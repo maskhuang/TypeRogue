@@ -1,0 +1,14 @@
+"DepotBuildConfig"
+{
+	"DepotID"	"YOUR_DEPOT_ID_MAC"
+	"contentroot"	"mac/"
+	"FileMapping"
+	{
+		"LocalPath"	"*"
+		"DepotPath"	"."
+		"recursive"	"1"
+	}
+	"FileExclusion"	"*.dsym"
+	"FileExclusion"	"*.map"
+	"FileExclusion"	"*.log"
+}

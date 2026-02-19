@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打字肉鸽</title>
+</head>
+<body>
+    <div id="game-container">
+        <!-- === BATTLE SCREEN === -->
+        <div id="battle-screen" class="screen">
+            <!-- 顶部信息栏 -->
+            <div id="top-bar">
+                <div id="level-info">
+                    <span id="level-label">LEVEL 1</span>
+                    <div id="player-relics"></div>
+                </div>
+                <div id="timer-section">
+                    <div id="timer-bar"><div id="timer-bar-fill"></div></div>
+                    <span id="timer-display">30</span>
+                </div>
+            </div>
+
+            <!-- 分数区域 -->
+            <div id="score-zone">
+                <div id="score-display">
+                    <span id="score-count">0</span>
+                    <span class="score-separator">/</span>
+                    <span id="target-score">100</span>
+                </div>
+                <div id="multiplier-section">
+                    <span class="mult-label">倍率</span>
+                    <span id="multiplier-display">1.0</span>
+                    <span class="mult-x">×</span>
+                </div>
+            </div>
+
+            <!-- 打字区域 -->
+            <div id="typing-zone">
+                <div id="word-zone">
+                    <div id="word-display"></div>
+                    <div id="input-feedback"></div>
+                </div>
+                <div id="skill-trigger-zone"></div>
+            </div>
+
+            <!-- 底部HUD -->
+            <div id="bottom-hud">
+                <div id="combo-display">
+                    <span id="combo-count">0</span>
+                    <span class="combo-label">COMBO</span>
+                </div>
+                <div id="battle-skills"></div>
+                <div id="active-library"></div>
+            </div>
+        </div>
+
+        <!-- === SHOP SCREEN === -->
+        <div id="shop-screen" class="screen">
+            <div id="shop-header">
+                <div id="shop-title">商店</div>
+                <div id="shop-result">
+                    Level <span id="shop-level-num">1</span> 完成!
+                    <span class="result-detail">
+                        得分: <span id="shop-score">0</span> / <span id="shop-target">100</span>
+                        (奖励: <span id="shop-bonus">0</span>)
+                    </span>
+                </div>
+            </div>
+
+            <div id="shop-content">
+                <!-- Left: Shop Items -->
+                <div id="shop-items">
+                    <div class="shop-section-header">
+                        <div id="shop-tabs"></div>
+                        <div class="gold-display">💰 <span id="shop-gold">30</span></div>
+                    </div>
+                    <div id="reward-cards"></div>
+                </div>
+
+                <!-- Right: Build Manager -->
+                <div id="shop-build">
+                    <div class="shop-section-title">构筑 (点击交换位置)</div>
+                    <div id="build-manager">
+                        <div id="bound-grid"></div>
+                        <div id="skill-inventory">
+                            <div class="inventory-label">已拥有技能</div>
+                            <div id="owned-skills"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="shop-footer">
+                <div id="shop-relics">
+                    <span class="relics-label">遗物:</span>
+                    <div id="shop-relic-icons"></div>
+                </div>
+                <button id="start-battle-btn">开始下一关</button>
+            </div>
+        </div>
+
+        <!-- === GAME OVER === -->
+        <div id="gameover-screen" class="screen">
+            <div id="gameover-content">
+                <div id="gameover-title">GAME OVER</div>
+                <div id="gameover-stats"></div>
+                <button class="restart-btn" id="restart-btn">再来一局</button>
+            </div>
+        </div>
+
+        <!-- Effects -->
+        <div id="particles"></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

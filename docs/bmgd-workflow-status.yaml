@@ -1,0 +1,43 @@
+# BMGD Workflow Status - 打字肉鸽
+# Track: Game Dev (Greenfield)
+# Updated: Switched from Quick Flow after prototype completion
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Suggested but not blocking
+#   - conditional: Depends on project type
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/gdd.md")
+#   - skipped: Optional workflow that was skipped
+
+generated: "2026-01-28"
+updated: "2026-02-16"
+project: "打字肉鸽"
+project_type: "game"
+selected_track: "gamedev"
+field_type: "greenfield"
+workflow_path: "gamedev-greenfield.yaml"
+
+# Prototype completed before switching tracks
+prototype_status: "completed"
+prototype_location: "/Volumes/work/project/game/prototype/"
+
+workflow_status:
+  # Phase 0 - Pre-production (Optional)
+  brainstorm-game: skipped
+  game-brief: optional
+
+  # Phase 1 - Design
+  gdd: "docs/gdd.md"
+  narrative: conditional
+
+  # Phase 2 - Technical
+  game-architecture: "docs/game-architecture.md"
+  test-framework: recommended
+
+  # Phase 3 - Production
+  sprint-planning: "docs/stories/sprint-status.yaml"

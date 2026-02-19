@@ -1,0 +1,1125 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: #0a0a0f;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#game-container {
+    position: relative;
+    width: 900px;
+    height: 600px;
+    background: linear-gradient(180deg, #0d0d15, #1a1a2e);
+    border: 2px solid #333;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.screen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: none;
+}
+
+/* ============================================ */
+/* BATTLE SCREEN                                */
+/* ============================================ */
+#battle-screen { display: flex; flex-direction: column; }
+
+/* 顶部栏 */
+#top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 25px;
+    background: rgba(0,0,0,0.4);
+}
+
+#level-info {
+    display: flex;
+    align-items: center;
+}
+
+#level-label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffe66d;
+    letter-spacing: 3px;
+}
+
+#active-library {
+    font-size: 11px;
+    color: #666;
+    padding: 4px 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+}
+
+#timer-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#timer-bar {
+    width: 200px;
+    height: 8px;
+    background: #1a1a2e;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#timer-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: #4ecdc4;
+    transition: width 0.1s linear;
+}
+
+#timer-display {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4ecdc4;
+    min-width: 40px;
+    text-align: right;
+}
+
+/* ===== 分数区域 - 主要焦点 ===== */
+#score-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px 20px;
+}
+
+#score-display {
+    font-size: 56px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+#score-count {
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255,255,255,0.3);
+    transition: color 0.3s;
+}
+
+.score-separator {
+    color: #444;
+    margin: 0 10px;
+}
+
+#target-score {
+    color: #666;
+}
+
+#multiplier-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px 20px;
+    background: rgba(255,230,109,0.1);
+    border: 1px solid rgba(255,230,109,0.3);
+    border-radius: 20px;
+}
+
+.mult-label {
+    font-size: 12px;
+    color: #888;
+}
+
+#multiplier-display {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffe66d;
+}
+
+.mult-x {
+    font-size: 14px;
+    color: #ffe66d;
+}
+
+/* ===== 打字区域 ===== */
+#typing-zone {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+#word-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#word-display {
+    font-size: 52px;
+    letter-spacing: 5px;
+    display: flex;
+    margin-bottom: 8px;
+}
+
+#input-feedback {
+    height: 24px;
+    font-size: 14px;
+    color: #888;
+}
+
+.letter {
+    display: inline-block;
+    padding: 3px 5px;
+    transition: color 0.1s, text-shadow 0.1s;
+    position: relative;
+    transform-origin: center bottom;
+}
+
+.letter.pending { color: #2a2a2a; }
+.letter.current {
+    color: #fff;
+    text-shadow: 0 0 15px rgba(255,255,255,0.8);
+    animation: currentPulse 1s ease-in-out infinite;
+}
+
+@keyframes currentPulse {
+    0%, 100% { transform: scale(1.1); }
+    50% { transform: scale(1.15); }
+}
+
+.letter.correct {
+    color: #4ecdc4;
+    text-shadow: 0 0 12px rgba(78,205,196,0.6);
+}
+
+.letter.wrong {
+    color: #ff6b6b;
+    animation: wrongShake 0.15s;
+}
+
+@keyframes wrongShake {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    25% { transform: translateX(-4px) rotate(-3deg); }
+    75% { transform: translateX(4px) rotate(3deg); }
+}
+
+.letter.has-skill::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: #ffe66d;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255,230,109,0.8);
+    animation: skillDotPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skillDotPulse {
+    0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.8; }
+    50% { transform: translateX(-50%) scale(1.3); opacity: 1; }
+}
+
+.letter.skill-triggered {
+    color: #ffe66d !important;
+    text-shadow: 0 0 20px rgba(255,230,109,0.8);
+}
+
+/* 字母入场动画 */
+.letter.letter-enter {
+    animation: letterEnter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+@keyframes letterEnter {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.5) rotate(-10deg);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg);
+    }
+}
+
+#skill-trigger-zone {
+    position: absolute;
+    bottom: 20px;
+    display: flex;
+    gap: 5px;
+    pointer-events: none;
+}
+
+/* ===== 底部HUD ===== */
+#bottom-hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 25px;
+    background: rgba(0,0,0,0.4);
+    border-top: 1px solid #333;
+}
+
+#combo-display {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+#combo-count {
+    font-size: 32px;
+    font-weight: bold;
+    color: #ff6b6b;
+    text-shadow: 0 0 15px rgba(255,107,107,0.5);
+}
+
+.combo-label {
+    font-size: 12px;
+    color: #ff6b6b;
+    opacity: 0.7;
+    letter-spacing: 2px;
+}
+
+#battle-skills {
+    display: flex;
+    gap: 6px;
+}
+
+.bound-skill {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 5px 8px;
+    background: linear-gradient(145deg, #1a2a28, #162420);
+    border: 1px solid #4ecdc4;
+    border-radius: 5px;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.15s, box-shadow 0.15s;
+    transform-origin: center center;
+}
+
+.bound-skill .skill-letter { font-size: 11px; font-weight: bold; color: #4ecdc4; }
+.bound-skill .skill-icon { font-size: 12px; transition: transform 0.15s; }
+.bound-skill .skill-level { font-size: 9px; color: #ffe66d; margin-left: 2px; }
+
+.bound-skill.triggered {
+    border-color: #ffe66d;
+    box-shadow: 0 0 15px rgba(255,230,109,0.6), 0 0 30px rgba(255,230,109,0.3);
+}
+
+.bound-skill.triggered .skill-icon {
+    animation: iconSpin 0.3s ease-out;
+}
+
+@keyframes iconSpin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(15deg) scale(1.3); }
+    100% { transform: rotate(0deg) scale(1); }
+}
+
+/* ============================================ */
+/* SHOP SCREEN                                  */
+/* ============================================ */
+#shop-screen { display: flex; flex-direction: column; background: linear-gradient(180deg, #12121a, #1a1a2e); }
+
+#shop-header {
+    text-align: center;
+    padding: 20px;
+    border-bottom: 1px solid #333;
+}
+
+#shop-title { font-size: 24px; font-weight: bold; color: #ffe66d; margin-bottom: 8px; }
+
+#shop-result { font-size: 14px; color: #4ecdc4; }
+.result-detail { color: #888; margin-left: 10px; }
+
+#shop-content { flex: 1; display: flex; padding: 20px; gap: 20px; overflow: hidden; }
+
+/* Shop Items Section */
+#shop-items { width: 50%; display: flex; flex-direction: column; }
+.shop-section-title { font-size: 12px; color: #888; margin-bottom: 12px; letter-spacing: 1px; }
+
+.shop-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+#shop-tabs {
+    display: flex;
+    gap: 5px;
+}
+
+.shop-tab {
+    padding: 8px 14px;
+    font-size: 12px;
+    font-family: inherit;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #333;
+    border-radius: 5px;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.shop-tab:hover { border-color: #4ecdc4; color: #fff; }
+.shop-tab.active { background: rgba(78,205,196,0.2); border-color: #4ecdc4; color: #4ecdc4; }
+
+.gold-display {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffe66d;
+}
+
+#reward-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    max-height: 320px;
+}
+
+.shop-empty {
+    text-align: center;
+    color: #666;
+    padding: 30px;
+    font-size: 14px;
+}
+
+.reward-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: linear-gradient(145deg, #1a1a2e, #252535);
+    border: 2px solid #333;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.15s, box-shadow 0.15s;
+    transform-style: preserve-3d;
+    perspective: 500px;
+}
+
+.reward-card:hover {
+    border-color: #4ecdc4;
+    transform: scale(1.03) rotateX(2deg) rotateY(-2deg);
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.3), 0 0 10px rgba(78,205,196,0.2);
+}
+
+.reward-card:active {
+    transform: scale(0.97);
+}
+
+.reward-card.cannot-afford { opacity: 0.5; }
+.reward-card.cannot-afford:hover { border-color: #ff6b6b; transform: scale(1.01); box-shadow: none; }
+
+.reward-card .reward-icon { font-size: 24px; }
+.reward-card .reward-info { flex: 1; }
+.reward-card .reward-name { font-size: 13px; font-weight: bold; color: #fff; margin-bottom: 2px; }
+.reward-card .reward-desc { font-size: 10px; color: #888; }
+.reward-card .reward-cost { font-size: 13px; color: #ffe66d; font-weight: bold; }
+.reward-card .reward-type { font-size: 9px; padding: 2px 6px; border-radius: 8px; }
+.reward-card .reward-type.new { background: rgba(78,205,196,0.2); color: #4ecdc4; }
+.reward-card .reward-type.upgrade { background: rgba(255,230,109,0.2); color: #ffe66d; }
+.reward-card .reward-type.stat { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+
+/* 遗物稀有度 */
+.reward-card .reward-type.common { background: rgba(150,150,150,0.2); color: #aaa; }
+.reward-card .reward-type.rare { background: rgba(52,152,219,0.2); color: #3498db; }
+.reward-card .reward-type.epic { background: rgba(155,89,182,0.2); color: #9b59b6; }
+
+/* 词库卡片 */
+.reward-card.library-card { border-color: #444; }
+.reward-card.library-card.owned { border-color: #4ecdc4; background: rgba(78,205,196,0.1); }
+.reward-card.library-card.active { border-color: #ffe66d; box-shadow: 0 0 10px rgba(255,230,109,0.3); }
+.library-freq { font-size: 9px; color: #666; margin-top: 3px; font-family: monospace; }
+.library-status { font-size: 11px; padding: 3px 8px; border-radius: 4px; }
+.library-status.active { background: #ffe66d; color: #000; }
+
+/* 遗物显示 */
+#player-relics {
+    display: flex;
+    gap: 3px;
+    margin-left: 10px;
+}
+
+.relic-icon {
+    font-size: 14px;
+    cursor: help;
+}
+
+#shop-relics {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.relics-label {
+    font-size: 12px;
+    color: #888;
+}
+
+#shop-relic-icons {
+    display: flex;
+    gap: 5px;
+}
+
+#shop-relic-icons .relic-icon {
+    font-size: 18px;
+}
+
+/* Build Manager Section */
+#shop-build { flex: 1; display: flex; flex-direction: column; }
+#build-manager { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+
+#bound-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+}
+
+.keyboard-row { display: flex; gap: 4px; justify-content: center; }
+.keyboard-row[data-row="1"] { margin-left: 18px; }
+.keyboard-row[data-row="2"] { margin-left: 40px; }
+
+.key-slot {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #252535, #1a1a2e);
+    border: 1px solid #444;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.15s, box-shadow 0.15s;
+    user-select: none;
+    transform-style: preserve-3d;
+}
+
+.key-slot:hover {
+    border-color: #4ecdc4;
+    transform: scale(1.1) translateY(-2px);
+}
+
+.key-slot:active {
+    transform: scale(0.95);
+}
+
+.key-slot.selected {
+    border-color: #ffe66d;
+    box-shadow: 0 0 15px rgba(255,230,109,0.6);
+    animation: selectedPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes selectedPulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(255,230,109,0.5); }
+    50% { box-shadow: 0 0 20px rgba(255,230,109,0.8); }
+}
+
+.key-slot.has-skill {
+    border-color: #4ecdc4;
+    background: linear-gradient(180deg, #1a2a28, #152520);
+    animation: skillSlotFloat 3s ease-in-out infinite;
+}
+
+@keyframes skillSlotFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+.key-slot.synergy-skill { border-color: #9b59b6; }
+.key-slot.adjacent-highlight { border-color: #ffe66d !important; background: rgba(255,230,109,0.1); }
+.key-slot .key-letter { font-size: 10px; color: #666; font-weight: bold; }
+.key-slot.has-skill .key-letter { color: #4ecdc4; }
+.key-slot .key-skill { font-size: 14px; }
+
+#skill-inventory { padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; }
+.inventory-label { font-size: 10px; color: #555; margin-bottom: 8px; text-align: center; }
+#owned-skills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 40px; }
+
+.inventory-skill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    background: #1a1a2e;
+    border: 2px solid #333;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.inventory-skill:hover { border-color: #ffe66d; }
+.inventory-skill.selected { border-color: #ffe66d; box-shadow: 0 0 10px rgba(255,230,109,0.5); }
+.inventory-skill.bound { border-color: #4ecdc4; }
+.inventory-skill.synergy { border-color: #9b59b6; }
+.inventory-skill .inv-icon { font-size: 16px; }
+.inventory-skill .inv-name { font-size: 11px; color: #ccc; }
+.inventory-skill .inv-level { font-size: 9px; color: #ffe66d; }
+.inventory-skill .inv-key { font-size: 9px; color: #4ecdc4; margin-left: 3px; }
+
+#shop-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 25px;
+    border-top: 1px solid #333;
+}
+
+#shop-stats { font-size: 13px; color: #888; }
+
+#start-battle-btn {
+    padding: 12px 30px;
+    font-size: 16px;
+    font-family: inherit;
+    background: linear-gradient(145deg, #4ecdc4, #3dbdb5);
+    border: none;
+    border-radius: 6px;
+    color: #0a0a0f;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#start-battle-btn:hover { transform: scale(1.05); box-shadow: 0 5px 20px rgba(78,205,196,0.4); }
+
+/* ============================================ */
+/* GAME OVER SCREEN                             */
+/* ============================================ */
+#gameover-screen { display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.95); }
+#gameover-content { text-align: center; }
+#gameover-title { font-size: 48px; font-weight: bold; color: #ff6b6b; text-shadow: 0 0 30px rgba(255,107,107,0.5); margin-bottom: 20px; }
+#gameover-stats { color: #888; font-size: 14px; line-height: 2; margin-bottom: 30px; }
+.restart-btn { padding: 12px 30px; font-size: 14px; font-family: inherit; background: transparent; border: 2px solid #4ecdc4; border-radius: 6px; color: #4ecdc4; cursor: pointer; transition: all 0.2s; }
+.restart-btn:hover { background: #4ecdc4; color: #0a0a0f; }
+
+/* ============================================ */
+/* BALATRO-STYLE JUICE ANIMATIONS               */
+/* ============================================ */
+
+/* Juice Up 弹跳动画 */
+.juice-up {
+    animation: juiceUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes juiceUp {
+    0% { transform: scale(1) rotate(0deg); }
+    30% { transform: scale(1.25) rotate(var(--juice-rot, 3deg)); }
+    50% { transform: scale(0.9) rotate(calc(var(--juice-rot, 3deg) * -0.5)); }
+    70% { transform: scale(1.08) rotate(calc(var(--juice-rot, 3deg) * 0.3)); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+/* 强力弹跳 (技能触发) */
+.juice-up-strong {
+    animation: juiceUpStrong 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes juiceUpStrong {
+    0% { transform: scale(1) rotate(0deg); }
+    20% { transform: scale(1.4) rotate(5deg); }
+    40% { transform: scale(0.85) rotate(-3deg); }
+    60% { transform: scale(1.15) rotate(2deg); }
+    80% { transform: scale(0.95) rotate(-1deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+/* 卡牌 idle 浮动动画 */
+.card-float {
+    animation: cardFloat 3s ease-in-out infinite;
+}
+
+@keyframes cardFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-2px) rotate(0.5deg); }
+    50% { transform: translateY(0) rotate(0deg); }
+    75% { transform: translateY(2px) rotate(-0.5deg); }
+}
+
+/* 3D 卡牌透视容器 */
+.card-3d {
+    transform-style: preserve-3d;
+    perspective: 800px;
+    transition: transform 0.15s ease-out;
+}
+
+.card-3d:hover {
+    transform: scale(1.05);
+}
+
+.card-3d-inner {
+    transition: transform 0.1s ease-out;
+    transform-style: preserve-3d;
+}
+
+/* 弹性缩放 */
+.elastic-scale {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.elastic-scale:hover {
+    transform: scale(1.08);
+}
+
+.elastic-scale:active {
+    transform: scale(0.95);
+}
+
+/* 购买成功动画 */
+.purchase-pop {
+    animation: purchasePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes purchasePop {
+    0% { transform: scale(1); opacity: 1; }
+    30% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+}
+
+/* 连击数字弹跳 */
+.combo-bump {
+    animation: comboBump 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes comboBump {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* 分数增加动画 */
+.score-bump {
+    animation: scoreBump 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scoreBump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.15); color: #4ecdc4; }
+    100% { transform: scale(1); }
+}
+
+/* 倍率变化动画 */
+.mult-bump {
+    animation: multBump 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes multBump {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.25); filter: brightness(1.5); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* ============================================ */
+/* EFFECTS                                      */
+/* ============================================ */
+#particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 100; }
+.particle { position: absolute; width: 4px; height: 4px; border-radius: 50%; animation: particleFly 0.35s ease-out forwards; }
+@keyframes particleFly { to { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); } }
+
+#game-container.shake { animation: containerShake 0.12s; }
+@keyframes containerShake { 25% { transform: translate(-3px, 2px); } 75% { transform: translate(3px, -2px); } }
+#game-container.impact { animation: impactFlash 0.12s; }
+@keyframes impactFlash { 50% { box-shadow: 0 0 25px rgba(78,205,196,0.35); } }
+
+/* === 爽感特效 === */
+
+/* 动态震动 - 可变强度 */
+#game-container.shake-dynamic {
+    animation: shakeDynamic 0.15s;
+}
+
+@keyframes shakeDynamic {
+    0%, 100% { transform: translate(0, 0); }
+    20% { transform: translate(calc(var(--shake-x, 3px) * -1), var(--shake-y, 2px)); }
+    40% { transform: translate(var(--shake-x, 3px), calc(var(--shake-y, 2px) * -1)); }
+    60% { transform: translate(calc(var(--shake-x, 3px) * -0.5), var(--shake-y, 2px)); }
+    80% { transform: translate(var(--shake-x, 3px), calc(var(--shake-y, 2px) * -0.5)); }
+}
+
+/* 屏幕闪光 */
+.screen-flash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 200;
+    animation: flashFade 0.2s ease-out forwards;
+}
+
+@keyframes flashFade {
+    0% { opacity: var(--flash-opacity, 0.4); }
+    100% { opacity: 0; }
+}
+
+/* 连击里程碑弹窗 */
+.milestone-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 300;
+    animation: milestonePop 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    pointer-events: none;
+}
+
+.milestone-text {
+    font-size: 72px;
+    font-weight: bold;
+    text-shadow: 0 0 30px currentColor, 0 0 60px currentColor;
+    animation: milestoneTextPulse 0.3s ease-out 2;
+}
+
+.milestone-combo {
+    font-size: 24px;
+    color: #fff;
+    margin-top: 10px;
+    opacity: 0.8;
+}
+
+@keyframes milestonePop {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3) rotate(-10deg);
+    }
+    15% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2) rotate(3deg);
+    }
+    30% {
+        transform: translate(-50%, -50%) scale(0.95) rotate(-2deg);
+    }
+    45% {
+        transform: translate(-50%, -50%) scale(1.05) rotate(1deg);
+    }
+    70% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.5) rotate(0deg);
+    }
+}
+
+@keyframes milestoneTextPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* 完美词语弹窗 */
+.perfect-popup {
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    font-weight: bold;
+    color: #ffe66d;
+    text-shadow: 0 0 20px rgba(255,230,109,0.8), 0 0 40px rgba(255,230,109,0.5);
+    z-index: 250;
+    animation: perfectPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    pointer-events: none;
+}
+
+@keyframes perfectPop {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5) rotate(-5deg);
+    }
+    30% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.3) rotate(3deg);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.2) translateY(-30px);
+    }
+}
+
+/* 倍率发光效果 - 强化版 */
+#game-container.mid-mult {
+    box-shadow: inset 0 0 100px rgba(255,230,109,0.25), 0 0 30px rgba(255,230,109,0.2);
+}
+
+#game-container.mid-mult::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 3px solid rgba(255,230,109,0.4);
+    border-radius: 12px;
+    pointer-events: none;
+    animation: borderPulseGold 1s ease-in-out infinite;
+}
+
+@keyframes borderPulseGold {
+    0%, 100% { border-color: rgba(255,230,109,0.3); }
+    50% { border-color: rgba(255,230,109,0.6); }
+}
+
+#game-container.high-mult {
+    box-shadow: inset 0 0 150px rgba(255,107,107,0.3), 0 0 50px rgba(255,107,107,0.3);
+    animation: highMultPulse 0.4s ease-in-out infinite;
+}
+
+#game-container.high-mult::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 4px solid rgba(255,107,107,0.6);
+    border-radius: 12px;
+    pointer-events: none;
+    animation: borderPulseRed 0.3s ease-in-out infinite;
+}
+
+@keyframes borderPulseRed {
+    0%, 100% { border-color: rgba(255,107,107,0.4); box-shadow: inset 0 0 30px rgba(255,107,107,0.2); }
+    50% { border-color: rgba(255,107,107,0.9); box-shadow: inset 0 0 50px rgba(255,107,107,0.4); }
+}
+
+@keyframes highMultPulse {
+    0%, 100% { box-shadow: inset 0 0 120px rgba(255,107,107,0.25), 0 0 40px rgba(255,107,107,0.25); }
+    50% { box-shadow: inset 0 0 180px rgba(255,107,107,0.4), 0 0 60px rgba(255,107,107,0.4); }
+}
+
+#multiplier-section {
+    transition: all 0.2s;
+}
+
+#game-container.mid-mult #multiplier-section {
+    border-color: #ffe66d;
+    background: rgba(255,230,109,0.2);
+    box-shadow: 0 0 20px rgba(255,230,109,0.5), 0 0 40px rgba(255,230,109,0.3);
+    transform: scale(1.05);
+}
+
+#game-container.high-mult #multiplier-section {
+    border-color: #ff6b6b;
+    background: rgba(255,107,107,0.25);
+    box-shadow: 0 0 25px rgba(255,107,107,0.7), 0 0 50px rgba(255,107,107,0.4);
+    animation: multSectionPulse 0.3s ease-in-out infinite;
+}
+
+#game-container.high-mult #multiplier-display {
+    color: #ff6b6b;
+    text-shadow: 0 0 10px rgba(255,107,107,0.8);
+}
+
+@keyframes multSectionPulse {
+    0%, 100% { transform: scale(1.05); }
+    50% { transform: scale(1.12); }
+}
+
+.skill-trigger-popup {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(255,230,109,0.15);
+    border: 1px solid rgba(255,230,109,0.5);
+    border-radius: 6px;
+    animation: triggerPop 0.35s forwards;
+}
+
+.skill-trigger-popup .trigger-icon { font-size: 20px; }
+@keyframes triggerPop { 0% { opacity: 0; transform: scale(0.5) translateY(15px); } 30% { opacity: 1; transform: scale(1.1) translateY(-5px); } 100% { opacity: 0; transform: scale(1) translateY(-30px); } }
+
+.score-popup {
+    position: absolute;
+    top: 25%;
+    font-size: 32px;
+    font-weight: bold;
+    color: #4ecdc4;
+    text-shadow: 0 0 20px rgba(78,205,196,0.8);
+    animation: scoreFloat 0.8s ease-out forwards;
+    pointer-events: none;
+    z-index: 100;
+}
+
+@keyframes scoreFloat {
+    0% { opacity: 1; transform: scale(0.5) translateY(0); }
+    20% { opacity: 1; transform: scale(1.2) translateY(-10px); }
+    100% { opacity: 0; transform: scale(1) translateY(-50px); }
+}
+
+.level-announce {
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 42px;
+    font-weight: bold;
+    color: #ffe66d;
+    text-shadow: 0 0 30px rgba(255,230,109,0.6);
+    text-align: center;
+    animation: levelAnnounce 1.5s forwards;
+    z-index: 150;
+}
+
+.level-announce .target-hint {
+    display: block;
+    font-size: 18px;
+    color: #888;
+    margin-top: 10px;
+}
+
+@keyframes levelAnnounce {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    15% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    70% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ============================================ */
+/* DECK MANAGEMENT (牌库管理)                   */
+/* ============================================ */
+
+.deck-stats-panel {
+    padding: 12px 15px;
+    background: rgba(78,205,196,0.1);
+    border: 1px solid rgba(78,205,196,0.3);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.deck-stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #4ecdc4;
+    margin-bottom: 5px;
+}
+
+.deck-count {
+    color: #ffe66d;
+}
+
+.deck-stats-info {
+    font-size: 11px;
+    color: #888;
+    display: flex;
+    gap: 8px;
+}
+
+.deck-stats-info span { white-space: nowrap; }
+.highlight-letter { color: #ffe66d; font-weight: bold; }
+
+.deck-section {
+    margin-bottom: 15px;
+}
+
+.deck-section-title {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #333;
+}
+
+.word-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.word-grid.deck-grid {
+    max-height: 150px;
+}
+
+.word-card {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: linear-gradient(145deg, #1a1a2e, #252535);
+    border: 1px solid #333;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+}
+
+.word-card:hover {
+    border-color: #4ecdc4;
+    transform: translateY(-2px);
+}
+
+.word-card.buyable:hover {
+    border-color: #4ecdc4;
+    box-shadow: 0 3px 10px rgba(78,205,196,0.2);
+}
+
+.word-card.recommended {
+    border-color: #ffe66d;
+    background: linear-gradient(145deg, #2a2520, #302a20);
+}
+
+.word-card.owned {
+    background: rgba(78,205,196,0.1);
+    border-color: #4ecdc4;
+}
+
+.word-card.owned:hover {
+    border-color: #ff6b6b;
+    background: rgba(255,107,107,0.1);
+}
+
+.word-text {
+    color: #fff;
+    font-family: monospace;
+    letter-spacing: 0.5px;
+}
+
+.bound-letter {
+    color: #ffe66d;
+    font-weight: bold;
+}
+
+.word-cost {
+    font-size: 10px;
+    color: #ffe66d;
+}
+
+.word-card.owned .word-cost {
+    font-size: 10px;
+    color: #ff6b6b;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+
+.word-card.owned:hover .word-cost {
+    opacity: 1;
+}
+
+.word-card.owned.cannot-afford {
+    opacity: 0.5;
+    border-color: #555;
+}
+
+.word-card.owned.cannot-afford:hover {
+    border-color: #ff6b6b;
+    cursor: not-allowed;
+}

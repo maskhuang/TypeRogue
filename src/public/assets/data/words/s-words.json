@@ -1,0 +1,14 @@
+{
+  "name": "s-words",
+  "language": "en",
+  "tier": 2,
+  "highlight": "s",
+  "words": [
+    "storm", "spark", "strike", "slash", "shield", "surge", "steel", "swift", "skill", "spell",
+    "spin", "speed", "shade", "shine", "shock", "snow", "soul", "stone", "star", "sage"
+  ],
+  "difficulty": [
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    1, 2, 2, 2, 2, 1, 1, 2, 1, 1
+  ]
+}

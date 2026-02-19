@@ -1,0 +1,8 @@
+打字肉鸽 (Typing Roguelike)
+
+Copyright © 2026 Yuchenghuang. All rights reserved.
+
+This software is proprietary and confidential.
+Unauthorized copying, distribution, or use is strictly prohibited.
+
+For licensing inquiries, please contact the developer.

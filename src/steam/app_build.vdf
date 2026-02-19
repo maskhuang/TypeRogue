@@ -1,0 +1,15 @@
+"appbuild"
+{
+	"appid"		"YOUR_APP_ID"
+	"desc"		"打字肉鸽 Build"
+	"buildoutput"	"../output/"
+	"contentroot"	"../release/"
+	"setlive"	""
+	"preview"	"0"
+
+	"depots"
+	{
+		"YOUR_DEPOT_ID_WIN"	"depot_build_win.vdf"
+		"YOUR_DEPOT_ID_MAC"	"depot_build_mac.vdf"
+	}
+}
