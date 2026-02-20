@@ -81,9 +81,24 @@ export interface PipelineResult {
   pendingBehaviors: ModifierBehavior[]
 }
 
-/** 管道上下文（预留给 11.3 条件系统） */
+/** 管道上下文 — 条件评估所需的运行时数据 */
 export interface PipelineContext {
-  // 11.3 将扩展: combo, wordLength, adjacentSkills, wordSkillCount, etc.
+  /** 当前连击数 */
+  combo?: number
+  /** 本场战斗是否出过错 */
+  hasError?: boolean
+  /** 相邻键中有技能的数量（调用方预计算） */
+  adjacentSkillCount?: number
+  /** 相邻键中无技能的数量（调用方预计算） */
+  adjacentEmptyCount?: number
+  /** 相邻键上技能的类型列表（调用方预计算） */
+  adjacentSkillTypes?: string[]
+  /** 当前词语 */
+  currentWord?: string
+  /** 本词已触发的技能数量 */
+  skillsTriggeredThisWord?: number
+  /** 本场战斗第几个词（1-indexed） */
+  wordNumber?: number
 }
 
 // === 完整 Modifier 接口 ===

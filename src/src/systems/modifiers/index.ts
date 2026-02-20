@@ -3,6 +3,7 @@
 // ============================================
 // Story 11.1: 统一效果管道的数据层
 // Story 11.2: 三层计算管道
+// Story 11.3: 条件系统
 
 export type {
   Modifier,
@@ -21,3 +22,4 @@ export type {
 
 export { ModifierRegistry } from './ModifierRegistry'
 export { EffectPipeline } from './EffectPipeline'
+export { ConditionEvaluator } from './ConditionEvaluator'

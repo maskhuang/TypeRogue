@@ -256,9 +256,9 @@ describe('EffectPipeline', () => {
     })
   })
 
-  // === 条件暂时全部通过 ===
+  // === 条件评估（11.3 集成） ===
   describe('条件处理', () => {
-    it('带 condition 的 modifier 目前始终通过（不被过滤）', () => {
+    it('条件满足时修饰器生效', () => {
       registry.register(createTestModifier({
         id: 'relic:berserker:score',
         layer: 'global',
@@ -270,9 +270,26 @@ describe('EffectPipeline', () => {
         layer: 'base',
         effect: { type: 'score', value: 10, stacking: 'additive' },
       }))
-      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
-      // condition ignored, so 10 * 1.3 = 13
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { combo: 25 })
+      // combo 25 >= 20, condition met → 10 * 1.3 = 13
       expect(result.effects.score).toBe(13)
+    })
+
+    it('条件不满足时修饰器被跳过', () => {
+      registry.register(createTestModifier({
+        id: 'relic:berserker:score',
+        layer: 'global',
+        condition: { type: 'combo_gte', value: 20 },
+        effect: { type: 'score', value: 1.3, stacking: 'multiplicative' },
+      }))
+      registry.register(createTestModifier({
+        id: 'skill:burst:score',
+        layer: 'base',
+        effect: { type: 'score', value: 10, stacking: 'additive' },
+      }))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { combo: 5 })
+      // combo 5 < 20, condition not met → global modifier skipped → 10 * 1 = 10
+      expect(result.effects.score).toBe(10)
     })
   })
 

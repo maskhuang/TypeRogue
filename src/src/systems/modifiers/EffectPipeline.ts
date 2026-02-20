@@ -2,6 +2,7 @@
 // 打字肉鸽 - EffectPipeline 三层计算管道
 // ============================================
 // Story 11.2: before → calculate → after 三阶段处理
+// Story 11.3: 条件评估集成
 
 import type {
   ModifierTrigger,
@@ -11,6 +12,7 @@ import type {
   PipelineContext,
 } from './ModifierTypes'
 import type { ModifierRegistry } from './ModifierRegistry'
+import { ConditionEvaluator } from './ConditionEvaluator'
 
 const EFFECT_TYPES: ModifierEffectType[] = ['score', 'multiply', 'time', 'gold', 'shield']
 
@@ -29,12 +31,12 @@ export class EffectPipeline {
   static resolve(
     registry: ModifierRegistry,
     trigger: ModifierTrigger,
-    _context?: PipelineContext,
+    context?: PipelineContext,
   ): PipelineResult {
     // === Phase 1: BEFORE — 拦截检查 ===
     const beforeMods = registry.getByTrigger(trigger, 'before')
     for (const mod of beforeMods) {
-      // TODO: 11.3 ConditionEvaluator.evaluate(mod.condition, context)
+      if (mod.condition && !ConditionEvaluator.evaluate(mod.condition, context)) continue
       if (mod.behavior?.type === 'intercept') {
         return {
           intercepted: true,
@@ -54,8 +56,8 @@ export class EffectPipeline {
       let globalProduct = 1
 
       for (const mod of calcMods) {
-        // TODO: 11.3 ConditionEvaluator.evaluate(mod.condition, context)
         if (mod.effect?.type !== effectType) continue
+        if (mod.condition && !ConditionEvaluator.evaluate(mod.condition, context)) continue
 
         switch (mod.layer) {
           case 'base':
@@ -76,8 +78,7 @@ export class EffectPipeline {
     // === Phase 3: AFTER — 收集待执行行为 ===
     const afterMods = registry.getByTrigger(trigger, 'after')
     const pendingBehaviors = afterMods
-      .filter(mod => mod.behavior != null)
-      // TODO: 11.3 ConditionEvaluator.evaluate(mod.condition, context)
+      .filter(mod => mod.behavior != null && (!mod.condition || ConditionEvaluator.evaluate(mod.condition, context)))
       .map(mod => mod.behavior!)
 
     return { intercepted: false, effects, pendingBehaviors }
