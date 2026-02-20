@@ -72,3 +72,11 @@ export function calculateTargetScore(level: number): number {
   const { TARGET_BASE, TARGET_LINEAR, TARGET_QUADRATIC } = BALANCE;
   return Math.floor(TARGET_BASE + level * TARGET_LINEAR + level * level * TARGET_QUADRATIC);
 }
+
+// === 遗物检查 ===
+/**
+ * 检查玩家是否拥有指定遗物
+ */
+export function hasRelic(relicId: string): boolean {
+  return state.player.relics.has(relicId);
+}

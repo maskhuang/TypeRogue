@@ -2,12 +2,12 @@
 // 打字肉鸽 - 战斗系统
 // ============================================
 
-import { state, synergy, calculateTargetScore } from '../core/state';
+import { state, synergy, calculateTargetScore, hasRelic } from '../core/state';
 import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { SKILLS } from '../data/skills';
-import { RELICS, hasRelic } from '../data/relics';
+import { RELICS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';

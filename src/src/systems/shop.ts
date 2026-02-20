@@ -2,10 +2,10 @@
 // 打字肉鸽 - 商店系统
 // ============================================
 
-import { state } from '../core/state';
+import { state, hasRelic } from '../core/state';
 import { KEYS, KEYBOARD_ROWS, ADJACENT_KEYS } from '../core/constants';
 import { SKILLS, SYNERGY_TYPES } from '../data/skills';
-import { RELICS, hasRelic } from '../data/relics';
+import { RELICS } from '../data/relics';
 import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';

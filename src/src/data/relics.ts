@@ -203,8 +203,8 @@ export function getAllRelics(): RelicData[] {
 }
 
 /**
- * 检查遗物是否存在
+ * 检查遗物数据是否存在
  */
-export function hasRelic(relicId: string): boolean {
+export function relicExists(relicId: string): boolean {
   return relicId in RELICS
 }
