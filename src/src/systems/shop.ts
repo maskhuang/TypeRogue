@@ -18,17 +18,20 @@ export function openShop(_won: boolean): void {
   state.phase = 'shop';
   const el = getElements();
 
-  // 存钱罐遗物：每关开始+5金币
+  // 存钱罐遗物：每关开始+10金币
   if (hasRelic('piggy_bank')) {
-    state.gold += 5;
+    state.gold += 10;
   }
 
-  // 藏宝图遗物：超额奖励翻倍
-  let bonus = Math.max(0, Math.floor((state.score - state.targetScore) / 10));
-  if (hasRelic('treasure_map')) {
-    bonus *= 2;
-  }
-  state.gold += 20 + bonus;
+  // 金币奖励：基础 20 + 剩余时间秒数
+  const baseGold = 20;
+  const timeBonus = Math.floor(state.time);
+  // 超杀之刃遗物：overkill 分数转金币
+  const overkillGold = hasRelic('overkill_blade') ? Math.max(0, state.overkill) : 0;
+  // 藏宝图遗物：额外 +15 金币
+  const treasureGold = hasRelic('treasure_map') ? 15 : 0;
+  const bonus = timeBonus + overkillGold + treasureGold;
+  state.gold += baseGold + bonus;
 
   el.shopLevelNum.textContent = String(state.level);
   el.shopScore.textContent = String(state.score);

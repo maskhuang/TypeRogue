@@ -99,9 +99,9 @@ describe('RelicSystem', () => {
     })
 
     it('should calculate battle_end modifiers correctly', () => {
-      ownedRelics = ['treasure_map'] // 1.25x gold
+      ownedRelics = ['treasure_map'] // +15 gold flat
       const modifiers = relicSystem.calculateModifiers('battle_end')
-      expect(modifiers.goldMultiplier).toBe(1.25)
+      expect(modifiers.goldFlat).toBe(15)
     })
 
     it('should calculate on_word_complete modifiers correctly', () => {
@@ -157,9 +157,9 @@ describe('RelicSystem', () => {
       expect(relicSystem.getScoreMultiplier()).toBe(1)
     })
 
-    it('getGoldMultiplier should return battle_end gold multiplier', () => {
-      ownedRelics = ['treasure_map']
-      expect(relicSystem.getGoldMultiplier()).toBe(1.25)
+    it('getGoldMultiplier should return default when no gold_multiplier relic', () => {
+      ownedRelics = ['treasure_map'] // treasure_map now uses gold_flat, not gold_multiplier
+      expect(relicSystem.getGoldMultiplier()).toBe(1)
     })
 
     it('getPriceDiscount should return passive price discount', () => {
@@ -310,7 +310,7 @@ describe('RelicSystem', () => {
         expect.objectContaining({
           trigger: 'battle_end',
           modifiers: expect.objectContaining({
-            goldMultiplier: 1.25
+            goldFlat: 15
           })
         })
       )

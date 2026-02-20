@@ -108,12 +108,25 @@ export const RELICS: Record<string, RelicData> = {
     id: 'treasure_map',
     name: '藏宝图',
     icon: '🗺️',
-    description: '战斗奖励金币 +25%',
+    description: '战斗结束时额外 +15 金币',
     rarity: 'rare',
     basePrice: 45,
     effects: [
-      { type: 'battle_end', modifier: 'gold_multiplier', value: 1.25 }
+      { type: 'battle_end', modifier: 'gold_flat', value: 15 }
     ]
+  },
+
+  overkill_blade: {
+    id: 'overkill_blade',
+    name: '超杀之刃',
+    icon: '⚔️',
+    description: '超杀分数转化为额外金币',
+    rarity: 'rare',
+    basePrice: 50,
+    effects: [
+      { type: 'battle_end', modifier: 'gold_flat', value: 0 } // 实际金币 = state.overkill，硬编码在 shop/battle 中
+    ],
+    flavor: '一击的余波化为金币的叮当声。'
   },
 
   combo_crown: {

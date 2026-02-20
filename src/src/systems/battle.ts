@@ -333,28 +333,32 @@ function showGoldReward(onComplete: () => void): void {
     return;
   }
 
-  // 计算奖励
+  // 计算奖励（与 shop.ts openShop 公式一致）
   const baseGold = 20;
-  let overkill = Math.max(0, state.overkill);
-  if (hasRelic('treasure_map')) {
-    overkill *= 2;
-  }
-  const timeBonus = Math.floor(state.time); // 剩余秒数作为奖励
-  const totalGold = baseGold + overkill + timeBonus;
-
-  // 存储时间奖励供 shop 使用
-  state.timeReward = timeBonus;
+  const timeBonus = Math.floor(state.time);
+  const overkillGold = hasRelic('overkill_blade') ? Math.max(0, state.overkill) : 0;
+  const treasureGold = hasRelic('treasure_map') ? 15 : 0;
+  const totalGold = baseGold + timeBonus + overkillGold + treasureGold;
 
   // 设置数值
   const goldBaseEl = document.getElementById('gold-base');
   const goldOverkillEl = document.getElementById('gold-overkill');
   const goldTimeEl = document.getElementById('gold-time');
+  const goldTreasureEl = document.getElementById('gold-treasure');
   const goldTotalEl = document.getElementById('gold-total');
 
   if (goldBaseEl) goldBaseEl.textContent = `+${baseGold}`;
-  if (goldOverkillEl) goldOverkillEl.textContent = `+${overkill}`;
   if (goldTimeEl) goldTimeEl.textContent = `+${timeBonus}`;
   if (goldTotalEl) goldTotalEl.textContent = `+${totalGold}`;
+
+  // 条件行：无遗物时隐藏整行
+  const overkillRow = document.querySelector('.gold-overkill-row') as HTMLElement;
+  if (overkillRow) overkillRow.style.display = overkillGold > 0 ? '' : 'none';
+  if (goldOverkillEl) goldOverkillEl.textContent = `+${overkillGold}`;
+
+  const treasureRow = document.querySelector('.gold-treasure-row') as HTMLElement;
+  if (treasureRow) treasureRow.style.display = treasureGold > 0 ? '' : 'none';
+  if (goldTreasureEl) goldTreasureEl.textContent = `+${treasureGold}`;
 
   // 隐藏结算面板
   hideSettlement();
@@ -454,7 +458,6 @@ export function startLevel(): void {
   state.multiplier = state.player.baseMultiplier;
   state.wordScore = 0;
   state.overkill = 0;
-  state.timeReward = 0;
   state.targetScore = calculateTargetScore(state.level);
 
   synergy.shieldCount = 0;

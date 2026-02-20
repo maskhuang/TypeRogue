@@ -15,8 +15,8 @@ import type { RelicRarity } from '../../../../src/systems/relics/RelicTypes'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 12 relics', () => {
-      expect(Object.keys(RELICS)).toHaveLength(12)
+    it('should contain 13 relics', () => {
+      expect(Object.keys(RELICS)).toHaveLength(13)
     })
 
     it('should have all required fields for each relic', () => {
@@ -60,9 +60,9 @@ describe('Relics Data', () => {
       expect(commons).toHaveLength(5)
     })
 
-    it('should have 4 rare relics', () => {
+    it('should have 5 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(4)
+      expect(rares).toHaveLength(5)
     })
 
     it('should have 3 legendary relics', () => {
@@ -122,11 +122,19 @@ describe('Relics Data', () => {
       expect(relic.effects[0].condition?.threshold).toBe(20)
     })
 
-    it('treasure_map should give gold multiplier on battle end', () => {
+    it('treasure_map should give gold flat on battle end', () => {
       const relic = RELICS.treasure_map
       expect(relic.effects[0].type).toBe('battle_end')
-      expect(relic.effects[0].modifier).toBe('gold_multiplier')
-      expect(relic.effects[0].value).toBe(1.25)
+      expect(relic.effects[0].modifier).toBe('gold_flat')
+      expect(relic.effects[0].value).toBe(15)
+    })
+
+    it('overkill_blade should convert overkill to gold', () => {
+      const relic = RELICS.overkill_blade
+      expect(relic.rarity).toBe('rare')
+      expect(relic.effects[0].type).toBe('battle_end')
+      expect(relic.effects[0].modifier).toBe('gold_flat')
+      expect(relic.effects[0].value).toBe(0)
     })
 
     it('combo_crown should give score multiplier on battle start', () => {
@@ -230,7 +238,7 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(12)
+      expect(ids).toHaveLength(13)
       expect(ids).toContain('lucky_coin')
       expect(ids).toContain('golden_keyboard')
       expect(ids).toContain('perfectionist')
@@ -240,7 +248,7 @@ describe('Relics Data', () => {
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(12)
+      expect(relics).toHaveLength(13)
     })
 
     it('should return RelicData objects', () => {
@@ -259,6 +267,7 @@ describe('Relics Data', () => {
       expect(RELICS.phoenix_feather.flavor).toBeDefined()
       expect(RELICS.golden_keyboard.flavor).toBeDefined()
       expect(RELICS.perfectionist.flavor).toBeDefined()
+      expect(RELICS.overkill_blade.flavor).toBeDefined()
     })
 
     it('should be optional (some relics have no flavor)', () => {

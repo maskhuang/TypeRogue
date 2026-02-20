@@ -22,7 +22,6 @@ export function createInitialState(): GameState {
     wordPerfect: true,
     lastMilestone: 0,
     overkill: 0,
-    timeReward: 0,
     player: {
       word: '',
       index: 0,

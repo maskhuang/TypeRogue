@@ -20,7 +20,6 @@ export interface GameState {
   wordPerfect: boolean;
   lastMilestone: number;
   overkill: number;  // 最后一击超出目标的分数
-  timeReward: number; // 剩余时间奖励
   player: PlayerState;
   shop: ShopState;
 }
