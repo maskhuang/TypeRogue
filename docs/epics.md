@@ -682,19 +682,373 @@ Epic 9: 数值平衡与技能迭代 ←── Epic 1-7
 
 ---
 
+---
+
+## Epic 11: 效果管道统一
+
+**目标:** 用统一的 Modifier 管道替换技能和遗物的硬编码 switch/case，实现三层修饰叠加模型（base 加法 → enhance 乘法 → global 乘法），为技能扩充和遗物重做奠定技术基础。
+
+**依赖:** Epic 9 (需要稳定的技能/遗物基线)
+
+**架构参考:** `systems/skills.ts`, `systems/relics/`, `core/types.ts`
+
+**设计参考:** `docs/brainstorming-skills-relics-refactor-2026-02-20.md` 方向 A
+
+### Story 11.1: Modifier 接口与注册中心
+
+**描述:** 定义统一的 Modifier 接口和 ModifierRegistry，作为效果管道的数据层。
+
+**验收标准:**
+- [ ] Modifier 接口: id, source, layer(base/enhance/global), trigger(EventType), phase(before/calculate/after), condition?, effect?, behavior?, priority
+- [ ] Condition 接口: type + 对应参数（combo_gte, adjacent_skills_gte, word_length_gte 等）
+- [ ] ModifierRegistry: register(modifier), unregister(id), getByTrigger(event), getBySource(sourceId)
+- [ ] 修饰器生命周期：技能绑定时注册、解绑时移除；遗物获取时注册
+- [ ] 单元测试覆盖注册/查询/移除
+
+**技术说明:**
+- 新增: `systems/modifiers/Modifier.ts`, `systems/modifiers/ModifierRegistry.ts`
+- 修改: `core/types.ts`（新增 Modifier 相关类型）
+
+### Story 11.2: 三层计算管道
+
+**描述:** 实现 EffectPipeline，按 before → calculate → after 三阶段处理修饰器，calculate 阶段内按 base(加法) → enhance(乘法) → global(乘法) 三层计算。
+
+**验收标准:**
+- [ ] EffectPipeline.resolve(event, context) → FinalEffect
+- [ ] Phase 1 (before): 收集拦截型修饰器，任一拦截则终止事件
+- [ ] Phase 2 (calculate): 三层计算 — Σ(base) × Π(enhance) × Π(global)
+- [ ] Phase 3 (after): 收集触发型修饰器，返回待执行的链式效果列表
+- [ ] 同层内按 priority 排序
+- [ ] 单元测试：纯 base、base+enhance、三层叠加、拦截终止、链式触发
+
+**技术说明:**
+- 新增: `systems/modifiers/EffectPipeline.ts`
+
+### Story 11.3: 条件系统
+
+**描述:** 实现 ConditionEvaluator，支持中等复杂度的条件原语，每个修饰器最多一个条件。
+
+**验收标准:**
+- [ ] 战斗状态条件: combo_gte, combo_lte, no_errors, random(probability)
+- [ ] 位置条件: adjacent_skills_gte(n), adjacent_empty_gte(n), adjacent_has_type(skillType)
+- [ ] 词语条件: word_length_gte(n), word_length_lte(n), word_has_letter(key)
+- [ ] 上下文条件: skills_triggered_this_word(n), nth_word(n)
+- [ ] ConditionEvaluator.evaluate(condition, context) → boolean
+- [ ] 无条件的修饰器始终生效
+- [ ] 单元测试覆盖所有条件类型
+
+**技术说明:**
+- 新增: `systems/modifiers/ConditionEvaluator.ts`
+
+### Story 11.4: 行为修饰器框架
+
+**描述:** 实现拦截型（Interceptor）和触发型（Reactor）行为修饰器，支持 shield 保护连击、echo 双触发等非数值效果。
+
+**验收标准:**
+- [ ] 拦截型: phase=before，可阻止事件默认效果（如 shield 阻止连击中断）
+- [ ] 触发型: phase=after，事件后触发额外行为（如 echo 触发下一个技能两次）
+- [ ] 链式触发深度上限（防死循环），建议 max_depth=3
+- [ ] BehaviorExecutor 执行行为队列
+- [ ] 单元测试：拦截成功/失败、链式触发、深度限制
+
+**技术说明:**
+- 新增: `systems/modifiers/BehaviorExecutor.ts`
+
+### Story 11.5: 现有技能迁移
+
+**描述:** 将当前所有技能从 skills.ts 的 switch/case 硬编码迁移到 Modifier 注册式。每个技能绑定时注册对应的 Modifier，解绑时移除。
+
+**验收标准:**
+- [ ] 所有现有技能（score/multiply/time/protect/core/aura/lone/echo/void/ripple）改为 Modifier 表达
+- [ ] 技能 triggerSkill() 改为调用 EffectPipeline.resolve()
+- [ ] bindSkill() 注册 Modifier，unbindSkill() 移除
+- [ ] 现有全部技能相关测试通过，行为不变
+- [ ] 删除 skills.ts 中的 switch/case 分支
+
+**技术说明:**
+- 修改: `systems/skills.ts`, `data/skills.ts`
+- 每个技能的 Modifier 定义放在 `data/skills.ts` 中
+
+### Story 11.6: 现有遗物迁移
+
+**描述:** 将当前所有遗物从 RelicEffects.ts 的硬编码检查迁移到 Modifier 注册式。遗物获取时注册 global 层 Modifier。
+
+**验收标准:**
+- [ ] 所有现有遗物改为 Modifier 表达（global 层）
+- [ ] 遗物效果通过 EffectPipeline 统一计算，不再硬编码检查 hasRelic()
+- [ ] acquireRelic() 注册 Modifier
+- [ ] 现有全部遗物相关测试通过，行为不变
+- [ ] 删除 RelicEffects.ts 中的硬编码条件分支
+
+**技术说明:**
+- 修改: `systems/relics/RelicEffects.ts`, `data/relics.ts`
+- 每个遗物的 Modifier 定义放在 `data/relics.ts` 中
+
+---
+
+## Epic 12: 技能池扩充
+
+**目标:** 将技能从 10 个扩充到 18 个，建立 5 大流派身份感（爆发/倍率/续航/连锁/被动），重设计现有联动技能以匹配"被动=键盘互动，主动=技能互动"的设计原则。
+
+**依赖:** Epic 11 (需要 Modifier 管道)
+
+**架构参考:** `data/skills.ts`, `systems/modifiers/`
+
+**设计参考:** `docs/brainstorming-skills-relics-refactor-2026-02-20.md` 方向 B
+
+### Story 12.1: 爆发流与倍率流技能
+
+**描述:** 实现爆发流 4 技能（burst/lone/void/gamble）和倍率流 3 技能（amp/chain/overclock），通过 Modifier 注册。
+
+**验收标准:**
+- [ ] burst: base 层 +5 分（替代原 spark/burst/star 三级，统一为一个可升级技能）
+- [ ] lone: base 层 +8 分，条件 skills_triggered_this_word = 0
+- [ ] void: base 层 +12 分，减去本词其他触发数
+- [ ] gamble: base 层 random(0.5) 条件下 +15 分
+- [ ] amp: base 层 +0.2 倍率
+- [ ] chain: base 层 +0.1 倍率，条件：连续不同技能触发
+- [ ] overclock: enhance 层 ×1.5，条件：本词第 3+ 个技能触发
+- [ ] 所有技能有 Modifier 定义、数据条目、单元测试
+
+**技术说明:**
+- 修改: `data/skills.ts`, `core/types.ts`（新技能 ID）
+
+### Story 12.2: 续航流与连锁流技能
+
+**描述:** 实现续航流 4 技能（freeze/shield/pulse/sentinel）和连锁流 4 技能（echo/ripple/mirror/leech），重设计 echo/ripple/mirror 匹配新设计原则。
+
+**验收标准:**
+- [ ] freeze: base 层 +2 秒
+- [ ] shield: before 层拦截器，打错时消耗 1 次盾保护连击
+- [ ] pulse: 行为型，触发计数器每满 3 次 +1 秒
+- [ ] sentinel: after 层触发器，每完成一个词恢复 1 次盾
+- [ ] echo: after 层触发器，设置"下一个非 echo 技能触发两次"标记
+- [ ] ripple: after 层触发器，设置"下一个非 ripple 技能效果传递给再下一个"标记
+- [ ] mirror: **被动**技能，after 层，同行最左技能触发时→触发最右技能
+- [ ] leech: base 层 +N 分（N = 本词已触发技能数）
+- [ ] echo/ripple 标记系统有反循环保护
+- [ ] 所有技能有 Modifier 定义、数据条目、单元测试
+
+**技术说明:**
+- 修改: `data/skills.ts`, `systems/modifiers/BehaviorExecutor.ts`
+
+### Story 12.3: 被动流技能
+
+**描述:** 实现/重设计被动流 3 技能（core/aura/anchor），遵循"被动=键盘空间互动"原则。
+
+**验收标准:**
+- [ ] core: enhance 层，相邻技能每触发 3 次 → 本词倍率 +0.1
+- [ ] aura: enhance 层，相邻分数技能效果 ×1.5
+- [ ] anchor: enhance 层，同行所有技能 ×1.15
+- [ ] 被动技能不占触发次数（不算"本词触发数"）
+- [ ] 所有技能有 Modifier 定义、数据条目、单元测试
+
+**技术说明:**
+- 修改: `data/skills.ts`
+
+### Story 12.4: 技能 UI 与商店更新
+
+**描述:** 更新技能相关 UI：商店技能池扩大为 18 个、技能描述更新、流派标签显示。
+
+**验收标准:**
+- [ ] 商店技能选择从 10 扩展到 18 个
+- [ ] 技能描述文案更新（反映新效果）
+- [ ] 技能卡片显示流派标签（爆发/倍率/续航/连锁/被动）
+- [ ] 移除旧技能 ID（spark/star/surge/clock 等被替换的）
+- [ ] 所有 UI 测试通过
+
+**技术说明:**
+- 修改: `systems/shop.ts`, UI 组件
+
+---
+
+## Epic 13: 遗物系统重做
+
+**目标:** 用构筑催化剂和风险回报交易替换现有平淡的数值遗物，让遗物真正改变玩家打法而非只放大数字。
+
+**依赖:** Epic 11 (Modifier 管道), Epic 12 (新技能池)
+
+**架构参考:** `data/relics.ts`, `systems/relics/`
+
+**设计参考:** `docs/brainstorming-skills-relics-refactor-2026-02-20.md` 方向 C
+
+### Story 13.1: 构筑催化剂遗物
+
+**描述:** 实现 6 个构筑催化剂遗物，每个强化特定流派并推动 all-in 构筑决策。
+
+**验收标准:**
+- [ ] 虚空之心: global 层，每个空键位 +3 底分（极简/lone/void 流）
+- [ ] 连锁放大器: global 层，echo/ripple 互动效果额外触发一次（连锁流）
+- [ ] 铁壁: global 层，shield 容量 +2，sentinel 每词回盾 +1（续航流）
+- [ ] 被动大师: global 层，被动技能 enhance 层效果翻倍（被动流）
+- [ ] 键盘风暴: global 层，技能数 ≥12 时所有技能底分 +2（填满键盘流）
+- [ ] 赌徒信条: global 层，gamble 100% 成功（爆发/赌博流）
+- [ ] 所有遗物通过 Modifier 注册，有单元测试
+- [ ] 替换现有弱设计遗物
+
+**技术说明:**
+- 修改: `data/relics.ts`, `systems/relics/RelicTypes.ts`
+
+### Story 13.2: 风险回报遗物
+
+**描述:** 实现 5 个风险回报遗物，每个提供强大能力但附带代价。
+
+**验收标准:**
+- [ ] 玻璃大炮: global 层 ×2 分数 + before 层打错即失败
+- [ ] 时间窃贼: after 层每次技能触发 +0.3 秒 + 基础时间减半
+- [ ] 贪婪之手: global 层金币 ×1.5 + 商店价格 +50%
+- [ ] 沉默誓约: global 层无技能时裸打 ×5 + 无法装备技能
+- [ ] 末日倒计时: 每关 +30 秒 + 每过一关基础时间 -5 秒
+- [ ] 每个遗物注册增益+代价两个 Modifier
+- [ ] 所有遗物有单元测试
+- [ ] 商店中风险回报遗物有醒目的视觉区分
+
+**技术说明:**
+- 修改: `data/relics.ts`, `systems/relics/RelicTypes.ts`
+
+---
+
+## Epic 14: 字母升级与词语联动
+
+**目标:** 增加字母升级系统和词语条件扩展，让选词决策从"含不含技能字母"扩展到"这个词的特征适不适合我的构筑"。
+
+**依赖:** Epic 11 (Modifier 管道 + 条件系统)
+
+**架构参考:** `systems/modifiers/`, `data/words.ts`
+
+**设计参考:** `docs/brainstorming-skills-relics-refactor-2026-02-20.md` 方向 D + E
+
+### Story 14.1: 字母升级系统
+
+**描述:** 实现字母升级机制：每个字母可从 Lv0 升到 Lv3，升级后该字母出现在词中时提供额外底分。
+
+**验收标准:**
+- [ ] 玩家状态新增 letterLevels: Map<string, number>（默认 Lv0）
+- [ ] 字母升级 = base 层 Modifier，trigger=on_correct_keystroke，condition=key_is(letter)
+- [ ] Lv1=+1, Lv2=+2, Lv3=+3 底分（每次该字母出现在词中时）
+- [ ] upgradeLetter(key) 方法，最高 Lv3
+- [ ] 键盘可视化显示字母等级
+- [ ] 单元测试
+
+**技术说明:**
+- 修改: `core/types.ts`（PlayerState 新增 letterLevels）
+- 新增: 字母升级 Modifier 注册逻辑
+
+### Story 14.2: 字母升级商店与来源
+
+**描述:** 在商店中增加字母升级购买入口，并实现其他升级来源。
+
+**验收标准:**
+- [ ] 商店新增"字母升级"区域，显示当前等级和升级价格
+- [ ] 升级价格递增（Lv1=10, Lv2=20, Lv3=35 金币，待平衡）
+- [ ] 过关奖励：随机升级一个字母的选项
+- [ ] 字母升级遗物接口预留（如"所有元音+1 级"）
+- [ ] UI 测试
+
+**技术说明:**
+- 修改: `systems/shop.ts`, 商店 UI 组件
+
+### Story 14.3: 词语条件扩展
+
+**描述:** 扩展条件系统，加入运行时自动计算的词语特征条件，为技能和遗物提供更丰富的触发维度。
+
+**验收标准:**
+- [ ] word_has_double_letter: 词含重复字母（jazz, book, see）
+- [ ] word_all_unique_letters: 词无重复字母（words, flame）
+- [ ] word_vowel_ratio_gte(n): 元音占比 ≥ n%
+- [ ] skill_density_gte(n): 技能键命中率 ≥ n%
+- [ ] 所有条件为运行时计算，零数据维护
+- [ ] 单元测试覆盖所有新条件
+- [ ] 至少 1 个遗物/技能使用新条件作为示例
+
+**技术说明:**
+- 修改: `systems/modifiers/ConditionEvaluator.ts`
+
+---
+
+## Epic 15: 技能进化系统
+
+**目标:** 为核心技能加进化分支（每技能 2 条路线），增加构筑深度和重玩价值。
+
+**依赖:** Epic 12 (需要 18 技能基线)
+
+**架构参考:** `data/skills.ts`, `systems/modifiers/`
+
+**设计参考:** `docs/brainstorming-skills-relics-refactor-2026-02-20.md` 方向 B 二期
+
+### Story 15.1: 进化分支数据设计
+
+**描述:** 为核心技能设计进化分支，每个技能 2 条进化路线，进化后效果质变。
+
+**验收标准:**
+- [ ] 选取 6-8 个核心技能设计进化分支
+- [ ] 每个进化分支有独立名称、效果描述、Modifier 定义
+- [ ] 进化条件定义（技能等级达到阈值 + 消耗金币/资源）
+- [ ] 设计文档记录所有进化分支
+
+**技术说明:**
+- 修改: `data/skills.ts`（新增进化数据结构）
+- 修改: `core/types.ts`（SkillData 新增进化字段）
+
+### Story 15.2: 进化 UI 与选择机制
+
+**描述:** 实现技能进化的 UI 流程：达到条件后弹出进化选择，玩家二选一。
+
+**验收标准:**
+- [ ] 技能达到进化条件时提示
+- [ ] 进化选择 UI：展示两条路线的效果对比
+- [ ] 选择后技能外观和效果变化
+- [ ] 进化不可逆（单局内）
+- [ ] UI 和功能测试
+
+**技术说明:**
+- 新增: 进化选择 UI 组件
+- 修改: `systems/shop.ts`（进化入口）
+
+---
+
+## Epic 依赖图
+
+```
+Epic 1-8: 基础系统 (done)
+    ↓
+Epic 9: 数值平衡 (done)
+    ↓
+Epic 10: 内容扩展 (in-progress)
+    ↓
+Epic 11: 效果管道统一 ←── 所有后续 Epic 的技术基础
+    ↓
+Epic 12: 技能池扩充 ──┐
+    ↓                  ↓
+Epic 13: 遗物系统重做 ─┤
+                       ↓
+Epic 14: 字母升级与词语联动
+    ↓
+Epic 15: 技能进化系统
+```
+
+**实施阶段:**
+- 一期: Epic 11（效果管道）
+- 二期: Epic 12 + 13（技能扩充 + 遗物重做，可并行）
+- 三期: Epic 14（字母升级 + 词语联动）
+- 四期: Epic 15（技能进化）
+
+---
+
 ## 实现优先级
 
 | 优先级 | Epic | 理由 |
 |--------|------|------|
-| P0 | Epic 1 | 核心玩法基础 |
-| P0 | Epic 2 | 核心差异化机制 |
-| P0 | Epic 3 | 核心差异化机制 |
-| P1 | Epic 4 | 可玩原型必需 |
-| P1 | Epic 5 | 完整游戏循环 |
-| P2 | Epic 6 | 重玩价值 |
-| P2 | Epic 7 | 游戏感 |
-| P1 | Epic 9 | 核心体验打磨 |
+| P0 | Epic 1-3 | 核心系统基础 |
+| P1 | Epic 4-5 | 可玩原型 |
+| P2 | Epic 6-7 | 重玩价值 + 游戏感 |
 | P3 | Epic 8 | 发布必需 |
+| P1 | Epic 9 | 核心体验打磨 |
+| P1 | Epic 10 | 内容丰富度 |
+| P0 | Epic 11 | 技术基础（阻塞 12-15） |
+| P1 | Epic 12-13 | 核心构筑深度 |
+| P2 | Epic 14 | 系统深化 |
+| P3 | Epic 15 | 重玩价值扩展 |
 
 ---
 

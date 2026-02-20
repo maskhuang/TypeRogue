@@ -110,8 +110,45 @@ development_status:
   10-1-curated-word-dictionary: done
   epic-10-retrospective: optional
 
+  # Epic 11: 效果管道统一
+  epic-11: in-progress
+  11-1-modifier-interface-registry: done
+  11-2-three-layer-pipeline: done
+  11-3-condition-system: backlog
+  11-4-behavior-modifiers: backlog
+  11-5-skill-migration: backlog
+  11-6-relic-migration: backlog
+  epic-11-retrospective: optional
+
+  # Epic 12: 技能池扩充
+  epic-12: backlog
+  12-1-burst-multiplier-skills: backlog
+  12-2-sustain-chain-skills: backlog
+  12-3-passive-skills: backlog
+  12-4-skill-ui-shop-update: backlog
+  epic-12-retrospective: optional
+
+  # Epic 13: 遗物系统重做
+  epic-13: backlog
+  13-1-build-catalyst-relics: backlog
+  13-2-risk-reward-relics: backlog
+  epic-13-retrospective: optional
+
+  # Epic 14: 字母升级与词语联动
+  epic-14: backlog
+  14-1-letter-upgrade-system: backlog
+  14-2-letter-upgrade-shop: backlog
+  14-3-word-condition-extension: backlog
+  epic-14-retrospective: optional
+
+  # Epic 15: 技能进化系统
+  epic-15: backlog
+  15-1-evolution-branch-design: backlog
+  15-2-evolution-ui-selection: backlog
+  epic-15-retrospective: optional
+
 # Summary:
-# - Total Epics: 10
-# - Total Stories: 39
+# - Total Epics: 15
+# - Total Stories: 56
 # - Epics Completed: 9
 # - Stories Completed: 34
