@@ -127,6 +127,7 @@ export interface SynergyState {
   echoTrigger: Set<string>;
   shieldCount: number;
   perfectStreak: number;
+  wordSkillCount: number; // 当前词语触发的技能数量
 }
 
 export interface AdjacentSkill {

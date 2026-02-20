@@ -61,6 +61,9 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
   highlightBoundSkill(skillId);
   playSound('skill');
 
+  // 记录技能触发（用于孤狼和虚空计算）
+  synergy.wordSkillCount++;
+
   switch (base.type) {
     case 'score':
       state.wordScore += val * state.multiplier;
@@ -102,10 +105,15 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
       break;
 
     case 'lone': {
-      const loneScore = adjacent.length === 0 ? val * 2 : val;
-      state.wordScore += loneScore * state.multiplier;
-      if (adjacent.length === 0) {
-        showFeedback(`孤狼x2! +${Math.floor(loneScore * state.multiplier)}`, '#e74c3c');
+      // 孤狼：如果本词无其他技能触发，+分数
+      // wordSkillCount已经包含了自己，所以检查是否为1
+      const otherSkills = synergy.wordSkillCount - 1;
+      if (otherSkills === 0) {
+        const loneScore = val * state.multiplier;
+        state.wordScore += loneScore;
+        showFeedback(`孤狼! +${Math.floor(loneScore)}`, '#e74c3c');
+      } else {
+        showFeedback(`孤狼失效...`, '#666');
       }
       break;
     }
@@ -124,9 +132,15 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
       break;
 
     case 'void': {
-      const voidScore = val + emptyCount * 3;
+      // 虚空：+分数，本词每有一个其他技能触发-1分
+      const otherSkills = synergy.wordSkillCount - 1;
+      const voidScore = Math.max(0, val - otherSkills);
       state.wordScore += voidScore * state.multiplier;
-      showFeedback(`虚空+${Math.floor(voidScore * state.multiplier)}`, '#2c3e50');
+      if (otherSkills > 0) {
+        showFeedback(`虚空+${Math.floor(voidScore * state.multiplier)} (-${otherSkills})`, '#2c3e50');
+      } else {
+        showFeedback(`虚空+${Math.floor(voidScore * state.multiplier)}`, '#2c3e50');
+      }
       break;
     }
 

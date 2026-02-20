@@ -146,19 +146,19 @@ export const SKILLS: Record<string, SkillDefinition> = {
     name: '孤狼',
     icon: '🐺',
     type: 'lone',
-    category: 'passive',
-    base: 20,
-    grow: 5,
-    desc: '[被动] 若无相邻技能，全局分数+20%'
+    category: 'active',
+    base: 8,
+    grow: 3,
+    desc: '若本词无其他技能触发，+8分'
   },
   void: {
     name: '虚空',
     icon: '🌑',
     type: 'void',
-    category: 'passive',
-    base: 3,
-    grow: 1,
-    desc: '[被动] 每个相邻空位使全局分数+3%'
+    category: 'active',
+    base: 12,
+    grow: 4,
+    desc: '+12分，本词每有一个其他技能触发-1分'
   },
 };
 

@@ -56,6 +56,7 @@ export function createSynergyState(): SynergyState {
     echoTrigger: new Set(),
     shieldCount: 0,
     perfectStreak: 0,
+    wordSkillCount: 0,
   };
 }
 
