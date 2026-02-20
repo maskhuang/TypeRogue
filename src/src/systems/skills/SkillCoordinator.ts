@@ -180,7 +180,7 @@ class SkillCoordinator {
 
     // 4. 处理主动技能的技能链效果
     let activeResult: ActiveSkillResult | null = null
-    if (skill.type === 'echo' || skill.type === 'ripple' || skill.type === 'combo') {
+    if (skill.type === 'echo' || skill.type === 'ripple') {
       activeResult = activeSkillSystem.processSkillTrigger(skillId, key, adjacentSkillKeys)
 
       // 设置技能链状态

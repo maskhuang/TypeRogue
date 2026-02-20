@@ -107,7 +107,7 @@ source_documents:
 **验收标准:**
 - [ ] SkillData 接口定义 (id, name, type, icon, base, grow)
 - [ ] 初始 10 个技能数据
-- [ ] 技能类型枚举: score, multiply, time, combo, protect, core, aura, lone, echo, void, ripple
+- [ ] 技能类型枚举: score, multiply, time, protect, core, aura, lone, echo, void, ripple
 
 **技术说明:**
 - 位置: `renderer/data/skills.ts`
@@ -540,6 +540,122 @@ Epic 8: Electron 与 Steam
 
 ---
 
+## Epic 9: 数值平衡与技能迭代
+
+**目标:** 统一倍率驱动的反馈体系，调整技能数值与遗物/商店经济，使构筑选择更有意义。
+
+**依赖:** Epic 1-7 (需要完整系统)
+
+**架构参考:** `data/skills.ts`, `data/relics.ts`, `systems/skills.ts`, `systems/battle.ts`, `systems/shop.ts`
+
+### Story 9.1: 移除 combo 技能类型，统一为 multiply
+
+**描述:** combo 技能（通过加连击间接提升倍率）与 multiply 技能（直接加倍率）本质相同，去掉 combo 技能类型。倍率提升统一由 multiply 技能直接完成。连击计数器保留为纯打字指标（连续正确击键），不再有技能直接修改连击数。
+
+**设计原则:**
+- 倍率来源仅两条：打字连击（自然积累）+ multiply 技能（主动触发）
+- 连击是玩家打字能力的体现，不应被技能"注水"
+- `chain`（连锁）需重新设计为其他类型或移除
+
+**验收标准:**
+- [ ] 从 SkillType / ActiveSkillType 中移除 `combo`
+- [ ] 删除 `systems/skills.ts` 中 `case 'combo'` 分支
+- [ ] `chain`（连锁）重新设计：改为 multiply 类型或替换为全新技能
+- [ ] 审查 `amp`（增幅）倍率增量（当前 +0.2/次）
+- [ ] 审查 `surge`（激涌）倍率增量（当前 +0.3/次）
+- [ ] 确保 multiply 技能之间形成合理的价格-效果梯度（amp < surge）
+- [ ] 所有相关测试通过
+
+**技术说明:**
+- 涉及: `core/types.ts`, `data/skills.ts`, `systems/skills.ts`
+
+### Story 9.2: 反馈体系改为倍率驱动
+
+**描述:** 将音效、粒子、火焰等反馈效果从基于连击数改为基于倍率，使反馈与实际分数产出一致。
+
+**验收标准:**
+- [ ] 打字音高基于 `state.multiplier` 而非 `state.combo`（1.0x→500Hz, 3.0x→800Hz）
+- [ ] 粒子火焰阈值从 `combo >= 10` 改为 `multiplier >= 2.0`
+- [ ] `ParticleManager.playComboFlame` / `getFlameIntensity` 参数改为 multiplier
+- [ ] `ComboCounter.setCombo` 接收 multiplier 参数
+- [ ] `BattleHUD` 传递 multiplier 到 ComboCounter
+- [ ] `ParticleController.onComboUpdate` 事件数据包含 multiplier
+- [ ] 所有相关测试通过
+
+**技术说明:**
+- 涉及: `effects/sound.ts`, `ui/effects/ParticleController.ts`, `ui/effects/ParticleManager.ts`, `ui/effects/ParticlePresets.ts`, `ui/hud/ComboCounter.ts`, `ui/hud/BattleHUD.ts`
+
+### Story 9.3: 遗物条件与经济重平衡
+
+**描述:** 调整遗物触发条件使其与倍率驱动体系一致；重做商店金币奖励计算，引入 overkill 和剩余时间奖励。
+
+**验收标准:**
+- [ ] 狂战士面具：条件从 `combo > 20` 改为 `multiplier > 3.0`，效果从 +30% 改为 +50%
+- [ ] `RelicConditionType` 新增 `multiplier_threshold`
+- [ ] `RelicEffects.BattleContext` 新增 `multiplier` 字段
+- [ ] 商店金币奖励改为：基础 20 + overkill 分数 + 剩余时间秒数
+- [ ] 藏宝图遗物：overkill 奖励翻倍（而非总超额 /10 翻倍）
+- [ ] 所有相关测试通过
+
+**技术说明:**
+- 涉及: `data/relics.ts`, `systems/relics/RelicTypes.ts`, `systems/relics/RelicEffects.ts`, `systems/shop.ts`
+
+### Story 9.4: 关卡难度曲线调优
+
+**描述:** 审查并调整 8 关的目标分数、时间限制和难度递增，确保玩家在合理构筑下能稳定通关前 6 关，后 2 关需要优秀构筑。
+
+**验收标准:**
+- [ ] 审查 `calculateTargetScore` 公式，确保各关目标分数合理
+- [ ] 审查时间限制递减曲线
+- [ ] 确保 Act 1 (关 1-3) 对新手友好
+- [ ] 确保 Act 3 (关 7-8) 需要策略性构筑
+- [ ] 记录调优后的数值表到设计文档
+
+**技术说明:**
+- 涉及: `core/state.ts`（`calculateTargetScore`）, `systems/stage/StageManager.ts`
+
+### Story 9.5: 技能数值审查与平衡
+
+**描述:** 全面审查所有技能的 base/grow 数值，确保各技能在不同阶段（早期/中期/后期）都有合理的价值定位，避免出现绝对优势/劣势技能。
+
+**验收标准:**
+- [ ] 制作技能 DPS/价值对比表（考虑触发频率、倍率影响）
+- [ ] 确保 score 类（spark/burst/star）形成合理的价格-收益梯度
+- [ ] 确保 multiply 类（amp/surge/chain 或替代品）形成合理的倍率梯度
+- [ ] 确保 time 类（clock/freeze）延时收益与分数产出匹配
+- [ ] 确保联动类（core/aura/echo/ripple）在正确的键位密度下有价值
+- [ ] 确保反协同类（lone/void）在低技能构筑时有竞争力
+- [ ] 记录最终数值到设计文档
+
+**技术说明:**
+- 涉及: `data/skills.ts`, 可能需要调整 `systems/skills.ts` 中的计算公式
+
+---
+
+## Epic 依赖图
+
+```
+Epic 1: 核心打字系统
+    ↓
+Epic 2: 被动技能系统
+    ↓
+Epic 3: 主动技能与效果队列
+    ↓
+Epic 4: 战斗场景 ←──────┐
+    ↓                   │
+Epic 5: Roguelike 循环  │
+    ↓                   │
+Epic 6: Meta 系统       │
+    ↓                   │
+Epic 7: 音效与视觉 ─────┘
+    ↓
+Epic 8: Electron 与 Steam
+
+Epic 9: 数值平衡与技能迭代 ←── Epic 1-7
+```
+
+---
+
 ## 实现优先级
 
 | 优先级 | Epic | 理由 |
@@ -551,8 +667,9 @@ Epic 8: Electron 与 Steam
 | P1 | Epic 5 | 完整游戏循环 |
 | P2 | Epic 6 | 重玩价值 |
 | P2 | Epic 7 | 游戏感 |
+| P1 | Epic 9 | 核心体验打磨 |
 | P3 | Epic 8 | 发布必需 |
 
 ---
 
-_Generated: 2026-02-16_
+_Updated: 2026-02-20_

@@ -83,16 +83,17 @@ export const SKILLS: Record<string, SkillDefinition> = {
     desc: '触发时+2秒'
   },
 
-  // === 连击技能（主动） ===
   chain: {
     name: '连锁',
     icon: '🔗',
-    type: 'combo',
+    type: 'multiply',
     category: 'active',
-    base: 5,
-    grow: 2,
-    desc: '触发时连击+5'
+    base: 10,
+    grow: 3,
+    desc: '触发时倍率+0.1'
   },
+
+  // === 护盾技能（主动） ===
   shield: {
     name: '护盾',
     icon: '🛡️',

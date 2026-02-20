@@ -80,12 +80,6 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
       showFeedback(`+${val}秒`, '#87ceeb');
       break;
 
-    case 'combo':
-      state.combo += val;
-      state.multiplier = state.player.baseMultiplier + state.combo * state.player.comboBonus;
-      showFeedback(`连击+${val}`, '#ff6b6b');
-      break;
-
     case 'protect':
       synergy.shieldCount += val;
       showFeedback(`护盾+${val}`, '#87ceeb');

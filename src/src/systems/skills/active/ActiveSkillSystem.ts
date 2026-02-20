@@ -142,18 +142,6 @@ class ActiveSkillSystem {
         })
         break
 
-      case 'combo':
-        // 连击类技能：为下一次触发入队加成效果
-        effectQueue.enqueue({
-          type: 'chain',
-          value: baseValue,
-          sourceSkillId: skillId,
-          sourceKey: key
-        })
-        queuedEffect = true
-        description = `连锁 +${baseValue}`
-        break
-
       default:
         // 其他技能不产生队列效果
         break

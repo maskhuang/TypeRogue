@@ -58,11 +58,11 @@ export type SkillCategory = 'active' | 'passive';
 
 /** 技能类型 */
 export type SkillType =
-  | 'score' | 'multiply' | 'time' | 'combo' | 'protect'
+  | 'score' | 'multiply' | 'time' | 'protect'
   | 'core' | 'aura' | 'lone' | 'echo' | 'void' | 'ripple';
 
 /** 主动技能类型（需按键触发） */
-export type ActiveSkillType = 'score' | 'multiply' | 'time' | 'combo' | 'protect' | 'echo' | 'ripple';
+export type ActiveSkillType = 'score' | 'multiply' | 'time' | 'protect' | 'echo' | 'ripple';
 
 /** 被动技能类型（持续生效，基于键盘布局） */
 export type PassiveSkillType = 'core' | 'aura' | 'lone' | 'void';
