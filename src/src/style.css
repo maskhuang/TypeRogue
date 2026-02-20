@@ -120,14 +120,7 @@ body {
 }
 
 #multiplier-section {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 10px;
-    padding: 8px 20px;
-    background: rgba(255,230,109,0.1);
-    border: 1px solid rgba(255,230,109,0.3);
-    border-radius: 20px;
+    display: none; /* 已移至结算面板 */
 }
 
 .mult-label {
@@ -901,32 +894,35 @@ body {
     50% { box-shadow: inset 0 0 180px rgba(255,107,107,0.4), 0 0 60px rgba(255,107,107,0.4); }
 }
 
-#multiplier-section {
+/* Settlement panel glow based on multiplier */
+#score-settlement .settlement-panel {
     transition: all 0.2s;
 }
 
-#game-container.mid-mult #multiplier-section {
+#game-container.mid-mult #score-settlement .settlement-panel {
     border-color: #ffe66d;
-    background: rgba(255,230,109,0.2);
-    box-shadow: 0 0 20px rgba(255,230,109,0.5), 0 0 40px rgba(255,230,109,0.3);
-    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.8), 0 0 30px rgba(255,230,109,0.5);
 }
 
-#game-container.high-mult #multiplier-section {
+#game-container.mid-mult #score-settlement .settlement-mult-box .settlement-value {
+    color: #ffe66d;
+    text-shadow: 0 0 20px rgba(255,230,109,0.7);
+}
+
+#game-container.high-mult #score-settlement .settlement-panel {
     border-color: #ff6b6b;
-    background: rgba(255,107,107,0.25);
-    box-shadow: 0 0 25px rgba(255,107,107,0.7), 0 0 50px rgba(255,107,107,0.4);
-    animation: multSectionPulse 0.3s ease-in-out infinite;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.8), 0 0 40px rgba(255,107,107,0.6);
+    animation: settlementPanelPulse 0.3s ease-in-out infinite;
 }
 
-#game-container.high-mult #multiplier-display {
+#game-container.high-mult #score-settlement .settlement-mult-box .settlement-value {
     color: #ff6b6b;
-    text-shadow: 0 0 10px rgba(255,107,107,0.8);
+    text-shadow: 0 0 20px rgba(255,107,107,0.8);
 }
 
-@keyframes multSectionPulse {
-    0%, 100% { transform: scale(1.05); }
-    50% { transform: scale(1.12); }
+@keyframes settlementPanelPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
 }
 
 .skill-trigger-popup {
@@ -1130,7 +1126,7 @@ body {
 
 #score-settlement {
     position: absolute;
-    top: 120px;
+    top: 200px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
@@ -1216,33 +1212,175 @@ body {
     text-shadow: 0 0 25px rgba(255, 230, 109, 0.6);
 }
 
-/* Settlement Animations */
-@keyframes settlementChipsIn {
+/* Settlement Live Mode - 实时显示 */
+#score-settlement.settlement-live .settlement-chips,
+#score-settlement.settlement-live .settlement-mult,
+#score-settlement.settlement-live .settlement-result {
+    opacity: 1;
+}
+
+#score-settlement.settlement-live .settlement-panel {
+    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+}
+
+/* Settlement Complete Animation - 词语完成时的动画 */
+@keyframes settlementBurst {
     0% {
-        opacity: 0;
-        transform: scale(0.5) translateY(20px);
+        transform: scale(1);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.8), 0 0 20px rgba(78,205,196,0.15);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 8px 40px rgba(0,0,0,0.8), 0 0 40px rgba(255,230,109,0.5);
     }
     100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
+        transform: scale(1);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.8), 0 0 20px rgba(78,205,196,0.15);
     }
 }
 
-@keyframes settlementMultIn {
+@keyframes settlementScoreBurst {
     0% {
-        opacity: 0;
-        transform: scale(0.5) translateX(-20px);
+        transform: scale(1);
+        color: #ffe66d;
+    }
+    30% {
+        transform: scale(1.3);
+        color: #fff;
     }
     100% {
-        opacity: 1;
-        transform: scale(1) translateX(0);
+        transform: scale(1);
+        color: #ffe66d;
     }
 }
 
-@keyframes settlementResultIn {
+#score-settlement.settlement-complete .settlement-panel {
+    animation: settlementBurst 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#score-settlement.settlement-complete .settlement-final {
+    animation: settlementScoreBurst 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#score-settlement.settlement-complete .settlement-chips,
+#score-settlement.settlement-complete .settlement-mult,
+#score-settlement.settlement-complete .settlement-result {
+    opacity: 1;
+}
+
+/* Initially visible in live mode */
+.settlement-panel .settlement-chips,
+.settlement-panel .settlement-mult,
+.settlement-panel .settlement-result {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+/* ============================================ */
+/* GOLD REWARD ANIMATION                        */
+/* ============================================ */
+
+#gold-reward {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    pointer-events: none;
+}
+
+#gold-reward.gold-reward-hidden {
+    display: none;
+}
+
+.gold-reward-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 30px 50px;
+    background: linear-gradient(145deg, #1a1a2e, #0d0d15);
+    border: 3px solid #ffe66d;
+    border-radius: 16px;
+    box-shadow: 0 0 60px rgba(255,230,109,0.4), 0 10px 40px rgba(0,0,0,0.8);
+}
+
+.gold-reward-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #4ecdc4;
+    text-shadow: 0 0 20px rgba(78,205,196,0.6);
+    letter-spacing: 4px;
+}
+
+.gold-reward-row {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 40px;
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+.gold-reward-label {
+    font-size: 18px;
+    color: #888;
+}
+
+.gold-reward-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffe66d;
+}
+
+.gold-overkill {
+    color: #ff6b6b;
+    text-shadow: 0 0 10px rgba(255,107,107,0.5);
+}
+
+.gold-time {
+    color: #4ecdc4;
+    text-shadow: 0 0 10px rgba(78,205,196,0.5);
+}
+
+.gold-reward-total {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding-top: 16px;
+    border-top: 2px solid rgba(255,230,109,0.3);
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+.gold-icon {
+    font-size: 36px;
+}
+
+.gold-total-value {
+    font-size: 42px;
+    font-weight: bold;
+    color: #ffe66d;
+    text-shadow: 0 0 30px rgba(255,230,109,0.7);
+}
+
+/* Gold reward animations */
+@keyframes goldRowIn {
     0% {
         opacity: 0;
-        transform: scale(0.3);
+        transform: translateX(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes goldTotalIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
     }
     50% {
         transform: scale(1.2);
@@ -1253,52 +1391,48 @@ body {
     }
 }
 
-@keyframes settlementPulse {
-    0%, 100% {
-        transform: scale(1);
-        text-shadow: 0 0 30px rgba(255, 230, 109, 0.6);
+@keyframes goldPanelIn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
     }
-    50% {
-        transform: scale(1.05);
-        text-shadow: 0 0 50px rgba(255, 230, 109, 0.9);
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
     }
 }
 
-@keyframes settlementFadeOut {
+@keyframes goldPanelOut {
     0% {
         opacity: 1;
-        transform: translateX(-50%) scale(1);
+        transform: translate(-50%, -50%) scale(1);
     }
     100% {
         opacity: 0;
-        transform: translateX(-50%) scale(0.9) translateY(-20px);
+        transform: translate(-50%, -50%) scale(0.9) translateY(-30px);
     }
 }
 
-/* Phase animations */
-.settlement-phase-chips .settlement-chips {
-    animation: settlementChipsIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+#gold-reward.gold-reward-show {
+    animation: goldPanelIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.settlement-phase-mult .settlement-mult {
-    animation: settlementMultIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(2) {
+    animation: goldRowIn 0.3s ease-out 0.2s forwards;
 }
 
-.settlement-phase-result .settlement-result {
-    animation: settlementResultIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(3) {
+    animation: goldRowIn 0.3s ease-out 0.4s forwards;
 }
 
-.settlement-phase-result .settlement-final {
-    animation: settlementPulse 0.6s ease-in-out 0.4s infinite;
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(4) {
+    animation: goldRowIn 0.3s ease-out 0.6s forwards;
 }
 
-.settlement-fade-out {
-    animation: settlementFadeOut 0.3s ease-out forwards;
+#gold-reward.gold-reward-show .gold-reward-total {
+    animation: goldTotalIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s forwards;
 }
 
-/* Initially hide parts for animation */
-.settlement-panel .settlement-chips,
-.settlement-panel .settlement-mult,
-.settlement-panel .settlement-result {
-    opacity: 0;
+#gold-reward.gold-reward-hide {
+    animation: goldPanelOut 0.3s ease-out forwards;
 }

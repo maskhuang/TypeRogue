@@ -19,7 +19,7 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 
 // === 分数结算 ===
 let wordBaseScore = 0; // 词语基础分（不含倍率）
-let settlementTimeout: ReturnType<typeof setTimeout> | null = null;
+let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
 
 // === 屏幕管理 ===
 export function showScreen(name: 'battle' | 'shop' | 'gameover'): void {
@@ -55,7 +55,9 @@ function setWord(): void {
   wordBaseScore = 0; // 重置基础分
   state.wordPerfect = true;
   synergy.echoTrigger.clear();
+  synergy.wordSkillCount = 0; // 重置技能触发计数
   renderWord();
+  updateSettlementLive(); // 初始化结算面板
 }
 
 function renderWord(): void {
@@ -149,6 +151,9 @@ function playerCorrect(k: string): void {
 
   state.player.index++;
 
+  // 实时更新结算面板
+  updateSettlementLive();
+
   // 完成词语
   if (state.player.index >= state.player.word.length) {
     completeWord();
@@ -207,17 +212,18 @@ function completeWord(): void {
   let mult = state.multiplier;
   let bonusMult = 1;
 
-  // 狂战士面具：连击>20时分数+50%
-  if (hasRelic('berserker_mask') && state.combo > 20) {
+  // 狂战士面具：倍率>3.0时分数+50%
+  if (hasRelic('berserker_mask') && state.multiplier > 3.0) {
     bonusMult = 1.5;
   }
 
   const finalMult = mult * bonusMult;
   const finalWordScore = Math.floor(baseChips * finalMult + state.player.wordBonus);
 
-  // 显示 Balatro 风格结算
-  showSettlement(baseChips, finalMult, finalWordScore);
+  // 显示 Balatro 风格完成动画
+  showSettlementComplete(baseChips, finalMult, finalWordScore);
 
+  const prevScore = state.score;
   state.score += finalWordScore;
   bumpScore();
 
@@ -227,11 +233,6 @@ function completeWord(): void {
     score: finalWordScore,
     perfect: state.wordPerfect
   });
-
-  // 时间水晶遗物：完成词语+0.5秒
-  if (hasRelic('time_crystal')) {
-    state.time = Math.min(state.time + 0.5, state.timeMax + state.player.timeBonus + 5);
-  }
 
   // 词语完成 - 所有字母一起弹跳
   Array.from(el.word.children).forEach((letter, i) => {
@@ -247,15 +248,63 @@ function completeWord(): void {
   // 重置词语基础分
   wordBaseScore = 0;
 
+  // 检查是否达到目标分数 - 提前结束关卡
+  if (state.score >= state.targetScore && prevScore < state.targetScore) {
+    // 计算 overkill：最后一击超出目标的分数
+    const needed = state.targetScore - prevScore;
+    state.overkill = finalWordScore - needed;
+
+    // 显示金币奖励动画，然后结束关卡
+    setTimeout(() => {
+      if (state.phase === 'battle') {
+        showGoldReward(() => endLevel());
+      }
+    }, 600);
+    return;
+  }
+
+  // 时间水晶遗物：完成词语+0.5秒（只有未通关时生效）
+  if (hasRelic('time_crystal')) {
+    state.time = Math.min(state.time + 0.5, state.timeMax + state.player.timeBonus + 5);
+  }
+
   setTimeout(() => {
     if (state.phase === 'battle') setWord();
   }, 200);
 }
 
 // === Balatro 风格分数结算展示 ===
-function showSettlement(chips: number, mult: number, final: number): void {
+
+/** 实时更新结算面板（每打一个字调用） */
+function updateSettlementLive(): void {
   const settlement = document.getElementById('score-settlement');
   if (!settlement) return;
+
+  const chipsEl = document.getElementById('settlement-chips');
+  const multEl = document.getElementById('settlement-mult');
+  const finalEl = document.getElementById('settlement-final');
+
+  const chips = Math.floor(wordBaseScore);
+  const mult = state.multiplier;
+  const final = Math.floor(chips * mult);
+
+  if (chipsEl) chipsEl.textContent = chips.toLocaleString();
+  if (multEl) multEl.textContent = mult.toFixed(1);
+  if (finalEl) finalEl.textContent = final.toLocaleString();
+
+  // 确保面板可见
+  settlement.classList.remove('settlement-hidden');
+  settlement.classList.add('settlement-live');
+}
+
+/** 词语完成时播放结算动画 */
+function showSettlementComplete(chips: number, mult: number, final: number): void {
+  const settlement = document.getElementById('score-settlement');
+  if (!settlement) return;
+
+  // 清除所有旧的定时器
+  settlementTimeouts.forEach(t => clearTimeout(t));
+  settlementTimeouts = [];
 
   const chipsEl = document.getElementById('settlement-chips');
   const multEl = document.getElementById('settlement-mult');
@@ -265,35 +314,69 @@ function showSettlement(chips: number, mult: number, final: number): void {
   if (multEl) multEl.textContent = mult.toFixed(1);
   if (finalEl) finalEl.textContent = final.toLocaleString();
 
-  // 清除旧的动画类
-  settlement.classList.remove('settlement-hidden', 'settlement-fade-out');
-  settlement.classList.remove('settlement-phase-chips', 'settlement-phase-mult', 'settlement-phase-result');
+  // 播放完成动画
+  settlement.classList.remove('settlement-live');
+  settlement.classList.add('settlement-complete');
 
-  // 显示并开始动画序列
-  settlement.classList.add('settlement-phase-chips');
+  // 完成动画后恢复到实时模式
+  settlementTimeouts.push(setTimeout(() => {
+    settlement.classList.remove('settlement-complete');
+    settlement.classList.add('settlement-live');
+  }, 400));
+}
 
+/** 显示金币奖励动画 */
+function showGoldReward(onComplete: () => void): void {
+  const goldReward = document.getElementById('gold-reward');
+  if (!goldReward) {
+    onComplete();
+    return;
+  }
+
+  // 计算奖励
+  const baseGold = 20;
+  let overkill = Math.max(0, state.overkill);
+  if (hasRelic('treasure_map')) {
+    overkill *= 2;
+  }
+  const timeBonus = Math.floor(state.time); // 剩余秒数作为奖励
+  const totalGold = baseGold + overkill + timeBonus;
+
+  // 存储时间奖励供 shop 使用
+  state.timeReward = timeBonus;
+
+  // 设置数值
+  const goldBaseEl = document.getElementById('gold-base');
+  const goldOverkillEl = document.getElementById('gold-overkill');
+  const goldTimeEl = document.getElementById('gold-time');
+  const goldTotalEl = document.getElementById('gold-total');
+
+  if (goldBaseEl) goldBaseEl.textContent = `+${baseGold}`;
+  if (goldOverkillEl) goldOverkillEl.textContent = `+${overkill}`;
+  if (goldTimeEl) goldTimeEl.textContent = `+${timeBonus}`;
+  if (goldTotalEl) goldTotalEl.textContent = `+${totalGold}`;
+
+  // 隐藏结算面板
+  hideSettlement();
+
+  // 显示金币奖励
+  goldReward.classList.remove('gold-reward-hidden', 'gold-reward-hide');
+  goldReward.classList.add('gold-reward-show');
+
+  // 播放音效
+  playSound('levelup');
+
+  // 动画完成后淡出并回调
   setTimeout(() => {
-    settlement.classList.add('settlement-phase-mult');
-  }, 200);
+    goldReward.classList.remove('gold-reward-show');
+    goldReward.classList.add('gold-reward-hide');
 
-  setTimeout(() => {
-    settlement.classList.add('settlement-phase-result');
-  }, 400);
-
-  // 清除旧的定时器
-  if (settlementTimeout) clearTimeout(settlementTimeout);
-
-  // 1.2秒后开始淡出
-  settlementTimeout = setTimeout(() => {
-    settlement.classList.add('settlement-fade-out');
-
-    // 淡出完成后隐藏
     setTimeout(() => {
-      settlement.classList.add('settlement-hidden');
-      settlement.classList.remove('settlement-fade-out');
-      settlement.classList.remove('settlement-phase-chips', 'settlement-phase-mult', 'settlement-phase-result');
+      goldReward.classList.add('gold-reward-hidden');
+      goldReward.classList.remove('gold-reward-hide');
+      onComplete();
     }, 300);
-  }, 1200);
+  }, 2000);
 }
 
 // === 计时器 ===
@@ -339,12 +422,28 @@ function updateTimerDisplay(): void {
 // === 关卡系统 ===
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
+  hideSettlement();
+
+  // 清除倍率光晕效果
+  const el = getElements();
+  el.container.classList.remove('mid-mult', 'high-mult');
 
   if (state.score >= state.targetScore) {
     openShop(true);
   } else {
     gameOver();
   }
+}
+
+/** 隐藏结算面板 */
+function hideSettlement(): void {
+  const settlement = document.getElementById('score-settlement');
+  if (settlement) {
+    settlement.classList.remove('settlement-live', 'settlement-complete');
+    settlement.classList.add('settlement-hidden');
+  }
+  settlementTimeouts.forEach(t => clearTimeout(t));
+  settlementTimeouts = [];
 }
 
 export function startLevel(): void {
@@ -354,6 +453,8 @@ export function startLevel(): void {
   state.maxCombo = 0;
   state.multiplier = state.player.baseMultiplier;
   state.wordScore = 0;
+  state.overkill = 0;
+  state.timeReward = 0;
   state.targetScore = calculateTargetScore(state.level);
 
   synergy.shieldCount = 0;
