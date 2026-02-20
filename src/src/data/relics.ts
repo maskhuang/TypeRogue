@@ -201,3 +201,10 @@ export function getAllRelicIds(): string[] {
 export function getAllRelics(): RelicData[] {
   return Object.values(RELICS)
 }
+
+/**
+ * 检查遗物是否存在
+ */
+export function hasRelic(relicId: string): boolean {
+  return relicId in RELICS
+}
