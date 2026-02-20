@@ -179,10 +179,9 @@ function renderRelicShop(): void {
 
     hasItems = true;
     const rarityClass = relic.rarity || 'common';
-    renderShopCard(relic.icon, relic.name, relic.desc, relic.cost, relic.rarity, rarityClass, () => {
-      if (buyItem(relic.cost)) {
+    renderShopCard(relic.icon, relic.name, relic.description, relic.basePrice, relic.rarity, rarityClass, () => {
+      if (buyItem(relic.basePrice)) {
         state.player.relics.add(relicId);
-        if (relic.onAcquire) relic.onAcquire();
         showFeedback(`获得 ${relic.name}!`, '#ffe66d');
         renderShopContent();
         renderRelicDisplay();

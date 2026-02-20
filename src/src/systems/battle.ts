@@ -404,7 +404,7 @@ export function renderRelicDisplay(): void {
       const span = document.createElement('span');
       span.className = 'relic-icon';
       span.textContent = relic.icon;
-      span.title = `${relic.name}: ${relic.desc}`;
+      span.title = `${relic.name}: ${relic.description}`;
       el.playerRelics.appendChild(span);
     }
   });
@@ -417,7 +417,7 @@ export function renderRelicDisplay(): void {
       const span = document.createElement('span');
       span.className = 'relic-icon';
       span.textContent = relic.icon;
-      span.title = `${relic.name}: ${relic.desc}`;
+      span.title = `${relic.name}: ${relic.description}`;
       el.shopRelicIcons.appendChild(span);
     }
   });
