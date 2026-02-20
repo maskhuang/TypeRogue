@@ -97,16 +97,21 @@ development_status:
   epic-8-retrospective: optional
 
   # Epic 9: 数值平衡与技能迭代
-  epic-9: in-progress
+  epic-9: done
   9-1-remove-combo-skill-type: done
   9-2-feedback-multiplier-driven: done  # skipped: 反馈保持基于连击数
   9-3-relic-economy-rebalance: done
-  9-4-stage-difficulty-tuning: backlog
-  9-5-skill-value-review: backlog
+  9-4-stage-difficulty-tuning: done  # skipped
+  9-5-skill-value-review: done
   epic-9-retrospective: optional
 
+  # Epic 10: 内容扩展与词库系统
+  epic-10: in-progress
+  10-1-curated-word-dictionary: done
+  epic-10-retrospective: optional
+
 # Summary:
-# - Total Epics: 9
-# - Total Stories: 38
-# - Epics Completed: 8
-# - Stories Completed: 33
+# - Total Epics: 10
+# - Total Stories: 39
+# - Epics Completed: 9
+# - Stories Completed: 34
