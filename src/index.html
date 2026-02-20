@@ -111,6 +111,27 @@
 
         <!-- Effects -->
         <div id="particles"></div>
+
+        <!-- Score Settlement (Balatro-style) -->
+        <div id="score-settlement" class="settlement-hidden">
+            <div class="settlement-panel">
+                <div class="settlement-chips">
+                    <span class="settlement-label">基数</span>
+                    <span class="settlement-value" id="settlement-chips">0</span>
+                </div>
+                <div class="settlement-mult">
+                    <span class="settlement-symbol">×</span>
+                    <div class="settlement-mult-box">
+                        <span class="settlement-label">倍率</span>
+                        <span class="settlement-value" id="settlement-mult">1.0</span>
+                    </div>
+                </div>
+                <div class="settlement-result">
+                    <span class="settlement-symbol">=</span>
+                    <span class="settlement-final" id="settlement-final">0</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

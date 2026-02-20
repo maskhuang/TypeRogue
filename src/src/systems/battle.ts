@@ -17,6 +17,10 @@ import { openShop } from './shop';
 // === 计时器 ===
 let timerInterval: ReturnType<typeof setInterval> | null = null;
 
+// === 分数结算 ===
+let wordBaseScore = 0; // 词语基础分（不含倍率）
+let settlementTimeout: ReturnType<typeof setTimeout> | null = null;
+
 // === 屏幕管理 ===
 export function showScreen(name: 'battle' | 'shop' | 'gameover'): void {
   const el = getElements();
@@ -48,6 +52,7 @@ function setWord(): void {
   state.player.word = pickWord();
   state.player.index = 0;
   state.wordScore = 0;
+  wordBaseScore = 0; // 重置基础分
   state.wordPerfect = true;
   synergy.echoTrigger.clear();
   renderWord();
@@ -126,7 +131,9 @@ function playerCorrect(k: string): void {
   state.multiplier = mult;
 
   // 字母基础分 + 字母加成
-  const letterScore = (1 + state.player.letterBonus) * state.multiplier;
+  const letterBase = 1 + state.player.letterBonus;
+  const letterScore = letterBase * state.multiplier;
+  wordBaseScore += letterBase; // 累计基础分（用于结算展示）
   state.wordScore += letterScore;
 
   // 触发技能
@@ -195,18 +202,23 @@ function playerWrong(): void {
 function completeWord(): void {
   const el = getElements();
 
-  // 词语完成奖励
-  let wordBonus = state.player.wordBonus;
-  let finalWordScore = state.wordScore + wordBonus;
+  // 计算基础分和倍率
+  const baseChips = Math.floor(wordBaseScore);
+  let mult = state.multiplier;
+  let bonusMult = 1;
 
   // 狂战士面具：连击>20时分数+50%
   if (hasRelic('berserker_mask') && state.combo > 20) {
-    finalWordScore *= 1.5;
+    bonusMult = 1.5;
   }
 
-  finalWordScore = Math.floor(finalWordScore);
+  const finalMult = mult * bonusMult;
+  const finalWordScore = Math.floor(baseChips * finalMult + state.player.wordBonus);
+
+  // 显示 Balatro 风格结算
+  showSettlement(baseChips, finalMult, finalWordScore);
+
   state.score += finalWordScore;
-  showScorePopup(finalWordScore);
   bumpScore();
 
   // 发送词语完成事件
@@ -232,9 +244,56 @@ function completeWord(): void {
 
   playSound('word');
 
+  // 重置词语基础分
+  wordBaseScore = 0;
+
   setTimeout(() => {
     if (state.phase === 'battle') setWord();
   }, 200);
+}
+
+// === Balatro 风格分数结算展示 ===
+function showSettlement(chips: number, mult: number, final: number): void {
+  const settlement = document.getElementById('score-settlement');
+  if (!settlement) return;
+
+  const chipsEl = document.getElementById('settlement-chips');
+  const multEl = document.getElementById('settlement-mult');
+  const finalEl = document.getElementById('settlement-final');
+
+  if (chipsEl) chipsEl.textContent = chips.toLocaleString();
+  if (multEl) multEl.textContent = mult.toFixed(1);
+  if (finalEl) finalEl.textContent = final.toLocaleString();
+
+  // 清除旧的动画类
+  settlement.classList.remove('settlement-hidden', 'settlement-fade-out');
+  settlement.classList.remove('settlement-phase-chips', 'settlement-phase-mult', 'settlement-phase-result');
+
+  // 显示并开始动画序列
+  settlement.classList.add('settlement-phase-chips');
+
+  setTimeout(() => {
+    settlement.classList.add('settlement-phase-mult');
+  }, 200);
+
+  setTimeout(() => {
+    settlement.classList.add('settlement-phase-result');
+  }, 400);
+
+  // 清除旧的定时器
+  if (settlementTimeout) clearTimeout(settlementTimeout);
+
+  // 1.2秒后开始淡出
+  settlementTimeout = setTimeout(() => {
+    settlement.classList.add('settlement-fade-out');
+
+    // 淡出完成后隐藏
+    setTimeout(() => {
+      settlement.classList.add('settlement-hidden');
+      settlement.classList.remove('settlement-fade-out');
+      settlement.classList.remove('settlement-phase-chips', 'settlement-phase-mult', 'settlement-phase-result');
+    }, 300);
+  }, 1200);
 }
 
 // === 计时器 ===
