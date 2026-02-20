@@ -43,7 +43,6 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
   let val = base.base + base.grow * (lvl - 1);
 
   const adjacent = getAdjacentSkills(triggerKey);
-  const emptyCount = getAdjacentEmptyCount(triggerKey);
 
   // 光环加成
   if (base.type === 'score') {
@@ -147,11 +146,13 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
       break;
   }
 
-  // 共鸣被动
+  // 共鸣被动：相邻 echo 技能概率触发（概率 = echo 的 base + grow*(lvl-1)）%
   if (!isEcho) {
     const adjacentEchoes = adjacent.filter(a => a.skill.type === 'echo');
     for (const echoAdj of adjacentEchoes) {
-      if (!synergy.echoTrigger.has(echoAdj.key) && Math.random() < 0.3) {
+      const echoLvl = state.player.skills.get(echoAdj.skillId)?.level || 1;
+      const echoProb = (echoAdj.skill.base + echoAdj.skill.grow * (echoLvl - 1)) / 100;
+      if (!synergy.echoTrigger.has(echoAdj.key) && Math.random() < echoProb) {
         synergy.echoTrigger.add(echoAdj.key);
         setTimeout(() => {
           if (state.phase === 'battle') {

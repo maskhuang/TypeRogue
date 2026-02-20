@@ -17,8 +17,8 @@ function init(): void {
   initElements();
 
   // 初始技能
-  state.player.skills.set('spark', { level: 1 });
-  state.player.bindings.set('f', 'spark');
+  state.player.skills.set('burst', { level: 1 });
+  state.player.bindings.set('f', 'burst');
 
   // 初始词库
   state.player.wordDeck = getStarterWords();

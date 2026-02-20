@@ -14,16 +14,7 @@ export const CHAIN_SKILL_TYPES: SkillType[] = ['echo', 'ripple'];
 export const SYNERGY_TYPES: SkillType[] = [...PASSIVE_SKILL_TYPES, ...CHAIN_SKILL_TYPES];
 
 export const SKILLS: Record<string, SkillDefinition> = {
-  // === 基础分数技能（主动） ===
-  spark: {
-    name: '火花',
-    icon: '✨',
-    type: 'score',
-    category: 'active',
-    base: 3,
-    grow: 1,
-    desc: '触发时+3分'
-  },
+  // === 分数技能（主动） ===
   burst: {
     name: '爆发',
     icon: '💥',
@@ -32,15 +23,6 @@ export const SKILLS: Record<string, SkillDefinition> = {
     base: 5,
     grow: 2,
     desc: '触发时+5分'
-  },
-  star: {
-    name: '星光',
-    icon: '⭐',
-    type: 'score',
-    category: 'active',
-    base: 8,
-    grow: 3,
-    desc: '触发时+8分'
   },
 
   // === 倍率技能（主动） ===
@@ -53,26 +35,8 @@ export const SKILLS: Record<string, SkillDefinition> = {
     grow: 5,
     desc: '触发时倍率+0.2'
   },
-  surge: {
-    name: '激涌',
-    icon: '⚡',
-    type: 'multiply',
-    category: 'active',
-    base: 30,
-    grow: 8,
-    desc: '触发时倍率+0.3'
-  },
 
   // === 时间技能（主动） ===
-  clock: {
-    name: '时钟',
-    icon: '⏰',
-    type: 'time',
-    category: 'active',
-    base: 1,
-    grow: 0.5,
-    desc: '触发时+1秒'
-  },
   freeze: {
     name: '冻结',
     icon: '❄️',
@@ -81,16 +45,6 @@ export const SKILLS: Record<string, SkillDefinition> = {
     base: 2,
     grow: 0.5,
     desc: '触发时+2秒'
-  },
-
-  chain: {
-    name: '连锁',
-    icon: '🔗',
-    type: 'multiply',
-    category: 'active',
-    base: 10,
-    grow: 3,
-    desc: '触发时倍率+0.1'
   },
 
   // === 护盾技能（主动） ===
@@ -110,18 +64,18 @@ export const SKILLS: Record<string, SkillDefinition> = {
     icon: '🔔',
     type: 'echo',
     category: 'active',
-    base: 0,
-    grow: 0,
-    desc: '触发后，下一个非回响技能也被触发'
+    base: 30,
+    grow: 10,
+    desc: '主动：触发所有相邻技能；被动：30%概率被相邻触发，升级提高'
   },
   ripple: {
     name: '涟漪',
     icon: '🌊',
     type: 'ripple',
     category: 'active',
-    base: 50,
-    grow: 10,
-    desc: '触发后，下一个技能效果×1.5'
+    base: 3,
+    grow: 1,
+    desc: '触发时+3分，相邻技能效果×1.5'
   },
 
   // === 被动技能（持续生效，基于键盘布局） ===
@@ -139,9 +93,9 @@ export const SKILLS: Record<string, SkillDefinition> = {
     icon: '🔆',
     type: 'aura',
     category: 'passive',
-    base: 50,
-    grow: 10,
-    desc: '[被动] 相邻主动技能效果+50%'
+    base: 3,
+    grow: 1,
+    desc: '[被动] 相邻分数技能效果+50%'
   },
   lone: {
     name: '孤狼',
