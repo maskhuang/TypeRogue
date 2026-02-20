@@ -14,6 +14,7 @@ import { BehaviorExecutor } from './modifiers/BehaviorExecutor';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { showFeedback, highlightBoundSkill, updateHUD } from './battle';
+import { injectRelicModifiers } from './relics/RelicPipeline';
 
 // === 获取相邻技能 ===
 export function getAdjacentSkills(key: string): AdjacentSkill[] {
@@ -83,6 +84,9 @@ export function createScopedRegistry(
     // 只注册 enhance/global 层（不注册 base 层，base 只属于触发技能本身）
     registry.registerMany(adjMods.filter(m => m.layer !== 'base'));
   }
+
+  // 遗物 global 层注入（如 golden_keyboard 技能效果 +25%）
+  injectRelicModifiers(registry, context);
 
   // 涟漪加成：global 层临时 Modifier
   if (synergy.rippleBonus.has(triggerKey)) {
@@ -155,6 +159,23 @@ export function generateFeedback(
     }
     case 'ripple':
       return { text: `涟漪→${context.adjacentSkillCount ?? 0}`, color: '#3498db' };
+    case 'gamble':
+      if (effects.score > 0) {
+        return { text: `豪赌! +${Math.floor(effects.score * state.multiplier)}`, color: '#f1c40f' };
+      }
+      return { text: '豪赌...空手', color: '#666' };
+    case 'chain':
+      if (effects.multiply > 0) {
+        return { text: `连锁! +${effects.multiply.toFixed(1)}`, color: '#e67e22' };
+      }
+      return { text: '连锁断裂...', color: '#666' };
+    case 'overclock': {
+      const triggered = (context.skillsTriggeredThisWord ?? 0) >= 3;
+      if (triggered) {
+        return { text: '超频!', color: '#e74c3c' };
+      }
+      return { text: '超频待机...', color: '#666' };
+    }
     default:
       return null;
   }
@@ -187,6 +208,9 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
 
   // 构建上下文 + 作用域注册表
   const context = buildTriggerContext(triggerKey, adjacent);
+  context.currentSkillId = skillId;
+  context.lastTriggeredSkillId = synergy.lastTriggeredSkillId ?? undefined;
+  synergy.lastTriggeredSkillId = skillId;
   const registry = createScopedRegistry(skillId, lvl, triggerKey, context, isEcho, adjacent);
 
   // 管道解析

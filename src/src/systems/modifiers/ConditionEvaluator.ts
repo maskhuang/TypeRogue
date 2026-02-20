@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - ConditionEvaluator 条件评估器
 // ============================================
-// Story 11.3: 12 种条件原语评估
+// Story 11.3+12.1: 15 种条件原语评估
 
 import type { ModifierCondition, PipelineContext } from './ModifierTypes'
 
@@ -44,9 +44,19 @@ export class ConditionEvaluator {
       case 'word_has_letter':
         return (ctx.currentWord ?? '').includes(condition.letter)
 
+      // === 遗物 ===
+      case 'multiplier_gte':
+        return (ctx.multiplier ?? 1) >= condition.value
+
       // === 上下文 ===
       case 'skills_triggered_this_word':
         return (ctx.skillsTriggeredThisWord ?? 0) === condition.value
+      case 'skills_triggered_gte':
+        return (ctx.skillsTriggeredThisWord ?? 0) >= condition.value
+      case 'different_skill_from_last':
+        return ctx.currentSkillId != null
+          && ctx.lastTriggeredSkillId != null
+          && ctx.currentSkillId !== ctx.lastTriggeredSkillId
       case 'nth_word': {
         const wn = ctx.wordNumber ?? 0
         return wn > 0 && wn % condition.value === 0

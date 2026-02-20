@@ -40,8 +40,9 @@ export type ModifierBehavior =
   | { type: 'trigger_adjacent' }
   | { type: 'buff_next_skill'; multiplier: number }
   | { type: 'trigger_skill'; targetSkillId: string }
+  | { type: 'combo_protect'; probability: number }
 
-// === 条件系统（12 种原语） ===
+// === 条件系统（15 种原语） ===
 export type ModifierCondition =
   // 战斗状态
   | { type: 'combo_gte'; value: number }
@@ -56,8 +57,12 @@ export type ModifierCondition =
   | { type: 'word_length_gte'; value: number }
   | { type: 'word_length_lte'; value: number }
   | { type: 'word_has_letter'; letter: string }
+  // 遗物
+  | { type: 'multiplier_gte'; value: number }
   // 上下文
   | { type: 'skills_triggered_this_word'; value: number }
+  | { type: 'skills_triggered_gte'; value: number }
+  | { type: 'different_skill_from_last' }
   | { type: 'nth_word'; value: number }
 
 // === 管道输出类型 (Story 11.2) ===
@@ -99,6 +104,14 @@ export interface PipelineContext {
   skillsTriggeredThisWord?: number
   /** 本场战斗第几个词（1-indexed） */
   wordNumber?: number
+  /** 当前倍率（遗物条件使用） */
+  multiplier?: number
+  /** 超杀分数（遗物金币计算使用） */
+  overkill?: number
+  /** 当前触发的技能 ID（chain 条件使用） */
+  currentSkillId?: string
+  /** 本词前一个触发的技能 ID（chain 条件使用） */
+  lastTriggeredSkillId?: string
 }
 
 // === 行为执行回调 (Story 11.4) ===
@@ -111,6 +124,8 @@ export interface BehaviorCallbacks {
   onTriggerSkill?(targetSkillId: string, depth: number): PipelineResult | null
   /** buff_next_skill: 通知调用方设置临时增益 */
   onBuffNextSkill?(multiplier: number): void
+  /** combo_protect: 按概率保护连击，返回是否保护成功 */
+  onComboProtect?(probability: number): boolean
 }
 
 /** BehaviorExecutor.execute() 的返回值 */

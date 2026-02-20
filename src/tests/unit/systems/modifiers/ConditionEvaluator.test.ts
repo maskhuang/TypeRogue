@@ -241,6 +241,37 @@ describe('ConditionEvaluator', () => {
     })
   })
 
+  // === 遗物条件 ===
+  describe('multiplier_gte', () => {
+    it('multiplier=3.5, value=3.0 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'multiplier_gte', value: 3.0 },
+        { multiplier: 3.5 },
+      )).toBe(true)
+    })
+
+    it('multiplier=2.0, value=3.0 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'multiplier_gte', value: 3.0 },
+        { multiplier: 2.0 },
+      )).toBe(false)
+    })
+
+    it('multiplier=3.0, value=3.0 → true (边界)', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'multiplier_gte', value: 3.0 },
+        { multiplier: 3.0 },
+      )).toBe(true)
+    })
+
+    it('multiplier 未提供 → 默认 1', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'multiplier_gte', value: 3.0 },
+        {},
+      )).toBe(false)
+    })
+  })
+
   // === 上下文条件 ===
   describe('skills_triggered_this_word', () => {
     it('skillsTriggeredThisWord=0, value=0 → true', () => {
@@ -291,6 +322,67 @@ describe('ConditionEvaluator', () => {
       expect(ConditionEvaluator.evaluate(
         { type: 'nth_word', value: 2 },
         {},
+      )).toBe(false)
+    })
+  })
+
+  // === Story 12.1: 新增条件 ===
+  describe('skills_triggered_gte', () => {
+    it('skillsTriggeredThisWord=3, value=3 → true (边界)', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'skills_triggered_gte', value: 3 },
+        { skillsTriggeredThisWord: 3 },
+      )).toBe(true)
+    })
+
+    it('skillsTriggeredThisWord=5, value=3 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'skills_triggered_gte', value: 3 },
+        { skillsTriggeredThisWord: 5 },
+      )).toBe(true)
+    })
+
+    it('skillsTriggeredThisWord=2, value=3 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'skills_triggered_gte', value: 3 },
+        { skillsTriggeredThisWord: 2 },
+      )).toBe(false)
+    })
+  })
+
+  describe('different_skill_from_last', () => {
+    it('不同技能 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'different_skill_from_last' },
+        { currentSkillId: 'chain', lastTriggeredSkillId: 'burst' },
+      )).toBe(true)
+    })
+
+    it('相同技能 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'different_skill_from_last' },
+        { currentSkillId: 'chain', lastTriggeredSkillId: 'chain' },
+      )).toBe(false)
+    })
+
+    it('无前置技能（第一个触发）→ false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'different_skill_from_last' },
+        { currentSkillId: 'chain' },
+      )).toBe(false)
+    })
+
+    it('lastTriggeredSkillId=undefined → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'different_skill_from_last' },
+        { currentSkillId: 'chain', lastTriggeredSkillId: undefined },
+      )).toBe(false)
+    })
+
+    it('currentSkillId 缺失但 lastTriggeredSkillId 存在 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'different_skill_from_last' },
+        { lastTriggeredSkillId: 'burst' },
       )).toBe(false)
     })
   })

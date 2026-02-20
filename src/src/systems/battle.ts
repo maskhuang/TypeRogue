@@ -2,7 +2,8 @@
 // 打字肉鸽 - 战斗系统
 // ============================================
 
-import { state, synergy, calculateTargetScore, hasRelic } from '../core/state';
+import { state, synergy, calculateTargetScore } from '../core/state';
+import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
@@ -39,7 +40,7 @@ function pickWord(): string {
   const bound = [...state.player.bindings.keys()];
 
   // 磁石遗物：更高几率选择包含技能字母的词
-  const magnetChance = hasRelic('magnet') ? 0.8 : 0.6;
+  const magnetChance = queryRelicFlag('magnet_bias') as number;
 
   if (bound.length && Math.random() < magnetChance) {
     const good = words.filter(w => bound.some(l => w.includes(l)));
@@ -56,6 +57,7 @@ function setWord(): void {
   state.wordPerfect = true;
   synergy.echoTrigger.clear();
   synergy.wordSkillCount = 0; // 重置技能触发计数
+  synergy.lastTriggeredSkillId = null; // 重置前一个技能跟踪
   renderWord();
   updateSettlementLive(); // 初始化结算面板
 }
@@ -127,7 +129,7 @@ function playerCorrect(k: string): void {
 
   // 计算倍率: 基础 + 连击加成 + 完美主义加成
   let mult = state.player.baseMultiplier + state.combo * state.player.comboBonus;
-  if (hasRelic('perfectionist')) {
+  if (queryRelicFlag('perfectionist_streak')) {
     mult += synergy.perfectStreak * 0.01;
   }
   state.multiplier = mult;
@@ -185,10 +187,21 @@ function playerWrong(): void {
     return;
   }
 
-  // 凤凰羽毛遗物：50%几率保护连击
-  if (hasRelic('phoenix_feather') && Math.random() < 0.5) {
-    showFeedback('凤凰羽毛!', '#ff9500');
-    return;
+  // 凤凰羽毛遗物：通过管道解析保护行为
+  {
+    let phoenixProtected = false;
+    resolveRelicEffectsWithBehaviors('on_error', { hasError: true }, {
+      onComboProtect: (probability: number) => {
+        if (Math.random() < probability) {
+          phoenixProtected = true;
+        }
+        return phoenixProtected;
+      },
+    });
+    if (phoenixProtected) {
+      showFeedback('凤凰羽毛!', '#ff9500');
+      return;
+    }
   }
 
   // 完美主义遗物：重置完美计数
@@ -212,10 +225,13 @@ function completeWord(): void {
   let mult = state.multiplier;
   let bonusMult = 1;
 
-  // 狂战士面具：倍率>3.0时分数+50%
-  if (hasRelic('berserker_mask') && state.multiplier > 3.0) {
-    bonusMult = 1.5;
-  }
+  // 遗物效果：通过管道解析 on_word_complete 效果
+  const wordRelicResult = resolveRelicEffects('on_word_complete', {
+    combo: state.combo,
+    multiplier: state.multiplier,
+  });
+  // 狂战士面具等遗物的 multiply 加成
+  bonusMult += wordRelicResult.effects.multiply;
 
   const finalMult = mult * bonusMult;
   const finalWordScore = Math.floor(baseChips * finalMult + state.player.wordBonus);
@@ -263,9 +279,9 @@ function completeWord(): void {
     return;
   }
 
-  // 时间水晶遗物：完成词语+0.5秒（只有未通关时生效）
-  if (hasRelic('time_crystal')) {
-    state.time = Math.min(state.time + 0.5, state.timeMax + state.player.timeBonus + 5);
+  // 遗物效果：完成词语时间加成（time_crystal 等）
+  if (wordRelicResult.effects.time > 0) {
+    state.time = Math.min(state.time + wordRelicResult.effects.time, state.timeMax + state.player.timeBonus + 5);
   }
 
   setTimeout(() => {
@@ -333,12 +349,12 @@ function showGoldReward(onComplete: () => void): void {
     return;
   }
 
-  // 计算奖励（与 shop.ts openShop 公式一致）
+  // 计算奖励（通过遗物管道解析）
   const baseGold = 20;
   const timeBonus = Math.floor(state.time);
-  const overkillGold = hasRelic('overkill_blade') ? Math.max(0, state.overkill) : 0;
-  const treasureGold = hasRelic('treasure_map') ? 15 : 0;
-  const totalGold = baseGold + timeBonus + overkillGold + treasureGold;
+  const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
+  const relicGold = Math.floor(goldRelicResult.effects.gold);
+  const totalGold = baseGold + timeBonus + relicGold;
 
   // 设置数值
   const goldBaseEl = document.getElementById('gold-base');
@@ -351,14 +367,12 @@ function showGoldReward(onComplete: () => void): void {
   if (goldTimeEl) goldTimeEl.textContent = `+${timeBonus}`;
   if (goldTotalEl) goldTotalEl.textContent = `+${totalGold}`;
 
-  // 条件行：无遗物时隐藏整行
+  // 遗物金币行：统一显示遗物加成
   const overkillRow = document.querySelector('.gold-overkill-row') as HTMLElement;
-  if (overkillRow) overkillRow.style.display = overkillGold > 0 ? '' : 'none';
-  if (goldOverkillEl) goldOverkillEl.textContent = `+${overkillGold}`;
-
+  if (overkillRow) overkillRow.style.display = 'none'; // 不再单独显示
   const treasureRow = document.querySelector('.gold-treasure-row') as HTMLElement;
-  if (treasureRow) treasureRow.style.display = treasureGold > 0 ? '' : 'none';
-  if (goldTreasureEl) goldTreasureEl.textContent = `+${treasureGold}`;
+  if (treasureRow) treasureRow.style.display = relicGold > 0 ? '' : 'none';
+  if (goldTreasureEl) goldTreasureEl.textContent = `+${relicGold}`;
 
   // 隐藏结算面板
   hideSettlement();
@@ -465,6 +479,12 @@ export function startLevel(): void {
   synergy.rippleBonus.clear();
   synergy.echoTrigger.clear();
 
+  // 遗物效果：战斗开始管道（combo_crown 初始倍率, time_lord 额外时间等）
+  const startRelicResult = resolveRelicEffects('on_battle_start');
+  if (startRelicResult.effects.multiply > 0) {
+    state.multiplier += startRelicResult.effects.multiply;
+  }
+
   const el = getElements();
   el.levelLabel.textContent = `LEVEL ${state.level}`;
 
@@ -476,6 +496,11 @@ export function startLevel(): void {
   renderActiveLibrary();
   announceLevel();
   startTimer();
+
+  // 时间遗物加成（在 startTimer 设置初始时间后应用，如 time_lord +8 秒）
+  if (startRelicResult.effects.time > 0) {
+    state.time = Math.min(state.time + startRelicResult.effects.time, state.timeMax + state.player.timeBonus + 15);
+  }
 }
 
 function announceLevel(): void {

@@ -8,7 +8,8 @@ import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTyp
 // === 被动技能类型列表 ===
 export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'lone', 'void'];
 
-// === 主动技能中的技能链类型 ===
+// === 主动技能中的链式行为类型（trigger_adjacent / buff_next_skill）===
+// 注意: 'chain' 技能（连锁）不在此列表中，它是条件倍率技能，非链式行为
 export const CHAIN_SKILL_TYPES: SkillType[] = ['echo', 'ripple'];
 
 // === 联动技能类型（兼容旧代码，包含被动和技能链类型） ===
@@ -116,6 +117,37 @@ export const SKILLS: Record<string, SkillDefinition> = {
     grow: 4,
     desc: '+12分，本词每有一个其他技能触发-1分'
   },
+
+  // === 爆发流新增 ===
+  gamble: {
+    name: '豪赌',
+    icon: '🎲',
+    type: 'gamble',
+    category: 'active',
+    base: 15,
+    grow: 5,
+    desc: '50%概率+15分'
+  },
+
+  // === 倍率流新增 ===
+  chain: {
+    name: '连锁',
+    icon: '🔗',
+    type: 'chain',
+    category: 'active',
+    base: 10,
+    grow: 5,
+    desc: '连续不同技能触发时+0.1倍率'
+  },
+  overclock: {
+    name: '超频',
+    icon: '⚡',
+    type: 'overclock',
+    category: 'active',
+    base: 50,
+    grow: 10,
+    desc: '本词第3+技能时效果×1.5'
+  },
 };
 
 // === Modifier 工厂类型 ===
@@ -219,6 +251,31 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
       priority: 100,
     },
   ],
+
+  // === 爆发流：gamble — 50% 概率 +score ===
+  gamble: (id, lvl) => [{
+    ...baseModifier(id, 'score', 'score', skillVal(id, lvl)),
+    condition: { type: 'random' as const, probability: 0.5 },
+  }],
+
+  // === 倍率流：chain — 连续不同技能时 +multiply ===
+  chain: (id, lvl) => [{
+    ...baseModifier(id, 'multiply', 'multiply', skillVal(id, lvl) / 100),
+    condition: { type: 'different_skill_from_last' as const },
+  }],
+
+  // === 倍率流：overclock — 本词 3+ 技能时 enhance score ×N ===
+  overclock: (id, lvl) => [{
+    id: `skill:${id}:enhance`,
+    source: `skill:${id}`,
+    sourceType: 'skill',
+    layer: 'enhance',
+    trigger: 'on_skill_trigger',
+    phase: 'calculate',
+    effect: { type: 'score', value: 1 + skillVal(id, lvl) / 100, stacking: 'multiplicative' },
+    condition: { type: 'skills_triggered_gte' as const, value: 3 },
+    priority: 100,
+  }],
 }
 
 /**

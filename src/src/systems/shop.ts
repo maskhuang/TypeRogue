@@ -2,7 +2,8 @@
 // 打字肉鸽 - 商店系统
 // ============================================
 
-import { state, hasRelic } from '../core/state';
+import { state } from '../core/state';
+import { resolveRelicEffects } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, ADJACENT_KEYS } from '../core/constants';
 import { SKILLS, SYNERGY_TYPES } from '../data/skills';
 import { RELICS } from '../data/relics';
@@ -18,19 +19,14 @@ export function openShop(_won: boolean): void {
   state.phase = 'shop';
   const el = getElements();
 
-  // 存钱罐遗物：每关开始+10金币
-  if (hasRelic('piggy_bank')) {
-    state.gold += 10;
-  }
+  // 遗物效果：通过管道解析 on_battle_end 金币加成
+  const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
+  const relicGold = Math.floor(goldRelicResult.effects.gold);
 
-  // 金币奖励：基础 20 + 剩余时间秒数
+  // 金币奖励：基础 20 + 剩余时间秒数 + 遗物金币
   const baseGold = 20;
   const timeBonus = Math.floor(state.time);
-  // 超杀之刃遗物：overkill 分数转金币
-  const overkillGold = hasRelic('overkill_blade') ? Math.max(0, state.overkill) : 0;
-  // 藏宝图遗物：额外 +15 金币
-  const treasureGold = hasRelic('treasure_map') ? 15 : 0;
-  const bonus = timeBonus + overkillGold + treasureGold;
+  const bonus = timeBonus + relicGold;
   state.gold += baseGold + bonus;
 
   el.shopLevelNum.textContent = String(state.level);

@@ -81,6 +81,13 @@ export class BehaviorExecutor {
             result.executedCount++
           }
           break
+
+        case 'combo_protect':
+          if (callbacks?.onComboProtect) {
+            callbacks.onComboProtect(behavior.probability)
+            result.executedCount++
+          }
+          break
       }
     }
 

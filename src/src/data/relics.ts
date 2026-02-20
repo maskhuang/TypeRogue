@@ -4,6 +4,7 @@
 // Story 5.4 Task 2: 遗物数据定义
 
 import type { RelicData, RelicRarity } from '../systems/relics/RelicTypes'
+import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes'
 
 /**
  * 所有遗物数据
@@ -185,6 +186,115 @@ export const RELICS: Record<string, RelicData> = {
     ],
     flavor: '只有完美，才配得上这份荣耀。'
   }
+}
+
+// === Relic Modifier 工厂类型 ===
+export type RelicModifierFactory = (
+  relicId: string,
+  context?: PipelineContext,
+) => Modifier[]
+
+// === 工具函数 ===
+function relicMod(
+  relicId: string,
+  id: string,
+  trigger: Modifier['trigger'],
+  phase: Modifier['phase'],
+  overrides: Partial<Modifier> = {},
+): Modifier {
+  return {
+    id: `relic:${relicId}:${id}`,
+    source: `relic:${relicId}`,
+    sourceType: 'relic',
+    layer: 'base',
+    trigger,
+    phase,
+    priority: 200,
+    ...overrides,
+  }
+}
+
+// === RELIC_MODIFIER_DEFS — 每个遗物的 Modifier 工厂 ===
+// 注意：加法效果用 base 层（baseSum += value），乘法效果用 global 层（globalProduct *= value）
+export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
+  // 行为型遗物：返回空数组，通过 queryRelicFlag 查询
+  lucky_coin: () => [],
+  magnet: () => [],
+  perfectionist: () => [],
+
+  // 时间水晶：完成词语 +0.5 秒
+  time_crystal: (id) => [
+    relicMod(id, 'time', 'on_word_complete', 'calculate', {
+      effect: { type: 'time', value: 0.5, stacking: 'additive' },
+    }),
+  ],
+
+  // 存钱罐：进入商店 +10 金币
+  piggy_bank: (id) => [
+    relicMod(id, 'gold', 'on_battle_end', 'calculate', {
+      effect: { type: 'gold', value: 10, stacking: 'additive' },
+    }),
+  ],
+
+  // 连击徽章：倍率 += combo * 0.01
+  combo_badge: (id, ctx) => [
+    relicMod(id, 'multiply', 'on_word_complete', 'calculate', {
+      effect: { type: 'multiply', value: (ctx?.combo ?? 0) * 0.01, stacking: 'additive' },
+    }),
+  ],
+
+  // 凤凰羽毛：打错时 50% 概率保护连击（代码行为为准）
+  // 使用 after 阶段以被 BehaviorExecutor 收集
+  phoenix_feather: (id) => [
+    relicMod(id, 'protect', 'on_error', 'after', {
+      behavior: { type: 'combo_protect', probability: 0.5 },
+    }),
+  ],
+
+  // 狂战士面具：倍率 >= 3.0 时 bonusMult +0.5（总计 1.5 倍）
+  // 注意：旧代码使用 > 3.0（严格大于），迁移后改为 >= 3.0（大于等于），边界情况影响极小
+  berserker_mask: (id) => [
+    relicMod(id, 'multiply', 'on_word_complete', 'calculate', {
+      effect: { type: 'multiply', value: 0.5, stacking: 'additive' },
+      condition: { type: 'multiplier_gte', value: 3.0 },
+    }),
+  ],
+
+  // 藏宝图：战斗结束 +15 金币
+  treasure_map: (id) => [
+    relicMod(id, 'gold', 'on_battle_end', 'calculate', {
+      effect: { type: 'gold', value: 15, stacking: 'additive' },
+    }),
+  ],
+
+  // 超杀之刃：overkill 分数转金币
+  overkill_blade: (id, ctx) => [
+    relicMod(id, 'gold', 'on_battle_end', 'calculate', {
+      effect: { type: 'gold', value: Math.max(0, ctx?.overkill ?? 0), stacking: 'additive' },
+    }),
+  ],
+
+  // 连击皇冠：战斗开始 倍率 +0.3
+  combo_crown: (id) => [
+    relicMod(id, 'multiply', 'on_battle_start', 'calculate', {
+      effect: { type: 'multiply', value: 0.3, stacking: 'additive' },
+    }),
+  ],
+
+  // 黄金键盘：技能触发时分数 ×1.25（乘法效果，用 global 层）
+  golden_keyboard: (id) => [
+    relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.25, stacking: 'multiplicative' },
+    }),
+  ],
+
+  // 时间领主：战斗开始 +8 秒
+  time_lord: (id) => [
+    relicMod(id, 'time', 'on_battle_start', 'calculate', {
+      effect: { type: 'time', value: 8, stacking: 'additive' },
+    }),
+  ],
 }
 
 /**

@@ -202,6 +202,36 @@ describe('BehaviorExecutor', () => {
     })
   })
 
+  // === combo_protect ===
+  describe('combo_protect', () => {
+    it('有回调 → onComboProtect 被调用, executedCount=1', () => {
+      const onComboProtect = vi.fn().mockReturnValue(true)
+      const callbacks: BehaviorCallbacks = { onComboProtect }
+      const behaviors: ModifierBehavior[] = [{ type: 'combo_protect', probability: 0.5 }]
+
+      const result = BehaviorExecutor.execute(behaviors, 0, callbacks)
+      expect(onComboProtect).toHaveBeenCalledWith(0.5)
+      expect(result.executedCount).toBe(1)
+    })
+
+    it('无回调 → 跳过, executedCount=0', () => {
+      const behaviors: ModifierBehavior[] = [{ type: 'combo_protect', probability: 0.5 }]
+      const result = BehaviorExecutor.execute(behaviors, 0)
+      expect(result.executedCount).toBe(0)
+    })
+
+    it('combo_protect 不受深度限制', () => {
+      const onComboProtect = vi.fn().mockReturnValue(false)
+      const callbacks: BehaviorCallbacks = { onComboProtect }
+      const behaviors: ModifierBehavior[] = [{ type: 'combo_protect', probability: 0.3 }]
+
+      const result = BehaviorExecutor.execute(behaviors, 3, callbacks)
+      expect(onComboProtect).toHaveBeenCalledWith(0.3)
+      expect(result.executedCount).toBe(1)
+      expect(result.skippedByDepth).toBe(0)
+    })
+  })
+
   // === 链式递归 ===
   describe('链式递归', () => {
     it('trigger_adjacent 返回含 trigger_skill → 深度递增', () => {

@@ -58,10 +58,11 @@ export type SkillCategory = 'active' | 'passive';
 /** 技能类型 */
 export type SkillType =
   | 'score' | 'multiply' | 'time' | 'protect'
-  | 'core' | 'aura' | 'lone' | 'echo' | 'void' | 'ripple';
+  | 'core' | 'aura' | 'lone' | 'echo' | 'void' | 'ripple'
+  | 'gamble' | 'chain' | 'overclock';
 
 /** 主动技能类型（需按键触发） */
-export type ActiveSkillType = 'score' | 'multiply' | 'time' | 'protect' | 'echo' | 'ripple';
+export type ActiveSkillType = 'score' | 'multiply' | 'time' | 'protect' | 'echo' | 'ripple' | 'gamble' | 'chain' | 'overclock';
 
 /** 被动技能类型（持续生效，基于键盘布局） */
 export type PassiveSkillType = 'core' | 'aura' | 'lone' | 'void';
@@ -127,6 +128,7 @@ export interface SynergyState {
   shieldCount: number;
   perfectStreak: number;
   wordSkillCount: number; // 当前词语触发的技能数量
+  lastTriggeredSkillId: string | null; // 本词前一个触发的技能（每词重置）
 }
 
 export interface AdjacentSkill {

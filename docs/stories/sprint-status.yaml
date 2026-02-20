@@ -117,12 +117,12 @@ development_status:
   11-3-condition-system: done
   11-4-behavior-modifiers: done
   11-5-skill-migration: done
-  11-6-relic-migration: backlog
+  11-6-relic-migration: done
   epic-11-retrospective: optional
 
   # Epic 12: 技能池扩充
-  epic-12: backlog
-  12-1-burst-multiplier-skills: backlog
+  epic-12: in-progress
+  12-1-burst-multiplier-skills: done
   12-2-sustain-chain-skills: backlog
   12-3-passive-skills: backlog
   12-4-skill-ui-shop-update: backlog

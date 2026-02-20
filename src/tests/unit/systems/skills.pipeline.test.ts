@@ -434,6 +434,136 @@ describe('技能管道集成', () => {
     })
   })
 
+  // === Story 12.1: 新技能管道集成 ===
+  describe('gamble 管道集成', () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    it('gamble random win → effects.score = 15', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.3) // < 0.5 → win
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.gamble('gamble', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(15)
+    })
+
+    it('gamble random lose → effects.score = 0', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.7) // >= 0.5 → lose
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.gamble('gamble', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(0)
+    })
+  })
+
+  describe('chain 管道集成', () => {
+    it('chain 前一个技能不同 → effects.multiply = 0.1', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.chain('chain', 1))
+      const ctx: PipelineContext = {
+        currentSkillId: 'chain',
+        lastTriggeredSkillId: 'burst',
+      }
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.multiply).toBeCloseTo(0.1)
+    })
+
+    it('chain 前一个技能相同 → effects.multiply = 0', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.chain('chain', 1))
+      const ctx: PipelineContext = {
+        currentSkillId: 'chain',
+        lastTriggeredSkillId: 'chain',
+      }
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.multiply).toBe(0)
+    })
+
+    it('chain 无前置技能 → effects.multiply = 0', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.chain('chain', 1))
+      const ctx: PipelineContext = { currentSkillId: 'chain' }
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.multiply).toBe(0)
+    })
+  })
+
+  describe('overclock 管道集成', () => {
+    it('overclock + burst, 3rd trigger → score = 5 × 1.5 = 7.5', () => {
+      const registry = new ModifierRegistry()
+      // burst base
+      registry.registerMany(SKILL_MODIFIER_DEFS.burst('burst', 1))
+      // overclock enhance (模拟相邻注入)
+      registry.registerMany(SKILL_MODIFIER_DEFS.overclock('overclock', 1))
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 3 }
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.score).toBe(7.5)
+    })
+
+    it('overclock + burst, 2nd trigger → score = 5 (无增强)', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.burst('burst', 1))
+      registry.registerMany(SKILL_MODIFIER_DEFS.overclock('overclock', 1))
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 2 }
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.score).toBe(5)
+    })
+
+    it('overclock 单独触发 → score = 0 (无 base)', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.overclock('overclock', 1))
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 3 }
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.score).toBe(0)
+    })
+  })
+
+  // === Story 12.1: 新技能反馈 ===
+  describe('generateFeedback 新技能', () => {
+    it('gamble win: 豪赌! +N #f1c40f', () => {
+      state.multiplier = 2.0
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 15 }
+      const fb = generateFeedback('gamble', effects, {})
+      expect(fb!.text).toBe('豪赌! +30')
+      expect(fb!.color).toBe('#f1c40f')
+    })
+
+    it('gamble lose: 豪赌...空手 #666', () => {
+      state.multiplier = 2.0
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 0 }
+      const fb = generateFeedback('gamble', effects, {})
+      expect(fb!.text).toBe('豪赌...空手')
+      expect(fb!.color).toBe('#666')
+    })
+
+    it('chain active: 连锁! +N #e67e22', () => {
+      const effects: EffectAccumulator = { ...emptyEffects(), multiply: 0.1 }
+      const fb = generateFeedback('chain', effects, {})
+      expect(fb!.text).toBe('连锁! +0.1')
+      expect(fb!.color).toBe('#e67e22')
+    })
+
+    it('chain inactive: 连锁断裂... #666', () => {
+      const effects: EffectAccumulator = { ...emptyEffects(), multiply: 0 }
+      const fb = generateFeedback('chain', effects, {})
+      expect(fb!.text).toBe('连锁断裂...')
+      expect(fb!.color).toBe('#666')
+    })
+
+    it('overclock 条件满足: 超频! #e74c3c', () => {
+      const effects: EffectAccumulator = { ...emptyEffects() }
+      const fb = generateFeedback('overclock', effects, { skillsTriggeredThisWord: 3 })
+      expect(fb!.text).toBe('超频!')
+      expect(fb!.color).toBe('#e74c3c')
+    })
+
+    it('overclock 条件不满足: 超频待机... #666', () => {
+      const effects: EffectAccumulator = { ...emptyEffects() }
+      const fb = generateFeedback('overclock', effects, { skillsTriggeredThisWord: 2 })
+      expect(fb!.text).toBe('超频待机...')
+      expect(fb!.color).toBe('#666')
+    })
+  })
+
   // === 管道链路集成测试 (M2) ===
   describe('管道链路集成', () => {
     it('burst 完整链路: context → registry → resolve → applyEffects → feedback', () => {

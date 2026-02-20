@@ -234,11 +234,81 @@ describe('SKILL_MODIFIER_DEFS', () => {
     })
   })
 
-  // === 工厂覆盖 ===
-  describe('全部 10 个技能有工厂', () => {
-    const allSkills = ['burst', 'amp', 'freeze', 'shield', 'core', 'aura', 'lone', 'echo', 'void', 'ripple']
+  // === Story 12.1: gamble ===
+  describe('gamble', () => {
+    it('level 1 → base score value=15, random(0.5) 条件', () => {
+      const mods = SKILL_MODIFIER_DEFS.gamble('gamble', 1)
+      expect(mods).toHaveLength(1)
+      const m = mods[0]
+      expect(m.id).toBe('skill:gamble:score')
+      expect(m.source).toBe('skill:gamble')
+      expect(m.sourceType).toBe('skill')
+      expect(m.layer).toBe('base')
+      expect(m.trigger).toBe('on_skill_trigger')
+      expect(m.phase).toBe('calculate')
+      expect(m.effect).toEqual({ type: 'score', value: 15, stacking: 'additive' })
+      expect(m.condition).toEqual({ type: 'random', probability: 0.5 })
+    })
 
-    it('SKILL_MODIFIER_DEFS 包含所有 10 个技能', () => {
+    it('level 3 → score value=25', () => {
+      const mods = SKILL_MODIFIER_DEFS.gamble('gamble', 3)
+      expect(mods[0].effect!.value).toBe(25) // 15 + 5*2 = 25
+    })
+  })
+
+  // === Story 12.1: chain ===
+  describe('chain', () => {
+    it('level 1 → base multiply value=0.1, different_skill_from_last 条件', () => {
+      const mods = SKILL_MODIFIER_DEFS.chain('chain', 1)
+      expect(mods).toHaveLength(1)
+      const m = mods[0]
+      expect(m.id).toBe('skill:chain:multiply')
+      expect(m.source).toBe('skill:chain')
+      expect(m.layer).toBe('base')
+      expect(m.trigger).toBe('on_skill_trigger')
+      expect(m.phase).toBe('calculate')
+      expect(m.effect).toEqual({ type: 'multiply', value: 0.1, stacking: 'additive' })
+      expect(m.condition).toEqual({ type: 'different_skill_from_last' })
+    })
+
+    it('level 3 → multiply value=0.2', () => {
+      const mods = SKILL_MODIFIER_DEFS.chain('chain', 3)
+      expect(mods[0].effect!.value).toBe(0.2) // 10 + 5*2 = 20, /100 = 0.2
+    })
+  })
+
+  // === Story 12.1: overclock ===
+  describe('overclock', () => {
+    it('level 1 → enhance score ×1.5, skills_triggered_gte(3) 条件', () => {
+      const mods = SKILL_MODIFIER_DEFS.overclock('overclock', 1)
+      expect(mods).toHaveLength(1)
+      const m = mods[0]
+      expect(m.id).toBe('skill:overclock:enhance')
+      expect(m.source).toBe('skill:overclock')
+      expect(m.sourceType).toBe('skill')
+      expect(m.layer).toBe('enhance')
+      expect(m.trigger).toBe('on_skill_trigger')
+      expect(m.phase).toBe('calculate')
+      expect(m.effect).toEqual({ type: 'score', value: 1.5, stacking: 'multiplicative' })
+      expect(m.condition).toEqual({ type: 'skills_triggered_gte', value: 3 })
+    })
+
+    it('level 2 → score ×1.6', () => {
+      const mods = SKILL_MODIFIER_DEFS.overclock('overclock', 2)
+      expect(mods[0].effect!.value).toBeCloseTo(1.6) // 1 + (50+10)/100 = 1.6
+    })
+
+    it('level 3 → score ×1.7', () => {
+      const mods = SKILL_MODIFIER_DEFS.overclock('overclock', 3)
+      expect(mods[0].effect!.value).toBeCloseTo(1.7) // 1 + (50+20)/100 = 1.7
+    })
+  })
+
+  // === 工厂覆盖 ===
+  describe('全部 13 个技能有工厂', () => {
+    const allSkills = ['burst', 'amp', 'freeze', 'shield', 'core', 'aura', 'lone', 'echo', 'void', 'ripple', 'gamble', 'chain', 'overclock']
+
+    it('SKILL_MODIFIER_DEFS 包含所有 13 个技能', () => {
       for (const skillId of allSkills) {
         expect(SKILL_MODIFIER_DEFS[skillId], `missing factory for ${skillId}`).toBeDefined()
         expect(typeof SKILL_MODIFIER_DEFS[skillId]).toBe('function')

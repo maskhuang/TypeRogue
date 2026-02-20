@@ -1,0 +1,98 @@
+// ============================================
+// 打字肉鸽 - RelicPipeline 遗物管道解析
+// ============================================
+// Story 11.6: 遗物迁移到 Modifier 管道
+
+import { state } from '../../core/state'
+import { RELIC_MODIFIER_DEFS } from '../../data/relics'
+import type { ModifierTrigger, PipelineContext, PipelineResult, BehaviorCallbacks } from '../modifiers/ModifierTypes'
+import { ModifierRegistry } from '../modifiers/ModifierRegistry'
+import { EffectPipeline } from '../modifiers/EffectPipeline'
+import { BehaviorExecutor } from '../modifiers/BehaviorExecutor'
+
+/**
+ * 解析遗物效果 — 遍历玩家拥有的遗物，调用工厂注册临时 ModifierRegistry，
+ * 通过 EffectPipeline.resolve() 统一计算。
+ *
+ * @param trigger 触发事件类型
+ * @param context 管道上下文（combo, multiplier, overkill 等）
+ * @returns PipelineResult 包含数值效果和待执行行为
+ */
+export function resolveRelicEffects(
+  trigger: ModifierTrigger,
+  context?: PipelineContext,
+): PipelineResult {
+  const registry = new ModifierRegistry()
+
+  for (const relicId of state.player.relics) {
+    const factory = RELIC_MODIFIER_DEFS[relicId]
+    if (!factory) continue
+    const mods = factory(relicId, context)
+    registry.registerMany(mods.filter(m => m.trigger === trigger))
+  }
+
+  return EffectPipeline.resolve(registry, trigger, context)
+}
+
+/**
+ * 解析遗物效果并执行行为
+ *
+ * @param trigger 触发事件类型
+ * @param context 管道上下文
+ * @param callbacks 行为回调
+ * @returns PipelineResult
+ */
+export function resolveRelicEffectsWithBehaviors(
+  trigger: ModifierTrigger,
+  context?: PipelineContext,
+  callbacks?: BehaviorCallbacks,
+): PipelineResult {
+  const result = resolveRelicEffects(trigger, context)
+  if (result.pendingBehaviors.length > 0 && callbacks) {
+    BehaviorExecutor.execute(result.pendingBehaviors, 0, callbacks)
+  }
+  return result
+}
+
+/**
+ * 查询遗物标记 — 替代 hasRelic() 的语义化查询接口。
+ * 用于行为型遗物（不产生数值效果的遗物）。
+ *
+ * @param flag 标记名称
+ * @returns 标记值（数字或 boolean）
+ */
+export function queryRelicFlag(flag: string): number | boolean {
+  switch (flag) {
+    case 'magnet_bias':
+      // 磁石：有遗物时词语选择偏向技能字母的概率更高
+      return state.player.relics.has('magnet') ? 0.8 : 0.6
+    case 'price_discount':
+      // 幸运硬币：商店折扣 10%
+      return state.player.relics.has('lucky_coin') ? 0.1 : 0
+    case 'perfectionist_streak':
+      // 完美主义者：是否启用完美连击加成
+      return state.player.relics.has('perfectionist')
+    default:
+      return false
+  }
+}
+
+/**
+ * 为技能管道注入遗物 global 层 Modifier。
+ * 目前仅 golden_keyboard 影响技能管道（技能效果 +25%）。
+ *
+ * @param registry 技能的 ModifierRegistry（会被修改）
+ * @param context 管道上下文
+ */
+export function injectRelicModifiers(
+  registry: ModifierRegistry,
+  context?: PipelineContext,
+): void {
+  for (const relicId of state.player.relics) {
+    const factory = RELIC_MODIFIER_DEFS[relicId]
+    if (!factory) continue
+    const mods = factory(relicId, context)
+    // 只注入 on_skill_trigger 的 global 层 Modifier
+    registry.registerMany(mods.filter(m => m.trigger === 'on_skill_trigger'))
+  }
+}
