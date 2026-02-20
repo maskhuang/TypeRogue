@@ -3,6 +3,7 @@
 // ============================================
 
 import type { SkillDefinition, SkillType, PassiveSkillType } from '../core/types';
+import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes';
 
 // === 被动技能类型列表 ===
 export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'lone', 'void'];
@@ -116,6 +117,109 @@ export const SKILLS: Record<string, SkillDefinition> = {
     desc: '+12分，本词每有一个其他技能触发-1分'
   },
 };
+
+// === Modifier 工厂类型 ===
+export type SkillModifierFactory = (
+  skillId: string,
+  level: number,
+  context?: PipelineContext,
+) => Modifier[]
+
+// === 工具函数 ===
+function skillVal(skillId: string, level: number): number {
+  const sk = SKILLS[skillId]
+  return sk.base + sk.grow * (level - 1)
+}
+
+function baseModifier(skillId: string, id: string, effectType: 'score' | 'multiply' | 'time' | 'shield', value: number): Modifier {
+  return {
+    id: `skill:${skillId}:${id}`,
+    source: `skill:${skillId}`,
+    sourceType: 'skill',
+    layer: 'base',
+    trigger: 'on_skill_trigger',
+    phase: 'calculate',
+    effect: { type: effectType, value, stacking: 'additive' },
+    priority: 100,
+  }
+}
+
+// === SKILL_MODIFIER_DEFS — 每个技能的 Modifier 工厂 ===
+export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
+  burst: (id, lvl) => [
+    baseModifier(id, 'score', 'score', skillVal(id, lvl)),
+  ],
+
+  amp: (id, lvl) => [
+    baseModifier(id, 'multiply', 'multiply', skillVal(id, lvl) / 100),
+  ],
+
+  freeze: (id, lvl) => [
+    baseModifier(id, 'time', 'time', skillVal(id, lvl)),
+  ],
+
+  shield: (id, lvl) => [
+    baseModifier(id, 'shield', 'shield', skillVal(id, lvl)),
+  ],
+
+  core: (id, lvl, ctx) => [
+    baseModifier(id, 'score', 'score', skillVal(id, lvl) + (ctx?.adjacentSkillCount ?? 0) * 2),
+  ],
+
+  aura: (id, lvl) => [
+    // 自身触发时小分数
+    baseModifier(id, 'score', 'score', skillVal(id, lvl) / 3),
+    // 相邻 score 技能 enhance ×1.5
+    {
+      id: `skill:${id}:enhance`,
+      source: `skill:${id}`,
+      sourceType: 'skill',
+      layer: 'enhance',
+      trigger: 'on_skill_trigger',
+      phase: 'calculate',
+      effect: { type: 'score', value: 1.5, stacking: 'multiplicative' },
+      priority: 100,
+    },
+  ],
+
+  lone: (id, lvl) => [{
+    ...baseModifier(id, 'score', 'score', skillVal(id, lvl)),
+    condition: { type: 'skills_triggered_this_word' as const, value: 1 },
+  }],
+
+  echo: (id, _lvl) => [{
+    id: `skill:${id}:trigger_adjacent`,
+    source: `skill:${id}`,
+    sourceType: 'skill',
+    layer: 'base',
+    trigger: 'on_skill_trigger',
+    phase: 'after',
+    behavior: { type: 'trigger_adjacent' },
+    priority: 100,
+  }],
+
+  void: (id, lvl, ctx) => {
+    const val = skillVal(id, lvl)
+    const otherSkills = Math.max(0, (ctx?.skillsTriggeredThisWord ?? 0) - 1)
+    return [
+      baseModifier(id, 'score', 'score', Math.max(0, val - otherSkills)),
+    ]
+  },
+
+  ripple: (id, lvl) => [
+    baseModifier(id, 'score', 'score', skillVal(id, lvl)),
+    {
+      id: `skill:${id}:buff`,
+      source: `skill:${id}`,
+      sourceType: 'skill',
+      layer: 'base',
+      trigger: 'on_skill_trigger',
+      phase: 'after',
+      behavior: { type: 'buff_next_skill', multiplier: 1.5 },
+      priority: 100,
+    },
+  ],
+}
 
 /**
  * 检查技能是否为被动技能

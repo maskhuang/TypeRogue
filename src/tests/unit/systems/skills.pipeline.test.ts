@@ -1,0 +1,521 @@
+// ============================================
+// 打字肉鸽 - 技能管道集成测试
+// ============================================
+// Story 11.5: 现有技能迁移 — pipeline 集成 + 效果应用 + 行为回调
+
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { SKILL_MODIFIER_DEFS, SKILLS } from '../../../src/data/skills'
+import { ModifierRegistry } from '../../../src/systems/modifiers/ModifierRegistry'
+import { EffectPipeline } from '../../../src/systems/modifiers/EffectPipeline'
+import { BehaviorExecutor } from '../../../src/systems/modifiers/BehaviorExecutor'
+import {
+  createScopedRegistry,
+  applyEffects,
+  buildTriggerContext,
+  generateFeedback,
+  getAdjacentSkills,
+} from '../../../src/systems/skills'
+import { state, synergy, resetState } from '../../../src/core/state'
+import type { PipelineContext, PipelineResult, EffectAccumulator } from '../../../src/systems/modifiers/ModifierTypes'
+
+// === 工具函数 ===
+function emptyEffects(): EffectAccumulator {
+  return { score: 0, multiply: 0, time: 0, gold: 0, shield: 0 }
+}
+
+describe('技能管道集成', () => {
+  beforeEach(() => {
+    resetState()
+  })
+
+  // === createScopedRegistry ===
+  describe('createScopedRegistry', () => {
+    it('burst 单独 → 1 个 base modifier', () => {
+      state.player.bindings.set('f', 'burst')
+      state.player.skills.set('burst', { level: 1 })
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      const registry = createScopedRegistry('burst', 1, 'f', ctx, false)
+      const mods = registry.getAll()
+      expect(mods.length).toBe(1)
+      expect(mods[0].source).toBe('skill:burst')
+      expect(mods[0].layer).toBe('base')
+    })
+
+    it('burst + 相邻 aura → base + enhance modifier', () => {
+      state.player.bindings.set('f', 'burst')
+      state.player.bindings.set('g', 'aura')
+      state.player.skills.set('burst', { level: 1 })
+      state.player.skills.set('aura', { level: 1 })
+      const ctx: PipelineContext = {
+        adjacentSkillCount: 1,
+        adjacentSkillTypes: ['aura'],
+        skillsTriggeredThisWord: 1,
+      }
+      const registry = createScopedRegistry('burst', 1, 'f', ctx, false)
+      const mods = registry.getAll()
+      // burst base score + aura enhance score (aura base score NOT included)
+      const enhanceMod = mods.find(m => m.layer === 'enhance')
+      expect(enhanceMod).toBeDefined()
+      expect(enhanceMod!.effect!.type).toBe('score')
+      expect(enhanceMod!.effect!.value).toBe(1.5)
+    })
+
+    it('burst + ripple bonus → base + global modifier', () => {
+      state.player.bindings.set('f', 'burst')
+      state.player.skills.set('burst', { level: 1 })
+      synergy.rippleBonus.set('f', 1.5)
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      const registry = createScopedRegistry('burst', 1, 'f', ctx, false)
+      const mods = registry.getAll()
+      const globalMod = mods.find(m => m.layer === 'global')
+      expect(globalMod).toBeDefined()
+      expect(globalMod!.effect!.type).toBe('score')
+      expect(globalMod!.effect!.value).toBe(1.5)
+      // ripple bonus should be consumed
+      expect(synergy.rippleBonus.has('f')).toBe(false)
+    })
+
+    it('echo isEcho=true → 无 trigger_adjacent 行为', () => {
+      state.player.bindings.set('f', 'echo')
+      state.player.skills.set('echo', { level: 1 })
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      const registry = createScopedRegistry('echo', 1, 'f', ctx, true)
+      const mods = registry.getAll()
+      const hasTriggerAdjacent = mods.some(m => m.behavior?.type === 'trigger_adjacent')
+      expect(hasTriggerAdjacent).toBe(false)
+    })
+
+    it('echo isEcho=false → 有 trigger_adjacent 行为', () => {
+      state.player.bindings.set('f', 'echo')
+      state.player.skills.set('echo', { level: 1 })
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      const registry = createScopedRegistry('echo', 1, 'f', ctx, false)
+      const mods = registry.getAll()
+      const hasTriggerAdjacent = mods.some(m => m.behavior?.type === 'trigger_adjacent')
+      expect(hasTriggerAdjacent).toBe(true)
+    })
+  })
+
+  // === applyEffects ===
+  describe('applyEffects', () => {
+    it('score=10, multiplier=2.0 → wordScore += 20', () => {
+      state.multiplier = 2.0
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 10 }
+      applyEffects(effects)
+      expect(state.wordScore).toBe(20)
+    })
+
+    it('multiply=0.2 → state.multiplier += 0.2', () => {
+      state.multiplier = 1.0
+      const effects: EffectAccumulator = { ...emptyEffects(), multiply: 0.2 }
+      applyEffects(effects)
+      expect(state.multiplier).toBeCloseTo(1.2)
+    })
+
+    it('time=2 → state.time += 2 (capped)', () => {
+      state.time = 25
+      state.timeMax = 30
+      const effects: EffectAccumulator = { ...emptyEffects(), time: 2 }
+      applyEffects(effects)
+      expect(state.time).toBe(27)
+    })
+
+    it('time 上限为 timeMax + 10', () => {
+      state.time = 38
+      state.timeMax = 30
+      const effects: EffectAccumulator = { ...emptyEffects(), time: 5 }
+      applyEffects(effects)
+      expect(state.time).toBe(40) // min(43, 30+10=40)
+    })
+
+    it('shield=1 → synergy.shieldCount += 1', () => {
+      synergy.shieldCount = 0
+      const effects: EffectAccumulator = { ...emptyEffects(), shield: 1 }
+      applyEffects(effects)
+      expect(synergy.shieldCount).toBe(1)
+    })
+
+    it('多效果同时应用', () => {
+      state.multiplier = 1.5
+      state.time = 20
+      state.timeMax = 30
+      const effects: EffectAccumulator = { score: 5, multiply: 0.1, time: 1, gold: 0, shield: 2 }
+      applyEffects(effects)
+      expect(state.wordScore).toBe(7.5) // 5 * 1.5
+      expect(state.multiplier).toBeCloseTo(1.6)
+      expect(state.time).toBe(21)
+      expect(synergy.shieldCount).toBe(2)
+    })
+  })
+
+  // === Pipeline 解析 ===
+  describe('Pipeline 解析', () => {
+    it('burst Lv1 → effects.score = 5', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.burst('burst', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.intercepted).toBe(false)
+      expect(result.effects.score).toBe(5)
+    })
+
+    it('burst + aura enhance → effects.score = 5 * 1.5 = 7.5', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.burst('burst', 1))
+      // 只注册 aura 的 enhance modifier（不注册 base）
+      const auraMods = SKILL_MODIFIER_DEFS.aura('aura', 1)
+      registry.registerMany(auraMods.filter(m => m.layer === 'enhance'))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(7.5)
+    })
+
+    it('burst + ripple global → effects.score = 5 * 1.5 = 7.5', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.burst('burst', 1))
+      registry.register({
+        id: 'bonus:ripple',
+        source: 'bonus:ripple',
+        sourceType: 'passive',
+        layer: 'global',
+        trigger: 'on_skill_trigger',
+        phase: 'calculate',
+        effect: { type: 'score', value: 1.5, stacking: 'multiplicative' },
+        priority: 200,
+      })
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(7.5)
+    })
+
+    it('burst + aura + ripple → effects.score = 5 * 1.5 * 1.5 = 11.25', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.burst('burst', 1))
+      const auraMods = SKILL_MODIFIER_DEFS.aura('aura', 1)
+      registry.registerMany(auraMods.filter(m => m.layer === 'enhance'))
+      registry.register({
+        id: 'bonus:ripple',
+        source: 'bonus:ripple',
+        sourceType: 'passive',
+        layer: 'global',
+        trigger: 'on_skill_trigger',
+        phase: 'calculate',
+        effect: { type: 'score', value: 1.5, stacking: 'multiplicative' },
+        priority: 200,
+      })
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(11.25)
+    })
+
+    it('lone 条件满足 (skillsTriggeredThisWord=1) → effects.score = 8', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.lone('lone', 1))
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.score).toBe(8)
+    })
+
+    it('lone 条件不满足 (skillsTriggeredThisWord=2) → effects.score = 0', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.lone('lone', 1))
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 2 }
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.score).toBe(0)
+    })
+
+    it('echo → pendingBehaviors 含 trigger_adjacent', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.echo('echo', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.pendingBehaviors).toHaveLength(1)
+      expect(result.pendingBehaviors[0].type).toBe('trigger_adjacent')
+    })
+
+    it('ripple → effects.score + pendingBehaviors 含 buff_next_skill', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.ripple('ripple', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(3)
+      expect(result.pendingBehaviors).toHaveLength(1)
+      expect(result.pendingBehaviors[0].type).toBe('buff_next_skill')
+      if (result.pendingBehaviors[0].type === 'buff_next_skill') {
+        expect(result.pendingBehaviors[0].multiplier).toBe(1.5)
+      }
+    })
+
+    it('amp Lv1 → effects.multiply = 0.2', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.amp('amp', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.multiply).toBeCloseTo(0.2)
+    })
+
+    it('freeze Lv1 → effects.time = 2', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.freeze('freeze', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.time).toBe(2)
+    })
+
+    it('shield Lv1 → effects.shield = 1', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.shield('shield', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.shield).toBe(1)
+    })
+  })
+
+  // === generateFeedback ===
+  describe('generateFeedback', () => {
+    it('burst: +N分 #4ecdc4', () => {
+      state.multiplier = 2.0
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 5 }
+      const fb = generateFeedback('burst', effects, { skillsTriggeredThisWord: 1 })
+      expect(fb).not.toBeNull()
+      expect(fb!.text).toBe('+10分')
+      expect(fb!.color).toBe('#4ecdc4')
+    })
+
+    it('amp: 倍率+N #ffe66d', () => {
+      const effects: EffectAccumulator = { ...emptyEffects(), multiply: 0.2 }
+      const fb = generateFeedback('amp', effects, {})
+      expect(fb).not.toBeNull()
+      expect(fb!.text).toBe('倍率+0.2')
+      expect(fb!.color).toBe('#ffe66d')
+    })
+
+    it('freeze: +N秒 #87ceeb', () => {
+      const effects: EffectAccumulator = { ...emptyEffects(), time: 2 }
+      const fb = generateFeedback('freeze', effects, {})
+      expect(fb!.text).toBe('+2秒')
+      expect(fb!.color).toBe('#87ceeb')
+    })
+
+    it('shield: 护盾+N #87ceeb', () => {
+      const effects: EffectAccumulator = { ...emptyEffects(), shield: 1 }
+      const fb = generateFeedback('shield', effects, {})
+      expect(fb!.text).toBe('护盾+1')
+      expect(fb!.color).toBe('#87ceeb')
+    })
+
+    it('core: 核心+N #9b59b6', () => {
+      state.multiplier = 1.5
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 11 }
+      const fb = generateFeedback('core', effects, {})
+      expect(fb!.text).toBe('核心+16')
+      expect(fb!.color).toBe('#9b59b6')
+    })
+
+    it('aura: 无反馈', () => {
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 1 }
+      const fb = generateFeedback('aura', effects, {})
+      expect(fb).toBeNull()
+    })
+
+    it('lone 条件满足: 孤狼! +N #e74c3c', () => {
+      state.multiplier = 2.0
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 8 }
+      const fb = generateFeedback('lone', effects, { skillsTriggeredThisWord: 1 })
+      expect(fb!.text).toBe('孤狼! +16')
+      expect(fb!.color).toBe('#e74c3c')
+    })
+
+    it('lone 条件不满足: 孤狼失效... #666', () => {
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 0 }
+      const fb = generateFeedback('lone', effects, { skillsTriggeredThisWord: 2 })
+      expect(fb!.text).toBe('孤狼失效...')
+      expect(fb!.color).toBe('#666')
+    })
+
+    it('echo: 共鸣! #e056fd', () => {
+      const effects: EffectAccumulator = emptyEffects()
+      const fb = generateFeedback('echo', effects, {})
+      expect(fb!.text).toBe('共鸣!')
+      expect(fb!.color).toBe('#e056fd')
+    })
+
+    it('void 有扣减: 虚空+N (-M) #2c3e50', () => {
+      state.multiplier = 1.0
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 10 }
+      const fb = generateFeedback('void', effects, { skillsTriggeredThisWord: 3 })
+      expect(fb!.text).toBe('虚空+10 (-2)')
+      expect(fb!.color).toBe('#2c3e50')
+    })
+
+    it('void 无扣减: 虚空+N #2c3e50', () => {
+      state.multiplier = 1.0
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 12 }
+      const fb = generateFeedback('void', effects, { skillsTriggeredThisWord: 1 })
+      expect(fb!.text).toBe('虚空+12')
+      expect(fb!.color).toBe('#2c3e50')
+    })
+
+    it('ripple: 涟漪→N #3498db', () => {
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 3 }
+      const fb = generateFeedback('ripple', effects, { adjacentSkillCount: 2 })
+      expect(fb!.text).toBe('涟漪→2')
+      expect(fb!.color).toBe('#3498db')
+    })
+  })
+
+  // === BehaviorExecutor 回调 ===
+  describe('BehaviorExecutor 回调', () => {
+    it('ripple pipeline → BehaviorExecutor 调用 onBuffNextSkill', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.ripple('ripple', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+
+      const onBuffNextSkill = vi.fn()
+      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onBuffNextSkill })
+
+      expect(onBuffNextSkill).toHaveBeenCalledOnce()
+      expect(onBuffNextSkill).toHaveBeenCalledWith(1.5)
+    })
+
+    it('echo pipeline → BehaviorExecutor 调用 onTriggerAdjacent', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.echo('echo', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+
+      const emptyResult: PipelineResult = {
+        intercepted: false,
+        effects: { score: 0, multiply: 0, time: 0, gold: 0, shield: 0 },
+        pendingBehaviors: [],
+      }
+      const onTriggerAdjacent = vi.fn(() => [emptyResult])
+      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onTriggerAdjacent })
+
+      expect(onTriggerAdjacent).toHaveBeenCalledOnce()
+      expect(onTriggerAdjacent).toHaveBeenCalledWith(0)
+    })
+
+    it('echo isEcho=true → BehaviorExecutor 无行为可执行', () => {
+      state.player.bindings.set('f', 'echo')
+      state.player.skills.set('echo', { level: 1 })
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      const registry = createScopedRegistry('echo', 1, 'f', ctx, true)
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+
+      const onTriggerAdjacent = vi.fn()
+      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onTriggerAdjacent })
+
+      expect(onTriggerAdjacent).not.toHaveBeenCalled()
+    })
+  })
+
+  // === aura 自增强回归测试 (H1) ===
+  describe('aura 不自我增强', () => {
+    it('aura 自身触发 → 只有 base score, 无 enhance 自乘', () => {
+      state.player.bindings.set('f', 'aura')
+      state.player.skills.set('aura', { level: 1 })
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      const registry = createScopedRegistry('aura', 1, 'f', ctx, false)
+
+      // registry 中不应有 enhance 层 modifier
+      const mods = registry.getAll()
+      const enhanceMod = mods.find(m => m.layer === 'enhance')
+      expect(enhanceMod).toBeUndefined()
+
+      // pipeline 解析：score = base only = 3/3 = 1（不乘 1.5）
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(1)
+    })
+
+    it('aura 相邻 burst → burst 获得 enhance ×1.5', () => {
+      state.player.bindings.set('f', 'burst')
+      state.player.bindings.set('g', 'aura')
+      state.player.skills.set('burst', { level: 1 })
+      state.player.skills.set('aura', { level: 1 })
+      const ctx: PipelineContext = {
+        adjacentSkillCount: 1,
+        adjacentSkillTypes: ['aura'],
+        skillsTriggeredThisWord: 1,
+      }
+      const registry = createScopedRegistry('burst', 1, 'f', ctx, false)
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(7.5) // 5 × 1.5
+    })
+  })
+
+  // === 管道链路集成测试 (M2) ===
+  describe('管道链路集成', () => {
+    it('burst 完整链路: context → registry → resolve → applyEffects → feedback', () => {
+      state.player.bindings.set('f', 'burst')
+      state.player.skills.set('burst', { level: 1 })
+      state.multiplier = 2.0
+      synergy.wordSkillCount = 0
+
+      // 1. buildTriggerContext
+      const adjacent = getAdjacentSkills('f')
+      synergy.wordSkillCount++
+      const context = buildTriggerContext('f', adjacent)
+      expect(context.skillsTriggeredThisWord).toBe(1)
+
+      // 2. createScopedRegistry
+      const registry = createScopedRegistry('burst', 1, 'f', context, false, adjacent)
+
+      // 3. EffectPipeline.resolve
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', context)
+      expect(result.effects.score).toBe(5)
+
+      // 4. applyEffects
+      applyEffects(result.effects)
+      expect(state.wordScore).toBe(10) // 5 × 2.0
+
+      // 5. generateFeedback
+      const fb = generateFeedback('burst', result.effects, context)
+      expect(fb!.text).toBe('+10分')
+    })
+
+    it('burst + 相邻 aura 完整链路', () => {
+      state.player.bindings.set('f', 'burst')
+      state.player.bindings.set('g', 'aura')
+      state.player.skills.set('burst', { level: 1 })
+      state.player.skills.set('aura', { level: 1 })
+      state.multiplier = 1.0
+
+      const adjacent = getAdjacentSkills('f')
+      synergy.wordSkillCount++
+      const context = buildTriggerContext('f', adjacent)
+      const registry = createScopedRegistry('burst', 1, 'f', context, false, adjacent)
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', context)
+
+      // burst 5 × aura enhance 1.5 = 7.5
+      expect(result.effects.score).toBe(7.5)
+
+      applyEffects(result.effects)
+      expect(state.wordScore).toBe(7.5)
+
+      const fb = generateFeedback('burst', result.effects, context)
+      expect(fb!.text).toBe('+7分') // Math.floor(7.5 * 1.0) = 7
+    })
+
+    it('ripple 完整链路: score + buff_next_skill 回调', () => {
+      state.player.bindings.set('f', 'ripple')
+      state.player.bindings.set('g', 'burst')
+      state.player.skills.set('ripple', { level: 1 })
+      state.player.skills.set('burst', { level: 1 })
+      state.multiplier = 1.0
+
+      const adjacent = getAdjacentSkills('f')
+      synergy.wordSkillCount++
+      const context = buildTriggerContext('f', adjacent)
+      const registry = createScopedRegistry('ripple', 1, 'f', context, false, adjacent)
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', context)
+
+      expect(result.effects.score).toBe(3)
+      expect(result.pendingBehaviors).toHaveLength(1)
+
+      // 执行行为回调
+      const onBuffNextSkill = vi.fn((multiplier: number) => {
+        for (const adj of adjacent) {
+          synergy.rippleBonus.set(adj.key, multiplier)
+        }
+      })
+      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onBuffNextSkill })
+
+      // 验证 ripple bonus 已设置
+      expect(onBuffNextSkill).toHaveBeenCalledWith(1.5)
+      if (adjacent.length > 0) {
+        expect(synergy.rippleBonus.has(adjacent[0].key)).toBe(true)
+      }
+    })
+  })
+})
