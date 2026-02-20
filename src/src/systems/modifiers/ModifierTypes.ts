@@ -101,6 +101,28 @@ export interface PipelineContext {
   wordNumber?: number
 }
 
+// === 行为执行回调 (Story 11.4) ===
+
+/** BehaviorExecutor 的回调接口 — 由调用方实现 */
+export interface BehaviorCallbacks {
+  /** trigger_adjacent: 返回相邻技能的 pipeline 结果列表 */
+  onTriggerAdjacent?(depth: number): PipelineResult[]
+  /** trigger_skill: 返回指定技能的 pipeline 结果（null = 技能不存在） */
+  onTriggerSkill?(targetSkillId: string, depth: number): PipelineResult | null
+  /** buff_next_skill: 通知调用方设置临时增益 */
+  onBuffNextSkill?(multiplier: number): void
+}
+
+/** BehaviorExecutor.execute() 的返回值 */
+export interface BehaviorExecutionResult {
+  /** 成功执行的行为数量（不含 intercept 跳过和深度截断） */
+  executedCount: number
+  /** 因深度限制被跳过的触发类行为数量 */
+  skippedByDepth: number
+  /** 实际达到的最大链式深度（等于传入的 depth 若无链式触发） */
+  chainDepthReached: number
+}
+
 // === 完整 Modifier 接口 ===
 export interface Modifier {
   /** 唯一标识，如 'skill:burst:score' */
