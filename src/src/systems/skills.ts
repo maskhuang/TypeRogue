@@ -4,10 +4,10 @@
 // Story 11.5: Modifier 管道集成
 
 import { state, synergy } from '../core/state';
-import { ADJACENT_KEYS } from '../core/constants';
+import { ADJACENT_KEYS, KEYBOARD_ROWS } from '../core/constants';
 import { SKILLS, SKILL_MODIFIER_DEFS } from '../data/skills';
 import type { AdjacentSkill } from '../core/types';
-import type { PipelineContext, EffectAccumulator, BehaviorCallbacks, PipelineResult } from './modifiers/ModifierTypes';
+import type { PipelineContext, EffectAccumulator, BehaviorCallbacks, PipelineResult, ModifierTrigger } from './modifiers/ModifierTypes';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { BehaviorExecutor } from './modifiers/BehaviorExecutor';
@@ -68,9 +68,13 @@ export function createScopedRegistry(
   // 注册触发技能自身的 base 层 Modifier（enhance/global 来自相邻技能）
   let mods = factory(skillId, level, context);
 
-  // isEcho 时过滤掉 trigger_adjacent 行为
+  // isEcho 时过滤掉链式行为（防止 echo 双触发中重复设置标记）
   if (isEcho) {
-    mods = mods.filter(m => m.behavior?.type !== 'trigger_adjacent');
+    mods = mods.filter(m =>
+      m.behavior?.type !== 'trigger_adjacent' &&
+      m.behavior?.type !== 'set_echo_flag' &&
+      m.behavior?.type !== 'set_ripple_flag'
+    );
   }
   registry.registerMany(mods.filter(m => m.layer === 'base'));
 
@@ -87,21 +91,6 @@ export function createScopedRegistry(
 
   // 遗物 global 层注入（如 golden_keyboard 技能效果 +25%）
   injectRelicModifiers(registry, context);
-
-  // 涟漪加成：global 层临时 Modifier
-  if (synergy.rippleBonus.has(triggerKey)) {
-    registry.register({
-      id: 'bonus:ripple',
-      source: 'bonus:ripple',
-      sourceType: 'passive',
-      layer: 'global',
-      trigger: 'on_skill_trigger',
-      phase: 'calculate',
-      effect: { type: 'score', value: 1.5, stacking: 'multiplicative' },
-      priority: 200,
-    });
-    synergy.rippleBonus.delete(triggerKey);
-  }
 
   return registry;
 }
@@ -148,7 +137,7 @@ export function generateFeedback(
       return { text: '孤狼失效...', color: '#666' };
     }
     case 'echo':
-      return { text: '共鸣!', color: '#e056fd' };
+      return { text: '回响→双触发', color: '#e056fd' };
     case 'void': {
       const otherSkills = Math.max(0, (context.skillsTriggeredThisWord ?? 0) - 1);
       const displayScore = Math.floor(effects.score * state.multiplier);
@@ -157,8 +146,10 @@ export function generateFeedback(
       }
       return { text: `虚空+${displayScore}`, color: '#2c3e50' };
     }
-    case 'ripple':
-      return { text: `涟漪→${context.adjacentSkillCount ?? 0}`, color: '#3498db' };
+    case 'ripple': {
+      const rippleText = effects.score > 0 ? `涟漪→传递 +${Math.floor(effects.score * state.multiplier)}` : '涟漪→传递';
+      return { text: rippleText, color: '#3498db' };
+    }
     case 'gamble':
       if (effects.score > 0) {
         return { text: `豪赌! +${Math.floor(effects.score * state.multiplier)}`, color: '#f1c40f' };
@@ -176,9 +167,38 @@ export function generateFeedback(
       }
       return { text: '超频待机...', color: '#666' };
     }
+    case 'pulse':
+      return null; // 反馈在 pulseCounter 回调中直接显示
+    case 'sentinel':
+      return null; // 反馈在 restoreShield 回调中直接显示
+    case 'mirror':
+      return { text: '镜像!', color: '#9b59b6' };
+    case 'leech':
+      return { text: `汲取+${Math.floor(effects.score * state.multiplier)}`, color: '#27ae60' };
     default:
       return null;
   }
+}
+
+// === 技能事件解析（非触发事件：on_error, on_word_complete） ===
+export function resolveSkillEventModifiers(
+  trigger: ModifierTrigger,
+  context: PipelineContext,
+  behaviorCallbacks?: BehaviorCallbacks,
+): PipelineResult {
+  const registry = new ModifierRegistry();
+  state.player.skills.forEach((data, skillId) => {
+    const factory = SKILL_MODIFIER_DEFS[skillId];
+    if (!factory) return;
+    const mods = factory(skillId, data.level, context);
+    registry.registerMany(mods.filter(m => m.trigger === trigger));
+  });
+  injectRelicModifiers(registry, context);
+  const result = EffectPipeline.resolve(registry, trigger, context);
+  if (behaviorCallbacks && result.pendingBehaviors.length > 0) {
+    BehaviorExecutor.execute(result.pendingBehaviors, 0, behaviorCallbacks);
+  }
+  return result;
 }
 
 // === 空 PipelineResult 工具 ===
@@ -206,6 +226,12 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
   // 记录技能触发
   synergy.wordSkillCount++;
 
+  // === Echo 标记检查（消费在前，二次触发在后） ===
+  const shouldEchoRepeat = synergy.echoPending && !isEcho && skillId !== 'echo';
+  if (shouldEchoRepeat) {
+    synergy.echoPending = false;
+  }
+
   // 构建上下文 + 作用域注册表
   const context = buildTriggerContext(triggerKey, adjacent);
   context.currentSkillId = skillId;
@@ -219,13 +245,25 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
   // 应用数值效果
   applyEffects(result.effects);
 
+  // === Ripple 传递：应用上一个技能存储的效果 ===
+  if (synergy.ripplePassthrough !== null) {
+    applyEffects(synergy.ripplePassthrough);
+    synergy.ripplePassthrough = null;
+  }
+
+  // === Ripple 标记检查：存储当前效果供下一个技能使用 ===
+  if (synergy.ripplePending && skillId !== 'ripple') {
+    synergy.ripplePending = false;
+    synergy.ripplePassthrough = { ...result.effects };
+  }
+
   // 显示反馈
   const fb = generateFeedback(skillId, result.effects, context);
   if (fb) {
     showFeedback(fb.text, fb.color);
   }
 
-  // 执行行为（echo trigger_adjacent, ripple buff_next_skill）
+  // 执行行为
   const callbacks: BehaviorCallbacks = {
     onTriggerAdjacent: (_depth: number) => {
       const results: PipelineResult[] = [];
@@ -239,29 +277,58 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
       }
       return results;
     },
-    onBuffNextSkill: (_multiplier: number) => {
-      for (const adj of adjacent) {
-        synergy.rippleBonus.set(adj.key, 1.5);
+    onSetEchoFlag: () => {
+      synergy.echoPending = true;
+    },
+    onSetRippleFlag: () => {
+      synergy.ripplePending = true;
+    },
+    onPulseCounter: (timeBonus: number) => {
+      synergy.pulseCount++;
+      if (synergy.pulseCount % 3 === 0) {
+        applyEffects({ score: 0, multiply: 0, time: timeBonus, gold: 0, shield: 0 });
+        showFeedback(`脉冲! +${timeBonus}秒`, '#2ecc71');
       }
+    },
+    onTriggerRowMirror: (_depth: number) => {
+      const row = KEYBOARD_ROWS.find(r => r.includes(triggerKey));
+      if (!row) return null;
+      // 找该行所有有绑定技能的键（按位置排序）
+      const boundInRow = row
+        .map((k, i) => ({ key: k, index: i, skillId: state.player.bindings.get(k) }))
+        .filter(e => e.skillId != null) as { key: string; index: number; skillId: string }[];
+      if (boundInRow.length < 2) return null;
+      const triggerIndex = row.indexOf(triggerKey);
+      const leftmost = boundInRow[0];
+      const rightmost = boundInRow[boundInRow.length - 1];
+      if (triggerIndex === leftmost.index && rightmost.key !== triggerKey) {
+        setTimeout(() => {
+          if (state.phase === 'battle') {
+            triggerSkill(rightmost.skillId, rightmost.key, true);
+          }
+        }, 100);
+        return emptyPipelineResult();
+      }
+      if (triggerIndex === rightmost.index && leftmost.key !== triggerKey) {
+        setTimeout(() => {
+          if (state.phase === 'battle') {
+            triggerSkill(leftmost.skillId, leftmost.key, true);
+          }
+        }, 100);
+        return emptyPipelineResult();
+      }
+      return null;
     },
   };
   BehaviorExecutor.execute(result.pendingBehaviors, 0, callbacks);
 
-  // echo 被动：相邻 echo 技能概率触发
-  if (!isEcho) {
-    const adjacentEchoes = adjacent.filter(a => a.skill.type === 'echo');
-    for (const echoAdj of adjacentEchoes) {
-      const echoLvl = state.player.skills.get(echoAdj.skillId)?.level || 1;
-      const echoProb = (echoAdj.skill.base + echoAdj.skill.grow * (echoLvl - 1)) / 100;
-      if (!synergy.echoTrigger.has(echoAdj.key) && Math.random() < echoProb) {
-        synergy.echoTrigger.add(echoAdj.key);
-        setTimeout(() => {
-          if (state.phase === 'battle') {
-            triggerSkill(echoAdj.skillId, echoAdj.key, true);
-          }
-        }, 150);
+  // === Echo 二次触发 ===
+  if (shouldEchoRepeat) {
+    setTimeout(() => {
+      if (state.phase === 'battle') {
+        triggerSkill(skillId, triggerKey, true);
       }
-    }
+    }, 100);
   }
 
   updateHUD();

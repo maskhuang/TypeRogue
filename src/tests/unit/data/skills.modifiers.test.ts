@@ -69,19 +69,25 @@ describe('SKILL_MODIFIER_DEFS', () => {
 
   // === shield ===
   describe('shield', () => {
-    it('level 1 → base shield value=1', () => {
+    it('level 1 → base shield value=1 + on_error interceptor', () => {
       const mods = SKILL_MODIFIER_DEFS.shield('shield', 1)
-      expect(mods).toHaveLength(1)
-      const m = mods[0]
-      expect(m.id).toBe('skill:shield:shield')
-      expect(m.layer).toBe('base')
-      expect(m.phase).toBe('calculate')
-      expect(m.effect).toEqual({ type: 'shield', value: 1, stacking: 'additive' })
+      expect(mods).toHaveLength(2)
+      const shieldMod = mods.find(m => m.trigger === 'on_skill_trigger')!
+      expect(shieldMod.id).toBe('skill:shield:shield')
+      expect(shieldMod.layer).toBe('base')
+      expect(shieldMod.phase).toBe('calculate')
+      expect(shieldMod.effect).toEqual({ type: 'shield', value: 1, stacking: 'additive' })
+      const protectMod = mods.find(m => m.trigger === 'on_error')!
+      expect(protectMod.id).toBe('skill:shield:protect')
+      expect(protectMod.phase).toBe('before')
+      expect(protectMod.behavior).toEqual({ type: 'intercept' })
+      expect(protectMod.priority).toBe(50)
     })
 
     it('level 3 → shield value=3', () => {
       const mods = SKILL_MODIFIER_DEFS.shield('shield', 3)
-      expect(mods[0].effect!.value).toBe(3)
+      const shieldMod = mods.find(m => m.trigger === 'on_skill_trigger')!
+      expect(shieldMod.effect!.value).toBe(3)
     })
   })
 
@@ -160,16 +166,22 @@ describe('SKILL_MODIFIER_DEFS', () => {
 
   // === echo ===
   describe('echo', () => {
-    it('after 阶段 trigger_adjacent 行为', () => {
+    it('base score + after set_echo_flag 行为', () => {
       const mods = SKILL_MODIFIER_DEFS.echo('echo', 1)
-      expect(mods).toHaveLength(1)
-      const m = mods[0]
-      expect(m.id).toBe('skill:echo:trigger_adjacent')
-      expect(m.layer).toBe('base')
-      expect(m.trigger).toBe('on_skill_trigger')
-      expect(m.phase).toBe('after')
-      expect(m.behavior).toEqual({ type: 'trigger_adjacent' })
-      expect(m.effect).toBeUndefined()
+      expect(mods).toHaveLength(2)
+      const scoreMod = mods.find(m => m.phase === 'calculate')!
+      expect(scoreMod.id).toBe('skill:echo:score')
+      expect(scoreMod.layer).toBe('base')
+      expect(scoreMod.effect).toEqual({ type: 'score', value: 2, stacking: 'additive' })
+      const flagMod = mods.find(m => m.phase === 'after')!
+      expect(flagMod.id).toBe('skill:echo:flag')
+      expect(flagMod.behavior).toEqual({ type: 'set_echo_flag' })
+    })
+
+    it('level 3 → score value=4', () => {
+      const mods = SKILL_MODIFIER_DEFS.echo('echo', 3)
+      const scoreMod = mods.find(m => m.phase === 'calculate')!
+      expect(scoreMod.effect!.value).toBe(4) // 2 + 1*2 = 4
     })
   })
 
@@ -206,7 +218,7 @@ describe('SKILL_MODIFIER_DEFS', () => {
 
   // === ripple ===
   describe('ripple', () => {
-    it('返回 2 个 Modifier — base score + after buff_next_skill', () => {
+    it('返回 2 个 Modifier — base score + after set_ripple_flag', () => {
       const mods = SKILL_MODIFIER_DEFS.ripple('ripple', 1)
       expect(mods).toHaveLength(2)
     })
@@ -219,12 +231,12 @@ describe('SKILL_MODIFIER_DEFS', () => {
       expect(base.effect).toEqual({ type: 'score', value: 3, stacking: 'additive' })
     })
 
-    it('after behavior modifier: buff_next_skill multiplier=1.5', () => {
+    it('after behavior modifier: set_ripple_flag', () => {
       const mods = SKILL_MODIFIER_DEFS.ripple('ripple', 1)
       const after = mods.find(m => m.phase === 'after')!
-      expect(after.id).toBe('skill:ripple:buff')
+      expect(after.id).toBe('skill:ripple:flag')
       expect(after.layer).toBe('base')
-      expect(after.behavior).toEqual({ type: 'buff_next_skill', multiplier: 1.5 })
+      expect(after.behavior).toEqual({ type: 'set_ripple_flag' })
     })
 
     it('level 3 → score value=5', () => {
@@ -304,11 +316,79 @@ describe('SKILL_MODIFIER_DEFS', () => {
     })
   })
 
-  // === 工厂覆盖 ===
-  describe('全部 13 个技能有工厂', () => {
-    const allSkills = ['burst', 'amp', 'freeze', 'shield', 'core', 'aura', 'lone', 'echo', 'void', 'ripple', 'gamble', 'chain', 'overclock']
+  // === Story 12.2: pulse ===
+  describe('pulse', () => {
+    it('after 阶段 pulse_counter 行为, timeBonus=1', () => {
+      const mods = SKILL_MODIFIER_DEFS.pulse('pulse', 1)
+      expect(mods).toHaveLength(1)
+      const m = mods[0]
+      expect(m.id).toBe('skill:pulse:counter')
+      expect(m.phase).toBe('after')
+      expect(m.trigger).toBe('on_skill_trigger')
+      expect(m.behavior).toEqual({ type: 'pulse_counter', timeBonus: 1 })
+    })
 
-    it('SKILL_MODIFIER_DEFS 包含所有 13 个技能', () => {
+    it('level 3 → timeBonus=2', () => {
+      const mods = SKILL_MODIFIER_DEFS.pulse('pulse', 3)
+      expect((mods[0].behavior as any).timeBonus).toBe(2) // 1 + 0.5*2 = 2
+    })
+  })
+
+  // === Story 12.2: sentinel ===
+  describe('sentinel', () => {
+    it('on_word_complete after 阶段 restore_shield 行为', () => {
+      const mods = SKILL_MODIFIER_DEFS.sentinel('sentinel', 1)
+      expect(mods).toHaveLength(1)
+      const m = mods[0]
+      expect(m.id).toBe('skill:sentinel:restore')
+      expect(m.trigger).toBe('on_word_complete')
+      expect(m.phase).toBe('after')
+      expect(m.behavior).toEqual({ type: 'restore_shield', amount: 1 })
+    })
+
+    it('level 3 → amount=3', () => {
+      const mods = SKILL_MODIFIER_DEFS.sentinel('sentinel', 3)
+      expect((mods[0].behavior as any).amount).toBe(3) // 1 + 1*2 = 3
+    })
+  })
+
+  // === Story 12.2: mirror ===
+  describe('mirror', () => {
+    it('enhance 层 after 阶段 trigger_row_mirror 行为', () => {
+      const mods = SKILL_MODIFIER_DEFS.mirror('mirror', 1)
+      expect(mods).toHaveLength(1)
+      const m = mods[0]
+      expect(m.id).toBe('skill:mirror:trigger')
+      expect(m.layer).toBe('enhance')
+      expect(m.phase).toBe('after')
+      expect(m.behavior).toEqual({ type: 'trigger_row_mirror' })
+    })
+  })
+
+  // === Story 12.2: leech ===
+  describe('leech', () => {
+    it('skillsTriggeredThisWord=0 → score=0', () => {
+      const mods = SKILL_MODIFIER_DEFS.leech('leech', 1, {})
+      expect(mods).toHaveLength(1)
+      expect(mods[0].effect!.value).toBe(0)
+    })
+
+    it('skillsTriggeredThisWord=3 → score=6', () => {
+      const mods = SKILL_MODIFIER_DEFS.leech('leech', 1, { skillsTriggeredThisWord: 3 })
+      expect(mods[0].effect!.value).toBe(6) // 3 * 2 = 6
+    })
+
+    it('level 3, skillsTriggeredThisWord=2 → score=8', () => {
+      const mods = SKILL_MODIFIER_DEFS.leech('leech', 3, { skillsTriggeredThisWord: 2 })
+      expect(mods[0].effect!.value).toBe(8) // 2 * (2 + 1*2) = 8
+    })
+  })
+
+  // === 工厂覆盖 ===
+  describe('全部 17 个技能有工厂', () => {
+    const allSkills = ['burst', 'amp', 'freeze', 'shield', 'core', 'aura', 'lone', 'echo', 'void', 'ripple', 'gamble', 'chain', 'overclock', 'pulse', 'sentinel', 'mirror', 'leech']
+
+    it('SKILL_MODIFIER_DEFS 包含所有 17 个技能', () => {
       for (const skillId of allSkills) {
         expect(SKILL_MODIFIER_DEFS[skillId], `missing factory for ${skillId}`).toBeDefined()
         expect(typeof SKILL_MODIFIER_DEFS[skillId]).toBe('function')

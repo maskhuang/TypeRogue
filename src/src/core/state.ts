@@ -57,6 +57,10 @@ export function createSynergyState(): SynergyState {
     perfectStreak: 0,
     wordSkillCount: 0,
     lastTriggeredSkillId: null,
+    echoPending: false,
+    ripplePending: false,
+    ripplePassthrough: null,
+    pulseCount: 0,
   };
 }
 

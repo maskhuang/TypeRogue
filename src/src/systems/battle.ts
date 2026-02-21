@@ -12,7 +12,7 @@ import { RELICS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
-import { triggerSkill } from './skills';
+import { triggerSkill, resolveSkillEventModifiers } from './skills';
 import { openShop } from './shop';
 
 // === 计时器 ===
@@ -56,8 +56,12 @@ function setWord(): void {
   wordBaseScore = 0; // 重置基础分
   state.wordPerfect = true;
   synergy.echoTrigger.clear();
-  synergy.wordSkillCount = 0; // 重置技能触发计数
-  synergy.lastTriggeredSkillId = null; // 重置前一个技能跟踪
+  synergy.wordSkillCount = 0;
+  synergy.lastTriggeredSkillId = null;
+  synergy.echoPending = false;
+  synergy.ripplePending = false;
+  synergy.ripplePassthrough = null;
+  synergy.pulseCount = 0;
   renderWord();
   updateSettlementLive(); // 初始化结算面板
 }
@@ -180,11 +184,14 @@ function playerWrong(): void {
 
   playSound('wrong');
 
-  // 护盾保护
-  if (synergy.shieldCount > 0) {
-    synergy.shieldCount--;
-    showFeedback('护盾保护!', '#87ceeb');
-    return;
+  // 护盾保护（通过管道解析 shield 的 on_error 拦截器）
+  {
+    const shieldResult = resolveSkillEventModifiers('on_error', { hasError: true });
+    if (shieldResult.intercepted && synergy.shieldCount > 0) {
+      synergy.shieldCount--;
+      showFeedback('护盾保护!', '#87ceeb');
+      return;
+    }
   }
 
   // 凤凰羽毛遗物：通过管道解析保护行为
@@ -283,6 +290,17 @@ function completeWord(): void {
   if (wordRelicResult.effects.time > 0) {
     state.time = Math.min(state.time + wordRelicResult.effects.time, state.timeMax + state.player.timeBonus + 5);
   }
+
+  // 技能效果：sentinel 完词恢复护盾
+  resolveSkillEventModifiers('on_word_complete', {
+    combo: state.combo,
+    multiplier: state.multiplier,
+  }, {
+    onRestoreShield: (amount: number) => {
+      synergy.shieldCount += amount;
+      showFeedback(`哨兵: +${amount}盾`, '#27ae60');
+    },
+  });
 
   setTimeout(() => {
     if (state.phase === 'battle') setWord();
@@ -478,6 +496,10 @@ export function startLevel(): void {
   synergy.perfectStreak = 0;
   synergy.rippleBonus.clear();
   synergy.echoTrigger.clear();
+  synergy.echoPending = false;
+  synergy.ripplePending = false;
+  synergy.ripplePassthrough = null;
+  synergy.pulseCount = 0;
 
   // 遗物效果：战斗开始管道（combo_crown 初始倍率, time_lord 额外时间等）
   const startRelicResult = resolveRelicEffects('on_battle_start');

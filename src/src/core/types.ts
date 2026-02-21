@@ -59,13 +59,14 @@ export type SkillCategory = 'active' | 'passive';
 export type SkillType =
   | 'score' | 'multiply' | 'time' | 'protect'
   | 'core' | 'aura' | 'lone' | 'echo' | 'void' | 'ripple'
-  | 'gamble' | 'chain' | 'overclock';
+  | 'gamble' | 'chain' | 'overclock'
+  | 'pulse' | 'sentinel' | 'mirror' | 'leech';
 
 /** 主动技能类型（需按键触发） */
-export type ActiveSkillType = 'score' | 'multiply' | 'time' | 'protect' | 'echo' | 'ripple' | 'gamble' | 'chain' | 'overclock';
+export type ActiveSkillType = 'score' | 'multiply' | 'time' | 'protect' | 'echo' | 'ripple' | 'gamble' | 'chain' | 'overclock' | 'pulse' | 'sentinel' | 'leech';
 
 /** 被动技能类型（持续生效，基于键盘布局） */
-export type PassiveSkillType = 'core' | 'aura' | 'lone' | 'void';
+export type PassiveSkillType = 'core' | 'aura' | 'lone' | 'void' | 'mirror';
 
 export interface SkillDefinition {
   name: string;
@@ -129,6 +130,10 @@ export interface SynergyState {
   perfectStreak: number;
   wordSkillCount: number; // 当前词语触发的技能数量
   lastTriggeredSkillId: string | null; // 本词前一个触发的技能（每词重置）
+  echoPending: boolean; // echo 标记：下一个非 echo 技能触发两次
+  ripplePending: boolean; // ripple 标记：下一个非 ripple 技能效果传递
+  ripplePassthrough: { score: number; multiply: number; time: number; gold: number; shield: number } | null; // ripple 传递的效果
+  pulseCount: number; // pulse 触发计数器（每词重置）
 }
 
 export interface AdjacentSkill {

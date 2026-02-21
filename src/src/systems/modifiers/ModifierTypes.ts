@@ -41,6 +41,11 @@ export type ModifierBehavior =
   | { type: 'buff_next_skill'; multiplier: number }
   | { type: 'trigger_skill'; targetSkillId: string }
   | { type: 'combo_protect'; probability: number }
+  | { type: 'set_echo_flag' }
+  | { type: 'set_ripple_flag' }
+  | { type: 'pulse_counter'; timeBonus: number }
+  | { type: 'restore_shield'; amount: number }
+  | { type: 'trigger_row_mirror' }
 
 // === 条件系统（15 种原语） ===
 export type ModifierCondition =
@@ -126,6 +131,16 @@ export interface BehaviorCallbacks {
   onBuffNextSkill?(multiplier: number): void
   /** combo_protect: 按概率保护连击，返回是否保护成功 */
   onComboProtect?(probability: number): boolean
+  /** set_echo_flag: 设置 echo 双触发标记 */
+  onSetEchoFlag?(): void
+  /** set_ripple_flag: 设置 ripple 效果传递标记 */
+  onSetRippleFlag?(): void
+  /** pulse_counter: 脉冲计数器，达到阈值时触发时间加成 */
+  onPulseCounter?(timeBonus: number): void
+  /** restore_shield: 恢复护盾充能 */
+  onRestoreShield?(amount: number): void
+  /** trigger_row_mirror: 同行镜像触发，返回触发结果 */
+  onTriggerRowMirror?(depth: number): PipelineResult | null
 }
 
 /** BehaviorExecutor.execute() 的返回值 */

@@ -6,9 +6,9 @@ import type { SkillDefinition, SkillType, PassiveSkillType } from '../core/types
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes';
 
 // === 被动技能类型列表 ===
-export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'lone', 'void'];
+export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'lone', 'void', 'mirror'];
 
-// === 主动技能中的链式行为类型（trigger_adjacent / buff_next_skill）===
+// === 连锁流技能类型（echo: 标记双触发 / ripple: 标记效果传递）===
 // 注意: 'chain' 技能（连锁）不在此列表中，它是条件倍率技能，非链式行为
 export const CHAIN_SKILL_TYPES: SkillType[] = ['echo', 'ripple'];
 
@@ -60,15 +60,15 @@ export const SKILLS: Record<string, SkillDefinition> = {
     desc: '打错时保护连击(1次)'
   },
 
-  // === 技能链技能（主动，影响下一个技能） ===
+  // === 连锁流技能（主动，标记互动） ===
   echo: {
     name: '回响',
     icon: '🔔',
     type: 'echo',
     category: 'active',
-    base: 30,
-    grow: 10,
-    desc: '主动：触发所有相邻技能；被动：30%概率被相邻触发，升级提高'
+    base: 2,
+    grow: 1,
+    desc: '触发后，下一个非echo技能触发两次'
   },
   ripple: {
     name: '涟漪',
@@ -77,7 +77,7 @@ export const SKILLS: Record<string, SkillDefinition> = {
     category: 'active',
     base: 3,
     grow: 1,
-    desc: '触发时+3分，相邻技能效果×1.5'
+    desc: '触发时+3分，下一个非ripple技能效果传递给再下一个'
   },
 
   // === 被动技能（持续生效，基于键盘布局） ===
@@ -148,6 +148,46 @@ export const SKILLS: Record<string, SkillDefinition> = {
     grow: 10,
     desc: '本词第3+技能时效果×1.5'
   },
+
+  // === 续航流新增 ===
+  pulse: {
+    name: '脉冲',
+    icon: '💓',
+    type: 'pulse',
+    category: 'active',
+    base: 1,
+    grow: 0.5,
+    desc: '每3次触发+1秒'
+  },
+  sentinel: {
+    name: '哨兵',
+    icon: '🏰',
+    type: 'sentinel',
+    category: 'active',
+    base: 1,
+    grow: 1,
+    desc: '每完成一词恢复1次盾'
+  },
+
+  // === 连锁流新增 ===
+  mirror: {
+    name: '镜像',
+    icon: '🪞',
+    type: 'mirror',
+    category: 'passive',
+    base: 1,
+    grow: 0,
+    desc: '[被动] 同行最左触发→触发最右'
+  },
+  leech: {
+    name: '汲取',
+    icon: '🧛',
+    type: 'leech',
+    category: 'active',
+    base: 2,
+    grow: 1,
+    desc: '本词每个已触发技能+2分'
+  },
 };
 
 // === Modifier 工厂类型 ===
@@ -192,6 +232,16 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
 
   shield: (id, lvl) => [
     baseModifier(id, 'shield', 'shield', skillVal(id, lvl)),
+    {
+      id: `skill:${id}:protect`,
+      source: `skill:${id}`,
+      sourceType: 'skill',
+      layer: 'base',
+      trigger: 'on_error',
+      phase: 'before',
+      behavior: { type: 'intercept' },
+      priority: 50,
+    },
   ],
 
   core: (id, lvl, ctx) => [
@@ -219,16 +269,19 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
     condition: { type: 'skills_triggered_this_word' as const, value: 1 },
   }],
 
-  echo: (id, _lvl) => [{
-    id: `skill:${id}:trigger_adjacent`,
-    source: `skill:${id}`,
-    sourceType: 'skill',
-    layer: 'base',
-    trigger: 'on_skill_trigger',
-    phase: 'after',
-    behavior: { type: 'trigger_adjacent' },
-    priority: 100,
-  }],
+  echo: (id, lvl) => [
+    baseModifier(id, 'score', 'score', skillVal(id, lvl)),
+    {
+      id: `skill:${id}:flag`,
+      source: `skill:${id}`,
+      sourceType: 'skill',
+      layer: 'base',
+      trigger: 'on_skill_trigger',
+      phase: 'after',
+      behavior: { type: 'set_echo_flag' },
+      priority: 100,
+    },
+  ],
 
   void: (id, lvl, ctx) => {
     const val = skillVal(id, lvl)
@@ -241,13 +294,13 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
   ripple: (id, lvl) => [
     baseModifier(id, 'score', 'score', skillVal(id, lvl)),
     {
-      id: `skill:${id}:buff`,
+      id: `skill:${id}:flag`,
       source: `skill:${id}`,
       sourceType: 'skill',
       layer: 'base',
       trigger: 'on_skill_trigger',
       phase: 'after',
-      behavior: { type: 'buff_next_skill', multiplier: 1.5 },
+      behavior: { type: 'set_ripple_flag' },
       priority: 100,
     },
   ],
@@ -276,6 +329,47 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
     condition: { type: 'skills_triggered_gte' as const, value: 3 },
     priority: 100,
   }],
+
+  // === 续航流：pulse — 每 3 次技能触发 +time ===
+  pulse: (id, lvl) => [{
+    id: `skill:${id}:counter`,
+    source: `skill:${id}`,
+    sourceType: 'skill',
+    layer: 'base',
+    trigger: 'on_skill_trigger',
+    phase: 'after',
+    behavior: { type: 'pulse_counter', timeBonus: skillVal(id, lvl) },
+    priority: 100,
+  }],
+
+  // === 续航流：sentinel — 每完成一词恢复护盾 ===
+  sentinel: (id, lvl) => [{
+    id: `skill:${id}:restore`,
+    source: `skill:${id}`,
+    sourceType: 'skill',
+    layer: 'base',
+    trigger: 'on_word_complete',
+    phase: 'after',
+    behavior: { type: 'restore_shield', amount: skillVal(id, lvl) },
+    priority: 100,
+  }],
+
+  // === 连锁流：mirror — 被动，同行镜像触发 ===
+  mirror: (id, _lvl) => [{
+    id: `skill:${id}:trigger`,
+    source: `skill:${id}`,
+    sourceType: 'skill',
+    layer: 'enhance',
+    trigger: 'on_skill_trigger',
+    phase: 'after',
+    behavior: { type: 'trigger_row_mirror' },
+    priority: 100,
+  }],
+
+  // === 连锁流：leech — 本词已触发技能数 × skillVal ===
+  leech: (id, lvl, ctx) => [
+    baseModifier(id, 'score', 'score', (ctx?.skillsTriggeredThisWord ?? 0) * skillVal(id, lvl)),
+  ],
 }
 
 /**

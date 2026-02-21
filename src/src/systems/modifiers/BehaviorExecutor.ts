@@ -88,6 +88,52 @@ export class BehaviorExecutor {
             result.executedCount++
           }
           break
+
+        case 'set_echo_flag':
+          if (callbacks?.onSetEchoFlag) {
+            callbacks.onSetEchoFlag()
+            result.executedCount++
+          }
+          break
+
+        case 'set_ripple_flag':
+          if (callbacks?.onSetRippleFlag) {
+            callbacks.onSetRippleFlag()
+            result.executedCount++
+          }
+          break
+
+        case 'pulse_counter':
+          if (callbacks?.onPulseCounter) {
+            callbacks.onPulseCounter(behavior.timeBonus)
+            result.executedCount++
+          }
+          break
+
+        case 'restore_shield':
+          if (callbacks?.onRestoreShield) {
+            callbacks.onRestoreShield(behavior.amount)
+            result.executedCount++
+          }
+          break
+
+        case 'trigger_row_mirror': {
+          if (depth >= BehaviorExecutor.MAX_DEPTH) {
+            result.skippedByDepth++
+            break
+          }
+          const mirrorResult = callbacks?.onTriggerRowMirror?.(depth)
+          if (!mirrorResult) break
+          result.executedCount++
+          result.chainDepthReached = Math.max(result.chainDepthReached, depth + 1)
+          if (mirrorResult.pendingBehaviors.length > 0) {
+            const sub = BehaviorExecutor.execute(mirrorResult.pendingBehaviors, depth + 1, callbacks)
+            result.executedCount += sub.executedCount
+            result.skippedByDepth += sub.skippedByDepth
+            result.chainDepthReached = Math.max(result.chainDepthReached, sub.chainDepthReached)
+          }
+          break
+        }
       }
     }
 

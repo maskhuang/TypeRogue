@@ -60,7 +60,7 @@ describe('技能管道集成', () => {
       expect(enhanceMod!.effect!.value).toBe(1.5)
     })
 
-    it('burst + ripple bonus → base + global modifier', () => {
+    it('ripple bonus 不再通过 createScopedRegistry 注入', () => {
       state.player.bindings.set('f', 'burst')
       state.player.skills.set('burst', { level: 1 })
       synergy.rippleBonus.set('f', 1.5)
@@ -68,31 +68,27 @@ describe('技能管道集成', () => {
       const registry = createScopedRegistry('burst', 1, 'f', ctx, false)
       const mods = registry.getAll()
       const globalMod = mods.find(m => m.layer === 'global')
-      expect(globalMod).toBeDefined()
-      expect(globalMod!.effect!.type).toBe('score')
-      expect(globalMod!.effect!.value).toBe(1.5)
-      // ripple bonus should be consumed
-      expect(synergy.rippleBonus.has('f')).toBe(false)
+      expect(globalMod).toBeUndefined()
     })
 
-    it('echo isEcho=true → 无 trigger_adjacent 行为', () => {
+    it('echo isEcho=true → 无 set_echo_flag 行为', () => {
       state.player.bindings.set('f', 'echo')
       state.player.skills.set('echo', { level: 1 })
       const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
       const registry = createScopedRegistry('echo', 1, 'f', ctx, true)
       const mods = registry.getAll()
-      const hasTriggerAdjacent = mods.some(m => m.behavior?.type === 'trigger_adjacent')
-      expect(hasTriggerAdjacent).toBe(false)
+      const hasEchoFlag = mods.some(m => m.behavior?.type === 'set_echo_flag')
+      expect(hasEchoFlag).toBe(false)
     })
 
-    it('echo isEcho=false → 有 trigger_adjacent 行为', () => {
+    it('echo isEcho=false → 有 set_echo_flag 行为', () => {
       state.player.bindings.set('f', 'echo')
       state.player.skills.set('echo', { level: 1 })
       const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
       const registry = createScopedRegistry('echo', 1, 'f', ctx, false)
       const mods = registry.getAll()
-      const hasTriggerAdjacent = mods.some(m => m.behavior?.type === 'trigger_adjacent')
-      expect(hasTriggerAdjacent).toBe(true)
+      const hasEchoFlag = mods.some(m => m.behavior?.type === 'set_echo_flag')
+      expect(hasEchoFlag).toBe(true)
     })
   })
 
@@ -220,24 +216,22 @@ describe('技能管道集成', () => {
       expect(result.effects.score).toBe(0)
     })
 
-    it('echo → pendingBehaviors 含 trigger_adjacent', () => {
+    it('echo → effects.score=2 + pendingBehaviors 含 set_echo_flag', () => {
       const registry = new ModifierRegistry()
       registry.registerMany(SKILL_MODIFIER_DEFS.echo('echo', 1))
       const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(2)
       expect(result.pendingBehaviors).toHaveLength(1)
-      expect(result.pendingBehaviors[0].type).toBe('trigger_adjacent')
+      expect(result.pendingBehaviors[0].type).toBe('set_echo_flag')
     })
 
-    it('ripple → effects.score + pendingBehaviors 含 buff_next_skill', () => {
+    it('ripple → effects.score=3 + pendingBehaviors 含 set_ripple_flag', () => {
       const registry = new ModifierRegistry()
       registry.registerMany(SKILL_MODIFIER_DEFS.ripple('ripple', 1))
       const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
       expect(result.effects.score).toBe(3)
       expect(result.pendingBehaviors).toHaveLength(1)
-      expect(result.pendingBehaviors[0].type).toBe('buff_next_skill')
-      if (result.pendingBehaviors[0].type === 'buff_next_skill') {
-        expect(result.pendingBehaviors[0].multiplier).toBe(1.5)
-      }
+      expect(result.pendingBehaviors[0].type).toBe('set_ripple_flag')
     })
 
     it('amp Lv1 → effects.multiply = 0.2', () => {
@@ -324,10 +318,10 @@ describe('技能管道集成', () => {
       expect(fb!.color).toBe('#666')
     })
 
-    it('echo: 共鸣! #e056fd', () => {
+    it('echo: 回响→双触发 #e056fd', () => {
       const effects: EffectAccumulator = emptyEffects()
       const fb = generateFeedback('echo', effects, {})
-      expect(fb!.text).toBe('共鸣!')
+      expect(fb!.text).toBe('回响→双触发')
       expect(fb!.color).toBe('#e056fd')
     })
 
@@ -347,56 +341,50 @@ describe('技能管道集成', () => {
       expect(fb!.color).toBe('#2c3e50')
     })
 
-    it('ripple: 涟漪→N #3498db', () => {
+    it('ripple: 涟漪→传递 +N #3498db', () => {
+      state.multiplier = 1.0
       const effects: EffectAccumulator = { ...emptyEffects(), score: 3 }
       const fb = generateFeedback('ripple', effects, { adjacentSkillCount: 2 })
-      expect(fb!.text).toBe('涟漪→2')
+      expect(fb!.text).toBe('涟漪→传递 +3')
       expect(fb!.color).toBe('#3498db')
     })
   })
 
   // === BehaviorExecutor 回调 ===
   describe('BehaviorExecutor 回调', () => {
-    it('ripple pipeline → BehaviorExecutor 调用 onBuffNextSkill', () => {
+    it('ripple pipeline → BehaviorExecutor 调用 onSetRippleFlag', () => {
       const registry = new ModifierRegistry()
       registry.registerMany(SKILL_MODIFIER_DEFS.ripple('ripple', 1))
       const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
 
-      const onBuffNextSkill = vi.fn()
-      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onBuffNextSkill })
+      const onSetRippleFlag = vi.fn()
+      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onSetRippleFlag })
 
-      expect(onBuffNextSkill).toHaveBeenCalledOnce()
-      expect(onBuffNextSkill).toHaveBeenCalledWith(1.5)
+      expect(onSetRippleFlag).toHaveBeenCalledOnce()
     })
 
-    it('echo pipeline → BehaviorExecutor 调用 onTriggerAdjacent', () => {
+    it('echo pipeline → BehaviorExecutor 调用 onSetEchoFlag', () => {
       const registry = new ModifierRegistry()
       registry.registerMany(SKILL_MODIFIER_DEFS.echo('echo', 1))
       const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
 
-      const emptyResult: PipelineResult = {
-        intercepted: false,
-        effects: { score: 0, multiply: 0, time: 0, gold: 0, shield: 0 },
-        pendingBehaviors: [],
-      }
-      const onTriggerAdjacent = vi.fn(() => [emptyResult])
-      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onTriggerAdjacent })
+      const onSetEchoFlag = vi.fn()
+      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onSetEchoFlag })
 
-      expect(onTriggerAdjacent).toHaveBeenCalledOnce()
-      expect(onTriggerAdjacent).toHaveBeenCalledWith(0)
+      expect(onSetEchoFlag).toHaveBeenCalledOnce()
     })
 
-    it('echo isEcho=true → BehaviorExecutor 无行为可执行', () => {
+    it('echo isEcho=true → BehaviorExecutor 无 set_echo_flag 行为', () => {
       state.player.bindings.set('f', 'echo')
       state.player.skills.set('echo', { level: 1 })
       const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
       const registry = createScopedRegistry('echo', 1, 'f', ctx, true)
       const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
 
-      const onTriggerAdjacent = vi.fn()
-      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onTriggerAdjacent })
+      const onSetEchoFlag = vi.fn()
+      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onSetEchoFlag })
 
-      expect(onTriggerAdjacent).not.toHaveBeenCalled()
+      expect(onSetEchoFlag).not.toHaveBeenCalled()
     })
   })
 
@@ -617,7 +605,7 @@ describe('技能管道集成', () => {
       expect(fb!.text).toBe('+7分') // Math.floor(7.5 * 1.0) = 7
     })
 
-    it('ripple 完整链路: score + buff_next_skill 回调', () => {
+    it('ripple 完整链路: score + set_ripple_flag 回调', () => {
       state.player.bindings.set('f', 'ripple')
       state.player.bindings.set('g', 'burst')
       state.player.skills.set('ripple', { level: 1 })
@@ -634,18 +622,145 @@ describe('技能管道集成', () => {
       expect(result.pendingBehaviors).toHaveLength(1)
 
       // 执行行为回调
-      const onBuffNextSkill = vi.fn((multiplier: number) => {
-        for (const adj of adjacent) {
-          synergy.rippleBonus.set(adj.key, multiplier)
-        }
+      const onSetRippleFlag = vi.fn(() => {
+        synergy.ripplePending = true
       })
-      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onBuffNextSkill })
+      BehaviorExecutor.execute(result.pendingBehaviors, 0, { onSetRippleFlag })
 
-      // 验证 ripple bonus 已设置
-      expect(onBuffNextSkill).toHaveBeenCalledWith(1.5)
-      if (adjacent.length > 0) {
-        expect(synergy.rippleBonus.has(adjacent[0].key)).toBe(true)
+      // 验证 ripple flag 已设置
+      expect(onSetRippleFlag).toHaveBeenCalled()
+      expect(synergy.ripplePending).toBe(true)
+    })
+  })
+
+  // === Story 12.2: 新技能管道集成 ===
+  describe('pulse 管道集成', () => {
+    it('pulse → after 行为 pulse_counter, timeBonus=1', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.pulse('pulse', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.pendingBehaviors).toHaveLength(1)
+      expect(result.pendingBehaviors[0].type).toBe('pulse_counter')
+      if (result.pendingBehaviors[0].type === 'pulse_counter') {
+        expect(result.pendingBehaviors[0].timeBonus).toBe(1)
       }
+    })
+  })
+
+  describe('sentinel 管道集成', () => {
+    it('sentinel on_word_complete → restore_shield 行为', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.sentinel('sentinel', 1))
+      const result = EffectPipeline.resolve(registry, 'on_word_complete')
+      expect(result.pendingBehaviors).toHaveLength(1)
+      expect(result.pendingBehaviors[0].type).toBe('restore_shield')
+      if (result.pendingBehaviors[0].type === 'restore_shield') {
+        expect(result.pendingBehaviors[0].amount).toBe(1)
+      }
+    })
+
+    it('sentinel on_skill_trigger → 无行为（trigger 不匹配）', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.sentinel('sentinel', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.pendingBehaviors).toHaveLength(0)
+    })
+  })
+
+  describe('leech 管道集成', () => {
+    it('leech, 3 skills triggered → score = 6', () => {
+      const registry = new ModifierRegistry()
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 3 }
+      registry.registerMany(SKILL_MODIFIER_DEFS.leech('leech', 1, ctx))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(6) // 3 * 2
+    })
+
+    it('leech, 0 skills triggered → score = 0', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.leech('leech', 1, {}))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(0)
+    })
+  })
+
+  describe('shield on_error 拦截', () => {
+    it('shield factory 包含 on_error 拦截器', () => {
+      const mods = SKILL_MODIFIER_DEFS.shield('shield', 1)
+      const onErrorMod = mods.find(m => m.trigger === 'on_error')
+      expect(onErrorMod).toBeDefined()
+      expect(onErrorMod!.phase).toBe('before')
+      expect(onErrorMod!.behavior).toEqual({ type: 'intercept' })
+    })
+
+    it('shield on_error → intercepted=true', () => {
+      const registry = new ModifierRegistry()
+      const mods = SKILL_MODIFIER_DEFS.shield('shield', 1)
+      registry.registerMany(mods.filter(m => m.trigger === 'on_error'))
+      const result = EffectPipeline.resolve(registry, 'on_error')
+      expect(result.intercepted).toBe(true)
+    })
+  })
+
+  describe('mirror 管道集成', () => {
+    it('mirror → after 行为 trigger_row_mirror', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.mirror('mirror', 1))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.pendingBehaviors).toHaveLength(1)
+      expect(result.pendingBehaviors[0].type).toBe('trigger_row_mirror')
+    })
+  })
+
+  // === Story 12.2: 新技能反馈 ===
+  describe('generateFeedback 12.2 新技能', () => {
+    it('echo: 回响→双触发 #e056fd', () => {
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 2 }
+      const fb = generateFeedback('echo', effects, {})
+      expect(fb!.text).toBe('回响→双触发')
+      expect(fb!.color).toBe('#e056fd')
+    })
+
+    it('ripple 有分数: 涟漪→传递 +N #3498db', () => {
+      state.multiplier = 2.0
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 3 }
+      const fb = generateFeedback('ripple', effects, {})
+      expect(fb!.text).toBe('涟漪→传递 +6')
+      expect(fb!.color).toBe('#3498db')
+    })
+
+    it('ripple 无分数: 涟漪→传递 #3498db', () => {
+      const effects: EffectAccumulator = emptyEffects()
+      const fb = generateFeedback('ripple', effects, {})
+      expect(fb!.text).toBe('涟漪→传递')
+      expect(fb!.color).toBe('#3498db')
+    })
+
+    it('pulse: null (反馈在回调中)', () => {
+      const effects: EffectAccumulator = emptyEffects()
+      const fb = generateFeedback('pulse', effects, {})
+      expect(fb).toBeNull()
+    })
+
+    it('sentinel: null (反馈在回调中)', () => {
+      const effects: EffectAccumulator = emptyEffects()
+      const fb = generateFeedback('sentinel', effects, {})
+      expect(fb).toBeNull()
+    })
+
+    it('mirror: 镜像! #9b59b6', () => {
+      const effects: EffectAccumulator = emptyEffects()
+      const fb = generateFeedback('mirror', effects, {})
+      expect(fb!.text).toBe('镜像!')
+      expect(fb!.color).toBe('#9b59b6')
+    })
+
+    it('leech: 汲取+N #27ae60', () => {
+      state.multiplier = 1.5
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 6 }
+      const fb = generateFeedback('leech', effects, {})
+      expect(fb!.text).toBe('汲取+9')
+      expect(fb!.color).toBe('#27ae60')
     })
   })
 })
