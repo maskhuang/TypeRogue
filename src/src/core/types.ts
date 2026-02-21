@@ -134,6 +134,7 @@ export interface SynergyState {
   ripplePending: boolean; // ripple 标记：下一个非 ripple 技能效果传递
   ripplePassthrough: { score: number; multiply: number; time: number; gold: number; shield: number } | null; // ripple 传递的效果
   pulseCount: number; // pulse 触发计数器（每词重置）
+  skillBaseScore: number; // 技能贡献的基础分（每词重置，结算面板使用）
 }
 
 export interface AdjacentSkill {

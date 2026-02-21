@@ -129,7 +129,7 @@ export function createScopedRegistry(
 // === 应用效果到游戏状态 ===
 export function applyEffects(effects: EffectAccumulator): void {
   if (effects.score > 0) {
-    state.wordScore += effects.score * state.multiplier;
+    synergy.skillBaseScore += effects.score;
   }
   if (effects.multiply > 0) {
     state.multiplier += effects.multiply;

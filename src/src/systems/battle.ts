@@ -57,6 +57,7 @@ function setWord(): void {
   state.wordPerfect = true;
   synergy.echoTrigger.clear();
   synergy.wordSkillCount = 0;
+  synergy.skillBaseScore = 0;
   synergy.lastTriggeredSkillId = null;
   synergy.echoPending = false;
   synergy.ripplePending = false;
@@ -227,8 +228,8 @@ function playerWrong(): void {
 function completeWord(): void {
   const el = getElements();
 
-  // 计算基础分和倍率
-  const baseChips = Math.floor(wordBaseScore);
+  // 计算基础分和倍率（字母基础分 + 技能基础分）
+  const baseChips = Math.floor(wordBaseScore + synergy.skillBaseScore);
   let mult = state.multiplier;
   let bonusMult = 1;
 
@@ -313,7 +314,7 @@ function updateSettlementLive(): void {
   const multEl = document.getElementById('settlement-mult');
   const finalEl = document.getElementById('settlement-final');
 
-  const chips = Math.floor(wordBaseScore);
+  const chips = Math.floor(wordBaseScore + synergy.skillBaseScore);
   const mult = state.multiplier;
   const final = Math.floor(chips * mult);
 

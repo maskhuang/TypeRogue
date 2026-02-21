@@ -94,11 +94,11 @@ describe('技能管道集成', () => {
 
   // === applyEffects ===
   describe('applyEffects', () => {
-    it('score=10, multiplier=2.0 → wordScore += 20', () => {
+    it('score=10 → skillBaseScore += 10', () => {
       state.multiplier = 2.0
       const effects: EffectAccumulator = { ...emptyEffects(), score: 10 }
       applyEffects(effects)
-      expect(state.wordScore).toBe(20)
+      expect(synergy.skillBaseScore).toBe(10)
     })
 
     it('multiply=0.2 → state.multiplier += 0.2', () => {
@@ -137,7 +137,7 @@ describe('技能管道集成', () => {
       state.timeMax = 30
       const effects: EffectAccumulator = { score: 5, multiply: 0.1, time: 1, gold: 0, shield: 2 }
       applyEffects(effects)
-      expect(state.wordScore).toBe(7.5) // 5 * 1.5
+      expect(synergy.skillBaseScore).toBe(5)
       expect(state.multiplier).toBeCloseTo(1.6)
       expect(state.time).toBe(21)
       expect(synergy.shieldCount).toBe(2)
@@ -574,7 +574,7 @@ describe('技能管道集成', () => {
 
       // 4. applyEffects
       applyEffects(result.effects)
-      expect(state.wordScore).toBe(10) // 5 × 2.0
+      expect(synergy.skillBaseScore).toBe(5) // raw score, no multiplier
 
       // 5. generateFeedback
       const fb = generateFeedback('burst', result.effects, context)
@@ -598,7 +598,7 @@ describe('技能管道集成', () => {
       expect(result.effects.score).toBe(7.5)
 
       applyEffects(result.effects)
-      expect(state.wordScore).toBe(7.5)
+      expect(synergy.skillBaseScore).toBe(7.5) // 5 * 1.5 (aura enhance)
 
       const fb = generateFeedback('burst', result.effects, context)
       expect(fb!.text).toBe('+7分') // Math.floor(7.5 * 1.0) = 7
