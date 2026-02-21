@@ -492,6 +492,7 @@ export function startLevel(): void {
 
   synergy.shieldCount = 0;
   synergy.perfectStreak = 0;
+  synergy.skillMultBonus = 0;
   synergy.rippleBonus.clear();
   synergy.echoTrigger.clear();
   synergy.echoPending = false;
