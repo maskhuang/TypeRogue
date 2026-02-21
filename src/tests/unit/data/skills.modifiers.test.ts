@@ -360,19 +360,27 @@ describe('SKILL_MODIFIER_DEFS', () => {
 
   // === Story 12.2: sentinel ===
   describe('sentinel', () => {
-    it('on_word_complete after 阶段 restore_shield 行为', () => {
-      const mods = SKILL_MODIFIER_DEFS.sentinel('sentinel', 1)
+    it('shieldCount=2 → score = 2*2 = 4', () => {
+      const ctx = { shieldCount: 2 }
+      const mods = SKILL_MODIFIER_DEFS.sentinel('sentinel', 1, ctx)
       expect(mods).toHaveLength(1)
       const m = mods[0]
-      expect(m.id).toBe('skill:sentinel:restore')
-      expect(m.trigger).toBe('on_word_complete')
-      expect(m.phase).toBe('after')
-      expect(m.behavior).toEqual({ type: 'restore_shield', amount: 1 })
+      expect(m.id).toBe('skill:sentinel:score')
+      expect(m.trigger).toBe('on_skill_trigger')
+      expect(m.phase).toBe('calculate')
+      expect(m.effect).toEqual({ type: 'score', value: 4, stacking: 'additive' })
     })
 
-    it('level 3 → amount=3', () => {
-      const mods = SKILL_MODIFIER_DEFS.sentinel('sentinel', 3)
-      expect((mods[0].behavior as any).amount).toBe(3) // 1 + 1*2 = 3
+    it('level 3, shieldCount=1 → score = 1*4 = 4', () => {
+      const ctx = { shieldCount: 1 }
+      const mods = SKILL_MODIFIER_DEFS.sentinel('sentinel', 3, ctx)
+      expect(mods[0].effect!.value).toBe(4) // (2 + 1*2) * 1 = 4
+    })
+
+    it('shieldCount=0 → score = 0', () => {
+      const ctx = { shieldCount: 0 }
+      const mods = SKILL_MODIFIER_DEFS.sentinel('sentinel', 1, ctx)
+      expect(mods[0].effect!.value).toBe(0)
     })
   })
 

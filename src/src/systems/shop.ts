@@ -5,7 +5,7 @@
 import { state } from '../core/state';
 import { resolveRelicEffects } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, ADJACENT_KEYS } from '../core/constants';
-import { SKILLS, SYNERGY_TYPES } from '../data/skills';
+import { SKILLS, SYNERGY_TYPES, getSkillSchool } from '../data/skills';
 import { RELICS } from '../data/relics';
 import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
@@ -131,7 +131,8 @@ function renderSkillShop(): void {
     if (item.type === 'new' && state.player.skills.has(item.skillId)) return;
 
     if (item.type === 'new') {
-      renderShopCard(sk.icon, sk.name, sk.desc, item.cost, '技能', 'new', () => {
+      const school = getSkillSchool(item.skillId);
+      renderShopCard(sk.icon, sk.name, sk.desc, item.cost, school.label, school.cssClass, () => {
         if (buyItem(item.cost)) {
           state.player.skills.set(item.skillId, { level: 1 });
           const freeKey = KEYS.find(k => !state.player.bindings.has(k));
@@ -142,7 +143,8 @@ function renderSkillShop(): void {
       });
     } else if (item.type === 'upgrade') {
       const lvl = state.player.skills.get(item.skillId)?.level || 1;
-      renderShopCard(sk.icon, `${sk.name} → Lv.${lvl + 1}`, '效果提升', item.cost, '升级', 'upgrade', () => {
+      const school = getSkillSchool(item.skillId);
+      renderShopCard(sk.icon, `${sk.name} → Lv.${lvl + 1}`, '效果提升', item.cost, `${school.label}·升级`, school.cssClass, () => {
         if (buyItem(item.cost)) {
           const data = state.player.skills.get(item.skillId);
           if (data) data.level++;
@@ -447,9 +449,11 @@ function renderBuildManager(): void {
     if (state.shop.selectedSkill === skillId) item.classList.add('selected');
     if (isSynergySkill(skillId)) item.classList.add('synergy');
 
+    const school = getSkillSchool(skillId);
     item.innerHTML = `
       <span class="inv-icon">${sk.icon}</span>
       <span class="inv-name">${sk.name}</span>
+      <span class="inv-school ${school.cssClass}">${school.label}</span>
       ${data.level > 1 ? `<span class="inv-level">Lv.${data.level}</span>` : ''}
       ${boundKey ? `<span class="inv-key">[${boundKey.toUpperCase()}]</span>` : ''}
     `;

@@ -291,15 +291,10 @@ function completeWord(): void {
     state.time = Math.min(state.time + wordRelicResult.effects.time, state.timeMax + state.player.timeBonus + 5);
   }
 
-  // 技能效果：sentinel 完词恢复护盾
+  // 技能效果：on_word_complete 事件（预留扩展）
   resolveSkillEventModifiers('on_word_complete', {
     combo: state.combo,
     multiplier: state.multiplier,
-  }, {
-    onRestoreShield: (amount: number) => {
-      synergy.shieldCount += amount;
-      showFeedback(`哨兵: +${amount}盾`, '#27ae60');
-    },
   });
 
   setTimeout(() => {

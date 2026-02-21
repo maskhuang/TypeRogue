@@ -1,5 +1,18 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+:root {
+  --school-burst: #ff6b6b;
+  --school-burst-bg: rgba(255,107,107,0.2);
+  --school-multiply: #ffe66d;
+  --school-multiply-bg: rgba(255,230,109,0.2);
+  --school-sustain: #4ecdc4;
+  --school-sustain-bg: rgba(78,205,196,0.2);
+  --school-chain: #e056fd;
+  --school-chain-bg: rgba(224,86,253,0.2);
+  --school-passive: #87ceeb;
+  --school-passive-bg: rgba(135,206,235,0.2);
+}
+
 body {
     background: #0a0a0f;
     color: #fff;
@@ -425,6 +438,13 @@ body {
 .reward-card .reward-type.upgrade { background: rgba(255,230,109,0.2); color: #ffe66d; }
 .reward-card .reward-type.stat { background: rgba(255,107,107,0.2); color: #ff6b6b; }
 
+/* 技能流派 */
+.reward-card .reward-type.school-burst { background: var(--school-burst-bg); color: var(--school-burst); }
+.reward-card .reward-type.school-multiply { background: var(--school-multiply-bg); color: var(--school-multiply); }
+.reward-card .reward-type.school-sustain { background: var(--school-sustain-bg); color: var(--school-sustain); }
+.reward-card .reward-type.school-chain { background: var(--school-chain-bg); color: var(--school-chain); }
+.reward-card .reward-type.school-passive { background: var(--school-passive-bg); color: var(--school-passive); }
+
 /* 遗物稀有度 */
 .reward-card .reward-type.common { background: rgba(150,150,150,0.2); color: #aaa; }
 .reward-card .reward-type.rare { background: rgba(52,152,219,0.2); color: #3498db; }
@@ -564,6 +584,12 @@ body {
 .inventory-skill .inv-name { font-size: 11px; color: #ccc; }
 .inventory-skill .inv-level { font-size: 9px; color: #ffe66d; }
 .inventory-skill .inv-key { font-size: 9px; color: #4ecdc4; margin-left: 3px; }
+.inventory-skill .inv-school { font-size: 8px; padding: 1px 4px; border-radius: 4px; margin-left: 2px; }
+.inventory-skill .inv-school.school-burst { background: var(--school-burst-bg); color: var(--school-burst); }
+.inventory-skill .inv-school.school-multiply { background: var(--school-multiply-bg); color: var(--school-multiply); }
+.inventory-skill .inv-school.school-sustain { background: var(--school-sustain-bg); color: var(--school-sustain); }
+.inventory-skill .inv-school.school-chain { background: var(--school-chain-bg); color: var(--school-chain); }
+.inventory-skill .inv-school.school-passive { background: var(--school-passive-bg); color: var(--school-passive); }
 
 #shop-footer {
     display: flex;

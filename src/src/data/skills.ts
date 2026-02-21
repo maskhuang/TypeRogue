@@ -164,9 +164,9 @@ export const SKILLS: Record<string, SkillDefinition> = {
     icon: '🏰',
     type: 'sentinel',
     category: 'active',
-    base: 1,
+    base: 2,
     grow: 1,
-    desc: '每完成一词恢复1次盾'
+    desc: '每层护盾+2分'
   },
 
   // === 连锁流新增 ===
@@ -367,17 +367,10 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
     priority: 100,
   }],
 
-  // === 续航流：sentinel — 每完成一词恢复护盾 ===
-  sentinel: (id, lvl) => [{
-    id: `skill:${id}:restore`,
-    source: `skill:${id}`,
-    sourceType: 'skill',
-    layer: 'base',
-    trigger: 'on_word_complete',
-    phase: 'after',
-    behavior: { type: 'restore_shield', amount: skillVal(id, lvl) },
-    priority: 100,
-  }],
+  // === 续航流：sentinel — 根据护盾层数加分 ===
+  sentinel: (id, lvl, ctx) => [
+    baseModifier(id, 'score', 'score', (ctx?.shieldCount ?? 0) * skillVal(id, lvl)),
+  ],
 
   // === 连锁流：mirror — 被动，同行镜像触发 ===
   mirror: (id, _lvl) => [{
@@ -407,6 +400,37 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
     effect: { type: 'score' as const, value: 1 + skillVal(id, lvl) / 100, stacking: 'multiplicative' as const },
     priority: 100,
   }],
+}
+
+// === 技能流派映射 ===
+export interface SkillSchool {
+  label: string;
+  cssClass: string;
+}
+
+export const SKILL_SCHOOL: Record<string, SkillSchool> = {
+  burst: { label: '爆发', cssClass: 'school-burst' },
+  lone: { label: '爆发', cssClass: 'school-burst' },
+  void: { label: '爆发', cssClass: 'school-burst' },
+  gamble: { label: '爆发', cssClass: 'school-burst' },
+  amp: { label: '倍率', cssClass: 'school-multiply' },
+  chain: { label: '倍率', cssClass: 'school-multiply' },
+  overclock: { label: '倍率', cssClass: 'school-multiply' },
+  freeze: { label: '续航', cssClass: 'school-sustain' },
+  shield: { label: '续航', cssClass: 'school-sustain' },
+  pulse: { label: '续航', cssClass: 'school-sustain' },
+  sentinel: { label: '续航', cssClass: 'school-sustain' },
+  echo: { label: '连锁', cssClass: 'school-chain' },
+  ripple: { label: '连锁', cssClass: 'school-chain' },
+  mirror: { label: '连锁', cssClass: 'school-chain' },
+  leech: { label: '连锁', cssClass: 'school-chain' },
+  core: { label: '被动', cssClass: 'school-passive' },
+  aura: { label: '被动', cssClass: 'school-passive' },
+  anchor: { label: '被动', cssClass: 'school-passive' },
+};
+
+export function getSkillSchool(skillId: string): SkillSchool {
+  return SKILL_SCHOOL[skillId] ?? { label: '未知', cssClass: 'school-unknown' };
 }
 
 /**

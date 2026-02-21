@@ -64,6 +64,7 @@ export function buildTriggerContext(triggerKey: string, adjacent: AdjacentSkill[
     adjacentEmptyCount: getAdjacentEmptyCount(triggerKey),
     adjacentSkillTypes: adjacent.map(a => a.skill.type),
     skillsTriggeredThisWord: synergy.wordSkillCount,
+    shieldCount: synergy.shieldCount,
   };
 }
 
@@ -199,8 +200,12 @@ export function generateFeedback(
     }
     case 'pulse':
       return null; // 反馈在 pulseCounter 回调中直接显示
-    case 'sentinel':
-      return null; // 反馈在 restoreShield 回调中直接显示
+    case 'sentinel': {
+      if (effects.score > 0) {
+        return { text: `哨兵+${Math.floor(effects.score * state.multiplier)}`, color: '#27ae60' };
+      }
+      return { text: '哨兵(无盾)', color: '#666' };
+    }
     case 'mirror':
       return { text: '镜像!', color: '#9b59b6' };
     case 'leech':

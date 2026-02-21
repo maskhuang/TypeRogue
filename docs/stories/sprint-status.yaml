@@ -121,16 +121,16 @@ development_status:
   epic-11-retrospective: optional
 
   # Epic 12: 技能池扩充
-  epic-12: in-progress
+  epic-12: done
   12-1-burst-multiplier-skills: done
   12-2-sustain-chain-skills: done
   12-3-passive-skills: done
-  12-4-skill-ui-shop-update: backlog
+  12-4-skill-ui-shop-update: done
   epic-12-retrospective: optional
 
   # Epic 13: 遗物系统重做
-  epic-13: backlog
-  13-1-build-catalyst-relics: backlog
+  epic-13: in-progress
+  13-1-build-catalyst-relics: ready-for-dev
   13-2-risk-reward-relics: backlog
   epic-13-retrospective: optional
 

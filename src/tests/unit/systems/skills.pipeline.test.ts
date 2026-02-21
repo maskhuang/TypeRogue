@@ -647,22 +647,20 @@ describe('技能管道集成', () => {
   })
 
   describe('sentinel 管道集成', () => {
-    it('sentinel on_word_complete → restore_shield 行为', () => {
+    it('sentinel shieldCount=2 → score=4', () => {
       const registry = new ModifierRegistry()
-      registry.registerMany(SKILL_MODIFIER_DEFS.sentinel('sentinel', 1))
-      const result = EffectPipeline.resolve(registry, 'on_word_complete')
-      expect(result.pendingBehaviors).toHaveLength(1)
-      expect(result.pendingBehaviors[0].type).toBe('restore_shield')
-      if (result.pendingBehaviors[0].type === 'restore_shield') {
-        expect(result.pendingBehaviors[0].amount).toBe(1)
-      }
+      const ctx: PipelineContext = { shieldCount: 2 }
+      registry.registerMany(SKILL_MODIFIER_DEFS.sentinel('sentinel', 1, ctx))
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+      expect(result.effects.score).toBe(4) // 2 shields * base 2
     })
 
-    it('sentinel on_skill_trigger → 无行为（trigger 不匹配）', () => {
+    it('sentinel shieldCount=0 → score=0', () => {
       const registry = new ModifierRegistry()
-      registry.registerMany(SKILL_MODIFIER_DEFS.sentinel('sentinel', 1))
+      const ctx: PipelineContext = { shieldCount: 0 }
+      registry.registerMany(SKILL_MODIFIER_DEFS.sentinel('sentinel', 1, ctx))
       const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
-      expect(result.pendingBehaviors).toHaveLength(0)
+      expect(result.effects.score).toBe(0)
     })
   })
 
@@ -741,10 +739,18 @@ describe('技能管道集成', () => {
       expect(fb).toBeNull()
     })
 
-    it('sentinel: null (反馈在回调中)', () => {
+    it('sentinel: 有盾时显示分数', () => {
+      const effects: EffectAccumulator = { ...emptyEffects(), score: 4 }
+      const fb = generateFeedback('sentinel', effects, {})
+      expect(fb!.text).toContain('哨兵')
+      expect(fb!.color).toBe('#27ae60')
+    })
+
+    it('sentinel: 无盾时显示灰色', () => {
       const effects: EffectAccumulator = emptyEffects()
       const fb = generateFeedback('sentinel', effects, {})
-      expect(fb).toBeNull()
+      expect(fb!.text).toBe('哨兵(无盾)')
+      expect(fb!.color).toBe('#666')
     })
 
     it('mirror: 镜像! #9b59b6', () => {

@@ -117,6 +117,8 @@ export interface PipelineContext {
   currentSkillId?: string
   /** 本词前一个触发的技能 ID（chain 条件使用） */
   lastTriggeredSkillId?: string
+  /** 当前护盾层数（sentinel 使用） */
+  shieldCount?: number
 }
 
 // === 行为执行回调 (Story 11.4) ===
