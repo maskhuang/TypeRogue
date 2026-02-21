@@ -289,12 +289,11 @@ describe('技能管道集成', () => {
       expect(fb!.color).toBe('#87ceeb')
     })
 
-    it('core: 核心+N #9b59b6', () => {
+    it('core: null (被动，静默增强)', () => {
       state.multiplier = 1.5
-      const effects: EffectAccumulator = { ...emptyEffects(), score: 11 }
+      const effects: EffectAccumulator = { ...emptyEffects(), multiply: 0.1 }
       const fb = generateFeedback('core', effects, {})
-      expect(fb!.text).toBe('核心+16')
-      expect(fb!.color).toBe('#9b59b6')
+      expect(fb).toBeNull()
     })
 
     it('aura: 无反馈', () => {
@@ -761,6 +760,157 @@ describe('技能管道集成', () => {
       const fb = generateFeedback('leech', effects, {})
       expect(fb!.text).toBe('汲取+9')
       expect(fb!.color).toBe('#27ae60')
+    })
+
+    it('anchor: null (被动，静默增强)', () => {
+      const effects: EffectAccumulator = emptyEffects()
+      const fb = generateFeedback('anchor', effects, {})
+      expect(fb).toBeNull()
+    })
+  })
+
+  // === Story 12.3: 被动流技能管道集成 ===
+  describe('core 重设计管道集成', () => {
+    it('core enhance, 3 triggers → burst score × 1.1 = 5.5', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.burst('burst', 1))
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 3 }
+      const coreMods = SKILL_MODIFIER_DEFS.core('core', 1, ctx)
+      registry.registerMany(coreMods)
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.score).toBeCloseTo(5.5) // 5 × 1.1
+    })
+
+    it('core enhance, 6 triggers → burst score × 1.2 = 6', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.burst('burst', 1))
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 6 }
+      const coreMods = SKILL_MODIFIER_DEFS.core('core', 1, ctx)
+      registry.registerMany(coreMods)
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.score).toBeCloseTo(6) // 5 × 1.2
+    })
+
+    it('core enhance, < 3 triggers → 无加成', () => {
+      const registry = new ModifierRegistry()
+      registry.registerMany(SKILL_MODIFIER_DEFS.burst('burst', 1))
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 2 }
+      const coreMods = SKILL_MODIFIER_DEFS.core('core', 1, ctx)
+      expect(coreMods).toHaveLength(0)
+      registry.registerMany(coreMods)
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.score).toBe(5)
+    })
+
+    it('core Lv2, 3 triggers → score enhance ×1.15', () => {
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 3 }
+      const coreMods = SKILL_MODIFIER_DEFS.core('core', 2, ctx)
+      expect(coreMods).toHaveLength(1)
+      expect(coreMods[0].effect!.value).toBeCloseTo(1.15)
+    })
+  })
+
+  describe('anchor 同行注入集成', () => {
+    it('anchor 在同行 → burst 获得 enhance score ×1.15', () => {
+      // f(burst) 和 j(anchor) 都在 asdfghjkl 行
+      state.player.bindings.set('f', 'burst')
+      state.player.bindings.set('j', 'anchor')
+      state.player.skills.set('burst', { level: 1 })
+      state.player.skills.set('anchor', { level: 1 })
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      const registry = createScopedRegistry('burst', 1, 'f', ctx, false)
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      // burst base 5 × anchor enhance 1.15 = 5.75
+      expect(result.effects.score).toBeCloseTo(5.75)
+    })
+
+    it('anchor 不在同行 → burst 无额外加成', () => {
+      // f(burst) 在 asdfghjkl 行, q(anchor) 在 qwertyuiop 行
+      state.player.bindings.set('f', 'burst')
+      state.player.bindings.set('q', 'anchor')
+      state.player.skills.set('burst', { level: 1 })
+      state.player.skills.set('anchor', { level: 1 })
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      const registry = createScopedRegistry('burst', 1, 'f', ctx, false)
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.score).toBe(5) // 无增强
+    })
+
+    it('anchor 同行 + aura 相邻 → 叠加', () => {
+      // f(burst), g(aura)相邻, j(anchor)同行
+      state.player.bindings.set('f', 'burst')
+      state.player.bindings.set('g', 'aura')
+      state.player.bindings.set('j', 'anchor')
+      state.player.skills.set('burst', { level: 1 })
+      state.player.skills.set('aura', { level: 1 })
+      state.player.skills.set('anchor', { level: 1 })
+      const ctx: PipelineContext = {
+        adjacentSkillCount: 1,
+        adjacentSkillTypes: ['aura'],
+        skillsTriggeredThisWord: 1,
+      }
+      const registry = createScopedRegistry('burst', 1, 'f', ctx, false)
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      // burst base 5 × aura enhance 1.5 × anchor enhance 1.15 = 8.625
+      expect(result.effects.score).toBeCloseTo(8.625)
+    })
+
+    it('anchor 既是相邻又是同行 → 只注入一次（不重复）', () => {
+      // g(burst), h(anchor) — h 既相邻 g 又同行
+      state.player.bindings.set('g', 'burst')
+      state.player.bindings.set('h', 'anchor')
+      state.player.skills.set('burst', { level: 1 })
+      state.player.skills.set('anchor', { level: 1 })
+      const ctx: PipelineContext = {
+        adjacentSkillCount: 1,
+        adjacentSkillTypes: ['anchor'],
+        skillsTriggeredThisWord: 1,
+      }
+      const registry = createScopedRegistry('burst', 1, 'g', ctx, false)
+      const mods = registry.getAll()
+      const anchorMods = mods.filter(m => m.source === 'skill:anchor')
+      expect(anchorMods).toHaveLength(1) // 不重复
+      const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
+      expect(result.effects.score).toBeCloseTo(5.75)
+    })
+
+    it('core 同行但非相邻 → 不注入（只限 adjacent）', () => {
+      // a(burst) 和 l(core) 同行但不相邻
+      state.player.bindings.set('a', 'burst')
+      state.player.bindings.set('l', 'core')
+      state.player.skills.set('burst', { level: 1 })
+      state.player.skills.set('core', { level: 1 })
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 3 }
+      const registry = createScopedRegistry('burst', 1, 'a', ctx, false)
+      const mods = registry.getAll()
+      const coreMods = mods.filter(m => m.source === 'skill:core')
+      expect(coreMods).toHaveLength(0) // core 不应从同行注入
+    })
+
+    it('aura 同行但非相邻 → 不注入（只限 adjacent）', () => {
+      // a(burst) 和 l(aura) 同行但不相邻
+      state.player.bindings.set('a', 'burst')
+      state.player.bindings.set('l', 'aura')
+      state.player.skills.set('burst', { level: 1 })
+      state.player.skills.set('aura', { level: 1 })
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      const registry = createScopedRegistry('burst', 1, 'a', ctx, false)
+      const mods = registry.getAll()
+      const auraMods = mods.filter(m => m.source === 'skill:aura')
+      expect(auraMods).toHaveLength(0) // aura 不应从同行注入
+    })
+
+    it('被动技能不计入 wordSkillCount（AC #4 天然满足）', () => {
+      // 被动技能不通过 triggerSkill 触发，所以 wordSkillCount 不递增
+      // 这里验证 createScopedRegistry 不会修改 synergy.wordSkillCount
+      state.player.bindings.set('f', 'burst')
+      state.player.bindings.set('j', 'anchor')
+      state.player.skills.set('burst', { level: 1 })
+      state.player.skills.set('anchor', { level: 1 })
+      synergy.wordSkillCount = 1
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
+      createScopedRegistry('burst', 1, 'f', ctx, false)
+      expect(synergy.wordSkillCount).toBe(1) // 未改变
     })
   })
 })

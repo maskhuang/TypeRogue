@@ -6,7 +6,7 @@ import type { SkillDefinition, SkillType, PassiveSkillType } from '../core/types
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes';
 
 // === 被动技能类型列表 ===
-export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'lone', 'void', 'mirror'];
+export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'mirror', 'anchor'];
 
 // === 连锁流技能类型（echo: 标记双触发 / ripple: 标记效果传递）===
 // 注意: 'chain' 技能（连锁）不在此列表中，它是条件倍率技能，非链式行为
@@ -86,9 +86,9 @@ export const SKILLS: Record<string, SkillDefinition> = {
     icon: '💎',
     type: 'core',
     category: 'passive',
-    base: 5,
-    grow: 2,
-    desc: '[被动] 每个相邻技能使全局分数+5%'
+    base: 10,
+    grow: 5,
+    desc: '[被动] 相邻技能每3次触发→分数+10%'
   },
   aura: {
     name: '光环',
@@ -188,6 +188,17 @@ export const SKILLS: Record<string, SkillDefinition> = {
     grow: 1,
     desc: '本词每个已触发技能+2分'
   },
+
+  // === 被动流新增 ===
+  anchor: {
+    name: '锚定',
+    icon: '⚓',
+    type: 'anchor',
+    category: 'passive',
+    base: 15,
+    grow: 0,
+    desc: '[被动] 同行所有技能效果×1.15'
+  },
 };
 
 // === Modifier 工厂类型 ===
@@ -244,9 +255,23 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
     },
   ],
 
-  core: (id, lvl, ctx) => [
-    baseModifier(id, 'score', 'score', skillVal(id, lvl) + (ctx?.adjacentSkillCount ?? 0) * 2),
-  ],
+  core: (id, lvl, ctx) => {
+    const triggers = ctx?.skillsTriggeredThisWord ?? 0;
+    const stacks = Math.floor(triggers / 3);
+    const bonusPerStack = skillVal(id, lvl) / 100; // base=10 → 0.1
+    const multBonus = stacks * bonusPerStack;
+    if (multBonus <= 0) return [];
+    return [{
+      id: `skill:${id}:enhance`,
+      source: `skill:${id}`,
+      sourceType: 'skill' as const,
+      layer: 'enhance' as const,
+      trigger: 'on_skill_trigger' as const,
+      phase: 'calculate' as const,
+      effect: { type: 'score' as const, value: 1 + multBonus, stacking: 'multiplicative' as const },
+      priority: 100,
+    }];
+  },
 
   aura: (id, lvl) => [
     // 自身触发时小分数
@@ -370,6 +395,18 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
   leech: (id, lvl, ctx) => [
     baseModifier(id, 'score', 'score', (ctx?.skillsTriggeredThisWord ?? 0) * skillVal(id, lvl)),
   ],
+
+  // === 被动流：anchor — 同行技能效果 ×1.15 ===
+  anchor: (id, lvl) => [{
+    id: `skill:${id}:enhance`,
+    source: `skill:${id}`,
+    sourceType: 'skill' as const,
+    layer: 'enhance' as const,
+    trigger: 'on_skill_trigger' as const,
+    phase: 'calculate' as const,
+    effect: { type: 'score' as const, value: 1 + skillVal(id, lvl) / 100, stacking: 'multiplicative' as const },
+    priority: 100,
+  }],
 }
 
 /**

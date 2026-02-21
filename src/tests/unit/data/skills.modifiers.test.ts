@@ -91,27 +91,51 @@ describe('SKILL_MODIFIER_DEFS', () => {
     })
   })
 
-  // === core ===
+  // === core (重设计: enhance multiply, 每3次触发+bonusPerStack) ===
   describe('core', () => {
-    it('adjacentSkillCount=0 → score value=5', () => {
+    it('skillsTriggeredThisWord=0 → 返回空数组', () => {
       const mods = SKILL_MODIFIER_DEFS.core('core', 1, {})
+      expect(mods).toHaveLength(0)
+    })
+
+    it('skillsTriggeredThisWord=2 → 返回空数组 (不足3次)', () => {
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 2 }
+      const mods = SKILL_MODIFIER_DEFS.core('core', 1, ctx)
+      expect(mods).toHaveLength(0)
+    })
+
+    it('skillsTriggeredThisWord=3 → enhance score ×1.1', () => {
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 3 }
+      const mods = SKILL_MODIFIER_DEFS.core('core', 1, ctx)
       expect(mods).toHaveLength(1)
       const m = mods[0]
-      expect(m.id).toBe('skill:core:score')
-      expect(m.layer).toBe('base')
-      expect(m.effect).toEqual({ type: 'score', value: 5, stacking: 'additive' })
+      expect(m.id).toBe('skill:core:enhance')
+      expect(m.source).toBe('skill:core')
+      expect(m.layer).toBe('enhance')
+      expect(m.trigger).toBe('on_skill_trigger')
+      expect(m.phase).toBe('calculate')
+      expect(m.effect).toEqual({ type: 'score', value: 1.1, stacking: 'multiplicative' })
     })
 
-    it('adjacentSkillCount=3 → score value=5+6=11', () => {
-      const ctx: PipelineContext = { adjacentSkillCount: 3 }
+    it('skillsTriggeredThisWord=6 → enhance score ×1.2 (2 stacks)', () => {
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 6 }
       const mods = SKILL_MODIFIER_DEFS.core('core', 1, ctx)
-      expect(mods[0].effect!.value).toBe(11)
+      expect(mods).toHaveLength(1)
+      expect(mods[0].effect!.value).toBeCloseTo(1.2)
     })
 
-    it('level 2, adjacentSkillCount=2 → score value=7+4=11', () => {
-      const ctx: PipelineContext = { adjacentSkillCount: 2 }
+    it('level 2, skillsTriggeredThisWord=3 → score ×1.15', () => {
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 3 }
       const mods = SKILL_MODIFIER_DEFS.core('core', 2, ctx)
-      expect(mods[0].effect!.value).toBe(11)
+      expect(mods).toHaveLength(1)
+      expect(mods[0].effect!.value).toBeCloseTo(1.15) // 1 + (10+5)/100 = 1.15
+    })
+
+    it('level 3, skillsTriggeredThisWord=3 → score ×1.2', () => {
+      const ctx: PipelineContext = { skillsTriggeredThisWord: 3 }
+      const mods = SKILL_MODIFIER_DEFS.core('core', 3, ctx)
+      expect(mods).toHaveLength(1)
+      expect(mods[0].effect!.value).toBeCloseTo(1.2) // 1 + (10+10)/100 = 1.2
     })
   })
 
@@ -384,11 +408,35 @@ describe('SKILL_MODIFIER_DEFS', () => {
     })
   })
 
-  // === 工厂覆盖 ===
-  describe('全部 17 个技能有工厂', () => {
-    const allSkills = ['burst', 'amp', 'freeze', 'shield', 'core', 'aura', 'lone', 'echo', 'void', 'ripple', 'gamble', 'chain', 'overclock', 'pulse', 'sentinel', 'mirror', 'leech']
+  // === Story 12.3: anchor ===
+  describe('anchor', () => {
+    it('enhance 层 score ×1.15 (base=15 → 1+15/100=1.15)', () => {
+      const mods = SKILL_MODIFIER_DEFS.anchor('anchor', 1)
+      expect(mods).toHaveLength(1)
+      const m = mods[0]
+      expect(m.id).toBe('skill:anchor:enhance')
+      expect(m.source).toBe('skill:anchor')
+      expect(m.sourceType).toBe('skill')
+      expect(m.layer).toBe('enhance')
+      expect(m.trigger).toBe('on_skill_trigger')
+      expect(m.phase).toBe('calculate')
+      expect(m.effect).toEqual({ type: 'score', value: 1.15, stacking: 'multiplicative' })
+      expect(m.priority).toBe(100)
+    })
 
-    it('SKILL_MODIFIER_DEFS 包含所有 17 个技能', () => {
+    it('grow=0 → 所有等级都是 ×1.15', () => {
+      const mods2 = SKILL_MODIFIER_DEFS.anchor('anchor', 2)
+      expect(mods2[0].effect!.value).toBeCloseTo(1.15)
+      const mods3 = SKILL_MODIFIER_DEFS.anchor('anchor', 3)
+      expect(mods3[0].effect!.value).toBeCloseTo(1.15)
+    })
+  })
+
+  // === 工厂覆盖 ===
+  describe('全部 18 个技能有工厂', () => {
+    const allSkills = ['burst', 'amp', 'freeze', 'shield', 'core', 'aura', 'lone', 'echo', 'void', 'ripple', 'gamble', 'chain', 'overclock', 'pulse', 'sentinel', 'mirror', 'leech', 'anchor']
+
+    it('SKILL_MODIFIER_DEFS 包含所有 18 个技能', () => {
       for (const skillId of allSkills) {
         expect(SKILL_MODIFIER_DEFS[skillId], `missing factory for ${skillId}`).toBeDefined()
         expect(typeof SKILL_MODIFIER_DEFS[skillId]).toBe('function')
@@ -399,7 +447,10 @@ describe('SKILL_MODIFIER_DEFS', () => {
       for (const skillId of allSkills) {
         const mods = SKILL_MODIFIER_DEFS[skillId](skillId, 1)
         expect(Array.isArray(mods), `${skillId} factory should return array`).toBe(true)
-        expect(mods.length, `${skillId} factory should return at least 1 modifier`).toBeGreaterThanOrEqual(1)
+        // core 在无触发上下文时返回空数组，这是正常行为
+        if (skillId !== 'core') {
+          expect(mods.length, `${skillId} factory should return at least 1 modifier`).toBeGreaterThanOrEqual(1)
+        }
       }
     })
   })

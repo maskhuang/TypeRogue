@@ -5,7 +5,7 @@
 
 import { state, synergy } from '../core/state';
 import { ADJACENT_KEYS, KEYBOARD_ROWS } from '../core/constants';
-import { SKILLS, SKILL_MODIFIER_DEFS } from '../data/skills';
+import { SKILLS, SKILL_MODIFIER_DEFS, isPassiveSkill } from '../data/skills';
 import type { AdjacentSkill } from '../core/types';
 import type { PipelineContext, EffectAccumulator, BehaviorCallbacks, PipelineResult, ModifierTrigger } from './modifiers/ModifierTypes';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
@@ -29,6 +29,21 @@ export function getAdjacentSkills(key: string): AdjacentSkill[] {
         skillId,
         skill: SKILLS[skillId],
       });
+    }
+  }
+  return skills;
+}
+
+// === 获取同行被动技能（排除自身和已在相邻列表中的） ===
+export function getSameRowPassiveSkills(triggerKey: string, selfSkillId: string): AdjacentSkill[] {
+  const row = KEYBOARD_ROWS.find(r => r.includes(triggerKey));
+  if (!row) return [];
+  const skills: AdjacentSkill[] = [];
+  for (const key of row) {
+    if (key === triggerKey) continue;
+    const skillId = state.player.bindings.get(key);
+    if (skillId && skillId !== selfSkillId && SKILLS[skillId] && isPassiveSkill(skillId)) {
+      skills.push({ key, skillId, skill: SKILLS[skillId] });
     }
   }
   return skills;
@@ -89,6 +104,21 @@ export function createScopedRegistry(
     registry.registerMany(adjMods.filter(m => m.layer !== 'base'));
   }
 
+  // 同行被动技能 enhance/global 层注入（仅限同行范围被动类型：anchor）
+  // 注意：core/aura 只影响相邻技能，不应从同行注入
+  const ROW_WIDE_PASSIVE_TYPES = new Set(['anchor']);
+  const sameRowPassives = getSameRowPassiveSkills(triggerKey, skillId);
+  const injectedSources = new Set(adjacent.map(a => a.skillId));
+  for (const rowSkill of sameRowPassives) {
+    if (!ROW_WIDE_PASSIVE_TYPES.has(rowSkill.skill.type)) continue; // 只注入同行范围被动
+    if (injectedSources.has(rowSkill.skillId)) continue; // 已通过相邻注入，跳过
+    const rowFactory = SKILL_MODIFIER_DEFS[rowSkill.skillId];
+    if (!rowFactory) continue;
+    const rowLvl = state.player.skills.get(rowSkill.skillId)?.level || 1;
+    const rowMods = rowFactory(rowSkill.skillId, rowLvl, context);
+    registry.registerMany(rowMods.filter(m => m.layer !== 'base'));
+  }
+
   // 遗物 global 层注入（如 golden_keyboard 技能效果 +25%）
   injectRelicModifiers(registry, context);
 
@@ -127,7 +157,7 @@ export function generateFeedback(
     case 'shield':
       return { text: `护盾+${effects.shield}`, color: '#87ceeb' };
     case 'core':
-      return { text: `核心+${Math.floor(effects.score * state.multiplier)}`, color: '#9b59b6' };
+      return null; // 被动技能，通过 enhance 层静默增强
     case 'aura':
       return null; // 静默
     case 'lone': {
@@ -175,6 +205,8 @@ export function generateFeedback(
       return { text: '镜像!', color: '#9b59b6' };
     case 'leech':
       return { text: `汲取+${Math.floor(effects.score * state.multiplier)}`, color: '#27ae60' };
+    case 'anchor':
+      return null; // 被动技能，通过 enhance 层静默增强
     default:
       return null;
   }
