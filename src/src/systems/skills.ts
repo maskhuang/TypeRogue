@@ -132,6 +132,7 @@ export function applyEffects(effects: EffectAccumulator): void {
     synergy.skillBaseScore += effects.score;
   }
   if (effects.multiply > 0) {
+    synergy.skillMultBonus += effects.multiply;
     state.multiplier += effects.multiply;
   }
   if (effects.time > 0) {

@@ -132,11 +132,12 @@ function playerCorrect(k: string): void {
   // 完美主义遗物：连续正确累计
   synergy.perfectStreak++;
 
-  // 计算倍率: 基础 + 连击加成 + 完美主义加成
+  // 计算倍率: 基础 + 连击加成 + 完美主义加成 + 技能倍率加成
   let mult = state.player.baseMultiplier + state.combo * state.player.comboBonus;
   if (queryRelicFlag('perfectionist_streak')) {
     mult += synergy.perfectStreak * 0.01;
   }
+  mult += synergy.skillMultBonus;
   state.multiplier = mult;
 
   // 字母基础分 + 字母加成
@@ -221,6 +222,7 @@ function playerWrong(): void {
   if (state.combo > 5) showFeedback(`${state.combo}× 断了!`, '#ff6b6b');
   state.combo = 0;
   state.lastMilestone = 0;
+  synergy.skillMultBonus = 0;
   state.multiplier = state.player.baseMultiplier;
   updateHUD();
 }

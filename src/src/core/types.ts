@@ -135,6 +135,7 @@ export interface SynergyState {
   ripplePassthrough: { score: number; multiply: number; time: number; gold: number; shield: number } | null; // ripple 传递的效果
   pulseCount: number; // pulse 触发计数器（每词重置）
   skillBaseScore: number; // 技能贡献的基础分（每词重置，结算面板使用）
+  skillMultBonus: number; // 技能累积的倍率加成（断连击时重置）
 }
 
 export interface AdjacentSkill {

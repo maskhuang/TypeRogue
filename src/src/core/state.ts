@@ -62,6 +62,7 @@ export function createSynergyState(): SynergyState {
     ripplePassthrough: null,
     pulseCount: 0,
     skillBaseScore: 0,
+    skillMultBonus: 0,
   };
 }
 
