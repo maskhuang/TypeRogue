@@ -47,6 +47,8 @@ export type ModifierBehavior =
   | { type: 'restore_shield'; amount: number }
   | { type: 'trigger_row_mirror' }
   | { type: 'amplify_chain' }
+  | { type: 'instant_fail' }
+  | { type: 'time_steal'; timeBonus: number }
 
 // === 条件系统（15 种原语） ===
 export type ModifierCondition =
@@ -73,6 +75,8 @@ export type ModifierCondition =
   // 催化剂遗物条件
   | { type: 'total_skills_gte'; value: number }
   | { type: 'always_true' }
+  // 风险回报遗物条件
+  | { type: 'no_skills_equipped' }
 
 // === 管道输出类型 (Story 11.2) ===
 
@@ -153,6 +157,10 @@ export interface BehaviorCallbacks {
   onTriggerRowMirror?(depth: number): PipelineResult | null
   /** amplify_chain: 连锁放大器，echo/ripple 额外触发一次 */
   onAmplifyChain?(): void
+  /** instant_fail: 玻璃大炮，打错即本关失败 */
+  onInstantFail?(): void
+  /** time_steal: 时间窃贼，技能触发时加时间 */
+  onTimeSteal?(timeBonus: number): void
 }
 
 /** BehaviorExecutor.execute() 的返回值 */

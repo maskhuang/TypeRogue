@@ -141,6 +141,20 @@ export class BehaviorExecutor {
             result.executedCount++
           }
           break
+
+        case 'instant_fail':
+          if (callbacks?.onInstantFail) {
+            callbacks.onInstantFail()
+            result.executedCount++
+          }
+          break
+
+        case 'time_steal':
+          if (callbacks?.onTimeSteal) {
+            callbacks.onTimeSteal(behavior.timeBonus)
+            result.executedCount++
+          }
+          break
       }
     }
 

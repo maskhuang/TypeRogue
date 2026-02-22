@@ -15,8 +15,8 @@ import type { RelicRarity } from '../../../../src/systems/relics/RelicTypes'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 13 relics', () => {
-      expect(Object.keys(RELICS)).toHaveLength(13)
+    it('should contain 18 relics', () => {
+      expect(Object.keys(RELICS)).toHaveLength(18)
     })
 
     it('should have all required fields for each relic', () => {
@@ -39,14 +39,14 @@ describe('Relics Data', () => {
       expect(commons).toHaveLength(2)
     })
 
-    it('should have 6 rare relics', () => {
+    it('should have 9 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(6)
+      expect(rares).toHaveLength(9)
     })
 
-    it('should have 5 legendary relics', () => {
+    it('should have 7 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(5)
+      expect(legendaries).toHaveLength(7)
     })
   })
 
@@ -142,18 +142,18 @@ describe('Relics Data', () => {
       }
     })
 
-    it('rare relics should cost 45-65 gold', () => {
+    it('rare relics should cost 40-65 gold', () => {
       const rares = getRelicsByRarity('rare')
       for (const relic of rares) {
-        expect(relic.basePrice).toBeGreaterThanOrEqual(45)
+        expect(relic.basePrice).toBeGreaterThanOrEqual(40)
         expect(relic.basePrice).toBeLessThanOrEqual(65)
       }
     })
 
-    it('legendary relics should cost 90-125 gold', () => {
+    it('legendary relics should cost 70-125 gold', () => {
       const legendaries = getRelicsByRarity('legendary')
       for (const relic of legendaries) {
-        expect(relic.basePrice).toBeGreaterThanOrEqual(90)
+        expect(relic.basePrice).toBeGreaterThanOrEqual(70)
         expect(relic.basePrice).toBeLessThanOrEqual(125)
       }
     })
@@ -202,19 +202,24 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(13)
+      expect(ids).toHaveLength(18)
       expect(ids).toContain('lucky_coin')
       expect(ids).toContain('golden_keyboard')
       expect(ids).toContain('perfectionist')
       expect(ids).toContain('void_heart')
       expect(ids).toContain('chain_amplifier')
+      expect(ids).toContain('glass_cannon')
+      expect(ids).toContain('time_thief')
+      expect(ids).toContain('greedy_hand')
+      expect(ids).toContain('silence_vow')
+      expect(ids).toContain('doomsday')
     })
   })
 
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(13)
+      expect(relics).toHaveLength(18)
     })
 
     it('should return RelicData objects', () => {

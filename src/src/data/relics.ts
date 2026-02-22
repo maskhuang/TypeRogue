@@ -146,6 +146,83 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '信仰赌桌的人，永远不会输。'
   },
 
+  // ==================== 风险回报遗物 ====================
+
+  glass_cannon: {
+    id: 'glass_cannon',
+    name: '玻璃大炮',
+    icon: '💣',
+    description: '技能分数 ×2，但打错即本关失败',
+    rarity: 'rare',
+    basePrice: 40,
+    category: 'risk-reward',
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 2.0 },
+      { type: 'on_error', modifier: 'instant_fail', value: 1 }
+    ],
+    flavor: '要么完美，要么毁灭。'
+  },
+
+  time_thief: {
+    id: 'time_thief',
+    name: '时间窃贼',
+    icon: '⏰',
+    description: '技能触发 +0.3 秒，但基础时间减半',
+    rarity: 'rare',
+    basePrice: 45,
+    category: 'risk-reward',
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'time_steal', value: 0.3 },
+      { type: 'battle_start', modifier: 'time_halve', value: 0.5 }
+    ],
+    flavor: '偷来的时间，总有代价。'
+  },
+
+  greedy_hand: {
+    id: 'greedy_hand',
+    name: '贪婪之手',
+    icon: '🤑',
+    description: '金币 ×1.5，但商店价格 +50%',
+    rarity: 'rare',
+    basePrice: 50,
+    category: 'risk-reward',
+    effects: [
+      { type: 'battle_end', modifier: 'gold_multiplier', value: 1.5 },
+      { type: 'passive', modifier: 'price_increase', value: 1.5 }
+    ],
+    flavor: '贪婪者索取一切，却付出更多。'
+  },
+
+  silence_vow: {
+    id: 'silence_vow',
+    name: '沉默誓约',
+    icon: '🤫',
+    description: '无技能时分数 ×5，但无法装备技能',
+    rarity: 'legendary',
+    basePrice: 80,
+    category: 'risk-reward',
+    effects: [
+      { type: 'on_word_complete', modifier: 'score_multiplier', value: 5.0 },
+      { type: 'passive', modifier: 'skill_lock', value: 1 }
+    ],
+    flavor: '沉默之中，文字本身就是力量。'
+  },
+
+  doomsday: {
+    id: 'doomsday',
+    name: '末日倒计时',
+    icon: '☢️',
+    description: '每关 +30 秒，但每过一关 -5 秒基础时间',
+    rarity: 'legendary',
+    basePrice: 70,
+    category: 'risk-reward',
+    effects: [
+      { type: 'battle_start', modifier: 'time_bonus', value: 30 },
+      { type: 'battle_start', modifier: 'time_penalty', value: -5 }
+    ],
+    flavor: '末日的钟声越来越近。'
+  },
+
   // ==================== 传说遗物 ====================
 
   golden_keyboard: {
@@ -276,6 +353,49 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
 
   // 赌徒信条：行为型，通过 queryRelicFlag 查询
   gamblers_creed: () => [],
+
+  // === 风险回报遗物 ===
+
+  // 玻璃大炮：score ×2（增益） + 打错即失败（代价）
+  glass_cannon: (id) => [
+    relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 2.0, stacking: 'multiplicative' },
+    }),
+    relicMod(id, 'fail', 'on_error', 'after', {
+      behavior: { type: 'instant_fail' },
+    }),
+  ],
+
+  // 时间窃贼：技能触发 +0.3s（增益），基础时间减半通过 queryRelicFlag
+  time_thief: (id) => [
+    relicMod(id, 'time', 'on_skill_trigger', 'after', {
+      behavior: { type: 'time_steal', timeBonus: 0.3 },
+    }),
+  ],
+
+  // 贪婪之手：金币 ×1.5（增益），价格 +50% 通过 queryRelicFlag
+  greedy_hand: (id) => [
+    relicMod(id, 'gold', 'on_battle_end', 'calculate', {
+      layer: 'global',
+      effect: { type: 'gold', value: 1.5, stacking: 'multiplicative' },
+    }),
+  ],
+
+  // 沉默誓约：无技能时 on_word_complete multiply +4（→ bonusMult=5 → 最终分 ×5），技能锁定通过 queryRelicFlag
+  silence_vow: (id) => [
+    relicMod(id, 'multiply', 'on_word_complete', 'calculate', {
+      effect: { type: 'multiply', value: 4.0, stacking: 'additive' },
+      condition: { type: 'no_skills_equipped' },
+    }),
+  ],
+
+  // 末日倒计时：+30s 时间（增益），递增时间扣减通过 queryRelicFlag
+  doomsday: (id) => [
+    relicMod(id, 'time', 'on_battle_start', 'calculate', {
+      effect: { type: 'time', value: 30, stacking: 'additive' },
+    }),
+  ],
 
   // 黄金键盘：技能触发时分数 ×1.25（乘法效果，用 global 层）
   golden_keyboard: (id) => [

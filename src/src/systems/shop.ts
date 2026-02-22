@@ -3,7 +3,7 @@
 // ============================================
 
 import { state } from '../core/state';
-import { resolveRelicEffects } from './relics/RelicPipeline';
+import { resolveRelicEffects, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, ADJACENT_KEYS } from '../core/constants';
 import { SKILLS, SYNERGY_TYPES, getSkillSchool } from '../data/skills';
 import { RELICS } from '../data/relics';
@@ -54,6 +54,13 @@ export function openShop(_won: boolean): void {
 function updateGoldDisplay(): void {
   const el = getElements();
   el.shopGold.textContent = String(state.gold);
+}
+
+// === 价格调整 ===
+function getAdjustedPrice(baseCost: number): number {
+  const discount = queryRelicFlag('price_discount') as number; // lucky_coin: 0.1 or 0
+  const greedyMult = queryRelicFlag('greedy_hand') as number; // greedy_hand: 1.5 or 1
+  return Math.ceil(baseCost * (1 - discount) * greedyMult);
 }
 
 // === 商店标签 ===
@@ -123,6 +130,12 @@ function renderSkillShop(): void {
   const el = getElements();
   el.rewardCards.innerHTML = '';
 
+  // 沉默誓约：禁止购买技能
+  if (queryRelicFlag('silence_vow') === true) {
+    el.rewardCards.innerHTML = '<div class="shop-empty">🤫 沉默誓约：无法购买技能</div>';
+    return;
+  }
+
   state.shop.shopSkills.forEach(item => {
     const sk = SKILLS[item.skillId];
     if (!sk) return;
@@ -130,10 +143,12 @@ function renderSkillShop(): void {
     // 检查是否已拥有
     if (item.type === 'new' && state.player.skills.has(item.skillId)) return;
 
+    const adjustedCost = getAdjustedPrice(item.cost);
+
     if (item.type === 'new') {
       const school = getSkillSchool(item.skillId);
-      renderShopCard(sk.icon, sk.name, sk.desc, item.cost, school.label, school.cssClass, () => {
-        if (buyItem(item.cost)) {
+      renderShopCard(sk.icon, sk.name, sk.desc, adjustedCost, school.label, school.cssClass, () => {
+        if (buyItem(adjustedCost)) {
           state.player.skills.set(item.skillId, { level: 1 });
           const freeKey = KEYS.find(k => !state.player.bindings.has(k));
           if (freeKey) state.player.bindings.set(freeKey, item.skillId);
@@ -144,8 +159,8 @@ function renderSkillShop(): void {
     } else if (item.type === 'upgrade') {
       const lvl = state.player.skills.get(item.skillId)?.level || 1;
       const school = getSkillSchool(item.skillId);
-      renderShopCard(sk.icon, `${sk.name} → Lv.${lvl + 1}`, '效果提升', item.cost, `${school.label}·升级`, school.cssClass, () => {
-        if (buyItem(item.cost)) {
+      renderShopCard(sk.icon, `${sk.name} → Lv.${lvl + 1}`, '效果提升', adjustedCost, `${school.label}·升级`, school.cssClass, () => {
+        if (buyItem(adjustedCost)) {
           const data = state.player.skills.get(item.skillId);
           if (data) data.level++;
           renderShopContent();
@@ -179,9 +194,12 @@ function renderRelicShop(): void {
     if (!relic) return;
 
     hasItems = true;
-    const rarityClass = relic.rarity || 'common';
-    renderShopCard(relic.icon, relic.name, relic.description, relic.basePrice, relic.rarity, rarityClass, () => {
-      if (buyItem(relic.basePrice)) {
+    const isRiskReward = relic.category === 'risk-reward';
+    const typeLabel = isRiskReward ? `${relic.rarity}·risk` : relic.rarity;
+    const typeClass = isRiskReward ? 'risk-reward' : (relic.rarity || 'common');
+    const adjustedCost = getAdjustedPrice(relic.basePrice);
+    renderShopCard(relic.icon, relic.name, relic.description, adjustedCost, typeLabel, typeClass, () => {
+      if (buyItem(adjustedCost)) {
         state.player.relics.add(relicId);
         showFeedback(`获得 ${relic.name}!`, '#ffe66d');
         renderShopContent();
@@ -245,13 +263,14 @@ function renderDeckShop(): void {
       boundKeys.includes(c.toLowerCase()) ? `<span class="bound-letter">${c}</span>` : c
     ).join('');
 
+    const adjustedWordCost = getAdjustedPrice(item.cost);
     wordCard.innerHTML = `
       <span class="word-text">${highlightedWord}</span>
-      <span class="word-cost">💰${item.cost}</span>
+      <span class="word-cost">💰${adjustedWordCost}</span>
     `;
 
     wordCard.onclick = () => {
-      if (buyItem(item.cost)) {
+      if (buyItem(adjustedWordCost)) {
         state.player.wordDeck.push(item.word);
         state.shop.shopWords.splice(idx, 1);
         showFeedback(`+${item.word}`, '#4ecdc4');
@@ -266,7 +285,7 @@ function renderDeckShop(): void {
   el.rewardCards.appendChild(buySection);
 
   // 当前词库区
-  const removeCost = state.shop.removeCount + 1;
+  const removeCost = getAdjustedPrice(state.shop.removeCount + 1);
   const deckSection = document.createElement('div');
   deckSection.className = 'deck-section';
   deckSection.innerHTML = `<div class="deck-section-title">📖 我的词库 (点击移除，费用: 💰${removeCost})</div>`;
@@ -320,6 +339,7 @@ function renderShopCard(
   const el = getElements();
   const card = document.createElement('div');
   card.className = 'reward-card';
+  if (typeClass === 'risk-reward') card.classList.add('risk-reward-card');
 
   const canAfford = state.gold >= cost;
   if (!canAfford) card.classList.add('cannot-afford');
@@ -467,6 +487,12 @@ function renderBuildManager(): void {
 }
 
 function clickKeySlot(key: string): void {
+  if (state.shop.selectedSkill && queryRelicFlag('silence_vow') === true) {
+    showFeedback('沉默誓约：无法绑定技能', '#ff6b6b');
+    state.shop.selectedSkill = null;
+    renderBuildManager();
+    return;
+  }
   if (state.shop.selectedSkill) {
     const existingSkill = state.player.bindings.get(key);
     const oldKey = [...state.player.bindings.entries()].find(([, id]) => id === state.shop.selectedSkill)?.[0];
@@ -484,6 +510,12 @@ function clickKeySlot(key: string): void {
 }
 
 function clickSkill(skillId: string): void {
+  if (state.shop.selectedKey && queryRelicFlag('silence_vow') === true) {
+    showFeedback('沉默誓约：无法绑定技能', '#ff6b6b');
+    state.shop.selectedKey = null;
+    renderBuildManager();
+    return;
+  }
   if (state.shop.selectedKey) {
     const oldKey = [...state.player.bindings.entries()].find(([, id]) => id === skillId)?.[0];
     if (oldKey) state.player.bindings.delete(oldKey);

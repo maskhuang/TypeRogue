@@ -15,6 +15,7 @@ export type RelicEffectType =
   | 'battle_start'     // 战斗开始时触发
   | 'battle_end'       // 战斗结束时触发
   | 'on_word_complete' // 完成词语时触发
+  | 'on_skill_trigger' // 技能触发时
   | 'on_keystroke'     // 每次击键时触发
   | 'on_combo_break'   // 连击断裂时触发
   | 'on_error'         // 打错时触发
@@ -34,6 +35,17 @@ export type RelicModifierType =
   | 'word_score_bonus'     // 词语基础分加成
   | 'multiplier_per_combo' // 每连击倍率加成
   | 'gold_flat'            // 金币固定加成
+  | 'score_bonus'          // 分数固定加成
+  | 'chain_amplify'        // 连锁放大
+  | 'shield_bonus'         // 护盾加成
+  | 'passive_enhance_double' // 被动增强翻倍
+  | 'gamble_guaranteed'    // 豪赌保证
+  | 'instant_fail'         // 打错即失败
+  | 'time_steal'           // 时间窃取
+  | 'time_halve'           // 时间减半
+  | 'price_increase'       // 价格增加
+  | 'skill_lock'           // 技能锁定
+  | 'time_penalty'         // 时间惩罚
 
 /**
  * 遗物效果条件类型
@@ -97,6 +109,9 @@ export interface RelicData {
 
   /** 风味文字（可选） */
   flavor?: string
+
+  /** 遗物分类（可选） */
+  category?: 'risk-reward'
 }
 
 /**

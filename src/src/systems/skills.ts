@@ -376,6 +376,9 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
         showFeedback(`脉冲! +${timeBonus}秒`, '#2ecc71');
       }
     },
+    onTimeSteal: (timeBonus: number) => {
+      applyEffects({ score: 0, multiply: 0, time: timeBonus, gold: 0, shield: 0 });
+    },
     onTriggerRowMirror: (_depth: number) => {
       const row = KEYBOARD_ROWS.find(r => r.includes(triggerKey));
       if (!row) return null;

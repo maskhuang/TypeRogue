@@ -449,6 +449,9 @@ body {
 .reward-card .reward-type.common { background: rgba(150,150,150,0.2); color: #aaa; }
 .reward-card .reward-type.rare { background: rgba(52,152,219,0.2); color: #3498db; }
 .reward-card .reward-type.epic { background: rgba(155,89,182,0.2); color: #9b59b6; }
+.reward-card .reward-type.legendary { background: rgba(255,215,0,0.2); color: #ffd700; }
+.reward-card .reward-type.risk-reward { background: rgba(255,50,50,0.25); color: #ff4444; font-weight: bold; }
+.reward-card.risk-reward-card { border-color: rgba(255,50,50,0.5); box-shadow: 0 0 8px rgba(255,50,50,0.15); }
 
 /* 词库卡片 */
 .reward-card.library-card { border-color: #444; }

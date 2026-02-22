@@ -129,14 +129,14 @@ development_status:
   epic-12-retrospective: optional
 
   # Epic 13: 遗物系统重做
-  epic-13: in-progress
+  epic-13: done
   13-1-build-catalyst-relics: done
-  13-2-risk-reward-relics: ready-for-dev
+  13-2-risk-reward-relics: done
   epic-13-retrospective: optional
 
   # Epic 14: 字母升级与词语联动
-  epic-14: backlog
-  14-1-letter-upgrade-system: backlog
+  epic-14: in-progress
+  14-1-letter-upgrade-system: ready-for-dev
   14-2-letter-upgrade-shop: backlog
   14-3-word-condition-extension: backlog
   epic-14-retrospective: optional
@@ -150,5 +150,5 @@ development_status:
 # Summary:
 # - Total Epics: 15
 # - Total Stories: 56
-# - Epics Completed: 9
-# - Stories Completed: 34
+# - Epics Completed: 10
+# - Stories Completed: 35

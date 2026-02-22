@@ -69,6 +69,9 @@ export class ConditionEvaluator {
         return (ctx.totalSkillCount ?? 0) >= condition.value
       case 'always_true':
         return true
+      // === 风险回报遗物 ===
+      case 'no_skills_equipped':
+        return (ctx.totalSkillCount ?? 0) === 0
       default:
         return false
     }

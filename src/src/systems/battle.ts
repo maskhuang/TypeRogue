@@ -194,9 +194,10 @@ function playerWrong(): void {
     }
   }
 
-  // 凤凰羽毛遗物：通过管道解析保护行为
+  // 遗物 on_error 管道解析（凤凰羽毛 + 玻璃大炮）
   {
     let phoenixProtected = false;
+    let instantFailed = false;
     resolveRelicEffectsWithBehaviors('on_error', { hasError: true }, {
       onComboProtect: (probability: number) => {
         if (Math.random() < probability) {
@@ -204,9 +205,18 @@ function playerWrong(): void {
         }
         return phoenixProtected;
       },
+      onInstantFail: () => {
+        instantFailed = true;
+      },
     });
     if (phoenixProtected) {
       showFeedback('凤凰羽毛!', '#ff9500');
+      return;
+    }
+    // 玻璃大炮：打错且未被保护 → 立即失败
+    if (instantFailed) {
+      showFeedback('玻璃大炮碎了!', '#ff0000');
+      gameOver();
       return;
     }
   }
@@ -237,6 +247,7 @@ function completeWord(): void {
   const wordRelicResult = resolveRelicEffects('on_word_complete', {
     combo: state.combo,
     multiplier: state.multiplier,
+    totalSkillCount: state.player.skills.size,
   });
   // 狂战士面具等遗物的 multiply 加成
   bonusMult += wordRelicResult.effects.multiply;
@@ -516,9 +527,20 @@ export function startLevel(): void {
   announceLevel();
   startTimer();
 
-  // 时间遗物加成（在 startTimer 设置初始时间后应用，如 time_lord +8 秒）
+  // 时间遗物加成（在 startTimer 设置初始时间后应用，如 time_lord +8 秒、doomsday +30 秒）
   if (startRelicResult.effects.time > 0) {
     state.time = Math.min(state.time + startRelicResult.effects.time, state.timeMax + state.player.timeBonus + 15);
+  }
+
+  // 时间窃贼代价：基础时间减半（在遗物加成之后，故 time_lord + time_thief 有趣互动）
+  if (queryRelicFlag('time_thief') === true) {
+    state.time = Math.floor(state.time / 2);
+  }
+
+  // 末日倒计时代价：每过一关基础时间 -5 秒（第1关不扣）
+  const doomPenalty = queryRelicFlag('doomsday') as number;
+  if (doomPenalty > 0) {
+    state.time = Math.max(5, state.time - doomPenalty);
   }
 }
 

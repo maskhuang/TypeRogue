@@ -84,6 +84,22 @@ export function queryRelicFlag(flag: string): number | boolean {
     case 'gamblers_creed':
       // 赌徒信条：gamble 100% 成功
       return state.player.relics.has('gamblers_creed')
+    // === 风险回报遗物 ===
+    case 'glass_cannon':
+      // 玻璃大炮：打错即失败
+      return state.player.relics.has('glass_cannon')
+    case 'time_thief':
+      // 时间窃贼：基础时间减半
+      return state.player.relics.has('time_thief')
+    case 'greedy_hand':
+      // 贪婪之手：价格 ×1.5
+      return state.player.relics.has('greedy_hand') ? 1.5 : 1
+    case 'silence_vow':
+      // 沉默誓约：无法装备技能
+      return state.player.relics.has('silence_vow')
+    case 'doomsday':
+      // 末日倒计时：每过一关 -5s
+      return state.player.relics.has('doomsday') ? (state.level - 1) * 5 : 0
     default:
       return false
   }
