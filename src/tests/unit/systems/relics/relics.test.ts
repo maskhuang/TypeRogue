@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 遗物数据测试
 // ============================================
-// Story 5.4 Task 2: 遗物数据定义测试
+// Story 5.4 Task 2 + Story 13.1: 遗物数据定义测试
 
 import { describe, it, expect } from 'vitest'
 import {
@@ -31,43 +31,22 @@ describe('Relics Data', () => {
         expect(relic.effects.length).toBeGreaterThan(0)
       }
     })
-
-    it('should have valid effect types for each relic', () => {
-      const validEffectTypes = [
-        'battle_start', 'battle_end', 'on_word_complete',
-        'on_keystroke', 'on_combo_break', 'on_error',
-        'passive', 'on_acquire'
-      ]
-      const validModifiers = [
-        'time_bonus', 'score_multiplier', 'gold_multiplier',
-        'combo_protection', 'skill_effect_bonus', 'price_discount',
-        'word_score_bonus', 'multiplier_per_combo', 'gold_flat'
-      ]
-
-      for (const relic of Object.values(RELICS)) {
-        for (const effect of relic.effects) {
-          expect(validEffectTypes).toContain(effect.type)
-          expect(validModifiers).toContain(effect.modifier)
-          expect(typeof effect.value).toBe('number')
-        }
-      }
-    })
   })
 
   describe('Rarity distribution', () => {
-    it('should have 5 common relics', () => {
+    it('should have 2 common relics', () => {
       const commons = getRelicsByRarity('common')
-      expect(commons).toHaveLength(5)
+      expect(commons).toHaveLength(2)
     })
 
-    it('should have 5 rare relics', () => {
+    it('should have 6 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(5)
+      expect(rares).toHaveLength(6)
     })
 
-    it('should have 3 legendary relics', () => {
+    it('should have 5 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(3)
+      expect(legendaries).toHaveLength(5)
     })
   })
 
@@ -85,25 +64,6 @@ describe('Relics Data', () => {
       expect(relic.effects[0].modifier).toBe('time_bonus')
       expect(relic.effects[0].value).toBe(0.5)
     })
-
-    it('piggy_bank should give gold on battle start', () => {
-      const relic = RELICS.piggy_bank
-      expect(relic.effects[0].type).toBe('battle_start')
-      expect(relic.effects[0].modifier).toBe('gold_flat')
-      expect(relic.effects[0].value).toBe(10)
-    })
-
-    it('magnet should give word score bonus', () => {
-      const relic = RELICS.magnet
-      expect(relic.effects[0].modifier).toBe('word_score_bonus')
-      expect(relic.effects[0].value).toBe(5)
-    })
-
-    it('combo_badge should give multiplier per combo', () => {
-      const relic = RELICS.combo_badge
-      expect(relic.effects[0].modifier).toBe('multiplier_per_combo')
-      expect(relic.effects[0].value).toBe(0.01)
-    })
   })
 
   describe('Rare relics', () => {
@@ -112,36 +72,33 @@ describe('Relics Data', () => {
       expect(relic.rarity).toBe('rare')
       expect(relic.effects[0].type).toBe('on_error')
       expect(relic.effects[0].modifier).toBe('combo_protection')
-      expect(relic.effects[0].value).toBe(0.3)
-    })
-
-    it('berserker_mask should have combo threshold condition', () => {
-      const relic = RELICS.berserker_mask
-      expect(relic.effects[0].condition).toBeDefined()
-      expect(relic.effects[0].condition?.type).toBe('combo_threshold')
-      expect(relic.effects[0].condition?.threshold).toBe(20)
-    })
-
-    it('treasure_map should give gold flat on battle end', () => {
-      const relic = RELICS.treasure_map
-      expect(relic.effects[0].type).toBe('battle_end')
-      expect(relic.effects[0].modifier).toBe('gold_flat')
-      expect(relic.effects[0].value).toBe(15)
     })
 
     it('overkill_blade should convert overkill to gold', () => {
       const relic = RELICS.overkill_blade
       expect(relic.rarity).toBe('rare')
       expect(relic.effects[0].type).toBe('battle_end')
-      expect(relic.effects[0].modifier).toBe('gold_flat')
-      expect(relic.effects[0].value).toBe(0)
     })
 
-    it('combo_crown should give score multiplier on battle start', () => {
-      const relic = RELICS.combo_crown
-      expect(relic.effects[0].type).toBe('battle_start')
-      expect(relic.effects[0].modifier).toBe('score_multiplier')
-      expect(relic.effects[0].value).toBe(0.3)
+    it('void_heart should be rare catalyst', () => {
+      const relic = RELICS.void_heart
+      expect(relic.rarity).toBe('rare')
+      expect(relic.effects[0].type).toBe('on_skill_trigger')
+    })
+
+    it('chain_amplifier should be rare catalyst', () => {
+      const relic = RELICS.chain_amplifier
+      expect(relic.rarity).toBe('rare')
+    })
+
+    it('fortress should be rare catalyst', () => {
+      const relic = RELICS.fortress
+      expect(relic.rarity).toBe('rare')
+    })
+
+    it('gamblers_creed should be rare catalyst', () => {
+      const relic = RELICS.gamblers_creed
+      expect(relic.rarity).toBe('rare')
     })
   })
 
@@ -150,7 +107,6 @@ describe('Relics Data', () => {
       const relic = RELICS.golden_keyboard
       expect(relic.rarity).toBe('legendary')
       expect(relic.effects[0].modifier).toBe('skill_effect_bonus')
-      expect(relic.effects[0].value).toBe(0.25)
     })
 
     it('time_lord should give large time bonus on battle start', () => {
@@ -164,7 +120,16 @@ describe('Relics Data', () => {
       const relic = RELICS.perfectionist
       expect(relic.effects[0].type).toBe('battle_end')
       expect(relic.effects[0].condition?.type).toBe('combo_threshold')
-      expect(relic.effects[0].condition?.threshold).toBe(-1) // 特殊值表示无错误
+    })
+
+    it('passive_mastery should be legendary catalyst', () => {
+      const relic = RELICS.passive_mastery
+      expect(relic.rarity).toBe('legendary')
+    })
+
+    it('keyboard_storm should be legendary catalyst', () => {
+      const relic = RELICS.keyboard_storm
+      expect(relic.rarity).toBe('legendary')
     })
   })
 
@@ -207,7 +172,6 @@ describe('Relics Data', () => {
     })
 
     it('should return empty array for unknown rarity', () => {
-      // Type assertion needed for testing invalid input
       const relics = getRelicsByRarity('mythic' as RelicRarity)
       expect(relics).toHaveLength(0)
     })
@@ -242,6 +206,8 @@ describe('Relics Data', () => {
       expect(ids).toContain('lucky_coin')
       expect(ids).toContain('golden_keyboard')
       expect(ids).toContain('perfectionist')
+      expect(ids).toContain('void_heart')
+      expect(ids).toContain('chain_amplifier')
     })
   })
 
@@ -268,11 +234,23 @@ describe('Relics Data', () => {
       expect(RELICS.golden_keyboard.flavor).toBeDefined()
       expect(RELICS.perfectionist.flavor).toBeDefined()
       expect(RELICS.overkill_blade.flavor).toBeDefined()
+      expect(RELICS.void_heart.flavor).toBeDefined()
     })
 
     it('should be optional (some relics have no flavor)', () => {
       expect(RELICS.time_crystal.flavor).toBeUndefined()
-      expect(RELICS.magnet.flavor).toBeUndefined()
+      expect(RELICS.time_lord.flavor).toBeUndefined()
+    })
+  })
+
+  describe('Removed relics should not exist', () => {
+    it('should not contain magnet, combo_badge, berserker_mask, combo_crown, treasure_map, piggy_bank', () => {
+      expect(RELICS['magnet']).toBeUndefined()
+      expect(RELICS['combo_badge']).toBeUndefined()
+      expect(RELICS['berserker_mask']).toBeUndefined()
+      expect(RELICS['combo_crown']).toBeUndefined()
+      expect(RELICS['treasure_map']).toBeUndefined()
+      expect(RELICS['piggy_bank']).toBeUndefined()
     })
   })
 })

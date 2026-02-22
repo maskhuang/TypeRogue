@@ -39,10 +39,8 @@ function pickWord(): string {
   const words = getActiveWords();
   const bound = [...state.player.bindings.keys()];
 
-  // 磁石遗物：更高几率选择包含技能字母的词
-  const magnetChance = queryRelicFlag('magnet_bias') as number;
-
-  if (bound.length && Math.random() < magnetChance) {
+  // 有绑定技能的字母时，偏向选择包含它们的词
+  if (bound.length && Math.random() < 0.6) {
     const good = words.filter(w => bound.some(l => w.includes(l)));
     if (good.length) return good[Math.floor(Math.random() * good.length)].toUpperCase();
   }
@@ -500,7 +498,7 @@ export function startLevel(): void {
   synergy.ripplePassthrough = null;
   synergy.pulseCount = 0;
 
-  // 遗物效果：战斗开始管道（combo_crown 初始倍率, time_lord 额外时间等）
+  // 遗物效果：战斗开始管道（time_lord 额外时间等）
   const startRelicResult = resolveRelicEffects('on_battle_start');
   if (startRelicResult.effects.multiply > 0) {
     state.multiplier += startRelicResult.effects.multiply;

@@ -72,7 +72,7 @@ describe('GameOver Events', () => {
         currentStage: 3,
         targetScore: 5000,
         skills: ['time_extend'],
-        relics: ['combo_crown']
+        relics: ['void_heart']
       }
 
       eventBus.emit('run:gameover', gameoverData)

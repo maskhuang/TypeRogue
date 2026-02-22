@@ -14,7 +14,7 @@ import { BehaviorExecutor } from './modifiers/BehaviorExecutor';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { showFeedback, highlightBoundSkill, updateHUD } from './battle';
-import { injectRelicModifiers } from './relics/RelicPipeline';
+import { injectRelicModifiers, queryRelicFlag } from './relics/RelicPipeline';
 
 // === 获取相邻技能 ===
 export function getAdjacentSkills(key: string): AdjacentSkill[] {
@@ -65,6 +65,8 @@ export function buildTriggerContext(triggerKey: string, adjacent: AdjacentSkill[
     adjacentSkillTypes: adjacent.map(a => a.skill.type),
     skillsTriggeredThisWord: synergy.wordSkillCount,
     shieldCount: synergy.shieldCount,
+    totalSkillCount: state.player.skills.size,
+    hasGamblersCreed: state.player.relics.has('gamblers_creed'),
   };
 }
 
@@ -96,11 +98,23 @@ export function createScopedRegistry(
 
   // 注册相邻技能的 enhance/global 层 Modifier
   const adjacent = adjacentOverride ?? getAdjacentSkills(triggerKey);
+  const hasPassiveMastery = queryRelicFlag('passive_mastery') === true;
   for (const adj of adjacent) {
     const adjFactory = SKILL_MODIFIER_DEFS[adj.skillId];
     if (!adjFactory) continue;
     const adjLvl = state.player.skills.get(adj.skillId)?.level || 1;
-    const adjMods = adjFactory(adj.skillId, adjLvl, context);
+    let adjMods = adjFactory(adj.skillId, adjLvl, context);
+    // 被动大师：被动技能 enhance 层效果翻倍
+    if (hasPassiveMastery && isPassiveSkill(adj.skillId)) {
+      adjMods = adjMods.map(m => {
+        if (m.layer === 'enhance' && m.effect && m.effect.stacking === 'multiplicative' && m.effect.value > 1) {
+          // 翻倍：(value - 1) * 2 + 1，如 1.5 → 2.0, 1.15 → 1.30
+          const boosted = 1 + (m.effect.value - 1) * 2;
+          return { ...m, effect: { ...m.effect, value: boosted } };
+        }
+        return m;
+      });
+    }
     // 只注册 enhance/global 层（不注册 base 层，base 只属于触发技能本身）
     registry.registerMany(adjMods.filter(m => m.layer !== 'base'));
   }
@@ -116,7 +130,17 @@ export function createScopedRegistry(
     const rowFactory = SKILL_MODIFIER_DEFS[rowSkill.skillId];
     if (!rowFactory) continue;
     const rowLvl = state.player.skills.get(rowSkill.skillId)?.level || 1;
-    const rowMods = rowFactory(rowSkill.skillId, rowLvl, context);
+    let rowMods = rowFactory(rowSkill.skillId, rowLvl, context);
+    // 被动大师：同行被动技能 enhance 层效果翻倍
+    if (hasPassiveMastery) {
+      rowMods = rowMods.map(m => {
+        if (m.layer === 'enhance' && m.effect && m.effect.stacking === 'multiplicative' && m.effect.value > 1) {
+          const boosted = 1 + (m.effect.value - 1) * 2;
+          return { ...m, effect: { ...m.effect, value: boosted } };
+        }
+        return m;
+      });
+    }
     registry.registerMany(rowMods.filter(m => m.layer !== 'base'));
   }
 
@@ -280,11 +304,35 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
   // 管道解析
   const result = EffectPipeline.resolve(registry, 'on_skill_trigger', context);
 
+  // 铁壁遗物：shield 效果 +2（在 applyEffects 之前，确保只应用一次）
+  if (result.effects.shield > 0) {
+    const fortressBonus = queryRelicFlag('fortress_shield_bonus') as number;
+    result.effects.shield += fortressBonus;
+  }
+
+  // 铁壁遗物：sentinel 每层护盾额外 +1 分
+  if (skillId === 'sentinel') {
+    const sentinelBonus = queryRelicFlag('fortress_sentinel_bonus') as number;
+    if (sentinelBonus > 0 && (context.shieldCount ?? 0) > 0) {
+      result.effects.score += (context.shieldCount ?? 0) * sentinelBonus;
+    }
+  }
+
   // 应用数值效果
   applyEffects(result.effects);
 
   // === Ripple 传递：应用上一个技能存储的效果 ===
   if (synergy.ripplePassthrough !== null) {
+    // 连锁放大器：ripple 传递效果 ×2（缩放数值而非重复调用）
+    if (queryRelicFlag('chain_amplifier') === true) {
+      synergy.ripplePassthrough = {
+        score: synergy.ripplePassthrough.score * 2,
+        multiply: synergy.ripplePassthrough.multiply * 2,
+        time: synergy.ripplePassthrough.time * 2,
+        gold: synergy.ripplePassthrough.gold * 2,
+        shield: synergy.ripplePassthrough.shield * 2,
+      };
+    }
     applyEffects(synergy.ripplePassthrough);
     synergy.ripplePassthrough = null;
   }
@@ -367,6 +415,14 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
         triggerSkill(skillId, triggerKey, true);
       }
     }, 100);
+    // 连锁放大器：echo 额外触发一次
+    if (queryRelicFlag('chain_amplifier') === true) {
+      setTimeout(() => {
+        if (state.phase === 'battle') {
+          triggerSkill(skillId, triggerKey, true);
+        }
+      }, 200);
+    }
   }
 
   updateHUD();

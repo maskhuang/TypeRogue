@@ -46,6 +46,7 @@ export type ModifierBehavior =
   | { type: 'pulse_counter'; timeBonus: number }
   | { type: 'restore_shield'; amount: number }
   | { type: 'trigger_row_mirror' }
+  | { type: 'amplify_chain' }
 
 // === 条件系统（15 种原语） ===
 export type ModifierCondition =
@@ -69,6 +70,9 @@ export type ModifierCondition =
   | { type: 'skills_triggered_gte'; value: number }
   | { type: 'different_skill_from_last' }
   | { type: 'nth_word'; value: number }
+  // 催化剂遗物条件
+  | { type: 'total_skills_gte'; value: number }
+  | { type: 'always_true' }
 
 // === 管道输出类型 (Story 11.2) ===
 
@@ -119,6 +123,10 @@ export interface PipelineContext {
   lastTriggeredSkillId?: string
   /** 当前护盾层数（sentinel 使用） */
   shieldCount?: number
+  /** 玩家当前拥有的技能总数（键盘风暴使用） */
+  totalSkillCount?: number
+  /** 是否拥有赌徒信条遗物（ConditionEvaluator 使用） */
+  hasGamblersCreed?: boolean
 }
 
 // === 行为执行回调 (Story 11.4) ===
@@ -143,6 +151,8 @@ export interface BehaviorCallbacks {
   onRestoreShield?(amount: number): void
   /** trigger_row_mirror: 同行镜像触发，返回触发结果 */
   onTriggerRowMirror?(depth: number): PipelineResult | null
+  /** amplify_chain: 连锁放大器，echo/ripple 额外触发一次 */
+  onAmplifyChain?(): void
 }
 
 /** BehaviorExecutor.execute() 的返回值 */

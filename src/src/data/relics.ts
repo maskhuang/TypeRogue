@@ -37,42 +37,6 @@ export const RELICS: Record<string, RelicData> = {
     ]
   },
 
-  piggy_bank: {
-    id: 'piggy_bank',
-    name: '存钱罐',
-    icon: '🐷',
-    description: '每关开始 +10 金币',
-    rarity: 'common',
-    basePrice: 25,
-    effects: [
-      { type: 'battle_start', modifier: 'gold_flat', value: 10 }
-    ]
-  },
-
-  magnet: {
-    id: 'magnet',
-    name: '磁石',
-    icon: '🧲',
-    description: '词语基础分 +5',
-    rarity: 'common',
-    basePrice: 20,
-    effects: [
-      { type: 'passive', modifier: 'word_score_bonus', value: 5 }
-    ]
-  },
-
-  combo_badge: {
-    id: 'combo_badge',
-    name: '连击徽章',
-    icon: '🎖️',
-    description: '每 10 连击获得 +0.1 倍率',
-    rarity: 'common',
-    basePrice: 30,
-    effects: [
-      { type: 'passive', modifier: 'multiplier_per_combo', value: 0.01 }
-    ]
-  },
-
   // ==================== 稀有遗物 ====================
 
   phoenix_feather: {
@@ -88,34 +52,6 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '涅槃重生，连击不灭。'
   },
 
-  berserker_mask: {
-    id: 'berserker_mask',
-    name: '狂战士面具',
-    icon: '👹',
-    description: '连击 > 20 时分数 +30%',
-    rarity: 'rare',
-    basePrice: 55,
-    effects: [
-      {
-        type: 'passive',
-        modifier: 'score_multiplier',
-        value: 0.3,
-        condition: { type: 'combo_threshold', threshold: 20 }
-      }
-    ]
-  },
-
-  treasure_map: {
-    id: 'treasure_map',
-    name: '藏宝图',
-    icon: '🗺️',
-    description: '战斗结束时额外 +15 金币',
-    rarity: 'rare',
-    basePrice: 45,
-    effects: [
-      { type: 'battle_end', modifier: 'gold_flat', value: 15 }
-    ]
-  },
 
   overkill_blade: {
     id: 'overkill_blade',
@@ -130,16 +66,84 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '一击的余波化为金币的叮当声。'
   },
 
-  combo_crown: {
-    id: 'combo_crown',
-    name: '连击皇冠',
-    icon: '👑',
-    description: '初始倍率 +0.3',
+  // ==================== 催化剂遗物 ====================
+
+  void_heart: {
+    id: 'void_heart',
+    name: '虚空之心',
+    icon: '🕳️',
+    description: '每个空键位 +3 底分',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_bonus', value: 3 }
+    ],
+    flavor: '虚空之中，空白即是力量。'
+  },
+
+  chain_amplifier: {
+    id: 'chain_amplifier',
+    name: '连锁放大器',
+    icon: '⚡',
+    description: 'echo/ripple 额外触发一次',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [
+      { type: 'passive', modifier: 'chain_amplify', value: 1 }
+    ],
+    flavor: '锁链之上再加一环。'
+  },
+
+  fortress: {
+    id: 'fortress',
+    name: '铁壁',
+    icon: '🏰',
+    description: '护盾+2，哨兵每层护盾额外+1分',
+    rarity: 'rare',
+    basePrice: 50,
+    effects: [
+      { type: 'passive', modifier: 'shield_bonus', value: 2 }
+    ],
+    flavor: '坚不可摧的堡垒。'
+  },
+
+  passive_mastery: {
+    id: 'passive_mastery',
+    name: '被动大师',
+    icon: '📿',
+    description: '被动技能增强效果翻倍',
+    rarity: 'legendary',
+    basePrice: 90,
+    effects: [
+      { type: 'passive', modifier: 'passive_enhance_double', value: 2 }
+    ],
+    flavor: '大师之道，在于无为而治。'
+  },
+
+  keyboard_storm: {
+    id: 'keyboard_storm',
+    name: '键盘风暴',
+    icon: '🌩️',
+    description: '技能数≥12时所有技能底分+2',
+    rarity: 'legendary',
+    basePrice: 100,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_bonus', value: 2 }
+    ],
+    flavor: '当键盘被占满，风暴降临。'
+  },
+
+  gamblers_creed: {
+    id: 'gamblers_creed',
+    name: '赌徒信条',
+    icon: '🎲',
+    description: '豪赌技能100%成功',
     rarity: 'rare',
     basePrice: 60,
     effects: [
-      { type: 'battle_start', modifier: 'score_multiplier', value: 0.3 }
-    ]
+      { type: 'passive', modifier: 'gamble_guaranteed', value: 1 }
+    ],
+    flavor: '信仰赌桌的人，永远不会输。'
   },
 
   // ==================== 传说遗物 ====================
@@ -219,7 +223,6 @@ function relicMod(
 export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
   // 行为型遗物：返回空数组，通过 queryRelicFlag 查询
   lucky_coin: () => [],
-  magnet: () => [],
   perfectionist: () => [],
 
   // 时间水晶：完成词语 +0.5 秒
@@ -229,19 +232,6 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
-  // 存钱罐：进入商店 +10 金币
-  piggy_bank: (id) => [
-    relicMod(id, 'gold', 'on_battle_end', 'calculate', {
-      effect: { type: 'gold', value: 10, stacking: 'additive' },
-    }),
-  ],
-
-  // 连击徽章：倍率 += combo * 0.01
-  combo_badge: (id, ctx) => [
-    relicMod(id, 'multiply', 'on_word_complete', 'calculate', {
-      effect: { type: 'multiply', value: (ctx?.combo ?? 0) * 0.01, stacking: 'additive' },
-    }),
-  ],
 
   // 凤凰羽毛：打错时 50% 概率保护连击（代码行为为准）
   // 使用 after 阶段以被 BehaviorExecutor 收集
@@ -251,21 +241,6 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
-  // 狂战士面具：倍率 >= 3.0 时 bonusMult +0.5（总计 1.5 倍）
-  // 注意：旧代码使用 > 3.0（严格大于），迁移后改为 >= 3.0（大于等于），边界情况影响极小
-  berserker_mask: (id) => [
-    relicMod(id, 'multiply', 'on_word_complete', 'calculate', {
-      effect: { type: 'multiply', value: 0.5, stacking: 'additive' },
-      condition: { type: 'multiplier_gte', value: 3.0 },
-    }),
-  ],
-
-  // 藏宝图：战斗结束 +15 金币
-  treasure_map: (id) => [
-    relicMod(id, 'gold', 'on_battle_end', 'calculate', {
-      effect: { type: 'gold', value: 15, stacking: 'additive' },
-    }),
-  ],
 
   // 超杀之刃：overkill 分数转金币
   overkill_blade: (id, ctx) => [
@@ -274,12 +249,33 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
-  // 连击皇冠：战斗开始 倍率 +0.3
-  combo_crown: (id) => [
-    relicMod(id, 'multiply', 'on_battle_start', 'calculate', {
-      effect: { type: 'multiply', value: 0.3, stacking: 'additive' },
+
+  // 虚空之心：每个空键位 +3 底分（base additive）
+  void_heart: (id, ctx) => [
+    relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
+      effect: { type: 'score', value: (ctx?.adjacentEmptyCount ?? 0) * 3, stacking: 'additive' },
     }),
   ],
+
+  // 连锁放大器：行为型，通过 queryRelicFlag 查询
+  chain_amplifier: () => [],
+
+  // 铁壁：行为型，通过 queryRelicFlag 查询
+  fortress: () => [],
+
+  // 被动大师：行为型，通过 createScopedRegistry 中特殊处理
+  passive_mastery: () => [],
+
+  // 键盘风暴：技能数 >=12 时底分 +2（base additive + 条件）
+  keyboard_storm: (id) => [
+    relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
+      effect: { type: 'score', value: 2, stacking: 'additive' },
+      condition: { type: 'total_skills_gte', value: 12 },
+    }),
+  ],
+
+  // 赌徒信条：行为型，通过 queryRelicFlag 查询
+  gamblers_creed: () => [],
 
   // 黄金键盘：技能触发时分数 ×1.25（乘法效果，用 global 层）
   golden_keyboard: (id) => [

@@ -134,6 +134,13 @@ export class BehaviorExecutor {
           }
           break
         }
+
+        case 'amplify_chain':
+          if (callbacks?.onAmplifyChain) {
+            callbacks.onAmplifyChain()
+            result.executedCount++
+          }
+          break
       }
     }
 

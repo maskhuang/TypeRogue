@@ -63,15 +63,27 @@ export function resolveRelicEffectsWithBehaviors(
  */
 export function queryRelicFlag(flag: string): number | boolean {
   switch (flag) {
-    case 'magnet_bias':
-      // 磁石：有遗物时词语选择偏向技能字母的概率更高
-      return state.player.relics.has('magnet') ? 0.8 : 0.6
     case 'price_discount':
       // 幸运硬币：商店折扣 10%
       return state.player.relics.has('lucky_coin') ? 0.1 : 0
     case 'perfectionist_streak':
       // 完美主义者：是否启用完美连击加成
       return state.player.relics.has('perfectionist')
+    case 'chain_amplifier':
+      // 连锁放大器：echo/ripple 额外触发一次
+      return state.player.relics.has('chain_amplifier')
+    case 'fortress_shield_bonus':
+      // 铁壁：shield 额外 +2
+      return state.player.relics.has('fortress') ? 2 : 0
+    case 'fortress_sentinel_bonus':
+      // 铁壁：sentinel 每层护盾额外 +1 分
+      return state.player.relics.has('fortress') ? 1 : 0
+    case 'passive_mastery':
+      // 被动大师：被动技能 enhance 效果翻倍
+      return state.player.relics.has('passive_mastery')
+    case 'gamblers_creed':
+      // 赌徒信条：gamble 100% 成功
+      return state.player.relics.has('gamblers_creed')
     default:
       return false
   }

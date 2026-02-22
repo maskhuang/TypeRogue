@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 遗物 Modifier 管道测试
 // ============================================
-// Story 11.6: 遗物迁移到 Modifier 管道
+// Story 11.6 + 13.1: 遗物管道 + 催化剂遗物
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { RELIC_MODIFIER_DEFS } from '../../../../src/data/relics'
@@ -55,12 +55,6 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
     })
   })
 
-  describe('magnet（行为型）', () => {
-    it('返回空数组', () => {
-      expect(RELIC_MODIFIER_DEFS.magnet('magnet')).toEqual([])
-    })
-  })
-
   describe('perfectionist（行为型）', () => {
     it('返回空数组', () => {
       expect(RELIC_MODIFIER_DEFS.perfectionist('perfectionist')).toEqual([])
@@ -78,33 +72,6 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
     })
   })
 
-  describe('piggy_bank', () => {
-    it('on_battle_end → gold +10 additive', () => {
-      const mods = RELIC_MODIFIER_DEFS.piggy_bank('piggy_bank')
-      expect(mods).toHaveLength(1)
-      expect(mods[0].trigger).toBe('on_battle_end')
-      expect(mods[0].effect).toEqual({ type: 'gold', value: 10, stacking: 'additive' })
-    })
-  })
-
-  describe('combo_badge', () => {
-    it('combo=0 → multiply +0', () => {
-      const mods = RELIC_MODIFIER_DEFS.combo_badge('combo_badge', { combo: 0 })
-      expect(mods).toHaveLength(1)
-      expect(mods[0].effect?.value).toBe(0)
-    })
-
-    it('combo=50 → multiply +0.5', () => {
-      const mods = RELIC_MODIFIER_DEFS.combo_badge('combo_badge', { combo: 50 })
-      expect(mods[0].effect?.value).toBeCloseTo(0.5)
-    })
-
-    it('combo=100 → multiply +1.0', () => {
-      const mods = RELIC_MODIFIER_DEFS.combo_badge('combo_badge', { combo: 100 })
-      expect(mods[0].effect?.value).toBeCloseTo(1.0)
-    })
-  })
-
   describe('phoenix_feather', () => {
     it('on_error → combo_protect behavior (probability 0.5)', () => {
       const mods = RELIC_MODIFIER_DEFS.phoenix_feather('phoenix_feather')
@@ -112,26 +79,6 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
       expect(mods[0].trigger).toBe('on_error')
       expect(mods[0].phase).toBe('after')
       expect(mods[0].behavior).toEqual({ type: 'combo_protect', probability: 0.5 })
-    })
-  })
-
-  describe('berserker_mask', () => {
-    it('on_word_complete → multiply +0.5, condition multiplier_gte(3.0)', () => {
-      const mods = RELIC_MODIFIER_DEFS.berserker_mask('berserker_mask')
-      expect(mods).toHaveLength(1)
-      expect(mods[0].trigger).toBe('on_word_complete')
-      expect(mods[0].layer).toBe('base')
-      expect(mods[0].effect).toEqual({ type: 'multiply', value: 0.5, stacking: 'additive' })
-      expect(mods[0].condition).toEqual({ type: 'multiplier_gte', value: 3.0 })
-    })
-  })
-
-  describe('treasure_map', () => {
-    it('on_battle_end → gold +15 additive', () => {
-      const mods = RELIC_MODIFIER_DEFS.treasure_map('treasure_map')
-      expect(mods).toHaveLength(1)
-      expect(mods[0].trigger).toBe('on_battle_end')
-      expect(mods[0].effect).toEqual({ type: 'gold', value: 15, stacking: 'additive' })
     })
   })
 
@@ -152,15 +99,6 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
     })
   })
 
-  describe('combo_crown', () => {
-    it('on_battle_start → multiply +0.3 additive', () => {
-      const mods = RELIC_MODIFIER_DEFS.combo_crown('combo_crown')
-      expect(mods).toHaveLength(1)
-      expect(mods[0].trigger).toBe('on_battle_start')
-      expect(mods[0].effect).toEqual({ type: 'multiply', value: 0.3, stacking: 'additive' })
-    })
-  })
-
   describe('golden_keyboard', () => {
     it('on_skill_trigger → score ×1.25 multiplicative', () => {
       const mods = RELIC_MODIFIER_DEFS.golden_keyboard('golden_keyboard')
@@ -178,6 +116,59 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
       expect(mods[0].effect).toEqual({ type: 'time', value: 8, stacking: 'additive' })
     })
   })
+
+  // === 催化剂遗物工厂测试 ===
+  describe('void_heart（催化剂）', () => {
+    it('adjacentEmptyCount=0 → score +0', () => {
+      const mods = RELIC_MODIFIER_DEFS.void_heart('void_heart', { adjacentEmptyCount: 0 })
+      expect(mods).toHaveLength(1)
+      expect(mods[0].effect?.value).toBe(0)
+    })
+
+    it('adjacentEmptyCount=3 → score +9', () => {
+      const mods = RELIC_MODIFIER_DEFS.void_heart('void_heart', { adjacentEmptyCount: 3 })
+      expect(mods[0].effect).toEqual({ type: 'score', value: 9, stacking: 'additive' })
+    })
+
+    it('adjacentEmptyCount 未提供 → score +0', () => {
+      const mods = RELIC_MODIFIER_DEFS.void_heart('void_heart')
+      expect(mods[0].effect?.value).toBe(0)
+    })
+  })
+
+  describe('chain_amplifier（催化剂，行为型）', () => {
+    it('返回空数组', () => {
+      expect(RELIC_MODIFIER_DEFS.chain_amplifier('chain_amplifier')).toEqual([])
+    })
+  })
+
+  describe('fortress（催化剂，行为型）', () => {
+    it('返回空数组', () => {
+      expect(RELIC_MODIFIER_DEFS.fortress('fortress')).toEqual([])
+    })
+  })
+
+  describe('passive_mastery（催化剂，行为型）', () => {
+    it('返回空数组', () => {
+      expect(RELIC_MODIFIER_DEFS.passive_mastery('passive_mastery')).toEqual([])
+    })
+  })
+
+  describe('keyboard_storm（催化剂）', () => {
+    it('on_skill_trigger → score +2 with total_skills_gte(12) condition', () => {
+      const mods = RELIC_MODIFIER_DEFS.keyboard_storm('keyboard_storm')
+      expect(mods).toHaveLength(1)
+      expect(mods[0].trigger).toBe('on_skill_trigger')
+      expect(mods[0].effect).toEqual({ type: 'score', value: 2, stacking: 'additive' })
+      expect(mods[0].condition).toEqual({ type: 'total_skills_gte', value: 12 })
+    })
+  })
+
+  describe('gamblers_creed（催化剂，行为型）', () => {
+    it('返回空数组', () => {
+      expect(RELIC_MODIFIER_DEFS.gamblers_creed('gamblers_creed')).toEqual([])
+    })
+  })
 })
 
 // ========================================
@@ -185,15 +176,6 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
 // ========================================
 describe('queryRelicFlag', () => {
   beforeEach(() => clearRelics())
-
-  it('magnet_bias: 无磁石 → 0.6', () => {
-    expect(queryRelicFlag('magnet_bias')).toBe(0.6)
-  })
-
-  it('magnet_bias: 有磁石 → 0.8', () => {
-    addRelic('magnet')
-    expect(queryRelicFlag('magnet_bias')).toBe(0.8)
-  })
 
   it('price_discount: 无幸运硬币 → 0', () => {
     expect(queryRelicFlag('price_discount')).toBe(0)
@@ -211,6 +193,51 @@ describe('queryRelicFlag', () => {
   it('perfectionist_streak: 有完美主义者 → true', () => {
     addRelic('perfectionist')
     expect(queryRelicFlag('perfectionist_streak')).toBe(true)
+  })
+
+  it('chain_amplifier: 无 → false', () => {
+    expect(queryRelicFlag('chain_amplifier')).toBe(false)
+  })
+
+  it('chain_amplifier: 有 → true', () => {
+    addRelic('chain_amplifier')
+    expect(queryRelicFlag('chain_amplifier')).toBe(true)
+  })
+
+  it('fortress_shield_bonus: 无 → 0', () => {
+    expect(queryRelicFlag('fortress_shield_bonus')).toBe(0)
+  })
+
+  it('fortress_shield_bonus: 有 → 2', () => {
+    addRelic('fortress')
+    expect(queryRelicFlag('fortress_shield_bonus')).toBe(2)
+  })
+
+  it('fortress_sentinel_bonus: 无 → 0', () => {
+    expect(queryRelicFlag('fortress_sentinel_bonus')).toBe(0)
+  })
+
+  it('fortress_sentinel_bonus: 有 → 1', () => {
+    addRelic('fortress')
+    expect(queryRelicFlag('fortress_sentinel_bonus')).toBe(1)
+  })
+
+  it('passive_mastery: 无 → false', () => {
+    expect(queryRelicFlag('passive_mastery')).toBe(false)
+  })
+
+  it('passive_mastery: 有 → true', () => {
+    addRelic('passive_mastery')
+    expect(queryRelicFlag('passive_mastery')).toBe(true)
+  })
+
+  it('gamblers_creed: 无 → false', () => {
+    expect(queryRelicFlag('gamblers_creed')).toBe(false)
+  })
+
+  it('gamblers_creed: 有 → true', () => {
+    addRelic('gamblers_creed')
+    expect(queryRelicFlag('gamblers_creed')).toBe(true)
   })
 
   it('unknown flag → false', () => {
@@ -238,38 +265,34 @@ describe('resolveRelicEffects 管道集成', () => {
     expect(result.effects.time).toBe(0.5)
   })
 
-  it('piggy_bank + treasure_map → on_battle_end 产生 gold 25', () => {
-    addRelic('piggy_bank')
-    addRelic('treasure_map')
-    const result = resolveRelicEffects('on_battle_end')
-    expect(result.effects.gold).toBe(25) // 10 + 15
-  })
-
-  it('overkill_blade + treasure_map → on_battle_end 金币叠加', () => {
+  it('overkill_blade → on_battle_end 金币 = overkill', () => {
     addRelic('overkill_blade')
-    addRelic('treasure_map')
     const result = resolveRelicEffects('on_battle_end', { overkill: 30 })
-    expect(result.effects.gold).toBe(45) // 30 + 15
+    expect(result.effects.gold).toBe(30)
   })
 
-  it('combo_crown + time_lord → on_battle_start 同时有 multiply 和 time', () => {
-    addRelic('combo_crown')
+  it('time_lord → on_battle_start time +8', () => {
     addRelic('time_lord')
     const result = resolveRelicEffects('on_battle_start')
-    expect(result.effects.multiply).toBeCloseTo(0.3)
     expect(result.effects.time).toBe(8)
   })
 
-  it('berserker_mask: multiplier < 3.0 → multiply = 0', () => {
-    addRelic('berserker_mask')
-    const result = resolveRelicEffects('on_word_complete', { multiplier: 2.5 })
-    expect(result.effects.multiply).toBe(0) // 条件不满足
+  it('void_heart: adjacentEmptyCount=4 → score +12', () => {
+    addRelic('void_heart')
+    const result = resolveRelicEffects('on_skill_trigger', { adjacentEmptyCount: 4 })
+    expect(result.effects.score).toBe(12)
   })
 
-  it('berserker_mask: multiplier >= 3.0 → multiply = 0.5', () => {
-    addRelic('berserker_mask')
-    const result = resolveRelicEffects('on_word_complete', { multiplier: 3.5 })
-    expect(result.effects.multiply).toBe(0.5) // bonusMult = 1 + 0.5 = 1.5
+  it('keyboard_storm: totalSkillCount=12 → score +2', () => {
+    addRelic('keyboard_storm')
+    const result = resolveRelicEffects('on_skill_trigger', { totalSkillCount: 12 })
+    expect(result.effects.score).toBe(2)
+  })
+
+  it('keyboard_storm: totalSkillCount=8 → score 0 (条件不满足)', () => {
+    addRelic('keyboard_storm')
+    const result = resolveRelicEffects('on_skill_trigger', { totalSkillCount: 8 })
+    expect(result.effects.score).toBe(0)
   })
 
   it('不匹配 trigger 的遗物被忽略', () => {
@@ -315,7 +338,6 @@ describe('injectRelicModifiers', () => {
     addRelic('golden_keyboard')
     const registry = new ModifierRegistry()
 
-    // 注册一个 base 层分数 Modifier（模拟 burst 技能）
     registry.register({
       id: 'skill:burst:score',
       source: 'skill:burst',
@@ -334,7 +356,51 @@ describe('injectRelicModifiers', () => {
     expect(result.effects.score).toBe(12.5)
   })
 
-  it('无 golden_keyboard → 不影响技能管道', () => {
+  it('void_heart → 注入 on_skill_trigger base score (空位数×3)', () => {
+    addRelic('void_heart')
+    const registry = new ModifierRegistry()
+
+    registry.register({
+      id: 'skill:burst:score',
+      source: 'skill:burst',
+      sourceType: 'skill',
+      layer: 'base',
+      trigger: 'on_skill_trigger',
+      phase: 'calculate',
+      effect: { type: 'score', value: 10, stacking: 'additive' },
+      priority: 100,
+    })
+
+    injectRelicModifiers(registry, { adjacentEmptyCount: 2 })
+
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
+    // base = 10 + 6(void_heart) = 16
+    expect(result.effects.score).toBe(16)
+  })
+
+  it('keyboard_storm + totalSkillCount=12 → 注入额外底分', () => {
+    addRelic('keyboard_storm')
+    const registry = new ModifierRegistry()
+
+    registry.register({
+      id: 'skill:burst:score',
+      source: 'skill:burst',
+      sourceType: 'skill',
+      layer: 'base',
+      trigger: 'on_skill_trigger',
+      phase: 'calculate',
+      effect: { type: 'score', value: 10, stacking: 'additive' },
+      priority: 100,
+    })
+
+    injectRelicModifiers(registry, { totalSkillCount: 12 })
+
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { totalSkillCount: 12 })
+    // base = 10 + 2(keyboard_storm) = 12
+    expect(result.effects.score).toBe(12)
+  })
+
+  it('无影响遗物 → 不改变技能管道', () => {
     addRelic('time_crystal') // 不影响 on_skill_trigger
     const registry = new ModifierRegistry()
 
@@ -352,7 +418,6 @@ describe('injectRelicModifiers', () => {
     injectRelicModifiers(registry)
 
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
-    // base=10, 无 global → 10
     expect(result.effects.score).toBe(10)
   })
 
@@ -360,7 +425,6 @@ describe('injectRelicModifiers', () => {
     addRelic('golden_keyboard')
     const registry = new ModifierRegistry()
 
-    // burst base
     registry.register({
       id: 'skill:burst:score',
       source: 'skill:burst',
@@ -372,7 +436,6 @@ describe('injectRelicModifiers', () => {
       priority: 100,
     })
 
-    // aura enhance
     registry.register({
       id: 'skill:aura:enhance',
       source: 'skill:aura',

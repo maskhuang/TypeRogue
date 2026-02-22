@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - RelicSystem 测试
 // ============================================
-// Story 5.4 Task 4: 遗物系统测试
+// Story 5.4 Task 4 + Story 13.1: 遗物系统测试
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { RelicSystem } from '../../../../src/systems/relics/RelicSystem'
@@ -31,13 +31,10 @@ describe('RelicSystem', () => {
 
     it('should auto-setup listeners by default', () => {
       const systemWithListeners = new RelicSystem(() => [])
-      // Verify listeners are set up by checking event handling
       systemWithListeners.destroy()
     })
 
     it('should not setup listeners when autoSetupListeners is false', () => {
-      // The system is already created with autoSetupListeners: false in beforeEach
-      // Just verify it works
       expect(relicSystem.getRelicCount()).toBe(0)
     })
   })
@@ -98,12 +95,6 @@ describe('RelicSystem', () => {
       expect(modifiers.timeBonus).toBe(8)
     })
 
-    it('should calculate battle_end modifiers correctly', () => {
-      ownedRelics = ['treasure_map'] // +15 gold flat
-      const modifiers = relicSystem.calculateModifiers('battle_end')
-      expect(modifiers.goldFlat).toBe(15)
-    })
-
     it('should calculate on_word_complete modifiers correctly', () => {
       ownedRelics = ['time_crystal'] // +0.5 seconds per word
       const modifiers = relicSystem.calculateModifiers('on_word_complete')
@@ -114,13 +105,6 @@ describe('RelicSystem', () => {
       ownedRelics = ['phoenix_feather'] // 30% combo protection
       const modifiers = relicSystem.calculateModifiers('on_error')
       expect(modifiers.comboProtectionChance).toBe(0.3)
-    })
-
-    it('should stack multiple relic effects', () => {
-      ownedRelics = ['time_lord', 'combo_crown'] // +8s time, +0.3 multiplier
-      const modifiers = relicSystem.calculateModifiers('battle_start')
-      expect(modifiers.timeBonus).toBe(8)
-      expect(modifiers.scoreMultiplier).toBe(1.3)
     })
   })
 
@@ -153,13 +137,8 @@ describe('RelicSystem', () => {
     })
 
     it('getScoreMultiplier should return passive score multiplier', () => {
-      ownedRelics = ['combo_crown'] // Only applies on battle_start, so passive should be 1
+      ownedRelics = ['golden_keyboard'] // passive skill_effect_bonus, not scoreMultiplier
       expect(relicSystem.getScoreMultiplier()).toBe(1)
-    })
-
-    it('getGoldMultiplier should return default when no gold_multiplier relic', () => {
-      ownedRelics = ['treasure_map'] // treasure_map now uses gold_flat, not gold_multiplier
-      expect(relicSystem.getGoldMultiplier()).toBe(1)
     })
 
     it('getPriceDiscount should return passive price discount', () => {
@@ -175,21 +154,6 @@ describe('RelicSystem', () => {
     it('getComboProtectionChance should return on_error combo protection', () => {
       ownedRelics = ['phoenix_feather']
       expect(relicSystem.getComboProtectionChance()).toBe(0.3)
-    })
-
-    it('getWordScoreBonus should return passive word score bonus', () => {
-      ownedRelics = ['magnet']
-      expect(relicSystem.getWordScoreBonus()).toBe(5)
-    })
-
-    it('getMultiplierFromCombo should calculate combo multiplier', () => {
-      ownedRelics = ['combo_badge'] // 0.01 per combo
-      expect(relicSystem.getMultiplierFromCombo(100)).toBeCloseTo(1)
-    })
-
-    it('getGoldFlat should return battle_start gold flat bonus', () => {
-      ownedRelics = ['piggy_bank']
-      expect(relicSystem.getGoldFlat()).toBe(10)
     })
   })
 
@@ -207,18 +171,6 @@ describe('RelicSystem', () => {
       const context = relicSystem.getContext()
       expect(context.combo).toBe(0)
       expect(context.hasError).toBe(false)
-    })
-
-    it('should affect conditional effects', () => {
-      ownedRelics = ['berserker_mask'] // +30% when combo > 20
-
-      relicSystem.updateContext({ combo: 15 })
-      const modifiersLow = relicSystem.calculateModifiers('passive')
-      expect(modifiersLow.scoreMultiplier).toBe(1) // Not activated
-
-      relicSystem.updateContext({ combo: 25 })
-      const modifiersHigh = relicSystem.calculateModifiers('passive')
-      expect(modifiersHigh.scoreMultiplier).toBe(1.3) // Activated
     })
   })
 
@@ -299,23 +251,6 @@ describe('RelicSystem', () => {
       vi.restoreAllMocks()
     })
 
-    it('should emit relic:effect on battle:end', () => {
-      const handler = vi.fn()
-      eventBus.on('relic:effect', handler)
-
-      ownedRelics = ['treasure_map']
-      eventBus.emit('battle:end', { result: 'win', score: 1000 })
-
-      expect(handler).toHaveBeenCalledWith(
-        expect.objectContaining({
-          trigger: 'battle_end',
-          modifiers: expect.objectContaining({
-            goldFlat: 15
-          })
-        })
-      )
-    })
-
     it('should reset context on battle:start', () => {
       relicSystem.updateContext({ combo: 50, hasError: true })
       eventBus.emit('battle:start', { stageId: 1 })
@@ -383,18 +318,12 @@ describe('RelicSystem', () => {
       expect(handler).toHaveBeenCalledTimes(1)
 
       relicSystem.destroy()
-
-      eventBus.emit('battle:start', { stageId: 2 })
-      // Handler should still be called (it's still subscribed)
-      // but RelicSystem won't emit relic:effect anymore
-      // This is a bit tricky to test without more complex setup
     })
 
     it('should clear cached modifiers', () => {
       ownedRelics = ['lucky_coin']
       relicSystem.getPassiveModifiers()
       relicSystem.destroy()
-      // After destroy, cache should be cleared (internal state)
     })
   })
 })

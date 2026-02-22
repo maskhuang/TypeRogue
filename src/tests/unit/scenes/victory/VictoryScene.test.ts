@@ -20,7 +20,7 @@ describe('VictoryScene', () => {
       maxCombo: 42,
       perfectWords: 150,
       skills: ['score_boost', 'combo_shield', 'time_extend'],
-      relics: ['lucky_coin', 'combo_crown']
+      relics: ['lucky_coin', 'void_heart']
     }
     scene = new VictoryScene(testData)
   })
@@ -44,7 +44,7 @@ describe('VictoryScene', () => {
       expect(data.maxCombo).toBe(42)
       expect(data.perfectWords).toBe(150)
       expect(data.skills).toEqual(['score_boost', 'combo_shield', 'time_extend'])
-      expect(data.relics).toEqual(['lucky_coin', 'combo_crown'])
+      expect(data.relics).toEqual(['lucky_coin', 'void_heart'])
     })
 
     it('should return a copy of data to prevent mutation', () => {
@@ -110,7 +110,7 @@ describe('VictoryScene', () => {
             maxCombo: 42,
             perfectWords: 150,
             skills: ['score_boost', 'combo_shield', 'time_extend'],
-            relics: ['lucky_coin', 'combo_crown']
+            relics: ['lucky_coin', 'void_heart']
           })
         })
       )
