@@ -32,6 +32,7 @@ export class KeyVisual extends Container {
   // 当前状态
   private isPressed: boolean = false
   private isAdjacentHighlighted: boolean = false
+  private letterLevel: number = 0
 
   // 尺寸常量
   static readonly KEY_SIZE = 48
@@ -46,6 +47,9 @@ export class KeyVisual extends Container {
   private static readonly COLOR_BORDER_DEFAULT = 0x444444
   private static readonly COLOR_BORDER_PRESSED = 0xffffff
   private static readonly COLOR_BORDER_ADJACENT = 0x6666aa
+  private static readonly COLOR_BORDER_LV1 = 0x88bbdd   // 淡蓝
+  private static readonly COLOR_BORDER_LV2 = 0x4488cc   // 蓝色
+  private static readonly COLOR_BORDER_LV3 = 0xffd700   // 金色
 
   private static readonly LABEL_STYLE = new TextStyle({
     fontFamily: 'Arial',
@@ -88,7 +92,17 @@ export class KeyVisual extends Container {
     } else if (this.isAdjacentHighlighted) {
       bgColor = KeyVisual.COLOR_ADJACENT
       borderColor = KeyVisual.COLOR_BORDER_ADJACENT
+    } else if (this.letterLevel >= 3) {
+      borderColor = KeyVisual.COLOR_BORDER_LV3
+    } else if (this.letterLevel === 2) {
+      borderColor = KeyVisual.COLOR_BORDER_LV2
+    } else if (this.letterLevel === 1) {
+      borderColor = KeyVisual.COLOR_BORDER_LV1
     }
+
+    const borderWidth = this.letterLevel >= 3
+      ? KeyVisual.BORDER_WIDTH + 1
+      : KeyVisual.BORDER_WIDTH
 
     // 绘制边框
     this.background.roundRect(
@@ -99,7 +113,7 @@ export class KeyVisual extends Container {
     this.background.fill({ color: bgColor })
     this.background.stroke({
       color: borderColor,
-      width: KeyVisual.BORDER_WIDTH
+      width: borderWidth
     })
   }
 
@@ -186,6 +200,23 @@ export class KeyVisual extends Container {
    */
   getAdjacentHighlight(): boolean {
     return this.isAdjacentHighlighted
+  }
+
+  /**
+   * 设置字母升级等级
+   */
+  setLetterLevel(level: number): void {
+    if (this.letterLevel !== level) {
+      this.letterLevel = level
+      this.drawBackground()
+    }
+  }
+
+  /**
+   * 获取字母升级等级
+   */
+  getLetterLevel(): number {
+    return this.letterLevel
   }
 
   /**

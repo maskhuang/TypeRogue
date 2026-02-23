@@ -25,6 +25,7 @@ export class KeyboardVisualizer extends Container {
   private unsubKeypress: (() => void) | null = null
   private unsubKeyup: (() => void) | null = null
   private unsubSkillTriggered: (() => void) | null = null
+  private unsubLetterUpgraded: (() => void) | null = null
 
   // 键盘布局定义
   private static readonly ROWS = [
@@ -130,6 +131,7 @@ export class KeyboardVisualizer extends Container {
     this.unsubKeypress = eventBus.on('input:keypress', this.onKeyPress.bind(this))
     this.unsubKeyup = eventBus.on('input:keyup', this.onKeyUp.bind(this))
     this.unsubSkillTriggered = eventBus.on('skill:triggered', this.onSkillTriggered.bind(this))
+    this.unsubLetterUpgraded = eventBus.on('letter:upgraded', this.onLetterUpgraded.bind(this))
   }
 
   /**
@@ -147,6 +149,10 @@ export class KeyboardVisualizer extends Container {
     if (this.unsubSkillTriggered) {
       this.unsubSkillTriggered()
       this.unsubSkillTriggered = null
+    }
+    if (this.unsubLetterUpgraded) {
+      this.unsubLetterUpgraded()
+      this.unsubLetterUpgraded = null
     }
   }
 
@@ -198,6 +204,29 @@ export class KeyboardVisualizer extends Container {
     if (keyVisual) {
       keyVisual.playTriggerAnimation()
     }
+  }
+
+  /**
+   * 处理字母升级
+   */
+  private onLetterUpgraded(data: GameEvents['letter:upgraded']): void {
+    if (this.destroyed) return
+
+    const keyVisual = this.keys.get(data.key.toUpperCase())
+    if (keyVisual) {
+      keyVisual.setLetterLevel(data.level)
+      keyVisual.playTriggerAnimation()
+    }
+  }
+
+  /**
+   * 同步所有字母等级显示
+   */
+  syncLetterLevels(letterLevels: Map<string, number>): void {
+    this.keys.forEach((keyVisual, keyName) => {
+      const level = letterLevels.get(keyName.toLowerCase()) ?? 0
+      keyVisual.setLetterLevel(level)
+    })
   }
 
   /**

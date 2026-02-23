@@ -33,7 +33,8 @@ export function createInitialState(): GameState {
       comboBonus: BALANCE.COMBO_BONUS,
       wordBonus: 0,
       timeBonus: 0,
-      letterBonus: 0,
+      letterLevels: new Map(),
+      evolvedSkills: new Map(),
     },
     shop: {
       rewards: [],
@@ -43,6 +44,8 @@ export function createInitialState(): GameState {
       selectedSkill: null,
       selectedKey: null,
       tab: 'skills',
+      freeLetterUpgrade: true,
+      freeLetterOptions: [],
       removeCount: 0,
     },
   };
@@ -63,6 +66,7 @@ export function createSynergyState(): SynergyState {
     pulseCount: 0,
     skillBaseScore: 0,
     skillMultBonus: 0,
+    letterBaseScore: 0,
   };
 }
 

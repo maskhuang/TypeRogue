@@ -13,6 +13,7 @@ import { playSound } from '../effects/sound';
 import { juiceUp } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopSkillItem } from '../core/types';
+import { upgradeLetter, getLetterLevel, getUpgradeCost } from './letters/LetterUpgradeSystem';
 
 // === 打开商店 ===
 export function openShop(_won: boolean): void {
@@ -41,6 +42,8 @@ export function openShop(_won: boolean): void {
   state.shop.shopWords = [];
   state.shop.shopSkills = generateShopSkills();
   state.shop.shopRelics = generateShopRelics();
+  state.shop.freeLetterUpgrade = true;
+  state.shop.freeLetterOptions = generateFreeLetterOptions();
   state.shop.removeCount = 0;
 
   renderShopTabs();
@@ -70,11 +73,12 @@ function renderShopTabs(): void {
     <button class="shop-tab ${state.shop.tab === 'skills' ? 'active' : ''}" data-tab="skills">⚡ 技能</button>
     <button class="shop-tab ${state.shop.tab === 'relics' ? 'active' : ''}" data-tab="relics">🏺 遗物</button>
     <button class="shop-tab ${state.shop.tab === 'deck' ? 'active' : ''}" data-tab="deck">📚 牌库</button>
+    <button class="shop-tab ${state.shop.tab === 'letters' ? 'active' : ''}" data-tab="letters">🔤 字母</button>
   `;
 
   el.shopTabs.querySelectorAll('.shop-tab').forEach(btn => {
     (btn as HTMLElement).onclick = () => {
-      state.shop.tab = (btn as HTMLElement).dataset.tab as 'skills' | 'relics' | 'deck';
+      state.shop.tab = (btn as HTMLElement).dataset.tab as 'skills' | 'relics' | 'deck' | 'letters';
       renderShopTabs();
       renderShopContent();
     };
@@ -92,6 +96,9 @@ function renderShopContent(): void {
       break;
     case 'deck':
       renderDeckShop();
+      break;
+    case 'letters':
+      renderLetterShop();
       break;
   }
 }
@@ -324,6 +331,109 @@ function renderDeckShop(): void {
 
   deckSection.appendChild(deckGrid);
   el.rewardCards.appendChild(deckSection);
+}
+
+// === 字母升级商店 ===
+const LETTER_LEVEL_CLASSES = ['', 'lv1', 'lv2', 'lv3'];
+
+function generateFreeLetterOptions(): string[] {
+  const upgradableKeys = KEYS.filter(k => getLetterLevel(k) < 3);
+  return upgradableKeys.sort(() => Math.random() - 0.5).slice(0, Math.min(3, upgradableKeys.length));
+}
+
+function renderLetterShop(): void {
+  const el = getElements();
+  el.rewardCards.innerHTML = '';
+
+  // 免费升级区域
+  if (state.shop.freeLetterUpgrade) {
+    const freeKeys = state.shop.freeLetterOptions;
+    if (freeKeys.length > 0) {
+      const freeSection = document.createElement('div');
+      freeSection.className = 'letter-free-section';
+
+      freeSection.innerHTML = `<div class="letter-free-title">🎁 免费升级（选择一个）</div>`;
+      const freeGrid = document.createElement('div');
+      freeGrid.className = 'letter-free-grid';
+
+      freeKeys.forEach(k => {
+        const level = getLetterLevel(k);
+        const card = document.createElement('div');
+        card.className = `letter-card free ${LETTER_LEVEL_CLASSES[level]}`;
+        card.innerHTML = `
+          <span class="letter-name">${k.toUpperCase()}</span>
+          <span class="letter-level">Lv.${level} → ${level + 1}</span>
+          <span class="letter-cost free-label">FREE</span>
+        `;
+        card.onclick = () => {
+          upgradeLetter(k);
+          state.shop.freeLetterUpgrade = false;
+          playSound('skill');
+          showFeedback(`${k.toUpperCase()} → Lv.${getLetterLevel(k)}!`, '#ffd700');
+          renderLetterShop();
+        };
+        freeGrid.appendChild(card);
+      });
+
+      freeSection.appendChild(freeGrid);
+      el.rewardCards.appendChild(freeSection);
+    } else {
+      const allMaxDiv = document.createElement('div');
+      allMaxDiv.className = 'letter-free-section';
+      allMaxDiv.innerHTML = '<div class="letter-free-title">🎉 所有字母已满级！</div>';
+      el.rewardCards.appendChild(allMaxDiv);
+      state.shop.freeLetterUpgrade = false;
+    }
+  }
+
+  // QWERTY 键盘布局
+  const letterGrid = document.createElement('div');
+  letterGrid.className = 'letter-grid';
+
+  KEYBOARD_ROWS.forEach(row => {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'letter-row';
+
+    row.forEach(k => {
+      const level = getLetterLevel(k);
+      const cost = getUpgradeCost(k);
+      const isMax = cost === null;
+      const lvClass = isMax ? 'max' : LETTER_LEVEL_CLASSES[level];
+      const card = document.createElement('div');
+      card.className = `letter-card ${lvClass}`;
+
+      if (!isMax) {
+        const adjustedCost = getAdjustedPrice(cost);
+        const canAfford = state.gold >= adjustedCost;
+        if (!canAfford) card.classList.add('cannot-afford');
+
+        card.innerHTML = `
+          <span class="letter-name">${k.toUpperCase()}</span>
+          <span class="letter-level">Lv.${level}</span>
+          <span class="letter-cost">💰${adjustedCost}</span>
+        `;
+        card.onclick = () => {
+          if (buyItem(adjustedCost)) {
+            upgradeLetter(k);
+            showFeedback(`${k.toUpperCase()} → Lv.${getLetterLevel(k)}!`, '#ffd700');
+            renderLetterShop();
+          }
+        };
+      } else {
+        card.innerHTML = `
+          <span class="letter-name">${k.toUpperCase()}</span>
+          <span class="letter-level">Lv.${level}</span>
+          <span class="letter-cost max-label">MAX</span>
+        `;
+      }
+
+      rowDiv.appendChild(card);
+    });
+
+    letterGrid.appendChild(rowDiv);
+  });
+
+  el.rewardCards.appendChild(letterGrid);
 }
 
 // === 商店卡片渲染 ===

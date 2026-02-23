@@ -388,6 +388,225 @@ describe('ConditionEvaluator', () => {
   })
 
   // === 缺失上下文字段默认行为 ===
+  describe('key_is (字母升级)', () => {
+    it('匹配相同字母 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'key_is', key: 'e' },
+        { currentKeystrokeKey: 'e' },
+      )).toBe(true)
+    })
+
+    it('大小写不敏感: key=E, ctx=e → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'key_is', key: 'E' },
+        { currentKeystrokeKey: 'e' },
+      )).toBe(true)
+    })
+
+    it('大小写不敏感: key=e, ctx=E → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'key_is', key: 'e' },
+        { currentKeystrokeKey: 'E' },
+      )).toBe(true)
+    })
+
+    it('不匹配不同字母 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'key_is', key: 'e' },
+        { currentKeystrokeKey: 'a' },
+      )).toBe(false)
+    })
+
+    it('ctx 无 currentKeystrokeKey → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'key_is', key: 'e' },
+        {},
+      )).toBe(false)
+    })
+
+    it('ctx 为 undefined → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'key_is', key: 'e' },
+      )).toBe(false)
+    })
+  })
+
+  // === Story 14.3: 词语特征条件 ===
+  describe('word_has_double_letter', () => {
+    it('词含重复字母 "book" → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_has_double_letter' },
+        { currentWord: 'book' },
+      )).toBe(true)
+    })
+
+    it('词含重复字母 "jazz" → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_has_double_letter' },
+        { currentWord: 'jazz' },
+      )).toBe(true)
+    })
+
+    it('词无重复字母 "words" → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_has_double_letter' },
+        { currentWord: 'words' },
+      )).toBe(false)
+    })
+
+    it('空词 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_has_double_letter' },
+        { currentWord: '' },
+      )).toBe(false)
+    })
+
+    it('大写词 "BOOK" → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_has_double_letter' },
+        { currentWord: 'BOOK' },
+      )).toBe(true)
+    })
+
+    it('单字母 "a" → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_has_double_letter' },
+        { currentWord: 'a' },
+      )).toBe(false)
+    })
+  })
+
+  describe('word_all_unique_letters', () => {
+    it('全唯一 "words" → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_all_unique_letters' },
+        { currentWord: 'words' },
+      )).toBe(true)
+    })
+
+    it('全唯一 "flame" → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_all_unique_letters' },
+        { currentWord: 'flame' },
+      )).toBe(true)
+    })
+
+    it('有重复 "book" → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_all_unique_letters' },
+        { currentWord: 'book' },
+      )).toBe(false)
+    })
+
+    it('空词 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_all_unique_letters' },
+        { currentWord: '' },
+      )).toBe(false)
+    })
+
+    it('大写全唯一 "FLAME" → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_all_unique_letters' },
+        { currentWord: 'FLAME' },
+      )).toBe(true)
+    })
+
+    it('单字母 "x" → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_all_unique_letters' },
+        { currentWord: 'x' },
+      )).toBe(true)
+    })
+  })
+
+  describe('word_vowel_ratio_gte', () => {
+    it('高元音 "aeiou"(100%) ≥ 0.5 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_vowel_ratio_gte', value: 0.5 },
+        { currentWord: 'aeiou' },
+      )).toBe(true)
+    })
+
+    it('低元音 "rhythm"(0%) ≥ 0.3 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_vowel_ratio_gte', value: 0.3 },
+        { currentWord: 'rhythm' },
+      )).toBe(false)
+    })
+
+    it('边界 "hello"(2/5=0.4) ≥ 0.4 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_vowel_ratio_gte', value: 0.4 },
+        { currentWord: 'hello' },
+      )).toBe(true)
+    })
+
+    it('"hello"(2/5=0.4) ≥ 0.5 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_vowel_ratio_gte', value: 0.5 },
+        { currentWord: 'hello' },
+      )).toBe(false)
+    })
+
+    it('空词 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_vowel_ratio_gte', value: 0.1 },
+        { currentWord: '' },
+      )).toBe(false)
+    })
+
+    it('大写 "AUDIO"(4/5=0.8) ≥ 0.5 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_vowel_ratio_gte', value: 0.5 },
+        { currentWord: 'AUDIO' },
+      )).toBe(true)
+    })
+  })
+
+  describe('skill_density_gte', () => {
+    it('skillDensity=0.75 ≥ 0.5 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'skill_density_gte', value: 0.5 },
+        { skillDensity: 0.75 },
+      )).toBe(true)
+    })
+
+    it('skillDensity=0 ≥ 0.5 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'skill_density_gte', value: 0.5 },
+        { skillDensity: 0 },
+      )).toBe(false)
+    })
+
+    it('边界 skillDensity=0.5 ≥ 0.5 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'skill_density_gte', value: 0.5 },
+        { skillDensity: 0.5 },
+      )).toBe(true)
+    })
+
+    it('skillDensity 未提供 → 默认 0 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'skill_density_gte', value: 0.1 },
+        {},
+      )).toBe(false)
+    })
+  })
+
+  describe('word_has_double_letter 与 word_all_unique_letters 互斥', () => {
+    it('非空词二者必定一真一假', () => {
+      const testWords = ['book', 'flame', 'jazz', 'words', 'see', 'cat']
+      for (const word of testWords) {
+        const hasDouble = ConditionEvaluator.evaluate(
+          { type: 'word_has_double_letter' }, { currentWord: word })
+        const allUnique = ConditionEvaluator.evaluate(
+          { type: 'word_all_unique_letters' }, { currentWord: word })
+        expect(hasDouble).not.toBe(allUnique)
+      }
+    })
+  })
+
   describe('缺失上下文默认行为', () => {
     it('combo 未提供 → 默认 0, combo_gte value=0 → true', () => {
       expect(ConditionEvaluator.evaluate(
@@ -493,5 +712,48 @@ describe('EffectPipeline + ConditionEvaluator 集成', () => {
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
     // burst 条件满足 (combo 15 >= 10) → 20 + 5 = 25
     expect(result.effects.score).toBe(25)
+  })
+
+  // === Story 14.3: rhyme_master 遗物集成 ===
+  it('word_has_double_letter 条件满足时遗物加分', () => {
+    registry = new ModifierRegistry()
+    // 模拟 rhyme_master 遗物效果
+    registry.register(createTestModifier({
+      id: 'relic:rhyme_master:score',
+      source: 'relic:rhyme_master',
+      sourceType: 'relic',
+      layer: 'base',
+      effect: { type: 'score', value: 3, stacking: 'additive' },
+      condition: { type: 'word_has_double_letter' },
+    }))
+    // 技能基础分
+    registry.register(createTestModifier({
+      id: 'skill:burst:score',
+      layer: 'base',
+      effect: { type: 'score', value: 5, stacking: 'additive' },
+    }))
+    // 词含重复字母 → 遗物生效
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { currentWord: 'BOOK' })
+    expect(result.effects.score).toBe(8) // 5 + 3
+  })
+
+  it('word_has_double_letter 条件不满足时遗物不加分', () => {
+    registry = new ModifierRegistry()
+    registry.register(createTestModifier({
+      id: 'relic:rhyme_master:score',
+      source: 'relic:rhyme_master',
+      sourceType: 'relic',
+      layer: 'base',
+      effect: { type: 'score', value: 3, stacking: 'additive' },
+      condition: { type: 'word_has_double_letter' },
+    }))
+    registry.register(createTestModifier({
+      id: 'skill:burst:score',
+      layer: 'base',
+      effect: { type: 'score', value: 5, stacking: 'additive' },
+    }))
+    // 词无重复字母 → 遗物不生效
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { currentWord: 'FLAME' })
+    expect(result.effects.score).toBe(5) // 只有技能分
   })
 })

@@ -36,7 +36,8 @@ export interface PlayerState {
   comboBonus: number;
   wordBonus: number;
   timeBonus: number;
-  letterBonus: number;
+  letterLevels: Map<string, number>;
+  evolvedSkills: Map<string, string>;  // skillId → branchId
 }
 
 export interface ShopState {
@@ -46,7 +47,9 @@ export interface ShopState {
   shopRelics: string[];
   selectedSkill: string | null;
   selectedKey: string | null;
-  tab: 'skills' | 'relics' | 'deck';
+  tab: 'skills' | 'relics' | 'deck' | 'letters';
+  freeLetterUpgrade: boolean;
+  freeLetterOptions: string[];
   removeCount: number;
 }
 
@@ -77,10 +80,26 @@ export interface SkillDefinition {
   base: number;
   grow: number;
   desc: string;
+  evolutions?: [string, string];  // [branchA_id, branchB_id]
 }
 
 export interface SkillInstance {
   level: number;
+}
+
+// === 技能进化系统 ===
+export interface EvolutionBranch {
+  id: string;              // e.g., 'burst_inferno'
+  name: string;            // e.g., '烈焰爆发'
+  icon: string;            // emoji
+  description: string;     // 玩家可见描述
+  skillId: string;         // 父技能 ID
+  branch: 'A' | 'B';      // 分支标识
+  condition: {
+    minLevel: number;      // 最低技能等级（通常为 3）
+    goldCost: number;      // 进化金币消耗
+  };
+  flavorText?: string;     // 风味文字
 }
 
 // === 遗物系统 ===
@@ -136,6 +155,7 @@ export interface SynergyState {
   pulseCount: number; // pulse 触发计数器（每词重置）
   skillBaseScore: number; // 技能贡献的基础分（每词重置，结算面板使用）
   skillMultBonus: number; // 技能累积的倍率加成（断连击时重置）
+  letterBaseScore: number; // 字母升级贡献的基础分（每词重置）
 }
 
 export interface AdjacentSkill {

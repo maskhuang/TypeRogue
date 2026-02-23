@@ -136,14 +136,14 @@ development_status:
 
   # Epic 14: 字母升级与词语联动
   epic-14: in-progress
-  14-1-letter-upgrade-system: ready-for-dev
-  14-2-letter-upgrade-shop: backlog
-  14-3-word-condition-extension: backlog
+  14-1-letter-upgrade-system: done
+  14-2-letter-upgrade-shop: done
+  14-3-word-condition-extension: done
   epic-14-retrospective: optional
 
   # Epic 15: 技能进化系统
-  epic-15: backlog
-  15-1-evolution-branch-design: backlog
+  epic-15: in-progress
+  15-1-evolution-branch-design: done
   15-2-evolution-ui-selection: backlog
   epic-15-retrospective: optional
 
@@ -151,4 +151,4 @@ development_status:
 # - Total Epics: 15
 # - Total Stories: 56
 # - Epics Completed: 10
-# - Stories Completed: 35
+# - Stories Completed: 36

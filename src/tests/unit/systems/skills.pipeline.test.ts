@@ -14,6 +14,7 @@ import {
   buildTriggerContext,
   generateFeedback,
   getAdjacentSkills,
+  computeSkillDensity,
 } from '../../../src/systems/skills'
 import { state, synergy, resetState } from '../../../src/core/state'
 import type { PipelineContext, PipelineResult, EffectAccumulator } from '../../../src/systems/modifiers/ModifierTypes'
@@ -917,6 +918,43 @@ describe('技能管道集成', () => {
       const ctx: PipelineContext = { skillsTriggeredThisWord: 1 }
       createScopedRegistry('burst', 1, 'f', ctx, false)
       expect(synergy.wordSkillCount).toBe(1) // 未改变
+    })
+  })
+
+  // === Story 14.3: computeSkillDensity ===
+  describe('computeSkillDensity', () => {
+    it('空词 → 0', () => {
+      expect(computeSkillDensity('')).toBe(0)
+    })
+
+    it('null/undefined → 0', () => {
+      expect(computeSkillDensity(null as unknown as string)).toBe(0)
+      expect(computeSkillDensity(undefined as unknown as string)).toBe(0)
+    })
+
+    it('无绑定时 → 0', () => {
+      state.player.bindings.clear()
+      expect(computeSkillDensity('hello')).toBe(0)
+    })
+
+    it('全部命中 → 1.0', () => {
+      state.player.bindings.set('b', 'burst')
+      state.player.bindings.set('o', 'amp')
+      state.player.bindings.set('k', 'freeze')
+      expect(computeSkillDensity('book')).toBe(1.0) // b+o+o+k = 4/4
+    })
+
+    it('部分命中含重复字母 → 正确计数', () => {
+      state.player.bindings.set('b', 'burst')
+      state.player.bindings.set('o', 'amp')
+      // k 无绑定
+      expect(computeSkillDensity('book')).toBe(0.75) // b+o+o+(!k) = 3/4
+    })
+
+    it('大写词 → 正确转小写后查询', () => {
+      state.player.bindings.set('h', 'burst')
+      state.player.bindings.set('e', 'amp')
+      expect(computeSkillDensity('HELLO')).toBe(0.4) // h+e+(!l)+(!l)+(!o) = 2/5
     })
   })
 })

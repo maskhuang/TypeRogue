@@ -2,7 +2,7 @@
 // 打字肉鸽 - 技能数据
 // ============================================
 
-import type { SkillDefinition, SkillType, PassiveSkillType } from '../core/types';
+import type { SkillDefinition, SkillType, PassiveSkillType, EvolutionBranch } from '../core/types';
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes';
 
 // === 被动技能类型列表 ===
@@ -24,7 +24,8 @@ export const SKILLS: Record<string, SkillDefinition> = {
     category: 'active',
     base: 5,
     grow: 2,
-    desc: '触发时+5分'
+    desc: '触发时+5分',
+    evolutions: ['burst_inferno', 'burst_precision'],
   },
 
   // === 倍率技能（主动） ===
@@ -35,7 +36,8 @@ export const SKILLS: Record<string, SkillDefinition> = {
     category: 'active',
     base: 20,
     grow: 5,
-    desc: '触发时倍率+0.2'
+    desc: '触发时倍率+0.2',
+    evolutions: ['amp_crescendo', 'amp_overdrive'],
   },
 
   // === 时间技能（主动） ===
@@ -46,7 +48,8 @@ export const SKILLS: Record<string, SkillDefinition> = {
     category: 'active',
     base: 2,
     grow: 0.5,
-    desc: '触发时+2秒'
+    desc: '触发时+2秒',
+    evolutions: ['freeze_permafrost', 'freeze_chrono'],
   },
 
   // === 护盾技能（主动） ===
@@ -68,7 +71,8 @@ export const SKILLS: Record<string, SkillDefinition> = {
     category: 'active',
     base: 2,
     grow: 1,
-    desc: '触发后，下一个非echo技能触发两次'
+    desc: '触发后，下一个非echo技能触发两次',
+    evolutions: ['echo_resonance', 'echo_phantom'],
   },
   ripple: {
     name: '涟漪',
@@ -88,7 +92,8 @@ export const SKILLS: Record<string, SkillDefinition> = {
     category: 'passive',
     base: 10,
     grow: 5,
-    desc: '[被动] 相邻技能每3次触发→分数+10%'
+    desc: '[被动] 相邻技能每3次触发→分数+10%',
+    evolutions: ['core_nexus', 'core_fusion'],
   },
   aura: {
     name: '光环',
@@ -106,7 +111,8 @@ export const SKILLS: Record<string, SkillDefinition> = {
     category: 'active',
     base: 8,
     grow: 3,
-    desc: '若本词无其他技能触发，+8分'
+    desc: '若本词无其他技能触发，+8分',
+    evolutions: ['lone_hermit', 'lone_shadow'],
   },
   void: {
     name: '虚空',
@@ -447,4 +453,319 @@ export function isPassiveSkill(skillId: string): boolean {
 export function isChainSkill(skillId: string): boolean {
   const skill = SKILLS[skillId];
   return skill?.type === 'echo' || skill?.type === 'ripple';
+}
+
+// ============================================
+// 技能进化系统 (Story 15.1)
+// ============================================
+
+// === 进化分支数据 ===
+export const EVOLUTIONS: Record<string, EvolutionBranch> = {
+  // --- burst 爆发流 ---
+  burst_inferno: {
+    id: 'burst_inferno',
+    name: '烈焰爆发',
+    icon: '🔥',
+    description: '底分翻倍但仅在 combo≥10 时触发',
+    skillId: 'burst',
+    branch: 'A',
+    condition: { minLevel: 3, goldCost: 40 },
+    flavorText: '积蓄的怒火在连击中爆发。',
+  },
+  burst_precision: {
+    id: 'burst_precision',
+    name: '精准爆发',
+    icon: '🎯',
+    description: '底分降低但额外加倍率 +0.3',
+    skillId: 'burst',
+    branch: 'B',
+    condition: { minLevel: 3, goldCost: 40 },
+    flavorText: '精准的一击胜过千次挥舞。',
+  },
+
+  // --- amp 倍率流 ---
+  amp_crescendo: {
+    id: 'amp_crescendo',
+    name: '渐强',
+    icon: '🎵',
+    description: '倍率加成随本词触发技能数递增（每个 +0.1 额外）',
+    skillId: 'amp',
+    branch: 'A',
+    condition: { minLevel: 3, goldCost: 50 },
+    flavorText: '旋律逐渐高昂，终成交响。',
+  },
+  amp_overdrive: {
+    id: 'amp_overdrive',
+    name: '超载',
+    icon: '💢',
+    description: '倍率加成翻倍但触发后下一个词无效',
+    skillId: 'amp',
+    branch: 'B',
+    condition: { minLevel: 3, goldCost: 50 },
+    flavorText: '超负荷运转，代价是短暂的停顿。',
+  },
+
+  // --- echo 连锁流 ---
+  echo_resonance: {
+    id: 'echo_resonance',
+    name: '共鸣',
+    icon: '🔊',
+    description: '双触发变三触发（第三次 50% 效果）',
+    skillId: 'echo',
+    branch: 'A',
+    condition: { minLevel: 3, goldCost: 50 },
+    flavorText: '回响不止一次，共鸣穿透虚空。',
+  },
+  echo_phantom: {
+    id: 'echo_phantom',
+    name: '幻影',
+    icon: '👻',
+    description: '第二次触发改为触发一个随机相邻技能',
+    skillId: 'echo',
+    branch: 'B',
+    condition: { minLevel: 3, goldCost: 50 },
+    flavorText: '回声中藏着另一个灵魂的低语。',
+  },
+
+  // --- freeze 续航流 ---
+  freeze_permafrost: {
+    id: 'freeze_permafrost',
+    name: '永冻',
+    icon: '🧊',
+    description: '加时提升至 +1.5 秒但每词只能触发一次',
+    skillId: 'freeze',
+    branch: 'A',
+    condition: { minLevel: 3, goldCost: 40 },
+    flavorText: '凝固的时间不再流逝。',
+  },
+  freeze_chrono: {
+    id: 'freeze_chrono',
+    name: '时光倒流',
+    icon: '⏪',
+    description: '不加时，改为每触发 3 次回溯一个错误（恢复 combo）',
+    skillId: 'freeze',
+    branch: 'B',
+    condition: { minLevel: 3, goldCost: 40 },
+    flavorText: '时间倒转，错误从未发生。',
+  },
+
+  // --- lone 爆发流 ---
+  lone_hermit: {
+    id: 'lone_hermit',
+    name: '隐士',
+    icon: '🏔️',
+    description: '孤立加成 ×3 但装备技能数上限降至 4',
+    skillId: 'lone',
+    branch: 'A',
+    condition: { minLevel: 3, goldCost: 60 },
+    flavorText: '极致的孤独蕴含极致的力量。',
+  },
+  lone_shadow: {
+    id: 'lone_shadow',
+    name: '暗影',
+    icon: '🌘',
+    description: '孤立条件放宽：允许 1 个其他技能触发仍视为孤立',
+    skillId: 'lone',
+    branch: 'B',
+    condition: { minLevel: 3, goldCost: 60 },
+    flavorText: '暗影从不真正独行，但也不需要同伴。',
+  },
+
+  // --- core 被动流 ---
+  core_nexus: {
+    id: 'core_nexus',
+    name: '枢纽',
+    icon: '🌐',
+    description: '每3次触发 +15% 增强但自身无底分',
+    skillId: 'core',
+    branch: 'A',
+    condition: { minLevel: 3, goldCost: 60 },
+    flavorText: '枢纽不发光，但让一切发光。',
+  },
+  core_fusion: {
+    id: 'core_fusion',
+    name: '融合',
+    icon: '⚛️',
+    description: '相邻增强降至 +5%，但自身获得相邻技能数 × 2 底分',
+    skillId: 'core',
+    branch: 'B',
+    condition: { minLevel: 3, goldCost: 60 },
+    flavorText: '融合众力，化为己用。',
+  },
+}
+
+// === 进化 Modifier 工厂 ===
+export const EVOLUTION_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
+  // --- burst_inferno: 底分翻倍 + combo≥10 条件 ---
+  burst_inferno: (id, lvl) => [{
+    ...baseModifier(id, 'score', 'score', skillVal(id, lvl) * 2),
+    condition: { type: 'combo_gte' as const, value: 10 },
+  }],
+
+  // --- burst_precision: 底分减半 + 额外倍率 +0.3 ---
+  burst_precision: (id, lvl) => [
+    baseModifier(id, 'score', 'score', Math.floor(skillVal(id, lvl) * 0.5)),
+    baseModifier(id, 'mult', 'multiply', 0.3),
+  ],
+
+  // --- amp_crescendo: 倍率随本词触发技能数递增 ---
+  amp_crescendo: (id, lvl, ctx) => {
+    const baseVal = skillVal(id, lvl) / 100
+    const extraPerSkill = 0.1
+    const skillsTriggered = ctx?.skillsTriggeredThisWord ?? 0
+    return [
+      baseModifier(id, 'multiply', 'multiply', baseVal + skillsTriggered * extraPerSkill),
+    ]
+  },
+
+  // --- amp_overdrive: 倍率翻倍 + 下一词冷却 ---
+  amp_overdrive: (id, lvl) => [
+    baseModifier(id, 'multiply', 'multiply', (skillVal(id, lvl) / 100) * 2),
+    {
+      id: `skill:${id}:cooldown`,
+      source: `skill:${id}`,
+      sourceType: 'skill' as const,
+      layer: 'base' as const,
+      trigger: 'on_skill_trigger' as const,
+      phase: 'after' as const,
+      behavior: { type: 'set_word_cooldown' as const },
+      priority: 100,
+    },
+  ],
+
+  // --- echo_resonance: 与 echo 相同结构，runtime 处理三触发 ---
+  echo_resonance: (id, lvl) => [
+    baseModifier(id, 'score', 'score', skillVal(id, lvl)),
+    {
+      id: `skill:${id}:flag`,
+      source: `skill:${id}`,
+      sourceType: 'skill' as const,
+      layer: 'base' as const,
+      trigger: 'on_skill_trigger' as const,
+      phase: 'after' as const,
+      behavior: { type: 'set_echo_flag' as const },
+      priority: 100,
+    },
+  ],
+
+  // --- echo_phantom: 触发随机相邻技能替代双触发 ---
+  echo_phantom: (id, lvl) => [
+    baseModifier(id, 'score', 'score', skillVal(id, lvl)),
+    {
+      id: `skill:${id}:flag`,
+      source: `skill:${id}`,
+      sourceType: 'skill' as const,
+      layer: 'base' as const,
+      trigger: 'on_skill_trigger' as const,
+      phase: 'after' as const,
+      behavior: { type: 'trigger_random_adjacent' as const },
+      priority: 100,
+    },
+  ],
+
+  // --- freeze_permafrost: 固定 +1.5 秒（每词一次由 runtime 控制）---
+  freeze_permafrost: (id, _lvl) => [
+    baseModifier(id, 'time', 'time', 1.5),
+  ],
+
+  // --- freeze_chrono: 无加时，每 3 次触发恢复 combo ---
+  freeze_chrono: (id, _lvl) => [{
+    id: `skill:${id}:restore`,
+    source: `skill:${id}`,
+    sourceType: 'skill' as const,
+    layer: 'base' as const,
+    trigger: 'on_skill_trigger' as const,
+    phase: 'after' as const,
+    behavior: { type: 'restore_combo' as const, triggerEvery: 3 },
+    priority: 100,
+  }],
+
+  // --- lone_hermit: 孤立加成 ×3（装备上限由 runtime 控制）---
+  lone_hermit: (id, lvl) => [{
+    ...baseModifier(id, 'score', 'score', skillVal(id, lvl) * 3),
+    condition: { type: 'skills_triggered_this_word' as const, value: 1 },
+  }],
+
+  // --- lone_shadow: 允许最多 2 个技能触发仍获加成 ---
+  lone_shadow: (id, lvl, ctx) => {
+    const triggered = ctx?.skillsTriggeredThisWord ?? 0
+    if (triggered > 2) return []
+    return [
+      baseModifier(id, 'score', 'score', skillVal(id, lvl) * 2),
+    ]
+  },
+
+  // --- core_nexus: +15% 每 3 次触发叠加，无底分 ---
+  core_nexus: (id, _lvl, ctx) => {
+    const triggers = ctx?.skillsTriggeredThisWord ?? 0
+    const stacks = Math.floor(triggers / 3)
+    const bonusPerStack = 0.15
+    const multBonus = stacks * bonusPerStack
+    if (multBonus <= 0) return []
+    return [{
+      id: `skill:${id}:enhance`,
+      source: `skill:${id}`,
+      sourceType: 'skill' as const,
+      layer: 'enhance' as const,
+      trigger: 'on_skill_trigger' as const,
+      phase: 'calculate' as const,
+      effect: { type: 'score' as const, value: 1 + multBonus, stacking: 'multiplicative' as const },
+      priority: 100,
+    }]
+  },
+
+  // --- core_fusion: +5% 叠加 + 相邻技能数 × 2 底分 ---
+  core_fusion: (id, _lvl, ctx) => {
+    const triggers = ctx?.skillsTriggeredThisWord ?? 0
+    const stacks = Math.floor(triggers / 3)
+    const adjacentCount = ctx?.adjacentSkillCount ?? 0
+    const mods: Modifier[] = []
+    if (adjacentCount > 0) {
+      mods.push(baseModifier(id, 'score', 'score', adjacentCount * 2))
+    }
+    const bonusPerStack = 0.05
+    const multBonus = stacks * bonusPerStack
+    if (multBonus > 0) {
+      mods.push({
+        id: `skill:${id}:enhance`,
+        source: `skill:${id}`,
+        sourceType: 'skill' as const,
+        layer: 'enhance' as const,
+        trigger: 'on_skill_trigger' as const,
+        phase: 'calculate' as const,
+        effect: { type: 'score' as const, value: 1 + multBonus, stacking: 'multiplicative' as const },
+        priority: 100,
+      })
+    }
+    return mods
+  },
+}
+
+// === 进化工厂查询 ===
+
+/**
+ * 获取技能的 Modifier 工厂（优先返回进化后工厂）
+ */
+export function getSkillModifierFactory(
+  skillId: string,
+  evolvedSkills?: Map<string, string>,
+): SkillModifierFactory {
+  if (evolvedSkills) {
+    const branchId = evolvedSkills.get(skillId)
+    if (branchId && EVOLUTION_MODIFIER_DEFS[branchId]) {
+      return EVOLUTION_MODIFIER_DEFS[branchId]
+    }
+  }
+  return SKILL_MODIFIER_DEFS[skillId]
+}
+
+/**
+ * 获取技能的进化分支列表
+ */
+export function getEvolutionBranches(skillId: string): EvolutionBranch[] {
+  const skill = SKILLS[skillId]
+  if (!skill?.evolutions) return []
+  return skill.evolutions
+    .map(branchId => EVOLUTIONS[branchId])
+    .filter((b): b is EvolutionBranch => b !== undefined)
 }

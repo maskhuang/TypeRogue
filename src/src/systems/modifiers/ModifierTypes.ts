@@ -49,6 +49,10 @@ export type ModifierBehavior =
   | { type: 'amplify_chain' }
   | { type: 'instant_fail' }
   | { type: 'time_steal'; timeBonus: number }
+  // 进化系统行为 (Story 15.1)
+  | { type: 'restore_combo'; triggerEvery: number }
+  | { type: 'set_word_cooldown' }
+  | { type: 'trigger_random_adjacent' }
 
 // === 条件系统（15 种原语） ===
 export type ModifierCondition =
@@ -77,6 +81,13 @@ export type ModifierCondition =
   | { type: 'always_true' }
   // 风险回报遗物条件
   | { type: 'no_skills_equipped' }
+  // 字母升级条件
+  | { type: 'key_is'; key: string }
+  // 词语特征条件 (Story 14.3)
+  | { type: 'word_has_double_letter' }
+  | { type: 'word_all_unique_letters' }
+  | { type: 'word_vowel_ratio_gte'; value: number }
+  | { type: 'skill_density_gte'; value: number }
 
 // === 管道输出类型 (Story 11.2) ===
 
@@ -131,6 +142,10 @@ export interface PipelineContext {
   totalSkillCount?: number
   /** 是否拥有赌徒信条遗物（ConditionEvaluator 使用） */
   hasGamblersCreed?: boolean
+  /** 当前正确击键的字母（字母升级系统使用） */
+  currentKeystrokeKey?: string
+  /** 词中技能键命中率 (0.0~1.0)（词语条件使用） */
+  skillDensity?: number
 }
 
 // === 行为执行回调 (Story 11.4) ===

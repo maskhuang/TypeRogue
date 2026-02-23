@@ -72,6 +72,26 @@ export class ConditionEvaluator {
       // === 风险回报遗物 ===
       case 'no_skills_equipped':
         return (ctx.totalSkillCount ?? 0) === 0
+      // === 字母升级 ===
+      case 'key_is':
+        return ctx.currentKeystrokeKey?.toLowerCase() === condition.key.toLowerCase()
+      // === 词语特征 (Story 14.3) ===
+      case 'word_has_double_letter': {
+        const w = (ctx.currentWord ?? '').toLowerCase()
+        return w.length > 0 && new Set(w).size < w.length
+      }
+      case 'word_all_unique_letters': {
+        const w = (ctx.currentWord ?? '').toLowerCase()
+        return w.length > 0 && new Set(w).size === w.length
+      }
+      case 'word_vowel_ratio_gte': {
+        const w = (ctx.currentWord ?? '').toLowerCase()
+        if (w.length === 0) return false
+        const vowelCount = [...w].filter(c => 'aeiou'.includes(c)).length
+        return vowelCount / w.length >= condition.value
+      }
+      case 'skill_density_gte':
+        return (ctx.skillDensity ?? 0) >= condition.value
       default:
         return false
     }

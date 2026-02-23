@@ -1150,6 +1150,132 @@ body {
 }
 
 /* ============================================ */
+/* LETTER UPGRADE SHOP                         */
+/* ============================================ */
+
+.letter-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px;
+}
+
+.letter-row {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+
+.letter-row:nth-child(2) { margin-left: 18px; }
+.letter-row:nth-child(3) { margin-left: 40px; }
+
+.letter-card {
+    width: 36px;
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: linear-gradient(145deg, #1a1a2e, #252535);
+    border: 2px solid #444;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.letter-card:hover {
+    border-color: #4ecdc4;
+    transform: translateY(-2px);
+}
+
+.letter-card.cannot-afford { opacity: 0.5; }
+.letter-card.cannot-afford:hover { border-color: #ff6b6b; transform: none; }
+
+.letter-card.lv1 { border-color: #88bbdd; }
+.letter-card.lv2 { border-color: #4488cc; }
+.letter-card.lv3, .letter-card.max { border-color: #ffd700; }
+
+.letter-card .letter-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.letter-card.lv1 .letter-name { color: #88bbdd; }
+.letter-card.lv2 .letter-name { color: #4488cc; }
+.letter-card.lv3 .letter-name, .letter-card.max .letter-name { color: #ffd700; }
+
+.letter-card .letter-level {
+    font-size: 8px;
+    color: #888;
+}
+
+.letter-card .letter-cost {
+    font-size: 8px;
+    color: #ffe66d;
+}
+
+.letter-card .max-label {
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.letter-card .free-label {
+    color: #4ecdc4;
+    font-weight: bold;
+    font-size: 9px;
+}
+
+.letter-card.free {
+    border-color: #4ecdc4;
+    background: linear-gradient(145deg, #1a2a28, #162420);
+    box-shadow: 0 0 8px rgba(78,205,196,0.3);
+}
+
+.letter-card.free:hover {
+    box-shadow: 0 0 15px rgba(78,205,196,0.5);
+    transform: translateY(-3px) scale(1.05);
+}
+
+.letter-free-section {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: rgba(78,205,196,0.08);
+    border: 1px solid rgba(78,205,196,0.25);
+    border-radius: 8px;
+}
+
+.letter-free-title {
+    font-size: 13px;
+    color: #4ecdc4;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.letter-free-grid {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.letter-free-grid .letter-card {
+    width: 60px;
+    height: 65px;
+}
+
+.letter-free-grid .letter-card .letter-name {
+    font-size: 18px;
+}
+
+.letter-free-grid .letter-card .letter-level {
+    font-size: 10px;
+}
+
+/* ============================================ */
 /* SCORE SETTLEMENT (Balatro-style)            */
 /* ============================================ */
 

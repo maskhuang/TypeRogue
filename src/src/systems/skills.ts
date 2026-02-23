@@ -55,6 +55,17 @@ export function getAdjacentEmptyCount(key: string): number {
   return adjacent.filter(k => !state.player.bindings.has(k)).length;
 }
 
+// === 技能键命中率计算 ===
+export function computeSkillDensity(word: string): number {
+  if (!word || word.length === 0) return 0
+  const w = word.toLowerCase()
+  let hits = 0
+  for (const ch of w) {
+    if (state.player.bindings.has(ch)) hits++
+  }
+  return hits / w.length
+}
+
 // === 构建管道上下文 ===
 export function buildTriggerContext(triggerKey: string, adjacent: AdjacentSkill[]): PipelineContext {
   return {
@@ -63,10 +74,12 @@ export function buildTriggerContext(triggerKey: string, adjacent: AdjacentSkill[
     adjacentSkillCount: adjacent.length,
     adjacentEmptyCount: getAdjacentEmptyCount(triggerKey),
     adjacentSkillTypes: adjacent.map(a => a.skill.type),
+    currentWord: state.player.word,
     skillsTriggeredThisWord: synergy.wordSkillCount,
     shieldCount: synergy.shieldCount,
     totalSkillCount: state.player.skills.size,
     hasGamblersCreed: state.player.relics.has('gamblers_creed'),
+    skillDensity: computeSkillDensity(state.player.word),
   };
 }
 

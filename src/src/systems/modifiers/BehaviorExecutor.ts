@@ -155,6 +155,12 @@ export class BehaviorExecutor {
             result.executedCount++
           }
           break
+
+        // 进化系统行为 — 占位（Story 15.2 实现执行逻辑）
+        case 'restore_combo':
+        case 'set_word_cooldown':
+        case 'trigger_random_adjacent':
+          break
       }
     }
 

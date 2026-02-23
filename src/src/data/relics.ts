@@ -66,6 +66,21 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '一击的余波化为金币的叮当声。'
   },
 
+  // ==================== 词语特征遗物 ====================
+
+  rhyme_master: {
+    id: 'rhyme_master',
+    name: '韵律大师',
+    icon: '🎵',
+    description: '词含重复字母时所有技能底分 +3',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_bonus', value: 3 }
+    ],
+    flavor: '重复的韵律中蕴藏着力量。'
+  },
+
   // ==================== 催化剂遗物 ====================
 
   void_heart: {
@@ -298,6 +313,14 @@ function relicMod(
 // === RELIC_MODIFIER_DEFS — 每个遗物的 Modifier 工厂 ===
 // 注意：加法效果用 base 层（baseSum += value），乘法效果用 global 层（globalProduct *= value）
 export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
+  // 韵律大师：词含重复字母时底分 +3（base additive + 条件）
+  rhyme_master: (id) => [
+    relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
+      effect: { type: 'score', value: 3, stacking: 'additive' },
+      condition: { type: 'word_has_double_letter' },
+    }),
+  ],
+
   // 行为型遗物：返回空数组，通过 queryRelicFlag 查询
   lucky_coin: () => [],
   perfectionist: () => [],

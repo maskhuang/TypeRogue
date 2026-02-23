@@ -14,6 +14,9 @@ import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, resolveSkillEventModifiers } from './skills';
 import { openShop } from './shop';
+import { getLetterModifiers } from './letters/LetterUpgradeSystem';
+import { ModifierRegistry } from './modifiers/ModifierRegistry';
+import { EffectPipeline } from './modifiers/EffectPipeline';
 
 // === 计时器 ===
 let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -21,6 +24,7 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 // === 分数结算 ===
 let wordBaseScore = 0; // 词语基础分（不含倍率）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
+let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
 
 // === 屏幕管理 ===
 export function showScreen(name: 'battle' | 'shop' | 'gameover'): void {
@@ -56,6 +60,7 @@ function setWord(): void {
   synergy.echoTrigger.clear();
   synergy.wordSkillCount = 0;
   synergy.skillBaseScore = 0;
+  synergy.letterBaseScore = 0;
   synergy.lastTriggeredSkillId = null;
   synergy.echoPending = false;
   synergy.ripplePending = false;
@@ -138,11 +143,21 @@ function playerCorrect(k: string): void {
   mult += synergy.skillMultBonus;
   state.multiplier = mult;
 
-  // 字母基础分 + 字母加成
-  const letterBase = 1 + state.player.letterBonus;
+  // 字母基础分（每个正确击键基础 1 分）
+  const letterBase = 1;
   const letterScore = letterBase * state.multiplier;
   wordBaseScore += letterBase; // 累计基础分（用于结算展示）
   state.wordScore += letterScore;
+
+  // 字母升级加分：通过缓存的注册表解析 on_correct_keystroke
+  if (letterRegistry) {
+    const letterResult = EffectPipeline.resolve(letterRegistry, 'on_correct_keystroke', {
+      currentKeystrokeKey: k,
+    });
+    if (letterResult.effects.score > 0) {
+      synergy.letterBaseScore += letterResult.effects.score;
+    }
+  }
 
   // 触发技能
   if (skillId) {
@@ -238,8 +253,8 @@ function playerWrong(): void {
 function completeWord(): void {
   const el = getElements();
 
-  // 计算基础分和倍率（字母基础分 + 技能基础分）
-  const baseChips = Math.floor(wordBaseScore + synergy.skillBaseScore);
+  // 计算基础分和倍率（字母基础分 + 技能基础分 + 字母升级底分）
+  const baseChips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore);
   let mult = state.multiplier;
   let bonusMult = 1;
 
@@ -325,7 +340,7 @@ function updateSettlementLive(): void {
   const multEl = document.getElementById('settlement-mult');
   const finalEl = document.getElementById('settlement-final');
 
-  const chips = Math.floor(wordBaseScore + synergy.skillBaseScore);
+  const chips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore);
   const mult = state.multiplier;
   const final = Math.floor(chips * mult);
 
@@ -508,6 +523,15 @@ export function startLevel(): void {
   synergy.ripplePending = false;
   synergy.ripplePassthrough = null;
   synergy.pulseCount = 0;
+
+  // 构建字母升级修饰器注册表（整场战斗缓存）
+  const letterMods = getLetterModifiers();
+  if (letterMods.length > 0) {
+    letterRegistry = new ModifierRegistry();
+    letterRegistry.registerMany(letterMods);
+  } else {
+    letterRegistry = null;
+  }
 
   // 遗物效果：战斗开始管道（time_lord 额外时间等）
   const startRelicResult = resolveRelicEffects('on_battle_start');
