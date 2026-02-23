@@ -1600,3 +1600,154 @@ body {
 #gold-reward.gold-reward-hide {
     animation: goldPanelOut 0.3s ease-out forwards;
 }
+
+/* ============================================ */
+/* EVOLUTION MODAL                              */
+/* ============================================ */
+#evolution-modal {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#evolution-modal.evolution-hidden {
+    display: none;
+}
+
+.evolution-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.evolution-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 30px;
+}
+
+.evolution-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffe66d;
+    margin-bottom: 24px;
+    text-shadow: 0 0 20px rgba(255, 230, 109, 0.5);
+}
+
+.evolution-branches {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+}
+
+.evolution-branch {
+    background: linear-gradient(180deg, #1a1a2e, #16213e);
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    width: 220px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.evolution-branch:hover {
+    border-color: #ffe66d;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(255, 230, 109, 0.2);
+}
+
+.evolution-branch.cannot-afford {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.evolution-branch.cannot-afford:hover {
+    border-color: #333;
+    transform: none;
+    box-shadow: none;
+}
+
+.evolution-branch-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+}
+
+.evolution-branch-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.evolution-branch-desc {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 12px;
+    line-height: 1.4;
+    min-height: 36px;
+}
+
+.evolution-branch-flavor {
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+    margin-bottom: 12px;
+}
+
+.evolution-branch-cost {
+    font-size: 14px;
+    color: #ffe66d;
+    font-weight: bold;
+}
+
+.evolution-cancel {
+    margin-top: 20px;
+    padding: 8px 24px;
+    background: transparent;
+    border: 1px solid #555;
+    color: #888;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.evolution-cancel:hover {
+    border-color: #888;
+    color: #fff;
+}
+
+.evolution-card {
+    border-color: #ffe66d !important;
+    background: linear-gradient(180deg, rgba(255, 230, 109, 0.08), transparent) !important;
+}
+
+.evolution-card .reward-type {
+    background: linear-gradient(135deg, #ffe66d, #f1c40f) !important;
+    color: #000 !important;
+    font-weight: bold;
+}
+
+.inv-evolved {
+    color: #ffe66d;
+    font-size: 10px;
+    margin-left: 2px;
+}
+
+.bound-skill.evolved {
+    border-color: #ffe66d;
+    box-shadow: 0 0 8px rgba(255, 230, 109, 0.3);
+}
+
+.reward-card.hermit-locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

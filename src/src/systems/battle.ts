@@ -7,7 +7,7 @@ import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag }
 import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
-import { SKILLS } from '../data/skills';
+import { SKILLS, getSkillDisplayInfo } from '../data/skills';
 import { RELICS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
@@ -66,6 +66,8 @@ function setWord(): void {
   synergy.ripplePending = false;
   synergy.ripplePassthrough = null;
   synergy.pulseCount = 0;
+  synergy.wordCooldowns.clear();
+  synergy.freezeTriggeredThisWord.clear();
   renderWord();
   updateSettlementLive(); // 初始化结算面板
 }
@@ -523,6 +525,9 @@ export function startLevel(): void {
   synergy.ripplePending = false;
   synergy.ripplePassthrough = null;
   synergy.pulseCount = 0;
+  synergy.wordCooldowns.clear();
+  synergy.restoreComboCounters.clear();
+  synergy.freezeTriggeredThisWord.clear();
 
   // 构建字母升级修饰器注册表（整场战斗缓存）
   const letterMods = getLetterModifiers();
@@ -631,14 +636,16 @@ export function renderBattleSkills(): void {
     const sk = SKILLS[skillId];
     if (!sk) return;
 
+    const display = getSkillDisplayInfo(skillId, state.player.evolvedSkills);
     const lvl = state.player.skills.get(skillId)?.level || 1;
+    const isEvolved = state.player.evolvedSkills.has(skillId);
     const d = document.createElement('div');
-    d.className = 'bound-skill card-float';
+    d.className = `bound-skill card-float${isEvolved ? ' evolved' : ''}`;
     d.dataset.id = skillId;
     d.style.animationDelay = `${delay * 0.2}s`;
     d.innerHTML = `
       <span class="skill-letter">${key.toUpperCase()}</span>
-      <span class="skill-icon">${sk.icon}</span>
+      <span class="skill-icon">${display.icon}</span>
       ${lvl > 1 ? `<span class="skill-level">Lv.${lvl}</span>` : ''}
     `;
     el.battleSkills.appendChild(d);

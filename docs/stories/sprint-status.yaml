@@ -144,7 +144,7 @@ development_status:
   # Epic 15: 技能进化系统
   epic-15: in-progress
   15-1-evolution-branch-design: done
-  15-2-evolution-ui-selection: backlog
+  15-2-evolution-ui-selection: done
   epic-15-retrospective: optional
 
 # Summary:

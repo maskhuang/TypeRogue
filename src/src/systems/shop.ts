@@ -5,7 +5,7 @@
 import { state } from '../core/state';
 import { resolveRelicEffects, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, ADJACENT_KEYS } from '../core/constants';
-import { SKILLS, SYNERGY_TYPES, getSkillSchool } from '../data/skills';
+import { SKILLS, SYNERGY_TYPES, getSkillSchool, getEvolutionBranches, EVOLUTIONS, getSkillDisplayInfo } from '../data/skills';
 import { RELICS } from '../data/relics';
 import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
@@ -153,16 +153,24 @@ function renderSkillShop(): void {
     const adjustedCost = getAdjustedPrice(item.cost);
 
     if (item.type === 'new') {
+      // lone_hermit 技能上限 4：禁止购买新技能
+      const hermitCapped = state.player.evolvedSkills.get('lone') === 'lone_hermit' && state.player.skills.size >= 4;
       const school = getSkillSchool(item.skillId);
-      renderShopCard(sk.icon, sk.name, sk.desc, adjustedCost, school.label, school.cssClass, () => {
-        if (buyItem(adjustedCost)) {
-          state.player.skills.set(item.skillId, { level: 1 });
-          const freeKey = KEYS.find(k => !state.player.bindings.has(k));
-          if (freeKey) state.player.bindings.set(freeKey, item.skillId);
-          renderShopContent();
-          renderBuildManager();
-        }
-      });
+      if (hermitCapped) {
+        renderShopCard(sk.icon, sk.name, '🏔️ 隐士: 技能上限 4', 0, school.label, 'hermit-locked', () => {
+          showFeedback('隐士: 技能上限 4!', '#ff6b6b');
+        });
+      } else {
+        renderShopCard(sk.icon, sk.name, sk.desc, adjustedCost, school.label, school.cssClass, () => {
+          if (buyItem(adjustedCost)) {
+            state.player.skills.set(item.skillId, { level: 1 });
+            const freeKey = KEYS.find(k => !state.player.bindings.has(k));
+            if (freeKey) state.player.bindings.set(freeKey, item.skillId);
+            renderShopContent();
+            renderBuildManager();
+          }
+        });
+      }
     } else if (item.type === 'upgrade') {
       const lvl = state.player.skills.get(item.skillId)?.level || 1;
       const school = getSkillSchool(item.skillId);
@@ -176,9 +184,97 @@ function renderSkillShop(): void {
     }
   });
 
+  // 进化卡片：Lv3 且有进化分支且尚未进化的技能
+  state.player.skills.forEach((data, skillId) => {
+    if (data.level < 3) return;
+    if (state.player.evolvedSkills.has(skillId)) return;
+    const branches = getEvolutionBranches(skillId);
+    if (branches.length === 0) return;
+    const sk = SKILLS[skillId];
+    if (!sk) return;
+    const school = getSkillSchool(skillId);
+    renderShopCard(sk.icon, `${sk.name} 可进化!`, '选择一条进化路线', 0, `${school.label}·进化`, 'evolution-card', () => {
+      renderEvolutionModal(skillId);
+    });
+  });
+
   if (el.rewardCards.children.length === 0) {
     el.rewardCards.innerHTML = '<div class="shop-empty">没有可购买的技能</div>';
   }
+}
+
+// === 进化模态框 ===
+function renderEvolutionModal(skillId: string): void {
+  const modal = document.getElementById('evolution-modal');
+  const titleEl = document.getElementById('evolution-title');
+  const branchesEl = document.getElementById('evolution-branches');
+  const cancelBtn = document.getElementById('evolution-cancel');
+  if (!modal || !titleEl || !branchesEl || !cancelBtn) return;
+
+  const sk = SKILLS[skillId];
+  if (!sk) return;
+
+  const branches = getEvolutionBranches(skillId);
+  if (branches.length === 0) return;
+
+  titleEl.textContent = `⚡ 技能进化 — ${sk.name} ⚡`;
+  branchesEl.innerHTML = '';
+
+  branches.forEach(branch => {
+    const cost = getAdjustedPrice(branch.condition.goldCost);
+    const canAfford = state.gold >= cost;
+
+    const card = document.createElement('div');
+    card.className = `evolution-branch${canAfford ? '' : ' cannot-afford'}`;
+    card.innerHTML = `
+      <div class="evolution-branch-icon">${branch.icon}</div>
+      <div class="evolution-branch-name">${branch.name}</div>
+      <div class="evolution-branch-desc">${branch.description}</div>
+      <div class="evolution-branch-flavor">"${branch.flavorText || ''}"</div>
+      <div class="evolution-branch-cost">💰 ${cost}</div>
+    `;
+
+    card.onclick = () => {
+      if (!canAfford) {
+        showFeedback('金币不足!', '#ff6b6b');
+        return;
+      }
+      evolveSkill(skillId, branch.id, cost);
+    };
+
+    branchesEl.appendChild(card);
+  });
+
+  cancelBtn.onclick = closeEvolutionModal;
+  const overlay = modal.querySelector('.evolution-overlay') as HTMLElement;
+  if (overlay) overlay.onclick = closeEvolutionModal;
+  modal.classList.remove('evolution-hidden');
+}
+
+function closeEvolutionModal(): void {
+  const modal = document.getElementById('evolution-modal');
+  if (modal) modal.classList.add('evolution-hidden');
+}
+
+function evolveSkill(skillId: string, branchId: string, cost: number): void {
+  if (state.gold < cost) return;
+  state.gold -= cost;
+  state.player.evolvedSkills.set(skillId, branchId);
+  updateGoldDisplay();
+
+  const evo = EVOLUTIONS[branchId];
+  if (evo) {
+    showFeedback(`进化! ${evo.icon} ${evo.name}`, '#ffe66d');
+  }
+  playSound('skill');
+  closeEvolutionModal();
+  renderShopContent();
+  renderBuildManager();
+}
+
+// === 获取技能显示信息（进化后使用进化数据） ===
+export function getSkillDisplay(skillId: string): { name: string; icon: string; desc: string } {
+  return getSkillDisplayInfo(skillId, state.player.evolvedSkills);
 }
 
 // === 生成商店遗物 ===
@@ -450,6 +546,8 @@ function renderShopCard(
   const card = document.createElement('div');
   card.className = 'reward-card';
   if (typeClass === 'risk-reward') card.classList.add('risk-reward-card');
+  if (typeClass === 'evolution-card') card.classList.add('evolution-card');
+  if (typeClass === 'hermit-locked') card.classList.add('hermit-locked');
 
   const canAfford = state.gold >= cost;
   if (!canAfford) card.classList.add('cannot-afford');
@@ -460,7 +558,7 @@ function renderShopCard(
       <div class="reward-name">${name}</div>
       <div class="reward-desc">${desc}</div>
     </div>
-    <div class="reward-cost">💰${cost}</div>
+    ${cost > 0 ? `<div class="reward-cost">💰${cost}</div>` : ''}
     <div class="reward-type ${typeClass}">${typeLabel}</div>
   `;
 
@@ -539,10 +637,10 @@ function renderBuildManager(): void {
 
       const skillId = state.player.bindings.get(k);
       if (skillId && SKILLS[skillId]) {
-        const sk = SKILLS[skillId];
+        const display = getSkillDisplay(skillId);
         slot.classList.add('has-skill');
         if (isSynergySkill(skillId)) slot.classList.add('synergy-skill');
-        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${sk.icon}</span>`;
+        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${display.icon}</span>`;
       } else {
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>`;
       }
@@ -571,6 +669,7 @@ function renderBuildManager(): void {
     const sk = SKILLS[skillId];
     if (!sk) return;
 
+    const display = getSkillDisplay(skillId);
     const boundKey = [...state.player.bindings.entries()].find(([, id]) => id === skillId)?.[0];
 
     const item = document.createElement('div');
@@ -580,9 +679,11 @@ function renderBuildManager(): void {
     if (isSynergySkill(skillId)) item.classList.add('synergy');
 
     const school = getSkillSchool(skillId);
+    const evolvedLabel = state.player.evolvedSkills.has(skillId) ? '<span class="inv-evolved">★</span>' : '';
     item.innerHTML = `
-      <span class="inv-icon">${sk.icon}</span>
-      <span class="inv-name">${sk.name}</span>
+      <span class="inv-icon">${display.icon}</span>
+      <span class="inv-name">${display.name}</span>
+      ${evolvedLabel}
       <span class="inv-school ${school.cssClass}">${school.label}</span>
       ${data.level > 1 ? `<span class="inv-level">Lv.${data.level}</span>` : ''}
       ${boundKey ? `<span class="inv-key">[${boundKey.toUpperCase()}]</span>` : ''}

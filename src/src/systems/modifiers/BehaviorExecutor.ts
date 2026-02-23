@@ -156,11 +156,38 @@ export class BehaviorExecutor {
           }
           break
 
-        // 进化系统行为 — 占位（Story 15.2 实现执行逻辑）
+        // 进化系统行为 (Story 15.2)
         case 'restore_combo':
-        case 'set_word_cooldown':
-        case 'trigger_random_adjacent':
+          if (callbacks?.onRestoreCombo) {
+            callbacks.onRestoreCombo(behavior.triggerEvery)
+            result.executedCount++
+          }
           break
+
+        case 'set_word_cooldown':
+          if (callbacks?.onSetWordCooldown) {
+            callbacks.onSetWordCooldown()
+            result.executedCount++
+          }
+          break
+
+        case 'trigger_random_adjacent': {
+          if (depth >= BehaviorExecutor.MAX_DEPTH) {
+            result.skippedByDepth++
+            break
+          }
+          const randResult = callbacks?.onTriggerRandomAdjacent?.(depth)
+          if (!randResult) break
+          result.executedCount++
+          result.chainDepthReached = Math.max(result.chainDepthReached, depth + 1)
+          if (randResult.pendingBehaviors.length > 0) {
+            const sub = BehaviorExecutor.execute(randResult.pendingBehaviors, depth + 1, callbacks)
+            result.executedCount += sub.executedCount
+            result.skippedByDepth += sub.skippedByDepth
+            result.chainDepthReached = Math.max(result.chainDepthReached, sub.chainDepthReached)
+          }
+          break
+        }
       }
     }
 

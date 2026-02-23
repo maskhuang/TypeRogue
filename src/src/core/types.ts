@@ -156,6 +156,10 @@ export interface SynergyState {
   skillBaseScore: number; // 技能贡献的基础分（每词重置，结算面板使用）
   skillMultBonus: number; // 技能累积的倍率加成（断连击时重置）
   letterBaseScore: number; // 字母升级贡献的基础分（每词重置）
+  // 进化系统
+  wordCooldowns: Set<string>; // amp_overdrive: 冷却中的技能（每词重置）
+  restoreComboCounters: Map<string, number>; // freeze_chrono: 触发计数（跨词保持）
+  freezeTriggeredThisWord: Set<string>; // freeze_permafrost: 每词一次追踪
 }
 
 export interface AdjacentSkill {

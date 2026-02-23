@@ -176,6 +176,13 @@ export interface BehaviorCallbacks {
   onInstantFail?(): void
   /** time_steal: 时间窃贼，技能触发时加时间 */
   onTimeSteal?(timeBonus: number): void
+  // 进化系统回调 (Story 15.2)
+  /** restore_combo: 每 N 次触发恢复连击 */
+  onRestoreCombo?(triggerEvery: number): void
+  /** set_word_cooldown: 设置当前技能本词冷却 */
+  onSetWordCooldown?(): void
+  /** trigger_random_adjacent: 随机触发一个相邻技能 */
+  onTriggerRandomAdjacent?(depth: number): PipelineResult | null
 }
 
 /** BehaviorExecutor.execute() 的返回值 */

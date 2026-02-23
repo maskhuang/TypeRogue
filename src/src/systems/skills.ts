@@ -5,7 +5,7 @@
 
 import { state, synergy } from '../core/state';
 import { ADJACENT_KEYS, KEYBOARD_ROWS } from '../core/constants';
-import { SKILLS, SKILL_MODIFIER_DEFS, isPassiveSkill } from '../data/skills';
+import { SKILLS, isPassiveSkill, getSkillModifierFactory, getSkillDisplayInfo } from '../data/skills';
 import type { AdjacentSkill } from '../core/types';
 import type { PipelineContext, EffectAccumulator, BehaviorCallbacks, PipelineResult, ModifierTrigger } from './modifiers/ModifierTypes';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
@@ -93,7 +93,7 @@ export function createScopedRegistry(
   adjacentOverride?: AdjacentSkill[],
 ): ModifierRegistry {
   const registry = new ModifierRegistry();
-  const factory = SKILL_MODIFIER_DEFS[skillId];
+  const factory = getSkillModifierFactory(skillId, state.player.evolvedSkills);
   if (!factory) return registry;
 
   // 注册触发技能自身的 base 层 Modifier（enhance/global 来自相邻技能）
@@ -103,6 +103,7 @@ export function createScopedRegistry(
   if (isEcho) {
     mods = mods.filter(m =>
       m.behavior?.type !== 'trigger_adjacent' &&
+      m.behavior?.type !== 'trigger_random_adjacent' &&
       m.behavior?.type !== 'set_echo_flag' &&
       m.behavior?.type !== 'set_ripple_flag'
     );
@@ -113,7 +114,7 @@ export function createScopedRegistry(
   const adjacent = adjacentOverride ?? getAdjacentSkills(triggerKey);
   const hasPassiveMastery = queryRelicFlag('passive_mastery') === true;
   for (const adj of adjacent) {
-    const adjFactory = SKILL_MODIFIER_DEFS[adj.skillId];
+    const adjFactory = getSkillModifierFactory(adj.skillId, state.player.evolvedSkills);
     if (!adjFactory) continue;
     const adjLvl = state.player.skills.get(adj.skillId)?.level || 1;
     let adjMods = adjFactory(adj.skillId, adjLvl, context);
@@ -140,7 +141,7 @@ export function createScopedRegistry(
   for (const rowSkill of sameRowPassives) {
     if (!ROW_WIDE_PASSIVE_TYPES.has(rowSkill.skill.type)) continue; // 只注入同行范围被动
     if (injectedSources.has(rowSkill.skillId)) continue; // 已通过相邻注入，跳过
-    const rowFactory = SKILL_MODIFIER_DEFS[rowSkill.skillId];
+    const rowFactory = getSkillModifierFactory(rowSkill.skillId, state.player.evolvedSkills);
     if (!rowFactory) continue;
     const rowLvl = state.player.skills.get(rowSkill.skillId)?.level || 1;
     let rowMods = rowFactory(rowSkill.skillId, rowLvl, context);
@@ -186,6 +187,12 @@ export function generateFeedback(
   effects: EffectAccumulator,
   context: PipelineContext,
 ): { text: string; color: string } | null {
+  // 进化技能优先使用进化反馈
+  const evoId = state.player.evolvedSkills.get(skillId);
+  if (evoId) {
+    return generateEvolvedFeedback(skillId, evoId, effects, context);
+  }
+
   switch (skillId) {
     case 'burst':
       return { text: `+${Math.floor(effects.score * state.multiplier)}分`, color: '#4ecdc4' };
@@ -255,6 +262,49 @@ export function generateFeedback(
   }
 }
 
+// === 进化技能反馈 ===
+function generateEvolvedFeedback(
+  skillId: string,
+  evoId: string,
+  effects: EffectAccumulator,
+  _context: PipelineContext,
+): { text: string; color: string } | null {
+  switch (evoId) {
+    case 'burst_inferno':
+      if (effects.score > 0) return { text: `烈焰! +${Math.floor(effects.score * state.multiplier)}`, color: '#ff4500' };
+      return { text: '烈焰(combo不足)', color: '#666' };
+    case 'burst_precision':
+      return { text: `精准+${Math.floor(effects.score * state.multiplier)} 倍率+${effects.multiply.toFixed(1)}`, color: '#4ecdc4' };
+    case 'amp_crescendo':
+      return { text: `渐强+${effects.multiply.toFixed(1)}`, color: '#ffe66d' };
+    case 'amp_overdrive':
+      return { text: `超载! +${effects.multiply.toFixed(1)}`, color: '#ff6b6b' };
+    case 'echo_resonance':
+      return { text: '共鸣→三触发', color: '#e056fd' };
+    case 'echo_phantom':
+      return { text: '幻影→随机触发', color: '#9b59b6' };
+    case 'freeze_permafrost':
+      if (effects.time > 0) return { text: `永冻+${effects.time}秒`, color: '#87ceeb' };
+      return { text: '永冻(本词已触发)', color: '#666' };
+    case 'freeze_chrono':
+      return { text: '时光倒流...', color: '#87ceeb' };
+    case 'lone_hermit':
+      if (effects.score > 0) return { text: `隐士! +${Math.floor(effects.score * state.multiplier)}`, color: '#e74c3c' };
+      return { text: '隐士失效...', color: '#666' };
+    case 'lone_shadow':
+      if (effects.score > 0) return { text: `暗影+${Math.floor(effects.score * state.multiplier)}`, color: '#2c3e50' };
+      return { text: '暗影失效...', color: '#666' };
+    case 'core_nexus':
+      return null; // 被动增强
+    case 'core_fusion':
+      if (effects.score > 0) return { text: `融合+${Math.floor(effects.score * state.multiplier)}`, color: '#87ceeb' };
+      return null;
+    default:
+      // 回退到基础反馈
+      return generateFeedback(skillId, effects, _context);
+  }
+}
+
 // === 技能事件解析（非触发事件：on_error, on_word_complete） ===
 export function resolveSkillEventModifiers(
   trigger: ModifierTrigger,
@@ -263,7 +313,7 @@ export function resolveSkillEventModifiers(
 ): PipelineResult {
   const registry = new ModifierRegistry();
   state.player.skills.forEach((data, skillId) => {
-    const factory = SKILL_MODIFIER_DEFS[skillId];
+    const factory = getSkillModifierFactory(skillId, state.player.evolvedSkills);
     if (!factory) return;
     const mods = factory(skillId, data.level, context);
     registry.registerMany(mods.filter(m => m.trigger === trigger));
@@ -289,6 +339,9 @@ function emptyPipelineResult(): PipelineResult {
 export function triggerSkill(skillId: string, triggerKey: string, isEcho = false): void {
   const base = SKILLS[skillId];
   if (!base) return;
+
+  // amp_overdrive 词冷却：已冷却的技能本词不再触发
+  if (synergy.wordCooldowns.has(skillId)) return;
 
   const lvl = state.player.skills.get(skillId)?.level || 1;
   const adjacent = getAdjacentSkills(triggerKey);
@@ -328,6 +381,15 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
     const sentinelBonus = queryRelicFlag('fortress_sentinel_bonus') as number;
     if (sentinelBonus > 0 && (context.shieldCount ?? 0) > 0) {
       result.effects.score += (context.shieldCount ?? 0) * sentinelBonus;
+    }
+  }
+
+  // freeze_permafrost 每词一次：已触发过则清零 time 效果
+  if (state.player.evolvedSkills.get(skillId) === 'freeze_permafrost') {
+    if (synergy.freezeTriggeredThisWord.has(skillId)) {
+      result.effects.time = 0;
+    } else {
+      synergy.freezeTriggeredThisWord.add(skillId);
     }
   }
 
@@ -392,6 +454,31 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
     onTimeSteal: (timeBonus: number) => {
       applyEffects({ score: 0, multiply: 0, time: timeBonus, gold: 0, shield: 0 });
     },
+    // 进化系统回调 (Story 15.2)
+    onRestoreCombo: (triggerEvery: number) => {
+      const counter = (synergy.restoreComboCounters.get(skillId) ?? 0) + 1;
+      synergy.restoreComboCounters.set(skillId, counter);
+      if (counter >= triggerEvery) {
+        synergy.restoreComboCounters.set(skillId, 0);
+        if (state.combo === 0 && state.maxCombo > 0) {
+          state.combo = Math.floor(state.maxCombo / 2);
+          showFeedback(`连击恢复! ${state.combo}`, '#87ceeb');
+        }
+      }
+    },
+    onSetWordCooldown: () => {
+      synergy.wordCooldowns.add(skillId);
+    },
+    onTriggerRandomAdjacent: (_depth: number) => {
+      if (adjacent.length === 0) return null;
+      const pick = adjacent[Math.floor(Math.random() * adjacent.length)];
+      setTimeout(() => {
+        if (state.phase === 'battle') {
+          triggerSkill(pick.skillId, pick.key, true);
+        }
+      }, 100);
+      return emptyPipelineResult();
+    },
     onTriggerRowMirror: (_depth: number) => {
       const row = KEYBOARD_ROWS.find(r => r.includes(triggerKey));
       if (!row) return null;
@@ -431,13 +518,21 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
         triggerSkill(skillId, triggerKey, true);
       }
     }, 100);
+    // echo_resonance 三触发：追加第三次触发
+    if (state.player.evolvedSkills.get('echo') === 'echo_resonance') {
+      setTimeout(() => {
+        if (state.phase === 'battle') {
+          triggerSkill(skillId, triggerKey, true);
+        }
+      }, 200);
+    }
     // 连锁放大器：echo 额外触发一次
     if (queryRelicFlag('chain_amplifier') === true) {
       setTimeout(() => {
         if (state.phase === 'battle') {
           triggerSkill(skillId, triggerKey, true);
         }
-      }, 200);
+      }, 300);
     }
   }
 
@@ -450,9 +545,10 @@ function showTriggerPopup(skillId: string): void {
   const sk = SKILLS[skillId];
   if (!sk) return;
 
+  const display = getSkillDisplayInfo(skillId, state.player.evolvedSkills);
   const p = document.createElement('div');
   p.className = 'skill-trigger-popup';
-  p.innerHTML = `<span class="trigger-icon">${sk.icon}</span>`;
+  p.innerHTML = `<span class="trigger-icon">${display.icon}</span>`;
   p.style.left = (Math.random() * 60 - 30) + 'px';
   el.triggerZone.appendChild(p);
   setTimeout(() => p.remove(), 350);

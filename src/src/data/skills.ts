@@ -769,3 +769,22 @@ export function getEvolutionBranches(skillId: string): EvolutionBranch[] {
     .map(branchId => EVOLUTIONS[branchId])
     .filter((b): b is EvolutionBranch => b !== undefined)
 }
+
+/**
+ * 获取技能显示信息（进化后使用进化数据）
+ */
+export function getSkillDisplayInfo(
+  skillId: string,
+  evolvedSkills?: Map<string, string>,
+): { name: string; icon: string; desc: string } {
+  if (evolvedSkills) {
+    const branchId = evolvedSkills.get(skillId)
+    if (branchId && EVOLUTIONS[branchId]) {
+      const evo = EVOLUTIONS[branchId]
+      return { name: evo.name, icon: evo.icon, desc: evo.description }
+    }
+  }
+  const sk = SKILLS[skillId]
+  if (sk) return { name: sk.name, icon: sk.icon, desc: sk.desc }
+  return { name: '???', icon: '?', desc: '' }
+}

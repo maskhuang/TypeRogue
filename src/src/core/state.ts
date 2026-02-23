@@ -67,6 +67,10 @@ export function createSynergyState(): SynergyState {
     skillBaseScore: 0,
     skillMultBonus: 0,
     letterBaseScore: 0,
+    // 进化系统
+    wordCooldowns: new Set(),
+    restoreComboCounters: new Map(),
+    freezeTriggeredThisWord: new Set(),
   };
 }
 
