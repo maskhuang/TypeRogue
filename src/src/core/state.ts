@@ -36,14 +36,10 @@ export function createInitialState(): GameState {
       evolvedSkills: new Map(),
     },
     shop: {
-      rewards: [],
-      shopWords: [],
-      shopSkills: [],
-      shopRelics: [],
+      items: [],
+      refreshCount: 0,
       selectedSkill: null,
       selectedKey: null,
-      tab: 'skills',
-      removeCount: 0,
     },
   };
 }

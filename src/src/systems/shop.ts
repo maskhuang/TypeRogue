@@ -1,21 +1,23 @@
 // ============================================
-// 打字肉鸽 - 商店系统
+// 打字肉鸽 - 商店系统（统一5商品）
 // ============================================
+// Epic 17: 统一商店 + 刷新/锁定/卖出 + 拖拽交互
 
 import { state } from '../core/state';
 import { resolveRelicEffects, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, ADJACENT_KEYS } from '../core/constants';
 import { SKILLS, SYNERGY_TYPES, getSkillSchool, getEvolutionBranches, EVOLUTIONS, getSkillDisplayInfo } from '../data/skills';
-import { RELICS } from '../data/relics';
 import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { juiceUp } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
-import type { ShopSkillItem } from '../core/types';
+import type { ShopItem } from '../core/types';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
+import { dragManager } from './dragManager';
+import type { DragPayload } from './dragManager';
 
 // === 打开商店 ===
 export function openShop(_won: boolean): void {
@@ -38,18 +40,20 @@ export function openShop(_won: boolean): void {
   el.shopBonus.textContent = bonus > 0 ? `+${bonus}` : '0';
   updateGoldDisplay();
 
-  state.shop.tab = 'skills';
   state.shop.selectedSkill = null;
   state.shop.selectedKey = null;
-  state.shop.shopWords = [];
-  state.shop.shopSkills = generateShopSkills();
-  state.shop.shopRelics = generateShopRelics();
-  state.shop.removeCount = 0;
 
-  renderShopTabs();
-  renderShopContent();
+  // 保留锁定商品，补充新商品至5个
+  const locked = state.shop.items.filter(item => item.locked);
+  const newItems = generateShopItems(5 - locked.length);
+  state.shop.items = [...locked, ...newItems];
+  state.shop.refreshCount = 0;
+
+  renderUnifiedShop();
   renderBuildManager();
   renderRelicDisplay();
+  registerShopDropZones();
+  dragManager.init();
   showScreen('shop');
 }
 
@@ -61,126 +65,135 @@ function updateGoldDisplay(): void {
 
 // === 价格调整 ===
 function getAdjustedPrice(baseCost: number): number {
-  const discount = queryRelicFlag('price_discount') as number; // lucky_coin: 0.1 or 0
-  const greedyMult = queryRelicFlag('greedy_hand') as number; // greedy_hand: 1.5 or 1
+  const discount = (queryRelicFlag('price_discount') as number) || 0;
+  const greedyMult = (queryRelicFlag('greedy_hand') as number) || 1;
   return Math.ceil(baseCost * (1 - discount) * greedyMult);
 }
 
-// === 商店标签 ===
-function renderShopTabs(): void {
-  const el = getElements();
-  el.shopTabs.innerHTML = `
-    <button class="shop-tab ${state.shop.tab === 'skills' ? 'active' : ''}" data-tab="skills">⚡ 技能</button>
-    <button class="shop-tab ${state.shop.tab === 'relics' ? 'active' : ''}" data-tab="relics">🏺 遗物</button>
-    <button class="shop-tab ${state.shop.tab === 'deck' ? 'active' : ''}" data-tab="deck">📚 牌库</button>
-  `;
-
-  el.shopTabs.querySelectorAll('.shop-tab').forEach(btn => {
-    (btn as HTMLElement).onclick = () => {
-      state.shop.tab = (btn as HTMLElement).dataset.tab as 'skills' | 'relics' | 'deck';
-      renderShopTabs();
-      renderShopContent();
-    };
-  });
-}
-
-// === 商店内容 ===
-function renderShopContent(): void {
-  switch (state.shop.tab) {
-    case 'skills':
-      renderSkillShop();
-      break;
-    case 'relics':
-      renderRelicShop();
-      break;
-    case 'deck':
-      renderDeckShop();
-      break;
+// === Fisher-Yates shuffle ===
+function shuffleArray<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
+  return arr;
 }
 
-// === 生成商店技能 ===
-function generateShopSkills(): ShopSkillItem[] {
-  const owned = [...state.player.skills.keys()];
-  const unowned = Object.keys(SKILLS).filter(id => !owned.includes(id));
-  const items: ShopSkillItem[] = [];
+// === 生成统一商品 ===
+function generateShopItems(count: number): ShopItem[] {
+  if (count <= 0) return [];
 
-  // 新技能
-  const shuffled = unowned.sort(() => Math.random() - 0.5).slice(0, 3);
-  shuffled.forEach(skillId => {
-    items.push({
-      type: 'new',
-      skillId,
-      cost: 15 + Math.floor(Math.random() * 15),
-    });
-  });
+  const isSilenced = queryRelicFlag('silence_vow') === true;
+  const items: ShopItem[] = [];
+  let nextId = Date.now();
 
-  // 升级已有技能
-  if (owned.length > 0) {
-    const upgradeId = owned[Math.floor(Math.random() * owned.length)];
-    items.push({
-      type: 'upgrade',
-      skillId: upgradeId,
-      cost: 25,
+  // 构建技能池
+  const skillPool: ShopItem[] = [];
+  if (!isSilenced) {
+    const owned = [...state.player.skills.keys()];
+    const unowned = Object.keys(SKILLS).filter(id => !owned.includes(id));
+
+    // 新技能
+    const shuffledNew = shuffleArray(unowned);
+    for (const skillId of shuffledNew) {
+      skillPool.push({
+        id: `si-${nextId++}`,
+        type: 'skill',
+        skillId,
+        cost: getAdjustedPrice(15 + Math.floor(Math.random() * 15)),
+        isUpgrade: false,
+        locked: false,
+      });
+    }
+
+    // 升级已有技能（未满级的）
+    const upgradable = owned.filter(id => {
+      const data = state.player.skills.get(id);
+      return data && data.level < 3;
     });
+    const shuffledUpgrade = shuffleArray(upgradable);
+    for (const skillId of shuffledUpgrade) {
+      skillPool.push({
+        id: `si-${nextId++}`,
+        type: 'skill',
+        skillId,
+        cost: getAdjustedPrice(25),
+        isUpgrade: true,
+        locked: false,
+      });
+    }
+  }
+
+  // 构建词语池
+  const wordPool: ShopItem[] = [];
+  const shopWords = generateShopWords(state.player.wordDeck);
+  for (const sw of shopWords) {
+    wordPool.push({
+      id: `si-${nextId++}`,
+      type: 'word',
+      word: sw.word,
+      cost: getAdjustedPrice(sw.cost),
+      isUpgrade: false,
+      locked: false,
+      highlight: sw.highlight,
+    });
+  }
+
+  // 保底：≥1 技能 + ≥1 词语（如果有的话）
+  if (count >= 2 && skillPool.length > 0 && wordPool.length > 0) {
+    items.push(skillPool.splice(0, 1)[0]);
+    items.push(wordPool.splice(0, 1)[0]);
+  } else if (skillPool.length > 0 && wordPool.length === 0) {
+    items.push(skillPool.splice(0, 1)[0]);
+  } else if (wordPool.length > 0) {
+    items.push(wordPool.splice(0, 1)[0]);
+  }
+
+  // 合并剩余池，随机填满
+  const remaining = shuffleArray([...skillPool, ...wordPool]);
+  while (items.length < count && remaining.length > 0) {
+    items.push(remaining.shift()!);
   }
 
   return items;
 }
 
-// === 技能商店 ===
-function renderSkillShop(): void {
+// === 渲染统一商店 ===
+function renderUnifiedShop(): void {
   const el = getElements();
+  el.shopTabs.innerHTML = '';
   el.rewardCards.innerHTML = '';
 
-  // 沉默誓约：禁止购买技能
-  if (queryRelicFlag('silence_vow') === true) {
-    el.rewardCards.innerHTML = '<div class="shop-empty">🤫 沉默誓约：无法购买技能</div>';
-    return;
-  }
+  // 顶部：词库统计
+  const stats = calculateDeckStats(state.player.wordDeck);
+  const boundKeys = [...state.player.bindings.keys()];
+  const statsRow = document.createElement('div');
+  statsRow.className = 'deck-stats-panel';
+  statsRow.innerHTML = `
+    <div class="deck-stats-header">
+      <span>📚 ${stats.totalWords}词 · 均长${stats.avgLength}</span>
+      <span>高频: ${stats.topLetters.slice(0, 4).map(([l, p]) =>
+        `<span class="${boundKeys.includes(l) ? 'highlight-letter' : ''}">${l.toUpperCase()}:${p}%</span>`
+      ).join(' ')}</span>
+    </div>
+  `;
+  el.rewardCards.appendChild(statsRow);
 
-  state.shop.shopSkills.forEach(item => {
-    const sk = SKILLS[item.skillId];
-    if (!sk) return;
+  // 刷新按钮
+  const refreshCost = (state.shop.refreshCount + 1) * 5;
+  const refreshBtn = document.createElement('button');
+  refreshBtn.className = 'shop-refresh-btn';
+  refreshBtn.innerHTML = `🔄 刷新 (💰${refreshCost})`;
+  if (state.gold < refreshCost) refreshBtn.classList.add('cannot-afford');
+  refreshBtn.onclick = () => refreshShop();
+  el.shopTabs.appendChild(refreshBtn);
 
-    // 检查是否已拥有
-    if (item.type === 'new' && state.player.skills.has(item.skillId)) return;
-
-    const adjustedCost = getAdjustedPrice(item.cost);
-
-    if (item.type === 'new') {
-      // lone_hermit 技能上限 4：禁止购买新技能
-      const hermitCapped = state.player.evolvedSkills.get('lone') === 'lone_hermit' && state.player.skills.size >= 4;
-      const school = getSkillSchool(item.skillId);
-      if (hermitCapped) {
-        renderShopCard(sk.icon, sk.name, '🏔️ 隐士: 技能上限 4', 0, school.label, 'hermit-locked', () => {
-          showFeedback('隐士: 技能上限 4!', '#ff6b6b');
-        });
-      } else {
-        renderShopCard(sk.icon, sk.name, sk.desc, adjustedCost, school.label, school.cssClass, () => {
-          if (buyItem(adjustedCost)) {
-            state.player.skills.set(item.skillId, { level: 1 });
-            const freeKey = KEYS.find(k => !state.player.bindings.has(k));
-            if (freeKey) state.player.bindings.set(freeKey, item.skillId);
-            renderShopContent();
-            renderBuildManager();
-          }
-        });
-      }
-    } else if (item.type === 'upgrade') {
-      const lvl = state.player.skills.get(item.skillId)?.level || 1;
-      const school = getSkillSchool(item.skillId);
-      renderShopCard(sk.icon, `${sk.name} → Lv.${lvl + 1}`, '效果提升', adjustedCost, `${school.label}·升级`, school.cssClass, () => {
-        if (buyItem(adjustedCost)) {
-          const data = state.player.skills.get(item.skillId);
-          if (data) data.level++;
-          renderShopContent();
-        }
-      });
-    }
+  // 5个商品卡片
+  state.shop.items.forEach((item, index) => {
+    renderUnifiedShopCard(item, index);
   });
 
-  // 进化卡片：Lv3 且有进化分支且尚未进化的技能
+  // 进化提示卡片：Lv3 且有进化分支且尚未进化的技能
   state.player.skills.forEach((data, skillId) => {
     if (data.level < 3) return;
     if (state.player.evolvedSkills.has(skillId)) return;
@@ -190,17 +203,235 @@ function renderSkillShop(): void {
     if (!sk) return;
     const school = getSkillSchool(skillId);
     renderShopCard(sk.icon, `${sk.name} 可进化!`, '选择一条进化路线', 0, `${school.label}·进化`, 'evolution-card', () => {
-      renderEvolutionModal(skillId);
+      renderEvolutionModal(skillId, false);
     });
   });
+}
 
-  if (el.rewardCards.children.length === 0) {
-    el.rewardCards.innerHTML = '<div class="shop-empty">没有可购买的技能</div>';
+// === 渲染统一商品卡片 ===
+function renderUnifiedShopCard(item: ShopItem, index: number): void {
+  const el = getElements();
+  const card = document.createElement('div');
+  card.className = 'reward-card';
+  card.dataset.shopIndex = String(index);
+  card.dataset.dragType = 'shop-item';
+
+  const canAfford = state.gold >= item.cost;
+  if (!canAfford) card.classList.add('cannot-afford');
+
+  if (item.type === 'skill') {
+    const sk = SKILLS[item.skillId!];
+    if (!sk) return;
+    const school = getSkillSchool(item.skillId!);
+    const display = getSkillDisplayInfo(item.skillId!, state.player.evolvedSkills);
+
+    let nameLabel = display.name;
+    let typeLabel = school.label;
+    if (item.isUpgrade) {
+      const lvl = state.player.skills.get(item.skillId!)?.level || 1;
+      nameLabel = `${display.name} (升级 Lv.${lvl}→${lvl + 1})`;
+      typeLabel = `${school.label}·升级`;
+    }
+
+    card.innerHTML = `
+      <div class="reward-icon">${display.icon}</div>
+      <div class="reward-info">
+        <div class="reward-name">${nameLabel}</div>
+        <div class="reward-desc">${display.desc}</div>
+      </div>
+      <div class="reward-cost">💰${item.cost}</div>
+      <div class="reward-type ${school.cssClass}">${typeLabel}</div>
+      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
+    `;
+  } else {
+    // Word item
+    const highlightedWord = item.word!.split('').map(c =>
+      [...state.player.bindings.keys()].includes(c.toLowerCase())
+        ? `<span class="bound-letter">${c}</span>` : c
+    ).join('');
+
+    card.innerHTML = `
+      <div class="reward-icon">📝</div>
+      <div class="reward-info">
+        <div class="reward-name word-text">${highlightedWord}</div>
+        <div class="reward-desc">${item.word!.length}字母${item.highlight ? ` · 高频${item.highlight.toUpperCase()}` : ''}</div>
+      </div>
+      <div class="reward-cost">💰${item.cost}</div>
+      <div class="reward-type word-type">词语</div>
+      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
+    `;
+  }
+
+  // 锁定按钮事件
+  const lockBtn = card.querySelector('.lock-toggle') as HTMLElement;
+  if (lockBtn) {
+    lockBtn.onclick = (e) => {
+      e.stopPropagation();
+      item.locked = !item.locked;
+      lockBtn.textContent = item.locked ? '🔒' : '🔓';
+      lockBtn.classList.toggle('locked', item.locked);
+    };
+  }
+
+  // 3D 卡牌悬停效果
+  init3DCardEffect(card);
+
+  card.onclick = () => {
+    juiceUp(card, 0.2, 3);
+    purchaseShopItem(index);
+  };
+
+  el.rewardCards.appendChild(card);
+}
+
+// === 核心购买逻辑（共享） ===
+// 返回购买的 skillId（技能）或 null（词语/失败），供调用者做后续绑定/进化
+function executePurchase(index: number): { skillId: string | null; isNew: boolean } | null {
+  const item = state.shop.items[index];
+  if (!item) return null;
+
+  if (state.gold < item.cost) {
+    showFeedback('金币不足!', '#ff6b6b');
+    return null;
+  }
+
+  if (item.type === 'skill') {
+    const skillId = item.skillId!;
+
+    // 隐士上限检查（新技能）
+    if (!item.isUpgrade) {
+      const hermitCapped = state.player.evolvedSkills.get('lone') === 'lone_hermit' && state.player.skills.size >= 4;
+      if (hermitCapped) {
+        showFeedback('隐士: 技能上限 4!', '#ff6b6b');
+        return null;
+      }
+    }
+
+    state.gold -= item.cost;
+    updateGoldDisplay();
+    playSound('skill');
+
+    const isNew = !item.isUpgrade;
+    if (item.isUpgrade) {
+      const data = state.player.skills.get(skillId);
+      if (data) {
+        data.level++;
+        data.purchasePrice = (data.purchasePrice || 0) + item.cost;
+      }
+      showFeedback(`${SKILLS[skillId]?.name} 升级!`, '#ffe66d');
+    } else {
+      state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
+      showFeedback(`获得 ${SKILLS[skillId]?.name}!`, '#4ecdc4');
+    }
+
+    state.shop.items.splice(index, 1);
+    return { skillId, isNew };
+  } else {
+    // 词语
+    state.gold -= item.cost;
+    updateGoldDisplay();
+    playSound('skill');
+    state.player.wordDeck.push(item.word!);
+    showFeedback(`+${item.word}`, '#4ecdc4');
+
+    state.shop.items.splice(index, 1);
+    return { skillId: null, isNew: false };
   }
 }
 
+// === 点击购买商品 ===
+function purchaseShopItem(index: number): void {
+  const result = executePurchase(index);
+  if (!result) return;
+
+  // 点击购买新技能时，自动绑定到第一个空键位
+  if (result.isNew && result.skillId) {
+    const freeKey = KEYS.find(k => !state.player.bindings.has(k));
+    if (freeKey) state.player.bindings.set(freeKey, result.skillId);
+  }
+
+  if (result.skillId) checkAutoEvolution(result.skillId);
+
+  renderUnifiedShop();
+  renderBuildManager();
+}
+
+// === 自动进化检查 ===
+function checkAutoEvolution(skillId: string): void {
+  const data = state.player.skills.get(skillId);
+  if (!data || data.level < 3) return;
+  if (state.player.evolvedSkills.has(skillId)) return;
+  const branches = getEvolutionBranches(skillId);
+  if (branches.length === 0) return;
+
+  // 自动弹出免费进化选择
+  renderEvolutionModal(skillId, true);
+}
+
+// === 刷新商店 ===
+function refreshShop(): void {
+  const cost = (state.shop.refreshCount + 1) * 5;
+  if (state.gold < cost) {
+    showFeedback('金币不足!', '#ff6b6b');
+    return;
+  }
+  state.gold -= cost;
+  state.shop.refreshCount++;
+  updateGoldDisplay();
+  playSound('skill');
+
+  // 保留锁定项，替换未锁定项
+  const locked = state.shop.items.filter(item => item.locked);
+  const newItems = generateShopItems(5 - locked.length);
+  state.shop.items = [...locked, ...newItems];
+
+  renderUnifiedShop();
+}
+
+// === 卖出技能 ===
+export function sellSkill(skillId: string): void {
+  const data = state.player.skills.get(skillId);
+  if (!data) return;
+
+  const sellPrice = Math.floor((data.purchasePrice || 15) / 2);
+  state.gold += sellPrice;
+
+  // 移除绑定
+  for (const [key, id] of state.player.bindings) {
+    if (id === skillId) {
+      state.player.bindings.delete(key);
+      break;
+    }
+  }
+
+  // 移除进化
+  state.player.evolvedSkills.delete(skillId);
+
+  // 移除技能
+  state.player.skills.delete(skillId);
+
+  updateGoldDisplay();
+  showFeedback(`卖出 +${sellPrice}💰`, '#ffe66d');
+  playSound('skill');
+  renderUnifiedShop();
+  renderBuildManager();
+}
+
+// === 卖出词语 ===
+export function sellWord(index: number): void {
+  if (index < 0 || index >= state.player.wordDeck.length) return;
+  const word = state.player.wordDeck[index];
+  state.gold += 3;
+  state.player.wordDeck.splice(index, 1);
+  updateGoldDisplay();
+  showFeedback(`-${word} +3💰`, '#ffe66d');
+  playSound('skill');
+  renderUnifiedShop();
+  renderBuildManager();
+}
+
 // === 进化模态框 ===
-function renderEvolutionModal(skillId: string): void {
+function renderEvolutionModal(skillId: string, isFree: boolean): void {
   const modal = document.getElementById('evolution-modal');
   const titleEl = document.getElementById('evolution-title');
   const branchesEl = document.getElementById('evolution-branches');
@@ -213,12 +444,14 @@ function renderEvolutionModal(skillId: string): void {
   const branches = getEvolutionBranches(skillId);
   if (branches.length === 0) return;
 
-  titleEl.textContent = `⚡ 技能进化 — ${sk.name} ⚡`;
+  titleEl.textContent = isFree
+    ? `⚡ 技能进化 — ${sk.name} (免费!) ⚡`
+    : `⚡ 技能进化 — ${sk.name} ⚡`;
   branchesEl.innerHTML = '';
 
   branches.forEach(branch => {
-    const cost = getAdjustedPrice(branch.condition.goldCost);
-    const canAfford = state.gold >= cost;
+    const cost = isFree ? 0 : getAdjustedPrice(branch.condition.goldCost);
+    const canAfford = isFree || state.gold >= cost;
 
     const card = document.createElement('div');
     card.className = `evolution-branch${canAfford ? '' : ' cannot-afford'}`;
@@ -227,7 +460,7 @@ function renderEvolutionModal(skillId: string): void {
       <div class="evolution-branch-name">${branch.name}</div>
       <div class="evolution-branch-desc">${branch.description}</div>
       <div class="evolution-branch-flavor">"${branch.flavorText || ''}"</div>
-      <div class="evolution-branch-cost">💰 ${cost}</div>
+      <div class="evolution-branch-cost">${isFree ? '✨ 免费' : `💰 ${cost}`}</div>
     `;
 
     card.onclick = () => {
@@ -253,8 +486,8 @@ function closeEvolutionModal(): void {
 }
 
 function evolveSkill(skillId: string, branchId: string, cost: number): void {
-  if (state.gold < cost) return;
-  state.gold -= cost;
+  if (cost > 0 && state.gold < cost) return;
+  if (cost > 0) state.gold -= cost;
   state.player.evolvedSkills.set(skillId, branchId);
   updateGoldDisplay();
 
@@ -264,7 +497,7 @@ function evolveSkill(skillId: string, branchId: string, cost: number): void {
   }
   playSound('skill');
   closeEvolutionModal();
-  renderShopContent();
+  renderUnifiedShop();
   renderBuildManager();
 }
 
@@ -273,161 +506,7 @@ export function getSkillDisplay(skillId: string): { name: string; icon: string; 
   return getSkillDisplayInfo(skillId, state.player.evolvedSkills);
 }
 
-// === 生成商店遗物 ===
-function generateShopRelics(): string[] {
-  const ownedRelics = state.player.relics;
-  const available = Object.keys(RELICS).filter(id => !ownedRelics.has(id));
-  return available.sort(() => Math.random() - 0.5).slice(0, 3);
-}
-
-// === 遗物商店 ===
-function renderRelicShop(): void {
-  const el = getElements();
-  el.rewardCards.innerHTML = '';
-
-  let hasItems = false;
-  state.shop.shopRelics.forEach(relicId => {
-    if (state.player.relics.has(relicId)) return;
-
-    const relic = RELICS[relicId];
-    if (!relic) return;
-
-    hasItems = true;
-    const isRiskReward = relic.category === 'risk-reward';
-    const typeLabel = isRiskReward ? `${relic.rarity}·risk` : relic.rarity;
-    const typeClass = isRiskReward ? 'risk-reward' : (relic.rarity || 'common');
-    const adjustedCost = getAdjustedPrice(relic.basePrice);
-    renderShopCard(relic.icon, relic.name, relic.description, adjustedCost, typeLabel, typeClass, () => {
-      if (buyItem(adjustedCost)) {
-        state.player.relics.add(relicId);
-        showFeedback(`获得 ${relic.name}!`, '#ffe66d');
-        renderShopContent();
-        renderRelicDisplay();
-      }
-    });
-  });
-
-  if (!hasItems) {
-    el.rewardCards.innerHTML = '<div class="shop-empty">已收集所有遗物!</div>';
-  }
-}
-
-// === 牌库商店 ===
-function renderDeckShop(): void {
-  const el = getElements();
-  el.rewardCards.innerHTML = '';
-
-  const stats = calculateDeckStats(state.player.wordDeck);
-  const boundKeys = [...state.player.bindings.keys()];
-
-  // 统计面板
-  const statsPanel = document.createElement('div');
-  statsPanel.className = 'deck-stats-panel';
-  statsPanel.innerHTML = `
-    <div class="deck-stats-header">
-      <span>📚 词库统计</span>
-      <span class="deck-count">${stats.totalWords} 词</span>
-    </div>
-    <div class="deck-stats-info">
-      <span>平均长度: ${stats.avgLength}</span>
-      <span>|</span>
-      <span>高频: ${stats.topLetters.slice(0, 5).map(([l, p]) =>
-        `<span class="${boundKeys.includes(l) ? 'highlight-letter' : ''}">${l.toUpperCase()}:${p}%</span>`
-      ).join(' ')}</span>
-    </div>
-  `;
-  el.rewardCards.appendChild(statsPanel);
-
-  // 购买词语区
-  const buySection = document.createElement('div');
-  buySection.className = 'deck-section';
-  buySection.innerHTML = '<div class="deck-section-title">🛒 购买词语</div>';
-
-  // 生成商店词语
-  if (state.shop.shopWords.length === 0) {
-    state.shop.shopWords = generateShopWords(state.player.wordDeck);
-  }
-
-  const buyGrid = document.createElement('div');
-  buyGrid.className = 'word-grid';
-
-  state.shop.shopWords.forEach((item, idx) => {
-    const wordCard = document.createElement('div');
-    wordCard.className = 'word-card buyable';
-    if (item.highlight && boundKeys.includes(item.highlight)) {
-      wordCard.classList.add('recommended');
-    }
-
-    const highlightedWord = item.word.split('').map(c =>
-      boundKeys.includes(c.toLowerCase()) ? `<span class="bound-letter">${c}</span>` : c
-    ).join('');
-
-    const adjustedWordCost = getAdjustedPrice(item.cost);
-    wordCard.innerHTML = `
-      <span class="word-text">${highlightedWord}</span>
-      <span class="word-cost">💰${adjustedWordCost}</span>
-    `;
-
-    wordCard.onclick = () => {
-      if (buyItem(adjustedWordCost)) {
-        state.player.wordDeck.push(item.word);
-        state.shop.shopWords.splice(idx, 1);
-        showFeedback(`+${item.word}`, '#4ecdc4');
-        renderDeckShop();
-        renderBuildManager();
-      }
-    };
-
-    buyGrid.appendChild(wordCard);
-  });
-
-  buySection.appendChild(buyGrid);
-  el.rewardCards.appendChild(buySection);
-
-  // 当前词库区
-  const removeCost = getAdjustedPrice(state.shop.removeCount + 1);
-  const deckSection = document.createElement('div');
-  deckSection.className = 'deck-section';
-  deckSection.innerHTML = `<div class="deck-section-title">📖 我的词库 (点击移除，费用: 💰${removeCost})</div>`;
-
-  const deckGrid = document.createElement('div');
-  deckGrid.className = 'word-grid deck-grid';
-
-  state.player.wordDeck.forEach((word, idx) => {
-    const wordCard = document.createElement('div');
-    wordCard.className = 'word-card owned';
-
-    const highlightedWord = word.split('').map(c =>
-      boundKeys.includes(c.toLowerCase()) ? `<span class="bound-letter">${c}</span>` : c
-    ).join('');
-
-    const canAfford = state.gold >= removeCost;
-    if (!canAfford) wordCard.classList.add('cannot-afford');
-
-    wordCard.innerHTML = `<span class="word-text">${highlightedWord}</span><span class="word-cost">-${removeCost}</span>`;
-
-    wordCard.onclick = () => {
-      if (state.gold < removeCost) {
-        showFeedback('金币不足!', '#ff6b6b');
-        return;
-      }
-      state.player.wordDeck.splice(idx, 1);
-      state.gold -= removeCost;
-      state.shop.removeCount++;
-      updateGoldDisplay();
-      showFeedback(`-${word} -${removeCost}💰`, '#ff6b6b');
-      renderDeckShop();
-      renderBuildManager();
-    };
-
-    deckGrid.appendChild(wordCard);
-  });
-
-  deckSection.appendChild(deckGrid);
-  el.rewardCards.appendChild(deckSection);
-}
-
-// === 商店卡片渲染 ===
+// === 商店卡片渲染（保留给进化提示卡） ===
 function renderShopCard(
   icon: string,
   name: string,
@@ -440,11 +519,9 @@ function renderShopCard(
   const el = getElements();
   const card = document.createElement('div');
   card.className = 'reward-card';
-  if (typeClass === 'risk-reward') card.classList.add('risk-reward-card');
   if (typeClass === 'evolution-card') card.classList.add('evolution-card');
-  if (typeClass === 'hermit-locked') card.classList.add('hermit-locked');
 
-  const canAfford = state.gold >= cost;
+  const canAfford = cost === 0 || state.gold >= cost;
   if (!canAfford) card.classList.add('cannot-afford');
 
   card.innerHTML = `
@@ -457,7 +534,6 @@ function renderShopCard(
     <div class="reward-type ${typeClass}">${typeLabel}</div>
   `;
 
-  // 3D 卡牌悬停效果
   init3DCardEffect(card);
 
   card.onclick = () => {
@@ -466,18 +542,6 @@ function renderShopCard(
   };
 
   el.rewardCards.appendChild(card);
-}
-
-// === 购买物品 ===
-function buyItem(cost: number): boolean {
-  if (state.gold < cost) {
-    showFeedback('金币不足!', '#ff6b6b');
-    return false;
-  }
-  state.gold -= cost;
-  updateGoldDisplay();
-  playSound('skill');
-  return true;
 }
 
 // === 3D 卡牌效果 ===
@@ -504,7 +568,7 @@ function isSynergySkill(skillId: string): boolean {
   return sk ? SYNERGY_TYPES.includes(sk.type) : false;
 }
 
-function renderBuildManager(): void {
+export function renderBuildManager(): void {
   const el = getElements();
   el.boundGrid.innerHTML = '';
 
@@ -551,6 +615,8 @@ function renderBuildManager(): void {
         const display = getSkillDisplay(skillId);
         const school = getSkillSchool(skillId);
         slot.classList.add('has-skill');
+        slot.dataset.dragType = 'skill-key';
+        slot.dataset.boundSkill = skillId;
         if (isSynergySkill(skillId)) slot.classList.add('synergy-skill');
         slot.classList.add(school.cssClass);
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${display.icon}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
@@ -615,12 +681,15 @@ function renderBuildManager(): void {
 
     const item = document.createElement('div');
     item.className = 'inventory-skill';
+    item.dataset.dragType = 'skill-inventory';
+    item.dataset.skillId = skillId;
     if (boundKey) item.classList.add('bound');
     if (state.shop.selectedSkill === skillId) item.classList.add('selected');
     if (isSynergySkill(skillId)) item.classList.add('synergy');
 
     const school = getSkillSchool(skillId);
     const evolvedLabel = state.player.evolvedSkills.has(skillId) ? '<span class="inv-evolved">★</span>' : '';
+    const sellPrice = Math.floor((data.purchasePrice || 15) / 2);
     item.innerHTML = `
       <span class="inv-icon">${display.icon}</span>
       <span class="inv-name">${display.name}</span>
@@ -628,10 +697,17 @@ function renderBuildManager(): void {
       <span class="inv-school ${school.cssClass}">${school.label}</span>
       ${data.level > 1 ? `<span class="inv-level">Lv.${data.level}</span>` : ''}
       ${boundKey ? `<span class="inv-key">[${boundKey.toUpperCase()}]</span>` : ''}
+      <span class="inv-sell" data-sell-skill="${skillId}">卖${sellPrice}💰</span>
     `;
 
     item.addEventListener('click', (e) => {
       e.stopPropagation();
+      // Check if sell button was clicked
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('inv-sell')) {
+        sellSkill(skillId);
+        return;
+      }
       clickSkill(skillId);
     });
     el.ownedSkills.appendChild(item);
@@ -684,10 +760,113 @@ function clickSkill(skillId: string): void {
   renderBuildManager();
 }
 
+// === 注册拖拽放置区 ===
+function registerShopDropZones(): void {
+  dragManager.clearDropZones();
+
+  // 1. 键位 slot — 接受 shop-item(技能)、skill-inventory、skill-key
+  const keySlots = document.querySelectorAll('.key-slot') as NodeListOf<HTMLElement>;
+  keySlots.forEach(slot => {
+    const key = slot.dataset.key || '';
+    dragManager.registerDropZone({
+      element: slot,
+      type: 'key-slot',
+      key,
+      accepts: (payload: DragPayload) => {
+        if (queryRelicFlag('silence_vow') === true) return false;
+        if (payload.type === 'shop-item') {
+          // 只接受技能类商品
+          const item = state.shop.items[payload.itemIndex ?? -1];
+          return item?.type === 'skill';
+        }
+        return payload.type === 'skill-inventory' || payload.type === 'skill-key';
+      },
+      onDrop: (payload: DragPayload) => {
+        handleDropOnKey(key, payload);
+      },
+    });
+  });
+
+  // 2. 卖出区 — 接受 skill-inventory、skill-key
+  const sellZone = document.getElementById('sell-zone');
+  if (sellZone) {
+    dragManager.registerDropZone({
+      element: sellZone,
+      type: 'sell-zone',
+      accepts: (payload: DragPayload) => {
+        return payload.type === 'skill-inventory' || payload.type === 'skill-key';
+      },
+      onDrop: (payload: DragPayload) => {
+        const skillId = payload.skillId;
+        if (skillId) {
+          sellSkill(skillId);
+          registerShopDropZones();
+        }
+      },
+    });
+  }
+}
+
+// === 拖拽到键位处理 ===
+function handleDropOnKey(targetKey: string, payload: DragPayload): void {
+  if (payload.type === 'shop-item') {
+    // 从商店拖拽技能到键位 → 购买并绑定
+    const index = payload.itemIndex ?? -1;
+    const item = state.shop.items[index];
+    if (!item || item.type !== 'skill') return;
+
+    const skillId = item.skillId!;
+    const result = executePurchase(index);
+    if (!result) return;
+
+    // 绑定到目标键位（交换现有技能）
+    const existingSkill = state.player.bindings.get(targetKey);
+    for (const [k, id] of state.player.bindings) {
+      if (id === skillId) {
+        if (existingSkill) state.player.bindings.set(k, existingSkill);
+        else state.player.bindings.delete(k);
+        break;
+      }
+    }
+    state.player.bindings.set(targetKey, skillId);
+
+    if (result.skillId) checkAutoEvolution(result.skillId);
+    renderUnifiedShop();
+    renderBuildManager();
+    registerShopDropZones();
+  } else if (payload.type === 'skill-inventory' || payload.type === 'skill-key') {
+    // 拖拽已有技能到键位 → 绑定/交换
+    const skillId = payload.skillId;
+    if (!skillId) return;
+
+    const existingSkill = state.player.bindings.get(targetKey);
+    const sourceKey = payload.sourceKey ||
+      [...state.player.bindings.entries()].find(([, id]) => id === skillId)?.[0];
+
+    // 移除源位置的绑定
+    if (sourceKey) {
+      if (existingSkill) {
+        state.player.bindings.set(sourceKey, existingSkill);
+      } else {
+        state.player.bindings.delete(sourceKey);
+      }
+    }
+
+    state.player.bindings.set(targetKey, skillId);
+    playSound('skill');
+
+    state.shop.selectedSkill = null;
+    state.shop.selectedKey = null;
+    renderBuildManager();
+    registerShopDropZones();
+  }
+}
+
 // === 初始化商店事件 ===
 export function initShopEvents(): void {
   const el = getElements();
   el.startBattleBtn.onclick = () => {
+    dragManager.destroy();
     state.level++;
     startLevel();
   };

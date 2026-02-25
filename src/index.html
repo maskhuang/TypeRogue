@@ -80,7 +80,7 @@
 
                 <!-- Right: Build Manager -->
                 <div id="shop-build">
-                    <div class="shop-section-title">构筑 (点击交换位置)</div>
+                    <div class="shop-section-title">构筑</div>
                     <div id="build-manager">
                         <div id="bound-grid"></div>
                         <div id="skill-inventory">
@@ -91,6 +91,7 @@
                 </div>
             </div>
 
+            <div id="sell-zone">🗑️ 拖到此处出售</div>
             <div id="shop-footer">
                 <div id="shop-relics">
                     <span class="relics-label">遗物:</span>
@@ -106,6 +107,16 @@
                 <div id="gameover-title">GAME OVER</div>
                 <div id="gameover-stats"></div>
                 <button class="restart-btn" id="restart-btn">再来一局</button>
+            </div>
+        </div>
+
+        <!-- Relic Picker Modal -->
+        <div id="relic-picker-modal" class="relic-picker-hidden">
+            <div class="relic-picker-overlay"></div>
+            <div class="relic-picker-content">
+                <div class="relic-picker-title">🏺 选择一件遗物 🏺</div>
+                <div class="relic-picker-cards" id="relic-picker-cards"></div>
+                <button class="relic-picker-skip" id="relic-picker-skip">跳过</button>
             </div>
         </div>
 

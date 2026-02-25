@@ -8,6 +8,7 @@ import { state } from './core/state';
 import { getStarterWords } from './data/words';
 import { startLevel, initInput } from './systems/battle';
 import { initShopEvents } from './systems/shop';
+import { shouldShowRelicPicker, showRelicPicker } from './systems/relicPicker';
 
 // === 游戏初始化 ===
 function init(): void {
@@ -43,7 +44,11 @@ function init(): void {
 
   // 启动游戏
   state.level = 1;
-  startLevel();
+  if (shouldShowRelicPicker(state.level)) {
+    showRelicPicker(() => startLevel());
+  } else {
+    startLevel();
+  }
 }
 
 // === 启动 ===

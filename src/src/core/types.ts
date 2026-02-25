@@ -39,15 +39,22 @@ export interface PlayerState {
   evolvedSkills: Map<string, string>;  // skillId → branchId
 }
 
+export interface ShopItem {
+  id: string;              // 商品唯一 ID
+  type: 'skill' | 'word';
+  skillId?: string;
+  word?: string;
+  cost: number;
+  isUpgrade: boolean;      // 重复技能 → true
+  locked: boolean;         // 锁定（17.3）
+  highlight?: string;      // 词语高频字母
+}
+
 export interface ShopState {
-  rewards: ShopReward[];
-  shopWords: ShopWord[];
-  shopSkills: ShopSkillItem[];
-  shopRelics: string[];
+  items: ShopItem[];       // 5 个商品
+  refreshCount: number;    // 刷新次数（17.3）
   selectedSkill: string | null;
   selectedKey: string | null;
-  tab: 'skills' | 'relics' | 'deck';
-  removeCount: number;
 }
 
 // === 技能系统 ===
@@ -82,6 +89,7 @@ export interface SkillDefinition {
 
 export interface SkillInstance {
   level: number;
+  purchasePrice?: number;  // 购买价格（用于卖出半价计算）
 }
 
 // === 技能进化系统 ===
@@ -119,24 +127,7 @@ export interface WordPool {
   highlight?: string;
 }
 
-// === 商店系统 ===
-export interface ShopReward {
-  type: 'skill' | 'relic' | 'word';
-  id: string;
-  cost: number;
-}
-
-export interface ShopWord {
-  word: string;
-  cost: number;
-  highlight?: string;
-}
-
-export interface ShopSkillItem {
-  type: 'new' | 'upgrade';
-  skillId: string;
-  cost: number;
-}
+// (旧 ShopReward/ShopWord/ShopSkillItem 已移除，由 ShopItem 替代)
 
 // === 联动系统 ===
 export interface SynergyState {

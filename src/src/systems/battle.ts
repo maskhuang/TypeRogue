@@ -14,6 +14,7 @@ import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, resolveSkillEventModifiers } from './skills';
 import { openShop } from './shop';
+import { shouldShowRelicPicker, showRelicPicker } from './relicPicker';
 import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
@@ -490,7 +491,12 @@ function endLevel(): void {
   el.container.classList.remove('mid-mult', 'high-mult');
 
   if (state.score >= state.targetScore) {
-    openShop(true);
+    // 每5关弹出遗物三选一，然后进商店
+    if (shouldShowRelicPicker(state.level)) {
+      showRelicPicker(() => openShop(true));
+    } else {
+      openShop(true);
+    }
   } else {
     gameOver();
   }

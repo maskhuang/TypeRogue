@@ -1716,3 +1716,289 @@ body {
     opacity: 0.4;
     cursor: not-allowed;
 }
+
+/* ============================================ */
+/* RELIC PICKER MODAL                          */
+/* ============================================ */
+#relic-picker-modal {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#relic-picker-modal.relic-picker-hidden {
+    display: none;
+}
+
+.relic-picker-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+}
+
+.relic-picker-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 30px;
+}
+
+.relic-picker-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffe66d;
+    margin-bottom: 24px;
+    text-shadow: 0 0 20px rgba(255, 230, 109, 0.5);
+    letter-spacing: 2px;
+}
+
+.relic-picker-cards {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.relic-picker-card {
+    background: linear-gradient(180deg, #1a1a2e, #16213e);
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    width: 200px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.relic-picker-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.relic-picker-card.relic-rarity-common {
+    border-color: #aaa;
+}
+
+.relic-picker-card.relic-rarity-common:hover {
+    border-color: #ddd;
+    box-shadow: 0 8px 24px rgba(150, 150, 150, 0.2);
+}
+
+.relic-picker-card.relic-rarity-rare {
+    border-color: #3498db;
+}
+
+.relic-picker-card.relic-rarity-rare:hover {
+    border-color: #5dade2;
+    box-shadow: 0 8px 24px rgba(52, 152, 219, 0.3);
+}
+
+.relic-picker-card.relic-rarity-legendary {
+    border-color: #ffd700;
+}
+
+.relic-picker-card.relic-rarity-legendary:hover {
+    border-color: #ffe66d;
+    box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+}
+
+.relic-picker-icon {
+    font-size: 42px;
+    margin-bottom: 10px;
+}
+
+.relic-picker-name {
+    font-size: 15px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.relic-picker-desc {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    min-height: 36px;
+}
+
+.relic-picker-rarity {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.relic-picker-flavor {
+    font-size: 10px;
+    color: #555;
+    font-style: italic;
+}
+
+.relic-picker-skip {
+    margin-top: 20px;
+    padding: 8px 24px;
+    background: transparent;
+    border: 1px solid #555;
+    color: #888;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.relic-picker-skip:hover {
+    border-color: #888;
+    color: #fff;
+}
+
+/* ============================================ */
+/* UNIFIED SHOP STYLES                         */
+/* ============================================ */
+
+.shop-refresh-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-family: inherit;
+    background: rgba(78, 205, 196, 0.15);
+    border: 1px solid #4ecdc4;
+    border-radius: 5px;
+    color: #4ecdc4;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.shop-refresh-btn:hover {
+    background: rgba(78, 205, 196, 0.3);
+    transform: scale(1.05);
+}
+
+.shop-refresh-btn.cannot-afford {
+    opacity: 0.4;
+    border-color: #555;
+    color: #555;
+    cursor: not-allowed;
+}
+
+.lock-toggle {
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.15s;
+    opacity: 0.4;
+}
+
+.lock-toggle:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.lock-toggle.locked {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(255, 230, 109, 0.5));
+}
+
+.reward-type.word-type {
+    background: rgba(78, 205, 196, 0.2);
+    color: #4ecdc4;
+}
+
+.inv-sell {
+    font-size: 9px;
+    color: #ff6b6b;
+    padding: 2px 5px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-left: auto;
+    opacity: 0.5;
+}
+
+.inv-sell:hover {
+    opacity: 1;
+    border-color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.15);
+}
+
+/* Sell zone for drag (17.4 prep) */
+#sell-zone {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    background: rgba(255, 107, 107, 0.1);
+    border: 2px dashed #ff6b6b;
+    border-radius: 8px;
+    color: #ff6b6b;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+#sell-zone.active {
+    display: flex;
+}
+
+#sell-zone.drag-over {
+    background: rgba(255, 107, 107, 0.3);
+    border-style: solid;
+    transform: scale(1.02);
+}
+
+/* Drag ghost */
+.drag-ghost {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(30, 30, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 13px;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.drag-ghost-icon {
+    font-size: 18px;
+}
+
+.drag-ghost-label {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dragging source element */
+[data-drag-type].dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+    user-select: none;
+}
+
+[data-drag-type] {
+    user-select: none;
+}
+
+/* Drop zone highlight */
+.drop-zone-highlight {
+    outline: 2px solid #4ecdc4 !important;
+    outline-offset: -2px;
+    background: rgba(78, 205, 196, 0.15) !important;
+}
+
+.key-slot.drop-zone-highlight {
+    outline: 2px solid #4ecdc4;
+    background: rgba(78, 205, 196, 0.2) !important;
+    transform: scale(1.1);
+}
