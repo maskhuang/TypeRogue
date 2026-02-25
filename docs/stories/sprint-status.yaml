@@ -106,12 +106,12 @@ development_status:
   epic-9-retrospective: optional
 
   # Epic 10: 内容扩展与词库系统
-  epic-10: in-progress
+  epic-10: done
   10-1-curated-word-dictionary: done
   epic-10-retrospective: optional
 
   # Epic 11: 效果管道统一
-  epic-11: in-progress
+  epic-11: done
   11-1-modifier-interface-registry: done
   11-2-three-layer-pipeline: done
   11-3-condition-system: done
@@ -135,14 +135,14 @@ development_status:
   epic-13-retrospective: optional
 
   # Epic 14: 字母升级与词语联动
-  epic-14: in-progress
+  epic-14: done
   14-1-letter-upgrade-system: done
   14-2-letter-upgrade-shop: done
   14-3-word-condition-extension: done
   epic-14-retrospective: optional
 
   # Epic 15: 技能进化系统
-  epic-15: in-progress
+  epic-15: done
   15-1-evolution-branch-design: done
   15-2-evolution-ui-selection: done
   epic-15-retrospective: optional
@@ -150,5 +150,5 @@ development_status:
 # Summary:
 # - Total Epics: 15
 # - Total Stories: 56
-# - Epics Completed: 10
-# - Stories Completed: 36
+# - Epics Completed: 15
+# - Stories Completed: 56
