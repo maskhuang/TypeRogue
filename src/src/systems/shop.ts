@@ -47,9 +47,8 @@ export function openShop(_won: boolean): void {
   state.shop.refreshCount = 0;
 
   renderUnifiedShop();
-  renderBuildManager();
+  renderBuildManager();  // 内部自动注册 drop zones
   renderRelicDisplay();
-  registerShopDropZones();
   dragManager.init();
   showScreen('shop');
 }
@@ -646,6 +645,7 @@ export function renderBuildManager(): void {
   el.ownedSkills.innerHTML = '';
   if (state.player.skills.size === 0) {
     el.ownedSkills.innerHTML = '<div style="color:#444;font-size:11px;">购买技能开始构筑</div>';
+    registerShopDropZones();
     return;
   }
 
@@ -684,6 +684,9 @@ export function renderBuildManager(): void {
     });
     el.ownedSkills.appendChild(item);
   });
+
+  // DOM 重建后自动重注册拖拽放置区
+  registerShopDropZones();
 }
 
 // === 注册拖拽放置区 ===
@@ -726,7 +729,6 @@ function registerShopDropZones(): void {
         const skillId = payload.skillId;
         if (skillId) {
           sellSkill(skillId);
-          registerShopDropZones();
         }
       },
     });
@@ -759,7 +761,6 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     if (result.skillId) checkAutoEvolution(result.skillId);
     renderUnifiedShop();
     renderBuildManager();
-    registerShopDropZones();
   } else if (payload.type === 'skill-inventory' || payload.type === 'skill-key') {
     // 拖拽已有技能到键位 → 绑定/交换
     const skillId = payload.skillId;
@@ -782,7 +783,6 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     playSound('skill');
 
     renderBuildManager();
-    registerShopDropZones();
   }
 }
 
