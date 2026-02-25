@@ -12,7 +12,8 @@ import { RELICS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
-import { triggerSkill, resolveSkillEventModifiers } from './skills';
+import { triggerSkill, resolveSkillEventModifiers, calculateLonePassiveBonus, getVoidLetterModifiers } from './skills';
+import { isLayoutOnlyPassive } from '../data/skills';
 import { openShop } from './shop';
 import { shouldShowRelicPicker, showRelicPicker } from './relicPicker';
 import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
@@ -27,6 +28,7 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 let wordBaseScore = 0; // 词语基础分（不含倍率）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
+let lonePassiveBonus = 0; // 孤狼被动倍率加成（每关开始时计算）
 
 // === 屏幕管理 ===
 export function showScreen(name: 'battle' | 'shop' | 'gameover'): void {
@@ -139,8 +141,8 @@ function playerCorrect(k: string): void {
   // 完美主义遗物：连续正确累计
   synergy.perfectStreak++;
 
-  // 计算倍率: 基础 + 连击加成 + 完美主义加成 + 技能倍率加成
-  let mult = state.player.baseMultiplier + state.combo * state.player.comboBonus;
+  // 计算倍率: 基础 + 孤狼被动 + 连击加成 + 完美主义加成 + 技能倍率加成
+  let mult = state.player.baseMultiplier + lonePassiveBonus + state.combo * state.player.comboBonus;
   if (queryRelicFlag('perfectionist_streak')) {
     mult += synergy.perfectStreak * 0.01;
   }
@@ -163,15 +165,16 @@ function playerCorrect(k: string): void {
     }
   }
 
-  // 触发技能
-  if (skillId) {
+  // 触发技能（孤狼/虚空等纯布局被动不触发）
+  const shouldTrigger = skillId && !isLayoutOnlyPassive(skillId);
+  if (shouldTrigger) {
     letter.classList.add('skill-triggered');
     juiceUp(letter, 0.4, 5); // 强力弹跳
     bumpMultiplier();
     triggerSkill(skillId, k);
   }
 
-  spawnParticles(letter, skillId ? 10 : 5, '#4ecdc4');
+  spawnParticles(letter, shouldTrigger ? 10 : 5, '#4ecdc4');
   playSound('type');
 
   state.player.index++;
@@ -250,7 +253,7 @@ function playerWrong(): void {
   state.combo = 0;
   state.lastMilestone = 0;
   synergy.skillMultBonus = 0;
-  state.multiplier = state.player.baseMultiplier;
+  state.multiplier = state.player.baseMultiplier + lonePassiveBonus;
   updateHUD();
 }
 
@@ -537,11 +540,18 @@ export function startLevel(): void {
   synergy.restoreComboCounters.clear();
   synergy.freezeTriggeredThisWord.clear();
 
+  // 孤狼被动：计算倍率加成
+  lonePassiveBonus = calculateLonePassiveBonus();
+  state.multiplier = state.player.baseMultiplier + lonePassiveBonus;
+
   // 构建字频底分修饰器注册表（整场战斗缓存）
   const letterMods = getLetterScoreModifiers(state.player.wordDeck);
-  if (letterMods.length > 0) {
+  // 虚空被动：注入相邻空位字母底分加成
+  const voidMods = getVoidLetterModifiers();
+  const allLetterMods = [...letterMods, ...voidMods];
+  if (allLetterMods.length > 0) {
     letterRegistry = new ModifierRegistry();
-    letterRegistry.registerMany(letterMods);
+    letterRegistry.registerMany(allLetterMods);
   } else {
     letterRegistry = null;
   }

@@ -71,7 +71,7 @@ export type SkillType =
 export type ActiveSkillType = 'score' | 'multiply' | 'time' | 'protect' | 'echo' | 'ripple' | 'gamble' | 'chain' | 'overclock' | 'pulse' | 'sentinel' | 'leech';
 
 /** 被动技能类型（持续生效，基于键盘布局） */
-export type PassiveSkillType = 'core' | 'aura' | 'mirror' | 'anchor';
+export type PassiveSkillType = 'core' | 'aura' | 'mirror' | 'anchor' | 'lone' | 'void';
 
 export interface SkillDefinition {
   name: string;

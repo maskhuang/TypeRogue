@@ -7,7 +7,7 @@ import { state, synergy } from '../core/state';
 import { ADJACENT_KEYS, KEYBOARD_ROWS } from '../core/constants';
 import { SKILLS, isPassiveSkill, getSkillModifierFactory, getSkillDisplayInfo } from '../data/skills';
 import type { AdjacentSkill } from '../core/types';
-import type { PipelineContext, EffectAccumulator, BehaviorCallbacks, PipelineResult, ModifierTrigger } from './modifiers/ModifierTypes';
+import type { PipelineContext, EffectAccumulator, BehaviorCallbacks, PipelineResult, ModifierTrigger, Modifier } from './modifiers/ModifierTypes';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { BehaviorExecutor } from './modifiers/BehaviorExecutor';
@@ -206,22 +206,12 @@ export function generateFeedback(
       return null; // 被动技能，通过 enhance 层静默增强
     case 'aura':
       return null; // 静默
-    case 'lone': {
-      if (effects.score > 0) {
-        return { text: `孤狼! +${Math.floor(effects.score * state.multiplier)}`, color: '#e74c3c' };
-      }
-      return { text: '孤狼失效...', color: '#666' };
-    }
+    case 'lone':
+      return null; // 纯布局被动，不触发
     case 'echo':
       return { text: '回响→双触发', color: '#e056fd' };
-    case 'void': {
-      const otherSkills = Math.max(0, (context.skillsTriggeredThisWord ?? 0) - 1);
-      const displayScore = Math.floor(effects.score * state.multiplier);
-      if (otherSkills > 0) {
-        return { text: `虚空+${displayScore} (-${otherSkills})`, color: '#2c3e50' };
-      }
-      return { text: `虚空+${displayScore}`, color: '#2c3e50' };
-    }
+    case 'void':
+      return null; // 纯布局被动，不触发
     case 'ripple': {
       const rippleText = effects.score > 0 ? `涟漪→传递 +${Math.floor(effects.score * state.multiplier)}` : '涟漪→传递';
       return { text: rippleText, color: '#3498db' };
@@ -289,11 +279,8 @@ function generateEvolvedFeedback(
     case 'freeze_chrono':
       return { text: '时光倒流...', color: '#87ceeb' };
     case 'lone_hermit':
-      if (effects.score > 0) return { text: `隐士! +${Math.floor(effects.score * state.multiplier)}`, color: '#e74c3c' };
-      return { text: '隐士失效...', color: '#666' };
     case 'lone_shadow':
-      if (effects.score > 0) return { text: `暗影+${Math.floor(effects.score * state.multiplier)}`, color: '#2c3e50' };
-      return { text: '暗影失效...', color: '#666' };
+      return null; // 纯布局被动进化，不触发
     case 'core_nexus':
       return null; // 被动增强
     case 'core_fusion':
@@ -537,6 +524,72 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
   }
 
   updateHUD();
+}
+
+// === 孤狼被动：计算基础倍率加成 ===
+export function calculateLonePassiveBonus(): number {
+  let bonus = 0;
+  for (const [key, skillId] of state.player.bindings) {
+    if (SKILLS[skillId]?.type !== 'lone') continue;
+    const level = state.player.skills.get(skillId)?.level || 1;
+    const baseBonus = (SKILLS[skillId].base + SKILLS[skillId].grow * (level - 1)) / 100;
+
+    const adjacent = ADJACENT_KEYS[key] || [];
+    const adjacentSkillCount = adjacent.filter(k => state.player.bindings.has(k)).length;
+
+    const evoId = state.player.evolvedSkills.get(skillId);
+    if (evoId === 'lone_hermit') {
+      // 隐士：加成×3，但最多装备4个技能
+      if (adjacentSkillCount === 0 && state.player.skills.size <= 4) {
+        bonus += baseBonus * 3;
+      }
+    } else if (evoId === 'lone_shadow') {
+      // 暗影：允许1个相邻技能，加成×1.5
+      if (adjacentSkillCount <= 1) {
+        bonus += baseBonus * 1.5;
+      }
+    } else {
+      // 基础：相邻无技能时生效
+      if (adjacentSkillCount === 0) {
+        bonus += baseBonus;
+      }
+    }
+  }
+  return bonus;
+}
+
+// === 虚空被动：生成字母底分修饰器 ===
+export function getVoidLetterModifiers(): Modifier[] {
+  const bonusMap = new Map<string, number>();
+
+  for (const [key, skillId] of state.player.bindings) {
+    if (SKILLS[skillId]?.type !== 'void') continue;
+    const level = state.player.skills.get(skillId)?.level || 1;
+    const bonusPerEmpty = SKILLS[skillId].base + SKILLS[skillId].grow * (level - 1);
+
+    const adjacent = ADJACENT_KEYS[key] || [];
+    for (const adjKey of adjacent) {
+      if (!state.player.bindings.has(adjKey)) {
+        bonusMap.set(adjKey, (bonusMap.get(adjKey) || 0) + bonusPerEmpty);
+      }
+    }
+  }
+
+  const modifiers: Modifier[] = [];
+  for (const [key, bonus] of bonusMap) {
+    modifiers.push({
+      id: `void:${key}:score`,
+      source: 'skill:void',
+      sourceType: 'skill',
+      layer: 'base',
+      trigger: 'on_correct_keystroke',
+      phase: 'calculate',
+      condition: { type: 'key_is', key },
+      effect: { type: 'score', value: bonus, stacking: 'additive' },
+      priority: 40,
+    });
+  }
+  return modifiers;
 }
 
 // === 显示技能触发弹窗 ===

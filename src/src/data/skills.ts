@@ -6,7 +6,7 @@ import type { SkillDefinition, SkillType, PassiveSkillType, EvolutionBranch } fr
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes';
 
 // === 被动技能类型列表 ===
-export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'mirror', 'anchor'];
+export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'mirror', 'anchor', 'lone', 'void'];
 
 // === 连锁流技能类型（echo: 标记双触发 / ripple: 标记效果传递）===
 // 注意: 'chain' 技能（连锁）不在此列表中，它是条件倍率技能，非链式行为
@@ -108,20 +108,20 @@ export const SKILLS: Record<string, SkillDefinition> = {
     name: '孤狼',
     icon: '🐺',
     type: 'lone',
-    category: 'active',
-    base: 8,
-    grow: 3,
-    desc: '若本词无其他技能触发，+8分',
+    category: 'passive',
+    base: 20,
+    grow: 10,
+    desc: '[被动] 若相邻均无技能，基础倍率+0.2',
     evolutions: ['lone_hermit', 'lone_shadow'],
   },
   void: {
     name: '虚空',
     icon: '🌑',
     type: 'void',
-    category: 'active',
-    base: 12,
-    grow: 4,
-    desc: '+12分，本词每有一个其他技能触发-1分'
+    category: 'passive',
+    base: 2,
+    grow: 1,
+    desc: '[被动] 每个相邻空位，字母底分+2',
   },
 
   // === 爆发流新增 ===
@@ -295,10 +295,7 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
     },
   ],
 
-  lone: (id, lvl) => [{
-    ...baseModifier(id, 'score', 'score', skillVal(id, lvl)),
-    condition: { type: 'skills_triggered_this_word' as const, value: 1 },
-  }],
+  lone: () => [],  // layout-only passive: bonus calculated at battle start
 
   echo: (id, lvl) => [
     baseModifier(id, 'score', 'score', skillVal(id, lvl)),
@@ -314,13 +311,7 @@ export const SKILL_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
     },
   ],
 
-  void: (id, lvl, ctx) => {
-    const val = skillVal(id, lvl)
-    const otherSkills = Math.max(0, (ctx?.skillsTriggeredThisWord ?? 0) - 1)
-    return [
-      baseModifier(id, 'score', 'score', Math.max(0, val - otherSkills)),
-    ]
-  },
+  void: () => [],  // layout-only passive: bonus calculated at battle start
 
   ripple: (id, lvl) => [
     baseModifier(id, 'score', 'score', skillVal(id, lvl)),
@@ -416,8 +407,8 @@ export interface SkillSchool {
 
 export const SKILL_SCHOOL: Record<string, SkillSchool> = {
   burst: { label: '爆发', cssClass: 'school-burst' },
-  lone: { label: '爆发', cssClass: 'school-burst' },
-  void: { label: '爆发', cssClass: 'school-burst' },
+  lone: { label: '被动', cssClass: 'school-passive' },
+  void: { label: '被动', cssClass: 'school-passive' },
   gamble: { label: '爆发', cssClass: 'school-burst' },
   amp: { label: '倍率', cssClass: 'school-multiply' },
   chain: { label: '倍率', cssClass: 'school-multiply' },
@@ -445,6 +436,14 @@ export function getSkillSchool(skillId: string): SkillSchool {
 export function isPassiveSkill(skillId: string): boolean {
   const skill = SKILLS[skillId];
   return skill?.category === 'passive';
+}
+
+/**
+ * 检查技能是否为纯布局被动技能（不触发，效果在战斗开始时计算）
+ */
+export function isLayoutOnlyPassive(skillId: string): boolean {
+  const skill = SKILLS[skillId];
+  return skill?.type === 'lone' || skill?.type === 'void';
 }
 
 /**
@@ -554,7 +553,7 @@ export const EVOLUTIONS: Record<string, EvolutionBranch> = {
     id: 'lone_hermit',
     name: '隐士',
     icon: '🏔️',
-    description: '孤立加成 ×3 但装备技能数上限降至 4',
+    description: '被动倍率加成×3，但最多装备4个技能',
     skillId: 'lone',
     branch: 'A',
     condition: { minLevel: 3, goldCost: 60 },
@@ -564,7 +563,7 @@ export const EVOLUTIONS: Record<string, EvolutionBranch> = {
     id: 'lone_shadow',
     name: '暗影',
     icon: '🌘',
-    description: '孤立条件放宽：允许 1 个其他技能触发仍视为孤立',
+    description: '允许1个相邻技能仍视为孤立，加成×1.5',
     skillId: 'lone',
     branch: 'B',
     condition: { minLevel: 3, goldCost: 60 },
@@ -680,20 +679,11 @@ export const EVOLUTION_MODIFIER_DEFS: Record<string, SkillModifierFactory> = {
     priority: 100,
   }],
 
-  // --- lone_hermit: 孤立加成 ×3（装备上限由 runtime 控制）---
-  lone_hermit: (id, lvl) => [{
-    ...baseModifier(id, 'score', 'score', skillVal(id, lvl) * 3),
-    condition: { type: 'skills_triggered_this_word' as const, value: 1 },
-  }],
+  // --- lone_hermit: layout-only passive, handled at battle start ---
+  lone_hermit: () => [],
 
-  // --- lone_shadow: 允许最多 2 个技能触发仍获加成 ---
-  lone_shadow: (id, lvl, ctx) => {
-    const triggered = ctx?.skillsTriggeredThisWord ?? 0
-    if (triggered > 2) return []
-    return [
-      baseModifier(id, 'score', 'score', skillVal(id, lvl) * 2),
-    ]
-  },
+  // --- lone_shadow: layout-only passive, handled at battle start ---
+  lone_shadow: () => [],
 
   // --- core_nexus: +15% 每 3 次触发叠加，无底分 ---
   core_nexus: (id, _lvl, ctx) => {

@@ -209,17 +209,16 @@ class PassiveSkillSystem {
         }
 
         case 'void': {
-          // 虚空：每个相邻空位 +3% 全局分数（基于等级）
+          // 虚空：每个相邻空位 → 字母底分+N（通过 battle.ts 注入字母修饰器实现）
+          // 此处仅记录来源信息用于 UI 展示
           const emptyCount = adjacencyMap.getAdjacentEmptyCount(key, this.bindings)
           if (emptyCount > 0) {
             const bonusPerEmpty = skill.base + skill.grow * (level - 1)
-            const bonusPercent = emptyCount * bonusPerEmpty
-            totalBonusPercent += bonusPercent
             sources.push({
               type: 'void',
               key,
               skillId,
-              bonus: bonusPercent / 100
+              bonus: emptyCount * bonusPerEmpty
             })
           }
           break
