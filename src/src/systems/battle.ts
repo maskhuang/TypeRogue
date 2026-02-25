@@ -17,6 +17,7 @@ import { openShop } from './shop';
 import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
+import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 
 // === 计时器 ===
 let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -507,6 +508,7 @@ function hideSettlement(): void {
 }
 
 export function startLevel(): void {
+  keyTooltip.hide();
   state.phase = 'battle';
   state.score = 0;
   state.combo = 0;

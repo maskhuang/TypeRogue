@@ -13,8 +13,9 @@ import { playSound } from '../effects/sound';
 import { juiceUp } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopSkillItem } from '../core/types';
-import { getLetterScores, calculateLetterFrequency } from './letters/LetterFrequencySystem';
+import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
+import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 
 // === 打开商店 ===
 export function openShop(_won: boolean): void {
@@ -507,9 +508,13 @@ function renderBuildManager(): void {
   const el = getElements();
   el.boundGrid.innerHTML = '';
 
-  // 计算字母底分和字频
-  const letterScores = getLetterScores(state.player.wordDeck);
+  // 计算字频（一次遍历），再导出底分
   const letterFreqs = calculateLetterFrequency(state.player.wordDeck);
+  const letterScores = new Map<string, number>();
+  letterFreqs.forEach((count, letter) => {
+    const score = letterFrequencyToScore(count);
+    if (score > 0) letterScores.set(letter, score);
+  });
 
   let adjacentKeys: string[] = [];
   if (state.shop.selectedKey) {
@@ -564,7 +569,7 @@ function renderBuildManager(): void {
       // Tooltip 悬停
       slot.addEventListener('mouseenter', (e: MouseEvent) => {
         const freq = letterFreqs.get(k) ?? 0;
-        const tooltipData: { letter: string; score: number; frequency: number; skill?: { name: string; icon: string; description: string; level: number; school: string; schoolCssClass: string } } = {
+        const tooltipData: KeyTooltipData = {
           letter: k,
           score,
           frequency: freq,

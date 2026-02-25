@@ -17,11 +17,17 @@ export interface KeyTooltipData {
   }
 }
 
+/** 转义 HTML 特殊字符 */
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
 /**
  * 键位悬停提示（单例 DOM 浮层）
  */
 class KeyTooltipManager {
   private tooltip: HTMLElement | null = null
+  private positionRafId: number = 0
 
   /**
    * 确保 tooltip DOM 元素存在
@@ -46,7 +52,7 @@ class KeyTooltipManager {
   show(x: number, y: number, data: KeyTooltipData): void {
     const el = this.ensureElement()
 
-    let html = `<div class="tooltip-letter">${data.letter.toUpperCase()}</div>`
+    let html = `<div class="tooltip-letter">${esc(data.letter.toUpperCase())}</div>`
 
     if (data.score > 0) {
       html += `<div class="tooltip-score">底分: +${data.score}</div>`
@@ -57,9 +63,9 @@ class KeyTooltipManager {
 
     if (data.skill) {
       html += `<div class="tooltip-skill">`
-      html += `<div class="tooltip-skill-name">${data.skill.icon} ${data.skill.name} Lv.${data.skill.level}</div>`
-      html += `<div class="tooltip-skill-desc">${data.skill.description}</div>`
-      html += `<span class="tooltip-skill-school ${data.skill.schoolCssClass}">${data.skill.school}</span>`
+      html += `<div class="tooltip-skill-name">${esc(data.skill.icon)} ${esc(data.skill.name)} Lv.${data.skill.level}</div>`
+      html += `<div class="tooltip-skill-desc">${esc(data.skill.description)}</div>`
+      html += `<span class="tooltip-skill-school ${esc(data.skill.schoolCssClass)}">${esc(data.skill.school)}</span>`
       html += `</div>`
     }
 
@@ -83,7 +89,7 @@ class KeyTooltipManager {
    * tooltip 是否正在显示
    */
   isVisible(): boolean {
-    return this.tooltip?.style.display !== 'none' && this.tooltip?.style.display !== ''
+    return !!this.tooltip && this.tooltip.style.display !== 'none' && this.tooltip.style.display !== ''
   }
 
   /**
@@ -98,9 +104,15 @@ class KeyTooltipManager {
     el.style.left = `${left}px`
     el.style.top = `${top}px`
 
+    // 取消上一次的边界检测，防止竞态
+    if (this.positionRafId) {
+      const cancel = typeof cancelAnimationFrame === 'function' ? cancelAnimationFrame : clearTimeout
+      cancel(this.positionRafId)
+    }
+
     // 下一帧做边界检测（避免溢出视口）
-    const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (cb: () => void) => setTimeout(cb, 0)
-    raf(() => {
+    const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (cb: () => void) => setTimeout(cb, 0) as unknown as number
+    this.positionRafId = raf(() => {
       if (typeof el.getBoundingClientRect !== 'function') return
       const rect = el.getBoundingClientRect()
       const vw = window.innerWidth

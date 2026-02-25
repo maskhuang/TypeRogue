@@ -184,6 +184,96 @@ describe('KeyVisual', () => {
     })
   })
 
+  describe('setLetterScore', () => {
+    it('初始底分应该为 0', () => {
+      expect(keyVisual.getLetterScore()).toBe(0)
+    })
+
+    it('应该更新底分', () => {
+      keyVisual.setLetterScore(3)
+      expect(keyVisual.getLetterScore()).toBe(3)
+    })
+
+    it('设置底分 > 0 应该增加 scoreLabel 子元素', () => {
+      const initialCount = keyVisual.children.length
+      keyVisual.setLetterScore(2)
+      expect(keyVisual.children.length).toBe(initialCount + 1)
+    })
+
+    it('底分从正数变回 0 应该移除 scoreLabel', () => {
+      keyVisual.setLetterScore(2)
+      const countWithScore = keyVisual.children.length
+      keyVisual.setLetterScore(0)
+      expect(keyVisual.children.length).toBe(countWithScore - 1)
+    })
+
+    it('重复设置相同底分不应重复操作', () => {
+      keyVisual.setLetterScore(5)
+      const count = keyVisual.children.length
+      keyVisual.setLetterScore(5)
+      expect(keyVisual.children.length).toBe(count)
+    })
+  })
+
+  describe('setSkillSchoolColor', () => {
+    it('初始流派底色应该为 null', () => {
+      expect(keyVisual.getSkillSchoolColor()).toBeNull()
+    })
+
+    it('应该更新流派底色', () => {
+      keyVisual.setSkillSchoolColor(0xff6b6b)
+      expect(keyVisual.getSkillSchoolColor()).toBe(0xff6b6b)
+    })
+
+    it('应该能清除流派底色', () => {
+      keyVisual.setSkillSchoolColor(0xff6b6b)
+      keyVisual.setSkillSchoolColor(null)
+      expect(keyVisual.getSkillSchoolColor()).toBeNull()
+    })
+
+    it('重复设置相同颜色不应重复操作', () => {
+      keyVisual.setSkillSchoolColor(0xff6b6b)
+      keyVisual.setSkillSchoolColor(0xff6b6b)
+      expect(keyVisual.getSkillSchoolColor()).toBe(0xff6b6b)
+    })
+  })
+
+  describe('setTooltipData', () => {
+    it('初始 tooltip 数据应该为 null', () => {
+      expect(keyVisual.getTooltipData()).toBeNull()
+    })
+
+    it('应该存储 tooltip 数据', () => {
+      const data = { letter: 'q', score: 3, frequency: 15 }
+      keyVisual.setTooltipData(data)
+      expect(keyVisual.getTooltipData()).toBe(data)
+    })
+
+    it('应该能清除 tooltip 数据', () => {
+      keyVisual.setTooltipData({ letter: 'q', score: 3, frequency: 15 })
+      keyVisual.setTooltipData(null)
+      expect(keyVisual.getTooltipData()).toBeNull()
+    })
+
+    it('应该存储包含技能信息的数据', () => {
+      const data = {
+        letter: 'q',
+        score: 3,
+        frequency: 15,
+        skill: {
+          name: '爆发',
+          icon: '💥',
+          description: '造成大量伤害',
+          level: 2,
+          school: '爆发',
+          schoolCssClass: 'school-burst',
+        },
+      }
+      keyVisual.setTooltipData(data)
+      expect(keyVisual.getTooltipData()?.skill?.name).toBe('爆发')
+    })
+  })
+
   describe('destroy', () => {
     it('应该正确销毁组件', () => {
       keyVisual.destroy()

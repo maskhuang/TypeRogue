@@ -58,7 +58,6 @@ export function getLetterScoreModifiers(wordDeck: string[]): Modifier[] {
   const scores = getLetterScores(wordDeck)
   const modifiers: Modifier[] = []
   scores.forEach((score, key) => {
-    if (score <= 0) return
     modifiers.push({
       id: `letter:${key}:score`,
       source: `letter:${key}`,

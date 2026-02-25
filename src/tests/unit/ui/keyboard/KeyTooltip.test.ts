@@ -138,4 +138,37 @@ describe('KeyTooltip', () => {
       keyTooltip.destroy()
     }).not.toThrow()
   })
+
+  it('未创建时 isVisible 返回 false', async () => {
+    const { keyTooltip } = await import('../../../../src/ui/keyboard/KeyTooltip')
+    expect(keyTooltip.isVisible()).toBe(false)
+  })
+
+  it('销毁后 isVisible 返回 false', async () => {
+    const { keyTooltip } = await import('../../../../src/ui/keyboard/KeyTooltip')
+    keyTooltip.show(100, 100, { letter: 'a', score: 1, frequency: 5 })
+    keyTooltip.destroy()
+    expect(keyTooltip.isVisible()).toBe(false)
+  })
+
+  it('HTML 特殊字符被转义', async () => {
+    const { keyTooltip } = await import('../../../../src/ui/keyboard/KeyTooltip')
+    keyTooltip.show(100, 100, {
+      letter: '<script>',
+      score: 1,
+      frequency: 5,
+      skill: {
+        name: '<b>XSS</b>',
+        icon: '💥',
+        description: '"><img onerror=alert(1)>',
+        level: 1,
+        school: 'test',
+        schoolCssClass: 'school-burst',
+      },
+    })
+    expect(mockTooltipEl._innerHTML).not.toContain('<script>')
+    expect(mockTooltipEl._innerHTML).not.toContain('<b>XSS</b>')
+    expect(mockTooltipEl._innerHTML).toContain('&lt;SCRIPT&gt;')
+    expect(mockTooltipEl._innerHTML).toContain('&lt;b&gt;XSS&lt;/b&gt;')
+  })
 })
