@@ -6,7 +6,9 @@
 import { Container, Texture } from 'pixi.js'
 import { KeyVisual } from './KeyVisual'
 import { adjacencyMap } from '../../systems/skills/passive/AdjacencyMap'
-import { eventBus, GameEvents } from '../../core/events/EventBus'
+import { eventBus } from '../../core/events/EventBus'
+import type { GameEvents } from '../../core/events/EventBus'
+import type { KeyTooltipData } from './KeyTooltip'
 
 /**
  * 键盘可视化组件
@@ -25,7 +27,6 @@ export class KeyboardVisualizer extends Container {
   private unsubKeypress: (() => void) | null = null
   private unsubKeyup: (() => void) | null = null
   private unsubSkillTriggered: (() => void) | null = null
-  private unsubLetterUpgraded: (() => void) | null = null
 
   // 键盘布局定义
   private static readonly ROWS = [
@@ -99,10 +100,12 @@ export class KeyboardVisualizer extends Container {
    * 同步技能绑定显示
    * @param bindings 技能绑定映射 Map<keyName, skillId>
    * @param skillTextures 技能图标映射 Map<skillId, Texture>
+   * @param schoolColors 技能流派颜色映射 Map<skillId, color>
    */
   syncBindings(
     bindings: Map<string, string>,
-    skillTextures?: Map<string, Texture>
+    skillTextures?: Map<string, Texture>,
+    schoolColors?: Map<string, number>
   ): void {
     this.keys.forEach((keyVisual, keyName) => {
       const skillId = bindings.get(keyName.toLowerCase()) || bindings.get(keyName)
@@ -111,6 +114,12 @@ export class KeyboardVisualizer extends Container {
         keyVisual.setSkillIcon(texture || null)
       } else {
         keyVisual.setSkillIcon(null)
+      }
+      // 同步流派底色
+      if (skillId && schoolColors) {
+        keyVisual.setSkillSchoolColor(schoolColors.get(skillId) ?? null)
+      } else {
+        keyVisual.setSkillSchoolColor(null)
       }
     })
   }
@@ -131,7 +140,6 @@ export class KeyboardVisualizer extends Container {
     this.unsubKeypress = eventBus.on('input:keypress', this.onKeyPress.bind(this))
     this.unsubKeyup = eventBus.on('input:keyup', this.onKeyUp.bind(this))
     this.unsubSkillTriggered = eventBus.on('skill:triggered', this.onSkillTriggered.bind(this))
-    this.unsubLetterUpgraded = eventBus.on('letter:upgraded', this.onLetterUpgraded.bind(this))
   }
 
   /**
@@ -149,10 +157,6 @@ export class KeyboardVisualizer extends Container {
     if (this.unsubSkillTriggered) {
       this.unsubSkillTriggered()
       this.unsubSkillTriggered = null
-    }
-    if (this.unsubLetterUpgraded) {
-      this.unsubLetterUpgraded()
-      this.unsubLetterUpgraded = null
     }
   }
 
@@ -207,25 +211,23 @@ export class KeyboardVisualizer extends Container {
   }
 
   /**
-   * 处理字母升级
+   * 同步所有字母底分显示
    */
-  private onLetterUpgraded(data: GameEvents['letter:upgraded']): void {
-    if (this.destroyed) return
-
-    const keyVisual = this.keys.get(data.key.toUpperCase())
-    if (keyVisual) {
-      keyVisual.setLetterLevel(data.level)
-      keyVisual.playTriggerAnimation()
-    }
+  syncLetterScores(letterScores: Map<string, number>): void {
+    this.keys.forEach((keyVisual, keyName) => {
+      const score = letterScores.get(keyName.toLowerCase()) ?? 0
+      keyVisual.setLetterScore(score)
+    })
   }
 
   /**
-   * 同步所有字母等级显示
+   * 同步 tooltip 数据
+   * @param tooltipMap Map<键名(小写), tooltip数据>
    */
-  syncLetterLevels(letterLevels: Map<string, number>): void {
+  syncTooltips(tooltipMap: Map<string, KeyTooltipData>): void {
     this.keys.forEach((keyVisual, keyName) => {
-      const level = letterLevels.get(keyName.toLowerCase()) ?? 0
-      keyVisual.setLetterLevel(level)
+      const data = tooltipMap.get(keyName.toLowerCase()) ?? null
+      keyVisual.setTooltipData(data)
     })
   }
 

@@ -36,7 +36,6 @@ export interface PlayerState {
   comboBonus: number;
   wordBonus: number;
   timeBonus: number;
-  letterLevels: Map<string, number>;
   evolvedSkills: Map<string, string>;  // skillId → branchId
 }
 
@@ -47,9 +46,7 @@ export interface ShopState {
   shopRelics: string[];
   selectedSkill: string | null;
   selectedKey: string | null;
-  tab: 'skills' | 'relics' | 'deck' | 'letters';
-  freeLetterUpgrade: boolean;
-  freeLetterOptions: string[];
+  tab: 'skills' | 'relics' | 'deck';
   removeCount: number;
 }
 

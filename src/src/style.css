@@ -512,6 +512,7 @@ body {
 .keyboard-row[data-row="2"] { margin-left: 40px; }
 
 .key-slot {
+    position: relative;
     width: 38px;
     height: 38px;
     display: flex;
@@ -1150,130 +1151,94 @@ body {
 }
 
 /* ============================================ */
-/* LETTER UPGRADE SHOP                         */
+/* KEY SCORE DISPLAY                           */
 /* ============================================ */
 
-.letter-grid {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    padding: 10px;
+.key-slot .key-score {
+    font-size: 8px;
+    font-weight: bold;
+    position: absolute;
+    top: 2px;
+    right: 3px;
 }
 
-.letter-row {
-    display: flex;
-    gap: 4px;
-    justify-content: center;
+.key-slot.score-low .key-score { color: #88bbdd; }
+.key-slot.score-mid .key-score { color: #4488cc; }
+.key-slot.score-high .key-score { color: #ffd700; }
+
+.key-slot.score-low { border-color: #88bbdd; }
+.key-slot.score-mid { border-color: #4488cc; }
+.key-slot.score-high { border-color: #ffd700; }
+
+/* 技能流派底色 */
+.key-slot.school-burst { background: linear-gradient(180deg, rgba(255,107,107,0.15), rgba(255,107,107,0.05)); }
+.key-slot.school-multiply { background: linear-gradient(180deg, rgba(255,230,109,0.15), rgba(255,230,109,0.05)); }
+.key-slot.school-sustain { background: linear-gradient(180deg, rgba(78,205,196,0.15), rgba(78,205,196,0.05)); }
+.key-slot.school-chain { background: linear-gradient(180deg, rgba(224,86,253,0.15), rgba(224,86,253,0.05)); }
+.key-slot.school-passive { background: linear-gradient(180deg, rgba(135,206,235,0.15), rgba(135,206,235,0.05)); }
+
+/* 键位悬停提示 */
+.key-tooltip {
+    position: fixed;
+    z-index: 9999;
+    padding: 8px 12px;
+    background: linear-gradient(145deg, #1a1a2e, #0d0d15);
+    border: 1px solid #4a4a6a;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    pointer-events: none;
+    font-size: 11px;
+    color: #ccc;
+    max-width: 220px;
+    white-space: nowrap;
 }
 
-.letter-row:nth-child(2) { margin-left: 18px; }
-.letter-row:nth-child(3) { margin-left: 40px; }
-
-.letter-card {
-    width: 36px;
-    height: 50px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    background: linear-gradient(145deg, #1a1a2e, #252535);
-    border: 2px solid #444;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.15s;
-    user-select: none;
+.key-tooltip .tooltip-letter {
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 4px;
 }
 
-.letter-card:hover {
-    border-color: #4ecdc4;
-    transform: translateY(-2px);
+.key-tooltip .tooltip-score {
+    color: #66ccff;
 }
 
-.letter-card.cannot-afford { opacity: 0.5; }
-.letter-card.cannot-afford:hover { border-color: #ff6b6b; transform: none; }
+.key-tooltip .tooltip-freq {
+    color: #888;
+    font-size: 10px;
+}
 
-.letter-card.lv1 { border-color: #88bbdd; }
-.letter-card.lv2 { border-color: #4488cc; }
-.letter-card.lv3, .letter-card.max { border-color: #ffd700; }
+.key-tooltip .tooltip-skill {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #333;
+}
 
-.letter-card .letter-name {
-    font-size: 13px;
+.key-tooltip .tooltip-skill-name {
     font-weight: bold;
     color: #fff;
 }
 
-.letter-card.lv1 .letter-name { color: #88bbdd; }
-.letter-card.lv2 .letter-name { color: #4488cc; }
-.letter-card.lv3 .letter-name, .letter-card.max .letter-name { color: #ffd700; }
-
-.letter-card .letter-level {
-    font-size: 8px;
-    color: #888;
-}
-
-.letter-card .letter-cost {
-    font-size: 8px;
-    color: #ffe66d;
-}
-
-.letter-card .max-label {
-    color: #ffd700;
-    font-weight: bold;
-}
-
-.letter-card .free-label {
-    color: #4ecdc4;
-    font-weight: bold;
-    font-size: 9px;
-}
-
-.letter-card.free {
-    border-color: #4ecdc4;
-    background: linear-gradient(145deg, #1a2a28, #162420);
-    box-shadow: 0 0 8px rgba(78,205,196,0.3);
-}
-
-.letter-card.free:hover {
-    box-shadow: 0 0 15px rgba(78,205,196,0.5);
-    transform: translateY(-3px) scale(1.05);
-}
-
-.letter-free-section {
-    margin-bottom: 10px;
-    padding: 10px;
-    background: rgba(78,205,196,0.08);
-    border: 1px solid rgba(78,205,196,0.25);
-    border-radius: 8px;
-}
-
-.letter-free-title {
-    font-size: 13px;
-    color: #4ecdc4;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 8px;
-}
-
-.letter-free-grid {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-}
-
-.letter-free-grid .letter-card {
-    width: 60px;
-    height: 65px;
-}
-
-.letter-free-grid .letter-card .letter-name {
-    font-size: 18px;
-}
-
-.letter-free-grid .letter-card .letter-level {
+.key-tooltip .tooltip-skill-desc {
+    color: #aaa;
     font-size: 10px;
+    white-space: normal;
 }
+
+.key-tooltip .tooltip-skill-school {
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 2px;
+}
+
+.key-tooltip .tooltip-skill-school.school-burst { background: var(--school-burst-bg); color: var(--school-burst); }
+.key-tooltip .tooltip-skill-school.school-multiply { background: var(--school-multiply-bg); color: var(--school-multiply); }
+.key-tooltip .tooltip-skill-school.school-sustain { background: var(--school-sustain-bg); color: var(--school-sustain); }
+.key-tooltip .tooltip-skill-school.school-chain { background: var(--school-chain-bg); color: var(--school-chain); }
+.key-tooltip .tooltip-skill-school.school-passive { background: var(--school-passive-bg); color: var(--school-passive); }
 
 /* ============================================ */
 /* SCORE SETTLEMENT (Balatro-style)            */

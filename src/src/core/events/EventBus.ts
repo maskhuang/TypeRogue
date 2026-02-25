@@ -65,9 +65,6 @@ export interface GameEvents {
   'relic:acquired': { relicId: string }
   'relic:removed': { relicId: string }
 
-  // 字母升级事件
-  'letter:upgraded': { key: string; level: number }
-
   // 连击事件
   'combo:update': { combo: number }
 

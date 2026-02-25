@@ -3,7 +3,9 @@
 // ============================================
 // Story 4.4 Task 1: 单键组件
 
-import { Container, Graphics, Text, TextStyle, Texture, Sprite } from 'pixi.js'
+import { Container, Graphics, Text, TextStyle, Texture, Sprite, FederatedPointerEvent } from 'pixi.js'
+import { keyTooltip } from './KeyTooltip'
+import type { KeyTooltipData } from './KeyTooltip'
 
 /**
  * 单个按键可视化组件
@@ -16,7 +18,9 @@ import { Container, Graphics, Text, TextStyle, Texture, Sprite } from 'pixi.js'
  */
 export class KeyVisual extends Container {
   private background: Graphics
+  private schoolOverlay: Graphics
   private keyLabel: Text
+  private scoreLabel: Text | null = null
   private skillIcon: Sprite | null = null
   private keyName: string
 
@@ -32,7 +36,9 @@ export class KeyVisual extends Container {
   // 当前状态
   private isPressed: boolean = false
   private isAdjacentHighlighted: boolean = false
-  private letterLevel: number = 0
+  private letterScore: number = 0
+  private schoolColor: number | null = null
+  private tooltipData: KeyTooltipData | null = null
 
   // 尺寸常量
   static readonly KEY_SIZE = 48
@@ -47,9 +53,9 @@ export class KeyVisual extends Container {
   private static readonly COLOR_BORDER_DEFAULT = 0x444444
   private static readonly COLOR_BORDER_PRESSED = 0xffffff
   private static readonly COLOR_BORDER_ADJACENT = 0x6666aa
-  private static readonly COLOR_BORDER_LV1 = 0x88bbdd   // 淡蓝
-  private static readonly COLOR_BORDER_LV2 = 0x4488cc   // 蓝色
-  private static readonly COLOR_BORDER_LV3 = 0xffd700   // 金色
+  private static readonly COLOR_BORDER_SCORE_LOW = 0x88bbdd   // 淡青 (1-2)
+  private static readonly COLOR_BORDER_SCORE_MID = 0x4488cc   // 蓝色 (3-5)
+  private static readonly COLOR_BORDER_SCORE_HIGH = 0xffd700  // 金色 (6+)
 
   private static readonly LABEL_STYLE = new TextStyle({
     fontFamily: 'Arial',
@@ -66,6 +72,9 @@ export class KeyVisual extends Container {
     this.background = new Graphics()
     this.addChild(this.background)
 
+    this.schoolOverlay = new Graphics()
+    this.addChild(this.schoolOverlay)
+
     this.keyLabel = new Text({
       text: keyName,
       style: KeyVisual.LABEL_STYLE
@@ -74,6 +83,12 @@ export class KeyVisual extends Container {
 
     this.drawBackground()
     this.positionLabel()
+
+    // 启用交互（tooltip 悬停）
+    this.eventMode = 'static'
+    this.cursor = 'pointer'
+    this.on('pointerover', this.onPointerOver, this)
+    this.on('pointerout', this.onPointerOut, this)
   }
 
   /**
@@ -92,15 +107,15 @@ export class KeyVisual extends Container {
     } else if (this.isAdjacentHighlighted) {
       bgColor = KeyVisual.COLOR_ADJACENT
       borderColor = KeyVisual.COLOR_BORDER_ADJACENT
-    } else if (this.letterLevel >= 3) {
-      borderColor = KeyVisual.COLOR_BORDER_LV3
-    } else if (this.letterLevel === 2) {
-      borderColor = KeyVisual.COLOR_BORDER_LV2
-    } else if (this.letterLevel === 1) {
-      borderColor = KeyVisual.COLOR_BORDER_LV1
+    } else if (this.letterScore >= 6) {
+      borderColor = KeyVisual.COLOR_BORDER_SCORE_HIGH
+    } else if (this.letterScore >= 3) {
+      borderColor = KeyVisual.COLOR_BORDER_SCORE_MID
+    } else if (this.letterScore >= 1) {
+      borderColor = KeyVisual.COLOR_BORDER_SCORE_LOW
     }
 
-    const borderWidth = this.letterLevel >= 3
+    const borderWidth = this.letterScore >= 6
       ? KeyVisual.BORDER_WIDTH + 1
       : KeyVisual.BORDER_WIDTH
 
@@ -203,20 +218,128 @@ export class KeyVisual extends Container {
   }
 
   /**
-   * 设置字母升级等级
+   * 设置字母底分
    */
-  setLetterLevel(level: number): void {
-    if (this.letterLevel !== level) {
-      this.letterLevel = level
+  setLetterScore(score: number): void {
+    if (this.letterScore !== score) {
+      this.letterScore = score
       this.drawBackground()
+      this.updateScoreLabel()
     }
   }
 
   /**
-   * 获取字母升级等级
+   * 获取字母底分
    */
-  getLetterLevel(): number {
-    return this.letterLevel
+  getLetterScore(): number {
+    return this.letterScore
+  }
+
+  /**
+   * 设置技能流派底色
+   * @param color 流派颜色（PixiJS hex），null 清除
+   */
+  setSkillSchoolColor(color: number | null): void {
+    if (this.schoolColor !== color) {
+      this.schoolColor = color
+      this.drawSchoolOverlay()
+    }
+  }
+
+  /**
+   * 获取技能流派底色
+   */
+  getSkillSchoolColor(): number | null {
+    return this.schoolColor
+  }
+
+  /**
+   * 更新分数文本显示
+   */
+  private updateScoreLabel(): void {
+    if (this.letterScore <= 0) {
+      if (this.scoreLabel) {
+        this.removeChild(this.scoreLabel)
+        this.scoreLabel.destroy()
+        this.scoreLabel = null
+      }
+      return
+    }
+
+    // 确定分数颜色
+    let fill: number
+    if (this.letterScore >= 6) {
+      fill = 0xffd700
+    } else if (this.letterScore >= 3) {
+      fill = 0x4488cc
+    } else {
+      fill = 0x88bbdd
+    }
+
+    if (!this.scoreLabel) {
+      this.scoreLabel = new Text({
+        text: String(this.letterScore),
+        style: new TextStyle({
+          fontFamily: 'Arial',
+          fontSize: 9,
+          fontWeight: 'bold',
+          fill,
+        })
+      })
+      this.addChild(this.scoreLabel)
+    } else {
+      this.scoreLabel.text = String(this.letterScore)
+      this.scoreLabel.style.fill = fill
+    }
+
+    // 定位到右上角
+    this.scoreLabel.x = KeyVisual.KEY_SIZE - 12
+    this.scoreLabel.y = 2
+  }
+
+  /**
+   * 绘制技能流派半透明底色
+   */
+  private drawSchoolOverlay(): void {
+    this.schoolOverlay.clear()
+    if (this.schoolColor === null) return
+
+    this.schoolOverlay.roundRect(
+      2, 2,
+      KeyVisual.KEY_SIZE - 4, KeyVisual.KEY_SIZE - 4,
+      KeyVisual.BORDER_RADIUS - 1
+    )
+    this.schoolOverlay.fill({ color: this.schoolColor, alpha: 0.15 })
+  }
+
+  /**
+   * 设置 tooltip 数据
+   */
+  setTooltipData(data: KeyTooltipData | null): void {
+    this.tooltipData = data
+  }
+
+  /**
+   * 获取 tooltip 数据
+   */
+  getTooltipData(): KeyTooltipData | null {
+    return this.tooltipData
+  }
+
+  /**
+   * 鼠标悬停显示 tooltip
+   */
+  private onPointerOver(e: FederatedPointerEvent): void {
+    if (this.tooltipData) {
+      keyTooltip.show(e.clientX, e.clientY, this.tooltipData)
+    }
+  }
+
+  /**
+   * 鼠标移出隐藏 tooltip
+   */
+  private onPointerOut(): void {
+    keyTooltip.hide()
   }
 
   /**

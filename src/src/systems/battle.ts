@@ -14,7 +14,7 @@ import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, resolveSkillEventModifiers } from './skills';
 import { openShop } from './shop';
-import { getLetterModifiers } from './letters/LetterUpgradeSystem';
+import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 
@@ -529,8 +529,8 @@ export function startLevel(): void {
   synergy.restoreComboCounters.clear();
   synergy.freezeTriggeredThisWord.clear();
 
-  // 构建字母升级修饰器注册表（整场战斗缓存）
-  const letterMods = getLetterModifiers();
+  // 构建字频底分修饰器注册表（整场战斗缓存）
+  const letterMods = getLetterScoreModifiers(state.player.wordDeck);
   if (letterMods.length > 0) {
     letterRegistry = new ModifierRegistry();
     letterRegistry.registerMany(letterMods);

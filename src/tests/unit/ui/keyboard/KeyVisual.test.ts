@@ -26,9 +26,9 @@ describe('KeyVisual', () => {
       expect(keyVisual.getKeyName()).toBe('Q')
     })
 
-    it('应该创建背景和标签', () => {
-      // 背景 + 标签 = 2 个子元素
-      expect(keyVisual.children.length).toBe(2)
+    it('应该创建背景、流派底色和标签', () => {
+      // 背景 + 流派底色 + 标签 = 3 个子元素
+      expect(keyVisual.children.length).toBe(3)
     })
 
     it('初始状态不应有技能图标', () => {

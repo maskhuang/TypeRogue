@@ -33,7 +33,6 @@ export function createInitialState(): GameState {
       comboBonus: BALANCE.COMBO_BONUS,
       wordBonus: 0,
       timeBonus: 0,
-      letterLevels: new Map(),
       evolvedSkills: new Map(),
     },
     shop: {
@@ -44,8 +43,6 @@ export function createInitialState(): GameState {
       selectedSkill: null,
       selectedKey: null,
       tab: 'skills',
-      freeLetterUpgrade: true,
-      freeLetterOptions: [],
       removeCount: 0,
     },
   };
