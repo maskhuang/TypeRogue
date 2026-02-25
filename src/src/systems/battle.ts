@@ -491,8 +491,8 @@ function endLevel(): void {
   el.container.classList.remove('mid-mult', 'high-mult');
 
   if (state.score >= state.targetScore) {
-    // 每5关弹出遗物三选一，然后进商店
-    if (shouldShowRelicPicker(state.level)) {
+    // 每5关弹出遗物三选一，然后进商店（第1关排除，开局已选过）
+    if (state.level % 5 === 0 && shouldShowRelicPicker(state.level)) {
       showRelicPicker(() => openShop(true));
     } else {
       openShop(true);
