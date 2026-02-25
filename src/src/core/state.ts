@@ -38,8 +38,6 @@ export function createInitialState(): GameState {
     shop: {
       items: [],
       refreshCount: 0,
-      selectedSkill: null,
-      selectedKey: null,
     },
   };
 }

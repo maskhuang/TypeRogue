@@ -53,8 +53,6 @@ export interface ShopItem {
 export interface ShopState {
   items: ShopItem[];       // 5 个商品
   refreshCount: number;    // 刷新次数（17.3）
-  selectedSkill: string | null;
-  selectedKey: string | null;
 }
 
 // === 技能系统 ===

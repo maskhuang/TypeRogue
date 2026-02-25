@@ -5,7 +5,7 @@
 
 import { state } from '../core/state';
 import { resolveRelicEffects, queryRelicFlag } from './relics/RelicPipeline';
-import { KEYS, KEYBOARD_ROWS, ADJACENT_KEYS } from '../core/constants';
+import { KEYS, KEYBOARD_ROWS } from '../core/constants';
 import { SKILLS, SYNERGY_TYPES, getSkillSchool, getEvolutionBranches, EVOLUTIONS, getSkillDisplayInfo } from '../data/skills';
 import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
@@ -39,9 +39,6 @@ export function openShop(_won: boolean): void {
   el.shopTarget.textContent = String(state.targetScore);
   el.shopBonus.textContent = bonus > 0 ? `+${bonus}` : '0';
   updateGoldDisplay();
-
-  state.shop.selectedSkill = null;
-  state.shop.selectedKey = null;
 
   // 保留锁定商品，补充新商品至5个
   const locked = state.shop.items.filter(item => item.locked);
@@ -580,18 +577,6 @@ export function renderBuildManager(): void {
     if (score > 0) letterScores.set(letter, score);
   });
 
-  let adjacentKeys: string[] = [];
-  if (state.shop.selectedKey) {
-    adjacentKeys = ADJACENT_KEYS[state.shop.selectedKey] || [];
-  } else if (state.shop.selectedSkill) {
-    for (const [k, id] of state.player.bindings) {
-      if (id === state.shop.selectedSkill) {
-        adjacentKeys = ADJACENT_KEYS[k] || [];
-        break;
-      }
-    }
-  }
-
   KEYBOARD_ROWS.forEach((row, rowIndex) => {
     const rowDiv = document.createElement('div');
     rowDiv.className = 'keyboard-row';
@@ -623,14 +608,6 @@ export function renderBuildManager(): void {
       } else {
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       }
-
-      if (state.shop.selectedKey === k) slot.classList.add('selected');
-      if (adjacentKeys.includes(k)) slot.classList.add('adjacent-highlight');
-
-      slot.addEventListener('click', (e) => {
-        e.stopPropagation();
-        clickKeySlot(k);
-      });
 
       // Tooltip 悬停
       slot.addEventListener('mouseenter', (e: MouseEvent) => {
@@ -684,7 +661,6 @@ export function renderBuildManager(): void {
     item.dataset.dragType = 'skill-inventory';
     item.dataset.skillId = skillId;
     if (boundKey) item.classList.add('bound');
-    if (state.shop.selectedSkill === skillId) item.classList.add('selected');
     if (isSynergySkill(skillId)) item.classList.add('synergy');
 
     const school = getSkillSchool(skillId);
@@ -701,63 +677,13 @@ export function renderBuildManager(): void {
     `;
 
     item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      // Check if sell button was clicked
       const target = e.target as HTMLElement;
       if (target.classList.contains('inv-sell')) {
         sellSkill(skillId);
-        return;
       }
-      clickSkill(skillId);
     });
     el.ownedSkills.appendChild(item);
   });
-}
-
-function clickKeySlot(key: string): void {
-  if (state.shop.selectedSkill && queryRelicFlag('silence_vow') === true) {
-    showFeedback('沉默誓约：无法绑定技能', '#ff6b6b');
-    state.shop.selectedSkill = null;
-    renderBuildManager();
-    return;
-  }
-  if (state.shop.selectedSkill) {
-    const existingSkill = state.player.bindings.get(key);
-    const oldKey = [...state.player.bindings.entries()].find(([, id]) => id === state.shop.selectedSkill)?.[0];
-    if (oldKey) state.player.bindings.delete(oldKey);
-    if (existingSkill && oldKey) state.player.bindings.set(oldKey, existingSkill);
-    state.player.bindings.set(key, state.shop.selectedSkill);
-    state.shop.selectedSkill = null;
-    state.shop.selectedKey = null;
-    playSound('skill');
-  } else {
-    state.shop.selectedKey = state.shop.selectedKey === key ? null : key;
-    state.shop.selectedSkill = null;
-  }
-  renderBuildManager();
-}
-
-function clickSkill(skillId: string): void {
-  if (state.shop.selectedKey && queryRelicFlag('silence_vow') === true) {
-    showFeedback('沉默誓约：无法绑定技能', '#ff6b6b');
-    state.shop.selectedKey = null;
-    renderBuildManager();
-    return;
-  }
-  if (state.shop.selectedKey) {
-    const oldKey = [...state.player.bindings.entries()].find(([, id]) => id === skillId)?.[0];
-    if (oldKey) state.player.bindings.delete(oldKey);
-    const existingSkill = state.player.bindings.get(state.shop.selectedKey);
-    if (existingSkill && oldKey) state.player.bindings.set(oldKey, existingSkill);
-    state.player.bindings.set(state.shop.selectedKey, skillId);
-    state.shop.selectedKey = null;
-    state.shop.selectedSkill = null;
-    playSound('skill');
-  } else {
-    state.shop.selectedSkill = state.shop.selectedSkill === skillId ? null : skillId;
-    state.shop.selectedKey = null;
-  }
-  renderBuildManager();
 }
 
 // === 注册拖拽放置区 ===
@@ -855,8 +781,6 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     state.player.bindings.set(targetKey, skillId);
     playSound('skill');
 
-    state.shop.selectedSkill = null;
-    state.shop.selectedKey = null;
     renderBuildManager();
     registerShopDropZones();
   }
