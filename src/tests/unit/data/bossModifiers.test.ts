@@ -7,7 +7,10 @@ import { describe, it, expect } from 'vitest'
 import {
   BOSS_MODIFIER_IDS,
   drawBossModifiers,
+  BOSS_MODIFIER_META,
+  getBossModifierMeta,
 } from '../../../src/data/bossModifiers'
+import type { BossModifierId } from '../../../src/data/bossModifiers'
 
 describe('bossModifiers', () => {
   describe('BOSS_MODIFIER_IDS', () => {
@@ -90,6 +93,55 @@ describe('bossModifiers', () => {
       }
       // 20 次抽取应至少有 2 种不同组合（极低概率全相同）
       expect(results.size).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  describe('BOSS_MODIFIER_META', () => {
+    it('包含所有 13 个修饰器的元数据', () => {
+      BOSS_MODIFIER_IDS.forEach(id => {
+        expect(BOSS_MODIFIER_META[id]).toBeDefined()
+      })
+    })
+
+    it('每个元数据包含必要字段', () => {
+      BOSS_MODIFIER_IDS.forEach(id => {
+        const meta = BOSS_MODIFIER_META[id]
+        expect(meta.id).toBe(id)
+        expect(meta.name).toBeTruthy()
+        expect(meta.icon).toBeTruthy()
+        expect(meta.description).toBeTruthy()
+        expect(meta.eliteHint).toBeTruthy()
+      })
+    })
+
+    it('没有多余的元数据条目', () => {
+      const metaKeys = Object.keys(BOSS_MODIFIER_META)
+      expect(metaKeys).toHaveLength(13)
+      metaKeys.forEach(key => {
+        expect(BOSS_MODIFIER_IDS).toContain(key)
+      })
+    })
+  })
+
+  describe('getBossModifierMeta()', () => {
+    it('返回已知修饰器的元数据', () => {
+      const meta = getBossModifierMeta('boss_fade')
+      expect(meta).toBeDefined()
+      expect(meta!.id).toBe('boss_fade')
+      expect(meta!.name).toBe('渐隐之词')
+      expect(meta!.icon).toBe('👻')
+    })
+
+    it('返回 undefined 给未知 ID', () => {
+      expect(getBossModifierMeta('unknown_id' as BossModifierId)).toBeUndefined()
+    })
+
+    it('所有 13 个修饰器都能查询', () => {
+      BOSS_MODIFIER_IDS.forEach(id => {
+        const meta = getBossModifierMeta(id)
+        expect(meta).toBeDefined()
+        expect(meta!.id).toBe(id)
+      })
     })
   })
 })

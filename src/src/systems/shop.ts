@@ -13,7 +13,7 @@ import { playSound } from '../effects/sound';
 import { juiceUp } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopItem } from '../core/types';
-import { getNextBattleNode, TOTAL_NODES } from './stage/stageFlow';
+import { getNextBattleNode, getStageType, TOTAL_NODES } from './stage/stageFlow';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
@@ -29,8 +29,9 @@ export function openShop(_won: boolean): void {
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
   const relicGold = Math.floor(goldRelicResult.effects.gold);
 
-  // 金币奖励：基础 20 + 剩余时间秒数 + 遗物金币
-  const baseGold = 20;
+  // 金币奖励：基础 20（精英关 ×2）+ 剩余时间秒数 + 遗物金币
+  const currentType = getStageType(state.level);
+  const baseGold = currentType === 'elite' ? 40 : 20;
   const timeBonus = Math.floor(state.time);
   const bonus = timeBonus + relicGold;
   state.gold += baseGold + bonus;

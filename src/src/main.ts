@@ -6,6 +6,7 @@ import './style.css';
 import { initElements } from './ui/elements';
 import { state } from './core/state';
 import { getStarterWords } from './data/words';
+import { drawBossModifiers } from './data/bossModifiers';
 import { startLevel, initInput } from './systems/battle';
 import { initShopEvents } from './systems/shop';
 import { shouldShowRelicPicker, showRelicPicker } from './systems/relicPicker';
@@ -41,6 +42,9 @@ function init(): void {
 
   console.log('✅ 初始化完成');
   console.log('📊 状态:', state);
+
+  // 抽取本局 Boss 修饰器池（3 个随机修饰器，精英关/Boss 关使用）
+  state.bossModifierPool = drawBossModifiers(3);
 
   // 启动游戏
   state.level = 1;

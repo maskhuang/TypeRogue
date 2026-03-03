@@ -20,7 +20,17 @@ import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
-import { getStageType, getTimeLimit, getBattleNumber, isBossNode, TOTAL_NODES } from './stage/stageFlow';
+import { getStageType, getTimeLimit, getBattleNumber, getEliteModifierIndex } from './stage/stageFlow';
+import { getBossModifierMeta } from '../data/bossModifiers';
+import type { BossModifierMeta } from '../data/bossModifiers';
+
+/** 获取当前精英关的修饰器元数据（非精英关返回 undefined） */
+function getCurrentEliteModifierMeta(): BossModifierMeta | undefined {
+  const modIdx = getEliteModifierIndex(state.level);
+  if (modIdx < 0) return undefined;
+  const modId = state.bossModifierPool[modIdx];
+  return modId ? getBossModifierMeta(modId) : undefined;
+}
 
 // === 计时器 ===
 let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -406,7 +416,8 @@ function showGoldReward(onComplete: () => void): void {
   }
 
   // 计算奖励（通过遗物管道解析）
-  const baseGold = 20;
+  const currentType = getStageType(state.level);
+  const baseGold = currentType === 'elite' ? 40 : 20; // 精英关金币 ×2
   const timeBonus = Math.floor(state.time);
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
   const relicGold = Math.floor(goldRelicResult.effects.gold);
@@ -590,6 +601,26 @@ export function startLevel(): void {
   const stageLabel = currentStageType === 'elite' ? ' [ELITE]' : currentStageType === 'boss' ? ' [BOSS]' : '';
   el.levelLabel.textContent = `LEVEL ${displayLevel}${stageLabel}`;
 
+  // Task 2.3: 精英关金色边框样式
+  el.battleScreen.classList.toggle('elite-stage', currentStageType === 'elite');
+
+  // Task 3.3-3.4: 修饰器 HUD 显示/隐藏
+  const modInfo = el.modifierInfo;
+  if (currentStageType === 'elite') {
+    const meta = getCurrentEliteModifierMeta();
+    if (meta) {
+      modInfo.querySelector('.modifier-icon')!.textContent = meta.icon;
+      modInfo.querySelector('.modifier-name')!.textContent = meta.name;
+      modInfo.querySelector('.modifier-hint')!.textContent = meta.eliteHint;
+      modInfo.classList.add('visible');
+    } else {
+      modInfo.classList.remove('visible');
+    }
+    // TODO [Story 18.4]: Apply weakened modifier effect via BossModifier framework
+  } else {
+    modInfo.classList.remove('visible');
+  }
+
   showScreen('battle');
   setWord();
   updateHUD();
@@ -622,8 +653,16 @@ function announceLevel(): void {
   ann.className = 'level-announce';
   const displayLevel = getBattleNumber(state.level) || state.level;
   const stageType = getStageType(state.level);
-  const typeLabel = stageType === 'elite' ? '<br><span class="elite-hint">精英挑战</span>' :
-                    stageType === 'boss' ? '<br><span class="boss-hint">BOSS 战</span>' : '';
+
+  let typeLabel = '';
+  if (stageType === 'elite') {
+    const meta = getCurrentEliteModifierMeta();
+    const modName = meta ? ` ${meta.icon} ${meta.name}` : '';
+    typeLabel = `<br><span class="elite-hint">精英挑战${modName}</span>`;
+  } else if (stageType === 'boss') {
+    typeLabel = '<br><span class="boss-hint">BOSS 战</span>';
+  }
+
   ann.innerHTML = `LEVEL ${displayLevel}${typeLabel}<br><span class="target-hint">目标: ${state.targetScore}分</span>`;
   el.container.appendChild(ann);
   playSound('levelup');

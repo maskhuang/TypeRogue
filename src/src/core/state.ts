@@ -23,6 +23,7 @@ export function createInitialState(): GameState {
     wordPerfect: true,
     lastMilestone: 0,
     overkill: 0,
+    bossModifierPool: [],
     player: {
       word: '',
       index: 0,

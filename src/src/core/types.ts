@@ -2,6 +2,8 @@
 // 打字肉鸽 - 类型定义
 // ============================================
 
+import type { BossModifierId } from '../data/bossModifiers';
+
 // === 游戏状态 ===
 export type GamePhase = 'battle' | 'shop' | 'gameover' | 'victory';
 
@@ -20,6 +22,7 @@ export interface GameState {
   wordPerfect: boolean;
   lastMilestone: number;
   overkill: number;  // 最后一击超出目标的分数
+  bossModifierPool: BossModifierId[];  // Run 级别：3 个随机 Boss 修饰器 ID
   player: PlayerState;
   shop: ShopState;
 }
@@ -173,6 +176,7 @@ export interface UIElements {
   container: HTMLElement;
   playerRelics: HTMLElement;
   activeLibrary: HTMLElement;
+  modifierInfo: HTMLElement;
   // Shop
   shopScreen: HTMLElement;
   shopLevelNum: HTMLElement;

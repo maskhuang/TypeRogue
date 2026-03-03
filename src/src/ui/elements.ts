@@ -26,6 +26,7 @@ export function initElements(): UIElements {
     container: document.getElementById('game-container')!,
     playerRelics: document.getElementById('player-relics')!,
     activeLibrary: document.getElementById('active-library')!,
+    modifierInfo: document.getElementById('modifier-info')!,
     // Shop
     shopScreen: document.getElementById('shop-screen')!,
     shopLevelNum: document.getElementById('shop-level-num')!,
