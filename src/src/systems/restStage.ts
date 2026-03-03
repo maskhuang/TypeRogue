@@ -112,7 +112,7 @@ function completeRestStage(): void {
     return;
   }
   state.level = nextBattle;
-  startLevel();
+  void startLevel();
 }
 
 // === 执行事件效果 ===

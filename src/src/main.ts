@@ -7,7 +7,7 @@ import { initElements } from './ui/elements';
 import { state } from './core/state';
 import { getStarterWords } from './data/words';
 import { drawBossModifiers } from './data/bossModifiers';
-import { startLevel, initInput } from './systems/battle';
+import { startLevel, initInput, resetLastAct } from './systems/battle';
 import { initShopEvents } from './systems/shop';
 import { shouldShowRelicPicker, showRelicPicker } from './systems/relicPicker';
 
@@ -47,11 +47,12 @@ function init(): void {
   state.bossModifierPool = drawBossModifiers(3);
 
   // 启动游戏
+  resetLastAct();
   state.level = 1;
   if (shouldShowRelicPicker(state.level)) {
-    showRelicPicker(() => startLevel());
+    showRelicPicker(() => void startLevel());
   } else {
-    startLevel();
+    void startLevel();
   }
 }
 

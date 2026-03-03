@@ -20,10 +20,11 @@ import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
-import { getStageType, getTimeLimit, getBattleNumber, getEliteModifierIndex } from './stage/stageFlow';
+import { getStageType, getTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode } from './stage/stageFlow';
 import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, isRhythmLocked } from '../data/bossModifiers';
 import type { BossModifierMeta } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation } from './bossModifierEngine';
+import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
 
 /** 获取当前精英关的修饰器元数据（非精英关返回 undefined） */
 function getCurrentEliteModifierMeta(): BossModifierMeta | undefined {
@@ -32,6 +33,12 @@ function getCurrentEliteModifierMeta(): BossModifierMeta | undefined {
   const modId = state.bossModifierPool[modIdx];
   return modId ? getBossModifierMeta(modId) : undefined;
 }
+
+// === Act 过渡追踪 ===
+let lastAct = 0;
+
+/** 重置 Act 过渡追踪（新游戏时调用） */
+export function resetLastAct(): void { lastAct = 0; }
 
 // === 计时器 ===
 let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -577,8 +584,17 @@ function hideSettlement(): void {
   settlementTimeouts = [];
 }
 
-export function startLevel(): void {
+export async function startLevel(): Promise<void> {
   keyTooltip.hide();
+
+  // === Act 过渡演出（在切换到战斗画面前显示） ===
+  const currentStageType = getStageType(state.level);
+  const currentAct = getActForNode(state.level);
+  if (currentAct !== lastAct) {
+    await showActTransition(currentAct);
+    lastAct = currentAct;
+  }
+
   state.phase = 'battle';
   state.score = 0;
   state.combo = 0;
@@ -591,7 +607,6 @@ export function startLevel(): void {
   state.tempBuffs = state.tempBuffs.filter(b => state.level <= b.expiresAtNode);
 
   // 使用 stageType-based 固定时间和目标分数
-  const currentStageType = getStageType(state.level);
   const battleNum = getBattleNumber(state.level);
   state.timeMax = getTimeLimit(state.level);
   state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
@@ -643,6 +658,9 @@ export function startLevel(): void {
   const stageLabel = currentStageType === 'elite' ? ' [ELITE]' : currentStageType === 'boss' ? ' [BOSS]' : '';
   el.levelLabel.textContent = `LEVEL ${displayLevel}${stageLabel}`;
 
+  // HUD: 显示当前 Act / StageType
+  updateStageInfo(currentAct, currentStageType);
+
   // Task 2.3: 精英关金色边框样式
   el.battleScreen.classList.toggle('elite-stage', currentStageType === 'elite');
 
@@ -675,6 +693,16 @@ export function startLevel(): void {
   renderBattleSkills();
   renderRelicDisplay();
   renderActiveLibrary();
+
+  // 精英关 / Boss 关入场演出（在战斗画面显示后）
+  if (currentStageType === 'elite') {
+    const modIdx = getEliteModifierIndex(state.level);
+    const modId = state.bossModifierPool[modIdx];
+    if (modId) await showEliteAnnouncement(modId);
+  } else if (currentStageType === 'boss') {
+    await showBossIntro(state.bossModifierPool);
+  }
+
   announceLevel();
   startTimer();
 

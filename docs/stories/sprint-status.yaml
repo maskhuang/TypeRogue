@@ -163,7 +163,7 @@ development_status:
   epic-17-retrospective: optional
 
   # Epic 18: Boss 战与 Act 结构
-  epic-18: in-progress
+  epic-18: done
   18-1-stage-type-act-structure: done
   18-2-elite-stage-mini-boss: done
   18-3-rest-stage-random-events: done
@@ -172,11 +172,11 @@ development_status:
   18-6-boss-cognitive-typing: done
   18-7-boss-rhythm-lock: done
   18-8-boss-numerical-rules: done
-  18-9-act-transition-visual-polish: backlog
+  18-9-act-transition-visual-polish: done
   epic-18-retrospective: optional
 
 # Summary:
 # - Total Epics: 18
 # - Total Stories: 72
-# - Epics Completed: 17
-# - Stories Completed: 67
+# - Epics Completed: 18
+# - Stories Completed: 72

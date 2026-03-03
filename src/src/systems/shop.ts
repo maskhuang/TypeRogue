@@ -805,7 +805,7 @@ export function initShopEvents(): void {
         return;
       }
       state.level = nextBattle;
-      startLevel();
+      void startLevel();
     }
   };
 }
