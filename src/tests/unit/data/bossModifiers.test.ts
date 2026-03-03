@@ -9,6 +9,7 @@ import {
   drawBossModifiers,
   BOSS_MODIFIER_META,
   getBossModifierMeta,
+  BOSS_MODIFIER_REGISTRY,
 } from '../../../src/data/bossModifiers'
 import type { BossModifierId } from '../../../src/data/bossModifiers'
 
@@ -141,6 +142,35 @@ describe('bossModifiers', () => {
         const meta = getBossModifierMeta(id)
         expect(meta).toBeDefined()
         expect(meta!.id).toBe(id)
+      })
+    })
+  })
+
+  // Story 18.4: BossModifier 注册表
+  describe('BOSS_MODIFIER_REGISTRY', () => {
+    it('注册表包含全部 13 个修饰器', () => {
+      const keys = Object.keys(BOSS_MODIFIER_REGISTRY)
+      expect(keys).toHaveLength(13)
+      BOSS_MODIFIER_IDS.forEach(id => {
+        expect(BOSS_MODIFIER_REGISTRY[id]).toBeDefined()
+      })
+    })
+
+    it('每个修饰器 id 与注册表 key 一致', () => {
+      for (const [key, mod] of Object.entries(BOSS_MODIFIER_REGISTRY)) {
+        expect(mod.id).toBe(key)
+      }
+    })
+
+    it('6 个数值修饰器返回非空参数', () => {
+      const numerical: BossModifierId[] = [
+        'boss_decay', 'boss_combo_punish', 'boss_cap',
+        'boss_fast_time', 'boss_double_target', 'boss_diminish',
+      ]
+      numerical.forEach(id => {
+        const params = BOSS_MODIFIER_REGISTRY[id].getParams(false)
+        const values = Object.values(params).filter(v => v !== undefined)
+        expect(values.length).toBeGreaterThan(0)
       })
     })
   })

@@ -1065,6 +1065,21 @@ body {
     font-size: 12px;
 }
 
+/* Boss 修饰器切换闪烁 (Story 18.4) */
+.modifier-switch {
+    animation: modifierFlash 0.5s ease;
+}
+
+@keyframes modifierFlash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; background: rgba(255,215,0,0.3); }
+}
+
+.modifier-announce {
+    font-size: 22px;
+    color: #ffd700;
+}
+
 /* ============================================ */
 /* REST SCREEN                                  */
 /* ============================================ */

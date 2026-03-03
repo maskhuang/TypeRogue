@@ -1,7 +1,8 @@
 // ============================================
-// 打字肉鸽 - Boss 修饰器 ID 定义
+// 打字肉鸽 - Boss 修饰器定义与注册表
 // ============================================
-// Story 18.1: 修饰器池（占位，实际逻辑由 Story 18.4 实现）
+// Story 18.1: 修饰器池（ID + Meta）
+// Story 18.4: BossModifier 接口 + 注册表 + 6 个数值修饰器实现 + 7 个 stub
 
 /**
  * 所有 Boss 修饰器 ID
@@ -153,4 +154,158 @@ export function drawBossModifiers(count: number): BossModifierId[] {
     result.push(pool.splice(idx, 1)[0])
   }
   return result
+}
+
+// ============================================
+// Story 18.4: BossModifier 系统
+// ============================================
+
+/**
+ * 修饰器运行参数（由 getParams 返回）
+ */
+export interface BossModifierParams {
+  decayRate?: number        // boss_decay: 每秒扣分百分比 (0.05 = 5%)
+  comboPunishRate?: number  // boss_combo_punish: 断连扣分百分比
+  scoreCap?: number         // boss_cap: 单词得分上限
+  timeSpeed?: number        // boss_fast_time: 计时器速度倍率
+  targetMultiplier?: number // boss_double_target: 目标分倍率
+  diminishRate?: number     // boss_diminish: 每词递减百分比
+}
+
+/**
+ * Boss 修饰器接口
+ */
+export interface BossModifier {
+  id: BossModifierId
+  /** 返回该修饰器的参数（isElite=true 时参数减弱） */
+  getParams(isElite: boolean): BossModifierParams
+  /** 应用修饰器效果到游戏状态（关卡开始时调用） */
+  apply(params: BossModifierParams): void
+  /** 清理修饰器效果（关卡结束或切换时调用） */
+  cleanup(): void
+  /** 每帧更新（可选，boss_decay 等需要） */
+  onTick?(dt: number): void
+}
+
+/** 创建 stub 修饰器（打字难度类，18.5-18.8 实现） */
+function createStubModifier(id: BossModifierId): BossModifier {
+  return {
+    id,
+    getParams: () => ({}),
+    apply: () => {},
+    cleanup: () => {},
+  }
+}
+
+// === 6 个数值规则类修饰器实现 ===
+
+import { state } from '../core/state'
+
+const bossDecay: BossModifier = {
+  id: 'boss_decay',
+  getParams: (isElite) => ({ decayRate: isElite ? 0.025 : 0.05 }),
+  apply: () => {},
+  cleanup: () => {},
+  onTick(dt: number) {
+    const rate = getActiveParams()?.decayRate
+    if (rate && state.score > 0) {
+      const penalty = state.score * rate * dt
+      state.score = Math.max(0, state.score - penalty)
+    }
+  },
+}
+
+const bossComboPunish: BossModifier = {
+  id: 'boss_combo_punish',
+  getParams: (isElite) => ({ comboPunishRate: isElite ? 0.10 : 0.20 }),
+  apply: () => {},
+  cleanup: () => {},
+}
+
+const bossCap: BossModifier = {
+  id: 'boss_cap',
+  getParams: (isElite) => ({ scoreCap: isElite ? 75 : 50 }),
+  apply: () => {},
+  cleanup: () => {},
+}
+
+const bossFastTime: BossModifier = {
+  id: 'boss_fast_time',
+  getParams: (isElite) => ({ timeSpeed: isElite ? 1.25 : 1.5 }),
+  apply: () => {},
+  cleanup: () => {},
+}
+
+let originalTargetScore = 0
+
+const bossDoubleTarget: BossModifier = {
+  id: 'boss_double_target',
+  getParams: (isElite) => ({ targetMultiplier: isElite ? 1.5 : 2.0 }),
+  apply: (params) => {
+    originalTargetScore = state.targetScore
+    if (params.targetMultiplier) {
+      state.targetScore = Math.floor(state.targetScore * params.targetMultiplier)
+    }
+  },
+  cleanup: () => {
+    if (originalTargetScore > 0) {
+      state.targetScore = originalTargetScore
+      originalTargetScore = 0
+    }
+  },
+}
+
+let diminishWordCount = 0
+
+const bossDiminish: BossModifier = {
+  id: 'boss_diminish',
+  getParams: (isElite) => ({ diminishRate: isElite ? 0.05 : 0.10 }),
+  apply: () => { diminishWordCount = 0 },
+  cleanup: () => { diminishWordCount = 0 },
+}
+
+/** 递增词数计数器（completeWord 调用） */
+export function incrementDiminishCount(): void {
+  diminishWordCount++
+}
+
+/** 获取当前递减倍率 */
+export function getDiminishMultiplier(): number {
+  const rate = getActiveParams()?.diminishRate
+  if (!rate) return 1
+  return Math.max(0, 1 - rate * diminishWordCount)
+}
+
+// === 修饰器注册表 ===
+
+export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
+  // 数值规则类（完整实现）
+  boss_decay: bossDecay,
+  boss_combo_punish: bossComboPunish,
+  boss_cap: bossCap,
+  boss_fast_time: bossFastTime,
+  boss_double_target: bossDoubleTarget,
+  boss_diminish: bossDiminish,
+  // 打字难度类（stub，18.5-18.8 实现）
+  boss_fade: createStubModifier('boss_fade'),
+  boss_scramble: createStubModifier('boss_scramble'),
+  boss_reverse: createStubModifier('boss_reverse'),
+  boss_drift: createStubModifier('boss_drift'),
+  boss_masked: createStubModifier('boss_masked'),
+  boss_spotlight: createStubModifier('boss_spotlight'),
+  boss_rhythm: createStubModifier('boss_rhythm'),
+}
+
+// === 活跃修饰器参数查询（供 bossModifierEngine 和 battle.ts 使用） ===
+
+let _activeParams: BossModifierParams | null = null
+
+/** 设置当前活跃修饰器参数（由 bossModifierEngine 调用） */
+export function setActiveParams(params: BossModifierParams | null): void {
+  _activeParams = params
+}
+
+/** 获取当前活跃修饰器参数 */
+export function getActiveParams(): BossModifierParams | null {
+  return _activeParams
 }

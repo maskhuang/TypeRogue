@@ -21,8 +21,9 @@ import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getTimeLimit, getBattleNumber, getEliteModifierIndex } from './stage/stageFlow';
-import { getBossModifierMeta } from '../data/bossModifiers';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier } from '../data/bossModifiers';
 import type { BossModifierMeta } from '../data/bossModifiers';
+import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation } from './bossModifierEngine';
 
 /** 获取当前精英关的修饰器元数据（非精英关返回 undefined） */
 function getCurrentEliteModifierMeta(): BossModifierMeta | undefined {
@@ -266,6 +267,15 @@ function playerWrong(): void {
   state.lastMilestone = 0;
   synergy.skillMultBonus = 0;
   state.multiplier = state.player.baseMultiplier + lonePassiveBonus;
+
+  // Boss 修饰器：断连即扣（combo_punish）
+  const modEffect = getActiveParams();
+  if (modEffect?.comboPunishRate && state.score > 0) {
+    const penalty = Math.floor(state.score * modEffect.comboPunishRate);
+    state.score = Math.max(0, state.score - penalty);
+    showFeedback(`-${penalty}分!`, '#ff4444');
+  }
+
   updateHUD();
 }
 
@@ -287,7 +297,17 @@ function completeWord(): void {
   bonusMult += wordRelicResult.effects.multiply;
 
   const finalMult = mult * bonusMult;
-  const finalWordScore = Math.floor(baseChips * finalMult + state.player.wordBonus);
+  let finalWordScore = Math.floor(baseChips * finalMult + state.player.wordBonus);
+
+  // Boss 修饰器：单词限额（cap）+ 递减收益（diminish）
+  const modEffect = getActiveParams();
+  if (modEffect?.scoreCap) {
+    finalWordScore = Math.min(finalWordScore, modEffect.scoreCap);
+  }
+  if (modEffect?.diminishRate) {
+    finalWordScore = Math.floor(finalWordScore * getDiminishMultiplier());
+    incrementDiminishCount();
+  }
 
   // 显示 Balatro 风格完成动画
   showSettlementComplete(baseChips, finalMult, finalWordScore);
@@ -476,7 +496,14 @@ function startTimer(): void {
       return;
     }
 
-    state.time -= 0.1;
+    // Boss 修饰器：时间加速（fast_time）
+    const modEffect = getActiveParams();
+    const timeSpeed = modEffect?.timeSpeed ?? 1;
+    state.time -= 0.1 * timeSpeed;
+
+    // Boss 修饰器：每帧更新（decay 等）
+    tickModifier(0.1);
+
     updateTimerDisplay();
 
     if (state.time <= 0) {
@@ -508,6 +535,8 @@ function updateTimerDisplay(): void {
 // === 关卡系统 ===
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
+  cleanupModifier();
+  stopBossRotation();
   hideSettlement();
 
   // 清除倍率光晕效果
@@ -627,7 +656,13 @@ export function startLevel(): void {
     } else {
       modInfo.classList.remove('visible');
     }
-    // TODO [Story 18.4]: Apply weakened modifier effect via BossModifier framework
+    // 应用减弱版修饰器（精英关）
+    const modIdx = getEliteModifierIndex(state.level);
+    const modId = state.bossModifierPool[modIdx];
+    if (modId) applyModifier(modId, true);
+  } else if (currentStageType === 'boss') {
+    // Boss 关：启动 3 阶段轮换引擎
+    startBossRotation();
   } else {
     modInfo.classList.remove('visible');
   }
@@ -684,6 +719,8 @@ function announceLevel(): void {
 function victory(): void {
   state.phase = 'victory';
   if (timerInterval) clearInterval(timerInterval);
+  cleanupModifier();
+  stopBossRotation();
 
   const el = getElements();
   el.gameoverStats.innerHTML = `
@@ -700,6 +737,8 @@ function victory(): void {
 function gameOver(): void {
   state.phase = 'gameover';
   if (timerInterval) clearInterval(timerInterval);
+  cleanupModifier();
+  stopBossRotation();
 
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;
