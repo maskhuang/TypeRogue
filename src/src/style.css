@@ -173,6 +173,7 @@ body {
     letter-spacing: 5px;
     display: flex;
     margin-bottom: 8px;
+    transition: transform 0.1s ease-out;
 }
 
 #input-feedback {
@@ -184,7 +185,7 @@ body {
 .letter {
     display: inline-block;
     padding: 3px 5px;
-    transition: color 0.1s, text-shadow 0.1s;
+    transition: color 0.1s, text-shadow 0.1s, opacity 0.15s ease;
     position: relative;
     transform-origin: center bottom;
 }

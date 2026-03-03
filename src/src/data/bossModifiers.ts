@@ -3,6 +3,7 @@
 // ============================================
 // Story 18.1: 修饰器池（ID + Meta）
 // Story 18.4: BossModifier 接口 + 注册表 + 6 个数值修饰器实现 + 7 个 stub
+// Story 18.5: 3 个视觉类修饰器实现（boss_fade, boss_drift, boss_spotlight）
 
 /**
  * 所有 Boss 修饰器 ID
@@ -164,12 +165,20 @@ export function drawBossModifiers(count: number): BossModifierId[] {
  * 修饰器运行参数（由 getParams 返回）
  */
 export interface BossModifierParams {
+  // 数值规则类
   decayRate?: number        // boss_decay: 每秒扣分百分比 (0.05 = 5%)
   comboPunishRate?: number  // boss_combo_punish: 断连扣分百分比
   scoreCap?: number         // boss_cap: 单词得分上限
   timeSpeed?: number        // boss_fast_time: 计时器速度倍率
   targetMultiplier?: number // boss_double_target: 目标分倍率
   diminishRate?: number     // boss_diminish: 每词递减百分比
+  // 视觉类（Story 18.5）
+  fadeSpeed?: number        // boss_fade: 初始淡出速度（秒/字母）
+  fadeSpeedEnd?: number     // boss_fade: 最终淡出速度
+  fadeDuration?: number     // boss_fade: 加速持续时间（秒）
+  driftAmplitude?: number   // boss_drift: 振幅（px）
+  driftFrequency?: number   // boss_drift: 频率（Hz）
+  spotlightRadius?: number  // boss_spotlight: 可见半径（字母数）
 }
 
 /**
@@ -276,6 +285,107 @@ export function getDiminishMultiplier(): number {
   return Math.max(0, 1 - rate * diminishWordCount)
 }
 
+// === 3 个视觉类修饰器实现（Story 18.5）===
+
+let fadeElapsed = 0
+
+const bossFade: BossModifier = {
+  id: 'boss_fade',
+  getParams: (isElite) => ({
+    fadeSpeed: isElite ? 3.0 : 1.5,
+    fadeSpeedEnd: isElite ? 1.6 : 0.8,
+    fadeDuration: isElite ? 45 : 60,
+  }),
+  apply: () => { fadeElapsed = 0 },
+  cleanup: () => {
+    fadeElapsed = 0
+    document.querySelectorAll('#word-display .letter').forEach(el => {
+      ;(el as HTMLElement).style.opacity = ''
+    })
+  },
+  onTick(dt: number) {
+    fadeElapsed += dt
+    const params = getActiveParams()
+    if (!params?.fadeSpeed) return
+
+    const t = Math.min(fadeElapsed / (params.fadeDuration ?? 60), 1)
+    const currentSpeed = params.fadeSpeed + ((params.fadeSpeedEnd ?? params.fadeSpeed) - params.fadeSpeed) * t
+
+    document.querySelectorAll('#word-display .letter').forEach((el) => {
+      if (el.classList.contains('correct')) return
+      const opacity = Math.max(0.05, 1 - fadeElapsed / currentSpeed * 0.3)
+      ;(el as HTMLElement).style.opacity = String(opacity)
+    })
+  },
+}
+
+let driftElapsed = 0
+
+const bossDrift: BossModifier = {
+  id: 'boss_drift',
+  getParams: (isElite) => ({
+    driftAmplitude: isElite ? 8 : 15,
+    driftFrequency: isElite ? 1.5 : 2.0,
+  }),
+  apply: () => { driftElapsed = 0 },
+  cleanup: () => {
+    driftElapsed = 0
+    const wordEl = document.getElementById('word-display')
+    if (wordEl) wordEl.style.transform = ''
+  },
+  onTick(dt: number) {
+    driftElapsed += dt
+    const params = getActiveParams()
+    if (!params?.driftAmplitude) return
+
+    const ampScale = 1 + driftElapsed / 60
+    const amp = params.driftAmplitude * ampScale
+    const freq = params.driftFrequency ?? 2
+
+    const x = Math.sin(driftElapsed * freq * Math.PI * 2) * amp
+    const y = Math.cos(driftElapsed * freq * Math.PI * 2 * 0.7) * amp * 0.5
+
+    const wordEl = document.getElementById('word-display')
+    if (wordEl) wordEl.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`
+  },
+}
+
+const bossSpotlight: BossModifier = {
+  id: 'boss_spotlight',
+  getParams: (isElite) => ({
+    spotlightRadius: isElite ? 3 : 2,
+  }),
+  apply: () => {},
+  cleanup: () => {
+    document.querySelectorAll('#word-display .letter').forEach(el => {
+      ;(el as HTMLElement).style.opacity = ''
+    })
+  },
+  onTick() {
+    const params = getActiveParams()
+    if (!params?.spotlightRadius) return
+
+    const idx = state.player.index
+    const radius = params.spotlightRadius
+
+    document.querySelectorAll('#word-display .letter').forEach((el, i) => {
+      if (el.classList.contains('correct')) {
+        ;(el as HTMLElement).style.opacity = ''
+        return
+      }
+      const distance = Math.abs(i - idx)
+      if (distance <= radius / 2) {
+        ;(el as HTMLElement).style.opacity = '1'
+      } else if (distance <= radius) {
+        const fade = 1 - (distance - radius / 2) / (radius / 2)
+        ;(el as HTMLElement).style.opacity = String(Math.max(0.05, fade))
+      } else {
+        ;(el as HTMLElement).style.opacity = '0.05'
+      }
+    })
+  },
+}
+
 // === 修饰器注册表 ===
 
 export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
@@ -286,13 +396,14 @@ export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
   boss_fast_time: bossFastTime,
   boss_double_target: bossDoubleTarget,
   boss_diminish: bossDiminish,
-  // 打字难度类（stub，18.5-18.8 实现）
-  boss_fade: createStubModifier('boss_fade'),
+  // 视觉类（Story 18.5 实现）
+  boss_fade: bossFade,
+  boss_drift: bossDrift,
+  boss_spotlight: bossSpotlight,
+  // 打字难度类（stub，18.6-18.8 实现）
   boss_scramble: createStubModifier('boss_scramble'),
   boss_reverse: createStubModifier('boss_reverse'),
-  boss_drift: createStubModifier('boss_drift'),
   boss_masked: createStubModifier('boss_masked'),
-  boss_spotlight: createStubModifier('boss_spotlight'),
   boss_rhythm: createStubModifier('boss_rhythm'),
 }
 

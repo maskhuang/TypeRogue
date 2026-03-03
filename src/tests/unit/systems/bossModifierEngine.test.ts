@@ -2,6 +2,7 @@
 // 打字肉鸽 - bossModifierEngine 单元测试
 // ============================================
 // Story 18.4: Boss 修饰器引擎 + 数值修饰器
+// Story 18.5: 3 个视觉类修饰器（boss_fade, boss_drift, boss_spotlight）
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { state, resetState } from '../../../src/core/state'
@@ -22,18 +23,45 @@ import {
   stopBossRotation,
 } from '../../../src/systems/bossModifierEngine'
 
-// Mock DOM
+// Mock DOM — supports visual modifier tests
+function createMockLetterEl(cls: string) {
+  const style: Record<string, string> = {}
+  return {
+    classList: {
+      contains: (c: string) => cls.includes(c),
+      add: vi.fn(),
+      remove: vi.fn(),
+    },
+    style,
+  }
+}
+
+let mockLetters: ReturnType<typeof createMockLetterEl>[] = []
+let mockWordDisplayStyle: Record<string, string> = {}
+
 vi.stubGlobal('document', {
-  getElementById: vi.fn(() => ({
-    classList: { add: vi.fn(), remove: vi.fn() },
-    querySelector: vi.fn(() => ({ textContent: '' })),
-    appendChild: vi.fn(),
-  })),
+  getElementById: vi.fn((id: string) => {
+    if (id === 'word-display') {
+      return {
+        classList: { add: vi.fn(), remove: vi.fn() },
+        querySelector: vi.fn(() => ({ textContent: '' })),
+        appendChild: vi.fn(),
+        style: mockWordDisplayStyle,
+      }
+    }
+    return {
+      classList: { add: vi.fn(), remove: vi.fn() },
+      querySelector: vi.fn(() => ({ textContent: '' })),
+      appendChild: vi.fn(),
+      style: {},
+    }
+  }),
   createElement: vi.fn(() => ({
     className: '',
     innerHTML: '',
     remove: vi.fn(),
   })),
+  querySelectorAll: vi.fn((_selector: string) => mockLetters),
 })
 
 describe('bossModifierEngine', () => {
@@ -42,6 +70,8 @@ describe('bossModifierEngine', () => {
     cleanupModifier()
     stopBossRotation()
     setActiveParams(null)
+    mockLetters = []
+    mockWordDisplayStyle = {}
   })
 
   describe('BOSS_MODIFIER_REGISTRY', () => {
@@ -59,15 +89,23 @@ describe('bossModifierEngine', () => {
       }
     })
 
-    it('7 个打字类修饰器为 stub（getParams 返回空对象）', () => {
+    it('4 个打字类修饰器为 stub（getParams 返回空对象）', () => {
       const stubs: BossModifierId[] = [
-        'boss_fade', 'boss_scramble', 'boss_reverse',
-        'boss_drift', 'boss_masked', 'boss_spotlight', 'boss_rhythm',
+        'boss_scramble', 'boss_reverse', 'boss_masked', 'boss_rhythm',
       ]
       stubs.forEach(id => {
         const mod = BOSS_MODIFIER_REGISTRY[id]
         expect(mod.getParams(false)).toEqual({})
         expect(mod.getParams(true)).toEqual({})
+      })
+    })
+
+    it('3 个视觉类修饰器返回非空参数', () => {
+      const visual: BossModifierId[] = ['boss_fade', 'boss_drift', 'boss_spotlight']
+      visual.forEach(id => {
+        const params = BOSS_MODIFIER_REGISTRY[id].getParams(false)
+        const values = Object.values(params).filter(v => v !== undefined)
+        expect(values.length).toBeGreaterThan(0)
       })
     })
   })
@@ -285,6 +323,229 @@ describe('bossModifierEngine', () => {
       state.bossModifierPool = ['boss_decay']
       startBossRotation()
       expect(getActiveModifierEffect()).toBeNull()
+    })
+  })
+
+  // === Story 18.5: 视觉类修饰器 ===
+
+  describe('boss_fade 修饰器', () => {
+    it('满功率参数: fadeSpeed=1.5, fadeSpeedEnd=0.8, fadeDuration=60', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_fade.getParams(false)
+      expect(params.fadeSpeed).toBe(1.5)
+      expect(params.fadeSpeedEnd).toBe(0.8)
+      expect(params.fadeDuration).toBe(60)
+    })
+
+    it('精英参数: fadeSpeed=3.0, fadeSpeedEnd=1.6, fadeDuration=45', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_fade.getParams(true)
+      expect(params.fadeSpeed).toBe(3.0)
+      expect(params.fadeSpeedEnd).toBe(1.6)
+      expect(params.fadeDuration).toBe(45)
+    })
+
+    it('精英参数弱于满功率（淡出更慢）', () => {
+      const full = BOSS_MODIFIER_REGISTRY.boss_fade.getParams(false)
+      const elite = BOSS_MODIFIER_REGISTRY.boss_fade.getParams(true)
+      // 精英淡出速度更大（更慢）
+      expect(elite.fadeSpeed!).toBeGreaterThan(full.fadeSpeed!)
+      expect(elite.fadeSpeedEnd!).toBeGreaterThan(full.fadeSpeedEnd!)
+    })
+
+    it('onTick 降低 pending 字母 opacity', () => {
+      mockLetters = [
+        createMockLetterEl('letter correct'),
+        createMockLetterEl('letter current'),
+        createMockLetterEl('letter pending'),
+        createMockLetterEl('letter pending'),
+      ]
+      applyModifier('boss_fade', false)
+      tickModifier(1.0)
+      // correct 字母 opacity 不变
+      expect(mockLetters[0].style.opacity).toBeUndefined()
+      // pending 字母 opacity 降低
+      expect(mockLetters[2].style.opacity).toBeDefined()
+      const opacity = parseFloat(mockLetters[2].style.opacity!)
+      expect(opacity).toBeLessThan(1)
+      expect(opacity).toBeGreaterThanOrEqual(0.05)
+    })
+
+    it('correct 字母不受影响', () => {
+      mockLetters = [
+        createMockLetterEl('letter correct'),
+        createMockLetterEl('letter pending'),
+      ]
+      applyModifier('boss_fade', false)
+      tickModifier(2.0)
+      expect(mockLetters[0].style.opacity).toBeUndefined()
+    })
+
+    it('cleanup 恢复 opacity', () => {
+      mockLetters = [
+        createMockLetterEl('letter pending'),
+        createMockLetterEl('letter pending'),
+      ]
+      applyModifier('boss_fade', false)
+      tickModifier(1.0)
+      expect(mockLetters[0].style.opacity).toBeDefined()
+      cleanupModifier()
+      // cleanup 调用 querySelectorAll 并清除 opacity
+      expect(mockLetters[0].style.opacity).toBe('')
+    })
+
+    it('有 onTick 方法', () => {
+      expect(typeof BOSS_MODIFIER_REGISTRY.boss_fade.onTick).toBe('function')
+    })
+  })
+
+  describe('boss_drift 修饰器', () => {
+    it('满功率参数: driftAmplitude=15, driftFrequency=2', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_drift.getParams(false)
+      expect(params.driftAmplitude).toBe(15)
+      expect(params.driftFrequency).toBe(2.0)
+    })
+
+    it('精英参数: driftAmplitude=8, driftFrequency=1.5', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_drift.getParams(true)
+      expect(params.driftAmplitude).toBe(8)
+      expect(params.driftFrequency).toBe(1.5)
+    })
+
+    it('精英参数弱于满功率（振幅更小）', () => {
+      const full = BOSS_MODIFIER_REGISTRY.boss_drift.getParams(false)
+      const elite = BOSS_MODIFIER_REGISTRY.boss_drift.getParams(true)
+      expect(elite.driftAmplitude!).toBeLessThan(full.driftAmplitude!)
+    })
+
+    it('onTick 设置 #word-display transform', () => {
+      applyModifier('boss_drift', false)
+      tickModifier(0.5)
+      expect(mockWordDisplayStyle.transform).toBeDefined()
+      expect(mockWordDisplayStyle.transform).toContain('translate(')
+    })
+
+    it('cleanup 清除 transform', () => {
+      applyModifier('boss_drift', false)
+      tickModifier(0.5)
+      expect(mockWordDisplayStyle.transform).toContain('translate(')
+      cleanupModifier()
+      expect(mockWordDisplayStyle.transform).toBe('')
+    })
+
+    it('有 onTick 方法', () => {
+      expect(typeof BOSS_MODIFIER_REGISTRY.boss_drift.onTick).toBe('function')
+    })
+  })
+
+  describe('boss_spotlight 修饰器', () => {
+    it('满功率参数: spotlightRadius=2', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_spotlight.getParams(false)
+      expect(params.spotlightRadius).toBe(2)
+    })
+
+    it('精英参数: spotlightRadius=3', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_spotlight.getParams(true)
+      expect(params.spotlightRadius).toBe(3)
+    })
+
+    it('精英参数弱于满功率（半径更大 = 更容易）', () => {
+      const full = BOSS_MODIFIER_REGISTRY.boss_spotlight.getParams(false)
+      const elite = BOSS_MODIFIER_REGISTRY.boss_spotlight.getParams(true)
+      expect(elite.spotlightRadius!).toBeGreaterThan(full.spotlightRadius!)
+    })
+
+    it('onTick 根据 player.index 设置 opacity', () => {
+      state.player.index = 1
+      state.player.word = 'HELLO'
+      mockLetters = [
+        createMockLetterEl('letter correct'),
+        createMockLetterEl('letter current'),
+        createMockLetterEl('letter pending'),
+        createMockLetterEl('letter pending'),
+        createMockLetterEl('letter pending'),
+      ]
+      applyModifier('boss_spotlight', false)
+      tickModifier(0.1)
+      // correct 字母保持不变
+      expect(mockLetters[0].style.opacity).toBe('')
+      // current (index=1) 在 radius/2=1 范围内，opacity=1
+      expect(mockLetters[1].style.opacity).toBe('1')
+      // index 4 距离 1 = 3，超出 radius=2，opacity=0.05
+      expect(mockLetters[4].style.opacity).toBe('0.05')
+    })
+
+    it('cleanup 恢复所有 letter opacity', () => {
+      mockLetters = [
+        createMockLetterEl('letter pending'),
+        createMockLetterEl('letter pending'),
+      ]
+      state.player.index = 0
+      state.player.word = 'AB'
+      applyModifier('boss_spotlight', false)
+      tickModifier(0.1)
+      cleanupModifier()
+      expect(mockLetters[0].style.opacity).toBe('')
+      expect(mockLetters[1].style.opacity).toBe('')
+    })
+
+    it('有 onTick 方法', () => {
+      expect(typeof BOSS_MODIFIER_REGISTRY.boss_spotlight.onTick).toBe('function')
+    })
+  })
+
+  describe('视觉类修饰器生命周期', () => {
+    it('apply → onTick → cleanup 完整周期不报错', () => {
+      const visualMods: BossModifierId[] = ['boss_fade', 'boss_drift', 'boss_spotlight']
+      mockLetters = [
+        createMockLetterEl('letter current'),
+        createMockLetterEl('letter pending'),
+      ]
+      state.player.index = 0
+      state.player.word = 'AB'
+
+      visualMods.forEach(id => {
+        expect(() => {
+          applyModifier(id, false)
+          tickModifier(0.1)
+          tickModifier(0.5)
+          cleanupModifier()
+        }).not.toThrow()
+      })
+    })
+
+    it('精英版 apply → onTick → cleanup 完整周期不报错', () => {
+      const visualMods: BossModifierId[] = ['boss_fade', 'boss_drift', 'boss_spotlight']
+      mockLetters = [
+        createMockLetterEl('letter current'),
+        createMockLetterEl('letter pending'),
+      ]
+      state.player.index = 0
+      state.player.word = 'AB'
+
+      visualMods.forEach(id => {
+        expect(() => {
+          applyModifier(id, true)
+          tickModifier(0.1)
+          cleanupModifier()
+        }).not.toThrow()
+      })
+    })
+
+    it('连续切换视觉修饰器不报错', () => {
+      mockLetters = [
+        createMockLetterEl('letter pending'),
+      ]
+      state.player.index = 0
+      state.player.word = 'A'
+
+      expect(() => {
+        applyModifier('boss_fade', false)
+        tickModifier(0.5)
+        applyModifier('boss_drift', false)
+        tickModifier(0.5)
+        applyModifier('boss_spotlight', false)
+        tickModifier(0.5)
+        cleanupModifier()
+      }).not.toThrow()
     })
   })
 })
