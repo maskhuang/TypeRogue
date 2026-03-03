@@ -5,6 +5,7 @@
 
 import {
   StageConfig,
+  StageType,
   ActInfo,
   LevelsData,
   GlobalSettings,
@@ -85,7 +86,7 @@ export class StageManager {
 
   /**
    * 获取关卡配置
-   * @param stageId 关卡编号 (1-8)
+   * @param stageId 关卡编号 (1-10)
    * @returns 关卡配置，不存在返回 undefined
    */
   getStage(stageId: number): StageConfig | undefined {
@@ -148,6 +149,39 @@ export class StageManager {
    */
   getActForStage(stageId: number): number {
     return this.stageMap.get(stageId)?.act || 1
+  }
+
+  // ==================== 关卡类型查询 ====================
+
+  /**
+   * 获取关卡类型
+   */
+  getStageType(stageId: number): StageType {
+    return this.stageMap.get(stageId)?.stageType || 'standard'
+  }
+
+  /**
+   * 检查是否为精英关
+   */
+  isEliteStage(stageId: number): boolean {
+    return this.getStageType(stageId) === 'elite'
+  }
+
+  /**
+   * 检查是否为休息关
+   */
+  isRestStage(stageId: number): boolean {
+    return this.getStageType(stageId) === 'rest'
+  }
+
+  /**
+   * 获取下一个关卡 ID
+   * @returns 下一个 stageId, 或 'victory' 表示通关
+   */
+  getNextStageId(currentStageId: number): number | 'victory' {
+    const total = this.getTotalStages()
+    if (currentStageId >= total) return 'victory'
+    return currentStageId + 1
   }
 
   // ==================== Boss 和最终关卡 ====================

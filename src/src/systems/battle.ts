@@ -20,6 +20,7 @@ import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
+import { getStageType, getTimeLimit, getBattleNumber, isBossNode, TOTAL_NODES } from './stage/stageFlow';
 
 // === 计时器 ===
 let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -311,12 +312,20 @@ function completeWord(): void {
     const needed = state.targetScore - prevScore;
     state.overkill = finalWordScore - needed;
 
-    // 显示金币奖励动画，然后结束关卡
-    setTimeout(() => {
-      if (state.phase === 'battle') {
-        showGoldReward(() => endLevel());
-      }
-    }, 600);
+    const currentType = getStageType(state.level);
+    if (currentType === 'boss') {
+      // Boss 关胜利跳过金币奖励动画（Boss 后无商店，金币无意义）
+      setTimeout(() => {
+        if (state.phase === 'battle') endLevel();
+      }, 600);
+    } else {
+      // 显示金币奖励动画，然后结束关卡
+      setTimeout(() => {
+        if (state.phase === 'battle') {
+          showGoldReward(() => endLevel());
+        }
+      }, 600);
+    }
     return;
   }
 
@@ -494,8 +503,17 @@ function endLevel(): void {
   el.container.classList.remove('mid-mult', 'high-mult');
 
   if (state.score >= state.targetScore) {
-    // 每5关弹出遗物三选一，然后进商店（第1关排除，开局已选过）
-    if (state.level % 5 === 0 && shouldShowRelicPicker(state.level)) {
+    const currentType = getStageType(state.level);
+
+    if (currentType === 'boss') {
+      // Boss 关胜利 → 直接胜利（无商店）
+      victory();
+      return;
+    }
+
+    // 标准关和精英关胜利 → 遗物选择器（每5个战斗节点） → 商店
+    const battleNum = getBattleNumber(state.level);
+    if (battleNum > 0 && battleNum % 5 === 0 && shouldShowRelicPicker(battleNum)) {
       showRelicPicker(() => openShop(true));
     } else {
       openShop(true);
@@ -525,7 +543,12 @@ export function startLevel(): void {
   state.multiplier = state.player.baseMultiplier;
   state.wordScore = 0;
   state.overkill = 0;
-  state.targetScore = calculateTargetScore(state.level);
+
+  // 使用 stageType-based 固定时间和目标分数
+  const currentStageType = getStageType(state.level);
+  const battleNum = getBattleNumber(state.level);
+  state.timeMax = getTimeLimit(state.level);
+  state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
 
   synergy.shieldCount = 0;
   synergy.perfectStreak = 0;
@@ -563,7 +586,9 @@ export function startLevel(): void {
   }
 
   const el = getElements();
-  el.levelLabel.textContent = `LEVEL ${state.level}`;
+  const displayLevel = getBattleNumber(state.level) || state.level;
+  const stageLabel = currentStageType === 'elite' ? ' [ELITE]' : currentStageType === 'boss' ? ' [BOSS]' : '';
+  el.levelLabel.textContent = `LEVEL ${displayLevel}${stageLabel}`;
 
   showScreen('battle');
   setWord();
@@ -595,10 +620,30 @@ function announceLevel(): void {
   const el = getElements();
   const ann = document.createElement('div');
   ann.className = 'level-announce';
-  ann.innerHTML = `LEVEL ${state.level}<br><span class="target-hint">目标: ${state.targetScore}分</span>`;
+  const displayLevel = getBattleNumber(state.level) || state.level;
+  const stageType = getStageType(state.level);
+  const typeLabel = stageType === 'elite' ? '<br><span class="elite-hint">精英挑战</span>' :
+                    stageType === 'boss' ? '<br><span class="boss-hint">BOSS 战</span>' : '';
+  ann.innerHTML = `LEVEL ${displayLevel}${typeLabel}<br><span class="target-hint">目标: ${state.targetScore}分</span>`;
   el.container.appendChild(ann);
   playSound('levelup');
   setTimeout(() => ann.remove(), 1500);
+}
+
+// === 胜利 ===
+function victory(): void {
+  state.phase = 'victory';
+  if (timerInterval) clearInterval(timerInterval);
+
+  const el = getElements();
+  el.gameoverStats.innerHTML = `
+    通关! Boss 已击败!<br>
+    最终得分: ${state.score}<br>
+    最高连击: ${state.maxCombo}<br>
+    获得技能: ${state.player.skills.size}
+  `;
+  showScreen('gameover');
+  playSound('levelup');
 }
 
 // === 游戏结束 ===
@@ -607,8 +652,9 @@ function gameOver(): void {
   if (timerInterval) clearInterval(timerInterval);
 
   const el = getElements();
+  const displayLevel = getBattleNumber(state.level) || state.level;
   el.gameoverStats.innerHTML = `
-    到达 Level ${state.level}<br>
+    到达 Level ${displayLevel}<br>
     最终得分: ${state.score} / ${state.targetScore}<br>
     最高连击: ${state.maxCombo}<br>
     获得技能: ${state.player.skills.size}

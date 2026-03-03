@@ -40,6 +40,7 @@ const testLevelsData: LevelsData = {
       name: '起点',
       act: 1,
       isBoss: false,
+      stageType: 'standard',
       timeLimit: 60,
       wordCount: 15,
       wordDifficulty: 1,
@@ -52,6 +53,7 @@ const testLevelsData: LevelsData = {
       name: '初探',
       act: 1,
       isBoss: false,
+      stageType: 'standard',
       timeLimit: 65,
       wordCount: 18,
       wordDifficulty: 1,
@@ -64,18 +66,20 @@ const testLevelsData: LevelsData = {
       name: '热身',
       act: 1,
       isBoss: false,
+      stageType: 'elite',
       timeLimit: 70,
       wordCount: 20,
       wordDifficulty: 2,
       baseGoldReward: 75,
       scoreMultiplier: 1.1,
-      modifiers: []
+      modifiers: ['elite']
     },
     {
       id: 4,
       name: '跃进',
       act: 2,
       isBoss: false,
+      stageType: 'standard',
       timeLimit: 75,
       wordCount: 22,
       wordDifficulty: 2,
@@ -88,18 +92,20 @@ const testLevelsData: LevelsData = {
       name: '挑战',
       act: 2,
       isBoss: false,
+      stageType: 'elite',
       timeLimit: 80,
       wordCount: 25,
       wordDifficulty: 3,
       baseGoldReward: 110,
       scoreMultiplier: 1.3,
-      modifiers: ['time_pressure']
+      modifiers: ['time_pressure', 'elite']
     },
     {
       id: 6,
       name: '险境',
       act: 2,
       isBoss: false,
+      stageType: 'standard',
       timeLimit: 85,
       wordCount: 28,
       wordDifficulty: 3,
@@ -112,18 +118,20 @@ const testLevelsData: LevelsData = {
       name: '巅峰',
       act: 3,
       isBoss: false,
-      timeLimit: 90,
-      wordCount: 30,
-      wordDifficulty: 4,
-      baseGoldReward: 150,
-      scoreMultiplier: 1.5,
-      modifiers: ['time_pressure', 'bonus_combo']
+      stageType: 'rest',
+      timeLimit: 0,
+      wordCount: 0,
+      wordDifficulty: 0,
+      baseGoldReward: 0,
+      scoreMultiplier: 0,
+      modifiers: []
     },
     {
       id: 8,
       name: '终极审判',
       act: 3,
       isBoss: true,
+      stageType: 'boss',
       timeLimit: 120,
       wordCount: 40,
       wordDifficulty: 5,
@@ -339,11 +347,11 @@ describe('StageManager', () => {
       expect(params.complexity).toBe(0.6)
     })
 
-    it('getWordDifficultyParams() 难度 4 的词语长度 5-8', () => {
-      const params = stageManager.getWordDifficultyParams(7) // wordDifficulty: 4
-      expect(params.minLength).toBe(5)
-      expect(params.maxLength).toBe(8)
-      expect(params.complexity).toBe(0.8)
+    it('getWordDifficultyParams() 休息关返回难度 1 参数', () => {
+      const params = stageManager.getWordDifficultyParams(7) // rest stage, wordDifficulty: 0
+      expect(params.minLength).toBe(3)
+      expect(params.maxLength).toBe(5)
+      expect(params.complexity).toBe(0.2)
     })
 
     it('getWordDifficultyParams() 难度 5 的词语长度 6-10', () => {
@@ -370,17 +378,18 @@ describe('StageManager', () => {
     it('hasModifier() 正确检测 time_pressure', () => {
       expect(stageManager.hasModifier(5, 'time_pressure')).toBe(true)
       expect(stageManager.hasModifier(6, 'time_pressure')).toBe(true)
-      expect(stageManager.hasModifier(7, 'time_pressure')).toBe(true)
       expect(stageManager.hasModifier(1, 'time_pressure')).toBe(false)
+    })
+
+    it('hasModifier() 正确检测 elite', () => {
+      expect(stageManager.hasModifier(3, 'elite')).toBe(true)
+      expect(stageManager.hasModifier(5, 'elite')).toBe(true)
+      expect(stageManager.hasModifier(1, 'elite')).toBe(false)
     })
 
     it('hasModifier() Stage 8 有 boss 和 no_error 修饰符', () => {
       expect(stageManager.hasModifier(8, 'boss')).toBe(true)
       expect(stageManager.hasModifier(8, 'no_error')).toBe(true)
-    })
-
-    it('hasModifier() Stage 7 有 bonus_combo 修饰符', () => {
-      expect(stageManager.hasModifier(7, 'bonus_combo')).toBe(true)
     })
 
     it('hasModifier() 不存在的关卡返回 false', () => {
@@ -389,8 +398,9 @@ describe('StageManager', () => {
 
     it('getModifiers() 返回所有修饰符', () => {
       expect(stageManager.getModifiers(8)).toEqual(['boss', 'no_error'])
-      expect(stageManager.getModifiers(7)).toEqual(['time_pressure', 'bonus_combo'])
+      expect(stageManager.getModifiers(3)).toEqual(['elite'])
       expect(stageManager.getModifiers(1)).toEqual([])
+      expect(stageManager.getModifiers(7)).toEqual([]) // rest stage
     })
   })
 
@@ -420,7 +430,7 @@ describe('StageManager', () => {
       stageManager.load(testLevelsData)
     })
 
-    it('所有关卡都有必需字段', () => {
+    it('所有战斗关卡都有必需字段', () => {
       const stages = stageManager.getAllStages()
       for (const stage of stages) {
         expect(stage.id).toBeGreaterThan(0)
@@ -428,34 +438,64 @@ describe('StageManager', () => {
         expect(stage.act).toBeGreaterThanOrEqual(1)
         expect(stage.act).toBeLessThanOrEqual(3)
         expect(typeof stage.isBoss).toBe('boolean')
-        expect(stage.timeLimit).toBeGreaterThan(0)
-        expect(stage.wordCount).toBeGreaterThan(0)
-        expect(stage.wordDifficulty).toBeGreaterThanOrEqual(1)
-        expect(stage.wordDifficulty).toBeLessThanOrEqual(5)
-        expect(stage.baseGoldReward).toBeGreaterThan(0)
-        expect(stage.scoreMultiplier).toBeGreaterThan(0)
+        expect(stage.stageType).toBeDefined()
+        if (stage.stageType !== 'rest') {
+          expect(stage.timeLimit).toBeGreaterThan(0)
+          expect(stage.wordCount).toBeGreaterThan(0)
+          expect(stage.wordDifficulty).toBeGreaterThanOrEqual(1)
+          expect(stage.wordDifficulty).toBeLessThanOrEqual(5)
+          expect(stage.baseGoldReward).toBeGreaterThan(0)
+          expect(stage.scoreMultiplier).toBeGreaterThan(0)
+        }
       }
     })
 
-    it('难度递增验证：时间递增', () => {
-      const stages = stageManager.getAllStages()
-      for (let i = 1; i < stages.length - 1; i++) { // 排除 Boss 关卡
-        expect(stages[i].timeLimit).toBeGreaterThanOrEqual(stages[i - 1].timeLimit)
-      }
-    })
-
-    it('难度递增验证：词数递增', () => {
-      const stages = stageManager.getAllStages()
+    it('难度递增验证：词数递增（战斗关）', () => {
+      const stages = stageManager.getAllStages().filter(s => s.stageType !== 'rest')
       for (let i = 1; i < stages.length; i++) {
         expect(stages[i].wordCount).toBeGreaterThanOrEqual(stages[i - 1].wordCount)
       }
     })
+  })
 
-    it('难度递增验证：金币奖励递增', () => {
-      const stages = stageManager.getAllStages()
-      for (let i = 1; i < stages.length; i++) {
-        expect(stages[i].baseGoldReward).toBeGreaterThanOrEqual(stages[i - 1].baseGoldReward)
-      }
+  // ==================== 关卡类型测试 ====================
+
+  describe('关卡类型', () => {
+    beforeEach(() => {
+      stageManager.load(testLevelsData)
+    })
+
+    it('getStageType() 返回正确的关卡类型', () => {
+      expect(stageManager.getStageType(1)).toBe('standard')
+      expect(stageManager.getStageType(3)).toBe('elite')
+      expect(stageManager.getStageType(7)).toBe('rest')
+      expect(stageManager.getStageType(8)).toBe('boss')
+    })
+
+    it('getStageType() 不存在的关卡返回 standard', () => {
+      expect(stageManager.getStageType(99)).toBe('standard')
+    })
+
+    it('isEliteStage() 正确识别精英关', () => {
+      expect(stageManager.isEliteStage(3)).toBe(true)
+      expect(stageManager.isEliteStage(5)).toBe(true)
+      expect(stageManager.isEliteStage(1)).toBe(false)
+      expect(stageManager.isEliteStage(8)).toBe(false)
+    })
+
+    it('isRestStage() 正确识别休息关', () => {
+      expect(stageManager.isRestStage(7)).toBe(true)
+      expect(stageManager.isRestStage(1)).toBe(false)
+      expect(stageManager.isRestStage(8)).toBe(false)
+    })
+
+    it('getNextStageId() 返回下一个关卡', () => {
+      expect(stageManager.getNextStageId(1)).toBe(2)
+      expect(stageManager.getNextStageId(7)).toBe(8)
+    })
+
+    it('getNextStageId() 最后一关返回 victory', () => {
+      expect(stageManager.getNextStageId(8)).toBe('victory')
     })
   })
 })

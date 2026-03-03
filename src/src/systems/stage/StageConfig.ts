@@ -4,6 +4,11 @@
 // Story 5.2 Task 1: 关卡配置类型定义
 
 /**
+ * 关卡类型
+ */
+export type StageType = 'standard' | 'elite' | 'boss' | 'rest'
+
+/**
  * 关卡修饰符类型
  */
 export type StageModifier =
@@ -11,12 +16,13 @@ export type StageModifier =
   | 'time_pressure' // 时间压力（额外减时）
   | 'bonus_combo'   // 连击加成
   | 'boss'          // Boss 战特殊规则
+  | 'elite'         // 精英关修饰器
 
 /**
  * 单个关卡配置
  */
 export interface StageConfig {
-  /** 关卡编号 (1-8) */
+  /** 关卡编号 (1-10, 含休息节点) */
   id: number
 
   /** 关卡名称 */
@@ -27,6 +33,9 @@ export interface StageConfig {
 
   /** 是否为 Boss 关卡 */
   isBoss: boolean
+
+  /** 关卡类型 */
+  stageType: StageType
 
   /** 时间限制（秒） */
   timeLimit: number

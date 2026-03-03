@@ -295,35 +295,35 @@ describe('RunState', () => {
       expect(runState.getCurrentAct()).toBe(1)
     })
 
-    it('Act 2: 关卡 4-6', () => {
-      // 推进到 Stage 4
-      runState.advanceStage() // 2
-      runState.advanceStage() // 3
-      runState.advanceStage() // 4
-      expect(runState.getCurrentStage()).toBe(4)
+    it('Act 2: 关卡 5-8（10 节点流程）', () => {
+      // 推进到 Stage 5
+      for (let i = 0; i < 4; i++) runState.advanceStage()
+      expect(runState.getCurrentStage()).toBe(5)
       expect(runState.getCurrentAct()).toBe(2)
 
-      runState.advanceStage() // 5
-      expect(runState.getCurrentAct()).toBe(2)
       runState.advanceStage() // 6
       expect(runState.getCurrentAct()).toBe(2)
-    })
-
-    it('Act 3: 关卡 7-8', () => {
-      // 推进到 Stage 7
-      for (let i = 0; i < 6; i++) runState.advanceStage()
-      expect(runState.getCurrentStage()).toBe(7)
-      expect(runState.getCurrentAct()).toBe(3)
-
+      runState.advanceStage() // 7
+      expect(runState.getCurrentAct()).toBe(2)
       runState.advanceStage() // 8
-      expect(runState.getCurrentStage()).toBe(8)
+      expect(runState.getCurrentAct()).toBe(2)
+    })
+
+    it('Act 3: 关卡 9-10（10 节点流程）', () => {
+      // 推进到 Stage 9
+      for (let i = 0; i < 8; i++) runState.advanceStage()
+      expect(runState.getCurrentStage()).toBe(9)
+      expect(runState.getCurrentAct()).toBe(3)
+
+      runState.advanceStage() // 10
+      expect(runState.getCurrentStage()).toBe(10)
       expect(runState.getCurrentAct()).toBe(3)
     })
 
-    it('isBossStage() 在第 8 关返回 true', () => {
+    it('isBossStage() 在第 10 关返回 true', () => {
       expect(runState.isBossStage()).toBe(false)
-      // 推进到 Stage 8
-      for (let i = 0; i < 7; i++) runState.advanceStage()
+      // 推进到 Stage 10
+      for (let i = 0; i < 9; i++) runState.advanceStage()
       expect(runState.isBossStage()).toBe(true)
     })
 
@@ -332,14 +332,14 @@ describe('RunState', () => {
       expect(runState.isBossStage()).toBe(false)
     })
 
-    it('advanceStage() 在 Stage 8 后不应继续推进', () => {
-      // 推进到 Stage 8
-      for (let i = 0; i < 7; i++) runState.advanceStage()
-      expect(runState.getCurrentStage()).toBe(8)
+    it('advanceStage() 在 Stage 10 后不应继续推进', () => {
+      // 推进到 Stage 10
+      for (let i = 0; i < 9; i++) runState.advanceStage()
+      expect(runState.getCurrentStage()).toBe(10)
 
       // 尝试继续推进
       runState.advanceStage()
-      expect(runState.getCurrentStage()).toBe(8) // 仍为 8
+      expect(runState.getCurrentStage()).toBe(10) // 仍为 10
       expect(runState.getCurrentAct()).toBe(3)
     })
   })
@@ -561,7 +561,7 @@ describe('RunState', () => {
       expect(restored.hasRelic('goldenKey')).toBe(true)
       expect(restored.hasRelic('silverRing')).toBe(true)
       expect(restored.getCurrentStage()).toBe(4)
-      expect(restored.getCurrentAct()).toBe(2)
+      expect(restored.getCurrentAct()).toBe(1)
       expect(restored.isActive()).toBe(true)
     })
 

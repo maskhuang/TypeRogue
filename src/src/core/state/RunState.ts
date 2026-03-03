@@ -4,6 +4,7 @@
 // Story 5.1: Run 状态管理
 
 import { BattleResult } from '../../scenes/battle/BattleFlowController'
+import { drawBossModifiers } from '../../data/bossModifiers'
 
 /**
  * 技能实例（已获得的技能）
@@ -37,6 +38,16 @@ export interface RunStats {
  * Run 状态数据
  * 管理单局游戏的所有持久数据
  */
+/**
+ * Boss 修饰器分配记录
+ */
+export interface BossModifierAssignment {
+  /** 关卡节点 ID */
+  stageId: number
+  /** 修饰器 ID */
+  modifierId: string
+}
+
 export interface RunStateData {
   /** 已获得技能列表 */
   skills: SkillInstance[]
@@ -50,7 +61,7 @@ export interface RunStateData {
   /** 金币数量 */
   gold: number
 
-  /** 当前关卡编号 (1-8) */
+  /** 当前关卡编号 (1-10, 含休息节点) */
   currentStage: number
 
   /** 当前幕数 (1-3) */
@@ -61,6 +72,12 @@ export interface RunStateData {
 
   /** Run 统计 */
   stats: RunStats
+
+  /** Boss 修饰器池（3个随机修饰器 ID） */
+  bossModifierPool: string[]
+
+  /** Boss 修饰器分配（Stage 3→A, Stage 6→B, Stage 9→C） */
+  bossModifierAssignment: BossModifierAssignment[]
 }
 
 /**
@@ -98,7 +115,9 @@ export class RunState {
         wordsCompleted: 0,
         battlesWon: 0,
         startTime: 0
-      }
+      },
+      bossModifierPool: [],
+      bossModifierAssignment: [],
     }
   }
 
@@ -294,16 +313,16 @@ export class RunState {
 
   /**
    * 推进到下一关
-   * 同时更新幕数 (Act 1: 1-3, Act 2: 4-6, Act 3: 7-8)
-   * 如果已在最终关卡（8），不再推进
+   * 同时更新幕数 (Act 1: 1-4, Act 2: 5-8, Act 3: 9-10)
+   * 如果已在最终关卡（10），不再推进
    */
   advanceStage(): void {
-    if (this.data.currentStage >= 8) return
+    if (this.data.currentStage >= 10) return
     this.data.currentStage++
-    // 更新幕数
-    if (this.data.currentStage <= 3) {
+    // Act 边界映射（与 systems/stage/stageFlow.ts NODE_ACT 保持同步）
+    if (this.data.currentStage <= 4) {
       this.data.currentAct = 1
-    } else if (this.data.currentStage <= 6) {
+    } else if (this.data.currentStage <= 8) {
       this.data.currentAct = 2
     } else {
       this.data.currentAct = 3
@@ -314,7 +333,7 @@ export class RunState {
    * 检查是否为 Boss 关卡
    */
   isBossStage(): boolean {
-    return this.data.currentStage === 8
+    return this.data.currentStage === 10
   }
 
   // ==================== Run 生命周期 (AC6) ====================
@@ -322,11 +341,22 @@ export class RunState {
   /**
    * 开始新 Run
    * 重置所有数据并标记为活跃
+   * 抽取 3 个 Boss 修饰器分配到精英关
    */
   startRun(): void {
     this.reset()
     this.data.isActive = true
     this.data.stats.startTime = Date.now()
+
+    // 抽取 3 个不重复的 Boss 修饰器
+    const modifiers = drawBossModifiers(3)
+    this.data.bossModifierPool = modifiers
+    // 分配到精英关节点: Stage 3→A, Stage 6→B, Stage 9→C
+    this.data.bossModifierAssignment = [
+      { stageId: 3, modifierId: modifiers[0] || '' },
+      { stageId: 6, modifierId: modifiers[1] || '' },
+      { stageId: 9, modifierId: modifiers[2] || '' },
+    ]
   }
 
   /**
@@ -407,7 +437,9 @@ export class RunState {
       currentStage: this.data.currentStage,
       currentAct: this.data.currentAct,
       isActive: this.data.isActive,
-      stats: { ...this.data.stats }
+      stats: { ...this.data.stats },
+      bossModifierPool: [...this.data.bossModifierPool],
+      bossModifierAssignment: [...this.data.bossModifierAssignment],
     }
   }
 
@@ -451,6 +483,8 @@ export class RunState {
     runState.data.currentAct = parsed.currentAct
     runState.data.isActive = parsed.isActive
     runState.data.stats = { ...parsed.stats }
+    runState.data.bossModifierPool = (parsed as any).bossModifierPool || []
+    runState.data.bossModifierAssignment = (parsed as any).bossModifierAssignment || []
 
     return runState
   }

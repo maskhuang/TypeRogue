@@ -3,6 +3,7 @@
 // ============================================
 
 import type { GameState, SynergyState } from './types';
+import type { StageType } from '../systems/stage/StageConfig';
 import { BALANCE } from './constants';
 
 // === 初始状态 ===
@@ -76,9 +77,12 @@ export function resetState(): void {
 }
 
 // === 关卡目标计算 ===
-export function calculateTargetScore(level: number): number {
+export function calculateTargetScore(level: number, stageType: StageType = 'standard'): number {
   const { TARGET_BASE, TARGET_LINEAR, TARGET_QUADRATIC } = BALANCE;
-  return Math.floor(TARGET_BASE + level * TARGET_LINEAR + level * level * TARGET_QUADRATIC);
+  const base = Math.floor(TARGET_BASE + level * TARGET_LINEAR + level * level * TARGET_QUADRATIC);
+  if (stageType === 'elite') return Math.floor(base * 1.3);
+  if (stageType === 'boss') return Math.floor(base * 1.5);
+  return base;
 }
 
 // === 遗物检查 ===

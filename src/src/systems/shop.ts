@@ -13,6 +13,7 @@ import { playSound } from '../effects/sound';
 import { juiceUp } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopItem } from '../core/types';
+import { getNextBattleNode, TOTAL_NODES } from './stage/stageFlow';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
@@ -791,7 +792,13 @@ export function initShopEvents(): void {
   const el = getElements();
   el.startBattleBtn.onclick = () => {
     dragManager.destroy();
-    state.level++;
+    // 跳到下一个战斗节点（跳过休息关占位）
+    const nextNode = getNextBattleNode(state.level);
+    if (nextNode === -1 || nextNode > TOTAL_NODES) {
+      // 不应到达这里，Boss 关胜利不经过商店
+      return;
+    }
+    state.level = nextNode;
     startLevel();
   };
 }
