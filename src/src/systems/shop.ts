@@ -13,7 +13,8 @@ import { playSound } from '../effects/sound';
 import { juiceUp } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopItem } from '../core/types';
-import { getNextBattleNode, getStageType, TOTAL_NODES } from './stage/stageFlow';
+import { getNextBattleNode, getStageType, isRestNode, TOTAL_NODES } from './stage/stageFlow';
+import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
@@ -793,13 +794,18 @@ export function initShopEvents(): void {
   const el = getElements();
   el.startBattleBtn.onclick = () => {
     dragManager.destroy();
-    // 跳到下一个战斗节点（跳过休息关占位）
-    const nextNode = getNextBattleNode(state.level);
-    if (nextNode === -1 || nextNode > TOTAL_NODES) {
-      // 不应到达这里，Boss 关胜利不经过商店
-      return;
+    // 检测下一节点是否为休息关
+    const nextNode = state.level + 1;
+    if (nextNode <= TOTAL_NODES && isRestNode(nextNode)) {
+      state.level = nextNode;
+      openRestStage();
+    } else {
+      const nextBattle = getNextBattleNode(state.level);
+      if (nextBattle === -1 || nextBattle > TOTAL_NODES) {
+        return;
+      }
+      state.level = nextBattle;
+      startLevel();
     }
-    state.level = nextNode;
-    startLevel();
   };
 }

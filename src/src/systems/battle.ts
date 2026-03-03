@@ -42,10 +42,11 @@ let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（�
 let lonePassiveBonus = 0; // 孤狼被动倍率加成（每关开始时计算）
 
 // === 屏幕管理 ===
-export function showScreen(name: 'battle' | 'shop' | 'gameover'): void {
+export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'rest'): void {
   const el = getElements();
   el.battleScreen.style.display = name === 'battle' ? 'flex' : 'none';
   el.shopScreen.style.display = name === 'shop' ? 'flex' : 'none';
+  el.restScreen.style.display = name === 'rest' ? 'flex' : 'none';
   el.gameoverScreen.style.display = name === 'gameover' ? 'flex' : 'none';
 }
 
@@ -555,11 +556,21 @@ export function startLevel(): void {
   state.wordScore = 0;
   state.overkill = 0;
 
+  // 清理过期临时 buff
+  state.tempBuffs = state.tempBuffs.filter(b => state.level <= b.expiresAtNode);
+
   // 使用 stageType-based 固定时间和目标分数
   const currentStageType = getStageType(state.level);
   const battleNum = getBattleNumber(state.level);
   state.timeMax = getTimeLimit(state.level);
   state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
+
+  // 应用活跃临时 buff
+  for (const buff of state.tempBuffs) {
+    if (buff.type === 'multiplier') state.player.baseMultiplier += buff.value;
+    if (buff.type === 'time') state.timeMax += buff.value;
+    if (buff.type === 'targetScore') state.targetScore = Math.floor(state.targetScore * buff.value);
+  }
 
   synergy.shieldCount = 0;
   synergy.perfectStreak = 0;

@@ -5,7 +5,7 @@
 import type { BossModifierId } from '../data/bossModifiers';
 
 // === 游戏状态 ===
-export type GamePhase = 'battle' | 'shop' | 'gameover' | 'victory';
+export type GamePhase = 'battle' | 'shop' | 'gameover' | 'victory' | 'rest';
 
 export interface GameState {
   level: number;
@@ -23,8 +23,17 @@ export interface GameState {
   lastMilestone: number;
   overkill: number;  // 最后一击超出目标的分数
   bossModifierPool: BossModifierId[];  // Run 级别：3 个随机 Boss 修饰器 ID
+  usedRestEvents: string[];            // Run 级别：已使用的休息事件 ID
+  tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
   player: PlayerState;
   shop: ShopState;
+}
+
+// === 临时 Buff 系统 ===
+export interface TempBuff {
+  type: 'multiplier' | 'time' | 'targetScore';
+  value: number;           // +1.0, -10, 1.5 等
+  expiresAtNode: number;   // 在哪个节点后过期
 }
 
 export interface PlayerState {
@@ -190,6 +199,8 @@ export interface UIElements {
   ownedSkills: HTMLElement;
   shopRelicIcons: HTMLElement;
   startBattleBtn: HTMLElement;
+  // Rest
+  restScreen: HTMLElement;
   // Gameover
   gameoverScreen: HTMLElement;
   gameoverStats: HTMLElement;

@@ -24,6 +24,8 @@ export function createInitialState(): GameState {
     lastMilestone: 0,
     overkill: 0,
     bossModifierPool: [],
+    usedRestEvents: [],
+    tempBuffs: [],
     player: {
       word: '',
       index: 0,
