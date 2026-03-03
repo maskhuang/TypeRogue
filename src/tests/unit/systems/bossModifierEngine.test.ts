@@ -3,6 +3,7 @@
 // ============================================
 // Story 18.4: Boss 修饰器引擎 + 数值修饰器
 // Story 18.5: 3 个视觉类修饰器（boss_fade, boss_drift, boss_spotlight）
+// Story 18.6: 3 个认知类修饰器（boss_scramble, boss_reverse, boss_masked）
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { state, resetState } from '../../../src/core/state'
@@ -12,6 +13,7 @@ import {
   setActiveParams,
   incrementDiminishCount,
   getDiminishMultiplier,
+  transformWordForModifier,
 } from '../../../src/data/bossModifiers'
 import type { BossModifierId, BossModifier, BossModifierParams } from '../../../src/data/bossModifiers'
 import {
@@ -24,15 +26,21 @@ import {
 } from '../../../src/systems/bossModifierEngine'
 
 // Mock DOM — supports visual modifier tests
-function createMockLetterEl(cls: string) {
+function createMockLetterEl(cls: string, text: string = '') {
   const style: Record<string, string> = {}
+  const attrs: Record<string, string> = {}
+  let _cls = cls
   return {
     classList: {
-      contains: (c: string) => cls.includes(c),
-      add: vi.fn(),
+      contains: (c: string) => _cls.split(' ').includes(c),
+      add: vi.fn((c: string) => { _cls += ' ' + c }),
       remove: vi.fn(),
     },
     style,
+    textContent: text,
+    getAttribute: (name: string) => attrs[name] ?? null,
+    setAttribute: (name: string, value: string) => { attrs[name] = value },
+    removeAttribute: (name: string) => { delete attrs[name] },
   }
 }
 
@@ -89,10 +97,8 @@ describe('bossModifierEngine', () => {
       }
     })
 
-    it('4 个打字类修饰器为 stub（getParams 返回空对象）', () => {
-      const stubs: BossModifierId[] = [
-        'boss_scramble', 'boss_reverse', 'boss_masked', 'boss_rhythm',
-      ]
+    it('1 个打字类修饰器为 stub（getParams 返回空对象）', () => {
+      const stubs: BossModifierId[] = ['boss_rhythm']
       stubs.forEach(id => {
         const mod = BOSS_MODIFIER_REGISTRY[id]
         expect(mod.getParams(false)).toEqual({})
@@ -103,6 +109,15 @@ describe('bossModifierEngine', () => {
     it('3 个视觉类修饰器返回非空参数', () => {
       const visual: BossModifierId[] = ['boss_fade', 'boss_drift', 'boss_spotlight']
       visual.forEach(id => {
+        const params = BOSS_MODIFIER_REGISTRY[id].getParams(false)
+        const values = Object.values(params).filter(v => v !== undefined)
+        expect(values.length).toBeGreaterThan(0)
+      })
+    })
+
+    it('3 个认知类修饰器返回非空参数', () => {
+      const cognitive: BossModifierId[] = ['boss_scramble', 'boss_reverse', 'boss_masked']
+      cognitive.forEach(id => {
         const params = BOSS_MODIFIER_REGISTRY[id].getParams(false)
         const values = Object.values(params).filter(v => v !== undefined)
         expect(values.length).toBeGreaterThan(0)
@@ -546,6 +561,248 @@ describe('bossModifierEngine', () => {
         tickModifier(0.5)
         cleanupModifier()
       }).not.toThrow()
+    })
+  })
+
+  // === Story 18.6: 认知类修饰器 ===
+
+  describe('boss_scramble 修饰器', () => {
+    it('满功率参数: scrambleMode=1', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_scramble.getParams(false)
+      expect(params.scrambleMode).toBe(1)
+    })
+
+    it('精英参数: scrambleMode=2（保留首尾）', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_scramble.getParams(true)
+      expect(params.scrambleMode).toBe(2)
+    })
+
+    it('transformWordForModifier 每次打乱结果都与原词不同 (AC7)', () => {
+      applyModifier('boss_scramble', false)
+      for (let i = 0; i < 20; i++) {
+        const result = transformWordForModifier('abcdef')
+        expect(result).not.toBe('abcdef')
+      }
+      cleanupModifier()
+    })
+
+    it('精英版保留首尾字母', () => {
+      applyModifier('boss_scramble', true)
+      for (let i = 0; i < 20; i++) {
+        const result = transformWordForModifier('abcdef')
+        expect(result[0]).toBe('a')
+        expect(result[result.length - 1]).toBe('f')
+      }
+      cleanupModifier()
+    })
+
+    it('短词（≤2字母）原样返回', () => {
+      applyModifier('boss_scramble', false)
+      expect(transformWordForModifier('a')).toBe('a')
+      expect(transformWordForModifier('ab')).toBe('ab')
+      cleanupModifier()
+    })
+
+    it('打乱结果长度不变', () => {
+      applyModifier('boss_scramble', false)
+      const result = transformWordForModifier('hello')
+      expect(result.length).toBe(5)
+      cleanupModifier()
+    })
+
+    it('打乱结果包含相同字母', () => {
+      applyModifier('boss_scramble', false)
+      const result = transformWordForModifier('hello')
+      expect(result.split('').sort().join('')).toBe('ehllo')
+      cleanupModifier()
+    })
+
+    it('精英版 3 字母词无法打乱，原样返回', () => {
+      applyModifier('boss_scramble', true)
+      // preserveEnds=true, 中间仅 1 字母，无法打乱
+      expect(transformWordForModifier('abc')).toBe('abc')
+      cleanupModifier()
+    })
+  })
+
+  describe('boss_reverse 修饰器', () => {
+    it('满功率参数: reverseActive=1', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_reverse.getParams(false)
+      expect(params.reverseActive).toBe(1)
+    })
+
+    it('精英参数: reverseActive=1（相同）', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_reverse.getParams(true)
+      expect(params.reverseActive).toBe(1)
+    })
+
+    it('transformWordForModifier 倒序词语', () => {
+      applyModifier('boss_reverse', false)
+      expect(transformWordForModifier('hello')).toBe('olleh')
+      expect(transformWordForModifier('world')).toBe('dlrow')
+      cleanupModifier()
+    })
+
+    it('单字母不变', () => {
+      applyModifier('boss_reverse', false)
+      expect(transformWordForModifier('a')).toBe('a')
+      cleanupModifier()
+    })
+
+    it('回文不变', () => {
+      applyModifier('boss_reverse', false)
+      expect(transformWordForModifier('aba')).toBe('aba')
+      cleanupModifier()
+    })
+  })
+
+  describe('boss_masked 修饰器', () => {
+    it('满功率参数: maskRate=0.30', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_masked.getParams(false)
+      expect(params.maskRate).toBe(0.30)
+    })
+
+    it('精英参数: maskRate=0.15', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_masked.getParams(true)
+      expect(params.maskRate).toBe(0.15)
+    })
+
+    it('onTick 将遮罩位置字母替换为 ?', () => {
+      state.player.word = 'HELLO'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'H'),
+        createMockLetterEl('letter pending', 'E'),
+        createMockLetterEl('letter pending', 'L'),
+        createMockLetterEl('letter pending', 'L'),
+        createMockLetterEl('letter pending', 'O'),
+      ]
+      applyModifier('boss_masked', false)
+      tickModifier(0.1)
+      // maskRate=0.30 → 5*0.30=1.5 → floor=1，至少遮 1 个字母
+      const maskedCount = mockLetters.filter(l => l.textContent === '?').length
+      expect(maskedCount).toBeGreaterThanOrEqual(1)
+    })
+
+    it('correct 字母恢复原文', () => {
+      state.player.word = 'AB'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+      ]
+      applyModifier('boss_masked', false)
+      tickModifier(0.1)
+      // 模拟打对第一个字母
+      mockLetters[0].classList.add('correct')
+      mockLetters[0].setAttribute('data-original', 'A')
+      mockLetters[0].textContent = '?'
+      tickModifier(0.1)
+      // correct 字母应恢复
+      expect(mockLetters[0].textContent).toBe('A')
+      expect(mockLetters[0].getAttribute('data-original')).toBeNull()
+      cleanupModifier()
+    })
+
+    it('cleanup 恢复所有字母原文', () => {
+      state.player.word = 'AB'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter pending', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+      ]
+      applyModifier('boss_masked', false)
+      tickModifier(0.1)
+      cleanupModifier()
+      // cleanup 后不应有 data-original 残留
+      mockLetters.forEach(l => {
+        expect(l.getAttribute('data-original')).toBeNull()
+      })
+    })
+
+    it('有 onTick 方法', () => {
+      expect(typeof BOSS_MODIFIER_REGISTRY.boss_masked.onTick).toBe('function')
+    })
+
+    it('换词时重新生成遮罩位置', () => {
+      state.player.word = 'ABCDE'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+        createMockLetterEl('letter pending', 'C'),
+        createMockLetterEl('letter pending', 'D'),
+        createMockLetterEl('letter pending', 'E'),
+      ]
+      applyModifier('boss_masked', false)
+      tickModifier(0.1)
+      const firstMasked = mockLetters.filter(l => l.textContent === '?').length
+      expect(firstMasked).toBeGreaterThanOrEqual(1)
+
+      // 换词 — 新词应重新生成遮罩
+      state.player.word = 'XY'
+      mockLetters = [
+        createMockLetterEl('letter current', 'X'),
+        createMockLetterEl('letter pending', 'Y'),
+      ]
+      tickModifier(0.1)
+      // 2 字母 * 0.30 = 0.6 → floor=0 → max(1,0)=1，至少遮 1 个
+      const secondMasked = mockLetters.filter(l => l.textContent === '?').length
+      expect(secondMasked).toBeGreaterThanOrEqual(1)
+      cleanupModifier()
+    })
+  })
+
+  describe('transformWordForModifier 函数', () => {
+    it('无活跃修饰器时原样返回', () => {
+      cleanupModifier()
+      setActiveParams(null)
+      expect(transformWordForModifier('hello')).toBe('hello')
+    })
+
+    it('非认知修饰器时原样返回', () => {
+      applyModifier('boss_decay', false)
+      expect(transformWordForModifier('hello')).toBe('hello')
+      cleanupModifier()
+    })
+  })
+
+  describe('认知类修饰器生命周期', () => {
+    it('apply → onTick → cleanup 完整周期不报错', () => {
+      const cognitiveMods: BossModifierId[] = ['boss_scramble', 'boss_reverse', 'boss_masked']
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+      ]
+      state.player.index = 0
+      state.player.word = 'AB'
+
+      cognitiveMods.forEach(id => {
+        expect(() => {
+          applyModifier(id, false)
+          tickModifier(0.1)
+          tickModifier(0.5)
+          cleanupModifier()
+        }).not.toThrow()
+      })
+    })
+
+    it('精英版生命周期不报错', () => {
+      const cognitiveMods: BossModifierId[] = ['boss_scramble', 'boss_reverse', 'boss_masked']
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+      ]
+      state.player.index = 0
+      state.player.word = 'AB'
+
+      cognitiveMods.forEach(id => {
+        expect(() => {
+          applyModifier(id, true)
+          tickModifier(0.1)
+          cleanupModifier()
+        }).not.toThrow()
+      })
     })
   })
 })

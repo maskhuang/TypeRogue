@@ -21,7 +21,7 @@ import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getTimeLimit, getBattleNumber, getEliteModifierIndex } from './stage/stageFlow';
-import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier } from '../data/bossModifiers';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier } from '../data/bossModifiers';
 import type { BossModifierMeta } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation } from './bossModifierEngine';
 
@@ -69,7 +69,7 @@ function pickWord(): string {
 }
 
 function setWord(): void {
-  state.player.word = pickWord();
+  state.player.word = transformWordForModifier(pickWord());
   state.player.index = 0;
   state.wordScore = 0;
   wordBaseScore = 0; // 重置基础分

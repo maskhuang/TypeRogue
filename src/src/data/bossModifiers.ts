@@ -4,6 +4,7 @@
 // Story 18.1: 修饰器池（ID + Meta）
 // Story 18.4: BossModifier 接口 + 注册表 + 6 个数值修饰器实现 + 7 个 stub
 // Story 18.5: 3 个视觉类修饰器实现（boss_fade, boss_drift, boss_spotlight）
+// Story 18.6: 3 个认知类修饰器实现（boss_scramble, boss_reverse, boss_masked）
 
 /**
  * 所有 Boss 修饰器 ID
@@ -179,6 +180,10 @@ export interface BossModifierParams {
   driftAmplitude?: number   // boss_drift: 振幅（px）
   driftFrequency?: number   // boss_drift: 频率（Hz）
   spotlightRadius?: number  // boss_spotlight: 可见半径（字母数）
+  // 认知类（Story 18.6）
+  scrambleMode?: number     // boss_scramble: 1=全打乱, 2=保留首尾
+  reverseActive?: number    // boss_reverse: 1=倒序 (truthy check)
+  maskRate?: number         // boss_masked: 遮罩比例 (0.30 / 0.15)
 }
 
 /**
@@ -386,6 +391,119 @@ const bossSpotlight: BossModifier = {
   },
 }
 
+// === 3 个认知类修饰器实现（Story 18.6）===
+
+function scrambleWord(word: string, preserveEnds: boolean, maxRetries = 5): string {
+  if (word.length <= 2) return word
+  const chars = word.split('')
+  const start = preserveEnds ? 1 : 0
+  const end = preserveEnds ? chars.length - 1 : chars.length
+
+  if (end - start <= 1) return word // 可打乱的字母不足 2 个
+
+  for (let i = end - 1; i > start; i--) {
+    const j = start + Math.floor(Math.random() * (i - start + 1))
+    ;[chars[i], chars[j]] = [chars[j], chars[i]]
+  }
+
+  const result = chars.join('')
+  if (result === word && maxRetries > 0) {
+    return scrambleWord(word, preserveEnds, maxRetries - 1)
+  }
+  return result
+}
+
+const bossScramble: BossModifier = {
+  id: 'boss_scramble',
+  getParams: (isElite) => ({ scrambleMode: isElite ? 2 : 1 }),
+  apply: () => {},
+  cleanup: () => {},
+}
+
+const bossReverse: BossModifier = {
+  id: 'boss_reverse',
+  getParams: () => ({ reverseActive: 1 }),
+  apply: () => {},
+  cleanup: () => {},
+}
+
+/** 词语变换：scramble/reverse 在 setWord 时调用 */
+export function transformWordForModifier(word: string): string {
+  const params = getActiveParams()
+  if (!params) return word
+
+  if (params.reverseActive) {
+    return word.split('').reverse().join('')
+  }
+
+  if (params.scrambleMode) {
+    return scrambleWord(word, params.scrambleMode === 2)
+  }
+
+  return word
+}
+
+let maskedPositions: Set<number> = new Set()
+let maskedForWord: string = ''
+
+function generateMaskedPositions(length: number, rate: number): Set<number> {
+  const count = Math.max(1, Math.floor(length * rate))
+  const positions = new Set<number>()
+  const available = Array.from({ length }, (_, i) => i)
+  for (let i = 0; i < count && available.length > 0; i++) {
+    const idx = Math.floor(Math.random() * available.length)
+    positions.add(available.splice(idx, 1)[0])
+  }
+  return positions
+}
+
+const bossMasked: BossModifier = {
+  id: 'boss_masked',
+  getParams: (isElite) => ({ maskRate: isElite ? 0.15 : 0.30 }),
+  apply: () => {
+    maskedPositions.clear()
+    maskedForWord = ''
+  },
+  cleanup: () => {
+    maskedPositions.clear()
+    maskedForWord = ''
+    document.querySelectorAll('#word-display .letter').forEach(el => {
+      const htmlEl = el as HTMLElement
+      const orig = htmlEl.getAttribute('data-original')
+      if (orig) {
+        htmlEl.textContent = orig
+        htmlEl.removeAttribute('data-original')
+      }
+    })
+  },
+  onTick() {
+    const params = getActiveParams()
+    if (!params?.maskRate) return
+
+    const currentWord = state.player.word
+    if (currentWord !== maskedForWord) {
+      maskedForWord = currentWord
+      maskedPositions = generateMaskedPositions(currentWord.length, params.maskRate)
+    }
+
+    document.querySelectorAll('#word-display .letter').forEach((el, i) => {
+      const htmlEl = el as HTMLElement
+      if (el.classList.contains('correct')) {
+        const orig = htmlEl.getAttribute('data-original')
+        if (orig) {
+          htmlEl.textContent = orig
+          htmlEl.removeAttribute('data-original')
+        }
+        return
+      }
+      if (maskedPositions.has(i) && !htmlEl.getAttribute('data-original')) {
+        htmlEl.setAttribute('data-original', htmlEl.textContent || '')
+        htmlEl.textContent = '?'
+      }
+    })
+  },
+}
+
 // === 修饰器注册表 ===
 
 export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
@@ -400,10 +518,11 @@ export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
   boss_fade: bossFade,
   boss_drift: bossDrift,
   boss_spotlight: bossSpotlight,
-  // 打字难度类（stub，18.6-18.8 实现）
-  boss_scramble: createStubModifier('boss_scramble'),
-  boss_reverse: createStubModifier('boss_reverse'),
-  boss_masked: createStubModifier('boss_masked'),
+  // 认知类（Story 18.6 实现）
+  boss_scramble: bossScramble,
+  boss_reverse: bossReverse,
+  boss_masked: bossMasked,
+  // 打字难度类（stub，18.7-18.8 实现）
   boss_rhythm: createStubModifier('boss_rhythm'),
 }
 

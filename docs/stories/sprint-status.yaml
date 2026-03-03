@@ -169,7 +169,7 @@ development_status:
   18-3-rest-stage-random-events: done
   18-4-boss-modifier-framework: done
   18-5-boss-visual-typing: done
-  18-6-boss-cognitive-typing: backlog
+  18-6-boss-cognitive-typing: done
   18-7-boss-rhythm-lock: backlog
   18-8-boss-numerical-rules: backlog
   18-9-act-transition-visual-polish: backlog
@@ -179,4 +179,4 @@ development_status:
 # - Total Epics: 18
 # - Total Stories: 72
 # - Epics Completed: 17
-# - Stories Completed: 64
+# - Stories Completed: 65
