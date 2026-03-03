@@ -21,7 +21,7 @@ import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getTimeLimit, getBattleNumber, getEliteModifierIndex } from './stage/stageFlow';
-import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier } from '../data/bossModifiers';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, isRhythmLocked } from '../data/bossModifiers';
 import type { BossModifierMeta } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation } from './bossModifierEngine';
 
@@ -122,6 +122,8 @@ export function initInput(): void {
 function handleKeyPress(data: { key: string; timestamp: number }): void {
   if (state.phase !== 'battle') return;
   initAudio();
+
+  if (isRhythmLocked()) return;
 
   const k = data.key.toLowerCase();
   const expect = state.player.word[state.player.index]?.toLowerCase();

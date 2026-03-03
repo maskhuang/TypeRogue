@@ -202,6 +202,15 @@ body {
     50% { transform: scale(1.15); }
 }
 
+.letter.rhythm-pulse {
+    animation: rhythmPulse 0.4s ease-in-out infinite;
+}
+
+@keyframes rhythmPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.12); opacity: 0.85; }
+}
+
 .letter.correct {
     color: #4ecdc4;
     text-shadow: 0 0 12px rgba(78,205,196,0.6);

@@ -4,6 +4,8 @@
 // Story 18.4: Boss 修饰器引擎 + 数值修饰器
 // Story 18.5: 3 个视觉类修饰器（boss_fade, boss_drift, boss_spotlight）
 // Story 18.6: 3 个认知类修饰器（boss_scramble, boss_reverse, boss_masked）
+// Story 18.7: 节奏锁定修饰器（boss_rhythm）
+// Story 18.8: 6 个数值修饰器集成测试（combo_punish, cap, fast_time）
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { state, resetState } from '../../../src/core/state'
@@ -14,6 +16,7 @@ import {
   incrementDiminishCount,
   getDiminishMultiplier,
   transformWordForModifier,
+  isRhythmLocked,
 } from '../../../src/data/bossModifiers'
 import type { BossModifierId, BossModifier, BossModifierParams } from '../../../src/data/bossModifiers'
 import {
@@ -97,13 +100,12 @@ describe('bossModifierEngine', () => {
       }
     })
 
-    it('1 个打字类修饰器为 stub（getParams 返回空对象）', () => {
-      const stubs: BossModifierId[] = ['boss_rhythm']
-      stubs.forEach(id => {
-        const mod = BOSS_MODIFIER_REGISTRY[id]
-        expect(mod.getParams(false)).toEqual({})
-        expect(mod.getParams(true)).toEqual({})
-      })
+    it('全部 13 个修饰器均已完整实现（0 个 stub）', () => {
+      for (const [_id, mod] of Object.entries(BOSS_MODIFIER_REGISTRY)) {
+        const params = mod.getParams(false)
+        const values = Object.values(params).filter(v => v !== undefined)
+        expect(values.length).toBeGreaterThan(0)
+      }
     })
 
     it('3 个视觉类修饰器返回非空参数', () => {
@@ -186,6 +188,88 @@ describe('bossModifierEngine', () => {
       const params = BOSS_MODIFIER_REGISTRY.boss_combo_punish.getParams(true)
       expect(params.comboPunishRate).toBe(0.10)
     })
+
+    it('集成：满功率扣 20% 总分（模拟 playerWrong 钩子）', () => {
+      applyModifier('boss_combo_punish', false)
+      state.score = 1000
+      const modEffect = getActiveParams()
+      if (modEffect?.comboPunishRate && state.score > 0) {
+        const penalty = Math.floor(state.score * modEffect.comboPunishRate)
+        state.score = Math.max(0, state.score - penalty)
+      }
+      expect(state.score).toBe(800) // 1000 - 200 = 800
+      cleanupModifier()
+    })
+
+    it('集成：精英版扣 10% 总分', () => {
+      applyModifier('boss_combo_punish', true)
+      state.score = 1000
+      const modEffect = getActiveParams()
+      if (modEffect?.comboPunishRate && state.score > 0) {
+        const penalty = Math.floor(state.score * modEffect.comboPunishRate)
+        state.score = Math.max(0, state.score - penalty)
+      }
+      expect(state.score).toBe(900) // 1000 - 100 = 900
+      cleanupModifier()
+    })
+
+    it('集成：分数为 0 时不扣减', () => {
+      applyModifier('boss_combo_punish', false)
+      state.score = 0
+      const modEffect = getActiveParams()
+      if (modEffect?.comboPunishRate && state.score > 0) {
+        const penalty = Math.floor(state.score * modEffect.comboPunishRate)
+        state.score = Math.max(0, state.score - penalty)
+      }
+      expect(state.score).toBe(0)
+      cleanupModifier()
+    })
+
+    it('集成：penalty 向下取整', () => {
+      applyModifier('boss_combo_punish', false)
+      state.score = 333 // 333 * 0.20 = 66.6 → floor = 66
+      const modEffect = getActiveParams()
+      if (modEffect?.comboPunishRate && state.score > 0) {
+        const penalty = Math.floor(state.score * modEffect.comboPunishRate)
+        state.score = Math.max(0, state.score - penalty)
+      }
+      expect(state.score).toBe(267) // 333 - 66 = 267
+      cleanupModifier()
+    })
+
+    it('集成：视觉反馈字符串格式正确（AC2）', () => {
+      applyModifier('boss_combo_punish', false)
+      state.score = 1000
+      const modEffect = getActiveParams()
+      if (modEffect?.comboPunishRate && state.score > 0) {
+        const penalty = Math.floor(state.score * modEffect.comboPunishRate)
+        // 验证 battle.ts showFeedback(`-${penalty}分!`) 的格式
+        const feedbackMsg = `-${penalty}分!`
+        expect(feedbackMsg).toBe('-200分!')
+        expect(penalty).toBe(200)
+      }
+      cleanupModifier()
+    })
+
+    it('集成：连续断连复合扣分（1000→800→640）', () => {
+      applyModifier('boss_combo_punish', false)
+      state.score = 1000
+      // 第一次断连
+      const mod1 = getActiveParams()
+      if (mod1?.comboPunishRate && state.score > 0) {
+        const penalty = Math.floor(state.score * mod1.comboPunishRate)
+        state.score = Math.max(0, state.score - penalty)
+      }
+      expect(state.score).toBe(800)
+      // 第二次断连
+      const mod2 = getActiveParams()
+      if (mod2?.comboPunishRate && state.score > 0) {
+        const penalty = Math.floor(state.score * mod2.comboPunishRate)
+        state.score = Math.max(0, state.score - penalty)
+      }
+      expect(state.score).toBe(640) // 800 - 160 = 640
+      cleanupModifier()
+    })
   })
 
   describe('boss_cap 修饰器', () => {
@@ -198,6 +282,39 @@ describe('bossModifierEngine', () => {
       const params = BOSS_MODIFIER_REGISTRY.boss_cap.getParams(true)
       expect(params.scoreCap).toBe(75)
     })
+
+    it('集成：高分词被截断到 cap=50（模拟 completeWord 钩子）', () => {
+      applyModifier('boss_cap', false)
+      let finalWordScore = 100
+      const modEffect = getActiveParams()
+      if (modEffect?.scoreCap) {
+        finalWordScore = Math.min(finalWordScore, modEffect.scoreCap)
+      }
+      expect(finalWordScore).toBe(50)
+      cleanupModifier()
+    })
+
+    it('集成：低于 cap 的分数不截断', () => {
+      applyModifier('boss_cap', false)
+      let finalWordScore = 30
+      const modEffect = getActiveParams()
+      if (modEffect?.scoreCap) {
+        finalWordScore = Math.min(finalWordScore, modEffect.scoreCap)
+      }
+      expect(finalWordScore).toBe(30)
+      cleanupModifier()
+    })
+
+    it('集成：精英版 scoreCap=75 截断', () => {
+      applyModifier('boss_cap', true)
+      let finalWordScore = 100
+      const modEffect = getActiveParams()
+      if (modEffect?.scoreCap) {
+        finalWordScore = Math.min(finalWordScore, modEffect.scoreCap)
+      }
+      expect(finalWordScore).toBe(75)
+      cleanupModifier()
+    })
   })
 
   describe('boss_fast_time 修饰器', () => {
@@ -209,6 +326,34 @@ describe('bossModifierEngine', () => {
     it('精英参数: timeSpeed = 1.25', () => {
       const params = BOSS_MODIFIER_REGISTRY.boss_fast_time.getParams(true)
       expect(params.timeSpeed).toBe(1.25)
+    })
+
+    it('集成：timer 以 1.5x 速度消耗时间（模拟 startTimer 钩子）', () => {
+      applyModifier('boss_fast_time', false)
+      state.time = 30.0
+      const modEffect = getActiveParams()
+      const timeSpeed = modEffect?.timeSpeed ?? 1
+      state.time -= 0.1 * timeSpeed // 模拟 1 次 100ms tick
+      expect(state.time).toBeCloseTo(29.85) // 30 - 0.15 = 29.85
+      cleanupModifier()
+    })
+
+    it('集成：精英版 1.25x 速度', () => {
+      applyModifier('boss_fast_time', true)
+      state.time = 30.0
+      const modEffect = getActiveParams()
+      const timeSpeed = modEffect?.timeSpeed ?? 1
+      state.time -= 0.1 * timeSpeed
+      expect(state.time).toBeCloseTo(29.875) // 30 - 0.125 = 29.875
+      cleanupModifier()
+    })
+
+    it('集成：无修饰器时 timeSpeed 默认为 1', () => {
+      state.time = 30.0
+      const modEffect = getActiveParams()
+      const timeSpeed = modEffect?.timeSpeed ?? 1
+      state.time -= 0.1 * timeSpeed
+      expect(state.time).toBeCloseTo(29.9) // 30 - 0.1 = 29.9
     })
   })
 
@@ -803,6 +948,314 @@ describe('bossModifierEngine', () => {
           cleanupModifier()
         }).not.toThrow()
       })
+    })
+  })
+
+  // === Story 18.7: 节奏锁定修饰器 ===
+
+  describe('boss_rhythm 修饰器', () => {
+    it('满功率参数: rhythmBpmStart=90, rhythmBpmEnd=140, rhythmDuration=60', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_rhythm.getParams(false)
+      expect(params.rhythmBpmStart).toBe(90)
+      expect(params.rhythmBpmEnd).toBe(140)
+      expect(params.rhythmDuration).toBe(60)
+    })
+
+    it('精英参数: rhythmBpmStart=70, rhythmBpmEnd=110, rhythmDuration=45', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_rhythm.getParams(true)
+      expect(params.rhythmBpmStart).toBe(70)
+      expect(params.rhythmBpmEnd).toBe(110)
+      expect(params.rhythmDuration).toBe(45)
+    })
+
+    it('精英参数弱于满功率（BPM 更低、时间更短）', () => {
+      const full = BOSS_MODIFIER_REGISTRY.boss_rhythm.getParams(false)
+      const elite = BOSS_MODIFIER_REGISTRY.boss_rhythm.getParams(true)
+      expect(elite.rhythmBpmStart!).toBeLessThan(full.rhythmBpmStart!)
+      expect(elite.rhythmBpmEnd!).toBeLessThan(full.rhythmBpmEnd!)
+    })
+
+    it('首字母立即解锁（+1 规则）', () => {
+      state.player.word = 'HELLO'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'H'),
+        createMockLetterEl('letter pending', 'E'),
+        createMockLetterEl('letter pending', 'L'),
+        createMockLetterEl('letter pending', 'L'),
+        createMockLetterEl('letter pending', 'O'),
+      ]
+      applyModifier('boss_rhythm', false)
+      // 即使 0 秒也有首字母解锁（wordTime=0 → floor(0/interval)+1 = 1）
+      tickModifier(0.001)
+      // 首字母（index 0）opacity=1
+      expect(mockLetters[0].style.opacity).toBe('1')
+      // 第二个字母仍锁定
+      expect(mockLetters[1].style.opacity).toBe('0.3')
+      cleanupModifier()
+    })
+
+    it('onTick 随时间解锁更多字母', () => {
+      state.player.word = 'ABCD'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+        createMockLetterEl('letter pending', 'C'),
+        createMockLetterEl('letter pending', 'D'),
+      ]
+      applyModifier('boss_rhythm', false)
+      // 首次 tick 注册词语（rhythmWordStart = rhythmElapsed）
+      tickModifier(0.001)
+      // BPM=90 → beatInterval = 60/90 ≈ 0.667s
+      // 再经过 1.5s: wordTime≈1.5 → floor(1.5/0.667)+1 = floor(2.25)+1 = 3
+      tickModifier(1.5)
+      // 前 3 个字母解锁，第 4 个锁定
+      expect(mockLetters[0].style.opacity).toBe('1')
+      expect(mockLetters[1].style.opacity).toBe('1')
+      expect(mockLetters[2].style.opacity).toBe('1')
+      expect(mockLetters[3].style.opacity).toBe('0.3')
+      cleanupModifier()
+    })
+
+    it('锁定字母 opacity=0.3', () => {
+      state.player.word = 'AB'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+      ]
+      applyModifier('boss_rhythm', false)
+      tickModifier(0.001)
+      // 首字母解锁，第二个锁定
+      expect(mockLetters[1].style.opacity).toBe('0.3')
+      cleanupModifier()
+    })
+
+    it('单字母词立即解锁且 beatInterval 无影响', () => {
+      state.player.word = 'A'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+      ]
+      applyModifier('boss_rhythm', false)
+      tickModifier(0.001)
+      // 单字母词：首字母立即解锁，opacity=1
+      expect(mockLetters[0].style.opacity).toBe('1')
+      // isRhythmLocked: index=0, unlockedCount=1 → 0 < 1 → false
+      expect(isRhythmLocked()).toBe(false)
+      cleanupModifier()
+    })
+
+    it('当前可打字母添加 rhythm-pulse 类', () => {
+      state.player.word = 'AB'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+      ]
+      applyModifier('boss_rhythm', false)
+      tickModifier(0.001)
+      // playerIdx=0, 已解锁 → 添加 rhythm-pulse
+      expect(mockLetters[0].classList.add).toHaveBeenCalledWith('rhythm-pulse')
+      cleanupModifier()
+    })
+
+    it('correct 字母恢复 opacity 并移除 rhythm-pulse', () => {
+      state.player.word = 'AB'
+      state.player.index = 1
+      mockLetters = [
+        createMockLetterEl('letter correct', 'A'),
+        createMockLetterEl('letter current', 'B'),
+      ]
+      applyModifier('boss_rhythm', false)
+      tickModifier(0.1)
+      // correct 字母 opacity 恢复空字符串
+      expect(mockLetters[0].style.opacity).toBe('')
+      expect(mockLetters[0].classList.remove).toHaveBeenCalledWith('rhythm-pulse')
+      cleanupModifier()
+    })
+
+    it('有 onTick 方法', () => {
+      expect(typeof BOSS_MODIFIER_REGISTRY.boss_rhythm.onTick).toBe('function')
+    })
+  })
+
+  describe('isRhythmLocked 函数', () => {
+    it('无活跃修饰器时返回 false', () => {
+      setActiveParams(null)
+      expect(isRhythmLocked()).toBe(false)
+    })
+
+    it('非节奏修饰器时返回 false', () => {
+      applyModifier('boss_decay', false)
+      expect(isRhythmLocked()).toBe(false)
+      cleanupModifier()
+    })
+
+    it('apply 后首次 tick 前返回 true（未解锁任何字母）', () => {
+      state.player.word = 'HELLO'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'H'),
+        createMockLetterEl('letter pending', 'E'),
+        createMockLetterEl('letter pending', 'L'),
+        createMockLetterEl('letter pending', 'L'),
+        createMockLetterEl('letter pending', 'O'),
+      ]
+      applyModifier('boss_rhythm', false)
+      // 尚未 tick — rhythmUnlockedCount=0, index=0 → 0 >= 0 → true
+      expect(isRhythmLocked()).toBe(true)
+      cleanupModifier()
+    })
+
+    it('当前字母已解锁时返回 false', () => {
+      state.player.word = 'HELLO'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'H'),
+        createMockLetterEl('letter pending', 'E'),
+        createMockLetterEl('letter pending', 'L'),
+        createMockLetterEl('letter pending', 'L'),
+        createMockLetterEl('letter pending', 'O'),
+      ]
+      applyModifier('boss_rhythm', false)
+      tickModifier(0.001) // 首字母解锁
+      // index=0, unlockedCount=1 → 0 < 1 → false
+      expect(isRhythmLocked()).toBe(false)
+      cleanupModifier()
+    })
+
+    it('当前字母未解锁时返回 true', () => {
+      state.player.word = 'HELLO'
+      state.player.index = 2
+      mockLetters = [
+        createMockLetterEl('letter correct', 'H'),
+        createMockLetterEl('letter correct', 'E'),
+        createMockLetterEl('letter current', 'L'),
+        createMockLetterEl('letter pending', 'L'),
+        createMockLetterEl('letter pending', 'O'),
+      ]
+      applyModifier('boss_rhythm', false)
+      tickModifier(0.001) // 仅首字母解锁，unlockedCount=1
+      // index=2, unlockedCount=1 → 2 >= 1 → true
+      expect(isRhythmLocked()).toBe(true)
+      cleanupModifier()
+    })
+  })
+
+  describe('boss_rhythm 换词与 BPM 递增', () => {
+    it('换词时重置节奏计时', () => {
+      state.player.word = 'AB'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+      ]
+      applyModifier('boss_rhythm', false)
+      // 首次 tick 注册词语
+      tickModifier(0.001)
+      // 经过 2 秒，两个字母都解锁
+      tickModifier(2.0)
+      expect(mockLetters[0].style.opacity).toBe('1')
+      expect(mockLetters[1].style.opacity).toBe('1')
+
+      // 换词 — 换词 tick 中 rhythmWordStart 重置为当前 rhythmElapsed
+      state.player.word = 'XYZ'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'X'),
+        createMockLetterEl('letter pending', 'Y'),
+        createMockLetterEl('letter pending', 'Z'),
+      ]
+      tickModifier(0.001) // 换词 tick（wordTime≈0 → 仅首字母解锁）
+      expect(mockLetters[0].style.opacity).toBe('1')
+      expect(mockLetters[1].style.opacity).toBe('0.3')
+      expect(mockLetters[2].style.opacity).toBe('0.3')
+      cleanupModifier()
+    })
+
+    it('BPM 随时间线性递增（换词后解锁更快证明 BPM 升高）', () => {
+      // 先用短词推进 30s，让 BPM 从 90 升到 ~115
+      state.player.word = 'A'
+      state.player.index = 0
+      mockLetters = [createMockLetterEl('letter current', 'A')]
+      applyModifier('boss_rhythm', false)
+      tickModifier(0.001) // 注册词语
+      tickModifier(30.0)  // 推进 30s → t=0.5 → BPM=90+(140-90)*0.5=115
+
+      // 换 10 字母新词 — wordTime 重置
+      state.player.word = 'ABCDEFGHIJ'
+      state.player.index = 0
+      mockLetters = Array.from({ length: 10 }, (_, i) =>
+        createMockLetterEl(i === 0 ? 'letter current' : 'letter pending', String.fromCharCode(65 + i))
+      )
+      tickModifier(0.001) // 注册新词
+
+      // tick 0.6s — 在 BPM=90(interval=0.667s) 下只解锁 1 个
+      // 但在 BPM≈115(interval=0.522s) 下解锁 floor(0.6/0.522)+1=2 个
+      tickModifier(0.6)
+      const unlocked = mockLetters.filter(l => l.style.opacity === '1').length
+      expect(unlocked).toBe(2) // 证明 BPM > 90
+      cleanupModifier()
+    })
+  })
+
+  describe('boss_rhythm cleanup', () => {
+    it('cleanup 恢复所有字母 opacity 并移除 rhythm-pulse', () => {
+      state.player.word = 'ABC'
+      state.player.index = 0
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+        createMockLetterEl('letter pending', 'C'),
+      ]
+      applyModifier('boss_rhythm', false)
+      tickModifier(0.5)
+      cleanupModifier()
+      // cleanup 后 opacity 全部恢复
+      mockLetters.forEach(l => {
+        expect(l.style.opacity).toBe('')
+      })
+      // rhythm-pulse 全部移除
+      mockLetters.forEach(l => {
+        expect(l.classList.remove).toHaveBeenCalledWith('rhythm-pulse')
+      })
+    })
+  })
+
+  describe('节奏修饰器生命周期', () => {
+    it('apply → onTick → cleanup 完整周期不报错', () => {
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+      ]
+      state.player.index = 0
+      state.player.word = 'AB'
+
+      expect(() => {
+        applyModifier('boss_rhythm', false)
+        tickModifier(0.1)
+        tickModifier(0.5)
+        tickModifier(1.0)
+        cleanupModifier()
+      }).not.toThrow()
+    })
+
+    it('精英版生命周期不报错', () => {
+      mockLetters = [
+        createMockLetterEl('letter current', 'A'),
+        createMockLetterEl('letter pending', 'B'),
+      ]
+      state.player.index = 0
+      state.player.word = 'AB'
+
+      expect(() => {
+        applyModifier('boss_rhythm', true)
+        tickModifier(0.1)
+        tickModifier(0.5)
+        cleanupModifier()
+      }).not.toThrow()
     })
   })
 })

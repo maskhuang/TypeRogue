@@ -5,6 +5,7 @@
 // Story 18.4: BossModifier 接口 + 注册表 + 6 个数值修饰器实现 + 7 个 stub
 // Story 18.5: 3 个视觉类修饰器实现（boss_fade, boss_drift, boss_spotlight）
 // Story 18.6: 3 个认知类修饰器实现（boss_scramble, boss_reverse, boss_masked）
+// Story 18.7: 节奏锁定修饰器实现（boss_rhythm）
 
 /**
  * 所有 Boss 修饰器 ID
@@ -184,6 +185,10 @@ export interface BossModifierParams {
   scrambleMode?: number     // boss_scramble: 1=全打乱, 2=保留首尾
   reverseActive?: number    // boss_reverse: 1=倒序 (truthy check)
   maskRate?: number         // boss_masked: 遮罩比例 (0.30 / 0.15)
+  // 节奏类（Story 18.7）
+  rhythmBpmStart?: number   // boss_rhythm: 起始 BPM (90 满功率, 70 精英)
+  rhythmBpmEnd?: number     // boss_rhythm: 最终 BPM (140 满功率, 110 精英)
+  rhythmDuration?: number   // boss_rhythm: BPM 递增持续时间（秒）
 }
 
 /**
@@ -199,16 +204,6 @@ export interface BossModifier {
   cleanup(): void
   /** 每帧更新（可选，boss_decay 等需要） */
   onTick?(dt: number): void
-}
-
-/** 创建 stub 修饰器（打字难度类，18.5-18.8 实现） */
-function createStubModifier(id: BossModifierId): BossModifier {
-  return {
-    id,
-    getParams: () => ({}),
-    apply: () => {},
-    cleanup: () => {},
-  }
 }
 
 // === 6 个数值规则类修饰器实现 ===
@@ -504,6 +499,90 @@ const bossMasked: BossModifier = {
   },
 }
 
+// === 节奏锁定修饰器实现（Story 18.7）===
+
+let rhythmElapsed = 0
+let rhythmWordStart = 0
+let rhythmWord = ''
+let rhythmUnlockedCount = 0
+
+const bossRhythm: BossModifier = {
+  id: 'boss_rhythm',
+  getParams: (isElite) => ({
+    rhythmBpmStart: isElite ? 70 : 90,
+    rhythmBpmEnd: isElite ? 110 : 140,
+    rhythmDuration: isElite ? 45 : 60,
+  }),
+  apply: () => {
+    rhythmElapsed = 0
+    rhythmWordStart = 0
+    rhythmWord = ''
+    rhythmUnlockedCount = 0
+  },
+  cleanup: () => {
+    rhythmElapsed = 0
+    rhythmWordStart = 0
+    rhythmWord = ''
+    rhythmUnlockedCount = 0
+    document.querySelectorAll('#word-display .letter').forEach(el => {
+      const htmlEl = el as HTMLElement
+      htmlEl.style.opacity = ''
+      htmlEl.classList.remove('rhythm-pulse')
+    })
+  },
+  onTick(dt: number) {
+    rhythmElapsed += dt
+    const params = getActiveParams()
+    if (!params?.rhythmBpmStart) return
+
+    const currentWord = state.player.word
+    if (currentWord !== rhythmWord) {
+      rhythmWord = currentWord
+      rhythmWordStart = rhythmElapsed
+    }
+
+    // BPM 线性递增
+    const t = Math.min(rhythmElapsed / (params.rhythmDuration ?? 60), 1)
+    const bpm = params.rhythmBpmStart + ((params.rhythmBpmEnd ?? params.rhythmBpmStart) - params.rhythmBpmStart) * t
+    const beatInterval = 60 / bpm
+
+    // 首字母立即解锁 (+1)
+    const wordTime = rhythmElapsed - rhythmWordStart
+    rhythmUnlockedCount = Math.min(
+      Math.floor(wordTime / beatInterval) + 1,
+      currentWord.length
+    )
+
+    const playerIdx = state.player.index
+    document.querySelectorAll('#word-display .letter').forEach((el, i) => {
+      const htmlEl = el as HTMLElement
+      if (el.classList.contains('correct')) {
+        htmlEl.style.opacity = ''
+        htmlEl.classList.remove('rhythm-pulse')
+        return
+      }
+      if (i < rhythmUnlockedCount) {
+        htmlEl.style.opacity = '1'
+        if (i === playerIdx) {
+          htmlEl.classList.add('rhythm-pulse')
+        } else {
+          htmlEl.classList.remove('rhythm-pulse')
+        }
+      } else {
+        htmlEl.style.opacity = '0.3'
+        htmlEl.classList.remove('rhythm-pulse')
+      }
+    })
+  },
+}
+
+/** 节奏锁定检查：handleKeyPress 调用，锁定时返回 true */
+export function isRhythmLocked(): boolean {
+  const params = getActiveParams()
+  if (!params?.rhythmBpmStart) return false
+  return state.player.index >= rhythmUnlockedCount
+}
+
 // === 修饰器注册表 ===
 
 export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
@@ -522,8 +601,8 @@ export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
   boss_scramble: bossScramble,
   boss_reverse: bossReverse,
   boss_masked: bossMasked,
-  // 打字难度类（stub，18.7-18.8 实现）
-  boss_rhythm: createStubModifier('boss_rhythm'),
+  // 节奏类（Story 18.7 实现）
+  boss_rhythm: bossRhythm,
 }
 
 // === 活跃修饰器参数查询（供 bossModifierEngine 和 battle.ts 使用） ===
