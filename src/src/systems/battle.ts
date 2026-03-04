@@ -7,7 +7,7 @@ import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag }
 import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
-import { SKILLS, getSkillDisplayInfo } from '../data/skills';
+import { SKILLS } from '../data/skills';
 import { PRODUCERS } from '../data/producers';
 import { CONVERTERS } from '../data/converters';
 import { CONNECTORS } from '../data/connectors';
@@ -314,7 +314,8 @@ function completeWord(): void {
   bonusMult += wordRelicResult.effects.multiply;
 
   const finalMult = mult * bonusMult;
-  let finalWordScore = Math.floor(baseChips * finalMult);
+  const instantScore = Math.floor(state.resources.score);
+  let finalWordScore = Math.floor(baseChips * finalMult + instantScore);
 
   // Boss 修饰器：单词限额（cap）+ 递减收益（diminish）
   const modEffect = getActiveParams();
@@ -327,7 +328,7 @@ function completeWord(): void {
   }
 
   // 显示 Balatro 风格完成动画
-  showSettlementComplete(baseChips, finalMult, finalWordScore);
+  showSettlementComplete(baseChips, finalMult, instantScore, finalWordScore);
 
   const prevScore = state.score;
   state.score += finalWordScore;
@@ -402,15 +403,18 @@ function updateSettlementLive(): void {
 
   const chipsEl = document.getElementById('settlement-chips');
   const multEl = document.getElementById('settlement-mult');
+  const scoreEl = document.getElementById('settlement-score');
   const finalEl = document.getElementById('settlement-final');
 
   const chips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore + state.player.wordBonus);
   state.resources.base = chips;
   const mult = state.multiplier;
-  const final = Math.floor(chips * mult);
+  const score = Math.floor(state.resources.score);
+  const final = Math.floor(chips * mult + score);
 
   if (chipsEl) chipsEl.textContent = chips.toLocaleString();
   if (multEl) multEl.textContent = mult.toFixed(1);
+  if (scoreEl) scoreEl.textContent = score.toLocaleString();
   if (finalEl) finalEl.textContent = final.toLocaleString();
 
   // 确保面板可见
@@ -419,7 +423,7 @@ function updateSettlementLive(): void {
 }
 
 /** 词语完成时播放结算动画 */
-function showSettlementComplete(chips: number, mult: number, final: number): void {
+function showSettlementComplete(chips: number, mult: number, score: number, total: number): void {
   const settlement = document.getElementById('score-settlement');
   if (!settlement) return;
 
@@ -429,11 +433,13 @@ function showSettlementComplete(chips: number, mult: number, final: number): voi
 
   const chipsEl = document.getElementById('settlement-chips');
   const multEl = document.getElementById('settlement-mult');
+  const scoreEl = document.getElementById('settlement-score');
   const finalEl = document.getElementById('settlement-final');
 
   if (chipsEl) chipsEl.textContent = chips.toLocaleString();
   if (multEl) multEl.textContent = mult.toFixed(1);
-  if (finalEl) finalEl.textContent = final.toLocaleString();
+  if (scoreEl) scoreEl.textContent = score.toLocaleString();
+  if (finalEl) finalEl.textContent = total.toLocaleString();
 
   // 播放完成动画
   settlement.classList.remove('settlement-live');
@@ -555,6 +561,7 @@ function updateTimerDisplay(): void {
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
   clearPseudoInfinite();
+  clearFloatQueue();
   cleanupModifier();
   stopBossRotation();
   hideSettlement();
@@ -712,7 +719,6 @@ export async function startLevel(): Promise<void> {
   showScreen('battle');
   setWord();
   updateHUD();
-  renderBattleSkills();
   renderRelicDisplay();
   renderActiveLibrary();
 
@@ -725,6 +731,7 @@ export async function startLevel(): Promise<void> {
     await showBossIntro(state.bossModifierPool);
   }
 
+  initFloatPool();
   announceLevel();
   startTimer();
 
@@ -772,6 +779,7 @@ function announceLevel(): void {
 function victory(): void {
   state.phase = 'victory';
   if (timerInterval) clearInterval(timerInterval);
+  clearFloatQueue();
   cleanupModifier();
   stopBossRotation();
 
@@ -791,6 +799,7 @@ function gameOver(): void {
   state.phase = 'gameover';
   if (timerInterval) clearInterval(timerInterval);
   clearPseudoInfinite();
+  clearFloatQueue();
   cleanupModifier();
   stopBossRotation();
 
@@ -834,31 +843,6 @@ export function updateHUD(): void {
   });
 }
 
-export function renderBattleSkills(): void {
-  const el = getElements();
-  el.battleSkills.innerHTML = '';
-
-  let delay = 0;
-  state.player.bindings.forEach((skillId, key) => {
-    const sk = SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
-    if (!sk) return;
-
-    const lvl = state.player.skills.get(skillId)?.level || 1;
-    const display = getSkillDisplayInfo(skillId, state.player.evolvedSkills, lvl, state.player.enchantedSkills);
-    const isEvolved = state.player.evolvedSkills.has(skillId) || state.player.enchantedSkills.has(skillId);
-    const d = document.createElement('div');
-    d.className = `bound-skill card-float${isEvolved ? ' evolved' : ''}`;
-    d.dataset.id = skillId;
-    d.style.animationDelay = `${delay * 0.2}s`;
-    d.innerHTML = `
-      <span class="skill-letter">${key.toUpperCase()}</span>
-      <span class="skill-icon">${display.icon}</span>
-      ${lvl > 1 ? `<span class="skill-level">Lv.${lvl}</span>` : ''}
-    `;
-    el.battleSkills.appendChild(d);
-    delay++;
-  });
-}
 
 export function renderRelicDisplay(): void {
   const el = getElements();
@@ -896,32 +880,87 @@ function renderActiveLibrary(): void {
   el.activeLibrary.textContent = `📚 ${deckSize}词`;
 }
 
-// === 特效 ===
-export function showFeedback(txt: string, color: string): void {
-  const el = getElements();
-  el.feedback.textContent = txt;
-  el.feedback.style.color = color;
-  setTimeout(() => {
-    if (el.feedback.textContent === txt) el.feedback.textContent = '';
-  }, 900);
-}
+// === 浮字系统 ===
+const FLOAT_POOL_SIZE = 20;
+const FLOAT_INTERVAL = 150; // 链式浮字间隔 ms
+let floatPool: HTMLDivElement[] = [];
+let floatQueue: Array<{ text: string; color: string }> = [];
+let queueTimer: ReturnType<typeof setTimeout> | null = null;
 
-function showScorePopup(score: number): void {
-  const el = getElements();
-  const p = document.createElement('div');
-  p.className = 'score-popup';
-  p.textContent = `+${score}`;
-  p.style.left = (40 + Math.random() * 20) + '%';
-  el.container.appendChild(p);
-  setTimeout(() => p.remove(), 800);
-}
-
-export function highlightBoundSkill(skillId: string): void {
-  const el = getElements();
-  const skill = el.battleSkills.querySelector(`[data-id="${skillId}"]`) as HTMLElement;
-  if (skill) {
-    skill.classList.add('triggered');
-    juiceUp(skill, 0.4, 5);
-    setTimeout(() => skill.classList.remove('triggered'), 250);
+/** 初始化浮字对象池 */
+function initFloatPool(): void {
+  if (floatPool.length > 0) return;
+  const container = getElements().container;
+  for (let i = 0; i < FLOAT_POOL_SIZE; i++) {
+    const el = document.createElement('div');
+    el.className = 'float-text';
+    el.style.display = 'none';
+    container.appendChild(el);
+    floatPool.push(el);
   }
 }
+
+/** 从池中获取空闲浮字元素 */
+function acquireFloat(): HTMLDivElement | null {
+  return floatPool.find(el => el.style.display === 'none') || null;
+}
+
+/** 回收浮字元素 */
+function releaseFloat(el: HTMLDivElement): void {
+  el.style.display = 'none';
+  el.classList.remove('float-text-active');
+}
+
+/** 创建一个浮字 */
+function createFloatText(text: string, color: string): void {
+  const el = acquireFloat();
+  if (!el) return; // 池满，跳过
+
+  el.textContent = text;
+  el.style.color = color;
+  el.style.left = (35 + Math.random() * 30) + '%';
+  el.style.display = '';
+  // 强制重排触发动画
+  void el.offsetWidth;
+  el.classList.add('float-text-active');
+
+  // 动画结束后回收（监听 animationend 而非硬编码延时）
+  el.onanimationend = () => releaseFloat(el);
+}
+
+/** 排队浮字（支持链式触发间隔弹出） */
+function drainQueue(): void {
+  if (floatQueue.length === 0) {
+    queueTimer = null;
+    return;
+  }
+  const item = floatQueue.shift()!;
+  createFloatText(item.text, item.color);
+  queueTimer = setTimeout(drainQueue, FLOAT_INTERVAL);
+}
+
+/** 清空浮字队列和定时器（关卡结束时调用） */
+function clearFloatQueue(): void {
+  floatQueue.length = 0;
+  if (queueTimer) {
+    clearTimeout(queueTimer);
+    queueTimer = null;
+  }
+  // 回收所有活跃浮字
+  for (const el of floatPool) {
+    releaseFloat(el);
+  }
+}
+
+/** 浮字反馈（替代旧 showFeedback） */
+export function showFeedback(txt: string, color: string): void {
+  floatQueue.push({ text: txt, color });
+  if (!queueTimer) drainQueue();
+}
+
+/** 伪无限模式视觉：屏幕边缘金色光晕 */
+export function setPseudoInfiniteVisual(active: boolean): void {
+  const el = getElements();
+  el.container.classList.toggle('pseudo-infinite', active);
+}
+

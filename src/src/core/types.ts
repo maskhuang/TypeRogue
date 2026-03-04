@@ -260,7 +260,6 @@ export interface UIElements {
   // Battle
   battleScreen: HTMLElement;
   word: HTMLElement;
-  feedback: HTMLElement;
   combo: HTMLElement;
   score: HTMLElement;
   targetScore: HTMLElement;
@@ -268,7 +267,6 @@ export interface UIElements {
   timerDisplay: HTMLElement;
   timerBar: HTMLElement;
   levelLabel: HTMLElement;
-  battleSkills: HTMLElement;
   triggerZone: HTMLElement;
   particles: HTMLElement;
   container: HTMLElement;

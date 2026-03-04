@@ -18,7 +18,7 @@ import { EffectPipeline } from './modifiers/EffectPipeline';
 import { BehaviorExecutor } from './modifiers/BehaviorExecutor';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
-import { showFeedback, highlightBoundSkill, updateHUD } from './battle';
+import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
 import { injectRelicModifiers, queryRelicFlag } from './relics/RelicPipeline';
 
 // === 获取相邻技能 ===
@@ -434,7 +434,7 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
 
   // 视觉/音效反馈
   showTriggerPopup(producerId);
-  highlightBoundSkill(producerId);
+
   playSound('skill');
   synergy.wordSkillCount++;
 
@@ -504,7 +504,7 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
 
   // 视觉/音效反馈
   showTriggerPopup(converterId);
-  highlightBoundSkill(converterId);
+
   playSound('skill');
   synergy.wordSkillCount++;
 
@@ -593,7 +593,7 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
   const baseValue = getProducerValue(producerId, level);
 
   showTriggerPopup(producerId);
-  highlightBoundSkill(producerId);
+
 
   if (prod.operator === 'add') {
     const value = baseValue * reduction;
@@ -635,7 +635,7 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
   const sourceVal = getSourceValue(conv.source, state.resources);
 
   showTriggerPopup(converterId);
-  highlightBoundSkill(converterId);
+
 
   if (conv.formula === 'add') {
     const delta = sourceVal * k * reduction;
@@ -755,6 +755,7 @@ export function enterPseudoInfinite(participantKeys: string[]): void {
   // 先设置 state，让 interval 回调读取 state 中的参与者列表（支持后续合并）
   const piState: PseudoInfiniteState = { intervalId: 0, participantKeys: [...participantKeys] };
   state.pseudoInfiniteState = piState;
+  setPseudoInfiniteVisual(true);
 
   const intervalId = setInterval(() => {
     if (state.phase !== 'battle') {
@@ -784,6 +785,7 @@ export function clearPseudoInfinite(): void {
   if (state.pseudoInfiniteState) {
     clearInterval(state.pseudoInfiniteState.intervalId);
     state.pseudoInfiniteState = null;
+    setPseudoInfiniteVisual(false);
   }
 }
 
@@ -794,7 +796,7 @@ export function triggerConnectorCopy(connectorId: string, triggerKey: string, ch
 
   // 视觉/音效反馈
   showTriggerPopup(connectorId);
-  highlightBoundSkill(connectorId);
+
   playSound('skill');
   synergy.wordSkillCount++;
 
@@ -848,7 +850,7 @@ export function checkResourceTriggers(resource: ResourceType, sourceKey: string,
 
     // 视觉/音效反馈
     showTriggerPopup(connId);
-    highlightBoundSkill(connId);
+
     playSound('skill');
     const desc = getConnectorDesc(connId);
     showFeedback(desc, '#a29bfe');
@@ -910,7 +912,7 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
 
   // 视觉/音效反馈
   showTriggerPopup(skillId);
-  highlightBoundSkill(skillId);
+
   playSound('skill');
 
   // 记录技能触发

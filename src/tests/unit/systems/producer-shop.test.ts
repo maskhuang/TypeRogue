@@ -13,7 +13,6 @@ vi.mock('../../../src/ui/elements', () => ({
   getElements: () => ({
     rewardCards: { innerHTML: '', appendChild: vi.fn() },
     boundGrid: { innerHTML: '' },
-    battleSkills: { querySelectorAll: () => [] },
     triggerZone: { appendChild: vi.fn() },
   }),
 }))
@@ -23,8 +22,8 @@ vi.mock('../../../src/effects/juice', () => ({
 }))
 vi.mock('../../../src/systems/battle', () => ({
   showFeedback: vi.fn(),
-  highlightBoundSkill: vi.fn(),
   updateHUD: vi.fn(),
+  setPseudoInfiniteVisual: vi.fn(),
 }))
 
 describe('产出者商店集成 (AC 7)', () => {

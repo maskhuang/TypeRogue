@@ -12,7 +12,6 @@ export function initElements(): UIElements {
     // Battle
     battleScreen: document.getElementById('battle-screen')!,
     word: document.getElementById('word-display')!,
-    feedback: document.getElementById('input-feedback')!,
     combo: document.getElementById('combo-count')!,
     score: document.getElementById('score-count')!,
     targetScore: document.getElementById('target-score')!,
@@ -20,7 +19,6 @@ export function initElements(): UIElements {
     timerDisplay: document.getElementById('timer-display')!,
     timerBar: document.getElementById('timer-bar-fill')!,
     levelLabel: document.getElementById('level-label')!,
-    battleSkills: document.getElementById('battle-skills')!,
     triggerZone: document.getElementById('skill-trigger-zone')!,
     particles: document.getElementById('particles')!,
     container: document.getElementById('game-container')!,

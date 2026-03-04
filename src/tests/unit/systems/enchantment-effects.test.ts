@@ -11,19 +11,17 @@ import { PRODUCERS } from '../../../src/data/producers'
 vi.mock('../../../src/ui/elements', () => ({
   getElements: () => ({
     triggerZone: { appendChild: vi.fn() },
-    battleSkills: { querySelectorAll: () => [] },
   }),
 }))
 vi.mock('../../../src/effects/sound', () => ({
   playSound: vi.fn(),
 }))
 const mockShowFeedback = vi.fn()
-const mockHighlightBoundSkill = vi.fn()
 const mockUpdateHUD = vi.fn()
 vi.mock('../../../src/systems/battle', () => ({
   showFeedback: (...args: any[]) => mockShowFeedback(...args),
-  highlightBoundSkill: (...args: any[]) => mockHighlightBoundSkill(...args),
   updateHUD: (...args: any[]) => mockUpdateHUD(...args),
+  setPseudoInfiniteVisual: vi.fn(),
 }))
 
 // Mock DOM for showTriggerPopup
@@ -34,7 +32,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals()
   mockShowFeedback.mockClear()
-  mockHighlightBoundSkill.mockClear()
   mockUpdateHUD.mockClear()
 })
 

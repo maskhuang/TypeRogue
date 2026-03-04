@@ -11,7 +11,6 @@ import { CONVERTERS } from '../../../src/data/converters'
 vi.mock('../../../src/ui/elements', () => ({
   getElements: () => ({
     triggerZone: { appendChild: vi.fn() },
-    battleSkills: { querySelectorAll: () => [] },
   }),
 }))
 vi.mock('../../../src/effects/sound', () => ({
@@ -19,8 +18,8 @@ vi.mock('../../../src/effects/sound', () => ({
 }))
 vi.mock('../../../src/systems/battle', () => ({
   showFeedback: vi.fn(),
-  highlightBoundSkill: vi.fn(),
   updateHUD: vi.fn(),
+  setPseudoInfiniteVisual: vi.fn(),
 }))
 
 // Mock DOM for showTriggerPopup
