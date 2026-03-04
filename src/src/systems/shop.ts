@@ -9,6 +9,7 @@ import { KEYS, KEYBOARD_ROWS } from '../core/constants';
 import { SKILLS, SYNERGY_TYPES, getSkillSchool, getEvolutionBranches, EVOLUTIONS, getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS } from '../data/producers';
 import { CONVERTERS } from '../data/converters';
+import { CONNECTORS, isConnector } from '../data/connectors';
 import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
@@ -93,7 +94,8 @@ function generateShopItems(count: number): ShopItem[] {
   if (!isSilenced) {
     const owned = [...state.player.skills.keys()];
     const poolConverterIds = state.converterPool.filter(id => id in CONVERTERS);
-    const allSkillIds = [...Object.keys(SKILLS), ...Object.keys(PRODUCERS), ...poolConverterIds];
+    const poolConnectorIds = state.connectorPool.filter(id => id in CONNECTORS);
+    const allSkillIds = [...Object.keys(SKILLS), ...Object.keys(PRODUCERS), ...poolConverterIds, ...poolConnectorIds];
     const unowned = allSkillIds.filter(id => !owned.includes(id));
 
     // 新技能
@@ -111,6 +113,7 @@ function generateShopItems(count: number): ShopItem[] {
 
     // 升级已有技能（未满级的）
     const upgradable = owned.filter(id => {
+      if (isConnector(id)) return false; // 连接者固定 Lv1，不可升级
       const data = state.player.skills.get(id);
       return data && data.level < 3;
     });
@@ -223,7 +226,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
   if (!canAfford) card.classList.add('cannot-afford');
 
   if (item.type === 'skill') {
-    const sk = SKILLS[item.skillId!] || PRODUCERS[item.skillId!];
+    const sk = SKILLS[item.skillId!] || PRODUCERS[item.skillId!] || CONVERTERS[item.skillId!] || CONNECTORS[item.skillId!];
     if (!sk) return;
     const school = getSkillSchool(item.skillId!);
     const lvl = state.player.skills.get(item.skillId!)?.level || 1;
@@ -321,10 +324,10 @@ function executePurchase(index: number): { skillId: string | null; isNew: boolea
         data.level++;
         data.purchasePrice = (data.purchasePrice || 0) + item.cost;
       }
-      showFeedback(`${(SKILLS[skillId] || PRODUCERS[skillId])?.name} 升级!`, '#ffe66d');
+      showFeedback(`${(SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name} 升级!`, '#ffe66d');
     } else {
       state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
-      showFeedback(`获得 ${(SKILLS[skillId] || PRODUCERS[skillId])?.name}!`, '#4ecdc4');
+      showFeedback(`获得 ${(SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name}!`, '#4ecdc4');
     }
 
     state.shop.items.splice(index, 1);
@@ -603,7 +606,7 @@ export function renderBuildManager(): void {
       else if (score >= 1) slot.classList.add('score-low');
 
       // 技能流派底色
-      if (skillId && (SKILLS[skillId] || PRODUCERS[skillId])) {
+      if (skillId && (SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])) {
         const display = getSkillDisplay(skillId);
         const school = getSkillSchool(skillId);
         slot.classList.add('has-skill');
@@ -624,7 +627,7 @@ export function renderBuildManager(): void {
           score,
           frequency: freq,
         };
-        if (skillId && (SKILLS[skillId] || PRODUCERS[skillId])) {
+        if (skillId && (SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])) {
           const display = getSkillDisplay(skillId);
           const school = getSkillSchool(skillId);
           const lvl = state.player.skills.get(skillId)?.level ?? 1;
@@ -658,7 +661,7 @@ export function renderBuildManager(): void {
   }
 
   state.player.skills.forEach((data, skillId) => {
-    const sk = SKILLS[skillId] || PRODUCERS[skillId];
+    const sk = SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
     if (!sk) return;
 
     const display = getSkillDisplay(skillId);

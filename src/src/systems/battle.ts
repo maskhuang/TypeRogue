@@ -10,11 +10,12 @@ import { getElements } from '../ui/elements';
 import { SKILLS, getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS } from '../data/producers';
 import { CONVERTERS } from '../data/converters';
+import { CONNECTORS } from '../data/connectors';
 import { RELICS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
-import { triggerSkill, resolveSkillEventModifiers, calculateLonePassiveBonus, getVoidLetterModifiers } from './skills';
+import { triggerSkill, resolveSkillEventModifiers, calculateLonePassiveBonus, getVoidLetterModifiers, clearPseudoInfinite } from './skills';
 import { isLayoutOnlyPassive } from '../data/skills';
 import { openShop } from './shop';
 import { shouldShowRelicPicker, showRelicPicker } from './relicPicker';
@@ -552,6 +553,7 @@ function updateTimerDisplay(): void {
 // === 关卡系统 ===
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
+  clearPseudoInfinite();
   cleanupModifier();
   stopBossRotation();
   hideSettlement();
@@ -787,6 +789,7 @@ function victory(): void {
 function gameOver(): void {
   state.phase = 'gameover';
   if (timerInterval) clearInterval(timerInterval);
+  clearPseudoInfinite();
   cleanupModifier();
   stopBossRotation();
 
@@ -836,7 +839,7 @@ export function renderBattleSkills(): void {
 
   let delay = 0;
   state.player.bindings.forEach((skillId, key) => {
-    const sk = SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId];
+    const sk = SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
     if (!sk) return;
 
     const lvl = state.player.skills.get(skillId)?.level || 1;

@@ -35,6 +35,8 @@ export function createInitialState(): GameState {
     tempBuffs: [],
     sealedKeys: [],
     converterPool: [],
+    connectorPool: [],
+    pseudoInfiniteState: null,
     player: {
       word: '',
       index: 0,

@@ -8,7 +8,9 @@ import { ADJACENT_KEYS, KEYBOARD_ROWS, RESOURCE_COLORS } from '../core/constants
 import { SKILLS, isPassiveSkill, getSkillModifierFactory, getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS, isProducer, getProducerValue } from '../data/producers';
 import { CONVERTERS, isConverter, getConverterK, getSourceValue, getConverterDesc } from '../data/converters';
-import type { AdjacentSkill, ResourceType } from '../core/types';
+import { CONNECTORS, isConnector, getConnectorDesc } from '../data/connectors';
+import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
+import type { AdjacentSkill, ResourceType, PseudoInfiniteState } from '../core/types';
 import type { PipelineContext, EffectAccumulator, BehaviorCallbacks, PipelineResult, ModifierTrigger, Modifier } from './modifiers/ModifierTypes';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
@@ -439,17 +441,174 @@ export function triggerConverter(converterId: string): void {
   updateHUD();
 }
 
+// === 连接者：判断技能是否能产出指定资源（Layer 1 过滤用） ===
+function canProduceResource(skillId: string, resource: ResourceType): boolean {
+  if (isProducer(skillId)) return PRODUCERS[skillId].resource === resource;
+  if (isConverter(skillId)) return CONVERTERS[skillId].target === resource;
+  const sk = SKILLS[skillId];
+  if (sk) {
+    if (resource === 'score' && sk.type === 'score') return true;
+    if (resource === 'multiplier' && sk.type === 'multiply') return true;
+    if (resource === 'time' && sk.type === 'time') return true;
+    if (resource === 'shield' && sk.type === 'protect') return true;
+  }
+  return false;
+}
+
+// === 连接者：进入伪无限模式 ===
+export function enterPseudoInfinite(participantKeys: string[]): void {
+  // 已有伪无限运行中则合并参与者
+  if (state.pseudoInfiniteState) {
+    for (const k of participantKeys) {
+      if (!state.pseudoInfiniteState.participantKeys.includes(k)) {
+        state.pseudoInfiniteState.participantKeys.push(k);
+      }
+    }
+    return;
+  }
+
+  // 先设置 state，让 interval 回调读取 state 中的参与者列表（支持后续合并）
+  const piState: PseudoInfiniteState = { intervalId: 0, participantKeys: [...participantKeys] };
+  state.pseudoInfiniteState = piState;
+
+  const intervalId = setInterval(() => {
+    if (state.phase !== 'battle') {
+      clearPseudoInfinite();
+      return;
+    }
+    // 从 state 读取参与者，确保合并后的新参与者也被触发
+    const keys = state.pseudoInfiniteState?.participantKeys ?? [];
+    for (const key of keys) {
+      const sid = state.player.bindings.get(key);
+      if (!sid) continue;
+      // 直接调底层触发，不进入链检测
+      if (isProducer(sid)) {
+        triggerProducer(sid);
+      } else if (isConverter(sid)) {
+        triggerConverter(sid);
+      }
+      // 连接者本身不产出资源，伪无限中跳过
+    }
+  }, 250);
+
+  piState.intervalId = intervalId as unknown as number;
+}
+
+// === 连接者：清理伪无限模式 ===
+export function clearPseudoInfinite(): void {
+  if (state.pseudoInfiniteState) {
+    clearInterval(state.pseudoInfiniteState.intervalId);
+    state.pseudoInfiniteState = null;
+  }
+}
+
+// === 连接者：复制型触发 ===
+export function triggerConnectorCopy(connectorId: string, triggerKey: string, chainHistory: string[]): void {
+  const conn = CONNECTORS[connectorId];
+  if (!conn || conn.triggerType !== 'copy') return;
+
+  // 视觉/音效反馈
+  showTriggerPopup(connectorId);
+  highlightBoundSkill(connectorId);
+  playSound('skill');
+  synergy.wordSkillCount++;
+
+  const desc = getConnectorDesc(connectorId);
+  showFeedback(desc, '#a29bfe');
+
+  // 查找位置关系内有绑定技能的键
+  const relatedKeys = getKeysWithRelation(triggerKey, conn.positionRelation);
+  const candidates = relatedKeys.filter(k => {
+    const sid = state.player.bindings.get(k);
+    return sid && !isConnector(sid); // 跳过其他连接者，避免无限递归
+  });
+  if (candidates.length === 0) return;
+
+  const targetKey = candidates[Math.floor(Math.random() * candidates.length)];
+  const targetSkillId = state.player.bindings.get(targetKey)!;
+
+  // 循环检测
+  if (chainHistory.includes(targetKey)) {
+    if (chainHistory.length >= 2) {
+      enterPseudoInfinite([...chainHistory, targetKey]);
+    }
+    return;
+  }
+
+  // 链式触发目标技能
+  triggerSkill(targetSkillId, targetKey, false, [...chainHistory, targetKey]);
+  updateHUD();
+}
+
+// === 连接者：资源触发检查 ===
+export function checkResourceTriggers(resource: ResourceType, sourceKey: string, chainHistory: string[]): void {
+  // 遍历所有已绑定的资源触发型连接者
+  for (const [connKey, connId] of state.player.bindings) {
+    const conn = CONNECTORS[connId];
+    if (!conn || conn.triggerType !== 'resourceTrigger' || conn.resource !== resource) continue;
+
+    // 检查产出技能的键是否与连接者有位置关系
+    if (!hasRelation(sourceKey, connKey, conn.positionRelation)) continue;
+
+    // 查找关系内有绑定技能的键
+    const relatedKeys = getKeysWithRelation(connKey, conn.positionRelation);
+    const candidates = relatedKeys.filter(k => {
+      const sid = state.player.bindings.get(k);
+      if (!sid) return false;
+      // Layer 1: 跳过能产出同资源的技能
+      if (canProduceResource(sid, resource)) return false;
+      return true;
+    });
+    if (candidates.length === 0) continue;
+
+    // 视觉/音效反馈
+    showTriggerPopup(connId);
+    highlightBoundSkill(connId);
+    playSound('skill');
+    const desc = getConnectorDesc(connId);
+    showFeedback(desc, '#a29bfe');
+
+    const targetKey = candidates[Math.floor(Math.random() * candidates.length)];
+    const targetSkillId = state.player.bindings.get(targetKey)!;
+
+    // 循环检测
+    if (chainHistory.includes(targetKey)) {
+      if (chainHistory.length >= 2) {
+        enterPseudoInfinite([...chainHistory, targetKey]);
+      }
+      continue;
+    }
+
+    // 链式触发
+    triggerSkill(targetSkillId, targetKey, false, [...chainHistory, targetKey]);
+  }
+}
+
 // === 触发技能（管道驱动） ===
-export function triggerSkill(skillId: string, triggerKey: string, isEcho = false): void {
+export function triggerSkill(skillId: string, triggerKey: string, isEcho = false, chainHistory?: string[]): void {
+  const chain = chainHistory || [triggerKey];
+
   // 产出者分流：绕过 Modifier 管道
   if (isProducer(skillId)) {
     triggerProducer(skillId);
+    checkResourceTriggers(PRODUCERS[skillId].resource, triggerKey, chain);
     return;
   }
 
   // 转化者分流：绕过 Modifier 管道
   if (isConverter(skillId)) {
     triggerConverter(skillId);
+    checkResourceTriggers(CONVERTERS[skillId].target, triggerKey, chain);
+    return;
+  }
+
+  // 连接者分流：复制型手动触发
+  if (isConnector(skillId)) {
+    const conn = CONNECTORS[skillId];
+    if (conn.triggerType === 'copy') {
+      triggerConnectorCopy(skillId, triggerKey, chain);
+    }
+    // resourceTrigger 型由 checkResourceTriggers 驱动，不在此处触发
     return;
   }
 
@@ -724,7 +883,7 @@ export function getVoidLetterModifiers(): Modifier[] {
 // === 显示技能触发弹窗 ===
 function showTriggerPopup(skillId: string): void {
   const el = getElements();
-  const sk = SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId];
+  const sk = SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
   if (!sk) return;
 
   const display = getSkillDisplayInfo(skillId, state.player.evolvedSkills);

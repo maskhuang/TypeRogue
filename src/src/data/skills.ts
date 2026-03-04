@@ -6,6 +6,7 @@ import type { SkillDefinition, SkillType, PassiveSkillType, EvolutionBranch } fr
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes';
 import { PRODUCERS, getProducerDesc } from './producers';
 import { CONVERTERS, getConverterDesc } from './converters';
+import { CONNECTORS, getConnectorDesc } from './connectors';
 
 // === 被动技能类型列表 ===
 export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'mirror', 'anchor', 'lone', 'void'];
@@ -443,6 +444,8 @@ export function getSkillSchool(skillId: string): SkillSchool {
   if (SKILL_SCHOOL[skillId]) return SKILL_SCHOOL[skillId];
   // 转化者统一归为"转化"流派
   if (skillId in CONVERTERS) return { label: '转化', cssClass: 'school-converter' };
+  // 连接者统一归为"连接"流派
+  if (skillId in CONNECTORS) return { label: '连接', cssClass: 'school-connector' };
   return { label: '未知', cssClass: 'school-unknown' };
 }
 
@@ -804,6 +807,11 @@ export function getSkillDisplayInfo(
   if (conv) {
     const desc = level ? getConverterDesc(skillId, level) : conv.desc
     return { name: conv.name, icon: conv.icon, desc }
+  }
+  // 连接者查询（固定 Lv1，无等级变化）
+  const conn = CONNECTORS[skillId]
+  if (conn) {
+    return { name: conn.name, icon: conn.icon, desc: getConnectorDesc(skillId) }
   }
   return { name: '???', icon: '?', desc: '' }
 }

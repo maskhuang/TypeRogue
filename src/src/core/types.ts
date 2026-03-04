@@ -3,6 +3,7 @@
 // ============================================
 
 import type { BossModifierId } from '../data/bossModifiers';
+import type { PositionRelation } from '../data/keyboardTopology';
 
 // === 资源系统 ===
 export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'shield';
@@ -32,6 +33,25 @@ export interface ConverterDefinition {
   formula: ConverterFormula; // add | multiply
   k: number;               // 基础系数 (Lv1)
   desc: string;            // 玩家可见描述
+}
+
+// === 连接者系统 ===
+export type ConnectorTriggerType = 'copy' | 'resourceTrigger';
+
+export interface ConnectorDefinition {
+  id: string;                          // conn_copy_adjacent, conn_base_adjacent, ...
+  name: string;                        // 映射, 震荡, ...
+  icon: string;                        // emoji
+  triggerType: ConnectorTriggerType;    // copy | resourceTrigger
+  positionRelation: PositionRelation;   // 位置关系枚举
+  resource?: ResourceType;             // 资源触发型专用：监听的资源
+  desc: string;                        // 玩家可见描述
+}
+
+// === 伪无限模式 ===
+export interface PseudoInfiniteState {
+  intervalId: number;          // setInterval 返回的 ID
+  participantKeys: string[];   // 循环内所有参与者的键位
 }
 
 export interface ResourceState {
@@ -65,6 +85,8 @@ export interface GameState {
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
   sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
   converterPool: string[];             // 本局转化者池（40 抽 20）
+  connectorPool: string[];             // 本局连接者池（36 抽 18）
+  pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
   resources: ResourceState;
   player: PlayerState;
   shop: ShopState;
