@@ -109,7 +109,7 @@ export function getConverterDesc(id: string, level: number): string {
   const tgtIcon = RESOURCE_ICONS[conv.target] || '';
   const kDisplay = parseFloat(k.toPrecision(4));
   if (conv.formula === 'add') {
-    return `${srcIcon}${srcLabel}→${tgtIcon}${tgtLabel}+（k=${kDisplay}）`;
+    return `获得等同于${srcIcon}${srcLabel}+${kDisplay}的${tgtIcon}${tgtLabel}`;
   }
-  return `${srcIcon}${srcLabel}→${tgtIcon}${tgtLabel}×（k=${kDisplay}）`;
+  return `获得等同于${srcIcon}${srcLabel}×${kDisplay}的${tgtIcon}${tgtLabel}`;
 }
