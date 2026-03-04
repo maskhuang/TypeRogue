@@ -97,6 +97,7 @@ function setWord(): void {
   synergy.pulseCount = 0;
   synergy.wordCooldowns.clear();
   synergy.freezeTriggeredThisWord.clear();
+  synergy.decayCounters.clear();
   renderWord();
   updateSettlementLive(); // 初始化结算面板
 }
@@ -843,8 +844,8 @@ export function renderBattleSkills(): void {
     if (!sk) return;
 
     const lvl = state.player.skills.get(skillId)?.level || 1;
-    const display = getSkillDisplayInfo(skillId, state.player.evolvedSkills, lvl);
-    const isEvolved = state.player.evolvedSkills.has(skillId);
+    const display = getSkillDisplayInfo(skillId, state.player.evolvedSkills, lvl, state.player.enchantedSkills);
+    const isEvolved = state.player.evolvedSkills.has(skillId) || state.player.enchantedSkills.has(skillId);
     const d = document.createElement('div');
     d.className = `bound-skill card-float${isEvolved ? ' evolved' : ''}`;
     d.dataset.id = skillId;

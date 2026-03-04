@@ -7,9 +7,10 @@ import { state } from '../core/state';
 import { resolveRelicEffects, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS } from '../core/constants';
 import { SKILLS, SYNERGY_TYPES, getSkillSchool, getEvolutionBranches, EVOLUTIONS, getSkillDisplayInfo } from '../data/skills';
-import { PRODUCERS } from '../data/producers';
-import { CONVERTERS } from '../data/converters';
+import { PRODUCERS, isProducer } from '../data/producers';
+import { CONVERTERS, isConverter } from '../data/converters';
 import { CONNECTORS, isConnector } from '../data/connectors';
+import { ENCHANTMENTS, drawEnchantmentPair } from '../data/enchantments';
 import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
@@ -230,7 +231,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
     if (!sk) return;
     const school = getSkillSchool(item.skillId!);
     const lvl = state.player.skills.get(item.skillId!)?.level || 1;
-    const display = getSkillDisplayInfo(item.skillId!, state.player.evolvedSkills, lvl);
+    const display = getSkillDisplayInfo(item.skillId!, state.player.evolvedSkills, lvl, state.player.enchantedSkills);
 
     let nameLabel = display.name;
     let typeLabel = school.label;
@@ -366,11 +367,18 @@ function purchaseShopItem(index: number): void {
 function checkAutoEvolution(skillId: string): void {
   const data = state.player.skills.get(skillId);
   if (!data || data.level < 3) return;
+
+  // 产出者/转化者走附魔系统
+  if (isProducer(skillId) || isConverter(skillId)) {
+    if (state.player.enchantedSkills.has(skillId)) return;
+    renderEnchantmentModal(skillId);
+    return;
+  }
+
+  // 旧技能走原进化分支
   if (state.player.evolvedSkills.has(skillId)) return;
   const branches = getEvolutionBranches(skillId);
   if (branches.length === 0) return;
-
-  // 自动弹出免费进化选择
   renderEvolutionModal(skillId, true);
 }
 
@@ -410,8 +418,9 @@ export function sellSkill(skillId: string): void {
     }
   }
 
-  // 移除进化
+  // 移除进化/附魔
   state.player.evolvedSkills.delete(skillId);
+  state.player.enchantedSkills.delete(skillId);
 
   // 移除技能
   state.player.skills.delete(skillId);
@@ -507,10 +516,59 @@ function evolveSkill(skillId: string, branchId: string, cost: number): void {
   renderBuildManager();
 }
 
+// === 附魔选择界面（复用 evolution-modal） ===
+function renderEnchantmentModal(skillId: string): void {
+  const modal = document.getElementById('evolution-modal');
+  const titleEl = document.getElementById('evolution-title');
+  const branchesEl = document.getElementById('evolution-branches');
+  const cancelBtn = document.getElementById('evolution-cancel');
+  if (!modal || !titleEl || !branchesEl || !cancelBtn) return;
+
+  const sk = PRODUCERS[skillId] || CONVERTERS[skillId];
+  if (!sk) return;
+
+  const [enchA, enchB] = drawEnchantmentPair();
+  const enchantments = [ENCHANTMENTS[enchA], ENCHANTMENTS[enchB]];
+
+  titleEl.textContent = `✨ 附魔选择 — ${sk.name} (免费!) ✨`;
+  branchesEl.innerHTML = '';
+
+  enchantments.forEach(ench => {
+    if (!ench) return;
+    const card = document.createElement('div');
+    card.className = 'evolution-branch';
+    card.innerHTML = `
+      <div class="evolution-branch-icon">${ench.icon}</div>
+      <div class="evolution-branch-name">${ench.name}</div>
+      <div class="evolution-branch-desc">${ench.desc}</div>
+      <div class="evolution-branch-cost">✨ 免费</div>
+    `;
+    card.onclick = () => applyEnchantment(skillId, ench.id);
+    branchesEl.appendChild(card);
+  });
+
+  cancelBtn.onclick = closeEvolutionModal;
+  const overlay = modal.querySelector('.evolution-overlay') as HTMLElement;
+  if (overlay) overlay.onclick = closeEvolutionModal;
+  modal.classList.remove('evolution-hidden');
+}
+
+function applyEnchantment(skillId: string, enchantmentId: string): void {
+  state.player.enchantedSkills.set(skillId, enchantmentId);
+  const ench = ENCHANTMENTS[enchantmentId];
+  if (ench) {
+    showFeedback(`附魔! ${ench.icon} ${ench.name}`, '#f9ca24');
+  }
+  playSound('skill');
+  closeEvolutionModal();
+  renderUnifiedShop();
+  renderBuildManager();
+}
+
 // === 获取技能显示信息（进化后使用进化数据） ===
 export function getSkillDisplay(skillId: string): { name: string; icon: string; desc: string } {
   const level = state.player.skills.get(skillId)?.level || 1;
-  return getSkillDisplayInfo(skillId, state.player.evolvedSkills, level);
+  return getSkillDisplayInfo(skillId, state.player.evolvedSkills, level, state.player.enchantedSkills);
 }
 
 // === 商店卡片渲染（保留给进化提示卡） ===

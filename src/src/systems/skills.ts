@@ -9,6 +9,7 @@ import { SKILLS, isPassiveSkill, getSkillModifierFactory, getSkillDisplayInfo } 
 import { PRODUCERS, isProducer, getProducerValue } from '../data/producers';
 import { CONVERTERS, isConverter, getConverterK, getSourceValue, getConverterDesc } from '../data/converters';
 import { CONNECTORS, isConnector, getConnectorDesc } from '../data/connectors';
+import { ENCHANTMENTS } from '../data/enchantments';
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
 import type { AdjacentSkill, ResourceType, PseudoInfiniteState } from '../core/types';
 import type { PipelineContext, EffectAccumulator, BehaviorCallbacks, PipelineResult, ModifierTrigger, Modifier } from './modifiers/ModifierTypes';
@@ -337,12 +338,99 @@ function getResourceLabel(r: ResourceType): string {
   }
 }
 
+// === 附魔：独立型倍率计算 ===
+function getIndependentMultiplier(ench: typeof ENCHANTMENTS[string], skillId: string): number {
+  switch (ench.id) {
+    case 'ench_pioneer':
+      return synergy.wordSkillCount === 0 ? ench.effectValue : 1;
+    case 'ench_finale': {
+      // 当前字母是本词最后一个绑定键位时 ×3
+      const word = state.player.word.toLowerCase();
+      if (!word) return 1;
+      // 找到最后一个绑定了技能的字母索引
+      let lastBoundIdx = -1;
+      for (let i = word.length - 1; i >= 0; i--) {
+        if (state.player.bindings.has(word[i])) {
+          lastBoundIdx = i;
+          break;
+        }
+      }
+      return state.player.index === lastBoundIdx ? ench.effectValue : 1;
+    }
+    case 'ench_decay': {
+      const count = synergy.decayCounters.get(skillId) || 0;
+      // NOTE: counter increment moved to triggerProducer/triggerConverter (after calling getEnchantmentMultiplier)
+      return ench.effectValue * Math.pow(0.7, count); // 2.5 × 0.7^count
+    }
+    case 'ench_thirst': {
+      // 对应资源越低越强：×(1 + 2 × (1 - ratio))，0% 时 ×3
+      const prod = PRODUCERS[skillId];
+      const conv = CONVERTERS[skillId];
+      const resType = prod?.resource || conv?.target;
+      if (!resType) return 1;
+      // 计算资源比例
+      let ratio = 1;
+      if (resType === 'time') {
+        ratio = state.timeMax > 0 ? state.time / state.timeMax : 1;
+      } else if (resType === 'multiplier') {
+        ratio = Math.min(state.multiplier / 5, 1); // 5 倍率为 100%
+      } else if (resType === 'shield') {
+        ratio = Math.min(state.resources.shield / 10, 1); // 10 盾为 100%
+      } else {
+        // base/score: 以目标分为基准
+        ratio = state.targetScore > 0 ? Math.min(state.score / state.targetScore, 1) : 1;
+      }
+      return 1 + 2 * (1 - Math.max(0, Math.min(1, ratio)));
+    }
+    default:
+      return 1;
+  }
+}
+
+// === 附魔：ench_decay 计数器推进（从 getter 分离的副作用） ===
+function advanceDecayCounter(skillId: string): void {
+  const enchId = state.player.enchantedSkills?.get(skillId);
+  if (!enchId) return;
+  const ench = ENCHANTMENTS[enchId];
+  if (!ench || ench.id !== 'ench_decay') return;
+  const count = synergy.decayCounters.get(skillId) || 0;
+  synergy.decayCounters.set(skillId, count + 1);
+}
+
+// === 附魔：计算增幅/排斥/独立倍率 ===
+export function getEnchantmentMultiplier(skillId: string, triggerKey?: string): number {
+  const enchId = state.player.enchantedSkills?.get(skillId);
+  if (!enchId) return 1;
+  const ench = ENCHANTMENTS[enchId];
+  if (!ench) return 1;
+
+  if (ench.spatialType === 'amplify' && triggerKey && ench.positionRelation) {
+    const related = getKeysWithRelation(triggerKey, ench.positionRelation);
+    const skillCount = related.filter(k => state.player.bindings.has(k)).length;
+    return 1 + skillCount * ench.effectValue;
+  }
+  if (ench.spatialType === 'repulsion' && triggerKey && ench.positionRelation) {
+    const related = getKeysWithRelation(triggerKey, ench.positionRelation);
+    const emptyCount = related.filter(k => !state.player.bindings.has(k)).length;
+    return 1 + emptyCount * ench.effectValue;
+  }
+  if (ench.category === 'independent') {
+    return getIndependentMultiplier(ench, skillId);
+  }
+  return 1;
+}
+
 // === 触发产出者（绕过 Modifier 管道） ===
-export function triggerProducer(producerId: string): void {
+export function triggerProducer(producerId: string, triggerKey?: string): void {
   const prod = PRODUCERS[producerId];
   if (!prod) return;
   const level = state.player.skills.get(producerId)?.level || 1;
-  const value = getProducerValue(producerId, level);
+  const baseValue = getProducerValue(producerId, level);
+  const enchMult = getEnchantmentMultiplier(producerId, triggerKey);
+  const value = prod.operator === 'add' ? baseValue * enchMult : baseValue;
+
+  // ench_decay: increment counter AFTER reading multiplier (side-effect-free getter)
+  advanceDecayCounter(producerId);
 
   // 视觉/音效反馈
   showTriggerPopup(producerId);
@@ -350,23 +438,29 @@ export function triggerProducer(producerId: string): void {
   playSound('skill');
   synergy.wordSkillCount++;
 
+  // 记录资源变化量（用于变性附魔）
+  let delta = 0;
+
   // 直接修改资源
   if (prod.operator === 'add') {
+    delta = value;
     if (prod.resource === 'score') {
-      // score 立刻结算到关卡总分
       state.resources.score += value;
       state.score += value;
     } else {
       state.resources[prod.resource] += value;
     }
   } else {
-    // ×N 乘法
+    // ×N 乘法（附魔不影响乘法型 value，但记录增量）
     if (prod.resource === 'score') {
       const before = state.resources.score;
       state.resources.score *= value;
-      state.score += (state.resources.score - before);
+      delta = state.resources.score - before;
+      state.score += delta;
     } else {
+      const before = state.resources[prod.resource];
       state.resources[prod.resource] *= value;
+      delta = state.resources[prod.resource] - before;
     }
   }
 
@@ -381,21 +475,32 @@ export function triggerProducer(producerId: string): void {
 
   // 浮字反馈
   const color = RESOURCE_COLORS[prod.resource];
+  const displayValue = prod.operator === 'add' ? value : baseValue;
   const text = prod.operator === 'add'
-    ? `+${value}${getResourceLabel(prod.resource)}`
-    : `×${value}${getResourceLabel(prod.resource)}`;
+    ? `+${displayValue}${getResourceLabel(prod.resource)}`
+    : `×${displayValue}${getResourceLabel(prod.resource)}`;
   showFeedback(text, color);
+  if (enchMult > 1) {
+    showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(producerId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
+  }
+
+  // 附魔后处理：溅射 + 变性（Task 3, 5 实现）
+  applyPostTriggerEnchantments(producerId, triggerKey, delta);
 
   updateHUD();
 }
 
 // === 触发转化者（绕过 Modifier 管道） ===
-export function triggerConverter(converterId: string): void {
+export function triggerConverter(converterId: string, triggerKey?: string): void {
   const conv = CONVERTERS[converterId];
   if (!conv) return;
   const level = state.player.skills.get(converterId)?.level || 1;
   const k = getConverterK(converterId, level);
   const sourceVal = getSourceValue(conv.source, state.resources);
+  const enchMult = getEnchantmentMultiplier(converterId, triggerKey);
+
+  // ench_decay: increment counter AFTER reading multiplier (side-effect-free getter)
+  advanceDecayCounter(converterId);
 
   // 视觉/音效反馈
   showTriggerPopup(converterId);
@@ -403,9 +508,12 @@ export function triggerConverter(converterId: string): void {
   playSound('skill');
   synergy.wordSkillCount++;
 
+  // 记录资源变化量（用于变性附魔）
+  let delta = 0;
+
   // 计算转化
   if (conv.formula === 'add') {
-    const delta = sourceVal * k;
+    delta = sourceVal * k * enchMult;
     if (conv.target === 'score') {
       state.resources.score += delta;
       state.score += delta;
@@ -418,9 +526,12 @@ export function triggerConverter(converterId: string): void {
     if (conv.target === 'score') {
       const before = state.resources.score;
       state.resources.score *= factor;
-      state.score += (state.resources.score - before);
+      delta = state.resources.score - before;
+      state.score += delta;
     } else {
+      const before = state.resources[conv.target];
       state.resources[conv.target] *= factor;
+      delta = state.resources[conv.target] - before;
     }
   }
 
@@ -437,8 +548,182 @@ export function triggerConverter(converterId: string): void {
   const color = RESOURCE_COLORS[conv.target];
   const desc = getConverterDesc(converterId, level);
   showFeedback(desc, color);
+  if (enchMult > 1) {
+    showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(converterId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
+  }
+
+  // 附魔后处理：溅射 + 变性（Task 3, 5 实现）
+  applyPostTriggerEnchantments(converterId, triggerKey, delta);
 
   updateHUD();
+}
+
+// === 附魔：溅射型 — 触发后对位置关系内技能减效触发 ===
+let _splashActive = false; // 防止溅射递归
+
+function applySplashEnchantment(skillId: string, triggerKey?: string): void {
+  if (_splashActive || !triggerKey) return;
+  const enchId = state.player.enchantedSkills?.get(skillId);
+  if (!enchId) return;
+  const ench = ENCHANTMENTS[enchId];
+  if (!ench || ench.spatialType !== 'splash' || !ench.positionRelation) return;
+
+  const related = getKeysWithRelation(triggerKey, ench.positionRelation);
+  _splashActive = true;
+  for (const key of related) {
+    const sid = state.player.bindings.get(key);
+    if (!sid || isConnector(sid)) continue;
+    // 以减效触发目标技能
+    if (isProducer(sid)) {
+      triggerProducerWithReduction(sid, key, ench.effectValue);
+    } else if (isConverter(sid)) {
+      triggerConverterWithReduction(sid, key, ench.effectValue);
+    }
+  }
+  _splashActive = false;
+
+  showFeedback(`${ench.icon} 溅射!`, '#a29bfe');
+}
+
+// === 附魔：减效触发产出者（溅射/共鸣用，无 enchMult/sound/wordSkillCount/postTrigger） ===
+function triggerProducerWithReduction(producerId: string, triggerKey: string, reduction: number): void {
+  const prod = PRODUCERS[producerId];
+  if (!prod) return;
+  const level = state.player.skills.get(producerId)?.level || 1;
+  const baseValue = getProducerValue(producerId, level);
+
+  showTriggerPopup(producerId);
+  highlightBoundSkill(producerId);
+
+  if (prod.operator === 'add') {
+    const value = baseValue * reduction;
+    if (prod.resource === 'score') {
+      state.resources.score += value;
+      state.score += value;
+    } else {
+      state.resources[prod.resource] += value;
+    }
+  } else {
+    // multiply: reduce the boost above 1 — e.g., ×1.5 at 30% → ×1.15
+    const factor = 1 + (baseValue - 1) * reduction;
+    if (prod.resource === 'score') {
+      const before = state.resources.score;
+      state.resources.score *= factor;
+      state.score += (state.resources.score - before);
+    } else {
+      state.resources[prod.resource] *= factor;
+    }
+  }
+
+  if (prod.resource === 'time') state.resources.time = Math.min(state.resources.time, state.timeMax * 2);
+  if (prod.resource === 'shield') state.resources.shield = Math.floor(state.resources.shield);
+
+  const color = RESOURCE_COLORS[prod.resource];
+  const feedbackText = prod.operator === 'add'
+    ? `+${(baseValue * reduction).toFixed(1)}${getResourceLabel(prod.resource)} (溅射)`
+    : `×${(1 + (baseValue - 1) * reduction).toFixed(2)}${getResourceLabel(prod.resource)} (溅射)`;
+  showFeedback(feedbackText, color);
+  updateHUD();
+}
+
+// === 附魔：减效触发转化者（溅射/共鸣用，无 enchMult/sound/wordSkillCount/postTrigger） ===
+function triggerConverterWithReduction(converterId: string, triggerKey: string, reduction: number): void {
+  const conv = CONVERTERS[converterId];
+  if (!conv) return;
+  const level = state.player.skills.get(converterId)?.level || 1;
+  const k = getConverterK(converterId, level);
+  const sourceVal = getSourceValue(conv.source, state.resources);
+
+  showTriggerPopup(converterId);
+  highlightBoundSkill(converterId);
+
+  if (conv.formula === 'add') {
+    const delta = sourceVal * k * reduction;
+    if (conv.target === 'score') {
+      state.resources.score += delta;
+      state.score += delta;
+    } else {
+      state.resources[conv.target] += delta;
+    }
+  } else {
+    const factor = 1 + sourceVal * k * reduction;
+    if (conv.target === 'score') {
+      const before = state.resources.score;
+      state.resources.score *= factor;
+      state.score += (state.resources.score - before);
+    } else {
+      state.resources[conv.target] *= factor;
+    }
+  }
+
+  if (conv.target === 'time') state.resources.time = Math.min(state.resources.time, state.timeMax * 2);
+  if (conv.target === 'shield') state.resources.shield = Math.floor(state.resources.shield);
+
+  const color = RESOURCE_COLORS[conv.target];
+  showFeedback(`${getConverterDesc(converterId, level)} (溅射)`, color);
+  updateHUD();
+}
+
+// === 附魔：变性型 — 额外资源产出 ===
+function applyTransmutationEnchantment(skillId: string, triggerKey?: string, delta?: number): void {
+  if (!delta || delta <= 0) return;
+  const enchId = state.player.enchantedSkills?.get(skillId);
+  if (!enchId) return;
+  const ench = ENCHANTMENTS[enchId];
+  if (!ench || ench.category !== 'transmutation' || !ench.extraResource) return;
+
+  const extraValue = delta * ench.effectValue;
+  if (ench.extraResource === 'score') {
+    state.resources.score += extraValue;
+    state.score += extraValue;
+  } else {
+    state.resources[ench.extraResource] += extraValue;
+  }
+
+  if (ench.extraResource === 'time') state.resources.time = Math.min(state.resources.time, state.timeMax * 2);
+  if (ench.extraResource === 'shield') state.resources.shield = Math.floor(state.resources.shield);
+
+  const color = RESOURCE_COLORS[ench.extraResource];
+  showFeedback(`${ench.icon} +${extraValue.toFixed(1)}${getResourceLabel(ench.extraResource)}`, color);
+
+  // 额外产出可触发连接者（AC6 设计意图）
+  if (triggerKey) {
+    checkResourceTriggers(ench.extraResource, triggerKey, [triggerKey]);
+  }
+
+  updateHUD();
+}
+
+// === 附魔：共鸣型 — 邻居触发时自身也触发 ===
+let _resonanceActive = false; // 防止共鸣递归
+
+export function checkResonanceTriggers(sourceKey: string): void {
+  if (_resonanceActive || !sourceKey) return;
+  _resonanceActive = true;
+
+  for (const [enchKey, sid] of state.player.bindings) {
+    if (enchKey === sourceKey) continue;
+    const enchId = state.player.enchantedSkills?.get(sid);
+    if (!enchId) continue;
+    const ench = ENCHANTMENTS[enchId];
+    if (!ench || ench.spatialType !== 'resonance' || !ench.positionRelation) continue;
+    if (!hasRelation(sourceKey, enchKey, ench.positionRelation)) continue;
+
+    // 以减效触发附魔技能
+    if (isProducer(sid)) {
+      triggerProducerWithReduction(sid, enchKey, ench.effectValue);
+    } else if (isConverter(sid)) {
+      triggerConverterWithReduction(sid, enchKey, ench.effectValue);
+    }
+  }
+
+  _resonanceActive = false;
+}
+
+// === 附魔后处理：溅射 + 变性 ===
+function applyPostTriggerEnchantments(skillId: string, triggerKey?: string, delta?: number): void {
+  applySplashEnchantment(skillId, triggerKey);
+  applyTransmutationEnchantment(skillId, triggerKey, delta);
 }
 
 // === 连接者：判断技能是否能产出指定资源（Layer 1 过滤用） ===
@@ -483,9 +768,9 @@ export function enterPseudoInfinite(participantKeys: string[]): void {
       if (!sid) continue;
       // 直接调底层触发，不进入链检测
       if (isProducer(sid)) {
-        triggerProducer(sid);
+        triggerProducer(sid, key);
       } else if (isConverter(sid)) {
-        triggerConverter(sid);
+        triggerConverter(sid, key);
       }
       // 连接者本身不产出资源，伪无限中跳过
     }
@@ -590,15 +875,17 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
 
   // 产出者分流：绕过 Modifier 管道
   if (isProducer(skillId)) {
-    triggerProducer(skillId);
+    triggerProducer(skillId, triggerKey);
     checkResourceTriggers(PRODUCERS[skillId].resource, triggerKey, chain);
+    checkResonanceTriggers(triggerKey);
     return;
   }
 
   // 转化者分流：绕过 Modifier 管道
   if (isConverter(skillId)) {
-    triggerConverter(skillId);
+    triggerConverter(skillId, triggerKey);
     checkResourceTriggers(CONVERTERS[skillId].target, triggerKey, chain);
+    checkResonanceTriggers(triggerKey);
     return;
   }
 
@@ -811,6 +1098,9 @@ export function triggerSkill(skillId: string, triggerKey: string, isEcho = false
     }
   }
 
+  // 共鸣：旧技能触发后检查共鸣附魔
+  checkResonanceTriggers(triggerKey);
+
   updateHUD();
 }
 
@@ -886,7 +1176,7 @@ function showTriggerPopup(skillId: string): void {
   const sk = SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
   if (!sk) return;
 
-  const display = getSkillDisplayInfo(skillId, state.player.evolvedSkills);
+  const display = getSkillDisplayInfo(skillId, state.player.evolvedSkills, undefined, state.player.enchantedSkills);
   const p = document.createElement('div');
   p.className = 'skill-trigger-popup';
   p.innerHTML = `<span class="trigger-icon">${display.icon}</span>`;

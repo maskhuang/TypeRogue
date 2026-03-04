@@ -49,6 +49,7 @@ export function createInitialState(): GameState {
       wordBonus: 0,
       timeBonus: 0,
       evolvedSkills: new Map(),
+      enchantedSkills: new Map(),
     },
     shop: {
       items: [],
@@ -94,6 +95,8 @@ export function createSynergyState(): SynergyState {
     wordCooldowns: new Set(),
     restoreComboCounters: new Map(),
     freezeTriggeredThisWord: new Set(),
+    // 附魔系统
+    decayCounters: new Map(),
   };
 }
 

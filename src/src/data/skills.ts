@@ -7,6 +7,7 @@ import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTyp
 import { PRODUCERS, getProducerDesc } from './producers';
 import { CONVERTERS, getConverterDesc } from './converters';
 import { CONNECTORS, getConnectorDesc } from './connectors';
+import { ENCHANTMENTS } from './enchantments';
 
 // === 被动技能类型列表 ===
 export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'mirror', 'anchor', 'lone', 'void'];
@@ -786,6 +787,7 @@ export function getSkillDisplayInfo(
   skillId: string,
   evolvedSkills?: Map<string, string>,
   level?: number,
+  enchantedSkills?: Map<string, string>,
 ): { name: string; icon: string; desc: string } {
   if (evolvedSkills) {
     const branchId = evolvedSkills.get(skillId)
@@ -794,19 +796,32 @@ export function getSkillDisplayInfo(
       return { name: evo.name, icon: evo.icon, desc: evo.description }
     }
   }
+
+  // 附魔后缀
+  let enchSuffix = '';
+  let enchIcon = '';
+  if (enchantedSkills) {
+    const enchId = enchantedSkills.get(skillId);
+    if (enchId && ENCHANTMENTS[enchId]) {
+      const ench = ENCHANTMENTS[enchId];
+      enchSuffix = ` [${ench.icon}${ench.name}]`;
+      enchIcon = ench.icon;
+    }
+  }
+
   const sk = SKILLS[skillId]
   if (sk) return { name: sk.name, icon: sk.icon, desc: sk.desc }
   // 产出者查询（level 决定动态描述）
   const prod = PRODUCERS[skillId]
   if (prod) {
     const desc = level ? getProducerDesc(skillId, level) : prod.desc
-    return { name: prod.name, icon: prod.icon, desc }
+    return { name: prod.name + enchSuffix, icon: enchIcon || prod.icon, desc: desc + (enchSuffix ? ` | 附魔: ${enchSuffix}` : '') }
   }
   // 转化者查询
   const conv = CONVERTERS[skillId]
   if (conv) {
     const desc = level ? getConverterDesc(skillId, level) : conv.desc
-    return { name: conv.name, icon: conv.icon, desc }
+    return { name: conv.name + enchSuffix, icon: enchIcon || conv.icon, desc: desc + (enchSuffix ? ` | 附魔: ${enchSuffix}` : '') }
   }
   // 连接者查询（固定 Lv1，无等级变化）
   const conn = CONNECTORS[skillId]

@@ -48,6 +48,22 @@ export interface ConnectorDefinition {
   desc: string;                        // 玩家可见描述
 }
 
+// === 附魔系统 ===
+export type EnchantmentCategory = 'spatial' | 'transmutation' | 'independent';
+export type SpatialEffectType = 'amplify' | 'splash' | 'resonance' | 'repulsion';
+
+export interface EnchantmentDefinition {
+  id: string;
+  name: string;
+  icon: string;
+  category: EnchantmentCategory;
+  spatialType?: SpatialEffectType;
+  positionRelation?: PositionRelation;
+  effectValue: number;           // 百分比系数 (0.20 = 20%) 或独立型倍率
+  extraResource?: ResourceType;  // 变性型专用：额外产出的资源
+  desc: string;
+}
+
 // === 伪无限模式 ===
 export interface PseudoInfiniteState {
   intervalId: number;          // setInterval 返回的 ID
@@ -119,6 +135,7 @@ export interface PlayerState {
   wordBonus: number;
   timeBonus: number;
   evolvedSkills: Map<string, string>;  // skillId → branchId
+  enchantedSkills: Map<string, string>;  // skillId → enchantmentId
 }
 
 export interface ShopItem {
@@ -228,6 +245,8 @@ export interface SynergyState {
   wordCooldowns: Set<string>; // amp_overdrive: 冷却中的技能（每词重置）
   restoreComboCounters: Map<string, number>; // freeze_chrono: 触发计数（跨词保持）
   freezeTriggeredThisWord: Set<string>; // freeze_permafrost: 每词一次追踪
+  // 附魔系统
+  decayCounters: Map<string, number>; // ench_decay: 本词内每个技能的触发次数
 }
 
 export interface AdjacentSkill {
