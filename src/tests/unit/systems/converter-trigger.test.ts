@@ -227,15 +227,15 @@ describe('triggerConverter — 时间/护盾 clamp (AC11)', () => {
     resetState()
   })
 
-  it('时间不超过 timeMax × 2', async () => {
+  it('时间无上限', async () => {
     const { triggerConverter } = await import('../../../src/systems/skills')
     state.player.skills.set('conv_base_time_add', { level: 3 })
     state.resources.base = 100  // large base
     state.timeMax = 30
     state.time = 55
     triggerConverter('conv_base_time_add')
-    // time += 100 × 0.15 × 2.0 = 30 → 85 → clamp to 60
-    expect(state.time).toBe(60)
+    // time += 100 × 0.15 × 2.0 = 30 → 85, 无上限
+    expect(state.time).toBeCloseTo(85)
   })
 
   it('护盾取整 (floor)', async () => {

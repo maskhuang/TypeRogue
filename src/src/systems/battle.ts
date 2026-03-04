@@ -365,7 +365,7 @@ function completeWord(): void {
 
   // 遗物效果：完成词语时间加成（time_crystal 等）
   if (wordRelicResult.effects.time > 0) {
-    state.time = Math.min(state.time + wordRelicResult.effects.time, state.timeMax * 2);
+    state.time += wordRelicResult.effects.time;
   }
 
   setTimeout(() => {
@@ -702,7 +702,7 @@ export async function startLevel(): Promise<void> {
 
   // 时间遗物加成（在 startTimer 设置初始时间后应用，如 time_lord +8 秒、doomsday +30 秒）
   if (startRelicResult.effects.time > 0) {
-    state.time = Math.min(state.time + startRelicResult.effects.time, state.timeMax * 2);
+    state.time += startRelicResult.effects.time;
   }
 
   // 时间窃贼代价：基础时间减半（在遗物加成之后，故 time_lord + time_thief 有趣互动）

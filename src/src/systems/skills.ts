@@ -180,7 +180,7 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
 
   // 时间 clamp
   if (prod.resource === 'time') {
-    state.resources.time = Math.min(state.resources.time, state.timeMax * 2);
+    // 时间无上限
   }
   // shield floor（×N 后可能出小数）
   if (prod.resource === 'shield') {
@@ -263,7 +263,7 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
 
   // 时间 clamp
   if (conv.target === 'time') {
-    state.resources.time = Math.min(state.resources.time, state.timeMax * 2);
+    // 时间无上限
   }
   // 护盾 floor
   if (conv.target === 'shield') {
@@ -341,7 +341,7 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
     }
   }
 
-  if (prod.resource === 'time') state.resources.time = Math.min(state.resources.time, state.timeMax * 2);
+  // 时间无上限
   if (prod.resource === 'shield') state.resources.shield = Math.floor(state.resources.shield);
 
   const color = RESOURCE_COLORS[prod.resource];
@@ -382,7 +382,7 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
     }
   }
 
-  if (conv.target === 'time') state.resources.time = Math.min(state.resources.time, state.timeMax * 2);
+  // 时间无上限
   if (conv.target === 'shield') state.resources.shield = Math.floor(state.resources.shield);
 
   const color = RESOURCE_COLORS[conv.target];
@@ -406,7 +406,7 @@ function applyTransmutationEnchantment(skillId: string, triggerKey?: string, del
     state.resources[ench.extraResource] += extraValue;
   }
 
-  if (ench.extraResource === 'time') state.resources.time = Math.min(state.resources.time, state.timeMax * 2);
+  // 时间无上限
   if (ench.extraResource === 'shield') state.resources.shield = Math.floor(state.resources.shield);
 
   const color = RESOURCE_COLORS[ench.extraResource];

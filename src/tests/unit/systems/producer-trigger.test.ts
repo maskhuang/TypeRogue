@@ -88,13 +88,13 @@ describe('triggerProducer — +N 加法产出者', () => {
     expect(state.resources.time).toBe(57)
   })
 
-  it('prod_freeze: time clamp 不超过 timeMax×2', async () => {
+  it('prod_freeze: time 无上限', async () => {
     const { triggerProducer } = await import('../../../src/systems/skills')
     state.player.skills.set('prod_freeze', { level: 1 })
     state.timeMax = 30
     state.time = 59
     triggerProducer('prod_freeze')
-    expect(state.time).toBe(60) // clamp to 30×2=60
+    expect(state.time).toBe(61) // 59 + 2, 无上限
   })
 
   it('prod_shield: shield += 1', async () => {
@@ -154,13 +154,13 @@ describe('triggerProducer — ×N 乘法产出者', () => {
     expect(state.time).toBeCloseTo(30) // 25 × 1.2 = 30
   })
 
-  it('prod_eternal: time clamp 不超过 timeMax×2', async () => {
+  it('prod_eternal: time 无上限', async () => {
     const { triggerProducer } = await import('../../../src/systems/skills')
     state.player.skills.set('prod_eternal', { level: 1 })
     state.timeMax = 30
     state.time = 55
     triggerProducer('prod_eternal')
-    expect(state.time).toBe(60) // 55×1.2=66 → clamp 60
+    expect(state.time).toBeCloseTo(66) // 55×1.2=66, 无上限
   })
 
   it('prod_fortress: shield *= 2, floor 取整', async () => {
