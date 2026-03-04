@@ -178,7 +178,7 @@ development_status:
   # Epic 19: 技能体系重构
   epic-19: in-progress
   19-1-resource-system-core: done
-  19-2-producer-skills: backlog
+  19-2-producer-skills: done
   19-3-keyboard-topology: backlog
   19-4-converter-framework: backlog
   19-5-connector-framework: backlog

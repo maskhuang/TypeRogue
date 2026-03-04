@@ -4,6 +4,7 @@
 
 import type { SkillDefinition, SkillType, PassiveSkillType, EvolutionBranch } from '../core/types';
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes';
+import { PRODUCERS, getProducerDesc } from './producers';
 
 // === 被动技能类型列表 ===
 export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'mirror', 'anchor', 'lone', 'void'];
@@ -424,6 +425,17 @@ export const SKILL_SCHOOL: Record<string, SkillSchool> = {
   core: { label: '被动', cssClass: 'school-passive' },
   aura: { label: '被动', cssClass: 'school-passive' },
   anchor: { label: '被动', cssClass: 'school-passive' },
+  // 产出者流派
+  prod_burst: { label: '产出', cssClass: 'school-producer' },
+  prod_focus: { label: '产出', cssClass: 'school-producer' },
+  prod_loot: { label: '产出', cssClass: 'school-producer' },
+  prod_crit: { label: '产出', cssClass: 'school-producer' },
+  prod_boost: { label: '产出', cssClass: 'school-producer' },
+  prod_frenzy: { label: '产出', cssClass: 'school-producer' },
+  prod_freeze: { label: '产出', cssClass: 'school-producer' },
+  prod_eternal: { label: '产出', cssClass: 'school-producer' },
+  prod_shield: { label: '产出', cssClass: 'school-producer' },
+  prod_fortress: { label: '产出', cssClass: 'school-producer' },
 };
 
 export function getSkillSchool(skillId: string): SkillSchool {
@@ -766,6 +778,7 @@ export function getEvolutionBranches(skillId: string): EvolutionBranch[] {
 export function getSkillDisplayInfo(
   skillId: string,
   evolvedSkills?: Map<string, string>,
+  level?: number,
 ): { name: string; icon: string; desc: string } {
   if (evolvedSkills) {
     const branchId = evolvedSkills.get(skillId)
@@ -776,5 +789,11 @@ export function getSkillDisplayInfo(
   }
   const sk = SKILLS[skillId]
   if (sk) return { name: sk.name, icon: sk.icon, desc: sk.desc }
+  // 产出者查询（level 决定动态描述）
+  const prod = PRODUCERS[skillId]
+  if (prod) {
+    const desc = level ? getProducerDesc(skillId, level) : prod.desc
+    return { name: prod.name, icon: prod.icon, desc }
+  }
   return { name: '???', icon: '?', desc: '' }
 }

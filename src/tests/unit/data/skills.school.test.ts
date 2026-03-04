@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { SKILLS, SKILL_SCHOOL, getSkillSchool } from '../../../src/data/skills';
+import { PRODUCERS } from '../../../src/data/producers';
 
 describe('SKILL_SCHOOL mapping', () => {
   it('covers all 18 skills in SKILLS', () => {
@@ -12,11 +13,11 @@ describe('SKILL_SCHOOL mapping', () => {
     }
   });
 
-  it('has no extra entries beyond SKILLS', () => {
+  it('has no extra entries beyond SKILLS and PRODUCERS', () => {
     const schoolIds = Object.keys(SKILL_SCHOOL);
-    const skillIds = Object.keys(SKILLS);
+    const allIds = [...Object.keys(SKILLS), ...Object.keys(PRODUCERS)];
     for (const id of schoolIds) {
-      expect(skillIds).toContain(id);
+      expect(allIds).toContain(id);
     }
   });
 
@@ -52,6 +53,13 @@ describe('SKILL_SCHOOL mapping', () => {
     for (const id of ['core', 'aura', 'anchor']) {
       expect(SKILL_SCHOOL[id].label).toBe('被动');
       expect(SKILL_SCHOOL[id].cssClass).toBe('school-passive');
+    }
+  });
+
+  it('maps producer school correctly', () => {
+    for (const id of Object.keys(PRODUCERS)) {
+      expect(SKILL_SCHOOL[id].label).toBe('产出');
+      expect(SKILL_SCHOOL[id].cssClass).toBe('school-producer');
     }
   });
 });

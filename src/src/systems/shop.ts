@@ -7,6 +7,7 @@ import { state } from '../core/state';
 import { resolveRelicEffects, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS } from '../core/constants';
 import { SKILLS, SYNERGY_TYPES, getSkillSchool, getEvolutionBranches, EVOLUTIONS, getSkillDisplayInfo } from '../data/skills';
+import { PRODUCERS } from '../data/producers';
 import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
@@ -90,7 +91,8 @@ function generateShopItems(count: number): ShopItem[] {
   const skillPool: ShopItem[] = [];
   if (!isSilenced) {
     const owned = [...state.player.skills.keys()];
-    const unowned = Object.keys(SKILLS).filter(id => !owned.includes(id));
+    const allSkillIds = [...Object.keys(SKILLS), ...Object.keys(PRODUCERS)];
+    const unowned = allSkillIds.filter(id => !owned.includes(id));
 
     // 新技能
     const shuffledNew = shuffleArray(unowned);
@@ -219,15 +221,15 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
   if (!canAfford) card.classList.add('cannot-afford');
 
   if (item.type === 'skill') {
-    const sk = SKILLS[item.skillId!];
+    const sk = SKILLS[item.skillId!] || PRODUCERS[item.skillId!];
     if (!sk) return;
     const school = getSkillSchool(item.skillId!);
-    const display = getSkillDisplayInfo(item.skillId!, state.player.evolvedSkills);
+    const lvl = state.player.skills.get(item.skillId!)?.level || 1;
+    const display = getSkillDisplayInfo(item.skillId!, state.player.evolvedSkills, lvl);
 
     let nameLabel = display.name;
     let typeLabel = school.label;
     if (item.isUpgrade) {
-      const lvl = state.player.skills.get(item.skillId!)?.level || 1;
       nameLabel = `${display.name} (升级 Lv.${lvl}→${lvl + 1})`;
       typeLabel = `${school.label}·升级`;
     }
@@ -317,10 +319,10 @@ function executePurchase(index: number): { skillId: string | null; isNew: boolea
         data.level++;
         data.purchasePrice = (data.purchasePrice || 0) + item.cost;
       }
-      showFeedback(`${SKILLS[skillId]?.name} 升级!`, '#ffe66d');
+      showFeedback(`${(SKILLS[skillId] || PRODUCERS[skillId])?.name} 升级!`, '#ffe66d');
     } else {
       state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
-      showFeedback(`获得 ${SKILLS[skillId]?.name}!`, '#4ecdc4');
+      showFeedback(`获得 ${(SKILLS[skillId] || PRODUCERS[skillId])?.name}!`, '#4ecdc4');
     }
 
     state.shop.items.splice(index, 1);
@@ -502,7 +504,8 @@ function evolveSkill(skillId: string, branchId: string, cost: number): void {
 
 // === 获取技能显示信息（进化后使用进化数据） ===
 export function getSkillDisplay(skillId: string): { name: string; icon: string; desc: string } {
-  return getSkillDisplayInfo(skillId, state.player.evolvedSkills);
+  const level = state.player.skills.get(skillId)?.level || 1;
+  return getSkillDisplayInfo(skillId, state.player.evolvedSkills, level);
 }
 
 // === 商店卡片渲染（保留给进化提示卡） ===
@@ -598,7 +601,7 @@ export function renderBuildManager(): void {
       else if (score >= 1) slot.classList.add('score-low');
 
       // 技能流派底色
-      if (skillId && SKILLS[skillId]) {
+      if (skillId && (SKILLS[skillId] || PRODUCERS[skillId])) {
         const display = getSkillDisplay(skillId);
         const school = getSkillSchool(skillId);
         slot.classList.add('has-skill');
@@ -619,7 +622,7 @@ export function renderBuildManager(): void {
           score,
           frequency: freq,
         };
-        if (skillId && SKILLS[skillId]) {
+        if (skillId && (SKILLS[skillId] || PRODUCERS[skillId])) {
           const display = getSkillDisplay(skillId);
           const school = getSkillSchool(skillId);
           const lvl = state.player.skills.get(skillId)?.level ?? 1;
@@ -653,7 +656,7 @@ export function renderBuildManager(): void {
   }
 
   state.player.skills.forEach((data, skillId) => {
-    const sk = SKILLS[skillId];
+    const sk = SKILLS[skillId] || PRODUCERS[skillId];
     if (!sk) return;
 
     const display = getSkillDisplay(skillId);

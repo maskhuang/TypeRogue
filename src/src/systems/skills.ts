@@ -4,9 +4,10 @@
 // Story 11.5: Modifier 管道集成
 
 import { state, synergy } from '../core/state';
-import { ADJACENT_KEYS, KEYBOARD_ROWS } from '../core/constants';
+import { ADJACENT_KEYS, KEYBOARD_ROWS, RESOURCE_COLORS } from '../core/constants';
 import { SKILLS, isPassiveSkill, getSkillModifierFactory, getSkillDisplayInfo } from '../data/skills';
-import type { AdjacentSkill } from '../core/types';
+import { PRODUCERS, isProducer, getProducerValue } from '../data/producers';
+import type { AdjacentSkill, ResourceType } from '../core/types';
 import type { PipelineContext, EffectAccumulator, BehaviorCallbacks, PipelineResult, ModifierTrigger, Modifier } from './modifiers/ModifierTypes';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
@@ -322,8 +323,77 @@ function emptyPipelineResult(): PipelineResult {
   };
 }
 
+// === 资源标签 ===
+function getResourceLabel(r: ResourceType): string {
+  switch (r) {
+    case 'base': return '基数';
+    case 'score': return '分';
+    case 'multiplier': return '倍率';
+    case 'time': return '秒';
+    case 'shield': return '盾';
+  }
+}
+
+// === 触发产出者（绕过 Modifier 管道） ===
+export function triggerProducer(producerId: string): void {
+  const prod = PRODUCERS[producerId];
+  if (!prod) return;
+  const level = state.player.skills.get(producerId)?.level || 1;
+  const value = getProducerValue(producerId, level);
+
+  // 视觉/音效反馈
+  showTriggerPopup(producerId);
+  highlightBoundSkill(producerId);
+  playSound('skill');
+  synergy.wordSkillCount++;
+
+  // 直接修改资源
+  if (prod.operator === 'add') {
+    if (prod.resource === 'score') {
+      // score 立刻结算到关卡总分
+      state.resources.score += value;
+      state.score += value;
+    } else {
+      state.resources[prod.resource] += value;
+    }
+  } else {
+    // ×N 乘法
+    if (prod.resource === 'score') {
+      const before = state.resources.score;
+      state.resources.score *= value;
+      state.score += (state.resources.score - before);
+    } else {
+      state.resources[prod.resource] *= value;
+    }
+  }
+
+  // 时间 clamp
+  if (prod.resource === 'time') {
+    state.resources.time = Math.min(state.resources.time, state.timeMax * 2);
+  }
+  // shield floor（×N 后可能出小数）
+  if (prod.resource === 'shield') {
+    state.resources.shield = Math.floor(state.resources.shield);
+  }
+
+  // 浮字反馈
+  const color = RESOURCE_COLORS[prod.resource];
+  const text = prod.operator === 'add'
+    ? `+${value}${getResourceLabel(prod.resource)}`
+    : `×${value}${getResourceLabel(prod.resource)}`;
+  showFeedback(text, color);
+
+  updateHUD();
+}
+
 // === 触发技能（管道驱动） ===
 export function triggerSkill(skillId: string, triggerKey: string, isEcho = false): void {
+  // 产出者分流：绕过 Modifier 管道
+  if (isProducer(skillId)) {
+    triggerProducer(skillId);
+    return;
+  }
+
   const base = SKILLS[skillId];
   if (!base) return;
 
@@ -595,7 +665,7 @@ export function getVoidLetterModifiers(): Modifier[] {
 // === 显示技能触发弹窗 ===
 function showTriggerPopup(skillId: string): void {
   const el = getElements();
-  const sk = SKILLS[skillId];
+  const sk = SKILLS[skillId] || PRODUCERS[skillId];
   if (!sk) return;
 
   const display = getSkillDisplayInfo(skillId, state.player.evolvedSkills);

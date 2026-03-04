@@ -7,9 +7,22 @@ import type { BossModifierId } from '../data/bossModifiers';
 // === 资源系统 ===
 export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'shield';
 
+// === 产出者系统 ===
+export type ProducerOperator = 'add' | 'multiply';
+
+export interface ProducerDefinition {
+  id: string;                       // prod_burst, prod_focus, ...
+  name: string;                     // 爆发, 聚能, ...
+  icon: string;                     // emoji
+  resource: ResourceType;           // 目标资源
+  operator: ProducerOperator;       // +N 或 ×N
+  values: [number, number, number]; // Lv1, Lv2, Lv3
+  desc: string;                     // 玩家可见描述
+}
+
 export interface ResourceState {
   base: number;        // 基数（每击键 +1，技能/字母升级累加）
-  score: number;       // 即时加分（直接累加到最终分数）— 当前无生产者，预留给 Story 19.2+ 技能
+  score: number;       // 即时加分（直接累加到最终分数）— 产出者 prod_loot/prod_crit 写入
   multiplier: number;  // 倍率（基础 + 连击 + 技能加成）
   time: number;        // 时间资源（倒计时秒数）
   shield: number;      // 护盾层数（抵消错误输入）
