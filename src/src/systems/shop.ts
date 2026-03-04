@@ -81,6 +81,9 @@ export function openShop(_won: boolean): void {
   renderRelicDisplay();
   dragManager.init();
   showScreen('shop');
+
+  // 补偿：检查商店外升到Lv.3但未附魔的技能（如休息关升级）
+  checkPendingEnchantments();
 }
 
 // === 金币显示 ===
@@ -407,6 +410,30 @@ function checkAutoEnchantment(skillId: string): void {
   }
 }
 
+// === 补偿检查：商店外升级导致的未附魔Lv.3技能 ===
+function checkPendingEnchantments(): void {
+  const pending: string[] = [];
+  for (const [skillId, data] of state.player.skills) {
+    if (data.level >= 3 && (isProducer(skillId) || isConverter(skillId)) && !state.player.enchantedSkills.has(skillId)) {
+      pending.push(skillId);
+    }
+  }
+  if (pending.length === 0) return;
+  // 逐个弹出附魔选择（前一个关闭后弹下一个）
+  showEnchantmentQueue(pending, 0);
+}
+
+function showEnchantmentQueue(queue: string[], index: number): void {
+  if (index >= queue.length) return;
+  const skillId = queue[index];
+  // 可能在队列过程中已被附魔（用户选择了）
+  if (state.player.enchantedSkills.has(skillId)) {
+    showEnchantmentQueue(queue, index + 1);
+    return;
+  }
+  renderEnchantmentModal(skillId, () => showEnchantmentQueue(queue, index + 1));
+}
+
 // === 刷新商店 ===
 function refreshShop(): void {
   const cost = (state.shop.refreshCount + 1) * 5;
@@ -473,10 +500,16 @@ export function sellWord(index: number): void {
 function closeEnchantmentModal(): void {
   const modal = document.getElementById('enchantment-modal');
   if (modal) modal.classList.add('enchantment-hidden');
+  const cb = _enchantmentOnClose;
+  _enchantmentOnClose = null;
+  if (cb) cb();
 }
 
 // === 附魔选择界面 ===
-function renderEnchantmentModal(skillId: string): void {
+let _enchantmentOnClose: (() => void) | null = null;
+
+function renderEnchantmentModal(skillId: string, onClose?: () => void): void {
+  _enchantmentOnClose = onClose || null;
   const modal = document.getElementById('enchantment-modal');
   const titleEl = document.getElementById('enchantment-title');
   const branchesEl = document.getElementById('enchantment-branches');
