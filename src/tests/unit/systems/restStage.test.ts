@@ -85,12 +85,19 @@ describe('restStage - executeEffect', () => {
       expect(multBuff!.value).toBe(-0.5)
     })
 
-    it('tempBuff expiresAtNode 指向 Act 结束节点', () => {
-      // state.level = 4 (Act 1 结束节点)
+    it('tempBuff expiresAtNode 指向下一 Act 结束节点', () => {
+      // state.level = 4 (Act 1 rest)，下一个战斗 = 5 (Act 2)，Act 2 结束于 Node 8
       executeEffect('trial_power')
-      // Act 1 结束于 Node 4
       state.tempBuffs.forEach(b => {
-        expect(b.expiresAtNode).toBe(4)
+        expect(b.expiresAtNode).toBe(8)
+      })
+    })
+
+    it('node 8 rest 时 tempBuff expiresAtNode = 10', () => {
+      state.level = 8 // Act 2 rest
+      executeEffect('trial_endurance')
+      state.tempBuffs.forEach(b => {
+        expect(b.expiresAtNode).toBe(10)
       })
     })
   })
@@ -167,6 +174,38 @@ describe('restStage - executeEffect', () => {
       executeEffect('curse_accept')
       expect(state.gold).toBe(goldBefore + 150)
     })
+
+    it('curse_accept 记录 sealedKeys', () => {
+      executeEffect('curse_accept')
+      expect(state.sealedKeys).toHaveLength(2)
+      state.sealedKeys.forEach(s => {
+        expect(s.key).toBeTruthy()
+        expect(s.skillId).toBeTruthy()
+        expect(s.expiresAtNode).toBeGreaterThan(0)
+      })
+    })
+
+    it('curse_accept expiresAtNode 指向下一 Act 结束节点', () => {
+      // state.level = 4 (Act 1 rest)，下一个战斗 = 5 (Act 2)，Act 2 结束 = 8
+      executeEffect('curse_accept')
+      state.sealedKeys.forEach(s => {
+        expect(s.expiresAtNode).toBe(8)
+      })
+    })
+
+    it('curse_accept 在 node 8 时 expiresAtNode = 10', () => {
+      state.level = 8 // Act 2 rest
+      executeEffect('curse_accept')
+      state.sealedKeys.forEach(s => {
+        expect(s.expiresAtNode).toBe(10)
+      })
+    })
+
+    it('curse_accept 结果文案包含自动恢复提示', () => {
+      const result = executeEffect('curse_accept')
+      expect(result).toContain('Act 结束后自动恢复')
+      expect(result).not.toContain('可在商店重新绑定')
+    })
   })
 
   describe('事件 8 - 技能复制器', () => {
@@ -177,11 +216,13 @@ describe('restStage - executeEffect', () => {
       expect(newTotalLevels).toBe(totalLevels + 1)
     })
 
-    it('copy_skill 添加 targetScore tempBuff', () => {
+    it('copy_skill 添加 targetScore tempBuff，expiresAtNode 指向下一 Act', () => {
       executeEffect('copy_skill')
       const tsBuff = state.tempBuffs.find(b => b.type === 'targetScore')
       expect(tsBuff).toBeDefined()
       expect(tsBuff!.value).toBe(1.5)
+      // state.level = 4 (Act 1 rest)，下一 Act 结束 = 8
+      expect(tsBuff!.expiresAtNode).toBe(8)
     })
   })
 
@@ -236,5 +277,84 @@ describe('restStage - TempBuff 过期', () => {
     state.level = 5
     state.tempBuffs = state.tempBuffs.filter(b => state.level <= b.expiresAtNode)
     expect(state.tempBuffs).toHaveLength(1)
+  })
+})
+
+describe('restStage - SealedKeys 过期恢复', () => {
+  beforeEach(() => {
+    resetState()
+    state.player.skills.set('burst', { level: 1 })
+    state.player.skills.set('amp', { level: 2 })
+  })
+
+  it('过期后绑定自动恢复', () => {
+    state.sealedKeys = [
+      { key: 'a', skillId: 'burst', expiresAtNode: 8 },
+    ]
+    // 模拟 level > expiresAtNode
+    state.level = 9
+    const expired = state.sealedKeys.filter(s => state.level > s.expiresAtNode)
+    for (const seal of expired) {
+      if (!state.player.bindings.has(seal.key) && state.player.skills.has(seal.skillId)) {
+        state.player.bindings.set(seal.key, seal.skillId)
+      }
+    }
+    state.sealedKeys = state.sealedKeys.filter(s => state.level <= s.expiresAtNode)
+
+    expect(state.player.bindings.get('a')).toBe('burst')
+    expect(state.sealedKeys).toHaveLength(0)
+  })
+
+  it('未过期时保留封印', () => {
+    state.sealedKeys = [
+      { key: 'a', skillId: 'burst', expiresAtNode: 8 },
+    ]
+    state.level = 7
+    const expired = state.sealedKeys.filter(s => state.level > s.expiresAtNode)
+    for (const seal of expired) {
+      if (!state.player.bindings.has(seal.key) && state.player.skills.has(seal.skillId)) {
+        state.player.bindings.set(seal.key, seal.skillId)
+      }
+    }
+    state.sealedKeys = state.sealedKeys.filter(s => state.level <= s.expiresAtNode)
+
+    expect(state.player.bindings.has('a')).toBe(false)
+    expect(state.sealedKeys).toHaveLength(1)
+  })
+
+  it('键位已被占用时不覆盖', () => {
+    state.player.bindings.set('a', 'amp') // 玩家手动绑定了别的技能
+    state.sealedKeys = [
+      { key: 'a', skillId: 'burst', expiresAtNode: 8 },
+    ]
+    state.level = 9
+    const expired = state.sealedKeys.filter(s => state.level > s.expiresAtNode)
+    for (const seal of expired) {
+      if (!state.player.bindings.has(seal.key) && state.player.skills.has(seal.skillId)) {
+        state.player.bindings.set(seal.key, seal.skillId)
+      }
+    }
+    state.sealedKeys = state.sealedKeys.filter(s => state.level <= s.expiresAtNode)
+
+    expect(state.player.bindings.get('a')).toBe('amp') // 不覆盖
+    expect(state.sealedKeys).toHaveLength(0) // 封印记录仍被清理
+  })
+
+  it('技能已不存在时不恢复绑定', () => {
+    state.sealedKeys = [
+      { key: 'a', skillId: 'burst', expiresAtNode: 8 },
+    ]
+    state.player.skills.delete('burst') // 技能被移除了
+    state.level = 9
+    const expired = state.sealedKeys.filter(s => state.level > s.expiresAtNode)
+    for (const seal of expired) {
+      if (!state.player.bindings.has(seal.key) && state.player.skills.has(seal.skillId)) {
+        state.player.bindings.set(seal.key, seal.skillId)
+      }
+    }
+    state.sealedKeys = state.sealedKeys.filter(s => state.level <= s.expiresAtNode)
+
+    expect(state.player.bindings.has('a')).toBe(false) // 不恢复
+    expect(state.sealedKeys).toHaveLength(0)
   })
 })

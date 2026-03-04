@@ -117,31 +117,34 @@ describe('技能管道集成', () => {
       expect(state.time).toBe(27)
     })
 
-    it('time 上限为 timeMax + 10', () => {
-      state.time = 38
+    it('time 上限为 timeMax × 2', () => {
+      state.time = 55
       state.timeMax = 30
-      const effects: EffectAccumulator = { ...emptyEffects(), time: 5 }
+      const effects: EffectAccumulator = { ...emptyEffects(), time: 10 }
       applyEffects(effects)
-      expect(state.time).toBe(40) // min(43, 30+10=40)
+      expect(state.time).toBe(60) // min(65, 30*2=60)
     })
 
-    it('shield=1 → synergy.shieldCount += 1', () => {
-      synergy.shieldCount = 0
+    it('shield=1 → resources.shield += 1', () => {
+      state.resources.shield = 0
       const effects: EffectAccumulator = { ...emptyEffects(), shield: 1 }
       applyEffects(effects)
-      expect(synergy.shieldCount).toBe(1)
+      expect(state.resources.shield).toBe(1)
     })
 
     it('多效果同时应用', () => {
       state.multiplier = 1.5
       state.time = 20
       state.timeMax = 30
+      state.resources.shield = 0
       const effects: EffectAccumulator = { score: 5, multiply: 0.1, time: 1, gold: 0, shield: 2 }
       applyEffects(effects)
       expect(synergy.skillBaseScore).toBe(5)
       expect(state.multiplier).toBeCloseTo(1.6)
+      expect(state.resources.multiplier).toBeCloseTo(1.6) // proxy 自动同步
       expect(state.time).toBe(21)
-      expect(synergy.shieldCount).toBe(2)
+      expect(state.resources.time).toBe(21) // proxy 自动同步
+      expect(state.resources.shield).toBe(2)
     })
   })
 

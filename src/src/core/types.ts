@@ -4,6 +4,17 @@
 
 import type { BossModifierId } from '../data/bossModifiers';
 
+// === 资源系统 ===
+export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'shield';
+
+export interface ResourceState {
+  base: number;        // 基数（每击键 +1，技能/字母升级累加）
+  score: number;       // 即时加分（直接累加到最终分数）— 当前无生产者，预留给 Story 19.2+ 技能
+  multiplier: number;  // 倍率（基础 + 连击 + 技能加成）
+  time: number;        // 时间资源（倒计时秒数）
+  shield: number;      // 护盾层数（抵消错误输入）
+}
+
 // === 游戏状态 ===
 export type GamePhase = 'battle' | 'shop' | 'gameover' | 'victory' | 'rest';
 
@@ -25,6 +36,8 @@ export interface GameState {
   bossModifierPool: BossModifierId[];  // Run 级别：3 个随机 Boss 修饰器 ID
   usedRestEvents: string[];            // Run 级别：已使用的休息事件 ID
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
+  sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
+  resources: ResourceState;
   player: PlayerState;
   shop: ShopState;
 }
@@ -34,6 +47,13 @@ export interface TempBuff {
   type: 'multiplier' | 'time' | 'targetScore';
   value: number;           // +1.0, -10, 1.5 等
   expiresAtNode: number;   // 在哪个节点后过期
+}
+
+// === 封印键位系统 ===
+export interface SealedKey {
+  key: string;           // 被封印的键位
+  skillId: string;       // 原绑定的技能 ID
+  expiresAtNode: number; // 过期节点
 }
 
 export interface PlayerState {

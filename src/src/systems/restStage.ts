@@ -143,13 +143,13 @@ export function executeEffect(effectId: string): string {
 
     // === 事件 2: 打字之神的考验 ===
     case 'trial_power': {
-      const actEnd = getActEndNode(state.level);
+      const actEnd = getNextActEndNode(state.level);
       state.tempBuffs.push({ type: 'multiplier', value: 1.0, expiresAtNode: actEnd });
       state.tempBuffs.push({ type: 'time', value: -10, expiresAtNode: actEnd });
       return '下一 Act 倍率 +1.0x，但时间 -10 秒！';
     }
     case 'trial_endurance': {
-      const actEnd = getActEndNode(state.level);
+      const actEnd = getNextActEndNode(state.level);
       state.tempBuffs.push({ type: 'time', value: 15, expiresAtNode: actEnd });
       state.tempBuffs.push({ type: 'multiplier', value: -0.5, expiresAtNode: actEnd });
       return '下一 Act 时间 +15 秒，但倍率 -0.5x！';
@@ -230,19 +230,22 @@ export function executeEffect(effectId: string): string {
 
     // === 事件 7: 键盘诅咒 ===
     case 'curse_accept': {
-      // 封印 2 个随机已绑定键位（移除绑定）
+      // 封印 2 个随机已绑定键位（临时移除绑定，Act 结束后自动恢复）
       const boundKeys = [...state.player.bindings.keys()];
       const sealed: string[] = [];
       const shuffled = [...boundKeys].sort(() => Math.random() - 0.5);
+      const expireNode = getNextActEndNode(state.level);
       for (let i = 0; i < Math.min(2, shuffled.length); i++) {
         const key = shuffled[i];
+        const skillId = state.player.bindings.get(key)!;
         state.player.bindings.delete(key);
+        state.sealedKeys.push({ key, skillId, expiresAtNode: expireNode });
         sealed.push(key.toUpperCase());
       }
       state.gold += 150;
       const relicId = grantRandomRelic();
       const relicMsg = relicId ? ` + 遗物 ${RELICS[relicId].icon} ${RELICS[relicId].name}` : '';
-      return `键位 [${sealed.join(', ')}] 被封印！获得 150 金币${relicMsg}。（可在商店重新绑定）`;
+      return `键位 [${sealed.join(', ')}] 被封印！获得 150 金币${relicMsg}。（Act 结束后自动恢复）`;
     }
 
     // === 事件 8: 技能复制器 ===
@@ -250,7 +253,7 @@ export function executeEffect(effectId: string): string {
       const upgraded = upgradeRandomSkill();
       if (!upgraded) return '没有可升级的技能。';
       // 目标分 ×1.5（临时 buff 到下一个 Act 结束）
-      const actEnd = getActEndNode(state.level);
+      const actEnd = getNextActEndNode(state.level);
       state.tempBuffs.push({ type: 'targetScore', value: 1.5, expiresAtNode: actEnd });
       return `${upgraded.name} 升级至 Lv.${upgraded.newLevel}！但下一 Act 目标分 ×1.5。`;
     }
@@ -270,7 +273,7 @@ export function executeEffect(effectId: string): string {
           return `厄运！失去 ${cost} 金币（30%）！`;
         },
         () => {
-          const actEnd = getActEndNode(state.level);
+          const actEnd = getNextActEndNode(state.level);
           state.tempBuffs.push({ type: 'multiplier', value: 0.5, expiresAtNode: actEnd });
           return '好运！下一 Act 倍率 +0.5x！';
         },
@@ -302,13 +305,19 @@ export function executeEffect(effectId: string): string {
 
 // === 辅助函数 ===
 
-/** 获取当前 Act 结束节点（下一个休息关或最终节点） */
-function getActEndNode(currentNode: number): number {
-  const act = getActForNode(currentNode);
+/** 获取指定节点所在 Act 的结束节点 */
+function getActEndNode(nodeId: number): number {
+  const act = getActForNode(nodeId);
   // Act 1 结束 = Node 4, Act 2 结束 = Node 8, Act 3 = Node 10
   if (act === 1) return 4;
   if (act === 2) return 8;
   return 10;
+}
+
+/** 获取下一个 Act 的结束节点（用于休息关"下一 Act"效果） */
+function getNextActEndNode(currentNode: number): number {
+  const nextBattle = getNextBattleNode(currentNode);
+  return nextBattle > 0 ? getActEndNode(nextBattle) : getActEndNode(currentNode);
 }
 
 /** 授予随机遗物，返回遗物 ID 或 null */

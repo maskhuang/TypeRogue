@@ -175,8 +175,21 @@ development_status:
   18-9-act-transition-visual-polish: done
   epic-18-retrospective: optional
 
+  # Epic 19: 技能体系重构
+  epic-19: in-progress
+  19-1-resource-system-core: done
+  19-2-producer-skills: backlog
+  19-3-keyboard-topology: backlog
+  19-4-converter-framework: backlog
+  19-5-connector-framework: backlog
+  19-6-enchantment-system: backlog
+  19-7-battle-ui-overhaul: backlog
+  19-8-shop-redesign-onboarding: backlog
+  19-9-relic-cleanup-migration: backlog
+  epic-19-retrospective: optional
+
 # Summary:
-# - Total Epics: 18
-# - Total Stories: 72
+# - Total Epics: 19
+# - Total Stories: 81
 # - Epics Completed: 18
 # - Stories Completed: 72

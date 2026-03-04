@@ -8,7 +8,7 @@ import { BALANCE } from './constants';
 
 // === 初始状态 ===
 export function createInitialState(): GameState {
-  return {
+  const gameState: GameState = {
     level: 1,
     phase: 'battle',
     time: BALANCE.TIME_PER_LEVEL,
@@ -23,9 +23,17 @@ export function createInitialState(): GameState {
     wordPerfect: true,
     lastMilestone: 0,
     overkill: 0,
+    resources: {
+      base: 0,
+      score: 0,
+      multiplier: BALANCE.BASE_MULTIPLIER,
+      time: BALANCE.TIME_PER_LEVEL,
+      shield: 0,
+    },
     bossModifierPool: [],
     usedRestEvents: [],
     tempBuffs: [],
+    sealedKeys: [],
     player: {
       word: '',
       index: 0,
@@ -44,6 +52,23 @@ export function createInitialState(): GameState {
       refreshCount: 0,
     },
   };
+
+  // Proxy: resources.multiplier ↔ state.multiplier, resources.time ↔ state.time
+  // 消除手动同步，读写 resources.multiplier/time 自动映射到 state 顶层字段
+  Object.defineProperty(gameState.resources, 'multiplier', {
+    get() { return gameState.multiplier; },
+    set(v: number) { gameState.multiplier = v; },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(gameState.resources, 'time', {
+    get() { return gameState.time; },
+    set(v: number) { gameState.time = v; },
+    enumerable: true,
+    configurable: true,
+  });
+
+  return gameState;
 }
 
 // === 联动状态 ===
@@ -72,6 +97,15 @@ export function createSynergyState(): SynergyState {
 // === 全局状态实例 ===
 export let state = createInitialState();
 export let synergy = createSynergyState();
+
+// === 资源重置 ===
+export function resetResources(): void {
+  state.resources.base = 0;
+  state.resources.score = 0;
+  state.resources.multiplier = BALANCE.BASE_MULTIPLIER;
+  state.resources.time = state.timeMax;
+  state.resources.shield = 0;
+}
 
 // === 状态重置 ===
 export function resetState(): void {

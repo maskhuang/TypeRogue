@@ -81,6 +81,15 @@ export const BALANCE = {
   SHAKE_HIGH_THRESHOLD: 20,
 };
 
+// === 资源颜色 ===
+export const RESOURCE_COLORS = {
+  base: '#e74c3c',       // 红
+  score: '#f1c40f',      // 金
+  multiplier: '#e67e22',  // 橙
+  time: '#3498db',       // 蓝
+  shield: '#bdc3c7',     // 银
+} as const;
+
 // === 动画参数 ===
 export const ANIMATION = {
   JUICE_DURATION: 350,

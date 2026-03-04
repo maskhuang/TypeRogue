@@ -76,7 +76,7 @@ export function buildTriggerContext(triggerKey: string, adjacent: AdjacentSkill[
     adjacentSkillTypes: adjacent.map(a => a.skill.type),
     currentWord: state.player.word,
     skillsTriggeredThisWord: synergy.wordSkillCount,
-    shieldCount: synergy.shieldCount,
+    shieldCount: state.resources.shield,
     totalSkillCount: state.player.skills.size,
     hasGamblersCreed: state.player.relics.has('gamblers_creed'),
     skillDensity: computeSkillDensity(state.player.word),
@@ -174,10 +174,10 @@ export function applyEffects(effects: EffectAccumulator): void {
     state.multiplier += effects.multiply;
   }
   if (effects.time > 0) {
-    state.time = Math.min(state.time + effects.time, state.timeMax + 10);
+    state.time = Math.min(state.time + effects.time, state.timeMax * 2);
   }
   if (effects.shield > 0) {
-    synergy.shieldCount += effects.shield;
+    state.resources.shield += effects.shield;
   }
 }
 

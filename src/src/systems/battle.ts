@@ -2,7 +2,7 @@
 // 打字肉鸽 - 战斗系统
 // ============================================
 
-import { state, synergy, calculateTargetScore } from '../core/state';
+import { state, synergy, calculateTargetScore, resetResources } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
@@ -80,6 +80,8 @@ function setWord(): void {
   state.player.index = 0;
   state.wordScore = 0;
   wordBaseScore = 0; // 重置基础分
+  state.resources.base = 0; // 重置资源基数
+  state.resources.score = 0; // 重置即时加分
   state.wordPerfect = true;
   synergy.echoTrigger.clear();
   synergy.wordSkillCount = 0;
@@ -175,6 +177,7 @@ function playerCorrect(k: string): void {
   const letterBase = 1;
   const letterScore = letterBase * state.multiplier;
   wordBaseScore += letterBase; // 累计基础分（用于结算展示）
+  state.resources.base += letterBase; // 写入资源
   state.wordScore += letterScore;
 
   // 字母升级加分：通过缓存的注册表解析 on_correct_keystroke
@@ -231,8 +234,8 @@ function playerWrong(): void {
   // 护盾保护（通过管道解析 shield 的 on_error 拦截器）
   {
     const shieldResult = resolveSkillEventModifiers('on_error', { hasError: true });
-    if (shieldResult.intercepted && synergy.shieldCount > 0) {
-      synergy.shieldCount--;
+    if (shieldResult.intercepted && state.resources.shield > 0) {
+      state.resources.shield -= 1;
       showFeedback('护盾保护!', '#87ceeb');
       return;
     }
@@ -291,8 +294,9 @@ function playerWrong(): void {
 function completeWord(): void {
   const el = getElements();
 
-  // 计算基础分和倍率（字母基础分 + 技能基础分 + 字母升级底分）
-  const baseChips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore);
+  // 计算基础分（字母击键 + 技能基础分 + 字母升级底分 + 字母底分加成）
+  const baseChips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore + state.player.wordBonus);
+  state.resources.base = baseChips;
   let mult = state.multiplier;
   let bonusMult = 1;
 
@@ -306,7 +310,7 @@ function completeWord(): void {
   bonusMult += wordRelicResult.effects.multiply;
 
   const finalMult = mult * bonusMult;
-  let finalWordScore = Math.floor(baseChips * finalMult + state.player.wordBonus);
+  let finalWordScore = Math.floor(baseChips * finalMult);
 
   // Boss 修饰器：单词限额（cap）+ 递减收益（diminish）
   const modEffect = getActiveParams();
@@ -371,7 +375,7 @@ function completeWord(): void {
 
   // 遗物效果：完成词语时间加成（time_crystal 等）
   if (wordRelicResult.effects.time > 0) {
-    state.time = Math.min(state.time + wordRelicResult.effects.time, state.timeMax + state.player.timeBonus + 5);
+    state.time = Math.min(state.time + wordRelicResult.effects.time, state.timeMax * 2);
   }
 
   // 技能效果：on_word_complete 事件（预留扩展）
@@ -396,7 +400,8 @@ function updateSettlementLive(): void {
   const multEl = document.getElementById('settlement-mult');
   const finalEl = document.getElementById('settlement-final');
 
-  const chips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore);
+  const chips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore + state.player.wordBonus);
+  state.resources.base = chips;
   const mult = state.multiplier;
   const final = Math.floor(chips * mult);
 
@@ -497,6 +502,7 @@ function showGoldReward(onComplete: () => void): void {
 // === 计时器 ===
 function startTimer(): void {
   state.time = state.timeMax + state.player.timeBonus;
+  state.resources.time = state.time; // 同步资源
   if (timerInterval) clearInterval(timerInterval);
 
   timerInterval = setInterval(() => {
@@ -606,6 +612,15 @@ export async function startLevel(): Promise<void> {
   // 清理过期临时 buff
   state.tempBuffs = state.tempBuffs.filter(b => state.level <= b.expiresAtNode);
 
+  // 恢复过期封印键位
+  const expiredSeals = state.sealedKeys.filter(s => state.level > s.expiresAtNode);
+  for (const seal of expiredSeals) {
+    if (!state.player.bindings.has(seal.key) && state.player.skills.has(seal.skillId)) {
+      state.player.bindings.set(seal.key, seal.skillId);
+    }
+  }
+  state.sealedKeys = state.sealedKeys.filter(s => state.level <= s.expiresAtNode);
+
   // 使用 stageType-based 固定时间和目标分数
   const battleNum = getBattleNumber(state.level);
   state.timeMax = getTimeLimit(state.level);
@@ -618,7 +633,9 @@ export async function startLevel(): Promise<void> {
     if (buff.type === 'targetScore') state.targetScore = Math.floor(state.targetScore * buff.value);
   }
 
-  synergy.shieldCount = 0;
+  // 重置资源（在 timeMax 和 tempBuff 之后，确保 resources.time 使用正确的 timeMax）
+  resetResources();
+
   synergy.perfectStreak = 0;
   synergy.skillMultBonus = 0;
   synergy.rippleBonus.clear();
@@ -651,7 +668,7 @@ export async function startLevel(): Promise<void> {
   const startRelicResult = resolveRelicEffects('on_battle_start');
   if (startRelicResult.effects.multiply > 0) {
     state.multiplier += startRelicResult.effects.multiply;
-  }
+    }
 
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;
@@ -708,7 +725,7 @@ export async function startLevel(): Promise<void> {
 
   // 时间遗物加成（在 startTimer 设置初始时间后应用，如 time_lord +8 秒、doomsday +30 秒）
   if (startRelicResult.effects.time > 0) {
-    state.time = Math.min(state.time + startRelicResult.effects.time, state.timeMax + state.player.timeBonus + 15);
+    state.time = Math.min(state.time + startRelicResult.effects.time, state.timeMax * 2);
   }
 
   // 时间窃贼代价：基础时间减半（在遗物加成之后，故 time_lord + time_thief 有趣互动）
@@ -721,6 +738,7 @@ export async function startLevel(): Promise<void> {
   if (doomPenalty > 0) {
     state.time = Math.max(5, state.time - doomPenalty);
   }
+
 }
 
 function announceLevel(): void {

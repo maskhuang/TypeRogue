@@ -120,7 +120,7 @@ export const REST_EVENTS: RestEvent[] = [
     icon: '📋',
     description: '一台神秘的机器可以复制你的技能，但代价是更高的挑战。',
     options: [
-      { label: '复制技能', description: '随机一个技能 +1 级，但下一关目标分 ×1.5', effectId: 'copy_skill' },
+      { label: '复制技能', description: '随机一个技能 +1 级，但下一 Act 目标分 ×1.5', effectId: 'copy_skill' },
       { label: '离开', description: '不复制', effectId: 'noop' },
     ],
     prerequisite: (s) => s.player.skills.size >= 1,
