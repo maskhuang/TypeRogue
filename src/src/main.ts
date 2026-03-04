@@ -7,6 +7,7 @@ import { initElements } from './ui/elements';
 import { state } from './core/state';
 import { getStarterWords } from './data/words';
 import { drawBossModifiers } from './data/bossModifiers';
+import { drawConverterPool } from './data/converters';
 import { startLevel, initInput, resetLastAct } from './systems/battle';
 import { initShopEvents } from './systems/shop';
 import { shouldShowRelicPicker, showRelicPicker } from './systems/relicPicker';
@@ -45,6 +46,9 @@ function init(): void {
 
   // 抽取本局 Boss 修饰器池（3 个随机修饰器，精英关/Boss 关使用）
   state.bossModifierPool = drawBossModifiers(3);
+
+  // 抽取本局转化者池（40 个中随机 20 个）
+  state.converterPool = drawConverterPool();
 
   // 启动游戏
   resetLastAct();

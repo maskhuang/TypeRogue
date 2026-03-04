@@ -9,6 +9,7 @@ import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { SKILLS, getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS } from '../data/producers';
+import { CONVERTERS } from '../data/converters';
 import { RELICS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
@@ -835,7 +836,7 @@ export function renderBattleSkills(): void {
 
   let delay = 0;
   state.player.bindings.forEach((skillId, key) => {
-    const sk = SKILLS[skillId] || PRODUCERS[skillId];
+    const sk = SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId];
     if (!sk) return;
 
     const lvl = state.player.skills.get(skillId)?.level || 1;

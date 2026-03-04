@@ -34,6 +34,7 @@ export function createInitialState(): GameState {
     usedRestEvents: [],
     tempBuffs: [],
     sealedKeys: [],
+    converterPool: [],
     player: {
       word: '',
       index: 0,

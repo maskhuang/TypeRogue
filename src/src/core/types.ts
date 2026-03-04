@@ -20,6 +20,20 @@ export interface ProducerDefinition {
   desc: string;                     // 玩家可见描述
 }
 
+// === 转化者系统 ===
+export type ConverterFormula = 'add' | 'multiply';
+
+export interface ConverterDefinition {
+  id: string;              // conv_base_score_add, conv_base_score_mul, ...
+  name: string;            // 变现, 加冕, ...
+  icon: string;            // emoji
+  source: ResourceType;    // 源资源（读取当前值，不消耗）
+  target: ResourceType;    // 目标资源
+  formula: ConverterFormula; // add | multiply
+  k: number;               // 基础系数 (Lv1)
+  desc: string;            // 玩家可见描述
+}
+
 export interface ResourceState {
   base: number;        // 基数（每击键 +1，技能/字母升级累加）
   score: number;       // 即时加分（直接累加到最终分数）— 产出者 prod_loot/prod_crit 写入
@@ -50,6 +64,7 @@ export interface GameState {
   usedRestEvents: string[];            // Run 级别：已使用的休息事件 ID
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
   sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
+  converterPool: string[];             // 本局转化者池（40 抽 20）
   resources: ResourceState;
   player: PlayerState;
   shop: ShopState;

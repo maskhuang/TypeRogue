@@ -5,6 +5,7 @@
 import type { SkillDefinition, SkillType, PassiveSkillType, EvolutionBranch } from '../core/types';
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes';
 import { PRODUCERS, getProducerDesc } from './producers';
+import { CONVERTERS, getConverterDesc } from './converters';
 
 // === 被动技能类型列表 ===
 export const PASSIVE_SKILL_TYPES: PassiveSkillType[] = ['core', 'aura', 'mirror', 'anchor', 'lone', 'void'];
@@ -439,7 +440,10 @@ export const SKILL_SCHOOL: Record<string, SkillSchool> = {
 };
 
 export function getSkillSchool(skillId: string): SkillSchool {
-  return SKILL_SCHOOL[skillId] ?? { label: '未知', cssClass: 'school-unknown' };
+  if (SKILL_SCHOOL[skillId]) return SKILL_SCHOOL[skillId];
+  // 转化者统一归为"转化"流派
+  if (skillId in CONVERTERS) return { label: '转化', cssClass: 'school-converter' };
+  return { label: '未知', cssClass: 'school-unknown' };
 }
 
 /**
@@ -794,6 +798,12 @@ export function getSkillDisplayInfo(
   if (prod) {
     const desc = level ? getProducerDesc(skillId, level) : prod.desc
     return { name: prod.name, icon: prod.icon, desc }
+  }
+  // 转化者查询
+  const conv = CONVERTERS[skillId]
+  if (conv) {
+    const desc = level ? getConverterDesc(skillId, level) : conv.desc
+    return { name: conv.name, icon: conv.icon, desc }
   }
   return { name: '???', icon: '?', desc: '' }
 }

@@ -4,6 +4,7 @@
 // Story 19.2: 10 个产出者（5 资源 × 2 运算符）
 
 import type { ProducerDefinition } from '../core/types';
+import { RESOURCE_LABELS } from '../core/constants';
 
 export const PRODUCERS: Record<string, ProducerDefinition> = {
   // === 基数产出者 ===
@@ -119,10 +120,6 @@ export function getProducerValue(id: string, level: number): number {
   const idx = Math.max(0, Math.min(level, 3) - 1);
   return p.values[idx];
 }
-
-const RESOURCE_LABELS: Record<string, string> = {
-  base: '基数', score: '分数', multiplier: '倍率', time: '时间', shield: '护盾',
-};
 
 /** 生成等级相关的产出者描述 */
 export function getProducerDesc(id: string, level: number): string {

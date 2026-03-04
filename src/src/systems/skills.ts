@@ -7,6 +7,7 @@ import { state, synergy } from '../core/state';
 import { ADJACENT_KEYS, KEYBOARD_ROWS, RESOURCE_COLORS } from '../core/constants';
 import { SKILLS, isPassiveSkill, getSkillModifierFactory, getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS, isProducer, getProducerValue } from '../data/producers';
+import { CONVERTERS, isConverter, getConverterK, getSourceValue, getConverterDesc } from '../data/converters';
 import type { AdjacentSkill, ResourceType } from '../core/types';
 import type { PipelineContext, EffectAccumulator, BehaviorCallbacks, PipelineResult, ModifierTrigger, Modifier } from './modifiers/ModifierTypes';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
@@ -386,11 +387,69 @@ export function triggerProducer(producerId: string): void {
   updateHUD();
 }
 
+// === 触发转化者（绕过 Modifier 管道） ===
+export function triggerConverter(converterId: string): void {
+  const conv = CONVERTERS[converterId];
+  if (!conv) return;
+  const level = state.player.skills.get(converterId)?.level || 1;
+  const k = getConverterK(converterId, level);
+  const sourceVal = getSourceValue(conv.source, state.resources);
+
+  // 视觉/音效反馈
+  showTriggerPopup(converterId);
+  highlightBoundSkill(converterId);
+  playSound('skill');
+  synergy.wordSkillCount++;
+
+  // 计算转化
+  if (conv.formula === 'add') {
+    const delta = sourceVal * k;
+    if (conv.target === 'score') {
+      state.resources.score += delta;
+      state.score += delta;
+    } else {
+      state.resources[conv.target] += delta;
+    }
+  } else {
+    // multiply: target *= (1 + sourceVal × k)
+    const factor = 1 + sourceVal * k;
+    if (conv.target === 'score') {
+      const before = state.resources.score;
+      state.resources.score *= factor;
+      state.score += (state.resources.score - before);
+    } else {
+      state.resources[conv.target] *= factor;
+    }
+  }
+
+  // 时间 clamp
+  if (conv.target === 'time') {
+    state.resources.time = Math.min(state.resources.time, state.timeMax * 2);
+  }
+  // 护盾 floor
+  if (conv.target === 'shield') {
+    state.resources.shield = Math.floor(state.resources.shield);
+  }
+
+  // 浮字反馈
+  const color = RESOURCE_COLORS[conv.target];
+  const desc = getConverterDesc(converterId, level);
+  showFeedback(desc, color);
+
+  updateHUD();
+}
+
 // === 触发技能（管道驱动） ===
 export function triggerSkill(skillId: string, triggerKey: string, isEcho = false): void {
   // 产出者分流：绕过 Modifier 管道
   if (isProducer(skillId)) {
     triggerProducer(skillId);
+    return;
+  }
+
+  // 转化者分流：绕过 Modifier 管道
+  if (isConverter(skillId)) {
+    triggerConverter(skillId);
     return;
   }
 
@@ -665,7 +724,7 @@ export function getVoidLetterModifiers(): Modifier[] {
 // === 显示技能触发弹窗 ===
 function showTriggerPopup(skillId: string): void {
   const el = getElements();
-  const sk = SKILLS[skillId] || PRODUCERS[skillId];
+  const sk = SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId];
   if (!sk) return;
 
   const display = getSkillDisplayInfo(skillId, state.player.evolvedSkills);

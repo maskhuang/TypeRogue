@@ -81,6 +81,16 @@ export const BALANCE = {
   SHAKE_HIGH_THRESHOLD: 20,
 };
 
+// === 资源标签 ===
+export const RESOURCE_LABELS: Record<string, string> = {
+  base: '基数', score: '分数', multiplier: '倍率', time: '时间', shield: '护盾',
+};
+
+// === 资源图标 ===
+export const RESOURCE_ICONS: Record<string, string> = {
+  base: '⚔️', score: '🪙', multiplier: '🔥', time: '⏳', shield: '🛡️',
+};
+
 // === 资源颜色 ===
 export const RESOURCE_COLORS = {
   base: '#e74c3c',       // 红

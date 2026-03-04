@@ -8,6 +8,7 @@ import { resolveRelicEffects, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS } from '../core/constants';
 import { SKILLS, SYNERGY_TYPES, getSkillSchool, getEvolutionBranches, EVOLUTIONS, getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS } from '../data/producers';
+import { CONVERTERS } from '../data/converters';
 import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
@@ -91,7 +92,8 @@ function generateShopItems(count: number): ShopItem[] {
   const skillPool: ShopItem[] = [];
   if (!isSilenced) {
     const owned = [...state.player.skills.keys()];
-    const allSkillIds = [...Object.keys(SKILLS), ...Object.keys(PRODUCERS)];
+    const poolConverterIds = state.converterPool.filter(id => id in CONVERTERS);
+    const allSkillIds = [...Object.keys(SKILLS), ...Object.keys(PRODUCERS), ...poolConverterIds];
     const unowned = allSkillIds.filter(id => !owned.includes(id));
 
     // 新技能
