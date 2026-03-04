@@ -26,8 +26,6 @@ export class ConditionEvaluator {
       case 'no_errors':
         return !(ctx.hasError ?? false)
       case 'random':
-        // 赌徒信条：gamble 100% 成功
-        if (ctx.hasGamblersCreed) return true
         return Math.random() < condition.probability
 
       // === 位置 ===

@@ -476,8 +476,9 @@ export class RunState {
       runState.data.bindings.set(key, skillId)
     })
 
-    // 恢复其他字段
-    runState.data.relics = [...parsed.relics]
+    // 恢复其他字段（过滤已删除遗物，兼容旧存档）
+    const DELETED_RELICS = ['chain_amplifier', 'fortress', 'passive_mastery', 'gamblers_creed']
+    runState.data.relics = parsed.relics.filter(id => !DELETED_RELICS.includes(id))
     runState.data.gold = parsed.gold
     runState.data.currentStage = parsed.currentStage
     runState.data.currentAct = parsed.currentAct

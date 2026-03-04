@@ -69,21 +69,6 @@ export function queryRelicFlag(flag: string): number | boolean {
     case 'perfectionist_streak':
       // 完美主义者：是否启用完美连击加成
       return state.player.relics.has('perfectionist')
-    case 'chain_amplifier':
-      // 连锁放大器：echo/ripple 额外触发一次
-      return state.player.relics.has('chain_amplifier')
-    case 'fortress_shield_bonus':
-      // 铁壁：shield 额外 +2
-      return state.player.relics.has('fortress') ? 2 : 0
-    case 'fortress_sentinel_bonus':
-      // 铁壁：sentinel 每层护盾额外 +1 分
-      return state.player.relics.has('fortress') ? 1 : 0
-    case 'passive_mastery':
-      // 被动大师：被动技能 enhance 效果翻倍
-      return state.player.relics.has('passive_mastery')
-    case 'gamblers_creed':
-      // 赌徒信条：gamble 100% 成功
-      return state.player.relics.has('gamblers_creed')
     // === 风险回报遗物 ===
     case 'glass_cannon':
       // 玻璃大炮：打错即失败

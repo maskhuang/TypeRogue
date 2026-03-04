@@ -51,7 +51,7 @@ const TEMP_SKILLS: Record<string, { name: string; description: string; rarity: s
 // 临时遗物数据
 const TEMP_RELICS: Record<string, { name: string; description: string; rarity: string }> = {
   'lucky_coin': { name: '幸运硬币', description: '商店价格降低 10%', rarity: 'common' },
-  'void_heart': { name: '虚空之心', description: '每个空键位 +3 底分', rarity: 'rare' }
+  'void_heart': { name: '虚空之心', description: '每个空键位 +3 基数', rarity: 'rare' }
 }
 
 /**

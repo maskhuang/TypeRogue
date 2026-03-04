@@ -140,8 +140,6 @@ export interface PipelineContext {
   shieldCount?: number
   /** 玩家当前拥有的技能总数（键盘风暴使用） */
   totalSkillCount?: number
-  /** 是否拥有赌徒信条遗物（ConditionEvaluator 使用） */
-  hasGamblersCreed?: boolean
   /** 当前正确击键的字母（字母升级系统使用） */
   currentKeystrokeKey?: string
   /** 词中技能键命中率 (0.0~1.0)（词语条件使用） */

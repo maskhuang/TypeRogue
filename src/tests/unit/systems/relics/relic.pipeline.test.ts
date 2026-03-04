@@ -136,24 +136,6 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
     })
   })
 
-  describe('chain_amplifier（催化剂，行为型）', () => {
-    it('返回空数组', () => {
-      expect(RELIC_MODIFIER_DEFS.chain_amplifier('chain_amplifier')).toEqual([])
-    })
-  })
-
-  describe('fortress（催化剂，行为型）', () => {
-    it('返回空数组', () => {
-      expect(RELIC_MODIFIER_DEFS.fortress('fortress')).toEqual([])
-    })
-  })
-
-  describe('passive_mastery（催化剂，行为型）', () => {
-    it('返回空数组', () => {
-      expect(RELIC_MODIFIER_DEFS.passive_mastery('passive_mastery')).toEqual([])
-    })
-  })
-
   describe('keyboard_storm（催化剂）', () => {
     it('on_skill_trigger → score +2 with total_skills_gte(12) condition', () => {
       const mods = RELIC_MODIFIER_DEFS.keyboard_storm('keyboard_storm')
@@ -164,11 +146,6 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
     })
   })
 
-  describe('gamblers_creed（催化剂，行为型）', () => {
-    it('返回空数组', () => {
-      expect(RELIC_MODIFIER_DEFS.gamblers_creed('gamblers_creed')).toEqual([])
-    })
-  })
 })
 
 // ========================================
@@ -195,49 +172,12 @@ describe('queryRelicFlag', () => {
     expect(queryRelicFlag('perfectionist_streak')).toBe(true)
   })
 
-  it('chain_amplifier: 无 → false', () => {
+  it('deleted relics return false/default', () => {
     expect(queryRelicFlag('chain_amplifier')).toBe(false)
-  })
-
-  it('chain_amplifier: 有 → true', () => {
-    addRelic('chain_amplifier')
-    expect(queryRelicFlag('chain_amplifier')).toBe(true)
-  })
-
-  it('fortress_shield_bonus: 无 → 0', () => {
-    expect(queryRelicFlag('fortress_shield_bonus')).toBe(0)
-  })
-
-  it('fortress_shield_bonus: 有 → 2', () => {
-    addRelic('fortress')
-    expect(queryRelicFlag('fortress_shield_bonus')).toBe(2)
-  })
-
-  it('fortress_sentinel_bonus: 无 → 0', () => {
-    expect(queryRelicFlag('fortress_sentinel_bonus')).toBe(0)
-  })
-
-  it('fortress_sentinel_bonus: 有 → 1', () => {
-    addRelic('fortress')
-    expect(queryRelicFlag('fortress_sentinel_bonus')).toBe(1)
-  })
-
-  it('passive_mastery: 无 → false', () => {
+    expect(queryRelicFlag('fortress_shield_bonus')).toBe(false)
+    expect(queryRelicFlag('fortress_sentinel_bonus')).toBe(false)
     expect(queryRelicFlag('passive_mastery')).toBe(false)
-  })
-
-  it('passive_mastery: 有 → true', () => {
-    addRelic('passive_mastery')
-    expect(queryRelicFlag('passive_mastery')).toBe(true)
-  })
-
-  it('gamblers_creed: 无 → false', () => {
     expect(queryRelicFlag('gamblers_creed')).toBe(false)
-  })
-
-  it('gamblers_creed: 有 → true', () => {
-    addRelic('gamblers_creed')
-    expect(queryRelicFlag('gamblers_creed')).toBe(true)
   })
 
   it('unknown flag → false', () => {

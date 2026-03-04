@@ -15,8 +15,8 @@ import type { RelicRarity } from '../../../../src/systems/relics/RelicTypes'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 19 relics', () => {
-      expect(Object.keys(RELICS)).toHaveLength(19)
+    it('should contain 15 relics', () => {
+      expect(Object.keys(RELICS)).toHaveLength(15)
     })
 
     it('should have all required fields for each relic', () => {
@@ -39,14 +39,14 @@ describe('Relics Data', () => {
       expect(commons).toHaveLength(2)
     })
 
-    it('should have 10 rare relics', () => {
+    it('should have 7 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(10)
+      expect(rares).toHaveLength(7)
     })
 
-    it('should have 7 legendary relics', () => {
+    it('should have 6 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(7)
+      expect(legendaries).toHaveLength(6)
     })
   })
 
@@ -86,21 +86,6 @@ describe('Relics Data', () => {
       expect(relic.effects[0].type).toBe('on_skill_trigger')
     })
 
-    it('chain_amplifier should be rare catalyst', () => {
-      const relic = RELICS.chain_amplifier
-      expect(relic.rarity).toBe('rare')
-    })
-
-    it('fortress should be rare catalyst', () => {
-      const relic = RELICS.fortress
-      expect(relic.rarity).toBe('rare')
-    })
-
-    it('gamblers_creed should be rare catalyst', () => {
-      const relic = RELICS.gamblers_creed
-      expect(relic.rarity).toBe('rare')
-    })
-
     it('rhyme_master should give score bonus on double letter words', () => {
       const relic = RELICS.rhyme_master
       expect(relic.rarity).toBe('rare')
@@ -129,11 +114,6 @@ describe('Relics Data', () => {
       const relic = RELICS.perfectionist
       expect(relic.effects[0].type).toBe('battle_end')
       expect(relic.effects[0].condition?.type).toBe('combo_threshold')
-    })
-
-    it('passive_mastery should be legendary catalyst', () => {
-      const relic = RELICS.passive_mastery
-      expect(relic.rarity).toBe('legendary')
     })
 
     it('keyboard_storm should be legendary catalyst', () => {
@@ -211,12 +191,11 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(19)
+      expect(ids).toHaveLength(15)
       expect(ids).toContain('lucky_coin')
       expect(ids).toContain('golden_keyboard')
       expect(ids).toContain('perfectionist')
       expect(ids).toContain('void_heart')
-      expect(ids).toContain('chain_amplifier')
       expect(ids).toContain('glass_cannon')
       expect(ids).toContain('time_thief')
       expect(ids).toContain('greedy_hand')
@@ -229,7 +208,7 @@ describe('Relics Data', () => {
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(19)
+      expect(relics).toHaveLength(15)
     })
 
     it('should return RelicData objects', () => {
@@ -266,6 +245,27 @@ describe('Relics Data', () => {
       expect(RELICS['combo_crown']).toBeUndefined()
       expect(RELICS['treasure_map']).toBeUndefined()
       expect(RELICS['piggy_bank']).toBeUndefined()
+    })
+
+    it('should not contain chain_amplifier, fortress, passive_mastery, gamblers_creed (Story 19.9)', () => {
+      expect(RELICS['chain_amplifier']).toBeUndefined()
+      expect(RELICS['fortress']).toBeUndefined()
+      expect(RELICS['passive_mastery']).toBeUndefined()
+      expect(RELICS['gamblers_creed']).toBeUndefined()
+    })
+  })
+
+  describe('Emoji and description updates (Story 19.9)', () => {
+    it('void_heart emoji should be 🌑', () => {
+      expect(RELICS.void_heart.icon).toBe('🌑')
+    })
+
+    it('void_heart description should use 基数', () => {
+      expect(RELICS.void_heart.description).toContain('基数')
+    })
+
+    it('rhyme_master description should use 基数', () => {
+      expect(RELICS.rhyme_master.description).toContain('基数')
     })
   })
 })

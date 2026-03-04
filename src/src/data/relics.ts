@@ -72,7 +72,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'rhyme_master',
     name: '韵律大师',
     icon: '🎵',
-    description: '词含重复字母时所有技能底分 +3',
+    description: '词含重复字母时所有技能基数 +3',
     rarity: 'rare',
     basePrice: 55,
     effects: [
@@ -86,8 +86,8 @@ export const RELICS: Record<string, RelicData> = {
   void_heart: {
     id: 'void_heart',
     name: '虚空之心',
-    icon: '🕳️',
-    description: '每个空键位 +3 底分',
+    icon: '🌑',
+    description: '每个空键位 +3 基数',
     rarity: 'rare',
     basePrice: 55,
     effects: [
@@ -96,69 +96,17 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '虚空之中，空白即是力量。'
   },
 
-  chain_amplifier: {
-    id: 'chain_amplifier',
-    name: '连锁放大器',
-    icon: '⚡',
-    description: 'echo/ripple 额外触发一次',
-    rarity: 'rare',
-    basePrice: 55,
-    effects: [
-      { type: 'passive', modifier: 'chain_amplify', value: 1 }
-    ],
-    flavor: '锁链之上再加一环。'
-  },
-
-  fortress: {
-    id: 'fortress',
-    name: '铁壁',
-    icon: '🏰',
-    description: '护盾+2，哨兵每层护盾额外+1分',
-    rarity: 'rare',
-    basePrice: 50,
-    effects: [
-      { type: 'passive', modifier: 'shield_bonus', value: 2 }
-    ],
-    flavor: '坚不可摧的堡垒。'
-  },
-
-  passive_mastery: {
-    id: 'passive_mastery',
-    name: '被动大师',
-    icon: '📿',
-    description: '被动技能增强效果翻倍',
-    rarity: 'legendary',
-    basePrice: 90,
-    effects: [
-      { type: 'passive', modifier: 'passive_enhance_double', value: 2 }
-    ],
-    flavor: '大师之道，在于无为而治。'
-  },
-
   keyboard_storm: {
     id: 'keyboard_storm',
     name: '键盘风暴',
     icon: '🌩️',
-    description: '技能数≥12时所有技能底分+2',
+    description: '技能数≥12时所有技能基数+2',
     rarity: 'legendary',
     basePrice: 100,
     effects: [
       { type: 'on_skill_trigger', modifier: 'score_bonus', value: 2 }
     ],
     flavor: '当键盘被占满，风暴降临。'
-  },
-
-  gamblers_creed: {
-    id: 'gamblers_creed',
-    name: '赌徒信条',
-    icon: '🎲',
-    description: '豪赌技能100%成功',
-    rarity: 'rare',
-    basePrice: 60,
-    effects: [
-      { type: 'passive', modifier: 'gamble_guaranteed', value: 1 }
-    ],
-    flavor: '信仰赌桌的人，永远不会输。'
   },
 
   // ==================== 风险回报遗物 ====================
@@ -313,7 +261,7 @@ function relicMod(
 // === RELIC_MODIFIER_DEFS — 每个遗物的 Modifier 工厂 ===
 // 注意：加法效果用 base 层（baseSum += value），乘法效果用 global 层（globalProduct *= value）
 export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
-  // 韵律大师：词含重复字母时底分 +3（base additive + 条件）
+  // 韵律大师：词含重复字母时基数 +3（base additive + 条件）
   rhyme_master: (id) => [
     relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
       effect: { type: 'score', value: 3, stacking: 'additive' },
@@ -350,32 +298,20 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
   ],
 
 
-  // 虚空之心：每个空键位 +3 底分（base additive）
+  // 虚空之心：每个空键位 +3 基数（base additive）
   void_heart: (id, ctx) => [
     relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
       effect: { type: 'score', value: (ctx?.adjacentEmptyCount ?? 0) * 3, stacking: 'additive' },
     }),
   ],
 
-  // 连锁放大器：行为型，通过 queryRelicFlag 查询
-  chain_amplifier: () => [],
-
-  // 铁壁：行为型，通过 queryRelicFlag 查询
-  fortress: () => [],
-
-  // 被动大师：行为型，通过 createScopedRegistry 中特殊处理
-  passive_mastery: () => [],
-
-  // 键盘风暴：技能数 >=12 时底分 +2（base additive + 条件）
+  // 键盘风暴：技能数 >=12 时基数 +2（base additive + 条件）
   keyboard_storm: (id) => [
     relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
       effect: { type: 'score', value: 2, stacking: 'additive' },
       condition: { type: 'total_skills_gte', value: 12 },
     }),
   ],
-
-  // 赌徒信条：行为型，通过 queryRelicFlag 查询
-  gamblers_creed: () => [],
 
   // === 风险回报遗物 ===
 
