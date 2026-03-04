@@ -41,19 +41,6 @@ export const ADJACENT_KEYS: Record<string, string[]> = {
   m: ['n', 'j', 'k'],
 };
 
-// === 技能效果数值 ===
-export const SKILL_EFFECTS = {
-  // 被动技能加成（基于键盘布局，持续生效）
-  AURA_MULTIPLIER: 1.5,           // 光环：相邻主动技能效果 +50%
-  CORE_BONUS_PER_ADJACENT: 5,     // 能量核心：每个相邻技能 +5% 全局分数
-  LONE_BONUS_PERCENT: 20,         // 孤狼：无相邻技能时 +20% 全局分数
-  VOID_BONUS_PER_EMPTY: 3,        // 虚空：每个相邻空位 +3% 全局分数
-
-  // 主动技能效果（技能链，影响下一个技能）
-  RIPPLE_MULTIPLIER: 1.5,         // 涟漪：下一个技能效果 ×1.5
-  ECHO_TRIGGER_NEXT: true,        // 回响：下一个技能也被触发
-}
-
 // === 游戏平衡数值 ===
 export const BALANCE = {
   // 基础数值

@@ -3,11 +3,3 @@
 // ============================================
 
 export { adjacencyMap, AdjacencyMap, type AdjacentSkillInfo } from './AdjacencyMap'
-export {
-  passiveSkillSystem,
-  PassiveSkillSystem,
-  type PassiveBonus,
-  type PassiveBonusSource,
-  type SkillTriggerResult,
-  type GlobalPassiveBonus
-} from './PassiveSkillSystem'

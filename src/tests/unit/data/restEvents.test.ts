@@ -30,8 +30,8 @@ function createTestState(overrides?: Partial<GameState>): GameState {
     player: {
       word: '',
       index: 0,
-      bindings: new Map([['a', 'burst'], ['s', 'amp']]),
-      skills: new Map([['burst', { level: 1 }], ['amp', { level: 2 }]]),
+      bindings: new Map([['a', 'prod_burst'], ['s', 'prod_boost']]),
+      skills: new Map([['prod_burst', { level: 1 }], ['prod_boost', { level: 2 }]]),
       relics: new Set(['lucky_coin']),
       wordDeck: ['fire', 'ice'],
       baseMultiplier: 1.0,
@@ -93,7 +93,7 @@ describe('restEvents', () => {
       expect(altar.prerequisite!(rich)).toBe(true)
 
       const poor = createTestState()
-      poor.player.skills = new Map([['burst', { level: 1 }]])
+      poor.player.skills = new Map([['prod_burst', { level: 1 }]])
       expect(altar.prerequisite!(poor)).toBe(false)
     })
 

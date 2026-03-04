@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { executeEffect } from '../../../src/systems/restStage'
 import { state, resetState } from '../../../src/core/state'
 import { RELICS } from '../../../src/data/relics'
-import { SKILLS } from '../../../src/data/skills'
+import { PRODUCERS } from '../../../src/data/producers'
 
 // Mock DOM 和音效
 vi.mock('../../../src/effects/sound', () => ({
@@ -31,10 +31,10 @@ describe('restStage - executeEffect', () => {
     // 设置基本游戏状态
     state.gold = 200
     state.level = 4 // 休息关
-    state.player.skills.set('burst', { level: 1 })
-    state.player.skills.set('amp', { level: 2 })
-    state.player.bindings.set('a', 'burst')
-    state.player.bindings.set('s', 'amp')
+    state.player.skills.set('prod_burst', { level: 1 })
+    state.player.skills.set('prod_boost', { level: 2 })
+    state.player.bindings.set('a', 'prod_burst')
+    state.player.bindings.set('s', 'prod_boost')
     state.player.relics.add('lucky_coin')
   })
 
@@ -283,13 +283,13 @@ describe('restStage - TempBuff 过期', () => {
 describe('restStage - SealedKeys 过期恢复', () => {
   beforeEach(() => {
     resetState()
-    state.player.skills.set('burst', { level: 1 })
-    state.player.skills.set('amp', { level: 2 })
+    state.player.skills.set('prod_burst', { level: 1 })
+    state.player.skills.set('prod_boost', { level: 2 })
   })
 
   it('过期后绑定自动恢复', () => {
     state.sealedKeys = [
-      { key: 'a', skillId: 'burst', expiresAtNode: 8 },
+      { key: 'a', skillId: 'prod_burst', expiresAtNode: 8 },
     ]
     // 模拟 level > expiresAtNode
     state.level = 9
@@ -301,13 +301,13 @@ describe('restStage - SealedKeys 过期恢复', () => {
     }
     state.sealedKeys = state.sealedKeys.filter(s => state.level <= s.expiresAtNode)
 
-    expect(state.player.bindings.get('a')).toBe('burst')
+    expect(state.player.bindings.get('a')).toBe('prod_burst')
     expect(state.sealedKeys).toHaveLength(0)
   })
 
   it('未过期时保留封印', () => {
     state.sealedKeys = [
-      { key: 'a', skillId: 'burst', expiresAtNode: 8 },
+      { key: 'a', skillId: 'prod_burst', expiresAtNode: 8 },
     ]
     state.level = 7
     const expired = state.sealedKeys.filter(s => state.level > s.expiresAtNode)
@@ -323,9 +323,9 @@ describe('restStage - SealedKeys 过期恢复', () => {
   })
 
   it('键位已被占用时不覆盖', () => {
-    state.player.bindings.set('a', 'amp') // 玩家手动绑定了别的技能
+    state.player.bindings.set('a', 'prod_boost') // 玩家手动绑定了别的技能
     state.sealedKeys = [
-      { key: 'a', skillId: 'burst', expiresAtNode: 8 },
+      { key: 'a', skillId: 'prod_burst', expiresAtNode: 8 },
     ]
     state.level = 9
     const expired = state.sealedKeys.filter(s => state.level > s.expiresAtNode)
@@ -336,15 +336,15 @@ describe('restStage - SealedKeys 过期恢复', () => {
     }
     state.sealedKeys = state.sealedKeys.filter(s => state.level <= s.expiresAtNode)
 
-    expect(state.player.bindings.get('a')).toBe('amp') // 不覆盖
+    expect(state.player.bindings.get('a')).toBe('prod_boost') // 不覆盖
     expect(state.sealedKeys).toHaveLength(0) // 封印记录仍被清理
   })
 
   it('技能已不存在时不恢复绑定', () => {
     state.sealedKeys = [
-      { key: 'a', skillId: 'burst', expiresAtNode: 8 },
+      { key: 'a', skillId: 'prod_burst', expiresAtNode: 8 },
     ]
-    state.player.skills.delete('burst') // 技能被移除了
+    state.player.skills.delete('prod_burst') // 技能被移除了
     state.level = 9
     const expired = state.sealedKeys.filter(s => state.level > s.expiresAtNode)
     for (const seal of expired) {

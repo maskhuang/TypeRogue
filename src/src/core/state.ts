@@ -79,23 +79,13 @@ export function createInitialState(): GameState {
 // === 联动状态 ===
 export function createSynergyState(): SynergyState {
   return {
-    rippleBonus: new Map(),
-    echoTrigger: new Set(),
     shieldCount: 0,
     perfectStreak: 0,
     wordSkillCount: 0,
     lastTriggeredSkillId: null,
-    echoPending: false,
-    ripplePending: false,
-    ripplePassthrough: null,
-    pulseCount: 0,
     skillBaseScore: 0,
     skillMultBonus: 0,
     letterBaseScore: 0,
-    // 进化系统
-    wordCooldowns: new Set(),
-    restoreComboCounters: new Map(),
-    freezeTriggeredThisWord: new Set(),
     // 附魔系统
     decayCounters: new Map(),
   };

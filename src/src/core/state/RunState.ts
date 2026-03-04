@@ -5,6 +5,7 @@
 
 import { BattleResult } from '../../scenes/battle/BattleFlowController'
 import { drawBossModifiers } from '../../data/bossModifiers'
+import { DELETED_SKILL_IDS, DELETED_EVOLUTION_IDS } from '../../data/skills'
 
 /**
  * 技能实例（已获得的技能）
@@ -466,13 +467,17 @@ export class RunState {
       }
     }
 
-    // 恢复技能
+    // 恢复技能（过滤已删除的旧技能）
     parsed.skills.forEach(skill => {
+      if (DELETED_SKILL_IDS.includes(skill.id)) return
+      if (DELETED_EVOLUTION_IDS.includes(skill.id)) return
       runState.data.skills.push({ id: skill.id, level: skill.level })
     })
 
-    // 恢复绑定 (从对象转回 Map)
+    // 恢复绑定（过滤已删除的旧技能绑定）
     Object.entries(parsed.bindings).forEach(([key, skillId]) => {
+      if (DELETED_SKILL_IDS.includes(skillId)) return
+      if (DELETED_EVOLUTION_IDS.includes(skillId)) return
       runState.data.bindings.set(key, skillId)
     })
 

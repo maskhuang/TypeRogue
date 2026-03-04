@@ -2,14 +2,8 @@
 // 打字肉鸽 - 技能系统导出
 // ============================================
 
-// 被动技能系统
-export * from './passive'
+// 被动技能系统（AdjacencyMap 仍被 UI 使用）
+export { adjacencyMap, AdjacencyMap, type AdjacentSkillInfo } from './passive/AdjacencyMap'
 
-// 主动技能系统
-export * from './active'
-
-// 技能协调器
-export * from './SkillCoordinator'
-
-// 重新导出技能数据（便于访问）
-export { SKILLS, SYNERGY_TYPES } from '../../data/skills'
+// 主动技能系统（EffectQueue 仍被测试使用）
+export * from './active/EffectQueue'

@@ -13,6 +13,7 @@ stories:
   - "19-7-battle-ui-overhaul"
   - "19-8-shop-redesign-onboarding"
   - "19-9-relic-cleanup-migration"
+  - "19-10-legacy-skill-cleanup"
 ---
 
 # Epic 19: 技能体系重构

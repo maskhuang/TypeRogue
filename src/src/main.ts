@@ -21,8 +21,8 @@ function init(): void {
   initElements();
 
   // 初始技能
-  state.player.skills.set('burst', { level: 1 });
-  state.player.bindings.set('f', 'burst');
+  state.player.skills.set('prod_burst', { level: 1 });
+  state.player.bindings.set('f', 'prod_burst');
 
   // 初始词库
   state.player.wordDeck = getStarterWords();

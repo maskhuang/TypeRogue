@@ -205,14 +205,13 @@ describe('现有商店功能保留 (AC3, AC7, AC8)', () => {
     expect(content).toContain('registerShopDropZones')
   })
 
-  it('进化/附魔模态框保留', async () => {
+  it('附魔模态框保留', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
     const content = fs.readFileSync(shopPath, 'utf-8')
-    expect(content).toContain('renderEvolutionModal')
     expect(content).toContain('renderEnchantmentModal')
-    expect(content).toContain('checkAutoEvolution')
+    expect(content).toContain('checkAutoEnchantment')
   })
 
   it('refreshShop 保留', async () => {

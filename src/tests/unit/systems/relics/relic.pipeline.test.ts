@@ -25,8 +25,6 @@ vi.mock('../../../../src/core/state', () => {
       overkill: 0,
     },
     synergy: {
-      rippleBonus: new Map(),
-      echoTrigger: new Set(),
       shieldCount: 0,
       perfectStreak: 0,
       wordSkillCount: 0,

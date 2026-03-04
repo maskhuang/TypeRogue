@@ -39,16 +39,19 @@ const BASE_PRICES: Record<string, Record<string, number>> = {
   relic: { common: 40, rare: 70, legendary: 120 }
 }
 
-// 临时技能数据（后续从 data/skills.ts 导入）
+// 临时数据（旧 PixiJS 场景残留，已被 systems/shop.ts 替代）
 const TEMP_SKILLS: Record<string, { name: string; description: string; rarity: string }> = {
-  'score_boost': { name: '分数提升', description: '每次击键额外获得 10 分', rarity: 'common' },
-  'combo_shield': { name: '连击护盾', description: '每 10 连击获得一次错误保护', rarity: 'common' },
-  'time_extend': { name: '时间延长', description: '每完成一个词延长 0.5 秒', rarity: 'rare' },
-  'multiplier_aura': { name: '倍率光环', description: '相邻技能获得 1.2x 加成', rarity: 'rare' },
-  'gold_magnet': { name: '金币磁铁', description: '战斗奖励金币 +20%', rarity: 'common' }
+  'prod_burst': { name: '爆发', description: '基数+5', rarity: 'common' },
+  'prod_loot': { name: '掠夺', description: '分数+15', rarity: 'common' },
+  'prod_boost': { name: '增幅', description: '倍率+0.2', rarity: 'common' },
+  'prod_freeze': { name: '冻结', description: '时间+2', rarity: 'common' },
+  'prod_shield': { name: '护盾', description: '护盾+1', rarity: 'common' },
+  'prod_focus': { name: '专注', description: '基数×2', rarity: 'rare' },
+  'prod_crit': { name: '暴击', description: '分数×1.1', rarity: 'rare' },
+  'prod_frenzy': { name: '狂热', description: '倍率×1.15', rarity: 'rare' },
+  'prod_eternal': { name: '永恒', description: '时间×1.2', rarity: 'rare' },
+  'prod_fortress': { name: '堡垒', description: '护盾×2', rarity: 'rare' },
 }
-
-// 临时遗物数据
 const TEMP_RELICS: Record<string, { name: string; description: string; rarity: string }> = {
   'lucky_coin': { name: '幸运硬币', description: '商店价格降低 10%', rarity: 'common' },
   'void_heart': { name: '虚空之心', description: '每个空键位 +3 基数', rarity: 'rare' }

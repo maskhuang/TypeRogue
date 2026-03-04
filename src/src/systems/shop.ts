@@ -6,7 +6,7 @@
 import { state } from '../core/state';
 import { resolveRelicEffects, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS } from '../core/constants';
-import { SKILLS, SYNERGY_TYPES, getSkillSchool, getEvolutionBranches, EVOLUTIONS, getSkillDisplayInfo } from '../data/skills';
+import { getSkillSchool, getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS, isProducer } from '../data/producers';
 import { CONVERTERS, isConverter } from '../data/converters';
 import { CONNECTORS, isConnector } from '../data/connectors';
@@ -117,13 +117,13 @@ function generateShopItems(count: number): ShopItem[] {
     const owned = [...state.player.skills.keys()];
     const poolConverterIds = state.converterPool.filter(id => id in CONVERTERS);
     const poolConnectorIds = state.connectorPool.filter(id => id in CONNECTORS);
-    const allSkillIds = [...Object.keys(SKILLS), ...Object.keys(PRODUCERS), ...poolConverterIds, ...poolConnectorIds];
+    const allSkillIds = [...Object.keys(PRODUCERS), ...poolConverterIds, ...poolConnectorIds];
     const unowned = allSkillIds.filter(id => !owned.includes(id));
 
     // 按类型分桶
     const act = getActForNode(state.level);
     const weights = ACT_SKILL_WEIGHTS[act] || ACT_SKILL_WEIGHTS[3];
-    const producerBucket = shuffleArray(unowned.filter(id => isProducer(id) || (!isConverter(id) && !isConnector(id))));
+    const producerBucket = shuffleArray(unowned.filter(id => isProducer(id)));
     const converterBucket = shuffleArray(unowned.filter(id => isConverter(id)));
     const connectorBucket = shuffleArray(unowned.filter(id => isConnector(id)));
 
@@ -244,19 +244,6 @@ function renderUnifiedShop(): void {
     renderUnifiedShopCard(item, index);
   });
 
-  // 进化提示卡片：Lv3 且有进化分支且尚未进化的技能
-  state.player.skills.forEach((data, skillId) => {
-    if (data.level < 3) return;
-    if (state.player.evolvedSkills.has(skillId)) return;
-    const branches = getEvolutionBranches(skillId);
-    if (branches.length === 0) return;
-    const sk = SKILLS[skillId];
-    if (!sk) return;
-    const school = getSkillSchool(skillId);
-    renderShopCard(sk.icon, `${sk.name} 可进化!`, '选择一条进化路线', 0, `${school.label}·进化`, 'evolution-card', () => {
-      renderEvolutionModal(skillId, false);
-    });
-  });
 }
 
 // === 渲染统一商品卡片 ===
@@ -271,11 +258,11 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
   if (!canAfford) card.classList.add('cannot-afford');
 
   if (item.type === 'skill') {
-    const sk = SKILLS[item.skillId!] || PRODUCERS[item.skillId!] || CONVERTERS[item.skillId!] || CONNECTORS[item.skillId!];
+    const sk = PRODUCERS[item.skillId!] || CONVERTERS[item.skillId!] || CONNECTORS[item.skillId!];
     if (!sk) return;
     const school = getSkillSchool(item.skillId!);
     const lvl = state.player.skills.get(item.skillId!)?.level || 1;
-    const display = getSkillDisplayInfo(item.skillId!, state.player.evolvedSkills, lvl, state.player.enchantedSkills);
+    const display = getSkillDisplayInfo(item.skillId!, lvl, state.player.enchantedSkills);
 
     let nameLabel = display.name;
     let typeLabel = school.label;
@@ -349,15 +336,6 @@ function executePurchase(index: number): { skillId: string | null; isNew: boolea
   if (item.type === 'skill') {
     const skillId = item.skillId!;
 
-    // 隐士上限检查（新技能）
-    if (!item.isUpgrade) {
-      const hermitCapped = state.player.evolvedSkills.get('lone') === 'lone_hermit' && state.player.skills.size >= 4;
-      if (hermitCapped) {
-        showFeedback('隐士: 技能上限 4!', '#ff6b6b');
-        return null;
-      }
-    }
-
     state.gold -= item.cost;
     updateGoldDisplay();
     playSound('skill');
@@ -369,10 +347,10 @@ function executePurchase(index: number): { skillId: string | null; isNew: boolea
         data.level++;
         data.purchasePrice = (data.purchasePrice || 0) + item.cost;
       }
-      showFeedback(`${(SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name} 升级!`, '#ffe66d');
+      showFeedback(`${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name} 升级!`, '#ffe66d');
     } else {
       state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
-      showFeedback(`获得 ${(SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name}!`, '#4ecdc4');
+      showFeedback(`获得 ${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name}!`, '#4ecdc4');
 
       // 首次获取某类型技能时显示 tooltip
       const category = getSkillCategory(skillId);
@@ -409,14 +387,14 @@ function purchaseShopItem(index: number): void {
     if (freeKey) state.player.bindings.set(freeKey, result.skillId);
   }
 
-  if (result.skillId) checkAutoEvolution(result.skillId);
+  if (result.skillId) checkAutoEnchantment(result.skillId);
 
   renderUnifiedShop();
   renderBuildManager();
 }
 
 // === 自动进化检查 ===
-function checkAutoEvolution(skillId: string): void {
+function checkAutoEnchantment(skillId: string): void {
   const data = state.player.skills.get(skillId);
   if (!data || data.level < 3) return;
 
@@ -424,14 +402,7 @@ function checkAutoEvolution(skillId: string): void {
   if (isProducer(skillId) || isConverter(skillId)) {
     if (state.player.enchantedSkills.has(skillId)) return;
     renderEnchantmentModal(skillId);
-    return;
   }
-
-  // 旧技能走原进化分支
-  if (state.player.evolvedSkills.has(skillId)) return;
-  const branches = getEvolutionBranches(skillId);
-  if (branches.length === 0) return;
-  renderEvolutionModal(skillId, true);
 }
 
 // === 刷新商店 ===
@@ -497,83 +468,17 @@ export function sellWord(index: number): void {
   renderBuildManager();
 }
 
-// === 进化模态框 ===
-function renderEvolutionModal(skillId: string, isFree: boolean): void {
-  const modal = document.getElementById('evolution-modal');
-  const titleEl = document.getElementById('evolution-title');
-  const branchesEl = document.getElementById('evolution-branches');
-  const cancelBtn = document.getElementById('evolution-cancel');
-  if (!modal || !titleEl || !branchesEl || !cancelBtn) return;
-
-  const sk = SKILLS[skillId];
-  if (!sk) return;
-
-  const branches = getEvolutionBranches(skillId);
-  if (branches.length === 0) return;
-
-  titleEl.textContent = isFree
-    ? `⚡ 技能进化 — ${sk.name} (免费!) ⚡`
-    : `⚡ 技能进化 — ${sk.name} ⚡`;
-  branchesEl.innerHTML = '';
-
-  branches.forEach(branch => {
-    const cost = isFree ? 0 : getAdjustedPrice(branch.condition.goldCost);
-    const canAfford = isFree || state.gold >= cost;
-
-    const card = document.createElement('div');
-    card.className = `evolution-branch${canAfford ? '' : ' cannot-afford'}`;
-    card.innerHTML = `
-      <div class="evolution-branch-icon">${branch.icon}</div>
-      <div class="evolution-branch-name">${branch.name}</div>
-      <div class="evolution-branch-desc">${branch.description}</div>
-      <div class="evolution-branch-flavor">"${branch.flavorText || ''}"</div>
-      <div class="evolution-branch-cost">${isFree ? '✨ 免费' : `💰 ${cost}`}</div>
-    `;
-
-    card.onclick = () => {
-      if (!canAfford) {
-        showFeedback('金币不足!', '#ff6b6b');
-        return;
-      }
-      evolveSkill(skillId, branch.id, cost);
-    };
-
-    branchesEl.appendChild(card);
-  });
-
-  cancelBtn.onclick = closeEvolutionModal;
-  const overlay = modal.querySelector('.evolution-overlay') as HTMLElement;
-  if (overlay) overlay.onclick = closeEvolutionModal;
-  modal.classList.remove('evolution-hidden');
+function closeEnchantmentModal(): void {
+  const modal = document.getElementById('enchantment-modal');
+  if (modal) modal.classList.add('enchantment-hidden');
 }
 
-function closeEvolutionModal(): void {
-  const modal = document.getElementById('evolution-modal');
-  if (modal) modal.classList.add('evolution-hidden');
-}
-
-function evolveSkill(skillId: string, branchId: string, cost: number): void {
-  if (cost > 0 && state.gold < cost) return;
-  if (cost > 0) state.gold -= cost;
-  state.player.evolvedSkills.set(skillId, branchId);
-  updateGoldDisplay();
-
-  const evo = EVOLUTIONS[branchId];
-  if (evo) {
-    showFeedback(`进化! ${evo.icon} ${evo.name}`, '#ffe66d');
-  }
-  playSound('skill');
-  closeEvolutionModal();
-  renderUnifiedShop();
-  renderBuildManager();
-}
-
-// === 附魔选择界面（复用 evolution-modal） ===
+// === 附魔选择界面 ===
 function renderEnchantmentModal(skillId: string): void {
-  const modal = document.getElementById('evolution-modal');
-  const titleEl = document.getElementById('evolution-title');
-  const branchesEl = document.getElementById('evolution-branches');
-  const cancelBtn = document.getElementById('evolution-cancel');
+  const modal = document.getElementById('enchantment-modal');
+  const titleEl = document.getElementById('enchantment-title');
+  const branchesEl = document.getElementById('enchantment-branches');
+  const cancelBtn = document.getElementById('enchantment-cancel');
   if (!modal || !titleEl || !branchesEl || !cancelBtn) return;
 
   const sk = PRODUCERS[skillId] || CONVERTERS[skillId];
@@ -588,21 +493,21 @@ function renderEnchantmentModal(skillId: string): void {
   enchantments.forEach(ench => {
     if (!ench) return;
     const card = document.createElement('div');
-    card.className = 'evolution-branch';
+    card.className = 'enchantment-branch';
     card.innerHTML = `
-      <div class="evolution-branch-icon">${ench.icon}</div>
-      <div class="evolution-branch-name">${ench.name}</div>
-      <div class="evolution-branch-desc">${ench.desc}</div>
-      <div class="evolution-branch-cost">✨ 免费</div>
+      <div class="enchantment-branch-icon">${ench.icon}</div>
+      <div class="enchantment-branch-name">${ench.name}</div>
+      <div class="enchantment-branch-desc">${ench.desc}</div>
+      <div class="enchantment-branch-cost">✨ 免费</div>
     `;
     card.onclick = () => applyEnchantment(skillId, ench.id);
     branchesEl.appendChild(card);
   });
 
-  cancelBtn.onclick = closeEvolutionModal;
-  const overlay = modal.querySelector('.evolution-overlay') as HTMLElement;
-  if (overlay) overlay.onclick = closeEvolutionModal;
-  modal.classList.remove('evolution-hidden');
+  cancelBtn.onclick = closeEnchantmentModal;
+  const overlay = modal.querySelector('.enchantment-overlay') as HTMLElement;
+  if (overlay) overlay.onclick = closeEnchantmentModal;
+  modal.classList.remove('enchantment-hidden');
 }
 
 function applyEnchantment(skillId: string, enchantmentId: string): void {
@@ -612,7 +517,7 @@ function applyEnchantment(skillId: string, enchantmentId: string): void {
     showFeedback(`附魔! ${ench.icon} ${ench.name}`, '#f9ca24');
   }
   playSound('skill');
-  closeEvolutionModal();
+  closeEnchantmentModal();
   renderUnifiedShop();
   renderBuildManager();
 }
@@ -620,45 +525,7 @@ function applyEnchantment(skillId: string, enchantmentId: string): void {
 // === 获取技能显示信息（进化后使用进化数据） ===
 export function getSkillDisplay(skillId: string): { name: string; icon: string; desc: string } {
   const level = state.player.skills.get(skillId)?.level || 1;
-  return getSkillDisplayInfo(skillId, state.player.evolvedSkills, level, state.player.enchantedSkills);
-}
-
-// === 商店卡片渲染（保留给进化提示卡） ===
-function renderShopCard(
-  icon: string,
-  name: string,
-  desc: string,
-  cost: number,
-  typeLabel: string,
-  typeClass: string,
-  onClick: () => void
-): void {
-  const el = getElements();
-  const card = document.createElement('div');
-  card.className = 'reward-card';
-  if (typeClass === 'evolution-card') card.classList.add('evolution-card');
-
-  const canAfford = cost === 0 || state.gold >= cost;
-  if (!canAfford) card.classList.add('cannot-afford');
-
-  card.innerHTML = `
-    <div class="reward-icon">${icon}</div>
-    <div class="reward-info">
-      <div class="reward-name">${name}</div>
-      <div class="reward-desc">${desc}</div>
-    </div>
-    ${cost > 0 ? `<div class="reward-cost">💰${cost}</div>` : ''}
-    <div class="reward-type ${typeClass}">${typeLabel}</div>
-  `;
-
-  init3DCardEffect(card);
-
-  card.onclick = () => {
-    juiceUp(card, 0.2, 3);
-    onClick();
-  };
-
-  el.rewardCards.appendChild(card);
+  return getSkillDisplayInfo(skillId, level, state.player.enchantedSkills);
 }
 
 // === 3D 卡牌效果 ===
@@ -677,12 +544,6 @@ function init3DCardEffect(card: HTMLElement): void {
   card.addEventListener('mouseleave', () => {
     card.style.transform = '';
   });
-}
-
-// === 构筑管理 ===
-function isSynergySkill(skillId: string): boolean {
-  const sk = SKILLS[skillId];
-  return sk ? SYNERGY_TYPES.includes(sk.type) : false;
 }
 
 export function renderBuildManager(): void {
@@ -716,13 +577,12 @@ export function renderBuildManager(): void {
       else if (score >= 1) slot.classList.add('score-low');
 
       // 技能流派底色
-      if (skillId && (SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])) {
+      if (skillId && (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])) {
         const display = getSkillDisplay(skillId);
         const school = getSkillSchool(skillId);
         slot.classList.add('has-skill');
         slot.dataset.dragType = 'skill-key';
         slot.dataset.boundSkill = skillId;
-        if (isSynergySkill(skillId)) slot.classList.add('synergy-skill');
         slot.classList.add(school.cssClass);
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${display.icon}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       } else {
@@ -737,7 +597,7 @@ export function renderBuildManager(): void {
           score,
           frequency: freq,
         };
-        if (skillId && (SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])) {
+        if (skillId && (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])) {
           const display = getSkillDisplay(skillId);
           const school = getSkillSchool(skillId);
           const lvl = state.player.skills.get(skillId)?.level ?? 1;
@@ -771,7 +631,7 @@ export function renderBuildManager(): void {
   }
 
   state.player.skills.forEach((data, skillId) => {
-    const sk = SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
+    const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
     if (!sk) return;
 
     const display = getSkillDisplay(skillId);
@@ -782,7 +642,6 @@ export function renderBuildManager(): void {
     item.dataset.dragType = 'skill-inventory';
     item.dataset.skillId = skillId;
     if (boundKey) item.classList.add('bound');
-    if (isSynergySkill(skillId)) item.classList.add('synergy');
 
     const school = getSkillSchool(skillId);
     const evolvedLabel = state.player.evolvedSkills.has(skillId) ? '<span class="inv-evolved">★</span>' : '';
@@ -879,7 +738,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     }
     state.player.bindings.set(targetKey, skillId);
 
-    if (result.skillId) checkAutoEvolution(result.skillId);
+    if (result.skillId) checkAutoEnchantment(result.skillId);
     renderUnifiedShop();
     renderBuildManager();
   } else if (payload.type === 'skill-inventory' || payload.type === 'skill-key') {

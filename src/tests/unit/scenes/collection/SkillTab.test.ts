@@ -7,7 +7,11 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { Container } from 'pixi.js'
 import { SkillTab } from '../../../../src/scenes/collection/tabs/SkillTab'
 import { MetaState } from '../../../../src/core/state/MetaState'
-import { SKILLS } from '../../../../src/data/skills'
+import { PRODUCERS } from '../../../../src/data/producers'
+import { CONVERTERS } from '../../../../src/data/converters'
+import { CONNECTORS } from '../../../../src/data/connectors'
+
+const ALL_SKILLS_COUNT = Object.keys(PRODUCERS).length + Object.keys(CONVERTERS).length + Object.keys(CONNECTORS).length
 
 describe('SkillTab', () => {
   let metaState: MetaState
@@ -36,7 +40,7 @@ describe('SkillTab', () => {
   describe('技能数据 (AC: #2)', () => {
     it('应该返回所有技能项', () => {
       const items = skillTab.getSkillItems()
-      expect(items.length).toBe(Object.keys(SKILLS).length)
+      expect(items.length).toBe(ALL_SKILLS_COUNT)
     })
 
     it('每个技能项应该有正确的结构', () => {
@@ -64,7 +68,7 @@ describe('SkillTab', () => {
   describe('统计数据 (AC: #7)', () => {
     it('应该返回正确的总技能数', () => {
       const total = skillTab.getTotalCount()
-      expect(total).toBe(Object.keys(SKILLS).length)
+      expect(total).toBe(ALL_SKILLS_COUNT)
     })
 
     it('应该返回正确的已解锁数', () => {
@@ -86,7 +90,7 @@ describe('SkillTab', () => {
   describe('内容高度', () => {
     it('应该返回正确的内容高度', () => {
       const height = skillTab.getContentHeight()
-      const totalSkills = Object.keys(SKILLS).length
+      const totalSkills = ALL_SKILLS_COUNT
       const columns = 5
       const itemHeight = 150
       const expectedRows = Math.ceil(totalSkills / columns)

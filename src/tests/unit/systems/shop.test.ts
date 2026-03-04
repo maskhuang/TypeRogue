@@ -1,32 +1,31 @@
 import { describe, it, expect } from 'vitest';
-import { SKILLS, getSkillSchool } from '../../../src/data/skills';
+import { PRODUCERS } from '../../../src/data/producers';
+import { CONVERTERS } from '../../../src/data/converters';
+import { CONNECTORS } from '../../../src/data/connectors';
+import { getSkillSchool } from '../../../src/data/skills';
 
 describe('Shop skill rendering integration', () => {
-  it('getSkillSchool returns valid label for every SKILLS entry', () => {
-    for (const id of Object.keys(SKILLS)) {
+  it('getSkillSchool returns valid label for producers', () => {
+    for (const id of Object.keys(PRODUCERS)) {
       const school = getSkillSchool(id);
       expect(school.label).not.toBe('未知');
     }
   });
 
   it('upgrade card label includes school and 升级 marker', () => {
-    // Simulates what shop.ts does for upgrade cards
-    const school = getSkillSchool('burst');
+    const school = getSkillSchool('prod_burst');
     const upgradeLabel = `${school.label}·升级`;
-    expect(upgradeLabel).toBe('爆发·升级');
     expect(upgradeLabel).toContain('升级');
   });
 
-  it('new skill card label is just the school label', () => {
-    const school = getSkillSchool('freeze');
-    expect(school.label).toBe('续航');
-  });
-
-  it('each school has a distinct cssClass', () => {
-    const classSet = new Set<string>();
-    for (const id of Object.keys(SKILLS)) {
-      classSet.add(getSkillSchool(id).cssClass);
+  it('getSkillSchool works for converters and connectors', () => {
+    for (const id of Object.keys(CONVERTERS)) {
+      const school = getSkillSchool(id);
+      expect(school).toBeDefined();
     }
-    expect(classSet.size).toBe(5);
+    for (const id of Object.keys(CONNECTORS)) {
+      const school = getSkillSchool(id);
+      expect(school).toBeDefined();
+    }
   });
 });

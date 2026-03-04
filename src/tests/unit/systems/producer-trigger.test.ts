@@ -218,16 +218,6 @@ describe('triggerSkill 产出者分流', () => {
     expect(state.resources.base).toBe(5) // 产出者触发了
   })
 
-  it('旧技能 ID 走原 Modifier 管道', async () => {
-    const { triggerSkill } = await import('../../../src/systems/skills')
-    state.player.skills.set('burst', { level: 1 })
-    state.player.bindings.set('a', 'burst')
-    state.phase = 'battle'
-    // burst 走 Modifier 管道，会给 synergy.skillBaseScore 加分
-    triggerSkill('burst')
-    expect(synergy.skillBaseScore).toBeGreaterThan(0) // 旧技能仍然工作
-  })
-
   it('wordSkillCount 在产出者触发后递增', async () => {
     const { triggerProducer } = await import('../../../src/systems/skills')
     state.player.skills.set('prod_burst', { level: 1 })

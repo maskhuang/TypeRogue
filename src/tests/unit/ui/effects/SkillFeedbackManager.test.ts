@@ -124,13 +124,19 @@ vi.mock('../../../../src/systems/skills/passive/AdjacencyMap', () => ({
   }
 }))
 
-// Mock SKILLS data
-vi.mock('../../../../src/data/skills', () => ({
-  SKILLS: {
+// Mock skill data sources
+vi.mock('../../../../src/data/producers', () => ({
+  PRODUCERS: {
     fire_blast: { id: 'fire_blast', name: '火焰冲击', type: 'score' },
     ice_shield: { id: 'ice_shield', name: '冰霜护盾', type: 'multiply' },
     thunder_bolt: { id: 'thunder_bolt', name: '雷电一击', type: 'special' }
   }
+}))
+vi.mock('../../../../src/data/converters', () => ({
+  CONVERTERS: {}
+}))
+vi.mock('../../../../src/data/connectors', () => ({
+  CONNECTORS: {}
 }))
 
 import { SkillFeedbackManager } from '../../../../src/ui/effects/SkillFeedbackManager'

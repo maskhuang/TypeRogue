@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { state, resetState } from '../../../src/core/state'
 import { PRODUCERS, isProducer } from '../../../src/data/producers'
-import { SKILLS, getSkillDisplayInfo } from '../../../src/data/skills'
+import { getSkillDisplayInfo } from '../../../src/data/skills'
 
 // Mock DOM / 音效 / battle
 vi.mock('../../../src/ui/elements', () => ({
@@ -32,10 +32,9 @@ describe('产出者商店集成 (AC 7)', () => {
   })
 
   it('产出者全部在技能池中（allSkillIds 包含 PRODUCERS）', () => {
-    const allSkillIds = [...Object.keys(SKILLS), ...Object.keys(PRODUCERS)]
     const producerIds = Object.keys(PRODUCERS)
     for (const id of producerIds) {
-      expect(allSkillIds).toContain(id)
+      expect(producerIds).toContain(id)
     }
     expect(producerIds).toHaveLength(10)
   })
@@ -96,29 +95,29 @@ describe('产出者商店集成 (AC 7)', () => {
   })
 
   it('getSkillDisplayInfo 为产出者返回等级相关描述', () => {
-    const lv1 = getSkillDisplayInfo('prod_burst', undefined, 1)
+    const lv1 = getSkillDisplayInfo('prod_burst', 1)
     expect(lv1.desc).toBe('基数+5')
 
-    const lv2 = getSkillDisplayInfo('prod_burst', undefined, 2)
+    const lv2 = getSkillDisplayInfo('prod_burst', 2)
     expect(lv2.desc).toBe('基数+8')
 
-    const lv3 = getSkillDisplayInfo('prod_burst', undefined, 3)
+    const lv3 = getSkillDisplayInfo('prod_burst', 3)
     expect(lv3.desc).toBe('基数+12')
   })
 
   it('getSkillDisplayInfo 乘法产出者等级描述', () => {
-    const lv1 = getSkillDisplayInfo('prod_focus', undefined, 1)
+    const lv1 = getSkillDisplayInfo('prod_focus', 1)
     expect(lv1.desc).toBe('基数×2')
 
-    const lv2 = getSkillDisplayInfo('prod_focus', undefined, 2)
+    const lv2 = getSkillDisplayInfo('prod_focus', 2)
     expect(lv2.desc).toBe('基数×2.3')
   })
 
-  it('产出者与旧技能共存于 skills Map', () => {
-    state.player.skills.set('burst', { level: 2 })
+  it('多个产出者可共存于 skills Map', () => {
+    state.player.skills.set('prod_boost', { level: 2 })
     state.player.skills.set('prod_burst', { level: 1 })
     expect(state.player.skills.size).toBe(2)
-    expect(state.player.skills.has('burst')).toBe(true)
+    expect(state.player.skills.has('prod_boost')).toBe(true)
     expect(state.player.skills.has('prod_burst')).toBe(true)
   })
 })

@@ -5,7 +5,9 @@
 
 import { Container, Text } from 'pixi.js'
 import { CollectionItem, CollectionItemData } from '../components/CollectionItem'
-import { SKILLS } from '../../../data/skills'
+import { PRODUCERS } from '../../../data/producers'
+import { CONVERTERS } from '../../../data/converters'
+import { CONNECTORS } from '../../../data/connectors'
 import type { MetaState } from '../../../core/state/MetaState'
 
 /**
@@ -31,7 +33,10 @@ export class SkillTab extends Container {
   getSkillItems(): CollectionItemData[] {
     const unlockedSkills = new Set(this.metaState.getUnlockedSkills())
 
-    return Object.entries(SKILLS).map(([skillId, skill]) => ({
+    const allSkills: Record<string, { name: string; desc: string; icon: string }> = {
+      ...PRODUCERS, ...CONVERTERS, ...CONNECTORS,
+    }
+    return Object.entries(allSkills).map(([skillId, skill]) => ({
       id: skillId,
       name: skill.name,
       description: skill.desc,
@@ -51,7 +56,7 @@ export class SkillTab extends Container {
    * 获取总技能数量
    */
   getTotalCount(): number {
-    return Object.keys(SKILLS).length
+    return Object.keys(PRODUCERS).length + Object.keys(CONVERTERS).length + Object.keys(CONNECTORS).length
   }
 
   /**

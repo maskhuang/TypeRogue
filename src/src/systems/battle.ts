@@ -7,16 +7,11 @@ import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag }
 import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
-import { SKILLS } from '../data/skills';
-import { PRODUCERS } from '../data/producers';
-import { CONVERTERS } from '../data/converters';
-import { CONNECTORS } from '../data/connectors';
 import { RELICS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
-import { triggerSkill, resolveSkillEventModifiers, calculateLonePassiveBonus, getVoidLetterModifiers, clearPseudoInfinite } from './skills';
-import { isLayoutOnlyPassive } from '../data/skills';
+import { triggerSkill, clearPseudoInfinite } from './skills';
 import { openShop } from './shop';
 import { shouldShowRelicPicker, showRelicPicker } from './relicPicker';
 import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
@@ -50,7 +45,6 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 let wordBaseScore = 0; // 词语基础分（不含倍率）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
-let lonePassiveBonus = 0; // 孤狼被动倍率加成（每关开始时计算）
 
 // === 屏幕管理 ===
 export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'rest'): void {
@@ -86,17 +80,10 @@ function setWord(): void {
   state.resources.base = 0; // 重置资源基数
   state.resources.score = 0; // 重置即时加分
   state.wordPerfect = true;
-  synergy.echoTrigger.clear();
   synergy.wordSkillCount = 0;
   synergy.skillBaseScore = 0;
   synergy.letterBaseScore = 0;
   synergy.lastTriggeredSkillId = null;
-  synergy.echoPending = false;
-  synergy.ripplePending = false;
-  synergy.ripplePassthrough = null;
-  synergy.pulseCount = 0;
-  synergy.wordCooldowns.clear();
-  synergy.freezeTriggeredThisWord.clear();
   synergy.decayCounters.clear();
   renderWord();
   updateSettlementLive(); // 初始化结算面板
@@ -169,8 +156,8 @@ function playerCorrect(k: string): void {
   // 完美主义遗物：连续正确累计
   synergy.perfectStreak++;
 
-  // 计算倍率: 基础 + 孤狼被动 + 连击加成 + 完美主义加成 + 技能倍率加成
-  let mult = state.player.baseMultiplier + lonePassiveBonus + state.combo * state.player.comboBonus;
+  // 计算倍率: 基础 + 连击加成 + 完美主义加成 + 技能倍率加成
+  let mult = state.player.baseMultiplier + state.combo * state.player.comboBonus;
   if (queryRelicFlag('perfectionist_streak')) {
     mult += synergy.perfectStreak * 0.01;
   }
@@ -194,8 +181,8 @@ function playerCorrect(k: string): void {
     }
   }
 
-  // 触发技能（孤狼/虚空等纯布局被动不触发）
-  const shouldTrigger = skillId && !isLayoutOnlyPassive(skillId);
+  // 触发技能（新系统：所有绑定技能都应触发）
+  const shouldTrigger = !!skillId;
   if (shouldTrigger) {
     letter.classList.add('skill-triggered');
     juiceUp(letter, 0.4, 5); // 强力弹跳
@@ -235,14 +222,11 @@ function playerWrong(): void {
 
   playSound('wrong');
 
-  // 护盾保护（通过管道解析 shield 的 on_error 拦截器）
-  {
-    const shieldResult = resolveSkillEventModifiers('on_error', { hasError: true });
-    if (shieldResult.intercepted && state.resources.shield > 0) {
-      state.resources.shield -= 1;
-      showFeedback('护盾保护!', '#87ceeb');
-      return;
-    }
+  // 护盾保护（资源系统：直接消耗护盾层数）
+  if (state.resources.shield > 0) {
+    state.resources.shield -= 1;
+    showFeedback('护盾保护!', '#87ceeb');
+    return;
   }
 
   // 遗物 on_error 管道解析（凤凰羽毛 + 玻璃大炮）
@@ -282,7 +266,7 @@ function playerWrong(): void {
   state.combo = 0;
   state.lastMilestone = 0;
   synergy.skillMultBonus = 0;
-  state.multiplier = state.player.baseMultiplier + lonePassiveBonus;
+  state.multiplier = state.player.baseMultiplier;
 
   // Boss 修饰器：断连即扣（combo_punish）
   const modEffect = getActiveParams();
@@ -382,12 +366,6 @@ function completeWord(): void {
   if (wordRelicResult.effects.time > 0) {
     state.time = Math.min(state.time + wordRelicResult.effects.time, state.timeMax * 2);
   }
-
-  // 技能效果：on_word_complete 事件（预留扩展）
-  resolveSkillEventModifiers('on_word_complete', {
-    combo: state.combo,
-    multiplier: state.multiplier,
-  });
 
   setTimeout(() => {
     if (state.phase === 'battle') setWord();
@@ -650,28 +628,13 @@ export async function startLevel(): Promise<void> {
 
   synergy.perfectStreak = 0;
   synergy.skillMultBonus = 0;
-  synergy.rippleBonus.clear();
-  synergy.echoTrigger.clear();
-  synergy.echoPending = false;
-  synergy.ripplePending = false;
-  synergy.ripplePassthrough = null;
-  synergy.pulseCount = 0;
-  synergy.wordCooldowns.clear();
-  synergy.restoreComboCounters.clear();
-  synergy.freezeTriggeredThisWord.clear();
-
-  // 孤狼被动：计算倍率加成
-  lonePassiveBonus = calculateLonePassiveBonus();
-  state.multiplier = state.player.baseMultiplier + lonePassiveBonus;
+  state.multiplier = state.player.baseMultiplier;
 
   // 构建字频底分修饰器注册表（整场战斗缓存）
   const letterMods = getLetterScoreModifiers(state.player.wordDeck);
-  // 虚空被动：注入相邻空位字母底分加成
-  const voidMods = getVoidLetterModifiers();
-  const allLetterMods = [...letterMods, ...voidMods];
-  if (allLetterMods.length > 0) {
+  if (letterMods.length > 0) {
     letterRegistry = new ModifierRegistry();
-    letterRegistry.registerMany(allLetterMods);
+    letterRegistry.registerMany(letterMods);
   } else {
     letterRegistry = null;
   }
