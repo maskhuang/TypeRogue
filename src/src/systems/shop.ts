@@ -11,6 +11,8 @@ import { PRODUCERS, isProducer } from '../data/producers';
 import { CONVERTERS, isConverter } from '../data/converters';
 import { CONNECTORS, isConnector } from '../data/connectors';
 import { ENCHANTMENTS, drawEnchantmentPair } from '../data/enchantments';
+import { getKeysWithRelation } from '../data/keyboardTopology';
+import type { PositionRelation } from '../data/keyboardTopology';
 import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
@@ -500,6 +502,23 @@ function renderEnchantmentModal(skillId: string): void {
       <div class="enchantment-branch-desc">${ench.desc}</div>
       <div class="enchantment-branch-cost">✨ 免费</div>
     `;
+    // 空间附魔范围预览
+    if (ench.positionRelation) {
+      const boundKey = findKeyForSkill(skillId);
+      if (boundKey) {
+        card.addEventListener('mouseenter', () => {
+          clearRangeHighlight();
+          const keys = getKeysWithRelation(boundKey, ench.positionRelation!);
+          keys.forEach(k => {
+            document.querySelector(`.key-slot[data-key="${k}"]`)
+              ?.classList.add('range-highlight');
+          });
+        });
+        card.addEventListener('mouseleave', () => {
+          clearRangeHighlight();
+        });
+      }
+    }
     card.onclick = () => applyEnchantment(skillId, ench.id);
     branchesEl.appendChild(card);
   });
@@ -546,6 +565,40 @@ function init3DCardEffect(card: HTMLElement): void {
   });
 }
 
+// === 范围预览高亮 ===
+function highlightSkillRange(key: string): void {
+  clearRangeHighlight();
+  const skillId = state.player.bindings.get(key);
+  if (!skillId) return;
+  const relations: PositionRelation[] = [];
+  const conn = CONNECTORS[skillId];
+  if (conn) relations.push(conn.positionRelation);
+  const enchId = state.player.enchantedSkills?.get(skillId);
+  const ench = enchId ? ENCHANTMENTS[enchId] : null;
+  if (ench?.positionRelation) relations.push(ench.positionRelation);
+  if (relations.length === 0) return;
+  const keys = new Set<string>();
+  for (const rel of relations) {
+    getKeysWithRelation(key, rel).forEach(k => keys.add(k));
+  }
+  keys.forEach(k => {
+    document.querySelector(`.key-slot[data-key="${k}"]`)
+      ?.classList.add('range-highlight');
+  });
+}
+
+function clearRangeHighlight(): void {
+  document.querySelectorAll('.key-slot.range-highlight')
+    .forEach(el => el.classList.remove('range-highlight'));
+}
+
+function findKeyForSkill(skillId: string): string | undefined {
+  for (const [key, id] of state.player.bindings) {
+    if (id === skillId) return key;
+  }
+  return undefined;
+}
+
 export function renderBuildManager(): void {
   const el = getElements();
   el.boundGrid.innerHTML = '';
@@ -589,7 +642,7 @@ export function renderBuildManager(): void {
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       }
 
-      // Tooltip 悬停
+      // Tooltip 悬停 + 范围预览
       slot.addEventListener('mouseenter', (e: MouseEvent) => {
         const freq = letterFreqs.get(k) ?? 0;
         const tooltipData: KeyTooltipData = {
@@ -611,9 +664,11 @@ export function renderBuildManager(): void {
           };
         }
         keyTooltip.show(e.clientX, e.clientY, tooltipData);
+        highlightSkillRange(k);
       });
       slot.addEventListener('mouseleave', () => {
         keyTooltip.hide();
+        clearRangeHighlight();
       });
 
       rowDiv.appendChild(slot);

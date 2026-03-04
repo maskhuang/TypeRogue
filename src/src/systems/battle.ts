@@ -315,7 +315,6 @@ function completeWord(): void {
   // 显示 Balatro 风格完成动画
   showSettlementComplete(baseChips, finalMult, instantScore, finalWordScore);
 
-  const prevScore = state.score;
   state.score += finalWordScore;
   bumpScore();
 
@@ -341,10 +340,9 @@ function completeWord(): void {
   wordBaseScore = 0;
 
   // 检查是否达到目标分数 - 提前结束关卡
-  if (state.score >= state.targetScore && prevScore < state.targetScore) {
-    // 计算 overkill：最后一击超出目标的分数
-    const needed = state.targetScore - prevScore;
-    state.overkill = finalWordScore - needed;
+  if (state.score >= state.targetScore) {
+    // 计算 overkill：超出目标的总分数
+    state.overkill = state.score - state.targetScore;
 
     const currentType = getStageType(state.level);
     if (currentType === 'boss') {
