@@ -37,6 +37,7 @@ export function createInitialState(): GameState {
     converterPool: [],
     connectorPool: [],
     pseudoInfiniteState: null,
+    seenSkillTypes: new Set(),
     player: {
       word: '',
       index: 0,

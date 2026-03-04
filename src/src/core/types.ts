@@ -103,6 +103,7 @@ export interface GameState {
   converterPool: string[];             // 本局转化者池（40 抽 20）
   connectorPool: string[];             // 本局连接者池（36 抽 18）
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
+  seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者 tooltip 跟踪）
   resources: ResourceState;
   player: PlayerState;
   shop: ShopState;

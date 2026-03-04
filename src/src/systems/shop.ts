@@ -17,13 +17,34 @@ import { playSound } from '../effects/sound';
 import { juiceUp } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopItem } from '../core/types';
-import { getNextBattleNode, getStageType, isRestNode, TOTAL_NODES } from './stage/stageFlow';
+import { getNextBattleNode, getStageType, isRestNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { dragManager } from './dragManager';
 import type { DragPayload } from './dragManager';
+
+// === Act 技能权重 ===
+export const ACT_SKILL_WEIGHTS: Record<number, { producer: number; converter: number; connector: number }> = {
+  1: { producer: 80, converter: 20, connector: 0 },
+  2: { producer: 30, converter: 50, connector: 20 },
+  3: { producer: 10, converter: 40, connector: 50 },
+};
+
+// === 首次获取 tooltip ===
+export const SKILL_TYPE_TOOLTIPS: Record<string, { text: string; color: string }> = {
+  producer:  { text: '💡 产出者：按键直接产出资源', color: '#4ecdc4' },
+  converter: { text: '💡 转化者：读取资源值，产出另一种', color: '#f39c12' },
+  connector: { text: '💡 连接者：自动触发周围技能', color: '#9b59b6' },
+};
+
+function getSkillCategory(skillId: string): string | null {
+  if (isProducer(skillId)) return 'producer';
+  if (isConverter(skillId)) return 'converter';
+  if (isConnector(skillId)) return 'connector';
+  return null;
+}
 
 // === 打开商店 ===
 export function openShop(_won: boolean): void {
@@ -90,7 +111,7 @@ function generateShopItems(count: number): ShopItem[] {
   const items: ShopItem[] = [];
   let nextId = Date.now();
 
-  // 构建技能池
+  // 构建技能池（按 Act 权重分类抽取）
   const skillPool: ShopItem[] = [];
   if (!isSilenced) {
     const owned = [...state.player.skills.keys()];
@@ -99,9 +120,32 @@ function generateShopItems(count: number): ShopItem[] {
     const allSkillIds = [...Object.keys(SKILLS), ...Object.keys(PRODUCERS), ...poolConverterIds, ...poolConnectorIds];
     const unowned = allSkillIds.filter(id => !owned.includes(id));
 
-    // 新技能
-    const shuffledNew = shuffleArray(unowned);
-    for (const skillId of shuffledNew) {
+    // 按类型分桶
+    const act = getActForNode(state.level);
+    const weights = ACT_SKILL_WEIGHTS[act] || ACT_SKILL_WEIGHTS[3];
+    const producerBucket = shuffleArray(unowned.filter(id => isProducer(id) || (!isConverter(id) && !isConnector(id))));
+    const converterBucket = shuffleArray(unowned.filter(id => isConverter(id)));
+    const connectorBucket = shuffleArray(unowned.filter(id => isConnector(id)));
+
+    // 加权抽取新技能（严格执行 0% 权重 = 绝不出现）
+    function weightedPick(): string | null {
+      const total = weights.producer + weights.converter + weights.connector;
+      const roll = Math.random() * total;
+      if (roll < weights.producer && producerBucket.length > 0) return producerBucket.shift()!;
+      if (roll < weights.producer + weights.converter && converterBucket.length > 0) return converterBucket.shift()!;
+      if (weights.connector > 0 && connectorBucket.length > 0) return connectorBucket.shift()!;
+      // fallback: 从非空的、权重 > 0 的桶中取
+      if (producerBucket.length > 0) return producerBucket.shift()!;
+      if (converterBucket.length > 0) return converterBucket.shift()!;
+      if (weights.connector > 0 && connectorBucket.length > 0) return connectorBucket.shift()!;
+      return null;
+    }
+
+    // 生成加权新技能商品（预抽 3 倍槽位数，保证保底和混合有足够选择）
+    const SKILL_POOL_MULTIPLIER = 3;
+    for (let i = 0; i < count * SKILL_POOL_MULTIPLIER; i++) {
+      const skillId = weightedPick();
+      if (!skillId) break;
       skillPool.push({
         id: `si-${nextId++}`,
         type: 'skill',
@@ -112,7 +156,7 @@ function generateShopItems(count: number): ShopItem[] {
       });
     }
 
-    // 升级已有技能（未满级的）
+    // 升级已有技能（未满级的）— 不受 Act 权重限制
     const upgradable = owned.filter(id => {
       if (isConnector(id)) return false; // 连接者固定 Lv1，不可升级
       const data = state.player.skills.get(id);
@@ -329,6 +373,14 @@ function executePurchase(index: number): { skillId: string | null; isNew: boolea
     } else {
       state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
       showFeedback(`获得 ${(SKILLS[skillId] || PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name}!`, '#4ecdc4');
+
+      // 首次获取某类型技能时显示 tooltip
+      const category = getSkillCategory(skillId);
+      if (category && !state.seenSkillTypes.has(category)) {
+        state.seenSkillTypes.add(category);
+        const tip = SKILL_TYPE_TOOLTIPS[category];
+        if (tip) showFeedback(tip.text, tip.color);
+      }
     }
 
     state.shop.items.splice(index, 1);
