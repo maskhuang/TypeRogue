@@ -117,19 +117,19 @@ describe('triggerProducer with enchantment — 增幅倍率应用 (AC2)', () => 
     state.player.bindings.set('f', 'prod_burst')
 
     // 无附魔
-    state.resources.base = 0
+    synergy.skillBaseScore = 0
     triggerProducer('prod_burst', 'f')
-    const baseWithout = state.resources.base
+    const baseWithout = synergy.skillBaseScore
 
     // 重置
-    state.resources.base = 0
+    synergy.skillBaseScore = 0
     state.player.enchantedSkills.set('prod_burst', 'ench_amplify_adjacent')
     // 添加相邻技能
     state.player.skills.set('prod_focus', { level: 1 })
     state.player.bindings.set('g', 'prod_focus')
 
     triggerProducer('prod_burst', 'f')
-    const baseWith = state.resources.base
+    const baseWith = synergy.skillBaseScore
 
     expect(baseWith).toBeGreaterThan(baseWithout)
   })
@@ -216,9 +216,10 @@ describe('变性型附魔 (AC3, AC6)', () => {
     state.player.enchantedSkills.set('prod_burst', 'ench_trans_score')
 
     const scoreBefore = state.resources.score
+    synergy.skillBaseScore = 0
     triggerProducer('prod_burst', 'f')
     // base 增加 + score 也应增加（变性附魔）
-    expect(state.resources.base).toBeGreaterThan(0)
+    expect(synergy.skillBaseScore).toBeGreaterThan(0)
     expect(state.resources.score).toBeGreaterThan(scoreBefore)
   })
 })

@@ -285,6 +285,7 @@ function completeWord(): void {
   // 计算基础分（字母击键 + 技能基础分 + 字母升级底分 + 字母底分加成）
   const baseChips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore + state.player.wordBonus);
   state.resources.base = baseChips;
+  state.resources.multiplier = state.multiplier;
   let mult = state.multiplier;
   let bonusMult = 1;
 
@@ -386,6 +387,7 @@ function updateSettlementLive(): void {
 
   const chips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore + state.player.wordBonus);
   state.resources.base = chips;
+  state.resources.multiplier = state.multiplier;
   const mult = state.multiplier;
   const score = Math.floor(state.resources.score);
   const final = Math.floor(chips * mult + score);

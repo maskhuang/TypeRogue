@@ -47,10 +47,10 @@ describe('triggerConnectorCopy — 复制型连接者 (AC2)', () => {
     state.player.skills.set('prod_burst', { level: 1 })
     state.player.bindings.set('g', 'prod_burst')
 
-    const baseBefore = state.resources.base
+    const baseBefore = synergy.skillBaseScore
     triggerConnectorCopy('conn_copy_adjacent', 'f', ['f'])
-    // prod_burst 应该被触发 → base 增加
-    expect(state.resources.base).toBeGreaterThan(baseBefore)
+    // prod_burst 应该被触发 → skillBaseScore 增加
+    expect(synergy.skillBaseScore).toBeGreaterThan(baseBefore)
   })
 
   it('位置关系内无技能时不崩溃', async () => {
@@ -86,10 +86,10 @@ describe('checkResourceTriggers — 资源触发 (AC3)', () => {
     state.player.bindings.set('d', 'prod_focus')
 
     // 模拟 g (与 f 相邻) 产出了 base
-    const multBefore = state.resources.multiplier
+    const multBefore = synergy.skillMultBonus
     checkResourceTriggers('base', 'g', ['g'])
-    // conn_base_adjacent 应触发，选中 d(prod_focus) → multiplier 增加
-    expect(state.resources.multiplier).toBeGreaterThanOrEqual(multBefore)
+    // conn_base_adjacent 应触发，选中 d(prod_focus) → skillMultBonus 增加
+    expect(synergy.skillMultBonus).toBeGreaterThanOrEqual(multBefore)
   })
 
   it('不匹配的资源不触发', async () => {
@@ -142,10 +142,10 @@ describe('Layer 1 — 2 卡循环阻断 (AC6)', () => {
     state.player.skills.set('prod_burst', { level: 1 })
     state.player.bindings.set('d', 'prod_burst')
 
-    const baseBefore = state.resources.base
+    const baseBefore = synergy.skillBaseScore
     checkResourceTriggers('base', 'g', ['g'])
-    // d 的 prod_burst 产出 base → 被 Layer 1 跳过 → base 不应增加
-    expect(state.resources.base).toBe(baseBefore)
+    // d 的 prod_burst 产出 base → 被 Layer 1 跳过 → skillBaseScore 不应增加
+    expect(synergy.skillBaseScore).toBe(baseBefore)
   })
 })
 
@@ -186,14 +186,14 @@ describe('伪无限速率 (AC6)', () => {
     state.player.bindings.set('f', 'prod_burst')
     state.phase = 'battle'
 
-    const baseBefore = state.resources.base
+    const baseBefore = synergy.skillBaseScore
     enterPseudoInfinite(['f'])
 
     // 等待 1 秒 = 4 ticks
     await new Promise(r => setTimeout(r, 1100))
 
-    const baseAfter = state.resources.base
-    // 应该触发了 4 次，每次 prod_burst 增加 base
+    const baseAfter = synergy.skillBaseScore
+    // 应该触发了 4 次，每次 prod_burst 增加 skillBaseScore
     expect(baseAfter).toBeGreaterThan(baseBefore)
 
     clearPseudoInfinite()
@@ -215,10 +215,10 @@ describe('伪无限期间手动输入不阻塞 (AC6)', () => {
     // 手动触发另一个技能
     state.player.skills.set('prod_focus', { level: 1 })
     state.player.bindings.set('g', 'prod_focus')
-    const multBefore = state.multiplier
+    const multBefore = synergy.skillMultBonus
     triggerSkill('prod_focus', 'g')
-    // prod_focus 增加 multiplier
-    expect(state.multiplier).toBeGreaterThanOrEqual(multBefore)
+    // prod_focus 增加 skillMultBonus
+    expect(synergy.skillMultBonus).toBeGreaterThanOrEqual(multBefore)
 
     clearPseudoInfinite()
   })

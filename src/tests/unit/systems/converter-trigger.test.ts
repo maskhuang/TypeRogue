@@ -48,14 +48,14 @@ describe('triggerConverter — 加法公式 (AC3)', () => {
     expect(state.score).toBeCloseTo(115) // 100 + 15
   })
 
-  it('base→multiplier add: multiplier += base × k', async () => {
+  it('base→multiplier add: skillMultBonus += base × k', async () => {
     const { triggerConverter } = await import('../../../src/systems/skills')
     state.player.skills.set('conv_base_mult_add', { level: 1 })
     state.resources.base = 15
-    state.multiplier = 1.0
+    synergy.skillMultBonus = 0
     triggerConverter('conv_base_mult_add')
-    // multiplier += 15 × 0.02 = 0.3
-    expect(state.multiplier).toBeCloseTo(1.3)
+    // skillMultBonus += 15 × 0.02 = 0.3
+    expect(synergy.skillMultBonus).toBeCloseTo(0.3)
   })
 
   it('base→time add: time += base × k, clamp to timeMax×2', async () => {
@@ -97,14 +97,15 @@ describe('triggerConverter — 乘法公式 (AC4)', () => {
     expect(state.score).toBeCloseTo(207.5) // 200 + 7.5
   })
 
-  it('base→multiplier mul: multiplier *= (1 + base × k)', async () => {
+  it('base→multiplier mul: skillMultBonus += multiplier × base × k', async () => {
     const { triggerConverter } = await import('../../../src/systems/skills')
     state.player.skills.set('conv_base_mult_mul', { level: 1 })
     state.resources.base = 15
     state.multiplier = 2.0
+    synergy.skillMultBonus = 0
     triggerConverter('conv_base_mult_mul')
-    // multiplier *= (1 + 15 × 0.008) = × 1.12 → 2.24
-    expect(state.multiplier).toBeCloseTo(2.24)
+    // delta = 2.0 × 15 × 0.008 = 0.24
+    expect(synergy.skillMultBonus).toBeCloseTo(0.24)
   })
 
   it('base→shield mul: shield *= (1 + base × k), floor', async () => {
@@ -147,7 +148,7 @@ describe('triggerConverter — 不消耗源资源 (AC5)', () => {
     const { triggerConverter } = await import('../../../src/systems/skills')
     state.player.skills.set('conv_shield_base_add', { level: 1 })
     state.resources.shield = 3
-    state.resources.base = 0
+    synergy.skillBaseScore = 0
     triggerConverter('conv_shield_base_add')
     expect(state.resources.shield).toBe(3) // 不消耗
   })
@@ -200,10 +201,11 @@ describe('triggerConverter — 分数为源特殊逻辑 (AC8)', () => {
     state.resources.score = 800
     state.resources.base = 15
     state.multiplier = 2.0
+    synergy.skillBaseScore = 0
     triggerConverter('conv_score_base_add')
     // sourceVal = 800 + 15 × 2.0 = 830
-    // base += 830 × 0.006 = 4.98
-    expect(state.resources.base).toBeCloseTo(15 + 4.98)
+    // skillBaseScore += 830 × 0.006 = 4.98
+    expect(synergy.skillBaseScore).toBeCloseTo(4.98)
   })
 
   it('分数为源 multiply: 读取累计得分', async () => {
@@ -212,11 +214,11 @@ describe('triggerConverter — 分数为源特殊逻辑 (AC8)', () => {
     state.resources.score = 800
     state.resources.base = 15
     state.multiplier = 2.0
-    const beforeMult = state.multiplier
+    synergy.skillMultBonus = 0
     triggerConverter('conv_score_mult_mul')
     // sourceVal = 830
-    // multiplier *= (1 + 830 × 0.00012) = × 1.0996
-    expect(state.multiplier).toBeCloseTo(beforeMult * (1 + 830 * 0.00012))
+    // delta = multiplier × sourceVal × k = 2.0 × 830 × 0.00012 = 0.1992
+    expect(synergy.skillMultBonus).toBeCloseTo(0.1992)
   })
 })
 

@@ -146,7 +146,11 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   // 直接修改资源
   if (prod.operator === 'add') {
     delta = value;
-    if (prod.resource === 'score') {
+    if (prod.resource === 'base') {
+      synergy.skillBaseScore += value;
+    } else if (prod.resource === 'multiplier') {
+      synergy.skillMultBonus += value;
+    } else if (prod.resource === 'score') {
       state.resources.score += value;
       state.score += value;
     } else {
@@ -154,7 +158,15 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
     }
   } else {
     // ×N 乘法（附魔不影响乘法型 value，但记录增量）
-    if (prod.resource === 'score') {
+    if (prod.resource === 'base') {
+      const before = synergy.skillBaseScore;
+      synergy.skillBaseScore *= value;
+      delta = synergy.skillBaseScore - before;
+    } else if (prod.resource === 'multiplier') {
+      const before = synergy.skillMultBonus;
+      synergy.skillMultBonus *= value;
+      delta = synergy.skillMultBonus - before;
+    } else if (prod.resource === 'score') {
       const before = state.resources.score;
       state.resources.score *= value;
       delta = state.resources.score - before;
@@ -216,7 +228,11 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   // 计算转化
   if (conv.formula === 'add') {
     delta = sourceVal * k * enchMult;
-    if (conv.target === 'score') {
+    if (conv.target === 'base') {
+      synergy.skillBaseScore += delta;
+    } else if (conv.target === 'multiplier') {
+      synergy.skillMultBonus += delta;
+    } else if (conv.target === 'score') {
       state.resources.score += delta;
       state.score += delta;
     } else {
@@ -225,7 +241,15 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   } else {
     // multiply: target *= (1 + sourceVal × k)
     const factor = 1 + sourceVal * k;
-    if (conv.target === 'score') {
+    if (conv.target === 'base') {
+      // multiply 等价于 base 总量 × sourceVal × k 的加值
+      delta = state.resources.base * sourceVal * k;
+      synergy.skillBaseScore += delta;
+    } else if (conv.target === 'multiplier') {
+      // multiply 等价于 multiplier 总量 × sourceVal × k 的加值
+      delta = state.multiplier * sourceVal * k;
+      synergy.skillMultBonus += delta;
+    } else if (conv.target === 'score') {
       const before = state.resources.score;
       state.resources.score *= factor;
       delta = state.resources.score - before;
