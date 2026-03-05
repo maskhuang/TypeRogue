@@ -584,6 +584,8 @@ export async function startLevel(): Promise<void> {
   keyTooltip.hide();
 
   // === Act 过渡演出（在切换到战斗画面前显示） ===
+  // 先隐藏所有屏幕，避免过渡动画期间暴露gameover等界面
+  showScreen('battle');
   const currentStageType = getStageType(state.level);
   const currentAct = getActForNode(state.level);
   if (currentAct !== lastAct) {
