@@ -492,7 +492,7 @@ export const WORD_POOL: Record<string, WordPool> = {
   },
 };
 
-// === 获取起始词库（从 Tier 1-2 词池随机抽取 20 词） ===
+// === 获取起始词库（从 Tier 1-2 词池随机抽取 10 词） ===
 export function getStarterWords(): string[] {
   const candidates: string[] = [];
   for (const pool of Object.values(WORD_POOL)) {
@@ -504,7 +504,7 @@ export function getStarterWords(): string[] {
     const j = Math.floor(Math.random() * (i + 1));
     [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
   }
-  return candidates.slice(0, 20);
+  return candidates.slice(0, 10);
 }
 
 // === 词库统计 ===
