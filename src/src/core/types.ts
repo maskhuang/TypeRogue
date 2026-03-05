@@ -232,6 +232,8 @@ export interface UIElements {
   rewardCards: HTMLElement;
   boundGrid: HTMLElement;
   ownedSkills: HTMLElement;
+  wordCount: HTMLElement;
+  ownedWords: HTMLElement;
   shopRelicIcons: HTMLElement;
   startBattleBtn: HTMLElement;
   // Rest

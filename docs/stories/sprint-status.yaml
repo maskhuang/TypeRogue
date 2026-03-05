@@ -189,8 +189,14 @@ development_status:
   19-10-legacy-skill-cleanup: done
   epic-19-retrospective: optional
 
+  # Epic 20: 词库管理 + 字频锁定
+  epic-20: in-progress
+  20-1-word-inventory-delete: done
+  20-2-zero-freq-key-lock: done
+  epic-20-retrospective: optional
+
 # Summary:
-# - Total Epics: 19
-# - Total Stories: 82
+# - Total Epics: 20
+# - Total Stories: 84
 # - Epics Completed: 18
-# - Stories Completed: 72
+# - Stories Completed: 74

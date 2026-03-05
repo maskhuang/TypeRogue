@@ -570,6 +570,40 @@ body {
 .inventory-skill .inv-school.school-chain { background: var(--school-chain-bg); color: var(--school-chain); }
 .inventory-skill .inv-school.school-passive { background: var(--school-passive-bg); color: var(--school-passive); }
 
+/* 词库面板 */
+#word-inventory { padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-top: 8px; }
+#owned-words { display: flex; flex-wrap: wrap; gap: 4px; max-height: 80px; overflow-y: auto; }
+.word-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: #1a1a2e;
+    border: 1px solid #333;
+    border-radius: 5px;
+    font-size: 11px;
+}
+.word-item .word-text { color: #ccc; }
+.word-item .bound-letter { color: #4ecdc4; font-weight: bold; }
+.word-delete-btn {
+    font-size: 9px;
+    padding: 1px 5px;
+    background: rgba(255,107,107,0.2);
+    color: #ff6b6b;
+    border: 1px solid #ff6b6b44;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.word-delete-btn:hover { background: rgba(255,107,107,0.4); }
+.word-delete-btn.cannot-afford { opacity: 0.3; pointer-events: none; }
+
+/* 零频键位锁定 */
+.key-slot.freq-locked {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
 #shop-footer {
     display: flex;
     align-items: center;

@@ -36,6 +36,8 @@ export function initElements(): UIElements {
     rewardCards: document.getElementById('reward-cards')!,
     boundGrid: document.getElementById('bound-grid')!,
     ownedSkills: document.getElementById('owned-skills')!,
+    wordCount: document.getElementById('word-count')!,
+    ownedWords: document.getElementById('owned-words')!,
     shopRelicIcons: document.getElementById('shop-relic-icons')!,
     startBattleBtn: document.getElementById('start-battle-btn')!,
     // Rest

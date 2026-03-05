@@ -27,6 +27,9 @@ import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { dragManager } from './dragManager';
 import type { DragPayload } from './dragManager';
 
+// === 零频键位缓存（供自动绑定使用） ===
+let cachedLetterFreqs: Map<string, number> | null = null;
+
 // === Act 技能权重 ===
 export const ACT_SKILL_WEIGHTS: Record<number, { producer: number; converter: number; connector: number }> = {
   1: { producer: 80, converter: 20, connector: 0 },
@@ -386,9 +389,9 @@ function purchaseShopItem(index: number): void {
   const result = executePurchase(index);
   if (!result) return;
 
-  // 点击购买新技能时，自动绑定到第一个空键位
+  // 点击购买新技能时，自动绑定到第一个空且非零频键位
   if (result.isNew && result.skillId) {
-    const freeKey = KEYS.find(k => !state.player.bindings.has(k));
+    const freeKey = KEYS.find(k => !state.player.bindings.has(k) && (cachedLetterFreqs?.get(k) ?? 0) > 0);
     if (freeKey) state.player.bindings.set(freeKey, result.skillId);
   }
 
@@ -654,11 +657,24 @@ export function renderBuildManager(): void {
 
   // 计算字频（一次遍历），再导出底分
   const letterFreqs = calculateLetterFrequency(state.player.wordDeck);
+  cachedLetterFreqs = letterFreqs;
   const letterScores = new Map<string, number>();
   letterFreqs.forEach((count, letter) => {
     const score = letterFrequencyToScore(count);
     if (score > 0) letterScores.set(letter, score);
   });
+
+  // 零频键位自动解绑（先收集再批量删除，避免遍历中修改 Map）
+  const keysToUnbind: string[] = [];
+  for (const [key] of state.player.bindings) {
+    if ((letterFreqs.get(key) ?? 0) === 0) keysToUnbind.push(key);
+  }
+  for (const key of keysToUnbind) {
+    const skillId = state.player.bindings.get(key)!;
+    state.player.bindings.delete(key);
+    const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
+    if (sk) showFeedback(`${sk.name} 已从 ${key.toUpperCase()} 解绑（字频归零）`, '#ff6b6b');
+  }
 
   KEYBOARD_ROWS.forEach((row, rowIndex) => {
     const rowDiv = document.createElement('div');
@@ -670,8 +686,12 @@ export function renderBuildManager(): void {
       slot.className = 'key-slot';
       slot.dataset.key = k;
 
+      const freq = letterFreqs.get(k) ?? 0;
       const score = letterScores.get(k) ?? 0;
       const skillId = state.player.bindings.get(k);
+
+      // 零频键位锁定
+      if (freq === 0) slot.classList.add('freq-locked');
 
       // 底分分级样式
       if (score >= 6) slot.classList.add('score-high');
@@ -772,6 +792,64 @@ export function renderBuildManager(): void {
 
   // DOM 重建后自动重注册拖拽放置区
   registerShopDropZones();
+
+  // 词库面板
+  renderWordInventory();
+}
+
+// === 词库面板 ===
+function renderWordInventory(): void {
+  const el = getElements();
+  el.wordCount.textContent = `(${state.player.wordDeck.length})`;
+  el.ownedWords.innerHTML = '';
+
+  const boundKeys = new Set(state.player.bindings.keys());
+
+  state.player.wordDeck.forEach((word, index) => {
+    const item = document.createElement('div');
+    item.className = 'word-item';
+
+    const wordSpan = document.createElement('span');
+    wordSpan.className = 'word-text';
+    wordSpan.innerHTML = word.split('').map(c =>
+      boundKeys.has(c.toLowerCase()) ? `<span class="bound-letter">${c}</span>` : c
+    ).join('');
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'word-delete-btn';
+    delBtn.textContent = '删 -3💰';
+    if (state.gold < 3 || state.player.wordDeck.length <= MIN_WORD_COUNT) delBtn.classList.add('cannot-afford');
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      removeWord(index);
+    };
+
+    item.appendChild(wordSpan);
+    item.appendChild(delBtn);
+    el.ownedWords.appendChild(item);
+  });
+}
+
+const MIN_WORD_COUNT = 3;
+
+function removeWord(index: number): void {
+  if (index < 0 || index >= state.player.wordDeck.length) return;
+  if (state.player.wordDeck.length <= MIN_WORD_COUNT) {
+    showFeedback(`词库最少保留${MIN_WORD_COUNT}个词!`, '#ff6b6b');
+    return;
+  }
+  if (state.gold < 3) {
+    showFeedback('金币不足!', '#ff6b6b');
+    return;
+  }
+  const word = state.player.wordDeck[index];
+  state.gold -= 3;
+  state.player.wordDeck.splice(index, 1);
+  updateGoldDisplay();
+  showFeedback(`删除 ${word} -3💰`, '#ff6b6b');
+  playSound('skill');
+  renderUnifiedShop();
+  renderBuildManager();
 }
 
 // === 注册拖拽放置区 ===
@@ -787,6 +865,7 @@ function registerShopDropZones(): void {
       type: 'key-slot',
       key,
       accepts: (payload: DragPayload) => {
+        if (slot.classList.contains('freq-locked')) return false;
         if (queryRelicFlag('silence_vow') === true) return false;
         if (payload.type === 'shop-item') {
           // 只接受技能类商品
