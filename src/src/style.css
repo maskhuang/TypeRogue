@@ -570,18 +570,29 @@ body {
 .inventory-skill .inv-school.school-chain { background: var(--school-chain-bg); color: var(--school-chain); }
 .inventory-skill .inv-school.school-passive { background: var(--school-passive-bg); color: var(--school-passive); }
 
-/* 词库面板 */
-#word-inventory { padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-top: 8px; }
-#owned-words { display: flex; flex-wrap: wrap; gap: 4px; max-height: 80px; overflow-y: auto; }
+/* 词库面板（独立 tab） */
+#word-panel {
+  padding: 8px;
+  overflow-y: auto;
+  max-height: 420px;
+}
+.word-panel-header {
+  margin-bottom: 8px;
+}
+.word-panel-header .inventory-label {
+  font-size: 12px;
+  color: #888;
+}
+#owned-words { display: flex; flex-wrap: wrap; gap: 6px; }
 .word-item {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
+    gap: 6px;
+    padding: 5px 10px;
     background: #1a1a2e;
     border: 1px solid #333;
     border-radius: 5px;
-    font-size: 11px;
+    font-size: 12px;
 }
 .word-item .word-text { color: #ccc; }
 .word-item .bound-letter { color: #4ecdc4; font-weight: bold; }

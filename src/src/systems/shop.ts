@@ -793,9 +793,6 @@ export function renderBuildManager(): void {
 
   // DOM 重建后自动重注册拖拽放置区
   registerShopDropZones();
-
-  // 词库面板
-  renderWordInventory();
 }
 
 // === 词库面板 ===
@@ -850,7 +847,7 @@ function removeWord(index: number): void {
   showFeedback(`删除 ${word} -3💰`, '#ff6b6b');
   playSound('skill');
   renderUnifiedShop();
-  renderBuildManager();
+  renderWordInventory();
 }
 
 // === 注册拖拽放置区 ===
@@ -1161,29 +1158,27 @@ function renderSkillsTab(container: HTMLElement, bs: import('../core/types').Bat
 function initStatsTabs(): void {
   const buildTab = document.getElementById('build-tab');
   const statsTab = document.getElementById('stats-tab');
+  const wordsTab = document.getElementById('words-tab');
   const buildManager = document.getElementById('build-manager');
   const statsPanel = document.getElementById('stats-panel');
-  if (!buildTab || !statsTab || !buildManager || !statsPanel) return;
+  const wordPanel = document.getElementById('word-panel');
+  if (!buildTab || !statsTab || !wordsTab || !buildManager || !statsPanel || !wordPanel) return;
 
-  // 默认显示构筑
-  buildTab.classList.add('active');
-  statsTab.classList.remove('active');
-  buildManager.style.display = '';
-  statsPanel.style.display = 'none';
+  function switchTab(active: 'build' | 'stats' | 'words') {
+    buildTab!.classList.toggle('active', active === 'build');
+    statsTab!.classList.toggle('active', active === 'stats');
+    wordsTab!.classList.toggle('active', active === 'words');
+    buildManager!.style.display = active === 'build' ? '' : 'none';
+    statsPanel!.style.display = active === 'stats' ? '' : 'none';
+    wordPanel!.style.display = active === 'words' ? '' : 'none';
+    if (active === 'stats') renderStatsPanel();
+    if (active === 'words') renderWordInventory();
+  }
 
-  buildTab.onclick = () => {
-    buildTab.classList.add('active');
-    statsTab.classList.remove('active');
-    buildManager.style.display = '';
-    statsPanel.style.display = 'none';
-  };
-  statsTab.onclick = () => {
-    statsTab.classList.add('active');
-    buildTab.classList.remove('active');
-    buildManager.style.display = 'none';
-    statsPanel.style.display = '';
-    renderStatsPanel();
-  };
+  switchTab('build');
+  buildTab.onclick = () => switchTab('build');
+  statsTab.onclick = () => switchTab('stats');
+  wordsTab.onclick = () => switchTab('words');
 }
 
 // === 初始化商店事件 ===
