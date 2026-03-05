@@ -17,6 +17,37 @@ import { playSound } from '../effects/sound';
 import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
 
 
+// === 战后统计：记录技能触发 ===
+const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, shield: 0 };
+
+function recordSkillTrigger(
+  skillId: string,
+  triggerKey: string | undefined,
+  resource: ResourceType,
+  delta: number,
+  isChain: boolean,
+): void {
+  const bs = state.battleStats;
+  if (!bs || !triggerKey) return;
+  // key stats
+  let ks = bs.keyStats.get(triggerKey);
+  if (!ks) { ks = { triggerCount: 0, resources: { ...EMPTY_RESOURCES } }; bs.keyStats.set(triggerKey, ks); }
+  ks.triggerCount++;
+  ks.resources[resource] += Math.abs(delta);
+  // skill stats
+  let ss = bs.skillStats.get(skillId);
+  if (!ss) { ss = { triggerCount: 0, resources: { ...EMPTY_RESOURCES }, chainTriggered: 0 }; bs.skillStats.set(skillId, ss); }
+  ss.triggerCount++;
+  ss.resources[resource] += Math.abs(delta);
+  if (isChain) {
+    ss.chainTriggered++;
+    bs.totalChainTriggers++;
+  }
+}
+
+// 模块级：当前触发是否来自链式（由 triggerSkill 设置，triggerProducer/Converter 读取）
+let _isChainTrigger = false;
+
 // === 技能键命中率计算 ===
 export function computeSkillDensity(word: string): number {
   if (!word || word.length === 0) return 0
@@ -187,6 +218,9 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
     state.resources.shield = Math.floor(state.resources.shield);
   }
 
+  // 战后统计
+  recordSkillTrigger(producerId, triggerKey, prod.resource, delta, _isChainTrigger);
+
   // 浮字反馈
   const color = RESOURCE_COLORS[prod.resource];
   const displayValue = prod.operator === 'add' ? value : baseValue;
@@ -269,6 +303,9 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   if (conv.target === 'shield') {
     state.resources.shield = Math.floor(state.resources.shield);
   }
+
+  // 战后统计
+  recordSkillTrigger(converterId, triggerKey, conv.target, delta, _isChainTrigger);
 
   // 浮字反馈
   const color = RESOURCE_COLORS[conv.target];
@@ -541,6 +578,10 @@ export function triggerConnectorCopy(connectorId: string, triggerKey: string, ch
     return;
   }
 
+  // 战后统计：连锁深度
+  const bs = state.battleStats;
+  if (bs) bs.maxChainDepth = Math.max(bs.maxChainDepth, chainHistory.length + 1);
+
   // 链式触发目标技能
   triggerSkill(targetSkillId, targetKey, false, [...chainHistory, targetKey]);
   updateHUD();
@@ -593,6 +634,7 @@ export function checkResourceTriggers(resource: ResourceType, sourceKey: string,
 // === 触发技能（管道驱动） ===
 export function triggerSkill(skillId: string, triggerKey: string, chainHistory?: string[]): void {
   const chain = chainHistory || [triggerKey];
+  _isChainTrigger = chain.length > 1;
 
   // 产出者分流：绕过 Modifier 管道
   if (isProducer(skillId)) {

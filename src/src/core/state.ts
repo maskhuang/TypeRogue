@@ -38,6 +38,7 @@ export function createInitialState(): GameState {
     connectorPool: [],
     pseudoInfiniteState: null,
     seenSkillTypes: new Set(),
+    battleStats: null,
     player: {
       word: '',
       index: 0,
@@ -74,6 +75,19 @@ export function createInitialState(): GameState {
   });
 
   return gameState;
+}
+
+// === 战后统计初始化 ===
+export function createBattleStats(): import('./types').BattleStats {
+  return {
+    keyStats: new Map(),
+    skillStats: new Map(),
+    wordsCompleted: 0,
+    totalChainTriggers: 0,
+    maxChainDepth: 0,
+    perfectWords: 0,
+    rating: '',
+  };
 }
 
 // === 联动状态 ===

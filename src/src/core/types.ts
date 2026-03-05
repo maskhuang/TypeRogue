@@ -64,6 +64,28 @@ export interface EnchantmentDefinition {
   desc: string;
 }
 
+// === 战后统计 ===
+export interface KeyStats {
+  triggerCount: number;
+  resources: Record<ResourceType, number>;
+}
+
+export interface SkillStats {
+  triggerCount: number;
+  resources: Record<ResourceType, number>;
+  chainTriggered: number;
+}
+
+export interface BattleStats {
+  keyStats: Map<string, KeyStats>;
+  skillStats: Map<string, SkillStats>;
+  wordsCompleted: number;
+  totalChainTriggers: number;
+  maxChainDepth: number;
+  perfectWords: number;
+  rating: string;
+}
+
 // === 伪无限模式 ===
 export interface PseudoInfiniteState {
   intervalId: number;          // setInterval 返回的 ID
@@ -104,6 +126,7 @@ export interface GameState {
   connectorPool: string[];             // 本局连接者池（36 抽 18）
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
   seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者 tooltip 跟踪）
+  battleStats: BattleStats | null;                   // 上一战的统计数据（商店中展示）
   resources: ResourceState;
   player: PlayerState;
   shop: ShopState;

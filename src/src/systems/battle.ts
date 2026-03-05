@@ -2,7 +2,7 @@
 // 打字肉鸽 - 战斗系统
 // ============================================
 
-import { state, synergy, calculateTargetScore, resetResources } from '../core/state';
+import { state, synergy, calculateTargetScore, resetResources, createBattleStats } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
@@ -318,6 +318,12 @@ function completeWord(): void {
   state.score += finalWordScore;
   bumpScore();
 
+  // 战后统计
+  if (state.battleStats) {
+    state.battleStats.wordsCompleted++;
+    if (state.wordPerfect) state.battleStats.perfectWords++;
+  }
+
   // 发送词语完成事件
   eventBus.emit('word:complete', {
     word: state.player.word,
@@ -535,6 +541,17 @@ function updateTimerDisplay(): void {
   }
 }
 
+// === 关卡评级 ===
+export function calculateRating(score: number, targetScore: number): string {
+  if (score < targetScore) return 'C';
+  const overkillRatio = (score - targetScore) / targetScore;
+  if (overkillRatio >= 2.0) return 'SSS';
+  if (overkillRatio >= 1.0) return 'SS';
+  if (overkillRatio >= 0.5) return 'S';
+  if (overkillRatio >= 0.2) return 'A';
+  return 'B';
+}
+
 // === 关卡系统 ===
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
@@ -547,6 +564,11 @@ function endLevel(): void {
   // 清除倍率光晕效果
   const el = getElements();
   el.container.classList.remove('mid-mult', 'high-mult');
+
+  // 计算关卡评级
+  if (state.battleStats) {
+    state.battleStats.rating = calculateRating(state.score, state.targetScore);
+  }
 
   if (state.score >= state.targetScore) {
     const currentType = getStageType(state.level);
@@ -627,6 +649,9 @@ export async function startLevel(): Promise<void> {
 
   // 重置资源（在 timeMax 和 tempBuff 之后，确保 resources.time 使用正确的 timeMax）
   resetResources();
+
+  // 初始化战后统计
+  state.battleStats = createBattleStats();
 
   synergy.perfectStreak = 0;
   synergy.skillMultBonus = 0;

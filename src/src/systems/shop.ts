@@ -5,7 +5,7 @@
 
 import { state } from '../core/state';
 import { resolveRelicEffects, queryRelicFlag } from './relics/RelicPipeline';
-import { KEYS, KEYBOARD_ROWS } from '../core/constants';
+import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS } from '../core/constants';
 import { getSkillSchool, getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS, isProducer } from '../data/producers';
 import { CONVERTERS, isConverter } from '../data/converters';
@@ -17,8 +17,8 @@ import { calculateDeckStats, generateShopWords } from '../data/words';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { juiceUp } from '../effects/juice';
-import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
-import type { ShopItem } from '../core/types';
+import { showScreen, startLevel, renderRelicDisplay, showFeedback, calculateRating } from './battle';
+import type { ShopItem, ResourceType } from '../core/types';
 import { getNextBattleNode, getStageType, isRestNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
@@ -82,6 +82,7 @@ export function openShop(_won: boolean): void {
   renderUnifiedShop();
   renderBuildManager();  // 内部自动注册 drop zones
   renderRelicDisplay();
+  initStatsTabs();
   dragManager.init();
   showScreen('shop');
 
@@ -948,6 +949,241 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
 
     renderBuildManager();
   }
+}
+
+// === 统计面板渲染 ===
+let _statsActiveTab: 'heatmap' | 'skills' = 'heatmap';
+
+function renderStatsPanel(): void {
+  const panel = document.getElementById('stats-panel');
+  if (!panel) return;
+  const bs = state.battleStats;
+  if (!bs) {
+    panel.innerHTML = '<div class="stats-empty">暂无战斗数据</div>';
+    return;
+  }
+
+  // 评级
+  const rating = bs.rating || calculateRating(state.score, state.targetScore);
+  const ratingClass = rating.length >= 2 ? 'rating-gold' : rating === 'S' ? 'rating-silver' : rating === 'A' ? 'rating-bronze' : '';
+
+  panel.innerHTML = `
+    <div class="stats-header">
+      <div class="rating-badge ${ratingClass}">${rating}</div>
+      <div class="stats-summary">
+        <span>完成 ${bs.wordsCompleted} 词</span>
+        <span>完美 ${bs.perfectWords} 词</span>
+        <span>连锁 ${bs.totalChainTriggers} 次</span>
+        ${bs.maxChainDepth > 1 ? `<span>最长链 ${bs.maxChainDepth}</span>` : ''}
+      </div>
+    </div>
+    <div class="stats-tabs">
+      <span class="stats-subtab ${_statsActiveTab === 'heatmap' ? 'active' : ''}" data-tab="heatmap">🔥 热力图</span>
+      <span class="stats-subtab ${_statsActiveTab === 'skills' ? 'active' : ''}" data-tab="skills">⚔️ 技能贡献</span>
+    </div>
+    <div id="stats-content"></div>
+  `;
+
+  // Sub-tab 切换
+  panel.querySelectorAll('.stats-subtab').forEach(tab => {
+    (tab as HTMLElement).onclick = () => {
+      _statsActiveTab = (tab as HTMLElement).dataset.tab as 'heatmap' | 'skills';
+      renderStatsPanel();
+    };
+  });
+
+  const content = document.getElementById('stats-content')!;
+  if (_statsActiveTab === 'heatmap') {
+    renderHeatmapTab(content, bs);
+  } else {
+    renderSkillsTab(content, bs);
+  }
+}
+
+// === 热力图色相：240(蓝) → 0(红) ===
+function heatColor(ratio: number): string {
+  const hue = 240 - ratio * 240;
+  return `hsl(${hue}, 80%, ${50 + (1 - ratio) * 15}%)`;
+}
+
+function renderHeatmapTab(container: HTMLElement, bs: import('../core/types').BattleStats): void {
+  // 找最大触发数（归一化基准）
+  let maxTrigger = 0;
+  bs.keyStats.forEach(ks => { if (ks.triggerCount > maxTrigger) maxTrigger = ks.triggerCount; });
+
+  let html = '<div class="heatmap-keyboard">';
+  KEYBOARD_ROWS.forEach(row => {
+    html += '<div class="heatmap-row">';
+    row.forEach(k => {
+      const ks = bs.keyStats.get(k);
+      const count = ks?.triggerCount ?? 0;
+      const ratio = maxTrigger > 0 ? count / maxTrigger : 0;
+      const hasSkill = state.player.bindings.has(k) || count > 0;
+      const bg = hasSkill && count > 0 ? heatColor(ratio) : 'rgba(255,255,255,0.05)';
+      const cls = hasSkill ? 'heatmap-key' : 'heatmap-key heatmap-key-empty';
+      html += `<div class="${cls}" data-key="${k}" style="background:${bg}">
+        <span class="hm-letter">${k.toUpperCase()}</span>
+        ${count > 0 ? `<span class="hm-count">${count}</span>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  container.innerHTML = html;
+
+  // 悬停详情浮窗
+  container.querySelectorAll('.heatmap-key').forEach(el => {
+    const key = (el as HTMLElement).dataset.key || '';
+    el.addEventListener('mouseenter', (e: Event) => showHeatmapTooltip(e as MouseEvent, key, bs));
+    el.addEventListener('mouseleave', hideHeatmapTooltip);
+  });
+}
+
+function showHeatmapTooltip(e: MouseEvent, key: string, bs: import('../core/types').BattleStats): void {
+  hideHeatmapTooltip();
+  const ks = bs.keyStats.get(key);
+  if (!ks || ks.triggerCount === 0) return;
+
+  const tip = document.createElement('div');
+  tip.id = 'heatmap-tooltip';
+  tip.className = 'heatmap-tooltip';
+
+  const resourceLines = (['base', 'score', 'multiplier', 'time', 'shield'] as ResourceType[])
+    .filter(r => ks.resources[r] > 0)
+    .map(r => `<div class="ht-resource"><span style="color:${RESOURCE_COLORS[r]}">${RESOURCE_ICONS[r]} ${RESOURCE_LABELS[r]}</span> +${ks.resources[r].toFixed(1)}</div>`)
+    .join('');
+
+  tip.innerHTML = `
+    <div class="ht-key">${key.toUpperCase()}</div>
+    <div class="ht-count">触发 ${ks.triggerCount} 次</div>
+    ${resourceLines}
+  `;
+
+  tip.style.left = e.clientX + 12 + 'px';
+  tip.style.top = e.clientY - 10 + 'px';
+  document.body.appendChild(tip);
+}
+
+function hideHeatmapTooltip(): void {
+  document.getElementById('heatmap-tooltip')?.remove();
+}
+
+function renderSkillsTab(container: HTMLElement, bs: import('../core/types').BattleStats): void {
+  // 计算每个技能的总贡献值（所有资源加权求和，score 权重最高）
+  const RESOURCE_WEIGHT: Record<ResourceType, number> = { base: 1, score: 2, multiplier: 1.5, time: 0.5, shield: 0.3 };
+  const skillEntries: { skillId: string; totalContrib: number; stats: import('../core/types').SkillStats }[] = [];
+
+  bs.skillStats.forEach((ss, skillId) => {
+    let total = 0;
+    for (const r of ['base', 'score', 'multiplier', 'time', 'shield'] as ResourceType[]) {
+      total += ss.resources[r] * (RESOURCE_WEIGHT[r] || 1);
+    }
+    skillEntries.push({ skillId, totalContrib: total, stats: ss });
+  });
+
+  skillEntries.sort((a, b) => b.totalContrib - a.totalContrib);
+  const maxContrib = skillEntries[0]?.totalContrib || 1;
+
+  // 资源总览
+  const resourceTotals: Record<ResourceType, number> = { base: 0, score: 0, multiplier: 0, time: 0, shield: 0 };
+  bs.skillStats.forEach(ss => {
+    for (const r of ['base', 'score', 'multiplier', 'time', 'shield'] as ResourceType[]) {
+      resourceTotals[r as ResourceType] += ss.resources[r];
+    }
+  });
+
+  // 三类技能占比
+  let prodCount = 0, convCount = 0, connCount = 0;
+  bs.skillStats.forEach((ss, skillId) => {
+    if (isProducer(skillId)) prodCount += ss.triggerCount;
+    else if (isConverter(skillId)) convCount += ss.triggerCount;
+    else if (isConnector(skillId)) connCount += ss.triggerCount;
+  });
+  const totalTriggers = prodCount + convCount + connCount || 1;
+
+  let html = '<div class="skills-tab">';
+
+  // 技能列表
+  html += '<div class="skill-stat-list">';
+  skillEntries.forEach((entry, i) => {
+    const sk = PRODUCERS[entry.skillId] || CONVERTERS[entry.skillId] || CONNECTORS[entry.skillId];
+    if (!sk) return;
+    const display = getSkillDisplay(entry.skillId);
+    const isMvp = i === 0 && entry.totalContrib > 0;
+    const barWidth = Math.round((entry.totalContrib / maxContrib) * 100);
+
+    const resourceBadges = (['base', 'score', 'multiplier', 'time', 'shield'] as ResourceType[])
+      .filter(r => entry.stats.resources[r] > 0)
+      .map(r => `<span class="sr-badge" style="color:${RESOURCE_COLORS[r]}">${RESOURCE_ICONS[r]}${entry.stats.resources[r].toFixed(0)}</span>`)
+      .join('');
+
+    html += `<div class="skill-stat-row${isMvp ? ' mvp' : ''}">
+      <div class="ssr-icon">${display.icon}${isMvp ? ' 👑' : ''}</div>
+      <div class="ssr-info">
+        <div class="ssr-name">${display.name} <span class="ssr-count">×${entry.stats.triggerCount}</span></div>
+        <div class="ssr-bar"><div class="ssr-bar-fill" style="width:${barWidth}%"></div></div>
+        <div class="ssr-resources">${resourceBadges}</div>
+      </div>
+    </div>`;
+  });
+  if (skillEntries.length === 0) html += '<div class="stats-empty">无技能触发记录</div>';
+  html += '</div>';
+
+  // 资源总览
+  html += '<div class="resource-overview"><div class="ro-title">资源总产出</div>';
+  for (const r of ['base', 'score', 'multiplier', 'time', 'shield'] as ResourceType[]) {
+    if (resourceTotals[r] > 0) {
+      html += `<div class="ro-item"><span style="color:${RESOURCE_COLORS[r]}">${RESOURCE_ICONS[r]} ${RESOURCE_LABELS[r]}</span> <span>+${resourceTotals[r].toFixed(1)}</span></div>`;
+    }
+  }
+  html += '</div>';
+
+  // 三类技能占比条
+  html += `<div class="type-breakdown">
+    <div class="tb-bar">
+      <div class="tb-seg tb-prod" style="width:${(prodCount / totalTriggers * 100).toFixed(1)}%" title="产出者 ${prodCount}"></div>
+      <div class="tb-seg tb-conv" style="width:${(convCount / totalTriggers * 100).toFixed(1)}%" title="转化者 ${convCount}"></div>
+      <div class="tb-seg tb-conn" style="width:${(connCount / totalTriggers * 100).toFixed(1)}%" title="连接者 ${connCount}"></div>
+    </div>
+    <div class="tb-legend">
+      <span class="tb-label"><span class="tb-dot tb-prod"></span>产出 ${prodCount}</span>
+      <span class="tb-label"><span class="tb-dot tb-conv"></span>转化 ${convCount}</span>
+      <span class="tb-label"><span class="tb-dot tb-conn"></span>连接 ${connCount}</span>
+    </div>
+  </div>`;
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// === 统计面板 Tab 切换 ===
+function initStatsTabs(): void {
+  const buildTab = document.getElementById('build-tab');
+  const statsTab = document.getElementById('stats-tab');
+  const buildManager = document.getElementById('build-manager');
+  const statsPanel = document.getElementById('stats-panel');
+  if (!buildTab || !statsTab || !buildManager || !statsPanel) return;
+
+  // 默认显示构筑
+  buildTab.classList.add('active');
+  statsTab.classList.remove('active');
+  buildManager.style.display = '';
+  statsPanel.style.display = 'none';
+
+  buildTab.onclick = () => {
+    buildTab.classList.add('active');
+    statsTab.classList.remove('active');
+    buildManager.style.display = '';
+    statsPanel.style.display = 'none';
+  };
+  statsTab.onclick = () => {
+    statsTab.classList.add('active');
+    buildTab.classList.remove('active');
+    buildManager.style.display = 'none';
+    statsPanel.style.display = '';
+    renderStatsPanel();
+  };
 }
 
 // === 初始化商店事件 ===

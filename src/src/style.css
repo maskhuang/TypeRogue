@@ -2493,3 +2493,248 @@ body {
     from { transform: translateY(0); }
     to { transform: translateY(-8px); }
 }
+
+/* ============================================ */
+/* BATTLE STATS PANEL                           */
+/* ============================================ */
+
+/* Build/Stats tab 切换 */
+.shop-section-title {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.build-tab {
+  cursor: pointer;
+  padding: 4px 10px;
+  font-size: 13px;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  user-select: none;
+}
+.build-tab:hover { color: #aaa; }
+.build-tab.active {
+  color: #fff;
+  border-bottom-color: #4ecdc4;
+}
+
+/* Stats Panel 容器 */
+#stats-panel {
+  overflow-y: auto;
+  max-height: 420px;
+  padding: 8px;
+}
+
+.stats-empty {
+  color: #555;
+  font-size: 12px;
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* 评级 + 摘要 */
+.stats-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.rating-badge {
+  font-size: 28px;
+  font-weight: bold;
+  min-width: 50px;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  color: #aaa;
+}
+.rating-badge.rating-gold {
+  color: #ffd700;
+  text-shadow: 0 0 12px rgba(255,215,0,0.6);
+  background: rgba(255,215,0,0.12);
+}
+.rating-badge.rating-silver {
+  color: #c0c0c0;
+  text-shadow: 0 0 8px rgba(192,192,192,0.5);
+  background: rgba(192,192,192,0.1);
+}
+.rating-badge.rating-bronze {
+  color: #cd7f32;
+  background: rgba(205,127,50,0.1);
+}
+
+.stats-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: #888;
+}
+
+/* Sub-tabs: 热力图 / 技能贡献 */
+.stats-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #222;
+  padding-bottom: 4px;
+}
+.stats-subtab {
+  cursor: pointer;
+  font-size: 12px;
+  color: #666;
+  padding: 2px 8px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.stats-subtab:hover { color: #aaa; }
+.stats-subtab.active {
+  color: #fff;
+  border-bottom-color: #e67e22;
+}
+
+/* === 热力图 === */
+.heatmap-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.heatmap-row {
+  display: flex;
+  gap: 3px;
+}
+.heatmap-key {
+  width: 34px;
+  height: 34px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  position: relative;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: transform 0.15s;
+}
+.heatmap-key:hover { transform: scale(1.15); z-index: 2; }
+.heatmap-key-empty { opacity: 0.35; }
+.hm-letter {
+  font-size: 11px;
+  font-weight: bold;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.hm-count {
+  font-size: 8px;
+  color: rgba(255,255,255,0.7);
+}
+
+/* 热力图 tooltip */
+.heatmap-tooltip {
+  position: fixed;
+  z-index: 9999;
+  background: #1a1a2e;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 11px;
+  pointer-events: none;
+  min-width: 120px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.ht-key { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+.ht-count { color: #aaa; margin-bottom: 6px; }
+.ht-resource { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+
+/* === 技能贡献 Tab === */
+.skills-tab { display: flex; flex-direction: column; gap: 10px; }
+
+.skill-stat-list { display: flex; flex-direction: column; gap: 4px; }
+
+.skill-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+}
+.skill-stat-row.mvp {
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.2);
+}
+
+.ssr-icon { font-size: 18px; min-width: 28px; text-align: center; }
+.ssr-info { flex: 1; min-width: 0; }
+.ssr-name { font-size: 12px; color: #ddd; }
+.ssr-count { color: #888; font-size: 10px; }
+.ssr-bar {
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  margin: 3px 0;
+  overflow: hidden;
+}
+.ssr-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #e67e22, #f39c12);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+.ssr-resources {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sr-badge { font-size: 10px; }
+
+/* 资源总览 */
+.resource-overview {
+  background: rgba(255,255,255,0.03);
+  border-radius: 6px;
+  padding: 8px;
+}
+.ro-title { font-size: 11px; color: #888; margin-bottom: 4px; }
+.ro-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 2px 0;
+}
+
+/* 三类技能占比 */
+.type-breakdown { margin-top: 4px; }
+.tb-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.05);
+}
+.tb-seg { min-width: 2px; transition: width 0.3s; }
+.tb-prod { background: #4ecdc4; }
+.tb-conv { background: #f39c12; }
+.tb-conn { background: #9b59b6; }
+.tb-legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #888;
+}
+.tb-label { display: flex; align-items: center; gap: 4px; }
+.tb-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.tb-dot.tb-prod { background: #4ecdc4; }
+.tb-dot.tb-conv { background: #f39c12; }
+.tb-dot.tb-conn { background: #9b59b6; }
