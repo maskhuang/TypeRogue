@@ -1035,6 +1035,651 @@ Epic 15: 技能进化系统
 
 ---
 
+## Epic 21: 金币资源化
+
+**目标:** 移除「剩余时间→金币」的默认转换，将金币纳入 ResourceType 资源体系，使其像 base/score/multiplier/time/shield 一样需要通过技能（产出者/转化者）生产。金币不再自动产生，玩家必须主动构筑金币产出链。
+
+**依赖:** 当前系统（不阻塞 Epic 11-15，可独立实施）
+
+**架构参考:** `core/types.ts`, `data/producers.ts`, `data/converters.ts`, `systems/skills.ts`, `systems/shop.ts`, `systems/battle.ts`
+
+**设计动机:**
+- 当前金币主要来源是「基础金币 + 剩余时间」，玩家无需做任何构筑决策即可稳定获得金币
+- 将金币变为需要技能生产的资源后，玩家面临「投资金币产出 vs 投资分数产出」的核心 trade-off
+- 与现有 5 资源体系完全一致的结构（产出者 add/multiply + 转化者 add/multiply），零特殊逻辑
+
+### Story 21.1: 金币加入资源类型
+
+**描述:** 将 gold 纳入 ResourceType 和 ResourceState，战斗中作为第 6 种资源参与技能系统。战斗结束时 resources.gold 累加到 state.gold。
+
+**验收标准:**
+- [ ] `ResourceType` 新增 `'gold'`：`'base' | 'score' | 'multiplier' | 'time' | 'shield' | 'gold'`
+- [ ] `ResourceState` 新增 `gold: number`（每关初始 0，不跨词重置）
+- [ ] `RESOURCE_LABELS` / `RESOURCE_ICONS` / `RESOURCE_COLORS` 新增 gold 条目（标签 `金币`，图标 `🪙`，颜色 `#ffd700`）
+- [ ] `resetResources()` 中 gold **不重置**（金币跨词累加，仅在战斗开始时清零）
+- [ ] `setWord()` 不重置 `resources.gold`
+- [ ] 战斗结束时（`openShop()`），`state.gold += Math.floor(state.resources.gold)` 替换原有的 `baseGold + timeBonus` 公式
+- [ ] `state.resources.gold` 在战斗开始时清零
+- [ ] 构建通过，现有测试通过
+
+**技术说明:**
+- 修改: `core/types.ts`, `core/constants.ts`, `core/state.ts`, `systems/battle.ts`, `systems/shop.ts`
+
+### Story 21.2: 金币产出者技能
+
+**描述:** 新增 2 个金币产出者（add + multiply），结构与现有 10 个产出者完全一致。
+
+**验收标准:**
+- [ ] `prod_mint`（铸币）：gold add，values `[3, 5, 8]`，每次触发直接 +N 金币
+- [ ] `prod_treasury`（金库）：gold multiply，values `[1.3, 1.5, 1.8]`，累积金币 ×N
+- [ ] 在 `PRODUCERS` 中注册，`isProducer()` / `getProducerValue()` / `getProducerDesc()` 自动适配
+- [ ] `triggerProducer` / `triggerProducerWithReduction` 的 gold 分支：直接操作 `state.resources.gold`（与 time/shield 处理方式相同，不走 synergy 累加器）
+- [ ] 战后统计中金币产出正确记录（`recordSkillTrigger` 支持 gold 资源）
+- [ ] 商店中可出现金币产出者，Act 权重同其他产出者
+
+**技术说明:**
+- 修改: `data/producers.ts`, `systems/skills.ts`（triggerProducer 的 add/multiply 分支需处理 gold）
+
+### Story 21.3: 金币转化者技能
+
+**描述:** 新增 10 个金币相关转化者（gold 作为源 → 4 目标 × 2 公式 = 8 个，+ 2 个其他资源 → gold），结构与现有 40 个转化者完全一致。
+
+**验收标准:**
+- [ ] **金币为源（8 个）**：gold → base/score/multiplier/time × add/multiply
+  - 命名参考：`conv_gold_base_add`（收购）、`conv_gold_score_add`（贿赂）、`conv_gold_mult_add`（雇佣）、`conv_gold_time_add`（赎买）等
+  - k 值基于 gold mid ~15 调参
+- [ ] **其他资源 → 金币（2 个，优先级最高的转换路径）**：
+  - `conv_score_gold_add`：分数→金币 add，k 值基于 score mid ~1000
+  - `conv_time_gold_add`：时间→金币 add，k 值基于 time mid ~40
+- [ ] 在 `CONVERTERS` 中注册，所有工具函数自动适配
+- [ ] `triggerConverter` / `triggerConverterWithReduction` 的 gold target 分支：直接操作 `state.resources.gold`
+- [ ] `getSourceValue` 支持 gold 源：直接返回 `resources.gold`
+- [ ] `drawConverterPool` 池中包含金币转化者
+- [ ] 战后统计中金币转化正确记录
+
+**技术说明:**
+- 修改: `data/converters.ts`, `systems/skills.ts`
+
+### Story 21.4: 移除默认金币产出
+
+**描述:** 移除战斗结束时的「基础金币 + 剩余时间→金币」自动转换，金币完全由技能产出。调整初始金币和商店价格以平衡经济。
+
+**验收标准:**
+- [ ] `openShop()` 中移除 `baseGold`（20/40）和 `timeBonus`（Math.floor(state.time)）
+- [ ] 战后金币 = `Math.floor(state.resources.gold)` + 遗物金币加成
+- [ ] 战后结算 UI 简化：移除「基础金币」「时间奖励」行，改为显示「战斗产出」
+- [ ] 初始金币从 30 调整为 50（补偿早期无金币技能时的冷启动）
+- [ ] 第一关商店保底出现至少 1 个金币类技能（产出者或转化者）
+- [ ] 休息事件中的固定金币奖励不变（altar_gold +200 等保留作为保底收入）
+- [ ] 遗物金币加成（贪婪之手 ×1.5、超杀之刃 overkill→gold）改为作用于 `resources.gold` 或保持战后倍率
+
+**技术说明:**
+- 修改: `systems/shop.ts`（openShop 金币计算）, `systems/battle.ts`（结算 UI）, `main.ts`（初始金币）
+- 修改: `data/relics.ts`（金币相关遗物适配）
+
+### Story 21.5: 结算与统计适配
+
+**描述:** 战斗中不显示金币 HUD（金币在每关结算界面统一展示）。键盘 tooltip 和热力图支持金币资源维度。
+
+**验收标准:**
+- [ ] 战斗 HUD **不**新增金币显示，金币仅在结算界面可见
+- [ ] 结算界面显示本关金币产出明细（技能产出 + 遗物加成）
+- [ ] 键盘 tooltip 中金币产出/转化信息正确显示
+- [ ] 战后热力图统计支持 gold 资源维度
+
+**技术说明:**
+- 修改: `systems/battle.ts`（结算 UI）, `systems/shop.ts`（热力图/tooltip）
+
+### Story 21.6: 金币连接者适配
+
+**描述:** 确保连接者系统兼容 gold 资源类型，资源触发器（on_resource_threshold）支持 gold。
+
+**验收标准:**
+- [ ] `ResourceTriggerDefinition` 的 resource 字段接受 `'gold'`
+- [ ] 金币达到阈值时可触发连接者链
+- [ ] 现有连接者池中可出现以 gold 为触发资源的连接者
+- [ ] 测试覆盖金币触发路径
+
+**技术说明:**
+- 修改: `data/connectors.ts`, `systems/skills.ts`（checkResourceTriggers）
+
+## Files Modified Summary (Epic 21)
+
+| File | Stories |
+|------|---------|
+| `core/types.ts` | 21.1 |
+| `core/constants.ts` | 21.1 |
+| `core/state.ts` | 21.1 |
+| `data/producers.ts` | 21.2 |
+| `data/converters.ts` | 21.3 |
+| `data/connectors.ts` | 21.6 |
+| `systems/skills.ts` | 21.2, 21.3, 21.6 |
+| `systems/battle.ts` | 21.1, 21.4, 21.5 |
+| `systems/shop.ts` | 21.1, 21.4, 21.5 |
+| `main.ts` | 21.4 |
+| `data/relics.ts` | 21.4 |
+
+---
+
+## Epic 22: 词语牌包系统
+
+**目标:** 用「牌包」替换商店中单独出售的词语。每个牌包由一个筛选条件定义，包含 3 个满足条件的词，玩家可从中选任意个加入词库。条件尽可能复用已有词池分类（tier/highlight/长度），使选词成为有意义的构筑决策。
+
+**依赖:** 当前系统（独立，可随时实施）
+
+**架构参考:** `data/words.ts`（WORD_POOL、generateShopWords）, `systems/shop.ts`（商品生成/购买流程）, `core/types.ts`（ShopItem）
+
+**设计动机:**
+- 当前商店单词逐个售卖，选择缺乏策略感——玩家随意买最便宜的词填充词库
+- 牌包将选词变为构筑决策：「买这包首字母 E 的词来提升 E 键频率？还是买短词包提高打字速度？」
+- 一包 3 词自选的机制让玩家在同一条件下仍有细粒度控制
+
+### Story 22.1: 牌包条件定义与数据结构
+
+**描述:** 定义牌包条件类型（PackCondition）和牌包数据结构（WordPack），实现从条件到候选词的筛选逻辑。
+
+**验收标准:**
+- [ ] `PackCondition` 类型定义，支持以下条件：
+  - `starts_with(letter)` — 首字母为指定字母
+  - `ends_with(letter)` — 尾字母为指定字母
+  - `contains(letter)` — 包含指定字母
+  - `contains_owned` — 包含玩家已有高频字母（频率≥5 的字母）
+  - `contains_unowned` — 包含玩家低频字母（频率<5），帮助解锁新键位
+  - `short` — 短词（2-4 字母），复用 WORD_POOL.short
+  - `long` — 长词（7+ 字母），复用 WORD_POOL.long
+  - `special` — 特殊主题词，复用 WORD_POOL.special
+  - `high_freq(letter)` — 复用 WORD_POOL 中 highlight 为该字母的词池
+- [ ] `WordPack` 接口：`{ condition: PackCondition, name: string, desc: string, words: string[], cost: number }`
+- [ ] `filterWordsByCondition(condition, allPools, ownedWords, playerFreqs)` 返回满足条件且未拥有的候选词列表
+- [ ] 单元测试覆盖每种条件类型
+
+**技术说明:**
+- 新增: `data/wordPacks.ts`（条件定义 + 筛选逻辑）
+- 复用: `data/words.ts` 的 WORD_POOL 数据
+
+### Story 22.2: 牌包生成策略
+
+**描述:** 实现商店中牌包的随机生成逻辑，每个牌包从候选条件中随机选取，抽 3 个满足条件的词。
+
+**验收标准:**
+- [ ] `generateWordPacks(ownedWords, playerFreqs, count)` 生成指定数量的牌包
+- [ ] 每包从候选条件池中随机选取一个条件
+- [ ] 条件池权重：与玩家当前绑定技能的键位相关条件更容易出现（如玩家绑了 E 键技能，`high_freq('e')` / `starts_with('e')` 权重更高）
+- [ ] 每包从满足条件的候选词中随机抽 3 个（不含已拥有词）
+- [ ] 若某条件候选词不足 3 个，跳过该条件选其他
+- [ ] 同一商店中不重复相同条件的牌包
+- [ ] 牌包定价：基于条件类型和词的平均长度（short 包便宜，long/special 包贵）
+
+**技术说明:**
+- 修改: `data/wordPacks.ts`
+
+### Story 22.3: 商店牌包 UI
+
+**描述:** 替换商店中单词商品的展示为牌包卡片，支持展开查看 3 个词并勾选要加入词库的词。
+
+**验收标准:**
+- [ ] 商店商品卡片新增 `type: 'pack'` 类型，替换原有 `type: 'word'`
+- [ ] 牌包卡片展示：条件名称（如「首字母 E」「短词」）、条件图标、价格、3 个词预览
+- [ ] 点击牌包展开详情：显示 3 个词，每个词旁有勾选框，默认全选
+- [ ] 词语高亮已绑定技能的字母（复用现有 `bound-letter` 样式）
+- [ ] 每个词旁显示词长和涉及的键位频率变化预览
+- [ ] 确认购买按钮：将勾选的词加入 `wordDeck`，至少选 1 个才能购买
+- [ ] 购买后牌包从商店移除
+- [ ] 牌包支持锁定/解锁（刷新时保留）
+
+**技术说明:**
+- 修改: `core/types.ts`（ShopItem 新增 pack 相关字段）
+- 修改: `systems/shop.ts`（生成/渲染/购买流程）
+- 修改: `style.css`（牌包卡片样式）
+
+### Story 22.4: 移除单词直售 & 商品保底
+
+**描述:** 移除商店中单独售卖词语的逻辑，统一改为牌包。调整商店商品保底规则。
+
+**验收标准:**
+- [ ] `generateShopItems` 不再生成 `type: 'word'` 商品
+- [ ] 商店 5 个商品槽位：保底 ≥1 技能 + ≥1 牌包，其余随机
+- [ ] 删除 `generateShopWords()` 函数或标记废弃
+- [ ] 原有词语删除功能保留（在词库标签页中删词仍然可用）
+- [ ] 原有词语购买相关的 UI 代码清理
+
+**技术说明:**
+- 修改: `systems/shop.ts`, `data/words.ts`
+
+### Story 22.5: 牌包条件与构筑联动
+
+**描述:** 让牌包条件感知玩家构筑状态，提供更有针对性的选择。
+
+**验收标准:**
+- [ ] `contains_owned` 条件：筛选包含玩家频率≥5 字母的词，强化已有键位
+- [ ] `contains_unowned` 条件：筛选包含玩家频率<5 字母的词，帮助解锁新键位
+- [ ] 商店中若玩家有绑定技能但对应键位频率偏低（5-8），更可能出现该键位的 `high_freq` 牌包
+- [ ] 牌包描述中提示频率变化（如「+3 E频率」）
+- [ ] Act 1 优先出现 `short` 和 `contains_owned` 包（新手友好），Act 3 出现更多 `long` 和 `special` 包
+
+**技术说明:**
+- 修改: `data/wordPacks.ts`（权重策略）, `systems/shop.ts`（Act 感知）
+
+## Files Modified Summary (Epic 22)
+
+| File | Stories |
+|------|---------|
+| `data/wordPacks.ts` (new) | 22.1, 22.2, 22.5 |
+| `data/words.ts` | 22.4 |
+| `core/types.ts` | 22.3 |
+| `systems/shop.ts` | 22.3, 22.4, 22.5 |
+| `style.css` | 22.3 |
+
+---
+
+## Epic 23: 增幅者技能类型
+
+**目标:** 新增第四种技能类型「增幅者」，按键叠层 buff 范围内产出者/转化者的面板值。层数关内跨词累积，过关归零。实现关内「冷启动→引擎轰鸣」的滚雪球节奏。
+
+**依赖:** Epic 19（技能体系重构）
+
+**架构参考:** `core/types.ts`, `data/producers.ts`（结构参考）, `systems/skills.ts`, `systems/battle.ts`
+
+**设计参考:** `docs/brainstorming-session-2026-03-05.md` Section E+
+
+**设计动机:**
+- 连接者管触发频率，增幅者管数值倍率 — 两种辅助维度正交互补
+- 增幅者占键位但不产出资源，纯辅助定位，创造「投资 buff vs 直接产出」的决策张力
+- 关内叠层实现滚雪球手感：前期冷机 → 中期升温 → 后期过热爆发
+
+### Story 23.1: 增幅者数据结构与类型定义
+
+**描述:** 定义增幅者技能类型、数据接口和基础常量。
+
+**验收标准:**
+- [ ] `SkillCategory` 新增 `'amplifier'` 类别（与 producer/converter/connector 并列）
+- [ ] `AmplifierDefinition` 接口：`{ id, name, icon, resource: ResourceType, positionRelation: PositionRelation, operator: 'add' | 'multiply', valuePerStack: number, desc }`
+- [ ] `AmplifierState` 接口：`{ stacks: number }`（存储在 BattleState，过关清零）
+- [ ] `isAmplifier()` / `getAmplifierDef()` 工具函数
+- [ ] 类型定义和工具函数测试通过
+
+**技术说明:**
+- 修改: `core/types.ts`
+- 新增: `data/amplifiers.ts`
+
+### Story 23.2: 首批增幅者技能数据
+
+**描述:** 设计并实现首批增幅者技能，覆盖关键的资源×位置×运算符组合。
+
+**验收标准:**
+- [ ] 首批 6-8 个增幅者，覆盖不同资源和位置关系组合
+- [ ] 加法增幅者示例：base 加法·相邻（每层让相邻产出者 base +1）
+- [ ] 乘法增幅者示例：base 乘法·相邻（每层让相邻产出者 base ×5%）
+- [ ] 每个增幅者有名称、图标、描述
+- [ ] 在 `AMPLIFIERS` 常量中注册
+- [ ] 数据定义无逻辑依赖，纯数据
+
+**技术说明:**
+- 修改: `data/amplifiers.ts`
+
+### Story 23.3: 增幅者触发与叠层机制
+
+**描述:** 实现增幅者的按键触发和叠层累积逻辑。
+
+**验收标准:**
+- [ ] 增幅者绑定在键位上，按到该键时 stacks +1
+- [ ] 叠层存储在 BattleState，跨词保持
+- [ ] `triggerAmplifier(ampId, triggerKey)` 函数：增加 stacks，播放叠层反馈
+- [ ] 叠层变化时更新 HUD 显示（键盘上显示当前层数）
+- [ ] 过关时（`resetBattleState`）清零所有增幅者 stacks
+- [ ] 增幅者触发不产出任何资源（纯辅助）
+
+**技术说明:**
+- 修改: `systems/skills.ts`, `systems/battle.ts`（BattleState 扩展）
+
+### Story 23.4: 增幅效果应用
+
+**描述:** 实现增幅者对范围内产出者/转化者的面板增幅计算。
+
+**验收标准:**
+- [ ] `getAmplifierBonus(skillId, triggerKey)` 返回该技能从所有增幅者获得的总加成
+- [ ] 加法增幅：范围内增幅者 stacks × valuePerStack 加到技能产出
+- [ ] 乘法增幅：范围内增幅者 stacks × valuePerStack 乘到技能产出
+- [ ] 仅增幅产出者和转化者，不增幅连接者和其他增幅者
+- [ ] 多个增幅者可同时作用于同一技能（效果叠加）
+- [ ] 在 `triggerProducer` / `triggerConverter` 中集成增幅计算
+- [ ] 单元测试：无增幅、单增幅、多增幅叠加
+
+**技术说明:**
+- 修改: `systems/skills.ts`
+
+### Story 23.5: 增幅者商店与 UI
+
+**描述:** 增幅者加入商店技能池，实现购买/绑定/键盘显示。
+
+**验收标准:**
+- [ ] 商店技能池包含增幅者，和产出者/转化者/连接者同池出现
+- [ ] 增幅者技能卡片有独特视觉区分（如边框颜色、类型标签「增幅」）
+- [ ] 绑定增幅者到键位后，键盘可视化显示增幅者图标 + 当前层数
+- [ ] 增幅者 tooltip 显示：效果描述、当前层数、影响范围内的技能列表
+- [ ] 战后统计中增幅者贡献正确记录
+
+**技术说明:**
+- 修改: `systems/shop.ts`, `systems/battle.ts`（键盘可视化）
+
+### Story 23.6: 增幅者附魔适配
+
+**描述:** 确保增幅者可被附魔系统附魔，所有附魔类型对增幅者生效。
+
+**验收标准:**
+- [ ] 增幅者 Lv3 时触发附魔选择（复用现有 `checkAutoEnchantment` 流程）
+- [ ] 空间·成长附魔对增幅者：范围内技能触发时，增幅者每层效果永久 +X%
+- [ ] 空间·共鸣附魔对增幅者：范围内技能触发时自动叠层（不用按键）
+- [ ] 空间·溅射附魔对增幅者：按增幅者键时以减效触发范围内技能
+- [ ] 变性附魔对增幅者：额外增幅对应资源（不产出，增幅第二种资源）
+- [ ] 独立·吞噬附魔对增幅者：可吞噬相邻图标数少于自己的技能
+- [ ] 附魔效果测试覆盖
+
+**技术说明:**
+- 修改: `systems/skills.ts`（附魔计算适配增幅者）
+
+## Files Modified Summary (Epic 23)
+
+| File | Stories |
+|------|---------|
+| `core/types.ts` | 23.1 |
+| `data/amplifiers.ts` (new) | 23.1, 23.2 |
+| `systems/skills.ts` | 23.3, 23.4, 23.6 |
+| `systems/battle.ts` | 23.3, 23.5 |
+| `systems/shop.ts` | 23.5 |
+
+---
+
+## Epic 24: 成长附魔与附魔重构
+
+**目标:** 移除空间·增幅附魔（6 个），替换为空间·成长附魔（6 个），新增独立·精通和独立·吞噬。成长附魔提供跨关（RunState）永久数值成长，线性无上限，是无尽模式中 build 对抗难度攀升的核心解答。
+
+**依赖:** Epic 19（技能体系重构，附魔系统已存在）
+
+**架构参考:** `data/enchantments.ts`, `systems/skills.ts`（getEnchantmentMultiplier）, `core/types.ts`
+
+**设计参考:** `docs/brainstorming-session-2026-03-05.md` Section F+
+
+**设计动机:**
+- 增幅附魔是静态布局加成（放了就有），成长附魔是动态使用加成（用得多才涨）— 后者更有趣
+- 成长值跨关保持（RunState），和增幅者的关内叠层（BattleState）形成双层成长体系
+- 吞噬附魔创造极简大师流：吃光相邻技能，最终一个超强技能 + 排斥加成空位
+
+### Story 24.1: 成长值状态存储
+
+**描述:** 在 RunState 中新增成长值存储结构，支持跨关保持、新 Run 重置。
+
+**验收标准:**
+- [ ] `RunState` 新增 `growthValues: Map<string, number>`（skillId → 累积成长百分比）
+- [ ] `RunState` 新增 `devourIcons: Map<string, string[]>`（skillId → 吞噬获得的图标列表）
+- [ ] 新 Run 开始时清零
+- [ ] 存档/读档支持（Map 序列化）
+- [ ] 类型定义和序列化测试通过
+
+**技术说明:**
+- 修改: `core/types.ts`, `core/state.ts`
+
+### Story 24.2: 移除增幅附魔，新增成长附魔数据
+
+**描述:** 从附魔池中移除 6 个空间·增幅附魔，替换为 6 个空间·成长附魔，新增独立·精通和独立·吞噬。
+
+**验收标准:**
+- [ ] `EnchantmentCategory` 新增 `'growth'`
+- [ ] 移除 6 个 `ench_amplify_*` 附魔定义
+- [ ] 新增 6 个空间·成长附魔：
+
+| ID | 名称 | 位置关系 | 条件 | 每次成长 |
+|---|---|---|---|---|
+| `ench_growth_adjacent` | 汲取 | 相邻 | 相邻技能触发 | +3% |
+| `ench_growth_sameRow` | 感染 | 同行 | 同行技能触发 | +2% |
+| `ench_growth_sameColumn` | 脉冲 | 同列 | 同列技能触发 | +4% |
+| `ench_growth_sameHand` | 渗透 | 同手 | 同手技能触发 | +1% |
+| `ench_growth_sameFinger` | 贯通 | 同指 | 同指技能触发 | +5% |
+| `ench_growth_symmetric` | 共振 | 对称 | 对称位技能触发 | +6% |
+
+- [ ] 新增独立·精通：`ench_mastery`，每触发 10 次 +5%，线性无上限
+- [ ] 新增独立·吞噬：`ench_devour`，战斗中触发 N 次后自动吞噬相邻图标数少于自己的技能，每图标 +20%
+- [ ] 总附魔数从 33 变为 35
+- [ ] 所有附魔有名称、图标、描述
+
+**技术说明:**
+- 修改: `data/enchantments.ts`
+
+### Story 24.3: 空间·成长附魔触发逻辑
+
+**描述:** 实现成长附魔的触发和累积计算。
+
+**验收标准:**
+- [ ] 当范围内技能触发时，检查该范围内是否有带成长附魔的技能
+- [ ] 满足位置关系时，`growthValues[skillId] += enchantment.effectValue`
+- [ ] 成长值作为额外乘算应用到技能产出：`finalValue = baseValue * (1 + growthValues[skillId])`
+- [ ] 成长值跨关保持（RunState），过关不清零
+- [ ] 线性无上限
+- [ ] 战后统计中显示各技能成长值
+- [ ] 单元测试：成长累积、跨关保持、产出计算
+
+**技术说明:**
+- 修改: `systems/skills.ts`（触发逻辑 + 产出计算）
+
+### Story 24.4: 独立·精通附魔逻辑
+
+**描述:** 实现精通附魔的触发计数和成长。
+
+**验收标准:**
+- [ ] 跟踪每个精通附魔技能的触发次数（RunState 内）
+- [ ] 每触发 10 次，`growthValues[skillId] += 0.05`（+5%）
+- [ ] 触发计数跨关保持
+- [ ] 成长值应用到技能产出（复用 Story 24.3 的计算路径）
+- [ ] 单元测试
+
+**技术说明:**
+- 修改: `systems/skills.ts`
+
+### Story 24.5: 独立·吞噬附魔逻辑
+
+**描述:** 实现吞噬附魔的图标计数、吞噬条件判断和执行。
+
+**验收标准:**
+- [ ] 图标计数规则：技能本身 = 1 图标，附魔 = +1 图标，每吞一个 = +1 图标
+- [ ] 吞噬条件：战斗中触发 N 次后，自动检查相邻技能图标数是否少于自己
+- [ ] 吞噬执行：被吞技能从键位解绑，其图标加入吞噬者的 `devourIcons` 列表
+- [ ] 增幅计算：每个图标 +20%（固定值），`finalValue = baseValue * (1 + iconCount * 0.2)`
+- [ ] 吞噬后的图标在键盘可视化中显示（技能图标前显示吞噬来的图标）
+- [ ] 不可反悔，被吞技能永久消失（本局内）
+- [ ] 吞噬动画反馈
+- [ ] 单元测试：图标计数、条件判断、吞噬执行、增幅计算
+
+**技术说明:**
+- 修改: `systems/skills.ts`, `systems/battle.ts`（键盘可视化）
+
+### Story 24.6: 附魔 UI 适配
+
+**描述:** 更新附魔选择 UI 和 tooltip 以支持成长/精通/吞噬的信息展示。
+
+**验收标准:**
+- [ ] 附魔选择弹窗中成长附魔有独特视觉标识（如成长图标、动态数值预览）
+- [ ] 技能 tooltip 显示当前成长百分比（如「成长: +45%」）
+- [ ] 吞噬附魔 tooltip 显示图标数和已吞噬技能列表
+- [ ] 精通附魔 tooltip 显示触发计数和下一里程碑进度
+- [ ] 战后统计中各技能成长值和吞噬记录
+
+**技术说明:**
+- 修改: `systems/shop.ts`（附魔 UI）, `systems/battle.ts`（tooltip）
+
+## Files Modified Summary (Epic 24)
+
+| File | Stories |
+|------|---------|
+| `core/types.ts` | 24.1 |
+| `core/state.ts` | 24.1 |
+| `data/enchantments.ts` | 24.2 |
+| `systems/skills.ts` | 24.3, 24.4, 24.5 |
+| `systems/battle.ts` | 24.5, 24.6 |
+| `systems/shop.ts` | 24.6 |
+
+---
+
+## Epic 25: 无尽模式
+
+**目标:** 通关后进入无尽模式，循环递增周目。每周目分数目标 ×2、时间衰减、Boss 修饰器 3 选 1 叠加。配合排行榜和每日种子系统，让构筑有终极测试场。
+
+**依赖:** Epic 18（Boss 战系统）, Epic 23（增幅者）, Epic 24（成长附魔）
+
+**架构参考:** `systems/battle.ts`, `systems/shop.ts`, `core/types.ts`（RunState）
+
+**设计参考:** `docs/brainstorming-session-2026-03-05.md` Section A+
+
+**设计动机:**
+- 解决核心体验问题：「爽不了多久就通关了」
+- 循环递增（非线性无限）提供进度压缩感：「曾经觉得难的关现在碾过」
+- 三维难度 vs 双层成长（成长附魔 + 增幅者）= 构筑极限探索
+- 排行榜 + 每日种子 = 社交竞争和重玩动力
+
+### Story 25.1: 周目状态与循环结构
+
+**描述:** 实现周目（Cycle）状态管理和循环递增的关卡结构。
+
+**验收标准:**
+- [ ] `RunState` 新增 `cycle: number`（默认 1，通关后 +1）
+- [ ] `RunState` 新增 `activeModifiers: string[]`（当前叠加的 Boss 修饰器列表）
+- [ ] 通关（完成最后一关）后不结束 Run，而是进入下一周目
+- [ ] 下一周目回到第 1 关，保留所有技能/附魔/成长值/金币
+- [ ] 周目数显示在战斗 HUD 中
+- [ ] 类型定义和状态管理测试通过
+
+**技术说明:**
+- 修改: `core/types.ts`, `core/state.ts`, `systems/battle.ts`
+
+### Story 25.2: 三维难度缩放
+
+**描述:** 实现每周目的分数目标翻倍和时间衰减。
+
+**验收标准:**
+- [ ] 分数目标：`baseTarget × (2 ^ (cycle - 1))`，每周目翻倍
+- [ ] 时间衰减：`baseTime × (decayFactor ^ (cycle - 1))`，衰减系数可配置，无下限
+- [ ] 衰减系数暂定 0.9，后续调参
+- [ ] 战斗 HUD 中显示当前周目的目标分数和时间
+- [ ] 难度曲线在 `calculateTargetScore` / `calculateTimeLimit` 中实现
+- [ ] 单元测试：各周目数值正确
+
+**技术说明:**
+- 修改: `systems/battle.ts`（目标分数/时间计算）
+
+### Story 25.3: Boss 修饰器 3 选 1 叠加
+
+**描述:** 每进入新周目时，展示 3 个 Boss 修饰器让玩家选 1 个叠加，已有修饰器保留。
+
+**验收标准:**
+- [ ] 进入新周目前弹出修饰器选择 UI
+- [ ] 从修饰器池中随机抽 3 个（排除已激活的）
+- [ ] 玩家选择 1 个，加入 `activeModifiers`
+- [ ] 所有已激活修饰器在整个周目内持续生效
+- [ ] 修饰器效果叠加（多个修饰器同时作用）
+- [ ] 选择 UI 展示每个修饰器的效果描述和当前已激活列表
+- [ ] 战斗 HUD 中显示当前所有激活修饰器图标
+
+**技术说明:**
+- 修改: `systems/battle.ts`（修饰器选择流程）, `core/types.ts`
+- 复用: 现有 Boss 修饰器数据和效果系统
+
+### Story 25.4: 稀有货架商店
+
+**描述:** 高周目解锁更稀有的商店商品，物价不变。
+
+**验收标准:**
+- [ ] 商店商品池根据周目数扩展：周目 2+ 解锁 Tier 2 商品，周目 4+ 解锁 Tier 3
+- [ ] 稀有商品包括：高级技能、稀有附魔、特殊词包等（具体内容后续迭代）
+- [ ] 物价体系不随周目变化
+- [ ] 商店 UI 中稀有商品有视觉标识（如金色边框）
+- [ ] 商品池扩展数据可配置
+
+**技术说明:**
+- 修改: `systems/shop.ts`（商品生成逻辑）
+
+### Story 25.5: 排行榜系统
+
+**描述:** 实现本地排行榜，记录最高周目数和分数。
+
+**验收标准:**
+- [ ] 排行榜数据结构：`{ cycle, lastStageScore, seed?, date, buildSummary }`
+- [ ] 按最高周目数排序，同周目比末关分数
+- [ ] 本地存储前 20 名记录（MetaState）
+- [ ] Run 结束时（失败或主动退出）记录成绩
+- [ ] 排行榜查看 UI（主菜单入口）
+- [ ] 显示 build 摘要（核心技能/附魔）
+
+**技术说明:**
+- 修改: `core/types.ts`（MetaState 新增 leaderboard）, `core/state.ts`
+
+### Story 25.6: 每日种子系统
+
+**描述:** 实现每日种子模式，固定初始条件让所有玩家同一起跑线。
+
+**验收标准:**
+- [ ] 种子值由日期生成：`seed = dateString hashCode`
+- [ ] 种子控制：初始词库选择、商店刷新序列、Boss 修饰器选项
+- [ ] 每日种子模式入口（主菜单）
+- [ ] 每日种子独立排行榜（与普通排行榜分开）
+- [ ] 同一天同一种子，多次游玩初始条件一致
+- [ ] 种子化随机数生成器（替换 Math.random）
+
+**技术说明:**
+- 新增: `core/seededRandom.ts`
+- 修改: `systems/battle.ts`, `systems/shop.ts`（使用种子随机）
+
+## Files Modified Summary (Epic 25)
+
+| File | Stories |
+|------|---------|
+| `core/types.ts` | 25.1, 25.3, 25.5 |
+| `core/state.ts` | 25.1, 25.5 |
+| `core/seededRandom.ts` (new) | 25.6 |
+| `systems/battle.ts` | 25.1, 25.2, 25.3, 25.6 |
+| `systems/shop.ts` | 25.4, 25.6 |
+
+---
+
+## Epic 依赖图
+
+```
+Epic 1-8: 基础系统 (done)
+    ↓
+Epic 9: 数值平衡 (done)
+    ↓
+Epic 10: 内容扩展 (in-progress)
+    ↓
+Epic 11: 效果管道统一 ←── 所有后续 Epic 的技术基础
+    ↓
+Epic 12: 技能池扩充 ──┐
+    ↓                  ↓
+Epic 13: 遗物系统重做 ─┤
+                       ↓
+Epic 14: 字母升级与词语联动
+    ↓
+Epic 15: 技能进化系统
+
+Epic 21: 金币资源化 ←── 独立，可随时实施
+Epic 22: 词语牌包系统 ←── 独立，可随时实施
+
+Epic 19 (done)
+    ↓
+Epic 23: 增幅者技能类型 ──┐
+    ↓                      ↓
+Epic 24: 成长附魔 ─────────┤
+                            ↓
+Epic 25: 无尽模式 ←── Epic 18 (done) + Epic 23 + Epic 24
+```
+
+**实施阶段:**
+- 一期: Epic 11（效果管道）
+- 二期: Epic 12 + 13（技能扩充 + 遗物重做，可并行）
+- 三期: Epic 14（字母升级 + 词语联动）
+- 四期: Epic 15（技能进化）
+- 独立: Epic 21（金币资源化）、Epic 22（词语牌包）— 可随时实施
+- 成长线: Epic 23（增幅者）→ Epic 24（成长附魔）→ Epic 25（无尽模式）
+
+---
+
 ## 实现优先级
 
 | 优先级 | Epic | 理由 |
@@ -1049,7 +1694,16 @@ Epic 15: 技能进化系统
 | P1 | Epic 12-13 | 核心构筑深度 |
 | P2 | Epic 14 | 系统深化 |
 | P3 | Epic 15 | 重玩价值扩展 |
+| P1 | Epic 17 | 商店系统重构 (done) |
+| P1 | Epic 18 | Boss 战与 Act 结构 (done) |
+| P0 | Epic 19 | 技能体系重构 (done) |
+| P1 | Epic 20 | 词库管理 + 字频锁定 (done) |
+| P1 | Epic 21 | 经济系统深化（独立可并行） |
+| P1 | Epic 22 | 选词策略深化（独立可并行） |
+| P1 | Epic 23 | 增幅者技能类型（成长线基础） |
+| P1 | Epic 24 | 成长附魔（无尽模式基础） |
+| P1 | Epic 25 | 无尽模式（终极内容） |
 
 ---
 
-_Updated: 2026-02-20_
+_Updated: 2026-03-05_

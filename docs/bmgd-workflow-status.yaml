@@ -28,7 +28,7 @@ prototype_location: "/Volumes/work/project/game/prototype/"
 
 workflow_status:
   # Phase 0 - Pre-production (Optional)
-  brainstorm-game: skipped
+  brainstorm-game: "docs/brainstorming-session-2026-03-04.md"
   game-brief: optional
 
   # Phase 1 - Design
