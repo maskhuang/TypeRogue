@@ -188,19 +188,17 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
       state.resources[prod.resource] += value;
     }
   } else {
-    // ×N 乘法（附魔不影响乘法型 value，但记录增量）
+    // ×N 乘法：基于总资源值计算增量，添加到对应累加器
     if (prod.resource === 'base') {
-      const before = synergy.skillBaseScore;
-      synergy.skillBaseScore *= value;
-      delta = synergy.skillBaseScore - before;
+      delta = state.resources.base * (value - 1);
+      synergy.skillBaseScore += delta;
     } else if (prod.resource === 'multiplier') {
-      const before = synergy.skillMultBonus;
-      synergy.skillMultBonus *= value;
-      delta = synergy.skillMultBonus - before;
+      delta = state.multiplier * (value - 1);
+      synergy.skillMultBonus += delta;
     } else if (prod.resource === 'score') {
-      const before = state.resources.score;
-      state.resources.score *= value;
-      delta = state.resources.score - before;
+      const pendingScore = state.resources.base * state.resources.multiplier + state.resources.score;
+      delta = pendingScore * (value - 1);
+      state.resources.score += delta;
       state.score += delta;
     } else {
       const before = state.resources[prod.resource];
@@ -284,9 +282,9 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
       delta = state.multiplier * sourceVal * k;
       synergy.skillMultBonus += delta;
     } else if (conv.target === 'score') {
-      const before = state.resources.score;
-      state.resources.score *= factor;
-      delta = state.resources.score - before;
+      const pendingScore = state.resources.base * state.resources.multiplier + state.resources.score;
+      delta = pendingScore * (factor - 1);
+      state.resources.score += delta;
       state.score += delta;
     } else {
       const before = state.resources[conv.target];
@@ -358,8 +356,11 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
   showTriggerPopup(producerId);
 
 
+  let delta = 0;
+
   if (prod.operator === 'add') {
     const value = baseValue * reduction;
+    delta = value;
     if (prod.resource === 'score') {
       state.resources.score += value;
       state.score += value;
@@ -370,16 +371,22 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
     // multiply: reduce the boost above 1 — e.g., ×1.5 at 30% → ×1.15
     const factor = 1 + (baseValue - 1) * reduction;
     if (prod.resource === 'score') {
-      const before = state.resources.score;
-      state.resources.score *= factor;
-      state.score += (state.resources.score - before);
+      const pendingScore = state.resources.base * state.resources.multiplier + state.resources.score;
+      delta = pendingScore * (factor - 1);
+      state.resources.score += delta;
+      state.score += delta;
     } else {
+      const before = state.resources[prod.resource];
       state.resources[prod.resource] *= factor;
+      delta = state.resources[prod.resource] - before;
     }
   }
 
   // 时间无上限
   if (prod.resource === 'shield') state.resources.shield = Math.floor(state.resources.shield);
+
+  // 战后统计
+  recordSkillTrigger(producerId, triggerKey, prod.resource, delta, false);
 
   const color = RESOURCE_COLORS[prod.resource];
   const feedbackText = prod.operator === 'add'
@@ -399,9 +406,10 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
 
   showTriggerPopup(converterId);
 
+  let delta = 0;
 
   if (conv.formula === 'add') {
-    const delta = sourceVal * k * reduction;
+    delta = sourceVal * k * reduction;
     if (conv.target === 'score') {
       state.resources.score += delta;
       state.score += delta;
@@ -411,16 +419,22 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
   } else {
     const factor = 1 + sourceVal * k * reduction;
     if (conv.target === 'score') {
-      const before = state.resources.score;
-      state.resources.score *= factor;
-      state.score += (state.resources.score - before);
+      const pendingScore = state.resources.base * state.resources.multiplier + state.resources.score;
+      delta = pendingScore * (factor - 1);
+      state.resources.score += delta;
+      state.score += delta;
     } else {
+      const before = state.resources[conv.target];
       state.resources[conv.target] *= factor;
+      delta = state.resources[conv.target] - before;
     }
   }
 
   // 时间无上限
   if (conv.target === 'shield') state.resources.shield = Math.floor(state.resources.shield);
+
+  // 战后统计
+  recordSkillTrigger(converterId, triggerKey, conv.target, delta, false);
 
   const color = RESOURCE_COLORS[conv.target];
   showFeedback(`${getConverterDesc(converterId, level)} (溅射)`, color);
@@ -583,7 +597,7 @@ export function triggerConnectorCopy(connectorId: string, triggerKey: string, ch
   if (bs) bs.maxChainDepth = Math.max(bs.maxChainDepth, chainHistory.length + 1);
 
   // 链式触发目标技能
-  triggerSkill(targetSkillId, targetKey, false, [...chainHistory, targetKey]);
+  triggerSkill(targetSkillId, targetKey, [...chainHistory, targetKey]);
   updateHUD();
 }
 
@@ -627,7 +641,7 @@ export function checkResourceTriggers(resource: ResourceType, sourceKey: string,
     }
 
     // 链式触发
-    triggerSkill(targetSkillId, targetKey, false, [...chainHistory, targetKey]);
+    triggerSkill(targetSkillId, targetKey, [...chainHistory, targetKey]);
   }
 }
 
