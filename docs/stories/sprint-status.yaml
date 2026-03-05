@@ -198,7 +198,7 @@ development_status:
   # Epic 21: 金币资源化
   epic-21: in-progress
   21-1-gold-resource-type: done
-  21-2-gold-producer-skills: backlog
+  21-2-gold-producer-skills: done
   21-3-gold-converter-skills: backlog
   21-4-remove-default-gold: backlog
   21-5-settlement-stats-adapt: backlog

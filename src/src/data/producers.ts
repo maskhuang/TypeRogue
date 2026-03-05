@@ -106,6 +106,26 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     values: [2, 2.3, 2.6],
     desc: '护盾×2',
   },
+
+  // === 金币产出者 ===
+  prod_mint: {
+    id: 'prod_mint',
+    name: '铸币',
+    icon: '💰',
+    resource: 'gold',
+    operator: 'add',
+    values: [3, 5, 8],
+    desc: '金币+3',
+  },
+  prod_treasury: {
+    id: 'prod_treasury',
+    name: '金库',
+    icon: '🏦',
+    resource: 'gold',
+    operator: 'multiply',
+    values: [1.3, 1.5, 1.7],
+    desc: '金币×1.3',
+  },
 };
 
 /** 检查 ID 是否为产出者 */

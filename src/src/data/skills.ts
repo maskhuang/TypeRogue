@@ -40,6 +40,8 @@ export const SKILL_SCHOOL: Record<string, SkillSchool> = {
   prod_eternal: { label: '产出', cssClass: 'school-producer' },
   prod_shield: { label: '产出', cssClass: 'school-producer' },
   prod_fortress: { label: '产出', cssClass: 'school-producer' },
+  prod_mint: { label: '产出', cssClass: 'school-producer' },
+  prod_treasury: { label: '产出', cssClass: 'school-producer' },
 };
 
 export function getSkillSchool(skillId: string): SkillSchool {

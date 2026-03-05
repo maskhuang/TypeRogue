@@ -68,6 +68,7 @@ function getResourceLabel(r: ResourceType): string {
     case 'multiplier': return '倍率';
     case 'time': return '秒';
     case 'shield': return '盾';
+    case 'gold': return '币';
   }
 }
 
