@@ -244,6 +244,8 @@ export interface UIElements {
   playerRelics: HTMLElement;
   activeLibrary: HTMLElement;
   modifierInfo: HTMLElement;
+  shieldDisplay: HTMLElement;
+  shieldCount: HTMLElement;
   // Shop
   shopScreen: HTMLElement;
   shopLevelNum: HTMLElement;
