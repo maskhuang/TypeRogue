@@ -625,6 +625,22 @@ function clearRangeHighlight(): void {
     .forEach(el => el.classList.remove('range-highlight'));
 }
 
+/** 计算范围高亮键位+源键位的包围盒（用于tooltip避让） */
+function getRangeHighlightRect(sourceSlot: HTMLElement): { top: number; left: number; right: number; bottom: number } | null {
+  const highlighted = document.querySelectorAll('.key-slot.range-highlight');
+  if (highlighted.length === 0) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const include = (r: DOMRect) => {
+    minX = Math.min(minX, r.left);
+    minY = Math.min(minY, r.top);
+    maxX = Math.max(maxX, r.right);
+    maxY = Math.max(maxY, r.bottom);
+  };
+  include(sourceSlot.getBoundingClientRect());
+  highlighted.forEach(el => include(el.getBoundingClientRect()));
+  return { top: minY, left: minX, right: maxX, bottom: maxY };
+}
+
 function findKeyForSkill(skillId: string): string | undefined {
   for (const [key, id] of state.player.bindings) {
     if (id === skillId) return key;
@@ -696,8 +712,9 @@ export function renderBuildManager(): void {
             schoolCssClass: school.cssClass,
           };
         }
-        keyTooltip.show(e.clientX, e.clientY, tooltipData);
         highlightSkillRange(k);
+        const avoidRect = getRangeHighlightRect(slot);
+        keyTooltip.show(e.clientX, e.clientY, tooltipData, avoidRect ?? undefined);
       });
       slot.addEventListener('mouseleave', () => {
         keyTooltip.hide();

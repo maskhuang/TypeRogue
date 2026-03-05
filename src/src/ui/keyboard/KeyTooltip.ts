@@ -48,8 +48,9 @@ class KeyTooltipManager {
    * @param x 鼠标 clientX
    * @param y 鼠标 clientY
    * @param data tooltip 数据
+   * @param avoidRect 需要避开的区域（范围高亮的包围盒）
    */
-  show(x: number, y: number, data: KeyTooltipData): void {
+  show(x: number, y: number, data: KeyTooltipData, avoidRect?: { top: number; left: number; right: number; bottom: number }): void {
     const el = this.ensureElement()
 
     let html = `<div class="tooltip-letter">${esc(data.letter.toUpperCase())}</div>`
@@ -72,8 +73,12 @@ class KeyTooltipManager {
     el.innerHTML = html
     el.style.display = 'block'
 
-    // 定位（避免溢出视口）
-    this.position(el, x, y)
+    // 定位（避免溢出视口，可选避开高亮区域）
+    if (avoidRect) {
+      this.positionAvoidingRect(el, x, avoidRect)
+    } else {
+      this.position(el, x, y)
+    }
   }
 
   /**
@@ -129,6 +134,71 @@ class KeyTooltipManager {
 
       el.style.left = `${left}px`
       el.style.top = `${top}px`
+    })
+  }
+
+  /**
+   * 定位 tooltip，避开范围高亮区域
+   */
+  private positionAvoidingRect(el: HTMLElement, cursorX: number, avoid: { top: number; left: number; right: number; bottom: number }): void {
+    const gap = 8
+
+    el.style.left = `0px`
+    el.style.top = `0px`
+
+    if (this.positionRafId) {
+      const cancel = typeof cancelAnimationFrame === 'function' ? cancelAnimationFrame : clearTimeout
+      cancel(this.positionRafId)
+    }
+
+    const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (cb: () => void) => setTimeout(cb, 0) as unknown as number
+    this.positionRafId = raf(() => {
+      if (typeof el.getBoundingClientRect !== 'function') return
+      const rect = el.getBoundingClientRect()
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+
+      // 水平居中于鼠标，但 clamp 到视口
+      let left = cursorX - rect.width / 2
+      if (left < gap) left = gap
+      if (left + rect.width > vw - gap) left = vw - rect.width - gap
+
+      // 优先放在高亮区域上方
+      let top = avoid.top - rect.height - gap
+      if (top >= gap) {
+        el.style.left = `${left}px`
+        el.style.top = `${top}px`
+        return
+      }
+
+      // 放在高亮区域下方
+      top = avoid.bottom + gap
+      if (top + rect.height <= vh - gap) {
+        el.style.left = `${left}px`
+        el.style.top = `${top}px`
+        return
+      }
+
+      // 放在高亮区域左侧
+      left = avoid.left - rect.width - gap
+      top = avoid.top
+      if (left >= gap && top + rect.height <= vh) {
+        el.style.left = `${left}px`
+        el.style.top = `${top}px`
+        return
+      }
+
+      // 放在高亮区域右侧
+      left = avoid.right + gap
+      if (left + rect.width <= vw - gap) {
+        el.style.left = `${left}px`
+        el.style.top = `${top}px`
+        return
+      }
+
+      // fallback: 上方，允许超出
+      el.style.left = `${Math.max(gap, cursorX - rect.width / 2)}px`
+      el.style.top = `${avoid.top - rect.height - gap}px`
     })
   }
 
