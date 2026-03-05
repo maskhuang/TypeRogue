@@ -18,7 +18,7 @@ import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
 
 
 // === 战后统计：记录技能触发 ===
-const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, shield: 0 };
+const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, shield: 0, gold: 0 };
 
 function recordSkillTrigger(
   skillId: string,

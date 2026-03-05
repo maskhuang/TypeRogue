@@ -70,12 +70,12 @@ export const BALANCE = {
 
 // === 资源标签 ===
 export const RESOURCE_LABELS: Record<string, string> = {
-  base: '基数', score: '分数', multiplier: '倍率', time: '时间', shield: '护盾',
+  base: '基数', score: '分数', multiplier: '倍率', time: '时间', shield: '护盾', gold: '金币',
 };
 
 // === 资源图标 ===
 export const RESOURCE_ICONS: Record<string, string> = {
-  base: '⚔️', score: '🪙', multiplier: '🔥', time: '⏳', shield: '🛡️',
+  base: '⚔️', score: '🪙', multiplier: '🔥', time: '⏳', shield: '🛡️', gold: '💰',
 };
 
 // === 资源颜色 ===
@@ -85,6 +85,7 @@ export const RESOURCE_COLORS = {
   multiplier: '#e67e22',  // 橙
   time: '#3498db',       // 蓝
   shield: '#bdc3c7',     // 银
+  gold: '#ffd700',       // 金币
 } as const;
 
 // === 动画参数 ===

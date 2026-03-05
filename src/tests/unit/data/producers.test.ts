@@ -16,7 +16,7 @@ describe('PRODUCERS 数据定义', () => {
       expect(prod.id).toBe(id)
       expect(prod.name).toBeTruthy()
       expect(prod.icon).toBeTruthy()
-      expect(['base', 'score', 'multiplier', 'time', 'shield']).toContain(prod.resource)
+      expect(['base', 'score', 'multiplier', 'time', 'shield', 'gold']).toContain(prod.resource)
       expect(['add', 'multiply']).toContain(prod.operator)
       expect(prod.values).toHaveLength(3)
       expect(prod.desc).toBeTruthy()

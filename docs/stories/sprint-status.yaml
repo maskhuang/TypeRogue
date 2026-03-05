@@ -195,8 +195,57 @@ development_status:
   20-2-zero-freq-key-lock: done
   epic-20-retrospective: optional
 
+  # Epic 21: 金币资源化
+  epic-21: in-progress
+  21-1-gold-resource-type: done
+  21-2-gold-producer-skills: backlog
+  21-3-gold-converter-skills: backlog
+  21-4-remove-default-gold: backlog
+  21-5-settlement-stats-adapt: backlog
+  21-6-gold-connector-adapt: backlog
+  epic-21-retrospective: optional
+
+  # Epic 22: 词语牌包系统
+  epic-22: backlog
+  22-1-pack-condition-data-structure: backlog
+  22-2-pack-generation-strategy: backlog
+  22-3-shop-pack-ui: backlog
+  22-4-remove-word-direct-sale: backlog
+  22-5-pack-build-synergy: backlog
+  epic-22-retrospective: optional
+
+  # Epic 23: 增幅者技能类型
+  epic-23: backlog
+  23-1-amplifier-data-structure: backlog
+  23-2-amplifier-skill-data: backlog
+  23-3-amplifier-trigger-stacking: backlog
+  23-4-amplifier-effect-application: backlog
+  23-5-amplifier-shop-ui: backlog
+  23-6-amplifier-enchantment-adapt: backlog
+  epic-23-retrospective: optional
+
+  # Epic 24: 成长附魔与附魔重构
+  epic-24: backlog
+  24-1-growth-value-state: backlog
+  24-2-remove-amplify-add-growth-data: backlog
+  24-3-spatial-growth-trigger-logic: backlog
+  24-4-mastery-enchantment-logic: backlog
+  24-5-devour-enchantment-logic: backlog
+  24-6-enchantment-ui-adapt: backlog
+  epic-24-retrospective: optional
+
+  # Epic 25: 无尽模式
+  epic-25: backlog
+  25-1-cycle-state-loop-structure: backlog
+  25-2-triple-difficulty-scaling: backlog
+  25-3-boss-modifier-pick-stack: backlog
+  25-4-rare-shop-shelves: backlog
+  25-5-leaderboard-system: backlog
+  25-6-daily-seed-system: backlog
+  epic-25-retrospective: optional
+
 # Summary:
-# - Total Epics: 20
-# - Total Stories: 84
+# - Total Epics: 25
+# - Total Stories: 107
 # - Epics Completed: 18
 # - Stories Completed: 74

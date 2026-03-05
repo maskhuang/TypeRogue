@@ -14,7 +14,7 @@ import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite } from './skills';
 import { openShop } from './shop';
 import { shouldShowRelicPicker, showRelicPicker } from './relicPicker';
-import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
+import { getLetterScoreModifiers, calculateLetterFrequency } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
@@ -69,6 +69,21 @@ function pickWord(): string {
     const good = words.filter(w => bound.some(l => w.includes(l)));
     if (good.length) return good[Math.floor(Math.random() * good.length)].toUpperCase();
   }
+
+  // 偏向选择包含已解锁字母（频率≥5）的词，减少无底分字母出现
+  const freq = calculateLetterFrequency(state.player.wordDeck);
+  const unlocked = new Set<string>();
+  freq.forEach((count, letter) => { if (count >= 5) unlocked.add(letter); });
+  if (unlocked.size > 0 && Math.random() < 0.7) {
+    // 按词中已解锁字母占比排序，取前半优选
+    const scored = words.map(w => {
+      const chars = [...w.toLowerCase()].filter(c => c >= 'a' && c <= 'z');
+      const ratio = chars.length ? chars.filter(c => unlocked.has(c)).length / chars.length : 0;
+      return { w, ratio };
+    }).filter(x => x.ratio > 0.5);
+    if (scored.length) return scored[Math.floor(Math.random() * scored.length)].w.toUpperCase();
+  }
+
   return words[Math.floor(Math.random() * words.length)].toUpperCase();
 }
 
@@ -651,6 +666,7 @@ export async function startLevel(): Promise<void> {
 
   // 重置资源（在 timeMax 和 tempBuff 之后，确保 resources.time 使用正确的 timeMax）
   resetResources();
+  state.resources.gold = 0;  // 金币每关开始清零（resetResources 不重置 gold，因为跨词累加）
 
   // 初始化战后统计
   state.battleStats = createBattleStats();

@@ -6,7 +6,7 @@ import type { BossModifierId } from '../data/bossModifiers';
 import type { PositionRelation } from '../data/keyboardTopology';
 
 // === 资源系统 ===
-export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'shield';
+export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'shield' | 'gold';
 
 // === 产出者系统 ===
 export type ProducerOperator = 'add' | 'multiply';
@@ -98,6 +98,7 @@ export interface ResourceState {
   multiplier: number;  // 倍率（基础 + 连击 + 技能加成）
   time: number;        // 时间资源（倒计时秒数）
   shield: number;      // 护盾层数（抵消错误输入）
+  gold: number;        // 金币资源（跨词累加，战斗结束转入 state.gold）
 }
 
 // === 游戏状态 ===

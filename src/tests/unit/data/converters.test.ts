@@ -59,7 +59,7 @@ describe('CONVERTERS 数据完整性', () => {
   });
 
   it('source 和 target 是有效资源类型', () => {
-    const validResources = ['base', 'score', 'multiplier', 'time', 'shield'];
+    const validResources = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
     for (const id of allIds) {
       expect(validResources, `${id}.source`).toContain(CONVERTERS[id].source);
       expect(validResources, `${id}.target`).toContain(CONVERTERS[id].target);

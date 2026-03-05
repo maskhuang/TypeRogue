@@ -245,12 +245,13 @@ describe('资源 proxy（multiplier/time 双向同步）', () => {
 })
 
 describe('RESOURCE_COLORS', () => {
-  it('定义了 5 种资源颜色', async () => {
+  it('定义了 6 种资源颜色', async () => {
     const { RESOURCE_COLORS } = await import('../../../src/core/constants')
     expect(RESOURCE_COLORS.base).toBe('#e74c3c')
     expect(RESOURCE_COLORS.score).toBe('#f1c40f')
     expect(RESOURCE_COLORS.multiplier).toBe('#e67e22')
     expect(RESOURCE_COLORS.time).toBe('#3498db')
     expect(RESOURCE_COLORS.shield).toBe('#bdc3c7')
+    expect(RESOURCE_COLORS.gold).toBe('#ffd700')
   })
 })

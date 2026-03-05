@@ -66,6 +66,7 @@ export function openShop(_won: boolean): void {
   const timeBonus = Math.floor(state.time);
   const bonus = timeBonus + relicGold;
   state.gold += baseGold + bonus;
+  state.gold += Math.floor(state.resources.gold);  // 技能产出的金币资源转入（21.1 管道）
 
   el.shopLevelNum.textContent = String(state.level);
   el.shopScore.textContent = String(state.score);
@@ -390,9 +391,9 @@ function purchaseShopItem(index: number): void {
   const result = executePurchase(index);
   if (!result) return;
 
-  // 点击购买新技能时，自动绑定到第一个空且非零频键位
+  // 点击购买新技能时，自动绑定到第一个空且未锁定键位（频率≥5）
   if (result.isNew && result.skillId) {
-    const freeKey = KEYS.find(k => !state.player.bindings.has(k) && (cachedLetterFreqs?.get(k) ?? 0) > 0);
+    const freeKey = KEYS.find(k => !state.player.bindings.has(k) && (cachedLetterFreqs?.get(k) ?? 0) >= 5);
     if (freeKey) state.player.bindings.set(freeKey, result.skillId);
   }
 
@@ -665,16 +666,16 @@ export function renderBuildManager(): void {
     if (score > 0) letterScores.set(letter, score);
   });
 
-  // 零频键位自动解绑（先收集再批量删除，避免遍历中修改 Map）
+  // 低频键位自动解绑（频率<5 → 底分为0 → 锁定）
   const keysToUnbind: string[] = [];
   for (const [key] of state.player.bindings) {
-    if ((letterFreqs.get(key) ?? 0) === 0) keysToUnbind.push(key);
+    if ((letterFreqs.get(key) ?? 0) < 5) keysToUnbind.push(key);
   }
   for (const key of keysToUnbind) {
     const skillId = state.player.bindings.get(key)!;
     state.player.bindings.delete(key);
     const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
-    if (sk) showFeedback(`${sk.name} 已从 ${key.toUpperCase()} 解绑（字频归零）`, '#ff6b6b');
+    if (sk) showFeedback(`${sk.name} 已从 ${key.toUpperCase()} 解绑（字频不足）`, '#ff6b6b');
   }
 
   KEYBOARD_ROWS.forEach((row, rowIndex) => {
@@ -691,8 +692,8 @@ export function renderBuildManager(): void {
       const score = letterScores.get(k) ?? 0;
       const skillId = state.player.bindings.get(k);
 
-      // 零频键位锁定
-      if (freq === 0) slot.classList.add('freq-locked');
+      // 低频键位锁定（频率<5 → 底分为0）
+      if (freq < 5) slot.classList.add('freq-locked');
 
       // 底分分级样式
       if (score >= 6) slot.classList.add('score-high');
@@ -1027,7 +1028,7 @@ function showHeatmapTooltip(e: MouseEvent, key: string, bs: import('../core/type
   tip.id = 'heatmap-tooltip';
   tip.className = 'heatmap-tooltip';
 
-  const resourceLines = (['base', 'score', 'multiplier', 'time', 'shield'] as ResourceType[])
+  const resourceLines = (['base', 'score', 'multiplier', 'time', 'shield', 'gold'] as ResourceType[])
     .filter(r => ks.resources[r] > 0)
     .map(r => `<div class="ht-resource"><span style="color:${RESOURCE_COLORS[r]}">${RESOURCE_ICONS[r]} ${RESOURCE_LABELS[r]}</span> +${ks.resources[r].toFixed(1)}</div>`)
     .join('');

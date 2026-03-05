@@ -29,6 +29,7 @@ export function createInitialState(): GameState {
       multiplier: BALANCE.BASE_MULTIPLIER,
       time: BALANCE.TIME_PER_LEVEL,
       shield: 0,
+      gold: 0,
     },
     bossModifierPool: [],
     usedRestEvents: [],
