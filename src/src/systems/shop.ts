@@ -983,6 +983,10 @@ function renderStatsPanel(): void {
   const rating = bs.rating || calculateRating(state.score, state.targetScore);
   const ratingClass = rating.length >= 2 ? 'rating-gold' : rating === 'S' ? 'rating-silver' : rating === 'A' ? 'rating-bronze' : '';
 
+  // 技能产出金币总计
+  let totalGold = 0;
+  bs.keyStats.forEach(ks => { totalGold += ks.resources.gold; });
+
   panel.innerHTML = `
     <div class="stats-header">
       <div class="rating-badge ${ratingClass}">${rating}</div>
@@ -991,11 +995,13 @@ function renderStatsPanel(): void {
         <span>完美 ${bs.perfectWords} 词</span>
         <span>连锁 ${bs.totalChainTriggers} 次</span>
         ${bs.maxChainDepth > 1 ? `<span>最长链 ${bs.maxChainDepth}</span>` : ''}
+        ${totalGold > 0 ? `<span>💰 +${Math.floor(totalGold)}</span>` : ''}
       </div>
     </div>
     <div id="stats-content"></div>
   `;
 
+  currentHeatmapDimension = 'triggerCount';
   renderHeatmapTab(document.getElementById('stats-content')!, bs);
 }
 
@@ -1005,24 +1011,59 @@ function heatColor(ratio: number): string {
   return `hsl(${hue}, 80%, ${50 + (1 - ratio) * 15}%)`;
 }
 
-function renderHeatmapTab(container: HTMLElement, bs: import('../core/types').BattleStats): void {
-  // 找最大触发数（归一化基准）
-  let maxTrigger = 0;
-  bs.keyStats.forEach(ks => { if (ks.triggerCount > maxTrigger) maxTrigger = ks.triggerCount; });
+// === 热力图维度 ===
+type HeatmapDimension = 'triggerCount' | ResourceType;
+let currentHeatmapDimension: HeatmapDimension = 'triggerCount';
 
-  let html = '<div class="heatmap-keyboard">';
+const HEATMAP_DIMENSIONS: { key: HeatmapDimension; label: string; color: string }[] = [
+  { key: 'triggerCount', label: '触发数', color: '#aaa' },
+  ...(['base', 'score', 'multiplier', 'time', 'shield', 'gold'] as ResourceType[])
+    .map(r => ({ key: r as HeatmapDimension, label: RESOURCE_LABELS[r], color: RESOURCE_COLORS[r] })),
+];
+
+function getKeyValue(ks: import('../core/types').KeyStats | undefined, dim: HeatmapDimension): number {
+  if (!ks) return 0;
+  return dim === 'triggerCount' ? ks.triggerCount : ks.resources[dim as ResourceType];
+}
+
+function formatDimValue(val: number, dim: HeatmapDimension): string {
+  if (val === 0) return '';
+  if (dim === 'triggerCount') return String(val);
+  if (dim === 'multiplier') return val.toFixed(2);
+  return val.toFixed(1);
+}
+
+function renderHeatmapTab(container: HTMLElement, bs: import('../core/types').BattleStats): void {
+  // 维度选择器
+  let html = '<div class="heatmap-dims">';
+  HEATMAP_DIMENSIONS.forEach(d => {
+    const active = d.key === currentHeatmapDimension;
+    const style = active ? `color:${d.color};border-color:${d.color}` : '';
+    html += `<span class="heatmap-dim${active ? ' active' : ''}" data-dim="${d.key}" style="${style}">${d.label}</span>`;
+  });
+  html += '</div>';
+
+  // 找最大值（归一化基准）
+  let maxVal = 0;
+  bs.keyStats.forEach(ks => {
+    const v = getKeyValue(ks, currentHeatmapDimension);
+    if (v > maxVal) maxVal = v;
+  });
+
+  html += '<div class="heatmap-keyboard">';
   KEYBOARD_ROWS.forEach(row => {
     html += '<div class="heatmap-row">';
     row.forEach(k => {
       const ks = bs.keyStats.get(k);
-      const count = ks?.triggerCount ?? 0;
-      const ratio = maxTrigger > 0 ? count / maxTrigger : 0;
-      const hasSkill = state.player.bindings.has(k) || count > 0;
-      const bg = hasSkill && count > 0 ? heatColor(ratio) : 'rgba(255,255,255,0.05)';
+      const val = getKeyValue(ks, currentHeatmapDimension);
+      const ratio = maxVal > 0 ? val / maxVal : 0;
+      const hasSkill = state.player.bindings.has(k) || (ks?.triggerCount ?? 0) > 0;
+      const bg = hasSkill && val > 0 ? heatColor(ratio) : 'rgba(255,255,255,0.05)';
       const cls = hasSkill ? 'heatmap-key' : 'heatmap-key heatmap-key-empty';
+      const countText = formatDimValue(val, currentHeatmapDimension);
       html += `<div class="${cls}" data-key="${k}" style="background:${bg}">
         <span class="hm-letter">${k.toUpperCase()}</span>
-        ${count > 0 ? `<span class="hm-count">${count}</span>` : ''}
+        ${countText ? `<span class="hm-count">${countText}</span>` : ''}
       </div>`;
     });
     html += '</div>';
@@ -1030,6 +1071,14 @@ function renderHeatmapTab(container: HTMLElement, bs: import('../core/types').Ba
   html += '</div>';
 
   container.innerHTML = html;
+
+  // 维度切换事件
+  container.querySelectorAll('.heatmap-dim').forEach(el => {
+    el.addEventListener('click', () => {
+      currentHeatmapDimension = (el as HTMLElement).dataset.dim as HeatmapDimension;
+      renderHeatmapTab(container, bs);
+    });
+  });
 
   // 悬停详情浮窗
   container.querySelectorAll('.heatmap-key').forEach(el => {

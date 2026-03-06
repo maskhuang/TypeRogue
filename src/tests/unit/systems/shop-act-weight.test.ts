@@ -201,6 +201,76 @@ describe('第一关金币保底 (21.4 AC5)', () => {
   })
 })
 
+// === 21.5: 热力图维度选择器 ===
+describe('热力图维度选择器 (21.5 AC4)', () => {
+  it('shop.ts 包含 HEATMAP_DIMENSIONS 定义', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
+    const content = fs.readFileSync(shopPath, 'utf-8')
+    expect(content).toContain('HEATMAP_DIMENSIONS')
+    expect(content).toContain('HeatmapDimension')
+    expect(content).toContain('currentHeatmapDimension')
+  })
+
+  it('维度选择器包含 7 种维度 (triggerCount + 6 resources)', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
+    const content = fs.readFileSync(shopPath, 'utf-8')
+    expect(content).toContain("key: 'triggerCount'")
+    expect(content).toContain("label: '触发数'")
+    // 6 resources via RESOURCE_LABELS mapping
+    expect(content).toContain('RESOURCE_LABELS[r]')
+    expect(content).toContain('RESOURCE_COLORS[r]')
+  })
+
+  it('renderHeatmapTab 输出 heatmap-dims 选择器', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
+    const content = fs.readFileSync(shopPath, 'utf-8')
+    expect(content).toContain('heatmap-dims')
+    expect(content).toContain('heatmap-dim')
+    expect(content).toContain('data-dim')
+  })
+
+  it('getKeyValue 辅助函数存在', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
+    const content = fs.readFileSync(shopPath, 'utf-8')
+    expect(content).toContain('function getKeyValue')
+    expect(content).toContain('triggerCount')
+    expect(content).toContain('ks.resources')
+  })
+})
+
+// === 21.5: 统计面板金币总计 ===
+describe('统计面板金币总计 (21.5 AC5)', () => {
+  it('renderStatsPanel 计算 totalGold', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
+    const content = fs.readFileSync(shopPath, 'utf-8')
+    expect(content).toContain('totalGold')
+    expect(content).toContain('ks.resources.gold')
+    expect(content).toContain('💰')
+  })
+})
+
+// === 21.5: tooltip 包含 gold ===
+describe('热力图 tooltip 包含 gold (21.5 AC3)', () => {
+  it('showHeatmapTooltip 遍历含 gold 的资源列表', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
+    const content = fs.readFileSync(shopPath, 'utf-8')
+    // tooltip 遍历 6 种资源（含 gold）
+    expect(content).toContain("'base', 'score', 'multiplier', 'time', 'shield', 'gold'")
+  })
+})
+
 // === AC3, AC7, AC8: 现有功能保留 ===
 describe('现有商店功能保留 (AC3, AC7, AC8)', () => {
   it('保底逻辑保留', async () => {

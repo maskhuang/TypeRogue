@@ -2609,6 +2609,31 @@ body {
   color: #888;
 }
 
+/* === 热力图维度选择器 === */
+.heatmap-dims {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  justify-content: center;
+}
+.heatmap-dim {
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.heatmap-dim.active {
+  font-weight: bold;
+}
+.heatmap-dim:hover:not(.active) {
+  border-color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.8);
+}
+
 /* === 热力图 === */
 .heatmap-keyboard {
   display: flex;
