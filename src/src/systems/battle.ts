@@ -671,6 +671,9 @@ export async function startLevel(): Promise<void> {
   // 初始化战后统计
   state.battleStats = createBattleStats();
 
+  // 清空增幅者叠层（每关重置）
+  state.amplifierStacks.clear();
+
   synergy.perfectStreak = 0;
   synergy.skillMultBonus = 0;
   state.multiplier = state.player.baseMultiplier;

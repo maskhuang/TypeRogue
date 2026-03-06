@@ -48,6 +48,25 @@ export interface ConnectorDefinition {
   desc: string;                        // 玩家可见描述
 }
 
+// === 增幅者系统 ===
+export type AmplifierOperator = 'add' | 'multiply';
+
+export interface AmplifierDefinition {
+  id: string;                       // amp_base_add_adjacent, amp_mult_mul_sameRow, ...
+  name: string;                     // 强化核心, 倍增光环, ...
+  icon: string;                     // emoji
+  resource: ResourceType;           // 增幅的目标资源
+  positionRelation: PositionRelation; // 影响范围（相邻/同行/同列/...）
+  operator: AmplifierOperator;      // 加法增幅 | 乘法增幅
+  valuePerStack: number;            // 每层增幅值（Lv1 基准）
+  desc: string;                     // 玩家可见描述
+}
+
+// === 增幅者状态 ===
+export interface AmplifierState {
+  stacks: number;  // 当前叠层数（关卡内累积，关卡结算清零）
+}
+
 // === 附魔系统 ===
 export type EnchantmentCategory = 'spatial' | 'transmutation' | 'independent';
 export type SpatialEffectType = 'amplify' | 'splash' | 'resonance' | 'repulsion';
@@ -125,8 +144,10 @@ export interface GameState {
   sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
   converterPool: string[];             // 本局转化者池（40 抽 20）
   connectorPool: string[];             // 本局连接者池（42 抽 21）
+  amplifierPool: string[];             // 本局增幅者池
+  amplifierStacks: Map<string, number>; // 增幅者叠层（key=ampId, value=层数），关卡结算时清零
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
-  seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者 tooltip 跟踪）
+  seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者/增幅者 tooltip 跟踪）
   battleStats: BattleStats | null;                   // 上一战的统计数据（商店中展示）
   resources: ResourceState;
   player: PlayerState;

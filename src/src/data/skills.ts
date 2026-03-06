@@ -1,11 +1,12 @@
 // ============================================
-// 打字肉鸽 - 技能数据（新系统：产出者/转化者/连接者）
+// 打字肉鸽 - 技能数据（新系统：产出者/转化者/连接者/增幅者）
 // ============================================
 // Story 19.10: 旧 18 技能系统已移除，仅保留流派映射和显示查询
 
 import { PRODUCERS, getProducerDesc } from './producers';
 import { CONVERTERS, getConverterDesc } from './converters';
 import { CONNECTORS, getConnectorDesc } from './connectors';
+import { AMPLIFIERS, getAmplifierDesc } from './amplifiers';
 import { ENCHANTMENTS } from './enchantments';
 
 // === 已删除旧技能 ID 列表（存档兼容用）===
@@ -50,6 +51,8 @@ export function getSkillSchool(skillId: string): SkillSchool {
   if (skillId in CONVERTERS) return { label: '转化', cssClass: 'school-converter' };
   // 连接者统一归为"连接"流派
   if (skillId in CONNECTORS) return { label: '连接', cssClass: 'school-connector' };
+  // 增幅者统一归为"增幅"流派
+  if (skillId in AMPLIFIERS) return { label: '增幅', cssClass: 'school-amplifier' };
   return { label: '未知', cssClass: 'school-unknown' };
 }
 
@@ -89,6 +92,12 @@ export function getSkillDisplayInfo(
   const conn = CONNECTORS[skillId];
   if (conn) {
     return { name: conn.name, icon: conn.icon, desc: getConnectorDesc(skillId) };
+  }
+  // 增幅者查询
+  const amp = AMPLIFIERS[skillId];
+  if (amp) {
+    const desc = level ? getAmplifierDesc(skillId, level) : amp.desc;
+    return { name: amp.name + enchSuffix, icon: enchIcon || amp.icon, desc: desc + (enchSuffix ? ` | 附魔: ${enchSuffix}` : '') };
   }
   return { name: '???', icon: '?', desc: '' };
 }

@@ -206,7 +206,7 @@ development_status:
   epic-21-retrospective: optional
 
   # Epic 22: 词语牌包系统
-  epic-22: in-progress
+  epic-22: done
   22-1-pack-condition-data-structure: done
   22-2-pack-generation-strategy: done
   22-3-shop-pack-ui: done
@@ -215,8 +215,8 @@ development_status:
   epic-22-retrospective: optional
 
   # Epic 23: 增幅者技能类型
-  epic-23: backlog
-  23-1-amplifier-data-structure: backlog
+  epic-23: in-progress
+  23-1-amplifier-data-structure: done
   23-2-amplifier-skill-data: backlog
   23-3-amplifier-trigger-stacking: backlog
   23-4-amplifier-effect-application: backlog
