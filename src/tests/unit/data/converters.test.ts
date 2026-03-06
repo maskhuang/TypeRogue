@@ -1,6 +1,6 @@
 // ============================================
 // 转化者数据 + 工具函数测试
-// Story 19.4: AC1, AC2, AC6, AC13
+// Story 19.4 + 21.3: 转化者数据完整性、工具函数、金币转化者
 // ============================================
 
 import { describe, it, expect } from 'vitest';
@@ -16,8 +16,8 @@ import {
 describe('CONVERTERS 数据完整性', () => {
   const allIds = Object.keys(CONVERTERS);
 
-  it('共 40 个转化者', () => {
-    expect(allIds.length).toBe(40);
+  it('共 50 个转化者', () => {
+    expect(allIds.length).toBe(50);
   });
 
   it('所有字段非空', () => {
@@ -66,12 +66,12 @@ describe('CONVERTERS 数据完整性', () => {
     }
   });
 
-  it('覆盖 5 源 × 4 目标 × 2 运算 = 40 种组合', () => {
+  it('覆盖 50 种唯一 source_target_formula 组合', () => {
     const combos = new Set(allIds.map(id => {
       const c = CONVERTERS[id];
       return `${c.source}_${c.target}_${c.formula}`;
     }));
-    expect(combos.size).toBe(40);
+    expect(combos.size).toBe(50);
   });
 
   it('基数为源 8 个', () => {
@@ -79,9 +79,9 @@ describe('CONVERTERS 数据完整性', () => {
     expect(baseSource.length).toBe(8);
   });
 
-  it('分数为源 8 个', () => {
+  it('分数为源 9 个', () => {
     const scoreSource = allIds.filter(id => CONVERTERS[id].source === 'score');
-    expect(scoreSource.length).toBe(8);
+    expect(scoreSource.length).toBe(9);
   });
 
   it('倍率为源 8 个', () => {
@@ -89,14 +89,19 @@ describe('CONVERTERS 数据完整性', () => {
     expect(multSource.length).toBe(8);
   });
 
-  it('时间为源 8 个', () => {
+  it('时间为源 9 个', () => {
     const timeSource = allIds.filter(id => CONVERTERS[id].source === 'time');
-    expect(timeSource.length).toBe(8);
+    expect(timeSource.length).toBe(9);
   });
 
   it('护盾为源 8 个', () => {
     const shieldSource = allIds.filter(id => CONVERTERS[id].source === 'shield');
     expect(shieldSource.length).toBe(8);
+  });
+
+  it('金币为源 8 个', () => {
+    const goldSource = allIds.filter(id => CONVERTERS[id].source === 'gold');
+    expect(goldSource.length).toBe(8);
   });
 });
 
@@ -104,6 +109,8 @@ describe('isConverter', () => {
   it('识别转化者 ID', () => {
     expect(isConverter('conv_base_score_add')).toBe(true);
     expect(isConverter('conv_shield_time_mul')).toBe(true);
+    expect(isConverter('conv_gold_base_add')).toBe(true);
+    expect(isConverter('conv_score_gold_add')).toBe(true);
   });
 
   it('不误判产出者和普通技能', () => {
@@ -145,7 +152,7 @@ describe('getConverterK', () => {
 });
 
 describe('getSourceValue', () => {
-  const resources = { base: 15, score: 200, multiplier: 2.0, time: 40, shield: 3 };
+  const resources = { base: 15, score: 200, multiplier: 2.0, time: 40, shield: 3, gold: 15 };
 
   it('基数为源直接返回 base', () => {
     expect(getSourceValue('base', resources)).toBe(15);
@@ -168,8 +175,12 @@ describe('getSourceValue', () => {
     expect(getSourceValue('shield', resources)).toBe(3);
   });
 
+  it('金币为源直接返回 gold', () => {
+    expect(getSourceValue('gold', resources)).toBe(15);
+  });
+
   it('分数为源 mid-game: score=800 + base=15 × mult=2.0 = 830', () => {
-    const mid = { base: 15, score: 800, multiplier: 2.0, time: 40, shield: 3 };
+    const mid = { base: 15, score: 800, multiplier: 2.0, time: 40, shield: 3, gold: 15 };
     expect(getSourceValue('score', mid)).toBeCloseTo(830);
   });
 });
@@ -197,6 +208,19 @@ describe('getConverterDesc', () => {
   it('不存在的 ID 返回空字符串', () => {
     expect(getConverterDesc('nonexistent', 1)).toBe('');
   });
+
+  it('金币转化者描述含金币标签', () => {
+    const desc = getConverterDesc('conv_gold_base_add', 1);
+    expect(desc).toContain('金币');
+    expect(desc).toContain('基数');
+    expect(desc).toContain('+');
+  });
+
+  it('其他→金币转化者描述含金币标签', () => {
+    const desc = getConverterDesc('conv_score_gold_add', 1);
+    expect(desc).toContain('分数');
+    expect(desc).toContain('金币');
+  });
 });
 
 describe('drawConverterPool', () => {
@@ -219,10 +243,67 @@ describe('drawConverterPool', () => {
 
   it('自定义数量', () => {
     expect(drawConverterPool(5).length).toBe(5);
-    expect(drawConverterPool(40).length).toBe(40);
+    expect(drawConverterPool(50).length).toBe(50);
   });
 
   it('超过总数时返回全部', () => {
-    expect(drawConverterPool(100).length).toBe(40);
+    expect(drawConverterPool(100).length).toBe(50);
+  });
+});
+
+describe('金币转化者 k 值验证', () => {
+  // gold-source (8 个)
+  it('conv_gold_base_add: gold→base add k=0.4', () => {
+    expect(CONVERTERS.conv_gold_base_add.k).toBeCloseTo(0.4);
+    expect(CONVERTERS.conv_gold_base_add.source).toBe('gold');
+    expect(CONVERTERS.conv_gold_base_add.target).toBe('base');
+    expect(CONVERTERS.conv_gold_base_add.formula).toBe('add');
+  });
+
+  it('conv_gold_base_mul: gold→base multiply k=0.04', () => {
+    expect(CONVERTERS.conv_gold_base_mul.k).toBeCloseTo(0.04);
+    expect(CONVERTERS.conv_gold_base_mul.formula).toBe('multiply');
+  });
+
+  it('conv_gold_score_add: gold→score add k=1.0', () => {
+    expect(CONVERTERS.conv_gold_score_add.k).toBeCloseTo(1.0);
+    expect(CONVERTERS.conv_gold_score_add.target).toBe('score');
+  });
+
+  it('conv_gold_score_mul: gold→score multiply k=0.005', () => {
+    expect(CONVERTERS.conv_gold_score_mul.k).toBeCloseTo(0.005);
+  });
+
+  it('conv_gold_mult_add: gold→multiplier add k=0.015', () => {
+    expect(CONVERTERS.conv_gold_mult_add.k).toBeCloseTo(0.015);
+    expect(CONVERTERS.conv_gold_mult_add.target).toBe('multiplier');
+  });
+
+  it('conv_gold_mult_mul: gold→multiplier multiply k=0.008', () => {
+    expect(CONVERTERS.conv_gold_mult_mul.k).toBeCloseTo(0.008);
+  });
+
+  it('conv_gold_time_add: gold→time add k=0.13', () => {
+    expect(CONVERTERS.conv_gold_time_add.k).toBeCloseTo(0.13);
+    expect(CONVERTERS.conv_gold_time_add.target).toBe('time');
+  });
+
+  it('conv_gold_time_mul: gold→time multiply k=0.005', () => {
+    expect(CONVERTERS.conv_gold_time_mul.k).toBeCloseTo(0.005);
+  });
+
+  // other→gold (2 个)
+  it('conv_score_gold_add: score→gold add k=0.002', () => {
+    expect(CONVERTERS.conv_score_gold_add.k).toBeCloseTo(0.002);
+    expect(CONVERTERS.conv_score_gold_add.source).toBe('score');
+    expect(CONVERTERS.conv_score_gold_add.target).toBe('gold');
+    expect(CONVERTERS.conv_score_gold_add.formula).toBe('add');
+  });
+
+  it('conv_time_gold_add: time→gold add k=0.05', () => {
+    expect(CONVERTERS.conv_time_gold_add.k).toBeCloseTo(0.05);
+    expect(CONVERTERS.conv_time_gold_add.source).toBe('time');
+    expect(CONVERTERS.conv_time_gold_add.target).toBe('gold');
+    expect(CONVERTERS.conv_time_gold_add.formula).toBe('add');
   });
 });
