@@ -21,6 +21,7 @@ export class KeyVisual extends Container {
   private schoolOverlay: Graphics
   private keyLabel: Text
   private scoreLabel: Text | null = null
+  private stackLabel: Text | null = null
   private skillIcon: Sprite | null = null
   private keyName: string
 
@@ -251,6 +252,33 @@ export class KeyVisual extends Container {
    */
   getSkillSchoolColor(): number | null {
     return this.schoolColor
+  }
+
+  /**
+   * 设置增幅者叠层数显示
+   * @param count 叠层数，0 或负数时隐藏
+   */
+  setStackCount(count: number): void {
+    if (count > 0) {
+      if (!this.stackLabel) {
+        this.stackLabel = new Text({
+          text: '',
+          style: new TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 9,
+            fontWeight: 'bold',
+            fill: 0xa29bfe,
+          })
+        })
+        this.stackLabel.x = 2
+        this.stackLabel.y = 2
+        this.addChild(this.stackLabel)
+      }
+      this.stackLabel.text = `×${count}`
+      this.stackLabel.visible = true
+    } else if (this.stackLabel) {
+      this.stackLabel.visible = false
+    }
   }
 
   /**

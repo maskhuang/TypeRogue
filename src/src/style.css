@@ -11,6 +11,8 @@
   --school-chain-bg: rgba(224,86,253,0.2);
   --school-passive: #87ceeb;
   --school-passive-bg: rgba(135,206,235,0.2);
+  --school-amplifier: #7c5cbf;
+  --school-amplifier-bg: rgba(124,92,191,0.2);
 }
 
 body {
@@ -447,6 +449,7 @@ body {
 .reward-card .reward-type.school-sustain { background: var(--school-sustain-bg); color: var(--school-sustain); }
 .reward-card .reward-type.school-chain { background: var(--school-chain-bg); color: var(--school-chain); }
 .reward-card .reward-type.school-passive { background: var(--school-passive-bg); color: var(--school-passive); }
+.reward-card .reward-type.school-amplifier { background: var(--school-amplifier-bg); color: var(--school-amplifier); }
 
 /* 遗物稀有度 */
 .reward-card .reward-type.common { background: rgba(150,150,150,0.2); color: #aaa; }
@@ -602,6 +605,7 @@ body {
 .inventory-skill .inv-school.school-sustain { background: var(--school-sustain-bg); color: var(--school-sustain); }
 .inventory-skill .inv-school.school-chain { background: var(--school-chain-bg); color: var(--school-chain); }
 .inventory-skill .inv-school.school-passive { background: var(--school-passive-bg); color: var(--school-passive); }
+.inventory-skill .inv-school.school-amplifier { background: var(--school-amplifier-bg); color: var(--school-amplifier); }
 
 /* 词库面板（独立 tab） */
 #word-panel {
@@ -1492,6 +1496,7 @@ body {
 .key-slot.school-sustain { background: linear-gradient(180deg, rgba(78,205,196,0.15), rgba(78,205,196,0.05)); }
 .key-slot.school-chain { background: linear-gradient(180deg, rgba(224,86,253,0.15), rgba(224,86,253,0.05)); }
 .key-slot.school-passive { background: linear-gradient(180deg, rgba(135,206,235,0.15), rgba(135,206,235,0.05)); }
+.key-slot.school-amplifier { background: linear-gradient(180deg, rgba(124,92,191,0.15), rgba(124,92,191,0.05)); }
 
 /* 键位悬停提示 */
 .key-tooltip {
@@ -1555,6 +1560,7 @@ body {
 .key-tooltip .tooltip-skill-school.school-sustain { background: var(--school-sustain-bg); color: var(--school-sustain); }
 .key-tooltip .tooltip-skill-school.school-chain { background: var(--school-chain-bg); color: var(--school-chain); }
 .key-tooltip .tooltip-skill-school.school-passive { background: var(--school-passive-bg); color: var(--school-passive); }
+.key-tooltip .tooltip-skill-school.school-amplifier { background: var(--school-amplifier-bg); color: var(--school-amplifier); }
 
 /* ============================================ */
 /* SCORE SETTLEMENT (Balatro-style)            */

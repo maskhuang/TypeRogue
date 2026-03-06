@@ -9,6 +9,7 @@ import { getStarterWords } from './data/words';
 import { drawBossModifiers } from './data/bossModifiers';
 import { drawConverterPool } from './data/converters';
 import { drawConnectorPool } from './data/connectors';
+import { drawAmplifierPool } from './data/amplifiers';
 import { startLevel, initInput, resetLastAct } from './systems/battle';
 import { initShopEvents } from './systems/shop';
 import { shouldShowRelicPicker, showRelicPicker } from './systems/relicPicker';
@@ -53,6 +54,9 @@ function init(): void {
 
   // 抽取本局连接者池（36 个中随机 18 个）
   state.connectorPool = drawConnectorPool();
+
+  // 抽取本局增幅者池（8 个全部入池）
+  state.amplifierPool = drawAmplifierPool();
 
   // 启动游戏
   resetLastAct();

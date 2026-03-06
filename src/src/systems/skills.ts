@@ -16,6 +16,7 @@ import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
+import { eventBus } from '../core/events/EventBus';
 
 
 // === 战后统计：记录技能触发 ===
@@ -706,9 +707,15 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
   el.triggerZone.appendChild(p);
   setTimeout(() => p.remove(), 350);
 
+  // 战后统计：记录触发次数（delta=0，增幅者不产出资源）
+  recordSkillTrigger(ampId, triggerKey, 'base', 0, false);
+
   playSound('skill');
   showFeedback(`${display.icon} ×${newStacks}`, '#a29bfe');
   updateHUD();
+
+  // 通知键盘可视化更新叠层显示
+  eventBus.emit('skill:triggered', { key: triggerKey, skillId: ampId, type: 'active', amplifierStacks: newStacks });
 }
 
 // === 触发技能（管道驱动） ===

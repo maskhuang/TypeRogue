@@ -207,6 +207,9 @@ export class KeyboardVisualizer extends Container {
 
     if (keyVisual) {
       keyVisual.playTriggerAnimation()
+      if (data.amplifierStacks != null) {
+        keyVisual.setStackCount(data.amplifierStacks)
+      }
     }
   }
 
@@ -228,6 +231,23 @@ export class KeyboardVisualizer extends Container {
     this.keys.forEach((keyVisual, keyName) => {
       const data = tooltipMap.get(keyName.toLowerCase()) ?? null
       keyVisual.setTooltipData(data)
+    })
+  }
+
+  /**
+   * 同步增幅者叠层显示
+   * @param stacks 增幅者叠层 Map<ampId, stackCount>
+   * @param bindings 技能绑定 Map<keyName, skillId>
+   */
+  syncAmplifierStacks(stacks: Map<string, number>, bindings: Map<string, string>): void {
+    this.keys.forEach((keyVisual, keyName) => {
+      const skillId = bindings.get(keyName.toLowerCase()) || bindings.get(keyName)
+      if (skillId) {
+        const count = stacks.get(skillId) || 0
+        keyVisual.setStackCount(count)
+      } else {
+        keyVisual.setStackCount(0)
+      }
     })
   }
 

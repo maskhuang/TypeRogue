@@ -14,6 +14,8 @@ export interface KeyTooltipData {
     level: number
     school: string
     schoolCssClass: string
+    amplifierStacks?: number
+    affectedSkills?: string[]
   }
 }
 
@@ -72,6 +74,12 @@ class KeyTooltipManager {
       html += `<div class="tooltip-skill">`
       html += `<div class="tooltip-skill-name">${esc(data.skill.icon)} ${esc(data.skill.name)} Lv.${data.skill.level}</div>`
       html += `<div class="tooltip-skill-desc">${esc(data.skill.description)}</div>`
+      if (data.skill.amplifierStacks != null) {
+        html += `<div class="tooltip-amp-stacks" style="color:#a29bfe;margin-top:3px;">叠层: ×${data.skill.amplifierStacks}</div>`
+      }
+      if (data.skill.affectedSkills && data.skill.affectedSkills.length > 0) {
+        html += `<div class="tooltip-amp-affects" style="color:#888;font-size:10px;margin-top:2px;">增幅范围: ${data.skill.affectedSkills.map(s => esc(s)).join(', ')}</div>`
+      }
       html += `<span class="tooltip-skill-school ${esc(data.skill.schoolCssClass)}">${esc(data.skill.school)}</span>`
       html += `</div>`
     }
