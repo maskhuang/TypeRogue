@@ -547,8 +547,8 @@ function checkAutoEnchantment(skillId: string): void {
   const data = state.player.skills.get(skillId);
   if (!data || data.level < 3) return;
 
-  // 产出者/转化者走附魔系统
-  if (isProducer(skillId) || isConverter(skillId)) {
+  // 产出者/转化者/增幅者走附魔系统
+  if (isProducer(skillId) || isConverter(skillId) || isAmplifier(skillId)) {
     if (state.player.enchantedSkills.has(skillId)) return;
     renderEnchantmentModal(skillId);
   }
@@ -558,7 +558,7 @@ function checkAutoEnchantment(skillId: string): void {
 function checkPendingEnchantments(): void {
   const pending: string[] = [];
   for (const [skillId, data] of state.player.skills) {
-    if (data.level >= 3 && (isProducer(skillId) || isConverter(skillId)) && !state.player.enchantedSkills.has(skillId)) {
+    if (data.level >= 3 && (isProducer(skillId) || isConverter(skillId) || isAmplifier(skillId)) && !state.player.enchantedSkills.has(skillId)) {
       pending.push(skillId);
     }
   }

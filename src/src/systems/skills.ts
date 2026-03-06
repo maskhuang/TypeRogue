@@ -102,7 +102,8 @@ function getIndependentMultiplier(ench: typeof ENCHANTMENTS[string], skillId: st
       // 对应资源越低越强：×(1 + 2 × (1 - ratio))，0% 时 ×3
       const prod = PRODUCERS[skillId];
       const conv = CONVERTERS[skillId];
-      const resType = prod?.resource || conv?.target;
+      const amp = AMPLIFIERS[skillId];
+      const resType = prod?.resource || conv?.target || amp?.resource;
       if (!resType) return 1;
       // 计算资源比例
       let ratio = 1;
@@ -169,16 +170,32 @@ export function getAmplifierBonus(
   for (const [ampKey, boundId] of state.player.bindings) {
     if (!isAmplifier(boundId)) continue;
     const amp = AMPLIFIERS[boundId];
-    if (!amp || amp.resource !== targetResource) continue;
+    if (!amp) continue;
     if (!hasRelation(triggerKey, ampKey, amp.positionRelation)) continue;
     const stacks = state.amplifierStacks.get(boundId) || 0;
     if (stacks === 0) continue;
     const level = state.player.skills.get(boundId)?.level || 1;
     const valuePerStack = getAmplifierValue(boundId, level);
-    if (amp.operator === 'add') {
-      addBonus += stacks * valuePerStack;
+
+    // 资源匹配：主资源 OR 变性附魔的 extraResource
+    let efficiency = 0;
+    if (amp.resource === targetResource) {
+      efficiency = 1; // 主资源：100% 效率
     } else {
-      mulBonus *= (1 + stacks * valuePerStack);
+      const enchId = state.player.enchantedSkills?.get(boundId);
+      if (enchId) {
+        const ench = ENCHANTMENTS[enchId];
+        if (ench?.category === 'transmutation' && ench.extraResource === targetResource) {
+          efficiency = ench.effectValue; // 如 0.3 = 30% 效率
+        }
+      }
+    }
+    if (efficiency === 0) continue;
+
+    if (amp.operator === 'add') {
+      addBonus += stacks * valuePerStack * efficiency;
+    } else {
+      mulBonus *= (1 + stacks * valuePerStack * efficiency);
     }
   }
   return { addBonus, mulBonus };
@@ -372,7 +389,7 @@ function applySplashEnchantment(skillId: string, triggerKey?: string): void {
   _splashActive = true;
   for (const key of related) {
     const sid = state.player.bindings.get(key);
-    if (!sid || isConnector(sid)) continue;
+    if (!sid || isConnector(sid) || isAmplifier(sid)) continue;
     // 以减效触发目标技能
     if (isProducer(sid)) {
       triggerProducerWithReduction(sid, key, ench.effectValue);
@@ -530,10 +547,25 @@ export function checkResonanceTriggers(sourceKey: string): void {
       triggerProducerWithReduction(sid, enchKey, ench.effectValue);
     } else if (isConverter(sid)) {
       triggerConverterWithReduction(sid, enchKey, ench.effectValue);
+    } else if (isAmplifier(sid)) {
+      triggerAmplifierResonance(sid, enchKey);
     }
   }
 
   _resonanceActive = false;
+}
+
+// === 附魔：共鸣触发增幅者叠层（静默版，无弹窗/音效） ===
+function triggerAmplifierResonance(ampId: string, key: string): void {
+  const amp = AMPLIFIERS[ampId];
+  if (!amp) return;
+  const current = state.amplifierStacks.get(ampId) || 0;
+  const newStacks = current + 1; // 共鸣固定 +1，不受 enchMult 影响
+  state.amplifierStacks.set(ampId, newStacks);
+  recordSkillTrigger(ampId, key, 'base', 0, false);
+  showFeedback(`${amp.icon || ''} ×${newStacks} (共鸣)`, '#a29bfe');
+  updateHUD();
+  eventBus.emit('skill:triggered', { key, skillId: ampId, type: 'active', amplifierStacks: newStacks });
 }
 
 // === 附魔后处理：溅射 + 变性 ===
@@ -689,10 +721,16 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
   const amp = AMPLIFIERS[ampId];
   if (!amp) return;
 
-  // 叠层 +1
+  // 附魔倍率 → 叠层增量
+  const enchMult = getEnchantmentMultiplier(ampId, triggerKey);
+  const stackGain = Math.max(1, Math.ceil(1 * enchMult)); // 至少+1层
+
   const current = state.amplifierStacks.get(ampId) || 0;
-  const newStacks = current + 1;
+  const newStacks = current + stackGain;
   state.amplifierStacks.set(ampId, newStacks);
+
+  // ench_decay counter（先读倍率，再推进计数器）
+  advanceDecayCounter(ampId);
 
   // 统计
   synergy.wordSkillCount++;
@@ -711,8 +749,15 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
   recordSkillTrigger(ampId, triggerKey, 'base', 0, false);
 
   playSound('skill');
-  showFeedback(`${display.icon} ×${newStacks}`, '#a29bfe');
+  showFeedback(`${display.icon} ×${newStacks}${stackGain > 1 ? ` (+${stackGain})` : ''}`, '#a29bfe');
+  if (enchMult > 1) {
+    const enchId = state.player.enchantedSkills?.get(ampId) || '';
+    showFeedback(`${ENCHANTMENTS[enchId]?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
+  }
   updateHUD();
+
+  // 溅射：触发范围内技能
+  applySplashEnchantment(ampId, triggerKey);
 
   // 通知键盘可视化更新叠层显示
   eventBus.emit('skill:triggered', { key: triggerKey, skillId: ampId, type: 'active', amplifierStacks: newStacks });
