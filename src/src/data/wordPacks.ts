@@ -4,6 +4,7 @@
 
 import { WORD_POOL } from './words';
 import type { PackCondition, WordPack } from '../core/types';
+import { random } from '../core/seededRandom';
 
 // === 全量词汇缓存（惰性初始化） ===
 let _allWords: string[] | null = null;
@@ -241,7 +242,7 @@ export function calculatePackCost(condition: PackCondition, words: string[]): nu
 function shuffleArray<T>(arr: T[]): T[] {
   const result = [...arr];
   for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
@@ -300,7 +301,7 @@ export function generateWordPacks(
   while (packs.length < count && pool.length > 0) {
     // 加权随机选取
     const totalWeight = pool.reduce((sum, p) => sum + p.weight, 0);
-    let roll = Math.random() * totalWeight;
+    let roll = random() * totalWeight;
     let pickedIndex = pool.length - 1;
     for (let i = 0; i < pool.length; i++) {
       roll -= pool[i].weight;

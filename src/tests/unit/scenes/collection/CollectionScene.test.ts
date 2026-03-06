@@ -93,9 +93,9 @@ describe('CollectionScene', () => {
   // ===========================================
 
   describe('TabBar 切换 (Task 2)', () => {
-    it('应该有三个标签页', () => {
+    it('应该有四个标签页', () => {
       scene.onEnter()
-      expect(scene.getTabCount()).toBe(3)
+      expect(scene.getTabCount()).toBe(4)
     })
 
     it('初始应该显示技能标签页', () => {
@@ -120,14 +120,15 @@ describe('CollectionScene', () => {
       scene.onEnter()
       scene.switchTab(1) // 1
       scene.switchTab(1) // 2
+      scene.switchTab(1) // 3
       scene.switchTab(1) // 回到 0
       expect(scene.getCurrentTabIndex()).toBe(0)
     })
 
     it('在第一个标签页向左切换应该循环到最后一个', () => {
       scene.onEnter()
-      scene.switchTab(-1) // 回到 2
-      expect(scene.getCurrentTabIndex()).toBe(2)
+      scene.switchTab(-1) // 回到 3
+      expect(scene.getCurrentTabIndex()).toBe(3)
     })
   })
 

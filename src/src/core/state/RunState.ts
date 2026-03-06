@@ -88,6 +88,12 @@ export interface RunStateData {
 
   /** 吞噬附魔获得的图标（skillId → 图标列表），跨关保持，新 Run 重置 */
   devourIcons: Map<string, string[]>
+
+  /** 当前周目数（默认 1，通关 Boss 后 +1） */
+  cycle: number
+
+  /** 跨周目累积的 Boss 修饰器列表 */
+  activeModifiers: string[]
 }
 
 /**
@@ -131,6 +137,8 @@ export class RunState {
       growthValues: new Map(),
       masteryCounters: new Map(),
       devourIcons: new Map(),
+      cycle: 1,
+      activeModifiers: [],
     }
   }
 
@@ -456,6 +464,8 @@ export class RunState {
       growthValues: Object.fromEntries(this.data.growthValues),
       masteryCounters: Object.fromEntries(this.data.masteryCounters),
       devourIcons: Object.fromEntries(this.data.devourIcons),
+      cycle: this.data.cycle,
+      activeModifiers: [...this.data.activeModifiers],
     }
   }
 
@@ -524,6 +534,10 @@ export class RunState {
     Object.entries(devourEntries).forEach(([skillId, icons]) => {
       runState.data.devourIcons.set(skillId, icons as string[])
     })
+
+    // 恢复周目数和活跃修饰器（兼容旧存档）
+    runState.data.cycle = (parsed as any).cycle || 1
+    runState.data.activeModifiers = (parsed as any).activeModifiers || []
 
     return runState
   }

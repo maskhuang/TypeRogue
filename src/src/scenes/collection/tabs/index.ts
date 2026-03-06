@@ -6,3 +6,4 @@
 export { SkillTab } from './SkillTab'
 export { RelicTab } from './RelicTab'
 export { StatsTab } from './StatsTab'
+export { LeaderboardTab } from './LeaderboardTab'

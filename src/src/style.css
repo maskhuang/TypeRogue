@@ -718,6 +718,23 @@ body {
 #gameover-stats { color: #888; font-size: 14px; line-height: 2; margin-bottom: 30px; }
 .restart-btn { padding: 12px 30px; font-size: 14px; font-family: inherit; background: transparent; border: 2px solid #4ecdc4; border-radius: 6px; color: #4ecdc4; cursor: pointer; transition: all 0.2s; }
 .restart-btn:hover { background: #4ecdc4; color: #0a0a0f; }
+.daily-btn { border-color: #ffe66d; color: #ffe66d; margin-left: 8px; }
+.daily-btn:hover { background: #ffe66d; color: #0a0a0f; }
+
+/* LEADERBOARD (Story 25.5) */
+.gameover-leaderboard { margin: 16px 0; max-height: 280px; overflow-y: auto; }
+.lb-title { font-size: 16px; color: #4ecdc4; margin-bottom: 8px; font-weight: bold; }
+.lb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.lb-table th { color: #666; font-weight: normal; padding: 4px 8px; text-align: left; border-bottom: 1px solid #333; }
+.lb-table td { padding: 4px 8px; color: #aaa; }
+.lb-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.lb-victory td:nth-child(4) { color: #ffe66d; font-weight: bold; }
+.lb-defeat td:nth-child(4) { color: #ff6b6b; }
+.lb-latest { background: rgba(78,205,196,0.1) !important; }
+.lb-latest td { color: #eee; }
+.lb-detail td { padding: 2px 8px; font-size: 11px; color: #666; }
+.lb-detail-label { color: #4ecdc4; }
+.lb-daily-title { color: #ffe66d; margin-top: 12px; }
 
 /* ============================================ */
 /* BALATRO-STYLE JUICE ANIMATIONS               */
@@ -2187,6 +2204,114 @@ body {
 .relic-picker-skip:hover {
     border-color: #888;
     color: #fff;
+}
+
+/* ============================================ */
+/* BOSS MODIFIER PICKER MODAL                  */
+/* ============================================ */
+#modifier-picker-modal {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#modifier-picker-modal.modifier-picker-hidden {
+    display: none;
+}
+
+.modifier-picker-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.modifier-picker-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 30px;
+}
+
+.modifier-picker-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #ff6b6b;
+    margin-bottom: 16px;
+    text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+    letter-spacing: 2px;
+}
+
+.modifier-picker-active {
+    margin-bottom: 20px;
+}
+
+.modifier-picker-active-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.modifier-picker-active-list {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.modifier-picker-active-tag {
+    padding: 4px 10px;
+    background: rgba(255, 107, 107, 0.15);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 12px;
+    font-size: 11px;
+    color: #ff6b6b;
+}
+
+.modifier-picker-cards {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.modifier-picker-card {
+    background: linear-gradient(180deg, #2a1a1a, #1a1016);
+    border: 2px solid #ff6b6b44;
+    border-radius: 12px;
+    padding: 20px;
+    width: 200px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.modifier-picker-card:hover {
+    transform: translateY(-6px);
+    border-color: #ff6b6b;
+    box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
+}
+
+.modifier-picker-icon {
+    font-size: 42px;
+    margin-bottom: 10px;
+}
+
+.modifier-picker-name {
+    font-size: 15px;
+    font-weight: bold;
+    color: #ff6b6b;
+    margin-bottom: 8px;
+}
+
+.modifier-picker-desc {
+    font-size: 12px;
+    color: #aaa;
+    line-height: 1.4;
+    min-height: 36px;
 }
 
 /* ============================================ */

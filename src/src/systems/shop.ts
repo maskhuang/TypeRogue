@@ -27,6 +27,7 @@ import { calculateLetterFrequency, letterFrequencyToScore } from './letters/Lett
 import { getIconCount } from './skills';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
+import { random } from '../core/seededRandom';
 import { dragManager } from './dragManager';
 import type { DragPayload } from './dragManager';
 
@@ -96,6 +97,11 @@ export function openShop(_won: boolean): void {
   const battleGold = skillGold + relicGold;
 
   el.shopLevelNum.textContent = String(state.level);
+  // 周目≥2时在商店标题显示周目数
+  const shopTitle = document.getElementById('shop-title');
+  if (shopTitle) {
+    shopTitle.textContent = state.cycle >= 2 ? `商店 · 周目${state.cycle}` : '商店';
+  }
   el.shopScore.textContent = String(state.score);
   el.shopTarget.textContent = String(state.targetScore);
   updateGoldDisplay();
@@ -141,7 +147,7 @@ function getAdjustedPrice(baseCost: number): number {
 // === Fisher-Yates shuffle ===
 function shuffleArray<T>(arr: T[]): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
@@ -178,7 +184,7 @@ function generateShopItems(count: number): ShopItem[] {
     // 加权抽取新技能（严格执行 0% 权重 = 绝不出现）
     function weightedPick(): string | null {
       const total = weights.producer + weights.converter + weights.connector + weights.amplifier;
-      const roll = Math.random() * total;
+      const roll = random() * total;
       if (roll < weights.producer && producerBucket.length > 0) return producerBucket.shift()!;
       if (roll < weights.producer + weights.converter && converterBucket.length > 0) return converterBucket.shift()!;
       if (roll < weights.producer + weights.converter + weights.connector && connectorBucket.length > 0) return connectorBucket.shift()!;
@@ -200,7 +206,7 @@ function generateShopItems(count: number): ShopItem[] {
         id: `si-${nextId++}`,
         type: 'skill',
         skillId,
-        cost: getAdjustedPrice(15 + Math.floor(Math.random() * 15)),
+        cost: getAdjustedPrice(15 + Math.floor(random() * 15)),
         isUpgrade: false,
         locked: false,
       });
@@ -216,12 +222,12 @@ function generateShopItems(count: number): ShopItem[] {
       if (!hasGold) {
         const goldCandidates = unowned.filter(id => isGoldSkill(id));
         if (goldCandidates.length > 0) {
-          const goldId = goldCandidates[Math.floor(Math.random() * goldCandidates.length)];
+          const goldId = goldCandidates[Math.floor(random() * goldCandidates.length)];
           skillPool[skillPool.length - 1] = {
             id: `si-${nextId++}`,
             type: 'skill',
             skillId: goldId,
-            cost: getAdjustedPrice(15 + Math.floor(Math.random() * 15)),
+            cost: getAdjustedPrice(15 + Math.floor(random() * 15)),
             isUpgrade: false,
             locked: false,
           };

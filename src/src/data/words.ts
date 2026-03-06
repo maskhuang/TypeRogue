@@ -3,6 +3,7 @@
 // ============================================
 
 import type { WordPool } from '../core/types';
+import { random } from '../core/seededRandom';
 
 export const WORD_POOL: Record<string, WordPool> = {
 
@@ -501,7 +502,7 @@ export function getStarterWords(): string[] {
     }
   }
   for (let i = candidates.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
   }
   return candidates.slice(0, 10);

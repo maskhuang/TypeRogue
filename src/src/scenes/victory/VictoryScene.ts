@@ -18,6 +18,10 @@ export interface VictoryData {
   perfectWords: number
   skills: string[]
   relics: string[]
+  cycle?: number                                                // Story 25.5
+  skillLevels?: { id: string; level: number }[]                 // Story 25.5
+  enchantments?: { skillId: string; enchantmentId: string }[]   // Story 25.5
+  activeModifiers?: string[]                                    // Story 25.5
 }
 
 /**
@@ -89,7 +93,11 @@ export class VictoryScene extends BaseScene {
         perfectWords: this.data.perfectWords,
         skills: this.data.skills,
         relics: this.data.relics
-      }
+      },
+      cycle: this.data.cycle,
+      skillLevels: this.data.skillLevels,
+      enchantments: this.data.enchantments,
+      activeModifiers: this.data.activeModifiers,
     })
   }
 

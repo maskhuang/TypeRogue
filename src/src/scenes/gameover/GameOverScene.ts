@@ -16,6 +16,10 @@ export interface GameOverData {
   targetScore: number
   skills: string[]
   relics: string[]
+  cycle?: number                                                // Story 25.5
+  skillLevels?: { id: string; level: number }[]                 // Story 25.5
+  enchantments?: { skillId: string; enchantmentId: string }[]   // Story 25.5
+  activeModifiers?: string[]                                    // Story 25.5
 }
 
 /**
@@ -83,7 +87,11 @@ export class GameOverScene extends BaseScene {
         maxCombo: 0, // GameOver 场景不跟踪连击
         skills: this.data.skills,
         relics: this.data.relics
-      }
+      },
+      cycle: this.data.cycle,
+      skillLevels: this.data.skillLevels,
+      enchantments: this.data.enchantments,
+      activeModifiers: this.data.activeModifiers,
     })
   }
 

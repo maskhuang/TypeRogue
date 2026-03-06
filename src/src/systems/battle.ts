@@ -18,11 +18,13 @@ import { getLetterScoreModifiers, calculateLetterFrequency } from './letters/Let
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
-import { getStageType, getTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode } from './stage/stageFlow';
-import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, isRhythmLocked } from '../data/bossModifiers';
+import { getStageType, getCycleTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode } from './stage/stageFlow';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, isRhythmLocked, drawBossModifiers } from '../data/bossModifiers';
 import type { BossModifierMeta } from '../data/bossModifiers';
-import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation } from './bossModifierEngine';
+import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation, isModifierActive } from './bossModifierEngine';
+import { showBossModifierPicker } from './bossModifierPicker';
 import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
+import { random, setNormalMode } from '../core/seededRandom';
 
 /** 获取当前精英关的修饰器元数据（非精英关返回 undefined） */
 function getCurrentEliteModifierMeta(): BossModifierMeta | undefined {
@@ -37,6 +39,22 @@ let lastAct = 0;
 
 /** 重置 Act 过渡追踪（新游戏时调用） */
 export function resetLastAct(): void { lastAct = 0; }
+
+/**
+ * Boss 胜利后的周目推进状态变更（提取为独立函数以便测试）
+ * - cycle++, level=1
+ * - 清除 tempBuffs/sealedKeys
+ * - 重置 Act 过渡状态
+ * - 重抽 bossModifierPool
+ */
+export function advanceCycle(): void {
+  state.cycle++;
+  state.level = 1;
+  resetLastAct();
+  state.tempBuffs = [];
+  state.sealedKeys = [];
+  state.bossModifierPool = drawBossModifiers(3);
+}
 
 // === 计时器 ===
 let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -65,26 +83,26 @@ function pickWord(): string {
   const bound = [...state.player.bindings.keys()];
 
   // 有绑定技能的字母时，偏向选择包含它们的词
-  if (bound.length && Math.random() < 0.6) {
+  if (bound.length && random() < 0.6) {
     const good = words.filter(w => bound.some(l => w.includes(l)));
-    if (good.length) return good[Math.floor(Math.random() * good.length)].toUpperCase();
+    if (good.length) return good[Math.floor(random() * good.length)].toUpperCase();
   }
 
   // 偏向选择包含已解锁字母（频率≥5）的词，减少无底分字母出现
   const freq = calculateLetterFrequency(state.player.wordDeck);
   const unlocked = new Set<string>();
   freq.forEach((count, letter) => { if (count >= 5) unlocked.add(letter); });
-  if (unlocked.size > 0 && Math.random() < 0.7) {
+  if (unlocked.size > 0 && random() < 0.7) {
     // 按词中已解锁字母占比排序，取前半优选
     const scored = words.map(w => {
       const chars = [...w.toLowerCase()].filter(c => c >= 'a' && c <= 'z');
       const ratio = chars.length ? chars.filter(c => unlocked.has(c)).length / chars.length : 0;
       return { w, ratio };
     }).filter(x => x.ratio > 0.5);
-    if (scored.length) return scored[Math.floor(Math.random() * scored.length)].w.toUpperCase();
+    if (scored.length) return scored[Math.floor(random() * scored.length)].w.toUpperCase();
   }
 
-  return words[Math.floor(Math.random() * words.length)].toUpperCase();
+  return words[Math.floor(random() * words.length)].toUpperCase();
 }
 
 function setWord(): void {
@@ -587,8 +605,9 @@ function endLevel(): void {
     const currentType = getStageType(state.level);
 
     if (currentType === 'boss') {
-      // Boss 关胜利 → 直接胜利（无商店）
-      victory();
+      // Boss 关胜利 → 周目推进 + 修饰器选择 + 进商店
+      advanceCycle();
+      showBossModifierPicker(() => openShop(true));
       return;
     }
 
@@ -650,8 +669,8 @@ export async function startLevel(): Promise<void> {
 
   // 使用 stageType-based 固定时间和目标分数
   const battleNum = getBattleNumber(state.level);
-  state.timeMax = getTimeLimit(state.level);
-  state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
+  state.timeMax = getCycleTimeLimit(state.level, state.cycle);
+  state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType, state.cycle);
 
   // 应用活跃临时 buff
   for (const buff of state.tempBuffs) {
@@ -697,13 +716,19 @@ export async function startLevel(): Promise<void> {
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;
   const stageLabel = currentStageType === 'elite' ? ' [ELITE]' : currentStageType === 'boss' ? ' [BOSS]' : '';
-  el.levelLabel.textContent = `LEVEL ${displayLevel}${stageLabel}`;
+  const cyclePrefix = state.cycle >= 2 ? `周目${state.cycle} · ` : '';
+  el.levelLabel.textContent = `${cyclePrefix}LEVEL ${displayLevel}${stageLabel}`;
 
   // HUD: 显示当前 Act / StageType
   updateStageInfo(currentAct, currentStageType);
 
   // Task 2.3: 精英关金色边框样式
   el.battleScreen.classList.toggle('elite-stage', currentStageType === 'elite');
+
+  // 应用跨周目永久修饰器（state.activeModifiers）
+  for (const permModId of state.activeModifiers) {
+    applyModifier(permModId, false, true);
+  }
 
   // Task 3.3-3.4: 修饰器 HUD 显示/隐藏
   const modInfo = el.modifierInfo;
@@ -717,10 +742,12 @@ export async function startLevel(): Promise<void> {
     } else {
       modInfo.classList.remove('visible');
     }
-    // 应用减弱版修饰器（精英关）
+    // 应用减弱版修饰器（精英关）— 跳过已在永久修饰器中的
     const modIdx = getEliteModifierIndex(state.level);
     const modId = state.bossModifierPool[modIdx];
-    if (modId) applyModifier(modId, true);
+    if (modId && !isModifierActive(modId)) {
+      applyModifier(modId, true);
+    }
   } else if (currentStageType === 'boss') {
     // Boss 关：启动 3 阶段轮换引擎
     startBossRotation();
@@ -781,7 +808,8 @@ function announceLevel(): void {
     typeLabel = '<br><span class="boss-hint">BOSS 战</span>';
   }
 
-  ann.innerHTML = `LEVEL ${displayLevel}${typeLabel}<br><span class="target-hint">目标: ${state.targetScore}分</span>`;
+  const cyclePfx = state.cycle >= 2 ? `周目${state.cycle} · ` : '';
+  ann.innerHTML = `${cyclePfx}LEVEL ${displayLevel}${typeLabel}<br><span class="target-hint">目标: ${state.targetScore}分</span>`;
   el.container.appendChild(ann);
   playSound('levelup');
   setTimeout(() => ann.remove(), 1500);
@@ -804,6 +832,26 @@ function victory(): void {
   `;
   showScreen('gameover');
   playSound('levelup');
+
+  // Story 25.6: 恢复普通随机模式
+  setNormalMode();
+
+  // Story 25.5: 记录排行榜
+  eventBus.emit('meta:check_unlocks', {
+    runResult: 'victory',
+    runStats: {
+      totalScore: state.score,
+      stagesCleared: state.level,
+      maxCombo: state.maxCombo,
+      skills: Array.from(state.player.skills.keys()),
+      relics: state.player.relics,
+    },
+    cycle: state.cycle,
+    skillLevels: Array.from(state.player.skills.entries()).map(([id, s]) => ({ id, level: s.level })),
+    enchantments: Array.from(state.player.enchantedSkills.entries()).map(([skillId, enchantmentId]) => ({ skillId, enchantmentId })),
+    activeModifiers: [...state.activeModifiers],
+    seed: state.dailySeed,
+  });
 }
 
 // === 游戏结束 ===
@@ -825,6 +873,26 @@ function gameOver(): void {
   `;
   showScreen('gameover');
   playSound('gameover');
+
+  // Story 25.6: 恢复普通随机模式
+  setNormalMode();
+
+  // Story 25.5: 记录排行榜
+  eventBus.emit('meta:check_unlocks', {
+    runResult: 'gameover',
+    runStats: {
+      totalScore: state.score,
+      stagesCleared: state.level - 1,
+      maxCombo: state.maxCombo,
+      skills: Array.from(state.player.skills.keys()),
+      relics: state.player.relics,
+    },
+    cycle: state.cycle,
+    skillLevels: Array.from(state.player.skills.entries()).map(([id, s]) => ({ id, level: s.level })),
+    enchantments: Array.from(state.player.enchantedSkills.entries()).map(([skillId, enchantmentId]) => ({ skillId, enchantmentId })),
+    activeModifiers: [...state.activeModifiers],
+    seed: state.dailySeed,
+  });
 }
 
 // === UI 更新 ===

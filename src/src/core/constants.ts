@@ -66,6 +66,10 @@ export const BALANCE = {
   // 震动强度阈值
   SHAKE_MID_THRESHOLD: 10,
   SHAKE_HIGH_THRESHOLD: 20,
+
+  // 周目难度缩放
+  CYCLE_SCORE_BASE: 2,      // 目标分数指数底数（每周目翻倍）
+  CYCLE_TIME_DECAY: 0.9,    // 时间衰减系数（每周目 ×0.9）
 };
 
 // === 资源标签 ===

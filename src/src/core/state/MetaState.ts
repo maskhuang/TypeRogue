@@ -3,6 +3,7 @@
 // ============================================
 // Story 6.1: Meta 状态管理
 // Story 6.3: 解锁系统集成
+// Story 25.5: 排行榜系统
 
 import { eventBus } from '../events/EventBus'
 import type { UnlockSystem } from '../unlock/UnlockSystem'
@@ -34,6 +35,33 @@ export interface AchievementProgress {
 }
 
 /**
+ * Build 摘要（排行榜记录中的构筑信息）
+ * Story 25.5: AC1
+ */
+export interface BuildSummary {
+  skills: { id: string; level: number }[]
+  enchantments: { skillId: string; enchantmentId: string }[]
+  relics: string[]
+  activeModifiers: string[]
+}
+
+/**
+ * 排行榜记录
+ * Story 25.5: AC1
+ */
+export interface LeaderboardEntry {
+  cycle: number                        // 最终周目数
+  score: number                        // Run 总分数
+  date: string                         // ISO 日期字符串
+  result: 'victory' | 'gameover'       // 结果类型
+  buildSummary: BuildSummary           // 构筑摘要
+  seed?: number                        // Story 25.6: 每日挑战种子（仅 daily 模式）
+}
+
+/** 排行榜最大记录数 */
+const LEADERBOARD_MAX_ENTRIES = 20
+
+/**
  * Run 结果数据（来自 meta:check_unlocks 事件）
  */
 export interface RunResultData {
@@ -49,6 +77,13 @@ export interface RunResultData {
     skills: string[]
     relics: string[]
   }
+  /** Story 25.5: 排行榜所需的扩展字段 */
+  cycle?: number
+  skillLevels?: { id: string; level: number }[]
+  enchantments?: { skillId: string; enchantmentId: string }[]
+  activeModifiers?: string[]
+  /** Story 25.6: 每日挑战种子 */
+  seed?: number | null
 }
 
 /**
@@ -87,6 +122,8 @@ export class MetaState {
   private unlockedRelics: Set<string>
   private achievements: Map<string, AchievementProgress>
   private stats: MetaStats
+  private leaderboard: LeaderboardEntry[]  // Story 25.5
+  private dailyLeaderboard: LeaderboardEntry[]  // Story 25.6
   private eventUnsubscriber: (() => void) | null = null
   private unlockSystem: UnlockSystem | null = null  // Story 6.3: 解锁系统实例
 
@@ -96,6 +133,8 @@ export class MetaState {
     this.unlockedRelics = new Set(DEFAULT_UNLOCKED_RELICS)
     this.achievements = new Map()
     this.stats = this.createDefaultStats()
+    this.leaderboard = []
+    this.dailyLeaderboard = []
 
     // 监听 meta:check_unlocks 事件 (AC: #12)
     this.setupEventListeners()
@@ -263,7 +302,10 @@ export class MetaState {
     // 1. 更新统计数据
     this.updateStats(data)
 
-    // 2. 检查解锁条件 (Story 6.3)
+    // 2. 记录排行榜 (Story 25.5)
+    this.recordLeaderboardEntry(data)
+
+    // 3. 检查解锁条件 (Story 6.3)
     if (this.unlockSystem) {
       const newUnlocks = this.unlockSystem.checkUnlocks(data)
       if (newUnlocks.length > 0) {
@@ -275,11 +317,94 @@ export class MetaState {
       }
     }
 
-    // 3. 发送统计更新事件
+    // 4. 发送统计更新事件
     eventBus.emit('meta:stats_updated', { stats: this.getStats() })
 
-    // 4. 触发自动保存 (Story 6.3: AC #10)
+    // 5. 触发自动保存 (Story 6.3: AC #10)
     eventBus.emit('meta:request_save', {})
+  }
+
+  /**
+   * 从 RunResultData 构建并记录排行榜条目
+   * Story 25.5: AC4
+   */
+  private recordLeaderboardEntry(data: RunResultData): void {
+    const entry: LeaderboardEntry = {
+      cycle: data.cycle ?? 1,
+      score: data.runStats.totalScore,
+      date: new Date().toISOString(),
+      result: data.runResult,
+      buildSummary: {
+        skills: data.skillLevels ?? data.runStats.skills.map(id => ({ id, level: 1 })),
+        enchantments: data.enchantments ?? [],
+        relics: [...data.runStats.relics],
+        activeModifiers: data.activeModifiers ?? [],
+      },
+    }
+    // Story 25.6: 根据种子字段分流到普通/每日排行榜
+    if (data.seed != null) {
+      entry.seed = data.seed
+      this.addDailyLeaderboardEntry(entry)
+    } else {
+      this.addLeaderboardEntry(entry)
+    }
+  }
+
+  // ===========================================
+  // 排行榜方法 (Story 25.5)
+  // ===========================================
+
+  /**
+   * 添加排行榜记录
+   * 插入后按 cycle 降序 → score 降序 → date 降序 排序，截断至 20 条
+   */
+  addLeaderboardEntry(entry: LeaderboardEntry): void {
+    this.leaderboard.push(entry)
+    this.leaderboard.sort(compareLeaderboardEntries)
+    if (this.leaderboard.length > LEADERBOARD_MAX_ENTRIES) {
+      this.leaderboard.length = LEADERBOARD_MAX_ENTRIES
+    }
+  }
+
+  /**
+   * 添加每日排行榜记录
+   */
+  addDailyLeaderboardEntry(entry: LeaderboardEntry): void {
+    this.dailyLeaderboard.push(entry)
+    this.dailyLeaderboard.sort(compareLeaderboardEntries)
+    if (this.dailyLeaderboard.length > LEADERBOARD_MAX_ENTRIES) {
+      this.dailyLeaderboard.length = LEADERBOARD_MAX_ENTRIES
+    }
+  }
+
+  /**
+   * 获取每日排行榜副本
+   */
+  getDailyLeaderboard(): LeaderboardEntry[] {
+    return this.dailyLeaderboard.map(e => ({
+      ...e,
+      buildSummary: {
+        skills: e.buildSummary.skills.map(s => ({ ...s })),
+        enchantments: e.buildSummary.enchantments.map(en => ({ ...en })),
+        relics: [...e.buildSummary.relics],
+        activeModifiers: [...e.buildSummary.activeModifiers],
+      },
+    }))
+  }
+
+  /**
+   * 获取排行榜副本
+   */
+  getLeaderboard(): LeaderboardEntry[] {
+    return this.leaderboard.map(e => ({
+      ...e,
+      buildSummary: {
+        skills: e.buildSummary.skills.map(s => ({ ...s })),
+        enchantments: e.buildSummary.enchantments.map(en => ({ ...en })),
+        relics: [...e.buildSummary.relics],
+        activeModifiers: [...e.buildSummary.activeModifiers],
+      },
+    }))
   }
 
   // ===========================================
@@ -291,11 +416,13 @@ export class MetaState {
    */
   serialize(): string {
     const data = {
-      version: 1,  // 存档版本号，便于后续迁移
+      version: 3,  // v3: 新增 dailyLeaderboard
       unlockedSkills: Array.from(this.unlockedSkills),
       unlockedRelics: Array.from(this.unlockedRelics),
       achievements: Array.from(this.achievements.entries()),
       stats: this.stats,
+      leaderboard: this.leaderboard,
+      dailyLeaderboard: this.dailyLeaderboard,
     }
     return JSON.stringify(data)
   }
@@ -307,8 +434,8 @@ export class MetaState {
     try {
       const data = JSON.parse(json)
 
-      // 版本检查（预留迁移逻辑）
-      if (data.version !== undefined && data.version !== 1) {
+      // 版本检查（v1/v2/v3 均可加载）
+      if (data.version !== undefined && data.version !== 1 && data.version !== 2 && data.version !== 3) {
         console.warn(`MetaState: Unknown save version ${data.version}, attempting to load anyway`)
       }
 
@@ -316,6 +443,8 @@ export class MetaState {
       this.unlockedRelics = new Set(data.unlockedRelics || DEFAULT_UNLOCKED_RELICS)
       this.achievements = new Map(data.achievements || [])
       this.stats = { ...this.createDefaultStats(), ...data.stats }
+      this.leaderboard = data.leaderboard || []
+      this.dailyLeaderboard = data.dailyLeaderboard || []
     } catch (error) {
       console.error('MetaState: Failed to deserialize save data', error)
       // 保持当前状态不变
@@ -330,6 +459,8 @@ export class MetaState {
     this.unlockedRelics = new Set(DEFAULT_UNLOCKED_RELICS)
     this.achievements = new Map()
     this.stats = this.createDefaultStats()
+    this.leaderboard = []
+    this.dailyLeaderboard = []
   }
 
   // ===========================================
@@ -399,4 +530,14 @@ export class MetaState {
       this.eventUnsubscriber = null
     }
   }
+}
+
+/**
+ * 排行榜排序比较函数
+ * cycle 降序 → score 降序 → date 降序
+ */
+function compareLeaderboardEntries(a: LeaderboardEntry, b: LeaderboardEntry): number {
+  if (b.cycle !== a.cycle) return b.cycle - a.cycle
+  if (b.score !== a.score) return b.score - a.score
+  return b.date.localeCompare(a.date)
 }

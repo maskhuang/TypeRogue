@@ -2,11 +2,13 @@
 // 打字肉鸽 - Boss 修饰器引擎
 // ============================================
 // Story 18.4: 修饰器生命周期管理 + Boss 关轮换引擎
+// Story 25.3: 多修饰器同时激活（跨周目叠加 + 精英/Boss 共存）
 
 import { state } from '../core/state'
 import {
   BOSS_MODIFIER_REGISTRY,
   setActiveParams,
+  getActiveParams,
   getBossModifierMeta,
 } from '../data/bossModifiers'
 import type {
@@ -15,9 +17,18 @@ import type {
   BossModifierParams,
 } from '../data/bossModifiers'
 
-// === 活跃修饰器状态 ===
+// === 修饰器实例 ===
 
-let activeModifier: { modifier: BossModifier; params: BossModifierParams } | null = null
+interface ModifierInstance {
+  modId: BossModifierId
+  modifier: BossModifier
+  params: BossModifierParams
+  isPermanent: boolean // true = 来自 state.activeModifiers（跨周目永久），false = 精英/Boss 轮换临时
+}
+
+// === 活跃修饰器状态（支持多个同时激活） ===
+
+let activeModifierInstances: ModifierInstance[] = []
 
 // === Boss 轮换状态 ===
 
@@ -27,30 +38,59 @@ let isRotating = false
 
 // === 修饰器生命周期 ===
 
-/** 应用修饰器（精英关或 Boss 关单阶段使用） */
-export function applyModifier(modId: BossModifierId, isElite: boolean): void {
-  cleanupModifier()
+/** 重新计算合并参数并写入 activeParams */
+function rebuildActiveParams(): void {
+  if (activeModifierInstances.length === 0) {
+    setActiveParams(null)
+    return
+  }
+  // 每个修饰器类型的参数键天然不重叠（候选排除保证不重复），直接 Object.assign
+  const merged: BossModifierParams = {}
+  for (const inst of activeModifierInstances) {
+    Object.assign(merged, inst.params)
+  }
+  setActiveParams(merged)
+}
+
+/** 应用修饰器（追加到活跃列表，不替换） */
+export function applyModifier(modId: BossModifierId, isElite: boolean, isPermanent = false): void {
   const mod = BOSS_MODIFIER_REGISTRY[modId]
   if (!mod) return
   const params = mod.getParams(isElite)
   mod.apply(params)
-  activeModifier = { modifier: mod, params }
-  setActiveParams(params)
+  activeModifierInstances.push({ modId, modifier: mod, params, isPermanent })
+  rebuildActiveParams()
 }
 
-/** 清理当前活跃修饰器 */
+/** 清理所有活跃修饰器（关卡结束时调用） */
 export function cleanupModifier(): void {
-  if (activeModifier) {
-    activeModifier.modifier.cleanup()
-    activeModifier = null
-    setActiveParams(null)
+  for (const inst of activeModifierInstances) {
+    inst.modifier.cleanup()
   }
+  activeModifierInstances = []
+  setActiveParams(null)
+}
+
+/** 清理临时修饰器（Boss 轮换切换时调用，保留永久修饰器） */
+export function cleanupTemporaryModifiers(): void {
+  const permanent: ModifierInstance[] = []
+  for (const inst of activeModifierInstances) {
+    if (inst.isPermanent) {
+      permanent.push(inst)
+    } else {
+      inst.modifier.cleanup()
+    }
+  }
+  activeModifierInstances = permanent
+  rebuildActiveParams()
 }
 
 /** 每帧更新（由 timer interval 调用） */
 export function tickModifier(dt: number): void {
-  if (activeModifier?.modifier.onTick) {
-    activeModifier.modifier.onTick(dt)
+  for (const inst of activeModifierInstances) {
+    if (inst.modifier.onTick) {
+      inst.modifier.onTick(dt)
+    }
   }
   // Boss 轮换检查
   if (isRotating) {
@@ -58,9 +98,14 @@ export function tickModifier(dt: number): void {
   }
 }
 
-/** 获取当前活跃修饰器效果参数（供 battle.ts 查询） */
+/** 获取当前活跃修饰器效果参数（供测试查询） */
 export function getActiveModifierEffect(): BossModifierParams | null {
-  return activeModifier ? activeModifier.params : null
+  return getActiveParams()
+}
+
+/** 检查某个修饰器是否已在活跃列表中（用于精英关去重） */
+export function isModifierActive(modId: BossModifierId): boolean {
+  return activeModifierInstances.some(inst => inst.modId === modId)
 }
 
 // === Boss 关轮换引擎 ===
@@ -95,21 +140,18 @@ function checkBossRotation(): void {
   }
 }
 
-/** 切换到指定阶段 */
+/** 切换到指定阶段（清理临时修饰器，保留永久修饰器） */
 function switchToPhase(phase: number): void {
   const modId = state.bossModifierPool[phase]
   if (!modId) return
 
-  // 清理旧的修饰器
-  cleanupModifier()
+  // 清理旧的临时修饰器（保留永久修饰器）
+  cleanupTemporaryModifiers()
 
-  // 应用新的修饰器（Boss 关使用满功率）
-  const mod = BOSS_MODIFIER_REGISTRY[modId]
-  if (!mod) return
-  const params = mod.getParams(false)
-  mod.apply(params)
-  activeModifier = { modifier: mod, params }
-  setActiveParams(params)
+  // 跳过已在永久修饰器中的（永久版已全力运行，不重复应用）
+  if (!isModifierActive(modId)) {
+    applyModifier(modId, false, false)
+  }
 
   // 阶段切换视觉提示（非首次切换时）
   if (bossRotationPhase >= 0) {

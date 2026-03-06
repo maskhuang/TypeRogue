@@ -388,7 +388,7 @@ describe('MetaState', () => {
     it('序列化应包含版本号', () => {
       const json = metaState.serialize()
       const data = JSON.parse(json)
-      expect(data.version).toBe(1)
+      expect(data.version).toBe(3)
     })
 
     it('序列化应包含所有解锁技能', () => {

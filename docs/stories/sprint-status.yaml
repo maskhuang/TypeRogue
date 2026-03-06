@@ -176,7 +176,7 @@ development_status:
   epic-18-retrospective: optional
 
   # Epic 19: 技能体系重构
-  epic-19: in-progress
+  epic-19: done
   19-1-resource-system-core: done
   19-2-producer-skills: done
   19-3-keyboard-topology: done
@@ -185,12 +185,12 @@ development_status:
   19-6-enchantment-system: done
   19-7-battle-ui-overhaul: done
   19-8-shop-redesign-onboarding: done
-  19-9-relic-cleanup-migration: review
+  19-9-relic-cleanup-migration: done
   19-10-legacy-skill-cleanup: done
   epic-19-retrospective: optional
 
   # Epic 20: 词库管理 + 字频锁定
-  epic-20: in-progress
+  epic-20: done
   20-1-word-inventory-delete: done
   20-2-zero-freq-key-lock: done
   epic-20-retrospective: optional
@@ -235,17 +235,17 @@ development_status:
   epic-24-retrospective: optional
 
   # Epic 25: 无尽模式
-  epic-25: backlog
-  25-1-cycle-state-loop-structure: backlog
-  25-2-triple-difficulty-scaling: backlog
-  25-3-boss-modifier-pick-stack: backlog
+  epic-25: in-progress
+  25-1-cycle-state-loop-structure: done
+  25-2-triple-difficulty-scaling: done
+  25-3-boss-modifier-pick-stack: done
   25-4-rare-shop-shelves: backlog
-  25-5-leaderboard-system: backlog
-  25-6-daily-seed-system: backlog
+  25-5-leaderboard-system: done
+  25-6-daily-seed-system: done
   epic-25-retrospective: optional
 
 # Summary:
 # - Total Epics: 25
 # - Total Stories: 107
 # - Epics Completed: 18
-# - Stories Completed: 74
+# - Stories Completed: 75

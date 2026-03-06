@@ -142,7 +142,9 @@
             <div id="gameover-content">
                 <div id="gameover-title">GAME OVER</div>
                 <div id="gameover-stats"></div>
+                <div id="gameover-leaderboard" class="gameover-leaderboard"></div>
                 <button class="restart-btn" id="restart-btn">再来一局</button>
+                <button class="restart-btn daily-btn" id="daily-btn">📅 每日挑战</button>
             </div>
         </div>
 
@@ -153,6 +155,16 @@
                 <div class="relic-picker-title">🏺 选择一件遗物 🏺</div>
                 <div class="relic-picker-cards" id="relic-picker-cards"></div>
                 <button class="relic-picker-skip" id="relic-picker-skip">跳过</button>
+            </div>
+        </div>
+
+        <!-- Boss Modifier Picker Modal -->
+        <div id="modifier-picker-modal" class="modifier-picker-hidden">
+            <div class="modifier-picker-overlay"></div>
+            <div class="modifier-picker-content">
+                <div class="modifier-picker-title">⚔️ 选择一个 Boss 修饰器 ⚔️</div>
+                <div class="modifier-picker-active" id="modifier-picker-active"></div>
+                <div class="modifier-picker-cards" id="modifier-picker-cards"></div>
             </div>
         </div>
 

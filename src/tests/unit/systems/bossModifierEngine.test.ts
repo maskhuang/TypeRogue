@@ -22,8 +22,10 @@ import type { BossModifierId, BossModifier, BossModifierParams } from '../../../
 import {
   applyModifier,
   cleanupModifier,
+  cleanupTemporaryModifiers,
   tickModifier,
   getActiveModifierEffect,
+  isModifierActive,
   startBossRotation,
   stopBossRotation,
 } from '../../../src/systems/bossModifierEngine'
@@ -142,12 +144,12 @@ describe('bossModifierEngine', () => {
       expect(getActiveModifierEffect()).toBeNull()
     })
 
-    it('连续应用自动清理旧修饰器', () => {
+    it('连续应用保留两个修饰器（多修饰器模式）', () => {
       applyModifier('boss_cap', false)
       applyModifier('boss_decay', false)
       const effect = getActiveModifierEffect()
       expect(effect!.decayRate).toBe(0.05)
-      expect(effect!.scoreCap).toBeUndefined()
+      expect(effect!.scoreCap).toBe(50)
     })
   })
 

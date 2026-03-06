@@ -103,6 +103,10 @@ export interface GameEvents {
       skills: string[]
       relics: string[]
     }
+    cycle?: number                                                // Story 25.5
+    skillLevels?: { id: string; level: number }[]                 // Story 25.5
+    enchantments?: { skillId: string; enchantmentId: string }[]   // Story 25.5
+    activeModifiers?: string[]                                    // Story 25.5
   }
 
   // 场景导航事件 (Story 5.5)

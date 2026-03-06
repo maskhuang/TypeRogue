@@ -4,6 +4,7 @@
 // Story 18.1: 10 节点关卡流程
 
 import type { StageType } from './StageConfig'
+import { BALANCE } from '../../core/constants'
 
 /**
  * 10 节点流程定义
@@ -91,6 +92,12 @@ export function isBossNode(nodeId: number): boolean {
 
 export function getTimeLimit(nodeId: number): number {
   return STAGE_TIME_LIMITS[getStageType(nodeId)]
+}
+
+/** 获取 cycle 衰减后的时间限制（取整） */
+export function getCycleTimeLimit(nodeId: number, cycle: number): number {
+  const base = STAGE_TIME_LIMITS[getStageType(nodeId)]
+  return Math.round(base * Math.pow(BALANCE.CYCLE_TIME_DECAY, cycle - 1))
 }
 
 /**

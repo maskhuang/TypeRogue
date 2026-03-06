@@ -10,7 +10,7 @@ import { eventBus } from '../../core/events/EventBus'
 /**
  * 标签页类型
  */
-type TabType = 'skills' | 'relics' | 'stats'
+type TabType = 'skills' | 'relics' | 'stats' | 'leaderboard'
 
 /**
  * 标签页定义
@@ -18,7 +18,8 @@ type TabType = 'skills' | 'relics' | 'stats'
 const TABS: { type: TabType; label: string }[] = [
   { type: 'skills', label: '技能' },
   { type: 'relics', label: '遗物' },
-  { type: 'stats', label: '统计' }
+  { type: 'stats', label: '统计' },
+  { type: 'leaderboard', label: '排行榜' },
 ]
 
 /**

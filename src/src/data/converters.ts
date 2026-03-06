@@ -5,6 +5,7 @@
 
 import type { ConverterDefinition, ResourceType, ResourceState } from '../core/types';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
+import { random } from '../core/seededRandom';
 
 // === 50 个转化者数据 ===
 export const CONVERTERS: Record<string, ConverterDefinition> = {
@@ -83,7 +84,7 @@ export function drawConverterPool(count = 20): string[] {
   const all = Object.keys(CONVERTERS);
   const shuffled = [...all];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled.slice(0, Math.min(count, shuffled.length));

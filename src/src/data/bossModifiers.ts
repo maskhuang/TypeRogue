@@ -153,10 +153,27 @@ export function drawBossModifiers(count: number): BossModifierId[] {
   const pool = [...BOSS_MODIFIER_IDS]
   const result: BossModifierId[] = []
   for (let i = 0; i < count && pool.length > 0; i++) {
-    const idx = Math.floor(Math.random() * pool.length)
+    const idx = Math.floor(random() * pool.length)
     result.push(pool.splice(idx, 1)[0])
   }
   return result
+}
+
+/**
+ * 生成 Boss 修饰器候选（排除已激活的修饰器）
+ * 从全部 13 个修饰器中排除 activeModifiers，随机取 3 个
+ * 若可用不足 3 个，返回全部可用
+ */
+export function generateBossModifierCandidates(activeModifiers: BossModifierId[]): BossModifierId[] {
+  const excluded = new Set(activeModifiers)
+  const pool = BOSS_MODIFIER_IDS.filter(id => !excluded.has(id))
+  // Fisher-Yates shuffle
+  const shuffled = [...pool]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled.slice(0, 3)
 }
 
 // ============================================
@@ -209,6 +226,7 @@ export interface BossModifier {
 // === 6 个数值规则类修饰器实现 ===
 
 import { state } from '../core/state'
+import { random } from '../core/seededRandom'
 
 const bossDecay: BossModifier = {
   id: 'boss_decay',
@@ -397,7 +415,7 @@ function scrambleWord(word: string, preserveEnds: boolean, maxRetries = 5): stri
   if (end - start <= 1) return word // 可打乱的字母不足 2 个
 
   for (let i = end - 1; i > start; i--) {
-    const j = start + Math.floor(Math.random() * (i - start + 1))
+    const j = start + Math.floor(random() * (i - start + 1))
     ;[chars[i], chars[j]] = [chars[j], chars[i]]
   }
 
@@ -446,7 +464,7 @@ function generateMaskedPositions(length: number, rate: number): Set<number> {
   const positions = new Set<number>()
   const available = Array.from({ length }, (_, i) => i)
   for (let i = 0; i < count && available.length > 0; i++) {
-    const idx = Math.floor(Math.random() * available.length)
+    const idx = Math.floor(random() * available.length)
     positions.add(available.splice(idx, 1)[0])
   }
   return positions

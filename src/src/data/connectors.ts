@@ -6,6 +6,7 @@
 import type { ConnectorDefinition } from '../core/types';
 import { PositionRelation } from './keyboardTopology';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
+import { random } from '../core/seededRandom';
 
 // === 位置关系标签 ===
 const RELATION_LABELS: Record<string, string> = {
@@ -91,7 +92,7 @@ export function drawConnectorPool(count = 18): string[] {
   const all = Object.keys(CONNECTORS);
   const shuffled = [...all];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled.slice(0, Math.min(count, shuffled.length));

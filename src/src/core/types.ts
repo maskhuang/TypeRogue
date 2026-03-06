@@ -138,6 +138,8 @@ export interface GameState {
   wordPerfect: boolean;
   lastMilestone: number;
   overkill: number;  // 最后一击超出目标的分数
+  cycle: number;                        // 当前周目数（默认 1，通关 Boss 后 +1）
+  activeModifiers: BossModifierId[];    // 跨周目累积的 Boss 修饰器列表
   bossModifierPool: BossModifierId[];  // Run 级别：3 个随机 Boss 修饰器 ID
   usedRestEvents: string[];            // Run 级别：已使用的休息事件 ID
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
@@ -153,6 +155,8 @@ export interface GameState {
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
   seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者/增幅者 tooltip 跟踪）
   battleStats: BattleStats | null;                   // 上一战的统计数据（商店中展示）
+  gameMode: 'normal' | 'daily';           // 游戏模式
+  dailySeed: number | null;                // 每日挑战种子（daily 模式时非 null）
   resources: ResourceState;
   player: PlayerState;
   shop: ShopState;

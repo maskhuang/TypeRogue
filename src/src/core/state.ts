@@ -31,6 +31,8 @@ export function createInitialState(): GameState {
       shield: 0,
       gold: 0,
     },
+    cycle: 1,
+    activeModifiers: [],
     bossModifierPool: [],
     usedRestEvents: [],
     tempBuffs: [],
@@ -45,6 +47,8 @@ export function createInitialState(): GameState {
     devourIcons: new Map(),
     pseudoInfiniteState: null,
     seenSkillTypes: new Set(),
+    gameMode: 'normal',
+    dailySeed: null,
     battleStats: null,
     player: {
       word: '',
@@ -130,12 +134,13 @@ export function resetState(): void {
 }
 
 // === 关卡目标计算 ===
-export function calculateTargetScore(level: number, stageType: StageType = 'standard'): number {
-  const { TARGET_BASE, TARGET_LINEAR, TARGET_QUADRATIC } = BALANCE;
+export function calculateTargetScore(level: number, stageType: StageType = 'standard', cycle: number = 1): number {
+  const { TARGET_BASE, TARGET_LINEAR, TARGET_QUADRATIC, CYCLE_SCORE_BASE } = BALANCE;
   const base = Math.floor(TARGET_BASE + level * TARGET_LINEAR + level * level * TARGET_QUADRATIC);
-  if (stageType === 'elite') return Math.floor(base * 1.3);
-  if (stageType === 'boss') return Math.floor(base * 1.5);
-  return base;
+  const scaled = Math.floor(base * Math.pow(CYCLE_SCORE_BASE, cycle - 1));
+  if (stageType === 'elite') return Math.floor(scaled * 1.3);
+  if (stageType === 'boss') return Math.floor(scaled * 1.5);
+  return scaled;
 }
 
 // === 遗物检查 ===

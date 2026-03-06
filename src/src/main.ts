@@ -13,6 +13,10 @@ import { drawAmplifierPool } from './data/amplifiers';
 import { startLevel, initInput, resetLastAct } from './systems/battle';
 import { initShopEvents } from './systems/shop';
 import { shouldShowRelicPicker, showRelicPicker } from './systems/relicPicker';
+import { MetaState } from './core/state/MetaState';
+import { initLeaderboardDisplay, renderLeaderboard } from './ui/leaderboardDisplay';
+import { eventBus } from './core/events/EventBus';
+import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode } from './core/seededRandom';
 
 // === 游戏初始化 ===
 function init(): void {
@@ -25,9 +29,6 @@ function init(): void {
   state.player.skills.set('prod_burst', { level: 1 });
   state.player.bindings.set('f', 'prod_burst');
 
-  // 初始词库
-  state.player.wordDeck = getStarterWords();
-
   // 初始金币
   state.gold = 50;
 
@@ -37,14 +38,53 @@ function init(): void {
   // 初始化商店事件
   initShopEvents();
 
+  // Story 25.5: 初始化 MetaState（排行榜 + 统计）
+  const metaState = new MetaState();
+  initLeaderboardDisplay(metaState);
+  // 排行榜：Run 结束后渲染
+  eventBus.on('meta:stats_updated', () => {
+    renderLeaderboard();
+  });
+
   // 初始化重开按钮
   const restartBtn = document.getElementById('restart-btn');
   if (restartBtn) {
     restartBtn.onclick = () => window.location.reload();
   }
 
+  // Story 25.6: 每日挑战按钮
+  const dailyBtn = document.getElementById('daily-btn');
+  if (dailyBtn) {
+    const seedStr = getDailySeedString();
+    dailyBtn.textContent = `📅 每日挑战 (${seedStr})`;
+    dailyBtn.onclick = () => {
+      // 存储 daily 标记到 sessionStorage，reload 时读取
+      sessionStorage.setItem('dailyMode', '1');
+      window.location.reload();
+    };
+  }
+
   console.log('✅ 初始化完成');
   console.log('📊 状态:', state);
+
+  // Story 25.6: 检查是否为每日模式
+  const isDaily = sessionStorage.getItem('dailyMode') === '1';
+  sessionStorage.removeItem('dailyMode');
+
+  if (isDaily) {
+    const seed = getDailySeed();
+    setSeededMode(seed);
+    state.gameMode = 'daily';
+    state.dailySeed = seed;
+    console.log(`📅 每日挑战模式 — 种子: ${seed} (${getDailySeedString()})`);
+  } else {
+    setNormalMode();
+    state.gameMode = 'normal';
+    state.dailySeed = null;
+  }
+
+  // 初始词库（必须在种子设置之后，确保每日模式确定性）
+  state.player.wordDeck = getStarterWords();
 
   // 抽取本局 Boss 修饰器池（3 个随机修饰器，精英关/Boss 关使用）
   state.bossModifierPool = drawBossModifiers(3);
