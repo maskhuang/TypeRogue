@@ -119,6 +119,9 @@ function generateShopItems(count: number): ShopItem[] {
   const items: ShopItem[] = [];
   let nextId = Date.now();
 
+  // 当前 Act（技能权重 + 牌包权重共用）
+  const act = getActForNode(state.level);
+
   // 构建技能池（按 Act 权重分类抽取）
   const skillPool: ShopItem[] = [];
   if (!isSilenced) {
@@ -129,7 +132,6 @@ function generateShopItems(count: number): ShopItem[] {
     const unowned = allSkillIds.filter(id => !owned.includes(id));
 
     // 按类型分桶
-    const act = getActForNode(state.level);
     const weights = ACT_SKILL_WEIGHTS[act] || ACT_SKILL_WEIGHTS[3];
     const producerBucket = shuffleArray(unowned.filter(id => isProducer(id)));
     const converterBucket = shuffleArray(unowned.filter(id => isConverter(id)));
@@ -210,7 +212,7 @@ function generateShopItems(count: number): ShopItem[] {
   const packPool: ShopItem[] = [];
   const boundKeys = [...state.player.bindings.keys()];
   const playerFreqs = calculateLetterFrequency(state.player.wordDeck);
-  const packs = generateWordPacks(state.player.wordDeck, playerFreqs, boundKeys, 8);
+  const packs = generateWordPacks(state.player.wordDeck, playerFreqs, boundKeys, 8, act);
   for (const pack of packs) {
     packPool.push({
       id: `si-${nextId++}`,

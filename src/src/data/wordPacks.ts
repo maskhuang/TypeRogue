@@ -170,9 +170,16 @@ export interface WeightedCondition {
 /**
  * 构建所有条件实例及权重
  * @param boundKeys 玩家当前绑定技能的键位
+ * @param playerFreqs 玩家字频（低频绑定键 high_freq 提权用）
+ * @param act 当前 Act（Act 感知权重调整用）
  */
-export function buildConditionPool(boundKeys: string[]): WeightedCondition[] {
+export function buildConditionPool(
+  boundKeys: string[],
+  playerFreqs?: Map<string, number>,
+  act?: number,
+): WeightedCondition[] {
   const bound = new Set(boundKeys.map(k => k.toLowerCase()));
+  const currentAct = act ?? 1;
   const pool: WeightedCondition[] = [];
 
   // starts_with / ends_with / contains — 26 个字母各一个变体
@@ -184,18 +191,23 @@ export function buildConditionPool(boundKeys: string[]): WeightedCondition[] {
     pool.push({ condition: { type: 'contains', letter }, weight: w });
   }
 
-  // contains_owned / contains_unowned — 固定权重
-  pool.push({ condition: { type: 'contains_owned' }, weight: 2 });
+  // contains_owned / contains_unowned — 固定权重 + Act 感知
+  pool.push({ condition: { type: 'contains_owned' }, weight: currentAct === 1 ? 6 : 2 });
   pool.push({ condition: { type: 'contains_unowned' }, weight: 2 });
 
-  // short / long / special — 固定权重
-  pool.push({ condition: { type: 'short' }, weight: 1 });
-  pool.push({ condition: { type: 'long' }, weight: 1 });
-  pool.push({ condition: { type: 'special' }, weight: 1 });
+  // short / long / special — 固定权重 + Act 感知
+  pool.push({ condition: { type: 'short' }, weight: currentAct === 1 ? 3 : 1 });
+  pool.push({ condition: { type: 'long' }, weight: currentAct === 3 ? 3 : 1 });
+  pool.push({ condition: { type: 'special' }, weight: currentAct === 3 ? 3 : 1 });
 
-  // high_freq — 仅对有 _words 池的 15 个字母
+  // high_freq — 仅对有 _words 池的字母；低频绑定键(freq 5-8)额外提权
   for (const letter of HIGH_FREQ_LETTERS) {
-    pool.push({ condition: { type: 'high_freq', letter }, weight: bound.has(letter) ? 3 : 1 });
+    let w = bound.has(letter) ? 3 : 1;
+    if (bound.has(letter) && playerFreqs) {
+      const freq = playerFreqs.get(letter) || 0;
+      if (freq >= 5 && freq <= 8) w = 6; // 低频绑定键：双倍偏好
+    }
+    pool.push({ condition: { type: 'high_freq', letter }, weight: w });
   }
 
   return pool;
@@ -235,6 +247,36 @@ function shuffleArray<T>(arr: T[]): T[] {
   return result;
 }
 
+// === 频率变化提示 ===
+
+/**
+ * 计算牌包中词语带来的字母频率增幅
+ * @returns 按增幅降序排列的 [字母, 增幅] 数组
+ */
+export function getFreqDelta(words: string[]): [string, number][] {
+  const delta = new Map<string, number>();
+  for (const word of words) {
+    for (const ch of word.toLowerCase()) {
+      if (ch >= 'a' && ch <= 'z') {
+        delta.set(ch, (delta.get(ch) || 0) + 1);
+      }
+    }
+  }
+  return [...delta.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+/**
+ * 生成频率变化提示文本（取增幅最大的 1-2 个字母，≥2 次）
+ * 注意：统计所有字母（词库层面的频率变化），
+ * 与 shop.ts getFreqHints 不同（仅统计绑定键字母，用于展开词行）
+ */
+function formatFreqHint(words: string[]): string {
+  const sorted = getFreqDelta(words).filter(([, n]) => n >= 2);
+  if (sorted.length === 0) return '';
+  const top = sorted.slice(0, 2);
+  return top.map(([l, n]) => `+${n} ${l.toUpperCase()}`).join(' · ');
+}
+
 // === 牌包生成 ===
 
 /**
@@ -243,14 +285,16 @@ function shuffleArray<T>(arr: T[]): T[] {
  * @param playerFreqs 字频 Map（contains_owned/unowned 用）
  * @param boundKeys 玩家绑定技能的键位
  * @param count 要生成的牌包数量
+ * @param act 当前 Act（Act 感知权重调整用）
  */
 export function generateWordPacks(
   ownedWords: string[],
   playerFreqs: Map<string, number> | undefined,
   boundKeys: string[],
   count: number,
+  act?: number,
 ): WordPack[] {
-  const pool = buildConditionPool(boundKeys);
+  const pool = buildConditionPool(boundKeys, playerFreqs, act);
   const packs: WordPack[] = [];
 
   while (packs.length < count && pool.length > 0) {
@@ -279,10 +323,12 @@ export function generateWordPacks(
     const words = shuffled.slice(0, 3);
 
     const meta = getConditionMeta(picked.condition);
+    const freqHint = formatFreqHint(words);
+    const desc = freqHint ? `${meta.desc} · ${freqHint}` : meta.desc;
     packs.push({
       condition: picked.condition,
       name: meta.name,
-      desc: meta.desc,
+      desc,
       words,
       cost: calculatePackCost(picked.condition, words),
     });
