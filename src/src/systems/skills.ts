@@ -9,7 +9,7 @@ import { getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS, isProducer, getProducerValue } from '../data/producers';
 import { CONVERTERS, isConverter, getConverterK, getSourceValue, getConverterDesc } from '../data/converters';
 import { CONNECTORS, isConnector, getConnectorDesc } from '../data/connectors';
-import { AMPLIFIERS, isAmplifier } from '../data/amplifiers';
+import { AMPLIFIERS, isAmplifier, getAmplifierValue } from '../data/amplifiers';
 import { ENCHANTMENTS } from '../data/enchantments';
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
 import type { ResourceType, PseudoInfiniteState } from '../core/types';
@@ -155,6 +155,34 @@ export function getEnchantmentMultiplier(skillId: string, triggerKey?: string): 
   return 1;
 }
 
+// === 增幅者加成计算 ===
+export function getAmplifierBonus(
+  skillId: string,
+  triggerKey: string | undefined,
+  targetResource: ResourceType,
+): { addBonus: number; mulBonus: number } {
+  let addBonus = 0;
+  let mulBonus = 1;
+  if (!triggerKey) return { addBonus, mulBonus };
+
+  for (const [ampKey, boundId] of state.player.bindings) {
+    if (!isAmplifier(boundId)) continue;
+    const amp = AMPLIFIERS[boundId];
+    if (!amp || amp.resource !== targetResource) continue;
+    if (!hasRelation(triggerKey, ampKey, amp.positionRelation)) continue;
+    const stacks = state.amplifierStacks.get(boundId) || 0;
+    if (stacks === 0) continue;
+    const level = state.player.skills.get(boundId)?.level || 1;
+    const valuePerStack = getAmplifierValue(boundId, level);
+    if (amp.operator === 'add') {
+      addBonus += stacks * valuePerStack;
+    } else {
+      mulBonus *= (1 + stacks * valuePerStack);
+    }
+  }
+  return { addBonus, mulBonus };
+}
+
 // === 触发产出者（绕过 Modifier 管道） ===
 export function triggerProducer(producerId: string, triggerKey?: string): void {
   const prod = PRODUCERS[producerId];
@@ -162,7 +190,9 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   const level = state.player.skills.get(producerId)?.level || 1;
   const baseValue = getProducerValue(producerId, level);
   const enchMult = getEnchantmentMultiplier(producerId, triggerKey);
-  const value = prod.operator === 'add' ? baseValue * enchMult : baseValue;
+  const ampBonus = getAmplifierBonus(producerId, triggerKey, prod.resource);
+  const amplifiedBase = (baseValue + ampBonus.addBonus) * ampBonus.mulBonus;
+  const value = prod.operator === 'add' ? amplifiedBase * enchMult : amplifiedBase;
 
   // ench_decay: increment counter AFTER reading multiplier (side-effect-free getter)
   advanceDecayCounter(producerId);
@@ -250,6 +280,8 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   const k = getConverterK(converterId, level);
   const sourceVal = getSourceValue(conv.source, state.resources);
   const enchMult = getEnchantmentMultiplier(converterId, triggerKey);
+  const ampBonus = getAmplifierBonus(converterId, triggerKey, conv.target);
+  const amplifiedK = (k + ampBonus.addBonus) * ampBonus.mulBonus;
 
   // ench_decay: increment counter AFTER reading multiplier (side-effect-free getter)
   advanceDecayCounter(converterId);
@@ -265,7 +297,7 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
 
   // 计算转化
   if (conv.formula === 'add') {
-    delta = sourceVal * k * enchMult;
+    delta = sourceVal * amplifiedK * enchMult;
     if (conv.target === 'base') {
       synergy.skillBaseScore += delta;
     } else if (conv.target === 'multiplier') {
@@ -277,15 +309,15 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
       state.resources[conv.target] += delta;
     }
   } else {
-    // multiply: target *= (1 + sourceVal × k)
-    const factor = 1 + sourceVal * k;
+    // multiply: target *= (1 + sourceVal × amplifiedK)
+    const factor = 1 + sourceVal * amplifiedK;
     if (conv.target === 'base') {
-      // multiply 等价于 base 总量 × sourceVal × k 的加值
-      delta = state.resources.base * sourceVal * k;
+      // multiply 等价于 base 总量 × sourceVal × amplifiedK 的加值
+      delta = state.resources.base * sourceVal * amplifiedK;
       synergy.skillBaseScore += delta;
     } else if (conv.target === 'multiplier') {
-      // multiply 等价于 multiplier 总量 × sourceVal × k 的加值
-      delta = state.multiplier * sourceVal * k;
+      // multiply 等价于 multiplier 总量 × sourceVal × amplifiedK 的加值
+      delta = state.multiplier * sourceVal * amplifiedK;
       synergy.skillMultBonus += delta;
     } else if (conv.target === 'score') {
       const pendingScore = state.resources.base * state.resources.multiplier + state.resources.score;
