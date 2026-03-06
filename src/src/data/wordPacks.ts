@@ -1,9 +1,9 @@
 // ============================================
-// 打字肉鸽 - 牌包系统（条件筛选 + 元数据）
+// 打字肉鸽 - 牌包系统（条件筛选 + 元数据 + 牌包生成）
 // ============================================
 
 import { WORD_POOL } from './words';
-import type { PackCondition } from '../core/types';
+import type { PackCondition, WordPack } from '../core/types';
 
 // === 全量词汇缓存（惰性初始化） ===
 let _allWords: string[] | null = null;
@@ -153,4 +153,140 @@ export function getConditionMeta(condition: PackCondition): ConditionMeta {
     default:
       return { name: '未知', desc: '', icon: '❓' };
   }
+}
+
+// === 条件候选池与权重 ===
+
+/** WORD_POOL 中实际存在 _words 池的字母（动态派生） */
+const HIGH_FREQ_LETTERS = Object.keys(WORD_POOL)
+  .filter(k => k.endsWith('_words'))
+  .map(k => k[0]);
+
+export interface WeightedCondition {
+  condition: PackCondition;
+  weight: number;
+}
+
+/**
+ * 构建所有条件实例及权重
+ * @param boundKeys 玩家当前绑定技能的键位
+ */
+export function buildConditionPool(boundKeys: string[]): WeightedCondition[] {
+  const bound = new Set(boundKeys.map(k => k.toLowerCase()));
+  const pool: WeightedCondition[] = [];
+
+  // starts_with / ends_with / contains — 26 个字母各一个变体
+  for (let i = 0; i < 26; i++) {
+    const letter = String.fromCharCode(97 + i);
+    const w = bound.has(letter) ? 3 : 1;
+    pool.push({ condition: { type: 'starts_with', letter }, weight: w });
+    pool.push({ condition: { type: 'ends_with', letter }, weight: w });
+    pool.push({ condition: { type: 'contains', letter }, weight: w });
+  }
+
+  // contains_owned / contains_unowned — 固定权重
+  pool.push({ condition: { type: 'contains_owned' }, weight: 2 });
+  pool.push({ condition: { type: 'contains_unowned' }, weight: 2 });
+
+  // short / long / special — 固定权重
+  pool.push({ condition: { type: 'short' }, weight: 1 });
+  pool.push({ condition: { type: 'long' }, weight: 1 });
+  pool.push({ condition: { type: 'special' }, weight: 1 });
+
+  // high_freq — 仅对有 _words 池的 15 个字母
+  for (const letter of HIGH_FREQ_LETTERS) {
+    pool.push({ condition: { type: 'high_freq', letter }, weight: bound.has(letter) ? 3 : 1 });
+  }
+
+  return pool;
+}
+
+// === 牌包定价 ===
+
+const BASE_PACK_COST: Record<string, number> = {
+  short: 15,
+  long: 25,
+  special: 30,
+  high_freq: 20,
+};
+const DEFAULT_PACK_COST = 18;
+
+/**
+ * 计算牌包价格
+ * @param condition 牌包条件
+ * @param words 牌包内的词
+ */
+export function calculatePackCost(condition: PackCondition, words: string[]): number {
+  const baseCost = BASE_PACK_COST[condition.type] ?? DEFAULT_PACK_COST;
+  const avgLen = words.length > 0
+    ? words.reduce((sum, w) => sum + w.length, 0) / words.length
+    : 0;
+  return baseCost + Math.floor(avgLen / 2);
+}
+
+// === Fisher-Yates shuffle ===
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+// === 牌包生成 ===
+
+/**
+ * 生成指定数量的牌包
+ * @param ownedWords 玩家已拥有的词
+ * @param playerFreqs 字频 Map（contains_owned/unowned 用）
+ * @param boundKeys 玩家绑定技能的键位
+ * @param count 要生成的牌包数量
+ */
+export function generateWordPacks(
+  ownedWords: string[],
+  playerFreqs: Map<string, number> | undefined,
+  boundKeys: string[],
+  count: number,
+): WordPack[] {
+  const pool = buildConditionPool(boundKeys);
+  const packs: WordPack[] = [];
+
+  while (packs.length < count && pool.length > 0) {
+    // 加权随机选取
+    const totalWeight = pool.reduce((sum, p) => sum + p.weight, 0);
+    let roll = Math.random() * totalWeight;
+    let pickedIndex = pool.length - 1;
+    for (let i = 0; i < pool.length; i++) {
+      roll -= pool[i].weight;
+      if (roll <= 0) {
+        pickedIndex = i;
+        break;
+      }
+    }
+
+    const picked = pool[pickedIndex];
+    // 从池中移除已选条件
+    pool.splice(pickedIndex, 1);
+
+    // 筛选候选词
+    const candidates = filterWordsByCondition(picked.condition, ownedWords, playerFreqs);
+    if (candidates.length < 3) continue; // 候选不足，跳过
+
+    // 随机抽 3 个
+    const shuffled = shuffleArray(candidates);
+    const words = shuffled.slice(0, 3);
+
+    const meta = getConditionMeta(picked.condition);
+    packs.push({
+      condition: picked.condition,
+      name: meta.name,
+      desc: meta.desc,
+      words,
+      cost: calculatePackCost(picked.condition, words),
+    });
+  }
+
+  return packs;
 }

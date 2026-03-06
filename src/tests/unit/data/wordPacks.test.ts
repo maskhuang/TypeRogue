@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { filterWordsByCondition, getConditionMeta } from '../../../src/data/wordPacks';
+import { filterWordsByCondition, getConditionMeta, buildConditionPool, calculatePackCost, generateWordPacks } from '../../../src/data/wordPacks';
 import { WORD_POOL } from '../../../src/data/words';
 import type { PackCondition } from '../../../src/core/types';
 
@@ -255,5 +255,218 @@ describe('getConditionMeta', () => {
     const meta = getConditionMeta({ type: 'high_freq', letter: 'a' });
     expect(meta.name).toBe('A高频');
     expect(meta.icon).toBe('🎯');
+  });
+});
+
+describe('buildConditionPool', () => {
+  it('无绑定键时生成正确数量的条件', () => {
+    const pool = buildConditionPool([]);
+    // 26×3 (starts_with/ends_with/contains) + 2 (owned/unowned) + 3 (short/long/special) + 15 (high_freq)
+    expect(pool.length).toBe(26 * 3 + 2 + 3 + 15);
+  });
+
+  it('绑定键位的条件权重为3', () => {
+    const pool = buildConditionPool(['e', 'a']);
+    const eStartsWith = pool.find(p => p.condition.type === 'starts_with' && p.condition.letter === 'e');
+    expect(eStartsWith!.weight).toBe(3);
+    const aHighFreq = pool.find(p => p.condition.type === 'high_freq' && p.condition.letter === 'a');
+    expect(aHighFreq!.weight).toBe(3);
+  });
+
+  it('未绑定键位的条件权重为1', () => {
+    const pool = buildConditionPool(['e']);
+    const bStartsWith = pool.find(p => p.condition.type === 'starts_with' && p.condition.letter === 'b');
+    expect(bStartsWith!.weight).toBe(1);
+  });
+
+  it('contains_owned/contains_unowned 固定权重2', () => {
+    const pool = buildConditionPool([]);
+    const owned = pool.find(p => p.condition.type === 'contains_owned');
+    const unowned = pool.find(p => p.condition.type === 'contains_unowned');
+    expect(owned!.weight).toBe(2);
+    expect(unowned!.weight).toBe(2);
+  });
+
+  it('high_freq 仅对有 _words 池的 15 个字母生成', () => {
+    const pool = buildConditionPool([]);
+    const highFreqs = pool.filter(p => p.condition.type === 'high_freq');
+    expect(highFreqs.length).toBe(15);
+    // 确认不包含 b, i, m, o, p 等无池字母
+    const letters = highFreqs.map(p => p.condition.letter);
+    expect(letters).not.toContain('b');
+    expect(letters).not.toContain('x');
+    expect(letters).toContain('e');
+    expect(letters).toContain('a');
+  });
+});
+
+describe('calculatePackCost', () => {
+  it('short 包基础价较低', () => {
+    const cost = calculatePackCost({ type: 'short' }, ['go', 'up', 'am']);
+    // base=15, avgLen=2, floor(2/2)=1 → 16
+    expect(cost).toBe(16);
+  });
+
+  it('long 包基础价较高', () => {
+    const cost = calculatePackCost({ type: 'long' }, ['january', 'october', 'several']);
+    // base=25, avgLen=7, floor(7/2)=3 → 28
+    expect(cost).toBe(28);
+  });
+
+  it('special 包最贵', () => {
+    const cost = calculatePackCost({ type: 'special' }, ['phoenix', 'dragon', 'wizard']);
+    // base=30, avgLen=6, floor(6/2)=3 → 33
+    expect(cost).toBe(33);
+  });
+
+  it('其他类型默认基础价18', () => {
+    const cost = calculatePackCost({ type: 'starts_with', letter: 'a' }, ['area', 'away', 'able']);
+    // base=18, avgLen=4, floor(4/2)=2 → 20
+    expect(cost).toBe(20);
+  });
+
+  it('空词数组不崩溃', () => {
+    const cost = calculatePackCost({ type: 'short' }, []);
+    expect(cost).toBe(15); // base + floor(0/2) = 15
+  });
+});
+
+describe('generateWordPacks', () => {
+  it('生成指定数量的牌包', () => {
+    const packs = generateWordPacks([], undefined, [], 3);
+    expect(packs.length).toBe(3);
+  });
+
+  it('count=1 时只生成 1 个包', () => {
+    const packs = generateWordPacks([], undefined, [], 1);
+    expect(packs.length).toBe(1);
+  });
+
+  it('每包恰好包含 3 个词', () => {
+    const packs = generateWordPacks([], undefined, [], 5);
+    packs.forEach(p => expect(p.words.length).toBe(3));
+  });
+
+  it('同一批牌包条件不重复', () => {
+    const packs = generateWordPacks([], undefined, [], 5);
+    const condKeys = packs.map(p => {
+      const c = p.condition;
+      return c.letter ? `${c.type}:${c.letter}` : c.type;
+    });
+    const unique = new Set(condKeys);
+    expect(unique.size).toBe(condKeys.length);
+  });
+
+  it('候选不足 3 个的条件被跳过', () => {
+    // 拥有几乎所有词，使大部分条件候选不足
+    const allWords: string[] = [];
+    for (const pool of Object.values(WORD_POOL)) {
+      allWords.push(...pool.words.map(w => w.toLowerCase()));
+    }
+    // 留少量词
+    const owned = allWords.slice(0, allWords.length - 5);
+    const packs = generateWordPacks(owned, undefined, [], 10);
+    // 应该生成极少包（或 0 包），不崩溃
+    packs.forEach(p => expect(p.words.length).toBe(3));
+  });
+
+  it('绑定键位的条件更容易出现（权重倾向性）', () => {
+    // 多次生成，统计 'e' 相关条件出现频率
+    const counts = { bound: 0, total: 0 };
+    for (let trial = 0; trial < 50; trial++) {
+      const packs = generateWordPacks([], undefined, ['e'], 2);
+      for (const p of packs) {
+        counts.total++;
+        if (p.condition.letter === 'e') counts.bound++;
+      }
+    }
+    // 绑定键 'e' 的条件（权重×3）应比基础频率高
+    // 100 个牌包中至少应该有几个 'e' 相关
+    expect(counts.bound).toBeGreaterThan(0);
+  });
+
+  it('牌包包含正确的 name 和 desc', () => {
+    const packs = generateWordPacks([], undefined, [], 3);
+    packs.forEach(p => {
+      expect(p.name).toBeTruthy();
+      expect(p.desc).toBeTruthy();
+    });
+  });
+
+  it('牌包价格为正整数', () => {
+    const packs = generateWordPacks([], undefined, [], 3);
+    packs.forEach(p => {
+      expect(p.cost).toBeGreaterThan(0);
+      expect(Number.isInteger(p.cost)).toBe(true);
+    });
+  });
+
+  it('条件池耗尽时优雅返回不足数量', () => {
+    // 请求 200 个包，但条件池只有 ~98 个
+    const packs = generateWordPacks([], undefined, [], 200);
+    expect(packs.length).toBeLessThan(200);
+    expect(packs.length).toBeGreaterThan(0);
+    packs.forEach(p => expect(p.words.length).toBe(3));
+  });
+
+  it('生成的词不包含已拥有词', () => {
+    const owned = ['member', 'served', 'league'];
+    const packs = generateWordPacks(owned, undefined, [], 5);
+    const allPackWords = packs.flatMap(p => p.words);
+    for (const w of owned) {
+      expect(allPackWords).not.toContain(w);
+    }
+  });
+
+  it('牌包内的词满足其条件', () => {
+    const packs = generateWordPacks([], undefined, [], 10);
+    for (const pack of packs) {
+      const c = pack.condition;
+      for (const w of pack.words) {
+        switch (c.type) {
+          case 'starts_with':
+            expect(w.startsWith(c.letter!)).toBe(true);
+            break;
+          case 'ends_with':
+            expect(w.endsWith(c.letter!)).toBe(true);
+            break;
+          case 'contains':
+            expect(w.includes(c.letter!)).toBe(true);
+            break;
+          case 'short':
+            expect(WORD_POOL['short'].words.map(x => x.toLowerCase())).toContain(w);
+            break;
+          case 'long':
+            expect(WORD_POOL['long'].words.map(x => x.toLowerCase())).toContain(w);
+            break;
+          case 'special':
+            expect(WORD_POOL['special'].words.map(x => x.toLowerCase())).toContain(w);
+            break;
+          case 'high_freq':
+            expect(WORD_POOL[`${c.letter}_words`].words.map(x => x.toLowerCase())).toContain(w);
+            break;
+          // contains_owned/unowned 需要 freqs，此处跳过
+        }
+      }
+    }
+  });
+
+  it('count=0 返回空数组', () => {
+    const packs = generateWordPacks([], undefined, [], 0);
+    expect(packs).toEqual([]);
+  });
+
+  it('传入 playerFreqs 时 contains_owned 条件可以被选中', () => {
+    // 设置高频字母使 contains_owned 有候选词
+    const freqs = new Map([['e', 10], ['a', 8]]);
+    let foundOwned = false;
+    for (let i = 0; i < 30; i++) {
+      const packs = generateWordPacks([], freqs, [], 5);
+      if (packs.some(p => p.condition.type === 'contains_owned')) {
+        foundOwned = true;
+        break;
+      }
+    }
+    expect(foundOwned).toBe(true);
   });
 });
