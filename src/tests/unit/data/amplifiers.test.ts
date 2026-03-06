@@ -116,7 +116,7 @@ describe('增幅者工具函数', () => {
     });
 
     it('无 level 时返回原始 desc', () => {
-      expect(getAmplifierDesc('amp_base_add_adjacent')).toBe('每层为范围内技能⚔️基数+1');
+      expect(getAmplifierDesc('amp_base_add_adjacent')).toBe('每层为相邻技能⚔️基数+1');
     });
 
     it('add 类型 Lv1 生成正确描述', () => {

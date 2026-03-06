@@ -15,7 +15,7 @@ export const RELICS: Record<string, RelicData> = {
   lucky_coin: {
     id: 'lucky_coin',
     name: '幸运硬币',
-    icon: '🪙',
+    icon: '🍀',
     description: '商店价格降低 10%',
     rarity: 'common',
     basePrice: 25,
@@ -28,7 +28,7 @@ export const RELICS: Record<string, RelicData> = {
   time_crystal: {
     id: 'time_crystal',
     name: '时间水晶',
-    icon: '💎',
+    icon: '🔷',
     description: '每完成一个词语 +0.5 秒',
     rarity: 'common',
     basePrice: 30,
@@ -56,7 +56,7 @@ export const RELICS: Record<string, RelicData> = {
   overkill_blade: {
     id: 'overkill_blade',
     name: '超杀之刃',
-    icon: '⚔️',
+    icon: '🔪',
     description: '超杀分数转化为额外金币',
     rarity: 'rare',
     basePrice: 50,
@@ -71,7 +71,7 @@ export const RELICS: Record<string, RelicData> = {
   rhyme_master: {
     id: 'rhyme_master',
     name: '韵律大师',
-    icon: '🎵',
+    icon: '🎶',
     description: '词含重复字母时所有技能基数 +3',
     rarity: 'rare',
     basePrice: 55,
@@ -204,7 +204,7 @@ export const RELICS: Record<string, RelicData> = {
   time_lord: {
     id: 'time_lord',
     name: '时间领主',
-    icon: '⏳',
+    icon: '🕰️',
     description: '每关额外 +8 秒',
     rarity: 'legendary',
     basePrice: 90,

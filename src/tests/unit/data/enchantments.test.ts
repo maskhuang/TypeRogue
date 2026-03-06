@@ -36,6 +36,11 @@ describe('附魔数据完整性', () => {
     const uniqueIds = new Set(ids)
     expect(ids.length).toBe(uniqueIds.size)
   })
+
+  it('每个图标唯一', () => {
+    const icons = Object.values(ENCHANTMENTS).map(e => e.icon)
+    expect(new Set(icons).size).toBe(icons.length)
+  })
 })
 
 describe('30 个空间型附魔', () => {

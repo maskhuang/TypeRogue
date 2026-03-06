@@ -25,6 +25,11 @@ describe('连接者数据', () => {
     expect(new Set(ids).size).toBe(36);
   });
 
+  it('每个图标唯一', () => {
+    const icons = Object.values(CONNECTORS).map(c => c.icon);
+    expect(new Set(icons).size).toBe(icons.length);
+  });
+
   it('id 与 key 一致', () => {
     for (const [key, conn] of Object.entries(CONNECTORS)) {
       expect(conn.id).toBe(key);

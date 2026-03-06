@@ -33,6 +33,11 @@ describe('CONVERTERS 数据完整性', () => {
     }
   });
 
+  it('每个图标唯一', () => {
+    const icons = Object.values(CONVERTERS).map(c => c.icon);
+    expect(new Set(icons).size).toBe(icons.length);
+  });
+
   it('id 与 key 一致', () => {
     for (const id of allIds) {
       expect(CONVERTERS[id].id).toBe(id);

@@ -56,7 +56,7 @@ export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
   ench_trans_shield:     { id: 'ench_trans_shield',     name: '附甲', icon: '🛡️✨', category: 'transmutation', effectValue: 0.15, extraResource: 'shield',     desc: '触发时额外产出 15% 护盾' },
 
   // === 独立型（1 个）"不依赖位置关系的成长" ===
-  ench_mastery: { id: 'ench_mastery', name: '精通', icon: '📈', category: 'independent', effectValue: 0.08, desc: '每触发 10 次，自身永久 +8%' },
+  ench_mastery: { id: 'ench_mastery', name: '精通', icon: '🏆', category: 'independent', effectValue: 0.08, desc: '每触发 10 次，自身永久 +8%' },
 } as const;
 
 // === 工具函数 ===

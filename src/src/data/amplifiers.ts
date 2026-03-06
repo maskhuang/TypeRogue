@@ -9,19 +9,29 @@ import { PositionRelation } from './keyboardTopology';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
 import { random } from '../core/seededRandom';
 
+// === 位置关系标签 ===
+const RELATION_LABELS: Record<string, string> = {
+  [PositionRelation.Adjacent]: '相邻',
+  [PositionRelation.SameRow]: '同行',
+  [PositionRelation.SameColumn]: '同列',
+  [PositionRelation.SameHand]: '同手',
+  [PositionRelation.SameFinger]: '同指',
+  [PositionRelation.Symmetric]: '对称位',
+};
+
 // === 8 个增幅者数据 ===
 export const AMPLIFIERS: Record<string, AmplifierDefinition> = {
   // === 加法增幅者（5 个）— 每层+N，稳定兜底 ===
-  amp_base_add_adjacent:      { id: 'amp_base_add_adjacent',      name: '铸基', icon: '🔱', resource: 'base',       positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 1,    desc: '每层为范围内技能⚔️基数+1' },
-  amp_mult_add_adjacent:      { id: 'amp_mult_add_adjacent',      name: '激励', icon: '✴️', resource: 'multiplier', positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 0.02, desc: '每层为范围内技能🔥倍率+0.02' },
-  amp_score_add_sameColumn:   { id: 'amp_score_add_sameColumn',   name: '聚财', icon: '🏹', resource: 'score',      positionRelation: PositionRelation.SameColumn, operator: 'add', valuePerStack: 2,    desc: '每层为范围内技能🪙分数+2' },
-  amp_time_add_adjacent:      { id: 'amp_time_add_adjacent',      name: '滋润', icon: '🌊', resource: 'time',       positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 0.05, desc: '每层为范围内技能⏳时间+0.05' },
-  amp_shield_add_symmetric:   { id: 'amp_shield_add_symmetric',   name: '映盾', icon: '🧿', resource: 'shield',     positionRelation: PositionRelation.Symmetric,  operator: 'add', valuePerStack: 0.02, desc: '每层为范围内技能🛡️护盾+0.02' },
+  amp_base_add_adjacent:      { id: 'amp_base_add_adjacent',      name: '铸基', icon: '🔱', resource: 'base',       positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 1,    desc: '每层为相邻技能⚔️基数+1' },
+  amp_mult_add_adjacent:      { id: 'amp_mult_add_adjacent',      name: '激励', icon: '✴️', resource: 'multiplier', positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 0.02, desc: '每层为相邻技能🔥倍率+0.02' },
+  amp_score_add_sameColumn:   { id: 'amp_score_add_sameColumn',   name: '聚财', icon: '🏹', resource: 'score',      positionRelation: PositionRelation.SameColumn, operator: 'add', valuePerStack: 2,    desc: '每层为同列技能🪙分数+2' },
+  amp_time_add_adjacent:      { id: 'amp_time_add_adjacent',      name: '滋润', icon: '💧', resource: 'time',       positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 0.05, desc: '每层为相邻技能⏳时间+0.05' },
+  amp_shield_add_symmetric:   { id: 'amp_shield_add_symmetric',   name: '映盾', icon: '🧿', resource: 'shield',     positionRelation: PositionRelation.Symmetric,  operator: 'add', valuePerStack: 0.02, desc: '每层为对称位技能🛡️护盾+0.02' },
 
   // === 乘法增幅者（3 个）— 每层×N%，后期爆发 ===
-  amp_base_mul_adjacent:      { id: 'amp_base_mul_adjacent',      name: '淬炼', icon: '⚗️', resource: 'base',       positionRelation: PositionRelation.Adjacent,   operator: 'multiply', valuePerStack: 0.05, desc: '每层为范围内技能⚔️基数×5%' },
-  amp_mult_mul_sameRow:       { id: 'amp_mult_mul_sameRow',       name: '共振', icon: '🔊', resource: 'multiplier', positionRelation: PositionRelation.SameRow,    operator: 'multiply', valuePerStack: 0.03, desc: '每层为范围内技能🔥倍率×3%' },
-  amp_score_mul_sameHand:     { id: 'amp_score_mul_sameHand',     name: '点金', icon: '🪄', resource: 'score',      positionRelation: PositionRelation.SameHand,   operator: 'multiply', valuePerStack: 0.04, desc: '每层为范围内技能🪙分数×4%' },
+  amp_base_mul_adjacent:      { id: 'amp_base_mul_adjacent',      name: '淬炼', icon: '⚗️', resource: 'base',       positionRelation: PositionRelation.Adjacent,   operator: 'multiply', valuePerStack: 0.05, desc: '每层为相邻技能⚔️基数×5%' },
+  amp_mult_mul_sameRow:       { id: 'amp_mult_mul_sameRow',       name: '共振', icon: '🔊', resource: 'multiplier', positionRelation: PositionRelation.SameRow,    operator: 'multiply', valuePerStack: 0.03, desc: '每层为同行技能🔥倍率×3%' },
+  amp_score_mul_sameHand:     { id: 'amp_score_mul_sameHand',     name: '点金', icon: '🪄', resource: 'score',      positionRelation: PositionRelation.SameHand,   operator: 'multiply', valuePerStack: 0.04, desc: '每层为同手技能🪙分数×4%' },
 } as const;
 
 // === 工具函数 ===
@@ -59,8 +69,9 @@ export function getAmplifierDesc(id: string, level?: number): string {
   const value = getAmplifierValue(id, level);
   const resLabel = RESOURCE_LABELS[amp.resource] || amp.resource;
   const resIcon = RESOURCE_ICONS[amp.resource] || '';
+  const relLabel = RELATION_LABELS[amp.positionRelation] || amp.positionRelation;
   if (amp.operator === 'add') {
-    return `每层为范围内技能${resIcon}${resLabel}+${parseFloat(value.toPrecision(4))}`;
+    return `每层为${relLabel}技能${resIcon}${resLabel}+${parseFloat(value.toPrecision(4))}`;
   }
-  return `每层为范围内技能${resIcon}${resLabel}×${parseFloat((value * 100).toPrecision(4))}%`;
+  return `每层为${relLabel}技能${resIcon}${resLabel}×${parseFloat((value * 100).toPrecision(4))}%`;
 }

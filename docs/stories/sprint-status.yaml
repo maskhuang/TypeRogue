@@ -244,8 +244,15 @@ development_status:
   25-6-daily-seed-system: done
   epic-25-retrospective: optional
 
+  # Epic 26: 图标注册表与跨类型查重
+  epic-26: done
+  26-1-icon-registry-cross-type-test: done
+  26-2-fix-duplicate-icons: done
+  26-3-per-type-icon-uniqueness-tests: done
+  epic-26-retrospective: optional
+
 # Summary:
-# - Total Epics: 25
-# - Total Stories: 107
-# - Epics Completed: 18
-# - Stories Completed: 75
+# - Total Epics: 26
+# - Total Stories: 110
+# - Epics Completed: 19
+# - Stories Completed: 78

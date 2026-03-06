@@ -23,6 +23,11 @@ describe('PRODUCERS 数据定义', () => {
     }
   })
 
+  it('每个图标唯一', () => {
+    const icons = Object.values(PRODUCERS).map(p => p.icon)
+    expect(new Set(icons).size).toBe(icons.length)
+  })
+
   it('6 种资源各有 2 个产出者（+N 和 ×N）', () => {
     const byResource: Record<string, string[]> = {}
     for (const prod of Object.values(PRODUCERS)) {

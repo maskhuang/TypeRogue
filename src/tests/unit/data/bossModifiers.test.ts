@@ -115,6 +115,11 @@ describe('bossModifiers', () => {
       })
     })
 
+    it('每个图标唯一', () => {
+      const icons = Object.values(BOSS_MODIFIER_META).map(m => m.icon)
+      expect(new Set(icons).size).toBe(icons.length)
+    })
+
     it('没有多余的元数据条目', () => {
       const metaKeys = Object.keys(BOSS_MODIFIER_META)
       expect(metaKeys).toHaveLength(13)

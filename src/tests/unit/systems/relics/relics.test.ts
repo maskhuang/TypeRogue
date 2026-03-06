@@ -19,6 +19,11 @@ describe('Relics Data', () => {
       expect(Object.keys(RELICS)).toHaveLength(15)
     })
 
+    it('每个图标唯一', () => {
+      const icons = Object.values(RELICS).map(r => r.icon)
+      expect(new Set(icons).size).toBe(icons.length)
+    })
+
     it('should have all required fields for each relic', () => {
       for (const [id, relic] of Object.entries(RELICS)) {
         expect(relic.id).toBe(id)

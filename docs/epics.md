@@ -1627,7 +1627,87 @@ Epic 15: 技能进化系统
 - 新增: `core/seededRandom.ts`
 - 修改: `systems/battle.ts`, `systems/shop.ts`（使用种子随机）
 
-## Files Modified Summary (Epic 25)
+---
+
+## Epic 26: 图标注册表与跨类型查重
+
+**目标:** 建立图标注册表和测试守卫，在 CI 阶段自动捕获跨数据类型的 emoji 图标重复，修复现有 ~15 组重复图标。
+
+**依赖:** Epic 19（技能体系数据）, Epic 23（增幅者）, Epic 24（附魔）
+
+**架构参考:** `data/iconRegistry.ts`, `data/*.ts`
+
+**设计动机:**
+- 155+ 个 emoji 分散在 7 个数据文件中，仅 amplifiers.test.ts 做了类内唯一性检查
+- 已知重复 ~15 组（如 🎯 被 prod_crit / boss_double_target 共用）
+- 需要测试守卫防止未来新增图标时引入重复
+
+### Story 26.1: 图标注册表 + 跨类型唯一性测试
+
+**描述:** 新建 iconRegistry.ts 模块聚合所有数据源图标，实现 isCompositeIcon 判断组合图标，建立跨类型唯一性测试。
+
+**验收标准:**
+- [x] `IconEntry { icon, id, type }` 接口
+- [x] `getAllIconEntries()` 聚合 176 个图标条目（8 个数据源）
+- [x] `isCompositeIcon()` 用 Intl.Segmenter 判断多字素图标
+- [x] `findDuplicateIcons()` 支持资源图标豁免 + 组合图标排除
+- [x] 跨类型唯一性测试、isCompositeIcon 测试、非空检查、总数校验
+
+**技术说明:**
+- 新增: `data/iconRegistry.ts`, `tests/unit/data/iconRegistry.test.ts`
+
+### Story 26.2: 修复现有重复图标
+
+**描述:** 修复 15 个跨类型重复图标，确保 findDuplicateIcons() 返回 0 重复。
+
+**验收标准:**
+- [x] bossModifiers.ts: boss_double_target 🎯→⏫, boss_diminish 📉→⬇️, boss_masked 🕳️→🫥
+- [x] amplifiers.ts: amp_time_add_adjacent 🌊→💧
+- [x] relics.ts: lucky_coin 🪙→🍀, time_crystal 💎→🔷, overkill_blade ⚔️→🔪, rhyme_master 🎵→🎶, time_lord ⏳→🕰️
+- [x] converters.ts: conv_score_shield_mul 💎→💠, conv_base_shield_mul 🏰→🪨, conv_time_shield_add ❄️→🧊, conv_gold_mult_add 🤝→🫱
+- [x] enchantments.ts: ench_mastery 📈→🏆
+- [x] 跨类型唯一性测试 0 重复
+
+**技术说明:**
+- 修改: `data/bossModifiers.ts`, `data/relics.ts`, `data/converters.ts`, `data/enchantments.ts`, `data/amplifiers.ts`
+
+### Story 26.3: 各数据文件增加类内唯一性测试
+
+**描述:** 在各数据类型测试文件中增加图标唯一性测试守卫。
+
+**验收标准:**
+- [x] producers.test.ts 增加图标唯一性测试
+- [x] converters.test.ts 增加图标唯一性测试
+- [x] connectors.test.ts 增加图标唯一性测试
+- [x] enchantments.test.ts 增加图标唯一性测试
+- [x] bossModifiers.test.ts 增加图标唯一性测试
+- [x] relics.test.ts 增加图标唯一性测试
+- [x] amplifiers.test.ts 已有，跳过
+
+**技术说明:**
+- 修改: 6 个测试文件
+
+## Files Modified Summary (Epic 26)
+
+| File | Stories |
+|------|---------|
+| `data/iconRegistry.ts` (new) | 26.1 |
+| `tests/unit/data/iconRegistry.test.ts` (new) | 26.1 |
+| `data/bossModifiers.ts` | 26.2 |
+| `data/relics.ts` | 26.2 |
+| `data/converters.ts` | 26.2 |
+| `data/enchantments.ts` | 26.2 |
+| `data/amplifiers.ts` | 26.2 |
+| `tests/unit/data/producers.test.ts` | 26.3 |
+| `tests/unit/data/converters.test.ts` | 26.3 |
+| `tests/unit/data/connectors.test.ts` | 26.3 |
+| `tests/unit/data/enchantments.test.ts` | 26.3 |
+| `tests/unit/data/bossModifiers.test.ts` | 26.3 |
+| `tests/unit/systems/relics/relics.test.ts` | 26.3 |
+
+---
+
+## Epic 依赖图
 
 | File | Stories |
 |------|---------|
@@ -1668,6 +1748,8 @@ Epic 23: 增幅者技能类型 ──┐
 Epic 24: 成长附魔 ─────────┤
                             ↓
 Epic 25: 无尽模式 ←── Epic 18 (done) + Epic 23 + Epic 24
+
+Epic 26: 图标注册表 ←── Epic 19 + Epic 23 + Epic 24（数据文件依赖）
 ```
 
 **实施阶段:**

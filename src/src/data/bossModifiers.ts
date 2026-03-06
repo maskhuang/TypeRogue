@@ -77,7 +77,7 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
   boss_masked: {
     id: 'boss_masked',
     name: '残缺词语',
-    icon: '🕳️',
+    icon: '🫥',
     description: '部分字母被遮挡（30%）',
     eliteHint: '遮挡 15% 字母',
   },
@@ -126,14 +126,14 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
   boss_double_target: {
     id: 'boss_double_target',
     name: '双倍目标',
-    icon: '🎯',
+    icon: '⏫',
     description: '目标分数 ×2',
     eliteHint: '目标分数 ×1.5',
   },
   boss_diminish: {
     id: 'boss_diminish',
     name: '递减收益',
-    icon: '📉',
+    icon: '⬇️',
     description: '每完成一词下个词分数 -10%',
     eliteHint: '每词 -5%',
   },
