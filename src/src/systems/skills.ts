@@ -201,6 +201,10 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
       delta = pendingScore * (value - 1);
       state.resources.score += delta;
       state.score += delta;
+    } else if (prod.resource === 'gold') {
+      // 金币乘算基于玩家持有金币（state.gold）
+      delta = state.gold * (value - 1);
+      state.resources.gold += delta;
     } else {
       const before = state.resources[prod.resource];
       state.resources[prod.resource] *= value;

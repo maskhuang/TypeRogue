@@ -19,7 +19,7 @@ export function createInitialState(): GameState {
     maxCombo: 0,
     multiplier: BALANCE.BASE_MULTIPLIER,
     wordScore: 0,
-    gold: 50,
+    gold: 100,
     wordPerfect: true,
     lastMilestone: 0,
     overkill: 0,

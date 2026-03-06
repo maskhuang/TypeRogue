@@ -461,21 +461,25 @@ function showGoldReward(onComplete: () => void): void {
     return;
   }
 
-  // 计算奖励（21.4: 技能产出 + 遗物加成，移除 baseGold/timeBonus）
+  // 计算奖励：技能产出 + 遗物加成（基础金币已在关卡开始时重置为100）
   const skillGold = Math.floor(state.resources.gold);
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
   const relicGold = Math.floor(goldRelicResult.effects.gold);
   const totalGold = skillGold + relicGold;
 
   // 设置数值
-  const goldBaseEl = document.getElementById('gold-base');
+  const goldSkillEl = document.getElementById('gold-skill');
   const goldTreasureEl = document.getElementById('gold-treasure');
   const goldTotalEl = document.getElementById('gold-total');
 
-  if (goldBaseEl) goldBaseEl.textContent = `+${skillGold}`;
-  if (goldTotalEl) goldTotalEl.textContent = `+${totalGold}`;
+  if (goldSkillEl) goldSkillEl.textContent = `+${skillGold}`;
+  if (goldTotalEl) goldTotalEl.textContent = totalGold > 0 ? `+${totalGold}` : '+0';
 
-  // 遗物金币行：统一显示遗物加成
+  // 技能产出行：有技能金币时才显示
+  const skillRow = document.getElementById('gold-skill-row') as HTMLElement;
+  if (skillRow) skillRow.style.display = skillGold > 0 ? '' : 'none';
+
+  // 遗物金币行：有遗物加成时才显示
   const treasureRow = document.querySelector('.gold-treasure-row') as HTMLElement;
   if (treasureRow) treasureRow.style.display = relicGold > 0 ? '' : 'none';
   if (goldTreasureEl) goldTreasureEl.textContent = `+${relicGold}`;
@@ -659,7 +663,10 @@ export async function startLevel(): Promise<void> {
 
   // 重置资源（在 timeMax 和 tempBuff 之后，确保 resources.time 使用正确的 timeMax）
   resetResources();
-  state.resources.gold = 0;  // 金币每关开始清零（resetResources 不重置 gold，因为跨词累加）
+  state.resources.gold = 0;
+
+  // 每关开始时金币重置为100
+  state.gold = 100;
 
   // 初始化战后统计
   state.battleStats = createBattleStats();

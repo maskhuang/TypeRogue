@@ -60,7 +60,7 @@ export function openShop(_won: boolean): void {
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
   const relicGold = Math.floor(goldRelicResult.effects.gold);
 
-  // 金币奖励：技能产出 + 遗物加成（21.4: 移除 baseGold/timeBonus）
+  // 技能产出 + 遗物加成（基础金币已在关卡开始时重置为100）
   const skillGold = Math.floor(state.resources.gold);
   state.gold += skillGold + relicGold;
   const battleGold = skillGold + relicGold;
