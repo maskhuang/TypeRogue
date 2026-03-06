@@ -9,6 +9,7 @@ import { getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS, isProducer, getProducerValue } from '../data/producers';
 import { CONVERTERS, isConverter, getConverterK, getSourceValue, getConverterDesc } from '../data/converters';
 import { CONNECTORS, isConnector, getConnectorDesc } from '../data/connectors';
+import { AMPLIFIERS, isAmplifier } from '../data/amplifiers';
 import { ENCHANTMENTS } from '../data/enchantments';
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
 import type { ResourceType, PseudoInfiniteState } from '../core/types';
@@ -650,6 +651,34 @@ export function checkResourceTriggers(resource: ResourceType, sourceKey: string,
   }
 }
 
+// === 触发增幅者（纯叠层，无资源产出） ===
+export function triggerAmplifier(ampId: string, triggerKey: string): void {
+  const amp = AMPLIFIERS[ampId];
+  if (!amp) return;
+
+  // 叠层 +1
+  const current = state.amplifierStacks.get(ampId) || 0;
+  const newStacks = current + 1;
+  state.amplifierStacks.set(ampId, newStacks);
+
+  // 统计
+  synergy.wordSkillCount++;
+
+  // 反馈弹窗（显示图标 + 层数）
+  const display = getSkillDisplayInfo(ampId, undefined, state.player.enchantedSkills);
+  const el = getElements();
+  const p = document.createElement('div');
+  p.className = 'skill-trigger-popup amplifier-stack';
+  p.innerHTML = `<span class="trigger-icon">${display.icon}</span><span class="stack-count">×${newStacks}</span>`;
+  p.style.left = (Math.random() * 60 - 30) + 'px';
+  el.triggerZone.appendChild(p);
+  setTimeout(() => p.remove(), 350);
+
+  playSound('skill');
+  showFeedback(`${display.icon} ×${newStacks}`, '#a29bfe');
+  updateHUD();
+}
+
 // === 触发技能（管道驱动） ===
 export function triggerSkill(skillId: string, triggerKey: string, chainHistory?: string[]): void {
   const chain = chainHistory || [triggerKey];
@@ -680,12 +709,18 @@ export function triggerSkill(skillId: string, triggerKey: string, chainHistory?:
     // resourceTrigger 型由 checkResourceTriggers 驱动，不在此处触发
     return;
   }
+
+  // 增幅者分流：纯叠层，无资源产出，无链式反应
+  if (isAmplifier(skillId)) {
+    triggerAmplifier(skillId, triggerKey);
+    return;
+  }
 }
 
 // === 显示技能触发弹窗 ===
 function showTriggerPopup(skillId: string): void {
   const el = getElements();
-  const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
+  const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || AMPLIFIERS[skillId];
   if (!sk) return;
 
   const display = getSkillDisplayInfo(skillId, undefined, state.player.enchantedSkills);
