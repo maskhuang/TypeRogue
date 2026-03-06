@@ -526,6 +526,9 @@ describe('RunState', () => {
       expect(parsed.gold).toBe(100)
       expect(parsed.relics).toEqual(['goldenKey'])
       expect(parsed.currentStage).toBe(2)
+      // Story 24.1: growthValues/devourIcons 序列化
+      expect(parsed.growthValues).toEqual({})
+      expect(parsed.devourIcons).toEqual({})
     })
 
     it('deserialize() 应正确恢复状态', () => {
@@ -563,6 +566,9 @@ describe('RunState', () => {
       expect(restored.getCurrentStage()).toBe(4)
       expect(restored.getCurrentAct()).toBe(1)
       expect(restored.isActive()).toBe(true)
+      // Story 24.1: growthValues/devourIcons 往返
+      expect(restored.getState().growthValues.size).toBe(0)
+      expect(restored.getState().devourIcons.size).toBe(0)
     })
 
     it('序列化/反序列化应保持战斗统计', () => {
@@ -600,6 +606,9 @@ describe('RunState', () => {
       expect(restored.getRelics()).toHaveLength(0)
       expect(restored.getCurrentStage()).toBe(1)
       expect(restored.isActive()).toBe(false)
+      // Story 24.1: growthValues/devourIcons 空状态往返
+      expect(restored.getState().growthValues.size).toBe(0)
+      expect(restored.getState().devourIcons.size).toBe(0)
     })
   })
 })

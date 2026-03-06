@@ -79,6 +79,12 @@ export interface RunStateData {
 
   /** Boss 修饰器分配（Stage 3→A, Stage 6→B, Stage 9→C） */
   bossModifierAssignment: BossModifierAssignment[]
+
+  /** 成长附魔累积值（skillId → 成长百分比），跨关保持，新 Run 重置 */
+  growthValues: Map<string, number>
+
+  /** 吞噬附魔获得的图标（skillId → 图标列表），跨关保持，新 Run 重置 */
+  devourIcons: Map<string, string[]>
 }
 
 /**
@@ -119,6 +125,8 @@ export class RunState {
       },
       bossModifierPool: [],
       bossModifierAssignment: [],
+      growthValues: new Map(),
+      devourIcons: new Map(),
     }
   }
 
@@ -441,6 +449,8 @@ export class RunState {
       stats: { ...this.data.stats },
       bossModifierPool: [...this.data.bossModifierPool],
       bossModifierAssignment: [...this.data.bossModifierAssignment],
+      growthValues: Object.fromEntries(this.data.growthValues),
+      devourIcons: Object.fromEntries(this.data.devourIcons),
     }
   }
 
@@ -491,6 +501,18 @@ export class RunState {
     runState.data.stats = { ...parsed.stats }
     runState.data.bossModifierPool = (parsed as any).bossModifierPool || []
     runState.data.bossModifierAssignment = (parsed as any).bossModifierAssignment || []
+
+    // 恢复成长值（兼容旧存档）
+    const growthEntries = (parsed as any).growthValues || {}
+    Object.entries(growthEntries).forEach(([skillId, value]) => {
+      runState.data.growthValues.set(skillId, value as number)
+    })
+
+    // 恢复吞噬图标（兼容旧存档）
+    const devourEntries = (parsed as any).devourIcons || {}
+    Object.entries(devourEntries).forEach(([skillId, icons]) => {
+      runState.data.devourIcons.set(skillId, icons as string[])
+    })
 
     return runState
   }

@@ -146,6 +146,8 @@ export interface GameState {
   connectorPool: string[];             // 本局连接者池（42 抽 21）
   amplifierPool: string[];             // 本局增幅者池
   amplifierStacks: Map<string, number>; // 增幅者叠层（key=ampId, value=层数），关卡结算时清零
+  growthValues: Map<string, number>;    // 成长附魔累积值（skillId → 成长百分比），跨关保持，新 Run 重置
+  devourIcons: Map<string, string[]>;   // 吞噬附魔获得的图标（skillId → 图标列表），跨关保持，新 Run 重置
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
   seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者/增幅者 tooltip 跟踪）
   battleStats: BattleStats | null;                   // 上一战的统计数据（商店中展示）

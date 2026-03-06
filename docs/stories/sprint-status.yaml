@@ -226,7 +226,7 @@ development_status:
 
   # Epic 24: 成长附魔与附魔重构
   epic-24: in-progress
-  24-1-growth-value-state: backlog
+  24-1-growth-value-state: done
   24-2-remove-amplify-add-growth-data: backlog
   24-3-spatial-growth-trigger-logic: backlog
   24-4-mastery-enchantment-logic: backlog

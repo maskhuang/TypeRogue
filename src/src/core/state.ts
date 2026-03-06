@@ -39,6 +39,8 @@ export function createInitialState(): GameState {
     connectorPool: [],
     amplifierPool: [],
     amplifierStacks: new Map(),
+    growthValues: new Map(),
+    devourIcons: new Map(),
     pseudoInfiniteState: null,
     seenSkillTypes: new Set(),
     battleStats: null,
