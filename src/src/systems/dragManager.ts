@@ -12,6 +12,7 @@ export interface DragPayload {
   word?: string;
   wordIndex?: number;
   cost?: number;
+  sellPrice?: number;  // 拖到卖出区时显示的售价
   label: string;    // 显示在幽灵元素中
   icon: string;     // emoji/icon
 }
@@ -22,10 +23,13 @@ export interface DropZone {
   key?: string;
   accepts: (payload: DragPayload) => boolean;
   onDrop: (payload: DragPayload) => void;
+  onDragEnter?: (payload: DragPayload) => void;
+  onDragLeave?: (payload: DragPayload) => void;
 }
 
 // === 常量 ===
 const DRAG_THRESHOLD = 5; // 最小移动距离才启动拖拽
+const SELL_ZONE_DEFAULT = '🗑️ 拖到此处出售';
 
 // === DragManager 类 ===
 class DragManager {
@@ -38,6 +42,8 @@ class DragManager {
   private sourceElement: HTMLElement | null = null;
   private currentDropTarget: DropZone | null = null;
   private active = false;
+  private _onDragStart: ((payload: DragPayload) => void) | null = null;
+  private _onDragEnd: ((payload: DragPayload) => void) | null = null;
 
   // 绑定的事件处理器（用于移除）
   private boundMouseDown: ((e: MouseEvent) => void) | null = null;
@@ -112,6 +118,10 @@ class DragManager {
     return this.isDragging;
   }
 
+  /** 注册拖拽开始/结束全局回调 */
+  set onDragStart(cb: ((payload: DragPayload) => void) | null) { this._onDragStart = cb; }
+  set onDragEnd(cb: ((payload: DragPayload) => void) | null) { this._onDragEnd = cb; }
+
   // === 内部方法 ===
 
   private onPointerDown(x: number, y: number, target: HTMLElement, _event: MouseEvent | TouchEvent): void {
@@ -119,8 +129,8 @@ class DragManager {
     const draggable = target.closest('[data-drag-type]') as HTMLElement;
     if (!draggable) return;
 
-    // 不拦截锁定按钮和卖出按钮的点击
-    if (target.closest('.lock-toggle') || target.closest('.inv-sell')) return;
+    // 不拦截锁定按钮的点击
+    if (target.closest('.lock-toggle')) return;
 
     const dragType = draggable.dataset.dragType as DragPayload['type'];
     if (!dragType) return;
@@ -154,6 +164,8 @@ class DragManager {
       // 显示卖出区
       const sellZone = document.getElementById('sell-zone');
       if (sellZone) sellZone.classList.add('active');
+
+      if (this._onDragStart) this._onDragStart(this.payload);
     }
 
     // 移动幽灵
@@ -189,14 +201,25 @@ class DragManager {
       this.sourceElement = null;
     }
 
+    // 触发离开回调
+    if (this.currentDropTarget?.onDragLeave && this.payload) {
+      this.currentDropTarget.onDragLeave(this.payload);
+    }
+
+    // 全局拖拽结束回调
+    if (this._onDragEnd && this.payload) {
+      this._onDragEnd(this.payload);
+    }
+
     // 清理放置区高亮
     this.clearHighlights();
 
-    // 隐藏卖出区
+    // 隐藏卖出区并还原文本
     const sellZone = document.getElementById('sell-zone');
     if (sellZone) {
       sellZone.classList.remove('active');
       sellZone.classList.remove('drag-over');
+      sellZone.textContent = SELL_ZONE_DEFAULT;
     }
 
     this.isDragging = false;
@@ -220,14 +243,23 @@ class DragManager {
         if (!skillId) return null;
         const label = el.querySelector('.inv-name')?.textContent || skillId;
         const icon = el.querySelector('.inv-icon')?.textContent || '⚡';
-        return { type, skillId, label, icon };
+        const sellPrice = parseInt(el.dataset.sellPrice || '0', 10);
+        return { type, skillId, label, icon, sellPrice };
       }
       case 'skill-key': {
         const key = el.dataset.key || '';
         const skillId = el.dataset.boundSkill || '';
         if (!key || !skillId) return null;
         const icon = el.querySelector('.key-skill')?.textContent || '⚡';
-        return { type, sourceKey: key, skillId, label: `[${key.toUpperCase()}]`, icon };
+        const sellPrice = parseInt(el.dataset.sellPrice || '0', 10);
+        return { type, sourceKey: key, skillId, label: `[${key.toUpperCase()}]`, icon, sellPrice };
+      }
+      case 'word': {
+        const word = el.dataset.word || '';
+        const wordIndex = parseInt(el.dataset.wordIndex || '-1', 10);
+        if (!word || wordIndex < 0) return null;
+        const sellPrice = parseInt(el.dataset.sellPrice || '0', 10);
+        return { type, word, wordIndex, label: word, icon: '📝', sellPrice };
       }
       default:
         return null;
@@ -273,10 +305,24 @@ class DragManager {
       if (this.currentDropTarget) {
         this.currentDropTarget.element.classList.remove('drop-zone-highlight');
         this.currentDropTarget.element.classList.remove('drag-over');
+        // 还原卖出区默认文本
+        if (this.currentDropTarget.type === 'sell-zone') {
+          this.currentDropTarget.element.textContent = SELL_ZONE_DEFAULT;
+        }
+        if (this.currentDropTarget.onDragLeave && this.payload) {
+          this.currentDropTarget.onDragLeave(this.payload);
+        }
       }
       if (found) {
         found.element.classList.add('drop-zone-highlight');
         found.element.classList.add('drag-over');
+        // 卖出区显示售价
+        if (found.type === 'sell-zone' && this.payload?.sellPrice != null) {
+          found.element.textContent = `出售 +${this.payload.sellPrice}💰`;
+        }
+        if (found.onDragEnter && this.payload) {
+          found.onDragEnter(this.payload);
+        }
       }
       this.currentDropTarget = found;
     }

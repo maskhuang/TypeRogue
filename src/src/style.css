@@ -626,26 +626,56 @@ body {
     border: 1px solid #333;
     border-radius: 5px;
     font-size: 12px;
+    cursor: grab;
+    transition: all 0.15s;
 }
+.word-item:hover { border-color: #ffe66d; }
+.word-item.dragging { opacity: 0.4; }
 .word-item .word-text { color: #ccc; }
 .word-item .bound-letter { color: #4ecdc4; font-weight: bold; }
-.word-delete-btn {
-    font-size: 9px;
-    padding: 1px 5px;
-    background: rgba(255,107,107,0.2);
-    color: #ff6b6b;
-    border: 1px solid #ff6b6b44;
-    border-radius: 3px;
-    cursor: pointer;
-    white-space: nowrap;
+/* .word-delete-btn removed — words sold via drag to sell-zone */
+
+/* 字频统计 */
+.freq-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-bottom: 8px;
+    padding: 6px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
 }
-.word-delete-btn:hover { background: rgba(255,107,107,0.4); }
-.word-delete-btn.cannot-afford { opacity: 0.3; pointer-events: none; }
+.freq-letter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 22px;
+    padding: 2px 0;
+    border-radius: 3px;
+    font-size: 9px;
+    line-height: 1.2;
+}
+.freq-letter .freq-char { font-weight: bold; }
+.freq-letter .freq-num { font-size: 8px; }
+.freq-letter.freq-low { background: rgba(100,100,100,0.3); color: #666; }
+.freq-letter.freq-mid { background: rgba(78,205,196,0.2); color: #4ecdc4; }
+.freq-letter.freq-high { background: rgba(255,230,109,0.2); color: #ffe66d; }
 
 /* 低频键位锁定（频率<5） */
 .key-slot.freq-locked {
     opacity: 0.3;
-    pointer-events: none;
+}
+
+/* 卖词后字频将跌破5的警告 */
+.freq-letter.freq-drop-warn {
+    background: rgba(255, 107, 107, 0.3) !important;
+    color: #ff6b6b !important;
+    animation: freqDropPulse 0.6s ease-in-out infinite;
+}
+
+@keyframes freqDropPulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(255, 107, 107, 0.3); }
+    50% { box-shadow: 0 0 8px rgba(255, 107, 107, 0.7); }
 }
 
 #shop-footer {
@@ -2223,7 +2253,7 @@ body {
 }
 
 @keyframes pack-slide-in {
-    from { opacity: 0; transform: translateY(-8px); }
+    from { opacity: 0; transform: translateY(-3px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -2236,13 +2266,7 @@ body {
     border-radius: 4px;
 }
 
-.pack-word-checkbox {
-    width: 16px;
-    height: 16px;
-    accent-color: #a882ff;
-    cursor: pointer;
-    flex-shrink: 0;
-}
+/* .pack-word-checkbox removed — whole-pack purchase */
 
 .pack-word-row .word-text {
     flex: 1;
@@ -2289,23 +2313,7 @@ body {
     color: #555;
 }
 
-.inv-sell {
-    font-size: 9px;
-    color: #ff6b6b;
-    padding: 2px 5px;
-    border: 1px solid transparent;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.15s;
-    margin-left: auto;
-    opacity: 0.5;
-}
-
-.inv-sell:hover {
-    opacity: 1;
-    border-color: #ff6b6b;
-    background: rgba(255, 107, 107, 0.15);
-}
+/* .inv-sell removed — skills sold via drag to sell-zone */
 
 /* Sell zone for drag (17.4 prep) */
 #sell-zone {

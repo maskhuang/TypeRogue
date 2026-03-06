@@ -4,9 +4,9 @@
 // Story 16.4: 鼠标悬停显示底分详情和技能信息
 
 export interface KeyTooltipData {
-  letter: string
-  score: number
-  frequency: number
+  letter?: string
+  score?: number
+  frequency?: number
   skill?: {
     name: string
     icon: string
@@ -53,13 +53,19 @@ class KeyTooltipManager {
   show(x: number, y: number, data: KeyTooltipData, avoidRect?: { top: number; left: number; right: number; bottom: number }): void {
     const el = this.ensureElement()
 
-    let html = `<div class="tooltip-letter">${esc(data.letter.toUpperCase())}</div>`
+    let html = ''
 
-    if (data.score > 0) {
-      html += `<div class="tooltip-score">底分: +${data.score}</div>`
-      html += `<div class="tooltip-freq">字频: ${data.frequency} 次</div>`
-    } else {
-      html += `<div class="tooltip-freq">字频: ${data.frequency} 次 (底分不足)</div>`
+    if (data.letter) {
+      html += `<div class="tooltip-letter">${esc(data.letter.toUpperCase())}</div>`
+    }
+
+    if (data.score != null && data.frequency != null) {
+      if (data.score > 0) {
+        html += `<div class="tooltip-score">底分: +${data.score}</div>`
+        html += `<div class="tooltip-freq">字频: ${data.frequency} 次</div>`
+      } else {
+        html += `<div class="tooltip-freq">字频: ${data.frequency} 次 (底分不足)</div>`
+      }
     }
 
     if (data.skill) {

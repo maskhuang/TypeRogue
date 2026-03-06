@@ -69,7 +69,6 @@ export function openShop(_won: boolean): void {
   el.shopLevelNum.textContent = String(state.level);
   el.shopScore.textContent = String(state.score);
   el.shopTarget.textContent = String(state.targetScore);
-  el.shopBonus.textContent = battleGold > 0 ? `+${battleGold}` : '0';
   updateGoldDisplay();
 
   // 保留锁定商品，补充新商品至5个
@@ -83,6 +82,14 @@ export function openShop(_won: boolean): void {
   renderRelicDisplay();
   initStatsTabs();
   dragManager.init();
+  dragManager.onDragStart = (payload) => {
+    if (payload.type === 'word' && payload.word) {
+      highlightFreqDropWarning(payload.word);
+    }
+  };
+  dragManager.onDragEnd = () => {
+    clearFreqDropWarning();
+  };
   showScreen('shop');
 
   // 补偿：检查商店外升到Lv.3但未附魔的技能（如休息关升级）
@@ -218,7 +225,6 @@ function generateShopItems(count: number): ShopItem[] {
       id: `si-${nextId++}`,
       type: 'pack',
       pack,
-      selectedWords: [true, true, true],
       cost: getAdjustedPrice(pack.cost),
       isUpgrade: false,
       locked: false,
@@ -404,27 +410,16 @@ function togglePackExpand(card: HTMLElement, item: ShopItem, index: number): voi
   });
 
   const pack = item.pack!;
-  const sel = item.selectedWords!;
   card.classList.add('expanded');
   const boundKeySet = new Set([...state.player.bindings.keys()]);
 
   const expandDiv = document.createElement('div');
   expandDiv.className = 'pack-expanded';
 
-  // 渲染每个词行
-  pack.words.forEach((word, wi) => {
+  // 渲染每个词行（无 checkbox，仅展示）
+  pack.words.forEach((word) => {
     const row = document.createElement('div');
     row.className = 'pack-word-row';
-
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.className = 'pack-word-checkbox';
-    cb.checked = sel[wi];
-    cb.onclick = (e) => {
-      e.stopPropagation();
-      sel[wi] = cb.checked;
-      updatePackBuyBtn(expandDiv, item);
-    };
 
     const wordSpan = document.createElement('span');
     wordSpan.className = 'word-text';
@@ -438,17 +433,15 @@ function togglePackExpand(card: HTMLElement, item: ShopItem, index: number): voi
     freqSpan.className = 'pack-freq-hint';
     freqSpan.textContent = getFreqHints(word);
 
-    row.append(cb, wordSpan, lenSpan, freqSpan);
+    row.append(wordSpan, lenSpan, freqSpan);
     expandDiv.appendChild(row);
   });
 
-  // 购买按钮
+  // 购买按钮（整包购买）
   const buyBtn = document.createElement('button');
   buyBtn.className = 'pack-buy-btn';
-  const selectedCount = sel.filter(Boolean).length;
-  buyBtn.textContent = `确认购买 (${selectedCount}词) 💰${item.cost}`;
-  buyBtn.disabled = selectedCount === 0;
-  if (state.gold < item.cost) buyBtn.disabled = true;
+  buyBtn.textContent = `购买整包 (${pack.words.length}词) 💰${item.cost}`;
+  buyBtn.disabled = state.gold < item.cost;
 
   buyBtn.onclick = (e) => {
     e.stopPropagation();
@@ -459,20 +452,10 @@ function togglePackExpand(card: HTMLElement, item: ShopItem, index: number): voi
   card.appendChild(expandDiv);
 }
 
-function updatePackBuyBtn(expandDiv: HTMLElement, item: ShopItem): void {
-  const btn = expandDiv.querySelector('.pack-buy-btn') as HTMLButtonElement;
-  if (!btn) return;
-  const selectedCount = item.selectedWords!.filter(Boolean).length;
-  btn.textContent = `确认购买 (${selectedCount}词) 💰${item.cost}`;
-  btn.disabled = selectedCount === 0 || state.gold < item.cost;
-}
-
 function purchasePackItem(index: number): void {
   const item = state.shop.items[index];
   if (!item || item.type !== 'pack' || !item.pack) return;
 
-  const selectedCount = item.selectedWords!.filter(Boolean).length;
-  if (selectedCount === 0) return;
   if (state.gold < item.cost) {
     showFeedback('金币不足!', '#ff6b6b');
     return;
@@ -482,16 +465,12 @@ function purchasePackItem(index: number): void {
   updateGoldDisplay();
   playSound('skill');
 
-  // 将勾选的词加入词库
-  const addedWords: string[] = [];
-  item.pack.words.forEach((word, i) => {
-    if (item.selectedWords![i]) {
-      state.player.wordDeck.push(word);
-      addedWords.push(word);
-    }
-  });
+  // 整包词全部加入词库
+  for (const word of item.pack.words) {
+    state.player.wordDeck.push(word);
+  }
 
-  showFeedback(`+${addedWords.length}词`, '#4ecdc4');
+  showFeedback(`+${item.pack.words.length}词`, '#4ecdc4');
   state.shop.items.splice(index, 1);
   renderUnifiedShop();
   renderBuildManager();
@@ -860,6 +839,8 @@ export function renderBuildManager(): void {
         slot.classList.add('has-skill');
         slot.dataset.dragType = 'skill-key';
         slot.dataset.boundSkill = skillId;
+        const skData = state.player.skills.get(skillId);
+        slot.dataset.sellPrice = String(Math.floor((skData?.purchasePrice || 15) / 2));
         slot.classList.add(school.cssClass);
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${display.icon}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       } else {
@@ -921,11 +902,11 @@ export function renderBuildManager(): void {
     item.className = 'inventory-skill';
     item.dataset.dragType = 'skill-inventory';
     item.dataset.skillId = skillId;
+    item.dataset.sellPrice = String(Math.floor((data.purchasePrice || 15) / 2));
     if (boundKey) item.classList.add('bound');
 
     const school = getSkillSchool(skillId);
     const evolvedLabel = state.player.evolvedSkills.has(skillId) ? '<span class="inv-evolved">★</span>' : '';
-    const sellPrice = Math.floor((data.purchasePrice || 15) / 2);
     item.innerHTML = `
       <span class="inv-icon">${display.icon}</span>
       <span class="inv-name">${display.name}</span>
@@ -933,15 +914,31 @@ export function renderBuildManager(): void {
       <span class="inv-school ${school.cssClass}">${school.label}</span>
       ${data.level > 1 ? `<span class="inv-level">Lv.${data.level}</span>` : ''}
       ${boundKey ? `<span class="inv-key">[${boundKey.toUpperCase()}]</span>` : ''}
-      <span class="inv-sell" data-sell-skill="${skillId}">卖${sellPrice}💰</span>
     `;
 
-    item.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      if (target.classList.contains('inv-sell')) {
-        sellSkill(skillId);
+    // 悬停预览技能效果
+    item.addEventListener('mouseenter', (e) => {
+      const tooltipData: KeyTooltipData = {
+        skill: {
+          name: display.name,
+          icon: display.icon,
+          description: display.desc,
+          level: data.level,
+          school: school.label,
+          schoolCssClass: school.cssClass,
+        },
+      };
+      if (boundKey) {
+        tooltipData.letter = boundKey.toUpperCase();
+        highlightSkillRange(boundKey);
       }
+      keyTooltip.show(e.clientX, e.clientY, tooltipData);
     });
+    item.addEventListener('mouseleave', () => {
+      keyTooltip.hide();
+      clearRangeHighlight();
+    });
+
     el.ownedSkills.appendChild(item);
   });
 
@@ -955,11 +952,36 @@ function renderWordInventory(): void {
   el.wordCount.textContent = `(${state.player.wordDeck.length})`;
   el.ownedWords.innerHTML = '';
 
+  // 清除旧的字频统计
+  el.ownedWords.parentElement!.querySelector('.freq-stats')?.remove();
+
+  // 字频统计区
+  const freqs = calculateLetterFrequency(state.player.wordDeck);
+  const freqContainer = document.createElement('div');
+  freqContainer.className = 'freq-stats';
+  for (let i = 0; i < 26; i++) {
+    const letter = String.fromCharCode(97 + i);
+    const freq = freqs.get(letter) || 0;
+    const block = document.createElement('div');
+    block.className = 'freq-letter';
+    if (freq < 5) block.classList.add('freq-low');
+    else if (freq >= 10) block.classList.add('freq-high');
+    else block.classList.add('freq-mid');
+    block.dataset.letter = letter;
+    block.innerHTML = `<span class="freq-char">${letter.toUpperCase()}</span><span class="freq-num">${freq}</span>`;
+    freqContainer.appendChild(block);
+  }
+  el.ownedWords.parentElement!.insertBefore(freqContainer, el.ownedWords);
+
   const boundKeys = new Set(state.player.bindings.keys());
 
   state.player.wordDeck.forEach((word, index) => {
     const item = document.createElement('div');
     item.className = 'word-item';
+    item.dataset.dragType = 'word';
+    item.dataset.word = word;
+    item.dataset.wordIndex = String(index);
+    item.dataset.sellPrice = '3';
 
     const wordSpan = document.createElement('span');
     wordSpan.className = 'word-text';
@@ -967,17 +989,7 @@ function renderWordInventory(): void {
       boundKeys.has(c.toLowerCase()) ? `<span class="bound-letter">${c}</span>` : c
     ).join('');
 
-    const delBtn = document.createElement('button');
-    delBtn.className = 'word-delete-btn';
-    delBtn.textContent = '删 -3💰';
-    if (state.gold < 3 || state.player.wordDeck.length <= MIN_WORD_COUNT) delBtn.classList.add('cannot-afford');
-    delBtn.onclick = (e) => {
-      e.stopPropagation();
-      removeWord(index);
-    };
-
     item.appendChild(wordSpan);
-    item.appendChild(delBtn);
     el.ownedWords.appendChild(item);
   });
 }
@@ -990,18 +1002,42 @@ function removeWord(index: number): void {
     showFeedback(`词库最少保留${MIN_WORD_COUNT}个词!`, '#ff6b6b');
     return;
   }
-  if (state.gold < 3) {
-    showFeedback('金币不足!', '#ff6b6b');
-    return;
-  }
   const word = state.player.wordDeck[index];
-  state.gold -= 3;
+  state.gold += 3;
   state.player.wordDeck.splice(index, 1);
   updateGoldDisplay();
-  showFeedback(`删除 ${word} -3💰`, '#ff6b6b');
+  showFeedback(`出售 ${word} +3💰`, '#ffe66d');
   playSound('skill');
   renderUnifiedShop();
   renderWordInventory();
+}
+
+// === 卖词字频跌落警告 ===
+function highlightFreqDropWarning(word: string): void {
+  const freqs = calculateLetterFrequency(state.player.wordDeck);
+  const wordCounts = new Map<string, number>();
+  for (const c of word.toLowerCase()) {
+    wordCounts.set(c, (wordCounts.get(c) || 0) + 1);
+  }
+  const warnLetters = new Set<string>();
+  wordCounts.forEach((count, letter) => {
+    const current = freqs.get(letter) || 0;
+    if (current >= 5 && current - count < 5) {
+      warnLetters.add(letter);
+    }
+  });
+  if (warnLetters.size === 0) return;
+  document.querySelectorAll('.freq-letter').forEach(block => {
+    const letter = (block as HTMLElement).dataset.letter;
+    if (letter && warnLetters.has(letter)) {
+      block.classList.add('freq-drop-warn');
+    }
+  });
+}
+
+function clearFreqDropWarning(): void {
+  document.querySelectorAll('.freq-letter.freq-drop-warn')
+    .forEach(el => el.classList.remove('freq-drop-warn'));
 }
 
 // === 注册拖拽放置区 ===
@@ -1032,16 +1068,23 @@ function registerShopDropZones(): void {
     });
   });
 
-  // 2. 卖出区 — 接受 skill-inventory、skill-key
+  // 2. 卖出区 — 接受 skill-inventory、skill-key、word
   const sellZone = document.getElementById('sell-zone');
   if (sellZone) {
     dragManager.registerDropZone({
       element: sellZone,
       type: 'sell-zone',
       accepts: (payload: DragPayload) => {
+        if (payload.type === 'word') {
+          return state.player.wordDeck.length > MIN_WORD_COUNT;
+        }
         return payload.type === 'skill-inventory' || payload.type === 'skill-key';
       },
       onDrop: (payload: DragPayload) => {
+        if (payload.type === 'word' && payload.wordIndex != null) {
+          removeWord(payload.wordIndex);
+          return;
+        }
         const skillId = payload.skillId;
         if (skillId) {
           sellSkill(skillId);

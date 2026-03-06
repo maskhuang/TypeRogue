@@ -32,7 +32,6 @@ export function initElements(): UIElements {
     shopLevelNum: document.getElementById('shop-level-num')!,
     shopScore: document.getElementById('shop-score')!,
     shopTarget: document.getElementById('shop-target')!,
-    shopBonus: document.getElementById('shop-bonus')!,
     shopGold: document.getElementById('shop-gold')!,
     shopTabs: document.getElementById('shop-tabs')!,
     rewardCards: document.getElementById('reward-cards')!,

@@ -473,7 +473,7 @@ function showGoldReward(onComplete: () => void): void {
   const goldTotalEl = document.getElementById('gold-total');
 
   if (goldSkillEl) goldSkillEl.textContent = `+${skillGold}`;
-  if (goldTotalEl) goldTotalEl.textContent = totalGold > 0 ? `+${totalGold}` : '+0';
+  if (goldTotalEl) goldTotalEl.textContent = String(100 + totalGold);
 
   // 技能产出行：有技能金币时才显示
   const skillRow = document.getElementById('gold-skill-row') as HTMLElement;

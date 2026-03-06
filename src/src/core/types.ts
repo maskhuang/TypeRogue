@@ -168,7 +168,6 @@ export interface ShopItem {
   type: 'skill' | 'pack';
   skillId?: string;
   pack?: WordPack;         // 牌包数据（type='pack' 时）
-  selectedWords?: boolean[]; // 牌包词勾选状态（type='pack' 时，默认全 true）
   cost: number;
   isUpgrade: boolean;      // 重复技能 → true
   locked: boolean;         // 锁定（17.3）
@@ -277,7 +276,6 @@ export interface UIElements {
   shopLevelNum: HTMLElement;
   shopScore: HTMLElement;
   shopTarget: HTMLElement;
-  shopBonus: HTMLElement;
   shopGold: HTMLElement;
   shopTabs: HTMLElement;
   rewardCards: HTMLElement;

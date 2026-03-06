@@ -71,7 +71,6 @@
                     Level <span id="shop-level-num">1</span> 完成!
                     <span class="result-detail">
                         得分: <span id="shop-score">0</span> / <span id="shop-target">100</span>
-                        (奖励: <span id="shop-bonus">0</span>)
                     </span>
                 </div>
             </div>
@@ -202,6 +201,10 @@
         <div id="gold-reward" class="gold-reward-hidden">
             <div class="gold-reward-panel">
                 <div class="gold-reward-title">LEVEL CLEAR!</div>
+                <div class="gold-reward-row" id="gold-base-row">
+                    <span class="gold-reward-label">基础</span>
+                    <span class="gold-reward-value">100</span>
+                </div>
                 <div class="gold-reward-row" id="gold-skill-row" style="display:none">
                     <span class="gold-reward-label">技能产出</span>
                     <span class="gold-reward-value" id="gold-skill">+0</span>
@@ -212,7 +215,7 @@
                 </div>
                 <div class="gold-reward-total">
                     <span class="gold-icon">💰</span>
-                    <span class="gold-total-value" id="gold-total">+20</span>
+                    <span class="gold-total-value" id="gold-total">100</span>
                 </div>
             </div>
         </div>
