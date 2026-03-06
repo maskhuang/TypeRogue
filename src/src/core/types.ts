@@ -207,6 +207,31 @@ export interface WordPool {
   highlight?: string;
 }
 
+// === 牌包系统 ===
+export type PackConditionType =
+  | 'starts_with'
+  | 'ends_with'
+  | 'contains'
+  | 'contains_owned'
+  | 'contains_unowned'
+  | 'short'
+  | 'long'
+  | 'special'
+  | 'high_freq';
+
+export interface PackCondition {
+  type: PackConditionType;
+  letter?: string;  // starts_with/ends_with/contains/high_freq 需要
+}
+
+export interface WordPack {
+  condition: PackCondition;
+  name: string;
+  desc: string;
+  words: string[];
+  cost: number;
+}
+
 // (旧 ShopReward/ShopWord/ShopSkillItem 已移除，由 ShopItem 替代)
 
 // === 联动系统 ===

@@ -207,7 +207,7 @@ development_status:
 
   # Epic 22: 词语牌包系统
   epic-22: in-progress
-  22-1-pack-condition-data-structure: backlog
+  22-1-pack-condition-data-structure: done
   22-2-pack-generation-strategy: backlog
   22-3-shop-pack-ui: backlog
   22-4-remove-word-direct-sale: backlog
