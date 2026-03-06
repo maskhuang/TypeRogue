@@ -19,7 +19,7 @@ import { playSound } from '../effects/sound';
 import { juiceUp } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback, calculateRating } from './battle';
 import type { ShopItem, ResourceType } from '../core/types';
-import { getNextBattleNode, getStageType, isRestNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
+import { getNextBattleNode, isRestNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
@@ -60,18 +60,15 @@ export function openShop(_won: boolean): void {
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
   const relicGold = Math.floor(goldRelicResult.effects.gold);
 
-  // 金币奖励：基础 20（精英关 ×2）+ 剩余时间秒数 + 遗物金币
-  const currentType = getStageType(state.level);
-  const baseGold = currentType === 'elite' ? 40 : 20;
-  const timeBonus = Math.floor(state.time);
-  const bonus = timeBonus + relicGold;
-  state.gold += baseGold + bonus;
-  state.gold += Math.floor(state.resources.gold);  // 技能产出的金币资源转入（21.1 管道）
+  // 金币奖励：技能产出 + 遗物加成（21.4: 移除 baseGold/timeBonus）
+  const skillGold = Math.floor(state.resources.gold);
+  state.gold += skillGold + relicGold;
+  const battleGold = skillGold + relicGold;
 
   el.shopLevelNum.textContent = String(state.level);
   el.shopScore.textContent = String(state.score);
   el.shopTarget.textContent = String(state.targetScore);
-  el.shopBonus.textContent = bonus > 0 ? `+${bonus}` : '0';
+  el.shopBonus.textContent = battleGold > 0 ? `+${battleGold}` : '0';
   updateGoldDisplay();
 
   // 保留锁定商品，补充新商品至5个
@@ -164,6 +161,29 @@ function generateShopItems(count: number): ShopItem[] {
         isUpgrade: false,
         locked: false,
       });
+    }
+
+    // 第一关金币保底：确保 ≥1 金币类技能（21.4）
+    if (state.level === 1 && skillPool.length > 0) {
+      const isGoldSkill = (id: string): boolean =>
+        id === 'prod_mint' || id === 'prod_treasury' ||
+        (id in CONVERTERS && (CONVERTERS[id].source === 'gold' || CONVERTERS[id].target === 'gold'));
+
+      const hasGold = skillPool.some(item => isGoldSkill(item.skillId!));
+      if (!hasGold) {
+        const goldCandidates = unowned.filter(id => isGoldSkill(id));
+        if (goldCandidates.length > 0) {
+          const goldId = goldCandidates[Math.floor(Math.random() * goldCandidates.length)];
+          skillPool[skillPool.length - 1] = {
+            id: `si-${nextId++}`,
+            type: 'skill',
+            skillId: goldId,
+            cost: getAdjustedPrice(15 + Math.floor(Math.random() * 15)),
+            isUpgrade: false,
+            locked: false,
+          };
+        }
+      }
     }
 
     // 升级已有技能（未满级的）— 不受 Act 权重限制

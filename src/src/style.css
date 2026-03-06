@@ -642,7 +642,7 @@ body {
 .word-delete-btn:hover { background: rgba(255,107,107,0.4); }
 .word-delete-btn.cannot-afford { opacity: 0.3; pointer-events: none; }
 
-/* 零频键位锁定 */
+/* 低频键位锁定（频率<5） */
 .key-slot.freq-locked {
     opacity: 0.3;
     pointer-events: none;
@@ -1751,16 +1751,6 @@ body {
     font-size: 20px;
     font-weight: bold;
     color: #ffe66d;
-}
-
-.gold-overkill {
-    color: #ff6b6b;
-    text-shadow: 0 0 10px rgba(255,107,107,0.5);
-}
-
-.gold-time {
-    color: #4ecdc4;
-    text-shadow: 0 0 10px rgba(78,205,196,0.5);
 }
 
 .gold-treasure {

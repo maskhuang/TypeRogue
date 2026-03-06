@@ -82,7 +82,7 @@ describe('产出者商店集成 (AC 7)', () => {
     }
     state.player.skills.delete(skillId)
 
-    expect(state.gold).toBe(30 + 10) // initial 30 + floor(20/2)
+    expect(state.gold).toBe(50 + 10) // initial 50 + floor(20/2)
     expect(state.player.skills.has('prod_shield')).toBe(false)
     expect(state.player.bindings.has('s')).toBe(false)
   })

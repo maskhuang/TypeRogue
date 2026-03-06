@@ -28,7 +28,7 @@ function init(): void {
   state.player.wordDeck = getStarterWords();
 
   // 初始金币
-  state.gold = 30;
+  state.gold = 50;
 
   // 初始化输入处理
   initInput();

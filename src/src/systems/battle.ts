@@ -461,28 +461,21 @@ function showGoldReward(onComplete: () => void): void {
     return;
   }
 
-  // 计算奖励（通过遗物管道解析）
-  const currentType = getStageType(state.level);
-  const baseGold = currentType === 'elite' ? 40 : 20; // 精英关金币 ×2
-  const timeBonus = Math.floor(state.time);
+  // 计算奖励（21.4: 技能产出 + 遗物加成，移除 baseGold/timeBonus）
+  const skillGold = Math.floor(state.resources.gold);
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
   const relicGold = Math.floor(goldRelicResult.effects.gold);
-  const totalGold = baseGold + timeBonus + relicGold;
+  const totalGold = skillGold + relicGold;
 
   // 设置数值
   const goldBaseEl = document.getElementById('gold-base');
-  const goldOverkillEl = document.getElementById('gold-overkill');
-  const goldTimeEl = document.getElementById('gold-time');
   const goldTreasureEl = document.getElementById('gold-treasure');
   const goldTotalEl = document.getElementById('gold-total');
 
-  if (goldBaseEl) goldBaseEl.textContent = `+${baseGold}`;
-  if (goldTimeEl) goldTimeEl.textContent = `+${timeBonus}`;
+  if (goldBaseEl) goldBaseEl.textContent = `+${skillGold}`;
   if (goldTotalEl) goldTotalEl.textContent = `+${totalGold}`;
 
   // 遗物金币行：统一显示遗物加成
-  const overkillRow = document.querySelector('.gold-overkill-row') as HTMLElement;
-  if (overkillRow) overkillRow.style.display = 'none'; // 不再单独显示
   const treasureRow = document.querySelector('.gold-treasure-row') as HTMLElement;
   if (treasureRow) treasureRow.style.display = relicGold > 0 ? '' : 'none';
   if (goldTreasureEl) goldTreasureEl.textContent = `+${relicGold}`;

@@ -199,8 +199,8 @@ development_status:
   epic-21: in-progress
   21-1-gold-resource-type: done
   21-2-gold-producer-skills: done
-  21-3-gold-converter-skills: backlog
-  21-4-remove-default-gold: backlog
+  21-3-gold-converter-skills: done
+  21-4-remove-default-gold: done
   21-5-settlement-stats-adapt: backlog
   21-6-gold-connector-adapt: backlog
   epic-21-retrospective: optional

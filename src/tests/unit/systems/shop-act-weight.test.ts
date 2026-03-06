@@ -169,6 +169,38 @@ describe('seenSkillTypes 状态 (AC5)', () => {
   })
 })
 
+// === 21.4: 第一关金币保底 ===
+describe('第一关金币保底 (21.4 AC5)', () => {
+  it('shop.ts 包含 level 1 金币保底逻辑', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
+    const content = fs.readFileSync(shopPath, 'utf-8')
+    expect(content).toContain('state.level === 1')
+    expect(content).toContain('isGoldSkill')
+    expect(content).toContain('prod_mint')
+    expect(content).toContain('prod_treasury')
+  })
+
+  it('金币保底检查 gold source 和 target', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
+    const content = fs.readFileSync(shopPath, 'utf-8')
+    expect(content).toContain("source === 'gold'")
+    expect(content).toContain("target === 'gold'")
+  })
+
+  it('金币保底替换逻辑存在', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
+    const content = fs.readFileSync(shopPath, 'utf-8')
+    expect(content).toContain('goldCandidates')
+    expect(content).toContain('skillPool[skillPool.length - 1]')
+  })
+})
+
 // === AC3, AC7, AC8: 现有功能保留 ===
 describe('现有商店功能保留 (AC3, AC7, AC8)', () => {
   it('保底逻辑保留', async () => {
