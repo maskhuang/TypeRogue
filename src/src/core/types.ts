@@ -68,7 +68,7 @@ export interface AmplifierState {
 }
 
 // === 附魔系统 ===
-export type EnchantmentCategory = 'spatial' | 'transmutation' | 'independent';
+export type EnchantmentCategory = 'spatial' | 'transmutation';
 export type SpatialEffectType = 'amplify' | 'splash' | 'resonance' | 'repulsion';
 
 export interface EnchantmentDefinition {
@@ -265,8 +265,6 @@ export interface SynergyState {
   skillBaseScore: number; // 技能贡献的基础分（每词重置，结算面板使用）
   skillMultBonus: number; // 技能累积的倍率加成（断连击时重置）
   letterBaseScore: number; // 字母升级贡献的基础分（每词重置）
-  // 附魔系统
-  decayCounters: Map<string, number>; // ench_decay: 本词内每个技能的触发次数
 }
 
 export interface AdjacentSkill {

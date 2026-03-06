@@ -99,7 +99,6 @@ function setWord(): void {
   synergy.skillBaseScore = 0;
   synergy.letterBaseScore = 0;
   synergy.lastTriggeredSkillId = null;
-  synergy.decayCounters.clear();
   renderWord();
   updateSettlementLive(); // 初始化结算面板
 }

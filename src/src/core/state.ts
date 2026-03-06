@@ -105,8 +105,6 @@ export function createSynergyState(): SynergyState {
     skillBaseScore: 0,
     skillMultBonus: 0,
     letterBaseScore: 0,
-    // 附魔系统
-    decayCounters: new Map(),
   };
 }
 

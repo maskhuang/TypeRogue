@@ -9,8 +9,8 @@ import { ENCHANTMENTS, isEnchantment, getEnchantmentDesc, drawEnchantmentPair } 
 describe('附魔数据完整性 (AC1)', () => {
   const allIds = Object.keys(ENCHANTMENTS)
 
-  it('共 33 个附魔', () => {
-    expect(allIds.length).toBe(33)
+  it('共 29 个附魔', () => {
+    expect(allIds.length).toBe(29)
   })
 
   it('每个附魔的 id 与 key 匹配', () => {
@@ -106,34 +106,11 @@ describe('5 个变性型附魔 (AC3)', () => {
   })
 })
 
-describe('4 个独立型附魔 (AC4)', () => {
-  const independents = Object.values(ENCHANTMENTS).filter(e => e.category === 'independent')
-
-  it('共 4 个', () => {
-    expect(independents.length).toBe(4)
-  })
-
-  it('包含先手/终幕/一刀/渴血', () => {
-    const ids = independents.map(e => e.id)
-    expect(ids).toContain('ench_pioneer')
-    expect(ids).toContain('ench_finale')
-    expect(ids).toContain('ench_decay')
-    expect(ids).toContain('ench_thirst')
-  })
-
-  it('不依赖位置关系', () => {
-    for (const ench of independents) {
-      expect(ench.positionRelation).toBeUndefined()
-      expect(ench.spatialType).toBeUndefined()
-    }
-  })
-})
-
 describe('isEnchantment', () => {
   it('有效 ID 返回 true', () => {
     expect(isEnchantment('ench_amplify_adjacent')).toBe(true)
     expect(isEnchantment('ench_trans_base')).toBe(true)
-    expect(isEnchantment('ench_pioneer')).toBe(true)
+    expect(isEnchantment('ench_splash_adjacent')).toBe(true)
   })
 
   it('无效 ID 返回 false', () => {
@@ -145,7 +122,7 @@ describe('isEnchantment', () => {
 describe('getEnchantmentDesc', () => {
   it('返回描述', () => {
     expect(getEnchantmentDesc('ench_amplify_adjacent')).toContain('相邻')
-    expect(getEnchantmentDesc('ench_pioneer')).toContain('第一个')
+    expect(getEnchantmentDesc('ench_trans_base')).toContain('基数')
   })
 
   it('无效 ID 返回空串', () => {

@@ -1,12 +1,12 @@
 // ============================================
 // 打字肉鸽 - 附魔数据
 // ============================================
-// Story 19.6: 33 个附魔（24 空间型 + 5 变性型 + 4 独立型）
+// Story 19.6: 29 个附魔（24 空间型 + 5 变性型）
 
 import type { EnchantmentDefinition } from '../core/types';
 import { PositionRelation } from './keyboardTopology';
 
-// === 33 个附魔数据 ===
+// === 29 个附魔数据 ===
 export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
   // === 空间型 — 增幅（6 个）"我因邻居变强" ===
   ench_amplify_adjacent:   { id: 'ench_amplify_adjacent',   name: '吸附', icon: '🧲',    category: 'spatial', spatialType: 'amplify', positionRelation: PositionRelation.Adjacent,   effectValue: 0.20, desc: '相邻每有一个技能，自身 +20%' },
@@ -47,11 +47,6 @@ export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
   ench_trans_time:       { id: 'ench_trans_time',       name: '附时', icon: '⏳✨', category: 'transmutation', effectValue: 0.20, extraResource: 'time',       desc: '触发时额外产出 20% 时间' },
   ench_trans_shield:     { id: 'ench_trans_shield',     name: '附甲', icon: '🛡️✨', category: 'transmutation', effectValue: 0.15, extraResource: 'shield',     desc: '触发时额外产出 15% 护盾' },
 
-  // === 独立型（4 个）"不依赖位置关系" ===
-  ench_pioneer: { id: 'ench_pioneer', name: '先手', icon: '🏁', category: 'independent', effectValue: 2.0, desc: '本词第一个触发时效果 ×2' },
-  ench_finale:  { id: 'ench_finale',  name: '终幕', icon: '🎆', category: 'independent', effectValue: 3.0, desc: '本词最后一个绑定键触发时效果 ×3' },
-  ench_decay:   { id: 'ench_decay',   name: '一刀', icon: '🔪', category: 'independent', effectValue: 2.5, desc: '首次触发 ×2.5，后续每次 ×0.7 递减' },
-  ench_thirst:  { id: 'ench_thirst',  name: '渴血', icon: '🏜️', category: 'independent', effectValue: 2.0, desc: '对应资源越低效果越强（0% 时 ×3）' },
 } as const;
 
 // === 工具函数 ===

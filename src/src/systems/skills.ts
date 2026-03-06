@@ -74,67 +74,7 @@ function getResourceLabel(r: ResourceType): string {
   }
 }
 
-// === 附魔：独立型倍率计算 ===
-function getIndependentMultiplier(ench: typeof ENCHANTMENTS[string], skillId: string): number {
-  switch (ench.id) {
-    case 'ench_pioneer':
-      return synergy.wordSkillCount === 0 ? ench.effectValue : 1;
-    case 'ench_finale': {
-      // 当前字母是本词最后一个绑定键位时 ×3
-      const word = state.player.word.toLowerCase();
-      if (!word) return 1;
-      // 找到最后一个绑定了技能的字母索引
-      let lastBoundIdx = -1;
-      for (let i = word.length - 1; i >= 0; i--) {
-        if (state.player.bindings.has(word[i])) {
-          lastBoundIdx = i;
-          break;
-        }
-      }
-      return state.player.index === lastBoundIdx ? ench.effectValue : 1;
-    }
-    case 'ench_decay': {
-      const count = synergy.decayCounters.get(skillId) || 0;
-      // NOTE: counter increment moved to triggerProducer/triggerConverter (after calling getEnchantmentMultiplier)
-      return ench.effectValue * Math.pow(0.7, count); // 2.5 × 0.7^count
-    }
-    case 'ench_thirst': {
-      // 对应资源越低越强：×(1 + 2 × (1 - ratio))，0% 时 ×3
-      const prod = PRODUCERS[skillId];
-      const conv = CONVERTERS[skillId];
-      const amp = AMPLIFIERS[skillId];
-      const resType = prod?.resource || conv?.target || amp?.resource;
-      if (!resType) return 1;
-      // 计算资源比例
-      let ratio = 1;
-      if (resType === 'time') {
-        ratio = state.timeMax > 0 ? state.time / state.timeMax : 1;
-      } else if (resType === 'multiplier') {
-        ratio = Math.min(state.multiplier / 5, 1); // 5 倍率为 100%
-      } else if (resType === 'shield') {
-        ratio = Math.min(state.resources.shield / 10, 1); // 10 盾为 100%
-      } else {
-        // base/score: 以目标分为基准
-        ratio = state.targetScore > 0 ? Math.min(state.score / state.targetScore, 1) : 1;
-      }
-      return 1 + 2 * (1 - Math.max(0, Math.min(1, ratio)));
-    }
-    default:
-      return 1;
-  }
-}
-
-// === 附魔：ench_decay 计数器推进（从 getter 分离的副作用） ===
-function advanceDecayCounter(skillId: string): void {
-  const enchId = state.player.enchantedSkills?.get(skillId);
-  if (!enchId) return;
-  const ench = ENCHANTMENTS[enchId];
-  if (!ench || ench.id !== 'ench_decay') return;
-  const count = synergy.decayCounters.get(skillId) || 0;
-  synergy.decayCounters.set(skillId, count + 1);
-}
-
-// === 附魔：计算增幅/排斥/独立倍率 ===
+// === 附魔：计算增幅/排斥倍率 ===
 export function getEnchantmentMultiplier(skillId: string, triggerKey?: string): number {
   const enchId = state.player.enchantedSkills?.get(skillId);
   if (!enchId) return 1;
@@ -150,9 +90,6 @@ export function getEnchantmentMultiplier(skillId: string, triggerKey?: string): 
     const related = getKeysWithRelation(triggerKey, ench.positionRelation);
     const emptyCount = related.filter(k => !state.player.bindings.has(k)).length;
     return 1 + emptyCount * ench.effectValue;
-  }
-  if (ench.category === 'independent') {
-    return getIndependentMultiplier(ench, skillId);
   }
   return 1;
 }
@@ -211,9 +148,6 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   const ampBonus = getAmplifierBonus(producerId, triggerKey, prod.resource);
   const amplifiedBase = (baseValue + ampBonus.addBonus) * ampBonus.mulBonus;
   const value = prod.operator === 'add' ? amplifiedBase * enchMult : amplifiedBase;
-
-  // ench_decay: increment counter AFTER reading multiplier (side-effect-free getter)
-  advanceDecayCounter(producerId);
 
   // 视觉/音效反馈
   showTriggerPopup(producerId);
@@ -300,9 +234,6 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   const enchMult = getEnchantmentMultiplier(converterId, triggerKey);
   const ampBonus = getAmplifierBonus(converterId, triggerKey, conv.target);
   const amplifiedK = (k + ampBonus.addBonus) * ampBonus.mulBonus;
-
-  // ench_decay: increment counter AFTER reading multiplier (side-effect-free getter)
-  advanceDecayCounter(converterId);
 
   // 视觉/音效反馈
   showTriggerPopup(converterId);
@@ -728,9 +659,6 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
   const current = state.amplifierStacks.get(ampId) || 0;
   const newStacks = current + stackGain;
   state.amplifierStacks.set(ampId, newStacks);
-
-  // ench_decay counter（先读倍率，再推进计数器）
-  advanceDecayCounter(ampId);
 
   // 统计
   synergy.wordSkillCount++;
