@@ -124,7 +124,7 @@ export interface GameState {
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
   sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
   converterPool: string[];             // 本局转化者池（40 抽 20）
-  connectorPool: string[];             // 本局连接者池（36 抽 18）
+  connectorPool: string[];             // 本局连接者池（42 抽 21）
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
   seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者 tooltip 跟踪）
   battleStats: BattleStats | null;                   // 上一战的统计数据（商店中展示）

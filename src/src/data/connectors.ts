@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 连接者技能数据
 // ============================================
-// Story 19.5: 36 个连接者（6 复制型 + 30 资源触发型）
+// Story 19.5 + 21.6: 42 个连接者（6 复制型 + 36 资源触发型）
 
 import type { ConnectorDefinition } from '../core/types';
 import { PositionRelation } from './keyboardTopology';
@@ -26,7 +26,7 @@ const RELATION_ICONS: Record<string, string> = {
   [PositionRelation.Symmetric]: '🪞',
 };
 
-// === 36 个连接者数据 ===
+// === 42 个连接者数据 ===
 export const CONNECTORS: Record<string, ConnectorDefinition> = {
   // === 复制型（6 个）— 按键触发，随机复制位置关系内一个技能 ===
   conn_copy_adjacent:   { id: 'conn_copy_adjacent',   name: '映射', icon: '🔗', triggerType: 'copy', positionRelation: PositionRelation.Adjacent,   desc: '按键时随机触发1个相邻技能' },
@@ -75,6 +75,14 @@ export const CONNECTORS: Record<string, ConnectorDefinition> = {
   conn_shield_sameHand:   { id: 'conn_shield_sameHand',   name: '方阵', icon: '🛡️🤝', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameHand,   resource: 'shield', desc: '同手护盾↑→随机触发1个同手非护盾技能' },
   conn_shield_sameFinger: { id: 'conn_shield_sameFinger', name: '坚守', icon: '🛡️👆', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameFinger, resource: 'shield', desc: '同指护盾↑→随机触发1个同指非护盾技能' },
   conn_shield_symmetric:  { id: 'conn_shield_symmetric',  name: '镜盾', icon: '🛡️🪞', triggerType: 'resourceTrigger', positionRelation: PositionRelation.Symmetric,  resource: 'shield', desc: '对称位护盾↑→随机触发1个对称位非护盾技能' },
+
+  // === 资源触发型：金币↑（6 个）===
+  conn_gold_adjacent:   { id: 'conn_gold_adjacent',   name: '交易', icon: '💰🔗', triggerType: 'resourceTrigger', positionRelation: PositionRelation.Adjacent,   resource: 'gold', desc: '相邻金币↑→随机触发1个相邻非金币技能' },
+  conn_gold_sameRow:    { id: 'conn_gold_sameRow',    name: '汇款', icon: '💰📡', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameRow,    resource: 'gold', desc: '同行金币↑→随机触发1个同行非金币技能' },
+  conn_gold_sameColumn: { id: 'conn_gold_sameColumn', name: '金脉', icon: '💰📌', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameColumn, resource: 'gold', desc: '同列金币↑→随机触发1个同列非金币技能' },
+  conn_gold_sameHand:   { id: 'conn_gold_sameHand',   name: '铸币', icon: '💰🤝', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameHand,   resource: 'gold', desc: '同手金币↑→随机触发1个同手非金币技能' },
+  conn_gold_sameFinger: { id: 'conn_gold_sameFinger', name: '点金', icon: '💰👆', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameFinger, resource: 'gold', desc: '同指金币↑→随机触发1个同指非金币技能' },
+  conn_gold_symmetric:  { id: 'conn_gold_symmetric',  name: '镜财', icon: '💰🪞', triggerType: 'resourceTrigger', positionRelation: PositionRelation.Symmetric,  resource: 'gold', desc: '对称位金币↑→随机触发1个对称位非金币技能' },
 } as const;
 
 // === 工具函数 ===
@@ -84,8 +92,8 @@ export function isConnector(id: string): boolean {
   return id in CONNECTORS;
 }
 
-/** 每局 run 从 36 个连接者中随机抽 18 个 ID */
-export function drawConnectorPool(count = 18): string[] {
+/** 每局 run 从 42 个连接者中随机抽 21 个 ID */
+export function drawConnectorPool(count = 21): string[] {
   const all = Object.keys(CONNECTORS);
   const shuffled = [...all];
   for (let i = shuffled.length - 1; i > 0; i--) {
