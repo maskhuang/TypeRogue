@@ -2196,6 +2196,104 @@ body {
     color: #4ecdc4;
 }
 
+/* === 牌包卡片样式 (22.3) === */
+.reward-type.pack-type {
+    background: rgba(168, 130, 255, 0.2);
+    color: #a882ff;
+}
+
+.pack-card .pack-preview {
+    font-size: 10px;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+
+.reward-card.pack-card.expanded {
+    flex-wrap: wrap;
+    border-color: #a882ff;
+    box-shadow: 0 0 10px rgba(168, 130, 255, 0.2);
+}
+
+.pack-expanded {
+    width: 100%;
+    padding: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow: hidden;
+    animation: pack-slide-in 0.2s ease-out;
+}
+
+@keyframes pack-slide-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pack-word-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+}
+
+.pack-word-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #a882ff;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.pack-word-row .word-text {
+    flex: 1;
+    font-size: 13px;
+    color: #ddd;
+    letter-spacing: 1px;
+}
+
+.pack-word-len {
+    font-size: 10px;
+    color: #888;
+    flex-shrink: 0;
+}
+
+.pack-freq-hint {
+    font-size: 10px;
+    color: #a882ff;
+    flex-shrink: 0;
+}
+
+.pack-buy-btn {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    background: linear-gradient(145deg, #2a1a4e, #3a2a5e);
+    color: #a882ff;
+    border: 1px solid #a882ff;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.pack-buy-btn:hover:not(:disabled) {
+    background: linear-gradient(145deg, #3a2a5e, #4a3a6e);
+    box-shadow: 0 0 8px rgba(168, 130, 255, 0.3);
+}
+
+.pack-buy-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: #555;
+    color: #555;
+}
+
 .inv-sell {
     font-size: 9px;
     color: #ff6b6b;

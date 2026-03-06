@@ -13,12 +13,13 @@ import { CONNECTORS, isConnector } from '../data/connectors';
 import { ENCHANTMENTS, drawEnchantmentPair } from '../data/enchantments';
 import { getKeysWithRelation } from '../data/keyboardTopology';
 import type { PositionRelation } from '../data/keyboardTopology';
-import { calculateDeckStats, generateShopWords } from '../data/words';
+import { calculateDeckStats } from '../data/words';
+import { generateWordPacks, getConditionMeta } from '../data/wordPacks';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { juiceUp } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback, calculateRating } from './battle';
-import type { ShopItem, ResourceType } from '../core/types';
+import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
 import { getNextBattleNode, isRestNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
@@ -205,33 +206,35 @@ function generateShopItems(count: number): ShopItem[] {
     }
   }
 
-  // 构建词语池
-  const wordPool: ShopItem[] = [];
-  const shopWords = generateShopWords(state.player.wordDeck);
-  for (const sw of shopWords) {
-    wordPool.push({
+  // 构建牌包池（替代词语池）
+  const packPool: ShopItem[] = [];
+  const boundKeys = [...state.player.bindings.keys()];
+  const playerFreqs = calculateLetterFrequency(state.player.wordDeck);
+  const packs = generateWordPacks(state.player.wordDeck, playerFreqs, boundKeys, 8);
+  for (const pack of packs) {
+    packPool.push({
       id: `si-${nextId++}`,
-      type: 'word',
-      word: sw.word,
-      cost: getAdjustedPrice(sw.cost),
+      type: 'pack',
+      pack,
+      selectedWords: [true, true, true],
+      cost: getAdjustedPrice(pack.cost),
       isUpgrade: false,
       locked: false,
-      highlight: sw.highlight,
     });
   }
 
-  // 保底：≥1 技能 + ≥1 词语（如果有的话）
-  if (count >= 2 && skillPool.length > 0 && wordPool.length > 0) {
+  // 保底：≥1 技能 + ≥1 牌包（如果有的话）
+  if (count >= 2 && skillPool.length > 0 && packPool.length > 0) {
     items.push(skillPool.splice(0, 1)[0]);
-    items.push(wordPool.splice(0, 1)[0]);
-  } else if (skillPool.length > 0 && wordPool.length === 0) {
+    items.push(packPool.splice(0, 1)[0]);
+  } else if (skillPool.length > 0 && packPool.length === 0) {
     items.push(skillPool.splice(0, 1)[0]);
-  } else if (wordPool.length > 0) {
-    items.push(wordPool.splice(0, 1)[0]);
+  } else if (packPool.length > 0) {
+    items.push(packPool.splice(0, 1)[0]);
   }
 
   // 合并剩余池，随机填满
-  const remaining = shuffleArray([...skillPool, ...wordPool]);
+  const remaining = shuffleArray([...skillPool, ...packPool]);
   while (items.length < count && remaining.length > 0) {
     items.push(remaining.shift()!);
   }
@@ -311,8 +314,24 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
       <div class="reward-type ${school.cssClass}">${typeLabel}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
+  } else if (item.type === 'pack' && item.pack) {
+    // Pack item
+    const pack = item.pack;
+    const preview = pack.words.join(', ');
+
+    card.classList.add('pack-card');
+    card.innerHTML = `
+      <div class="reward-icon">${getPackIcon(pack.condition.type)}</div>
+      <div class="reward-info">
+        <div class="reward-name">${pack.name}</div>
+        <div class="reward-desc pack-preview">${pack.desc} · ${preview}</div>
+      </div>
+      <div class="reward-cost">💰${item.cost}</div>
+      <div class="reward-type pack-type">词包</div>
+      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
+    `;
   } else {
-    // Word item
+    // Word item (legacy)
     const highlightedWord = item.word!.split('').map(c =>
       [...state.player.bindings.keys()].includes(c.toLowerCase())
         ? `<span class="bound-letter">${c}</span>` : c
@@ -344,12 +363,153 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
   // 3D 卡牌悬停效果
   init3DCardEffect(card);
 
-  card.onclick = () => {
-    juiceUp(card, 0.2, 3);
-    purchaseShopItem(index);
-  };
+  if (item.type === 'pack') {
+    // 牌包点击展开/折叠，非直接购买
+    card.onclick = () => {
+      juiceUp(card, 0.2, 3);
+      togglePackExpand(card, item, index);
+    };
+  } else {
+    card.onclick = () => {
+      juiceUp(card, 0.2, 3);
+      purchaseShopItem(index);
+    };
+  }
 
   el.rewardCards.appendChild(card);
+}
+
+// === 牌包辅助函数 ===
+
+function getPackIcon(condType: PackConditionType): string {
+  const meta = getConditionMeta({ type: condType });
+  return meta.icon;
+}
+
+function highlightWord(word: string, boundKeySet: Set<string>): string {
+  return word.split('').map(c =>
+    boundKeySet.has(c.toLowerCase())
+      ? `<span class="bound-letter">${c}</span>` : c
+  ).join('');
+}
+
+function getFreqHints(word: string): string {
+  const boundKeys = new Set([...state.player.bindings.keys()]);
+  const counts = new Map<string, number>();
+  for (const c of word.toLowerCase()) {
+    if (boundKeys.has(c)) counts.set(c, (counts.get(c) || 0) + 1);
+  }
+  const hints: string[] = [];
+  counts.forEach((n, k) => hints.push(`+${n} ${k.toUpperCase()}`));
+  return hints.join(' ');
+}
+
+function togglePackExpand(card: HTMLElement, item: ShopItem, index: number): void {
+  const existing = card.querySelector('.pack-expanded');
+  if (existing) {
+    existing.remove();
+    card.classList.remove('expanded');
+    return;
+  }
+
+  // 折叠其他已展开的牌包
+  document.querySelectorAll('.reward-card.expanded').forEach(c => {
+    c.querySelector('.pack-expanded')?.remove();
+    c.classList.remove('expanded');
+  });
+
+  const pack = item.pack!;
+  const sel = item.selectedWords!;
+  card.classList.add('expanded');
+  const boundKeySet = new Set([...state.player.bindings.keys()]);
+
+  const expandDiv = document.createElement('div');
+  expandDiv.className = 'pack-expanded';
+
+  // 渲染每个词行
+  pack.words.forEach((word, wi) => {
+    const row = document.createElement('div');
+    row.className = 'pack-word-row';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'pack-word-checkbox';
+    cb.checked = sel[wi];
+    cb.onclick = (e) => {
+      e.stopPropagation();
+      sel[wi] = cb.checked;
+      updatePackBuyBtn(expandDiv, item);
+    };
+
+    const wordSpan = document.createElement('span');
+    wordSpan.className = 'word-text';
+    wordSpan.innerHTML = highlightWord(word, boundKeySet);
+
+    const lenSpan = document.createElement('span');
+    lenSpan.className = 'pack-word-len';
+    lenSpan.textContent = `${word.length}字母`;
+
+    const freqSpan = document.createElement('span');
+    freqSpan.className = 'pack-freq-hint';
+    freqSpan.textContent = getFreqHints(word);
+
+    row.append(cb, wordSpan, lenSpan, freqSpan);
+    expandDiv.appendChild(row);
+  });
+
+  // 购买按钮
+  const buyBtn = document.createElement('button');
+  buyBtn.className = 'pack-buy-btn';
+  const selectedCount = sel.filter(Boolean).length;
+  buyBtn.textContent = `确认购买 (${selectedCount}词) 💰${item.cost}`;
+  buyBtn.disabled = selectedCount === 0;
+  if (state.gold < item.cost) buyBtn.disabled = true;
+
+  buyBtn.onclick = (e) => {
+    e.stopPropagation();
+    purchasePackItem(index);
+  };
+  expandDiv.appendChild(buyBtn);
+
+  card.appendChild(expandDiv);
+}
+
+function updatePackBuyBtn(expandDiv: HTMLElement, item: ShopItem): void {
+  const btn = expandDiv.querySelector('.pack-buy-btn') as HTMLButtonElement;
+  if (!btn) return;
+  const selectedCount = item.selectedWords!.filter(Boolean).length;
+  btn.textContent = `确认购买 (${selectedCount}词) 💰${item.cost}`;
+  btn.disabled = selectedCount === 0 || state.gold < item.cost;
+}
+
+function purchasePackItem(index: number): void {
+  const item = state.shop.items[index];
+  if (!item || item.type !== 'pack' || !item.pack) return;
+
+  const selectedCount = item.selectedWords!.filter(Boolean).length;
+  if (selectedCount === 0) return;
+  if (state.gold < item.cost) {
+    showFeedback('金币不足!', '#ff6b6b');
+    return;
+  }
+
+  state.gold -= item.cost;
+  updateGoldDisplay();
+  playSound('skill');
+
+  // 将勾选的词加入词库
+  const addedWords: string[] = [];
+  item.pack.words.forEach((word, i) => {
+    if (item.selectedWords![i]) {
+      state.player.wordDeck.push(word);
+      addedWords.push(word);
+    }
+  });
+
+  showFeedback(`+${addedWords.length}词`, '#4ecdc4');
+  state.shop.items.splice(index, 1);
+  renderUnifiedShop();
+  renderBuildManager();
 }
 
 // === 核心购买逻辑（共享） ===
@@ -357,6 +517,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
 function executePurchase(index: number): { skillId: string | null; isNew: boolean } | null {
   const item = state.shop.items[index];
   if (!item) return null;
+  if (item.type === 'pack') return null; // pack 走 purchasePackItem，不经此函数
 
   if (state.gold < item.cost) {
     showFeedback('金币不足!', '#ff6b6b');
