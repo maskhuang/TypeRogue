@@ -1,6 +1,6 @@
 # Story 23.4: 增幅效果应用
 
-Status: review
+Status: done
 
 ## Story
 
