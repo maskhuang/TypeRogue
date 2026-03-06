@@ -83,6 +83,9 @@ export interface RunStateData {
   /** 成长附魔累积值（skillId → 成长百分比），跨关保持，新 Run 重置 */
   growthValues: Map<string, number>
 
+  /** 精通附魔触发计数（skillId → 累计触发次数），跨关保持，新 Run 重置 */
+  masteryCounters: Map<string, number>
+
   /** 吞噬附魔获得的图标（skillId → 图标列表），跨关保持，新 Run 重置 */
   devourIcons: Map<string, string[]>
 }
@@ -126,6 +129,7 @@ export class RunState {
       bossModifierPool: [],
       bossModifierAssignment: [],
       growthValues: new Map(),
+      masteryCounters: new Map(),
       devourIcons: new Map(),
     }
   }
@@ -450,6 +454,7 @@ export class RunState {
       bossModifierPool: [...this.data.bossModifierPool],
       bossModifierAssignment: [...this.data.bossModifierAssignment],
       growthValues: Object.fromEntries(this.data.growthValues),
+      masteryCounters: Object.fromEntries(this.data.masteryCounters),
       devourIcons: Object.fromEntries(this.data.devourIcons),
     }
   }
@@ -506,6 +511,12 @@ export class RunState {
     const growthEntries = (parsed as any).growthValues || {}
     Object.entries(growthEntries).forEach(([skillId, value]) => {
       runState.data.growthValues.set(skillId, value as number)
+    })
+
+    // 恢复精通计数（兼容旧存档）
+    const masteryEntries = (parsed as any).masteryCounters || {}
+    Object.entries(masteryEntries).forEach(([skillId, count]) => {
+      runState.data.masteryCounters.set(skillId, count as number)
     })
 
     // 恢复吞噬图标（兼容旧存档）

@@ -574,6 +574,8 @@ body {
 .key-slot .key-letter { font-size: 10px; color: #666; font-weight: bold; }
 .key-slot.has-skill .key-letter { color: #4ecdc4; }
 .key-slot .key-skill { font-size: 14px; }
+.key-slot .devour-icons { font-size: 8px; opacity: 0.8; }
+.key-slot .growth-badge { font-size: 8px; color: #ffe66d; display: block; line-height: 1; margin-top: 1px; }
 
 #skill-inventory { padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; }
 .inventory-label { font-size: 10px; color: #555; margin-bottom: 8px; text-align: center; }
@@ -1963,6 +1965,13 @@ body {
     border-color: #333;
     transform: none;
     box-shadow: none;
+}
+
+.enchantment-category-tag {
+    font-size: 10px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
 }
 
 .enchantment-branch-icon {

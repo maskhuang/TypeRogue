@@ -672,6 +672,8 @@ export async function startLevel(): Promise<void> {
 
   // 清空增幅者叠层（每关重置）
   state.amplifierStacks.clear();
+  // 清空吞噬附魔触发计数（每关重置）
+  state.devourCounters.clear();
 
   synergy.perfectStreak = 0;
   synergy.skillMultBonus = 0;

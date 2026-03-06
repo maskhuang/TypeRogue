@@ -68,8 +68,8 @@ export interface AmplifierState {
 }
 
 // === 附魔系统 ===
-export type EnchantmentCategory = 'spatial' | 'transmutation';
-export type SpatialEffectType = 'amplify' | 'splash' | 'resonance' | 'repulsion';
+export type EnchantmentCategory = 'spatial' | 'transmutation' | 'independent';
+export type SpatialEffectType = 'growth' | 'splash' | 'resonance' | 'repulsion' | 'devour';
 
 export interface EnchantmentDefinition {
   id: string;
@@ -146,7 +146,9 @@ export interface GameState {
   connectorPool: string[];             // 本局连接者池（42 抽 21）
   amplifierPool: string[];             // 本局增幅者池
   amplifierStacks: Map<string, number>; // 增幅者叠层（key=ampId, value=层数），关卡结算时清零
+  devourCounters: Map<string, number>;  // 吞噬附魔战斗内触发计数（skillId → 计数），每关重置
   growthValues: Map<string, number>;    // 成长附魔累积值（skillId → 成长百分比），跨关保持，新 Run 重置
+  masteryCounters: Map<string, number>; // 精通附魔触发计数（skillId → 累计触发次数），跨关保持，新 Run 重置
   devourIcons: Map<string, string[]>;   // 吞噬附魔获得的图标（skillId → 图标列表），跨关保持，新 Run 重置
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
   seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者/增幅者 tooltip 跟踪）

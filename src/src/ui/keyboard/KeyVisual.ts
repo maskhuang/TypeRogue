@@ -22,6 +22,7 @@ export class KeyVisual extends Container {
   private keyLabel: Text
   private scoreLabel: Text | null = null
   private stackLabel: Text | null = null
+  private growthLabel: Text | null = null
   private skillIcon: Sprite | null = null
   private keyName: string
 
@@ -278,6 +279,34 @@ export class KeyVisual extends Container {
       this.stackLabel.visible = true
     } else if (this.stackLabel) {
       this.stackLabel.visible = false
+    }
+  }
+
+  /**
+   * 设置成长值百分比显示
+   * @param value 成长值（0.45 = 45%），0 时隐藏
+   */
+  setGrowthLabel(value: number): void {
+    if (value > 0) {
+      if (!this.growthLabel) {
+        this.growthLabel = new Text({
+          text: '',
+          style: new TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 8,
+            fontWeight: 'bold',
+            fill: 0xffe66d,
+          })
+        })
+        this.growthLabel.anchor.set(1, 1)
+        this.growthLabel.x = KeyVisual.KEY_SIZE - 3
+        this.growthLabel.y = KeyVisual.KEY_SIZE - 3
+        this.addChild(this.growthLabel)
+      }
+      this.growthLabel.text = `+${Math.round(value * 100)}%`
+      this.growthLabel.visible = true
+    } else if (this.growthLabel) {
+      this.growthLabel.visible = false
     }
   }
 

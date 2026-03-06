@@ -210,6 +210,9 @@ export class KeyboardVisualizer extends Container {
       if (data.amplifierStacks != null) {
         keyVisual.setStackCount(data.amplifierStacks)
       }
+      if (data.growthValue != null) {
+        keyVisual.setGrowthLabel(data.growthValue)
+      }
     }
   }
 

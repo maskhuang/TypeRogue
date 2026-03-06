@@ -225,13 +225,13 @@ development_status:
   epic-23-retrospective: optional
 
   # Epic 24: 成长附魔与附魔重构
-  epic-24: in-progress
+  epic-24: done
   24-1-growth-value-state: done
-  24-2-remove-amplify-add-growth-data: backlog
-  24-3-spatial-growth-trigger-logic: backlog
-  24-4-mastery-enchantment-logic: backlog
-  24-5-devour-enchantment-logic: backlog
-  24-6-enchantment-ui-adapt: backlog
+  24-2-remove-amplify-add-growth-data: done
+  24-3-spatial-growth-trigger-logic: done
+  24-4-mastery-enchantment-logic: done
+  24-5-devour-enchantment-logic: done
+  24-6-enchantment-ui-adapt: done
   epic-24-retrospective: optional
 
   # Epic 25: 无尽模式

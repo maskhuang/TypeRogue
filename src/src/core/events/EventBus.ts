@@ -19,7 +19,7 @@ export interface GameEvents {
   'word:new': { word: string; length: number }
 
   // 技能事件
-  'skill:triggered': { key: string; skillId: string; type: 'passive' | 'active'; amplifierStacks?: number }
+  'skill:triggered': { key: string; skillId: string; type: 'passive' | 'active'; amplifierStacks?: number; growthValue?: number }
   'skill:upgraded': { skillId: string; newLevel: number }
 
   // 效果队列事件

@@ -24,6 +24,7 @@ import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
 import { getNextBattleNode, isRestNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
+import { getIconCount } from './skills';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { dragManager } from './dragManager';
@@ -53,6 +54,31 @@ function getSkillCategory(skillId: string): string | null {
   if (isConnector(skillId)) return 'connector';
   if (isAmplifier(skillId)) return 'amplifier';
   return null;
+}
+
+// === 附魔状态信息（tooltip 用） ===
+export function buildEnchantmentInfo(skillId: string): string | undefined {
+  const enchId = state.player.enchantedSkills.get(skillId);
+  if (!enchId) return undefined;
+  const ench = ENCHANTMENTS[enchId];
+  if (!ench) return undefined;
+
+  if (ench.spatialType === 'growth') {
+    const growth = state.growthValues.get(skillId) || 0;
+    return `${ench.icon} ${ench.name}: 成长 +${Math.round(growth * 100)}%`;
+  }
+  if (ench.id === 'ench_mastery') {
+    const growth = state.growthValues.get(skillId) || 0;
+    const count = state.masteryCounters.get(skillId) || 0;
+    return `${ench.icon} ${ench.name}: ${count % 10}/10 → 成长 +${Math.round(growth * 100)}%`;
+  }
+  if (ench.spatialType === 'devour') {
+    const devoured = state.devourIcons.get(skillId);
+    const icons = devoured && devoured.length > 0 ? devoured.join('') : '';
+    const count = getIconCount(skillId);
+    return `${ench.icon} ${ench.name}: ${icons} (图标×${count})`;
+  }
+  return `${ench.icon} ${ench.name}: ${ench.desc}`;
 }
 
 // === 打开商店 ===
@@ -663,7 +689,9 @@ function renderEnchantmentModal(skillId: string, onClose?: () => void): void {
   const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || AMPLIFIERS[skillId];
   if (!sk) return;
 
-  const [enchA, enchB] = drawEnchantmentPair();
+  // 增幅者：空间附魔只刷与自身范围匹配的
+  const skillRelation = isAmplifier(skillId) ? AMPLIFIERS[skillId].positionRelation : undefined;
+  const [enchA, enchB] = drawEnchantmentPair(skillRelation);
   const enchantments = [ENCHANTMENTS[enchA], ENCHANTMENTS[enchB]];
 
   titleEl.textContent = `✨ 附魔选择 — ${sk.name} (免费!) ✨`;
@@ -673,7 +701,14 @@ function renderEnchantmentModal(skillId: string, onClose?: () => void): void {
     if (!ench) return;
     const card = document.createElement('div');
     card.className = 'enchantment-branch';
+    const catLabel = ench.category === 'spatial' ? '🌐 空间'
+      : ench.category === 'transmutation' ? '⚗️ 变性'
+      : '⭐ 独立';
+    const catColor = ench.category === 'spatial' ? '#4ecdc4'
+      : ench.category === 'transmutation' ? '#ffe66d'
+      : '#ff6b6b';
     card.innerHTML = `
+      <div class="enchantment-category-tag" style="color:${catColor}">${catLabel}</div>
       <div class="enchantment-branch-icon">${ench.icon}</div>
       <div class="enchantment-branch-name">${ench.name}</div>
       <div class="enchantment-branch-desc">${ench.desc}</div>
@@ -851,7 +886,11 @@ export function renderBuildManager(): void {
         const skData = state.player.skills.get(skillId);
         slot.dataset.sellPrice = String(Math.floor((skData?.purchasePrice || 15) / 2));
         slot.classList.add(school.cssClass);
-        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${display.icon}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
+        const devoured = state.devourIcons.get(skillId);
+        const devourPrefix = devoured && devoured.length > 0 ? `<span class="devour-icons">${devoured.join('')}</span>` : '';
+        const growthVal = state.growthValues.get(skillId) || 0;
+        const growthBadge = growthVal > 0 ? `<span class="growth-badge">+${Math.round(growthVal * 100)}%</span>` : '';
+        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${devourPrefix}${display.icon}</span>${growthBadge}${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       } else {
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       }
@@ -891,6 +930,8 @@ export function renderBuildManager(): void {
             }
             tooltipData.skill.affectedSkills = affected;
           }
+          // 附魔状态信息
+          tooltipData.skill.enchantmentInfo = buildEnchantmentInfo(skillId);
         }
         highlightSkillRange(k);
         const avoidRect = getRangeHighlightRect(slot);
@@ -967,6 +1008,8 @@ export function renderBuildManager(): void {
         }
         tooltipData.skill!.affectedSkills = affected;
       }
+      // 附魔状态信息
+      tooltipData.skill!.enchantmentInfo = buildEnchantmentInfo(skillId);
       if (boundKey) {
         tooltipData.letter = boundKey.toUpperCase();
         highlightSkillRange(boundKey);

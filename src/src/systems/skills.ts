@@ -74,24 +74,163 @@ function getResourceLabel(r: ResourceType): string {
   }
 }
 
-// === 附魔：计算增幅/排斥倍率 ===
+// === 附魔：计算成长/排斥倍率 ===
 export function getEnchantmentMultiplier(skillId: string, triggerKey?: string): number {
   const enchId = state.player.enchantedSkills?.get(skillId);
   if (!enchId) return 1;
   const ench = ENCHANTMENTS[enchId];
   if (!ench) return 1;
 
-  if (ench.spatialType === 'amplify' && triggerKey && ench.positionRelation) {
-    const related = getKeysWithRelation(triggerKey, ench.positionRelation);
-    const skillCount = related.filter(k => state.player.bindings.has(k)).length;
-    return 1 + skillCount * ench.effectValue;
+  // 成长型 / 精通型：返回累积的成长值作为倍率（共享 growthValues 存储）
+  if (ench.spatialType === 'growth' || ench.id === 'ench_mastery') {
+    const accumulated = state.growthValues.get(skillId) || 0;
+    return 1 + accumulated;
   }
+
+  // 吞噬型：每个图标 +20%
+  if (ench.spatialType === 'devour') {
+    return 1 + getIconCount(skillId) * ench.effectValue;
+  }
+
   if (ench.spatialType === 'repulsion' && triggerKey && ench.positionRelation) {
     const related = getKeysWithRelation(triggerKey, ench.positionRelation);
     const emptyCount = related.filter(k => !state.player.bindings.has(k)).length;
     return 1 + emptyCount * ench.effectValue;
   }
   return 1;
+}
+
+// === 附魔：成长型 — 邻居触发时累积成长值 ===
+let _growthActive = false;
+
+export function checkGrowthAccumulation(triggerKey: string): void {
+  if (!triggerKey || _growthActive) return;
+  _growthActive = true;
+
+  try {
+    for (const [skillId, enchId] of state.player.enchantedSkills) {
+      const ench = ENCHANTMENTS[enchId];
+      if (!ench || ench.spatialType !== 'growth' || !ench.positionRelation) continue;
+
+      // 反查该技能绑定的键位
+      for (const [boundKey, boundSkillId] of state.player.bindings) {
+        if (boundSkillId !== skillId) continue;
+        if (triggerKey === boundKey) continue; // 排除自身触发
+        if (!hasRelation(triggerKey, boundKey, ench.positionRelation)) continue;
+
+        const current = state.growthValues.get(skillId) || 0;
+        const newVal = current + ench.effectValue;
+        state.growthValues.set(skillId, newVal);
+        eventBus.emit('skill:triggered', { key: boundKey, skillId, type: 'passive', growthValue: newVal });
+      }
+    }
+  } finally {
+    _growthActive = false;
+  }
+}
+
+// === 附魔：精通型 — 自身触发时累积计数，每 10 次永久成长 ===
+export function checkMasteryAccumulation(skillId: string): void {
+  const enchId = state.player.enchantedSkills?.get(skillId);
+  if (enchId !== 'ench_mastery') return;
+
+  const ench = ENCHANTMENTS[enchId];
+  if (!ench) return;
+
+  const current = state.masteryCounters.get(skillId) || 0;
+  const newCount = current + 1;
+  state.masteryCounters.set(skillId, newCount);
+
+  // 每 10 次触发 → 永久成长 +8%
+  if (newCount % 10 === 0) {
+    const currentGrowth = state.growthValues.get(skillId) || 0;
+    const newVal = currentGrowth + ench.effectValue;
+    state.growthValues.set(skillId, newVal);
+    // 通知键盘可视化更新成长显示
+    const boundKey = [...state.player.bindings.entries()].find(([, id]) => id === skillId)?.[0];
+    if (boundKey) {
+      eventBus.emit('skill:triggered', { key: boundKey, skillId, type: 'passive', growthValue: newVal });
+    }
+  }
+}
+
+// === 附魔：吞噬型 — 图标计数 + 战斗内累积触发 + 吞噬弱邻居 ===
+const DEVOUR_TRIGGER_THRESHOLD = 5;
+
+export function getIconCount(skillId: string): number {
+  let count = 1; // 技能本身 = 1 图标
+  if (state.player.enchantedSkills.has(skillId)) count += 1; // 附魔 = +1
+  const devoured = state.devourIcons.get(skillId);
+  if (devoured) count += devoured.length; // 每吞噬 = +1
+  return count;
+}
+
+export function checkDevourAccumulation(skillId: string, triggerKey?: string): void {
+  const enchId = state.player.enchantedSkills?.get(skillId);
+  if (!enchId) return;
+  const ench = ENCHANTMENTS[enchId];
+  if (!ench || ench.spatialType !== 'devour') return;
+
+  // 自增 per-battle 计数
+  const current = state.devourCounters.get(skillId) || 0;
+  const newCount = current + 1;
+  state.devourCounters.set(skillId, newCount);
+
+  // 每 DEVOUR_TRIGGER_THRESHOLD 次触发 → 检查吞噬
+  if (newCount % DEVOUR_TRIGGER_THRESHOLD !== 0) return;
+
+  // 反查吞噬者的绑定键位
+  let devourerKey: string | undefined;
+  for (const [bk, bId] of state.player.bindings) {
+    if (bId === skillId) { devourerKey = bk; break; }
+  }
+  if (!devourerKey) return;
+
+  // 通过 positionRelation 获取范围内所有键位
+  const candidateKeys = getKeysWithRelation(devourerKey, ench.positionRelation!);
+  if (candidateKeys.length === 0) return;
+
+  const myIconCount = getIconCount(skillId);
+
+  // 找到范围内图标数最少的弱技能
+  let weakestKey: string | undefined;
+  let weakestSkillId: string | undefined;
+  let weakestCount = Infinity;
+
+  for (const ck of candidateKeys) {
+    const cSkillId = state.player.bindings.get(ck);
+    if (!cSkillId || cSkillId === skillId) continue;
+    const cCount = getIconCount(cSkillId);
+    if (cCount < myIconCount && cCount < weakestCount) {
+      weakestCount = cCount;
+      weakestKey = ck;
+      weakestSkillId = cSkillId;
+    }
+  }
+
+  if (weakestKey && weakestSkillId) {
+    executeDevour(skillId, weakestSkillId, weakestKey);
+  }
+}
+
+function executeDevour(devourSkillId: string, targetSkillId: string, targetKey: string): void {
+  // 获取目标技能的原始图标（不传 enchantedSkills → 返回原始技能图标）
+  const targetInfo = getSkillDisplayInfo(targetSkillId);
+  const targetIcon = targetInfo.icon;
+
+  // 添加图标到吞噬者
+  const icons = state.devourIcons.get(devourSkillId) || [];
+  icons.push(targetIcon);
+  state.devourIcons.set(devourSkillId, icons);
+
+  // 永久移除目标（本局内）
+  state.player.bindings.delete(targetKey);
+  state.player.skills.delete(targetSkillId);
+  state.player.enchantedSkills.delete(targetSkillId);
+
+  // 反馈
+  showFeedback(`🦷 吞噬! ${targetIcon}`, '#e74c3c');
+  playSound('skill');
 }
 
 // === 增幅者加成计算 ===
@@ -221,6 +360,13 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   // 附魔后处理：溅射 + 变性（Task 3, 5 实现）
   applyPostTriggerEnchantments(producerId, triggerKey, delta);
 
+  // 成长附魔累积
+  if (triggerKey) checkGrowthAccumulation(triggerKey);
+  // 精通附魔累积
+  checkMasteryAccumulation(producerId);
+  // 吞噬附魔累积
+  checkDevourAccumulation(producerId, triggerKey);
+
   updateHUD();
 }
 
@@ -303,6 +449,13 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   // 附魔后处理：溅射 + 变性（Task 3, 5 实现）
   applyPostTriggerEnchantments(converterId, triggerKey, delta);
 
+  // 成长附魔累积
+  if (triggerKey) checkGrowthAccumulation(triggerKey);
+  // 精通附魔累积
+  checkMasteryAccumulation(converterId);
+  // 吞噬附魔累积
+  checkDevourAccumulation(converterId, triggerKey);
+
   updateHUD();
 }
 
@@ -380,6 +533,14 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
     ? `+${(baseValue * reduction).toFixed(1)}${getResourceLabel(prod.resource)} (溅射)`
     : `×${(1 + (baseValue - 1) * reduction).toFixed(2)}${getResourceLabel(prod.resource)} (溅射)`;
   showFeedback(feedbackText, color);
+
+  // 成长附魔累积（溅射/共鸣子触发也贡献）
+  checkGrowthAccumulation(triggerKey);
+  // 精通附魔累积（溅射/共鸣子触发也计数）
+  checkMasteryAccumulation(producerId);
+  // 吞噬附魔累积（溅射/共鸣子触发也计数）
+  checkDevourAccumulation(producerId, triggerKey);
+
   updateHUD();
 }
 
@@ -425,6 +586,14 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
 
   const color = RESOURCE_COLORS[conv.target];
   showFeedback(`${getConverterDesc(converterId, level)} (溅射)`, color);
+
+  // 成长附魔累积（溅射/共鸣子触发也贡献）
+  checkGrowthAccumulation(triggerKey);
+  // 精通附魔累积（溅射/共鸣子触发也计数）
+  checkMasteryAccumulation(converterId);
+  // 吞噬附魔累积（溅射/共鸣子触发也计数）
+  checkDevourAccumulation(converterId, triggerKey);
+
   updateHUD();
 }
 
@@ -495,8 +664,16 @@ function triggerAmplifierResonance(ampId: string, key: string): void {
   state.amplifierStacks.set(ampId, newStacks);
   recordSkillTrigger(ampId, key, 'base', 0, false);
   showFeedback(`${amp.icon || ''} ×${newStacks} (共鸣)`, '#a29bfe');
+
+  // 成长附魔累积（共鸣子触发也贡献）
+  checkGrowthAccumulation(key);
+  // 精通附魔累积（共鸣子触发也计数）
+  checkMasteryAccumulation(ampId);
+  // 吞噬附魔累积（共鸣子触发也计数）
+  checkDevourAccumulation(ampId, key);
+
   updateHUD();
-  eventBus.emit('skill:triggered', { key, skillId: ampId, type: 'active', amplifierStacks: newStacks });
+  eventBus.emit('skill:triggered', { key, skillId: ampId, type: 'active', amplifierStacks: newStacks, growthValue: state.growthValues.get(ampId) || 0 });
 }
 
 // === 附魔后处理：溅射 + 变性 ===
@@ -682,13 +859,20 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
     const enchId = state.player.enchantedSkills?.get(ampId) || '';
     showFeedback(`${ENCHANTMENTS[enchId]?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
   }
-  updateHUD();
-
   // 溅射：触发范围内技能
   applySplashEnchantment(ampId, triggerKey);
 
+  // 成长附魔累积
+  checkGrowthAccumulation(triggerKey);
+  // 精通附魔累积
+  checkMasteryAccumulation(ampId);
+  // 吞噬附魔累积
+  checkDevourAccumulation(ampId, triggerKey);
+
+  updateHUD();
+
   // 通知键盘可视化更新叠层显示
-  eventBus.emit('skill:triggered', { key: triggerKey, skillId: ampId, type: 'active', amplifierStacks: newStacks });
+  eventBus.emit('skill:triggered', { key: triggerKey, skillId: ampId, type: 'active', amplifierStacks: newStacks, growthValue: state.growthValues.get(ampId) || 0 });
 }
 
 // === 触发技能（管道驱动） ===

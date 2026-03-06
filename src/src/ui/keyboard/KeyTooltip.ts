@@ -16,6 +16,7 @@ export interface KeyTooltipData {
     schoolCssClass: string
     amplifierStacks?: number
     affectedSkills?: string[]
+    enchantmentInfo?: string
   }
 }
 
@@ -79,6 +80,9 @@ class KeyTooltipManager {
       }
       if (data.skill.affectedSkills && data.skill.affectedSkills.length > 0) {
         html += `<div class="tooltip-amp-affects" style="color:#888;font-size:10px;margin-top:2px;">增幅范围: ${data.skill.affectedSkills.map(s => esc(s)).join(', ')}</div>`
+      }
+      if (data.skill.enchantmentInfo) {
+        html += `<div class="tooltip-enchantment" style="color:#9b59b6;font-size:10px;margin-top:3px;">${esc(data.skill.enchantmentInfo)}</div>`
       }
       html += `<span class="tooltip-skill-school ${esc(data.skill.schoolCssClass)}">${esc(data.skill.school)}</span>`
       html += `</div>`

@@ -46,29 +46,6 @@ describe('triggerAmplifier — 无附魔时行为不变（回归）', () => {
   })
 })
 
-// === Task 2: amplify 附魔增加叠层增量 ===
-
-describe('triggerAmplifier — amplify 附魔增加叠层增量', () => {
-  beforeEach(() => { resetState() })
-
-  it('amplify·adjacent: 2个相邻技能 → enchMult=1.4, 叠层+2', async () => {
-    const { triggerAmplifier } = await import('../../../src/systems/skills')
-    // 增幅者在 'a', enchanted with amplify·adjacent (effectValue=0.2)
-    state.player.bindings.set('a', 'amp_base_add_adjacent')
-    state.player.skills.set('amp_base_add_adjacent', { level: 1 })
-    state.player.enchantedSkills.set('amp_base_add_adjacent', 'ench_amplify_adjacent')
-    state.amplifierStacks.set('amp_base_add_adjacent', 0)
-
-    // 2 个相邻技能绑定到 'a' 的邻居键：s, w
-    state.player.bindings.set('s', 'prod_burst')
-    state.player.bindings.set('w', 'prod_sustain')
-
-    triggerAmplifier('amp_base_add_adjacent', 'a')
-    // enchMult = 1 + 2 * 0.2 = 1.4, ceil(1.4) = 2
-    expect(state.amplifierStacks.get('amp_base_add_adjacent')).toBe(2)
-  })
-})
-
 // === Task 2: repulsion 附魔增加叠层增量 ===
 
 describe('triggerAmplifier — repulsion 附魔增加叠层增量', () => {
@@ -179,7 +156,7 @@ describe('checkResonanceTriggers — 增幅者自动叠层', () => {
 
     state.player.bindings.set('a', 'prod_burst')
 
-    // 手动叠层 (注意: resonance 走 getEnchantmentMultiplier 返回 1，因为 spatialType=resonance 不在 amplify/repulsion 分支)
+    // 手动叠层 (注意: resonance 走 getEnchantmentMultiplier 返回 1，因为 spatialType=resonance 不在 repulsion 分支)
     triggerAmplifier('amp_base_add_adjacent', 's')
     expect(state.amplifierStacks.get('amp_base_add_adjacent')).toBe(1) // +1 (enchMult=1)
 
