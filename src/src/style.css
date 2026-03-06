@@ -2191,11 +2191,6 @@ body {
     filter: drop-shadow(0 0 4px rgba(255, 230, 109, 0.5));
 }
 
-.reward-type.word-type {
-    background: rgba(78, 205, 196, 0.2);
-    color: #4ecdc4;
-}
-
 /* === 牌包卡片样式 (22.3) === */
 .reward-type.pack-type {
     background: rgba(168, 130, 255, 0.2);

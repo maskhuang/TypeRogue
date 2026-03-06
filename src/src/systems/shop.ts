@@ -330,23 +330,6 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
       <div class="reward-type pack-type">词包</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
-  } else {
-    // Word item (legacy)
-    const highlightedWord = item.word!.split('').map(c =>
-      [...state.player.bindings.keys()].includes(c.toLowerCase())
-        ? `<span class="bound-letter">${c}</span>` : c
-    ).join('');
-
-    card.innerHTML = `
-      <div class="reward-icon">📝</div>
-      <div class="reward-info">
-        <div class="reward-name word-text">${highlightedWord}</div>
-        <div class="reward-desc">${item.word!.length}字母${item.highlight ? ` · 高频${item.highlight.toUpperCase()}` : ''}</div>
-      </div>
-      <div class="reward-cost">💰${item.cost}</div>
-      <div class="reward-type word-type">词语</div>
-      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
-    `;
   }
 
   // 锁定按钮事件
@@ -512,59 +495,46 @@ function purchasePackItem(index: number): void {
   renderBuildManager();
 }
 
-// === 核心购买逻辑（共享） ===
-// 返回购买的 skillId（技能）或 null（词语/失败），供调用者做后续绑定/进化
-function executePurchase(index: number): { skillId: string | null; isNew: boolean } | null {
+// === 核心购买逻辑（仅技能） ===
+// 返回购买的 skillId 或 null（非技能/失败），供调用者做后续绑定/进化
+function executePurchase(index: number): { skillId: string; isNew: boolean } | null {
   const item = state.shop.items[index];
-  if (!item) return null;
-  if (item.type === 'pack') return null; // pack 走 purchasePackItem，不经此函数
+  if (!item || item.type !== 'skill') return null;
 
   if (state.gold < item.cost) {
     showFeedback('金币不足!', '#ff6b6b');
     return null;
   }
 
-  if (item.type === 'skill') {
-    const skillId = item.skillId!;
+  const skillId = item.skillId!;
 
-    state.gold -= item.cost;
-    updateGoldDisplay();
-    playSound('skill');
+  state.gold -= item.cost;
+  updateGoldDisplay();
+  playSound('skill');
 
-    const isNew = !item.isUpgrade;
-    if (item.isUpgrade) {
-      const data = state.player.skills.get(skillId);
-      if (data) {
-        data.level++;
-        data.purchasePrice = (data.purchasePrice || 0) + item.cost;
-      }
-      showFeedback(`${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name} 升级!`, '#ffe66d');
-    } else {
-      state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
-      showFeedback(`获得 ${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name}!`, '#4ecdc4');
-
-      // 首次获取某类型技能时显示 tooltip
-      const category = getSkillCategory(skillId);
-      if (category && !state.seenSkillTypes.has(category)) {
-        state.seenSkillTypes.add(category);
-        const tip = SKILL_TYPE_TOOLTIPS[category];
-        if (tip) showFeedback(tip.text, tip.color);
-      }
+  const isNew = !item.isUpgrade;
+  if (item.isUpgrade) {
+    const data = state.player.skills.get(skillId);
+    if (data) {
+      data.level++;
+      data.purchasePrice = (data.purchasePrice || 0) + item.cost;
     }
-
-    state.shop.items.splice(index, 1);
-    return { skillId, isNew };
+    showFeedback(`${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name} 升级!`, '#ffe66d');
   } else {
-    // 词语
-    state.gold -= item.cost;
-    updateGoldDisplay();
-    playSound('skill');
-    state.player.wordDeck.push(item.word!);
-    showFeedback(`+${item.word}`, '#4ecdc4');
+    state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
+    showFeedback(`获得 ${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId])?.name}!`, '#4ecdc4');
 
-    state.shop.items.splice(index, 1);
-    return { skillId: null, isNew: false };
+    // 首次获取某类型技能时显示 tooltip
+    const category = getSkillCategory(skillId);
+    if (category && !state.seenSkillTypes.has(category)) {
+      state.seenSkillTypes.add(category);
+      const tip = SKILL_TYPE_TOOLTIPS[category];
+      if (tip) showFeedback(tip.text, tip.color);
+    }
   }
+
+  state.shop.items.splice(index, 1);
+  return { skillId, isNew };
 }
 
 // === 点击购买商品 ===

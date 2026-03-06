@@ -165,15 +165,13 @@ export interface PlayerState {
 
 export interface ShopItem {
   id: string;              // 商品唯一 ID
-  type: 'skill' | 'word' | 'pack';
+  type: 'skill' | 'pack';
   skillId?: string;
-  word?: string;
   pack?: WordPack;         // 牌包数据（type='pack' 时）
   selectedWords?: boolean[]; // 牌包词勾选状态（type='pack' 时，默认全 true）
   cost: number;
   isUpgrade: boolean;      // 重复技能 → true
   locked: boolean;         // 锁定（17.3）
-  highlight?: string;      // 词语高频字母
 }
 
 export interface ShopState {

@@ -549,23 +549,3 @@ export function calculateDeckStats(wordDeck: string[]): DeckStats {
     topLetters: sorted.slice(0, 8),
   };
 }
-
-// === 生成商店可购买的词语 ===
-export function generateShopWords(ownedWords: string[]): { word: string; cost: number; highlight?: string }[] {
-  const available: { word: string; cost: number; highlight?: string }[] = [];
-  const owned = new Set(ownedWords);
-
-  for (const [, pool] of Object.entries(WORD_POOL)) {
-    for (const word of pool.words) {
-      if (!owned.has(word)) {
-        available.push({
-          word,
-          cost: pool.cost + Math.floor(word.length / 2),
-          highlight: pool.highlight,
-        });
-      }
-    }
-  }
-
-  return available.sort(() => Math.random() - 0.5).slice(0, 8);
-}
