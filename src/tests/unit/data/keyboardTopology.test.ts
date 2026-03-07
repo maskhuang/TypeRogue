@@ -15,6 +15,9 @@ import {
   hasRelation,
   getRelations,
   getKeysWithRelation,
+  isHomeRow,
+  isIsolatedSkill,
+  isInPair,
 } from '../../../src/data/keyboardTopology';
 import { ADJACENT_KEYS, KEYBOARD_ROWS, KEYS } from '../../../src/core/constants';
 
@@ -451,6 +454,96 @@ describe('getKeysWithRelation', () => {
         expect(result).not.toContain(key);
       }
     }
+  });
+});
+
+// === isHomeRow ===
+
+describe('isHomeRow', () => {
+  it('主行键 (ASDFGHJKL) 返回 true', () => {
+    for (const key of ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l']) {
+      expect(isHomeRow(key)).toBe(true);
+    }
+  });
+
+  it('非主行键返回 false', () => {
+    for (const key of ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'z', 'x', 'c', 'v', 'b', 'n', 'm']) {
+      expect(isHomeRow(key)).toBe(false);
+    }
+  });
+
+  it('大小写不敏感', () => {
+    expect(isHomeRow('F')).toBe(true);
+    expect(isHomeRow('Q')).toBe(false);
+  });
+
+  it('无效键返回 false', () => {
+    expect(isHomeRow('1')).toBe(false);
+    expect(isHomeRow('')).toBe(false);
+  });
+});
+
+// === isIsolatedSkill ===
+
+describe('isIsolatedSkill', () => {
+  it('无相邻技能 → 孤立', () => {
+    const bindings = new Map([['q', 'skill_a'], ['l', 'skill_b']]);
+    expect(isIsolatedSkill('q', bindings)).toBe(true);
+    expect(isIsolatedSkill('l', bindings)).toBe(true);
+  });
+
+  it('有相邻技能 → 非孤立', () => {
+    const bindings = new Map([['f', 'skill_a'], ['g', 'skill_b']]);
+    expect(isIsolatedSkill('f', bindings)).toBe(false);
+    expect(isIsolatedSkill('g', bindings)).toBe(false);
+  });
+
+  it('唯一技能 → 孤立', () => {
+    const bindings = new Map([['m', 'skill_a']]);
+    expect(isIsolatedSkill('m', bindings)).toBe(true);
+  });
+
+  it('大小写不敏感', () => {
+    const bindings = new Map([['q', 'skill_a']]);
+    expect(isIsolatedSkill('Q', bindings)).toBe(true);
+  });
+});
+
+// === isInPair ===
+
+describe('isInPair', () => {
+  it('两个相邻键 → 配对', () => {
+    const bindings = new Map([['f', 'skill_a'], ['g', 'skill_b']]);
+    expect(isInPair('f', bindings)).toBe(true);
+    expect(isInPair('g', bindings)).toBe(true);
+  });
+
+  it('三个相邻键 → 非配对（分量=3）', () => {
+    const bindings = new Map([['f', 'skill_a'], ['g', 'skill_b'], ['h', 'skill_c']]);
+    expect(isInPair('f', bindings)).toBe(false);
+    expect(isInPair('g', bindings)).toBe(false);
+    expect(isInPair('h', bindings)).toBe(false);
+  });
+
+  it('孤立键 → 非配对（分量=1）', () => {
+    const bindings = new Map([['q', 'skill_a']]);
+    expect(isInPair('q', bindings)).toBe(false);
+  });
+
+  it('键不在 bindings 中 → false', () => {
+    const bindings = new Map([['f', 'skill_a'], ['g', 'skill_b']]);
+    expect(isInPair('q', bindings)).toBe(false);
+  });
+
+  it('两对独立配对', () => {
+    const bindings = new Map([['f', 'a'], ['g', 'b'], ['j', 'c'], ['k', 'd']]);
+    expect(isInPair('f', bindings)).toBe(true);
+    expect(isInPair('j', bindings)).toBe(true);
+  });
+
+  it('大小写不敏感', () => {
+    const bindings = new Map([['f', 'a'], ['g', 'b']]);
+    expect(isInPair('F', bindings)).toBe(true);
   });
 });
 

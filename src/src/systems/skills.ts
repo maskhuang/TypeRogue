@@ -94,6 +94,9 @@ function getEquippedProducerCount(): number {
   return count;
 }
 
+// T5 遗物支持：当前触发技能的键位
+let _currentTriggerKey: string | undefined;
+
 /** 获取技能触发时的遗物倍率（on_skill_trigger 遗物：glass_cannon, forge_heart 等） */
 function getRelicSkillMultiplier(category: string): number {
   return resolveRelicSkillTrigger({
@@ -102,6 +105,7 @@ function getRelicSkillMultiplier(category: string): number {
     amplifierMaxStacks: getMaxAmplifierStacks(),
     equippedProducerCount: getEquippedProducerCount(),
     wordHasProducerTriggered: _wordHasProducerTriggered,
+    currentSkillKey: _currentTriggerKey,
   }, {
     onTimeSteal: (bonus) => {
       state.time += bonus;
@@ -337,6 +341,7 @@ export function getAmplifierBonus(
 export function triggerProducer(producerId: string, triggerKey?: string): void {
   const prod = PRODUCERS[producerId];
   if (!prod) return;
+  _currentTriggerKey = triggerKey;
   _wordHasProducerTriggered = true;
   const level = state.player.skills.get(producerId)?.level || 1;
   const baseValue = getProducerValue(producerId, level);
@@ -423,6 +428,7 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
 export function triggerConverter(converterId: string, triggerKey?: string): void {
   const conv = CONVERTERS[converterId];
   if (!conv) return;
+  _currentTriggerKey = triggerKey;
   const level = state.player.skills.get(converterId)?.level || 1;
   const k = getConverterK(converterId, level);
   const sourceVal = getSourceValue(conv.source, state.resources);
@@ -917,6 +923,7 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
 export function triggerSkill(skillId: string, triggerKey: string, chainHistory?: string[]): void {
   const chain = chainHistory || [triggerKey];
   _isChainTrigger = chain.length > 1;
+  _currentTriggerKey = triggerKey;
 
   // 产出者分流：绕过 Modifier 管道
   if (isProducer(skillId)) {

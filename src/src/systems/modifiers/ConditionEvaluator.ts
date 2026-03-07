@@ -1,15 +1,18 @@
 // ============================================
 // 打字肉鸽 - ConditionEvaluator 条件评估器
 // ============================================
-// Story 11.3+12.1+27.2: 30 种条件原语评估
+// Story 11.3+12.1+27.2+27.4: 34 种条件原语评估
 
 import type { ModifierCondition, PipelineContext } from './ModifierTypes'
+import { isHomeRow, isIsolatedSkill, isInPair } from '../../data/keyboardTopology'
+import { state } from '../../core/state'
 
 /**
- * 条件评估器 — 纯函数，无副作用
+ * 条件评估器
  *
  * 评估 ModifierCondition 是否在给定 PipelineContext 下满足。
  * 无条件的修饰器始终生效（condition=undefined → true）。
+ * 注意：is_in_pair/is_isolated 条件读取 state.player.bindings（非纯函数）。
  */
 export class ConditionEvaluator {
   static evaluate(condition: ModifierCondition | undefined, context?: PipelineContext): boolean {
@@ -105,6 +108,15 @@ export class ConditionEvaluator {
         return ctx.currentSkillCategory === 'producer' && (ctx.equippedProducerCount ?? 0) >= condition.value
       case 'is_converter_after_producer':
         return ctx.currentSkillCategory === 'converter' && ctx.wordHasProducerTriggered === true
+      // === T5 空间策略遗物条件 (Story 27.4) ===
+      case 'is_home_row':
+        return isHomeRow(ctx.currentSkillKey ?? '')
+      case 'both_hands_triggered':
+        return ctx.leftHandTriggered === true && ctx.rightHandTriggered === true
+      case 'is_in_pair':
+        return isInPair(ctx.currentSkillKey ?? '', state.player.bindings)
+      case 'is_isolated':
+        return isIsolatedSkill(ctx.currentSkillKey ?? '', state.player.bindings)
       default:
         return false
     }

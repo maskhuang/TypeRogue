@@ -265,6 +265,60 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '资源汇流成河，奖励随之倾泻。'
   },
 
+  // ==================== T5 空间策略遗物 ====================
+
+  home_advantage: {
+    id: 'home_advantage',
+    name: '主行优势',
+    icon: '🏠',
+    description: '主行（ASDFGHJKL）键位的技能，每次触发产出 +30%',
+    rarity: 'rare',
+    basePrice: 50,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 1.30 }
+    ],
+    flavor: '家的位置，就是力量的源泉。'
+  },
+
+  ambidextrous: {
+    id: 'ambidextrous',
+    name: '双手兼备',
+    icon: '🤲',
+    description: '一词中左手侧和右手侧均触发过技能时，该词结算得分 +30%',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [
+      { type: 'on_word_complete', modifier: 'score_multiplier', value: 0.30 }
+    ],
+    flavor: '左右平衡，方能兼济天下。'
+  },
+
+  twin_bond: {
+    id: 'twin_bond',
+    name: '成双成对',
+    icon: '👯',
+    description: '恰好两个相邻的技能触发时，该技能产出 +25%',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 1.25 }
+    ],
+    flavor: '一双无间，胜过千军。'
+  },
+
+  lone_wolf: {
+    id: 'lone_wolf',
+    name: '独狼',
+    icon: '🐺',
+    description: '孤立技能（无相邻技能）触发时，该技能产出 ×1.8',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 1.80 }
+    ],
+    flavor: '独行者，无需同伴。'
+  },
+
   // ==================== 传说遗物 ====================
 
   perfectionist: {
@@ -433,6 +487,43 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     relicMod(id, 'boost', 'on_word_complete', 'calculate', {
       effect: { type: 'multiply', value: 0.20, stacking: 'additive' },
       condition: { type: 'word_resource_types_gte', value: 3 },
+    }),
+  ],
+
+  // === T5 空间策略遗物 ===
+
+  // 主行优势：主行键位技能触发 +30%（global 层乘法）
+  home_advantage: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.30, stacking: 'multiplicative' },
+      condition: { type: 'is_home_row' },
+    }),
+  ],
+
+  // 双手兼备：左右手都触发过技能时，词结算 bonusMult +0.30
+  ambidextrous: (id) => [
+    relicMod(id, 'boost', 'on_word_complete', 'calculate', {
+      effect: { type: 'multiply', value: 0.30, stacking: 'additive' },
+      condition: { type: 'both_hands_triggered' },
+    }),
+  ],
+
+  // 成双成对：配对技能（连通分量=2）触发 +25%（global 层乘法）
+  twin_bond: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.25, stacking: 'multiplicative' },
+      condition: { type: 'is_in_pair' },
+    }),
+  ],
+
+  // 独狼：孤立技能触发 ×1.8（global 层乘法）
+  lone_wolf: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.80, stacking: 'multiplicative' },
+      condition: { type: 'is_isolated' },
     }),
   ],
 

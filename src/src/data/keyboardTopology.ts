@@ -138,6 +138,39 @@ export function getRelations(keyA: string, keyB: string): PositionRelation[] {
   return result;
 }
 
+/** 检查键是否在主行（ASDFGHJKL，ROW_MAP === 1） */
+export function isHomeRow(key: string): boolean {
+  return ROW_MAP[normalize(key)] === 1;
+}
+
+/** 检查技能是否孤立（无相邻技能，连通分量 === 1） */
+export function isIsolatedSkill(key: string, bindings: Map<string, string>): boolean {
+  const k = normalize(key);
+  if (!k || !(k in ADJACENT_KEYS)) return false;
+  const adjacent = ADJACENT_KEYS[k];
+  const bindingKeys = new Set([...bindings.keys()].map(x => x.toLowerCase()));
+  return adjacent.every(adj => !bindingKeys.has(adj));
+}
+
+/** 检查技能是否在配对中（连通分量大小恰好 === 2） */
+export function isInPair(key: string, bindings: Map<string, string>): boolean {
+  const k = normalize(key);
+  const skillKeys = new Set([...bindings.keys()].map(x => x.toLowerCase()));
+  if (!skillKeys.has(k)) return false;
+  const visited = new Set<string>([k]);
+  const queue = [k];
+  while (queue.length > 0) {
+    const curr = queue.shift()!;
+    for (const adj of (ADJACENT_KEYS[curr] || [])) {
+      if (skillKeys.has(adj) && !visited.has(adj)) {
+        visited.add(adj);
+        queue.push(adj);
+      }
+    }
+  }
+  return visited.size === 2;
+}
+
 /** 返回与指定键有某种关系的所有键 */
 export function getKeysWithRelation(key: string, relation: PositionRelation): string[] {
   const k = normalize(key);

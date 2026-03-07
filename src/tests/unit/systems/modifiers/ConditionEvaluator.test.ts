@@ -8,6 +8,7 @@ import { ConditionEvaluator } from '../../../../src/systems/modifiers/ConditionE
 import { ModifierRegistry } from '../../../../src/systems/modifiers/ModifierRegistry'
 import { EffectPipeline } from '../../../../src/systems/modifiers/EffectPipeline'
 import type { Modifier, PipelineContext } from '../../../../src/systems/modifiers/ModifierTypes'
+import { state } from '../../../../src/core/state'
 
 // === 测试工厂 ===
 function createTestModifier(overrides: Partial<Modifier> = {}): Modifier {
@@ -604,6 +605,111 @@ describe('ConditionEvaluator', () => {
           { type: 'word_all_unique_letters' }, { currentWord: word })
         expect(hasDouble).not.toBe(allUnique)
       }
+    })
+  })
+
+  // === T5 空间策略遗物条件 (Story 27.4) ===
+  describe('is_home_row', () => {
+    it('home row key "f" → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'is_home_row' },
+        { currentSkillKey: 'f' },
+      )).toBe(true)
+    })
+
+    it('top row key "q" → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'is_home_row' },
+        { currentSkillKey: 'q' },
+      )).toBe(false)
+    })
+
+    it('currentSkillKey 未提供 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'is_home_row' },
+        {},
+      )).toBe(false)
+    })
+
+    it('大小写不敏感: "F" → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'is_home_row' },
+        { currentSkillKey: 'F' },
+      )).toBe(true)
+    })
+  })
+
+  describe('both_hands_triggered', () => {
+    it('双手都触发 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'both_hands_triggered' },
+        { leftHandTriggered: true, rightHandTriggered: true },
+      )).toBe(true)
+    })
+
+    it('只有左手 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'both_hands_triggered' },
+        { leftHandTriggered: true, rightHandTriggered: false },
+      )).toBe(false)
+    })
+
+    it('只有右手 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'both_hands_triggered' },
+        { leftHandTriggered: false, rightHandTriggered: true },
+      )).toBe(false)
+    })
+
+    it('未提供 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'both_hands_triggered' },
+        {},
+      )).toBe(false)
+    })
+  })
+
+  describe('is_in_pair', () => {
+    it('技能与相邻技能组成 pair → true', () => {
+      state.player.bindings = new Map([['f', 'skill_a'], ['g', 'skill_b']])
+      expect(ConditionEvaluator.evaluate(
+        { type: 'is_in_pair' },
+        { currentSkillKey: 'f' },
+      )).toBe(true)
+    })
+
+    it('技能孤立无相邻 → false', () => {
+      state.player.bindings = new Map([['f', 'skill_a'], ['p', 'skill_b']])
+      expect(ConditionEvaluator.evaluate(
+        { type: 'is_in_pair' },
+        { currentSkillKey: 'f' },
+      )).toBe(false)
+    })
+  })
+
+  describe('is_isolated', () => {
+    it('无相邻技能 → true', () => {
+      state.player.bindings = new Map([['f', 'skill_a'], ['p', 'skill_b']])
+      expect(ConditionEvaluator.evaluate(
+        { type: 'is_isolated' },
+        { currentSkillKey: 'f' },
+      )).toBe(true)
+    })
+
+    it('有相邻技能 → false', () => {
+      state.player.bindings = new Map([['f', 'skill_a'], ['g', 'skill_b']])
+      expect(ConditionEvaluator.evaluate(
+        { type: 'is_isolated' },
+        { currentSkillKey: 'f' },
+      )).toBe(false)
+    })
+
+    it('currentSkillKey 未提供 → false（无效键）', () => {
+      state.player.bindings = new Map([['f', 'skill_a']])
+      expect(ConditionEvaluator.evaluate(
+        { type: 'is_isolated' },
+        {},
+      )).toBe(false)
     })
   })
 

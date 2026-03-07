@@ -12,6 +12,7 @@ import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMulti
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
+import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop } from './shop';
 import { shouldShowRelicPicker, showRelicPicker } from './relicPicker';
 import { getLetterScoreModifiers, calculateLetterFrequency } from './letters/LetterFrequencySystem';
@@ -64,6 +65,8 @@ let wordBaseScore = 0; // 词语基础分（不含倍率）
 let wordStartTime = 0; // T1遗物：词语开始时的剩余时间（用于完美韵律时间返还）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
+let leftHandTriggered = false; // T5遗物：本词左手技能是否触发过
+let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
 
 // === 屏幕管理 ===
 export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'rest'): void {
@@ -116,6 +119,8 @@ function setWord(): void {
   state.wordPerfect = true;
   wordStartTime = state.time; // 记录词语开始时的剩余时间
   resetWordResourceTypes(); // 重置词级资源追踪
+  leftHandTriggered = false; // 重置左右手追踪
+  rightHandTriggered = false;
   synergy.wordSkillCount = 0;
   synergy.skillBaseScore = 0;
   synergy.letterBaseScore = 0;
@@ -216,6 +221,10 @@ function playerCorrect(k: string): void {
     letter.classList.add('skill-triggered');
     juiceUp(letter, 0.4, 5); // 强力弹跳
     bumpMultiplier();
+    // T5 遗物：追踪左右手触发
+    const hand = HAND_MAP[k];
+    if (hand === 'left') leftHandTriggered = true;
+    else if (hand === 'right') rightHandTriggered = true;
     triggerSkill(skillId, k);
   }
 
@@ -325,6 +334,8 @@ function completeWord(): void {
     totalSkillCount: state.player.skills.size,
     wordPerfect: state.wordPerfect,
     wordResourceTypes: getWordResourceTypeCount(),
+    leftHandTriggered,
+    rightHandTriggered,
   }, {
     onTimeRefund: (ratio: number) => {
       const refund = wordElapsed * ratio;

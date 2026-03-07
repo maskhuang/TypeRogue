@@ -15,8 +15,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 14 relics', () => {
-      expect(Object.keys(RELICS)).toHaveLength(15)
+    it('should contain 19 relics', () => {
+      expect(Object.keys(RELICS)).toHaveLength(19)
     })
 
     it('每个图标唯一', () => {
@@ -44,9 +44,9 @@ describe('Relics Data', () => {
       expect(commons).toHaveLength(3)
     })
 
-    it('should have 9 rare relics', () => {
+    it('should have 13 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(9)
+      expect(rares).toHaveLength(13)
     })
 
     it('should have 3 legendary relics', () => {
@@ -159,7 +159,7 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(15)
+      expect(ids).toHaveLength(19)
       expect(ids).toContain('lucky_coin')
       expect(ids).toContain('perfectionist')
       expect(ids).toContain('glass_cannon')
@@ -169,13 +169,17 @@ describe('Relics Data', () => {
       expect(ids).toContain('stack_resonance')
       expect(ids).toContain('perfect_rhythm')
       expect(ids).toContain('resource_flood')
+      expect(ids).toContain('home_advantage')
+      expect(ids).toContain('ambidextrous')
+      expect(ids).toContain('twin_bond')
+      expect(ids).toContain('lone_wolf')
     })
   })
 
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(15)
+      expect(relics).toHaveLength(19)
     })
 
     it('should return RelicData objects', () => {

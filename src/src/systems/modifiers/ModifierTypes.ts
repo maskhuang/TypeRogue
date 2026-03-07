@@ -55,7 +55,7 @@ export type ModifierBehavior =
   | { type: 'set_word_cooldown' }
   | { type: 'trigger_random_adjacent' }
 
-// === 条件系统（15 种原语） ===
+// === 条件系统 ===
 export type ModifierCondition =
   // 战斗状态
   | { type: 'combo_gte'; value: number }
@@ -97,6 +97,11 @@ export type ModifierCondition =
   | { type: 'word_perfect' }
   | { type: 'is_producer_and_count_gte'; value: number }
   | { type: 'is_converter_after_producer' }
+  // T5 空间策略遗物条件 (Story 27.4)
+  | { type: 'is_home_row' }
+  | { type: 'both_hands_triggered' }
+  | { type: 'is_in_pair' }
+  | { type: 'is_isolated' }
 
 // === 管道输出类型 (Story 11.2) ===
 
@@ -164,6 +169,12 @@ export interface PipelineContext {
   equippedProducerCount?: number
   /** 本词是否有产出者触发过（熔炉之心使用） */
   wordHasProducerTriggered?: boolean
+  /** 当前触发技能绑定的键位（T5 空间遗物使用） */
+  currentSkillKey?: string
+  /** 本词是否有左手技能触发过（双手兼备使用） */
+  leftHandTriggered?: boolean
+  /** 本词是否有右手技能触发过（双手兼备使用） */
+  rightHandTriggered?: boolean
 }
 
 // === 行为执行回调 (Story 11.4) ===
