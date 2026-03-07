@@ -4,7 +4,7 @@
 // Epic 17: 统一商店 + 刷新/锁定/卖出 + 拖拽交互
 
 import { state } from '../core/state';
-import { resolveRelicEffects, queryRelicFlag } from './relics/RelicPipeline';
+import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS } from '../core/constants';
 import { getSkillSchool, getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS, isProducer } from '../data/producers';
@@ -554,6 +554,13 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
   }
 
   state.shop.items.splice(index, 1);
+
+  // T2 遗物事件钩子：技能购买后触发 (Story 28.1)
+  resolveRelicEffectsWithBehaviors('on_skill_purchase', {
+    purchasedSkillId: skillId,
+    isUpgrade: !isNew,
+  });
+
   return { skillId, isNew };
 }
 
@@ -753,6 +760,13 @@ function applyEnchantment(skillId: string, enchantmentId: string): void {
   if (ench) {
     showFeedback(`附魔! ${ench.icon} ${ench.name}`, '#f9ca24');
   }
+
+  // T2 遗物事件钩子：附魔获取后触发 (Story 28.1)
+  resolveRelicEffectsWithBehaviors('on_enchantment_acquire', {
+    enchantedSkillId: skillId,
+    enchantmentId,
+  });
+
   playSound('skill');
   closeEnchantmentModal();
   renderUnifiedShop();

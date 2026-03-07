@@ -667,6 +667,10 @@ export async function startLevel(): Promise<void> {
   const currentStageType = getStageType(state.level);
   const currentAct = getActForNode(state.level);
   if (currentAct !== lastAct) {
+    // T2 遗物事件钩子：幕切换时触发 on_act_end（跳过首次进入，lastAct=0 表示无前序幕）(Story 28.1)
+    if (lastAct > 0) {
+      resolveRelicEffectsWithBehaviors('on_act_end', { endedAct: lastAct });
+    }
     await showActTransition(currentAct);
     lastAct = currentAct;
   }

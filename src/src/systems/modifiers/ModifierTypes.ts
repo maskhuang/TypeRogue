@@ -20,6 +20,9 @@ export type ModifierTrigger =
   | 'on_combo_break'         // 连击中断时
   | 'on_battle_start'        // 战斗开始
   | 'on_battle_end'          // 战斗结束
+  | 'on_skill_purchase'      // 商店购买技能后 (Story 28.1)
+  | 'on_enchantment_acquire' // 附魔获取后 (Story 28.1)
+  | 'on_act_end'             // 幕切换时 (Story 28.1)
 
 // === 修饰器来源类型 ===
 export type ModifierSourceType = 'skill' | 'relic' | 'passive' | 'letter'
@@ -181,6 +184,16 @@ export interface PipelineContext {
   relicStates?: Record<string, number>
   /** 通关剩余时间（time_bank 遗物使用） */
   remainingTime?: number
+  /** 购买的技能 ID（on_skill_purchase 使用） */
+  purchasedSkillId?: string
+  /** 是否为升级购买（on_skill_purchase 使用） */
+  isUpgrade?: boolean
+  /** 被附魔的技能 ID（on_enchantment_acquire 使用） */
+  enchantedSkillId?: string
+  /** 附魔 ID（on_enchantment_acquire 使用） */
+  enchantmentId?: string
+  /** 结束的幕编号（on_act_end 使用） */
+  endedAct?: number
 }
 
 // === 行为执行回调 (Story 11.4) ===
