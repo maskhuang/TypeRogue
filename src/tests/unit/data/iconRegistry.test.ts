@@ -43,7 +43,7 @@ describe('图标注册表', () => {
       expect(isCompositeIcon('⚔️🔗')).toBe(true);
       expect(isCompositeIcon('🌱📡')).toBe(true);
       expect(isCompositeIcon('⚔️✨')).toBe(true);
-      expect(isCompositeIcon('🔥🔥')).toBe(true);
+      expect(isCompositeIcon('💫🔗')).toBe(true);
       expect(isCompositeIcon('🕳️🤝')).toBe(true);
     });
   });

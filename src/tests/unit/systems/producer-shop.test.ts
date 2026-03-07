@@ -91,26 +91,26 @@ describe('产出者商店集成 (AC 7)', () => {
     const display = getSkillDisplayInfo('prod_burst')
     expect(display.name).toBe('爆发')
     expect(display.icon).toBe('⚔️')
-    expect(display.desc).toBe('基数+5') // default (no level = Lv1 static)
+    expect(display.desc).toBe('触发时：⚔️基数+5') // default (no level = Lv1 static)
   })
 
   it('getSkillDisplayInfo 为产出者返回等级相关描述', () => {
     const lv1 = getSkillDisplayInfo('prod_burst', 1)
-    expect(lv1.desc).toBe('基数+5')
+    expect(lv1.desc).toBe('触发时：⚔️基数+5')
 
     const lv2 = getSkillDisplayInfo('prod_burst', 2)
-    expect(lv2.desc).toBe('基数+8')
+    expect(lv2.desc).toBe('触发时：⚔️基数+8')
 
     const lv3 = getSkillDisplayInfo('prod_burst', 3)
-    expect(lv3.desc).toBe('基数+12')
+    expect(lv3.desc).toBe('触发时：⚔️基数+12')
   })
 
   it('getSkillDisplayInfo 乘法产出者等级描述', () => {
     const lv1 = getSkillDisplayInfo('prod_focus', 1)
-    expect(lv1.desc).toBe('基数×2')
+    expect(lv1.desc).toBe('触发时：⚔️基数×2')
 
     const lv2 = getSkillDisplayInfo('prod_focus', 2)
-    expect(lv2.desc).toBe('基数×2.3')
+    expect(lv2.desc).toBe('触发时：⚔️基数×2.3')
   })
 
   it('多个产出者可共存于 skills Map', () => {

@@ -4,7 +4,7 @@
 // Story 19.2: 10 个产出者（5 资源 × 2 运算符）
 
 import type { ProducerDefinition } from '../core/types';
-import { RESOURCE_LABELS } from '../core/constants';
+import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
 
 export const PRODUCERS: Record<string, ProducerDefinition> = {
   // === 基数产出者 ===
@@ -15,7 +15,7 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     resource: 'base',
     operator: 'add',
     values: [5, 8, 12],
-    desc: '基数+5',
+    desc: '触发时：⚔️基数+5',
   },
   prod_focus: {
     id: 'prod_focus',
@@ -24,7 +24,7 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     resource: 'base',
     operator: 'multiply',
     values: [2, 2.3, 2.6],
-    desc: '基数×2',
+    desc: '触发时：⚔️基数×2',
   },
 
   // === 分数产出者 ===
@@ -35,7 +35,7 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     resource: 'score',
     operator: 'add',
     values: [15, 24, 36],
-    desc: '分数+15',
+    desc: '触发时：🪙分数+15',
   },
   prod_crit: {
     id: 'prod_crit',
@@ -44,7 +44,7 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     resource: 'score',
     operator: 'multiply',
     values: [1.1, 1.15, 1.2],
-    desc: '分数×1.1',
+    desc: '触发时：🪙分数×1.1',
   },
 
   // === 倍率产出者 ===
@@ -55,16 +55,16 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     resource: 'multiplier',
     operator: 'add',
     values: [0.2, 0.32, 0.48],
-    desc: '倍率+0.2',
+    desc: '触发时：🔥倍率+0.2',
   },
   prod_frenzy: {
     id: 'prod_frenzy',
     name: '狂热',
-    icon: '🔥🔥',
+    icon: '💢',
     resource: 'multiplier',
     operator: 'multiply',
     values: [1.15, 1.2, 1.25],
-    desc: '倍率×1.15',
+    desc: '触发时：🔥倍率×1.15',
   },
 
   // === 时间产出者 ===
@@ -75,7 +75,7 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     resource: 'time',
     operator: 'add',
     values: [2, 3.2, 4.8],
-    desc: '时间+2秒',
+    desc: '触发时：⏳时间+2',
   },
   prod_eternal: {
     id: 'prod_eternal',
@@ -84,7 +84,7 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     resource: 'time',
     operator: 'multiply',
     values: [1.2, 1.25, 1.3],
-    desc: '时间×1.2',
+    desc: '触发时：⏳时间×1.2',
   },
 
   // === 金币产出者 ===
@@ -95,7 +95,7 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     resource: 'gold',
     operator: 'add',
     values: [3, 5, 8],
-    desc: '金币+3',
+    desc: '触发时：💰金币+3',
   },
   prod_treasury: {
     id: 'prod_treasury',
@@ -104,7 +104,7 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     resource: 'gold',
     operator: 'multiply',
     values: [1.3, 1.5, 1.7],
-    desc: '金币×1.3',
+    desc: '触发时：💰金币×1.3',
   },
 };
 
@@ -127,5 +127,8 @@ export function getProducerDesc(id: string, level: number): string {
   if (!p) return '';
   const val = getProducerValue(id, level);
   const label = RESOURCE_LABELS[p.resource] || p.resource;
-  return p.operator === 'add' ? `${label}+${val}` : `${label}×${val}`;
+  const icon = RESOURCE_ICONS[p.resource] || '';
+  return p.operator === 'add'
+    ? `触发时：${icon}${label}+${val}`
+    : `触发时：${icon}${label}×${val}`;
 }

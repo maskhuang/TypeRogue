@@ -10,46 +10,46 @@ import { random } from '../core/seededRandom';
 // === 34 个转化者数据 ===
 export const CONVERTERS: Record<string, ConverterDefinition> = {
   // === 基数为源（6 个）— ⚔️→ ===
-  conv_base_score_add:  { id: 'conv_base_score_add',  name: '变现', icon: '💱', source: 'base', target: 'score',      formula: 'add',      k: 1.0,    desc: '获得等同于基数+1的分数' },
-  conv_base_score_mul:  { id: 'conv_base_score_mul',  name: '加冕', icon: '👑', source: 'base', target: 'score',      formula: 'multiply', k: 0.005,  desc: '获得等同于基数×0.005的分数' },
-  conv_base_mult_add:   { id: 'conv_base_mult_add',   name: '喷发', icon: '🌋', source: 'base', target: 'multiplier', formula: 'add',      k: 0.02,   desc: '获得等同于基数+0.02的倍率' },
-  conv_base_mult_mul:   { id: 'conv_base_mult_mul',   name: '引爆', icon: '💥', source: 'base', target: 'multiplier', formula: 'multiply', k: 0.008,  desc: '获得等同于基数×0.008的倍率' },
-  conv_base_time_add:   { id: 'conv_base_time_add',   name: '汲血', icon: '🩸', source: 'base', target: 'time',       formula: 'add',      k: 0.15,   desc: '获得等同于基数+0.15的时间' },
-  conv_base_time_mul:   { id: 'conv_base_time_mul',   name: '再生', icon: '🧬', source: 'base', target: 'time',       formula: 'multiply', k: 0.005,  desc: '获得等同于基数×0.005的时间' },
+  conv_base_score_add:  { id: 'conv_base_score_add',  name: '变现', icon: '💱', source: 'base', target: 'score',      formula: 'add',      k: 1.0,    desc: '触发时：🪙分数+(⚔️基数×1)' },
+  conv_base_score_mul:  { id: 'conv_base_score_mul',  name: '加冕', icon: '👑', source: 'base', target: 'score',      formula: 'multiply', k: 0.005,  desc: '触发时：🪙分数×(1+⚔️基数×0.005)' },
+  conv_base_mult_add:   { id: 'conv_base_mult_add',   name: '喷发', icon: '🌋', source: 'base', target: 'multiplier', formula: 'add',      k: 0.02,   desc: '触发时：🔥倍率+(⚔️基数×0.02)' },
+  conv_base_mult_mul:   { id: 'conv_base_mult_mul',   name: '引爆', icon: '💥', source: 'base', target: 'multiplier', formula: 'multiply', k: 0.008,  desc: '触发时：🔥倍率×(1+⚔️基数×0.008)' },
+  conv_base_time_add:   { id: 'conv_base_time_add',   name: '汲血', icon: '🩸', source: 'base', target: 'time',       formula: 'add',      k: 0.15,   desc: '触发时：⏳时间+(⚔️基数×0.15)' },
+  conv_base_time_mul:   { id: 'conv_base_time_mul',   name: '再生', icon: '🧬', source: 'base', target: 'time',       formula: 'multiply', k: 0.005,  desc: '触发时：⏳时间×(1+⚔️基数×0.005)' },
   // === 分数为源（7 个）— 🪙→ （mid ~1000，k 极小） ===
-  conv_score_base_add:   { id: 'conv_score_base_add',   name: '投资', icon: '⚒️', source: 'score', target: 'base',       formula: 'add',      k: 0.006,   desc: '获得等同于分数+0.006的基数' },
-  conv_score_base_mul:   { id: 'conv_score_base_mul',   name: '奠基', icon: '🏗️', source: 'score', target: 'base',       formula: 'multiply', k: 0.0006,  desc: '获得等同于分数×0.0006的基数' },
-  conv_score_mult_add:   { id: 'conv_score_mult_add',   name: '乘势', icon: '🎰', source: 'score', target: 'multiplier', formula: 'add',      k: 0.0002,  desc: '获得等同于分数+0.0002的倍率' },
-  conv_score_mult_mul:   { id: 'conv_score_mult_mul',   name: '膨胀', icon: '📈', source: 'score', target: 'multiplier', formula: 'multiply', k: 0.00012, desc: '获得等同于分数×0.00012的倍率' },
-  conv_score_time_add:   { id: 'conv_score_time_add',   name: '续命', icon: '💊', source: 'score', target: 'time',       formula: 'add',      k: 0.002,   desc: '获得等同于分数+0.002的时间' },
-  conv_score_time_mul:   { id: 'conv_score_time_mul',   name: '预言', icon: '🔮', source: 'score', target: 'time',       formula: 'multiply', k: 0.00008, desc: '获得等同于分数×0.00008的时间' },
-  conv_score_gold_add:   { id: 'conv_score_gold_add',   name: '征税', icon: '📜', source: 'score', target: 'gold',       formula: 'add',      k: 0.002,   desc: '获得等同于分数+0.002的金币' },
+  conv_score_base_add:   { id: 'conv_score_base_add',   name: '投资', icon: '⚒️', source: 'score', target: 'base',       formula: 'add',      k: 0.006,   desc: '触发时：⚔️基数+(🪙分数×0.006)' },
+  conv_score_base_mul:   { id: 'conv_score_base_mul',   name: '奠基', icon: '🏗️', source: 'score', target: 'base',       formula: 'multiply', k: 0.0006,  desc: '触发时：⚔️基数×(1+🪙分数×0.0006)' },
+  conv_score_mult_add:   { id: 'conv_score_mult_add',   name: '乘势', icon: '🎰', source: 'score', target: 'multiplier', formula: 'add',      k: 0.0002,  desc: '触发时：🔥倍率+(🪙分数×0.0002)' },
+  conv_score_mult_mul:   { id: 'conv_score_mult_mul',   name: '膨胀', icon: '📈', source: 'score', target: 'multiplier', formula: 'multiply', k: 0.00012, desc: '触发时：🔥倍率×(1+🪙分数×0.00012)' },
+  conv_score_time_add:   { id: 'conv_score_time_add',   name: '续命', icon: '💊', source: 'score', target: 'time',       formula: 'add',      k: 0.002,   desc: '触发时：⏳时间+(🪙分数×0.002)' },
+  conv_score_time_mul:   { id: 'conv_score_time_mul',   name: '预言', icon: '🔮', source: 'score', target: 'time',       formula: 'multiply', k: 0.00008, desc: '触发时：⏳时间×(1+🪙分数×0.00008)' },
+  conv_score_gold_add:   { id: 'conv_score_gold_add',   name: '征税', icon: '📜', source: 'score', target: 'gold',       formula: 'add',      k: 0.002,   desc: '触发时：💰金币+(🪙分数×0.002)' },
 
   // === 倍率为源（6 个）— 🔥→ （mid ~2.0） ===
-  conv_mult_base_add:   { id: 'conv_mult_base_add',   name: '锻打', icon: '🔨', source: 'multiplier', target: 'base',       formula: 'add',      k: 3.0,  desc: '获得等同于倍率+3的基数' },
-  conv_mult_base_mul:   { id: 'conv_mult_base_mul',   name: '雷铸', icon: '⚡', source: 'multiplier', target: 'base',       formula: 'multiply', k: 0.3,  desc: '获得等同于倍率×0.3的基数' },
-  conv_mult_score_add:  { id: 'conv_mult_score_add',  name: '溢光', icon: '🌟', source: 'multiplier', target: 'score',      formula: 'add',      k: 8.0,  desc: '获得等同于倍率+8的分数' },
-  conv_mult_score_mul:  { id: 'conv_mult_score_mul',  name: '陨落', icon: '☄️', source: 'multiplier', target: 'score',      formula: 'multiply', k: 0.04, desc: '获得等同于倍率×0.04的分数' },
-  conv_mult_time_add:   { id: 'conv_mult_time_add',   name: '烛照', icon: '🕯️', source: 'multiplier', target: 'time',       formula: 'add',      k: 1.0,  desc: '获得等同于倍率+1的时间' },
-  conv_mult_time_mul:   { id: 'conv_mult_time_mul',   name: '延曦', icon: '🌅', source: 'multiplier', target: 'time',       formula: 'multiply', k: 0.05, desc: '获得等同于倍率×0.05的时间' },
+  conv_mult_base_add:   { id: 'conv_mult_base_add',   name: '锻打', icon: '🔨', source: 'multiplier', target: 'base',       formula: 'add',      k: 3.0,  desc: '触发时：⚔️基数+(🔥倍率×3)' },
+  conv_mult_base_mul:   { id: 'conv_mult_base_mul',   name: '雷铸', icon: '⚡', source: 'multiplier', target: 'base',       formula: 'multiply', k: 0.3,  desc: '触发时：⚔️基数×(1+🔥倍率×0.3)' },
+  conv_mult_score_add:  { id: 'conv_mult_score_add',  name: '溢光', icon: '🌟', source: 'multiplier', target: 'score',      formula: 'add',      k: 8.0,  desc: '触发时：🪙分数+(🔥倍率×8)' },
+  conv_mult_score_mul:  { id: 'conv_mult_score_mul',  name: '陨落', icon: '☄️', source: 'multiplier', target: 'score',      formula: 'multiply', k: 0.04, desc: '触发时：🪙分数×(1+🔥倍率×0.04)' },
+  conv_mult_time_add:   { id: 'conv_mult_time_add',   name: '烛照', icon: '🕯️', source: 'multiplier', target: 'time',       formula: 'add',      k: 1.0,  desc: '触发时：⏳时间+(🔥倍率×1)' },
+  conv_mult_time_mul:   { id: 'conv_mult_time_mul',   name: '延曦', icon: '🌅', source: 'multiplier', target: 'time',       formula: 'multiply', k: 0.05, desc: '触发时：⏳时间×(1+🔥倍率×0.05)' },
   // === 时间为源（7 个）— ⏳→ （mid ~40s） ===
-  conv_time_base_add:   { id: 'conv_time_base_add',   name: '蚀刻', icon: '⛏️', source: 'time', target: 'base',       formula: 'add',      k: 0.15,  desc: '获得等同于时间+0.15的基数' },
-  conv_time_base_mul:   { id: 'conv_time_base_mul',   name: '时斩', icon: '🗡️', source: 'time', target: 'base',       formula: 'multiply', k: 0.015, desc: '获得等同于时间×0.015的基数' },
-  conv_time_score_add:  { id: 'conv_time_score_add',  name: '兑现', icon: '⌛', source: 'time', target: 'score',      formula: 'add',      k: 0.4,   desc: '获得等同于时间+0.4的分数' },
-  conv_time_score_mul:  { id: 'conv_time_score_mul',  name: '时运', icon: '🎪', source: 'time', target: 'score',      formula: 'multiply', k: 0.002, desc: '获得等同于时间×0.002的分数' },
-  conv_time_mult_add:   { id: 'conv_time_mult_add',   name: '加速', icon: '🌀', source: 'time', target: 'multiplier', formula: 'add',      k: 0.005, desc: '获得等同于时间+0.005的倍率' },
-  conv_time_mult_mul:   { id: 'conv_time_mult_mul',   name: '时暴', icon: '🌪️', source: 'time', target: 'multiplier', formula: 'multiply', k: 0.003, desc: '获得等同于时间×0.003的倍率' },
-  conv_time_gold_add:   { id: 'conv_time_gold_add',   name: '典当', icon: '⚖️', source: 'time', target: 'gold',       formula: 'add',      k: 0.05,  desc: '获得等同于时间+0.05的金币' },
+  conv_time_base_add:   { id: 'conv_time_base_add',   name: '蚀刻', icon: '⛏️', source: 'time', target: 'base',       formula: 'add',      k: 0.15,  desc: '触发时：⚔️基数+(⏳时间×0.15)' },
+  conv_time_base_mul:   { id: 'conv_time_base_mul',   name: '时斩', icon: '🗡️', source: 'time', target: 'base',       formula: 'multiply', k: 0.015, desc: '触发时：⚔️基数×(1+⏳时间×0.015)' },
+  conv_time_score_add:  { id: 'conv_time_score_add',  name: '兑现', icon: '⌛', source: 'time', target: 'score',      formula: 'add',      k: 0.4,   desc: '触发时：🪙分数+(⏳时间×0.4)' },
+  conv_time_score_mul:  { id: 'conv_time_score_mul',  name: '时运', icon: '🎪', source: 'time', target: 'score',      formula: 'multiply', k: 0.002, desc: '触发时：🪙分数×(1+⏳时间×0.002)' },
+  conv_time_mult_add:   { id: 'conv_time_mult_add',   name: '加速', icon: '🌀', source: 'time', target: 'multiplier', formula: 'add',      k: 0.005, desc: '触发时：🔥倍率+(⏳时间×0.005)' },
+  conv_time_mult_mul:   { id: 'conv_time_mult_mul',   name: '时暴', icon: '🌪️', source: 'time', target: 'multiplier', formula: 'multiply', k: 0.003, desc: '触发时：🔥倍率×(1+⏳时间×0.003)' },
+  conv_time_gold_add:   { id: 'conv_time_gold_add',   name: '典当', icon: '⚖️', source: 'time', target: 'gold',       formula: 'add',      k: 0.05,  desc: '触发时：💰金币+(⏳时间×0.05)' },
 
   // === 金币为源（8 个）— 💰→ （mid ~15） ===
-  conv_gold_base_add:   { id: 'conv_gold_base_add',   name: '收购', icon: '🏪', source: 'gold', target: 'base',       formula: 'add',      k: 0.4,   desc: '获得等同于金币+0.4的基数' },
-  conv_gold_base_mul:   { id: 'conv_gold_base_mul',   name: '镀金', icon: '✨', source: 'gold', target: 'base',       formula: 'multiply', k: 0.04,  desc: '获得等同于金币×0.04的基数' },
-  conv_gold_score_add:  { id: 'conv_gold_score_add',  name: '贿赂', icon: '💸', source: 'gold', target: 'score',      formula: 'add',      k: 1.0,   desc: '获得等同于金币+1的分数' },
-  conv_gold_score_mul:  { id: 'conv_gold_score_mul',  name: '悬赏', icon: '🎖️', source: 'gold', target: 'score',      formula: 'multiply', k: 0.005, desc: '获得等同于金币×0.005的分数' },
-  conv_gold_mult_add:   { id: 'conv_gold_mult_add',   name: '雇佣', icon: '🫱', source: 'gold', target: 'multiplier', formula: 'add',      k: 0.015, desc: '获得等同于金币+0.015的倍率' },
-  conv_gold_mult_mul:   { id: 'conv_gold_mult_mul',   name: '投机', icon: '📊', source: 'gold', target: 'multiplier', formula: 'multiply', k: 0.008, desc: '获得等同于金币×0.008的倍率' },
-  conv_gold_time_add:   { id: 'conv_gold_time_add',   name: '赎买', icon: '🔑', source: 'gold', target: 'time',       formula: 'add',      k: 0.13,  desc: '获得等同于金币+0.13的时间' },
-  conv_gold_time_mul:   { id: 'conv_gold_time_mul',   name: '朝贡', icon: '🏺', source: 'gold', target: 'time',       formula: 'multiply', k: 0.005, desc: '获得等同于金币×0.005的时间' },
+  conv_gold_base_add:   { id: 'conv_gold_base_add',   name: '收购', icon: '🏪', source: 'gold', target: 'base',       formula: 'add',      k: 0.4,   desc: '触发时：⚔️基数+(💰金币×0.4)' },
+  conv_gold_base_mul:   { id: 'conv_gold_base_mul',   name: '镀金', icon: '✨', source: 'gold', target: 'base',       formula: 'multiply', k: 0.04,  desc: '触发时：⚔️基数×(1+💰金币×0.04)' },
+  conv_gold_score_add:  { id: 'conv_gold_score_add',  name: '贿赂', icon: '💸', source: 'gold', target: 'score',      formula: 'add',      k: 1.0,   desc: '触发时：🪙分数+(💰金币×1)' },
+  conv_gold_score_mul:  { id: 'conv_gold_score_mul',  name: '悬赏', icon: '🎖️', source: 'gold', target: 'score',      formula: 'multiply', k: 0.005, desc: '触发时：🪙分数×(1+💰金币×0.005)' },
+  conv_gold_mult_add:   { id: 'conv_gold_mult_add',   name: '雇佣', icon: '🫱', source: 'gold', target: 'multiplier', formula: 'add',      k: 0.015, desc: '触发时：🔥倍率+(💰金币×0.015)' },
+  conv_gold_mult_mul:   { id: 'conv_gold_mult_mul',   name: '投机', icon: '📊', source: 'gold', target: 'multiplier', formula: 'multiply', k: 0.008, desc: '触发时：🔥倍率×(1+💰金币×0.008)' },
+  conv_gold_time_add:   { id: 'conv_gold_time_add',   name: '赎买', icon: '🔑', source: 'gold', target: 'time',       formula: 'add',      k: 0.13,  desc: '触发时：⏳时间+(💰金币×0.13)' },
+  conv_gold_time_mul:   { id: 'conv_gold_time_mul',   name: '朝贡', icon: '🏺', source: 'gold', target: 'time',       formula: 'multiply', k: 0.005, desc: '触发时：⏳时间×(1+💰金币×0.005)' },
 } as const;
 
 // === 工具函数 ===
@@ -102,7 +102,7 @@ export function getConverterDesc(id: string, level: number): string {
   const tgtIcon = RESOURCE_ICONS[conv.target] || '';
   const kDisplay = parseFloat(k.toPrecision(4));
   if (conv.formula === 'add') {
-    return `获得等同于${srcIcon}${srcLabel}+${kDisplay}的${tgtIcon}${tgtLabel}`;
+    return `触发时：${tgtIcon}${tgtLabel}+(${srcIcon}${srcLabel}×${kDisplay})`;
   }
-  return `获得等同于${srcIcon}${srcLabel}×${kDisplay}的${tgtIcon}${tgtLabel}`;
+  return `触发时：${tgtIcon}${tgtLabel}×(1+${srcIcon}${srcLabel}×${kDisplay})`;
 }
