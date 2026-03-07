@@ -102,6 +102,8 @@ export type ModifierCondition =
   | { type: 'both_hands_triggered' }
   | { type: 'is_in_pair' }
   | { type: 'is_isolated' }
+  // T6/T7 遗物条件 (Story 27.5)
+  | { type: 'current_skill_is_producer' }
 
 // === 管道输出类型 (Story 11.2) ===
 
@@ -175,6 +177,10 @@ export interface PipelineContext {
   leftHandTriggered?: boolean
   /** 本词是否有右手技能触发过（双手兼备使用） */
   rightHandTriggered?: boolean
+  /** 遗物可变状态（ramen 等动态值遗物使用） */
+  relicStates?: Record<string, number>
+  /** 通关剩余时间（time_bank 遗物使用） */
+  remainingTime?: number
 }
 
 // === 行为执行回调 (Story 11.4) ===

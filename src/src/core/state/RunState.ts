@@ -95,6 +95,9 @@ export interface RunStateData {
 
   /** 跨周目累积的 Boss 修饰器列表 */
   activeModifiers: string[]
+
+  /** 遗物可变状态（relicId → 数值），用于 ramen 等有动态值的遗物 */
+  relicStates: Record<string, number>
 }
 
 /**
@@ -140,6 +143,7 @@ export class RunState {
       devourIcons: new Map(),
       cycle: 1,
       activeModifiers: [],
+      relicStates: {},
     }
   }
 
@@ -468,6 +472,7 @@ export class RunState {
       devourIcons: Object.fromEntries(this.data.devourIcons),
       cycle: this.data.cycle,
       activeModifiers: [...this.data.activeModifiers],
+      relicStates: { ...this.data.relicStates },
     }
   }
 
@@ -541,6 +546,7 @@ export class RunState {
     // 恢复周目数和活跃修饰器（兼容旧存档）
     runState.data.cycle = (parsed as any).cycle || 1
     runState.data.activeModifiers = (parsed as any).activeModifiers || []
+    runState.data.relicStates = (parsed as any).relicStates || {}
 
     return runState
   }

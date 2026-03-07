@@ -285,6 +285,18 @@ function playerWrong(): void {
       gameOver();
       return;
     }
+    // ramen 衰减：每次打错 -0.1×，降至 ≤1.0 时移除遗物
+    if (state.player.relics.has('ramen')) {
+      const curr = state.player.relicStates['ramen'] ?? 1.5;
+      const next = Math.round((curr - 0.1) * 10) / 10;
+      if (next <= 1.0) {
+        state.player.relics.delete('ramen');
+        delete state.player.relicStates['ramen'];
+        showFeedback('拉面凉了...', '#999');
+      } else {
+        state.player.relicStates['ramen'] = next;
+      }
+    }
   }
 
   // 标记词语不完美
@@ -492,7 +504,7 @@ function showGoldReward(onComplete: () => void): void {
 
   // 计算奖励：技能产出 + 遗物加成（基础金币已在关卡开始时重置为100）
   const skillGold = Math.floor(state.resources.gold);
-  const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
+  const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
   const relicGold = Math.floor(goldRelicResult.effects.gold);
   const totalGold = skillGold + relicGold;
 
@@ -722,7 +734,11 @@ export async function startLevel(): Promise<void> {
   const startRelicResult = resolveRelicEffects('on_battle_start');
   if (startRelicResult.effects.multiply > 0) {
     state.multiplier += startRelicResult.effects.multiply;
-    }
+  }
+  // cornucopia 等：战斗开始时金币加成
+  if (startRelicResult.effects.gold > 0) {
+    state.gold += startRelicResult.effects.gold;
+  }
 
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;

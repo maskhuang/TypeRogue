@@ -319,6 +319,65 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '独行者，无需同伴。'
   },
 
+  // ==================== T6 经济遗物 ====================
+
+  cornucopia: {
+    id: 'cornucopia',
+    name: '聚宝盆',
+    icon: '🧧',
+    description: '每关开始时获得 +15 金币',
+    rarity: 'common',
+    basePrice: 25,
+    effects: [
+      { type: 'battle_start', modifier: 'gold_flat', value: 15 }
+    ],
+    flavor: '盆中自有黄金来。'
+  },
+
+  time_bank: {
+    id: 'time_bank',
+    name: '时间银行',
+    icon: '💳',
+    description: '通关剩余时间转化为等量金币（1秒=1金币）',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [
+      { type: 'battle_end', modifier: 'gold_flat', value: 0 }
+    ],
+    flavor: '时间就是金钱，字面意义上的。'
+  },
+
+  // ==================== T7 风险回报遗物 ====================
+
+  ramen: {
+    id: 'ramen',
+    name: '拉面',
+    icon: '🍜',
+    description: '分数 ×1.5，每次打错 -0.1×（降至 ×1.0 时消失）',
+    rarity: 'rare',
+    basePrice: 45,
+    category: 'risk-reward',
+    effects: [
+      { type: 'on_word_complete', modifier: 'score_multiplier', value: 1.5 }
+    ],
+    flavor: '热腾腾的拉面，凉了就没味了。'
+  },
+
+  overcharge: {
+    id: 'overcharge',
+    name: '过载核心',
+    icon: '🔋',
+    description: '产出者效果 +50%，但每次产出者触发 -0.1s 时间',
+    rarity: 'rare',
+    basePrice: 50,
+    category: 'risk-reward',
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 1.5 },
+      { type: 'on_skill_trigger', modifier: 'time_steal', value: -0.1 }
+    ],
+    flavor: '过度充能，燃烧时间。'
+  },
+
   // ==================== 传说遗物 ====================
 
   perfectionist: {
@@ -524,6 +583,48 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
       layer: 'global',
       effect: { type: 'score', value: 1.80, stacking: 'multiplicative' },
       condition: { type: 'is_isolated' },
+    }),
+  ],
+
+  // === T6 经济遗物 ===
+
+  // 聚宝盆：每关开始 +15 金币（base 层加法）
+  cornucopia: (id) => [
+    relicMod(id, 'gold', 'on_battle_start', 'calculate', {
+      effect: { type: 'gold', value: 15, stacking: 'additive' },
+    }),
+  ],
+
+  // 时间银行：通关剩余时间转金币（动态值，参考 overkill_blade）
+  time_bank: (id, ctx) => [
+    relicMod(id, 'gold', 'on_battle_end', 'calculate', {
+      effect: { type: 'gold', value: Math.floor(ctx?.remainingTime ?? 0), stacking: 'additive' },
+    }),
+  ],
+
+  // === T7 风险回报遗物 ===
+
+  // 拉面：分数 ×1.5（衰减），on_word_complete multiply 加算
+  ramen: (id, ctx) => {
+    const mult = ctx?.relicStates?.['ramen'] ?? 1.5
+    if (mult <= 1.0) return []
+    return [
+      relicMod(id, 'boost', 'on_word_complete', 'calculate', {
+        effect: { type: 'multiply', value: mult - 1.0, stacking: 'additive' },
+      }),
+    ]
+  },
+
+  // 过载核心：产出者 +50%（global 层），每次产出者触发 -0.1s（time_steal 行为）
+  overcharge: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.50, stacking: 'multiplicative' },
+      condition: { type: 'current_skill_is_producer' },
+    }),
+    relicMod(id, 'time_cost', 'on_skill_trigger', 'after', {
+      behavior: { type: 'time_steal', timeBonus: -0.1 },
+      condition: { type: 'current_skill_is_producer' },
     }),
   ],
 

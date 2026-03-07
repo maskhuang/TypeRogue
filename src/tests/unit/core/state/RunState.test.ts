@@ -632,6 +632,37 @@ describe('RunState', () => {
       expect(restored.getState().devourIcons.size).toBe(0)
     })
 
+    it('relicStates 序列化/反序列化往返', () => {
+      runState.startRun()
+      runState.addRelic('ramen')
+      // 手动设置 relicStates
+      ;(runState as any).data.relicStates = { ramen: 1.3 }
+
+      const serialized = runState.serialize()
+      const jsonString = JSON.stringify(serialized)
+      const parsed = JSON.parse(jsonString)
+
+      expect(parsed.relicStates).toEqual({ ramen: 1.3 })
+
+      const restored = RunState.deserialize(parsed)
+      expect(restored.getState().relicStates).toEqual({ ramen: 1.3 })
+    })
+
+    it('旧存档无 relicStates 字段 → 默认 {}', () => {
+      const fakeData = {
+        skills: [],
+        bindings: {},
+        relics: [],
+        gold: 0,
+        currentStage: 1,
+        currentAct: 1,
+        isActive: false,
+        stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, battlesWon: 0, startTime: 0 },
+      }
+      const restored = RunState.deserialize(fakeData)
+      expect(restored.getState().relicStates).toEqual({})
+    })
+
     it('deserialize() 遗物超过 10 个时截断为前 10 个', () => {
       // 构造含 15 个遗物的旧存档数据
       const fakeRelics = Array.from({ length: 15 }, (_, i) => `test_relic_${i}`)

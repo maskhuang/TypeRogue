@@ -6,6 +6,7 @@ import type { GameState, SynergyState } from './types';
 import type { StageType } from '../systems/stage/StageConfig';
 import { BALANCE } from './constants';
 import { MAX_RELIC_SLOTS, getRelicData } from '../data/relics';
+import { initRelicState } from '../systems/relics/RelicPipeline';
 
 // === 初始状态 ===
 export function createInitialState(): GameState {
@@ -56,6 +57,7 @@ export function createInitialState(): GameState {
       bindings: new Map(),
       skills: new Map(),
       relics: new Set(),
+      relicStates: {},
       wordDeck: [],
       baseMultiplier: BALANCE.BASE_MULTIPLIER,
       comboBonus: BALANCE.COMBO_BONUS,
@@ -163,6 +165,7 @@ export function addRelicWithCapacity(relicId: string): boolean {
   if (state.player.relics.has(relicId)) return false;
   if (isRelicSlotsFull()) return false;
   state.player.relics.add(relicId);
+  initRelicState(relicId);
   return true;
 }
 
@@ -171,6 +174,7 @@ export function addRelicWithCapacity(relicId: string): boolean {
  */
 export function removeRelic(relicId: string): void {
   state.player.relics.delete(relicId);
+  delete state.player.relicStates[relicId];
 }
 
 /**
@@ -180,7 +184,9 @@ export function replaceRelic(oldId: string, newId: string): number {
   if (state.player.relics.has(newId)) return 0; // 已拥有新遗物，不替换
   const oldRelic = getRelicData(oldId);
   state.player.relics.delete(oldId);
+  delete state.player.relicStates[oldId];
   state.player.relics.add(newId);
+  initRelicState(newId);
   const sellGold = oldRelic ? Math.floor(oldRelic.basePrice * 0.5) : 0;
   state.gold += sellGold;
   return sellGold;

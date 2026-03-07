@@ -24,14 +24,17 @@ export function resolveRelicEffects(
 ): PipelineResult {
   const registry = new ModifierRegistry()
 
+  // 注入 relicStates 到上下文（ramen 等动态值遗物需要）
+  const ctx = { ...context, relicStates: state.player.relicStates }
+
   for (const relicId of state.player.relics) {
     const factory = RELIC_MODIFIER_DEFS[relicId]
     if (!factory) continue
-    const mods = factory(relicId, context)
+    const mods = factory(relicId, ctx)
     registry.registerMany(mods.filter(m => m.trigger === trigger))
   }
 
-  return EffectPipeline.resolve(registry, trigger, context)
+  return EffectPipeline.resolve(registry, trigger, ctx)
 }
 
 /**
@@ -106,15 +109,44 @@ export function resolveRelicSkillTrigger(
     layer: 'base', trigger: 'on_skill_trigger', phase: 'calculate',
     effect: { type: 'score', value: 1, stacking: 'additive' }, priority: 0,
   })
+  // 注入 relicStates
+  const ctx = { ...context, relicStates: state.player.relicStates }
   for (const relicId of state.player.relics) {
     const factory = RELIC_MODIFIER_DEFS[relicId]
     if (!factory) continue
-    const mods = factory(relicId, context)
+    const mods = factory(relicId, ctx)
     registry.registerMany(mods.filter(m => m.trigger === 'on_skill_trigger'))
   }
-  const result = EffectPipeline.resolve(registry, 'on_skill_trigger', context)
+  const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
   if (result.pendingBehaviors.length > 0 && callbacks) {
     BehaviorExecutor.execute(result.pendingBehaviors, 0, callbacks)
   }
   return result.effects.score || 1
+}
+
+/**
+ * 初始化遗物可变状态 — 在遗物获取时调用
+ * 仅对需要动态状态的遗物设置初始值
+ */
+export function initRelicState(relicId: string): void {
+  const INITIAL_VALUES: Record<string, number> = {
+    ramen: 1.5,
+  }
+  if (relicId in INITIAL_VALUES) {
+    state.player.relicStates[relicId] = INITIAL_VALUES[relicId]
+  }
+}
+
+/**
+ * 读取遗物可变状态
+ */
+export function getRelicState(relicId: string): number | undefined {
+  return state.player.relicStates[relicId]
+}
+
+/**
+ * 写入遗物可变状态
+ */
+export function setRelicState(relicId: string, value: number): void {
+  state.player.relicStates[relicId] = value
 }

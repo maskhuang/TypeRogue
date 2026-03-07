@@ -117,6 +117,9 @@ export class ConditionEvaluator {
         return isInPair(ctx.currentSkillKey ?? '', state.player.bindings)
       case 'is_isolated':
         return isIsolatedSkill(ctx.currentSkillKey ?? '', state.player.bindings)
+      // === T6/T7 遗物条件 (Story 27.5) ===
+      case 'current_skill_is_producer':
+        return ctx.currentSkillCategory === 'producer'
       default:
         return false
     }
