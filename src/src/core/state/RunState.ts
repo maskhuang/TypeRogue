@@ -6,6 +6,7 @@
 import { BattleResult } from '../../scenes/battle/BattleFlowController'
 import { drawBossModifiers } from '../../data/bossModifiers'
 import { DELETED_SKILL_IDS, DELETED_EVOLUTION_IDS } from '../../data/skills'
+import { DELETED_RELIC_IDS } from '../../data/relics'
 
 /**
  * 技能实例（已获得的技能）
@@ -507,8 +508,7 @@ export class RunState {
     })
 
     // 恢复其他字段（过滤已删除遗物，兼容旧存档）
-    const DELETED_RELICS = ['chain_amplifier', 'fortress', 'passive_mastery', 'gamblers_creed']
-    runState.data.relics = parsed.relics.filter(id => !DELETED_RELICS.includes(id))
+    runState.data.relics = parsed.relics.filter(id => !DELETED_RELIC_IDS.includes(id))
     runState.data.gold = parsed.gold
     runState.data.currentStage = parsed.currentStage
     runState.data.currentAct = parsed.currentAct

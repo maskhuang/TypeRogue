@@ -11,7 +11,7 @@ import {
   getAllRelicIds,
   getAllRelics
 } from '../../../../src/data/relics'
-import type { RelicRarity } from '../../../../src/systems/relics/RelicTypes'
+import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {

@@ -3,8 +3,69 @@
 // ============================================
 // Story 5.4 Task 2: 遗物数据定义
 
-import type { RelicData, RelicRarity } from '../systems/relics/RelicTypes'
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes'
+
+// === 遗物类型定义（从 RelicTypes.ts 迁入） ===
+
+export type RelicRarity = 'common' | 'rare' | 'legendary'
+
+export type RelicEffectType =
+  | 'battle_start'     // 战斗开始时触发
+  | 'battle_end'       // 战斗结束时触发
+  | 'on_word_complete' // 完成词语时触发
+  | 'on_skill_trigger' // 技能触发时
+  | 'on_keystroke'     // 每次击键时触发
+  | 'on_combo_break'   // 连击断裂时触发
+  | 'on_error'         // 打错时触发
+  | 'passive'          // 持续被动效果
+  | 'on_acquire'       // 获取时一次性触发
+
+export type RelicModifierType =
+  | 'time_bonus'           // 时间加成（秒）
+  | 'score_multiplier'     // 分数倍率加成
+  | 'gold_multiplier'      // 金币倍率加成
+  | 'combo_protection'     // 连击保护概率
+  | 'skill_effect_bonus'   // 技能效果加成
+  | 'price_discount'       // 商店折扣
+  | 'word_score_bonus'     // 词语基础分加成
+  | 'multiplier_per_combo' // 每连击倍率加成
+  | 'gold_flat'            // 金币固定加成
+  | 'score_bonus'          // 分数固定加成
+  | 'instant_fail'         // 打错即失败
+  | 'time_steal'           // 时间窃取
+  | 'time_halve'           // 时间减半
+  | 'price_increase'       // 价格增加
+  | 'skill_lock'           // 技能锁定
+  | 'time_penalty'         // 时间惩罚
+
+export type RelicConditionType =
+  | 'combo_threshold'   // 连击阈值
+  | 'score_threshold'   // 分数阈值
+  | 'time_remaining'    // 剩余时间阈值
+
+export interface RelicCondition {
+  type: RelicConditionType
+  threshold: number
+}
+
+export interface RelicEffect {
+  type: RelicEffectType
+  modifier: RelicModifierType
+  value: number
+  condition?: RelicCondition
+}
+
+export interface RelicData {
+  id: string
+  name: string
+  icon: string
+  description: string
+  rarity: RelicRarity
+  basePrice: number
+  effects: RelicEffect[]
+  flavor?: string
+  category?: 'risk-reward'
+}
 
 /**
  * 所有遗物数据
@@ -406,3 +467,12 @@ export function getAllRelics(): RelicData[] {
 export function relicExists(relicId: string): boolean {
   return relicId in RELICS
 }
+
+/**
+ * 已删除的遗物 ID（用于存档迁移过滤）
+ */
+export const DELETED_RELIC_IDS = [
+  'magnet', 'combo_badge', 'berserker_mask',
+  'combo_crown', 'treasure_map', 'piggy_bank',
+  'chain_amplifier', 'fortress', 'passive_mastery', 'gamblers_creed',
+]

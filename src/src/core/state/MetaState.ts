@@ -104,7 +104,6 @@ const DEFAULT_UNLOCKED_SKILLS = [
  */
 const DEFAULT_UNLOCKED_RELICS = [
   'lucky_coin',       // 幸运硬币
-  'speed_ring',       // 速度戒指
 ]
 
 /**

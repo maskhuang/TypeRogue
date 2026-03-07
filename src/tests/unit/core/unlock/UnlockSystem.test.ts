@@ -191,7 +191,7 @@ describe('UnlockSystem', () => {
 
       const relicUnlock = newUnlocks.find(u => u.id === 'milestone_relic_act1')
       expect(relicUnlock).toBeDefined()
-      expect(metaState.isRelicUnlocked('combo_keeper')).toBe(true)
+      expect(metaState.isRelicUnlocked('phoenix_feather')).toBe(true)
     })
 
     it('失败时不应解锁里程碑', () => {
@@ -436,7 +436,7 @@ describe('UnlockSystem', () => {
 
       const highscoreUnlock = newUnlocks.find(u => u.id === 'stats_highscore')
       expect(highscoreUnlock).toBeDefined()
-      expect(metaState.isRelicUnlocked('score_amplifier')).toBe(true)
+      expect(metaState.isRelicUnlocked('golden_keyboard')).toBe(true)
     })
 
     it('达到连击阈值时应解锁', () => {

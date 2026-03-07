@@ -54,7 +54,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
   {
     id: 'milestone_relic_act1',
     type: 'relic',
-    targetId: 'combo_keeper',
+    targetId: 'phoenix_feather',
     name: '连击守护者',
     description: '首次通关 Act 1',
     condition: {
@@ -127,7 +127,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
   {
     id: 'stats_highscore',
     type: 'relic',
-    targetId: 'score_amplifier',
+    targetId: 'golden_keyboard',
     name: '高分猎手',
     description: '单局得分达到 50000',
     condition: {

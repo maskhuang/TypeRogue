@@ -34,7 +34,6 @@ describe('MetaState', () => {
 
     it('应包含默认解锁的遗物 (AC: #2, #11)', () => {
       expect(metaState.isRelicUnlocked('lucky_coin')).toBe(true)
-      expect(metaState.isRelicUnlocked('speed_ring')).toBe(true)
     })
 
     it('未知技能应返回未解锁 (AC: #1)', () => {
@@ -153,7 +152,6 @@ describe('MetaState', () => {
     it('应能获取所有已解锁遗物列表 (AC: #9)', () => {
       const relics = metaState.getUnlockedRelics()
       expect(relics).toContain('lucky_coin')
-      expect(relics).toContain('speed_ring')
       expect(Array.isArray(relics)).toBe(true)
     })
 

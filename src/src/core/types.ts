@@ -49,16 +49,13 @@ export interface ConnectorDefinition {
 }
 
 // === 增幅者系统 ===
-export type AmplifierOperator = 'add' | 'multiply';
-
 export interface AmplifierDefinition {
-  id: string;                       // amp_base_add_adjacent, amp_mult_mul_sameRow, ...
-  name: string;                     // 强化核心, 倍增光环, ...
-  icon: string;                     // emoji
+  id: string;                       // amp_base_adjacent, amp_mult_sameRow, ...
+  name: string;                     // 铸基, 共振, ...
+  icon: string;                     // 复合图标（资源图标+范围图标）
   resource: ResourceType;           // 增幅的目标资源
   positionRelation: PositionRelation; // 影响范围（相邻/同行/同列/...）
-  operator: AmplifierOperator;      // 加法增幅 | 乘法增幅
-  valuePerStack: number;            // 每层增幅值（Lv1 基准）
+  valuePerStack: number;            // 每层增幅百分比（0.03 = 3%/层）
   desc: string;                     // 玩家可见描述
 }
 
@@ -212,18 +209,6 @@ export interface ShopState {
 export interface SkillInstance {
   level: number;
   purchasePrice?: number;  // 购买价格（用于卖出半价计算）
-}
-
-// === 遗物系统 ===
-export type RelicRarity = 'common' | 'rare' | 'epic';
-
-export interface RelicDefinition {
-  name: string;
-  icon: string;
-  desc: string;
-  cost: number;
-  rarity: RelicRarity;
-  onAcquire?: () => void;
 }
 
 // === 词库系统 ===
