@@ -3,7 +3,7 @@
 // ============================================
 // Story 18.3: 休息关随机事件场景
 
-import { state } from '../core/state';
+import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { drawRestEvent } from '../data/restEvents';
 import type { RestEvent, RestEventOption } from '../data/restEvents';
 import { RELICS } from '../data/relics';
@@ -331,8 +331,9 @@ function grantRandomRelic(targetRarity?: string): string | null {
     if (filtered.length > 0) available = filtered;
   }
   if (available.length === 0) return null;
+  if (isRelicSlotsFull()) return null;
   const relicId = available[Math.floor(Math.random() * available.length)];
-  state.player.relics.add(relicId);
+  addRelicWithCapacity(relicId);
   renderRelicDisplay();
   return relicId;
 }

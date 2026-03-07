@@ -252,7 +252,7 @@ development_status:
   epic-27: in-progress
   27-1-remove-old-relics: done
   27-2-relic-type-system: done
-  27-3-slot-system-data: backlog
+  27-3-slot-system-data: done
   27-4-new-t1-passive-relics: backlog
   27-5-new-t5-t6-t7-relics: backlog
   epic-27-retrospective: optional

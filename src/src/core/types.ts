@@ -177,7 +177,7 @@ export interface PlayerState {
   index: number;
   bindings: Map<string, string>;  // key -> skillId
   skills: Map<string, SkillInstance>;
-  relics: Set<string>;
+  relics: Set<string>; // 上限 MAX_RELIC_SLOTS (10)
   wordDeck: string[];
   // 被动加成
   baseMultiplier: number;

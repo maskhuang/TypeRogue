@@ -61,8 +61,9 @@ const TEMP_RELICS: Record<string, { name: string; description: string; rarity: s
 export interface IRunState {
   getGold(): number
   spendGold(amount: number): boolean
+  addGold(amount: number): void
   addSkill(id: string): void
-  addRelic(id: string): void
+  addRelic(id: string): boolean
   getSkillLevel(id: string): number
   hasRelic(id: string): boolean
 }
@@ -349,8 +350,10 @@ export class ShopScene extends BaseScene {
     // 添加到库存
     if (item.type === 'skill') {
       this.runState.addSkill(item.id)
-    } else {
-      this.runState.addRelic(item.id)
+    } else if (!this.runState.addRelic(item.id)) {
+      // 槽位满，退还金币
+      this.runState.addGold(price)
+      return false
     }
 
     // 标记已购买

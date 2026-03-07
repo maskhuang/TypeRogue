@@ -58,6 +58,9 @@ export interface RelicData {
   category?: 'risk-reward'
 }
 
+/** 遗物槽位上限 */
+export const MAX_RELIC_SLOTS = 10
+
 /**
  * 所有遗物数据
  */

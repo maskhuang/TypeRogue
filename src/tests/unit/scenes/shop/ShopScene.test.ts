@@ -40,7 +40,13 @@ function createMockRunState(initialGold = 100): IRunState & {
       skills.set(id, Math.min(3, level + 1))
     },
     addRelic(id: string) {
+      if (relics.has(id)) return false
       relics.add(id)
+      return true
+    },
+    addGold(amount: number) {
+      gold = Math.max(0, gold + amount)
+      this.gold = gold
     },
     getSkillLevel(id: string) {
       return skills.get(id) || 0

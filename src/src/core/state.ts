@@ -5,6 +5,7 @@
 import type { GameState, SynergyState } from './types';
 import type { StageType } from '../systems/stage/StageConfig';
 import { BALANCE } from './constants';
+import { MAX_RELIC_SLOTS, getRelicData } from '../data/relics';
 
 // === 初始状态 ===
 export function createInitialState(): GameState {
@@ -139,10 +140,48 @@ export function calculateTargetScore(level: number, stageType: StageType = 'stan
   return scaled;
 }
 
-// === 遗物检查 ===
+// === 遗物管理 ===
 /**
  * 检查玩家是否拥有指定遗物
  */
 export function hasRelic(relicId: string): boolean {
   return state.player.relics.has(relicId);
+}
+
+/**
+ * 遗物槽位是否已满
+ */
+export function isRelicSlotsFull(): boolean {
+  return state.player.relics.size >= MAX_RELIC_SLOTS;
+}
+
+/**
+ * 添加遗物（带容量检查）
+ * @returns true=成功添加, false=已拥有或槽位满
+ */
+export function addRelicWithCapacity(relicId: string): boolean {
+  if (state.player.relics.has(relicId)) return false;
+  if (isRelicSlotsFull()) return false;
+  state.player.relics.add(relicId);
+  return true;
+}
+
+/**
+ * 移除遗物
+ */
+export function removeRelic(relicId: string): void {
+  state.player.relics.delete(relicId);
+}
+
+/**
+ * 替换遗物 — 删旧添新，返回卖出金币
+ */
+export function replaceRelic(oldId: string, newId: string): number {
+  if (state.player.relics.has(newId)) return 0; // 已拥有新遗物，不替换
+  const oldRelic = getRelicData(oldId);
+  state.player.relics.delete(oldId);
+  state.player.relics.add(newId);
+  const sellGold = oldRelic ? Math.floor(oldRelic.basePrice * 0.5) : 0;
+  state.gold += sellGold;
+  return sellGold;
 }

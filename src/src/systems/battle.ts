@@ -7,7 +7,7 @@ import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag }
 import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
-import { RELICS } from '../data/relics';
+import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
@@ -926,32 +926,30 @@ export function updateHUD(): void {
 
 export function renderRelicDisplay(): void {
   const el = getElements();
+  const relicArray = [...state.player.relics];
 
-  // 战斗界面遗物
-  el.playerRelics.innerHTML = '';
-  state.player.relics.forEach(relicId => {
-    const relic = RELICS[relicId];
-    if (relic) {
-      const span = document.createElement('span');
-      span.className = 'relic-icon';
-      span.textContent = relic.icon;
-      span.title = `${relic.name}: ${relic.description}`;
-      el.playerRelics.appendChild(span);
+  // 渲染 10 槽位到指定容器
+  function renderSlots(container: HTMLElement) {
+    container.innerHTML = '';
+    for (let i = 0; i < MAX_RELIC_SLOTS; i++) {
+      const slot = document.createElement('span');
+      const keyLabel = i < 9 ? `${i + 1}` : '0';
+      if (relicArray[i]) {
+        const relic = RELICS[relicArray[i]];
+        slot.className = 'relic-icon';
+        slot.textContent = relic?.icon ?? '?';
+        slot.title = `[${keyLabel}] ${relic?.name}: ${relic?.description}`;
+      } else {
+        slot.className = 'relic-icon relic-slot-empty';
+        slot.textContent = '·';
+        slot.title = `[${keyLabel}] 空槽位`;
+      }
+      container.appendChild(slot);
     }
-  });
+  }
 
-  // 商店界面遗物
-  el.shopRelicIcons.innerHTML = '';
-  state.player.relics.forEach(relicId => {
-    const relic = RELICS[relicId];
-    if (relic) {
-      const span = document.createElement('span');
-      span.className = 'relic-icon';
-      span.textContent = relic.icon;
-      span.title = `${relic.name}: ${relic.description}`;
-      el.shopRelicIcons.appendChild(span);
-    }
-  });
+  renderSlots(el.playerRelics);
+  renderSlots(el.shopRelicIcons);
 }
 
 function renderActiveLibrary(): void {

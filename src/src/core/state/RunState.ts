@@ -6,7 +6,7 @@
 import { BattleResult } from '../../scenes/battle/BattleFlowController'
 import { drawBossModifiers } from '../../data/bossModifiers'
 import { DELETED_SKILL_IDS, DELETED_EVOLUTION_IDS } from '../../data/skills'
-import { DELETED_RELIC_IDS } from '../../data/relics'
+import { DELETED_RELIC_IDS, MAX_RELIC_SLOTS } from '../../data/relics'
 
 /**
  * 技能实例（已获得的技能）
@@ -297,10 +297,11 @@ export class RunState {
    * 添加遗物
    * 重复添加会被忽略
    */
-  addRelic(relicId: string): void {
-    if (!this.data.relics.includes(relicId)) {
-      this.data.relics.push(relicId)
-    }
+  addRelic(relicId: string): boolean {
+    if (this.data.relics.includes(relicId)) return false
+    if (this.data.relics.length >= MAX_RELIC_SLOTS) return false
+    this.data.relics.push(relicId)
+    return true
   }
 
   /**
@@ -508,7 +509,9 @@ export class RunState {
     })
 
     // 恢复其他字段（过滤已删除遗物，兼容旧存档）
-    runState.data.relics = parsed.relics.filter(id => !DELETED_RELIC_IDS.includes(id))
+    runState.data.relics = parsed.relics
+      .filter(id => !DELETED_RELIC_IDS.includes(id))
+      .slice(0, MAX_RELIC_SLOTS)
     runState.data.gold = parsed.gold
     runState.data.currentStage = parsed.currentStage
     runState.data.currentAct = parsed.currentAct

@@ -272,6 +272,27 @@ describe('RunState', () => {
       runState.addRelic('relic2')
       expect(runState.getRelics()).toHaveLength(2)
     })
+
+    it('addRelic() 返回 boolean（成功/失败）', () => {
+      expect(runState.addRelic('r1')).toBe(true)
+      expect(runState.addRelic('r1')).toBe(false) // 重复
+    })
+
+    it('addRelic() 满 10 个后返回 false', () => {
+      for (let i = 0; i < 10; i++) {
+        expect(runState.addRelic(`relic_${i}`)).toBe(true)
+      }
+      expect(runState.addRelic('relic_extra')).toBe(false)
+      expect(runState.getRelics()).toHaveLength(10)
+    })
+
+    it('addRelic() 第 10 个仍可添加', () => {
+      for (let i = 0; i < 9; i++) {
+        runState.addRelic(`relic_${i}`)
+      }
+      expect(runState.addRelic('relic_9')).toBe(true)
+      expect(runState.getRelics()).toHaveLength(10)
+    })
   })
 
   // ==================== 关卡进度测试 (AC3) ====================
@@ -609,6 +630,31 @@ describe('RunState', () => {
       // Story 24.1: growthValues/devourIcons 空状态往返
       expect(restored.getState().growthValues.size).toBe(0)
       expect(restored.getState().devourIcons.size).toBe(0)
+    })
+
+    it('deserialize() 遗物超过 10 个时截断为前 10 个', () => {
+      // 构造含 15 个遗物的旧存档数据
+      const fakeRelics = Array.from({ length: 15 }, (_, i) => `test_relic_${i}`)
+      const fakeData = {
+        skills: [],
+        bindings: {},
+        relics: fakeRelics,
+        gold: 0,
+        currentStage: 1,
+        currentAct: 1,
+        isActive: true,
+        stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, totalGoldEarned: 0 },
+        evolvedSkills: {},
+        enchantedSkills: {},
+        growthValues: {},
+        masteryCounters: {},
+        devourCounters: {},
+        devourIcons: {},
+      }
+      const restored = RunState.deserialize(fakeData)
+      expect(restored.getRelics()).toHaveLength(10)
+      expect(restored.getRelics()[0]).toBe('test_relic_0')
+      expect(restored.getRelics()[9]).toBe('test_relic_9')
     })
   })
 })
