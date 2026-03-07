@@ -31,14 +31,14 @@ const RELATION_ICONS: Record<string, string> = {
 // === 7 个增幅者数据 ===
 export const AMPLIFIERS: Record<string, AmplifierDefinition> = {
   // === 加法增幅者（4 个）— 每层+N，稳定兜底 ===
-  amp_base_add_adjacent:      { id: 'amp_base_add_adjacent',      name: '铸基', icon: '🔱', resource: 'base',       positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 1,    desc: '触发时+1层：🔗相邻技能⚔️基数+1/层' },
-  amp_mult_add_adjacent:      { id: 'amp_mult_add_adjacent',      name: '激励', icon: '✴️', resource: 'multiplier', positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 0.02, desc: '触发时+1层：🔗相邻技能🔥倍率+0.02/层' },
-  amp_score_add_sameColumn:   { id: 'amp_score_add_sameColumn',   name: '聚财', icon: '🏹', resource: 'score',      positionRelation: PositionRelation.SameColumn, operator: 'add', valuePerStack: 2,    desc: '触发时+1层：📌同列技能🪙分数+2/层' },
-  amp_time_add_adjacent:      { id: 'amp_time_add_adjacent',      name: '滋润', icon: '💧', resource: 'time',       positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 0.05, desc: '触发时+1层：🔗相邻技能⏳时间+0.05/层' },
+  amp_base_add_adjacent:      { id: 'amp_base_add_adjacent',      name: '铸基', icon: '🔱', resource: 'base',       positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 1,    desc: '触发时+1层：每个🔗相邻技能⚔️基数+1/层' },
+  amp_mult_add_adjacent:      { id: 'amp_mult_add_adjacent',      name: '激励', icon: '✴️', resource: 'multiplier', positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 0.02, desc: '触发时+1层：每个🔗相邻技能🔥倍率+0.02/层' },
+  amp_score_add_sameColumn:   { id: 'amp_score_add_sameColumn',   name: '聚财', icon: '🏹', resource: 'score',      positionRelation: PositionRelation.SameColumn, operator: 'add', valuePerStack: 2,    desc: '触发时+1层：每个📌同列技能🪙分数+2/层' },
+  amp_time_add_adjacent:      { id: 'amp_time_add_adjacent',      name: '滋润', icon: '💧', resource: 'time',       positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 0.05, desc: '触发时+1层：每个🔗相邻技能⏳时间+0.05/层' },
   // === 乘法增幅者（3 个）— 每层×N%，后期爆发 ===
-  amp_base_mul_adjacent:      { id: 'amp_base_mul_adjacent',      name: '淬炼', icon: '⚗️', resource: 'base',       positionRelation: PositionRelation.Adjacent,   operator: 'multiply', valuePerStack: 0.05, desc: '触发时+1层：🔗相邻技能⚔️基数×5%/层' },
-  amp_mult_mul_sameRow:       { id: 'amp_mult_mul_sameRow',       name: '共振', icon: '🔊', resource: 'multiplier', positionRelation: PositionRelation.SameRow,    operator: 'multiply', valuePerStack: 0.03, desc: '触发时+1层：📡同行技能🔥倍率×3%/层' },
-  amp_score_mul_sameHand:     { id: 'amp_score_mul_sameHand',     name: '点金', icon: '🪄', resource: 'score',      positionRelation: PositionRelation.SameHand,   operator: 'multiply', valuePerStack: 0.04, desc: '触发时+1层：🤝同手技能🪙分数×4%/层' },
+  amp_base_mul_adjacent:      { id: 'amp_base_mul_adjacent',      name: '淬炼', icon: '⚗️', resource: 'base',       positionRelation: PositionRelation.Adjacent,   operator: 'multiply', valuePerStack: 0.05, desc: '触发时+1层：每个🔗相邻技能⚔️基数×5%/层' },
+  amp_mult_mul_sameRow:       { id: 'amp_mult_mul_sameRow',       name: '共振', icon: '🔊', resource: 'multiplier', positionRelation: PositionRelation.SameRow,    operator: 'multiply', valuePerStack: 0.03, desc: '触发时+1层：每个📡同行技能🔥倍率×3%/层' },
+  amp_score_mul_sameHand:     { id: 'amp_score_mul_sameHand',     name: '点金', icon: '🪄', resource: 'score',      positionRelation: PositionRelation.SameHand,   operator: 'multiply', valuePerStack: 0.04, desc: '触发时+1层：每个🤝同手技能🪙分数×4%/层' },
 } as const;
 
 // === 工具函数 ===
@@ -79,7 +79,7 @@ export function getAmplifierDesc(id: string, level?: number): string {
   const relLabel = RELATION_LABELS[amp.positionRelation] || amp.positionRelation;
   const relIcon = RELATION_ICONS[amp.positionRelation] || '';
   if (amp.operator === 'add') {
-    return `触发时+1层：${relIcon}${relLabel}技能${resIcon}${resLabel}+${parseFloat(value.toPrecision(4))}/层`;
+    return `触发时+1层：每个${relIcon}${relLabel}技能${resIcon}${resLabel}+${parseFloat(value.toPrecision(4))}/层`;
   }
-  return `触发时+1层：${relIcon}${relLabel}技能${resIcon}${resLabel}×${parseFloat((value * 100).toPrecision(4))}%/层`;
+  return `触发时+1层：每个${relIcon}${relLabel}技能${resIcon}${resLabel}×${parseFloat((value * 100).toPrecision(4))}%/层`;
 }

@@ -311,26 +311,25 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
       state.resources[prod.resource] += value;
     }
   } else {
-    // ×N 乘法：基于总资源值计算增量，添加到对应累加器
+    // ×N 乘法：基于总资源值计算增量，enchMult 缩放增量部分
     if (prod.resource === 'base') {
-      delta = state.resources.base * (value - 1);
+      delta = state.resources.base * (value - 1) * enchMult;
       synergy.skillBaseScore += delta;
     } else if (prod.resource === 'multiplier') {
-      delta = state.multiplier * (value - 1);
+      delta = state.multiplier * (value - 1) * enchMult;
       synergy.skillMultBonus += delta;
     } else if (prod.resource === 'score') {
       const pendingScore = state.resources.base * state.resources.multiplier + state.resources.score;
-      delta = pendingScore * (value - 1);
+      delta = pendingScore * (value - 1) * enchMult;
       state.resources.score += delta;
       state.score += delta;
     } else if (prod.resource === 'gold') {
       // 金币乘算基于玩家持有金币（state.gold）
-      delta = state.gold * (value - 1);
+      delta = state.gold * (value - 1) * enchMult;
       state.resources.gold += delta;
     } else {
-      const before = state.resources[prod.resource];
-      state.resources[prod.resource] *= value;
-      delta = state.resources[prod.resource] - before;
+      delta = state.resources[prod.resource] * (value - 1) * enchMult;
+      state.resources[prod.resource] += delta;
     }
   }
 
@@ -395,25 +394,22 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
       state.resources[conv.target] += delta;
     }
   } else {
-    // multiply: target *= (1 + sourceVal × amplifiedK)
+    // multiply: target *= (1 + sourceVal × amplifiedK)，enchMult 缩放增量部分
     const factor = 1 + sourceVal * amplifiedK;
     if (conv.target === 'base') {
-      // multiply 等价于 base 总量 × sourceVal × amplifiedK 的加值
-      delta = state.resources.base * sourceVal * amplifiedK;
+      delta = state.resources.base * sourceVal * amplifiedK * enchMult;
       synergy.skillBaseScore += delta;
     } else if (conv.target === 'multiplier') {
-      // multiply 等价于 multiplier 总量 × sourceVal × amplifiedK 的加值
-      delta = state.multiplier * sourceVal * amplifiedK;
+      delta = state.multiplier * sourceVal * amplifiedK * enchMult;
       synergy.skillMultBonus += delta;
     } else if (conv.target === 'score') {
       const pendingScore = state.resources.base * state.resources.multiplier + state.resources.score;
-      delta = pendingScore * (factor - 1);
+      delta = pendingScore * (factor - 1) * enchMult;
       state.resources.score += delta;
       state.score += delta;
     } else {
-      const before = state.resources[conv.target];
-      state.resources[conv.target] *= factor;
-      delta = state.resources[conv.target] - before;
+      delta = state.resources[conv.target] * (factor - 1) * enchMult;
+      state.resources[conv.target] += delta;
     }
   }
 
