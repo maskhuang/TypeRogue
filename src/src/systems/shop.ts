@@ -717,7 +717,7 @@ function renderEnchantmentModal(skillId: string, onClose?: () => void): void {
       <div class="enchantment-category-tag" style="color:${catColor}">${catLabel}</div>
       <div class="enchantment-branch-icon">${ench.icon}</div>
       <div class="enchantment-branch-name">${ench.name}</div>
-      <div class="enchantment-branch-desc">${ench.desc}</div>
+      <div class="enchantment-branch-desc">${isAmplifier(skillId) && ench.category === 'transmutation' && ench.extraResource ? `增幅效果同时作用于${RESOURCE_ICONS[ench.extraResource] || ''}${RESOURCE_LABELS[ench.extraResource] || ench.extraResource}（${Math.round(ench.effectValue * 100)}%效率）` : ench.desc}</div>
       <div class="enchantment-branch-cost">✨ 免费</div>
     `;
     // 空间附魔范围预览
@@ -1156,7 +1156,25 @@ function registerShopDropZones(): void {
     });
   });
 
-  // 2. 卖出区 — 接受 skill-inventory、skill-key、word
+  // 2. 已有技能区 — 接受 skill-key（从键盘卸下技能）
+  const skillInv = document.getElementById('skill-inventory');
+  if (skillInv) {
+    dragManager.registerDropZone({
+      element: skillInv,
+      type: 'skill-inventory',
+      accepts: (payload: DragPayload) => payload.type === 'skill-key',
+      onDrop: (payload: DragPayload) => {
+        const skillId = payload.skillId;
+        const sourceKey = payload.sourceKey;
+        if (!skillId || !sourceKey) return;
+        state.player.bindings.delete(sourceKey);
+        playSound('skill');
+        renderBuildManager();
+      },
+    });
+  }
+
+  // 3. 卖出区 — 接受 skill-inventory、skill-key、word
   const sellZone = document.getElementById('sell-zone');
   if (sellZone) {
     dragManager.registerDropZone({

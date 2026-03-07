@@ -85,16 +85,19 @@ describe('triggerConverter — 乘法公式 (AC4)', () => {
     resetState()
   })
 
-  it('base→score mul: score *= (1 + sourceVal × k)', async () => {
+  it('base→score mul: pendingScore = base×mult+score, delta = pendingScore × (factor-1)', async () => {
     const { triggerConverter } = await import('../../../src/systems/skills')
     state.player.skills.set('conv_base_score_mul', { level: 1 })
     state.resources.base = 15
+    state.resources.multiplier = 1.0
     state.resources.score = 100
     state.score = 200
     triggerConverter('conv_base_score_mul')
-    // score *= (1 + 15 × 0.005) = × 1.075 → 107.5
-    expect(state.resources.score).toBeCloseTo(107.5)
-    expect(state.score).toBeCloseTo(207.5) // 200 + 7.5
+    // factor = 1 + 15 × 0.005 = 1.075
+    // pendingScore = 15 × 1.0 + 100 = 115
+    // delta = 115 × 0.075 = 8.625
+    expect(state.resources.score).toBeCloseTo(108.625)
+    expect(state.score).toBeCloseTo(208.625)
   })
 
   it('base→multiplier mul: skillMultBonus += multiplier × base × k', async () => {

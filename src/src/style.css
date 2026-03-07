@@ -500,8 +500,8 @@ body {
 }
 
 /* Build Manager Section */
-#shop-build { flex: 1; display: flex; flex-direction: column; }
-#build-manager { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+#shop-build { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#build-manager { flex: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
 
 #bound-grid {
     display: flex;
@@ -577,7 +577,8 @@ body {
 .key-slot .devour-icons { font-size: 8px; opacity: 0.8; }
 .key-slot .growth-badge { font-size: 8px; color: #ffe66d; display: block; line-height: 1; margin-top: 1px; }
 
-#skill-inventory { padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; }
+#skill-inventory { padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; transition: border-color 0.15s; border: 2px solid transparent; }
+#skill-inventory.drag-over { border-color: #4ecdc4; background: rgba(78,205,196,0.08); }
 .inventory-label { font-size: 10px; color: #555; margin-bottom: 8px; text-align: center; }
 #owned-skills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; min-height: 40px; }
 
@@ -1610,8 +1611,7 @@ body {
 }
 
 .settlement-chips,
-.settlement-mult-box,
-.settlement-score-box {
+.settlement-mult-box {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1648,20 +1648,10 @@ body {
     text-shadow: 0 0 20px rgba(255, 102, 102, 0.5);
 }
 
-.settlement-mult,
-.settlement-score {
+.settlement-mult {
     display: flex;
     align-items: center;
     gap: 10px;
-}
-
-.settlement-score-box .settlement-label {
-    color: #f1c40f;
-}
-
-.settlement-score-box .settlement-value {
-    color: #f1c40f;
-    text-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
 }
 
 .settlement-symbol {
@@ -1687,7 +1677,6 @@ body {
 /* Settlement Live Mode - 实时显示 */
 #score-settlement.settlement-live .settlement-chips,
 #score-settlement.settlement-live .settlement-mult,
-#score-settlement.settlement-live .settlement-score,
 #score-settlement.settlement-live .settlement-result {
     opacity: 1;
 }
@@ -1737,7 +1726,6 @@ body {
 
 #score-settlement.settlement-complete .settlement-chips,
 #score-settlement.settlement-complete .settlement-mult,
-#score-settlement.settlement-complete .settlement-score,
 #score-settlement.settlement-complete .settlement-result {
     opacity: 1;
 }
@@ -1745,7 +1733,6 @@ body {
 /* Initially visible in live mode */
 .settlement-panel .settlement-chips,
 .settlement-panel .settlement-mult,
-.settlement-panel .settlement-score,
 .settlement-panel .settlement-result {
     opacity: 0;
     transition: opacity 0.2s;

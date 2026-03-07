@@ -111,20 +111,22 @@ describe('triggerProducer — ×N 乘法产出者', () => {
     resetState()
   })
 
-  it('prod_focus: skillBaseScore *= 2 (Lv1)', async () => {
+  it('prod_focus: base ×2 → delta = resources.base × (2-1) (Lv1)', async () => {
     const { triggerProducer } = await import('../../../src/systems/skills')
     state.player.skills.set('prod_focus', { level: 1 })
-    synergy.skillBaseScore = 10
+    state.resources.base = 10
     triggerProducer('prod_focus')
-    expect(synergy.skillBaseScore).toBe(20) // 10 × 2
+    // delta = 10 × (2 - 1) = 10
+    expect(synergy.skillBaseScore).toBe(10)
   })
 
-  it('prod_focus: skillBaseScore *= 2.3 (Lv2)', async () => {
+  it('prod_focus: base ×2.3 → delta = resources.base × (2.3-1) (Lv2)', async () => {
     const { triggerProducer } = await import('../../../src/systems/skills')
     state.player.skills.set('prod_focus', { level: 2 })
-    synergy.skillBaseScore = 10
+    state.resources.base = 10
     triggerProducer('prod_focus')
-    expect(synergy.skillBaseScore).toBeCloseTo(23) // 10 × 2.3
+    // delta = 10 × (2.3 - 1) = 13
+    expect(synergy.skillBaseScore).toBeCloseTo(13)
   })
 
   it('prod_crit: score *= 1.1 并立刻结算增量到 state.score', async () => {
@@ -137,12 +139,13 @@ describe('triggerProducer — ×N 乘法产出者', () => {
     expect(state.score).toBeCloseTo(210) // 200 + (110 - 100)
   })
 
-  it('prod_frenzy: skillMultBonus *= 1.15', async () => {
+  it('prod_frenzy: mult ×1.15 → delta = state.multiplier × (1.15-1)', async () => {
     const { triggerProducer } = await import('../../../src/systems/skills')
     state.player.skills.set('prod_frenzy', { level: 1 })
-    synergy.skillMultBonus = 2.0
+    state.multiplier = 2.0
     triggerProducer('prod_frenzy')
-    expect(synergy.skillMultBonus).toBeCloseTo(2.3) // 2.0 × 1.15
+    // delta = 2.0 × (1.15 - 1) = 0.3
+    expect(synergy.skillMultBonus).toBeCloseTo(0.3)
   })
 
   it('prod_eternal: time *= 1.2, clamp to timeMax×2', async () => {

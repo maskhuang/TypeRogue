@@ -8,6 +8,7 @@ import { CONVERTERS, getConverterDesc } from './converters';
 import { CONNECTORS, getConnectorDesc } from './connectors';
 import { AMPLIFIERS, getAmplifierDesc } from './amplifiers';
 import { ENCHANTMENTS } from './enchantments';
+import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
 
 // === 已删除旧技能 ID 列表（存档兼容用）===
 export const DELETED_SKILL_IDS = [
@@ -97,7 +98,21 @@ export function getSkillDisplayInfo(
   const amp = AMPLIFIERS[skillId];
   if (amp) {
     const desc = level ? getAmplifierDesc(skillId, level) : amp.desc;
-    return { name: amp.name + enchSuffix, icon: enchIcon || amp.icon, desc: desc + (enchSuffix ? ` | 附魔: ${enchSuffix}` : '') };
+    // 变性附魔：显示双资源增幅说明
+    let enchDesc = enchSuffix ? ` | 附魔: ${enchSuffix}` : '';
+    if (enchantedSkills) {
+      const enchId = enchantedSkills.get(skillId);
+      if (enchId) {
+        const ench = ENCHANTMENTS[enchId];
+        if (ench?.category === 'transmutation' && ench.extraResource) {
+          const extraIcon = RESOURCE_ICONS[ench.extraResource] || '';
+          const extraLabel = RESOURCE_LABELS[ench.extraResource] || ench.extraResource;
+          const pct = Math.round(ench.effectValue * 100);
+          enchDesc = ` | ${ench.icon}${ench.name}: 同时增幅${extraIcon}${extraLabel}（${pct}%效率）`;
+        }
+      }
+    }
+    return { name: amp.name + enchSuffix, icon: enchIcon || amp.icon, desc: desc + enchDesc };
   }
   return { name: '???', icon: '?', desc: '' };
 }

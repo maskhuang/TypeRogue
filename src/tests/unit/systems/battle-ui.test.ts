@@ -102,37 +102,26 @@ describe('6 种资源颜色 (AC2)', () => {
 
 // === AC6: 结算面板公式 ===
 describe('结算面板公式 (AC6)', () => {
-  it('index.html 包含 settlement-score 元素', async () => {
-    const fs = await import('fs')
-    const path = await import('path')
-    const htmlPath = path.resolve(__dirname, '../../../index.html')
-    const content = fs.readFileSync(htmlPath, 'utf-8')
-    expect(content).toContain('settlement-score')
-    expect(content).toContain('id="settlement-score"')
-  })
-
-  it('结算面板布局顺序: 基数 × 倍率 + 分数 = 最终', async () => {
+  it('结算面板布局顺序: 基数 × 倍率 = 最终（分数已即时计入）', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const htmlPath = path.resolve(__dirname, '../../../index.html')
     const content = fs.readFileSync(htmlPath, 'utf-8')
     const chipsPos = content.indexOf('settlement-chips')
     const multPos = content.indexOf('settlement-mult')
-    const scorePos = content.indexOf('settlement-score')
     const resultPos = content.indexOf('settlement-result')
     expect(chipsPos).toBeLessThan(multPos)
-    expect(multPos).toBeLessThan(scorePos)
-    expect(scorePos).toBeLessThan(resultPos)
+    expect(multPos).toBeLessThan(resultPos)
   })
 
-  it('battle.ts updateSettlementLive 使用 base×mult+score 公式', async () => {
+  it('battle.ts updateSettlementLive 使用 base×mult 公式（分数即时结算）', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const battlePath = path.resolve(__dirname, '../../../src/systems/battle.ts')
     const content = fs.readFileSync(battlePath, 'utf-8')
-    // 验证公式包含 resources.score
-    expect(content).toContain('state.resources.score')
-    expect(content).toContain('chips * mult + score')
+    expect(content).toContain('chips * mult')
+    // 分数不再参与词语结算公式
+    expect(content).not.toContain('chips * mult + score')
   })
 })
 

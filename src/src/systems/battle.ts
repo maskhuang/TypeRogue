@@ -333,8 +333,8 @@ function completeWord(): void {
   bonusMult += wordRelicResult.effects.multiply;
 
   const finalMult = mult * bonusMult;
-  const instantScore = Math.floor(state.resources.score);
-  let finalWordScore = Math.floor(baseChips * finalMult + instantScore);
+  // 分数类技能已在触发时即时计入 state.score，此处仅结算 基数×倍率
+  let finalWordScore = Math.floor(baseChips * finalMult);
 
   // Boss 修饰器：单词限额（cap）+ 递减收益（diminish）
   const modEffect = getActiveParams();
@@ -347,7 +347,7 @@ function completeWord(): void {
   }
 
   // 显示 Balatro 风格完成动画
-  showSettlementComplete(baseChips, finalMult, instantScore, finalWordScore);
+  showSettlementComplete(baseChips, finalMult, finalWordScore);
 
   state.score += finalWordScore;
   bumpScore();
@@ -420,19 +420,17 @@ function updateSettlementLive(): void {
 
   const chipsEl = document.getElementById('settlement-chips');
   const multEl = document.getElementById('settlement-mult');
-  const scoreEl = document.getElementById('settlement-score');
   const finalEl = document.getElementById('settlement-final');
 
   const chips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore + state.player.wordBonus);
   state.resources.base = chips;
   state.resources.multiplier = state.multiplier;
   const mult = state.multiplier;
-  const score = Math.floor(state.resources.score);
-  const final = Math.floor(chips * mult + score);
+  // 分数已即时计入总分，结算面板仅展示 基数×倍率
+  const final = Math.floor(chips * mult);
 
   if (chipsEl) chipsEl.textContent = chips.toLocaleString();
   if (multEl) multEl.textContent = mult.toFixed(1);
-  if (scoreEl) scoreEl.textContent = score.toLocaleString();
   if (finalEl) finalEl.textContent = final.toLocaleString();
 
   // 确保面板可见
@@ -441,7 +439,7 @@ function updateSettlementLive(): void {
 }
 
 /** 词语完成时播放结算动画 */
-function showSettlementComplete(chips: number, mult: number, score: number, total: number): void {
+function showSettlementComplete(chips: number, mult: number, total: number): void {
   const settlement = document.getElementById('score-settlement');
   if (!settlement) return;
 
@@ -451,12 +449,10 @@ function showSettlementComplete(chips: number, mult: number, score: number, tota
 
   const chipsEl = document.getElementById('settlement-chips');
   const multEl = document.getElementById('settlement-mult');
-  const scoreEl = document.getElementById('settlement-score');
   const finalEl = document.getElementById('settlement-final');
 
   if (chipsEl) chipsEl.textContent = chips.toLocaleString();
   if (multEl) multEl.textContent = mult.toFixed(1);
-  if (scoreEl) scoreEl.textContent = score.toLocaleString();
   if (finalEl) finalEl.textContent = total.toLocaleString();
 
   // 播放完成动画

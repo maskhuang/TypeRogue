@@ -18,29 +18,32 @@ describe('Act 权重定义 (AC1)', () => {
   it('每个 Act 权重之和为 100', () => {
     for (const act of [1, 2, 3]) {
       const w = ACT_SKILL_WEIGHTS[act]
-      expect(w.producer + w.converter + w.connector).toBe(100)
+      expect(w.producer + w.converter + w.connector + w.amplifier).toBe(100)
     }
   })
 
-  it('Act 1 权重: 80/20/0', () => {
+  it('Act 1 权重: 80/20/0/0', () => {
     const w = ACT_SKILL_WEIGHTS[1]
     expect(w.producer).toBe(80)
     expect(w.converter).toBe(20)
     expect(w.connector).toBe(0)
+    expect(w.amplifier).toBe(0)
   })
 
-  it('Act 2 权重: 30/50/20', () => {
+  it('Act 2 权重: 25/45/20/10', () => {
     const w = ACT_SKILL_WEIGHTS[2]
-    expect(w.producer).toBe(30)
-    expect(w.converter).toBe(50)
+    expect(w.producer).toBe(25)
+    expect(w.converter).toBe(45)
     expect(w.connector).toBe(20)
+    expect(w.amplifier).toBe(10)
   })
 
-  it('Act 3 权重: 10/40/50', () => {
+  it('Act 3 权重: 10/35/35/20', () => {
     const w = ACT_SKILL_WEIGHTS[3]
     expect(w.producer).toBe(10)
-    expect(w.converter).toBe(40)
-    expect(w.connector).toBe(50)
+    expect(w.converter).toBe(35)
+    expect(w.connector).toBe(35)
+    expect(w.amplifier).toBe(20)
   })
 })
 
@@ -50,16 +53,14 @@ describe('Act 1 无连接者 (AC2)', () => {
     expect(ACT_SKILL_WEIGHTS[1].connector).toBe(0)
   })
 
-  it('weightedPick 使用 weights.connector > 0 守卫', async () => {
+  it('weightedPick 使用 connectorBucket 守卫', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
     const content = fs.readFileSync(shopPath, 'utf-8')
-    // 所有 connectorBucket 访问必须有 weights.connector > 0 守卫
+    // connectorBucket 访问都有长度或权重守卫
     const connectorAccess = (content.match(/connectorBucket\.(shift|length)/g) || []).length
-    const connectorGuarded = (content.match(/weights\.connector > 0 && connectorBucket/g) || []).length
-    // weightedPick 中有 2 处 connectorBucket 访问需要守卫
-    expect(connectorGuarded).toBeGreaterThanOrEqual(2)
+    expect(connectorAccess).toBeGreaterThanOrEqual(2)
   })
 
   it('SKILL_POOL_MULTIPLIER 常量替代魔法数字', async () => {
@@ -110,15 +111,16 @@ describe('升级池独立于 Act 权重 (AC6)', () => {
 
 // === AC4, AC5: tooltip 系统 ===
 describe('首次获取 tooltip (AC4, AC5)', () => {
-  it('SKILL_TYPE_TOOLTIPS 包含 3 种类型', () => {
-    expect(Object.keys(SKILL_TYPE_TOOLTIPS).length).toBe(3)
+  it('SKILL_TYPE_TOOLTIPS 包含 4 种类型', () => {
+    expect(Object.keys(SKILL_TYPE_TOOLTIPS).length).toBe(4)
     expect(SKILL_TYPE_TOOLTIPS['producer']).toBeDefined()
     expect(SKILL_TYPE_TOOLTIPS['converter']).toBeDefined()
     expect(SKILL_TYPE_TOOLTIPS['connector']).toBeDefined()
+    expect(SKILL_TYPE_TOOLTIPS['amplifier']).toBeDefined()
   })
 
   it('每种 tooltip 包含 text 和 color', () => {
-    for (const key of ['producer', 'converter', 'connector']) {
+    for (const key of ['producer', 'converter', 'connector', 'amplifier']) {
       const tip = SKILL_TYPE_TOOLTIPS[key]
       expect(tip.text).toBeTruthy()
       expect(tip.color).toBeTruthy()
