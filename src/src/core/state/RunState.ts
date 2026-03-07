@@ -96,7 +96,7 @@ export interface RunStateData {
   /** 跨周目累积的 Boss 修饰器列表 */
   activeModifiers: string[]
 
-  /** 遗物可变状态（relicId → 数值），用于 ramen 等有动态值的遗物 */
+  /** 遗物可变状态（relicId → 数值），用于 entropy/schrodinger_dice 等有动态值的遗物 */
   relicStates: Record<string, number>
 }
 

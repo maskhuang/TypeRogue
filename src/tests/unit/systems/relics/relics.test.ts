@@ -15,8 +15,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 23 relics', () => {
-      expect(Object.keys(RELICS)).toHaveLength(23)
+    it('should contain 27 relics', () => {
+      expect(Object.keys(RELICS)).toHaveLength(27)
     })
 
     it('每个图标唯一', () => {
@@ -44,9 +44,9 @@ describe('Relics Data', () => {
       expect(commons).toHaveLength(4)
     })
 
-    it('should have 16 rare relics', () => {
+    it('should have 20 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(16)
+      expect(rares).toHaveLength(20)
     })
 
     it('should have 3 legendary relics', () => {
@@ -159,7 +159,7 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(23)
+      expect(ids).toHaveLength(27)
       expect(ids).toContain('lucky_coin')
       expect(ids).toContain('perfectionist')
       expect(ids).toContain('glass_cannon')
@@ -179,7 +179,7 @@ describe('Relics Data', () => {
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(23)
+      expect(relics).toHaveLength(27)
     })
 
     it('should return RelicData objects', () => {

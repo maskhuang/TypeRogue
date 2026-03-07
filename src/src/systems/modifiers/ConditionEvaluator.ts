@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - ConditionEvaluator 条件评估器
 // ============================================
-// Story 11.3+12.1+27.2+27.4: 34 种条件原语评估
+// Story 11.3+12.1+27.2+27.4+28.3: 36 种条件原语评估
 
 import type { ModifierCondition, PipelineContext } from './ModifierTypes'
 import { isHomeRow, isIsolatedSkill, isInPair } from '../../data/keyboardTopology'
@@ -120,6 +120,11 @@ export class ConditionEvaluator {
       // === T6/T7 遗物条件 (Story 27.5) ===
       case 'current_skill_is_producer':
         return ctx.currentSkillCategory === 'producer'
+      // === T2 遗物重设计条件 (Story 28.3) ===
+      case 'word_time_lt':
+        return (ctx.wordElapsed ?? Infinity) < condition.value
+      case 'word_time_gt':
+        return (ctx.wordElapsed ?? 0) > condition.value
       default:
         return false
     }

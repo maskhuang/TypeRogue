@@ -130,7 +130,10 @@ export function resolveRelicSkillTrigger(
  */
 export function initRelicState(relicId: string): void {
   const INITIAL_VALUES: Record<string, number> = {
-    ramen: 1.5,
+    campfire_ember: 0,
+    star_chart: 0,
+    entropy: 30,
+    schrodinger_dice: 1.25,
   }
   if (relicId in INITIAL_VALUES) {
     state.player.relicStates[relicId] = INITIAL_VALUES[relicId]

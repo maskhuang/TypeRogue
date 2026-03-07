@@ -186,59 +186,63 @@ describe('time_bank — 剩余时间转金币', () => {
 })
 
 // ========================================
-// ramen（拉面）
+// ramen（拉面）— 速度条件型 (Story 28.3 重设计)
 // ========================================
-describe('ramen — 分数 ×1.5 衰减遗物', () => {
+describe('ramen — 快速完词 +30% / 慢速 -20%', () => {
   beforeEach(clearRelics)
 
-  it('初始 relicStates=1.5 → on_word_complete multiply=0.5', () => {
-    addRelic('ramen')
-    const result = resolveFactory('ramen', 'on_word_complete', {
-      relicStates: { ramen: 1.5 },
-    })
-    expect(result.effects.multiply).toBeCloseTo(0.5)
+  it('工厂始终返回 2 个条件修饰器（无状态依赖）', () => {
+    const factory = RELIC_MODIFIER_DEFS.ramen
+    const mods = factory('ramen')
+    expect(mods).toHaveLength(2)
+    expect(mods[0].condition).toBeDefined()
+    expect(mods[1].condition).toBeDefined()
   })
 
-  it('relicStates=1.3 → multiply=0.3', () => {
+  it('快速完词 wordElapsed=1.5 → multiply=+0.3', () => {
     addRelic('ramen')
     const result = resolveFactory('ramen', 'on_word_complete', {
-      relicStates: { ramen: 1.3 },
+      wordElapsed: 1.5,
     })
     expect(result.effects.multiply).toBeCloseTo(0.3)
   })
 
-  it('relicStates=1.1 → multiply=0.1', () => {
+  it('慢速完词 wordElapsed=5.0 → multiply=-0.2', () => {
     addRelic('ramen')
     const result = resolveFactory('ramen', 'on_word_complete', {
-      relicStates: { ramen: 1.1 },
+      wordElapsed: 5.0,
     })
-    expect(result.effects.multiply).toBeCloseTo(0.1)
+    expect(result.effects.multiply).toBeCloseTo(-0.2)
   })
 
-  it('relicStates=1.0 → 返回空 modifier（无效果）', () => {
+  it('中间速度 wordElapsed=3.0 → multiply=0（无效果）', () => {
     addRelic('ramen')
-    const factory = RELIC_MODIFIER_DEFS.ramen
-    const mods = factory('ramen', { relicStates: { ramen: 1.0 } })
-    expect(mods).toHaveLength(0)
+    const result = resolveFactory('ramen', 'on_word_complete', {
+      wordElapsed: 3.0,
+    })
+    expect(result.effects.multiply).toBe(0)
   })
 
-  it('relicStates=0.9 → 返回空 modifier（≤1.0）', () => {
+  it('边界值 wordElapsed=2.0 → 不触发快速（<2 不含 =2）', () => {
     addRelic('ramen')
-    const factory = RELIC_MODIFIER_DEFS.ramen
-    const mods = factory('ramen', { relicStates: { ramen: 0.9 } })
-    expect(mods).toHaveLength(0)
+    const result = resolveFactory('ramen', 'on_word_complete', {
+      wordElapsed: 2.0,
+    })
+    expect(result.effects.multiply).toBe(0)
   })
 
-  it('无 relicStates → 默认 1.5，multiply=0.5', () => {
+  it('边界值 wordElapsed=4.0 → 不触发慢速（>4 不含 =4）', () => {
     addRelic('ramen')
-    const result = resolveFactory('ramen', 'on_word_complete')
-    expect(result.effects.multiply).toBeCloseTo(0.5)
+    const result = resolveFactory('ramen', 'on_word_complete', {
+      wordElapsed: 4.0,
+    })
+    expect(result.effects.multiply).toBe(0)
   })
 
   it('非 on_word_complete trigger 不产出', () => {
     addRelic('ramen')
     const result = resolveFactory('ramen', 'on_skill_trigger', {
-      relicStates: { ramen: 1.5 },
+      wordElapsed: 1.0,
     })
     expect(result.effects.multiply).toBe(0)
   })
@@ -343,13 +347,13 @@ describe('current_skill_is_producer 条件', () => {
 describe('initRelicState', () => {
   beforeEach(clearRelics)
 
-  it('ramen 初始化 relicStates["ramen"] = 1.5', async () => {
+  it('ramen 无状态：initRelicState 不写入 relicStates', async () => {
     const { initRelicState } = await import('../../../../src/systems/relics/RelicPipeline')
     initRelicState('ramen')
-    expect(state.player.relicStates['ramen']).toBe(1.5)
+    expect(state.player.relicStates['ramen']).toBeUndefined()
   })
 
-  it('非 ramen 遗物不写入 relicStates', async () => {
+  it('非状态遗物不写入 relicStates', async () => {
     const { initRelicState } = await import('../../../../src/systems/relics/RelicPipeline')
     initRelicState('cornucopia')
     expect(state.player.relicStates['cornucopia']).toBeUndefined()

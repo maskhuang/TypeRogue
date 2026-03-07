@@ -107,6 +107,9 @@ export type ModifierCondition =
   | { type: 'is_isolated' }
   // T6/T7 遗物条件 (Story 27.5)
   | { type: 'current_skill_is_producer' }
+  // T2 遗物重设计条件 (Story 28.3)
+  | { type: 'word_time_lt'; value: number }
+  | { type: 'word_time_gt'; value: number }
 
 // === 管道输出类型 (Story 11.2) ===
 
@@ -194,6 +197,8 @@ export interface PipelineContext {
   enchantmentId?: string
   /** 结束的幕编号（on_act_end 使用） */
   endedAct?: number
+  /** 本词完成用时，秒（拉面遗物速度条件使用） */
+  wordElapsed?: number
 }
 
 // === 行为执行回调 (Story 11.4) ===

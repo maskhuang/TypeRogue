@@ -560,6 +560,10 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
     purchasedSkillId: skillId,
     isUpgrade: !isNew,
   });
+  // T2 campfire_ember 购买计数递增 (Story 28.2)
+  if (state.player.relics.has('campfire_ember')) {
+    state.player.relicStates['campfire_ember'] = (state.player.relicStates['campfire_ember'] ?? 0) + 1;
+  }
 
   return { skillId, isNew };
 }
@@ -766,6 +770,10 @@ function applyEnchantment(skillId: string, enchantmentId: string): void {
     enchantedSkillId: skillId,
     enchantmentId,
   });
+  // T2 star_chart 附魔计数递增 (Story 28.2)
+  if (state.player.relics.has('star_chart')) {
+    state.player.relicStates['star_chart'] = (state.player.relicStates['star_chart'] ?? 0) + 1;
+  }
 
   playSound('skill');
   closeEnchantmentModal();

@@ -285,18 +285,6 @@ function playerWrong(): void {
       gameOver();
       return;
     }
-    // ramen 衰减：每次打错 -0.1×，降至 ≤1.0 时移除遗物
-    if (state.player.relics.has('ramen')) {
-      const curr = state.player.relicStates['ramen'] ?? 1.5;
-      const next = Math.round((curr - 0.1) * 10) / 10;
-      if (next <= 1.0) {
-        state.player.relics.delete('ramen');
-        delete state.player.relicStates['ramen'];
-        showFeedback('拉面凉了...', '#999');
-      } else {
-        state.player.relicStates['ramen'] = next;
-      }
-    }
   }
 
   // 标记词语不完美
@@ -348,6 +336,7 @@ function completeWord(): void {
     wordResourceTypes: getWordResourceTypeCount(),
     leftHandTriggered,
     rightHandTriggered,
+    wordElapsed,
   }, {
     onTimeRefund: (ratio: number) => {
       const refund = wordElapsed * ratio;
@@ -507,6 +496,32 @@ function showGoldReward(onComplete: () => void): void {
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
   const relicGold = Math.floor(goldRelicResult.effects.gold);
   const totalGold = skillGold + relicGold;
+
+  // T2 遗物状态更新：entropy 衰减 + schrodinger_dice 翻倍/消失 (Story 28.2+28.3)
+  if (state.player.relics.has('entropy')) {
+    const curr = state.player.relicStates['entropy'] ?? 30;
+    const next = curr - 5;
+    if (next <= 0) {
+      state.player.relics.delete('entropy');
+      delete state.player.relicStates['entropy'];
+      showFeedback('熵增殆尽...', '#999');
+    } else {
+      state.player.relicStates['entropy'] = next;
+    }
+  }
+  if (state.player.relics.has('schrodinger_dice')) {
+    if (random() < 0.5) {
+      // 50% 翻倍
+      const curr = state.player.relicStates['schrodinger_dice'] ?? 1.25;
+      state.player.relicStates['schrodinger_dice'] = curr * 2;
+      showFeedback(`骰子翻倍！×${(curr * 2).toFixed(2)}`, '#ffdd00');
+    } else {
+      // 50% 消失
+      state.player.relics.delete('schrodinger_dice');
+      delete state.player.relicStates['schrodinger_dice'];
+      showFeedback('骰子消失了...', '#999');
+    }
+  }
 
   // 设置数值
   const goldSkillEl = document.getElementById('gold-skill');
@@ -670,6 +685,10 @@ export async function startLevel(): Promise<void> {
     // T2 遗物事件钩子：幕切换时触发 on_act_end（跳过首次进入，lastAct=0 表示无前序幕）(Story 28.1)
     if (lastAct > 0) {
       resolveRelicEffectsWithBehaviors('on_act_end', { endedAct: lastAct });
+      // T2 campfire_ember 幕重置：购买计数归零 (Story 28.2)
+      if (state.player.relics.has('campfire_ember')) {
+        state.player.relicStates['campfire_ember'] = 0;
+      }
     }
     await showActTransition(currentAct);
     lastAct = currentAct;

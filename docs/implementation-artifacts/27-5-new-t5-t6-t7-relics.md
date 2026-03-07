@@ -1,6 +1,6 @@
 # Story 27.5: T6 经济 + T7 风险回报新遗物（4 新遗物 + relicStates 基础设施）
 
-Status: review
+Status: done
 
 ## Story
 

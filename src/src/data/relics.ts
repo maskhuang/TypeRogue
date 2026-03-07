@@ -99,7 +99,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'overkill_blade',
     name: '超杀之刃',
     icon: '🔪',
-    description: '超杀分数转化为额外金币',
+    description: '超杀得分转化为额外金币',
     rarity: 'rare',
     basePrice: 50,
     effects: [
@@ -114,7 +114,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'glass_cannon',
     name: '玻璃大炮',
     icon: '💣',
-    description: '技能分数 ×3，但打错即本关失败',
+    description: '技能得分 ×3，但打错即本关失败',
     rarity: 'rare',
     basePrice: 40,
     category: 'risk-reward',
@@ -159,7 +159,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'silence_vow',
     name: '沉默誓约',
     icon: '🤫',
-    description: '无技能时分数 ×5，但无法装备技能',
+    description: '无技能时得分 ×5，但无法装备技能',
     rarity: 'legendary',
     basePrice: 80,
     category: 'risk-reward',
@@ -353,14 +353,14 @@ export const RELICS: Record<string, RelicData> = {
     id: 'ramen',
     name: '拉面',
     icon: '🍜',
-    description: '分数 ×1.5，每次打错 -0.1×（降至 ×1.0 时消失）',
+    description: '快速完词(<2s) 得分 +30%，慢速(>4s) 得分 -20%',
     rarity: 'rare',
     basePrice: 45,
     category: 'risk-reward',
     effects: [
-      { type: 'on_word_complete', modifier: 'score_multiplier', value: 1.5 }
+      { type: 'on_word_complete', modifier: 'score_multiplier', value: 1.3 }
     ],
-    flavor: '热腾腾的拉面，凉了就没味了。'
+    flavor: '趁热吃，凉了就不好吃了。'
   },
 
   overcharge: {
@@ -376,6 +376,62 @@ export const RELICS: Record<string, RelicData> = {
       { type: 'on_skill_trigger', modifier: 'time_steal', value: -0.1 }
     ],
     flavor: '过度充能，燃烧时间。'
+  },
+
+  // ==================== T2 累积成长遗物 (Story 28.2) ====================
+
+  campfire_ember: {
+    id: 'campfire_ember',
+    name: '篝火余烬',
+    icon: '🏕️',
+    description: '每购买 1 个技能，得分 +5%（幕结束重置）',
+    rarity: 'rare',
+    basePrice: 50,
+    effects: [
+      { type: 'passive', modifier: 'score_multiplier', value: 1.05 },
+    ],
+    flavor: '余烬尚温，趁热打铁。'
+  },
+
+  star_chart: {
+    id: 'star_chart',
+    name: '星图罗盘',
+    icon: '🧭',
+    description: '每获得 1 个附魔，得分永久 +8%',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [
+      { type: 'passive', modifier: 'score_multiplier', value: 1.08 },
+    ],
+    flavor: '每一次附魔，都是新的星辰。'
+  },
+
+  entropy: {
+    id: 'entropy',
+    name: '熵增',
+    icon: '🌑',
+    description: '资源产出 +30%，每过 1 关 -5%，归零时消失',
+    rarity: 'rare',
+    basePrice: 45,
+    category: 'risk-reward',
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 1.30 },
+    ],
+    flavor: '一切终将归于混沌。'
+  },
+
+  schrodinger_dice: {
+    id: 'schrodinger_dice',
+    name: '薛定谔骰子',
+    icon: '🎭',
+    description: '得分 ×1.25，每关结束 50% 翻倍 / 50% 消失',
+    rarity: 'rare',
+    basePrice: 50,
+    category: 'risk-reward',
+    effects: [
+      { type: 'passive', modifier: 'score_multiplier', value: 1.25 },
+    ],
+    flavor: '不打开盒子，你永远不知道。'
   },
 
   // ==================== 传说遗物 ====================
@@ -604,9 +660,57 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
 
   // === T7 风险回报遗物 ===
 
-  // 拉面：分数 ×1.5（衰减），on_word_complete multiply 加算
-  ramen: (id, ctx) => {
-    const mult = ctx?.relicStates?.['ramen'] ?? 1.5
+  // 拉面：快速完词 +30%（<2s），慢速 -20%（>4s），条件型无状态
+  ramen: (id) => [
+    relicMod(id, 'fast', 'on_word_complete', 'calculate', {
+      effect: { type: 'multiply', value: 0.3, stacking: 'additive' },
+      condition: { type: 'word_time_lt', value: 2 },
+    }),
+    relicMod(id, 'slow', 'on_word_complete', 'calculate', {
+      effect: { type: 'multiply', value: -0.2, stacking: 'additive' },
+      condition: { type: 'word_time_gt', value: 4 },
+    }),
+  ],
+
+  // === T2 累积成长遗物 (Story 28.2) ===
+
+  // 篝火余烬：购买技能累积 +5%（幕重置），on_word_complete multiply 加算
+  campfire_ember: (id, ctx) => {
+    const count = ctx?.relicStates?.['campfire_ember'] ?? 0
+    if (count <= 0) return []
+    return [
+      relicMod(id, 'boost', 'on_word_complete', 'calculate', {
+        effect: { type: 'multiply', value: count * 0.05, stacking: 'additive' },
+      }),
+    ]
+  },
+
+  // 星图罗盘：附魔累积 +8%（永久），on_word_complete multiply 加算
+  star_chart: (id, ctx) => {
+    const count = ctx?.relicStates?.['star_chart'] ?? 0
+    if (count <= 0) return []
+    return [
+      relicMod(id, 'boost', 'on_word_complete', 'calculate', {
+        effect: { type: 'multiply', value: count * 0.08, stacking: 'additive' },
+      }),
+    ]
+  },
+
+  // 熵增：资源产出 +30%（衰减），on_skill_trigger global 层 score 乘算
+  entropy: (id, ctx) => {
+    const pct = ctx?.relicStates?.['entropy'] ?? 30
+    if (pct <= 0) return []
+    return [
+      relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+        layer: 'global',
+        effect: { type: 'score', value: 1 + pct / 100, stacking: 'multiplicative' },
+      }),
+    ]
+  },
+
+  // 薛定谔骰子：动态倍率（初始 ×1.25，每关 50% 翻倍 / 50% 消失）
+  schrodinger_dice: (id, ctx) => {
+    const mult = ctx?.relicStates?.['schrodinger_dice'] ?? 1.25
     if (mult <= 1.0) return []
     return [
       relicMod(id, 'boost', 'on_word_complete', 'calculate', {

@@ -713,6 +713,67 @@ describe('ConditionEvaluator', () => {
     })
   })
 
+  // === T2 遗物重设计条件 (Story 28.3) ===
+  describe('word_time_lt', () => {
+    it('wordElapsed=1.5 < 2 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_time_lt', value: 2 },
+        { wordElapsed: 1.5 },
+      )).toBe(true)
+    })
+
+    it('wordElapsed=2.0 不满足 < 2 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_time_lt', value: 2 },
+        { wordElapsed: 2.0 },
+      )).toBe(false)
+    })
+
+    it('wordElapsed=3.0 不满足 < 2 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_time_lt', value: 2 },
+        { wordElapsed: 3.0 },
+      )).toBe(false)
+    })
+
+    it('wordElapsed 未提供 → 默认 Infinity, Infinity < 2 → false（安全：不给奖励）', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_time_lt', value: 2 },
+        {},
+      )).toBe(false)
+    })
+  })
+
+  describe('word_time_gt', () => {
+    it('wordElapsed=5.0 > 4 → true', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_time_gt', value: 4 },
+        { wordElapsed: 5.0 },
+      )).toBe(true)
+    })
+
+    it('wordElapsed=4.0 不满足 > 4 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_time_gt', value: 4 },
+        { wordElapsed: 4.0 },
+      )).toBe(false)
+    })
+
+    it('wordElapsed=3.0 不满足 > 4 → false', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_time_gt', value: 4 },
+        { wordElapsed: 3.0 },
+      )).toBe(false)
+    })
+
+    it('wordElapsed 未提供 → 默认 0, 0 > 4 → false（安全：不给惩罚）', () => {
+      expect(ConditionEvaluator.evaluate(
+        { type: 'word_time_gt', value: 4 },
+        {},
+      )).toBe(false)
+    })
+  })
+
   describe('缺失上下文默认行为', () => {
     it('combo 未提供 → 默认 0, combo_gte value=0 → true', () => {
       expect(ConditionEvaluator.evaluate(
