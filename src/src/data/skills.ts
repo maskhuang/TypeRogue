@@ -15,6 +15,10 @@ export const DELETED_SKILL_IDS = [
   'burst', 'amp', 'freeze', 'shield', 'echo', 'ripple',
   'core', 'aura', 'lone', 'void', 'gamble', 'chain',
   'overclock', 'pulse', 'sentinel', 'mirror', 'leech', 'anchor',
+  // 旧增幅者 ID（7个 add/multiply 版 → 30个统一百分比版）
+  'amp_base_add_adjacent', 'amp_mult_add_adjacent', 'amp_score_add_sameColumn',
+  'amp_time_add_adjacent', 'amp_base_mul_adjacent', 'amp_mult_mul_sameRow',
+  'amp_score_mul_sameHand',
 ];
 
 // === 已删除进化分支 ID 列表（存档兼容用）===

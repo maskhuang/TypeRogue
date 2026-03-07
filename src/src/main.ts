@@ -95,7 +95,7 @@ function init(): void {
   // 抽取本局连接者池（36 个中随机 18 个）
   state.connectorPool = drawConnectorPool();
 
-  // 抽取本局增幅者池（8 个全部入池）
+  // 抽取本局增幅者池（30 个中随机 15 个）
   state.amplifierPool = drawAmplifierPool();
 
   // 启动游戏

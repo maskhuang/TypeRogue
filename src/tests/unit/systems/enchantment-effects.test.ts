@@ -476,11 +476,11 @@ describe('成长附魔集成 — 溅射/增幅者触发路径 (AC6, AC7)', () =>
     state.player.bindings.set('g', 'prod_burst')
     state.player.enchantedSkills.set('prod_burst', 'ench_growth_adjacent')
 
-    state.player.skills.set('amp_base_add_adjacent', { level: 1 })
-    state.player.bindings.set('f', 'amp_base_add_adjacent')
+    state.player.skills.set('amp_base_adjacent', { level: 1 })
+    state.player.bindings.set('f', 'amp_base_adjacent')
 
     // f 触发增幅者 → checkGrowthAccumulation('f') → g 的 growth 累积
-    triggerAmplifier('amp_base_add_adjacent', 'f')
+    triggerAmplifier('amp_base_adjacent', 'f')
     expect(state.growthValues.get('prod_burst')).toBeCloseTo(0.03)
   })
 })
@@ -500,12 +500,12 @@ describe('精通附魔集成 — triggerProducer/triggerAmplifier → mastery �
 
   it('增幅者触发精通附魔 → masteryCounters 自增', async () => {
     const { triggerAmplifier } = await import('../../../src/systems/skills')
-    state.player.skills.set('amp_base_add_adjacent', { level: 1 })
-    state.player.bindings.set('f', 'amp_base_add_adjacent')
-    state.player.enchantedSkills.set('amp_base_add_adjacent', 'ench_mastery')
+    state.player.skills.set('amp_base_adjacent', { level: 1 })
+    state.player.bindings.set('f', 'amp_base_adjacent')
+    state.player.enchantedSkills.set('amp_base_adjacent', 'ench_mastery')
 
-    triggerAmplifier('amp_base_add_adjacent', 'f')
-    expect(state.masteryCounters.get('amp_base_add_adjacent')).toBe(1)
+    triggerAmplifier('amp_base_adjacent', 'f')
+    expect(state.masteryCounters.get('amp_base_adjacent')).toBe(1)
   })
 })
 

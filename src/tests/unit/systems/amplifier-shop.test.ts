@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 增幅者商店集成测试
 // ============================================
-// Story 23.5: 商店技能池 + 卡片渲染 + 统计记录
+// 统一 +N%/层 机制
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { state, synergy, resetState } from '../../../src/core/state'
@@ -66,10 +66,8 @@ describe('SKILL_TYPE_TOOLTIPS — 增幅者', () => {
 
 describe('getSkillCategory — 增幅者', () => {
   it('增幅者 ID 返回 amplifier', async () => {
-    // getSkillCategory is not exported, but we can test via the shop behavior
-    // Instead test that isAmplifier works correctly
     const { isAmplifier } = await import('../../../src/data/amplifiers')
-    expect(isAmplifier('amp_base_add_adjacent')).toBe(true)
+    expect(isAmplifier('amp_base_adjacent')).toBe(true)
     expect(isAmplifier('prod_burst')).toBe(false)
     expect(isAmplifier('conv_base_score_add')).toBe(false)
   })
@@ -85,16 +83,16 @@ describe('triggerAmplifier — 统计记录 (AC5)', () => {
     const { triggerAmplifier } = await import('../../../src/systems/skills')
 
     state.battleStats = createBattleStats()
-    state.player.bindings.set('a', 'amp_base_add_adjacent')
-    state.player.skills.set('amp_base_add_adjacent', { level: 1 })
+    state.player.bindings.set('a', 'amp_base_adjacent')
+    state.player.skills.set('amp_base_adjacent', { level: 1 })
 
-    triggerAmplifier('amp_base_add_adjacent', 'a')
+    triggerAmplifier('amp_base_adjacent', 'a')
 
     const ks = state.battleStats!.keyStats.get('a')
     expect(ks).toBeDefined()
     expect(ks!.triggerCount).toBe(1)
 
-    const ss = state.battleStats!.skillStats.get('amp_base_add_adjacent')
+    const ss = state.battleStats!.skillStats.get('amp_base_adjacent')
     expect(ss).toBeDefined()
     expect(ss!.triggerCount).toBe(1)
     // 增幅者不产出资源，delta=0
@@ -106,16 +104,16 @@ describe('triggerAmplifier — 统计记录 (AC5)', () => {
     const { triggerAmplifier } = await import('../../../src/systems/skills')
 
     state.battleStats = createBattleStats()
-    state.player.bindings.set('s', 'amp_base_add_adjacent')
-    state.player.skills.set('amp_base_add_adjacent', { level: 1 })
+    state.player.bindings.set('s', 'amp_base_adjacent')
+    state.player.skills.set('amp_base_adjacent', { level: 1 })
 
-    triggerAmplifier('amp_base_add_adjacent', 's')
-    triggerAmplifier('amp_base_add_adjacent', 's')
-    triggerAmplifier('amp_base_add_adjacent', 's')
+    triggerAmplifier('amp_base_adjacent', 's')
+    triggerAmplifier('amp_base_adjacent', 's')
+    triggerAmplifier('amp_base_adjacent', 's')
 
     const ks = state.battleStats!.keyStats.get('s')
     expect(ks!.triggerCount).toBe(3)
-    expect(state.amplifierStacks.get('amp_base_add_adjacent')).toBe(3)
+    expect(state.amplifierStacks.get('amp_base_adjacent')).toBe(3)
   })
 })
 
@@ -125,7 +123,7 @@ describe('amplifierPool — 池初始化', () => {
     const pool = drawAmplifierPool()
     expect(Array.isArray(pool)).toBe(true)
     expect(pool.length).toBeGreaterThan(0)
-    expect(pool.length).toBeLessThanOrEqual(10)
+    expect(pool.length).toBeLessThanOrEqual(15)
   })
 
   it('drawAmplifierPool 返回的都是有效增幅者 ID', async () => {

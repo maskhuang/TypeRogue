@@ -239,9 +239,9 @@ export function getAmplifierBonus(
   triggerKey: string | undefined,
   targetResource: ResourceType,
 ): { addBonus: number; mulBonus: number } {
-  let addBonus = 0;
-  let mulBonus = 1;
-  if (!triggerKey) return { addBonus, mulBonus };
+  if (!triggerKey) return { addBonus: 0, mulBonus: 1 };
+
+  let percentBonus = 0;
 
   for (const [ampKey, boundId] of state.player.bindings) {
     if (!isAmplifier(boundId)) continue;
@@ -268,13 +268,10 @@ export function getAmplifierBonus(
     }
     if (efficiency === 0) continue;
 
-    if (amp.operator === 'add') {
-      addBonus += stacks * valuePerStack * efficiency;
-    } else {
-      mulBonus *= (1 + stacks * valuePerStack * efficiency);
-    }
+    // 统一百分比加算（类似成长附魔的加性叠加）
+    percentBonus += stacks * valuePerStack * efficiency;
   }
-  return { addBonus, mulBonus };
+  return { addBonus: 0, mulBonus: 1 + percentBonus };
 }
 
 // === 触发产出者（绕过 Modifier 管道） ===

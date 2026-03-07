@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 增幅者触发与叠层测试
 // ============================================
-// Story 23.3: triggerAmplifier + triggerSkill 分派
+// 统一 +N%/层 机制
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { state, synergy, resetState } from '../../../src/core/state'
@@ -30,7 +30,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const AMP_ID = 'amp_base_add_adjacent'
+const AMP_ID = 'amp_base_adjacent'
 
 describe('triggerAmplifier — 叠层递增', () => {
   beforeEach(() => {
@@ -53,7 +53,7 @@ describe('triggerAmplifier — 叠层递增', () => {
 
   it('多个增幅者独立叠层', async () => {
     const { triggerAmplifier } = await import('../../../src/systems/skills')
-    const ampId2 = 'amp_mult_add_adjacent'
+    const ampId2 = 'amp_mult_adjacent'
     triggerAmplifier(AMP_ID, 'a')
     triggerAmplifier(AMP_ID, 'a')
     triggerAmplifier(ampId2, 's')
@@ -175,11 +175,9 @@ describe('startLevel — amplifierStacks 清零（回归验证）', () => {
     resetState()
     // 模拟关内叠层
     state.amplifierStacks.set(AMP_ID, 15)
-    state.amplifierStacks.set('amp_mult_add_adjacent', 8)
+    state.amplifierStacks.set('amp_mult_adjacent', 8)
     expect(state.amplifierStacks.size).toBe(2)
 
-    // startLevel() 在 battle.ts:675 调用 state.amplifierStacks.clear()
-    // battle.ts 已被 mock，此处直接验证 clear 行为正确
     const clearSpy = vi.spyOn(state.amplifierStacks, 'clear')
     state.amplifierStacks.clear()
     expect(clearSpy).toHaveBeenCalledOnce()

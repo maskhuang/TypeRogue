@@ -1,10 +1,9 @@
 // ============================================
 // 打字肉鸽 - 增幅者技能数据
 // ============================================
-// Story 23.1: 数据结构与工具函数
-// Story 23.2: 7 个增幅者数据（4 加法 + 3 乘法）
+// 30 个增幅者（5 资源 × 6 范围），统一 +N%/层 机制
 
-import type { AmplifierDefinition } from '../core/types';
+import type { AmplifierDefinition, ResourceType } from '../core/types';
 import { PositionRelation } from './keyboardTopology';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
 import { random } from '../core/seededRandom';
@@ -28,18 +27,73 @@ const RELATION_ICONS: Record<string, string> = {
   [PositionRelation.Symmetric]: '🪞',
 };
 
-// === 7 个增幅者数据 ===
-export const AMPLIFIERS: Record<string, AmplifierDefinition> = {
-  // === 加法增幅者（4 个）— 每层+N，稳定兜底 ===
-  amp_base_add_adjacent:      { id: 'amp_base_add_adjacent',      name: '铸基', icon: '🔱', resource: 'base',       positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 1,    desc: '触发时+1层：每个🔗相邻技能⚔️基数+1/层' },
-  amp_mult_add_adjacent:      { id: 'amp_mult_add_adjacent',      name: '激励', icon: '✴️', resource: 'multiplier', positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 0.02, desc: '触发时+1层：每个🔗相邻技能🔥倍率+0.02/层' },
-  amp_score_add_sameColumn:   { id: 'amp_score_add_sameColumn',   name: '聚财', icon: '🏹', resource: 'score',      positionRelation: PositionRelation.SameColumn, operator: 'add', valuePerStack: 2,    desc: '触发时+1层：每个📌同列技能🪙分数+2/层' },
-  amp_time_add_adjacent:      { id: 'amp_time_add_adjacent',      name: '滋润', icon: '💧', resource: 'time',       positionRelation: PositionRelation.Adjacent,   operator: 'add', valuePerStack: 0.05, desc: '触发时+1层：每个🔗相邻技能⏳时间+0.05/层' },
-  // === 乘法增幅者（3 个）— 每层×N%，后期爆发 ===
-  amp_base_mul_adjacent:      { id: 'amp_base_mul_adjacent',      name: '淬炼', icon: '⚗️', resource: 'base',       positionRelation: PositionRelation.Adjacent,   operator: 'multiply', valuePerStack: 0.05, desc: '触发时+1层：每个🔗相邻技能⚔️基数×5%/层' },
-  amp_mult_mul_sameRow:       { id: 'amp_mult_mul_sameRow',       name: '共振', icon: '🔊', resource: 'multiplier', positionRelation: PositionRelation.SameRow,    operator: 'multiply', valuePerStack: 0.03, desc: '触发时+1层：每个📡同行技能🔥倍率×3%/层' },
-  amp_score_mul_sameHand:     { id: 'amp_score_mul_sameHand',     name: '点金', icon: '🪄', resource: 'score',      positionRelation: PositionRelation.SameHand,   operator: 'multiply', valuePerStack: 0.04, desc: '触发时+1层：每个🤝同手技能🪙分数×4%/层' },
-} as const;
+// === 资源基础图标（用于复合图标） ===
+const RESOURCE_BASE_ICONS: Record<ResourceType, string> = {
+  base: '🔱', score: '🏹', multiplier: '✴️', time: '💧', gold: '💠',
+};
+
+// === 资源 ID 缩写（用于生成 amp ID） ===
+const RES_ID: Record<ResourceType, string> = {
+  base: 'base', score: 'score', multiplier: 'mult', time: 'time', gold: 'gold',
+};
+
+// === 增幅者名称表（30 个唯一名称） ===
+const AMP_NAMES: Record<ResourceType, Record<string, string>> = {
+  base:       { [PositionRelation.Adjacent]: '铸基', [PositionRelation.SameRow]: '横基', [PositionRelation.SameColumn]: '纵基', [PositionRelation.SameHand]: '稳基', [PositionRelation.SameFinger]: '精铸', [PositionRelation.Symmetric]: '映基' },
+  score:      { [PositionRelation.Adjacent]: '聚财', [PositionRelation.SameRow]: '横财', [PositionRelation.SameColumn]: '纵财', [PositionRelation.SameHand]: '稳财', [PositionRelation.SameFinger]: '精聚', [PositionRelation.Symmetric]: '映财' },
+  multiplier: { [PositionRelation.Adjacent]: '激励', [PositionRelation.SameRow]: '共振', [PositionRelation.SameColumn]: '纵振', [PositionRelation.SameHand]: '合力', [PositionRelation.SameFinger]: '精振', [PositionRelation.Symmetric]: '映振' },
+  time:       { [PositionRelation.Adjacent]: '滋润', [PositionRelation.SameRow]: '延续', [PositionRelation.SameColumn]: '纵延', [PositionRelation.SameHand]: '缓息', [PositionRelation.SameFinger]: '精续', [PositionRelation.Symmetric]: '映时' },
+  gold:       { [PositionRelation.Adjacent]: '铸币', [PositionRelation.SameRow]: '淘金', [PositionRelation.SameColumn]: '掘金', [PositionRelation.SameHand]: '聚金', [PositionRelation.SameFinger]: '精金', [PositionRelation.Symmetric]: '映金' },
+};
+
+// === 增幅值表（valuePerStack 小数）===
+// 窄范围 → 高 per-stack，宽范围 → 低 per-stack。30 层参考点目标 +60%~120%
+const AMP_VALUES: Record<ResourceType, Record<string, number>> = {
+  base:       { [PositionRelation.Adjacent]: 0.03, [PositionRelation.SameRow]: 0.025, [PositionRelation.SameColumn]: 0.06, [PositionRelation.SameHand]: 0.02, [PositionRelation.SameFinger]: 0.06, [PositionRelation.Symmetric]: 0.12 },
+  score:      { [PositionRelation.Adjacent]: 0.03, [PositionRelation.SameRow]: 0.025, [PositionRelation.SameColumn]: 0.06, [PositionRelation.SameHand]: 0.02, [PositionRelation.SameFinger]: 0.06, [PositionRelation.Symmetric]: 0.12 },
+  multiplier: { [PositionRelation.Adjacent]: 0.02, [PositionRelation.SameRow]: 0.015, [PositionRelation.SameColumn]: 0.04, [PositionRelation.SameHand]: 0.01, [PositionRelation.SameFinger]: 0.04, [PositionRelation.Symmetric]: 0.08 },
+  time:       { [PositionRelation.Adjacent]: 0.02, [PositionRelation.SameRow]: 0.015, [PositionRelation.SameColumn]: 0.04, [PositionRelation.SameHand]: 0.01, [PositionRelation.SameFinger]: 0.04, [PositionRelation.Symmetric]: 0.08 },
+  gold:       { [PositionRelation.Adjacent]: 0.03, [PositionRelation.SameRow]: 0.025, [PositionRelation.SameColumn]: 0.06, [PositionRelation.SameHand]: 0.02, [PositionRelation.SameFinger]: 0.06, [PositionRelation.Symmetric]: 0.12 },
+};
+
+// === 生成描述字符串 ===
+function buildDesc(resource: ResourceType, relation: PositionRelation, pct: number): string {
+  const relIcon = RELATION_ICONS[relation] || '';
+  const relLabel = RELATION_LABELS[relation] || relation;
+  const resIcon = RESOURCE_ICONS[resource] || '';
+  const resLabel = RESOURCE_LABELS[resource] || resource;
+  return `触发时+1层：每个${relIcon}${relLabel}技能${resIcon}${resLabel}+${pct}%/层`;
+}
+
+// === 程序化生成 30 个增幅者 ===
+const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+const ALL_RELATIONS: PositionRelation[] = [
+  PositionRelation.Adjacent, PositionRelation.SameRow, PositionRelation.SameColumn,
+  PositionRelation.SameHand, PositionRelation.SameFinger, PositionRelation.Symmetric,
+];
+
+function generateAmplifiers(): Record<string, AmplifierDefinition> {
+  const result: Record<string, AmplifierDefinition> = {};
+  for (const res of ALL_RESOURCES) {
+    for (const rel of ALL_RELATIONS) {
+      const id = `amp_${RES_ID[res]}_${rel}`;
+      const valuePerStack = AMP_VALUES[res][rel];
+      const pct = parseFloat((valuePerStack * 100).toPrecision(4));
+      result[id] = {
+        id,
+        name: AMP_NAMES[res][rel],
+        icon: `${RESOURCE_BASE_ICONS[res]}${RELATION_ICONS[rel]}`,
+        resource: res,
+        positionRelation: rel,
+        valuePerStack,
+        desc: buildDesc(res, rel, pct),
+      };
+    }
+  }
+  return result;
+}
+
+export const AMPLIFIERS: Record<string, AmplifierDefinition> = generateAmplifiers();
 
 // === 工具函数 ===
 
@@ -49,7 +103,7 @@ export function isAmplifier(id: string): boolean {
 }
 
 /** 每局 run 从增幅者池中随机抽取指定数量 */
-export function drawAmplifierPool(count = 10): string[] {
+export function drawAmplifierPool(count = 15): string[] {
   const all = Object.keys(AMPLIFIERS);
   const shuffled = [...all];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -74,12 +128,10 @@ export function getAmplifierDesc(id: string, level?: number): string {
   if (!amp) return '';
   if (level == null) return amp.desc;
   const value = getAmplifierValue(id, level);
-  const resLabel = RESOURCE_LABELS[amp.resource] || amp.resource;
-  const resIcon = RESOURCE_ICONS[amp.resource] || '';
-  const relLabel = RELATION_LABELS[amp.positionRelation] || amp.positionRelation;
   const relIcon = RELATION_ICONS[amp.positionRelation] || '';
-  if (amp.operator === 'add') {
-    return `触发时+1层：每个${relIcon}${relLabel}技能${resIcon}${resLabel}+${parseFloat(value.toPrecision(4))}/层`;
-  }
-  return `触发时+1层：每个${relIcon}${relLabel}技能${resIcon}${resLabel}×${parseFloat((value * 100).toPrecision(4))}%/层`;
+  const relLabel = RELATION_LABELS[amp.positionRelation] || amp.positionRelation;
+  const resIcon = RESOURCE_ICONS[amp.resource] || '';
+  const resLabel = RESOURCE_LABELS[amp.resource] || amp.resource;
+  const pct = parseFloat((value * 100).toPrecision(4));
+  return `触发时+1层：每个${relIcon}${relLabel}技能${resIcon}${resLabel}+${pct}%/层`;
 }
