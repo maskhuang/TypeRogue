@@ -436,7 +436,7 @@ describe('UnlockSystem', () => {
 
       const highscoreUnlock = newUnlocks.find(u => u.id === 'stats_highscore')
       expect(highscoreUnlock).toBeDefined()
-      expect(metaState.isRelicUnlocked('golden_keyboard')).toBe(true)
+      expect(metaState.isRelicUnlocked('overkill_blade')).toBe(true)
     })
 
     it('达到连击阈值时应解锁', () => {

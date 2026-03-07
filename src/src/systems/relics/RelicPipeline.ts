@@ -92,7 +92,7 @@ export function queryRelicFlag(flag: string): number | boolean {
 
 /**
  * 为技能管道注入遗物 global 层 Modifier。
- * 目前仅 golden_keyboard 影响技能管道（技能效果 +25%）。
+ * 将遗物产生的 Modifier 注入技能管道。
  *
  * @param registry 技能的 ModifierRegistry（会被修改）
  * @param context 管道上下文

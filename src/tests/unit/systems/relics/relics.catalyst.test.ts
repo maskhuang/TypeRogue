@@ -5,7 +5,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { RELIC_MODIFIER_DEFS } from '../../../../src/data/relics'
-import { injectRelicModifiers } from '../../../../src/systems/relics/RelicPipeline'
 import { ConditionEvaluator } from '../../../../src/systems/modifiers/ConditionEvaluator'
 import { ModifierRegistry } from '../../../../src/systems/modifiers/ModifierRegistry'
 import { EffectPipeline } from '../../../../src/systems/modifiers/EffectPipeline'
@@ -42,96 +41,7 @@ function addRelic(id: string): void {
   state.player.relics.add(id)
 }
 
-// ========================================
-// 虚空之心（void_heart）
-// ========================================
-describe('虚空之心 (void_heart)', () => {
-  beforeEach(() => clearRelics())
-
-  it('空键位=0 → 底分加成 0', () => {
-    const mods = RELIC_MODIFIER_DEFS.void_heart('void_heart', { adjacentEmptyCount: 0 })
-    expect(mods[0].effect?.value).toBe(0)
-  })
-
-  it('空键位=2 → 底分加成 6', () => {
-    const mods = RELIC_MODIFIER_DEFS.void_heart('void_heart', { adjacentEmptyCount: 2 })
-    expect(mods[0].effect?.value).toBe(6)
-  })
-
-  it('空键位=5 → 底分加成 15', () => {
-    const mods = RELIC_MODIFIER_DEFS.void_heart('void_heart', { adjacentEmptyCount: 5 })
-    expect(mods[0].effect?.value).toBe(15)
-  })
-
-  it('与技能底分叠加（base additive stacking）', () => {
-    addRelic('void_heart')
-    const registry = new ModifierRegistry()
-    // 模拟技能底分
-    registry.register({
-      id: 'skill:burst:score', source: 'skill:burst', sourceType: 'skill',
-      layer: 'base', trigger: 'on_skill_trigger', phase: 'calculate',
-      effect: { type: 'score', value: 10, stacking: 'additive' }, priority: 100,
-    })
-    injectRelicModifiers(registry, { adjacentEmptyCount: 3 })
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
-    // base = 10 + 9 = 19
-    expect(result.effects.score).toBe(19)
-  })
-})
-
-// ========================================
-// 键盘风暴（keyboard_storm）
-// ========================================
-describe('键盘风暴 (keyboard_storm)', () => {
-  beforeEach(() => clearRelics())
-
-  it('total_skills_gte 条件: totalSkillCount=12 → true', () => {
-    expect(ConditionEvaluator.evaluate(
-      { type: 'total_skills_gte', value: 12 },
-      { totalSkillCount: 12 }
-    )).toBe(true)
-  })
-
-  it('total_skills_gte 条件: totalSkillCount=11 → false', () => {
-    expect(ConditionEvaluator.evaluate(
-      { type: 'total_skills_gte', value: 12 },
-      { totalSkillCount: 11 }
-    )).toBe(false)
-  })
-
-  it('total_skills_gte 条件: totalSkillCount=15 → true', () => {
-    expect(ConditionEvaluator.evaluate(
-      { type: 'total_skills_gte', value: 12 },
-      { totalSkillCount: 15 }
-    )).toBe(true)
-  })
-
-  it('管道集成: 条件满足时加底分 +2', () => {
-    addRelic('keyboard_storm')
-    const registry = new ModifierRegistry()
-    registry.register({
-      id: 'skill:burst:score', source: 'skill:burst', sourceType: 'skill',
-      layer: 'base', trigger: 'on_skill_trigger', phase: 'calculate',
-      effect: { type: 'score', value: 10, stacking: 'additive' }, priority: 100,
-    })
-    injectRelicModifiers(registry, { totalSkillCount: 12 })
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { totalSkillCount: 12 })
-    expect(result.effects.score).toBe(12) // 10 + 2
-  })
-
-  it('管道集成: 条件不满足时不加底分', () => {
-    addRelic('keyboard_storm')
-    const registry = new ModifierRegistry()
-    registry.register({
-      id: 'skill:burst:score', source: 'skill:burst', sourceType: 'skill',
-      layer: 'base', trigger: 'on_skill_trigger', phase: 'calculate',
-      effect: { type: 'score', value: 10, stacking: 'additive' }, priority: 100,
-    })
-    injectRelicModifiers(registry, { totalSkillCount: 8 })
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { totalSkillCount: 8 })
-    expect(result.effects.score).toBe(10) // 条件不满足，仍然只有 10
-  })
-})
+// (void_heart 和 keyboard_storm 已在遗物系统重构中移除)
 
 // ========================================
 // always_true 条件
@@ -183,5 +93,14 @@ describe('旧遗物已移除', () => {
     expect(RELIC_MODIFIER_DEFS['fortress']).toBeUndefined()
     expect(RELIC_MODIFIER_DEFS['passive_mastery']).toBeUndefined()
     expect(RELIC_MODIFIER_DEFS['gamblers_creed']).toBeUndefined()
+  })
+
+  it('RELIC_MODIFIER_DEFS 不含遗物重构删除的遗物', () => {
+    expect(RELIC_MODIFIER_DEFS['golden_keyboard']).toBeUndefined()
+    expect(RELIC_MODIFIER_DEFS['void_heart']).toBeUndefined()
+    expect(RELIC_MODIFIER_DEFS['rhyme_master']).toBeUndefined()
+    expect(RELIC_MODIFIER_DEFS['keyboard_storm']).toBeUndefined()
+    expect(RELIC_MODIFIER_DEFS['time_lord']).toBeUndefined()
+    expect(RELIC_MODIFIER_DEFS['time_crystal']).toBeUndefined()
   })
 })

@@ -392,7 +392,7 @@ function completeWord(): void {
     return;
   }
 
-  // 遗物效果：完成词语时间加成（time_crystal 等）
+  // 遗物效果：完成词语时间加成
   if (wordRelicResult.effects.time > 0) {
     state.time += wordRelicResult.effects.time;
   }
@@ -694,7 +694,7 @@ export async function startLevel(): Promise<void> {
     letterRegistry = null;
   }
 
-  // 遗物效果：战斗开始管道（time_lord 额外时间等）
+  // 遗物效果：战斗开始管道（doomsday 额外时间等）
   const startRelicResult = resolveRelicEffects('on_battle_start');
   if (startRelicResult.effects.multiply > 0) {
     state.multiplier += startRelicResult.effects.multiply;
@@ -761,12 +761,12 @@ export async function startLevel(): Promise<void> {
   announceLevel();
   startTimer();
 
-  // 时间遗物加成（在 startTimer 设置初始时间后应用，如 time_lord +8 秒、doomsday +30 秒）
+  // 时间遗物加成（在 startTimer 设置初始时间后应用，如 doomsday +30 秒）
   if (startRelicResult.effects.time > 0) {
     state.time += startRelicResult.effects.time;
   }
 
-  // 时间窃贼代价：基础时间减半（在遗物加成之后，故 time_lord + time_thief 有趣互动）
+  // 时间窃贼代价：基础时间减半（在遗物加成之后应用）
   if (queryRelicFlag('time_thief') === true) {
     state.time = Math.floor(state.time / 2);
   }

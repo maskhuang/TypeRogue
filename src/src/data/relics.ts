@@ -14,23 +14,16 @@ export type RelicEffectType =
   | 'battle_end'       // 战斗结束时触发
   | 'on_word_complete' // 完成词语时触发
   | 'on_skill_trigger' // 技能触发时
-  | 'on_keystroke'     // 每次击键时触发
-  | 'on_combo_break'   // 连击断裂时触发
   | 'on_error'         // 打错时触发
   | 'passive'          // 持续被动效果
-  | 'on_acquire'       // 获取时一次性触发
 
 export type RelicModifierType =
   | 'time_bonus'           // 时间加成（秒）
   | 'score_multiplier'     // 分数倍率加成
   | 'gold_multiplier'      // 金币倍率加成
   | 'combo_protection'     // 连击保护概率
-  | 'skill_effect_bonus'   // 技能效果加成
   | 'price_discount'       // 商店折扣
-  | 'word_score_bonus'     // 词语基础分加成
-  | 'multiplier_per_combo' // 每连击倍率加成
   | 'gold_flat'            // 金币固定加成
-  | 'score_bonus'          // 分数固定加成
   | 'instant_fail'         // 打错即失败
   | 'time_steal'           // 时间窃取
   | 'time_halve'           // 时间减半
@@ -40,8 +33,6 @@ export type RelicModifierType =
 
 export type RelicConditionType =
   | 'combo_threshold'   // 连击阈值
-  | 'score_threshold'   // 分数阈值
-  | 'time_remaining'    // 剩余时间阈值
 
 export interface RelicCondition {
   type: RelicConditionType
@@ -86,18 +77,6 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '据说这枚硬币总是正面朝上。'
   },
 
-  time_crystal: {
-    id: 'time_crystal',
-    name: '时间水晶',
-    icon: '🔷',
-    description: '每完成一个词语 +0.5 秒',
-    rarity: 'common',
-    basePrice: 30,
-    effects: [
-      { type: 'on_word_complete', modifier: 'time_bonus', value: 0.5 }
-    ]
-  },
-
   // ==================== 稀有遗物 ====================
 
   phoenix_feather: {
@@ -113,7 +92,6 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '涅槃重生，连击不灭。'
   },
 
-
   overkill_blade: {
     id: 'overkill_blade',
     name: '超杀之刃',
@@ -125,49 +103,6 @@ export const RELICS: Record<string, RelicData> = {
       { type: 'battle_end', modifier: 'gold_flat', value: 0 } // 实际金币 = state.overkill，硬编码在 shop/battle 中
     ],
     flavor: '一击的余波化为金币的叮当声。'
-  },
-
-  // ==================== 词语特征遗物 ====================
-
-  rhyme_master: {
-    id: 'rhyme_master',
-    name: '韵律大师',
-    icon: '🎶',
-    description: '词含重复字母时所有技能基数 +3',
-    rarity: 'rare',
-    basePrice: 55,
-    effects: [
-      { type: 'on_skill_trigger', modifier: 'score_bonus', value: 3 }
-    ],
-    flavor: '重复的韵律中蕴藏着力量。'
-  },
-
-  // ==================== 催化剂遗物 ====================
-
-  void_heart: {
-    id: 'void_heart',
-    name: '虚空之心',
-    icon: '🌑',
-    description: '每个空键位 +3 基数',
-    rarity: 'rare',
-    basePrice: 55,
-    effects: [
-      { type: 'on_skill_trigger', modifier: 'score_bonus', value: 3 }
-    ],
-    flavor: '虚空之中，空白即是力量。'
-  },
-
-  keyboard_storm: {
-    id: 'keyboard_storm',
-    name: '键盘风暴',
-    icon: '🌩️',
-    description: '技能数≥12时所有技能基数+2',
-    rarity: 'legendary',
-    basePrice: 100,
-    effects: [
-      { type: 'on_skill_trigger', modifier: 'score_bonus', value: 2 }
-    ],
-    flavor: '当键盘被占满，风暴降临。'
   },
 
   // ==================== 风险回报遗物 ====================
@@ -249,31 +184,6 @@ export const RELICS: Record<string, RelicData> = {
 
   // ==================== 传说遗物 ====================
 
-  golden_keyboard: {
-    id: 'golden_keyboard',
-    name: '黄金键盘',
-    icon: '⌨️',
-    description: '所有技能效果 +25%',
-    rarity: 'legendary',
-    basePrice: 100,
-    effects: [
-      { type: 'passive', modifier: 'skill_effect_bonus', value: 0.25 }
-    ],
-    flavor: '传说中的键盘，每一次击键都闪耀着金光。'
-  },
-
-  time_lord: {
-    id: 'time_lord',
-    name: '时间领主',
-    icon: '🕰️',
-    description: '每关额外 +8 秒',
-    rarity: 'legendary',
-    basePrice: 90,
-    effects: [
-      { type: 'battle_start', modifier: 'time_bonus', value: 8 }
-    ]
-  },
-
   perfectionist: {
     id: 'perfectionist',
     name: '完美主义者',
@@ -322,25 +232,9 @@ function relicMod(
 // === RELIC_MODIFIER_DEFS — 每个遗物的 Modifier 工厂 ===
 // 注意：加法效果用 base 层（baseSum += value），乘法效果用 global 层（globalProduct *= value）
 export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
-  // 韵律大师：词含重复字母时基数 +3（base additive + 条件）
-  rhyme_master: (id) => [
-    relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
-      effect: { type: 'score', value: 3, stacking: 'additive' },
-      condition: { type: 'word_has_double_letter' },
-    }),
-  ],
-
   // 行为型遗物：返回空数组，通过 queryRelicFlag 查询
   lucky_coin: () => [],
   perfectionist: () => [],
-
-  // 时间水晶：完成词语 +0.5 秒
-  time_crystal: (id) => [
-    relicMod(id, 'time', 'on_word_complete', 'calculate', {
-      effect: { type: 'time', value: 0.5, stacking: 'additive' },
-    }),
-  ],
-
 
   // 凤凰羽毛：打错时 50% 概率保护连击（代码行为为准）
   // 使用 after 阶段以被 BehaviorExecutor 收集
@@ -350,7 +244,6 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
-
   // 超杀之刃：overkill 分数转金币
   overkill_blade: (id, ctx) => [
     relicMod(id, 'gold', 'on_battle_end', 'calculate', {
@@ -358,21 +251,6 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
-
-  // 虚空之心：每个空键位 +3 基数（base additive）
-  void_heart: (id, ctx) => [
-    relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
-      effect: { type: 'score', value: (ctx?.adjacentEmptyCount ?? 0) * 3, stacking: 'additive' },
-    }),
-  ],
-
-  // 键盘风暴：技能数 >=12 时基数 +2（base additive + 条件）
-  keyboard_storm: (id) => [
-    relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
-      effect: { type: 'score', value: 2, stacking: 'additive' },
-      condition: { type: 'total_skills_gte', value: 12 },
-    }),
-  ],
 
   // === 风险回报遗物 ===
 
@@ -417,20 +295,6 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
-  // 黄金键盘：技能触发时分数 ×1.25（乘法效果，用 global 层）
-  golden_keyboard: (id) => [
-    relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
-      layer: 'global',
-      effect: { type: 'score', value: 1.25, stacking: 'multiplicative' },
-    }),
-  ],
-
-  // 时间领主：战斗开始 +8 秒
-  time_lord: (id) => [
-    relicMod(id, 'time', 'on_battle_start', 'calculate', {
-      effect: { type: 'time', value: 8, stacking: 'additive' },
-    }),
-  ],
 }
 
 /**
@@ -475,4 +339,6 @@ export const DELETED_RELIC_IDS = [
   'magnet', 'combo_badge', 'berserker_mask',
   'combo_crown', 'treasure_map', 'piggy_bank',
   'chain_amplifier', 'fortress', 'passive_mastery', 'gamblers_creed',
+  'golden_keyboard', 'void_heart', 'rhyme_master',
+  'keyboard_storm', 'time_lord', 'time_crystal',
 ]

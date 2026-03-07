@@ -58,17 +58,6 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
     })
   })
 
-  describe('time_crystal', () => {
-    it('on_word_complete → time +0.5 additive (base 层)', () => {
-      const mods = RELIC_MODIFIER_DEFS.time_crystal('time_crystal')
-      expect(mods).toHaveLength(1)
-      expect(mods[0].trigger).toBe('on_word_complete')
-      expect(mods[0].layer).toBe('base')
-      expect(mods[0].phase).toBe('calculate')
-      expect(mods[0].effect).toEqual({ type: 'time', value: 0.5, stacking: 'additive' })
-    })
-  })
-
   describe('phoenix_feather', () => {
     it('on_error → combo_protect behavior (probability 0.5)', () => {
       const mods = RELIC_MODIFIER_DEFS.phoenix_feather('phoenix_feather')
@@ -93,53 +82,6 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
     it('overkill 未提供 → gold +0', () => {
       const mods = RELIC_MODIFIER_DEFS.overkill_blade('overkill_blade')
       expect(mods[0].effect?.value).toBe(0)
-    })
-  })
-
-  describe('golden_keyboard', () => {
-    it('on_skill_trigger → score ×1.25 multiplicative', () => {
-      const mods = RELIC_MODIFIER_DEFS.golden_keyboard('golden_keyboard')
-      expect(mods).toHaveLength(1)
-      expect(mods[0].trigger).toBe('on_skill_trigger')
-      expect(mods[0].effect).toEqual({ type: 'score', value: 1.25, stacking: 'multiplicative' })
-    })
-  })
-
-  describe('time_lord', () => {
-    it('on_battle_start → time +8 additive', () => {
-      const mods = RELIC_MODIFIER_DEFS.time_lord('time_lord')
-      expect(mods).toHaveLength(1)
-      expect(mods[0].trigger).toBe('on_battle_start')
-      expect(mods[0].effect).toEqual({ type: 'time', value: 8, stacking: 'additive' })
-    })
-  })
-
-  // === 催化剂遗物工厂测试 ===
-  describe('void_heart（催化剂）', () => {
-    it('adjacentEmptyCount=0 → score +0', () => {
-      const mods = RELIC_MODIFIER_DEFS.void_heart('void_heart', { adjacentEmptyCount: 0 })
-      expect(mods).toHaveLength(1)
-      expect(mods[0].effect?.value).toBe(0)
-    })
-
-    it('adjacentEmptyCount=3 → score +9', () => {
-      const mods = RELIC_MODIFIER_DEFS.void_heart('void_heart', { adjacentEmptyCount: 3 })
-      expect(mods[0].effect).toEqual({ type: 'score', value: 9, stacking: 'additive' })
-    })
-
-    it('adjacentEmptyCount 未提供 → score +0', () => {
-      const mods = RELIC_MODIFIER_DEFS.void_heart('void_heart')
-      expect(mods[0].effect?.value).toBe(0)
-    })
-  })
-
-  describe('keyboard_storm（催化剂）', () => {
-    it('on_skill_trigger → score +2 with total_skills_gte(12) condition', () => {
-      const mods = RELIC_MODIFIER_DEFS.keyboard_storm('keyboard_storm')
-      expect(mods).toHaveLength(1)
-      expect(mods[0].trigger).toBe('on_skill_trigger')
-      expect(mods[0].effect).toEqual({ type: 'score', value: 2, stacking: 'additive' })
-      expect(mods[0].condition).toEqual({ type: 'total_skills_gte', value: 12 })
     })
   })
 
@@ -196,46 +138,16 @@ describe('resolveRelicEffects 管道集成', () => {
     expect(result.effects.multiply).toBe(0)
   })
 
-  it('time_crystal → on_word_complete 产生 time +0.5', () => {
-    addRelic('time_crystal')
-    const result = resolveRelicEffects('on_word_complete')
-    expect(result.effects.time).toBe(0.5)
-  })
-
   it('overkill_blade → on_battle_end 金币 = overkill', () => {
     addRelic('overkill_blade')
     const result = resolveRelicEffects('on_battle_end', { overkill: 30 })
     expect(result.effects.gold).toBe(30)
   })
 
-  it('time_lord → on_battle_start time +8', () => {
-    addRelic('time_lord')
-    const result = resolveRelicEffects('on_battle_start')
-    expect(result.effects.time).toBe(8)
-  })
-
-  it('void_heart: adjacentEmptyCount=4 → score +12', () => {
-    addRelic('void_heart')
-    const result = resolveRelicEffects('on_skill_trigger', { adjacentEmptyCount: 4 })
-    expect(result.effects.score).toBe(12)
-  })
-
-  it('keyboard_storm: totalSkillCount=12 → score +2', () => {
-    addRelic('keyboard_storm')
-    const result = resolveRelicEffects('on_skill_trigger', { totalSkillCount: 12 })
-    expect(result.effects.score).toBe(2)
-  })
-
-  it('keyboard_storm: totalSkillCount=8 → score 0 (条件不满足)', () => {
-    addRelic('keyboard_storm')
-    const result = resolveRelicEffects('on_skill_trigger', { totalSkillCount: 8 })
-    expect(result.effects.score).toBe(0)
-  })
-
   it('不匹配 trigger 的遗物被忽略', () => {
-    addRelic('time_crystal') // on_word_complete
+    addRelic('phoenix_feather') // on_error
     const result = resolveRelicEffects('on_battle_end')
-    expect(result.effects.time).toBe(0) // trigger 不匹配，被过滤
+    expect(result.effects.score).toBe(0) // trigger 不匹配，被过滤
   })
 })
 
@@ -271,74 +183,8 @@ describe('resolveRelicEffectsWithBehaviors', () => {
 describe('injectRelicModifiers', () => {
   beforeEach(() => clearRelics())
 
-  it('golden_keyboard → 注入 on_skill_trigger global score ×1.25', () => {
-    addRelic('golden_keyboard')
-    const registry = new ModifierRegistry()
-
-    registry.register({
-      id: 'skill:burst:score',
-      source: 'skill:burst',
-      sourceType: 'skill',
-      layer: 'base',
-      trigger: 'on_skill_trigger',
-      phase: 'calculate',
-      effect: { type: 'score', value: 10, stacking: 'additive' },
-      priority: 100,
-    })
-
-    injectRelicModifiers(registry)
-
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
-    // base=10, global=1.25 → 10*1*1.25 = 12.5
-    expect(result.effects.score).toBe(12.5)
-  })
-
-  it('void_heart → 注入 on_skill_trigger base score (空位数×3)', () => {
-    addRelic('void_heart')
-    const registry = new ModifierRegistry()
-
-    registry.register({
-      id: 'skill:burst:score',
-      source: 'skill:burst',
-      sourceType: 'skill',
-      layer: 'base',
-      trigger: 'on_skill_trigger',
-      phase: 'calculate',
-      effect: { type: 'score', value: 10, stacking: 'additive' },
-      priority: 100,
-    })
-
-    injectRelicModifiers(registry, { adjacentEmptyCount: 2 })
-
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
-    // base = 10 + 6(void_heart) = 16
-    expect(result.effects.score).toBe(16)
-  })
-
-  it('keyboard_storm + totalSkillCount=12 → 注入额外底分', () => {
-    addRelic('keyboard_storm')
-    const registry = new ModifierRegistry()
-
-    registry.register({
-      id: 'skill:burst:score',
-      source: 'skill:burst',
-      sourceType: 'skill',
-      layer: 'base',
-      trigger: 'on_skill_trigger',
-      phase: 'calculate',
-      effect: { type: 'score', value: 10, stacking: 'additive' },
-      priority: 100,
-    })
-
-    injectRelicModifiers(registry, { totalSkillCount: 12 })
-
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { totalSkillCount: 12 })
-    // base = 10 + 2(keyboard_storm) = 12
-    expect(result.effects.score).toBe(12)
-  })
-
   it('无影响遗物 → 不改变技能管道', () => {
-    addRelic('time_crystal') // 不影响 on_skill_trigger
+    addRelic('phoenix_feather') // 不影响 on_skill_trigger
     const registry = new ModifierRegistry()
 
     registry.register({
@@ -358,36 +204,4 @@ describe('injectRelicModifiers', () => {
     expect(result.effects.score).toBe(10)
   })
 
-  it('golden_keyboard + aura enhance → 三层叠加', () => {
-    addRelic('golden_keyboard')
-    const registry = new ModifierRegistry()
-
-    registry.register({
-      id: 'skill:burst:score',
-      source: 'skill:burst',
-      sourceType: 'skill',
-      layer: 'base',
-      trigger: 'on_skill_trigger',
-      phase: 'calculate',
-      effect: { type: 'score', value: 10, stacking: 'additive' },
-      priority: 100,
-    })
-
-    registry.register({
-      id: 'skill:aura:enhance',
-      source: 'skill:aura',
-      sourceType: 'skill',
-      layer: 'enhance',
-      trigger: 'on_skill_trigger',
-      phase: 'calculate',
-      effect: { type: 'score', value: 1.5, stacking: 'multiplicative' },
-      priority: 100,
-    })
-
-    injectRelicModifiers(registry)
-
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
-    // base=10, enhance=1.5, global=1.25 → 10 * 1.5 * 1.25 = 18.75
-    expect(result.effects.score).toBe(18.75)
-  })
 })

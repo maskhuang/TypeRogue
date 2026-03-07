@@ -127,7 +127,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
   {
     id: 'stats_highscore',
     type: 'relic',
-    targetId: 'golden_keyboard',
+    targetId: 'overkill_blade',
     name: '高分猎手',
     description: '单局得分达到 50000',
     condition: {

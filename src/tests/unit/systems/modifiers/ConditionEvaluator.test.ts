@@ -714,34 +714,31 @@ describe('EffectPipeline + ConditionEvaluator 集成', () => {
     expect(result.effects.score).toBe(25)
   })
 
-  // === Story 14.3: rhyme_master 遗物集成 ===
-  it('word_has_double_letter 条件满足时遗物加分', () => {
+  // === word_has_double_letter 条件测试 ===
+  it('word_has_double_letter 条件满足时加分', () => {
     registry = new ModifierRegistry()
-    // 模拟 rhyme_master 遗物效果
     registry.register(createTestModifier({
-      id: 'relic:rhyme_master:score',
-      source: 'relic:rhyme_master',
+      id: 'relic:test:score',
+      source: 'relic:test',
       sourceType: 'relic',
       layer: 'base',
       effect: { type: 'score', value: 3, stacking: 'additive' },
       condition: { type: 'word_has_double_letter' },
     }))
-    // 技能基础分
     registry.register(createTestModifier({
       id: 'skill:burst:score',
       layer: 'base',
       effect: { type: 'score', value: 5, stacking: 'additive' },
     }))
-    // 词含重复字母 → 遗物生效
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { currentWord: 'BOOK' })
     expect(result.effects.score).toBe(8) // 5 + 3
   })
 
-  it('word_has_double_letter 条件不满足时遗物不加分', () => {
+  it('word_has_double_letter 条件不满足时不加分', () => {
     registry = new ModifierRegistry()
     registry.register(createTestModifier({
-      id: 'relic:rhyme_master:score',
-      source: 'relic:rhyme_master',
+      id: 'relic:test:score',
+      source: 'relic:test',
       sourceType: 'relic',
       layer: 'base',
       effect: { type: 'score', value: 3, stacking: 'additive' },
@@ -752,8 +749,7 @@ describe('EffectPipeline + ConditionEvaluator 集成', () => {
       layer: 'base',
       effect: { type: 'score', value: 5, stacking: 'additive' },
     }))
-    // 词无重复字母 → 遗物不生效
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { currentWord: 'FLAME' })
-    expect(result.effects.score).toBe(5) // 只有技能分
+    expect(result.effects.score).toBe(5)
   })
 })

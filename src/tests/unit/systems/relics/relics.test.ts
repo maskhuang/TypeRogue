@@ -15,8 +15,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 15 relics', () => {
-      expect(Object.keys(RELICS)).toHaveLength(15)
+    it('should contain 9 relics', () => {
+      expect(Object.keys(RELICS)).toHaveLength(9)
     })
 
     it('每个图标唯一', () => {
@@ -39,19 +39,19 @@ describe('Relics Data', () => {
   })
 
   describe('Rarity distribution', () => {
-    it('should have 2 common relics', () => {
+    it('should have 1 common relic', () => {
       const commons = getRelicsByRarity('common')
-      expect(commons).toHaveLength(2)
+      expect(commons).toHaveLength(1)
     })
 
-    it('should have 7 rare relics', () => {
+    it('should have 5 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(7)
+      expect(rares).toHaveLength(5)
     })
 
-    it('should have 6 legendary relics', () => {
+    it('should have 3 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(6)
+      expect(legendaries).toHaveLength(3)
     })
   })
 
@@ -63,12 +63,6 @@ describe('Relics Data', () => {
       expect(relic.effects[0].value).toBe(0.1)
     })
 
-    it('time_crystal should give time bonus on word complete', () => {
-      const relic = RELICS.time_crystal
-      expect(relic.effects[0].type).toBe('on_word_complete')
-      expect(relic.effects[0].modifier).toBe('time_bonus')
-      expect(relic.effects[0].value).toBe(0.5)
-    })
   })
 
   describe('Rare relics', () => {
@@ -85,45 +79,13 @@ describe('Relics Data', () => {
       expect(relic.effects[0].type).toBe('battle_end')
     })
 
-    it('void_heart should be rare catalyst', () => {
-      const relic = RELICS.void_heart
-      expect(relic.rarity).toBe('rare')
-      expect(relic.effects[0].type).toBe('on_skill_trigger')
-    })
-
-    it('rhyme_master should give score bonus on double letter words', () => {
-      const relic = RELICS.rhyme_master
-      expect(relic.rarity).toBe('rare')
-      expect(relic.basePrice).toBe(55)
-      expect(relic.effects[0].type).toBe('on_skill_trigger')
-      expect(relic.effects[0].modifier).toBe('score_bonus')
-      expect(relic.effects[0].value).toBe(3)
-    })
   })
 
   describe('Legendary relics', () => {
-    it('golden_keyboard should give skill effect bonus', () => {
-      const relic = RELICS.golden_keyboard
-      expect(relic.rarity).toBe('legendary')
-      expect(relic.effects[0].modifier).toBe('skill_effect_bonus')
-    })
-
-    it('time_lord should give large time bonus on battle start', () => {
-      const relic = RELICS.time_lord
-      expect(relic.effects[0].type).toBe('battle_start')
-      expect(relic.effects[0].modifier).toBe('time_bonus')
-      expect(relic.effects[0].value).toBe(8)
-    })
-
     it('perfectionist should have special no-error condition', () => {
       const relic = RELICS.perfectionist
       expect(relic.effects[0].type).toBe('battle_end')
       expect(relic.effects[0].condition?.type).toBe('combo_threshold')
-    })
-
-    it('keyboard_storm should be legendary catalyst', () => {
-      const relic = RELICS.keyboard_storm
-      expect(relic.rarity).toBe('legendary')
     })
   })
 
@@ -196,24 +158,21 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(15)
+      expect(ids).toHaveLength(9)
       expect(ids).toContain('lucky_coin')
-      expect(ids).toContain('golden_keyboard')
       expect(ids).toContain('perfectionist')
-      expect(ids).toContain('void_heart')
       expect(ids).toContain('glass_cannon')
       expect(ids).toContain('time_thief')
       expect(ids).toContain('greedy_hand')
       expect(ids).toContain('silence_vow')
       expect(ids).toContain('doomsday')
-      expect(ids).toContain('rhyme_master')
     })
   })
 
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(15)
+      expect(relics).toHaveLength(9)
     })
 
     it('should return RelicData objects', () => {
@@ -230,15 +189,8 @@ describe('Relics Data', () => {
     it('should have flavor text for select relics', () => {
       expect(RELICS.lucky_coin.flavor).toBeDefined()
       expect(RELICS.phoenix_feather.flavor).toBeDefined()
-      expect(RELICS.golden_keyboard.flavor).toBeDefined()
       expect(RELICS.perfectionist.flavor).toBeDefined()
       expect(RELICS.overkill_blade.flavor).toBeDefined()
-      expect(RELICS.void_heart.flavor).toBeDefined()
-    })
-
-    it('should be optional (some relics have no flavor)', () => {
-      expect(RELICS.time_crystal.flavor).toBeUndefined()
-      expect(RELICS.time_lord.flavor).toBeUndefined()
     })
   })
 
@@ -258,19 +210,14 @@ describe('Relics Data', () => {
       expect(RELICS['passive_mastery']).toBeUndefined()
       expect(RELICS['gamblers_creed']).toBeUndefined()
     })
-  })
 
-  describe('Emoji and description updates (Story 19.9)', () => {
-    it('void_heart emoji should be 🌑', () => {
-      expect(RELICS.void_heart.icon).toBe('🌑')
-    })
-
-    it('void_heart description should use 基数', () => {
-      expect(RELICS.void_heart.description).toContain('基数')
-    })
-
-    it('rhyme_master description should use 基数', () => {
-      expect(RELICS.rhyme_master.description).toContain('基数')
+    it('should not contain relics removed in relic system redesign', () => {
+      expect(RELICS['golden_keyboard']).toBeUndefined()
+      expect(RELICS['void_heart']).toBeUndefined()
+      expect(RELICS['rhyme_master']).toBeUndefined()
+      expect(RELICS['keyboard_storm']).toBeUndefined()
+      expect(RELICS['time_lord']).toBeUndefined()
+      expect(RELICS['time_crystal']).toBeUndefined()
     })
   })
 })

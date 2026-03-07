@@ -51,7 +51,7 @@ describe('排行榜系统 (Story 25.5)', () => {
         buildSummary: makeBuildSummary({
           skills: [{ id: 'base_producer_add', level: 2 }, { id: 'score_converter_mul', level: 1 }],
           enchantments: [{ skillId: 'base_producer_add', enchantmentId: 'growth_adjacent' }],
-          relics: ['lucky_coin', 'time_crystal'],
+          relics: ['lucky_coin', 'phoenix_feather'],
           activeModifiers: ['boss_cap', 'boss_decay'],
         }),
       })

@@ -52,7 +52,7 @@ const TEMP_SKILLS: Record<string, { name: string; description: string; rarity: s
 }
 const TEMP_RELICS: Record<string, { name: string; description: string; rarity: string }> = {
   'lucky_coin': { name: '幸运硬币', description: '商店价格降低 10%', rarity: 'common' },
-  'void_heart': { name: '虚空之心', description: '每个空键位 +3 基数', rarity: 'rare' }
+  'phoenix_feather': { name: '凤凰羽毛', description: '打错时 30% 概率保护连击', rarity: 'rare' }
 }
 
 /**

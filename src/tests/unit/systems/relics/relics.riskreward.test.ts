@@ -377,23 +377,6 @@ describe('末日倒计时 (doomsday)', () => {
 describe('风险回报遗物组合交互', () => {
   beforeEach(() => clearRelics())
 
-  it('glass_cannon + golden_keyboard: score ×2 × ×1.25 = ×2.5', () => {
-    addRelic('glass_cannon')
-    addRelic('golden_keyboard')
-    const registry = new ModifierRegistry()
-    registry.register({
-      id: 'skill:burst:score', source: 'skill:burst', sourceType: 'skill',
-      layer: 'base', trigger: 'on_skill_trigger', phase: 'calculate',
-      effect: { type: 'score', value: 10, stacking: 'additive' }, priority: 100,
-    })
-    const gcMods = RELIC_MODIFIER_DEFS.glass_cannon('glass_cannon')
-    const gkMods = RELIC_MODIFIER_DEFS.golden_keyboard('golden_keyboard')
-    registry.registerMany([...gcMods, ...gkMods].filter(m => m.trigger === 'on_skill_trigger'))
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
-    // base=10, global=×2×1.25=×2.5 → 25
-    expect(result.effects.score).toBe(25)
-  })
-
   it('greedy_hand + overkill_blade: 金币 ×1.5', () => {
     addRelic('greedy_hand')
     addRelic('overkill_blade')
@@ -402,11 +385,9 @@ describe('风险回报遗物组合交互', () => {
     expect(result.effects.gold).toBe(30)
   })
 
-  it('doomsday + time_lord: 时间叠加', () => {
+  it('doomsday: +30s 时间', () => {
     addRelic('doomsday')
-    addRelic('time_lord')
     const result = resolveRelicEffects('on_battle_start')
-    // doomsday +30s + time_lord +8s → 38s
-    expect(result.effects.time).toBe(38)
+    expect(result.effects.time).toBe(30)
   })
 })
