@@ -1,0 +1,258 @@
+# generated: 2026-03-07
+# project: game
+# project_key: typerogue
+# tracking_system: file-system
+# story_location: docs/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-07
+project: game
+project_key: typerogue
+tracking_system: file-system
+story_location: docs/implementation-artifacts
+
+development_status:
+  # ===== Epic 1: 核心打字系统 =====
+  epic-1: done
+  1-1-keyboard-input-handler: done
+  1-2-word-matcher: done
+  1-3-word-loader: done
+  1-4-basic-scoring: done
+  epic-1-retrospective: optional
+
+  # ===== Epic 2: 被动技能系统 =====
+  epic-2: done
+  2-1-keyboard-adjacency-map: done
+  2-2-skill-data-definition: done
+  2-3-skill-binding-system: done
+  2-4-passive-skill-calculation: done
+  epic-2-retrospective: optional
+
+  # ===== Epic 3: 主动技能与效果队列 =====
+  epic-3: done
+  3-1-effect-queue: done
+  3-2-active-skill-system: done
+  3-3-skill-coordinator: done
+  3-4-skill-trigger-integration: done
+  epic-3-retrospective: optional
+
+  # ===== Epic 4: 战斗场景 =====
+  epic-4: done
+  4-1-scene-manager: done
+  4-2-battle-scene-framework: done
+  4-3-battle-hud: done
+  4-4-keyboard-visualizer: done
+  4-5-battle-flow-complete: done
+  epic-4-retrospective: optional
+
+  # ===== Epic 5: Roguelike 循环 =====
+  epic-5: done
+  5-1-run-state-management: done
+  5-2-stage-progression: done
+  5-3-shop-scene: done
+  5-4-relic-system: done
+  5-5-game-over-flow: done
+  epic-5-retrospective: optional
+
+  # ===== Epic 6: Meta 系统 =====
+  epic-6: done
+  6-1-meta-state-management: done
+  6-2-save-system: done
+  6-3-unlock-system: done
+  6-4-collection-scene: done
+  epic-6-retrospective: optional
+
+  # ===== Epic 7: 音效与视觉 =====
+  epic-7: done
+  7-1-audio-manager: done
+  7-2-keystroke-sounds: done
+  7-3-particle-effects: done
+  7-4-skill-trigger-feedback: done
+  epic-7-retrospective: optional
+
+  # ===== Epic 8: Electron 与 Steam =====
+  epic-8: done
+  8-1-electron-main-process: done
+  8-2-steam-initialization: done
+  8-3-steam-achievements: done
+  8-4-steam-cloud-save: done
+  8-5-build-and-package: done
+  epic-8-retrospective: optional
+
+  # ===== Epic 9: 数值平衡与技能迭代 =====
+  epic-9: done
+  9-1-remove-combo-skill-type: done
+  9-2-feedback-multiplier-driven: done
+  9-3-relic-economy-rebalance: done
+  9-4-stage-difficulty-tuning: done
+  9-5-skill-value-review: done
+  epic-9-retrospective: optional
+
+  # ===== Epic 10: 内容扩展与词库系统 =====
+  epic-10: done
+  10-1-curated-word-dictionary: done
+  epic-10-retrospective: optional
+
+  # ===== Epic 11: 效果管道统一 =====
+  epic-11: done
+  11-1-modifier-interface-registry: done
+  11-2-three-layer-pipeline: done
+  11-3-condition-system: done
+  11-4-behavior-modifiers: done
+  11-5-skill-migration: done
+  11-6-relic-migration: done
+  epic-11-retrospective: optional
+
+  # ===== Epic 12: 技能池扩充 =====
+  epic-12: done
+  12-1-burst-multiplier-skills: done
+  12-2-sustain-chain-skills: done
+  12-3-passive-skills: done
+  12-4-skill-ui-shop-update: done
+  epic-12-retrospective: optional
+
+  # ===== Epic 13: 遗物系统重做 =====
+  epic-13: done
+  13-1-build-catalyst-relics: done
+  13-2-risk-reward-relics: done
+  epic-13-retrospective: optional
+
+  # ===== Epic 14: 字母升级与词语联动 =====
+  epic-14: done
+  14-1-letter-upgrade-system: done
+  14-2-letter-upgrade-shop: done
+  14-3-word-condition-extension: done
+  epic-14-retrospective: optional
+
+  # ===== Epic 15: 技能进化系统 =====
+  epic-15: done
+  15-1-evolution-branch-design: done
+  15-2-evolution-ui-selection: done
+  epic-15-retrospective: optional
+
+  # ===== Epic 18: Boss 战与 Act 结构 =====
+  epic-18: done
+  18-1-stage-type-act-structure: done
+  18-2-elite-stage-mini-boss: done
+  18-3-rest-stage-random-events: done
+  18-4-boss-modifier-framework: done
+  18-5-boss-visual-typing: done
+  18-6-boss-cognitive-typing: done
+  18-7-boss-rhythm-lock: done
+  18-8-boss-numerical-rules: done
+  18-9-act-transition-visual-polish: done
+  epic-18-retrospective: optional
+
+  # ===== Epic 19: 技能体系重构 =====
+  epic-19: done
+  19-1-resource-system-core: done
+  19-2-producer-skills: done
+  19-3-keyboard-topology: done
+  19-4-converter-framework: done
+  19-5-connector-framework: done
+  19-6-enchantment-system: done
+  19-7-battle-ui-overhaul: done
+  19-8-shop-redesign-onboarding: done
+  19-9-relic-cleanup-migration: done
+  19-10-legacy-skill-cleanup: done
+  epic-19-retrospective: optional
+
+  # ===== Epic 20: 词库管理与字频锁定 =====
+  epic-20: done
+  20-1-word-inventory-delete: done
+  20-2-zero-freq-key-lock: done
+  epic-20-retrospective: optional
+
+  # ===== Epic 21: 金币资源化 =====
+  epic-21: done
+  21-1-gold-resource-type: done
+  21-2-gold-producer-skills: done
+  21-3-gold-converter-skills: done
+  21-4-remove-default-gold: done
+  21-5-settlement-stats-adapt: done
+  21-6-gold-connector-adapt: done
+  epic-21-retrospective: optional
+
+  # ===== Epic 22: 词语牌包系统 =====
+  epic-22: done
+  22-1-pack-condition-data-structure: done
+  22-2-pack-generation-strategy: done
+  22-3-shop-pack-ui: done
+  22-4-remove-word-direct-sale: done
+  22-5-pack-build-synergy: done
+  epic-22-retrospective: optional
+
+  # ===== Epic 23: 增幅者技能类型 =====
+  epic-23: done
+  23-1-amplifier-data-structure: done
+  23-2-amplifier-skill-data: done
+  23-3-amplifier-trigger-stacking: done
+  23-4-amplifier-effect-application: done
+  23-5-amplifier-shop-ui: done
+  23-6-amplifier-enchantment-adapt: done
+  epic-23-retrospective: optional
+
+  # ===== Epic 24: 成长附魔与附魔重构 =====
+  epic-24: done
+  24-1-growth-value-state: done
+  24-2-remove-amplify-add-growth-data: done
+  24-3-spatial-growth-trigger-logic: done
+  24-4-mastery-enchantment-logic: done
+  24-5-devour-enchantment-logic: done
+  24-6-enchantment-ui-adapt: done
+  epic-24-retrospective: optional
+
+  # ===== Epic 25: 无尽模式 =====
+  epic-25: done
+  25-1-cycle-state-loop-structure: done
+  25-2-triple-difficulty-scaling: done
+  25-3-boss-modifier-pick-stack: done
+  25-4-rare-shelf-shop: done
+  25-5-leaderboard-system: done
+  25-6-daily-seed-system: done
+  epic-25-retrospective: optional
+
+  # ===== Epic 26: 图标注册表与跨类型查重 =====
+  epic-26: done
+  26-1-icon-registry-cross-type-test: done
+  26-2-fix-duplicate-icons: done
+  26-3-per-type-icon-uniqueness-tests: done
+  epic-26-retrospective: optional
+
+  # ===== Epic 27: 遗物系统重设计 (from relic-implementation-plan.md) =====
+  # Source: docs/planning-artifacts/relic-implementation-plan.md
+  epic-27: in-progress
+  27-1-remove-old-relics: done
+  27-2-relic-type-system: done
+  27-3-slot-system-data: backlog
+  27-4-new-t1-passive-relics: backlog
+  27-5-new-t5-t6-t7-relics: backlog
+  epic-27-retrospective: optional

@@ -66,9 +66,6 @@ export function queryRelicFlag(flag: string): number | boolean {
     case 'price_discount':
       // 幸运硬币：商店折扣 10%
       return state.player.relics.has('lucky_coin') ? 0.1 : 0
-    case 'perfectionist_streak':
-      // 完美主义者：是否启用完美连击加成
-      return state.player.relics.has('perfectionist')
     // === 风险回报遗物 ===
     case 'glass_cannon':
       // 玻璃大炮：打错即失败
@@ -91,21 +88,33 @@ export function queryRelicFlag(flag: string): number | boolean {
 }
 
 /**
- * 为技能管道注入遗物 global 层 Modifier。
- * 将遗物产生的 Modifier 注入技能管道。
+ * 解析 on_skill_trigger 遗物效果，返回分数倍率和待执行行为。
+ * 注入 dummy base=1 使 global 层乘法生效，结果 score 即为倍率。
  *
- * @param registry 技能的 ModifierRegistry（会被修改）
- * @param context 管道上下文
+ * @param context 管道上下文（currentSkillCategory, isChainedTrigger, amplifierMaxStacks）
+ * @param callbacks 行为回调（onTimeSteal 等）
+ * @returns score 倍率（≥1，无遗物时为 1）
  */
-export function injectRelicModifiers(
-  registry: ModifierRegistry,
-  context?: PipelineContext,
-): void {
+export function resolveRelicSkillTrigger(
+  context: PipelineContext,
+  callbacks?: BehaviorCallbacks,
+): number {
+  const registry = new ModifierRegistry()
+  // dummy base=1: 使 global 层乘法公式 baseSum × enhanceProduct × globalProduct 生效
+  registry.register({
+    id: '_relic_base:score', source: '_relic_base', sourceType: 'skill',
+    layer: 'base', trigger: 'on_skill_trigger', phase: 'calculate',
+    effect: { type: 'score', value: 1, stacking: 'additive' }, priority: 0,
+  })
   for (const relicId of state.player.relics) {
     const factory = RELIC_MODIFIER_DEFS[relicId]
     if (!factory) continue
     const mods = factory(relicId, context)
-    // 只注入 on_skill_trigger 的 global 层 Modifier
     registry.registerMany(mods.filter(m => m.trigger === 'on_skill_trigger'))
   }
+  const result = EffectPipeline.resolve(registry, 'on_skill_trigger', context)
+  if (result.pendingBehaviors.length > 0 && callbacks) {
+    BehaviorExecutor.execute(result.pendingBehaviors, 0, callbacks)
+  }
+  return result.effects.score || 1
 }

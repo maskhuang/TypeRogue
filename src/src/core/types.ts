@@ -248,7 +248,6 @@ export interface WordPack {
 
 // === 联动系统 ===
 export interface SynergyState {
-  perfectStreak: number;
   wordSkillCount: number; // 当前词语触发的技能数量
   lastTriggeredSkillId: string | null; // 本词前一个触发的技能（每词重置）
   skillBaseScore: number; // 技能贡献的基础分（每词重置，结算面板使用）

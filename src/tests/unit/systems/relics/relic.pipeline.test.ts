@@ -5,9 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { RELIC_MODIFIER_DEFS } from '../../../../src/data/relics'
-import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag, injectRelicModifiers } from '../../../../src/systems/relics/RelicPipeline'
-import { ModifierRegistry } from '../../../../src/systems/modifiers/ModifierRegistry'
-import { EffectPipeline } from '../../../../src/systems/modifiers/EffectPipeline'
+import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag, resolveRelicSkillTrigger } from '../../../../src/systems/relics/RelicPipeline'
 import type { PipelineContext, BehaviorCallbacks } from '../../../../src/systems/modifiers/ModifierTypes'
 
 // === Mock state ===
@@ -25,7 +23,6 @@ vi.mock('../../../../src/core/state', () => {
       overkill: 0,
     },
     synergy: {
-      perfectStreak: 0,
       wordSkillCount: 0,
     },
   }
@@ -52,9 +49,20 @@ describe('RELIC_MODIFIER_DEFS 工厂', () => {
     })
   })
 
-  describe('perfectionist（行为型）', () => {
-    it('返回空数组', () => {
-      expect(RELIC_MODIFIER_DEFS.perfectionist('perfectionist')).toEqual([])
+  describe('perfectionist（得分 ×2 + 断连击失去遗物）', () => {
+    it('返回 2 个 Modifier（score ×2 + remove_relic）', () => {
+      const mods = RELIC_MODIFIER_DEFS.perfectionist('perfectionist')
+      expect(mods).toHaveLength(2)
+      const scoreMod = mods.find(m => m.effect?.type === 'score')
+      expect(scoreMod).toBeDefined()
+      expect(scoreMod!.layer).toBe('global')
+      expect(scoreMod!.trigger).toBe('on_word_complete')
+      expect(scoreMod!.effect!.value).toBe(2.0)
+      expect(scoreMod!.effect!.stacking).toBe('multiplicative')
+      const loseMod = mods.find(m => m.behavior?.type === 'remove_relic')
+      expect(loseMod).toBeDefined()
+      expect(loseMod!.trigger).toBe('on_combo_break')
+      expect(loseMod!.phase).toBe('after')
     })
   })
 
@@ -102,14 +110,7 @@ describe('queryRelicFlag', () => {
     expect(queryRelicFlag('price_discount')).toBe(0.1)
   })
 
-  it('perfectionist_streak: 无完美主义者 → false', () => {
-    expect(queryRelicFlag('perfectionist_streak')).toBe(false)
-  })
-
-  it('perfectionist_streak: 有完美主义者 → true', () => {
-    addRelic('perfectionist')
-    expect(queryRelicFlag('perfectionist_streak')).toBe(true)
-  })
+  // perfectionist_streak queryRelicFlag 已移除，完美主义者改用 RELIC_MODIFIER_DEFS 管道
 
   it('deleted relics return false/default', () => {
     expect(queryRelicFlag('chain_amplifier')).toBe(false)
@@ -178,30 +179,51 @@ describe('resolveRelicEffectsWithBehaviors', () => {
 })
 
 // ========================================
-// injectRelicModifiers 测试
+// resolveRelicSkillTrigger 测试
 // ========================================
-describe('injectRelicModifiers', () => {
+describe('resolveRelicSkillTrigger', () => {
   beforeEach(() => clearRelics())
 
-  it('无影响遗物 → 不改变技能管道', () => {
-    addRelic('phoenix_feather') // 不影响 on_skill_trigger
-    const registry = new ModifierRegistry()
-
-    registry.register({
-      id: 'skill:burst:score',
-      source: 'skill:burst',
-      sourceType: 'skill',
-      layer: 'base',
-      trigger: 'on_skill_trigger',
-      phase: 'calculate',
-      effect: { type: 'score', value: 10, stacking: 'additive' },
-      priority: 100,
-    })
-
-    injectRelicModifiers(registry)
-
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
-    expect(result.effects.score).toBe(10)
+  it('无遗物 → 倍率 = 1', () => {
+    const mult = resolveRelicSkillTrigger({})
+    expect(mult).toBe(1)
   })
 
+  it('非 on_skill_trigger 遗物 → 倍率 = 1', () => {
+    addRelic('phoenix_feather') // on_error 遗物
+    const mult = resolveRelicSkillTrigger({})
+    expect(mult).toBe(1)
+  })
+
+  it('glass_cannon → 倍率 = 3', () => {
+    addRelic('glass_cannon')
+    const mult = resolveRelicSkillTrigger({})
+    expect(mult).toBe(3)
+  })
+
+  it('forge_heart + converter + 产出者已触发 → 倍率 = 1.15', () => {
+    addRelic('forge_heart')
+    const mult = resolveRelicSkillTrigger({ currentSkillCategory: 'converter', wordHasProducerTriggered: true })
+    expect(mult).toBeCloseTo(1.15, 5)
+  })
+
+  it('forge_heart + producer → 倍率 = 1（条件不满足）', () => {
+    addRelic('forge_heart')
+    const mult = resolveRelicSkillTrigger({ currentSkillCategory: 'producer' })
+    expect(mult).toBe(1)
+  })
+
+  it('多遗物叠加: glass_cannon × forge_heart(converter+产出者已触发) → 3 × 1.15', () => {
+    addRelic('glass_cannon')
+    addRelic('forge_heart')
+    const mult = resolveRelicSkillTrigger({ currentSkillCategory: 'converter', wordHasProducerTriggered: true })
+    expect(mult).toBeCloseTo(3 * 1.15, 5)
+  })
+
+  it('time_thief → 执行 onTimeSteal 行为', () => {
+    addRelic('time_thief')
+    let bonus = 0
+    resolveRelicSkillTrigger({}, { onTimeSteal: (b) => { bonus = b } })
+    expect(bonus).toBe(0.3)
+  })
 })

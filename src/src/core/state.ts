@@ -103,7 +103,6 @@ export function createBattleStats(): import('./types').BattleStats {
 // === 联动状态 ===
 export function createSynergyState(): SynergyState {
   return {
-    perfectStreak: 0,
     wordSkillCount: 0,
     lastTriggeredSkillId: null,
     skillBaseScore: 0,

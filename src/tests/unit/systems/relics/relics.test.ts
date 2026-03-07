@@ -15,8 +15,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 9 relics', () => {
-      expect(Object.keys(RELICS)).toHaveLength(9)
+    it('should contain 14 relics', () => {
+      expect(Object.keys(RELICS)).toHaveLength(15)
     })
 
     it('每个图标唯一', () => {
@@ -39,14 +39,14 @@ describe('Relics Data', () => {
   })
 
   describe('Rarity distribution', () => {
-    it('should have 1 common relic', () => {
+    it('should have 3 common relics', () => {
       const commons = getRelicsByRarity('common')
-      expect(commons).toHaveLength(1)
+      expect(commons).toHaveLength(3)
     })
 
-    it('should have 5 rare relics', () => {
+    it('should have 9 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(5)
+      expect(rares).toHaveLength(9)
     })
 
     it('should have 3 legendary relics', () => {
@@ -82,10 +82,11 @@ describe('Relics Data', () => {
   })
 
   describe('Legendary relics', () => {
-    it('perfectionist should have special no-error condition', () => {
+    it('perfectionist should have passive score multiplier', () => {
       const relic = RELICS.perfectionist
-      expect(relic.effects[0].type).toBe('battle_end')
-      expect(relic.effects[0].condition?.type).toBe('combo_threshold')
+      expect(relic.effects[0].type).toBe('passive')
+      expect(relic.effects[0].modifier).toBe('score_multiplier')
+      expect(relic.effects[0].value).toBe(2.0)
     })
   })
 
@@ -158,21 +159,23 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(9)
+      expect(ids).toHaveLength(15)
       expect(ids).toContain('lucky_coin')
       expect(ids).toContain('perfectionist')
       expect(ids).toContain('glass_cannon')
-      expect(ids).toContain('time_thief')
-      expect(ids).toContain('greedy_hand')
-      expect(ids).toContain('silence_vow')
-      expect(ids).toContain('doomsday')
+      expect(ids).toContain('spark_core')
+      expect(ids).toContain('forge_heart')
+      expect(ids).toContain('chain_surge')
+      expect(ids).toContain('stack_resonance')
+      expect(ids).toContain('perfect_rhythm')
+      expect(ids).toContain('resource_flood')
     })
   })
 
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(9)
+      expect(relics).toHaveLength(15)
     })
 
     it('should return RelicData objects', () => {

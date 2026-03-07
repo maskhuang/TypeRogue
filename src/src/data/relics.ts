@@ -111,12 +111,12 @@ export const RELICS: Record<string, RelicData> = {
     id: 'glass_cannon',
     name: '玻璃大炮',
     icon: '💣',
-    description: '技能分数 ×2，但打错即本关失败',
+    description: '技能分数 ×3，但打错即本关失败',
     rarity: 'rare',
     basePrice: 40,
     category: 'risk-reward',
     effects: [
-      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 2.0 },
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 3.0 },
       { type: 'on_error', modifier: 'instant_fail', value: 1 }
     ],
     flavor: '要么完美，要么毁灭。'
@@ -182,22 +182,97 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '末日的钟声越来越近。'
   },
 
+  // ==================== T1 条件加成遗物 ====================
+
+  spark_core: {
+    id: 'spark_core',
+    name: '点火核心',
+    icon: '🧨',
+    description: '装备 ≥3 个产出者时，产出者产出 +20%',
+    rarity: 'rare',
+    basePrice: 50,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 0.20 }
+    ],
+    flavor: '产出者越多，火花越烈。'
+  },
+
+  forge_heart: {
+    id: 'forge_heart',
+    name: '熔炉之心',
+    icon: '⚗️',
+    description: '本词有产出者触发后，转化者产出 +15%',
+    rarity: 'common',
+    basePrice: 25,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 0.15 }
+    ],
+    flavor: '熔炉的心脏为转化注入力量。'
+  },
+
+  chain_surge: {
+    id: 'chain_surge',
+    name: '链路增压',
+    icon: '🧲',
+    description: '被连接者触发的技能产出 +25%',
+    rarity: 'rare',
+    basePrice: 50,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 0.25 }
+    ],
+    flavor: '传导的能量在链路中不断增压。'
+  },
+
+  stack_resonance: {
+    id: 'stack_resonance',
+    name: '层叠共鸣',
+    icon: '⚜️',
+    description: '任意增幅者叠层 ≥15 时，技能产出 +10%',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 0.10 }
+    ],
+    flavor: '层叠至极，共鸣自生。'
+  },
+
+  perfect_rhythm: {
+    id: 'perfect_rhythm',
+    name: '完美韵律',
+    icon: '🎶',
+    description: '无错误完成词语时，恢复该词 50% 消耗时间',
+    rarity: 'common',
+    basePrice: 30,
+    effects: [
+      { type: 'on_word_complete', modifier: 'time_bonus', value: 0.5 }
+    ],
+    flavor: '完美的节奏，时间也为之回溯。'
+  },
+
+  resource_flood: {
+    id: 'resource_flood',
+    name: '资源洪流',
+    icon: '🌈',
+    description: '单词内产出 ≥3 种资源时，该词得分 +20%',
+    rarity: 'rare',
+    basePrice: 50,
+    effects: [
+      { type: 'on_word_complete', modifier: 'score_multiplier', value: 0.20 }
+    ],
+    flavor: '资源汇流成河，奖励随之倾泻。'
+  },
+
   // ==================== 传说遗物 ====================
 
   perfectionist: {
     id: 'perfectionist',
     name: '完美主义者',
     icon: '💯',
-    description: '无错误通关时分数 ×2',
+    description: '得分 ×2，但断连击时永久失去此遗物',
     rarity: 'legendary',
     basePrice: 120,
     effects: [
-      {
-        type: 'battle_end',
-        modifier: 'score_multiplier',
-        value: 1, // 额外 +1 (总共 ×2)
-        condition: { type: 'combo_threshold', threshold: -1 } // 特殊：-1 表示无断连
-      }
+      { type: 'passive', modifier: 'score_multiplier', value: 2.0 },
     ],
     flavor: '只有完美，才配得上这份荣耀。'
   }
@@ -234,7 +309,16 @@ function relicMod(
 export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
   // 行为型遗物：返回空数组，通过 queryRelicFlag 查询
   lucky_coin: () => [],
-  perfectionist: () => [],
+  // 完美主义者：得分 ×2（global 层），断连击时失去遗物（behavior）
+  perfectionist: (id) => [
+    relicMod(id, 'score', 'on_word_complete', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 2.0, stacking: 'multiplicative' },
+    }),
+    relicMod(id, 'lose', 'on_combo_break', 'after', {
+      behavior: { type: 'remove_relic', relicId: 'perfectionist' },
+    }),
+  ],
 
   // 凤凰羽毛：打错时 50% 概率保护连击（代码行为为准）
   // 使用 after 阶段以被 BehaviorExecutor 收集
@@ -254,11 +338,11 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
 
   // === 风险回报遗物 ===
 
-  // 玻璃大炮：score ×2（增益） + 打错即失败（代价）
+  // 玻璃大炮：score ×3（增益） + 打错即失败（代价）
   glass_cannon: (id) => [
     relicMod(id, 'score', 'on_skill_trigger', 'calculate', {
       layer: 'global',
-      effect: { type: 'score', value: 2.0, stacking: 'multiplicative' },
+      effect: { type: 'score', value: 3.0, stacking: 'multiplicative' },
     }),
     relicMod(id, 'fail', 'on_error', 'after', {
       behavior: { type: 'instant_fail' },
@@ -292,6 +376,60 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
   doomsday: (id) => [
     relicMod(id, 'time', 'on_battle_start', 'calculate', {
       effect: { type: 'time', value: 30, stacking: 'additive' },
+    }),
+  ],
+
+  // === T1 条件加成遗物 ===
+
+  // 点火核心：≥3 产出者时产出者产出 +20%（global 层乘法，双条件）
+  spark_core: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.20, stacking: 'multiplicative' },
+      condition: { type: 'is_producer_and_count_gte', value: 3 },
+    }),
+  ],
+
+  // 熔炉之心：本词有产出者触发后，转化者产出 +15%（global 层乘法）
+  forge_heart: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.15, stacking: 'multiplicative' },
+      condition: { type: 'is_converter_after_producer' },
+    }),
+  ],
+
+  // 链路增压：被传导的技能效果 +25%（global 层乘法）
+  chain_surge: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.25, stacking: 'multiplicative' },
+      condition: { type: 'is_chained_trigger' },
+    }),
+  ],
+
+  // 层叠共鸣：增幅者叠层 ≥15 时，受影响技能 +10%（global 层乘法）
+  stack_resonance: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.10, stacking: 'multiplicative' },
+      condition: { type: 'amplifier_stacks_gte', value: 15 },
+    }),
+  ],
+
+  // 完美韵律：无错误完成词语时恢复 50% 消耗时间（behavior 型）
+  perfect_rhythm: (id) => [
+    relicMod(id, 'refund', 'on_word_complete', 'after', {
+      behavior: { type: 'time_refund', ratio: 0.5 },
+      condition: { type: 'word_perfect' },
+    }),
+  ],
+
+  // 资源洪流：单词内产出 ≥3 种资源时，该词分数 +20%（bonusMult 加算）
+  resource_flood: (id) => [
+    relicMod(id, 'boost', 'on_word_complete', 'calculate', {
+      effect: { type: 'multiply', value: 0.20, stacking: 'additive' },
+      condition: { type: 'word_resource_types_gte', value: 3 },
     }),
   ],
 

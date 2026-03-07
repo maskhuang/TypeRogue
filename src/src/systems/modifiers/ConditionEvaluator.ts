@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - ConditionEvaluator 条件评估器
 // ============================================
-// Story 11.3+12.1: 15 种条件原语评估
+// Story 11.3+12.1+27.2: 30 种条件原语评估
 
 import type { ModifierCondition, PipelineContext } from './ModifierTypes'
 
@@ -90,6 +90,21 @@ export class ConditionEvaluator {
       }
       case 'skill_density_gte':
         return (ctx.skillDensity ?? 0) >= condition.value
+      // === T1 条件加成遗物 (Story 27.2) ===
+      case 'current_skill_is_converter':
+        return ctx.currentSkillCategory === 'converter'
+      case 'is_chained_trigger':
+        return ctx.isChainedTrigger === true
+      case 'amplifier_stacks_gte':
+        return (ctx.amplifierMaxStacks ?? 0) >= condition.value
+      case 'word_resource_types_gte':
+        return (ctx.wordResourceTypes ?? 0) >= condition.value
+      case 'word_perfect':
+        return ctx.wordPerfect === true
+      case 'is_producer_and_count_gte':
+        return ctx.currentSkillCategory === 'producer' && (ctx.equippedProducerCount ?? 0) >= condition.value
+      case 'is_converter_after_producer':
+        return ctx.currentSkillCategory === 'converter' && ctx.wordHasProducerTriggered === true
       default:
         return false
     }

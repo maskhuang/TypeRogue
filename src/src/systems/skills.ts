@@ -16,11 +16,12 @@ import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
+import { resolveRelicSkillTrigger } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
 
 
 // === 战后统计：记录技能触发 ===
-const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, shield: 0, gold: 0 };
+const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, gold: 0 };
 
 function recordSkillTrigger(
   skillId: string,
@@ -45,10 +46,68 @@ function recordSkillTrigger(
     ss.chainTriggered++;
     bs.totalChainTriggers++;
   }
+  // T1 遗物：追踪本词产出的资源种类
+  if (Math.abs(delta) > 0) {
+    _wordResourceTypes.add(resource);
+  }
 }
 
 // 模块级：当前触发是否来自链式（由 triggerSkill 设置，triggerProducer/Converter 读取）
 let _isChainTrigger = false;
+
+// T1 遗物支持：追踪本词已产出的不同资源种类
+const _wordResourceTypes = new Set<string>();
+// T1 遗物支持：本词是否有产出者触发过（熔炉之心使用）
+let _wordHasProducerTriggered = false;
+
+/** 获取本词已产出的资源种类数 */
+export function getWordResourceTypeCount(): number {
+  return _wordResourceTypes.size;
+}
+
+/** 本词是否有产出者触发过 */
+export function hasProducerTriggeredThisWord(): boolean {
+  return _wordHasProducerTriggered;
+}
+
+/** 重置词级追踪（每词开始时调用） */
+export function resetWordResourceTypes(): void {
+  _wordResourceTypes.clear();
+  _wordHasProducerTriggered = false;
+}
+
+/** 计算当前所有增幅者中的最大叠层数 */
+function getMaxAmplifierStacks(): number {
+  let max = 0;
+  for (const stacks of state.amplifierStacks.values()) {
+    if (stacks > max) max = stacks;
+  }
+  return max;
+}
+
+/** 计算已装备的产出者数量 */
+function getEquippedProducerCount(): number {
+  let count = 0;
+  for (const skillId of state.player.bindings.values()) {
+    if (isProducer(skillId)) count++;
+  }
+  return count;
+}
+
+/** 获取技能触发时的遗物倍率（on_skill_trigger 遗物：glass_cannon, forge_heart 等） */
+function getRelicSkillMultiplier(category: string): number {
+  return resolveRelicSkillTrigger({
+    currentSkillCategory: category,
+    isChainedTrigger: _isChainTrigger,
+    amplifierMaxStacks: getMaxAmplifierStacks(),
+    equippedProducerCount: getEquippedProducerCount(),
+    wordHasProducerTriggered: _wordHasProducerTriggered,
+  }, {
+    onTimeSteal: (bonus) => {
+      state.time += bonus;
+    },
+  });
+}
 
 // === 技能键命中率计算 ===
 export function computeSkillDensity(word: string): number {
@@ -278,12 +337,15 @@ export function getAmplifierBonus(
 export function triggerProducer(producerId: string, triggerKey?: string): void {
   const prod = PRODUCERS[producerId];
   if (!prod) return;
+  _wordHasProducerTriggered = true;
   const level = state.player.skills.get(producerId)?.level || 1;
   const baseValue = getProducerValue(producerId, level);
   const enchMult = getEnchantmentMultiplier(producerId, triggerKey);
   const ampBonus = getAmplifierBonus(producerId, triggerKey, prod.resource);
   const amplifiedBase = (baseValue + ampBonus.addBonus) * ampBonus.mulBonus;
-  const value = prod.operator === 'add' ? amplifiedBase * enchMult : amplifiedBase;
+  const relicMult = getRelicSkillMultiplier('producer');
+  const totalMult = enchMult * relicMult;
+  const value = prod.operator === 'add' ? amplifiedBase * totalMult : amplifiedBase;
 
   // 视觉/音效反馈
   showTriggerPopup(producerId);
@@ -308,24 +370,24 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
       state.resources[prod.resource] += value;
     }
   } else {
-    // ×N 乘法：基于总资源值计算增量，enchMult 缩放增量部分
+    // ×N 乘法：基于总资源值计算增量，totalMult 缩放增量部分
     if (prod.resource === 'base') {
-      delta = state.resources.base * (value - 1) * enchMult;
+      delta = state.resources.base * (value - 1) * totalMult;
       synergy.skillBaseScore += delta;
     } else if (prod.resource === 'multiplier') {
-      delta = state.multiplier * (value - 1) * enchMult;
+      delta = state.multiplier * (value - 1) * totalMult;
       synergy.skillMultBonus += delta;
     } else if (prod.resource === 'score') {
       const pendingScore = state.resources.base * state.resources.multiplier + state.resources.score;
-      delta = pendingScore * (value - 1) * enchMult;
+      delta = pendingScore * (value - 1) * totalMult;
       state.resources.score += delta;
       state.score += delta;
     } else if (prod.resource === 'gold') {
       // 金币乘算基于玩家持有金币（state.gold）
-      delta = state.gold * (value - 1) * enchMult;
+      delta = state.gold * (value - 1) * totalMult;
       state.resources.gold += delta;
     } else {
-      delta = state.resources[prod.resource] * (value - 1) * enchMult;
+      delta = state.resources[prod.resource] * (value - 1) * totalMult;
       state.resources[prod.resource] += delta;
     }
   }
@@ -367,6 +429,8 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   const enchMult = getEnchantmentMultiplier(converterId, triggerKey);
   const ampBonus = getAmplifierBonus(converterId, triggerKey, conv.target);
   const amplifiedK = (k + ampBonus.addBonus) * ampBonus.mulBonus;
+  const relicMult = getRelicSkillMultiplier('converter');
+  const totalMult = enchMult * relicMult;
 
   // 视觉/音效反馈
   showTriggerPopup(converterId);
@@ -379,7 +443,7 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
 
   // 计算转化
   if (conv.formula === 'add') {
-    delta = sourceVal * amplifiedK * enchMult;
+    delta = sourceVal * amplifiedK * totalMult;
     if (conv.target === 'base') {
       synergy.skillBaseScore += delta;
     } else if (conv.target === 'multiplier') {
@@ -391,21 +455,21 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
       state.resources[conv.target] += delta;
     }
   } else {
-    // multiply: target *= (1 + sourceVal × amplifiedK)，enchMult 缩放增量部分
+    // multiply: target *= (1 + sourceVal × amplifiedK)，totalMult 缩放增量部分
     const factor = 1 + sourceVal * amplifiedK;
     if (conv.target === 'base') {
-      delta = state.resources.base * sourceVal * amplifiedK * enchMult;
+      delta = state.resources.base * sourceVal * amplifiedK * totalMult;
       synergy.skillBaseScore += delta;
     } else if (conv.target === 'multiplier') {
-      delta = state.multiplier * sourceVal * amplifiedK * enchMult;
+      delta = state.multiplier * sourceVal * amplifiedK * totalMult;
       synergy.skillMultBonus += delta;
     } else if (conv.target === 'score') {
       const pendingScore = state.resources.base * state.resources.multiplier + state.resources.score;
-      delta = pendingScore * (factor - 1) * enchMult;
+      delta = pendingScore * (factor - 1) * totalMult;
       state.resources.score += delta;
       state.score += delta;
     } else {
-      delta = state.resources[conv.target] * (factor - 1) * enchMult;
+      delta = state.resources[conv.target] * (factor - 1) * totalMult;
       state.resources[conv.target] += delta;
     }
   }

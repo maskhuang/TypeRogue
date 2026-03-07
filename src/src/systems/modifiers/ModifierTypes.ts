@@ -48,6 +48,8 @@ export type ModifierBehavior =
   | { type: 'amplify_chain' }
   | { type: 'instant_fail' }
   | { type: 'time_steal'; timeBonus: number }
+  | { type: 'remove_relic'; relicId: string }
+  | { type: 'time_refund'; ratio: number }
   // 进化系统行为 (Story 15.1)
   | { type: 'restore_combo'; triggerEvery: number }
   | { type: 'set_word_cooldown' }
@@ -87,6 +89,14 @@ export type ModifierCondition =
   | { type: 'word_all_unique_letters' }
   | { type: 'word_vowel_ratio_gte'; value: number }
   | { type: 'skill_density_gte'; value: number }
+  // T1 条件加成遗物 (Story 27.2)
+  | { type: 'current_skill_is_converter' }
+  | { type: 'is_chained_trigger' }
+  | { type: 'amplifier_stacks_gte'; value: number }
+  | { type: 'word_resource_types_gte'; value: number }
+  | { type: 'word_perfect' }
+  | { type: 'is_producer_and_count_gte'; value: number }
+  | { type: 'is_converter_after_producer' }
 
 // === 管道输出类型 (Story 11.2) ===
 
@@ -140,6 +150,20 @@ export interface PipelineContext {
   currentKeystrokeKey?: string
   /** 词中技能键命中率 (0.0~1.0)（词语条件使用） */
   skillDensity?: number
+  /** 当前触发技能的类型分类（T1 遗物条件使用） */
+  currentSkillCategory?: 'producer' | 'converter' | 'connector' | 'amplifier'
+  /** 是否由连接者传导触发（链路增压使用） */
+  isChainedTrigger?: boolean
+  /** 本词已产出的不同资源种类数（资源洪流使用） */
+  wordResourceTypes?: number
+  /** 本词是否无错误（完美韵律使用） */
+  wordPerfect?: boolean
+  /** 当前增幅者最大叠层数（层叠共鸣使用） */
+  amplifierMaxStacks?: number
+  /** 已装备的产出者数量（点火核心使用） */
+  equippedProducerCount?: number
+  /** 本词是否有产出者触发过（熔炉之心使用） */
+  wordHasProducerTriggered?: boolean
 }
 
 // === 行为执行回调 (Story 11.4) ===
@@ -168,6 +192,10 @@ export interface BehaviorCallbacks {
   onInstantFail?(): void
   /** time_steal: 时间窃贼，技能触发时加时间 */
   onTimeSteal?(timeBonus: number): void
+  /** remove_relic: 移除指定遗物（完美主义者断连击时触发） */
+  onRemoveRelic?(relicId: string): void
+  /** time_refund: 返还词语消耗时间的百分比（完美韵律使用） */
+  onTimeRefund?(ratio: number): void
   // 进化系统回调 (Story 15.2)
   /** restore_combo: 每 N 次触发恢复连击 */
   onRestoreCombo?(triggerEvery: number): void

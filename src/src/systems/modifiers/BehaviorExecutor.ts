@@ -149,6 +149,20 @@ export class BehaviorExecutor {
           }
           break
 
+        case 'remove_relic':
+          if (callbacks?.onRemoveRelic) {
+            callbacks.onRemoveRelic(behavior.relicId)
+            result.executedCount++
+          }
+          break
+
+        case 'time_refund':
+          if (callbacks?.onTimeRefund) {
+            callbacks.onTimeRefund(behavior.ratio)
+            result.executedCount++
+          }
+          break
+
         // 进化系统行为 (Story 15.2)
         case 'restore_combo':
           if (callbacks?.onRestoreCombo) {

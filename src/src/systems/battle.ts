@@ -11,7 +11,7 @@ import { RELICS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
-import { triggerSkill, clearPseudoInfinite } from './skills';
+import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
 import { openShop } from './shop';
 import { shouldShowRelicPicker, showRelicPicker } from './relicPicker';
 import { getLetterScoreModifiers, calculateLetterFrequency } from './letters/LetterFrequencySystem';
@@ -61,6 +61,7 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 
 // === 分数结算 ===
 let wordBaseScore = 0; // 词语基础分（不含倍率）
+let wordStartTime = 0; // T1遗物：词语开始时的剩余时间（用于完美韵律时间返还）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
 
@@ -113,6 +114,8 @@ function setWord(): void {
   state.resources.base = 0; // 重置资源基数
   state.resources.score = 0; // 重置即时加分
   state.wordPerfect = true;
+  wordStartTime = state.time; // 记录词语开始时的剩余时间
+  resetWordResourceTypes(); // 重置词级资源追踪
   synergy.wordSkillCount = 0;
   synergy.skillBaseScore = 0;
   synergy.letterBaseScore = 0;
@@ -185,14 +188,8 @@ function playerCorrect(k: string): void {
   state.maxCombo = Math.max(state.maxCombo, state.combo);
   bumpCombo();
 
-  // 完美主义遗物：连续正确累计
-  synergy.perfectStreak++;
-
-  // 计算倍率: 基础 + 连击加成 + 完美主义加成 + 技能倍率加成
+  // 计算倍率: 基础 + 连击加成 + 技能倍率加成
   let mult = state.player.baseMultiplier + state.combo * state.player.comboBonus;
-  if (queryRelicFlag('perfectionist_streak')) {
-    mult += synergy.perfectStreak * 0.01;
-  }
   mult += synergy.skillMultBonus;
   state.multiplier = mult;
 
@@ -281,13 +278,19 @@ function playerWrong(): void {
     }
   }
 
-  // 完美主义遗物：重置完美计数
-  synergy.perfectStreak = 0;
-
   // 标记词语不完美
   state.wordPerfect = false;
 
   if (state.combo > 5) showFeedback(`${state.combo}× 断了!`, '#ff6b6b');
+
+  // 遗物 on_combo_break 管道解析（完美主义者断连击失去遗物）
+  resolveRelicEffectsWithBehaviors('on_combo_break', {}, {
+    onRemoveRelic: (relicId: string) => {
+      state.player.relics.delete(relicId);
+      showFeedback('遗物碎裂!', '#ff4444');
+    },
+  });
+
   state.combo = 0;
   state.lastMilestone = 0;
   synergy.skillMultBonus = 0;
@@ -314,11 +317,22 @@ function completeWord(): void {
   let mult = state.multiplier;
   let bonusMult = 1;
 
-  // 遗物效果：通过管道解析 on_word_complete 效果
-  const wordRelicResult = resolveRelicEffects('on_word_complete', {
+  // 遗物效果：通过管道解析 on_word_complete 效果（含 T1 遗物条件）
+  const wordElapsed = Math.max(0, wordStartTime - state.time);
+  const wordRelicResult = resolveRelicEffectsWithBehaviors('on_word_complete', {
     combo: state.combo,
     multiplier: state.multiplier,
     totalSkillCount: state.player.skills.size,
+    wordPerfect: state.wordPerfect,
+    wordResourceTypes: getWordResourceTypeCount(),
+  }, {
+    onTimeRefund: (ratio: number) => {
+      const refund = wordElapsed * ratio;
+      if (refund > 0) {
+        state.time += refund;
+        showFeedback(`+${refund.toFixed(1)}s`, '#00ff88');
+      }
+    },
   });
   // 狂战士面具等遗物的 multiply 加成
   bonusMult += wordRelicResult.effects.multiply;
@@ -681,7 +695,6 @@ export async function startLevel(): Promise<void> {
   // 清空吞噬附魔触发计数（每关重置）
   state.devourCounters.clear();
 
-  synergy.perfectStreak = 0;
   synergy.skillMultBonus = 0;
   state.multiplier = state.player.baseMultiplier;
 

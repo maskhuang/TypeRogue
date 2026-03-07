@@ -81,18 +81,18 @@ describe('玻璃大炮 (glass_cannon)', () => {
     expect(RELICS.glass_cannon.basePrice).toBe(40)
   })
 
-  it('工厂: 产生 2 个 Modifier（score ×2 + instant_fail）', () => {
+  it('工厂: 产生 2 个 Modifier（score ×3 + instant_fail）', () => {
     const mods = RELIC_MODIFIER_DEFS.glass_cannon('glass_cannon')
     expect(mods).toHaveLength(2)
   })
 
-  it('增益: global 层 score ×2 multiplicative', () => {
+  it('增益: global 层 score ×3 multiplicative', () => {
     const mods = RELIC_MODIFIER_DEFS.glass_cannon('glass_cannon')
     const scoreMod = mods.find(m => m.effect?.type === 'score')
     expect(scoreMod).toBeDefined()
     expect(scoreMod!.layer).toBe('global')
     expect(scoreMod!.trigger).toBe('on_skill_trigger')
-    expect(scoreMod!.effect!.value).toBe(2.0)
+    expect(scoreMod!.effect!.value).toBe(3.0)
     expect(scoreMod!.effect!.stacking).toBe('multiplicative')
   })
 
@@ -113,7 +113,7 @@ describe('玻璃大炮 (glass_cannon)', () => {
     expect(queryRelicFlag('glass_cannon')).toBe(true)
   })
 
-  it('管道集成: score 被 ×2 放大', () => {
+  it('管道集成: score 被 ×3 放大', () => {
     addRelic('glass_cannon')
     const registry = new ModifierRegistry()
     registry.register({
@@ -125,8 +125,8 @@ describe('玻璃大炮 (glass_cannon)', () => {
     const relicMods = RELIC_MODIFIER_DEFS.glass_cannon('glass_cannon')
     registry.registerMany(relicMods.filter(m => m.trigger === 'on_skill_trigger'))
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
-    // base=10, global=×2 → 10 × 2 = 20
-    expect(result.effects.score).toBe(20)
+    // base=10, global=×3 → 10 × 3 = 30
+    expect(result.effects.score).toBe(30)
   })
 
   it('instant_fail 行为通过 BehaviorExecutor 触发回调', () => {
