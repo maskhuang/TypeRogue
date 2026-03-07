@@ -8,7 +8,7 @@ import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS } from '../data/relics';
-import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow, bumpShield } from '../effects/juice';
+import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite } from './skills';
@@ -253,15 +253,6 @@ function playerWrong(): void {
   setTimeout(() => el.container.classList.remove('shake'), 120);
 
   playSound('wrong');
-
-  // 护盾保护（资源系统：直接消耗护盾层数）
-  if (state.resources.shield > 0) {
-    state.resources.shield -= 1;
-    bumpShield();
-    updateHUD();
-    showFeedback('护盾保护!', '#87ceeb');
-    return;
-  }
 
   // 遗物 on_error 管道解析（凤凰羽毛 + 玻璃大炮）
   {
@@ -910,11 +901,6 @@ export function updateHUD(): void {
   }
 
   updateMultiplierGlow();
-
-  // 护盾显示
-  const shieldVal = Math.floor(state.resources.shield);
-  el.shieldDisplay.classList.toggle('shield-hidden', shieldVal <= 0);
-  el.shieldCount.textContent = String(shieldVal);
 
   // 发送分数更新事件
   eventBus.emit('score:update', {

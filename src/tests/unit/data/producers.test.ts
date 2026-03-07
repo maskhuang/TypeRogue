@@ -7,8 +7,8 @@ import { describe, it, expect } from 'vitest'
 import { PRODUCERS, isProducer, getProducerValue } from '../../../src/data/producers'
 
 describe('PRODUCERS 数据定义', () => {
-  it('定义了 12 个产出者', () => {
-    expect(Object.keys(PRODUCERS)).toHaveLength(12)
+  it('定义了 10 个产出者', () => {
+    expect(Object.keys(PRODUCERS)).toHaveLength(10)
   })
 
   it('每个产出者有完整字段', () => {
@@ -16,7 +16,7 @@ describe('PRODUCERS 数据定义', () => {
       expect(prod.id).toBe(id)
       expect(prod.name).toBeTruthy()
       expect(prod.icon).toBeTruthy()
-      expect(['base', 'score', 'multiplier', 'time', 'shield', 'gold']).toContain(prod.resource)
+      expect(['base', 'score', 'multiplier', 'time', 'gold']).toContain(prod.resource)
       expect(['add', 'multiply']).toContain(prod.operator)
       expect(prod.values).toHaveLength(3)
       expect(prod.desc).toBeTruthy()
@@ -28,13 +28,13 @@ describe('PRODUCERS 数据定义', () => {
     expect(new Set(icons).size).toBe(icons.length)
   })
 
-  it('6 种资源各有 2 个产出者（+N 和 ×N）', () => {
+  it('5 种资源各有 2 个产出者（+N 和 ×N）', () => {
     const byResource: Record<string, string[]> = {}
     for (const prod of Object.values(PRODUCERS)) {
       if (!byResource[prod.resource]) byResource[prod.resource] = []
       byResource[prod.resource].push(prod.operator)
     }
-    for (const resource of ['base', 'score', 'multiplier', 'time', 'shield', 'gold']) {
+    for (const resource of ['base', 'score', 'multiplier', 'time', 'gold']) {
       expect(byResource[resource]).toHaveLength(2)
       expect(byResource[resource]).toContain('add')
       expect(byResource[resource]).toContain('multiply')
@@ -54,8 +54,8 @@ describe('产出者数值正确性', () => {
   })
 
   it('+N 类非整数资源 Lv2 ≈ Lv1×1.6, Lv3 ≈ Lv1×2.4', () => {
-    // 排除 shield 和 gold（整数资源，手动调整值）
-    const nonIntProducers = addProducers.filter(p => p.resource !== 'shield' && p.resource !== 'gold')
+    // 排除 gold（整数资源，手动调整值）
+    const nonIntProducers = addProducers.filter(p => p.resource !== 'gold')
     for (const prod of nonIntProducers) {
       expect(prod.values[1]).toBeCloseTo(prod.values[0] * 1.6, 1)
       expect(prod.values[2]).toBeCloseTo(prod.values[0] * 2.4, 1)
@@ -110,14 +110,6 @@ describe('产出者数值正确性', () => {
     expect(PRODUCERS.prod_eternal.values).toEqual([1.2, 1.25, 1.3])
   })
 
-  it('A9 护盾: shield +1/+2/+3', () => {
-    expect(PRODUCERS.prod_shield.values).toEqual([1, 2, 3])
-  })
-
-  it('A10 铁壁: shield ×2/×2.3/×2.6', () => {
-    expect(PRODUCERS.prod_fortress.values).toEqual([2, 2.3, 2.6])
-  })
-
   it('A11 铸币: gold +3/+5/+8', () => {
     expect(PRODUCERS.prod_mint.values).toEqual([3, 5, 8])
     expect(PRODUCERS.prod_mint.resource).toBe('gold')
@@ -136,7 +128,7 @@ describe('isProducer', () => {
     expect(isProducer('prod_burst')).toBe(true)
     expect(isProducer('prod_focus')).toBe(true)
     expect(isProducer('prod_loot')).toBe(true)
-    expect(isProducer('prod_fortress')).toBe(true)
+    expect(isProducer('prod_mint')).toBe(true)
   })
 
   it('非产出者 ID 返回 false', () => {

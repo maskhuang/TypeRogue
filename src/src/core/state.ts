@@ -28,7 +28,6 @@ export function createInitialState(): GameState {
       score: 0,
       multiplier: BALANCE.BASE_MULTIPLIER,
       time: BALANCE.TIME_PER_LEVEL,
-      shield: 0,
       gold: 0,
     },
     cycle: 1,
@@ -104,7 +103,6 @@ export function createBattleStats(): import('./types').BattleStats {
 // === 联动状态 ===
 export function createSynergyState(): SynergyState {
   return {
-    shieldCount: 0,
     perfectStreak: 0,
     wordSkillCount: 0,
     lastTriggeredSkillId: null,
@@ -124,7 +122,6 @@ export function resetResources(): void {
   state.resources.score = 0;
   state.resources.multiplier = BALANCE.BASE_MULTIPLIER;
   state.resources.time = state.timeMax;
-  state.resources.shield = 0;
 }
 
 // === 状态重置 ===

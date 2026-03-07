@@ -334,15 +334,6 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
     }
   }
 
-  // 时间 clamp
-  if (prod.resource === 'time') {
-    // 时间无上限
-  }
-  // shield floor（×N 后可能出小数）
-  if (prod.resource === 'shield') {
-    state.resources.shield = Math.floor(state.resources.shield);
-  }
-
   // 战后统计
   recordSkillTrigger(producerId, triggerKey, prod.resource, delta, _isChainTrigger);
 
@@ -426,15 +417,6 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
     }
   }
 
-  // 时间 clamp
-  if (conv.target === 'time') {
-    // 时间无上限
-  }
-  // 护盾 floor
-  if (conv.target === 'shield') {
-    state.resources.shield = Math.floor(state.resources.shield);
-  }
-
   // 战后统计
   recordSkillTrigger(converterId, triggerKey, conv.target, delta, _isChainTrigger);
 
@@ -470,15 +452,22 @@ function applySplashEnchantment(skillId: string, triggerKey?: string): void {
   if (!ench || ench.spatialType !== 'splash' || !ench.positionRelation) return;
 
   const related = getKeysWithRelation(triggerKey, ench.positionRelation);
-  _splashActive = true;
+  // 统计范围内有效技能数，效率 = 100% / 技能数
+  const targets: { sid: string; key: string }[] = [];
   for (const key of related) {
     const sid = state.player.bindings.get(key);
     if (!sid || isConnector(sid) || isAmplifier(sid)) continue;
-    // 以减效触发目标技能
+    targets.push({ sid, key });
+  }
+  if (targets.length === 0) return;
+  const reduction = 1 / targets.length;
+
+  _splashActive = true;
+  for (const { sid, key } of targets) {
     if (isProducer(sid)) {
-      triggerProducerWithReduction(sid, key, ench.effectValue);
+      triggerProducerWithReduction(sid, key, reduction);
     } else if (isConverter(sid)) {
-      triggerConverterWithReduction(sid, key, ench.effectValue);
+      triggerConverterWithReduction(sid, key, reduction);
     }
   }
   _splashActive = false;
@@ -521,9 +510,6 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
       delta = state.resources[prod.resource] - before;
     }
   }
-
-  // 时间无上限
-  if (prod.resource === 'shield') state.resources.shield = Math.floor(state.resources.shield);
 
   // 战后统计
   recordSkillTrigger(producerId, triggerKey, prod.resource, delta, false);
@@ -578,9 +564,6 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
     }
   }
 
-  // 时间无上限
-  if (conv.target === 'shield') state.resources.shield = Math.floor(state.resources.shield);
-
   // 战后统计
   recordSkillTrigger(converterId, triggerKey, conv.target, delta, false);
 
@@ -613,8 +596,6 @@ function applyTransmutationEnchantment(skillId: string, triggerKey?: string, del
     state.resources[ench.extraResource] += extraValue;
   }
 
-  // 时间无上限
-  if (ench.extraResource === 'shield') state.resources.shield = Math.floor(state.resources.shield);
 
   const color = RESOURCE_COLORS[ench.extraResource];
   showFeedback(`${ench.icon} +${extraValue.toFixed(1)}${getResourceLabel(ench.extraResource)}`, color);

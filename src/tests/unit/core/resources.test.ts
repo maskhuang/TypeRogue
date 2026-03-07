@@ -33,20 +33,14 @@ describe('ResourceState 初始化', () => {
     expect(state.resources.time).toBe(BALANCE.TIME_PER_LEVEL)
   })
 
-  it('resources.shield 初始值为 0', () => {
-    expect(state.resources.shield).toBe(0)
-  })
-
   it('resetState 重置 resources 为初始值', () => {
     state.resources.base = 10
     state.resources.score = 50
     state.resources.multiplier = 3.5
-    state.resources.shield = 2
     resetState()
     expect(state.resources.base).toBe(0)
     expect(state.resources.score).toBe(0)
     expect(state.resources.multiplier).toBe(1.0)
-    expect(state.resources.shield).toBe(0)
   })
 })
 
@@ -80,11 +74,6 @@ describe('resetResources', () => {
     expect(state.resources.time).toBe(45)
   })
 
-  it('重置 shield 为 0', () => {
-    state.resources.shield = 3
-    resetResources()
-    expect(state.resources.shield).toBe(0)
-  })
 })
 
 describe('分数公式正确性', () => {
@@ -115,35 +104,6 @@ describe('分数公式正确性', () => {
     state.player.wordBonus = 0
     const finalScore = Math.floor((state.resources.base + state.player.wordBonus) * state.resources.multiplier)
     expect(finalScore).toBe(9) // floor(7 × 1.3) = floor(9.1) = 9
-  })
-})
-
-describe('护盾资源', () => {
-  beforeEach(() => {
-    resetState()
-  })
-
-  it('shield > 0 时抵消错误', () => {
-    state.resources.shield = 2
-    // 模拟护盾消耗
-    if (state.resources.shield > 0) {
-      state.resources.shield -= 1
-    }
-    expect(state.resources.shield).toBe(1)
-  })
-
-  it('shield = 0 时不再抵消', () => {
-    state.resources.shield = 0
-    const shieldBefore = state.resources.shield
-    expect(shieldBefore).toBe(0)
-  })
-
-  it('shield 跨词持续（per-level）', () => {
-    state.resources.shield = 3
-    // 第一个词消耗 1 层
-    state.resources.shield -= 1
-    // 进入下一个词（不重置）
-    expect(state.resources.shield).toBe(2)
   })
 })
 
@@ -195,12 +155,6 @@ describe('资源直接操作', () => {
     resetState()
   })
 
-  it('shield 直接写入 resources.shield', () => {
-    state.resources.shield = 0
-    state.resources.shield += 2
-    expect(state.resources.shield).toBe(2)
-  })
-
   it('multiply 通过 proxy 自动同步到 resources.multiplier', () => {
     state.multiplier = 1.5
     state.multiplier += 0.3
@@ -245,13 +199,12 @@ describe('资源 proxy（multiplier/time 双向同步）', () => {
 })
 
 describe('RESOURCE_COLORS', () => {
-  it('定义了 6 种资源颜色', async () => {
+  it('定义了 5 种资源颜色', async () => {
     const { RESOURCE_COLORS } = await import('../../../src/core/constants')
     expect(RESOURCE_COLORS.base).toBe('#e74c3c')
     expect(RESOURCE_COLORS.score).toBe('#f1c40f')
     expect(RESOURCE_COLORS.multiplier).toBe('#e67e22')
     expect(RESOURCE_COLORS.time).toBe('#3498db')
-    expect(RESOURCE_COLORS.shield).toBe('#bdc3c7')
     expect(RESOURCE_COLORS.gold).toBe('#ffd700')
   })
 })

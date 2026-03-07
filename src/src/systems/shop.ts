@@ -1299,7 +1299,7 @@ let currentHeatmapDimension: HeatmapDimension = 'triggerCount';
 
 const HEATMAP_DIMENSIONS: { key: HeatmapDimension; label: string; color: string }[] = [
   { key: 'triggerCount', label: '触发数', color: '#aaa' },
-  ...(['base', 'score', 'multiplier', 'time', 'shield', 'gold'] as ResourceType[])
+  ...(['base', 'score', 'multiplier', 'time', 'gold'] as ResourceType[])
     .map(r => ({ key: r as HeatmapDimension, label: RESOURCE_LABELS[r], color: RESOURCE_COLORS[r] })),
 ];
 
@@ -1379,7 +1379,7 @@ function showHeatmapTooltip(e: MouseEvent, key: string, bs: import('../core/type
   tip.id = 'heatmap-tooltip';
   tip.className = 'heatmap-tooltip';
 
-  const resourceLines = (['base', 'score', 'multiplier', 'time', 'shield', 'gold'] as ResourceType[])
+  const resourceLines = (['base', 'score', 'multiplier', 'time', 'gold'] as ResourceType[])
     .filter(r => ks.resources[r] > 0)
     .map(r => `<div class="ht-resource"><span style="color:${RESOURCE_COLORS[r]}">${RESOURCE_ICONS[r]} ${RESOURCE_LABELS[r]}</span> +${ks.resources[r].toFixed(1)}</div>`)
     .join('');

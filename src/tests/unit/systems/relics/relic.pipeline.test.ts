@@ -25,7 +25,6 @@ vi.mock('../../../../src/core/state', () => {
       overkill: 0,
     },
     synergy: {
-      shieldCount: 0,
       perfectStreak: 0,
       wordSkillCount: 0,
     },

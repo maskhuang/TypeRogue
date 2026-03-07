@@ -39,7 +39,7 @@ describe('EffectPipeline', () => {
       expect(result.effects.multiply).toBe(0)
       expect(result.effects.time).toBe(0)
       expect(result.effects.gold).toBe(0)
-      expect(result.effects.shield).toBe(0)
+      expect(result.effects.gold).toBe(0)
       expect(result.pendingBehaviors).toEqual([])
     })
   })
@@ -239,7 +239,7 @@ describe('EffectPipeline', () => {
       expect(result.effects.time).toBe(6)
       expect(result.effects.multiply).toBe(0) // 无 multiply 效果
       expect(result.effects.gold).toBe(0)
-      expect(result.effects.shield).toBe(0)
+      expect(result.effects.gold).toBe(0)
     })
   })
 

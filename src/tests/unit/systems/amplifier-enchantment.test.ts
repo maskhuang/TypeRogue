@@ -73,7 +73,7 @@ describe('triggerAmplifier — splash 附魔触发范围内技能', () => {
 
   it('splash·adjacent: 触发相邻产出者', async () => {
     const { triggerAmplifier } = await import('../../../src/systems/skills')
-    // 增幅者在 'a', enchanted with splash·adjacent (effectValue=0.3)
+    // 增幅者在 'a', enchanted with splash·adjacent
     state.player.bindings.set('a', 'amp_base_add_adjacent')
     state.player.skills.set('amp_base_add_adjacent', { level: 1 })
     state.player.enchantedSkills.set('amp_base_add_adjacent', 'ench_splash_adjacent')
@@ -85,9 +85,8 @@ describe('triggerAmplifier — splash 附魔触发范围内技能', () => {
 
     state.resources.base = 0
     triggerAmplifier('amp_base_add_adjacent', 'a')
-    // 溅射应触发 prod_burst (减效30%): +5 * 0.3 = 1.5
-    // triggerProducerWithReduction 直接加到 state.resources.base
-    expect(state.resources.base).toBeCloseTo(1.5)
+    // 溅射效率 = 100% / 1 个技能 = 100%: +5 * 1.0 = 5
+    expect(state.resources.base).toBeCloseTo(5)
   })
 
   it('splash: 跳过相邻增幅者（不触发其他增幅者）', async () => {

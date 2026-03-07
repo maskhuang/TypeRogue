@@ -90,7 +90,6 @@ describe('triggerAmplifier — 零资源变化', () => {
     state.resources.score = 100
     state.resources.multiplier = 1.5
     state.resources.time = 30
-    state.resources.shield = 5
     state.resources.gold = 50
     synergy.skillBaseScore = 20
     synergy.skillMultBonus = 0.5
@@ -103,7 +102,6 @@ describe('triggerAmplifier — 零资源变化', () => {
       score: state.resources.score,
       multiplier: state.resources.multiplier,
       time: state.resources.time,
-      shield: state.resources.shield,
       gold: state.resources.gold,
       skillBaseScore: synergy.skillBaseScore,
       skillMultBonus: synergy.skillMultBonus,
@@ -118,7 +116,6 @@ describe('triggerAmplifier — 零资源变化', () => {
     expect(state.resources.score).toBe(snap.score)
     expect(state.resources.multiplier).toBe(snap.multiplier)
     expect(state.resources.time).toBe(snap.time)
-    expect(state.resources.shield).toBe(snap.shield)
     expect(state.resources.gold).toBe(snap.gold)
     expect(synergy.skillBaseScore).toBe(snap.skillBaseScore)
     expect(synergy.skillMultBonus).toBe(snap.skillMultBonus)

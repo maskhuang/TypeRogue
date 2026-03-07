@@ -11,18 +11,18 @@ describe('连接者数据', () => {
   const copyType = all.filter(c => c.triggerType === 'copy');
   const resourceType = all.filter(c => c.triggerType === 'resourceTrigger');
 
-  it('共 36 个连接者', () => {
-    expect(all.length).toBe(36);
+  it('共 31 个连接者', () => {
+    expect(all.length).toBe(31);
   });
 
-  it('6 个复制型 + 30 个资源触发型', () => {
+  it('6 个复制型 + 25 个资源触发型', () => {
     expect(copyType.length).toBe(6);
-    expect(resourceType.length).toBe(30);
+    expect(resourceType.length).toBe(25);
   });
 
   it('所有 id 唯一', () => {
     const ids = all.map(c => c.id);
-    expect(new Set(ids).size).toBe(36);
+    expect(new Set(ids).size).toBe(31);
   });
 
   it('每个图标唯一', () => {
@@ -57,8 +57,8 @@ describe('连接者数据', () => {
     expect(relations).toContain(PositionRelation.Symmetric);
   });
 
-  it('资源触发型覆盖 6 资源 × 5 位置 = 30（无对称位）', () => {
-    const resources = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
+  it('资源触发型覆盖 5 资源 × 5 位置 = 25（无对称位）', () => {
+    const resources = ['base', 'score', 'multiplier', 'time', 'gold'];
     const relations = Object.values(PositionRelation).filter(r => r !== PositionRelation.Symmetric);
     for (const r of resources) {
       for (const rel of relations) {
@@ -85,7 +85,7 @@ describe('isConnector', () => {
   it('连接者 ID 返回 true', () => {
     expect(isConnector('conn_copy_adjacent')).toBe(true);
     expect(isConnector('conn_base_sameRow')).toBe(true);
-    expect(isConnector('conn_shield_sameFinger')).toBe(true);
+    expect(isConnector('conn_gold_sameFinger')).toBe(true);
   });
 
   it('金币连接者 ID 返回 true', () => {
@@ -122,11 +122,11 @@ describe('drawConnectorPool', () => {
 
   it('自定义数量', () => {
     expect(drawConnectorPool(5).length).toBe(5);
-    expect(drawConnectorPool(36).length).toBe(36);
+    expect(drawConnectorPool(31).length).toBe(31);
   });
 
   it('超过总数时返回全部', () => {
-    expect(drawConnectorPool(100).length).toBe(36);
+    expect(drawConnectorPool(100).length).toBe(31);
   });
 
   it('两次抽取结果不完全相同（概率性）', () => {

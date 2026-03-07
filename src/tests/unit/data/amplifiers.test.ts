@@ -12,8 +12,8 @@ import { createInitialState } from '../../../src/core/state';
 const ALL_AMP_IDS = Object.keys(AMPLIFIERS);
 
 describe('增幅者数据完整性', () => {
-  it('共 8 个增幅者', () => {
-    expect(Object.keys(AMPLIFIERS).length).toBe(8);
+  it('共 7 个增幅者', () => {
+    expect(Object.keys(AMPLIFIERS).length).toBe(7);
   });
 
   it('所有 id 唯一', () => {
@@ -55,13 +55,12 @@ describe('增幅者数据完整性', () => {
     expect(mulAmps.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('覆盖 base/score/multiplier/time/shield 五种资源', () => {
+  it('覆盖 base/score/multiplier/time 四种资源', () => {
     const resources = new Set(Object.values(AMPLIFIERS).map(a => a.resource));
     expect(resources).toContain('base');
     expect(resources).toContain('score');
     expect(resources).toContain('multiplier');
     expect(resources).toContain('time');
-    expect(resources).toContain('shield');
   });
 
   it('每个名称唯一', () => {
@@ -146,7 +145,7 @@ describe('增幅者工具函数', () => {
 
     it('抽取数量不超过总数', () => {
       const pool = drawAmplifierPool(20);
-      expect(pool.length).toBe(8);
+      expect(pool.length).toBe(7);
     });
 
     it('抽取指定数量', () => {
@@ -155,12 +154,12 @@ describe('增幅者工具函数', () => {
     });
 
     it('抽取结果不重复', () => {
-      const pool = drawAmplifierPool(8);
+      const pool = drawAmplifierPool(7);
       expect(new Set(pool).size).toBe(pool.length);
     });
 
     it('抽取结果均为合法增幅者 ID', () => {
-      const pool = drawAmplifierPool(8);
+      const pool = drawAmplifierPool(7);
       for (const id of pool) {
         expect(isAmplifier(id)).toBe(true);
       }
@@ -168,7 +167,7 @@ describe('增幅者工具函数', () => {
 
     it('默认参数可用', () => {
       const pool = drawAmplifierPool();
-      expect(pool.length).toBe(8); // 默认 10，但只有 8 个
+      expect(pool.length).toBe(7); // 默认 10，但只有 7 个
     });
   });
 

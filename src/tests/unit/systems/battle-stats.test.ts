@@ -21,7 +21,7 @@ describe('createBattleStats', () => {
   it('keyStats 和 skillStats 是独立的 Map 实例', () => {
     const bs1 = createBattleStats()
     const bs2 = createBattleStats()
-    bs1.keyStats.set('a', { triggerCount: 1, resources: { base: 0, score: 0, multiplier: 0, time: 0, shield: 0 } })
+    bs1.keyStats.set('a', { triggerCount: 1, resources: { base: 0, score: 0, multiplier: 0, time: 0, gold: 0 } })
     expect(bs2.keyStats.size).toBe(0)
   })
 })

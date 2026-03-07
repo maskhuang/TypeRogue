@@ -14,10 +14,10 @@ import type {
 import type { ModifierRegistry } from './ModifierRegistry'
 import { ConditionEvaluator } from './ConditionEvaluator'
 
-const EFFECT_TYPES: ModifierEffectType[] = ['score', 'multiply', 'time', 'gold', 'shield']
+const EFFECT_TYPES: ModifierEffectType[] = ['score', 'multiply', 'time', 'gold']
 
 function createEmptyAccumulator(): EffectAccumulator {
-  return { score: 0, multiply: 0, time: 0, gold: 0, shield: 0 }
+  return { score: 0, multiply: 0, time: 0, gold: 0 }
 }
 
 /**

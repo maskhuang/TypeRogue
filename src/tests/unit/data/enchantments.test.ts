@@ -1,6 +1,6 @@
 // ============================================
 // 附魔数据完整性 + 工具函数测试
-// Story 24.2: 36 个附魔（30 空间型 + 5 变性型 + 1 独立型）
+// Story 24.2: 35 个附魔（30 空间型 + 4 变性型 + 1 独立型）
 // ============================================
 
 import { describe, it, expect } from 'vitest'
@@ -9,8 +9,8 @@ import { ENCHANTMENTS, isEnchantment, getEnchantmentDesc, drawEnchantmentPair } 
 describe('附魔数据完整性', () => {
   const allIds = Object.keys(ENCHANTMENTS)
 
-  it('共 36 个附魔', () => {
-    expect(allIds.length).toBe(36)
+  it('共 35 个附魔', () => {
+    expect(allIds.length).toBe(35)
   })
 
   it('每个附魔的 id 与 key 匹配', () => {
@@ -27,7 +27,10 @@ describe('附魔数据完整性', () => {
       expect(ench.category).toBeTruthy()
       expect(ench.desc).toBeTruthy()
       expect(typeof ench.effectValue).toBe('number')
-      expect(ench.effectValue).toBeGreaterThan(0)
+      // 溅射附魔 effectValue=0（动态计算 100%/技能数），其余 > 0
+      if (ench.spatialType !== 'splash') {
+        expect(ench.effectValue).toBeGreaterThan(0)
+      }
     }
   })
 
@@ -85,11 +88,11 @@ describe('30 个空间型附魔', () => {
   })
 })
 
-describe('5 个变性型附魔', () => {
+describe('4 个变性型附魔', () => {
   const transmutations = Object.values(ENCHANTMENTS).filter(e => e.category === 'transmutation')
 
-  it('共 5 个', () => {
-    expect(transmutations.length).toBe(5)
+  it('共 4 个', () => {
+    expect(transmutations.length).toBe(4)
   })
 
   it('每个有 extraResource', () => {
@@ -98,13 +101,12 @@ describe('5 个变性型附魔', () => {
     }
   })
 
-  it('覆盖 5 种资源', () => {
+  it('覆盖 4 种资源', () => {
     const resources = transmutations.map(e => e.extraResource)
     expect(resources).toContain('base')
     expect(resources).toContain('score')
     expect(resources).toContain('multiplier')
     expect(resources).toContain('time')
-    expect(resources).toContain('shield')
   })
 
   it('系数正确', () => {
@@ -112,7 +114,6 @@ describe('5 个变性型附魔', () => {
     expect(transmutations.find(e => e.extraResource === 'score')?.effectValue).toBe(0.30)
     expect(transmutations.find(e => e.extraResource === 'multiplier')?.effectValue).toBe(0.10)
     expect(transmutations.find(e => e.extraResource === 'time')?.effectValue).toBe(0.20)
-    expect(transmutations.find(e => e.extraResource === 'shield')?.effectValue).toBe(0.15)
   })
 })
 

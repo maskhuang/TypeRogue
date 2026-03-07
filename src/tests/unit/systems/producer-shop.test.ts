@@ -36,13 +36,13 @@ describe('产出者商店集成 (AC 7)', () => {
     for (const id of producerIds) {
       expect(producerIds).toContain(id)
     }
-    expect(producerIds).toHaveLength(12)
+    expect(producerIds).toHaveLength(10)
   })
 
   it('isProducer 正确区分产出者和旧技能', () => {
     expect(isProducer('prod_burst')).toBe(true)
     expect(isProducer('burst')).toBe(false)
-    expect(isProducer('prod_fortress')).toBe(true)
+    expect(isProducer('prod_mint')).toBe(true)
     expect(isProducer('shield')).toBe(false)
   })
 
@@ -68,11 +68,11 @@ describe('产出者商店集成 (AC 7)', () => {
   })
 
   it('产出者可以卖出（从 skills 和 bindings 移除）', () => {
-    state.player.skills.set('prod_shield', { level: 2, purchasePrice: 20 })
-    state.player.bindings.set('s', 'prod_shield')
+    state.player.skills.set('prod_mint', { level: 2, purchasePrice: 20 })
+    state.player.bindings.set('s', 'prod_mint')
 
     // 模拟卖出流程
-    const skillId = 'prod_shield'
+    const skillId = 'prod_mint'
     const sellData = state.player.skills.get(skillId)!
     const sellPrice = Math.floor((sellData.purchasePrice || 15) / 2)
     state.gold += sellPrice
@@ -83,7 +83,7 @@ describe('产出者商店集成 (AC 7)', () => {
     state.player.skills.delete(skillId)
 
     expect(state.gold).toBe(100 + 10) // initial 100 + floor(20/2)
-    expect(state.player.skills.has('prod_shield')).toBe(false)
+    expect(state.player.skills.has('prod_mint')).toBe(false)
     expect(state.player.bindings.has('s')).toBe(false)
   })
 

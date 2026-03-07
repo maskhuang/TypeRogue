@@ -25,7 +25,7 @@ export type ModifierTrigger =
 export type ModifierSourceType = 'skill' | 'relic' | 'passive' | 'letter'
 
 // === 数值效果类型 ===
-export type ModifierEffectType = 'score' | 'multiply' | 'time' | 'gold' | 'shield'
+export type ModifierEffectType = 'score' | 'multiply' | 'time' | 'gold'
 
 /** 数值效果 */
 export interface ModifierEffect {
@@ -44,7 +44,6 @@ export type ModifierBehavior =
   | { type: 'set_echo_flag' }
   | { type: 'set_ripple_flag' }
   | { type: 'pulse_counter'; timeBonus: number }
-  | { type: 'restore_shield'; amount: number }
   | { type: 'trigger_row_mirror' }
   | { type: 'amplify_chain' }
   | { type: 'instant_fail' }
@@ -97,7 +96,6 @@ export interface EffectAccumulator {
   multiply: number
   time: number
   gold: number
-  shield: number
 }
 
 /** EffectPipeline.resolve() 的返回值 */
@@ -136,8 +134,6 @@ export interface PipelineContext {
   currentSkillId?: string
   /** 本词前一个触发的技能 ID（chain 条件使用） */
   lastTriggeredSkillId?: string
-  /** 当前护盾层数（sentinel 使用） */
-  shieldCount?: number
   /** 玩家当前拥有的技能总数（键盘风暴使用） */
   totalSkillCount?: number
   /** 当前正确击键的字母（字母升级系统使用） */
@@ -164,8 +160,6 @@ export interface BehaviorCallbacks {
   onSetRippleFlag?(): void
   /** pulse_counter: 脉冲计数器，达到阈值时触发时间加成 */
   onPulseCounter?(timeBonus: number): void
-  /** restore_shield: 恢复护盾充能 */
-  onRestoreShield?(amount: number): void
   /** trigger_row_mirror: 同行镜像触发，返回触发结果 */
   onTriggerRowMirror?(depth: number): PipelineResult | null
   /** amplify_chain: 连锁放大器，echo/ripple 额外触发一次 */

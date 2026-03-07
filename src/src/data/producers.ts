@@ -87,26 +87,6 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     desc: '时间×1.2',
   },
 
-  // === 护盾产出者 ===
-  prod_shield: {
-    id: 'prod_shield',
-    name: '护盾',
-    icon: '🛡️',
-    resource: 'shield',
-    operator: 'add',
-    values: [1, 2, 3],
-    desc: '护盾+1',
-  },
-  prod_fortress: {
-    id: 'prod_fortress',
-    name: '铁壁',
-    icon: '🏰',
-    resource: 'shield',
-    operator: 'multiply',
-    values: [2, 2.3, 2.6],
-    desc: '护盾×2',
-  },
-
   // === 金币产出者 ===
   prod_mint: {
     id: 'prod_mint',

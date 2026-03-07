@@ -110,13 +110,6 @@ export class BehaviorExecutor {
           }
           break
 
-        case 'restore_shield':
-          if (callbacks?.onRestoreShield) {
-            callbacks.onRestoreShield(behavior.amount)
-            result.executedCount++
-          }
-          break
-
         case 'trigger_row_mirror': {
           if (depth >= BehaviorExecutor.MAX_DEPTH) {
             result.skippedByDepth++

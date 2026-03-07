@@ -15,7 +15,7 @@ import type {
 function emptyPipelineResult(pendingBehaviors: ModifierBehavior[] = []): PipelineResult {
   return {
     intercepted: false,
-    effects: { score: 0, multiply: 0, time: 0, gold: 0, shield: 0 },
+    effects: { score: 0, multiply: 0, time: 0, gold: 0 },
     pendingBehaviors,
   }
 }

@@ -1,12 +1,12 @@
 // ============================================
 // 打字肉鸽 - 附魔数据
 // ============================================
-// Story 24.2: 36 个附魔（30 空间型 + 5 变性型 + 1 独立型）
+// Story 24.2: 35 个附魔（30 空间型 + 4 变性型 + 1 独立型）
 
 import type { EnchantmentDefinition } from '../core/types';
 import { PositionRelation } from './keyboardTopology';
 
-// === 36 个附魔数据 ===
+// === 35 个附魔数据 ===
 export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
   // === 空间型 — 成长（6 个）"邻居触发让我跨关变强" ===
   ench_growth_adjacent:   { id: 'ench_growth_adjacent',   name: '汲取', icon: '🌱',    category: 'spatial', spatialType: 'growth', positionRelation: PositionRelation.Adjacent,   effectValue: 0.03, desc: '相邻技能触发时，自身永久 +3%' },
@@ -16,13 +16,13 @@ export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
   ench_growth_sameFinger: { id: 'ench_growth_sameFinger', name: '贯通', icon: '🌱👆', category: 'spatial', spatialType: 'growth', positionRelation: PositionRelation.SameFinger, effectValue: 0.05, desc: '同指技能触发时，自身永久 +5%' },
   ench_growth_symmetric:  { id: 'ench_growth_symmetric',  name: '共振', icon: '🌱🪞', category: 'spatial', spatialType: 'growth', positionRelation: PositionRelation.Symmetric,  effectValue: 0.06, desc: '对称位技能触发时，自身永久 +6%' },
 
-  // === 空间型 — 溅射（6 个）"我让邻居变强" ===
-  ench_splash_adjacent:   { id: 'ench_splash_adjacent',   name: '波及', icon: '💫',    category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.Adjacent,   effectValue: 0.30, desc: '触发时，相邻技能各以自身 30% 效果额外触发一次' },
-  ench_splash_sameRow:    { id: 'ench_splash_sameRow',    name: '横扫', icon: '💫📡', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameRow,    effectValue: 0.20, desc: '触发时，同行技能各以自身 20% 效果额外触发一次' },
-  ench_splash_sameColumn: { id: 'ench_splash_sameColumn', name: '穿刺', icon: '💫📌', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameColumn, effectValue: 0.35, desc: '触发时，同列技能各以自身 35% 效果额外触发一次' },
-  ench_splash_sameHand:   { id: 'ench_splash_sameHand',   name: '普照', icon: '💫🤝', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameHand,   effectValue: 0.10, desc: '触发时，同手技能各以自身 10% 效果额外触发一次' },
-  ench_splash_sameFinger: { id: 'ench_splash_sameFinger', name: '灌注', icon: '💫👆', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameFinger, effectValue: 0.40, desc: '触发时，同指技能各以自身 40% 效果额外触发一次' },
-  ench_splash_symmetric:  { id: 'ench_splash_symmetric',  name: '投影', icon: '💫🪞', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.Symmetric,  effectValue: 0.50, desc: '触发时，对称位技能以自身 50% 效果额外触发一次' },
+  // === 空间型 — 溅射（6 个）"我让邻居变强"，效率 = 100%/范围内技能数 ===
+  ench_splash_adjacent:   { id: 'ench_splash_adjacent',   name: '波及', icon: '💫',    category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.Adjacent,   effectValue: 0, desc: '触发时，以(100/相邻技能数)%效率触发相邻技能' },
+  ench_splash_sameRow:    { id: 'ench_splash_sameRow',    name: '横扫', icon: '💫📡', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameRow,    effectValue: 0, desc: '触发时，以(100/同行技能数)%效率触发同行技能' },
+  ench_splash_sameColumn: { id: 'ench_splash_sameColumn', name: '穿刺', icon: '💫📌', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameColumn, effectValue: 0, desc: '触发时，以(100/同列技能数)%效率触发同列技能' },
+  ench_splash_sameHand:   { id: 'ench_splash_sameHand',   name: '普照', icon: '💫🤝', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameHand,   effectValue: 0, desc: '触发时，以(100/同手技能数)%效率触发同手技能' },
+  ench_splash_sameFinger: { id: 'ench_splash_sameFinger', name: '灌注', icon: '💫👆', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameFinger, effectValue: 0, desc: '触发时，以(100/同指技能数)%效率触发同指技能' },
+  ench_splash_symmetric:  { id: 'ench_splash_symmetric',  name: '投影', icon: '💫🪞', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.Symmetric,  effectValue: 0, desc: '触发时，以(100/对称位技能数)%效率触发对称位技能' },
 
   // === 空间型 — 共鸣（6 个）"邻居带我白嫖" ===
   ench_resonance_adjacent:   { id: 'ench_resonance_adjacent',   name: '感应', icon: '🔔',    category: 'spatial', spatialType: 'resonance', positionRelation: PositionRelation.Adjacent,   effectValue: 0.50, desc: '相邻技能触发时，自身触发一次（50%效果）' },
@@ -48,13 +48,11 @@ export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
   ench_devour_sameFinger: { id: 'ench_devour_sameFinger', name: '噬指', icon: '🦷👆', category: 'spatial', spatialType: 'devour', positionRelation: PositionRelation.SameFinger, effectValue: 0.20, desc: '触发 N 次后吞噬同指弱技能，每图标 +20%' },
   ench_devour_symmetric:  { id: 'ench_devour_symmetric',  name: '噬镜', icon: '🦷🪞', category: 'spatial', spatialType: 'devour', positionRelation: PositionRelation.Symmetric,  effectValue: 0.20, desc: '触发 N 次后吞噬对称位弱技能，每图标 +20%' },
 
-  // === 变性型（5 个）"额外产出另一种资源" ===
+  // === 变性型（4 个）"额外产出另一种资源" ===
   ench_trans_base:       { id: 'ench_trans_base',       name: '附力', icon: '⚔️✨', category: 'transmutation', effectValue: 0.30, extraResource: 'base',       desc: '触发时额外产出 30% 基数' },
   ench_trans_score:      { id: 'ench_trans_score',      name: '附金', icon: '🪙✨', category: 'transmutation', effectValue: 0.30, extraResource: 'score',      desc: '触发时额外产出 30% 分数' },
   ench_trans_multiplier: { id: 'ench_trans_multiplier', name: '附焰', icon: '🔥✨', category: 'transmutation', effectValue: 0.10, extraResource: 'multiplier', desc: '触发时额外产出 10% 倍率' },
   ench_trans_time:       { id: 'ench_trans_time',       name: '附时', icon: '⏳✨', category: 'transmutation', effectValue: 0.20, extraResource: 'time',       desc: '触发时额外产出 20% 时间' },
-  ench_trans_shield:     { id: 'ench_trans_shield',     name: '附甲', icon: '🛡️✨', category: 'transmutation', effectValue: 0.15, extraResource: 'shield',     desc: '触发时额外产出 15% 护盾' },
-
   // === 独立型（1 个）"不依赖位置关系的成长" ===
   ench_mastery: { id: 'ench_mastery', name: '精通', icon: '🏆', category: 'independent', effectValue: 0.08, desc: '每触发 10 次，自身永久 +8%' },
 } as const;

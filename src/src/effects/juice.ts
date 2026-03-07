@@ -41,13 +41,6 @@ export function bumpMultiplier(): void {
   el.multiplier.classList.add('mult-bump');
 }
 
-export function bumpShield(): void {
-  const el = getElements();
-  el.shieldCount.classList.remove('shield-bump');
-  void el.shieldCount.offsetWidth;
-  el.shieldCount.classList.add('shield-bump');
-}
-
 // === 屏幕震动 ===
 export function screenShake(intensity = 1): void {
   const el = getElements();

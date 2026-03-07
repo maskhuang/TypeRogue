@@ -69,15 +69,6 @@ describe('triggerConverter — 加法公式 (AC3)', () => {
     expect(state.time).toBeCloseTo(52.25)
   })
 
-  it('base→shield add: shield += base × k, floor', async () => {
-    const { triggerConverter } = await import('../../../src/systems/skills')
-    state.player.skills.set('conv_base_shield_add', { level: 1 })
-    state.resources.base = 15
-    state.resources.shield = 2
-    triggerConverter('conv_base_shield_add')
-    // shield += 15 × 0.08 = 1.2 → 3.2 → floor = 3
-    expect(state.resources.shield).toBe(3)
-  })
 })
 
 describe('triggerConverter — 乘法公式 (AC4)', () => {
@@ -111,15 +102,6 @@ describe('triggerConverter — 乘法公式 (AC4)', () => {
     expect(synergy.skillMultBonus).toBeCloseTo(0.24)
   })
 
-  it('base→shield mul: shield *= (1 + base × k), floor', async () => {
-    const { triggerConverter } = await import('../../../src/systems/skills')
-    state.player.skills.set('conv_base_shield_mul', { level: 1 })
-    state.resources.base = 15
-    state.resources.shield = 3
-    triggerConverter('conv_base_shield_mul')
-    // shield *= (1 + 15 × 0.04) = × 1.6 → 4.8 → floor = 4
-    expect(state.resources.shield).toBe(4)
-  })
 })
 
 describe('triggerConverter — 不消耗源资源 (AC5)', () => {
@@ -147,14 +129,6 @@ describe('triggerConverter — 不消耗源资源 (AC5)', () => {
     expect(state.multiplier).toBeCloseTo(2.0) // 不消耗
   })
 
-  it('shield→base: shield 值不变', async () => {
-    const { triggerConverter } = await import('../../../src/systems/skills')
-    state.player.skills.set('conv_shield_base_add', { level: 1 })
-    state.resources.shield = 3
-    synergy.skillBaseScore = 0
-    triggerConverter('conv_shield_base_add')
-    expect(state.resources.shield).toBe(3) // 不消耗
-  })
 })
 
 describe('triggerConverter — Lv 成长 (AC6)', () => {
@@ -225,7 +199,7 @@ describe('triggerConverter — 分数为源特殊逻辑 (AC8)', () => {
   })
 })
 
-describe('triggerConverter — 时间/护盾 clamp (AC11)', () => {
+describe('triggerConverter — 时间无上限 (AC11)', () => {
   beforeEach(() => {
     resetState()
   })
@@ -239,26 +213,6 @@ describe('triggerConverter — 时间/护盾 clamp (AC11)', () => {
     triggerConverter('conv_base_time_add')
     // time += 100 × 0.15 × 2.0 = 30 → 85, 无上限
     expect(state.time).toBeCloseTo(85)
-  })
-
-  it('护盾取整 (floor)', async () => {
-    const { triggerConverter } = await import('../../../src/systems/skills')
-    state.player.skills.set('conv_mult_shield_add', { level: 1 })
-    state.multiplier = 2.0
-    state.resources.shield = 0
-    triggerConverter('conv_mult_shield_add')
-    // shield += 2.0 × 0.5 = 1.0 → exactly 1, floor = 1
-    expect(state.resources.shield).toBe(1)
-  })
-
-  it('护盾乘法后取整', async () => {
-    const { triggerConverter } = await import('../../../src/systems/skills')
-    state.player.skills.set('conv_mult_shield_mul', { level: 1 })
-    state.multiplier = 2.0
-    state.resources.shield = 3
-    triggerConverter('conv_mult_shield_mul')
-    // shield *= (1 + 2.0 × 0.3) = × 1.6 → 4.8 → floor = 4
-    expect(state.resources.shield).toBe(4)
   })
 })
 

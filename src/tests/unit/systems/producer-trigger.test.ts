@@ -97,13 +97,6 @@ describe('triggerProducer — +N 加法产出者', () => {
     expect(state.time).toBe(61) // 59 + 2, 无上限
   })
 
-  it('prod_shield: shield += 1', async () => {
-    const { triggerProducer } = await import('../../../src/systems/skills')
-    state.player.skills.set('prod_shield', { level: 1 })
-    state.resources.shield = 2
-    triggerProducer('prod_shield')
-    expect(state.resources.shield).toBe(3)
-  })
 })
 
 describe('triggerProducer — ×N 乘法产出者', () => {
@@ -166,21 +159,6 @@ describe('triggerProducer — ×N 乘法产出者', () => {
     expect(state.time).toBeCloseTo(66) // 55×1.2=66, 无上限
   })
 
-  it('prod_fortress: shield *= 2, floor 取整', async () => {
-    const { triggerProducer } = await import('../../../src/systems/skills')
-    state.player.skills.set('prod_fortress', { level: 1 })
-    state.resources.shield = 3
-    triggerProducer('prod_fortress')
-    expect(state.resources.shield).toBe(6) // 3 × 2
-  })
-
-  it('prod_fortress: shield ×2.3 floor', async () => {
-    const { triggerProducer } = await import('../../../src/systems/skills')
-    state.player.skills.set('prod_fortress', { level: 2 })
-    state.resources.shield = 3
-    triggerProducer('prod_fortress')
-    expect(state.resources.shield).toBe(6) // floor(3 × 2.3) = floor(6.9) = 6
-  })
 })
 
 describe('triggerProducer — ×N 当前值为 0', () => {
@@ -194,14 +172,6 @@ describe('triggerProducer — ×N 当前值为 0', () => {
     synergy.skillBaseScore = 0
     triggerProducer('prod_focus')
     expect(synergy.skillBaseScore).toBe(0)
-  })
-
-  it('shield=0 × 2 = 0（正常行为）', async () => {
-    const { triggerProducer } = await import('../../../src/systems/skills')
-    state.player.skills.set('prod_fortress', { level: 1 })
-    state.resources.shield = 0
-    triggerProducer('prod_fortress')
-    expect(state.resources.shield).toBe(0)
   })
 })
 

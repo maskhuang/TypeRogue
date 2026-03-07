@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 连接者技能数据
 // ============================================
-// Story 19.5 + 21.6: 36 个连接者（6 复制型 + 30 资源触发型）
+// Story 19.5 + 21.6: 31 个连接者（6 复制型 + 25 资源触发型）
 
 import type { ConnectorDefinition } from '../core/types';
 import { PositionRelation } from './keyboardTopology';
@@ -27,7 +27,7 @@ const RELATION_ICONS: Record<string, string> = {
   [PositionRelation.Symmetric]: '🪞',
 };
 
-// === 42 个连接者数据 ===
+// === 31 个连接者数据 ===
 export const CONNECTORS: Record<string, ConnectorDefinition> = {
   // === 复制型（6 个）— 按键触发，随机复制位置关系内一个技能 ===
   conn_copy_adjacent:   { id: 'conn_copy_adjacent',   name: '映射', icon: '🔗', triggerType: 'copy', positionRelation: PositionRelation.Adjacent,   desc: '按下此键时，随机触发1个与此键相邻的技能' },
@@ -65,13 +65,6 @@ export const CONNECTORS: Record<string, ConnectorDefinition> = {
   conn_time_sameHand:   { id: 'conn_time_sameHand',   name: '共时', icon: '⏳🤝', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameHand,   resource: 'time', desc: '与此键同手的技能产出时间时，随机触发1个同手的非时间技能' },
   conn_time_sameFinger: { id: 'conn_time_sameFinger', name: '拨针', icon: '⏳👆', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameFinger, resource: 'time', desc: '与此键同指的技能产出时间时，随机触发1个同指的非时间技能' },
 
-  // === 资源触发型：护盾↑（5 个）===
-  conn_shield_adjacent:   { id: 'conn_shield_adjacent',   name: '联防', icon: '🛡️🔗', triggerType: 'resourceTrigger', positionRelation: PositionRelation.Adjacent,   resource: 'shield', desc: '与此键相邻的技能产出护盾时，随机触发1个相邻的非护盾技能' },
-  conn_shield_sameRow:    { id: 'conn_shield_sameRow',    name: '阵线', icon: '🛡️📡', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameRow,    resource: 'shield', desc: '与此键同行的技能产出护盾时，随机触发1个同行的非护盾技能' },
-  conn_shield_sameColumn: { id: 'conn_shield_sameColumn', name: '壁垒', icon: '🛡️📌', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameColumn, resource: 'shield', desc: '与此键同列的技能产出护盾时，随机触发1个同列的非护盾技能' },
-  conn_shield_sameHand:   { id: 'conn_shield_sameHand',   name: '方阵', icon: '🛡️🤝', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameHand,   resource: 'shield', desc: '与此键同手的技能产出护盾时，随机触发1个同手的非护盾技能' },
-  conn_shield_sameFinger: { id: 'conn_shield_sameFinger', name: '坚守', icon: '🛡️👆', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameFinger, resource: 'shield', desc: '与此键同指的技能产出护盾时，随机触发1个同指的非护盾技能' },
-
   // === 资源触发型：金币↑（5 个）===
   conn_gold_adjacent:   { id: 'conn_gold_adjacent',   name: '交易', icon: '💰🔗', triggerType: 'resourceTrigger', positionRelation: PositionRelation.Adjacent,   resource: 'gold', desc: '与此键相邻的技能产出金币时，随机触发1个相邻的非金币技能' },
   conn_gold_sameRow:    { id: 'conn_gold_sameRow',    name: '汇款', icon: '💰📡', triggerType: 'resourceTrigger', positionRelation: PositionRelation.SameRow,    resource: 'gold', desc: '与此键同行的技能产出金币时，随机触发1个同行的非金币技能' },
@@ -87,7 +80,7 @@ export function isConnector(id: string): boolean {
   return id in CONNECTORS;
 }
 
-/** 每局 run 从 36 个连接者中随机抽 18 个 ID */
+/** 每局 run 从 31 个连接者中随机抽 18 个 ID */
 export function drawConnectorPool(count = 18): string[] {
   const all = Object.keys(CONNECTORS);
   const shuffled = [...all];

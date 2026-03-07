@@ -269,7 +269,7 @@ describe('热力图 tooltip 包含 gold (21.5 AC3)', () => {
     const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
     const content = fs.readFileSync(shopPath, 'utf-8')
     // tooltip 遍历 6 种资源（含 gold）
-    expect(content).toContain("'base', 'score', 'multiplier', 'time', 'shield', 'gold'")
+    expect(content).toContain("'base', 'score', 'multiplier', 'time', 'gold'")
   })
 })
 

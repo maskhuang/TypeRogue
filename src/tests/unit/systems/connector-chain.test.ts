@@ -121,8 +121,8 @@ describe('分叉触发 — 多连接者同时触发 (AC3)', () => {
     state.player.skills.set('prod_focus', { level: 1 })
     state.player.bindings.set('d', 'prod_focus')
     // k 绑定 prod_focus
-    state.player.skills.set('prod_shield', { level: 1 })
-    state.player.bindings.set('k', 'prod_shield')
+    state.player.skills.set('prod_mint', { level: 1 })
+    state.player.bindings.set('k', 'prod_mint')
 
     // g 产出 base → 两个连接者都应有机会触发
     // 不应崩溃

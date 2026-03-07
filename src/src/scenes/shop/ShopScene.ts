@@ -45,12 +45,10 @@ const TEMP_SKILLS: Record<string, { name: string; description: string; rarity: s
   'prod_loot': { name: '掠夺', description: '分数+15', rarity: 'common' },
   'prod_boost': { name: '增幅', description: '倍率+0.2', rarity: 'common' },
   'prod_freeze': { name: '冻结', description: '时间+2', rarity: 'common' },
-  'prod_shield': { name: '护盾', description: '护盾+1', rarity: 'common' },
   'prod_focus': { name: '专注', description: '基数×2', rarity: 'rare' },
   'prod_crit': { name: '暴击', description: '分数×1.1', rarity: 'rare' },
   'prod_frenzy': { name: '狂热', description: '倍率×1.15', rarity: 'rare' },
   'prod_eternal': { name: '永恒', description: '时间×1.2', rarity: 'rare' },
-  'prod_fortress': { name: '堡垒', description: '护盾×2', rarity: 'rare' },
 }
 const TEMP_RELICS: Record<string, { name: string; description: string; rarity: string }> = {
   'lucky_coin': { name: '幸运硬币', description: '商店价格降低 10%', rarity: 'common' },

@@ -27,7 +27,6 @@ vi.mock('../../../../src/core/state', () => {
       level: 1,
     },
     synergy: {
-      shieldCount: 0,
       wordSkillCount: 0,
       skillBaseScore: 0,
       skillMultBonus: 0,

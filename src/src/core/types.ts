@@ -6,7 +6,7 @@ import type { BossModifierId } from '../data/bossModifiers';
 import type { PositionRelation } from '../data/keyboardTopology';
 
 // === 资源系统 ===
-export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'shield' | 'gold';
+export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'gold';
 
 // === 产出者系统 ===
 export type ProducerOperator = 'add' | 'multiply';
@@ -116,7 +116,6 @@ export interface ResourceState {
   score: number;       // 即时加分（直接累加到最终分数）— 产出者 prod_loot/prod_crit 写入
   multiplier: number;  // 倍率（基础 + 连击 + 技能加成）
   time: number;        // 时间资源（倒计时秒数）
-  shield: number;      // 护盾层数（抵消错误输入）
   gold: number;        // 金币资源（跨词累加，战斗结束转入 state.gold）
 }
 
@@ -264,7 +263,6 @@ export interface WordPack {
 
 // === 联动系统 ===
 export interface SynergyState {
-  shieldCount: number;
   perfectStreak: number;
   wordSkillCount: number; // 当前词语触发的技能数量
   lastTriggeredSkillId: string | null; // 本词前一个触发的技能（每词重置）
@@ -296,8 +294,6 @@ export interface UIElements {
   playerRelics: HTMLElement;
   activeLibrary: HTMLElement;
   modifierInfo: HTMLElement;
-  shieldDisplay: HTMLElement;
-  shieldCount: HTMLElement;
   // Shop
   shopScreen: HTMLElement;
   shopLevelNum: HTMLElement;
