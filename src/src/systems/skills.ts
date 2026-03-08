@@ -16,7 +16,7 @@ import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
-import { getFloatScale } from '../effects/juice';
+import { getFloatScale, getFloatScaleMul } from '../effects/juice';
 import { resolveRelicSkillTrigger, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
 
@@ -415,11 +415,10 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   const color = RESOURCE_COLORS[prod.resource];
   const rawDisplay = prod.operator === 'add' ? value : baseValue;
   const displayValue = parseFloat(rawDisplay.toPrecision(4));
-  const floatScale = getFloatScale(prod.resource, delta);
   if (prod.operator === 'add') {
-    showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color, floatScale);
+    showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color, getFloatScale(prod.resource, delta));
   } else {
-    showFeedback(`×${displayValue}`, color, floatScale);
+    showFeedback(`×${displayValue}`, color, getFloatScaleMul(prod.resource, (value - 1) * totalMult));
   }
   if (enchMult > 1) {
     showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(producerId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
@@ -500,11 +499,10 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   // 浮字反馈
   const color = RESOURCE_COLORS[conv.target];
   const displayDelta = Math.round(delta);
-  const floatScale = getFloatScale(conv.target, delta);
   if (conv.formula === 'add') {
-    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color, floatScale);
+    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color, getFloatScale(conv.target, delta));
   } else {
-    showFeedback(`×${parseFloat((1 + sourceVal * amplifiedK).toPrecision(4))}`, color, floatScale);
+    showFeedback(`×${parseFloat((1 + sourceVal * amplifiedK).toPrecision(4))}`, color, getFloatScaleMul(conv.target, sourceVal * amplifiedK * totalMult));
   }
   if (enchMult > 1) {
     showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(converterId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
@@ -597,11 +595,10 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
   recordSkillTrigger(producerId, triggerKey, prod.resource, delta, false);
 
   const color = RESOURCE_COLORS[prod.resource];
-  const floatScale = getFloatScale(prod.resource, delta);
   if (prod.operator === 'add') {
-    showFeedback(`+${parseFloat((baseValue * reduction).toPrecision(4))}${getResourceLabel(prod.resource)} (溅射)`, color, floatScale);
+    showFeedback(`+${parseFloat((baseValue * reduction).toPrecision(4))}${getResourceLabel(prod.resource)} (溅射)`, color, getFloatScale(prod.resource, delta));
   } else {
-    showFeedback(`×${parseFloat((1 + (baseValue - 1) * reduction).toPrecision(4))} (溅射)`, color, floatScale);
+    showFeedback(`×${parseFloat((1 + (baseValue - 1) * reduction).toPrecision(4))} (溅射)`, color, getFloatScaleMul(prod.resource, (baseValue - 1) * reduction));
   }
 
   // 成长附魔累积（溅射/共鸣子触发也贡献）
@@ -653,11 +650,10 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
 
   const color = RESOURCE_COLORS[conv.target];
   const displayDelta = Math.round(delta);
-  const floatScale = getFloatScale(conv.target, delta);
   if (conv.formula === 'add') {
-    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)} (溅射)`, color, floatScale);
+    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)} (溅射)`, color, getFloatScale(conv.target, delta));
   } else {
-    showFeedback(`×${parseFloat((1 + sourceVal * k * reduction).toPrecision(4))} (溅射)`, color, floatScale);
+    showFeedback(`×${parseFloat((1 + sourceVal * k * reduction).toPrecision(4))} (溅射)`, color, getFloatScaleMul(conv.target, sourceVal * k * reduction));
   }
 
   // 成长附魔累积（溅射/共鸣子触发也贡献）
