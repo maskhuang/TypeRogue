@@ -183,3 +183,147 @@ describe('retrigger 管道集成', () => {
     expect(result.pendingBehaviors[0]).toEqual({ type: 'retrigger' })
   })
 })
+
+// === T3 遗物工厂测试 (Story 29.2) ===
+import { RELIC_MODIFIER_DEFS } from '../../../../src/data/relics'
+
+describe('T3 遗物工厂 — echo_bell', () => {
+  it('工厂产出正确 modifier（retrigger 行为 + skills_triggered_this_word 条件）', () => {
+    const mods = RELIC_MODIFIER_DEFS.echo_bell('echo_bell')
+    expect(mods).toHaveLength(1)
+    const mod = mods[0]
+    expect(mod.trigger).toBe('on_skill_trigger')
+    expect(mod.phase).toBe('after')
+    expect(mod.behavior).toEqual({ type: 'retrigger' })
+    expect(mod.condition).toEqual({ type: 'skills_triggered_this_word', value: 0 })
+  })
+
+  it('skillsTriggeredThisWord=0 → 产出 retrigger 行为', () => {
+    const registry = new ModifierRegistry()
+    const mods = RELIC_MODIFIER_DEFS.echo_bell('echo_bell')
+    mods.forEach(m => registry.register(m))
+
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
+      skillsTriggeredThisWord: 0,
+    })
+    expect(result.pendingBehaviors).toHaveLength(1)
+    expect(result.pendingBehaviors[0]).toEqual({ type: 'retrigger' })
+  })
+
+  it('skillsTriggeredThisWord=1 → 不产出 retrigger 行为', () => {
+    const registry = new ModifierRegistry()
+    const mods = RELIC_MODIFIER_DEFS.echo_bell('echo_bell')
+    mods.forEach(m => registry.register(m))
+
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
+      skillsTriggeredThisWord: 1,
+    })
+    expect(result.pendingBehaviors).toHaveLength(0)
+  })
+})
+
+describe('T3 遗物工厂 — storm_drum', () => {
+  it('工厂产出正确 modifier（retrigger 行为 + current_skill_is_producer 条件）', () => {
+    const mods = RELIC_MODIFIER_DEFS.storm_drum('storm_drum')
+    expect(mods).toHaveLength(1)
+    const mod = mods[0]
+    expect(mod.trigger).toBe('on_skill_trigger')
+    expect(mod.phase).toBe('after')
+    expect(mod.behavior).toEqual({ type: 'retrigger' })
+    expect(mod.condition).toEqual({ type: 'current_skill_is_producer' })
+  })
+
+  it('producer → 产出 retrigger 行为', () => {
+    const registry = new ModifierRegistry()
+    const mods = RELIC_MODIFIER_DEFS.storm_drum('storm_drum')
+    mods.forEach(m => registry.register(m))
+
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
+      currentSkillCategory: 'producer',
+    })
+    expect(result.pendingBehaviors).toHaveLength(1)
+    expect(result.pendingBehaviors[0]).toEqual({ type: 'retrigger' })
+  })
+
+  it('converter → 不产出 retrigger 行为', () => {
+    const registry = new ModifierRegistry()
+    const mods = RELIC_MODIFIER_DEFS.storm_drum('storm_drum')
+    mods.forEach(m => registry.register(m))
+
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
+      currentSkillCategory: 'converter',
+    })
+    expect(result.pendingBehaviors).toHaveLength(0)
+  })
+})
+
+describe('T3 遗物工厂 — finale', () => {
+  it('工厂产出正确 modifier（retrigger 行为 + combo_gte 条件）', () => {
+    const mods = RELIC_MODIFIER_DEFS.finale('finale')
+    expect(mods).toHaveLength(1)
+    const mod = mods[0]
+    expect(mod.trigger).toBe('on_skill_trigger')
+    expect(mod.phase).toBe('after')
+    expect(mod.behavior).toEqual({ type: 'retrigger' })
+    expect(mod.condition).toEqual({ type: 'combo_gte', value: 20 })
+  })
+
+  it('combo=20 → 产出 retrigger 行为', () => {
+    const registry = new ModifierRegistry()
+    const mods = RELIC_MODIFIER_DEFS.finale('finale')
+    mods.forEach(m => registry.register(m))
+
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
+      combo: 20,
+    })
+    expect(result.pendingBehaviors).toHaveLength(1)
+    expect(result.pendingBehaviors[0]).toEqual({ type: 'retrigger' })
+  })
+
+  it('combo=5 → 不产出 retrigger 行为', () => {
+    const registry = new ModifierRegistry()
+    const mods = RELIC_MODIFIER_DEFS.finale('finale')
+    mods.forEach(m => registry.register(m))
+
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
+      combo: 5,
+    })
+    expect(result.pendingBehaviors).toHaveLength(0)
+  })
+})
+
+// === 多 retrigger 遗物共存测试 (Story 29.2 review fix) ===
+describe('T3 多 retrigger 遗物共存', () => {
+  it('echo_bell + storm_drum 同时装备，producer 首技能 → 2 个 retrigger behavior', () => {
+    const registry = new ModifierRegistry()
+    RELIC_MODIFIER_DEFS.echo_bell('echo_bell').forEach(m => registry.register(m))
+    RELIC_MODIFIER_DEFS.storm_drum('storm_drum').forEach(m => registry.register(m))
+
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
+      skillsTriggeredThisWord: 0,
+      currentSkillCategory: 'producer',
+    })
+    // 两个条件都满足 → 2 个 retrigger behavior
+    expect(result.pendingBehaviors).toHaveLength(2)
+    expect(result.pendingBehaviors.every(b => b.type === 'retrigger')).toBe(true)
+
+    // BehaviorExecutor：回调被调用 2 次，但实际 _retriggerRequested 是布尔，效果等价 1 次
+    let retriggerCount = 0
+    BehaviorExecutor.execute(result.pendingBehaviors, 0, {
+      onRetrigger: () => { retriggerCount++ },
+    })
+    expect(retriggerCount).toBe(2)
+  })
+
+  it('echo_bell + storm_drum 同时装备，converter 首技能 → 仅 echo_bell 触发', () => {
+    const registry = new ModifierRegistry()
+    RELIC_MODIFIER_DEFS.echo_bell('echo_bell').forEach(m => registry.register(m))
+    RELIC_MODIFIER_DEFS.storm_drum('storm_drum').forEach(m => registry.register(m))
+
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
+      skillsTriggeredThisWord: 0,
+      currentSkillCategory: 'converter',
+    })
+    expect(result.pendingBehaviors).toHaveLength(1)
+  })
+})

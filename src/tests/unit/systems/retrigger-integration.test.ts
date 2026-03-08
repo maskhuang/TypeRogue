@@ -17,6 +17,7 @@ vi.mock('../../../src/systems/relics/RelicPipeline', () => ({
     }
     return 1
   },
+  queryRelicFlag: () => false,
 }))
 
 // Mock UI / 音效

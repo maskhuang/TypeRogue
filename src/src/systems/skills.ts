@@ -16,7 +16,7 @@ import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
-import { resolveRelicSkillTrigger } from './relics/RelicPipeline';
+import { resolveRelicSkillTrigger, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
 
 
@@ -111,6 +111,8 @@ function getRelicSkillMultiplier(category: string): number {
     equippedProducerCount: getEquippedProducerCount(),
     wordHasProducerTriggered: _wordHasProducerTriggered,
     currentSkillKey: _currentTriggerKey,
+    skillsTriggeredThisWord: synergy.wordSkillCount,
+    combo: state.combo,
   }, {
     onTimeSteal: (bonus) => {
       state.time += bonus;
@@ -792,6 +794,12 @@ export function clearPseudoInfinite(): void {
 
 // === 连接者：复制型触发 ===
 export function triggerConnectorCopy(connectorId: string, triggerKey: string, chainHistory: string[]): void {
+  // T4 限制遗物：连接者锁定
+  if (queryRelicFlag('connector_lock') === true) {
+    showFeedback('连接者已锁定!', '#ff0000');
+    return;
+  }
+
   const conn = CONNECTORS[connectorId];
   if (!conn || conn.triggerType !== 'copy') return;
 
@@ -834,6 +842,9 @@ export function triggerConnectorCopy(connectorId: string, triggerKey: string, ch
 
 // === 连接者：资源触发检查 ===
 export function checkResourceTriggers(resource: ResourceType, sourceKey: string, chainHistory: string[]): void {
+  // T4 限制遗物：连接者锁定（与 triggerConnectorCopy 一致）
+  if (queryRelicFlag('connector_lock') === true) return;
+
   // 遍历所有已绑定的资源触发型连接者
   for (const [connKey, connId] of state.player.bindings) {
     const conn = CONNECTORS[connId];
@@ -924,6 +935,7 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
   updateHUD();
 
   // T3 重触发遗物：增幅者不调用 getRelicSkillMultiplier，需单独检查 retrigger 行为 (Story 29.1)
+  // 注意：wordSkillCount 已在 L895 递增，传 -1 保持与 producer/converter 一致语义（评估时尚未计入本次技能）
   resolveRelicSkillTrigger({
     currentSkillCategory: 'amplifier',
     isChainedTrigger: _isChainTrigger,
@@ -932,6 +944,8 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
     equippedProducerCount: getEquippedProducerCount(),
     wordHasProducerTriggered: _wordHasProducerTriggered,
     currentSkillKey: _currentTriggerKey,
+    skillsTriggeredThisWord: Math.max(0, synergy.wordSkillCount - 1),
+    combo: state.combo,
   }, {
     onRetrigger: () => {
       _retriggerRequested = true;

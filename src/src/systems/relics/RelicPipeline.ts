@@ -4,7 +4,7 @@
 // Story 11.6: 遗物迁移到 Modifier 管道
 
 import { state } from '../../core/state'
-import { RELIC_MODIFIER_DEFS } from '../../data/relics'
+import { RELIC_MODIFIER_DEFS, RELIC_FLAGS, RELICS } from '../../data/relics'
 import type { ModifierTrigger, PipelineContext, PipelineResult, BehaviorCallbacks } from '../modifiers/ModifierTypes'
 import { ModifierRegistry } from '../modifiers/ModifierRegistry'
 import { EffectPipeline } from '../modifiers/EffectPipeline'
@@ -85,6 +85,19 @@ export function queryRelicFlag(flag: string): number | boolean {
     case 'doomsday':
       // 末日倒计时：每过一关 -5s
       return state.player.relics.has('doomsday') ? (state.level - 1) * 5 : 0
+    // === T4 限制 Flag (Story 30.1) ===
+    case 'connector_lock':
+      return (RELIC_FLAGS['connector_lock'] || []).some(id => state.player.relics.has(id))
+    case 'enchant_lock':
+      return (RELIC_FLAGS['enchant_lock'] || []).some(id => state.player.relics.has(id))
+    case 'max_skill_level': {
+      const ids = (RELIC_FLAGS['max_skill_level'] || []).filter(id => state.player.relics.has(id))
+      if (ids.length === 0) return Infinity
+      return Math.min(...ids.map(id => {
+        const eff = RELICS[id]?.effects.find(e => e.modifier === 'max_skill_level')
+        return eff?.value ?? Infinity
+      }))
+    }
     default:
       return false
   }

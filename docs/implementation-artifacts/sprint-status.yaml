@@ -268,14 +268,14 @@ development_status:
 
   # ===== Epic 29: T3 重触发遗物 (from relic-implementation-plan.md Epic 5) =====
   # Source: docs/planning-artifacts/relic-implementation-plan.md §Epic 5
-  epic-29: in-progress
+  epic-29: done
   29-1-retrigger-pipeline: done
-  29-2-t3-retrigger-relics: backlog
+  29-2-t3-retrigger-relics: done
   epic-29-retrospective: optional
 
   # ===== Epic 30: T4 规则改造遗物 (from relic-implementation-plan.md Epic 6) =====
   # Source: docs/planning-artifacts/relic-implementation-plan.md §Epic 6
-  epic-30: backlog
-  30-1-restriction-framework: backlog
+  epic-30: in-progress
+  30-1-restriction-framework: done
   30-2-t4-rule-relics: backlog
   epic-30-retrospective: optional

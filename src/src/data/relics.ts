@@ -30,6 +30,7 @@ export type RelicModifierType =
   | 'price_increase'       // 价格增加
   | 'skill_lock'           // 技能锁定
   | 'time_penalty'         // 时间惩罚
+  | 'max_skill_level'      // 技能等级上限（T4 限制框架）
 
 export type RelicConditionType =
   | 'combo_threshold'   // 连击阈值
@@ -447,7 +448,39 @@ export const RELICS: Record<string, RelicData> = {
       { type: 'passive', modifier: 'score_multiplier', value: 2.0 },
     ],
     flavor: '只有完美，才配得上这份荣耀。'
-  }
+  },
+
+  // === T3 重触发遗物 ===
+  echo_bell: {
+    id: 'echo_bell',
+    name: '回响之铃',
+    icon: '🎐',
+    description: '每词第一个技能触发两次',
+    rarity: 'rare',
+    basePrice: 50,
+    effects: [],
+    flavor: '风铃轻响，余音绕梁。',
+  },
+  storm_drum: {
+    id: 'storm_drum',
+    name: '风暴战鼓',
+    icon: '🥁',
+    description: '产出者技能触发两次',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [],
+    flavor: '鼓声震天，万物生长。',
+  },
+  finale: {
+    id: 'finale',
+    name: '终幕',
+    icon: '🎬',
+    description: '连击≥20时技能触发两次',
+    rarity: 'legendary',
+    basePrice: 100,
+    effects: [],
+    flavor: '当高潮来临，一切都要再来一次。',
+  },
 }
 
 // === Relic Modifier 工厂类型 ===
@@ -732,6 +765,39 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
+  // === T3 重触发遗物 ===
+  // 回响之铃：本词第一个技能触发时重触发
+  echo_bell: (id) => [
+    relicMod(id, 'retrigger', 'on_skill_trigger', 'after', {
+      behavior: { type: 'retrigger' },
+      condition: { type: 'skills_triggered_this_word', value: 0 },
+    }),
+  ],
+
+  // 风暴战鼓：产出者技能触发时重触发
+  storm_drum: (id) => [
+    relicMod(id, 'retrigger', 'on_skill_trigger', 'after', {
+      behavior: { type: 'retrigger' },
+      condition: { type: 'current_skill_is_producer' },
+    }),
+  ],
+
+  // 终幕：连击≥20时重触发
+  finale: (id) => [
+    relicMod(id, 'retrigger', 'on_skill_trigger', 'after', {
+      behavior: { type: 'retrigger' },
+      condition: { type: 'combo_gte', value: 20 },
+    }),
+  ],
+
+}
+
+// === T4 限制 Flag 映射表 ===
+// flag name → 设置该 flag 的遗物 ID 列表（Story 30-2 填充具体遗物）
+export const RELIC_FLAGS: Record<string, string[]> = {
+  connector_lock: [],   // 禁用连接者
+  enchant_lock: [],     // 禁用附魔
+  max_skill_level: [],  // 限制技能等级上限
 }
 
 /**

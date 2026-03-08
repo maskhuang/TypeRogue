@@ -174,8 +174,11 @@ function generateShopItems(count: number): ShopItem[] {
     const allSkillIds = [...Object.keys(PRODUCERS), ...poolConverterIds, ...poolConnectorIds, ...poolAmplifierIds];
     const unowned = allSkillIds.filter(id => !owned.includes(id));
 
-    // 按类型分桶
-    const weights = ACT_SKILL_WEIGHTS[act] || ACT_SKILL_WEIGHTS[3];
+    // 按类型分桶（T4 限制遗物可禁用连接者）
+    const weights = { ...(ACT_SKILL_WEIGHTS[act] || ACT_SKILL_WEIGHTS[3]) };
+    if (queryRelicFlag('connector_lock') === true) {
+      weights.connector = 0;
+    }
     const producerBucket = shuffleArray(unowned.filter(id => isProducer(id)));
     const converterBucket = shuffleArray(unowned.filter(id => isConverter(id)));
     const connectorBucket = shuffleArray(unowned.filter(id => isConnector(id)));
@@ -236,10 +239,12 @@ function generateShopItems(count: number): ShopItem[] {
     }
 
     // 升级已有技能（未满级的）— 不受 Act 权重限制
+    const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
+    const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel;
     const upgradable = owned.filter(id => {
       if (isConnector(id)) return false; // 连接者固定 Lv1，不可升级
       const data = state.player.skills.get(id);
-      return data && data.level < 3;
+      return data && data.level < levelCap;
     });
     const shuffledUpgrade = shuffleArray(upgradable);
     for (const skillId of shuffledUpgrade) {
@@ -590,6 +595,12 @@ function checkAutoEnchantment(skillId: string): void {
   const data = state.player.skills.get(skillId);
   if (!data || data.level < 3) return;
 
+  // T4 限制遗物：附魔锁定
+  if (queryRelicFlag('enchant_lock') === true) {
+    showFeedback('附魔已锁定!', '#ff0000');
+    return;
+  }
+
   // 产出者/转化者/增幅者走附魔系统
   if (isProducer(skillId) || isConverter(skillId) || isAmplifier(skillId)) {
     if (state.player.enchantedSkills.has(skillId)) return;
@@ -599,6 +610,9 @@ function checkAutoEnchantment(skillId: string): void {
 
 // === 补偿检查：商店外升级导致的未附魔Lv.3技能 ===
 function checkPendingEnchantments(): void {
+  // T4 限制遗物：附魔锁定 → 跳过补偿附魔
+  if (queryRelicFlag('enchant_lock') === true) return;
+
   const pending: string[] = [];
   for (const [skillId, data] of state.player.skills) {
     if (data.level >= 3 && (isProducer(skillId) || isConverter(skillId) || isAmplifier(skillId)) && !state.player.enchantedSkills.has(skillId)) {
