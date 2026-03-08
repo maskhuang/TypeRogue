@@ -260,7 +260,7 @@ development_status:
   # ===== Epic 28: T2 累积成长遗物 (from relic-implementation-plan.md Epic 4) =====
   # Source: docs/planning-artifacts/relic-implementation-plan.md §Epic 4
   # Note: relicStates 基础设施已在 27-5 完成，无需重复
-  epic-28: in-progress
+  epic-28: done
   28-1-t2-event-hooks: done
   28-2-t2-cumulative-relics: done
   28-3-t2-relic-redesign: done
@@ -268,8 +268,8 @@ development_status:
 
   # ===== Epic 29: T3 重触发遗物 (from relic-implementation-plan.md Epic 5) =====
   # Source: docs/planning-artifacts/relic-implementation-plan.md §Epic 5
-  epic-29: backlog
-  29-1-retrigger-pipeline: backlog
+  epic-29: in-progress
+  29-1-retrigger-pipeline: done
   29-2-t3-retrigger-relics: backlog
   epic-29-retrospective: optional
 

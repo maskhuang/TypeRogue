@@ -55,6 +55,10 @@ function recordSkillTrigger(
 // 模块级：当前触发是否来自链式（由 triggerSkill 设置，triggerProducer/Converter 读取）
 let _isChainTrigger = false;
 
+// T3 重触发遗物支持 (Story 29.1)
+let _retriggerRequested = false;
+let _isRetriggered = false;
+
 // T1 遗物支持：追踪本词已产出的不同资源种类
 const _wordResourceTypes = new Set<string>();
 // T1 遗物支持：本词是否有产出者触发过（熔炉之心使用）
@@ -102,6 +106,7 @@ function getRelicSkillMultiplier(category: string): number {
   return resolveRelicSkillTrigger({
     currentSkillCategory: category,
     isChainedTrigger: _isChainTrigger,
+    isRetriggered: _isRetriggered,
     amplifierMaxStacks: getMaxAmplifierStacks(),
     equippedProducerCount: getEquippedProducerCount(),
     wordHasProducerTriggered: _wordHasProducerTriggered,
@@ -109,6 +114,9 @@ function getRelicSkillMultiplier(category: string): number {
   }, {
     onTimeSteal: (bonus) => {
       state.time += bonus;
+    },
+    onRetrigger: () => {
+      _retriggerRequested = true;
     },
   });
 }
@@ -915,6 +923,21 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
 
   updateHUD();
 
+  // T3 重触发遗物：增幅者不调用 getRelicSkillMultiplier，需单独检查 retrigger 行为 (Story 29.1)
+  resolveRelicSkillTrigger({
+    currentSkillCategory: 'amplifier',
+    isChainedTrigger: _isChainTrigger,
+    isRetriggered: _isRetriggered,
+    amplifierMaxStacks: getMaxAmplifierStacks(),
+    equippedProducerCount: getEquippedProducerCount(),
+    wordHasProducerTriggered: _wordHasProducerTriggered,
+    currentSkillKey: _currentTriggerKey,
+  }, {
+    onRetrigger: () => {
+      _retriggerRequested = true;
+    },
+  });
+
   // 通知键盘可视化更新叠层显示
   eventBus.emit('skill:triggered', { key: triggerKey, skillId: ampId, type: 'active', amplifierStacks: newStacks, growthValue: state.growthValues.get(ampId) || 0 });
 }
@@ -924,37 +947,45 @@ export function triggerSkill(skillId: string, triggerKey: string, chainHistory?:
   const chain = chainHistory || [triggerKey];
   _isChainTrigger = chain.length > 1;
   _currentTriggerKey = triggerKey;
+  _retriggerRequested = false;
+
+  // 局部变量捕获 retrigger 请求，防止 checkResourceTriggers 嵌套调用覆写模块标志
+  let shouldRetrigger = false;
 
   // 产出者分流：绕过 Modifier 管道
   if (isProducer(skillId)) {
     triggerProducer(skillId, triggerKey);
+    shouldRetrigger = _retriggerRequested;
     checkResourceTriggers(PRODUCERS[skillId].resource, triggerKey, chain);
     checkResonanceTriggers(triggerKey);
-    return;
-  }
-
-  // 转化者分流：绕过 Modifier 管道
-  if (isConverter(skillId)) {
+  } else if (isConverter(skillId)) {
+    // 转化者分流：绕过 Modifier 管道
     triggerConverter(skillId, triggerKey);
+    shouldRetrigger = _retriggerRequested;
     checkResourceTriggers(CONVERTERS[skillId].target, triggerKey, chain);
     checkResonanceTriggers(triggerKey);
-    return;
-  }
-
-  // 连接者分流：复制型手动触发
-  if (isConnector(skillId)) {
+  } else if (isConnector(skillId)) {
+    // 连接者分流：不可重触发（会导致链式触发混乱）
     const conn = CONNECTORS[skillId];
     if (conn.triggerType === 'copy') {
       triggerConnectorCopy(skillId, triggerKey, chain);
     }
-    // resourceTrigger 型由 checkResourceTriggers 驱动，不在此处触发
+    return;
+  } else if (isAmplifier(skillId)) {
+    // 增幅者分流：纯叠层，无资源产出
+    triggerAmplifier(skillId, triggerKey);
+    shouldRetrigger = _retriggerRequested;
+  } else {
     return;
   }
 
-  // 增幅者分流：纯叠层，无资源产出，无链式反应
-  if (isAmplifier(skillId)) {
-    triggerAmplifier(skillId, triggerKey);
-    return;
+  // T3 重触发遗物：技能执行后检查 retrigger，防循环 (Story 29.1)
+  if (shouldRetrigger && !_isRetriggered) {
+    _retriggerRequested = false;
+    _isRetriggered = true;
+    showFeedback('重触发!', '#ff6b00');
+    triggerSkill(skillId, triggerKey, chainHistory);
+    _isRetriggered = false;
   }
 }
 

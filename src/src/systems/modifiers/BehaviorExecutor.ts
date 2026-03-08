@@ -195,6 +195,14 @@ export class BehaviorExecutor {
           }
           break
         }
+
+        // T3 重触发遗物 (Story 29.1)
+        case 'retrigger':
+          if (callbacks?.onRetrigger) {
+            callbacks.onRetrigger()
+            result.executedCount++
+          }
+          break
       }
     }
 

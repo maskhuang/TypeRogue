@@ -57,6 +57,8 @@ export type ModifierBehavior =
   | { type: 'restore_combo'; triggerEvery: number }
   | { type: 'set_word_cooldown' }
   | { type: 'trigger_random_adjacent' }
+  // T3 重触发遗物行为 (Story 29.1)
+  | { type: 'retrigger' }
 
 // === 条件系统 ===
 export type ModifierCondition =
@@ -199,6 +201,8 @@ export interface PipelineContext {
   endedAct?: number
   /** 本词完成用时，秒（拉面遗物速度条件使用） */
   wordElapsed?: number
+  /** 当前技能是否为重触发执行（防循环，Story 29.1） */
+  isRetriggered?: boolean
 }
 
 // === 行为执行回调 (Story 11.4) ===
@@ -238,6 +242,8 @@ export interface BehaviorCallbacks {
   onSetWordCooldown?(): void
   /** trigger_random_adjacent: 随机触发一个相邻技能 */
   onTriggerRandomAdjacent?(depth: number): PipelineResult | null
+  /** retrigger: 标记当前技能需要重触发 (Story 29.1) */
+  onRetrigger?(): void
 }
 
 /** BehaviorExecutor.execute() 的返回值 */
