@@ -1718,6 +1718,44 @@ body {
 }
 
 /* ============================================ */
+/* SCORE COLOR GRADING (Story 31.1)             */
+/* ============================================ */
+
+.score-silver {
+    color: #e0e0e0 !important;
+    text-shadow: 0 0 8px rgba(224, 224, 224, 0.5) !important;
+    will-change: transform, filter;
+}
+
+.score-gold {
+    color: #ffd700 !important;
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.6) !important;
+    will-change: transform, filter;
+}
+
+.score-rainbow {
+    background: linear-gradient(90deg, #ff6b6b, #ffd700, #4ecdc4, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent !important;
+    filter: brightness(1.3);
+    will-change: transform, filter;
+}
+
+.score-legendary {
+    color: #fff !important;
+    text-shadow: 0 0 20px #ffd700, 0 0 40px #ff6b6b !important;
+    animation: legendaryPulse 0.5s ease-in-out forwards;
+    will-change: transform, filter;
+}
+
+@keyframes legendaryPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.8); }
+}
+
+/* ============================================ */
 /* GOLD REWARD ANIMATION                        */
 /* ============================================ */
 

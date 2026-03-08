@@ -85,3 +85,23 @@ export function getShakeIntensity(score: number): number {
   if (score >= BALANCE.SHAKE_MID_THRESHOLD) return 2;
   return 1;
 }
+
+// === 分数颜色分级 ===
+/**
+ * 根据分数返回对应的 CSS class 名
+ * - 0-99: '' (默认白色)
+ * - 100-999: 'score-silver' (银白+微光)
+ * - 1000-4999: 'score-gold' (金色+发光)
+ * - 5000-9999: 'score-rainbow' (彩虹渐变)
+ * - 10000+: 'score-legendary' (发光+脉冲)
+ */
+export function getScoreTier(score: number): string {
+  if (score >= 10000) return 'score-legendary';
+  if (score >= 5000) return 'score-rainbow';
+  if (score >= 1000) return 'score-gold';
+  if (score >= 100) return 'score-silver';
+  return '';
+}
+
+/** 所有分数分级 CSS class，用于清除旧 class */
+export const SCORE_TIER_CLASSES = ['score-silver', 'score-gold', 'score-rainbow', 'score-legendary'] as const;

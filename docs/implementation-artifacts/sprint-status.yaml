@@ -279,3 +279,30 @@ development_status:
   30-1-restriction-framework: done
   30-2-t4-rule-relics: done
   epic-30-retrospective: optional
+
+  # ===== Epic 31: 数字 Juice 体系 =====
+  # Source: docs/stories/epic-21-number-juice.md (renumbered from Epic 21)
+  epic-31: in-progress
+  31-1-number-color-grading: done
+  31-2-screen-shake-grading: backlog
+  31-3-number-sound-effects: backlog
+  31-4-number-animation-system: backlog
+  31-5-score-milestone-celebration: backlog
+  31-6-stage-rating-system: backlog
+  epic-31-retrospective: optional
+
+  # ===== Epic 32: 职业系统 + 造词师 + 蜕变师 =====
+  # Source: docs/stories/epic-22-class-system.md (renumbered from Epic 22)
+  epic-32: backlog
+  32-1-class-framework: backlog
+  32-2-class-resource-pipeline: backlog
+  32-3-class-loss-mechanism: backlog
+  32-4-wordsmith-fragment-queue: backlog
+  32-5-wordsmith-producers-converters: backlog
+  32-6-wordsmith-crafting-ui: backlog
+  32-7-wordsmith-enchantments-relics: backlog
+  32-8-metamorph-hidden-pool: backlog
+  32-9-metamorph-mutation-core: backlog
+  32-10-metamorph-enchantments-relics: backlog
+  32-11-class-integration-balance: backlog
+  epic-32-retrospective: optional

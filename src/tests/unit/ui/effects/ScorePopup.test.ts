@@ -250,4 +250,25 @@ describe('ScorePopup', () => {
       expect(() => popup.show(2000, 100, 100)).not.toThrow()
     })
   })
+
+  // ===========================================
+  // 5 档颜色分级测试 (Story 31.1)
+  // ===========================================
+
+  describe('5 档颜色分级 (Story 31.1)', () => {
+    it('所有 5 个分数档位都能正确创建飘字', () => {
+      popup.show(50, 100, 100)     // 默认白
+      popup.show(200, 100, 100)    // 银白
+      popup.show(2000, 100, 100)   // 金色
+      popup.show(7000, 100, 100)   // 彩虹近似
+      popup.show(15000, 100, 100)  // 传奇白
+
+      expect(popup.getActiveCount()).toBe(5)
+    })
+
+    it('极高分数不应崩溃', () => {
+      expect(() => popup.show(999999, 100, 100)).not.toThrow()
+      expect(popup.getActiveCount()).toBe(1)
+    })
+  })
 })

@@ -68,6 +68,10 @@ export class ScorePopup {
     text.text = `+${score.toLocaleString()}`
     text.style.fontSize = fontSize
     text.style.fill = color
+    // 传奇档（10000+）强化 stroke 增加辨识度 (Review H2)
+    text.style.stroke = score >= 10000
+      ? { color: '#ffd700', width: 4 }
+      : { color: '#000000', width: 3 }
 
     text.anchor.set(0.5)
     text.position.set(x, y)
@@ -173,23 +177,25 @@ export class ScorePopup {
   }
 
   /**
-   * 根据分数计算字体大小
+   * 根据分数计算字体大小（5 档）
    */
   private calculateFontSize(score: number): number {
-    if (score >= 1000) return 36
-    if (score >= 500) return 32
-    if (score >= 100) return 28
+    if (score >= 10000) return 38
+    if (score >= 5000) return 34
+    if (score >= 1000) return 30
+    if (score >= 100) return 26
     return 24
   }
 
   /**
-   * 根据分数计算颜色
+   * 根据分数计算颜色（5 档，与 CSS 分级对齐）
    */
   private calculateColor(score: number): string {
-    if (score >= 1000) return '#ffe66d' // 金色
-    if (score >= 500) return '#9b59b6'  // 紫色
-    if (score >= 100) return '#4ecdc4'  // 青色
-    return '#eaeaea' // 白色
+    if (score >= 10000) return '#ffffff' // 传奇白（配合强 stroke）
+    if (score >= 5000) return '#a855f7'  // 彩虹近似（紫色）
+    if (score >= 1000) return '#ffd700'  // 金色
+    if (score >= 100) return '#e0e0e0'   // 银白
+    return '#eaeaea'                     // 默认白
   }
 
   /**

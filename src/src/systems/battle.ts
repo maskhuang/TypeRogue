@@ -8,7 +8,7 @@ import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
-import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow } from '../effects/juice';
+import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow, getScoreTier, SCORE_TIER_CLASSES } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
@@ -64,6 +64,7 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 let wordBaseScore = 0; // 词语基础分（不含倍率）
 let wordStartTime = 0; // T1遗物：词语开始时的剩余时间（用于完美韵律时间返还）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
+let lastScoreTier = ''; // 缓存上一次分数分级，避免每帧重启 CSS 动画 (Review M1)
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
 let leftHandTriggered = false; // T5遗物：本词左手技能是否触发过
 let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
@@ -448,7 +449,13 @@ function updateSettlementLive(): void {
 
   if (chipsEl) chipsEl.textContent = chips.toLocaleString();
   if (multEl) multEl.textContent = mult.toFixed(1);
-  if (finalEl) finalEl.textContent = final.toLocaleString();
+  if (finalEl) {
+    finalEl.textContent = final.toLocaleString();
+    // 实时模式也更新颜色分级，避免上一个词的 tier class 残留 (Review H1)
+    finalEl.classList.remove(...SCORE_TIER_CLASSES);
+    const tier = getScoreTier(final);
+    if (tier) finalEl.classList.add(tier);
+  }
 
   // 确保面板可见
   settlement.classList.remove('settlement-hidden');
@@ -470,7 +477,13 @@ function showSettlementComplete(chips: number, mult: number, total: number): voi
 
   if (chipsEl) chipsEl.textContent = chips.toLocaleString();
   if (multEl) multEl.textContent = mult.toFixed(1);
-  if (finalEl) finalEl.textContent = total.toLocaleString();
+  if (finalEl) {
+    finalEl.textContent = total.toLocaleString();
+    // 分数颜色分级 (Story 31.1)
+    finalEl.classList.remove(...SCORE_TIER_CLASSES);
+    const tier = getScoreTier(total);
+    if (tier) finalEl.classList.add(tier);
+  }
 
   // 播放完成动画
   settlement.classList.remove('settlement-live');
@@ -703,6 +716,7 @@ export async function startLevel(): Promise<void> {
 
   state.phase = 'battle';
   state.score = 0;
+  lastScoreTier = ''; // 重置分数分级缓存 (Review M1)
   state.combo = 0;
   state.maxCombo = 0;
   state.multiplier = state.player.baseMultiplier;
@@ -960,7 +974,7 @@ export function updateHUD(): void {
   el.targetScore.textContent = String(state.targetScore);
   el.multiplier.textContent = state.multiplier.toFixed(1);
 
-  // 分数进度颜色
+  // 分数进度颜色（基础）
   const progress = state.score / state.targetScore;
   if (progress >= 1) {
     el.score.style.color = '#4ecdc4';
@@ -968,6 +982,15 @@ export function updateHUD(): void {
     el.score.style.color = '#ffe66d';
   } else {
     el.score.style.color = '#fff';
+  }
+
+  // 分数颜色分级 — 高分时覆盖进度颜色 (Story 31.1)
+  // 仅在 tier 变化时更新 class，避免重启 CSS 动画 (Review M1)
+  const scoreTier = getScoreTier(state.score);
+  if (scoreTier !== lastScoreTier) {
+    el.score.classList.remove(...SCORE_TIER_CLASSES);
+    if (scoreTier) el.score.classList.add(scoreTier);
+    lastScoreTier = scoreTier;
   }
 
   updateMultiplierGlow();
