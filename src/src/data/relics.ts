@@ -31,6 +31,7 @@ export type RelicModifierType =
   | 'skill_lock'           // 技能锁定
   | 'time_penalty'         // 时间惩罚
   | 'max_skill_level'      // 技能等级上限（T4 限制框架）
+  | 'max_skill_count'      // 技能数量上限（T4 限制框架）
 
 export type RelicConditionType =
   | 'combo_threshold'   // 连击阈值
@@ -450,6 +451,75 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '只有完美，才配得上这份荣耀。'
   },
 
+  // ==================== T4 规则改造遗物 (Story 30.2) ====================
+
+  chain_ban: {
+    id: 'chain_ban',
+    name: '链式禁令',
+    icon: '⛓️',
+    description: '技能产出 +30%，但连接者被禁用',
+    rarity: 'legendary',
+    basePrice: 80,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 1.30 },
+    ],
+    flavor: '斩断锁链，力量才能自由流动。',
+  },
+
+  no_enchant_vow: {
+    id: 'no_enchant_vow',
+    name: '无附魔戒律',
+    icon: '🚫',
+    description: '技能产出 +40%，但无法获得新附魔',
+    rarity: 'legendary',
+    basePrice: 80,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 1.40 },
+    ],
+    flavor: '放弃附魔的诱惑，换取纯粹的力量。',
+  },
+
+  keyboard_flood: {
+    id: 'keyboard_flood',
+    name: '键盘洪水',
+    icon: '⌨️',
+    description: '≥15 技能时产出 +25%，但无法升级/附魔',
+    rarity: 'legendary',
+    basePrice: 100,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 1.25 },
+      { type: 'passive', modifier: 'max_skill_level', value: 1 },
+    ],
+    flavor: '洪水席卷键盘，数量即是力量。',
+  },
+
+  pure_heart: {
+    id: 'pure_heart',
+    name: '纯粹之心',
+    icon: '❤️',
+    description: '产出者效果 ×3，但只能使用产出者',
+    rarity: 'legendary',
+    basePrice: 100,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 3.0 },
+    ],
+    flavor: '纯粹的心灵，产出无穷的力量。',
+  },
+
+  minimalist: {
+    id: 'minimalist',
+    name: '极简主义',
+    icon: '🔲',
+    description: '最多 5 技能全 Lv3，词结算 ×2',
+    rarity: 'legendary',
+    basePrice: 100,
+    effects: [
+      { type: 'passive', modifier: 'max_skill_level', value: 3 },
+      { type: 'passive', modifier: 'max_skill_count', value: 5 },
+    ],
+    flavor: '少即是多，精即是强。',
+  },
+
   // === T3 重触发遗物 ===
   echo_bell: {
     id: 'echo_bell',
@@ -765,6 +835,49 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
+  // === T4 规则改造遗物 (Story 30.2) ===
+
+  // 链式禁令：score ×1.30（global 层），连接者锁通过 RELIC_FLAGS
+  chain_ban: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.30, stacking: 'multiplicative' },
+    }),
+  ],
+
+  // 无附魔戒律：score ×1.40（global 层），附魔锁通过 RELIC_FLAGS
+  no_enchant_vow: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.40, stacking: 'multiplicative' },
+    }),
+  ],
+
+  // 键盘洪水：≥15 技能时 score ×1.25（global 层条件型），enchant_lock + max_skill_level=1 通过 RELIC_FLAGS
+  keyboard_flood: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 1.25, stacking: 'multiplicative' },
+      condition: { type: 'total_skills_gte', value: 15 },
+    }),
+  ],
+
+  // 纯粹之心：产出者 score ×3（global 层条件型），producer_only 通过 RELIC_FLAGS
+  pure_heart: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 3.0, stacking: 'multiplicative' },
+      condition: { type: 'current_skill_is_producer' },
+    }),
+  ],
+
+  // 极简主义：词结算 ×2（on_word_complete multiply +1.0），max_skill_count + max_skill_level 通过 RELIC_FLAGS
+  minimalist: (id) => [
+    relicMod(id, 'multiply', 'on_word_complete', 'calculate', {
+      effect: { type: 'multiply', value: 1.0, stacking: 'additive' },
+    }),
+  ],
+
   // === T3 重触发遗物 ===
   // 回响之铃：本词第一个技能触发时重触发
   echo_bell: (id) => [
@@ -795,9 +908,11 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
 // === T4 限制 Flag 映射表 ===
 // flag name → 设置该 flag 的遗物 ID 列表（Story 30-2 填充具体遗物）
 export const RELIC_FLAGS: Record<string, string[]> = {
-  connector_lock: [],   // 禁用连接者
-  enchant_lock: [],     // 禁用附魔
-  max_skill_level: [],  // 限制技能等级上限
+  connector_lock: ['chain_ban'],                    // 禁用连接者
+  enchant_lock: ['no_enchant_vow', 'keyboard_flood'], // 禁用附魔
+  max_skill_level: ['keyboard_flood', 'minimalist'],  // 限制技能等级上限
+  producer_only: ['pure_heart'],                    // 仅允许产出者
+  max_skill_count: ['minimalist'],                  // 限制技能数量上限
 }
 
 /**

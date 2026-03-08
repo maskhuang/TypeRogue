@@ -275,7 +275,7 @@ development_status:
 
   # ===== Epic 30: T4 规则改造遗物 (from relic-implementation-plan.md Epic 6) =====
   # Source: docs/planning-artifacts/relic-implementation-plan.md §Epic 6
-  epic-30: in-progress
+  epic-30: done
   30-1-restriction-framework: done
-  30-2-t4-rule-relics: backlog
+  30-2-t4-rule-relics: done
   epic-30-retrospective: optional

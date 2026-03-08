@@ -5,6 +5,8 @@
 
 import { state } from '../../core/state'
 import { RELIC_MODIFIER_DEFS, RELIC_FLAGS, RELICS } from '../../data/relics'
+import { isProducer } from '../../data/producers'
+import { showFeedback } from '../battle'
 import type { ModifierTrigger, PipelineContext, PipelineResult, BehaviorCallbacks } from '../modifiers/ModifierTypes'
 import { ModifierRegistry } from '../modifiers/ModifierRegistry'
 import { EffectPipeline } from '../modifiers/EffectPipeline'
@@ -98,6 +100,17 @@ export function queryRelicFlag(flag: string): number | boolean {
         return eff?.value ?? Infinity
       }))
     }
+    // === T4 新 Flag (Story 30.2) ===
+    case 'producer_only':
+      return (RELIC_FLAGS['producer_only'] || []).some(id => state.player.relics.has(id))
+    case 'max_skill_count': {
+      const ids = (RELIC_FLAGS['max_skill_count'] || []).filter(id => state.player.relics.has(id))
+      if (ids.length === 0) return Infinity
+      return Math.min(...ids.map(id => {
+        const eff = RELICS[id]?.effects.find(e => e.modifier === 'max_skill_count')
+        return eff?.value ?? Infinity
+      }))
+    }
     default:
       return false
   }
@@ -150,6 +163,46 @@ export function initRelicState(relicId: string): void {
   }
   if (relicId in INITIAL_VALUES) {
     state.player.relicStates[relicId] = INITIAL_VALUES[relicId]
+  }
+
+  // === T4 获取时副作用 ===
+
+  // 纯粹之心：移除所有非产出者技能
+  if (relicId === 'pure_heart') {
+    const toRemove: string[] = []
+    for (const [skillId] of state.player.skills) {
+      if (!isProducer(skillId)) toRemove.push(skillId)
+    }
+    for (const skillId of toRemove) {
+      state.player.skills.delete(skillId)
+      state.player.enchantedSkills.delete(skillId)
+      if (state.growthValues) state.growthValues.delete(skillId)
+      if (state.amplifierStacks) state.amplifierStacks.delete(skillId)
+      // 移除绑定（先收集 key，避免迭代中删除）
+      const boundKeys = [...state.player.bindings.entries()]
+        .filter(([, v]) => v === skillId)
+        .map(([k]) => k)
+      for (const k of boundKeys) state.player.bindings.delete(k)
+    }
+    if (toRemove.length > 0) {
+      showFeedback(`纯粹之心：${toRemove.length}个非产出者已移除!`, '#ff0000')
+    }
+  }
+
+  // 极简主义：将所有已有技能升至 Lv3
+  // 注意：checkAutoEnchantment 在 shop.ts 中，此处无法调用（循环依赖）。
+  // 升级后的 Lv3 技能的附魔由 checkPendingEnchantments()（shop.ts:131）在商店打开时补偿触发。
+  if (relicId === 'minimalist') {
+    let upgraded = 0
+    for (const [, data] of state.player.skills) {
+      if (data.level < 3) {
+        data.level = 3
+        upgraded++
+      }
+    }
+    if (upgraded > 0) {
+      showFeedback(`极简主义：${upgraded}个技能升至 Lv3!`, '#ffe66d')
+    }
   }
 }
 

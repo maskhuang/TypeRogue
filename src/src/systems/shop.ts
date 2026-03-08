@@ -179,6 +179,12 @@ function generateShopItems(count: number): ShopItem[] {
     if (queryRelicFlag('connector_lock') === true) {
       weights.connector = 0;
     }
+    // T4 纯粹之心：只允许产出者
+    if (queryRelicFlag('producer_only') === true) {
+      weights.converter = 0;
+      weights.connector = 0;
+      weights.amplifier = 0;
+    }
     const producerBucket = shuffleArray(unowned.filter(id => isProducer(id)));
     const converterBucket = shuffleArray(unowned.filter(id => isConverter(id)));
     const connectorBucket = shuffleArray(unowned.filter(id => isConnector(id)));
@@ -193,16 +199,20 @@ function generateShopItems(count: number): ShopItem[] {
       if (roll < weights.producer + weights.converter + weights.connector && connectorBucket.length > 0) return connectorBucket.shift()!;
       if (weights.amplifier > 0 && amplifierBucket.length > 0) return amplifierBucket.shift()!;
       // fallback: 从非空的、权重 > 0 的桶中取
-      if (producerBucket.length > 0) return producerBucket.shift()!;
-      if (converterBucket.length > 0) return converterBucket.shift()!;
+      if (weights.producer > 0 && producerBucket.length > 0) return producerBucket.shift()!;
+      if (weights.converter > 0 && converterBucket.length > 0) return converterBucket.shift()!;
       if (weights.connector > 0 && connectorBucket.length > 0) return connectorBucket.shift()!;
       if (weights.amplifier > 0 && amplifierBucket.length > 0) return amplifierBucket.shift()!;
       return null;
     }
 
+    // T4 极简主义：技能数量达上限时不生成新技能
+    const maxSkillCount = queryRelicFlag('max_skill_count') as number;
+    const skillCountFull = maxSkillCount !== Infinity && state.player.skills.size >= maxSkillCount;
+
     // 生成加权新技能商品（预抽 3 倍槽位数，保证保底和混合有足够选择）
     const SKILL_POOL_MULTIPLIER = 3;
-    for (let i = 0; i < count * SKILL_POOL_MULTIPLIER; i++) {
+    for (let i = 0; i < count * SKILL_POOL_MULTIPLIER && !skillCountFull; i++) {
       const skillId = weightedPick();
       if (!skillId) break;
       skillPool.push({
@@ -582,6 +592,16 @@ function purchaseShopItem(index: number): void {
   if (result.isNew && result.skillId) {
     const freeKey = KEYS.find(k => !state.player.bindings.has(k) && (cachedLetterFreqs?.get(k) ?? 0) >= 5);
     if (freeKey) state.player.bindings.set(freeKey, result.skillId);
+  }
+
+  // T4 极简主义：新购买的技能自动升至 max_skill_level
+  const minMaxLevel = queryRelicFlag('max_skill_level') as number;
+  if (result.isNew && minMaxLevel !== Infinity && minMaxLevel > 1) {
+    const data = state.player.skills.get(result.skillId);
+    if (data && data.level < minMaxLevel) {
+      data.level = minMaxLevel;
+      showFeedback(`自动升至 Lv${minMaxLevel}!`, '#ffe66d');
+    }
   }
 
   if (result.skillId) checkAutoEnchantment(result.skillId);

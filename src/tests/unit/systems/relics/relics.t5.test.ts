@@ -67,8 +67,8 @@ describe('T5 遗物数据', () => {
     })
   })
 
-  it('RELIC_MODIFIER_DEFS 总数 = 30', () => {
-    expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(30)
+  it('RELIC_MODIFIER_DEFS 总数 = 35', () => {
+    expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(35)
   })
 
   it('图标唯一', () => {
