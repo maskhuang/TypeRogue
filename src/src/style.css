@@ -305,7 +305,7 @@ body {
 /* ============================================ */
 /* SHOP SCREEN                                  */
 /* ============================================ */
-#shop-screen { display: flex; flex-direction: column; background: linear-gradient(180deg, #12121a, #1a1a2e); }
+#shop-screen { display: flex; flex-direction: column; background: linear-gradient(180deg, #12121a, #1a1a2e); overflow: hidden; }
 
 #shop-header {
     text-align: center;
@@ -318,7 +318,7 @@ body {
 #shop-result { font-size: 14px; color: #4ecdc4; }
 .result-detail { color: #888; margin-left: 10px; }
 
-#shop-content { flex: 1; display: flex; padding: 20px; gap: 20px; overflow: hidden; }
+#shop-content { flex: 1; display: flex; padding: 20px; gap: 20px; overflow: hidden; min-height: 0; }
 
 /* Shop Items Section */
 #shop-items { width: 50%; display: flex; flex-direction: column; }
@@ -453,12 +453,12 @@ body {
 }
 
 .relic-key-slot {
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
 }
 
 .relic-key-slot .relic-slot-icon {
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .relic-key-slot.has-relic {
@@ -479,7 +479,7 @@ body {
 }
 
 /* Build Manager Section */
-#shop-build { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#shop-build { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 #build-manager { flex: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
 
 #bound-grid {
@@ -492,14 +492,14 @@ body {
     border-radius: 8px;
 }
 
-.keyboard-row { display: flex; gap: 4px; justify-content: center; }
-.keyboard-row[data-row="1"] { margin-left: 18px; }
-.keyboard-row[data-row="2"] { margin-left: 40px; }
+.keyboard-row { display: flex; gap: 3px; justify-content: center; }
+.keyboard-row[data-row="1"] { margin-left: 16px; }
+.keyboard-row[data-row="2"] { margin-left: 35px; }
 
 .key-slot {
     position: relative;
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -550,11 +550,11 @@ body {
     background: rgba(255, 230, 109, 0.15) !important;
     box-shadow: 0 0 8px rgba(255, 230, 109, 0.3);
 }
-.key-slot .key-letter { font-size: 10px; color: #666; font-weight: bold; }
+.key-slot .key-letter { font-size: 8px; color: #666; font-weight: bold; }
 .key-slot.has-skill .key-letter { color: #4ecdc4; }
-.key-slot .key-skill { font-size: 14px; }
-.key-slot .devour-icons { font-size: 8px; opacity: 0.8; }
-.key-slot .growth-badge { font-size: 8px; color: #ffe66d; display: block; line-height: 1; margin-top: 1px; }
+.key-slot .key-skill { font-size: 12px; }
+.key-slot .devour-icons { font-size: 7px; opacity: 0.8; }
+.key-slot .growth-badge { font-size: 7px; color: #ffe66d; display: block; line-height: 1; margin-top: 1px; }
 
 #skill-inventory { padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; transition: border-color 0.15s; border: 2px solid transparent; }
 #skill-inventory.drag-over { border-color: #4ecdc4; background: rgba(78,205,196,0.08); }
@@ -2060,6 +2060,9 @@ body {
     z-index: 1;
     text-align: center;
     padding: 30px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .relic-picker-title {
@@ -2073,8 +2076,9 @@ body {
 
 .relic-picker-cards {
     display: flex;
-    gap: 20px;
+    gap: 15px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .relic-picker-card {
@@ -2170,6 +2174,34 @@ body {
 .relic-picker-skip:hover {
     border-color: #888;
     color: #fff;
+}
+
+/* Replace mode */
+.relic-replace-header {
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffe66d;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.relic-picker-sell {
+    font-size: 11px;
+    color: #ffe66d;
+    margin-top: 6px;
+}
+
+.relic-give-up {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+}
+
+.relic-give-up:hover {
+    opacity: 1;
 }
 
 /* ============================================ */

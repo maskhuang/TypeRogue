@@ -326,10 +326,13 @@ function generateShopItems(count: number): ShopItem[] {
     items.push(packPool.splice(0, 1)[0]);
   }
 
-  // 遗物商品（最多 1 个，占总 5 槽之一）
-  const relicItem = generateShopRelicItem(act, nextId++);
-  if (relicItem && items.length < count) {
-    items.push(relicItem);
+  // 遗物商品（最多 1 个，占总 5 槽之一，40%概率刷新）
+  const RELIC_SPAWN_CHANCE = 0.4;
+  if (random() < RELIC_SPAWN_CHANCE) {
+    const relicItem = generateShopRelicItem(act, nextId++);
+    if (relicItem && items.length < count) {
+      items.push(relicItem);
+    }
   }
 
   // 合并剩余池，随机填满

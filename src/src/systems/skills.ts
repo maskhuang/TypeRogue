@@ -8,7 +8,7 @@ import { RESOURCE_COLORS } from '../core/constants';
 import { getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS, isProducer, getProducerValue } from '../data/producers';
 import { CONVERTERS, isConverter, getConverterK, getSourceValue, getConverterDesc } from '../data/converters';
-import { CONNECTORS, isConnector, getConnectorDesc } from '../data/connectors';
+import { CONNECTORS, isConnector } from '../data/connectors';
 import { AMPLIFIERS, isAmplifier, getAmplifierValue } from '../data/amplifiers';
 import { ENCHANTMENTS } from '../data/enchantments';
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
@@ -412,11 +412,15 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
 
   // 浮字反馈
   const color = RESOURCE_COLORS[prod.resource];
-  const displayValue = prod.operator === 'add' ? value : baseValue;
-  const text = prod.operator === 'add'
-    ? `+${displayValue}${getResourceLabel(prod.resource)}`
-    : `×${displayValue}${getResourceLabel(prod.resource)}`;
-  showFeedback(text, color);
+  const rawDisplay = prod.operator === 'add' ? value : baseValue;
+  const displayValue = parseFloat(rawDisplay.toPrecision(4));
+  if (prod.operator === 'add') {
+    showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color);
+  } else {
+    const displayDeltaP = parseFloat(delta.toPrecision(4));
+    showFeedback(`×${displayValue}`, color);
+    showFeedback(`+${displayDeltaP}${getResourceLabel(prod.resource)}`, color);
+  }
   if (enchMult > 1) {
     showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(producerId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
   }
@@ -495,8 +499,13 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
 
   // 浮字反馈
   const color = RESOURCE_COLORS[conv.target];
-  const desc = getConverterDesc(converterId, level);
-  showFeedback(desc, color);
+  const displayDelta = Math.round(delta);
+  if (conv.formula === 'add') {
+    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color);
+  } else {
+    showFeedback(`×${parseFloat((1 + sourceVal * amplifiedK).toPrecision(4))}`, color);
+    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color);
+  }
   if (enchMult > 1) {
     showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(converterId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
   }
@@ -588,10 +597,13 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
   recordSkillTrigger(producerId, triggerKey, prod.resource, delta, false);
 
   const color = RESOURCE_COLORS[prod.resource];
-  const feedbackText = prod.operator === 'add'
-    ? `+${(baseValue * reduction).toFixed(1)}${getResourceLabel(prod.resource)} (溅射)`
-    : `×${(1 + (baseValue - 1) * reduction).toFixed(2)}${getResourceLabel(prod.resource)} (溅射)`;
-  showFeedback(feedbackText, color);
+  if (prod.operator === 'add') {
+    showFeedback(`+${parseFloat((baseValue * reduction).toPrecision(4))}${getResourceLabel(prod.resource)} (溅射)`, color);
+  } else {
+    const splashDelta = parseFloat(delta.toPrecision(4));
+    showFeedback(`×${parseFloat((1 + (baseValue - 1) * reduction).toPrecision(4))} (溅射)`, color);
+    showFeedback(`+${splashDelta}${getResourceLabel(prod.resource)} (溅射)`, color);
+  }
 
   // 成长附魔累积（溅射/共鸣子触发也贡献）
   checkGrowthAccumulation(triggerKey);
@@ -641,7 +653,13 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
   recordSkillTrigger(converterId, triggerKey, conv.target, delta, false);
 
   const color = RESOURCE_COLORS[conv.target];
-  showFeedback(`${getConverterDesc(converterId, level)} (溅射)`, color);
+  const displayDelta = Math.round(delta);
+  if (conv.formula === 'add') {
+    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)} (溅射)`, color);
+  } else {
+    showFeedback(`×${parseFloat((1 + sourceVal * k * reduction).toPrecision(4))} (溅射)`, color);
+    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)} (溅射)`, color);
+  }
 
   // 成长附魔累积（溅射/共鸣子触发也贡献）
   checkGrowthAccumulation(triggerKey);
@@ -671,7 +689,7 @@ function applyTransmutationEnchantment(skillId: string, triggerKey?: string, del
 
 
   const color = RESOURCE_COLORS[ench.extraResource];
-  showFeedback(`${ench.icon} +${extraValue.toFixed(1)}${getResourceLabel(ench.extraResource)}`, color);
+  showFeedback(`${ench.icon} +${parseFloat(extraValue.toPrecision(4))}${getResourceLabel(ench.extraResource)}`, color);
 
   // 额外产出可触发连接者（AC6 设计意图）
   if (triggerKey) {
@@ -809,9 +827,6 @@ export function triggerConnectorCopy(connectorId: string, triggerKey: string, ch
   playSound('skill');
   synergy.wordSkillCount++;
 
-  const desc = getConnectorDesc(connectorId);
-  showFeedback(desc, '#a29bfe');
-
   // 查找位置关系内有绑定技能的键
   const relatedKeys = getKeysWithRelation(triggerKey, conn.positionRelation);
   const candidates = relatedKeys.filter(k => {
@@ -822,6 +837,11 @@ export function triggerConnectorCopy(connectorId: string, triggerKey: string, ch
 
   const targetKey = candidates[Math.floor(Math.random() * candidates.length)];
   const targetSkillId = state.player.bindings.get(targetKey)!;
+
+  // 反馈：连接者图标 → 目标技能
+  const connDisplay = getSkillDisplayInfo(connectorId, undefined, state.player.enchantedSkills);
+  const targetDisplay = getSkillDisplayInfo(targetSkillId, undefined, state.player.enchantedSkills);
+  showFeedback(`${connDisplay.icon}→${targetDisplay.icon}${targetDisplay.name}`, '#a29bfe');
 
   // 循环检测
   if (chainHistory.includes(targetKey)) {
@@ -868,11 +888,14 @@ export function checkResourceTriggers(resource: ResourceType, sourceKey: string,
     showTriggerPopup(connId);
 
     playSound('skill');
-    const desc = getConnectorDesc(connId);
-    showFeedback(desc, '#a29bfe');
 
     const targetKey = candidates[Math.floor(Math.random() * candidates.length)];
     const targetSkillId = state.player.bindings.get(targetKey)!;
+
+    // 反馈：连接者图标 → 目标技能
+    const connDisplay = getSkillDisplayInfo(connId, undefined, state.player.enchantedSkills);
+    const targetDisplay = getSkillDisplayInfo(targetSkillId, undefined, state.player.enchantedSkills);
+    showFeedback(`${connDisplay.icon}→${targetDisplay.icon}${targetDisplay.name}`, '#a29bfe');
 
     // 循环检测
     if (chainHistory.includes(targetKey)) {
