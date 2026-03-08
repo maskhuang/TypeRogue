@@ -37,7 +37,6 @@ export function initElements(): UIElements {
     ownedSkills: document.getElementById('owned-skills')!,
     wordCount: document.getElementById('word-count')!,
     ownedWords: document.getElementById('owned-words')!,
-    shopRelicIcons: document.getElementById('shop-relic-icons')!,
     startBattleBtn: document.getElementById('start-battle-btn')!,
     // Rest
     restScreen: document.getElementById('rest-screen')!,

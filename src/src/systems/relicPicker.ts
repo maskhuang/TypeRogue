@@ -2,36 +2,93 @@
 // 打字肉鸽 - 遗物三选一系统
 // ============================================
 // Story 17.1: 遗物脱离商店，改为开局 + 每5关弹出三选一
+// Q2: 加权遗物候选生成 + 多渠道获取
 
 import { state, isRelicSlotsFull, addRelicWithCapacity, replaceRelic } from '../core/state';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
+import type { RelicRarity } from '../data/relics';
 import { renderRelicDisplay, showFeedback } from './battle';
 import { playSound } from '../effects/sound';
+import { random } from '../core/seededRandom';
 
-// === 是否应该弹出遗物三选一 ===
-export function shouldShowRelicPicker(level: number): boolean {
-  // 开局(level 1) + 每5关(5, 10, 15...)
-  if (level !== 1 && level % 5 !== 0) return false;
-  // 还有未拥有的遗物
-  const owned = state.player.relics;
-  return Object.keys(RELICS).some(id => !owned.has(id));
+// === 加权遗物类型 ===
+export interface RelicWeights {
+  common: number;
+  rare: number;
+  legendary: number;
 }
 
-// === 生成3个候选遗物 ===
-export function generateRelicCandidates(): string[] {
+export const RELIC_WEIGHT_PRESETS = {
+  gameStart:  { common: 70, rare: 25, legendary: 5 },
+  eliteDrop:  { common: 0,  rare: 60, legendary: 40 },
+  bossDrop:   { common: 0,  rare: 0,  legendary: 100 },
+} as const;
+
+// === 是否还有未拥有的遗物 ===
+export function hasUnownedRelics(): boolean {
+  return Object.keys(RELICS).some(id => !state.player.relics.has(id));
+}
+
+// === 生成加权候选遗物 ===
+export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRESETS.gameStart): string[] {
   const owned = state.player.relics;
   const available = Object.keys(RELICS).filter(id => !owned.has(id));
-  // Fisher-Yates shuffle
-  for (let i = available.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [available[i], available[j]] = [available[j], available[i]];
+
+  // 按稀有度分桶
+  const buckets: Record<RelicRarity, string[]> = { common: [], rare: [], legendary: [] };
+  for (const id of available) {
+    const rarity = RELICS[id].rarity;
+    buckets[rarity].push(id);
   }
-  return available.slice(0, 3);
+
+  // Fisher-Yates 打散各桶
+  for (const key of Object.keys(buckets) as RelicRarity[]) {
+    const arr = buckets[key];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+
+  // 加权抽取 3 个不重复候选
+  const candidates: string[] = [];
+  const rarities: RelicRarity[] = ['common', 'rare', 'legendary'];
+  const activeRarities = rarities.filter(r => weights[r] > 0 && buckets[r].length > 0);
+
+  while (candidates.length < 3 && activeRarities.length > 0) {
+    const totalWeight = activeRarities.reduce((sum, r) => sum + weights[r], 0);
+    const roll = random() * totalWeight;
+    let cumulative = 0;
+    let picked: RelicRarity | null = null;
+
+    for (const r of activeRarities) {
+      cumulative += weights[r];
+      if (roll < cumulative) {
+        picked = r;
+        break;
+      }
+    }
+    if (!picked) picked = activeRarities[activeRarities.length - 1];
+
+    const id = buckets[picked].shift();
+    if (id) {
+      candidates.push(id);
+    }
+
+    // 移除已空桶
+    for (let i = activeRarities.length - 1; i >= 0; i--) {
+      if (buckets[activeRarities[i]].length === 0) {
+        activeRarities.splice(i, 1);
+      }
+    }
+  }
+
+  return candidates;
 }
 
 // === 显示遗物三选一模态框 ===
-export function showRelicPicker(onComplete: () => void): void {
-  const candidates = generateRelicCandidates();
+export function showRelicPicker(onComplete: () => void, weights?: RelicWeights): void {
+  const candidates = generateRelicCandidates(weights);
   if (candidates.length === 0) {
     onComplete();
     return;
@@ -85,7 +142,7 @@ export function showRelicPicker(onComplete: () => void): void {
         renderRelicDisplay();
         finish();
       } else {
-        showReplaceUI(relicId, finish);
+        showRelicReplaceUI(relicId, finish);
       }
     };
 
@@ -107,8 +164,8 @@ function closeRelicPicker(): void {
   if (modal) modal.classList.add('relic-picker-hidden');
 }
 
-// === 替换模式 UI ===
-function showReplaceUI(newRelicId: string, onDone: () => void): void {
+// === 替换模式 UI（导出供商店复用） ===
+export function showRelicReplaceUI(newRelicId: string, onDone: () => void): void {
   const newRelic = RELICS[newRelicId];
   if (!newRelic) { onDone(); return; }
 

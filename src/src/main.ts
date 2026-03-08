@@ -12,7 +12,7 @@ import { drawConnectorPool } from './data/connectors';
 import { drawAmplifierPool } from './data/amplifiers';
 import { startLevel, initInput, resetLastAct } from './systems/battle';
 import { initShopEvents } from './systems/shop';
-import { shouldShowRelicPicker, showRelicPicker } from './systems/relicPicker';
+import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
 import { MetaState } from './core/state/MetaState';
 import { initLeaderboardDisplay, renderLeaderboard } from './ui/leaderboardDisplay';
 import { eventBus } from './core/events/EventBus';
@@ -101,8 +101,8 @@ function init(): void {
   // 启动游戏
   resetLastAct();
   state.level = 1;
-  if (shouldShowRelicPicker(state.level)) {
-    showRelicPicker(() => void startLevel());
+  if (hasUnownedRelics()) {
+    showRelicPicker(() => void startLevel(), RELIC_WEIGHT_PRESETS.gameStart);
   } else {
     void startLevel();
   }

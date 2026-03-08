@@ -445,24 +445,37 @@ body {
     cursor: help;
 }
 
-#shop-relics {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+/* 遗物数字行 */
+.relic-row {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.relics-label {
-    font-size: 12px;
-    color: #888;
+.relic-key-slot {
+    width: 38px;
+    height: 38px;
 }
 
-#shop-relic-icons {
-    display: flex;
-    gap: 5px;
+.relic-key-slot .relic-slot-icon {
+    font-size: 16px;
 }
 
-#shop-relic-icons .relic-icon {
-    font-size: 18px;
+.relic-key-slot.has-relic {
+    border-color: #888;
+}
+
+/* 稀有度边框色 */
+.relic-key-slot.relic-common { border-color: #aaa; }
+.relic-key-slot.relic-rare { border-color: #4488cc; }
+.relic-key-slot.relic-legendary { border-color: #ffd700; }
+
+.relic-key-slot.relic-slot-empty {
+    opacity: 0.3;
+}
+
+.relic-key-slot.relic-slot-empty .relic-slot-icon {
+    color: #444;
 }
 
 /* Build Manager Section */
@@ -2882,4 +2895,17 @@ body {
 .ht-key { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
 .ht-count { color: #aaa; margin-bottom: 6px; }
 .ht-resource { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+
+/* === 商店遗物卡片 === */
+.reward-card.relic-card { border-color: #555; }
+.reward-card.relic-card-common { border-color: #888; }
+.reward-card.relic-card-rare { border-color: #4488cc; box-shadow: 0 0 6px rgba(68,136,204,0.15); }
+.reward-card.relic-card-legendary { border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.2); }
+
+.reward-type.relic-type { font-size: 9px; padding: 2px 6px; border-radius: 8px; text-transform: uppercase; }
+.reward-type.relic-rarity-common { background: rgba(150,150,150,0.2); color: #aaa; }
+.reward-type.relic-rarity-rare { background: rgba(68,136,204,0.2); color: #4488cc; }
+.reward-type.relic-rarity-legendary { background: rgba(255,215,0,0.2); color: #ffd700; }
+
+.reward-flavor { font-size: 9px; color: #555; font-style: italic; margin-top: 2px; }
 

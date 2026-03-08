@@ -191,9 +191,10 @@ export interface PlayerState {
 
 export interface ShopItem {
   id: string;              // 商品唯一 ID
-  type: 'skill' | 'pack';
+  type: 'skill' | 'pack' | 'relic';
   skillId?: string;
   pack?: WordPack;         // 牌包数据（type='pack' 时）
+  relicId?: string;        // 遗物 ID（type='relic' 时）
   cost: number;
   isUpgrade: boolean;      // 重复技能 → true
   locked: boolean;         // 锁定（17.3）
@@ -291,7 +292,6 @@ export interface UIElements {
   ownedSkills: HTMLElement;
   wordCount: HTMLElement;
   ownedWords: HTMLElement;
-  shopRelicIcons: HTMLElement;
   startBattleBtn: HTMLElement;
   // Rest
   restScreen: HTMLElement;

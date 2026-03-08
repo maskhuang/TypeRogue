@@ -14,7 +14,7 @@ import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop } from './shop';
-import { shouldShowRelicPicker, showRelicPicker } from './relicPicker';
+import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './relicPicker';
 import { getLetterScoreModifiers, calculateLetterFrequency } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
@@ -644,19 +644,26 @@ function endLevel(): void {
     const currentType = getStageType(state.level);
 
     if (currentType === 'boss') {
-      // Boss 关胜利 → 周目推进 + 修饰器选择 + 进商店
+      // Boss 关胜利 → 周目推进 + 修饰器选择 + 传说遗物三选一 + 进商店
       advanceCycle();
-      showBossModifierPicker(() => openShop(true));
+      showBossModifierPicker(() => {
+        if (hasUnownedRelics()) {
+          showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.bossDrop);
+        } else {
+          openShop(true);
+        }
+      });
       return;
     }
 
-    // 标准关和精英关胜利 → 遗物选择器（每5个战斗节点） → 商店
-    const battleNum = getBattleNumber(state.level);
-    if (battleNum > 0 && battleNum % 5 === 0 && shouldShowRelicPicker(battleNum)) {
-      showRelicPicker(() => openShop(true));
-    } else {
-      openShop(true);
+    if (currentType === 'elite' && hasUnownedRelics()) {
+      // 精英关胜利 → 遗物三选一（rare 60% / legendary 40%）→ 商店
+      showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.eliteDrop);
+      return;
     }
+
+    // 普通关胜利 → 直接进商店
+    openShop(true);
   } else {
     gameOver();
   }
@@ -999,7 +1006,6 @@ export function renderRelicDisplay(): void {
   }
 
   renderSlots(el.playerRelics);
-  renderSlots(el.shopRelicIcons);
 }
 
 function renderActiveLibrary(): void {

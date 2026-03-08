@@ -3,7 +3,7 @@
 // ============================================
 // Epic 17: 统一商店 + 刷新/锁定/卖出 + 拖拽交互
 
-import { state } from '../core/state';
+import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS } from '../core/constants';
 import { getSkillSchool, getSkillDisplayInfo } from '../data/skills';
@@ -25,6 +25,9 @@ import { getNextBattleNode, isRestNode, getActForNode, TOTAL_NODES } from './sta
 import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { getIconCount } from './skills';
+import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
+import type { RelicWeights } from './relicPicker';
+import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
@@ -40,6 +43,34 @@ export const ACT_SKILL_WEIGHTS: Record<number, { producer: number; converter: nu
   2: { producer: 25, converter: 45, connector: 20, amplifier: 10 },
   3: { producer: 10, converter: 35, connector: 35, amplifier: 20 },
 };
+
+// === Act 遗物权重 ===
+const ACT_RELIC_WEIGHTS: Record<number, RelicWeights> = {
+  1: { common: 60, rare: 30, legendary: 10 },
+  2: { common: 30, rare: 50, legendary: 20 },
+  3: { common: 10, rare: 40, legendary: 50 },
+};
+
+// === 生成商店遗物商品 ===
+export function generateShopRelicItem(act: number, itemId?: number): ShopItem | null {
+  if (isRelicSlotsFull()) return null;
+  const weights = ACT_RELIC_WEIGHTS[act] || ACT_RELIC_WEIGHTS[3];
+  const candidates = generateRelicCandidates(weights);
+  if (candidates.length === 0) return null;
+
+  const relicId = candidates[0];
+  const relic = RELICS[relicId];
+  if (!relic) return null;
+
+  return {
+    id: `si-${itemId ?? Date.now()}-relic`,
+    type: 'relic',
+    relicId,
+    cost: getAdjustedPrice(relic.basePrice),
+    isUpgrade: false,
+    locked: false,
+  };
+}
 
 // === 首次获取 tooltip ===
 export const SKILL_TYPE_TOOLTIPS: Record<string, { text: string; color: string }> = {
@@ -295,6 +326,12 @@ function generateShopItems(count: number): ShopItem[] {
     items.push(packPool.splice(0, 1)[0]);
   }
 
+  // 遗物商品（最多 1 个，占总 5 槽之一）
+  const relicItem = generateShopRelicItem(act, nextId++);
+  if (relicItem && items.length < count) {
+    items.push(relicItem);
+  }
+
   // 合并剩余池，随机填满
   const remaining = shuffleArray([...skillPool, ...packPool]);
   while (items.length < count && remaining.length > 0) {
@@ -392,6 +429,24 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
       <div class="reward-type pack-type">词包</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
+  } else if (item.type === 'relic' && item.relicId) {
+    // Relic item
+    const relic = RELICS[item.relicId];
+    if (!relic) return;
+    const rarityClass = relic.rarity || 'common';
+
+    card.classList.add('relic-card', `relic-card-${rarityClass}`);
+    card.innerHTML = `
+      <div class="reward-icon">${relic.icon}</div>
+      <div class="reward-info">
+        <div class="reward-name">${relic.name}</div>
+        <div class="reward-desc">${relic.description}</div>
+        ${relic.flavor ? `<div class="reward-flavor">"${relic.flavor}"</div>` : ''}
+      </div>
+      <div class="reward-cost">💰${item.cost}</div>
+      <div class="reward-type relic-type relic-rarity-${rarityClass}">${rarityClass}</div>
+      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
+    `;
   }
 
   // 锁定按钮事件
@@ -413,6 +468,11 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
     card.onclick = () => {
       juiceUp(card, 0.2, 3);
       togglePackExpand(card, item, index);
+    };
+  } else if (item.type === 'relic') {
+    card.onclick = () => {
+      juiceUp(card, 0.2, 3);
+      purchaseShopRelicItem(index);
     };
   } else {
     card.onclick = () => {
@@ -608,6 +668,56 @@ function purchaseShopItem(index: number): void {
 
   renderUnifiedShop();
   renderBuildManager();
+}
+
+// === 购买遗物商品 ===
+function purchaseShopRelicItem(index: number): void {
+  const item = state.shop.items[index];
+  if (!item || item.type !== 'relic' || !item.relicId) return;
+
+  const relicId = item.relicId;
+  const relic = RELICS[relicId];
+  if (!relic) return;
+
+  if (state.gold < item.cost) {
+    showFeedback('金币不足!', '#ff6b6b');
+    return;
+  }
+
+  if (state.player.relics.has(relicId)) {
+    showFeedback('已拥有该遗物!', '#ff6b6b');
+    return;
+  }
+
+  if (!isRelicSlotsFull()) {
+    state.gold -= item.cost;
+    addRelicWithCapacity(relicId);
+    updateGoldDisplay();
+    showFeedback(`获得遗物 ${relic.icon} ${relic.name}!`, '#ffe66d');
+    playSound('skill');
+    state.shop.items.splice(index, 1);
+    renderRelicDisplay();
+    renderUnifiedShop();
+    renderBuildManager();
+  } else {
+    // 槽位已满 → 弹出替换 UI（放弃则不扣金）
+    const modal = document.getElementById('relic-picker-modal');
+    if (modal) modal.classList.remove('relic-picker-hidden');
+
+    showRelicReplaceUI(relicId, () => {
+      // 检查是否成功替换（新遗物已在 relics 中）
+      if (state.player.relics.has(relicId)) {
+        state.gold -= item.cost;
+        updateGoldDisplay();
+        state.shop.items.splice(index, 1);
+      }
+      const m = document.getElementById('relic-picker-modal');
+      if (m) m.classList.add('relic-picker-hidden');
+      renderRelicDisplay();
+      renderUnifiedShop();
+      renderBuildManager();
+    });
+  }
 }
 
 // === 自动进化检查 ===
@@ -915,6 +1025,33 @@ export function renderBuildManager(): void {
     const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || AMPLIFIERS[skillId];
     if (sk) showFeedback(`${sk.name} 已从 ${key.toUpperCase()} 解绑（字频不足）`, '#ff6b6b');
   }
+
+  // === 遗物数字行 ===
+  const relicArray = [...state.player.relics];
+  const relicRow = document.createElement('div');
+  relicRow.className = 'keyboard-row relic-row';
+
+  const RELIC_KEYS = ['1','2','3','4','5','6','7','8','9','0'];
+  RELIC_KEYS.forEach((k, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'key-slot relic-key-slot';
+    slot.dataset.relicIndex = String(i);
+
+    if (relicArray[i]) {
+      const relic = RELICS[relicArray[i]];
+      if (!relic) return;
+      slot.classList.add('has-relic');
+      slot.classList.add(`relic-${relic.rarity}`);
+      slot.innerHTML = `<span class="key-letter">${k}</span><span class="relic-slot-icon">${relic.icon}</span>`;
+      slot.title = `[${k}] ${relic.name}: ${relic.description}`;
+    } else {
+      slot.classList.add('relic-slot-empty');
+      slot.innerHTML = `<span class="key-letter">${k}</span><span class="relic-slot-icon">·</span>`;
+      slot.title = `[${k}] 空槽位`;
+    }
+    relicRow.appendChild(slot);
+  });
+  el.boundGrid.appendChild(relicRow);
 
   KEYBOARD_ROWS.forEach((row, rowIndex) => {
     const rowDiv = document.createElement('div');
