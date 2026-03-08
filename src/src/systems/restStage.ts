@@ -276,8 +276,8 @@ export function executeEffect(effectId: string): string {
         },
         () => {
           const actEnd = getNextActEndNode(state.level);
-          state.tempBuffs.push({ type: 'multiplier', value: 0.5, expiresAtNode: actEnd });
-          return '好运！下一 Act 倍率 +0.5x！';
+          state.tempBuffs.push({ type: 'multiplier', value: -0.5, expiresAtNode: actEnd });
+          return '厄运！下一 Act 倍率 -0.5x！';
         },
       ];
       const pick = outcomes[Math.floor(Math.random() * outcomes.length)];

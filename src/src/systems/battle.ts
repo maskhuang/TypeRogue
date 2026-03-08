@@ -15,7 +15,7 @@ import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResou
 import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop } from './shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './relicPicker';
-import { getLetterScoreModifiers, calculateLetterFrequency } from './letters/LetterFrequencySystem';
+import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
@@ -87,28 +87,6 @@ function getActiveWords(): string[] {
 
 function pickWord(): string {
   const words = getActiveWords();
-  const bound = [...state.player.bindings.keys()];
-
-  // 有绑定技能的字母时，偏向选择包含它们的词
-  if (bound.length && random() < 0.6) {
-    const good = words.filter(w => bound.some(l => w.includes(l)));
-    if (good.length) return good[Math.floor(random() * good.length)].toUpperCase();
-  }
-
-  // 偏向选择包含已解锁字母（频率≥5）的词，减少无底分字母出现
-  const freq = calculateLetterFrequency(state.player.wordDeck);
-  const unlocked = new Set<string>();
-  freq.forEach((count, letter) => { if (count >= 5) unlocked.add(letter); });
-  if (unlocked.size > 0 && random() < 0.7) {
-    // 按词中已解锁字母占比排序，取前半优选
-    const scored = words.map(w => {
-      const chars = [...w.toLowerCase()].filter(c => c >= 'a' && c <= 'z');
-      const ratio = chars.length ? chars.filter(c => unlocked.has(c)).length / chars.length : 0;
-      return { w, ratio };
-    }).filter(x => x.ratio > 0.5);
-    if (scored.length) return scored[Math.floor(random() * scored.length)].w.toUpperCase();
-  }
-
   return words[Math.floor(random() * words.length)].toUpperCase();
 }
 
