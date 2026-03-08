@@ -3,8 +3,6 @@
 // ============================================
 
 import { getElements } from '../ui/elements';
-import { BALANCE } from '../core/constants';
-import { state } from '../core/state';
 
 // === 基础弹跳动画 ===
 export function juiceUp(element: HTMLElement | null, scale = 0.3, rotation = 3): void {
@@ -17,6 +15,17 @@ export function juiceUp(element: HTMLElement | null, scale = 0.3, rotation = 3):
 
 export function juiceUpStrong(element: HTMLElement | null): void {
   juiceUp(element, 0.4, 5);
+}
+
+// === 资源产出浮字缩放（以 Lv1 产出者基础值为 1.0，log 放大，无上限） ===
+const LV1_PRODUCER_BASE: Record<string, number> = {
+  base: 5, score: 15, multiplier: 0.2, time: 2, gold: 3,
+};
+
+export function getFloatScale(resource: string, delta: number): number {
+  const ref = LV1_PRODUCER_BASE[resource] ?? 5;
+  const ratio = Math.abs(delta) / ref;
+  return Math.max(1, Math.log2(1 + ratio));
 }
 
 // === UI 元素弹跳 ===
@@ -41,6 +50,16 @@ export function bumpMultiplier(): void {
   el.multiplier.classList.add('mult-bump');
 }
 
+export function bumpTimer(): void {
+  const el = getElements();
+  el.timerDisplay.classList.remove('timer-bump');
+  void el.timerDisplay.offsetWidth;
+  el.timerDisplay.classList.add('timer-bump');
+  el.timerBar.classList.remove('timer-bar-bump');
+  void el.timerBar.offsetWidth;
+  el.timerBar.classList.add('timer-bar-bump');
+}
+
 // === 屏幕震动 ===
 export function screenShake(intensity = 1): void {
   const el = getElements();
@@ -63,26 +82,10 @@ export function screenFlash(color: string, opacity = 0.4): void {
   setTimeout(() => flash.remove(), 200);
 }
 
-// === 倍率视觉反馈 ===
-export function updateMultiplierGlow(): void {
-  const el = getElements();
-  const mult = state.multiplier;
-
-  if (mult >= BALANCE.MULT_HIGH_THRESHOLD) {
-    el.container.classList.add('high-mult');
-    el.container.classList.remove('mid-mult');
-  } else if (mult >= BALANCE.MULT_MID_THRESHOLD) {
-    el.container.classList.add('mid-mult');
-    el.container.classList.remove('high-mult');
-  } else {
-    el.container.classList.remove('mid-mult', 'high-mult');
-  }
-}
-
 // === 计算震动强度 ===
 export function getShakeIntensity(score: number): number {
-  if (score >= BALANCE.SHAKE_HIGH_THRESHOLD) return 3;
-  if (score >= BALANCE.SHAKE_MID_THRESHOLD) return 2;
+  if (score >= 20) return 3;
+  if (score >= 10) return 2;
   return 1;
 }
 

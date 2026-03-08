@@ -98,6 +98,7 @@ body {
 }
 
 #timer-display {
+    display: inline-block;
     font-size: 24px;
     font-weight: bold;
     color: #4ecdc4;
@@ -120,6 +121,7 @@ body {
 }
 
 #score-count {
+    display: inline-block;
     color: #fff;
     text-shadow: 0 0 20px rgba(255,255,255,0.3);
     transition: color 0.3s;
@@ -144,6 +146,7 @@ body {
 }
 
 #multiplier-display {
+    display: inline-block;
     font-size: 24px;
     font-weight: bold;
     color: #ffe66d;
@@ -817,8 +820,52 @@ body {
 
 @keyframes scoreBump {
     0% { transform: scale(1); }
-    40% { transform: scale(1.15); color: #4ecdc4; }
+    40% { transform: scale(1.5); color: #4ecdc4; }
     100% { transform: scale(1); }
+}
+
+/* 结算面板基数弹跳 */
+.chips-bump {
+    animation: chipsBump 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes chipsBump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.5); }
+    100% { transform: scale(1); }
+}
+
+/* 结算面板倍率弹跳 */
+.sett-mult-bump {
+    animation: settMultBump 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes settMultBump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.5); }
+    100% { transform: scale(1); }
+}
+
+/* 计时器数字弹跳 */
+.timer-bump {
+    animation: timerBump 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes timerBump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.5); }
+    100% { transform: scale(1); }
+}
+
+/* 计时器条弹跳 */
+.timer-bar-bump {
+    animation: timerBarBump 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes timerBarBump {
+    0% { transform: scaleY(1); }
+    40% { transform: scaleY(2.2); }
+    100% { transform: scaleY(1); }
 }
 
 /* 倍率变化动画 */
@@ -965,82 +1012,6 @@ body {
     }
 }
 
-/* 倍率发光效果 - 强化版 */
-#game-container.mid-mult {
-    box-shadow: inset 0 0 100px rgba(255,230,109,0.25), 0 0 30px rgba(255,230,109,0.2);
-}
-
-#game-container.mid-mult::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border: 3px solid rgba(255,230,109,0.4);
-    border-radius: 12px;
-    pointer-events: none;
-    animation: borderPulseGold 1s ease-in-out infinite;
-}
-
-@keyframes borderPulseGold {
-    0%, 100% { border-color: rgba(255,230,109,0.3); }
-    50% { border-color: rgba(255,230,109,0.6); }
-}
-
-#game-container.high-mult {
-    box-shadow: inset 0 0 150px rgba(255,107,107,0.3), 0 0 50px rgba(255,107,107,0.3);
-    animation: highMultPulse 0.4s ease-in-out infinite;
-}
-
-#game-container.high-mult::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border: 4px solid rgba(255,107,107,0.6);
-    border-radius: 12px;
-    pointer-events: none;
-    animation: borderPulseRed 0.3s ease-in-out infinite;
-}
-
-@keyframes borderPulseRed {
-    0%, 100% { border-color: rgba(255,107,107,0.4); box-shadow: inset 0 0 30px rgba(255,107,107,0.2); }
-    50% { border-color: rgba(255,107,107,0.9); box-shadow: inset 0 0 50px rgba(255,107,107,0.4); }
-}
-
-@keyframes highMultPulse {
-    0%, 100% { box-shadow: inset 0 0 120px rgba(255,107,107,0.25), 0 0 40px rgba(255,107,107,0.25); }
-    50% { box-shadow: inset 0 0 180px rgba(255,107,107,0.4), 0 0 60px rgba(255,107,107,0.4); }
-}
-
-/* Settlement panel glow based on multiplier */
-#score-settlement .settlement-panel {
-    transition: all 0.2s;
-}
-
-#game-container.mid-mult #score-settlement .settlement-panel {
-    border-color: #ffe66d;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.8), 0 0 30px rgba(255,230,109,0.5);
-}
-
-#game-container.mid-mult #score-settlement .settlement-mult-box .settlement-value {
-    color: #ffe66d;
-    text-shadow: 0 0 20px rgba(255,230,109,0.7);
-}
-
-#game-container.high-mult #score-settlement .settlement-panel {
-    border-color: #ff6b6b;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.8), 0 0 40px rgba(255,107,107,0.6);
-    animation: settlementPanelPulse 0.3s ease-in-out infinite;
-}
-
-#game-container.high-mult #score-settlement .settlement-mult-box .settlement-value {
-    color: #ff6b6b;
-    text-shadow: 0 0 20px rgba(255,107,107,0.8);
-}
-
-@keyframes settlementPanelPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.03); }
-}
-
 .skill-trigger-popup {
     position: absolute;
     display: flex;
@@ -1073,9 +1044,9 @@ body {
 }
 
 @keyframes floatUp {
-    0% { opacity: 0; transform: translateY(0) scale(0.5); }
-    15% { opacity: 1; transform: translateY(-8px) scale(1.15); }
-    100% { opacity: 0; transform: translateY(-50px) scale(1); }
+    0% { opacity: 0; transform: translateY(0) scale(calc(0.5 * var(--float-scale, 1))); }
+    15% { opacity: 1; transform: translateY(-8px) scale(calc(1.15 * var(--float-scale, 1))); }
+    100% { opacity: 0; transform: translateY(-50px) scale(var(--float-scale, 1)); }
 }
 
 /* 伪无限模式视觉 (Story 19.7) */

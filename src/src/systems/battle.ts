@@ -8,7 +8,7 @@ import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
-import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, screenShake, updateMultiplierGlow, getScoreTier, SCORE_TIER_CLASSES } from '../effects/juice';
+import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getScoreTier, SCORE_TIER_CLASSES } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
@@ -65,6 +65,8 @@ let wordBaseScore = 0; // 词语基础分（不含倍率）
 let wordStartTime = 0; // T1遗物：词语开始时的剩余时间（用于完美韵律时间返还）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
 let lastScoreTier = ''; // 缓存上一次分数分级，避免每帧重启 CSS 动画 (Review M1)
+let lastSkillBase = 0; // 技能基数产出缓存（变化时弹跳）
+let lastSkillMult = 0; // 技能倍率产出缓存（变化时弹跳）
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
 let leftHandTriggered = false; // T5遗物：本词左手技能是否触发过
 let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
@@ -115,6 +117,8 @@ function setWord(): void {
   state.player.index = 0;
   state.wordScore = 0;
   wordBaseScore = 0; // 重置基础分
+  lastSkillBase = 0; // 重置技能产出弹跳缓存
+  lastSkillMult = 0;
   state.resources.base = 0; // 重置资源基数
   state.resources.score = 0; // 重置即时加分
   state.wordPerfect = true;
@@ -188,6 +192,8 @@ function playerCorrect(k: string): void {
 
   // Juice 动画 - 字母弹跳
   juiceUp(letter, 0.2, 2);
+  let skillProducedScore = false;
+  let skillProducedTime = false;
 
   // 连击增加
   state.combo++;
@@ -226,7 +232,11 @@ function playerCorrect(k: string): void {
     const hand = HAND_MAP[k];
     if (hand === 'left') leftHandTriggered = true;
     else if (hand === 'right') rightHandTriggered = true;
+    const scoreBefore = state.score;
+    const timeBefore = state.time;
     triggerSkill(skillId, k);
+    if (state.score > scoreBefore) skillProducedScore = true;
+    if (state.time > timeBefore) skillProducedTime = true;
   }
 
   spawnParticles(letter, shouldTrigger ? 10 : 5, '#4ecdc4');
@@ -247,6 +257,10 @@ function playerCorrect(k: string): void {
   }
 
   updateHUD();
+
+  // 技能产出分数/时间：在 updateHUD 更新数字后再弹跳
+  if (skillProducedScore) bumpScore();
+  if (skillProducedTime) bumpTimer();
 }
 
 function playerWrong(): void {
@@ -311,7 +325,8 @@ function playerWrong(): void {
   if (modEffect?.comboPunishRate && state.score > 0) {
     const penalty = Math.floor(state.score * modEffect.comboPunishRate);
     state.score = Math.max(0, state.score - penalty);
-    showFeedback(`-${penalty}分!`, '#ff4444');
+    showFeedback(`-${penalty}分!`, '#ff4444', getFloatScale('score', penalty));
+    bumpScore();
   }
 
   updateHUD();
@@ -343,7 +358,8 @@ function completeWord(): void {
       const refund = wordElapsed * ratio;
       if (refund > 0) {
         state.time += refund;
-        showFeedback(`+${refund.toFixed(1)}s`, '#00ff88');
+        showFeedback(`+${refund.toFixed(1)}s`, '#00ff88', getFloatScale('time', refund));
+        bumpTimer();
       }
     },
   });
@@ -422,6 +438,8 @@ function completeWord(): void {
   // 遗物效果：完成词语时间加成
   if (wordRelicResult.effects.time > 0) {
     state.time += wordRelicResult.effects.time;
+    showFeedback(`+${wordRelicResult.effects.time.toFixed(1)}s`, '#00ff88', getFloatScale('time', wordRelicResult.effects.time));
+    bumpTimer();
   }
 
   setTimeout(() => {
@@ -447,8 +465,24 @@ function updateSettlementLive(): void {
   // 分数已即时计入总分，结算面板仅展示 基数×倍率
   const final = Math.floor(chips * mult);
 
-  if (chipsEl) chipsEl.textContent = chips.toLocaleString();
-  if (multEl) multEl.textContent = mult.toFixed(1);
+  if (chipsEl) {
+    chipsEl.textContent = chips.toLocaleString();
+    if (synergy.skillBaseScore !== lastSkillBase) {
+      chipsEl.classList.remove('chips-bump');
+      void chipsEl.offsetWidth;
+      chipsEl.classList.add('chips-bump');
+      lastSkillBase = synergy.skillBaseScore;
+    }
+  }
+  if (multEl) {
+    multEl.textContent = mult.toFixed(1);
+    if (synergy.skillMultBonus !== lastSkillMult) {
+      multEl.classList.remove('sett-mult-bump');
+      void multEl.offsetWidth;
+      multEl.classList.add('sett-mult-bump');
+      lastSkillMult = synergy.skillMultBonus;
+    }
+  }
   if (finalEl) {
     finalEl.textContent = final.toLocaleString();
     // 实时模式也更新颜色分级，避免上一个词的 tier class 残留 (Review H1)
@@ -643,10 +677,6 @@ function endLevel(): void {
   cleanupModifier();
   stopBossRotation();
   hideSettlement();
-
-  // 清除倍率光晕效果
-  const el = getElements();
-  el.container.classList.remove('mid-mult', 'high-mult');
 
   // 计算关卡评级
   if (state.battleStats) {
@@ -993,8 +1023,6 @@ export function updateHUD(): void {
     lastScoreTier = scoreTier;
   }
 
-  updateMultiplierGlow();
-
   // 发送分数更新事件
   eventBus.emit('score:update', {
     score: state.score,
@@ -1041,7 +1069,7 @@ function renderActiveLibrary(): void {
 const FLOAT_POOL_SIZE = 20;
 const FLOAT_INTERVAL = 150; // 链式浮字间隔 ms
 let floatPool: HTMLDivElement[] = [];
-let floatQueue: Array<{ text: string; color: string }> = [];
+let floatQueue: Array<{ text: string; color: string; scale?: number }> = [];
 let queueTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** 初始化浮字对象池 */
@@ -1069,13 +1097,14 @@ function releaseFloat(el: HTMLDivElement): void {
 }
 
 /** 创建一个浮字 */
-function createFloatText(text: string, color: string): void {
+function createFloatText(text: string, color: string, scale = 1): void {
   const el = acquireFloat();
   if (!el) return; // 池满，跳过
 
   el.textContent = text;
   el.style.color = color;
   el.style.left = (35 + Math.random() * 30) + '%';
+  el.style.setProperty('--float-scale', String(scale));
   el.style.display = '';
   // 强制重排触发动画
   void el.offsetWidth;
@@ -1092,7 +1121,7 @@ function drainQueue(): void {
     return;
   }
   const item = floatQueue.shift()!;
-  createFloatText(item.text, item.color);
+  createFloatText(item.text, item.color, item.scale);
   queueTimer = setTimeout(drainQueue, FLOAT_INTERVAL);
 }
 
@@ -1109,9 +1138,9 @@ function clearFloatQueue(): void {
   }
 }
 
-/** 浮字反馈（替代旧 showFeedback） */
-export function showFeedback(txt: string, color: string): void {
-  floatQueue.push({ text: txt, color });
+/** 浮字反馈（scale 控制字体缩放，默认 1） */
+export function showFeedback(txt: string, color: string, scale?: number): void {
+  floatQueue.push({ text: txt, color, scale });
   if (!queueTimer) drainQueue();
 }
 
