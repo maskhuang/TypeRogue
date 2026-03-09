@@ -3486,9 +3486,10 @@ body {
 .morph-skill-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     justify-content: center;
     margin-bottom: 12px;
+    flex-shrink: 0;
 }
 
 .morph-skill-card {

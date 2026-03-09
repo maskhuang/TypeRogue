@@ -7,7 +7,7 @@ import { state } from '../../core/state';
 import { playSound } from '../../effects/sound';
 import { showFeedback } from '../battle';
 import { renderBuildManager } from '../shop';
-import { getSkillDisplayInfo } from '../../data/skills';
+import { getSkillDisplayInfo, getSkillSchool } from '../../data/skills';
 import { PRODUCERS, isProducer } from '../../data/producers';
 import { CONVERTERS, isConverter } from '../../data/converters';
 import { CONNECTORS, isConnector } from '../../data/connectors';
@@ -152,6 +152,58 @@ function performMetamorph(oldSkillId: string, boundKey: string, container: HTMLE
   renderBuildManager();
 }
 
+// === 技能悬停提示 ===
+const TYPE_NAMES: Record<string, string> = {
+  producer: '产出者', converter: '转化者', connector: '连接者', amplifier: '增幅者',
+};
+
+function showMorphTooltip(e: MouseEvent, skillId: string, level: number, type: SkillType | null, boundKey: string): void {
+  hideMorphTooltip();
+  const info = getSkillDisplayInfo(skillId, level, state.player.enchantedSkills);
+  const school = getSkillSchool(skillId);
+  const tip = document.createElement('div');
+  tip.id = 'morph-tooltip';
+  tip.className = 'key-tooltip';
+
+  let html = `<div style="font-size:14px;font-weight:bold;color:#fff;margin-bottom:2px;">${info.icon} ${info.name} Lv.${level}</div>`;
+  html += `<div style="color:#888;font-size:10px;margin-bottom:4px;">键位: ${boundKey.toUpperCase()}</div>`;
+  html += `<div style="color:#aaa;font-size:10px;white-space:normal;margin-bottom:4px;">${info.desc}</div>`;
+  html += `<span style="font-size:9px;padding:1px 4px;border-radius:3px;display:inline-block;background:rgba(255,255,255,0.08);" class="${school.cssClass}">${school.label}</span>`;
+
+  if (type && type !== 'producer') {
+    const poolSize = computeHiddenPool(type).length;
+    html += `<div style="color:#2ecc71;font-size:10px;margin-top:4px;">隐藏池剩余: ${poolSize} 个${TYPE_NAMES[type]}</div>`;
+  } else if (type === 'producer') {
+    html += `<div style="color:#666;font-size:10px;margin-top:4px;">产出者不可蜕变</div>`;
+  }
+
+  tip.innerHTML = html;
+  tip.style.left = e.clientX + 12 + 'px';
+  tip.style.top = e.clientY + 12 + 'px';
+  document.body.appendChild(tip);
+  requestAnimationFrame(() => {
+    const rect = tip.getBoundingClientRect();
+    if (rect.right > window.innerWidth) tip.style.left = (e.clientX - rect.width - 12) + 'px';
+    if (rect.bottom > window.innerHeight) tip.style.top = (e.clientY - rect.height - 12) + 'px';
+  });
+}
+
+function moveMorphTooltip(e: MouseEvent): void {
+  const tip = document.getElementById('morph-tooltip');
+  if (!tip) return;
+  tip.style.left = e.clientX + 12 + 'px';
+  tip.style.top = e.clientY + 12 + 'px';
+  requestAnimationFrame(() => {
+    const rect = tip.getBoundingClientRect();
+    if (rect.right > window.innerWidth) tip.style.left = (e.clientX - rect.width - 12) + 'px';
+    if (rect.bottom > window.innerHeight) tip.style.top = (e.clientY - rect.height - 12) + 'px';
+  });
+}
+
+function hideMorphTooltip(): void {
+  document.getElementById('morph-tooltip')?.remove();
+}
+
 // === 面板渲染 ===
 export function renderMetamorphPanel(container: HTMLElement): void {
   container.innerHTML = '';
@@ -224,8 +276,18 @@ export function renderMetamorphPanel(container: HTMLElement): void {
     card.appendChild(keyLabel);
     card.appendChild(typeLabel);
 
+    // 悬停提示
+    card.addEventListener('mouseenter', (e: MouseEvent) => {
+      showMorphTooltip(e, skillId, skillData.level, type, key);
+    });
+    card.addEventListener('mousemove', (e: MouseEvent) => {
+      moveMorphTooltip(e);
+    });
+    card.addEventListener('mouseleave', hideMorphTooltip);
+
     if (!isDisabled) {
       card.onclick = () => {
+        hideMorphTooltip();
         card.classList.add('morph-transforming');
         setTimeout(() => {
           performMetamorph(skillId, key, container);

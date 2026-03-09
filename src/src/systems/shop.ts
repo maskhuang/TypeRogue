@@ -1104,11 +1104,17 @@ export function renderBuildManager(): void {
       slot.classList.add('has-relic');
       slot.classList.add(`relic-${relic.rarity}`);
       slot.innerHTML = `<span class="key-letter">${k}</span><span class="relic-slot-icon">${relic.icon}</span>`;
-      slot.title = `[${k}] ${relic.name}: ${relic.description}`;
+      // 富文本悬停提示
+      slot.addEventListener('mouseenter', (e: MouseEvent) => {
+        showRelicTooltip(e, relic);
+      });
+      slot.addEventListener('mousemove', (e: MouseEvent) => {
+        moveRelicTooltip(e);
+      });
+      slot.addEventListener('mouseleave', hideRelicTooltip);
     } else {
       slot.classList.add('relic-slot-empty');
       slot.innerHTML = `<span class="key-letter">${k}</span><span class="relic-slot-icon">·</span>`;
-      slot.title = `[${k}] 空槽位`;
     }
     relicRow.appendChild(slot);
   });
@@ -1665,6 +1671,48 @@ function showHeatmapTooltip(e: MouseEvent, key: string, bs: import('../core/type
 
 function hideHeatmapTooltip(): void {
   document.getElementById('heatmap-tooltip')?.remove();
+}
+
+// === 遗物悬停提示 ===
+const RARITY_COLORS: Record<string, string> = { common: '#aaa', rare: '#4488cc', legendary: '#ffd700' };
+const RARITY_LABELS: Record<string, string> = { common: '普通', rare: '稀有', legendary: '传说' };
+
+function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicData): void {
+  hideRelicTooltip();
+  const tip = document.createElement('div');
+  tip.id = 'relic-tooltip';
+  tip.className = 'key-tooltip';
+  const rarityColor = RARITY_COLORS[relic.rarity] || '#aaa';
+  tip.innerHTML =
+    `<div style="font-size:14px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${relic.name}</div>` +
+    `<div style="font-size:9px;padding:1px 4px;border-radius:3px;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${RARITY_LABELS[relic.rarity] || relic.rarity}</div>` +
+    `<div style="color:#aaa;font-size:10px;white-space:normal;">${relic.description}</div>` +
+    (relic.flavor ? `<div style="color:#666;font-size:9px;font-style:italic;margin-top:4px;">${relic.flavor}</div>` : '');
+  tip.style.left = e.clientX + 12 + 'px';
+  tip.style.top = e.clientY + 12 + 'px';
+  document.body.appendChild(tip);
+  // 边界检测
+  requestAnimationFrame(() => {
+    const rect = tip.getBoundingClientRect();
+    if (rect.right > window.innerWidth) tip.style.left = (e.clientX - rect.width - 12) + 'px';
+    if (rect.bottom > window.innerHeight) tip.style.top = (e.clientY - rect.height - 12) + 'px';
+  });
+}
+
+function moveRelicTooltip(e: MouseEvent): void {
+  const tip = document.getElementById('relic-tooltip');
+  if (!tip) return;
+  tip.style.left = e.clientX + 12 + 'px';
+  tip.style.top = e.clientY + 12 + 'px';
+  requestAnimationFrame(() => {
+    const rect = tip.getBoundingClientRect();
+    if (rect.right > window.innerWidth) tip.style.left = (e.clientX - rect.width - 12) + 'px';
+    if (rect.bottom > window.innerHeight) tip.style.top = (e.clientY - rect.height - 12) + 'px';
+  });
+}
+
+function hideRelicTooltip(): void {
+  document.getElementById('relic-tooltip')?.remove();
 }
 
 // === 统计面板 Tab 切换 ===
