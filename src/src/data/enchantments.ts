@@ -18,12 +18,12 @@ export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
   ench_growth_symmetric:  { id: 'ench_growth_symmetric',  name: '共振', icon: '🌱🪞', category: 'spatial', spatialType: 'growth', positionRelation: PositionRelation.Symmetric,  effectValue: 0.06, desc: '🪞对称位技能触发时：自身产出永久+6%' },
 
   // === 空间型 — 溅射（6 个）"我让邻居变强"，效率 = 100%/范围内技能数 ===
-  ench_splash_adjacent:   { id: 'ench_splash_adjacent',   name: '波及', icon: '💫🔗', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.Adjacent,   effectValue: 0, desc: '触发后：等分效率触发🔗相邻非连接技能（不再引发💫溅射）' },
-  ench_splash_sameRow:    { id: 'ench_splash_sameRow',    name: '横扫', icon: '💫📡', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameRow,    effectValue: 0, desc: '触发后：等分效率触发📡同行非连接技能（不再引发💫溅射）' },
-  ench_splash_sameColumn: { id: 'ench_splash_sameColumn', name: '穿刺', icon: '💫📌', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameColumn, effectValue: 0, desc: '触发后：等分效率触发📌同列非连接技能（不再引发💫溅射）' },
-  ench_splash_sameHand:   { id: 'ench_splash_sameHand',   name: '普照', icon: '💫🤝', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameHand,   effectValue: 0, desc: '触发后：等分效率触发🤝同手非连接技能（不再引发💫溅射）' },
-  ench_splash_sameFinger: { id: 'ench_splash_sameFinger', name: '灌注', icon: '💫👆', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameFinger, effectValue: 0, desc: '触发后：等分效率触发👆同指非连接技能（不再引发💫溅射）' },
-  ench_splash_symmetric:  { id: 'ench_splash_symmetric',  name: '投影', icon: '💫🪞', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.Symmetric,  effectValue: 0, desc: '触发后：等分效率触发🪞对称位非连接技能（不再引发💫溅射）' },
+  ench_splash_adjacent:   { id: 'ench_splash_adjacent',   name: '波及', icon: '💫🔗', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.Adjacent,   effectValue: 0, desc: '触发后：等分效率触发🔗相邻非复制技能（不再引发💫溅射）' },
+  ench_splash_sameRow:    { id: 'ench_splash_sameRow',    name: '横扫', icon: '💫📡', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameRow,    effectValue: 0, desc: '触发后：等分效率触发📡同行非复制技能（不再引发💫溅射）' },
+  ench_splash_sameColumn: { id: 'ench_splash_sameColumn', name: '穿刺', icon: '💫📌', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameColumn, effectValue: 0, desc: '触发后：等分效率触发📌同列非复制技能（不再引发💫溅射）' },
+  ench_splash_sameHand:   { id: 'ench_splash_sameHand',   name: '普照', icon: '💫🤝', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameHand,   effectValue: 0, desc: '触发后：等分效率触发🤝同手非复制技能（不再引发💫溅射）' },
+  ench_splash_sameFinger: { id: 'ench_splash_sameFinger', name: '灌注', icon: '💫👆', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.SameFinger, effectValue: 0, desc: '触发后：等分效率触发👆同指非复制技能（不再引发💫溅射）' },
+  ench_splash_symmetric:  { id: 'ench_splash_symmetric',  name: '投影', icon: '💫🪞', category: 'spatial', spatialType: 'splash', positionRelation: PositionRelation.Symmetric,  effectValue: 0, desc: '触发后：等分效率触发🪞对称位非复制技能（不再引发💫溅射）' },
 
   // === 空间型 — 共鸣（6 个）"邻居带我白嫖" ===
   ench_resonance_adjacent:   { id: 'ench_resonance_adjacent',   name: '感应', icon: '🔔🔗', category: 'spatial', spatialType: 'resonance', positionRelation: PositionRelation.Adjacent,   effectValue: 0.50, desc: '🔗相邻技能触发时：自身触发（50%效率，不再引发🔔共鸣）' },
