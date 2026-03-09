@@ -19,6 +19,7 @@ import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
 import { getFloatScale, getFloatScaleMul } from '../effects/juice';
 import { resolveRelicSkillTrigger, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
+import { routeFragmentsToInventory } from './classes/FragmentQueue';
 
 
 // === 战后统计：记录技能触发 ===
@@ -409,10 +410,7 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
 
   // 职业资源：累加本关产出计数器 + 跨关库存
   if (prod.resource === 'fragment') {
-    const absDelta = Math.abs(delta);
-    state.classResourceProduced.fragment = (state.classResourceProduced.fragment ?? 0) + absDelta;
-    // 暂写入通用 _total 键；Story 32.4 采集队列会按字母分配
-    state.fragmentInventory._total = (state.fragmentInventory._total ?? 0) + absDelta;
+    routeFragmentsToInventory(Math.abs(delta));
   } else if (prod.resource === 'mutagen') {
     const absDelta = Math.abs(delta);
     state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + absDelta;
@@ -514,9 +512,7 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
 
   // 转化者目标为职业资源时：累加本关产出计数器 + 库存
   if (conv.target === 'fragment') {
-    const absDelta = Math.abs(delta);
-    state.classResourceProduced.fragment = (state.classResourceProduced.fragment ?? 0) + absDelta;
-    state.fragmentInventory._total = (state.fragmentInventory._total ?? 0) + absDelta;
+    routeFragmentsToInventory(Math.abs(delta));
   } else if (conv.target === 'mutagen') {
     const absDelta = Math.abs(delta);
     state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + absDelta;
@@ -686,9 +682,7 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
 
   // 转化者目标为职业资源时：累加本关产出计数器 + 库存
   if (conv.target === 'fragment') {
-    const absDelta = Math.abs(delta);
-    state.classResourceProduced.fragment = (state.classResourceProduced.fragment ?? 0) + absDelta;
-    state.fragmentInventory._total = (state.fragmentInventory._total ?? 0) + absDelta;
+    routeFragmentsToInventory(Math.abs(delta));
   } else if (conv.target === 'mutagen') {
     const absDelta = Math.abs(delta);
     state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + absDelta;

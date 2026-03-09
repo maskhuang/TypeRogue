@@ -264,10 +264,12 @@ describe('职业资源初始化 (Story 32.2)', () => {
     expect(state.classResourceProduced.mutagen).toBe(7)
   })
 
-  it('fragmentInventory._total 可正确累加', () => {
-    state.fragmentInventory._total = (state.fragmentInventory._total ?? 0) + 4
-    state.fragmentInventory._total = (state.fragmentInventory._total ?? 0) + 6
-    expect(state.fragmentInventory._total).toBe(10)
+  it('fragmentInventory 各字母可独立累加', () => {
+    state.fragmentInventory.e = (state.fragmentInventory.e ?? 0) + 4
+    state.fragmentInventory.e = (state.fragmentInventory.e ?? 0) + 6
+    expect(state.fragmentInventory.e).toBe(10)
+    state.fragmentInventory.a = (state.fragmentInventory.a ?? 0) + 3
+    expect(state.fragmentInventory.a).toBe(3)
   })
 
   it('mutagenInventory 可正确累加', () => {
@@ -277,12 +279,26 @@ describe('职业资源初始化 (Story 32.2)', () => {
   })
 
   it('resetResources 不重置跨关库存（fragmentInventory/mutagenInventory）', () => {
-    state.fragmentInventory._total = 10
     state.fragmentInventory.a = 3
+    state.fragmentInventory.e = 5
     state.mutagenInventory = 7
     resetResources()
-    expect(state.fragmentInventory._total).toBe(10)
     expect(state.fragmentInventory.a).toBe(3)
+    expect(state.fragmentInventory.e).toBe(5)
     expect(state.mutagenInventory).toBe(7)
+  })
+
+  it('createInitialState 包含 fragmentQueue 和 fragmentQueuePosition', () => {
+    const s = createInitialState()
+    expect(s.fragmentQueue).toEqual(['_', '_', '_', '_', '_', '_'])
+    expect(s.fragmentQueuePosition).toBe(0)
+  })
+
+  it('resetResources 重置 fragmentQueuePosition 但不重置 fragmentQueue', () => {
+    state.fragmentQueue = ['e', 'a', 't', '_', '_', '_']
+    state.fragmentQueuePosition = 3
+    resetResources()
+    expect(state.fragmentQueuePosition).toBe(0)
+    expect(state.fragmentQueue).toEqual(['e', 'a', 't', '_', '_', '_'])
   })
 })

@@ -160,6 +160,8 @@ export interface GameState {
   battleStats: BattleStats | null;                   // 上一战的统计数据（商店中展示）
   classResourceProduced: Record<string, number>;  // 本关累计职业资源产出（fragment/mutagen），每关重置
   fragmentInventory: Record<string, number>;       // 造词师：26 字母碎片库存（A-Z），跨关保持，Run 重置
+  fragmentQueue: string[];                          // 造词师：采集队列字母序列（如 ['e','e','a','t','_','_']），跨关保持
+  fragmentQueuePosition: number;                    // 造词师：采集队列当前位置（每关重置）
   mutagenInventory: number;                        // 蜕变师：变异素库存，跨关保持，Run 重置
   gameMode: 'normal' | 'daily';           // 游戏模式
   dailySeed: number | null;                // 每日挑战种子（daily 模式时非 null）

@@ -34,6 +34,7 @@ import { random } from '../core/seededRandom';
 import { dragManager } from './dragManager';
 import { isResourceActiveForClass } from './classes/ClassResourceFilter';
 import { CLASS_DEFINITIONS } from '../data/classes';
+import { isFeatureEnabled, getFeatureLostReason } from './classes/ClassFeatureGate';
 import type { DragPayload } from './dragManager';
 
 // === 零频键位缓存（供自动绑定使用） ===
@@ -307,20 +308,22 @@ function generateShopItems(count: number): ShopItem[] {
     }
   }
 
-  // 构建牌包池（替代词语池）
+  // 构建牌包池（替代词语池）— 职业门控：造词师失去牌包系统
   const packPool: ShopItem[] = [];
-  const boundKeys = [...state.player.bindings.keys()];
-  const playerFreqs = calculateLetterFrequency(state.player.wordDeck);
-  const packs = generateWordPacks(state.player.wordDeck, playerFreqs, boundKeys, 8, act);
-  for (const pack of packs) {
-    packPool.push({
-      id: `si-${nextId++}`,
-      type: 'pack',
-      pack,
-      cost: getAdjustedPrice(pack.cost),
-      isUpgrade: false,
-      locked: false,
-    });
+  if (isFeatureEnabled('pack-system')) {
+    const boundKeys = [...state.player.bindings.keys()];
+    const playerFreqs = calculateLetterFrequency(state.player.wordDeck);
+    const packs = generateWordPacks(state.player.wordDeck, playerFreqs, boundKeys, 8, act);
+    for (const pack of packs) {
+      packPool.push({
+        id: `si-${nextId++}`,
+        type: 'pack',
+        pack,
+        cost: getAdjustedPrice(pack.cost),
+        isUpgrade: false,
+        locked: false,
+      });
+    }
   }
 
   // 保底：≥1 技能 + ≥1 牌包（如果有的话）
@@ -744,7 +747,14 @@ function checkAutoEnchantment(skillId: string): void {
   // 产出者/转化者/增幅者走附魔系统
   if (isProducer(skillId) || isConverter(skillId) || isAmplifier(skillId)) {
     if (state.player.enchantedSkills.has(skillId)) return;
-    renderEnchantmentModal(skillId);
+    // 职业门控：蜕变师失去附魔选择权 → 随机附魔
+    if (!isFeatureEnabled('enchant-choice')) {
+      applyRandomEnchantment(skillId);
+      renderUnifiedShop();
+      renderBuildManager();
+    } else {
+      renderEnchantmentModal(skillId);
+    }
   }
 }
 
@@ -762,6 +772,11 @@ function checkPendingEnchantments(): void {
   if (pending.length === 0) return;
   // 逐个弹出附魔选择（前一个关闭后弹下一个）
   showEnchantmentQueue(pending, 0);
+  // 随机附魔路径：批量处理完后统一重渲染（避免 N 次冗余重建）
+  if (!isFeatureEnabled('enchant-choice')) {
+    renderUnifiedShop();
+    renderBuildManager();
+  }
 }
 
 function showEnchantmentQueue(queue: string[], index: number): void {
@@ -769,6 +784,12 @@ function showEnchantmentQueue(queue: string[], index: number): void {
   const skillId = queue[index];
   // 可能在队列过程中已被附魔（用户选择了）
   if (state.player.enchantedSkills.has(skillId)) {
+    showEnchantmentQueue(queue, index + 1);
+    return;
+  }
+  // 职业门控：蜕变师失去附魔选择权 → 逐个随机附魔
+  if (!isFeatureEnabled('enchant-choice')) {
+    applyRandomEnchantment(skillId);
     showEnchantmentQueue(queue, index + 1);
     return;
   }
@@ -844,6 +865,34 @@ function closeEnchantmentModal(): void {
   const cb = _enchantmentOnClose;
   _enchantmentOnClose = null;
   if (cb) cb();
+}
+
+// === 随机附魔（蜕变师失去附魔选择权时使用） ===
+// 不调用 applyEnchantment 避免：双重 feedback + 无用 closeModal + 冗余 re-render
+function applyRandomEnchantment(skillId: string): void {
+  const skillRelation = isAmplifier(skillId) ? AMPLIFIERS[skillId].positionRelation : undefined;
+  const [enchA, enchB] = drawEnchantmentPair(skillRelation);
+  const chosen = random() < 0.5 ? enchA : enchB;
+
+  // 核心状态写入（同 applyEnchantment）
+  state.player.enchantedSkills.set(skillId, chosen);
+  const ench = ENCHANTMENTS[chosen];
+  if (ench) {
+    showFeedback(`🎲 随机附魔! ${ench.icon} ${ench.name}`, '#f9ca24');
+  }
+
+  // 遗物钩子（同 applyEnchantment）
+  resolveRelicEffectsWithBehaviors('on_enchantment_acquire', {
+    enchantedSkillId: skillId,
+    enchantmentId: chosen,
+  });
+  if (state.player.relics.has('star_chart')) {
+    state.player.relicStates['star_chart'] = (state.player.relicStates['star_chart'] ?? 0) + 1;
+  }
+
+  playSound('buy');
+  // 不调用 closeEnchantmentModal()（未打开模态框）
+  // 不调用 renderUnifiedShop / renderBuildManager（由调用方统一处理）
 }
 
 // === 附魔选择界面 ===
@@ -1637,10 +1686,17 @@ function initStatsTabs(): void {
     if (active === 'words') renderWordInventory();
   }
 
+  // 职业门控：造词师失去牌包系统 → 隐藏词库 tab
+  if (!isFeatureEnabled('pack-system')) {
+    wordsTab.style.display = 'none';
+    const reason = getFeatureLostReason('pack-system');
+    if (reason) wordsTab.title = reason;
+  }
+
   switchTab('build');
   buildTab.onclick = () => switchTab('build');
   statsTab.onclick = () => switchTab('stats');
-  wordsTab.onclick = () => switchTab('words');
+  wordsTab.onclick = () => { if (isFeatureEnabled('pack-system')) switchTab('words'); };
 }
 
 // === 初始化商店事件 ===
