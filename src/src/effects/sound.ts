@@ -208,103 +208,83 @@ export function playSound(type: keyof typeof SOUND_PROFILES): void {
 }
 
 
-// === 词语结算分数音效（4 档合成） ===
-export function playScoreSound(score: number): void {
+// === 词语结算分数音效（4 档，与打字音效同调） ===
+// 设计：以打字 tone 层的 combo 频率为根音，纯比率构建和声
+// 最后一个音始终落在五度或九度，营造"开放/未解决"的结尾感
+
+/** 取当前 combo 对应的打字 tone 基频（与 playTypeSound 第 3 层同公式） */
+function getTypingRoot(): number {
+  return 300 + 400 * Math.log2(1 + state.combo * 0.06);
+}
+
+// 开放音程比率池（相对根音）
+// 大二度 9/8, 大三度 5/4, 纯四度 4/3, 纯五度 3/2, 大六度 5/3, 八度 2, 大九度 9/4
+const OPEN_INTERVALS = [9 / 8, 5 / 4, 4 / 3, 3 / 2, 5 / 3, 2, 9 / 4];
+// 结尾专用：只用纯五度 / 大九度（最"开放"的两个音程）
+const ENDING_INTERVALS = [3 / 2, 9 / 4];
+
+/** 播放单个柔和 sine 音 */
+function playChimeTone(freq: number, vol: number, decay: number, delay = 0): void {
   if (!audioContext) return;
   const ctx = audioContext;
-  const t = ctx.currentTime;
+  const t = ctx.currentTime + delay;
+
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine';
+  o.connect(g);
+  connectToOutput(g);
+  o.frequency.setValueAtTime(randomize(freq, 0.015), t);
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.001, t + decay);
+  o.start(t);
+  o.stop(t + decay);
+}
+
+/** 从池中随机取一个 */
+function pick<T>(arr: readonly T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+export function playScoreSound(score: number): void {
+  if (!audioContext) return;
   const tier = getScoreSoundTier(score);
+  const root = getTypingRoot();
+  const ending = pick(ENDING_INTERVALS);
 
   switch (tier) {
-    // Tier 0 (0-99): 清脆 — 高频 sine 短促下扫
+    // Tier 0 (0-99): 根音 → 开放音（两音，极简）
     case 0: {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine';
-      o.connect(g);
-      connectToOutput(g);
-      const freq = randomize(1200, 0.05);
-      const vol = randomize(0.08, 0.08);
-      const dec = randomize(0.08, 0.08);
-      o.frequency.setValueAtTime(freq, t);
-      o.frequency.exponentialRampToValueAtTime(freq * 0.83, t + dec * 0.5);
-      softAttack(g, vol, t);
-      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
-      o.start(t);
-      o.stop(t + dec);
+      playChimeTone(root, randomize(0.04, 0.1), randomize(0.10, 0.1));
+      playChimeTone(root * ending, randomize(0.035, 0.1), randomize(0.14, 0.1), 0.04);
       break;
     }
-    // Tier 1 (100-999): 明亮 — 中频上扫 + body层
+    // Tier 1 (100-999): 根音 → 三度 → 开放音
     case 1: {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine';
-      o.connect(g);
-      connectToOutput(g);
-      const freq = randomize(800, 0.05);
-      const endFreq = randomize(1100, 0.05);
-      const vol = randomize(0.12, 0.08);
-      const dec = randomize(0.12, 0.08);
-      o.frequency.setValueAtTime(freq, t);
-      o.frequency.exponentialRampToValueAtTime(endFreq, t + dec * 0.6);
-      softAttack(g, vol, t);
-      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
-      o.start(t);
-      o.stop(t + dec);
-      addBodyLayer(freq, endFreq, vol, dec);
+      const mid = pick([5 / 4, 4 / 3]); // 大三度或纯四度
+      playChimeTone(root, randomize(0.04, 0.1), randomize(0.14, 0.1));
+      playChimeTone(root * mid, randomize(0.035, 0.1), randomize(0.16, 0.1), 0.04);
+      playChimeTone(root * ending, randomize(0.03, 0.1), randomize(0.20, 0.1), 0.08);
       break;
     }
-    // Tier 2 (1000-4999): 厚重 — 低频 triangle + 双body层
+    // Tier 2 (1000-4999): 四音琶音，从根音上行到开放音
     case 2: {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'triangle';
-      o.connect(g);
-      connectToOutput(g);
-      const freq = randomize(400, 0.05);
-      const endFreq = randomize(550, 0.05);
-      const vol = randomize(0.16, 0.08);
-      const dec = randomize(0.20, 0.08);
-      o.frequency.setValueAtTime(freq, t);
-      o.frequency.exponentialRampToValueAtTime(endFreq, t + dec * 0.6);
-      softAttack(g, vol, t);
-      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
-      o.start(t);
-      o.stop(t + dec);
-      addBodyLayer(freq, endFreq, vol, dec);
-      addBodyLayer(freq * 0.5, endFreq * 0.5, vol * 0.3, dec);
+      const m1 = pick([9 / 8, 5 / 4]);  // 二度或三度
+      const m2 = pick([4 / 3, 3 / 2]);  // 四度或五度
+      playChimeTone(root, randomize(0.04, 0.1), randomize(0.20, 0.1));
+      playChimeTone(root * m1, randomize(0.035, 0.1), randomize(0.22, 0.1), 0.03);
+      playChimeTone(root * m2, randomize(0.03, 0.1), randomize(0.24, 0.1), 0.06);
+      playChimeTone(root * ending * 1, randomize(0.03, 0.1), randomize(0.28, 0.1), 0.09);
       break;
     }
-    // Tier 3 (5000+): 轰鸣 — 极低频 + 次谐波 + 长尾
+    // Tier 3 (5000+): 五音级联 + 低八度垫底，结尾大九度
     case 3: {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'triangle';
-      o.connect(g);
-      connectToOutput(g);
-      const freq = randomize(250, 0.05);
-      const endFreq = randomize(400, 0.05);
-      const vol = randomize(0.22, 0.08);
-      const dec = randomize(0.35, 0.08);
-      o.frequency.setValueAtTime(freq, t);
-      o.frequency.exponentialRampToValueAtTime(endFreq, t + dec * 0.5);
-      softAttack(g, vol, t);
-      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
-      o.start(t);
-      o.stop(t + dec);
-      // 次谐波 125Hz
-      const sub = ctx.createOscillator();
-      const subG = ctx.createGain();
-      sub.type = 'sine';
-      sub.connect(subG);
-      connectToOutput(subG);
-      sub.frequency.setValueAtTime(randomize(125, 0.05), t);
-      softAttack(subG, vol * 0.4, t);
-      subG.gain.exponentialRampToValueAtTime(0.01, t + dec * 0.8);
-      sub.start(t);
-      sub.stop(t + dec * 0.8);
-      addBodyLayer(freq, endFreq, vol, dec);
-      addBodyLayer(freq * 0.5, endFreq * 0.5, vol * 0.25, dec * 0.7);
+      playChimeTone(root * 0.5, randomize(0.025, 0.1), randomize(0.30, 0.1));
+      const steps = [1, 5 / 4, 3 / 2, 2, 9 / 4]; // 根 三 五 八 九
+      for (let i = 0; i < steps.length; i++) {
+        playChimeTone(root * steps[i], randomize(0.032, 0.1), randomize(0.28, 0.1), i * 0.03);
+      }
       break;
     }
   }
