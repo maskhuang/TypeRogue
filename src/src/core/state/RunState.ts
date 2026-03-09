@@ -7,6 +7,7 @@ import { BattleResult } from '../../scenes/battle/BattleFlowController'
 import { drawBossModifiers } from '../../data/bossModifiers'
 import { DELETED_SKILL_IDS, DELETED_EVOLUTION_IDS } from '../../data/skills'
 import { DELETED_RELIC_IDS, MAX_RELIC_SLOTS } from '../../data/relics'
+import type { ClassId } from '../types'
 
 /**
  * 技能实例（已获得的技能）
@@ -98,6 +99,41 @@ export interface RunStateData {
 
   /** 遗物可变状态（relicId → 数值），用于 entropy/schrodinger_dice 等有动态值的遗物 */
   relicStates: Record<string, number>
+
+  // === 职业系统字段（Story 32.11） ===
+
+  /** 当前职业 ID */
+  classId: ClassId
+
+  /** 造词师：26 字母碎片库存 */
+  fragmentInventory: Record<string, number>
+
+  /** 造词师：采集队列字母序列 */
+  fragmentQueue: string[]
+
+  /** 造词师：采集队列当前位置 */
+  fragmentQueuePosition: number
+
+  /** 造词师：本 Run 已造词列表 */
+  craftedWords: string[]
+
+  /** 蜕变师：变异素库存 */
+  mutagenInventory: number
+
+  /** 技能进化映射（原ID → 进化ID） */
+  evolvedSkills: Map<string, string>
+
+  /** 技能附魔映射（skillId → enchantmentId） */
+  enchantedSkills: Map<string, string>
+
+  /** 已见技能类型（用于商店多样性） */
+  seenSkillTypes: Set<string>
+
+  /** 增幅者叠层（skillId → 叠层数） */
+  amplifierStacks: Map<string, number>
+
+  /** 词库（含造词师造出的词） */
+  wordDeck: string[]
 }
 
 /**
@@ -144,6 +180,17 @@ export class RunState {
       cycle: 1,
       activeModifiers: [],
       relicStates: {},
+      classId: 'none',
+      fragmentInventory: {},
+      fragmentQueue: ['_', '_', '_', '_', '_', '_'],
+      fragmentQueuePosition: 0,
+      craftedWords: [],
+      mutagenInventory: 0,
+      evolvedSkills: new Map(),
+      enchantedSkills: new Map(),
+      seenSkillTypes: new Set(),
+      amplifierStacks: new Map(),
+      wordDeck: [],
     }
   }
 
@@ -473,6 +520,17 @@ export class RunState {
       cycle: this.data.cycle,
       activeModifiers: [...this.data.activeModifiers],
       relicStates: { ...this.data.relicStates },
+      classId: this.data.classId,
+      fragmentInventory: { ...this.data.fragmentInventory },
+      fragmentQueue: [...this.data.fragmentQueue],
+      fragmentQueuePosition: this.data.fragmentQueuePosition,
+      craftedWords: [...this.data.craftedWords],
+      mutagenInventory: this.data.mutagenInventory,
+      evolvedSkills: Object.fromEntries(this.data.evolvedSkills),
+      enchantedSkills: Object.fromEntries(this.data.enchantedSkills),
+      seenSkillTypes: Array.from(this.data.seenSkillTypes),
+      amplifierStacks: Object.fromEntries(this.data.amplifierStacks),
+      wordDeck: [...this.data.wordDeck],
     }
   }
 
@@ -547,6 +605,33 @@ export class RunState {
     runState.data.cycle = (parsed as any).cycle || 1
     runState.data.activeModifiers = (parsed as any).activeModifiers || []
     runState.data.relicStates = (parsed as any).relicStates || {}
+
+    // 恢复职业系统字段（兼容旧存档）
+    runState.data.classId = ((parsed as any).classId || 'none') as ClassId
+    runState.data.fragmentInventory = (parsed as any).fragmentInventory || {}
+    runState.data.fragmentQueue = (parsed as any).fragmentQueue || ['_', '_', '_', '_', '_', '_']
+    runState.data.fragmentQueuePosition = (parsed as any).fragmentQueuePosition || 0
+    runState.data.craftedWords = (parsed as any).craftedWords || []
+    runState.data.mutagenInventory = (parsed as any).mutagenInventory || 0
+    runState.data.wordDeck = (parsed as any).wordDeck || []
+
+    const evolvedEntries = (parsed as any).evolvedSkills || {}
+    Object.entries(evolvedEntries).forEach(([skillId, evolvedId]) => {
+      runState.data.evolvedSkills.set(skillId, evolvedId as string)
+    })
+
+    const enchantedEntries = (parsed as any).enchantedSkills || {}
+    Object.entries(enchantedEntries).forEach(([skillId, enchId]) => {
+      runState.data.enchantedSkills.set(skillId, enchId as string)
+    })
+
+    const seenTypes: string[] = (parsed as any).seenSkillTypes || []
+    seenTypes.forEach(t => runState.data.seenSkillTypes.add(t))
+
+    const ampEntries = (parsed as any).amplifierStacks || {}
+    Object.entries(ampEntries).forEach(([skillId, count]) => {
+      runState.data.amplifierStacks.set(skillId, count as number)
+    })
 
     return runState
   }

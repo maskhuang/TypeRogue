@@ -293,7 +293,7 @@ development_status:
 
   # ===== Epic 32: 职业系统 + 造词师 + 蜕变师 =====
   # Source: docs/stories/epic-22-class-system.md (renumbered from Epic 22)
-  epic-32: in-progress
+  epic-32: done
   32-1-class-framework: done
   32-2-class-resource-pipeline: done
   32-3-class-loss-mechanism: done
@@ -304,5 +304,5 @@ development_status:
   32-8-metamorph-hidden-pool: done
   32-9-metamorph-mutation-core: done
   32-10-metamorph-enchantments-relics: done
-  32-11-class-integration-balance: backlog
+  32-11-class-integration-balance: done
   epic-32-retrospective: optional
