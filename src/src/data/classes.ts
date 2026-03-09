@@ -3,7 +3,7 @@
 // ============================================
 // Story 32.1 Task 1: 职业定义框架
 
-import type { ClassId, FeatureId } from '../core/types';
+import type { ClassId, FeatureId, ResourceType } from '../core/types';
 
 /**
  * 职业定义接口
@@ -13,12 +13,8 @@ export interface ClassDefinition {
   name: string;
   description: string;
   icon: string;
-  /**
-   * 独有资源类型名称
-   * TODO(Story 32.2): 当前为 string | null，待 ResourceType 扩展 'fragment' | 'mutagen' 后
-   * 应改为 ResourceType | null，并同步更新所有引用处
-   */
-  uniqueResource: string | null;
+  /** 独有资源类型 */
+  uniqueResource: ResourceType | null;
   /** 失去的能力 */
   loseFeature: FeatureId | null;
   /** 失去能力的描述 */

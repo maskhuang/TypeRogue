@@ -67,21 +67,25 @@ export const BALANCE = {
 // === 资源标签 ===
 export const RESOURCE_LABELS: Record<string, string> = {
   base: '基数', score: '分数', multiplier: '倍率', time: '时间', gold: '金币',
+  fragment: '碎片', mutagen: '变异素',
 };
 
 // === 资源图标 ===
 export const RESOURCE_ICONS: Record<string, string> = {
   base: '⚔️', score: '🪙', multiplier: '🔥', time: '⏳', gold: '💰',
+  fragment: '🔤', mutagen: '🧬',
 };
 
 // === 资源颜色 ===
-export const RESOURCE_COLORS = {
+export const RESOURCE_COLORS: Record<string, string> = {
   base: '#e74c3c',       // 红
   score: '#f1c40f',      // 金
   multiplier: '#e67e22',  // 橙
   time: '#3498db',       // 蓝
   gold: '#ffd700',       // 金币
-} as const;
+  fragment: '#9b59b6',   // 紫（造词师碎片）
+  mutagen: '#2ecc71',    // 绿（蜕变师变异素）
+};
 
 // === 动画参数 ===
 export const ANIMATION = {

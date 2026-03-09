@@ -26,12 +26,20 @@ export function createInitialState(): GameState {
     wordPerfect: true,
     lastMilestone: 0,
     overkill: 0,
+    classResourceProduced: {},
+    fragmentInventory: {
+      a: 0, b: 0, c: 0, d: 0, e: 0, f: 0, g: 0, h: 0, i: 0, j: 0, k: 0, l: 0, m: 0,
+      n: 0, o: 0, p: 0, q: 0, r: 0, s: 0, t: 0, u: 0, v: 0, w: 0, x: 0, y: 0, z: 0,
+    },
+    mutagenInventory: 0,
     resources: {
       base: 0,
       score: 0,
       multiplier: BALANCE.BASE_MULTIPLIER,
       time: BALANCE.TIME_PER_LEVEL,
       gold: 0,
+      fragment: 0,
+      mutagen: 0,
     },
     cycle: 1,
     activeModifiers: [],
@@ -125,6 +133,9 @@ export function resetResources(): void {
   state.resources.score = 0;
   state.resources.multiplier = BALANCE.BASE_MULTIPLIER;
   state.resources.time = state.timeMax;
+  state.resources.fragment = 0;
+  state.resources.mutagen = 0;
+  state.classResourceProduced = {};
 }
 
 // === 状态重置 ===

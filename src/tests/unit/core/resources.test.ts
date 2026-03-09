@@ -199,12 +199,90 @@ describe('资源 proxy（multiplier/time 双向同步）', () => {
 })
 
 describe('RESOURCE_COLORS', () => {
-  it('定义了 5 种资源颜色', async () => {
+  it('定义了 5 种通用资源颜色', async () => {
     const { RESOURCE_COLORS } = await import('../../../src/core/constants')
     expect(RESOURCE_COLORS.base).toBe('#e74c3c')
     expect(RESOURCE_COLORS.score).toBe('#f1c40f')
     expect(RESOURCE_COLORS.multiplier).toBe('#e67e22')
     expect(RESOURCE_COLORS.time).toBe('#3498db')
     expect(RESOURCE_COLORS.gold).toBe('#ffd700')
+  })
+
+  it('定义了职业资源颜色', async () => {
+    const { RESOURCE_COLORS } = await import('../../../src/core/constants')
+    expect(RESOURCE_COLORS.fragment).toBe('#9b59b6')
+    expect(RESOURCE_COLORS.mutagen).toBe('#2ecc71')
+  })
+})
+
+describe('职业资源初始化 (Story 32.2)', () => {
+  beforeEach(() => {
+    resetState()
+  })
+
+  it('resources.fragment 初始值为 0', () => {
+    expect(state.resources.fragment).toBe(0)
+  })
+
+  it('resources.mutagen 初始值为 0', () => {
+    expect(state.resources.mutagen).toBe(0)
+  })
+
+  it('classResourceProduced 初始为空对象', () => {
+    expect(state.classResourceProduced).toEqual({})
+  })
+
+  it('fragmentInventory 初始为 26 字母全 0', () => {
+    expect(Object.keys(state.fragmentInventory)).toHaveLength(26)
+    for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
+      expect(state.fragmentInventory[letter]).toBe(0)
+    }
+  })
+
+  it('mutagenInventory 初始为 0', () => {
+    expect(state.mutagenInventory).toBe(0)
+  })
+
+  it('resetResources 重置 fragment/mutagen 和 classResourceProduced', () => {
+    state.resources.fragment = 10
+    state.resources.mutagen = 5
+    state.classResourceProduced = { fragment: 10, mutagen: 5 }
+    resetResources()
+    expect(state.resources.fragment).toBe(0)
+    expect(state.resources.mutagen).toBe(0)
+    expect(state.classResourceProduced).toEqual({})
+  })
+
+  it('classResourceProduced 可正确累加 fragment', () => {
+    state.classResourceProduced.fragment = (state.classResourceProduced.fragment ?? 0) + 5
+    state.classResourceProduced.fragment = (state.classResourceProduced.fragment ?? 0) + 3
+    expect(state.classResourceProduced.fragment).toBe(8)
+  })
+
+  it('classResourceProduced 可正确累加 mutagen', () => {
+    state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + 7
+    expect(state.classResourceProduced.mutagen).toBe(7)
+  })
+
+  it('fragmentInventory._total 可正确累加', () => {
+    state.fragmentInventory._total = (state.fragmentInventory._total ?? 0) + 4
+    state.fragmentInventory._total = (state.fragmentInventory._total ?? 0) + 6
+    expect(state.fragmentInventory._total).toBe(10)
+  })
+
+  it('mutagenInventory 可正确累加', () => {
+    state.mutagenInventory += 3
+    state.mutagenInventory += 2
+    expect(state.mutagenInventory).toBe(5)
+  })
+
+  it('resetResources 不重置跨关库存（fragmentInventory/mutagenInventory）', () => {
+    state.fragmentInventory._total = 10
+    state.fragmentInventory.a = 3
+    state.mutagenInventory = 7
+    resetResources()
+    expect(state.fragmentInventory._total).toBe(10)
+    expect(state.fragmentInventory.a).toBe(3)
+    expect(state.mutagenInventory).toBe(7)
   })
 })

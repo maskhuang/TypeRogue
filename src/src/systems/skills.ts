@@ -22,7 +22,7 @@ import { eventBus } from '../core/events/EventBus';
 
 
 // === 战后统计：记录技能触发 ===
-const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, gold: 0 };
+const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, gold: 0, fragment: 0, mutagen: 0 };
 
 function recordSkillTrigger(
   skillId: string,
@@ -407,21 +407,38 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
     }
   }
 
+  // 职业资源：累加本关产出计数器 + 跨关库存
+  if (prod.resource === 'fragment') {
+    const absDelta = Math.abs(delta);
+    state.classResourceProduced.fragment = (state.classResourceProduced.fragment ?? 0) + absDelta;
+    // 暂写入通用 _total 键；Story 32.4 采集队列会按字母分配
+    state.fragmentInventory._total = (state.fragmentInventory._total ?? 0) + absDelta;
+  } else if (prod.resource === 'mutagen') {
+    const absDelta = Math.abs(delta);
+    state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + absDelta;
+    state.mutagenInventory += absDelta;
+  }
+
   // 战后统计
   recordSkillTrigger(producerId, triggerKey, prod.resource, delta, _isChainTrigger);
 
-  // 浮字反馈
-  const color = RESOURCE_COLORS[prod.resource];
-  const rawDisplay = prod.operator === 'add' ? value : baseValue;
-  const displayValue = parseFloat(rawDisplay.toPrecision(4));
-  if (prod.operator === 'add') {
-    const scale = getFloatScale(prod.resource, delta);
-    showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color, scale);
-    // TODO: Epic 23 — 资源产出音效
-  } else {
-    const scale = getFloatScaleMul(prod.resource, (value - 1) * totalMult);
-    showFeedback(`×${displayValue}`, color, scale);
-    // TODO: Epic 23 — 资源产出音效
+  // 浮字反馈（非激活职业资源不显示）
+  const isClassResource = prod.resource === 'fragment' || prod.resource === 'mutagen';
+  const isActiveClassResource = (prod.resource === 'fragment' && state.classId === 'wordsmith')
+    || (prod.resource === 'mutagen' && state.classId === 'metamorph');
+  if (!isClassResource || isActiveClassResource) {
+    const color = RESOURCE_COLORS[prod.resource];
+    const rawDisplay = prod.operator === 'add' ? value : baseValue;
+    const displayValue = parseFloat(rawDisplay.toPrecision(4));
+    if (prod.operator === 'add') {
+      const scale = getFloatScale(prod.resource, delta);
+      showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color, scale);
+      // TODO: Epic 23 — 资源产出音效
+    } else {
+      const scale = getFloatScaleMul(prod.resource, (value - 1) * totalMult);
+      showFeedback(`×${displayValue}`, color, scale);
+      // TODO: Epic 23 — 资源产出音效
+    }
   }
   if (enchMult > 1) {
     showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(producerId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
@@ -447,7 +464,7 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   _currentTriggerKey = triggerKey;
   const level = state.player.skills.get(converterId)?.level || 1;
   const k = getConverterK(converterId, level);
-  const sourceVal = getSourceValue(conv.source, state.resources);
+  const sourceVal = getSourceValue(conv.source, state.resources, state.classResourceProduced);
   const enchMult = getEnchantmentMultiplier(converterId, triggerKey);
   const ampBonus = getAmplifierBonus(converterId, triggerKey, conv.target);
   const amplifiedK = (k + ampBonus.addBonus) * ampBonus.mulBonus;
@@ -495,20 +512,36 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
     }
   }
 
+  // 转化者目标为职业资源时：累加本关产出计数器 + 库存
+  if (conv.target === 'fragment') {
+    const absDelta = Math.abs(delta);
+    state.classResourceProduced.fragment = (state.classResourceProduced.fragment ?? 0) + absDelta;
+    state.fragmentInventory._total = (state.fragmentInventory._total ?? 0) + absDelta;
+  } else if (conv.target === 'mutagen') {
+    const absDelta = Math.abs(delta);
+    state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + absDelta;
+    state.mutagenInventory += absDelta;
+  }
+
   // 战后统计
   recordSkillTrigger(converterId, triggerKey, conv.target, delta, _isChainTrigger);
 
-  // 浮字反馈
-  const color = RESOURCE_COLORS[conv.target];
-  const displayDelta = Math.round(delta);
-  if (conv.formula === 'add') {
-    const scale = getFloatScale(conv.target, delta);
-    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color, scale);
-    // TODO: Epic 23 — 资源产出音效
-  } else {
-    const scale = getFloatScaleMul(conv.target, sourceVal * amplifiedK * totalMult);
-    showFeedback(`×${parseFloat((1 + sourceVal * amplifiedK).toPrecision(4))}`, color, scale);
-    // TODO: Epic 23 — 资源产出音效
+  // 浮字反馈（非激活职业资源不显示）
+  const isTargetClassResource = conv.target === 'fragment' || conv.target === 'mutagen';
+  const isTargetActiveClass = (conv.target === 'fragment' && state.classId === 'wordsmith')
+    || (conv.target === 'mutagen' && state.classId === 'metamorph');
+  if (!isTargetClassResource || isTargetActiveClass) {
+    const color = RESOURCE_COLORS[conv.target];
+    const displayDelta = Math.round(delta);
+    if (conv.formula === 'add') {
+      const scale = getFloatScale(conv.target, delta);
+      showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color, scale);
+      // TODO: Epic 23 — 资源产出音效
+    } else {
+      const scale = getFloatScaleMul(conv.target, sourceVal * amplifiedK * totalMult);
+      showFeedback(`×${parseFloat((1 + sourceVal * amplifiedK).toPrecision(4))}`, color, scale);
+      // TODO: Epic 23 — 资源产出音效
+    }
   }
   if (enchMult > 1) {
     showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(converterId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
@@ -623,7 +656,7 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
   if (!conv) return;
   const level = state.player.skills.get(converterId)?.level || 1;
   const k = getConverterK(converterId, level);
-  const sourceVal = getSourceValue(conv.source, state.resources);
+  const sourceVal = getSourceValue(conv.source, state.resources, state.classResourceProduced);
 
   showTriggerPopup(converterId);
 
@@ -651,15 +684,32 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
     }
   }
 
+  // 转化者目标为职业资源时：累加本关产出计数器 + 库存
+  if (conv.target === 'fragment') {
+    const absDelta = Math.abs(delta);
+    state.classResourceProduced.fragment = (state.classResourceProduced.fragment ?? 0) + absDelta;
+    state.fragmentInventory._total = (state.fragmentInventory._total ?? 0) + absDelta;
+  } else if (conv.target === 'mutagen') {
+    const absDelta = Math.abs(delta);
+    state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + absDelta;
+    state.mutagenInventory += absDelta;
+  }
+
   // 战后统计
   recordSkillTrigger(converterId, triggerKey, conv.target, delta, false);
 
-  const color = RESOURCE_COLORS[conv.target];
-  const displayDelta = Math.round(delta);
-  if (conv.formula === 'add') {
-    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)} (溅射)`, color, getFloatScale(conv.target, delta));
-  } else {
-    showFeedback(`×${parseFloat((1 + sourceVal * k * reduction).toPrecision(4))} (溅射)`, color, getFloatScaleMul(conv.target, sourceVal * k * reduction));
+  // 浮字反馈（非激活职业资源不显示）
+  const isTargetClassRes = conv.target === 'fragment' || conv.target === 'mutagen';
+  const isTargetActiveRes = (conv.target === 'fragment' && state.classId === 'wordsmith')
+    || (conv.target === 'mutagen' && state.classId === 'metamorph');
+  if (!isTargetClassRes || isTargetActiveRes) {
+    const color = RESOURCE_COLORS[conv.target];
+    const displayDelta = Math.round(delta);
+    if (conv.formula === 'add') {
+      showFeedback(`+${displayDelta}${getResourceLabel(conv.target)} (溅射)`, color, getFloatScale(conv.target, delta));
+    } else {
+      showFeedback(`×${parseFloat((1 + sourceVal * k * reduction).toPrecision(4))} (溅射)`, color, getFloatScaleMul(conv.target, sourceVal * k * reduction));
+    }
   }
 
   // 成长附魔累积（溅射/共鸣子触发也贡献）

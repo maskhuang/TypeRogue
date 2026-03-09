@@ -7,9 +7,9 @@ import { initElements } from './ui/elements';
 import { state } from './core/state';
 import { getStarterWords } from './data/words';
 import { drawBossModifiers } from './data/bossModifiers';
-import { drawConverterPool } from './data/converters';
-import { drawConnectorPool } from './data/connectors';
-import { drawAmplifierPool } from './data/amplifiers';
+import { drawConverterPool, CONVERTERS } from './data/converters';
+import { drawConnectorPool, CONNECTORS } from './data/connectors';
+import { drawAmplifierPool, AMPLIFIERS } from './data/amplifiers';
 import { startLevel, initInput, resetLastAct } from './systems/battle';
 import { initShopEvents } from './systems/shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
@@ -18,6 +18,7 @@ import { initLeaderboardDisplay, renderLeaderboard } from './ui/leaderboardDispl
 import { eventBus } from './core/events/EventBus';
 import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode } from './core/seededRandom';
 import { showClassPicker } from './systems/classes/ClassPicker';
+import { filterSkillIdsByClass } from './systems/classes/ClassResourceFilter';
 
 // === 游戏初始化 ===
 function init(): void {
@@ -104,6 +105,11 @@ function init(): void {
   state.level = 1;
 
   const startAfterClassSelect = () => {
+    // Story 32.2: 按职业过滤技能池（移除非当前职业的职业资源技能）
+    state.converterPool = filterSkillIdsByClass(state.converterPool, state.classId, id => CONVERTERS[id]);
+    state.connectorPool = filterSkillIdsByClass(state.connectorPool, state.classId, id => CONNECTORS[id]);
+    state.amplifierPool = filterSkillIdsByClass(state.amplifierPool, state.classId, id => AMPLIFIERS[id]);
+
     if (hasUnownedRelics()) {
       showRelicPicker(() => void startLevel(), RELIC_WEIGHT_PRESETS.gameStart);
     } else {

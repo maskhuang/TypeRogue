@@ -32,6 +32,8 @@ import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
 import { dragManager } from './dragManager';
+import { isResourceActiveForClass } from './classes/ClassResourceFilter';
+import { CLASS_DEFINITIONS } from '../data/classes';
 import type { DragPayload } from './dragManager';
 
 // === 零频键位缓存（供自动绑定使用） ===
@@ -202,7 +204,12 @@ function generateShopItems(count: number): ShopItem[] {
     const poolConverterIds = state.converterPool.filter(id => id in CONVERTERS);
     const poolConnectorIds = state.connectorPool.filter(id => id in CONNECTORS);
     const poolAmplifierIds = state.amplifierPool.filter(id => id in AMPLIFIERS);
-    const allSkillIds = [...Object.keys(PRODUCERS), ...poolConverterIds, ...poolConnectorIds, ...poolAmplifierIds];
+    // Story 32.2: 过滤非当前职业的职业资源相关技能
+    const producerIds = Object.keys(PRODUCERS).filter(id => {
+      const prod = PRODUCERS[id];
+      return isResourceActiveForClass(prod.resource, state.classId);
+    });
+    const allSkillIds = [...producerIds, ...poolConverterIds, ...poolConnectorIds, ...poolAmplifierIds];
     const unowned = allSkillIds.filter(id => !owned.includes(id));
 
     // 按类型分桶（T4 限制遗物可禁用连接者）
@@ -1498,11 +1505,16 @@ function heatColor(ratio: number): string {
 type HeatmapDimension = 'triggerCount' | ResourceType;
 let currentHeatmapDimension: HeatmapDimension = 'triggerCount';
 
-const HEATMAP_DIMENSIONS: { key: HeatmapDimension; label: string; color: string }[] = [
-  { key: 'triggerCount', label: '触发数', color: '#aaa' },
-  ...(['base', 'score', 'multiplier', 'time', 'gold'] as ResourceType[])
-    .map(r => ({ key: r as HeatmapDimension, label: RESOURCE_LABELS[r], color: RESOURCE_COLORS[r] })),
-];
+function getHeatmapDimensions(): { key: HeatmapDimension; label: string; color: string }[] {
+  const resources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+  // Story 32.2: 激活的职业资源也显示在热力图维度中
+  const classRes = CLASS_DEFINITIONS[state.classId]?.uniqueResource;
+  if (classRes) resources.push(classRes);
+  return [
+    { key: 'triggerCount', label: '触发数', color: '#aaa' },
+    ...resources.map(r => ({ key: r as HeatmapDimension, label: RESOURCE_LABELS[r], color: RESOURCE_COLORS[r] })),
+  ];
+}
 
 function getKeyValue(ks: import('../core/types').KeyStats | undefined, dim: HeatmapDimension): number {
   if (!ks) return 0;
@@ -1519,7 +1531,7 @@ function formatDimValue(val: number, dim: HeatmapDimension): string {
 function renderHeatmapTab(container: HTMLElement, bs: import('../core/types').BattleStats): void {
   // 维度选择器
   let html = '<div class="heatmap-dims">';
-  HEATMAP_DIMENSIONS.forEach(d => {
+  getHeatmapDimensions().forEach(d => {
     const active = d.key === currentHeatmapDimension;
     const style = active ? `color:${d.color};border-color:${d.color}` : '';
     html += `<span class="heatmap-dim${active ? ' active' : ''}" data-dim="${d.key}" style="${style}">${d.label}</span>`;
@@ -1580,7 +1592,11 @@ function showHeatmapTooltip(e: MouseEvent, key: string, bs: import('../core/type
   tip.id = 'heatmap-tooltip';
   tip.className = 'heatmap-tooltip';
 
-  const resourceLines = (['base', 'score', 'multiplier', 'time', 'gold'] as ResourceType[])
+  // Story 32.2: 包含激活的职业资源
+  const tooltipResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+  const tooltipClassRes = CLASS_DEFINITIONS[state.classId]?.uniqueResource;
+  if (tooltipClassRes) tooltipResources.push(tooltipClassRes);
+  const resourceLines = tooltipResources
     .filter(r => ks.resources[r] > 0)
     .map(r => `<div class="ht-resource"><span style="color:${RESOURCE_COLORS[r]}">${RESOURCE_ICONS[r]} ${RESOURCE_LABELS[r]}</span> +${ks.resources[r].toFixed(1)}</div>`)
     .join('');

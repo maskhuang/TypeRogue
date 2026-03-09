@@ -151,7 +151,7 @@ describe('getConverterK', () => {
 });
 
 describe('getSourceValue', () => {
-  const resources = { base: 15, score: 200, multiplier: 2.0, time: 40, gold: 15 };
+  const resources = { base: 15, score: 200, multiplier: 2.0, time: 40, gold: 15, fragment: 0, mutagen: 0 };
 
   it('基数为源直接返回 base', () => {
     expect(getSourceValue('base', resources)).toBe(15);
@@ -175,8 +175,22 @@ describe('getSourceValue', () => {
   });
 
   it('分数为源 mid-game: score=800 + base=15 × mult=2.0 = 830', () => {
-    const mid = { base: 15, score: 800, multiplier: 2.0, time: 40, gold: 15 };
+    const mid = { base: 15, score: 800, multiplier: 2.0, time: 40, gold: 15, fragment: 0, mutagen: 0 };
     expect(getSourceValue('score', mid)).toBeCloseTo(830);
+  });
+
+  it('fragment 为源时读取 classResourceProduced', () => {
+    const produced = { fragment: 42 };
+    expect(getSourceValue('fragment', resources, produced)).toBe(42);
+  });
+
+  it('mutagen 为源时读取 classResourceProduced', () => {
+    const produced = { mutagen: 10 };
+    expect(getSourceValue('mutagen', resources, produced)).toBe(10);
+  });
+
+  it('fragment 为源无 classResourceProduced 返回 0', () => {
+    expect(getSourceValue('fragment', resources)).toBe(0);
   });
 });
 

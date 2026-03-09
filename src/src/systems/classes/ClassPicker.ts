@@ -8,6 +8,7 @@ import type { ClassDefinition } from '../../data/classes';
 import { CLASS_DEFINITIONS, getSelectableClassIds } from '../../data/classes';
 import { classManager } from './ClassManager';
 import type { MetaState } from '../../core/state/MetaState';
+import { RESOURCE_LABELS, RESOURCE_ICONS } from '../../core/constants';
 
 /**
  * 显示职业选择界面
@@ -119,7 +120,9 @@ function createClassCard(def: ClassDefinition, isUnlocked: boolean): HTMLDivElem
     if (def.uniqueResource) {
       const span = document.createElement('span');
       span.className = 'info-resource';
-      span.textContent = `资源: ${def.uniqueResource}`;
+      const resIcon = RESOURCE_ICONS[def.uniqueResource] || '';
+      const resLabel = RESOURCE_LABELS[def.uniqueResource] || def.uniqueResource;
+      span.textContent = `资源: ${resIcon} ${resLabel}`;
       infoEl.appendChild(span);
       hasInfo = true;
     }

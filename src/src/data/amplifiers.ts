@@ -30,11 +30,13 @@ const RELATION_ICONS: Record<string, string> = {
 // === 资源基础图标（用于复合图标） ===
 const RESOURCE_BASE_ICONS: Record<ResourceType, string> = {
   base: '🔱', score: '🏹', multiplier: '✴️', time: '💧', gold: '💠',
+  fragment: '🔤', mutagen: '🧬',
 };
 
 // === 资源 ID 缩写（用于生成 amp ID） ===
 const RES_ID: Record<ResourceType, string> = {
   base: 'base', score: 'score', multiplier: 'mult', time: 'time', gold: 'gold',
+  fragment: 'fragment', mutagen: 'mutagen',
 };
 
 // === 增幅者名称表（30 个唯一名称） ===
@@ -44,6 +46,8 @@ const AMP_NAMES: Record<ResourceType, Record<string, string>> = {
   multiplier: { [PositionRelation.Adjacent]: '激励', [PositionRelation.SameRow]: '共振', [PositionRelation.SameColumn]: '纵振', [PositionRelation.SameHand]: '合力', [PositionRelation.SameFinger]: '精振', [PositionRelation.Symmetric]: '映振' },
   time:       { [PositionRelation.Adjacent]: '滋润', [PositionRelation.SameRow]: '延续', [PositionRelation.SameColumn]: '纵延', [PositionRelation.SameHand]: '缓息', [PositionRelation.SameFinger]: '精续', [PositionRelation.Symmetric]: '映时' },
   gold:       { [PositionRelation.Adjacent]: '铸币', [PositionRelation.SameRow]: '淘金', [PositionRelation.SameColumn]: '掘金', [PositionRelation.SameHand]: '聚金', [PositionRelation.SameFinger]: '精金', [PositionRelation.Symmetric]: '映金' },
+  fragment:   {},  // 造词师专属，具体增幅者在 Story 32.5 定义
+  mutagen:    {},  // 蜕变师专属，具体增幅者在 Story 32.8 定义
 };
 
 // === 增幅值表（valuePerStack 小数）===
@@ -54,6 +58,8 @@ const AMP_VALUES: Record<ResourceType, Record<string, number>> = {
   multiplier: { [PositionRelation.Adjacent]: 0.02, [PositionRelation.SameRow]: 0.015, [PositionRelation.SameColumn]: 0.04, [PositionRelation.SameHand]: 0.01, [PositionRelation.SameFinger]: 0.04, [PositionRelation.Symmetric]: 0.08 },
   time:       { [PositionRelation.Adjacent]: 0.02, [PositionRelation.SameRow]: 0.015, [PositionRelation.SameColumn]: 0.04, [PositionRelation.SameHand]: 0.01, [PositionRelation.SameFinger]: 0.04, [PositionRelation.Symmetric]: 0.08 },
   gold:       { [PositionRelation.Adjacent]: 0.03, [PositionRelation.SameRow]: 0.025, [PositionRelation.SameColumn]: 0.06, [PositionRelation.SameHand]: 0.02, [PositionRelation.SameFinger]: 0.06, [PositionRelation.Symmetric]: 0.12 },
+  fragment:   {},  // 造词师专属
+  mutagen:    {},  // 蜕变师专属
 };
 
 // === 生成描述字符串 ===

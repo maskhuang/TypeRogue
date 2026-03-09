@@ -205,12 +205,12 @@ describe('第一关金币保底 (21.4 AC5)', () => {
 
 // === 21.5: 热力图维度选择器 ===
 describe('热力图维度选择器 (21.5 AC4)', () => {
-  it('shop.ts 包含 HEATMAP_DIMENSIONS 定义', async () => {
+  it('shop.ts 包含热力图维度定义', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
     const content = fs.readFileSync(shopPath, 'utf-8')
-    expect(content).toContain('HEATMAP_DIMENSIONS')
+    expect(content).toContain('getHeatmapDimensions')
     expect(content).toContain('HeatmapDimension')
     expect(content).toContain('currentHeatmapDimension')
   })

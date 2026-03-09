@@ -10,7 +10,7 @@ export type ClassId = 'none' | 'wordsmith' | 'metamorph';
 export type FeatureId = 'pack-system' | 'enchant-choice';
 
 // === 资源系统 ===
-export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'gold';
+export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'gold' | 'fragment' | 'mutagen';
 
 // === 产出者系统 ===
 export type ProducerOperator = 'add' | 'multiply';
@@ -118,6 +118,8 @@ export interface ResourceState {
   multiplier: number;  // 倍率（基础 + 连击 + 技能加成）
   time: number;        // 时间资源（倒计时秒数）
   gold: number;        // 金币资源（跨词累加，战斗结束转入 state.gold）
+  fragment: number;    // 字母碎片（造词师专属，本关累计）
+  mutagen: number;     // 变异素（蜕变师专属，本关累计）
 }
 
 // === 游戏状态 ===
@@ -156,6 +158,9 @@ export interface GameState {
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
   seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者/增幅者 tooltip 跟踪）
   battleStats: BattleStats | null;                   // 上一战的统计数据（商店中展示）
+  classResourceProduced: Record<string, number>;  // 本关累计职业资源产出（fragment/mutagen），每关重置
+  fragmentInventory: Record<string, number>;       // 造词师：26 字母碎片库存（A-Z），跨关保持，Run 重置
+  mutagenInventory: number;                        // 蜕变师：变异素库存，跨关保持，Run 重置
   gameMode: 'normal' | 'daily';           // 游戏模式
   dailySeed: number | null;                // 每日挑战种子（daily 模式时非 null）
   resources: ResourceState;

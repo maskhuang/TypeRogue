@@ -295,7 +295,7 @@ development_status:
   # Source: docs/stories/epic-22-class-system.md (renumbered from Epic 22)
   epic-32: in-progress
   32-1-class-framework: done
-  32-2-class-resource-pipeline: backlog
+  32-2-class-resource-pipeline: done
   32-3-class-loss-mechanism: backlog
   32-4-wordsmith-fragment-queue: backlog
   32-5-wordsmith-producers-converters: backlog

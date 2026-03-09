@@ -15,7 +15,7 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   conv_base_mult_add:   { id: 'conv_base_mult_add',   name: '喷发', icon: '🌋', source: 'base', target: 'multiplier', formula: 'add',      k: 0.02,   desc: '触发时：🔥倍率+(⚔️基数×0.02)' },
   conv_base_mult_mul:   { id: 'conv_base_mult_mul',   name: '引爆', icon: '💥', source: 'base', target: 'multiplier', formula: 'multiply', k: 0.008,  desc: '触发时：🔥倍率×(1+⚔️基数×0.008)' },
   conv_base_time_add:   { id: 'conv_base_time_add',   name: '汲血', icon: '🩸', source: 'base', target: 'time',       formula: 'add',      k: 0.15,   desc: '触发时：⏳时间+(⚔️基数×0.15)' },
-  conv_base_time_mul:   { id: 'conv_base_time_mul',   name: '再生', icon: '🧬', source: 'base', target: 'time',       formula: 'multiply', k: 0.005,  desc: '触发时：⏳时间×(1+⚔️基数×0.005)' },
+  conv_base_time_mul:   { id: 'conv_base_time_mul',   name: '再生', icon: '🧪', source: 'base', target: 'time',       formula: 'multiply', k: 0.005,  desc: '触发时：⏳时间×(1+⚔️基数×0.005)' },
   // === 分数为源（7 个）— 🪙→ （mid ~1000，k 极小） ===
   conv_score_base_add:   { id: 'conv_score_base_add',   name: '投资', icon: '⚒️', source: 'score', target: 'base',       formula: 'add',      k: 0.006,   desc: '触发时：⚔️基数+(🪙分数×0.006)' },
   conv_score_base_mul:   { id: 'conv_score_base_mul',   name: '奠基', icon: '🏗️', source: 'score', target: 'base',       formula: 'multiply', k: 0.0006,  desc: '触发时：⚔️基数×(1+🪙分数×0.0006)' },
@@ -82,9 +82,13 @@ export function getConverterK(id: string, level: number): number {
 /**
  * 读取源资源当前值
  * - score 特殊处理：返回本关累计得分 = resources.score + resources.base × resources.multiplier
+ * - fragment/mutagen 特殊处理：读取本关累计产出量（classResourceProduced），而非 resources 当前值
  * - 其他资源直接返回 resources[source]
  */
-export function getSourceValue(source: ResourceType, resources: ResourceState): number {
+export function getSourceValue(source: ResourceType, resources: ResourceState, classResourceProduced?: Record<string, number>): number {
+  if (source === 'fragment' || source === 'mutagen') {
+    return classResourceProduced?.[source] ?? 0;
+  }
   if (source === 'score') {
     return resources.score + resources.base * resources.multiplier;
   }

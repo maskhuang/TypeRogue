@@ -65,17 +65,19 @@ describe('技能栏移除 (AC1)', () => {
 })
 
 // === AC2: 资源颜色定义 ===
-describe('5 种资源颜色 (AC2)', () => {
+describe('7 种资源颜色 (AC2 + Story 32.2)', () => {
   const expectedColors: Record<ResourceType, string> = {
     base: '#e74c3c',
     score: '#f1c40f',
     multiplier: '#e67e22',
     time: '#3498db',
     gold: '#ffd700',
+    fragment: '#9b59b6',
+    mutagen: '#2ecc71',
   }
 
-  it('RESOURCE_COLORS 包含 5 种资源', () => {
-    expect(Object.keys(RESOURCE_COLORS).length).toBe(5)
+  it('RESOURCE_COLORS 包含 7 种资源', () => {
+    expect(Object.keys(RESOURCE_COLORS).length).toBe(7)
   })
 
   for (const [resource, color] of Object.entries(expectedColors)) {
@@ -84,17 +86,19 @@ describe('5 种资源颜色 (AC2)', () => {
     })
   }
 
-  it('RESOURCE_LABELS 包含 5 种资源标签', () => {
-    expect(Object.keys(RESOURCE_LABELS).length).toBe(5)
+  it('RESOURCE_LABELS 包含 7 种资源标签', () => {
+    expect(Object.keys(RESOURCE_LABELS).length).toBe(7)
     expect(RESOURCE_LABELS['base']).toBe('基数')
     expect(RESOURCE_LABELS['score']).toBe('分数')
     expect(RESOURCE_LABELS['multiplier']).toBe('倍率')
     expect(RESOURCE_LABELS['time']).toBe('时间')
     expect(RESOURCE_LABELS['gold']).toBe('金币')
+    expect(RESOURCE_LABELS['fragment']).toBe('碎片')
+    expect(RESOURCE_LABELS['mutagen']).toBe('变异素')
   })
 
-  it('RESOURCE_ICONS 包含 5 种资源图标', () => {
-    expect(Object.keys(RESOURCE_ICONS).length).toBe(5)
+  it('RESOURCE_ICONS 包含 7 种资源图标', () => {
+    expect(Object.keys(RESOURCE_ICONS).length).toBe(7)
   })
 })
 
