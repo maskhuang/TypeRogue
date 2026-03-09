@@ -38,7 +38,7 @@ export function calculateCraftCost(letters: string[]): { fragments: Record<strin
 // === 检查碎片是否充足 ===
 function hasEnoughFragments(needed: Record<string, number>): boolean {
   for (const [letter, count] of Object.entries(needed)) {
-    if ((state.fragmentInventory[letter] || 0) < count) return false;
+    if (Math.floor(state.fragmentInventory[letter] || 0) < count) return false;
   }
   return true;
 }
@@ -210,7 +210,7 @@ function renderFragmentInventory(container: HTMLElement): void {
   for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
     const cell = document.createElement('div');
     cell.className = 'craft-inventory-cell';
-    const total = state.fragmentInventory[letter] || 0;
+    const total = Math.floor(state.fragmentInventory[letter] || 0);
     const used = currentWordLetters.filter(l => l === letter).length;
     const available = total - used;
     if (available <= 0) cell.classList.add('craft-inventory-empty');
@@ -242,7 +242,7 @@ function renderFragmentInventory(container: HTMLElement): void {
 function addLetterToWord(letter: string, panelContainer: HTMLElement): void {
   // 检查库存是否足够（计算已在输入中使用的数量）
   const usedCount = currentWordLetters.filter(l => l === letter).length;
-  const available = (state.fragmentInventory[letter] || 0) - usedCount;
+  const available = Math.floor(state.fragmentInventory[letter] || 0) - usedCount;
   if (available <= 0) {
     showFeedback(`${letter.toUpperCase()} 碎片不足!`, '#ff6b6b');
     return;
@@ -307,7 +307,7 @@ function renderWordBuilder(container: HTMLElement, onGoldUpdate: () => void): vo
     const entries = Object.entries(fragments);
     for (let idx = 0; idx < entries.length; idx++) {
       const [letter, count] = entries[idx];
-      const available = state.fragmentInventory[letter] || 0;
+      const available = Math.floor(state.fragmentInventory[letter] || 0);
       const part = document.createElement('span');
       if (available < count) part.className = 'craft-cost-insufficient';
       part.textContent = `${letter.toUpperCase()}×${count}`;

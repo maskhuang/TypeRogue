@@ -30,12 +30,12 @@ const RELATION_ICONS: Record<string, string> = {
 // === 31 个连接者数据 ===
 export const CONNECTORS: Record<string, ConnectorDefinition> = {
   // === 复制型（6 个）— 触发时，随机复制位置关系内一个技能 ===
-  conn_copy_adjacent:   { id: 'conn_copy_adjacent',   name: '映射', icon: '🔗', triggerType: 'copy', positionRelation: PositionRelation.Adjacent,   desc: '触发时：触发1个🔗相邻非连接技能' },
-  conn_copy_sameRow:    { id: 'conn_copy_sameRow',    name: '广播', icon: '📡', triggerType: 'copy', positionRelation: PositionRelation.SameRow,    desc: '触发时：触发1个📡同行非连接技能' },
-  conn_copy_sameColumn: { id: 'conn_copy_sameColumn', name: '钉合', icon: '📌', triggerType: 'copy', positionRelation: PositionRelation.SameColumn, desc: '触发时：触发1个📌同列非连接技能' },
-  conn_copy_sameHand:   { id: 'conn_copy_sameHand',   name: '握手', icon: '🤝', triggerType: 'copy', positionRelation: PositionRelation.SameHand,   desc: '触发时：触发1个🤝同手非连接技能' },
-  conn_copy_sameFinger: { id: 'conn_copy_sameFinger', name: '指令', icon: '👆', triggerType: 'copy', positionRelation: PositionRelation.SameFinger, desc: '触发时：触发1个👆同指非连接技能' },
-  conn_copy_symmetric:  { id: 'conn_copy_symmetric',  name: '链接', icon: '🪞', triggerType: 'copy', positionRelation: PositionRelation.Symmetric,  desc: '触发时：触发1个🪞对称位非连接技能' },
+  conn_copy_adjacent:   { id: 'conn_copy_adjacent',   name: '映射', icon: '🔗', triggerType: 'copy', positionRelation: PositionRelation.Adjacent,   desc: '触发1个🔗相邻非连接技能' },
+  conn_copy_sameRow:    { id: 'conn_copy_sameRow',    name: '广播', icon: '📡', triggerType: 'copy', positionRelation: PositionRelation.SameRow,    desc: '触发1个📡同行非连接技能' },
+  conn_copy_sameColumn: { id: 'conn_copy_sameColumn', name: '钉合', icon: '📌', triggerType: 'copy', positionRelation: PositionRelation.SameColumn, desc: '触发1个📌同列非连接技能' },
+  conn_copy_sameHand:   { id: 'conn_copy_sameHand',   name: '握手', icon: '🤝', triggerType: 'copy', positionRelation: PositionRelation.SameHand,   desc: '触发1个🤝同手非连接技能' },
+  conn_copy_sameFinger: { id: 'conn_copy_sameFinger', name: '指令', icon: '👆', triggerType: 'copy', positionRelation: PositionRelation.SameFinger, desc: '触发1个👆同指非连接技能' },
+  conn_copy_symmetric:  { id: 'conn_copy_symmetric',  name: '链接', icon: '🪞', triggerType: 'copy', positionRelation: PositionRelation.Symmetric,  desc: '触发1个🪞对称位非连接技能' },
 
   // === 资源触发型：基数↑（5 个）===
   conn_base_adjacent:   { id: 'conn_base_adjacent',   name: '震荡', icon: '⚔️🔗', triggerType: 'resourceTrigger', positionRelation: PositionRelation.Adjacent,   resource: 'base', desc: '🔗相邻技能产出⚔️基数时：触发1个🔗相邻非⚔️基数技能' },
@@ -98,7 +98,7 @@ export function getConnectorDesc(id: string): string {
   const relLabel = RELATION_LABELS[conn.positionRelation] || conn.positionRelation;
   const relIcon = RELATION_ICONS[conn.positionRelation] || '';
   if (conn.triggerType === 'copy') {
-    return `触发时：触发1个${relIcon}${relLabel}非连接技能`;
+    return `触发1个${relIcon}${relLabel}非连接技能`;
   }
   const resLabel = RESOURCE_LABELS[conn.resource!] || conn.resource;
   const resIcon = RESOURCE_ICONS[conn.resource!] || '';

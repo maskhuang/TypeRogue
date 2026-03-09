@@ -1184,7 +1184,7 @@ export function renderBuildManager(): void {
           // 增幅者额外信息：叠层 + 范围内受影响技能
           if (isAmplifier(skillId)) {
             const amp = AMPLIFIERS[skillId];
-            tooltipData.skill.amplifierStacks = state.amplifierStacks.get(skillId) || 0;
+            tooltipData.skill.amplifierStacks = Math.floor(state.amplifierStacks.get(skillId) || 0);
             const affected: string[] = [];
             for (const [bk, bId] of state.player.bindings) {
               if (bk === k) continue;
@@ -1262,7 +1262,7 @@ export function renderBuildManager(): void {
       // 增幅者额外信息：叠层 + 范围内受影响技能
       if (isAmplifier(skillId) && boundKey) {
         const ampDef = AMPLIFIERS[skillId];
-        tooltipData.skill!.amplifierStacks = state.amplifierStacks.get(skillId) || 0;
+        tooltipData.skill!.amplifierStacks = Math.floor(state.amplifierStacks.get(skillId) || 0);
         const affected: string[] = [];
         for (const [bk, bId] of state.player.bindings) {
           if (bk === boundKey) continue;

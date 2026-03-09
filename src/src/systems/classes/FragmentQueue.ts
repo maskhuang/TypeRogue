@@ -4,7 +4,6 @@
 // Story 32.4: 字母碎片资源 + 采集队列
 
 import { state } from '../../core/state';
-import { random } from '../../core/seededRandom';
 
 const BASE_QUEUE_LENGTH = 6;
 
@@ -18,28 +17,18 @@ export function getMaxQueueLength(): number {
 }
 
 /**
- * 概率溢出：将浮点碎片数转换为离散整数
- * floor(raw) = 保底，frac(raw) = 额外 +1 概率
- */
-export function resolveFragmentAmount(rawAmount: number): number {
-  const base = Math.floor(rawAmount);
-  const frac = rawAmount - base;
-  return frac > 0 && random() < frac ? base + 1 : base;
-}
-
-/**
- * 按采集队列分配碎片到字母池
- * 返回分配结果（如 {e: 2, a: 1}）
+ * 按采集队列分配碎片到字母池（支持浮点累积）
+ * 每个队列格最多分配 1.0，尾格接收剩余小数部分
  * 跳过 '_' 格，推进队列位置
  */
 export function distributeFragments(amount: number): Record<string, number> {
   const result: Record<string, number> = {};
   const queue = state.fragmentQueue;
-  if (queue.length === 0 || amount <= 0) return result;
+  if (queue.length === 0 || amount <= 1e-9) return result;
 
-  let distributed = 0;
+  let remaining = amount;
   let safetyLimit = queue.length; // 防止全 '_' 死循环
-  while (distributed < amount && safetyLimit > 0) {
+  while (remaining > 1e-9 && safetyLimit > 0) {
     const letter = queue[state.fragmentQueuePosition % queue.length];
     state.fragmentQueuePosition = (state.fragmentQueuePosition + 1) % queue.length;
     if (letter === '_') {
@@ -47,32 +36,32 @@ export function distributeFragments(amount: number): Record<string, number> {
       continue;
     }
     safetyLimit = queue.length; // 遇到有效字母重置安全计数
-    result[letter] = (result[letter] ?? 0) + 1;
+    const portion = Math.min(remaining, 1);
+    result[letter] = (result[letter] ?? 0) + portion;
     // 碎片棱镜：同时产出字母表相邻字母
     if (state.player.relics.has('fragment_prism')) {
       const code = letter.charCodeAt(0);
       if (code > 97) { // 'a' = 97, skip left for 'a'
         const left = String.fromCharCode(code - 1);
-        result[left] = (result[left] ?? 0) + 1;
+        result[left] = (result[left] ?? 0) + portion;
       }
       if (code < 122) { // 'z' = 122, skip right for 'z'
         const right = String.fromCharCode(code + 1);
-        result[right] = (result[right] ?? 0) + 1;
+        result[right] = (result[right] ?? 0) + portion;
       }
     }
-    distributed++;
+    remaining -= portion;
   }
   return result;
 }
 
 /**
- * 碎片路由：概率溢出 + 队列分配 + 写入库存
+ * 碎片路由：浮点累积 + 队列分配 + 写入库存
  * 统一入口，供 triggerProducer / triggerConverter / triggerConverterWithReduction 调用
  */
 export function routeFragmentsToInventory(absDelta: number): void {
   state.classResourceProduced.fragment = (state.classResourceProduced.fragment ?? 0) + absDelta;
-  const actualAmount = resolveFragmentAmount(absDelta);
-  const distributed = distributeFragments(actualAmount);
+  const distributed = distributeFragments(absDelta);
   for (const [letter, count] of Object.entries(distributed)) {
     state.fragmentInventory[letter] = (state.fragmentInventory[letter] ?? 0) + count;
   }

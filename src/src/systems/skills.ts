@@ -85,7 +85,8 @@ export function resetWordResourceTypes(): void {
 /** 计算当前所有增幅者中的最大叠层数 */
 function getMaxAmplifierStacks(): number {
   let max = 0;
-  for (const stacks of state.amplifierStacks.values()) {
+  for (const raw of state.amplifierStacks.values()) {
+    const stacks = Math.floor(raw);
     if (stacks > max) max = stacks;
   }
   return max;
@@ -182,7 +183,7 @@ export function getEnchantmentMultiplier(skillId: string, triggerKey?: string): 
 
   // 满溢：碎片库存中 ≥15 的字母数 → +20% + (N-1)*5%
   if (ench.id === 'ench_overflow') {
-    const highCount = Object.values(state.fragmentInventory).filter(v => v >= 15).length;
+    const highCount = Object.values(state.fragmentInventory).filter(v => Math.floor(v) >= 15).length;
     if (highCount === 0) return 1;
     return 1 + ench.effectValue + Math.max(0, highCount - 1) * 0.05;
   }
@@ -349,7 +350,7 @@ export function getAmplifierBonus(
     const amp = AMPLIFIERS[boundId];
     if (!amp) continue;
     if (!hasRelation(triggerKey, ampKey, amp.positionRelation)) continue;
-    const stacks = state.amplifierStacks.get(boundId) || 0;
+    const stacks = Math.floor(state.amplifierStacks.get(boundId) || 0);
     if (stacks === 0) continue;
     const level = state.player.skills.get(boundId)?.level || 1;
     const valuePerStack = getAmplifierValue(boundId, level);
@@ -816,7 +817,7 @@ export function checkResonanceTriggers(sourceKey: string): void {
     } else if (isConverter(sid)) {
       triggerConverterWithReduction(sid, enchKey, ench.effectValue);
     } else if (isAmplifier(sid)) {
-      triggerAmplifierResonance(sid, enchKey);
+      triggerAmplifierResonance(sid, enchKey, ench.effectValue);
     }
   }
 
@@ -824,14 +825,15 @@ export function checkResonanceTriggers(sourceKey: string): void {
 }
 
 // === 附魔：共鸣触发增幅者叠层（静默版，无弹窗/音效） ===
-function triggerAmplifierResonance(ampId: string, key: string): void {
+function triggerAmplifierResonance(ampId: string, key: string, efficiency: number = 1): void {
   const amp = AMPLIFIERS[ampId];
   if (!amp) return;
   const current = state.amplifierStacks.get(ampId) || 0;
-  const newStacks = current + 1; // 共鸣固定 +1，不受 enchMult 影响
+  const newStacks = current + efficiency; // 浮点累积：50%共鸣 = +0.5层
   state.amplifierStacks.set(ampId, newStacks);
   recordSkillTrigger(ampId, key, 'base', 0, false);
-  showFeedback(`${amp.icon || ''} ×${newStacks} (共鸣)`, '#a29bfe');
+  const displayStacks = Math.floor(newStacks);
+  showFeedback(`${amp.icon || ''} ×${displayStacks} (共鸣)`, '#a29bfe');
 
   // 成长附魔累积（共鸣子触发也贡献）
   checkGrowthAccumulation(key);
@@ -841,7 +843,7 @@ function triggerAmplifierResonance(ampId: string, key: string): void {
   checkDevourAccumulation(ampId, key);
 
   updateHUD();
-  eventBus.emit('skill:triggered', { key, skillId: ampId, type: 'active', amplifierStacks: newStacks, growthValue: state.growthValues.get(ampId) || 0 });
+  eventBus.emit('skill:triggered', { key, skillId: ampId, type: 'active', amplifierStacks: Math.floor(newStacks), growthValue: state.growthValues.get(ampId) || 0 });
 }
 
 // === 附魔后处理：溅射 + 变性 ===
@@ -1027,7 +1029,7 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
   const el = getElements();
   const p = document.createElement('div');
   p.className = 'skill-trigger-popup amplifier-stack';
-  p.innerHTML = `<span class="trigger-icon">${display.icon}</span><span class="stack-count">×${newStacks}</span>`;
+  p.innerHTML = `<span class="trigger-icon">${display.icon}</span><span class="stack-count">×${Math.floor(newStacks)}</span>`;
   p.style.left = (Math.random() * 60 - 30) + 'px';
   el.triggerZone.appendChild(p);
   setTimeout(() => p.remove(), 350);
@@ -1072,7 +1074,7 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
   });
 
   // 通知键盘可视化更新叠层显示
-  eventBus.emit('skill:triggered', { key: triggerKey, skillId: ampId, type: 'active', amplifierStacks: newStacks, growthValue: state.growthValues.get(ampId) || 0 });
+  eventBus.emit('skill:triggered', { key: triggerKey, skillId: ampId, type: 'active', amplifierStacks: Math.floor(newStacks), growthValue: state.growthValues.get(ampId) || 0 });
 }
 
 // === 触发技能（管道驱动） ===
