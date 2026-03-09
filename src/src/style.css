@@ -45,7 +45,7 @@ body {
 /* ============================================ */
 /* BATTLE SCREEN                                */
 /* ============================================ */
-#battle-screen { display: flex; flex-direction: column; }
+#battle-screen { flex-direction: column; }
 
 /* 顶部栏 */
 #top-bar {
@@ -308,7 +308,7 @@ body {
 /* ============================================ */
 /* SHOP SCREEN                                  */
 /* ============================================ */
-#shop-screen { display: flex; flex-direction: column; background: linear-gradient(180deg, #12121a, #1a1a2e); overflow: hidden; }
+#shop-screen { flex-direction: column; background: linear-gradient(180deg, #12121a, #1a1a2e); overflow: hidden; }
 
 #shop-header {
     text-align: center;
@@ -695,7 +695,7 @@ body {
 /* ============================================ */
 /* GAME OVER SCREEN                             */
 /* ============================================ */
-#gameover-screen { display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.95); }
+#gameover-screen { align-items: center; justify-content: center; background: rgba(0,0,0,0.95); }
 #gameover-content { text-align: center; }
 #gameover-title { font-size: 48px; font-weight: bold; color: #ff6b6b; text-shadow: 0 0 30px rgba(255,107,107,0.5); margin-bottom: 20px; }
 #gameover-stats { color: #888; font-size: 14px; line-height: 2; margin-bottom: 30px; }
