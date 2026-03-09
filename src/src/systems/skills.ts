@@ -14,7 +14,7 @@ import { ENCHANTMENTS } from '../data/enchantments';
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
 import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { getElements } from '../ui/elements';
-import { playSound } from '../effects/sound';
+import { playSound, playResourceSound } from '../effects/sound';
 import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
 import { getFloatScale, getFloatScaleMul } from '../effects/juice';
 import { resolveRelicSkillTrigger, queryRelicFlag } from './relics/RelicPipeline';
@@ -363,10 +363,9 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   const totalMult = enchMult * relicMult;
   const value = prod.operator === 'add' ? amplifiedBase * totalMult : amplifiedBase;
 
-  // 视觉/音效反馈
+  // 视觉反馈
   showTriggerPopup(producerId);
 
-  playSound('skill');
   synergy.wordSkillCount++;
 
   // 记录资源变化量（用于变性附魔）
@@ -416,9 +415,13 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   const rawDisplay = prod.operator === 'add' ? value : baseValue;
   const displayValue = parseFloat(rawDisplay.toPrecision(4));
   if (prod.operator === 'add') {
-    showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color, getFloatScale(prod.resource, delta));
+    const scale = getFloatScale(prod.resource, delta);
+    showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color, scale);
+    playResourceSound(prod.resource, scale);
   } else {
-    showFeedback(`×${displayValue}`, color, getFloatScaleMul(prod.resource, (value - 1) * totalMult));
+    const scale = getFloatScaleMul(prod.resource, (value - 1) * totalMult);
+    showFeedback(`×${displayValue}`, color, scale);
+    playResourceSound(prod.resource, scale);
   }
   if (enchMult > 1) {
     showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(producerId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
@@ -451,10 +454,9 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   const relicMult = getRelicSkillMultiplier('converter');
   const totalMult = enchMult * relicMult;
 
-  // 视觉/音效反馈
+  // 视觉反馈
   showTriggerPopup(converterId);
 
-  playSound('skill');
   synergy.wordSkillCount++;
 
   // 记录资源变化量（用于变性附魔）
@@ -500,9 +502,13 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   const color = RESOURCE_COLORS[conv.target];
   const displayDelta = Math.round(delta);
   if (conv.formula === 'add') {
-    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color, getFloatScale(conv.target, delta));
+    const scale = getFloatScale(conv.target, delta);
+    showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color, scale);
+    playResourceSound(conv.target, scale);
   } else {
-    showFeedback(`×${parseFloat((1 + sourceVal * amplifiedK).toPrecision(4))}`, color, getFloatScaleMul(conv.target, sourceVal * amplifiedK * totalMult));
+    const scale = getFloatScaleMul(conv.target, sourceVal * amplifiedK * totalMult);
+    showFeedback(`×${parseFloat((1 + sourceVal * amplifiedK).toPrecision(4))}`, color, scale);
+    playResourceSound(conv.target, scale);
   }
   if (enchMult > 1) {
     showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(converterId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');

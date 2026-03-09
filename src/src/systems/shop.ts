@@ -580,7 +580,7 @@ function purchasePackItem(index: number): void {
 
   state.gold -= item.cost;
   updateGoldDisplay();
-  playSound('skill');
+  playSound('buy');
 
   // 整包词全部加入词库
   for (const word of item.pack.words) {
@@ -608,7 +608,7 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
 
   state.gold -= item.cost;
   updateGoldDisplay();
-  playSound('skill');
+  playSound('buy');
 
   const isNew = !item.isUpgrade;
   if (item.isUpgrade) {
@@ -697,7 +697,7 @@ function purchaseShopRelicItem(index: number): void {
     addRelicWithCapacity(relicId);
     updateGoldDisplay();
     showFeedback(`获得遗物 ${relic.icon} ${relic.name}!`, '#ffe66d');
-    playSound('skill');
+    playSound('buy');
     state.shop.items.splice(index, 1);
     renderRelicDisplay();
     renderUnifiedShop();
@@ -778,7 +778,7 @@ function refreshShop(): void {
   state.gold -= cost;
   state.shop.refreshCount++;
   updateGoldDisplay();
-  playSound('skill');
+  playSound('buy');
 
   // 保留锁定项，替换未锁定项
   const locked = state.shop.items.filter(item => item.locked);
@@ -813,7 +813,7 @@ export function sellSkill(skillId: string): void {
 
   updateGoldDisplay();
   showFeedback(`卖出 +${sellPrice}💰`, '#ffe66d');
-  playSound('skill');
+  playSound('buy');
   renderUnifiedShop();
   renderBuildManager();
 }
@@ -826,7 +826,7 @@ export function sellWord(index: number): void {
   state.player.wordDeck.splice(index, 1);
   updateGoldDisplay();
   showFeedback(`-${word} +3💰`, '#ffe66d');
-  playSound('skill');
+  playSound('buy');
   renderUnifiedShop();
   renderBuildManager();
 }
@@ -922,7 +922,7 @@ function applyEnchantment(skillId: string, enchantmentId: string): void {
     state.player.relicStates['star_chart'] = (state.player.relicStates['star_chart'] ?? 0) + 1;
   }
 
-  playSound('skill');
+  playSound('buy');
   closeEnchantmentModal();
   renderUnifiedShop();
   renderBuildManager();
@@ -1291,7 +1291,7 @@ function removeWord(index: number): void {
   state.player.wordDeck.splice(index, 1);
   updateGoldDisplay();
   showFeedback(`出售 ${word} +3💰`, '#ffe66d');
-  playSound('skill');
+  playSound('buy');
   renderUnifiedShop();
   renderWordInventory();
 }
@@ -1364,7 +1364,7 @@ function registerShopDropZones(): void {
         const sourceKey = payload.sourceKey;
         if (!skillId || !sourceKey) return;
         state.player.bindings.delete(sourceKey);
-        playSound('skill');
+        playSound('buy');
         renderBuildManager();
       },
     });
@@ -1441,7 +1441,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     }
 
     state.player.bindings.set(targetKey, skillId);
-    playSound('skill');
+    playSound('buy');
 
     renderBuildManager();
   }
