@@ -299,6 +299,93 @@ export function showMilestoneCelebration(tier: MilestoneTier): void {
   }
 }
 
+// === 关卡评级配置 (Story 31.6) ===
+export interface RatingTier {
+  grade: string;
+  color: string;
+  glowColor: string;
+  cssClass: string;
+  particleCount: number;
+  particleColor: string;
+  shakeIntensity: number;
+}
+
+export const RATING_TIERS: readonly RatingTier[] = [
+  { grade: 'C',   color: '#888888', glowColor: '',        cssClass: 'rating-c',   particleCount: 0,  particleColor: '',        shakeIntensity: 0 },
+  { grade: 'B',   color: '#4a90d9', glowColor: '',        cssClass: 'rating-b',   particleCount: 0,  particleColor: '',        shakeIntensity: 0 },
+  { grade: 'A',   color: '#ffd700', glowColor: '#ffd700', cssClass: 'rating-a',   particleCount: 0,  particleColor: '',        shakeIntensity: 0 },
+  { grade: 'S',   color: '#a855f7', glowColor: '#a855f7', cssClass: 'rating-s',   particleCount: 0,  particleColor: '',        shakeIntensity: 0 },
+  { grade: 'SS',  color: '#ffd700', glowColor: '#ffd700', cssClass: 'rating-ss',  particleCount: 30, particleColor: '#ffd700', shakeIntensity: 0 },
+  { grade: 'SSS', color: '#ff6b6b', glowColor: '#ff6b6b', cssClass: 'rating-sss', particleCount: 50, particleColor: '#ff6b6b', shakeIntensity: 4 },
+];
+
+export const GRADE_ORDER = ['C', 'B', 'A', 'S', 'SS', 'SSS'] as const;
+
+export function getRatingTier(grade: string): RatingTier {
+  return RATING_TIERS.find(t => t.grade === grade) ?? RATING_TIERS[0];
+}
+
+export function calculateRating(score: number, targetScore: number): string {
+  if (targetScore <= 0 || score < targetScore) return 'C';
+  const overkillRatio = (score - targetScore) / targetScore;
+  if (overkillRatio >= 2.0) return 'SSS'; // 300%+
+  if (overkillRatio >= 1.0) return 'SS';  // 200-300%
+  if (overkillRatio >= 0.6) return 'S';   // 160-200%
+  if (overkillRatio >= 0.3) return 'A';   // 130-160%
+  return 'B';                              // 100-130% (达标即 B)
+}
+
+/** 评级揭示动画：从 C 逐级滚动到最终评级 */
+export function showRatingReveal(finalGrade: string, onComplete: () => void, soundFn?: (grade: string) => void): void {
+  const el = getElements();
+  const finalIdx = GRADE_ORDER.indexOf(finalGrade as typeof GRADE_ORDER[number]);
+  if (finalIdx < 0) { onComplete(); return; }
+
+  // 创建覆盖层
+  const overlay = document.createElement('div');
+  overlay.className = 'rating-reveal';
+  const gradeEl = document.createElement('div');
+  gradeEl.className = 'rating-grade';
+  overlay.appendChild(gradeEl);
+  el.container.appendChild(overlay);
+
+  let step = 0;
+  const interval = setInterval(() => {
+    if (step > finalIdx) {
+      clearInterval(interval);
+      // 最终评级特效
+      const tier = getRatingTier(finalGrade);
+      if (tier.particleCount > 0) spawnParticles(gradeEl, tier.particleCount, tier.particleColor);
+      if (tier.shakeIntensity > 0) screenShake(tier.shakeIntensity);
+      if (tier.glowColor) screenFlash(tier.glowColor, 0.3);
+      // 停留 800ms 后淡出
+      setTimeout(() => {
+        overlay.classList.add('rating-reveal-fade');
+        setTimeout(() => {
+          overlay.remove();
+          onComplete();
+        }, 300);
+      }, 800);
+      return;
+    }
+    const grade = GRADE_ORDER[step];
+    const tier = getRatingTier(grade);
+    gradeEl.textContent = grade;
+    gradeEl.className = `rating-grade ${tier.cssClass}`;
+    gradeEl.style.color = tier.color;
+    if (tier.glowColor) {
+      gradeEl.style.textShadow = `0 0 30px ${tier.glowColor}, 0 0 60px ${tier.glowColor}`;
+    } else {
+      gradeEl.style.textShadow = '';
+    }
+    if (soundFn) soundFn(grade);
+    if (step === finalIdx) {
+      gradeEl.classList.add('rating-final');
+    }
+    step++;
+  }, 300);
+}
+
 // === 分数音效分级（4 档） ===
 export function getScoreSoundTier(score: number): number {
   if (score >= 5000) return 3;

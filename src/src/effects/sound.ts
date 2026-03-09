@@ -346,6 +346,38 @@ export function playScoreSound(score: number): void {
   }
 }
 
+// === 评级音效 (Story 31.6) ===
+const RATING_SOUND_CONFIG: Record<string, { freqs: number[]; type: OscillatorType; vol: number; decay: number }> = {
+  C:   { freqs: [200],               type: 'sine',     vol: 0.06, decay: 0.15 },
+  B:   { freqs: [330],               type: 'sine',     vol: 0.07, decay: 0.2 },
+  A:   { freqs: [440],               type: 'triangle', vol: 0.08, decay: 0.25 },
+  S:   { freqs: [440, 554, 659],     type: 'triangle', vol: 0.06, decay: 0.3 },
+  SS:  { freqs: [523, 659, 784],     type: 'triangle', vol: 0.06, decay: 0.4 },
+  SSS: { freqs: [261, 523, 659, 784, 1046], type: 'sawtooth', vol: 0.04, decay: 0.5 },
+};
+
+export function playRatingSound(grade: string): void {
+  if (!audioContext) return;
+  const ctx = audioContext;
+  const t = ctx.currentTime;
+  const cfg = RATING_SOUND_CONFIG[grade];
+  if (!cfg) return;
+
+  for (const freq of cfg.freqs) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = cfg.type;
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(cfg.vol, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + cfg.decay);
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start(t);
+    o.stop(t + cfg.decay);
+  }
+}
+
 // === 便捷函数 ===
 export const sound = {
   type: () => playSound('type'),

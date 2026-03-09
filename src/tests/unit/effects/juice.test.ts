@@ -4,7 +4,7 @@
 // Story 31.1: 数字颜色分级系统 (AC: 1, 5)
 
 import { describe, it, expect } from 'vitest'
-import { getScoreTier, SCORE_TIER_CLASSES, getShakeIntensity, SHAKE_TIERS, getScoreSoundTier, ScoreRoller, getScoreBumpScale, checkMilestone, MILESTONE_TIERS } from '../../../src/effects/juice'
+import { getScoreTier, SCORE_TIER_CLASSES, getShakeIntensity, SHAKE_TIERS, getScoreSoundTier, ScoreRoller, getScoreBumpScale, checkMilestone, MILESTONE_TIERS, RATING_TIERS, getRatingTier, GRADE_ORDER, calculateRating } from '../../../src/effects/juice'
 
 describe('getScoreTier', () => {
   it('returns empty string for scores below 100', () => {
@@ -366,5 +366,113 @@ describe('getScoreBumpScale', () => {
     for (let i = 1; i < scales.length; i++) {
       expect(scales[i]).toBeGreaterThanOrEqual(scales[i - 1])
     }
+  })
+})
+
+// Story 31.6: 关卡评级系统 (AC: 1, 7)
+
+describe('calculateRating', () => {
+  it('returns C when score < targetScore (失败)', () => {
+    expect(calculateRating(99, 100)).toBe('C')
+    expect(calculateRating(0, 100)).toBe('C')
+    expect(calculateRating(500, 1000)).toBe('C')
+  })
+
+  it('returns B for 100-110% (overkillRatio < 0.1)', () => {
+    expect(calculateRating(100, 100)).toBe('B') // exactly 100%
+    expect(calculateRating(109, 100)).toBe('B') // 109%
+  })
+
+  it('returns A for 130-160% (overkillRatio 0.3-0.6)', () => {
+    expect(calculateRating(130, 100)).toBe('A') // overkill=0.3
+    expect(calculateRating(159, 100)).toBe('A') // overkill=0.59
+  })
+
+  it('returns S for 160-200% (overkillRatio 0.6-1.0)', () => {
+    expect(calculateRating(160, 100)).toBe('S') // overkill=0.6
+    expect(calculateRating(199, 100)).toBe('S') // overkill=0.99
+  })
+
+  it('returns SS for 200-300% (overkillRatio 1.0-2.0)', () => {
+    expect(calculateRating(200, 100)).toBe('SS') // overkill=1.0
+    expect(calculateRating(299, 100)).toBe('SS') // overkill=1.99
+  })
+
+  it('returns SSS for 300%+ (overkillRatio >= 2.0)', () => {
+    expect(calculateRating(300, 100)).toBe('SSS') // overkill=2.0
+    expect(calculateRating(1000, 100)).toBe('SSS') // overkill=9.0
+  })
+
+  it('returns C when targetScore <= 0', () => {
+    expect(calculateRating(100, 0)).toBe('C')
+    expect(calculateRating(100, -1)).toBe('C')
+  })
+
+  it('handles exact boundary transitions', () => {
+    // B → A at overkillRatio 0.3 (score 130 for target 100)
+    expect(calculateRating(129, 100)).toBe('B')
+    expect(calculateRating(130, 100)).toBe('A')
+
+    // A → S at overkillRatio 0.6 (score 160 for target 100)
+    expect(calculateRating(159, 100)).toBe('A')
+    expect(calculateRating(160, 100)).toBe('S')
+
+    // S → SS at overkillRatio 1.0 (score 200 for target 100)
+    expect(calculateRating(199, 100)).toBe('S')
+    expect(calculateRating(200, 100)).toBe('SS')
+
+    // SS → SSS at overkillRatio 2.0 (score 300 for target 100)
+    expect(calculateRating(299, 100)).toBe('SS')
+    expect(calculateRating(300, 100)).toBe('SSS')
+  })
+})
+
+describe('RATING_TIERS', () => {
+  it('contains 6 rating entries (C through SSS)', () => {
+    expect(RATING_TIERS).toHaveLength(6)
+  })
+
+  it('covers all grades in order', () => {
+    const grades = RATING_TIERS.map(t => t.grade)
+    expect(grades).toEqual(['C', 'B', 'A', 'S', 'SS', 'SSS'])
+  })
+
+  it('SS and SSS have particles, others do not', () => {
+    for (const tier of RATING_TIERS) {
+      if (tier.grade === 'SS' || tier.grade === 'SSS') {
+        expect(tier.particleCount).toBeGreaterThan(0)
+      } else {
+        expect(tier.particleCount).toBe(0)
+      }
+    }
+  })
+
+  it('only SSS has shakeIntensity > 0', () => {
+    for (const tier of RATING_TIERS) {
+      if (tier.grade === 'SSS') {
+        expect(tier.shakeIntensity).toBeGreaterThan(0)
+      } else {
+        expect(tier.shakeIntensity).toBe(0)
+      }
+    }
+  })
+})
+
+describe('getRatingTier', () => {
+  it('returns correct tier for each grade', () => {
+    for (const tier of RATING_TIERS) {
+      expect(getRatingTier(tier.grade)).toBe(tier)
+    }
+  })
+
+  it('returns C tier for unknown grades', () => {
+    expect(getRatingTier('X')).toBe(RATING_TIERS[0])
+    expect(getRatingTier('')).toBe(RATING_TIERS[0])
+  })
+})
+
+describe('GRADE_ORDER', () => {
+  it('contains 6 grades in ascending order', () => {
+    expect(GRADE_ORDER).toEqual(['C', 'B', 'A', 'S', 'SS', 'SSS'])
   })
 })

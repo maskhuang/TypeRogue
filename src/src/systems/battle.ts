@@ -8,8 +8,8 @@ import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
-import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration } from '../effects/juice';
-import { playSound, initAudio, playScoreSound } from '../effects/sound';
+import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
+import { playSound, initAudio, playScoreSound, playRatingSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
@@ -677,16 +677,6 @@ function updateTimerDisplay(): void {
 }
 
 // === 关卡评级 ===
-export function calculateRating(score: number, targetScore: number): string {
-  if (score < targetScore) return 'C';
-  const overkillRatio = (score - targetScore) / targetScore;
-  if (overkillRatio >= 2.0) return 'SSS';
-  if (overkillRatio >= 1.0) return 'SS';
-  if (overkillRatio >= 0.5) return 'S';
-  if (overkillRatio >= 0.2) return 'A';
-  return 'B';
-}
-
 // === 关卡系统 ===
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
@@ -703,29 +693,32 @@ function endLevel(): void {
   }
 
   if (state.score >= state.targetScore) {
-    const currentType = getStageType(state.level);
+    const rating = state.battleStats?.rating || 'B';
+    showRatingReveal(rating, () => {
+      const currentType = getStageType(state.level);
 
-    if (currentType === 'boss') {
-      // Boss 关胜利 → 周目推进 + 修饰器选择 + 传说遗物三选一 + 进商店
-      advanceCycle();
-      showBossModifierPicker(() => {
-        if (hasUnownedRelics()) {
-          showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.bossDrop);
-        } else {
-          openShop(true);
-        }
-      });
-      return;
-    }
+      if (currentType === 'boss') {
+        // Boss 关胜利 → 周目推进 + 修饰器选择 + 传说遗物三选一 + 进商店
+        advanceCycle();
+        showBossModifierPicker(() => {
+          if (hasUnownedRelics()) {
+            showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.bossDrop);
+          } else {
+            openShop(true);
+          }
+        });
+        return;
+      }
 
-    if (currentType === 'elite' && hasUnownedRelics()) {
-      // 精英关胜利 → 遗物三选一（rare 60% / legendary 40%）→ 商店
-      showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.eliteDrop);
-      return;
-    }
+      if (currentType === 'elite' && hasUnownedRelics()) {
+        // 精英关胜利 → 遗物三选一（rare 60% / legendary 40%）→ 商店
+        showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.eliteDrop);
+        return;
+      }
 
-    // 普通关胜利 → 直接进商店
-    openShop(true);
+      // 普通关胜利 → 直接进商店
+      openShop(true);
+    }, playRatingSound);
   } else {
     gameOver();
   }
