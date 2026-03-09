@@ -8,7 +8,7 @@ import { playSound } from '../../effects/sound';
 import { showFeedback } from '../battle';
 import { renderBuildManager } from '../shop';
 import { getSkillDisplayInfo, getSkillSchool } from '../../data/skills';
-import { PRODUCERS, isProducer } from '../../data/producers';
+import { isProducer } from '../../data/producers';
 import { CONVERTERS, isConverter } from '../../data/converters';
 import { CONNECTORS, REPLICATORS, isConnector, isReplicator } from '../../data/connectors';
 import { AMPLIFIERS, isAmplifier } from '../../data/amplifiers';
@@ -18,7 +18,7 @@ import { random } from '../../core/seededRandom';
 // === 技能类型判定 ===
 type SkillType = 'producer' | 'converter' | 'connector' | 'replicator' | 'amplifier';
 
-function getSkillType(id: string): SkillType | null {
+export function getSkillType(id: string): SkillType | null {
   if (isProducer(id)) return 'producer';
   if (isConverter(id)) return 'converter';
   if (isConnector(id)) return 'connector';
@@ -28,7 +28,7 @@ function getSkillType(id: string): SkillType | null {
 }
 
 // === 隐藏池计算 ===
-function computeHiddenPool(type: 'converter' | 'connector' | 'replicator' | 'amplifier'): string[] {
+export function computeHiddenPool(type: 'converter' | 'connector' | 'replicator' | 'amplifier'): string[] {
   // 全集 ID
   let allIds: string[];
   let visiblePool: string[];
@@ -72,7 +72,7 @@ function computeHiddenPool(type: 'converter' | 'connector' | 'replicator' | 'amp
 }
 
 // === 蜕变核心逻辑 ===
-function performMetamorph(oldSkillId: string, boundKey: string, container: HTMLElement): void {
+export function performMetamorph(oldSkillId: string, boundKey: string, container: HTMLElement): void {
   const type = getSkillType(oldSkillId);
   if (!type || type === 'producer') return;
   // computeHiddenPool 不接受 'producer'，但上面已排除
@@ -95,6 +95,10 @@ function performMetamorph(oldSkillId: string, boundKey: string, container: HTMLE
     return;
   }
 
+  // 验证技能数据（必须在扣费前检查，防止数据缺失时白扣资源）
+  const oldData = state.player.skills.get(oldSkillId);
+  if (!oldData) return;
+
   // 扣费
   if (!isFree) {
     state.mutagenInventory -= 1;
@@ -106,10 +110,6 @@ function performMetamorph(oldSkillId: string, boundKey: string, container: HTMLE
   // 随机抽取
   const idx = Math.floor(random() * pool.length);
   const newSkillId = pool[idx];
-
-  // 全继承交换
-  const oldData = state.player.skills.get(oldSkillId);
-  if (!oldData) return;
 
   const { level, purchasePrice } = oldData;
 
@@ -164,7 +164,7 @@ const TYPE_NAMES: Record<string, string> = {
   producer: '产出者', converter: '转化者', connector: '连接者', replicator: '复制者', amplifier: '增幅者',
 };
 
-function showMorphTooltip(e: MouseEvent, skillId: string, level: number, type: SkillType | null, boundKey: string): void {
+function showMorphTooltip(e: MouseEvent, skillId: string, level: number, type: SkillType | null, boundKey: string, hiddenPoolSize?: number): void {
   hideMorphTooltip();
   const info = getSkillDisplayInfo(skillId, level, state.player.enchantedSkills);
   const school = getSkillSchool(skillId);
@@ -178,8 +178,7 @@ function showMorphTooltip(e: MouseEvent, skillId: string, level: number, type: S
   html += `<span style="font-size:9px;padding:1px 4px;border-radius:3px;display:inline-block;background:rgba(255,255,255,0.08);" class="${school.cssClass}">${school.label}</span>`;
 
   if (type && type !== 'producer') {
-    const poolSize = computeHiddenPool(type).length;
-    html += `<div style="color:#2ecc71;font-size:10px;margin-top:4px;">隐藏池剩余: ${poolSize} 个${TYPE_NAMES[type]}</div>`;
+    html += `<div style="color:#2ecc71;font-size:10px;margin-top:4px;">隐藏池剩余: ${hiddenPoolSize ?? 0} 个${TYPE_NAMES[type]}</div>`;
   } else if (type === 'producer') {
     html += `<div style="color:#666;font-size:10px;margin-top:4px;">产出者不可蜕变</div>`;
   }
@@ -233,6 +232,9 @@ export function renderMetamorphPanel(container: HTMLElement): void {
   info.textContent = infoText;
   container.appendChild(info);
 
+  // 预计算各类型隐藏池大小（避免逐次悬停重复计算）
+  const poolSizes = new Map<string, number>();
+
   // 技能网格
   const grid = document.createElement('div');
   grid.className = 'morph-skill-grid';
@@ -270,23 +272,21 @@ export function renderMetamorphPanel(container: HTMLElement): void {
     // 类型标签
     const typeLabel = document.createElement('div');
     typeLabel.className = 'morph-skill-type';
-    const typeNames: Record<string, string> = {
-      producer: '产出者',
-      converter: '转化者',
-      connector: '连接者',
-      replicator: '复制者',
-      amplifier: '增幅者',
-    };
-    typeLabel.textContent = type ? typeNames[type] : '未知';
+    typeLabel.textContent = type ? TYPE_NAMES[type] : '未知';
 
     card.appendChild(icon);
     card.appendChild(name);
     card.appendChild(keyLabel);
     card.appendChild(typeLabel);
 
+    // 缓存该类型隐藏池大小
+    if (type && type !== 'producer' && !poolSizes.has(type)) {
+      poolSizes.set(type, computeHiddenPool(type).length);
+    }
+
     // 悬停提示
     card.addEventListener('mouseenter', (e: MouseEvent) => {
-      showMorphTooltip(e, skillId, skillData.level, type, key);
+      showMorphTooltip(e, skillId, skillData.level, type, key, poolSizes.get(type ?? ''));
     });
     card.addEventListener('mousemove', (e: MouseEvent) => {
       moveMorphTooltip(e);
