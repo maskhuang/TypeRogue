@@ -1,13 +1,13 @@
 // ============================================
 // 打字肉鸽 - 转化者技能数据
 // ============================================
-// Story 19.4 + 21.3 + 32.5: 52 个转化者（5 通用源 × 目标 × 2 运算符 + 18 碎片转化者）
+// Story 19.4 + 21.3 + 32.5 + 32.8: 60 个转化者（5 通用源 × 目标 × 2 运算符 + 18 碎片转化者 + 8 变异素转化者）
 
 import type { ConverterDefinition, ResourceType, ResourceState } from '../core/types';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
 import { random } from '../core/seededRandom';
 
-// === 52 个转化者数据 ===
+// === 60 个转化者数据 ===
 export const CONVERTERS: Record<string, ConverterDefinition> = {
   // === 基数为源（6 个）— ⚔️→ ===
   conv_base_score_add:  { id: 'conv_base_score_add',  name: '变现', icon: '💱', source: 'base', target: 'score',      formula: 'add',      k: 1.0,    desc: '触发时：🪙分数+(⚔️基数×1)' },
@@ -72,6 +72,18 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   conv_time_fragment_mul:   { id: 'conv_time_fragment_mul',   name: '沉思', icon: '🧘', source: 'time',       target: 'fragment', formula: 'multiply', k: 0.01,   desc: '触发时：🔤碎片×(1+⏳时间×0.01)' },
   conv_gold_fragment_add:   { id: 'conv_gold_fragment_add',   name: '收藏', icon: '🗃️', source: 'gold',       target: 'fragment', formula: 'add',      k: 0.3,    desc: '触发时：🔤碎片+(💰金币×0.3)' },
   conv_gold_fragment_mul:   { id: 'conv_gold_fragment_mul',   name: '投稿', icon: '📮', source: 'gold',       target: 'fragment', formula: 'multiply', k: 0.03,   desc: '触发时：🔤碎片×(1+💰金币×0.03)' },
+
+  // === 变异素为源（4 个）— 🧬→（蜕变师专属，mid ~5-10） ===
+  conv_mutagen_score_add:  { id: 'conv_mutagen_score_add',  name: '变析', icon: '🩻', source: 'mutagen', target: 'score',      formula: 'add',      k: 0.8,   desc: '触发时：🪙分数+(🧬变异素×0.8)' },
+  conv_mutagen_score_mul:  { id: 'conv_mutagen_score_mul',  name: '蜕化', icon: '🦎', source: 'mutagen', target: 'score',      formula: 'multiply', k: 0.004, desc: '触发时：🪙分数×(1+🧬变异素×0.004)' },
+  conv_mutagen_base_add:   { id: 'conv_mutagen_base_add',   name: '菌丝', icon: '🍄', source: 'mutagen', target: 'base',       formula: 'add',      k: 0.08,  desc: '触发时：⚔️基数+(🧬变异素×0.08)' },
+  conv_mutagen_mult_add:   { id: 'conv_mutagen_mult_add',   name: '催变', icon: '🌿', source: 'mutagen', target: 'multiplier', formula: 'add',      k: 0.015, desc: '触发时：🔥倍率+(🧬变异素×0.015)' },
+
+  // === 其他→变异素（4 个）— →🧬（蜕变师专属） ===
+  conv_base_mutagen_add:   { id: 'conv_base_mutagen_add',   name: '提炼', icon: '🗜️', source: 'base',       target: 'mutagen', formula: 'add',      k: 0.08,  desc: '触发时：🧬变异素+(⚔️基数×0.08)' },
+  conv_score_mutagen_add:  { id: 'conv_score_mutagen_add',  name: '孵化', icon: '🪺', source: 'score',      target: 'mutagen', formula: 'add',      k: 0.005, desc: '触发时：🧬变异素+(🪙分数×0.005)' },
+  conv_mult_mutagen_add:   { id: 'conv_mult_mutagen_add',   name: '裂变', icon: '🫀', source: 'multiplier', target: 'mutagen', formula: 'add',      k: 2.0,   desc: '触发时：🧬变异素+(🔥倍率×2)' },
+  conv_time_mutagen_add:   { id: 'conv_time_mutagen_add',   name: '培养', icon: '🌡️', source: 'time',       target: 'mutagen', formula: 'add',      k: 0.1,   desc: '触发时：🧬变异素+(⏳时间×0.1)' },
 } as const;
 
 // === 工具函数 ===
@@ -81,7 +93,7 @@ export function isConverter(id: string): boolean {
   return id in CONVERTERS;
 }
 
-/** 每局 run 从 52 个转化者中随机抽 31 个 ID（非造词师过滤碎片转化者后保持 ~20） */
+/** 每局 run 从 60 个转化者中随机抽 31 个 ID（非职业过滤碎片/变异素转化者后保持 ~20） */
 export function drawConverterPool(count = 31): string[] {
   const all = Object.keys(CONVERTERS);
   const shuffled = [...all];

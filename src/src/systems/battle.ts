@@ -882,6 +882,13 @@ export async function startLevel(): Promise<void> {
   }
 
   showScreen('battle');
+
+  // 蜕变师：显示变异素 HUD
+  const mutagenHud = document.getElementById('mutagen-hud');
+  if (mutagenHud) {
+    mutagenHud.style.display = state.classId === 'metamorph' ? 'flex' : 'none';
+  }
+
   setWord();
   updateHUD();
   renderRelicDisplay();
@@ -1049,6 +1056,12 @@ export function updateHUD(): void {
     el.score.classList.remove(...SCORE_TIER_CLASSES);
     if (scoreTier) el.score.classList.add(scoreTier);
     lastScoreTier = scoreTier;
+  }
+
+  // 蜕变师：更新变异素 HUD
+  if (state.classId === 'metamorph') {
+    const mutagenEl = document.getElementById('mutagen-count');
+    if (mutagenEl) mutagenEl.textContent = String(Math.floor(state.mutagenInventory));
   }
 
   // 发送分数更新事件

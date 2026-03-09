@@ -126,6 +126,26 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     values: [1.8, 2.1, 2.4],
     desc: '触发时：🔤碎片×1.8',
   },
+
+  // === 变异素产出者（蜕变师专属）===
+  prod_mutagen_drip: {
+    id: 'prod_mutagen_drip',
+    name: '渗变',
+    icon: '💉',
+    resource: 'mutagen',
+    operator: 'add',
+    values: [1, 1.6, 2.4],
+    desc: '触发时：🧬变异素+1',
+  },
+  prod_mutagen_surge: {
+    id: 'prod_mutagen_surge',
+    name: '突变',
+    icon: '🦠',
+    resource: 'mutagen',
+    operator: 'multiply',
+    values: [1.8, 2.1, 2.4],
+    desc: '触发时：🧬变异素×1.8',
+  },
 };
 
 /** 检查 ID 是否为产出者 */

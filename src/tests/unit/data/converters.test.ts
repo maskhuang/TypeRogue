@@ -16,8 +16,8 @@ import {
 describe('CONVERTERS 数据完整性', () => {
   const allIds = Object.keys(CONVERTERS);
 
-  it('共 52 个转化者', () => {
-    expect(allIds.length).toBe(52);
+  it('共 60 个转化者', () => {
+    expect(allIds.length).toBe(60);
   });
 
   it('所有字段非空', () => {
@@ -64,39 +64,39 @@ describe('CONVERTERS 数据完整性', () => {
   });
 
   it('source 和 target 是有效资源类型', () => {
-    const validResources = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment'];
+    const validResources = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen'];
     for (const id of allIds) {
       expect(validResources, `${id}.source`).toContain(CONVERTERS[id].source);
       expect(validResources, `${id}.target`).toContain(CONVERTERS[id].target);
     }
   });
 
-  it('覆盖 52 种唯一 source_target_formula 组合', () => {
+  it('覆盖 60 种唯一 source_target_formula 组合', () => {
     const combos = new Set(allIds.map(id => {
       const c = CONVERTERS[id];
       return `${c.source}_${c.target}_${c.formula}`;
     }));
-    expect(combos.size).toBe(52);
+    expect(combos.size).toBe(60);
   });
 
-  it('基数为源 8 个', () => {
+  it('基数为源 9 个', () => {
     const baseSource = allIds.filter(id => CONVERTERS[id].source === 'base');
-    expect(baseSource.length).toBe(8);
+    expect(baseSource.length).toBe(9);
   });
 
-  it('分数为源 9 个', () => {
+  it('分数为源 10 个', () => {
     const scoreSource = allIds.filter(id => CONVERTERS[id].source === 'score');
-    expect(scoreSource.length).toBe(9);
+    expect(scoreSource.length).toBe(10);
   });
 
-  it('倍率为源 8 个', () => {
+  it('倍率为源 9 个', () => {
     const multSource = allIds.filter(id => CONVERTERS[id].source === 'multiplier');
-    expect(multSource.length).toBe(8);
+    expect(multSource.length).toBe(9);
   });
 
-  it('时间为源 9 个', () => {
+  it('时间为源 10 个', () => {
     const timeSource = allIds.filter(id => CONVERTERS[id].source === 'time');
-    expect(timeSource.length).toBe(9);
+    expect(timeSource.length).toBe(10);
   });
 
   it('金币为源 10 个', () => {
@@ -107,6 +107,11 @@ describe('CONVERTERS 数据完整性', () => {
   it('碎片为源 8 个', () => {
     const fragmentSource = allIds.filter(id => CONVERTERS[id].source === 'fragment');
     expect(fragmentSource.length).toBe(8);
+  });
+
+  it('变异素为源 4 个', () => {
+    const mutagenSource = allIds.filter(id => CONVERTERS[id].source === 'mutagen');
+    expect(mutagenSource.length).toBe(4);
   });
 });
 
@@ -257,11 +262,11 @@ describe('drawConverterPool', () => {
 
   it('自定义数量', () => {
     expect(drawConverterPool(5).length).toBe(5);
-    expect(drawConverterPool(52).length).toBe(52);
+    expect(drawConverterPool(60).length).toBe(60);
   });
 
   it('超过总数时返回全部', () => {
-    expect(drawConverterPool(100).length).toBe(52);
+    expect(drawConverterPool(100).length).toBe(60);
   });
 });
 

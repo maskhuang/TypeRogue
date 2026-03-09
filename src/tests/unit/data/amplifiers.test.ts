@@ -1,7 +1,7 @@
 // ============================================
 // 增幅者数据完整性 + 工具函数测试
 // ============================================
-// 30 个增幅者（5 资源 × 6 范围），统一 +N%/层 机制
+// 36 个增幅者（6 资源 × 6 范围），统一 +N%/层 机制
 
 import { describe, it, expect } from 'vitest';
 import { AMPLIFIERS, isAmplifier, drawAmplifierPool, getAmplifierValue, getAmplifierDesc } from '../../../src/data/amplifiers';
@@ -12,8 +12,8 @@ import { createInitialState } from '../../../src/core/state';
 const ALL_AMP_IDS = Object.keys(AMPLIFIERS);
 
 describe('增幅者数据完整性', () => {
-  it('共 30 个增幅者（5 资源 × 6 范围）', () => {
-    expect(Object.keys(AMPLIFIERS).length).toBe(30);
+  it('共 36 个增幅者（6 资源 × 6 范围）', () => {
+    expect(Object.keys(AMPLIFIERS).length).toBe(36);
   });
 
   it('所有 id 唯一', () => {
@@ -47,14 +47,15 @@ describe('增幅者数据完整性', () => {
     }
   });
 
-  it('覆盖全部 5 种资源（base/score/multiplier/time/gold）', () => {
+  it('覆盖全部 6 种资源（base/score/multiplier/time/gold/mutagen）', () => {
     const resources = new Set(Object.values(AMPLIFIERS).map(a => a.resource));
     expect(resources).toContain('base');
     expect(resources).toContain('score');
     expect(resources).toContain('multiplier');
     expect(resources).toContain('time');
     expect(resources).toContain('gold');
-    expect(resources.size).toBe(5);
+    expect(resources).toContain('mutagen');
+    expect(resources.size).toBe(6);
   });
 
   it('每种资源恰好 6 个增幅者', () => {
@@ -62,7 +63,7 @@ describe('增幅者数据完整性', () => {
     for (const amp of Object.values(AMPLIFIERS)) {
       byCounts[amp.resource] = (byCounts[amp.resource] || 0) + 1;
     }
-    for (const res of ['base', 'score', 'multiplier', 'time', 'gold']) {
+    for (const res of ['base', 'score', 'multiplier', 'time', 'gold', 'mutagen']) {
       expect(byCounts[res]).toBe(6);
     }
   });
@@ -160,7 +161,7 @@ describe('增幅者工具函数', () => {
 
     it('抽取数量不超过总数', () => {
       const pool = drawAmplifierPool(50);
-      expect(pool.length).toBe(30);
+      expect(pool.length).toBe(36);
     });
 
     it('抽取指定数量', () => {
@@ -169,12 +170,12 @@ describe('增幅者工具函数', () => {
     });
 
     it('抽取结果不重复', () => {
-      const pool = drawAmplifierPool(30);
+      const pool = drawAmplifierPool(36);
       expect(new Set(pool).size).toBe(pool.length);
     });
 
     it('抽取结果均为合法增幅者 ID', () => {
-      const pool = drawAmplifierPool(30);
+      const pool = drawAmplifierPool(36);
       for (const id of pool) {
         expect(isAmplifier(id)).toBe(true);
       }

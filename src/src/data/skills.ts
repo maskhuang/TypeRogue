@@ -48,6 +48,8 @@ export const SKILL_SCHOOL: Record<string, SkillSchool> = {
   prod_treasury: { label: '产出', cssClass: 'school-producer' },
   prod_harvest: { label: '产出', cssClass: 'school-producer' },
   prod_refine: { label: '产出', cssClass: 'school-producer' },
+  prod_mutagen_drip: { label: '产出', cssClass: 'school-producer' },
+  prod_mutagen_surge: { label: '产出', cssClass: 'school-producer' },
 };
 
 export function getSkillSchool(skillId: string): SkillSchool {

@@ -7,8 +7,8 @@ import { describe, it, expect } from 'vitest'
 import { PRODUCERS, isProducer, getProducerValue } from '../../../src/data/producers'
 
 describe('PRODUCERS 数据定义', () => {
-  it('定义了 12 个产出者', () => {
-    expect(Object.keys(PRODUCERS)).toHaveLength(12)
+  it('定义了 14 个产出者', () => {
+    expect(Object.keys(PRODUCERS)).toHaveLength(14)
   })
 
   it('每个产出者有完整字段', () => {
@@ -16,7 +16,7 @@ describe('PRODUCERS 数据定义', () => {
       expect(prod.id).toBe(id)
       expect(prod.name).toBeTruthy()
       expect(prod.icon).toBeTruthy()
-      expect(['base', 'score', 'multiplier', 'time', 'gold', 'fragment']).toContain(prod.resource)
+      expect(['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']).toContain(prod.resource)
       expect(['add', 'multiply']).toContain(prod.operator)
       expect(prod.values).toHaveLength(3)
       expect(prod.desc).toBeTruthy()
@@ -28,13 +28,13 @@ describe('PRODUCERS 数据定义', () => {
     expect(new Set(icons).size).toBe(icons.length)
   })
 
-  it('6 种资源各有 2 个产出者（+N 和 ×N）', () => {
+  it('7 种资源各有 2 个产出者（+N 和 ×N）', () => {
     const byResource: Record<string, string[]> = {}
     for (const prod of Object.values(PRODUCERS)) {
       if (!byResource[prod.resource]) byResource[prod.resource] = []
       byResource[prod.resource].push(prod.operator)
     }
-    for (const resource of ['base', 'score', 'multiplier', 'time', 'gold', 'fragment']) {
+    for (const resource of ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']) {
       expect(byResource[resource]).toHaveLength(2)
       expect(byResource[resource]).toContain('add')
       expect(byResource[resource]).toContain('multiply')

@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 增幅者技能数据
 // ============================================
-// 30 个增幅者（5 资源 × 6 范围），统一 +N%/层 机制
+// 36 个增幅者（6 资源 × 6 范围），统一 +N%/层 机制
 
 import type { AmplifierDefinition, ResourceType } from '../core/types';
 import { PositionRelation } from './keyboardTopology';
@@ -39,15 +39,15 @@ const RES_ID: Record<ResourceType, string> = {
   fragment: 'fragment', mutagen: 'mutagen',
 };
 
-// === 增幅者名称表（30 个唯一名称） ===
+// === 增幅者名称表（36 个唯一名称） ===
 const AMP_NAMES: Record<ResourceType, Record<string, string>> = {
   base:       { [PositionRelation.Adjacent]: '铸基', [PositionRelation.SameRow]: '横基', [PositionRelation.SameColumn]: '纵基', [PositionRelation.SameHand]: '稳基', [PositionRelation.SameFinger]: '精铸', [PositionRelation.Symmetric]: '映基' },
   score:      { [PositionRelation.Adjacent]: '聚财', [PositionRelation.SameRow]: '横财', [PositionRelation.SameColumn]: '纵财', [PositionRelation.SameHand]: '稳财', [PositionRelation.SameFinger]: '精聚', [PositionRelation.Symmetric]: '映财' },
   multiplier: { [PositionRelation.Adjacent]: '激励', [PositionRelation.SameRow]: '共振', [PositionRelation.SameColumn]: '纵振', [PositionRelation.SameHand]: '合力', [PositionRelation.SameFinger]: '精振', [PositionRelation.Symmetric]: '映振' },
   time:       { [PositionRelation.Adjacent]: '滋润', [PositionRelation.SameRow]: '延续', [PositionRelation.SameColumn]: '纵延', [PositionRelation.SameHand]: '缓息', [PositionRelation.SameFinger]: '精续', [PositionRelation.Symmetric]: '映时' },
   gold:       { [PositionRelation.Adjacent]: '铸币', [PositionRelation.SameRow]: '淘金', [PositionRelation.SameColumn]: '掘金', [PositionRelation.SameHand]: '聚金', [PositionRelation.SameFinger]: '精金', [PositionRelation.Symmetric]: '映金' },
-  fragment:   {},  // 造词师专属，具体增幅者在 Story 32.5 定义
-  mutagen:    {},  // 蜕变师专属，具体增幅者在 Story 32.8 定义
+  fragment:   {},  // 造词师专属（待 Story 扩展）
+  mutagen:    { [PositionRelation.Adjacent]: '诱变', [PositionRelation.SameRow]: '横变', [PositionRelation.SameColumn]: '纵变', [PositionRelation.SameHand]: '同源', [PositionRelation.SameFinger]: '精变', [PositionRelation.Symmetric]: '映变' },
 };
 
 // === 增幅值表（valuePerStack 小数）===
@@ -58,8 +58,8 @@ const AMP_VALUES: Record<ResourceType, Record<string, number>> = {
   multiplier: { [PositionRelation.Adjacent]: 0.02, [PositionRelation.SameRow]: 0.015, [PositionRelation.SameColumn]: 0.04, [PositionRelation.SameHand]: 0.01, [PositionRelation.SameFinger]: 0.04, [PositionRelation.Symmetric]: 0.08 },
   time:       { [PositionRelation.Adjacent]: 0.02, [PositionRelation.SameRow]: 0.015, [PositionRelation.SameColumn]: 0.04, [PositionRelation.SameHand]: 0.01, [PositionRelation.SameFinger]: 0.04, [PositionRelation.Symmetric]: 0.08 },
   gold:       { [PositionRelation.Adjacent]: 0.03, [PositionRelation.SameRow]: 0.025, [PositionRelation.SameColumn]: 0.06, [PositionRelation.SameHand]: 0.02, [PositionRelation.SameFinger]: 0.06, [PositionRelation.Symmetric]: 0.12 },
-  fragment:   {},  // 造词师专属
-  mutagen:    {},  // 蜕变师专属
+  fragment:   {},  // 造词师专属（待 Story 扩展）
+  mutagen:    { [PositionRelation.Adjacent]: 0.03, [PositionRelation.SameRow]: 0.025, [PositionRelation.SameColumn]: 0.06, [PositionRelation.SameHand]: 0.02, [PositionRelation.SameFinger]: 0.06, [PositionRelation.Symmetric]: 0.12 },
 };
 
 // === 生成描述字符串 ===
@@ -71,8 +71,8 @@ function buildDesc(resource: ResourceType, relation: PositionRelation, pct: numb
   return `触发时+1层：每个${relIcon}${relLabel}技能${resIcon}${resLabel}+${pct}%/层`;
 }
 
-// === 程序化生成 30 个增幅者 ===
-const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+// === 程序化生成 36 个增幅者 ===
+const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'mutagen'];
 const ALL_RELATIONS: PositionRelation[] = [
   PositionRelation.Adjacent, PositionRelation.SameRow, PositionRelation.SameColumn,
   PositionRelation.SameHand, PositionRelation.SameFinger, PositionRelation.Symmetric,

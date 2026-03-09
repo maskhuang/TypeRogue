@@ -442,6 +442,7 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
     const absDelta = Math.abs(delta);
     state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + absDelta;
     state.mutagenInventory += absDelta;
+    synergy.skillBaseScore += 1; // 变异素产出者附带微量 base（与碎片产出者同模式）
   }
 
   // 战后统计
@@ -657,14 +658,29 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
     }
   }
 
+  // 职业资源路由（溅射/共鸣也需正确路由到库存和累计产出）
+  if (prod.resource === 'fragment') {
+    routeFragmentsToInventory(Math.abs(delta));
+  } else if (prod.resource === 'mutagen') {
+    const absDelta = Math.abs(delta);
+    state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + absDelta;
+    state.mutagenInventory += absDelta;
+  }
+
   // 战后统计
   recordSkillTrigger(producerId, triggerKey, prod.resource, delta, false);
 
-  const color = RESOURCE_COLORS[prod.resource];
-  if (prod.operator === 'add') {
-    showFeedback(`+${parseFloat((baseValue * reduction).toPrecision(4))}${getResourceLabel(prod.resource)} (溅射)`, color, getFloatScale(prod.resource, delta));
-  } else {
-    showFeedback(`×${parseFloat((1 + (baseValue - 1) * reduction).toPrecision(4))} (溅射)`, color, getFloatScaleMul(prod.resource, (baseValue - 1) * reduction));
+  // 浮字反馈（非激活职业资源不显示）
+  const isClassResource = prod.resource === 'fragment' || prod.resource === 'mutagen';
+  const isActiveClassResource = (prod.resource === 'fragment' && state.classId === 'wordsmith')
+    || (prod.resource === 'mutagen' && state.classId === 'metamorph');
+  if (!isClassResource || isActiveClassResource) {
+    const color = RESOURCE_COLORS[prod.resource];
+    if (prod.operator === 'add') {
+      showFeedback(`+${parseFloat((baseValue * reduction).toPrecision(4))}${getResourceLabel(prod.resource)} (溅射)`, color, getFloatScale(prod.resource, delta));
+    } else {
+      showFeedback(`×${parseFloat((1 + (baseValue - 1) * reduction).toPrecision(4))} (溅射)`, color, getFloatScaleMul(prod.resource, (baseValue - 1) * reduction));
+    }
   }
 
   // 成长附魔累积（溅射/共鸣子触发也贡献）

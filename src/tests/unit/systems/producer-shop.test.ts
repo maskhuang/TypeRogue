@@ -36,7 +36,7 @@ describe('产出者商店集成 (AC 7)', () => {
     for (const id of producerIds) {
       expect(producerIds).toContain(id)
     }
-    expect(producerIds).toHaveLength(12)
+    expect(producerIds).toHaveLength(14)
   })
 
   it('isProducer 正确区分产出者和旧技能', () => {
