@@ -18,7 +18,7 @@ import { calculateDeckStats } from '../data/words';
 import { generateWordPacks, getConditionMeta } from '../data/wordPacks';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
-import { juiceUp, calculateRating } from '../effects/juice';
+import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
 import { getNextBattleNode, isRestNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
@@ -1458,8 +1458,15 @@ function renderStatsPanel(): void {
   }
 
   // 评级
-  const rating = bs.rating || calculateRating(state.score, state.targetScore);
-  const ratingClass = rating.length >= 2 ? 'rating-gold' : rating === 'S' ? 'rating-silver' : rating === 'A' ? 'rating-bronze' : '';
+  const rating = bs.rating || calculateRating({
+    score: state.score,
+    targetScore: state.targetScore,
+    perfectWords: bs.perfectWords,
+    wordsCompleted: bs.wordsCompleted,
+    timeRemaining: state.time,
+    timeMax: state.timeMax,
+  });
+  const ratingClass = getRatingTier(rating).cssClass;
 
   // 技能产出金币总计
   let totalGold = 0;

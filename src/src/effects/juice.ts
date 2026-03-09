@@ -325,14 +325,50 @@ export function getRatingTier(grade: string): RatingTier {
   return RATING_TIERS.find(t => t.grade === grade) ?? RATING_TIERS[0];
 }
 
-export function calculateRating(score: number, targetScore: number): string {
-  if (targetScore <= 0 || score < targetScore) return 'C';
-  const overkillRatio = (score - targetScore) / targetScore;
-  if (overkillRatio >= 2.0) return 'SSS'; // 300%+
-  if (overkillRatio >= 1.0) return 'SS';  // 200-300%
-  if (overkillRatio >= 0.6) return 'S';   // 160-200%
-  if (overkillRatio >= 0.3) return 'A';   // 130-160%
-  return 'B';                              // 100-130% (达标即 B)
+export interface RatingInput {
+  score: number;
+  targetScore: number;
+  perfectWords: number;
+  wordsCompleted: number;
+  timeRemaining: number;
+  timeMax: number;
+}
+
+/** 失误率维度：perfectWords / wordsCompleted (0~1 → 0~5) */
+function accuracyScore(perfect: number, total: number): number {
+  if (total <= 0) return 0;
+  return (perfect / total) * 5;
+}
+
+/** 完成速度维度：剩余时间占比 (0~1 → 0~5, log 缩放) */
+function speedScore(timeRemaining: number, timeMax: number): number {
+  if (timeMax <= 0) return 0;
+  const ratio = Math.max(0, timeRemaining / timeMax);
+  // log 缩放：剩 50% 时间 ≈ 2.5 分，剩 80% ≈ 4 分
+  return Math.min(5, Math.log2(1 + ratio * 3) * 2);
+}
+
+/** 超杀维度：(score - target) / target (log 缩放, 0~5) */
+function overkillScore(score: number, targetScore: number): number {
+  if (targetScore <= 0 || score <= targetScore) return 0;
+  const ratio = (score - targetScore) / targetScore;
+  // log 缩放：50% 超杀 ≈ 1.7, 200% ≈ 3.2, 500% ≈ 4.1
+  return Math.min(5, Math.log2(1 + ratio) * 1.8);
+}
+
+/** 三维平均 → 6 档评级 */
+export function calculateRating(input: RatingInput): string {
+  if (input.targetScore <= 0 || input.score < input.targetScore) return 'C';
+  const avg = (
+    accuracyScore(input.perfectWords, input.wordsCompleted) +
+    speedScore(input.timeRemaining, input.timeMax) +
+    overkillScore(input.score, input.targetScore)
+  ) / 3;
+  if (avg >= 4.2) return 'SSS';
+  if (avg >= 3.4) return 'SS';
+  if (avg >= 2.6) return 'S';
+  if (avg >= 1.8) return 'A';
+  return 'B';
 }
 
 /** 评级揭示动画：从 C 逐级滚动到最终评级 */

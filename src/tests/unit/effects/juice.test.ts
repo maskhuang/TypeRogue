@@ -372,58 +372,50 @@ describe('getScoreBumpScale', () => {
 // Story 31.6: 关卡评级系统 (AC: 1, 7)
 
 describe('calculateRating', () => {
+  const base = { score: 100, targetScore: 100, perfectWords: 10, wordsCompleted: 10, timeRemaining: 30, timeMax: 60 }
+
   it('returns C when score < targetScore (失败)', () => {
-    expect(calculateRating(99, 100)).toBe('C')
-    expect(calculateRating(0, 100)).toBe('C')
-    expect(calculateRating(500, 1000)).toBe('C')
-  })
-
-  it('returns B for 100-110% (overkillRatio < 0.1)', () => {
-    expect(calculateRating(100, 100)).toBe('B') // exactly 100%
-    expect(calculateRating(109, 100)).toBe('B') // 109%
-  })
-
-  it('returns A for 130-160% (overkillRatio 0.3-0.6)', () => {
-    expect(calculateRating(130, 100)).toBe('A') // overkill=0.3
-    expect(calculateRating(159, 100)).toBe('A') // overkill=0.59
-  })
-
-  it('returns S for 160-200% (overkillRatio 0.6-1.0)', () => {
-    expect(calculateRating(160, 100)).toBe('S') // overkill=0.6
-    expect(calculateRating(199, 100)).toBe('S') // overkill=0.99
-  })
-
-  it('returns SS for 200-300% (overkillRatio 1.0-2.0)', () => {
-    expect(calculateRating(200, 100)).toBe('SS') // overkill=1.0
-    expect(calculateRating(299, 100)).toBe('SS') // overkill=1.99
-  })
-
-  it('returns SSS for 300%+ (overkillRatio >= 2.0)', () => {
-    expect(calculateRating(300, 100)).toBe('SSS') // overkill=2.0
-    expect(calculateRating(1000, 100)).toBe('SSS') // overkill=9.0
+    expect(calculateRating({ ...base, score: 99 })).toBe('C')
+    expect(calculateRating({ ...base, score: 0 })).toBe('C')
   })
 
   it('returns C when targetScore <= 0', () => {
-    expect(calculateRating(100, 0)).toBe('C')
-    expect(calculateRating(100, -1)).toBe('C')
+    expect(calculateRating({ ...base, targetScore: 0 })).toBe('C')
+    expect(calculateRating({ ...base, targetScore: -1 })).toBe('C')
   })
 
-  it('handles exact boundary transitions', () => {
-    // B → A at overkillRatio 0.3 (score 130 for target 100)
-    expect(calculateRating(129, 100)).toBe('B')
-    expect(calculateRating(130, 100)).toBe('A')
+  it('returns B with minimal performance (刚达标, 多失误, 少时间)', () => {
+    expect(calculateRating({ ...base, perfectWords: 2, timeRemaining: 1 })).toBe('B')
+  })
 
-    // A → S at overkillRatio 0.6 (score 160 for target 100)
-    expect(calculateRating(159, 100)).toBe('A')
-    expect(calculateRating(160, 100)).toBe('S')
+  it('returns higher grades with better multi-dimensional performance', () => {
+    // 全完美 + 大量剩余时间 + 高超杀 → 高评级
+    const perfect = { ...base, score: 500, perfectWords: 10, wordsCompleted: 10, timeRemaining: 50, timeMax: 60 }
+    const grade = calculateRating(perfect)
+    expect(['S', 'SS', 'SSS']).toContain(grade)
+  })
 
-    // S → SS at overkillRatio 1.0 (score 200 for target 100)
-    expect(calculateRating(199, 100)).toBe('S')
-    expect(calculateRating(200, 100)).toBe('SS')
+  it('accuracy dimension: more perfect words → higher grade', () => {
+    const low = calculateRating({ ...base, score: 150, perfectWords: 3, wordsCompleted: 10, timeRemaining: 20 })
+    const high = calculateRating({ ...base, score: 150, perfectWords: 10, wordsCompleted: 10, timeRemaining: 20 })
+    expect(GRADE_ORDER.indexOf(high as any)).toBeGreaterThanOrEqual(GRADE_ORDER.indexOf(low as any))
+  })
 
-    // SS → SSS at overkillRatio 2.0 (score 300 for target 100)
-    expect(calculateRating(299, 100)).toBe('SS')
-    expect(calculateRating(300, 100)).toBe('SSS')
+  it('speed dimension: more time remaining → higher grade', () => {
+    const slow = calculateRating({ ...base, score: 150, timeRemaining: 5, timeMax: 60 })
+    const fast = calculateRating({ ...base, score: 150, timeRemaining: 50, timeMax: 60 })
+    expect(GRADE_ORDER.indexOf(fast as any)).toBeGreaterThanOrEqual(GRADE_ORDER.indexOf(slow as any))
+  })
+
+  it('overkill dimension: higher score → higher grade', () => {
+    const low = calculateRating({ ...base, score: 110, timeRemaining: 20 })
+    const high = calculateRating({ ...base, score: 500, timeRemaining: 20 })
+    expect(GRADE_ORDER.indexOf(high as any)).toBeGreaterThanOrEqual(GRADE_ORDER.indexOf(low as any))
+  })
+
+  it('SSS requires excellence in all dimensions', () => {
+    const sss = calculateRating({ score: 1000, targetScore: 100, perfectWords: 20, wordsCompleted: 20, timeRemaining: 55, timeMax: 60 })
+    expect(sss).toBe('SSS')
   })
 })
 

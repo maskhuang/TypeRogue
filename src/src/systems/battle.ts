@@ -689,7 +689,14 @@ function endLevel(): void {
 
   // 计算关卡评级
   if (state.battleStats) {
-    state.battleStats.rating = calculateRating(state.score, state.targetScore);
+    state.battleStats.rating = calculateRating({
+      score: state.score,
+      targetScore: state.targetScore,
+      perfectWords: state.battleStats.perfectWords,
+      wordsCompleted: state.battleStats.wordsCompleted,
+      timeRemaining: state.time,
+      timeMax: state.timeMax,
+    });
   }
 
   if (state.score >= state.targetScore) {

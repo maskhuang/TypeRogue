@@ -11,12 +11,12 @@ let audioContext: AudioContext | null = null;
 // === 打击感 Click：高频短促，combo→音高上升+音量渐强+衰减缩短 ===
 function getTypeClick(): { freq: number; vol: number; decay: number } {
   const combo = state.combo;
-  // combo→频率 1000~1400Hz（每combo +20Hz，封顶20）
-  const freq = Math.min(1400, 1000 + Math.min(combo, 20) * 20);
-  // combo→音量 0.04~0.08
-  const vol = Math.min(0.08, 0.04 + combo * 0.002);
-  // combo→衰减 0.12s~0.08s（更紧凑）
-  const decay = Math.max(0.08, 0.12 - combo * 0.002);
+  // combo→频率 500Hz起，每combo +15Hz，无上限
+  const freq = 500 + combo * 15;
+  // combo→音量 0.02~0.045
+  const vol = Math.min(0.045, 0.02 + combo * 0.00125);
+  // combo→衰减 0.16s~0.10s（更柔和）
+  const decay = Math.max(0.10, 0.16 - combo * 0.003);
   return { freq, vol, decay };
 }
 

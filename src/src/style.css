@@ -2836,20 +2836,12 @@ body {
   background: rgba(255,255,255,0.08);
   color: #aaa;
 }
-.rating-badge.rating-gold {
-  color: #ffd700;
-  text-shadow: 0 0 12px rgba(255,215,0,0.6);
-  background: rgba(255,215,0,0.12);
-}
-.rating-badge.rating-silver {
-  color: #c0c0c0;
-  text-shadow: 0 0 8px rgba(192,192,192,0.5);
-  background: rgba(192,192,192,0.1);
-}
-.rating-badge.rating-bronze {
-  color: #cd7f32;
-  background: rgba(205,127,50,0.1);
-}
+.rating-badge.rating-c { color: #888888; }
+.rating-badge.rating-b { color: #4a90d9; background: rgba(74,144,217,0.1); }
+.rating-badge.rating-a { color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,0.5); background: rgba(255,215,0,0.1); }
+.rating-badge.rating-s { color: #a855f7; text-shadow: 0 0 10px rgba(168,85,247,0.5); background: rgba(168,85,247,0.1); }
+.rating-badge.rating-ss { color: #ffd700; text-shadow: 0 0 12px rgba(255,215,0,0.6); background: rgba(255,215,0,0.12); }
+.rating-badge.rating-sss { color: #ff6b6b; text-shadow: 0 0 12px rgba(255,107,107,0.6); background: rgba(255,107,107,0.12); }
 
 .stats-summary {
   display: flex;
