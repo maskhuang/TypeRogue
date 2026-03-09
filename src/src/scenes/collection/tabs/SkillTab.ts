@@ -7,7 +7,7 @@ import { Container, Text } from 'pixi.js'
 import { CollectionItem, CollectionItemData } from '../components/CollectionItem'
 import { PRODUCERS } from '../../../data/producers'
 import { CONVERTERS } from '../../../data/converters'
-import { CONNECTORS } from '../../../data/connectors'
+import { CONNECTORS, REPLICATORS } from '../../../data/connectors'
 import type { MetaState } from '../../../core/state/MetaState'
 
 /**
@@ -34,7 +34,7 @@ export class SkillTab extends Container {
     const unlockedSkills = new Set(this.metaState.getUnlockedSkills())
 
     const allSkills: Record<string, { name: string; desc: string; icon: string }> = {
-      ...PRODUCERS, ...CONVERTERS, ...CONNECTORS,
+      ...PRODUCERS, ...CONVERTERS, ...CONNECTORS, ...REPLICATORS,
     }
     return Object.entries(allSkills).map(([skillId, skill]) => ({
       id: skillId,

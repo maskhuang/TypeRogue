@@ -9,7 +9,7 @@ import type { RestEvent, RestEventOption } from '../data/restEvents';
 import { RELICS } from '../data/relics';
 import { PRODUCERS } from '../data/producers';
 import { CONVERTERS } from '../data/converters';
-import { CONNECTORS } from '../data/connectors';
+import { CONNECTORS, REPLICATORS } from '../data/connectors';
 import { showScreen, startLevel, renderRelicDisplay } from './battle';
 import { getNextBattleNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { getBossModifierMeta } from '../data/bossModifiers';
@@ -163,7 +163,7 @@ export function executeEffect(effectId: string): string {
       if (!removed) return '没有可献祭的技能。';
       const newSkillId = grantRandomNewSkill();
       if (newSkillId) {
-        const newSk = PRODUCERS[newSkillId] || CONVERTERS[newSkillId] || CONNECTORS[newSkillId];
+        const newSk = PRODUCERS[newSkillId] || CONVERTERS[newSkillId] || CONNECTORS[newSkillId] || REPLICATORS[newSkillId];
         return `献祭了 ${removed.name}，获得新技能 ${newSk.icon} ${newSk.name}！`;
       }
       return `献祭了 ${removed.name}，但没有更多新技能可获得。`;
@@ -354,7 +354,7 @@ function removeRandomSkill(): { id: string; name: string } | null {
   const skillIds = [...state.player.skills.keys()];
   if (skillIds.length === 0) return null;
   const skillId = skillIds[Math.floor(Math.random() * skillIds.length)];
-  const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
+  const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId];
 
   // 移除绑定
   for (const [key, id] of state.player.bindings) {
@@ -374,7 +374,7 @@ function removeRandomSkill(): { id: string; name: string } | null {
 /** 授予随机新技能（未拥有的），返回技能 ID 或 null */
 function grantRandomNewSkill(): string | null {
   const owned = [...state.player.skills.keys()];
-  const available = [...Object.keys(PRODUCERS), ...Object.keys(CONVERTERS), ...Object.keys(CONNECTORS)].filter(id => !owned.includes(id));
+  const available = [...Object.keys(PRODUCERS), ...Object.keys(CONVERTERS), ...Object.keys(CONNECTORS), ...Object.keys(REPLICATORS)].filter(id => !owned.includes(id));
   if (available.length === 0) return null;
   const skillId = available[Math.floor(Math.random() * available.length)];
   state.player.skills.set(skillId, { level: 1 });
@@ -388,6 +388,6 @@ function upgradeRandomSkill(): { name: string; newLevel: number } | null {
   if (upgradable.length === 0) return null;
   const [skillId, data] = upgradable[Math.floor(Math.random() * upgradable.length)];
   data.level++;
-  const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId];
+  const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId];
   return sk ? { name: sk.name, newLevel: data.level } : null;
 }

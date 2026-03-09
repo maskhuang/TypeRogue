@@ -8,7 +8,7 @@ import { RESOURCE_COLORS } from '../core/constants';
 import { getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS, isProducer, getProducerValue } from '../data/producers';
 import { CONVERTERS, isConverter, getConverterK, getSourceValue, getConverterDesc } from '../data/converters';
-import { CONNECTORS, isConnector } from '../data/connectors';
+import { CONNECTORS, REPLICATORS, isConnector, isReplicator } from '../data/connectors';
 import { AMPLIFIERS, isAmplifier, getAmplifierValue } from '../data/amplifiers';
 import { ENCHANTMENTS } from '../data/enchantments';
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
@@ -604,7 +604,7 @@ function applySplashEnchantment(skillId: string, triggerKey?: string): void {
   const targets: { sid: string; key: string }[] = [];
   for (const key of related) {
     const sid = state.player.bindings.get(key);
-    if (!sid || isConnector(sid) || isAmplifier(sid)) continue;
+    if (!sid || isConnector(sid) || isReplicator(sid)) continue;
     targets.push({ sid, key });
   }
   if (targets.length === 0) return;
@@ -616,6 +616,8 @@ function applySplashEnchantment(skillId: string, triggerKey?: string): void {
       triggerProducerWithReduction(sid, key, reduction);
     } else if (isConverter(sid)) {
       triggerConverterWithReduction(sid, key, reduction);
+    } else if (isAmplifier(sid)) {
+      triggerAmplifierIndirect(sid, key, reduction, '溅射');
     }
   }
   _splashActive = false;
@@ -817,33 +819,33 @@ export function checkResonanceTriggers(sourceKey: string): void {
     } else if (isConverter(sid)) {
       triggerConverterWithReduction(sid, enchKey, ench.effectValue);
     } else if (isAmplifier(sid)) {
-      triggerAmplifierResonance(sid, enchKey, ench.effectValue);
+      triggerAmplifierIndirect(sid, enchKey, ench.effectValue, '共鸣');
     }
   }
 
   _resonanceActive = false;
 }
 
-// === 附魔：共鸣触发增幅者叠层（静默版，无弹窗/音效） ===
-function triggerAmplifierResonance(ampId: string, key: string, efficiency: number = 1): void {
+// === 附魔：间接触发增幅者叠层（共鸣/溅射共用，浮点累积） ===
+function triggerAmplifierIndirect(ampId: string, key: string, efficiency: number, source: string): void {
   const amp = AMPLIFIERS[ampId];
   if (!amp) return;
   const current = state.amplifierStacks.get(ampId) || 0;
-  const newStacks = current + efficiency; // 浮点累积：50%共鸣 = +0.5层
+  const newStacks = current + efficiency; // 浮点累积
   state.amplifierStacks.set(ampId, newStacks);
   recordSkillTrigger(ampId, key, 'base', 0, false);
   const displayStacks = Math.floor(newStacks);
-  showFeedback(`${amp.icon || ''} ×${displayStacks} (共鸣)`, '#a29bfe');
+  showFeedback(`${amp.icon || ''} ×${displayStacks} (${source})`, '#a29bfe');
 
-  // 成长附魔累积（共鸣子触发也贡献）
+  // 成长附魔累积
   checkGrowthAccumulation(key);
-  // 精通附魔累积（共鸣子触发也计数）
+  // 精通附魔累积
   checkMasteryAccumulation(ampId);
-  // 吞噬附魔累积（共鸣子触发也计数）
+  // 吞噬附魔累积
   checkDevourAccumulation(ampId, key);
 
   updateHUD();
-  eventBus.emit('skill:triggered', { key, skillId: ampId, type: 'active', amplifierStacks: Math.floor(newStacks), growthValue: state.growthValues.get(ampId) || 0 });
+  eventBus.emit('skill:triggered', { key, skillId: ampId, type: 'active', amplifierStacks: displayStacks, growthValue: state.growthValues.get(ampId) || 0 });
 }
 
 // === 附魔后处理：溅射 + 变性 ===
@@ -908,36 +910,36 @@ export function clearPseudoInfinite(): void {
   }
 }
 
-// === 连接者：复制型触发 ===
-export function triggerConnectorCopy(connectorId: string, triggerKey: string, chainHistory: string[]): void {
-  // T4 限制遗物：连接者锁定
+// === 复制者：按键触发，复制范围内技能 ===
+export function triggerReplicator(replicatorId: string, triggerKey: string, chainHistory: string[]): void {
+  // T4 限制遗物：连接者锁定（复制者也受影响）
   if (queryRelicFlag('connector_lock') === true) {
     showFeedback('连接者已锁定!', '#ff0000');
     return;
   }
 
-  const conn = CONNECTORS[connectorId];
-  if (!conn || conn.triggerType !== 'copy') return;
+  const rep = REPLICATORS[replicatorId];
+  if (!rep) return;
 
   // 视觉/音效反馈
-  showTriggerPopup(connectorId);
+  showTriggerPopup(replicatorId);
 
   playSound('skill');
   synergy.wordSkillCount++;
 
   // 查找位置关系内有绑定技能的键
-  const relatedKeys = getKeysWithRelation(triggerKey, conn.positionRelation);
+  const relatedKeys = getKeysWithRelation(triggerKey, rep.positionRelation);
   const candidates = relatedKeys.filter(k => {
     const sid = state.player.bindings.get(k);
-    return sid && !isConnector(sid); // 跳过其他连接者，避免无限递归
+    return sid && !isReplicator(sid); // 跳过其他复制者，避免无限递归
   });
   if (candidates.length === 0) return;
 
   const targetKey = candidates[Math.floor(Math.random() * candidates.length)];
   const targetSkillId = state.player.bindings.get(targetKey)!;
 
-  // 反馈：连接者图标 → 目标技能
-  const connDisplay = getSkillDisplayInfo(connectorId, undefined, state.player.enchantedSkills);
+  // 反馈：复制者图标 → 目标技能
+  const connDisplay = getSkillDisplayInfo(replicatorId, undefined, state.player.enchantedSkills);
   const targetDisplay = getSkillDisplayInfo(targetSkillId, undefined, state.player.enchantedSkills);
   showFeedback(`${connDisplay.icon}→${targetDisplay.icon}${targetDisplay.name}`, '#a29bfe');
 
@@ -960,13 +962,13 @@ export function triggerConnectorCopy(connectorId: string, triggerKey: string, ch
 
 // === 连接者：资源触发检查 ===
 export function checkResourceTriggers(resource: ResourceType, sourceKey: string, chainHistory: string[]): void {
-  // T4 限制遗物：连接者锁定（与 triggerConnectorCopy 一致）
+  // T4 限制遗物：连接者锁定
   if (queryRelicFlag('connector_lock') === true) return;
 
   // 遍历所有已绑定的资源触发型连接者
   for (const [connKey, connId] of state.player.bindings) {
     const conn = CONNECTORS[connId];
-    if (!conn || conn.triggerType !== 'resourceTrigger' || conn.resource !== resource) continue;
+    if (!conn || conn.resource !== resource) continue;
 
     // 检查产出技能的键是否与连接者有位置关系
     if (!hasRelation(sourceKey, connKey, conn.positionRelation)) continue;
@@ -1099,12 +1101,12 @@ export function triggerSkill(skillId: string, triggerKey: string, chainHistory?:
     shouldRetrigger = _retriggerRequested;
     checkResourceTriggers(CONVERTERS[skillId].target, triggerKey, chain);
     checkResonanceTriggers(triggerKey);
+  } else if (isReplicator(skillId)) {
+    // 复制者分流：不可重触发（会导致链式触发混乱）
+    triggerReplicator(skillId, triggerKey, chain);
+    return;
   } else if (isConnector(skillId)) {
-    // 连接者分流：不可重触发（会导致链式触发混乱）
-    const conn = CONNECTORS[skillId];
-    if (conn.triggerType === 'copy') {
-      triggerConnectorCopy(skillId, triggerKey, chain);
-    }
+    // 连接者（资源触发型）：被动触发，不从 triggerSkill 主动执行
     return;
   } else if (isAmplifier(skillId)) {
     // 增幅者分流：纯叠层，无资源产出

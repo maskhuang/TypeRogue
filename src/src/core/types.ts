@@ -39,16 +39,22 @@ export interface ConverterDefinition {
   desc: string;            // 玩家可见描述
 }
 
-// === 连接者系统 ===
-export type ConnectorTriggerType = 'copy' | 'resourceTrigger';
-
-export interface ConnectorDefinition {
-  id: string;                          // conn_copy_adjacent, conn_base_adjacent, ...
-  name: string;                        // 映射, 震荡, ...
+// === 复制者系统 ===
+export interface ReplicatorDefinition {
+  id: string;                          // conn_copy_adjacent, ...
+  name: string;                        // 映射, 广播, ...
   icon: string;                        // emoji
-  triggerType: ConnectorTriggerType;    // copy | resourceTrigger
   positionRelation: PositionRelation;   // 位置关系枚举
-  resource?: ResourceType;             // 资源触发型专用：监听的资源
+  desc: string;                        // 玩家可见描述
+}
+
+// === 连接者系统 ===
+export interface ConnectorDefinition {
+  id: string;                          // conn_base_adjacent, ...
+  name: string;                        // 震荡, 横波, ...
+  icon: string;                        // emoji
+  positionRelation: PositionRelation;   // 位置关系枚举
+  resource: ResourceType;              // 监听的资源
   desc: string;                        // 玩家可见描述
 }
 
@@ -148,7 +154,8 @@ export interface GameState {
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
   sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
   converterPool: string[];             // 本局转化者池（40 抽 20）
-  connectorPool: string[];             // 本局连接者池（42 抽 21）
+  connectorPool: string[];             // 本局连接者池（25 抽 13）
+  replicatorPool: string[];            // 本局复制者池（6 抽 5）
   amplifierPool: string[];             // 本局增幅者池
   amplifierStacks: Map<string, number>; // 增幅者叠层（key=ampId, value=层数），关卡结算时清零
   devourCounters: Map<string, number>;  // 吞噬附魔战斗内触发计数（skillId → 计数），每关重置

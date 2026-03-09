@@ -52,6 +52,7 @@ export function createInitialState(): GameState {
     sealedKeys: [],
     converterPool: [],
     connectorPool: [],
+    replicatorPool: [],
     amplifierPool: [],
     amplifierStacks: new Map(),
     devourCounters: new Map(),

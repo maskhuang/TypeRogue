@@ -16,7 +16,7 @@ import { EffectQueueDisplay, type QueuedEffect } from './EffectQueueDisplay'
 import { adjacencyMap } from '../../systems/skills/passive/AdjacencyMap'
 import { PRODUCERS } from '../../data/producers'
 import { CONVERTERS } from '../../data/converters'
-import { CONNECTORS } from '../../data/connectors'
+import { CONNECTORS, REPLICATORS } from '../../data/connectors'
 
 interface SkillTriggeredEvent {
   key: string
@@ -118,7 +118,7 @@ export class SkillFeedbackManager {
     const keyPosition = this.getKeyPosition(data.key)
     if (!keyPosition) return
 
-    const skill = PRODUCERS[data.skillId] || CONVERTERS[data.skillId] || CONNECTORS[data.skillId] as any
+    const skill = PRODUCERS[data.skillId] || CONVERTERS[data.skillId] || CONNECTORS[data.skillId] || REPLICATORS[data.skillId] as any
     if (!skill) return
 
     // 1. 播放图标弹出

@@ -5,14 +5,14 @@
 
 import { PRODUCERS } from './producers';
 import { CONVERTERS } from './converters';
-import { CONNECTORS } from './connectors';
+import { CONNECTORS, REPLICATORS } from './connectors';
 import { AMPLIFIERS } from './amplifiers';
 import { ENCHANTMENTS } from './enchantments';
 import { RELICS } from './relics';
 import { BOSS_MODIFIER_META } from './bossModifiers';
 import { RESOURCE_ICONS } from '../core/constants';
 
-export type IconType = 'producer' | 'converter' | 'connector' | 'amplifier' | 'enchantment' | 'relic' | 'bossModifier' | 'resource';
+export type IconType = 'producer' | 'converter' | 'connector' | 'replicator' | 'amplifier' | 'enchantment' | 'relic' | 'bossModifier' | 'resource';
 
 export interface IconEntry {
   icon: string;
@@ -42,6 +42,9 @@ export function getAllIconEntries(): IconEntry[] {
   }
   for (const c of Object.values(CONNECTORS)) {
     entries.push({ icon: c.icon, id: c.id, type: 'connector' });
+  }
+  for (const r of Object.values(REPLICATORS)) {
+    entries.push({ icon: r.icon, id: r.id, type: 'replicator' });
   }
   for (const a of Object.values(AMPLIFIERS)) {
     entries.push({ icon: a.icon, id: a.id, type: 'amplifier' });

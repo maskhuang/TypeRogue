@@ -10,24 +10,25 @@ import { renderBuildManager } from '../shop';
 import { getSkillDisplayInfo, getSkillSchool } from '../../data/skills';
 import { PRODUCERS, isProducer } from '../../data/producers';
 import { CONVERTERS, isConverter } from '../../data/converters';
-import { CONNECTORS, isConnector } from '../../data/connectors';
+import { CONNECTORS, REPLICATORS, isConnector, isReplicator } from '../../data/connectors';
 import { AMPLIFIERS, isAmplifier } from '../../data/amplifiers';
 import { filterSkillIdsByClass } from './ClassResourceFilter';
 import { random } from '../../core/seededRandom';
 
 // === 技能类型判定 ===
-type SkillType = 'producer' | 'converter' | 'connector' | 'amplifier';
+type SkillType = 'producer' | 'converter' | 'connector' | 'replicator' | 'amplifier';
 
 function getSkillType(id: string): SkillType | null {
   if (isProducer(id)) return 'producer';
   if (isConverter(id)) return 'converter';
   if (isConnector(id)) return 'connector';
+  if (isReplicator(id)) return 'replicator';
   if (isAmplifier(id)) return 'amplifier';
   return null;
 }
 
 // === 隐藏池计算 ===
-function computeHiddenPool(type: 'converter' | 'connector' | 'amplifier'): string[] {
+function computeHiddenPool(type: 'converter' | 'connector' | 'replicator' | 'amplifier'): string[] {
   // 全集 ID
   let allIds: string[];
   let visiblePool: string[];
@@ -43,6 +44,11 @@ function computeHiddenPool(type: 'converter' | 'connector' | 'amplifier'): strin
       allIds = Object.keys(CONNECTORS);
       visiblePool = state.connectorPool;
       getDefinition = id => CONNECTORS[id];
+      break;
+    case 'replicator':
+      allIds = Object.keys(REPLICATORS);
+      visiblePool = state.replicatorPool;
+      getDefinition = id => REPLICATORS[id] as any;
       break;
     case 'amplifier':
       allIds = Object.keys(AMPLIFIERS);
@@ -69,6 +75,7 @@ function computeHiddenPool(type: 'converter' | 'connector' | 'amplifier'): strin
 function performMetamorph(oldSkillId: string, boundKey: string, container: HTMLElement): void {
   const type = getSkillType(oldSkillId);
   if (!type || type === 'producer') return;
+  // computeHiddenPool 不接受 'producer'，但上面已排除
 
   // 费用计算
   const hasPrimalMutant = state.player.relics.has('primal_mutant');
@@ -154,7 +161,7 @@ function performMetamorph(oldSkillId: string, boundKey: string, container: HTMLE
 
 // === 技能悬停提示 ===
 const TYPE_NAMES: Record<string, string> = {
-  producer: '产出者', converter: '转化者', connector: '连接者', amplifier: '增幅者',
+  producer: '产出者', converter: '转化者', connector: '连接者', replicator: '复制者', amplifier: '增幅者',
 };
 
 function showMorphTooltip(e: MouseEvent, skillId: string, level: number, type: SkillType | null, boundKey: string): void {
@@ -267,6 +274,7 @@ export function renderMetamorphPanel(container: HTMLElement): void {
       producer: '产出者',
       converter: '转化者',
       connector: '连接者',
+      replicator: '复制者',
       amplifier: '增幅者',
     };
     typeLabel.textContent = type ? typeNames[type] : '未知';

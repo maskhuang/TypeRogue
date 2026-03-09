@@ -9,7 +9,7 @@ import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS }
 import { getSkillSchool, getSkillDisplayInfo } from '../data/skills';
 import { PRODUCERS, isProducer } from '../data/producers';
 import { CONVERTERS, isConverter } from '../data/converters';
-import { CONNECTORS, isConnector } from '../data/connectors';
+import { CONNECTORS, REPLICATORS, isConnector, isReplicator } from '../data/connectors';
 import { AMPLIFIERS, isAmplifier } from '../data/amplifiers';
 import { ENCHANTMENTS, drawEnchantmentPair } from '../data/enchantments';
 import { getKeysWithRelation, hasRelation } from '../data/keyboardTopology';
@@ -43,10 +43,10 @@ import type { DragPayload } from './dragManager';
 let cachedLetterFreqs: Map<string, number> | null = null;
 
 // === Act 技能权重 ===
-export const ACT_SKILL_WEIGHTS: Record<number, { producer: number; converter: number; connector: number; amplifier: number }> = {
-  1: { producer: 80, converter: 20, connector: 0, amplifier: 0 },
-  2: { producer: 25, converter: 45, connector: 20, amplifier: 10 },
-  3: { producer: 10, converter: 35, connector: 35, amplifier: 20 },
+export const ACT_SKILL_WEIGHTS: Record<number, { producer: number; converter: number; connector: number; replicator: number; amplifier: number }> = {
+  1: { producer: 80, converter: 20, connector: 0, replicator: 0, amplifier: 0 },
+  2: { producer: 25, converter: 45, connector: 15, replicator: 5, amplifier: 10 },
+  3: { producer: 10, converter: 35, connector: 25, replicator: 10, amplifier: 20 },
 };
 
 // === Act 遗物权重 ===
@@ -82,6 +82,7 @@ export const SKILL_TYPE_TOOLTIPS: Record<string, { text: string; color: string }
   producer:  { text: '💡 产出者：按键直接产出资源', color: '#4ecdc4' },
   converter: { text: '💡 转化者：读取资源值，产出另一种', color: '#f39c12' },
   connector: { text: '💡 连接者：自动触发周围技能', color: '#9b59b6' },
+  replicator: { text: '💡 复制者：按键触发周围技能', color: '#8e44ad' },
   amplifier: { text: '💡 增幅者：叠层增幅范围内技能数值', color: '#7c5cbf' },
 };
 
@@ -89,6 +90,7 @@ function getSkillCategory(skillId: string): string | null {
   if (isProducer(skillId)) return 'producer';
   if (isConverter(skillId)) return 'converter';
   if (isConnector(skillId)) return 'connector';
+  if (isReplicator(skillId)) return 'replicator';
   if (isAmplifier(skillId)) return 'amplifier';
   return null;
 }
@@ -206,43 +208,53 @@ function generateShopItems(count: number): ShopItem[] {
     const owned = [...state.player.skills.keys()];
     const poolConverterIds = state.converterPool.filter(id => id in CONVERTERS);
     const poolConnectorIds = state.connectorPool.filter(id => id in CONNECTORS);
+    const poolReplicatorIds = state.replicatorPool.filter(id => id in REPLICATORS);
     const poolAmplifierIds = state.amplifierPool.filter(id => id in AMPLIFIERS);
     // Story 32.2: 过滤非当前职业的职业资源相关技能
     const producerIds = Object.keys(PRODUCERS).filter(id => {
       const prod = PRODUCERS[id];
       return isResourceActiveForClass(prod.resource, state.classId);
     });
-    const allSkillIds = [...producerIds, ...poolConverterIds, ...poolConnectorIds, ...poolAmplifierIds];
+    const allSkillIds = [...producerIds, ...poolConverterIds, ...poolConnectorIds, ...poolReplicatorIds, ...poolAmplifierIds];
     const unowned = allSkillIds.filter(id => !owned.includes(id));
 
     // 按类型分桶（T4 限制遗物可禁用连接者）
     const weights = { ...(ACT_SKILL_WEIGHTS[act] || ACT_SKILL_WEIGHTS[3]) };
     if (queryRelicFlag('connector_lock') === true) {
       weights.connector = 0;
+      weights.replicator = 0;
     }
     // T4 纯粹之心：只允许产出者
     if (queryRelicFlag('producer_only') === true) {
       weights.converter = 0;
       weights.connector = 0;
+      weights.replicator = 0;
       weights.amplifier = 0;
     }
     const producerBucket = shuffleArray(unowned.filter(id => isProducer(id)));
     const converterBucket = shuffleArray(unowned.filter(id => isConverter(id)));
     const connectorBucket = shuffleArray(unowned.filter(id => isConnector(id)));
+    const replicatorBucket = shuffleArray(unowned.filter(id => isReplicator(id)));
     const amplifierBucket = shuffleArray(unowned.filter(id => isAmplifier(id)));
 
     // 加权抽取新技能（严格执行 0% 权重 = 绝不出现）
     function weightedPick(): string | null {
-      const total = weights.producer + weights.converter + weights.connector + weights.amplifier;
+      const total = weights.producer + weights.converter + weights.connector + weights.replicator + weights.amplifier;
       const roll = random() * total;
-      if (roll < weights.producer && producerBucket.length > 0) return producerBucket.shift()!;
-      if (roll < weights.producer + weights.converter && converterBucket.length > 0) return converterBucket.shift()!;
-      if (roll < weights.producer + weights.converter + weights.connector && connectorBucket.length > 0) return connectorBucket.shift()!;
+      let acc = weights.producer;
+      if (roll < acc && producerBucket.length > 0) return producerBucket.shift()!;
+      acc += weights.converter;
+      if (roll < acc && converterBucket.length > 0) return converterBucket.shift()!;
+      acc += weights.connector;
+      if (roll < acc && connectorBucket.length > 0) return connectorBucket.shift()!;
+      acc += weights.replicator;
+      if (roll < acc && replicatorBucket.length > 0) return replicatorBucket.shift()!;
       if (weights.amplifier > 0 && amplifierBucket.length > 0) return amplifierBucket.shift()!;
       // fallback: 从非空的、权重 > 0 的桶中取
       if (weights.producer > 0 && producerBucket.length > 0) return producerBucket.shift()!;
       if (weights.converter > 0 && converterBucket.length > 0) return converterBucket.shift()!;
       if (weights.connector > 0 && connectorBucket.length > 0) return connectorBucket.shift()!;
+      if (weights.replicator > 0 && replicatorBucket.length > 0) return replicatorBucket.shift()!;
       if (weights.amplifier > 0 && amplifierBucket.length > 0) return amplifierBucket.shift()!;
       return null;
     }
@@ -293,7 +305,7 @@ function generateShopItems(count: number): ShopItem[] {
     const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
     const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel;
     const upgradable = owned.filter(id => {
-      if (isConnector(id)) return false; // 连接者固定 Lv1，不可升级
+      if (isConnector(id) || isReplicator(id)) return false; // 连接者/复制者固定 Lv1，不可升级
       const data = state.player.skills.get(id);
       return data && data.level < levelCap;
     });
@@ -405,7 +417,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
   if (!canAfford) card.classList.add('cannot-afford');
 
   if (item.type === 'skill') {
-    const sk = PRODUCERS[item.skillId!] || CONVERTERS[item.skillId!] || CONNECTORS[item.skillId!] || AMPLIFIERS[item.skillId!];
+    const sk = PRODUCERS[item.skillId!] || CONVERTERS[item.skillId!] || CONNECTORS[item.skillId!] || REPLICATORS[item.skillId!] || AMPLIFIERS[item.skillId!];
     if (!sk) return;
     const school = getSkillSchool(item.skillId!);
     const lvl = state.player.skills.get(item.skillId!)?.level || 1;
@@ -629,10 +641,10 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
       data.level++;
       data.purchasePrice = (data.purchasePrice || 0) + item.cost;
     }
-    showFeedback(`${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || AMPLIFIERS[skillId])?.name} 升级!`, '#ffe66d');
+    showFeedback(`${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])?.name} 升级!`, '#ffe66d');
   } else {
     state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
-    showFeedback(`获得 ${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || AMPLIFIERS[skillId])?.name}!`, '#4ecdc4');
+    showFeedback(`获得 ${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])?.name}!`, '#4ecdc4');
 
     // 首次获取某类型技能时显示 tooltip
     const category = getSkillCategory(skillId);
@@ -1018,6 +1030,8 @@ function highlightSkillRange(key: string): void {
   const relations: PositionRelation[] = [];
   const conn = CONNECTORS[skillId];
   if (conn) relations.push(conn.positionRelation);
+  const rep = REPLICATORS[skillId];
+  if (rep) relations.push(rep.positionRelation);
   const amp = AMPLIFIERS[skillId];
   if (amp) relations.push(amp.positionRelation);
   const enchId = state.player.enchantedSkills?.get(skillId);
@@ -1143,7 +1157,7 @@ export function renderBuildManager(): void {
       else if (score >= 1) slot.classList.add('score-low');
 
       // 技能流派底色
-      if (skillId && (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || AMPLIFIERS[skillId])) {
+      if (skillId && (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])) {
         const display = getSkillDisplay(skillId);
         const school = getSkillSchool(skillId);
         slot.classList.add('has-skill');
@@ -1169,7 +1183,7 @@ export function renderBuildManager(): void {
           score,
           frequency: freq,
         };
-        if (skillId && (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || AMPLIFIERS[skillId])) {
+        if (skillId && (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])) {
           const display = getSkillDisplay(skillId);
           const school = getSkillSchool(skillId);
           const lvl = state.player.skills.get(skillId)?.level ?? 1;

@@ -5,7 +5,7 @@
 
 import { PRODUCERS, getProducerDesc } from './producers';
 import { CONVERTERS, getConverterDesc } from './converters';
-import { CONNECTORS, getConnectorDesc } from './connectors';
+import { CONNECTORS, REPLICATORS, getConnectorDesc, getReplicatorDesc } from './connectors';
 import { AMPLIFIERS, getAmplifierDesc } from './amplifiers';
 import { ENCHANTMENTS } from './enchantments';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
@@ -58,6 +58,8 @@ export function getSkillSchool(skillId: string): SkillSchool {
   if (skillId in CONVERTERS) return { label: '转化', cssClass: 'school-converter' };
   // 连接者统一归为"连接"流派
   if (skillId in CONNECTORS) return { label: '连接', cssClass: 'school-connector' };
+  // 复制者统一归为"复制"流派
+  if (skillId in REPLICATORS) return { label: '复制', cssClass: 'school-replicator' };
   // 增幅者统一归为"增幅"流派
   if (skillId in AMPLIFIERS) return { label: '增幅', cssClass: 'school-amplifier' };
   return { label: '未知', cssClass: 'school-unknown' };
@@ -99,6 +101,11 @@ export function getSkillDisplayInfo(
   const conn = CONNECTORS[skillId];
   if (conn) {
     return { name: conn.name, icon: conn.icon, desc: getConnectorDesc(skillId) };
+  }
+  // 复制者查询（固定 Lv1，无等级变化）
+  const rep = REPLICATORS[skillId];
+  if (rep) {
+    return { name: rep.name, icon: rep.icon, desc: getReplicatorDesc(skillId) };
   }
   // 增幅者查询
   const amp = AMPLIFIERS[skillId];

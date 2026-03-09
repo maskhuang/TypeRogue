@@ -8,7 +8,7 @@ import { state } from './core/state';
 import { getStarterWords } from './data/words';
 import { drawBossModifiers } from './data/bossModifiers';
 import { drawConverterPool, CONVERTERS } from './data/converters';
-import { drawConnectorPool, CONNECTORS } from './data/connectors';
+import { drawConnectorPool, drawReplicatorPool, CONNECTORS, REPLICATORS } from './data/connectors';
 import { drawAmplifierPool, AMPLIFIERS } from './data/amplifiers';
 import { startLevel, initInput, resetLastAct } from './systems/battle';
 import { initShopEvents } from './systems/shop';
@@ -94,8 +94,11 @@ function init(): void {
   // 抽取本局转化者池（52 个中随机 31 个，非造词师过滤后 ~20）
   state.converterPool = drawConverterPool();
 
-  // 抽取本局连接者池（36 个中随机 18 个）
+  // 抽取本局连接者池（25 个中随机 13 个）
   state.connectorPool = drawConnectorPool();
+
+  // 抽取本局复制者池（6 个中随机 5 个）
+  state.replicatorPool = drawReplicatorPool();
 
   // 抽取本局增幅者池（30 个中随机 15 个）
   state.amplifierPool = drawAmplifierPool();
@@ -108,6 +111,7 @@ function init(): void {
     // Story 32.2: 按职业过滤技能池（移除非当前职业的职业资源技能）
     state.converterPool = filterSkillIdsByClass(state.converterPool, state.classId, id => CONVERTERS[id]);
     state.connectorPool = filterSkillIdsByClass(state.connectorPool, state.classId, id => CONNECTORS[id]);
+    state.replicatorPool = filterSkillIdsByClass(state.replicatorPool, state.classId, id => REPLICATORS[id] as any);
     state.amplifierPool = filterSkillIdsByClass(state.amplifierPool, state.classId, id => AMPLIFIERS[id]);
 
     // 有初始遗物的职业跳过开局三选一
