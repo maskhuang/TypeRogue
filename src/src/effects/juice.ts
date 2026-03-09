@@ -159,3 +159,11 @@ export function getScoreTier(score: number): string {
 
 /** 所有分数分级 CSS class，用于清除旧 class */
 export const SCORE_TIER_CLASSES = ['score-silver', 'score-gold', 'score-rainbow', 'score-legendary'] as const;
+
+// === 分数音效分级（4 档） ===
+export function getScoreSoundTier(score: number): number {
+  if (score >= 5000) return 3;
+  if (score >= 1000) return 2;
+  if (score >= 100) return 1;
+  return 0;
+}

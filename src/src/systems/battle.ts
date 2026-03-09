@@ -9,7 +9,7 @@ import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES } from '../effects/juice';
-import { playSound, initAudio } from '../effects/sound';
+import { playSound, initAudio, playScoreSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
@@ -386,7 +386,7 @@ function completeWord(): void {
   const shakeIntensity = getShakeIntensity(finalWordScore);
   if (shakeIntensity > 0) screenShake(shakeIntensity);
 
-  playSound('word');
+  playScoreSound(finalWordScore);
 
   // 重置词语基础分
   wordBaseScore = 0;

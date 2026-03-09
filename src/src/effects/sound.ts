@@ -4,6 +4,7 @@
 
 import { SOUND_PROFILES } from '../core/constants';
 import { state } from '../core/state';
+import { getScoreSoundTier } from './juice';
 
 let audioContext: AudioContext | null = null;
 
@@ -19,24 +20,15 @@ function getTypeClick(): { freq: number; vol: number; decay: number } {
   return { freq, vol, decay };
 }
 
-// === 词语结算音：combo→音高上升+扫频加宽+音量渐强 ===
-function getWordProfile(): { startFreq: number; endFreq: number; vol: number; decay: number } {
-  const combo = state.combo;
-  // combo→起始频率 500~700Hz（每combo +10Hz，封顶20）
-  const startFreq = Math.min(700, 500 + Math.min(combo, 20) * 10);
-  // combo→扫频比加宽 1.5~1.8（更辉煌）
-  const ratio = Math.min(1.8, 1.5 + combo * 0.015);
-  const endFreq = startFreq * ratio;
-  // combo→音量 0.10~0.18
-  const vol = Math.min(0.18, 0.10 + combo * 0.004);
-  // combo→持续时间 0.15~0.20s（更绵长）
-  const decay = Math.min(0.20, 0.15 + combo * 0.0025);
-  return { startFreq, endFreq, vol, decay };
-}
-
 // === 随机化工具：每次播放微小随机偏移，避免完全相同的重复 ===
 function randomize(value: number, range = 0.05): number {
   return value * (1 + (Math.random() * 2 - 1) * range);
+}
+
+// === soft attack: 5ms fade-in 代替硬起音 ===
+function softAttack(gain: GainNode, vol: number, time: number): void {
+  gain.gain.setValueAtTime(0.001, time);
+  gain.gain.linearRampToValueAtTime(vol, time + 0.005);
 }
 
 // === 噪声缓冲区（预生成，复用）===
@@ -121,19 +113,6 @@ export function playSound(type: keyof typeof SOUND_PROFILES): void {
     return;
   }
 
-  // 特殊处理: word 音效 — combo驱动的结算音
-  if (type === 'word') {
-    const w = getWordProfile();
-    oscillator.frequency.setValueAtTime(w.startFreq, time);
-    oscillator.frequency.exponentialRampToValueAtTime(w.endFreq, time + w.decay * 0.6);
-    gainNode.gain.setValueAtTime(w.vol, time);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, time + w.decay);
-    oscillator.start(time);
-    oscillator.stop(time + w.decay);
-    addBodyLayer(w.startFreq, w.endFreq, w.vol, w.decay);
-    return;
-  }
-
   const [startFreq, endFreq, volume] = SOUND_PROFILES[type] || [600, 800, 0.08];
 
   oscillator.frequency.setValueAtTime(startFreq, time);
@@ -157,12 +136,6 @@ export function playResourceSound(resource: string, intensity = 1): void {
   const volMul = Math.min(intensity, 3);                        // 音量×intensity，封顶3倍
   const decMul = 1 + Math.log2(intensity) * 0.3;               // 衰减拉长（log缓增）
   const pitchShift = Math.pow(2, (Math.min(intensity, 4) - 1) * 2 / 12); // 最多升4半音
-
-  // soft attack helper: 5ms fade-in 代替硬起音
-  const softAttack = (gain: GainNode, vol: number, time: number) => {
-    gain.gain.setValueAtTime(0.001, time);
-    gain.gain.linearRampToValueAtTime(vol, time + 0.005);
-  };
 
   switch (resource) {
     // ⚔️ base — 简洁下行 triangle 短音（柔和替代原 square + 噪声）
@@ -271,12 +244,113 @@ export function playResourceSound(resource: string, intensity = 1): void {
   }
 }
 
+// === 词语结算分数音效（4 档合成） ===
+export function playScoreSound(score: number): void {
+  if (!audioContext) return;
+  const ctx = audioContext;
+  const t = ctx.currentTime;
+  const tier = getScoreSoundTier(score);
+
+  switch (tier) {
+    // Tier 0 (0-99): 清脆 — 高频 sine 短促下扫
+    case 0: {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.connect(g);
+      g.connect(ctx.destination);
+      const freq = randomize(1200, 0.05);
+      const vol = randomize(0.08, 0.08);
+      const dec = randomize(0.08, 0.08);
+      o.frequency.setValueAtTime(freq, t);
+      o.frequency.exponentialRampToValueAtTime(freq * 0.83, t + dec * 0.5);
+      softAttack(g, vol, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
+      o.start(t);
+      o.stop(t + dec);
+      break;
+    }
+    // Tier 1 (100-999): 明亮 — 中频上扫 + body层
+    case 1: {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.connect(g);
+      g.connect(ctx.destination);
+      const freq = randomize(800, 0.05);
+      const endFreq = randomize(1100, 0.05);
+      const vol = randomize(0.12, 0.08);
+      const dec = randomize(0.12, 0.08);
+      o.frequency.setValueAtTime(freq, t);
+      o.frequency.exponentialRampToValueAtTime(endFreq, t + dec * 0.6);
+      softAttack(g, vol, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
+      o.start(t);
+      o.stop(t + dec);
+      addBodyLayer(freq, endFreq, vol, dec);
+      break;
+    }
+    // Tier 2 (1000-4999): 厚重 — 低频 triangle + 双body层
+    case 2: {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'triangle';
+      o.connect(g);
+      g.connect(ctx.destination);
+      const freq = randomize(400, 0.05);
+      const endFreq = randomize(550, 0.05);
+      const vol = randomize(0.16, 0.08);
+      const dec = randomize(0.20, 0.08);
+      o.frequency.setValueAtTime(freq, t);
+      o.frequency.exponentialRampToValueAtTime(endFreq, t + dec * 0.6);
+      softAttack(g, vol, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
+      o.start(t);
+      o.stop(t + dec);
+      addBodyLayer(freq, endFreq, vol, dec);
+      addBodyLayer(freq * 0.5, endFreq * 0.5, vol * 0.3, dec);
+      break;
+    }
+    // Tier 3 (5000+): 轰鸣 — 极低频 + 次谐波 + 长尾
+    case 3: {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'triangle';
+      o.connect(g);
+      g.connect(ctx.destination);
+      const freq = randomize(250, 0.05);
+      const endFreq = randomize(400, 0.05);
+      const vol = randomize(0.22, 0.08);
+      const dec = randomize(0.35, 0.08);
+      o.frequency.setValueAtTime(freq, t);
+      o.frequency.exponentialRampToValueAtTime(endFreq, t + dec * 0.5);
+      softAttack(g, vol, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
+      o.start(t);
+      o.stop(t + dec);
+      // 次谐波 125Hz
+      const sub = ctx.createOscillator();
+      const subG = ctx.createGain();
+      sub.type = 'sine';
+      sub.connect(subG);
+      subG.connect(ctx.destination);
+      sub.frequency.setValueAtTime(randomize(125, 0.05), t);
+      softAttack(subG, vol * 0.4, t);
+      subG.gain.exponentialRampToValueAtTime(0.01, t + dec * 0.8);
+      sub.start(t);
+      sub.stop(t + dec * 0.8);
+      addBodyLayer(freq, endFreq, vol, dec);
+      addBodyLayer(freq * 0.5, endFreq * 0.5, vol * 0.25, dec * 0.7);
+      break;
+    }
+  }
+}
+
 // === 便捷函数 ===
 export const sound = {
   type: () => playSound('type'),
   wrong: () => playSound('wrong'),
   skill: () => playSound('skill'),
-  word: () => playSound('word'),
   levelup: () => playSound('levelup'),
   gameover: () => playSound('gameover'),
   buy: () => playSound('buy'),
