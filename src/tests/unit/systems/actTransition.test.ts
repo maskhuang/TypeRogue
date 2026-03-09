@@ -243,7 +243,7 @@ describe('actTransition', () => {
 
       const promise = showBossIntro(pool)
 
-      expect(screenShake).toHaveBeenCalledWith(3)
+      expect(screenShake).toHaveBeenCalledWith(4)
 
       const overlay = mockDocument.getElementById('boss-intro-overlay')
       expect(overlay).not.toBeNull()

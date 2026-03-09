@@ -59,10 +59,6 @@ export const BALANCE = {
   SKILL_UPGRADE_PRICE: 25,
   WORD_REMOVE_BASE: 1,
 
-  // 震动强度阈值
-  SHAKE_MID_THRESHOLD: 10,
-  SHAKE_HIGH_THRESHOLD: 20,
-
   // 周目难度缩放
   CYCLE_SCORE_BASE: 2,      // 目标分数指数底数（每周目翻倍）
   CYCLE_TIME_DECAY: 0.9,    // 时间衰减系数（每周目 ×0.9）
@@ -104,4 +100,5 @@ export const SOUND_PROFILES: Record<string, [number, number, number]> = {
   word: [523, 784, 0.15],
   levelup: [400, 800, 0.15],
   gameover: [300, 100, 0.2],
+  buy: [500, 380, 0.06],             // ↓中高频下行，轻快购买感
 };

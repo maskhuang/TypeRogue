@@ -284,7 +284,7 @@ development_status:
   # Source: docs/stories/epic-21-number-juice.md (renumbered from Epic 21)
   epic-31: in-progress
   31-1-number-color-grading: done
-  31-2-screen-shake-grading: backlog
+  31-2-screen-shake-grading: done
   31-3-number-sound-effects: backlog
   31-4-number-animation-system: backlog
   31-5-score-milestone-celebration: backlog

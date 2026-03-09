@@ -71,15 +71,52 @@ export function bumpTimer(): void {
   el.timerBar.classList.add('timer-bar-bump');
 }
 
-// === 屏幕震动 ===
+// === 屏幕震动 5 档查表系统 ===
+export const SHAKE_TIERS = [
+  { x: 2, y: 1, duration: 100 },   // intensity 1: 微震
+  { x: 4, y: 2, duration: 150 },   // intensity 2: 轻震
+  { x: 6, y: 3, duration: 200 },   // intensity 3: 中震
+  { x: 10, y: 5, duration: 300 },  // intensity 4: 强震
+  { x: 16, y: 8, duration: 400 },  // intensity 5: 猛震
+] as const;
+
+/** 无障碍开关：设为 false 可禁用所有屏幕震动 */
+export let shakeEnabled = true;
+export function setShakeEnabled(v: boolean): void { shakeEnabled = v; }
+
+let currentShakeIntensity = 0;
+let shakeTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function screenShake(intensity = 1): void {
+  if (!shakeEnabled) return;
+  if (intensity < 1 || intensity > 5) return;
+  // 最大值叠加：新震动 < 当前值时跳过
+  if (intensity < currentShakeIntensity) return;
+
+  const tier = SHAKE_TIERS[intensity - 1];
+  const signX = Math.random() < 0.5 ? -1 : 1;
+  const signY = Math.random() < 0.5 ? -1 : 1;
+
   const el = getElements();
-  el.container.style.setProperty('--shake-x', `${3 * intensity}px`);
-  el.container.style.setProperty('--shake-y', `${2 * intensity}px`);
+  el.container.style.setProperty('--shake-x', `${tier.x * signX}px`);
+  el.container.style.setProperty('--shake-y', `${tier.y * signY}px`);
+  el.container.style.setProperty('--shake-duration', `${tier.duration}ms`);
   el.container.classList.remove('shake-dynamic');
   void el.container.offsetWidth;
   el.container.classList.add('shake-dynamic');
-  setTimeout(() => el.container.classList.remove('shake-dynamic'), 150 * intensity);
+
+  currentShakeIntensity = intensity;
+  if (shakeTimer) clearTimeout(shakeTimer);
+  shakeTimer = setTimeout(() => {
+    el.container.classList.remove('shake-dynamic');
+    currentShakeIntensity = 0;
+    shakeTimer = null;
+  }, tier.duration);
+
+  // 猛震（intensity 5）额外触发金色屏幕闪光
+  if (intensity === 5) {
+    screenFlash('#ffd700', 0.3);
+  }
 }
 
 // === 屏幕闪光 ===
@@ -93,11 +130,14 @@ export function screenFlash(color: string, opacity = 0.4): void {
   setTimeout(() => flash.remove(), 200);
 }
 
-// === 计算震动强度 ===
+// === 计算震动强度（5 档 + 0 档） ===
 export function getShakeIntensity(score: number): number {
-  if (score >= 20) return 3;
-  if (score >= 10) return 2;
-  return 1;
+  if (score >= 10000) return 5;
+  if (score >= 5000) return 4;
+  if (score >= 1000) return 3;
+  if (score >= 500) return 2;
+  if (score >= 100) return 1;
+  return 0;
 }
 
 // === 分数颜色分级 ===

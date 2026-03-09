@@ -8,7 +8,7 @@ import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
-import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getScoreTier, SCORE_TIER_CLASSES } from '../effects/juice';
+import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES } from '../effects/juice';
 import { playSound, initAudio } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
@@ -382,9 +382,9 @@ function completeWord(): void {
     setTimeout(() => juiceUp(letter as HTMLElement, 0.25, 4 * (i % 2 === 0 ? 1 : -1)), i * 30);
   });
 
-  // 分级屏幕震动
-  const shakeIntensity = finalWordScore >= 20 ? 3 : finalWordScore >= 10 ? 2 : 1;
-  screenShake(shakeIntensity);
+  // 分级屏幕震动（5 档，<100 分不震动）
+  const shakeIntensity = getShakeIntensity(finalWordScore);
+  if (shakeIntensity > 0) screenShake(shakeIntensity);
 
   playSound('word');
 

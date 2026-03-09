@@ -893,17 +893,19 @@ body {
 
 /* === 爽感特效 === */
 
-/* 动态震动 - 可变强度 */
+/* 动态震动 - 5 档可变强度 + 自然衰减 */
 #game-container.shake-dynamic {
-    animation: shakeDynamic 0.15s;
+    animation: shakeDynamic var(--shake-duration, 150ms) ease-out;
+    will-change: transform;
 }
 
 @keyframes shakeDynamic {
-    0%, 100% { transform: translate(0, 0); }
-    20% { transform: translate(calc(var(--shake-x, 3px) * -1), var(--shake-y, 2px)); }
-    40% { transform: translate(var(--shake-x, 3px), calc(var(--shake-y, 2px) * -1)); }
-    60% { transform: translate(calc(var(--shake-x, 3px) * -0.5), var(--shake-y, 2px)); }
-    80% { transform: translate(var(--shake-x, 3px), calc(var(--shake-y, 2px) * -0.5)); }
+    0% { transform: translate(var(--shake-x, 3px), var(--shake-y, 2px)); }
+    20% { transform: translate(calc(var(--shake-x, 3px) * -0.8), calc(var(--shake-y, 2px) * 0.8)); }
+    40% { transform: translate(calc(var(--shake-x, 3px) * 0.5), calc(var(--shake-y, 2px) * -0.5)); }
+    60% { transform: translate(calc(var(--shake-x, 3px) * -0.3), calc(var(--shake-y, 2px) * 0.3)); }
+    80% { transform: translate(calc(var(--shake-x, 3px) * 0.1), calc(var(--shake-y, 2px) * -0.1)); }
+    100% { transform: translate(0, 0); }
 }
 
 /* 屏幕闪光 */

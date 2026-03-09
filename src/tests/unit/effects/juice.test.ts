@@ -4,7 +4,7 @@
 // Story 31.1: 数字颜色分级系统 (AC: 1, 5)
 
 import { describe, it, expect } from 'vitest'
-import { getScoreTier, SCORE_TIER_CLASSES } from '../../../src/effects/juice'
+import { getScoreTier, SCORE_TIER_CLASSES, getShakeIntensity, SHAKE_TIERS } from '../../../src/effects/juice'
 
 describe('getScoreTier', () => {
   it('returns empty string for scores below 100', () => {
@@ -69,5 +69,84 @@ describe('SCORE_TIER_CLASSES', () => {
     expect(SCORE_TIER_CLASSES).toContain('score-gold')
     expect(SCORE_TIER_CLASSES).toContain('score-rainbow')
     expect(SCORE_TIER_CLASSES).toContain('score-legendary')
+  })
+})
+
+// Story 31.2: 屏幕震动分级系统 (AC: 1, 6)
+
+describe('getShakeIntensity', () => {
+  it('returns 0 for scores below 100 (no shake)', () => {
+    expect(getShakeIntensity(0)).toBe(0)
+    expect(getShakeIntensity(50)).toBe(0)
+    expect(getShakeIntensity(99)).toBe(0)
+  })
+
+  it('returns 1 for scores 100-499 (微震)', () => {
+    expect(getShakeIntensity(100)).toBe(1)
+    expect(getShakeIntensity(499)).toBe(1)
+  })
+
+  it('returns 2 for scores 500-999 (轻震)', () => {
+    expect(getShakeIntensity(500)).toBe(2)
+    expect(getShakeIntensity(999)).toBe(2)
+  })
+
+  it('returns 3 for scores 1000-4999 (中震)', () => {
+    expect(getShakeIntensity(1000)).toBe(3)
+    expect(getShakeIntensity(4999)).toBe(3)
+  })
+
+  it('returns 4 for scores 5000-9999 (强震)', () => {
+    expect(getShakeIntensity(5000)).toBe(4)
+    expect(getShakeIntensity(9999)).toBe(4)
+  })
+
+  it('returns 5 for scores 10000+ (猛震)', () => {
+    expect(getShakeIntensity(10000)).toBe(5)
+    expect(getShakeIntensity(99999)).toBe(5)
+  })
+
+  // 边界值测试
+  it('handles exact boundary transitions correctly', () => {
+    expect(getShakeIntensity(99)).toBe(0)
+    expect(getShakeIntensity(100)).toBe(1)
+
+    expect(getShakeIntensity(499)).toBe(1)
+    expect(getShakeIntensity(500)).toBe(2)
+
+    expect(getShakeIntensity(999)).toBe(2)
+    expect(getShakeIntensity(1000)).toBe(3)
+
+    expect(getShakeIntensity(4999)).toBe(3)
+    expect(getShakeIntensity(5000)).toBe(4)
+
+    expect(getShakeIntensity(9999)).toBe(4)
+    expect(getShakeIntensity(10000)).toBe(5)
+  })
+
+  it('handles negative scores', () => {
+    expect(getShakeIntensity(-1)).toBe(0)
+  })
+})
+
+describe('SHAKE_TIERS', () => {
+  it('contains 5 tier entries', () => {
+    expect(SHAKE_TIERS).toHaveLength(5)
+  })
+
+  it('has increasing x, y, and duration values', () => {
+    for (let i = 1; i < SHAKE_TIERS.length; i++) {
+      expect(SHAKE_TIERS[i].x).toBeGreaterThan(SHAKE_TIERS[i - 1].x)
+      expect(SHAKE_TIERS[i].y).toBeGreaterThan(SHAKE_TIERS[i - 1].y)
+      expect(SHAKE_TIERS[i].duration).toBeGreaterThan(SHAKE_TIERS[i - 1].duration)
+    }
+  })
+
+  it('has correct values for each tier', () => {
+    expect(SHAKE_TIERS[0]).toEqual({ x: 2, y: 1, duration: 100 })
+    expect(SHAKE_TIERS[1]).toEqual({ x: 4, y: 2, duration: 150 })
+    expect(SHAKE_TIERS[2]).toEqual({ x: 6, y: 3, duration: 200 })
+    expect(SHAKE_TIERS[3]).toEqual({ x: 10, y: 5, duration: 300 })
+    expect(SHAKE_TIERS[4]).toEqual({ x: 16, y: 8, duration: 400 })
   })
 })

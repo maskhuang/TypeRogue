@@ -61,7 +61,7 @@ export function showEliteAnnouncement(modId: string): Promise<void> {
 /** 显示 Boss 入场特效（约 2s） */
 export function showBossIntro(pool: string[]): Promise<void> {
   return new Promise(resolve => {
-    screenShake(3)
+    screenShake(4)
 
     const overlay = document.createElement('div')
     overlay.id = 'boss-intro-overlay'
