@@ -17,6 +17,7 @@ import { MetaState } from './core/state/MetaState';
 import { initLeaderboardDisplay, renderLeaderboard } from './ui/leaderboardDisplay';
 import { eventBus } from './core/events/EventBus';
 import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode } from './core/seededRandom';
+import { showClassPicker } from './systems/classes/ClassPicker';
 
 // === 游戏初始化 ===
 function init(): void {
@@ -98,14 +99,20 @@ function init(): void {
   // 抽取本局增幅者池（30 个中随机 15 个）
   state.amplifierPool = drawAmplifierPool();
 
-  // 启动游戏
+  // 启动游戏流程：职业选择 → 遗物选择 → 开始关卡
   resetLastAct();
   state.level = 1;
-  if (hasUnownedRelics()) {
-    showRelicPicker(() => void startLevel(), RELIC_WEIGHT_PRESETS.gameStart);
-  } else {
-    void startLevel();
-  }
+
+  const startAfterClassSelect = () => {
+    if (hasUnownedRelics()) {
+      showRelicPicker(() => void startLevel(), RELIC_WEIGHT_PRESETS.gameStart);
+    } else {
+      void startLevel();
+    }
+  };
+
+  // Story 32.1: 显示职业选择界面
+  showClassPicker(metaState, startAfterClassSelect);
 }
 
 // === 启动 ===

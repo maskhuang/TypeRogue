@@ -5,6 +5,10 @@
 import type { BossModifierId } from '../data/bossModifiers';
 import type { PositionRelation } from '../data/keyboardTopology';
 
+// === 职业系统 ===
+export type ClassId = 'none' | 'wordsmith' | 'metamorph';
+export type FeatureId = 'pack-system' | 'enchant-choice';
+
 // === 资源系统 ===
 export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'gold';
 
@@ -120,6 +124,7 @@ export interface ResourceState {
 export type GamePhase = 'battle' | 'shop' | 'gameover' | 'victory' | 'rest';
 
 export interface GameState {
+  classId: ClassId;
   level: number;
   phase: GamePhase;
   time: number;

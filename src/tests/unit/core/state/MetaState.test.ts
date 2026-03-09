@@ -175,6 +175,71 @@ describe('MetaState', () => {
   })
 
   // ===========================================
+  // 职业解锁测试 (Story 32.1)
+  // ===========================================
+  describe('解锁职业', () => {
+    it('默认应解锁 none 职业', () => {
+      expect(metaState.isClassUnlocked('none')).toBe(true)
+    })
+
+    it('应能解锁新职业', () => {
+      const result = metaState.unlockClass('wordsmith')
+      expect(result).toBe(true)
+      expect(metaState.isClassUnlocked('wordsmith')).toBe(true)
+    })
+
+    it('重复解锁应返回 false', () => {
+      metaState.unlockClass('wordsmith')
+      const result = metaState.unlockClass('wordsmith')
+      expect(result).toBe(false)
+    })
+
+    it('解锁时应发送 meta:class_unlocked 事件', () => {
+      const handler = vi.fn()
+      eventBus.on('meta:class_unlocked', handler)
+      metaState.unlockClass('metamorph')
+      expect(handler).toHaveBeenCalledWith({ classId: 'metamorph' })
+    })
+
+    it('重复解锁不应发送事件', () => {
+      const handler = vi.fn()
+      metaState.unlockClass('wordsmith')
+      eventBus.on('meta:class_unlocked', handler)
+      metaState.unlockClass('wordsmith')
+      expect(handler).not.toHaveBeenCalled()
+    })
+
+    it('应能获取所有已解锁职业列表', () => {
+      const classes = metaState.getUnlockedClasses()
+      expect(classes).toContain('none')
+      expect(Array.isArray(classes)).toBe(true)
+    })
+
+    it('解锁新职业后列表应更新', () => {
+      metaState.unlockClass('wordsmith')
+      const classes = metaState.getUnlockedClasses()
+      expect(classes).toContain('wordsmith')
+    })
+
+    it('默认已解锁的 none 重复解锁返回 false', () => {
+      const result = metaState.unlockClass('none')
+      expect(result).toBe(false)
+    })
+
+    it('isClassUnlocked 应正确检查状态', () => {
+      expect(metaState.isClassUnlocked('none')).toBe(true)
+      expect(metaState.isClassUnlocked('wordsmith')).toBe(false)
+      metaState.unlockClass('wordsmith')
+      expect(metaState.isClassUnlocked('wordsmith')).toBe(true)
+    })
+
+    it('空字符串应返回 false', () => {
+      const result = metaState.unlockClass('')
+      expect(result).toBe(false)
+    })
+  })
+
+  // ===========================================
   // 统计更新测试 (AC: #8, #5)
   // ===========================================
   describe('统计更新', () => {
@@ -386,7 +451,7 @@ describe('MetaState', () => {
     it('序列化应包含版本号', () => {
       const json = metaState.serialize()
       const data = JSON.parse(json)
-      expect(data.version).toBe(3)
+      expect(data.version).toBe(4)
     })
 
     it('序列化应包含所有解锁技能', () => {
@@ -405,6 +470,14 @@ describe('MetaState', () => {
       expect(data.unlockedRelics).toContain('lucky_coin')
     })
 
+    it('序列化应包含解锁职业 (Story 32.1)', () => {
+      metaState.unlockClass('wordsmith')
+      const json = metaState.serialize()
+      const data = JSON.parse(json)
+      expect(data.unlockedClasses).toContain('wordsmith')
+      expect(data.unlockedClasses).toContain('none')
+    })
+
     it('序列化应包含统计数据', () => {
       metaState.updateStats({
         runResult: 'victory',
@@ -419,6 +492,7 @@ describe('MetaState', () => {
     it('应能从 JSON 反序列化 (AC: #10)', () => {
       metaState.unlockSkill('test_skill')
       metaState.unlockRelic('test_relic')
+      metaState.unlockClass('wordsmith')
       metaState.updateStats({
         runResult: 'victory',
         runStats: { totalScore: 7000, stagesCleared: 8, maxCombo: 60, skills: [], relics: [] }
@@ -430,8 +504,25 @@ describe('MetaState', () => {
 
       expect(newState.isSkillUnlocked('test_skill')).toBe(true)
       expect(newState.isRelicUnlocked('test_relic')).toBe(true)
+      expect(newState.isClassUnlocked('wordsmith')).toBe(true)
       expect(newState.getStats().highestScore).toBe(7000)
       expect(newState.getStats().totalRuns).toBe(1)
+    })
+
+    it('反序列化 v3 数据应使用默认职业 (Story 32.1)', () => {
+      const v3Data = {
+        version: 3,
+        unlockedSkills: ['score_boost'],
+        unlockedRelics: ['lucky_coin'],
+        achievements: [],
+        stats: { totalRuns: 5 },
+        leaderboard: [],
+        dailyLeaderboard: [],
+      }
+      const newState = new MetaState()
+      newState.deserialize(JSON.stringify(v3Data))
+      expect(newState.isClassUnlocked('none')).toBe(true)
+      expect(newState.isClassUnlocked('wordsmith')).toBe(false)
     })
 
     it('反序列化无效 JSON 应保持当前状态', () => {
@@ -466,6 +557,13 @@ describe('MetaState', () => {
       metaState.reset()
       expect(metaState.isRelicUnlocked('extra_relic')).toBe(false)
       expect(metaState.isRelicUnlocked('lucky_coin')).toBe(true)
+    })
+
+    it('reset 应恢复默认解锁职业 (Story 32.1)', () => {
+      metaState.unlockClass('wordsmith')
+      metaState.reset()
+      expect(metaState.isClassUnlocked('wordsmith')).toBe(false)
+      expect(metaState.isClassUnlocked('none')).toBe(true)
     })
 
     it('reset 应清零统计数据', () => {

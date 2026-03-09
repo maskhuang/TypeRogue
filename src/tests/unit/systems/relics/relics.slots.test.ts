@@ -143,9 +143,14 @@ describe('遗物槽位系统 (Story 27.3)', () => {
 
   // === 遗物数据基线 ===
   describe('遗物数据完整性', () => {
-    it('所有遗物有 basePrice > 0', () => {
+    it('所有遗物有 basePrice >= 0（starter 遗物为 0）', () => {
+      const starterRelics = new Set(['apprentice_notes', 'primal_mutant'])
       for (const relic of Object.values(RELICS)) {
-        expect(relic.basePrice, `${relic.id} basePrice`).toBeGreaterThan(0)
+        if (starterRelics.has(relic.id)) {
+          expect(relic.basePrice, `${relic.id} basePrice`).toBe(0)
+        } else {
+          expect(relic.basePrice, `${relic.id} basePrice`).toBeGreaterThan(0)
+        }
       }
     })
 

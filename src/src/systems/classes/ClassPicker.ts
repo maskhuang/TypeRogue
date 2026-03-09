@@ -1,0 +1,162 @@
+// ============================================
+// 打字肉鸽 - 职业选择界面
+// ============================================
+// Story 32.1 Task 4: 职业选择 UI（DOM 模态框模式）
+
+import type { ClassId } from '../../core/types';
+import type { ClassDefinition } from '../../data/classes';
+import { CLASS_DEFINITIONS, getSelectableClassIds } from '../../data/classes';
+import { classManager } from './ClassManager';
+import type { MetaState } from '../../core/state/MetaState';
+
+/**
+ * 显示职业选择界面
+ * @param metaState MetaState 实例，用于检查职业解锁状态
+ * @param onComplete 选择完成后的回调
+ */
+export function showClassPicker(metaState: MetaState, onComplete: () => void): void {
+  const modal = document.getElementById('class-select-modal');
+  const cardsEl = document.getElementById('class-select-cards');
+  const confirmBtn = document.getElementById('class-select-confirm');
+
+  if (!modal || !cardsEl || !confirmBtn) {
+    // 无 DOM 元素（测试环境等），直接跳过
+    onComplete();
+    return;
+  }
+
+  let selectedClassId: ClassId | null = null;
+  let completed = false;
+
+  const finish = () => {
+    if (completed) return;
+    completed = true;
+
+    if (selectedClassId) {
+      classManager.selectClass(selectedClassId);
+    }
+
+    closeClassPicker();
+    onComplete();
+  };
+
+  cardsEl.innerHTML = '';
+
+  // 可选择的职业卡片
+  const selectableIds = getSelectableClassIds();
+  const allIds: ClassId[] = [...selectableIds, 'none'];
+
+  allIds.forEach(classId => {
+    const def = CLASS_DEFINITIONS[classId];
+    if (!def) return;
+
+    const isUnlocked = metaState.isClassUnlocked(classId);
+    const card = createClassCard(def, isUnlocked);
+
+    if (isUnlocked) {
+      card.onclick = () => {
+        // 取消之前的选中
+        cardsEl.querySelectorAll('.class-select-card').forEach(c =>
+          c.classList.remove('class-card-selected')
+        );
+        card.classList.add('class-card-selected');
+        selectedClassId = classId;
+
+        // 显示确认按钮
+        confirmBtn.classList.remove('class-select-confirm-hidden');
+        confirmBtn.textContent = classId === 'none'
+          ? '开始（无职业）'
+          : `确认选择 ${def.name}`;
+      };
+    }
+
+    cardsEl.appendChild(card);
+  });
+
+  // 确认按钮
+  confirmBtn.onclick = () => {
+    if (selectedClassId !== null) {
+      finish();
+    }
+  };
+
+  // 显示模态框
+  modal.classList.remove('class-select-hidden');
+  confirmBtn.classList.add('class-select-confirm-hidden');
+}
+
+/**
+ * 创建职业卡片 DOM 元素（使用 DOM API 避免 innerHTML XSS 风险）
+ */
+function createClassCard(def: ClassDefinition, isUnlocked: boolean): HTMLDivElement {
+  const card = document.createElement('div');
+  card.className = 'class-select-card';
+
+  if (!isUnlocked) {
+    card.classList.add('class-card-locked');
+  }
+
+  const iconEl = document.createElement('div');
+  iconEl.className = 'class-card-icon';
+  iconEl.textContent = def.icon;
+  card.appendChild(iconEl);
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'class-card-name';
+  nameEl.textContent = def.name;
+  card.appendChild(nameEl);
+
+  const descEl = document.createElement('div');
+  descEl.className = 'class-card-desc';
+  descEl.textContent = def.description;
+  card.appendChild(descEl);
+
+  if (def.id !== 'none') {
+    const infoEl = document.createElement('div');
+    infoEl.className = 'class-card-info';
+    let hasInfo = false;
+
+    if (def.uniqueResource) {
+      const span = document.createElement('span');
+      span.className = 'info-resource';
+      span.textContent = `资源: ${def.uniqueResource}`;
+      infoEl.appendChild(span);
+      hasInfo = true;
+    }
+    if (def.loseDescription) {
+      if (hasInfo) infoEl.appendChild(document.createElement('br'));
+      const span = document.createElement('span');
+      span.className = 'info-lose';
+      span.textContent = `⚠ ${def.loseDescription}`;
+      infoEl.appendChild(span);
+      hasInfo = true;
+    }
+    if (def.starterRelic) {
+      if (hasInfo) infoEl.appendChild(document.createElement('br'));
+      const span = document.createElement('span');
+      span.className = 'info-relic';
+      span.textContent = '🏺 初始遗物';
+      infoEl.appendChild(span);
+      hasInfo = true;
+    }
+
+    if (hasInfo) card.appendChild(infoEl);
+  }
+
+  if (!isUnlocked) {
+    const lockEl = document.createElement('div');
+    lockEl.className = 'class-card-lock-text';
+    lockEl.textContent = '🔒 未解锁';
+    card.appendChild(lockEl);
+  }
+
+  return card;
+}
+
+/**
+ * 关闭职业选择模态框
+ */
+function closeClassPicker(): void {
+  const modal = document.getElementById('class-select-modal');
+  if (modal) modal.classList.add('class-select-hidden');
+}

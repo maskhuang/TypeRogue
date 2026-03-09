@@ -15,8 +15,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 35 relics', () => {
-      expect(Object.keys(RELICS)).toHaveLength(35)
+    it('should contain 37 relics', () => {
+      expect(Object.keys(RELICS)).toHaveLength(37)
     })
 
     it('每个图标唯一', () => {
@@ -31,7 +31,7 @@ describe('Relics Data', () => {
         expect(relic.icon).toBeTruthy()
         expect(relic.description).toBeTruthy()
         expect(['common', 'rare', 'legendary']).toContain(relic.rarity)
-        expect(relic.basePrice).toBeGreaterThan(0)
+        expect(relic.basePrice).toBeGreaterThanOrEqual(0)
         expect(Array.isArray(relic.effects)).toBe(true)
         // 行为型遗物（T3 retrigger 等）使用 RELIC_MODIFIER_DEFS 而非 effects
         expect(relic.effects.length).toBeGreaterThanOrEqual(0)
@@ -40,9 +40,9 @@ describe('Relics Data', () => {
   })
 
   describe('Rarity distribution', () => {
-    it('should have 4 common relics', () => {
+    it('should have 6 common relics', () => {
       const commons = getRelicsByRarity('common')
-      expect(commons).toHaveLength(4)
+      expect(commons).toHaveLength(6)
     })
 
     it('should have 22 rare relics', () => {
@@ -92,9 +92,10 @@ describe('Relics Data', () => {
   })
 
   describe('Price ranges', () => {
-    it('common relics should cost 20-35 gold', () => {
+    it('common relics should cost 20-35 gold (starter relics excluded)', () => {
       const commons = getRelicsByRarity('common')
-      for (const relic of commons) {
+      const shopCommons = commons.filter(r => r.basePrice > 0)
+      for (const relic of shopCommons) {
         expect(relic.basePrice).toBeGreaterThanOrEqual(20)
         expect(relic.basePrice).toBeLessThanOrEqual(35)
       }
@@ -160,7 +161,7 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(35)
+      expect(ids).toHaveLength(37)
       expect(ids).toContain('lucky_coin')
       expect(ids).toContain('perfectionist')
       expect(ids).toContain('glass_cannon')
@@ -180,7 +181,7 @@ describe('Relics Data', () => {
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(35)
+      expect(relics).toHaveLength(37)
     })
 
     it('should return RelicData objects', () => {

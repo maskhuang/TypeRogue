@@ -11,6 +11,7 @@ import { initRelicState } from '../systems/relics/RelicPipeline';
 // === 初始状态 ===
 export function createInitialState(): GameState {
   const gameState: GameState = {
+    classId: 'none',
     level: 1,
     phase: 'battle',
     time: BALANCE.TIME_PER_LEVEL,

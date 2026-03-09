@@ -4,6 +4,7 @@
 // Story 6.1: Meta 状态管理
 // Story 6.3: 解锁系统集成
 // Story 25.5: 排行榜系统
+// Story 32.1: 职业解锁追踪
 
 import { eventBus } from '../events/EventBus'
 import type { UnlockSystem } from '../unlock/UnlockSystem'
@@ -107,6 +108,14 @@ const DEFAULT_UNLOCKED_RELICS = [
 ]
 
 /**
+ * 默认解锁的职业
+ * Story 32.1: 'none' 始终可用
+ */
+const DEFAULT_UNLOCKED_CLASSES = [
+  'none',             // 无职业（默认模式）
+]
+
+/**
  * MetaState - 管理跨 Run 的永久数据
  *
  * 职责:
@@ -119,6 +128,7 @@ const DEFAULT_UNLOCKED_RELICS = [
 export class MetaState {
   private unlockedSkills: Set<string>
   private unlockedRelics: Set<string>
+  private unlockedClasses: Set<string>  // Story 32.1
   private achievements: Map<string, AchievementProgress>
   private stats: MetaStats
   private leaderboard: LeaderboardEntry[]  // Story 25.5
@@ -130,6 +140,7 @@ export class MetaState {
     // 初始化默认解锁 (AC: #11)
     this.unlockedSkills = new Set(DEFAULT_UNLOCKED_SKILLS)
     this.unlockedRelics = new Set(DEFAULT_UNLOCKED_RELICS)
+    this.unlockedClasses = new Set(DEFAULT_UNLOCKED_CLASSES)
     this.achievements = new Map()
     this.stats = this.createDefaultStats()
     this.leaderboard = []
@@ -224,6 +235,40 @@ export class MetaState {
    */
   getUnlockedRelics(): string[] {
     return Array.from(this.unlockedRelics)
+  }
+
+  // ===========================================
+  // 职业解锁方法 (Story 32.1)
+  // ===========================================
+
+  /**
+   * 解锁职业
+   * @returns true 如果是新解锁，false 如果已解锁或 ID 无效
+   */
+  unlockClass(classId: string): boolean {
+    if (!classId || typeof classId !== 'string') {
+      return false
+    }
+    if (this.unlockedClasses.has(classId)) {
+      return false
+    }
+    this.unlockedClasses.add(classId)
+    eventBus.emit('meta:class_unlocked', { classId })
+    return true
+  }
+
+  /**
+   * 检查职业是否已解锁
+   */
+  isClassUnlocked(classId: string): boolean {
+    return this.unlockedClasses.has(classId)
+  }
+
+  /**
+   * 获取所有已解锁职业
+   */
+  getUnlockedClasses(): string[] {
+    return Array.from(this.unlockedClasses)
   }
 
   // ===========================================
@@ -415,9 +460,10 @@ export class MetaState {
    */
   serialize(): string {
     const data = {
-      version: 3,  // v3: 新增 dailyLeaderboard
+      version: 4,  // v4: 新增 unlockedClasses (Story 32.1)
       unlockedSkills: Array.from(this.unlockedSkills),
       unlockedRelics: Array.from(this.unlockedRelics),
+      unlockedClasses: Array.from(this.unlockedClasses),
       achievements: Array.from(this.achievements.entries()),
       stats: this.stats,
       leaderboard: this.leaderboard,
@@ -433,13 +479,14 @@ export class MetaState {
     try {
       const data = JSON.parse(json)
 
-      // 版本检查（v1/v2/v3 均可加载）
-      if (data.version !== undefined && data.version !== 1 && data.version !== 2 && data.version !== 3) {
+      // 版本检查（v1/v2/v3/v4 均可加载）
+      if (data.version !== undefined && ![1, 2, 3, 4].includes(data.version)) {
         console.warn(`MetaState: Unknown save version ${data.version}, attempting to load anyway`)
       }
 
       this.unlockedSkills = new Set(data.unlockedSkills || DEFAULT_UNLOCKED_SKILLS)
       this.unlockedRelics = new Set(data.unlockedRelics || DEFAULT_UNLOCKED_RELICS)
+      this.unlockedClasses = new Set(data.unlockedClasses || DEFAULT_UNLOCKED_CLASSES)
       this.achievements = new Map(data.achievements || [])
       this.stats = { ...this.createDefaultStats(), ...data.stats }
       this.leaderboard = data.leaderboard || []
@@ -456,6 +503,7 @@ export class MetaState {
   reset(): void {
     this.unlockedSkills = new Set(DEFAULT_UNLOCKED_SKILLS)
     this.unlockedRelics = new Set(DEFAULT_UNLOCKED_RELICS)
+    this.unlockedClasses = new Set(DEFAULT_UNLOCKED_CLASSES)
     this.achievements = new Map()
     this.stats = this.createDefaultStats()
     this.leaderboard = []

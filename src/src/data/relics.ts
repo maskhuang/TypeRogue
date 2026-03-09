@@ -551,6 +551,31 @@ export const RELICS: Record<string, RelicData> = {
     effects: [],
     flavor: '当高潮来临，一切都要再来一次。',
   },
+
+  // ==================== 职业初始遗物（占位） ====================
+  // Story 32.1: 占位定义，具体效果在 Story 32.7 / 32.10 实现
+
+  apprentice_notes: {
+    id: 'apprentice_notes',
+    name: '学徒笔记',
+    icon: '📓',
+    description: '造词师初始遗物。开局元音碎片各 ×3。',
+    rarity: 'common',
+    basePrice: 0,
+    effects: [],
+    flavor: '每一笔都是对语言的敬意。',
+  },
+
+  primal_mutant: {
+    id: 'primal_mutant',
+    name: '原初变异体',
+    icon: '🧫',
+    description: '蜕变师初始遗物。每关第一次蜕变免费。',
+    rarity: 'common',
+    basePrice: 0,
+    effects: [],
+    flavor: '最初的变异，蕴含无限可能。',
+  },
 }
 
 // === Relic Modifier 工厂类型 ===
