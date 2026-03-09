@@ -8,16 +8,57 @@ import { getScoreSoundTier } from './juice';
 
 let audioContext: AudioContext | null = null;
 
-// === 打击感 Click：高频短促，combo→音高上升+音量渐强+衰减缩短 ===
-function getTypeClick(): { freq: number; vol: number; decay: number } {
+// === 打字三层音效：click（触底冲击）+ thock（壳体共鸣）+ tone（combo 积累感） ===
+function playTypeSound(): void {
+  if (!audioContext) return;
+  const ctx = audioContext;
+  const t = ctx.currentTime;
   const combo = state.combo;
-  // combo→频率 500Hz起，每combo +15Hz，无上限
-  const freq = 500 + combo * 15;
-  // combo→音量 0.02~0.045
-  const vol = Math.min(0.045, 0.02 + combo * 0.00125);
-  // combo→衰减 0.16s~0.10s（更柔和）
-  const decay = Math.max(0.10, 0.16 - combo * 0.003);
-  return { freq, vol, decay };
+
+  // 1) Click 层 — 极短噪声脉冲，模拟触底冲击
+  const clickVol = Math.min(0.035, 0.02 + combo * 0.0005); // combo 微升音量
+  const noiseSrc = ctx.createBufferSource();
+  noiseSrc.buffer = getNoiseBuffer();
+  const clickFilter = ctx.createBiquadFilter();
+  clickFilter.type = 'highpass';
+  clickFilter.frequency.value = randomize(800, 0.05);
+  const clickGain = ctx.createGain();
+  noiseSrc.connect(clickFilter);
+  clickFilter.connect(clickGain);
+  connectToOutput(clickGain);
+  clickGain.gain.setValueAtTime(clickVol, t);
+  clickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.004); // 4ms 极短
+  noiseSrc.start(t);
+  noiseSrc.stop(t + 0.005);
+
+  // 2) Thock 层 — 低频 triangle，给予"肉感"，combo 不影响
+  const thockFreq = randomize(280, 0.06);
+  const thockOsc = ctx.createOscillator();
+  const thockGain = ctx.createGain();
+  thockOsc.type = 'triangle';
+  thockOsc.connect(thockGain);
+  connectToOutput(thockGain);
+  thockOsc.frequency.setValueAtTime(thockFreq, t);
+  thockOsc.frequency.exponentialRampToValueAtTime(thockFreq * 0.6, t + 0.03);
+  softAttack(thockGain, 0.025, t);
+  thockGain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+  thockOsc.start(t);
+  thockOsc.stop(t + 0.04);
+
+  // 3) Tone 层 — 轻柔 sine，combo 驱动音高缓升，体现积累感
+  const toneFreq = 300 + 400 * Math.log2(1 + combo * 0.06); // 300→~700Hz
+  const toneVol = Math.min(0.025, 0.008 + combo * 0.0004);  // 极轻，陪衬
+  const toneDec = 0.06;
+  const toneOsc = ctx.createOscillator();
+  const toneGain = ctx.createGain();
+  toneOsc.type = 'sine';
+  toneOsc.connect(toneGain);
+  connectToOutput(toneGain);
+  toneOsc.frequency.setValueAtTime(randomize(toneFreq, 0.03), t);
+  softAttack(toneGain, toneVol, t);
+  toneGain.gain.exponentialRampToValueAtTime(0.001, t + toneDec);
+  toneOsc.start(t);
+  toneOsc.stop(t + toneDec);
 }
 
 // === 随机化工具：每次播放微小随机偏移，避免完全相同的重复 ===
@@ -54,7 +95,7 @@ function addBodyLayer(freq: number, endFreq: number, vol: number, decay: number)
   const triGain = audioContext.createGain();
   tri.type = 'triangle';
   tri.connect(triGain);
-  triGain.connect(audioContext.destination);
+  connectToOutput(triGain);
   tri.frequency.setValueAtTime(freq, time);
   tri.frequency.exponentialRampToValueAtTime(endFreq, time + decay * 0.7);
   triGain.gain.setValueAtTime(vol * 0.35, time);
@@ -72,7 +113,7 @@ function addBodyLayer(freq: number, endFreq: number, vol: number, decay: number)
   const noiseGain = audioContext.createGain();
   noiseSrc.connect(noiseFilter);
   noiseFilter.connect(noiseGain);
-  noiseGain.connect(audioContext.destination);
+  connectToOutput(noiseGain);
   const noiseDec = decay * 0.5; // 噪声比主音短
   noiseGain.gain.setValueAtTime(vol * 0.5, time);
   noiseGain.gain.exponentialRampToValueAtTime(0.01, time + noiseDec);
@@ -80,10 +121,52 @@ function addBodyLayer(freq: number, endFreq: number, vol: number, decay: number)
   noiseSrc.stop(time + noiseDec);
 }
 
+// === 全局混响（短延迟反馈模拟小空间） ===
+let reverbSend: GainNode | null = null;
+let dryNode: GainNode | null = null;
+
+function initReverb(ctx: AudioContext): void {
+  // dry 通路
+  dryNode = ctx.createGain();
+  dryNode.gain.value = 1.0;
+  dryNode.connect(ctx.destination);
+
+  // wet 通路：delay → feedback → output
+  reverbSend = ctx.createGain();
+  reverbSend.gain.value = 0.25; // wet 量
+
+  const delay1 = ctx.createDelay();
+  delay1.delayTime.value = 0.03; // 30ms 早期反射
+  const delay2 = ctx.createDelay();
+  delay2.delayTime.value = 0.06; // 60ms 二次反射
+
+  const fb = ctx.createGain();
+  fb.gain.value = 0.3; // 反馈衰减
+
+  const lpf = ctx.createBiquadFilter();
+  lpf.type = 'lowpass';
+  lpf.frequency.value = 2500; // 高频吸收，混响更温暖
+
+  reverbSend.connect(delay1);
+  delay1.connect(lpf);
+  lpf.connect(delay2);
+  delay2.connect(fb);
+  fb.connect(delay1); // 反馈环
+  delay2.connect(ctx.destination);
+}
+
+/** 连接音源到输出（dry + wet 混响） */
+function connectToOutput(node: AudioNode): void {
+  if (dryNode) node.connect(dryNode);
+  if (reverbSend) node.connect(reverbSend);
+  if (!dryNode && !reverbSend) node.connect(audioContext!.destination);
+}
+
 // === 初始化音频上下文 ===
 export function initAudio(): void {
   if (!audioContext) {
     audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    initReverb(audioContext);
   }
 }
 
@@ -95,21 +178,16 @@ export function playSound(type: keyof typeof SOUND_PROFILES): void {
   const gainNode = audioContext.createGain();
 
   oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  connectToOutput(gainNode);
 
   const time = audioContext.currentTime;
 
-  // 特殊处理: type 音效 — 高频短促 click，combo驱动
+  // 特殊处理: type 音效 — 三层键盘音（click + thock + tone）
   if (type === 'type') {
-    const click = getTypeClick();
-    // 窄幅下扫（click感）: freq → freq×0.85
-    oscillator.frequency.setValueAtTime(click.freq, time);
-    oscillator.frequency.exponentialRampToValueAtTime(click.freq * 0.85, time + click.decay * 0.3);
-    gainNode.gain.setValueAtTime(click.vol, time);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, time + click.decay);
-    oscillator.start(time);
-    oscillator.stop(time + click.decay);
-    addBodyLayer(click.freq, click.freq * 0.85, click.vol, click.decay);
+    // 释放预创建的 oscillator/gainNode（不使用）
+    oscillator.disconnect();
+    gainNode.disconnect();
+    playTypeSound();
     return;
   }
 
@@ -144,7 +222,7 @@ export function playResourceSound(resource: string, intensity = 1): void {
       const g = ctx.createGain();
       o.type = 'triangle';
       o.connect(g);
-      g.connect(ctx.destination);
+      connectToOutput(g);
       const freq = randomize(400 * pitchShift, 0.03);
       const vol = randomize(0.07 * volMul, 0.10);
       const dec = randomize(0.10 * decMul, 0.08);
@@ -164,7 +242,7 @@ export function playResourceSound(resource: string, intensity = 1): void {
         const g = ctx.createGain();
         o.type = 'sine';
         o.connect(g);
-        g.connect(ctx.destination);
+        connectToOutput(g);
         o.frequency.setValueAtTime(randomize(baseFreq * pitchShift, 0.03), t);
         const vol = randomize(0.06 * volMul, 0.10);
         softAttack(g, vol, t);
@@ -181,7 +259,7 @@ export function playResourceSound(resource: string, intensity = 1): void {
       const g = ctx.createGain();
       o.type = 'triangle';
       o.connect(g);
-      g.connect(ctx.destination);
+      connectToOutput(g);
       const startF = randomize(420 * pitchShift, 0.03);
       o.frequency.setValueAtTime(startF, t);
       o.frequency.exponentialRampToValueAtTime(startF * (530 / 420), t + 0.12 * decMul);
@@ -199,7 +277,7 @@ export function playResourceSound(resource: string, intensity = 1): void {
       const g = ctx.createGain();
       o.type = 'sine';
       o.connect(g);
-      g.connect(ctx.destination);
+      connectToOutput(g);
       const freq = randomize(1100 * pitchShift, 0.03);
       o.frequency.setValueAtTime(freq, t);
       o.frequency.exponentialRampToValueAtTime(freq * 0.89, t + dec * 0.5);
@@ -218,7 +296,7 @@ export function playResourceSound(resource: string, intensity = 1): void {
       const g1 = ctx.createGain();
       o1.type = 'sine';
       o1.connect(g1);
-      g1.connect(ctx.destination);
+      connectToOutput(g1);
       o1.frequency.setValueAtTime(randomize(600 * pitchShift, 0.03), t);
       const vol1 = randomize(0.06 * volMul, 0.10);
       softAttack(g1, vol1, t);
@@ -230,7 +308,7 @@ export function playResourceSound(resource: string, intensity = 1): void {
       const g2 = ctx.createGain();
       o2.type = 'sine';
       o2.connect(g2);
-      g2.connect(ctx.destination);
+      connectToOutput(g2);
       o2.frequency.setValueAtTime(randomize(1200 * pitchShift, 0.03), t);
       const vol2 = randomize(0.03 * volMul, 0.10);
       softAttack(g2, vol2, t);
@@ -258,7 +336,7 @@ export function playScoreSound(score: number): void {
       const g = ctx.createGain();
       o.type = 'sine';
       o.connect(g);
-      g.connect(ctx.destination);
+      connectToOutput(g);
       const freq = randomize(1200, 0.05);
       const vol = randomize(0.08, 0.08);
       const dec = randomize(0.08, 0.08);
@@ -276,7 +354,7 @@ export function playScoreSound(score: number): void {
       const g = ctx.createGain();
       o.type = 'sine';
       o.connect(g);
-      g.connect(ctx.destination);
+      connectToOutput(g);
       const freq = randomize(800, 0.05);
       const endFreq = randomize(1100, 0.05);
       const vol = randomize(0.12, 0.08);
@@ -296,7 +374,7 @@ export function playScoreSound(score: number): void {
       const g = ctx.createGain();
       o.type = 'triangle';
       o.connect(g);
-      g.connect(ctx.destination);
+      connectToOutput(g);
       const freq = randomize(400, 0.05);
       const endFreq = randomize(550, 0.05);
       const vol = randomize(0.16, 0.08);
@@ -317,7 +395,7 @@ export function playScoreSound(score: number): void {
       const g = ctx.createGain();
       o.type = 'triangle';
       o.connect(g);
-      g.connect(ctx.destination);
+      connectToOutput(g);
       const freq = randomize(250, 0.05);
       const endFreq = randomize(400, 0.05);
       const vol = randomize(0.22, 0.08);
@@ -333,7 +411,7 @@ export function playScoreSound(score: number): void {
       const subG = ctx.createGain();
       sub.type = 'sine';
       sub.connect(subG);
-      subG.connect(ctx.destination);
+      connectToOutput(subG);
       sub.frequency.setValueAtTime(randomize(125, 0.05), t);
       softAttack(subG, vol * 0.4, t);
       subG.gain.exponentialRampToValueAtTime(0.01, t + dec * 0.8);
@@ -372,7 +450,7 @@ export function playRatingSound(grade: string): void {
     g.gain.linearRampToValueAtTime(cfg.vol, t + 0.01);
     g.gain.exponentialRampToValueAtTime(0.001, t + cfg.decay);
     o.connect(g);
-    g.connect(ctx.destination);
+    connectToOutput(g);
     o.start(t);
     o.stop(t + cfg.decay);
   }
