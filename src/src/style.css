@@ -3455,3 +3455,114 @@ body {
     background: rgba(255,107,107,0.2);
 }
 
+/* === 蜕变台样式 === */
+#metamorph-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 8px;
+}
+
+.morph-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #2ecc71;
+    padding: 8px 0;
+    text-align: center;
+}
+
+.morph-info {
+    text-align: center;
+    color: #aaa;
+    font-size: 0.9em;
+    margin-bottom: 12px;
+    padding: 6px 8px;
+    background: rgba(46,204,113,0.08);
+    border-radius: 6px;
+}
+
+.morph-skill-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.morph-skill-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 72px;
+    padding: 8px 4px;
+    border: 1.5px solid rgba(46,204,113,0.4);
+    border-radius: 8px;
+    background: rgba(46,204,113,0.06);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.morph-skill-card:hover:not(.morph-disabled) {
+    border-color: #2ecc71;
+    background: rgba(46,204,113,0.15);
+    transform: scale(1.05);
+}
+
+.morph-skill-card.morph-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.02);
+}
+
+.morph-skill-icon {
+    font-size: 1.5em;
+    margin-bottom: 2px;
+}
+
+.morph-skill-name {
+    font-size: 0.75em;
+    color: #ddd;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.morph-skill-key {
+    font-size: 0.7em;
+    color: #888;
+    margin-top: 2px;
+}
+
+.morph-skill-type {
+    font-size: 0.65em;
+    color: #2ecc71;
+    margin-top: 1px;
+}
+
+.morph-skill-card.morph-disabled .morph-skill-type {
+    color: #666;
+}
+
+.morph-hint {
+    text-align: center;
+    color: #666;
+    font-size: 0.8em;
+    padding: 8px 0;
+}
+
+@keyframes morph-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46,204,113,0.4); }
+    50% { transform: scale(1.08); box-shadow: 0 0 12px 4px rgba(46,204,113,0.3); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46,204,113,0); }
+}
+
+.morph-transforming {
+    animation: morph-pulse 0.3s ease-out;
+    pointer-events: none;
+}
+

@@ -36,6 +36,7 @@ import { isResourceActiveForClass } from './classes/ClassResourceFilter';
 import { CLASS_DEFINITIONS } from '../data/classes';
 import { isFeatureEnabled, getFeatureLostReason } from './classes/ClassFeatureGate';
 import { renderCraftPanel, resetCraftInput } from './classes/CraftingStation';
+import { renderMetamorphPanel } from './classes/MetamorphStation';
 import type { DragPayload } from './dragManager';
 
 // === 零频键位缓存（供自动绑定使用） ===
@@ -1672,27 +1673,34 @@ function initStatsTabs(): void {
   const statsTab = document.getElementById('stats-tab');
   const wordsTab = document.getElementById('words-tab');
   const craftTab = document.getElementById('craft-tab');
+  const metamorphTab = document.getElementById('metamorph-tab');
   const buildManager = document.getElementById('build-manager');
   const statsPanel = document.getElementById('stats-panel');
   const wordPanel = document.getElementById('word-panel');
   const craftPanel = document.getElementById('craft-panel');
+  const metamorphPanel = document.getElementById('metamorph-panel');
   if (!buildTab || !statsTab || !wordsTab || !buildManager || !statsPanel || !wordPanel) return;
 
-  type TabId = 'build' | 'stats' | 'words' | 'craft';
+  type TabId = 'build' | 'stats' | 'words' | 'craft' | 'metamorph';
 
   function switchTab(active: TabId) {
     buildTab!.classList.toggle('active', active === 'build');
     statsTab!.classList.toggle('active', active === 'stats');
     wordsTab!.classList.toggle('active', active === 'words');
     craftTab?.classList.toggle('active', active === 'craft');
+    metamorphTab?.classList.toggle('active', active === 'metamorph');
     buildManager!.style.display = active === 'build' ? '' : 'none';
     statsPanel!.style.display = active === 'stats' ? '' : 'none';
     wordPanel!.style.display = active === 'words' ? '' : 'none';
     if (craftPanel) craftPanel.style.display = active === 'craft' ? '' : 'none';
+    if (metamorphPanel) metamorphPanel.style.display = active === 'metamorph' ? '' : 'none';
     if (active === 'stats') renderStatsPanel();
     if (active === 'words') renderWordInventory();
     if (active === 'craft' && craftPanel) {
       renderCraftPanel(craftPanel, updateGoldDisplay);
+    }
+    if (active === 'metamorph' && metamorphPanel) {
+      renderMetamorphPanel(metamorphPanel);
     }
   }
 
@@ -1708,11 +1716,19 @@ function initStatsTabs(): void {
     if (craftTab) craftTab.style.display = 'none';
   }
 
+  // 职业门控：蜕变师 → 显示蜕变台 tab
+  if (state.classId === 'metamorph') {
+    if (metamorphTab) metamorphTab.style.display = '';
+  } else {
+    if (metamorphTab) metamorphTab.style.display = 'none';
+  }
+
   switchTab('build');
   buildTab.onclick = () => switchTab('build');
   statsTab.onclick = () => switchTab('stats');
   wordsTab.onclick = () => switchTab('words');
   if (craftTab) craftTab.onclick = () => { if (!isFeatureEnabled('pack-system')) switchTab('craft'); };
+  if (metamorphTab) metamorphTab.onclick = () => { if (state.classId === 'metamorph') switchTab('metamorph'); };
 }
 
 // === 初始化商店事件 ===

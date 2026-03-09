@@ -113,6 +113,8 @@ const DEFAULT_UNLOCKED_RELICS = [
  */
 const DEFAULT_UNLOCKED_CLASSES = [
   'none',             // 无职业（默认模式）
+  'wordsmith',        // 造词师（测试用，后续接入解锁条件）
+  'metamorph',        // 蜕变师（测试用，后续接入解锁条件）
 ]
 
 /**

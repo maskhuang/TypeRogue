@@ -812,6 +812,10 @@ export async function startLevel(): Promise<void> {
   state.amplifierStacks.clear();
   // 清空吞噬附魔触发计数（每关重置）
   state.devourCounters.clear();
+  // 重置蜕变师 primal_mutant 遗物免费蜕变状态
+  if (state.player.relics.has('primal_mutant')) {
+    state.player.relicStates['primal_mutant'] = 0;
+  }
 
   synergy.skillMultBonus = 0;
   state.multiplier = state.player.baseMultiplier;
