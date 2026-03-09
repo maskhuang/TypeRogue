@@ -110,7 +110,8 @@ function init(): void {
     state.connectorPool = filterSkillIdsByClass(state.connectorPool, state.classId, id => CONNECTORS[id]);
     state.amplifierPool = filterSkillIdsByClass(state.amplifierPool, state.classId, id => AMPLIFIERS[id]);
 
-    if (hasUnownedRelics()) {
+    // 有初始遗物的职业跳过开局三选一
+    if (state.classId === 'none' && hasUnownedRelics()) {
       showRelicPicker(() => void startLevel(), RELIC_WEIGHT_PRESETS.gameStart);
     } else {
       void startLevel();

@@ -1696,12 +1696,8 @@ function initStatsTabs(): void {
     }
   }
 
-  // 职业门控：造词师失去牌包系统 → 隐藏词库 tab，显示造词台 tab
+  // 职业门控：造词师失去牌包系统 → 显示造词台 tab，但保留词库 tab（只读）
   if (!isFeatureEnabled('pack-system')) {
-    wordsTab.style.display = 'none';
-    const reason = getFeatureLostReason('pack-system');
-    if (reason) wordsTab.title = reason;
-
     // 显示造词台 tab
     if (craftTab) {
       craftTab.style.display = '';
@@ -1715,7 +1711,7 @@ function initStatsTabs(): void {
   switchTab('build');
   buildTab.onclick = () => switchTab('build');
   statsTab.onclick = () => switchTab('stats');
-  wordsTab.onclick = () => { if (isFeatureEnabled('pack-system')) switchTab('words'); };
+  wordsTab.onclick = () => switchTab('words');
   if (craftTab) craftTab.onclick = () => { if (!isFeatureEnabled('pack-system')) switchTab('craft'); };
 }
 
