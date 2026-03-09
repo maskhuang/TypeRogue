@@ -162,6 +162,7 @@ export interface GameState {
   fragmentInventory: Record<string, number>;       // 造词师：26 字母碎片库存（A-Z），跨关保持，Run 重置
   fragmentQueue: string[];                          // 造词师：采集队列字母序列（如 ['e','e','a','t','_','_']），跨关保持
   fragmentQueuePosition: number;                    // 造词师：采集队列当前位置（每关重置）
+  craftedWords: string[];                           // 造词师：本 Run 已造词列表，跨关保持，Run 重置
   mutagenInventory: number;                        // 蜕变师：变异素库存，跨关保持，Run 重置
   gameMode: 'normal' | 'daily';           // 游戏模式
   dailySeed: number | null;                // 每日挑战种子（daily 模式时非 null）

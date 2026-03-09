@@ -7,8 +7,8 @@ import { describe, it, expect } from 'vitest'
 import { PRODUCERS, isProducer, getProducerValue } from '../../../src/data/producers'
 
 describe('PRODUCERS 数据定义', () => {
-  it('定义了 10 个产出者', () => {
-    expect(Object.keys(PRODUCERS)).toHaveLength(10)
+  it('定义了 12 个产出者', () => {
+    expect(Object.keys(PRODUCERS)).toHaveLength(12)
   })
 
   it('每个产出者有完整字段', () => {
@@ -16,7 +16,7 @@ describe('PRODUCERS 数据定义', () => {
       expect(prod.id).toBe(id)
       expect(prod.name).toBeTruthy()
       expect(prod.icon).toBeTruthy()
-      expect(['base', 'score', 'multiplier', 'time', 'gold']).toContain(prod.resource)
+      expect(['base', 'score', 'multiplier', 'time', 'gold', 'fragment']).toContain(prod.resource)
       expect(['add', 'multiply']).toContain(prod.operator)
       expect(prod.values).toHaveLength(3)
       expect(prod.desc).toBeTruthy()
@@ -28,13 +28,13 @@ describe('PRODUCERS 数据定义', () => {
     expect(new Set(icons).size).toBe(icons.length)
   })
 
-  it('5 种资源各有 2 个产出者（+N 和 ×N）', () => {
+  it('6 种资源各有 2 个产出者（+N 和 ×N）', () => {
     const byResource: Record<string, string[]> = {}
     for (const prod of Object.values(PRODUCERS)) {
       if (!byResource[prod.resource]) byResource[prod.resource] = []
       byResource[prod.resource].push(prod.operator)
     }
-    for (const resource of ['base', 'score', 'multiplier', 'time', 'gold']) {
+    for (const resource of ['base', 'score', 'multiplier', 'time', 'gold', 'fragment']) {
       expect(byResource[resource]).toHaveLength(2)
       expect(byResource[resource]).toContain('add')
       expect(byResource[resource]).toContain('multiply')
@@ -108,6 +108,18 @@ describe('产出者数值正确性', () => {
 
   it('A8 永恒: time ×1.2/×1.25/×1.3', () => {
     expect(PRODUCERS.prod_eternal.values).toEqual([1.2, 1.25, 1.3])
+  })
+
+  it('A9 采集: fragment +1/+1.6/+2.4', () => {
+    expect(PRODUCERS.prod_harvest.values).toEqual([1, 1.6, 2.4])
+    expect(PRODUCERS.prod_harvest.resource).toBe('fragment')
+    expect(PRODUCERS.prod_harvest.operator).toBe('add')
+  })
+
+  it('A10 精炼: fragment ×1.8/×2.1/×2.4', () => {
+    expect(PRODUCERS.prod_refine.values).toEqual([1.8, 2.1, 2.4])
+    expect(PRODUCERS.prod_refine.resource).toBe('fragment')
+    expect(PRODUCERS.prod_refine.operator).toBe('multiply')
   })
 
   it('A11 铸币: gold +3/+5/+8', () => {

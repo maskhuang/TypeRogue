@@ -298,8 +298,8 @@ development_status:
   32-2-class-resource-pipeline: done
   32-3-class-loss-mechanism: done
   32-4-wordsmith-fragment-queue: done
-  32-5-wordsmith-producers-converters: backlog
-  32-6-wordsmith-crafting-ui: backlog
+  32-5-wordsmith-producers-converters: done
+  32-6-wordsmith-crafting-ui: done
   32-7-wordsmith-enchantments-relics: backlog
   32-8-metamorph-hidden-pool: backlog
   32-9-metamorph-mutation-core: backlog

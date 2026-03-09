@@ -411,6 +411,7 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   // 职业资源：累加本关产出计数器 + 跨关库存
   if (prod.resource === 'fragment') {
     routeFragmentsToInventory(Math.abs(delta));
+    synergy.skillBaseScore += 1; // 碎片产出者附带微量 base（固定 +1，不随等级缩放）
   } else if (prod.resource === 'mutagen') {
     const absDelta = Math.abs(delta);
     state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + absDelta;

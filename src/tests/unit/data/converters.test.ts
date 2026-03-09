@@ -16,8 +16,8 @@ import {
 describe('CONVERTERS 数据完整性', () => {
   const allIds = Object.keys(CONVERTERS);
 
-  it('共 34 个转化者', () => {
-    expect(allIds.length).toBe(34);
+  it('共 52 个转化者', () => {
+    expect(allIds.length).toBe(52);
   });
 
   it('所有字段非空', () => {
@@ -64,44 +64,49 @@ describe('CONVERTERS 数据完整性', () => {
   });
 
   it('source 和 target 是有效资源类型', () => {
-    const validResources = ['base', 'score', 'multiplier', 'time', 'gold'];
+    const validResources = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment'];
     for (const id of allIds) {
       expect(validResources, `${id}.source`).toContain(CONVERTERS[id].source);
       expect(validResources, `${id}.target`).toContain(CONVERTERS[id].target);
     }
   });
 
-  it('覆盖 34 种唯一 source_target_formula 组合', () => {
+  it('覆盖 52 种唯一 source_target_formula 组合', () => {
     const combos = new Set(allIds.map(id => {
       const c = CONVERTERS[id];
       return `${c.source}_${c.target}_${c.formula}`;
     }));
-    expect(combos.size).toBe(34);
+    expect(combos.size).toBe(52);
   });
 
-  it('基数为源 6 个', () => {
+  it('基数为源 8 个', () => {
     const baseSource = allIds.filter(id => CONVERTERS[id].source === 'base');
-    expect(baseSource.length).toBe(6);
+    expect(baseSource.length).toBe(8);
   });
 
-  it('分数为源 7 个', () => {
+  it('分数为源 9 个', () => {
     const scoreSource = allIds.filter(id => CONVERTERS[id].source === 'score');
-    expect(scoreSource.length).toBe(7);
+    expect(scoreSource.length).toBe(9);
   });
 
-  it('倍率为源 6 个', () => {
+  it('倍率为源 8 个', () => {
     const multSource = allIds.filter(id => CONVERTERS[id].source === 'multiplier');
-    expect(multSource.length).toBe(6);
+    expect(multSource.length).toBe(8);
   });
 
-  it('时间为源 7 个', () => {
+  it('时间为源 9 个', () => {
     const timeSource = allIds.filter(id => CONVERTERS[id].source === 'time');
-    expect(timeSource.length).toBe(7);
+    expect(timeSource.length).toBe(9);
   });
 
-  it('金币为源 8 个', () => {
+  it('金币为源 10 个', () => {
     const goldSource = allIds.filter(id => CONVERTERS[id].source === 'gold');
-    expect(goldSource.length).toBe(8);
+    expect(goldSource.length).toBe(10);
+  });
+
+  it('碎片为源 8 个', () => {
+    const fragmentSource = allIds.filter(id => CONVERTERS[id].source === 'fragment');
+    expect(fragmentSource.length).toBe(8);
   });
 });
 
@@ -233,9 +238,9 @@ describe('getConverterDesc', () => {
 });
 
 describe('drawConverterPool', () => {
-  it('默认抽 20 个', () => {
+  it('默认抽 31 个', () => {
     const pool = drawConverterPool();
-    expect(pool.length).toBe(20);
+    expect(pool.length).toBe(31);
   });
 
   it('抽出的都是有效转化者 ID', () => {
@@ -252,11 +257,11 @@ describe('drawConverterPool', () => {
 
   it('自定义数量', () => {
     expect(drawConverterPool(5).length).toBe(5);
-    expect(drawConverterPool(34).length).toBe(34);
+    expect(drawConverterPool(52).length).toBe(52);
   });
 
   it('超过总数时返回全部', () => {
-    expect(drawConverterPool(100).length).toBe(34);
+    expect(drawConverterPool(100).length).toBe(52);
   });
 });
 
@@ -314,5 +319,114 @@ describe('金币转化者 k 值验证', () => {
     expect(CONVERTERS.conv_time_gold_add.source).toBe('time');
     expect(CONVERTERS.conv_time_gold_add.target).toBe('gold');
     expect(CONVERTERS.conv_time_gold_add.formula).toBe('add');
+  });
+});
+
+describe('碎片转化者 k 值验证', () => {
+  // fragment→other (8 个)
+  it('conv_fragment_score_add: fragment→score add k=0.8', () => {
+    expect(CONVERTERS.conv_fragment_score_add.k).toBeCloseTo(0.8);
+    expect(CONVERTERS.conv_fragment_score_add.source).toBe('fragment');
+    expect(CONVERTERS.conv_fragment_score_add.target).toBe('score');
+    expect(CONVERTERS.conv_fragment_score_add.formula).toBe('add');
+  });
+
+  it('conv_fragment_score_mul: fragment→score multiply k=0.004', () => {
+    expect(CONVERTERS.conv_fragment_score_mul.k).toBeCloseTo(0.004);
+    expect(CONVERTERS.conv_fragment_score_mul.formula).toBe('multiply');
+  });
+
+  it('conv_fragment_mult_add: fragment→multiplier add k=0.015', () => {
+    expect(CONVERTERS.conv_fragment_mult_add.k).toBeCloseTo(0.015);
+    expect(CONVERTERS.conv_fragment_mult_add.target).toBe('multiplier');
+  });
+
+  it('conv_fragment_mult_mul: fragment→multiplier multiply k=0.006', () => {
+    expect(CONVERTERS.conv_fragment_mult_mul.k).toBeCloseTo(0.006);
+  });
+
+  it('conv_fragment_time_add: fragment→time add k=0.12', () => {
+    expect(CONVERTERS.conv_fragment_time_add.k).toBeCloseTo(0.12);
+    expect(CONVERTERS.conv_fragment_time_add.target).toBe('time');
+  });
+
+  it('conv_fragment_time_mul: fragment→time multiply k=0.004', () => {
+    expect(CONVERTERS.conv_fragment_time_mul.k).toBeCloseTo(0.004);
+  });
+
+  it('conv_fragment_gold_add: fragment→gold add k=0.3', () => {
+    expect(CONVERTERS.conv_fragment_gold_add.k).toBeCloseTo(0.3);
+    expect(CONVERTERS.conv_fragment_gold_add.target).toBe('gold');
+  });
+
+  it('conv_fragment_gold_mul: fragment→gold multiply k=0.003', () => {
+    expect(CONVERTERS.conv_fragment_gold_mul.k).toBeCloseTo(0.003);
+  });
+
+  // other→fragment (10 个)
+  it('conv_base_fragment_add: base→fragment add k=0.08', () => {
+    expect(CONVERTERS.conv_base_fragment_add.k).toBeCloseTo(0.08);
+    expect(CONVERTERS.conv_base_fragment_add.source).toBe('base');
+    expect(CONVERTERS.conv_base_fragment_add.target).toBe('fragment');
+    expect(CONVERTERS.conv_base_fragment_add.formula).toBe('add');
+  });
+
+  it('conv_base_fragment_mul: base→fragment multiply k=0.003', () => {
+    expect(CONVERTERS.conv_base_fragment_mul.k).toBeCloseTo(0.003);
+  });
+
+  it('conv_score_fragment_add: score→fragment add k=0.005', () => {
+    expect(CONVERTERS.conv_score_fragment_add.k).toBeCloseTo(0.005);
+    expect(CONVERTERS.conv_score_fragment_add.target).toBe('fragment');
+  });
+
+  it('conv_score_fragment_mul: score→fragment multiply k=0.0003', () => {
+    expect(CONVERTERS.conv_score_fragment_mul.k).toBeCloseTo(0.0003);
+  });
+
+  it('conv_mult_fragment_add: multiplier→fragment add k=2.0', () => {
+    expect(CONVERTERS.conv_mult_fragment_add.k).toBeCloseTo(2.0);
+    expect(CONVERTERS.conv_mult_fragment_add.source).toBe('multiplier');
+  });
+
+  it('conv_mult_fragment_mul: multiplier→fragment multiply k=0.2', () => {
+    expect(CONVERTERS.conv_mult_fragment_mul.k).toBeCloseTo(0.2);
+  });
+
+  it('conv_time_fragment_add: time→fragment add k=0.1', () => {
+    expect(CONVERTERS.conv_time_fragment_add.k).toBeCloseTo(0.1);
+    expect(CONVERTERS.conv_time_fragment_add.target).toBe('fragment');
+  });
+
+  it('conv_time_fragment_mul: time→fragment multiply k=0.01', () => {
+    expect(CONVERTERS.conv_time_fragment_mul.k).toBeCloseTo(0.01);
+  });
+
+  it('conv_gold_fragment_add: gold→fragment add k=0.3', () => {
+    expect(CONVERTERS.conv_gold_fragment_add.k).toBeCloseTo(0.3);
+    expect(CONVERTERS.conv_gold_fragment_add.source).toBe('gold');
+    expect(CONVERTERS.conv_gold_fragment_add.target).toBe('fragment');
+  });
+
+  it('conv_gold_fragment_mul: gold→fragment multiply k=0.03', () => {
+    expect(CONVERTERS.conv_gold_fragment_mul.k).toBeCloseTo(0.03);
+  });
+});
+
+describe('碎片转化者平衡约束', () => {
+  it('fragment→score add k ≤ base→score add k（碎片不压倒通用路线）', () => {
+    expect(CONVERTERS.conv_fragment_score_add.k).toBeLessThanOrEqual(CONVERTERS.conv_base_score_add.k);
+  });
+
+  it('fragment→multiplier add k ≤ base→mult add k', () => {
+    expect(CONVERTERS.conv_fragment_mult_add.k).toBeLessThanOrEqual(CONVERTERS.conv_base_mult_add.k);
+  });
+
+  it('fragment→time add k ≤ base→time add k', () => {
+    expect(CONVERTERS.conv_fragment_time_add.k).toBeLessThanOrEqual(CONVERTERS.conv_base_time_add.k);
+  });
+
+  it('fragment→score mul k ≤ base→score mul k', () => {
+    expect(CONVERTERS.conv_fragment_score_mul.k).toBeLessThanOrEqual(CONVERTERS.conv_base_score_mul.k);
   });
 });

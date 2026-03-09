@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 产出者技能数据
 // ============================================
-// Story 19.2: 10 个产出者（5 资源 × 2 运算符）
+// Story 19.2 + 32.5: 12 个产出者（6 资源 × 2 运算符）
 
 import type { ProducerDefinition } from '../core/types';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
@@ -105,6 +105,26 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     operator: 'multiply',
     values: [1.3, 1.5, 1.7],
     desc: '触发时：💰金币×1.3',
+  },
+
+  // === 碎片产出者（造词师专属）===
+  prod_harvest: {
+    id: 'prod_harvest',
+    name: '采集',
+    icon: '📝',
+    resource: 'fragment',
+    operator: 'add',
+    values: [1, 1.6, 2.4],
+    desc: '触发时：🔤碎片+1',
+  },
+  prod_refine: {
+    id: 'prod_refine',
+    name: '精炼',
+    icon: '🔍',
+    resource: 'fragment',
+    operator: 'multiply',
+    values: [1.8, 2.1, 2.4],
+    desc: '触发时：🔤碎片×1.8',
   },
 };
 

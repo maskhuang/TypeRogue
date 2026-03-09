@@ -33,6 +33,7 @@ export function createInitialState(): GameState {
     },
     fragmentQueue: ['_', '_', '_', '_', '_', '_'],
     fragmentQueuePosition: 0,
+    craftedWords: [],
     mutagenInventory: 0,
     resources: {
       base: 0,

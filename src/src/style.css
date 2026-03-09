@@ -3146,3 +3146,292 @@ body {
     display: none;
 }
 
+/* ============================================
+   造词台 UI (Story 32.6)
+   ============================================ */
+
+.craft-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #ffe66d;
+    padding: 8px 0;
+    text-align: center;
+}
+
+.craft-section {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+}
+
+.craft-section-header {
+    font-size: 0.85em;
+    color: #aaa;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+/* 采集队列 */
+.craft-queue-row {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+
+.craft-queue-slot {
+    width: 36px;
+    height: 36px;
+    border: 2px solid #555;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: rgba(255,255,255,0.05);
+}
+
+.craft-queue-slot:hover {
+    border-color: #ffe66d;
+    background: rgba(255,230,109,0.1);
+}
+
+.craft-queue-slot.craft-queue-empty {
+    color: #666;
+}
+
+.craft-queue-slot.craft-queue-active {
+    border-color: #4ecdc4;
+    box-shadow: 0 0 6px rgba(78,205,196,0.4);
+}
+
+/* 碎片库存网格 */
+.craft-inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    gap: 3px;
+}
+
+.craft-inventory-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3px 2px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.craft-inventory-cell:hover {
+    background: rgba(78,205,196,0.15);
+}
+
+.craft-inventory-cell.craft-inventory-empty {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.craft-inventory-letter {
+    font-size: 0.8em;
+    font-weight: bold;
+    color: #ddd;
+}
+
+.craft-inventory-count {
+    font-size: 0.7em;
+    color: #4ecdc4;
+}
+
+.craft-inventory-empty .craft-inventory-count {
+    color: #666;
+}
+
+/* 造词输入区 */
+.craft-word-row {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    min-height: 32px;
+    align-items: center;
+    padding: 4px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.craft-word-placeholder {
+    color: #666;
+    font-size: 0.85em;
+    font-style: italic;
+}
+
+.craft-word-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: rgba(78,205,196,0.2);
+    border: 1px solid #4ecdc4;
+    border-radius: 4px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.craft-word-chip:hover {
+    background: rgba(255,107,107,0.3);
+    border-color: #ff6b6b;
+}
+
+/* 消耗预览 */
+.craft-cost-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8em;
+    color: #ccc;
+    margin-bottom: 6px;
+}
+
+.craft-cost-insufficient {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+.craft-cost-gold {
+    color: #ffe66d;
+}
+
+.craft-cost-gold.craft-cost-insufficient {
+    color: #ff6b6b;
+}
+
+/* 确认按钮 */
+.craft-confirm-btn {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.craft-confirm-btn:hover {
+    transform: scale(1.02);
+}
+
+.craft-confirm-btn.craft-confirm-disabled {
+    background: #444;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.craft-confirm-hint {
+    display: block;
+    text-align: center;
+    font-size: 0.75em;
+    color: #ff6b6b;
+    margin-top: 4px;
+}
+
+/* 已造词列表 */
+.craft-word-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.craft-word-tag {
+    padding: 2px 8px;
+    background: rgba(255,230,109,0.15);
+    border: 1px solid rgba(255,230,109,0.3);
+    border-radius: 12px;
+    font-size: 0.8em;
+    color: #ffe66d;
+}
+
+/* 字母选择器弹窗 */
+.letter-picker-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.letter-picker-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+}
+
+.letter-picker-content {
+    position: relative;
+    background: #1a1a2e;
+    border: 2px solid #4ecdc4;
+    border-radius: 12px;
+    padding: 16px;
+    max-width: 360px;
+    z-index: 1;
+}
+
+.letter-picker-title {
+    text-align: center;
+    font-weight: bold;
+    color: #ffe66d;
+    margin-bottom: 12px;
+}
+
+.letter-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 4px;
+}
+
+.letter-picker-btn {
+    padding: 8px 4px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.letter-picker-btn:hover {
+    background: rgba(78,205,196,0.2);
+    border-color: #4ecdc4;
+}
+
+.letter-picker-btn.letter-picker-skip {
+    grid-column: span 2;
+    background: rgba(255,107,107,0.1);
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.letter-picker-btn.letter-picker-skip:hover {
+    background: rgba(255,107,107,0.2);
+}
+

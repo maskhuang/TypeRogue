@@ -175,6 +175,43 @@ describe('triggerProducer — ×N 当前值为 0', () => {
   })
 })
 
+describe('triggerProducer — 碎片产出者 + base_score 附带', () => {
+  beforeEach(() => {
+    resetState()
+  })
+
+  it('prod_harvest: fragment +1 (Lv1) 并附带 skillBaseScore += 1', async () => {
+    const { triggerProducer } = await import('../../../src/systems/skills')
+    state.player.skills.set('prod_harvest', { level: 1 })
+    state.classId = 'wordsmith'
+    synergy.skillBaseScore = 0
+    triggerProducer('prod_harvest')
+    // 碎片产出者附带固定 +1 base（不随等级缩放）
+    expect(synergy.skillBaseScore).toBe(1)
+    // 碎片路由到 classResourceProduced
+    expect(state.classResourceProduced.fragment).toBeGreaterThan(0)
+  })
+
+  it('prod_harvest Lv3: skillBaseScore 仍为 +1（不随等级缩放）', async () => {
+    const { triggerProducer } = await import('../../../src/systems/skills')
+    state.player.skills.set('prod_harvest', { level: 3 })
+    state.classId = 'wordsmith'
+    synergy.skillBaseScore = 0
+    triggerProducer('prod_harvest')
+    expect(synergy.skillBaseScore).toBe(1) // 固定 +1，与等级无关
+  })
+
+  it('prod_refine: ×N 碎片也附带 skillBaseScore += 1', async () => {
+    const { triggerProducer } = await import('../../../src/systems/skills')
+    state.player.skills.set('prod_refine', { level: 1 })
+    state.classId = 'wordsmith'
+    state.resources.fragment = 5 // 需要有碎片基数才能乘
+    synergy.skillBaseScore = 0
+    triggerProducer('prod_refine')
+    expect(synergy.skillBaseScore).toBe(1) // 固定 +1
+  })
+})
+
 describe('triggerSkill 产出者分流', () => {
   beforeEach(() => {
     resetState()

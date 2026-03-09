@@ -35,6 +35,7 @@ import { dragManager } from './dragManager';
 import { isResourceActiveForClass } from './classes/ClassResourceFilter';
 import { CLASS_DEFINITIONS } from '../data/classes';
 import { isFeatureEnabled, getFeatureLostReason } from './classes/ClassFeatureGate';
+import { renderCraftPanel, resetCraftInput } from './classes/CraftingStation';
 import type { DragPayload } from './dragManager';
 
 // === 零频键位缓存（供自动绑定使用） ===
@@ -1670,33 +1671,52 @@ function initStatsTabs(): void {
   const buildTab = document.getElementById('build-tab');
   const statsTab = document.getElementById('stats-tab');
   const wordsTab = document.getElementById('words-tab');
+  const craftTab = document.getElementById('craft-tab');
   const buildManager = document.getElementById('build-manager');
   const statsPanel = document.getElementById('stats-panel');
   const wordPanel = document.getElementById('word-panel');
+  const craftPanel = document.getElementById('craft-panel');
   if (!buildTab || !statsTab || !wordsTab || !buildManager || !statsPanel || !wordPanel) return;
 
-  function switchTab(active: 'build' | 'stats' | 'words') {
+  type TabId = 'build' | 'stats' | 'words' | 'craft';
+
+  function switchTab(active: TabId) {
     buildTab!.classList.toggle('active', active === 'build');
     statsTab!.classList.toggle('active', active === 'stats');
     wordsTab!.classList.toggle('active', active === 'words');
+    craftTab?.classList.toggle('active', active === 'craft');
     buildManager!.style.display = active === 'build' ? '' : 'none';
     statsPanel!.style.display = active === 'stats' ? '' : 'none';
     wordPanel!.style.display = active === 'words' ? '' : 'none';
+    if (craftPanel) craftPanel.style.display = active === 'craft' ? '' : 'none';
     if (active === 'stats') renderStatsPanel();
     if (active === 'words') renderWordInventory();
+    if (active === 'craft' && craftPanel) {
+      renderCraftPanel(craftPanel, updateGoldDisplay);
+    }
   }
 
-  // 职业门控：造词师失去牌包系统 → 隐藏词库 tab
+  // 职业门控：造词师失去牌包系统 → 隐藏词库 tab，显示造词台 tab
   if (!isFeatureEnabled('pack-system')) {
     wordsTab.style.display = 'none';
     const reason = getFeatureLostReason('pack-system');
     if (reason) wordsTab.title = reason;
+
+    // 显示造词台 tab
+    if (craftTab) {
+      craftTab.style.display = '';
+      resetCraftInput();
+    }
+  } else {
+    // 非造词师：隐藏造词台 tab
+    if (craftTab) craftTab.style.display = 'none';
   }
 
   switchTab('build');
   buildTab.onclick = () => switchTab('build');
   statsTab.onclick = () => switchTab('stats');
   wordsTab.onclick = () => { if (isFeatureEnabled('pack-system')) switchTab('words'); };
+  if (craftTab) craftTab.onclick = () => { if (!isFeatureEnabled('pack-system')) switchTab('craft'); };
 }
 
 // === 初始化商店事件 ===

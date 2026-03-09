@@ -91,7 +91,7 @@ function init(): void {
   // 抽取本局 Boss 修饰器池（3 个随机修饰器，精英关/Boss 关使用）
   state.bossModifierPool = drawBossModifiers(3);
 
-  // 抽取本局转化者池（40 个中随机 20 个）
+  // 抽取本局转化者池（52 个中随机 31 个，非造词师过滤后 ~20）
   state.converterPool = drawConverterPool();
 
   // 抽取本局连接者池（36 个中随机 18 个）
