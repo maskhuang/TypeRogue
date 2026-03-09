@@ -576,6 +576,75 @@ export const RELICS: Record<string, RelicData> = {
     effects: [],
     flavor: '最初的变异，蕴含无限可能。',
   },
+
+  // ==================== 造词师专属遗物 ====================
+  // Story 32.7: 6 个新遗物（学徒笔记效果在 RelicPipeline.initRelicState 中实现）
+
+  masters_lexicon: {
+    id: 'masters_lexicon',
+    name: '大师词典',
+    icon: '📙',
+    description: '获得时全字母碎片各+2，采集队列+2格。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    flavor: '二十六个字母，足以书写万物。',
+  },
+
+  perpetual_queue: {
+    id: 'perpetual_queue',
+    name: '永动队列',
+    icon: '♾️',
+    description: '每关战斗开始时自动采集一轮队列。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    flavor: '永不停歇的字母之轮。',
+  },
+
+  refining_lens: {
+    id: 'refining_lens',
+    name: '精炼透镜',
+    icon: '🔬',
+    description: '碎片→其他资源转化者读数+30%。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    flavor: '透镜下，碎片折射出更多价值。',
+  },
+
+  word_scissors: {
+    id: 'word_scissors',
+    name: '拆词剪刀',
+    icon: '✂️',
+    description: '可拆解已造词，返还50%碎片。',
+    rarity: 'rare',
+    basePrice: 60,
+    effects: [],
+    flavor: '剪下一个词，重组一种可能。',
+  },
+
+  resonance_mold: {
+    id: 'resonance_mold',
+    name: '共鸣字模',
+    icon: '🧩',
+    description: '造词时重复字母不收金币。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    flavor: '每个字母都有平等的共鸣权。',
+  },
+
+  fragment_prism: {
+    id: 'fragment_prism',
+    name: '碎片棱镜',
+    icon: '🔺',
+    description: '采集队列每格同时产出相邻字母碎片。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    flavor: '一束碎片光，折射出整个字母表。',
+  },
 }
 
 // === Relic Modifier 工厂类型 ===

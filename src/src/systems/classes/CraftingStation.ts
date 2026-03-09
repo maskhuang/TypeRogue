@@ -6,6 +6,7 @@
 import { state } from '../../core/state';
 import { playSound } from '../../effects/sound';
 import { showFeedback } from '../battle';
+import { onWordCrafted } from '../skills';
 import { getMaxQueueLength, setFragmentQueue } from './FragmentQueue';
 
 // === 金币递增公式常量 ===
@@ -21,11 +22,13 @@ export function calculateCraftCost(letters: string[]): { fragments: Record<strin
     fragments[lower] = (fragments[lower] || 0) + 1;
   }
 
-  // 金币：每个字母重复出现的递增成本
-  for (const count of Object.values(fragments)) {
-    for (let i = 1; i < count; i++) {
-      const costIndex = Math.min(i, REPEAT_GOLD_COST.length - 1);
-      gold += REPEAT_GOLD_COST[costIndex];
+  // 共鸣字模：重复字母不收金币
+  if (!state.player.relics.has('resonance_mold')) {
+    for (const count of Object.values(fragments)) {
+      for (let i = 1; i < count; i++) {
+        const costIndex = Math.min(i, REPEAT_GOLD_COST.length - 1);
+        gold += REPEAT_GOLD_COST[costIndex];
+      }
     }
   }
 
@@ -74,6 +77,9 @@ export function craftWord(letters: string[], onGoldUpdate: () => void): boolean 
   // 推入词库
   state.player.wordDeck.push(word);
   state.craftedWords.push(word);
+
+  // 丰收附魔累计
+  onWordCrafted();
 
   playSound('buy');
   return true;
@@ -314,7 +320,9 @@ function renderWordBuilder(container: HTMLElement, onGoldUpdate: () => void): vo
     const goldCost = document.createElement('span');
     goldCost.className = 'craft-cost-gold';
     if (gold > state.gold) goldCost.classList.add('craft-cost-insufficient');
-    goldCost.textContent = gold > 0 ? `💰 ${gold}g` : '💰 0g (无重复)';
+    const goldLabel = gold > 0 ? `💰 ${gold}g`
+      : state.player.relics.has('resonance_mold') ? '💰 0g (共鸣字模)' : '💰 0g (无重复)';
+    goldCost.textContent = goldLabel;
     costRow.appendChild(goldCost);
 
     section.appendChild(costRow);
@@ -351,6 +359,33 @@ function renderWordBuilder(container: HTMLElement, onGoldUpdate: () => void): vo
   container.appendChild(section);
 }
 
+// === 拆词剪刀：拆解已造词，返还 50% 碎片 ===
+export function deconstructWord(word: string, onGoldUpdate: () => void): boolean {
+  const idx = state.craftedWords.indexOf(word);
+  if (idx === -1) return false;
+
+  // 计算返还碎片（50% 向下取整）
+  const { fragments } = calculateCraftCost(word.split(''));
+  for (const [letter, count] of Object.entries(fragments)) {
+    const refund = Math.floor(count * 0.5);
+    if (refund > 0) {
+      state.fragmentInventory[letter] = (state.fragmentInventory[letter] || 0) + refund;
+    }
+  }
+
+  // 从 craftedWords 移除
+  state.craftedWords.splice(idx, 1);
+
+  // 从 wordDeck 移除（仅移除第一个匹配）
+  const deckIdx = state.player.wordDeck.indexOf(word);
+  if (deckIdx !== -1) state.player.wordDeck.splice(deckIdx, 1);
+
+  showFeedback(`✂ 拆解「${word}」，碎片已返还!`, '#88ccff');
+  playSound('buy');
+  onGoldUpdate();
+  return true;
+}
+
 // === 已造词列表 ===
 function renderCraftedWordList(container: HTMLElement): void {
   if (state.craftedWords.length === 0) return;
@@ -366,10 +401,28 @@ function renderCraftedWordList(container: HTMLElement): void {
   const list = document.createElement('div');
   list.className = 'craft-word-list';
 
+  const hasScissors = state.player.relics.has('word_scissors');
+
   for (const word of state.craftedWords) {
     const tag = document.createElement('span');
     tag.className = 'craft-word-tag';
     tag.textContent = word;
+
+    if (hasScissors) {
+      const btn = document.createElement('button');
+      btn.className = 'craft-deconstruct-btn';
+      btn.textContent = '✂';
+      btn.title = '拆解（返还50%碎片）';
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (cachedGoldUpdate) {
+          deconstructWord(word, cachedGoldUpdate);
+          renderCraftPanel(container, cachedGoldUpdate);
+        }
+      };
+      tag.appendChild(btn);
+    }
+
     list.appendChild(tag);
   }
 

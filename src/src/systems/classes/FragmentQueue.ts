@@ -12,8 +12,9 @@ const BASE_QUEUE_LENGTH = 6;
  * 获取当前最大队列长度（基础 6，遗物可扩展）
  */
 export function getMaxQueueLength(): number {
-  // Story 32.7 实现遗物扩展（如大师词典 +2）
-  return BASE_QUEUE_LENGTH;
+  let max = BASE_QUEUE_LENGTH;
+  if (state.player.relics.has('masters_lexicon')) max += 2;
+  return max;
 }
 
 /**
@@ -47,6 +48,18 @@ export function distributeFragments(amount: number): Record<string, number> {
     }
     safetyLimit = queue.length; // 遇到有效字母重置安全计数
     result[letter] = (result[letter] ?? 0) + 1;
+    // 碎片棱镜：同时产出字母表相邻字母
+    if (state.player.relics.has('fragment_prism')) {
+      const code = letter.charCodeAt(0);
+      if (code > 97) { // 'a' = 97, skip left for 'a'
+        const left = String.fromCharCode(code - 1);
+        result[left] = (result[left] ?? 0) + 1;
+      }
+      if (code < 122) { // 'z' = 122, skip right for 'z'
+        const right = String.fromCharCode(code + 1);
+        result[right] = (result[right] ?? 0) + 1;
+      }
+    }
     distributed++;
   }
   return result;

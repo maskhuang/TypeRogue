@@ -15,8 +15,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 37 relics', () => {
-      expect(Object.keys(RELICS)).toHaveLength(37)
+    it('should contain 43 relics', () => {
+      expect(Object.keys(RELICS)).toHaveLength(43)
     })
 
     it('每个图标唯一', () => {
@@ -45,14 +45,14 @@ describe('Relics Data', () => {
       expect(commons).toHaveLength(6)
     })
 
-    it('should have 22 rare relics', () => {
+    it('should have 25 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(22)
+      expect(rares).toHaveLength(25)
     })
 
-    it('should have 9 legendary relics', () => {
+    it('should have 12 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(9)
+      expect(legendaries).toHaveLength(12)
     })
   })
 
@@ -101,19 +101,19 @@ describe('Relics Data', () => {
       }
     })
 
-    it('rare relics should cost 40-65 gold', () => {
+    it('rare relics should cost 40-80 gold', () => {
       const rares = getRelicsByRarity('rare')
       for (const relic of rares) {
-        expect(relic.basePrice).toBeGreaterThanOrEqual(40)
-        expect(relic.basePrice).toBeLessThanOrEqual(65)
+        expect(relic.basePrice, `${relic.id} basePrice`).toBeGreaterThanOrEqual(40)
+        expect(relic.basePrice, `${relic.id} basePrice`).toBeLessThanOrEqual(80)
       }
     })
 
-    it('legendary relics should cost 70-125 gold', () => {
+    it('legendary relics should cost 0 (reward-only) or 70-125 gold', () => {
       const legendaries = getRelicsByRarity('legendary')
       for (const relic of legendaries) {
-        expect(relic.basePrice).toBeGreaterThanOrEqual(70)
-        expect(relic.basePrice).toBeLessThanOrEqual(125)
+        const valid = relic.basePrice === 0 || (relic.basePrice >= 70 && relic.basePrice <= 125)
+        expect(valid, `${relic.id} basePrice=${relic.basePrice}`).toBe(true)
       }
     })
   })
@@ -161,7 +161,7 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(37)
+      expect(ids).toHaveLength(43)
       expect(ids).toContain('lucky_coin')
       expect(ids).toContain('perfectionist')
       expect(ids).toContain('glass_cannon')
@@ -181,7 +181,7 @@ describe('Relics Data', () => {
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(37)
+      expect(relics).toHaveLength(43)
     })
 
     it('should return RelicData objects', () => {

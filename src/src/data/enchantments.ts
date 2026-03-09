@@ -5,6 +5,7 @@
 
 import type { EnchantmentDefinition } from '../core/types';
 import { PositionRelation } from './keyboardTopology';
+import { state } from '../core/state';
 
 // === 35 个附魔数据 ===
 export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
@@ -55,6 +56,11 @@ export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
   ench_trans_time:       { id: 'ench_trans_time',       name: '附时', icon: '⏳✨', category: 'transmutation', effectValue: 0.20, extraResource: 'time',       desc: '触发后：额外产出⏳时间（本次产出的20%）' },
   // === 独立型（1 个）"不依赖位置关系的成长" ===
   ench_mastery: { id: 'ench_mastery', name: '精通', icon: '🏆', category: 'independent', effectValue: 0.08, desc: '每10次触发：自身产出永久+8%' },
+
+  // === 职业专属 — 造词师（3 个）"造词驱动的成长" ===
+  ench_harvest:         { id: 'ench_harvest',         name: '丰收', icon: '🌾', category: 'class-exclusive', effectValue: 0.08, desc: '每造一个词：自身产出永久+8%' },
+  ench_letter_affinity: { id: 'ench_letter_affinity', name: '字母亲和', icon: '💌', category: 'class-exclusive', effectValue: 0.25, desc: '采集队列含本键字母时：产出+25%' },
+  ench_overflow:        { id: 'ench_overflow',        name: '满溢', icon: '🫧', category: 'class-exclusive', effectValue: 0.20, desc: '每有1种碎片≥15：产出+20%（第2种起各+5%）' },
 } as const;
 
 // === 工具函数 ===
@@ -77,8 +83,11 @@ export function getEnchantmentDesc(id: string): string {
  *   若提供，空间类附魔只保留匹配该范围的，非空间类不受限
  */
 export function drawEnchantmentPair(skillRelation?: PositionRelation): [string, string] {
+  const isWordsmith = state.classId === 'wordsmith';
   const all = Object.values(ENCHANTMENTS)
     .filter(e => {
+      // 职业专属附魔：仅对应职业可抽取
+      if (e.category === 'class-exclusive') return isWordsmith;
       if (!skillRelation) return true;
       // 空间类必须匹配技能范围
       if (e.category === 'spatial') return e.positionRelation === skillRelation;

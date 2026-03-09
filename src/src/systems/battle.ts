@@ -26,6 +26,7 @@ import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBo
 import { showBossModifierPicker } from './bossModifierPicker';
 import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
+import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
 
 /** 获取当前精英关的修饰器元数据（非精英关返回 undefined） */
 function getCurrentEliteModifierMeta(): BossModifierMeta | undefined {
@@ -832,6 +833,10 @@ export async function startLevel(): Promise<void> {
   // cornucopia 等：战斗开始时金币加成
   if (startRelicResult.effects.gold > 0) {
     state.gold += startRelicResult.effects.gold;
+  }
+  // 永动队列：战斗开始时自动采集完整一轮队列
+  if (state.player.relics.has('perpetual_queue')) {
+    routeFragmentsToInventory(getMaxQueueLength());
   }
 
   const el = getElements();

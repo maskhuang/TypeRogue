@@ -69,7 +69,7 @@ export interface AmplifierState {
 }
 
 // === 附魔系统 ===
-export type EnchantmentCategory = 'spatial' | 'transmutation' | 'independent';
+export type EnchantmentCategory = 'spatial' | 'transmutation' | 'independent' | 'class-exclusive';
 export type SpatialEffectType = 'growth' | 'splash' | 'resonance' | 'repulsion' | 'devour';
 
 export interface EnchantmentDefinition {

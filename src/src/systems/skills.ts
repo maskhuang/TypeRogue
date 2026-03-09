@@ -144,8 +144,9 @@ function getResourceLabel(r: ResourceType): string {
     case 'score': return '分';
     case 'multiplier': return '倍率';
     case 'time': return '秒';
-    case 'shield': return '盾';
     case 'gold': return '币';
+    case 'fragment': return '碎片';
+    case 'mutagen': return '变异素';
   }
 }
 
@@ -156,8 +157,8 @@ export function getEnchantmentMultiplier(skillId: string, triggerKey?: string): 
   const ench = ENCHANTMENTS[enchId];
   if (!ench) return 1;
 
-  // 成长型 / 精通型：返回累积的成长值作为倍率（共享 growthValues 存储）
-  if (ench.spatialType === 'growth' || ench.id === 'ench_mastery') {
+  // 成长型 / 精通型 / 丰收：返回累积的成长值作为倍率（共享 growthValues 存储）
+  if (ench.spatialType === 'growth' || ench.id === 'ench_mastery' || ench.id === 'ench_harvest') {
     const accumulated = state.growthValues.get(skillId) || 0;
     return 1 + accumulated;
   }
@@ -172,6 +173,20 @@ export function getEnchantmentMultiplier(skillId: string, triggerKey?: string): 
     const emptyCount = related.filter(k => !state.player.bindings.has(k)).length;
     return 1 + emptyCount * ench.effectValue;
   }
+
+  // 字母亲和：采集队列含本键字母时 +25%
+  if (ench.id === 'ench_letter_affinity' && triggerKey) {
+    const keyLetter = triggerKey.toLowerCase();
+    return state.fragmentQueue.some(l => l === keyLetter) ? 1 + ench.effectValue : 1;
+  }
+
+  // 满溢：碎片库存中 ≥15 的字母数 → +20% + (N-1)*5%
+  if (ench.id === 'ench_overflow') {
+    const highCount = Object.values(state.fragmentInventory).filter(v => v >= 15).length;
+    if (highCount === 0) return 1;
+    return 1 + ench.effectValue + Math.max(0, highCount - 1) * 0.05;
+  }
+
   return 1;
 }
 
@@ -226,6 +241,17 @@ export function checkMasteryAccumulation(skillId: string): void {
     if (boundKey) {
       eventBus.emit('skill:triggered', { key: boundKey, skillId, type: 'passive', growthValue: newVal });
     }
+  }
+}
+
+// === 附魔：丰收型 — 造词时为所有 harvest 附魔技能累积成长 ===
+export function onWordCrafted(): void {
+  for (const [skillId, enchId] of state.player.enchantedSkills) {
+    if (enchId !== 'ench_harvest') continue;
+    const ench = ENCHANTMENTS[enchId];
+    if (!ench) continue;
+    const current = state.growthValues.get(skillId) || 0;
+    state.growthValues.set(skillId, current + ench.effectValue);
   }
 }
 
@@ -463,7 +489,11 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   _currentTriggerKey = triggerKey;
   const level = state.player.skills.get(converterId)?.level || 1;
   const k = getConverterK(converterId, level);
-  const sourceVal = getSourceValue(conv.source, state.resources, state.classResourceProduced);
+  let sourceVal = getSourceValue(conv.source, state.resources, state.classResourceProduced);
+  // 精炼透镜：fragment→其他资源转化者读数 +30%
+  if (conv.source === 'fragment' && state.player.relics.has('refining_lens')) {
+    sourceVal *= 1.3;
+  }
   const enchMult = getEnchantmentMultiplier(converterId, triggerKey);
   const ampBonus = getAmplifierBonus(converterId, triggerKey, conv.target);
   const amplifiedK = (k + ampBonus.addBonus) * ampBonus.mulBonus;
@@ -653,7 +683,11 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
   if (!conv) return;
   const level = state.player.skills.get(converterId)?.level || 1;
   const k = getConverterK(converterId, level);
-  const sourceVal = getSourceValue(conv.source, state.resources, state.classResourceProduced);
+  let sourceVal = getSourceValue(conv.source, state.resources, state.classResourceProduced);
+  // 精炼透镜：fragment→其他资源转化者读数 +30%
+  if (conv.source === 'fragment' && state.player.relics.has('refining_lens')) {
+    sourceVal *= 1.3;
+  }
 
   showTriggerPopup(converterId);
 

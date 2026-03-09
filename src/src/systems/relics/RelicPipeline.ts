@@ -189,6 +189,22 @@ export function initRelicState(relicId: string): void {
     }
   }
 
+  // === 造词师遗物：学徒笔记 — 元音碎片各 +3 ===
+  if (relicId === 'apprentice_notes') {
+    for (const vowel of ['a', 'e', 'i', 'o', 'u']) {
+      state.fragmentInventory[vowel] = (state.fragmentInventory[vowel] || 0) + 3
+    }
+  }
+
+  // === 造词师遗物：大师词典 — 全字母碎片各 +2 + 队列 +2 ===
+  if (relicId === 'masters_lexicon') {
+    for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
+      state.fragmentInventory[letter] = (state.fragmentInventory[letter] || 0) + 2
+    }
+    // 队列扩展：追加 2 个空格（getMaxQueueLength 会返回 +2）
+    state.fragmentQueue.push('_', '_')
+  }
+
   // 极简主义：将所有已有技能升至 Lv3
   // 注意：checkAutoEnchantment 在 shop.ts 中，此处无法调用（循环依赖）。
   // 升级后的 Lv3 技能的附魔由 checkPendingEnchantments()（shop.ts:131）在商店打开时补偿触发。

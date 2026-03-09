@@ -30,9 +30,27 @@ export function hasUnownedRelics(): boolean {
 }
 
 // === 生成加权候选遗物 ===
+// 造词师专属遗物 ID 集合（非造词师时从候选池排除）
+const WORDSMITH_EXCLUSIVE_RELICS = new Set([
+  'apprentice_notes', 'masters_lexicon', 'perpetual_queue',
+  'refining_lens', 'word_scissors', 'resonance_mold', 'fragment_prism',
+]);
+
+// 蜕变师专属遗物 ID 集合
+const METAMORPH_EXCLUSIVE_RELICS = new Set([
+  'primal_mutant',
+]);
+
 export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRESETS.gameStart): string[] {
   const owned = state.player.relics;
-  const available = Object.keys(RELICS).filter(id => !owned.has(id));
+  const classId = state.classId;
+  const available = Object.keys(RELICS).filter(id => {
+    if (owned.has(id)) return false;
+    // 职业专属遗物过滤
+    if (WORDSMITH_EXCLUSIVE_RELICS.has(id) && classId !== 'wordsmith') return false;
+    if (METAMORPH_EXCLUSIVE_RELICS.has(id) && classId !== 'metamorph') return false;
+    return true;
+  });
 
   // 按稀有度分桶
   const buckets: Record<RelicRarity, string[]> = { common: [], rare: [], legendary: [] };
