@@ -4,7 +4,7 @@
 // Story 31.1: 数字颜色分级系统 (AC: 1, 5)
 
 import { describe, it, expect } from 'vitest'
-import { getScoreTier, SCORE_TIER_CLASSES, getShakeIntensity, SHAKE_TIERS, getScoreSoundTier } from '../../../src/effects/juice'
+import { getScoreTier, SCORE_TIER_CLASSES, getShakeIntensity, SHAKE_TIERS, getScoreSoundTier, ScoreRoller, getScoreBumpScale } from '../../../src/effects/juice'
 
 describe('getScoreTier', () => {
   it('returns empty string for scores below 100', () => {
@@ -192,5 +192,123 @@ describe('getScoreSoundTier', () => {
   it('handles negative and zero scores', () => {
     expect(getScoreSoundTier(-1)).toBe(0)
     expect(getScoreSoundTier(0)).toBe(0)
+  })
+})
+
+// Story 31.4: 数字动画系统 (AC: 1, 5)
+
+describe('ScoreRoller', () => {
+  it('getDuration returns 0.3s minimum for small diffs', () => {
+    expect(ScoreRoller.getDuration(0)).toBe(0.3)
+    expect(ScoreRoller.getDuration(1)).toBeCloseTo(0.3, 1)
+  })
+
+  it('getDuration scales with log10 of diff', () => {
+    const d10 = ScoreRoller.getDuration(10)
+    const d100 = ScoreRoller.getDuration(100)
+    const d1000 = ScoreRoller.getDuration(1000)
+    expect(d10).toBeGreaterThan(0.3)
+    expect(d100).toBeGreaterThan(d10)
+    expect(d1000).toBeGreaterThan(d100)
+  })
+
+  it('getDuration caps at 0.8s', () => {
+    expect(ScoreRoller.getDuration(1000000)).toBeLessThanOrEqual(0.8)
+  })
+
+  it('starts at 0 and stays at 0 with no target', () => {
+    const roller = new ScoreRoller()
+    expect(roller.getValue()).toBe(0)
+    expect(roller.update(0.1)).toBe(0)
+  })
+
+  it('reaches target after full duration', () => {
+    const roller = new ScoreRoller()
+    roller.setTarget(100)
+    // Simulate enough time to complete
+    roller.update(1.0)
+    expect(roller.getValue()).toBe(100)
+  })
+
+  it('interpolates during animation', () => {
+    const roller = new ScoreRoller()
+    roller.setTarget(1000)
+    // Small dt should produce partial value
+    const partial = roller.update(0.05)
+    expect(partial).toBeGreaterThan(0)
+    expect(partial).toBeLessThan(1000)
+  })
+
+  it('handles rapid target changes', () => {
+    const roller = new ScoreRoller()
+    roller.setTarget(100)
+    roller.update(0.05) // partially animate
+    roller.setTarget(500) // change target before completing
+    // Should jump to previous target (100) and start rolling to 500
+    expect(roller.getValue()).toBe(100)
+    roller.update(2.0) // complete
+    expect(roller.getValue()).toBe(500)
+  })
+
+  it('ignores duplicate setTarget calls', () => {
+    const roller = new ScoreRoller()
+    roller.setTarget(100)
+    roller.update(0.05)
+    const val = roller.getValue()
+    roller.setTarget(100) // same target, should be no-op
+    expect(roller.getValue()).toBe(val)
+  })
+
+  it('reset clears state and prevents rollback', () => {
+    const roller = new ScoreRoller()
+    roller.setTarget(5000)
+    roller.update(2.0) // complete to 5000
+    expect(roller.getValue()).toBe(5000)
+    roller.reset(0) // new level: reset to 0
+    expect(roller.getValue()).toBe(0)
+    roller.setTarget(0) // same as reset value, should be no-op
+    expect(roller.getValue()).toBe(0)
+    roller.update(1.0) // should stay at 0
+    expect(roller.getValue()).toBe(0)
+  })
+})
+
+describe('getScoreBumpScale', () => {
+  it('returns 1.5 (default) for scores below 1000', () => {
+    expect(getScoreBumpScale(0)).toBe(1.5)
+    expect(getScoreBumpScale(500)).toBe(1.5)
+    expect(getScoreBumpScale(999)).toBe(1.5)
+  })
+
+  it('returns 1.6 for scores 1000-4999', () => {
+    expect(getScoreBumpScale(1000)).toBe(1.6)
+    expect(getScoreBumpScale(4999)).toBe(1.6)
+  })
+
+  it('returns 1.8 for scores 5000-9999', () => {
+    expect(getScoreBumpScale(5000)).toBe(1.8)
+    expect(getScoreBumpScale(9999)).toBe(1.8)
+  })
+
+  it('returns 2.0 for scores 10000+', () => {
+    expect(getScoreBumpScale(10000)).toBe(2.0)
+    expect(getScoreBumpScale(99999)).toBe(2.0)
+  })
+
+  it('handles exact boundary transitions', () => {
+    expect(getScoreBumpScale(999)).toBe(1.5)
+    expect(getScoreBumpScale(1000)).toBe(1.6)
+    expect(getScoreBumpScale(4999)).toBe(1.6)
+    expect(getScoreBumpScale(5000)).toBe(1.8)
+    expect(getScoreBumpScale(9999)).toBe(1.8)
+    expect(getScoreBumpScale(10000)).toBe(2.0)
+  })
+
+  it('scale values are monotonically increasing', () => {
+    const scores = [0, 999, 1000, 4999, 5000, 9999, 10000]
+    const scales = scores.map(getScoreBumpScale)
+    for (let i = 1; i < scales.length; i++) {
+      expect(scales[i]).toBeGreaterThanOrEqual(scales[i - 1])
+    }
   })
 })

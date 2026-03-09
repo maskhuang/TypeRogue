@@ -8,7 +8,7 @@ import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
-import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES } from '../effects/juice';
+import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale } from '../effects/juice';
 import { playSound, initAudio, playScoreSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
@@ -70,6 +70,35 @@ let lastSkillMult = 0; // 技能倍率产出缓存（变化时弹跳）
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
 let leftHandTriggered = false; // T5遗物：本词左手技能是否触发过
 let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
+
+// === 分数滚轮动画 (Story 31.4) ===
+const scoreRoller = new ScoreRoller();
+let scoreRollerRaf: number | null = null;
+let scoreRollerLastTime = 0;
+
+/** 分数滚轮 rAF 帧更新 (Story 31.4) */
+function scoreRollerTick(now: number): void {
+  if (!scoreRollerLastTime) scoreRollerLastTime = now;
+  const dt = (now - scoreRollerLastTime) / 1000; // 转换为秒
+  scoreRollerLastTime = now;
+  const display = scoreRoller.update(dt);
+  const el = getElements();
+  el.score.textContent = String(display);
+  scoreRollerRaf = requestAnimationFrame(scoreRollerTick);
+}
+
+function startScoreRoller(): void {
+  stopScoreRoller();
+  scoreRollerLastTime = 0;
+  scoreRollerRaf = requestAnimationFrame(scoreRollerTick);
+}
+
+function stopScoreRoller(): void {
+  if (scoreRollerRaf !== null) {
+    cancelAnimationFrame(scoreRollerRaf);
+    scoreRollerRaf = null;
+  }
+}
 
 // === 屏幕管理 ===
 export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'rest'): void {
@@ -362,7 +391,12 @@ function completeWord(): void {
   showSettlementComplete(baseChips, finalMult, finalWordScore);
 
   state.score += finalWordScore;
-  bumpScore();
+  bumpScore(finalWordScore); // Story 31.4: 弹性缩放
+
+  // Story 31.4: 高分慢动作结算（≥1000 分）
+  if (finalWordScore >= 1000) {
+    triggerSlowMotion(300, 0.7);
+  }
 
   // 战后统计
   if (state.battleStats) {
@@ -603,7 +637,7 @@ function startTimer(): void {
     // Boss 修饰器：时间加速（fast_time）
     const modEffect = getActiveParams();
     const timeSpeed = modEffect?.timeSpeed ?? 1;
-    state.time -= 0.1 * timeSpeed;
+    state.time -= 0.1 * timeSpeed * getTimeScale(); // Story 31.4: 慢动作
 
     // Boss 修饰器：每帧更新（decay 等）
     tickModifier(0.1);
@@ -650,6 +684,7 @@ export function calculateRating(score: number, targetScore: number): string {
 // === 关卡系统 ===
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
+  stopScoreRoller(); // Story 31.4
   clearPseudoInfinite();
   clearFloatQueue();
   cleanupModifier();
@@ -724,6 +759,7 @@ export async function startLevel(): Promise<void> {
 
   state.phase = 'battle';
   state.score = 0;
+  scoreRoller.reset(0); // Review H1: 重置滚轮，避免从旧分数回滚
   lastScoreTier = ''; // 重置分数分级缓存 (Review M1)
   state.combo = 0;
   state.maxCombo = 0;
@@ -852,6 +888,7 @@ export async function startLevel(): Promise<void> {
   initFloatPool();
   announceLevel();
   startTimer();
+  startScoreRoller(); // Story 31.4: 分数滚轮动画
 
   // 时间遗物加成（在 startTimer 设置初始时间后应用，如 doomsday +30 秒）
   if (startRelicResult.effects.time > 0) {
@@ -898,6 +935,7 @@ function announceLevel(): void {
 function victory(): void {
   state.phase = 'victory';
   if (timerInterval) clearInterval(timerInterval);
+  stopScoreRoller(); // Story 31.4
   clearFloatQueue();
   cleanupModifier();
   stopBossRotation();
@@ -978,7 +1016,8 @@ function gameOver(): void {
 export function updateHUD(): void {
   const el = getElements();
   el.combo.textContent = String(state.combo);
-  el.score.textContent = String(Math.floor(state.score));
+  scoreRoller.setTarget(Math.floor(state.score)); // Story 31.4: 平滑滚动
+  el.score.textContent = String(scoreRoller.getValue()); // Review M1: rAF 未启动时 fallback
   el.targetScore.textContent = String(state.targetScore);
   el.multiplier.textContent = state.multiplier.toFixed(1);
 

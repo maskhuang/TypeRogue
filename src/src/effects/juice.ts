@@ -47,8 +47,10 @@ export function bumpCombo(): void {
   el.combo.classList.add('combo-bump');
 }
 
-export function bumpScore(): void {
+export function bumpScore(wordScore = 0): void {
   const el = getElements();
+  const scale = getScoreBumpScale(wordScore);
+  el.score.style.setProperty('--bump-scale', String(scale));
   el.score.classList.remove('score-bump');
   void el.score.offsetWidth;
   el.score.classList.add('score-bump');
@@ -159,6 +161,80 @@ export function getScoreTier(score: number): string {
 
 /** 所有分数分级 CSS class，用于清除旧 class */
 export const SCORE_TIER_CLASSES = ['score-silver', 'score-gold', 'score-rainbow', 'score-legendary'] as const;
+
+// === 分数滚轮计数器 ===
+function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+export class ScoreRoller {
+  private currentDisplay = 0;
+  private target = 0;
+  private elapsed = 0;
+  private duration = 0;
+  private startValue = 0;
+
+  /** 设置新目标分数 */
+  setTarget(newTarget: number): void {
+    if (newTarget === this.target) return;
+    // 正在滚动时跳到旧目标，开始新滚动
+    this.currentDisplay = this.target;
+    this.startValue = this.currentDisplay;
+    this.target = newTarget;
+    this.elapsed = 0;
+    this.duration = ScoreRoller.getDuration(Math.abs(newTarget - this.startValue));
+  }
+
+  /** 帧更新，返回当前显示值 */
+  update(dt: number): number {
+    if (this.currentDisplay === this.target) return this.currentDisplay;
+    this.elapsed += dt;
+    const t = Math.min(this.elapsed / this.duration, 1);
+    const eased = easeOutCubic(t);
+    this.currentDisplay = Math.floor(this.startValue + (this.target - this.startValue) * eased);
+    if (t >= 1) this.currentDisplay = this.target;
+    return this.currentDisplay;
+  }
+
+  /** 纯函数：根据差值计算动画时长（0.3s-0.8s） */
+  static getDuration(diff: number): number {
+    if (diff <= 0) return 0.3;
+    return Math.min(0.8, 0.3 + Math.log10(diff) * 0.15);
+  }
+
+  /** 重置状态（关卡切换时调用，避免从旧分数回滚） */
+  reset(value = 0): void {
+    this.currentDisplay = value;
+    this.target = value;
+    this.startValue = value;
+    this.elapsed = 0;
+    this.duration = 0;
+  }
+
+  getValue(): number { return this.currentDisplay; }
+}
+
+// === 弹性弹出缩放（4 档，默认 1.5 保持原有弹跳反馈） ===
+export function getScoreBumpScale(score: number): number {
+  if (score >= 10000) return 2.0;
+  if (score >= 5000) return 1.8;
+  if (score >= 1000) return 1.6;
+  return 1.5;
+}
+
+// === 慢动作结算 ===
+let slowMotionEndTime = 0;
+let slowMotionScale = 1.0;
+
+export function triggerSlowMotion(durationMs = 300, scale = 0.7): void {
+  slowMotionEndTime = performance.now() + durationMs;
+  slowMotionScale = scale;
+}
+
+export function getTimeScale(): number {
+  if (performance.now() < slowMotionEndTime) return slowMotionScale;
+  return 1.0;
+}
 
 // === 分数音效分级（4 档） ===
 export function getScoreSoundTier(score: number): number {

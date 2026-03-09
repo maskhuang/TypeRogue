@@ -820,7 +820,7 @@ body {
 
 @keyframes scoreBump {
     0% { transform: scale(1); }
-    40% { transform: scale(1.5); color: #4ecdc4; }
+    40% { transform: scale(var(--bump-scale, 1.5)); color: #4ecdc4; }
     100% { transform: scale(1); }
 }
 
