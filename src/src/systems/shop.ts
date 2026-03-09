@@ -491,10 +491,9 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
   init3DCardEffect(card);
 
   if (item.type === 'pack') {
-    // 牌包点击展开/折叠，非直接购买
     card.onclick = () => {
       juiceUp(card, 0.2, 3);
-      togglePackExpand(card, item, index);
+      purchasePackItem(index);
     };
   } else if (item.type === 'relic') {
     card.onclick = () => {

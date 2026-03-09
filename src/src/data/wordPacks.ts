@@ -183,32 +183,38 @@ export function buildConditionPool(
   const currentAct = act ?? 1;
   const pool: WeightedCondition[] = [];
 
+  // 按键位状态分配权重：已有+绑定=3，未拥有=2，已有+未绑定=0.5
+  const owned = new Set<string>();
+  if (playerFreqs) {
+    playerFreqs.forEach((freq, letter) => { if (freq >= 5) owned.add(letter); });
+  }
+  function letterWeight(letter: string): number {
+    if (bound.has(letter)) return 3;       // 已有且绑定技能
+    if (!owned.has(letter)) return 2;      // 未拥有键位
+    return 0.5;                            // 已有且未绑定技能
+  }
+
   // starts_with / ends_with / contains — 26 个字母各一个变体
   for (let i = 0; i < 26; i++) {
     const letter = String.fromCharCode(97 + i);
-    const w = bound.has(letter) ? 3 : 1;
+    const w = letterWeight(letter);
     pool.push({ condition: { type: 'starts_with', letter }, weight: w });
     pool.push({ condition: { type: 'ends_with', letter }, weight: w });
     pool.push({ condition: { type: 'contains', letter }, weight: w });
   }
 
-  // contains_owned / contains_unowned — 固定权重 + Act 感知
-  pool.push({ condition: { type: 'contains_owned' }, weight: currentAct === 1 ? 6 : 2 });
+  // contains_owned / contains_unowned
+  pool.push({ condition: { type: 'contains_owned' }, weight: 3 });
   pool.push({ condition: { type: 'contains_unowned' }, weight: 2 });
 
-  // short / long / special — 固定权重 + Act 感知
-  pool.push({ condition: { type: 'short' }, weight: currentAct === 1 ? 3 : 1 });
-  pool.push({ condition: { type: 'long' }, weight: currentAct === 3 ? 3 : 1 });
-  pool.push({ condition: { type: 'special' }, weight: currentAct === 3 ? 3 : 1 });
+  // short / long / special
+  pool.push({ condition: { type: 'short' }, weight: 1 });
+  pool.push({ condition: { type: 'long' }, weight: 1 });
+  pool.push({ condition: { type: 'special' }, weight: 1 });
 
-  // high_freq — 仅对有 _words 池的字母；低频绑定键(freq 5-8)额外提权
+  // high_freq — 仅对有 _words 池的字母
   for (const letter of HIGH_FREQ_LETTERS) {
-    let w = bound.has(letter) ? 3 : 1;
-    if (bound.has(letter) && playerFreqs) {
-      const freq = playerFreqs.get(letter) || 0;
-      if (freq >= 5 && freq <= 8) w = 6; // 低频绑定键：双倍偏好
-    }
-    pool.push({ condition: { type: 'high_freq', letter }, weight: w });
+    pool.push({ condition: { type: 'high_freq', letter }, weight: letterWeight(letter) });
   }
 
   return pool;
@@ -317,11 +323,11 @@ export function generateWordPacks(
 
     // 筛选候选词
     const candidates = filterWordsByCondition(picked.condition, ownedWords, playerFreqs);
-    if (candidates.length < 3) continue; // 候选不足，跳过
+    if (candidates.length < 5) continue; // 候选不足，跳过
 
-    // 随机抽 3 个
+    // 随机抽 5 个
     const shuffled = shuffleArray(candidates);
-    const words = shuffled.slice(0, 3);
+    const words = shuffled.slice(0, 5);
 
     const meta = getConditionMeta(picked.condition);
     const freqHint = formatFreqHint(words);
