@@ -8,7 +8,7 @@ import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
-import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale } from '../effects/juice';
+import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration } from '../effects/juice';
 import { playSound, initAudio, playScoreSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
@@ -390,6 +390,7 @@ function completeWord(): void {
   // 显示 Balatro 风格完成动画
   showSettlementComplete(baseChips, finalMult, finalWordScore);
 
+  const prevScore = state.score;
   state.score += finalWordScore;
   bumpScore(finalWordScore); // Story 31.4: 弹性缩放
 
@@ -397,6 +398,10 @@ function completeWord(): void {
   if (finalWordScore >= 1000) {
     triggerSlowMotion(300, 0.7);
   }
+
+  // Story 31.5: 分数里程碑庆祝
+  const milestone = checkMilestone(prevScore, state.score);
+  if (milestone) showMilestoneCelebration(milestone);
 
   // 战后统计
   if (state.battleStats) {
@@ -420,7 +425,8 @@ function completeWord(): void {
   const shakeIntensity = getShakeIntensity(finalWordScore);
   if (shakeIntensity > 0) screenShake(shakeIntensity);
 
-  playScoreSound(finalWordScore);
+  // 音效：里程碑触发时以里程碑等级播放，否则以单词分数播放
+  playScoreSound(milestone ? milestone.threshold : finalWordScore);
 
   // 重置词语基础分
   wordBaseScore = 0;

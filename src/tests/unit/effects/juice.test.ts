@@ -4,7 +4,7 @@
 // Story 31.1: 数字颜色分级系统 (AC: 1, 5)
 
 import { describe, it, expect } from 'vitest'
-import { getScoreTier, SCORE_TIER_CLASSES, getShakeIntensity, SHAKE_TIERS, getScoreSoundTier, ScoreRoller, getScoreBumpScale } from '../../../src/effects/juice'
+import { getScoreTier, SCORE_TIER_CLASSES, getShakeIntensity, SHAKE_TIERS, getScoreSoundTier, ScoreRoller, getScoreBumpScale, checkMilestone, MILESTONE_TIERS } from '../../../src/effects/juice'
 
 describe('getScoreTier', () => {
   it('returns empty string for scores below 100', () => {
@@ -270,6 +270,62 @@ describe('ScoreRoller', () => {
     expect(roller.getValue()).toBe(0)
     roller.update(1.0) // should stay at 0
     expect(roller.getValue()).toBe(0)
+  })
+})
+
+// Story 31.5: 分数里程碑庆祝 (AC: 1, 7)
+
+describe('checkMilestone', () => {
+  it('returns null when no milestone is crossed', () => {
+    expect(checkMilestone(10, 50)).toBeNull()
+    expect(checkMilestone(100, 200)).toBeNull()
+    expect(checkMilestone(1000, 2000)).toBeNull()
+  })
+
+  it('detects exact threshold crossing (99 → 100)', () => {
+    const tier = checkMilestone(99, 100)
+    expect(tier).not.toBeNull()
+    expect(tier!.threshold).toBe(100)
+    expect(tier!.label).toBe('100!')
+  })
+
+  it('returns the highest crossed tier when multiple are crossed', () => {
+    // Jump from 0 to 5000 crosses 100, 500, 1000, 5000
+    const tier = checkMilestone(0, 5000)
+    expect(tier).not.toBeNull()
+    expect(tier!.threshold).toBe(5000)
+  })
+
+  it('does not re-trigger for scores already above threshold', () => {
+    expect(checkMilestone(150, 200)).toBeNull()
+    expect(checkMilestone(5000, 8000)).toBeNull()
+    expect(checkMilestone(10000, 20000)).toBeNull()
+  })
+
+  it('detects each individual milestone tier', () => {
+    for (const tier of MILESTONE_TIERS) {
+      const result = checkMilestone(tier.threshold - 1, tier.threshold)
+      expect(result).not.toBeNull()
+      expect(result!.threshold).toBe(tier.threshold)
+    }
+  })
+})
+
+describe('MILESTONE_TIERS', () => {
+  it('contains 5 milestone entries', () => {
+    expect(MILESTONE_TIERS).toHaveLength(5)
+  })
+
+  it('has increasing thresholds', () => {
+    for (let i = 1; i < MILESTONE_TIERS.length; i++) {
+      expect(MILESTONE_TIERS[i].threshold).toBeGreaterThan(MILESTONE_TIERS[i - 1].threshold)
+    }
+  })
+
+  it('has increasing fontSize values', () => {
+    for (let i = 1; i < MILESTONE_TIERS.length; i++) {
+      expect(MILESTONE_TIERS[i].fontSize).toBeGreaterThan(MILESTONE_TIERS[i - 1].fontSize)
+    }
   })
 })
 

@@ -3,6 +3,7 @@
 // ============================================
 
 import { getElements } from '../ui/elements';
+import { spawnParticles } from './particles';
 
 // === 基础弹跳动画 ===
 export function juiceUp(element: HTMLElement | null, scale = 0.3, rotation = 3): void {
@@ -234,6 +235,68 @@ export function triggerSlowMotion(durationMs = 300, scale = 0.7): void {
 export function getTimeScale(): number {
   if (performance.now() < slowMotionEndTime) return slowMotionScale;
   return 1.0;
+}
+
+// === 分数里程碑庆祝 (Story 31.5) ===
+export interface MilestoneTier {
+  threshold: number;
+  label: string;
+  fontSize: number;
+  color: string;
+  flashColor: string;
+  flashOpacity: number;
+  particleCount: number;
+  particleColor: string;
+  shakeIntensity: number;
+}
+
+export const MILESTONE_TIERS: readonly MilestoneTier[] = [
+  { threshold: 100,   label: '100!',   fontSize: 36, color: '#ffffff', flashColor: '#ffffff', flashOpacity: 0.15, particleCount: 0,  particleColor: '',        shakeIntensity: 0 },
+  { threshold: 500,   label: '500!',   fontSize: 44, color: '#ffd700', flashColor: '#ffd700', flashOpacity: 0.2,  particleCount: 15, particleColor: '#ffd700', shakeIntensity: 0 },
+  { threshold: 1000,  label: '1000!',  fontSize: 56, color: '#ffd700', flashColor: '#ffd700', flashOpacity: 0.3,  particleCount: 25, particleColor: '#ff6b6b', shakeIntensity: 2 },
+  { threshold: 5000,  label: '5000!',  fontSize: 72, color: '#ff6b6b', flashColor: '#ff6b6b', flashOpacity: 0.4,  particleCount: 40, particleColor: '#ff6b6b', shakeIntensity: 4 },
+  { threshold: 10000, label: '10000!', fontSize: 96, color: '#ffd700', flashColor: '#ffd700', flashOpacity: 0.5,  particleCount: 60, particleColor: '#ffd700', shakeIntensity: 5 },
+];
+
+/** 检测分数是否越过里程碑，返回最高新越过的 tier（无越过返回 null） */
+export function checkMilestone(prevScore: number, newScore: number): MilestoneTier | null {
+  for (let i = MILESTONE_TIERS.length - 1; i >= 0; i--) {
+    const tier = MILESTONE_TIERS[i];
+    if (newScore >= tier.threshold && prevScore < tier.threshold) {
+      return tier;
+    }
+  }
+  return null;
+}
+
+/** 显示里程碑庆祝效果（弹出文字 + 闪光 + 粒子 + 屏震） */
+export function showMilestoneCelebration(tier: MilestoneTier): void {
+  const el = getElements();
+
+  // 文字弹出
+  const popup = document.createElement('div');
+  popup.className = 'milestone-popup';
+  const text = document.createElement('div');
+  text.className = 'milestone-text';
+  text.textContent = tier.label;
+  text.style.fontSize = `${tier.fontSize}px`;
+  text.style.color = tier.color;
+  popup.appendChild(text);
+  el.container.appendChild(popup);
+  setTimeout(() => popup.remove(), 1200);
+
+  // 屏幕闪光
+  screenFlash(tier.flashColor, tier.flashOpacity);
+
+  // 粒子爆发
+  if (tier.particleCount > 0) {
+    spawnParticles(el.score, tier.particleCount, tier.particleColor);
+  }
+
+  // 屏幕震动
+  if (tier.shakeIntensity > 0) {
+    screenShake(tier.shakeIntensity);
+  }
 }
 
 // === 分数音效分级（4 档） ===
