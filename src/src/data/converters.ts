@@ -1,13 +1,13 @@
 // ============================================
 // 打字肉鸽 - 转化者技能数据
 // ============================================
-// Story 19.4 + 21.3 + 32.5 + 32.8: 60 个转化者（5 通用源 × 目标 × 2 运算符 + 18 碎片转化者 + 8 变异素转化者）
+// Story 19.4 + 21.3 + 32.5 + 32.8: 74 个转化者（5 通用源 × 目标 × 2 运算符 + 20 碎片转化者 + 20 变异素转化者）
 
 import type { ConverterDefinition, ResourceType, ResourceState } from '../core/types';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
 import { random } from '../core/seededRandom';
 
-// === 60 个转化者数据 ===
+// === 74 个转化者数据 ===
 export const CONVERTERS: Record<string, ConverterDefinition> = {
   // === 基数为源（6 个）— ⚔️→ ===
   conv_base_score_add:  { id: 'conv_base_score_add',  name: '变现', icon: '💱', source: 'base', target: 'score',      formula: 'add',      k: 1.0,    desc: '触发时：🪙分数+(⚔️基数×1)' },
@@ -51,15 +51,17 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   conv_gold_time_add:   { id: 'conv_gold_time_add',   name: '赎买', icon: '🔑', source: 'gold', target: 'time',       formula: 'add',      k: 0.13,  desc: '触发时：⏳时间+(💰金币×0.13)' },
   conv_gold_time_mul:   { id: 'conv_gold_time_mul',   name: '朝贡', icon: '🏺', source: 'gold', target: 'time',       formula: 'multiply', k: 0.005, desc: '触发时：⏳时间×(1+💰金币×0.005)' },
 
-  // === 碎片为源（8 个）— 🔤→（造词师专属，mid ~5-10） ===
-  conv_fragment_score_add:  { id: 'conv_fragment_score_add',  name: '字面价值', icon: '📖', source: 'fragment', target: 'score',      formula: 'add',      k: 0.8,    desc: '触发时：🪙分数+(🔤碎片×0.8)' },
-  conv_fragment_score_mul:  { id: 'conv_fragment_score_mul',  name: '笔锋',     icon: '🖊️', source: 'fragment', target: 'score',      formula: 'multiply', k: 0.004,  desc: '触发时：🪙分数×(1+🔤碎片×0.004)' },
-  conv_fragment_mult_add:   { id: 'conv_fragment_mult_add',   name: '词韵',     icon: '🏷️', source: 'fragment', target: 'multiplier', formula: 'add',      k: 0.015,  desc: '触发时：🔥倍率+(🔤碎片×0.015)' },
-  conv_fragment_mult_mul:   { id: 'conv_fragment_mult_mul',   name: '文锋',     icon: '🗞️', source: 'fragment', target: 'multiplier', formula: 'multiply', k: 0.006,  desc: '触发时：🔥倍率×(1+🔤碎片×0.006)' },
-  conv_fragment_time_add:   { id: 'conv_fragment_time_add',   name: '墨续',     icon: '🖋️', source: 'fragment', target: 'time',       formula: 'add',      k: 0.12,   desc: '触发时：⏳时间+(🔤碎片×0.12)' },
-  conv_fragment_time_mul:   { id: 'conv_fragment_time_mul',   name: '篆刻',     icon: '🪪', source: 'fragment', target: 'time',       formula: 'multiply', k: 0.004,  desc: '触发时：⏳时间×(1+🔤碎片×0.004)' },
-  conv_fragment_gold_add:   { id: 'conv_fragment_gold_add',   name: '字润',     icon: '📰', source: 'fragment', target: 'gold',       formula: 'add',      k: 0.3,    desc: '触发时：💰金币+(🔤碎片×0.3)' },
-  conv_fragment_gold_mul:   { id: 'conv_fragment_gold_mul',   name: '版税',     icon: '📕', source: 'fragment', target: 'gold',       formula: 'multiply', k: 0.003,  desc: '触发时：💰金币×(1+🔤碎片×0.003)' },
+  // === 碎片为源（10 个）— 🔤→（造词师专属，mid ~5-10） ===
+  conv_fragment_base_add:   { id: 'conv_fragment_base_add',   name: '字铸',     icon: '🔩', source: 'fragment', target: 'base',       formula: 'add',      k: 0.08,   desc: '触发时：⚔️基数+(🔤本关碎片产出×0.08)' },
+  conv_fragment_base_mul:   { id: 'conv_fragment_base_mul',   name: '构词',     icon: '📐', source: 'fragment', target: 'base',       formula: 'multiply', k: 0.003,  desc: '触发时：⚔️基数×(1+🔤本关碎片产出×0.003)' },
+  conv_fragment_score_add:  { id: 'conv_fragment_score_add',  name: '字面价值', icon: '📖', source: 'fragment', target: 'score',      formula: 'add',      k: 0.8,    desc: '触发时：🪙分数+(🔤本关碎片产出×0.8)' },
+  conv_fragment_score_mul:  { id: 'conv_fragment_score_mul',  name: '笔锋',     icon: '🖊️', source: 'fragment', target: 'score',      formula: 'multiply', k: 0.004,  desc: '触发时：🪙分数×(1+🔤本关碎片产出×0.004)' },
+  conv_fragment_mult_add:   { id: 'conv_fragment_mult_add',   name: '词韵',     icon: '🏷️', source: 'fragment', target: 'multiplier', formula: 'add',      k: 0.015,  desc: '触发时：🔥倍率+(🔤本关碎片产出×0.015)' },
+  conv_fragment_mult_mul:   { id: 'conv_fragment_mult_mul',   name: '文锋',     icon: '🗞️', source: 'fragment', target: 'multiplier', formula: 'multiply', k: 0.006,  desc: '触发时：🔥倍率×(1+🔤本关碎片产出×0.006)' },
+  conv_fragment_time_add:   { id: 'conv_fragment_time_add',   name: '墨续',     icon: '🖋️', source: 'fragment', target: 'time',       formula: 'add',      k: 0.12,   desc: '触发时：⏳时间+(🔤本关碎片产出×0.12)' },
+  conv_fragment_time_mul:   { id: 'conv_fragment_time_mul',   name: '篆刻',     icon: '🪪', source: 'fragment', target: 'time',       formula: 'multiply', k: 0.004,  desc: '触发时：⏳时间×(1+🔤本关碎片产出×0.004)' },
+  conv_fragment_gold_add:   { id: 'conv_fragment_gold_add',   name: '字润',     icon: '📰', source: 'fragment', target: 'gold',       formula: 'add',      k: 0.3,    desc: '触发时：💰金币+(🔤本关碎片产出×0.3)' },
+  conv_fragment_gold_mul:   { id: 'conv_fragment_gold_mul',   name: '版税',     icon: '📕', source: 'fragment', target: 'gold',       formula: 'multiply', k: 0.003,  desc: '触发时：💰金币×(1+🔤本关碎片产出×0.003)' },
 
   // === 其他→碎片（10 个）— →🔤（造词师专属） ===
   conv_base_fragment_add:   { id: 'conv_base_fragment_add',   name: '拓印', icon: '🔡', source: 'base',       target: 'fragment', formula: 'add',      k: 0.08,   desc: '触发时：🔤碎片+(⚔️基数×0.08)' },
@@ -73,17 +75,29 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   conv_gold_fragment_add:   { id: 'conv_gold_fragment_add',   name: '收藏', icon: '🗃️', source: 'gold',       target: 'fragment', formula: 'add',      k: 0.3,    desc: '触发时：🔤碎片+(💰金币×0.3)' },
   conv_gold_fragment_mul:   { id: 'conv_gold_fragment_mul',   name: '投稿', icon: '📮', source: 'gold',       target: 'fragment', formula: 'multiply', k: 0.03,   desc: '触发时：🔤碎片×(1+💰金币×0.03)' },
 
-  // === 变异素为源（4 个）— 🧬→（蜕变师专属，mid ~5-10） ===
-  conv_mutagen_score_add:  { id: 'conv_mutagen_score_add',  name: '变析', icon: '🩻', source: 'mutagen', target: 'score',      formula: 'add',      k: 0.8,   desc: '触发时：🪙分数+(🧬变异素×0.8)' },
-  conv_mutagen_score_mul:  { id: 'conv_mutagen_score_mul',  name: '蜕化', icon: '🦎', source: 'mutagen', target: 'score',      formula: 'multiply', k: 0.004, desc: '触发时：🪙分数×(1+🧬变异素×0.004)' },
-  conv_mutagen_base_add:   { id: 'conv_mutagen_base_add',   name: '菌丝', icon: '🍄', source: 'mutagen', target: 'base',       formula: 'add',      k: 0.08,  desc: '触发时：⚔️基数+(🧬变异素×0.08)' },
-  conv_mutagen_mult_add:   { id: 'conv_mutagen_mult_add',   name: '催变', icon: '🌿', source: 'mutagen', target: 'multiplier', formula: 'add',      k: 0.015, desc: '触发时：🔥倍率+(🧬变异素×0.015)' },
+  // === 变异素为源（10 个）— 🧬→（蜕变师专属，mid ~5-10） ===
+  conv_mutagen_score_add:  { id: 'conv_mutagen_score_add',  name: '变析', icon: '🩻', source: 'mutagen', target: 'score',      formula: 'add',      k: 0.8,   desc: '触发时：🪙分数+(🧬本关变异素产出×0.8)' },
+  conv_mutagen_score_mul:  { id: 'conv_mutagen_score_mul',  name: '蜕化', icon: '🦎', source: 'mutagen', target: 'score',      formula: 'multiply', k: 0.004, desc: '触发时：🪙分数×(1+🧬本关变异素产出×0.004)' },
+  conv_mutagen_base_add:   { id: 'conv_mutagen_base_add',   name: '菌丝', icon: '🍄', source: 'mutagen', target: 'base',       formula: 'add',      k: 0.08,  desc: '触发时：⚔️基数+(🧬本关变异素产出×0.08)' },
+  conv_mutagen_base_mul:   { id: 'conv_mutagen_base_mul',   name: '寄生', icon: '🐛', source: 'mutagen', target: 'base',       formula: 'multiply', k: 0.003, desc: '触发时：⚔️基数×(1+🧬本关变异素产出×0.003)' },
+  conv_mutagen_mult_add:   { id: 'conv_mutagen_mult_add',   name: '催变', icon: '🌿', source: 'mutagen', target: 'multiplier', formula: 'add',      k: 0.015, desc: '触发时：🔥倍率+(🧬本关变异素产出×0.015)' },
+  conv_mutagen_mult_mul:   { id: 'conv_mutagen_mult_mul',   name: '异变', icon: '🐍', source: 'mutagen', target: 'multiplier', formula: 'multiply', k: 0.006, desc: '触发时：🔥倍率×(1+🧬本关变异素产出×0.006)' },
+  conv_mutagen_time_add:   { id: 'conv_mutagen_time_add',   name: '孢释', icon: '🪸', source: 'mutagen', target: 'time',       formula: 'add',      k: 0.12,  desc: '触发时：⏳时间+(🧬本关变异素产出×0.12)' },
+  conv_mutagen_time_mul:   { id: 'conv_mutagen_time_mul',   name: '休眠', icon: '🐚', source: 'mutagen', target: 'time',       formula: 'multiply', k: 0.004, desc: '触发时：⏳时间×(1+🧬本关变异素产出×0.004)' },
+  conv_mutagen_gold_add:   { id: 'conv_mutagen_gold_add',   name: '分泌', icon: '🦂', source: 'mutagen', target: 'gold',       formula: 'add',      k: 0.3,   desc: '触发时：💰金币+(🧬本关变异素产出×0.3)' },
+  conv_mutagen_gold_mul:   { id: 'conv_mutagen_gold_mul',   name: '腐金', icon: '🍂', source: 'mutagen', target: 'gold',       formula: 'multiply', k: 0.003, desc: '触发时：💰金币×(1+🧬本关变异素产出×0.003)' },
 
-  // === 其他→变异素（4 个）— →🧬（蜕变师专属） ===
-  conv_base_mutagen_add:   { id: 'conv_base_mutagen_add',   name: '提炼', icon: '🗜️', source: 'base',       target: 'mutagen', formula: 'add',      k: 0.08,  desc: '触发时：🧬变异素+(⚔️基数×0.08)' },
-  conv_score_mutagen_add:  { id: 'conv_score_mutagen_add',  name: '孵化', icon: '🪺', source: 'score',      target: 'mutagen', formula: 'add',      k: 0.005, desc: '触发时：🧬变异素+(🪙分数×0.005)' },
-  conv_mult_mutagen_add:   { id: 'conv_mult_mutagen_add',   name: '裂变', icon: '🫀', source: 'multiplier', target: 'mutagen', formula: 'add',      k: 2.0,   desc: '触发时：🧬变异素+(🔥倍率×2)' },
-  conv_time_mutagen_add:   { id: 'conv_time_mutagen_add',   name: '培养', icon: '🌡️', source: 'time',       target: 'mutagen', formula: 'add',      k: 0.1,   desc: '触发时：🧬变异素+(⏳时间×0.1)' },
+  // === 其他→变异素（10 个）— →🧬（蜕变师专属） ===
+  conv_base_mutagen_add:   { id: 'conv_base_mutagen_add',   name: '提炼', icon: '🗜️', source: 'base',       target: 'mutagen', formula: 'add',      k: 0.08,   desc: '触发时：🧬变异素+(⚔️基数×0.08)' },
+  conv_base_mutagen_mul:   { id: 'conv_base_mutagen_mul',   name: '感染', icon: '🪰', source: 'base',       target: 'mutagen', formula: 'multiply', k: 0.003,  desc: '触发时：🧬变异素×(1+⚔️基数×0.003)' },
+  conv_score_mutagen_add:  { id: 'conv_score_mutagen_add',  name: '孵化', icon: '🪺', source: 'score',      target: 'mutagen', formula: 'add',      k: 0.005,  desc: '触发时：🧬变异素+(🪙分数×0.005)' },
+  conv_score_mutagen_mul:  { id: 'conv_score_mutagen_mul',  name: '增殖', icon: '🪱', source: 'score',      target: 'mutagen', formula: 'multiply', k: 0.0003, desc: '触发时：🧬变异素×(1+🪙分数×0.0003)' },
+  conv_mult_mutagen_add:   { id: 'conv_mult_mutagen_add',   name: '裂变', icon: '🫀', source: 'multiplier', target: 'mutagen', formula: 'add',      k: 2.0,    desc: '触发时：🧬变异素+(🔥倍率×2)' },
+  conv_mult_mutagen_mul:   { id: 'conv_mult_mutagen_mul',   name: '共生', icon: '🪲', source: 'multiplier', target: 'mutagen', formula: 'multiply', k: 0.2,    desc: '触发时：🧬变异素×(1+🔥倍率×0.2)' },
+  conv_time_mutagen_add:   { id: 'conv_time_mutagen_add',   name: '培养', icon: '🌡️', source: 'time',       target: 'mutagen', formula: 'add',      k: 0.1,    desc: '触发时：🧬变异素+(⏳时间×0.1)' },
+  conv_time_mutagen_mul:   { id: 'conv_time_mutagen_mul',   name: '潜伏', icon: '🐌', source: 'time',       target: 'mutagen', formula: 'multiply', k: 0.01,   desc: '触发时：🧬变异素×(1+⏳时间×0.01)' },
+  conv_gold_mutagen_add:   { id: 'conv_gold_mutagen_add',   name: '接种', icon: '🌵', source: 'gold',       target: 'mutagen', formula: 'add',      k: 0.3,    desc: '触发时：🧬变异素+(💰金币×0.3)' },
+  conv_gold_mutagen_mul:   { id: 'conv_gold_mutagen_mul',   name: '萃毒', icon: '🦗', source: 'gold',       target: 'mutagen', formula: 'multiply', k: 0.03,   desc: '触发时：🧬变异素×(1+💰金币×0.03)' },
 } as const;
 
 // === 工具函数 ===
@@ -93,7 +107,7 @@ export function isConverter(id: string): boolean {
   return id in CONVERTERS;
 }
 
-/** 每局 run 从 60 个转化者中随机抽 31 个 ID（非职业过滤碎片/变异素转化者后保持 ~20） */
+/** 每局 run 从 74 个转化者中随机抽 31 个 ID（非职业过滤碎片/变异素转化者后保持 ~20） */
 export function drawConverterPool(count = 31): string[] {
   const all = Object.keys(CONVERTERS);
   const shuffled = [...all];
@@ -134,7 +148,9 @@ export function getConverterDesc(id: string, level: number): string {
   const conv = CONVERTERS[id];
   if (!conv) return '';
   const k = getConverterK(id, level);
-  const srcLabel = RESOURCE_LABELS[conv.source] || conv.source;
+  const rawSrcLabel = RESOURCE_LABELS[conv.source] || conv.source;
+  const srcLabel = (conv.source === 'fragment' || conv.source === 'mutagen')
+    ? `本关${rawSrcLabel}产出` : rawSrcLabel;
   const tgtLabel = RESOURCE_LABELS[conv.target] || conv.target;
   const srcIcon = RESOURCE_ICONS[conv.source] || '';
   const tgtIcon = RESOURCE_ICONS[conv.target] || '';

@@ -88,6 +88,11 @@ body {
 }
 .class-resource-hud .class-resource-icon { font-size: 1.1em; }
 #mutagen-count { color: #2ecc71; font-weight: bold; }
+.class-resource-produced-label { color: #aaa; font-size: 0.85em; }
+.class-resource-produced-value { font-weight: bold; }
+#fragment-produced { color: #9b59b6; }
+#mutagen-produced { color: #2ecc71; }
+.class-resource-separator { color: #666; margin: 0 2px; }
 
 #timer-section {
     display: flex;

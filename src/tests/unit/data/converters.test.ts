@@ -16,8 +16,8 @@ import {
 describe('CONVERTERS 数据完整性', () => {
   const allIds = Object.keys(CONVERTERS);
 
-  it('共 60 个转化者', () => {
-    expect(allIds.length).toBe(60);
+  it('共 74 个转化者', () => {
+    expect(allIds.length).toBe(74);
   });
 
   it('所有字段非空', () => {
@@ -71,47 +71,47 @@ describe('CONVERTERS 数据完整性', () => {
     }
   });
 
-  it('覆盖 60 种唯一 source_target_formula 组合', () => {
+  it('覆盖 74 种唯一 source_target_formula 组合', () => {
     const combos = new Set(allIds.map(id => {
       const c = CONVERTERS[id];
       return `${c.source}_${c.target}_${c.formula}`;
     }));
-    expect(combos.size).toBe(60);
+    expect(combos.size).toBe(74);
   });
 
-  it('基数为源 9 个', () => {
+  it('基数为源 10 个', () => {
     const baseSource = allIds.filter(id => CONVERTERS[id].source === 'base');
-    expect(baseSource.length).toBe(9);
+    expect(baseSource.length).toBe(10);
   });
 
-  it('分数为源 10 个', () => {
+  it('分数为源 11 个', () => {
     const scoreSource = allIds.filter(id => CONVERTERS[id].source === 'score');
-    expect(scoreSource.length).toBe(10);
+    expect(scoreSource.length).toBe(11);
   });
 
-  it('倍率为源 9 个', () => {
+  it('倍率为源 10 个', () => {
     const multSource = allIds.filter(id => CONVERTERS[id].source === 'multiplier');
-    expect(multSource.length).toBe(9);
+    expect(multSource.length).toBe(10);
   });
 
-  it('时间为源 10 个', () => {
+  it('时间为源 11 个', () => {
     const timeSource = allIds.filter(id => CONVERTERS[id].source === 'time');
-    expect(timeSource.length).toBe(10);
+    expect(timeSource.length).toBe(11);
   });
 
-  it('金币为源 10 个', () => {
+  it('金币为源 12 个', () => {
     const goldSource = allIds.filter(id => CONVERTERS[id].source === 'gold');
-    expect(goldSource.length).toBe(10);
+    expect(goldSource.length).toBe(12);
   });
 
-  it('碎片为源 8 个', () => {
+  it('碎片为源 10 个', () => {
     const fragmentSource = allIds.filter(id => CONVERTERS[id].source === 'fragment');
-    expect(fragmentSource.length).toBe(8);
+    expect(fragmentSource.length).toBe(10);
   });
 
-  it('变异素为源 4 个', () => {
+  it('变异素为源 10 个', () => {
     const mutagenSource = allIds.filter(id => CONVERTERS[id].source === 'mutagen');
-    expect(mutagenSource.length).toBe(4);
+    expect(mutagenSource.length).toBe(10);
   });
 });
 
@@ -262,11 +262,11 @@ describe('drawConverterPool', () => {
 
   it('自定义数量', () => {
     expect(drawConverterPool(5).length).toBe(5);
-    expect(drawConverterPool(60).length).toBe(60);
+    expect(drawConverterPool(72).length).toBe(72);
   });
 
   it('超过总数时返回全部', () => {
-    expect(drawConverterPool(100).length).toBe(60);
+    expect(drawConverterPool(100).length).toBe(74);
   });
 });
 
@@ -328,7 +328,19 @@ describe('金币转化者 k 值验证', () => {
 });
 
 describe('碎片转化者 k 值验证', () => {
-  // fragment→other (8 个)
+  // fragment→other (10 个)
+  it('conv_fragment_base_add: fragment→base add k=0.08', () => {
+    expect(CONVERTERS.conv_fragment_base_add.k).toBeCloseTo(0.08);
+    expect(CONVERTERS.conv_fragment_base_add.source).toBe('fragment');
+    expect(CONVERTERS.conv_fragment_base_add.target).toBe('base');
+    expect(CONVERTERS.conv_fragment_base_add.formula).toBe('add');
+  });
+
+  it('conv_fragment_base_mul: fragment→base multiply k=0.003', () => {
+    expect(CONVERTERS.conv_fragment_base_mul.k).toBeCloseTo(0.003);
+    expect(CONVERTERS.conv_fragment_base_mul.formula).toBe('multiply');
+  });
+
   it('conv_fragment_score_add: fragment→score add k=0.8', () => {
     expect(CONVERTERS.conv_fragment_score_add.k).toBeCloseTo(0.8);
     expect(CONVERTERS.conv_fragment_score_add.source).toBe('fragment');
@@ -433,5 +445,10 @@ describe('碎片转化者平衡约束', () => {
 
   it('fragment→score mul k ≤ base→score mul k', () => {
     expect(CONVERTERS.conv_fragment_score_mul.k).toBeLessThanOrEqual(CONVERTERS.conv_base_score_mul.k);
+  });
+
+  it('fragment→base k 与 mutagen→base k 对称', () => {
+    expect(CONVERTERS.conv_fragment_base_add.k).toBeCloseTo(CONVERTERS.conv_mutagen_base_add.k);
+    expect(CONVERTERS.conv_fragment_base_mul.k).toBeCloseTo(CONVERTERS.conv_mutagen_base_mul.k);
   });
 });

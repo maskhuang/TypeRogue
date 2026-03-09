@@ -883,7 +883,11 @@ export async function startLevel(): Promise<void> {
 
   showScreen('battle');
 
-  // 蜕变师：显示变异素 HUD
+  // 职业资源 HUD 显示切换
+  const fragmentHud = document.getElementById('fragment-hud');
+  if (fragmentHud) {
+    fragmentHud.style.display = state.classId === 'wordsmith' ? 'flex' : 'none';
+  }
   const mutagenHud = document.getElementById('mutagen-hud');
   if (mutagenHud) {
     mutagenHud.style.display = state.classId === 'metamorph' ? 'flex' : 'none';
@@ -1058,10 +1062,15 @@ export function updateHUD(): void {
     lastScoreTier = scoreTier;
   }
 
-  // 蜕变师：更新变异素 HUD
-  if (state.classId === 'metamorph') {
+  // 职业资源 HUD 更新
+  if (state.classId === 'wordsmith') {
+    const el = document.getElementById('fragment-produced');
+    if (el) el.textContent = String(Math.floor(state.classResourceProduced.fragment ?? 0));
+  } else if (state.classId === 'metamorph') {
     const mutagenEl = document.getElementById('mutagen-count');
     if (mutagenEl) mutagenEl.textContent = String(Math.floor(state.mutagenInventory));
+    const producedEl = document.getElementById('mutagen-produced');
+    if (producedEl) producedEl.textContent = String(Math.floor(state.classResourceProduced.mutagen ?? 0));
   }
 
   // 发送分数更新事件
