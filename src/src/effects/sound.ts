@@ -16,7 +16,7 @@ function playTypeSound(): void {
   const combo = state.combo;
 
   // 1) Click 层 — 极短噪声脉冲，模拟触底冲击
-  const clickVol = Math.min(0.035, 0.02 + combo * 0.0005); // combo 微升音量
+  const clickVol = randomize(Math.min(0.035, 0.02 + combo * 0.0005), 0.08); // combo 微升音量
   const noiseSrc = ctx.createBufferSource();
   noiseSrc.buffer = getNoiseBuffer();
   const clickFilter = ctx.createBiquadFilter();
@@ -40,7 +40,7 @@ function playTypeSound(): void {
   connectToOutput(thockGain);
   thockOsc.frequency.setValueAtTime(thockFreq, t);
   thockOsc.frequency.exponentialRampToValueAtTime(thockFreq * 0.6, t + 0.03);
-  softAttack(thockGain, 0.025, t);
+  softAttack(thockGain, randomize(0.025, 0.08), t);
   thockGain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
   thockOsc.start(t);
   thockOsc.stop(t + 0.04);
@@ -192,135 +192,21 @@ export function playSound(type: keyof typeof SOUND_PROFILES): void {
   }
 
   const [startFreq, endFreq, volume] = SOUND_PROFILES[type] || [600, 800, 0.08];
+  const sf = randomize(startFreq, 0.05);
+  const ef = randomize(endFreq, 0.05);
+  const vol = randomize(volume, 0.08);
+  const dec = randomize(0.15, 0.08);
 
-  oscillator.frequency.setValueAtTime(startFreq, time);
-  oscillator.frequency.exponentialRampToValueAtTime(endFreq, time + 0.1);
-  gainNode.gain.setValueAtTime(volume, time);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+  oscillator.frequency.setValueAtTime(sf, time);
+  oscillator.frequency.exponentialRampToValueAtTime(ef, time + 0.1);
+  gainNode.gain.setValueAtTime(vol, time);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, time + dec);
 
   oscillator.start(time);
-  oscillator.stop(time + 0.15);
-  addBodyLayer(startFreq, endFreq, volume, 0.15);
+  oscillator.stop(time + dec);
+  addBodyLayer(sf, ef, vol, dec);
 }
 
-// === 资源产出音效：每种资源独立合成，intensity 调制音量/衰减/音高 ===
-// intensity = floatScale（≥1.0，以Lv1产出为基准的log比例值）
-export function playResourceSound(resource: string, intensity = 1): void {
-  if (!audioContext) return;
-  const ctx = audioContext;
-  const t = ctx.currentTime;
-
-  // 强度调制系数（封顶避免爆音）
-  const volMul = Math.min(intensity, 3);                        // 音量×intensity，封顶3倍
-  const decMul = 1 + Math.log2(intensity) * 0.3;               // 衰减拉长（log缓增）
-  const pitchShift = Math.pow(2, (Math.min(intensity, 4) - 1) * 2 / 12); // 最多升4半音
-
-  switch (resource) {
-    // ⚔️ base — 简洁下行 triangle 短音（柔和替代原 square + 噪声）
-    case 'base': {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'triangle';
-      o.connect(g);
-      connectToOutput(g);
-      const freq = randomize(400 * pitchShift, 0.03);
-      const vol = randomize(0.07 * volMul, 0.10);
-      const dec = randomize(0.10 * decMul, 0.08);
-      o.frequency.setValueAtTime(freq, t);
-      o.frequency.exponentialRampToValueAtTime(freq * 0.5, t + 0.06 * decMul);
-      softAttack(g, vol, t);
-      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
-      o.start(t);
-      o.stop(t + dec);
-      break;
-    }
-    // 🪙 score — 纯五度双音"叮"，降频更温暖（660+990Hz）
-    case 'score': {
-      const dec = randomize(0.18 * decMul, 0.08);
-      for (const baseFreq of [660, 990]) { // E5 + B5 = 纯五度，更温暖
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'sine';
-        o.connect(g);
-        connectToOutput(g);
-        o.frequency.setValueAtTime(randomize(baseFreq * pitchShift, 0.03), t);
-        const vol = randomize(0.06 * volMul, 0.10);
-        softAttack(g, vol, t);
-        g.gain.exponentialRampToValueAtTime(0.01, t + dec);
-        o.start(t);
-        o.stop(t + dec);
-      }
-      break;
-    }
-    // 🔥 multiplier — 窄幅上行大三度（420→530Hz），简洁单层 triangle
-    case 'multiplier': {
-      const dec = randomize(0.16 * decMul, 0.08);
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'triangle';
-      o.connect(g);
-      connectToOutput(g);
-      const startF = randomize(420 * pitchShift, 0.03);
-      o.frequency.setValueAtTime(startF, t);
-      o.frequency.exponentialRampToValueAtTime(startF * (530 / 420), t + 0.12 * decMul);
-      const vol = randomize(0.07 * volMul, 0.10);
-      softAttack(g, vol, t);
-      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
-      o.start(t);
-      o.stop(t + dec);
-      break;
-    }
-    // ⏳ time — 短促 tick，降频至 1100Hz
-    case 'time': {
-      const dec = randomize(0.06 * decMul, 0.08);
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine';
-      o.connect(g);
-      connectToOutput(g);
-      const freq = randomize(1100 * pitchShift, 0.03);
-      o.frequency.setValueAtTime(freq, t);
-      o.frequency.exponentialRampToValueAtTime(freq * 0.89, t + dec * 0.5);
-      const vol = randomize(0.05 * volMul, 0.10);
-      softAttack(g, vol, t);
-      g.gain.exponentialRampToValueAtTime(0.01, t + dec);
-      o.start(t);
-      o.stop(t + dec);
-      break;
-    }
-    // 💰 gold — sine 基频 600Hz + 八度泛音 1200Hz（去掉拍频）
-    case 'gold': {
-      const dec = randomize(0.20 * decMul, 0.08);
-      // 基频 600Hz
-      const o1 = ctx.createOscillator();
-      const g1 = ctx.createGain();
-      o1.type = 'sine';
-      o1.connect(g1);
-      connectToOutput(g1);
-      o1.frequency.setValueAtTime(randomize(600 * pitchShift, 0.03), t);
-      const vol1 = randomize(0.06 * volMul, 0.10);
-      softAttack(g1, vol1, t);
-      g1.gain.exponentialRampToValueAtTime(0.01, t + dec);
-      o1.start(t);
-      o1.stop(t + dec);
-      // 八度泛音 1200Hz（轻量点缀）
-      const o2 = ctx.createOscillator();
-      const g2 = ctx.createGain();
-      o2.type = 'sine';
-      o2.connect(g2);
-      connectToOutput(g2);
-      o2.frequency.setValueAtTime(randomize(1200 * pitchShift, 0.03), t);
-      const vol2 = randomize(0.03 * volMul, 0.10);
-      softAttack(g2, vol2, t);
-      g2.gain.exponentialRampToValueAtTime(0.01, t + 0.12 * decMul);
-      o2.start(t);
-      o2.stop(t + 0.12 * decMul);
-      break;
-    }
-    default:
-      playSound('skill');
-  }
-}
 
 // === 词语结算分数音效（4 档合成） ===
 export function playScoreSound(score: number): void {
@@ -444,15 +330,18 @@ export function playRatingSound(grade: string): void {
   for (const freq of cfg.freqs) {
     const o = ctx.createOscillator();
     const g = ctx.createGain();
+    const f = randomize(freq, 0.03);
+    const v = randomize(cfg.vol, 0.08);
+    const d = randomize(cfg.decay, 0.08);
     o.type = cfg.type;
-    o.frequency.setValueAtTime(freq, t);
+    o.frequency.setValueAtTime(f, t);
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(cfg.vol, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.001, t + cfg.decay);
+    g.gain.linearRampToValueAtTime(v, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + d);
     o.connect(g);
     connectToOutput(g);
     o.start(t);
-    o.stop(t + cfg.decay);
+    o.stop(t + d);
   }
 }
 

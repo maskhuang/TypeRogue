@@ -14,7 +14,7 @@ import { ENCHANTMENTS } from '../data/enchantments';
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
 import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { getElements } from '../ui/elements';
-import { playSound, playResourceSound } from '../effects/sound';
+import { playSound } from '../effects/sound';
 import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
 import { getFloatScale, getFloatScaleMul } from '../effects/juice';
 import { resolveRelicSkillTrigger, queryRelicFlag } from './relics/RelicPipeline';
@@ -417,11 +417,11 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   if (prod.operator === 'add') {
     const scale = getFloatScale(prod.resource, delta);
     showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color, scale);
-    playResourceSound(prod.resource, scale);
+    // TODO: Epic 23 — 资源产出音效
   } else {
     const scale = getFloatScaleMul(prod.resource, (value - 1) * totalMult);
     showFeedback(`×${displayValue}`, color, scale);
-    playResourceSound(prod.resource, scale);
+    // TODO: Epic 23 — 资源产出音效
   }
   if (enchMult > 1) {
     showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(producerId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');
@@ -504,11 +504,11 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   if (conv.formula === 'add') {
     const scale = getFloatScale(conv.target, delta);
     showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color, scale);
-    playResourceSound(conv.target, scale);
+    // TODO: Epic 23 — 资源产出音效
   } else {
     const scale = getFloatScaleMul(conv.target, sourceVal * amplifiedK * totalMult);
     showFeedback(`×${parseFloat((1 + sourceVal * amplifiedK).toPrecision(4))}`, color, scale);
-    playResourceSound(conv.target, scale);
+    // TODO: Epic 23 — 资源产出音效
   }
   if (enchMult > 1) {
     showFeedback(`${ENCHANTMENTS[state.player.enchantedSkills?.get(converterId) || '']?.icon || ''} ×${enchMult.toFixed(1)}`, '#f9ca24');

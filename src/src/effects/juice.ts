@@ -251,11 +251,11 @@ export interface MilestoneTier {
 }
 
 export const MILESTONE_TIERS: readonly MilestoneTier[] = [
-  { threshold: 100,   label: '100!',   fontSize: 36, color: '#ffffff', flashColor: '#ffffff', flashOpacity: 0.15, particleCount: 0,  particleColor: '',        shakeIntensity: 0 },
-  { threshold: 500,   label: '500!',   fontSize: 44, color: '#ffd700', flashColor: '#ffd700', flashOpacity: 0.2,  particleCount: 15, particleColor: '#ffd700', shakeIntensity: 0 },
-  { threshold: 1000,  label: '1000!',  fontSize: 56, color: '#ffd700', flashColor: '#ffd700', flashOpacity: 0.3,  particleCount: 25, particleColor: '#ff6b6b', shakeIntensity: 2 },
-  { threshold: 5000,  label: '5000!',  fontSize: 72, color: '#ff6b6b', flashColor: '#ff6b6b', flashOpacity: 0.4,  particleCount: 40, particleColor: '#ff6b6b', shakeIntensity: 4 },
-  { threshold: 10000, label: '10000!', fontSize: 96, color: '#ffd700', flashColor: '#ffd700', flashOpacity: 0.5,  particleCount: 60, particleColor: '#ffd700', shakeIntensity: 5 },
+  { threshold: 100,   label: '100!',   fontSize: 36, color: '#e0e0e0', flashColor: '#e0e0e0', flashOpacity: 0.15, particleCount: 0,  particleColor: '',        shakeIntensity: 0 },
+  { threshold: 500,   label: '500!',   fontSize: 44, color: '#f0e6c0', flashColor: '#f0e6c0', flashOpacity: 0.2,  particleCount: 15, particleColor: '#f0e6c0', shakeIntensity: 0 },
+  { threshold: 1000,  label: '1000!',  fontSize: 56, color: '#ffd700', flashColor: '#ffd700', flashOpacity: 0.3,  particleCount: 25, particleColor: '#ffd700', shakeIntensity: 2 },
+  { threshold: 5000,  label: '5000!',  fontSize: 72, color: '#a855f7', flashColor: '#a855f7', flashOpacity: 0.4,  particleCount: 40, particleColor: '#a855f7', shakeIntensity: 4 },
+  { threshold: 10000, label: '10000!', fontSize: 96, color: '#ffffff', flashColor: '#ffd700', flashOpacity: 0.5,  particleCount: 60, particleColor: '#ffd700', shakeIntensity: 5 },
 ];
 
 /** 检测分数是否越过里程碑，返回最高新越过的 tier（无越过返回 null） */

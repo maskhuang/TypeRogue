@@ -1364,7 +1364,6 @@ function registerShopDropZones(): void {
         const sourceKey = payload.sourceKey;
         if (!skillId || !sourceKey) return;
         state.player.bindings.delete(sourceKey);
-        playSound('buy');
         renderBuildManager();
       },
     });
@@ -1441,7 +1440,6 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     }
 
     state.player.bindings.set(targetKey, skillId);
-    playSound('buy');
 
     renderBuildManager();
   }
