@@ -577,6 +577,75 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '最初的变异，蕴含无限可能。',
   },
 
+  // ==================== 蜕变师专属遗物 ====================
+  // Story 32.10: 6 个新遗物
+
+  ultimate_mutant_strain: {
+    id: 'ultimate_mutant_strain',
+    name: '终极突变株',
+    icon: '⚛️',
+    description: '每关前2次蜕变免费，每次蜕变返还1变异素。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    flavor: '进化的尽头，是无限的可能性。',
+  },
+
+  gene_stabilizer: {
+    id: 'gene_stabilizer',
+    name: '基因稳定器',
+    icon: '🔒',
+    description: '本关再次蜕变同一键位免费。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    flavor: '稳定基因链，降低变异代价。',
+  },
+
+  catalyst_injector: {
+    id: 'catalyst_injector',
+    name: '催化注射器',
+    icon: '🩺',
+    description: '变异素→其他资源转化者读数+30%。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    flavor: '一针催化，变异素释放更多能量。',
+  },
+
+  chaos_seed: {
+    id: 'chaos_seed',
+    name: '混沌种子',
+    icon: '🌱',
+    description: '每关结束时随机一个未附魔技能获随机附魔。',
+    rarity: 'rare',
+    basePrice: 60,
+    effects: [],
+    flavor: '混沌中播下的种子，总会结出意外的果实。',
+  },
+
+  abyss_eye: {
+    id: 'abyss_eye',
+    name: '深渊之眼',
+    icon: '👁️',
+    description: '蜕变台预览2个隐藏池技能。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    flavor: '凝视深渊，深渊亦凝视着你。',
+  },
+
+  fittest_survivors: {
+    id: 'fittest_survivors',
+    name: '适者生存',
+    icon: '💪',
+    description: '蜕变后的技能本关产出+20%。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    flavor: '适者生存，强者愈强。',
+  },
+
   // ==================== 造词师专属遗物 ====================
   // Story 32.7: 6 个新遗物（学徒笔记效果在 RelicPipeline.initRelicState 中实现）
 

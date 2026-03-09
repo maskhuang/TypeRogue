@@ -882,7 +882,7 @@ function closeEnchantmentModal(): void {
 
 // === 随机附魔（蜕变师失去附魔选择权时使用） ===
 // 不调用 applyEnchantment 避免：双重 feedback + 无用 closeModal + 冗余 re-render
-function applyRandomEnchantment(skillId: string): void {
+export function applyRandomEnchantment(skillId: string): void {
   const skillRelation = isAmplifier(skillId) ? AMPLIFIERS[skillId].positionRelation : undefined;
   const [enchA, enchB] = drawEnchantmentPair(skillRelation);
   const chosen = random() < 0.5 ? enchA : enchB;

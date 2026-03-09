@@ -148,6 +148,7 @@ describe('遗物槽位系统 (Story 27.3)', () => {
       const zeroPriceRelics = new Set([
         'apprentice_notes', 'primal_mutant',
         'masters_lexicon', 'resonance_mold', 'fragment_prism',
+        'ultimate_mutant_strain', 'abyss_eye', 'fittest_survivors',
       ])
       for (const relic of Object.values(RELICS)) {
         if (zeroPriceRelics.has(relic.id)) {

@@ -9,8 +9,8 @@ import { ENCHANTMENTS, isEnchantment, getEnchantmentDesc, drawEnchantmentPair } 
 describe('附魔数据完整性', () => {
   const allIds = Object.keys(ENCHANTMENTS)
 
-  it('共 38 个附魔', () => {
-    expect(allIds.length).toBe(38)
+  it('共 41 个附魔', () => {
+    expect(allIds.length).toBe(41)
   })
 
   it('每个附魔的 id 与 key 匹配', () => {
@@ -140,11 +140,11 @@ describe('1 个独立型附魔', () => {
   })
 })
 
-describe('3 个职业专属附魔', () => {
+describe('6 个职业专属附魔', () => {
   const exclusives = Object.values(ENCHANTMENTS).filter(e => e.category === 'class-exclusive')
 
-  it('共 3 个', () => {
-    expect(exclusives.length).toBe(3)
+  it('共 6 个', () => {
+    expect(exclusives.length).toBe(6)
   })
 
   it('不依赖位置关系', () => {

@@ -30,8 +30,8 @@ beforeEach(() => {
 describe('造词师专属附魔数据', () => {
   const classExclusives = Object.values(ENCHANTMENTS).filter(e => e.category === 'class-exclusive')
 
-  it('共 3 个 class-exclusive 附魔', () => {
-    expect(classExclusives.length).toBe(3)
+  it('共 6 个 class-exclusive 附魔', () => {
+    expect(classExclusives.length).toBe(6)
   })
 
   it('包含 harvest/letter_affinity/overflow', () => {

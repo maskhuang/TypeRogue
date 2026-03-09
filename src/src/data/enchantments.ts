@@ -61,6 +61,11 @@ export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
   ench_harvest:         { id: 'ench_harvest',         name: '丰收', icon: '🌾', category: 'class-exclusive', effectValue: 0.08, desc: '每造一个词：自身产出永久+8%' },
   ench_letter_affinity: { id: 'ench_letter_affinity', name: '字母亲和', icon: '💌', category: 'class-exclusive', effectValue: 0.25, desc: '采集队列含本键字母时：产出+25%' },
   ench_overflow:        { id: 'ench_overflow',        name: '满溢', icon: '🫧', category: 'class-exclusive', effectValue: 0.20, desc: '每有1种碎片≥15：产出+20%（第2种起各+5%）' },
+
+  // === 职业专属 — 蜕变师（3 个）"拥抱随机的进化" ===
+  ench_adapt:            { id: 'ench_adapt',            name: '适应', icon: '🧬🔄', category: 'class-exclusive', effectValue: 0.15, desc: '每被蜕变一次：自身产出永久+15%（跨关保留）' },
+  ench_unstable:         { id: 'ench_unstable',         name: '不稳定', icon: '⚗️💥', category: 'class-exclusive', effectValue: 0.30, desc: '每关开始随机一种资源+30%，关末消失' },
+  ench_mutation_hunger:  { id: 'ench_mutation_hunger',  name: '嗜变', icon: '🧪🧬', category: 'class-exclusive', effectValue: 0.05, desc: '触发时5%概率产1变异素（不占产出者槽位）' },
 } as const;
 
 // === 工具函数 ===
@@ -82,12 +87,19 @@ export function getEnchantmentDesc(id: string): string {
  * @param skillRelation 技能自身的 positionRelation（如增幅者）；
  *   若提供，空间类附魔只保留匹配该范围的，非空间类不受限
  */
+// 职业专属附魔 ID 集合（用于按职业过滤，避免蜕变师抽到造词师附魔）
+const WORDSMITH_ENCHS = new Set(['ench_harvest', 'ench_letter_affinity', 'ench_overflow']);
+const METAMORPH_ENCHS = new Set(['ench_adapt', 'ench_unstable', 'ench_mutation_hunger']);
+
 export function drawEnchantmentPair(skillRelation?: PositionRelation): [string, string] {
-  const isWordsmith = state.classId === 'wordsmith';
   const all = Object.values(ENCHANTMENTS)
     .filter(e => {
-      // 职业专属附魔：仅对应职业可抽取
-      if (e.category === 'class-exclusive') return isWordsmith;
+      // 职业专属附魔：仅对应职业可抽取（互斥）
+      if (e.category === 'class-exclusive') {
+        if (state.classId === 'wordsmith') return WORDSMITH_ENCHS.has(e.id);
+        if (state.classId === 'metamorph') return METAMORPH_ENCHS.has(e.id);
+        return false;
+      }
       if (!skillRelation) return true;
       // 空间类必须匹配技能范围
       if (e.category === 'spatial') return e.positionRelation === skillRelation;

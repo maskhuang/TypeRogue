@@ -75,17 +75,30 @@ export function computeHiddenPool(type: 'converter' | 'connector' | 'replicator'
 export function performMetamorph(oldSkillId: string, boundKey: string, container: HTMLElement): void {
   const type = getSkillType(oldSkillId);
   if (!type || type === 'producer') return;
-  // computeHiddenPool 不接受 'producer'，但上面已排除
 
   // 费用计算
+  let cost = 1;
+  const hasUltimateMutant = state.player.relics.has('ultimate_mutant_strain');
   const hasPrimalMutant = state.player.relics.has('primal_mutant');
-  const isFree = hasPrimalMutant && state.player.relicStates['primal_mutant'] === 0;
 
-  if (!isFree) {
-    if (state.mutagenInventory < 1) {
-      showFeedback('变异素不足!', '#ff6b6b');
-      return;
+  // 终极突变株：每关前2次蜕变免费（覆盖 primal_mutant）
+  if (hasUltimateMutant) {
+    const usedCount = state.player.relicStates['ultimate_mutant_strain'] ?? 0;
+    if (usedCount < 2) cost = 0;
+  } else if (hasPrimalMutant && state.player.relicStates['primal_mutant'] === 0) {
+    cost = 0;
+  }
+
+  // 基因稳定器：同一键位再次蜕变免费
+  if (cost > 0 && state.player.relics.has('gene_stabilizer')) {
+    if (state.player.relicStates['gene_stab_' + boundKey] === 1) {
+      cost = 0;
     }
+  }
+
+  if (cost > 0 && state.mutagenInventory < cost) {
+    showFeedback('变异素不足!', '#ff6b6b');
+    return;
   }
 
   // 隐藏池
@@ -100,11 +113,20 @@ export function performMetamorph(oldSkillId: string, boundKey: string, container
   if (!oldData) return;
 
   // 扣费
-  if (!isFree) {
-    state.mutagenInventory -= 1;
-  } else {
-    // 标记本关已使用免费次数
+  if (cost > 0) {
+    state.mutagenInventory -= cost;
+  }
+
+  // 更新遗物状态
+  if (hasUltimateMutant) {
+    state.player.relicStates['ultimate_mutant_strain'] = (state.player.relicStates['ultimate_mutant_strain'] ?? 0) + 1;
+  } else if (hasPrimalMutant && cost === 0) {
     state.player.relicStates['primal_mutant'] = 1;
+  }
+
+  // 基因稳定器：记录已蜕变键位
+  if (state.player.relics.has('gene_stabilizer')) {
+    state.player.relicStates['gene_stab_' + boundKey] = 1;
   }
 
   // 随机抽取
@@ -134,6 +156,12 @@ export function performMetamorph(oldSkillId: string, boundKey: string, container
     state.growthValues.set(newSkillId, growth);
   }
 
+  // 适应附魔：每被蜕变一次 +15%（迁移后在新技能上累加）
+  if (enchId === 'ench_adapt') {
+    const current = state.growthValues.get(newSkillId) ?? 0;
+    state.growthValues.set(newSkillId, current + 0.15);
+  }
+
   // masteryCounters: 迁移精通计数
   const mastery = state.masteryCounters.get(oldSkillId);
   if (mastery !== undefined) {
@@ -146,6 +174,17 @@ export function performMetamorph(oldSkillId: string, boundKey: string, container
   if (devour !== undefined) {
     state.devourIcons.delete(oldSkillId);
     state.devourIcons.set(newSkillId, devour);
+  }
+
+  // 终极突变株：蜕变结果来自隐藏池 → 高稀有度返 1 变异素
+  if (hasUltimateMutant) {
+    state.mutagenInventory += 1;
+    showFeedback('⚛️ +1变异素（高稀有度）', '#2ecc71');
+  }
+
+  // 适者生存：蜕变后技能本关产出 +20%
+  if (state.player.relics.has('fittest_survivors')) {
+    state.player.relicStates['fittest_' + newSkillId] = 1;
   }
 
   // 反馈
@@ -223,11 +262,17 @@ export function renderMetamorphPanel(container: HTMLElement): void {
   // 变异素库存 + 免费次数提示
   const info = document.createElement('div');
   info.className = 'morph-info';
+  const hasUltimateMutant = state.player.relics.has('ultimate_mutant_strain');
   const hasPrimalMutant = state.player.relics.has('primal_mutant');
-  const isFree = hasPrimalMutant && state.player.relicStates['primal_mutant'] === 0;
+  let freeRemaining = 0;
+  if (hasUltimateMutant) {
+    freeRemaining = Math.max(0, 2 - (state.player.relicStates['ultimate_mutant_strain'] ?? 0));
+  } else if (hasPrimalMutant && state.player.relicStates['primal_mutant'] === 0) {
+    freeRemaining = 1;
+  }
   let infoText = `🧬 变异素: ${Math.floor(state.mutagenInventory)}`;
-  if (isFree) {
-    infoText += '  |  🎁 本关首次免费';
+  if (freeRemaining > 0) {
+    infoText += `  |  🎁 本关免费剩余: ${freeRemaining}次`;
   }
   info.textContent = infoText;
   container.appendChild(info);
@@ -307,6 +352,35 @@ export function renderMetamorphPanel(container: HTMLElement): void {
   }
 
   container.appendChild(grid);
+
+  // 深渊之眼：预览 2 个隐藏池技能
+  if (state.player.relics.has('abyss_eye')) {
+    const allHidden: string[] = [];
+    for (const t of ['converter', 'connector', 'replicator', 'amplifier'] as const) {
+      allHidden.push(...computeHiddenPool(t));
+    }
+    if (allHidden.length > 0) {
+      const preview = document.createElement('div');
+      preview.className = 'morph-abyss-preview';
+      preview.innerHTML = '<div style="color:#a29bfe;font-size:11px;margin-bottom:4px;">👁️ 深渊之眼 — 隐藏池预览</div>';
+      const count = Math.min(2, allHidden.length);
+      // 随机选 2 个不重复
+      const picked = new Set<number>();
+      while (picked.size < count) {
+        picked.add(Math.floor(random() * allHidden.length));
+      }
+      for (const i of picked) {
+        const sid = allHidden[i];
+        const sInfo = getSkillDisplayInfo(sid);
+        const sType = getSkillType(sid);
+        const label = document.createElement('div');
+        label.style.cssText = 'color:#ccc;font-size:11px;padding:2px 0;';
+        label.textContent = `${sInfo.icon} ${sInfo.name} (${sType ? TYPE_NAMES[sType] : '?'})`;
+        preview.appendChild(label);
+      }
+      container.appendChild(preview);
+    }
+  }
 
   // 提示文字
   const hint = document.createElement('div');

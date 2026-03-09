@@ -38,7 +38,8 @@ const WORDSMITH_EXCLUSIVE_RELICS = new Set([
 
 // 蜕变师专属遗物 ID 集合
 const METAMORPH_EXCLUSIVE_RELICS = new Set([
-  'primal_mutant',
+  'primal_mutant', 'ultimate_mutant_strain', 'gene_stabilizer',
+  'catalyst_injector', 'chaos_seed', 'abyss_eye', 'fittest_survivors',
 ]);
 
 export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRESETS.gameStart): string[] {

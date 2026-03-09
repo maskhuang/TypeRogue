@@ -35,6 +35,7 @@ export function createInitialState(): GameState {
     fragmentQueuePosition: 0,
     craftedWords: [],
     mutagenInventory: 0,
+    unstableResources: new Map(),
     resources: {
       base: 0,
       score: 0,
@@ -141,6 +142,7 @@ export function resetResources(): void {
   state.resources.mutagen = 0;
   state.classResourceProduced = {};
   state.fragmentQueuePosition = 0;
+  state.unstableResources.clear();
 }
 
 // === 状态重置 ===

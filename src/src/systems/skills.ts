@@ -20,6 +20,7 @@ import { getFloatScale, getFloatScaleMul } from '../effects/juice';
 import { resolveRelicSkillTrigger, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
 import { routeFragmentsToInventory } from './classes/FragmentQueue';
+import { random } from '../core/seededRandom';
 
 
 // === 战后统计：记录技能触发 ===
@@ -151,6 +152,17 @@ function getResourceLabel(r: ResourceType): string {
   }
 }
 
+// === 辅助：获取技能主产出资源类型 ===
+function getSkillOutputResource(skillId: string): import('../core/types').ResourceType | null {
+  const prod = PRODUCERS[skillId];
+  if (prod) return prod.resource;
+  const conv = CONVERTERS[skillId];
+  if (conv) return conv.target;
+  const amp = AMPLIFIERS[skillId];
+  if (amp) return amp.resource;
+  return null;
+}
+
 // === 附魔：计算成长/排斥倍率 ===
 export function getEnchantmentMultiplier(skillId: string, triggerKey?: string): number {
   const enchId = state.player.enchantedSkills?.get(skillId);
@@ -158,10 +170,18 @@ export function getEnchantmentMultiplier(skillId: string, triggerKey?: string): 
   const ench = ENCHANTMENTS[enchId];
   if (!ench) return 1;
 
-  // 成长型 / 精通型 / 丰收：返回累积的成长值作为倍率（共享 growthValues 存储）
-  if (ench.spatialType === 'growth' || ench.id === 'ench_mastery' || ench.id === 'ench_harvest') {
+  // 成长型 / 精通型 / 丰收 / 适应：返回累积的成长值作为倍率（共享 growthValues 存储）
+  if (ench.spatialType === 'growth' || ench.id === 'ench_mastery' || ench.id === 'ench_harvest' || ench.id === 'ench_adapt') {
     const accumulated = state.growthValues.get(skillId) || 0;
     return 1 + accumulated;
+  }
+
+  // 不稳定：匹配本关随机资源时 +30%
+  if (ench.id === 'ench_unstable') {
+    const assigned = state.unstableResources.get(skillId);
+    if (!assigned) return 1;
+    const output = getSkillOutputResource(skillId);
+    return output === assigned ? 1 + ench.effectValue : 1;
   }
 
   // 吞噬型：每个图标 +20%
@@ -335,6 +355,18 @@ function executeDevour(devourSkillId: string, targetSkillId: string, targetKey: 
   playSound('skill');
 }
 
+// === 附魔：嗜变 — 触发时 5% 概率产 1 变异素 ===
+function checkMutationHunger(skillId: string): void {
+  const enchId = state.player.enchantedSkills?.get(skillId);
+  if (enchId !== 'ench_mutation_hunger') return;
+  if (random() < 0.05) {
+    state.mutagenInventory += 1;
+    state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + 1;
+    showFeedback('🧪🧬 +1变异素', '#2ecc71');
+    updateHUD();
+  }
+}
+
 // === 增幅者加成计算 ===
 export function getAmplifierBonus(
   skillId: string,
@@ -388,7 +420,8 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   const ampBonus = getAmplifierBonus(producerId, triggerKey, prod.resource);
   const amplifiedBase = (baseValue + ampBonus.addBonus) * ampBonus.mulBonus;
   const relicMult = getRelicSkillMultiplier('producer');
-  const totalMult = enchMult * relicMult;
+  const fittestMult = state.player.relicStates['fittest_' + producerId] === 1 ? 1.2 : 1;
+  const totalMult = enchMult * relicMult * fittestMult;
   const value = prod.operator === 'add' ? amplifiedBase * totalMult : amplifiedBase;
 
   // 视觉反馈
@@ -480,6 +513,8 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   checkMasteryAccumulation(producerId);
   // 吞噬附魔累积
   checkDevourAccumulation(producerId, triggerKey);
+  // 嗜变附魔：5% 概率产变异素
+  checkMutationHunger(producerId);
 
   updateHUD();
 }
@@ -496,11 +531,16 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   if (conv.source === 'fragment' && state.player.relics.has('refining_lens')) {
     sourceVal *= 1.3;
   }
+  // 催化注射器：mutagen→其他资源转化者读数 +30%
+  if (conv.source === 'mutagen' && state.player.relics.has('catalyst_injector')) {
+    sourceVal *= 1.3;
+  }
   const enchMult = getEnchantmentMultiplier(converterId, triggerKey);
   const ampBonus = getAmplifierBonus(converterId, triggerKey, conv.target);
   const amplifiedK = (k + ampBonus.addBonus) * ampBonus.mulBonus;
   const relicMult = getRelicSkillMultiplier('converter');
-  const totalMult = enchMult * relicMult;
+  const fittestMult = state.player.relicStates['fittest_' + converterId] === 1 ? 1.2 : 1;
+  const totalMult = enchMult * relicMult * fittestMult;
 
   // 视觉反馈
   showTriggerPopup(converterId);
@@ -585,6 +625,8 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   checkMasteryAccumulation(converterId);
   // 吞噬附魔累积
   checkDevourAccumulation(converterId, triggerKey);
+  // 嗜变附魔：5% 概率产变异素
+  checkMutationHunger(converterId);
 
   updateHUD();
 }
@@ -692,6 +734,7 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
   checkMasteryAccumulation(producerId);
   // 吞噬附魔累积（溅射/共鸣子触发也计数）
   checkDevourAccumulation(producerId, triggerKey);
+  checkMutationHunger(producerId);
 
   updateHUD();
 }
@@ -705,6 +748,10 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
   let sourceVal = getSourceValue(conv.source, state.resources, state.classResourceProduced);
   // 精炼透镜：fragment→其他资源转化者读数 +30%
   if (conv.source === 'fragment' && state.player.relics.has('refining_lens')) {
+    sourceVal *= 1.3;
+  }
+  // 催化注射器：mutagen→其他资源转化者读数 +30%
+  if (conv.source === 'mutagen' && state.player.relics.has('catalyst_injector')) {
     sourceVal *= 1.3;
   }
 
@@ -766,6 +813,7 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
   checkMasteryAccumulation(converterId);
   // 吞噬附魔累积（溅射/共鸣子触发也计数）
   checkDevourAccumulation(converterId, triggerKey);
+  checkMutationHunger(converterId);
 
   updateHUD();
 }
@@ -843,6 +891,7 @@ function triggerAmplifierIndirect(ampId: string, key: string, efficiency: number
   checkMasteryAccumulation(ampId);
   // 吞噬附魔累积
   checkDevourAccumulation(ampId, key);
+  checkMutationHunger(ampId);
 
   updateHUD();
   eventBus.emit('skill:triggered', { key, skillId: ampId, type: 'active', amplifierStacks: displayStacks, growthValue: state.growthValues.get(ampId) || 0 });
@@ -1017,7 +1066,8 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
 
   // 附魔倍率 → 叠层增量
   const enchMult = getEnchantmentMultiplier(ampId, triggerKey);
-  const stackGain = Math.max(1, Math.ceil(1 * enchMult)); // 至少+1层
+  const fittestMult = state.player.relicStates['fittest_' + ampId] === 1 ? 1.2 : 1;
+  const stackGain = Math.max(1, Math.ceil(1 * enchMult * fittestMult)); // 至少+1层
 
   const current = state.amplifierStacks.get(ampId) || 0;
   const newStacks = current + stackGain;
@@ -1054,6 +1104,7 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
   checkMasteryAccumulation(ampId);
   // 吞噬附魔累积
   checkDevourAccumulation(ampId, triggerKey);
+  checkMutationHunger(ampId);
 
   updateHUD();
 
