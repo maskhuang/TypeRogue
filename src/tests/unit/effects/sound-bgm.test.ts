@@ -132,10 +132,10 @@ describe('BGM Drone 持续低音 (Story 33.5)', () => {
     startBGM();
 
     expect(mockCtx.gains).toHaveLength(2);
-    // C2 gain = 0.03
-    expect(mockCtx.gains[0].gain.setValueAtTime).toHaveBeenCalledWith(0.03, 1.0);
-    // C3 gain = 0.015
-    expect(mockCtx.gains[1].gain.setValueAtTime).toHaveBeenCalledWith(0.015, 1.0);
+    // C2 gain = 0.015
+    expect(mockCtx.gains[0].gain.setValueAtTime).toHaveBeenCalledWith(0.015, 1.0);
+    // C3 gain = 0.008
+    expect(mockCtx.gains[1].gain.setValueAtTime).toHaveBeenCalledWith(0.008, 1.0);
 
     // connectToOutput 调用验证（AC #3）— gain 节点 connect 到 destination
     expect(mockCtx.gains[0].connect).toHaveBeenCalled();
@@ -267,7 +267,7 @@ describe('BGM Kick 脉冲 (Story 33.6)', () => {
     _chordInternals._playKickPulse();
 
     const gain = mockCtx.gains[0];
-    expect(gain.gain.setValueAtTime).toHaveBeenCalledWith(0.01, 1.0);
+    expect(gain.gain.setValueAtTime).toHaveBeenCalledWith(0.005, 1.0);
   });
 
   it('combo=15 时音量封顶 0.02', () => {
@@ -275,8 +275,8 @@ describe('BGM Kick 脉冲 (Story 33.6)', () => {
     _chordInternals._playKickPulse();
 
     const gain = mockCtx.gains[0];
-    // 15 * 0.002 = 0.03 → min(0.02, 0.03) = 0.02
-    expect(gain.gain.setValueAtTime).toHaveBeenCalledWith(0.02, 1.0);
+    // 15 * 0.001 = 0.015 → min(0.01, 0.015) = 0.01
+    expect(gain.gain.setValueAtTime).toHaveBeenCalledWith(0.01, 1.0);
   });
 
   // ---- Task 3: 防叠加 ----
@@ -381,7 +381,7 @@ describe('BGM 张力层 (Story 33.7)', () => {
     // drone 有 2 个 gain，张力音 gain 是第 3 个
     const tensionGain = mockCtx.gains[2];
     expect(tensionGain.gain.setValueAtTime).toHaveBeenCalledWith(0, 1.0);
-    expect(tensionGain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0.02, 1.5);
+    expect(tensionGain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0.01, 1.5);
     // 接入输出
     expect(tensionGain.connect).toHaveBeenCalled();
   });
@@ -426,13 +426,13 @@ describe('BGM 张力层 (Story 33.7)', () => {
     expect(tremoloGain.connect).toHaveBeenCalledWith(mockCtx.gains[0].gain);
   });
 
-  it('level 4 张力音音量 ×1.5 (0.0375)', () => {
+  it('level 4 张力音音量 ×1.5 (0.018)', () => {
     _chordInternals._updateBGMTension(4);
 
-    // 张力音 gain（第 3 个 gain）应 ramp 至 0.0375
+    // 张力音 gain（第 3 个 gain）应 ramp 至 0.018
     const tensionGain = mockCtx.gains[2];
     expect(tensionGain.gain.linearRampToValueAtTime)
-      .toHaveBeenCalledWith(0.0375, 1.5);
+      .toHaveBeenCalledWith(0.018, 1.5);
   });
 
   // ---- Drone 频率恢复（Review M3） ----

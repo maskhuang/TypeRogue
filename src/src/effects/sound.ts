@@ -75,7 +75,7 @@ function playKickPulse(): void {
 
   const ctx = audioContext;
   const t = ctx.currentTime;
-  const vol = Math.min(0.02, combo * 0.002); // combo 10+ → 0.02 封顶
+  const vol = Math.min(0.01, combo * 0.001); // combo 10+ → 0.01 封顶
 
   // 防叠加：停掉上一个 kick
   // try/catch: stop() 已被调度过时再次调用会抛 InvalidStateError
@@ -629,7 +629,7 @@ export function startBGM(): void {
   droneGain1 = ctx.createGain();
   droneOsc1.type = 'sine';
   droneOsc1.frequency.setValueAtTime(65.41, now);
-  droneGain1.gain.setValueAtTime(0.03, now);
+  droneGain1.gain.setValueAtTime(0.015, now);
   droneOsc1.connect(droneGain1);
   connectToOutput(droneGain1);
   droneOsc1.start(now);
@@ -639,7 +639,7 @@ export function startBGM(): void {
   droneGain2 = ctx.createGain();
   droneOsc2.type = 'sine';
   droneOsc2.frequency.setValueAtTime(130.81, now);
-  droneGain2.gain.setValueAtTime(0.015, now);
+  droneGain2.gain.setValueAtTime(0.008, now);
   droneOsc2.connect(droneGain2);
   connectToOutput(droneGain2);
   droneOsc2.start(now);
@@ -701,7 +701,7 @@ export function updateBGMTension(level: number): void {
   // Level 2/3: 创建张力音
   if (level >= 2 && level <= 3 && !tensionOsc) {
     const freq = TENSION_FREQS[level] ?? 116.54;
-    const vol = level === 3 ? 0.025 : 0.02;
+    const vol = level === 3 ? 0.012 : 0.01;
     tensionOsc = ctx.createOscillator();
     tensionGain = ctx.createGain();
     tensionOsc.type = 'sine';
@@ -730,12 +730,12 @@ export function updateBGMTension(level: number): void {
       tensionOsc.type = 'sine';
       tensionOsc.frequency.setValueAtTime(freq, now);
       tensionGain.gain.setValueAtTime(0, now);
-      tensionGain.gain.linearRampToValueAtTime(0.0375, now + 0.5); // 0.025 × 1.5
+      tensionGain.gain.linearRampToValueAtTime(0.018, now + 0.5); // 0.012 × 1.5
       tensionOsc.connect(tensionGain);
       connectToOutput(tensionGain);
       tensionOsc.start(now);
     } else {
-      tensionGain!.gain.linearRampToValueAtTime(0.0375, now + 0.5);
+      tensionGain!.gain.linearRampToValueAtTime(0.018, now + 0.5);
     }
 
     // Tremolo LFO: 8Hz sine → 调制 drone 音量
