@@ -14,7 +14,7 @@ import { ENCHANTMENTS } from '../data/enchantments';
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
 import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { getElements } from '../ui/elements';
-import { playSound } from '../effects/sound';
+import { playSound, emitResourceSound } from '../effects/sound';
 import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
 import { getFloatScale, getFloatScaleMul } from '../effects/juice';
 import { resolveRelicSkillTrigger, queryRelicFlag } from './relics/RelicPipeline';
@@ -493,11 +493,11 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
     if (prod.operator === 'add') {
       const scale = getFloatScale(prod.resource, delta);
       showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color, scale);
-      // TODO: Epic 23 — 资源产出音效
+      emitResourceSound(prod.resource, scale);
     } else {
       const scale = getFloatScaleMul(prod.resource, (value - 1) * totalMult);
       showFeedback(`×${displayValue}`, color, scale);
-      // TODO: Epic 23 — 资源产出音效
+      emitResourceSound(prod.resource, scale);
     }
   }
   if (enchMult > 1) {
@@ -605,11 +605,11 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
     if (conv.formula === 'add') {
       const scale = getFloatScale(conv.target, delta);
       showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color, scale);
-      // TODO: Epic 23 — 资源产出音效
+      emitResourceSound(conv.target, scale);
     } else {
       const scale = getFloatScaleMul(conv.target, sourceVal * amplifiedK * totalMult);
       showFeedback(`×${parseFloat((1 + sourceVal * amplifiedK).toPrecision(4))}`, color, scale);
-      // TODO: Epic 23 — 资源产出音效
+      emitResourceSound(conv.target, scale);
     }
   }
   if (enchMult > 1) {

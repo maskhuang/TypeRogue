@@ -28,6 +28,7 @@ vi.mock('../../../src/ui/elements', () => ({
 }))
 vi.mock('../../../src/effects/sound', () => ({
   playSound: vi.fn(),
+  emitResourceSound: vi.fn(),
 }))
 
 const mockShowFeedback = vi.fn()

@@ -16,7 +16,7 @@ vi.mock('../../../src/ui/elements', () => ({
     triggerZone: { appendChild: vi.fn() },
   }),
 }))
-vi.mock('../../../src/effects/sound', () => ({ playSound: vi.fn() }))
+vi.mock('../../../src/effects/sound', () => ({ playSound: vi.fn(), emitResourceSound: vi.fn() }))
 vi.mock('../../../src/effects/juice', () => ({
   juiceUp: vi.fn(), init3DCardEffect: vi.fn(),
 }))

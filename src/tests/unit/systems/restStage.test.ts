@@ -12,6 +12,7 @@ import { PRODUCERS } from '../../../src/data/producers'
 // Mock DOM 和音效
 vi.mock('../../../src/effects/sound', () => ({
   playSound: vi.fn(),
+  emitResourceSound: vi.fn(),
 }))
 
 vi.mock('../../../src/systems/battle', () => ({

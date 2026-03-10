@@ -325,6 +325,104 @@ export function playRatingSound(grade: string): void {
   }
 }
 
+// === 资源和弦系统 (Epic 33) ===
+// 五声音阶映射：C大调五声 C-E-G-A-C'，任意组合都和谐
+export const RESOURCE_FREQ: Record<string, number> = {
+  base: 262,       // C4 — 根音，稳定基底
+  score: 330,      // E4 — 大三度，明亮积极
+  multiplier: 392, // G4 — 纯五度，力量感
+  time: 440,       // A4 — 大六度，轻盈流动
+  gold: 523,       // C5 — 八度，高亮点缀
+};
+
+// 和弦缓冲区：收集同一微任务内所有资源产出，合并播放
+const chordBuffer: Map<string, number> = new Map(); // resource → max intensity
+let chordScheduled = false;
+let lastChordTime = 0;
+
+const CHORD_COOLDOWN = 0.08;   // 80ms 硬冷却
+const CHORD_BASE_VOL = 0.08;   // 每音分量基础音量
+const CHORD_DECAY = 0.08;      // 80ms 衰减
+const CHORD_MAX_RMS = 0.15;    // RMS 总音量封顶
+
+/** 纯函数：计算 RMS 缩放后的各分量音量 */
+export function calculateRMSVolumes(rawVolumes: number[]): number[] {
+  if (rawVolumes.length === 0) return [];
+  const sumSq = rawVolumes.reduce((s, v) => s + v * v, 0);
+  const rms = Math.sqrt(sumSq);
+  if (rms <= CHORD_MAX_RMS) return rawVolumes;
+  const ratio = CHORD_MAX_RMS / rms;
+  return rawVolumes.map(v => v * ratio);
+}
+
+/** 缓冲资源音效：仅写缓冲，不立即发声 */
+export function emitResourceSound(resource: string, intensity: number): void {
+  if (!RESOURCE_FREQ[resource]) return;
+  const prev = chordBuffer.get(resource) || 0;
+  chordBuffer.set(resource, Math.max(prev, intensity));
+  if (!chordScheduled) {
+    chordScheduled = true;
+    queueMicrotask(flushResourceChord);
+  }
+}
+
+/** 合成并播放缓冲区中的和弦 */
+function flushResourceChord(): void {
+  chordScheduled = false;
+  if (!audioContext || chordBuffer.size === 0) {
+    chordBuffer.clear();
+    return;
+  }
+
+  const ctx = audioContext;
+  const now = ctx.currentTime;
+
+  // 硬冷却检查
+  if (now - lastChordTime < CHORD_COOLDOWN) {
+    chordBuffer.clear();
+    return;
+  }
+  lastChordTime = now;
+
+  // 收集各音分量音量
+  const entries = Array.from(chordBuffer.entries());
+  const rawVolumes = entries.map(([, intensity]) =>
+    CHORD_BASE_VOL * Math.min(intensity, 2) * randomize(1, 0.08)
+  );
+
+  // RMS 缩放
+  const volumes = calculateRMSVolumes(rawVolumes);
+
+  // 为每个资源创建振荡器
+  entries.forEach(([resource], i) => {
+    const freq = RESOURCE_FREQ[resource];
+    if (!freq) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.connect(gain);
+    connectToOutput(gain);
+    osc.frequency.setValueAtTime(randomize(freq, 0.03), now);
+    softAttack(gain, volumes[i], now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + CHORD_DECAY);
+    osc.start(now);
+    osc.stop(now + CHORD_DECAY + 0.01);
+  });
+
+  chordBuffer.clear();
+}
+
+// 测试辅助：暴露内部状态供测试验证
+export const _chordInternals = {
+  get buffer() { return chordBuffer; },
+  get scheduled() { return chordScheduled; },
+  get lastTime() { return lastChordTime; },
+  resetCooldown() { lastChordTime = 0; },
+  _setMockContext(ctx: AudioContext | null) { audioContext = ctx; },
+  _setLastChordTime(t: number) { lastChordTime = t; },
+};
+
 // === 便捷函数 ===
 export const sound = {
   type: () => playSound('type'),

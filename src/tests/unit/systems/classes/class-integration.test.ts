@@ -15,7 +15,7 @@ import { generateRelicCandidates } from '../../../../src/systems/relicPicker'
 import { craftWord } from '../../../../src/systems/classes/CraftingStation'
 
 // Mock side-effect modules
-vi.mock('../../../../src/effects/sound', () => ({ playSound: vi.fn() }))
+vi.mock('../../../../src/effects/sound', () => ({ playSound: vi.fn(), emitResourceSound: vi.fn() }))
 vi.mock('../../../../src/systems/battle', () => ({
   showFeedback: vi.fn(),
   updateHUD: vi.fn(),

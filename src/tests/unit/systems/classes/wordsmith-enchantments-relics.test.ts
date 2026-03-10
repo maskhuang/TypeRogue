@@ -9,7 +9,7 @@ import { RELICS } from '../../../../src/data/relics'
 import { state, resetState } from '../../../../src/core/state'
 
 // Mock DOM + sound
-vi.mock('../../../../src/effects/sound', () => ({ playSound: vi.fn() }))
+vi.mock('../../../../src/effects/sound', () => ({ playSound: vi.fn(), emitResourceSound: vi.fn() }))
 vi.mock('../../../../src/systems/battle', () => ({
   showFeedback: vi.fn(),
   updateHUD: vi.fn(),
