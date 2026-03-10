@@ -341,8 +341,8 @@ let chordScheduled = false;
 let lastChordTime = 0;
 
 const CHORD_COOLDOWN = 0.08;   // 80ms 硬冷却
-const CHORD_BASE_VOL = 0.08;   // 每音分量基础音量
-const CHORD_DECAY = 0.08;      // 80ms 衰减
+const CHORD_BASE_VOL = 0.10;   // 每音分量基础音量
+const CHORD_DECAY = 0.14;      // 140ms 衰减
 const CHORD_MAX_RMS = 0.15;    // RMS 总音量封顶
 
 /** 纯函数：计算 RMS 缩放后的各分量音量 */
@@ -400,7 +400,7 @@ function flushResourceChord(): void {
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'sine';
+    osc.type = 'triangle';
     osc.connect(gain);
     connectToOutput(gain);
     osc.frequency.setValueAtTime(randomize(freq, 0.03), now);

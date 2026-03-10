@@ -488,7 +488,7 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
     || (prod.resource === 'mutagen' && state.classId === 'metamorph');
   if (!isClassResource || isActiveClassResource) {
     const color = RESOURCE_COLORS[prod.resource];
-    const rawDisplay = prod.operator === 'add' ? value : baseValue;
+    const rawDisplay = prod.operator === 'add' ? value : amplifiedBase;
     const displayValue = parseFloat(rawDisplay.toPrecision(4));
     if (prod.operator === 'add') {
       const scale = getFloatScale(prod.resource, delta);
