@@ -328,43 +328,43 @@ export function playRatingSound(grade: string): void {
 // === 资源音效系统 (Epic 33) ===
 // 每种资源拥有独立合成函数，不同波形/噪声/滤波组合，蒙眼可辨识
 
-type ResourceSynth = (ctx: AudioContext, now: number, vol: number) => void;
+type ResourceSynth = (ctx: AudioContext, now: number, vol: number, pitchShift?: number, decayMul?: number) => void;
 
 /** base: 低频 triangle 下扫 + bandpass 噪声冲击，"砖块/筹码"质感 */
-function synthBase(ctx: AudioContext, now: number, vol: number): void {
+function synthBase(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
   // 1) Triangle 下扫 120→60Hz
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = 'triangle';
   osc.connect(gain);
   connectToOutput(gain);
-  osc.frequency.setValueAtTime(randomize(120, 0.05), now);
-  osc.frequency.exponentialRampToValueAtTime(randomize(60, 0.05), now + 0.04);
+  osc.frequency.setValueAtTime(randomize(120 * pitchShift, 0.05), now);
+  osc.frequency.exponentialRampToValueAtTime(randomize(60 * pitchShift, 0.05), now + 0.04 * decayMul);
   softAttack(gain, vol * 0.6, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05 * decayMul);
   osc.start(now);
-  osc.stop(now + 0.06);
+  osc.stop(now + 0.06 * decayMul);
 
   // 2) Bandpass 噪声脉冲
   const noiseSrc = ctx.createBufferSource();
   noiseSrc.buffer = getNoiseBuffer();
   const filter = ctx.createBiquadFilter();
   filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(randomize(150, 0.05), now);
+  filter.frequency.setValueAtTime(randomize(150 * pitchShift, 0.05), now);
   filter.Q.setValueAtTime(3, now);
   const noiseGain = ctx.createGain();
   noiseSrc.connect(filter);
   filter.connect(noiseGain);
   connectToOutput(noiseGain);
   noiseGain.gain.setValueAtTime(vol * 0.4, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02 * decayMul);
   noiseSrc.start(now);
-  noiseSrc.stop(now + 0.03);
+  noiseSrc.stop(now + 0.03 * decayMul);
 }
 
 /** score: square 琶音 3 音跳跃，"硬币拾取"感 */
-function synthScore(ctx: AudioContext, now: number, vol: number): void {
-  const freqs = [randomize(880, 0.05), randomize(1320, 0.05), randomize(1760, 0.05)];
+function synthScore(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
+  const freqs = [randomize(880 * pitchShift, 0.05), randomize(1320 * pitchShift, 0.05), randomize(1760 * pitchShift, 0.05)];
   const vols = [vol * 0.5, vol * 0.35, vol * 0.3];
   freqs.forEach((freq, i) => {
     const osc = ctx.createOscillator();
@@ -375,34 +375,34 @@ function synthScore(ctx: AudioContext, now: number, vol: number): void {
     const t = now + i * 0.025;
     osc.frequency.setValueAtTime(freq, t);
     softAttack(gain, vols[i], t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06 * decayMul);
     osc.start(t);
-    osc.stop(t + 0.07);
+    osc.stop(t + 0.07 * decayMul);
   });
 }
 
 /** multiplier: sawtooth 上扫 + bandpass，"力量提升"感 */
-function synthMultiplier(ctx: AudioContext, now: number, vol: number): void {
+function synthMultiplier(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
   const osc = ctx.createOscillator();
   const filter = ctx.createBiquadFilter();
   const gain = ctx.createGain();
   osc.type = 'sawtooth';
   filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(randomize(400, 0.05), now);
+  filter.frequency.setValueAtTime(randomize(400 * pitchShift, 0.05), now);
   filter.Q.setValueAtTime(2, now);
   osc.connect(filter);
   filter.connect(gain);
   connectToOutput(gain);
-  osc.frequency.setValueAtTime(randomize(200, 0.05), now);
-  osc.frequency.exponentialRampToValueAtTime(randomize(800, 0.05), now + 0.1);
+  osc.frequency.setValueAtTime(randomize(200 * pitchShift, 0.05), now);
+  osc.frequency.exponentialRampToValueAtTime(randomize(800 * pitchShift, 0.05), now + 0.1 * decayMul);
   softAttack(gain, vol * 0.7, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12 * decayMul);
   osc.start(now);
-  osc.stop(now + 0.13);
+  osc.stop(now + 0.13 * decayMul);
 }
 
 /** time: 高频 sine 双击，"时钟滴答"感 */
-function synthTime(ctx: AudioContext, now: number, vol: number): void {
+function synthTime(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
   for (let i = 0; i < 2; i++) {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -410,27 +410,27 @@ function synthTime(ctx: AudioContext, now: number, vol: number): void {
     osc.connect(gain);
     connectToOutput(gain);
     const t = now + i * 0.03;
-    osc.frequency.setValueAtTime(randomize(2000, 0.05), t);
+    osc.frequency.setValueAtTime(randomize(2000 * pitchShift, 0.05), t);
     softAttack(gain, vol * 0.3, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03 * decayMul);
     osc.start(t);
-    osc.stop(t + 0.04);
+    osc.stop(t + 0.04 * decayMul);
   }
 }
 
 /** gold: square + 高频 sine 泛音，"金币叮当"感 */
-function synthGold(ctx: AudioContext, now: number, vol: number): void {
+function synthGold(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
   // 1) Square 基音
   const osc1 = ctx.createOscillator();
   const gain1 = ctx.createGain();
   osc1.type = 'square';
   osc1.connect(gain1);
   connectToOutput(gain1);
-  osc1.frequency.setValueAtTime(randomize(1200, 0.05), now);
+  osc1.frequency.setValueAtTime(randomize(1200 * pitchShift, 0.05), now);
   softAttack(gain1, vol * 0.4, now);
-  gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.08 * decayMul);
   osc1.start(now);
-  osc1.stop(now + 0.09);
+  osc1.stop(now + 0.09 * decayMul);
 
   // 2) Sine 泛音（2倍频）
   const osc2 = ctx.createOscillator();
@@ -438,12 +438,21 @@ function synthGold(ctx: AudioContext, now: number, vol: number): void {
   osc2.type = 'sine';
   osc2.connect(gain2);
   connectToOutput(gain2);
-  osc2.frequency.setValueAtTime(randomize(2400, 0.05), now);
+  osc2.frequency.setValueAtTime(randomize(2400 * pitchShift, 0.05), now);
   softAttack(gain2, vol * 0.25, now);
-  gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+  gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.12 * decayMul);
   osc2.start(now);
-  osc2.stop(now + 0.13);
+  osc2.stop(now + 0.13 * decayMul);
 }
+
+/** 各资源的特征基频（用于泛音增厚层的真实谐波计算） */
+const RESOURCE_BASE_FREQ: Record<string, number> = {
+  base: 120,
+  score: 880,
+  multiplier: 200,
+  time: 2000,
+  gold: 1200,
+};
 
 /** 资源合成函数调度表 */
 export const RESOURCE_SYNTH: Record<string, ResourceSynth> = {
@@ -455,13 +464,15 @@ export const RESOURCE_SYNTH: Record<string, ResourceSynth> = {
 };
 
 // 和弦缓冲区：收集同一微任务内所有资源产出，合并播放
-const chordBuffer: Map<string, number> = new Map(); // resource → max intensity
+const chordBuffer: Map<string, { intensity: number; chainDepth: number }> = new Map();
 let chordScheduled = false;
 let lastChordTime = 0;
 
 const CHORD_COOLDOWN = 0.08;   // 80ms 硬冷却
 const CHORD_BASE_VOL = 0.12;   // 每音分量基础音量
 const CHORD_MAX_RMS = 0.20;    // RMS 总音量封顶
+const CHORD_STAGGER = 0.015;   // 15ms 连锁时间展开间隔
+const MAX_PITCH_SEMITONES = 6; // 最大音高偏移（增四度）
 
 /** 纯函数：计算 RMS 缩放后的各分量音量 */
 export function calculateRMSVolumes(rawVolumes: number[]): number[] {
@@ -474,10 +485,13 @@ export function calculateRMSVolumes(rawVolumes: number[]): number[] {
 }
 
 /** 缓冲资源音效：仅写缓冲，不立即发声 */
-export function emitResourceSound(resource: string, intensity: number): void {
+export function emitResourceSound(resource: string, intensity: number, chainDepth = 0): void {
   if (!(resource in RESOURCE_SYNTH)) return;
-  const prev = chordBuffer.get(resource) || 0;
-  chordBuffer.set(resource, Math.max(prev, intensity));
+  const prev = chordBuffer.get(resource);
+  chordBuffer.set(resource, {
+    intensity: Math.max(prev?.intensity ?? 0, intensity),
+    chainDepth: Math.max(prev?.chainDepth ?? 0, chainDepth),
+  });
   if (!chordScheduled) {
     chordScheduled = true;
     queueMicrotask(flushResourceChord);
@@ -504,20 +518,48 @@ function flushResourceChord(): void {
 
   // 收集各音分量音量
   const entries = Array.from(chordBuffer.entries());
-  const rawVolumes = entries.map(([, intensity]) =>
+  const rawVolumes = entries.map(([, { intensity }]) =>
     CHORD_BASE_VOL * Math.min(intensity, 2) * randomize(1, 0.08)
   );
 
   // RMS 缩放
   const volumes = calculateRMSVolumes(rawVolumes);
 
-  // 为每个资源调用独立合成函数
-  entries.forEach(([resource], i) => {
+  // 为每个资源调用独立合成函数（含连锁时间展开 + 音高偏移 + 强度调制）
+  entries.forEach(([resource, { intensity, chainDepth }], i) => {
     const synth = RESOURCE_SYNTH[resource];
-    if (synth) synth(ctx, now, volumes[i]);
+    if (!synth) return;
+
+    const clampedDepth = Math.min(chainDepth, MAX_PITCH_SEMITONES);
+    const stagger = clampedDepth * CHORD_STAGGER;
+    const pitchShift = 2 ** (clampedDepth / 12);
+    const decayMul = 1 + Math.log2(Math.max(intensity, 1)) * 0.3;
+
+    synth(ctx, now + stagger, volumes[i], pitchShift, decayMul);
+
+    // 高强度增厚：intensity ≥ 2.0 叠加 triangle 2 次谐波
+    if (intensity >= 2.0) {
+      const baseFreq = RESOURCE_BASE_FREQ[resource] ?? 440;
+      addHarmonicLayer(ctx, now + stagger, volumes[i] * 0.3, baseFreq, pitchShift, decayMul);
+    }
   });
 
   chordBuffer.clear();
+}
+
+/** 泛音增厚层：高 intensity 时叠加 triangle 谐波（2 次谐波 = 基频 × 2） */
+function addHarmonicLayer(ctx: AudioContext, now: number, vol: number, baseFreq: number, pitchShift: number, decayMul: number): void {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.connect(gain);
+  connectToOutput(gain);
+  osc.frequency.setValueAtTime(randomize(baseFreq * 2 * pitchShift, 0.05), now);
+  softAttack(gain, vol, now);
+  const decay = 0.15 * decayMul;
+  gain.gain.exponentialRampToValueAtTime(0.001, now + decay);
+  osc.start(now);
+  osc.stop(now + decay + 0.01);
 }
 
 // 测试辅助：暴露内部状态供测试验证

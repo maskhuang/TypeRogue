@@ -3,6 +3,7 @@
 // ============================================
 // Story 33.1: 和弦缓冲与合成器
 // Story 33.2: 资源独立音色设计
+// Story 33.3: 连锁深度与强度调制
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
@@ -205,14 +206,14 @@ describe('emitResourceSound 缓冲逻辑 (Task 4)', () => {
 
   it('写入缓冲区', () => {
     emitResourceSound('base', 1.5);
-    expect(_chordInternals.buffer.get('base')).toBe(1.5);
+    expect(_chordInternals.buffer.get('base')).toEqual({ intensity: 1.5, chainDepth: 0 });
   });
 
   it('同种资源多次 emit 取 max intensity', () => {
     emitResourceSound('base', 1.0);
     emitResourceSound('base', 2.5);
     emitResourceSound('base', 1.8);
-    expect(_chordInternals.buffer.get('base')).toBe(2.5);
+    expect(_chordInternals.buffer.get('base')).toEqual({ intensity: 2.5, chainDepth: 0 });
   });
 
   it('不同资源各自保留', () => {
@@ -220,9 +221,9 @@ describe('emitResourceSound 缓冲逻辑 (Task 4)', () => {
     emitResourceSound('score', 2.0);
     emitResourceSound('gold', 1.5);
     expect(_chordInternals.buffer.size).toBe(3);
-    expect(_chordInternals.buffer.get('base')).toBe(1.0);
-    expect(_chordInternals.buffer.get('score')).toBe(2.0);
-    expect(_chordInternals.buffer.get('gold')).toBe(1.5);
+    expect(_chordInternals.buffer.get('base')).toEqual({ intensity: 1.0, chainDepth: 0 });
+    expect(_chordInternals.buffer.get('score')).toEqual({ intensity: 2.0, chainDepth: 0 });
+    expect(_chordInternals.buffer.get('gold')).toEqual({ intensity: 1.5, chainDepth: 0 });
   });
 
   it('只调度一次 microtask', () => {
@@ -237,7 +238,7 @@ describe('emitResourceSound 缓冲逻辑 (Task 4)', () => {
   it('intensity=0 仍写入缓冲', () => {
     emitResourceSound('base', 0);
     expect(_chordInternals.buffer.has('base')).toBe(true);
-    expect(_chordInternals.buffer.get('base')).toBe(0);
+    expect(_chordInternals.buffer.get('base')).toEqual({ intensity: 0, chainDepth: 0 });
   });
 
   it('非映射资源（fragment/mutagen）不写入缓冲', () => {
@@ -380,5 +381,231 @@ describe('flushResourceChord 行为', () => {
     spyBase.mockRestore();
     spyScore.mockRestore();
     spyGold.mockRestore();
+  });
+
+  it('flush 传入正确的 pitchShift 和 decayMul (chainDepth=3, intensity=1.0)', async () => {
+    const mockCtx = createMockAudioContext(0.1);
+    _chordInternals._setMockContext(mockCtx as unknown as AudioContext);
+
+    const spyBase = vi.spyOn(RESOURCE_SYNTH, 'base');
+    emitResourceSound('base', 1.0, 3);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    expect(spyBase).toHaveBeenCalledTimes(1);
+    const args = spyBase.mock.calls[0];
+    // pitchShift = 2^(3/12) ≈ 1.189
+    expect(args[3]).toBeCloseTo(2 ** (3 / 12), 3);
+    // decayMul = 1 + log₂(max(1, 1)) * 0.3 = 1 (since log₂(1) = 0)
+    expect(args[4]).toBeCloseTo(1, 3);
+    // stagger: now + 3 * 0.015 = 0.1 + 0.045
+    expect(args[1]).toBeCloseTo(0.1 + 0.045, 3);
+
+    spyBase.mockRestore();
+  });
+});
+
+describe('chainDepth 缓冲逻辑 (Story 33.3 Task 1)', () => {
+  beforeEach(() => {
+    _chordInternals.buffer.clear();
+    _chordInternals.resetCooldown();
+  });
+
+  it('chainDepth 写入缓冲', () => {
+    emitResourceSound('base', 1.0, 3);
+    expect(_chordInternals.buffer.get('base')).toEqual({ intensity: 1.0, chainDepth: 3 });
+  });
+
+  it('同资源多次 emit 取 max chainDepth', () => {
+    emitResourceSound('base', 1.0, 1);
+    emitResourceSound('base', 1.5, 4);
+    emitResourceSound('base', 2.0, 2);
+    expect(_chordInternals.buffer.get('base')).toEqual({ intensity: 2.0, chainDepth: 4 });
+  });
+
+  it('默认 chainDepth=0', () => {
+    emitResourceSound('score', 1.0);
+    expect(_chordInternals.buffer.get('score')).toEqual({ intensity: 1.0, chainDepth: 0 });
+  });
+});
+
+describe('音高偏移 + 时间展开 (Story 33.3 Task 3)', () => {
+  let mockCtx: ReturnType<typeof createMockAudioContext>;
+
+  beforeEach(() => {
+    mockCtx = createMockAudioContext(1.0);
+    _chordInternals._setMockContext(mockCtx as unknown as AudioContext);
+    _chordInternals.buffer.clear();
+    _chordInternals.resetCooldown();
+  });
+
+  afterEach(() => {
+    _chordInternals._setMockContext(null);
+  });
+
+  it('chainDepth=0 时无偏移（pitchShift=1, stagger=0）', async () => {
+    const spy = vi.spyOn(RESOURCE_SYNTH, 'base');
+    emitResourceSound('base', 1.0, 0);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    const args = spy.mock.calls[0];
+    expect(args[1]).toBeCloseTo(1.0, 3); // now, no stagger
+    expect(args[3]).toBeCloseTo(1.0, 3); // pitchShift = 1
+    spy.mockRestore();
+  });
+
+  it('chainDepth=3 时频率上移 3 半音 + 延迟 45ms', async () => {
+    const spy = vi.spyOn(RESOURCE_SYNTH, 'score');
+    emitResourceSound('score', 1.0, 3);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    const args = spy.mock.calls[0];
+    // stagger = 3 * 0.015 = 0.045
+    expect(args[1]).toBeCloseTo(1.0 + 0.045, 3);
+    // pitchShift = 2^(3/12) ≈ 1.1892
+    expect(args[3]).toBeCloseTo(2 ** (3 / 12), 3);
+    spy.mockRestore();
+  });
+
+  it('chainDepth=8 被截断为 6（最大增四度）', async () => {
+    const spy = vi.spyOn(RESOURCE_SYNTH, 'gold');
+    emitResourceSound('gold', 1.0, 8);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    const args = spy.mock.calls[0];
+    // clamped to 6: stagger = 6 * 0.015 = 0.09
+    expect(args[1]).toBeCloseTo(1.0 + 0.09, 3);
+    // pitchShift = 2^(6/12) = sqrt(2) ≈ 1.4142
+    expect(args[3]).toBeCloseTo(Math.SQRT2, 3);
+    spy.mockRestore();
+  });
+});
+
+describe('ResourceSynth pitchShift / decayMul 扩展 (Story 33.3 Task 4)', () => {
+  let mockCtx: ReturnType<typeof createMockAudioContext>;
+
+  beforeEach(() => {
+    mockCtx = createMockAudioContext();
+    _chordInternals._setMockContext(mockCtx as unknown as AudioContext);
+  });
+
+  afterEach(() => {
+    _chordInternals._setMockContext(null);
+  });
+
+  it('pitchShift=1.5 使 synthBase 频率 ×1.5', () => {
+    RESOURCE_SYNTH.base(mockCtx as unknown as AudioContext, 0.1, 0.1, 1.5, 1);
+    // synthBase 起始频率 ~120 * 1.5 = 180 (±5%)
+    const freqStart = mockCtx.oscillators[0].frequency.setValueAtTime.mock.calls[0][0];
+    expect(freqStart).toBeGreaterThan(170);
+    expect(freqStart).toBeLessThan(190);
+  });
+
+  it('decayMul=2 延长 synthScore 的 stop 时间', () => {
+    RESOURCE_SYNTH.score(mockCtx as unknown as AudioContext, 0.1, 0.1, 1, 2);
+    // synthScore osc.stop(t + 0.07 * decayMul) = t + 0.14
+    // First oscillator: t = 0.1
+    const stopTime = mockCtx.oscillators[0].stop.mock.calls[0][0];
+    expect(stopTime).toBeCloseTo(0.1 + 0.14, 2);
+  });
+
+  it('默认 pitchShift=1, decayMul=1 不改变行为', () => {
+    RESOURCE_SYNTH.time(mockCtx as unknown as AudioContext, 0.1, 0.1);
+    // synthTime 频率 ~2000 (±5%)
+    const freq = mockCtx.oscillators[0].frequency.setValueAtTime.mock.calls[0][0];
+    expect(freq).toBeGreaterThan(1890);
+    expect(freq).toBeLessThan(2110);
+  });
+});
+
+describe('强度调制 — 泛音增厚 + 衰减延展 (Story 33.3 Task 5)', () => {
+  let mockCtx: ReturnType<typeof createMockAudioContext>;
+
+  beforeEach(() => {
+    mockCtx = createMockAudioContext(1.0);
+    _chordInternals._setMockContext(mockCtx as unknown as AudioContext);
+    _chordInternals.buffer.clear();
+    _chordInternals.resetCooldown();
+  });
+
+  afterEach(() => {
+    _chordInternals._setMockContext(null);
+  });
+
+  it('intensity=1.0 时不叠加泛音增厚层', async () => {
+    emitResourceSound('base', 1.0, 0);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    // synthBase 创建 1 oscillator + 1 bufferSource = 1 in oscillators[]
+    // No addHarmonicLayer called → no extra triangle oscillator
+    const triangleOscs = mockCtx.oscillators.filter((o: any) => o.type === 'triangle');
+    // synthBase 自身有 1 个 triangle
+    expect(triangleOscs).toHaveLength(1);
+  });
+
+  it('intensity=2.5 时叠加泛音增厚层（额外 triangle oscillator, 2 次谐波）', async () => {
+    emitResourceSound('base', 2.5, 0);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    // synthBase: 1 triangle + addHarmonicLayer: 1 triangle = 2 triangle total
+    const triangleOscs = mockCtx.oscillators.filter((o: any) => o.type === 'triangle');
+    expect(triangleOscs).toHaveLength(2);
+    // 增厚层频率 = base 基频 120Hz × 2 = 240Hz (±5%)
+    const harmonicFreq = triangleOscs[1].frequency.setValueAtTime.mock.calls[0][0];
+    expect(harmonicFreq).toBeGreaterThan(227);
+    expect(harmonicFreq).toBeLessThan(253);
+  });
+
+  it('decayMul 随 intensity 正确增长', async () => {
+    const spy = vi.spyOn(RESOURCE_SYNTH, 'score');
+
+    // intensity=4.0 → decayMul = 1 + log₂(4) * 0.3 = 1 + 2 * 0.3 = 1.6
+    emitResourceSound('score', 4.0, 0);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    const decayMul = spy.mock.calls[0][4];
+    expect(decayMul).toBeCloseTo(1.6, 2);
+
+    spy.mockRestore();
+  });
+
+  it('多资源不同 chainDepth 和弦：各自独立 stagger 和 pitchShift', async () => {
+    const spyBase = vi.spyOn(RESOURCE_SYNTH, 'base');
+    const spyScore = vi.spyOn(RESOURCE_SYNTH, 'score');
+    const spyGold = vi.spyOn(RESOURCE_SYNTH, 'gold');
+
+    emitResourceSound('base', 1.0, 0);
+    emitResourceSound('score', 1.0, 2);
+    emitResourceSound('gold', 1.0, 5);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    // base: depth=0, stagger=0, pitchShift=1
+    expect(spyBase.mock.calls[0][1]).toBeCloseTo(1.0, 3);
+    expect(spyBase.mock.calls[0][3]).toBeCloseTo(1.0, 3);
+
+    // score: depth=2, stagger=2*0.015=0.03, pitchShift=2^(2/12)
+    expect(spyScore.mock.calls[0][1]).toBeCloseTo(1.0 + 0.03, 3);
+    expect(spyScore.mock.calls[0][3]).toBeCloseTo(2 ** (2 / 12), 3);
+
+    // gold: depth=5, stagger=5*0.015=0.075, pitchShift=2^(5/12)
+    expect(spyGold.mock.calls[0][1]).toBeCloseTo(1.0 + 0.075, 3);
+    expect(spyGold.mock.calls[0][3]).toBeCloseTo(2 ** (5 / 12), 3);
+
+    spyBase.mockRestore();
+    spyScore.mockRestore();
+    spyGold.mockRestore();
+  });
+
+  it('intensity < 1 时 decayMul=1（log₂ 不产生负值）', async () => {
+    const spy = vi.spyOn(RESOURCE_SYNTH, 'time');
+
+    emitResourceSound('time', 0.5, 0);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    // max(0.5, 1) = 1 → log₂(1) = 0 → decayMul = 1
+    const decayMul = spy.mock.calls[0][4];
+    expect(decayMul).toBeCloseTo(1, 3);
+
+    spy.mockRestore();
   });
 });

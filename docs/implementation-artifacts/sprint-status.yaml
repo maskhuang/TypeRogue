@@ -312,7 +312,7 @@ development_status:
   epic-33: in-progress
   33-1-chord-buffer-synthesizer: done
   33-2-resource-distinct-sound-design: done
-  33-3-chain-depth-intensity-modulation: backlog
+  33-3-chain-depth-intensity-modulation: done
   33-4-mix-balance-extreme-cases: backlog
   33-5-bgm-drone-bass: backlog
   33-6-bgm-rhythm-pulse-typing: backlog

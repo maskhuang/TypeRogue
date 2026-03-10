@@ -57,6 +57,7 @@ function recordSkillTrigger(
 
 // 模块级：当前触发是否来自链式（由 triggerSkill 设置，triggerProducer/Converter 读取）
 let _isChainTrigger = false;
+let _currentChainDepth = 0;
 
 // T3 重触发遗物支持 (Story 29.1)
 let _retriggerRequested = false;
@@ -493,11 +494,11 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
     if (prod.operator === 'add') {
       const scale = getFloatScale(prod.resource, delta);
       showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color, scale);
-      emitResourceSound(prod.resource, scale);
+      emitResourceSound(prod.resource, scale, _currentChainDepth);
     } else {
       const scale = getFloatScaleMul(prod.resource, (value - 1) * totalMult);
       showFeedback(`×${displayValue}`, color, scale);
-      emitResourceSound(prod.resource, scale);
+      emitResourceSound(prod.resource, scale, _currentChainDepth);
     }
   }
   if (enchMult > 1) {
@@ -605,11 +606,11 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
     if (conv.formula === 'add') {
       const scale = getFloatScale(conv.target, delta);
       showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color, scale);
-      emitResourceSound(conv.target, scale);
+      emitResourceSound(conv.target, scale, _currentChainDepth);
     } else {
       const scale = getFloatScaleMul(conv.target, sourceVal * amplifiedK * totalMult);
       showFeedback(`×${parseFloat((1 + sourceVal * amplifiedK).toPrecision(4))}`, color, scale);
-      emitResourceSound(conv.target, scale);
+      emitResourceSound(conv.target, scale, _currentChainDepth);
     }
   }
   if (enchMult > 1) {
@@ -1134,6 +1135,7 @@ export function triggerAmplifier(ampId: string, triggerKey: string): void {
 export function triggerSkill(skillId: string, triggerKey: string, chainHistory?: string[]): void {
   const chain = chainHistory || [triggerKey];
   _isChainTrigger = chain.length > 1;
+  _currentChainDepth = chain.length - 1;
   _currentTriggerKey = triggerKey;
   _retriggerRequested = false;
 
