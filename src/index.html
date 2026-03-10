@@ -4,9 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>打字肉鸽</title>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="6f08e4cb-8e09-4e18-b0c5-616450decc42"></script>
 </head>
 <body>
     <div id="game-container">
+        <!-- Language Toggle (所有版本可用) -->
+        <div id="lang-toggle" class="lang-toggle">
+            <button class="lang-btn" data-lang="zh">中</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+
         <!-- === BATTLE SCREEN === -->
         <div id="battle-screen" class="screen">
             <!-- 顶部信息栏 -->
@@ -23,14 +30,14 @@
                 </div>
                 <div id="fragment-hud" class="class-resource-hud" style="display:none;">
                     <span class="class-resource-icon">🔤</span>
-                    <span class="class-resource-produced-label">本关产出</span>
+                    <span class="class-resource-produced-label" data-i18n="hud.produced">本关产出</span>
                     <span id="fragment-produced" class="class-resource-produced-value">0</span>
                 </div>
                 <div id="mutagen-hud" class="class-resource-hud" style="display:none;">
                     <span class="class-resource-icon">🧬</span>
                     <span id="mutagen-count">0</span>
                     <span class="class-resource-separator">·</span>
-                    <span class="class-resource-produced-label">本关产出</span>
+                    <span class="class-resource-produced-label" data-i18n="hud.produced">本关产出</span>
                     <span id="mutagen-produced" class="class-resource-produced-value">0</span>
                 </div>
                 <div id="timer-section">
@@ -47,7 +54,7 @@
                     <span id="target-score">100</span>
                 </div>
                 <div id="multiplier-section">
-                    <span class="mult-label">倍率</span>
+                    <span class="mult-label" data-i18n="hud.multiplier">倍率</span>
                     <span id="multiplier-display">1.0</span>
                     <span class="mult-x">×</span>
                 </div>
@@ -74,11 +81,11 @@
         <!-- === SHOP SCREEN === -->
         <div id="shop-screen" class="screen">
             <div id="shop-header">
-                <div id="shop-title">商店</div>
+                <div id="shop-title" data-i18n="shop.title">商店</div>
                 <div id="shop-result">
-                    Level <span id="shop-level-num">1</span> 完成!
+                    <span data-i18n="shop.level_clear">完成!</span> Level <span id="shop-level-num">1</span>
                     <span class="result-detail">
-                        得分: <span id="shop-score">0</span> / <span id="shop-target">100</span>
+                        <span data-i18n="shop.score_label">得分:</span> <span id="shop-score">0</span> / <span id="shop-target">100</span>
                     </span>
                 </div>
             </div>
@@ -96,16 +103,16 @@
                 <!-- Right: Build Manager -->
                 <div id="shop-build">
                     <div class="shop-section-title">
-                        <span id="build-tab" class="build-tab active">构筑</span>
-                        <span id="stats-tab" class="build-tab">📊 统计</span>
-                        <span id="words-tab" class="build-tab">📚 词库</span>
-                        <span id="craft-tab" class="build-tab" style="display:none;">🔤 造词台</span>
-                        <span id="metamorph-tab" class="build-tab" style="display:none;">🧬 蜕变台</span>
+                        <span id="build-tab" class="build-tab active" data-i18n="shop.tab.build">构筑</span>
+                        <span id="stats-tab" class="build-tab" data-i18n="shop.tab.stats">📊 统计</span>
+                        <span id="words-tab" class="build-tab" data-i18n="shop.tab.words">📚 词库</span>
+                        <span id="craft-tab" class="build-tab" style="display:none;" data-i18n="shop.tab.craft">🔤 造词台</span>
+                        <span id="metamorph-tab" class="build-tab" style="display:none;" data-i18n="shop.tab.metamorph">🧬 蜕变台</span>
                     </div>
                     <div id="stats-panel" style="display:none;"></div>
                     <div id="word-panel" style="display:none;">
                         <div class="word-panel-header">
-                            <span class="inventory-label">词库 <span id="word-count"></span></span>
+                            <span class="inventory-label"><span data-i18n="shop.word_inventory">词库</span> <span id="word-count"></span></span>
                         </div>
                         <div id="owned-words"></div>
                     </div>
@@ -114,23 +121,23 @@
                     <div id="build-manager">
                         <div id="bound-grid"></div>
                         <div id="skill-inventory">
-                            <div class="inventory-label">已拥有技能</div>
+                            <div class="inventory-label" data-i18n="shop.owned_skills">已拥有技能</div>
                             <div id="owned-skills"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="sell-zone">🗑️ 拖到此处出售</div>
+            <div id="sell-zone" data-i18n="shop.sell_zone">🗑️ 拖到此处出售</div>
             <div id="shop-footer">
-                <button id="start-battle-btn">开始下一关</button>
+                <button id="start-battle-btn" data-i18n="shop.next_battle">开始下一关</button>
             </div>
         </div>
 
         <!-- === REST SCREEN === -->
         <div id="rest-screen" class="screen">
             <div class="rest-header">
-                <div class="rest-title">休息关</div>
+                <div class="rest-title" data-i18n="rest.title">休息关</div>
                 <div class="rest-act-label" id="rest-act-label"></div>
             </div>
             <div class="rest-event" id="rest-event">
@@ -141,7 +148,7 @@
             <div class="rest-options" id="rest-options"></div>
             <div class="rest-result rest-result-hidden" id="rest-result">
                 <div class="result-text" id="rest-result-text"></div>
-                <button class="rest-continue-btn" id="rest-continue-btn">继续旅程</button>
+                <button class="rest-continue-btn" id="rest-continue-btn" data-i18n="rest.continue">继续旅程</button>
             </div>
         </div>
 
@@ -151,8 +158,8 @@
                 <div id="gameover-title">GAME OVER</div>
                 <div id="gameover-stats"></div>
                 <div id="gameover-leaderboard" class="gameover-leaderboard"></div>
-                <button class="restart-btn" id="restart-btn">再来一局</button>
-                <button class="restart-btn daily-btn" id="daily-btn">📅 每日挑战</button>
+                <button class="restart-btn" id="restart-btn" data-i18n="gameover.restart">再来一局</button>
+                <button class="restart-btn daily-btn" id="daily-btn" data-i18n="gameover.daily">📅 每日挑战</button>
             </div>
         </div>
 
@@ -160,9 +167,9 @@
         <div id="class-select-modal" class="class-select-hidden">
             <div class="class-select-overlay"></div>
             <div class="class-select-content">
-                <div class="class-select-title">⚔️ 选择职业 ⚔️</div>
+                <div class="class-select-title" data-i18n="class_select.title">⚔️ 选择职业 ⚔️</div>
                 <div class="class-select-cards" id="class-select-cards"></div>
-                <button class="class-select-confirm class-select-confirm-hidden" id="class-select-confirm">确认选择</button>
+                <button class="class-select-confirm class-select-confirm-hidden" id="class-select-confirm" data-i18n="class_select.confirm">确认选择</button>
             </div>
         </div>
 
@@ -170,9 +177,9 @@
         <div id="relic-picker-modal" class="relic-picker-hidden">
             <div class="relic-picker-overlay"></div>
             <div class="relic-picker-content">
-                <div class="relic-picker-title">🏺 选择一件遗物 🏺</div>
+                <div class="relic-picker-title" data-i18n="relic_picker.title">🏺 选择一件遗物 🏺</div>
                 <div class="relic-picker-cards" id="relic-picker-cards"></div>
-                <button class="relic-picker-skip" id="relic-picker-skip">跳过</button>
+                <button class="relic-picker-skip" id="relic-picker-skip" data-i18n="relic_picker.skip">跳过</button>
             </div>
         </div>
 
@@ -180,7 +187,7 @@
         <div id="modifier-picker-modal" class="modifier-picker-hidden">
             <div class="modifier-picker-overlay"></div>
             <div class="modifier-picker-content">
-                <div class="modifier-picker-title">⚔️ 选择一个 Boss 修饰器 ⚔️</div>
+                <div class="modifier-picker-title" data-i18n="modifier_picker.title">⚔️ 选择一个 Boss 修饰器 ⚔️</div>
                 <div class="modifier-picker-active" id="modifier-picker-active"></div>
                 <div class="modifier-picker-cards" id="modifier-picker-cards"></div>
             </div>
@@ -190,9 +197,9 @@
         <div id="enchantment-modal" class="enchantment-hidden">
             <div class="enchantment-overlay"></div>
             <div class="enchantment-content">
-                <div class="enchantment-title" id="enchantment-title">⚡ 技能附魔 ⚡</div>
+                <div class="enchantment-title" id="enchantment-title" data-i18n="enchantment.title">⚡ 技能附魔 ⚡</div>
                 <div class="enchantment-branches" id="enchantment-branches"></div>
-                <button class="enchantment-cancel" id="enchantment-cancel">取消</button>
+                <button class="enchantment-cancel" id="enchantment-cancel" data-i18n="enchantment.cancel">取消</button>
             </div>
         </div>
 
@@ -203,13 +210,13 @@
         <div id="score-settlement" class="settlement-hidden">
             <div class="settlement-panel">
                 <div class="settlement-chips">
-                    <span class="settlement-label">基数</span>
+                    <span class="settlement-label" data-i18n="settlement.base">基数</span>
                     <span class="settlement-value" id="settlement-chips">0</span>
                 </div>
                 <div class="settlement-mult">
                     <span class="settlement-symbol">×</span>
                     <div class="settlement-mult-box">
-                        <span class="settlement-label">倍率</span>
+                        <span class="settlement-label" data-i18n="settlement.mult">倍率</span>
                         <span class="settlement-value" id="settlement-mult">1.0</span>
                     </div>
                 </div>
@@ -225,15 +232,15 @@
             <div class="gold-reward-panel">
                 <div class="gold-reward-title">LEVEL CLEAR!</div>
                 <div class="gold-reward-row" id="gold-base-row">
-                    <span class="gold-reward-label">基础</span>
+                    <span class="gold-reward-label" data-i18n="gold_reward.base">基础</span>
                     <span class="gold-reward-value">100</span>
                 </div>
                 <div class="gold-reward-row" id="gold-skill-row" style="display:none">
-                    <span class="gold-reward-label">技能产出</span>
+                    <span class="gold-reward-label" data-i18n="gold_reward.skill">技能产出</span>
                     <span class="gold-reward-value" id="gold-skill">+0</span>
                 </div>
                 <div class="gold-reward-row gold-treasure-row" style="display:none">
-                    <span class="gold-reward-label">遗物加成</span>
+                    <span class="gold-reward-label" data-i18n="gold_reward.relic">遗物加成</span>
                     <span class="gold-reward-value gold-treasure" id="gold-treasure">+15</span>
                 </div>
                 <div class="gold-reward-total">
@@ -242,6 +249,19 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Demo Start Overlay (仅 Demo 构建时显示，完整版 main.ts 中 IS_DEMO=false 不会使用) -->
+    <div id="demo-start-overlay" class="demo-overlay">
+      <div class="demo-start-content">
+        <div id="demo-lang-toggle" class="demo-lang-toggle">
+          <button class="demo-lang-btn" data-lang="zh">中文</button>
+          <button class="demo-lang-btn active" data-lang="en">EN</button>
+        </div>
+        <h1 data-i18n="game.title">打字肉鸽</h1>
+        <p data-i18n="demo.subtitle">用你的键盘构建得分引擎</p>
+        <button class="demo-start-btn" data-i18n="demo.start">开始试玩</button>
+      </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

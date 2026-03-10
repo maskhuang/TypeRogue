@@ -221,7 +221,7 @@ describe('热力图维度选择器 (21.5 AC4)', () => {
     const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
     const content = fs.readFileSync(shopPath, 'utf-8')
     expect(content).toContain("key: 'triggerCount'")
-    expect(content).toContain("label: '触发数'")
+    expect(content).toContain("label: t('shop.heatmap.triggers')")
     // 6 resources via RESOURCE_LABELS mapping
     expect(content).toContain('RESOURCE_LABELS[r]')
     expect(content).toContain('RESOURCE_COLORS[r]')

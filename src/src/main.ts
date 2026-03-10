@@ -20,6 +20,14 @@ import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode } from '
 import { showClassPicker } from './systems/classes/ClassPicker';
 import { filterSkillIdsByClass } from './systems/classes/ClassResourceFilter';
 import { saveManager } from './core/save/SaveManager';
+import {
+  IS_DEMO, DEMO_STARTER_SKILLS, DEMO_CONVERTER_IDS,
+  DEMO_STARTER_RELIC, DEMO_ELITE_MODIFIER
+} from './demo/demo-config';
+import { cleanDemoDom, installDemoErrorBoundary, checkWebGLSupport, showWebGLError } from './demo/demo-dom-cleanup';
+import { trackEvent } from './demo/demo-analytics';
+import { initLocale, setLocale, getLocale, applyHtmlI18n } from './demo/demo-i18n';
+import type { Locale } from './demo/demo-i18n';
 
 // === 游戏初始化 ===
 async function init(): Promise<void> {
@@ -28,18 +36,60 @@ async function init(): Promise<void> {
   // 初始化 UI 元素引用
   initElements();
 
-  // 初始技能
-  state.player.skills.set('prod_burst', { level: 1 });
-  state.player.bindings.set('f', 'prod_burst');
-
-  // 初始金币
-  state.gold = 50;
+  // Demo: 移除完整版多余 DOM 节点
+  cleanDemoDom();
 
   // 初始化输入处理
   initInput();
 
   // 初始化商店事件
   initShopEvents();
+
+  if (IS_DEMO) {
+    // === Demo 模式：精简初始化 ===
+
+    // 预设技能绑定
+    for (const { skillId, key } of DEMO_STARTER_SKILLS) {
+      state.player.skills.set(skillId, { level: 1 });
+      state.player.bindings.set(key, skillId);
+    }
+    state.gold = 75;
+
+    // 赠送开局遗物
+    state.player.relics.add(DEMO_STARTER_RELIC);
+
+    // 固定技能池
+    state.converterPool = [...DEMO_CONVERTER_IDS];
+    state.connectorPool = [];
+    state.replicatorPool = [];
+    state.amplifierPool = [];
+
+    // 精英关使用单个视觉 modifier
+    state.bossModifierPool = [DEMO_ELITE_MODIFIER];
+
+    // 跳过职业选择
+    state.classId = 'none';
+    state.gameMode = 'normal';
+    state.dailySeed = null;
+
+    // 初始词库
+    state.player.wordDeck = getStarterWords();
+
+    // 直接开始
+    resetLastAct();
+    state.level = 1;
+    void startLevel();
+    return;
+  }
+
+  // === 完整版流程 ===
+
+  // 初始技能
+  state.player.skills.set('prod_burst', { level: 1 });
+  state.player.bindings.set('f', 'prod_burst');
+
+  // 初始金币
+  state.gold = 50;
 
   // Story 25.5: 初始化 MetaState（排行榜 + 统计）
   const metaState = new MetaState();
@@ -144,8 +194,70 @@ async function init(): Promise<void> {
 }
 
 // === 启动 ===
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => void init());
+if (IS_DEMO) {
+  // Demo: 初始化 i18n + 应用 HTML 翻译
+  initLocale();
+  applyHtmlI18n();
+
+  // Demo: 语言切换按钮
+  const langBtns = document.querySelectorAll('.demo-lang-btn');
+  // 初始化高亮状态
+  langBtns.forEach(btn => {
+    const lang = (btn as HTMLElement).dataset.lang;
+    btn.classList.toggle('active', lang === getLocale());
+  });
+  langBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const lang = (btn as HTMLElement).dataset.lang as Locale;
+      setLocale(lang);
+      langBtns.forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.lang === lang));
+      applyHtmlI18n();
+    });
+  });
+
+  // Demo: 安装错误边界，等待用户手势启动
+  installDemoErrorBoundary();
+  const overlay = document.getElementById('demo-start-overlay');
+  if (overlay) {
+    const startBtn = overlay.querySelector('.demo-start-btn');
+    (startBtn || overlay).addEventListener('click', () => {
+      if (!checkWebGLSupport()) {
+        overlay.remove();
+        showWebGLError();
+        return;
+      }
+      overlay.remove();
+      trackEvent('demo_start');
+      void init();
+    }, { once: true });
+  } else {
+    void init();
+  }
 } else {
-  void init();
+  // 完整版：移除 demo overlay，初始化 i18n
+  document.getElementById('demo-start-overlay')?.remove();
+  initLocale();
+  applyHtmlI18n();
+
+  // 语言切换按钮
+  const langBtns = document.querySelectorAll('#lang-toggle .lang-btn');
+  langBtns.forEach(btn => {
+    const lang = (btn as HTMLElement).dataset.lang;
+    btn.classList.toggle('active', lang === getLocale());
+  });
+  langBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = (btn as HTMLElement).dataset.lang as Locale;
+      setLocale(lang);
+      langBtns.forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.lang === lang));
+      applyHtmlI18n();
+    });
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => void init());
+  } else {
+    void init();
+  }
 }

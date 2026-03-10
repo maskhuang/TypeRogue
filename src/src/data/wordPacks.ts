@@ -5,6 +5,7 @@
 import { WORD_POOL } from './words';
 import type { PackCondition, WordPack } from '../core/types';
 import { random } from '../core/seededRandom';
+import { t } from '../demo/demo-i18n';
 
 // === 全量词汇缓存（惰性初始化） ===
 let _allWords: string[] | null = null;
@@ -134,25 +135,25 @@ export function getConditionMeta(condition: PackCondition): ConditionMeta {
 
   switch (condition.type) {
     case 'starts_with':
-      return { name: `${letter}开头`, desc: `以${letter}开头的词`, icon: '🔤' };
+      return { name: t('pack.starts_with', { letter }), desc: t('pack.starts_with.desc', { letter }), icon: '🔤' };
     case 'ends_with':
-      return { name: `${letter}结尾`, desc: `以${letter}结尾的词`, icon: '🔠' };
+      return { name: t('pack.ends_with', { letter }), desc: t('pack.ends_with.desc', { letter }), icon: '🔠' };
     case 'contains':
-      return { name: `含${letter}`, desc: `包含字母${letter}的词`, icon: '🔍' };
+      return { name: t('pack.contains', { letter }), desc: t('pack.contains.desc', { letter }), icon: '🔍' };
     case 'contains_owned':
-      return { name: '强化词包', desc: '包含你的高频字母的词', icon: '💪' };
+      return { name: t('pack.contains_owned'), desc: t('pack.contains_owned.desc'), icon: '💪' };
     case 'contains_unowned':
-      return { name: '探索词包', desc: '包含你的低频字母的词', icon: '🗺️' };
+      return { name: t('pack.contains_unowned'), desc: t('pack.contains_unowned.desc'), icon: '🗺️' };
     case 'short':
-      return { name: '短词精选', desc: '2-3字母的短词', icon: '⚡' };
+      return { name: t('pack.short'), desc: t('pack.short.desc'), icon: '⚡' };
     case 'long':
-      return { name: '长词挑战', desc: '7+字母的长词', icon: '📏' };
+      return { name: t('pack.long'), desc: t('pack.long.desc'), icon: '📏' };
     case 'special':
-      return { name: '奇幻词包', desc: '特殊主题词', icon: '✨' };
+      return { name: t('pack.special'), desc: t('pack.special.desc'), icon: '✨' };
     case 'high_freq':
-      return { name: `${letter}高频`, desc: `高频${letter}字母词`, icon: '🎯' };
+      return { name: t('pack.high_freq', { letter }), desc: t('pack.high_freq.desc', { letter }), icon: '🎯' };
     default:
-      return { name: '未知', desc: '', icon: '❓' };
+      return { name: t('pack.unknown'), desc: '', icon: '❓' };
   }
 }
 

@@ -64,7 +64,7 @@ function playTypeSound(): void {
   playKickPulse();
 }
 
-// === BGM Kick 脉冲 — 打字驱动低频心跳 ===
+// === BGM Kick 脉冲 — 柔化 triangle 心跳 ===
 
 let kickOsc: OscillatorNode | null = null;
 
@@ -75,31 +75,30 @@ function playKickPulse(): void {
 
   const ctx = audioContext;
   const t = ctx.currentTime;
-  const vol = Math.min(0.01, combo * 0.001); // combo 10+ → 0.01 封顶
+  const vol = Math.min(0.007, combo * 0.001); // combo 7+ → 0.007 封顶
 
   // 防叠加：停掉上一个 kick
-  // try/catch: stop() 已被调度过时再次调用会抛 InvalidStateError
   if (kickOsc) {
     try { kickOsc.stop(); } catch (_) { /* already stopped */ }
     kickOsc = null;
   }
 
-  // 合成 kick：sine 80→40Hz 下滑 + 20ms 衰减
+  // 合成 kick：triangle 60→35Hz 下滑 + 30ms 衰减
   kickOsc = ctx.createOscillator();
   const gain = ctx.createGain();
-  kickOsc.type = 'sine';
-  kickOsc.frequency.setValueAtTime(80, t);
-  kickOsc.frequency.exponentialRampToValueAtTime(40, t + 0.02);
+  kickOsc.type = 'triangle';
+  kickOsc.frequency.setValueAtTime(60, t);
+  kickOsc.frequency.exponentialRampToValueAtTime(35, t + 0.03);
   gain.gain.setValueAtTime(vol, t);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
   kickOsc.connect(gain);
   connectToOutput(gain);
   kickOsc.start(t);
-  kickOsc.stop(t + 0.025);
+  kickOsc.stop(t + 0.035);
 
   // 播放完毕后清空引用
   const osc = kickOsc;
-  setTimeout(() => { if (kickOsc === osc) kickOsc = null; }, 30);
+  setTimeout(() => { if (kickOsc === osc) kickOsc = null; }, 40);
 }
 
 // === 随机化工具：每次播放微小随机偏移，避免完全相同的重复 ===
@@ -208,6 +207,7 @@ export function initAudio(): void {
   if (!audioContext) {
     audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     initReverb(audioContext);
+    loadAllBGM().catch(() => {}); // fire-and-forget 预加载
   }
 }
 
@@ -611,170 +611,143 @@ function addHarmonicLayer(ctx: AudioContext, now: number, vol: number, baseFreq:
   osc.stop(now + decay + 0.01);
 }
 
-// === BGM Drone 持续低音 ===
+// === BGM 多轨播放层 ===
+// AudioBufferSourceNode (loop) → BiquadFilter (lowpass) → GainNode → connectToOutput
 
-let droneOsc1: OscillatorNode | null = null;
-let droneOsc2: OscillatorNode | null = null;
-let droneGain1: GainNode | null = null;
-let droneGain2: GainNode | null = null;
+export type BgmTrack = 'battle' | 'chill';
 
-/** 启动 BGM drone — C2 基音 + C3 泛音层 */
-export function startBGM(): void {
-  if (!audioContext || droneOsc1) return;
-  const ctx = audioContext;
-  const now = ctx.currentTime;
-
-  // C2 基音层 (65.41Hz)
-  droneOsc1 = ctx.createOscillator();
-  droneGain1 = ctx.createGain();
-  droneOsc1.type = 'sine';
-  droneOsc1.frequency.setValueAtTime(65.41, now);
-  droneGain1.gain.setValueAtTime(0.015, now);
-  droneOsc1.connect(droneGain1);
-  connectToOutput(droneGain1);
-  droneOsc1.start(now);
-
-  // C3 泛音层 (130.81Hz)
-  droneOsc2 = ctx.createOscillator();
-  droneGain2 = ctx.createGain();
-  droneOsc2.type = 'sine';
-  droneOsc2.frequency.setValueAtTime(130.81, now);
-  droneGain2.gain.setValueAtTime(0.008, now);
-  droneOsc2.connect(droneGain2);
-  connectToOutput(droneGain2);
-  droneOsc2.start(now);
-}
-
-/** 停止 BGM drone — 500ms fadeout */
-export function stopBGM(): void {
-  if (!audioContext || !droneOsc1) return;
-  const now = audioContext.currentTime;
-
-  droneGain1!.gain.linearRampToValueAtTime(0, now + 0.5);
-  droneGain2!.gain.linearRampToValueAtTime(0, now + 0.5);
-  droneOsc1.stop(now + 0.55);
-  droneOsc2!.stop(now + 0.55);
-
-  droneOsc1 = droneOsc2 = null;
-  droneGain1 = droneGain2 = null;
-}
-
-// === BGM 张力层 — 战局状态驱动不协和音 ===
-
-let tensionLevel = 0;
-let tensionOsc: OscillatorNode | null = null;
-let tensionGain: GainNode | null = null;
-let tremoloOsc: OscillatorNode | null = null;
-let tremoloGain: GainNode | null = null;
-
-const TENSION_FREQS: Record<number, number> = {
-  2: 116.54,  // Bb2 — 小七度
-  3: 92.50,   // F#2 — 增四度/三全音
+const BGM_TRACKS: Record<BgmTrack, { url: string; baseVol: number; baseLPF: number }> = {
+  battle: { url: import.meta.env.BASE_URL + 'audio/bgm.mp3',       baseVol: 0.15, baseLPF: 800 },
+  chill:  { url: import.meta.env.BASE_URL + 'audio/bgm-chill.mp3', baseVol: 0.18, baseLPF: 20000 },
 };
 
-/** 更新 BGM 张力层级 (0-4) */
-export function updateBGMTension(level: number): void {
-  if (level === tensionLevel) return; // 幂等
-  if (!audioContext || !droneOsc1) {
-    tensionLevel = level;
-    return; // drone 未启动，仅记录
-  }
+const bgmBuffers: Map<BgmTrack, AudioBuffer> = new Map();
+let currentTrack: BgmTrack | null = null;
+let bgmSource: AudioBufferSourceNode | null = null;
+let bgmLPF: BiquadFilterNode | null = null;
+let bgmGain: GainNode | null = null;
+
+/** 并行预加载所有 BGM 曲目 */
+async function loadAllBGM(): Promise<void> {
+  if (!audioContext) return;
+  const ctx = audioContext;
+  const tasks = (Object.entries(BGM_TRACKS) as [BgmTrack, typeof BGM_TRACKS[BgmTrack]][])
+    .filter(([key]) => !bgmBuffers.has(key))
+    .map(async ([key, { url }]) => {
+      const resp = await fetch(url);
+      const arrayBuf = await resp.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(arrayBuf);
+      bgmBuffers.set(key, decoded);
+    });
+  await Promise.all(tasks);
+}
+
+/** 启动/切换 BGM — 异曲交叉淡化，同曲幂等 */
+export async function startBGM(track: BgmTrack): Promise<void> {
+  if (!audioContext) return;
+  if (currentTrack === track && bgmSource) return; // 幂等
 
   const ctx = audioContext;
   const now = ctx.currentTime;
-  const prevLevel = tensionLevel;
-  tensionLevel = level;
 
-  // 清除旧张力音（500ms fadeout）
-  if (tensionOsc && (level <= 1 || TENSION_FREQS[level] !== TENSION_FREQS[prevLevel])) {
-    tensionGain!.gain.linearRampToValueAtTime(0, now + 0.5);
-    tensionOsc.stop(now + 0.55);
-    tensionOsc = tensionGain = null;
+  // 旧曲淡出
+  if (bgmSource) {
+    bgmGain!.gain.linearRampToValueAtTime(0, now + 0.5);
+    bgmSource.stop(now + 0.55);
+    bgmSource = null;
+    bgmLPF = null;
+    bgmGain = null;
   }
 
-  // 清除 tremolo（从 level 4 退出时）
-  if (tremoloOsc && level < 4) {
-    tremoloOsc.stop(now + 0.5);
-    tremoloOsc = tremoloGain = null;
-  }
+  await loadAllBGM();
+  const buffer = bgmBuffers.get(track);
+  if (!buffer || !audioContext) return;
 
-  // Level 2/3: 创建张力音
-  if (level >= 2 && level <= 3 && !tensionOsc) {
-    const freq = TENSION_FREQS[level] ?? 116.54;
-    const vol = level === 3 ? 0.012 : 0.01;
-    tensionOsc = ctx.createOscillator();
-    tensionGain = ctx.createGain();
-    tensionOsc.type = 'sine';
-    tensionOsc.frequency.setValueAtTime(freq, now);
-    tensionGain.gain.setValueAtTime(0, now);
-    tensionGain.gain.linearRampToValueAtTime(vol, now + 0.5); // 500ms 渐入
-    tensionOsc.connect(tensionGain);
-    connectToOutput(tensionGain);
-    tensionOsc.start(now);
-  }
+  const cfg = BGM_TRACKS[track];
+  const now2 = audioContext.currentTime;
 
-  // Level 3: drone 基音升至 C3
-  if (level === 3) {
-    droneOsc1!.frequency.exponentialRampToValueAtTime(130.81, now + 0.5);
-  } else if (prevLevel >= 3 && level < 3) {
-    droneOsc1!.frequency.exponentialRampToValueAtTime(65.41, now + 0.5);
-  }
+  bgmLPF = ctx.createBiquadFilter();
+  bgmLPF.type = 'lowpass';
+  bgmLPF.frequency.setValueAtTime(cfg.baseLPF, now2);
 
-  // Level 4: 叠加 tremolo + 张力音 ×1.5
-  if (level === 4) {
-    // 确保 F#2 张力音存在
-    if (!tensionOsc) {
-      const freq = TENSION_FREQS[3]; // F#2
-      tensionOsc = ctx.createOscillator();
-      tensionGain = ctx.createGain();
-      tensionOsc.type = 'sine';
-      tensionOsc.frequency.setValueAtTime(freq, now);
-      tensionGain.gain.setValueAtTime(0, now);
-      tensionGain.gain.linearRampToValueAtTime(0.018, now + 0.5); // 0.012 × 1.5
-      tensionOsc.connect(tensionGain);
-      connectToOutput(tensionGain);
-      tensionOsc.start(now);
-    } else {
-      tensionGain!.gain.linearRampToValueAtTime(0.018, now + 0.5);
-    }
+  bgmGain = ctx.createGain();
+  bgmGain.gain.setValueAtTime(0, now2);
+  bgmGain.gain.linearRampToValueAtTime(cfg.baseVol, now2 + 0.5); // 500ms 淡入
 
-    // Tremolo LFO: 8Hz sine → 调制 drone 音量
-    if (!tremoloOsc) {
-      tremoloOsc = ctx.createOscillator();
-      tremoloGain = ctx.createGain();
-      tremoloOsc.type = 'sine';
-      tremoloOsc.frequency.setValueAtTime(8, now);
-      tremoloGain.gain.setValueAtTime(0.5, now); // 振幅 ±0.5
-      tremoloOsc.connect(tremoloGain);
-      tremoloGain.connect(droneGain1!.gain); // 调制 AudioParam
-      tremoloOsc.start(now);
-    }
+  bgmSource = ctx.createBufferSource();
+  bgmSource.buffer = buffer;
+  bgmSource.loop = true;
 
-    // drone 基音也需升至 C3（若从 level 2 直接跳到 4）
-    droneOsc1!.frequency.exponentialRampToValueAtTime(130.81, now + 0.5);
-  }
+  bgmSource.connect(bgmLPF);
+  bgmLPF.connect(bgmGain);
+  connectToOutput(bgmGain);
+  const offset = Math.random() * buffer.duration;
+  bgmSource.start(now2, offset);
+
+  currentTrack = track;
+  tensionLevel = 0;
 }
 
-/** 释放张力层 — 通关/结算时 200ms 快速 fadeout */
-export function releaseBGMTension(): void {
-  if (!audioContext) return;
+/** 停止 BGM — 500ms fadeout */
+export function stopBGM(): void {
+  if (!audioContext || !bgmSource) return;
   const now = audioContext.currentTime;
 
-  if (tensionOsc) {
-    tensionGain!.gain.linearRampToValueAtTime(0, now + 0.2);
-    tensionOsc.stop(now + 0.25);
-    tensionOsc = tensionGain = null;
+  bgmGain!.gain.linearRampToValueAtTime(0, now + 0.5);
+  bgmSource.stop(now + 0.55);
+
+  bgmSource = null;
+  bgmLPF = null;
+  bgmGain = null;
+  currentTrack = null;
+}
+
+// === BGM 张力系统 — LPF + 音量驱动 ===
+
+let tensionLevel = 0;
+
+interface TensionParams {
+  lpfCutoff: number;
+  padVol: number;
+  rampTime: number;
+}
+
+const TENSION_TABLE: Record<number, TensionParams> = {
+  0: { lpfCutoff: 800,  padVol: 0.15, rampTime: 0.8 },
+  1: { lpfCutoff: 800,  padVol: 0.15, rampTime: 0.8 },
+  2: { lpfCutoff: 2000, padVol: 0.20, rampTime: 0.8 },
+  3: { lpfCutoff: 4000, padVol: 0.25, rampTime: 0.6 },
+  4: { lpfCutoff: 6000, padVol: 0.30, rampTime: 0.4 },
+};
+
+/** 更新 BGM 张力层级 (0-4) — 调整 LPF 截止频率 + 音量 */
+export function updateBGMTension(level: number): void {
+  if (currentTrack !== 'battle') return; // 张力仅对战斗曲生效
+  if (level === tensionLevel) return;
+  if (!audioContext || !bgmSource) {
+    tensionLevel = level;
+    return;
   }
 
-  if (tremoloOsc) {
-    tremoloOsc.stop(now + 0.2);
-    tremoloOsc = tremoloGain = null;
-  }
+  const now = audioContext.currentTime;
+  tensionLevel = level;
 
-  // 恢复 drone 基音至 C2
-  if (droneOsc1) {
-    droneOsc1.frequency.exponentialRampToValueAtTime(65.41, now + 0.5);
-  }
+  const params = TENSION_TABLE[level] ?? TENSION_TABLE[0];
+  const ramp = params.rampTime;
+
+  bgmLPF!.frequency.linearRampToValueAtTime(params.lpfCutoff, now + ramp);
+  bgmGain!.gain.linearRampToValueAtTime(params.padVol, now + ramp);
+}
+
+/** 释放张力层 — 通关/结算时 200ms 快速恢复基线 */
+export function releaseBGMTension(): void {
+  if (currentTrack !== 'battle') return; // 张力仅对战斗曲生效
+  if (!audioContext || !bgmSource) return;
+  const now = audioContext.currentTime;
+  const baseline = TENSION_TABLE[0];
+
+  bgmLPF!.frequency.linearRampToValueAtTime(baseline.lpfCutoff, now + 0.2);
+  bgmGain!.gain.linearRampToValueAtTime(baseline.padVol, now + 0.2);
 
   tensionLevel = 0;
 }
@@ -791,20 +764,22 @@ export const _chordInternals = {
   _setMockContext(ctx: AudioContext | null) { audioContext = ctx; },
   _setLastChordTime(t: number) { lastChordTime = t; },
   _setScoreSoundActive(v: boolean) { _scoreSoundActive = v; },
-  get droneActive() { return droneOsc1 !== null; },
+  _setBgmBuffers(map: Map<string, AudioBuffer>) {
+    bgmBuffers.clear();
+    for (const [k, v] of map) bgmBuffers.set(k as BgmTrack, v);
+  },
+  get currentTrack() { return currentTrack; },
+  get droneActive() { return bgmSource !== null; },
   get kickActive() { return kickOsc !== null; },
   get tensionLevel() { return tensionLevel; },
   _playKickPulse: playKickPulse,
   _updateBGMTension: updateBGMTension,
   _releaseBGMTension: releaseBGMTension,
   _stopBGMImmediate() {
-    if (droneOsc1) { droneOsc1.stop(); droneOsc1 = null; }
-    if (droneOsc2) { droneOsc2.stop(); droneOsc2 = null; }
-    droneGain1 = droneGain2 = null;
-    if (tensionOsc) { try { tensionOsc.stop(); } catch (_) {} tensionOsc = null; }
-    tensionGain = null;
-    if (tremoloOsc) { try { tremoloOsc.stop(); } catch (_) {} tremoloOsc = null; }
-    tremoloGain = null;
+    if (bgmSource) { try { bgmSource.stop(); } catch (_) { /* already stopped */ } bgmSource = null; }
+    bgmLPF = null;
+    bgmGain = null;
+    currentTrack = null;
     tensionLevel = 0;
   },
 };

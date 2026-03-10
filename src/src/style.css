@@ -25,6 +25,30 @@ body {
     justify-content: center;
 }
 
+/* Language Toggle */
+.lang-toggle {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    z-index: 1000;
+    display: flex;
+    gap: 2px;
+}
+
+.lang-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #666;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.lang-btn:hover { color: #aaa; }
+.lang-btn.active { color: #4ecdc4; border-color: #4ecdc4; }
+
 #game-container {
     position: relative;
     width: 900px;
@@ -3565,5 +3589,206 @@ body {
 .morph-transforming {
     animation: morph-pulse 0.3s ease-out;
     pointer-events: none;
+}
+
+/* === Demo Overlay Styles === */
+
+.demo-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 15, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.demo-start-content {
+    text-align: center;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+}
+
+.demo-start-content h1 {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #ff6b6b, #ffe66d, #4ecdc4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.demo-start-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.demo-start-content p {
+    font-size: 1.1rem;
+    color: #888;
+    margin-bottom: 2rem;
+}
+
+.demo-start-btn {
+    background: linear-gradient(135deg, #4ecdc4, #44b4ab);
+    color: #fff;
+    border: none;
+    padding: 1rem 3rem;
+    font-size: 1.2rem;
+    font-family: 'Courier New', monospace;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.demo-start-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(78, 205, 196, 0.4);
+}
+
+/* Demo Language Toggle */
+.demo-lang-toggle {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.demo-lang-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #888;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 4px 14px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.demo-lang-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ccc;
+}
+
+.demo-lang-btn.active {
+    background: rgba(78, 205, 196, 0.2);
+    color: #4ecdc4;
+    border-color: #4ecdc4;
+}
+
+/* Demo Tutorial Tooltip */
+.demo-tutorial-tip {
+    position: fixed;
+    background: rgba(78, 205, 196, 0.95);
+    color: #0a0a0f;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    z-index: 9000;
+    animation: demo-tip-in 0.3s ease-out;
+    pointer-events: none;
+    max-width: 320px;
+    text-align: center;
+}
+
+@keyframes demo-tip-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Demo End Screen */
+.demo-end-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 15, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.demo-end-content {
+    text-align: center;
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    max-width: 500px;
+}
+
+.demo-end-content h2 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: #ffe66d;
+}
+
+.demo-end-stats {
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.8;
+}
+
+.demo-end-divider {
+    border: none;
+    border-top: 1px solid #333;
+    margin: 1.5rem 0;
+}
+
+.demo-end-features {
+    text-align: left;
+    margin-bottom: 2rem;
+    padding-left: 1rem;
+}
+
+.demo-end-features h3 {
+    color: #4ecdc4;
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+}
+
+.demo-end-features ul {
+    list-style: none;
+    padding: 0;
+    line-height: 1.8;
+    color: #ccc;
+}
+
+.demo-end-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.demo-end-actions a,
+.demo-end-actions button {
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    border: none;
+}
+
+.demo-steam-btn {
+    background: linear-gradient(135deg, #1b2838, #2a475e);
+    color: #66c0f4;
+    border: 1px solid #66c0f4 !important;
+}
+
+.demo-steam-btn:hover {
+    background: linear-gradient(135deg, #2a475e, #3d6b8e);
+}
+
+.demo-replay-btn {
+    background: #333;
+    color: #fff;
+}
+
+.demo-replay-btn:hover {
+    background: #444;
 }
 

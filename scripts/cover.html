@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 630px; height: 500px;
+  background: #0a0a0f;
+  font-family: 'Courier New', monospace;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; position: relative;
+}
+.bg-grid {
+  position: absolute; inset: 0; opacity: 0.06;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.glow-top {
+  position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+  width: 400px; height: 200px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(78,205,196,0.15), transparent 70%);
+}
+.glow-bottom {
+  position: absolute; bottom: -60px; left: 50%; transform: translateX(-50%);
+  width: 500px; height: 180px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255,107,107,0.1), transparent 70%);
+}
+.content {
+  position: relative; z-index: 1; text-align: center;
+}
+h1 {
+  font-size: 56px; font-weight: bold; letter-spacing: 2px;
+  background: linear-gradient(135deg, #ff6b6b, #ffe66d, #4ecdc4);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: 12px;
+}
+.tagline {
+  color: #888; font-size: 15px; margin-bottom: 36px; letter-spacing: 1px;
+}
+.keyboard {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.row { display: flex; gap: 5px; }
+.key {
+  width: 42px; height: 42px; border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #555; position: relative;
+}
+.key.lit {
+  border-color: rgba(78,205,196,0.6);
+  background: rgba(78,205,196,0.12);
+  color: #4ecdc4;
+  box-shadow: 0 0 12px rgba(78,205,196,0.2);
+}
+.key.fire {
+  border-color: rgba(255,107,107,0.6);
+  background: rgba(255,107,107,0.12);
+  color: #ff6b6b;
+  box-shadow: 0 0 12px rgba(255,107,107,0.2);
+}
+.key.gold {
+  border-color: rgba(255,230,109,0.6);
+  background: rgba(255,230,109,0.12);
+  color: #ffe66d;
+  box-shadow: 0 0 12px rgba(255,230,109,0.2);
+}
+.key .skill {
+  position: absolute; bottom: 2px; right: 3px; font-size: 9px;
+}
+.badge {
+  display: inline-block; margin-top: 28px; padding: 4px 14px;
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
+  color: #666; font-size: 11px; letter-spacing: 1px;
+}
+</style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="glow-top"></div>
+  <div class="glow-bottom"></div>
+  <div class="content">
+    <h1>TypeRogue</h1>
+    <div class="tagline">Type words. Trigger skills. Break the score ceiling.</div>
+    <div class="keyboard">
+      <div class="row">
+        <div class="key">Q</div>
+        <div class="key">W</div>
+        <div class="key lit">E<span class="skill">⚔️</span></div>
+        <div class="key fire">R<span class="skill">🔥</span></div>
+        <div class="key lit">T<span class="skill">🪙</span></div>
+        <div class="key">Y</div>
+        <div class="key">U</div>
+        <div class="key">I</div>
+        <div class="key">O</div>
+        <div class="key">P</div>
+      </div>
+      <div class="row">
+        <div class="key gold">A<span class="skill">💰</span></div>
+        <div class="key">S</div>
+        <div class="key">D</div>
+        <div class="key fire">F<span class="skill">💱</span></div>
+        <div class="key">G</div>
+        <div class="key">H</div>
+        <div class="key">J</div>
+        <div class="key">K</div>
+        <div class="key">L</div>
+      </div>
+      <div class="row">
+        <div class="key">Z</div>
+        <div class="key">X</div>
+        <div class="key">C</div>
+        <div class="key">V</div>
+        <div class="key">B</div>
+        <div class="key">N</div>
+        <div class="key">M</div>
+      </div>
+    </div>
+    <div class="badge">ROGUELIKE TYPING DECKBUILDER</div>
+  </div>
+</body>
+</html>

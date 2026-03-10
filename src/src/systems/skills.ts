@@ -13,6 +13,7 @@ import { AMPLIFIERS, isAmplifier, getAmplifierValue } from '../data/amplifiers';
 import { ENCHANTMENTS } from '../data/enchantments';
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
 import type { ResourceType, PseudoInfiniteState } from '../core/types';
+import { t } from '../demo/demo-i18n';
 import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
 import { showFeedback, updateHUD, setPseudoInfiniteVisual } from './battle';
@@ -142,15 +143,7 @@ export function computeSkillDensity(word: string): number {
 
 // === 资源标签 ===
 function getResourceLabel(r: ResourceType): string {
-  switch (r) {
-    case 'base': return '基数';
-    case 'score': return '分';
-    case 'multiplier': return '倍率';
-    case 'time': return '秒';
-    case 'gold': return '币';
-    case 'fragment': return '碎片';
-    case 'mutagen': return '变异素';
-  }
+  return t(`unit.${r}`);
 }
 
 // === 辅助：获取技能主产出资源类型 ===
@@ -352,7 +345,7 @@ function executeDevour(devourSkillId: string, targetSkillId: string, targetKey: 
   state.player.enchantedSkills.delete(targetSkillId);
 
   // 反馈
-  showFeedback(`🦷 吞噬! ${targetIcon}`, '#e74c3c');
+  showFeedback(t('skill.devour', { icon: targetIcon }), '#e74c3c');
   playSound('skill');
 }
 
@@ -363,7 +356,7 @@ function checkMutationHunger(skillId: string): void {
   if (random() < 0.05) {
     state.mutagenInventory += 1;
     state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + 1;
-    showFeedback('🧪🧬 +1变异素', '#2ecc71');
+    showFeedback(t('skill.mutagen_drop'), '#2ecc71');
     updateHUD();
   }
 }
@@ -660,12 +653,12 @@ function applySplashEnchantment(skillId: string, triggerKey?: string): void {
     } else if (isConverter(sid)) {
       triggerConverterWithReduction(sid, key, reduction);
     } else if (isAmplifier(sid)) {
-      triggerAmplifierIndirect(sid, key, reduction, '溅射');
+      triggerAmplifierIndirect(sid, key, reduction, t('skill.splash_suffix'));
     }
   }
   _splashActive = false;
 
-  showFeedback(`${ench.icon} 溅射!`, '#a29bfe');
+  showFeedback(t('skill.splash', { icon: ench.icon }), '#a29bfe');
 }
 
 // === 附魔：减效触发产出者（溅射/共鸣用，无 enchMult/sound/wordSkillCount/postTrigger） ===
@@ -723,9 +716,9 @@ function triggerProducerWithReduction(producerId: string, triggerKey: string, re
   if (!isClassResource || isActiveClassResource) {
     const color = RESOURCE_COLORS[prod.resource];
     if (prod.operator === 'add') {
-      showFeedback(`+${parseFloat((baseValue * reduction).toPrecision(4))}${getResourceLabel(prod.resource)} (溅射)`, color, getFloatScale(prod.resource, delta));
+      showFeedback(`+${parseFloat((baseValue * reduction).toPrecision(4))}${getResourceLabel(prod.resource)} (${t('skill.splash_suffix')})`, color, getFloatScale(prod.resource, delta));
     } else {
-      showFeedback(`×${parseFloat((1 + (baseValue - 1) * reduction).toPrecision(4))} (溅射)`, color, getFloatScaleMul(prod.resource, (baseValue - 1) * reduction));
+      showFeedback(`×${parseFloat((1 + (baseValue - 1) * reduction).toPrecision(4))} (${t('skill.splash_suffix')})`, color, getFloatScaleMul(prod.resource, (baseValue - 1) * reduction));
     }
   }
 
@@ -802,9 +795,9 @@ function triggerConverterWithReduction(converterId: string, triggerKey: string, 
     const color = RESOURCE_COLORS[conv.target];
     const displayDelta = Math.round(delta);
     if (conv.formula === 'add') {
-      showFeedback(`+${displayDelta}${getResourceLabel(conv.target)} (溅射)`, color, getFloatScale(conv.target, delta));
+      showFeedback(`+${displayDelta}${getResourceLabel(conv.target)} (${t('skill.splash_suffix')})`, color, getFloatScale(conv.target, delta));
     } else {
-      showFeedback(`×${parseFloat((1 + sourceVal * k * reduction).toPrecision(4))} (溅射)`, color, getFloatScaleMul(conv.target, sourceVal * k * reduction));
+      showFeedback(`×${parseFloat((1 + sourceVal * k * reduction).toPrecision(4))} (${t('skill.splash_suffix')})`, color, getFloatScaleMul(conv.target, sourceVal * k * reduction));
     }
   }
 
@@ -868,7 +861,7 @@ export function checkResonanceTriggers(sourceKey: string): void {
     } else if (isConverter(sid)) {
       triggerConverterWithReduction(sid, enchKey, ench.effectValue);
     } else if (isAmplifier(sid)) {
-      triggerAmplifierIndirect(sid, enchKey, ench.effectValue, '共鸣');
+      triggerAmplifierIndirect(sid, enchKey, ench.effectValue, t('skill.resonance_suffix'));
     }
   }
 
@@ -964,7 +957,7 @@ export function clearPseudoInfinite(): void {
 export function triggerReplicator(replicatorId: string, triggerKey: string, chainHistory: string[]): void {
   // T4 限制遗物：连接者锁定（复制者也受影响）
   if (queryRelicFlag('connector_lock') === true) {
-    showFeedback('连接者已锁定!', '#ff0000');
+    showFeedback(t('skill.connector_locked'), '#ff0000');
     return;
   }
 
@@ -1173,7 +1166,7 @@ export function triggerSkill(skillId: string, triggerKey: string, chainHistory?:
   if (shouldRetrigger && !_isRetriggered) {
     _retriggerRequested = false;
     _isRetriggered = true;
-    showFeedback('重触发!', '#ff6b00');
+    showFeedback(t('skill.retrigger'), '#ff6b00');
     triggerSkill(skillId, triggerKey, chainHistory);
     _isRetriggered = false;
   }

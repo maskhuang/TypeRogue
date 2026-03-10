@@ -38,6 +38,8 @@ import { isFeatureEnabled, getFeatureLostReason } from './classes/ClassFeatureGa
 import { renderCraftPanel, resetCraftInput } from './classes/CraftingStation';
 import { renderMetamorphPanel } from './classes/MetamorphStation';
 import type { DragPayload } from './dragManager';
+import { IS_DEMO, DEMO_PRODUCER_IDS } from '../demo/demo-config';
+import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
@@ -78,6 +80,21 @@ export function generateShopRelicItem(act: number, itemId?: number): ShopItem | 
 }
 
 // === 首次获取 tooltip ===
+// i18n-aware tooltip lookup (runtime)
+function getSkillTypeTooltip(type: string): { text: string; color: string } | undefined {
+  const map: Record<string, { key: string; color: string }> = {
+    producer:   { key: 'tooltip.producer',   color: '#4ecdc4' },
+    converter:  { key: 'tooltip.converter',  color: '#f39c12' },
+    connector:  { key: 'tooltip.connector',  color: '#9b59b6' },
+    replicator: { key: 'tooltip.replicator', color: '#8e44ad' },
+    amplifier:  { key: 'tooltip.amplifier',  color: '#7c5cbf' },
+  };
+  const entry = map[type];
+  if (!entry) return undefined;
+  return { text: t(entry.key), color: entry.color };
+}
+
+// Backward-compat export for tests (static ZH values)
 export const SKILL_TYPE_TOOLTIPS: Record<string, { text: string; color: string }> = {
   producer:  { text: '💡 产出者：按键直接产出资源', color: '#4ecdc4' },
   converter: { text: '💡 转化者：读取资源值，产出另一种', color: '#f39c12' },
@@ -102,22 +119,23 @@ export function buildEnchantmentInfo(skillId: string): string | undefined {
   const ench = ENCHANTMENTS[enchId];
   if (!ench) return undefined;
 
+  const enchName = localizeItemName(enchId, ench.name);
   if (ench.spatialType === 'growth') {
     const growth = state.growthValues.get(skillId) || 0;
-    return `${ench.icon} ${ench.name}: 成长 +${Math.round(growth * 100)}%`;
+    return t('enchant.growth', { icon: ench.icon, name: enchName, pct: Math.round(growth * 100) });
   }
   if (ench.id === 'ench_mastery') {
     const growth = state.growthValues.get(skillId) || 0;
     const count = state.masteryCounters.get(skillId) || 0;
-    return `${ench.icon} ${ench.name}: ${count % 10}/10 → 成长 +${Math.round(growth * 100)}%`;
+    return t('enchant.mastery', { icon: ench.icon, name: enchName, progress: count % 10, pct: Math.round(growth * 100) });
   }
   if (ench.spatialType === 'devour') {
     const devoured = state.devourIcons.get(skillId);
     const icons = devoured && devoured.length > 0 ? devoured.join('') : '';
     const count = getIconCount(skillId);
-    return `${ench.icon} ${ench.name}: ${icons} (图标×${count})`;
+    return t('enchant.devour', { icon: ench.icon, name: enchName, icons, count });
   }
-  return `${ench.icon} ${ench.name}: ${ench.desc}`;
+  return `${ench.icon} ${enchName}: ${localizeItemDesc(enchId, ench.desc)}`;
 }
 
 // === 打开商店 ===
@@ -138,7 +156,7 @@ export function openShop(_won: boolean): void {
   // 周目≥2时在商店标题显示周目数
   const shopTitle = document.getElementById('shop-title');
   if (shopTitle) {
-    shopTitle.textContent = state.cycle >= 2 ? `商店 · 周目${state.cycle}` : '商店';
+    shopTitle.textContent = state.cycle >= 2 ? t('shop.cycle_title', { cycle: state.cycle }) : t('shop.title');
   }
   el.shopScore.textContent = String(state.score);
   el.shopTarget.textContent = String(state.targetScore);
@@ -211,9 +229,9 @@ function generateShopItems(count: number): ShopItem[] {
     const poolReplicatorIds = state.replicatorPool.filter(id => id in REPLICATORS);
     const poolAmplifierIds = state.amplifierPool.filter(id => id in AMPLIFIERS);
     // Story 32.2: 过滤非当前职业的职业资源相关技能
-    const producerIds = Object.keys(PRODUCERS).filter(id => {
+    const producerIds = (IS_DEMO ? DEMO_PRODUCER_IDS : Object.keys(PRODUCERS)).filter(id => {
       const prod = PRODUCERS[id];
-      return isResourceActiveForClass(prod.resource, state.classId);
+      return prod && isResourceActiveForClass(prod.resource, state.classId);
     });
     const allSkillIds = [...producerIds, ...poolConverterIds, ...poolConnectorIds, ...poolReplicatorIds, ...poolAmplifierIds];
     const unowned = allSkillIds.filter(id => !owned.includes(id));
@@ -381,8 +399,8 @@ function renderUnifiedShop(): void {
   statsRow.className = 'deck-stats-panel';
   statsRow.innerHTML = `
     <div class="deck-stats-header">
-      <span>📚 ${stats.totalWords}词 · 均长${stats.avgLength}</span>
-      <span>高频: ${stats.topLetters.slice(0, 4).map(([l, p]) =>
+      <span>${t('shop.deck_stats', { total: stats.totalWords, avg: stats.avgLength })}</span>
+      <span>${t('shop.top_freq')} ${stats.topLetters.slice(0, 4).map(([l, p]) =>
         `<span class="${boundKeys.includes(l) ? 'highlight-letter' : ''}">${l.toUpperCase()}:${p}%</span>`
       ).join(' ')}</span>
     </div>
@@ -393,7 +411,7 @@ function renderUnifiedShop(): void {
   const refreshCost = (state.shop.refreshCount + 1) * 5;
   const refreshBtn = document.createElement('button');
   refreshBtn.className = 'shop-refresh-btn';
-  refreshBtn.innerHTML = `🔄 刷新 (💰${refreshCost})`;
+  refreshBtn.innerHTML = t('shop.refresh', { cost: refreshCost });
   if (state.gold < refreshCost) refreshBtn.classList.add('cannot-afford');
   refreshBtn.onclick = () => refreshShop();
   el.shopTabs.appendChild(refreshBtn);
@@ -426,8 +444,8 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
     let nameLabel = display.name;
     let typeLabel = school.label;
     if (item.isUpgrade) {
-      nameLabel = `${display.name} (升级 Lv.${lvl}→${lvl + 1})`;
-      typeLabel = `${school.label}·升级`;
+      nameLabel = t('shop.upgrade_name', { name: display.name, from: lvl, to: lvl + 1 });
+      typeLabel = t('shop.upgrade_label', { label: school.label });
     }
 
     card.innerHTML = `
@@ -453,7 +471,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
         <div class="reward-desc pack-preview">${pack.desc} · ${preview}</div>
       </div>
       <div class="reward-cost">💰${item.cost}</div>
-      <div class="reward-type pack-type">词包</div>
+      <div class="reward-type pack-type">${t('shop.pack_type')}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
   } else if (item.type === 'relic' && item.relicId) {
@@ -466,12 +484,12 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
     card.innerHTML = `
       <div class="reward-icon">${relic.icon}</div>
       <div class="reward-info">
-        <div class="reward-name">${relic.name}</div>
-        <div class="reward-desc">${relic.description}</div>
-        ${relic.flavor ? `<div class="reward-flavor">"${relic.flavor}"</div>` : ''}
+        <div class="reward-name">${localizeItemName(item.relicId, relic.name)}</div>
+        <div class="reward-desc">${localizeItemDesc(item.relicId, relic.description)}</div>
+        ${relic.flavor && getLocale() === 'zh' ? `<div class="reward-flavor">"${relic.flavor}"</div>` : ''}
       </div>
       <div class="reward-cost">💰${item.cost}</div>
-      <div class="reward-type relic-type relic-rarity-${rarityClass}">${rarityClass}</div>
+      <div class="reward-type relic-type relic-rarity-${rarityClass}">${t(`shop.rarity.${rarityClass}`)}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
   }
@@ -567,7 +585,7 @@ function togglePackExpand(card: HTMLElement, item: ShopItem, index: number): voi
 
     const lenSpan = document.createElement('span');
     lenSpan.className = 'pack-word-len';
-    lenSpan.textContent = `${word.length}字母`;
+    lenSpan.textContent = `${word.length} ${t('shop.letters')}`;
 
     const freqSpan = document.createElement('span');
     freqSpan.className = 'pack-freq-hint';
@@ -580,7 +598,7 @@ function togglePackExpand(card: HTMLElement, item: ShopItem, index: number): voi
   // 购买按钮（整包购买）
   const buyBtn = document.createElement('button');
   buyBtn.className = 'pack-buy-btn';
-  buyBtn.textContent = `购买整包 (${pack.words.length}词) 💰${item.cost}`;
+  buyBtn.textContent = t('shop.buy_pack', { count: pack.words.length, cost: item.cost });
   buyBtn.disabled = state.gold < item.cost;
 
   buyBtn.onclick = (e) => {
@@ -597,7 +615,7 @@ function purchasePackItem(index: number): void {
   if (!item || item.type !== 'pack' || !item.pack) return;
 
   if (state.gold < item.cost) {
-    showFeedback('金币不足!', '#ff6b6b');
+    showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
 
@@ -610,7 +628,7 @@ function purchasePackItem(index: number): void {
     state.player.wordDeck.push(word);
   }
 
-  showFeedback(`+${item.pack.words.length}词`, '#4ecdc4');
+  showFeedback(t('shop.add_words', { count: item.pack.words.length }), '#4ecdc4');
   state.shop.items.splice(index, 1);
   renderUnifiedShop();
   renderBuildManager();
@@ -623,7 +641,7 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
   if (!item || item.type !== 'skill') return null;
 
   if (state.gold < item.cost) {
-    showFeedback('金币不足!', '#ff6b6b');
+    showFeedback(t('shop.no_gold'), '#ff6b6b');
     return null;
   }
 
@@ -640,16 +658,18 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
       data.level++;
       data.purchasePrice = (data.purchasePrice || 0) + item.cost;
     }
-    showFeedback(`${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])?.name} 升级!`, '#ffe66d');
+    const skName = localizeItemName(skillId, (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])?.name || '');
+    showFeedback(t('shop.skill_upgrade', { name: skName }), '#ffe66d');
   } else {
     state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
-    showFeedback(`获得 ${(PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])?.name}!`, '#4ecdc4');
+    const skName = localizeItemName(skillId, (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])?.name || '');
+    showFeedback(t('shop.got_skill', { name: skName }), '#4ecdc4');
 
     // 首次获取某类型技能时显示 tooltip
     const category = getSkillCategory(skillId);
     if (category && !state.seenSkillTypes.has(category)) {
       state.seenSkillTypes.add(category);
-      const tip = SKILL_TYPE_TOOLTIPS[category];
+      const tip = getSkillTypeTooltip(category);
       if (tip) showFeedback(tip.text, tip.color);
     }
   }
@@ -686,7 +706,7 @@ function purchaseShopItem(index: number): void {
     const data = state.player.skills.get(result.skillId);
     if (data && data.level < minMaxLevel) {
       data.level = minMaxLevel;
-      showFeedback(`自动升至 Lv${minMaxLevel}!`, '#ffe66d');
+      showFeedback(t('shop.auto_level', { level: minMaxLevel }), '#ffe66d');
     }
   }
 
@@ -706,12 +726,12 @@ function purchaseShopRelicItem(index: number): void {
   if (!relic) return;
 
   if (state.gold < item.cost) {
-    showFeedback('金币不足!', '#ff6b6b');
+    showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
 
   if (state.player.relics.has(relicId)) {
-    showFeedback('已拥有该遗物!', '#ff6b6b');
+    showFeedback(t('shop.already_owned'), '#ff6b6b');
     return;
   }
 
@@ -719,7 +739,7 @@ function purchaseShopRelicItem(index: number): void {
     state.gold -= item.cost;
     addRelicWithCapacity(relicId);
     updateGoldDisplay();
-    showFeedback(`获得遗物 ${relic.icon} ${relic.name}!`, '#ffe66d');
+    showFeedback(t('shop.got_relic', { icon: relic.icon, name: localizeItemName(relicId, relic.name) }), '#ffe66d');
     playSound('buy');
     state.shop.items.splice(index, 1);
     renderRelicDisplay();
@@ -753,7 +773,7 @@ function checkAutoEnchantment(skillId: string): void {
 
   // T4 限制遗物：附魔锁定
   if (queryRelicFlag('enchant_lock') === true) {
-    showFeedback('附魔已锁定!', '#ff0000');
+    showFeedback(t('shop.enchant_locked'), '#ff0000');
     return;
   }
 
@@ -813,7 +833,7 @@ function showEnchantmentQueue(queue: string[], index: number): void {
 function refreshShop(): void {
   const cost = (state.shop.refreshCount + 1) * 5;
   if (state.gold < cost) {
-    showFeedback('金币不足!', '#ff6b6b');
+    showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
   state.gold -= cost;
@@ -853,7 +873,7 @@ export function sellSkill(skillId: string): void {
   state.player.skills.delete(skillId);
 
   updateGoldDisplay();
-  showFeedback(`卖出 +${sellPrice}💰`, '#ffe66d');
+  showFeedback(t('shop.sell', { price: sellPrice }), '#ffe66d');
   playSound('buy');
   renderUnifiedShop();
   renderBuildManager();
@@ -866,7 +886,7 @@ export function sellWord(index: number): void {
   state.gold += 3;
   state.player.wordDeck.splice(index, 1);
   updateGoldDisplay();
-  showFeedback(`-${word} +3💰`, '#ffe66d');
+  showFeedback(t('shop.sell_word', { word }), '#ffe66d');
   playSound('buy');
   renderUnifiedShop();
   renderBuildManager();
@@ -891,7 +911,7 @@ export function applyRandomEnchantment(skillId: string): void {
   state.player.enchantedSkills.set(skillId, chosen);
   const ench = ENCHANTMENTS[chosen];
   if (ench) {
-    showFeedback(`🎲 随机附魔! ${ench.icon} ${ench.name}`, '#f9ca24');
+    showFeedback(t('shop.random_enchant', { icon: ench.icon, name: localizeItemName(chosen, ench.name) }), '#f9ca24');
   }
 
   // 遗物钩子（同 applyEnchantment）
@@ -927,25 +947,28 @@ function renderEnchantmentModal(skillId: string, onClose?: () => void): void {
   const [enchA, enchB] = drawEnchantmentPair(skillRelation);
   const enchantments = [ENCHANTMENTS[enchA], ENCHANTMENTS[enchB]];
 
-  titleEl.textContent = `✨ 附魔选择 — ${sk.name} (免费!) ✨`;
+  titleEl.textContent = t('shop.enchant_choose', { name: localizeItemName(skillId, sk.name) });
   branchesEl.innerHTML = '';
 
   enchantments.forEach(ench => {
     if (!ench) return;
     const card = document.createElement('div');
     card.className = 'enchantment-branch';
-    const catLabel = ench.category === 'spatial' ? '🌐 空间'
-      : ench.category === 'transmutation' ? '⚗️ 变性'
-      : '⭐ 独立';
+    const catLabel = ench.category === 'spatial' ? t('shop.enchant_cat.spatial')
+      : ench.category === 'transmutation' ? t('shop.enchant_cat.transmutation')
+      : t('shop.enchant_cat.independent');
     const catColor = ench.category === 'spatial' ? '#4ecdc4'
       : ench.category === 'transmutation' ? '#ffe66d'
       : '#ff6b6b';
+    const enchDescText = isAmplifier(skillId) && ench.category === 'transmutation' && ench.extraResource
+      ? t('shop.enchant_dual', { icon: RESOURCE_ICONS[ench.extraResource] || '', label: t(`resource.${ench.extraResource}`), pct: Math.round(ench.effectValue * 100) })
+      : localizeItemDesc(ench.id, ench.desc);
     card.innerHTML = `
       <div class="enchantment-category-tag" style="color:${catColor}">${catLabel}</div>
       <div class="enchantment-branch-icon">${ench.icon}</div>
-      <div class="enchantment-branch-name">${ench.name}</div>
-      <div class="enchantment-branch-desc">${isAmplifier(skillId) && ench.category === 'transmutation' && ench.extraResource ? `增幅效果同时作用于${RESOURCE_ICONS[ench.extraResource] || ''}${RESOURCE_LABELS[ench.extraResource] || ench.extraResource}（${Math.round(ench.effectValue * 100)}%效率）` : ench.desc}</div>
-      <div class="enchantment-branch-cost">✨ 免费</div>
+      <div class="enchantment-branch-name">${localizeItemName(ench.id, ench.name)}</div>
+      <div class="enchantment-branch-desc">${enchDescText}</div>
+      <div class="enchantment-branch-cost">${t('shop.enchant_cost')}</div>
     `;
     // 空间附魔范围预览
     if (ench.positionRelation) {
@@ -978,7 +1001,7 @@ function applyEnchantment(skillId: string, enchantmentId: string): void {
   state.player.enchantedSkills.set(skillId, enchantmentId);
   const ench = ENCHANTMENTS[enchantmentId];
   if (ench) {
-    showFeedback(`附魔! ${ench.icon} ${ench.name}`, '#f9ca24');
+    showFeedback(t('shop.enchanted', { icon: ench.icon, name: localizeItemName(enchantmentId, ench.name) }), '#f9ca24');
   }
 
   // T2 遗物事件钩子：附魔获取后触发 (Story 28.1)
@@ -1097,7 +1120,7 @@ export function renderBuildManager(): void {
     const skillId = state.player.bindings.get(key)!;
     state.player.bindings.delete(key);
     const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || AMPLIFIERS[skillId];
-    if (sk) showFeedback(`${sk.name} 已从 ${key.toUpperCase()} 解绑（字频不足）`, '#ff6b6b');
+    if (sk) showFeedback(t('shop.unbound', { name: localizeItemName(skillId, sk.name), key: key.toUpperCase() }), '#ff6b6b');
   }
 
   // === 遗物数字行 ===
@@ -1230,7 +1253,7 @@ export function renderBuildManager(): void {
   // 已拥有技能
   el.ownedSkills.innerHTML = '';
   if (state.player.skills.size === 0) {
-    el.ownedSkills.innerHTML = '<div style="color:#444;font-size:11px;">购买技能开始构筑</div>';
+    el.ownedSkills.innerHTML = `<div style="color:#444;font-size:11px;">${t('shop.buy_skills_hint')}</div>`;
     registerShopDropZones();
     return;
   }
@@ -1360,14 +1383,14 @@ const MIN_WORD_COUNT = 3;
 function removeWord(index: number): void {
   if (index < 0 || index >= state.player.wordDeck.length) return;
   if (state.player.wordDeck.length <= MIN_WORD_COUNT) {
-    showFeedback(`词库最少保留${MIN_WORD_COUNT}个词!`, '#ff6b6b');
+    showFeedback(t('shop.min_words', { count: MIN_WORD_COUNT }), '#ff6b6b');
     return;
   }
   const word = state.player.wordDeck[index];
   state.gold += 3;
   state.player.wordDeck.splice(index, 1);
   updateGoldDisplay();
-  showFeedback(`出售 ${word} +3💰`, '#ffe66d');
+  showFeedback(t('shop.sell_word_feedback', { word }), '#ffe66d');
   playSound('buy');
   renderUnifiedShop();
   renderWordInventory();
@@ -1528,7 +1551,7 @@ function renderStatsPanel(): void {
   if (!panel) return;
   const bs = state.battleStats;
   if (!bs) {
-    panel.innerHTML = '<div class="stats-empty">暂无战斗数据</div>';
+    panel.innerHTML = `<div class="stats-empty">${t('shop.no_stats')}</div>`;
     return;
   }
 
@@ -1551,10 +1574,10 @@ function renderStatsPanel(): void {
     <div class="stats-header">
       <div class="rating-badge ${ratingClass}">${rating}</div>
       <div class="stats-summary">
-        <span>完成 ${bs.wordsCompleted} 词</span>
-        <span>完美 ${bs.perfectWords} 词</span>
-        <span>连锁 ${bs.totalChainTriggers} 次</span>
-        ${bs.maxChainDepth > 1 ? `<span>最长链 ${bs.maxChainDepth}</span>` : ''}
+        <span>${t('shop.words_done', { count: bs.wordsCompleted })}</span>
+        <span>${t('shop.words_perfect', { count: bs.perfectWords })}</span>
+        <span>${t('shop.chain_count', { count: bs.totalChainTriggers })}</span>
+        ${bs.maxChainDepth > 1 ? `<span>${t('shop.max_chain', { count: bs.maxChainDepth })}</span>` : ''}
         ${totalGold > 0 ? `<span>💰 +${Math.floor(totalGold)}</span>` : ''}
       </div>
     </div>
@@ -1581,8 +1604,8 @@ function getHeatmapDimensions(): { key: HeatmapDimension; label: string; color: 
   const classRes = CLASS_DEFINITIONS[state.classId]?.uniqueResource;
   if (classRes) resources.push(classRes);
   return [
-    { key: 'triggerCount', label: '触发数', color: '#aaa' },
-    ...resources.map(r => ({ key: r as HeatmapDimension, label: RESOURCE_LABELS[r], color: RESOURCE_COLORS[r] })),
+    { key: 'triggerCount', label: t('shop.heatmap.triggers'), color: '#aaa' },
+    ...resources.map(r => ({ key: r as HeatmapDimension, label: t(`resource.${r}`), color: RESOURCE_COLORS[r] })),
   ];
 }
 
@@ -1668,12 +1691,12 @@ function showHeatmapTooltip(e: MouseEvent, key: string, bs: import('../core/type
   if (tooltipClassRes) tooltipResources.push(tooltipClassRes);
   const resourceLines = tooltipResources
     .filter(r => ks.resources[r] > 0)
-    .map(r => `<div class="ht-resource"><span style="color:${RESOURCE_COLORS[r]}">${RESOURCE_ICONS[r]} ${RESOURCE_LABELS[r]}</span> +${ks.resources[r].toFixed(1)}</div>`)
+    .map(r => `<div class="ht-resource"><span style="color:${RESOURCE_COLORS[r]}">${RESOURCE_ICONS[r]} ${t(`resource.${r}`)}</span> +${ks.resources[r].toFixed(1)}</div>`)
     .join('');
 
   tip.innerHTML = `
     <div class="ht-key">${key.toUpperCase()}</div>
-    <div class="ht-count">触发 ${ks.triggerCount} 次</div>
+    <div class="ht-count">${t('shop.heatmap.triggered', { count: ks.triggerCount })}</div>
     ${resourceLines}
   `;
 
@@ -1688,7 +1711,9 @@ function hideHeatmapTooltip(): void {
 
 // === 遗物悬停提示 ===
 const RARITY_COLORS: Record<string, string> = { common: '#aaa', rare: '#4488cc', legendary: '#ffd700' };
-const RARITY_LABELS: Record<string, string> = { common: '普通', rare: '稀有', legendary: '传说' };
+function getRarityLabel(rarity: string): string {
+  return t(`shop.rarity.${rarity}`);
+}
 
 function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicData): void {
   hideRelicTooltip();
@@ -1697,10 +1722,10 @@ function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicDa
   tip.className = 'key-tooltip';
   const rarityColor = RARITY_COLORS[relic.rarity] || '#aaa';
   tip.innerHTML =
-    `<div style="font-size:14px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${relic.name}</div>` +
-    `<div style="font-size:9px;padding:1px 4px;border-radius:3px;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${RARITY_LABELS[relic.rarity] || relic.rarity}</div>` +
-    `<div style="color:#aaa;font-size:10px;white-space:normal;">${relic.description}</div>` +
-    (relic.flavor ? `<div style="color:#666;font-size:9px;font-style:italic;margin-top:4px;">${relic.flavor}</div>` : '');
+    `<div style="font-size:14px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${localizeItemName(relic.id, relic.name)}</div>` +
+    `<div style="font-size:9px;padding:1px 4px;border-radius:3px;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${getRarityLabel(relic.rarity)}</div>` +
+    `<div style="color:#aaa;font-size:10px;white-space:normal;">${localizeItemDesc(relic.id, relic.description)}</div>` +
+    (relic.flavor && getLocale() === 'zh' ? `<div style="color:#666;font-size:9px;font-style:italic;margin-top:4px;">${relic.flavor}</div>` : '');
   tip.style.left = e.clientX + 12 + 'px';
   tip.style.top = e.clientY + 12 + 'px';
   document.body.appendChild(tip);
@@ -1782,6 +1807,11 @@ function initStatsTabs(): void {
     if (metamorphTab) metamorphTab.style.display = '';
   } else {
     if (metamorphTab) metamorphTab.style.display = 'none';
+  }
+
+  // Demo: 隐藏词包标签
+  if (IS_DEMO && wordsTab) {
+    wordsTab.style.display = 'none';
   }
 
   switchTab('build');

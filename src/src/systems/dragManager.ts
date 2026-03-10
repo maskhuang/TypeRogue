@@ -27,9 +27,10 @@ export interface DropZone {
   onDragLeave?: (payload: DragPayload) => void;
 }
 
+import { t } from '../demo/demo-i18n';
+
 // === 常量 ===
 const DRAG_THRESHOLD = 5; // 最小移动距离才启动拖拽
-const SELL_ZONE_DEFAULT = '🗑️ 拖到此处出售';
 
 // === DragManager 类 ===
 class DragManager {
@@ -219,7 +220,7 @@ class DragManager {
     if (sellZone) {
       sellZone.classList.remove('active');
       sellZone.classList.remove('drag-over');
-      sellZone.textContent = SELL_ZONE_DEFAULT;
+      sellZone.textContent = t('shop.sell_zone');
     }
 
     this.isDragging = false;
@@ -232,7 +233,7 @@ class DragManager {
       case 'shop-item': {
         const index = parseInt(el.dataset.shopIndex || '-1', 10);
         if (index < 0) return null;
-        const label = el.querySelector('.reward-name')?.textContent || '商品';
+        const label = el.querySelector('.reward-name')?.textContent || 'Item';
         const icon = el.querySelector('.reward-icon')?.textContent || '📦';
         const costText = el.querySelector('.reward-cost')?.textContent || '';
         const cost = parseInt(costText.replace(/[^0-9]/g, '') || '0', 10);
@@ -307,7 +308,7 @@ class DragManager {
         this.currentDropTarget.element.classList.remove('drag-over');
         // 还原卖出区默认文本
         if (this.currentDropTarget.type === 'sell-zone') {
-          this.currentDropTarget.element.textContent = SELL_ZONE_DEFAULT;
+          this.currentDropTarget.element.textContent = t('shop.sell_zone');
         }
         if (this.currentDropTarget.onDragLeave && this.payload) {
           this.currentDropTarget.onDragLeave(this.payload);
@@ -318,7 +319,7 @@ class DragManager {
         found.element.classList.add('drag-over');
         // 卖出区显示售价
         if (found.type === 'sell-zone' && this.payload?.sellPrice != null) {
-          found.element.textContent = `出售 +${this.payload.sellPrice}💰`;
+          found.element.textContent = t('shop.sell', { price: this.payload.sellPrice });
         }
         if (found.onDragEnter && this.payload) {
           found.onDragEnter(this.payload);

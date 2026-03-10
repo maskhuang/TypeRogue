@@ -4,6 +4,7 @@
 // Story 3.1: 实现技能效果队列管理
 
 import { eventBus } from '../../../core/events/EventBus'
+import { t } from '../../../demo/demo-i18n'
 
 /**
  * 队列效果类型
@@ -145,22 +146,22 @@ class EffectQueue {
     switch (effect.type) {
       case 'amplify':
         value = Math.floor(baseValue * effect.value)
-        description = `增幅 x${effect.value}`
+        description = t('effect.amplify', { value: effect.value })
         break
 
       case 'ripple':
         value = Math.floor(baseValue * effect.value)
-        description = `涟漪 x${effect.value}`
+        description = t('effect.ripple', { value: effect.value })
         break
 
       case 'chain':
         value = baseValue + effect.value
-        description = `连锁 +${effect.value}`
+        description = t('effect.chain', { value: effect.value })
         break
 
       case 'transform':
         value = effect.value
-        description = `转化 =${effect.value}`
+        description = t('effect.transform', { value: effect.value })
         break
 
       case 'delay':
@@ -172,9 +173,9 @@ class EffectQueue {
             ...effect,
             delayCount: currentDelayCount + 1
           })
-          description = `延迟 (${currentDelayCount + 1}/${MAX_DELAY_COUNT})`
+          description = t('effect.delay', { current: currentDelayCount + 1, max: MAX_DELAY_COUNT })
         } else {
-          description = '延迟已达上限，效果消失'
+          description = t('effect.delay_max')
         }
         value = baseValue
         break

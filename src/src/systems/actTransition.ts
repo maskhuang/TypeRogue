@@ -5,17 +5,12 @@
 
 import { getBossModifierMeta } from '../data/bossModifiers'
 import { screenShake } from '../effects/juice'
-
-const ACT_TITLES: Record<number, string> = {
-  1: '热身',
-  2: '征途',
-  3: '决战',
-}
+import { t } from '../demo/demo-i18n'
 
 /** 显示 Act 标题卡过渡动画（约 1.5s） */
 export function showActTransition(actNum: number): Promise<void> {
   return new Promise(resolve => {
-    const subtitle = ACT_TITLES[actNum] || ''
+    const subtitle = t(`act.${actNum}`)
     const overlay = document.createElement('div')
     overlay.id = 'act-transition-overlay'
     overlay.innerHTML = `
@@ -45,7 +40,7 @@ export function showEliteAnnouncement(modId: string): Promise<void> {
 
     const banner = document.createElement('div')
     banner.id = 'elite-announcement'
-    banner.innerHTML = `⚡ 精英强化: ${meta.icon} ${meta.name}`
+    banner.innerHTML = t('act.elite_announce', { icon: meta.icon, name: meta.name })
     document.body.appendChild(banner)
 
     requestAnimationFrame(() => {

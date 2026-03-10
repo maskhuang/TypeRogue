@@ -14,6 +14,7 @@ import { showScreen, startLevel, renderRelicDisplay } from './battle';
 import { getNextBattleNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { getBossModifierMeta } from '../data/bossModifiers';
 import { playSound } from '../effects/sound';
+import { t, localizeItemName } from '../demo/demo-i18n';
 
 let currentEvent: RestEvent | null = null;
 
@@ -27,7 +28,7 @@ export function openRestStage(): void {
   // 渲染 UI
   const actNum = getActForNode(state.level);
   const actLabel = document.getElementById('rest-act-label');
-  if (actLabel) actLabel.textContent = `Act ${actNum} 结束`;
+  if (actLabel) actLabel.textContent = t('rest.act_end', { act: actNum });
 
   const iconEl = document.getElementById('rest-event-icon');
   const nameEl = document.getElementById('rest-event-name');
@@ -44,12 +45,12 @@ export function openRestStage(): void {
   if (!currentEvent) {
     // 无可用事件 — 显示安静休息
     iconEl.textContent = '🌙';
-    nameEl.textContent = '安静的休息';
-    descEl.textContent = '没有什么特别的事发生。你安静地休息了一会儿。';
+    nameEl.textContent = t('rest.quiet_name');
+    descEl.textContent = t('rest.quiet_desc');
     optionsEl.innerHTML = '';
     resultEl.classList.remove('rest-result-hidden');
     const resultText = document.getElementById('rest-result-text');
-    if (resultText) resultText.textContent = '休息完毕，继续前进。';
+    if (resultText) resultText.textContent = t('rest.quiet_done');
     continueBtn.onclick = () => completeRestStage();
   } else {
     // 记录已使用
@@ -121,118 +122,105 @@ function completeRestStage(): void {
 export function executeEffect(effectId: string): string {
   switch (effectId) {
     case 'noop':
-      return '你选择了离开。';
+      return t('rest.noop');
 
-    // === 事件 1: 神秘商人 ===
     case 'merchant_rare_relic': {
       const cost = Math.floor(state.gold * 0.5);
       state.gold -= cost;
       const relicId = grantRandomRelic('rare');
       if (relicId) {
         const relic = RELICS[relicId];
-        return `花费 ${cost} 金币，获得稀有遗物 ${relic.icon} ${relic.name}！`;
+        return t('rest.merchant.rare', { cost, icon: relic.icon, name: localizeItemName(relicId, relic.name) });
       }
-      return `花费 ${cost} 金币，但没有更多遗物可获得。`;
+      return t('rest.merchant.rare_fail', { cost });
     }
     case 'merchant_common_relic': {
       const relicId = grantRandomRelic('common');
       if (relicId) {
         const relic = RELICS[relicId];
-        return `免费获得普通遗物 ${relic.icon} ${relic.name}！`;
+        return t('rest.merchant.common', { icon: relic.icon, name: localizeItemName(relicId, relic.name) });
       }
-      return '没有更多普通遗物可获得。';
+      return t('rest.merchant.common_fail');
     }
 
-    // === 事件 2: 打字之神的考验 ===
     case 'trial_power': {
       const actEnd = getNextActEndNode(state.level);
       state.tempBuffs.push({ type: 'multiplier', value: 1.0, expiresAtNode: actEnd });
       state.tempBuffs.push({ type: 'time', value: -10, expiresAtNode: actEnd });
-      return '下一 Act 倍率 +1.0x，但时间 -10 秒！';
+      return t('rest.trial.power_r');
     }
     case 'trial_endurance': {
       const actEnd = getNextActEndNode(state.level);
       state.tempBuffs.push({ type: 'time', value: 15, expiresAtNode: actEnd });
       state.tempBuffs.push({ type: 'multiplier', value: -0.5, expiresAtNode: actEnd });
-      return '下一 Act 时间 +15 秒，但倍率 -0.5x！';
+      return t('rest.trial.endurance_r');
     }
 
-    // === 事件 3: 技能祭坛 ===
     case 'altar_upgrade': {
       const removed = removeRandomSkill();
-      if (!removed) return '没有可献祭的技能。';
+      if (!removed) return t('rest.altar.no_skill');
       const newSkillId = grantRandomNewSkill();
       if (newSkillId) {
         const newSk = PRODUCERS[newSkillId] || CONVERTERS[newSkillId] || CONNECTORS[newSkillId] || REPLICATORS[newSkillId];
-        return `献祭了 ${removed.name}，获得新技能 ${newSk.icon} ${newSk.name}！`;
+        return t('rest.altar.upgrade_r', { removed: localizeItemName(removed.id, removed.name), icon: newSk.icon, name: localizeItemName(newSkillId, newSk.name) });
       }
-      return `献祭了 ${removed.name}，但没有更多新技能可获得。`;
+      return t('rest.altar.upgrade_fail', { removed: localizeItemName(removed.id, removed.name) });
     }
     case 'altar_gold': {
       const removed = removeRandomSkill();
-      if (!removed) return '没有可献祭的技能。';
+      if (!removed) return t('rest.altar.no_skill');
       state.gold += 200;
-      return `献祭了 ${removed.name}，获得 200 金币！`;
+      return t('rest.altar.gold_r', { removed: localizeItemName(removed.id, removed.name) });
     }
 
-    // === 事件 4: 赌徒的骰子 ===
     case 'gamble_bet': {
-      if (state.gold < 100) return '金币不足！';
+      if (state.gold < 100) return t('rest.gamble.no_gold');
       state.gold -= 100;
       if (Math.random() < 0.5) {
         state.gold += 300;
-        return '赢了！获得 300 金币！(净赚 200)';
+        return t('rest.gamble.win');
       } else {
-        return '输了！失去 100 金币！';
+        return t('rest.gamble.lose');
       }
     }
 
-    // === 事件 5: 遗物熔炉 ===
     case 'forge_relic_to_skill': {
       const removed = removeRandomRelic();
-      if (!removed) return '没有可销毁的遗物。';
+      if (!removed) return t('rest.forge.no_relic');
       const upgraded = upgradeRandomSkill();
       if (upgraded) {
-        return `销毁了 ${removed.icon} ${removed.name}，${upgraded.name} 升级至 Lv.${upgraded.newLevel}！`;
+        return t('rest.forge.relic_r', { icon: removed.icon, name: localizeItemName(removed.id, removed.name), skill: localizeItemName(upgraded.id, upgraded.name), level: upgraded.newLevel });
       }
-      return `销毁了 ${removed.icon} ${removed.name}，但没有可升级的技能。`;
+      return t('rest.forge.relic_fail', { icon: removed.icon, name: localizeItemName(removed.id, removed.name) });
     }
     case 'forge_skill_to_relic': {
       const removed = removeRandomSkill();
-      if (!removed) return '没有可销毁的技能。';
+      if (!removed) return t('rest.forge.no_skill');
       const relicId = grantRandomRelic();
       if (relicId) {
         const relic = RELICS[relicId];
-        return `销毁了 ${removed.name}，获得遗物 ${relic.icon} ${relic.name}！`;
+        return t('rest.forge.skill_r', { removed: localizeItemName(removed.id, removed.name), icon: relic.icon, name: localizeItemName(relicId, relic.name) });
       }
-      return `销毁了 ${removed.name}，但没有更多遗物可获得。`;
+      return t('rest.forge.skill_fail', { removed: localizeItemName(removed.id, removed.name) });
     }
 
-    // === 事件 6: 时间裂缝 ===
     case 'rift_skip': {
-      // 跳过下一关：从当前休息关跳两步
       const next1 = getNextBattleNode(state.level);
       if (next1 > 0) {
         const next2 = getNextBattleNode(next1);
         if (next2 > 0 && next2 <= TOTAL_NODES) {
-          // completeRestStage 会设置 state.level = getNextBattleNode(state.level)
-          // 我们需要跳过一个额外的战斗节点
-          // 通过提前推进 state.level 实现
-          state.level = next1; // 跳到第一个战斗节点的位置
-          return `时空裂缝打开，跳过了一关！将直接前往 Level ${next2}。`;
+          state.level = next1;
+          return t('rest.rift.skip_r', { level: next2 });
         }
       }
-      return '时空裂缝不稳定，无法跳跃。';
+      return t('rest.rift.skip_fail');
     }
     case 'rift_replay': {
-      // 重打上一关：给额外金币奖励（模拟多打一关的收益）
       state.gold += 50;
-      return '时间回溯！额外获得 50 金币作为重打奖励。';
+      return t('rest.rift.replay_r');
     }
 
-    // === 事件 7: 键盘诅咒 ===
     case 'curse_accept': {
-      // 封印 2 个随机已绑定键位（临时移除绑定，Act 结束后自动恢复）
       const boundKeys = [...state.player.bindings.keys()];
       const sealed: string[] = [];
       const shuffled = [...boundKeys].sort(() => Math.random() - 0.5);
@@ -246,62 +234,57 @@ export function executeEffect(effectId: string): string {
       }
       state.gold += 150;
       const relicId = grantRandomRelic();
-      const relicMsg = relicId ? ` + 遗物 ${RELICS[relicId].icon} ${RELICS[relicId].name}` : '';
-      return `键位 [${sealed.join(', ')}] 被封印！获得 150 金币${relicMsg}。（Act 结束后自动恢复）`;
+      const relicMsg = relicId ? t('rest.curse.relic_bonus', { icon: RELICS[relicId].icon, name: localizeItemName(relicId, RELICS[relicId].name) }) : '';
+      return t('rest.curse.r', { keys: sealed.join(', '), relic: relicMsg });
     }
 
-    // === 事件 8: 技能复制器 ===
     case 'copy_skill': {
       const upgraded = upgradeRandomSkill();
-      if (!upgraded) return '没有可升级的技能。';
-      // 目标分 ×1.5（临时 buff 到下一个 Act 结束）
+      if (!upgraded) return t('rest.copier.no_skill');
       const actEnd = getNextActEndNode(state.level);
       state.tempBuffs.push({ type: 'targetScore', value: 1.5, expiresAtNode: actEnd });
-      return `${upgraded.name} 升级至 Lv.${upgraded.newLevel}！但下一 Act 目标分 ×1.5。`;
+      return t('rest.copier.r', { name: localizeItemName(upgraded.id, upgraded.name), level: upgraded.newLevel });
     }
 
-    // === 事件 9: 命运之轮 ===
     case 'wheel_spin': {
       const outcomes = [
-        () => { state.gold += 150; return '好运！获得 150 金币！'; },
+        () => { state.gold += 150; return t('rest.wheel.gold', { gold: 150 }); },
         () => {
           const relicId = grantRandomRelic();
-          if (relicId) return `好运！获得遗物 ${RELICS[relicId].icon} ${RELICS[relicId].name}！`;
-          state.gold += 100; return '好运！获得 100 金币！';
+          if (relicId) return t('rest.wheel.relic', { icon: RELICS[relicId].icon, name: localizeItemName(relicId, RELICS[relicId].name) });
+          state.gold += 100; return t('rest.wheel.gold', { gold: 100 });
         },
         () => {
           const cost = Math.floor(state.gold * 0.3);
           state.gold -= cost;
-          return `厄运！失去 ${cost} 金币（30%）！`;
+          return t('rest.wheel.lose_gold', { cost });
         },
         () => {
           const actEnd = getNextActEndNode(state.level);
           state.tempBuffs.push({ type: 'multiplier', value: -0.5, expiresAtNode: actEnd });
-          return '厄运！下一 Act 倍率 -0.5x！';
+          return t('rest.wheel.lose_mult');
         },
       ];
       const pick = outcomes[Math.floor(Math.random() * outcomes.length)];
-      return `命运之轮转动……${pick()}`;
+      return t('rest.wheel.prefix') + pick();
     }
 
-    // === 事件 10: 宁静冥想 ===
     case 'meditate_preview': {
-      // 预览下一 Act 的 Boss 修饰器
       const mods = state.bossModifierPool;
-      if (mods.length === 0) return '冥想中看到一片宁静……没有更多信息。';
+      if (mods.length === 0) return t('rest.meditate.empty');
       const previews = mods.map((id, i) => {
         const meta = getBossModifierMeta(id);
-        return meta ? `修饰器${['A', 'B', 'C'][i]}: ${meta.icon} ${meta.name} — ${meta.eliteHint}` : '';
+        return meta ? t('rest.meditate.modifier', { idx: ['A', 'B', 'C'][i], icon: meta.icon, name: meta.name, hint: meta.eliteHint }) : '';
       }).filter(Boolean);
-      return `冥想预见：\n${previews.join('\n')}`;
+      return t('rest.meditate.result', { previews: previews.join('\n') });
     }
     case 'meditate_gold': {
       state.gold += 80;
-      return '积蓄力量，获得 80 金币！';
+      return t('rest.meditate.gold_r');
     }
 
     default:
-      return '无事发生。';
+      return t('rest.default');
   }
 }
 
@@ -382,12 +365,12 @@ function grantRandomNewSkill(): string | null {
 }
 
 /** 升级随机已有技能（未满级的），返回信息 */
-function upgradeRandomSkill(): { name: string; newLevel: number } | null {
+function upgradeRandomSkill(): { id: string; name: string; newLevel: number } | null {
   const upgradable = [...state.player.skills.entries()]
     .filter(([, data]) => data.level < 3);
   if (upgradable.length === 0) return null;
   const [skillId, data] = upgradable[Math.floor(Math.random() * upgradable.length)];
   data.level++;
   const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId];
-  return sk ? { name: sk.name, newLevel: data.level } : null;
+  return sk ? { id: skillId, name: sk.name, newLevel: data.level } : null;
 }

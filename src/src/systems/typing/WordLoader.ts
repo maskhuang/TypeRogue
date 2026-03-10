@@ -41,7 +41,7 @@ export interface WordEntry {
  */
 class WordLoader {
   private cache = new Map<string, WordList>()
-  private basePath = '/assets/data/words'
+  private basePath = import.meta.env.BASE_URL + 'assets/data/words'
 
   /**
    * 加载词库

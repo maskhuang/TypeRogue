@@ -20,7 +20,7 @@ import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
-import { getStageType, getCycleTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode } from './stage/stageFlow';
+import { getStageType, getCycleTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, isRhythmLocked, drawBossModifiers } from '../data/bossModifiers';
 import type { BossModifierMeta } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation, isModifierActive } from './bossModifierEngine';
@@ -28,6 +28,14 @@ import { showBossModifierPicker } from './bossModifierPicker';
 import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
+import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
+import { initDemoTutorial } from '../demo/demo-tutorial';
+import { showDemoEndScreen } from '../demo/demo-end-screen';
+import { trackEvent } from '../demo/demo-analytics';
+import { t, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
+
+// === Demo 固定词序队列 ===
+let demoWordQueue: string[] = [];
 
 /** 获取当前精英关的修饰器元数据（非精英关返回 undefined） */
 function getCurrentEliteModifierMeta(): BossModifierMeta | undefined {
@@ -117,6 +125,10 @@ function getActiveWords(): string[] {
 }
 
 function pickWord(): string {
+  // Demo 第一关：固定前 N 个词保证触发预设技能
+  if (demoWordQueue.length > 0) {
+    return demoWordQueue.shift()!.toUpperCase();
+  }
   const words = getActiveWords();
   return words[Math.floor(random() * words.length)].toUpperCase();
 }
@@ -300,12 +312,12 @@ function playerWrong(): void {
       },
     });
     if (phoenixProtected) {
-      showFeedback('凤凰羽毛!', '#ff9500');
+      showFeedback(t('battle.phoenix'), '#ff9500');
       return;
     }
     // 玻璃大炮：打错且未被保护 → 立即失败
     if (instantFailed) {
-      showFeedback('玻璃大炮碎了!', '#ff0000');
+      showFeedback(t('battle.glass_break'), '#ff0000');
       gameOver();
       return;
     }
@@ -314,13 +326,13 @@ function playerWrong(): void {
   // 标记词语不完美
   state.wordPerfect = false;
 
-  if (state.combo > 5) showFeedback(`${state.combo}× 断了!`, '#ff6b6b');
+  if (state.combo > 5) showFeedback(t('battle.combo_break', { combo: state.combo }), '#ff6b6b');
 
   // 遗物 on_combo_break 管道解析（完美主义者断连击失去遗物）
   resolveRelicEffectsWithBehaviors('on_combo_break', {}, {
     onRemoveRelic: (relicId: string) => {
       state.player.relics.delete(relicId);
-      showFeedback('遗物碎裂!', '#ff4444');
+      showFeedback(t('battle.relic_break'), '#ff4444');
     },
   });
 
@@ -334,7 +346,7 @@ function playerWrong(): void {
   if (modEffect?.comboPunishRate && state.score > 0) {
     const penalty = Math.floor(state.score * modEffect.comboPunishRate);
     state.score = Math.max(0, state.score - penalty);
-    showFeedback(`-${penalty}分!`, '#ff4444', getFloatScale('score', penalty));
+    showFeedback(t('battle.penalty', { value: penalty }), '#ff4444', getFloatScale('score', penalty));
     bumpScore();
   }
 
@@ -571,7 +583,7 @@ function showGoldReward(onComplete: () => void): void {
     if (next <= 0) {
       state.player.relics.delete('entropy');
       delete state.player.relicStates['entropy'];
-      showFeedback('熵增殆尽...', '#999');
+      showFeedback(t('battle.entropy'), '#999');
     } else {
       state.player.relicStates['entropy'] = next;
     }
@@ -581,12 +593,12 @@ function showGoldReward(onComplete: () => void): void {
       // 50% 翻倍
       const curr = state.player.relicStates['schrodinger_dice'] ?? 1.25;
       state.player.relicStates['schrodinger_dice'] = curr * 2;
-      showFeedback(`骰子翻倍！×${(curr * 2).toFixed(2)}`, '#ffdd00');
+      showFeedback(t('battle.dice_double', { value: (curr * 2).toFixed(2) }), '#ffdd00');
     } else {
       // 50% 消失
       state.player.relics.delete('schrodinger_dice');
       delete state.player.relicStates['schrodinger_dice'];
-      showFeedback('骰子消失了...', '#999');
+      showFeedback(t('battle.dice_gone'), '#999');
     }
   }
 
@@ -728,10 +740,17 @@ function endLevel(): void {
   }
 
   if (state.score >= state.targetScore) {
+    trackEvent('demo_stage_complete', { stage: state.level, score: state.score });
     const rating = state.battleStats?.rating || 'B';
     showRatingReveal(rating, () => {
       startBGM('chill');
       const currentType = getStageType(state.level);
+
+      // Demo: 最终关完成后直接结束
+      if (IS_DEMO && state.level >= TOTAL_NODES) {
+        victory();
+        return;
+      }
 
       if (currentType === 'boss') {
         if (state.endlessUnlocked) {
@@ -761,6 +780,7 @@ function endLevel(): void {
       openShop(true);
     }, playRatingSound);
   } else {
+    trackEvent('demo_stage_fail', { stage: state.level, score: state.score });
     gameOver();
   }
 }
@@ -825,6 +845,11 @@ export async function startLevel(): Promise<void> {
   const battleNum = getBattleNumber(state.level);
   state.timeMax = getCycleTimeLimit(state.level, state.cycle);
   state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType, state.cycle);
+
+  // Demo: 使用降低难度的固定目标分数
+  if (IS_DEMO && DEMO_TARGET_SCORES[state.level] !== undefined) {
+    state.targetScore = DEMO_TARGET_SCORES[state.level];
+  }
 
   // 应用活跃临时 buff
   for (const buff of state.tempBuffs) {
@@ -906,7 +931,7 @@ export async function startLevel(): Promise<void> {
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;
   const stageLabel = currentStageType === 'elite' ? ' [ELITE]' : currentStageType === 'boss' ? ' [BOSS]' : '';
-  const cyclePrefix = state.cycle >= 2 ? `周目${state.cycle} · ` : '';
+  const cyclePrefix = state.cycle >= 2 ? t('battle.cycle_prefix', { cycle: state.cycle }) : '';
   el.levelLabel.textContent = `${cyclePrefix}LEVEL ${displayLevel}${stageLabel}`;
 
   // HUD: 显示当前 Act / StageType
@@ -926,8 +951,8 @@ export async function startLevel(): Promise<void> {
     const meta = getCurrentEliteModifierMeta();
     if (meta) {
       modInfo.querySelector('.modifier-icon')!.textContent = meta.icon;
-      modInfo.querySelector('.modifier-name')!.textContent = meta.name;
-      modInfo.querySelector('.modifier-hint')!.textContent = meta.eliteHint;
+      modInfo.querySelector('.modifier-name')!.textContent = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name;
+      modInfo.querySelector('.modifier-hint')!.textContent = t(`modifier.${meta.id}.elite`) !== `modifier.${meta.id}.elite` ? t(`modifier.${meta.id}.elite`) : meta.eliteHint;
       modInfo.classList.add('visible');
     } else {
       modInfo.classList.remove('visible');
@@ -957,6 +982,11 @@ export async function startLevel(): Promise<void> {
     mutagenHud.style.display = state.classId === 'metamorph' ? 'flex' : 'none';
   }
 
+  // Demo 第一关：固定前 N 个词保证触发预设技能
+  if (IS_DEMO && state.level === 1) {
+    demoWordQueue = [...DEMO_FIRST_STAGE_WORDS];
+  }
+
   setWord();
   updateHUD();
   renderRelicDisplay();
@@ -973,6 +1003,12 @@ export async function startLevel(): Promise<void> {
 
   initFloatPool();
   announceLevel();
+
+  // Demo 第一关：启动新手引导
+  if (IS_DEMO && state.level === 1) {
+    initDemoTutorial();
+  }
+
   startTimer();
   startScoreRoller(); // Story 31.4: 分数滚轮动画
 
@@ -1005,13 +1041,13 @@ function announceLevel(): void {
   if (stageType === 'elite') {
     const meta = getCurrentEliteModifierMeta();
     const modName = meta ? ` ${meta.icon} ${meta.name}` : '';
-    typeLabel = `<br><span class="elite-hint">精英挑战${modName}</span>`;
+    typeLabel = `<br><span class="elite-hint">${t('battle.elite_hint')}${modName}</span>`;
   } else if (stageType === 'boss') {
-    typeLabel = '<br><span class="boss-hint">BOSS 战</span>';
+    typeLabel = `<br><span class="boss-hint">${t('battle.boss_hint')}</span>`;
   }
 
-  const cyclePfx = state.cycle >= 2 ? `周目${state.cycle} · ` : '';
-  ann.innerHTML = `${cyclePfx}LEVEL ${displayLevel}${typeLabel}<br><span class="target-hint">目标: ${state.targetScore}分</span>`;
+  const cyclePfx = state.cycle >= 2 ? t('battle.cycle_prefix', { cycle: state.cycle }) : '';
+  ann.innerHTML = `${cyclePfx}LEVEL ${displayLevel}${typeLabel}<br><span class="target-hint">${t('battle.target_hint', { value: state.targetScore })}</span>`;
   el.container.appendChild(ann);
   playSound('levelup');
   setTimeout(() => ann.remove(), 1500);
@@ -1026,15 +1062,26 @@ function victory(): void {
   cleanupModifier();
   stopBossRotation();
 
+  if (IS_DEMO) {
+    stopBGM();
+    showDemoEndScreen({
+      totalScore: state.score,
+      maxCombo: state.maxCombo,
+      skillCount: state.battleStats ? [...state.battleStats.skillStats.values()].reduce((sum, s) => sum + s.triggerCount, 0) : 0,
+      stagesCleared: state.level,
+    });
+    return;
+  }
+
   const el = getElements();
   const endlessHint = state.endlessUnlocked
     ? ''
-    : '<br><span style="color:#ffe66d;font-size:0.85em">用全部三个职业各通关一次即可解锁无尽模式</span>';
+    : `<br><span style="color:#ffe66d;font-size:0.85em">${t('battle.unlock_endless')}</span>`;
   el.gameoverStats.innerHTML = `
-    通关! Boss 已击败!<br>
-    最终得分: ${state.score}<br>
-    最高连击: ${state.maxCombo}<br>
-    获得技能: ${state.player.skills.size}${endlessHint}
+    ${t('battle.victory')}<br>
+    ${t('battle.final_score', { score: state.score })}<br>
+    ${t('battle.max_combo', { combo: state.maxCombo })}<br>
+    ${t('battle.skills_owned', { count: state.player.skills.size })}${endlessHint}
   `;
   showScreen('gameover');
   playSound('levelup');
@@ -1066,19 +1113,30 @@ function gameOver(): void {
   state.phase = 'gameover';
   if (timerInterval) clearInterval(timerInterval);
   releaseBGMTension();
-  startBGM('chill');
   clearPseudoInfinite();
   clearFloatQueue();
   cleanupModifier();
   stopBossRotation();
 
+  if (IS_DEMO) {
+    stopBGM();
+    showDemoEndScreen({
+      totalScore: state.score,
+      maxCombo: state.maxCombo,
+      skillCount: state.battleStats ? [...state.battleStats.skillStats.values()].reduce((sum, s) => sum + s.triggerCount, 0) : 0,
+      stagesCleared: state.level - 1,
+    });
+    return;
+  }
+
+  startBGM('chill');
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;
   el.gameoverStats.innerHTML = `
-    到达 Level ${displayLevel}<br>
-    最终得分: ${state.score} / ${state.targetScore}<br>
-    最高连击: ${state.maxCombo}<br>
-    获得技能: ${state.player.skills.size}
+    ${t('battle.reached_level', { level: displayLevel })}<br>
+    ${t('battle.final_score_target', { score: state.score, target: state.targetScore })}<br>
+    ${t('battle.max_combo', { combo: state.maxCombo })}<br>
+    ${t('battle.skills_owned', { count: state.player.skills.size })}
   `;
   showScreen('gameover');
   playSound('gameover');
@@ -1167,11 +1225,11 @@ export function renderRelicDisplay(): void {
         const relic = RELICS[relicArray[i]];
         slot.className = 'relic-icon';
         slot.textContent = relic?.icon ?? '?';
-        slot.title = `[${keyLabel}] ${relic?.name}: ${relic?.description}`;
+        slot.title = `[${keyLabel}] ${localizeItemName(relicArray[i], relic?.name ?? '')}: ${localizeItemDesc(relicArray[i], relic?.description ?? '')}`;
       } else {
         slot.className = 'relic-icon relic-slot-empty';
         slot.textContent = '·';
-        slot.title = `[${keyLabel}] 空槽位`;
+        slot.title = t('battle.empty_slot', { key: keyLabel });
       }
       container.appendChild(slot);
     }
@@ -1183,7 +1241,7 @@ export function renderRelicDisplay(): void {
 function renderActiveLibrary(): void {
   const el = getElements();
   const deckSize = state.player.wordDeck.length;
-  el.activeLibrary.textContent = `📚 ${deckSize}词`;
+  el.activeLibrary.textContent = t('battle.deck_label', { count: deckSize });
 }
 
 // === 浮字系统 ===

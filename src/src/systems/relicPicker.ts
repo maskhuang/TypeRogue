@@ -10,6 +10,7 @@ import type { RelicRarity } from '../data/relics';
 import { renderRelicDisplay, showFeedback } from './battle';
 import { playSound } from '../effects/sound';
 import { random } from '../core/seededRandom';
+import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 
 // === 加权遗物类型 ===
 export interface RelicWeights {
@@ -147,16 +148,16 @@ export function showRelicPicker(onComplete: () => void, weights?: RelicWeights):
     card.className = `relic-picker-card relic-rarity-${rarityClass}`;
     card.innerHTML = `
       <div class="relic-picker-icon">${relic.icon}</div>
-      <div class="relic-picker-name">${relic.name}</div>
-      <div class="relic-picker-desc">${relic.description}</div>
-      <div class="relic-picker-rarity">${rarityClass}</div>
-      ${relic.flavor ? `<div class="relic-picker-flavor">"${relic.flavor}"</div>` : ''}
+      <div class="relic-picker-name">${localizeItemName(relicId, relic.name)}</div>
+      <div class="relic-picker-desc">${localizeItemDesc(relicId, relic.description)}</div>
+      <div class="relic-picker-rarity">${t(`shop.rarity.${rarityClass}`)}</div>
+      ${relic.flavor && getLocale() === 'zh' ? `<div class="relic-picker-flavor">"${relic.flavor}"</div>` : ''}
     `;
 
     card.onclick = () => {
       if (!isRelicSlotsFull()) {
         addRelicWithCapacity(relicId);
-        showFeedback(`获得遗物 ${relic.icon} ${relic.name}!`, '#ffe66d');
+        showFeedback(t('shop.got_relic', { icon: relic.icon, name: localizeItemName(relicId, relic.name) }), '#ffe66d');
         playSound('skill');
         renderRelicDisplay();
         finish();
@@ -196,7 +197,7 @@ export function showRelicReplaceUI(newRelicId: string, onDone: () => void): void
   // 标题提示
   const header = document.createElement('div');
   header.className = 'relic-replace-header';
-  header.textContent = `槽位已满！选择要替换的遗物（获得 ${newRelic.icon} ${newRelic.name}）`;
+  header.textContent = t('relic.slots_full', { icon: newRelic.icon, name: localizeItemName(newRelicId, newRelic.name) });
   cardsEl.appendChild(header);
 
   // 显示当前所有遗物供选择替换
@@ -209,13 +210,13 @@ export function showRelicReplaceUI(newRelicId: string, onDone: () => void): void
     card.className = `relic-picker-card relic-rarity-${owned.rarity}`;
     card.innerHTML = `
       <div class="relic-picker-icon">${owned.icon}</div>
-      <div class="relic-picker-name">${owned.name}</div>
-      <div class="relic-picker-desc">${owned.description}</div>
-      <div class="relic-picker-sell">卖出 +${sellGold}g</div>
+      <div class="relic-picker-name">${localizeItemName(ownedId, owned.name)}</div>
+      <div class="relic-picker-desc">${localizeItemDesc(ownedId, owned.description)}</div>
+      <div class="relic-picker-sell">${t('relic.sell_label', { gold: sellGold })}</div>
     `;
     card.onclick = () => {
       const gold = replaceRelic(ownedId, newRelicId);
-      showFeedback(`替换遗物！获得 ${newRelic.icon} ${newRelic.name}，卖出 +${gold}g`, '#ffe66d');
+      showFeedback(t('relic.replace', { icon: newRelic.icon, name: localizeItemName(newRelicId, newRelic.name), gold }), '#ffe66d');
       playSound('skill');
       renderRelicDisplay();
       onDone();
@@ -226,7 +227,7 @@ export function showRelicReplaceUI(newRelicId: string, onDone: () => void): void
   // 放弃按钮
   const giveUp = document.createElement('div');
   giveUp.className = 'relic-picker-card relic-give-up';
-  giveUp.innerHTML = `<div class="relic-picker-icon">✕</div><div class="relic-picker-name">放弃</div>`;
+  giveUp.innerHTML = `<div class="relic-picker-icon">✕</div><div class="relic-picker-name">${t('relic.give_up')}</div>`;
   giveUp.onclick = () => onDone();
   cardsEl.appendChild(giveUp);
 }

@@ -5,6 +5,7 @@
 
 import type { StageType } from './StageConfig'
 import { BALANCE } from '../../core/constants'
+import { IS_DEMO, DEMO_STAGE_MAP } from '../../demo/demo-config'
 
 /**
  * 10 节点流程定义
@@ -30,41 +31,49 @@ export const STAGE_TIME_LIMITS: Record<StageType, number> = {
 }
 
 /** 节点 → 关卡类型映射 */
-const NODE_STAGE_TYPE: Record<number, StageType> = {
-  1: 'standard',
-  2: 'standard',
-  3: 'elite',
-  4: 'rest',
-  5: 'standard',
-  6: 'elite',
-  7: 'standard',
-  8: 'rest',
-  9: 'elite',
-  10: 'boss',
-}
+const NODE_STAGE_TYPE: Record<number, StageType> = IS_DEMO
+  ? DEMO_STAGE_MAP.nodeStageType
+  : {
+    1: 'standard',
+    2: 'standard',
+    3: 'elite',
+    4: 'rest',
+    5: 'standard',
+    6: 'elite',
+    7: 'standard',
+    8: 'rest',
+    9: 'elite',
+    10: 'boss',
+  }
 
 /** 节点 → Act 映射 */
-const NODE_ACT: Record<number, number> = {
-  1: 1, 2: 1, 3: 1, 4: 1,
-  5: 2, 6: 2, 7: 2, 8: 2,
-  9: 3, 10: 3,
-}
+const NODE_ACT: Record<number, number> = IS_DEMO
+  ? DEMO_STAGE_MAP.nodeAct
+  : {
+    1: 1, 2: 1, 3: 1, 4: 1,
+    5: 2, 6: 2, 7: 2, 8: 2,
+    9: 3, 10: 3,
+  }
 
 /** 节点 → 战斗编号映射（休息关无战斗编号） */
-const NODE_BATTLE_NUMBER: Record<number, number> = {
-  1: 1, 2: 2, 3: 3,
-  5: 4, 6: 5, 7: 6,
-  9: 7, 10: 8,
-}
+const NODE_BATTLE_NUMBER: Record<number, number> = IS_DEMO
+  ? DEMO_STAGE_MAP.nodeBattleNumber
+  : {
+    1: 1, 2: 2, 3: 3,
+    5: 4, 6: 5, 7: 6,
+    9: 7, 10: 8,
+  }
 
 /** 精英关节点 → 修饰器序号映射 */
-const ELITE_MODIFIER_INDEX: Record<number, number> = {
-  3: 0,  // 修饰器 A
-  6: 1,  // 修饰器 B
-  9: 2,  // 修饰器 C
-}
+const ELITE_MODIFIER_INDEX: Record<number, number> = IS_DEMO
+  ? { 3: 0 }  // Demo 仅 1 个精英关
+  : {
+    3: 0,  // 修饰器 A
+    6: 1,  // 修饰器 B
+    9: 2,  // 修饰器 C
+  }
 
-export const TOTAL_NODES = 10
+export const TOTAL_NODES = IS_DEMO ? DEMO_STAGE_MAP.totalNodes : 10
 
 export function getStageType(nodeId: number): StageType {
   return NODE_STAGE_TYPE[nodeId] || 'standard'

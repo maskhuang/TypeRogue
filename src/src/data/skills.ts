@@ -9,6 +9,7 @@ import { CONNECTORS, REPLICATORS, getConnectorDesc, getReplicatorDesc } from './
 import { AMPLIFIERS, getAmplifierDesc } from './amplifiers';
 import { ENCHANTMENTS } from './enchantments';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
+import { t, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 
 // === 已删除旧技能 ID 列表（存档兼容用）===
 export const DELETED_SKILL_IDS = [
@@ -53,16 +54,12 @@ export const SKILL_SCHOOL: Record<string, SkillSchool> = {
 };
 
 export function getSkillSchool(skillId: string): SkillSchool {
-  if (SKILL_SCHOOL[skillId]) return SKILL_SCHOOL[skillId];
-  // 转化者统一归为"转化"流派
-  if (skillId in CONVERTERS) return { label: '转化', cssClass: 'school-converter' };
-  // 连接者统一归为"连接"流派
-  if (skillId in CONNECTORS) return { label: '连接', cssClass: 'school-connector' };
-  // 复制者统一归为"复制"流派
-  if (skillId in REPLICATORS) return { label: '复制', cssClass: 'school-replicator' };
-  // 增幅者统一归为"增幅"流派
-  if (skillId in AMPLIFIERS) return { label: '增幅', cssClass: 'school-amplifier' };
-  return { label: '未知', cssClass: 'school-unknown' };
+  if (SKILL_SCHOOL[skillId]) return { label: t('school.producer'), cssClass: 'school-producer' };
+  if (skillId in CONVERTERS) return { label: t('school.converter'), cssClass: 'school-converter' };
+  if (skillId in CONNECTORS) return { label: t('school.connector'), cssClass: 'school-connector' };
+  if (skillId in REPLICATORS) return { label: t('school.replicator'), cssClass: 'school-replicator' };
+  if (skillId in AMPLIFIERS) return { label: t('school.amplifier'), cssClass: 'school-amplifier' };
+  return { label: t('school.unknown'), cssClass: 'school-unknown' };
 }
 
 /**
@@ -80,7 +77,7 @@ export function getSkillDisplayInfo(
     const enchId = enchantedSkills.get(skillId);
     if (enchId && ENCHANTMENTS[enchId]) {
       const ench = ENCHANTMENTS[enchId];
-      enchSuffix = ` [${ench.icon}${ench.name}]`;
+      enchSuffix = ` [${ench.icon}${localizeItemName(enchId, ench.name)}]`;
       enchIcon = ench.icon;
     }
   }
@@ -88,44 +85,47 @@ export function getSkillDisplayInfo(
   // 产出者查询（level 决定动态描述）
   const prod = PRODUCERS[skillId];
   if (prod) {
-    const desc = level ? getProducerDesc(skillId, level) : prod.desc;
-    return { name: prod.name + enchSuffix, icon: enchIcon || prod.icon, desc: desc + (enchSuffix ? ` | 附魔: ${enchSuffix}` : '') };
+    const name = localizeItemName(skillId, prod.name);
+    const desc = localizeItemDesc(skillId, level ? getProducerDesc(skillId, level) : prod.desc);
+    return { name: name + enchSuffix, icon: enchIcon || prod.icon, desc: desc + (enchSuffix ? t('skill.enchant_suffix', { suffix: enchSuffix }) : '') };
   }
   // 转化者查询
   const conv = CONVERTERS[skillId];
   if (conv) {
-    const desc = level ? getConverterDesc(skillId, level) : conv.desc;
-    return { name: conv.name + enchSuffix, icon: enchIcon || conv.icon, desc: desc + (enchSuffix ? ` | 附魔: ${enchSuffix}` : '') };
+    const name = localizeItemName(skillId, conv.name);
+    const desc = localizeItemDesc(skillId, level ? getConverterDesc(skillId, level) : conv.desc);
+    return { name: name + enchSuffix, icon: enchIcon || conv.icon, desc: desc + (enchSuffix ? t('skill.enchant_suffix', { suffix: enchSuffix }) : '') };
   }
   // 连接者查询（固定 Lv1，无等级变化）
   const conn = CONNECTORS[skillId];
   if (conn) {
-    return { name: conn.name, icon: conn.icon, desc: getConnectorDesc(skillId) };
+    return { name: localizeItemName(skillId, conn.name), icon: conn.icon, desc: getConnectorDesc(skillId) };
   }
   // 复制者查询（固定 Lv1，无等级变化）
   const rep = REPLICATORS[skillId];
   if (rep) {
-    return { name: rep.name, icon: rep.icon, desc: getReplicatorDesc(skillId) };
+    return { name: localizeItemName(skillId, rep.name), icon: rep.icon, desc: getReplicatorDesc(skillId) };
   }
   // 增幅者查询
   const amp = AMPLIFIERS[skillId];
   if (amp) {
+    const name = localizeItemName(skillId, amp.name);
     const desc = level ? getAmplifierDesc(skillId, level) : amp.desc;
     // 变性附魔：显示双资源增幅说明
-    let enchDesc = enchSuffix ? ` | 附魔: ${enchSuffix}` : '';
+    let enchDesc = enchSuffix ? t('skill.enchant_suffix', { suffix: enchSuffix }) : '';
     if (enchantedSkills) {
       const enchId = enchantedSkills.get(skillId);
       if (enchId) {
         const ench = ENCHANTMENTS[enchId];
         if (ench?.category === 'transmutation' && ench.extraResource) {
           const extraIcon = RESOURCE_ICONS[ench.extraResource] || '';
-          const extraLabel = RESOURCE_LABELS[ench.extraResource] || ench.extraResource;
+          const extraLabel = t(`resource.${ench.extraResource}`);
           const pct = Math.round(ench.effectValue * 100);
-          enchDesc = ` | ${ench.icon}${ench.name}: 同时增幅${extraIcon}${extraLabel}（${pct}%效率）`;
+          enchDesc = t('skill.amp_dual', { icon: ench.icon, name: localizeItemName(enchId, ench.name), extraIcon, extraLabel, pct });
         }
       }
     }
-    return { name: amp.name + enchSuffix, icon: enchIcon || amp.icon, desc: desc + enchDesc };
+    return { name: name + enchSuffix, icon: enchIcon || amp.icon, desc: desc + enchDesc };
   }
   return { name: '???', icon: '?', desc: '' };
 }
