@@ -4,12 +4,14 @@
 // Story 33.1: 和弦缓冲与合成器
 // Story 33.2: 资源独立音色设计
 // Story 33.3: 连锁深度与强度调制
+// Story 33.4: 混音平衡与极端场景
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   RESOURCE_SYNTH,
   calculateRMSVolumes,
   emitResourceSound,
+  playScoreSound,
   _chordInternals,
 } from '../../../src/effects/sound';
 
@@ -254,42 +256,42 @@ describe('calculateRMSVolumes (RMS 计算)', () => {
   });
 
   it('单分量不超限时不缩放', () => {
-    const result = calculateRMSVolumes([0.08]);
-    expect(result).toEqual([0.08]);
+    const result = calculateRMSVolumes([0.02]);
+    expect(result).toEqual([0.02]);
   });
 
   it('多分量 RMS 不超限时不缩放', () => {
-    const result = calculateRMSVolumes([0.08, 0.08]);
-    expect(result[0]).toBeCloseTo(0.08);
-    expect(result[1]).toBeCloseTo(0.08);
+    const result = calculateRMSVolumes([0.01, 0.01]);
+    expect(result[0]).toBeCloseTo(0.01);
+    expect(result[1]).toBeCloseTo(0.01);
   });
 
-  it('5 分量 RMS 超限时等比缩放', () => {
-    // RMS(0.12×5) = sqrt(5×0.0144) = sqrt(0.072) ≈ 0.268 > 0.20
-    const input = [0.12, 0.12, 0.12, 0.12, 0.12];
+  it('5 分量 RMS 超限时等比缩放至 0.03', () => {
+    // RMS(0.04×5) = sqrt(5×0.0016) = sqrt(0.008) ≈ 0.089 > 0.03
+    const input = [0.04, 0.04, 0.04, 0.04, 0.04];
     const result = calculateRMSVolumes(input);
     const rms = Math.sqrt(result.reduce((s, v) => s + v * v, 0));
-    expect(rms).toBeCloseTo(0.20, 2);
+    expect(rms).toBeCloseTo(0.03, 2);
     const ratio = result[0] / result[1];
     expect(ratio).toBeCloseTo(1, 5);
   });
 
-  it('不同分量音量超限时等比缩放', () => {
-    const input = [0.15, 0.18, 0.12, 0.16, 0.13];
+  it('不同分量音量超限时等比缩放至 0.03', () => {
+    const input = [0.03, 0.04, 0.02, 0.035, 0.025];
     const result = calculateRMSVolumes(input);
     const rms = Math.sqrt(result.reduce((s, v) => s + v * v, 0));
-    expect(rms).toBeCloseTo(0.20, 2);
+    expect(rms).toBeCloseTo(0.03, 2);
     expect(result[0] / result[1]).toBeCloseTo(input[0] / input[1], 4);
   });
 
   it('恰好等于上限时不缩放', () => {
-    const result = calculateRMSVolumes([0.20]);
-    expect(result[0]).toBeCloseTo(0.20);
+    const result = calculateRMSVolumes([0.03]);
+    expect(result[0]).toBeCloseTo(0.03);
   });
 
-  it('单分量超限时缩放到上限', () => {
-    const result = calculateRMSVolumes([0.4]);
-    expect(result[0]).toBeCloseTo(0.20);
+  it('单分量超限时缩放到上限 0.03', () => {
+    const result = calculateRMSVolumes([0.1]);
+    expect(result[0]).toBeCloseTo(0.03);
   });
 });
 
@@ -607,5 +609,130 @@ describe('强度调制 — 泛音增厚 + 衰减延展 (Story 33.3 Task 5)', () 
     expect(decayMul).toBeCloseTo(1, 3);
 
     spy.mockRestore();
+  });
+});
+
+// ============================================================
+// Story 33.4 Task 1 — 混音平衡：音量比例校准
+// ============================================================
+describe('混音平衡 — 音量比例 (Story 33.4 Task 1)', () => {
+  beforeEach(() => {
+    const mockCtx = createMockAudioContext(1.0);
+    _chordInternals._setMockContext(mockCtx as unknown as AudioContext);
+    _chordInternals.resetCooldown();
+  });
+
+  afterEach(() => {
+    _chordInternals._setMockContext(null);
+  });
+
+  it('5 资源满载和弦的 RMS ≤ 0.03', async () => {
+    const spies = {
+      base: vi.spyOn(RESOURCE_SYNTH, 'base'),
+      score: vi.spyOn(RESOURCE_SYNTH, 'score'),
+      multiplier: vi.spyOn(RESOURCE_SYNTH, 'multiplier'),
+      time: vi.spyOn(RESOURCE_SYNTH, 'time'),
+      gold: vi.spyOn(RESOURCE_SYNTH, 'gold'),
+    };
+
+    // 5 资源满载
+    emitResourceSound('base', 1.0);
+    emitResourceSound('score', 1.0);
+    emitResourceSound('multiplier', 1.0);
+    emitResourceSound('time', 1.0);
+    emitResourceSound('gold', 1.0);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    // 收集所有 synth vol 参数 — 必须全部被调用
+    const vols = Object.values(spies).map(s => {
+      expect(s).toHaveBeenCalled();
+      return s.mock.calls[0][2];
+    });
+    const rms = Math.sqrt(vols.reduce((sum, v) => sum + v * v, 0));
+    expect(rms).toBeLessThanOrEqual(0.03 + 1e-6);
+
+    Object.values(spies).forEach(s => s.mockRestore());
+  });
+
+  it('CHORD_BASE_VOL 和 CHORD_MAX_RMS 常量值正确', () => {
+    const internals = _chordInternals;
+    expect(internals.CHORD_BASE_VOL).toBeCloseTo(0.04, 3);
+    expect(internals.CHORD_MAX_RMS).toBeCloseTo(0.03, 3);
+  });
+});
+
+// ============================================================
+// Story 33.4 Task 2 — 侧链回避：playScoreSound ducking
+// ============================================================
+describe('侧链回避 — playScoreSound ducking (Story 33.4 Task 2)', () => {
+  let mockCtx: ReturnType<typeof createMockAudioContext>;
+
+  beforeEach(() => {
+    mockCtx = createMockAudioContext(1.0);
+    _chordInternals._setMockContext(mockCtx as unknown as AudioContext);
+    _chordInternals.resetCooldown();
+    _chordInternals._setScoreSoundActive(false);
+  });
+
+  afterEach(() => {
+    _chordInternals._setMockContext(null);
+    _chordInternals._setScoreSoundActive(false);
+  });
+
+  it('playScoreSound 激活期间 flush 的 synth vol 降半（-6dB）', async () => {
+    const spy = vi.spyOn(RESOURCE_SYNTH, 'base');
+
+    emitResourceSound('base', 1.0);
+    // 模拟 playScoreSound 设置标志
+    _chordInternals._setScoreSoundActive(true);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    const volWithDuck = spy.mock.calls[0][2];
+
+    spy.mockRestore();
+    _chordInternals._setScoreSoundActive(false);
+
+    // 重置冷却以允许再次 flush
+    _chordInternals.resetCooldown();
+
+    // 再次不带 ducking 触发
+    const spy2 = vi.spyOn(RESOURCE_SYNTH, 'base');
+    emitResourceSound('base', 1.0);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    const volNoDuck = spy2.mock.calls[0][2];
+    spy2.mockRestore();
+
+    // ducked vol 应约为正常 vol 的一半
+    expect(volWithDuck).toBeCloseTo(volNoDuck * 0.5, 4);
+  });
+
+  it('非激活期间 flush 音量不变（duckFactor=1.0）', async () => {
+    const spy = vi.spyOn(RESOURCE_SYNTH, 'base');
+
+    // 确保标志关闭
+    _chordInternals._setScoreSoundActive(false);
+    emitResourceSound('base', 1.0);
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    const vol = spy.mock.calls[0][2];
+    // 单资源不带 duck 因子，duckFactor=1.0
+    expect(vol).toBeGreaterThan(0);
+
+    spy.mockRestore();
+  });
+
+  it('标志在 microtask 后自动复位', async () => {
+    // 直接调用 playScoreSound — 它会设置标志并 queueMicrotask 复位
+    playScoreSound(100);
+
+    // 同步阶段标志应为 true
+    expect(_chordInternals.scoreSoundActive).toBe(true);
+
+    // 等待 microtask 执行
+    await new Promise<void>(resolve => queueMicrotask(resolve));
+
+    // 标志应复位
+    expect(_chordInternals.scoreSoundActive).toBe(false);
   });
 });

@@ -9,7 +9,7 @@ import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
-import { playSound, initAudio, playScoreSound, playRatingSound } from '../effects/sound';
+import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
 import { isConnector, isReplicator } from '../data/connectors';
@@ -682,6 +682,7 @@ function updateTimerDisplay(): void {
 // === 关卡系统 ===
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
+  stopBGM();
   stopScoreRoller(); // Story 31.4
   clearPseudoInfinite();
   clearFloatQueue();
@@ -780,6 +781,8 @@ export async function startLevel(): Promise<void> {
   }
 
   state.phase = 'battle';
+  initAudio();
+  startBGM();
   state.score = 0;
   scoreRoller.reset(0); // Review H1: 重置滚轮，避免从旧分数回滚
   lastScoreTier = ''; // 重置分数分级缓存 (Review M1)
@@ -1041,6 +1044,7 @@ function victory(): void {
 function gameOver(): void {
   state.phase = 'gameover';
   if (timerInterval) clearInterval(timerInterval);
+  stopBGM();
   clearPseudoInfinite();
   clearFloatQueue();
   cleanupModifier();

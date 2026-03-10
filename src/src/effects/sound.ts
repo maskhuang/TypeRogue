@@ -59,6 +59,47 @@ function playTypeSound(): void {
   toneGain.gain.exponentialRampToValueAtTime(0.001, t + toneDec);
   toneOsc.start(t);
   toneOsc.stop(t + toneDec);
+
+  // BGM 节奏脉冲层
+  playKickPulse();
+}
+
+// === BGM Kick 脉冲 — 打字驱动低频心跳 ===
+
+let kickOsc: OscillatorNode | null = null;
+
+function playKickPulse(): void {
+  if (!audioContext) return;
+  const combo = state.combo;
+  if (combo === 0) return; // combo 0 无脉冲
+
+  const ctx = audioContext;
+  const t = ctx.currentTime;
+  const vol = Math.min(0.02, combo * 0.002); // combo 10+ → 0.02 封顶
+
+  // 防叠加：停掉上一个 kick
+  // try/catch: stop() 已被调度过时再次调用会抛 InvalidStateError
+  if (kickOsc) {
+    try { kickOsc.stop(); } catch (_) { /* already stopped */ }
+    kickOsc = null;
+  }
+
+  // 合成 kick：sine 80→40Hz 下滑 + 20ms 衰减
+  kickOsc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  kickOsc.type = 'sine';
+  kickOsc.frequency.setValueAtTime(80, t);
+  kickOsc.frequency.exponentialRampToValueAtTime(40, t + 0.02);
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+  kickOsc.connect(gain);
+  connectToOutput(gain);
+  kickOsc.start(t);
+  kickOsc.stop(t + 0.025);
+
+  // 播放完毕后清空引用
+  const osc = kickOsc;
+  setTimeout(() => { if (kickOsc === osc) kickOsc = null; }, 30);
 }
 
 // === 随机化工具：每次播放微小随机偏移，避免完全相同的重复 ===
@@ -247,7 +288,14 @@ function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// 侧链回避：playScoreSound 激活期间资源音效降 6dB
+// ⚠️ 时序依赖：battle.ts 中 emitResourceSound 先于 playScoreSound 调用，
+// 使得 flush microtask 执行时 flag 已设置。若调用顺序反转，ducking 将失效。
+let _scoreSoundActive = false;
+
 export function playScoreSound(score: number): void {
+  _scoreSoundActive = true;
+  queueMicrotask(() => { _scoreSoundActive = false; });
   if (!audioContext) return;
   const tier = getScoreSoundTier(score);
   const root = getTypingRoot();
@@ -469,8 +517,8 @@ let chordScheduled = false;
 let lastChordTime = 0;
 
 const CHORD_COOLDOWN = 0.08;   // 80ms 硬冷却
-const CHORD_BASE_VOL = 0.12;   // 每音分量基础音量
-const CHORD_MAX_RMS = 0.20;    // RMS 总音量封顶
+const CHORD_BASE_VOL = 0.04;   // 每音分量基础音量（> MAX_RMS 时由 RMS 钳位，实际作为多资源间相对权重）
+const CHORD_MAX_RMS = 0.03;    // RMS 总音量封顶（≤ 打字音峰值 0.035 × 60%）
 const CHORD_STAGGER = 0.015;   // 15ms 连锁时间展开间隔
 const MAX_PITCH_SEMITONES = 6; // 最大音高偏移（增四度）
 
@@ -522,8 +570,9 @@ function flushResourceChord(): void {
     CHORD_BASE_VOL * Math.min(intensity, 2) * randomize(1, 0.08)
   );
 
-  // RMS 缩放
-  const volumes = calculateRMSVolumes(rawVolumes);
+  // RMS 缩放 + 侧链回避（playScoreSound 激活时 -6dB）
+  const duckFactor = _scoreSoundActive ? 0.5 : 1.0;
+  const volumes = calculateRMSVolumes(rawVolumes).map(v => v * duckFactor);
 
   // 为每个资源调用独立合成函数（含连锁时间展开 + 音高偏移 + 强度调制）
   entries.forEach(([resource, { intensity, chainDepth }], i) => {
@@ -562,14 +611,74 @@ function addHarmonicLayer(ctx: AudioContext, now: number, vol: number, baseFreq:
   osc.stop(now + decay + 0.01);
 }
 
+// === BGM Drone 持续低音 ===
+
+let droneOsc1: OscillatorNode | null = null;
+let droneOsc2: OscillatorNode | null = null;
+let droneGain1: GainNode | null = null;
+let droneGain2: GainNode | null = null;
+
+/** 启动 BGM drone — C2 基音 + C3 泛音层 */
+export function startBGM(): void {
+  if (!audioContext || droneOsc1) return;
+  const ctx = audioContext;
+  const now = ctx.currentTime;
+
+  // C2 基音层 (65.41Hz)
+  droneOsc1 = ctx.createOscillator();
+  droneGain1 = ctx.createGain();
+  droneOsc1.type = 'sine';
+  droneOsc1.frequency.setValueAtTime(65.41, now);
+  droneGain1.gain.setValueAtTime(0.03, now);
+  droneOsc1.connect(droneGain1);
+  connectToOutput(droneGain1);
+  droneOsc1.start(now);
+
+  // C3 泛音层 (130.81Hz)
+  droneOsc2 = ctx.createOscillator();
+  droneGain2 = ctx.createGain();
+  droneOsc2.type = 'sine';
+  droneOsc2.frequency.setValueAtTime(130.81, now);
+  droneGain2.gain.setValueAtTime(0.015, now);
+  droneOsc2.connect(droneGain2);
+  connectToOutput(droneGain2);
+  droneOsc2.start(now);
+}
+
+/** 停止 BGM drone — 500ms fadeout */
+export function stopBGM(): void {
+  if (!audioContext || !droneOsc1) return;
+  const now = audioContext.currentTime;
+
+  droneGain1!.gain.linearRampToValueAtTime(0, now + 0.5);
+  droneGain2!.gain.linearRampToValueAtTime(0, now + 0.5);
+  droneOsc1.stop(now + 0.55);
+  droneOsc2!.stop(now + 0.55);
+
+  droneOsc1 = droneOsc2 = null;
+  droneGain1 = droneGain2 = null;
+}
+
 // 测试辅助：暴露内部状态供测试验证
 export const _chordInternals = {
   get buffer() { return chordBuffer; },
   get scheduled() { return chordScheduled; },
   get lastTime() { return lastChordTime; },
+  get scoreSoundActive() { return _scoreSoundActive; },
+  CHORD_BASE_VOL,
+  CHORD_MAX_RMS,
   resetCooldown() { lastChordTime = 0; },
   _setMockContext(ctx: AudioContext | null) { audioContext = ctx; },
   _setLastChordTime(t: number) { lastChordTime = t; },
+  _setScoreSoundActive(v: boolean) { _scoreSoundActive = v; },
+  get droneActive() { return droneOsc1 !== null; },
+  get kickActive() { return kickOsc !== null; },
+  _playKickPulse: playKickPulse,
+  _stopBGMImmediate() {
+    if (droneOsc1) { droneOsc1.stop(); droneOsc1 = null; }
+    if (droneOsc2) { droneOsc2.stop(); droneOsc2 = null; }
+    droneGain1 = droneGain2 = null;
+  },
 };
 
 // === 便捷函数 ===
