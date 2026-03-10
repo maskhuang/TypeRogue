@@ -9,7 +9,7 @@ import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
-import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM } from '../effects/sound';
+import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
 import { isConnector, isReplicator } from '../data/connectors';
@@ -652,6 +652,16 @@ function startTimer(): void {
 
     updateTimerDisplay();
 
+    // BGM 张力层：根据时间比例和关卡类型计算张力等级
+    const ratio = state.time / (state.timeMax + state.player.timeBonus);
+    const currentStageTypeForTension = getStageType(state.level);
+    let tension = 0;
+    if (currentStageTypeForTension === 'boss') tension = Math.max(tension, 3);
+    if (ratio < 0.1) tension = 4;
+    else if (ratio < 0.3) tension = Math.max(tension, 2);
+    else if (ratio >= 0.3) tension = Math.max(tension, 1);
+    updateBGMTension(tension);
+
     if (state.time <= 0) {
       state.time = 0;
       if (timerInterval) clearInterval(timerInterval);
@@ -682,6 +692,7 @@ function updateTimerDisplay(): void {
 // === 关卡系统 ===
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
+  releaseBGMTension();
   stopBGM();
   stopScoreRoller(); // Story 31.4
   clearPseudoInfinite();
@@ -1044,6 +1055,7 @@ function victory(): void {
 function gameOver(): void {
   state.phase = 'gameover';
   if (timerInterval) clearInterval(timerInterval);
+  releaseBGMTension();
   stopBGM();
   clearPseudoInfinite();
   clearFloatQueue();

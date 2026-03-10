@@ -43,6 +43,7 @@ function createMockAudioContext(initialTime = 0.1) {
     setValueAtTime: vi.fn(),
     linearRampToValueAtTime: vi.fn(),
     exponentialRampToValueAtTime: vi.fn(),
+    connect: vi.fn(), // tremolo LFO 连接到 AudioParam
     value: 0,
   });
 
@@ -300,5 +301,175 @@ describe('BGM Kick 脉冲 (Story 33.6)', () => {
         _chordInternals._playKickPulse();
       }
     }).not.toThrow();
+  });
+});
+
+// ============================================================
+// Story 33.7 — BGM 张力层：战局状态驱动
+// ============================================================
+describe('BGM 张力层 (Story 33.7)', () => {
+  let mockCtx: MockCtx;
+
+  beforeEach(() => {
+    mockCtx = createMockAudioContext(1.0);
+    _chordInternals._setMockContext(mockCtx as unknown as AudioContext);
+    startBGM(); // 张力层依赖 drone 存在
+  });
+
+  afterEach(() => {
+    _chordInternals._stopBGMImmediate();
+    _chordInternals._setMockContext(null);
+  });
+
+  // ---- Task 1: 状态管理 ----
+
+  it('同 level 重复调用为空操作', () => {
+    _chordInternals._updateBGMTension(2);
+    const oscCount = mockCtx.oscillators.length;
+    _chordInternals._updateBGMTension(2);
+    // 不应创建额外 oscillator
+    expect(mockCtx.oscillators.length).toBe(oscCount);
+  });
+
+  it('drone 未启动时不创建 oscillator', () => {
+    _chordInternals._stopBGMImmediate();
+    const oscCountBefore = mockCtx.oscillators.length;
+    _chordInternals._updateBGMTension(2);
+    // 不应创建新 oscillator（drone 已停止）
+    expect(mockCtx.oscillators.length).toBe(oscCountBefore);
+    // 但 tensionLevel 应被记录
+    expect(_chordInternals.tensionLevel).toBe(2);
+  });
+
+  // ---- Task 2: Level 0-1 基础状态 ----
+
+  it('updateBGMTension(0) 清除张力音', () => {
+    _chordInternals._updateBGMTension(2); // 先设置张力音
+    const tensionOscIdx = mockCtx.oscillators.length - 1; // 最后一个是张力音
+    _chordInternals._updateBGMTension(0);
+    // 张力音应被 fadeout + stop
+    expect(mockCtx.gains[mockCtx.gains.length - 1].gain.linearRampToValueAtTime)
+      .toHaveBeenCalledWith(0, 1.5);
+    expect(mockCtx.oscillators[tensionOscIdx].stop).toHaveBeenCalledWith(1.55);
+    expect(_chordInternals.tensionLevel).toBe(0);
+  });
+
+  it('level 1 不创建额外 oscillator', () => {
+    const oscCountAfterDrone = mockCtx.oscillators.length; // 2 (drone)
+    _chordInternals._updateBGMTension(1);
+    // level 1 不创建张力音
+    expect(mockCtx.oscillators.length).toBe(oscCountAfterDrone);
+    expect(_chordInternals.tensionLevel).toBe(1);
+  });
+
+  // ---- Task 3: Level 2 — 小七度 ----
+
+  it('level 2 创建 116.54Hz sine oscillator', () => {
+    _chordInternals._updateBGMTension(2);
+
+    // drone 有 2 个 osc，张力音是第 3 个
+    const tensionOsc = mockCtx.oscillators[2];
+    expect(tensionOsc).toBeDefined();
+    expect(tensionOsc.type).toBe('sine');
+    expect(tensionOsc.frequency.setValueAtTime).toHaveBeenCalledWith(116.54, 1.0);
+    expect(tensionOsc.start).toHaveBeenCalledWith(1.0);
+  });
+
+  it('level 2 音量 500ms 渐入至 0.02', () => {
+    _chordInternals._updateBGMTension(2);
+
+    // drone 有 2 个 gain，张力音 gain 是第 3 个
+    const tensionGain = mockCtx.gains[2];
+    expect(tensionGain.gain.setValueAtTime).toHaveBeenCalledWith(0, 1.0);
+    expect(tensionGain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0.02, 1.5);
+    // 接入输出
+    expect(tensionGain.connect).toHaveBeenCalled();
+  });
+
+  // ---- Task 4: Level 3 — 增四度/三全音 ----
+
+  it('level 3 创建 92.50Hz sine oscillator', () => {
+    _chordInternals._updateBGMTension(3);
+
+    const tensionOsc = mockCtx.oscillators[2];
+    expect(tensionOsc.type).toBe('sine');
+    expect(tensionOsc.frequency.setValueAtTime).toHaveBeenCalledWith(92.50, 1.0);
+  });
+
+  it('level 3 drone 基音频率升至 130.81Hz', () => {
+    _chordInternals._updateBGMTension(3);
+
+    // drone osc1 频率应被 ramp 至 130.81Hz
+    const droneOsc = mockCtx.oscillators[0];
+    expect(droneOsc.frequency.exponentialRampToValueAtTime)
+      .toHaveBeenCalledWith(130.81, 1.5);
+  });
+
+  // ---- Task 5: Level 4 — tremolo ----
+
+  it('level 4 创建 8Hz tremolo oscillator 并调制 drone 音量', () => {
+    _chordInternals._updateBGMTension(4);
+
+    // drone(2) + tension(1) + tremolo(1) = 4 oscillators
+    expect(mockCtx.oscillators.length).toBeGreaterThanOrEqual(4);
+
+    // 找到 tremolo osc（最后一个）
+    const tremoloOsc = mockCtx.oscillators[mockCtx.oscillators.length - 1];
+    expect(tremoloOsc.type).toBe('sine');
+    expect(tremoloOsc.frequency.setValueAtTime).toHaveBeenCalledWith(8, 1.0);
+
+    // tremolo gain 深度 0.5（振幅 ±0.5）
+    const tremoloGain = mockCtx.gains[mockCtx.gains.length - 1];
+    expect(tremoloGain.gain.setValueAtTime).toHaveBeenCalledWith(0.5, 1.0);
+
+    // tremolo gain 连接到 droneGain1.gain（AudioParam 调制）
+    expect(tremoloGain.connect).toHaveBeenCalledWith(mockCtx.gains[0].gain);
+  });
+
+  it('level 4 张力音音量 ×1.5 (0.0375)', () => {
+    _chordInternals._updateBGMTension(4);
+
+    // 张力音 gain（第 3 个 gain）应 ramp 至 0.0375
+    const tensionGain = mockCtx.gains[2];
+    expect(tensionGain.gain.linearRampToValueAtTime)
+      .toHaveBeenCalledWith(0.0375, 1.5);
+  });
+
+  // ---- Drone 频率恢复（Review M3） ----
+
+  it('level 4→2 时 drone 基音恢复 C2 (65.41Hz)', () => {
+    _chordInternals._updateBGMTension(4); // drone 升至 C3
+    _chordInternals._updateBGMTension(2); // 退回 level 2
+
+    const droneOsc = mockCtx.oscillators[0];
+    const rampCalls = droneOsc.frequency.exponentialRampToValueAtTime.mock.calls;
+    // 最后一次 ramp 应是恢复 C2
+    expect(rampCalls[rampCalls.length - 1]).toEqual([65.41, 1.5]);
+  });
+
+  // ---- Task 6: 通关释放 ----
+
+  it('releaseBGMTension 执行 200ms fadeout', () => {
+    _chordInternals._updateBGMTension(3);
+    const tensionOsc = mockCtx.oscillators[2];
+    const tensionGain = mockCtx.gains[2];
+
+    _chordInternals._releaseBGMTension();
+
+    // 200ms fadeout（不是 500ms）
+    expect(tensionGain.gain.linearRampToValueAtTime).toHaveBeenCalledWith(0, 1.2);
+    expect(tensionOsc.stop).toHaveBeenCalledWith(1.25);
+    expect(_chordInternals.tensionLevel).toBe(0);
+  });
+
+  it('release 后 drone 基音恢复 C2 (65.41Hz)', () => {
+    _chordInternals._updateBGMTension(3); // drone 升至 C3
+    _chordInternals._releaseBGMTension();
+
+    // drone osc1 频率应 ramp 回 65.41Hz
+    const droneOsc = mockCtx.oscillators[0];
+    const rampCalls = droneOsc.frequency.exponentialRampToValueAtTime.mock.calls;
+    // 最后一次 ramp 应是恢复 C2
+    expect(rampCalls[rampCalls.length - 1]).toEqual([65.41, 1.5]);
   });
 });

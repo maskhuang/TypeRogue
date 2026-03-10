@@ -659,6 +659,126 @@ export function stopBGM(): void {
   droneGain1 = droneGain2 = null;
 }
 
+// === BGM 张力层 — 战局状态驱动不协和音 ===
+
+let tensionLevel = 0;
+let tensionOsc: OscillatorNode | null = null;
+let tensionGain: GainNode | null = null;
+let tremoloOsc: OscillatorNode | null = null;
+let tremoloGain: GainNode | null = null;
+
+const TENSION_FREQS: Record<number, number> = {
+  2: 116.54,  // Bb2 — 小七度
+  3: 92.50,   // F#2 — 增四度/三全音
+};
+
+/** 更新 BGM 张力层级 (0-4) */
+export function updateBGMTension(level: number): void {
+  if (level === tensionLevel) return; // 幂等
+  if (!audioContext || !droneOsc1) {
+    tensionLevel = level;
+    return; // drone 未启动，仅记录
+  }
+
+  const ctx = audioContext;
+  const now = ctx.currentTime;
+  const prevLevel = tensionLevel;
+  tensionLevel = level;
+
+  // 清除旧张力音（500ms fadeout）
+  if (tensionOsc && (level <= 1 || TENSION_FREQS[level] !== TENSION_FREQS[prevLevel])) {
+    tensionGain!.gain.linearRampToValueAtTime(0, now + 0.5);
+    tensionOsc.stop(now + 0.55);
+    tensionOsc = tensionGain = null;
+  }
+
+  // 清除 tremolo（从 level 4 退出时）
+  if (tremoloOsc && level < 4) {
+    tremoloOsc.stop(now + 0.5);
+    tremoloOsc = tremoloGain = null;
+  }
+
+  // Level 2/3: 创建张力音
+  if (level >= 2 && level <= 3 && !tensionOsc) {
+    const freq = TENSION_FREQS[level] ?? 116.54;
+    const vol = level === 3 ? 0.025 : 0.02;
+    tensionOsc = ctx.createOscillator();
+    tensionGain = ctx.createGain();
+    tensionOsc.type = 'sine';
+    tensionOsc.frequency.setValueAtTime(freq, now);
+    tensionGain.gain.setValueAtTime(0, now);
+    tensionGain.gain.linearRampToValueAtTime(vol, now + 0.5); // 500ms 渐入
+    tensionOsc.connect(tensionGain);
+    connectToOutput(tensionGain);
+    tensionOsc.start(now);
+  }
+
+  // Level 3: drone 基音升至 C3
+  if (level === 3) {
+    droneOsc1!.frequency.exponentialRampToValueAtTime(130.81, now + 0.5);
+  } else if (prevLevel >= 3 && level < 3) {
+    droneOsc1!.frequency.exponentialRampToValueAtTime(65.41, now + 0.5);
+  }
+
+  // Level 4: 叠加 tremolo + 张力音 ×1.5
+  if (level === 4) {
+    // 确保 F#2 张力音存在
+    if (!tensionOsc) {
+      const freq = TENSION_FREQS[3]; // F#2
+      tensionOsc = ctx.createOscillator();
+      tensionGain = ctx.createGain();
+      tensionOsc.type = 'sine';
+      tensionOsc.frequency.setValueAtTime(freq, now);
+      tensionGain.gain.setValueAtTime(0, now);
+      tensionGain.gain.linearRampToValueAtTime(0.0375, now + 0.5); // 0.025 × 1.5
+      tensionOsc.connect(tensionGain);
+      connectToOutput(tensionGain);
+      tensionOsc.start(now);
+    } else {
+      tensionGain!.gain.linearRampToValueAtTime(0.0375, now + 0.5);
+    }
+
+    // Tremolo LFO: 8Hz sine → 调制 drone 音量
+    if (!tremoloOsc) {
+      tremoloOsc = ctx.createOscillator();
+      tremoloGain = ctx.createGain();
+      tremoloOsc.type = 'sine';
+      tremoloOsc.frequency.setValueAtTime(8, now);
+      tremoloGain.gain.setValueAtTime(0.5, now); // 振幅 ±0.5
+      tremoloOsc.connect(tremoloGain);
+      tremoloGain.connect(droneGain1!.gain); // 调制 AudioParam
+      tremoloOsc.start(now);
+    }
+
+    // drone 基音也需升至 C3（若从 level 2 直接跳到 4）
+    droneOsc1!.frequency.exponentialRampToValueAtTime(130.81, now + 0.5);
+  }
+}
+
+/** 释放张力层 — 通关/结算时 200ms 快速 fadeout */
+export function releaseBGMTension(): void {
+  if (!audioContext) return;
+  const now = audioContext.currentTime;
+
+  if (tensionOsc) {
+    tensionGain!.gain.linearRampToValueAtTime(0, now + 0.2);
+    tensionOsc.stop(now + 0.25);
+    tensionOsc = tensionGain = null;
+  }
+
+  if (tremoloOsc) {
+    tremoloOsc.stop(now + 0.2);
+    tremoloOsc = tremoloGain = null;
+  }
+
+  // 恢复 drone 基音至 C2
+  if (droneOsc1) {
+    droneOsc1.frequency.exponentialRampToValueAtTime(65.41, now + 0.5);
+  }
+
+  tensionLevel = 0;
+}
+
 // 测试辅助：暴露内部状态供测试验证
 export const _chordInternals = {
   get buffer() { return chordBuffer; },
@@ -673,11 +793,19 @@ export const _chordInternals = {
   _setScoreSoundActive(v: boolean) { _scoreSoundActive = v; },
   get droneActive() { return droneOsc1 !== null; },
   get kickActive() { return kickOsc !== null; },
+  get tensionLevel() { return tensionLevel; },
   _playKickPulse: playKickPulse,
+  _updateBGMTension: updateBGMTension,
+  _releaseBGMTension: releaseBGMTension,
   _stopBGMImmediate() {
     if (droneOsc1) { droneOsc1.stop(); droneOsc1 = null; }
     if (droneOsc2) { droneOsc2.stop(); droneOsc2 = null; }
     droneGain1 = droneGain2 = null;
+    if (tensionOsc) { try { tensionOsc.stop(); } catch (_) {} tensionOsc = null; }
+    tensionGain = null;
+    if (tremoloOsc) { try { tremoloOsc.stop(); } catch (_) {} tremoloOsc = null; }
+    tremoloGain = null;
+    tensionLevel = 0;
   },
 };
 

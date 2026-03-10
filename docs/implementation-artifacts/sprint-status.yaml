@@ -309,12 +309,12 @@ development_status:
 
   # ===== Epic 33: 音效系统重构 =====
   # Source: docs/stories/epic-23-sound-system-refactor.md (renumbered from Epic 23)
-  epic-33: in-progress
+  epic-33: done
   33-1-chord-buffer-synthesizer: done
   33-2-resource-distinct-sound-design: done
   33-3-chain-depth-intensity-modulation: done
   33-4-mix-balance-extreme-cases: done
   33-5-bgm-drone-bass: done
   33-6-bgm-rhythm-pulse-typing: done
-  33-7-bgm-tension-battle-state: backlog
+  33-7-bgm-tension-battle-state: done
   epic-33-retrospective: optional
