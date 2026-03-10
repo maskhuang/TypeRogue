@@ -19,9 +19,10 @@ import { eventBus } from './core/events/EventBus';
 import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode } from './core/seededRandom';
 import { showClassPicker } from './systems/classes/ClassPicker';
 import { filterSkillIdsByClass } from './systems/classes/ClassResourceFilter';
+import { saveManager } from './core/save/SaveManager';
 
 // === 游戏初始化 ===
-function init(): void {
+async function init(): Promise<void> {
   console.log('🎮 打字肉鸽 - 初始化中...');
 
   // 初始化 UI 元素引用
@@ -42,10 +43,26 @@ function init(): void {
 
   // Story 25.5: 初始化 MetaState（排行榜 + 统计）
   const metaState = new MetaState();
+
+  // 加载存档
+  const savedMeta = await saveManager.loadMeta();
+  if (savedMeta) {
+    metaState.deserialize(savedMeta);
+  }
+
+  state.endlessUnlocked = metaState.isModeUnlocked('endless');
   initLeaderboardDisplay(metaState);
+
+  // 监听保存请求：Run 结束时自动持久化 MetaState
+  eventBus.on('meta:request_save', () => {
+    void saveManager.saveMeta(metaState.serialize());
+  });
+
   // 排行榜：Run 结束后渲染
   eventBus.on('meta:stats_updated', () => {
     renderLeaderboard();
+    // 保存后刷新 endlessUnlocked（可能刚解锁）
+    state.endlessUnlocked = metaState.isModeUnlocked('endless');
   });
 
   // 初始化重开按钮
@@ -128,7 +145,7 @@ function init(): void {
 
 // === 启动 ===
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', () => void init());
 } else {
-  init();
+  void init();
 }

@@ -172,6 +172,7 @@ export interface GameState {
   craftedWords: string[];                           // 造词师：本 Run 已造词列表，跨关保持，Run 重置
   mutagenInventory: number;                        // 蜕变师：变异素库存，跨关保持，Run 重置
   unstableResources: Map<string, ResourceType>;    // 不稳定附魔：每关随机资源分配（skillId → 资源类型），每关重置
+  endlessUnlocked: boolean;                // 无尽模式是否解锁
   gameMode: 'normal' | 'daily';           // 游戏模式
   dailySeed: number | null;                // 每日挑战种子（daily 模式时非 null）
   resources: ResourceState;

@@ -730,18 +730,24 @@ function endLevel(): void {
   if (state.score >= state.targetScore) {
     const rating = state.battleStats?.rating || 'B';
     showRatingReveal(rating, () => {
+      startBGM('chill');
       const currentType = getStageType(state.level);
 
       if (currentType === 'boss') {
-        // Boss 关胜利 → 周目推进 + 修饰器选择 + 传说遗物三选一 + 进商店
-        advanceCycle();
-        showBossModifierPicker(() => {
-          if (hasUnownedRelics()) {
-            showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.bossDrop);
-          } else {
-            openShop(true);
-          }
-        });
+        if (state.endlessUnlocked) {
+          // 无尽模式已解锁 → 周目推进 + 修饰器选择 + 传说遗物三选一 + 进商店
+          advanceCycle();
+          showBossModifierPicker(() => {
+            if (hasUnownedRelics()) {
+              showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.bossDrop);
+            } else {
+              openShop(true);
+            }
+          });
+        } else {
+          // 无尽模式未解锁 → 通关结算
+          victory();
+        }
         return;
       }
 
@@ -793,7 +799,7 @@ export async function startLevel(): Promise<void> {
 
   state.phase = 'battle';
   initAudio();
-  startBGM();
+  startBGM('battle');
   state.score = 0;
   scoreRoller.reset(0); // Review H1: 重置滚轮，避免从旧分数回滚
   lastScoreTier = ''; // 重置分数分级缓存 (Review M1)
@@ -1021,11 +1027,14 @@ function victory(): void {
   stopBossRotation();
 
   const el = getElements();
+  const endlessHint = state.endlessUnlocked
+    ? ''
+    : '<br><span style="color:#ffe66d;font-size:0.85em">用全部三个职业各通关一次即可解锁无尽模式</span>';
   el.gameoverStats.innerHTML = `
     通关! Boss 已击败!<br>
     最终得分: ${state.score}<br>
     最高连击: ${state.maxCombo}<br>
-    获得技能: ${state.player.skills.size}
+    获得技能: ${state.player.skills.size}${endlessHint}
   `;
   showScreen('gameover');
   playSound('levelup');
@@ -1048,6 +1057,7 @@ function victory(): void {
     enchantments: Array.from(state.player.enchantedSkills.entries()).map(([skillId, enchantmentId]) => ({ skillId, enchantmentId })),
     activeModifiers: [...state.activeModifiers],
     seed: state.dailySeed,
+    classId: state.classId,
   });
 }
 
@@ -1056,7 +1066,7 @@ function gameOver(): void {
   state.phase = 'gameover';
   if (timerInterval) clearInterval(timerInterval);
   releaseBGMTension();
-  stopBGM();
+  startBGM('chill');
   clearPseudoInfinite();
   clearFloatQueue();
   cleanupModifier();
@@ -1091,6 +1101,7 @@ function gameOver(): void {
     enchantments: Array.from(state.player.enchantedSkills.entries()).map(([skillId, enchantmentId]) => ({ skillId, enchantmentId })),
     activeModifiers: [...state.activeModifiers],
     seed: state.dailySeed,
+    classId: state.classId,
   });
 }
 

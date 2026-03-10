@@ -107,6 +107,7 @@ export interface GameEvents {
     skillLevels?: { id: string; level: number }[]                 // Story 25.5
     enchantments?: { skillId: string; enchantmentId: string }[]   // Story 25.5
     activeModifiers?: string[]                                    // Story 25.5
+    classId?: string                                              // 职业 ID
   }
 
   // 场景导航事件 (Story 5.5)
@@ -123,6 +124,10 @@ export interface GameEvents {
 
   'meta:relic_unlocked': {
     relicId: string
+  }
+
+  'meta:class_unlocked': {
+    classId: string
   }
 
   'meta:achievement_unlocked': {

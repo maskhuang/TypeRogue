@@ -85,6 +85,8 @@ export interface RunResultData {
   activeModifiers?: string[]
   /** Story 25.6: 每日挑战种子 */
   seed?: number | null
+  /** 职业 ID（用于追踪哪个职业通关） */
+  classId?: string
 }
 
 /**
@@ -113,8 +115,6 @@ const DEFAULT_UNLOCKED_RELICS = [
  */
 const DEFAULT_UNLOCKED_CLASSES = [
   'none',             // 无职业（默认模式）
-  'wordsmith',        // 造词师（测试用，后续接入解锁条件）
-  'metamorph',        // 蜕变师（测试用，后续接入解锁条件）
 ]
 
 /**
@@ -131,6 +131,8 @@ export class MetaState {
   private unlockedSkills: Set<string>
   private unlockedRelics: Set<string>
   private unlockedClasses: Set<string>  // Story 32.1
+  private victoriedClasses: Set<string>  // 通关过的职业集合
+  private unlockedModes: Set<string>     // 已解锁的模式集合
   private achievements: Map<string, AchievementProgress>
   private stats: MetaStats
   private leaderboard: LeaderboardEntry[]  // Story 25.5
@@ -143,6 +145,8 @@ export class MetaState {
     this.unlockedSkills = new Set(DEFAULT_UNLOCKED_SKILLS)
     this.unlockedRelics = new Set(DEFAULT_UNLOCKED_RELICS)
     this.unlockedClasses = new Set(DEFAULT_UNLOCKED_CLASSES)
+    this.victoriedClasses = new Set()
+    this.unlockedModes = new Set()
     this.achievements = new Map()
     this.stats = this.createDefaultStats()
     this.leaderboard = []
@@ -274,6 +278,83 @@ export class MetaState {
   }
 
   // ===========================================
+  // 职业通关 & 模式解锁方法
+  // ===========================================
+
+  /**
+   * 记录某职业通关
+   */
+  addClassVictory(classId: string): void {
+    if (!classId || typeof classId !== 'string') return
+    this.victoriedClasses.add(classId)
+  }
+
+  /**
+   * 获取通关过的职业列表
+   */
+  getVictoriedClasses(): string[] {
+    return Array.from(this.victoriedClasses)
+  }
+
+  /**
+   * 检查模式是否已解锁
+   */
+  isModeUnlocked(modeId: string): boolean {
+    return this.unlockedModes.has(modeId)
+  }
+
+  /**
+   * 解锁模式
+   * @returns true 如果是新解锁
+   */
+  unlockMode(modeId: string): boolean {
+    if (!modeId || typeof modeId !== 'string') return false
+    if (this.unlockedModes.has(modeId)) return false
+    this.unlockedModes.add(modeId)
+    return true
+  }
+
+  /**
+   * 检查进度驱动的解锁条件（职业 + 模式）
+   * - victories >= 1 → 解锁造词师
+   * - 所有技能已解锁 → 解锁蜕变师
+   * - 三职业均通关 → 解锁无尽模式
+   */
+  checkProgressionUnlocks(): void {
+    // 造词师：首次通关（任意职业）
+    if (this.stats.victories >= 1) {
+      this.unlockClass('wordsmith')
+    }
+
+    // 蜕变师：解锁所有技能
+    const totalSkillCount = this.getTotalSkillCount()
+    if (totalSkillCount > 0 && this.unlockedSkills.size >= totalSkillCount) {
+      this.unlockClass('metamorph')
+    }
+
+    // 无尽模式：三职业均通关
+    if (
+      this.victoriedClasses.has('none') &&
+      this.victoriedClasses.has('wordsmith') &&
+      this.victoriedClasses.has('metamorph')
+    ) {
+      this.unlockMode('endless')
+    }
+  }
+
+  /**
+   * 获取游戏总技能数（用于蜕变师解锁条件判断）
+   * 可通过 setTotalSkillCount 外部设置，否则返回 0（不触发解锁）
+   */
+  private totalSkillCountOverride = 0
+  setTotalSkillCount(count: number): void {
+    this.totalSkillCountOverride = count
+  }
+  private getTotalSkillCount(): number {
+    return this.totalSkillCountOverride
+  }
+
+  // ===========================================
   // 统计方法 (AC: #8, #5)
   // ===========================================
 
@@ -348,10 +429,16 @@ export class MetaState {
     // 1. 更新统计数据
     this.updateStats(data)
 
-    // 2. 记录排行榜 (Story 25.5)
+    // 2. 记录职业通关 + 检查进度解锁
+    if (data.runResult === 'victory' && data.classId) {
+      this.addClassVictory(data.classId)
+    }
+    this.checkProgressionUnlocks()
+
+    // 3. 记录排行榜 (Story 25.5)
     this.recordLeaderboardEntry(data)
 
-    // 3. 检查解锁条件 (Story 6.3)
+    // 4. 检查解锁条件 (Story 6.3)
     if (this.unlockSystem) {
       const newUnlocks = this.unlockSystem.checkUnlocks(data)
       if (newUnlocks.length > 0) {
@@ -363,10 +450,10 @@ export class MetaState {
       }
     }
 
-    // 4. 发送统计更新事件
+    // 5. 发送统计更新事件
     eventBus.emit('meta:stats_updated', { stats: this.getStats() })
 
-    // 5. 触发自动保存 (Story 6.3: AC #10)
+    // 6. 触发自动保存 (Story 6.3: AC #10)
     eventBus.emit('meta:request_save', {})
   }
 
@@ -462,10 +549,12 @@ export class MetaState {
    */
   serialize(): string {
     const data = {
-      version: 4,  // v4: 新增 unlockedClasses (Story 32.1)
+      version: 5,  // v5: 新增 victoriedClasses + unlockedModes
       unlockedSkills: Array.from(this.unlockedSkills),
       unlockedRelics: Array.from(this.unlockedRelics),
       unlockedClasses: Array.from(this.unlockedClasses),
+      victoriedClasses: Array.from(this.victoriedClasses),
+      unlockedModes: Array.from(this.unlockedModes),
       achievements: Array.from(this.achievements.entries()),
       stats: this.stats,
       leaderboard: this.leaderboard,
@@ -481,14 +570,16 @@ export class MetaState {
     try {
       const data = JSON.parse(json)
 
-      // 版本检查（v1/v2/v3/v4 均可加载）
-      if (data.version !== undefined && ![1, 2, 3, 4].includes(data.version)) {
+      // 版本检查（v1-v5 均可加载）
+      if (data.version !== undefined && ![1, 2, 3, 4, 5].includes(data.version)) {
         console.warn(`MetaState: Unknown save version ${data.version}, attempting to load anyway`)
       }
 
       this.unlockedSkills = new Set(data.unlockedSkills || DEFAULT_UNLOCKED_SKILLS)
       this.unlockedRelics = new Set(data.unlockedRelics || DEFAULT_UNLOCKED_RELICS)
       this.unlockedClasses = new Set(data.unlockedClasses || DEFAULT_UNLOCKED_CLASSES)
+      this.victoriedClasses = new Set(data.victoriedClasses || [])
+      this.unlockedModes = new Set(data.unlockedModes || [])
       this.achievements = new Map(data.achievements || [])
       this.stats = { ...this.createDefaultStats(), ...data.stats }
       this.leaderboard = data.leaderboard || []
@@ -506,6 +597,8 @@ export class MetaState {
     this.unlockedSkills = new Set(DEFAULT_UNLOCKED_SKILLS)
     this.unlockedRelics = new Set(DEFAULT_UNLOCKED_RELICS)
     this.unlockedClasses = new Set(DEFAULT_UNLOCKED_CLASSES)
+    this.victoriedClasses = new Set()
+    this.unlockedModes = new Set()
     this.achievements = new Map()
     this.stats = this.createDefaultStats()
     this.leaderboard = []

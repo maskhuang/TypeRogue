@@ -36,6 +36,7 @@ export function createInitialState(): GameState {
     craftedWords: [],
     mutagenInventory: 0,
     unstableResources: new Map(),
+    endlessUnlocked: false,
     resources: {
       base: 0,
       score: 0,
