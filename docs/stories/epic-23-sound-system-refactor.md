@@ -3,6 +3,7 @@ title: "Epic 23: 音效系统重构"
 epic_key: "epic-23"
 status: "backlog"
 created: "2026-03-08"
+updated: "2026-03-09"
 stories: []
 ---
 
@@ -17,167 +18,146 @@ stories: []
 - 全局短混响（双延迟反馈）
 - `randomize()` 防重复、`softAttack()` 渐入
 
-**痛点：** 资源产出类音效（base/score/multiplier/time/gold）在多技能同时触发时听感混乱，已临时移除（调用点保留 `// TODO: Epic 23`）。需要重新设计资源音效的整体方案。
+**已完成：** Story 23.1 实现了资源音效的缓冲合并管线（`emitResourceSound` → buffer → `flushResourceChord`），但听感反馈不佳——所有资源用同类波形不同音高，缺乏辨识度和打击感。
 
-## 采用方案：音乐化合并
+**参考：** Balatro（小丑牌）的音效设计提供了关键启发：
+- 每种资源使用**完全不同音色特征**的短促音效（筹码碰撞声、硬币声、打击声）
+- 同类音效有 **2-7 个变体**随机播放，避免机械重复
+- **蓄力→释放**两段式设计用于大分数爆发
+- 音效来源可混合：合成 + 采样（Balatro 使用 Freesound CC0 采样）
+
+## 采用方案：独立音色 + 多变体 + 缓冲防叠加
 
 ### 核心思路
 
-不是每个技能单独发声，而是将同一次按键触发的所有资源产出**收集后合并为一个和弦**播放。技能越多 → 和弦越丰满（而非越吵）。
+每种资源拥有**独特的合成音色**（不同波形、频率走向、衰减特征），而非同波形不同音高。保留 Story 23.1 的缓冲合并管线用于防叠加和冷却控制，但合成逻辑从"统一振荡器"改为"per-resource 独立合成函数"。
 
-### 技术可行性
+### 技术架构
 
-经代码分析，一次按键的整个触发链（`triggerSkill` → 连锁 `triggerProducer`/`triggerConverter` → 溅射/附魔）是**同步调用链**，在同一个 JS 微任务中完成。因此可以：
-1. 产出时只往缓冲区写入 `{ resource, intensity }`
-2. 用 `queueMicrotask()` 在本轮微任务结束后统一合成播放
-3. 无需 setTimeout/定时器，零额外延迟
+```
+emitResourceSound(resource, intensity)
+  → chordBuffer 收集（同资源取 max intensity）
+  → queueMicrotask → flushResourceChord()
+    → 遍历 buffer，对每个 resource 调用 RESOURCE_SYNTH[resource](intensity)
+    → 每个合成函数独立创建振荡器/噪声/滤波器组合
+    → RMS 总音量封顶
+```
 
-### 资源→音高映射
+### 资源音色设计方向
 
-采用 C 大调五声音阶（C-E-G-A-C'），任意组合都和谐：
+| 资源 | 音色特征 | 合成思路 | 参考 |
+|------|---------|---------|------|
+| base | 低沉冲击 | triangle 下扫 + 噪声脉冲 | Balatro chips |
+| score | 明亮跳跃 | square 频率跳跃（琶音） | Balatro coin |
+| multiplier | 力量上扫 | sawtooth 上扫 + bandpass | Balatro multhit |
+| time | 轻盈点击 | 高频 sine 双击 | 时钟滴答 |
+| gold | 金属质感 | square + 高频泛音 | 硬币叮当 |
 
-| 资源 | 音名 | 频率 | 设计意图 |
-|------|------|------|---------|
-| base | C4 | 262 Hz | 根音，稳定基底 |
-| score | E4 | 330 Hz | 大三度，明亮积极 |
-| multiplier | G4 | 392 Hz | 纯五度，力量感 |
-| time | A4 | 440 Hz | 大六度，轻盈流动 |
-| gold | C5 | 523 Hz | 八度，高亮点缀 |
+### 多变体系统
+
+每种资源合成函数内通过参数随机化产生变体：
+- 基础频率 ±5%
+- 频率走向（上扫/下扫幅度）±10%
+- 衰减时长 ±15%
+- 音量 ±8%
+- 可选：随机选择不同波形组合
+
+目标：同一资源连续触发 5 次，每次听起来有微妙不同，但整体音色特征一致。
 
 ### 强度（intensity）调制
 
-每种资源的 intensity（已有的 `getFloatScale` 返回值，≥1.0 的 log 比例值）影响该音在和弦中的表现：
+intensity（`getFloatScale` 返回值）影响音效的"份量感"：
 
 | 参数 | 低 intensity (1.0) | 高 intensity (3.0+) |
 |------|-------------------|-------------------|
-| 音量 | 基础音量 | 最高 ×2 封顶 |
-| 波形 | 纯 sine | sine + triangle 泛音层 |
-| 衰减 | 80ms 短促 | 200ms+ 余韵 |
-| detune | 0 | ±5 cent chorus 效果 |
-
-### 和弦合成细节
-
-一次按键可能产出的资源组合举例：
-
-| 场景 | 和弦 | 听感 |
-|------|------|------|
-| 单个 base 产出者 | C4 单音 | 轻柔"叮" |
-| base + score | C4 + E4 | 温暖大三度 |
-| base + score + mult | C4 + E4 + G4 | 大三和弦，饱满 |
-| 全资源爆发 | C4+E4+G4+A4+C5 | 五声和弦，辉煌但和谐 |
-| 只有 gold | C5 单音 | 清脆高音点缀 |
+| 音量 | 基础音量 | ×2 封顶 |
+| 衰减 | 基础衰减 | ×1.5 更长余韵 |
+| 泛音层 | 无 | 叠加 triangle/噪声增厚 |
 
 ### 整体音量控制
 
-- 和弦总音量 = 各音分量的 **RMS 混合**（非简单相加），防止多音叠加爆音
-- 总音量上限固定（如 0.15），无论多少资源同时产出
-- 各音分量按 intensity 比例分配音量份额
-
-### 冷却机制
-
-- 伪无限循环（250ms 间隔自动触发）：每 tick 一个和弦，自然间隔足够
-- 普通按键触发：`queueMicrotask` 保证同一按键只发一次
-- 额外硬冷却 80ms：防止极快打字时和弦过密
+- 和弦总音量 = 各音分量的 **RMS 混合**，防止多音叠加爆音
+- 总音量上限固定（0.25），无论多少资源同时产出
+- 硬冷却 80ms，冷却期丢弃缓冲
 
 ## Stories
 
-### Story 23.1: 和弦缓冲与合成器
+### Story 23.1: 和弦缓冲与合成器 ✅ DONE
 
 **目标：** 实现「收集 → 合并 → 播放」的核心管线
 
 **验收标准：**
 - AC1: `emitResourceSound(resource, intensity)` 接口，调用点只写缓冲不发声
-- AC2: `queueMicrotask` 触发 `flushResourceChord()`，将缓冲区合成为一个和弦
+- AC2: `queueMicrotask` 触发 `flushResourceChord()`，将缓冲区合成
 - AC3: 同种资源多次产出取 max intensity
-- AC4: 和弦使用五声音阶映射（C4/E4/G4/A4/C5）
-- AC5: 单音 sine 波形，softAttack 渐入，80ms 基础衰减
-- AC6: 硬冷却 80ms，冷却中丢弃
-- AC7: 总音量 RMS 混合，封顶 0.15
-- AC8: `randomize()` 应用于频率（±3%）和音量（±8%）
+- AC4: 硬冷却 80ms，冷却中丢弃
+- AC5: 总音量 RMS 混合封顶
+- AC6: `randomize()` 应用于频率和音量
+- AC7: 非映射资源（fragment/mutagen）静默跳过
+- AC8: `skills.ts` 4 处 TODO 替换为 `emitResourceSound` 调用
 
-**技术方案：**
-```
-// sound.ts 新增
-const chordBuffer: Map<string, number> = new Map(); // resource → max intensity
-let chordScheduled = false;
-
-export function emitResourceSound(resource: string, intensity: number): void {
-  const prev = chordBuffer.get(resource) || 0;
-  chordBuffer.set(resource, Math.max(prev, intensity));
-  if (!chordScheduled) {
-    chordScheduled = true;
-    queueMicrotask(flushResourceChord);
-  }
-}
-
-function flushResourceChord(): void {
-  chordScheduled = false;
-  if (冷却中) { chordBuffer.clear(); return; }
-  // 遍历 chordBuffer，为每个 resource 创建对应音高的振荡器
-  // RMS 混合总音量
-  chordBuffer.clear();
-}
-```
-
-**改动文件：**
-- `effects/sound.ts`: 新增 `emitResourceSound`, `flushResourceChord`, 音高映射表
-- `systems/skills.ts`: 4 处 `// TODO: Epic 23` 替换为 `emitResourceSound(resource, scale)`
+**状态：** Done — 缓冲管线 + 20 个测试通过。当前合成用统一 triangle 振荡器，将在 23.2 替换为独立音色。
 
 **估点：** 3
 
 ---
 
-### Story 23.2: 强度调制与音色丰富度
+### Story 23.2: 资源独立音色设计
 
-**目标：** intensity 驱动音色从清淡到丰满的渐变
+**目标：** 每种资源拥有独特的合成音色特征，替换当前统一振荡器
 
 **前置：** Story 23.1
 
 **验收标准：**
-- AC1: intensity ≥ 2.0 时自动叠加 triangle 泛音层（音量 ×0.3）
-- AC2: intensity 影响衰减时长：80ms × (1 + log₂(intensity) × 0.4)
-- AC3: intensity ≥ 2.5 时加入 ±5 cent detune 产生 chorus 效果
-- AC4: 音量调制：baseVol × min(intensity, 2)，封顶防爆
-- AC5: 极端测试：5 种资源全部 intensity=4 时听感仍和谐
+- AC1: 创建 `RESOURCE_SYNTH` 调度表，每种资源映射到独立合成函数
+- AC2: `synthBase()` — 低频 triangle 下扫 + bandpass 噪声冲击，模拟"筹码/砖块"质感
+- AC3: `synthScore()` — square 波频率跳跃（2-3 音琶音），模拟"硬币拾取"
+- AC4: `synthMultiplier()` — sawtooth 上扫 + bandpass 滤波，模拟"力量提升"
+- AC5: `synthTime()` — 高频 sine 双击（间隔 30ms），模拟"时钟滴答"
+- AC6: `synthGold()` — square + 高频 sine 泛音叠加，模拟"金币叮当"
+- AC7: `flushResourceChord` 改为调用 `RESOURCE_SYNTH[resource]` 而非统一振荡器
+- AC8: 5 种资源蒙眼可辨识（辨识度测试）
+- AC9: 3+ 种资源同时触发时听感清晰不混乱
 
 **改动文件：**
-- `effects/sound.ts`: `flushResourceChord` 内按 intensity 分支合成逻辑
+- `effects/sound.ts`: 5 个 synth 函数 + RESOURCE_SYNTH 调度表 + flushResourceChord 重构
+
+**估点：** 3
+
+---
+
+### Story 23.3: 连锁深度与强度调制
+
+**目标：** 连锁触发时音效递进，intensity 驱动音色从轻到重
+
+**前置：** Story 23.2
+
+**验收标准：**
+- AC1: `emitResourceSound` 增加可选参数 `chainDepth`（默认 0）
+- AC2: chainDepth > 0 时，合成函数的基础频率上移 chainDepth 个半音（×2^(n/12)）
+- AC3: 最大偏移 6 半音（增四度），避免音高过高刺耳
+- AC4: intensity ≥ 2.0 时自动叠加泛音增厚层（音量 ×0.3）
+- AC5: intensity 影响衰减时长：baseDecay × (1 + log₂(intensity) × 0.3)
+
+**改动文件：**
+- `effects/sound.ts`: 各 synth 函数内 intensity/chainDepth 参数处理
+- `systems/skills.ts`: `triggerSkill` 传入 `chain.length - 1` 作为 chainDepth
 
 **估点：** 2
 
 ---
 
-### Story 23.3: 连锁深度音高偏移
-
-**目标：** 连锁触发时和弦整体升调，体现连锁深度的递进感
-
-**前置：** Story 23.1
-
-**验收标准：**
-- AC1: `emitResourceSound` 增加可选参数 `chainDepth`（默认 0）
-- AC2: chainDepth > 0 时，整个和弦上移 chainDepth 个半音（×2^(n/12)）
-- AC3: 最大偏移 6 半音（增四度），避免音高过高刺耳
-- AC4: 连锁断裂时（三层保护截断）不特殊处理音效（视觉已有反馈）
-
-**改动文件：**
-- `effects/sound.ts`: 音高偏移逻辑
-- `systems/skills.ts`: `triggerSkill` 传入 `chain.length - 1` 作为 chainDepth
-
-**估点：** 1
-
----
-
 ### Story 23.4: 混音平衡与极端场景
 
-**目标：** 确保资源和弦与打字音、结算音和谐共存
+**目标：** 确保资源音效与打字音、结算音和谐共存
 
-**前置：** Story 23.1, 23.2
+**前置：** Story 23.2
 
 **验收标准：**
-- AC1: 资源和弦总音量 ≤ 打字音峰值的 60%（背景层定位）
-- AC2: 词语结算 `playScoreSound` 触发时，当帧资源和弦自动降 6dB（侧链回避）
+- AC1: 资源音效总音量 ≤ 打字音峰值的 60%（背景层定位）
+- AC2: 词语结算 `playScoreSound` 触发时，当帧资源音效自动降 6dB（侧链回避）
 - AC3: 20+ 技能 + 高速打字场景，无爆音、无可感知延迟
-- AC4: 伪无限循环（250ms 自动触发）场景下和弦节奏自然
+- AC4: 伪无限循环（250ms 自动触发）场景下音效节奏自然
 - AC5: Boss 战（高压力、高密度产出）听感紧张但不烦躁
 
 **改动文件：**
@@ -189,9 +169,9 @@ function flushResourceChord(): void {
 
 ### Story 23.5: BGM 骨架 — Drone 持续低音
 
-**目标：** 提供恒定的调性锚点，让资源和弦"有根"，填充低频空白
+**目标：** 提供恒定的调性锚点，填充低频空白
 
-**前置：** 无（可与 23.1 并行）
+**前置：** 无（可与 23.2 并行）
 
 **验收标准：**
 - AC1: 战斗开始时启动 C2（65Hz）sine 持续音，音量 ~0.03，极低存在感
@@ -219,7 +199,7 @@ function flushResourceChord(): void {
 - AC2: 脉冲音量跟随 combo：combo 0 时无脉冲，combo 10+ 时音量 ~0.02
 - AC3: combo 断裂时脉冲消失，只剩 drone 的寂静（对比感）
 - AC4: 脉冲不随打字加密而叠加爆音（同一时刻最多一个脉冲在响）
-- AC5: 脉冲频段（40-80Hz）不与资源和弦（262-523Hz）/ 打字音（280-800Hz）冲突
+- AC5: 脉冲频段（40-80Hz）不与资源音效 / 打字音冲突
 
 **改动文件：**
 - `effects/sound.ts`: 脉冲合成，集成到 `playTypeSound()` 流程
@@ -254,14 +234,15 @@ function flushResourceChord(): void {
 
 ## 核心原则
 
-1. **耳朵是信息通道**：眼睛忙于打字时，音效承担资源产出反馈的核心职责
-2. **不干扰打字节奏**：资源音效是背景层，不应抢占打字音的前景地位
-3. **密集不成噪**：10+ 技能同时产出时仍然悦耳，而非叠加成噪音
-4. **资源可辨识**：不同资源类型有辨识度，但不追求每次都听清
+1. **辨识度优先**：每种资源有独特音色特征，蒙眼可辨识（参考 Balatro 的 chips/coin/multhit）
+2. **耳朵是信息通道**：眼睛忙于打字时，音效承担资源产出反馈的核心职责
+3. **不干扰打字节奏**：资源音效是背景层，不应抢占打字音的前景地位
+4. **密集不成噪**：10+ 技能同时产出时仍然清晰，而非叠加成噪音
+5. **变体防重复**：同类音效通过参数随机化产生微妙变化，避免机械感
 
 ## 技术约束
 
-- 纯 Web Audio API 合成（无音频文件）
+- 优先 Web Audio API 合成，可选采样辅助（放置于 `public/assets/audio/`）
 - 零额外延迟（`queueMicrotask` 在同一帧内完成）
 - 保持现有架构：`effects/sound.ts` 单文件
 - 保持 `connectToOutput()` 全局混响管线
@@ -270,19 +251,22 @@ function flushResourceChord(): void {
 ## 实施顺序
 
 ```
-资源和弦线：                    BGM 线：
-23.1 和弦缓冲与合成器 (3pt)     23.5 Drone 持续低音 (1pt)
- ├── 23.2 强度调制 (2pt)         ├── 23.6 节奏脉冲层 (2pt)
- ├── 23.3 连锁深度偏移 (1pt)     ├── 23.7 张力层 (3pt)
+资源音效线：                    BGM 线：
+23.1 缓冲管线 ✅ DONE (3pt)    23.5 Drone 持续低音 (1pt)
+ ├── 23.2 独立音色设计 (3pt)     ├── 23.6 节奏脉冲层 (2pt)
+ ├── 23.3 连锁/强度调制 (2pt)    ├── 23.7 张力层 (3pt)
  └───┴── 23.4 混音平衡 (2pt) ←──┘  （全局调优）
 ```
 
 两条线可并行开发。23.4 混音平衡作为最终调优，依赖两条线全部完成。
-总计 14 点。
+总计 16 点（23.1 已完成 3 点，剩余 13 点）。
 
-## 相关
+## 参考
 
+- **Balatro 音效设计**：75 个音效文件，chips(2)/coin(7)/multhit(2)/glass(6) 等多变体设计
+  - 音源来自 [Freesound.org](https://freesound.org)（CC0），含 toy piano 采样
+  - 蓄力→释放两段式（`explosion_buildup` → `explosion_release`）
+  - 8-bit 合成风格 + CRT 视觉 = 复古赌场氛围
 - Epic 候选 A「连锁视听反馈」（brainstorm #21/#30/#51-58/#64/#95）
 - Epic 7「音效与视觉」（旧规划，已由当前实现部分覆盖）
-- Epic 21 Story 31.3「数字音效系统」（已完成）
-- 调用点：`skills.ts` 4 处 `// TODO: Epic 23 — 资源产出音效`
+- Story 31.3「数字音效系统」（已完成）
