@@ -381,18 +381,18 @@ type ResourceSynth = (ctx: AudioContext, now: number, vol: number, pitchShift?: 
 
 /** base: 低频 triangle 下扫 + bandpass 噪声冲击，"砖块/筹码"质感 */
 function synthBase(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
-  // 高频 sine 短脉冲 — "筹码/计数器"感，与打字 thock 层拉开频段
+  // 短促木鱼/木块敲击 — square 1400Hz 极短脉冲，远离打字 tone(300-700Hz)
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-  osc.type = 'sine';
+  osc.type = 'square';
   osc.connect(gain);
   connectToOutput(gain);
-  osc.frequency.setValueAtTime(randomize(660 * pitchShift, 0.05), now);
-  osc.frequency.exponentialRampToValueAtTime(randomize(440 * pitchShift, 0.05), now + 0.03 * decayMul);
-  softAttack(gain, vol * 0.5, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04 * decayMul);
+  osc.frequency.setValueAtTime(randomize(1400 * pitchShift, 0.05), now);
+  osc.frequency.exponentialRampToValueAtTime(randomize(1100 * pitchShift, 0.05), now + 0.015 * decayMul);
+  gain.gain.setValueAtTime(vol * 0.35, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02 * decayMul);
   osc.start(now);
-  osc.stop(now + 0.05 * decayMul);
+  osc.stop(now + 0.025 * decayMul);
 }
 
 /** score: square 琶音 3 音跳跃，"硬币拾取"感 */
@@ -414,24 +414,23 @@ function synthScore(ctx: AudioContext, now: number, vol: number, pitchShift = 1,
   });
 }
 
-/** multiplier: sawtooth 上扫 + bandpass，"力量提升"感 */
+/** multiplier: triangle 双音上行，"力量提升"感 — 高频区与基数/打字分离 */
 function synthMultiplier(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
-  const osc = ctx.createOscillator();
-  const filter = ctx.createBiquadFilter();
-  const gain = ctx.createGain();
-  osc.type = 'sawtooth';
-  filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(randomize(400 * pitchShift, 0.05), now);
-  filter.Q.setValueAtTime(2, now);
-  osc.connect(filter);
-  filter.connect(gain);
-  connectToOutput(gain);
-  osc.frequency.setValueAtTime(randomize(200 * pitchShift, 0.05), now);
-  osc.frequency.exponentialRampToValueAtTime(randomize(800 * pitchShift, 0.05), now + 0.1 * decayMul);
-  softAttack(gain, vol * 0.7, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12 * decayMul);
-  osc.start(now);
-  osc.stop(now + 0.13 * decayMul);
+  // 两音快速上行琶音 (1800→2400Hz)，triangle 柔和但明亮
+  const freqs = [1800 * pitchShift, 2400 * pitchShift];
+  freqs.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.connect(gain);
+    connectToOutput(gain);
+    const t = now + i * 0.04;
+    osc.frequency.setValueAtTime(randomize(freq, 0.05), t);
+    softAttack(gain, vol * 0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05 * decayMul);
+    osc.start(t);
+    osc.stop(t + 0.06 * decayMul);
+  });
 }
 
 /** time: 高频 sine 双击，"时钟滴答"感 */
@@ -480,9 +479,9 @@ function synthGold(ctx: AudioContext, now: number, vol: number, pitchShift = 1, 
 
 /** 各资源的特征基频（用于泛音增厚层的真实谐波计算） */
 const RESOURCE_BASE_FREQ: Record<string, number> = {
-  base: 120,
+  base: 1400,
   score: 880,
-  multiplier: 200,
+  multiplier: 1800,
   time: 2000,
   gold: 1200,
 };
