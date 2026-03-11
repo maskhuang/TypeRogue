@@ -381,34 +381,18 @@ type ResourceSynth = (ctx: AudioContext, now: number, vol: number, pitchShift?: 
 
 /** base: 低频 triangle 下扫 + bandpass 噪声冲击，"砖块/筹码"质感 */
 function synthBase(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
-  // 1) Triangle 下扫 120→60Hz
+  // 高频 sine 短脉冲 — "筹码/计数器"感，与打字 thock 层拉开频段
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-  osc.type = 'triangle';
+  osc.type = 'sine';
   osc.connect(gain);
   connectToOutput(gain);
-  osc.frequency.setValueAtTime(randomize(120 * pitchShift, 0.05), now);
-  osc.frequency.exponentialRampToValueAtTime(randomize(60 * pitchShift, 0.05), now + 0.04 * decayMul);
-  softAttack(gain, vol * 0.6, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05 * decayMul);
+  osc.frequency.setValueAtTime(randomize(660 * pitchShift, 0.05), now);
+  osc.frequency.exponentialRampToValueAtTime(randomize(440 * pitchShift, 0.05), now + 0.03 * decayMul);
+  softAttack(gain, vol * 0.5, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04 * decayMul);
   osc.start(now);
-  osc.stop(now + 0.06 * decayMul);
-
-  // 2) Bandpass 噪声脉冲
-  const noiseSrc = ctx.createBufferSource();
-  noiseSrc.buffer = getNoiseBuffer();
-  const filter = ctx.createBiquadFilter();
-  filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(randomize(150 * pitchShift, 0.05), now);
-  filter.Q.setValueAtTime(3, now);
-  const noiseGain = ctx.createGain();
-  noiseSrc.connect(filter);
-  filter.connect(noiseGain);
-  connectToOutput(noiseGain);
-  noiseGain.gain.setValueAtTime(vol * 0.4, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02 * decayMul);
-  noiseSrc.start(now);
-  noiseSrc.stop(now + 0.03 * decayMul);
+  osc.stop(now + 0.05 * decayMul);
 }
 
 /** score: square 琶音 3 音跳跃，"硬币拾取"感 */
