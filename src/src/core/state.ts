@@ -61,6 +61,9 @@ export function createInitialState(): GameState {
     growthValues: new Map(),
     masteryCounters: new Map(),
     devourIcons: new Map(),
+    chargeAccumulated: new Map(),
+    decayMultipliers: new Map(),
+    pulseCounts: new Map(),
     pseudoInfiniteState: null,
     seenSkillTypes: new Set(),
     gameMode: 'normal',
@@ -144,6 +147,8 @@ export function resetResources(): void {
   state.classResourceProduced = {};
   state.fragmentQueuePosition = 0;
   state.unstableResources.clear();
+  state.chargeAccumulated.clear();
+  state.pulseCounts.clear();
 }
 
 // === 状态重置 ===

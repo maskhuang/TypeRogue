@@ -20,6 +20,9 @@ export const DELETED_SKILL_IDS = [
   'amp_base_add_adjacent', 'amp_mult_add_adjacent', 'amp_score_add_sameColumn',
   'amp_time_add_adjacent', 'amp_base_mul_adjacent', 'amp_mult_mul_sameRow',
   'amp_score_mul_sameHand',
+  // 旧乘算产出者（Story 34.2: 乘算移入附魔系统）
+  'prod_focus', 'prod_crit', 'prod_frenzy', 'prod_eternal',
+  'prod_treasury', 'prod_refine', 'prod_mutagen_surge',
 ];
 
 // === 已删除进化分支 ID 列表（存档兼容用）===
@@ -35,26 +38,8 @@ export interface SkillSchool {
   cssClass: string;
 }
 
-export const SKILL_SCHOOL: Record<string, SkillSchool> = {
-  // 产出者流派
-  prod_burst: { label: '产出', cssClass: 'school-producer' },
-  prod_focus: { label: '产出', cssClass: 'school-producer' },
-  prod_loot: { label: '产出', cssClass: 'school-producer' },
-  prod_crit: { label: '产出', cssClass: 'school-producer' },
-  prod_boost: { label: '产出', cssClass: 'school-producer' },
-  prod_frenzy: { label: '产出', cssClass: 'school-producer' },
-  prod_freeze: { label: '产出', cssClass: 'school-producer' },
-  prod_eternal: { label: '产出', cssClass: 'school-producer' },
-  prod_mint: { label: '产出', cssClass: 'school-producer' },
-  prod_treasury: { label: '产出', cssClass: 'school-producer' },
-  prod_harvest: { label: '产出', cssClass: 'school-producer' },
-  prod_refine: { label: '产出', cssClass: 'school-producer' },
-  prod_mutagen_drip: { label: '产出', cssClass: 'school-producer' },
-  prod_mutagen_surge: { label: '产出', cssClass: 'school-producer' },
-};
-
 export function getSkillSchool(skillId: string): SkillSchool {
-  if (SKILL_SCHOOL[skillId]) return { label: t('school.producer'), cssClass: 'school-producer' };
+  if (skillId in PRODUCERS) return { label: t('school.producer'), cssClass: 'school-producer' };
   if (skillId in CONVERTERS) return { label: t('school.converter'), cssClass: 'school-converter' };
   if (skillId in CONNECTORS) return { label: t('school.connector'), cssClass: 'school-connector' };
   if (skillId in REPLICATORS) return { label: t('school.replicator'), cssClass: 'school-replicator' };
@@ -86,8 +71,16 @@ export function getSkillDisplayInfo(
   const prod = PRODUCERS[skillId];
   if (prod) {
     const name = localizeItemName(skillId, prod.name);
-    const desc = localizeItemDesc(skillId, level ? getProducerDesc(skillId, level) : prod.desc);
-    return { name: name + enchSuffix, icon: enchIcon || prod.icon, desc: desc + (enchSuffix ? t('skill.enchant_suffix', { suffix: enchSuffix }) : '') };
+    const isMultEnch = enchantedSkills?.get(skillId) === 'ench_multiply';
+    let multiplyOverride: { operator: 'multiply'; value: number } | undefined;
+    if (isMultEnch) {
+      const mv = ENCHANTMENTS['ench_multiply']?.multiplyValues;
+      if (mv && mv[prod.resource] && level) {
+        multiplyOverride = { operator: 'multiply', value: mv[prod.resource][level - 1] };
+      }
+    }
+    const desc = localizeItemDesc(skillId, level ? getProducerDesc(skillId, level, multiplyOverride) : prod.desc);
+    return { name: name + enchSuffix, icon: isMultEnch ? '✖️' : (enchIcon || prod.icon), desc: desc + (enchSuffix ? t('skill.enchant_suffix', { suffix: enchSuffix }) : '') };
   }
   // 转化者查询
   const conv = CONVERTERS[skillId];

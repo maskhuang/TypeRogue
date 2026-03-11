@@ -12,7 +12,7 @@ import { CONNECTORS, REPLICATORS, isConnector, isReplicator } from '../data/conn
 import { AMPLIFIERS, isAmplifier, getAmplifierValue } from '../data/amplifiers';
 import { ENCHANTMENTS } from '../data/enchantments';
 import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology';
-import type { ResourceType, PseudoInfiniteState } from '../core/types';
+import type { ResourceType, PseudoInfiniteState, DecayParams, ChargeParams, VoidParams, PulseParams, CritParams } from '../core/types';
 import { t } from '../demo/demo-i18n';
 import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
@@ -83,6 +83,31 @@ export function hasProducerTriggeredThisWord(): boolean {
 export function resetWordResourceTypes(): void {
   _wordResourceTypes.clear();
   _wordHasProducerTriggered = false;
+  // 衰减产出者：每词重置倍率
+  resetDecayMultipliers();
+}
+
+/** 衰减产出者：重置所有衰减倍率到 initialMult */
+function resetDecayMultipliers(): void {
+  for (const [skillId] of state.decayMultipliers) {
+    const prod = PRODUCERS[skillId];
+    if (prod?.mechanic === 'decay' && prod.mechanicParams) {
+      state.decayMultipliers.set(skillId, (prod.mechanicParams as DecayParams).initialMult);
+    }
+  }
+}
+
+/** 蓄力产出者：每帧更新蓄力值（由 battle.ts 计时器调用） */
+export function updateChargeProducers(dt: number): void {
+  for (const skillId of state.player.bindings.values()) {
+    const prod = PRODUCERS[skillId];
+    if (prod?.mechanic !== 'charge' || !prod.mechanicParams) continue;
+    const params = prod.mechanicParams as ChargeParams;
+    const current = state.chargeAccumulated.get(skillId) || 0;
+    if (current < params.maxBonus) {
+      state.chargeAccumulated.set(skillId, Math.min(current + params.gainPerSec * dt, params.maxBonus));
+    }
+  }
 }
 
 /** 计算当前所有增幅者中的最大叠层数 */
@@ -410,13 +435,67 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   _wordHasProducerTriggered = true;
   const level = state.player.skills.get(producerId)?.level || 1;
   const baseValue = getProducerValue(producerId, level);
+
+  // 乘算化附魔检测（Story 34.2）
+  const enchantedId = state.player.enchantedSkills?.get(producerId);
+  const isMultiplyEnchanted = enchantedId === 'ench_multiply';
+  let effectiveOperator = prod.operator;
+  let effectiveBaseValue = baseValue;
+  if (isMultiplyEnchanted) {
+    const mv = ENCHANTMENTS['ench_multiply']?.multiplyValues;
+    if (mv && mv[prod.resource]) {
+      effectiveBaseValue = mv[prod.resource][level - 1];
+      effectiveOperator = 'multiply';
+    }
+  }
+
   const enchMult = getEnchantmentMultiplier(producerId, triggerKey);
   const ampBonus = getAmplifierBonus(producerId, triggerKey, prod.resource);
-  const amplifiedBase = (baseValue + ampBonus.addBonus) * ampBonus.mulBonus;
+  const amplifiedBase = (effectiveBaseValue + ampBonus.addBonus) * ampBonus.mulBonus;
   const relicMult = getRelicSkillMultiplier('producer');
   const fittestMult = state.player.relicStates['fittest_' + producerId] === 1 ? 1.2 : 1;
   const totalMult = enchMult * relicMult * fittestMult;
-  const value = prod.operator === 'add' ? amplifiedBase * totalMult : amplifiedBase;
+
+  // === 新机制：Phase 2 加算层 ===
+  let mechanicAddBonus = 0; // 加入 amplifiedBase 之上的百分比加成
+  const mechanic = prod.mechanic || 'standard';
+  if (mechanic === 'charge' && prod.mechanicParams) {
+    const charge = state.chargeAccumulated.get(producerId) || 0;
+    mechanicAddBonus = charge;
+    state.chargeAccumulated.set(producerId, 0); // 释放后清零
+  } else if (mechanic === 'void' && prod.mechanicParams && triggerKey) {
+    const vp = prod.mechanicParams as VoidParams;
+    const related = getKeysWithRelation(triggerKey, vp.posRel);
+    const emptyCount = related.filter(k => !state.player.bindings.has(k)).length;
+    mechanicAddBonus = emptyCount * vp.bonusPerSlot;
+  }
+  const mechanicAdjustedBase = amplifiedBase * (1 + mechanicAddBonus);
+
+  let value = effectiveOperator === 'add' ? mechanicAdjustedBase * totalMult : mechanicAdjustedBase;
+
+  // === 新机制：Phase 3 乘算层 ===
+  let mechanicMult = 1;
+  let isCritHit = false;
+  if (mechanic === 'decay' && prod.mechanicParams) {
+    const dp = prod.mechanicParams as DecayParams;
+    const currentMult = state.decayMultipliers.get(producerId) ?? dp.initialMult;
+    mechanicMult *= currentMult;
+    state.decayMultipliers.set(producerId, Math.max(dp.floor, currentMult - dp.decayPerTrigger));
+  } else if (mechanic === 'pulse' && prod.mechanicParams) {
+    const pp = prod.mechanicParams as PulseParams;
+    const count = (state.pulseCounts.get(producerId) || 0) + 1;
+    state.pulseCounts.set(producerId, count);
+    if (count % pp.interval === 0) {
+      mechanicMult *= pp.burstMult;
+    }
+  } else if (mechanic === 'crit' && prod.mechanicParams) {
+    const cp = prod.mechanicParams as CritParams;
+    if (random() < cp.chance) {
+      mechanicMult *= cp.critMult;
+      isCritHit = true;
+    }
+  }
+  value *= mechanicMult;
 
   // 视觉反馈
   showTriggerPopup(producerId);
@@ -427,7 +506,7 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   let delta = 0;
 
   // 直接修改资源
-  if (prod.operator === 'add') {
+  if (effectiveOperator === 'add') {
     delta = value;
     if (prod.resource === 'base') {
       synergy.skillBaseScore += value;
@@ -482,11 +561,13 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
     || (prod.resource === 'mutagen' && state.classId === 'metamorph');
   if (!isClassResource || isActiveClassResource) {
     const color = RESOURCE_COLORS[prod.resource];
-    const rawDisplay = prod.operator === 'add' ? value : amplifiedBase;
+    const rawDisplay = effectiveOperator === 'add' ? value : amplifiedBase;
     const displayValue = parseFloat(rawDisplay.toPrecision(4));
-    if (prod.operator === 'add') {
-      const scale = getFloatScale(prod.resource, delta);
-      showFeedback(`+${displayValue}${getResourceLabel(prod.resource)}`, color, scale);
+    if (effectiveOperator === 'add') {
+      let scale = getFloatScale(prod.resource, delta);
+      if (isCritHit) scale = Math.max(scale, 2.0);
+      const prefix = isCritHit ? '💥' : '';
+      showFeedback(`${prefix}+${displayValue}${getResourceLabel(prod.resource)}`, color, scale);
       emitResourceSound(prod.resource, scale, _currentChainDepth);
     } else {
       const scale = getFloatScaleMul(prod.resource, (value - 1) * totalMult);

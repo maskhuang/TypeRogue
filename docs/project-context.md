@@ -1,7 +1,7 @@
 ---
 project_name: '打字肉鸽'
 user_name: 'Yuchenghuang'
-date: '2026-02-16'
+date: '2026-03-10'
 sections_completed: ['technology_stack', 'engine_rules', 'performance', 'code_organization', 'testing', 'platform', 'critical_rules']
 ---
 
@@ -76,27 +76,122 @@ state.meta.unlocks.push(newUnlock)  // FORBIDDEN
 
 ### Skill System Rules
 
-**Dual System - DO NOT MIX:**
+**Five Skill Categories:**
 
-| System | Trigger | Data Source | Location |
-|--------|---------|-------------|----------|
-| Passive | Automatic on keypress | ADJACENT_KEYS map | `skills/passive/` |
-| Active | Queue-based | EffectQueue | `skills/active/` |
+| Category | Count | Trigger | Behavior |
+|----------|-------|---------|----------|
+| Producer | 77 (7 standard add + 70 mechanic) | Direct keystroke | Generate resource (add only; multiply via ench_multiply enchantment); mechanic variants: charge, decay, pulse, crit, void |
+| Converter | 74 (31/run) | Direct keystroke | Read source resource → produce target |
+| Connector | 25 (13/run) | Passive: resource event | When positional neighbor produces matching resource → fire random non-same skill |
+| Replicator | 6 (5/run) | Direct keystroke | Copy & fire random skill in positional range |
+| Amplifier | 36 (15/run) | Direct keystroke | +1 stack/trigger; stacks → % bonus to positional neighbors |
 
-**Processing Order (MUST follow):**
-1. PassiveSkillSystem calculates position bonus
-2. ActiveSkillSystem applies queued effects
-3. SkillCoordinator executes final effect
-4. EventBus broadcasts `skill:triggered`
+**Central Dispatcher — `triggerSkill()` in `systems/skills.ts` (~1200 lines):**
 
-**Keyboard Adjacency (Novel Pattern):**
-```typescript
-// CORRECT: Use AdjacencyMap
-const adjacent = adjacencyMap.getAdjacent('F')  // ['D', 'G', 'R', 'T', 'C', 'V']
-
-// WRONG: Hardcode adjacency
-const adjacent = ['D', 'G']  // Incomplete, will break skills
 ```
+keydown → InputHandler → eventBus('input:keypress')
+  → battle.ts handleKeyPress() → playerCorrect(k)
+  → lookup: skillId = state.player.bindings.get(k)
+  → triggerSkill(skillId, k)
+```
+
+**Producer/Converter Computation Order (MUST follow):**
+1. Base value: `getProducerValue(id, level)` (Lv1/Lv2/Lv3)
+2. Enchantment multiplier: `getEnchantmentMultiplier()` (growth/mastery/harvest/repulsion/devour/overflow/letter_affinity)
+3. Amplifier bonus: `getAmplifierBonus()` — scan bound amplifiers, check position relation + stacks
+4. Relic multiplier: `resolveRelicSkillTrigger()` via RelicPipeline
+5. Apply to resource state
+6. Post-trigger: `checkResourceTriggers()` (→ Connectors), `checkResonanceTriggers()`, `applyPostTriggerEnchantments()` (→ Splash + Transmutation)
+7. Growth/mastery/devour accumulation
+8. Visual feedback + audio + `eventBus.emit('skill:triggered')`
+
+**Chain Loop Detection:**
+- `chainHistory: string[]` tracks fired keys; if same key reappears at depth ≥ 2 → `enterPseudoInfinite()` (250ms setInterval continuous fire)
+
+**Keyboard Position Relations (6 types in `data/keyboardTopology.ts`):**
+
+```typescript
+enum PositionRelation {
+  Adjacent, SameRow, SameColumn, SameHand, SameFinger, Symmetric
+}
+// CORRECT: Use topology functions
+hasRelation(keyA, keyB, PositionRelation.Adjacent)
+
+// WRONG: Hardcode adjacency lists
+```
+
+**Pool Draw (Per-Run Randomization):**
+- Producers: all 77 always available (7 standard add + 28 charge/decay/pulse/crit + 42 void)
+- Converters: 31 of 74 drawn per run
+- Connectors: 13 of 25; Replicators: 5 of 6
+- Amplifiers: 15 of 36
+- Pool IDs stored in `state.converterPool`, `state.connectorPool`, etc.
+
+### Enchantment System Rules
+
+Enchantments attach to skills via `state.player.enchantedSkills: Map<skillId, enchantmentId>`.
+
+| Category | Count | Behavior |
+|----------|-------|----------|
+| Growth | 6 (by position) | Neighbor triggers → permanent % output growth (cross-stage) |
+| Splash | 6 | On trigger → fire all positional neighbors at 100%/N efficiency |
+| Resonance | 6 | Neighbor triggers → self fires at reduced % |
+| Repulsion | 6 | Empty positions in range → +% per empty slot |
+| Devour | 6 | Every 5 triggers → permanently absorb weakest neighbor |
+| Transmutation | 4 | After trigger → extra secondary resource (% of delta) |
+| Mastery | 1 | Every 10 triggers → permanent +8% growth |
+| Class-exclusive | 6 | Wordsmith (harvest/letter_affinity/overflow) + Metamorph (adapt/unstable/mutation_hunger) |
+
+**Enchantment State (cross-stage, run-reset):**
+- `growthValues: Map<skillId, number>` — cumulative growth %
+- `masteryCounters: Map<skillId, number>` — mastery trigger count
+- `devourIcons: Map<skillId, string[]>` — absorbed icons
+- `devourCounters: Map<skillId, number>` — per-battle, cleared per stage
+
+### Relic / Modifier Pipeline Rules
+
+Relics use a 3-layer modifier pipeline (`systems/modifiers/`), skills do NOT:
+
+```
+Layers:  base (additive) → enhance (multiplicative) → global (multiplicative)
+Phases:  before (intercept) → calculate → after (chain behaviors)
+```
+
+- `resolveRelicSkillTrigger(context)` returns a scalar multiplier (≥1.0) applied to skill output
+- `PipelineContext` carries runtime state: combo, hand triggers, chain depth, amplifier stacks, skill density
+- Triggers: `on_skill_trigger`, `on_correct_keystroke`, `on_word_complete`, `on_combo_break`, etc.
+
+### Skill State Storage Rules
+
+**Per-Run (in GameState / RunState):**
+```typescript
+player: {
+  bindings: Map<string, string>          // key → skillId
+  skills: Map<string, SkillInstance>     // skillId → { level: 1-3 }
+  enchantedSkills: Map<string, string>   // skillId → enchantmentId
+}
+```
+
+**Per-Stage Reset:**
+- `amplifierStacks: Map<string, number>` — cleared between stages
+
+**Per-Word Reset (module-level in skills.ts):**
+- `_isChainTrigger`, `_currentChainDepth`, `_retriggerRequested`
+- `_wordResourceTypes: Set<string>`, `_wordHasProducerTriggered`
+
+**SynergyState (per-word cross-skill tracking):**
+```typescript
+synergy: {
+  wordSkillCount, lastTriggeredSkillId,
+  skillBaseScore, skillMultBonus,  // combined at word-completion scoring
+  letterBaseScore
+}
+```
+
+**Resource Routing (CRITICAL):**
+- `base` / `multiplier` → write to `synergy.skillBaseScore` / `synergy.skillMultBonus` (NOT directly to state.resources)
+- `score` → write directly to `state.resources.score`
+- Combined at word-completion time
 
 ### Scene Management Rules
 
@@ -193,7 +288,10 @@ data            core      systems + ui
 | Game mechanics | `systems/` | `typing/InputHandler.ts` |
 | PixiJS scenes | `scenes/` | `battle/BattleScene.ts` |
 | Reusable UI | `ui/` | `hud/ScoreDisplay.ts` |
-| Data definitions | `data/` | `skills.ts` |
+| Data definitions | `data/` | `producers.ts`, `converters.ts`, `enchantments.ts` |
+| Keyboard topology | `data/` | `keyboardTopology.ts` |
+| Skill engine | `systems/` | `skills.ts` (central dispatcher) |
+| Relic pipeline | `systems/modifiers/` | `EffectPipeline.ts`, `ModifierRegistry.ts` |
 
 ### Naming Conventions
 
@@ -327,8 +425,12 @@ tests/
 
 - **Fast typing (100+ WPM):** Sound pool must be 20+
 - **Skill chain overflow:** EffectQueue max 10, drop oldest
+- **Connector chain loops:** chainHistory tracks fired keys; depth ≥ 2 same key → pseudoInfinite mode (250ms interval)
+- **Amplifier fractional stacks:** Splash/resonance indirect triggers accumulate float stacks; use `Math.floor()` for bonuses
+- **Resource routing:** `base`/`multiplier` go to SynergyState, NOT state.resources; `score` goes direct
 - **Save during battle:** Queue save, execute on battle end
 - **Steam offline:** Graceful fallback, local achievements
+- **DELETED_SKILL_IDS:** RunState filters these on deserialize for save compatibility
 
 ---
 
@@ -336,12 +438,14 @@ tests/
 
 ### New Skill Checklist
 
-- [ ] Define in `data/skills.ts`
-- [ ] Determine system: passive (position) or active (queue)
-- [ ] Implement in appropriate `systems/skills/` subfolder
-- [ ] Add to SkillCoordinator if needs cross-system logic
-- [ ] Create sound in audio pool
-- [ ] Add visual feedback in `ui/effects/`
+- [ ] Define in `data/` (producers.ts / converters.ts / connectors.ts / amplifiers.ts)
+- [ ] Determine category: Producer / Converter / Connector / Replicator / Amplifier
+- [ ] Add trigger path in `systems/skills.ts` central dispatcher (`triggerSkill()`)
+- [ ] If positional: use `PositionRelation` from `data/keyboardTopology.ts`
+- [ ] Add to pool draw function if category uses pool (converters/connectors/replicators/amplifiers)
+- [ ] Handle in `RunState.ts` serialization (addSkill/removeSkill/bindSkill)
+- [ ] Create sound in audio pool (`effects/sound.ts`)
+- [ ] Add visual feedback via `showTriggerPopup()` + `showFeedback()` + `SkillFeedbackManager`
 
 ### New Scene Checklist
 
@@ -352,4 +456,4 @@ tests/
 
 ---
 
-_Last updated: 2026-02-16_
+_Last updated: 2026-03-10_

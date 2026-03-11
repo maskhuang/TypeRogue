@@ -30,15 +30,10 @@ export const DEMO_STARTER_RELIC = 'cornucopia'
 // === Demo 技能池 ===
 export const DEMO_PRODUCER_IDS = [
   'prod_burst',    // 爆发 — base +5
-  'prod_focus',    // 聚能 — base ×2
   'prod_loot',     // 掠夺 — score +15
-  'prod_crit',     // 暴击 — score ×1.1
   'prod_boost',    // 强化 — multiplier +0.2
-  'prod_frenzy',   // 狂热 — multiplier ×1.15
   'prod_freeze',   // 冻结 — time +2s
-  'prod_eternal',  // 永恒 — time ×1.2
   'prod_mint',     // 铸币 — gold +3
-  'prod_treasury', // 金库 — gold ×1.3
 ]
 
 export const DEMO_CONVERTER_IDS = [

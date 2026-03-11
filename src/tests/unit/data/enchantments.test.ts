@@ -9,8 +9,8 @@ import { ENCHANTMENTS, isEnchantment, getEnchantmentDesc, drawEnchantmentPair } 
 describe('附魔数据完整性', () => {
   const allIds = Object.keys(ENCHANTMENTS)
 
-  it('共 41 个附魔', () => {
-    expect(allIds.length).toBe(41)
+  it('共 42 个附魔', () => {
+    expect(allIds.length).toBe(42)
   })
 
   it('每个附魔的 id 与 key 匹配', () => {
@@ -27,8 +27,8 @@ describe('附魔数据完整性', () => {
       expect(ench.category).toBeTruthy()
       expect(ench.desc).toBeTruthy()
       expect(typeof ench.effectValue).toBe('number')
-      // 溅射附魔 effectValue=0（动态计算 100%/技能数），其余 > 0
-      if (ench.spatialType !== 'splash') {
+      // 溅射附魔 effectValue=0（动态计算 100%/技能数），运算符型 effectValue=0（使用 multiplyValues），其余 > 0
+      if (ench.spatialType !== 'splash' && ench.category !== 'operator') {
         expect(ench.effectValue).toBeGreaterThan(0)
       }
     }

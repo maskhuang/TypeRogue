@@ -34,7 +34,6 @@ vi.mock('../../../../src/core/seededRandom', () => ({
 vi.mock('../../../../src/data/skills', () => ({
   getSkillDisplayInfo: vi.fn(() => ({ icon: '?', name: 'mock', desc: '' })),
   getSkillSchool: vi.fn(() => ({ label: 'mock', cssClass: '' })),
-  SKILL_SCHOOL: {},
   DELETED_SKILL_IDS: [],
   DELETED_EVOLUTION_IDS: [],
 }))

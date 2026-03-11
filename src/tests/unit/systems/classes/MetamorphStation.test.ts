@@ -25,7 +25,6 @@ vi.mock('../../../../src/core/seededRandom', () => ({
 vi.mock('../../../../src/data/skills', () => ({
   getSkillDisplayInfo: vi.fn((_id: string) => ({ icon: '?', name: 'mock', desc: '' })),
   getSkillSchool: vi.fn(() => ({ label: 'mock', cssClass: '' })),
-  SKILL_SCHOOL: {},
 }));
 vi.mock('../../../../src/ui/elements', () => ({
   getElements: () => ({ triggerZone: { appendChild: vi.fn() } }),

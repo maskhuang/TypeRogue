@@ -43,17 +43,11 @@ const METAMORPH_EXCLUSIVE_RELICS = new Set([
   'catalyst_injector', 'chaos_seed', 'abyss_eye', 'fittest_survivors',
 ]);
 
-// 暂时禁用的时间类遗物
-const DISABLED_RELICS = new Set([
-  'time_thief', 'doomsday', 'perfect_rhythm',
-]);
-
 export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRESETS.gameStart): string[] {
   const owned = state.player.relics;
   const classId = state.classId;
   const available = Object.keys(RELICS).filter(id => {
     if (owned.has(id)) return false;
-    if (DISABLED_RELICS.has(id)) return false;
     // 职业专属遗物过滤
     if (WORDSMITH_EXCLUSIVE_RELICS.has(id) && classId !== 'wordsmith') return false;
     if (METAMORPH_EXCLUSIVE_RELICS.has(id) && classId !== 'metamorph') return false;

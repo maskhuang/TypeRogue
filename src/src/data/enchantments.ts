@@ -66,6 +66,25 @@ export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
   ench_adapt:            { id: 'ench_adapt',            name: '适应', icon: '🧬🔄', category: 'class-exclusive', effectValue: 0.15, desc: '每被蜕变一次：自身产出永久+15%（跨关保留）' },
   ench_unstable:         { id: 'ench_unstable',         name: '不稳定', icon: '⚗️💥', category: 'class-exclusive', effectValue: 0.30, desc: '每关开始随机一种资源+30%，关末消失' },
   ench_mutation_hunger:  { id: 'ench_mutation_hunger',  name: '嗜变', icon: '🧪🧬', category: 'class-exclusive', effectValue: 0.05, desc: '触发时5%概率产1变异素（不占产出者槽位）' },
+
+  // === 运算符型 — 乘算化（1 个）"将加算产出者升格为乘算产出者" ===
+  ench_multiply: {
+    id: 'ench_multiply',
+    name: '乘算化',
+    icon: '✖️',
+    category: 'operator',
+    effectValue: 0,
+    multiplyValues: {
+      base:       [2, 2.3, 2.6],
+      score:      [1.1, 1.15, 1.2],
+      multiplier: [1.15, 1.2, 1.25],
+      time:       [1.2, 1.25, 1.3],
+      gold:       [1.3, 1.5, 1.7],
+      fragment:   [1.8, 2.1, 2.4],
+      mutagen:    [1.8, 2.1, 2.4],
+    },
+    desc: '将加算产出者升格为乘算产出者，按资源类型查表获取乘算值',
+  },
 } as const;
 
 // === 工具函数 ===
@@ -91,13 +110,9 @@ export function getEnchantmentDesc(id: string): string {
 const WORDSMITH_ENCHS = new Set(['ench_harvest', 'ench_letter_affinity', 'ench_overflow']);
 const METAMORPH_ENCHS = new Set(['ench_adapt', 'ench_unstable', 'ench_mutation_hunger']);
 
-// 暂时禁用的附魔
-const DISABLED_ENCHANTMENTS = new Set(['ench_trans_time']);
-
 export function drawEnchantmentPair(skillRelation?: PositionRelation): [string, string] {
   const all = Object.values(ENCHANTMENTS)
     .filter(e => {
-      if (DISABLED_ENCHANTMENTS.has(e.id)) return false;
       // 职业专属附魔：仅对应职业可抽取（互斥）
       if (e.category === 'class-exclusive') {
         if (state.classId === 'wordsmith') return WORDSMITH_ENCHS.has(e.id);

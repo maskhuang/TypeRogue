@@ -14,6 +14,35 @@ export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'gold' | '
 
 // === 产出者系统 ===
 export type ProducerOperator = 'add' | 'multiply';
+export type ProducerMechanic = 'standard' | 'charge' | 'decay' | 'pulse' | 'crit' | 'void';
+
+export interface ChargeParams {
+  gainPerSec: number;      // 每秒蓄力百分比 (0.08 = 8%/s)
+  maxBonus: number;        // 上限 (2.0 = 200%)
+}
+
+export interface DecayParams {
+  initialMult: number;     // 初始倍率 (2.0)
+  decayPerTrigger: number; // 每次触发衰减量 (0.15)
+  floor: number;           // 下限 (0.5)
+}
+
+export interface PulseParams {
+  interval: number;        // 爆发间隔 (4 = 每第4次)
+  burstMult: number;       // 爆发倍率 (3.0)
+}
+
+export interface CritParams {
+  chance: number;          // 暴击概率 (0.5 = 50%)
+  critMult: number;        // 暴击倍率 (2.0)
+}
+
+export interface VoidParams {
+  posRel: PositionRelation; // 检测范围
+  bonusPerSlot: number;     // 每空位加成百分比 (0.25 = 25%)
+}
+
+export type MechanicParams = ChargeParams | DecayParams | PulseParams | CritParams | VoidParams;
 
 export interface ProducerDefinition {
   id: string;                       // prod_burst, prod_focus, ...
@@ -23,6 +52,8 @@ export interface ProducerDefinition {
   operator: ProducerOperator;       // +N 或 ×N
   values: [number, number, number]; // Lv1, Lv2, Lv3
   desc: string;                     // 玩家可见描述
+  mechanic?: ProducerMechanic;      // 机制类型（默认 'standard'）
+  mechanicParams?: MechanicParams;  // 机制参数
 }
 
 // === 转化者系统 ===
@@ -75,7 +106,7 @@ export interface AmplifierState {
 }
 
 // === 附魔系统 ===
-export type EnchantmentCategory = 'spatial' | 'transmutation' | 'independent' | 'class-exclusive';
+export type EnchantmentCategory = 'spatial' | 'transmutation' | 'independent' | 'class-exclusive' | 'operator';
 export type SpatialEffectType = 'growth' | 'splash' | 'resonance' | 'repulsion' | 'devour';
 
 export interface EnchantmentDefinition {
@@ -87,6 +118,7 @@ export interface EnchantmentDefinition {
   positionRelation?: PositionRelation;
   effectValue: number;           // 百分比系数 (0.20 = 20%) 或独立型倍率
   extraResource?: ResourceType;  // 变性型专用：额外产出的资源
+  multiplyValues?: Record<ResourceType, [number, number, number]>;  // 运算符型：资源→乘算值表
   desc: string;
 }
 
@@ -162,6 +194,9 @@ export interface GameState {
   growthValues: Map<string, number>;    // 成长附魔累积值（skillId → 成长百分比），跨关保持，新 Run 重置
   masteryCounters: Map<string, number>; // 精通附魔触发计数（skillId → 累计触发次数），跨关保持，新 Run 重置
   devourIcons: Map<string, string[]>;   // 吞噬附魔获得的图标（skillId → 图标列表），跨关保持，新 Run 重置
+  chargeAccumulated: Map<string, number>;  // 蓄力产出者累积值（skillId → 0~maxBonus），每关重置
+  decayMultipliers: Map<string, number>;   // 衰减产出者当前倍率（skillId → initialMult~floor），每词重置
+  pulseCounts: Map<string, number>;        // 脉冲产出者触发计数（skillId → count），每关重置
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
   seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者/增幅者 tooltip 跟踪）
   battleStats: BattleStats | null;                   // 上一战的统计数据（商店中展示）

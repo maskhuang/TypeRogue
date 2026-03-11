@@ -251,8 +251,19 @@ development_status:
   26-3-per-type-icon-uniqueness-tests: done
   epic-26-retrospective: optional
 
+  # Epic 34: 技能词条化重构（方案 B）
+  epic-34: backlog
+  34-1-new-additive-producers: backlog
+  34-2-multiply-to-enchantment: backlog
+  34-3-remove-multiply-converters: backlog
+  34-4-self-resource-convert-transmute: backlog
+  34-5-shop-pool-rebalance: backlog
+  34-6-ui-enchantment-display: backlog
+  34-7-balance-tuning: backlog
+  epic-34-retrospective: optional
+
 # Summary:
-# - Total Epics: 26
-# - Total Stories: 110
+# - Total Epics: 27
+# - Total Stories: 117
 # - Epics Completed: 19
 # - Stories Completed: 78

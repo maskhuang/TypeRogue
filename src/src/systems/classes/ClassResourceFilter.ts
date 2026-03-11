@@ -14,17 +14,12 @@ const CLASS_RESOURCE_MAP: Partial<Record<ResourceType, ClassId>> = {
 /** 所有职业资源类型 */
 const CLASS_RESOURCES: ResourceType[] = ['fragment', 'mutagen'];
 
-/** 暂时禁用的资源类型（不出现在任何技能池中） */
-const DISABLED_RESOURCES: Set<ResourceType> = new Set(['time']);
-
 /**
  * 判断资源类型是否对当前职业激活
- * - 禁用资源始终不激活
- * - 通用资源（base/score/multiplier/gold）始终激活
+ * - 通用资源（base/score/multiplier/time/gold）始终激活
  * - 职业资源仅在对应职业时激活
  */
 export function isResourceActiveForClass(resource: ResourceType, classId: ClassId): boolean {
-  if (DISABLED_RESOURCES.has(resource)) return false;
   const requiredClass = CLASS_RESOURCE_MAP[resource];
   if (!requiredClass) return true; // 通用资源，始终可用
   return classId === requiredClass;

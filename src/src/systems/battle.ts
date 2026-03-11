@@ -11,7 +11,7 @@ import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
-import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount } from './skills';
+import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers } from './skills';
 import { isConnector, isReplicator } from '../data/connectors';
 import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop, applyRandomEnchantment } from './shop';
@@ -663,6 +663,9 @@ function startTimer(): void {
     const modEffect = getActiveParams();
     const timeSpeed = modEffect?.timeSpeed ?? 1;
     state.time -= 0.1 * timeSpeed * getTimeScale(); // Story 31.4: 慢动作
+
+    // 蓄力产出者：每帧累加充能值
+    updateChargeProducers(0.1);
 
     // Boss 修饰器：每帧更新（decay / scroll 等）
     tickModifier(0.1);

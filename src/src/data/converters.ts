@@ -14,15 +14,15 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   conv_base_score_mul:  { id: 'conv_base_score_mul',  name: '加冕', icon: '👑', source: 'base', target: 'score',      formula: 'multiply', k: 0.005,  desc: '🪙分数×(1+⚔️基数×0.005)' },
   conv_base_mult_add:   { id: 'conv_base_mult_add',   name: '喷发', icon: '🌋', source: 'base', target: 'multiplier', formula: 'add',      k: 0.02,   desc: '🔥倍率+(⚔️基数×0.02)' },
   conv_base_mult_mul:   { id: 'conv_base_mult_mul',   name: '引爆', icon: '💥', source: 'base', target: 'multiplier', formula: 'multiply', k: 0.008,  desc: '🔥倍率×(1+⚔️基数×0.008)' },
-  conv_base_time_add:   { id: 'conv_base_time_add',   name: '汲血', icon: '🩸', source: 'base', target: 'time',       formula: 'add',      k: 0.015,   desc: '⏳时间+(⚔️基数×0.015)' },
-  conv_base_time_mul:   { id: 'conv_base_time_mul',   name: '再生', icon: '🧪', source: 'base', target: 'time',       formula: 'multiply', k: 0.0005,  desc: '⏳时间×(1+⚔️基数×0.0005)' },
+  conv_base_time_add:   { id: 'conv_base_time_add',   name: '汲血', icon: '🩸', source: 'base', target: 'time',       formula: 'add',      k: 0.15,   desc: '⏳时间+(⚔️基数×0.15)' },
+  conv_base_time_mul:   { id: 'conv_base_time_mul',   name: '再生', icon: '🧪', source: 'base', target: 'time',       formula: 'multiply', k: 0.005,  desc: '⏳时间×(1+⚔️基数×0.005)' },
   // === 分数为源（7 个）— 🪙→ （mid ~1000，k 极小） ===
   conv_score_base_add:   { id: 'conv_score_base_add',   name: '投资', icon: '⚒️', source: 'score', target: 'base',       formula: 'add',      k: 0.006,   desc: '⚔️基数+(🪙分数×0.006)' },
   conv_score_base_mul:   { id: 'conv_score_base_mul',   name: '奠基', icon: '🏗️', source: 'score', target: 'base',       formula: 'multiply', k: 0.0006,  desc: '⚔️基数×(1+🪙分数×0.0006)' },
   conv_score_mult_add:   { id: 'conv_score_mult_add',   name: '乘势', icon: '🎰', source: 'score', target: 'multiplier', formula: 'add',      k: 0.0002,  desc: '🔥倍率+(🪙分数×0.0002)' },
   conv_score_mult_mul:   { id: 'conv_score_mult_mul',   name: '膨胀', icon: '📈', source: 'score', target: 'multiplier', formula: 'multiply', k: 0.00012, desc: '🔥倍率×(1+🪙分数×0.00012)' },
-  conv_score_time_add:   { id: 'conv_score_time_add',   name: '续命', icon: '💊', source: 'score', target: 'time',       formula: 'add',      k: 0.0002,   desc: '⏳时间+(🪙分数×0.0002)' },
-  conv_score_time_mul:   { id: 'conv_score_time_mul',   name: '预言', icon: '🔮', source: 'score', target: 'time',       formula: 'multiply', k: 0.000008, desc: '⏳时间×(1+🪙分数×0.000008)' },
+  conv_score_time_add:   { id: 'conv_score_time_add',   name: '续命', icon: '💊', source: 'score', target: 'time',       formula: 'add',      k: 0.002,   desc: '⏳时间+(🪙分数×0.002)' },
+  conv_score_time_mul:   { id: 'conv_score_time_mul',   name: '预言', icon: '🔮', source: 'score', target: 'time',       formula: 'multiply', k: 0.00008, desc: '⏳时间×(1+🪙分数×0.00008)' },
   conv_score_gold_add:   { id: 'conv_score_gold_add',   name: '征税', icon: '📜', source: 'score', target: 'gold',       formula: 'add',      k: 0.002,   desc: '💰金币+(🪙分数×0.002)' },
 
   // === 倍率为源（6 个）— 🔥→ （mid ~2.0） ===
@@ -30,8 +30,8 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   conv_mult_base_mul:   { id: 'conv_mult_base_mul',   name: '雷铸', icon: '⚡', source: 'multiplier', target: 'base',       formula: 'multiply', k: 0.3,  desc: '⚔️基数×(1+🔥倍率×0.3)' },
   conv_mult_score_add:  { id: 'conv_mult_score_add',  name: '溢光', icon: '🌟', source: 'multiplier', target: 'score',      formula: 'add',      k: 8.0,  desc: '🪙分数+(🔥倍率×8)' },
   conv_mult_score_mul:  { id: 'conv_mult_score_mul',  name: '陨落', icon: '☄️', source: 'multiplier', target: 'score',      formula: 'multiply', k: 0.04, desc: '🪙分数×(1+🔥倍率×0.04)' },
-  conv_mult_time_add:   { id: 'conv_mult_time_add',   name: '烛照', icon: '🕯️', source: 'multiplier', target: 'time',       formula: 'add',      k: 0.1,  desc: '⏳时间+(🔥倍率×0.1)'},
-  conv_mult_time_mul:   { id: 'conv_mult_time_mul',   name: '延曦', icon: '🌅', source: 'multiplier', target: 'time',       formula: 'multiply', k: 0.005, desc: '⏳时间×(1+🔥倍率×0.005)' },
+  conv_mult_time_add:   { id: 'conv_mult_time_add',   name: '烛照', icon: '🕯️', source: 'multiplier', target: 'time',       formula: 'add',      k: 1.0,  desc: '⏳时间+🔥倍率'},
+  conv_mult_time_mul:   { id: 'conv_mult_time_mul',   name: '延曦', icon: '🌅', source: 'multiplier', target: 'time',       formula: 'multiply', k: 0.05, desc: '⏳时间×(1+🔥倍率×0.05)' },
   // === 时间为源（7 个）— ⏳→ （mid ~40s） ===
   conv_time_base_add:   { id: 'conv_time_base_add',   name: '蚀刻', icon: '⛏️', source: 'time', target: 'base',       formula: 'add',      k: 0.15,  desc: '⚔️基数+(⏳时间×0.15)' },
   conv_time_base_mul:   { id: 'conv_time_base_mul',   name: '时斩', icon: '🗡️', source: 'time', target: 'base',       formula: 'multiply', k: 0.015, desc: '⚔️基数×(1+⏳时间×0.015)' },
@@ -48,8 +48,8 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   conv_gold_score_mul:  { id: 'conv_gold_score_mul',  name: '悬赏', icon: '🎖️', source: 'gold', target: 'score',      formula: 'multiply', k: 0.005, desc: '🪙分数×(1+💰金币×0.005)' },
   conv_gold_mult_add:   { id: 'conv_gold_mult_add',   name: '雇佣', icon: '🫱', source: 'gold', target: 'multiplier', formula: 'add',      k: 0.015, desc: '🔥倍率+(💰金币×0.015)' },
   conv_gold_mult_mul:   { id: 'conv_gold_mult_mul',   name: '投机', icon: '📊', source: 'gold', target: 'multiplier', formula: 'multiply', k: 0.008, desc: '🔥倍率×(1+💰金币×0.008)' },
-  conv_gold_time_add:   { id: 'conv_gold_time_add',   name: '赎买', icon: '🔑', source: 'gold', target: 'time',       formula: 'add',      k: 0.013,  desc: '⏳时间+(💰金币×0.013)' },
-  conv_gold_time_mul:   { id: 'conv_gold_time_mul',   name: '朝贡', icon: '🏺', source: 'gold', target: 'time',       formula: 'multiply', k: 0.0005, desc: '⏳时间×(1+💰金币×0.0005)' },
+  conv_gold_time_add:   { id: 'conv_gold_time_add',   name: '赎买', icon: '🔑', source: 'gold', target: 'time',       formula: 'add',      k: 0.13,  desc: '⏳时间+(💰金币×0.13)' },
+  conv_gold_time_mul:   { id: 'conv_gold_time_mul',   name: '朝贡', icon: '🏺', source: 'gold', target: 'time',       formula: 'multiply', k: 0.005, desc: '⏳时间×(1+💰金币×0.005)' },
 
   // === 碎片为源（10 个）— 🔤→（造词师专属，mid ~5-10） ===
   conv_fragment_base_add:   { id: 'conv_fragment_base_add',   name: '字铸',     icon: '🔩', source: 'fragment', target: 'base',       formula: 'add',      k: 0.08,   desc: '⚔️基数+(🔤本关碎片产出×0.08)' },
@@ -58,8 +58,8 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   conv_fragment_score_mul:  { id: 'conv_fragment_score_mul',  name: '笔锋',     icon: '🖊️', source: 'fragment', target: 'score',      formula: 'multiply', k: 0.004,  desc: '🪙分数×(1+🔤本关碎片产出×0.004)' },
   conv_fragment_mult_add:   { id: 'conv_fragment_mult_add',   name: '词韵',     icon: '🏷️', source: 'fragment', target: 'multiplier', formula: 'add',      k: 0.015,  desc: '🔥倍率+(🔤本关碎片产出×0.015)' },
   conv_fragment_mult_mul:   { id: 'conv_fragment_mult_mul',   name: '文锋',     icon: '🗞️', source: 'fragment', target: 'multiplier', formula: 'multiply', k: 0.006,  desc: '🔥倍率×(1+🔤本关碎片产出×0.006)' },
-  conv_fragment_time_add:   { id: 'conv_fragment_time_add',   name: '墨续',     icon: '🖋️', source: 'fragment', target: 'time',       formula: 'add',      k: 0.012,   desc: '⏳时间+(🔤本关碎片产出×0.012)' },
-  conv_fragment_time_mul:   { id: 'conv_fragment_time_mul',   name: '篆刻',     icon: '🪪', source: 'fragment', target: 'time',       formula: 'multiply', k: 0.0004,  desc: '⏳时间×(1+🔤本关碎片产出×0.0004)' },
+  conv_fragment_time_add:   { id: 'conv_fragment_time_add',   name: '墨续',     icon: '🖋️', source: 'fragment', target: 'time',       formula: 'add',      k: 0.12,   desc: '⏳时间+(🔤本关碎片产出×0.12)' },
+  conv_fragment_time_mul:   { id: 'conv_fragment_time_mul',   name: '篆刻',     icon: '🪪', source: 'fragment', target: 'time',       formula: 'multiply', k: 0.004,  desc: '⏳时间×(1+🔤本关碎片产出×0.004)' },
   conv_fragment_gold_add:   { id: 'conv_fragment_gold_add',   name: '字润',     icon: '📰', source: 'fragment', target: 'gold',       formula: 'add',      k: 0.3,    desc: '💰金币+(🔤本关碎片产出×0.3)' },
   conv_fragment_gold_mul:   { id: 'conv_fragment_gold_mul',   name: '版税',     icon: '📕', source: 'fragment', target: 'gold',       formula: 'multiply', k: 0.003,  desc: '💰金币×(1+🔤本关碎片产出×0.003)' },
 
@@ -82,8 +82,8 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   conv_mutagen_base_mul:   { id: 'conv_mutagen_base_mul',   name: '寄生', icon: '🐛', source: 'mutagen', target: 'base',       formula: 'multiply', k: 0.003, desc: '⚔️基数×(1+🧬本关变异素产出×0.003)' },
   conv_mutagen_mult_add:   { id: 'conv_mutagen_mult_add',   name: '催变', icon: '🌿', source: 'mutagen', target: 'multiplier', formula: 'add',      k: 0.015, desc: '🔥倍率+(🧬本关变异素产出×0.015)' },
   conv_mutagen_mult_mul:   { id: 'conv_mutagen_mult_mul',   name: '异变', icon: '🐍', source: 'mutagen', target: 'multiplier', formula: 'multiply', k: 0.006, desc: '🔥倍率×(1+🧬本关变异素产出×0.006)' },
-  conv_mutagen_time_add:   { id: 'conv_mutagen_time_add',   name: '孢释', icon: '🪸', source: 'mutagen', target: 'time',       formula: 'add',      k: 0.012,  desc: '⏳时间+(🧬本关变异素产出×0.012)' },
-  conv_mutagen_time_mul:   { id: 'conv_mutagen_time_mul',   name: '休眠', icon: '🐚', source: 'mutagen', target: 'time',       formula: 'multiply', k: 0.0004, desc: '⏳时间×(1+🧬本关变异素产出×0.0004)' },
+  conv_mutagen_time_add:   { id: 'conv_mutagen_time_add',   name: '孢释', icon: '🪸', source: 'mutagen', target: 'time',       formula: 'add',      k: 0.12,  desc: '⏳时间+(🧬本关变异素产出×0.12)' },
+  conv_mutagen_time_mul:   { id: 'conv_mutagen_time_mul',   name: '休眠', icon: '🐚', source: 'mutagen', target: 'time',       formula: 'multiply', k: 0.004, desc: '⏳时间×(1+🧬本关变异素产出×0.004)' },
   conv_mutagen_gold_add:   { id: 'conv_mutagen_gold_add',   name: '分泌', icon: '🦂', source: 'mutagen', target: 'gold',       formula: 'add',      k: 0.3,   desc: '💰金币+(🧬本关变异素产出×0.3)' },
   conv_mutagen_gold_mul:   { id: 'conv_mutagen_gold_mul',   name: '腐金', icon: '🍂', source: 'mutagen', target: 'gold',       formula: 'multiply', k: 0.003, desc: '💰金币×(1+🧬本关变异素产出×0.003)' },
 
