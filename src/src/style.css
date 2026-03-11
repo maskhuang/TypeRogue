@@ -502,6 +502,20 @@ body {
 .reward-card .reward-type.risk-reward { background: rgba(255,50,50,0.25); color: #ff4444; font-weight: bold; }
 .reward-card.risk-reward-card { border-color: rgba(255,50,50,0.5); box-shadow: 0 0 8px rgba(255,50,50,0.15); }
 
+/* Story 34.6 AC2: 机制 badge */
+.mechanic-badge {
+    display: inline-block;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 9px;
+    margin-left: 4px;
+}
+.mechanic-charge  { background: rgba(78,205,196,0.2); color: #4ecdc4; }
+.mechanic-decay   { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+.mechanic-pulse   { background: rgba(255,230,109,0.2); color: #ffe66d; }
+.mechanic-crit    { background: rgba(224,86,253,0.2); color: #e056fd; }
+.mechanic-void    { background: rgba(100,100,120,0.2); color: #888; }
+
 /* 词库卡片 */
 .reward-card.library-card { border-color: #444; }
 .reward-card.library-card.owned { border-color: #4ecdc4; background: rgba(78,205,196,0.1); }
@@ -632,6 +646,34 @@ body {
 .key-slot .key-skill { font-size: 12px; }
 .key-slot .devour-icons { font-size: 7px; opacity: 0.8; }
 .key-slot .growth-badge { font-size: 7px; color: #ffe66d; display: block; line-height: 1; margin-top: 1px; }
+
+/* Story 34.6: 乘算化附魔金色边框 (AC1) */
+.key-slot.multiply-enchanted {
+    border-color: #ffe66d !important;
+    box-shadow: 0 0 8px rgba(255,230,109,0.4);
+}
+
+/* Story 34.6: 机制角标 (AC6) */
+.key-slot .mechanic-icon-badge {
+    position: absolute;
+    right: 1px;
+    bottom: 1px;
+    font-size: 8px;
+    opacity: 0.7;
+    line-height: 1;
+}
+
+/* Story 34.6: 虚无范围空位高亮 (AC7) */
+.key-slot.void-range-empty {
+    border-color: #9b59b6 !important;
+    background: rgba(155,89,182,0.15) !important;
+    box-shadow: 0 0 6px rgba(155,89,182,0.3);
+    animation: voidPulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes voidPulse {
+    from { box-shadow: 0 0 4px rgba(155,89,182,0.2); }
+    to { box-shadow: 0 0 10px rgba(155,89,182,0.5); }
+}
 
 #skill-inventory { padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; transition: border-color 0.15s; border: 2px solid transparent; }
 #skill-inventory.drag-over { border-color: #4ecdc4; background: rgba(78,205,196,0.08); }
@@ -1100,7 +1142,17 @@ body {
 }
 
 .skill-trigger-popup .trigger-icon { font-size: 20px; }
+.skill-trigger-popup .trigger-mechanic { font-size: 8px; color: rgba(255,255,255,0.6); display: block; text-align: center; line-height: 1; margin-top: 1px; }
+.skill-trigger-popup .trigger-crit { font-size: 10px; color: #ffe66d; font-weight: bold; display: block; text-align: center; line-height: 1; }
+
+/* Story 34.6 AC5: 暴击触发特殊反馈 */
+.skill-trigger-popup.crit-trigger {
+    background: rgba(255,230,109,0.3);
+    border-color: #ffe66d;
+    animation: critTriggerPop 0.5s forwards;
+}
 @keyframes triggerPop { 0% { opacity: 0; transform: scale(0.5) translateY(15px); } 30% { opacity: 1; transform: scale(1.1) translateY(-5px); } 100% { opacity: 0; transform: scale(1) translateY(-30px); } }
+@keyframes critTriggerPop { 0% { opacity: 0; transform: scale(0.5) translateY(15px); } 20% { opacity: 1; transform: scale(1.4) translateY(-5px); } 50% { opacity: 1; transform: scale(1.0) translateY(-15px); } 100% { opacity: 0; transform: scale(1) translateY(-40px); } }
 
 /* 浮字系统 (Story 19.7) */
 .float-text {

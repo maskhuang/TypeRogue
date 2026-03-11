@@ -9,7 +9,7 @@ import { PositionRelation } from './keyboardTopology';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
 
 // === 机制中文标签 ===
-const MECHANIC_LABELS: Record<string, string> = {
+export const MECHANIC_LABELS: Record<string, string> = {
   charge: '蓄力',
   decay: '衰减',
   pulse: '脉冲',
@@ -18,7 +18,7 @@ const MECHANIC_LABELS: Record<string, string> = {
 };
 
 // === 位置关系标签 ===
-const RELATION_LABELS: Record<string, string> = {
+export const RELATION_LABELS: Record<string, string> = {
   [PositionRelation.Adjacent]: '相邻',
   [PositionRelation.SameRow]: '同行',
   [PositionRelation.SameColumn]: '同列',
@@ -48,7 +48,7 @@ const BASE_VALUES: Record<ResourceType, [number, number, number]> = {
 };
 
 // === 机制图标前缀 ===
-const MECHANIC_ICONS: Record<string, string> = {
+export const MECHANIC_ICONS: Record<string, string> = {
   charge: '🔌',
   decay: '📉',
   pulse: '💗',

@@ -18,6 +18,7 @@ export interface KeyTooltipData {
     schoolCssClass: string
     amplifierStacks?: number
     affectedSkills?: string[]
+    mechanicInfo?: string
     enchantmentInfo?: string
   }
 }
@@ -82,6 +83,9 @@ class KeyTooltipManager {
       }
       if (data.skill.affectedSkills && data.skill.affectedSkills.length > 0) {
         html += `<div class="tooltip-amp-affects" style="color:#888;font-size:10px;margin-top:2px;">${esc(t('tooltip.amp_range', { skills: data.skill.affectedSkills.join(', ') }))}</div>`
+      }
+      if (data.skill.mechanicInfo) {
+        html += `<div class="tooltip-mechanic" style="color:#4ecdc4;font-size:10px;margin-top:3px;">${esc(data.skill.mechanicInfo)}</div>`
       }
       if (data.skill.enchantmentInfo) {
         html += `<div class="tooltip-enchantment" style="color:#9b59b6;font-size:10px;margin-top:3px;">${esc(data.skill.enchantmentInfo)}</div>`

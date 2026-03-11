@@ -497,8 +497,29 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
   }
   value *= mechanicMult;
 
+  // Story 34.6 AC4/AC5: 构建机制状态文字
+  let mechanicText: string | undefined;
+  if (mechanic === 'charge' && prod.mechanicParams) {
+    // 蓄力已在上面释放清零，显示释放前的蓄力量
+    mechanicText = `+${Math.round(mechanicAddBonus * 100)}%⬆`;
+  } else if (mechanic === 'decay' && prod.mechanicParams) {
+    const dp = prod.mechanicParams as DecayParams;
+    // 显示衰减后的当前倍率（即下次触发将使用的值）
+    const postDecayMult = state.decayMultipliers.get(producerId) ?? dp.initialMult;
+    mechanicText = `×${postDecayMult.toFixed(1)}`;
+  } else if (mechanic === 'pulse' && prod.mechanicParams) {
+    const pp = prod.mechanicParams as PulseParams;
+    const count = state.pulseCounts.get(producerId) || 0;
+    mechanicText = `${count % pp.interval}/${pp.interval}`;
+  } else if (mechanic === 'void' && prod.mechanicParams && triggerKey) {
+    const vp = prod.mechanicParams as VoidParams;
+    const related = getKeysWithRelation(triggerKey, vp.posRel);
+    const emptyCount = related.filter(k => !state.player.bindings.has(k)).length;
+    mechanicText = `+${emptyCount}空位`;
+  }
+
   // 视觉反馈
-  showTriggerPopup(producerId);
+  showTriggerPopup(producerId, mechanicText, isCritHit);
 
   synergy.wordSkillCount++;
 
@@ -1270,8 +1291,8 @@ export function triggerSkill(skillId: string, triggerKey: string, chainHistory?:
   }
 }
 
-// === 显示技能触发弹窗 ===
-function showTriggerPopup(skillId: string): void {
+// === 显示技能触发弹窗（Story 34.6 AC4/AC5 增强） ===
+function showTriggerPopup(skillId: string, mechanicText?: string, isCrit?: boolean): void {
   const el = getElements();
   const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || AMPLIFIERS[skillId];
   if (!sk) return;
@@ -1279,8 +1300,11 @@ function showTriggerPopup(skillId: string): void {
   const display = getSkillDisplayInfo(skillId, undefined, state.player.enchantedSkills);
   const p = document.createElement('div');
   p.className = 'skill-trigger-popup';
-  p.innerHTML = `<span class="trigger-icon">${display.icon}</span>`;
+  if (isCrit) p.classList.add('crit-trigger');
+  const mechSpan = mechanicText ? `<span class="trigger-mechanic">${mechanicText}</span>` : '';
+  const critSpan = isCrit ? `<span class="trigger-crit">CRIT!</span>` : '';
+  p.innerHTML = `<span class="trigger-icon">${display.icon}</span>${mechSpan}${critSpan}`;
   p.style.left = (Math.random() * 60 - 30) + 'px';
   el.triggerZone.appendChild(p);
-  setTimeout(() => p.remove(), 350);
+  setTimeout(() => p.remove(), isCrit ? 500 : 350);
 }

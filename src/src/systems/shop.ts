@@ -7,7 +7,7 @@ import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS } from '../core/constants';
 import { getSkillSchool, getSkillDisplayInfo } from '../data/skills';
-import { PRODUCERS, isProducer, getProducerMechanic } from '../data/producers';
+import { PRODUCERS, isProducer, getProducerMechanic, MECHANIC_LABELS, MECHANIC_ICONS, RELATION_LABELS } from '../data/producers';
 import { CONVERTERS, isConverter } from '../data/converters';
 import { CONNECTORS, REPLICATORS, isConnector, isReplicator } from '../data/connectors';
 import { AMPLIFIERS, isAmplifier } from '../data/amplifiers';
@@ -20,7 +20,7 @@ import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
-import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
+import type { ShopItem, ResourceType, PackConditionType, ChargeParams, DecayParams, PulseParams, CritParams, VoidParams } from '../core/types';
 import { getNextBattleNode, isRestNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
@@ -115,6 +115,44 @@ function getSkillCategory(skillId: string): string | null {
   if (isReplicator(skillId)) return 'replicator';
   if (isAmplifier(skillId)) return 'amplifier';
   return null;
+}
+
+// === 产出者机制信息（tooltip 用, Story 34.6 AC3） ===
+export function buildMechanicInfo(skillId: string): string | undefined {
+  if (!isProducer(skillId)) return undefined;
+  const prod = PRODUCERS[skillId];
+  if (!prod) return undefined;
+  const mech = prod.mechanic || 'standard';
+  if (mech === 'standard') return undefined;
+  const icon = MECHANIC_ICONS[mech] || '';
+  const label = MECHANIC_LABELS[mech] || '';
+  const params = prod.mechanicParams;
+  if (!params) return `${icon}${label}`;
+  switch (mech) {
+    case 'charge': {
+      const cp = params as ChargeParams;
+      return `${icon}${label} · 每秒+${Math.round(cp.gainPerSec * 100)}%，上限${Math.round(cp.maxBonus * 100)}%`;
+    }
+    case 'decay': {
+      const dp = params as DecayParams;
+      return `${icon}${label} · 初始×${dp.initialMult}，每次-${dp.decayPerTrigger}，下限×${dp.floor}`;
+    }
+    case 'pulse': {
+      const pp = params as PulseParams;
+      return `${icon}${label} · 每${pp.interval}次触发×${pp.burstMult}`;
+    }
+    case 'crit': {
+      const crp = params as CritParams;
+      return `${icon}${label} · ${Math.round(crp.chance * 100)}%概率×${crp.critMult}`;
+    }
+    case 'void': {
+      const vp = params as VoidParams;
+      const relLabel = vp.posRel ? (RELATION_LABELS[vp.posRel] || vp.posRel) : '';
+      return `${icon}${label} · ${relLabel}范围每空位+${Math.round(vp.bonusPerSlot * 100)}%`;
+    }
+    default:
+      return `${icon}${label}`;
+  }
 }
 
 // === 附魔状态信息（tooltip 用） ===
@@ -516,6 +554,11 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
       typeLabel = t('shop.upgrade_label', { label: school.label });
     }
 
+    // Story 34.6 AC2: 产出者机制 badge
+    const cardMechanic = isProducer(item.skillId!) ? getProducerMechanic(item.skillId!) : null;
+    const mechanicBadge = cardMechanic && cardMechanic !== 'standard'
+      ? `<span class="mechanic-badge mechanic-${cardMechanic}">${MECHANIC_ICONS[cardMechanic] || ''}${MECHANIC_LABELS[cardMechanic] || ''}</span>` : '';
+
     card.innerHTML = `
       <div class="reward-icon">${display.icon}</div>
       <div class="reward-info">
@@ -523,7 +566,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
         <div class="reward-desc">${display.desc}</div>
       </div>
       <div class="reward-cost">💰${item.cost}</div>
-      <div class="reward-type ${school.cssClass}">${typeLabel}</div>
+      <div class="reward-type ${school.cssClass}">${typeLabel}${mechanicBadge}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
   } else if (item.type === 'pack' && item.pack) {
@@ -1256,11 +1299,19 @@ export function renderBuildManager(): void {
         const skData = state.player.skills.get(skillId);
         slot.dataset.sellPrice = String(Math.floor((skData?.purchasePrice || 15) / 2));
         slot.classList.add(school.cssClass);
+        // Story 34.6 AC1: 乘算化附魔金色边框
+        if (state.player.enchantedSkills.get(skillId) === 'ench_multiply') {
+          slot.classList.add('multiply-enchanted');
+        }
+        // Story 34.6 AC6: 非 standard 产出者机制角标
+        const prodMechanic = isProducer(skillId) ? getProducerMechanic(skillId) : null;
+        const mechanicBadgeHtml = prodMechanic && prodMechanic !== 'standard'
+          ? `<span class="mechanic-icon-badge">${MECHANIC_ICONS[prodMechanic] || ''}</span>` : '';
         const devoured = state.devourIcons.get(skillId);
         const devourPrefix = devoured && devoured.length > 0 ? `<span class="devour-icons">${devoured.join('')}</span>` : '';
         const growthVal = state.growthValues.get(skillId) || 0;
         const growthBadge = growthVal > 0 ? `<span class="growth-badge">+${Math.round(growthVal * 100)}%</span>` : '';
-        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${devourPrefix}${display.icon}</span>${growthBadge}${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
+        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${devourPrefix}${display.icon}</span>${growthBadge}${mechanicBadgeHtml}${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       } else {
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       }
@@ -1300,16 +1351,32 @@ export function renderBuildManager(): void {
             }
             tooltipData.skill.affectedSkills = affected;
           }
+          // Story 34.6 AC3: 机制信息
+          tooltipData.skill.mechanicInfo = buildMechanicInfo(skillId);
           // 附魔状态信息
           tooltipData.skill.enchantmentInfo = buildEnchantmentInfo(skillId);
         }
         highlightSkillRange(k);
+        // Story 34.6 AC7: 虚无范围空位高亮
+        if (skillId && isProducer(skillId)) {
+          const voidProd = PRODUCERS[skillId];
+          if (voidProd?.mechanic === 'void' && voidProd.mechanicParams && 'posRel' in voidProd.mechanicParams) {
+            const related = getKeysWithRelation(k, (voidProd.mechanicParams as any).posRel);
+            related.forEach(rk => {
+              if (!state.player.bindings.has(rk)) {
+                document.querySelector(`.key-slot[data-key="${rk}"]`)?.classList.add('void-range-empty');
+              }
+            });
+          }
+        }
         const avoidRect = getRangeHighlightRect(slot);
         keyTooltip.show(e.clientX, e.clientY, tooltipData, avoidRect ?? undefined);
       });
       slot.addEventListener('mouseleave', () => {
         keyTooltip.hide();
         clearRangeHighlight();
+        // Story 34.6 AC7: 清除虚无范围高亮
+        document.querySelectorAll('.key-slot.void-range-empty').forEach(el => el.classList.remove('void-range-empty'));
       });
 
       rowDiv.appendChild(slot);
@@ -1378,6 +1445,8 @@ export function renderBuildManager(): void {
         }
         tooltipData.skill!.affectedSkills = affected;
       }
+      // Story 34.6 AC3: 机制信息
+      tooltipData.skill!.mechanicInfo = buildMechanicInfo(skillId);
       // 附魔状态信息
       tooltipData.skill!.enchantmentInfo = buildEnchantmentInfo(skillId);
       if (boundKey) {
