@@ -74,8 +74,8 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     icon: '❄️',
     resource: 'time',
     operator: 'add',
-    values: [2, 3.2, 4.8],
-    desc: '⏳时间+2',
+    values: [0.2, 0.32, 0.48],
+    desc: '⏳时间+0.2',
   },
   prod_eternal: {
     id: 'prod_eternal',
@@ -83,8 +83,8 @@ export const PRODUCERS: Record<string, ProducerDefinition> = {
     icon: '⏳',
     resource: 'time',
     operator: 'multiply',
-    values: [1.2, 1.25, 1.3],
-    desc: '⏳时间×1.2',
+    values: [1.02, 1.025, 1.03],
+    desc: '⏳时间×1.02',
   },
 
   // === 金币产出者 ===
