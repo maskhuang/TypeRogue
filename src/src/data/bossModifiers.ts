@@ -3,23 +3,19 @@
 // ============================================
 // Story 18.1: 修饰器池（ID + Meta）
 // Story 18.4: BossModifier 接口 + 注册表 + 6 个数值修饰器实现 + 7 个 stub
-// Story 18.5: 3 个视觉类修饰器实现（boss_fade, boss_drift, boss_spotlight）
-// Story 18.6: 3 个认知类修饰器实现（boss_scramble, boss_reverse, boss_masked）
-// Story 18.7: 节奏锁定修饰器实现（boss_rhythm）
+// Story 18.5: 视觉类修饰器实现（boss_fade, boss_spotlight）
+// Story 18.6: 认知类修饰器实现（boss_scramble, boss_reverse）
 
 /**
  * 所有 Boss 修饰器 ID
- * 打字难度类（7种）+ 数值规则类（6种）= 13种
+ * 打字难度类（4种）+ 数值规则类（6种）+ 认知/视觉类（2种）= 12种
  */
 export const BOSS_MODIFIER_IDS = [
   // 打字难度类
   'boss_fade',       // 渐隐之词
   'boss_scramble',   // 乱序打字
   'boss_reverse',    // 倒序输入
-  'boss_drift',      // 移动文字
-  'boss_masked',     // 残缺词语
   'boss_spotlight',  // 聚光灯
-  'boss_rhythm',     // 节奏锁定
   // 数值规则类
   'boss_decay',      // 分数衰减
   'boss_combo_punish', // 断连即扣
@@ -27,6 +23,9 @@ export const BOSS_MODIFIER_IDS = [
   'boss_fast_time',  // 时间加速
   'boss_double_target', // 双倍目标
   'boss_diminish',   // 递减收益
+  // 新增修饰器
+  'boss_garble',     // 乱码
+  'boss_scroll',     // 滚屏
 ] as const
 
 export type BossModifierId = typeof BOSS_MODIFIER_IDS[number]
@@ -43,7 +42,7 @@ export interface BossModifierMeta {
 }
 
 /**
- * 13 个修饰器的元数据
+ * 12 个修饰器的元数据
  */
 export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
   boss_fade: {
@@ -67,33 +66,12 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     description: '从最后一个字母往前打',
     eliteHint: '从最后一个字母往前打',
   },
-  boss_drift: {
-    id: 'boss_drift',
-    name: '移动文字',
-    icon: '🌊',
-    description: '词语在屏幕上漂移晃动',
-    eliteHint: '词语轻微漂移（振幅减半）',
-  },
-  boss_masked: {
-    id: 'boss_masked',
-    name: '残缺词语',
-    icon: '🫥',
-    description: '部分字母被遮挡（30%）',
-    eliteHint: '遮挡 15% 字母',
-  },
   boss_spotlight: {
     id: 'boss_spotlight',
     name: '聚光灯',
     icon: '🔦',
     description: '只能看到当前 2-3 个字母',
     eliteHint: '可见 3-4 个字母',
-  },
-  boss_rhythm: {
-    id: 'boss_rhythm',
-    name: '节奏锁定',
-    icon: '🎵',
-    description: '字母按节拍解锁（BPM 90-140）',
-    eliteHint: '节拍较慢（BPM 70-110）',
   },
   boss_decay: {
     id: 'boss_decay',
@@ -137,6 +115,20 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     description: '每完成一词下个词分数 -10%',
     eliteHint: '每词 -5%',
   },
+  boss_garble: {
+    id: 'boss_garble',
+    name: '乱码',
+    icon: '🔣',
+    description: '词语中插入随机标点符号',
+    eliteHint: '插入较少标点符号',
+  },
+  boss_scroll: {
+    id: 'boss_scroll',
+    name: '滚屏',
+    icon: '📜',
+    description: '字母从右向左滚动，对准箭头时打字',
+    eliteHint: '滚动较慢，命中区更宽',
+  },
 }
 
 /**
@@ -147,7 +139,7 @@ export function getBossModifierMeta(id: BossModifierId): BossModifierMeta | unde
 }
 
 /**
- * 从修饰器池中随机抽取 n 个不重复的修饰器
+ * 从修饰器池中随机抽取 n 个不重复的修饰器（共 12 个）
  */
 export function drawBossModifiers(count: number): BossModifierId[] {
   const pool = [...BOSS_MODIFIER_IDS]
@@ -161,7 +153,7 @@ export function drawBossModifiers(count: number): BossModifierId[] {
 
 /**
  * 生成 Boss 修饰器候选（排除已激活的修饰器）
- * 从全部 13 个修饰器中排除 activeModifiers，随机取 3 个
+ * 从全部 12 个修饰器中排除 activeModifiers，随机取 3 个
  * 若可用不足 3 个，返回全部可用
  */
 export function generateBossModifierCandidates(activeModifiers: BossModifierId[]): BossModifierId[] {
@@ -195,17 +187,16 @@ export interface BossModifierParams {
   fadeSpeed?: number        // boss_fade: 初始淡出速度（秒/字母）
   fadeSpeedEnd?: number     // boss_fade: 最终淡出速度
   fadeDuration?: number     // boss_fade: 加速持续时间（秒）
-  driftAmplitude?: number   // boss_drift: 振幅（px）
-  driftFrequency?: number   // boss_drift: 频率（Hz）
   spotlightRadius?: number  // boss_spotlight: 可见半径（字母数）
   // 认知类（Story 18.6）
   scrambleMode?: number     // boss_scramble: 1=全打乱, 2=保留首尾
   reverseActive?: number    // boss_reverse: 1=倒序 (truthy check)
-  maskRate?: number         // boss_masked: 遮罩比例 (0.30 / 0.15)
-  // 节奏类（Story 18.7）
-  rhythmBpmStart?: number   // boss_rhythm: 起始 BPM (90 满功率, 70 精英)
-  rhythmBpmEnd?: number     // boss_rhythm: 最终 BPM (140 满功率, 110 精英)
-  rhythmDuration?: number   // boss_rhythm: BPM 递增持续时间（秒）
+  // 乱码（boss_garble）
+  garbleRate?: number       // 标点插入率
+  garbleActive?: number     // 1=激活 (truthy check)
+  // 滚屏（boss_scroll）
+  scrollSpeed?: number      // 滚动速度（px/s）
+  scrollHitZone?: number    // 命中区宽度（px）
 }
 
 /**
@@ -337,37 +328,6 @@ const bossFade: BossModifier = {
   },
 }
 
-let driftElapsed = 0
-
-const bossDrift: BossModifier = {
-  id: 'boss_drift',
-  getParams: (isElite) => ({
-    driftAmplitude: isElite ? 8 : 15,
-    driftFrequency: isElite ? 1.5 : 2.0,
-  }),
-  apply: () => { driftElapsed = 0 },
-  cleanup: () => {
-    driftElapsed = 0
-    const wordEl = document.getElementById('word-display')
-    if (wordEl) wordEl.style.transform = ''
-  },
-  onTick(dt: number) {
-    driftElapsed += dt
-    const params = getActiveParams()
-    if (!params?.driftAmplitude) return
-
-    const ampScale = 1 + driftElapsed / 60
-    const amp = params.driftAmplitude * ampScale
-    const freq = params.driftFrequency ?? 2
-
-    const x = Math.sin(driftElapsed * freq * Math.PI * 2) * amp
-    const y = Math.cos(driftElapsed * freq * Math.PI * 2 * 0.7) * amp * 0.5
-
-    const wordEl = document.getElementById('word-display')
-    if (wordEl) wordEl.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`
-  },
-}
-
 const bossSpotlight: BossModifier = {
   id: 'boss_spotlight',
   getParams: (isElite) => ({
@@ -440,165 +400,150 @@ const bossReverse: BossModifier = {
   cleanup: () => {},
 }
 
-/** 词语变换：scramble/reverse 在 setWord 时调用 */
+// === boss_garble 乱码修饰器 ===
+
+export const GARBLE_CHARS = '.,;:!?'
+
+/** 向词语中随机插入标点符号，至少插入 1 个 */
+export function garbleWord(word: string, rate: number): string {
+  const chars = word.split('')
+  const result: string[] = []
+  let inserted = 0
+  for (let i = 0; i < chars.length; i++) {
+    result.push(chars[i])
+    if (random() < rate) {
+      result.push(GARBLE_CHARS[Math.floor(random() * GARBLE_CHARS.length)])
+      inserted++
+    }
+  }
+  // 保证至少插入 1 个标点
+  if (inserted === 0) {
+    const pos = Math.floor(random() * (result.length - 1)) + 1
+    result.splice(pos, 0, GARBLE_CHARS[Math.floor(random() * GARBLE_CHARS.length)])
+  }
+  return result.join('')
+}
+
+/** 是否乱码修饰器激活 */
+export function isGarbleActive(): boolean {
+  return !!getActiveParams()?.garbleActive
+}
+
+const bossGarble: BossModifier = {
+  id: 'boss_garble',
+  getParams: (isElite) => ({ garbleRate: isElite ? 0.15 : 0.3, garbleActive: 1 }),
+  apply: () => {},
+  cleanup: () => {},
+}
+
+// === boss_scroll 滚屏修饰器 ===
+
+let scrollOffset = 0
+let scrollActive = false
+let scrollMissFlags: boolean[] = []
+let scrollArrowEl: HTMLElement | null = null
+
+export function isScrollActive(): boolean {
+  return scrollActive
+}
+
+export function initScrollWord(len: number): void {
+  scrollOffset = 0
+  scrollMissFlags = new Array(len).fill(false)
+}
+
+/**
+ * 判断字母相对箭头位置
+ * 'locked' = 还没到箭头, 'hit' = 在命中区, 'miss' = 已经过了箭头
+ */
+export function checkScrollLetterState(idx: number): 'locked' | 'hit' | 'miss' {
+  if (scrollMissFlags[idx]) return 'miss'
+  const params = getActiveParams()
+  if (!params?.scrollHitZone) return 'hit'
+  const wordEl = document.getElementById('word-display')
+  if (!wordEl) return 'hit'
+  const letterEl = wordEl.children[idx] as HTMLElement | undefined
+  if (!letterEl) return 'hit'
+  const arrowEl = scrollArrowEl
+  if (!arrowEl) return 'hit'
+  const letterRect = letterEl.getBoundingClientRect()
+  const arrowRect = arrowEl.getBoundingClientRect()
+  const letterCenter = letterRect.left + letterRect.width / 2
+  const arrowCenter = arrowRect.left + arrowRect.width / 2
+  const dist = letterCenter - arrowCenter
+  const halfZone = params.scrollHitZone / 2
+  if (dist > halfZone) return 'locked'
+  if (dist < -halfZone) return 'miss'
+  return 'hit'
+}
+
+export function markScrollMiss(idx: number): void {
+  scrollMissFlags[idx] = true
+}
+
+const bossScroll: BossModifier = {
+  id: 'boss_scroll',
+  getParams: (isElite) => ({
+    scrollSpeed: isElite ? 60 : 100,
+    scrollHitZone: isElite ? 60 : 40,
+  }),
+  apply: (params) => {
+    scrollOffset = 0
+    scrollActive = true
+    scrollMissFlags = []
+    // 创建箭头 DOM
+    const zone = document.getElementById('word-zone')
+    if (zone) {
+      scrollArrowEl = document.createElement('div')
+      scrollArrowEl.id = 'scroll-arrow'
+      scrollArrowEl.textContent = '▼'
+      zone.insertBefore(scrollArrowEl, zone.firstChild)
+    }
+  },
+  cleanup: () => {
+    scrollActive = false
+    scrollOffset = 0
+    scrollMissFlags = []
+    if (scrollArrowEl) {
+      scrollArrowEl.remove()
+      scrollArrowEl = null
+    }
+    // 恢复 word-display transform
+    const wordEl = document.getElementById('word-display')
+    if (wordEl) wordEl.style.transform = ''
+  },
+  onTick(dt: number) {
+    if (!scrollActive) return
+    const params = getActiveParams()
+    if (!params?.scrollSpeed) return
+    scrollOffset += params.scrollSpeed * dt
+    const wordEl = document.getElementById('word-display')
+    if (wordEl) {
+      wordEl.style.transform = `translateX(-${scrollOffset}px)`
+    }
+  },
+}
+
+/** 词语变换：reverse/scramble/garble 在 setWord 时调用（支持组合） */
 export function transformWordForModifier(word: string): string {
   const params = getActiveParams()
   if (!params) return word
 
+  let result = word
+
   if (params.reverseActive) {
-    return word.split('').reverse().join('')
+    result = result.split('').reverse().join('')
   }
 
   if (params.scrambleMode) {
-    return scrambleWord(word, params.scrambleMode === 2)
+    result = scrambleWord(result, params.scrambleMode === 2)
   }
 
-  return word
-}
-
-let maskedPositions: Set<number> = new Set()
-let maskedForWord: string = ''
-
-function generateMaskedPositions(length: number, rate: number): Set<number> {
-  const count = Math.max(1, Math.floor(length * rate))
-  const positions = new Set<number>()
-  const available = Array.from({ length }, (_, i) => i)
-  for (let i = 0; i < count && available.length > 0; i++) {
-    const idx = Math.floor(random() * available.length)
-    positions.add(available.splice(idx, 1)[0])
+  if (params.garbleActive && params.garbleRate) {
+    result = garbleWord(result, params.garbleRate)
   }
-  return positions
-}
 
-const bossMasked: BossModifier = {
-  id: 'boss_masked',
-  getParams: (isElite) => ({ maskRate: isElite ? 0.15 : 0.30 }),
-  apply: () => {
-    maskedPositions.clear()
-    maskedForWord = ''
-  },
-  cleanup: () => {
-    maskedPositions.clear()
-    maskedForWord = ''
-    document.querySelectorAll('#word-display .letter').forEach(el => {
-      const htmlEl = el as HTMLElement
-      const orig = htmlEl.getAttribute('data-original')
-      if (orig) {
-        htmlEl.textContent = orig
-        htmlEl.removeAttribute('data-original')
-      }
-    })
-  },
-  onTick() {
-    const params = getActiveParams()
-    if (!params?.maskRate) return
-
-    const currentWord = state.player.word
-    if (currentWord !== maskedForWord) {
-      maskedForWord = currentWord
-      maskedPositions = generateMaskedPositions(currentWord.length, params.maskRate)
-    }
-
-    document.querySelectorAll('#word-display .letter').forEach((el, i) => {
-      const htmlEl = el as HTMLElement
-      if (el.classList.contains('correct')) {
-        const orig = htmlEl.getAttribute('data-original')
-        if (orig) {
-          htmlEl.textContent = orig
-          htmlEl.removeAttribute('data-original')
-        }
-        return
-      }
-      if (maskedPositions.has(i) && !htmlEl.getAttribute('data-original')) {
-        htmlEl.setAttribute('data-original', htmlEl.textContent || '')
-        htmlEl.textContent = '?'
-      }
-    })
-  },
-}
-
-// === 节奏锁定修饰器实现（Story 18.7）===
-
-let rhythmElapsed = 0
-let rhythmWordStart = 0
-let rhythmWord = ''
-let rhythmUnlockedCount = 0
-
-const bossRhythm: BossModifier = {
-  id: 'boss_rhythm',
-  getParams: (isElite) => ({
-    rhythmBpmStart: isElite ? 70 : 90,
-    rhythmBpmEnd: isElite ? 110 : 140,
-    rhythmDuration: isElite ? 45 : 60,
-  }),
-  apply: () => {
-    rhythmElapsed = 0
-    rhythmWordStart = 0
-    rhythmWord = ''
-    rhythmUnlockedCount = 0
-  },
-  cleanup: () => {
-    rhythmElapsed = 0
-    rhythmWordStart = 0
-    rhythmWord = ''
-    rhythmUnlockedCount = 0
-    document.querySelectorAll('#word-display .letter').forEach(el => {
-      const htmlEl = el as HTMLElement
-      htmlEl.style.opacity = ''
-      htmlEl.classList.remove('rhythm-pulse')
-    })
-  },
-  onTick(dt: number) {
-    rhythmElapsed += dt
-    const params = getActiveParams()
-    if (!params?.rhythmBpmStart) return
-
-    const currentWord = state.player.word
-    if (currentWord !== rhythmWord) {
-      rhythmWord = currentWord
-      rhythmWordStart = rhythmElapsed
-    }
-
-    // BPM 线性递增
-    const t = Math.min(rhythmElapsed / (params.rhythmDuration ?? 60), 1)
-    const bpm = params.rhythmBpmStart + ((params.rhythmBpmEnd ?? params.rhythmBpmStart) - params.rhythmBpmStart) * t
-    const beatInterval = 60 / bpm
-
-    // 首字母立即解锁 (+1)
-    const wordTime = rhythmElapsed - rhythmWordStart
-    rhythmUnlockedCount = Math.min(
-      Math.floor(wordTime / beatInterval) + 1,
-      currentWord.length
-    )
-
-    const playerIdx = state.player.index
-    document.querySelectorAll('#word-display .letter').forEach((el, i) => {
-      const htmlEl = el as HTMLElement
-      if (el.classList.contains('correct')) {
-        htmlEl.style.opacity = ''
-        htmlEl.classList.remove('rhythm-pulse')
-        return
-      }
-      if (i < rhythmUnlockedCount) {
-        htmlEl.style.opacity = '1'
-        if (i === playerIdx) {
-          htmlEl.classList.add('rhythm-pulse')
-        } else {
-          htmlEl.classList.remove('rhythm-pulse')
-        }
-      } else {
-        htmlEl.style.opacity = '0.3'
-        htmlEl.classList.remove('rhythm-pulse')
-      }
-    })
-  },
-}
-
-/** 节奏锁定检查：handleKeyPress 调用，锁定时返回 true */
-export function isRhythmLocked(): boolean {
-  const params = getActiveParams()
-  if (!params?.rhythmBpmStart) return false
-  return state.player.index >= rhythmUnlockedCount
+  return result
 }
 
 // === 修饰器注册表 ===
@@ -613,14 +558,13 @@ export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
   boss_diminish: bossDiminish,
   // 视觉类（Story 18.5 实现）
   boss_fade: bossFade,
-  boss_drift: bossDrift,
   boss_spotlight: bossSpotlight,
   // 认知类（Story 18.6 实现）
   boss_scramble: bossScramble,
   boss_reverse: bossReverse,
-  boss_masked: bossMasked,
-  // 节奏类（Story 18.7 实现）
-  boss_rhythm: bossRhythm,
+  // 新增修饰器
+  boss_garble: bossGarble,
+  boss_scroll: bossScroll,
 }
 
 // === 活跃修饰器参数查询（供 bossModifierEngine 和 battle.ts 使用） ===

@@ -223,6 +223,29 @@ body {
     transition: transform 0.1s ease-out;
 }
 
+/* boss_scroll 滚屏箭头 */
+#scroll-arrow {
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ffe66d;
+    font-size: 22px;
+    z-index: 10;
+    pointer-events: none;
+    animation: scrollArrowPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes scrollArrowPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.letter.scroll-missed {
+    color: #555 !important;
+    opacity: 0.4 !important;
+    text-decoration: line-through;
+}
 
 .letter {
     display: inline-block;

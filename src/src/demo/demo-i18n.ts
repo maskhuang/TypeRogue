@@ -267,6 +267,12 @@ const ZH: Record<string, string> = {
   'modifier.boss_spotlight': '聚光灯',
   'modifier.boss_spotlight.desc': '只能看到当前 2-3 个字母',
   'modifier.boss_spotlight.elite': '可见 3-4 个字母',
+  'modifier.boss_garble': '乱码',
+  'modifier.boss_garble.desc': '词语中插入随机标点符号',
+  'modifier.boss_garble.elite': '插入较少标点符号',
+  'modifier.boss_scroll': '滚屏',
+  'modifier.boss_scroll.desc': '字母从右向左滚动，对准箭头时打字',
+  'modifier.boss_scroll.elite': '滚动较慢，命中区更宽',
 
   // --- rest stage ---
   'rest.act_end': 'Act {act} 结束',
@@ -614,6 +620,12 @@ const EN: Record<string, string> = {
   'modifier.boss_spotlight': 'Spotlight',
   'modifier.boss_spotlight.desc': 'Only 2-3 letters visible at a time',
   'modifier.boss_spotlight.elite': '3-4 letters visible',
+  'modifier.boss_garble': 'Garble',
+  'modifier.boss_garble.desc': 'Random punctuation inserted into words',
+  'modifier.boss_garble.elite': 'Less punctuation inserted',
+  'modifier.boss_scroll': 'Scroll',
+  'modifier.boss_scroll.desc': 'Letters scroll left — type when aligned with arrow',
+  'modifier.boss_scroll.elite': 'Slower scroll, wider hit zone',
 
   // --- rest stage ---
   'rest.act_end': 'Act {act} Complete',

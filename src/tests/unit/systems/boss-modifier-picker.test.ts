@@ -75,8 +75,8 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       })
     })
 
-    it('排除 10 个后仅剩 3 个可用', () => {
-      const active = BOSS_MODIFIER_IDS.slice(0, 10) as BossModifierId[]
+    it('排除 9 个后仅剩 3 个可用', () => {
+      const active = BOSS_MODIFIER_IDS.slice(0, 9) as BossModifierId[]
       const candidates = generateBossModifierCandidates(active)
       expect(candidates).toHaveLength(3)
       active.forEach(id => {
@@ -84,19 +84,19 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       })
     })
 
-    it('排除 11 个后仅剩 2 个可用', () => {
-      const active = BOSS_MODIFIER_IDS.slice(0, 11) as BossModifierId[]
+    it('排除 10 个后仅剩 2 个可用', () => {
+      const active = BOSS_MODIFIER_IDS.slice(0, 10) as BossModifierId[]
       const candidates = generateBossModifierCandidates(active)
       expect(candidates).toHaveLength(2)
     })
 
-    it('排除 12 个后仅剩 1 个可用', () => {
-      const active = BOSS_MODIFIER_IDS.slice(0, 12) as BossModifierId[]
+    it('排除 11 个后仅剩 1 个可用', () => {
+      const active = BOSS_MODIFIER_IDS.slice(0, 11) as BossModifierId[]
       const candidates = generateBossModifierCandidates(active)
       expect(candidates).toHaveLength(1)
     })
 
-    it('排除全部 13 个后返回空数组', () => {
+    it('排除全部 12 个后返回空数组', () => {
       const active = [...BOSS_MODIFIER_IDS] as BossModifierId[]
       const candidates = generateBossModifierCandidates(active)
       expect(candidates).toHaveLength(0)
@@ -108,7 +108,7 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
         const c = generateBossModifierCandidates([])
         results.add(c.sort().join(','))
       }
-      // 从 13 个中取 3 个，组合数 C(13,3)=286，20 次内大概率不全相同
+      // 从 12 个中取 3 个，组合数 C(12,3)=220，20 次内大概率不全相同
       expect(results.size).toBeGreaterThan(1)
     })
   })

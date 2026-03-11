@@ -21,7 +21,7 @@ import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getCycleTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode, TOTAL_NODES } from './stage/stageFlow';
-import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, isRhythmLocked, drawBossModifiers } from '../data/bossModifiers';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawBossModifiers, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss } from '../data/bossModifiers';
 import type { BossModifierMeta } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation, isModifierActive } from './bossModifierEngine';
 import { showBossModifierPicker } from './bossModifierPicker';
@@ -152,6 +152,7 @@ function setWord(): void {
   synergy.letterBaseScore = 0;
   synergy.lastTriggeredSkillId = null;
   renderWord();
+  if (isScrollActive()) initScrollWord(state.player.word.length);
   updateSettlementLive(); // 初始化结算面板
 }
 
@@ -189,7 +190,11 @@ function handleKeyPress(data: { key: string; timestamp: number }): void {
   if (state.phase !== 'battle') return;
   initAudio();
 
-  if (isRhythmLocked()) return;
+  // 滚屏模式：字母 locked 时忽略按键
+  if (isScrollActive()) {
+    const scrollState = checkScrollLetterState(state.player.index);
+    if (scrollState === 'locked') return;
+  }
 
   const k = data.key.toLowerCase();
   const expect = state.player.word[state.player.index]?.toLowerCase();
@@ -659,8 +664,26 @@ function startTimer(): void {
     const timeSpeed = modEffect?.timeSpeed ?? 1;
     state.time -= 0.1 * timeSpeed * getTimeScale(); // Story 31.4: 慢动作
 
-    // Boss 修饰器：每帧更新（decay 等）
+    // Boss 修饰器：每帧更新（decay / scroll 等）
     tickModifier(0.1);
+
+    // 滚屏模式：检测 miss 并自动推进
+    if (isScrollActive() && state.player.index < state.player.word.length) {
+      while (state.player.index < state.player.word.length) {
+        const ls = checkScrollLetterState(state.player.index);
+        if (ls !== 'miss') break;
+        markScrollMiss(state.player.index);
+        // 视觉标记
+        const el = getElements();
+        const letterEl = el.word.children[state.player.index] as HTMLElement | undefined;
+        if (letterEl) letterEl.classList.add('scroll-missed');
+        state.player.index++;
+        state.wordPerfect = false;
+      }
+      if (state.player.index >= state.player.word.length) {
+        completeWord();
+      }
+    }
 
     updateTimerDisplay();
 

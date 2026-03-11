@@ -2,9 +2,8 @@
 // 打字肉鸽 - bossModifierEngine 单元测试
 // ============================================
 // Story 18.4: Boss 修饰器引擎 + 数值修饰器
-// Story 18.5: 3 个视觉类修饰器（boss_fade, boss_drift, boss_spotlight）
-// Story 18.6: 3 个认知类修饰器（boss_scramble, boss_reverse, boss_masked）
-// Story 18.7: 节奏锁定修饰器（boss_rhythm）
+// Story 18.5: 视觉类修饰器（boss_fade, boss_spotlight）
+// Story 18.6: 认知类修饰器（boss_scramble, boss_reverse）
 // Story 18.8: 6 个数值修饰器集成测试（combo_punish, cap, fast_time）
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
@@ -16,7 +15,13 @@ import {
   incrementDiminishCount,
   getDiminishMultiplier,
   transformWordForModifier,
-  isRhythmLocked,
+  garbleWord,
+  isGarbleActive,
+  GARBLE_CHARS,
+  isScrollActive,
+  initScrollWord,
+  checkScrollLetterState,
+  markScrollMiss,
 } from '../../../src/data/bossModifiers'
 import type { BossModifierId, BossModifier, BossModifierParams } from '../../../src/data/bossModifiers'
 import {
@@ -59,7 +64,14 @@ vi.stubGlobal('document', {
         classList: { add: vi.fn(), remove: vi.fn() },
         querySelector: vi.fn(() => ({ textContent: '' })),
         appendChild: vi.fn(),
+        children: mockLetters,
         style: mockWordDisplayStyle,
+      }
+    }
+    if (id === 'word-zone') {
+      return {
+        insertBefore: vi.fn(),
+        firstChild: null,
       }
     }
     return {
@@ -70,8 +82,10 @@ vi.stubGlobal('document', {
     }
   }),
   createElement: vi.fn(() => ({
+    id: '',
     className: '',
     innerHTML: '',
+    textContent: '',
     remove: vi.fn(),
   })),
   querySelectorAll: vi.fn((_selector: string) => mockLetters),
@@ -88,9 +102,9 @@ describe('bossModifierEngine', () => {
   })
 
   describe('BOSS_MODIFIER_REGISTRY', () => {
-    it('包含全部 13 个修饰器', () => {
+    it('包含全部 12 个修饰器', () => {
       const keys = Object.keys(BOSS_MODIFIER_REGISTRY)
-      expect(keys).toHaveLength(13)
+      expect(keys).toHaveLength(12)
     })
 
     it('每个修饰器都有 id/getParams/apply/cleanup', () => {
@@ -102,7 +116,7 @@ describe('bossModifierEngine', () => {
       }
     })
 
-    it('全部 13 个修饰器均已完整实现（0 个 stub）', () => {
+    it('全部 12 个修饰器均已完整实现（0 个 stub）', () => {
       for (const [_id, mod] of Object.entries(BOSS_MODIFIER_REGISTRY)) {
         const params = mod.getParams(false)
         const values = Object.values(params).filter(v => v !== undefined)
@@ -110,8 +124,8 @@ describe('bossModifierEngine', () => {
       }
     })
 
-    it('3 个视觉类修饰器返回非空参数', () => {
-      const visual: BossModifierId[] = ['boss_fade', 'boss_drift', 'boss_spotlight']
+    it('2 个视觉类修饰器返回非空参数', () => {
+      const visual: BossModifierId[] = ['boss_fade', 'boss_spotlight']
       visual.forEach(id => {
         const params = BOSS_MODIFIER_REGISTRY[id].getParams(false)
         const values = Object.values(params).filter(v => v !== undefined)
@@ -119,8 +133,8 @@ describe('bossModifierEngine', () => {
       })
     })
 
-    it('3 个认知类修饰器返回非空参数', () => {
-      const cognitive: BossModifierId[] = ['boss_scramble', 'boss_reverse', 'boss_masked']
+    it('2 个认知类修饰器返回非空参数', () => {
+      const cognitive: BossModifierId[] = ['boss_scramble', 'boss_reverse']
       cognitive.forEach(id => {
         const params = BOSS_MODIFIER_REGISTRY[id].getParams(false)
         const values = Object.values(params).filter(v => v !== undefined)
@@ -559,45 +573,6 @@ describe('bossModifierEngine', () => {
     })
   })
 
-  describe('boss_drift 修饰器', () => {
-    it('满功率参数: driftAmplitude=15, driftFrequency=2', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_drift.getParams(false)
-      expect(params.driftAmplitude).toBe(15)
-      expect(params.driftFrequency).toBe(2.0)
-    })
-
-    it('精英参数: driftAmplitude=8, driftFrequency=1.5', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_drift.getParams(true)
-      expect(params.driftAmplitude).toBe(8)
-      expect(params.driftFrequency).toBe(1.5)
-    })
-
-    it('精英参数弱于满功率（振幅更小）', () => {
-      const full = BOSS_MODIFIER_REGISTRY.boss_drift.getParams(false)
-      const elite = BOSS_MODIFIER_REGISTRY.boss_drift.getParams(true)
-      expect(elite.driftAmplitude!).toBeLessThan(full.driftAmplitude!)
-    })
-
-    it('onTick 设置 #word-display transform', () => {
-      applyModifier('boss_drift', false)
-      tickModifier(0.5)
-      expect(mockWordDisplayStyle.transform).toBeDefined()
-      expect(mockWordDisplayStyle.transform).toContain('translate(')
-    })
-
-    it('cleanup 清除 transform', () => {
-      applyModifier('boss_drift', false)
-      tickModifier(0.5)
-      expect(mockWordDisplayStyle.transform).toContain('translate(')
-      cleanupModifier()
-      expect(mockWordDisplayStyle.transform).toBe('')
-    })
-
-    it('有 onTick 方法', () => {
-      expect(typeof BOSS_MODIFIER_REGISTRY.boss_drift.onTick).toBe('function')
-    })
-  })
-
   describe('boss_spotlight 修饰器', () => {
     it('满功率参数: spotlightRadius=2', () => {
       const params = BOSS_MODIFIER_REGISTRY.boss_spotlight.getParams(false)
@@ -656,7 +631,7 @@ describe('bossModifierEngine', () => {
 
   describe('视觉类修饰器生命周期', () => {
     it('apply → onTick → cleanup 完整周期不报错', () => {
-      const visualMods: BossModifierId[] = ['boss_fade', 'boss_drift', 'boss_spotlight']
+      const visualMods: BossModifierId[] = ['boss_fade', 'boss_spotlight']
       mockLetters = [
         createMockLetterEl('letter current'),
         createMockLetterEl('letter pending'),
@@ -675,7 +650,7 @@ describe('bossModifierEngine', () => {
     })
 
     it('精英版 apply → onTick → cleanup 完整周期不报错', () => {
-      const visualMods: BossModifierId[] = ['boss_fade', 'boss_drift', 'boss_spotlight']
+      const visualMods: BossModifierId[] = ['boss_fade', 'boss_spotlight']
       mockLetters = [
         createMockLetterEl('letter current'),
         createMockLetterEl('letter pending'),
@@ -701,8 +676,6 @@ describe('bossModifierEngine', () => {
 
       expect(() => {
         applyModifier('boss_fade', false)
-        tickModifier(0.5)
-        applyModifier('boss_drift', false)
         tickModifier(0.5)
         applyModifier('boss_spotlight', false)
         tickModifier(0.5)
@@ -803,103 +776,6 @@ describe('bossModifierEngine', () => {
     })
   })
 
-  describe('boss_masked 修饰器', () => {
-    it('满功率参数: maskRate=0.30', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_masked.getParams(false)
-      expect(params.maskRate).toBe(0.30)
-    })
-
-    it('精英参数: maskRate=0.15', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_masked.getParams(true)
-      expect(params.maskRate).toBe(0.15)
-    })
-
-    it('onTick 将遮罩位置字母替换为 ?', () => {
-      state.player.word = 'HELLO'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'H'),
-        createMockLetterEl('letter pending', 'E'),
-        createMockLetterEl('letter pending', 'L'),
-        createMockLetterEl('letter pending', 'L'),
-        createMockLetterEl('letter pending', 'O'),
-      ]
-      applyModifier('boss_masked', false)
-      tickModifier(0.1)
-      // maskRate=0.30 → 5*0.30=1.5 → floor=1，至少遮 1 个字母
-      const maskedCount = mockLetters.filter(l => l.textContent === '?').length
-      expect(maskedCount).toBeGreaterThanOrEqual(1)
-    })
-
-    it('correct 字母恢复原文', () => {
-      state.player.word = 'AB'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'A'),
-        createMockLetterEl('letter pending', 'B'),
-      ]
-      applyModifier('boss_masked', false)
-      tickModifier(0.1)
-      // 模拟打对第一个字母
-      mockLetters[0].classList.add('correct')
-      mockLetters[0].setAttribute('data-original', 'A')
-      mockLetters[0].textContent = '?'
-      tickModifier(0.1)
-      // correct 字母应恢复
-      expect(mockLetters[0].textContent).toBe('A')
-      expect(mockLetters[0].getAttribute('data-original')).toBeNull()
-      cleanupModifier()
-    })
-
-    it('cleanup 恢复所有字母原文', () => {
-      state.player.word = 'AB'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter pending', 'A'),
-        createMockLetterEl('letter pending', 'B'),
-      ]
-      applyModifier('boss_masked', false)
-      tickModifier(0.1)
-      cleanupModifier()
-      // cleanup 后不应有 data-original 残留
-      mockLetters.forEach(l => {
-        expect(l.getAttribute('data-original')).toBeNull()
-      })
-    })
-
-    it('有 onTick 方法', () => {
-      expect(typeof BOSS_MODIFIER_REGISTRY.boss_masked.onTick).toBe('function')
-    })
-
-    it('换词时重新生成遮罩位置', () => {
-      state.player.word = 'ABCDE'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'A'),
-        createMockLetterEl('letter pending', 'B'),
-        createMockLetterEl('letter pending', 'C'),
-        createMockLetterEl('letter pending', 'D'),
-        createMockLetterEl('letter pending', 'E'),
-      ]
-      applyModifier('boss_masked', false)
-      tickModifier(0.1)
-      const firstMasked = mockLetters.filter(l => l.textContent === '?').length
-      expect(firstMasked).toBeGreaterThanOrEqual(1)
-
-      // 换词 — 新词应重新生成遮罩
-      state.player.word = 'XY'
-      mockLetters = [
-        createMockLetterEl('letter current', 'X'),
-        createMockLetterEl('letter pending', 'Y'),
-      ]
-      tickModifier(0.1)
-      // 2 字母 * 0.30 = 0.6 → floor=0 → max(1,0)=1，至少遮 1 个
-      const secondMasked = mockLetters.filter(l => l.textContent === '?').length
-      expect(secondMasked).toBeGreaterThanOrEqual(1)
-      cleanupModifier()
-    })
-  })
-
   describe('transformWordForModifier 函数', () => {
     it('无活跃修饰器时原样返回', () => {
       cleanupModifier()
@@ -916,7 +792,7 @@ describe('bossModifierEngine', () => {
 
   describe('认知类修饰器生命周期', () => {
     it('apply → onTick → cleanup 完整周期不报错', () => {
-      const cognitiveMods: BossModifierId[] = ['boss_scramble', 'boss_reverse', 'boss_masked']
+      const cognitiveMods: BossModifierId[] = ['boss_scramble', 'boss_reverse']
       mockLetters = [
         createMockLetterEl('letter current', 'A'),
         createMockLetterEl('letter pending', 'B'),
@@ -935,7 +811,7 @@ describe('bossModifierEngine', () => {
     })
 
     it('精英版生命周期不报错', () => {
-      const cognitiveMods: BossModifierId[] = ['boss_scramble', 'boss_reverse', 'boss_masked']
+      const cognitiveMods: BossModifierId[] = ['boss_scramble', 'boss_reverse']
       mockLetters = [
         createMockLetterEl('letter current', 'A'),
         createMockLetterEl('letter pending', 'B'),
@@ -953,311 +829,125 @@ describe('bossModifierEngine', () => {
     })
   })
 
-  // === Story 18.7: 节奏锁定修饰器 ===
+  // === boss_garble 乱码修饰器 ===
 
-  describe('boss_rhythm 修饰器', () => {
-    it('满功率参数: rhythmBpmStart=90, rhythmBpmEnd=140, rhythmDuration=60', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_rhythm.getParams(false)
-      expect(params.rhythmBpmStart).toBe(90)
-      expect(params.rhythmBpmEnd).toBe(140)
-      expect(params.rhythmDuration).toBe(60)
+  describe('boss_garble 修饰器', () => {
+    it('满功率参数: garbleRate=0.3, garbleActive=1', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_garble.getParams(false)
+      expect(params.garbleRate).toBe(0.3)
+      expect(params.garbleActive).toBe(1)
     })
 
-    it('精英参数: rhythmBpmStart=70, rhythmBpmEnd=110, rhythmDuration=45', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_rhythm.getParams(true)
-      expect(params.rhythmBpmStart).toBe(70)
-      expect(params.rhythmBpmEnd).toBe(110)
-      expect(params.rhythmDuration).toBe(45)
+    it('精英参数: garbleRate=0.15', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_garble.getParams(true)
+      expect(params.garbleRate).toBe(0.15)
+      expect(params.garbleActive).toBe(1)
     })
 
-    it('精英参数弱于满功率（BPM 更低、时间更短）', () => {
-      const full = BOSS_MODIFIER_REGISTRY.boss_rhythm.getParams(false)
-      const elite = BOSS_MODIFIER_REGISTRY.boss_rhythm.getParams(true)
-      expect(elite.rhythmBpmStart!).toBeLessThan(full.rhythmBpmStart!)
-      expect(elite.rhythmBpmEnd!).toBeLessThan(full.rhythmBpmEnd!)
+    it('garbleWord 至少插入 1 个标点', () => {
+      for (let i = 0; i < 20; i++) {
+        const result = garbleWord('hello', 0.3)
+        expect(result.length).toBeGreaterThan(5)
+        const punctCount = result.split('').filter(c => GARBLE_CHARS.includes(c)).length
+        expect(punctCount).toBeGreaterThanOrEqual(1)
+      }
     })
 
-    it('首字母立即解锁（+1 规则）', () => {
-      state.player.word = 'HELLO'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'H'),
-        createMockLetterEl('letter pending', 'E'),
-        createMockLetterEl('letter pending', 'L'),
-        createMockLetterEl('letter pending', 'L'),
-        createMockLetterEl('letter pending', 'O'),
-      ]
-      applyModifier('boss_rhythm', false)
-      // 即使 0 秒也有首字母解锁（wordTime=0 → floor(0/interval)+1 = 1）
-      tickModifier(0.001)
-      // 首字母（index 0）opacity=1
-      expect(mockLetters[0].style.opacity).toBe('1')
-      // 第二个字母仍锁定
-      expect(mockLetters[1].style.opacity).toBe('0.3')
+    it('garbleWord 保留原始字母', () => {
+      const result = garbleWord('abc', 0.5)
+      const letters = result.split('').filter(c => !GARBLE_CHARS.includes(c))
+      expect(letters.join('')).toBe('abc')
+    })
+
+    it('isGarbleActive 激活时返回 true', () => {
+      applyModifier('boss_garble', false)
+      expect(isGarbleActive()).toBe(true)
       cleanupModifier()
     })
 
-    it('onTick 随时间解锁更多字母', () => {
-      state.player.word = 'ABCD'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'A'),
-        createMockLetterEl('letter pending', 'B'),
-        createMockLetterEl('letter pending', 'C'),
-        createMockLetterEl('letter pending', 'D'),
-      ]
-      applyModifier('boss_rhythm', false)
-      // 首次 tick 注册词语（rhythmWordStart = rhythmElapsed）
-      tickModifier(0.001)
-      // BPM=90 → beatInterval = 60/90 ≈ 0.667s
-      // 再经过 1.5s: wordTime≈1.5 → floor(1.5/0.667)+1 = floor(2.25)+1 = 3
-      tickModifier(1.5)
-      // 前 3 个字母解锁，第 4 个锁定
-      expect(mockLetters[0].style.opacity).toBe('1')
-      expect(mockLetters[1].style.opacity).toBe('1')
-      expect(mockLetters[2].style.opacity).toBe('1')
-      expect(mockLetters[3].style.opacity).toBe('0.3')
+    it('isGarbleActive 未激活时返回 false', () => {
+      expect(isGarbleActive()).toBe(false)
+    })
+
+    it('transformWordForModifier 应用 garble 变换', () => {
+      applyModifier('boss_garble', false)
+      const result = transformWordForModifier('hello')
+      expect(result.length).toBeGreaterThan(5)
       cleanupModifier()
     })
 
-    it('锁定字母 opacity=0.3', () => {
-      state.player.word = 'AB'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'A'),
-        createMockLetterEl('letter pending', 'B'),
-      ]
-      applyModifier('boss_rhythm', false)
-      tickModifier(0.001)
-      // 首字母解锁，第二个锁定
-      expect(mockLetters[1].style.opacity).toBe('0.3')
+    it('apply → cleanup 完整周期不报错', () => {
+      expect(() => {
+        applyModifier('boss_garble', false)
+        tickModifier(0.1)
+        cleanupModifier()
+      }).not.toThrow()
+    })
+  })
+
+  // === boss_scroll 滚屏修饰器 ===
+
+  describe('boss_scroll 修饰器', () => {
+    it('满功率参数: scrollSpeed=100, scrollHitZone=40', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_scroll.getParams(false)
+      expect(params.scrollSpeed).toBe(100)
+      expect(params.scrollHitZone).toBe(40)
+    })
+
+    it('精英参数: scrollSpeed=60, scrollHitZone=60', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_scroll.getParams(true)
+      expect(params.scrollSpeed).toBe(60)
+      expect(params.scrollHitZone).toBe(60)
+    })
+
+    it('精英参数弱于满功率（速度更慢，命中区更宽）', () => {
+      const full = BOSS_MODIFIER_REGISTRY.boss_scroll.getParams(false)
+      const elite = BOSS_MODIFIER_REGISTRY.boss_scroll.getParams(true)
+      expect(elite.scrollSpeed!).toBeLessThan(full.scrollSpeed!)
+      expect(elite.scrollHitZone!).toBeGreaterThan(full.scrollHitZone!)
+    })
+
+    it('apply 设置 scrollActive', () => {
+      applyModifier('boss_scroll', false)
+      expect(isScrollActive()).toBe(true)
       cleanupModifier()
     })
 
-    it('单字母词立即解锁且 beatInterval 无影响', () => {
-      state.player.word = 'A'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'A'),
-      ]
-      applyModifier('boss_rhythm', false)
-      tickModifier(0.001)
-      // 单字母词：首字母立即解锁，opacity=1
-      expect(mockLetters[0].style.opacity).toBe('1')
-      // isRhythmLocked: index=0, unlockedCount=1 → 0 < 1 → false
-      expect(isRhythmLocked()).toBe(false)
+    it('cleanup 重置 scrollActive', () => {
+      applyModifier('boss_scroll', false)
       cleanupModifier()
+      expect(isScrollActive()).toBe(false)
     })
 
-    it('当前可打字母添加 rhythm-pulse 类', () => {
-      state.player.word = 'AB'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'A'),
-        createMockLetterEl('letter pending', 'B'),
-      ]
-      applyModifier('boss_rhythm', false)
-      tickModifier(0.001)
-      // playerIdx=0, 已解锁 → 添加 rhythm-pulse
-      expect(mockLetters[0].classList.add).toHaveBeenCalledWith('rhythm-pulse')
-      cleanupModifier()
+    it('initScrollWord 重置 miss 标记', () => {
+      expect(() => initScrollWord(5)).not.toThrow()
     })
 
-    it('correct 字母恢复 opacity 并移除 rhythm-pulse', () => {
-      state.player.word = 'AB'
-      state.player.index = 1
-      mockLetters = [
-        createMockLetterEl('letter correct', 'A'),
-        createMockLetterEl('letter current', 'B'),
-      ]
-      applyModifier('boss_rhythm', false)
-      tickModifier(0.1)
-      // correct 字母 opacity 恢复空字符串
-      expect(mockLetters[0].style.opacity).toBe('')
-      expect(mockLetters[0].classList.remove).toHaveBeenCalledWith('rhythm-pulse')
-      cleanupModifier()
+    it('markScrollMiss 标记指定索引', () => {
+      initScrollWord(3)
+      expect(() => markScrollMiss(0)).not.toThrow()
     })
 
     it('有 onTick 方法', () => {
-      expect(typeof BOSS_MODIFIER_REGISTRY.boss_rhythm.onTick).toBe('function')
-    })
-  })
-
-  describe('isRhythmLocked 函数', () => {
-    it('无活跃修饰器时返回 false', () => {
-      setActiveParams(null)
-      expect(isRhythmLocked()).toBe(false)
+      expect(typeof BOSS_MODIFIER_REGISTRY.boss_scroll.onTick).toBe('function')
     })
 
-    it('非节奏修饰器时返回 false', () => {
-      applyModifier('boss_decay', false)
-      expect(isRhythmLocked()).toBe(false)
-      cleanupModifier()
-    })
-
-    it('apply 后首次 tick 前返回 true（未解锁任何字母）', () => {
-      state.player.word = 'HELLO'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'H'),
-        createMockLetterEl('letter pending', 'E'),
-        createMockLetterEl('letter pending', 'L'),
-        createMockLetterEl('letter pending', 'L'),
-        createMockLetterEl('letter pending', 'O'),
-      ]
-      applyModifier('boss_rhythm', false)
-      // 尚未 tick — rhythmUnlockedCount=0, index=0 → 0 >= 0 → true
-      expect(isRhythmLocked()).toBe(true)
-      cleanupModifier()
-    })
-
-    it('当前字母已解锁时返回 false', () => {
-      state.player.word = 'HELLO'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'H'),
-        createMockLetterEl('letter pending', 'E'),
-        createMockLetterEl('letter pending', 'L'),
-        createMockLetterEl('letter pending', 'L'),
-        createMockLetterEl('letter pending', 'O'),
-      ]
-      applyModifier('boss_rhythm', false)
-      tickModifier(0.001) // 首字母解锁
-      // index=0, unlockedCount=1 → 0 < 1 → false
-      expect(isRhythmLocked()).toBe(false)
-      cleanupModifier()
-    })
-
-    it('当前字母未解锁时返回 true', () => {
-      state.player.word = 'HELLO'
-      state.player.index = 2
-      mockLetters = [
-        createMockLetterEl('letter correct', 'H'),
-        createMockLetterEl('letter correct', 'E'),
-        createMockLetterEl('letter current', 'L'),
-        createMockLetterEl('letter pending', 'L'),
-        createMockLetterEl('letter pending', 'O'),
-      ]
-      applyModifier('boss_rhythm', false)
-      tickModifier(0.001) // 仅首字母解锁，unlockedCount=1
-      // index=2, unlockedCount=1 → 2 >= 1 → true
-      expect(isRhythmLocked()).toBe(true)
-      cleanupModifier()
-    })
-  })
-
-  describe('boss_rhythm 换词与 BPM 递增', () => {
-    it('换词时重置节奏计时', () => {
-      state.player.word = 'AB'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'A'),
-        createMockLetterEl('letter pending', 'B'),
-      ]
-      applyModifier('boss_rhythm', false)
-      // 首次 tick 注册词语
-      tickModifier(0.001)
-      // 经过 2 秒，两个字母都解锁
-      tickModifier(2.0)
-      expect(mockLetters[0].style.opacity).toBe('1')
-      expect(mockLetters[1].style.opacity).toBe('1')
-
-      // 换词 — 换词 tick 中 rhythmWordStart 重置为当前 rhythmElapsed
-      state.player.word = 'XYZ'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'X'),
-        createMockLetterEl('letter pending', 'Y'),
-        createMockLetterEl('letter pending', 'Z'),
-      ]
-      tickModifier(0.001) // 换词 tick（wordTime≈0 → 仅首字母解锁）
-      expect(mockLetters[0].style.opacity).toBe('1')
-      expect(mockLetters[1].style.opacity).toBe('0.3')
-      expect(mockLetters[2].style.opacity).toBe('0.3')
-      cleanupModifier()
-    })
-
-    it('BPM 随时间线性递增（换词后解锁更快证明 BPM 升高）', () => {
-      // 先用短词推进 30s，让 BPM 从 90 升到 ~115
-      state.player.word = 'A'
-      state.player.index = 0
-      mockLetters = [createMockLetterEl('letter current', 'A')]
-      applyModifier('boss_rhythm', false)
-      tickModifier(0.001) // 注册词语
-      tickModifier(30.0)  // 推进 30s → t=0.5 → BPM=90+(140-90)*0.5=115
-
-      // 换 10 字母新词 — wordTime 重置
-      state.player.word = 'ABCDEFGHIJ'
-      state.player.index = 0
-      mockLetters = Array.from({ length: 10 }, (_, i) =>
-        createMockLetterEl(i === 0 ? 'letter current' : 'letter pending', String.fromCharCode(65 + i))
-      )
-      tickModifier(0.001) // 注册新词
-
-      // tick 0.6s — 在 BPM=90(interval=0.667s) 下只解锁 1 个
-      // 但在 BPM≈115(interval=0.522s) 下解锁 floor(0.6/0.522)+1=2 个
-      tickModifier(0.6)
-      const unlocked = mockLetters.filter(l => l.style.opacity === '1').length
-      expect(unlocked).toBe(2) // 证明 BPM > 90
-      cleanupModifier()
-    })
-  })
-
-  describe('boss_rhythm cleanup', () => {
-    it('cleanup 恢复所有字母 opacity 并移除 rhythm-pulse', () => {
-      state.player.word = 'ABC'
-      state.player.index = 0
-      mockLetters = [
-        createMockLetterEl('letter current', 'A'),
-        createMockLetterEl('letter pending', 'B'),
-        createMockLetterEl('letter pending', 'C'),
-      ]
-      applyModifier('boss_rhythm', false)
-      tickModifier(0.5)
-      cleanupModifier()
-      // cleanup 后 opacity 全部恢复
-      mockLetters.forEach(l => {
-        expect(l.style.opacity).toBe('')
-      })
-      // rhythm-pulse 全部移除
-      mockLetters.forEach(l => {
-        expect(l.classList.remove).toHaveBeenCalledWith('rhythm-pulse')
-      })
-    })
-  })
-
-  describe('节奏修饰器生命周期', () => {
     it('apply → onTick → cleanup 完整周期不报错', () => {
-      mockLetters = [
-        createMockLetterEl('letter current', 'A'),
-        createMockLetterEl('letter pending', 'B'),
-      ]
-      state.player.index = 0
-      state.player.word = 'AB'
-
       expect(() => {
-        applyModifier('boss_rhythm', false)
+        applyModifier('boss_scroll', false)
         tickModifier(0.1)
         tickModifier(0.5)
-        tickModifier(1.0)
         cleanupModifier()
       }).not.toThrow()
     })
 
     it('精英版生命周期不报错', () => {
-      mockLetters = [
-        createMockLetterEl('letter current', 'A'),
-        createMockLetterEl('letter pending', 'B'),
-      ]
-      state.player.index = 0
-      state.player.word = 'AB'
-
       expect(() => {
-        applyModifier('boss_rhythm', true)
+        applyModifier('boss_scroll', true)
         tickModifier(0.1)
-        tickModifier(0.5)
         cleanupModifier()
       }).not.toThrow()
     })
   })
+
 })

@@ -15,14 +15,13 @@ import type { BossModifierId } from '../../../src/data/bossModifiers'
 
 describe('bossModifiers', () => {
   describe('BOSS_MODIFIER_IDS', () => {
-    it('共 13 个修饰器', () => {
-      expect(BOSS_MODIFIER_IDS).toHaveLength(13)
+    it('共 12 个修饰器', () => {
+      expect(BOSS_MODIFIER_IDS).toHaveLength(12)
     })
 
-    it('包含 7 个打字难度类修饰器', () => {
+    it('包含 4 个打字难度类修饰器', () => {
       const typingMods = [
-        'boss_fade', 'boss_scramble', 'boss_reverse',
-        'boss_drift', 'boss_masked', 'boss_spotlight', 'boss_rhythm',
+        'boss_fade', 'boss_scramble', 'boss_reverse', 'boss_spotlight',
       ]
       typingMods.forEach(id => {
         expect(BOSS_MODIFIER_IDS).toContain(id)
@@ -74,16 +73,16 @@ describe('bossModifiers', () => {
       expect(BOSS_MODIFIER_IDS).toContain(result[0])
     })
 
-    it('抽取 13 个返回全部修饰器', () => {
-      const result = drawBossModifiers(13)
-      expect(result).toHaveLength(13)
+    it('抽取 12 个返回全部修饰器', () => {
+      const result = drawBossModifiers(12)
+      expect(result).toHaveLength(12)
       const unique = new Set(result)
-      expect(unique.size).toBe(13)
+      expect(unique.size).toBe(12)
     })
 
-    it('抽取超过总数时最多返回 13 个', () => {
+    it('抽取超过总数时最多返回 12 个', () => {
       const result = drawBossModifiers(20)
-      expect(result).toHaveLength(13)
+      expect(result).toHaveLength(12)
     })
 
     it('多次抽取具有随机性', () => {
@@ -98,7 +97,7 @@ describe('bossModifiers', () => {
   })
 
   describe('BOSS_MODIFIER_META', () => {
-    it('包含所有 13 个修饰器的元数据', () => {
+    it('包含所有 12 个修饰器的元数据', () => {
       BOSS_MODIFIER_IDS.forEach(id => {
         expect(BOSS_MODIFIER_META[id]).toBeDefined()
       })
@@ -122,7 +121,7 @@ describe('bossModifiers', () => {
 
     it('没有多余的元数据条目', () => {
       const metaKeys = Object.keys(BOSS_MODIFIER_META)
-      expect(metaKeys).toHaveLength(13)
+      expect(metaKeys).toHaveLength(12)
       metaKeys.forEach(key => {
         expect(BOSS_MODIFIER_IDS).toContain(key)
       })
@@ -142,7 +141,7 @@ describe('bossModifiers', () => {
       expect(getBossModifierMeta('unknown_id' as BossModifierId)).toBeUndefined()
     })
 
-    it('所有 13 个修饰器都能查询', () => {
+    it('所有 12 个修饰器都能查询', () => {
       BOSS_MODIFIER_IDS.forEach(id => {
         const meta = getBossModifierMeta(id)
         expect(meta).toBeDefined()
@@ -153,9 +152,9 @@ describe('bossModifiers', () => {
 
   // Story 18.4: BossModifier 注册表
   describe('BOSS_MODIFIER_REGISTRY', () => {
-    it('注册表包含全部 13 个修饰器', () => {
+    it('注册表包含全部 12 个修饰器', () => {
       const keys = Object.keys(BOSS_MODIFIER_REGISTRY)
-      expect(keys).toHaveLength(13)
+      expect(keys).toHaveLength(12)
       BOSS_MODIFIER_IDS.forEach(id => {
         expect(BOSS_MODIFIER_REGISTRY[id]).toBeDefined()
       })
@@ -177,6 +176,23 @@ describe('bossModifiers', () => {
         const values = Object.values(params).filter(v => v !== undefined)
         expect(values.length).toBeGreaterThan(0)
       })
+    })
+
+    it('boss_garble 返回 garbleRate 和 garbleActive', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_garble.getParams(false)
+      expect(params.garbleRate).toBe(0.3)
+      expect(params.garbleActive).toBe(1)
+    })
+
+    it('boss_scroll 返回 scrollSpeed 和 scrollHitZone', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_scroll.getParams(false)
+      expect(params.scrollSpeed).toBe(100)
+      expect(params.scrollHitZone).toBe(40)
+    })
+
+    it('包含 boss_garble 和 boss_scroll', () => {
+      expect(BOSS_MODIFIER_IDS).toContain('boss_garble')
+      expect(BOSS_MODIFIER_IDS).toContain('boss_scroll')
     })
   })
 })
