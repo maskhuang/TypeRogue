@@ -223,7 +223,16 @@ body {
     transition: transform 0.1s ease-out;
 }
 
-/* boss_scroll 滚屏箭头 */
+/* boss_scroll 滚屏模式 */
+#word-zone.scroll-active {
+    position: relative;
+    overflow: hidden;
+}
+
+#word-zone.scroll-active #word-display {
+    transition: none; /* 禁用 ease-out 避免抖动 */
+}
+
 #scroll-arrow {
     position: absolute;
     top: -4px;

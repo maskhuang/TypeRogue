@@ -448,8 +448,15 @@ export function isScrollActive(): boolean {
 }
 
 export function initScrollWord(len: number): void {
-  scrollOffset = 0
   scrollMissFlags = new Array(len).fill(false)
+  // 让词语从箭头右侧开始：初始偏移 = -(半个词宽 + 缓冲)
+  const wordEl = document.getElementById('word-display')
+  if (wordEl) {
+    const halfWidth = wordEl.scrollWidth / 2
+    scrollOffset = -(halfWidth + 40) // 额外 40px 缓冲让玩家看到第一个字母接近
+  } else {
+    scrollOffset = 0
+  }
 }
 
 /**
@@ -487,13 +494,13 @@ const bossScroll: BossModifier = {
     scrollSpeed: isElite ? 60 : 100,
     scrollHitZone: isElite ? 60 : 40,
   }),
-  apply: (params) => {
+  apply: () => {
     scrollOffset = 0
     scrollActive = true
     scrollMissFlags = []
-    // 创建箭头 DOM
     const zone = document.getElementById('word-zone')
     if (zone) {
+      zone.classList.add('scroll-active')
       scrollArrowEl = document.createElement('div')
       scrollArrowEl.id = 'scroll-arrow'
       scrollArrowEl.textContent = '▼'
@@ -508,7 +515,8 @@ const bossScroll: BossModifier = {
       scrollArrowEl.remove()
       scrollArrowEl = null
     }
-    // 恢复 word-display transform
+    const zone = document.getElementById('word-zone')
+    if (zone) zone.classList.remove('scroll-active')
     const wordEl = document.getElementById('word-display')
     if (wordEl) wordEl.style.transform = ''
   },
@@ -519,7 +527,7 @@ const bossScroll: BossModifier = {
     scrollOffset += params.scrollSpeed * dt
     const wordEl = document.getElementById('word-display')
     if (wordEl) {
-      wordEl.style.transform = `translateX(-${scrollOffset}px)`
+      wordEl.style.transform = `translateX(${-scrollOffset}px)`
     }
   },
 }

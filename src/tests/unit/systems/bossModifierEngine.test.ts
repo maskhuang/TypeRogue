@@ -70,6 +70,7 @@ vi.stubGlobal('document', {
     }
     if (id === 'word-zone') {
       return {
+        classList: { add: vi.fn(), remove: vi.fn() },
         insertBefore: vi.fn(),
         firstChild: null,
       }
