@@ -381,18 +381,33 @@ type ResourceSynth = (ctx: AudioContext, now: number, vol: number, pitchShift?: 
 
 /** base: 低频 triangle 下扫 + bandpass 噪声冲击，"砖块/筹码"质感 */
 function synthBase(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
-  // 短促木鱼/木块敲击 — square 1400Hz 极短脉冲，远离打字 tone(300-700Hz)
+  // "弹珠落盘" — square 下扫 + 噪声尾巴，清脆有存在感
+  // 1) Square 主音：1500→900Hz 快速下滑
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = 'square';
   osc.connect(gain);
   connectToOutput(gain);
-  osc.frequency.setValueAtTime(randomize(1400 * pitchShift, 0.05), now);
-  osc.frequency.exponentialRampToValueAtTime(randomize(1100 * pitchShift, 0.05), now + 0.015 * decayMul);
-  gain.gain.setValueAtTime(vol * 0.35, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02 * decayMul);
+  osc.frequency.setValueAtTime(randomize(1500 * pitchShift, 0.05), now);
+  osc.frequency.exponentialRampToValueAtTime(randomize(900 * pitchShift, 0.05), now + 0.035 * decayMul);
+  gain.gain.setValueAtTime(vol * 0.7, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05 * decayMul);
   osc.start(now);
-  osc.stop(now + 0.025 * decayMul);
+  osc.stop(now + 0.055 * decayMul);
+  // 2) 高频噪声点缀：增加"弹落"质感
+  const noiseSrc = ctx.createBufferSource();
+  noiseSrc.buffer = getNoiseBuffer();
+  const hpf = ctx.createBiquadFilter();
+  hpf.type = 'highpass';
+  hpf.frequency.value = 3000;
+  const noiseGain = ctx.createGain();
+  noiseSrc.connect(hpf);
+  hpf.connect(noiseGain);
+  connectToOutput(noiseGain);
+  noiseGain.gain.setValueAtTime(vol * 0.3, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02 * decayMul);
+  noiseSrc.start(now);
+  noiseSrc.stop(now + 0.025 * decayMul);
 }
 
 /** score: square 琶音 3 音跳跃，"硬币拾取"感 */
@@ -414,22 +429,27 @@ function synthScore(ctx: AudioContext, now: number, vol: number, pitchShift = 1,
   });
 }
 
-/** multiplier: triangle 双音上行，"力量提升"感 — 高频区与基数/打字分离 */
+/** multiplier: 三音上行光辉琶音，"倍率提升"感 */
 function synthMultiplier(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
-  // 两音快速上行琶音 (1800→2400Hz)，triangle 柔和但明亮
-  const freqs = [1800 * pitchShift, 2400 * pitchShift];
+  // 三音快速上行 (1600→2000→2500Hz)，sawtooth+LPF 带金属光泽
+  const freqs = [1600 * pitchShift, 2000 * pitchShift, 2500 * pitchShift];
+  const vols = [vol * 0.6, vol * 0.5, vol * 0.4];
   freqs.forEach((freq, i) => {
     const osc = ctx.createOscillator();
+    const lpf = ctx.createBiquadFilter();
     const gain = ctx.createGain();
-    osc.type = 'triangle';
-    osc.connect(gain);
+    osc.type = 'sawtooth';
+    lpf.type = 'lowpass';
+    lpf.frequency.value = 4000;
+    osc.connect(lpf);
+    lpf.connect(gain);
     connectToOutput(gain);
-    const t = now + i * 0.04;
-    osc.frequency.setValueAtTime(randomize(freq, 0.05), t);
-    softAttack(gain, vol * 0.3, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05 * decayMul);
+    const t = now + i * 0.03;
+    osc.frequency.setValueAtTime(randomize(freq, 0.04), t);
+    softAttack(gain, vols[i], t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07 * decayMul);
     osc.start(t);
-    osc.stop(t + 0.06 * decayMul);
+    osc.stop(t + 0.08 * decayMul);
   });
 }
 
