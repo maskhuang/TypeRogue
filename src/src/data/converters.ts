@@ -1,13 +1,13 @@
 // ============================================
 // 打字肉鸽 - 转化者技能数据
 // ============================================
-// Story 19.4 + 21.3 + 32.5 + 32.8 → Story 34.3: 38 个加算转化者（乘算转化者移入 ench_multiply 附魔）
+// Story 19.4 + 21.3 + 32.5 + 32.8 → Story 34.3 → 34.4: 45 个加算转化者（38 异源 + 7 同源）
 
 import type { ConverterDefinition, ResourceType, ResourceState } from '../core/types';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../core/constants';
 import { random } from '../core/seededRandom';
 
-// === 38 个转化者数据（Story 34.3: 移除 36 个乘算转化者，仅保留加算） ===
+// === 45 个转化者数据（Story 34.3: 移除乘算，Story 34.4: +7 同源转化者） ===
 export const CONVERTERS: Record<string, ConverterDefinition> = {
   // === 基数为源（3 个）— ⚔️→ ===
   conv_base_score_add:  { id: 'conv_base_score_add',  name: '变现', icon: '💱', source: 'base', target: 'score',      formula: 'add', k: 1.0,   desc: '🪙分数+⚔️基数'},
@@ -62,6 +62,15 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   conv_mult_mutagen_add:   { id: 'conv_mult_mutagen_add',   name: '裂变', icon: '🫀', source: 'multiplier', target: 'mutagen', formula: 'add', k: 2.0,   desc: '🧬变异素+(🔥倍率×2)' },
   conv_time_mutagen_add:   { id: 'conv_time_mutagen_add',   name: '培养', icon: '🌡️', source: 'time',       target: 'mutagen', formula: 'add', k: 0.1,   desc: '🧬变异素+(⏳时间×0.1)' },
   conv_gold_mutagen_add:   { id: 'conv_gold_mutagen_add',   name: '接种', icon: '🌵', source: 'gold',       target: 'mutagen', formula: 'add', k: 0.3,   desc: '🧬变异素+(💰金币×0.3)' },
+
+  // === 同源转化者（7 个）— source === target，等效指数增长，k 值独立调低（Story 34.4）===
+  conv_base_base_add:         { id: 'conv_base_base_add',         name: '自强',   icon: '🎯', source: 'base',       target: 'base',       formula: 'add', k: 0.03,   desc: '⚔️基数+(⚔️基数×0.03)' },
+  conv_score_score_add:       { id: 'conv_score_score_add',       name: '复利',   icon: '🔮', source: 'score',      target: 'score',      formula: 'add', k: 0.0008, desc: '🪙分数+(🪙分数×0.0008)' },
+  conv_mult_mult_add:         { id: 'conv_mult_mult_add',         name: '自燃',   icon: '⚡', source: 'multiplier', target: 'multiplier', formula: 'add', k: 0.15,   desc: '🔥倍率+(🔥倍率×0.15)' },
+  conv_time_time_add:         { id: 'conv_time_time_add',         name: '回溯',   icon: '🌊', source: 'time',       target: 'time',       formula: 'add', k: 0.015,  desc: '⏳时间+(⏳时间×0.015)' },
+  conv_gold_gold_add:         { id: 'conv_gold_gold_add',         name: '生息',   icon: '🧿', source: 'gold',       target: 'gold',       formula: 'add', k: 0.005,  desc: '💰金币+(💰金币×0.005)' },
+  conv_fragment_fragment_add: { id: 'conv_fragment_fragment_add', name: '增殖',   icon: '🌸', source: 'fragment',   target: 'fragment',   formula: 'add', k: 0.03,   desc: '🔤碎片+(🔤本关碎片产出×0.03)' },
+  conv_mutagen_mutagen_add:   { id: 'conv_mutagen_mutagen_add',   name: '自噬',   icon: '🦠', source: 'mutagen',    target: 'mutagen',    formula: 'add', k: 0.03,   desc: '🧬变异素+(🧬本关变异素产出×0.03)' },
 } as const;
 
 // === 工具函数 ===
@@ -71,15 +80,31 @@ export function isConverter(id: string): boolean {
   return id in CONVERTERS;
 }
 
-/** 每局 run 从 38 个转化者中随机抽 20 个 ID（非职业过滤碎片/变异素转化者后保持 ~10-12） */
+/** 每局 run 从 45 个转化者中加权抽 20 个 ID（异源权重 10、同源权重 3） */
 export function drawConverterPool(count = 20): string[] {
-  const all = Object.keys(CONVERTERS);
-  const shuffled = [...all];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  // 构建加权数组：异源 ×10 重复，同源 ×3 重复
+  const weighted: string[] = [];
+  for (const id of Object.keys(CONVERTERS)) {
+    const c = CONVERTERS[id];
+    const w = c.source === c.target ? 3 : 10;
+    for (let i = 0; i < w; i++) weighted.push(id);
   }
-  return shuffled.slice(0, Math.min(count, shuffled.length));
+  // Seeded shuffle
+  for (let i = weighted.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [weighted[i], weighted[j]] = [weighted[j], weighted[i]];
+  }
+  // 去重取前 count 个唯一 ID
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const id of weighted) {
+    if (!seen.has(id)) {
+      seen.add(id);
+      result.push(id);
+      if (result.length >= count) break;
+    }
+  }
+  return result;
 }
 
 /** 获取转化者在指定等级的 k 系数：Lv1=k×1.0, Lv2=k×1.5, Lv3=k×2.0 */

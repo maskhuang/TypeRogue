@@ -322,6 +322,128 @@ describe('triggerConverter — 无效 ID 安全 no-op', () => {
   })
 })
 
+describe('triggerConverter — 同源转化者（Story 34.4）', () => {
+  beforeEach(() => {
+    resetState()
+  })
+
+  it('base→base add: skillBaseScore += base × k', async () => {
+    const { triggerConverter } = await import('../../../src/systems/skills')
+    state.player.skills.set('conv_base_base_add', { level: 1 })
+    state.resources.base = 15
+    synergy.skillBaseScore = 0
+    triggerConverter('conv_base_base_add')
+    // target=base → skillBaseScore += 15 × 0.03 = 0.45
+    expect(synergy.skillBaseScore).toBeCloseTo(0.45)
+  })
+
+  it('score→score add: score += sourceVal × k', async () => {
+    const { triggerConverter } = await import('../../../src/systems/skills')
+    state.player.skills.set('conv_score_score_add', { level: 1 })
+    state.resources.score = 500
+    state.resources.base = 10
+    state.multiplier = 1.0
+    state.score = 600
+    triggerConverter('conv_score_score_add')
+    // sourceVal = 500 + 10 × 1.0 = 510
+    // delta = 510 × 0.0008 = 0.408
+    expect(state.resources.score).toBeCloseTo(500.408)
+    expect(state.score).toBeCloseTo(600.408)
+  })
+
+  it('mult→mult add: skillMultBonus += mult × k', async () => {
+    const { triggerConverter } = await import('../../../src/systems/skills')
+    state.player.skills.set('conv_mult_mult_add', { level: 1 })
+    state.multiplier = 2.0
+    synergy.skillMultBonus = 0
+    triggerConverter('conv_mult_mult_add')
+    // delta = 2.0 × 0.15 = 0.30
+    expect(synergy.skillMultBonus).toBeCloseTo(0.30)
+  })
+
+  it('同源转化者不消耗源资源', async () => {
+    const { triggerConverter } = await import('../../../src/systems/skills')
+    state.player.skills.set('conv_base_base_add', { level: 1 })
+    state.resources.base = 15
+    synergy.skillBaseScore = 0
+    triggerConverter('conv_base_base_add')
+    expect(state.resources.base).toBe(15)
+  })
+
+  it('同源转化者 + ench_multiply → 降级为 add（不走乘算）', async () => {
+    const { triggerConverter } = await import('../../../src/systems/skills')
+    state.player.skills.set('conv_base_base_add', { level: 1 })
+    state.player.enchantedSkills.set('conv_base_base_add', 'ench_multiply')
+    state.resources.base = 15
+    synergy.skillBaseScore = 0
+    triggerConverter('conv_base_base_add')
+    // converterMultiplyK 无 base_base 键 → 降级为 add
+    // delta = 15 × 0.03 = 0.45
+    expect(synergy.skillBaseScore).toBeCloseTo(0.45)
+  })
+
+  it('fragment→fragment: 读 classResourceProduced 写回 classResourceProduced', async () => {
+    const { triggerConverter } = await import('../../../src/systems/skills')
+    state.classId = 'wordsmith'
+    state.player.skills.set('conv_fragment_fragment_add', { level: 1 })
+    state.classResourceProduced = { fragment: 10 }
+    state.resources.fragment = 0
+    triggerConverter('conv_fragment_fragment_add')
+    // sourceVal = classResourceProduced.fragment = 10
+    // delta = 10 × 0.03 = 0.3
+    // routeFragmentsToInventory → classResourceProduced.fragment += 0.3
+    expect(state.classResourceProduced.fragment).toBeCloseTo(10.3)
+  })
+
+  it('mutagen→mutagen: 读 classResourceProduced 写回 classResourceProduced', async () => {
+    const { triggerConverter } = await import('../../../src/systems/skills')
+    state.classId = 'metamorph'
+    state.player.skills.set('conv_mutagen_mutagen_add', { level: 1 })
+    state.classResourceProduced = { mutagen: 8 }
+    state.resources.mutagen = 0
+    triggerConverter('conv_mutagen_mutagen_add')
+    // sourceVal = classResourceProduced.mutagen = 8
+    // delta = 8 × 0.03 = 0.24
+    // classResourceProduced.mutagen += 0.24
+    expect(state.classResourceProduced.mutagen).toBeCloseTo(8.24)
+    expect(state.mutagenInventory).toBeCloseTo(0.24)
+  })
+})
+
+describe('同资源衍生附魔（Story 34.4 AC3）', () => {
+  beforeEach(() => {
+    resetState()
+  })
+
+  it('base 产出者 + ench_trans_base → 额外 30% base', async () => {
+    const { triggerProducer } = await import('../../../src/systems/skills')
+    state.player.skills.set('prod_burst', { level: 1 })
+    state.player.enchantedSkills.set('prod_burst', 'ench_trans_base')
+    state.resources.base = 0
+    synergy.skillBaseScore = 0
+    triggerProducer('prod_burst')
+    // prod_burst Lv1 base add = 5 → skillBaseScore += 5
+    // ench_trans_base effectValue=0.30 → extra base = 5 × 0.30 = 1.5
+    // extra base goes to resources.base (not skillBaseScore)
+    expect(synergy.skillBaseScore).toBeCloseTo(5)
+    expect(state.resources.base).toBeCloseTo(1.5)
+  })
+
+  it('score 产出者 + ench_trans_score → 额外 30% score', async () => {
+    const { triggerProducer } = await import('../../../src/systems/skills')
+    state.player.skills.set('prod_loot', { level: 1 })
+    state.player.enchantedSkills.set('prod_loot', 'ench_trans_score')
+    state.resources.score = 0
+    state.score = 0
+    triggerProducer('prod_loot')
+    // prod_loot Lv1 score add = 15 → score += 15, resources.score += 15
+    // ench_trans_score effectValue=0.30 → extra score = 15 × 0.30 = 4.5
+    // total resources.score = 15 + 4.5 = 19.5, state.score = 15 + 4.5 = 19.5
+    expect(state.resources.score).toBeCloseTo(19.5)
+    expect(state.score).toBeCloseTo(19.5)
+  })
+})
+
 describe('converterPool — 技能池抽取', () => {
   it('state.converterPool 初始为空数组', () => {
     resetState()

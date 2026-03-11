@@ -1,6 +1,6 @@
 // ============================================
 // 转化者数据 + 工具函数测试
-// Story 19.4 + 21.3 → Story 34.3: 38 个加算转化者（乘算移入 ench_multiply）
+// Story 19.4 + 21.3 → 34.3 → 34.4: 45 个加算转化者（38 异源 + 7 同源）
 // ============================================
 
 import { describe, it, expect } from 'vitest';
@@ -16,8 +16,8 @@ import {
 describe('CONVERTERS 数据完整性', () => {
   const allIds = Object.keys(CONVERTERS);
 
-  it('共 38 个转化者', () => {
-    expect(allIds.length).toBe(38);
+  it('共 45 个转化者（38 异源 + 7 同源）', () => {
+    expect(allIds.length).toBe(45);
   });
 
   it('所有字段非空', () => {
@@ -44,11 +44,14 @@ describe('CONVERTERS 数据完整性', () => {
     }
   });
 
-  it('source ≠ target', () => {
-    for (const id of allIds) {
-      const c = CONVERTERS[id];
-      expect(c.source, `${id}: source should differ from target`).not.toBe(c.target);
-    }
+  it('异源转化者 38 个 source ≠ target', () => {
+    const hetero = allIds.filter(id => CONVERTERS[id].source !== CONVERTERS[id].target);
+    expect(hetero.length).toBe(38);
+  });
+
+  it('同源转化者 7 个 source === target', () => {
+    const self = allIds.filter(id => CONVERTERS[id].source === CONVERTERS[id].target);
+    expect(self.length).toBe(7);
   });
 
   it('k > 0', () => {
@@ -71,51 +74,51 @@ describe('CONVERTERS 数据完整性', () => {
     }
   });
 
-  it('覆盖 38 种唯一 source_target 组合', () => {
+  it('覆盖 45 种唯一 source_target 组合', () => {
     const combos = new Set(allIds.map(id => {
       const c = CONVERTERS[id];
       return `${c.source}_${c.target}`;
     }));
-    expect(combos.size).toBe(38);
+    expect(combos.size).toBe(45);
   });
 
-  it('基数为源 5 个', () => {
+  it('基数为源 6 个（含同源）', () => {
     const baseSource = allIds.filter(id => CONVERTERS[id].source === 'base');
-    expect(baseSource.length).toBe(5);
+    expect(baseSource.length).toBe(6);
   });
 
-  it('分数为源 6 个', () => {
+  it('分数为源 7 个（含同源）', () => {
     const scoreSource = allIds.filter(id => CONVERTERS[id].source === 'score');
-    expect(scoreSource.length).toBe(6);
+    expect(scoreSource.length).toBe(7);
   });
 
-  it('倍率为源 5 个', () => {
+  it('倍率为源 6 个（含同源）', () => {
     const multSource = allIds.filter(id => CONVERTERS[id].source === 'multiplier');
-    expect(multSource.length).toBe(5);
+    expect(multSource.length).toBe(6);
   });
 
-  it('时间为源 6 个', () => {
+  it('时间为源 7 个（含同源）', () => {
     const timeSource = allIds.filter(id => CONVERTERS[id].source === 'time');
-    expect(timeSource.length).toBe(6);
+    expect(timeSource.length).toBe(7);
   });
 
-  it('金币为源 6 个', () => {
+  it('金币为源 7 个（含同源）', () => {
     const goldSource = allIds.filter(id => CONVERTERS[id].source === 'gold');
-    expect(goldSource.length).toBe(6);
+    expect(goldSource.length).toBe(7);
   });
 
-  it('碎片为源或目标 10 个', () => {
+  it('碎片为源或目标 11 个（含同源）', () => {
     const fragmentRelated = allIds.filter(id =>
       CONVERTERS[id].source === 'fragment' || CONVERTERS[id].target === 'fragment'
     );
-    expect(fragmentRelated.length).toBe(10);
+    expect(fragmentRelated.length).toBe(11);
   });
 
-  it('变异素为源或目标 10 个', () => {
+  it('变异素为源或目标 11 个（含同源）', () => {
     const mutagenRelated = allIds.filter(id =>
       CONVERTERS[id].source === 'mutagen' || CONVERTERS[id].target === 'mutagen'
     );
-    expect(mutagenRelated.length).toBe(10);
+    expect(mutagenRelated.length).toBe(11);
   });
 });
 
@@ -264,7 +267,66 @@ describe('drawConverterPool', () => {
   });
 
   it('超过总数时返回全部', () => {
-    expect(drawConverterPool(100).length).toBe(38);
+    expect(drawConverterPool(100).length).toBe(45);
+  });
+
+  it('加权抽取：同源出现概率低于异源（AC4）', () => {
+    // 多次抽取 20 个，统计同源转化者出现频次
+    const selfIds = new Set(Object.keys(CONVERTERS).filter(id => CONVERTERS[id].source === CONVERTERS[id].target));
+    let selfCount = 0;
+    let heteroCount = 0;
+    const trials = 200;
+    for (let i = 0; i < trials; i++) {
+      const pool = drawConverterPool(20);
+      for (const id of pool) {
+        if (selfIds.has(id)) selfCount++;
+        else heteroCount++;
+      }
+    }
+    // 同源 7 个 ×3 = 21, 异源 38 个 ×10 = 380, 权重占比 21/401 ≈ 5.2%
+    // 20 抽中同源期望 ~1.05 个，异源 ~18.95 个
+    // 同源平均占比应显著低于 7/45 ≈ 15.6%（无加权时的均匀比例）
+    const selfRatio = selfCount / (selfCount + heteroCount);
+    expect(selfRatio).toBeLessThan(0.12); // 加权后应远低于 15.6%
+    expect(selfRatio).toBeGreaterThan(0);  // 但不为 0
+  });
+});
+
+describe('同源转化者数据验证', () => {
+  it('7 个同源转化者 source === target', () => {
+    const selfIds = Object.keys(CONVERTERS).filter(id => CONVERTERS[id].source === CONVERTERS[id].target);
+    expect(selfIds.length).toBe(7);
+    for (const id of selfIds) {
+      expect(CONVERTERS[id].formula).toBe('add');
+    }
+  });
+
+  it('同源转化者 k 值在校准范围内', () => {
+    // AC2: base 0.02~0.05, score 0.0005~0.001, mult 0.10~0.25, time 0.01~0.025, gold 0.003~0.008, frag/mut 0.02~0.05
+    expect(CONVERTERS.conv_base_base_add.k).toBeGreaterThanOrEqual(0.02);
+    expect(CONVERTERS.conv_base_base_add.k).toBeLessThanOrEqual(0.05);
+
+    expect(CONVERTERS.conv_score_score_add.k).toBeGreaterThanOrEqual(0.0005);
+    expect(CONVERTERS.conv_score_score_add.k).toBeLessThanOrEqual(0.001);
+
+    expect(CONVERTERS.conv_mult_mult_add.k).toBeGreaterThanOrEqual(0.10);
+    expect(CONVERTERS.conv_mult_mult_add.k).toBeLessThanOrEqual(0.25);
+
+    expect(CONVERTERS.conv_time_time_add.k).toBeGreaterThanOrEqual(0.01);
+    expect(CONVERTERS.conv_time_time_add.k).toBeLessThanOrEqual(0.025);
+
+    expect(CONVERTERS.conv_gold_gold_add.k).toBeGreaterThanOrEqual(0.003);
+    expect(CONVERTERS.conv_gold_gold_add.k).toBeLessThanOrEqual(0.008);
+
+    expect(CONVERTERS.conv_fragment_fragment_add.k).toBeGreaterThanOrEqual(0.02);
+    expect(CONVERTERS.conv_fragment_fragment_add.k).toBeLessThanOrEqual(0.05);
+
+    expect(CONVERTERS.conv_mutagen_mutagen_add.k).toBeGreaterThanOrEqual(0.02);
+    expect(CONVERTERS.conv_mutagen_mutagen_add.k).toBeLessThanOrEqual(0.05);
+  });
+
+  it('fragment 同源 k 与 mutagen 同源 k 对称', () => {
+    expect(CONVERTERS.conv_fragment_fragment_add.k).toBeCloseTo(CONVERTERS.conv_mutagen_mutagen_add.k);
   });
 });
 

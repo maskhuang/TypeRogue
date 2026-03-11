@@ -81,7 +81,7 @@ state.meta.unlocks.push(newUnlock)  // FORBIDDEN
 | Category | Count | Trigger | Behavior |
 |----------|-------|---------|----------|
 | Producer | 77 (7 standard add + 70 mechanic) | Direct keystroke | Generate resource (add only; multiply via ench_multiply enchantment); mechanic variants: charge, decay, pulse, crit, void |
-| Converter | 74 (31/run) | Direct keystroke | Read source resource → produce target |
+| Converter | 45 (20/run, weighted) | Direct keystroke | Read source resource → produce target (38 hetero + 7 same-source; add only, multiply via ench_multiply) |
 | Connector | 25 (13/run) | Passive: resource event | When positional neighbor produces matching resource → fire random non-same skill |
 | Replicator | 6 (5/run) | Direct keystroke | Copy & fire random skill in positional range |
 | Amplifier | 36 (15/run) | Direct keystroke | +1 stack/trigger; stacks → % bonus to positional neighbors |
