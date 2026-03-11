@@ -182,6 +182,46 @@ describe('6 个吞噬型空间附魔', () => {
   })
 })
 
+describe('ench_multiply 运算符型附魔', () => {
+  const enchMultiply = ENCHANTMENTS['ench_multiply']
+
+  it('存在且类别为 operator', () => {
+    expect(enchMultiply).toBeTruthy()
+    expect(enchMultiply.category).toBe('operator')
+  })
+
+  it('multiplyValues 覆盖 7 种资源', () => {
+    const mv = enchMultiply.multiplyValues!
+    expect(mv).toBeTruthy()
+    const resources = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
+    for (const r of resources) {
+      expect(mv[r as keyof typeof mv], `missing multiplyValues.${r}`).toBeTruthy()
+      expect(mv[r as keyof typeof mv].length).toBe(3)
+    }
+  })
+
+  it('converterMultiplyK 存在且有 36 个源→目标组合', () => {
+    const cmk = enchMultiply.converterMultiplyK!
+    expect(cmk).toBeTruthy()
+    expect(Object.keys(cmk).length).toBe(36)
+  })
+
+  it('converterMultiplyK 所有值 > 0', () => {
+    const cmk = enchMultiply.converterMultiplyK!
+    for (const [key, val] of Object.entries(cmk)) {
+      expect(val, `${key} should be > 0`).toBeGreaterThan(0)
+    }
+  })
+
+  it('converterMultiplyK 关键 k 值正确', () => {
+    const cmk = enchMultiply.converterMultiplyK!
+    expect(cmk['base_score']).toBeCloseTo(0.005)
+    expect(cmk['score_base']).toBeCloseTo(0.0006)
+    expect(cmk['multiplier_base']).toBeCloseTo(0.3)
+    expect(cmk['gold_base']).toBeCloseTo(0.04)
+  })
+})
+
 describe('isEnchantment', () => {
   it('有效 ID 返回 true', () => {
     expect(isEnchantment('ench_growth_adjacent')).toBe(true)

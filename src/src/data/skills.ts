@@ -23,6 +23,21 @@ export const DELETED_SKILL_IDS = [
   // 旧乘算产出者（Story 34.2: 乘算移入附魔系统）
   'prod_focus', 'prod_crit', 'prod_frenzy', 'prod_eternal',
   'prod_treasury', 'prod_refine', 'prod_mutagen_surge',
+  // 旧乘算转化者（Story 34.3: 乘算移入附魔系统）
+  'conv_base_score_mul', 'conv_base_mult_mul', 'conv_base_time_mul',
+  'conv_base_fragment_mul', 'conv_base_mutagen_mul',
+  'conv_score_base_mul', 'conv_score_mult_mul', 'conv_score_time_mul',
+  'conv_score_fragment_mul', 'conv_score_mutagen_mul',
+  'conv_mult_base_mul', 'conv_mult_score_mul', 'conv_mult_time_mul',
+  'conv_mult_fragment_mul', 'conv_mult_mutagen_mul',
+  'conv_time_base_mul', 'conv_time_score_mul', 'conv_time_mult_mul',
+  'conv_time_fragment_mul', 'conv_time_mutagen_mul',
+  'conv_gold_base_mul', 'conv_gold_score_mul', 'conv_gold_mult_mul',
+  'conv_gold_time_mul', 'conv_gold_fragment_mul', 'conv_gold_mutagen_mul',
+  'conv_fragment_base_mul', 'conv_fragment_score_mul', 'conv_fragment_mult_mul',
+  'conv_fragment_time_mul', 'conv_fragment_gold_mul',
+  'conv_mutagen_score_mul', 'conv_mutagen_base_mul', 'conv_mutagen_mult_mul',
+  'conv_mutagen_time_mul', 'conv_mutagen_gold_mul',
 ];
 
 // === 已删除进化分支 ID 列表（存档兼容用）===
@@ -86,8 +101,20 @@ export function getSkillDisplayInfo(
   const conv = CONVERTERS[skillId];
   if (conv) {
     const name = localizeItemName(skillId, conv.name);
-    const desc = localizeItemDesc(skillId, level ? getConverterDesc(skillId, level) : conv.desc);
-    return { name: name + enchSuffix, icon: enchIcon || conv.icon, desc: desc + (enchSuffix ? t('skill.enchant_suffix', { suffix: enchSuffix }) : '') };
+    const isMultEnchConv = enchantedSkills?.get(skillId) === 'ench_multiply';
+    let convMultiplyOverride: { formula: 'multiply'; k: number } | undefined;
+    if (isMultEnchConv) {
+      const cmk = ENCHANTMENTS['ench_multiply']?.converterMultiplyK;
+      const key = `${conv.source}_${conv.target}`;
+      if (cmk && cmk[key] !== undefined) {
+        const growthFactors = [1.0, 1.5, 2.0];
+        const lvl = level || 1;
+        const idx = Math.max(0, Math.min(lvl, 3) - 1);
+        convMultiplyOverride = { formula: 'multiply', k: cmk[key] * growthFactors[idx] };
+      }
+    }
+    const desc = localizeItemDesc(skillId, level ? getConverterDesc(skillId, level, convMultiplyOverride) : conv.desc);
+    return { name: name + enchSuffix, icon: convMultiplyOverride ? '✖️' : (enchIcon || conv.icon), desc: desc + (enchSuffix ? t('skill.enchant_suffix', { suffix: enchSuffix }) : '') };
   }
   // 连接者查询（固定 Lv1，无等级变化）
   const conn = CONNECTORS[skillId];

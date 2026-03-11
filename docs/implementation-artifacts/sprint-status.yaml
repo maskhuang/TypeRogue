@@ -324,7 +324,7 @@ development_status:
   epic-34: in-progress
   34-1-new-additive-producers: done
   34-2-multiply-to-enchantment: done
-  34-3-remove-multiply-converters: backlog
+  34-3-remove-multiply-converters: done
   34-4-self-resource-convert-transmute: backlog
   34-5-shop-pool-rebalance: backlog
   34-6-ui-enchantment-display: backlog

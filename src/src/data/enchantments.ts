@@ -83,7 +83,30 @@ export const ENCHANTMENTS: Record<string, EnchantmentDefinition> = {
       fragment:   [1.8, 2.1, 2.4],
       mutagen:    [1.8, 2.1, 2.4],
     },
-    desc: '将加算产出者升格为乘算产出者，按资源类型查表获取乘算值',
+    converterMultiplyK: {
+      // base 源
+      base_score: 0.005, base_multiplier: 0.008, base_time: 0.005,
+      base_fragment: 0.003, base_mutagen: 0.003,
+      // score 源
+      score_base: 0.0006, score_multiplier: 0.00012, score_time: 0.00008,
+      score_fragment: 0.0003, score_mutagen: 0.0003,
+      // multiplier 源
+      multiplier_base: 0.3, multiplier_score: 0.04, multiplier_time: 0.05,
+      multiplier_fragment: 0.2, multiplier_mutagen: 0.2,
+      // time 源
+      time_base: 0.015, time_score: 0.002, time_multiplier: 0.003,
+      time_fragment: 0.01, time_mutagen: 0.01,
+      // gold 源
+      gold_base: 0.04, gold_score: 0.005, gold_multiplier: 0.008,
+      gold_time: 0.005, gold_fragment: 0.03, gold_mutagen: 0.003,
+      // fragment 源
+      fragment_base: 0.003, fragment_score: 0.004, fragment_multiplier: 0.006,
+      fragment_time: 0.004, fragment_gold: 0.003,
+      // mutagen 源
+      mutagen_base: 0.003, mutagen_score: 0.004, mutagen_multiplier: 0.006,
+      mutagen_time: 0.004, mutagen_gold: 0.003,
+    },
+    desc: '将加算产出者/转化者升格为乘算，按资源类型查表获取乘算值',
   },
 } as const;
 

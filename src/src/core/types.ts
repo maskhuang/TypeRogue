@@ -118,7 +118,8 @@ export interface EnchantmentDefinition {
   positionRelation?: PositionRelation;
   effectValue: number;           // 百分比系数 (0.20 = 20%) 或独立型倍率
   extraResource?: ResourceType;  // 变性型专用：额外产出的资源
-  multiplyValues?: Record<ResourceType, [number, number, number]>;  // 运算符型：资源→乘算值表
+  multiplyValues?: Record<ResourceType, [number, number, number]>;  // 运算符型：产出者资源→乘算值表
+  converterMultiplyK?: Record<string, number>;  // 运算符型：转化者 ${source}_${target} → 乘算 k 值
   desc: string;
 }
 
@@ -185,7 +186,7 @@ export interface GameState {
   usedRestEvents: string[];            // Run 级别：已使用的休息事件 ID
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
   sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
-  converterPool: string[];             // 本局转化者池（40 抽 20）
+  converterPool: string[];             // 本局转化者池（38 抽 20）
   connectorPool: string[];             // 本局连接者池（25 抽 13）
   replicatorPool: string[];            // 本局复制者池（6 抽 5）
   amplifierPool: string[];             // 本局增幅者池

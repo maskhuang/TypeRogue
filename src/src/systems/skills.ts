@@ -601,6 +601,23 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   _currentTriggerKey = triggerKey;
   const level = state.player.skills.get(converterId)?.level || 1;
   const k = getConverterK(converterId, level);
+
+  // 乘算化附魔检测（Story 34.3）
+  const enchantedId = state.player.enchantedSkills?.get(converterId);
+  const isMultiplyEnchanted = enchantedId === 'ench_multiply';
+  let effectiveFormula: 'add' | 'multiply' = conv.formula;
+  let effectiveK = k;
+  if (isMultiplyEnchanted) {
+    const cmk = ENCHANTMENTS['ench_multiply']?.converterMultiplyK;
+    const mapKey = `${conv.source}_${conv.target}`;
+    if (cmk && cmk[mapKey] !== undefined) {
+      effectiveFormula = 'multiply';
+      const growthFactors = [1.0, 1.5, 2.0];
+      const idx = Math.max(0, Math.min(level, 3) - 1);
+      effectiveK = cmk[mapKey] * growthFactors[idx];
+    }
+  }
+
   let sourceVal = getSourceValue(conv.source, state.resources, state.classResourceProduced);
   // 精炼透镜：fragment→其他资源转化者读数 +30%
   if (conv.source === 'fragment' && state.player.relics.has('refining_lens')) {
@@ -612,7 +629,7 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   }
   const enchMult = getEnchantmentMultiplier(converterId, triggerKey);
   const ampBonus = getAmplifierBonus(converterId, triggerKey, conv.target);
-  const amplifiedK = (k + ampBonus.addBonus) * ampBonus.mulBonus;
+  const amplifiedK = (effectiveK + ampBonus.addBonus) * ampBonus.mulBonus;
   const relicMult = getRelicSkillMultiplier('converter');
   const fittestMult = state.player.relicStates['fittest_' + converterId] === 1 ? 1.2 : 1;
   const totalMult = enchMult * relicMult * fittestMult;
@@ -625,8 +642,8 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   // 记录资源变化量（用于变性附魔）
   let delta = 0;
 
-  // 计算转化
-  if (conv.formula === 'add') {
+  // 计算转化（使用 effectiveFormula 和 amplifiedK）
+  if (effectiveFormula === 'add') {
     delta = sourceVal * amplifiedK * totalMult;
     if (conv.target === 'base') {
       synergy.skillBaseScore += delta;
@@ -677,7 +694,7 @@ export function triggerConverter(converterId: string, triggerKey?: string): void
   if (!isTargetClassResource || isTargetActiveClass) {
     const color = RESOURCE_COLORS[conv.target];
     const displayDelta = Math.round(delta);
-    if (conv.formula === 'add') {
+    if (effectiveFormula === 'add') {
       const scale = getFloatScale(conv.target, delta);
       showFeedback(`+${displayDelta}${getResourceLabel(conv.target)}`, color, scale);
       emitResourceSound(conv.target, scale, _currentChainDepth);
