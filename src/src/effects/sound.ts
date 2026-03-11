@@ -16,7 +16,7 @@ function playTypeSound(): void {
   const combo = state.combo;
 
   // 1) Click 层 — 极短噪声脉冲，模拟触底冲击
-  const clickVol = randomize(Math.min(0.05, 0.03 + combo * 0.0005), 0.08); // combo 微升音量
+  const clickVol = randomize(Math.min(0.10, 0.06 + combo * 0.001), 0.08); // combo 微升音量
   const noiseSrc = ctx.createBufferSource();
   noiseSrc.buffer = getNoiseBuffer();
   const clickFilter = ctx.createBiquadFilter();
@@ -40,14 +40,14 @@ function playTypeSound(): void {
   connectToOutput(thockGain);
   thockOsc.frequency.setValueAtTime(thockFreq, t);
   thockOsc.frequency.exponentialRampToValueAtTime(thockFreq * 0.6, t + 0.03);
-  softAttack(thockGain, randomize(0.035, 0.08), t);
+  softAttack(thockGain, randomize(0.07, 0.08), t);
   thockGain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
   thockOsc.start(t);
   thockOsc.stop(t + 0.04);
 
   // 3) Tone 层 — 轻柔 sine，combo 驱动音高缓升，体现积累感
   const toneFreq = 300 + 400 * Math.log2(1 + combo * 0.06); // 300→~700Hz
-  const toneVol = Math.min(0.035, 0.012 + combo * 0.0005);  // 轻柔陪衬
+  const toneVol = Math.min(0.07, 0.024 + combo * 0.001);  // 陪衬
   const toneDec = 0.06;
   const toneOsc = ctx.createOscillator();
   const toneGain = ctx.createGain();
