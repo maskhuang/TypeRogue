@@ -292,6 +292,12 @@ export function isProducer(id: string): boolean {
   return id in PRODUCERS;
 }
 
+/** 获取产出者的机制类型 */
+export function getProducerMechanic(id: string): ProducerMechanic {
+  const p = PRODUCERS[id];
+  return p?.mechanic || 'standard';
+}
+
 /** 获取产出者在指定等级的数值 */
 export function getProducerValue(id: string, level: number): number {
   const p = PRODUCERS[id];

@@ -186,7 +186,7 @@ export interface GameState {
   usedRestEvents: string[];            // Run 级别：已使用的休息事件 ID
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
   sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
-  converterPool: string[];             // 本局转化者池（45 加权抽 20，同源权重 3 异源权重 10）
+  converterPool: string[];             // 本局转化者池（45 加权抽 23，同源权重 3 异源权重 10）
   connectorPool: string[];             // 本局连接者池（25 抽 13）
   replicatorPool: string[];            // 本局复制者池（6 抽 5）
   amplifierPool: string[];             // 本局增幅者池

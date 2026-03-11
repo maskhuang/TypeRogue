@@ -80,8 +80,8 @@ export function isConverter(id: string): boolean {
   return id in CONVERTERS;
 }
 
-/** 每局 run 从 45 个转化者中加权抽 20 个 ID（异源权重 10、同源权重 3） */
-export function drawConverterPool(count = 20): string[] {
+/** 每局 run 从 45 个转化者中加权抽 23 个 ID（异源权重 10、同源权重 3） */
+export function drawConverterPool(count = 23): string[] {
   // 构建加权数组：异源 ×10 重复，同源 ×3 重复
   const weighted: string[] = [];
   for (const id of Object.keys(CONVERTERS)) {

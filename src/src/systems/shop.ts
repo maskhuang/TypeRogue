@@ -7,7 +7,7 @@ import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS } from '../core/constants';
 import { getSkillSchool, getSkillDisplayInfo } from '../data/skills';
-import { PRODUCERS, isProducer } from '../data/producers';
+import { PRODUCERS, isProducer, getProducerMechanic } from '../data/producers';
 import { CONVERTERS, isConverter } from '../data/converters';
 import { CONNECTORS, REPLICATORS, isConnector, isReplicator } from '../data/connectors';
 import { AMPLIFIERS, isAmplifier } from '../data/amplifiers';
@@ -43,6 +43,11 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
+
+// === 产出者机制分组权重（Story 34.5） ===
+export const PRODUCER_MECHANIC_WEIGHTS: Record<string, number> = {
+  standard: 10, charge: 8, decay: 8, pulse: 8, crit: 8, void: 4,
+};
 
 // === Act 技能权重 ===
 export const ACT_SKILL_WEIGHTS: Record<number, { producer: number; converter: number; connector: number; replicator: number; amplifier: number }> = {
@@ -209,6 +214,41 @@ function shuffleArray<T>(arr: T[]): T[] {
   return arr;
 }
 
+// === Story 34.5: 产出者按机制加权排列 ===
+export function buildMechanicWeightedBucket(producerIds: string[]): string[] {
+  // 1. 按机制分桶
+  const mechBuckets: Record<string, string[]> = {};
+  for (const id of producerIds) {
+    const mech = getProducerMechanic(id);
+    if (!mechBuckets[mech]) mechBuckets[mech] = [];
+    mechBuckets[mech].push(id);
+  }
+  // 2. 每桶内部 shuffle
+  for (const arr of Object.values(mechBuckets)) shuffleArray(arr);
+  // 3. 加权交织：每次按机制权重 roll 一个组，取出 1 个
+  const result: string[] = [];
+  for (let i = 0; i < producerIds.length; i++) {
+    const entries = Object.entries(mechBuckets).filter(([, arr]) => arr.length > 0);
+    if (entries.length === 0) break;
+    const totalW = entries.reduce((s, [m]) => s + (PRODUCER_MECHANIC_WEIGHTS[m] || 1), 0);
+    const roll = random() * totalW;
+    let acc = 0;
+    let picked = false;
+    for (const [mech, arr] of entries) {
+      acc += PRODUCER_MECHANIC_WEIGHTS[mech] || 1;
+      if (roll < acc) {
+        result.push(arr.shift()!);
+        picked = true;
+        break;
+      }
+    }
+    if (!picked && entries.length > 0) {
+      result.push(entries[0][1].shift()!);
+    }
+  }
+  return result;
+}
+
 // === 生成统一商品 ===
 function generateShopItems(count: number): ShopItem[] {
   if (count <= 0) return [];
@@ -249,7 +289,10 @@ function generateShopItems(count: number): ShopItem[] {
       weights.replicator = 0;
       weights.amplifier = 0;
     }
-    const producerBucket = shuffleArray(unowned.filter(id => isProducer(id)));
+    // Story 34.5: 产出者按机制分桶加权排列
+    const producerBucket = buildMechanicWeightedBucket(
+      unowned.filter(id => isProducer(id))
+    );
     const converterBucket = shuffleArray(unowned.filter(id => isConverter(id)));
     const connectorBucket = shuffleArray(unowned.filter(id => isConnector(id)));
     const replicatorBucket = shuffleArray(unowned.filter(id => isReplicator(id)));
@@ -294,6 +337,31 @@ function generateShopItems(count: number): ShopItem[] {
         isUpgrade: false,
         locked: false,
       });
+    }
+
+    // Story 34.5: 产出者品类多样性保证 — 至少 2 种不同机制
+    const producerItems = skillPool.filter(item => item.skillId && isProducer(item.skillId));
+    if (producerItems.length >= 2) {
+      const mechanics = new Set(producerItems.map(item => getProducerMechanic(item.skillId!)));
+      if (mechanics.size === 1) {
+        // 所有产出者都是同一机制，替换最后一个为不同机制
+        const currentMech = [...mechanics][0];
+        const altIdx = producerBucket.findIndex(id => getProducerMechanic(id) !== currentMech);
+        if (altIdx >= 0) {
+          const altProducer = producerBucket.splice(altIdx, 1)[0];
+          const lastProdIdx = skillPool.findLastIndex(item => item.skillId && isProducer(item.skillId));
+          if (lastProdIdx >= 0) {
+            skillPool[lastProdIdx] = {
+              id: `si-${nextId++}`,
+              type: 'skill',
+              skillId: altProducer,
+              cost: getAdjustedPrice(15 + Math.floor(random() * 15)),
+              isUpgrade: false,
+              locked: false,
+            };
+          }
+        }
+      }
     }
 
     // 第一关金币保底：确保 ≥1 金币类技能（21.4）

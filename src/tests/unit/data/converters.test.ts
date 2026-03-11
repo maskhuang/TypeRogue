@@ -244,9 +244,9 @@ describe('getConverterDesc', () => {
 });
 
 describe('drawConverterPool', () => {
-  it('默认抽 20 个', () => {
+  it('默认抽 23 个（Story 34.5: 45 个转化者 × ~51%）', () => {
     const pool = drawConverterPool();
-    expect(pool.length).toBe(20);
+    expect(pool.length).toBe(23);
   });
 
   it('抽出的都是有效转化者 ID', () => {
