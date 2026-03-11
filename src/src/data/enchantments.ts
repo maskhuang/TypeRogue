@@ -91,9 +91,13 @@ export function getEnchantmentDesc(id: string): string {
 const WORDSMITH_ENCHS = new Set(['ench_harvest', 'ench_letter_affinity', 'ench_overflow']);
 const METAMORPH_ENCHS = new Set(['ench_adapt', 'ench_unstable', 'ench_mutation_hunger']);
 
+// 暂时禁用的附魔
+const DISABLED_ENCHANTMENTS = new Set(['ench_trans_time']);
+
 export function drawEnchantmentPair(skillRelation?: PositionRelation): [string, string] {
   const all = Object.values(ENCHANTMENTS)
     .filter(e => {
+      if (DISABLED_ENCHANTMENTS.has(e.id)) return false;
       // 职业专属附魔：仅对应职业可抽取（互斥）
       if (e.category === 'class-exclusive') {
         if (state.classId === 'wordsmith') return WORDSMITH_ENCHS.has(e.id);
