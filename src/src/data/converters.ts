@@ -66,7 +66,7 @@ export const CONVERTERS: Record<string, ConverterDefinition> = {
   // === 同源转化者（7 个）— source === target，等效指数增长，k 值独立调低（Story 34.4）===
   conv_base_base_add:         { id: 'conv_base_base_add',         name: '自强',   icon: '🎯', source: 'base',       target: 'base',       formula: 'add', k: 0.03,   desc: '⚔️基数+(⚔️基数×0.03)' },
   conv_score_score_add:       { id: 'conv_score_score_add',       name: '复利',   icon: '🔮', source: 'score',      target: 'score',      formula: 'add', k: 0.0008, desc: '🪙分数+(🪙分数×0.0008)' },
-  conv_mult_mult_add:         { id: 'conv_mult_mult_add',         name: '自燃',   icon: '⚡', source: 'multiplier', target: 'multiplier', formula: 'add', k: 0.15,   desc: '🔥倍率+(🔥倍率×0.15)' },
+  conv_mult_mult_add:         { id: 'conv_mult_mult_add',         name: '自燃',   icon: '⚡', source: 'multiplier', target: 'multiplier', formula: 'add', k: 0.03,   desc: '🔥倍率+(🔥倍率×0.03)' },
   conv_time_time_add:         { id: 'conv_time_time_add',         name: '回溯',   icon: '🌊', source: 'time',       target: 'time',       formula: 'add', k: 0.015,  desc: '⏳时间+(⏳时间×0.015)' },
   conv_gold_gold_add:         { id: 'conv_gold_gold_add',         name: '生息',   icon: '🧿', source: 'gold',       target: 'gold',       formula: 'add', k: 0.005,  desc: '💰金币+(💰金币×0.005)' },
   conv_fragment_fragment_add: { id: 'conv_fragment_fragment_add', name: '增殖',   icon: '🌸', source: 'fragment',   target: 'fragment',   formula: 'add', k: 0.03,   desc: '🔤碎片+(🔤本关碎片产出×0.03)' },
