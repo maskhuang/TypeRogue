@@ -8,6 +8,7 @@ import { t } from '../../demo/demo-i18n'
 export interface AffixTooltipInfo {
   typeName: string
   paramSummary: string
+  description?: string
 }
 
 export interface KeyTooltipData {
@@ -104,6 +105,9 @@ class KeyTooltipManager {
         html += `<div class="tooltip-affix-section" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
         for (const affix of data.skill.affixInfo) {
           html += `<div class="tooltip-affix" style="color:#e67e22;font-size:10px;">[${esc(affix.typeName)}] ${esc(affix.paramSummary)}</div>`
+          if (affix.description) {
+            html += `<div style="color:#888;font-size:10px;margin-left:2px;margin-bottom:2px;">${esc(affix.description)}</div>`
+          }
         }
         html += `</div>`
       }

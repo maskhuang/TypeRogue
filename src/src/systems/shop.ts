@@ -322,6 +322,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
   const affixInfo: AffixTooltipInfo[] = skill.affixes.map(a => ({
     typeName: AFFIX_NAMES[a.type],
     paramSummary: buildAffixParamSummary(a),
+    description: AFFIX_DESCRIPTIONS[a.type] || '',
   }))
 
   let questProgress: string | undefined
