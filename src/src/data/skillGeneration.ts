@@ -8,8 +8,9 @@ import { random } from '../core/seededRandom'
 import { RESOURCE_ICONS } from '../core/constants'
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
+import type { AffixInstance, AffixSkillInstance, SkillRarity } from './affixes'
 import {
-  AffixType, AffixInstance, AffixSkillInstance, SkillRarity,
+  AffixType,
   AFFIX_WEIGHTS, BASE_VALUES, RARITY_PROBABILITIES,
   VOID_BONUS_TABLE, RESONANCE_EFFICIENCY_TABLE, CONVERT_K_TABLE,
   AFFIX_NAMES, RESOURCE_NAMES,

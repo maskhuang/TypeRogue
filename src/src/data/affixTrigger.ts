@@ -9,9 +9,9 @@
 // 设计文档: docs/design/affix-skill-system.md §五
 
 import type { ResourceType, ResourceState } from '../core/types'
+import type { AffixInstance, AffixSkillInstance, AffixSkillSaveData, SkillRuntimeState } from './affixes'
 import {
-  AffixType, AffixInstance, AffixSkillInstance, AffixSkillSaveData,
-  SkillRuntimeState,
+  AffixType,
   EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS, QUEST_AFFIX_MAP,
   TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_CALIBRATION, BASE_VALUES,
   isOldSystemSkill,
