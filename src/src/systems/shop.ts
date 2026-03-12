@@ -366,7 +366,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
 function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): string {
   switch (a.type) {
     case 'multiply': return `×${a.multiplier?.toFixed(1) ?? '?'}`
-    case 'convert': return `k=${a.k?.toFixed(3) ?? '?'}`
+    case 'convert': return `${RESOURCE_NAMES[a.source!] ?? '?'}→本资源 k=${a.k?.toFixed(3) ?? '?'}`
     case 'charge': return `${Math.round((a.gainPerSec ?? 0) * 100)}%/s 上限${Math.round((a.maxBonus ?? 0) * 100)}%`
     case 'decay': return `初始×${a.initialMult ?? '?'} 衰减${a.decayPerTrigger ?? '?'} 下限×${a.floor ?? '?'}`
     case 'pulse': return `每${a.interval ?? '?'}次 ×${a.burstMult?.toFixed(1) ?? '?'}`
@@ -592,6 +592,8 @@ function generateShopItems(count: number): ShopItem[] {
 
 // === 渲染统一商店 ===
 function renderUnifiedShop(): void {
+  hideShopSkillTooltip();
+  hideAffixComparisonPanel();
   const el = getElements();
   el.shopTabs.innerHTML = '';
   el.rewardCards.innerHTML = '';

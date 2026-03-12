@@ -172,15 +172,15 @@ export type SkillRarity = 0 | 1 | 2 | 3
 
 export const RARITY_NAMES: Record<SkillRarity, string> = {
   0: '普通',
-  1: '魔法',
-  2: '稀有',
+  1: '稀有',
+  2: '史诗',
   3: '传说',
 }
 
 export const RARITY_COLORS: Record<SkillRarity, string> = {
   0: '#ffffff',  // 白
   1: '#4488ff',  // 蓝
-  2: '#ffcc00',  // 黄
+  2: '#a855f7',  // 紫
   3: '#ff8800',  // 橙
 }
 

@@ -370,8 +370,8 @@ describe('RESOURCE_NAMES', () => {
 describe('Rarity constants', () => {
   it('RARITY_NAMES should cover 0-3', () => {
     expect(RARITY_NAMES[0]).toBe('普通')
-    expect(RARITY_NAMES[1]).toBe('魔法')
-    expect(RARITY_NAMES[2]).toBe('稀有')
+    expect(RARITY_NAMES[1]).toBe('稀有')
+    expect(RARITY_NAMES[2]).toBe('史诗')
     expect(RARITY_NAMES[3]).toBe('传说')
   })
 

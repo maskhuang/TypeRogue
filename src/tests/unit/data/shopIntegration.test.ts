@@ -107,8 +107,8 @@ describe('RARITY_COLORS (AC3)', () => {
     expect(RARITY_COLORS[1]).toBe('#4488ff');
   });
 
-  it('rarity 2 → yellow', () => {
-    expect(RARITY_COLORS[2]).toBe('#ffcc00');
+  it('rarity 2 → purple', () => {
+    expect(RARITY_COLORS[2]).toBe('#a855f7');
   });
 
   it('rarity 3 → orange', () => {
@@ -126,8 +126,8 @@ describe('RARITY_COLORS (AC3)', () => {
     expect(affixNames).toHaveLength(2);
     affixNames.forEach(name => expect(name).toBeDefined());
     expect(affixNames.join(' · ').length).toBeGreaterThan(0);
-    // Border color should be yellow for rarity=2
-    expect(RARITY_COLORS[affix.rarity]).toBe('#ffcc00');
+    // Border color should be purple for rarity=2
+    expect(RARITY_COLORS[affix.rarity]).toBe('#a855f7');
   });
 });
 

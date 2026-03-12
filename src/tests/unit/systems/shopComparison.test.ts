@@ -56,7 +56,7 @@ describe('商店对比面板数据', () => {
     })
 
     it('稀有度颜色应该有效', () => {
-      expect(RARITY_COLORS[mockSkillA.rarity]).toBe('#ffcc00') // 黄
+      expect(RARITY_COLORS[mockSkillA.rarity]).toBe('#a855f7') // 紫
       expect(RARITY_COLORS[mockSkillB.rarity]).toBe('#4488ff') // 蓝
     })
   })
