@@ -376,7 +376,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'pulse': return `每${a.interval ?? '?'}次 ×${a.burstMult?.toFixed(1) ?? '?'}`
     case 'crit': return `${Math.round((a.chance ?? 0) * 100)}% ×${a.critMult?.toFixed(1) ?? '?'}`
     case 'void': return `${rel}每空位+${Math.round((a.bonusPerSlot ?? 0) * 100)}%`
-    case 'resonance': return `${rel}产出${RESOURCE_NAMES[a.resource!] ?? '?'}时触发`
+    case 'resonance': return `${rel}产出${RESOURCE_ICONS[a.resource!] || ''}${RESOURCE_NAMES[a.resource!] ?? '?'}时触发`
     case 'amplify': return `${rel}${RESOURCE_ICONS[a.resource!] || ''}${RESOURCE_NAMES[a.resource!] ?? ''}每层+${Math.round((a.valuePerStack ?? 0) * 100)}%`
     case 'cascade': return `${rel || '上键范围内'} ×${a.cascadeMult?.toFixed(1) ?? '?'}`
     case 'outcast': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
@@ -517,10 +517,11 @@ export function openShop(_won: boolean): void {
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
   const relicGold = Math.floor(goldRelicResult.effects.gold);
 
-  // 技能产出 + 遗物加成（基础金币已在关卡开始时重置为100）
+  // 基础100 + 技能产出 + 遗物加成（金币跨关累计）
+  const baseGold = 100;
   const skillGold = Math.floor(state.resources.gold);
-  state.gold += skillGold + relicGold;
-  const battleGold = skillGold + relicGold;
+  state.gold += baseGold + skillGold + relicGold;
+  const battleGold = baseGold + skillGold + relicGold;
 
   el.shopLevelNum.textContent = String(state.level);
   // 周目≥2时在商店标题显示周目数

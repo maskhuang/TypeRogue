@@ -580,11 +580,12 @@ function showGoldReward(onComplete: () => void): void {
     return;
   }
 
-  // 计算奖励：技能产出 + 遗物加成（基础金币已在关卡开始时重置为100）
+  // 计算奖励：基础100（结算时发放） + 技能产出 + 遗物加成
+  const baseGold = 100;
   const skillGold = Math.floor(state.resources.gold);
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
   const relicGold = Math.floor(goldRelicResult.effects.gold);
-  const totalGold = skillGold + relicGold;
+  const totalGold = baseGold + skillGold + relicGold;
 
   // T2 遗物状态更新：entropy 衰减 + schrodinger_dice 翻倍/消失 (Story 28.2+28.3)
   if (state.player.relics.has('entropy')) {
@@ -618,7 +619,7 @@ function showGoldReward(onComplete: () => void): void {
   const goldTotalEl = document.getElementById('gold-total');
 
   if (goldSkillEl) goldSkillEl.textContent = `+${skillGold}`;
-  if (goldTotalEl) goldTotalEl.textContent = String(100 + totalGold);
+  if (goldTotalEl) goldTotalEl.textContent = String(totalGold);
 
   // 技能产出行：有技能金币时才显示
   const skillRow = document.getElementById('gold-skill-row') as HTMLElement;
@@ -892,9 +893,6 @@ export async function startLevel(): Promise<void> {
   // 重置资源（在 timeMax 和 tempBuff 之后，确保 resources.time 使用正确的 timeMax）
   resetResources();
   state.resources.gold = 0;
-
-  // 每关开始时金币重置为100
-  state.gold = 100;
 
   // 初始化战后统计
   state.battleStats = createBattleStats();

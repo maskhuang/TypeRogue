@@ -554,8 +554,8 @@ export function triggerProducer(producerId: string, triggerKey?: string): void {
       state.resources.score += delta;
       state.score += delta;
     } else if (prod.resource === 'gold') {
-      // 金币乘算基于玩家持有金币（state.gold）
-      delta = state.gold * (value - 1) * totalMult;
+      // 金币乘算基于关内累计金币（resources.gold）
+      delta = state.resources.gold * (value - 1) * totalMult;
       state.resources.gold += delta;
     } else {
       delta = state.resources[prod.resource] * (value - 1) * totalMult;

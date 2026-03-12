@@ -22,7 +22,7 @@ export function createInitialState(): GameState {
     maxCombo: 0,
     multiplier: BALANCE.BASE_MULTIPLIER,
     wordScore: 0,
-    gold: 100,
+    gold: 0,
     wordPerfect: true,
     lastMilestone: 0,
     overkill: 0,
