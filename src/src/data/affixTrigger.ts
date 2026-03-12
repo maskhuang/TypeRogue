@@ -1,13 +1,14 @@
 // ============================================
-// 打字肉鸽 - 词条制触发流水线 Phase 1~3
+// 打字肉鸽 - 词条制触发流水线 Phase 1~6
 // ============================================
-// Story 35.3: 基础值 → 加算层 → 乘算层
+// Story 35.3: Phase 1~3（基础值 → 加算层 → 乘算层）
+// Story 35.4: Phase 4~6（资源写入 → 后触发 → 邻居通知）
 // 设计文档: docs/design/affix-skill-system.md §五
 
 import type { ResourceType, ResourceState } from '../core/types'
 import {
   AffixType, AffixInstance, AffixSkillInstance, SkillRuntimeState,
-  EnchantmentType,
+  EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 
@@ -39,6 +40,17 @@ export interface TriggerContext {
   fragmentInventory?: Record<string, number>
   /** 不稳定附魔本关随机资源 */
   unstableBonusResource?: ResourceType
+  // ── Phase 4-6 附魔运行时参数（由调用方填充） ──
+  /** 溅射附魔位置关系（Splash 变体） */
+  splashPosRel?: PositionRelation
+  /** 衍生附魔目标资源 */
+  transmuteResource?: ResourceType
+  /** 衍生附魔比率（默认 TRANSMUTE_DEFAULT_RATIO） */
+  transmuteRatio?: number
+  /** 嗜变附魔概率（默认 MUTATION_HUNGER_CHANCE） */
+  mutationHungerChance?: number
+  /** 各技能附魔运行时参数（键为 skillId） */
+  skillEnchantmentParams?: Map<string, { posRel?: PositionRelation }>
 }
 
 // ===== 状态变更 =====
@@ -57,6 +69,40 @@ export interface TriggerFlags {
   isCascade: boolean
   isTabooPenalty: boolean
   ligatureCount: number
+}
+
+// ===== Phase 4-6 返回类型 =====
+
+export interface Phase4Result {
+  targetResource: ResourceType
+  output: number
+}
+
+export interface Phase5Result {
+  /** 复制词条需触发的邻居键位 */
+  replicateTargets: string[]
+  /** 递归词条重触发指令 */
+  recurse: { shouldRecurse: boolean, newChance: number }
+  /** 衍生附魔额外资源产出 */
+  transmuteOutput: { resource: ResourceType, amount: number } | null
+  /** 溅射附魔目标列表 */
+  splashTargets: { key: string, efficiency: number }[]
+  /** 嗜变附魔产出（0 或 1） */
+  mutagenOutput: number
+  /** 吞噬目标键位（QuestDevour 满层时） */
+  devourTarget: string | null
+  /** 是否完成一次任务循环 */
+  questCompleted: boolean
+}
+
+export type Phase6Action =
+  | { type: 'resonance', neighborKey: string, efficiencyMult: number }
+  | { type: 'link', neighborKey: string }
+  | { type: 'apprentice_neighbor', neighborKey: string, growthDelta: number }
+  | { type: 'quest_resonance', neighborKey: string }
+
+export interface Phase6Result {
+  actions: Phase6Action[]
 }
 
 // ===== 触发结果 =====
@@ -80,6 +126,12 @@ export interface TriggerResult {
   ligatureCount: number
   /** 需要应用的状态变更列表 */
   stateMutations: StateMutation[]
+  /** Phase 4 结果 */
+  phase4?: Phase4Result
+  /** Phase 5 结果 */
+  phase5?: Phase5Result
+  /** Phase 6 结果 */
+  phase6?: Phase6Result
 }
 
 // ===== 辅助函数 =====
@@ -425,16 +477,381 @@ export function resolvePhase3(
   return { output, multipliers, flags, mutations }
 }
 
+// ===== Phase 4-6 常量 =====
+
+export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
+export const MAX_RECURSE_DEPTH = 10
+export const MAX_CHAIN_DEPTH = 20
+export const MUTATION_HUNGER_CHANCE = 0.05
+export const TRANSMUTE_DEFAULT_RATIO = 0.10
+
+/** 学徒附魔 growthPerProc 默认值（Phase 5 自触发类型） */
+export const APPRENTICE_GROWTH_DEFAULTS: Partial<Record<EnchantmentType, number>> = {
+  [EnchantmentType.ApprenticeSelf]: 0.02,
+  [EnchantmentType.ApprenticeCrit]: 0.04,
+  [EnchantmentType.ApprenticeOutcast]: 0.03,
+  [EnchantmentType.ApprenticeProc]: 0.03,
+}
+
+// ===== Phase 4-6 辅助函数 =====
+
+/** 加权随机资源选择（光谱附魔偏向最低资源） */
+export function weightedRandomResource(ctx: TriggerContext, spectrumCompletions: number): ResourceType {
+  if (spectrumCompletions <= 0) {
+    // 等概率随机
+    const idx = Math.floor(ctx.randomFn() * ALL_RESOURCES.length)
+    return ALL_RESOURCES[Math.min(idx, ALL_RESOURCES.length - 1)]
+  }
+
+  // 找到当前值最低的资源
+  let minVal = Infinity
+  let minIdx = 0
+  for (let i = 0; i < ALL_RESOURCES.length; i++) {
+    const val = getAffixSourceValue(ALL_RESOURCES[i], ctx)
+    if (val < minVal) {
+      minVal = val
+      minIdx = i
+    }
+  }
+
+  // 加权：base = 1，最低资源额外 + completions × 0.15
+  const weights: number[] = ALL_RESOURCES.map(() => 1)
+  weights[minIdx] += spectrumCompletions * 0.15
+
+  const totalWeight = weights.reduce((a, b) => a + b, 0)
+  let roll = ctx.randomFn() * totalWeight
+  for (let i = 0; i < ALL_RESOURCES.length; i++) {
+    roll -= weights[i]
+    if (roll <= 0) return ALL_RESOURCES[i]
+  }
+  return ALL_RESOURCES[ALL_RESOURCES.length - 1]
+}
+
+/** 找 posRel 范围内产出最低的邻居键位 */
+export function findWeakestNeighbor(
+  triggerKey: string,
+  posRel: PositionRelation,
+  ctx: TriggerContext,
+): string | null {
+  const neighbors = getKeysWithRelation(triggerKey, posRel)
+  let weakestKey: string | null = null
+  let weakestLevel = Infinity
+  let weakestBase = Infinity
+
+  for (const nk of neighbors) {
+    if (nk === triggerKey) continue
+    const nSkillId = ctx.bindings.get(nk)
+    if (!nSkillId) continue
+    const nSkill = ctx.allSkills.get(nSkillId)
+    if (!nSkill) continue
+
+    if (nSkill.level < weakestLevel || (nSkill.level === weakestLevel && nSkill.baseValues[0] < weakestBase)) {
+      weakestKey = nk
+      weakestLevel = nSkill.level
+      weakestBase = nSkill.baseValues[0]
+    }
+  }
+
+  return weakestKey
+}
+
+/** 从候选中不重复随机选取 N 个键位 */
+export function pickRandomKeys(keys: string[], count: number, randomFn: () => number): string[] {
+  if (keys.length <= count) return [...keys]
+
+  const pool = [...keys]
+  const picked: string[] = []
+  for (let i = 0; i < count; i++) {
+    const idx = Math.floor(randomFn() * pool.length)
+    picked.push(pool[idx])
+    pool.splice(idx, 1)
+  }
+  return picked
+}
+
+/** 检查任务附魔事件条件是否满足 */
+function checkQuestEventCondition(
+  event: string,
+  triggerFlags: TriggerFlags,
+  skill: AffixSkillInstance,
+  ctx: TriggerContext,
+  recurseProc: boolean,
+): boolean {
+  switch (event) {
+    case 'selfTrigger': return true
+    case 'critHit': return triggerFlags.isCrit
+    case 'outcastProc':
+      return skill.affixes.some(a => a.type === AffixType.Outcast) && isFirstOrLastLetter(ctx.triggerKey, ctx.currentWord)
+    case 'affixProc:pulse': return triggerFlags.isPulse
+    case 'affixProc:cascade': return triggerFlags.isCascade
+    case 'affixProc:recurse': return recurseProc
+    case 'affixProc:taboo_penalty': return triggerFlags.isTabooPenalty
+    // 外部事件（wordComplete, perfectWord, longWord, comboReach, stageCleared, neighborTrigger, mutationApplied）
+    // 不在 Phase 5 处理，由调用方在对应事件回调中处理
+    default: return false
+  }
+}
+
+// ===== Phase 4: 资源选择 =====
+
+/**
+ * Phase 4: 确定目标资源。彩虹词条随机选择资源，光谱附魔偏向最低资源。
+ * 实际资源写入和反馈/音效由调用方执行。
+ */
+export function resolvePhase4(
+  skill: AffixSkillInstance,
+  output: number,
+  runtimeState: SkillRuntimeState,
+  ctx: TriggerContext,
+): Phase4Result {
+  const hasRainbow = skill.affixes.some(a => a.type === AffixType.Rainbow)
+
+  if (!hasRainbow) {
+    return { targetResource: skill.resource, output }
+  }
+
+  const spectrumCompletions = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestSpectrum)
+  const targetResource = weightedRandomResource(ctx, spectrumCompletions)
+  return { targetResource, output }
+}
+
+// ===== Phase 5: 后触发效果 =====
+
+/**
+ * Phase 5: 处理词条后触发和附魔后触发。
+ * 副作用：增幅叠层、学徒成长、任务叠层直接写入 runtimeState。
+ * 返回动作描述符（复制/递归/衍生/溅射/嗜变/吞噬），由调用方执行。
+ */
+export function resolvePhase5(
+  skill: AffixSkillInstance,
+  runtimeState: SkillRuntimeState,
+  ctx: TriggerContext,
+  triggerFlags: TriggerFlags,
+  output: number,
+  recurseDepth: number = 0,
+): Phase5Result {
+  const result: Phase5Result = {
+    replicateTargets: [],
+    recurse: { shouldRecurse: false, newChance: 0 },
+    transmuteOutput: null,
+    splashTargets: [],
+    mutagenOutput: 0,
+    devourTarget: null,
+    questCompleted: false,
+  }
+
+  let recurseProc = false
+
+  // ── 词条后触发 ──
+  for (const affix of skill.affixes) {
+    switch (affix.type) {
+      case AffixType.Replicate: {
+        if (affix.posRel == null) break
+        const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestFission)
+        const targetCount = 1 + c
+        const candidates = getKeysWithRelation(ctx.triggerKey, affix.posRel)
+          .filter(k => ctx.bindings.has(k) && k !== ctx.triggerKey)
+        result.replicateTargets = pickRandomKeys(candidates, targetCount, ctx.randomFn)
+        break
+      }
+
+      case AffixType.Amplify: {
+        runtimeState.amplifyStacks += 1
+        break
+      }
+
+      case AffixType.Recurse: {
+        if (recurseDepth >= MAX_RECURSE_DEPTH) break
+        const chance = affix.recurseChance ?? 0
+        if (ctx.randomFn() < chance) {
+          result.recurse = { shouldRecurse: true, newChance: chance / 2 }
+          recurseProc = true
+        }
+        break
+      }
+
+      default:
+        break
+    }
+  }
+
+  // ── 附魔后触发 ──
+
+  // 学徒附魔（自触发类型：Self/Crit/Outcast/Proc）
+  for (const enchId of skill.enchantmentIds) {
+    const ench = enchId as EnchantmentType
+    const growth = APPRENTICE_GROWTH_DEFAULTS[ench]
+    if (growth == null) continue
+
+    let shouldGrow = false
+    switch (ench) {
+      case EnchantmentType.ApprenticeSelf:
+        shouldGrow = true
+        break
+      case EnchantmentType.ApprenticeCrit:
+        shouldGrow = triggerFlags.isCrit
+        break
+      case EnchantmentType.ApprenticeOutcast:
+        shouldGrow = skill.affixes.some(a => a.type === AffixType.Outcast)
+          && isFirstOrLastLetter(ctx.triggerKey, ctx.currentWord)
+        break
+      case EnchantmentType.ApprenticeProc:
+        shouldGrow = triggerFlags.isCrit || triggerFlags.isPulse
+          || triggerFlags.isCascade || triggerFlags.isTabooPenalty
+        break
+    }
+
+    if (shouldGrow) {
+      runtimeState.apprenticeAccumulated += growth
+    }
+  }
+
+  // 任务附魔叠层
+  const questEnchType = skill.enchantmentIds.find(id =>
+    QUEST_ENCHANTMENT_DEFS.some(d => d.type === id),
+  ) as EnchantmentType | undefined
+
+  if (questEnchType) {
+    const questDef = QUEST_ENCHANTMENT_DEFS.find(d => d.type === questEnchType)!
+    const eventMet = checkQuestEventCondition(questDef.event, triggerFlags, skill, ctx, recurseProc)
+
+    if (eventMet) {
+      runtimeState.questStacks++
+
+      if (runtimeState.questStacks >= questDef.targetStacks) {
+        runtimeState.questStacks = 0
+        runtimeState.questCompletions++
+        result.questCompleted = true
+
+        // QuestDevour 特殊：吃最弱邻居
+        if (questEnchType === EnchantmentType.QuestDevour) {
+          const voidAffix = skill.affixes.find(a => a.type === AffixType.Void)
+          if (voidAffix?.posRel != null) {
+            result.devourTarget = findWeakestNeighbor(ctx.triggerKey, voidAffix.posRel, ctx)
+          }
+        }
+      }
+    }
+  }
+
+  // 衍生附魔
+  if (skill.enchantmentIds.includes(EnchantmentType.Transmute)) {
+    const extraResource = ctx.transmuteResource
+    const ratio = ctx.transmuteRatio ?? TRANSMUTE_DEFAULT_RATIO
+    if (extraResource) {
+      result.transmuteOutput = { resource: extraResource, amount: output * ratio }
+    }
+  }
+
+  // 溅射附魔
+  if (skill.enchantmentIds.includes(EnchantmentType.Splash)) {
+    const posRel = ctx.splashPosRel
+    if (posRel != null) {
+      const candidates = getKeysWithRelation(ctx.triggerKey, posRel)
+        .filter(k => ctx.bindings.has(k) && k !== ctx.triggerKey)
+      if (candidates.length > 0) {
+        const eff = 1 / candidates.length
+        result.splashTargets = candidates.map(k => ({ key: k, efficiency: eff }))
+      }
+    }
+  }
+
+  // 嗜变附魔
+  if (skill.enchantmentIds.includes(EnchantmentType.MutationHunger)) {
+    const chance = ctx.mutationHungerChance ?? MUTATION_HUNGER_CHANCE
+    if (ctx.randomFn() < chance) {
+      result.mutagenOutput = 1
+    }
+  }
+
+  return result
+}
+
+// ===== Phase 6: 邻居通知 =====
+
+/**
+ * Phase 6: 遍历所有已绑定邻居，检查共鸣/连接/学徒·观摩/任务·共振。
+ * 返回动作描述符，由调用方执行对应触发/成长/叠层。
+ */
+export function resolvePhase6(
+  triggerKey: string,
+  skill: AffixSkillInstance,
+  runtimeState: SkillRuntimeState,
+  ctx: TriggerContext,
+  actualResource?: ResourceType,
+): Phase6Result {
+  const actions: Phase6Action[] = []
+
+  for (const [neighborKey, neighborSkillId] of ctx.bindings) {
+    if (neighborKey === triggerKey) continue
+
+    const neighborSkill = ctx.allSkills.get(neighborSkillId)
+    if (!neighborSkill) continue
+
+    const neighborState = ctx.skillStates.get(neighborSkillId)
+
+    // 共鸣词条：邻居触发 → 自身以 effectiveEff 触发
+    for (const affix of neighborSkill.affixes) {
+      if (affix.type === AffixType.Resonance && affix.posRel != null) {
+        if (hasRelation(triggerKey, neighborKey, affix.posRel)) {
+          const baseEff = affix.efficiency ?? 0
+          const c = neighborState ? getQuestCompletions(neighborSkill, neighborState, EnchantmentType.QuestResonance) : 0
+          const effectiveEff = baseEff + c * 0.08
+          actions.push({ type: 'resonance', neighborKey, efficiencyMult: effectiveEff })
+        }
+      }
+
+      // 连接词条：当前技能产出资源 === 连接词条监听资源 → 邻居触发
+      if (affix.type === AffixType.Link && affix.resource != null && affix.posRel != null) {
+        const producedResource = actualResource ?? skill.resource
+        if (producedResource === affix.resource && hasRelation(triggerKey, neighborKey, affix.posRel)) {
+          actions.push({ type: 'link', neighborKey })
+        }
+      }
+    }
+
+    // 学徒·观摩附魔：邻居触发 → 自身永久成长（不触发技能）
+    if (neighborSkill.enchantmentIds.includes(EnchantmentType.ApprenticeNeighbor)) {
+      const params = ctx.skillEnchantmentParams?.get(neighborSkillId)
+      if (params?.posRel != null && hasRelation(triggerKey, neighborKey, params.posRel)) {
+        const growth = APPRENTICE_NEIGHBOR_GROWTH[params.posRel]
+        actions.push({ type: 'apprentice_neighbor', neighborKey, growthDelta: growth })
+      }
+    }
+
+    // 任务·共振附魔：邻居触发 → 叠层
+    if (neighborSkill.enchantmentIds.includes(EnchantmentType.QuestResonance)) {
+      const hasResonanceOrLink = neighborSkill.affixes.some(a =>
+        a.type === AffixType.Resonance || a.type === AffixType.Link,
+      )
+      if (hasResonanceOrLink) {
+        const posRelMatch = neighborSkill.affixes.some(a => {
+          if ((a.type === AffixType.Resonance || a.type === AffixType.Link) && a.posRel != null) {
+            return hasRelation(triggerKey, neighborKey, a.posRel)
+          }
+          return false
+        })
+        if (posRelMatch) {
+          actions.push({ type: 'quest_resonance', neighborKey })
+        }
+      }
+    }
+  }
+
+  return { actions }
+}
+
 // ===== 组合入口 =====
 
 /**
- * 触发词条制技能的完整 Phase 1~3 计算。
- * 副作用：蓄力清零（Phase 2）、衰减更新（Phase 3）直接写入 runtimeState。
+ * 触发词条制技能的完整 Phase 1~6 计算。
+ * 副作用：蓄力清零（Phase 2）、衰减更新（Phase 3）、增幅/学徒/任务叠层（Phase 5）直接写入 runtimeState。
  */
 export function triggerAffixSkill(
   skill: AffixSkillInstance,
   runtimeState: SkillRuntimeState,
   ctx: TriggerContext,
+  recurseDepth: number = 0,
 ): TriggerResult {
   // Phase 1: 基础值
   const base = resolvePhase1(skill)
@@ -444,6 +861,15 @@ export function triggerAffixSkill(
 
   // Phase 3: 乘算层
   const p3 = resolvePhase3(skill, runtimeState, ctx, p2.output)
+
+  // Phase 4: 资源选择
+  const p4 = resolvePhase4(skill, p3.output, runtimeState, ctx)
+
+  // Phase 5: 后触发
+  const p5 = resolvePhase5(skill, runtimeState, ctx, p3.flags, p3.output, recurseDepth)
+
+  // Phase 6: 邻居通知（传入 Phase 4 解析后的实际资源，供 Link 检查使用）
+  const p6 = resolvePhase6(ctx.triggerKey, skill, runtimeState, ctx, p4.targetResource)
 
   // 合并状态变更
   const allMutations = [...p2.mutations, ...p3.mutations]
@@ -458,6 +884,9 @@ export function triggerAffixSkill(
     isTabooPenalty: p3.flags.isTabooPenalty,
     ligatureCount: p3.flags.ligatureCount,
     stateMutations: allMutations,
+    phase4: p4,
+    phase5: p5,
+    phase6: p6,
   }
 }
 

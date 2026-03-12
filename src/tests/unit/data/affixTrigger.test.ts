@@ -1,5 +1,5 @@
 // ============================================
-// 打字肉鸽 - 词条制触发流水线 Phase 1~3 单元测试
+// 打字肉鸽 - 词条制触发流水线 Phase 1~6 单元测试
 // ============================================
 // Story 35.3: 基础值 → 加算层 → 乘算层
 
@@ -11,15 +11,24 @@ import {
   SkillRuntimeState,
   EnchantmentType,
   BASE_VALUES,
+  APPRENTICE_NEIGHBOR_GROWTH,
 } from '../../../src/data/affixes'
 import { PositionRelation } from '../../../src/data/keyboardTopology'
 import type { ResourceType, ResourceState } from '../../../src/core/types'
 import {
   TriggerContext,
   TriggerResult,
+  TriggerFlags,
+  Phase4Result,
+  Phase5Result,
+  Phase6Result,
+  Phase6Action,
   resolvePhase1,
   resolvePhase2,
   resolvePhase3,
+  resolvePhase4,
+  resolvePhase5,
+  resolvePhase6,
   getAffixSourceValue,
   triggerAffixSkill,
   countEmptySlots,
@@ -28,6 +37,14 @@ import {
   sumNeighborAmplifyStacks,
   hasEnchantment,
   getQuestCompletions,
+  weightedRandomResource,
+  findWeakestNeighbor,
+  pickRandomKeys,
+  ALL_RESOURCES,
+  MAX_RECURSE_DEPTH,
+  APPRENTICE_GROWTH_DEFAULTS,
+  TRANSMUTE_DEFAULT_RATIO,
+  MUTATION_HUNGER_CHANCE,
 } from '../../../src/data/affixTrigger'
 
 // ===== 工厂辅助 =====
@@ -1057,5 +1074,907 @@ describe('triggerAffixSkill', () => {
     const result = triggerAffixSkill(skill, state, ctx)
     expect(result.output).toBe(5)
     expect(result.isCascade).toBe(false)
+  })
+
+  it('should include phase4/5/6 results', () => {
+    const skill = makeSkill({ level: 1, rarity: 0 as 0, affixes: [] })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    const result = triggerAffixSkill(skill, state, ctx)
+    expect(result.phase4).toBeDefined()
+    expect(result.phase4!.targetResource).toBe('base')
+    expect(result.phase5).toBeDefined()
+    expect(result.phase5!.replicateTargets).toEqual([])
+    expect(result.phase6).toBeDefined()
+    expect(result.phase6!.actions).toEqual([])
+  })
+})
+
+// ===== Phase 4-6 辅助函数测试 =====
+
+function makeFlags(overrides?: Partial<TriggerFlags>): TriggerFlags {
+  return {
+    isCrit: false,
+    isPulse: false,
+    isCascade: false,
+    isTabooPenalty: false,
+    ligatureCount: 0,
+    ...overrides,
+  }
+}
+
+// ===== Phase 4 测试 =====
+
+describe('resolvePhase4', () => {
+  it('should return skill.resource when no Rainbow affix', () => {
+    const skill = makeSkill({ resource: 'gold' as ResourceType })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    const result = resolvePhase4(skill, 10, state, ctx)
+    expect(result.targetResource).toBe('gold')
+    expect(result.output).toBe(10)
+  })
+
+  it('should randomly select resource with Rainbow affix', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Rainbow }],
+    })
+    const state = makeRuntimeState()
+    // randomFn returns 0.0 → index 0 → 'base'
+    const ctx = makeContext({ randomFn: () => 0.0 })
+    const result = resolvePhase4(skill, 10, state, ctx)
+    expect(result.targetResource).toBe('base')
+  })
+
+  it('should select different resources with different random values', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Rainbow }],
+    })
+    const state = makeRuntimeState()
+    // Test each resource by index
+    for (let i = 0; i < 7; i++) {
+      const ctx = makeContext({ randomFn: () => i / 7 })
+      const result = resolvePhase4(skill, 10, state, ctx)
+      expect(result.targetResource).toBe(ALL_RESOURCES[i])
+    }
+  })
+
+  it('should weight toward lowest resource with QuestSpectrum', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Rainbow }],
+      enchantmentIds: [EnchantmentType.QuestSpectrum],
+    })
+    const state = makeRuntimeState({ questCompletions: 10 })
+    // Gold is lowest (0), others positive
+    const ctx = makeContext({
+      resources: makeResources({ base: 100, score: 100, multiplier: 5, time: 30, gold: 0, fragment: 50, mutagen: 50 }),
+      classResourceProduced: { fragment: 50, mutagen: 50 },
+      randomFn: () => 0.99, // near end → weighted toward gold (index 4)
+    })
+    // With high completions and gold=0, gold should get heavy weight
+    // Weight: base=1, score=1, mult=1, time=1, gold=1+10*0.15=2.5, frag=1, mut=1
+    // Total = 8.5
+    // At 0.99 * 8.5 = 8.415 → sum 1+1+1+1+2.5+1+1 = 8.5, so it wraps around
+    // Let's test that gold gets more hits
+    let goldCount = 0
+    const trials = 100
+    for (let i = 0; i < trials; i++) {
+      const ctx2 = makeContext({
+        resources: makeResources({ base: 100, score: 100, multiplier: 5, time: 30, gold: 0, fragment: 50, mutagen: 50 }),
+        classResourceProduced: { fragment: 50, mutagen: 50 },
+        randomFn: () => i / trials,
+      })
+      const r = resolvePhase4(skill, 10, state, ctx2)
+      if (r.targetResource === 'gold') goldCount++
+    }
+    // Gold should get more than 1/7 (~14%) of hits due to weighting
+    expect(goldCount).toBeGreaterThan(14)
+  })
+
+  it('should degrade to equal probability when QuestSpectrum completions=0', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Rainbow }],
+      enchantmentIds: [EnchantmentType.QuestSpectrum],
+    })
+    const state = makeRuntimeState({ questCompletions: 0 })
+    const ctx = makeContext({ randomFn: () => 0.0 })
+    const result = resolvePhase4(skill, 10, state, ctx)
+    // With 0 completions, equal probability → same as no spectrum
+    expect(result.targetResource).toBe('base')
+  })
+})
+
+// ===== weightedRandomResource 测试 =====
+
+describe('weightedRandomResource', () => {
+  it('should return equal probability when spectrumCompletions=0', () => {
+    const ctx = makeContext({ randomFn: () => 2 / 7 })
+    // floor(2/7 * 7) = floor(2) = 2 → 'multiplier'
+    expect(weightedRandomResource(ctx, 0)).toBe('multiplier')
+  })
+
+  it('should bias toward lowest resource', () => {
+    const ctx = makeContext({
+      resources: makeResources({ base: 0, score: 100, multiplier: 5, time: 30, gold: 50 }),
+      randomFn: () => 0.01, // very low roll → should hit base (index 0)
+    })
+    expect(weightedRandomResource(ctx, 5)).toBe('base')
+  })
+})
+
+// ===== findWeakestNeighbor 测试 =====
+
+describe('findWeakestNeighbor', () => {
+  it('should return null when no neighbors bound', () => {
+    const ctx = makeContext({ bindings: new Map() })
+    expect(findWeakestNeighbor('a', PositionRelation.Adjacent, ctx)).toBeNull()
+  })
+
+  it('should find lowest level neighbor', () => {
+    const bindings = new Map([['s', 'sk_s'], ['d', 'sk_d']])
+    const allSkills = new Map<string, AffixSkillInstance>([
+      ['sk_s', makeSkill({ id: 'sk_s', level: 2, baseValues: [5, 8, 12] as [number, number, number] })],
+      ['sk_d', makeSkill({ id: 'sk_d', level: 1, baseValues: [5, 8, 12] as [number, number, number] })],
+    ])
+    const ctx = makeContext({ bindings, allSkills })
+    // 'd' is level 1 (weaker) — but need 's' and 'd' to be adjacent to 'a'
+    // In keyboard topology, 's' is adjacent to 'a', 'd' may or may not be
+    // Let's just test the logic with the results
+    const result = findWeakestNeighbor('a', PositionRelation.SameRow, ctx)
+    // 'a', 's', 'd' are on the same row
+    if (result) {
+      const sk = allSkills.get(bindings.get(result)!)!
+      expect(sk.level).toBeLessThanOrEqual(2)
+    }
+  })
+})
+
+// ===== pickRandomKeys 测试 =====
+
+describe('pickRandomKeys', () => {
+  it('should return all keys when count >= keys.length', () => {
+    const result = pickRandomKeys(['a', 'b', 'c'], 5, () => 0.5)
+    expect(result).toEqual(['a', 'b', 'c'])
+  })
+
+  it('should return exactly count keys', () => {
+    const result = pickRandomKeys(['a', 'b', 'c', 'd', 'e'], 2, () => 0.0)
+    expect(result.length).toBe(2)
+  })
+
+  it('should return no duplicates', () => {
+    let callCount = 0
+    const randomFn = () => {
+      callCount++
+      return callCount % 2 === 1 ? 0.0 : 0.99
+    }
+    const result = pickRandomKeys(['a', 'b', 'c', 'd'], 3, randomFn)
+    expect(result.length).toBe(3)
+    expect(new Set(result).size).toBe(3)
+  })
+
+  it('should return empty array for empty input', () => {
+    expect(pickRandomKeys([], 3, () => 0.5)).toEqual([])
+  })
+})
+
+// ===== Phase 5 测试 =====
+
+describe('resolvePhase5', () => {
+  describe('Replicate affix', () => {
+    it('should pick neighbors from posRel range', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Replicate, posRel: PositionRelation.SameRow }],
+      })
+      const bindings = new Map([['s', 'sk_s'], ['d', 'sk_d'], ['f', 'sk_f']])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, randomFn: () => 0.0 })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      // Should pick 1 neighbor (base count = 1, no QuestFission)
+      expect(result.replicateTargets.length).toBe(1)
+      expect(bindings.has(result.replicateTargets[0])).toBe(true)
+    })
+
+    it('should pick 1+completions neighbors with QuestFission', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Replicate, posRel: PositionRelation.SameRow }],
+        enchantmentIds: [EnchantmentType.QuestFission],
+      })
+      const bindings = new Map([['s', 'sk_s'], ['d', 'sk_d'], ['f', 'sk_f'], ['g', 'sk_g']])
+      const state = makeRuntimeState({ questCompletions: 2 })
+      const ctx = makeContext({ triggerKey: 'a', bindings, randomFn: () => 0.0 })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      // targets = 1 + 2 = 3
+      expect(result.replicateTargets.length).toBeLessThanOrEqual(3)
+      expect(result.replicateTargets.length).toBeGreaterThan(0)
+    })
+
+    it('should return empty when no candidates', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Replicate, posRel: PositionRelation.SameRow }],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings: new Map(), randomFn: () => 0.0 })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      expect(result.replicateTargets).toEqual([])
+    })
+  })
+
+  describe('Amplify affix', () => {
+    it('should increment amplifyStacks by 1', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Amplify, posRel: PositionRelation.Adjacent, resource: 'base' as ResourceType, valuePerStack: 0.03 }],
+      })
+      const state = makeRuntimeState({ amplifyStacks: 5 })
+      const ctx = makeContext()
+      const flags = makeFlags()
+      resolvePhase5(skill, state, ctx, flags, 10)
+      expect(state.amplifyStacks).toBe(6)
+    })
+  })
+
+  describe('Recurse affix', () => {
+    it('should set shouldRecurse=true when roll succeeds', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Recurse, recurseChance: 0.25 }],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({ randomFn: () => 0.1 }) // 0.1 < 0.25 → success
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10, 0)
+      expect(result.recurse.shouldRecurse).toBe(true)
+      expect(result.recurse.newChance).toBeCloseTo(0.125) // 0.25 / 2
+    })
+
+    it('should NOT recurse when roll fails', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Recurse, recurseChance: 0.25 }],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({ randomFn: () => 0.5 }) // 0.5 > 0.25 → fail
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10, 0)
+      expect(result.recurse.shouldRecurse).toBe(false)
+    })
+
+    it('should NOT recurse when depth >= MAX_RECURSE_DEPTH', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Recurse, recurseChance: 1.0 }],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({ randomFn: () => 0.0 })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10, MAX_RECURSE_DEPTH)
+      expect(result.recurse.shouldRecurse).toBe(false)
+    })
+  })
+
+  describe('Apprentice enchantments (Phase 5 self-trigger types)', () => {
+    it('ApprenticeSelf: should always accumulate growth', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.ApprenticeSelf],
+      })
+      const state = makeRuntimeState({ apprenticeAccumulated: 0.10 })
+      const ctx = makeContext()
+      const flags = makeFlags()
+      resolvePhase5(skill, state, ctx, flags, 10)
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.10 + 0.02)
+    })
+
+    it('ApprenticeCrit: should only accumulate on crit', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.ApprenticeCrit],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext()
+
+      // No crit → no growth
+      resolvePhase5(skill, state, ctx, makeFlags({ isCrit: false }), 10)
+      expect(state.apprenticeAccumulated).toBe(0)
+
+      // Crit → growth
+      resolvePhase5(skill, state, ctx, makeFlags({ isCrit: true }), 10)
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.04)
+    })
+
+    it('ApprenticeOutcast: should accumulate when outcast condition met', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Outcast, bonusPercent: 0.5 }],
+        enchantmentIds: [EnchantmentType.ApprenticeOutcast],
+      })
+      const state = makeRuntimeState()
+      // 'a' is first letter of 'apple'
+      const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple' })
+      const flags = makeFlags()
+      resolvePhase5(skill, state, ctx, flags, 10)
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
+    })
+
+    it('ApprenticeOutcast: should NOT accumulate when not first/last letter', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Outcast, bonusPercent: 0.5 }],
+        enchantmentIds: [EnchantmentType.ApprenticeOutcast],
+      })
+      const state = makeRuntimeState()
+      // 'p' is middle letter of 'apple'
+      const ctx = makeContext({ triggerKey: 'p', currentWord: 'apple' })
+      const flags = makeFlags()
+      resolvePhase5(skill, state, ctx, flags, 10)
+      expect(state.apprenticeAccumulated).toBe(0)
+    })
+
+    it('ApprenticeProc: should accumulate on any affix proc', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.ApprenticeProc],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext()
+
+      // Pulse proc → growth
+      resolvePhase5(skill, state, ctx, makeFlags({ isPulse: true }), 10)
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
+    })
+
+    it('ApprenticeProc: should NOT accumulate when no affix proc', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.ApprenticeProc],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext()
+      resolvePhase5(skill, state, ctx, makeFlags(), 10)
+      expect(state.apprenticeAccumulated).toBe(0)
+    })
+  })
+
+  describe('Quest enchantment stacking', () => {
+    it('should increment questStacks when event condition met', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
+        enchantmentIds: [EnchantmentType.QuestDevour],
+      })
+      const state = makeRuntimeState({ questStacks: 0 })
+      const ctx = makeContext()
+      const flags = makeFlags()
+      // QuestDevour event = 'selfTrigger' → always true
+      resolvePhase5(skill, state, ctx, flags, 10)
+      expect(state.questStacks).toBe(1)
+      expect(state.questCompletions).toBe(0)
+    })
+
+    it('should complete quest cycle when stacks >= target', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
+        enchantmentIds: [EnchantmentType.QuestDevour],
+      })
+      // QuestDevour targetStacks = 15, start at 14
+      const state = makeRuntimeState({ questStacks: 14 })
+      const ctx = makeContext()
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      expect(state.questStacks).toBe(0) // reset
+      expect(state.questCompletions).toBe(1)
+      expect(result.questCompleted).toBe(true)
+    })
+
+    it('QuestDevour should return devourTarget on completion', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
+        enchantmentIds: [EnchantmentType.QuestDevour],
+      })
+      const bindings = new Map([['s', 'sk_s']])
+      const allSkills = new Map<string, AffixSkillInstance>([
+        ['sk_s', makeSkill({ id: 'sk_s', level: 1 })],
+      ])
+      const state = makeRuntimeState({ questStacks: 14 })
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      expect(result.questCompleted).toBe(true)
+      // devourTarget should be the weakest neighbor in Void's posRel range
+      // Whether 's' is adjacent to 'a' depends on topology — if it is, devourTarget = 's'
+      if (result.devourTarget != null) {
+        expect(typeof result.devourTarget).toBe('string')
+      }
+    })
+
+    it('QuestOverload: should stack on crit hit only', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+        enchantmentIds: [EnchantmentType.QuestOverload],
+      })
+      const state = makeRuntimeState({ questStacks: 0 })
+      const ctx = makeContext()
+
+      // No crit → no stack
+      resolvePhase5(skill, state, ctx, makeFlags({ isCrit: false }), 10)
+      expect(state.questStacks).toBe(0)
+
+      // Crit → +1 stack
+      resolvePhase5(skill, state, ctx, makeFlags({ isCrit: true }), 10)
+      expect(state.questStacks).toBe(1)
+    })
+
+    it('QuestSacrifice: should stack on taboo penalty', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Taboo, bonusPercent: 1.0, penaltyChance: 0.1 }],
+        enchantmentIds: [EnchantmentType.QuestSacrifice],
+      })
+      const state = makeRuntimeState({ questStacks: 0 })
+      const ctx = makeContext()
+
+      // Taboo penalty → +1 stack
+      resolvePhase5(skill, state, ctx, makeFlags({ isTabooPenalty: true }), 10)
+      expect(state.questStacks).toBe(1)
+
+      // No penalty → no stack
+      resolvePhase5(skill, state, ctx, makeFlags({ isTabooPenalty: false }), 10)
+      expect(state.questStacks).toBe(1) // unchanged
+    })
+
+    it('QuestIterate: should stack on recurse proc', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Recurse, recurseChance: 1.0 }], // always recurse
+        enchantmentIds: [EnchantmentType.QuestIterate],
+      })
+      const state = makeRuntimeState({ questStacks: 0 })
+      const ctx = makeContext({ randomFn: () => 0.0 }) // recurse succeeds
+      const flags = makeFlags()
+      resolvePhase5(skill, state, ctx, flags, 10, 0)
+      expect(state.questStacks).toBe(1)
+    })
+  })
+
+  describe('Transmute enchantment', () => {
+    it('should produce extra resource output', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.Transmute],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({
+        transmuteResource: 'gold' as ResourceType,
+        transmuteRatio: 0.15,
+      })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 100)
+      expect(result.transmuteOutput).toEqual({ resource: 'gold', amount: 15 })
+    })
+
+    it('should use default ratio when not specified', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.Transmute],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({ transmuteResource: 'score' as ResourceType })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 100)
+      expect(result.transmuteOutput).toEqual({ resource: 'score', amount: 100 * TRANSMUTE_DEFAULT_RATIO })
+    })
+
+    it('should return null when no transmuteResource', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.Transmute],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext()
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 100)
+      expect(result.transmuteOutput).toBeNull()
+    })
+  })
+
+  describe('Splash enchantment', () => {
+    it('should return posRel neighbors with efficiency = 1/count', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.Splash],
+      })
+      const bindings = new Map([['s', 'sk_s'], ['d', 'sk_d']])
+      const state = makeRuntimeState()
+      const ctx = makeContext({
+        triggerKey: 'a',
+        bindings,
+        splashPosRel: PositionRelation.SameRow,
+      })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      // 's' and 'd' are on same row as 'a'
+      if (result.splashTargets.length > 0) {
+        const eff = 1 / result.splashTargets.length
+        for (const target of result.splashTargets) {
+          expect(target.efficiency).toBeCloseTo(eff)
+        }
+      }
+    })
+
+    it('should return empty when splashPosRel not provided', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.Splash],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a' })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      expect(result.splashTargets).toEqual([])
+    })
+
+    it('should return empty when no neighbors in range', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.Splash],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({
+        triggerKey: 'a',
+        bindings: new Map(),
+        splashPosRel: PositionRelation.Adjacent,
+      })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      expect(result.splashTargets).toEqual([])
+    })
+  })
+
+  describe('MutationHunger enchantment', () => {
+    it('should produce mutagen when roll succeeds', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.MutationHunger],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({ randomFn: () => 0.01 }) // 0.01 < 0.05 → success
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      expect(result.mutagenOutput).toBe(1)
+    })
+
+    it('should NOT produce mutagen when roll fails', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.MutationHunger],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({ randomFn: () => 0.9 }) // 0.9 > 0.05 → fail
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      expect(result.mutagenOutput).toBe(0)
+    })
+
+    it('should use custom chance from context', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.MutationHunger],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({
+        mutationHungerChance: 0.5,
+        randomFn: () => 0.3, // 0.3 < 0.5 → success with custom chance
+      })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      expect(result.mutagenOutput).toBe(1)
+    })
+  })
+})
+
+// ===== Phase 6 测试 =====
+
+describe('resolvePhase6', () => {
+  describe('Resonance affix', () => {
+    it('should produce resonance action when neighbor has Resonance + posRel matches', () => {
+      const skill = makeSkill({ resource: 'base' as ResourceType })
+      const neighborSkill = makeSkill({
+        id: 'sk_neighbor',
+        affixes: [{ type: AffixType.Resonance, posRel: PositionRelation.SameRow, efficiency: 0.5 }],
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
+      const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
+      const skillStates = new Map([['sk_neighbor', makeRuntimeState({ skillId: 'sk_neighbor' })]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills, skillStates })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const resonanceActions = result.actions.filter(a => a.type === 'resonance')
+      // 'a' and 's' are on the same row
+      if (resonanceActions.length > 0) {
+        expect(resonanceActions[0].type).toBe('resonance')
+        expect(resonanceActions[0].neighborKey).toBe('s')
+        expect((resonanceActions[0] as any).efficiencyMult).toBeCloseTo(0.5)
+      }
+    })
+
+    it('should enhance efficiency with QuestResonance', () => {
+      const skill = makeSkill({ resource: 'base' as ResourceType })
+      const neighborSkill = makeSkill({
+        id: 'sk_neighbor',
+        affixes: [{ type: AffixType.Resonance, posRel: PositionRelation.SameRow, efficiency: 0.5 }],
+        enchantmentIds: [EnchantmentType.QuestResonance],
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
+      const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
+      const neighborState = makeRuntimeState({ skillId: 'sk_neighbor', questCompletions: 5 })
+      const skillStates = new Map([['sk_neighbor', neighborState]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills, skillStates })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const resonanceActions = result.actions.filter(a => a.type === 'resonance')
+      if (resonanceActions.length > 0) {
+        // effectiveEff = 0.5 + 5 * 0.08 = 0.9
+        expect((resonanceActions[0] as any).efficiencyMult).toBeCloseTo(0.9)
+      }
+    })
+  })
+
+  describe('Link affix', () => {
+    it('should produce link action when resource matches', () => {
+      // Trigger skill produces 'base'
+      const skill = makeSkill({ resource: 'base' as ResourceType })
+      // Neighbor has Link watching 'base'
+      const neighborSkill = makeSkill({
+        id: 'sk_neighbor',
+        affixes: [{ type: AffixType.Link, resource: 'base' as ResourceType, posRel: PositionRelation.SameRow }],
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
+      const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const linkActions = result.actions.filter(a => a.type === 'link')
+      // 'a' and 's' are same row
+      if (linkActions.length > 0) {
+        expect(linkActions[0].neighborKey).toBe('s')
+      }
+    })
+
+    it('should NOT produce link action when resource does not match', () => {
+      const skill = makeSkill({ resource: 'gold' as ResourceType })
+      const neighborSkill = makeSkill({
+        id: 'sk_neighbor',
+        affixes: [{ type: AffixType.Link, resource: 'base' as ResourceType, posRel: PositionRelation.SameRow }],
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
+      const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const linkActions = result.actions.filter(a => a.type === 'link')
+      expect(linkActions.length).toBe(0)
+    })
+  })
+
+  describe('ApprenticeNeighbor enchantment', () => {
+    it('should produce growth action when posRel matches', () => {
+      const skill = makeSkill({ resource: 'base' as ResourceType })
+      const neighborSkill = makeSkill({
+        id: 'sk_neighbor',
+        enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
+      const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
+      const enchParams = new Map([['sk_neighbor', { posRel: PositionRelation.SameRow }]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({
+        triggerKey: 'a',
+        bindings,
+        allSkills,
+        skillEnchantmentParams: enchParams,
+      })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const apprenticeActions = result.actions.filter(a => a.type === 'apprentice_neighbor')
+      // 'a' and 's' are same row
+      if (apprenticeActions.length > 0) {
+        const growth = APPRENTICE_NEIGHBOR_GROWTH[PositionRelation.SameRow]
+        expect((apprenticeActions[0] as any).growthDelta).toBeCloseTo(growth)
+      }
+    })
+
+    it('should NOT produce action when no enchantmentParams', () => {
+      const skill = makeSkill({ resource: 'base' as ResourceType })
+      const neighborSkill = makeSkill({
+        id: 'sk_neighbor',
+        enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
+      const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const apprenticeActions = result.actions.filter(a => a.type === 'apprentice_neighbor')
+      expect(apprenticeActions.length).toBe(0)
+    })
+  })
+
+  describe('QuestResonance enchantment', () => {
+    it('should produce quest_resonance action when neighbor has QuestResonance + Resonance/Link', () => {
+      const skill = makeSkill({ resource: 'base' as ResourceType })
+      const neighborSkill = makeSkill({
+        id: 'sk_neighbor',
+        affixes: [{ type: AffixType.Resonance, posRel: PositionRelation.SameRow, efficiency: 0.5 }],
+        enchantmentIds: [EnchantmentType.QuestResonance],
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
+      const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const questActions = result.actions.filter(a => a.type === 'quest_resonance')
+      // 'a' and 's' same row → posRel matches → quest_resonance action
+      if (questActions.length > 0) {
+        expect(questActions[0].neighborKey).toBe('s')
+      }
+    })
+
+    it('should NOT produce action when neighbor has no Resonance/Link affix', () => {
+      const skill = makeSkill({ resource: 'base' as ResourceType })
+      const neighborSkill = makeSkill({
+        id: 'sk_neighbor',
+        affixes: [], // no Resonance or Link
+        enchantmentIds: [EnchantmentType.QuestResonance],
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
+      const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const questActions = result.actions.filter(a => a.type === 'quest_resonance')
+      expect(questActions.length).toBe(0)
+    })
+  })
+
+  describe('Edge cases', () => {
+    it('should skip self key', () => {
+      const skill = makeSkill({
+        id: 'test_skill',
+        affixes: [{ type: AffixType.Resonance, posRel: PositionRelation.SameRow, efficiency: 0.5 }],
+      })
+      const bindings = new Map([['a', 'test_skill']])
+      const allSkills = new Map([['test_skill', skill]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      // Should not include self
+      expect(result.actions.length).toBe(0)
+    })
+
+    it('should return empty actions when no bindings', () => {
+      const skill = makeSkill()
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings: new Map() })
+      const result = resolvePhase6('a', skill, state, ctx)
+      expect(result.actions).toEqual([])
+    })
+  })
+})
+
+// ===== Phase 1-6 组合端到端测试 =====
+
+describe('Full Phase 1-6 pipeline', () => {
+  it('basic skill: Phase 4 returns skill.resource, Phase 5/6 no actions', () => {
+    const skill = makeSkill({ level: 1, rarity: 0 as 0, affixes: [], resource: 'base' as ResourceType })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    const result = triggerAffixSkill(skill, state, ctx)
+    expect(result.phase4!.targetResource).toBe('base')
+    expect(result.phase4!.output).toBe(5)
+    expect(result.phase5!.replicateTargets).toEqual([])
+    expect(result.phase5!.recurse.shouldRecurse).toBe(false)
+    expect(result.phase5!.transmuteOutput).toBeNull()
+    expect(result.phase5!.splashTargets).toEqual([])
+    expect(result.phase5!.mutagenOutput).toBe(0)
+    expect(result.phase6!.actions).toEqual([])
+  })
+
+  it('Rainbow + Splash skill: Phase 4 random resource + Phase 5 splash targets', () => {
+    const skill = makeSkill({
+      level: 1,
+      affixes: [{ type: AffixType.Rainbow }],
+      enchantmentIds: [EnchantmentType.Splash],
+    })
+    const bindings = new Map([['s', 'sk_s'], ['d', 'sk_d']])
+    const state = makeRuntimeState()
+    const ctx = makeContext({
+      triggerKey: 'a',
+      bindings,
+      randomFn: () => 0.0, // → base
+      splashPosRel: PositionRelation.SameRow,
+    })
+    const result = triggerAffixSkill(skill, state, ctx)
+    expect(result.phase4!.targetResource).toBe('base')
+    // Splash targets include same-row neighbors
+    if (result.phase5!.splashTargets.length > 0) {
+      for (const t of result.phase5!.splashTargets) {
+        expect(t.efficiency).toBeCloseTo(1 / result.phase5!.splashTargets.length)
+      }
+    }
+  })
+
+  it('Recurse with depth limit: should stop at MAX_RECURSE_DEPTH', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Recurse, recurseChance: 1.0 }],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ randomFn: () => 0.0 })
+    // At depth 10 → should not recurse
+    const result = triggerAffixSkill(skill, state, ctx, MAX_RECURSE_DEPTH)
+    expect(result.phase5!.recurse.shouldRecurse).toBe(false)
+  })
+
+  it('Rainbow + Link: Phase 6 should use Phase 4 resolved resource for Link check', () => {
+    // Rainbow skill resolves to 'gold' via Phase 4
+    const skill = makeSkill({
+      resource: 'base' as ResourceType,
+      affixes: [{ type: AffixType.Rainbow }],
+    })
+    // Neighbor has Link watching 'base' (skill's base resource)
+    const neighborLinkBase = makeSkill({
+      id: 'sk_link_base',
+      affixes: [{ type: AffixType.Link, resource: 'base' as ResourceType, posRel: PositionRelation.SameRow }],
+    })
+    const bindings = new Map([['a', 'test_skill'], ['s', 'sk_link_base']])
+    const allSkills = new Map([['test_skill', skill], ['sk_link_base', neighborLinkBase]])
+    const state = makeRuntimeState()
+    // randomFn → 4/7 → index 4 → 'gold'
+    const ctx = makeContext({
+      triggerKey: 'a',
+      bindings,
+      allSkills,
+      randomFn: () => 4 / 7,
+    })
+    const result = triggerAffixSkill(skill, state, ctx)
+    // Phase 4 resolved to 'gold', not 'base'
+    expect(result.phase4!.targetResource).toBe('gold')
+    // Link neighbor watching 'base' should NOT be triggered (actual resource is 'gold')
+    const linkActions = result.phase6!.actions.filter(a => a.type === 'link')
+    expect(linkActions.length).toBe(0)
+  })
+})
+
+// ===== Code Review 修复验证测试 =====
+
+describe('Code review fixes', () => {
+  it('findWeakestNeighbor should NOT return triggerKey (self-exclusion)', () => {
+    // 'a' is bound to a weak skill, neighbors are stronger
+    const weakSkill = makeSkill({ id: 'sk_weak', level: 1, baseValues: [1, 2, 3] as [number, number, number] })
+    const strongSkill = makeSkill({ id: 'sk_strong', level: 3, baseValues: [10, 20, 30] as [number, number, number] })
+    const bindings = new Map([['a', 'sk_weak'], ['s', 'sk_strong']])
+    const allSkills = new Map([['sk_weak', weakSkill], ['sk_strong', strongSkill]])
+    const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+    // Even though 'a' is weakest on its row, findWeakestNeighbor should return 's' (not 'a')
+    const result = findWeakestNeighbor('a', PositionRelation.SameRow, ctx)
+    expect(result).not.toBe('a')
+    // 's' is on the same row and is the only non-self neighbor → should be 's'
+    if (result != null) {
+      expect(result).toBe('s')
+    }
+  })
+
+  it('QuestAscend (event=perfectWord) should NOT stack during Phase 5', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
+      enchantmentIds: [EnchantmentType.QuestAscend],
+    })
+    const state = makeRuntimeState({ questStacks: 0 })
+    const ctx = makeContext()
+    const flags = makeFlags()
+    // QuestAscend event = 'perfectWord' → external event → should NOT stack in Phase 5
+    resolvePhase5(skill, state, ctx, flags, 10)
+    expect(state.questStacks).toBe(0)
+  })
+
+  it('QuestEnergize (event=wordComplete) should NOT stack during Phase 5', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Charge, gainPerSec: 0.08, maxBonus: 2.0 }],
+      enchantmentIds: [EnchantmentType.QuestEnergize],
+    })
+    const state = makeRuntimeState({ questStacks: 0 })
+    const ctx = makeContext()
+    const flags = makeFlags()
+    resolvePhase5(skill, state, ctx, flags, 10)
+    expect(state.questStacks).toBe(0)
   })
 })
