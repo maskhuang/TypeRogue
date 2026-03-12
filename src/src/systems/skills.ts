@@ -22,6 +22,7 @@ import { resolveRelicSkillTrigger, queryRelicFlag } from './relics/RelicPipeline
 import { eventBus } from '../core/events/EventBus';
 import { routeFragmentsToInventory } from './classes/FragmentQueue';
 import { random } from '../core/seededRandom';
+import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 
 
 // === 战后统计：记录技能触发 ===
@@ -1277,6 +1278,10 @@ export function triggerSkill(skillId: string, triggerKey: string, chainHistory?:
     // 增幅者分流：纯叠层，无资源产出
     triggerAmplifier(skillId, triggerKey);
     shouldRetrigger = _retriggerRequested;
+  } else if (state.affixSkills.has(skillId)) {
+    // 词条制技能：通过调度器触发 + 浮字反馈
+    triggerAffixSkillWithFeedback(skillId, triggerKey);
+    return;
   } else {
     return;
   }
@@ -1289,6 +1294,93 @@ export function triggerSkill(skillId: string, triggerKey: string, chainHistory?:
     triggerSkill(skillId, triggerKey, chainHistory);
     _isRetriggered = false;
   }
+}
+
+// === 词条制技能触发 + 浮字反馈 ===
+function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): void {
+  const skill = state.affixSkills.get(skillId)!;
+
+  synergy.wordSkillCount++;
+
+  // 构建触发上下文
+  const ctx = {
+    triggerKey,
+    currentWord: state.player.word,
+    resources: { ...state.resources },
+    classResourceProduced: { ...state.classResourceProduced },
+    bindings: state.player.bindings,
+    skillStates: state.affixSkillStates,
+    allSkills: state.affixSkills,
+    randomFn: random,
+    comboCount: state.combo,
+    playerClass: state.classId,
+  };
+
+  const result = orchestrateAffixTrigger(skillId, triggerKey, ctx, {
+    applyResource: (resource: ResourceType, amount: number) => {
+      if (resource === 'base') {
+        synergy.skillBaseScore += amount;
+      } else if (resource === 'multiplier') {
+        synergy.skillMultBonus += amount;
+      } else if (resource === 'score') {
+        state.resources.score += amount;
+        state.score += amount;
+      } else {
+        state.resources[resource] += amount;
+      }
+      if (resource === 'fragment') {
+        routeFragmentsToInventory(Math.abs(amount));
+      } else if (resource === 'mutagen') {
+        state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + Math.abs(amount);
+        state.mutagenInventory += Math.abs(amount);
+      }
+    },
+    showFeedback: (text: string, color: string) => showFeedback(text, color),
+    playSound: (type: string) => playSound(type),
+    enterPseudoInfinite: (_keys: string[]) => setPseudoInfiniteVisual(true),
+  });
+
+  // 浮字反馈：基于每次触发的结果
+  for (const tr of result.triggerResults) {
+    if (!tr.phase4) continue;
+    const resource = tr.phase4.targetResource;
+    const amount = tr.output;
+    if (amount === 0) continue;
+
+    const color = RESOURCE_COLORS[resource] || '#ffffff';
+    const label = getResourceLabel(resource);
+    const displayValue = parseFloat(Math.abs(amount).toPrecision(4));
+    const scale = getFloatScale(resource, amount);
+
+    let prefix = '';
+    if (tr.isCrit) prefix = '💥';
+    if (tr.isTabooPenalty) {
+      showFeedback(`-${displayValue}${label}`, '#ff4444', scale);
+    } else {
+      showFeedback(`${prefix}+${displayValue}${label}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1));
+    }
+    emitResourceSound(resource, scale, 0);
+
+    // 战后统计
+    recordSkillTrigger(skillId, triggerKey, resource, amount, false);
+  }
+
+  // 技能触发弹窗
+  const el = getElements();
+  const p = document.createElement('div');
+  p.className = 'skill-trigger-popup';
+  if (result.triggerResults.some(r => r.isCrit)) p.classList.add('crit-trigger');
+  p.innerHTML = `<span class="trigger-icon">${skill.icon}</span>`;
+  p.style.left = (Math.random() * 60 - 30) + 'px';
+  el.triggerZone.appendChild(p);
+  setTimeout(() => p.remove(), 350);
+
+  // 事件总线通知
+  eventBus.emit('skill:triggered', {
+    key: triggerKey,
+    skillId,
+    type: 'active',
+  });
 }
 
 // === 显示技能触发弹窗（Story 34.6 AC4/AC5 增强） ===

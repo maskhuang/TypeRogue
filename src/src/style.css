@@ -1608,8 +1608,9 @@ body {
     pointer-events: none;
     font-size: 11px;
     color: #ccc;
-    max-width: 220px;
-    white-space: nowrap;
+    max-width: 260px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .key-tooltip .tooltip-letter {

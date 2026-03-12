@@ -7,11 +7,13 @@
 import type { ResourceType } from '../core/types'
 import {
   triggerAffixSkill,
+  MAX_RECURSE_DEPTH,
+  MAX_CHAIN_DEPTH,
+} from '../data/affixTrigger'
+import type {
   TriggerContext,
   TriggerResult,
   Phase6Action,
-  MAX_RECURSE_DEPTH,
-  MAX_CHAIN_DEPTH,
 } from '../data/affixTrigger'
 
 // ===== 工作队列条目 =====
