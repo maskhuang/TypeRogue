@@ -21,9 +21,11 @@ import { showClassPicker } from './systems/classes/ClassPicker';
 import { filterSkillIdsByClass } from './systems/classes/ClassResourceFilter';
 import { saveManager } from './core/save/SaveManager';
 import {
-  IS_DEMO, DEMO_STARTER_SKILLS, DEMO_CONVERTER_IDS,
+  IS_DEMO, DEMO_CONVERTER_IDS,
   DEMO_STARTER_RELIC, DEMO_ELITE_MODIFIER
 } from './demo/demo-config';
+import { generateSkill } from './data/skillGeneration';
+import { createSkillRuntimeState } from './data/affixes';
 import { cleanDemoDom, installDemoErrorBoundary, checkWebGLSupport, showWebGLError } from './demo/demo-dom-cleanup';
 import { trackEvent } from './demo/demo-analytics';
 import { initLocale, setLocale, getLocale, applyHtmlI18n } from './demo/demo-i18n';
@@ -48,10 +50,18 @@ async function init(): Promise<void> {
   if (IS_DEMO) {
     // === Demo 模式：精简初始化 ===
 
-    // 预设技能绑定
-    for (const { skillId, key } of DEMO_STARTER_SKILLS) {
-      state.player.skills.set(skillId, { level: 1 });
-      state.player.bindings.set(key, skillId);
+    // 预设技能绑定（新词条制系统）
+    const demoResources: Array<{ resource: import('./core/types').ResourceType; key: string }> = [
+      { resource: 'base', key: 'e' },
+      { resource: 'score', key: 't' },
+      { resource: 'gold', key: 'a' },
+    ];
+    for (const { resource, key } of demoResources) {
+      const sk = generateSkill({ resource, rarity: 0, level: 1 });
+      state.player.skills.set(sk.id, { level: 1 });
+      state.affixSkills.set(sk.id, sk);
+      state.affixSkillStates.set(sk.id, createSkillRuntimeState(sk.id));
+      state.player.bindings.set(key, sk.id);
     }
     state.gold = 75;
 
@@ -84,9 +94,12 @@ async function init(): Promise<void> {
 
   // === 完整版流程 ===
 
-  // 初始技能
-  state.player.skills.set('prod_burst', { level: 1 });
-  state.player.bindings.set('f', 'prod_burst');
+  // 初始技能（新词条制系统）
+  const starterSkill = generateSkill({ resource: 'base', rarity: 0, level: 1 });
+  state.player.skills.set(starterSkill.id, { level: 1 });
+  state.affixSkills.set(starterSkill.id, starterSkill);
+  state.affixSkillStates.set(starterSkill.id, createSkillRuntimeState(starterSkill.id));
+  state.player.bindings.set('f', starterSkill.id);
 
   // 初始金币
   state.gold = 50;

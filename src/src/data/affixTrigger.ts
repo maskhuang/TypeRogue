@@ -571,19 +571,28 @@ export const APPRENTICE_GROWTH_DEFAULTS: Partial<Record<EnchantmentType, number>
 
 // ===== Phase 4-6 辅助函数 =====
 
-/** 加权随机资源选择（光谱附魔偏向最低资源） */
+/** 根据职业过滤可用资源 */
+function getClassResources(playerClass?: string): ResourceType[] {
+  const pool: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
+  if (playerClass === 'wordsmith') pool.push('fragment')
+  if (playerClass === 'metamorph') pool.push('mutagen')
+  return pool
+}
+
+/** 加权随机资源选择（光谱附魔偏向最低资源，职业约束） */
 export function weightedRandomResource(ctx: TriggerContext, spectrumCompletions: number): ResourceType {
+  const pool = getClassResources(ctx.playerClass)
   if (spectrumCompletions <= 0) {
     // 等概率随机
-    const idx = Math.floor(ctx.randomFn() * ALL_RESOURCES.length)
-    return ALL_RESOURCES[Math.min(idx, ALL_RESOURCES.length - 1)]
+    const idx = Math.floor(ctx.randomFn() * pool.length)
+    return pool[Math.min(idx, pool.length - 1)]
   }
 
   // 找到当前值最低的资源
   let minVal = Infinity
   let minIdx = 0
-  for (let i = 0; i < ALL_RESOURCES.length; i++) {
-    const val = getAffixSourceValue(ALL_RESOURCES[i], ctx)
+  for (let i = 0; i < pool.length; i++) {
+    const val = getAffixSourceValue(pool[i], ctx)
     if (val < minVal) {
       minVal = val
       minIdx = i
@@ -591,16 +600,16 @@ export function weightedRandomResource(ctx: TriggerContext, spectrumCompletions:
   }
 
   // 加权：base = 1，最低资源额外 + completions × 0.15
-  const weights: number[] = ALL_RESOURCES.map(() => 1)
+  const weights: number[] = pool.map(() => 1)
   weights[minIdx] += spectrumCompletions * 0.15
 
   const totalWeight = weights.reduce((a, b) => a + b, 0)
   let roll = ctx.randomFn() * totalWeight
-  for (let i = 0; i < ALL_RESOURCES.length; i++) {
+  for (let i = 0; i < pool.length; i++) {
     roll -= weights[i]
-    if (roll <= 0) return ALL_RESOURCES[i]
+    if (roll <= 0) return pool[i]
   }
-  return ALL_RESOURCES[ALL_RESOURCES.length - 1]
+  return pool[pool.length - 1]
 }
 
 /** 找 posRel 范围内产出最低的邻居键位 */

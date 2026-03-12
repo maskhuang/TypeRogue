@@ -117,10 +117,10 @@ export function generateAffixShopItem(
   }
   // mono_affix 类别限制：重试直到技能含已选类别词条
   const lockedCategory = getMonoAffixCategory();
-  let skill = generateSkill({ resource, rarity });
+  let skill = generateSkill({ resource, rarity, availableResources: resourcePool });
   // clamp：如果 rarity 未指定（随机掷骰），超过 actMaxRarity 时重生成
   if (rarity === undefined && skill.rarity > actMaxRarity) {
-    skill = generateSkill({ resource, rarity: actMaxRarity });
+    skill = generateSkill({ resource, rarity: actMaxRarity, availableResources: resourcePool });
   }
   if (lockedCategory && skill.rarity > 0) {
     for (let attempt = 0; attempt < 20; attempt++) {
@@ -128,7 +128,7 @@ export function generateAffixShopItem(
         a => AFFIX_CATEGORY_MAP[a.type as keyof typeof AFFIX_CATEGORY_MAP] === lockedCategory,
       );
       if (hasMatch) break;
-      skill = generateSkill({ resource, rarity: skill.rarity as SkillRarity });
+      skill = generateSkill({ resource, rarity: skill.rarity as SkillRarity, availableResources: resourcePool });
     }
   }
   const cost = getAdjustedPrice(calculateAffixSkillPrice(skill.rarity, skill.level, rollPriceFluctuation()));
@@ -377,7 +377,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'crit': return `${Math.round((a.chance ?? 0) * 100)}% ×${a.critMult?.toFixed(1) ?? '?'}`
     case 'void': return `${rel}每空位+${Math.round((a.bonusPerSlot ?? 0) * 100)}%`
     case 'resonance': return `${rel}效率${Math.round((a.efficiency ?? 0) * 100)}%`
-    case 'amplify': return `${rel}每层+${Math.round((a.valuePerStack ?? 0) * 100)}%`
+    case 'amplify': return `${rel}${RESOURCE_ICONS[a.resource!] || ''}${RESOURCE_NAMES[a.resource!] ?? ''}每层+${Math.round((a.valuePerStack ?? 0) * 100)}%`
     case 'cascade': return `${rel || '上键范围内'} ×${a.cascadeMult?.toFixed(1) ?? '?'}`
     case 'outcast': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
     case 'gravity': return `概率×${a.probMult?.toFixed(1) ?? '?'}`
@@ -385,7 +385,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'taboo': return `+100% / ${Math.round((a.penaltyChance ?? 0) * 100)}%负产出`
     case 'rainbow': return '随机资源'
     case 'mirror': return `${rel}镜像复制`
-    case 'link': return `${rel}邻居产出时触发`
+    case 'link': return `${rel}邻居产出${RESOURCE_ICONS[a.resource!] || ''}${RESOURCE_NAMES[a.resource!] ?? ''}时触发`
     case 'replicate': return `${rel}复制触发`
     case 'ligature': return `连字加成`
     case 'twin': return `双附魔`

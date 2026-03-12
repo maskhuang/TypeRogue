@@ -18,7 +18,7 @@ import {
 
 // ===== 常量 =====
 
-const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
+const GENERIC_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
 const ALL_POS_RELATIONS: PositionRelation[] = Object.values(PositionRelation)
 
 // ===== 辅助函数 =====
@@ -113,7 +113,9 @@ export function rollAffixParams(
   type: AffixType,
   resource: ResourceType,
   convertVariant?: 'cross' | 'self',
+  availableResources?: ResourceType[],
 ): AffixInstance {
+  const pool = availableResources ?? GENERIC_RESOURCES
   switch (type) {
     case AffixType.Multiply:
       return { type, multiplier: roundTo(1.3 + random() * 0.7, 2) }
@@ -124,11 +126,11 @@ export function rollAffixParams(
         source = resource
       } else if (convertVariant === 'cross') {
         // 异源：排除本资源
-        const others = ALL_RESOURCES.filter(r => r !== resource)
+        const others = pool.filter(r => r !== resource)
         source = pickRandom(others)
       } else {
-        // 无指定：随机（后续系统可按需处理）
-        source = pickRandom(ALL_RESOURCES)
+        // 无指定：随机
+        source = pickRandom(pool)
       }
       const [kMin, kMax] = CONVERT_K_TABLE[source]
       const k = roundTo(kMin + random() * (kMax - kMin), 4)
@@ -169,7 +171,7 @@ export function rollAffixParams(
       return { type, posRel: pickRandom(ALL_POS_RELATIONS) }
 
     case AffixType.Link:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), resource: pickRandom(ALL_RESOURCES) }
+      return { type, posRel: pickRandom(ALL_POS_RELATIONS), resource: pickRandom(pool) }
 
     case AffixType.Replicate:
       return { type, posRel: pickRandom(ALL_POS_RELATIONS) }
@@ -220,11 +222,14 @@ export interface GenerateSkillOptions {
   rarity?: SkillRarity
   /** 强制等级 */
   level?: number
+  /** 职业可用资源池（约束转化源/连接监听/增幅资源） */
+  availableResources?: ResourceType[]
 }
 
 /** 生成一个随机词条制技能实例 */
 export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstance {
-  const resource = options?.resource ?? pickRandom(ALL_RESOURCES)
+  const pool = options?.availableResources ?? GENERIC_RESOURCES
+  const resource = options?.resource ?? pickRandom(pool)
   const rarity = options?.rarity ?? rollRarity()
   const level = options?.level ?? 1
 
@@ -232,7 +237,7 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
   const samples = weightedSampleWithout(rarity)
 
   // 每个词条掷参数
-  const affixes = samples.map(s => rollAffixParams(s.type, resource, s.convertVariant))
+  const affixes = samples.map(s => rollAffixParams(s.type, resource, s.convertVariant, pool))
 
   // 自动命名
   const name = generateName(resource, affixes)
