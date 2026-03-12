@@ -32,17 +32,91 @@ import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
 import { dragManager } from './dragManager';
-import { isResourceActiveForClass } from './classes/ClassResourceFilter';
 import { CLASS_DEFINITIONS } from '../data/classes';
 import { isFeatureEnabled, getFeatureLostReason } from './classes/ClassFeatureGate';
 import { renderCraftPanel, resetCraftInput } from './classes/CraftingStation';
 import { renderMetamorphPanel } from './classes/MetamorphStation';
 import type { DragPayload } from './dragManager';
-import { IS_DEMO, DEMO_PRODUCER_IDS } from '../demo/demo-config';
+import { IS_DEMO } from '../demo/demo-config';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
+import { generateSkill } from '../data/skillGeneration';
+import { createSkillRuntimeState, AFFIX_NAMES, RARITY_COLORS } from '../data/affixes';
+import type { SkillRarity } from '../data/affixes';
+import { getEnchantmentSlotCount, filterQuestCandidates } from '../data/affixTrigger';
+import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS } from '../data/affixes';
+import type { EnchantmentType } from '../data/affixes';
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
+
+// === 词条制技能定价（Story 35.9） ===
+export const AFFIX_SKILL_BASE_PRICE = 50;
+
+// RARITY_COLORS 从 affixes.ts 导入（白/蓝/黄/橙 四级稀有度边框颜色）
+
+const RARITY_LABELS: Record<number, string> = {
+  0: '普通', 1: '魔法', 2: '稀有', 3: '传说',
+};
+
+/** 词条制技能定价公式：basePrice × (1 + rarity × 0.5) × (1 + (level-1) × 0.3) */
+export function calculateAffixSkillPrice(rarity: number, level: number, basePrice: number = AFFIX_SKILL_BASE_PRICE): number {
+  return Math.round(basePrice * (1 + rarity * 0.5) * (1 + (level - 1) * 0.3));
+}
+
+/** 职业可用资源池（排除非对应职业的 fragment/mutagen） */
+function getAvailableResources(classId: string): ResourceType[] {
+  const all: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+  if (classId === 'wordsmith') all.push('fragment');
+  if (classId === 'metamorph') all.push('mutagen');
+  return all;
+}
+
+/** 生成单个词条制技能商品 */
+export function generateAffixShopItem(
+  itemId: number,
+  options?: { rarity?: SkillRarity; resource?: ResourceType },
+): ShopItem {
+  const resourcePool = getAvailableResources(state.classId);
+  const resource = options?.resource ?? resourcePool[Math.floor(random() * resourcePool.length)];
+  const skill = generateSkill({ resource, rarity: options?.rarity });
+  const cost = getAdjustedPrice(calculateAffixSkillPrice(skill.rarity, skill.level));
+
+  return {
+    id: `si-${itemId}-affix`,
+    type: 'skill',
+    skillId: skill.id,
+    affixSkill: skill,
+    cost,
+    isUpgrade: false,
+    locked: false,
+  };
+}
+
+/** 生成多个词条制技能商品（保证品类多样性：至少 1 件 rarity≥1） */
+export function generateAffixShopItems(count: number): ShopItem[] {
+  if (count <= 0) return [];
+  const items: ShopItem[] = [];
+  let nextId = Date.now();
+
+  // 保底第 1 件：rarity≥1（蓝装以上）
+  let guaranteed: ShopItem;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    guaranteed = generateAffixShopItem(nextId++);
+    if (guaranteed.affixSkill!.rarity >= 1) break;
+  }
+  // 如果 10 次都没 ≥1，强制 rarity=1
+  if (!guaranteed! || guaranteed!.affixSkill!.rarity < 1) {
+    guaranteed = generateAffixShopItem(nextId++, { rarity: 1 as SkillRarity });
+  }
+  items.push(guaranteed!);
+
+  // 剩余随机
+  for (let i = 1; i < count; i++) {
+    items.push(generateAffixShopItem(nextId++));
+  }
+
+  return items;
+}
 
 // === 产出者机制分组权重（Story 34.5） ===
 export const PRODUCER_MECHANIC_WEIGHTS: Record<string, number> = {
@@ -298,148 +372,38 @@ function generateShopItems(count: number): ShopItem[] {
   // 当前 Act（技能权重 + 牌包权重共用）
   const act = getActForNode(state.level);
 
-  // 构建技能池（按 Act 权重分类抽取）
+  // 构建词条制技能池（Story 35.9 — 替代旧固定池）
   const skillPool: ShopItem[] = [];
   if (!isSilenced) {
-    const owned = [...state.player.skills.keys()];
-    const poolConverterIds = state.converterPool.filter(id => id in CONVERTERS);
-    const poolConnectorIds = state.connectorPool.filter(id => id in CONNECTORS);
-    const poolReplicatorIds = state.replicatorPool.filter(id => id in REPLICATORS);
-    const poolAmplifierIds = state.amplifierPool.filter(id => id in AMPLIFIERS);
-    // Story 32.2: 过滤非当前职业的职业资源相关技能
-    const producerIds = (IS_DEMO ? DEMO_PRODUCER_IDS : Object.keys(PRODUCERS)).filter(id => {
-      const prod = PRODUCERS[id];
-      return prod && isResourceActiveForClass(prod.resource, state.classId);
-    });
-    const allSkillIds = [...producerIds, ...poolConverterIds, ...poolConnectorIds, ...poolReplicatorIds, ...poolAmplifierIds];
-    const unowned = allSkillIds.filter(id => !owned.includes(id));
-
-    // 按类型分桶（T4 限制遗物可禁用连接者）
-    const weights = { ...(ACT_SKILL_WEIGHTS[act] || ACT_SKILL_WEIGHTS[3]) };
-    if (queryRelicFlag('connector_lock') === true) {
-      weights.connector = 0;
-      weights.replicator = 0;
-    }
-    // T4 纯粹之心：只允许产出者
-    if (queryRelicFlag('producer_only') === true) {
-      weights.converter = 0;
-      weights.connector = 0;
-      weights.replicator = 0;
-      weights.amplifier = 0;
-    }
-    // Story 34.5: 产出者按机制分桶加权排列
-    const producerBucket = buildMechanicWeightedBucket(
-      unowned.filter(id => isProducer(id))
-    );
-    const converterBucket = shuffleArray(unowned.filter(id => isConverter(id)));
-    const connectorBucket = shuffleArray(unowned.filter(id => isConnector(id)));
-    const replicatorBucket = shuffleArray(unowned.filter(id => isReplicator(id)));
-    const amplifierBucket = shuffleArray(unowned.filter(id => isAmplifier(id)));
-
-    // 加权抽取新技能（严格执行 0% 权重 = 绝不出现）
-    function weightedPick(): string | null {
-      const total = weights.producer + weights.converter + weights.connector + weights.replicator + weights.amplifier;
-      const roll = random() * total;
-      let acc = weights.producer;
-      if (roll < acc && producerBucket.length > 0) return producerBucket.shift()!;
-      acc += weights.converter;
-      if (roll < acc && converterBucket.length > 0) return converterBucket.shift()!;
-      acc += weights.connector;
-      if (roll < acc && connectorBucket.length > 0) return connectorBucket.shift()!;
-      acc += weights.replicator;
-      if (roll < acc && replicatorBucket.length > 0) return replicatorBucket.shift()!;
-      if (weights.amplifier > 0 && amplifierBucket.length > 0) return amplifierBucket.shift()!;
-      // fallback: 从非空的、权重 > 0 的桶中取
-      if (weights.producer > 0 && producerBucket.length > 0) return producerBucket.shift()!;
-      if (weights.converter > 0 && converterBucket.length > 0) return converterBucket.shift()!;
-      if (weights.connector > 0 && connectorBucket.length > 0) return connectorBucket.shift()!;
-      if (weights.replicator > 0 && replicatorBucket.length > 0) return replicatorBucket.shift()!;
-      if (weights.amplifier > 0 && amplifierBucket.length > 0) return amplifierBucket.shift()!;
-      return null;
-    }
-
     // T4 极简主义：技能数量达上限时不生成新技能
     const maxSkillCount = queryRelicFlag('max_skill_count') as number;
     const skillCountFull = maxSkillCount !== Infinity && state.player.skills.size >= maxSkillCount;
 
-    // 生成加权新技能商品（预抽 3 倍槽位数，保证保底和混合有足够选择）
-    const SKILL_POOL_MULTIPLIER = 3;
-    for (let i = 0; i < count * SKILL_POOL_MULTIPLIER && !skillCountFull; i++) {
-      const skillId = weightedPick();
-      if (!skillId) break;
-      skillPool.push({
-        id: `si-${nextId++}`,
-        type: 'skill',
-        skillId,
-        cost: getAdjustedPrice(15 + Math.floor(random() * 15)),
-        isUpgrade: false,
-        locked: false,
-      });
+    if (!skillCountFull) {
+      // 生成词条制技能商品（含品类多样性保证）
+      const affixItems = generateAffixShopItems(count);
+      skillPool.push(...affixItems);
     }
 
-    // Story 34.5: 产出者品类多样性保证 — 至少 2 种不同机制
-    const producerItems = skillPool.filter(item => item.skillId && isProducer(item.skillId));
-    if (producerItems.length >= 2) {
-      const mechanics = new Set(producerItems.map(item => getProducerMechanic(item.skillId!)));
-      if (mechanics.size === 1) {
-        // 所有产出者都是同一机制，替换最后一个为不同机制
-        const currentMech = [...mechanics][0];
-        const altIdx = producerBucket.findIndex(id => getProducerMechanic(id) !== currentMech);
-        if (altIdx >= 0) {
-          const altProducer = producerBucket.splice(altIdx, 1)[0];
-          const lastProdIdx = skillPool.findLastIndex(item => item.skillId && isProducer(item.skillId));
-          if (lastProdIdx >= 0) {
-            skillPool[lastProdIdx] = {
-              id: `si-${nextId++}`,
-              type: 'skill',
-              skillId: altProducer,
-              cost: getAdjustedPrice(15 + Math.floor(random() * 15)),
-              isUpgrade: false,
-              locked: false,
-            };
-          }
-        }
-      }
-    }
-
-    // 第一关金币保底：确保 ≥1 金币类技能（21.4）
-    if (state.level === 1 && skillPool.length > 0) {
-      const isGoldSkill = (id: string): boolean =>
-        id === 'prod_mint' || id === 'prod_treasury' ||
-        (id in CONVERTERS && (CONVERTERS[id].source === 'gold' || CONVERTERS[id].target === 'gold'));
-
-      const hasGold = skillPool.some(item => isGoldSkill(item.skillId!));
-      if (!hasGold) {
-        const goldCandidates = unowned.filter(id => isGoldSkill(id));
-        if (goldCandidates.length > 0) {
-          const goldId = goldCandidates[Math.floor(random() * goldCandidates.length)];
-          skillPool[skillPool.length - 1] = {
-            id: `si-${nextId++}`,
-            type: 'skill',
-            skillId: goldId,
-            cost: getAdjustedPrice(15 + Math.floor(random() * 15)),
-            isUpgrade: false,
-            locked: false,
-          };
-        }
-      }
-    }
-
-    // 升级已有技能（未满级的）— 不受 Act 权重限制
+    // 升级已有词条制技能（未满级的）
     const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
     const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel;
-    const upgradable = owned.filter(id => {
-      if (isConnector(id) || isReplicator(id)) return false; // 连接者/复制者固定 Lv1，不可升级
-      const data = state.player.skills.get(id);
-      return data && data.level < levelCap;
-    });
-    const shuffledUpgrade = shuffleArray(upgradable);
+    const upgradableAffix: string[] = [];
+    for (const [skillId, data] of state.player.skills) {
+      if (data.level < levelCap && state.affixSkills.has(skillId)) {
+        upgradableAffix.push(skillId);
+      }
+    }
+    const shuffledUpgrade = shuffleArray(upgradableAffix);
     for (const skillId of shuffledUpgrade) {
+      const affixSkill = state.affixSkills.get(skillId)!;
+      const nextLevel = (state.player.skills.get(skillId)?.level || 1) + 1;
       skillPool.push({
         id: `si-${nextId++}`,
         type: 'skill',
         skillId,
-        cost: getAdjustedPrice(25),
+        affixSkill: { ...affixSkill, level: nextLevel },
+        cost: getAdjustedPrice(calculateAffixSkillPrice(affixSkill.rarity, nextLevel)),
         isUpgrade: true,
         locked: false,
       });
@@ -540,7 +504,33 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
   const canAfford = state.gold >= item.cost;
   if (!canAfford) card.classList.add('cannot-afford');
 
-  if (item.type === 'skill') {
+  if (item.type === 'skill' && item.affixSkill) {
+    // 词条制技能卡片（Story 35.9 AC3）
+    const affix = item.affixSkill;
+    const rarityColor = RARITY_COLORS[affix.rarity] || '#ffffff';
+    const rarityLabel = RARITY_LABELS[affix.rarity] || '普通';
+    const affixNames = affix.affixes.map(a => AFFIX_NAMES[a.type]).join(' · ');
+    const lvl = state.player.skills.get(item.skillId!)?.level || affix.level;
+
+    let nameLabel = affix.name;
+    if (item.isUpgrade) {
+      nameLabel = t('shop.upgrade_name', { name: affix.name, from: lvl, to: lvl + 1 });
+    }
+
+    card.classList.add('affix-skill-card');
+    card.style.borderColor = rarityColor;
+    card.innerHTML = `
+      <div class="reward-icon">${affix.icon}</div>
+      <div class="reward-info">
+        <div class="reward-name">${nameLabel}</div>
+        <div class="reward-desc affix-list">${affixNames || '无词条'}</div>
+        ${affix.level > 1 ? `<div class="affix-level">Lv.${affix.level}</div>` : ''}
+      </div>
+      <div class="reward-cost">💰${item.cost}</div>
+      <div class="reward-type" style="color:${rarityColor}">${item.isUpgrade ? '升级' : rarityLabel}</div>
+      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
+    `;
+  } else if (item.type === 'skill') {
     const sk = PRODUCERS[item.skillId!] || CONVERTERS[item.skillId!] || CONNECTORS[item.skillId!] || REPLICATORS[item.skillId!] || AMPLIFIERS[item.skillId!];
     if (!sk) return;
     const school = getSkillSchool(item.skillId!);
@@ -763,7 +753,30 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
   playSound('buy');
 
   const isNew = !item.isUpgrade;
-  if (item.isUpgrade) {
+  const isAffix = !!item.affixSkill;
+
+  if (isAffix) {
+    // 词条制技能购买/升级
+    const affixSkill = item.affixSkill!;
+    if (item.isUpgrade) {
+      const data = state.player.skills.get(skillId);
+      if (data) {
+        data.level = Math.min(3, data.level + 1);
+        data.purchasePrice = (data.purchasePrice || 0) + item.cost;
+      }
+      // 同步更新 affixSkills 中的 level
+      const existing = state.affixSkills.get(skillId);
+      if (existing) existing.level = data?.level || existing.level;
+      showFeedback(t('shop.skill_upgrade', { name: affixSkill.name }), '#ffe66d');
+    } else {
+      // 新词条制技能
+      affixSkill.purchasePrice = item.cost;
+      state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
+      state.affixSkills.set(skillId, affixSkill);
+      state.affixSkillStates.set(skillId, createSkillRuntimeState(skillId));
+      showFeedback(t('shop.got_skill', { name: affixSkill.name }), '#4ecdc4');
+    }
+  } else if (item.isUpgrade) {
     const data = state.player.skills.get(skillId);
     if (data) {
       data.level++;
@@ -888,7 +901,28 @@ function checkAutoEnchantment(skillId: string): void {
     return;
   }
 
-  // 产出者/转化者/增幅者走附魔系统
+  // 词条制技能走新附魔流程（Quest 附魔 → enchantmentIds）
+  const affixSkill = state.affixSkills.get(skillId);
+  if (affixSkill) {
+    const slotCount = getEnchantmentSlotCount(affixSkill);
+    if (affixSkill.enchantmentIds.length >= slotCount) return;
+    const candidates = filterEnchantmentsByClass(
+      filterQuestCandidates(affixSkill),
+      state.classId !== 'none' ? state.classId : undefined,
+    );
+    if (candidates.length === 0) return;
+    // 职业门控：蜕变师失去附魔选择权 → 随机附魔
+    if (!isFeatureEnabled('enchant-choice')) {
+      applyAffixRandomEnchantment(skillId, affixSkill, candidates);
+      renderUnifiedShop();
+      renderBuildManager();
+    } else {
+      renderAffixEnchantmentModal(skillId, affixSkill, candidates);
+    }
+    return;
+  }
+
+  // 旧系统：产出者/转化者/增幅者走附魔系统
   if (isProducer(skillId) || isConverter(skillId) || isAmplifier(skillId)) {
     if (state.player.enchantedSkills.has(skillId)) return;
     // 职业门控：蜕变师失去附魔选择权 → 随机附魔
@@ -980,6 +1014,10 @@ export function sellSkill(skillId: string): void {
   state.player.evolvedSkills.delete(skillId);
   state.player.enchantedSkills.delete(skillId);
 
+  // 移除词条制技能数据（AC4 — 运行时状态丢弃）
+  state.affixSkills.delete(skillId);
+  state.affixSkillStates.delete(skillId);
+
   // 移除技能
   state.player.skills.delete(skillId);
 
@@ -1013,6 +1051,89 @@ function closeEnchantmentModal(): void {
 
 // === 随机附魔（蜕变师失去附魔选择权时使用） ===
 // 不调用 applyEnchantment 避免：双重 feedback + 无用 closeModal + 冗余 re-render
+// === 词条制技能附魔（写入 enchantmentIds） ===
+
+function getQuestEnchantmentDef(type: EnchantmentType) {
+  return QUEST_ENCHANTMENT_DEFS.find(d => d.type === type);
+}
+
+/** 词条制技能随机附魔（蜕变师路径） */
+function applyAffixRandomEnchantment(
+  skillId: string,
+  affixSkill: import('../data/affixes').AffixSkillInstance,
+  candidates: EnchantmentType[],
+): void {
+  const chosen = candidates[Math.floor(random() * candidates.length)];
+  affixSkill.enchantmentIds.push(chosen);
+  const def = getQuestEnchantmentDef(chosen);
+  if (def) {
+    showFeedback(t('shop.random_enchant', { icon: '✨', name: def.name }), '#f9ca24');
+  }
+  resolveRelicEffectsWithBehaviors('on_enchantment_acquire', {
+    enchantedSkillId: skillId,
+    enchantmentId: chosen,
+  });
+  if (state.player.relics.has('star_chart')) {
+    state.player.relicStates['star_chart'] = (state.player.relicStates['star_chart'] ?? 0) + 1;
+  }
+  playSound('buy');
+}
+
+/** 词条制技能附魔选择界面 */
+function renderAffixEnchantmentModal(
+  skillId: string,
+  affixSkill: import('../data/affixes').AffixSkillInstance,
+  candidates: EnchantmentType[],
+): void {
+  _enchantmentOnClose = null;
+  const modal = document.getElementById('enchantment-modal');
+  const titleEl = document.getElementById('enchantment-title');
+  const branchesEl = document.getElementById('enchantment-branches');
+  const cancelBtn = document.getElementById('enchantment-cancel');
+  if (!modal || !titleEl || !branchesEl || !cancelBtn) return;
+
+  // 取最多 2 个候选
+  const shown = candidates.length <= 2 ? candidates : [
+    candidates[Math.floor(random() * candidates.length)],
+    candidates[Math.floor(random() * candidates.length)],
+  ].filter((v, i, a) => a.indexOf(v) === i); // dedupe
+
+  titleEl.textContent = t('shop.enchant_choose', { name: affixSkill.name });
+  branchesEl.innerHTML = '';
+
+  shown.forEach(enchType => {
+    const def = getQuestEnchantmentDef(enchType);
+    if (!def) return;
+    const card = document.createElement('div');
+    card.className = 'enchantment-branch';
+    card.innerHTML = `
+      <div class="enchantment-category-tag" style="color:#4ecdc4">${t('shop.enchant_cat.quest') || '任务'}</div>
+      <div class="enchantment-branch-icon">✨</div>
+      <div class="enchantment-branch-name">${def.name}</div>
+      <div class="enchantment-branch-desc">${def.effectDesc} (${def.targetStacks}次触发)</div>
+    `;
+    card.onclick = () => {
+      affixSkill.enchantmentIds.push(enchType);
+      resolveRelicEffectsWithBehaviors('on_enchantment_acquire', {
+        enchantedSkillId: skillId,
+        enchantmentId: enchType,
+      });
+      if (state.player.relics.has('star_chart')) {
+        state.player.relicStates['star_chart'] = (state.player.relicStates['star_chart'] ?? 0) + 1;
+      }
+      showFeedback(t('shop.enchanted', { icon: '✨', name: def.name }), '#f9ca24');
+      playSound('buy');
+      closeEnchantmentModal();
+      renderUnifiedShop();
+      renderBuildManager();
+    };
+    branchesEl.appendChild(card);
+  });
+
+  cancelBtn.onclick = () => closeEnchantmentModal();
+  modal.style.display = 'flex';
+}
+
 export function applyRandomEnchantment(skillId: string): void {
   const skillRelation = isAmplifier(skillId) ? AMPLIFIERS[skillId].positionRelation : undefined;
   const [enchA, enchB] = drawEnchantmentPair(skillRelation);
@@ -1847,7 +1968,7 @@ function hideHeatmapTooltip(): void {
 }
 
 // === 遗物悬停提示 ===
-const RARITY_COLORS: Record<string, string> = { common: '#aaa', rare: '#4488cc', legendary: '#ffd700' };
+const RELIC_RARITY_COLORS: Record<string, string> = { common: '#aaa', rare: '#4488cc', legendary: '#ffd700' };
 function getRarityLabel(rarity: string): string {
   return t(`shop.rarity.${rarity}`);
 }
@@ -1857,7 +1978,7 @@ function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicDa
   const tip = document.createElement('div');
   tip.id = 'relic-tooltip';
   tip.className = 'key-tooltip';
-  const rarityColor = RARITY_COLORS[relic.rarity] || '#aaa';
+  const rarityColor = RELIC_RARITY_COLORS[relic.rarity] || '#aaa';
   tip.innerHTML =
     `<div style="font-size:14px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${localizeItemName(relic.id, relic.name)}</div>` +
     `<div style="font-size:9px;padding:1px 4px;border-radius:3px;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${getRarityLabel(relic.rarity)}</div>` +

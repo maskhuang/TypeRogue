@@ -8,6 +8,11 @@ import { drawBossModifiers } from '../../data/bossModifiers'
 import { DELETED_SKILL_IDS, DELETED_EVOLUTION_IDS } from '../../data/skills'
 import { DELETED_RELIC_IDS, MAX_RELIC_SLOTS } from '../../data/relics'
 import type { ClassId } from '../types'
+import type { AffixSkillInstance, SkillRuntimeState } from '../../data/affixes'
+import { createSkillRuntimeState } from '../../data/affixes'
+import { serializeSkill, deserializeSkill, migrateLoadedSkills } from '../../data/affixTrigger'
+import { generateName } from '../../data/skillGeneration'
+import { RESOURCE_ICONS } from '../constants'
 
 /**
  * 技能实例（已获得的技能）
@@ -134,6 +139,12 @@ export interface RunStateData {
 
   /** 词库（含造词师造出的词） */
   wordDeck: string[]
+
+  /** 词条制技能定义（35.9） */
+  affixSkills: Map<string, AffixSkillInstance>
+
+  /** 词条制技能运行时状态（35.9） */
+  affixSkillStates: Map<string, SkillRuntimeState>
 }
 
 /**
@@ -191,6 +202,8 @@ export class RunState {
       seenSkillTypes: new Set(),
       amplifierStacks: new Map(),
       wordDeck: [],
+      affixSkills: new Map(),
+      affixSkillStates: new Map(),
     }
   }
 
@@ -246,6 +259,10 @@ export class RunState {
         this.data.bindings.delete(key)
       }
     }
+
+    // 清理词条制技能数据（35.9 review fix）
+    this.data.affixSkills.delete(skillId)
+    this.data.affixSkillStates.delete(skillId)
 
     return true
   }
@@ -531,6 +548,10 @@ export class RunState {
       seenSkillTypes: Array.from(this.data.seenSkillTypes),
       amplifierStacks: Object.fromEntries(this.data.amplifierStacks),
       wordDeck: [...this.data.wordDeck],
+      affixSkillData: [...this.data.affixSkills.entries()].map(([id, skill]) => {
+        const rt = this.data.affixSkillStates.get(id) || createSkillRuntimeState(id)
+        return serializeSkill(skill, rt)
+      }),
     }
   }
 
@@ -632,6 +653,18 @@ export class RunState {
     Object.entries(ampEntries).forEach(([skillId, count]) => {
       runState.data.amplifierStacks.set(skillId, count as number)
     })
+
+    // 恢复词条制技能（35.9）
+    const rawAffixSkills: any[] = (parsed as any).affixSkillData || []
+    const migratedSkills = migrateLoadedSkills(rawAffixSkills)
+    for (const saveData of migratedSkills) {
+      const { skill, runtimeState } = deserializeSkill(saveData)
+      // TODO(35-9): 恢复显示名和图标
+      skill.name = generateName(skill.resource, skill.affixes)
+      skill.icon = RESOURCE_ICONS[skill.resource] || '?'
+      runState.data.affixSkills.set(skill.id, skill)
+      runState.data.affixSkillStates.set(skill.id, runtimeState)
+    }
 
     return runState
   }

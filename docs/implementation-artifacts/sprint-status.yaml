@@ -342,8 +342,8 @@ development_status:
   35-5-enchantment-splash-apprentice: done
   35-6-enchantment-quest-18: done
   35-7-enchantment-transmute-passive-operator: done
-  35-8-state-lifecycle-serialization: backlog
-  35-9-shop-integration: backlog
+  35-8-state-lifecycle-serialization: done
+  35-9-shop-integration: done
   35-10-mutation-system: backlog
   35-11-ui-keyboard-combat: backlog
   35-12-relic-adaptation: backlog

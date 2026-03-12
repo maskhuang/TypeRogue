@@ -4,6 +4,7 @@
 
 import type { BossModifierId } from '../data/bossModifiers';
 import type { PositionRelation } from '../data/keyboardTopology';
+import type { AffixSkillInstance, SkillRuntimeState } from '../data/affixes';
 
 // === 职业系统 ===
 export type ClassId = 'none' | 'wordsmith' | 'metamorph';
@@ -208,6 +209,8 @@ export interface GameState {
   craftedWords: string[];                           // 造词师：本 Run 已造词列表，跨关保持，Run 重置
   mutagenInventory: number;                        // 蜕变师：变异素库存，跨关保持，Run 重置
   unstableResources: Map<string, ResourceType>;    // 不稳定附魔：每关随机资源分配（skillId → 资源类型），每关重置
+  affixSkills: Map<string, AffixSkillInstance>;      // 词条制技能定义（skillId → 完整技能数据），35.9
+  affixSkillStates: Map<string, SkillRuntimeState>;  // 词条制技能运行时状态（skillId → 8字段状态），35.9
   endlessUnlocked: boolean;                // 无尽模式是否解锁
   gameMode: 'normal' | 'daily';           // 游戏模式
   dailySeed: number | null;                // 每日挑战种子（daily 模式时非 null）
@@ -251,6 +254,7 @@ export interface ShopItem {
   id: string;              // 商品唯一 ID
   type: 'skill' | 'pack' | 'relic';
   skillId?: string;
+  affixSkill?: AffixSkillInstance;  // 词条制技能数据（35.9）
   pack?: WordPack;         // 牌包数据（type='pack' 时）
   relicId?: string;        // 遗物 ID（type='relic' 时）
   cost: number;
