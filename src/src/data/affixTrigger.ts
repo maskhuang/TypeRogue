@@ -3,12 +3,14 @@
 // ============================================
 // Story 35.3: Phase 1~3（基础值 → 加算层 → 乘算层）
 // Story 35.4: Phase 4~6（资源写入 → 后触发 → 邻居通知）
+// Story 35.5: 学徒附魔 12 类 + 溅射数据 + 职业过滤
+// Story 35.6: 任务附魔完善 + Mirror/Gravity 助手 + 抽取过滤 + Twin
 // 设计文档: docs/design/affix-skill-system.md §五
 
 import type { ResourceType, ResourceState } from '../core/types'
 import {
   AffixType, AffixInstance, AffixSkillInstance, SkillRuntimeState,
-  EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS,
+  EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS, QUEST_AFFIX_MAP,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 
@@ -458,10 +460,12 @@ export function resolvePhase3(
 
       case AffixType.Ligature: {
         const n = countOccurrences(ctx.triggerKey, ctx.currentWord)
-        if (n >= 2) {
-          output *= n
-          multipliers.push(n)
-          flags.ligatureCount = n
+        const cLig = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestOverlap)
+        const nEff = n + cLig
+        if (nEff >= 2) {
+          output *= nEff
+          multipliers.push(nEff)
+          flags.ligatureCount = nEff
         }
         break
       }
@@ -608,8 +612,13 @@ function checkQuestEventCondition(
     case 'affixProc:cascade': return triggerFlags.isCascade
     case 'affixProc:recurse': return recurseProc
     case 'affixProc:taboo_penalty': return triggerFlags.isTabooPenalty
-    // 外部事件（wordComplete, perfectWord, longWord, comboReach, stageCleared, neighborTrigger, mutationApplied）
-    // 不在 Phase 5 处理，由调用方在对应事件回调中处理
+    // ── Phase 5 可判断的事件（使用 TriggerContext 字段） ──
+    case 'perfectWord': return ctx.perfectWord === true
+    case 'wordComplete': return ctx.wordCompleted === true
+    case 'longWord:6': return ctx.wordCompleted === true && ctx.currentWord.length >= 6
+    // ── neighborTrigger 在 Phase 6 独立处理（QuestResonance），Phase 5 不重复叠层 ──
+    case 'neighborTrigger': return false
+    // ── 外部事件（comboReach:15, stageCleared）由调用方通过 applyQuestEvent 处理 ──
     default: return false
   }
 }
@@ -684,9 +693,10 @@ export function resolvePhase5(
 
       case AffixType.Recurse: {
         if (recurseDepth >= MAX_RECURSE_DEPTH) break
-        const chance = affix.recurseChance ?? 0
-        if (ctx.randomFn() < chance) {
-          result.recurse = { shouldRecurse: true, newChance: chance / 2 }
+        const cRec = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestIterate)
+        const chanceEff = (affix.recurseChance ?? 0) + cRec * 0.03
+        if (ctx.randomFn() < chanceEff) {
+          result.recurse = { shouldRecurse: true, newChance: chanceEff / 2 }
           recurseProc = true
         }
         break
@@ -963,6 +973,158 @@ export function applyApprenticeEvent(
     return true
   }
   return false
+}
+
+// ===== 任务附魔外部事件回调 =====
+
+/** 任务附魔外部事件→附魔类型映射（可多对一） */
+const QUEST_EXTERNAL_EVENT_MAP: Record<string, EnchantmentType[]> = {
+  stageCleared: [EnchantmentType.QuestMirror],
+  comboReach: [EnchantmentType.QuestPurify],
+}
+
+/**
+ * 外部任务事件回调：系统层在对应事件发生时调用。
+ * 遍历 enchantmentIds，匹配事件→questStacks++→满层 questCompletions++ 并重置。
+ * 纯函数（仅修改传入的 runtimeState），不调用系统层。
+ */
+export function applyQuestEvent(
+  event: string,
+  runtimeState: SkillRuntimeState,
+  enchantmentIds: string[],
+): boolean {
+  const targetEnchs = QUEST_EXTERNAL_EVENT_MAP[event]
+  if (!targetEnchs) return false
+
+  let applied = false
+  for (const targetEnch of targetEnchs) {
+    if (!enchantmentIds.includes(targetEnch)) continue
+    const def = QUEST_ENCHANTMENT_DEFS.find(d => d.type === targetEnch)
+    if (!def) continue
+
+    runtimeState.questStacks++
+    if (runtimeState.questStacks >= def.targetStacks) {
+      runtimeState.questStacks = 0
+      runtimeState.questCompletions++
+    }
+    applied = true
+  }
+  return applied
+}
+
+// ===== Gravity / Mirror 数据助手 =====
+
+/**
+ * 获取 Gravity 词条的有效 probMult（含 QuestPolarize 增强）。
+ * 供词选系统在触发流水线外调用，data 层纯函数。
+ * 注意：probMult=1.0（中性）时，quest 增强偏向引力方向（>=1 分支）。
+ */
+export function getEffectiveProbMult(
+  affix: AffixInstance,
+  runtimeState: SkillRuntimeState,
+  skill: AffixSkillInstance,
+): number {
+  const baseProbMult = affix.probMult ?? 1
+  const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestPolarize)
+  if (c === 0) return baseProbMult
+
+  const delta = Math.abs(baseProbMult - 1)
+  const enhancedDelta = delta + c * 0.15
+  return baseProbMult >= 1 ? 1 + enhancedDelta : 1 - enhancedDelta
+}
+
+/**
+ * Mirror 词条关卡初始化：从邻居复制一个词条（含 QuestMirror ×1.1^c 增强）。
+ * 供系统层在关卡开始时调用，返回复制的 AffixInstance 或 null。
+ * 注意：调用方须将 ctx.triggerKey 设为 Mirror 技能的绑定键位（非当前按键）。
+ */
+export function resolveMirrorCopy(
+  skill: AffixSkillInstance,
+  runtimeState: SkillRuntimeState,
+  ctx: TriggerContext,
+): AffixInstance | null {
+  const mirrorAffix = skill.affixes.find(a => a.type === AffixType.Mirror)
+  if (!mirrorAffix?.posRel) return null
+
+  // 获取范围内有绑定技能的邻居键位
+  const neighborKeys = getKeysWithRelation(ctx.triggerKey, mirrorAffix.posRel)
+    .filter(k => ctx.bindings.has(k) && k !== ctx.triggerKey)
+
+  if (neighborKeys.length === 0) return null
+
+  // 随机选一个邻居
+  const neighborKey = neighborKeys[Math.floor(ctx.randomFn() * neighborKeys.length)]
+  const neighborSkillId = ctx.bindings.get(neighborKey)
+  if (!neighborSkillId) return null
+
+  const neighborSkill = ctx.allSkills.get(neighborSkillId)
+  if (!neighborSkill || neighborSkill.affixes.length === 0) return null
+
+  // 随机选一个词条（排除 Mirror 和 Twin）
+  const copyable = neighborSkill.affixes.filter(
+    a => a.type !== AffixType.Mirror && a.type !== AffixType.Twin,
+  )
+  if (copyable.length === 0) return null
+
+  const source = copyable[Math.floor(ctx.randomFn() * copyable.length)]
+  const copied: AffixInstance = { ...source }
+
+  // QuestMirror 增强：所有数值参数 ×1.1^c（设计文档："复制参数 ×1.1"）
+  const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestMirror)
+  if (c > 0) {
+    const boost = Math.pow(1.1, c)
+    // 加算类参数：直接 ×boost
+    if (copied.k != null) copied.k *= boost
+    if (copied.bonusPercent != null) copied.bonusPercent *= boost
+    if (copied.bonusPerSlot != null) copied.bonusPerSlot *= boost
+    if (copied.valuePerStack != null) copied.valuePerStack *= boost
+    if (copied.maxBonus != null) copied.maxBonus *= boost
+    if (copied.recurseChance != null) copied.recurseChance *= boost
+    if (copied.efficiency != null) copied.efficiency *= boost
+    if (copied.chance != null) copied.chance *= boost
+    if (copied.gainPerSec != null) copied.gainPerSec *= boost
+    if (copied.floor != null) copied.floor *= boost
+    if (copied.penaltyChance != null) copied.penaltyChance *= boost
+    if (copied.decayPerTrigger != null) copied.decayPerTrigger *= boost
+    if (copied.probMult != null) copied.probMult *= boost
+    if (copied.interval != null) copied.interval *= boost
+    // 乘算类参数：boost 作用于 (m-1) 增量
+    if (copied.multiplier != null) copied.multiplier = 1 + (copied.multiplier - 1) * boost
+    if (copied.critMult != null) copied.critMult = 1 + (copied.critMult - 1) * boost
+    if (copied.burstMult != null) copied.burstMult = 1 + (copied.burstMult - 1) * boost
+    if (copied.cascadeMult != null) copied.cascadeMult = 1 + (copied.cascadeMult - 1) * boost
+    if (copied.initialMult != null) copied.initialMult = 1 + (copied.initialMult - 1) * boost
+  }
+
+  return copied
+}
+
+// ===== 任务附魔抽取过滤 + Twin =====
+
+/**
+ * 返回技能可抽取的任务附魔候选列表。
+ * 仅返回技能拥有对应词条的任务，且排除已有的附魔。
+ */
+export function filterQuestCandidates(skill: AffixSkillInstance): EnchantmentType[] {
+  const skillAffixTypes = new Set(skill.affixes.map(a => a.type))
+  const existingEnchs = new Set(skill.enchantmentIds)
+
+  return (Object.entries(QUEST_AFFIX_MAP) as [EnchantmentType, AffixType | AffixType[]][])
+    .filter(([enchType, targetAffix]) => {
+      if (existingEnchs.has(enchType)) return false
+      if (Array.isArray(targetAffix)) {
+        return targetAffix.some(t => skillAffixTypes.has(t))
+      }
+      return skillAffixTypes.has(targetAffix)
+    })
+    .map(([enchType]) => enchType)
+}
+
+/**
+ * 返回技能的附魔槽位数量。Twin 词条使附魔数量翻倍（1→2）。
+ */
+export function getEnchantmentSlotCount(skill: AffixSkillInstance): number {
+  return skill.affixes.some(a => a.type === AffixType.Twin) ? 2 : 1
 }
 
 // ===== 内部辅助 =====

@@ -14,6 +14,8 @@ import {
   APPRENTICE_NEIGHBOR_GROWTH,
   SPLASH_ENCHANTMENT_DEFS,
   CLASS_RESTRICTED_ENCHANTMENTS,
+  QUEST_AFFIX_MAP,
+  QUEST_ENCHANTMENT_DEFS,
   filterEnchantmentsByClass,
 } from '../../../src/data/affixes'
 import { PositionRelation } from '../../../src/data/keyboardTopology'
@@ -44,6 +46,11 @@ import {
   findWeakestNeighbor,
   pickRandomKeys,
   applyApprenticeEvent,
+  applyQuestEvent,
+  getEffectiveProbMult,
+  resolveMirrorCopy,
+  filterQuestCandidates,
+  getEnchantmentSlotCount,
   ALL_RESOURCES,
   MAX_RECURSE_DEPTH,
   APPRENTICE_GROWTH_DEFAULTS,
@@ -2265,5 +2272,412 @@ describe('Story 35.5: filterEnchantmentsByClass', () => {
     const result = filterEnchantmentsByClass(candidates, 'unknown')
     expect(result).not.toContain(EnchantmentType.ApprenticeHarvest)
     expect(result).not.toContain(EnchantmentType.ApprenticeAdapt)
+  })
+})
+
+// ===== Story 35.6: 任务附魔完善 =====
+
+describe('Story 35.6: checkQuestEventCondition inline events', () => {
+  // checkQuestEventCondition is internal, test through Phase 5 quest stacking
+  it('perfectWord event: QuestAscend should stack on perfectWord', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
+      enchantmentIds: [EnchantmentType.QuestAscend],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ perfectWord: true })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.questStacks).toBe(1)
+  })
+
+  it('perfectWord event: QuestAscend should NOT stack when perfectWord is false', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
+      enchantmentIds: [EnchantmentType.QuestAscend],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ perfectWord: false })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.questStacks).toBe(0)
+  })
+
+  it('wordComplete event: QuestEnergize should stack on wordCompleted', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Charge, maxBonus: 1.0 }],
+      enchantmentIds: [EnchantmentType.QuestEnergize],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ wordCompleted: true })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.questStacks).toBe(1)
+  })
+
+  it('wordComplete event: QuestPolarize should stack on wordCompleted', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Gravity, probMult: 1.5 }],
+      enchantmentIds: [EnchantmentType.QuestPolarize],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ wordCompleted: true })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.questStacks).toBe(1)
+  })
+
+  it('longWord:6 event: QuestFission should stack on wordCompleted + length >= 6', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Replicate, posRel: PositionRelation.Adjacent }],
+      enchantmentIds: [EnchantmentType.QuestFission],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ currentWord: 'banana', wordCompleted: true })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.questStacks).toBe(1)
+  })
+
+  it('longWord:6 event: QuestFission should NOT stack on short word', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Replicate, posRel: PositionRelation.Adjacent }],
+      enchantmentIds: [EnchantmentType.QuestFission],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ currentWord: 'apple', wordCompleted: true })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.questStacks).toBe(0)
+  })
+
+  it('neighborTrigger event: should return false in Phase 5 (handled in Phase 6)', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Resonance, posRel: PositionRelation.Adjacent, efficiency: 0.5 }],
+      enchantmentIds: [EnchantmentType.QuestResonance],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    // neighborTrigger returns false in Phase 5 → no stacking
+    expect(state.questStacks).toBe(0)
+  })
+})
+
+describe('Story 35.6: QuestOverlap — Phase 3 Ligature integration', () => {
+  it('should use nEff = n + questCompletions as multiplier', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Ligature }],
+      enchantmentIds: [EnchantmentType.QuestOverlap],
+    })
+    // 'a' appears 1 time in 'apple', + 2 quest completions = nEff = 3
+    const state = makeRuntimeState({ questCompletions: 2 })
+    const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple' })
+    const result = resolvePhase3(skill, state, ctx, 10)
+    expect(result.output).toBeCloseTo(30) // 10 * 3
+    expect(result.flags.ligatureCount).toBe(3)
+  })
+
+  it('should not trigger when nEff < 2 (n=1, c=0)', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Ligature }],
+      enchantmentIds: [EnchantmentType.QuestOverlap],
+    })
+    const state = makeRuntimeState({ questCompletions: 0 })
+    const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple' })
+    const result = resolvePhase3(skill, state, ctx, 10)
+    expect(result.output).toBeCloseTo(10) // no multiplier
+    expect(result.flags.ligatureCount).toBe(0)
+  })
+
+  it('should trigger when quest makes nEff reach 2 (n=1, c=1)', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Ligature }],
+      enchantmentIds: [EnchantmentType.QuestOverlap],
+    })
+    const state = makeRuntimeState({ questCompletions: 1 })
+    const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple' })
+    const result = resolvePhase3(skill, state, ctx, 10)
+    expect(result.output).toBeCloseTo(20) // 10 * 2
+    expect(result.flags.ligatureCount).toBe(2)
+  })
+})
+
+describe('Story 35.6: QuestIterate — Phase 5 Recurse integration', () => {
+  it('should increase recurse chance with quest completions', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Recurse, recurseChance: 0.1 }],
+      enchantmentIds: [EnchantmentType.QuestIterate],
+    })
+    const state = makeRuntimeState({ questCompletions: 2 })
+    // chanceEff = 0.1 + 2*0.03 = 0.16, randomFn returns 0.15 → should recurse
+    const ctx = makeContext({ randomFn: () => 0.15 })
+    const result = resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(result.recurse.shouldRecurse).toBe(true)
+    expect(result.recurse.newChance).toBeCloseTo(0.08) // 0.16 / 2
+  })
+
+  it('should use base chance when no quest completions', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Recurse, recurseChance: 0.1 }],
+    })
+    const state = makeRuntimeState({ questCompletions: 0 })
+    // randomFn returns 0.15 → 0.15 > 0.1, should NOT recurse
+    const ctx = makeContext({ randomFn: () => 0.15 })
+    const result = resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(result.recurse.shouldRecurse).toBe(false)
+  })
+})
+
+describe('Story 35.6: getEffectiveProbMult', () => {
+  it('should return base probMult when no quest completions', () => {
+    const affix: AffixInstance = { type: AffixType.Gravity, probMult: 1.5 }
+    const skill = makeSkill({ affixes: [affix] })
+    const state = makeRuntimeState()
+    expect(getEffectiveProbMult(affix, state, skill)).toBeCloseTo(1.5)
+  })
+
+  it('should enhance attraction (probMult > 1) with quest completions', () => {
+    const affix: AffixInstance = { type: AffixType.Gravity, probMult: 1.5 }
+    const skill = makeSkill({
+      affixes: [affix],
+      enchantmentIds: [EnchantmentType.QuestPolarize],
+    })
+    const state = makeRuntimeState({ questCompletions: 2 })
+    // delta=0.5, enhanced=0.5+2*0.15=0.8, result=1+0.8=1.8
+    expect(getEffectiveProbMult(affix, state, skill)).toBeCloseTo(1.8)
+  })
+
+  it('should enhance repulsion (probMult < 1) with quest completions', () => {
+    const affix: AffixInstance = { type: AffixType.Gravity, probMult: 0.5 }
+    const skill = makeSkill({
+      affixes: [affix],
+      enchantmentIds: [EnchantmentType.QuestPolarize],
+    })
+    const state = makeRuntimeState({ questCompletions: 2 })
+    // delta=0.5, enhanced=0.5+2*0.15=0.8, result=1-0.8=0.2
+    expect(getEffectiveProbMult(affix, state, skill)).toBeCloseTo(0.2)
+  })
+
+  it('should handle probMult = 1 (no deviation) with quest', () => {
+    const affix: AffixInstance = { type: AffixType.Gravity, probMult: 1.0 }
+    const skill = makeSkill({
+      affixes: [affix],
+      enchantmentIds: [EnchantmentType.QuestPolarize],
+    })
+    const state = makeRuntimeState({ questCompletions: 3 })
+    // delta=0, enhanced=0+3*0.15=0.45, result=1+0.45=1.45
+    expect(getEffectiveProbMult(affix, state, skill)).toBeCloseTo(1.45)
+  })
+})
+
+describe('Story 35.6: resolveMirrorCopy', () => {
+  it('should copy a random affix from a neighbor skill', () => {
+    const neighborSkill = makeSkill({
+      id: 'neighbor',
+      affixes: [{ type: AffixType.Crit, chance: 0.2, critMult: 2.0 }],
+    })
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+    })
+    const state = makeRuntimeState()
+    const bindings = new Map([['a', 'test_skill'], ['s', 'neighbor']])
+    const allSkills = new Map([['test_skill', skill], ['neighbor', neighborSkill]])
+    const ctx = makeContext({
+      triggerKey: 'a',
+      bindings,
+      allSkills,
+      randomFn: () => 0.0, // always pick first
+    })
+
+    const copied = resolveMirrorCopy(skill, state, ctx)
+    expect(copied).not.toBeNull()
+    expect(copied!.type).toBe(AffixType.Crit)
+    expect(copied!.chance).toBeCloseTo(0.2)
+    expect(copied!.critMult).toBeCloseTo(2.0)
+  })
+
+  it('should return null when no neighbors have skills', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ triggerKey: 'a', bindings: new Map() })
+
+    expect(resolveMirrorCopy(skill, state, ctx)).toBeNull()
+  })
+
+  it('should apply QuestMirror boost to copied affix params (additive)', () => {
+    const neighborSkill = makeSkill({
+      id: 'neighbor',
+      affixes: [{ type: AffixType.Convert, k: 0.1, source: 'base' as ResourceType }],
+    })
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+      enchantmentIds: [EnchantmentType.QuestMirror],
+    })
+    const state = makeRuntimeState({ questCompletions: 2 })
+    const bindings = new Map([['a', 'test_skill'], ['s', 'neighbor']])
+    const allSkills = new Map([['test_skill', skill], ['neighbor', neighborSkill]])
+    const ctx = makeContext({
+      triggerKey: 'a',
+      bindings,
+      allSkills,
+      randomFn: () => 0.0,
+    })
+
+    const copied = resolveMirrorCopy(skill, state, ctx)
+    expect(copied).not.toBeNull()
+    // k boosted by 1.1^2 = 1.21 → 0.1 * 1.21 = 0.121
+    expect(copied!.k).toBeCloseTo(0.121, 2)
+  })
+
+  it('should boost all numeric params including chance/gainPerSec/floor', () => {
+    const neighborSkill = makeSkill({
+      id: 'neighbor',
+      affixes: [{ type: AffixType.Crit, chance: 0.2, critMult: 2.0 }],
+    })
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+      enchantmentIds: [EnchantmentType.QuestMirror],
+    })
+    const state = makeRuntimeState({ questCompletions: 1 })
+    const bindings = new Map([['a', 'test_skill'], ['s', 'neighbor']])
+    const allSkills = new Map([['test_skill', skill], ['neighbor', neighborSkill]])
+    const ctx = makeContext({
+      triggerKey: 'a',
+      bindings,
+      allSkills,
+      randomFn: () => 0.0,
+    })
+
+    const copied = resolveMirrorCopy(skill, state, ctx)
+    expect(copied).not.toBeNull()
+    // chance: 0.2 * 1.1 = 0.22 (additive boost)
+    expect(copied!.chance).toBeCloseTo(0.22)
+    // critMult: 1 + (2.0-1)*1.1 = 1 + 1.1 = 2.1 (multiplicative boost)
+    expect(copied!.critMult).toBeCloseTo(2.1)
+  })
+
+  it('should return null when neighbor has only Mirror/Twin affixes', () => {
+    const neighborSkill = makeSkill({
+      id: 'neighbor',
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+    })
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+    })
+    const state = makeRuntimeState()
+    const bindings = new Map([['a', 'test_skill'], ['s', 'neighbor']])
+    const allSkills = new Map([['test_skill', skill], ['neighbor', neighborSkill]])
+    const ctx = makeContext({
+      triggerKey: 'a',
+      bindings,
+      allSkills,
+      randomFn: () => 0.0,
+    })
+
+    expect(resolveMirrorCopy(skill, state, ctx)).toBeNull()
+  })
+})
+
+describe('Story 35.6: applyQuestEvent', () => {
+  it('stageCleared: QuestMirror (targetStacks=1) should immediately cycle', () => {
+    const state = makeRuntimeState()
+    const result = applyQuestEvent('stageCleared', state, [EnchantmentType.QuestMirror])
+    expect(result).toBe(true)
+    // targetStacks=1, so stacks immediately hit target → reset + completion
+    expect(state.questStacks).toBe(0)
+    expect(state.questCompletions).toBe(1)
+  })
+
+  it('comboReach: QuestPurify (targetStacks=3) should increment stacks', () => {
+    const state = makeRuntimeState()
+    const result = applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
+    expect(result).toBe(true)
+    expect(state.questStacks).toBe(1) // 1 of 3 target
+    expect(state.questCompletions).toBe(0)
+  })
+
+  it('should cycle: QuestPurify completions++ after 3 comboReach events', () => {
+    const state = makeRuntimeState()
+    applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
+    applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
+    applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
+    expect(state.questStacks).toBe(0) // reset after 3
+    expect(state.questCompletions).toBe(1)
+  })
+
+  it('should return false for unknown event', () => {
+    const state = makeRuntimeState()
+    expect(applyQuestEvent('unknownEvent', state, [EnchantmentType.QuestMirror])).toBe(false)
+    expect(state.questStacks).toBe(0)
+  })
+
+  it('should return false when enchantment not in list', () => {
+    const state = makeRuntimeState()
+    expect(applyQuestEvent('stageCleared', state, [EnchantmentType.QuestDevour])).toBe(false)
+  })
+})
+
+describe('Story 35.6: filterQuestCandidates', () => {
+  it('should return matching quest enchantments for skill affixes', () => {
+    const skill = makeSkill({
+      affixes: [
+        { type: AffixType.Crit, chance: 0.2, critMult: 2.0 },
+        { type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.1 },
+      ],
+    })
+    const candidates = filterQuestCandidates(skill)
+    expect(candidates).toContain(EnchantmentType.QuestOverload) // Crit
+    expect(candidates).toContain(EnchantmentType.QuestDevour) // Void
+    expect(candidates).not.toContain(EnchantmentType.QuestRefine) // no Convert
+  })
+
+  it('should return empty when no matching affixes', () => {
+    const skill = makeSkill({ affixes: [] })
+    expect(filterQuestCandidates(skill)).toHaveLength(0)
+  })
+
+  it('should handle QuestResonance matching either Resonance or Link', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Link, posRel: PositionRelation.Adjacent, efficiency: 0.5 }],
+    })
+    const candidates = filterQuestCandidates(skill)
+    expect(candidates).toContain(EnchantmentType.QuestResonance)
+  })
+
+  it('should exclude already-owned enchantments', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Crit, chance: 0.2, critMult: 2.0 }],
+      enchantmentIds: [EnchantmentType.QuestOverload],
+    })
+    const candidates = filterQuestCandidates(skill)
+    expect(candidates).not.toContain(EnchantmentType.QuestOverload)
+  })
+})
+
+describe('Story 35.6: getEnchantmentSlotCount', () => {
+  it('should return 1 for normal skills', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Crit, chance: 0.2, critMult: 2.0 }],
+    })
+    expect(getEnchantmentSlotCount(skill)).toBe(1)
+  })
+
+  it('should return 2 for skills with Twin affix', () => {
+    const skill = makeSkill({
+      affixes: [
+        { type: AffixType.Crit, chance: 0.2, critMult: 2.0 },
+        { type: AffixType.Twin },
+      ],
+    })
+    expect(getEnchantmentSlotCount(skill)).toBe(2)
+  })
+})
+
+describe('Story 35.6: QUEST_ENCHANTMENT_DEFS completeness', () => {
+  it('should have exactly 18 quest enchantment definitions', () => {
+    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(18)
+  })
+
+  it('every quest enchantment should have a matching QUEST_AFFIX_MAP entry', () => {
+    for (const def of QUEST_ENCHANTMENT_DEFS) {
+      expect(QUEST_AFFIX_MAP[def.type]).toBeDefined()
+    }
   })
 })
