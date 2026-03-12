@@ -6,6 +6,8 @@
 import { Container, Graphics, Text, TextStyle, Texture, Sprite, FederatedPointerEvent } from 'pixi.js'
 import { keyTooltip } from './KeyTooltip'
 import type { KeyTooltipData } from './KeyTooltip'
+import type { SkillRarity } from '../../data/affixes'
+import { RARITY_COLORS } from '../../data/affixes'
 
 /**
  * 单个按键可视化组件
@@ -26,14 +28,27 @@ export class KeyVisual extends Container {
   private skillIcon: Sprite | null = null
   private keyName: string
 
+  // 词条制状态
+  private currentRarity: SkillRarity | null = null
+  private affixDotCount: number = 0
+  private questProgressRatio: number = 0
+  private affixDotsGraphics: Graphics | null = null
+  private questProgressGraphics: Graphics | null = null
+
   // 动画状态
   private animationScale: number = 1.0
   private animationAlpha: number = 1.0
   private isAnimating: boolean = false
 
+  // 特效动画状态
+  private flashColor: number | null = null
+  private flashAlpha: number = 0
+  private flashGraphics: Graphics | null = null
+
   // 动画速度常量
   private static readonly SCALE_RECOVERY_SPEED = 2.0
   private static readonly ALPHA_RECOVERY_SPEED = 3.0
+  private static readonly FLASH_DECAY_SPEED = 4.0
 
   // 当前状态
   private isPressed: boolean = false
@@ -109,6 +124,8 @@ export class KeyVisual extends Container {
     } else if (this.isAdjacentHighlighted) {
       bgColor = KeyVisual.COLOR_ADJACENT
       borderColor = KeyVisual.COLOR_BORDER_ADJACENT
+    } else if (this.currentRarity !== null) {
+      borderColor = parseInt(RARITY_COLORS[this.currentRarity].replace('#', ''), 16)
     } else if (this.letterScore >= 6) {
       borderColor = KeyVisual.COLOR_BORDER_SCORE_HIGH
     } else if (this.letterScore >= 3) {
@@ -384,6 +401,157 @@ export class KeyVisual extends Container {
   }
 
   /**
+   * 设置稀有度边框颜色
+   */
+  setRarityBorder(rarity: SkillRarity | null): void {
+    if (this.currentRarity !== rarity) {
+      this.currentRarity = rarity
+      this.drawBackground()
+    }
+  }
+
+  /**
+   * 获取当前稀有度
+   */
+  getRarity(): SkillRarity | null {
+    return this.currentRarity
+  }
+
+  /**
+   * 设置词条数量指示点（0~3）
+   */
+  setAffixDots(count: number): void {
+    const clamped = Math.max(0, Math.min(3, Math.floor(count)))
+    if (this.affixDotCount === clamped) return
+    this.affixDotCount = clamped
+    this.drawAffixDots()
+  }
+
+  /**
+   * 获取词条数量指示点
+   */
+  getAffixDotCount(): number {
+    return this.affixDotCount
+  }
+
+  /**
+   * 绘制词条数量指示点
+   */
+  private drawAffixDots(): void {
+    if (this.affixDotCount <= 0) {
+      if (this.affixDotsGraphics) {
+        this.removeChild(this.affixDotsGraphics)
+        this.affixDotsGraphics.destroy()
+        this.affixDotsGraphics = null
+      }
+      return
+    }
+
+    if (!this.affixDotsGraphics) {
+      this.affixDotsGraphics = new Graphics()
+      this.addChild(this.affixDotsGraphics)
+    }
+    this.affixDotsGraphics.clear()
+
+    const dotRadius = 2
+    const dotGap = 6
+    const totalWidth = this.affixDotCount * dotRadius * 2 + (this.affixDotCount - 1) * (dotGap - dotRadius * 2)
+    const startX = (KeyVisual.KEY_SIZE - totalWidth) / 2 + dotRadius
+
+    for (let i = 0; i < this.affixDotCount; i++) {
+      const cx = startX + i * dotGap
+      const cy = KeyVisual.KEY_SIZE - 6
+      this.affixDotsGraphics.circle(cx, cy, dotRadius)
+    }
+    this.affixDotsGraphics.fill({ color: 0xffffff, alpha: 0.8 })
+  }
+
+  /**
+   * 设置任务进度环比例（0~1）
+   */
+  setQuestProgress(ratio: number): void {
+    const clamped = Math.max(0, Math.min(1, ratio))
+    if (this.questProgressRatio === clamped) return
+    this.questProgressRatio = clamped
+    this.drawQuestProgress()
+  }
+
+  /**
+   * 获取任务进度环比例
+   */
+  getQuestProgressRatio(): number {
+    return this.questProgressRatio
+  }
+
+  /**
+   * 绘制任务进度环
+   */
+  private drawQuestProgress(): void {
+    if (this.questProgressRatio <= 0) {
+      if (this.questProgressGraphics) {
+        this.removeChild(this.questProgressGraphics)
+        this.questProgressGraphics.destroy()
+        this.questProgressGraphics = null
+      }
+      return
+    }
+
+    if (!this.questProgressGraphics) {
+      this.questProgressGraphics = new Graphics()
+      this.addChild(this.questProgressGraphics)
+    }
+    this.questProgressGraphics.clear()
+
+    const cx = KeyVisual.KEY_SIZE / 2
+    const cy = KeyVisual.KEY_SIZE / 2
+    const radius = KeyVisual.KEY_SIZE / 2 - 1
+    const startAngle = -Math.PI / 2
+    const endAngle = startAngle + this.questProgressRatio * Math.PI * 2
+
+    this.questProgressGraphics.arc(cx, cy, radius, startAngle, endAngle)
+    this.questProgressGraphics.stroke({ color: 0xffd700, width: 2, alpha: 0.7 })
+  }
+
+  /**
+   * 播放闪光特效
+   * @param color 闪光颜色（PixiJS hex）
+   * @param alpha 初始透明度
+   */
+  playFlashEffect(color: number, alpha: number = 1.0): void {
+    this.flashColor = color
+    this.flashAlpha = alpha
+    if (!this.flashGraphics) {
+      this.flashGraphics = new Graphics()
+      this.addChild(this.flashGraphics)
+    }
+    this.drawFlash()
+    this.isAnimating = true
+  }
+
+  /**
+   * 获取闪光透明度
+   */
+  getFlashAlpha(): number {
+    return this.flashAlpha
+  }
+
+  /**
+   * 绘制闪光覆盖
+   */
+  private drawFlash(): void {
+    if (!this.flashGraphics) return
+    this.flashGraphics.clear()
+    if (this.flashColor === null || this.flashAlpha <= 0) return
+
+    this.flashGraphics.roundRect(
+      1, 1,
+      KeyVisual.KEY_SIZE - 2, KeyVisual.KEY_SIZE - 2,
+      KeyVisual.BORDER_RADIUS - 1
+    )
+    this.flashGraphics.fill({ color: this.flashColor, alpha: this.flashAlpha })
+  }
+
+  /**
    * 鼠标悬停显示 tooltip
    */
   private onPointerOver(e: FederatedPointerEvent): void {
@@ -430,11 +598,15 @@ export class KeyVisual extends Container {
   update(dt: number): void {
     if (!this.isAnimating) return
 
+    let stillAnimating = false
+
     // 缩放恢复
     if (this.animationScale > 1.0) {
       this.animationScale -= dt * KeyVisual.SCALE_RECOVERY_SPEED
       if (this.animationScale < 1.0) {
         this.animationScale = 1.0
+      } else {
+        stillAnimating = true
       }
       this.scale.set(this.animationScale)
     }
@@ -444,11 +616,27 @@ export class KeyVisual extends Container {
       this.animationAlpha -= dt * KeyVisual.ALPHA_RECOVERY_SPEED
       if (this.animationAlpha < 1.0) {
         this.animationAlpha = 1.0
-        this.isAnimating = false
-        // 确保 scale 最终重置为 1.0
         this.scale.set(1.0)
+      } else {
+        stillAnimating = true
       }
       this.background.alpha = this.animationAlpha
+    }
+
+    // 闪光衰减
+    if (this.flashAlpha > 0) {
+      this.flashAlpha -= dt * KeyVisual.FLASH_DECAY_SPEED
+      if (this.flashAlpha <= 0) {
+        this.flashAlpha = 0
+        this.flashColor = null
+      } else {
+        stillAnimating = true
+      }
+      this.drawFlash()
+    }
+
+    if (!stillAnimating) {
+      this.isAnimating = false
     }
   }
 
@@ -459,6 +647,18 @@ export class KeyVisual extends Container {
     if (this.skillIcon) {
       this.skillIcon.destroy()
       this.skillIcon = null
+    }
+    if (this.affixDotsGraphics) {
+      this.affixDotsGraphics.destroy()
+      this.affixDotsGraphics = null
+    }
+    if (this.questProgressGraphics) {
+      this.questProgressGraphics.destroy()
+      this.questProgressGraphics = null
+    }
+    if (this.flashGraphics) {
+      this.flashGraphics.destroy()
+      this.flashGraphics = null
     }
     super.destroy({ children: true })
   }

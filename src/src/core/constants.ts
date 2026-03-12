@@ -105,4 +105,8 @@ export const SOUND_PROFILES: Record<string, [number, number, number]> = {
   levelup: [400, 800, 0.15],
   gameover: [300, 100, 0.2],
   buy: [500, 380, 0.06],             // ↓中高频下行，轻快购买感
+  crit: [800, 1600, 0.15],           // ↑高频上行，暴击冲击感
+  pulse: [600, 1200, 0.12],          // ↑中高频上行，脉冲爆发感
+  quest_complete: [523, 1046, 0.14], // ↑八度上行，成就感
+  taboo: [200, 100, 0.10],           // ↓低频下行，警告感
 };

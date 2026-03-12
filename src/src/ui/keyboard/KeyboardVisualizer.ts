@@ -9,6 +9,9 @@ import { adjacencyMap } from '../../systems/skills/passive/AdjacencyMap'
 import { eventBus } from '../../core/events/EventBus'
 import type { GameEvents } from '../../core/events/EventBus'
 import type { KeyTooltipData } from './KeyTooltip'
+import { state } from '../../core/state'
+import { QUEST_ENCHANTMENT_DEFS } from '../../data/affixes'
+import type { QuestEnchantmentDef } from '../../data/affixes'
 
 /**
  * 键盘可视化组件
@@ -121,6 +124,15 @@ export class KeyboardVisualizer extends Container {
       } else {
         keyVisual.setSkillSchoolColor(null)
       }
+      // 词条制技能：稀有度边框 + 词条数圆点
+      if (skillId && state.affixSkills.has(skillId)) {
+        const affixSkill = state.affixSkills.get(skillId)!
+        keyVisual.setRarityBorder(affixSkill.rarity)
+        keyVisual.setAffixDots(affixSkill.affixes.length)
+      } else {
+        keyVisual.setRarityBorder(null)
+        keyVisual.setAffixDots(0)
+      }
     })
   }
 
@@ -212,6 +224,19 @@ export class KeyboardVisualizer extends Container {
       }
       if (data.growthValue != null) {
         keyVisual.setGrowthLabel(data.growthValue)
+      }
+      // 词条制：同步任务进度环
+      if (data.skillId && state.affixSkillStates.has(data.skillId)) {
+        const rt = state.affixSkillStates.get(data.skillId)!
+        const skill = state.affixSkills.get(data.skillId)
+        if (skill && rt.questStacks > 0) {
+          const questEnch = skill.enchantmentIds
+            .map((id: string) => QUEST_ENCHANTMENT_DEFS.find((d: QuestEnchantmentDef) => d.type === id))
+            .find((d): d is QuestEnchantmentDef => d != null)
+          if (questEnch) {
+            keyVisual.setQuestProgress(rt.questStacks / questEnch.targetStacks)
+          }
+        }
       }
     }
   }

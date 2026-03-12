@@ -344,8 +344,8 @@ development_status:
   35-7-enchantment-transmute-passive-operator: done
   35-8-state-lifecycle-serialization: done
   35-9-shop-integration: done
-  35-10-mutation-system: backlog
-  35-11-ui-keyboard-combat: backlog
+  35-10-mutation-system: done
+  35-11-ui-keyboard-combat: done
   35-12-relic-adaptation: backlog
   35-13-balance-testing: backlog
   epic-35-retrospective: optional

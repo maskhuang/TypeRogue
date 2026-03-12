@@ -5,6 +5,11 @@
 
 import { t } from '../../demo/demo-i18n'
 
+export interface AffixTooltipInfo {
+  typeName: string
+  paramSummary: string
+}
+
 export interface KeyTooltipData {
   letter?: string
   score?: number
@@ -20,6 +25,10 @@ export interface KeyTooltipData {
     affectedSkills?: string[]
     mechanicInfo?: string
     enchantmentInfo?: string
+    // 词条制技能扩展
+    affixInfo?: AffixTooltipInfo[]
+    questProgress?: string
+    apprenticeGrowth?: string
   }
 }
 
@@ -89,6 +98,22 @@ class KeyTooltipManager {
       }
       if (data.skill.enchantmentInfo) {
         html += `<div class="tooltip-enchantment" style="color:#9b59b6;font-size:10px;margin-top:3px;">${esc(data.skill.enchantmentInfo)}</div>`
+      }
+      // 词条制：词条信息区
+      if (data.skill.affixInfo && data.skill.affixInfo.length > 0) {
+        html += `<div class="tooltip-affix-section" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
+        for (const affix of data.skill.affixInfo) {
+          html += `<div class="tooltip-affix" style="color:#e67e22;font-size:10px;">[${esc(affix.typeName)}] ${esc(affix.paramSummary)}</div>`
+        }
+        html += `</div>`
+      }
+      // 词条制：任务进度
+      if (data.skill.questProgress) {
+        html += `<div class="tooltip-quest" style="color:#f1c40f;font-size:10px;margin-top:3px;">${esc(data.skill.questProgress)}</div>`
+      }
+      // 词条制：学徒成长
+      if (data.skill.apprenticeGrowth) {
+        html += `<div class="tooltip-apprentice" style="color:#2ecc71;font-size:10px;margin-top:3px;">${esc(data.skill.apprenticeGrowth)}</div>`
       }
       html += `<span class="tooltip-skill-school ${esc(data.skill.schoolCssClass)}">${esc(data.skill.school)}</span>`
       html += `</div>`

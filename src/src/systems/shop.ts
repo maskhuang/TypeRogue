@@ -40,7 +40,7 @@ import type { DragPayload } from './dragManager';
 import { IS_DEMO } from '../demo/demo-config';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 import { generateSkill } from '../data/skillGeneration';
-import { createSkillRuntimeState, AFFIX_NAMES, RARITY_COLORS } from '../data/affixes';
+import { createSkillRuntimeState, AFFIX_NAMES, RARITY_COLORS, RARITY_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
 import { getEnchantmentSlotCount, filterQuestCandidates } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS } from '../data/affixes';
@@ -54,9 +54,8 @@ export const AFFIX_SKILL_BASE_PRICE = 50;
 
 // RARITY_COLORS 从 affixes.ts 导入（白/蓝/黄/橙 四级稀有度边框颜色）
 
-const RARITY_LABELS: Record<number, string> = {
-  0: '普通', 1: '魔法', 2: '稀有', 3: '传说',
-};
+// 使用 affixes.ts 的 RARITY_NAMES 作为单一来源；此处别名保持兼容
+const RARITY_LABELS = RARITY_NAMES as Record<number, string>;
 
 /** 词条制技能定价公式：basePrice × (1 + rarity × 0.5) × (1 + (level-1) × 0.3) */
 export function calculateAffixSkillPrice(rarity: number, level: number, basePrice: number = AFFIX_SKILL_BASE_PRICE): number {
@@ -253,6 +252,70 @@ export function buildEnchantmentInfo(skillId: string): string | undefined {
     return t('enchant.devour', { icon: ench.icon, name: enchName, icons, count });
   }
   return `${ench.icon} ${enchName}: ${localizeItemDesc(enchId, ench.desc)}`;
+}
+
+// === 词条制技能 tooltip 数据构建（Story 35.11 AC2/AC8） ===
+import type { AffixTooltipInfo } from '../ui/keyboard/KeyTooltip';
+import type { AffixSkillInstance, SkillRuntimeState, QuestEnchantmentDef } from '../data/affixes';
+
+/** 构建词条制技能的 tooltip 扩展字段 */
+export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRuntimeState): {
+  affixInfo: AffixTooltipInfo[]
+  questProgress?: string
+  apprenticeGrowth?: string
+} {
+  const affixInfo: AffixTooltipInfo[] = skill.affixes.map(a => ({
+    typeName: AFFIX_NAMES[a.type],
+    paramSummary: buildAffixParamSummary(a),
+  }))
+
+  let questProgress: string | undefined
+  let apprenticeGrowth: string | undefined
+
+  if (rt) {
+    // 任务进度
+    if (rt.questStacks > 0 || rt.questCompletions > 0) {
+      const questEnch = skill.enchantmentIds
+        .map(id => QUEST_ENCHANTMENT_DEFS.find((d: QuestEnchantmentDef) => d.type === id))
+        .find((d): d is QuestEnchantmentDef => d != null)
+      if (questEnch) {
+        questProgress = `任务: ${rt.questStacks}/${questEnch.targetStacks} 层 (完成 ${rt.questCompletions} 次)`
+      }
+    }
+    // 学徒成长
+    if (rt.apprenticeAccumulated > 0) {
+      apprenticeGrowth = `学徒: +${(rt.apprenticeAccumulated * 100).toFixed(1)}%`
+    }
+  }
+
+  return { affixInfo, questProgress, apprenticeGrowth }
+}
+
+/** 构建单个词条的参数摘要 */
+function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): string {
+  switch (a.type) {
+    case 'multiply': return `×${a.multiplier?.toFixed(1) ?? '?'}`
+    case 'convert': return `k=${a.k?.toFixed(3) ?? '?'}`
+    case 'charge': return `${Math.round((a.gainPerSec ?? 0) * 100)}%/s 上限${Math.round((a.maxBonus ?? 0) * 100)}%`
+    case 'decay': return `初始×${a.initialMult ?? '?'} 衰减${a.decayPerTrigger ?? '?'} 下限×${a.floor ?? '?'}`
+    case 'pulse': return `每${a.interval ?? '?'}次 ×${a.burstMult?.toFixed(1) ?? '?'}`
+    case 'crit': return `${Math.round((a.chance ?? 0) * 100)}% ×${a.critMult?.toFixed(1) ?? '?'}`
+    case 'void': return `每空位+${Math.round((a.bonusPerSlot ?? 0) * 100)}%`
+    case 'resonance': return `效率${Math.round((a.efficiency ?? 0) * 100)}%`
+    case 'amplify': return `每层+${Math.round((a.valuePerStack ?? 0) * 100)}%`
+    case 'cascade': return `×${a.cascadeMult?.toFixed(1) ?? '?'}`
+    case 'outcast': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
+    case 'gravity': return `概率×${a.probMult?.toFixed(1) ?? '?'}`
+    case 'recurse': return `${Math.round((a.recurseChance ?? 0) * 100)}%重触发`
+    case 'taboo': return `+100% / ${Math.round((a.penaltyChance ?? 0) * 100)}%负产出`
+    case 'rainbow': return '全资源适配'
+    case 'mirror': return `镜像复制`
+    case 'link': return `联动触发`
+    case 'replicate': return `复制触发`
+    case 'ligature': return `连字加成`
+    case 'twin': return `双生触发`
+    default: return ''
+  }
 }
 
 // === 打开商店 ===
@@ -626,7 +689,131 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
     };
   }
 
+  // 词条制技能对比面板（Story 35.11 AC9）
+  if (item.type === 'skill' && item.affixSkill && !item.isUpgrade) {
+    card.addEventListener('mouseenter', () => {
+      showAffixComparisonPanel(item.affixSkill!, card);
+    });
+    card.addEventListener('mouseleave', () => {
+      hideAffixComparisonPanel();
+    });
+  }
+
   el.rewardCards.appendChild(card);
+}
+
+// === 词条制技能对比面板 ===
+let comparisonPanel: HTMLElement | null = null;
+
+function showAffixComparisonPanel(shopSkill: AffixSkillInstance, cardEl: HTMLElement): void {
+  // 找最佳对比目标：优先同资源类型 → 否则取第一个已装备的词条制技能
+  let existingSkill: AffixSkillInstance | null = null;
+  let existingKey: string | null = null;
+
+  // 第一遍：找同资源类型的已装备技能
+  for (const [k, id] of state.player.bindings) {
+    if (state.affixSkills.has(id)) {
+      const candidate = state.affixSkills.get(id)!;
+      if (candidate.resource === shopSkill.resource) {
+        existingSkill = candidate;
+        existingKey = k;
+        break;
+      }
+    }
+  }
+  // 第二遍：若无同资源，取第一个词条制技能
+  if (!existingSkill) {
+    for (const [k, id] of state.player.bindings) {
+      if (state.affixSkills.has(id)) {
+        existingSkill = state.affixSkills.get(id)!;
+        existingKey = k;
+        break;
+      }
+    }
+  }
+
+  if (!existingSkill) return; // 无已装备词条制技能，不显示对比
+
+  hideAffixComparisonPanel();
+  comparisonPanel = document.createElement('div');
+  comparisonPanel.className = 'affix-comparison-panel';
+  comparisonPanel.style.cssText = 'position:absolute;z-index:1000;background:#1a1a2e;border:1px solid #333;border-radius:8px;padding:10px;font-size:11px;color:#ccc;pointer-events:none;min-width:280px;';
+
+  // 左列：当前技能  右列：商店技能
+  const leftCol = buildComparisonColumn(existingSkill, `当前 [${existingKey?.toUpperCase()}]`, shopSkill);
+  const rightCol = buildComparisonColumn(shopSkill, '商店候选', existingSkill);
+
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:12px;';
+  row.appendChild(leftCol);
+  row.appendChild(rightCol);
+  comparisonPanel.appendChild(row);
+
+  // 定位
+  document.body.appendChild(comparisonPanel);
+  const cardRect = cardEl.getBoundingClientRect();
+  comparisonPanel.style.left = `${cardRect.right + 8}px`;
+  comparisonPanel.style.top = `${cardRect.top}px`;
+
+  // 边界检查
+  const panelRect = comparisonPanel.getBoundingClientRect();
+  if (panelRect.right > window.innerWidth) {
+    comparisonPanel.style.left = `${cardRect.left - panelRect.width - 8}px`;
+  }
+  if (panelRect.bottom > window.innerHeight) {
+    comparisonPanel.style.top = `${window.innerHeight - panelRect.height - 8}px`;
+  }
+}
+
+function buildComparisonColumn(skill: AffixSkillInstance, label: string, otherSkill: AffixSkillInstance): HTMLElement {
+  const col = document.createElement('div');
+  col.style.cssText = 'flex:1;min-width:120px;';
+
+  const header = document.createElement('div');
+  header.style.cssText = `font-weight:bold;color:${RARITY_COLORS[skill.rarity]};margin-bottom:4px;`;
+  header.textContent = `${skill.icon} ${skill.name}`;
+  col.appendChild(header);
+
+  const labelDiv = document.createElement('div');
+  labelDiv.style.cssText = 'color:#888;font-size:10px;margin-bottom:4px;';
+  labelDiv.textContent = label;
+  col.appendChild(labelDiv);
+
+  // 稀有度：比对方高→绿，低→红
+  const rarityDiv = document.createElement('div');
+  const rarityColor = skill.rarity > otherSkill.rarity ? '#2ecc71' : skill.rarity < otherSkill.rarity ? '#e74c3c' : '#ccc';
+  rarityDiv.style.cssText = `color:${rarityColor};`;
+  rarityDiv.textContent = `${RARITY_LABELS[skill.rarity]} Lv.${skill.level}`;
+  col.appendChild(rarityDiv);
+
+  // 词条列表（对方没有的词条类型→蓝色标注为"新增"）
+  const otherAffixTypes = new Set(otherSkill.affixes.map(a => a.type));
+  for (const affix of skill.affixes) {
+    const affixDiv = document.createElement('div');
+    const isNew = !otherAffixTypes.has(affix.type);
+    affixDiv.style.cssText = `color:${isNew ? '#3498db' : '#e67e22'};font-size:10px;margin-top:2px;`;
+    affixDiv.textContent = `[${AFFIX_NAMES[affix.type]}] ${buildAffixParamSummary(affix)}${isNew ? ' ✦新' : ''}`;
+    col.appendChild(affixDiv);
+  }
+
+  // 附魔（使用人类可读名而非原始 ID）
+  for (const enchId of skill.enchantmentIds) {
+    const questDef = QUEST_ENCHANTMENT_DEFS.find(d => d.type === enchId);
+    const enchName = questDef ? questDef.name : enchId.replace(/_/g, ' ');
+    const enchDiv = document.createElement('div');
+    enchDiv.style.cssText = 'color:#9b59b6;font-size:10px;margin-top:2px;';
+    enchDiv.textContent = `✦ ${enchName}`;
+    col.appendChild(enchDiv);
+  }
+
+  return col;
+}
+
+function hideAffixComparisonPanel(): void {
+  if (comparisonPanel && comparisonPanel.parentElement) {
+    comparisonPanel.parentElement.removeChild(comparisonPanel);
+  }
+  comparisonPanel = null;
 }
 
 // === 牌包辅助函数 ===
@@ -1476,6 +1663,25 @@ export function renderBuildManager(): void {
           tooltipData.skill.mechanicInfo = buildMechanicInfo(skillId);
           // 附魔状态信息
           tooltipData.skill.enchantmentInfo = buildEnchantmentInfo(skillId);
+        }
+        // 词条制技能 tooltip（Story 35.11 AC2/AC8）
+        if (skillId && state.affixSkills.has(skillId)) {
+          const affixSkill = state.affixSkills.get(skillId)!;
+          const rt = state.affixSkillStates.get(skillId);
+          if (!tooltipData.skill) {
+            tooltipData.skill = {
+              name: affixSkill.name,
+              icon: affixSkill.icon,
+              description: `${RARITY_LABELS[affixSkill.rarity]} Lv.${affixSkill.level}`,
+              level: affixSkill.level,
+              school: RARITY_LABELS[affixSkill.rarity] ?? '普通',
+              schoolCssClass: `rarity-${affixSkill.rarity}`,
+            };
+          }
+          const fields = buildAffixTooltipFields(affixSkill, rt);
+          tooltipData.skill.affixInfo = fields.affixInfo;
+          tooltipData.skill.questProgress = fields.questProgress;
+          tooltipData.skill.apprenticeGrowth = fields.apprenticeGrowth;
         }
         highlightSkillRange(k);
         // Story 34.6 AC7: 虚无范围空位高亮

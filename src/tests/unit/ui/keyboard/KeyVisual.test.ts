@@ -274,6 +274,139 @@ describe('KeyVisual', () => {
     })
   })
 
+  describe('setRarityBorder', () => {
+    it('初始稀有度应该为 null', () => {
+      expect(keyVisual.getRarity()).toBeNull()
+    })
+
+    it('应该设置稀有度为 0 (普通/白)', () => {
+      keyVisual.setRarityBorder(0)
+      expect(keyVisual.getRarity()).toBe(0)
+    })
+
+    it('应该设置稀有度为 1 (魔法/蓝)', () => {
+      keyVisual.setRarityBorder(1)
+      expect(keyVisual.getRarity()).toBe(1)
+    })
+
+    it('应该设置稀有度为 2 (稀有/黄)', () => {
+      keyVisual.setRarityBorder(2)
+      expect(keyVisual.getRarity()).toBe(2)
+    })
+
+    it('应该设置稀有度为 3 (传说/橙)', () => {
+      keyVisual.setRarityBorder(3)
+      expect(keyVisual.getRarity()).toBe(3)
+    })
+
+    it('应该能清除稀有度', () => {
+      keyVisual.setRarityBorder(2)
+      keyVisual.setRarityBorder(null)
+      expect(keyVisual.getRarity()).toBeNull()
+    })
+
+    it('重复设置相同稀有度不应重复操作', () => {
+      keyVisual.setRarityBorder(1)
+      keyVisual.setRarityBorder(1)
+      expect(keyVisual.getRarity()).toBe(1)
+    })
+  })
+
+  describe('setAffixDots', () => {
+    it('初始词条数应该为 0', () => {
+      expect(keyVisual.getAffixDotCount()).toBe(0)
+    })
+
+    it('应该设置 1 个词条点', () => {
+      keyVisual.setAffixDots(1)
+      expect(keyVisual.getAffixDotCount()).toBe(1)
+    })
+
+    it('应该设置 3 个词条点', () => {
+      keyVisual.setAffixDots(3)
+      expect(keyVisual.getAffixDotCount()).toBe(3)
+    })
+
+    it('应该限制最大为 3', () => {
+      keyVisual.setAffixDots(5)
+      expect(keyVisual.getAffixDotCount()).toBe(3)
+    })
+
+    it('应该限制最小为 0', () => {
+      keyVisual.setAffixDots(-1)
+      expect(keyVisual.getAffixDotCount()).toBe(0)
+    })
+
+    it('设置词条数 > 0 应该增加 Graphics 子元素', () => {
+      const initialCount = keyVisual.children.length
+      keyVisual.setAffixDots(2)
+      expect(keyVisual.children.length).toBe(initialCount + 1)
+    })
+
+    it('词条数从正数变回 0 应该移除 Graphics', () => {
+      keyVisual.setAffixDots(2)
+      const countWithDots = keyVisual.children.length
+      keyVisual.setAffixDots(0)
+      expect(keyVisual.children.length).toBe(countWithDots - 1)
+    })
+  })
+
+  describe('setQuestProgress', () => {
+    it('初始进度应该为 0', () => {
+      expect(keyVisual.getQuestProgressRatio()).toBe(0)
+    })
+
+    it('应该设置进度为 0.5', () => {
+      keyVisual.setQuestProgress(0.5)
+      expect(keyVisual.getQuestProgressRatio()).toBe(0.5)
+    })
+
+    it('应该限制最大为 1', () => {
+      keyVisual.setQuestProgress(1.5)
+      expect(keyVisual.getQuestProgressRatio()).toBe(1)
+    })
+
+    it('应该限制最小为 0', () => {
+      keyVisual.setQuestProgress(-0.5)
+      expect(keyVisual.getQuestProgressRatio()).toBe(0)
+    })
+
+    it('设置进度 > 0 应该增加 Graphics 子元素', () => {
+      const initialCount = keyVisual.children.length
+      keyVisual.setQuestProgress(0.5)
+      expect(keyVisual.children.length).toBe(initialCount + 1)
+    })
+
+    it('进度从正数变回 0 应该移除 Graphics', () => {
+      keyVisual.setQuestProgress(0.5)
+      const countWithProgress = keyVisual.children.length
+      keyVisual.setQuestProgress(0)
+      expect(keyVisual.children.length).toBe(countWithProgress - 1)
+    })
+  })
+
+  describe('playFlashEffect', () => {
+    it('应该启动闪光动画', () => {
+      keyVisual.playFlashEffect(0xffffff, 0.8)
+      expect(keyVisual.getFlashAlpha()).toBe(0.8)
+      expect(keyVisual.getIsAnimating()).toBe(true)
+    })
+
+    it('闪光应该随时间衰减', () => {
+      keyVisual.playFlashEffect(0xffffff, 1.0)
+      keyVisual.update(0.1)
+      expect(keyVisual.getFlashAlpha()).toBeLessThan(1.0)
+    })
+
+    it('多次 update 后闪光应该完全消失', () => {
+      keyVisual.playFlashEffect(0xffffff, 1.0)
+      for (let i = 0; i < 20; i++) {
+        keyVisual.update(0.1)
+      }
+      expect(keyVisual.getFlashAlpha()).toBe(0)
+    })
+  })
+
   describe('destroy', () => {
     it('应该正确销毁组件', () => {
       keyVisual.destroy()
@@ -287,6 +420,14 @@ describe('KeyVisual', () => {
 
     it('应该正确销毁带图标的组件', () => {
       keyVisual.setSkillIcon(Texture.WHITE)
+      keyVisual.destroy()
+      expect(keyVisual.destroyed).toBe(true)
+    })
+
+    it('应该正确销毁带词条信息的组件', () => {
+      keyVisual.setRarityBorder(2)
+      keyVisual.setAffixDots(3)
+      keyVisual.setQuestProgress(0.5)
       keyVisual.destroy()
       expect(keyVisual.destroyed).toBe(true)
     })
