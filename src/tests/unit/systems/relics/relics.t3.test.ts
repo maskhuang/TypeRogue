@@ -112,11 +112,11 @@ describe('retrigger 管道集成', () => {
   it('retrigger modifier 有条件 → 条件不满足时不产生 behavior', () => {
     const registry = new ModifierRegistry()
     registry.register(createRetriggerModifier('storm_drum', {
-      type: 'current_skill_is_producer',
+      type: 'skill_rarity_gte', value: 2,
     }))
 
-    // 转化者不满足 current_skill_is_producer
-    const ctx: PipelineContext = { currentSkillCategory: 'converter' }
+    // rarity=1 不满足 skill_rarity_gte 2
+    const ctx: PipelineContext = { currentSkillRarity: 1 }
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
     expect(result.pendingBehaviors).toHaveLength(0)
   })
@@ -124,10 +124,10 @@ describe('retrigger 管道集成', () => {
   it('retrigger modifier 有条件 → 条件满足时产生 behavior', () => {
     const registry = new ModifierRegistry()
     registry.register(createRetriggerModifier('storm_drum', {
-      type: 'current_skill_is_producer',
+      type: 'skill_rarity_gte', value: 2,
     }))
 
-    const ctx: PipelineContext = { currentSkillCategory: 'producer' }
+    const ctx: PipelineContext = { currentSkillRarity: 2 }
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
     expect(result.pendingBehaviors).toHaveLength(1)
     expect(result.pendingBehaviors[0]).toEqual({ type: 'retrigger' })
@@ -223,35 +223,35 @@ describe('T3 遗物工厂 — echo_bell', () => {
 })
 
 describe('T3 遗物工厂 — storm_drum', () => {
-  it('工厂产出正确 modifier（retrigger 行为 + current_skill_is_producer 条件）', () => {
+  it('工厂产出正确 modifier（retrigger 行为 + skill_rarity_gte 2 条件）', () => {
     const mods = RELIC_MODIFIER_DEFS.storm_drum('storm_drum')
     expect(mods).toHaveLength(1)
     const mod = mods[0]
     expect(mod.trigger).toBe('on_skill_trigger')
     expect(mod.phase).toBe('after')
     expect(mod.behavior).toEqual({ type: 'retrigger' })
-    expect(mod.condition).toEqual({ type: 'current_skill_is_producer' })
+    expect(mod.condition).toEqual({ type: 'skill_rarity_gte', value: 2 })
   })
 
-  it('producer → 产出 retrigger 行为', () => {
+  it('rarity≥2 → 产出 retrigger 行为', () => {
     const registry = new ModifierRegistry()
     const mods = RELIC_MODIFIER_DEFS.storm_drum('storm_drum')
     mods.forEach(m => registry.register(m))
 
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
-      currentSkillCategory: 'producer',
+      currentSkillRarity: 2,
     })
     expect(result.pendingBehaviors).toHaveLength(1)
     expect(result.pendingBehaviors[0]).toEqual({ type: 'retrigger' })
   })
 
-  it('converter → 不产出 retrigger 行为', () => {
+  it('rarity<2 → 不产出 retrigger 行为', () => {
     const registry = new ModifierRegistry()
     const mods = RELIC_MODIFIER_DEFS.storm_drum('storm_drum')
     mods.forEach(m => registry.register(m))
 
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
-      currentSkillCategory: 'converter',
+      currentSkillRarity: 1,
     })
     expect(result.pendingBehaviors).toHaveLength(0)
   })
@@ -294,14 +294,14 @@ describe('T3 遗物工厂 — finale', () => {
 
 // === 多 retrigger 遗物共存测试 (Story 29.2 review fix) ===
 describe('T3 多 retrigger 遗物共存', () => {
-  it('echo_bell + storm_drum 同时装备，producer 首技能 → 2 个 retrigger behavior', () => {
+  it('echo_bell + storm_drum 同时装备，rarity≥2 首技能 → 2 个 retrigger behavior', () => {
     const registry = new ModifierRegistry()
     RELIC_MODIFIER_DEFS.echo_bell('echo_bell').forEach(m => registry.register(m))
     RELIC_MODIFIER_DEFS.storm_drum('storm_drum').forEach(m => registry.register(m))
 
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
       skillsTriggeredThisWord: 0,
-      currentSkillCategory: 'producer',
+      currentSkillRarity: 2,
     })
     // 两个条件都满足 → 2 个 retrigger behavior
     expect(result.pendingBehaviors).toHaveLength(2)
@@ -315,14 +315,14 @@ describe('T3 多 retrigger 遗物共存', () => {
     expect(retriggerCount).toBe(2)
   })
 
-  it('echo_bell + storm_drum 同时装备，converter 首技能 → 仅 echo_bell 触发', () => {
+  it('echo_bell + storm_drum 同时装备，rarity<2 首技能 → 仅 echo_bell 触发', () => {
     const registry = new ModifierRegistry()
     RELIC_MODIFIER_DEFS.echo_bell('echo_bell').forEach(m => registry.register(m))
     RELIC_MODIFIER_DEFS.storm_drum('storm_drum').forEach(m => registry.register(m))
 
     const result = EffectPipeline.resolve(registry, 'on_skill_trigger', {
       skillsTriggeredThisWord: 0,
-      currentSkillCategory: 'converter',
+      currentSkillRarity: 1,
     })
     expect(result.pendingBehaviors).toHaveLength(1)
   })

@@ -10,7 +10,9 @@ import type { AffixInstance, SkillRarity } from './affixes'
 import {
   AffixType, EnchantmentType,
   QUEST_AFFIX_MAP, AFFIX_WEIGHTS,
+  AFFIX_CATEGORY_MAP,
 } from './affixes'
+import type { AffixCategory } from './affixes'
 import {
   rollAffixParams, generateName,
 } from './skillGeneration'
@@ -142,7 +144,10 @@ function emitMutationApplied(): void {
  * 但此函数支持 excludeTypes 排除过滤（weightedSampleWithout 仅做不重复抽取）。
  * 若 AFFIX_WEIGHTS 结构变更，两处需同步维护。
  */
-function sampleOneExcluding(excludeTypes: AffixType[]): { type: AffixType; convertVariant?: 'cross' | 'self' } | null {
+function sampleOneExcluding(
+  excludeTypes: AffixType[],
+  allowedCategory?: AffixCategory,
+): { type: AffixType; convertVariant?: 'cross' | 'self' } | null {
   const excludeSet = new Set<string>(excludeTypes.map(t => t as string))
 
   // 构建过滤后的权重池
@@ -153,8 +158,12 @@ function sampleOneExcluding(excludeTypes: AffixType[]): { type: AffixType; conve
     // Convert 拆分为 convert_cross/convert_self
     if (key === 'convert_cross' || key === 'convert_self') {
       if (excludeSet.has(AffixType.Convert)) continue
+      // mono_affix 类别过滤
+      if (allowedCategory && AFFIX_CATEGORY_MAP[AffixType.Convert] !== allowedCategory) continue
     } else {
       if (excludeSet.has(key)) continue
+      // mono_affix 类别过滤
+      if (allowedCategory && AFFIX_CATEGORY_MAP[key as AffixType] !== allowedCategory) continue
     }
     entries.push({ key, weight })
     totalWeight += weight
@@ -186,7 +195,7 @@ function sampleOneExcluding(excludeTypes: AffixType[]): { type: AffixType; conve
 
 // ===== 蜕变 A: 词条重铸 =====
 
-export function mutateA(skillId: string, affixIndex: number): MutationResult {
+export function mutateA(skillId: string, affixIndex: number, allowedCategory?: AffixCategory): MutationResult {
   const skill = state.affixSkills.get(skillId)
   if (!skill) {
     return { success: false, error: '技能不存在', mutagenCost: 0, mutagenRefund: 0 }
@@ -217,7 +226,7 @@ export function mutateA(skillId: string, affixIndex: number): MutationResult {
     .filter((_, i) => i !== affixIndex)
     .map(a => a.type)
 
-  const sample = sampleOneExcluding(excludeTypes)
+  const sample = sampleOneExcluding(excludeTypes, allowedCategory)
   if (!sample) {
     // 极端情况：所有词条类型都被排除 — 回滚
     state.mutagenInventory += cost
@@ -252,7 +261,7 @@ export function mutateA(skillId: string, affixIndex: number): MutationResult {
 
 // ===== 蜕变 C↑: 稀有度升级 =====
 
-export function mutateUpgrade(skillId: string): MutationResult {
+export function mutateUpgrade(skillId: string, allowedCategory?: AffixCategory): MutationResult {
   const skill = state.affixSkills.get(skillId)
   if (!skill) {
     return { success: false, error: '技能不存在', mutagenCost: 0, mutagenRefund: 0 }
@@ -271,7 +280,7 @@ export function mutateUpgrade(skillId: string): MutationResult {
 
   // 排除已有词条类型
   const excludeTypes = skill.affixes.map(a => a.type)
-  const sample = sampleOneExcluding(excludeTypes)
+  const sample = sampleOneExcluding(excludeTypes, allowedCategory)
   if (!sample) {
     state.mutagenInventory += cost
     return { success: false, error: '无可用词条类型', mutagenCost: 0, mutagenRefund: 0 }

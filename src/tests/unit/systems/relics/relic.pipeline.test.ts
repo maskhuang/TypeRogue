@@ -15,12 +15,15 @@ vi.mock('../../../../src/core/state', () => {
     state: {
       player: {
         relics,
+        relicStates: {} as Record<string, number>,
         bindings: new Map(),
         skills: new Map(),
       },
       combo: 0,
       multiplier: 1,
       overkill: 0,
+      affixSkills: new Map(),
+      affixSkillStates: new Map(),
     },
     synergy: {
       wordSkillCount: 0,
@@ -201,22 +204,22 @@ describe('resolveRelicSkillTrigger', () => {
     expect(mult).toBe(3)
   })
 
-  it('forge_heart + converter + 产出者已触发 → 倍率 = 1.15', () => {
+  it('forge_heart + 含 convert 词条 → 倍率 = 1.15', () => {
     addRelic('forge_heart')
-    const mult = resolveRelicSkillTrigger({ currentSkillCategory: 'converter', wordHasProducerTriggered: true })
+    const mult = resolveRelicSkillTrigger({ currentSkillAffixes: ['convert'] })
     expect(mult).toBeCloseTo(1.15, 5)
   })
 
-  it('forge_heart + producer → 倍率 = 1（条件不满足）', () => {
+  it('forge_heart + 无 convert 词条 → 倍率 = 1（条件不满足）', () => {
     addRelic('forge_heart')
-    const mult = resolveRelicSkillTrigger({ currentSkillCategory: 'producer' })
+    const mult = resolveRelicSkillTrigger({ currentSkillAffixes: ['amplify'] })
     expect(mult).toBe(1)
   })
 
-  it('多遗物叠加: glass_cannon × forge_heart(converter+产出者已触发) → 3 × 1.15', () => {
+  it('多遗物叠加: glass_cannon × forge_heart(含 convert 词条) → 3 × 1.15', () => {
     addRelic('glass_cannon')
     addRelic('forge_heart')
-    const mult = resolveRelicSkillTrigger({ currentSkillCategory: 'converter', wordHasProducerTriggered: true })
+    const mult = resolveRelicSkillTrigger({ currentSkillAffixes: ['convert'] })
     expect(mult).toBeCloseTo(3 * 1.15, 5)
   })
 

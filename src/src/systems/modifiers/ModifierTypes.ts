@@ -112,6 +112,11 @@ export type ModifierCondition =
   // T2 遗物重设计条件 (Story 28.3)
   | { type: 'word_time_lt'; value: number }
   | { type: 'word_time_gt'; value: number }
+  // 词条制遗物适配条件 (Story 35.12)
+  | { type: 'skill_has_affix'; affixType: string }
+  | { type: 'skill_rarity_gte'; value: number }
+  | { type: 'affix_amplify_stacks_gte'; value: number }
+  | { type: 'is_affix_chain_trigger' }
 
 // === 管道输出类型 (Story 11.2) ===
 
@@ -203,6 +208,15 @@ export interface PipelineContext {
   wordElapsed?: number
   /** 当前技能是否为重触发执行（防循环，Story 29.1） */
   isRetriggered?: boolean
+  // 词条制技能字段 (Story 35.12)
+  /** 当前触发的词条制技能稀有度 (0=白, 1=蓝, 2=黄, 3=红) */
+  currentSkillRarity?: number
+  /** 当前触发技能拥有的词条类型列表 */
+  currentSkillAffixes?: string[]
+  /** 当前触发技能的增幅词条叠层数 */
+  currentSkillAmplifyStacks?: number
+  /** 是否来自连接/共鸣/复制词条的被动触发 */
+  isAffixChainTrigger?: boolean
 }
 
 // === 行为执行回调 (Story 11.4) ===

@@ -20,6 +20,8 @@ import {
   getMutateACost, getUpgradeCost,
   canMutateA, canUpgrade, canDowngrade,
 } from '../../data/affixMutation';
+import { queryRelicFlag, getMonoAffixCategory } from '../relics/RelicPipeline';
+import type { AffixCategory } from '../../data/affixes';
 
 // === 技能类型判定 ===
 type SkillType = 'producer' | 'converter' | 'connector' | 'replicator' | 'amplifier';
@@ -323,7 +325,8 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
       if (aEnabled) {
         const idx = i;
         btn.onclick = () => {
-          const result = mutateA(skillId, idx);
+          const monoCategory = getMonoAffixCategory() as AffixCategory | null;
+          const result = mutateA(skillId, idx, monoCategory ?? undefined);
           if (result.success) {
             playSound('skill');
             showFeedback(`🔄 重铸: ${AFFIX_NAMES[result.oldAffix!.type]} → ${AFFIX_NAMES[result.newAffix!.type]}`, '#e67e22', 1.2);
@@ -340,17 +343,21 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
 
   // === 蜕变C↑：稀有度升级 ===
   {
-    const upEnabled = canUpgrade(skillId);
+    const whiteOnly = queryRelicFlag('white_only') as boolean;
+    const upEnabled = !whiteOnly && canUpgrade(skillId);
     const upCost = skill.rarity < 3 ? getUpgradeCost(skill.rarity) : 0;
     const btn = document.createElement('button');
     btn.className = 'morph-action-btn';
     btn.style.cssText = `padding:8px 12px;border:1px solid ${upEnabled ? '#2ecc71' : '#555'};background:${upEnabled ? 'rgba(46,204,113,0.15)' : 'rgba(50,50,50,0.3)'};color:${upEnabled ? '#2ecc71' : '#666'};border-radius:4px;cursor:${upEnabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
-    btn.textContent = skill.rarity >= 3
-      ? '⬆️ 稀有度升级 — 已传说'
-      : `⬆️ 稀有度升级 (${RARITY_NAMES[skill.rarity]}→${RARITY_NAMES[(skill.rarity + 1) as 0|1|2|3]}) — 消耗 ${upCost} 变异素`;
+    btn.textContent = whiteOnly
+      ? '⬆️ 稀有度升级 — 纯粹之心禁止'
+      : skill.rarity >= 3
+        ? '⬆️ 稀有度升级 — 已传说'
+        : `⬆️ 稀有度升级 (${RARITY_NAMES[skill.rarity]}→${RARITY_NAMES[(skill.rarity + 1) as 0|1|2|3]}) — 消耗 ${upCost} 变异素`;
     if (upEnabled) {
       btn.onclick = () => {
-        const result = mutateUpgrade(skillId);
+        const monoUpCat = getMonoAffixCategory() as AffixCategory | null;
+        const result = mutateUpgrade(skillId, monoUpCat ?? undefined);
         if (result.success) {
           playSound('skill');
           showFeedback(`⬆️ 升级: +${AFFIX_NAMES[result.newAffix!.type]}`, '#2ecc71', 1.2);

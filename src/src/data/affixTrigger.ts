@@ -68,6 +68,11 @@ export interface TriggerContext {
   mutationHungerChance?: number
   /** 各技能附魔运行时参数（键为 skillId） */
   skillEnchantmentParams?: Map<string, { posRel?: PositionRelation }>
+  // ── 遗物注入（由 skills.ts 提供，避免 data→systems 依赖）(Story 35.12) ──
+  /** resolveRelicSkillTrigger() 结果乘数 */
+  relicMultiplier?: number
+  /** chain_ban 生效时为 true：跳过连接/复制/共鸣词条 Phase 5-6 */
+  chainAffixesDisabled?: boolean
 }
 
 // ===== 状态变更 =====
@@ -723,6 +728,7 @@ export function resolvePhase5(
   for (const affix of skill.affixes) {
     switch (affix.type) {
       case AffixType.Replicate: {
+        if (ctx.chainAffixesDisabled) break // chain_ban: 跳过复制词条
         if (affix.posRel == null) break
         const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestFission)
         const targetCount = 1 + c
@@ -897,6 +903,8 @@ export function resolvePhase6(
 
     // 共鸣词条：邻居触发 → 自身以 effectiveEff 触发
     for (const affix of neighborSkill.affixes) {
+      if (affix.type === AffixType.Resonance && ctx.chainAffixesDisabled) continue // chain_ban: 跳过共鸣
+      if (affix.type === AffixType.Link && ctx.chainAffixesDisabled) continue // chain_ban: 跳过连接
       if (affix.type === AffixType.Resonance && affix.posRel != null) {
         if (hasRelation(triggerKey, neighborKey, affix.posRel)) {
           const baseEff = affix.efficiency ?? 0

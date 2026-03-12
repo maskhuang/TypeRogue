@@ -5,6 +5,7 @@
 
 import { state } from '../../core/state'
 import { RELIC_MODIFIER_DEFS, RELIC_FLAGS, RELICS } from '../../data/relics'
+import { AFFIX_CATEGORY_MAP } from '../../data/affixes'
 import { isProducer } from '../../data/producers'
 import { showFeedback } from '../battle'
 import type { ModifierTrigger, PipelineContext, PipelineResult, BehaviorCallbacks } from '../modifiers/ModifierTypes'
@@ -103,6 +104,14 @@ export function queryRelicFlag(flag: string): number | boolean {
     // === T4 新 Flag (Story 30.2) ===
     case 'producer_only':
       return (RELIC_FLAGS['producer_only'] || []).some(id => state.player.relics.has(id))
+    // === 词条制适配 Flag (Story 35.12) ===
+    case 'white_only':
+      return (RELIC_FLAGS['white_only'] || []).some(id => state.player.relics.has(id))
+    case 'chain_affix_lock':
+      return (RELIC_FLAGS['chain_affix_lock'] || []).some(id => state.player.relics.has(id))
+    case 'affix_category_lock':
+      if (!(RELIC_FLAGS['affix_category_lock'] || []).some(id => state.player.relics.has(id))) return false
+      return state.player.relicStates['mono_affix_category'] ?? false
     case 'max_skill_count': {
       const ids = (RELIC_FLAGS['max_skill_count'] || []).filter(id => state.player.relics.has(id))
       if (ids.length === 0) return Infinity
@@ -135,8 +144,33 @@ export function resolveRelicSkillTrigger(
     layer: 'base', trigger: 'on_skill_trigger', phase: 'calculate',
     effect: { type: 'score', value: 1, stacking: 'additive' }, priority: 0,
   })
-  // 注入 relicStates
-  const ctx = { ...context, relicStates: state.player.relicStates }
+  // 注入 relicStates + 词条制动态统计 (Story 35.12)
+  const relicStates = { ...state.player.relicStates }
+  // affix_spectrum: 不同词条类型数
+  if (state.player.relics.has('affix_spectrum')) {
+    const types = new Set<string>()
+    for (const skill of state.affixSkills.values()) {
+      for (const affix of skill.affixes) types.add(affix.type)
+    }
+    relicStates['_affix_type_count'] = types.size
+  }
+  // legendary_aura: 传说技能数
+  if (state.player.relics.has('legendary_aura')) {
+    let count = 0
+    for (const skill of state.affixSkills.values()) {
+      if (skill.rarity === 3) count++
+    }
+    relicStates['_legendary_count'] = count
+  }
+  // quest_momentum: questCompletions 总和
+  if (state.player.relics.has('quest_momentum')) {
+    let total = 0
+    for (const rs of state.affixSkillStates.values()) {
+      total += rs.questCompletions ?? 0
+    }
+    relicStates['_quest_completions_total'] = total
+  }
+  const ctx = { ...context, relicStates }
   for (const relicId of state.player.relics) {
     const factory = RELIC_MODIFIER_DEFS[relicId]
     if (!factory) continue
@@ -167,8 +201,10 @@ export function initRelicState(relicId: string): void {
 
   // === T4 获取时副作用 ===
 
-  // 纯粹之心：移除所有非产出者技能
+  // 纯粹之心：移除所有非产出者技能（旧系统）+ 非白装 affix 技能（新系统）
   if (relicId === 'pure_heart') {
+    let removedCount = 0
+    // 旧系统：移除非产出者
     const toRemove: string[] = []
     for (const [skillId] of state.player.skills) {
       if (!isProducer(skillId)) toRemove.push(skillId)
@@ -178,14 +214,28 @@ export function initRelicState(relicId: string): void {
       state.player.enchantedSkills.delete(skillId)
       if (state.growthValues) state.growthValues.delete(skillId)
       if (state.amplifierStacks) state.amplifierStacks.delete(skillId)
-      // 移除绑定（先收集 key，避免迭代中删除）
       const boundKeys = [...state.player.bindings.entries()]
         .filter(([, v]) => v === skillId)
         .map(([k]) => k)
       for (const k of boundKeys) state.player.bindings.delete(k)
     }
-    if (toRemove.length > 0) {
-      showFeedback(`纯粹之心：${toRemove.length}个非产出者已移除!`, '#ff0000')
+    removedCount += toRemove.length
+    // 新系统：移除 rarity > 0 的 affix 技能
+    const affixToRemove: string[] = []
+    for (const [skillId, skill] of state.affixSkills) {
+      if (skill.rarity > 0) affixToRemove.push(skillId)
+    }
+    for (const skillId of affixToRemove) {
+      state.affixSkills.delete(skillId)
+      state.affixSkillStates.delete(skillId)
+      const boundKeys = [...state.player.bindings.entries()]
+        .filter(([, v]) => v === skillId)
+        .map(([k]) => k)
+      for (const k of boundKeys) state.player.bindings.delete(k)
+    }
+    removedCount += affixToRemove.length
+    if (removedCount > 0) {
+      showFeedback(`纯粹之心：${removedCount}个非白装技能已移除!`, '#ff0000')
     }
   }
 
@@ -203,6 +253,27 @@ export function initRelicState(relicId: string): void {
     }
     // 队列扩展：追加 2 个空格（getMaxQueueLength 会返回 +2）
     state.fragmentQueue.push('_', '_')
+  }
+
+  // 纯血词条：自动检测现有技能中最常见的词条类别并选定
+  if (relicId === 'mono_affix') {
+    // 统计每个类别的词条数
+    const categoryCounts: Record<string, number> = {}
+    for (const skill of state.affixSkills.values()) {
+      for (const affix of skill.affixes) {
+        const cat = AFFIX_CATEGORY_MAP[affix.type as keyof typeof AFFIX_CATEGORY_MAP]
+        if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1
+      }
+    }
+    // 找到最多的类别（默认 'numeric'）
+    let bestCategory = 'numeric'
+    let bestCount = 0
+    for (const [cat, count] of Object.entries(categoryCounts)) {
+      if (count > bestCount) { bestCategory = cat; bestCount = count }
+    }
+    // 选定类别并移除不符合的技能
+    setMonoAffixCategory(bestCategory)
+    showFeedback(`纯血词条：选定 ${AFFIX_CATEGORY_LABELS[bestCategory]}！`, '#9b59b6')
   }
 
   // 极简主义：将所有已有技能升至 Lv3
@@ -234,4 +305,71 @@ export function getRelicState(relicId: string): number | undefined {
  */
 export function setRelicState(relicId: string, value: number): void {
   state.player.relicStates[relicId] = value
+}
+
+/**
+ * 六种词条类别名（用于 mono_affix 类别选择 UI）
+ */
+export const AFFIX_CATEGORY_LABELS: Record<string, string> = {
+  numeric: '数值型',
+  rhythm: '节奏型',
+  topology: '拓扑型',
+  trigger_chain: '触发链型',
+  word_sense: '单词感知型',
+  meta_rule: '元规则型',
+}
+
+/**
+ * 设置 mono_affix 已选类别并移除不符合的 affix 技能
+ */
+export function setMonoAffixCategory(category: string): void {
+  state.player.relicStates['mono_affix_category'] = AFFIX_CATEGORY_INDEX[category] ?? 0
+  // 移除不符合类别的 affix 技能
+  const toRemove: string[] = []
+  for (const [skillId, skill] of state.affixSkills) {
+    const hasMatchingAffix = skill.affixes.some(
+      (a: { type: string }) => AFFIX_CATEGORY_MAP[a.type as keyof typeof AFFIX_CATEGORY_MAP] === category,
+    )
+    if (!hasMatchingAffix) toRemove.push(skillId)
+  }
+  for (const skillId of toRemove) {
+    state.affixSkills.delete(skillId)
+    state.affixSkillStates.delete(skillId)
+    const boundKeys = [...state.player.bindings.entries()]
+      .filter(([, v]) => v === skillId)
+      .map(([k]) => k)
+    for (const k of boundKeys) state.player.bindings.delete(k)
+  }
+  if (toRemove.length > 0) {
+    showFeedback(`纯血词条：${toRemove.length}个不符类别技能已移除!`, '#ff0000')
+  }
+}
+
+/** 类别名 → 编号映射（1-6，0=未选） */
+const AFFIX_CATEGORY_INDEX: Record<string, number> = {
+  numeric: 1,
+  rhythm: 2,
+  topology: 3,
+  trigger_chain: 4,
+  word_sense: 5,
+  meta_rule: 6,
+}
+
+/** 编号 → 类别名映射 */
+export const AFFIX_CATEGORY_BY_INDEX: Record<number, string> = {
+  1: 'numeric',
+  2: 'rhythm',
+  3: 'topology',
+  4: 'trigger_chain',
+  5: 'word_sense',
+  6: 'meta_rule',
+}
+
+/**
+ * 获取 mono_affix 已选类别名（null = 未选/未激活）
+ */
+export function getMonoAffixCategory(): string | null {
+  const idx = state.player.relicStates['mono_affix_category']
+  if (!idx || idx <= 0) return null
+  return AFFIX_CATEGORY_BY_INDEX[idx] ?? null
 }

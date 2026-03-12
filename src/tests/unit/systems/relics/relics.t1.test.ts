@@ -60,8 +60,8 @@ describe('T1 遗物数据', () => {
     })
   })
 
-  it('RELIC_MODIFIER_DEFS 总数 = 35', () => {
-    expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(35)
+  it('RELIC_MODIFIER_DEFS 总数 = 39', () => {
+    expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(39)
   })
 
   it('图标唯一', () => {
@@ -152,38 +152,38 @@ describe('forge_heart（熔炉之心）', () => {
     expect(RELICS.forge_heart.basePrice).toBe(25)
   })
 
-  it('工厂: 产生 1 个 Modifier（score ×1.15 条件: is_converter_after_producer）', () => {
+  it('工厂: 产生 1 个 Modifier（score ×1.15 条件: skill_has_affix convert）', () => {
     const mods = RELIC_MODIFIER_DEFS.forge_heart('forge_heart')
     expect(mods).toHaveLength(1)
     expect(mods[0].layer).toBe('global')
     expect(mods[0].trigger).toBe('on_skill_trigger')
     expect(mods[0].effect!.type).toBe('score')
     expect(mods[0].effect!.value).toBe(1.15)
-    expect(mods[0].condition).toEqual({ type: 'is_converter_after_producer' })
+    expect(mods[0].condition).toEqual({ type: 'skill_has_affix', affixType: 'convert' })
   })
 
-  it('条件: converter + 产出者已触发 → 生效', () => {
+  it('条件: 技能有 convert 词缀 → 生效', () => {
     expect(ConditionEvaluator.evaluate(
-      { type: 'is_converter_after_producer' },
-      { currentSkillCategory: 'converter', wordHasProducerTriggered: true }
+      { type: 'skill_has_affix', affixType: 'convert' },
+      { currentSkillAffixes: ['convert'] }
     )).toBe(true)
   })
 
-  it('条件: converter + 产出者未触发 → 不生效', () => {
+  it('条件: 技能无 convert 词缀 → 不生效', () => {
     expect(ConditionEvaluator.evaluate(
-      { type: 'is_converter_after_producer' },
-      { currentSkillCategory: 'converter', wordHasProducerTriggered: false }
+      { type: 'skill_has_affix', affixType: 'convert' },
+      { currentSkillAffixes: [] }
     )).toBe(false)
   })
 
-  it('条件: producer + 产出者已触发 → 不生效（非转化者）', () => {
+  it('条件: 技能有其他词缀但无 convert → 不生效', () => {
     expect(ConditionEvaluator.evaluate(
-      { type: 'is_converter_after_producer' },
-      { currentSkillCategory: 'producer', wordHasProducerTriggered: true }
+      { type: 'skill_has_affix', affixType: 'convert' },
+      { currentSkillAffixes: ['produce'] }
     )).toBe(false)
   })
 
-  it('管道集成: converter + 产出者已触发 → score ×1.15', () => {
+  it('管道集成: 技能有 convert 词缀 → score ×1.15', () => {
     addRelic('forge_heart')
     const registry = new ModifierRegistry()
     registry.register({
@@ -193,11 +193,11 @@ describe('forge_heart（熔炉之心）', () => {
     })
     const relicMods = RELIC_MODIFIER_DEFS.forge_heart('forge_heart')
     registry.registerMany(relicMods)
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { currentSkillCategory: 'converter', wordHasProducerTriggered: true })
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { currentSkillAffixes: ['convert'] })
     expect(result.effects.score).toBeCloseTo(115, 5)
   })
 
-  it('管道集成: converter + 产出者未触发 → score 不变', () => {
+  it('管道集成: 技能无 convert 词缀 → score 不变', () => {
     addRelic('forge_heart')
     const registry = new ModifierRegistry()
     registry.register({
@@ -207,7 +207,7 @@ describe('forge_heart（熔炉之心）', () => {
     })
     const relicMods = RELIC_MODIFIER_DEFS.forge_heart('forge_heart')
     registry.registerMany(relicMods)
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { currentSkillCategory: 'converter', wordHasProducerTriggered: false })
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { currentSkillAffixes: [] })
     expect(result.effects.score).toBe(100)
   })
 })
@@ -226,29 +226,29 @@ describe('chain_surge（链路增压）', () => {
   it('工厂: 产生 1 个 Modifier（score ×1.25 条件: chained）', () => {
     const mods = RELIC_MODIFIER_DEFS.chain_surge('chain_surge')
     expect(mods).toHaveLength(1)
-    expect(mods[0].condition).toEqual({ type: 'is_chained_trigger' })
+    expect(mods[0].condition).toEqual({ type: 'is_affix_chain_trigger' })
     expect(mods[0].effect!.value).toBe(1.25)
   })
 
-  it('条件: 链式触发时生效', () => {
+  it('条件: 词缀链式触发时生效', () => {
     expect(ConditionEvaluator.evaluate(
-      { type: 'is_chained_trigger' },
-      { isChainedTrigger: true }
+      { type: 'is_affix_chain_trigger' },
+      { isAffixChainTrigger: true }
     )).toBe(true)
   })
 
-  it('条件: 非链式不生效', () => {
+  it('条件: 非词缀链式不生效', () => {
     expect(ConditionEvaluator.evaluate(
-      { type: 'is_chained_trigger' },
-      { isChainedTrigger: false }
+      { type: 'is_affix_chain_trigger' },
+      { isAffixChainTrigger: false }
     )).toBe(false)
     expect(ConditionEvaluator.evaluate(
-      { type: 'is_chained_trigger' },
+      { type: 'is_affix_chain_trigger' },
       {}
     )).toBe(false)
   })
 
-  it('管道集成: 链式触发时 score ×1.25', () => {
+  it('管道集成: 词缀链式触发时 score ×1.25', () => {
     addRelic('chain_surge')
     const registry = new ModifierRegistry()
     registry.register({
@@ -258,11 +258,11 @@ describe('chain_surge（链路增压）', () => {
     })
     const relicMods = RELIC_MODIFIER_DEFS.chain_surge('chain_surge')
     registry.registerMany(relicMods)
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { isChainedTrigger: true })
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { isAffixChainTrigger: true })
     expect(result.effects.score).toBe(125)
   })
 
-  it('管道集成: 非链式触发时 score 不变', () => {
+  it('管道集成: 非词缀链式触发时 score 不变', () => {
     addRelic('chain_surge')
     const registry = new ModifierRegistry()
     registry.register({
@@ -272,7 +272,7 @@ describe('chain_surge（链路增压）', () => {
     })
     const relicMods = RELIC_MODIFIER_DEFS.chain_surge('chain_surge')
     registry.registerMany(relicMods)
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { isChainedTrigger: false })
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { isAffixChainTrigger: false })
     expect(result.effects.score).toBe(100)
   })
 })
@@ -291,27 +291,27 @@ describe('stack_resonance（层叠共鸣）', () => {
   it('工厂: 产生 1 个 Modifier（score ×1.10 条件: stacks≥15）', () => {
     const mods = RELIC_MODIFIER_DEFS.stack_resonance('stack_resonance')
     expect(mods).toHaveLength(1)
-    expect(mods[0].condition).toEqual({ type: 'amplifier_stacks_gte', value: 15 })
+    expect(mods[0].condition).toEqual({ type: 'affix_amplify_stacks_gte', value: 15 })
     expect(mods[0].effect!.value).toBe(1.10)
   })
 
   it('条件: 叠层=15 时生效', () => {
     expect(ConditionEvaluator.evaluate(
-      { type: 'amplifier_stacks_gte', value: 15 },
-      { amplifierMaxStacks: 15 }
+      { type: 'affix_amplify_stacks_gte', value: 15 },
+      { currentSkillAmplifyStacks: 15 }
     )).toBe(true)
   })
 
   it('条件: 叠层=14 不生效', () => {
     expect(ConditionEvaluator.evaluate(
-      { type: 'amplifier_stacks_gte', value: 15 },
-      { amplifierMaxStacks: 14 }
+      { type: 'affix_amplify_stacks_gte', value: 15 },
+      { currentSkillAmplifyStacks: 14 }
     )).toBe(false)
   })
 
   it('条件: 无叠层数据不生效', () => {
     expect(ConditionEvaluator.evaluate(
-      { type: 'amplifier_stacks_gte', value: 15 },
+      { type: 'affix_amplify_stacks_gte', value: 15 },
       {}
     )).toBe(false)
   })
@@ -326,7 +326,7 @@ describe('stack_resonance（层叠共鸣）', () => {
     })
     const relicMods = RELIC_MODIFIER_DEFS.stack_resonance('stack_resonance')
     registry.registerMany(relicMods)
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { amplifierMaxStacks: 15 })
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { currentSkillAmplifyStacks: 15 })
     expect(result.effects.score).toBeCloseTo(110, 5)
   })
 
@@ -340,7 +340,7 @@ describe('stack_resonance（层叠共鸣）', () => {
     })
     const relicMods = RELIC_MODIFIER_DEFS.stack_resonance('stack_resonance')
     registry.registerMany(relicMods)
-    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { amplifierMaxStacks: 10 })
+    const result = EffectPipeline.resolve(registry, 'on_skill_trigger', { currentSkillAmplifyStacks: 10 })
     expect(result.effects.score).toBe(100)
   })
 })

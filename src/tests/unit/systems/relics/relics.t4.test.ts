@@ -24,6 +24,8 @@ vi.mock('../../../../src/core/state', () => {
       level: 1,
       growthValues: new Map(),
       amplifierStacks: new Map(),
+      affixSkills: new Map(),
+      affixSkillStates: new Map(),
     },
     synergy: {
       wordSkillCount: 0,
@@ -284,11 +286,11 @@ describe('pure_heart 工厂', () => {
     expect(mods).toHaveLength(1)
   })
 
-  it('global 层 score ×3.0，条件 current_skill_is_producer', () => {
+  it('global 层 score ×3.0，条件 skill_rarity_gte 0', () => {
     const mods = RELIC_MODIFIER_DEFS.pure_heart('pure_heart')
     expect(mods[0].layer).toBe('global')
     expect(mods[0].effect?.value).toBe(3.0)
-    expect(mods[0].condition).toEqual({ type: 'current_skill_is_producer' })
+    expect(mods[0].condition).toEqual({ type: 'skill_rarity_gte', value: 0 })
   })
 
   it('RELICS 数据价格 100', () => {

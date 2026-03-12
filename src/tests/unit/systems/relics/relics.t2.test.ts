@@ -49,8 +49,8 @@ describe('T2 遗物数据', () => {
     })
   })
 
-  it('RELIC_MODIFIER_DEFS 总数 = 35', () => {
-    expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(35)
+  it('RELIC_MODIFIER_DEFS 总数 = 39', () => {
+    expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(39)
   })
 
   it('图标唯一（T2 内部）', () => {

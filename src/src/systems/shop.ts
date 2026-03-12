@@ -40,11 +40,12 @@ import type { DragPayload } from './dragManager';
 import { IS_DEMO } from '../demo/demo-config';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 import { generateSkill } from '../data/skillGeneration';
-import { createSkillRuntimeState, AFFIX_NAMES, RARITY_COLORS, RARITY_NAMES } from '../data/affixes';
+import { createSkillRuntimeState, AFFIX_NAMES, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
 import { getEnchantmentSlotCount, filterQuestCandidates } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
+import { getMonoAffixCategory } from './relics/RelicPipeline';
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
@@ -77,7 +78,21 @@ export function generateAffixShopItem(
 ): ShopItem {
   const resourcePool = getAvailableResources(state.classId);
   const resource = options?.resource ?? resourcePool[Math.floor(random() * resourcePool.length)];
-  const skill = generateSkill({ resource, rarity: options?.rarity });
+  // pure_heart 白装限制：强制 rarity=0
+  const whiteOnly = queryRelicFlag('white_only') as boolean;
+  const rarity = whiteOnly ? 0 as SkillRarity : options?.rarity;
+  // mono_affix 类别限制：重试直到技能含已选类别词条
+  const lockedCategory = getMonoAffixCategory();
+  let skill = generateSkill({ resource, rarity });
+  if (lockedCategory && skill.rarity > 0) {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const hasMatch = skill.affixes.some(
+        a => AFFIX_CATEGORY_MAP[a.type as keyof typeof AFFIX_CATEGORY_MAP] === lockedCategory,
+      );
+      if (hasMatch) break;
+      skill = generateSkill({ resource, rarity });
+    }
+  }
   const cost = getAdjustedPrice(calculateAffixSkillPrice(skill.rarity, skill.level));
 
   return {
@@ -91,11 +106,21 @@ export function generateAffixShopItem(
   };
 }
 
-/** 生成多个词条制技能商品（保证品类多样性：至少 1 件 rarity≥1） */
+/** 生成多个词条制技能商品（保证品类多样性：至少 1 件 rarity≥1，除非 white_only） */
 export function generateAffixShopItems(count: number): ShopItem[] {
   if (count <= 0) return [];
   const items: ShopItem[] = [];
   let nextId = Date.now();
+
+  const whiteOnly = queryRelicFlag('white_only') as boolean;
+
+  if (whiteOnly) {
+    // pure_heart：全部白装
+    for (let i = 0; i < count; i++) {
+      items.push(generateAffixShopItem(nextId++));
+    }
+    return items;
+  }
 
   // 保底第 1 件：rarity≥1（蓝装以上）
   let guaranteed: ShopItem;

@@ -251,29 +251,29 @@ describe('ramen — 快速完词 +30% / 慢速 -20%', () => {
 // ========================================
 // overcharge（过载核心）
 // ========================================
-describe('overcharge — 产出者 +50% / -0.1s', () => {
+describe('overcharge — 蓝装及以上 +50% / -0.1s', () => {
   beforeEach(clearRelics)
 
-  it('产出者触发 → score ×1.50（global 层）', () => {
+  it('rarity≥1 触发 → score ×1.50（global 层）', () => {
     addRelic('overcharge')
     const result = resolveSkillTrigger('overcharge', {
-      currentSkillCategory: 'producer',
+      currentSkillRarity: 1,
     })
     expect(result.effects.score).toBeCloseTo(1.50)
   })
 
-  it('非产出者触发 → score ×1.00（无增益）', () => {
+  it('rarity=0(白装) 触发 → score ×1.00（无增益）', () => {
     addRelic('overcharge')
     const result = resolveSkillTrigger('overcharge', {
-      currentSkillCategory: 'converter',
+      currentSkillRarity: 0,
     })
     expect(result.effects.score).toBeCloseTo(1.0)
   })
 
-  it('产出者触发 → 产生 time_steal 行为（-0.1s）', () => {
+  it('rarity≥1 触发 → 产生 time_steal 行为（-0.1s）', () => {
     addRelic('overcharge')
     const result = resolveSkillTrigger('overcharge', {
-      currentSkillCategory: 'producer',
+      currentSkillRarity: 2,
     })
     expect(result.pendingBehaviors).toHaveLength(1)
     expect(result.pendingBehaviors[0]).toEqual({
@@ -282,10 +282,10 @@ describe('overcharge — 产出者 +50% / -0.1s', () => {
     })
   })
 
-  it('非产出者触发 → 无 time_steal 行为', () => {
+  it('rarity=0 触发 → 无 time_steal 行为', () => {
     addRelic('overcharge')
     const result = resolveSkillTrigger('overcharge', {
-      currentSkillCategory: 'connector',
+      currentSkillRarity: 0,
     })
     expect(result.pendingBehaviors).toHaveLength(0)
   })
@@ -293,7 +293,7 @@ describe('overcharge — 产出者 +50% / -0.1s', () => {
   it('time_steal 行为可被 BehaviorExecutor 执行', () => {
     addRelic('overcharge')
     const result = resolveSkillTrigger('overcharge', {
-      currentSkillCategory: 'producer',
+      currentSkillRarity: 1,
     })
     let timeStolen = 0
     BehaviorExecutor.execute(result.pendingBehaviors, 0, {
@@ -302,11 +302,9 @@ describe('overcharge — 产出者 +50% / -0.1s', () => {
     expect(timeStolen).toBe(-0.1)
   })
 
-  it('amplifier 触发 → 无效果', () => {
+  it('无 rarity 信息（旧系统） → 无效果', () => {
     addRelic('overcharge')
-    const result = resolveSkillTrigger('overcharge', {
-      currentSkillCategory: 'amplifier',
-    })
+    const result = resolveSkillTrigger('overcharge', {})
     expect(result.effects.score).toBeCloseTo(1.0)
     expect(result.pendingBehaviors).toHaveLength(0)
   })

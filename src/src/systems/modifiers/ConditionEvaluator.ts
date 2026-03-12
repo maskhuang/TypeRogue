@@ -125,6 +125,15 @@ export class ConditionEvaluator {
         return (ctx.wordElapsed ?? Infinity) < condition.value
       case 'word_time_gt':
         return (ctx.wordElapsed ?? 0) > condition.value
+      // === 词条制遗物适配条件 (Story 35.12) ===
+      case 'skill_has_affix':
+        return (ctx.currentSkillAffixes ?? []).includes(condition.affixType)
+      case 'skill_rarity_gte':
+        return (ctx.currentSkillRarity ?? -1) >= condition.value
+      case 'affix_amplify_stacks_gte':
+        return (ctx.currentSkillAmplifyStacks ?? 0) >= condition.value
+      case 'is_affix_chain_trigger':
+        return ctx.isAffixChainTrigger === true
       default:
         return false
     }

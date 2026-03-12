@@ -4,6 +4,7 @@
 // Story 5.4 Task 2: 遗物数据定义
 
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes'
+import { AffixType, AFFIX_CATEGORY_MAP } from './affixes'
 
 // === 遗物类型定义（从 RelicTypes.ts 迁入） ===
 
@@ -206,7 +207,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'forge_heart',
     name: '熔炉之心',
     icon: '⚗️',
-    description: '本词有产出者触发后，转化者产出 +15%',
+    description: '拥有转化词条的技能触发时，产出 +15%',
     rarity: 'common',
     basePrice: 25,
     effects: [
@@ -219,7 +220,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'chain_surge',
     name: '链路增压',
     icon: '🧲',
-    description: '被连接者触发的技能产出 +25%',
+    description: '连接词条被动触发时，被触发技能产出 +25%',
     rarity: 'rare',
     basePrice: 50,
     effects: [
@@ -232,7 +233,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'stack_resonance',
     name: '层叠共鸣',
     icon: '⚜️',
-    description: '任意增幅者叠层 ≥15 时，技能产出 +10%',
+    description: '增幅词条叠层 ≥15 时，技能产出 +10%',
     rarity: 'rare',
     basePrice: 55,
     effects: [
@@ -369,7 +370,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'overcharge',
     name: '过载核心',
     icon: '🔋',
-    description: '产出者效果 +50%，但每次产出者触发 -0.1s 时间',
+    description: '魔法(蓝)及以上技能效果 +50%，但每次触发 -0.1s 时间',
     rarity: 'rare',
     basePrice: 50,
     category: 'risk-reward',
@@ -457,7 +458,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'chain_ban',
     name: '链式禁令',
     icon: '⛓️',
-    description: '技能产出 +30%，但连接者被禁用',
+    description: '技能产出 +30%，但触发链词条（连接/复制/共鸣）被禁用',
     rarity: 'legendary',
     basePrice: 80,
     effects: [
@@ -497,7 +498,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'pure_heart',
     name: '纯粹之心',
     icon: '❤️',
-    description: '产出者效果 ×3，但只能使用产出者',
+    description: '白装技能效果 ×3，但只能使用白装（0 词条）',
     rarity: 'legendary',
     basePrice: 100,
     effects: [
@@ -535,7 +536,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'storm_drum',
     name: '风暴战鼓',
     icon: '🥁',
-    description: '产出者技能触发两次',
+    description: '稀有(黄)及以上技能触发两次',
     rarity: 'rare',
     basePrice: 55,
     effects: [],
@@ -550,6 +551,60 @@ export const RELICS: Record<string, RelicData> = {
     basePrice: 100,
     effects: [],
     flavor: '当高潮来临，一切都要再来一次。',
+  },
+
+  // ==================== 词条制专属遗物 (Story 35.12) ====================
+
+  affix_spectrum: {
+    id: 'affix_spectrum',
+    name: '词条光谱',
+    icon: '🪬',
+    description: '每拥有 1 种不同词条类型，全技能产出 +3%',
+    rarity: 'rare',
+    basePrice: 55,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 0.03 }
+    ],
+    flavor: '色彩越丰富，光谱越耀眼。'
+  },
+
+  legendary_aura: {
+    id: 'legendary_aura',
+    name: '传说气场',
+    icon: '👑',
+    description: '每拥有 1 个传说(红)技能，全技能产出 +8%',
+    rarity: 'rare',
+    basePrice: 60,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 0.08 }
+    ],
+    flavor: '传说的气息弥漫在每一次触发中。'
+  },
+
+  quest_momentum: {
+    id: 'quest_momentum',
+    name: '任务动力',
+    icon: '🪄',
+    description: '每完成 1 次任务附魔，全技能产出 +2%',
+    rarity: 'rare',
+    basePrice: 50,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 0.02 }
+    ],
+    flavor: '每一个达成的目标，都化为持续的动力。'
+  },
+
+  mono_affix: {
+    id: 'mono_affix',
+    name: '纯血词条',
+    icon: '🧊',
+    description: '限定同一词条类别，该类别技能产出 ×2',
+    rarity: 'legendary',
+    basePrice: 100,
+    effects: [
+      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 2.0 }
+    ],
+    flavor: '纯粹的血脉，专注的力量。'
   },
 
   // ==================== 职业初始遗物（占位） ====================
@@ -828,30 +883,30 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
-  // 熔炉之心：本词有产出者触发后，转化者产出 +15%（global 层乘法）
+  // 熔炉之心：拥有转化词条的技能触发时 +15%（global 层乘法）
   forge_heart: (id) => [
     relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
       layer: 'global',
       effect: { type: 'score', value: 1.15, stacking: 'multiplicative' },
-      condition: { type: 'is_converter_after_producer' },
+      condition: { type: 'skill_has_affix', affixType: 'convert' },
     }),
   ],
 
-  // 链路增压：被传导的技能效果 +25%（global 层乘法）
+  // 链路增压：连接词条被动触发时 +25%（global 层乘法）
   chain_surge: (id) => [
     relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
       layer: 'global',
       effect: { type: 'score', value: 1.25, stacking: 'multiplicative' },
-      condition: { type: 'is_chained_trigger' },
+      condition: { type: 'is_affix_chain_trigger' },
     }),
   ],
 
-  // 层叠共鸣：增幅者叠层 ≥15 时，受影响技能 +10%（global 层乘法）
+  // 层叠共鸣：增幅词条叠层 ≥15 时，受影响技能 +10%（global 层乘法）
   stack_resonance: (id) => [
     relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
       layer: 'global',
       effect: { type: 'score', value: 1.10, stacking: 'multiplicative' },
-      condition: { type: 'amplifier_stacks_gte', value: 15 },
+      condition: { type: 'affix_amplify_stacks_gte', value: 15 },
     }),
   ],
 
@@ -985,16 +1040,16 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     ]
   },
 
-  // 过载核心：产出者 +50%（global 层），每次产出者触发 -0.1s（time_steal 行为）
+  // 过载核心：蓝装及以上 +50%（global 层），每次触发 -0.1s（time_steal 行为）
   overcharge: (id) => [
     relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
       layer: 'global',
       effect: { type: 'score', value: 1.50, stacking: 'multiplicative' },
-      condition: { type: 'current_skill_is_producer' },
+      condition: { type: 'skill_rarity_gte', value: 1 },
     }),
     relicMod(id, 'time_cost', 'on_skill_trigger', 'after', {
       behavior: { type: 'time_steal', timeBonus: -0.1 },
-      condition: { type: 'current_skill_is_producer' },
+      condition: { type: 'skill_rarity_gte', value: 1 },
     }),
   ],
 
@@ -1025,12 +1080,14 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
-  // 纯粹之心：产出者 score ×3（global 层条件型），producer_only 通过 RELIC_FLAGS
+  // 纯粹之心：白装(rarity=0) score ×3（global 层条件型），white_only 通过 RELIC_FLAGS
+  // 注意：条件 rarity>=0 意为"仅 affix 技能"（旧系统技能默认 rarity=-1 不满足）。
+  // white_only flag 阻止获取非白装，因此实际效果等同于"仅白装 ×3"。
   pure_heart: (id) => [
     relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
       layer: 'global',
       effect: { type: 'score', value: 3.0, stacking: 'multiplicative' },
-      condition: { type: 'current_skill_is_producer' },
+      condition: { type: 'skill_rarity_gte', value: 0 },
     }),
   ],
 
@@ -1050,11 +1107,11 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
-  // 风暴战鼓：产出者技能触发时重触发
+  // 风暴战鼓：稀有(黄)及以上技能触发时重触发
   storm_drum: (id) => [
     relicMod(id, 'retrigger', 'on_skill_trigger', 'after', {
       behavior: { type: 'retrigger' },
-      condition: { type: 'current_skill_is_producer' },
+      condition: { type: 'skill_rarity_gte', value: 2 },
     }),
   ],
 
@@ -1066,16 +1123,66 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     }),
   ],
 
+  // === 词条制专属遗物 (Story 35.12) ===
+
+  // 词条光谱：每种不同词条类型 → 全技能 +3%（动态计数，on_skill_trigger score 加算）
+  affix_spectrum: (id, ctx) => {
+    if (ctx?.relicStates?.['_affix_type_count'] != null) {
+      const count = ctx.relicStates['_affix_type_count']
+      if (count <= 0) return []
+      return [
+        relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+          effect: { type: 'score', value: count * 0.03, stacking: 'additive' },
+        }),
+      ]
+    }
+    return []
+  },
+
+  // 传说气场：每个传说(红)技能 → 全技能 +8%（动态计数）
+  legendary_aura: (id, ctx) => {
+    const count = ctx?.relicStates?.['_legendary_count'] ?? 0
+    if (count <= 0) return []
+    return [
+      relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+        effect: { type: 'score', value: count * 0.08, stacking: 'additive' },
+      }),
+    ]
+  },
+
+  // 任务动力：累计 questCompletions 总和 → 全技能 +2%（动态计数）
+  quest_momentum: (id, ctx) => {
+    const total = ctx?.relicStates?.['_quest_completions_total'] ?? 0
+    if (total <= 0) return []
+    return [
+      relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+        effect: { type: 'score', value: total * 0.02, stacking: 'additive' },
+      }),
+    ]
+  },
+
+  // 纯血词条：已选类别 ×2（global 层，仅 affix 技能），限制通过 RELIC_FLAGS
+  mono_affix: (id) => [
+    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
+      layer: 'global',
+      effect: { type: 'score', value: 2.0, stacking: 'multiplicative' },
+      condition: { type: 'skill_rarity_gte', value: 0 },
+    }),
+  ],
+
 }
 
 // === T4 限制 Flag 映射表 ===
 // flag name → 设置该 flag 的遗物 ID 列表（Story 30-2 填充具体遗物）
 export const RELIC_FLAGS: Record<string, string[]> = {
-  connector_lock: ['chain_ban'],                    // 禁用连接者
+  connector_lock: ['chain_ban'],                    // 禁用连接者（旧系统兼容）
+  chain_affix_lock: ['chain_ban'],                  // 禁用触发链词条（连接/复制/共鸣）
   enchant_lock: ['no_enchant_vow', 'keyboard_flood'], // 禁用附魔
   max_skill_level: ['keyboard_flood', 'minimalist'],  // 限制技能等级上限
-  producer_only: ['pure_heart'],                    // 仅允许产出者
+  producer_only: ['pure_heart'],                    // 仅允许产出者（旧系统兼容）
+  white_only: ['pure_heart'],                       // 仅允许白装（rarity=0）
   max_skill_count: ['minimalist'],                  // 限制技能数量上限
+  affix_category_lock: ['mono_affix'],              // 限定词条类别
 }
 
 /**
