@@ -337,6 +337,32 @@ export const RESOURCE_NAMES: Record<ResourceType, string> = {
 /** 稀有度掷骰概率 */
 export const RARITY_PROBABILITIES: [number, number, number, number] = [0.40, 0.30, 0.20, 0.10]
 
+// ===== 衍生附魔比率表（per-resource） =====
+
+/** 衍生附魔每种额外资源的产出比率（设计文档 §4.5 衍生附魔表） */
+export const TRANSMUTE_RATIO_TABLE: Record<ResourceType, number> = {
+  base:       0.30,
+  score:      0.30,
+  multiplier: 0.10,
+  time:       0.20,
+  gold:       0.20,
+  fragment:   0.15,
+  mutagen:    0.15,
+}
+
+// ===== 乘算化运算符校准表（per-resource） =====
+
+/** 乘算化附魔：将加算层各项 bonus 转为独立乘数时的校准系数（初始全 1.0，后续平衡调优） */
+export const MULTIPLY_OPERATOR_CALIBRATION: Record<ResourceType, number> = {
+  base:       1.0,
+  score:      1.0,
+  multiplier: 1.0,
+  time:       1.0,
+  gold:       1.0,
+  fragment:   1.0,
+  mutagen:    1.0,
+}
+
 // ===== 学徒·观摩 growthPerProc 按 PositionRelation =====
 
 export const APPRENTICE_NEIGHBOR_GROWTH: Record<PositionRelation, number> = {
@@ -367,8 +393,8 @@ export const SPLASH_ENCHANTMENT_DEFS: SplashEnchantmentDef[] = [
 // ===== 职业限定附魔 =====
 
 export const CLASS_RESTRICTED_ENCHANTMENTS: Record<string, EnchantmentType[]> = {
-  wordsmith: [EnchantmentType.ApprenticeHarvest],
-  metamorph: [EnchantmentType.ApprenticeAdapt],
+  wordsmith: [EnchantmentType.ApprenticeHarvest, EnchantmentType.LetterAffinity, EnchantmentType.Overflow],
+  metamorph: [EnchantmentType.ApprenticeAdapt, EnchantmentType.Unstable, EnchantmentType.MutationHunger],
 }
 
 /** 所有职业限定附魔的集合（用于快速查找） */

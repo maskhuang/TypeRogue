@@ -16,6 +16,8 @@ import {
   CLASS_RESTRICTED_ENCHANTMENTS,
   QUEST_AFFIX_MAP,
   QUEST_ENCHANTMENT_DEFS,
+  TRANSMUTE_RATIO_TABLE,
+  MULTIPLY_OPERATOR_CALIBRATION,
   filterEnchantmentsByClass,
 } from '../../../src/data/affixes'
 import { PositionRelation } from '../../../src/data/keyboardTopology'
@@ -54,7 +56,6 @@ import {
   ALL_RESOURCES,
   MAX_RECURSE_DEPTH,
   APPRENTICE_GROWTH_DEFAULTS,
-  TRANSMUTE_DEFAULT_RATIO,
   MUTATION_HUNGER_CHANCE,
 } from '../../../src/data/affixTrigger'
 
@@ -1575,21 +1576,21 @@ describe('resolvePhase5', () => {
   })
 
   describe('Transmute enchantment', () => {
-    it('should produce extra resource output', () => {
+    it('should produce extra resource output using per-resource ratio', () => {
       const skill = makeSkill({
         enchantmentIds: [EnchantmentType.Transmute],
       })
       const state = makeRuntimeState()
       const ctx = makeContext({
         transmuteResource: 'gold' as ResourceType,
-        transmuteRatio: 0.15,
       })
       const flags = makeFlags()
       const result = resolvePhase5(skill, state, ctx, flags, 100)
-      expect(result.transmuteOutput).toEqual({ resource: 'gold', amount: 15 })
+      // gold ratio = 0.20
+      expect(result.transmuteOutput).toEqual({ resource: 'gold', amount: 20 })
     })
 
-    it('should use default ratio when not specified', () => {
+    it('should use per-resource ratio from TRANSMUTE_RATIO_TABLE', () => {
       const skill = makeSkill({
         enchantmentIds: [EnchantmentType.Transmute],
       })
@@ -1597,7 +1598,8 @@ describe('resolvePhase5', () => {
       const ctx = makeContext({ transmuteResource: 'score' as ResourceType })
       const flags = makeFlags()
       const result = resolvePhase5(skill, state, ctx, flags, 100)
-      expect(result.transmuteOutput).toEqual({ resource: 'score', amount: 100 * TRANSMUTE_DEFAULT_RATIO })
+      // score ratio = 0.30
+      expect(result.transmuteOutput).toEqual({ resource: 'score', amount: 30 })
     })
 
     it('should return null when no transmuteResource', () => {
@@ -1609,6 +1611,20 @@ describe('resolvePhase5', () => {
       const flags = makeFlags()
       const result = resolvePhase5(skill, state, ctx, flags, 100)
       expect(result.transmuteOutput).toBeNull()
+    })
+
+    it('should set transmuteSameResourceBoost when extraResource === skill.resource', () => {
+      const skill = makeSkill({
+        resource: 'base' as ResourceType,
+        enchantmentIds: [EnchantmentType.Transmute],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext({ transmuteResource: 'base' as ResourceType })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 100)
+      // Same resource: no transmuteOutput, boost ratio instead
+      expect(result.transmuteOutput).toBeNull()
+      expect(result.transmuteSameResourceBoost).toBe(0.30) // base ratio = 0.30
     })
   })
 
@@ -2679,5 +2695,373 @@ describe('Story 35.6: QUEST_ENCHANTMENT_DEFS completeness', () => {
     for (const def of QUEST_ENCHANTMENT_DEFS) {
       expect(QUEST_AFFIX_MAP[def.type]).toBeDefined()
     }
+  })
+})
+
+// ===== Story 35-7: 衍生 + 被动 + 乘算化 =====
+
+describe('TRANSMUTE_RATIO_TABLE', () => {
+  it('should have 7 resource entries with correct ratios', () => {
+    expect(TRANSMUTE_RATIO_TABLE['base' as ResourceType]).toBe(0.30)
+    expect(TRANSMUTE_RATIO_TABLE['score' as ResourceType]).toBe(0.30)
+    expect(TRANSMUTE_RATIO_TABLE['multiplier' as ResourceType]).toBe(0.10)
+    expect(TRANSMUTE_RATIO_TABLE['time' as ResourceType]).toBe(0.20)
+    expect(TRANSMUTE_RATIO_TABLE['gold' as ResourceType]).toBe(0.20)
+    expect(TRANSMUTE_RATIO_TABLE['fragment' as ResourceType]).toBe(0.15)
+    expect(TRANSMUTE_RATIO_TABLE['mutagen' as ResourceType]).toBe(0.15)
+  })
+
+  it('should cover all ALL_RESOURCES entries', () => {
+    for (const r of ALL_RESOURCES) {
+      expect(TRANSMUTE_RATIO_TABLE[r]).toBeDefined()
+    }
+  })
+})
+
+describe('Transmute per-resource ratios in Phase 5', () => {
+  it('should use multiplier ratio (10%) for multiplier resource', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.Transmute] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ transmuteResource: 'multiplier' as ResourceType })
+    const flags = makeFlags()
+    const result = resolvePhase5(skill, state, ctx, flags, 200)
+    expect(result.transmuteOutput).toEqual({ resource: 'multiplier', amount: 20 }) // 200 × 0.10
+  })
+
+  it('should use fragment ratio (15%) for fragment resource', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.Transmute] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ transmuteResource: 'fragment' as ResourceType })
+    const flags = makeFlags()
+    const result = resolvePhase5(skill, state, ctx, flags, 100)
+    expect(result.transmuteOutput).toEqual({ resource: 'fragment', amount: 15 }) // 100 × 0.15
+  })
+
+  it('should use time ratio (20%) for time resource', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.Transmute] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ transmuteResource: 'time' as ResourceType })
+    const flags = makeFlags()
+    const result = resolvePhase5(skill, state, ctx, flags, 50)
+    expect(result.transmuteOutput).toEqual({ resource: 'time', amount: 10 }) // 50 × 0.20
+  })
+})
+
+describe('Transmute same-resource optimization', () => {
+  it('should boost main output via transmuteSameResourceBoost when same resource', () => {
+    const skill = makeSkill({
+      resource: 'gold' as ResourceType,
+      enchantmentIds: [EnchantmentType.Transmute],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ transmuteResource: 'gold' as ResourceType })
+    const flags = makeFlags()
+    const result = resolvePhase5(skill, state, ctx, flags, 100)
+    expect(result.transmuteOutput).toBeNull()
+    expect(result.transmuteSameResourceBoost).toBe(0.20) // gold ratio
+  })
+
+  it('should produce transmuteOutput when different resource', () => {
+    const skill = makeSkill({
+      resource: 'base' as ResourceType,
+      enchantmentIds: [EnchantmentType.Transmute],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ transmuteResource: 'gold' as ResourceType })
+    const flags = makeFlags()
+    const result = resolvePhase5(skill, state, ctx, flags, 100)
+    expect(result.transmuteOutput).toEqual({ resource: 'gold', amount: 20 })
+    expect(result.transmuteSameResourceBoost).toBe(0)
+  })
+
+  it('should return 0 boost when no transmute enchantment', () => {
+    const skill = makeSkill({ enchantmentIds: [] })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    const flags = makeFlags()
+    const result = resolvePhase5(skill, state, ctx, flags, 100)
+    expect(result.transmuteSameResourceBoost).toBe(0)
+  })
+})
+
+describe('MultiplyOperator — Phase 2 bonusBreakdown', () => {
+  it('should return bonusBreakdown with individual bonuses when MultiplyOperator active', () => {
+    const skill = makeSkill({
+      affixes: [
+        { type: AffixType.Taboo },          // +1.0
+        { type: AffixType.Outcast, bonusPercent: 0.3 },  // +0.3 (if first/last)
+      ],
+      enchantmentIds: [EnchantmentType.MultiplyOperator],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ triggerKey: 'h', currentWord: 'hello' }) // 'h' is first letter
+    const result = resolvePhase2(skill, state, ctx, 10)
+    // MultiplyOperator: output = baseOutput (not multiplied by bonusPercent)
+    expect(result.output).toBe(10)
+    expect(result.bonusPercent).toBeCloseTo(1.3) // 1.0 + 0.3
+    expect(result.bonusBreakdown).toBeDefined()
+    expect(result.bonusBreakdown!.length).toBe(2)
+    expect(result.bonusBreakdown![0]).toBeCloseTo(1.0)
+    expect(result.bonusBreakdown![1]).toBeCloseTo(0.3)
+  })
+
+  it('should NOT return bonusBreakdown without MultiplyOperator', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Taboo }],
+      enchantmentIds: [],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    const result = resolvePhase2(skill, state, ctx, 10)
+    expect(result.output).toBe(10 * (1 + 1.0)) // normal: 10 × 2.0
+    expect(result.bonusBreakdown).toBeUndefined()
+  })
+
+  it('should return baseOutput when MultiplyOperator active and no bonuses', () => {
+    const skill = makeSkill({
+      affixes: [],
+      enchantmentIds: [EnchantmentType.MultiplyOperator],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    const result = resolvePhase2(skill, state, ctx, 10)
+    expect(result.output).toBe(10)
+    expect(result.bonusPercent).toBe(0)
+    expect(result.bonusBreakdown).toEqual([])
+  })
+})
+
+describe('MultiplyOperator — Phase 3 multiplicative application', () => {
+  it('should multiply each breakdown bonus independently', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.MultiplyOperator] })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    // bonusBreakdown = [0.30, 0.20] → output × 1.30 × 1.20 = input × 1.56
+    const result = resolvePhase3(skill, state, ctx, 100, [0.30, 0.20])
+    expect(result.output).toBeCloseTo(100 * 1.30 * 1.20)
+    expect(result.multipliers).toContain(1.30)
+    expect(result.multipliers).toContain(1.20)
+  })
+
+  it('additive vs multiplicative: MultiplyOperator produces larger result', () => {
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+
+    // Additive mode: 100 × (1 + 0.30 + 0.20 + 0.25) = 100 × 1.75 = 175
+    const addSkill = makeSkill({ enchantmentIds: [] })
+    const addP3 = resolvePhase3(addSkill, state, ctx, 175) // Phase 2 already applied
+    // No bonusBreakdown → no MultiplyOperator effect
+    expect(addP3.output).toBe(175)
+
+    // MultiplyOperator mode: 100 × 1.30 × 1.20 × 1.25 = 100 × 1.95 = 195
+    const mulSkill = makeSkill({ enchantmentIds: [EnchantmentType.MultiplyOperator] })
+    const mulP3 = resolvePhase3(mulSkill, state, ctx, 100, [0.30, 0.20, 0.25])
+    expect(mulP3.output).toBeCloseTo(195)
+    expect(mulP3.output).toBeGreaterThan(addP3.output) // multiplicative > additive
+  })
+
+  it('should have no effect when bonusBreakdown is empty', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.MultiplyOperator] })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    const result = resolvePhase3(skill, state, ctx, 100, [])
+    expect(result.output).toBe(100) // no change
+    expect(result.multipliers).toEqual([])
+  })
+
+  it('should have no effect when bonusBreakdown is undefined', () => {
+    const skill = makeSkill({ enchantmentIds: [] })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    const result = resolvePhase3(skill, state, ctx, 100, undefined)
+    expect(result.output).toBe(100)
+  })
+
+  it('should apply resource calibration factor (default 1.0)', () => {
+    // MULTIPLY_OPERATOR_CALIBRATION defaults to 1.0 for all resources
+    const skill = makeSkill({
+      resource: 'base' as ResourceType,
+      enchantmentIds: [EnchantmentType.MultiplyOperator],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    const calibration = MULTIPLY_OPERATOR_CALIBRATION['base' as ResourceType]
+    expect(calibration).toBe(1.0)
+    const result = resolvePhase3(skill, state, ctx, 100, [0.50])
+    // 100 × (1 + 0.50 × 1.0) = 100 × 1.50 = 150
+    expect(result.output).toBeCloseTo(150)
+  })
+
+  it('should scale bonuses by non-1.0 calibration factor', () => {
+    // Temporarily patch calibration table to test non-default calibration
+    const origVal = MULTIPLY_OPERATOR_CALIBRATION['score' as ResourceType]
+    ;(MULTIPLY_OPERATOR_CALIBRATION as Record<string, number>)['score'] = 0.8
+    try {
+      const skill = makeSkill({
+        resource: 'score' as ResourceType,
+        enchantmentIds: [EnchantmentType.MultiplyOperator],
+      })
+      const state = makeRuntimeState()
+      const ctx = makeContext()
+      // breakdown has two bonuses: 0.50 and 0.20
+      const result = resolvePhase3(skill, state, ctx, 100, [0.50, 0.20])
+      // 100 × (1 + 0.50 × 0.8) × (1 + 0.20 × 0.8) = 100 × 1.40 × 1.16 = 162.4
+      expect(result.output).toBeCloseTo(162.4)
+      expect(result.multipliers).toHaveLength(2)
+      expect(result.multipliers[0]).toBeCloseTo(1.40)
+      expect(result.multipliers[1]).toBeCloseTo(1.16)
+    } finally {
+      ;(MULTIPLY_OPERATOR_CALIBRATION as Record<string, number>)['score'] = origVal
+    }
+  })
+})
+
+describe('MultiplyOperator + passive enchantment combo', () => {
+  it('should include passive enchantment bonus in bonusBreakdown', () => {
+    const skill = makeSkill({
+      resource: 'base' as ResourceType,
+      affixes: [],
+      enchantmentIds: [EnchantmentType.MultiplyOperator, EnchantmentType.Overflow],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({
+      fragmentInventory: { a: 15, b: 15, c: 5 },  // 2 saturated fragments
+    })
+    const result = resolvePhase2(skill, state, ctx, 10)
+    // MultiplyOperator: output = baseOutput
+    expect(result.output).toBe(10)
+    // Overflow: 2 × 0.20 = 0.40
+    expect(result.bonusPercent).toBeCloseTo(0.40)
+    expect(result.bonusBreakdown).toBeDefined()
+    expect(result.bonusBreakdown!.length).toBe(1) // one bonus: 0.40
+    expect(result.bonusBreakdown![0]).toBeCloseTo(0.40)
+  })
+})
+
+describe('Passive enchantment regression', () => {
+  it('Overflow: should add 20% per saturated fragment', () => {
+    const skill = makeSkill({
+      enchantmentIds: [EnchantmentType.Overflow],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({
+      fragmentInventory: { a: 15, b: 20, c: 10 },
+    })
+    const result = resolvePhase2(skill, state, ctx, 10)
+    expect(result.bonusPercent).toBeCloseTo(0.40) // 2 × 0.20
+    expect(result.output).toBeCloseTo(10 * 1.40)
+  })
+
+  it('LetterAffinity: should add 25% when queue contains key', () => {
+    const skill = makeSkill({
+      enchantmentIds: [EnchantmentType.LetterAffinity],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({
+      triggerKey: 'A',
+      fragmentQueue: ['a', 'b', 'c'],
+    })
+    const result = resolvePhase2(skill, state, ctx, 10)
+    expect(result.bonusPercent).toBeCloseTo(0.25)
+    expect(result.output).toBeCloseTo(10 * 1.25)
+  })
+
+  it('LetterAffinity: should NOT add bonus when key not in queue', () => {
+    const skill = makeSkill({
+      enchantmentIds: [EnchantmentType.LetterAffinity],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({
+      triggerKey: 'x',
+      fragmentQueue: ['a', 'b', 'c'],
+    })
+    const result = resolvePhase2(skill, state, ctx, 10)
+    expect(result.bonusPercent).toBe(0)
+  })
+
+  it('Unstable: should add 30% when resource matches', () => {
+    const skill = makeSkill({
+      resource: 'gold' as ResourceType,
+      enchantmentIds: [EnchantmentType.Unstable],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({
+      unstableBonusResource: 'gold' as ResourceType,
+    })
+    const result = resolvePhase2(skill, state, ctx, 10)
+    expect(result.bonusPercent).toBeCloseTo(0.30)
+    expect(result.output).toBeCloseTo(10 * 1.30)
+  })
+
+  it('Unstable: should NOT add bonus when resource does not match', () => {
+    const skill = makeSkill({
+      resource: 'base' as ResourceType,
+      enchantmentIds: [EnchantmentType.Unstable],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({
+      unstableBonusResource: 'gold' as ResourceType,
+    })
+    const result = resolvePhase2(skill, state, ctx, 10)
+    expect(result.bonusPercent).toBe(0)
+  })
+
+  it('MutationHunger: should produce mutagenOutput on lucky roll', () => {
+    const skill = makeSkill({
+      enchantmentIds: [EnchantmentType.MutationHunger],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ randomFn: () => 0.01 }) // < 0.05
+    const flags = makeFlags()
+    const result = resolvePhase5(skill, state, ctx, flags, 100)
+    expect(result.mutagenOutput).toBe(1)
+  })
+
+  it('MutationHunger: should NOT produce mutagenOutput on unlucky roll', () => {
+    const skill = makeSkill({
+      enchantmentIds: [EnchantmentType.MutationHunger],
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ randomFn: () => 0.99 }) // > 0.05
+    const flags = makeFlags()
+    const result = resolvePhase5(skill, state, ctx, flags, 100)
+    expect(result.mutagenOutput).toBe(0)
+  })
+})
+
+describe('CLASS_RESTRICTED_ENCHANTMENTS — passive coverage', () => {
+  it('should include 4 passive enchantments in class restrictions', () => {
+    const wsEnch = CLASS_RESTRICTED_ENCHANTMENTS['wordsmith']
+    const mmEnch = CLASS_RESTRICTED_ENCHANTMENTS['metamorph']
+    expect(wsEnch).toContain(EnchantmentType.LetterAffinity)
+    expect(wsEnch).toContain(EnchantmentType.Overflow)
+    expect(mmEnch).toContain(EnchantmentType.Unstable)
+    expect(mmEnch).toContain(EnchantmentType.MutationHunger)
+  })
+
+  it('filterEnchantmentsByClass should exclude passive enchantments for no class', () => {
+    const candidates = [
+      EnchantmentType.Splash,
+      EnchantmentType.LetterAffinity,
+      EnchantmentType.Overflow,
+      EnchantmentType.Unstable,
+      EnchantmentType.MutationHunger,
+    ]
+    const filtered = filterEnchantmentsByClass(candidates)
+    expect(filtered).toEqual([EnchantmentType.Splash])
+  })
+
+  it('filterEnchantmentsByClass should include wordsmith passives for wordsmith', () => {
+    const candidates = [
+      EnchantmentType.Splash,
+      EnchantmentType.LetterAffinity,
+      EnchantmentType.Overflow,
+      EnchantmentType.Unstable,
+    ]
+    const filtered = filterEnchantmentsByClass(candidates, 'wordsmith')
+    expect(filtered).toContain(EnchantmentType.Splash)
+    expect(filtered).toContain(EnchantmentType.LetterAffinity)
+    expect(filtered).toContain(EnchantmentType.Overflow)
+    expect(filtered).not.toContain(EnchantmentType.Unstable)
   })
 })
