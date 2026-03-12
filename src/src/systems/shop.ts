@@ -774,7 +774,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
       <div class="reward-info">
         <div class="reward-name">${nameLabel}</div>
         <div class="reward-desc affix-list">${affixNames || '无词条'}</div>
-        ${affix.level > 1 ? `<div class="affix-level">Lv.${affix.level}</div>` : ''}
+        ${!item.isUpgrade && affix.level > 1 ? `<div class="affix-level">Lv.${affix.level}</div>` : ''}
       </div>
       <div class="reward-cost">💰${item.cost}</div>
       <div class="reward-type" style="color:${rarityColor}">${item.isUpgrade ? '升级' : rarityLabel}</div>
@@ -1909,7 +1909,7 @@ export function renderBuildManager(): void {
         const skData = state.player.skills.get(skillId);
         slot.dataset.sellPrice = String(Math.floor((skData?.purchasePrice || 15) / 2));
         slot.style.borderColor = rarityColor;
-        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${affixSkill.icon}</span>${affixSkill.level > 1 ? `<span class="affix-level-badge">Lv.${affixSkill.level}</span>` : ''}${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
+        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${affixSkill.icon}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       } else {
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       }
