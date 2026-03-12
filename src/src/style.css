@@ -637,8 +637,8 @@ body {
 .key-slot.synergy-skill { border-color: #9b59b6; }
 .key-slot.adjacent-highlight { border-color: #ffe66d !important; background: rgba(255,230,109,0.1); }
 .key-slot.range-highlight {
-    border-color: #ffe66d !important;
-    background: rgba(255, 230, 109, 0.15) !important;
+    border-color: #ffe66d;
+    background: rgba(255, 230, 109, 0.15);
     box-shadow: 0 0 8px rgba(255, 230, 109, 0.3);
 }
 .key-slot .key-letter { font-size: 8px; color: #666; font-weight: bold; }

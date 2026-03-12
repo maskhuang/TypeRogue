@@ -24,7 +24,7 @@ export interface SmartEstimate {
 }
 
 /** 每种词条的独特颜色 */
-const AFFIX_COLORS: Record<string, string> = {
+export const AFFIX_COLORS: Record<string, string> = {
   base:      '#cccccc', // 灰白 — 基础值
   apprentice:'#2ecc71', // 绿 — 学徒
   multiply:  '#e74c3c', // 红 — 强化

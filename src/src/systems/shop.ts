@@ -28,7 +28,7 @@ import { getIconCount } from './skills';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
-import { keyTooltip } from '../ui/keyboard/KeyTooltip';
+import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
 import { dragManager } from './dragManager';
@@ -1705,34 +1705,72 @@ function init3DCardEffect(card: HTMLElement): void {
 }
 
 // === 范围预览高亮 ===
+
+/** #rrggbb → rgba(r,g,b,a) */
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r},${g},${b},${alpha})`
+}
+
 function highlightSkillRange(key: string): void {
   clearRangeHighlight();
   const skillId = state.player.bindings.get(key);
   if (!skillId) return;
-  const relations: PositionRelation[] = [];
+
+  const highlights: { rel: PositionRelation; color: string }[] = [];
+  const defaultColor = '#ffe66d';
+
+  // 旧版技能 — 金色
   const conn = CONNECTORS[skillId];
-  if (conn) relations.push(conn.positionRelation);
+  if (conn) highlights.push({ rel: conn.positionRelation, color: defaultColor });
   const rep = REPLICATORS[skillId];
-  if (rep) relations.push(rep.positionRelation);
+  if (rep) highlights.push({ rel: rep.positionRelation, color: defaultColor });
   const amp = AMPLIFIERS[skillId];
-  if (amp) relations.push(amp.positionRelation);
+  if (amp) highlights.push({ rel: amp.positionRelation, color: defaultColor });
+
+  // 旧版附魔 — 金色
   const enchId = state.player.enchantedSkills?.get(skillId);
   const ench = enchId ? ENCHANTMENTS[enchId] : null;
-  if (ench?.positionRelation) relations.push(ench.positionRelation);
-  if (relations.length === 0) return;
-  const keys = new Set<string>();
-  for (const rel of relations) {
-    getKeysWithRelation(key, rel).forEach(k => keys.add(k));
+  if (ench?.positionRelation) highlights.push({ rel: ench.positionRelation, color: defaultColor });
+
+  // 词条制技能 — 各词条用自己的颜色
+  const affixSkill = state.affixSkills.get(skillId);
+  if (affixSkill) {
+    for (const affix of affixSkill.affixes) {
+      if (affix.posRel) {
+        highlights.push({ rel: affix.posRel, color: AFFIX_COLORS[affix.type] || defaultColor })
+      }
+    }
   }
-  keys.forEach(k => {
-    document.querySelector(`.key-slot[data-key="${k}"]`)
-      ?.classList.add('range-highlight');
+
+  if (highlights.length === 0) return;
+
+  // 收集每个键位的颜色（后覆盖前）
+  const keyColorMap = new Map<string, string>();
+  for (const { rel, color } of highlights) {
+    for (const k of getKeysWithRelation(key, rel)) {
+      keyColorMap.set(k, color);
+    }
+  }
+  keyColorMap.forEach((color, k) => {
+    const el = document.querySelector(`.key-slot[data-key="${k}"]`) as HTMLElement | null;
+    if (!el) return;
+    el.classList.add('range-highlight');
+    el.style.borderColor = color;
+    el.style.background = hexToRgba(color, 0.15);
+    el.style.boxShadow = `0 0 8px ${hexToRgba(color, 0.3)}`;
   });
 }
 
 function clearRangeHighlight(): void {
-  document.querySelectorAll('.key-slot.range-highlight')
-    .forEach(el => el.classList.remove('range-highlight'));
+  document.querySelectorAll('.key-slot.range-highlight').forEach(el => {
+    el.classList.remove('range-highlight');
+    (el as HTMLElement).style.borderColor = '';
+    (el as HTMLElement).style.background = '';
+    (el as HTMLElement).style.boxShadow = '';
+  });
 }
 
 /** 计算范围高亮键位+源键位的包围盒（用于tooltip避让） */
@@ -1953,6 +1991,22 @@ export function renderBuildManager(): void {
                 document.querySelector(`.key-slot[data-key="${rk}"]`)?.classList.add('void-range-empty');
               }
             });
+          }
+        }
+        // 词条制 Void 词条空位高亮
+        if (skillId) {
+          const affixSk = state.affixSkills.get(skillId);
+          if (affixSk) {
+            for (const affix of affixSk.affixes) {
+              if (affix.type === 'void' && affix.posRel) {
+                const related = getKeysWithRelation(k, affix.posRel);
+                related.forEach(rk => {
+                  if (!state.player.bindings.has(rk)) {
+                    document.querySelector(`.key-slot[data-key="${rk}"]`)?.classList.add('void-range-empty');
+                  }
+                });
+              }
+            }
           }
         }
         const avoidRect = getRangeHighlightRect(slot);
