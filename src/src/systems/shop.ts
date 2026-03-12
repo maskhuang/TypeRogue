@@ -1058,6 +1058,28 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
 
   const skillId = item.skillId!;
 
+  // T4 遗物约束：购买时再次检查（防止同次商店内先买遗物再买技能绕过限制）
+  if (!item.isUpgrade) {
+    const maxSkillCount = queryRelicFlag('max_skill_count') as number;
+    if (maxSkillCount !== Infinity && state.player.skills.size >= maxSkillCount) {
+      showFeedback(t('shop.skill_count_full'), '#ff6b6b');
+      return null;
+    }
+    // pure_heart 白装限制：禁止购买非白装新技能
+    if (queryRelicFlag('white_only') === true && item.affixSkill && item.affixSkill.rarity > 0) {
+      showFeedback(t('shop.white_only'), '#ff6b6b');
+      return null;
+    }
+  } else {
+    // 升级时检查等级上限（keyboard_flood max_skill_level=1 等）
+    const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
+    const currentLevel = state.player.skills.get(skillId)?.level ?? 0;
+    if (maxSkillLevel !== Infinity && currentLevel >= maxSkillLevel) {
+      showFeedback(t('shop.level_capped'), '#ff6b6b');
+      return null;
+    }
+  }
+
   state.gold -= item.cost;
   updateGoldDisplay();
   playSound('buy');

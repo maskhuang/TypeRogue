@@ -13,6 +13,7 @@ import { CONNECTORS, REPLICATORS } from '../data/connectors';
 import { showScreen, startLevel, renderRelicDisplay } from './battle';
 import { getNextBattleNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { getBossModifierMeta } from '../data/bossModifiers';
+import { queryRelicFlag } from './relics/RelicPipeline';
 import { playSound } from '../effects/sound';
 import { t, localizeItemName } from '../demo/demo-i18n';
 
@@ -356,6 +357,10 @@ function removeRandomSkill(): { id: string; name: string } | null {
 
 /** 授予随机新技能（未拥有的），返回技能 ID 或 null */
 function grantRandomNewSkill(): string | null {
+  // T4 极简主义：技能数量已达上限时不授予
+  const maxSkillCount = queryRelicFlag('max_skill_count') as number;
+  if (maxSkillCount !== Infinity && state.player.skills.size >= maxSkillCount) return null;
+
   const owned = [...state.player.skills.keys()];
   const available = [...Object.keys(PRODUCERS), ...Object.keys(CONVERTERS), ...Object.keys(CONNECTORS), ...Object.keys(REPLICATORS)].filter(id => !owned.includes(id));
   if (available.length === 0) return null;
@@ -366,8 +371,10 @@ function grantRandomNewSkill(): string | null {
 
 /** 升级随机已有技能（未满级的），返回信息 */
 function upgradeRandomSkill(): { id: string; name: string; newLevel: number } | null {
+  const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
+  const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel;
   const upgradable = [...state.player.skills.entries()]
-    .filter(([, data]) => data.level < 3);
+    .filter(([, data]) => data.level < levelCap);
   if (upgradable.length === 0) return null;
   const [skillId, data] = upgradable[Math.floor(Math.random() * upgradable.length)];
   data.level++;

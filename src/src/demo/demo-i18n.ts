@@ -113,6 +113,9 @@ const ZH: Record<string, string> = {
   // --- shop.ts ---
   'shop.cycle_title': '商店 · 周目{cycle}',
   'shop.no_gold': '金币不足!',
+  'shop.skill_count_full': '技能数量已达上限!',
+  'shop.white_only': '纯粹之心：仅允许白装技能!',
+  'shop.level_capped': '技能等级已达上限!',
   'shop.already_owned': '已拥有该遗物!',
   'shop.got_relic': '获得遗物 {icon} {name}!',
   'shop.skill_upgrade': '{name} 升级!',
@@ -466,6 +469,9 @@ const EN: Record<string, string> = {
   // --- shop.ts ---
   'shop.cycle_title': 'Shop · Cycle {cycle}',
   'shop.no_gold': 'Not enough gold!',
+  'shop.skill_count_full': 'Skill slots full!',
+  'shop.white_only': 'Pure Heart: white skills only!',
+  'shop.level_capped': 'Skill level capped!',
   'shop.already_owned': 'Already owned!',
   'shop.got_relic': 'Got relic {icon} {name}!',
   'shop.skill_upgrade': '{name} upgraded!',
