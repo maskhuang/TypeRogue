@@ -7,8 +7,46 @@ import { t } from '../../demo/demo-i18n'
 
 export interface AffixTooltipInfo {
   typeName: string
+  typeKey?: string
   paramSummary: string
   description?: string
+}
+
+export interface EstimateBreakdownLine {
+  typeKey: string   // affix/enchant type for coloring
+  label: string     // e.g. "基础值" / "强化 ×1.65"
+  detail: string    // e.g. "= 15" / "+0.15×1任务"
+}
+
+export interface SmartEstimate {
+  estimatedOutput: number
+  breakdown: EstimateBreakdownLine[]
+}
+
+/** 每种词条的独特颜色 */
+const AFFIX_COLORS: Record<string, string> = {
+  base:      '#cccccc', // 灰白 — 基础值
+  apprentice:'#2ecc71', // 绿 — 学徒
+  multiply:  '#e74c3c', // 红 — 强化
+  convert:   '#f39c12', // 橙 — 转化
+  rainbow:   '#ff6bcb', // 粉 — 彩虹
+  charge:    '#3498db', // 蓝 — 蓄力
+  decay:     '#95a5a6', // 灰 — 衰减
+  pulse:     '#e67e22', // 深橙 — 脉冲
+  crit:      '#f1c40f', // 金 — 暴击
+  cascade:   '#1abc9c', // 青 — 级联
+  void:      '#9b59b6', // 紫 — 虚无
+  resonance: '#2ecc71', // 绿 — 共鸣
+  mirror:    '#a29bfe', // 淡紫 — 倒影
+  link:      '#00cec9', // 湖蓝 — 连接
+  replicate: '#6c5ce7', // 靛蓝 — 复制
+  amplify:   '#fd79a8', // 浅粉 — 增幅
+  outcast:   '#d35400', // 棕 — 流放
+  gravity:   '#8e44ad', // 深紫 — 引力
+  ligature:  '#27ae60', // 深绿 — 连字
+  twin:      '#fdcb6e', // 淡金 — 双生
+  recurse:   '#00b894', // 薄荷 — 递归
+  taboo:     '#ff4757', // 亮红 — 禁忌
 }
 
 export interface KeyTooltipData {
@@ -30,6 +68,11 @@ export interface KeyTooltipData {
     affixInfo?: AffixTooltipInfo[]
     questProgress?: string
     apprenticeGrowth?: string
+    // 智能产出预估
+    smartEstimate?: SmartEstimate
+    // 商店扩展
+    upgradeInfo?: string
+    baseValuesText?: string
   }
 }
 
@@ -86,8 +129,16 @@ class KeyTooltipManager {
 
     if (data.skill) {
       html += `<div class="tooltip-skill">`
-      html += `<div class="tooltip-skill-name">${esc(data.skill.icon)} ${esc(data.skill.name)} Lv.${data.skill.level}</div>`
+      if (data.skill.upgradeInfo) {
+        html += `<div class="tooltip-skill-name">${esc(data.skill.icon)} ${esc(data.skill.name)}</div>`
+        html += `<div class="tooltip-upgrade" style="color:#2ecc71;font-size:10px;margin-top:2px;">${esc(data.skill.upgradeInfo)}</div>`
+      } else {
+        html += `<div class="tooltip-skill-name">${esc(data.skill.icon)} ${esc(data.skill.name)} Lv.${data.skill.level}</div>`
+      }
       html += `<div class="tooltip-skill-desc">${esc(data.skill.description)}</div>`
+      if (data.skill.baseValuesText) {
+        html += `<div class="tooltip-base-values" style="color:#777;font-size:10px;margin-top:2px;">${esc(data.skill.baseValuesText)}</div>`
+      }
       if (data.skill.amplifierStacks != null) {
         html += `<div class="tooltip-amp-stacks" style="color:#a29bfe;margin-top:3px;">${esc(t('tooltip.stacks', { count: data.skill.amplifierStacks }))}</div>`
       }
@@ -100,11 +151,25 @@ class KeyTooltipManager {
       if (data.skill.enchantmentInfo) {
         html += `<div class="tooltip-enchantment" style="color:#9b59b6;font-size:10px;margin-top:3px;">${esc(data.skill.enchantmentInfo)}</div>`
       }
+      // 智能产出预估区
+      if (data.skill.smartEstimate) {
+        const est = data.skill.smartEstimate
+        html += `<div class="tooltip-estimate" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
+        html += `<div style="color:#fff;font-size:11px;font-weight:bold;">预估产出: ${est.estimatedOutput >= 0 ? '+' : ''}${est.estimatedOutput.toFixed(1)}</div>`
+        for (const line of est.breakdown) {
+          const color = AFFIX_COLORS[line.typeKey] || '#aaa'
+          html += `<div style="color:${color};font-size:10px;margin-left:4px;">${esc(line.label)}`
+          if (line.detail) html += ` <span style="color:#666;">${esc(line.detail)}</span>`
+          html += `</div>`
+        }
+        html += `</div>`
+      }
       // 词条制：词条信息区
       if (data.skill.affixInfo && data.skill.affixInfo.length > 0) {
         html += `<div class="tooltip-affix-section" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
         for (const affix of data.skill.affixInfo) {
-          html += `<div class="tooltip-affix" style="color:#e67e22;font-size:10px;">[${esc(affix.typeName)}] ${esc(affix.paramSummary)}</div>`
+          const affixColor = AFFIX_COLORS[affix.typeKey || ''] || '#e67e22'
+          html += `<div class="tooltip-affix" style="color:${affixColor};font-size:10px;">&lt;${esc(affix.typeName)}&gt; ${esc(affix.paramSummary)}</div>`
           if (affix.description) {
             html += `<div style="color:#888;font-size:10px;margin-left:2px;margin-bottom:2px;">${esc(affix.description)}</div>`
           }
@@ -119,7 +184,6 @@ class KeyTooltipManager {
       if (data.skill.apprenticeGrowth) {
         html += `<div class="tooltip-apprentice" style="color:#2ecc71;font-size:10px;margin-top:3px;">${esc(data.skill.apprenticeGrowth)}</div>`
       }
-      html += `<span class="tooltip-skill-school ${esc(data.skill.schoolCssClass)}">${esc(data.skill.school)}</span>`
       html += `</div>`
     }
 

@@ -42,7 +42,7 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, AFFIX_NAMES, AFFIX_DESCRIPTIONS, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
-import { getEnchantmentSlotCount, filterQuestCandidates } from '../data/affixTrigger';
+import { getEnchantmentSlotCount, filterQuestCandidates, resolvePhase1, getQuestCompletions, countEmptySlots } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
@@ -325,20 +325,23 @@ export function buildEnchantmentInfo(skillId: string): string | undefined {
 }
 
 // === 词条制技能 tooltip 数据构建（Story 35.11 AC2/AC8） ===
-import type { AffixTooltipInfo } from '../ui/keyboard/KeyTooltip';
+import type { AffixTooltipInfo, SmartEstimate, EstimateBreakdownLine } from '../ui/keyboard/KeyTooltip';
 import type { AffixSkillInstance, SkillRuntimeState, QuestEnchantmentDef } from '../data/affixes';
 
 /** 构建词条制技能的 tooltip 扩展字段 */
-export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRuntimeState): {
+export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRuntimeState, excludeTypes?: Set<string>): {
   affixInfo: AffixTooltipInfo[]
   questProgress?: string
   apprenticeGrowth?: string
 } {
-  const affixInfo: AffixTooltipInfo[] = skill.affixes.map(a => ({
-    typeName: AFFIX_NAMES[a.type],
-    paramSummary: buildAffixParamSummary(a),
-    description: AFFIX_DESCRIPTIONS[a.type] || '',
-  }))
+  const affixInfo: AffixTooltipInfo[] = skill.affixes
+    .filter(a => !excludeTypes || !excludeTypes.has(a.type))
+    .map(a => ({
+      typeName: AFFIX_NAMES[a.type],
+      typeKey: a.type,
+      paramSummary: buildAffixParamSummary(a),
+      description: AFFIX_DESCRIPTIONS[a.type] || '',
+    }))
 
   let questProgress: string | undefined
   let apprenticeGrowth: string | undefined
@@ -364,29 +367,141 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
 
 /** 构建单个词条的参数摘要 */
 function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): string {
+  const rel = a.posRel ? RELATION_LABELS[a.posRel] || a.posRel : '';
   switch (a.type) {
     case 'multiply': return `×${a.multiplier?.toFixed(1) ?? '?'}`
-    case 'convert': return `${RESOURCE_NAMES[a.source!] ?? '?'}→本资源 k=${a.k?.toFixed(3) ?? '?'}`
+    case 'convert': return `${RESOURCE_ICONS[a.source!] || ''}${RESOURCE_NAMES[a.source!] ?? '?'}→本资源 k=${a.k?.toFixed(3) ?? '?'}`
     case 'charge': return `${Math.round((a.gainPerSec ?? 0) * 100)}%/s 上限${Math.round((a.maxBonus ?? 0) * 100)}%`
     case 'decay': return `初始×${a.initialMult ?? '?'} 衰减${a.decayPerTrigger ?? '?'} 下限×${a.floor ?? '?'}`
     case 'pulse': return `每${a.interval ?? '?'}次 ×${a.burstMult?.toFixed(1) ?? '?'}`
     case 'crit': return `${Math.round((a.chance ?? 0) * 100)}% ×${a.critMult?.toFixed(1) ?? '?'}`
-    case 'void': return `每空位+${Math.round((a.bonusPerSlot ?? 0) * 100)}%`
-    case 'resonance': return `效率${Math.round((a.efficiency ?? 0) * 100)}%`
-    case 'amplify': return `每层+${Math.round((a.valuePerStack ?? 0) * 100)}%`
-    case 'cascade': return `上键相邻 ×${a.cascadeMult?.toFixed(1) ?? '?'}`
+    case 'void': return `${rel}每空位+${Math.round((a.bonusPerSlot ?? 0) * 100)}%`
+    case 'resonance': return `${rel}效率${Math.round((a.efficiency ?? 0) * 100)}%`
+    case 'amplify': return `${rel}每层+${Math.round((a.valuePerStack ?? 0) * 100)}%`
+    case 'cascade': return `${rel || '上键相邻'} ×${a.cascadeMult?.toFixed(1) ?? '?'}`
     case 'outcast': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
     case 'gravity': return `概率×${a.probMult?.toFixed(1) ?? '?'}`
     case 'recurse': return `${Math.round((a.recurseChance ?? 0) * 100)}%重触发`
     case 'taboo': return `+100% / ${Math.round((a.penaltyChance ?? 0) * 100)}%负产出`
     case 'rainbow': return '随机资源'
-    case 'mirror': return `镜像复制`
-    case 'link': return `邻居产出时触发`
-    case 'replicate': return `复制触发`
+    case 'mirror': return `${rel}镜像复制`
+    case 'link': return `${rel}邻居产出时触发`
+    case 'replicate': return `${rel}复制触发`
     case 'ligature': return `连字加成`
     case 'twin': return `双附魔`
     default: return ''
   }
+}
+
+// === 智能产出预估（构筑界面 tooltip） ===
+
+const APPRENTICE_ENCHANTMENT_IDS: string[] = [
+  'apprentice_self', 'apprentice_neighbor', 'apprentice_word',
+  'apprentice_proc', 'apprentice_crit', 'apprentice_outcast',
+  'apprentice_longword', 'apprentice_perfect', 'apprentice_combo',
+  'apprentice_stage',
+]
+
+/**
+ * 计算战斗外可预估的产出：Multiply / Void / Taboo 词条 + 学徒附魔。
+ * 返回 null 表示该技能没有可预估项。
+ * @param boundKey 技能绑定的键位（无绑定时传 undefined，Void 需要）
+ */
+export function computeSmartEstimate(
+  skill: AffixSkillInstance,
+  rt?: SkillRuntimeState,
+  boundKey?: string,
+): SmartEstimate | null {
+  const breakdown: EstimateBreakdownLine[] = []
+
+  // Phase 1: 基础值
+  const base = resolvePhase1(skill)
+  breakdown.push({ typeKey: 'base', label: `基础值 ${base}`, detail: '' })
+
+  // 收集 Phase 2 加性和 Phase 3 乘性
+  let addPercent = 0  // 加性总百分比
+  let multProduct = 1 // 乘性连乘
+
+  const questC = (questType: import('../data/affixes').EnchantmentType): number => {
+    if (!rt) return 0
+    return getQuestCompletions(skill, rt, questType)
+  }
+
+  for (const affix of skill.affixes) {
+    switch (affix.type) {
+      case 'multiply': {
+        const c = questC('quest_ascend' as import('../data/affixes').EnchantmentType)
+        const m = (affix.multiplier ?? 1) + c * 0.15
+        multProduct *= m
+        const detail = c > 0 ? `(${affix.multiplier?.toFixed(1)}+${c}×0.15 任务)` : ''
+        breakdown.push({ typeKey: 'multiply', label: `强化 ×${m.toFixed(2)}`, detail })
+        break
+      }
+      case 'void': {
+        if (affix.posRel == null) break
+        const c = questC('quest_devour' as import('../data/affixes').EnchantmentType)
+        const slotEff = (affix.bonusPerSlot ?? 0) + c * 0.05
+        const empty = boundKey
+          ? countEmptySlots(boundKey, affix.posRel, state.player.bindings)
+          : 0
+        const bonus = empty * slotEff
+        addPercent += bonus
+        // quest_devour c >= 3 额外加成
+        let extraBonus = 0
+        if (rt && skill.enchantmentIds.includes('quest_devour' as any)) {
+          const cd = rt.questCompletions
+          if (cd >= 3) {
+            extraBonus = cd * 0.10
+            addPercent += extraBonus
+          }
+        }
+        const emptyLabel = boundKey ? `${empty}空位` : '未绑定'
+        const detail = c > 0
+          ? `(${emptyLabel}×${Math.round(slotEff * 100)}%${extraBonus > 0 ? ` +${Math.round(extraBonus * 100)}%额外` : ''})`
+          : `(${emptyLabel}×${Math.round((affix.bonusPerSlot ?? 0) * 100)}%)`
+        breakdown.push({ typeKey: 'void', label: `虚无 +${Math.round(bonus * 100)}%${extraBonus > 0 ? `+${Math.round(extraBonus * 100)}%` : ''}`, detail })
+        break
+      }
+      case 'taboo': {
+        // Phase 2: +100%
+        addPercent += 1.0
+        // Phase 3: 期望 = ×(1 - 2×effPenalty)
+        const c = questC('quest_sacrifice' as import('../data/affixes').EnchantmentType)
+        const effPenalty = Math.max(0.02, (affix.penaltyChance ?? 0.1) - c * 0.01)
+        const expectMult = 1 - 2 * effPenalty
+        multProduct *= expectMult
+        const detail = c > 0
+          ? `(负产出${Math.round(effPenalty * 100)}%, 任务-${c}%)`
+          : `(负产出${Math.round(effPenalty * 100)}%)`
+        breakdown.push({ typeKey: 'taboo', label: `禁忌 +100% 期望×${expectMult.toFixed(2)}`, detail })
+        break
+      }
+      // 其余词条不预估
+      default:
+        break
+    }
+  }
+
+  // 学徒附魔
+  if (rt && rt.apprenticeAccumulated > 0) {
+    const hasApprentice = skill.enchantmentIds.some(id => APPRENTICE_ENCHANTMENT_IDS.includes(id as string))
+    if (hasApprentice) {
+      addPercent += rt.apprenticeAccumulated
+      breakdown.push({
+        typeKey: 'apprentice',
+        label: `学徒 +${(rt.apprenticeAccumulated * 100).toFixed(1)}%`,
+        detail: '',
+      })
+    }
+  }
+
+  // 如果只有基础值行、没有任何预估项，返回 null
+  if (breakdown.length <= 1) return null
+
+  const estimatedOutput = base * (1 + addPercent) * multProduct
+  breakdown.push({ typeKey: 'base', label: `≈ ${estimatedOutput.toFixed(1)}`, detail: '(单次预估)' })
+
+  return { estimatedOutput, breakdown }
 }
 
 // === 打开商店 ===
@@ -592,8 +707,7 @@ function generateShopItems(count: number): ShopItem[] {
 
 // === 渲染统一商店 ===
 function renderUnifiedShop(): void {
-  hideShopSkillTooltip();
-  hideAffixComparisonPanel();
+  hideAllTooltips();
   const el = getElements();
   el.shopTabs.innerHTML = '';
   el.rewardCards.innerHTML = '';
@@ -762,85 +876,49 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
     };
   }
 
-  // 词条制技能悬停详情 tooltip + 对比面板
+  // 词条制技能悬停详情 tooltip（复用 keyTooltip，与构筑界面统一风格）
   if (item.type === 'skill' && item.affixSkill) {
     card.addEventListener('mouseenter', (e: MouseEvent) => {
-      showShopSkillTooltip(item.affixSkill!, card, e);
-      if (!item.isUpgrade) showAffixComparisonPanel(item.affixSkill!, card);
-    });
-    card.addEventListener('mousemove', (e: MouseEvent) => {
-      moveShopSkillTooltip(e);
+      hideAllTooltips();
+      const skill = item.affixSkill!;
+      const baseVals = skill.baseValues;
+      const resIcon = RESOURCE_ICONS[skill.resource] || '';
+      const resName = RESOURCE_NAMES[skill.resource] || skill.resource;
+      const baseVal = baseVals[skill.level - 1] ?? baseVals[0];
+
+      const tooltipData: KeyTooltipData = {
+        skill: {
+          name: skill.name,
+          icon: skill.icon,
+          description: `${resIcon}${resName}+${baseVal}`,
+          level: skill.level,
+          school: RARITY_LABELS[skill.rarity] ?? '普通',
+          schoolCssClass: `rarity-${skill.rarity}`,
+          baseValuesText: `基础产出: Lv.1=${baseVals[0]} / Lv.2=${baseVals[1]} / Lv.3=${baseVals[2]}`,
+        },
+      };
+      if (item.isUpgrade) {
+        const curLv = skill.level - 1;
+        const curBase = curLv >= 1 ? baseVals[curLv - 1] : 0;
+        tooltipData.skill!.upgradeInfo = `升级 Lv.${curLv} → Lv.${skill.level}　基础产出 ${curBase} → ${baseVal}`;
+      }
+      const fields = buildAffixTooltipFields(skill);
+      tooltipData.skill!.affixInfo = fields.affixInfo;
+      keyTooltip.show(e.clientX, e.clientY, tooltipData);
     });
     card.addEventListener('mouseleave', () => {
-      hideShopSkillTooltip();
-      hideAffixComparisonPanel();
+      keyTooltip.hide();
     });
   }
 
   el.rewardCards.appendChild(card);
 }
 
-// === 商店技能悬停详情 tooltip ===
-let shopSkillTooltip: HTMLElement | null = null;
-
-function showShopSkillTooltip(skill: AffixSkillInstance, _cardEl: HTMLElement, e: MouseEvent): void {
-  hideShopSkillTooltip();
-  const rarityColor = RARITY_COLORS[skill.rarity] || '#ffffff';
-  const rarityLabel = RARITY_LABELS[skill.rarity] || '普通';
-  const resourceName = RESOURCE_NAMES[skill.resource] || skill.resource;
-
-  let affixHtml = '';
-  if (skill.affixes.length > 0) {
-    affixHtml = skill.affixes.map(a => {
-      const name = AFFIX_NAMES[a.type];
-      const desc = AFFIX_DESCRIPTIONS[a.type] || '';
-      const param = buildAffixParamSummary(a);
-      return `<div style="margin:3px 0;"><div><span style="color:${rarityColor};font-weight:bold;">${name}</span> <span style="color:#aaa;">${param}</span></div><div style="color:#888;font-size:10px;margin-left:2px;">${desc}</div></div>`;
-    }).join('');
-  } else {
-    affixHtml = '<div style="color:#666;">无词条</div>';
-  }
-
-  const baseVals = skill.baseValues;
-  const baseValText = baseVals ? `Lv.1=${baseVals[0]} / Lv.2=${baseVals[1]} / Lv.3=${baseVals[2]}` : '';
-
-  shopSkillTooltip = document.createElement('div');
-  shopSkillTooltip.className = 'shop-skill-tooltip';
-  shopSkillTooltip.style.cssText = 'position:fixed;z-index:1100;background:#12121f;border:1px solid #444;border-radius:6px;padding:8px 10px;font-size:11px;color:#ddd;pointer-events:none;max-width:260px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
-  shopSkillTooltip.innerHTML = `
-    <div style="font-weight:bold;color:${rarityColor};margin-bottom:4px;">${skill.icon} ${skill.name}</div>
-    <div style="color:#888;margin-bottom:4px;">${rarityLabel} · ${resourceName} · Lv.${skill.level}</div>
-    ${baseValText ? `<div style="color:#777;margin-bottom:4px;font-size:10px;">基础产出: ${baseValText}</div>` : ''}
-    <div style="border-top:1px solid #333;padding-top:4px;">${affixHtml}</div>
-  `;
-  document.body.appendChild(shopSkillTooltip);
-  positionShopSkillTooltip(e.clientX, e.clientY);
-}
-
-function moveShopSkillTooltip(e: MouseEvent): void {
-  if (shopSkillTooltip) positionShopSkillTooltip(e.clientX, e.clientY);
-}
-
-function positionShopSkillTooltip(x: number, y: number): void {
-  if (!shopSkillTooltip) return;
-  const pad = 12;
-  shopSkillTooltip.style.left = `${x + pad}px`;
-  shopSkillTooltip.style.top = `${y + pad}px`;
-  // 边界修正
-  const rect = shopSkillTooltip.getBoundingClientRect();
-  if (rect.right > window.innerWidth) {
-    shopSkillTooltip.style.left = `${x - rect.width - pad}px`;
-  }
-  if (rect.bottom > window.innerHeight) {
-    shopSkillTooltip.style.top = `${y - rect.height - pad}px`;
-  }
-}
-
-function hideShopSkillTooltip(): void {
-  if (shopSkillTooltip) {
-    shopSkillTooltip.remove();
-    shopSkillTooltip = null;
-  }
+// === 隐藏所有浮层（统一入口，防止多 tooltip 叠加） ===
+function hideAllTooltips(): void {
+  keyTooltip.hide();
+  hideAffixComparisonPanel();
+  document.getElementById('relic-tooltip')?.remove();
 }
 
 // === 词条制技能对比面板 ===
@@ -1800,6 +1878,7 @@ export function renderBuildManager(): void {
 
       // Tooltip 悬停 + 范围预览
       slot.addEventListener('mouseenter', (e: MouseEvent) => {
+        hideAllTooltips();
         const freq = letterFreqs.get(k) ?? 0;
         const tooltipData: KeyTooltipData = {
           letter: k,
@@ -1843,19 +1922,25 @@ export function renderBuildManager(): void {
           const affixSkill = state.affixSkills.get(skillId)!;
           const rt = state.affixSkillStates.get(skillId);
           if (!tooltipData.skill) {
+            const baseVal = affixSkill.baseValues[affixSkill.level - 1] ?? affixSkill.baseValues[0];
+            const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
+            const resName = RESOURCE_NAMES[affixSkill.resource] || affixSkill.resource;
             tooltipData.skill = {
               name: affixSkill.name,
               icon: affixSkill.icon,
-              description: `${RARITY_LABELS[affixSkill.rarity]} Lv.${affixSkill.level}`,
+              description: `${resIcon}${resName}+${baseVal}`,
               level: affixSkill.level,
               school: RARITY_LABELS[affixSkill.rarity] ?? '普通',
               schoolCssClass: `rarity-${affixSkill.rarity}`,
             };
           }
-          const fields = buildAffixTooltipFields(affixSkill, rt);
+          const estimate = computeSmartEstimate(affixSkill, rt, k);
+          const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['multiply', 'void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
+          const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
           tooltipData.skill.affixInfo = fields.affixInfo;
           tooltipData.skill.questProgress = fields.questProgress;
-          tooltipData.skill.apprenticeGrowth = fields.apprenticeGrowth;
+          tooltipData.skill.apprenticeGrowth = estimate ? undefined : fields.apprenticeGrowth;
+          tooltipData.skill.smartEstimate = estimate ?? undefined;
         }
         highlightSkillRange(k);
         // Story 34.6 AC7: 虚无范围空位高亮
@@ -1924,21 +2009,28 @@ export function renderBuildManager(): void {
 
       // 词条制技能悬停预览
       item.addEventListener('mouseenter', (e) => {
+        hideAllTooltips();
         const rt = state.affixSkillStates.get(skillId);
+        const baseVal = affixSkill.baseValues[affixSkill.level - 1] ?? affixSkill.baseValues[0];
+        const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
+        const resName = RESOURCE_NAMES[affixSkill.resource] || affixSkill.resource;
         const tooltipData: KeyTooltipData = {
           skill: {
             name: affixSkill.name,
             icon: affixSkill.icon,
-            description: `${rarityLabel} Lv.${affixSkill.level}`,
+            description: `${resIcon}${resName}+${baseVal}`,
             level: affixSkill.level,
             school: rarityLabel,
             schoolCssClass: `rarity-${affixSkill.rarity}`,
           },
         };
-        const fields = buildAffixTooltipFields(affixSkill, rt);
+        const estimate = computeSmartEstimate(affixSkill, rt, boundKey ?? undefined);
+        const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['multiply', 'void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
+        const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
         tooltipData.skill!.affixInfo = fields.affixInfo;
         tooltipData.skill!.questProgress = fields.questProgress;
-        tooltipData.skill!.apprenticeGrowth = fields.apprenticeGrowth;
+        tooltipData.skill!.apprenticeGrowth = estimate ? undefined : fields.apprenticeGrowth;
+        tooltipData.skill!.smartEstimate = estimate ?? undefined;
         if (boundKey) {
           tooltipData.letter = boundKey.toUpperCase();
           highlightSkillRange(boundKey);
@@ -1965,6 +2057,7 @@ export function renderBuildManager(): void {
 
       // 悬停预览技能效果
       item.addEventListener('mouseenter', (e) => {
+        hideAllTooltips();
         const tooltipData: KeyTooltipData = {
           skill: {
             name: display.name,
@@ -2399,7 +2492,7 @@ function getRarityLabel(rarity: string): string {
 }
 
 function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicData): void {
-  hideRelicTooltip();
+  hideAllTooltips();
   const tip = document.createElement('div');
   tip.id = 'relic-tooltip';
   tip.className = 'key-tooltip';
