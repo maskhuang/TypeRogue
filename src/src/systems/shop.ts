@@ -40,7 +40,7 @@ import type { DragPayload } from './dragManager';
 import { IS_DEMO } from '../demo/demo-config';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 import { generateSkill } from '../data/skillGeneration';
-import { createSkillRuntimeState, AFFIX_NAMES, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP } from '../data/affixes';
+import { createSkillRuntimeState, AFFIX_NAMES, AFFIX_DESCRIPTIONS, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
 import { getEnchantmentSlotCount, filterQuestCandidates } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS } from '../data/affixes';
@@ -71,26 +71,49 @@ function getAvailableResources(classId: string): ResourceType[] {
   return all;
 }
 
+/** Act → 最大稀有度（词条数）映射；Act1 只刷无词条/单词条，Act2 开始双词条，Act3+ 无限制 */
+function getActMaxRarity(): SkillRarity {
+  // 无尽模式（cycle ≥ 2）无稀有度上限
+  if (state.cycle >= 2) return 3 as SkillRarity;
+  const act = getActForNode(state.level);
+  if (act <= 1) return 1 as SkillRarity;   // Act1: 0~1
+  if (act === 2) return 2 as SkillRarity;   // Act2: 0~2
+  return 3 as SkillRarity;                  // Act3+: 0~3
+}
+
 /** 生成单个词条制技能商品 */
 export function generateAffixShopItem(
   itemId: number,
-  options?: { rarity?: SkillRarity; resource?: ResourceType },
+  options?: { rarity?: SkillRarity; resource?: ResourceType; maxRarity?: SkillRarity },
 ): ShopItem {
   const resourcePool = getAvailableResources(state.classId);
   const resource = options?.resource ?? resourcePool[Math.floor(random() * resourcePool.length)];
   // pure_heart 白装限制：强制 rarity=0
   const whiteOnly = queryRelicFlag('white_only') as boolean;
-  const rarity = whiteOnly ? 0 as SkillRarity : options?.rarity;
+  // Act 稀有度上限（仅影响随机掷骰，不影响外部指定的 rarity）
+  const actMaxRarity = options?.maxRarity ?? getActMaxRarity();
+  let rarity: SkillRarity | undefined;
+  if (whiteOnly) {
+    rarity = 0 as SkillRarity;
+  } else if (options?.rarity !== undefined) {
+    rarity = options.rarity; // 外部强制稀有度，不受 Act 上限限制
+  } else {
+    rarity = undefined; // 由 generateSkill 内部掷骰，之后再 clamp
+  }
   // mono_affix 类别限制：重试直到技能含已选类别词条
   const lockedCategory = getMonoAffixCategory();
   let skill = generateSkill({ resource, rarity });
+  // clamp：如果 rarity 未指定（随机掷骰），超过 actMaxRarity 时重生成
+  if (rarity === undefined && skill.rarity > actMaxRarity) {
+    skill = generateSkill({ resource, rarity: actMaxRarity });
+  }
   if (lockedCategory && skill.rarity > 0) {
     for (let attempt = 0; attempt < 20; attempt++) {
       const hasMatch = skill.affixes.some(
         a => AFFIX_CATEGORY_MAP[a.type as keyof typeof AFFIX_CATEGORY_MAP] === lockedCategory,
       );
       if (hasMatch) break;
-      skill = generateSkill({ resource, rarity });
+      skill = generateSkill({ resource, rarity: skill.rarity as SkillRarity });
     }
   }
   const cost = getAdjustedPrice(calculateAffixSkillPrice(skill.rarity, skill.level));
@@ -106,13 +129,14 @@ export function generateAffixShopItem(
   };
 }
 
-/** 生成多个词条制技能商品（保证品类多样性：至少 1 件 rarity≥1，除非 white_only） */
+/** 生成多个词条制技能商品（保证品类多样性：至少 1 件 rarity≥1，除非 white_only 或 Act 限制） */
 export function generateAffixShopItems(count: number): ShopItem[] {
   if (count <= 0) return [];
   const items: ShopItem[] = [];
   let nextId = Date.now();
 
   const whiteOnly = queryRelicFlag('white_only') as boolean;
+  const actMaxRarity = getActMaxRarity();
 
   if (whiteOnly) {
     // pure_heart：全部白装
@@ -122,21 +146,27 @@ export function generateAffixShopItems(count: number): ShopItem[] {
     return items;
   }
 
-  // 保底第 1 件：rarity≥1（蓝装以上）
+  // 保底第 1 件：rarity≥1（蓝装以上），但不超过 Act 上限
+  const guaranteedRarity = Math.min(1, actMaxRarity) as SkillRarity;
   let guaranteed: ShopItem;
-  for (let attempt = 0; attempt < 10; attempt++) {
-    guaranteed = generateAffixShopItem(nextId++);
-    if (guaranteed.affixSkill!.rarity >= 1) break;
-  }
-  // 如果 10 次都没 ≥1，强制 rarity=1
-  if (!guaranteed! || guaranteed!.affixSkill!.rarity < 1) {
-    guaranteed = generateAffixShopItem(nextId++, { rarity: 1 as SkillRarity });
+  if (guaranteedRarity >= 1) {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      guaranteed = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity });
+      if (guaranteed.affixSkill!.rarity >= 1) break;
+    }
+    // 如果 10 次都没 ≥1，强制 rarity=1
+    if (!guaranteed! || guaranteed!.affixSkill!.rarity < 1) {
+      guaranteed = generateAffixShopItem(nextId++, { rarity: 1 as SkillRarity, maxRarity: actMaxRarity });
+    }
+  } else {
+    // Act1 允许的最大 rarity=0 时，无法保底蓝装
+    guaranteed = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity });
   }
   items.push(guaranteed!);
 
   // 剩余随机
   for (let i = 1; i < count; i++) {
-    items.push(generateAffixShopItem(nextId++));
+    items.push(generateAffixShopItem(nextId++, { maxRarity: actMaxRarity }));
   }
 
   return items;
@@ -714,17 +744,85 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
     };
   }
 
-  // 词条制技能对比面板（Story 35.11 AC9）
-  if (item.type === 'skill' && item.affixSkill && !item.isUpgrade) {
-    card.addEventListener('mouseenter', () => {
-      showAffixComparisonPanel(item.affixSkill!, card);
+  // 词条制技能悬停详情 tooltip + 对比面板
+  if (item.type === 'skill' && item.affixSkill) {
+    card.addEventListener('mouseenter', (e: MouseEvent) => {
+      showShopSkillTooltip(item.affixSkill!, card, e);
+      if (!item.isUpgrade) showAffixComparisonPanel(item.affixSkill!, card);
+    });
+    card.addEventListener('mousemove', (e: MouseEvent) => {
+      moveShopSkillTooltip(e);
     });
     card.addEventListener('mouseleave', () => {
+      hideShopSkillTooltip();
       hideAffixComparisonPanel();
     });
   }
 
   el.rewardCards.appendChild(card);
+}
+
+// === 商店技能悬停详情 tooltip ===
+let shopSkillTooltip: HTMLElement | null = null;
+
+function showShopSkillTooltip(skill: AffixSkillInstance, _cardEl: HTMLElement, e: MouseEvent): void {
+  hideShopSkillTooltip();
+  const rarityColor = RARITY_COLORS[skill.rarity] || '#ffffff';
+  const rarityLabel = RARITY_LABELS[skill.rarity] || '普通';
+  const resourceName = RESOURCE_NAMES[skill.resource] || skill.resource;
+
+  let affixHtml = '';
+  if (skill.affixes.length > 0) {
+    affixHtml = skill.affixes.map(a => {
+      const name = AFFIX_NAMES[a.type];
+      const desc = AFFIX_DESCRIPTIONS[a.type] || '';
+      const param = buildAffixParamSummary(a);
+      return `<div style="margin:3px 0;"><div><span style="color:${rarityColor};font-weight:bold;">${name}</span> <span style="color:#aaa;">${param}</span></div><div style="color:#888;font-size:10px;margin-left:2px;">${desc}</div></div>`;
+    }).join('');
+  } else {
+    affixHtml = '<div style="color:#666;">无词条</div>';
+  }
+
+  const baseVals = skill.baseValues;
+  const baseValText = baseVals ? `Lv.1=${baseVals[0]} / Lv.2=${baseVals[1]} / Lv.3=${baseVals[2]}` : '';
+
+  shopSkillTooltip = document.createElement('div');
+  shopSkillTooltip.className = 'shop-skill-tooltip';
+  shopSkillTooltip.style.cssText = 'position:fixed;z-index:1100;background:#12121f;border:1px solid #444;border-radius:6px;padding:8px 10px;font-size:11px;color:#ddd;pointer-events:none;max-width:260px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+  shopSkillTooltip.innerHTML = `
+    <div style="font-weight:bold;color:${rarityColor};margin-bottom:4px;">${skill.icon} ${skill.name}</div>
+    <div style="color:#888;margin-bottom:4px;">${rarityLabel} · ${resourceName} · Lv.${skill.level}</div>
+    ${baseValText ? `<div style="color:#777;margin-bottom:4px;font-size:10px;">基础产出: ${baseValText}</div>` : ''}
+    <div style="border-top:1px solid #333;padding-top:4px;">${affixHtml}</div>
+  `;
+  document.body.appendChild(shopSkillTooltip);
+  positionShopSkillTooltip(e.clientX, e.clientY);
+}
+
+function moveShopSkillTooltip(e: MouseEvent): void {
+  if (shopSkillTooltip) positionShopSkillTooltip(e.clientX, e.clientY);
+}
+
+function positionShopSkillTooltip(x: number, y: number): void {
+  if (!shopSkillTooltip) return;
+  const pad = 12;
+  shopSkillTooltip.style.left = `${x + pad}px`;
+  shopSkillTooltip.style.top = `${y + pad}px`;
+  // 边界修正
+  const rect = shopSkillTooltip.getBoundingClientRect();
+  if (rect.right > window.innerWidth) {
+    shopSkillTooltip.style.left = `${x - rect.width - pad}px`;
+  }
+  if (rect.bottom > window.innerHeight) {
+    shopSkillTooltip.style.top = `${y - rect.height - pad}px`;
+  }
+}
+
+function hideShopSkillTooltip(): void {
+  if (shopSkillTooltip) {
+    shopSkillTooltip.remove();
+    shopSkillTooltip = null;
+  }
 }
 
 // === 词条制技能对比面板 ===
@@ -1645,6 +1743,17 @@ export function renderBuildManager(): void {
         const growthVal = state.growthValues.get(skillId) || 0;
         const growthBadge = growthVal > 0 ? `<span class="growth-badge">+${Math.round(growthVal * 100)}%</span>` : '';
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${devourPrefix}${display.icon}</span>${growthBadge}${mechanicBadgeHtml}${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
+      } else if (skillId && state.affixSkills.has(skillId)) {
+        // 词条制技能键位渲染
+        const affixSkill = state.affixSkills.get(skillId)!;
+        const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#ffffff';
+        slot.classList.add('has-skill', 'affix-skill-slot');
+        slot.dataset.dragType = 'skill-key';
+        slot.dataset.boundSkill = skillId;
+        const skData = state.player.skills.get(skillId);
+        slot.dataset.sellPrice = String(Math.floor((skData?.purchasePrice || 15) / 2));
+        slot.style.borderColor = rarityColor;
+        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${affixSkill.icon}</span>${affixSkill.level > 1 ? `<span class="affix-level-badge">Lv.${affixSkill.level}</span>` : ''}${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       } else {
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       }
@@ -1746,12 +1855,11 @@ export function renderBuildManager(): void {
   }
 
   state.player.skills.forEach((data, skillId) => {
-    const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || AMPLIFIERS[skillId];
-    if (!sk) return;
+    const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId];
+    const affixSkill = state.affixSkills.get(skillId);
+    if (!sk && !affixSkill) return;
 
-    const display = getSkillDisplay(skillId);
     const boundKey = [...state.player.bindings.entries()].find(([, id]) => id === skillId)?.[0];
-
     const item = document.createElement('div');
     item.className = 'inventory-skill';
     item.dataset.dragType = 'skill-inventory';
@@ -1759,58 +1867,104 @@ export function renderBuildManager(): void {
     item.dataset.sellPrice = String(Math.floor((data.purchasePrice || 15) / 2));
     if (boundKey) item.classList.add('bound');
 
-    const school = getSkillSchool(skillId);
-    const evolvedLabel = state.player.evolvedSkills.has(skillId) ? '<span class="inv-evolved">★</span>' : '';
-    item.innerHTML = `
-      <span class="inv-icon">${display.icon}</span>
-      <span class="inv-name">${display.name}</span>
-      ${evolvedLabel}
-      <span class="inv-school ${school.cssClass}">${school.label}</span>
-      ${data.level > 1 ? `<span class="inv-level">Lv.${data.level}</span>` : ''}
-      ${boundKey ? `<span class="inv-key">[${boundKey.toUpperCase()}]</span>` : ''}
-    `;
+    if (affixSkill) {
+      // 词条制技能渲染
+      const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#ffffff';
+      const rarityLabel = RARITY_LABELS[affixSkill.rarity] || '普通';
+      const affixNames = affixSkill.affixes.map(a => AFFIX_NAMES[a.type]).join('·');
+      item.style.borderColor = rarityColor;
+      item.innerHTML = `
+        <span class="inv-icon">${affixSkill.icon}</span>
+        <span class="inv-name">${affixSkill.name}</span>
+        <span class="inv-school" style="color:${rarityColor}">${rarityLabel}</span>
+        ${data.level > 1 ? `<span class="inv-level">Lv.${data.level}</span>` : ''}
+        ${affixNames ? `<span class="inv-affixes" style="color:#888;font-size:10px;">${affixNames}</span>` : ''}
+        ${boundKey ? `<span class="inv-key">[${boundKey.toUpperCase()}]</span>` : ''}
+      `;
 
-    // 悬停预览技能效果
-    item.addEventListener('mouseenter', (e) => {
-      const tooltipData: KeyTooltipData = {
-        skill: {
-          name: display.name,
-          icon: display.icon,
-          description: display.desc,
-          level: data.level,
-          school: school.label,
-          schoolCssClass: school.cssClass,
-        },
-      };
-      // 增幅者额外信息：叠层 + 范围内受影响技能
-      if (isAmplifier(skillId) && boundKey) {
-        const ampDef = AMPLIFIERS[skillId];
-        tooltipData.skill!.amplifierStacks = Math.floor(state.amplifierStacks.get(skillId) || 0);
-        const affected: string[] = [];
-        for (const [bk, bId] of state.player.bindings) {
-          if (bk === boundKey) continue;
-          if (!isProducer(bId) && !isConverter(bId)) continue;
-          if (hasRelation(bk, boundKey, ampDef.positionRelation)) {
-            const d = getSkillDisplayInfo(bId, undefined, state.player.enchantedSkills);
-            affected.push(`${d.icon}${d.name}`);
-          }
+      // 词条制技能悬停预览
+      item.addEventListener('mouseenter', (e) => {
+        const rt = state.affixSkillStates.get(skillId);
+        const tooltipData: KeyTooltipData = {
+          skill: {
+            name: affixSkill.name,
+            icon: affixSkill.icon,
+            description: `${rarityLabel} Lv.${affixSkill.level}`,
+            level: affixSkill.level,
+            school: rarityLabel,
+            schoolCssClass: `rarity-${affixSkill.rarity}`,
+          },
+        };
+        const fields = buildAffixTooltipFields(affixSkill, rt);
+        tooltipData.skill!.affixInfo = fields.affixInfo;
+        tooltipData.skill!.questProgress = fields.questProgress;
+        tooltipData.skill!.apprenticeGrowth = fields.apprenticeGrowth;
+        if (boundKey) {
+          tooltipData.letter = boundKey.toUpperCase();
+          highlightSkillRange(boundKey);
         }
-        tooltipData.skill!.affectedSkills = affected;
-      }
-      // Story 34.6 AC3: 机制信息
-      tooltipData.skill!.mechanicInfo = buildMechanicInfo(skillId);
-      // 附魔状态信息
-      tooltipData.skill!.enchantmentInfo = buildEnchantmentInfo(skillId);
-      if (boundKey) {
-        tooltipData.letter = boundKey.toUpperCase();
-        highlightSkillRange(boundKey);
-      }
-      keyTooltip.show(e.clientX, e.clientY, tooltipData);
-    });
-    item.addEventListener('mouseleave', () => {
-      keyTooltip.hide();
-      clearRangeHighlight();
-    });
+        keyTooltip.show(e.clientX, e.clientY, tooltipData);
+      });
+      item.addEventListener('mouseleave', () => {
+        keyTooltip.hide();
+        clearRangeHighlight();
+      });
+    } else {
+      // 旧版技能渲染
+      const display = getSkillDisplay(skillId);
+      const school = getSkillSchool(skillId);
+      const evolvedLabel = state.player.evolvedSkills.has(skillId) ? '<span class="inv-evolved">★</span>' : '';
+      item.innerHTML = `
+        <span class="inv-icon">${display.icon}</span>
+        <span class="inv-name">${display.name}</span>
+        ${evolvedLabel}
+        <span class="inv-school ${school.cssClass}">${school.label}</span>
+        ${data.level > 1 ? `<span class="inv-level">Lv.${data.level}</span>` : ''}
+        ${boundKey ? `<span class="inv-key">[${boundKey.toUpperCase()}]</span>` : ''}
+      `;
+
+      // 悬停预览技能效果
+      item.addEventListener('mouseenter', (e) => {
+        const tooltipData: KeyTooltipData = {
+          skill: {
+            name: display.name,
+            icon: display.icon,
+            description: display.desc,
+            level: data.level,
+            school: school.label,
+            schoolCssClass: school.cssClass,
+          },
+        };
+        // 增幅者额外信息：叠层 + 范围内受影响技能
+        if (isAmplifier(skillId) && boundKey) {
+          const ampDef = AMPLIFIERS[skillId];
+          tooltipData.skill!.amplifierStacks = Math.floor(state.amplifierStacks.get(skillId) || 0);
+          const affected: string[] = [];
+          for (const [bk, bId] of state.player.bindings) {
+            if (bk === boundKey) continue;
+            if (!isProducer(bId) && !isConverter(bId)) continue;
+            if (hasRelation(bk, boundKey, ampDef.positionRelation)) {
+              const d = getSkillDisplayInfo(bId, undefined, state.player.enchantedSkills);
+              affected.push(`${d.icon}${d.name}`);
+            }
+          }
+          tooltipData.skill!.affectedSkills = affected;
+        }
+        // Story 34.6 AC3: 机制信息
+        tooltipData.skill!.mechanicInfo = buildMechanicInfo(skillId);
+        // 附魔状态信息
+        tooltipData.skill!.enchantmentInfo = buildEnchantmentInfo(skillId);
+        if (boundKey) {
+          tooltipData.letter = boundKey.toUpperCase();
+          highlightSkillRange(boundKey);
+        }
+        keyTooltip.show(e.clientX, e.clientY, tooltipData);
+      });
+      item.addEventListener('mouseleave', () => {
+        keyTooltip.hide();
+        clearRangeHighlight();
+      });
+    }
 
     el.ownedSkills.appendChild(item);
   });

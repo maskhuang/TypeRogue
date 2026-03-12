@@ -324,6 +324,30 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Taboo]: '禁忌',
 }
 
+/** 词条功能说明（玩家可读） */
+export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
+  [AffixType.Multiply]: '产出直接乘以倍率',
+  [AffixType.Convert]: '消耗一种资源，按系数转化为本资源',
+  [AffixType.Rainbow]: '产出适配所有资源类型',
+  [AffixType.Charge]: '未触发时持续蓄力，触发时释放加成',
+  [AffixType.Decay]: '首次触发加成最高，之后逐次衰减',
+  [AffixType.Pulse]: '每隔固定次数触发一次爆发',
+  [AffixType.Crit]: '触发时有概率暴击',
+  [AffixType.Cascade]: '指定位置关系的相邻键有技能时加成',
+  [AffixType.Void]: '指定位置关系的相邻空位越多加成越高',
+  [AffixType.Resonance]: '指定位置关系的相邻技能触发时获得效率加成',
+  [AffixType.Mirror]: '每关首次触发时复制一个相邻技能的词条',
+  [AffixType.Link]: '产出特定资源时自动触发相邻技能',
+  [AffixType.Replicate]: '按键时同时触发相邻技能',
+  [AffixType.Amplify]: '每次触发叠层，增幅相邻技能的产出',
+  [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
+  [AffixType.Gravity]: '根据字母在单词中的出现频率调整产出',
+  [AffixType.Ligature]: '连续字母触发时获得加成',
+  [AffixType.Twin]: '每次触发产出两次',
+  [AffixType.Recurse]: '触发后有概率再次触发',
+  [AffixType.Taboo]: '大幅提升产出，但有小概率产出负值',
+}
+
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
   base: '基数',
   score: '分数',
