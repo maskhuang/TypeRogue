@@ -330,3 +330,22 @@ development_status:
   34-6-ui-enchantment-display: done
   34-7-balance-tuning: done
   epic-34-retrospective: optional
+
+  # ===== Epic 35: 词条制技能系统（方案 A）=====
+  # Source: docs/stories/epic-35-affix-skill-system.md
+  # Design: docs/design/affix-skill-system.md
+  epic-35: in-progress
+  35-1-core-data-affix-defs: done
+  35-2-skill-generation-engine: backlog
+  35-3-trigger-pipeline-phase1-3: backlog
+  35-4-trigger-pipeline-phase4-6: backlog
+  35-5-enchantment-splash-apprentice: backlog
+  35-6-enchantment-quest-18: backlog
+  35-7-enchantment-transmute-passive-operator: backlog
+  35-8-state-lifecycle-serialization: backlog
+  35-9-shop-integration: backlog
+  35-10-mutation-system: backlog
+  35-11-ui-keyboard-combat: backlog
+  35-12-relic-adaptation: backlog
+  35-13-balance-testing: backlog
+  epic-35-retrospective: optional

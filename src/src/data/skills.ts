@@ -38,6 +38,14 @@ export const DELETED_SKILL_IDS = [
   'conv_fragment_time_mul', 'conv_fragment_gold_mul',
   'conv_mutagen_score_mul', 'conv_mutagen_base_mul', 'conv_mutagen_mult_mul',
   'conv_mutagen_time_mul', 'conv_mutagen_gold_mul',
+  // ⚠️ Epic 35（方案 A 词条制）将替换以下系统：
+  // - Producer（producers.ts）→ 统一为基底 + 词条
+  // - Converter（converters.ts）→ 转化词条
+  // - Connector（connectors.ts）→ 连接词条
+  // - Replicator（connectors.ts）→ 复制词条
+  // - Amplifier（amplifiers.ts）→ 增幅词条
+  // - Enchantment（enchantments.ts）→ 新附魔系统（affixes.ts EnchantmentType）
+  // 旧系统在 Epic 35 后续 Story 中逐步迁移，迁移完成后将相关 ID 加入此列表
 ];
 
 // === 已删除进化分支 ID 列表（存档兼容用）===
