@@ -40,14 +40,11 @@ export interface ModifierEffect {
 // === 行为效果 ===
 export type ModifierBehavior =
   | { type: 'intercept' }
-  | { type: 'trigger_adjacent' }
   | { type: 'buff_next_skill'; multiplier: number }
-  | { type: 'trigger_skill'; targetSkillId: string }
   | { type: 'combo_protect'; probability: number }
   | { type: 'set_echo_flag' }
   | { type: 'set_ripple_flag' }
   | { type: 'pulse_counter'; timeBonus: number }
-  | { type: 'trigger_row_mirror' }
   | { type: 'amplify_chain' }
   | { type: 'instant_fail' }
   | { type: 'time_steal'; timeBonus: number }
@@ -56,7 +53,6 @@ export type ModifierBehavior =
   // 进化系统行为 (Story 15.1)
   | { type: 'restore_combo'; triggerEvery: number }
   | { type: 'set_word_cooldown' }
-  | { type: 'trigger_random_adjacent' }
   // T3 重触发遗物行为 (Story 29.1)
   | { type: 'retrigger' }
 
@@ -223,10 +219,6 @@ export interface PipelineContext {
 
 /** BehaviorExecutor 的回调接口 — 由调用方实现 */
 export interface BehaviorCallbacks {
-  /** trigger_adjacent: 返回相邻技能的 pipeline 结果列表 */
-  onTriggerAdjacent?(depth: number): PipelineResult[]
-  /** trigger_skill: 返回指定技能的 pipeline 结果（null = 技能不存在） */
-  onTriggerSkill?(targetSkillId: string, depth: number): PipelineResult | null
   /** buff_next_skill: 通知调用方设置临时增益 */
   onBuffNextSkill?(multiplier: number): void
   /** combo_protect: 按概率保护连击，返回是否保护成功 */
@@ -237,8 +229,6 @@ export interface BehaviorCallbacks {
   onSetRippleFlag?(): void
   /** pulse_counter: 脉冲计数器，达到阈值时触发时间加成 */
   onPulseCounter?(timeBonus: number): void
-  /** trigger_row_mirror: 同行镜像触发，返回触发结果 */
-  onTriggerRowMirror?(depth: number): PipelineResult | null
   /** amplify_chain: 连锁放大器，echo/ripple 额外触发一次 */
   onAmplifyChain?(): void
   /** instant_fail: 玻璃大炮，打错即本关失败 */
@@ -254,20 +244,8 @@ export interface BehaviorCallbacks {
   onRestoreCombo?(triggerEvery: number): void
   /** set_word_cooldown: 设置当前技能本词冷却 */
   onSetWordCooldown?(): void
-  /** trigger_random_adjacent: 随机触发一个相邻技能 */
-  onTriggerRandomAdjacent?(depth: number): PipelineResult | null
   /** retrigger: 标记当前技能需要重触发 (Story 29.1) */
   onRetrigger?(): void
-}
-
-/** BehaviorExecutor.execute() 的返回值 */
-export interface BehaviorExecutionResult {
-  /** 成功执行的行为数量（不含 intercept 跳过和深度截断） */
-  executedCount: number
-  /** 因深度限制被跳过的触发类行为数量 */
-  skippedByDepth: number
-  /** 实际达到的最大链式深度（等于传入的 depth 若无链式触发） */
-  chainDepthReached: number
 }
 
 // === 完整 Modifier 接口 ===

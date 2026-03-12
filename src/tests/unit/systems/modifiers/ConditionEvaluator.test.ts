@@ -828,7 +828,7 @@ describe('EffectPipeline + ConditionEvaluator 集成', () => {
       layer: 'base',
       effect: undefined,
       condition: { type: 'combo_gte', value: 10 },
-      behavior: { type: 'trigger_adjacent' },
+      behavior: { type: 'retrigger' },
     }))
     registry.register(createTestModifier({
       id: 'skill:ripple:buff',

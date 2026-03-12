@@ -20,7 +20,6 @@ export type {
   PipelineResult,
   PipelineContext,
   BehaviorCallbacks,
-  BehaviorExecutionResult,
 } from './ModifierTypes'
 
 export { ModifierRegistry } from './ModifierRegistry'

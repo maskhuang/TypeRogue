@@ -182,11 +182,11 @@ describe('EffectPipeline', () => {
   describe('after 阶段 pendingBehaviors', () => {
     it('收集 after 阶段的行为修饰器', () => {
       registry.register(createTestModifier({
-        id: 'skill:echo:chain',
+        id: 'skill:echo:retrigger',
         phase: 'after',
         layer: 'base',
         effect: undefined,
-        behavior: { type: 'trigger_adjacent' },
+        behavior: { type: 'retrigger' },
       }))
       registry.register(createTestModifier({
         id: 'skill:ripple:buff',
@@ -198,7 +198,7 @@ describe('EffectPipeline', () => {
       }))
       const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
       expect(result.pendingBehaviors).toHaveLength(2)
-      expect(result.pendingBehaviors[0]).toEqual({ type: 'trigger_adjacent' })
+      expect(result.pendingBehaviors[0]).toEqual({ type: 'retrigger' })
       expect(result.pendingBehaviors[1]).toEqual({ type: 'buff_next_skill', multiplier: 1.5 })
     })
   })
@@ -301,7 +301,7 @@ describe('EffectPipeline', () => {
         phase: 'calculate',
         layer: 'base',
         effect: { type: 'score', value: 10, stacking: 'additive' },
-        behavior: { type: 'trigger_adjacent' },
+        behavior: { type: 'retrigger' },
       }))
       const result = EffectPipeline.resolve(registry, 'on_skill_trigger')
       expect(result.effects.score).toBe(10)

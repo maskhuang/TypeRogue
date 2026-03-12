@@ -55,7 +55,7 @@ export function resolveRelicEffectsWithBehaviors(
 ): PipelineResult {
   const result = resolveRelicEffects(trigger, context)
   if (result.pendingBehaviors.length > 0 && callbacks) {
-    BehaviorExecutor.execute(result.pendingBehaviors, 0, callbacks)
+    BehaviorExecutor.execute(result.pendingBehaviors, callbacks)
   }
   return result
 }
@@ -178,7 +178,7 @@ export function resolveRelicSkillTrigger(
   }
   const result = EffectPipeline.resolve(registry, 'on_skill_trigger', ctx)
   if (result.pendingBehaviors.length > 0 && callbacks) {
-    BehaviorExecutor.execute(result.pendingBehaviors, 0, callbacks)
+    BehaviorExecutor.execute(result.pendingBehaviors, callbacks)
   }
   return result.effects.score || 1
 }
