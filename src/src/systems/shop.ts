@@ -378,7 +378,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'void': return `${rel}每空位+${Math.round((a.bonusPerSlot ?? 0) * 100)}%`
     case 'resonance': return `${rel}效率${Math.round((a.efficiency ?? 0) * 100)}%`
     case 'amplify': return `${rel}每层+${Math.round((a.valuePerStack ?? 0) * 100)}%`
-    case 'cascade': return `${rel || '上键相邻'} ×${a.cascadeMult?.toFixed(1) ?? '?'}`
+    case 'cascade': return `${rel || '上键范围内'} ×${a.cascadeMult?.toFixed(1) ?? '?'}`
     case 'outcast': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
     case 'gravity': return `概率×${a.probMult?.toFixed(1) ?? '?'}`
     case 'recurse': return `${Math.round((a.recurseChance ?? 0) * 100)}%重触发`
