@@ -217,15 +217,16 @@ describe('AC2: Recurse 伪循环', () => {
 })
 
 // =============================================
-// AC3: Replicate 伪循环
+// AC3: Splash 伪循环
 // =============================================
 
-describe('AC3: Replicate 伪循环', () => {
-  it('Replicate 通过队列触发邻居而非递归', () => {
-    const skillA = buildSkillWithAffixes([AffixType.Replicate], 'base')
+describe('AC3: Splash 伪循环', () => {
+  it('Splash 通过队列触发邻居而非递归', () => {
+    const skillA = buildSkillWithAffixes([AffixType.Splash], 'base')
     skillA.id = 'skill_a'
     skillA.rarity = 1 as 0
     skillA.affixes[0].posRel = PositionRelation.Adjacent
+    skillA.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
 
     const skillB = makeSkill({ id: 'skill_b' })
 
@@ -233,7 +234,7 @@ describe('AC3: Replicate 伪循环', () => {
 
     const result = orchestrateAffixTrigger('skill_a', 'a', ctx)
 
-    // skill_a 本身 + skill_b 通过 Replicate 队列触发
+    // skill_a 本身 + skill_b 通过 Splash 队列触发
     expect(result.triggerCount).toBeGreaterThanOrEqual(2)
     expect(Number.isFinite(result.totalOutput)).toBe(true)
   })
@@ -251,8 +252,6 @@ describe('AC4: Phase 6 伪循环', () => {
     skillB.id = 'skill_b'
     skillB.rarity = 1 as 0
     skillB.affixes[0].posRel = PositionRelation.Adjacent
-    skillB.affixes[0].efficiency = 0.5
-
     const ctx = makeTwoSkillContext(skillA, skillB, 'a', 's')
 
     const result = orchestrateAffixTrigger('skill_a', 'a', ctx)
@@ -263,16 +262,18 @@ describe('AC4: Phase 6 伪循环', () => {
   })
 
   it('循环检测触发 pseudoInfinite', () => {
-    // skill_a(Replicate) → skill_b(Replicate) → skill_a → 循环
-    const skillA = buildSkillWithAffixes([AffixType.Replicate], 'base')
+    // skill_a(Splash) → skill_b(Splash) → skill_a → 循环
+    const skillA = buildSkillWithAffixes([AffixType.Splash], 'base')
     skillA.id = 'skill_a'
     skillA.rarity = 1 as 0
     skillA.affixes[0].posRel = PositionRelation.Adjacent
+    skillA.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
 
-    const skillB = buildSkillWithAffixes([AffixType.Replicate], 'base')
+    const skillB = buildSkillWithAffixes([AffixType.Splash], 'base')
     skillB.id = 'skill_b'
     skillB.rarity = 1 as 0
     skillB.affixes[0].posRel = PositionRelation.Adjacent
+    skillB.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
 
     const ctx = makeTwoSkillContext(skillA, skillB, 'a', 's')
 
@@ -283,7 +284,7 @@ describe('AC4: Phase 6 伪循环', () => {
 
     const result = orchestrateAffixTrigger('skill_a', 'a', ctx, callbacks)
 
-    // A Replicate→B, B Replicate→A: 检测到 'a' 已在 chainHistory 中
+    // A Splash→B, B Splash→A: 检测到 'a' 已在 chainHistory 中
     expect(result.enteredPseudoInfinite).toBe(true)
     expect(pseudoInfiniteSpy).toHaveBeenCalled()
     // pseudoInfiniteKeys 应包含参与循环的键位
@@ -300,17 +301,19 @@ describe('AC4: Phase 6 伪循环', () => {
 
 describe('AC5: chainHistory 统一', () => {
   it('chainHistory 传播使循环检测在第二次访问时生效', () => {
-    // A(Replicate)→B(Replicate)→A: 第二次访问 A 时 chainHistory=['a','s','a']
+    // A(Splash)→B(Splash)→A: 第二次访问 A 时 chainHistory=['a','s','a']
     // 循环检测在 B→A 时发现 'a' 已在 history 中 → pseudoInfinite
-    const skillA = buildSkillWithAffixes([AffixType.Replicate], 'base')
+    const skillA = buildSkillWithAffixes([AffixType.Splash], 'base')
     skillA.id = 'skill_a'
     skillA.rarity = 1 as 0
     skillA.affixes[0].posRel = PositionRelation.Adjacent
+    skillA.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
 
-    const skillB = buildSkillWithAffixes([AffixType.Replicate], 'base')
+    const skillB = buildSkillWithAffixes([AffixType.Splash], 'base')
     skillB.id = 'skill_b'
     skillB.rarity = 1 as 0
     skillB.affixes[0].posRel = PositionRelation.Adjacent
+    skillB.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
 
     const ctx = makeTwoSkillContext(skillA, skillB, 'a', 's')
 
@@ -423,18 +426,19 @@ describe('AC8: 副作用集中', () => {
 // =============================================
 
 describe('AC9: 队列深度与循环检测', () => {
-  it('Replicate+Resonance+Link 全链场景不栈溢出', () => {
+  it('Splash+Resonance+Link 全链场景不栈溢出', () => {
     const skillA = buildSkillWithAffixes(
-      [AffixType.Replicate, AffixType.Resonance, AffixType.Link],
+      [AffixType.Splash, AffixType.Resonance, AffixType.Link],
       'base',
     )
     skillA.id = 'skill_a'
     skillA.rarity = 3 as 0
     skillA.affixes[0].posRel = PositionRelation.Adjacent
+    skillA.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
     skillA.affixes[1].posRel = PositionRelation.Adjacent
-    skillA.affixes[1].efficiency = 0.5
+    skillA.affixes[1].resource = 'base' as import('../../../src/core/types').ResourceType
     skillA.affixes[2].posRel = PositionRelation.Adjacent
-    skillA.affixes[2].watchAffix = AffixType.Replicate
+    skillA.affixes[2].watchAffix = AffixType.Splash
 
     const skillB = makeSkill({ id: 'skill_b', resource: 'base' })
 
@@ -448,10 +452,11 @@ describe('AC9: 队列深度与循环检测', () => {
   })
 
   it('chain_ban 下链式词条不入队', () => {
-    const skill = buildSkillWithAffixes([AffixType.Replicate], 'base')
+    const skill = buildSkillWithAffixes([AffixType.Splash], 'base')
     skill.id = 'sk1'
     skill.rarity = 1 as 0
     skill.affixes[0].posRel = PositionRelation.Adjacent
+    skill.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
 
     const skillB = makeSkill({ id: 'skill_b' })
 
@@ -472,7 +477,7 @@ describe('AC9: 队列深度与循环检测', () => {
 
     const result = orchestrateAffixTrigger('sk1', 'a', ctx)
 
-    // chain_ban 下 Phase 5 不会产生 replicateTargets
+    // chain_ban 下 Phase 5 不会产生 splashTargets
     // 只有 skill_a 本身触发
     expect(result.triggerCount).toBe(1)
   })

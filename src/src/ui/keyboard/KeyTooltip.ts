@@ -39,7 +39,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   resonance: '#2ecc71', // 绿 — 共鸣
   mirror:    '#a29bfe', // 淡紫 — 倒影
   link:      '#00cec9', // 湖蓝 — 连接
-  replicate: '#6c5ce7', // 靛蓝 — 复制
+  splash:    '#6c5ce7', // 靛蓝 — 溅射
   amplify:   '#fd79a8', // 浅粉 — 增幅
   outcast:   '#d35400', // 棕 — 流放
   gravity:   '#8e44ad', // 深紫 — 引力

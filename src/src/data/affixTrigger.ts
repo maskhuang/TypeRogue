@@ -58,8 +58,6 @@ export interface TriggerContext {
   /** 本次触发是否应用了变异 */
   mutationApplied?: boolean
   // ── Phase 4-6 附魔运行时参数（由调用方填充） ──
-  /** 溅射附魔位置关系（Splash 变体） */
-  splashPosRel?: PositionRelation
   /** 衍生附魔目标资源 */
   transmuteResource?: ResourceType
   /** @deprecated 使用 TRANSMUTE_RATIO_TABLE[resource] 替代 */
@@ -101,16 +99,14 @@ export interface Phase4Result {
 }
 
 export interface Phase5Result {
-  /** 复制词条需触发的邻居键位 */
-  replicateTargets: string[]
   /** 递归词条重触发指令 */
   recurse: { shouldRecurse: boolean, newChance: number }
   /** 衍生附魔额外资源产出（异资源时） */
   transmuteOutput: { resource: ResourceType, amount: number } | null
   /** 衍生附魔同资源增强比率（同资源时，系统层应用 output × (1 + boost)）— 由 35-9 shop-integration 消费 */
   transmuteSameResourceBoost: number
-  /** 溅射附魔目标列表 */
-  splashTargets: { key: string, efficiency: number }[]
+  /** 溅射词条需触发的邻居键位 */
+  splashTargets: string[]
   /** 嗜变附魔产出（0 或 1） */
   mutagenOutput: number
   /** 吞噬目标键位（QuestDevour 满层时） */
@@ -120,7 +116,7 @@ export interface Phase5Result {
 }
 
 export type Phase6Action =
-  | { type: 'resonance', neighborKey: string, efficiencyMult: number }
+  | { type: 'resonance', neighborKey: string }
   | { type: 'link', neighborKey: string }
   | { type: 'apprentice_neighbor', neighborKey: string, growthDelta: number }
   | { type: 'quest_resonance', neighborKey: string }
@@ -721,7 +717,6 @@ export function resolvePhase5(
   recurseDepth: number = 0,
 ): Phase5Result {
   const result: Phase5Result = {
-    replicateTargets: [],
     recurse: { shouldRecurse: false, newChance: 0 },
     transmuteOutput: null,
     transmuteSameResourceBoost: 0,
@@ -736,14 +731,23 @@ export function resolvePhase5(
   // ── 词条后触发 ──
   for (const affix of skill.affixes) {
     switch (affix.type) {
-      case AffixType.Replicate: {
-        if (ctx.chainAffixesDisabled) break // chain_ban: 跳过复制词条
+      case AffixType.Splash: {
+        if (ctx.chainAffixesDisabled) break // chain_ban: 跳过溅射词条
         if (affix.posRel == null) break
         const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestFission)
         const targetCount = 1 + c
-        const candidates = getKeysWithRelation(ctx.triggerKey, affix.posRel)
+        const allKeys = getKeysWithRelation(ctx.triggerKey, affix.posRel)
           .filter(k => ctx.bindings.has(k) && k !== ctx.triggerKey)
-        result.replicateTargets = pickRandomKeys(candidates, targetCount, ctx.randomFn)
+        // 按资源或词条类型过滤目标
+        const filtered = allKeys.filter(k => {
+          const sid = ctx.bindings.get(k)!
+          const target = ctx.allSkills.get(sid)
+          if (!target) return false
+          if (affix.resource) return target.resource === affix.resource
+          if (affix.watchAffix) return target.affixes.some(a => a.type === affix.watchAffix)
+          return true
+        })
+        result.splashTargets = pickRandomKeys(filtered, targetCount, ctx.randomFn)
         break
       }
 
@@ -863,19 +867,6 @@ export function resolvePhase5(
     }
   }
 
-  // 溅射附魔
-  if (skill.enchantmentIds.includes(EnchantmentType.Splash)) {
-    const posRel = ctx.splashPosRel
-    if (posRel != null) {
-      const candidates = getKeysWithRelation(ctx.triggerKey, posRel)
-        .filter(k => ctx.bindings.has(k) && k !== ctx.triggerKey)
-      if (candidates.length > 0) {
-        const eff = 1 / candidates.length
-        result.splashTargets = candidates.map(k => ({ key: k, efficiency: eff }))
-      }
-    }
-  }
-
   // 嗜变附魔
   if (skill.enchantmentIds.includes(EnchantmentType.MutationHunger)) {
     const chance = ctx.mutationHungerChance ?? MUTATION_HUNGER_CHANCE
@@ -910,16 +901,15 @@ export function resolvePhase6(
 
     const neighborState = ctx.skillStates.get(neighborSkillId)
 
-    // 共鸣词条：邻居触发 → 自身以 effectiveEff 触发
+    // 共鸣词条：范围内技能产出指定资源时自动触发 / 感应词条：范围内指定词条触发时自动触发
     for (const affix of neighborSkill.affixes) {
       if (affix.type === AffixType.Resonance && ctx.chainAffixesDisabled) continue // chain_ban: 跳过共鸣
       if (affix.type === AffixType.Link && ctx.chainAffixesDisabled) continue // chain_ban: 跳过感应
-      if (affix.type === AffixType.Resonance && affix.posRel != null) {
-        if (hasRelation(triggerKey, neighborKey, affix.posRel)) {
-          const baseEff = affix.efficiency ?? 0
-          const c = neighborState ? getQuestCompletions(neighborSkill, neighborState, EnchantmentType.QuestResonance) : 0
-          const effectiveEff = baseEff + c * 0.08
-          actions.push({ type: 'resonance', neighborKey, efficiencyMult: effectiveEff })
+
+      // 共鸣词条：触发技能产出的资源匹配 → 邻居自动触发
+      if (affix.type === AffixType.Resonance && affix.posRel != null && affix.resource != null) {
+        if (actualResource === affix.resource && hasRelation(triggerKey, neighborKey, affix.posRel)) {
+          actions.push({ type: 'resonance', neighborKey })
         }
       }
 
@@ -1173,7 +1163,6 @@ export function resolveMirrorCopy(
     if (copied.valuePerStack != null) copied.valuePerStack *= boost
     if (copied.maxBonus != null) copied.maxBonus *= boost
     if (copied.recurseChance != null) copied.recurseChance *= boost
-    if (copied.efficiency != null) copied.efficiency *= boost
     if (copied.chance != null) copied.chance *= boost
     if (copied.gainPerSec != null) copied.gainPerSec *= boost
     if (copied.floor != null) copied.floor *= boost

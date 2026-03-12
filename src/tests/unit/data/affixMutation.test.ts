@@ -496,7 +496,7 @@ describe('invalidateQuestEnchantment (AC7)', () => {
 
   it('handles QuestResonance mapping to [Resonance, Link]', () => {
     const skill = makeSkill({
-      affixes: [{ type: AffixType.Resonance, posRel: 'adjacent' as any, efficiency: 0.5 }],
+      affixes: [{ type: AffixType.Resonance, posRel: 'adjacent' as any, resource: 'base' as any }],
       enchantmentIds: [EnchantmentType.QuestResonance],
     })
     setupSkill(skill)

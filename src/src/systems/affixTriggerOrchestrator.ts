@@ -21,7 +21,6 @@ import type {
 export type TriggerWorkType =
   | 'initial'
   | 'recurse'
-  | 'replicate'
   | 'resonance'
   | 'link'
   | 'splash'
@@ -37,10 +36,6 @@ export interface TriggerWorkItem {
   depth: number
   /** 链式历史（用于循环检测） */
   chainHistory: string[]
-  /** 共鸣效率倍率（仅 resonance 类型） */
-  efficiencyMult?: number
-  /** 溅射效率（仅 splash 类型） */
-  splashEfficiency?: number
 }
 
 // ===== 调度器结果 =====
@@ -120,8 +115,8 @@ export function orchestrateAffixTrigger(
       continue
     }
 
-    // ── 循环检测：仅对链式类型（replicate/resonance/link/splash）检查 ──
-    const isChainType = item.type === 'replicate' || item.type === 'resonance'
+    // ── 循环检测：仅对链式类型（resonance/link/splash）检查 ──
+    const isChainType = item.type === 'resonance'
       || item.type === 'link' || item.type === 'splash'
     if (isChainType && item.chainHistory.includes(item.triggerKey)) {
       // 检测到循环 → 进入伪无限模式
@@ -154,14 +149,8 @@ export function orchestrateAffixTrigger(
     const recurseDepth = item.type === 'recurse' ? item.depth : 0
     const result = triggerAffixSkill(skill, runtimeState, triggerCtx, recurseDepth)
 
-    // ── 应用效率缩减（共鸣/溅射）+ 同资源衍生增强 ──
+    // ── 同资源衍生增强 ──
     let effectiveOutput = result.output
-    if (item.type === 'resonance' && item.efficiencyMult != null) {
-      effectiveOutput = result.output * item.efficiencyMult
-    }
-    if (item.type === 'splash' && item.splashEfficiency != null) {
-      effectiveOutput = result.output * item.splashEfficiency
-    }
     // 同资源衍生附魔增强（系统层应用 output × (1 + boost)）
     if (result.phase5?.transmuteSameResourceBoost) {
       effectiveOutput *= (1 + result.phase5.transmuteSameResourceBoost)
@@ -209,35 +198,18 @@ export function orchestrateAffixTrigger(
       })
     }
 
-    // Replicate: 触发邻居
-    if (result.phase5?.replicateTargets) {
-      for (const targetKey of result.phase5.replicateTargets) {
+    // Splash: 溅射邻居
+    if (result.phase5?.splashTargets) {
+      for (const targetKey of result.phase5.splashTargets) {
         const targetSkillId = ctx.bindings.get(targetKey)
         if (!targetSkillId) continue
 
         queue.push({
           skillId: targetSkillId,
           triggerKey: targetKey,
-          type: 'replicate',
-          depth: item.depth + 1,
-          chainHistory: childHistory,
-        })
-      }
-    }
-
-    // Splash: 溅射邻居
-    if (result.phase5?.splashTargets) {
-      for (const splash of result.phase5.splashTargets) {
-        const targetSkillId = ctx.bindings.get(splash.key)
-        if (!targetSkillId) continue
-
-        queue.push({
-          skillId: targetSkillId,
-          triggerKey: splash.key,
           type: 'splash',
           depth: item.depth + 1,
           chainHistory: childHistory,
-          splashEfficiency: splash.efficiency,
         })
       }
     }
@@ -278,7 +250,6 @@ function enqueuePhase6Action(
         type: 'resonance',
         depth: parentChildHistory.length,
         chainHistory: parentChildHistory,
-        efficiencyMult: action.efficiencyMult,
       })
       break
     }

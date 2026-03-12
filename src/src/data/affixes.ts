@@ -7,7 +7,8 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（20 类，6 类别） =====
+// ===== 词条类型枚举（20 类，6 类别） ====
+// Replicate 已合并入 Splash
 
 export enum AffixType {
   // ── 数值型 ──
@@ -26,7 +27,7 @@ export enum AffixType {
   Mirror = 'mirror',
   // ── 触发链型 ──
   Link = 'link',
-  Replicate = 'replicate',
+  Splash = 'splash',
   Amplify = 'amplify',
   // ── 单词感知型 ──
   Outcast = 'outcast',
@@ -55,7 +56,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Resonance]: 'topology',
   [AffixType.Mirror]: 'topology',
   [AffixType.Link]: 'trigger_chain',
-  [AffixType.Replicate]: 'trigger_chain',
+  [AffixType.Splash]: 'trigger_chain',
   [AffixType.Amplify]: 'trigger_chain',
   [AffixType.Outcast]: 'word_sense',
   [AffixType.Gravity]: 'word_sense',
@@ -65,12 +66,10 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Taboo]: 'meta_rule',
 }
 
-// ===== 附魔类型枚举（37 个枚举值） =====
-// 溅射/衍生各为 1 个枚举值，posRel/资源变体在运行时处理
+// ===== 附魔类型枚举（36 个枚举值） =====
+// 衍生为 1 个枚举值，资源变体在运行时处理
 
 export enum EnchantmentType {
-  // ── 溅射（1，运行时按 posRel 6 变体） ──
-  Splash = 'splash',
   // ── 学徒型（12） ──
   ApprenticeSelf = 'apprentice_self',
   ApprenticeNeighbor = 'apprentice_neighbor',
@@ -127,7 +126,7 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestCharge]: AffixType.Outcast,    // 蓄势→流放
   [EnchantmentType.QuestRefine]: AffixType.Convert,
   [EnchantmentType.QuestEnergize]: AffixType.Charge,    // 充能→蓄力
-  [EnchantmentType.QuestFission]: AffixType.Replicate,
+  [EnchantmentType.QuestFission]: AffixType.Splash,
   [EnchantmentType.QuestStack]: AffixType.Amplify,
   [EnchantmentType.QuestPolarize]: AffixType.Gravity,
   [EnchantmentType.QuestSpectrum]: AffixType.Rainbow,
@@ -154,11 +153,10 @@ export interface AffixInstance {
   burstMult?: number               // Pulse: 爆发乘数
   chance?: number                  // Crit: 暴击概率
   critMult?: number                // Crit: 暴击乘数
-  posRel?: PositionRelation        // Void/Resonance/Mirror/Link/Replicate/Amplify/Cascade
+  posRel?: PositionRelation        // Void/Resonance/Mirror/Link/Splash/Amplify/Cascade
   bonusPerSlot?: number            // Void: 每空位加成%
-  efficiency?: number              // Resonance: 触发效率%
-  resource?: ResourceType          // Amplify: 关联资源
-  watchAffix?: AffixType           // Link(感应): 监听的词条类型
+  resource?: ResourceType          // Resonance: 监听资源 / Amplify: 关联资源 / Splash: 目标资源
+  watchAffix?: AffixType           // Link: 监听词条类型 / Splash: 目标词条类型
   valuePerStack?: number           // Amplify: 每层加成%
   cascadeMult?: number             // Cascade: 级联乘数
   bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: +100% 固定
@@ -259,7 +257,7 @@ export const AFFIX_WEIGHTS: Record<AffixWeightKey, number> = {
   [AffixType.Resonance]: 4,
   [AffixType.Mirror]: 3,
   [AffixType.Link]: 6,
-  [AffixType.Replicate]: 3,
+  [AffixType.Splash]: 5,
   [AffixType.Amplify]: 5,
   [AffixType.Outcast]: 8,
   [AffixType.Gravity]: 3,
@@ -277,16 +275,6 @@ export const VOID_BONUS_TABLE: Record<PositionRelation, number> = {
   [PositionRelation.SameHand]: 0.05,
   [PositionRelation.SameFinger]: 0.35,
   [PositionRelation.Symmetric]: 0.50,
-}
-
-/** 共鸣词条 efficiency 按 PositionRelation */
-export const RESONANCE_EFFICIENCY_TABLE: Record<PositionRelation, number> = {
-  [PositionRelation.Adjacent]: 0.50,
-  [PositionRelation.SameRow]: 0.30,
-  [PositionRelation.SameColumn]: 0.40,
-  [PositionRelation.SameHand]: 0.15,
-  [PositionRelation.SameFinger]: 0.50,
-  [PositionRelation.Symmetric]: 0.60,
 }
 
 /** 转化词条 k 值校准表：[k_min, k_max] */
@@ -315,7 +303,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Resonance]: '共鸣',
   [AffixType.Mirror]: '倒影',
   [AffixType.Link]: '感应',
-  [AffixType.Replicate]: '复制',
+  [AffixType.Splash]: '溅射',
   [AffixType.Amplify]: '增幅',
   [AffixType.Outcast]: '流放',
   [AffixType.Gravity]: '引力',
@@ -336,10 +324,10 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Crit]: '触发时有概率暴击',
   [AffixType.Cascade]: '上一个按键与当前键满足指定位置关系时，产出倍增',
   [AffixType.Void]: '范围内空位越多加成越高',
-  [AffixType.Resonance]: '范围内技能触发时，本技能以指定效率被动触发',
+  [AffixType.Resonance]: '范围内技能产出指定资源时，本技能自动触发',
   [AffixType.Mirror]: '每关开始时复制一个范围内技能的随机词条',
   [AffixType.Link]: '范围内有指定词条的技能触发时，本技能自动触发',
-  [AffixType.Replicate]: '触发时随机触发范围内1个技能',
+  [AffixType.Splash]: '触发后随机触发范围内1个匹配的技能',
   [AffixType.Amplify]: '每次触发叠一层，与范围内同资源增幅技能共享层数加成',
   [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
   [AffixType.Gravity]: '调整含本键字母的单词出现概率',
@@ -399,22 +387,6 @@ export const APPRENTICE_NEIGHBOR_GROWTH: Record<PositionRelation, number> = {
   [PositionRelation.Symmetric]: 0.03,
 }
 
-// ===== 溅射附魔定义（1 类型 × 6 posRel 变体） =====
-
-export interface SplashEnchantmentDef {
-  posRel: PositionRelation
-  name: string
-}
-
-export const SPLASH_ENCHANTMENT_DEFS: SplashEnchantmentDef[] = [
-  { posRel: PositionRelation.Adjacent,  name: '溅射·相邻' },
-  { posRel: PositionRelation.SameRow,   name: '溅射·同行' },
-  { posRel: PositionRelation.SameColumn, name: '溅射·同列' },
-  { posRel: PositionRelation.SameHand,  name: '溅射·同手' },
-  { posRel: PositionRelation.SameFinger, name: '溅射·同指' },
-  { posRel: PositionRelation.Symmetric, name: '溅射·对称' },
-]
-
 // ===== 职业限定附魔 =====
 
 export const CLASS_RESTRICTED_ENCHANTMENTS: Record<string, EnchantmentType[]> = {
@@ -471,11 +443,11 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestAscend, name: '升华', targetAffix: AffixType.Multiply, event: 'perfectWord', targetStacks: 3, effectDesc: 'multiplier +0.15' },
   { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'affixProc:cascade', targetStacks: 6, effectDesc: 'cascadeMult +0.2' },
   { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'comboReach:15', targetStacks: 3, effectDesc: 'floor -0.05 (min 0.1)' },
-  { type: EnchantmentType.QuestResonance, name: '共振', targetAffix: [AffixType.Resonance, AffixType.Link], event: 'neighborTrigger', targetStacks: 20, effectDesc: 'efficiency +8%' },
+  { type: EnchantmentType.QuestResonance, name: '共振', targetAffix: [AffixType.Resonance, AffixType.Link], event: 'neighborTrigger', targetStacks: 20, effectDesc: '触发产出 +10%/层' },
   { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'outcastProc', targetStacks: 10, effectDesc: 'bonusPercent +15%' },
   { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'selfTrigger', targetStacks: 15, effectDesc: 'k ×1.1' },
   { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'wordComplete', targetStacks: 5, effectDesc: 'maxBonus +0.3' },
-  { type: EnchantmentType.QuestFission, name: '裂变', targetAffix: AffixType.Replicate, event: 'longWord:6', targetStacks: 5, effectDesc: '额外触发 +1 邻居' },
+  { type: EnchantmentType.QuestFission, name: '裂变', targetAffix: AffixType.Splash, event: 'longWord:6', targetStacks: 5, effectDesc: '额外触发 +1 邻居' },
   { type: EnchantmentType.QuestStack, name: '层叠', targetAffix: AffixType.Amplify, event: 'selfTrigger', targetStacks: 25, effectDesc: 'valuePerStack +0.005' },
   { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'wordComplete', targetStacks: 8, effectDesc: '|probMult−1| +0.15' },
   { type: EnchantmentType.QuestSpectrum, name: '光谱', targetAffix: AffixType.Rainbow, event: 'selfTrigger', targetStacks: 20, effectDesc: '随机权重偏向最低资源 +15%/层' },

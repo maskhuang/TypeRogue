@@ -12,7 +12,7 @@ import type { AffixInstance, AffixSkillInstance, SkillRarity } from './affixes'
 import {
   AffixType,
   AFFIX_WEIGHTS, BASE_VALUES, RARITY_PROBABILITIES,
-  VOID_BONUS_TABLE, RESONANCE_EFFICIENCY_TABLE, CONVERT_K_TABLE,
+  VOID_BONUS_TABLE, CONVERT_K_TABLE,
   AFFIX_NAMES, RESOURCE_NAMES,
 } from './affixes'
 
@@ -163,8 +163,10 @@ export function rollAffixParams(
     }
 
     case AffixType.Resonance: {
+      // 共鸣词条：监听特定资源类型，范围内技能产出该资源时自动触发
       const posRel = pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, efficiency: RESONANCE_EFFICIENCY_TABLE[posRel] }
+      const watchResource = pickRandom(pool)
+      return { type, posRel, resource: watchResource }
     }
 
     case AffixType.Mirror:
@@ -176,8 +178,18 @@ export function rollAffixParams(
       return { type, posRel: pickRandom(ALL_POS_RELATIONS), watchAffix: pickRandom(watchCandidates) }
     }
 
-    case AffixType.Replicate:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS) }
+    case AffixType.Splash: {
+      // 溅射词条：触发后随机触发范围内1个匹配的技能（按资源或词条过滤）
+      const posRel = pickRandom(ALL_POS_RELATIONS)
+      if (random() < 0.5) {
+        // 资源变体：只触发产出指定资源的技能
+        return { type, posRel, resource: pickRandom(pool) }
+      } else {
+        // 词条变体：只触发拥有指定词条的技能
+        const candidates = Object.values(AffixType).filter(t => t !== AffixType.Splash)
+        return { type, posRel, watchAffix: pickRandom(candidates) }
+      }
+    }
 
     case AffixType.Amplify:
       return { type, posRel: pickRandom(ALL_POS_RELATIONS), resource, valuePerStack: 0.02 }

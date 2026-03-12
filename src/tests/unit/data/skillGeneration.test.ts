@@ -13,7 +13,6 @@ import {
   BASE_VALUES,
   RARITY_PROBABILITIES,
   VOID_BONUS_TABLE,
-  RESONANCE_EFFICIENCY_TABLE,
   CONVERT_K_TABLE,
   AFFIX_NAMES,
   RESOURCE_NAMES,
@@ -323,11 +322,11 @@ describe('rollAffixParams', () => {
   })
 
   describe('Resonance', () => {
-    it('should have posRel and correct efficiency from table', () => {
+    it('should have posRel and watchResource', () => {
       for (let i = 0; i < 50; i++) {
         const a = rollAffixParams(AffixType.Resonance, resource)
         expect(ALL_POS_RELATIONS).toContain(a.posRel)
-        expect(a.efficiency).toBe(RESONANCE_EFFICIENCY_TABLE[a.posRel!])
+        expect(a.resource).toBeDefined()
       }
     })
   })
@@ -349,13 +348,6 @@ describe('rollAffixParams', () => {
         expect(allAffixTypes).toContain(a.watchAffix)
         expect(a.watchAffix).not.toBe(AffixType.Link)
       }
-    })
-  })
-
-  describe('Replicate', () => {
-    it('should have posRel', () => {
-      const a = rollAffixParams(AffixType.Replicate, resource)
-      expect(ALL_POS_RELATIONS).toContain(a.posRel)
     })
   })
 

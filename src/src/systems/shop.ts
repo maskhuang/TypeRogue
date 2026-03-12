@@ -376,7 +376,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'pulse': return `每${a.interval ?? '?'}次 ×${a.burstMult?.toFixed(1) ?? '?'}`
     case 'crit': return `${Math.round((a.chance ?? 0) * 100)}% ×${a.critMult?.toFixed(1) ?? '?'}`
     case 'void': return `${rel}每空位+${Math.round((a.bonusPerSlot ?? 0) * 100)}%`
-    case 'resonance': return `${rel}效率${Math.round((a.efficiency ?? 0) * 100)}%`
+    case 'resonance': return `${rel}产出${RESOURCE_NAMES[a.resource!] ?? '?'}时触发`
     case 'amplify': return `${rel}${RESOURCE_ICONS[a.resource!] || ''}${RESOURCE_NAMES[a.resource!] ?? ''}每层+${Math.round((a.valuePerStack ?? 0) * 100)}%`
     case 'cascade': return `${rel || '上键范围内'} ×${a.cascadeMult?.toFixed(1) ?? '?'}`
     case 'outcast': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
@@ -386,7 +386,11 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'rainbow': return '随机资源'
     case 'mirror': return `${rel}镜像复制`
     case 'link': return `${rel}有[${AFFIX_NAMES[a.watchAffix!] ?? '?'}]词条技能触发时触发`
-    case 'replicate': return `${rel}复制触发`
+    case 'splash': {
+      if (a.resource) return `${rel}溅射${RESOURCE_NAMES[a.resource] ?? '?'}技能`
+      if (a.watchAffix) return `${rel}溅射[${AFFIX_NAMES[a.watchAffix] ?? '?'}]技能`
+      return `${rel}溅射触发`
+    }
     case 'ligature': return `连字加成`
     case 'twin': return `双附魔`
     default: return ''

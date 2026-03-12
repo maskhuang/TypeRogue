@@ -14,7 +14,6 @@ import {
   AFFIX_WEIGHTS,
   BASE_VALUES,
   VOID_BONUS_TABLE,
-  RESONANCE_EFFICIENCY_TABLE,
   CONVERT_K_TABLE,
   AFFIX_NAMES,
   RESOURCE_NAMES,
@@ -47,7 +46,7 @@ describe('AffixType', () => {
       'multiply', 'convert', 'rainbow',
       'charge', 'decay', 'pulse', 'crit', 'cascade',
       'void', 'resonance', 'mirror',
-      'link', 'replicate', 'amplify',
+      'link', 'splash', 'amplify',
       'outcast', 'gravity', 'ligature',
       'twin', 'recurse', 'taboo',
     ]
@@ -101,13 +100,13 @@ describe('AFFIX_CATEGORY_MAP', () => {
 describe('EnchantmentType', () => {
   const allEnchTypes = Object.values(EnchantmentType)
 
-  it('should have exactly 37 values', () => {
-    expect(allEnchTypes).toHaveLength(37)
+  it('should have exactly 36 values', () => {
+    expect(allEnchTypes).toHaveLength(36)
   })
 
   it('should have unique string values', () => {
     const unique = new Set(allEnchTypes)
-    expect(unique.size).toBe(37)
+    expect(unique.size).toBe(36)
   })
 
   it('should have 12 apprentice types', () => {
@@ -146,7 +145,7 @@ describe('QUEST_AFFIX_MAP', () => {
     expect(QUEST_AFFIX_MAP[EnchantmentType.QuestEnergize]).toBe(AffixType.Charge)
   })
 
-  it('should cover all affix types except Twin (双生 has no quest)', () => {
+  it('should cover all affix types except Twin (no quest)', () => {
     const coveredAffixes = new Set<AffixType>()
     for (const mapping of Object.values(QUEST_AFFIX_MAP)) {
       if (Array.isArray(mapping)) {
@@ -155,9 +154,10 @@ describe('QUEST_AFFIX_MAP', () => {
         coveredAffixes.add(mapping)
       }
     }
+    const noQuestTypes = new Set([AffixType.Twin])
     const allAffixTypes = Object.values(AffixType)
     for (const at of allAffixTypes) {
-      if (at === AffixType.Twin) {
+      if (noQuestTypes.has(at)) {
         expect(coveredAffixes.has(at)).toBe(false)
       } else {
         expect(coveredAffixes.has(at)).toBe(true)
@@ -281,31 +281,6 @@ describe('VOID_BONUS_TABLE', () => {
     expect(VOID_BONUS_TABLE[PositionRelation.Adjacent]).toBe(0.25)
     expect(VOID_BONUS_TABLE[PositionRelation.SameHand]).toBe(0.05)
     expect(VOID_BONUS_TABLE[PositionRelation.Symmetric]).toBe(0.50)
-  })
-})
-
-// ===== RESONANCE_EFFICIENCY_TABLE =====
-
-describe('RESONANCE_EFFICIENCY_TABLE', () => {
-  const ALL_POS_RELS = Object.values(PositionRelation)
-
-  it('should cover all 6 PositionRelation values', () => {
-    for (const pr of ALL_POS_RELS) {
-      expect(RESONANCE_EFFICIENCY_TABLE[pr]).toBeDefined()
-    }
-  })
-
-  it('should have values between 0 and 1', () => {
-    for (const pr of ALL_POS_RELS) {
-      expect(RESONANCE_EFFICIENCY_TABLE[pr]).toBeGreaterThan(0)
-      expect(RESONANCE_EFFICIENCY_TABLE[pr]).toBeLessThanOrEqual(1)
-    }
-  })
-
-  it('should match design doc values', () => {
-    expect(RESONANCE_EFFICIENCY_TABLE[PositionRelation.Adjacent]).toBe(0.50)
-    expect(RESONANCE_EFFICIENCY_TABLE[PositionRelation.SameHand]).toBe(0.15)
-    expect(RESONANCE_EFFICIENCY_TABLE[PositionRelation.Symmetric]).toBe(0.60)
   })
 })
 

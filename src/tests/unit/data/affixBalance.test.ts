@@ -193,7 +193,7 @@ describe('AC1: 20 种词条单独平衡', () => {
     AffixType.Mirror,     // 需要邻居
     AffixType.Resonance,  // 被动触发
     AffixType.Link,       // 被动触发
-    AffixType.Replicate,  // 触发邻居
+    AffixType.Splash,    // 触发邻居
     AffixType.Amplify,    // 需要叠层
     AffixType.Twin,       // 纯元数据
     AffixType.Gravity,    // 纯元数据（影响词频）
@@ -579,19 +579,20 @@ describe('AC7: 触发链深度防护', () => {
     expect(MAX_CHAIN_DEPTH).toBe(20)
   })
 
-  it('Replicate + Resonance + Link 全链场景不栈溢出', () => {
+  it('Splash + Resonance + Link 全链场景不栈溢出', () => {
     // 构建两个互相引用的技能
     const skillA = buildSkillWithAffixes(
-      [AffixType.Replicate, AffixType.Resonance, AffixType.Link],
+      [AffixType.Splash, AffixType.Resonance, AffixType.Link],
       'base',
     )
     skillA.id = 'skill_a'
     skillA.rarity = 3 as 0
     skillA.affixes[0].posRel = PositionRelation.Adjacent
+    skillA.affixes[0].resource = 'base' as ResourceType
     skillA.affixes[1].posRel = PositionRelation.Adjacent
-    skillA.affixes[1].efficiency = 0.5
+    skillA.affixes[1].resource = 'base' as ResourceType
     skillA.affixes[2].posRel = PositionRelation.Adjacent
-    skillA.affixes[2].watchAffix = AffixType.Replicate
+    skillA.affixes[2].watchAffix = AffixType.Splash
 
     const skillB = makeSkill({
       id: 'skill_b',
@@ -709,10 +710,11 @@ describe('AC9: 遗物×词条交互', () => {
     expect(getUpgradeCost(3)).toBe(Infinity)
   })
 
-  it('chain_ban: chainAffixesDisabled=true 时 Phase 5 不触发 Replicate', () => {
-    const skill = buildSkillWithAffixes([AffixType.Replicate], 'base')
+  it('chain_ban: chainAffixesDisabled=true 时 Phase 5 不触发 Splash', () => {
+    const skill = buildSkillWithAffixes([AffixType.Splash], 'base')
     skill.rarity = 1 as 0
     skill.affixes[0].posRel = PositionRelation.Adjacent
+    skill.affixes[0].resource = 'base' as ResourceType
 
     const bindings = new Map<string, string>()
     bindings.set('a', skill.id)
@@ -739,11 +741,11 @@ describe('AC9: 遗物×词条交互', () => {
     const state = makeRuntimeState({ skillId: skill.id })
     const result = triggerOnce(skill, state, ctx)
 
-    // 输出应正常但 Phase 5 不应包含 Replicate 触发
+    // 输出应正常但 Phase 5 不应包含 Splash 触发
     expect(result.output).not.toBeNaN()
-    // Phase 5 的 replicateTargets 应为空
+    // Phase 5 的 splashTargets 应为空
     if (result.phase5) {
-      expect(result.phase5.replicateTargets.length).toBe(0)
+      expect(result.phase5.splashTargets.length).toBe(0)
     }
   })
 
@@ -751,7 +753,7 @@ describe('AC9: 遗物×词条交互', () => {
     const skill = buildSkillWithAffixes([AffixType.Resonance], 'base')
     skill.rarity = 1 as 0
     skill.affixes[0].posRel = PositionRelation.Adjacent
-    skill.affixes[0].efficiency = 0.5
+    skill.affixes[0].resource = 'base' as ResourceType
 
     const ctx = makeContext({
       chainAffixesDisabled: true,
