@@ -5,7 +5,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { state, resetState } from '../../../src/core/state';
 import {
   calculateAffixSkillPrice,
-  AFFIX_SKILL_BASE_PRICE,
+  AFFIX_RARITY_BASE_PRICES,
+  AFFIX_SKILL_PRICE_CAP,
+  rollPriceFluctuation,
   generateAffixShopItem,
   generateAffixShopItems,
 } from '../../../src/systems/shop';
@@ -40,41 +42,56 @@ beforeEach(() => {
 // AC2 — 定价公式
 // ============================================================
 describe('calculateAffixSkillPrice (AC2)', () => {
-  it('rarity=0 level=1 → basePrice×1.0', () => {
-    expect(calculateAffixSkillPrice(0, 1)).toBe(50);
+  it('rarity base prices: 0→25, 1→50, 2→75, 3→100', () => {
+    expect(AFFIX_RARITY_BASE_PRICES).toEqual([25, 50, 75, 100]);
   });
 
-  it('rarity=1 level=1 → basePrice×1.5', () => {
-    expect(calculateAffixSkillPrice(1, 1)).toBe(75);
+  it('rarity=0 level=1 no fluctuation → 25', () => {
+    expect(calculateAffixSkillPrice(0, 1)).toBe(25);
   });
 
-  it('rarity=2 level=1 → basePrice×2.0', () => {
-    expect(calculateAffixSkillPrice(2, 1)).toBe(100);
+  it('rarity=1 level=1 no fluctuation → 50', () => {
+    expect(calculateAffixSkillPrice(1, 1)).toBe(50);
   });
 
-  it('rarity=3 level=1 → basePrice×2.5', () => {
-    expect(calculateAffixSkillPrice(3, 1)).toBe(125);
+  it('rarity=2 level=1 no fluctuation → 75', () => {
+    expect(calculateAffixSkillPrice(2, 1)).toBe(75);
   });
 
-  it('rarity=0 level=2 → basePrice×1.3', () => {
-    expect(calculateAffixSkillPrice(0, 2)).toBe(65);
+  it('rarity=3 level=1 no fluctuation → 100', () => {
+    expect(calculateAffixSkillPrice(3, 1)).toBe(100);
   });
 
-  it('rarity=0 level=3 → basePrice×1.6', () => {
-    expect(calculateAffixSkillPrice(0, 3)).toBe(80);
+  it('level 2 adds +20% to base', () => {
+    expect(calculateAffixSkillPrice(0, 2)).toBe(30);   // 25 × 1.2
+    expect(calculateAffixSkillPrice(1, 2)).toBe(60);   // 50 × 1.2
   });
 
-  it('rarity=1 level=3 → basePrice×2.4', () => {
-    expect(calculateAffixSkillPrice(1, 3)).toBe(120);
+  it('level 3 adds +40% to base', () => {
+    expect(calculateAffixSkillPrice(0, 3)).toBe(35);   // 25 × 1.4
+    expect(calculateAffixSkillPrice(1, 3)).toBe(70);   // 50 × 1.4
   });
 
-  it('custom basePrice is respected', () => {
-    expect(calculateAffixSkillPrice(0, 1, 100)).toBe(100);
-    expect(calculateAffixSkillPrice(3, 1, 100)).toBe(250);
+  it('price cap at 100 even with high level', () => {
+    expect(calculateAffixSkillPrice(3, 3)).toBe(100);  // 100 × 1.4 → capped
+    expect(calculateAffixSkillPrice(2, 3)).toBe(100);  // 75 × 1.4 = 105 → capped
   });
 
-  it('default basePrice equals AFFIX_SKILL_BASE_PRICE', () => {
-    expect(AFFIX_SKILL_BASE_PRICE).toBe(50);
+  it('fluctuation factor scales price', () => {
+    expect(calculateAffixSkillPrice(1, 1, 0.8)).toBe(40);   // 50 × 0.8
+    expect(calculateAffixSkillPrice(1, 1, 1.2)).toBe(60);   // 50 × 1.2
+  });
+
+  it('fluctuation still capped at 100', () => {
+    expect(calculateAffixSkillPrice(3, 1, 1.2)).toBe(100);  // 100 × 1.2 → capped
+  });
+
+  it('rollPriceFluctuation returns value in [0.8, 1.2]', () => {
+    for (let i = 0; i < 50; i++) {
+      const f = rollPriceFluctuation();
+      expect(f).toBeGreaterThanOrEqual(0.8);
+      expect(f).toBeLessThanOrEqual(1.2);
+    }
   });
 });
 
@@ -133,11 +150,14 @@ describe('generateAffixShopItem (AC1)', () => {
     expect(item.locked).toBe(false);
   });
 
-  it('cost matches pricing formula', () => {
+  it('cost is within fluctuation range and capped at 100', () => {
     const item = generateAffixShopItem(1);
-    const expectedBase = calculateAffixSkillPrice(item.affixSkill!.rarity, item.affixSkill!.level);
-    // getAdjustedPrice may apply relic modifiers — without relics, should be same
-    expect(item.cost).toBe(expectedBase);
+    const base = AFFIX_RARITY_BASE_PRICES[Math.min(item.affixSkill!.rarity, 3) as 0 | 1 | 2 | 3];
+    const levelMult = 1 + (item.affixSkill!.level - 1) * 0.2;
+    const minPrice = Math.round(base * levelMult * 0.8);
+    const maxPrice = Math.min(Math.round(base * levelMult * 1.2), AFFIX_SKILL_PRICE_CAP);
+    expect(item.cost).toBeGreaterThanOrEqual(minPrice);
+    expect(item.cost).toBeLessThanOrEqual(maxPrice);
   });
 
   it('id format is si-{n}-affix', () => {

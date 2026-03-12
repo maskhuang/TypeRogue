@@ -51,17 +51,32 @@ import { getMonoAffixCategory } from './relics/RelicPipeline';
 let cachedLetterFreqs: Map<string, number> | null = null;
 
 // === 词条制技能定价（Story 35.9） ===
-export const AFFIX_SKILL_BASE_PRICE = 50;
+
+/** 词条制技能按稀有度基础定价（0/1/2/3 词条 → 25/50/75/100） */
+export const AFFIX_RARITY_BASE_PRICES: readonly [number, number, number, number] = [25, 50, 75, 100];
+
+/** 词条制技能定价上限 */
+export const AFFIX_SKILL_PRICE_CAP = 100;
+
+/**
+ * 词条制技能定价：按稀有度查表 × 等级系数 × 随机波动，上限 100。
+ * @param fluctuation 随机波动因子（0.8~1.2），不传则无波动（用于 UI 显示等确定性场景）
+ */
+export function calculateAffixSkillPrice(rarity: number, level: number, fluctuation: number = 1): number {
+  const base = AFFIX_RARITY_BASE_PRICES[Math.min(rarity, 3) as 0 | 1 | 2 | 3];
+  const levelMult = 1 + (level - 1) * 0.2;
+  return Math.min(Math.round(base * levelMult * fluctuation), AFFIX_SKILL_PRICE_CAP);
+}
+
+/** 生成随机价格波动因子（±20%） */
+export function rollPriceFluctuation(): number {
+  return 0.8 + random() * 0.4;
+}
 
 // RARITY_COLORS 从 affixes.ts 导入（白/蓝/黄/橙 四级稀有度边框颜色）
 
 // 使用 affixes.ts 的 RARITY_NAMES 作为单一来源；此处别名保持兼容
 const RARITY_LABELS = RARITY_NAMES as Record<number, string>;
-
-/** 词条制技能定价公式：basePrice × (1 + rarity × 0.5) × (1 + (level-1) × 0.3) */
-export function calculateAffixSkillPrice(rarity: number, level: number, basePrice: number = AFFIX_SKILL_BASE_PRICE): number {
-  return Math.round(basePrice * (1 + rarity * 0.5) * (1 + (level - 1) * 0.3));
-}
 
 /** 职业可用资源池（排除非对应职业的 fragment/mutagen） */
 function getAvailableResources(classId: string): ResourceType[] {
@@ -116,7 +131,7 @@ export function generateAffixShopItem(
       skill = generateSkill({ resource, rarity: skill.rarity as SkillRarity });
     }
   }
-  const cost = getAdjustedPrice(calculateAffixSkillPrice(skill.rarity, skill.level));
+  const cost = getAdjustedPrice(calculateAffixSkillPrice(skill.rarity, skill.level, rollPriceFluctuation()));
 
   return {
     id: `si-${itemId}-affix`,
@@ -522,7 +537,7 @@ function generateShopItems(count: number): ShopItem[] {
         type: 'skill',
         skillId,
         affixSkill: { ...affixSkill, level: nextLevel },
-        cost: getAdjustedPrice(calculateAffixSkillPrice(affixSkill.rarity, nextLevel)),
+        cost: getAdjustedPrice(calculateAffixSkillPrice(affixSkill.rarity, nextLevel, rollPriceFluctuation())),
         isUpgrade: true,
         locked: false,
       });
