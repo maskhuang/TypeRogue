@@ -339,12 +339,15 @@ describe('rollAffixParams', () => {
     })
   })
 
-  describe('Link', () => {
-    it('should have posRel and random resource', () => {
+  describe('Link (感应)', () => {
+    it('should have posRel and random watchAffix (excluding Link itself)', () => {
+      const allAffixTypes = Object.values(AffixType)
       for (let i = 0; i < 30; i++) {
         const a = rollAffixParams(AffixType.Link, resource)
         expect(ALL_POS_RELATIONS).toContain(a.posRel)
-        expect(ALL_RESOURCES).toContain(a.resource)
+        expect(a.watchAffix).toBeDefined()
+        expect(allAffixTypes).toContain(a.watchAffix)
+        expect(a.watchAffix).not.toBe(AffixType.Link)
       }
     })
   })

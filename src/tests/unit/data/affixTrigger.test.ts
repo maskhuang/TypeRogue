@@ -1776,14 +1776,17 @@ describe('resolvePhase6', () => {
     })
   })
 
-  describe('Link affix', () => {
-    it('should produce link action when resource matches', () => {
-      // Trigger skill produces 'base'
-      const skill = makeSkill({ resource: 'base' as ResourceType })
-      // Neighbor has Link watching 'base'
+  describe('Link (感应) affix', () => {
+    it('should produce link action when trigger skill has the watched affix', () => {
+      // Trigger skill has Crit affix
+      const skill = makeSkill({
+        resource: 'base' as ResourceType,
+        affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+      })
+      // Neighbor has Link watching Crit
       const neighborSkill = makeSkill({
         id: 'sk_neighbor',
-        affixes: [{ type: AffixType.Link, resource: 'base' as ResourceType, posRel: PositionRelation.SameRow }],
+        affixes: [{ type: AffixType.Link, watchAffix: AffixType.Crit, posRel: PositionRelation.SameRow }],
       })
       const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
       const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
@@ -1798,11 +1801,15 @@ describe('resolvePhase6', () => {
       }
     })
 
-    it('should NOT produce link action when resource does not match', () => {
-      const skill = makeSkill({ resource: 'gold' as ResourceType })
+    it('should NOT produce link action when trigger skill does not have the watched affix', () => {
+      // Trigger skill has Multiply, not Crit
+      const skill = makeSkill({
+        resource: 'gold' as ResourceType,
+        affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
+      })
       const neighborSkill = makeSkill({
         id: 'sk_neighbor',
-        affixes: [{ type: AffixType.Link, resource: 'base' as ResourceType, posRel: PositionRelation.SameRow }],
+        affixes: [{ type: AffixType.Link, watchAffix: AffixType.Crit, posRel: PositionRelation.SameRow }],
       })
       const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
       const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
@@ -1977,21 +1984,20 @@ describe('Full Phase 1-6 pipeline', () => {
     expect(result.phase5!.recurse.shouldRecurse).toBe(false)
   })
 
-  it('Rainbow + Link: Phase 6 should use Phase 4 resolved resource for Link check', () => {
-    // Rainbow skill resolves to 'gold' via Phase 4
+  it('Rainbow + Link (感应): Phase 6 should check trigger skill affix type, not resource', () => {
+    // Rainbow skill has Rainbow affix
     const skill = makeSkill({
       resource: 'base' as ResourceType,
       affixes: [{ type: AffixType.Rainbow }],
     })
-    // Neighbor has Link watching 'base' (skill's base resource)
-    const neighborLinkBase = makeSkill({
-      id: 'sk_link_base',
-      affixes: [{ type: AffixType.Link, resource: 'base' as ResourceType, posRel: PositionRelation.SameRow }],
+    // Neighbor has Link watching Rainbow affix
+    const neighborLinkRainbow = makeSkill({
+      id: 'sk_link_rainbow',
+      affixes: [{ type: AffixType.Link, watchAffix: AffixType.Rainbow, posRel: PositionRelation.SameRow }],
     })
-    const bindings = new Map([['a', 'test_skill'], ['s', 'sk_link_base']])
-    const allSkills = new Map([['test_skill', skill], ['sk_link_base', neighborLinkBase]])
+    const bindings = new Map([['a', 'test_skill'], ['s', 'sk_link_rainbow']])
+    const allSkills = new Map([['test_skill', skill], ['sk_link_rainbow', neighborLinkRainbow]])
     const state = makeRuntimeState()
-    // randomFn → 4/7 → index 4 → 'gold'
     const ctx = makeContext({
       triggerKey: 'a',
       bindings,
@@ -1999,11 +2005,10 @@ describe('Full Phase 1-6 pipeline', () => {
       randomFn: () => 4 / 7,
     })
     const result = triggerAffixSkill(skill, state, ctx)
-    // Phase 4 resolved to 'gold', not 'base'
-    expect(result.phase4!.targetResource).toBe('gold')
-    // Link neighbor watching 'base' should NOT be triggered (actual resource is 'gold')
+    // Link neighbor watching Rainbow affix should be triggered (skill has Rainbow)
     const linkActions = result.phase6!.actions.filter(a => a.type === 'link')
-    expect(linkActions.length).toBe(0)
+    expect(linkActions.length).toBe(1)
+    expect(linkActions[0].neighborKey).toBe('s')
   })
 })
 
@@ -2661,7 +2666,7 @@ describe('Story 35.6: filterQuestCandidates', () => {
 
   it('should handle QuestResonance matching either Resonance or Link', () => {
     const skill = makeSkill({
-      affixes: [{ type: AffixType.Link, posRel: PositionRelation.Adjacent, efficiency: 0.5 }],
+      affixes: [{ type: AffixType.Link, posRel: PositionRelation.Adjacent, watchAffix: AffixType.Crit }],
     })
     const candidates = filterQuestCandidates(skill)
     expect(candidates).toContain(EnchantmentType.QuestResonance)

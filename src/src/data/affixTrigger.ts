@@ -890,7 +890,7 @@ export function resolvePhase5(
 // ===== Phase 6: 邻居通知 =====
 
 /**
- * Phase 6: 遍历所有已绑定邻居，检查共鸣/连接/学徒·观摩/任务·共振。
+ * Phase 6: 遍历所有已绑定邻居，检查共鸣/感应/学徒·观摩/任务·共振。
  * 返回动作描述符，由调用方执行对应触发/成长/叠层。
  */
 export function resolvePhase6(
@@ -913,7 +913,7 @@ export function resolvePhase6(
     // 共鸣词条：邻居触发 → 自身以 effectiveEff 触发
     for (const affix of neighborSkill.affixes) {
       if (affix.type === AffixType.Resonance && ctx.chainAffixesDisabled) continue // chain_ban: 跳过共鸣
-      if (affix.type === AffixType.Link && ctx.chainAffixesDisabled) continue // chain_ban: 跳过连接
+      if (affix.type === AffixType.Link && ctx.chainAffixesDisabled) continue // chain_ban: 跳过感应
       if (affix.type === AffixType.Resonance && affix.posRel != null) {
         if (hasRelation(triggerKey, neighborKey, affix.posRel)) {
           const baseEff = affix.efficiency ?? 0
@@ -923,10 +923,10 @@ export function resolvePhase6(
         }
       }
 
-      // 连接词条：当前技能产出资源 === 连接词条监听资源 → 邻居触发
-      if (affix.type === AffixType.Link && affix.resource != null && affix.posRel != null) {
-        const producedResource = actualResource ?? skill.resource
-        if (producedResource === affix.resource && hasRelation(triggerKey, neighborKey, affix.posRel)) {
+      // 感应词条：触发技能拥有指定词条类型 → 邻居触发
+      if (affix.type === AffixType.Link && affix.watchAffix != null && affix.posRel != null) {
+        const triggerSkillHasAffix = skill.affixes.some(a => a.type === affix.watchAffix)
+        if (triggerSkillHasAffix && hasRelation(triggerKey, neighborKey, affix.posRel)) {
           actions.push({ type: 'link', neighborKey })
         }
       }
@@ -1015,7 +1015,7 @@ export function triggerAffixSkill(
   // Phase 5: 后触发
   const p5 = resolvePhase5(effectiveSkill, runtimeState, ctx, p3.flags, p3.output, recurseDepth)
 
-  // Phase 6: 邻居通知（传入 Phase 4 解析后的实际资源，供 Link 检查使用）
+  // Phase 6: 邻居通知（感应词条检查触发技能词条类型）
   const p6 = resolvePhase6(ctx.triggerKey, effectiveSkill, runtimeState, ctx, p4.targetResource)
 
   // 合并状态变更

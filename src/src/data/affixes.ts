@@ -157,7 +157,8 @@ export interface AffixInstance {
   posRel?: PositionRelation        // Void/Resonance/Mirror/Link/Replicate/Amplify/Cascade
   bonusPerSlot?: number            // Void: 每空位加成%
   efficiency?: number              // Resonance: 触发效率%
-  resource?: ResourceType          // Link/Amplify: 关联资源
+  resource?: ResourceType          // Amplify: 关联资源
+  watchAffix?: AffixType           // Link(感应): 监听的词条类型
   valuePerStack?: number           // Amplify: 每层加成%
   cascadeMult?: number             // Cascade: 级联乘数
   bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: +100% 固定
@@ -313,7 +314,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Void]: '虚无',
   [AffixType.Resonance]: '共鸣',
   [AffixType.Mirror]: '倒影',
-  [AffixType.Link]: '连接',
+  [AffixType.Link]: '感应',
   [AffixType.Replicate]: '复制',
   [AffixType.Amplify]: '增幅',
   [AffixType.Outcast]: '流放',
@@ -337,7 +338,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Void]: '范围内空位越多加成越高',
   [AffixType.Resonance]: '范围内技能触发时，本技能以指定效率被动触发',
   [AffixType.Mirror]: '每关开始时复制一个范围内技能的随机词条',
-  [AffixType.Link]: '范围内技能产出指定资源时，本技能自动触发',
+  [AffixType.Link]: '范围内有指定词条的技能触发时，本技能自动触发',
   [AffixType.Replicate]: '触发时随机触发范围内1个技能',
   [AffixType.Amplify]: '每次触发叠一层，与范围内同资源增幅技能共享层数加成',
   [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',

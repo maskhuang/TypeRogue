@@ -591,7 +591,7 @@ describe('AC7: 触发链深度防护', () => {
     skillA.affixes[1].posRel = PositionRelation.Adjacent
     skillA.affixes[1].efficiency = 0.5
     skillA.affixes[2].posRel = PositionRelation.Adjacent
-    skillA.affixes[2].resource = 'base'
+    skillA.affixes[2].watchAffix = AffixType.Replicate
 
     const skillB = makeSkill({
       id: 'skill_b',

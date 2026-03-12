@@ -246,7 +246,7 @@ function getSkillTypeTooltip(type: string): { text: string; color: string } | un
 export const SKILL_TYPE_TOOLTIPS: Record<string, { text: string; color: string }> = {
   producer:  { text: '💡 产出者：按键直接产出资源', color: '#4ecdc4' },
   converter: { text: '💡 转化者：读取资源值，产出另一种', color: '#f39c12' },
-  connector: { text: '💡 连接者：自动触发周围技能', color: '#9b59b6' },
+  connector: { text: '💡 感应者：感应周围词条自动触发', color: '#9b59b6' },
   replicator: { text: '💡 复制者：按键触发周围技能', color: '#8e44ad' },
   amplifier: { text: '💡 增幅者：叠层增幅范围内技能数值', color: '#7c5cbf' },
 };
@@ -385,7 +385,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'taboo': return `+100% / ${Math.round((a.penaltyChance ?? 0) * 100)}%负产出`
     case 'rainbow': return '随机资源'
     case 'mirror': return `${rel}镜像复制`
-    case 'link': return `${rel}邻居产出${RESOURCE_ICONS[a.resource!] || ''}${RESOURCE_NAMES[a.resource!] ?? ''}时触发`
+    case 'link': return `${rel}有[${AFFIX_NAMES[a.watchAffix!] ?? '?'}]词条技能触发时触发`
     case 'replicate': return `${rel}复制触发`
     case 'ligature': return `连字加成`
     case 'twin': return `双附魔`

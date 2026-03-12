@@ -170,8 +170,11 @@ export function rollAffixParams(
     case AffixType.Mirror:
       return { type, posRel: pickRandom(ALL_POS_RELATIONS) }
 
-    case AffixType.Link:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), resource: pickRandom(pool) }
+    case AffixType.Link: {
+      // 感应词条：随机选一个词条类型作为监听目标（排除自身避免自引用）
+      const watchCandidates = Object.values(AffixType).filter(t => t !== AffixType.Link)
+      return { type, posRel: pickRandom(ALL_POS_RELATIONS), watchAffix: pickRandom(watchCandidates) }
+    }
 
     case AffixType.Replicate:
       return { type, posRel: pickRandom(ALL_POS_RELATIONS) }
