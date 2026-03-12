@@ -334,7 +334,7 @@ development_status:
   # ===== Epic 35: 词条制技能系统（方案 A）=====
   # Source: docs/stories/epic-35-affix-skill-system.md
   # Design: docs/design/affix-skill-system.md
-  epic-35: in-progress
+  epic-35: done
   35-1-core-data-affix-defs: done
   35-2-skill-generation-engine: done
   35-3-trigger-pipeline-phase1-3: done
@@ -347,5 +347,5 @@ development_status:
   35-10-mutation-system: done
   35-11-ui-keyboard-combat: done
   35-12-relic-adaptation: done
-  35-13-balance-testing: backlog
+  35-13-balance-testing: done
   epic-35-retrospective: optional
