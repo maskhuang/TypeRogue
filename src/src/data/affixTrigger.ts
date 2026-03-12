@@ -10,9 +10,11 @@
 
 import type { ResourceType, ResourceState } from '../core/types'
 import {
-  AffixType, AffixInstance, AffixSkillInstance, SkillRuntimeState,
+  AffixType, AffixInstance, AffixSkillInstance, AffixSkillSaveData,
+  SkillRuntimeState,
   EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS, QUEST_AFFIX_MAP,
-  TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_CALIBRATION,
+  TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_CALIBRATION, BASE_VALUES,
+  isOldSystemSkill,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 
@@ -1174,6 +1176,167 @@ export function filterQuestCandidates(skill: AffixSkillInstance): EnchantmentTyp
  */
 export function getEnchantmentSlotCount(skill: AffixSkillInstance): number {
   return skill.affixes.some(a => a.type === AffixType.Twin) ? 2 : 1
+}
+
+// ===== 生命周期钩子 (Story 35.8) =====
+
+/**
+ * 每词初始化：重置所有技能的 Decay 词条 currentDecayMult 为该词条的 initialMult。
+ * 纯函数——直接修改传入的 skillStates。
+ */
+export function resetDecayForWord(
+  skills: Map<string, AffixSkillInstance>,
+  skillStates: Map<string, SkillRuntimeState>,
+): void {
+  for (const [skillId, skill] of skills) {
+    const state = skillStates.get(skillId)
+    if (!state) continue
+    for (const affix of skill.affixes) {
+      if (affix.type === AffixType.Decay) {
+        state.currentDecayMult = affix.initialMult ?? 1
+      }
+    }
+  }
+}
+
+/**
+ * 每关初始化：重置所有技能的 triggerCount/amplifyStacks，刷新 Mirror 词条。
+ * 纯函数——直接修改传入的 skillStates。
+ * Mirror 刷新通过 resolveMirrorCopy 实现，需要构造最小 TriggerContext。
+ */
+export function resetStageState(
+  skills: Map<string, AffixSkillInstance>,
+  skillStates: Map<string, SkillRuntimeState>,
+  bindings: Map<string, string>,
+  randomFn: () => number,
+): void {
+  for (const [skillId, state] of skillStates) {
+    state.triggerCount = 0
+    state.amplifyStacks = 0
+    state.chargeAccumulated = 0
+
+    // Mirror 词条刷新
+    const skill = skills.get(skillId)
+    if (!skill) continue
+    const hasMirror = skill.affixes.some(a => a.type === AffixType.Mirror)
+    if (hasMirror) {
+      // 找到该技能绑定的键位
+      let boundKey: string | undefined
+      for (const [key, sid] of bindings) {
+        if (sid === skillId) { boundKey = key; break }
+      }
+      if (boundKey) {
+        // 构造最小 TriggerContext 供 resolveMirrorCopy 使用
+        const mirrorCtx: TriggerContext = {
+          triggerKey: boundKey,
+          currentWord: '',
+          resources: { base: 0, score: 0, multiplier: 1, time: 0, gold: 0, fragment: 0, mutagen: 0 },
+          classResourceProduced: {},
+          bindings,
+          skillStates,
+          allSkills: skills,
+          randomFn,
+        }
+        state.mirrorCopiedAffix = resolveMirrorCopy(skill, state, mirrorCtx)
+      }
+    }
+  }
+}
+
+/**
+ * Run 结束重置：清零所有技能的跨关累积状态。
+ * 纯函数——直接修改传入的 skillStates。
+ */
+export function resetRunState(
+  skillStates: Map<string, SkillRuntimeState>,
+): void {
+  for (const [, state] of skillStates) {
+    state.apprenticeAccumulated = 0
+    state.questCompletions = 0
+    state.questStacks = 0
+  }
+}
+
+// ===== 序列化 (Story 35.8) =====
+
+/**
+ * 序列化技能为存档格式。纯函数。
+ */
+export function serializeSkill(
+  skill: AffixSkillInstance,
+  runtimeState: SkillRuntimeState,
+): AffixSkillSaveData {
+  return {
+    id: skill.id,
+    resource: skill.resource,
+    level: skill.level,
+    rarity: skill.rarity,
+    affixes: skill.affixes.map(a => ({ ...a })),
+    enchantmentIds: [...skill.enchantmentIds],
+    runtime: { ...runtimeState, mirrorCopiedAffix: runtimeState.mirrorCopiedAffix ? { ...runtimeState.mirrorCopiedAffix } : null },
+  }
+}
+
+/**
+ * 反序列化存档数据为技能实例 + 运行时状态。纯函数。
+ */
+export function deserializeSkill(
+  data: AffixSkillSaveData,
+): { skill: AffixSkillInstance, runtimeState: SkillRuntimeState } {
+  const skill: AffixSkillInstance = {
+    id: data.id,
+    name: data.id, // TODO(35-9): 由 shop-integration 根据生成规则恢复显示名
+    icon: '',      // TODO(35-9): 由 shop-integration 根据生成规则恢复图标
+    resource: data.resource,
+    baseValues: BASE_VALUES[data.resource] ?? [0, 0, 0],
+    level: data.level,
+    rarity: data.rarity,
+    affixes: data.affixes.map(a => ({ ...a })),
+    enchantmentIds: [...data.enchantmentIds],
+  }
+  const runtimeState: SkillRuntimeState = {
+    skillId: data.id,
+    chargeAccumulated: data.runtime.chargeAccumulated ?? 0,
+    currentDecayMult: data.runtime.currentDecayMult ?? 1,
+    mirrorCopiedAffix: data.runtime.mirrorCopiedAffix ? { ...data.runtime.mirrorCopiedAffix } : null,
+    triggerCount: data.runtime.triggerCount ?? 0,
+    amplifyStacks: data.runtime.amplifyStacks ?? 0,
+    apprenticeAccumulated: data.runtime.apprenticeAccumulated ?? 0,
+    questStacks: data.runtime.questStacks ?? 0,
+    questCompletions: data.runtime.questCompletions ?? 0,
+  }
+  return { skill, runtimeState }
+}
+
+/**
+ * 旧存档迁移：过滤已删除的旧系统技能 + 补全缺失的 affixes 字段。纯函数。
+ */
+export function migrateLoadedSkills(
+  loadedSkills: any[],
+): AffixSkillSaveData[] {
+  return loadedSkills
+    .filter((s: any) => !isOldSystemSkill(s.id))
+    .map((s: any) => {
+      const patched = { ...s }
+      if (patched.affixes === undefined || patched.affixes === null) {
+        patched.affixes = []
+        patched.rarity = 0
+      }
+      if (patched.runtime === undefined || patched.runtime === null) {
+        patched.runtime = {
+          skillId: patched.id,
+          chargeAccumulated: 0,
+          currentDecayMult: 1,
+          mirrorCopiedAffix: null,
+          triggerCount: 0,
+          amplifyStacks: 0,
+          apprenticeAccumulated: 0,
+          questStacks: 0,
+          questCompletions: 0,
+        }
+      }
+      return patched
+    })
 }
 
 // ===== 内部辅助 =====

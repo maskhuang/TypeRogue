@@ -19,6 +19,9 @@ import {
   TRANSMUTE_RATIO_TABLE,
   MULTIPLY_OPERATOR_CALIBRATION,
   filterEnchantmentsByClass,
+  AffixSkillSaveData,
+  OLD_SKILL_PREFIXES,
+  isOldSystemSkill,
 } from '../../../src/data/affixes'
 import { PositionRelation } from '../../../src/data/keyboardTopology'
 import type { ResourceType, ResourceState } from '../../../src/core/types'
@@ -53,6 +56,12 @@ import {
   resolveMirrorCopy,
   filterQuestCandidates,
   getEnchantmentSlotCount,
+  resetDecayForWord,
+  resetStageState,
+  resetRunState,
+  serializeSkill,
+  deserializeSkill,
+  migrateLoadedSkills,
   ALL_RESOURCES,
   MAX_RECURSE_DEPTH,
   APPRENTICE_GROWTH_DEFAULTS,
@@ -3063,5 +3072,352 @@ describe('CLASS_RESTRICTED_ENCHANTMENTS — passive coverage', () => {
     expect(filtered).toContain(EnchantmentType.LetterAffinity)
     expect(filtered).toContain(EnchantmentType.Overflow)
     expect(filtered).not.toContain(EnchantmentType.Unstable)
+  })
+})
+
+// ===== Story 35.8: 状态生命周期与序列化 =====
+
+describe('resetDecayForWord (Task 1)', () => {
+  it('should reset Decay currentDecayMult to initialMult for all skills', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+
+    const skill = makeSkill({
+      id: 'decay_skill',
+      affixes: [{ type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.1, floor: 0.5 } as AffixInstance],
+    })
+    skills.set('decay_skill', skill)
+    states.set('decay_skill', makeRuntimeState({ skillId: 'decay_skill', currentDecayMult: 0.8 }))
+
+    resetDecayForWord(skills, states)
+    expect(states.get('decay_skill')!.currentDecayMult).toBe(2.0)
+  })
+
+  it('should not affect skills without Decay affix', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+
+    const skill = makeSkill({ id: 'no_decay', affixes: [] })
+    skills.set('no_decay', skill)
+    states.set('no_decay', makeRuntimeState({ skillId: 'no_decay', currentDecayMult: 0.5 }))
+
+    resetDecayForWord(skills, states)
+    expect(states.get('no_decay')!.currentDecayMult).toBe(0.5)
+  })
+
+  it('should handle multiple skills with mixed affixes', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+
+    skills.set('s1', makeSkill({
+      id: 's1',
+      affixes: [{ type: AffixType.Decay, initialMult: 3.0, decayPerTrigger: 0.2, floor: 0.5 } as AffixInstance],
+    }))
+    skills.set('s2', makeSkill({ id: 's2', affixes: [] }))
+    states.set('s1', makeRuntimeState({ skillId: 's1', currentDecayMult: 1.2 }))
+    states.set('s2', makeRuntimeState({ skillId: 's2', currentDecayMult: 0.7 }))
+
+    resetDecayForWord(skills, states)
+    expect(states.get('s1')!.currentDecayMult).toBe(3.0)
+    expect(states.get('s2')!.currentDecayMult).toBe(0.7) // unchanged
+  })
+})
+
+describe('resetStageState (Task 2)', () => {
+  it('should reset triggerCount and amplifyStacks for all skills', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+
+    skills.set('s1', makeSkill({ id: 's1' }))
+    states.set('s1', makeRuntimeState({ skillId: 's1', triggerCount: 50, amplifyStacks: 30 }))
+
+    resetStageState(skills, states, new Map(), () => 0.5)
+    expect(states.get('s1')!.triggerCount).toBe(0)
+    expect(states.get('s1')!.amplifyStacks).toBe(0)
+    expect(states.get('s1')!.chargeAccumulated).toBe(0)
+  })
+
+  it('should reset chargeAccumulated to 0', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+
+    skills.set('s1', makeSkill({ id: 's1' }))
+    states.set('s1', makeRuntimeState({ skillId: 's1', chargeAccumulated: 0.75 }))
+
+    resetStageState(skills, states, new Map(), () => 0.5)
+    expect(states.get('s1')!.chargeAccumulated).toBe(0)
+  })
+
+  it('should not reset apprenticeAccumulated or questCompletions', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+
+    skills.set('s1', makeSkill({ id: 's1' }))
+    states.set('s1', makeRuntimeState({
+      skillId: 's1', triggerCount: 10, amplifyStacks: 5,
+      apprenticeAccumulated: 0.5, questCompletions: 3, questStacks: 2,
+    }))
+
+    resetStageState(skills, states, new Map(), () => 0.5)
+    expect(states.get('s1')!.apprenticeAccumulated).toBe(0.5)
+    expect(states.get('s1')!.questCompletions).toBe(3)
+    expect(states.get('s1')!.questStacks).toBe(2)
+  })
+
+  it('should refresh mirrorCopiedAffix for skills with Mirror affix', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+    const bindings = new Map<string, string>()
+
+    // Mirror skill at key 'a'
+    const mirrorSkill = makeSkill({
+      id: 'mirror_skill',
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent } as AffixInstance],
+    })
+    skills.set('mirror_skill', mirrorSkill)
+    states.set('mirror_skill', makeRuntimeState({ skillId: 'mirror_skill', mirrorCopiedAffix: null }))
+    bindings.set('a', 'mirror_skill')
+
+    // Neighbor skill at key 's' with a Crit affix
+    const neighborSkill = makeSkill({
+      id: 'neighbor_skill',
+      affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 } as AffixInstance],
+    })
+    skills.set('neighbor_skill', neighborSkill)
+    states.set('neighbor_skill', makeRuntimeState({ skillId: 'neighbor_skill' }))
+    bindings.set('s', 'neighbor_skill')
+
+    resetStageState(skills, states, bindings, () => 0.1) // randomFn returns 0.1
+
+    // Mirror should have copied the neighbor's Crit affix
+    const mirrorState = states.get('mirror_skill')!
+    expect(mirrorState.triggerCount).toBe(0)
+    expect(mirrorState.amplifyStacks).toBe(0)
+    // 'a' and 's' are Adjacent on QWERTY — Mirror should copy the neighbor's Crit affix
+    expect(mirrorState.mirrorCopiedAffix).not.toBeNull()
+    expect(mirrorState.mirrorCopiedAffix!.type).toBe(AffixType.Crit)
+  })
+})
+
+describe('resetRunState (Task 3)', () => {
+  it('should reset apprenticeAccumulated, questCompletions, and questStacks', () => {
+    const states = new Map<string, SkillRuntimeState>()
+    states.set('s1', makeRuntimeState({
+      skillId: 's1',
+      apprenticeAccumulated: 0.30,
+      questCompletions: 5,
+      questStacks: 3,
+    }))
+    states.set('s2', makeRuntimeState({
+      skillId: 's2',
+      apprenticeAccumulated: 0.15,
+      questCompletions: 2,
+      questStacks: 7,
+    }))
+
+    resetRunState(states)
+
+    expect(states.get('s1')!.apprenticeAccumulated).toBe(0)
+    expect(states.get('s1')!.questCompletions).toBe(0)
+    expect(states.get('s1')!.questStacks).toBe(0)
+    expect(states.get('s2')!.apprenticeAccumulated).toBe(0)
+    expect(states.get('s2')!.questCompletions).toBe(0)
+    expect(states.get('s2')!.questStacks).toBe(0)
+  })
+
+  it('should NOT reset per-stage fields (chargeAccumulated, triggerCount, etc.)', () => {
+    const states = new Map<string, SkillRuntimeState>()
+    states.set('s1', makeRuntimeState({
+      skillId: 's1',
+      chargeAccumulated: 0.5,
+      triggerCount: 10,
+      amplifyStacks: 3,
+      currentDecayMult: 1.5,
+      apprenticeAccumulated: 0.2,
+    }))
+
+    resetRunState(states)
+
+    expect(states.get('s1')!.chargeAccumulated).toBe(0.5)
+    expect(states.get('s1')!.triggerCount).toBe(10)
+    expect(states.get('s1')!.amplifyStacks).toBe(3)
+    expect(states.get('s1')!.currentDecayMult).toBe(1.5)
+  })
+})
+
+describe('serializeSkill / deserializeSkill (Task 4)', () => {
+  it('should roundtrip a basic skill with no affixes', () => {
+    const skill = makeSkill({ id: 'test_rt', resource: 'base' as ResourceType, level: 2, rarity: 0 as 0 })
+    const state = makeRuntimeState({ skillId: 'test_rt' })
+
+    const saved = serializeSkill(skill, state)
+    const json = JSON.parse(JSON.stringify(saved))
+    const { skill: restored, runtimeState } = deserializeSkill(json)
+
+    expect(restored.id).toBe('test_rt')
+    expect(restored.resource).toBe('base')
+    expect(restored.level).toBe(2)
+    expect(restored.rarity).toBe(0)
+    expect(restored.affixes).toEqual([])
+    expect(runtimeState.skillId).toBe('test_rt')
+    expect(runtimeState.chargeAccumulated).toBe(0)
+  })
+
+  it('should roundtrip a skill with mirrorCopiedAffix (non-null)', () => {
+    const mirrorAffix: AffixInstance = {
+      type: AffixType.Crit,
+      chance: 0.5,
+      critMult: 2.0,
+    }
+    const skill = makeSkill({
+      id: 'mirror_rt',
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent } as AffixInstance],
+    })
+    const state = makeRuntimeState({
+      skillId: 'mirror_rt',
+      mirrorCopiedAffix: mirrorAffix,
+      apprenticeAccumulated: 0.25,
+      questCompletions: 3,
+    })
+
+    const saved = serializeSkill(skill, state)
+    const json = JSON.parse(JSON.stringify(saved))
+    const { runtimeState } = deserializeSkill(json)
+
+    expect(runtimeState.mirrorCopiedAffix).not.toBeNull()
+    expect(runtimeState.mirrorCopiedAffix!.type).toBe(AffixType.Crit)
+    expect(runtimeState.mirrorCopiedAffix!.chance).toBe(0.5)
+    expect(runtimeState.mirrorCopiedAffix!.critMult).toBe(2.0)
+    expect(runtimeState.apprenticeAccumulated).toBe(0.25)
+    expect(runtimeState.questCompletions).toBe(3)
+  })
+
+  it('should roundtrip a fully-loaded skill with 3 affixes and enchantments', () => {
+    const skill = makeSkill({
+      id: 'full_skill',
+      resource: 'multiplier' as ResourceType,
+      level: 3,
+      rarity: 3 as 3,
+      affixes: [
+        { type: AffixType.Multiply, multiplier: 1.5 } as AffixInstance,
+        { type: AffixType.Crit, chance: 0.3, critMult: 3.0 } as AffixInstance,
+        { type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.1, floor: 0.5 } as AffixInstance,
+      ],
+      enchantmentIds: [EnchantmentType.QuestOverload, EnchantmentType.Transmute],
+    })
+    const state = makeRuntimeState({
+      skillId: 'full_skill',
+      currentDecayMult: 1.5,
+      questStacks: 4,
+      questCompletions: 2,
+    })
+
+    const saved = serializeSkill(skill, state)
+    const json = JSON.parse(JSON.stringify(saved))
+    const { skill: restored, runtimeState } = deserializeSkill(json)
+
+    expect(restored.affixes).toHaveLength(3)
+    expect(restored.affixes[0].type).toBe(AffixType.Multiply)
+    expect(restored.affixes[1].chance).toBe(0.3)
+    expect(restored.affixes[2].initialMult).toBe(2.0)
+    expect(restored.enchantmentIds).toEqual([EnchantmentType.QuestOverload, EnchantmentType.Transmute])
+    expect(runtimeState.currentDecayMult).toBe(1.5)
+    expect(runtimeState.questStacks).toBe(4)
+  })
+
+  it('should produce deep copies (no reference sharing)', () => {
+    const affix: AffixInstance = { type: AffixType.Multiply, multiplier: 1.5 }
+    const skill = makeSkill({ id: 'copy_test', affixes: [affix] })
+    const state = makeRuntimeState({ skillId: 'copy_test' })
+
+    const saved = serializeSkill(skill, state)
+    // Mutate original
+    affix.multiplier = 999
+    expect(saved.affixes[0].multiplier).toBe(1.5)
+  })
+})
+
+describe('isOldSystemSkill (Task 5)', () => {
+  it('should identify producer IDs', () => {
+    expect(isOldSystemSkill('prod_burst')).toBe(true)
+    expect(isOldSystemSkill('prod_void_base_adjacent')).toBe(true)
+  })
+
+  it('should identify converter IDs', () => {
+    expect(isOldSystemSkill('conv_base_score_add')).toBe(true)
+  })
+
+  it('should identify connector IDs', () => {
+    expect(isOldSystemSkill('conn_copy_adjacent')).toBe(true)
+  })
+
+  it('should identify amplifier IDs', () => {
+    expect(isOldSystemSkill('amp_base_Adjacent')).toBe(true)
+  })
+
+  it('should not match affix skill IDs', () => {
+    expect(isOldSystemSkill('affix_skill_001')).toBe(false)
+    expect(isOldSystemSkill('test_skill')).toBe(false)
+  })
+})
+
+describe('migrateLoadedSkills (Task 5)', () => {
+  it('should filter out old system skills', () => {
+    const loaded = [
+      { id: 'prod_burst', level: 1, resource: 'base' },
+      { id: 'affix_skill_1', level: 2, resource: 'score', affixes: [], rarity: 1 },
+      { id: 'conv_base_score_add', level: 1, resource: 'score' },
+    ]
+    const result = migrateLoadedSkills(loaded)
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('affix_skill_1')
+  })
+
+  it('should add affixes=[] and rarity=0 to skills without affixes field', () => {
+    const loaded = [
+      { id: 'old_affix_skill', level: 2, resource: 'base', enchantmentIds: ['ench1'] },
+    ]
+    const result = migrateLoadedSkills(loaded)
+    expect(result).toHaveLength(1)
+    expect(result[0].affixes).toEqual([])
+    expect(result[0].rarity).toBe(0)
+    expect(result[0].enchantmentIds).toEqual(['ench1'])
+  })
+
+  it('should not modify skills that already have affixes field', () => {
+    const affix = { type: AffixType.Multiply, multiplier: 1.5 }
+    const loaded = [
+      { id: 'new_skill', level: 3, resource: 'multiplier', affixes: [affix], rarity: 2, enchantmentIds: [] },
+    ]
+    const result = migrateLoadedSkills(loaded)
+    expect(result).toHaveLength(1)
+    expect(result[0].affixes).toHaveLength(1)
+    expect(result[0].rarity).toBe(2)
+  })
+
+  it('should handle empty input', () => {
+    expect(migrateLoadedSkills([])).toEqual([])
+  })
+
+  it('should add default runtime when runtime field is missing', () => {
+    const loaded = [
+      { id: 'no_runtime_skill', level: 1, resource: 'base', affixes: [{ type: AffixType.Flat, flatBonus: 5 }], rarity: 1, enchantmentIds: [] },
+    ]
+    const result = migrateLoadedSkills(loaded)
+    expect(result).toHaveLength(1)
+    expect(result[0].runtime).toBeDefined()
+    expect(result[0].runtime.skillId).toBe('no_runtime_skill')
+    expect(result[0].runtime.chargeAccumulated).toBe(0)
+    expect(result[0].runtime.currentDecayMult).toBe(1)
+    expect(result[0].runtime.mirrorCopiedAffix).toBeNull()
+  })
+
+  it('should handle skills with affixes=null as missing', () => {
+    const loaded = [
+      { id: 'null_affix', level: 1, resource: 'base', affixes: null },
+    ]
+    const result = migrateLoadedSkills(loaded)
+    expect(result[0].affixes).toEqual([])
+    expect(result[0].rarity).toBe(0)
   })
 })

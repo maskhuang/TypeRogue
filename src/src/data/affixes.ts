@@ -460,6 +460,16 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'affixProc:taboo_penalty', targetStacks: 3, effectDesc: 'penaltyChance -1%/层 (min 2%)' },
 ]
 
+// ===== 旧系统技能识别（存档迁移用）=====
+
+/** 旧系统技能 ID 前缀（Epic 19/34: Producer/Converter/Connector/Amplifier） */
+export const OLD_SKILL_PREFIXES = ['prod_', 'conv_', 'conn_', 'amp_']
+
+/** 检查是否为 Epic 19/34 旧系统技能（按前缀匹配） */
+export function isOldSystemSkill(id: string): boolean {
+  return OLD_SKILL_PREFIXES.some(prefix => id.startsWith(prefix))
+}
+
 // ===== 工厂函数：创建默认运行时状态 =====
 
 export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
