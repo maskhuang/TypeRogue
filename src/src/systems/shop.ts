@@ -358,17 +358,17 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'void': return `每空位+${Math.round((a.bonusPerSlot ?? 0) * 100)}%`
     case 'resonance': return `效率${Math.round((a.efficiency ?? 0) * 100)}%`
     case 'amplify': return `每层+${Math.round((a.valuePerStack ?? 0) * 100)}%`
-    case 'cascade': return `×${a.cascadeMult?.toFixed(1) ?? '?'}`
+    case 'cascade': return `上键相邻 ×${a.cascadeMult?.toFixed(1) ?? '?'}`
     case 'outcast': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
     case 'gravity': return `概率×${a.probMult?.toFixed(1) ?? '?'}`
     case 'recurse': return `${Math.round((a.recurseChance ?? 0) * 100)}%重触发`
     case 'taboo': return `+100% / ${Math.round((a.penaltyChance ?? 0) * 100)}%负产出`
-    case 'rainbow': return '全资源适配'
+    case 'rainbow': return '随机资源'
     case 'mirror': return `镜像复制`
-    case 'link': return `联动触发`
+    case 'link': return `邻居产出时触发`
     case 'replicate': return `复制触发`
     case 'ligature': return `连字加成`
-    case 'twin': return `双生触发`
+    case 'twin': return `双附魔`
     default: return ''
   }
 }

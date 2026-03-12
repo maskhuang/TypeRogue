@@ -66,6 +66,7 @@ import {
   MAX_RECURSE_DEPTH,
   APPRENTICE_GROWTH_DEFAULTS,
   MUTATION_HUNGER_CHANCE,
+  buildEffectiveSkill,
 } from '../../../src/data/affixTrigger'
 
 // ===== 工厂辅助 =====
@@ -3419,5 +3420,125 @@ describe('migrateLoadedSkills (Task 5)', () => {
     const result = migrateLoadedSkills(loaded)
     expect(result[0].affixes).toEqual([])
     expect(result[0].rarity).toBe(0)
+  })
+})
+
+// ===== buildEffectiveSkill + Mirror 触发参与测试 =====
+
+describe('buildEffectiveSkill (Mirror replacement)', () => {
+  it('should return original skill when mirrorCopiedAffix is null', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent } as AffixInstance],
+    })
+    const state = makeRuntimeState({ mirrorCopiedAffix: null })
+    const result = buildEffectiveSkill(skill, state)
+    expect(result).toBe(skill) // same reference, zero allocation
+  })
+
+  it('should return original skill when no Mirror affix exists', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 } as AffixInstance],
+    })
+    const copiedAffix: AffixInstance = { type: AffixType.Multiply, multiplier: 1.5 }
+    const state = makeRuntimeState({ mirrorCopiedAffix: copiedAffix })
+    const result = buildEffectiveSkill(skill, state)
+    expect(result).toBe(skill)
+  })
+
+  it('should replace Mirror affix with mirrorCopiedAffix', () => {
+    const mirrorAffix: AffixInstance = { type: AffixType.Mirror, posRel: PositionRelation.Adjacent }
+    const critAffix: AffixInstance = { type: AffixType.Crit, chance: 0.5, critMult: 2.0 }
+    const copiedVoid: AffixInstance = { type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }
+
+    const skill = makeSkill({
+      affixes: [critAffix, mirrorAffix],
+    })
+    const state = makeRuntimeState({ mirrorCopiedAffix: copiedVoid })
+    const result = buildEffectiveSkill(skill, state)
+
+    expect(result).not.toBe(skill)
+    expect(result.affixes).toHaveLength(2)
+    expect(result.affixes[0].type).toBe(AffixType.Crit)
+    expect(result.affixes[1].type).toBe(AffixType.Void)
+    expect(result.affixes[1].bonusPerSlot).toBe(0.25)
+  })
+
+  it('should not mutate original skill affixes', () => {
+    const mirrorAffix: AffixInstance = { type: AffixType.Mirror, posRel: PositionRelation.Adjacent }
+    const skill = makeSkill({ affixes: [mirrorAffix] })
+    const copiedMultiply: AffixInstance = { type: AffixType.Multiply, multiplier: 1.8 }
+    const state = makeRuntimeState({ mirrorCopiedAffix: copiedMultiply })
+
+    buildEffectiveSkill(skill, state)
+    expect(skill.affixes[0].type).toBe(AffixType.Mirror) // original unchanged
+  })
+})
+
+describe('Mirror affix participates in trigger pipeline', () => {
+  it('Mirror copying Multiply should apply multiplier in Phase 3', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent } as AffixInstance],
+      level: 1,
+    })
+    const copiedMultiply: AffixInstance = { type: AffixType.Multiply, multiplier: 2.0 }
+    const state = makeRuntimeState({ mirrorCopiedAffix: copiedMultiply })
+    const ctx = makeContext()
+
+    const result = triggerAffixSkill(skill, state, ctx)
+    // base = 5, × 2.0 = 10
+    expect(result.output).toBe(10)
+    expect(result.multipliers).toContain(2.0)
+  })
+
+  it('Mirror copying Crit should enable crit when roll succeeds', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent } as AffixInstance],
+      level: 1,
+    })
+    const copiedCrit: AffixInstance = { type: AffixType.Crit, chance: 1.0, critMult: 3.0 }
+    const state = makeRuntimeState({ mirrorCopiedAffix: copiedCrit })
+    const ctx = makeContext({ randomFn: () => 0.5 }) // 0.5 < 1.0 → crit
+
+    const result = triggerAffixSkill(skill, state, ctx)
+    expect(result.isCrit).toBe(true)
+    // base = 5, × 3.0 = 15
+    expect(result.output).toBe(15)
+  })
+
+  it('Mirror copying Void should add bonus from empty slots in Phase 2', () => {
+    const bindings = new Map<string, string>()
+    bindings.set('a', 'test_skill')
+    // 'a' has adjacent keys like 's', 'q', 'w', 'z' — all empty
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent } as AffixInstance],
+      level: 1,
+    })
+    const copiedVoid: AffixInstance = { type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }
+    const state = makeRuntimeState({ mirrorCopiedAffix: copiedVoid })
+    const allSkills = new Map<string, AffixSkillInstance>()
+    allSkills.set('test_skill', skill)
+    const skillStates = new Map<string, SkillRuntimeState>()
+    skillStates.set('test_skill', state)
+    const ctx = makeContext({ bindings, allSkills, skillStates })
+
+    const result = triggerAffixSkill(skill, state, ctx)
+    // Should have bonus > 0 because adjacent keys are empty
+    expect(result.bonusPercent).toBeGreaterThan(0)
+    expect(result.output).toBeGreaterThan(5) // base=5 + void bonus
+  })
+
+  it('Mirror with null copy should behave as no extra affix', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent } as AffixInstance],
+      level: 1,
+    })
+    const state = makeRuntimeState({ mirrorCopiedAffix: null })
+    const ctx = makeContext()
+
+    const result = triggerAffixSkill(skill, state, ctx)
+    // Mirror without copy = no effect, just base output
+    expect(result.output).toBe(5)
+    expect(result.multipliers).toHaveLength(0)
+    expect(result.bonusPercent).toBe(0)
   })
 })

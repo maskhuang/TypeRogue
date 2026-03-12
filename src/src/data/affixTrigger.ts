@@ -954,6 +954,28 @@ export function resolvePhase6(
   return { actions }
 }
 
+// ===== Mirror 有效词条替换 =====
+
+/**
+ * 构建有效技能：将 Mirror 词条替换为运行时复制的词条。
+ * 若无 Mirror 或 mirrorCopiedAffix 为 null，直接返回原 skill（零分配）。
+ */
+export function buildEffectiveSkill(
+  skill: AffixSkillInstance,
+  runtimeState: SkillRuntimeState,
+): AffixSkillInstance {
+  if (!runtimeState.mirrorCopiedAffix) return skill
+  const hasMirror = skill.affixes.some(a => a.type === AffixType.Mirror)
+  if (!hasMirror) return skill
+
+  return {
+    ...skill,
+    affixes: skill.affixes.map(a =>
+      a.type === AffixType.Mirror ? runtimeState.mirrorCopiedAffix! : a,
+    ),
+  }
+}
+
 // ===== 组合入口 =====
 
 /**
@@ -966,23 +988,26 @@ export function triggerAffixSkill(
   ctx: TriggerContext,
   recurseDepth: number = 0,
 ): TriggerResult {
+  // Mirror 词条替换：将 Mirror 替换为运行时复制的词条，使其参与所有 Phase 计算
+  const effectiveSkill = buildEffectiveSkill(skill, runtimeState)
+
   // Phase 1: 基础值
-  const base = resolvePhase1(skill)
+  const base = resolvePhase1(effectiveSkill)
 
   // Phase 2: 加算层
-  const p2 = resolvePhase2(skill, runtimeState, ctx, base)
+  const p2 = resolvePhase2(effectiveSkill, runtimeState, ctx, base)
 
   // Phase 3: 乘算层（乘算化模式传入 bonusBreakdown）
-  const p3 = resolvePhase3(skill, runtimeState, ctx, p2.output, p2.bonusBreakdown)
+  const p3 = resolvePhase3(effectiveSkill, runtimeState, ctx, p2.output, p2.bonusBreakdown)
 
   // Phase 4: 资源选择
-  const p4 = resolvePhase4(skill, p3.output, runtimeState, ctx)
+  const p4 = resolvePhase4(effectiveSkill, p3.output, runtimeState, ctx)
 
   // Phase 5: 后触发
-  const p5 = resolvePhase5(skill, runtimeState, ctx, p3.flags, p3.output, recurseDepth)
+  const p5 = resolvePhase5(effectiveSkill, runtimeState, ctx, p3.flags, p3.output, recurseDepth)
 
   // Phase 6: 邻居通知（传入 Phase 4 解析后的实际资源，供 Link 检查使用）
-  const p6 = resolvePhase6(ctx.triggerKey, skill, runtimeState, ctx, p4.targetResource)
+  const p6 = resolvePhase6(ctx.triggerKey, effectiveSkill, runtimeState, ctx, p4.targetResource)
 
   // 合并状态变更
   const allMutations = [...p2.mutations, ...p3.mutations]
