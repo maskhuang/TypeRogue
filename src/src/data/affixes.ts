@@ -348,6 +348,51 @@ export const APPRENTICE_NEIGHBOR_GROWTH: Record<PositionRelation, number> = {
   [PositionRelation.Symmetric]: 0.03,
 }
 
+// ===== 溅射附魔定义（1 类型 × 6 posRel 变体） =====
+
+export interface SplashEnchantmentDef {
+  posRel: PositionRelation
+  name: string
+}
+
+export const SPLASH_ENCHANTMENT_DEFS: SplashEnchantmentDef[] = [
+  { posRel: PositionRelation.Adjacent,  name: '溅射·相邻' },
+  { posRel: PositionRelation.SameRow,   name: '溅射·同行' },
+  { posRel: PositionRelation.SameColumn, name: '溅射·同列' },
+  { posRel: PositionRelation.SameHand,  name: '溅射·同手' },
+  { posRel: PositionRelation.SameFinger, name: '溅射·同指' },
+  { posRel: PositionRelation.Symmetric, name: '溅射·对称' },
+]
+
+// ===== 职业限定附魔 =====
+
+export const CLASS_RESTRICTED_ENCHANTMENTS: Record<string, EnchantmentType[]> = {
+  wordsmith: [EnchantmentType.ApprenticeHarvest],
+  metamorph: [EnchantmentType.ApprenticeAdapt],
+}
+
+/** 所有职业限定附魔的集合（用于快速查找） */
+const ALL_CLASS_RESTRICTED = new Set<EnchantmentType>(
+  Object.values(CLASS_RESTRICTED_ENCHANTMENTS).flat(),
+)
+
+/**
+ * 按职业过滤附魔候选列表。
+ * - 无职业：排除所有职业限定附魔
+ * - 有职业：排除非本职业的限定附魔，保留本职业的
+ */
+export function filterEnchantmentsByClass(
+  candidates: EnchantmentType[],
+  playerClass?: string,
+): EnchantmentType[] {
+  if (!playerClass) {
+    return candidates.filter(e => !ALL_CLASS_RESTRICTED.has(e))
+  }
+  const allowed = CLASS_RESTRICTED_ENCHANTMENTS[playerClass] ?? []
+  const allowedSet = new Set(allowed)
+  return candidates.filter(e => !ALL_CLASS_RESTRICTED.has(e) || allowedSet.has(e))
+}
+
 // ===== 事件类型（学徒/任务附魔可监听） =====
 
 export type AffixEventId =

@@ -12,6 +12,9 @@ import {
   EnchantmentType,
   BASE_VALUES,
   APPRENTICE_NEIGHBOR_GROWTH,
+  SPLASH_ENCHANTMENT_DEFS,
+  CLASS_RESTRICTED_ENCHANTMENTS,
+  filterEnchantmentsByClass,
 } from '../../../src/data/affixes'
 import { PositionRelation } from '../../../src/data/keyboardTopology'
 import type { ResourceType, ResourceState } from '../../../src/core/types'
@@ -40,6 +43,7 @@ import {
   weightedRandomResource,
   findWeakestNeighbor,
   pickRandomKeys,
+  applyApprenticeEvent,
   ALL_RESOURCES,
   MAX_RECURSE_DEPTH,
   APPRENTICE_GROWTH_DEFAULTS,
@@ -583,6 +587,42 @@ describe('resolvePhase2', () => {
       const ctx = makeContext({ unstableBonusResource: 'score' })
       const result = resolvePhase2(skill, state, ctx, 5)
       expect(result.bonusPercent).toBe(0)
+    })
+  })
+
+  describe('Apprentice accumulated bonus', () => {
+    it('should apply apprenticeAccumulated exactly once even with multiple apprentice enchantments', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeCrit],
+      })
+      const state = makeRuntimeState({ apprenticeAccumulated: 0.5 })
+      const ctx = makeContext()
+      const result = resolvePhase2(skill, state, ctx, 10)
+      // 0.5 should be added once, not twice: output = 10 * (1 + 0.5) = 15
+      expect(result.bonusPercent).toBeCloseTo(0.5)
+      expect(result.output).toBeCloseTo(15)
+    })
+
+    it('should apply apprenticeAccumulated once with single apprentice enchantment', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.ApprenticeSelf],
+      })
+      const state = makeRuntimeState({ apprenticeAccumulated: 0.3 })
+      const ctx = makeContext()
+      const result = resolvePhase2(skill, state, ctx, 10)
+      expect(result.bonusPercent).toBeCloseTo(0.3)
+      expect(result.output).toBeCloseTo(13)
+    })
+
+    it('should not apply apprenticeAccumulated when no apprentice enchantments', () => {
+      const skill = makeSkill({
+        enchantmentIds: [EnchantmentType.QuestDevour],
+      })
+      const state = makeRuntimeState({ apprenticeAccumulated: 0.5 })
+      const ctx = makeContext()
+      const result = resolvePhase2(skill, state, ctx, 10)
+      // QuestDevour with 0 completions adds nothing, and no apprentice enchantment
+      expect(result.bonusPercent).toBeCloseTo(0)
     })
   })
 })
@@ -1361,7 +1401,7 @@ describe('resolvePhase5', () => {
       const ctx = makeContext()
       const flags = makeFlags()
       resolvePhase5(skill, state, ctx, flags, 10)
-      expect(state.apprenticeAccumulated).toBeCloseTo(0.10 + 0.02)
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.10 + 0.005)
     })
 
     it('ApprenticeCrit: should only accumulate on crit', () => {
@@ -1377,7 +1417,7 @@ describe('resolvePhase5', () => {
 
       // Crit → growth
       resolvePhase5(skill, state, ctx, makeFlags({ isCrit: true }), 10)
-      expect(state.apprenticeAccumulated).toBeCloseTo(0.04)
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
     })
 
     it('ApprenticeOutcast: should accumulate when outcast condition met', () => {
@@ -1390,7 +1430,7 @@ describe('resolvePhase5', () => {
       const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple' })
       const flags = makeFlags()
       resolvePhase5(skill, state, ctx, flags, 10)
-      expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.015)
     })
 
     it('ApprenticeOutcast: should NOT accumulate when not first/last letter', () => {
@@ -1415,7 +1455,7 @@ describe('resolvePhase5', () => {
 
       // Pulse proc → growth
       resolvePhase5(skill, state, ctx, makeFlags({ isPulse: true }), 10)
-      expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.015)
     })
 
     it('ApprenticeProc: should NOT accumulate when no affix proc', () => {
@@ -1976,5 +2016,254 @@ describe('Code review fixes', () => {
     const flags = makeFlags()
     resolvePhase5(skill, state, ctx, flags, 10)
     expect(state.questStacks).toBe(0)
+  })
+})
+
+// ===== Story 35.5: 附魔系统 — 溅射 + 学徒(12) =====
+
+describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness', () => {
+  it('should contain all 11 Phase-5 + event apprentice types (excluding Neighbor)', () => {
+    const expectedTypes = [
+      EnchantmentType.ApprenticeSelf,
+      EnchantmentType.ApprenticeCrit,
+      EnchantmentType.ApprenticeOutcast,
+      EnchantmentType.ApprenticeProc,
+      EnchantmentType.ApprenticeWord,
+      EnchantmentType.ApprenticeLongWord,
+      EnchantmentType.ApprenticePerfect,
+      EnchantmentType.ApprenticeHarvest,
+      EnchantmentType.ApprenticeAdapt,
+      EnchantmentType.ApprenticeCombo,
+      EnchantmentType.ApprenticeStage,
+    ]
+    for (const t of expectedTypes) {
+      expect(APPRENTICE_GROWTH_DEFAULTS[t]).toBeDefined()
+      expect(APPRENTICE_GROWTH_DEFAULTS[t]).toBeGreaterThan(0)
+    }
+  })
+
+  it('growthPerProc values should match design document', () => {
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeSelf]).toBeCloseTo(0.005)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeCrit]).toBeCloseTo(0.02)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeOutcast]).toBeCloseTo(0.015)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeProc]).toBeCloseTo(0.015)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeWord]).toBeCloseTo(0.02)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeLongWord]).toBeCloseTo(0.025)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticePerfect]).toBeCloseTo(0.03)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeHarvest]).toBeCloseTo(0.08)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeAdapt]).toBeCloseTo(0.15)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeCombo]).toBeCloseTo(0.01)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeStage]).toBeCloseTo(0.08)
+  })
+
+  it('ApprenticeNeighbor should NOT be in APPRENTICE_GROWTH_DEFAULTS', () => {
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeNeighbor]).toBeUndefined()
+  })
+})
+
+describe('Story 35.5: Phase 5 new apprentice self-trigger types', () => {
+  it('ApprenticeWord: should accumulate when wordCompleted is true', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeWord] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ currentWord: 'hello', wordCompleted: true })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
+  })
+
+  it('ApprenticeWord: should NOT accumulate when wordCompleted is false/undefined', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeWord] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ currentWord: 'hello' })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticeLongWord: should accumulate when wordCompleted and word length >= 6', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeLongWord] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ currentWord: 'banana', wordCompleted: true }) // 6 letters
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.025)
+  })
+
+  it('ApprenticeLongWord: should NOT accumulate when word length < 6', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeLongWord] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ currentWord: 'apple', wordCompleted: true }) // 5 letters
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticeLongWord: should NOT accumulate when wordCompleted is false', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeLongWord] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ currentWord: 'banana' }) // 6 letters but not completed
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticePerfect: should accumulate when perfectWord is true', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticePerfect] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ perfectWord: true })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
+  })
+
+  it('ApprenticePerfect: should NOT accumulate when perfectWord is false/undefined', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticePerfect] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ perfectWord: false })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBe(0)
+
+    const state2 = makeRuntimeState()
+    const ctx2 = makeContext() // perfectWord undefined
+    resolvePhase5(skill, state2, ctx2, makeFlags(), 10)
+    expect(state2.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticeHarvest: should accumulate when wordCompleted is true', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeHarvest] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ currentWord: 'test', wordCompleted: true })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.08)
+  })
+
+  it('ApprenticeHarvest: should NOT accumulate when wordCompleted is false/undefined', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeHarvest] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ currentWord: 'test' })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticeAdapt: should accumulate when mutationApplied is true', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeAdapt] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ mutationApplied: true })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.15)
+  })
+
+  it('ApprenticeAdapt: should NOT accumulate when mutationApplied is false/undefined', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeAdapt] })
+    const state = makeRuntimeState()
+    const ctx = makeContext() // mutationApplied undefined
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticeCombo: should NOT accumulate in Phase 5 (external event)', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeCombo] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ comboCount: 15 })
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticeStage: should NOT accumulate in Phase 5 (external event)', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeStage] })
+    const state = makeRuntimeState()
+    const ctx = makeContext()
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+})
+
+describe('Story 35.5: applyApprenticeEvent', () => {
+  it('stageCleared should accumulate ApprenticeStage growth', () => {
+    const state = makeRuntimeState()
+    const result = applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeStage])
+    expect(result).toBe(true)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.08)
+  })
+
+  it('comboReach should accumulate ApprenticeCombo growth', () => {
+    const state = makeRuntimeState()
+    const result = applyApprenticeEvent('comboReach', state, [EnchantmentType.ApprenticeCombo])
+    expect(result).toBe(true)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.01)
+  })
+
+  it('should return false for unknown event', () => {
+    const state = makeRuntimeState()
+    const result = applyApprenticeEvent('unknownEvent', state, [EnchantmentType.ApprenticeStage])
+    expect(result).toBe(false)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('should return false when enchantment not in list', () => {
+    const state = makeRuntimeState()
+    const result = applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeSelf])
+    expect(result).toBe(false)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('should accumulate incrementally on repeated calls', () => {
+    const state = makeRuntimeState()
+    applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeStage])
+    applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeStage])
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.16)
+  })
+})
+
+describe('Story 35.5: SPLASH_ENCHANTMENT_DEFS', () => {
+  it('should have 6 entries for all PositionRelation values', () => {
+    expect(SPLASH_ENCHANTMENT_DEFS).toHaveLength(6)
+    const posRels = SPLASH_ENCHANTMENT_DEFS.map(d => d.posRel)
+    expect(posRels).toContain(PositionRelation.Adjacent)
+    expect(posRels).toContain(PositionRelation.SameRow)
+    expect(posRels).toContain(PositionRelation.SameColumn)
+    expect(posRels).toContain(PositionRelation.SameHand)
+    expect(posRels).toContain(PositionRelation.SameFinger)
+    expect(posRels).toContain(PositionRelation.Symmetric)
+  })
+
+  it('each entry should have a name', () => {
+    for (const def of SPLASH_ENCHANTMENT_DEFS) {
+      expect(def.name).toBeTruthy()
+      expect(typeof def.name).toBe('string')
+    }
+  })
+})
+
+describe('Story 35.5: filterEnchantmentsByClass', () => {
+  const candidates = [
+    EnchantmentType.ApprenticeSelf,
+    EnchantmentType.ApprenticeHarvest,
+    EnchantmentType.ApprenticeAdapt,
+    EnchantmentType.Splash,
+  ]
+
+  it('no class: should exclude all class-restricted enchantments', () => {
+    const result = filterEnchantmentsByClass(candidates)
+    expect(result).toContain(EnchantmentType.ApprenticeSelf)
+    expect(result).toContain(EnchantmentType.Splash)
+    expect(result).not.toContain(EnchantmentType.ApprenticeHarvest)
+    expect(result).not.toContain(EnchantmentType.ApprenticeAdapt)
+  })
+
+  it('wordsmith: should keep Harvest but exclude Adapt', () => {
+    const result = filterEnchantmentsByClass(candidates, 'wordsmith')
+    expect(result).toContain(EnchantmentType.ApprenticeSelf)
+    expect(result).toContain(EnchantmentType.Splash)
+    expect(result).toContain(EnchantmentType.ApprenticeHarvest)
+    expect(result).not.toContain(EnchantmentType.ApprenticeAdapt)
+  })
+
+  it('metamorph: should keep Adapt but exclude Harvest', () => {
+    const result = filterEnchantmentsByClass(candidates, 'metamorph')
+    expect(result).toContain(EnchantmentType.ApprenticeSelf)
+    expect(result).toContain(EnchantmentType.Splash)
+    expect(result).not.toContain(EnchantmentType.ApprenticeHarvest)
+    expect(result).toContain(EnchantmentType.ApprenticeAdapt)
+  })
+
+  it('unknown class: should exclude all class-restricted', () => {
+    const result = filterEnchantmentsByClass(candidates, 'unknown')
+    expect(result).not.toContain(EnchantmentType.ApprenticeHarvest)
+    expect(result).not.toContain(EnchantmentType.ApprenticeAdapt)
   })
 })

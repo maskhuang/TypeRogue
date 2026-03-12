@@ -40,6 +40,17 @@ export interface TriggerContext {
   fragmentInventory?: Record<string, number>
   /** 不稳定附魔本关随机资源 */
   unstableBonusResource?: ResourceType
+  // ── Phase 5 学徒附魔事件上下文（由调用方注入） ──
+  /** 本次触发是否完成了一个单词（学徒·造词/丰收） */
+  wordCompleted?: boolean
+  /** 本次触发是否零错误完成单词 */
+  perfectWord?: boolean
+  /** 当前连击数（学徒·连击在 comboReach(15) 时触发） */
+  comboCount?: number
+  /** 当前玩家职业（造词师限定/蜕变师限定附魔） */
+  playerClass?: string
+  /** 本次触发是否应用了变异 */
+  mutationApplied?: boolean
   // ── Phase 4-6 附魔运行时参数（由调用方填充） ──
   /** 溅射附魔位置关系（Splash 变体） */
   splashPosRel?: PositionRelation
@@ -311,13 +322,14 @@ export function resolvePhase2(
   }
 
   // ── 附魔加算 ──
+
+  // 学徒系列：永久成长累积（所有学徒共享同一累积值，只加一次）
+  if (skill.enchantmentIds.some(id => isApprenticeEnchantment(id as EnchantmentType))) {
+    bonusPercent += runtimeState.apprenticeAccumulated
+  }
+
   for (const enchId of skill.enchantmentIds) {
     const ench = enchId as EnchantmentType
-
-    // 学徒系列：永久成长累积
-    if (isApprenticeEnchantment(ench)) {
-      bonusPercent += runtimeState.apprenticeAccumulated
-    }
 
     // 任务·吞噬 额外加成（c >= 3 时）
     if (ench === EnchantmentType.QuestDevour) {
@@ -485,12 +497,22 @@ export const MAX_CHAIN_DEPTH = 20
 export const MUTATION_HUNGER_CHANCE = 0.05
 export const TRANSMUTE_DEFAULT_RATIO = 0.10
 
-/** 学徒附魔 growthPerProc 默认值（Phase 5 自触发类型） */
+/** 学徒附魔 growthPerProc 默认值（Phase 5 自触发类型 + 外部事件类型） */
 export const APPRENTICE_GROWTH_DEFAULTS: Partial<Record<EnchantmentType, number>> = {
-  [EnchantmentType.ApprenticeSelf]: 0.02,
-  [EnchantmentType.ApprenticeCrit]: 0.04,
-  [EnchantmentType.ApprenticeOutcast]: 0.03,
-  [EnchantmentType.ApprenticeProc]: 0.03,
+  // Phase 5 自触发类型
+  [EnchantmentType.ApprenticeSelf]: 0.005,      // 0.5% — selfTrigger（每次触发）
+  [EnchantmentType.ApprenticeCrit]: 0.02,        // 2%   — critHit
+  [EnchantmentType.ApprenticeOutcast]: 0.015,    // 1.5% — outcastProc
+  [EnchantmentType.ApprenticeProc]: 0.015,       // 1.5% — affixProc
+  [EnchantmentType.ApprenticeWord]: 0.02,        // 2%   — wordComplete
+  [EnchantmentType.ApprenticeLongWord]: 0.025,   // 2.5% — longWord(≥6)
+  [EnchantmentType.ApprenticePerfect]: 0.03,     // 3%   — perfectWord
+  [EnchantmentType.ApprenticeHarvest]: 0.08,     // 8%   — wordComplete（造词师限定）
+  [EnchantmentType.ApprenticeAdapt]: 0.15,       // 15%  — mutationApplied（蜕变师限定）
+  // 外部事件类型（由 applyApprenticeEvent 处理）
+  [EnchantmentType.ApprenticeCombo]: 0.01,       // 1%   — comboReach(15)
+  [EnchantmentType.ApprenticeStage]: 0.08,       // 8%   — stageCleared
+  // ApprenticeNeighbor 不在此表，按 APPRENTICE_NEIGHBOR_GROWTH 查 posRel 表
 }
 
 // ===== Phase 4-6 辅助函数 =====
@@ -677,7 +699,7 @@ export function resolvePhase5(
 
   // ── 附魔后触发 ──
 
-  // 学徒附魔（自触发类型：Self/Crit/Outcast/Proc）
+  // 学徒附魔（Phase 5 自触发类型）
   for (const enchId of skill.enchantmentIds) {
     const ench = enchId as EnchantmentType
     const growth = APPRENTICE_GROWTH_DEFAULTS[ench]
@@ -698,6 +720,28 @@ export function resolvePhase5(
       case EnchantmentType.ApprenticeProc:
         shouldGrow = triggerFlags.isCrit || triggerFlags.isPulse
           || triggerFlags.isCascade || triggerFlags.isTabooPenalty
+        break
+      case EnchantmentType.ApprenticeWord:
+        shouldGrow = ctx.wordCompleted === true
+        break
+      case EnchantmentType.ApprenticeLongWord:
+        shouldGrow = ctx.wordCompleted === true && ctx.currentWord.length >= 6
+        break
+      case EnchantmentType.ApprenticePerfect:
+        shouldGrow = ctx.perfectWord === true
+        break
+      case EnchantmentType.ApprenticeHarvest:
+        // 造词师限定 — 抽取时已过滤，触发时不再检查职业
+        shouldGrow = ctx.wordCompleted === true
+        break
+      case EnchantmentType.ApprenticeAdapt:
+        // 蜕变师限定 — 抽取时已过滤，触发时不再检查职业
+        shouldGrow = ctx.mutationApplied === true
+        break
+      // ApprenticeCombo / ApprenticeStage — 外部事件，不在 Phase 5 处理
+      case EnchantmentType.ApprenticeCombo:
+      case EnchantmentType.ApprenticeStage:
+        shouldGrow = false
         break
     }
 
@@ -888,6 +932,37 @@ export function triggerAffixSkill(
     phase5: p5,
     phase6: p6,
   }
+}
+
+// ===== 外部事件回调 =====
+
+/** 学徒附魔事件→附魔类型映射 */
+const APPRENTICE_EVENT_MAP: Record<string, EnchantmentType> = {
+  stageCleared: EnchantmentType.ApprenticeStage,
+  comboReach: EnchantmentType.ApprenticeCombo,
+}
+
+/**
+ * 外部事件回调：系统层在对应事件发生时调用此函数。
+ * 遍历 enchantmentIds，匹配事件→累加 growthPerProc 到 runtimeState.apprenticeAccumulated。
+ * 纯函数（仅修改传入的 runtimeState），不调用系统层。
+ */
+export function applyApprenticeEvent(
+  event: string,
+  runtimeState: SkillRuntimeState,
+  enchantmentIds: string[],
+): boolean {
+  const targetEnch = APPRENTICE_EVENT_MAP[event]
+  if (!targetEnch) return false
+
+  const growth = APPRENTICE_GROWTH_DEFAULTS[targetEnch]
+  if (growth == null) return false
+
+  if (enchantmentIds.includes(targetEnch)) {
+    runtimeState.apprenticeAccumulated += growth
+    return true
+  }
+  return false
 }
 
 // ===== 内部辅助 =====
