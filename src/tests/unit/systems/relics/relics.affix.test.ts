@@ -213,8 +213,8 @@ describe('overcharge（过载核心）适配', () => {
     expect(mods[1].condition).toEqual({ type: 'skill_rarity_gte', value: 1 })
   })
 
-  it('description 已更新为魔法(蓝)以上', () => {
-    expect(RELICS.overcharge.description).toContain('魔法')
+  it('description 已更新为稀有(蓝)以上', () => {
+    expect(RELICS.overcharge.description).toContain('稀有')
   })
 })
 
@@ -360,30 +360,9 @@ describe('quest_momentum（任务动力）', () => {
 })
 
 // ========================================
-// 7.7: mono_affix 类别过滤
+// 7.7: AFFIX_CATEGORY_MAP 覆盖检查
 // ========================================
-describe('mono_affix（纯血词条）', () => {
-  it('RELICS 数据完整', () => {
-    const r = RELICS.mono_affix
-    expect(r).toBeDefined()
-    expect(r.id).toBe('mono_affix')
-    expect(r.rarity).toBe('legendary')
-    expect(r.basePrice).toBe(100)
-  })
-
-  it('RELIC_FLAGS 包含 affix_category_lock → mono_affix', () => {
-    expect(RELIC_FLAGS['affix_category_lock']).toContain('mono_affix')
-  })
-
-  it('工厂: score ×2 global 层，条件 skill_rarity_gte(0)', () => {
-    const mods = RELIC_MODIFIER_DEFS.mono_affix('mono_affix')
-    expect(mods).toHaveLength(1)
-    expect(mods[0].layer).toBe('global')
-    expect(mods[0].effect!.value).toBe(2.0)
-    expect(mods[0].effect!.stacking).toBe('multiplicative')
-    expect(mods[0].condition).toEqual({ type: 'skill_rarity_gte', value: 0 })
-  })
-
+describe('AFFIX_CATEGORY_MAP 覆盖检查', () => {
   it('AFFIX_CATEGORY_MAP 覆盖所有 20 种词条类型', () => {
     const allTypes = Object.values(AffixType)
     for (const t of allTypes) {
@@ -396,14 +375,14 @@ describe('mono_affix（纯血词条）', () => {
 // ========================================
 // 7.8: 新遗物数据完整性
 // ========================================
-describe('4 个新遗物数据完整性', () => {
-  const newIds = ['affix_spectrum', 'legendary_aura', 'quest_momentum', 'mono_affix']
+describe('3 个新遗物数据完整性', () => {
+  const newIds = ['affix_spectrum', 'legendary_aura', 'quest_momentum']
 
-  it('4 个遗物都在 RELICS 中定义', () => {
+  it('3 个遗物都在 RELICS 中定义', () => {
     newIds.forEach(id => expect(RELICS[id]).toBeDefined())
   })
 
-  it('4 个遗物都在 RELIC_MODIFIER_DEFS 中定义', () => {
+  it('3 个遗物都在 RELIC_MODIFIER_DEFS 中定义', () => {
     newIds.forEach(id => expect(RELIC_MODIFIER_DEFS[id]).toBeDefined())
   })
 

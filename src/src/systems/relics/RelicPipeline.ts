@@ -110,8 +110,7 @@ export function queryRelicFlag(flag: string): number | boolean {
     case 'chain_affix_lock':
       return (RELIC_FLAGS['chain_affix_lock'] || []).some(id => state.player.relics.has(id))
     case 'affix_category_lock':
-      if (!(RELIC_FLAGS['affix_category_lock'] || []).some(id => state.player.relics.has(id))) return false
-      return state.player.relicStates['mono_affix_category'] ?? false
+      return false
     case 'max_skill_count': {
       const ids = (RELIC_FLAGS['max_skill_count'] || []).filter(id => state.player.relics.has(id))
       if (ids.length === 0) return Infinity
@@ -255,26 +254,6 @@ export function initRelicState(relicId: string): void {
     state.fragmentQueue.push('_', '_')
   }
 
-  // 纯血词条：自动检测现有技能中最常见的词条类别并选定
-  if (relicId === 'mono_affix') {
-    // 统计每个类别的词条数
-    const categoryCounts: Record<string, number> = {}
-    for (const skill of state.affixSkills.values()) {
-      for (const affix of skill.affixes) {
-        const cat = AFFIX_CATEGORY_MAP[affix.type as keyof typeof AFFIX_CATEGORY_MAP]
-        if (cat) categoryCounts[cat] = (categoryCounts[cat] || 0) + 1
-      }
-    }
-    // 找到最多的类别（默认 'numeric'）
-    let bestCategory = 'numeric'
-    let bestCount = 0
-    for (const [cat, count] of Object.entries(categoryCounts)) {
-      if (count > bestCount) { bestCategory = cat; bestCount = count }
-    }
-    // 选定类别并移除不符合的技能
-    setMonoAffixCategory(bestCategory)
-    showFeedback(`纯血词条：选定 ${AFFIX_CATEGORY_LABELS[bestCategory]}！`, '#9b59b6')
-  }
 
   // 极简主义：将所有已有技能升至 Lv3
   // 注意：checkAutoEnchantment 在 shop.ts 中，此处无法调用（循环依赖）。

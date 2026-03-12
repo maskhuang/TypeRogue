@@ -770,7 +770,7 @@ describe('AC9: 遗物×词条交互', () => {
     }
   })
 
-  it('mono_affix: AFFIX_CATEGORY_MAP 覆盖全部 20 种词条', () => {
+  it('AFFIX_CATEGORY_MAP 覆盖全部 20 种词条', () => {
     for (const affixType of ALL_AFFIX_TYPES) {
       expect(AFFIX_CATEGORY_MAP[affixType]).toBeDefined()
     }

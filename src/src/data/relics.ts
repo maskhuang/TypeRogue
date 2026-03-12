@@ -4,7 +4,6 @@
 // Story 5.4 Task 2: 遗物数据定义
 
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes'
-import { AffixType, AFFIX_CATEGORY_MAP } from './affixes'
 
 // === 遗物类型定义（从 RelicTypes.ts 迁入） ===
 
@@ -370,7 +369,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'overcharge',
     name: '过载核心',
     icon: '🔋',
-    description: '魔法(蓝)及以上技能效果 +50%，但每次触发 -0.1s 时间',
+    description: '稀有(蓝)及以上技能效果 +50%，但每次触发 -0.1s 时间',
     rarity: 'rare',
     basePrice: 50,
     category: 'risk-reward',
@@ -594,18 +593,6 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '每一个达成的目标，都化为持续的动力。'
   },
 
-  mono_affix: {
-    id: 'mono_affix',
-    name: '纯血词条',
-    icon: '🧊',
-    description: '限定同一词条类别，该类别技能产出 ×2',
-    rarity: 'legendary',
-    basePrice: 100,
-    effects: [
-      { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 2.0 }
-    ],
-    flavor: '纯粹的血脉，专注的力量。'
-  },
 
   // ==================== 职业初始遗物（占位） ====================
   // Story 32.1: 占位定义，具体效果在 Story 32.7 / 32.10 实现
@@ -1161,14 +1148,6 @@ export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
     ]
   },
 
-  // 纯血词条：已选类别 ×2（global 层，仅 affix 技能），限制通过 RELIC_FLAGS
-  mono_affix: (id) => [
-    relicMod(id, 'boost', 'on_skill_trigger', 'calculate', {
-      layer: 'global',
-      effect: { type: 'score', value: 2.0, stacking: 'multiplicative' },
-      condition: { type: 'skill_rarity_gte', value: 0 },
-    }),
-  ],
 
 }
 
@@ -1182,7 +1161,6 @@ export const RELIC_FLAGS: Record<string, string[]> = {
   producer_only: ['pure_heart'],                    // 仅允许产出者（旧系统兼容）
   white_only: ['pure_heart'],                       // 仅允许白装（rarity=0）
   max_skill_count: ['minimalist'],                  // 限制技能数量上限
-  affix_category_lock: ['mono_affix'],              // 限定词条类别
 }
 
 /**
@@ -1229,4 +1207,5 @@ export const DELETED_RELIC_IDS = [
   'chain_amplifier', 'fortress', 'passive_mastery', 'gamblers_creed',
   'golden_keyboard', 'void_heart', 'rhyme_master',
   'keyboard_storm', 'time_lord', 'time_crystal',
+  'mono_affix',
 ]
