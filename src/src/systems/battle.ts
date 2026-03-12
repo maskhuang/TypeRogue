@@ -452,6 +452,11 @@ function completeWord(): void {
 
   // 检查是否达到目标分数 - 提前结束关卡
   if (state.score >= state.targetScore) {
+    // 立即停止计时器，防止评分动画期间时间继续走
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    // 隐藏结算面板，防止分数显示继续跳动
+    hideSettlement();
+
     // 计算 overkill：超出目标的总分数
     state.overkill = state.score - state.targetScore;
 
