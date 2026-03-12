@@ -336,7 +336,7 @@ development_status:
   # Design: docs/design/affix-skill-system.md
   epic-35: in-progress
   35-1-core-data-affix-defs: done
-  35-2-skill-generation-engine: backlog
+  35-2-skill-generation-engine: done
   35-3-trigger-pipeline-phase1-3: backlog
   35-4-trigger-pipeline-phase4-6: backlog
   35-5-enchantment-splash-apprentice: backlog
