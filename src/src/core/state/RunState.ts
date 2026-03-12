@@ -145,6 +145,9 @@ export interface RunStateData {
 
   /** 词条制技能运行时状态（35.9） */
   affixSkillStates: Map<string, SkillRuntimeState>
+
+  /** 蜕变A累计次数（35.10） */
+  mutationACounts: Map<string, number>
 }
 
 /**
@@ -204,6 +207,7 @@ export class RunState {
       wordDeck: [],
       affixSkills: new Map(),
       affixSkillStates: new Map(),
+      mutationACounts: new Map(),
     }
   }
 
@@ -552,6 +556,7 @@ export class RunState {
         const rt = this.data.affixSkillStates.get(id) || createSkillRuntimeState(id)
         return serializeSkill(skill, rt)
       }),
+      mutationACounts: Object.fromEntries(this.data.mutationACounts),
     }
   }
 
@@ -665,6 +670,12 @@ export class RunState {
       runState.data.affixSkills.set(skill.id, skill)
       runState.data.affixSkillStates.set(skill.id, runtimeState)
     }
+
+    // 恢复蜕变A计数（35.10）
+    const mutationAEntries = (parsed as any).mutationACounts || {}
+    Object.entries(mutationAEntries).forEach(([skillId, count]) => {
+      runState.data.mutationACounts.set(skillId, count as number)
+    })
 
     return runState
   }

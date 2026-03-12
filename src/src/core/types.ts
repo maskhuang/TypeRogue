@@ -211,6 +211,7 @@ export interface GameState {
   unstableResources: Map<string, ResourceType>;    // 不稳定附魔：每关随机资源分配（skillId → 资源类型），每关重置
   affixSkills: Map<string, AffixSkillInstance>;      // 词条制技能定义（skillId → 完整技能数据），35.9
   affixSkillStates: Map<string, SkillRuntimeState>;  // 词条制技能运行时状态（skillId → 8字段状态），35.9
+  mutationACounts: Map<string, number>;              // 蜕变A累计次数（skillId → 次数），35.10
   endlessUnlocked: boolean;                // 无尽模式是否解锁
   gameMode: 'normal' | 'daily';           // 游戏模式
   dailySeed: number | null;                // 每日挑战种子（daily 模式时非 null）

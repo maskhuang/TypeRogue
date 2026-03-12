@@ -14,6 +14,12 @@ import { CONNECTORS, REPLICATORS, isConnector, isReplicator } from '../../data/c
 import { AMPLIFIERS, isAmplifier } from '../../data/amplifiers';
 import { filterSkillIdsByClass } from './ClassResourceFilter';
 import { random } from '../../core/seededRandom';
+import { AFFIX_NAMES, RARITY_COLORS, RARITY_NAMES } from '../../data/affixes';
+import {
+  mutateA, mutateUpgrade, mutateDowngrade,
+  getMutateACost, getUpgradeCost,
+  canMutateA, canUpgrade, canDowngrade,
+} from '../../data/affixMutation';
 
 // === 技能类型判定 ===
 type SkillType = 'producer' | 'converter' | 'connector' | 'replicator' | 'amplifier';
@@ -249,6 +255,150 @@ function hideMorphTooltip(): void {
   document.getElementById('morph-tooltip')?.remove();
 }
 
+// === 词条制技能蜕变操作面板 (35.10) ===
+
+function renderAffixMutationPanel(skillId: string, boundKey: string, container: HTMLElement): void {
+  const skill = state.affixSkills.get(skillId);
+  if (!skill) return;
+
+  // 清空容器，渲染操作面板
+  container.innerHTML = '';
+
+  // 标题
+  const title = document.createElement('div');
+  title.className = 'morph-title';
+  title.textContent = `🧬 词条蜕变 — ${skill.name}`;
+  container.appendChild(title);
+
+  // 技能信息
+  const info = document.createElement('div');
+  info.style.cssText = 'color:#ccc;font-size:12px;margin:8px 0;padding:8px;background:rgba(255,255,255,0.05);border-radius:4px;';
+  const rarityColor = RARITY_COLORS[skill.rarity] || '#fff';
+  const rarityName = RARITY_NAMES[skill.rarity] || '?';
+
+  const nameRow = document.createElement('div');
+  nameRow.style.cssText = `color:${rarityColor};font-weight:bold;`;
+  nameRow.textContent = `${skill.icon} ${skill.name} (${rarityName})`;
+  info.appendChild(nameRow);
+
+  const affixRow = document.createElement('div');
+  affixRow.style.cssText = 'margin-top:4px;font-size:11px;';
+  if (skill.affixes.length > 0) {
+    skill.affixes.forEach((a, i) => {
+      if (i > 0) affixRow.appendChild(document.createTextNode('  '));
+      const span = document.createElement('span');
+      span.style.color = '#aaa';
+      span.textContent = `[${i}] ${AFFIX_NAMES[a.type]}`;
+      affixRow.appendChild(span);
+    });
+  } else {
+    const span = document.createElement('span');
+    span.style.color = '#666';
+    span.textContent = '无词条';
+    affixRow.appendChild(span);
+  }
+  info.appendChild(affixRow);
+
+  const mutagenRow = document.createElement('div');
+  mutagenRow.style.cssText = 'margin-top:4px;font-size:11px;color:#888;';
+  mutagenRow.textContent = `🧬 变异素: ${Math.floor(state.mutagenInventory)}`;
+  info.appendChild(mutagenRow);
+
+  container.appendChild(info);
+
+  // 操作按钮区
+  const btnArea = document.createElement('div');
+  btnArea.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin:8px 0;';
+
+  // === 蜕变A：词条重铸 ===
+  if (skill.affixes.length > 0) {
+    const aCost = getMutateACost(skillId);
+    const aEnabled = canMutateA(skillId);
+    for (let i = 0; i < skill.affixes.length; i++) {
+      const affix = skill.affixes[i];
+      const btn = document.createElement('button');
+      btn.className = 'morph-action-btn';
+      btn.style.cssText = `padding:8px 12px;border:1px solid ${aEnabled ? '#e67e22' : '#555'};background:${aEnabled ? 'rgba(230,126,34,0.15)' : 'rgba(50,50,50,0.3)'};color:${aEnabled ? '#e67e22' : '#666'};border-radius:4px;cursor:${aEnabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
+      btn.textContent = `🔄 重铸 [${i}] ${AFFIX_NAMES[affix.type]} — 消耗 ${aCost} 变异素`;
+      if (aEnabled) {
+        const idx = i;
+        btn.onclick = () => {
+          const result = mutateA(skillId, idx);
+          if (result.success) {
+            playSound('skill');
+            showFeedback(`🔄 重铸: ${AFFIX_NAMES[result.oldAffix!.type]} → ${AFFIX_NAMES[result.newAffix!.type]}`, '#e67e22', 1.2);
+            renderAffixMutationPanel(skillId, boundKey, container);
+            renderBuildManager();
+          } else {
+            showFeedback(result.error || '操作失败', '#ff6b6b');
+          }
+        };
+      }
+      btnArea.appendChild(btn);
+    }
+  }
+
+  // === 蜕变C↑：稀有度升级 ===
+  {
+    const upEnabled = canUpgrade(skillId);
+    const upCost = skill.rarity < 3 ? getUpgradeCost(skill.rarity) : 0;
+    const btn = document.createElement('button');
+    btn.className = 'morph-action-btn';
+    btn.style.cssText = `padding:8px 12px;border:1px solid ${upEnabled ? '#2ecc71' : '#555'};background:${upEnabled ? 'rgba(46,204,113,0.15)' : 'rgba(50,50,50,0.3)'};color:${upEnabled ? '#2ecc71' : '#666'};border-radius:4px;cursor:${upEnabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
+    btn.textContent = skill.rarity >= 3
+      ? '⬆️ 稀有度升级 — 已传说'
+      : `⬆️ 稀有度升级 (${RARITY_NAMES[skill.rarity]}→${RARITY_NAMES[(skill.rarity + 1) as 0|1|2|3]}) — 消耗 ${upCost} 变异素`;
+    if (upEnabled) {
+      btn.onclick = () => {
+        const result = mutateUpgrade(skillId);
+        if (result.success) {
+          playSound('skill');
+          showFeedback(`⬆️ 升级: +${AFFIX_NAMES[result.newAffix!.type]}`, '#2ecc71', 1.2);
+          renderAffixMutationPanel(skillId, boundKey, container);
+          renderBuildManager();
+        } else {
+          showFeedback(result.error || '操作失败', '#ff6b6b');
+        }
+      };
+    }
+    btnArea.appendChild(btn);
+  }
+
+  // === 蜕变C↓：稀有度降级 ===
+  {
+    const downEnabled = canDowngrade(skillId);
+    const btn = document.createElement('button');
+    btn.className = 'morph-action-btn';
+    btn.style.cssText = `padding:8px 12px;border:1px solid ${downEnabled ? '#e74c3c' : '#555'};background:${downEnabled ? 'rgba(231,76,60,0.15)' : 'rgba(50,50,50,0.3)'};color:${downEnabled ? '#e74c3c' : '#666'};border-radius:4px;cursor:${downEnabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
+    btn.textContent = skill.rarity <= 0
+      ? '⬇️ 稀有度降级 — 已白装'
+      : `⬇️ 稀有度降级 (${RARITY_NAMES[skill.rarity]}→${RARITY_NAMES[(skill.rarity - 1) as 0|1|2|3]}) — 返还 1 变异素`;
+    if (downEnabled) {
+      btn.onclick = () => {
+        const result = mutateDowngrade(skillId);
+        if (result.success) {
+          playSound('skill');
+          showFeedback(`⬇️ 降级: -${AFFIX_NAMES[result.removedAffix!.type]} +1🧬`, '#e74c3c', 1.2);
+          renderAffixMutationPanel(skillId, boundKey, container);
+          renderBuildManager();
+        } else {
+          showFeedback(result.error || '操作失败', '#ff6b6b');
+        }
+      };
+    }
+    btnArea.appendChild(btn);
+  }
+
+  container.appendChild(btnArea);
+
+  // 返回按钮
+  const backBtn = document.createElement('button');
+  backBtn.style.cssText = 'padding:6px 12px;border:1px solid #555;background:rgba(255,255,255,0.05);color:#aaa;border-radius:4px;cursor:pointer;font-size:11px;margin-top:8px;';
+  backBtn.textContent = '← 返回技能列表';
+  backBtn.onclick = () => renderMetamorphPanel(container);
+  container.appendChild(backBtn);
+}
+
 // === 面板渲染 ===
 export function renderMetamorphPanel(container: HTMLElement): void {
   container.innerHTML = '';
@@ -288,15 +438,27 @@ export function renderMetamorphPanel(container: HTMLElement): void {
     const skillData = state.player.skills.get(skillId);
     if (!skillData) continue;
 
-    const type = getSkillType(skillId);
-    const displayInfo = getSkillDisplayInfo(skillId, skillData.level, state.player.enchantedSkills);
+    // 判断是否为词条制技能 (35.10)
+    const isAffix = state.affixSkills.has(skillId);
+    const affixSkill = isAffix ? state.affixSkills.get(skillId)! : null;
+
+    const type = isAffix ? null : getSkillType(skillId);
+    const displayInfo = isAffix
+      ? { icon: affixSkill!.icon, name: affixSkill!.name, desc: '' }
+      : getSkillDisplayInfo(skillId, skillData.level, state.player.enchantedSkills);
 
     const card = document.createElement('div');
     card.className = 'morph-skill-card';
 
-    const isDisabled = !type || type === 'producer';
+    // 旧系统：产出者或未知类型禁用；词条制：始终可点击
+    const isDisabled = !isAffix && (!type || type === 'producer');
     if (isDisabled) {
       card.classList.add('morph-disabled');
+    }
+
+    // 词条制技能稀有度边框
+    if (isAffix && affixSkill) {
+      card.style.borderColor = RARITY_COLORS[affixSkill.rarity] || '#fff';
     }
 
     // 图标
@@ -317,20 +479,26 @@ export function renderMetamorphPanel(container: HTMLElement): void {
     // 类型标签
     const typeLabel = document.createElement('div');
     typeLabel.className = 'morph-skill-type';
-    typeLabel.textContent = type ? TYPE_NAMES[type] : '未知';
+    if (isAffix && affixSkill) {
+      typeLabel.textContent = `${RARITY_NAMES[affixSkill.rarity]} (${affixSkill.affixes.length}词条)`;
+      typeLabel.style.color = RARITY_COLORS[affixSkill.rarity] || '#fff';
+    } else {
+      typeLabel.textContent = type ? TYPE_NAMES[type] : '未知';
+    }
 
     card.appendChild(icon);
     card.appendChild(name);
     card.appendChild(keyLabel);
     card.appendChild(typeLabel);
 
-    // 缓存该类型隐藏池大小
-    if (type && type !== 'producer' && !poolSizes.has(type)) {
+    // 缓存该类型隐藏池大小（旧系统）
+    if (!isAffix && type && type !== 'producer' && !poolSizes.has(type)) {
       poolSizes.set(type, computeHiddenPool(type).length);
     }
 
     // 悬停提示
     card.addEventListener('mouseenter', (e: MouseEvent) => {
+      if (isAffix) return; // 词条制技能暂不用旧系统 tooltip
       showMorphTooltip(e, skillId, skillData.level, type, key, poolSizes.get(type ?? ''));
     });
     card.addEventListener('mousemove', (e: MouseEvent) => {
@@ -341,10 +509,16 @@ export function renderMetamorphPanel(container: HTMLElement): void {
     if (!isDisabled) {
       card.onclick = () => {
         hideMorphTooltip();
-        card.classList.add('morph-transforming');
-        setTimeout(() => {
-          performMetamorph(skillId, key, container);
-        }, 200);
+        if (isAffix) {
+          // 词条制 → 打开蜕变操作面板
+          renderAffixMutationPanel(skillId, key, container);
+        } else {
+          // 旧系统 → 隐藏池替换
+          card.classList.add('morph-transforming');
+          setTimeout(() => {
+            performMetamorph(skillId, key, container);
+          }, 200);
+        }
       };
     }
 

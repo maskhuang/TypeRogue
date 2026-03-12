@@ -38,6 +38,7 @@ export function createInitialState(): GameState {
     unstableResources: new Map(),
     affixSkills: new Map(),
     affixSkillStates: new Map(),
+    mutationACounts: new Map(),
     endlessUnlocked: false,
     resources: {
       base: 0,
