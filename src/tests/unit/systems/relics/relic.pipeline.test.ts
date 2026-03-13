@@ -45,7 +45,7 @@ function addRelic(id: string): void {
 // RELIC_MODIFIER_DEFS 工厂单元测试
 // ========================================
 describe('RELIC_MODIFIER_DEFS 工厂', () => {
-  it('所有职业专属遗物无 modifier 工厂（行为型）', () => {
+  it('玻璃大炮得分×2 改为 completeWord 直接翻倍，不走管道', () => {
     expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(0)
   })
 })

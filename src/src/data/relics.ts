@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 遗物数据
 // ============================================
-// 仅保留职业专属遗物
+// 职业专属遗物 + 通用遗物
 
 import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTypes'
 
@@ -151,7 +151,7 @@ export interface RelicData {
 export const MAX_RELIC_SLOTS = 12
 
 /**
- * 所有遗物数据（仅职业专属）
+ * 所有遗物数据（职业专属 + 通用遗物）
  */
 export const RELICS: Record<string, RelicData> = {
   // ==================== 职业初始遗物 ====================
@@ -270,6 +270,74 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '每个字母都有平等的共鸣权。',
   },
 
+  // ==================== 通用遗物：打字/输入系统 (Story 36.2) ====================
+
+  typing_wax_seal: {
+    id: 'typing_wax_seal',
+    name: '打字蜡封',
+    icon: '🕯️',
+    description: '每词首次打错免除惩罚。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'typing',
+    behaviorType: 'error_forgive_first',
+    flavor: '蜡封之下，第一次失误悄然消融。',
+  },
+
+  echo_thimble: {
+    id: 'echo_thimble',
+    name: '回声指套',
+    icon: '🧤',
+    description: '正确击键时 8% 概率触发双重击键（combo+1，技能额外触发一次）。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'typing',
+    behaviorType: 'double_keystroke',
+    flavor: '指尖的余韵，化为第二次敲击。',
+  },
+
+  little_helper: {
+    id: 'little_helper',
+    name: '小助手',
+    icon: '🤖',
+    description: '重复单词打完首字母后按 Tab 自动补全。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'typing',
+    behaviorType: 'autocomplete',
+    flavor: '这个词……我见过。',
+  },
+
+  rhythm_adapt: {
+    id: 'rhythm_adapt',
+    name: '节奏适应',
+    icon: '🎵',
+    description: '单词用时>3s加1秒时间；用时<3s该词得分+30%。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'typing',
+    behaviorType: 'rhythm_adapt',
+    flavor: '快与慢，皆有其奖赏。',
+  },
+
+  glass_cannon_v2: {
+    id: 'glass_cannon_v2',
+    name: '玻璃大炮',
+    icon: '💥',
+    description: '得分×2，打错即死。蜡封免除的错误不触发死亡。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'typing',
+    behaviorType: 'glass_cannon',
+    category: 'risk-reward',
+    flavor: '一击之间，荣耀与毁灭并存。',
+  },
+
 }
 
 // === Relic Modifier 工厂类型 ===
@@ -279,7 +347,7 @@ export type RelicModifierFactory = (
 ) => Modifier[]
 
 // === RELIC_MODIFIER_DEFS — 每个遗物的 Modifier 工厂 ===
-// 职业专属遗物均为行为型，无 Modifier 管道效果
+// 玻璃大炮得分×2 改为 completeWord() 中直接整词翻倍，不走管道
 export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {}
 
 // === T4 限制 Flag 映射表（已清空，无 T4 遗物） ===

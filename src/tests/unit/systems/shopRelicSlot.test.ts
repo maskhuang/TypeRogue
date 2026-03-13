@@ -27,15 +27,9 @@ describe('商店遗物槽位 (Q2)', () => {
   })
 
   it('槽位满时不生成遗物', () => {
-    // 填满遗物槽位
-    const allIds = getAllRelicIds()
-    for (let i = 0; i < allIds.length; i++) {
-      state.player.relics.add(allIds[i])
-    }
-    // 若实际遗物不够填满槽位，用占位 ID 补齐
-    let idx = 0
-    while (state.player.relics.size < MAX_RELIC_SLOTS) {
-      state.player.relics.add(`test_relic_${idx++}`)
+    // 填满遗物槽位（用占位 ID 精确填到 MAX_RELIC_SLOTS）
+    for (let i = 0; i < MAX_RELIC_SLOTS; i++) {
+      state.player.relics.add(`test_relic_${i}`)
     }
     expect(state.player.relics.size).toBe(MAX_RELIC_SLOTS)
     const item = generateShopRelicItem(1)

@@ -154,6 +154,7 @@ describe('遗物槽位系统 (Story 27.3)', () => {
         'masters_lexicon', 'resonance_mold',
         'ultimate_mutant_strain', 'fittest_survivors',
         'chaos_seed', 'word_scissors',
+        'glass_cannon_v2', // risk-reward 遗物，basePrice=0
       ])
       for (const relic of Object.values(RELICS)) {
         if (zeroPriceRelics.has(relic.id)) {

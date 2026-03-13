@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 遗物数据测试
 // ============================================
-// 仅测试职业专属遗物
+// 职业专属遗物 + 通用遗物
 
 import { describe, it, expect } from 'vitest'
 import {
@@ -17,8 +17,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 10 relics (class-exclusive only)', () => {
-      expect(Object.keys(RELICS)).toHaveLength(10)
+    it('should contain 15 relics (10 class-exclusive + 5 typing)', () => {
+      expect(Object.keys(RELICS)).toHaveLength(15)
     })
 
     it('每个图标唯一', () => {
@@ -40,24 +40,24 @@ describe('Relics Data', () => {
   })
 
   describe('Rarity distribution', () => {
-    it('should have 2 common relics (starter relics)', () => {
+    it('should have 4 common relics (2 starter + 2 typing)', () => {
       const commons = getRelicsByRarity('common')
-      expect(commons).toHaveLength(2)
+      expect(commons).toHaveLength(4)
     })
 
-    it('should have 2 rare relics', () => {
+    it('should have 3 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(2)
+      expect(rares).toHaveLength(3)
     })
 
-    it('should have 2 epic relics', () => {
+    it('should have 3 epic relics', () => {
       const epics = getRelicsByRarity('epic')
-      expect(epics).toHaveLength(2)
+      expect(epics).toHaveLength(3)
     })
 
-    it('should have 4 legendary relics', () => {
+    it('should have 5 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(4)
+      expect(legendaries).toHaveLength(5)
     })
   })
 
@@ -77,10 +77,18 @@ describe('Relics Data', () => {
       }
     })
 
-    it('all relics should be class-exclusive', () => {
+  })
+
+  describe('Universal relics', () => {
+    const WORDSMITH_RELICS = ['apprentice_notes', 'masters_lexicon', 'perpetual_queue', 'word_scissors', 'resonance_mold']
+    const METAMORPH_RELICS = ['primal_mutant', 'ultimate_mutant_strain', 'gene_stabilizer', 'chaos_seed', 'fittest_survivors']
+
+    it('non-class relics should have subsystem field', () => {
       const allClassRelics = new Set([...WORDSMITH_RELICS, ...METAMORPH_RELICS])
-      for (const id of Object.keys(RELICS)) {
-        expect(allClassRelics.has(id), `${id} should be class-exclusive`).toBe(true)
+      for (const [id, relic] of Object.entries(RELICS)) {
+        if (!allClassRelics.has(id)) {
+          expect(relic.subsystem, `${id} should have subsystem`).toBeTruthy()
+        }
       }
     })
   })
@@ -113,16 +121,17 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(10)
+      expect(ids).toHaveLength(15)
       expect(ids).toContain('apprentice_notes')
       expect(ids).toContain('primal_mutant')
+      expect(ids).toContain('typing_wax_seal')
     })
   })
 
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(10)
+      expect(relics).toHaveLength(15)
     })
   })
 

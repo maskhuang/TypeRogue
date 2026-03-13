@@ -27,6 +27,7 @@ import { showBossModifierPicker } from './bossModifierPicker';
 import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
+import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, calculateRhythmAdapt, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors } from './relics/TypingRelicBehaviors';
 import { filterEnchantmentCandidates, getEnchantmentSlotCount, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -124,6 +125,7 @@ let lastSkillMult = 0; // 技能倍率产出缓存（变化时弹跳）
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
 let leftHandTriggered = false; // T5遗物：本词左手技能是否触发过
 let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
+let wordStartScore = 0; // 玻璃大炮：记录词开始时总分（用于整词得分翻倍）
 
 // === 分数滚轮动画 (Story 31.4) ===
 const scoreRoller = new ScoreRoller();
@@ -188,6 +190,7 @@ function setWord(): void {
   state.resources.score = 0; // 重置即时加分
   state.wordPerfect = true;
   wordStartTime = state.time; // 记录词语开始时的剩余时间
+  wordStartScore = state.score; // 玻璃大炮：记录词开始时总分
   resetWordResourceTypes(); // 重置词级资源追踪
   leftHandTriggered = false; // 重置左右手追踪
   rightHandTriggered = false;
@@ -195,6 +198,9 @@ function setWord(): void {
   synergy.skillBaseScore = 0;
   synergy.letterBaseScore = 0;
   synergy.lastTriggeredSkillId = null;
+  // Story 36.2: 蜡封状态重置 + 单词追踪
+  resetWaxSeal();
+  trackWord(state.player.word);
   renderWord();
   if (isScrollActive()) initScrollWord(state.player.word.length);
   updateSettlementLive(); // 初始化结算面板
@@ -225,6 +231,19 @@ export function initInput(): void {
   // 使用新的 InputHandler + EventBus 架构
   eventBus.on('input:keypress', handleKeyPress);
   inputHandler.enable();
+  // Story 36.2: 注册打字子系统遗物行为
+  initTypingRelicBehaviors();
+  // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
+  document.addEventListener('keydown', handleTabKey);
+}
+
+/** Story 36.2: Tab 键处理（小助手自动补全） — 独立于 InputHandler */
+function handleTabKey(e: KeyboardEvent): void {
+  if (e.key !== 'Tab') return;
+  if (state.phase !== 'battle') return;
+  if (!canAutocomplete()) return;
+  e.preventDefault(); // 阻止浏览器默认焦点切换
+  performAutocomplete();
 }
 
 /**
@@ -249,6 +268,19 @@ function handleKeyPress(data: { key: string; timestamp: number }): void {
   } else {
     playerWrong();
     eventBus.emit('word:error', { key: k, expected: expect || '' });
+  }
+}
+
+/**
+ * Story 36.2: 小助手自动补全 — 按顺序执行剩余字母的 playerCorrect 逻辑
+ */
+function performAutocomplete(): void {
+  const word = state.player.word;
+  showFeedback('Tab ✓', '#00ff88');
+  while (state.player.index < word.length) {
+    const k = word[state.player.index].toLowerCase();
+    playerCorrect(k);
+    eventBus.emit('word:correct', { key: k, index: state.player.index - 1 });
   }
 }
 
@@ -309,6 +341,20 @@ function playerCorrect(k: string): void {
     if (state.time > timeBefore) skillProducedTime = true;
   }
 
+  // Story 36.2: 回声指套 — 8% 概率双重击键（combo+1 + 倍率更新 + 技能二次触发）
+  if (checkEchoThimble(random())) {
+    state.combo++;
+    state.maxCombo = Math.max(state.maxCombo, state.combo);
+    // 重新计算 multiplier 以反映新 combo
+    mult = state.player.baseMultiplier + state.combo * state.player.comboBonus;
+    mult += synergy.skillMultBonus;
+    state.multiplier = mult;
+    if (skillId) {
+      triggerSkill(skillId, k);
+    }
+    showFeedback('Echo!', '#4ecdc4');
+  }
+
   spawnParticles(letter, shouldTrigger ? 10 : 5, '#4ecdc4');
   playSound('type');
 
@@ -337,6 +383,15 @@ function playerWrong(): void {
   const el = getElements();
   const letter = el.word.children[state.player.index] as HTMLElement;
 
+  // Story 36.2: 打字蜡封 — 每词首次错误免除（在 on_error 管道之前检查）
+  if (checkWaxSealForgive()) {
+    letter?.classList.add('wrong');
+    setTimeout(() => letter?.classList.remove('wrong'), 150);
+    showFeedback('🕯️', '#ff9500');
+    playSound('wrong');
+    return; // 免除错误：不触发 on_error 管道、不断 combo、不触发玻璃大炮
+  }
+
   letter?.classList.add('wrong');
   setTimeout(() => letter?.classList.remove('wrong'), 150);
 
@@ -345,10 +400,16 @@ function playerWrong(): void {
 
   playSound('wrong');
 
-  // 遗物 on_error 管道解析（凤凰羽毛 + 玻璃大炮）
+  // Story 36.2: 玻璃大炮 — 打错即死（蜡封免除的错误已 return，不会到达这里）
+  if (hasGlassCannon()) {
+    showFeedback(t('battle.glass_break'), '#ff0000');
+    gameOver();
+    return;
+  }
+
+  // 遗物 on_error 管道解析（凤凰羽毛等）
   {
     let phoenixProtected = false;
-    let instantFailed = false;
     resolveRelicEffectsWithBehaviors('on_error', { hasError: true }, {
       onComboProtect: (probability: number) => {
         if (Math.random() < probability) {
@@ -357,17 +418,11 @@ function playerWrong(): void {
         return phoenixProtected;
       },
       onInstantFail: () => {
-        instantFailed = true;
+        // 玻璃大炮已在上方单独处理，此处保留接口兼容
       },
     });
     if (phoenixProtected) {
       showFeedback(t('battle.phoenix'), '#ff9500');
-      return;
-    }
-    // 玻璃大炮：打错且未被保护 → 立即失败
-    if (instantFailed) {
-      showFeedback(t('battle.glass_break'), '#ff0000');
-      gameOver();
       return;
     }
   }
@@ -436,6 +491,15 @@ function completeWord(): void {
   // 狂战士面具等遗物的 multiply 加成
   bonusMult += wordRelicResult.effects.multiply;
 
+  // Story 36.2: 节奏适应 — 根据单词用时给予时间或分数奖励
+  const rhythmResult = calculateRhythmAdapt(wordElapsed);
+  if (rhythmResult.timeBonus > 0) {
+    state.time += rhythmResult.timeBonus;
+    showFeedback(`🎵 +${rhythmResult.timeBonus}s`, '#00ff88');
+    bumpTimer();
+  }
+  bonusMult *= rhythmResult.scoreMult;
+
   const finalMult = mult * bonusMult;
   // 分数类技能已在触发时即时计入 state.score，此处仅结算 基数×倍率
   let finalWordScore = Math.floor(baseChips * finalMult);
@@ -455,6 +519,14 @@ function completeWord(): void {
 
   const prevScore = state.score;
   state.score += finalWordScore;
+
+  // Story 36.2: 玻璃大炮 — 整词得分翻倍（含技能直接加分 + 公式结算分）
+  if (hasGlassCannon()) {
+    const wordGain = state.score - wordStartScore;
+    state.score = wordStartScore + wordGain * 2;
+    finalWordScore = state.score - prevScore; // 更新显示用分数
+  }
+
   bumpScore(finalWordScore); // Story 31.4: 弹性缩放
 
   // Story 31.4: 高分慢动作结算（≥1000 分）
@@ -894,6 +966,9 @@ export async function startLevel(): Promise<void> {
   // 重置资源（在 timeMax 和 tempBuff 之后，确保 resources.time 使用正确的 timeMax）
   resetResources();
   state.resources.gold = 0;
+
+  // Story 36.2: 重置打字遗物关级别状态（已见单词等）
+  resetTypingRelicState();
 
   // 初始化战后统计
   state.battleStats = createBattleStats();

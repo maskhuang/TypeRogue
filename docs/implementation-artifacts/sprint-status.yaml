@@ -356,7 +356,7 @@ development_status:
   # Design: docs/design/relic-system.md
   epic-36: in-progress
   36-1-relic-infrastructure: done
-  36-2-typing-input-relics: backlog
+  36-2-typing-input-relics: done
   36-3-combo-multiplier-relics: backlog
   36-4-skill-system-relics: backlog
   36-5-enchantment-relics: backlog
