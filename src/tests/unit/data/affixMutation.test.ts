@@ -12,6 +12,7 @@ import type { AffixSkillInstance, SkillRuntimeState } from '../../../src/data/af
 import type { ResourceType } from '../../../src/core/types'
 import {
   mutate,
+  mutateSingle,
   getMutateCost,
   canMutate,
   invalidateQuestEnchantment,
@@ -359,5 +360,100 @@ describe('mutationApplied event', () => {
 
     const rt = state.affixSkillStates.get(skill.id)!
     expect(rt.apprenticeAccumulated).toBe(0)
+  })
+})
+
+// ============================================================
+// mutateSingle: 基因稳定器 — 单词条蜕变
+// ============================================================
+describe('mutateSingle (gene_stabilizer)', () => {
+  it('replaces only the targeted affix, others unchanged', () => {
+    const skill = makeOrangeSkill() // Crit + Pulse + Multiply
+    setupSkill(skill)
+    state.mutagenInventory = 10
+
+    const origTypes = skill.affixes.map(a => a.type)
+    const result = mutateSingle(skill.id, 0)
+    expect(result.success).toBe(true)
+
+    const updated = state.affixSkills.get(skill.id)!
+    expect(updated.affixes).toHaveLength(3)
+    // affixes[1] and affixes[2] should be unchanged
+    expect(updated.affixes[1].type).toBe(origTypes[1])
+    expect(updated.affixes[2].type).toBe(origTypes[2])
+  })
+
+  it('new affix excludes other existing affix types', () => {
+    const skill = makeOrangeSkill() // Crit + Pulse + Multiply
+    setupSkill(skill)
+    state.mutagenInventory = 10
+
+    const result = mutateSingle(skill.id, 0)
+    expect(result.success).toBe(true)
+
+    const updated = state.affixSkills.get(skill.id)!
+    // New affix[0] should not be Pulse or Multiply
+    expect(updated.affixes[0].type).not.toBe(AffixType.Pulse)
+    expect(updated.affixes[0].type).not.toBe(AffixType.Multiply)
+  })
+
+  it('costs same as full mutate (1 + count)', () => {
+    const skill = makeSkill()
+    setupSkill(skill)
+    state.mutagenInventory = 10
+
+    const result = mutateSingle(skill.id, 0)
+    expect(result.success).toBe(true)
+    expect(result.mutagenCost).toBe(1)
+    expect(state.mutagenInventory).toBe(9)
+  })
+
+  it('increments mutation count', () => {
+    const skill = makeSkill()
+    setupSkill(skill)
+    state.mutagenInventory = 20
+
+    mutateSingle(skill.id, 0)
+    expect(state.mutationACounts.get(skill.id)).toBe(1)
+  })
+
+  it('returns oldAffix and newAffix', () => {
+    const skill = makeSkill()
+    setupSkill(skill)
+    state.mutagenInventory = 10
+
+    const result = mutateSingle(skill.id, 0)
+    expect(result.success).toBe(true)
+    expect(result.oldAffix).toBeDefined()
+    expect(result.newAffix).toBeDefined()
+  })
+
+  it('fails for invalid affix index', () => {
+    const skill = makeSkill()
+    setupSkill(skill)
+    state.mutagenInventory = 10
+
+    const result = mutateSingle(skill.id, 5)
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('索引无效')
+  })
+
+  it('fails for white skill', () => {
+    const skill = makeWhiteSkill()
+    setupSkill(skill)
+    state.mutagenInventory = 10
+
+    const result = mutateSingle(skill.id, 0)
+    expect(result.success).toBe(false)
+  })
+
+  it('fails when mutagen insufficient', () => {
+    const skill = makeSkill()
+    setupSkill(skill)
+    state.mutagenInventory = 0
+
+    const result = mutateSingle(skill.id, 0)
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('变异素不足')
   })
 })

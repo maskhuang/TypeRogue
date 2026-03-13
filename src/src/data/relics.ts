@@ -637,22 +637,11 @@ export const RELICS: Record<string, RelicData> = {
     id: 'gene_stabilizer',
     name: '基因稳定器',
     icon: '🔒',
-    description: '本关再次蜕变同一键位免费。',
+    description: '解锁单词条蜕变（可只替换一个词条）。',
     rarity: 'rare',
     basePrice: 80,
     effects: [],
-    flavor: '稳定基因链，降低变异代价。',
-  },
-
-  catalyst_injector: {
-    id: 'catalyst_injector',
-    name: '催化注射器',
-    icon: '🩺',
-    description: '变异素→其他资源转化者读数+30%。',
-    rarity: 'rare',
-    basePrice: 80,
-    effects: [],
-    flavor: '一针催化，变异素释放更多能量。',
+    flavor: '稳定基因链，精准操控变异。',
   },
 
   chaos_seed: {
@@ -664,17 +653,6 @@ export const RELICS: Record<string, RelicData> = {
     basePrice: 60,
     effects: [],
     flavor: '混沌中播下的种子，总会结出意外的果实。',
-  },
-
-  abyss_eye: {
-    id: 'abyss_eye',
-    name: '深渊之眼',
-    icon: '👁️',
-    description: '蜕变台预览2个隐藏池技能。',
-    rarity: 'legendary',
-    basePrice: 0,
-    effects: [],
-    flavor: '凝视深渊，深渊亦凝视着你。',
   },
 
   fittest_survivors: {
@@ -713,22 +691,11 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '永不停歇的字母之轮。',
   },
 
-  refining_lens: {
-    id: 'refining_lens',
-    name: '精炼透镜',
-    icon: '🔬',
-    description: '碎片→其他资源转化者读数+30%。',
-    rarity: 'rare',
-    basePrice: 80,
-    effects: [],
-    flavor: '透镜下，碎片折射出更多价值。',
-  },
-
   word_scissors: {
     id: 'word_scissors',
     name: '拆词剪刀',
     icon: '✂️',
-    description: '可拆解已造词，返还50%碎片。',
+    description: '可拆解已造词，返还所有碎片。',
     rarity: 'rare',
     basePrice: 60,
     effects: [],
@@ -746,16 +713,6 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '每个字母都有平等的共鸣权。',
   },
 
-  fragment_prism: {
-    id: 'fragment_prism',
-    name: '碎片棱镜',
-    icon: '🔺',
-    description: '采集队列每格同时产出相邻字母碎片。',
-    rarity: 'legendary',
-    basePrice: 0,
-    effects: [],
-    flavor: '一束碎片光，折射出整个字母表。',
-  },
 }
 
 // === Relic Modifier 工厂类型 ===
@@ -1208,4 +1165,5 @@ export const DELETED_RELIC_IDS = [
   'golden_keyboard', 'void_heart', 'rhyme_master',
   'keyboard_storm', 'time_lord', 'time_crystal',
   'mono_affix',
+  'refining_lens', 'catalyst_injector', 'fragment_prism', 'abyss_eye',
 ]

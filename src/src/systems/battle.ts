@@ -889,12 +889,6 @@ export async function startLevel(): Promise<void> {
   if (state.player.relics.has('ultimate_mutant_strain')) {
     state.player.relicStates['ultimate_mutant_strain'] = 0;
   }
-  // 基因稳定器：清除已蜕变键位记录
-  if (state.player.relics.has('gene_stabilizer')) {
-    for (const key of Object.keys(state.player.relicStates)) {
-      if (key.startsWith('gene_stab_')) delete state.player.relicStates[key];
-    }
-  }
   // 适者生存：清除蜕变加成标记
   if (state.player.relics.has('fittest_survivors')) {
     for (const key of Object.keys(state.player.relicStates)) {

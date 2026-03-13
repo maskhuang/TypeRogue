@@ -9,7 +9,7 @@ import { showFeedback } from '../battle';
 import { renderBuildManager } from '../shop';
 import { AFFIX_NAMES, RARITY_COLORS, RARITY_NAMES } from '../../data/affixes';
 import {
-  mutate, getMutateCost, canMutate,
+  mutate, mutateSingle, getMutateCost, canMutate,
 } from '../../data/affixMutation';
 import { getMonoAffixCategory } from '../relics/RelicPipeline';
 import type { AffixCategory } from '../../data/affixes';
@@ -70,9 +70,12 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
   const btnArea = document.createElement('div');
   btnArea.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin:8px 0;';
 
+  const cost = getMutateCost(skillId);
+  const enabled = canMutate(skillId);
+  const hasGeneStabilizer = state.player.relics.has('gene_stabilizer');
+
+  // 全部蜕变按钮
   {
-    const cost = getMutateCost(skillId);
-    const enabled = canMutate(skillId);
     const btn = document.createElement('button');
     btn.className = 'morph-action-btn';
     btn.style.cssText = `padding:8px 12px;border:1px solid ${enabled ? '#e67e22' : '#555'};background:${enabled ? 'rgba(230,126,34,0.15)' : 'rgba(50,50,50,0.3)'};color:${enabled ? '#e67e22' : '#666'};border-radius:4px;cursor:${enabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
@@ -94,6 +97,33 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
       };
     }
     btnArea.appendChild(btn);
+  }
+
+  // 基因稳定器：单词条蜕变按钮
+  if (hasGeneStabilizer && skill.affixes.length > 0) {
+    for (let i = 0; i < skill.affixes.length; i++) {
+      const affix = skill.affixes[i];
+      const btn = document.createElement('button');
+      btn.className = 'morph-action-btn';
+      btn.style.cssText = `padding:8px 12px;border:1px solid ${enabled ? '#9b59b6' : '#555'};background:${enabled ? 'rgba(155,89,182,0.15)' : 'rgba(50,50,50,0.3)'};color:${enabled ? '#9b59b6' : '#666'};border-radius:4px;cursor:${enabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
+      btn.textContent = `🔒 蜕变 [${i}] ${AFFIX_NAMES[affix.type]} — 消耗 ${cost} 变异素`;
+      if (enabled) {
+        const idx = i;
+        btn.onclick = () => {
+          const monoCategory = getMonoAffixCategory() as AffixCategory | null;
+          const result = mutateSingle(skillId, idx, monoCategory ?? undefined);
+          if (result.success) {
+            playSound('skill');
+            showFeedback(`🔒 ${AFFIX_NAMES[result.oldAffix!.type]} → ${AFFIX_NAMES[result.newAffix!.type]}`, '#9b59b6', 1.2);
+            renderAffixMutationPanel(skillId, boundKey, container);
+            renderBuildManager();
+          } else {
+            showFeedback(result.error || '操作失败', '#ff6b6b');
+          }
+        };
+      }
+      btnArea.appendChild(btn);
+    }
   }
 
   container.appendChild(btnArea);

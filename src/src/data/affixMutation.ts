@@ -170,6 +170,71 @@ function sampleOneExcluding(
   return { type: last.key as AffixType }
 }
 
+// ===== 蜕变单词条（基因稳定器遗物） =====
+
+export function mutateSingle(skillId: string, affixIndex: number, allowedCategory?: AffixCategory): MutationResult {
+  const skill = state.affixSkills.get(skillId)
+  if (!skill) {
+    return { success: false, error: '技能不存在', mutagenCost: 0, mutagenRefund: 0 }
+  }
+  if (skill.affixes.length === 0) {
+    return { success: false, error: '无词条', mutagenCost: 0, mutagenRefund: 0 }
+  }
+  if (affixIndex < 0 || affixIndex >= skill.affixes.length) {
+    return { success: false, error: '词条索引无效', mutagenCost: 0, mutagenRefund: 0 }
+  }
+
+  const cost = getMutateCost(skillId)
+  if (state.mutagenInventory < cost) {
+    return { success: false, error: '变异素不足', mutagenCost: 0, mutagenRefund: 0 }
+  }
+
+  // 扣费
+  state.mutagenInventory -= cost
+
+  // 累计计数
+  state.mutationACounts.set(skillId, (state.mutationACounts.get(skillId) ?? 0) + 1)
+
+  // 保存旧词条
+  const oldAffix = skill.affixes[affixIndex]
+
+  // 排除该技能其他词条的类型
+  const excludeTypes = skill.affixes
+    .filter((_, i) => i !== affixIndex)
+    .map(a => a.type)
+
+  const sample = sampleOneExcluding(excludeTypes, allowedCategory)
+  if (!sample) {
+    state.mutagenInventory += cost
+    const counts = state.mutationACounts.get(skillId)!
+    state.mutationACounts.set(skillId, counts - 1)
+    return { success: false, error: '无可用词条类型', mutagenCost: 0, mutagenRefund: 0 }
+  }
+
+  const newAffix = rollAffixParams(sample.type, skill.resource, sample.convertVariant)
+  skill.affixes[affixIndex] = newAffix
+
+  // 任务附魔失效检查
+  if (oldAffix.type !== newAffix.type) {
+    invalidateQuestEnchantment(skillId, oldAffix.type)
+  }
+
+  // 更新名称和图标
+  skill.name = generateName(skill.resource, skill.affixes)
+  skill.icon = RESOURCE_ICONS[skill.resource] || '?'
+
+  // 广播 mutationApplied
+  emitMutationApplied()
+
+  return {
+    success: true,
+    oldAffix,
+    newAffix,
+    mutagenCost: cost,
+    mutagenRefund: 0,
+  }
+}
+
 // ===== 蜕变：将所有词条替换为池中随机新词条 =====
 
 export function mutate(skillId: string, allowedCategory?: AffixCategory): MutationResult {
