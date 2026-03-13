@@ -32,7 +32,9 @@ import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI, showRowMedalSelection } from './relicPicker';
 import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
 import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
+import { checkEliteHunterGoldMultiplier } from './relics/StageRelicBehaviors';
 import { getDiscountMultiplier, getRecycleSellMultiplier, getBlackMarketExtraSlots, canSmuggleFree, consumeSmuggleFree, isTimedAuction, startAuctionTimer, clearAuctionTimer, resetShopRelicState } from './relics/ShopRelicBehaviors';
+import { hasIntermissionFreeRefresh, consumeIntermissionFreeRefresh } from './relics/StageRelicBehaviors';
 import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
@@ -454,8 +456,10 @@ export function openShop(_won: boolean): void {
     relicGold = furnaceResult.bonusGold;
   }
 
-  state.gold += baseGold + skillGold + relicGold;
-  const battleGold = baseGold + skillGold + relicGold;
+  // Review H1: 精英猎手 — 精英关金币翻倍（同步 showGoldReward 显示）
+  const eliteMultiplier = checkEliteHunterGoldMultiplier();
+  const battleGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier);
+  state.gold += battleGold;
 
   el.shopLevelNum.textContent = String(state.level);
   // 周目≥2时在商店标题显示周目数
@@ -1406,6 +1410,12 @@ function refreshShop(): void {
   if (cost > 0 && consumeWordDealerFreeRefresh()) {
     cost = 0;
     showFeedback('🤑 免费刷新！', '#ffe66d');
+  }
+  // Story 36.10: 幕间准备 — 消费免费刷新
+  if (cost > 0 && hasIntermissionFreeRefresh()) {
+    consumeIntermissionFreeRefresh();
+    cost = 0;
+    showFeedback('🔋 幕间免费刷新！', '#88ddff');
   }
   if (cost > 0 && state.gold < cost) {
     showFeedback(t('shop.no_gold'), '#ff6b6b');

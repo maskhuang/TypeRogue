@@ -11,6 +11,7 @@ import { showScreen, startLevel, renderRelicDisplay } from './battle';
 import { getNextBattleNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { getBossModifierMeta } from '../data/bossModifiers';
 import { queryRelicFlag } from './relics/RelicPipeline';
+import { checkIntermission, grantIntermissionFreeRefreshes } from './relics/StageRelicBehaviors';
 import { playSound } from '../effects/sound';
 import { t, localizeItemName } from '../demo/demo-i18n';
 
@@ -19,6 +20,13 @@ let currentEvent: RestEvent | null = null;
 // === 打开休息关 ===
 export function openRestStage(): void {
   state.phase = 'rest';
+
+  // Story 36.10: 幕间准备 — 休息关额外金币 + 免费刷新
+  const intermission = checkIntermission();
+  if (intermission) {
+    state.gold += intermission.gold;
+    grantIntermissionFreeRefreshes(intermission.freeRefreshes);
+  }
 
   // 抽取事件
   currentEvent = drawRestEvent(state.usedRestEvents, state);

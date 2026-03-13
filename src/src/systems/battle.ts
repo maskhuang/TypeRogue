@@ -35,6 +35,7 @@ import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, incrementStorm
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTimeDew, incrementWordParity, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
+import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -258,6 +259,8 @@ export function initInput(): void {
   initResourceRelicBehaviors();
   // Story 36.9: 注册商店子系统遗物行为
   initShopRelicBehaviors();
+  // Story 36.10: 注册关卡进度子系统遗物行为
+  initStageRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
 }
@@ -852,8 +855,9 @@ function showGoldReward(onComplete: () => void): void {
     relicGold = furnaceResult.bonusGold;
   }
 
-  const totalGold = baseGold + skillGold + relicGold;
-
+  // Story 36.10: 精英猎手 — 精英关金币翻倍
+  const eliteMultiplier = checkEliteHunterGoldMultiplier();
+  const totalGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier);
 
   // 设置数值
   const goldSkillEl = document.getElementById('gold-skill');
@@ -1041,6 +1045,37 @@ function endLevel(): void {
       openShop(true);
     }, playRatingSound);
   } else {
+    // Story 36.10: 不死鸟 — 失败前检查复活
+    const phoenixResult = checkPhoenixRevive();
+    if (phoenixResult) {
+      consumePhoenix();
+      state.phase = 'battle';
+      // 精英/Boss 关刷新修饰器（endLevel 顶部已 cleanup，此处只需重新 apply）
+      if (phoenixResult.refreshModifiers) {
+        const stageType = getStageType(state.level);
+        if (stageType === 'elite') {
+          const modIdx = getEliteModifierIndex(state.level);
+          const modId = state.bossModifierPool[modIdx];
+          if (modId && !isModifierActive(modId)) {
+            applyModifier(modId, true);
+          }
+        } else if (stageType === 'boss') {
+          startBossRotation();
+        }
+      }
+      // Review C1: startTimer 会覆盖 state.time，必须在之后设置复活时间
+      startTimer();
+      state.time = phoenixResult.reviveTime;
+      state.resources.time = state.time;
+      // Review H2: endLevel 已 stopBGM，需重启战斗 BGM
+      startBGM('battle');
+      // Review M2: endLevel 已 stopScoreRoller，需重启分数滚轮
+      startScoreRoller();
+      renderRelicDisplay();
+      showFeedback('🐦‍🔥 不死鸟复活！', '#ff6600');
+      playSound('levelup');
+      return;
+    }
     trackEvent('demo_stage_fail', { stage: state.level, score: state.score });
     gameOver();
   }
@@ -1118,6 +1153,9 @@ export async function startLevel(): Promise<void> {
     if (buff.type === 'targetScore') state.targetScore = Math.floor(state.targetScore * buff.value);
   }
 
+  // Story 36.10: 续航电池 — 每关基础时间 +10s（tempBuff 之后、startTimer 之前）
+  state.timeMax += getEnduranceTimeBonus();
+
   // 重置资源（在 timeMax 和 tempBuff 之后，确保 resources.time 使用正确的 timeMax）
   resetResources();
   state.resources.gold = 0;
@@ -1135,6 +1173,8 @@ export async function startLevel(): Promise<void> {
   resetTopologyRelicState();
   // Story 36.8: 重置资源遗物关级别状态（时间露珠计数器 + 资源潮汐奇偶）
   resetResourceRelicBattleState();
+  // Story 36.10: 重置关卡进度遗物关级别状态（暖身操计时 + 幕间免费刷新）
+  resetStageRelicBattleState();
 
   // 标点解放遗物：设置遗物乱码激活状态
   setRelicGarbleActive(state.player.relics.has('punctuation_liberation'));

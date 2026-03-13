@@ -21,6 +21,7 @@ import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/
 import { getAdjacentPowerBonus, getSymmetryPactBonus, getRowMedalBonus } from './relics/TopologyRelicBehaviors';
 import { getShortSprintBonus } from './relics/WordRelicBehaviors';
 import { recordResourceProduction, getResourceTideBonus, resetWordResourceAmounts } from './relics/ResourceRelicBehaviors';
+import { getWarmUpBonus } from './relics/StageRelicBehaviors';
 
 
 // === 战后统计：记录技能触发 ===
@@ -194,6 +195,9 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
   // Story 36.7: 短词冲刺加算
   const shortSprintBonus = getShortSprintBonus(state.player.word.length);
   if (shortSprintBonus > 0) relicBonus += shortSprintBonus;
+  // Story 36.10: 暖身操加算（前 10 秒 +40%）
+  const warmUpBonus = getWarmUpBonus();
+  if (warmUpBonus > 0) relicBonus += warmUpBonus;
 
   // Story 36.4: 无冕之王 — Lv4+ 按 Lv3 值 × 1.6^(level-3) 缩放
   const ukScale = (hasUncrownedKing() && skill.level > 3 && skill.enchantmentIds.length === 0)

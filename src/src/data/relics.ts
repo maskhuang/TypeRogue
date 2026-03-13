@@ -795,6 +795,69 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '时间就是金钱，字面意义上的。',
   },
 
+  // ─── 关卡进度系统遗物 (Story 36.10) ───
+
+  warm_up: {
+    id: 'warm_up',
+    name: '暖身操',
+    icon: '🏋️',
+    description: '每关前10秒技能产出+40%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'stage',
+    flavor: '开局先热身，产出翻一番。',
+  },
+
+  intermission: {
+    id: 'intermission',
+    name: '幕间准备',
+    icon: '🔋',
+    description: '休息关额外获得+10金币和1次免费刷新。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'stage',
+    flavor: '幕间休息，养精蓄锐。',
+  },
+
+  endurance_battery: {
+    id: 'endurance_battery',
+    name: '续航电池',
+    icon: '🔌',
+    description: '每关基础时间+10秒。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'stage',
+    flavor: '充满电的战斗，永不断电。',
+  },
+
+  elite_hunter: {
+    id: 'elite_hunter',
+    name: '精英猎手',
+    icon: '🎯',
+    description: '精英关通关金币奖励翻倍。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'stage',
+    flavor: '猎杀精英，双倍回报。',
+  },
+
+  phoenix: {
+    id: 'phoenix',
+    name: '不死鸟',
+    icon: '🐦‍🔥',
+    description: '关卡失败后复活（时间重置10秒），消耗此遗物。精英/Boss关额外刷新修饰器。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'stage',
+    behaviorType: 'phoenix',
+    flavor: '浴火重生，涅槃一次。',
+  },
+
 }
 
 // === Relic Modifier 工厂类型 ===

@@ -162,6 +162,7 @@ describe('遗物槽位系统 (Story 27.3)', () => {
         'punctuation_liberation', // 传说级遗物，basePrice=0
         'universal_furnace', // 传说级遗物，basePrice=0
         'timed_auction', // 传说级遗物，basePrice=0
+        'phoenix', // 传说级遗物，basePrice=0
       ])
       for (const relic of Object.values(RELICS)) {
         if (zeroPriceRelics.has(relic.id)) {
