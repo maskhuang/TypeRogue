@@ -164,6 +164,7 @@ describe('遗物槽位系统 (Story 27.3)', () => {
         'timed_auction', // 传说级遗物，basePrice=0
         'phoenix', // 传说级遗物，basePrice=0
         'modifier_reversal', // 传说级遗物，basePrice=0
+        'score_black_hole', // 传说级遗物，basePrice=0
       ])
       for (const relic of Object.values(RELICS)) {
         if (zeroPriceRelics.has(relic.id)) {

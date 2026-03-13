@@ -34,6 +34,7 @@ import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRe
 import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
 import { checkEliteHunterGoldMultiplier } from './relics/StageRelicBehaviors';
 import { getBountyHunterGoldBonus } from './relics/BossModifierRelicBehaviors';
+import { getSRankTrophyGold } from './relics/ScoringRelicBehaviors';
 import { getDiscountMultiplier, getRecycleSellMultiplier, getBlackMarketExtraSlots, canSmuggleFree, consumeSmuggleFree, isTimedAuction, startAuctionTimer, clearAuctionTimer, resetShopRelicState } from './relics/ShopRelicBehaviors';
 import { hasIntermissionFreeRefresh, consumeIntermissionFreeRefresh } from './relics/StageRelicBehaviors';
 import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
@@ -461,7 +462,9 @@ export function openShop(_won: boolean): void {
   const eliteMultiplier = checkEliteHunterGoldMultiplier();
   // Story 36.11: 赏金猎人 — 永久修饰器数量×20%金币加成
   const bountyBonus = getBountyHunterGoldBonus();
-  const battleGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier * (1 + bountyBonus));
+  // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
+  const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
+  const battleGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier * (1 + bountyBonus)) + trophyGold;
   state.gold += battleGold;
 
   el.shopLevelNum.textContent = String(state.level);

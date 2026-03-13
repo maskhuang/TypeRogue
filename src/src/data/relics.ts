@@ -923,6 +923,70 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '混乱中诞生秩序，或秩序中诞生混乱。',
   },
 
+  // ===== 结算/评分系统 (scoring) =====
+
+  base_shield: {
+    id: 'base_shield',
+    name: '基数护盾',
+    icon: '🔰',
+    description: '每词结算分数不低于 20 分（在 Boss 修饰器之后应用）。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'scoring',
+    flavor: '再微小的光芒，也不会被黑暗完全吞噬。',
+  },
+
+  lenient_judge: {
+    id: 'lenient_judge',
+    name: '宽容评审',
+    icon: '⚖️',
+    description: '目标分数降低 10%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'scoring',
+    flavor: '评审官今天心情不错。',
+  },
+
+  s_rank_trophy: {
+    id: 's_rank_trophy',
+    name: 'S 级奖杯',
+    icon: '🏆',
+    description: '战斗评级 S +25 金币、SS +50、SSS +100。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'scoring',
+    flavor: '追求卓越，回报自来。',
+  },
+
+  snowball: {
+    id: 'snowball',
+    name: '雪球效应',
+    icon: '❄️',
+    description: '本关每词得分递增 5%（第 1 词 +0%，第 2 词 +5%，第 3 词 +10%…）。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'scoring',
+    behaviorType: 'snowball',
+    flavor: '小雪球滚下山坡，变成了雪崩。',
+  },
+
+  score_black_hole: {
+    id: 'score_black_hole',
+    name: '分数黑洞',
+    icon: '🌀',
+    description: '单词完成后分数不自动结算，累计到隐藏池。按回车键一次性结算——达标即通关，未达标即失败。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'scoring',
+    behaviorType: 'score_black_hole',
+    flavor: '万物坠入虚空，直到奇点爆发。',
+  },
+
 }
 
 // === Relic Modifier 工厂类型 ===

@@ -37,6 +37,7 @@ import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTim
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
+import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -264,8 +265,12 @@ export function initInput(): void {
   initStageRelicBehaviors();
   // Story 36.11: 注册Boss修饰器子系统遗物行为
   initBossModifierRelicBehaviors();
+  // Story 36.12: 注册结算/评分子系统遗物行为
+  initScoringRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
+  // Story 36.12: Enter 键独立监听（分数黑洞手动结算）
+  document.addEventListener('keydown', handleEnterKey);
 }
 
 /** Story 36.2: Tab 键处理（小助手自动补全） — 独立于 InputHandler */
@@ -275,6 +280,30 @@ function handleTabKey(e: KeyboardEvent): void {
   if (!canAutocomplete()) return;
   e.preventDefault(); // 阻止浏览器默认焦点切换
   performAutocomplete();
+}
+
+/** Story 36.12: Enter 键处理（分数黑洞手动结算） — 独立于 InputHandler */
+function handleEnterKey(e: KeyboardEvent): void {
+  if (e.key !== 'Enter') return;
+  if (state.phase !== 'battle') return;
+  if (!isBlackHoleActive() || hasBlackHoleSettled()) return;
+
+  const pool = settleBlackHole();
+  state.score += pool;
+  showFeedback('🕳️ 黑洞结算！', '#8800ff');
+
+  // 恢复 HUD 正常显示
+  updateHUD();
+
+  // 立即判定
+  if (state.score >= state.targetScore) {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    hideSettlement();
+    state.overkill = state.score - state.targetScore;
+    endLevel();
+  } else {
+    gameOver();
+  }
 }
 
 /**
@@ -345,10 +374,14 @@ function playerCorrect(k: string): void {
   state.resources.base += letterBase; // 写入资源
   state.wordScore += letterScore;
 
-  // Story 36.8: 分数磁铁 — 每打一个字+1分
+  // Story 36.8: 分数磁铁 — 每打一个字+1分（黑洞模式重定向到隐藏池）
   const magnetBonus = checkScoreMagnet();
   if (magnetBonus > 0) {
-    state.score += magnetBonus;
+    if (isBlackHoleActive()) {
+      accumulateBlackHole(magnetBonus);
+    } else {
+      state.score += magnetBonus;
+    }
   }
 
   // 字母升级加分：通过缓存的注册表解析 on_correct_keystroke
@@ -607,29 +640,41 @@ function completeWord(): void {
     incrementDiminishCount();
   }
 
+  // Story 36.12: 基数护盾 — 每词最低 20 分（Boss 修饰器之后）
+  finalWordScore = applyBaseShield(finalWordScore);
+  // Story 36.12: 雪球效应 — 每词得分递增 5%
+  finalWordScore = applySnowball(finalWordScore);
+
   // 显示 Balatro 风格完成动画
   showSettlementComplete(baseChips, finalMult, finalWordScore);
 
-  const prevScore = state.score;
-  state.score += finalWordScore;
+  // Story 36.12: 分数黑洞 — 累计到隐藏池，跳过分数结算和胜利检查
+  let milestone: ReturnType<typeof checkMilestone> = null;
+  if (isBlackHoleActive()) {
+    const poolScore = hasGlassCannon() ? finalWordScore * 2 : finalWordScore;
+    accumulateBlackHole(poolScore);
+  } else {
+    const prevScore = state.score;
+    state.score += finalWordScore;
 
-  // Story 36.2: 玻璃大炮 — 整词得分翻倍（含技能直接加分 + 公式结算分）
-  if (hasGlassCannon()) {
-    const wordGain = state.score - wordStartScore;
-    state.score = wordStartScore + wordGain * 2;
-    finalWordScore = state.score - prevScore; // 更新显示用分数
+    // Story 36.2: 玻璃大炮 — 整词得分翻倍（含技能直接加分 + 公式结算分）
+    if (hasGlassCannon()) {
+      const wordGain = state.score - wordStartScore;
+      state.score = wordStartScore + wordGain * 2;
+      finalWordScore = state.score - prevScore; // 更新显示用分数
+    }
+
+    bumpScore(finalWordScore); // Story 31.4: 弹性缩放
+
+    // Story 31.4: 高分慢动作结算（≥1000 分）
+    if (finalWordScore >= 1000) {
+      triggerSlowMotion(300, 0.7);
+    }
+
+    // Story 31.5: 分数里程碑庆祝
+    milestone = checkMilestone(prevScore, state.score);
+    if (milestone) showMilestoneCelebration(milestone);
   }
-
-  bumpScore(finalWordScore); // Story 31.4: 弹性缩放
-
-  // Story 31.4: 高分慢动作结算（≥1000 分）
-  if (finalWordScore >= 1000) {
-    triggerSlowMotion(300, 0.7);
-  }
-
-  // Story 31.5: 分数里程碑庆祝
-  const milestone = checkMilestone(prevScore, state.score);
-  if (milestone) showMilestoneCelebration(milestone);
 
   // 战后统计
   if (state.battleStats) {
@@ -721,8 +766,8 @@ function completeWord(): void {
   // 重置词语基础分
   wordBaseScore = 0;
 
-  // 检查是否达到目标分数 - 提前结束关卡
-  if (state.score >= state.targetScore) {
+  // 检查是否达到目标分数 - 提前结束关卡（黑洞模式跳过，由 Enter 键手动判定）
+  if (!isBlackHoleActive() && state.score >= state.targetScore) {
     // 立即停止计时器，防止评分动画期间时间继续走
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     // 隐藏结算面板，防止分数显示继续跳动
@@ -868,7 +913,9 @@ function showGoldReward(onComplete: () => void): void {
   const eliteMultiplier = checkEliteHunterGoldMultiplier();
   // Story 36.11: 赏金猎人 — 永久修饰器数量×20%金币加成
   const bountyBonus = getBountyHunterGoldBonus();
-  const totalGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier * (1 + bountyBonus));
+  // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
+  const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
+  const totalGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier * (1 + bountyBonus)) + trophyGold;
 
   // 设置数值
   const goldSkillEl = document.getElementById('gold-skill');
@@ -1157,6 +1204,9 @@ export async function startLevel(): Promise<void> {
     state.targetScore = DEMO_TARGET_SCORES[state.level];
   }
 
+  // Story 36.12: 宽容评审 — 目标分数降低 10%（tempBuff 之前）
+  state.targetScore = applyLenientJudge(state.targetScore);
+
   // 应用活跃临时 buff
   for (const buff of state.tempBuffs) {
     if (buff.type === 'multiplier') state.player.baseMultiplier += buff.value;
@@ -1188,6 +1238,8 @@ export async function startLevel(): Promise<void> {
   resetStageRelicBattleState();
   // Story 36.11: 重置Boss修饰器遗物关级别状态（屏障标记 + 混沌轮盘计数）
   resetBossModifierRelicBattleState();
+  // Story 36.12: 重置结算/评分遗物关级别状态（雪球序号 + 黑洞池）
+  resetScoringRelicBattleState();
 
   // 标点解放遗物：设置遗物乱码激活状态
   setRelicGarbleActive(state.player.relics.has('punctuation_liberation'));
@@ -1491,24 +1543,34 @@ function gameOver(): void {
 export function updateHUD(): void {
   const el = getElements();
   el.combo.textContent = String(state.combo);
-  scoreRoller.setTarget(Math.floor(state.score)); // Story 31.4: 平滑滚动
-  el.score.textContent = String(scoreRoller.getValue()); // Review M1: rAF 未启动时 fallback
+  // Story 36.12: 分数黑洞 — HUD 分数显示 "???"（未结算时隐藏真实分数+进度色+tier class）
+  const blackHoleHidden = isBlackHoleActive() && !hasBlackHoleSettled();
+  if (blackHoleHidden) {
+    el.score.textContent = '???';
+    el.score.style.color = '#fff';
+  } else {
+    scoreRoller.setTarget(Math.floor(state.score)); // Story 31.4: 平滑滚动
+    el.score.textContent = String(scoreRoller.getValue()); // Review M1: rAF 未启动时 fallback
+  }
   el.targetScore.textContent = String(state.targetScore);
   el.multiplier.textContent = state.multiplier.toFixed(1);
 
-  // 分数进度颜色（基础）
-  const progress = state.score / state.targetScore;
-  if (progress >= 1) {
-    el.score.style.color = '#4ecdc4';
-  } else if (progress >= 0.7) {
-    el.score.style.color = '#ffe66d';
-  } else {
-    el.score.style.color = '#fff';
+  // 分数进度颜色（基础）— 黑洞隐藏时跳过
+  if (!blackHoleHidden) {
+    const progress = state.score / state.targetScore;
+    if (progress >= 1) {
+      el.score.style.color = '#4ecdc4';
+    } else if (progress >= 0.7) {
+      el.score.style.color = '#ffe66d';
+    } else {
+      el.score.style.color = '#fff';
+    }
   }
 
   // 分数颜色分级 — 高分时覆盖进度颜色 (Story 31.1)
   // 仅在 tier 变化时更新 class，避免重启 CSS 动画 (Review M1)
-  const scoreTier = getScoreTier(state.score);
+  // 黑洞隐藏时清除 tier class
+  const scoreTier = blackHoleHidden ? '' : getScoreTier(state.score);
   if (scoreTier !== lastScoreTier) {
     el.score.classList.remove(...SCORE_TIER_CLASSES);
     if (scoreTier) el.score.classList.add(scoreTier);
