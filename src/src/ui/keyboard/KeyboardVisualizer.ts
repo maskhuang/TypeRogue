@@ -78,17 +78,22 @@ export class KeyboardVisualizer extends Container {
   }
 
   /**
-   * 获取键盘可视化宽度
-   * 第一行 10 个键 + 间隙
+   * 获取键盘可视化宽度（含行偏移和扩展键位）
    */
   getKeyboardWidth(): number {
-    const rowLength = KeyboardVisualizer.ROWS[0].length
-    return rowLength * KeyVisual.KEY_SIZE + (rowLength - 1) * KeyVisual.KEY_GAP
+    const hasPunctuationRelic = state?.player?.relics?.has('punctuation_liberation') ?? false
+    const rows = hasPunctuationRelic ? KeyboardVisualizer.EXTENDED_ROWS : KeyboardVisualizer.ROWS
+    let maxRight = 0
+    rows.forEach((row, rowIndex) => {
+      const offsetX = KeyboardVisualizer.ROW_OFFSETS[rowIndex] * (KeyVisual.KEY_SIZE + KeyVisual.KEY_GAP)
+      const rowRight = offsetX + row.length * KeyVisual.KEY_SIZE + (row.length - 1) * KeyVisual.KEY_GAP
+      if (rowRight > maxRight) maxRight = rowRight
+    })
+    return maxRight
   }
 
   /**
    * 获取键盘可视化高度
-   * 3 行 + 间隙
    */
   getKeyboardHeight(): number {
     const rowCount = KeyboardVisualizer.ROWS.length

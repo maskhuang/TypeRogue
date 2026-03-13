@@ -19,7 +19,7 @@ import {
   isPunctuationRelicActive,
 } from '../../../../src/systems/relics/WordRelicBehaviors'
 import { clearBehaviorHandlers, getRegisteredBehaviors } from '../../../../src/systems/relics/RelicPipeline'
-import { garbleWord, setRelicGarbleActive, isRelicGarbleActive, isGarbleActive, getActiveGarbleChars } from '../../../../src/data/bossModifiers'
+import { garbleWord, setRelicGarbleActive, isRelicGarbleActive, isGarbleActive, getActiveGarbleChars, transformWordForModifier } from '../../../../src/data/bossModifiers'
 import { RELIC_GARBLE_CHARS, PUNCTUATION_KEYS } from '../../../../src/core/constants'
 import { isSymmetric, isAdjacent, ROW_MAP, COLUMN_MAP, FINGER_MAP, HAND_MAP } from '../../../../src/data/keyboardTopology'
 
@@ -326,6 +326,42 @@ describe('单词/词库系统遗物行为 (Story 36.7)', () => {
       const timeReward = checkLongWordMaster(6)
       expect(goldReward).toBe(WORD_COLLECTION_GOLD)
       expect(timeReward).toBe(LONG_WORD_TIME_BONUS)
+    })
+  })
+
+  // === 遗物乱码优先级 ===
+  describe('遗物乱码 vs Boss 乱码优先级', () => {
+    it('遗物乱码激活时 transformWordForModifier 仅使用遗物字符集', () => {
+      setRelicGarbleActive(true)
+      // 多次运行以提高覆盖率（随机插入）
+      for (let i = 0; i < 20; i++) {
+        const result = transformWordForModifier('HELLO')
+        const nonLetters = result.split('').filter(c => !/[A-Z]/.test(c))
+        for (const ch of nonLetters) {
+          expect(RELIC_GARBLE_CHARS).toContain(ch)
+        }
+      }
+      setRelicGarbleActive(false)
+    })
+  })
+
+  // === 词汇收藏序列化 (AC6) ===
+  describe('词汇收藏序列化 (AC6)', () => {
+    it('collectedWords 存储在 state.player 中', () => {
+      state.player.relics.add('word_collection')
+      checkWordCollection('HELLO')
+      checkWordCollection('WORLD')
+      expect(state.player.collectedWords.has('HELLO')).toBe(true)
+      expect(state.player.collectedWords.has('WORLD')).toBe(true)
+      expect(state.player.collectedWords.size).toBe(2)
+    })
+
+    it('resetWordRelicRunState 清空 state.player.collectedWords', () => {
+      state.player.relics.add('word_collection')
+      checkWordCollection('TEST')
+      expect(state.player.collectedWords.size).toBe(1)
+      resetWordRelicRunState()
+      expect(state.player.collectedWords.size).toBe(0)
     })
   })
 })

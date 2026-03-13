@@ -133,6 +133,9 @@ export interface RunStateData {
 
   /** 蜕变A累计次数（35.10） */
   mutationACounts: Map<string, number>
+
+  /** 词汇收藏：本 Run 已完成单词集合（36.7） */
+  collectedWords: Set<string>
 }
 
 /**
@@ -188,6 +191,7 @@ export class RunState {
       affixSkills: new Map(),
       affixSkillStates: new Map(),
       mutationACounts: new Map(),
+      collectedWords: new Set(),
     }
   }
 
@@ -534,6 +538,7 @@ export class RunState {
         return serializeSkill(skill, rt)
       }),
       mutationACounts: Object.fromEntries(this.data.mutationACounts),
+      collectedWords: Array.from(this.data.collectedWords),
     }
   }
 
@@ -625,6 +630,10 @@ export class RunState {
     Object.entries(mutationAEntries).forEach(([skillId, count]) => {
       runState.data.mutationACounts.set(skillId, count as number)
     })
+
+    // 恢复词汇收藏（36.7）
+    const savedWords: string[] = (parsed as any).collectedWords || []
+    savedWords.forEach(w => runState.data.collectedWords.add(w))
 
     return runState
   }

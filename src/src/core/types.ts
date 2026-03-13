@@ -235,6 +235,7 @@ export interface PlayerState {
   wordBonus: number;
   timeBonus: number;
   evolvedSkills: Map<string, string>;  // skillId → branchId (legacy, kept for save compat)
+  collectedWords: Set<string>;  // 词汇收藏：本 Run 已完成单词（36.7）
 }
 
 export interface ShopItem {

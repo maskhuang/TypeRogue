@@ -672,5 +672,36 @@ describe('RunState', () => {
       expect(restored.getRelics()[0]).toBe('test_relic_0')
       expect(restored.getRelics()[11]).toBe('test_relic_11')
     })
+
+    it('序列化/反序列化应保持词汇收藏 (AC6)', () => {
+      runState.startRun()
+      runState.data.collectedWords.add('HELLO')
+      runState.data.collectedWords.add('WORLD')
+
+      const serialized = runState.serialize()
+      const jsonString = JSON.stringify(serialized)
+      const parsed = JSON.parse(jsonString)
+      const restored = RunState.deserialize(parsed)
+
+      expect(restored.data.collectedWords.size).toBe(2)
+      expect(restored.data.collectedWords.has('HELLO')).toBe(true)
+      expect(restored.data.collectedWords.has('WORLD')).toBe(true)
+    })
+
+    it('deserialize() 兼容旧存档无 collectedWords 字段', () => {
+      const fakeData = {
+        skills: [],
+        bindings: {},
+        relics: [],
+        gold: 0,
+        currentStage: 1,
+        currentAct: 1,
+        isActive: true,
+        stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, totalGoldEarned: 0 },
+        // 无 collectedWords 字段
+      }
+      const restored = RunState.deserialize(fakeData)
+      expect(restored.data.collectedWords.size).toBe(0)
+    })
   })
 })

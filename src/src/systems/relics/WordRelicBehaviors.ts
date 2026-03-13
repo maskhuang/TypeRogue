@@ -14,21 +14,18 @@ export const SHORT_SPRINT_RATE = 0.20
 /** 长词达人：≥6字母单词完成时的时间奖励（秒） */
 export const LONG_WORD_TIME_BONUS = 1
 
-// === 模块级状态（Run 级别） ===
-let _collectedWords: Set<string> = new Set()
-
 // === 词汇收藏 (word_collection) ===
 
 /**
  * 检查词汇收藏触发
  * 持有 word_collection + 本 Run 首次完成该单词 → WORD_COLLECTION_GOLD，否则 0
- * 同时将单词加入已收藏集合
+ * 同时将单词加入已收藏集合（存储在 RunStateData 中，可序列化）
  */
 export function checkWordCollection(word: string): number {
   if (!state.player.relics.has('word_collection')) return 0
   const upper = word.toUpperCase()
-  if (_collectedWords.has(upper)) return 0
-  _collectedWords.add(upper)
+  if (state.player.collectedWords.has(upper)) return 0
+  state.player.collectedWords.add(upper)
   return WORD_COLLECTION_GOLD
 }
 
@@ -36,7 +33,7 @@ export function checkWordCollection(word: string): number {
  * 获取已收藏单词集合（测试用）
  */
 export function getCollectedWords(): ReadonlySet<string> {
-  return _collectedWords
+  return state.player.collectedWords
 }
 
 // === 短词冲刺 (short_sprint) ===
@@ -100,7 +97,7 @@ export function isPunctuationRelicActive(): boolean {
  * 重置 Run 级别状态 — 在 startRun() 中调用
  */
 export function resetWordRelicRunState(): void {
-  _collectedWords = new Set()
+  state.player.collectedWords.clear()
 }
 
 // === 注册所有行为 ===

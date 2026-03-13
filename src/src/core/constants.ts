@@ -40,7 +40,7 @@ export const ADJACENT_KEYS: Record<string, string[]> = {
   h: ['g', 'y', 'u', 'j', 'b', 'n'],
   j: ['h', 'u', 'i', 'k', 'n', 'm'],
   k: ['j', 'i', 'o', 'l', 'm', ','],
-  l: ['k', 'o', 'p', ';', ','],
+  l: ['k', 'o', 'p', ';', ',', '.'],
   z: ['a', 's', 'x'],
   x: ['z', 's', 'd', 'c'],
   c: ['x', 'd', 'f', 'v'],

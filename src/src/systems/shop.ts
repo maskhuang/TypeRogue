@@ -1303,7 +1303,7 @@ function refreshShop(): void {
     return;
   }
   state.gold -= cost;
-  if (cost > 0) state.shop.refreshCount++;
+  state.shop.refreshCount++;
   updateGoldDisplay();
   playSound('buy');
 

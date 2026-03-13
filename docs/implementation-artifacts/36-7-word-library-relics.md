@@ -18,7 +18,7 @@ so that my word deck composition becomes a meaningful strategic lever beyond jus
 
 4. **AC4 — 词语经销商 (word_dealer)**: 出售词语后设置 `relicStates['word_dealer'] = 1`；下次商店刷新时检测此 flag，若为 1 则刷新不扣金币并清除 flag。
 
-5. **AC5 — 标点解放 (punctuation_liberation)**: ⚠️ 标记为 `TODO-LATER`。仅创建遗物数据定义，不实现完整逻辑。description 中注明"（即将推出）"。
+5. **AC5 — 标点解放 (punctuation_liberation)**: 完整实现。解锁 `;,./ ` 四个标点键位（可绑定技能），词语中随机混入标点。复用 Boss 乱码系统（遗物优先），扩展键盘拓扑（30 键）、商店 UI、战斗集成。
 
 6. **AC6 — 词汇收藏跨关持久化**: 词汇收藏的 Set 在 Run 内跨关保持（battle 1 收集的词在 battle 2 不再触发金币），Run 开始时清空。有测试验证跨关行为。
 
