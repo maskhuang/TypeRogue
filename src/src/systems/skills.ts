@@ -18,6 +18,7 @@ import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { shouldBlockMultiplierResource, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, hasUncrownedKing, UK_GROWTH_RATE } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
+import { getAdjacentPowerBonus, getSymmetryPactBonus, getRowMedalBonus } from './relics/TopologyRelicBehaviors';
 
 
 // === 战后统计：记录技能触发 ===
@@ -171,7 +172,7 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     questStackIncrement: getQuestStackIncrement(),
   };
 
-  // Story 36.3 + 36.4: 遗物加算合并（倍率棱镜 + 首发强化 + 少而精）
+  // Story 36.3 + 36.4 + 36.6: 遗物加算合并（倍率棱镜 + 首发强化 + 少而精 + 拓扑系遗物）
   let relicBonus = 0;
   const prismBonus = getMultiplierPrismBonus();
   if (prismBonus > 0) relicBonus += prismBonus;
@@ -179,6 +180,13 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
   if (firstStrikeBonus > 0) relicBonus += firstStrikeBonus;
   const lessIsMoreBonus = getLessIsMoreBonus();
   if (lessIsMoreBonus > 0) relicBonus += lessIsMoreBonus;
+  // Story 36.6: 键盘拓扑遗物加算
+  const adjacentBonus = getAdjacentPowerBonus(triggerKey);
+  if (adjacentBonus > 0) relicBonus += adjacentBonus;
+  const symmetryBonus = getSymmetryPactBonus(triggerKey);
+  if (symmetryBonus > 0) relicBonus += symmetryBonus;
+  const rowBonus = getRowMedalBonus(triggerKey);
+  if (rowBonus > 0) relicBonus += rowBonus;
 
   // Story 36.4: 无冕之王 — Lv4+ 按 Lv3 值 × 1.6^(level-3) 缩放
   const ukScale = (hasUncrownedKing() && skill.level > 3 && skill.enchantmentIds.length === 0)

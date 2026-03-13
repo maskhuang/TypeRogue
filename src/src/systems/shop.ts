@@ -29,7 +29,7 @@ import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
-import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
+import { generateRelicCandidates, showRelicReplaceUI, showRowMedalSelection } from './relicPicker';
 import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
@@ -1205,6 +1205,10 @@ function purchaseShopRelicItem(index: number): void {
       const upgraded = applyTrainingManual();
       if (upgraded > 0) showFeedback(`📖 ${upgraded}个技能升至Lv.2!`, '#00ff88');
     }
+    // Story 36.6: 行会勋章 — 购买时选择加成行
+    if (relicId === 'row_medal') {
+      showRowMedalSelection(showFeedback);
+    }
     state.shop.items.splice(index, 1);
     renderRelicDisplay();
     renderUnifiedShop();
@@ -1224,6 +1228,10 @@ function purchaseShopRelicItem(index: number): void {
         if (relicId === 'training_manual') {
           const upgraded = applyTrainingManual();
           if (upgraded > 0) showFeedback(`📖 ${upgraded}个技能升至Lv.2!`, '#00ff88');
+        }
+        // Story 36.6: 行会勋章 — 替换购买时也选择加成行
+        if (relicId === 'row_medal') {
+          showRowMedalSelection(showFeedback);
         }
       }
       const m = document.getElementById('relic-picker-modal');

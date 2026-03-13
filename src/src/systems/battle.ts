@@ -31,6 +31,7 @@ import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, c
 import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmortalCombo, shouldBlockMultiplierResource, syncRhythmDoctorMilestone, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing } from './relics/SkillRelicBehaviors';
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors } from './relics/EnchantmentRelicBehaviors';
+import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, incrementStormWordCount, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -203,6 +204,8 @@ function setWord(): void {
   synergy.skillBaseScore = 0;
   synergy.letterBaseScore = 0;
   synergy.lastTriggeredSkillId = null;
+  // Story 36.6: 双手协奏手追踪重置
+  resetDualConcertoHand();
   // Story 36.2: 蜡封状态重置 + 单词追踪
   resetWaxSeal();
   trackWord(state.player.word);
@@ -244,6 +247,8 @@ export function initInput(): void {
   initSkillRelicBehaviors();
   // Story 36.5: 注册附魔子系统遗物行为
   initEnchantmentRelicBehaviors();
+  // Story 36.6: 注册拓扑子系统遗物行为
+  initTopologyRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
 }
@@ -345,6 +350,12 @@ function playerCorrect(k: string): void {
     const hand = HAND_MAP[k];
     if (hand === 'left') leftHandTriggered = true;
     else if (hand === 'right') rightHandTriggered = true;
+    // Story 36.6: 双手协奏 — 左右手交替击键加时间
+    const concertoBonus = checkDualConcerto(k);
+    if (concertoBonus > 0) {
+      state.time += concertoBonus;
+      showFeedback(`🎹 +${concertoBonus}秒`, '#00ff88');
+    }
     const scoreBefore = state.score;
     const timeBefore = state.time;
     triggerSkill(skillId, k);
@@ -610,6 +621,16 @@ function completeWord(): void {
     score: finalWordScore,
     perfect: state.wordPerfect
   });
+
+  // Story 36.6: 全键风暴 — 前 3 词完成后触发未命中技能
+  incrementStormWordCount();
+  const stormTargets = checkKeyStorm(state.player.word, random);
+  for (const target of stormTargets) {
+    triggerSkill(target.skillId, target.key);
+  }
+  if (stormTargets.length > 0) {
+    showFeedback(`⛈️ ×${stormTargets.length}`, '#aa88ff');
+  }
 
   // 词语完成 - 所有字母一起弹跳
   Array.from(el.word.children).forEach((letter, i) => {
@@ -1039,6 +1060,8 @@ export async function startLevel(): Promise<void> {
   resetSkillRelicState();
   // Story 36.5: 重置附魔遗物关级别状态
   resetEnchantmentRelicState();
+  // Story 36.6: 重置拓扑遗物关级别状态（双手协奏手追踪 + 全键风暴计数）
+  resetTopologyRelicState();
 
   // 初始化战后统计
   state.battleStats = createBattleStats();

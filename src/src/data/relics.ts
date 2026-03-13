@@ -534,6 +534,71 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '锚定更多附魔，代价是日益攀升的物价。',
   },
 
+  // ==================== 键盘拓扑系统遗物 (Story 36.6) ====================
+
+  adjacent_power: {
+    id: 'adjacent_power',
+    name: '邻键之力',
+    icon: '🤝',
+    description: '技能触发时，每个相邻已装备技能使产出+6%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'topology',
+    flavor: '键盘上的邻居守望相助。',
+  },
+
+  symmetry_pact: {
+    id: 'symmetry_pact',
+    name: '对称契约',
+    icon: '🪞',
+    description: '对称位两技能都装备时，各自产出+15%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'topology',
+    flavor: '左右呼应，对称之美蕴含力量。',
+  },
+
+  row_medal: {
+    id: 'row_medal',
+    name: '行会勋章',
+    icon: '🎖️',
+    description: '选一行（QWER/ASDF/ZXCV），该行技能产出+25%。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'topology',
+    behaviorType: 'row_select',
+    flavor: '加入行会，享受专属加成。',
+  },
+
+  dual_concerto: {
+    id: 'dual_concerto',
+    name: '双手协奏',
+    icon: '🎹',
+    description: '每当交替击键（左右手切换）时，+0.5s时间。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'topology',
+    behaviorType: 'hand_alternation',
+    flavor: '双手在键盘上翩翩起舞。',
+  },
+
+  key_storm: {
+    id: 'key_storm',
+    name: '全键风暴',
+    icon: '⛈️',
+    description: '每关前3个单词完成时，随机触发3个未被该词命中的已装备技能。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'topology',
+    behaviorType: 'key_storm',
+    flavor: '风暴席卷整个键盘，每个键都不会被遗忘。',
+  },
+
 }
 
 // === Relic Modifier 工厂类型 ===

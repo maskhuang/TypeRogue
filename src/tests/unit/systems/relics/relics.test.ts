@@ -17,8 +17,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 30 relics (10 class-exclusive + 5 typing + 5 combo + 5 skill + 5 enchantment)', () => {
-      expect(Object.keys(RELICS)).toHaveLength(30)
+    it('should contain 35 relics (10 class-exclusive + 5 typing + 5 combo + 5 skill + 5 enchantment + 5 topology)', () => {
+      expect(Object.keys(RELICS)).toHaveLength(35)
     })
 
     it('每个图标唯一', () => {
@@ -40,24 +40,24 @@ describe('Relics Data', () => {
   })
 
   describe('Rarity distribution', () => {
-    it('should have 10 common relics (2 starter + 2 typing + 2 combo + 2 skill + 2 enchantment)', () => {
+    it('should have 12 common relics (2 starter + 2 typing + 2 combo + 2 skill + 2 enchantment + 2 topology)', () => {
       const commons = getRelicsByRarity('common')
-      expect(commons).toHaveLength(10)
+      expect(commons).toHaveLength(12)
     })
 
-    it('should have 6 rare relics', () => {
+    it('should have 7 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(6)
+      expect(rares).toHaveLength(7)
     })
 
-    it('should have 6 epic relics', () => {
+    it('should have 7 epic relics', () => {
       const epics = getRelicsByRarity('epic')
-      expect(epics).toHaveLength(6)
+      expect(epics).toHaveLength(7)
     })
 
-    it('should have 8 legendary relics', () => {
+    it('should have 9 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(8)
+      expect(legendaries).toHaveLength(9)
     })
   })
 
@@ -121,7 +121,7 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(30)
+      expect(ids).toHaveLength(35)
       expect(ids).toContain('apprentice_notes')
       expect(ids).toContain('primal_mutant')
       expect(ids).toContain('typing_wax_seal')
@@ -131,7 +131,7 @@ describe('Relics Data', () => {
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(30)
+      expect(relics).toHaveLength(35)
     })
   })
 

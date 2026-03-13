@@ -11,6 +11,7 @@ import { renderRelicDisplay, showFeedback } from './battle';
 import { playSound } from '../effects/sound';
 import { random } from '../core/seededRandom';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
+import { setRowMedalRow } from './relics/TopologyRelicBehaviors';
 
 // === 加权遗物类型 ===
 export interface RelicWeights {
@@ -160,6 +161,8 @@ export function showRelicPicker(onComplete: () => void, weights?: RelicWeights):
         addRelicWithCapacity(relicId);
         showFeedback(t('shop.got_relic', { icon: relic.icon, name: localizeItemName(relicId, relic.name) }), '#ffe66d');
         playSound('skill');
+        // Story 36.6: 行会勋章 — 获取时选择加成行
+        if (relicId === 'row_medal') showRowMedalSelection(showFeedback);
         renderRelicDisplay();
         finish();
       } else {
@@ -219,6 +222,8 @@ export function showRelicReplaceUI(newRelicId: string, onDone: () => void): void
       const gold = replaceRelic(ownedId, newRelicId);
       showFeedback(t('relic.replace', { icon: newRelic.icon, name: localizeItemName(newRelicId, newRelic.name), gold }), '#ffe66d');
       playSound('skill');
+      // Story 36.6: 行会勋章 — 替换获取时也选择加成行
+      if (newRelicId === 'row_medal') showRowMedalSelection(showFeedback);
       renderRelicDisplay();
       onDone();
     };
@@ -231,4 +236,47 @@ export function showRelicReplaceUI(newRelicId: string, onDone: () => void): void
   giveUp.innerHTML = `<div class="relic-picker-icon">✕</div><div class="relic-picker-name">${t('relic.give_up')}</div>`;
   giveUp.onclick = () => onDone();
   cardsEl.appendChild(giveUp);
+}
+
+// === Story 36.6: 行会勋章 — 行选择弹窗 ===
+const ROW_LABELS = ['QWERTYUIOP（上行）', 'ASDFGHJKL（中行）', 'ZXCVBNM（下行）']
+
+export function showRowMedalSelection(feedbackFn: (text: string, color: string) => void): void {
+  const overlay = document.createElement('div')
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;'
+
+  const panel = document.createElement('div')
+  panel.style.cssText = 'background:#1a1a2e;border:2px solid #ffd700;border-radius:12px;padding:24px;text-align:center;max-width:360px;'
+
+  const title = document.createElement('div')
+  title.style.cssText = 'font-size:18px;color:#ffd700;margin-bottom:16px;'
+  title.textContent = '🎖️ 选择加成行'
+  panel.appendChild(title)
+
+  const desc = document.createElement('div')
+  desc.style.cssText = 'font-size:14px;color:#ccc;margin-bottom:16px;'
+  desc.textContent = '该行键位触发的技能获得 +25% 产出'
+  panel.appendChild(desc)
+
+  for (let i = 0; i < 3; i++) {
+    const btn = document.createElement('button')
+    btn.style.cssText = 'display:block;width:100%;padding:10px;margin:6px 0;background:#2a2a4e;border:1px solid #555;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;'
+    btn.textContent = ROW_LABELS[i]
+    btn.addEventListener('click', () => {
+      setRowMedalRow(i)
+      overlay.remove()
+      feedbackFn(`🎖️ 已选择${ROW_LABELS[i]}`, '#ffd700')
+    })
+    panel.appendChild(btn)
+  }
+
+  // 取消按钮
+  const cancel = document.createElement('button')
+  cancel.style.cssText = 'display:block;width:100%;padding:8px;margin-top:12px;background:transparent;border:1px solid #666;border-radius:8px;color:#888;font-size:13px;cursor:pointer;'
+  cancel.textContent = '稍后选择'
+  cancel.addEventListener('click', () => overlay.remove())
+  panel.appendChild(cancel)
+
+  overlay.appendChild(panel)
+  document.body.appendChild(overlay)
 }
