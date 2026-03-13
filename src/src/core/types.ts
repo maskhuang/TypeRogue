@@ -226,7 +226,7 @@ export interface PlayerState {
   index: number;
   bindings: Map<string, string>;  // key -> skillId
   skills: Map<string, SkillInstance>;
-  relics: Set<string>; // 上限 MAX_RELIC_SLOTS (10)
+  relics: Set<string>; // 上限 MAX_RELIC_SLOTS (12)
   relicStates: Record<string, number>; // 遗物可变状态（ramen 等）
   wordDeck: string[];
   // 被动加成

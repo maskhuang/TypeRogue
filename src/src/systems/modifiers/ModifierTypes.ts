@@ -23,6 +23,14 @@ export type ModifierTrigger =
   | 'on_skill_purchase'      // 商店购买技能后 (Story 28.1)
   | 'on_enchantment_acquire' // 附魔获取后 (Story 28.1)
   | 'on_act_end'             // 幕切换时 (Story 28.1)
+  // Story 36.1: 遗物系统新增触发类型
+  | 'on_keystroke'           // 每次击键时（含正确和错误）
+  | 'on_combo_change'        // combo 变化时（增长或中断）
+  | 'on_word_start'          // 单词开始输入时
+  | 'on_shop_enter'          // 进入商店时
+  | 'on_stage_start'         // 关卡开始时
+  | 'on_stage_end'           // 关卡结束时
+  | 'on_settle'              // 单词结算时
 
 // === 修饰器来源类型 ===
 export type ModifierSourceType = 'skill' | 'relic' | 'passive' | 'letter'

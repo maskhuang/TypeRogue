@@ -16,6 +16,14 @@ export type RelicEffectType =
   | 'on_skill_trigger' // 技能触发时
   | 'on_error'         // 打错时触发
   | 'passive'          // 持续被动效果
+  // Story 36.1: 新增触发时机
+  | 'on_keystroke'     // 每次正确/错误击键时触发
+  | 'on_combo_change'  // combo 变化时触发（包括中断和增长）
+  | 'on_word_start'    // 单词开始输入时触发
+  | 'on_shop_enter'    // 进入商店时触发
+  | 'on_stage_start'   // 关卡开始时触发
+  | 'on_stage_end'     // 关卡结束时触发
+  | 'on_settle'        // 单词结算时触发
 
 export type RelicModifierType =
   | 'time_bonus'           // 时间加成（秒）
@@ -32,13 +40,37 @@ export type RelicModifierType =
   | 'time_penalty'         // 时间惩罚
   | 'max_skill_level'      // 技能等级上限（T4 限制框架）
   | 'max_skill_count'      // 技能数量上限（T4 限制框架）
+  // Story 36.1: 新增修改器类型
+  | 'skill_output_percent' // 技能产出百分比加算（多个遗物加算叠加）
+  | 'error_forgive'        // 错误免除次数（每词重置）
+  | 'combo_retain_percent' // combo 中断保留百分比（0-1）
+  | 'enchant_growth_bonus' // 附魔成长速度加成百分比
+  | 'shop_slot_bonus'      // 商店额外商品位
+  | 'free_refresh'         // 商店免费刷新次数
+  | 'target_score_reduce'  // 目标分数降低百分比（0-1）
+  | 'base_time_bonus'      // 每关基础时间加成（秒）
+  | 'sell_price_bonus'     // 出售价格加成百分比（0-1）
+  | 'word_score_min'       // 单词最低结算得分
+  | 'modifier_debuff_reduce' // Boss修饰器负面效果降低百分比（0-1）
+  | 'gold_per_modifier'    // 每个激活修饰器额外通关金币百分比
 
 export type RelicConditionType =
-  | 'combo_threshold'   // 连击阈值
+  | 'combo_threshold'       // 连击达到阈值
+  // Story 36.1: 新增条件类型
+  | 'multiplier_threshold'  // 倍率达到阈值
+  | 'skill_count_lt'        // 已装备技能数量小于阈值
+  | 'word_length_gte'       // 单词长度 >= 阈值
+  | 'word_length_lte'       // 单词长度 <= 阈值
+  | 'time_elapsed_lt'       // 关卡已进行时间 < 阈值（秒）
+  | 'stage_type'            // 关卡类型匹配
+  | 'resource_types_gte'    // 一词内产出资源种类数 >= 阈值
 
 export interface RelicCondition {
   type: RelicConditionType
-  threshold: number
+  /** 数值阈值（用于 combo_threshold, multiplier_threshold, skill_count_lt, word_length, time_elapsed_lt, resource_types_gte） */
+  threshold?: number
+  /** 关卡类型匹配值（stage_type 使用） */
+  stageType?: 'normal' | 'elite' | 'boss' | 'rest'
 }
 
 export interface RelicEffect {
@@ -47,6 +79,57 @@ export interface RelicEffect {
   value: number
   condition?: RelicCondition
 }
+
+/** 遗物所属子系统（11 个子系统 × 5 个遗物 = 55 通用遗物） */
+export type RelicSubsystem =
+  | 'typing'         // 打字/输入系统
+  | 'combo'          // 连击/倍率系统
+  | 'skill'          // 技能系统（词条制）
+  | 'enchantment'    // 附魔系统
+  | 'topology'       // 键盘拓扑系统
+  | 'word'           // 单词/词库系统
+  | 'resource'       // 资源系统
+  | 'shop'           // 商店系统
+  | 'stage'          // 关卡进度系统
+  | 'boss_modifier'  // Boss修饰器系统
+  | 'scoring'        // 结算/评分系统
+
+/** 遗物行为类型 — 标记需要自定义逻辑的遗物 */
+export type RelicBehaviorType =
+  // 打字/输入系统
+  | 'error_forgive_first'  // 打字蜡封：每词首次错误免除
+  | 'double_keystroke'     // 回声指套：正确击键概率算两次
+  | 'autocomplete'         // 小助手：Tab 自动补全重复单词
+  | 'rhythm_adapt'         // 节奏适应：根据单词用时给予不同奖励
+  | 'glass_cannon'         // 玻璃大炮：得分×2，打错即死
+  // 连击/倍率系统
+  | 'combo_detonator'      // 连击引爆：combo 达阈值时触发技能
+  | 'immortal_combo'       // 不灭连击：combo 永不中断，禁止 multiplier 产出
+  // 技能系统
+  | 'training_manual'      // 集训手册：一次性升级所有 Lv.1 技能
+  | 'jazz_diversity'       // 爵士乐：一词内不同词条类型越多加分越高
+  | 'uncrowned_king'       // 无冕之王：无附魔技能无限升级，禁止附魔
+  // 附魔系统
+  | 'fate_fork'            // 命运三岔：附魔选择变 3 选 1
+  | 'early_awakening'      // 早期觉醒：Lv2 技能可获得附魔
+  // 键盘拓扑系统
+  | 'row_select'           // 行会勋章：选一行加成
+  | 'hand_alternation'     // 双手协奏：左右手交替击键加时间
+  | 'key_storm'            // 全键风暴：前 3 词完成时随机触发未命中技能
+  // 单词/词库系统
+  | 'word_dealer'          // 词语经销商：出售词语→下次刷新免费
+  // 商店系统
+  | 'smuggle_free'         // 走私通道：每关免费拿走最便宜商品
+  | 'timed_auction'        // 限时拍卖：刷新免费 + 30 秒倒计时
+  // 关卡进度系统
+  | 'phoenix'              // 不死鸟：失败后复活并移除此遗物
+  // Boss修饰器系统
+  | 'modifier_barrier'     // 修饰器屏障：第一个修饰器无效化
+  | 'chaos_roulette'       // 混沌轮盘：每 5 词替换一个修饰器
+  | 'modifier_reversal'    // 修饰器反转：一半修饰器反转为增益
+  // 结算/评分系统
+  | 'snowball'             // 雪球效应：每词得分递增
+  | 'score_black_hole'     // 分数黑洞：隐藏累计，单次手动结算
 
 export interface RelicData {
   id: string
@@ -58,10 +141,14 @@ export interface RelicData {
   effects: RelicEffect[]
   flavor?: string
   category?: 'risk-reward'
+  /** 所属子系统（通用遗物分类，职业遗物无此字段） */
+  subsystem?: RelicSubsystem
+  /** 行为类型（需要自定义逻辑的遗物） */
+  behaviorType?: RelicBehaviorType
 }
 
-/** 遗物槽位上限 */
-export const MAX_RELIC_SLOTS = 10
+/** 遗物槽位上限（F1-F12） */
+export const MAX_RELIC_SLOTS = 12
 
 /**
  * 所有遗物数据（仅职业专属）

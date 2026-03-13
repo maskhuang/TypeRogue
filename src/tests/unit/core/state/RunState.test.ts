@@ -278,20 +278,20 @@ describe('RunState', () => {
       expect(runState.addRelic('r1')).toBe(false) // 重复
     })
 
-    it('addRelic() 满 10 个后返回 false', () => {
-      for (let i = 0; i < 10; i++) {
+    it('addRelic() 满 12 个后返回 false', () => {
+      for (let i = 0; i < 12; i++) {
         expect(runState.addRelic(`relic_${i}`)).toBe(true)
       }
       expect(runState.addRelic('relic_extra')).toBe(false)
-      expect(runState.getRelics()).toHaveLength(10)
+      expect(runState.getRelics()).toHaveLength(12)
     })
 
-    it('addRelic() 第 10 个仍可添加', () => {
-      for (let i = 0; i < 9; i++) {
+    it('addRelic() 第 12 个仍可添加', () => {
+      for (let i = 0; i < 11; i++) {
         runState.addRelic(`relic_${i}`)
       }
-      expect(runState.addRelic('relic_9')).toBe(true)
-      expect(runState.getRelics()).toHaveLength(10)
+      expect(runState.addRelic('relic_11')).toBe(true)
+      expect(runState.getRelics()).toHaveLength(12)
     })
   })
 
@@ -654,7 +654,7 @@ describe('RunState', () => {
       expect(restored.getState().relicStates).toEqual({})
     })
 
-    it('deserialize() 遗物超过 10 个时截断为前 10 个', () => {
+    it('deserialize() 遗物超过 12 个时截断为前 12 个', () => {
       // 构造含 15 个遗物的旧存档数据
       const fakeRelics = Array.from({ length: 15 }, (_, i) => `test_relic_${i}`)
       const fakeData = {
@@ -668,9 +668,9 @@ describe('RunState', () => {
         stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, totalGoldEarned: 0 },
       }
       const restored = RunState.deserialize(fakeData)
-      expect(restored.getRelics()).toHaveLength(10)
+      expect(restored.getRelics()).toHaveLength(12)
       expect(restored.getRelics()[0]).toBe('test_relic_0')
-      expect(restored.getRelics()[9]).toBe('test_relic_9')
+      expect(restored.getRelics()[11]).toBe('test_relic_11')
     })
   })
 })

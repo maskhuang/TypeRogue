@@ -4,6 +4,7 @@
 
 import { state } from '../../core/state'
 import { RELIC_MODIFIER_DEFS, RELIC_FLAGS, RELICS } from '../../data/relics'
+import type { RelicBehaviorType, RelicCondition } from '../../data/relics'
 import { AFFIX_CATEGORY_MAP } from '../../data/affixes'
 import { showFeedback } from '../battle'
 import type { ModifierTrigger, PipelineContext, PipelineResult, BehaviorCallbacks } from '../modifiers/ModifierTypes'
@@ -202,4 +203,97 @@ export function getMonoAffixCategory(): string | null {
   const idx = state.player.relicStates['mono_affix_category']
   if (!idx || idx <= 0) return null
   return AFFIX_CATEGORY_BY_INDEX[idx] ?? null
+}
+
+// ============================================
+// Story 36.1: 遗物条件评估 + 行为分发框架
+// ============================================
+
+/**
+ * 评估遗物条件是否满足
+ */
+export function evaluateRelicCondition(
+  condition: RelicCondition,
+  context: RelicConditionContext,
+): boolean {
+  switch (condition.type) {
+    case 'combo_threshold':
+      return (context.combo ?? 0) >= (condition.threshold ?? 0)
+    case 'multiplier_threshold':
+      return (context.multiplier ?? 1) >= (condition.threshold ?? 0)
+    case 'skill_count_lt':
+      return (context.equippedSkillCount ?? 0) < (condition.threshold ?? 0)
+    case 'word_length_gte':
+      return (context.wordLength ?? 0) >= (condition.threshold ?? 0)
+    case 'word_length_lte':
+      return (context.wordLength ?? 0) <= (condition.threshold ?? 0)
+    case 'time_elapsed_lt':
+      return (context.timeElapsed ?? 0) < (condition.threshold ?? 0)
+    case 'stage_type':
+      return context.stageType === condition.stageType
+    case 'resource_types_gte':
+      return (context.resourceTypesThisWord ?? 0) >= (condition.threshold ?? 0)
+    default:
+      return false
+  }
+}
+
+/** 遗物条件评估所需的运行时上下文 */
+export interface RelicConditionContext {
+  combo?: number
+  multiplier?: number
+  equippedSkillCount?: number
+  wordLength?: number
+  timeElapsed?: number
+  stageType?: 'normal' | 'elite' | 'boss' | 'rest'
+  resourceTypesThisWord?: number
+}
+
+// === 行为分发注册表 ===
+
+/** 遗物行为处理函数签名 */
+export type RelicBehaviorHandler = (relicId: string, context: PipelineContext) => void
+
+/** 已注册的行为处理函数 */
+const behaviorHandlers: Map<RelicBehaviorType, RelicBehaviorHandler> = new Map()
+
+/**
+ * 注册遗物行为处理函数 — 后续 Stories 在各自模块中调用此函数注册具体行为
+ */
+export function registerRelicBehavior(
+  behaviorType: RelicBehaviorType,
+  handler: RelicBehaviorHandler,
+): void {
+  behaviorHandlers.set(behaviorType, handler)
+}
+
+/**
+ * 分发遗物行为 — 查找并执行已注册的行为处理函数
+ * @returns true 如果找到并执行了处理函数
+ */
+export function dispatchRelicBehavior(
+  behaviorType: RelicBehaviorType,
+  relicId: string,
+  context: PipelineContext,
+): boolean {
+  const handler = behaviorHandlers.get(behaviorType)
+  if (handler) {
+    handler(relicId, context)
+    return true
+  }
+  return false
+}
+
+/**
+ * 获取所有已注册行为类型（用于测试）
+ */
+export function getRegisteredBehaviors(): RelicBehaviorType[] {
+  return [...behaviorHandlers.keys()]
+}
+
+/**
+ * 清空所有已注册行为处理函数（用于测试隔离）
+ */
+export function clearBehaviorHandlers(): void {
+  behaviorHandlers.clear()
 }

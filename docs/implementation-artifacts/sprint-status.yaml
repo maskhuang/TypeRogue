@@ -350,3 +350,22 @@ development_status:
   35-13-balance-testing: done
   35-14-iterative-trigger-loop: done
   epic-35-retrospective: optional
+
+  # ===== Epic 36: 遗物系统扩展（55 个通用遗物）=====
+  # Source: docs/stories/epic-36-relic-system-expansion.md
+  # Design: docs/design/relic-system.md
+  epic-36: in-progress
+  36-1-relic-infrastructure: done
+  36-2-typing-input-relics: backlog
+  36-3-combo-multiplier-relics: backlog
+  36-4-skill-system-relics: backlog
+  36-5-enchantment-relics: backlog
+  36-6-keyboard-topology-relics: backlog
+  36-7-word-library-relics: backlog
+  36-8-resource-relics: backlog
+  36-9-shop-relics: backlog
+  36-10-stage-progress-relics: backlog
+  36-11-boss-modifier-relics: backlog
+  36-12-scoring-relics: backlog
+  36-13-balance-integration-test: backlog
+  epic-36-retrospective: optional
