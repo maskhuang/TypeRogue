@@ -33,6 +33,7 @@ import { generateRelicCandidates, showRelicReplaceUI, showRowMedalSelection } fr
 import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
 import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
 import { checkEliteHunterGoldMultiplier } from './relics/StageRelicBehaviors';
+import { getBountyHunterGoldBonus } from './relics/BossModifierRelicBehaviors';
 import { getDiscountMultiplier, getRecycleSellMultiplier, getBlackMarketExtraSlots, canSmuggleFree, consumeSmuggleFree, isTimedAuction, startAuctionTimer, clearAuctionTimer, resetShopRelicState } from './relics/ShopRelicBehaviors';
 import { hasIntermissionFreeRefresh, consumeIntermissionFreeRefresh } from './relics/StageRelicBehaviors';
 import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
@@ -458,7 +459,9 @@ export function openShop(_won: boolean): void {
 
   // Review H1: 精英猎手 — 精英关金币翻倍（同步 showGoldReward 显示）
   const eliteMultiplier = checkEliteHunterGoldMultiplier();
-  const battleGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier);
+  // Story 36.11: 赏金猎人 — 永久修饰器数量×20%金币加成
+  const bountyBonus = getBountyHunterGoldBonus();
+  const battleGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier * (1 + bountyBonus));
   state.gold += battleGold;
 
   el.shopLevelNum.textContent = String(state.level);

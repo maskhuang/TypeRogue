@@ -22,7 +22,7 @@ import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getCycleTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawBossModifiers, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive } from '../data/bossModifiers';
 import type { BossModifierMeta } from '../data/bossModifiers';
-import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation, isModifierActive } from './bossModifierEngine';
+import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
 import { showBossModifierPicker } from './bossModifierPicker';
 import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
@@ -36,6 +36,7 @@ import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from
 import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTimeDew, incrementWordParity, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
+import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -261,6 +262,8 @@ export function initInput(): void {
   initShopRelicBehaviors();
   // Story 36.10: 注册关卡进度子系统遗物行为
   initStageRelicBehaviors();
+  // Story 36.11: 注册Boss修饰器子系统遗物行为
+  initBossModifierRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
 }
@@ -527,10 +530,11 @@ function playerWrong(): void {
     syncRhythmDoctorMilestone(buffered);
   }
 
-  // Boss 修饰器：断连即扣（combo_punish）
+  // Boss 修饰器：断连即扣（combo_punish）+ Story 36.11 护盾削弱
   const modEffect = getActiveParams();
   if (modEffect?.comboPunishRate && state.score > 0) {
-    const penalty = Math.floor(state.score * modEffect.comboPunishRate);
+    const shieldedRate = getShieldedValue(modEffect.comboPunishRate, true);
+    const penalty = Math.floor(state.score * shieldedRate);
     state.score = Math.max(0, state.score - penalty);
     showFeedback(t('battle.penalty', { value: penalty }), '#ff4444', getFloatScale('score', penalty));
     bumpScore();
@@ -593,10 +597,10 @@ function completeWord(): void {
   // 分数类技能已在触发时即时计入 state.score，此处仅结算 基数×倍率
   let finalWordScore = Math.floor(baseChips * finalMult);
 
-  // Boss 修饰器：单词限额（cap）+ 递减收益（diminish）
+  // Boss 修饰器：单词限额（cap）+ 递减收益（diminish）+ Story 36.11 护盾削弱
   const modEffect = getActiveParams();
   if (modEffect?.scoreCap) {
-    finalWordScore = Math.min(finalWordScore, modEffect.scoreCap);
+    finalWordScore = Math.min(finalWordScore, getShieldedScoreCap(modEffect.scoreCap));
   }
   if (modEffect?.diminishRate) {
     finalWordScore = Math.floor(finalWordScore * getDiminishMultiplier());
@@ -695,6 +699,11 @@ function completeWord(): void {
     state.time += longWordTime;
     showFeedback(`📏 +${longWordTime}秒`, '#00ff88');
     bumpTimer();
+  }
+
+  // Story 36.11: 混沌轮盘 — Boss关每5词替换一个修饰器
+  if (checkChaosRoulette()) {
+    showFeedback('🎰 混沌轮盘！', '#ff44ff');
   }
 
   // 词语完成 - 所有字母一起弹跳
@@ -857,7 +866,9 @@ function showGoldReward(onComplete: () => void): void {
 
   // Story 36.10: 精英猎手 — 精英关金币翻倍
   const eliteMultiplier = checkEliteHunterGoldMultiplier();
-  const totalGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier);
+  // Story 36.11: 赏金猎人 — 永久修饰器数量×20%金币加成
+  const bountyBonus = getBountyHunterGoldBonus();
+  const totalGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier * (1 + bountyBonus));
 
   // 设置数值
   const goldSkillEl = document.getElementById('gold-skill');
@@ -911,9 +922,9 @@ function startTimer(): void {
       return;
     }
 
-    // Boss 修饰器：时间加速（fast_time）
+    // Boss 修饰器：时间加速（fast_time）+ Story 36.11 护盾削弱
     const modEffect = getActiveParams();
-    const timeSpeed = modEffect?.timeSpeed ?? 1;
+    const timeSpeed = getShieldedTimeSpeed(modEffect?.timeSpeed ?? 1);
     state.time -= 0.1 * timeSpeed * getTimeScale(); // Story 31.4: 慢动作
 
     // 蓄力产出者：每帧累加充能值
@@ -1175,6 +1186,8 @@ export async function startLevel(): Promise<void> {
   resetResourceRelicBattleState();
   // Story 36.10: 重置关卡进度遗物关级别状态（暖身操计时 + 幕间免费刷新）
   resetStageRelicBattleState();
+  // Story 36.11: 重置Boss修饰器遗物关级别状态（屏障标记 + 混沌轮盘计数）
+  resetBossModifierRelicBattleState();
 
   // 标点解放遗物：设置遗物乱码激活状态
   setRelicGarbleActive(state.player.relics.has('punctuation_liberation'));
@@ -1261,16 +1274,39 @@ export async function startLevel(): Promise<void> {
       modInfo.classList.remove('visible');
     }
     // 应用减弱版修饰器（精英关）— 跳过已在永久修饰器中的
+    // Story 36.11: 修饰器屏障 — 精英关首个修饰器无效化
     const modIdx = getEliteModifierIndex(state.level);
     const modId = state.bossModifierPool[modIdx];
     if (modId && !isModifierActive(modId)) {
-      applyModifier(modId, true);
+      if (shouldBarrierBlock()) {
+        showFeedback('🚧 修饰器屏障！', '#44aaff');
+      } else {
+        applyModifier(modId, true);
+      }
     }
   } else if (currentStageType === 'boss') {
     // Boss 关：启动 3 阶段轮换引擎
     startBossRotation();
+    // Story 36.11: 修饰器屏障 — Boss 关首个修饰器无效化
+    if (shouldBarrierBlock()) {
+      undoLastTemporaryModifier();
+      showFeedback('🚧 修饰器屏障！', '#44aaff');
+    }
   } else {
     modInfo.classList.remove('visible');
+  }
+
+  // Story 36.11: 修饰器护盾 — targetMultiplier 事后修正
+  const modParams = getActiveParams();
+  if (modParams?.targetMultiplier && state.player.relics.has('modifier_shield')) {
+    const shielded = getShieldedTargetMultiplier(modParams.targetMultiplier);
+    state.targetScore = Math.floor(state.targetScore * shielded / modParams.targetMultiplier);
+  }
+
+  // Story 36.11: 修饰器反转
+  if (state.player.relics.has('modifier_reversal') && getActiveModifierEffect()) {
+    applyModifierReversal();
+    showFeedback('🔄 修饰器反转！', '#ff8800');
   }
 
   showScreen('battle');

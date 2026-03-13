@@ -858,6 +858,71 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '浴火重生，涅槃一次。',
   },
 
+  // ===== Boss修饰器系统遗物 (5) =====
+
+  modifier_shield: {
+    id: 'modifier_shield',
+    name: '修饰器护盾',
+    icon: '🧿',
+    description: '所有修饰器的负面数值效果减弱25%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'boss_modifier',
+    flavor: '削弱敌意，化险为夷。',
+  },
+
+  bounty_hunter: {
+    id: 'bounty_hunter',
+    name: '赏金猎人',
+    icon: '🏴‍☠️',
+    description: '每个永久修饰器使通关金币+20%（加算）。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'boss_modifier',
+    flavor: '风险越大，赏金越高。',
+  },
+
+  modifier_barrier: {
+    id: 'modifier_barrier',
+    name: '修饰器屏障',
+    icon: '🚧',
+    description: '精英/Boss关开始时，第一个修饰器被无效化。每关仅一次。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'boss_modifier',
+    behaviorType: 'modifier_barrier',
+    flavor: '先发制人，挡住第一波。',
+  },
+
+  chaos_roulette: {
+    id: 'chaos_roulette',
+    name: '混沌轮盘',
+    icon: '🎰',
+    description: 'Boss关中，每完成5个词随机替换一个活跃修饰器。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'boss_modifier',
+    behaviorType: 'chaos_roulette',
+    flavor: '转动命运之轮，拥抱混沌。',
+  },
+
+  modifier_reversal: {
+    id: 'modifier_reversal',
+    name: '修饰器反转',
+    icon: '🔄',
+    description: '关卡开始时，随机一半修饰器反转为增益，另一半数值翻倍。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'boss_modifier',
+    behaviorType: 'modifier_reversal',
+    flavor: '混乱中诞生秩序，或秩序中诞生混乱。',
+  },
+
 }
 
 // === Relic Modifier 工厂类型 ===

@@ -227,7 +227,9 @@ const bossDecay: BossModifier = {
   onTick(dt: number) {
     const rate = getActiveParams()?.decayRate
     if (rate && state.score > 0) {
-      const penalty = state.score * rate * dt
+      // Story 36.11: 护盾削弱 decayRate（内联避免循环依赖）
+      const shieldedRate = state.player.relics.has('modifier_shield') ? rate * 0.75 : rate
+      const penalty = state.score * shieldedRate * dt
       state.score = Math.max(0, state.score - penalty)
     }
   },
@@ -291,7 +293,9 @@ export function incrementDiminishCount(): void {
 export function getDiminishMultiplier(): number {
   const rate = getActiveParams()?.diminishRate
   if (!rate) return 1
-  return Math.max(0, 1 - rate * diminishWordCount)
+  // Story 36.11: 护盾削弱 diminishRate（内联避免循环依赖）
+  const shieldedRate = state.player.relics.has('modifier_shield') ? rate * 0.75 : rate
+  return Math.max(0, 1 - shieldedRate * diminishWordCount)
 }
 
 // === 3 个视觉类修饰器实现（Story 18.5）===

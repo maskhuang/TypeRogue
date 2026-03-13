@@ -108,6 +108,42 @@ export function isModifierActive(modId: BossModifierId): boolean {
   return activeModifierInstances.some(inst => inst.modId === modId)
 }
 
+/** 获取当前活跃修饰器实例列表（只读引用） */
+export function getActiveInstances(): readonly ModifierInstance[] {
+  return activeModifierInstances
+}
+
+/** 暴露 rebuildActiveParams 供外部调用（修饰器反转修改 params 后重建合并参数） */
+export function forceRebuildParams(): void {
+  rebuildActiveParams()
+}
+
+/** 替换一个临时修饰器（混沌轮盘用）：cleanup 旧修饰器 → 移除 → 应用新修饰器 → rebuild */
+export function replaceTemporaryModifier(oldModId: BossModifierId, newModId: BossModifierId): boolean {
+  const idx = activeModifierInstances.findIndex(inst => inst.modId === oldModId && !inst.isPermanent)
+  if (idx < 0) return false
+  const old = activeModifierInstances[idx]
+  old.modifier.cleanup()
+  activeModifierInstances.splice(idx, 1)
+  applyModifier(newModId, false, false)
+  return true
+}
+
+/** 撤销最后一个临时修饰器（修饰器屏障用） */
+export function undoLastTemporaryModifier(): boolean {
+  for (let i = activeModifierInstances.length - 1; i >= 0; i--) {
+    if (!activeModifierInstances[i].isPermanent) {
+      activeModifierInstances[i].modifier.cleanup()
+      activeModifierInstances.splice(i, 1)
+      rebuildActiveParams()
+      return true
+    }
+  }
+  return false
+}
+
+export type { ModifierInstance }
+
 // === Boss 关轮换引擎 ===
 
 /** 启动 Boss 关 3 阶段轮换（20s 一换） */
