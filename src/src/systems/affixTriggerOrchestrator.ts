@@ -174,11 +174,6 @@ export function orchestrateAffixTrigger(
       )
     }
 
-    // 嗜变变异素
-    if (result.phase5?.mutagenOutput && result.phase5.mutagenOutput > 0) {
-      callbacks?.applyResource?.('mutagen', result.phase5.mutagenOutput)
-    }
-
     // 吞噬
     if (result.phase5?.devourTarget) {
       callbacks?.devourTarget?.(result.phase5.devourTarget)

@@ -40,12 +40,6 @@ export interface TriggerContext {
   allSkills: Map<string, AffixSkillInstance>
   /** 随机函数注入（暴击/禁忌掷骰） */
   randomFn: () => number
-  /** 造词师采集队列（字母亲和附魔） */
-  fragmentQueue?: string[]
-  /** 碎片库存（满溢附魔） */
-  fragmentInventory?: Record<string, number>
-  /** 不稳定附魔本关随机资源 */
-  unstableBonusResource?: ResourceType
   // ── Phase 5 学徒附魔事件上下文（由调用方注入） ──
   /** 本次触发是否完成了一个单词（学徒·造词/丰收） */
   wordCompleted?: boolean
@@ -62,8 +56,6 @@ export interface TriggerContext {
   transmuteResource?: ResourceType
   /** @deprecated 使用 TRANSMUTE_RATIO_TABLE[resource] 替代 */
   transmuteRatio?: number
-  /** 嗜变附魔概率（默认 MUTATION_HUNGER_CHANCE） */
-  mutationHungerChance?: number
   /** 各技能附魔运行时参数（键为 skillId） */
   skillEnchantmentParams?: Map<string, { posRel?: PositionRelation }>
   // ── 遗物注入（由 skills.ts 提供，避免 data→systems 依赖）(Story 35.12) ──
@@ -107,8 +99,6 @@ export interface Phase5Result {
   transmuteSameResourceBoost: number
   /** 溅射词条需触发的邻居键位 */
   splashTargets: string[]
-  /** 嗜变附魔产出（0 或 1） */
-  mutagenOutput: number
   /** 吞噬目标键位（QuestDevour 满层时） */
   devourTarget: string | null
   /** 是否完成一次任务循环 */
@@ -370,30 +360,6 @@ export function resolvePhase2(
       track()
     }
 
-    // 满溢：碎片库存中 ≥15 的字母数 × 20%
-    if (ench === EnchantmentType.Overflow) {
-      if (ctx.fragmentInventory) {
-        const count = Object.values(ctx.fragmentInventory).filter(v => Math.floor(v) >= 15).length
-        bonusPercent += count * 0.20
-      }
-      track()
-    }
-
-    // 字母亲和：队列含 triggerKey 时 +25%
-    if (ench === EnchantmentType.LetterAffinity) {
-      if (ctx.fragmentQueue && ctx.fragmentQueue.includes(ctx.triggerKey.toLowerCase())) {
-        bonusPercent += 0.25
-      }
-      track()
-    }
-
-    // 不稳定：资源匹配时 +30%
-    if (ench === EnchantmentType.Unstable) {
-      if (ctx.unstableBonusResource && skill.resource === ctx.unstableBonusResource) {
-        bonusPercent += 0.30
-      }
-      track()
-    }
   }
 
   // 乘算化模式：不应用 bonusPercent 到 output，由 Phase 3 逐项相乘
@@ -545,7 +511,6 @@ export function resolvePhase3(
 export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
 export const MAX_RECURSE_DEPTH = 10
 export const MAX_CHAIN_DEPTH = 20
-export const MUTATION_HUNGER_CHANCE = 0.05
 
 /** 学徒附魔 growthPerProc 默认值（Phase 5 自触发类型 + 外部事件类型） */
 export const APPRENTICE_GROWTH_DEFAULTS: Partial<Record<EnchantmentType, number>> = {
@@ -721,7 +686,6 @@ export function resolvePhase5(
     transmuteOutput: null,
     transmuteSameResourceBoost: 0,
     splashTargets: [],
-    mutagenOutput: 0,
     devourTarget: null,
     questCompleted: false,
   }
@@ -864,14 +828,6 @@ export function resolvePhase5(
       } else {
         result.transmuteOutput = { resource: extraResource, amount: output * ratio }
       }
-    }
-  }
-
-  // 嗜变附魔
-  if (skill.enchantmentIds.includes(EnchantmentType.MutationHunger)) {
-    const chance = ctx.mutationHungerChance ?? MUTATION_HUNGER_CHANCE
-    if (ctx.randomFn() < chance) {
-      result.mutagenOutput = 1
     }
   }
 
@@ -1203,7 +1159,7 @@ export function filterQuestCandidates(skill: AffixSkillInstance): EnchantmentTyp
 }
 
 /**
- * 返回技能可获取的全部附魔候选列表（学徒+任务+衍生+被动+运算符）。
+ * 返回技能可获取的全部附魔候选列表（学徒+任务+衍生+运算符）。
  * 排除已装备的附魔。职业过滤由外部 filterEnchantmentsByClass 处理。
  */
 export function filterEnchantmentCandidates(skill: AffixSkillInstance): EnchantmentType[] {
@@ -1234,16 +1190,7 @@ export function filterEnchantmentCandidates(skill: AffixSkillInstance): Enchantm
     candidates.push(EnchantmentType.Transmute)
   }
 
-  // 4. 被动附魔（4 个，职业过滤由外部处理）
-  const passiveTypes: EnchantmentType[] = [
-    EnchantmentType.LetterAffinity, EnchantmentType.Overflow,
-    EnchantmentType.Unstable, EnchantmentType.MutationHunger,
-  ]
-  for (const t of passiveTypes) {
-    if (!existingEnchs.has(t)) candidates.push(t)
-  }
-
-  // 5. 运算符（1 个）
+  // 4. 运算符（1 个）
   if (!existingEnchs.has(EnchantmentType.MultiplyOperator)) {
     candidates.push(EnchantmentType.MultiplyOperator)
   }

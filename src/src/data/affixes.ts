@@ -104,11 +104,6 @@ export enum EnchantmentType {
   QuestSacrifice = 'quest_sacrifice',
   // ── 衍生型（1，运行时按 extraResource 7 变体） ──
   Transmute = 'transmute',
-  // ── 被动型（职业限定，4） ──
-  LetterAffinity = 'letter_affinity',
-  Overflow = 'overflow',
-  Unstable = 'unstable',
-  MutationHunger = 'mutation_hunger',
   // ── 运算符（1） ──
   MultiplyOperator = 'multiply_operator',
 }
@@ -162,11 +157,6 @@ export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
   [EnchantmentType.ApprenticeStage]:    { type: EnchantmentType.ApprenticeStage,    name: '学徒·通关', icon: '🏆', category: 'apprentice', desc: '通关时永久成长 +15%' },
   [EnchantmentType.ApprenticeHarvest]:  { type: EnchantmentType.ApprenticeHarvest,  name: '学徒·丰收', icon: '🌾', category: 'apprentice', desc: '造词师限定：完成单词时永久成长 +3%' },
   [EnchantmentType.ApprenticeAdapt]:    { type: EnchantmentType.ApprenticeAdapt,    name: '学徒·适应', icon: '🧬', category: 'apprentice', desc: '蜕变师限定：每次蜕变永久成长 +15%' },
-  // ── 被动型（4） ──
-  [EnchantmentType.LetterAffinity]:  { type: EnchantmentType.LetterAffinity,  name: '字母亲和', icon: '🔤', category: 'passive', desc: '造词师限定：触发时将字母加入采集队列' },
-  [EnchantmentType.Overflow]:        { type: EnchantmentType.Overflow,        name: '满溢',     icon: '💧', category: 'passive', desc: '造词师限定：碎片库存满时溢出为分数' },
-  [EnchantmentType.Unstable]:        { type: EnchantmentType.Unstable,        name: '不稳定',   icon: '⚡', category: 'passive', desc: '蜕变师限定：每关随机额外产出一种资源' },
-  [EnchantmentType.MutationHunger]:  { type: EnchantmentType.MutationHunger,  name: '嗜变',     icon: '🧪', category: 'passive', desc: '蜕变师限定：触发时有概率产出变异素' },
   // ── 运算符（1） ──
   [EnchantmentType.MultiplyOperator]: { type: EnchantmentType.MultiplyOperator, name: '乘算化', icon: '✖️', category: 'operator', desc: '将加算层各项 bonus 转为独立乘数' },
 }
@@ -433,8 +423,8 @@ export const APPRENTICE_NEIGHBOR_GROWTH: Record<PositionRelation, number> = {
 // ===== 职业限定附魔 =====
 
 export const CLASS_RESTRICTED_ENCHANTMENTS: Record<string, EnchantmentType[]> = {
-  wordsmith: [EnchantmentType.ApprenticeHarvest, EnchantmentType.LetterAffinity, EnchantmentType.Overflow],
-  metamorph: [EnchantmentType.ApprenticeAdapt, EnchantmentType.Unstable, EnchantmentType.MutationHunger],
+  wordsmith: [EnchantmentType.ApprenticeHarvest],
+  metamorph: [EnchantmentType.ApprenticeAdapt],
 }
 
 /** 所有职业限定附魔的集合（用于快速查找） */
@@ -495,7 +485,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'wordComplete', targetStacks: 8, effectDesc: '|probMult−1| +0.15' },
   { type: EnchantmentType.QuestSpectrum, name: '光谱', targetAffix: AffixType.Rainbow, event: 'selfTrigger', targetStacks: 20, effectDesc: '随机权重偏向最低资源 +15%/层' },
   { type: EnchantmentType.QuestMirror, name: '映射', targetAffix: AffixType.Mirror, event: 'stageCleared', targetStacks: 1, effectDesc: '复制参数 ×1.1/层' },
-  { type: EnchantmentType.QuestOverlap, name: '重叠', targetAffix: AffixType.Ligature, event: 'selfTrigger', targetStacks: 15, effectDesc: '连字 N 上限 +1/层' },
+  { type: EnchantmentType.QuestOverlap, name: '重叠', targetAffix: AffixType.Ligature, event: 'selfTrigger', targetStacks: 15, effectDesc: '连字有效重复次数 +1/层' },
   { type: EnchantmentType.QuestIterate, name: '迭代', targetAffix: AffixType.Recurse, event: 'affixProc:recurse', targetStacks: 5, effectDesc: 'recurseChance +3%/层' },
   { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'affixProc:taboo_penalty', targetStacks: 3, effectDesc: 'penaltyChance -1%/层 (min 2%)' },
 ]

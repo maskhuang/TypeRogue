@@ -801,10 +801,9 @@ const ITEM_NAMES_EN: Record<string, string> = {
   ench_trans_multiplier: 'Ignite', ench_trans_time: 'Hasten',
   // Enchantment — Mastery
   ench_mastery: 'Mastery',
-  // Enchantments — Wordsmith class
-  ench_harvest: 'Harvest', ench_letter_affinity: 'Affinity', ench_overflow: 'Overflow',
-  // Enchantments — Metamorph class
-  ench_adapt: 'Adapt', ench_unstable: 'Unstable', ench_mutation_hunger: 'Hunger',
+  // Enchantments — Class-restricted apprentice
+  ench_harvest: 'Harvest',
+  ench_adapt: 'Adapt',
 }
 
 const ITEM_DESCS_EN: Record<string, string> = {
