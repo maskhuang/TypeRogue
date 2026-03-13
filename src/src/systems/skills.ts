@@ -16,6 +16,7 @@ import { routeFragmentsToInventory } from './classes/FragmentQueue';
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { shouldBlockMultiplierResource, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
+import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, hasUncrownedKing, UK_GROWTH_RATE } from './relics/SkillRelicBehaviors';
 
 
 // === 战后统计：记录技能触发 ===
@@ -69,6 +70,7 @@ export function hasProducerTriggeredThisWord(): boolean {
 export function resetWordResourceTypes(): void {
   _wordResourceTypes.clear();
   _wordHasProducerTriggered = false;
+  resetWordAffixTypes();
 }
 
 /** 蓄力产出者：每帧更新蓄力值（旧系统已移除，保留空实现供 battle.ts 调用） */
@@ -165,15 +167,28 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     playerClass: state.classId,
   };
 
-  // Story 36.3: 倍率棱镜 + 不灭连击
+  // Story 36.3 + 36.4: 遗物加算合并（倍率棱镜 + 首发强化 + 少而精）
+  let relicBonus = 0;
   const prismBonus = getMultiplierPrismBonus();
+  if (prismBonus > 0) relicBonus += prismBonus;
+  const firstStrikeBonus = getFirstStrikeBonus();
+  if (firstStrikeBonus > 0) relicBonus += firstStrikeBonus;
+  const lessIsMoreBonus = getLessIsMoreBonus();
+  if (lessIsMoreBonus > 0) relicBonus += lessIsMoreBonus;
+
+  // Story 36.4: 无冕之王 — Lv4+ 按 Lv3 值 × 1.6^(level-3) 缩放
+  const ukScale = (hasUncrownedKing() && skill.level > 3 && skill.enchantmentIds.length === 0)
+    ? Math.pow(UK_GROWTH_RATE, skill.level - 3)
+    : 1;
 
   const result = orchestrateAffixTrigger(skillId, triggerKey, ctx, {
     applyResource: (resource: ResourceType, amount: number) => {
       // 不灭连击：阻止 multiplier 资源产出
       if (resource === 'multiplier' && shouldBlockMultiplierResource()) return;
-      // 倍率棱镜：技能正产出 +20%（不放大 taboo 惩罚）
-      if (prismBonus > 0 && amount > 0) amount = amount * (1 + prismBonus);
+      // 无冕之王：Lv4+ 基础值缩放
+      if (ukScale > 1) amount = amount * ukScale;
+      // 遗物加算：正产出 + relicBonus%（不放大 taboo 惩罚）
+      if (relicBonus > 0 && amount > 0) amount = amount * (1 + relicBonus);
 
       if (resource === 'base') {
         synergy.skillBaseScore += amount;
@@ -197,14 +212,19 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     enterPseudoInfinite: (_keys: string[]) => setPseudoInfiniteVisual(true),
   });
 
+  // Story 36.4: 爵士乐 — 追踪本词触发的词条类型
+  trackWordAffixTypes(skill.affixes);
+
   // 浮字反馈：基于每次触发的结果
   for (const tr of result.triggerResults) {
     if (!tr.phase4) continue;
     const resource = tr.phase4.targetResource;
     // 不灭连击：multiplier 资源已被阻止，跳过反馈
     if (resource === 'multiplier' && shouldBlockMultiplierResource()) continue;
-    // 倍率棱镜：同步缩放反馈值（仅正产出）
-    let amount = (prismBonus > 0 && tr.output > 0) ? tr.output * (1 + prismBonus) : tr.output;
+    // 遗物缩放：同步缩放反馈值（无冕之王 + 加算遗物，仅正产出）
+    let amount = tr.output;
+    if (ukScale > 1) amount = amount * ukScale;
+    if (relicBonus > 0 && amount > 0) amount = amount * (1 + relicBonus);
     if (amount === 0) continue;
 
     const color = RESOURCE_COLORS[resource] || '#ffffff';

@@ -29,6 +29,7 @@ import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
 import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, calculateRhythmAdapt, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors } from './relics/TypingRelicBehaviors';
 import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmortalCombo, shouldBlockMultiplierResource, syncRhythmDoctorMilestone, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
+import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing } from './relics/SkillRelicBehaviors';
 import { filterEnchantmentCandidates, getEnchantmentSlotCount, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -58,6 +59,8 @@ export function applyChaosSeedEnchantments(): void {
   const playerClass = state.classId !== 'none' ? state.classId : undefined;
   for (const [skillId, skill] of state.affixSkills) {
     if (skill.enchantmentIds.length > 0) continue;
+    // Story 36.4: 无冕之王 — 不给无附魔技能添加临时附魔
+    if (hasUncrownedKing()) continue;
     const candidates = filterEnchantmentsByClass(
       filterEnchantmentCandidates(skill),
       playerClass,
@@ -236,6 +239,8 @@ export function initInput(): void {
   initTypingRelicBehaviors();
   // Story 36.3: 注册连击子系统遗物行为
   initComboRelicBehaviors();
+  // Story 36.4: 注册技能子系统遗物行为
+  initSkillRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
 }
@@ -535,6 +540,13 @@ function completeWord(): void {
   });
   // 狂战士面具等遗物的 multiply 加成
   bonusMult += wordRelicResult.effects.multiply;
+
+  // Story 36.4: 爵士乐 — 一词内 ≥3 种不同词条类型时得分 +10%×N
+  const jazzBonus = checkJazzBonus();
+  if (jazzBonus > 0) {
+    bonusMult += jazzBonus;
+    showFeedback(`🎷 +${Math.round(jazzBonus * 100)}%`, '#ffaa00');
+  }
 
   // Story 36.2: 节奏适应 — 根据单词用时给予时间或分数奖励
   const rhythmResult = calculateRhythmAdapt(wordElapsed);
@@ -1020,6 +1032,8 @@ export async function startLevel(): Promise<void> {
 
   // Story 36.3: 重置连击遗物关级别状态（引爆阈值、节奏 milestone）
   resetComboRelicState();
+  // Story 36.4: 重置技能遗物关级别状态（爵士乐词条追踪）
+  resetSkillRelicState();
 
   // 初始化战后统计
   state.battleStats = createBattleStats();

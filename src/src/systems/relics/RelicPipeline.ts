@@ -79,6 +79,8 @@ export function queryRelicFlag(flag: string): number | boolean {
 
 /**
  * 解析 on_skill_trigger 遗物效果，返回分数倍率和待执行行为。
+ * TODO: 未被调用 — 所有遗物效果均通过纯函数在 applyResource 回调中直接应用。
+ * 若 55 个通用遗物实现完毕后仍无使用场景，可连同 RELIC_MODIFIER_DEFS 一起清理。
  */
 export function resolveRelicSkillTrigger(
   context: PipelineContext,

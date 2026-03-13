@@ -48,6 +48,7 @@ import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligi
 import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_NAMES, TRANSMUTE_RATIO_TABLE, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
+import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment } from './relics/SkillRelicBehaviors';
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
@@ -513,6 +514,8 @@ function generateShopItems(count: number): ShopItem[] {
   const skillPool: ShopItem[] = [];
   const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
   const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel;
+  // Story 36.4: 无冕之王 — 无附魔技能突破等级上限
+  const hasUK = hasUncrownedKing();
   if (!isSilenced) {
     // T4 极简主义：技能数量达上限时不生成新技能
     const maxSkillCount = queryRelicFlag('max_skill_count') as number;
@@ -535,7 +538,8 @@ function generateShopItems(count: number): ShopItem[] {
         if (ownedSkillId && !convertedSkillIds.has(ownedSkillId)) {
           const ownedData = state.player.skills.get(ownedSkillId);
           const ownedAffix = state.affixSkills.get(ownedSkillId);
-          if (ownedData && ownedAffix && ownedData.level < levelCap) {
+          const effectiveCap1 = (hasUK && ownedAffix?.enchantmentIds.length === 0) ? Infinity : levelCap;
+          if (ownedData && ownedAffix && ownedData.level < effectiveCap1) {
             // 转为升级
             const nextLevel = ownedData.level + 1;
             affixItems[i] = {
@@ -554,7 +558,9 @@ function generateShopItems(count: number): ShopItem[] {
       // 升级已有词条制技能（未满级的，排除已被上面转换过的）
       const upgradableAffix: string[] = [];
       for (const [skillId, data] of state.player.skills) {
-        if (data.level < levelCap && state.affixSkills.has(skillId) && !convertedSkillIds.has(skillId)) {
+        const as = state.affixSkills.get(skillId);
+        const cap = (hasUK && as && as.enchantmentIds.length === 0) ? Infinity : levelCap;
+        if (data.level < cap && as && !convertedSkillIds.has(skillId)) {
           upgradableAffix.push(skillId);
         }
       }
@@ -576,7 +582,9 @@ function generateShopItems(count: number): ShopItem[] {
       // 技能数量已满：只生成升级项
       const upgradableAffix: string[] = [];
       for (const [skillId, data] of state.player.skills) {
-        if (data.level < levelCap && state.affixSkills.has(skillId)) {
+        const as2 = state.affixSkills.get(skillId);
+        const cap2 = (hasUK && as2 && as2.enchantmentIds.length === 0) ? Infinity : levelCap;
+        if (data.level < cap2 && as2) {
           upgradableAffix.push(skillId);
         }
       }
@@ -1107,7 +1115,10 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
     if (item.isUpgrade) {
       const data = state.player.skills.get(skillId);
       if (data) {
-        data.level = Math.min(3, data.level + 1);
+        // Story 36.4: 无冕之王 — 无附魔技能不受 Lv.3 上限
+        const existingSkill = state.affixSkills.get(skillId);
+        const ukCap = (hasUncrownedKing() && existingSkill && existingSkill.enchantmentIds.length === 0) ? Infinity : 3;
+        data.level = Math.min(ukCap, data.level + 1);
         data.purchasePrice = (data.purchasePrice || 0) + item.cost;
       }
       // 同步更新 affixSkills 中的 level
@@ -1187,6 +1198,11 @@ function purchaseShopRelicItem(index: number): void {
     updateGoldDisplay();
     showFeedback(t('shop.got_relic', { icon: relic.icon, name: localizeItemName(relicId, relic.name) }), '#ffe66d');
     playSound('buy');
+    // Story 36.4: 集训手册 — 购买时一次性升级所有 Lv.1 技能
+    if (relicId === 'training_manual') {
+      const upgraded = applyTrainingManual();
+      if (upgraded > 0) showFeedback(`📖 ${upgraded}个技能升至Lv.2!`, '#00ff88');
+    }
     state.shop.items.splice(index, 1);
     renderRelicDisplay();
     renderUnifiedShop();
@@ -1202,6 +1218,11 @@ function purchaseShopRelicItem(index: number): void {
         state.gold -= item.cost;
         updateGoldDisplay();
         state.shop.items.splice(index, 1);
+        // Story 36.4: 集训手册 — 替换购买时也触发一次性升级
+        if (relicId === 'training_manual') {
+          const upgraded = applyTrainingManual();
+          if (upgraded > 0) showFeedback(`📖 ${upgraded}个技能升至Lv.2!`, '#00ff88');
+        }
       }
       const m = document.getElementById('relic-picker-modal');
       if (m) m.classList.add('relic-picker-hidden');
@@ -1220,6 +1241,12 @@ function checkAutoEnchantment(skillId: string): void {
   // T4 限制遗物：附魔锁定
   if (queryRelicFlag('enchant_lock') === true) {
     showFeedback(t('shop.enchant_locked'), '#ff0000');
+    return;
+  }
+
+  // Story 36.4: 无冕之王 — 无附魔技能不弹出附魔选择
+  const affixSkillForBlock = state.affixSkills.get(skillId);
+  if (affixSkillForBlock && shouldBlockEnchantment(affixSkillForBlock.enchantmentIds)) {
     return;
   }
 

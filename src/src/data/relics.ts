@@ -403,6 +403,72 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '永不断裂的锁链，代价是禁锢的力量。',
   },
 
+  // ==================== 技能系统（词条制）遗物 ====================
+
+  first_strike: {
+    id: 'first_strike',
+    name: '首发强化',
+    icon: '⚡',
+    description: '每个单词第一个技能触发，产出+20%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'skill',
+    flavor: '先发制人，一击致命。',
+  },
+
+  less_is_more: {
+    id: 'less_is_more',
+    name: '少而精',
+    icon: '💎',
+    description: '装备技能数量<10时，技能产出+20%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'skill',
+    flavor: '少即是多，精即是强。',
+  },
+
+  training_manual: {
+    id: 'training_manual',
+    name: '集训手册',
+    icon: '📖',
+    description: '获取时一次性升级所有Lv.1技能至Lv.2。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'skill',
+    behaviorType: 'training_manual',
+    flavor: '翻开手册，技能突飞猛进。',
+  },
+
+  jazz: {
+    id: 'jazz',
+    name: '爵士乐',
+    icon: '🎷',
+    description: '一词内触发≥3种不同词条类型时，该词得分+10%×独特词条数。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'skill',
+    behaviorType: 'jazz_diversity',
+    flavor: '即兴演奏，多样生辉。',
+  },
+
+  uncrowned_king: {
+    id: 'uncrowned_king',
+    name: '无冕之王',
+    icon: '👑',
+    description: '没有附魔的技能可以无限升级（Lv4+沿用+60%递增），但永远不能获得附魔。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'skill',
+    behaviorType: 'uncrowned_king',
+    category: 'risk-reward',
+    flavor: '不戴王冠，却统御一切。',
+  },
+
 }
 
 // === Relic Modifier 工厂类型 ===
