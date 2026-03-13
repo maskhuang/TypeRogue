@@ -342,7 +342,7 @@ export const RELICS: Record<string, RelicData> = {
 
   combo_buffer: {
     id: 'combo_buffer',
-    name: '连击缓冲',
+    name: '余韵护盾',
     icon: '🛡️',
     description: 'combo 中断时保留 30%（向下取整）。',
     rarity: 'common',
@@ -378,7 +378,7 @@ export const RELICS: Record<string, RelicData> = {
 
   combo_detonator: {
     id: 'combo_detonator',
-    name: '连击引爆',
+    name: '蓄势引爆',
     icon: '💣',
     description: 'combo 达 15/30/45 时，随机触发 3 个装备技能。',
     rarity: 'epic',
@@ -391,7 +391,7 @@ export const RELICS: Record<string, RelicData> = {
 
   immortal_combo: {
     id: 'immortal_combo',
-    name: '不灭连击',
+    name: '不断之链',
     icon: '🔗',
     description: 'combo 永不中断（跨关不重置），但技能不再产出 multiplier 资源。',
     rarity: 'legendary',
