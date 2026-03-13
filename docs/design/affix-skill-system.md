@@ -16,7 +16,7 @@ _日期: 2026-03-11_
 - **统一为词条制**：所有技能 = 加算产出者（基底）+ 0~3 个词条
 - **加算为主、乘算稀有**：大部分增益进入加算层合并，乘算词条权重极低
 - **运行时随机生成**：每局商店刷出的技能都不同，海量组合提升重玩性
-- **附魔精简保留**：学徒(10)/任务(8)/溅射/衍生/职业专属/乘算化 保留为技能附魔层
+- **附魔精简保留**：学徒(12)/任务(18)/衍生/乘算化 保留为技能附魔层
 
 ### 重构范围
 
@@ -26,15 +26,15 @@ _日期: 2026-03-11_
 | Producer（乘算） | → 乘算词条 |
 | Converter（加算） | → 转化词条 |
 | Converter（乘算） | **删除**（遏制乘算泛滥） |
-| Connector | → 连接词条 |
-| Replicator | → 复制词条 |
+| Connector | → 感应词条 |
+| Replicator | → 溅射词条（合并 Replicate 入 Splash） |
 | Amplifier | → 增幅词条 |
 | 附魔-共鸣 | → 共鸣词条 |
 | 附魔-虚无(Repulsion) | → 虚无词条 |
 | 附魔-衍生(Transmutation) | 保留为附魔 |
-| 附魔-精通/成长/吞噬 | → 学徒附魔(10) + 任务附魔(8) |
-| 附魔-溅射 | 保留为附魔 |
-| 附魔-职业专属（6个） | 保留为附魔 |
+| 附魔-精通/成长/吞噬 | → 学徒附魔(12) + 任务附魔(18) |
+| 附魔-溅射 | → 溅射词条（合并入 Splash AffixType） |
+| 附魔-被动(职业限定4个) | **删除**（字母亲和/满溢/不稳定/嗜变） |
 | 附魔-乘算化 | 保留为附魔 |
 
 ---
@@ -60,8 +60,8 @@ _日期: 2026-03-11_
 | 稀有度 | 词条数 | 颜色 | 商店出现概率 |
 |--------|-------|------|------------|
 | 普通 | 0 | 白 | 40% |
-| 魔法 | 1 | 蓝 | 30% |
-| 稀有 | 2 | 黄 | 20% |
+| 稀有 | 1 | 蓝 | 30% |
+| 史诗 | 2 | 紫 | 20% |
 | 传说 | 3 | 橙 | 10% |
 
 ---
@@ -86,30 +86,30 @@ _日期: 2026-03-11_
 | 5 | **衰减** | 新设计 | 基础产出 ×N，每次触发 -X%，每词重置 | `initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5` | 6 |
 | 6 | **脉冲** | 新设计 | 每第 N 次触发产出 ×M，其余正常 | `interval: 4, burstMult: 3.0` | 6 |
 | 7 | **暴击** | 新设计 | 每次触发 X% 概率产出 ×N | `chance: 0.5, critMult: 2.0` | 8 |
-| 8 | **级联** | Noita触发链 | 若**上一个按键**在[posRel]范围内，产出 ×N | `posRel, cascadeMult: 1.8~2.5` | 4 |
+| 8 | **级联** | Noita触发链 | 若**上一个按键**在[posRel]范围内，产出 ×N | `posRel, cascadeMult: 1.8~2.5` | 6 |
 
 #### 键盘拓扑型
 
 | # | 词条 | 来源 | 效果 | 参数 | 权重 |
 |---|------|------|------|------|------|
 | 9 | **虚无** | Repulsion附魔 | [posRel]范围内每空位产出 +X% | `posRel, bonusPerSlot: 5%~50%` | 10 |
-| 10 | **共鸣** | Resonance附魔 | [posRel]范围内技能触发时，自身以 X% 效率触发 | `posRel, efficiency: 15%~60%` | 4 |
+| 10 | **共鸣** | Resonance附魔 | [posRel]范围内技能产出指定资源时，自身自动触发 | `posRel, resource: ResourceType` | 4 |
 | 11 | **倒影** | 新设计 | 变成[posRel]范围内技能的一个随机词条（复制类型+参数），每关刷新 | `posRel` | 3 |
 
 #### 触发链型
 
 | # | 词条 | 来源 | 效果 | 参数 | 权重 |
 |---|------|------|------|------|------|
-| 12 | **连接** | Connector | [posRel]范围内技能产出[resource]时，自身触发 | `posRel, resource` | 4 |
-| 13 | **复制** | Replicator | 触发后额外触发[posRel]范围内 1 个随机技能 | `posRel` | 3 |
-| 14 | **增幅** | Amplifier | 每次触发 +1 层；**自身（同资源时）及**[posRel]范围内同资源技能获得 +X%/层 | `posRel, resource, valuePerStack` | 3 |
+| 12 | **感应** | Connector | [posRel]范围内有指定词条的技能触发时，自身触发 | `posRel, watchAffix: AffixType` | 6 |
+| 13 | **溅射** | Replicator+Splash | 触发后随机触发[posRel]范围内 1 个匹配的技能 | `posRel, resource?, watchAffix?` | 5 |
+| 14 | **增幅** | Amplifier | 每次触发 +1 层；**自身（同资源时）及**[posRel]范围内同资源技能获得 +X%/层 | `posRel, resource, valuePerStack` | 5 |
 
 #### 单词感知型
 
 | # | 词条 | 来源 | 效果 | 参数 | 权重 |
 |---|------|------|------|------|------|
-| 15 | **流放** | 炉石·流放 | 技能字母为单词**首字母或尾字母**时，产出 +X% | `bonusPercent: 40%~80%` | 6 |
-| 16 | **引力** | 新设计 | 包含此字母的单词出现概率 ×N（N<1 斥力，N>1 引力） | `probMult: 0~2` | 5 |
+| 15 | **流放** | 炉石·流放 | 技能字母为单词**首字母或尾字母**时，产出 +X% | `bonusPercent: 40%~80%` | 8 |
+| 16 | **引力** | 新设计 | 包含此字母的单词出现概率 ×N（N<1 斥力，N>1 引力） | `probMult: 0~2` | 3 |
 | 17 | **连字** | 新设计 | 技能字母在当前单词中出现 N 次 → 产出 ×N | 无（运行时计算字母出现次数） | 6 |
 
 #### 元规则型
@@ -130,17 +130,6 @@ _日期: 2026-03-11_
 | SameHand | 5% |
 | SameFinger | 35% |
 | Symmetric | 50% |
-
-### 共鸣词条 efficiency 按 PositionRelation
-
-| PositionRelation | efficiency |
-|-----------------|-----------|
-| Adjacent | 50% |
-| SameRow | 30% |
-| SameColumn | 40% |
-| SameHand | 15% |
-| SameFinger | 50% |
-| Symmetric | 60% |
 
 ### 转化词条 k 值校准表
 
@@ -182,12 +171,6 @@ _日期: 2026-03-11_
 
 词条制重构后，以下附魔保留为技能附加层。每个技能可携带 **0~1 个附魔**（独立于词条系统）。
 
-### 溅射附魔（1 类 × 6 位置关系 = 6 个）
-
-| 附魔 | 效果 | 参数 |
-|------|------|------|
-| **溅射** | 触发后等分效率触发[posRel]范围内所有技能 | `posRel` |
-
 ### 可监听事件表
 
 以下事件可用于学徒/任务附魔的条件判定：
@@ -197,12 +180,16 @@ _日期: 2026-03-11_
 | `selfTrigger` | 自身触发（按键） | Phase 1 | 高 |
 | `neighborTrigger` | [posRel]邻居触发 | Phase 6 | 高 |
 | `wordComplete` | 完成单词 | 单词系统 | 中 |
-| `affixProc` | 词条效果触发（暴击/脉冲/级联/流放等） | Phase 2-3 | 中 |
+| `affixProc` | 词条效果触发（通用） | Phase 2-3 | 中 |
+| `affixProc:pulse` | 脉冲词条触发 | Phase 3 | 中 |
+| `affixProc:cascade` | 级联词条触发 | Phase 3 | 中低 |
+| `affixProc:recurse` | 递归词条触发 | Phase 5 | 中低 |
+| `affixProc:taboo_penalty` | 禁忌负产出触发 | Phase 3 | 低 |
 | `critHit` | 暴击命中 | Phase 3 | 中低 |
 | `outcastProc` | 流放触发（首/尾字母） | Phase 2 | 中 |
-| `longWord` | 完成长单词（≥6字母） | 单词系统 | 低 |
+| `longWord:6` | 完成长单词（≥6字母） | 单词系统 | 低 |
 | `perfectWord` | 零错误完成单词 | 单词系统 | 中 |
-| `comboReach` | 连击达到 N | combo 计数器 | 中 |
+| `comboReach:15` | 连击达到 15 | combo 计数器 | 中 |
 | `stageCleared` | 关卡通关 | 关卡系统 | 极低 |
 | `mutationApplied` | 技能被蜕变 | 蜕变师系统 | 极低 |
 
@@ -212,17 +199,17 @@ _日期: 2026-03-11_
 
 | 附魔 | 监听事件 | 每次 +% | 说明 |
 |------|---------|---------|------|
-| **学徒·自修** | selfTrigger | +0.5% | ← 精通；按得越多越强 |
+| **学徒·自修** | selfTrigger | +1% | ← 精通；按得越多越强 |
 | **学徒·观摩** | neighborTrigger(posRel) | +X%(按posRel表) | ← 成长；邻居帮你成长 |
 | **学徒·造词** | wordComplete | +2% | 奖励完整打词 |
-| **学徒·悟道** | affixProc | +1.5% | 词条效果触发时成长 |
-| **学徒·暴击** | critHit | +2% | 暴击越多越强 |
-| **学徒·流放** | outcastProc | +1.5% | 首尾字母触发时成长 |
-| **学徒·长词** | longWord(≥6) | +2.5% | 鼓励挑战长单词 |
-| **学徒·精准** | perfectWord | +3% | 零错误奖励 |
-| **学徒·连击** | comboReach(15) | +1% | 连击里程碑奖励 |
-| **学徒·通关** | stageCleared | +8% | 每通关一次大幅成长 |
-| **学徒·丰收** | wordComplete | +8% | 造词师限定；← 丰收 |
+| **学徒·悟道** | affixProc | +3% | 词条效果触发时成长 |
+| **学徒·暴击** | critHit | +5% | 暴击越多越强 |
+| **学徒·流放** | outcastProc | +4% | 首尾字母触发时成长 |
+| **学徒·长词** | longWord:6 | +5% | 鼓励挑战长单词 |
+| **学徒·精准** | perfectWord | +8% | 零错误奖励 |
+| **学徒·连击** | comboReach:15 | +10% | 连击里程碑奖励 |
+| **学徒·通关** | stageCleared | +15% | 每通关一次大幅成长 |
+| **学徒·丰收** | wordComplete | +3% | 造词师限定；← 丰收 |
 | **学徒·适应** | mutationApplied | +15% | 蜕变师限定；← 适应 |
 
 #### 学徒·观摩 growthPerProc 按 PositionRelation
@@ -246,22 +233,22 @@ _日期: 2026-03-11_
 |------|---------|---------|---------|------------|------|
 | **任务·吞噬** | 虚无 | selfTrigger | 15 | 吃[posRel]最弱邻居(+空位); bonusPerSlot +5% | 吞噬创造虚空 |
 | **任务·过载** | 暴击 | critHit | 8 | critMult +0.5 | 暴击越多→暴击越猛 |
-| **任务·回响** | 脉冲 | affixProc(pulse) | 6 | burstMult +0.3 | 脉冲共鸣→爆发增强 |
+| **任务·回响** | 脉冲 | affixProc:pulse | 6 | burstMult +0.3 | 脉冲共鸣→爆发增强 |
 | **任务·升华** | 乘算 | perfectWord | 3 | multiplier +0.15 | 完美操作→放大器进化 |
-| **任务·连锁** | 级联 | affixProc(cascade) | 6 | cascadeMult +0.2 | 级联反馈→倍率提升 |
-| **任务·净化** | 衰减 | comboReach(15) | 3 | floor -0.05 (min 0.1) | 心流净化→衰减减缓 |
-| **任务·共振** | 共鸣+连接 | neighborTrigger | 20 | efficiency +8% | 互助→联动增强 |
+| **任务·连锁** | 级联 | affixProc:cascade | 6 | cascadeMult +0.2 | 级联反馈→倍率提升 |
+| **任务·净化** | 衰减 | comboReach:15 | 3 | floor -0.05 (min 0.1) | 心流净化→衰减减缓 |
+| **任务·共振** | 共鸣+感应 | neighborTrigger | 20 | 触发产出 +10%/层 | 互助→联动增强 |
 | **任务·蓄势** | 流放 | outcastProc | 10 | bonusPercent +15% | 边缘蓄力→流放精通 |
 | **任务·精炼** | 转化 | selfTrigger | 15 | k ×1.1 | 持续转化→系数精炼 |
 | **任务·充能** | 蓄力 | wordComplete | 5 | maxBonus +0.3 | 打词充能→上限突破 |
-| **任务·裂变** | 复制 | longWord(≥6) | 5 | 额外触发 +1 邻居 | 长词积累→裂变扩散 |
+| **任务·裂变** | 溅射 | longWord:6 | 5 | 额外触发 +1 邻居 | 长词积累→裂变扩散 |
 | **任务·层叠** | 增幅 | selfTrigger | 25 | valuePerStack +0.005 | 持续增幅→层层叠加 |
 | **任务·极化** | 引力 | wordComplete | 8 | \|probMult−1\| +0.15 极化 | 打词→引力/斥力极化 |
 | **任务·光谱** | 彩虹 | selfTrigger | 20 | 随机权重偏向当前最低资源 +15%/层 | 智能补缺→资源均衡 |
 | **任务·映射** | 倒影 | stageCleared | 1 | 复制的词条参数 ×1.1（+10%/层，永久累积） | 每关磨练→倒影增强 |
 | **任务·重叠** | 连字 | selfTrigger | 15 | 连字 ×N 的 N 上限 +1（基础上限=字母实际出现次数） | 重复触发→连字超频 |
-| **任务·迭代** | 递归 | affixProc(recurse) | 5 | recurseChance +3%/层 | 递归越多→递归越频 |
-| **任务·献祭** | 禁忌 | affixProc(taboo_penalty) | 3 | penaltyChance -1%/层 (min 2%) | 承受惩罚→净化风险 |
+| **任务·迭代** | 递归 | affixProc:recurse | 5 | recurseChance +3%/层 | 递归越多→递归越频 |
+| **任务·献祭** | 禁忌 | affixProc:taboo_penalty | 3 | penaltyChance -1%/层 (min 2%) | 承受惩罚→净化风险 |
 
 ### 衍生附魔（7 个）
 
@@ -276,17 +263,6 @@ _日期: 2026-03-11_
 | **衍生·金币** | gold | 20% | |
 | **衍生·碎片** | fragment | 15% | 职业资源，比例适中 |
 | **衍生·变异素** | mutagen | 15% | 职业资源，比例适中 |
-
-### 被动附魔（职业限定，4 个）
-
-每次触发时检查条件，满足则获得加成。
-
-| 附魔 | 职业 | 效果 | 参数 |
-|------|------|------|------|
-| **字母亲和** | 造词师 | 采集队列含本键字母时产出 +X% | `bonus: 25%` |
-| **满溢** | 造词师 | 每有 1 种碎片 ≥15 产出 +X% | `bonus: 20%` |
-| **不稳定** | 蜕变师 | 每关随机一种资源 +X% | `bonus: 30%` |
-| **嗜变** | 蜕变师 | 触发时 X% 概率产 1 变异素 | `chance: 5%` |
 
 ### 运算符附魔（1 个）
 
@@ -357,11 +333,6 @@ if 学徒附魔: bonusPercent += apprenticeAccumulated
 // 任务·吞噬: ≥3次完成后额外通用加成（虚无 bonusPerSlot 已在上方内联增强）
 if 任务·吞噬 && c >= 3: bonusPercent += c × 10%
 
-// 条件加成类
-if 满溢附魔: bonusPercent += countSaturatedFragments() × bonus
-if 字母亲和附魔: if queueContainsLetter(key) → bonusPercent += bonus
-if 不稳定附魔: if resource === randomStageBonusResource → bonusPercent += bonus
-
 output = output × (1 + bonusPercent)
 ```
 
@@ -403,10 +374,10 @@ emitResourceSound(resource)
 ### Phase 5: 后触发效果
 
 ```
-// ── 词条后触发（任务增强复制词条） ──
-if 复制:
+// ── 词条后触发（任务增强溅射词条） ──
+if 溅射:
   targets = 1 + (裂变 ? questCompletions : 0)
-  pick `targets` random skills in posRel range → triggerSkill(each)
+  pick `targets` random matching skills in posRel range → triggerSkill(each)
 if 增幅: self.stacks += 1
 // 递归: X% 概率重新触发自身（连锁时概率减半）
 if 递归: if roll(recurseChance) → triggerSkill(self, { recurseChance: recurseChance / 2 })
@@ -436,21 +407,19 @@ if 任务附魔:
       // 其余任务的增强效果通过 questCompletions 在 Phase 2-3 自动生效
 
 if 衍生附魔: applyToResource(extraResource, output × ratio)
-if 溅射附魔: for each skill in posRel range → triggerSkill(skill, efficiency=1/count)
-if 嗜变附魔: if roll(chance) → applyToResource('mutagen', 1)
 ```
 
 ### Phase 6: 被动通知邻居
 
 ```
 for each neighborSkill bound at neighborKey:
-  // [词条] 共鸣: 邻居触发 → 自身触发（减效；任务·共振 completions 增益效率）
-  if neighbor has 共鸣词条 && hasRelation(triggerKey, neighborKey, posRel):
-    effectiveEff = efficiency + (共振 ? neighbor.questCompletions × 0.08 : 0)
-    triggerSkill(neighbor, neighborKey, { efficiencyMult: effectiveEff })
+  // [词条] 共鸣: 邻居产出指定资源 → 自身触发（任务·共振 completions 增益产出 +10%/层）
+  if neighbor has 共鸣词条 && resource === neighbor.resonanceResource && hasRelation(triggerKey, neighborKey, posRel):
+    bonusFromQuest = 共振 ? neighbor.questCompletions × 0.10 : 0
+    triggerSkill(neighbor, neighborKey, { bonusFromQuest })
 
-  // [词条] 连接: 邻居产出指定资源 → 自身触发（共振同样增益连接效率）
-  if neighbor has 连接词条 && resource === linkResource && hasRelation(triggerKey, neighborKey, posRel):
+  // [词条] 感应: 邻居拥有指定词条类型的技能触发 → 自身触发
+  if neighbor has 感应词条 && triggerSkill.hasAffix(neighbor.watchAffix) && hasRelation(triggerKey, neighborKey, posRel):
     triggerSkill(neighbor, neighborKey)
 
   // [附魔] 学徒·观摩: 邻居触发 → 自身永久成长（不触发技能）
@@ -470,8 +439,8 @@ eventBus.emit('skill:triggered', { key, skillId, resource, output })
 
 ```
 "别人触发 → 影响自己"（Phase 6 被动检查）
-  [词条] 共鸣: 邻居触发(任意) → 自身触发(减效)
-  [词条] 连接: 邻居产出(指定资源) → 自身触发
+  [词条] 共鸣: 邻居产出(指定资源) → 自身触发
+  [词条] 感应: 邻居拥有(指定词条)的技能触发 → 自身触发
   [附魔] 学徒·观摩: 邻居触发 → 自身永久成长(不触发)
   [附魔] 任务(邻居条件): 邻居触发 → 自身叠层
 
@@ -479,15 +448,14 @@ eventBus.emit('skill:triggered', { key, skillId, resource, output })
   [词条] 引力: 含此字母的单词出现概率 ×probMult（极化: |probMult−1| +0.15/层）
 
 "自己触发 → 影响别人"（Phase 5 后触发）
-  [词条] 复制: 自身触发 → 1+裂变层 个随机邻居触发
+  [词条] 溅射: 自身触发 → 1+裂变层 个匹配邻居触发
   [词条] 增幅: 自身触发 → 自身(同资源)及邻居获得层数加成
-  [附魔] 溅射: 自身触发 → 全部邻居触发(均分效率)
   [附魔] 任务·吞噬: 15次触发 → 吃最弱邻居(虚无+空位+bonusPerSlot)
 
 "任务循环叠层 → 永久增强对应词条"（questCompletions 生效于 Phase 2-3）
   吞噬→虚无  过载→暴击  回响→脉冲  升华→乘算  连锁→级联
-  净化→衰减  共振→共鸣  蓄势→流放  精炼→转化  充能→蓄力
-  裂变→复制  层叠→增幅  极化→引力  光谱→彩虹  映射→倒影
+  净化→衰减  共振→共鸣+感应  蓄势→流放  精炼→转化  充能→蓄力
+  裂变→溅射  层叠→增幅  极化→引力  光谱→彩虹  映射→倒影
   重叠→连字  迭代→递归  献祭→禁忌
 ```
 
@@ -497,6 +465,7 @@ eventBus.emit('skill:triggered', { key, skillId, resource, output })
 
 ```typescript
 // ===== 词条类型枚举（20 类） =====
+// Replicate 已合并入 Splash
 enum AffixType {
   // 数值型
   Multiply = 'multiply',
@@ -514,7 +483,7 @@ enum AffixType {
   Mirror = 'mirror',
   // 触发链型
   Link = 'link',
-  Replicate = 'replicate',
+  Splash = 'splash',
   Amplify = 'amplify',
   // 单词感知型
   Outcast = 'outcast',
@@ -526,10 +495,9 @@ enum AffixType {
   Taboo = 'taboo',
 }
 
-// ===== 附魔类型枚举（保留，37 类） =====
+// ===== 附魔类型枚举（保留，32 类） =====
+// 衍生为 1 个枚举值，资源变体在运行时处理
 enum EnchantmentType {
-  // 溅射（1×6 posRel）
-  Splash = 'splash',
   // 学徒型（12）
   ApprenticeSelf = 'apprentice_self',          // 自修
   ApprenticeNeighbor = 'apprentice_neighbor',  // 观摩
@@ -550,11 +518,11 @@ enum EnchantmentType {
   QuestAscend = 'quest_ascend',                // 升华 → 乘算
   QuestChain = 'quest_chain',                  // 连锁 → 级联
   QuestPurify = 'quest_purify',                // 净化 → 衰减
-  QuestResonance = 'quest_resonance',          // 共振 → 共鸣+连接
+  QuestResonance = 'quest_resonance',          // 共振 → 共鸣+感应
   QuestCharge = 'quest_charge',                // 蓄势 → 流放
   QuestRefine = 'quest_refine',                // 精炼 → 转化
   QuestEnergize = 'quest_energize',            // 充能 → 蓄力
-  QuestFission = 'quest_fission',              // 裂变 → 复制
+  QuestFission = 'quest_fission',              // 裂变 → 溅射
   QuestStack = 'quest_stack',                  // 层叠 → 增幅
   QuestPolarize = 'quest_polarize',            // 极化 → 引力
   QuestSpectrum = 'quest_spectrum',            // 光谱 → 彩虹
@@ -562,14 +530,9 @@ enum EnchantmentType {
   QuestOverlap = 'quest_overlap',              // 重叠 → 连字
   QuestIterate = 'quest_iterate',              // 迭代 → 递归
   QuestSacrifice = 'quest_sacrifice',          // 献祭 → 禁忌
-  // 衍生型（1×7 资源）
+  // 衍生型（1，运行时按 extraResource 7 变体）
   Transmute = 'transmute',
-  // 被动型（职业限定，4）
-  LetterAffinity = 'letter_affinity',          // 字母亲和（造词师）
-  Overflow = 'overflow',                       // 满溢（造词师）
-  Unstable = 'unstable',                       // 不稳定（蜕变师）
-  MutationHunger = 'mutation_hunger',          // 嗜变（蜕变师）
-  // 运算符
+  // 运算符（1）
   MultiplyOperator = 'multiply_operator',
 }
 
@@ -589,13 +552,13 @@ interface AffixInstance {
   burstMult?: number               // Pulse: 爆发乘数
   chance?: number                  // Crit: 概率
   critMult?: number                // Crit: 暴击乘数
-  posRel?: PositionRelation        // Void/Resonance/Link/Replicate/Amplify: 位置关系
+  posRel?: PositionRelation        // Void/Resonance/Mirror/Link/Splash/Amplify/Cascade: 位置关系
   bonusPerSlot?: number            // Void: 每空位加成%
-  efficiency?: number              // Resonance: 触发效率%
-  resource?: ResourceType          // Link/Amplify: 关联资源
+  resource?: ResourceType          // Resonance: 监听资源 / Amplify: 关联资源 / Splash: 目标资源
+  watchAffix?: AffixType           // Link: 监听词条类型 / Splash: 目标词条类型
   valuePerStack?: number           // Amplify: 每层加成%
   cascadeMult?: number             // Cascade: 级联乘数
-  bonusPercent?: number            // Outcast: 首尾字母加成%
+  bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: +100% 固定
   probMult?: number                // Gravity: 单词出现概率倍率（0~2）
   // Ligature: 无参数（运行时计算字母出现次数 → ×N）
   // Twin: 无运行时参数（生成阶段影响附魔分配）
@@ -604,7 +567,7 @@ interface AffixInstance {
 }
 
 // ===== 技能实例（一个完整的产出者） =====
-interface SkillInstance {
+interface AffixSkillInstance {
   id: string                       // 运行时生成的唯一 ID
   name: string                     // 自动拼接的名字
   icon: string                     // 基底资源图标
@@ -614,6 +577,7 @@ interface SkillInstance {
   rarity: 0 | 1 | 2 | 3           // 词条数量
   affixes: AffixInstance[]         // 0~3 个词条
   enchantmentIds: string[]         // 附魔列表（通常 0~1 个；双生词条时最多 2 个）
+  transmuteResource?: ResourceType // 衍生附魔目标资源
   purchasePrice?: number           // 购买价格（用于转卖计算）
 }
 
@@ -644,7 +608,7 @@ function rollRarity(): 0 | 1 | 2 | 3 {
   const r = Math.random()
   if (r < 0.40) return 0  // 白 40%
   if (r < 0.70) return 1  // 蓝 30%
-  if (r < 0.90) return 2  // 黄 20%
+  if (r < 0.90) return 2  // 紫 20%
   return 3                 // 橙 10%
 }
 ```
@@ -661,15 +625,15 @@ function rollRarity(): 0 | 1 | 2 | 3 {
 | 衰减 | 6 | 中等 |
 | 脉冲 | 6 | 中等 |
 | 暴击 | 8 | 常见，好理解 |
+| 级联 | 6 | 中等，打字顺序乘算 |
 | 虚无 | 10 | 常见，鼓励布局思考 |
 | 共鸣 | 4 | 较少，被动白嫖 |
 | 倒影 | 3 | 稀有，每关随机变身 |
-| 连接 | 4 | 较少，资源条件触发 |
-| 复制 | 3 | 稀有，链式强力 |
-| 增幅 | 3 | 稀有，辅助型 |
-| 级联 | 4 | 较少，打字顺序乘算 |
-| 流放 | 6 | 中等，首尾字母加成 |
-| 引力 | 5 | 中等，影响单词出现概率 |
+| 感应 | 6 | 中等，词条条件触发 |
+| 溅射 | 5 | 中等，链式触发 |
+| 增幅 | 5 | 中等，辅助型 |
+| 流放 | 8 | 常见，首尾字母加成 |
+| 引力 | 3 | 稀有，影响单词出现概率 |
 | 连字 | 6 | 中等，重复字母奖励 |
 | 双生 | 2 | 极稀有，元规则修改 |
 | 递归 | 3 | 稀有，概率自我重触发 |
@@ -678,14 +642,14 @@ function rollRarity(): 0 | 1 | 2 | 3 {
 ### 生成流程
 
 ```typescript
-function generateSkill(): SkillInstance {
+function generateSkill(): AffixSkillInstance {
   // 1. 随机基底资源
   const resource = pickRandom(AVAILABLE_RESOURCES)
 
   // 2. 掷稀有度
   const rarity = rollRarity()
 
-  // 3. 词条池（15 类通用词条，无职业过滤）
+  // 3. 词条池（20 类通用词条，无职业过滤）
   const pool = AFFIX_POOL
 
   // 4. 加权不重复抽取 N 个词条类型
@@ -751,7 +715,8 @@ function rollAffixParams(type: AffixType, resource: ResourceType): AffixInstance
 
     case AffixType.Resonance: {
       const posRel = pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, efficiency: RESONANCE_EFFICIENCY_TABLE[posRel] }
+      const resource = pickRandom(ALL_RESOURCES)  // 监听的资源类型
+      return { type, posRel, resource }
     }
 
     case AffixType.Mirror:
@@ -759,9 +724,9 @@ function rollAffixParams(type: AffixType, resource: ResourceType): AffixInstance
       // 运行时: 每关开始从 posRel 邻居中随机复制一个词条的类型+参数
 
     case AffixType.Link:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), resource: pickRandom(ALL_RESOURCES) }
+      return { type, posRel: pickRandom(ALL_POS_RELATIONS), watchAffix: pickRandom(ALL_AFFIX_TYPES) }
 
-    case AffixType.Replicate:
+    case AffixType.Splash:
       return { type, posRel: pickRandom(ALL_POS_RELATIONS) }
 
     case AffixType.Amplify:
@@ -800,7 +765,7 @@ function rollAffixParams(type: AffixType, resource: ResourceType): AffixInstance
 ```
 白(0词条): "基数" / "分数" / "倍率" ...
 蓝(1词条): "暴击·基数"
-黄(2词条): "暴击·蓄力·基数"
+紫(2词条): "暴击·蓄力·基数"
 橙(3词条): "暴击·蓄力·共鸣·基数"
 ```
 
@@ -808,8 +773,8 @@ function rollAffixParams(type: AffixType, resource: ResourceType): AffixInstance
 const AFFIX_NAMES: Record<AffixType, string> = {
   multiply: '强化', convert: '转化', rainbow: '彩虹', charge: '蓄力',
   decay: '衰减', pulse: '脉冲', crit: '暴击',
-  void: '虚无', resonance: '共鸣', mirror: '倒影', link: '连接',
-  replicate: '复制', amplify: '增幅', cascade: '级联',
+  void: '虚无', resonance: '共鸣', mirror: '倒影', link: '感应',
+  splash: '溅射', amplify: '增幅', cascade: '级联',
   outcast: '流放', gravity: '引力', ligature: '连字',
   twin: '双生', recurse: '递归', taboo: '禁忌',
 }
@@ -831,13 +796,14 @@ function generateName(resource: ResourceType, affixes: AffixInstance[]): string 
 ## 十、存档序列化
 
 ```typescript
-interface SkillSaveData {
+interface AffixSkillSaveData {
   id: string
   resource: ResourceType
   level: number
   rarity: number
   affixes: AffixInstance[]          // 词条定义（不变）
   enchantmentIds: string[]          // 附魔 ID 列表（双生词条时最多 2 个）
+  transmuteResource?: ResourceType  // 衍生附魔目标资源
   runtime: SkillRuntimeState       // 运行时状态
 }
 ```
@@ -864,8 +830,8 @@ interface SkillSaveData {
 
 - 通用词条: 20 类
 - 橙装组合: C(20,3) = 1140
-- 每种组合的子参数变体（转化的源资源、共鸣的位置关系等）再乘以数倍
-- 附魔层额外 ×43 种可能（溅射6 + 学徒12 + 任务18(需对应词条) + 衍生7 + 被动4 + 乘算化1 + 无附魔）
+- 每种组合的子参数变体（转化的源资源、共鸣的监听资源、感应的监听词条等）再乘以数倍
+- 附魔层额外 ×39 种可能（学徒12 + 任务18(需对应词条) + 衍生7 + 乘算化1 + 无附魔）
 - 运行时随机生成 → 每局每个商店位都是独特技能
 
 ---
@@ -884,7 +850,7 @@ interface SkillSaveData {
 | [附魔] 任务(吞噬/蓄势=加算) | [词条] 递归(X%重触发) |
 | | [附魔] 乘算化 |
 | | [任务] 升华/过载/回响/连锁/净化(乘算参数增强) |
-| [附魔] 满溢、字母亲和、不稳定 | 遗物(外部系统) |
+| | 遗物(外部系统) |
 
 一个橙装最多 3 词条。全乘算组合（乘算+暴击+脉冲）概率极低（权重 4×8×6 vs 总权重³），有效遏制数值膨胀。
 
@@ -974,7 +940,7 @@ interface SkillSaveData {
 | ID | 旧效果 | 新效果 | 改写理由 |
 |----|--------|--------|---------|
 | `forge_heart` 熔炉之心 | 产出者触发时转化者 +15% | **拥有转化词条的技能触发时，k 值额外 +15%** | 产出者/转化者→转化词条 |
-| `chain_surge` 链路增压 | 连接者传导时被传导技能 +25% | **连接词条触发（被动传导）时，被触发的技能本次产出 +25%** | 连接者→连接词条 |
+| `chain_surge` 链路增压 | 连接者传导时被传导技能 +25% | **感应词条触发（被动传导）时，被触发的技能本次产出 +25%** | 连接者→感应词条 |
 | `stack_resonance` 层叠共鸣 | 增幅者叠层≥15 时 +10% | **增幅词条叠层 ≥15 时，受增幅影响的技能额外 +10%** | 增幅者→增幅词条 |
 | `resource_flood` 资源洪流 | 单词内≥3种资源时 +20% | **不变**（彩虹词条单次只产1种随机资源，不会单独满足条件） | 无需改 |
 
@@ -982,15 +948,15 @@ interface SkillSaveData {
 
 | ID | 旧效果 | 新效果 | 改写理由 |
 |----|--------|--------|---------|
-| `storm_drum` 风暴鼓 | 产出者双触发 | **稀有度 ≥2（黄装及以上）的技能双触发** | 全技能都是产出者→用稀有度区分 |
-| `overcharge` 过载核心 | 产出者 +50%，触发 -0.1s | **稀有度 ≥1（蓝装及以上）触发时 +50%，但每次触发 -0.1s** | 同上 |
+| `storm_drum` 风暴鼓 | 产出者双触发 | **稀有度 ≥2（史诗及以上）的技能双触发** | 全技能都是产出者→用稀有度区分 |
+| `overcharge` 过载核心 | 产出者 +50%，触发 -0.1s | **稀有度 ≥1（稀有及以上）触发时 +50%，但每次触发 -0.1s** | 同上 |
 
 #### T4 规则改造
 
 | ID | 旧效果 | 新效果 | 改写理由 |
 |----|--------|--------|---------|
 | `pure_heart` 纯粹之心 | 只能装备产出者，×3 | **技能只能为白装（0 词条），但产出 ×3** | 禁用技能类别→禁用词条；白装=纯产出者 |
-| `chain_ban` 链式禁令 | 连接者无法触发 +30% | **触发链词条（连接/复制/共鸣）无效，全技能 +30%** | 连接者→触发链类别 |
+| `chain_ban` 链式禁令 | 连接者无法触发 +30% | **触发链词条（感应/溅射/共鸣）无效，全技能 +30%** | 连接者→触发链类别 |
 | `keyboard_flood` 键盘洪水 | ≥15 技能 Lv1 +25% | **不变**（Lv1 限制意味着无法获取附魔，与旧效果等价） | 无需改 |
 | `no_enchant_vow` 无附魔戒律 | 无附魔 +40% | **不变** | 无需改 |
 
@@ -1040,11 +1006,11 @@ interface SkillSaveData {
 | 遗物 | 数值型 | 节奏型 | 拓扑型 | 触发链型 | 单词型 | 元规则 |
 |------|--------|--------|--------|---------|--------|--------|
 | 熔炉之心 | 转化 +k | - | - | - | - | - |
-| 链路增压 | - | - | - | 连接 +25% | - | - |
+| 链路增压 | - | - | - | 感应 +25% | - | - |
 | 层叠共鸣 | - | - | - | 增幅≥15 +10% | - | - |
 | 风暴鼓 | - | - | - | - | - | - |
 | 纯粹之心 | 🚫全禁 | 🚫全禁 | 🚫全禁 | 🚫全禁 | 🚫全禁 | 🚫全禁 |
-| 链式禁令 | - | - | 共鸣🚫 | 连接/复制🚫 | - | - |
+| 链式禁令 | - | - | 共鸣🚫 | 感应/溅射🚫 | - | - |
 | 纯血词条 | ×2(若选) | ×2(若选) | ×2(若选) | ×2(若选) | ×2(若选) | ×2(若选) |
 | 词条光谱 | 计数 | 计数 | 计数 | 计数 | 计数 | 计数 |
 | 传说气场 | - | - | - | - | - | - |
@@ -1052,4 +1018,4 @@ interface SkillSaveData {
 
 ---
 
-_Last updated: 2026-03-11_
+_Last updated: 2026-03-12_

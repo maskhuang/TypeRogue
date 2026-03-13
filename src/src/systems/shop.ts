@@ -98,10 +98,10 @@ function getActMaxRarity(): SkillRarity {
   return 3 as SkillRarity;                  // Act3+: 0~3
 }
 
-/** 生成单个词条制技能商品 */
+/** 生成单个词条制技能商品（避免与已有技能重名） */
 export function generateAffixShopItem(
   itemId: number,
-  options?: { rarity?: SkillRarity; resource?: ResourceType; maxRarity?: SkillRarity },
+  options?: { rarity?: SkillRarity; resource?: ResourceType; maxRarity?: SkillRarity; excludeNames?: Set<string> },
 ): ShopItem {
   const resourcePool = getAvailableResources(state.classId);
   const resource = options?.resource ?? resourcePool[Math.floor(random() * resourcePool.length)];
@@ -119,10 +119,21 @@ export function generateAffixShopItem(
   }
   // mono_affix 类别限制：重试直到技能含已选类别词条
   const lockedCategory = getMonoAffixCategory();
+  const excludeNames = options?.excludeNames;
   let skill = generateSkill({ resource, rarity, availableResources: resourcePool });
   // clamp：如果 rarity 未指定（随机掷骰），超过 actMaxRarity 时重生成
   if (rarity === undefined && skill.rarity > actMaxRarity) {
     skill = generateSkill({ resource, rarity: actMaxRarity, availableResources: resourcePool });
+  }
+  // 重试：避免与已有技能/本批其他技能重名（最多 10 次）
+  if (excludeNames && excludeNames.has(skill.name)) {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      skill = generateSkill({ resource: resourcePool[Math.floor(random() * resourcePool.length)], rarity: skill.rarity as SkillRarity, availableResources: resourcePool });
+      if (rarity === undefined && skill.rarity > actMaxRarity) {
+        skill = generateSkill({ resource: skill.resource, rarity: actMaxRarity, availableResources: resourcePool });
+      }
+      if (!excludeNames.has(skill.name)) break;
+    }
   }
   if (lockedCategory && skill.rarity > 0) {
     for (let attempt = 0; attempt < 20; attempt++) {
@@ -146,11 +157,14 @@ export function generateAffixShopItem(
   };
 }
 
-/** 生成多个词条制技能商品（保证品类多样性：至少 1 件 rarity≥1，除非 white_only 或 Act 限制） */
+/** 生成多个词条制技能商品（保证品类多样性：至少 1 件 rarity≥1，除非 white_only 或 Act 限制；同批内互相去重） */
 export function generateAffixShopItems(count: number): ShopItem[] {
   if (count <= 0) return [];
   const items: ShopItem[] = [];
   let nextId = Date.now();
+
+  // 同批内互相去重（不排除已有技能名——重名由 generateShopItems 转为升级）
+  const excludeNames = new Set<string>();
 
   const whiteOnly = queryRelicFlag('white_only') as boolean;
   const actMaxRarity = getActMaxRarity();
@@ -158,7 +172,9 @@ export function generateAffixShopItems(count: number): ShopItem[] {
   if (whiteOnly) {
     // pure_heart：全部白装
     for (let i = 0; i < count; i++) {
-      items.push(generateAffixShopItem(nextId++));
+      const item = generateAffixShopItem(nextId++, { excludeNames });
+      excludeNames.add(item.affixSkill!.name);
+      items.push(item);
     }
     return items;
   }
@@ -168,22 +184,25 @@ export function generateAffixShopItems(count: number): ShopItem[] {
   let guaranteed: ShopItem;
   if (guaranteedRarity >= 1) {
     for (let attempt = 0; attempt < 10; attempt++) {
-      guaranteed = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity });
+      guaranteed = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity, excludeNames });
       if (guaranteed.affixSkill!.rarity >= 1) break;
     }
     // 如果 10 次都没 ≥1，强制 rarity=1
     if (!guaranteed! || guaranteed!.affixSkill!.rarity < 1) {
-      guaranteed = generateAffixShopItem(nextId++, { rarity: 1 as SkillRarity, maxRarity: actMaxRarity });
+      guaranteed = generateAffixShopItem(nextId++, { rarity: 1 as SkillRarity, maxRarity: actMaxRarity, excludeNames });
     }
   } else {
     // Act1 允许的最大 rarity=0 时，无法保底蓝装
-    guaranteed = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity });
+    guaranteed = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity, excludeNames });
   }
+  excludeNames.add(guaranteed!.affixSkill!.name);
   items.push(guaranteed!);
 
   // 剩余随机
   for (let i = 1; i < count; i++) {
-    items.push(generateAffixShopItem(nextId++, { maxRarity: actMaxRarity }));
+    const item = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity, excludeNames });
+    excludeNames.add(item.affixSkill!.name);
+    items.push(item);
   }
 
   return items;
@@ -495,39 +514,89 @@ function generateShopItems(count: number): ShopItem[] {
 
   // 构建词条制技能池（Story 35.9 — 替代旧固定池）
   const skillPool: ShopItem[] = [];
+  const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
+  const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel;
   if (!isSilenced) {
     // T4 极简主义：技能数量达上限时不生成新技能
     const maxSkillCount = queryRelicFlag('max_skill_count') as number;
     const skillCountFull = maxSkillCount !== Infinity && state.player.skills.size >= maxSkillCount;
 
     if (!skillCountFull) {
-      // 生成词条制技能商品（含品类多样性保证）
+      // 生成词条制技能商品（同批内互相去重）
       const affixItems = generateAffixShopItems(count);
-      skillPool.push(...affixItems);
-    }
 
-    // 升级已有词条制技能（未满级的）
-    const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
-    const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel;
-    const upgradableAffix: string[] = [];
-    for (const [skillId, data] of state.player.skills) {
-      if (data.level < levelCap && state.affixSkills.has(skillId)) {
-        upgradableAffix.push(skillId);
+      // 与已有技能同名 → 直接转为升级项（同一 skillId 只转一次）
+      const ownedNameToId = new Map<string, string>();
+      for (const [skillId] of state.player.skills) {
+        const affix = state.affixSkills.get(skillId);
+        if (affix) ownedNameToId.set(affix.name, skillId);
       }
-    }
-    const shuffledUpgrade = shuffleArray(upgradableAffix);
-    for (const skillId of shuffledUpgrade) {
-      const affixSkill = state.affixSkills.get(skillId)!;
-      const nextLevel = (state.player.skills.get(skillId)?.level || 1) + 1;
-      skillPool.push({
-        id: `si-${nextId++}`,
-        type: 'skill',
-        skillId,
-        affixSkill: { ...affixSkill, level: nextLevel },
-        cost: getAdjustedPrice(calculateAffixSkillPrice(affixSkill.rarity, nextLevel, rollPriceFluctuation())),
-        isUpgrade: true,
-        locked: false,
-      });
+      const convertedSkillIds = new Set<string>();
+      for (let i = 0; i < affixItems.length; i++) {
+        const item = affixItems[i];
+        const ownedSkillId = ownedNameToId.get(item.affixSkill!.name);
+        if (ownedSkillId && !convertedSkillIds.has(ownedSkillId)) {
+          const ownedData = state.player.skills.get(ownedSkillId);
+          const ownedAffix = state.affixSkills.get(ownedSkillId);
+          if (ownedData && ownedAffix && ownedData.level < levelCap) {
+            // 转为升级
+            const nextLevel = ownedData.level + 1;
+            affixItems[i] = {
+              ...item,
+              skillId: ownedSkillId,
+              affixSkill: { ...ownedAffix, level: nextLevel },
+              cost: getAdjustedPrice(calculateAffixSkillPrice(ownedAffix.rarity, nextLevel, rollPriceFluctuation())),
+              isUpgrade: true,
+            };
+            convertedSkillIds.add(ownedSkillId);
+          }
+        }
+      }
+      skillPool.push(...affixItems);
+
+      // 升级已有词条制技能（未满级的，排除已被上面转换过的）
+      const upgradableAffix: string[] = [];
+      for (const [skillId, data] of state.player.skills) {
+        if (data.level < levelCap && state.affixSkills.has(skillId) && !convertedSkillIds.has(skillId)) {
+          upgradableAffix.push(skillId);
+        }
+      }
+      const shuffledUpgrade = shuffleArray(upgradableAffix);
+      for (const skillId of shuffledUpgrade) {
+        const affixSkill = state.affixSkills.get(skillId)!;
+        const nextLevel = (state.player.skills.get(skillId)?.level || 1) + 1;
+        skillPool.push({
+          id: `si-${nextId++}`,
+          type: 'skill',
+          skillId,
+          affixSkill: { ...affixSkill, level: nextLevel },
+          cost: getAdjustedPrice(calculateAffixSkillPrice(affixSkill.rarity, nextLevel, rollPriceFluctuation())),
+          isUpgrade: true,
+          locked: false,
+        });
+      }
+    } else {
+      // 技能数量已满：只生成升级项
+      const upgradableAffix: string[] = [];
+      for (const [skillId, data] of state.player.skills) {
+        if (data.level < levelCap && state.affixSkills.has(skillId)) {
+          upgradableAffix.push(skillId);
+        }
+      }
+      const shuffledUpgrade = shuffleArray(upgradableAffix);
+      for (const skillId of shuffledUpgrade) {
+        const affixSkill = state.affixSkills.get(skillId)!;
+        const nextLevel = (state.player.skills.get(skillId)?.level || 1) + 1;
+        skillPool.push({
+          id: `si-${nextId++}`,
+          type: 'skill',
+          skillId,
+          affixSkill: { ...affixSkill, level: nextLevel },
+          cost: getAdjustedPrice(calculateAffixSkillPrice(affixSkill.rarity, nextLevel, rollPriceFluctuation())),
+          isUpgrade: true,
+          locked: false,
+        });
+      }
     }
   }
 
@@ -549,12 +618,25 @@ function generateShopItems(count: number): ShopItem[] {
     }
   }
 
-  // 保底：≥1 技能 + ≥1 牌包（如果有的话）
+  // 保底：≥1 技能（优先升级） + ≥1 牌包（如果有的话）
+  // 优先从升级项中选保底技能，确保玩家看到升级选项
+  const upgradeItems = skillPool.filter(i => i.isUpgrade);
   if (count >= 2 && skillPool.length > 0 && packPool.length > 0) {
-    items.push(skillPool.splice(0, 1)[0]);
+    // 保底技能：有升级时优先升级
+    if (upgradeItems.length > 0) {
+      const idx = skillPool.indexOf(upgradeItems[0]);
+      items.push(skillPool.splice(idx, 1)[0]);
+    } else {
+      items.push(skillPool.splice(0, 1)[0]);
+    }
     items.push(packPool.splice(0, 1)[0]);
   } else if (skillPool.length > 0 && packPool.length === 0) {
-    items.push(skillPool.splice(0, 1)[0]);
+    if (upgradeItems.length > 0) {
+      const idx = skillPool.indexOf(upgradeItems[0]);
+      items.push(skillPool.splice(idx, 1)[0]);
+    } else {
+      items.push(skillPool.splice(0, 1)[0]);
+    }
   } else if (packPool.length > 0) {
     items.push(packPool.splice(0, 1)[0]);
   }
