@@ -20,6 +20,7 @@ import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWord
 import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
 import { getAdjacentPowerBonus, getSymmetryPactBonus, getRowMedalBonus } from './relics/TopologyRelicBehaviors';
 import { getShortSprintBonus } from './relics/WordRelicBehaviors';
+import { recordResourceProduction, getResourceTideBonus, resetWordResourceAmounts } from './relics/ResourceRelicBehaviors';
 
 
 // === 战后统计：记录技能触发 ===
@@ -74,6 +75,8 @@ export function resetWordResourceTypes(): void {
   _wordResourceTypes.clear();
   _wordHasProducerTriggered = false;
   resetWordAffixTypes();
+  // Story 36.8: 同步清空资源感应追踪
+  resetWordResourceAmounts();
 }
 
 /** 蓄力产出者：每帧更新蓄力值（旧系统已移除，保留空实现供 battle.ts 调用） */
@@ -204,7 +207,13 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
       // 无冕之王：Lv4+ 基础值缩放
       if (ukScale > 1) amount = amount * ukScale;
       // 遗物加算：正产出 + relicBonus%（不放大 taboo 惩罚）
-      if (relicBonus > 0 && amount > 0) amount = amount * (1 + relicBonus);
+      let totalBonus = relicBonus;
+      // Story 36.8: 资源潮汐 — 按资源类型条件加算
+      const tideBonus = getResourceTideBonus(resource);
+      if (tideBonus > 0) totalBonus += tideBonus;
+      if (totalBonus > 0 && amount > 0) amount = amount * (1 + totalBonus);
+      // Story 36.8: 资源感应 — 追踪正产出
+      if (amount > 0) recordResourceProduction(resource, amount);
 
       if (resource === 'base') {
         synergy.skillBaseScore += amount;
@@ -237,10 +246,13 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     const resource = tr.phase4.targetResource;
     // 不灭连击：multiplier 资源已被阻止，跳过反馈
     if (resource === 'multiplier' && shouldBlockMultiplierResource()) continue;
-    // 遗物缩放：同步缩放反馈值（无冕之王 + 加算遗物，仅正产出）
+    // 遗物缩放：同步缩放反馈值（无冕之王 + 加算遗物 + 资源潮汐，仅正产出）
     let amount = tr.output;
     if (ukScale > 1) amount = amount * ukScale;
-    if (relicBonus > 0 && amount > 0) amount = amount * (1 + relicBonus);
+    let feedbackBonus = relicBonus;
+    const feedbackTide = getResourceTideBonus(resource);
+    if (feedbackTide > 0) feedbackBonus += feedbackTide;
+    if (feedbackBonus > 0 && amount > 0) amount = amount * (1 + feedbackBonus);
     if (amount === 0) continue;
 
     const color = RESOURCE_COLORS[resource] || '#ffffff';

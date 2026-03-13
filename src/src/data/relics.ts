@@ -119,6 +119,8 @@ export type RelicBehaviorType =
   // 单词/词库系统
   | 'word_dealer'          // 词语经销商：出售词语→下次刷新免费
   | 'key_storm'            // 全键风暴：前 3 词完成时随机触发未命中技能
+  // 资源系统
+  | 'resource_tide'        // 资源潮汐：奇偶词交替加成 base/multiplier
   // 商店系统
   | 'smuggle_free'         // 走私通道：每关免费拿走最便宜商品
   | 'timed_auction'        // 限时拍卖：刷新免费 + 30 秒倒计时
@@ -662,6 +664,69 @@ export const RELICS: Record<string, RelicData> = {
     subsystem: 'word',
     behaviorType: 'punctuation_liberation',
     flavor: '标点符号也有成为技能载体的权利。',
+  },
+
+  // ─── 资源系统遗物 (Story 36.8) ───
+
+  score_magnet: {
+    id: 'score_magnet',
+    name: '分数磁铁',
+    icon: '🧲',
+    description: '每完成一个单词+1分数。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'resource',
+    flavor: '分数自然被你吸引。',
+  },
+
+  resource_sense: {
+    id: 'resource_sense',
+    name: '资源感应',
+    icon: '🔮',
+    description: '一词内产出3+种资源，最少那种+50%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'resource',
+    flavor: '感知每一种资源的流动。',
+  },
+
+  time_dew: {
+    id: 'time_dew',
+    name: '时间露珠',
+    icon: '💧',
+    description: '每完成3个单词+1秒。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'resource',
+    flavor: '三词一露，滴水成河。',
+  },
+
+  resource_tide: {
+    id: 'resource_tide',
+    name: '资源潮汐',
+    icon: '🌊',
+    description: '奇数词base+40%，偶数词multiplier+40%。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'resource',
+    behaviorType: 'resource_tide',
+    flavor: '潮起潮落，资源交替涌来。',
+  },
+
+  universal_furnace: {
+    id: 'universal_furnace',
+    name: '万物熔炉',
+    icon: '🔥',
+    description: '战斗结束时，超标分数+剩余时间→金币，但不获得基础通关金币。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'resource',
+    flavor: '万物皆可熔炼为金。',
   },
 
 }

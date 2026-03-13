@@ -31,6 +31,7 @@ import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI, showRowMedalSelection } from './relicPicker';
 import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
+import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
 import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
@@ -436,11 +437,19 @@ export function openShop(_won: boolean): void {
 
   // 遗物效果：通过管道解析 on_battle_end 金币加成
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
-  const relicGold = Math.floor(goldRelicResult.effects.gold);
+  let relicGold = Math.floor(goldRelicResult.effects.gold);
 
   // 基础100 + 技能产出 + 遗物加成（金币跨关累计）
-  const baseGold = 100;
+  let baseGold = 100;
   const skillGold = Math.floor(state.resources.gold);
+
+  // Story 36.8: 万物熔炉 — 覆盖默认金币计算
+  const furnaceResult = checkUniversalFurnace();
+  if (furnaceResult) {
+    baseGold = 0;
+    relicGold = furnaceResult.bonusGold;
+  }
+
   state.gold += baseGold + skillGold + relicGold;
   const battleGold = baseGold + skillGold + relicGold;
 

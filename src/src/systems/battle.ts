@@ -33,6 +33,7 @@ import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncro
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors } from './relics/EnchantmentRelicBehaviors';
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, incrementStormWordCount, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
+import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTimeDew, incrementWordParity, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -252,6 +253,8 @@ export function initInput(): void {
   initTopologyRelicBehaviors();
   // Story 36.7: 注册单词子系统遗物行为
   initWordRelicBehaviors();
+  // Story 36.8: 注册资源子系统遗物行为
+  initResourceRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
 }
@@ -635,6 +638,45 @@ function completeWord(): void {
     showFeedback(`⛈️ ×${stormTargets.length}`, '#aa88ff');
   }
 
+  // Story 36.8: 分数磁铁 — 每词完成+1分
+  const magnetBonus = checkScoreMagnet();
+  if (magnetBonus > 0) {
+    state.score += magnetBonus;
+    showFeedback(`🧲 +${magnetBonus}`, '#ffdd44');
+  }
+
+  // Story 36.8: 资源感应 — ≥3种资源时最少那种+50%（基于本词产出量）
+  const senseResult = checkResourceSense();
+  if (senseResult && senseResult.bonus > 0) {
+    const senseResource = senseResult.resource;
+    const senseBonus = senseResult.bonus;
+    // 按资源类型正确路由（与 skills.ts applyResource 对齐）
+    if (senseResource === 'base' || senseResource === 'score') {
+      state.score += senseBonus;
+    } else if (senseResource === 'multiplier') {
+      state.score += senseBonus; // multiplier 阶段已结束，转为直接加分
+    } else if (senseResource === 'time') {
+      state.time += senseBonus;
+      bumpTimer();
+    } else {
+      state.resources[senseResource as keyof typeof state.resources] += senseBonus;
+    }
+    if (senseResource === 'fragment') routeFragmentsToInventory(senseBonus);
+    showFeedback(`🔮 +${senseBonus}`, '#cc88ff');
+  }
+
+  // Story 36.8: 时间露珠 — 每3词+1s
+  incrementTimeDewCounter();
+  const dewBonus = checkTimeDew();
+  if (dewBonus > 0) {
+    state.time += dewBonus;
+    showFeedback(`💧 +${dewBonus}秒`, '#00ff88');
+    bumpTimer();
+  }
+
+  // Story 36.8: 资源潮汐 — 词序号递增（加算在 skills.ts applyResource 中）
+  incrementWordParity();
+
   // Story 36.7: 词汇收藏 — 首次完成的单词+3金币
   const collectionGold = checkWordCollection(state.player.word);
   if (collectionGold > 0) {
@@ -796,10 +838,18 @@ function showGoldReward(onComplete: () => void): void {
   }
 
   // 计算奖励：基础100（结算时发放） + 技能产出 + 遗物加成
-  const baseGold = 100;
+  let baseGold = 100;
   const skillGold = Math.floor(state.resources.gold);
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
-  const relicGold = Math.floor(goldRelicResult.effects.gold);
+  let relicGold = Math.floor(goldRelicResult.effects.gold);
+
+  // Story 36.8: 万物熔炉 — 覆盖默认金币计算
+  const furnaceResult = checkUniversalFurnace();
+  if (furnaceResult) {
+    baseGold = 0;
+    relicGold = furnaceResult.bonusGold;
+  }
+
   const totalGold = baseGold + skillGold + relicGold;
 
 
@@ -1081,6 +1131,8 @@ export async function startLevel(): Promise<void> {
   resetEnchantmentRelicState();
   // Story 36.6: 重置拓扑遗物关级别状态（双手协奏手追踪 + 全键风暴计数）
   resetTopologyRelicState();
+  // Story 36.8: 重置资源遗物关级别状态（时间露珠计数器 + 资源潮汐奇偶）
+  resetResourceRelicBattleState();
 
   // 标点解放遗物：设置遗物乱码激活状态
   setRelicGarbleActive(state.player.relics.has('punctuation_liberation'));
