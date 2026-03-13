@@ -172,8 +172,8 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     applyResource: (resource: ResourceType, amount: number) => {
       // 不灭连击：阻止 multiplier 资源产出
       if (resource === 'multiplier' && shouldBlockMultiplierResource()) return;
-      // 倍率棱镜：技能产出 +20%
-      if (prismBonus > 0) amount = amount * (1 + prismBonus);
+      // 倍率棱镜：技能正产出 +20%（不放大 taboo 惩罚）
+      if (prismBonus > 0 && amount > 0) amount = amount * (1 + prismBonus);
 
       if (resource === 'base') {
         synergy.skillBaseScore += amount;
@@ -203,8 +203,8 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     const resource = tr.phase4.targetResource;
     // 不灭连击：multiplier 资源已被阻止，跳过反馈
     if (resource === 'multiplier' && shouldBlockMultiplierResource()) continue;
-    // 倍率棱镜：同步缩放反馈值
-    let amount = prismBonus > 0 ? tr.output * (1 + prismBonus) : tr.output;
+    // 倍率棱镜：同步缩放反馈值（仅正产出）
+    let amount = (prismBonus > 0 && tr.output > 0) ? tr.output * (1 + prismBonus) : tr.output;
     if (amount === 0) continue;
 
     const color = RESOURCE_COLORS[resource] || '#ffffff';

@@ -371,10 +371,18 @@ function playerCorrect(k: string): void {
   if (detonateCount > 0) {
     const skillIds = Array.from(state.affixSkills.keys());
     const count = Math.min(detonateCount, skillIds.length);
-    // 随机选 count 个技能触发
-    const shuffled = [...skillIds].sort(() => random() - 0.5);
+    // Fisher-Yates 洗牌选 count 个技能
+    const shuffled = [...skillIds];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    // 用每个技能自身的绑定 key 触发
     for (let i = 0; i < count; i++) {
-      triggerSkill(shuffled[i], k);
+      const sid = shuffled[i];
+      const boundKey = [...state.player.bindings.entries()]
+        .find(([, v]) => v === sid)?.[0] ?? k;
+      triggerSkill(sid, boundKey);
     }
     showFeedback(`💣 ×${count}`, '#ff6b00');
   }

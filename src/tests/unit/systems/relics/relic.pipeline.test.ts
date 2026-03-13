@@ -45,9 +45,8 @@ function addRelic(id: string): void {
 // RELIC_MODIFIER_DEFS 工厂单元测试
 // ========================================
 describe('RELIC_MODIFIER_DEFS 工厂', () => {
-  it('仅 multiplier_prism 使用管道（1 个工厂）', () => {
-    expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(1)
-    expect(RELIC_MODIFIER_DEFS['multiplier_prism']).toBeDefined()
+  it('当前无遗物使用管道（均走纯函数）', () => {
+    expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(0)
   })
 })
 

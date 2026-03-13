@@ -413,16 +413,8 @@ export type RelicModifierFactory = (
 
 // === RELIC_MODIFIER_DEFS — 每个遗物的 Modifier 工厂 ===
 // 玻璃大炮得分×2 改为 completeWord() 中直接整词翻倍，不走管道
-export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
-  // Story 36.3: 倍率棱镜 — 倍率≥2.5 时技能产出+20%
-  multiplier_prism: (_relicId, _context) => [{
-    id: 'multiplier_prism:skill_output', source: 'multiplier_prism', sourceType: 'relic' as const,
-    layer: 'base' as const, trigger: 'on_skill_trigger' as const, phase: 'calculate' as const,
-    condition: { field: 'multiplier', op: '>=' as const, value: 2.5 },
-    effect: { type: 'score' as const, value: 0.2, stacking: 'additive' as const },
-    priority: 100,
-  }],
-}
+// multiplier_prism 通过 ComboRelicBehaviors.getMultiplierPrismBonus() 纯函数实现，不走管道
+export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {}
 
 // === T4 限制 Flag 映射表（已清空，无 T4 遗物） ===
 export const RELIC_FLAGS: Record<string, string[]> = {}

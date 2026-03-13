@@ -1,6 +1,6 @@
 # Story 36.3: 连击/倍率系统遗物
 
-Status: review
+Status: done
 
 ## Story
 
@@ -161,11 +161,7 @@ const result = orchestrateAffixTrigger(skillId, triggerKey, ctx, {
 用 `relicStates['combo_detonator']` 作为位掩码：bit0=15已触发, bit1=30已触发, bit2=45已触发。每关重置为 0。这避免了 combo 持续增长时重复触发同一阈值。
 
 **5. immortal_combo 的 multiplier 拦截位置：**
-最佳拦截点在 `skills.ts` 的 `applyResource` 回调中。这需要 `skills.ts` 能查询遗物状态。可选方案：
-- **方案 A**: 在 `battle.ts` 中包装 `applyResource` 回调，在回调内检查 `shouldBlockMultiplierResource()` — 推荐（不修改 skills.ts）
-- **方案 B**: 在 `skills.ts` 中直接导入并检查 — 增加耦合
-
-推荐方案 A：在 `battle.ts` 中包装技能触发回调。
+拦截点在 `skills.ts` 的 `applyResource` 回调中（方案 B）。`skills.ts` 直接导入 `shouldBlockMultiplierResource()` 和 `getMultiplierPrismBonus()`。选择方案 B 的原因：skills.ts 是资源应用的唯一入口，在此统一处理遗物效果比在 battle.ts 包装回调更内聚。
 
 **6. immortal_combo 跨关不重置：**
 需在 `startLevel()` 中添加 `hasImmortalCombo()` 检查。combo、maxCombo、multiplier、skillMultBonus 四项都需跳过重置。但注意：`state.multiplier` 在 `playerCorrect()` 的每次击键中都会重算，所以跳过 startLevel 中的重置就够了。
@@ -267,9 +263,19 @@ Claude Opus 4.6
 ### Completion Notes List
 
 - All 8 tasks completed, all 6 ACs satisfied
-- 34 new unit tests, all passing
-- 174 total relic tests passing (no regressions)
+- 37 new unit tests (34 original + 3 interaction tests from review), all passing
+- 177 total relic tests passing (no regressions)
 - Pre-existing test failures in sound-bgm, restEvents, KeyTooltip are unrelated
+
+### Code Review Fixes Applied
+
+- [Review M1] multiplier_prism 不再放大 taboo 惩罚（仅缩放正产出）
+- [Review M2] combo_detonator 使用每个技能自身绑定的 key 触发，而非当前击键 key
+- [Review M3] 移除 RELIC_MODIFIER_DEFS 中 multiplier_prism 的死代码 factory
+- [Review M4] Dev Notes 更新为实际采用的方案 B
+- [Review L1] combo_detonator 随机选技能改用 Fisher-Yates 洗牌
+- [Review L2] 添加 3 个遗物交互测试
+- [Review H1] combo_detonator + immortal_combo 交互保留为设计决策（每关重新触发阈值）
 
 ### File List
 

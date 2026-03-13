@@ -265,4 +265,44 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       expect(registered).toContain('immortal_combo')
     })
   })
+
+  // =====================
+  // 交互测试 (Review L2)
+  // =====================
+  describe('遗物交互', () => {
+    it('immortal_combo + combo_buffer：immortal 优先，buffer 不生效', () => {
+      state.player.relics.add('combo_buffer')
+      state.player.relics.add('immortal_combo')
+      // immortal_combo 时 playerWrong 跳过整个重置块，buffer 不被调用
+      // 但 calculateComboBuffer 本身仍返回正常值（不受 immortal 影响）
+      expect(calculateComboBuffer(20)).toBe(6)
+      // hasImmortalCombo 为 true 时 battle.ts 会跳过 buffer 逻辑
+      expect(hasImmortalCombo()).toBe(true)
+    })
+
+    it('multiplier_prism + immortal_combo：棱镜加成仍生效', () => {
+      state.player.relics.add('multiplier_prism')
+      state.player.relics.add('immortal_combo')
+      state.multiplier = 3.0
+      // 棱镜仍提供 +20%（独立于 multiplier 资源阻止）
+      expect(getMultiplierPrismBonus()).toBe(0.2)
+      // multiplier 资源被阻止
+      expect(shouldBlockMultiplierResource()).toBe(true)
+    })
+
+    it('combo_buffer + rhythm_doctor：缓冲后 milestone 正确同步', () => {
+      state.player.relics.add('combo_buffer')
+      state.player.relics.add('rhythm_doctor')
+      // combo 到 25，触发 milestone 10 和 20
+      checkRhythmDoctor(10)
+      checkRhythmDoctor(20)
+      // combo 中断，buffer 保留 floor(25 * 0.3) = 7
+      const buffered = calculateComboBuffer(25)
+      expect(buffered).toBe(7)
+      syncRhythmDoctorMilestone(buffered)
+      // milestone 同步为 0（floor(7/10)*10），下一个 milestone 是 10
+      expect(checkRhythmDoctor(8)).toBe(0)
+      expect(checkRhythmDoctor(10)).toBe(1)
+    })
+  })
 })
