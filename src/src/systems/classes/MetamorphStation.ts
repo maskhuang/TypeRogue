@@ -9,11 +9,9 @@ import { showFeedback } from '../battle';
 import { renderBuildManager } from '../shop';
 import { AFFIX_NAMES, RARITY_COLORS, RARITY_NAMES } from '../../data/affixes';
 import {
-  mutateA, mutateUpgrade, mutateDowngrade,
-  getMutateACost, getUpgradeCost,
-  canMutateA, canUpgrade, canDowngrade,
+  mutate, getMutateCost, canMutate,
 } from '../../data/affixMutation';
-import { queryRelicFlag, getMonoAffixCategory } from '../relics/RelicPipeline';
+import { getMonoAffixCategory } from '../relics/RelicPipeline';
 import type { AffixCategory } from '../../data/affixes';
 
 // Old skill type system removed — only affix skills remain
@@ -24,7 +22,6 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
   const skill = state.affixSkills.get(skillId);
   if (!skill) return;
 
-  // 清空容器，渲染操作面板
   container.innerHTML = '';
 
   // 标题
@@ -69,84 +66,26 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
 
   container.appendChild(info);
 
-  // 操作按钮区
+  // 蜕变按钮
   const btnArea = document.createElement('div');
   btnArea.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin:8px 0;';
 
-  // === 蜕变A：词条重铸 ===
-  if (skill.affixes.length > 0) {
-    const aCost = getMutateACost(skillId);
-    const aEnabled = canMutateA(skillId);
-    for (let i = 0; i < skill.affixes.length; i++) {
-      const affix = skill.affixes[i];
-      const btn = document.createElement('button');
-      btn.className = 'morph-action-btn';
-      btn.style.cssText = `padding:8px 12px;border:1px solid ${aEnabled ? '#e67e22' : '#555'};background:${aEnabled ? 'rgba(230,126,34,0.15)' : 'rgba(50,50,50,0.3)'};color:${aEnabled ? '#e67e22' : '#666'};border-radius:4px;cursor:${aEnabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
-      btn.textContent = `🔄 重铸 [${i}] ${AFFIX_NAMES[affix.type]} — 消耗 ${aCost} 变异素`;
-      if (aEnabled) {
-        const idx = i;
-        btn.onclick = () => {
-          const monoCategory = getMonoAffixCategory() as AffixCategory | null;
-          const result = mutateA(skillId, idx, monoCategory ?? undefined);
-          if (result.success) {
-            playSound('skill');
-            showFeedback(`🔄 重铸: ${AFFIX_NAMES[result.oldAffix!.type]} → ${AFFIX_NAMES[result.newAffix!.type]}`, '#e67e22', 1.2);
-            renderAffixMutationPanel(skillId, boundKey, container);
-            renderBuildManager();
-          } else {
-            showFeedback(result.error || '操作失败', '#ff6b6b');
-          }
-        };
-      }
-      btnArea.appendChild(btn);
-    }
-  }
-
-  // === 蜕变C↑：稀有度升级 ===
   {
-    const whiteOnly = queryRelicFlag('white_only') as boolean;
-    const upEnabled = !whiteOnly && canUpgrade(skillId);
-    const upCost = skill.rarity < 3 ? getUpgradeCost(skill.rarity) : 0;
+    const cost = getMutateCost(skillId);
+    const enabled = canMutate(skillId);
     const btn = document.createElement('button');
     btn.className = 'morph-action-btn';
-    btn.style.cssText = `padding:8px 12px;border:1px solid ${upEnabled ? '#2ecc71' : '#555'};background:${upEnabled ? 'rgba(46,204,113,0.15)' : 'rgba(50,50,50,0.3)'};color:${upEnabled ? '#2ecc71' : '#666'};border-radius:4px;cursor:${upEnabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
-    btn.textContent = whiteOnly
-      ? '⬆️ 稀有度升级 — 纯粹之心禁止'
-      : skill.rarity >= 3
-        ? '⬆️ 稀有度升级 — 已传说'
-        : `⬆️ 稀有度升级 (${RARITY_NAMES[skill.rarity]}→${RARITY_NAMES[(skill.rarity + 1) as 0|1|2|3]}) — 消耗 ${upCost} 变异素`;
-    if (upEnabled) {
+    btn.style.cssText = `padding:8px 12px;border:1px solid ${enabled ? '#e67e22' : '#555'};background:${enabled ? 'rgba(230,126,34,0.15)' : 'rgba(50,50,50,0.3)'};color:${enabled ? '#e67e22' : '#666'};border-radius:4px;cursor:${enabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
+    btn.textContent = skill.affixes.length === 0
+      ? '🔄 蜕变 — 无词条'
+      : `🔄 蜕变全部词条 — 消耗 ${cost} 变异素`;
+    if (enabled) {
       btn.onclick = () => {
-        const monoUpCat = getMonoAffixCategory() as AffixCategory | null;
-        const result = mutateUpgrade(skillId, monoUpCat ?? undefined);
+        const monoCategory = getMonoAffixCategory() as AffixCategory | null;
+        const result = mutate(skillId, monoCategory ?? undefined);
         if (result.success) {
           playSound('skill');
-          showFeedback(`⬆️ 升级: +${AFFIX_NAMES[result.newAffix!.type]}`, '#2ecc71', 1.2);
-          renderAffixMutationPanel(skillId, boundKey, container);
-          renderBuildManager();
-        } else {
-          showFeedback(result.error || '操作失败', '#ff6b6b');
-        }
-      };
-    }
-    btnArea.appendChild(btn);
-  }
-
-  // === 蜕变C↓：稀有度降级 ===
-  {
-    const downEnabled = canDowngrade(skillId);
-    const btn = document.createElement('button');
-    btn.className = 'morph-action-btn';
-    btn.style.cssText = `padding:8px 12px;border:1px solid ${downEnabled ? '#e74c3c' : '#555'};background:${downEnabled ? 'rgba(231,76,60,0.15)' : 'rgba(50,50,50,0.3)'};color:${downEnabled ? '#e74c3c' : '#666'};border-radius:4px;cursor:${downEnabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
-    btn.textContent = skill.rarity <= 0
-      ? '⬇️ 稀有度降级 — 已白装'
-      : `⬇️ 稀有度降级 (${RARITY_NAMES[skill.rarity]}→${RARITY_NAMES[(skill.rarity - 1) as 0|1|2|3]}) — 返还 1 变异素`;
-    if (downEnabled) {
-      btn.onclick = () => {
-        const result = mutateDowngrade(skillId);
-        if (result.success) {
-          playSound('skill');
-          showFeedback(`⬇️ 降级: -${AFFIX_NAMES[result.removedAffix!.type]} +1🧬`, '#e74c3c', 1.2);
+          showFeedback(`🔄 蜕变完成`, '#e67e22', 1.2);
           renderAffixMutationPanel(skillId, boundKey, container);
           renderBuildManager();
         } else {

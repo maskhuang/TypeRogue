@@ -31,9 +31,7 @@ import {
 } from '../../../src/data/skillGeneration'
 import { PositionRelation } from '../../../src/data/keyboardTopology'
 import {
-  getMutateACost,
-  getUpgradeCost,
-  UPGRADE_COSTS,
+  getMutateCost,
 } from '../../../src/data/affixMutation'
 
 // =============================================
@@ -484,39 +482,21 @@ describe('AC4: 任务附魔循环', () => {
 // =============================================
 
 describe('AC5: 蜕变成本', () => {
-  it('UPGRADE_COSTS 常量正确', () => {
-    expect(UPGRADE_COSTS[0]).toBe(5)  // 白→蓝
-    expect(UPGRADE_COSTS[1]).toBe(8)  // 蓝→黄
-    expect(UPGRADE_COSTS[2]).toBe(12) // 黄→橙
-  })
-
-  it('getMutateACost: 基础=3，递增+1/次', () => {
-    // getMutateACost(skillId) = 3 + mutationACounts[skillId]
-    // 模拟递增消耗: 第 0~4 次 → 3,4,5,6,7
-    const costs = [3, 4, 5, 6, 7]
+  it('getMutateCost: 基础=1，递增+1/次', () => {
+    // getMutateCost(skillId) = 1 + mutationCounts[skillId]
+    // 模拟递增消耗: 第 0~4 次 → 1,2,3,4,5
+    const costs = [1, 2, 3, 4, 5]
     for (let i = 0; i < 5; i++) {
-      expect(3 + i).toBe(costs[i])
+      expect(1 + i).toBe(costs[i])
     }
   })
 
-  it('getUpgradeCost 返回值正确', () => {
-    expect(getUpgradeCost(0)).toBe(5)
-    expect(getUpgradeCost(1)).toBe(8)
-    expect(getUpgradeCost(2)).toBe(12)
-    expect(getUpgradeCost(3)).toBe(Infinity) // 已橙
-  })
-
-  it('蜕变 A 5 次总消耗 = 3+4+5+6+7 = 25', () => {
+  it('蜕变 5 次总消耗 = 1+2+3+4+5 = 15', () => {
     let total = 0
     for (let i = 0; i < 5; i++) {
-      total += 3 + i // base=3, +used
+      total += 1 + i
     }
-    expect(total).toBe(25)
-  })
-
-  it('蜕变 C↑ 全升（白→橙）总消耗 = 5+8+12 = 25', () => {
-    const total = UPGRADE_COSTS[0] + UPGRADE_COSTS[1] + UPGRADE_COSTS[2]
-    expect(total).toBe(25)
+    expect(total).toBe(15)
   })
 
   it('嗜变附魔变异素产出估算：10 关 ~300 触发，5% 概率 ~15 变异素', () => {
@@ -525,8 +505,8 @@ describe('AC5: 蜕变成本', () => {
     const expectedMutagen = 300 * 0.05
     expect(expectedMutagen).toBeGreaterThanOrEqual(10)
     expect(expectedMutagen).toBeLessThanOrEqual(25)
-    // 15 变异素可支付：蜕变A 3次(3+4+5=12) 或 C↑ 白→蓝+蓝→黄(5+8=13)
-    expect(expectedMutagen).toBeGreaterThanOrEqual(12)
+    // 15 变异素可支付：蜕变 5 次 (1+2+3+4+5=15)
+    expect(expectedMutagen).toBeGreaterThanOrEqual(15)
   })
 })
 
@@ -704,10 +684,6 @@ describe('AC9: 遗物×词条交互', () => {
     for (const o of outputs) {
       expect(o).toBeCloseTo(BASE_VALUES.base[0], 1)
     }
-  })
-
-  it('pure_heart: 已橙装不可再升级', () => {
-    expect(getUpgradeCost(3)).toBe(Infinity)
   })
 
   it('chain_ban: chainAffixesDisabled=true 时 Phase 5 不触发 Splash', () => {

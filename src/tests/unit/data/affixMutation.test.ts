@@ -11,16 +11,10 @@ import {
 import type { AffixSkillInstance, SkillRuntimeState } from '../../../src/data/affixes'
 import type { ResourceType } from '../../../src/core/types'
 import {
-  mutateA,
-  mutateUpgrade,
-  mutateDowngrade,
-  getMutateACost,
-  getUpgradeCost,
-  canMutateA,
-  canUpgrade,
-  canDowngrade,
+  mutate,
+  getMutateCost,
+  canMutate,
   invalidateQuestEnchantment,
-  UPGRADE_COSTS,
 } from '../../../src/data/affixMutation'
 
 // ===== 测试辅助 =====
@@ -72,369 +66,175 @@ beforeEach(() => {
 })
 
 // ============================================================
-// AC3 — getMutateACost: 基础3 + run内累计
+// getMutateCost: 1 + 已蜕变次数
 // ============================================================
-describe('getMutateACost (AC3)', () => {
-  it('first mutation on skill costs 3', () => {
-    expect(getMutateACost('skill_test_001')).toBe(3)
+describe('getMutateCost', () => {
+  it('first mutation costs 1', () => {
+    expect(getMutateCost('skill_test_001')).toBe(1)
   })
 
-  it('second mutation on same skill costs 4', () => {
+  it('second mutation costs 2', () => {
     state.mutationACounts.set('skill_test_001', 1)
-    expect(getMutateACost('skill_test_001')).toBe(4)
+    expect(getMutateCost('skill_test_001')).toBe(2)
   })
 
-  it('third mutation on same skill costs 5', () => {
+  it('third mutation costs 3', () => {
     state.mutationACounts.set('skill_test_001', 2)
-    expect(getMutateACost('skill_test_001')).toBe(5)
+    expect(getMutateCost('skill_test_001')).toBe(3)
   })
 
   it('different skills have independent counters', () => {
     state.mutationACounts.set('skill_a', 3)
-    expect(getMutateACost('skill_b')).toBe(3)
+    expect(getMutateCost('skill_b')).toBe(1)
   })
 })
 
 // ============================================================
-// AC4 — getUpgradeCost
+// canMutate
 // ============================================================
-describe('getUpgradeCost (AC4)', () => {
-  it('white→blue costs 5', () => {
-    expect(getUpgradeCost(0)).toBe(5)
-  })
-
-  it('blue→yellow costs 8', () => {
-    expect(getUpgradeCost(1)).toBe(8)
-  })
-
-  it('yellow→orange costs 12', () => {
-    expect(getUpgradeCost(2)).toBe(12)
-  })
-
-  it('UPGRADE_COSTS matches design', () => {
-    expect(UPGRADE_COSTS).toEqual({ 0: 5, 1: 8, 2: 12 })
-  })
-})
-
-// ============================================================
-// canMutateA / canUpgrade / canDowngrade
-// ============================================================
-describe('can* guard functions', () => {
-  it('canMutateA returns false for white skill (no affixes)', () => {
+describe('canMutate', () => {
+  it('returns false for white skill (no affixes)', () => {
     const skill = makeWhiteSkill()
     setupSkill(skill)
-    expect(canMutateA(skill.id)).toBe(false)
+    expect(canMutate(skill.id)).toBe(false)
   })
 
-  it('canMutateA returns true for blue skill with sufficient mutagen', () => {
+  it('returns true for blue skill with sufficient mutagen', () => {
     const skill = makeSkill()
     setupSkill(skill)
     state.mutagenInventory = 10
-    expect(canMutateA(skill.id)).toBe(true)
+    expect(canMutate(skill.id)).toBe(true)
   })
 
-  it('canMutateA returns false when mutagen insufficient', () => {
+  it('returns false when mutagen insufficient', () => {
     const skill = makeSkill()
     setupSkill(skill)
     state.mutagenInventory = 0
-    expect(canMutateA(skill.id)).toBe(false)
-  })
-
-  it('canUpgrade returns false for orange skill', () => {
-    const skill = makeOrangeSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 99
-    expect(canUpgrade(skill.id)).toBe(false)
-  })
-
-  it('canUpgrade returns true for blue skill with enough mutagen', () => {
-    const skill = makeSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 8
-    expect(canUpgrade(skill.id)).toBe(true)
-  })
-
-  it('canDowngrade returns false for white skill', () => {
-    const skill = makeWhiteSkill()
-    setupSkill(skill)
-    expect(canDowngrade(skill.id)).toBe(false)
-  })
-
-  it('canDowngrade returns true for blue skill (always free)', () => {
-    const skill = makeSkill()
-    setupSkill(skill)
-    expect(canDowngrade(skill.id)).toBe(true)
+    expect(canMutate(skill.id)).toBe(false)
   })
 })
 
 // ============================================================
-// AC2 — mutateA: 词条重铸 + 池过滤
+// mutate: 将所有词条替换为池中随机新词条
 // ============================================================
-describe('mutateA (AC1, AC2, AC3)', () => {
-  it('reforges the chosen affix', () => {
+describe('mutate', () => {
+  it('replaces all affixes on a blue skill (1 affix)', () => {
     const skill = makeSkill()
     setupSkill(skill)
     state.mutagenInventory = 10
-    const oldType = skill.affixes[0].type
 
-    const result = mutateA(skill.id, 0)
+    const result = mutate(skill.id)
     expect(result.success).toBe(true)
-    expect(result.mutagenCost).toBe(3)
+    expect(result.mutagenCost).toBe(1)
 
     const updated = state.affixSkills.get(skill.id)!
-    // The new affix may or may not be same type (random), but cost was deducted
-    expect(state.mutagenInventory).toBe(7) // 10 - 3
+    expect(updated.affixes).toHaveLength(1)
+    expect(state.mutagenInventory).toBe(9) // 10 - 1
   })
 
-  it('excludes existing affix types from pool (AC2)', () => {
-    const skill = makeOrangeSkill() // Crit + Pulse + Multiply
+  it('replaces all 3 affixes on an orange skill', () => {
+    const skill = makeOrangeSkill()
     setupSkill(skill)
     state.mutagenInventory = 10
 
-    // Reforge affix[0] (Crit) — should NOT get Pulse or Multiply
-    const result = mutateA(skill.id, 0)
+    const result = mutate(skill.id)
     expect(result.success).toBe(true)
+
     const updated = state.affixSkills.get(skill.id)!
-    const newType = updated.affixes[0].type
-    // New type should not be Pulse or Multiply (the other affixes)
-    expect(newType).not.toBe(AffixType.Pulse)
-    expect(newType).not.toBe(AffixType.Multiply)
+    expect(updated.affixes).toHaveLength(3)
+    // rarity unchanged
+    expect(updated.rarity).toBe(3)
   })
 
-  it('increments mutationACounts', () => {
+  it('new affixes are all different types', () => {
+    const skill = makeOrangeSkill()
+    setupSkill(skill)
+    state.mutagenInventory = 10
+
+    mutate(skill.id)
+
+    const updated = state.affixSkills.get(skill.id)!
+    const types = updated.affixes.map(a => a.type)
+    expect(new Set(types).size).toBe(types.length)
+  })
+
+  it('increments mutation count', () => {
     const skill = makeSkill()
     setupSkill(skill)
     state.mutagenInventory = 20
 
-    mutateA(skill.id, 0)
+    mutate(skill.id)
     expect(state.mutationACounts.get(skill.id)).toBe(1)
 
-    mutateA(skill.id, 0)
+    mutate(skill.id)
     expect(state.mutationACounts.get(skill.id)).toBe(2)
+  })
+
+  it('cost increases with mutation count', () => {
+    const skill = makeSkill()
+    setupSkill(skill)
+    state.mutagenInventory = 100
+
+    mutate(skill.id) // cost 1
+    expect(state.mutagenInventory).toBe(99)
+    mutate(skill.id) // cost 2
+    expect(state.mutagenInventory).toBe(97)
+    mutate(skill.id) // cost 3
+    expect(state.mutagenInventory).toBe(94)
   })
 
   it('fails when mutagen insufficient', () => {
     const skill = makeSkill()
     setupSkill(skill)
-    state.mutagenInventory = 1
+    state.mutagenInventory = 0
 
-    const result = mutateA(skill.id, 0)
+    const result = mutate(skill.id)
     expect(result.success).toBe(false)
     expect(result.error).toContain('变异素不足')
-    expect(state.mutagenInventory).toBe(1) // unchanged
+    expect(state.mutagenInventory).toBe(0)
   })
 
-  it('fails for white skill', () => {
+  it('fails for white skill (no affixes)', () => {
     const skill = makeWhiteSkill()
     setupSkill(skill)
     state.mutagenInventory = 10
 
-    const result = mutateA(skill.id, 0)
+    const result = mutate(skill.id)
     expect(result.success).toBe(false)
     expect(result.error).toContain('无词条')
   })
 
-  it('fails for invalid affix index', () => {
-    const skill = makeSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 10
-
-    const result = mutateA(skill.id, 5)
-    expect(result.success).toBe(false)
-  })
-
   it('fails for non-existent skill', () => {
     state.mutagenInventory = 10
-    const result = mutateA('nonexistent', 0)
+    const result = mutate('nonexistent')
     expect(result.success).toBe(false)
   })
 })
 
 // ============================================================
-// AC4 — mutateUpgrade: 稀有度升级
+// 名称更新
 // ============================================================
-describe('mutateUpgrade (AC4)', () => {
-  it('upgrades blue→yellow: rarity+1, adds 1 affix', () => {
-    const skill = makeSkill({ rarity: 1 as 0 | 1 | 2 | 3 })
-    setupSkill(skill)
-    state.mutagenInventory = 20
-
-    const result = mutateUpgrade(skill.id)
-    expect(result.success).toBe(true)
-    expect(result.mutagenCost).toBe(8) // blue→yellow
-    expect(state.mutagenInventory).toBe(12) // 20 - 8
-
-    const updated = state.affixSkills.get(skill.id)!
-    expect(updated.rarity).toBe(2)
-    expect(updated.affixes).toHaveLength(2) // was 1, now 2
-  })
-
-  it('upgrades white→blue: costs 5', () => {
-    const skill = makeWhiteSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 10
-
-    const result = mutateUpgrade(skill.id)
-    expect(result.success).toBe(true)
-    expect(result.mutagenCost).toBe(5)
-    expect(state.mutagenInventory).toBe(5)
-
-    const updated = state.affixSkills.get(skill.id)!
-    expect(updated.rarity).toBe(1)
-    expect(updated.affixes).toHaveLength(1)
-  })
-
-  it('fails for orange skill (already legendary)', () => {
-    const skill = makeOrangeSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 99
-
-    const result = mutateUpgrade(skill.id)
-    expect(result.success).toBe(false)
-    expect(result.error).toContain('已传说')
-  })
-
-  it('fails when mutagen insufficient', () => {
-    const skill = makeSkill({ rarity: 2 as 0 | 1 | 2 | 3 })
-    setupSkill(skill)
-    state.mutagenInventory = 5 // need 12
-
-    const result = mutateUpgrade(skill.id)
-    expect(result.success).toBe(false)
-  })
-
-  it('new affix type excludes existing types', () => {
-    const skill = makeSkill({
-      rarity: 2 as 0 | 1 | 2 | 3,
-      affixes: [
-        { type: AffixType.Crit, chance: 0.5, critMult: 2.0 },
-        { type: AffixType.Pulse, interval: 4, burstMult: 3.0 },
-      ],
-    })
-    setupSkill(skill)
-    state.mutagenInventory = 20
-
-    const result = mutateUpgrade(skill.id)
-    expect(result.success).toBe(true)
-
-    const updated = state.affixSkills.get(skill.id)!
-    const newAffix = updated.affixes[2]
-    expect(newAffix.type).not.toBe(AffixType.Crit)
-    expect(newAffix.type).not.toBe(AffixType.Pulse)
-  })
-
-  it('excludes Convert type (both cross/self variants) from pool', () => {
-    const skill = makeSkill({
-      rarity: 1 as 0 | 1 | 2 | 3,
-      affixes: [
-        { type: AffixType.Convert, source: 'base' as any, target: 'score' as any, formula: 'add' as any, k: 0.5 },
-      ],
-    })
-    setupSkill(skill)
-    state.mutagenInventory = 20
-
-    // Upgrade → new affix must not be Convert (both convert_cross and convert_self excluded)
-    const result = mutateUpgrade(skill.id)
-    expect(result.success).toBe(true)
-
-    const updated = state.affixSkills.get(skill.id)!
-    const newAffix = updated.affixes[1]
-    expect(newAffix.type).not.toBe(AffixType.Convert)
-  })
-})
-
-// ============================================================
-// AC5 — mutateDowngrade: 稀有度降级
-// ============================================================
-describe('mutateDowngrade (AC5)', () => {
-  it('downgrades blue→white: rarity-1, removes 1 affix, refunds 1 mutagen', () => {
-    const skill = makeSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 5
-
-    const result = mutateDowngrade(skill.id)
-    expect(result.success).toBe(true)
-    expect(result.mutagenCost).toBe(0)
-    expect(result.mutagenRefund).toBe(1)
-    expect(state.mutagenInventory).toBe(6) // 5 + 1
-
-    const updated = state.affixSkills.get(skill.id)!
-    expect(updated.rarity).toBe(0)
-    expect(updated.affixes).toHaveLength(0)
-  })
-
-  it('downgrades orange→yellow: removes 1 of 3 affixes', () => {
-    const skill = makeOrangeSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 0
-
-    const result = mutateDowngrade(skill.id)
-    expect(result.success).toBe(true)
-
-    const updated = state.affixSkills.get(skill.id)!
-    expect(updated.rarity).toBe(2)
-    expect(updated.affixes).toHaveLength(2)
-    expect(state.mutagenInventory).toBe(1) // refund
-  })
-
-  it('fails for white skill', () => {
-    const skill = makeWhiteSkill()
-    setupSkill(skill)
-
-    const result = mutateDowngrade(skill.id)
-    expect(result.success).toBe(false)
-    expect(result.error).toContain('已白装')
-  })
-})
-
-// ============================================================
-// AC6 — 名称更新
-// ============================================================
-describe('Name update after mutation (AC6)', () => {
-  it('mutateA updates skill name', () => {
+describe('Name update after mutation', () => {
+  it('mutate updates skill name', () => {
     const skill = makeSkill()
     setupSkill(skill)
     state.mutagenInventory = 10
 
-    const oldName = skill.name
-    mutateA(skill.id, 0)
+    mutate(skill.id)
     const updated = state.affixSkills.get(skill.id)!
-    // Name should be regenerated (may or may not equal old name)
     expect(updated.name).toBeDefined()
     expect(updated.name.length).toBeGreaterThan(0)
   })
-
-  it('mutateUpgrade updates skill name with new affix', () => {
-    const skill = makeWhiteSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 10
-
-    mutateUpgrade(skill.id)
-    const updated = state.affixSkills.get(skill.id)!
-    // Was "基数", now should have affix prefix
-    expect(updated.name).toContain('·')
-  })
-
-  it('mutateDowngrade updates skill name', () => {
-    const skill = makeSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 0
-
-    mutateDowngrade(skill.id)
-    const updated = state.affixSkills.get(skill.id)!
-    // Was "暴击·基数", now white → "基数"
-    expect(updated.name).toBe('基数')
-  })
 })
 
 // ============================================================
-// AC7 — 任务附魔失效
+// 任务附魔失效
 // ============================================================
-describe('invalidateQuestEnchantment (AC7)', () => {
+describe('invalidateQuestEnchantment', () => {
   it('removes quest enchantment when corresponding affix is removed', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
-      enchantmentIds: [EnchantmentType.QuestOverload], // QuestOverload → Crit
+      enchantmentIds: [EnchantmentType.QuestOverload],
     })
     setupSkill(skill)
     const rt = state.affixSkillStates.get(skill.id)!
@@ -456,12 +256,11 @@ describe('invalidateQuestEnchantment (AC7)', () => {
         { type: AffixType.Crit, chance: 0.5, critMult: 2.0 },
         { type: AffixType.Void, posRel: 'adjacent' as any, bonusPerSlot: 0.25 },
       ],
-      enchantmentIds: [EnchantmentType.QuestDevour], // QuestDevour → Void
+      enchantmentIds: [EnchantmentType.QuestDevour],
       rarity: 2 as 0 | 1 | 2 | 3,
     })
     setupSkill(skill)
 
-    // Remove Crit — QuestDevour should stay (it maps to Void, not Crit)
     invalidateQuestEnchantment(skill.id, AffixType.Crit)
 
     const updated = state.affixSkills.get(skill.id)!
@@ -482,13 +281,11 @@ describe('invalidateQuestEnchantment (AC7)', () => {
     rt.questStacks = 7
     rt.questCompletions = 3
 
-    // Remove Crit → QuestOverload removed, but QuestDevour survives (maps to Void)
     invalidateQuestEnchantment(skill.id, AffixType.Crit)
 
     const updated = state.affixSkills.get(skill.id)!
     expect(updated.enchantmentIds).not.toContain(EnchantmentType.QuestOverload)
     expect(updated.enchantmentIds).toContain(EnchantmentType.QuestDevour)
-    // Quest state preserved because QuestDevour still active
     const updatedRt = state.affixSkillStates.get(skill.id)!
     expect(updatedRt.questStacks).toBe(7)
     expect(updatedRt.questCompletions).toBe(3)
@@ -501,14 +298,13 @@ describe('invalidateQuestEnchantment (AC7)', () => {
     })
     setupSkill(skill)
 
-    // Remove Resonance — QuestResonance should be removed (maps to [Resonance, Link])
     invalidateQuestEnchantment(skill.id, AffixType.Resonance)
 
     const updated = state.affixSkills.get(skill.id)!
     expect(updated.enchantmentIds).not.toContain(EnchantmentType.QuestResonance)
   })
 
-  it('mutateA triggers invalidation when affix type changes', () => {
+  it('mutate triggers invalidation when affix type changes', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
       enchantmentIds: [EnchantmentType.QuestOverload],
@@ -519,90 +315,36 @@ describe('invalidateQuestEnchantment (AC7)', () => {
     rt.questStacks = 3
     rt.questCompletions = 1
 
-    // Mock random to force selection of Multiply (first entry in AFFIX_WEIGHTS), ensuring type change
+    // Mock random to force selection of Multiply (first entry in AFFIX_WEIGHTS)
     const spy = vi.spyOn(seededRandom, 'random').mockReturnValue(0.01)
-    mutateA(skill.id, 0)
+    mutate(skill.id)
     spy.mockRestore()
 
     const updated = state.affixSkills.get(skill.id)!
     const updatedRt = state.affixSkillStates.get(skill.id)!
-    // With deterministic random, new type is guaranteed to not be Crit
     expect(updated.affixes[0].type).not.toBe(AffixType.Crit)
     expect(updated.enchantmentIds).not.toContain(EnchantmentType.QuestOverload)
-    expect(updatedRt.questStacks).toBe(0)
-    expect(updatedRt.questCompletions).toBe(0)
-  })
-
-  it('mutateDowngrade triggers invalidation for removed affix', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
-      enchantmentIds: [EnchantmentType.QuestOverload],
-    })
-    setupSkill(skill)
-    const rt = state.affixSkillStates.get(skill.id)!
-    rt.questCompletions = 2
-
-    mutateDowngrade(skill.id)
-
-    const updated = state.affixSkills.get(skill.id)!
-    expect(updated.enchantmentIds).not.toContain(EnchantmentType.QuestOverload)
-    const updatedRt = state.affixSkillStates.get(skill.id)!
     expect(updatedRt.questStacks).toBe(0)
     expect(updatedRt.questCompletions).toBe(0)
   })
 })
 
 // ============================================================
-// AC8 — mutationApplied 事件 → ApprenticeAdapt 成长
+// mutationApplied 事件 → ApprenticeAdapt 成长
 // ============================================================
-describe('mutationApplied event (AC8)', () => {
-  it('mutateA triggers ApprenticeAdapt growth (+0.15)', () => {
-    // Skill being mutated
+describe('mutationApplied event', () => {
+  it('mutate triggers ApprenticeAdapt growth (+0.15)', () => {
     const skill = makeSkill({ id: 'skill_mutated' })
     setupSkill(skill)
     state.mutagenInventory = 10
 
-    // Another skill with ApprenticeAdapt enchantment
     const adaptSkill = makeSkill({
       id: 'skill_adapt',
       enchantmentIds: [EnchantmentType.ApprenticeAdapt],
     })
     setupSkill(adaptSkill)
 
-    mutateA('skill_mutated', 0)
-
-    const adaptRt = state.affixSkillStates.get('skill_adapt')!
-    expect(adaptRt.apprenticeAccumulated).toBeCloseTo(0.15, 4)
-  })
-
-  it('mutateUpgrade triggers ApprenticeAdapt growth', () => {
-    const skill = makeWhiteSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 10
-
-    const adaptSkill = makeSkill({
-      id: 'skill_adapt',
-      enchantmentIds: [EnchantmentType.ApprenticeAdapt],
-    })
-    setupSkill(adaptSkill)
-
-    mutateUpgrade(skill.id)
-
-    const adaptRt = state.affixSkillStates.get('skill_adapt')!
-    expect(adaptRt.apprenticeAccumulated).toBeCloseTo(0.15, 4)
-  })
-
-  it('mutateDowngrade triggers ApprenticeAdapt growth', () => {
-    const skill = makeSkill()
-    setupSkill(skill)
-
-    const adaptSkill = makeSkill({
-      id: 'skill_adapt',
-      enchantmentIds: [EnchantmentType.ApprenticeAdapt],
-    })
-    setupSkill(adaptSkill)
-
-    mutateDowngrade(skill.id)
+    mutate('skill_mutated')
 
     const adaptRt = state.affixSkillStates.get('skill_adapt')!
     expect(adaptRt.apprenticeAccumulated).toBeCloseTo(0.15, 4)
@@ -613,11 +355,9 @@ describe('mutationApplied event (AC8)', () => {
     setupSkill(skill)
     state.mutagenInventory = 10
 
-    mutateA(skill.id, 0)
+    mutate(skill.id)
 
-    // No crash, no growth anywhere
     const rt = state.affixSkillStates.get(skill.id)!
-    // apprenticeAccumulated should be 0 unless skill itself has adapt
     expect(rt.apprenticeAccumulated).toBe(0)
   })
 })

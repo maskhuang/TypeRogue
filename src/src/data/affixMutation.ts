@@ -20,16 +20,6 @@ import { random } from '../core/seededRandom'
 
 // ===== 常量 =====
 
-/** 蜕变C↑ 消耗表：当前稀有度 → 升级所需变异素 */
-export const UPGRADE_COSTS: Record<number, number> = {
-  0: 5,   // 白→蓝
-  1: 8,   // 蓝→黄
-  2: 12,  // 黄→橙
-}
-
-/** 蜕变A 基础消耗 */
-const MUTATE_A_BASE_COST = 3
-
 /** ApprenticeAdapt 每次蜕变成长值 */
 const ADAPT_GROWTH = 0.15
 
@@ -47,35 +37,18 @@ export interface MutationResult {
 
 // ===== 消耗查询 =====
 
-/** 蜕变A消耗：基础3 + 该技能已用次数 */
-export function getMutateACost(skillId: string): number {
+/** 蜕变消耗：1 + 该技能已蜕变次数 */
+export function getMutateCost(skillId: string): number {
   const used = state.mutationACounts.get(skillId) ?? 0
-  return MUTATE_A_BASE_COST + used
-}
-
-/** 蜕变C↑消耗 */
-export function getUpgradeCost(currentRarity: number): number {
-  return UPGRADE_COSTS[currentRarity] ?? Infinity
+  return 1 + used
 }
 
 // ===== 可操作性检查 =====
 
-export function canMutateA(skillId: string): boolean {
+export function canMutate(skillId: string): boolean {
   const skill = state.affixSkills.get(skillId)
   if (!skill || skill.affixes.length === 0) return false
-  return state.mutagenInventory >= getMutateACost(skillId)
-}
-
-export function canUpgrade(skillId: string): boolean {
-  const skill = state.affixSkills.get(skillId)
-  if (!skill || skill.rarity >= 3) return false
-  return state.mutagenInventory >= getUpgradeCost(skill.rarity)
-}
-
-export function canDowngrade(skillId: string): boolean {
-  const skill = state.affixSkills.get(skillId)
-  if (!skill || skill.rarity <= 0) return false
-  return true // 降级免费
+  return state.mutagenInventory >= getMutateCost(skillId)
 }
 
 // ===== 任务附魔失效 =====
@@ -197,9 +170,9 @@ function sampleOneExcluding(
   return { type: last.key as AffixType }
 }
 
-// ===== 蜕变 A: 词条重铸 =====
+// ===== 蜕变：将所有词条替换为池中随机新词条 =====
 
-export function mutateA(skillId: string, affixIndex: number, allowedCategory?: AffixCategory): MutationResult {
+export function mutate(skillId: string, allowedCategory?: AffixCategory): MutationResult {
   const skill = state.affixSkills.get(skillId)
   if (!skill) {
     return { success: false, error: '技能不存在', mutagenCost: 0, mutagenRefund: 0 }
@@ -207,11 +180,8 @@ export function mutateA(skillId: string, affixIndex: number, allowedCategory?: A
   if (skill.affixes.length === 0) {
     return { success: false, error: '无词条', mutagenCost: 0, mutagenRefund: 0 }
   }
-  if (affixIndex < 0 || affixIndex >= skill.affixes.length) {
-    return { success: false, error: '词条索引无效', mutagenCost: 0, mutagenRefund: 0 }
-  }
 
-  const cost = getMutateACost(skillId)
+  const cost = getMutateCost(skillId)
   if (state.mutagenInventory < cost) {
     return { success: false, error: '变异素不足', mutagenCost: 0, mutagenRefund: 0 }
   }
@@ -222,29 +192,32 @@ export function mutateA(skillId: string, affixIndex: number, allowedCategory?: A
   // 累计计数
   state.mutationACounts.set(skillId, (state.mutationACounts.get(skillId) ?? 0) + 1)
 
-  // 保存旧词条
-  const oldAffix = skill.affixes[affixIndex]
+  // 保存旧词条，用于任务附魔失效检查
+  const oldAffixes = skill.affixes.map(a => ({ ...a }))
 
-  // 池过滤：排除该技能其他词条的类型
-  const excludeTypes = skill.affixes
-    .filter((_, i) => i !== affixIndex)
-    .map(a => a.type)
-
-  const sample = sampleOneExcluding(excludeTypes, allowedCategory)
-  if (!sample) {
-    // 极端情况：所有词条类型都被排除 — 回滚
-    state.mutagenInventory += cost
-    const counts = state.mutationACounts.get(skillId)!
-    state.mutationACounts.set(skillId, counts - 1)
-    return { success: false, error: '无可用词条类型', mutagenCost: 0, mutagenRefund: 0 }
+  // 逐个替换所有词条，每个新词条排除已选类型（保证不重复）
+  const newAffixes: AffixInstance[] = []
+  for (let i = 0; i < skill.affixes.length; i++) {
+    const excludeTypes = newAffixes.map(a => a.type)
+    const sample = sampleOneExcluding(excludeTypes, allowedCategory)
+    if (!sample) {
+      // 极端情况：池中无可用类型 — 回滚
+      state.mutagenInventory += cost
+      const counts = state.mutationACounts.get(skillId)!
+      state.mutationACounts.set(skillId, counts - 1)
+      return { success: false, error: '无可用词条类型', mutagenCost: 0, mutagenRefund: 0 }
+    }
+    newAffixes.push(rollAffixParams(sample.type, skill.resource, sample.convertVariant))
   }
 
-  const newAffix = rollAffixParams(sample.type, skill.resource, sample.convertVariant)
-  skill.affixes[affixIndex] = newAffix
+  skill.affixes = newAffixes
 
-  // 任务附魔失效检查
-  if (oldAffix.type !== newAffix.type) {
-    invalidateQuestEnchantment(skillId, oldAffix.type)
+  // 任务附魔失效检查：旧词条类型中不再存在于新词条的，触发失效
+  const newTypes = new Set(newAffixes.map(a => a.type))
+  for (const old of oldAffixes) {
+    if (!newTypes.has(old.type)) {
+      invalidateQuestEnchantment(skillId, old.type)
+    }
   }
 
   // 更新名称和图标
@@ -256,92 +229,7 @@ export function mutateA(skillId: string, affixIndex: number, allowedCategory?: A
 
   return {
     success: true,
-    oldAffix,
-    newAffix,
     mutagenCost: cost,
     mutagenRefund: 0,
-  }
-}
-
-// ===== 蜕变 C↑: 稀有度升级 =====
-
-export function mutateUpgrade(skillId: string, allowedCategory?: AffixCategory): MutationResult {
-  const skill = state.affixSkills.get(skillId)
-  if (!skill) {
-    return { success: false, error: '技能不存在', mutagenCost: 0, mutagenRefund: 0 }
-  }
-  if (skill.rarity >= 3) {
-    return { success: false, error: '已传说', mutagenCost: 0, mutagenRefund: 0 }
-  }
-
-  const cost = getUpgradeCost(skill.rarity)
-  if (state.mutagenInventory < cost) {
-    return { success: false, error: '变异素不足', mutagenCost: 0, mutagenRefund: 0 }
-  }
-
-  // 扣费
-  state.mutagenInventory -= cost
-
-  // 排除已有词条类型
-  const excludeTypes = skill.affixes.map(a => a.type)
-  const sample = sampleOneExcluding(excludeTypes, allowedCategory)
-  if (!sample) {
-    state.mutagenInventory += cost
-    return { success: false, error: '无可用词条类型', mutagenCost: 0, mutagenRefund: 0 }
-  }
-
-  const newAffix = rollAffixParams(sample.type, skill.resource, sample.convertVariant)
-  skill.affixes.push(newAffix)
-  skill.rarity = (skill.rarity + 1) as SkillRarity
-
-  // 更新名称和图标
-  skill.name = generateName(skill.resource, skill.affixes)
-  skill.icon = RESOURCE_ICONS[skill.resource] || '?'
-
-  // 广播 mutationApplied
-  emitMutationApplied()
-
-  return {
-    success: true,
-    newAffix,
-    mutagenCost: cost,
-    mutagenRefund: 0,
-  }
-}
-
-// ===== 蜕变 C↓: 稀有度降级 =====
-
-export function mutateDowngrade(skillId: string): MutationResult {
-  const skill = state.affixSkills.get(skillId)
-  if (!skill) {
-    return { success: false, error: '技能不存在', mutagenCost: 0, mutagenRefund: 0 }
-  }
-  if (skill.rarity <= 0) {
-    return { success: false, error: '已白装', mutagenCost: 0, mutagenRefund: 0 }
-  }
-
-  // 随机移除1个词条
-  const removeIdx = Math.floor(random() * skill.affixes.length)
-  const removedAffix = skill.affixes.splice(removeIdx, 1)[0]
-  skill.rarity = (skill.rarity - 1) as SkillRarity
-
-  // 任务附魔失效检查
-  invalidateQuestEnchantment(skillId, removedAffix.type)
-
-  // 返还1变异素
-  state.mutagenInventory += 1
-
-  // 更新名称和图标
-  skill.name = generateName(skill.resource, skill.affixes)
-  skill.icon = RESOURCE_ICONS[skill.resource] || '?'
-
-  // 广播 mutationApplied
-  emitMutationApplied()
-
-  return {
-    success: true,
-    removedAffix,
-    mutagenCost: 0,
-    mutagenRefund: 1,
   }
 }
