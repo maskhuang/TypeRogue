@@ -336,6 +336,12 @@ function playerCorrect(k: string): void {
   state.resources.base += letterBase; // 写入资源
   state.wordScore += letterScore;
 
+  // Story 36.8: 分数磁铁 — 每打一个字+1分
+  const magnetBonus = checkScoreMagnet();
+  if (magnetBonus > 0) {
+    state.score += magnetBonus;
+  }
+
   // 字母升级加分：通过缓存的注册表解析 on_correct_keystroke
   if (letterRegistry) {
     const letterResult = EffectPipeline.resolve(letterRegistry, 'on_correct_keystroke', {
@@ -636,13 +642,6 @@ function completeWord(): void {
   }
   if (stormTargets.length > 0) {
     showFeedback(`⛈️ ×${stormTargets.length}`, '#aa88ff');
-  }
-
-  // Story 36.8: 分数磁铁 — 每词完成+1分
-  const magnetBonus = checkScoreMagnet();
-  if (magnetBonus > 0) {
-    state.score += magnetBonus;
-    showFeedback(`🧲 +${magnetBonus}`, '#ffdd44');
   }
 
   // Story 36.8: 资源感应 — ≥3种资源时最少那种+50%（基于本词产出量）
