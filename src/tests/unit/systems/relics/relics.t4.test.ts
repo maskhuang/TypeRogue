@@ -17,7 +17,6 @@ vi.mock('../../../../src/core/state', () => {
         relicStates: {} as Record<string, number>,
         bindings: new Map<string, string>(),
         skills: new Map(),
-        enchantedSkills: new Map(),
       },
       combo: 0,
       multiplier: 1,
@@ -39,11 +38,6 @@ vi.mock('../../../../src/systems/battle', () => ({
   showFeedback: vi.fn(),
   updateHUD: vi.fn(),
   setPseudoInfiniteVisual: vi.fn(),
-}))
-
-// Mock producers for isProducer
-vi.mock('../../../../src/data/producers', () => ({
-  isProducer: (id: string) => id.startsWith('prod_'),
 }))
 
 import { state } from '../../../../src/core/state'
@@ -327,24 +321,25 @@ describe('initRelicState — T4 副作用', () => {
   beforeEach(() => {
     state.player.skills.clear()
     state.player.bindings.clear()
-    state.player.enchantedSkills.clear()
     state.player.relics.clear()
   })
 
-  it('pure_heart 移除非产出者技能', async () => {
+  it('pure_heart 移除 rarity > 0 的 affix 技能', async () => {
     const { initRelicState } = await import('../../../../src/systems/relics/RelicPipeline')
-    state.player.skills.set('prod_burst', { level: 1 })
-    state.player.skills.set('conv_fire', { level: 1 })
-    state.player.skills.set('prod_chain', { level: 2 })
-    state.player.bindings.set('a', 'prod_burst')
-    state.player.bindings.set('s', 'conv_fire')
+    // Setup: white (rarity=0) and blue (rarity=1) affix skills
+    state.player.skills.set('skill_white', { level: 1 })
+    state.affixSkills.set('skill_white', { id: 'skill_white', rarity: 0, resource: 'base', affixes: [], baseValues: [5, 7, 9], level: 1, name: 'White', icon: '⚪', enchantmentIds: [] } as any)
+    state.player.skills.set('skill_blue', { level: 1 })
+    state.affixSkills.set('skill_blue', { id: 'skill_blue', rarity: 1, resource: 'score', affixes: [{}], baseValues: [5, 7, 9], level: 1, name: 'Blue', icon: '🔵', enchantmentIds: [] } as any)
+    state.player.bindings.set('a', 'skill_white')
+    state.player.bindings.set('s', 'skill_blue')
     state.player.relics.add('pure_heart')
 
     initRelicState('pure_heart')
 
-    expect(state.player.skills.has('prod_burst')).toBe(true)
-    expect(state.player.skills.has('prod_chain')).toBe(true)
-    expect(state.player.skills.has('conv_fire')).toBe(false)
+    expect(state.player.skills.has('skill_white')).toBe(true)
+    expect(state.player.skills.has('skill_blue')).toBe(false)
+    expect(state.player.bindings.has('a')).toBe(true)
     expect(state.player.bindings.has('s')).toBe(false)
   })
 

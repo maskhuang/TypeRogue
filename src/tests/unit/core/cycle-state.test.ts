@@ -171,24 +171,6 @@ describe('周目状态 (cycle)', () => {
       expect(state.gold).toBe(350)
     })
 
-    it('保留 growthValues', () => {
-      state.growthValues.set('skill_a', 0.24)
-      advanceCycle()
-      expect(state.growthValues.get('skill_a')).toBe(0.24)
-    })
-
-    it('保留 masteryCounters', () => {
-      state.masteryCounters.set('skill_b', 30)
-      advanceCycle()
-      expect(state.masteryCounters.get('skill_b')).toBe(30)
-    })
-
-    it('保留 devourIcons', () => {
-      state.devourIcons.set('skill_c', ['🔥', '⚡'])
-      advanceCycle()
-      expect(state.devourIcons.get('skill_c')).toEqual(['🔥', '⚡'])
-    })
-
     it('保留 relics', () => {
       state.player.relics.add('lucky_coin')
       advanceCycle()
@@ -201,13 +183,6 @@ describe('周目状态 (cycle)', () => {
       expect(state.player.wordDeck).toEqual(['hello', 'world', 'test'])
     })
 
-    it('保留 enchantedSkills/evolvedSkills', () => {
-      state.player.enchantedSkills.set('prod_burst', 'ench_growth_adjacent')
-      state.player.evolvedSkills.set('prod_burst', 'prod_burst_evo_a')
-      advanceCycle()
-      expect(state.player.enchantedSkills.get('prod_burst')).toBe('ench_growth_adjacent')
-      expect(state.player.evolvedSkills.get('prod_burst')).toBe('prod_burst_evo_a')
-    })
   })
 
   // === AC5: HUD 显示逻辑 ===

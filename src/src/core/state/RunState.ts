@@ -87,15 +87,6 @@ export interface RunStateData {
   /** Boss 修饰器分配（Stage 3→A, Stage 6→B, Stage 9→C） */
   bossModifierAssignment: BossModifierAssignment[]
 
-  /** 成长附魔累积值（skillId → 成长百分比），跨关保持，新 Run 重置 */
-  growthValues: Map<string, number>
-
-  /** 精通附魔触发计数（skillId → 累计触发次数），跨关保持，新 Run 重置 */
-  masteryCounters: Map<string, number>
-
-  /** 吞噬附魔获得的图标（skillId → 图标列表），跨关保持，新 Run 重置 */
-  devourIcons: Map<string, string[]>
-
   /** 当前周目数（默认 1，通关 Boss 后 +1） */
   cycle: number
 
@@ -125,17 +116,11 @@ export interface RunStateData {
   /** 蜕变师：变异素库存 */
   mutagenInventory: number
 
-  /** 技能进化映射（原ID → 进化ID） */
+  /** 技能进化映射（原ID → 进化ID）— legacy */
   evolvedSkills: Map<string, string>
-
-  /** 技能附魔映射（skillId → enchantmentId） */
-  enchantedSkills: Map<string, string>
 
   /** 已见技能类型（用于商店多样性） */
   seenSkillTypes: Set<string>
-
-  /** 增幅者叠层（skillId → 叠层数） */
-  amplifierStacks: Map<string, number>
 
   /** 词库（含造词师造出的词） */
   wordDeck: string[]
@@ -188,9 +173,6 @@ export class RunState {
       },
       bossModifierPool: [],
       bossModifierAssignment: [],
-      growthValues: new Map(),
-      masteryCounters: new Map(),
-      devourIcons: new Map(),
       cycle: 1,
       activeModifiers: [],
       relicStates: {},
@@ -201,9 +183,7 @@ export class RunState {
       craftedWords: [],
       mutagenInventory: 0,
       evolvedSkills: new Map(),
-      enchantedSkills: new Map(),
       seenSkillTypes: new Set(),
-      amplifierStacks: new Map(),
       wordDeck: [],
       affixSkills: new Map(),
       affixSkillStates: new Map(),
@@ -535,9 +515,6 @@ export class RunState {
       stats: { ...this.data.stats },
       bossModifierPool: [...this.data.bossModifierPool],
       bossModifierAssignment: [...this.data.bossModifierAssignment],
-      growthValues: Object.fromEntries(this.data.growthValues),
-      masteryCounters: Object.fromEntries(this.data.masteryCounters),
-      devourIcons: Object.fromEntries(this.data.devourIcons),
       cycle: this.data.cycle,
       activeModifiers: [...this.data.activeModifiers],
       relicStates: { ...this.data.relicStates },
@@ -548,9 +525,7 @@ export class RunState {
       craftedWords: [...this.data.craftedWords],
       mutagenInventory: this.data.mutagenInventory,
       evolvedSkills: Object.fromEntries(this.data.evolvedSkills),
-      enchantedSkills: Object.fromEntries(this.data.enchantedSkills),
       seenSkillTypes: Array.from(this.data.seenSkillTypes),
-      amplifierStacks: Object.fromEntries(this.data.amplifierStacks),
       wordDeck: [...this.data.wordDeck],
       affixSkillData: [...this.data.affixSkills.entries()].map(([id, skill]) => {
         const rt = this.data.affixSkillStates.get(id) || createSkillRuntimeState(id)
@@ -609,24 +584,6 @@ export class RunState {
     runState.data.bossModifierPool = (parsed as any).bossModifierPool || []
     runState.data.bossModifierAssignment = (parsed as any).bossModifierAssignment || []
 
-    // 恢复成长值（兼容旧存档）
-    const growthEntries = (parsed as any).growthValues || {}
-    Object.entries(growthEntries).forEach(([skillId, value]) => {
-      runState.data.growthValues.set(skillId, value as number)
-    })
-
-    // 恢复精通计数（兼容旧存档）
-    const masteryEntries = (parsed as any).masteryCounters || {}
-    Object.entries(masteryEntries).forEach(([skillId, count]) => {
-      runState.data.masteryCounters.set(skillId, count as number)
-    })
-
-    // 恢复吞噬图标（兼容旧存档）
-    const devourEntries = (parsed as any).devourIcons || {}
-    Object.entries(devourEntries).forEach(([skillId, icons]) => {
-      runState.data.devourIcons.set(skillId, icons as string[])
-    })
-
     // 恢复周目数和活跃修饰器（兼容旧存档）
     runState.data.cycle = (parsed as any).cycle || 1
     runState.data.activeModifiers = (parsed as any).activeModifiers || []
@@ -646,18 +603,8 @@ export class RunState {
       runState.data.evolvedSkills.set(skillId, evolvedId as string)
     })
 
-    const enchantedEntries = (parsed as any).enchantedSkills || {}
-    Object.entries(enchantedEntries).forEach(([skillId, enchId]) => {
-      runState.data.enchantedSkills.set(skillId, enchId as string)
-    })
-
     const seenTypes: string[] = (parsed as any).seenSkillTypes || []
     seenTypes.forEach(t => runState.data.seenSkillTypes.add(t))
-
-    const ampEntries = (parsed as any).amplifierStacks || {}
-    Object.entries(ampEntries).forEach(([skillId, count]) => {
-      runState.data.amplifierStacks.set(skillId, count as number)
-    })
 
     // 恢复词条制技能（35.9）
     const rawAffixSkills: any[] = (parsed as any).affixSkillData || []

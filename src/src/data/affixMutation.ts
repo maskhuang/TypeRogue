@@ -115,6 +115,10 @@ export function invalidateQuestEnchantment(skillId: string, removedAffixType: Af
     rt.questStacks = 0
     rt.questCompletions = 0
   }
+  // 若 Transmute 附魔被移除，清理 transmuteResource
+  if (!skill.enchantmentIds.includes(EnchantmentType.Transmute)) {
+    skill.transmuteResource = undefined
+  }
 }
 
 // ===== mutationApplied 事件广播 =====

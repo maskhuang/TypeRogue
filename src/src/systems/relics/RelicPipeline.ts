@@ -6,7 +6,6 @@
 import { state } from '../../core/state'
 import { RELIC_MODIFIER_DEFS, RELIC_FLAGS, RELICS } from '../../data/relics'
 import { AFFIX_CATEGORY_MAP } from '../../data/affixes'
-import { isProducer } from '../../data/producers'
 import { showFeedback } from '../battle'
 import type { ModifierTrigger, PipelineContext, PipelineResult, BehaviorCallbacks } from '../modifiers/ModifierTypes'
 import { ModifierRegistry } from '../modifiers/ModifierRegistry'
@@ -200,31 +199,14 @@ export function initRelicState(relicId: string): void {
 
   // === T4 获取时副作用 ===
 
-  // 纯粹之心：移除所有非产出者技能（旧系统）+ 非白装 affix 技能（新系统）
+  // 纯粹之心：移除 rarity > 0 的 affix 技能（仅保留白装）
   if (relicId === 'pure_heart') {
-    let removedCount = 0
-    // 旧系统：移除非产出者
-    const toRemove: string[] = []
-    for (const [skillId] of state.player.skills) {
-      if (!isProducer(skillId)) toRemove.push(skillId)
-    }
-    for (const skillId of toRemove) {
-      state.player.skills.delete(skillId)
-      state.player.enchantedSkills.delete(skillId)
-      if (state.growthValues) state.growthValues.delete(skillId)
-      if (state.amplifierStacks) state.amplifierStacks.delete(skillId)
-      const boundKeys = [...state.player.bindings.entries()]
-        .filter(([, v]) => v === skillId)
-        .map(([k]) => k)
-      for (const k of boundKeys) state.player.bindings.delete(k)
-    }
-    removedCount += toRemove.length
-    // 新系统：移除 rarity > 0 的 affix 技能
     const affixToRemove: string[] = []
     for (const [skillId, skill] of state.affixSkills) {
       if (skill.rarity > 0) affixToRemove.push(skillId)
     }
     for (const skillId of affixToRemove) {
+      state.player.skills.delete(skillId)
       state.affixSkills.delete(skillId)
       state.affixSkillStates.delete(skillId)
       const boundKeys = [...state.player.bindings.entries()]
@@ -232,9 +214,8 @@ export function initRelicState(relicId: string): void {
         .map(([k]) => k)
       for (const k of boundKeys) state.player.bindings.delete(k)
     }
-    removedCount += affixToRemove.length
-    if (removedCount > 0) {
-      showFeedback(`纯粹之心：${removedCount}个非白装技能已移除!`, '#ff0000')
+    if (affixToRemove.length > 0) {
+      showFeedback(`纯粹之心：${affixToRemove.length}个非白装技能已移除!`, '#ff0000')
     }
   }
 

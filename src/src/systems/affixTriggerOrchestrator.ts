@@ -143,6 +143,7 @@ export function orchestrateAffixTrigger(
     const triggerCtx: TriggerContext = {
       ...ctx,
       triggerKey: item.triggerKey,
+      transmuteResource: skill.transmuteResource,
     }
 
     // ── 执行纯计算（triggerAffixSkill 签名不变） ──

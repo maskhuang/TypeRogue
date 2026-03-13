@@ -6,7 +6,6 @@
 import { state } from '../../core/state';
 import { playSound } from '../../effects/sound';
 import { showFeedback } from '../battle';
-import { onWordCrafted } from '../skills';
 import { getMaxQueueLength, setFragmentQueue } from './FragmentQueue';
 
 // === 金币递增公式常量 ===
@@ -77,9 +76,6 @@ export function craftWord(letters: string[], onGoldUpdate: () => void): boolean 
   // 推入词库
   state.player.wordDeck.push(word);
   state.craftedWords.push(word);
-
-  // 丰收附魔累计
-  onWordCrafted();
 
   playSound('buy');
   return true;

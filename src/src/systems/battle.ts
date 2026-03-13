@@ -12,9 +12,8 @@ import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers } from './skills';
-import { isConnector, isReplicator } from '../data/connectors';
 import { HAND_MAP } from '../data/keyboardTopology';
-import { openShop, applyRandomEnchantment } from './shop';
+import { openShop } from './shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './relicPicker';
 import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
@@ -757,20 +756,6 @@ function endLevel(): void {
     });
   }
 
-  // 混沌种子：关卡结束时随机一个未附魔技能获随机附魔
-  if (state.score >= state.targetScore && state.player.relics.has('chaos_seed')) {
-    const candidates: string[] = [];
-    for (const [, skillId] of state.player.bindings) {
-      if (state.player.enchantedSkills.has(skillId)) continue;
-      if (isConnector(skillId) || isReplicator(skillId)) continue;
-      candidates.push(skillId);
-    }
-    if (candidates.length > 0) {
-      const pick = candidates[Math.floor(random() * candidates.length)];
-      applyRandomEnchantment(pick);
-    }
-  }
-
   if (state.score >= state.targetScore) {
     trackEvent('demo_stage_complete', { stage: state.level, score: state.score });
     const rating = state.battleStats?.rating || 'B';
@@ -897,10 +882,6 @@ export async function startLevel(): Promise<void> {
   // 初始化战后统计
   state.battleStats = createBattleStats();
 
-  // 清空增幅者叠层（每关重置）
-  state.amplifierStacks.clear();
-  // 清空吞噬附魔触发计数（每关重置）
-  state.devourCounters.clear();
   // 重置蜕变师遗物状态
   if (state.player.relics.has('primal_mutant')) {
     state.player.relicStates['primal_mutant'] = 0;
@@ -918,16 +899,6 @@ export async function startLevel(): Promise<void> {
   if (state.player.relics.has('fittest_survivors')) {
     for (const key of Object.keys(state.player.relicStates)) {
       if (key.startsWith('fittest_')) delete state.player.relicStates[key];
-    }
-  }
-
-  // 不稳定附魔：每关开始随机分配资源类型（关末自然失效，下一关重新分配）
-  state.unstableResources.clear();
-  const UNSTABLE_POOL: import('../core/types').ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
-  for (const [skillId, enchId] of state.player.enchantedSkills) {
-    if (enchId === 'ench_unstable') {
-      const idx = Math.floor(random() * UNSTABLE_POOL.length);
-      state.unstableResources.set(skillId, UNSTABLE_POOL[idx]);
     }
   }
 
@@ -1130,7 +1101,6 @@ function victory(): void {
     },
     cycle: state.cycle,
     skillLevels: Array.from(state.player.skills.entries()).map(([id, s]) => ({ id, level: s.level })),
-    enchantments: Array.from(state.player.enchantedSkills.entries()).map(([skillId, enchantmentId]) => ({ skillId, enchantmentId })),
     activeModifiers: [...state.activeModifiers],
     seed: state.dailySeed,
     classId: state.classId,
@@ -1185,7 +1155,6 @@ function gameOver(): void {
     },
     cycle: state.cycle,
     skillLevels: Array.from(state.player.skills.entries()).map(([id, s]) => ({ id, level: s.level })),
-    enchantments: Array.from(state.player.enchantedSkills.entries()).map(([skillId, enchantmentId]) => ({ skillId, enchantmentId })),
     activeModifiers: [...state.activeModifiers],
     seed: state.dailySeed,
     classId: state.classId,

@@ -14,9 +14,6 @@ import { EffectTextDisplay } from './EffectTextDisplay'
 import { AdjacencyVisualizer } from './AdjacencyVisualizer'
 import { EffectQueueDisplay, type QueuedEffect } from './EffectQueueDisplay'
 import { adjacencyMap } from '../../systems/skills/passive/AdjacencyMap'
-import { PRODUCERS } from '../../data/producers'
-import { CONVERTERS } from '../../data/converters'
-import { CONNECTORS, REPLICATORS } from '../../data/connectors'
 import { playSound } from '../../effects/sound'
 import { state } from '../../core/state'
 
@@ -124,21 +121,17 @@ export class SkillFeedbackManager {
     const keyPosition = this.getKeyPosition(data.key)
     if (!keyPosition) return
 
-    const skill = PRODUCERS[data.skillId] || CONVERTERS[data.skillId] || CONNECTORS[data.skillId] || REPLICATORS[data.skillId] as any
-    if (!skill) return
+    const affixSkill = state.affixSkills.get(data.skillId)
+    if (!affixSkill) return
 
     // 1. 播放图标弹出
     this.skillIconPopup.play(data.skillId, keyPosition.x, keyPosition.y)
 
     // 2. 显示效果文字
     if (data.value !== undefined) {
-      if (skill.type === 'score') {
-        this.effectTextDisplay.showScoreBonus(data.value, keyPosition.x, keyPosition.y - 30)
-      } else if (skill.type === 'multiply') {
-        this.effectTextDisplay.showMultiplierBonus(data.value / 100, keyPosition.x, keyPosition.y - 30)
-      }
+      this.effectTextDisplay.showScoreBonus(data.value, keyPosition.x, keyPosition.y - 30)
     }
-    this.effectTextDisplay.showSkillName(skill.name, keyPosition.x, keyPosition.y - 50)
+    this.effectTextDisplay.showSkillName(affixSkill.name, keyPosition.x, keyPosition.y - 50)
 
     // 3. 被动技能显示相邻联动
     if (data.type === 'passive') {

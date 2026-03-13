@@ -281,8 +281,6 @@ describe('Affix skill state lifecycle (AC1, AC4)', () => {
     for (const [key, id] of state.player.bindings) {
       if (id === skillId) { state.player.bindings.delete(key); break; }
     }
-    state.player.evolvedSkills.delete(skillId);
-    state.player.enchantedSkills.delete(skillId);
     state.affixSkills.delete(skillId);
     state.affixSkillStates.delete(skillId);
     state.player.skills.delete(skillId);

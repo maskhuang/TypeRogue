@@ -187,20 +187,8 @@ export interface GameState {
   usedRestEvents: string[];            // Run 级别：已使用的休息事件 ID
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
   sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
-  converterPool: string[];             // 本局转化者池（45 加权抽 23，同源权重 3 异源权重 10）
-  connectorPool: string[];             // 本局连接者池（25 抽 13）
-  replicatorPool: string[];            // 本局复制者池（6 抽 5）
-  amplifierPool: string[];             // 本局增幅者池
-  amplifierStacks: Map<string, number>; // 增幅者叠层（key=ampId, value=层数），关卡结算时清零
-  devourCounters: Map<string, number>;  // 吞噬附魔战斗内触发计数（skillId → 计数），每关重置
-  growthValues: Map<string, number>;    // 成长附魔累积值（skillId → 成长百分比），跨关保持，新 Run 重置
-  masteryCounters: Map<string, number>; // 精通附魔触发计数（skillId → 累计触发次数），跨关保持，新 Run 重置
-  devourIcons: Map<string, string[]>;   // 吞噬附魔获得的图标（skillId → 图标列表），跨关保持，新 Run 重置
-  chargeAccumulated: Map<string, number>;  // 蓄力产出者累积值（skillId → 0~maxBonus），每关重置
-  decayMultipliers: Map<string, number>;   // 衰减产出者当前倍率（skillId → initialMult~floor），每词重置
-  pulseCounts: Map<string, number>;        // 脉冲产出者触发计数（skillId → count），每关重置
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
-  seenSkillTypes: Set<string>;                      // 已见技能类型（产出者/转化者/连接者/增幅者 tooltip 跟踪）
+  seenSkillTypes: Set<string>;                      // 已见技能类型（tooltip 跟踪）
   battleStats: BattleStats | null;                   // 上一战的统计数据（商店中展示）
   classResourceProduced: Record<string, number>;  // 本关累计职业资源产出（fragment/mutagen），每关重置
   fragmentInventory: Record<string, number>;       // 造词师：26 字母碎片库存（A-Z），跨关保持，Run 重置
@@ -208,7 +196,6 @@ export interface GameState {
   fragmentQueuePosition: number;                    // 造词师：采集队列当前位置（每关重置）
   craftedWords: string[];                           // 造词师：本 Run 已造词列表，跨关保持，Run 重置
   mutagenInventory: number;                        // 蜕变师：变异素库存，跨关保持，Run 重置
-  unstableResources: Map<string, ResourceType>;    // 不稳定附魔：每关随机资源分配（skillId → 资源类型），每关重置
   affixSkills: Map<string, AffixSkillInstance>;      // 词条制技能定义（skillId → 完整技能数据），35.9
   affixSkillStates: Map<string, SkillRuntimeState>;  // 词条制技能运行时状态（skillId → 8字段状态），35.9
   mutationACounts: Map<string, number>;              // 蜕变A累计次数（skillId → 次数），35.10
@@ -247,8 +234,7 @@ export interface PlayerState {
   comboBonus: number;
   wordBonus: number;
   timeBonus: number;
-  evolvedSkills: Map<string, string>;  // skillId → branchId
-  enchantedSkills: Map<string, string>;  // skillId → enchantmentId
+  evolvedSkills: Map<string, string>;  // skillId → branchId (legacy, kept for save compat)
 }
 
 export interface ShopItem {

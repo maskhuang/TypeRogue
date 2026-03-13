@@ -1203,6 +1203,75 @@ export function filterQuestCandidates(skill: AffixSkillInstance): EnchantmentTyp
 }
 
 /**
+ * 返回技能可获取的全部附魔候选列表（学徒+任务+衍生+被动+运算符）。
+ * 排除已装备的附魔。职业过滤由外部 filterEnchantmentsByClass 处理。
+ */
+export function filterEnchantmentCandidates(skill: AffixSkillInstance): EnchantmentType[] {
+  const existingEnchs = new Set(skill.enchantmentIds)
+  const candidates: EnchantmentType[] = []
+
+  // 1. 学徒附魔（12 个，无词条要求）
+  const apprenticeTypes: EnchantmentType[] = [
+    EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeNeighbor,
+    EnchantmentType.ApprenticeWord, EnchantmentType.ApprenticeProc,
+    EnchantmentType.ApprenticeCrit, EnchantmentType.ApprenticeOutcast,
+    EnchantmentType.ApprenticeLongWord, EnchantmentType.ApprenticePerfect,
+    EnchantmentType.ApprenticeCombo, EnchantmentType.ApprenticeStage,
+    EnchantmentType.ApprenticeHarvest, EnchantmentType.ApprenticeAdapt,
+  ]
+  for (const t of apprenticeTypes) {
+    if (!existingEnchs.has(t)) candidates.push(t)
+  }
+
+  // 2. 任务附魔（需匹配词条）
+  const questCandidates = filterQuestCandidates(skill)
+  for (const t of questCandidates) {
+    candidates.push(t)
+  }
+
+  // 3. 衍生附魔（1 个枚举值，资源变体运行时展开）
+  if (!existingEnchs.has(EnchantmentType.Transmute)) {
+    candidates.push(EnchantmentType.Transmute)
+  }
+
+  // 4. 被动附魔（4 个，职业过滤由外部处理）
+  const passiveTypes: EnchantmentType[] = [
+    EnchantmentType.LetterAffinity, EnchantmentType.Overflow,
+    EnchantmentType.Unstable, EnchantmentType.MutationHunger,
+  ]
+  for (const t of passiveTypes) {
+    if (!existingEnchs.has(t)) candidates.push(t)
+  }
+
+  // 5. 运算符（1 个）
+  if (!existingEnchs.has(EnchantmentType.MultiplyOperator)) {
+    candidates.push(EnchantmentType.MultiplyOperator)
+  }
+
+  return candidates
+}
+
+/**
+ * 返回衍生附魔可选的目标资源列表。
+ * 排除与技能自身相同的资源，并根据职业限制排除 fragment/mutagen。
+ */
+export function getTransmuteEligibleResources(
+  skillResource: ResourceType,
+  playerClass?: string,
+): ResourceType[] {
+  const allResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
+  return allResources.filter(r => {
+    // 排除与自身相同的资源
+    if (r === skillResource) return false
+    // fragment: 仅造词师可用
+    if (r === 'fragment' && (!playerClass || playerClass === 'metamorph')) return false
+    // mutagen: 仅蜕变师可用
+    if (r === 'mutagen' && (!playerClass || playerClass === 'wordsmith')) return false
+    return true
+  })
+}
+
+/**
  * 返回技能的附魔槽位数量。Twin 词条使附魔数量翻倍（1→2）。
  */
 export function getEnchantmentSlotCount(skill: AffixSkillInstance): number {
@@ -1304,6 +1373,7 @@ export function serializeSkill(
     rarity: skill.rarity,
     affixes: skill.affixes.map(a => ({ ...a })),
     enchantmentIds: [...skill.enchantmentIds],
+    transmuteResource: skill.transmuteResource,
     runtime: { ...runtimeState, mirrorCopiedAffix: runtimeState.mirrorCopiedAffix ? { ...runtimeState.mirrorCopiedAffix } : null },
   }
 }
@@ -1324,6 +1394,7 @@ export function deserializeSkill(
     rarity: data.rarity,
     affixes: data.affixes.map(a => ({ ...a })),
     enchantmentIds: [...data.enchantmentIds],
+    transmuteResource: data.transmuteResource,
   }
   const runtimeState: SkillRuntimeState = {
     skillId: data.id,
@@ -1373,7 +1444,7 @@ export function migrateLoadedSkills(
 // ===== 内部辅助 =====
 
 /** 判断附魔类型是否为学徒系列 */
-function isApprenticeEnchantment(ench: EnchantmentType): boolean {
+export function isApprenticeEnchantment(ench: EnchantmentType): boolean {
   return ench === EnchantmentType.ApprenticeSelf
     || ench === EnchantmentType.ApprenticeNeighbor
     || ench === EnchantmentType.ApprenticeWord

@@ -7,9 +7,6 @@ import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { drawRestEvent } from '../data/restEvents';
 import type { RestEvent, RestEventOption } from '../data/restEvents';
 import { RELICS } from '../data/relics';
-import { PRODUCERS } from '../data/producers';
-import { CONVERTERS } from '../data/converters';
-import { CONNECTORS, REPLICATORS } from '../data/connectors';
 import { showScreen, startLevel, renderRelicDisplay } from './battle';
 import { getNextBattleNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { getBossModifierMeta } from '../data/bossModifiers';
@@ -160,11 +157,6 @@ export function executeEffect(effectId: string): string {
     case 'altar_upgrade': {
       const removed = removeRandomSkill();
       if (!removed) return t('rest.altar.no_skill');
-      const newSkillId = grantRandomNewSkill();
-      if (newSkillId) {
-        const newSk = PRODUCERS[newSkillId] || CONVERTERS[newSkillId] || CONNECTORS[newSkillId] || REPLICATORS[newSkillId];
-        return t('rest.altar.upgrade_r', { removed: localizeItemName(removed.id, removed.name), icon: newSk.icon, name: localizeItemName(newSkillId, newSk.name) });
-      }
       return t('rest.altar.upgrade_fail', { removed: localizeItemName(removed.id, removed.name) });
     }
     case 'altar_gold': {
@@ -333,12 +325,12 @@ function removeRandomRelic(): { id: string; name: string; icon: string } | null 
   return relic ? { id: relicId, name: relic.name, icon: relic.icon } : null;
 }
 
-/** 移除随机技能（含绑定和进化清理），返回技能名 */
+/** 移除随机技能（含绑定清理），返回技能名 */
 function removeRandomSkill(): { id: string; name: string } | null {
   const skillIds = [...state.player.skills.keys()];
   if (skillIds.length === 0) return null;
   const skillId = skillIds[Math.floor(Math.random() * skillIds.length)];
-  const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId];
+  const affixSkill = state.affixSkills.get(skillId);
 
   // 移除绑定
   for (const [key, id] of state.player.bindings) {
@@ -347,26 +339,13 @@ function removeRandomSkill(): { id: string; name: string } | null {
       break;
     }
   }
-  // 移除进化
-  state.player.evolvedSkills.delete(skillId);
+  // 移除词条制技能数据
+  state.affixSkills.delete(skillId);
+  state.affixSkillStates.delete(skillId);
   // 移除技能
   state.player.skills.delete(skillId);
 
-  return sk ? { id: skillId, name: sk.name } : null;
-}
-
-/** 授予随机新技能（未拥有的），返回技能 ID 或 null */
-function grantRandomNewSkill(): string | null {
-  // T4 极简主义：技能数量已达上限时不授予
-  const maxSkillCount = queryRelicFlag('max_skill_count') as number;
-  if (maxSkillCount !== Infinity && state.player.skills.size >= maxSkillCount) return null;
-
-  const owned = [...state.player.skills.keys()];
-  const available = [...Object.keys(PRODUCERS), ...Object.keys(CONVERTERS), ...Object.keys(CONNECTORS), ...Object.keys(REPLICATORS)].filter(id => !owned.includes(id));
-  if (available.length === 0) return null;
-  const skillId = available[Math.floor(Math.random() * available.length)];
-  state.player.skills.set(skillId, { level: 1 });
-  return skillId;
+  return affixSkill ? { id: skillId, name: affixSkill.name } : null;
 }
 
 /** 升级随机已有技能（未满级的），返回信息 */
@@ -378,6 +357,6 @@ function upgradeRandomSkill(): { id: string; name: string; newLevel: number } | 
   if (upgradable.length === 0) return null;
   const [skillId, data] = upgradable[Math.floor(Math.random() * upgradable.length)];
   data.level++;
-  const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId];
-  return sk ? { id: skillId, name: sk.name, newLevel: data.level } : null;
+  const affixSkill = state.affixSkills.get(skillId);
+  return affixSkill ? { id: skillId, name: affixSkill.name, newLevel: data.level } : null;
 }

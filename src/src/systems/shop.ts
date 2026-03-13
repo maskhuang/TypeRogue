@@ -6,25 +6,27 @@
 import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS } from '../core/constants';
-import { getSkillSchool, getSkillDisplayInfo } from '../data/skills';
-import { PRODUCERS, isProducer, getProducerMechanic, MECHANIC_LABELS, MECHANIC_ICONS, RELATION_LABELS } from '../data/producers';
-import { CONVERTERS, isConverter } from '../data/converters';
-import { CONNECTORS, REPLICATORS, isConnector, isReplicator } from '../data/connectors';
-import { AMPLIFIERS, isAmplifier } from '../data/amplifiers';
-import { ENCHANTMENTS, drawEnchantmentPair } from '../data/enchantments';
-import { getKeysWithRelation, hasRelation } from '../data/keyboardTopology';
-import type { PositionRelation } from '../data/keyboardTopology';
+import { getKeysWithRelation, PositionRelation } from '../data/keyboardTopology';
+
+// === 位置关系标签（从旧 producers.ts 迁移） ===
+const RELATION_LABELS: Record<string, string> = {
+  [PositionRelation.Adjacent]: '相邻',
+  [PositionRelation.SameRow]: '同行',
+  [PositionRelation.SameColumn]: '同列',
+  [PositionRelation.SameHand]: '同手',
+  [PositionRelation.SameFinger]: '同指',
+  [PositionRelation.Symmetric]: '对称位',
+};
 import { calculateDeckStats } from '../data/words';
 import { generateWordPacks, getConditionMeta } from '../data/wordPacks';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
-import type { ShopItem, ResourceType, PackConditionType, ChargeParams, DecayParams, PulseParams, CritParams, VoidParams } from '../core/types';
+import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
 import { getNextBattleNode, isRestNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
-import { getIconCount } from './skills';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
@@ -42,8 +44,8 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, AFFIX_NAMES, AFFIX_DESCRIPTIONS, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
-import { getEnchantmentSlotCount, filterQuestCandidates, resolvePhase1, getQuestCompletions, countEmptySlots } from '../data/affixTrigger';
-import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS } from '../data/affixes';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, getQuestCompletions, countEmptySlots } from '../data/affixTrigger';
+import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_NAMES, TRANSMUTE_RATIO_TABLE, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 
@@ -187,17 +189,7 @@ export function generateAffixShopItems(count: number): ShopItem[] {
   return items;
 }
 
-// === 产出者机制分组权重（Story 34.5） ===
-export const PRODUCER_MECHANIC_WEIGHTS: Record<string, number> = {
-  standard: 10, charge: 8, decay: 8, pulse: 8, crit: 8, void: 4,
-};
-
-// === Act 技能权重 ===
-export const ACT_SKILL_WEIGHTS: Record<number, { producer: number; converter: number; connector: number; replicator: number; amplifier: number }> = {
-  1: { producer: 80, converter: 20, connector: 0, replicator: 0, amplifier: 0 },
-  2: { producer: 25, converter: 45, connector: 15, replicator: 5, amplifier: 10 },
-  3: { producer: 10, converter: 35, connector: 25, replicator: 10, amplifier: 20 },
-};
+// Old producer/act skill weights removed (词条制 replaces old system)
 
 // === Act 遗物权重 ===
 const ACT_RELIC_WEIGHTS: Record<number, RelicWeights> = {
@@ -227,101 +219,14 @@ export function generateShopRelicItem(act: number, itemId?: number): ShopItem | 
   };
 }
 
-// === 首次获取 tooltip ===
-// i18n-aware tooltip lookup (runtime)
-function getSkillTypeTooltip(type: string): { text: string; color: string } | undefined {
-  const map: Record<string, { key: string; color: string }> = {
-    producer:   { key: 'tooltip.producer',   color: '#4ecdc4' },
-    converter:  { key: 'tooltip.converter',  color: '#f39c12' },
-    connector:  { key: 'tooltip.connector',  color: '#9b59b6' },
-    replicator: { key: 'tooltip.replicator', color: '#8e44ad' },
-    amplifier:  { key: 'tooltip.amplifier',  color: '#7c5cbf' },
-  };
-  const entry = map[type];
-  if (!entry) return undefined;
-  return { text: t(entry.key), color: entry.color };
+// === 附魔信息占位（旧系统已移除） ===
+export function buildMechanicInfo(_skillId: string): string | undefined {
+  return undefined;
 }
 
-// Backward-compat export for tests (static ZH values)
-export const SKILL_TYPE_TOOLTIPS: Record<string, { text: string; color: string }> = {
-  producer:  { text: '💡 产出者：按键直接产出资源', color: '#4ecdc4' },
-  converter: { text: '💡 转化者：读取资源值，产出另一种', color: '#f39c12' },
-  connector: { text: '💡 感应者：感应周围词条自动触发', color: '#9b59b6' },
-  replicator: { text: '💡 复制者：按键触发周围技能', color: '#8e44ad' },
-  amplifier: { text: '💡 增幅者：叠层增幅范围内技能数值', color: '#7c5cbf' },
-};
-
-function getSkillCategory(skillId: string): string | null {
-  if (isProducer(skillId)) return 'producer';
-  if (isConverter(skillId)) return 'converter';
-  if (isConnector(skillId)) return 'connector';
-  if (isReplicator(skillId)) return 'replicator';
-  if (isAmplifier(skillId)) return 'amplifier';
-  return null;
-}
-
-// === 产出者机制信息（tooltip 用, Story 34.6 AC3） ===
-export function buildMechanicInfo(skillId: string): string | undefined {
-  if (!isProducer(skillId)) return undefined;
-  const prod = PRODUCERS[skillId];
-  if (!prod) return undefined;
-  const mech = prod.mechanic || 'standard';
-  if (mech === 'standard') return undefined;
-  const icon = MECHANIC_ICONS[mech] || '';
-  const label = MECHANIC_LABELS[mech] || '';
-  const params = prod.mechanicParams;
-  if (!params) return `${icon}${label}`;
-  switch (mech) {
-    case 'charge': {
-      const cp = params as ChargeParams;
-      return `${icon}${label} · 每秒+${Math.round(cp.gainPerSec * 100)}%，上限${Math.round(cp.maxBonus * 100)}%`;
-    }
-    case 'decay': {
-      const dp = params as DecayParams;
-      return `${icon}${label} · 初始×${dp.initialMult}，每次-${dp.decayPerTrigger}，下限×${dp.floor}`;
-    }
-    case 'pulse': {
-      const pp = params as PulseParams;
-      return `${icon}${label} · 每${pp.interval}次触发×${pp.burstMult}`;
-    }
-    case 'crit': {
-      const crp = params as CritParams;
-      return `${icon}${label} · ${Math.round(crp.chance * 100)}%概率×${crp.critMult}`;
-    }
-    case 'void': {
-      const vp = params as VoidParams;
-      const relLabel = vp.posRel ? (RELATION_LABELS[vp.posRel] || vp.posRel) : '';
-      return `${icon}${label} · ${relLabel}范围每空位+${Math.round(vp.bonusPerSlot * 100)}%`;
-    }
-    default:
-      return `${icon}${label}`;
-  }
-}
-
-// === 附魔状态信息（tooltip 用） ===
-export function buildEnchantmentInfo(skillId: string): string | undefined {
-  const enchId = state.player.enchantedSkills.get(skillId);
-  if (!enchId) return undefined;
-  const ench = ENCHANTMENTS[enchId];
-  if (!ench) return undefined;
-
-  const enchName = localizeItemName(enchId, ench.name);
-  if (ench.spatialType === 'growth') {
-    const growth = state.growthValues.get(skillId) || 0;
-    return t('enchant.growth', { icon: ench.icon, name: enchName, pct: Math.round(growth * 100) });
-  }
-  if (ench.id === 'ench_mastery') {
-    const growth = state.growthValues.get(skillId) || 0;
-    const count = state.masteryCounters.get(skillId) || 0;
-    return t('enchant.mastery', { icon: ench.icon, name: enchName, progress: count % 10, pct: Math.round(growth * 100) });
-  }
-  if (ench.spatialType === 'devour') {
-    const devoured = state.devourIcons.get(skillId);
-    const icons = devoured && devoured.length > 0 ? devoured.join('') : '';
-    const count = getIconCount(skillId);
-    return t('enchant.devour', { icon: ench.icon, name: enchName, icons, count });
-  }
-  return `${ench.icon} ${enchName}: ${localizeItemDesc(enchId, ench.desc)}`;
+// === 附魔状态信息（旧系统已移除） ===
+export function buildEnchantmentInfo(_skillId: string): string | undefined {
+  return undefined;
 }
 
 // === 词条制技能 tooltip 数据构建（Story 35.11 AC2/AC8） ===
@@ -399,12 +304,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
 
 // === 智能产出预估（构筑界面 tooltip） ===
 
-const APPRENTICE_ENCHANTMENT_IDS: string[] = [
-  'apprentice_self', 'apprentice_neighbor', 'apprentice_word',
-  'apprentice_proc', 'apprentice_crit', 'apprentice_outcast',
-  'apprentice_longword', 'apprentice_perfect', 'apprentice_combo',
-  'apprentice_stage',
-]
+// APPRENTICE_ENCHANTMENT_IDS 已被 isApprenticeEnchantment() 取代
 
 /**
  * 计算战斗外可预估的产出：Multiply / Void / Taboo 词条 + 学徒附魔。
@@ -488,7 +388,7 @@ export function computeSmartEstimate(
 
   // 学徒附魔
   if (rt && rt.apprenticeAccumulated > 0) {
-    const hasApprentice = skill.enchantmentIds.some(id => APPRENTICE_ENCHANTMENT_IDS.includes(id as string))
+    const hasApprentice = skill.enchantmentIds.some(id => isApprenticeEnchantment(id as import('../data/affixes').EnchantmentType))
     if (hasApprentice) {
       addPercent += rt.apprenticeAccumulated
       breakdown.push({
@@ -580,40 +480,7 @@ function shuffleArray<T>(arr: T[]): T[] {
   return arr;
 }
 
-// === Story 34.5: 产出者按机制加权排列 ===
-export function buildMechanicWeightedBucket(producerIds: string[]): string[] {
-  // 1. 按机制分桶
-  const mechBuckets: Record<string, string[]> = {};
-  for (const id of producerIds) {
-    const mech = getProducerMechanic(id);
-    if (!mechBuckets[mech]) mechBuckets[mech] = [];
-    mechBuckets[mech].push(id);
-  }
-  // 2. 每桶内部 shuffle
-  for (const arr of Object.values(mechBuckets)) shuffleArray(arr);
-  // 3. 加权交织：每次按机制权重 roll 一个组，取出 1 个
-  const result: string[] = [];
-  for (let i = 0; i < producerIds.length; i++) {
-    const entries = Object.entries(mechBuckets).filter(([, arr]) => arr.length > 0);
-    if (entries.length === 0) break;
-    const totalW = entries.reduce((s, [m]) => s + (PRODUCER_MECHANIC_WEIGHTS[m] || 1), 0);
-    const roll = random() * totalW;
-    let acc = 0;
-    let picked = false;
-    for (const [mech, arr] of entries) {
-      acc += PRODUCER_MECHANIC_WEIGHTS[mech] || 1;
-      if (roll < acc) {
-        result.push(arr.shift()!);
-        picked = true;
-        break;
-      }
-    }
-    if (!picked && entries.length > 0) {
-      result.push(entries[0][1].shift()!);
-    }
-  }
-  return result;
-}
+// buildMechanicWeightedBucket removed (old producer system)
 
 // === 生成统一商品 ===
 function generateShopItems(count: number): ShopItem[] {
@@ -783,35 +650,6 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
       </div>
       <div class="reward-cost">💰${item.cost}</div>
       <div class="reward-type" style="color:${rarityColor}">${item.isUpgrade ? '升级' : rarityLabel}</div>
-      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
-    `;
-  } else if (item.type === 'skill') {
-    const sk = PRODUCERS[item.skillId!] || CONVERTERS[item.skillId!] || CONNECTORS[item.skillId!] || REPLICATORS[item.skillId!] || AMPLIFIERS[item.skillId!];
-    if (!sk) return;
-    const school = getSkillSchool(item.skillId!);
-    const lvl = state.player.skills.get(item.skillId!)?.level || 1;
-    const display = getSkillDisplayInfo(item.skillId!, lvl, state.player.enchantedSkills);
-
-    let nameLabel = display.name;
-    let typeLabel = school.label;
-    if (item.isUpgrade) {
-      nameLabel = t('shop.upgrade_name', { name: display.name, from: lvl, to: lvl + 1 });
-      typeLabel = t('shop.upgrade_label', { label: school.label });
-    }
-
-    // Story 34.6 AC2: 产出者机制 badge
-    const cardMechanic = isProducer(item.skillId!) ? getProducerMechanic(item.skillId!) : null;
-    const mechanicBadge = cardMechanic && cardMechanic !== 'standard'
-      ? `<span class="mechanic-badge mechanic-${cardMechanic}">${MECHANIC_ICONS[cardMechanic] || ''}${MECHANIC_LABELS[cardMechanic] || ''}</span>` : '';
-
-    card.innerHTML = `
-      <div class="reward-icon">${display.icon}</div>
-      <div class="reward-info">
-        <div class="reward-name">${nameLabel}</div>
-        <div class="reward-desc">${display.desc}</div>
-      </div>
-      <div class="reward-cost">💰${item.cost}</div>
-      <div class="reward-type ${school.cssClass}">${typeLabel}${mechanicBadge}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
   } else if (item.type === 'pack' && item.pack) {
@@ -1020,13 +858,15 @@ function buildComparisonColumn(skill: AffixSkillInstance, label: string, otherSk
     col.appendChild(affixDiv);
   }
 
-  // 附魔（使用人类可读名而非原始 ID）
+  // 附魔（使用统一信息查找）
   for (const enchId of skill.enchantmentIds) {
-    const questDef = QUEST_ENCHANTMENT_DEFS.find(d => d.type === enchId);
-    const enchName = questDef ? questDef.name : enchId.replace(/_/g, ' ');
+    const info = getEnchantmentDisplayInfo(enchId as EnchantmentType, skill.transmuteResource);
+    const enchName = info ? info.name : enchId.replace(/_/g, ' ');
+    const enchColor = info ? info.categoryColor : '#9b59b6';
+    const enchIcon = info ? info.icon : '✦';
     const enchDiv = document.createElement('div');
-    enchDiv.style.cssText = 'color:#9b59b6;font-size:10px;margin-top:2px;';
-    enchDiv.textContent = `✦ ${enchName}`;
+    enchDiv.style.cssText = `color:${enchColor};font-size:10px;margin-top:2px;`;
+    enchDiv.textContent = `${enchIcon} ${enchName}`;
     col.appendChild(enchDiv);
   }
 
@@ -1209,26 +1049,6 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
       state.affixSkillStates.set(skillId, createSkillRuntimeState(skillId));
       showFeedback(t('shop.got_skill', { name: affixSkill.name }), '#4ecdc4');
     }
-  } else if (item.isUpgrade) {
-    const data = state.player.skills.get(skillId);
-    if (data) {
-      data.level++;
-      data.purchasePrice = (data.purchasePrice || 0) + item.cost;
-    }
-    const skName = localizeItemName(skillId, (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])?.name || '');
-    showFeedback(t('shop.skill_upgrade', { name: skName }), '#ffe66d');
-  } else {
-    state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
-    const skName = localizeItemName(skillId, (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])?.name || '');
-    showFeedback(t('shop.got_skill', { name: skName }), '#4ecdc4');
-
-    // 首次获取某类型技能时显示 tooltip
-    const category = getSkillCategory(skillId);
-    if (category && !state.seenSkillTypes.has(category)) {
-      state.seenSkillTypes.add(category);
-      const tip = getSkillTypeTooltip(category);
-      if (tip) showFeedback(tip.text, tip.color);
-    }
   }
 
   state.shop.items.splice(index, 1);
@@ -1340,7 +1160,7 @@ function checkAutoEnchantment(skillId: string): void {
     const slotCount = getEnchantmentSlotCount(affixSkill);
     if (affixSkill.enchantmentIds.length >= slotCount) return;
     const candidates = filterEnchantmentsByClass(
-      filterQuestCandidates(affixSkill),
+      filterEnchantmentCandidates(affixSkill),
       state.classId !== 'none' ? state.classId : undefined,
     );
     if (candidates.length === 0) return;
@@ -1354,57 +1174,11 @@ function checkAutoEnchantment(skillId: string): void {
     }
     return;
   }
-
-  // 旧系统：产出者/转化者/增幅者走附魔系统
-  if (isProducer(skillId) || isConverter(skillId) || isAmplifier(skillId)) {
-    if (state.player.enchantedSkills.has(skillId)) return;
-    // 职业门控：蜕变师失去附魔选择权 → 随机附魔
-    if (!isFeatureEnabled('enchant-choice')) {
-      applyRandomEnchantment(skillId);
-      renderUnifiedShop();
-      renderBuildManager();
-    } else {
-      renderEnchantmentModal(skillId);
-    }
-  }
 }
 
-// === 补偿检查：商店外升级导致的未附魔Lv.3技能 ===
+// === 补偿检查（旧系统已移除，保留空实现） ===
 function checkPendingEnchantments(): void {
-  // T4 限制遗物：附魔锁定 → 跳过补偿附魔
-  if (queryRelicFlag('enchant_lock') === true) return;
-
-  const pending: string[] = [];
-  for (const [skillId, data] of state.player.skills) {
-    if (data.level >= 3 && (isProducer(skillId) || isConverter(skillId) || isAmplifier(skillId)) && !state.player.enchantedSkills.has(skillId)) {
-      pending.push(skillId);
-    }
-  }
-  if (pending.length === 0) return;
-  // 逐个弹出附魔选择（前一个关闭后弹下一个）
-  showEnchantmentQueue(pending, 0);
-  // 随机附魔路径：批量处理完后统一重渲染（避免 N 次冗余重建）
-  if (!isFeatureEnabled('enchant-choice')) {
-    renderUnifiedShop();
-    renderBuildManager();
-  }
-}
-
-function showEnchantmentQueue(queue: string[], index: number): void {
-  if (index >= queue.length) return;
-  const skillId = queue[index];
-  // 可能在队列过程中已被附魔（用户选择了）
-  if (state.player.enchantedSkills.has(skillId)) {
-    showEnchantmentQueue(queue, index + 1);
-    return;
-  }
-  // 职业门控：蜕变师失去附魔选择权 → 逐个随机附魔
-  if (!isFeatureEnabled('enchant-choice')) {
-    applyRandomEnchantment(skillId);
-    showEnchantmentQueue(queue, index + 1);
-    return;
-  }
-  renderEnchantmentModal(skillId, () => showEnchantmentQueue(queue, index + 1));
+  // no-op: 旧附魔补偿已移除
 }
 
 // === 刷新商店 ===
@@ -1443,10 +1217,6 @@ export function sellSkill(skillId: string): void {
     }
   }
 
-  // 移除进化/附魔
-  state.player.evolvedSkills.delete(skillId);
-  state.player.enchantedSkills.delete(skillId);
-
   // 移除词条制技能数据（AC4 — 运行时状态丢弃）
   state.affixSkills.delete(skillId);
   state.affixSkillStates.delete(skillId);
@@ -1474,6 +1244,8 @@ export function sellWord(index: number): void {
   renderBuildManager();
 }
 
+let _enchantmentOnClose: (() => void) | null = null;
+
 function closeEnchantmentModal(): void {
   const modal = document.getElementById('enchantment-modal');
   if (modal) modal.classList.add('enchantment-hidden');
@@ -1490,6 +1262,64 @@ function getQuestEnchantmentDef(type: EnchantmentType) {
   return QUEST_ENCHANTMENT_DEFS.find(d => d.type === type);
 }
 
+/** 附魔类别颜色 */
+const ENCHANTMENT_CATEGORY_COLORS: Record<string, string> = {
+  apprentice: '#2ecc71',
+  quest: '#4ecdc4',
+  transmute: '#e67e22',
+  passive: '#9b59b6',
+  operator: '#e74c3c',
+}
+
+/** 附魔类别中文名 */
+const ENCHANTMENT_CATEGORY_LABELS: Record<string, string> = {
+  apprentice: '学徒',
+  quest: '任务',
+  transmute: '衍生',
+  passive: '被动',
+  operator: '运算符',
+}
+
+/** 统一附魔信息查找 */
+function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: import('../core/types').ResourceType): {
+  name: string; desc: string; icon: string; category: string; categoryColor: string;
+} | null {
+  // Quest 类型
+  const questDef = getQuestEnchantmentDef(type);
+  if (questDef) {
+    return {
+      name: questDef.name,
+      desc: `${questDef.effectDesc} (${questDef.targetStacks}次触发)`,
+      icon: '✨',
+      category: ENCHANTMENT_CATEGORY_LABELS.quest,
+      categoryColor: ENCHANTMENT_CATEGORY_COLORS.quest,
+    };
+  }
+  // Transmute 特殊处理
+  if (type === EnchantmentTypeEnum.Transmute && transmuteRes) {
+    const ratio = TRANSMUTE_RATIO_TABLE[transmuteRes];
+    return {
+      name: TRANSMUTE_NAMES[transmuteRes],
+      desc: `额外产出 ${(ratio * 100).toFixed(0)}% 的${RESOURCE_NAMES[transmuteRes]}`,
+      icon: '🔀',
+      category: ENCHANTMENT_CATEGORY_LABELS.transmute,
+      categoryColor: ENCHANTMENT_CATEGORY_COLORS.transmute,
+    };
+  }
+  // ENCHANTMENT_META 查找（学徒/被动/运算符）
+  const meta = ENCHANTMENT_META[type as string];
+  if (meta) {
+    return {
+      name: meta.name,
+      desc: meta.desc,
+      icon: meta.icon,
+      category: ENCHANTMENT_CATEGORY_LABELS[meta.category] || meta.category,
+      categoryColor: ENCHANTMENT_CATEGORY_COLORS[meta.category] || '#999',
+    };
+  }
+  return null;
+}
+
 /** 词条制技能随机附魔（蜕变师路径） */
 function applyAffixRandomEnchantment(
   skillId: string,
@@ -1498,9 +1328,17 @@ function applyAffixRandomEnchantment(
 ): void {
   const chosen = candidates[Math.floor(random() * candidates.length)];
   affixSkill.enchantmentIds.push(chosen);
-  const def = getQuestEnchantmentDef(chosen);
-  if (def) {
-    showFeedback(t('shop.random_enchant', { icon: '✨', name: def.name }), '#f9ca24');
+  // Transmute：随机分配目标资源
+  if (chosen === EnchantmentTypeEnum.Transmute) {
+    const playerClass = state.classId !== 'none' ? state.classId : undefined;
+    const eligible = getTransmuteEligibleResources(affixSkill.resource, playerClass);
+    if (eligible.length > 0) {
+      affixSkill.transmuteResource = eligible[Math.floor(random() * eligible.length)];
+    }
+  }
+  const info = getEnchantmentDisplayInfo(chosen, affixSkill.transmuteResource);
+  if (info) {
+    showFeedback(t('shop.random_enchant', { icon: info.icon, name: info.name }), '#f9ca24');
   }
   resolveRelicEffectsWithBehaviors('on_enchantment_acquire', {
     enchantedSkillId: skillId,
@@ -1525,28 +1363,55 @@ function renderAffixEnchantmentModal(
   const cancelBtn = document.getElementById('enchantment-cancel');
   if (!modal || !titleEl || !branchesEl || !cancelBtn) return;
 
+  const playerClass = state.classId !== 'none' ? state.classId : undefined;
+
+  // 预处理 Transmute 候选：展开为资源变体并预分配
+  type ShownCandidate = { enchType: EnchantmentType; transmuteRes?: import('../core/types').ResourceType };
+  const expandedCandidates: ShownCandidate[] = [];
+  for (const enchType of candidates) {
+    if (enchType === EnchantmentTypeEnum.Transmute) {
+      const eligible = getTransmuteEligibleResources(affixSkill.resource, playerClass);
+      if (eligible.length > 0) {
+        // 随机选一个资源作为此候选的展示
+        const res = eligible[Math.floor(random() * eligible.length)];
+        expandedCandidates.push({ enchType, transmuteRes: res });
+      }
+    } else {
+      expandedCandidates.push({ enchType });
+    }
+  }
+
   // 取最多 2 个候选
-  const shown = candidates.length <= 2 ? candidates : [
-    candidates[Math.floor(random() * candidates.length)],
-    candidates[Math.floor(random() * candidates.length)],
-  ].filter((v, i, a) => a.indexOf(v) === i); // dedupe
+  const shown = expandedCandidates.length <= 2 ? expandedCandidates : (() => {
+    const a = expandedCandidates[Math.floor(random() * expandedCandidates.length)];
+    let b = expandedCandidates[Math.floor(random() * expandedCandidates.length)];
+    // dedupe by enchType + transmuteRes
+    if (a.enchType === b.enchType && a.transmuteRes === b.transmuteRes) {
+      return [a];
+    }
+    return [a, b];
+  })();
 
   titleEl.textContent = t('shop.enchant_choose', { name: affixSkill.name });
   branchesEl.innerHTML = '';
 
-  shown.forEach(enchType => {
-    const def = getQuestEnchantmentDef(enchType);
-    if (!def) return;
+  shown.forEach(({ enchType, transmuteRes }) => {
+    const info = getEnchantmentDisplayInfo(enchType, transmuteRes);
+    if (!info) return;
     const card = document.createElement('div');
     card.className = 'enchantment-branch';
     card.innerHTML = `
-      <div class="enchantment-category-tag" style="color:#4ecdc4">${t('shop.enchant_cat.quest') || '任务'}</div>
-      <div class="enchantment-branch-icon">✨</div>
-      <div class="enchantment-branch-name">${def.name}</div>
-      <div class="enchantment-branch-desc">${def.effectDesc} (${def.targetStacks}次触发)</div>
+      <div class="enchantment-category-tag" style="color:${info.categoryColor}">${info.category}</div>
+      <div class="enchantment-branch-icon">${info.icon}</div>
+      <div class="enchantment-branch-name">${info.name}</div>
+      <div class="enchantment-branch-desc">${info.desc}</div>
     `;
     card.onclick = () => {
       affixSkill.enchantmentIds.push(enchType);
+      // Transmute：保存目标资源
+      if (enchType === EnchantmentTypeEnum.Transmute && transmuteRes) {
+        affixSkill.transmuteResource = transmuteRes;
+      }
       resolveRelicEffectsWithBehaviors('on_enchantment_acquire', {
         enchantedSkillId: skillId,
         enchantmentId: enchType,
@@ -1554,7 +1419,7 @@ function renderAffixEnchantmentModal(
       if (state.player.relics.has('star_chart')) {
         state.player.relicStates['star_chart'] = (state.player.relicStates['star_chart'] ?? 0) + 1;
       }
-      showFeedback(t('shop.enchanted', { icon: '✨', name: def.name }), '#f9ca24');
+      showFeedback(t('shop.enchanted', { icon: info.icon, name: info.name }), '#f9ca24');
       playSound('buy');
       closeEnchantmentModal();
       renderUnifiedShop();
@@ -1567,128 +1432,11 @@ function renderAffixEnchantmentModal(
   modal.style.display = 'flex';
 }
 
-export function applyRandomEnchantment(skillId: string): void {
-  const skillRelation = isAmplifier(skillId) ? AMPLIFIERS[skillId].positionRelation : undefined;
-  const [enchA, enchB] = drawEnchantmentPair(skillRelation);
-  const chosen = random() < 0.5 ? enchA : enchB;
-
-  // 核心状态写入（同 applyEnchantment）
-  state.player.enchantedSkills.set(skillId, chosen);
-  const ench = ENCHANTMENTS[chosen];
-  if (ench) {
-    showFeedback(t('shop.random_enchant', { icon: ench.icon, name: localizeItemName(chosen, ench.name) }), '#f9ca24');
-  }
-
-  // 遗物钩子（同 applyEnchantment）
-  resolveRelicEffectsWithBehaviors('on_enchantment_acquire', {
-    enchantedSkillId: skillId,
-    enchantmentId: chosen,
-  });
-  if (state.player.relics.has('star_chart')) {
-    state.player.relicStates['star_chart'] = (state.player.relicStates['star_chart'] ?? 0) + 1;
-  }
-
-  playSound('buy');
-  // 不调用 closeEnchantmentModal()（未打开模态框）
-  // 不调用 renderUnifiedShop / renderBuildManager（由调用方统一处理）
-}
-
-// === 附魔选择界面 ===
-let _enchantmentOnClose: (() => void) | null = null;
-
-function renderEnchantmentModal(skillId: string, onClose?: () => void): void {
-  _enchantmentOnClose = onClose || null;
-  const modal = document.getElementById('enchantment-modal');
-  const titleEl = document.getElementById('enchantment-title');
-  const branchesEl = document.getElementById('enchantment-branches');
-  const cancelBtn = document.getElementById('enchantment-cancel');
-  if (!modal || !titleEl || !branchesEl || !cancelBtn) return;
-
-  const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || AMPLIFIERS[skillId];
-  if (!sk) return;
-
-  // 增幅者：空间附魔只刷与自身范围匹配的
-  const skillRelation = isAmplifier(skillId) ? AMPLIFIERS[skillId].positionRelation : undefined;
-  const [enchA, enchB] = drawEnchantmentPair(skillRelation);
-  const enchantments = [ENCHANTMENTS[enchA], ENCHANTMENTS[enchB]];
-
-  titleEl.textContent = t('shop.enchant_choose', { name: localizeItemName(skillId, sk.name) });
-  branchesEl.innerHTML = '';
-
-  enchantments.forEach(ench => {
-    if (!ench) return;
-    const card = document.createElement('div');
-    card.className = 'enchantment-branch';
-    const catLabel = ench.category === 'spatial' ? t('shop.enchant_cat.spatial')
-      : ench.category === 'transmutation' ? t('shop.enchant_cat.transmutation')
-      : t('shop.enchant_cat.independent');
-    const catColor = ench.category === 'spatial' ? '#4ecdc4'
-      : ench.category === 'transmutation' ? '#ffe66d'
-      : '#ff6b6b';
-    const enchDescText = isAmplifier(skillId) && ench.category === 'transmutation' && ench.extraResource
-      ? t('shop.enchant_dual', { icon: RESOURCE_ICONS[ench.extraResource] || '', label: t(`resource.${ench.extraResource}`), pct: Math.round(ench.effectValue * 100) })
-      : localizeItemDesc(ench.id, ench.desc);
-    card.innerHTML = `
-      <div class="enchantment-category-tag" style="color:${catColor}">${catLabel}</div>
-      <div class="enchantment-branch-icon">${ench.icon}</div>
-      <div class="enchantment-branch-name">${localizeItemName(ench.id, ench.name)}</div>
-      <div class="enchantment-branch-desc">${enchDescText}</div>
-      <div class="enchantment-branch-cost">${t('shop.enchant_cost')}</div>
-    `;
-    // 空间附魔范围预览
-    if (ench.positionRelation) {
-      const boundKey = findKeyForSkill(skillId);
-      if (boundKey) {
-        card.addEventListener('mouseenter', () => {
-          clearRangeHighlight();
-          const keys = getKeysWithRelation(boundKey, ench.positionRelation!);
-          keys.forEach(k => {
-            document.querySelector(`.key-slot[data-key="${k}"]`)
-              ?.classList.add('range-highlight');
-          });
-        });
-        card.addEventListener('mouseleave', () => {
-          clearRangeHighlight();
-        });
-      }
-    }
-    card.onclick = () => applyEnchantment(skillId, ench.id);
-    branchesEl.appendChild(card);
-  });
-
-  cancelBtn.onclick = closeEnchantmentModal;
-  const overlay = modal.querySelector('.enchantment-overlay') as HTMLElement;
-  if (overlay) overlay.onclick = closeEnchantmentModal;
-  modal.classList.remove('enchantment-hidden');
-}
-
-function applyEnchantment(skillId: string, enchantmentId: string): void {
-  state.player.enchantedSkills.set(skillId, enchantmentId);
-  const ench = ENCHANTMENTS[enchantmentId];
-  if (ench) {
-    showFeedback(t('shop.enchanted', { icon: ench.icon, name: localizeItemName(enchantmentId, ench.name) }), '#f9ca24');
-  }
-
-  // T2 遗物事件钩子：附魔获取后触发 (Story 28.1)
-  resolveRelicEffectsWithBehaviors('on_enchantment_acquire', {
-    enchantedSkillId: skillId,
-    enchantmentId,
-  });
-  // T2 star_chart 附魔计数递增 (Story 28.2)
-  if (state.player.relics.has('star_chart')) {
-    state.player.relicStates['star_chart'] = (state.player.relicStates['star_chart'] ?? 0) + 1;
-  }
-
-  playSound('buy');
-  closeEnchantmentModal();
-  renderUnifiedShop();
-  renderBuildManager();
-}
-
-// === 获取技能显示信息（进化后使用进化数据） ===
+// === 获取技能显示信息 ===
 export function getSkillDisplay(skillId: string): { name: string; icon: string; desc: string } {
-  const level = state.player.skills.get(skillId)?.level || 1;
-  return getSkillDisplayInfo(skillId, level, state.player.enchantedSkills);
+  const affixSkill = state.affixSkills.get(skillId);
+  if (affixSkill) return { name: affixSkill.name, icon: affixSkill.icon, desc: '' };
+  return { name: '???', icon: '?', desc: '' };
 }
 
 // === 3D 卡牌效果 ===
@@ -1726,19 +1474,6 @@ function highlightSkillRange(key: string): void {
 
   const highlights: { rel: PositionRelation; color: string }[] = [];
   const defaultColor = '#ffe66d';
-
-  // 旧版技能 — 金色
-  const conn = CONNECTORS[skillId];
-  if (conn) highlights.push({ rel: conn.positionRelation, color: defaultColor });
-  const rep = REPLICATORS[skillId];
-  if (rep) highlights.push({ rel: rep.positionRelation, color: defaultColor });
-  const amp = AMPLIFIERS[skillId];
-  if (amp) highlights.push({ rel: amp.positionRelation, color: defaultColor });
-
-  // 旧版附魔 — 金色
-  const enchId = state.player.enchantedSkills?.get(skillId);
-  const ench = enchId ? ENCHANTMENTS[enchId] : null;
-  if (ench?.positionRelation) highlights.push({ rel: ench.positionRelation, color: defaultColor });
 
   // 词条制技能 — 各词条用自己的颜色
   const affixSkill = state.affixSkills.get(skillId);
@@ -1822,8 +1557,8 @@ export function renderBuildManager(): void {
   for (const key of keysToUnbind) {
     const skillId = state.player.bindings.get(key)!;
     state.player.bindings.delete(key);
-    const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || AMPLIFIERS[skillId];
-    if (sk) showFeedback(t('shop.unbound', { name: localizeItemName(skillId, sk.name), key: key.toUpperCase() }), '#ff6b6b');
+    const affixSk = state.affixSkills.get(skillId);
+    if (affixSk) showFeedback(t('shop.unbound', { name: affixSk.name, key: key.toUpperCase() }), '#ff6b6b');
   }
 
   // === 遗物数字行 ===
@@ -1881,30 +1616,8 @@ export function renderBuildManager(): void {
       else if (score >= 3) slot.classList.add('score-mid');
       else if (score >= 1) slot.classList.add('score-low');
 
-      // 技能流派底色
-      if (skillId && (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])) {
-        const display = getSkillDisplay(skillId);
-        const school = getSkillSchool(skillId);
-        slot.classList.add('has-skill');
-        slot.dataset.dragType = 'skill-key';
-        slot.dataset.boundSkill = skillId;
-        const skData = state.player.skills.get(skillId);
-        slot.dataset.sellPrice = String(Math.floor((skData?.purchasePrice || 15) / 2));
-        slot.classList.add(school.cssClass);
-        // Story 34.6 AC1: 乘算化附魔金色边框
-        if (state.player.enchantedSkills.get(skillId) === 'ench_multiply') {
-          slot.classList.add('multiply-enchanted');
-        }
-        // Story 34.6 AC6: 非 standard 产出者机制角标
-        const prodMechanic = isProducer(skillId) ? getProducerMechanic(skillId) : null;
-        const mechanicBadgeHtml = prodMechanic && prodMechanic !== 'standard'
-          ? `<span class="mechanic-icon-badge">${MECHANIC_ICONS[prodMechanic] || ''}</span>` : '';
-        const devoured = state.devourIcons.get(skillId);
-        const devourPrefix = devoured && devoured.length > 0 ? `<span class="devour-icons">${devoured.join('')}</span>` : '';
-        const growthVal = state.growthValues.get(skillId) || 0;
-        const growthBadge = growthVal > 0 ? `<span class="growth-badge">+${Math.round(growthVal * 100)}%</span>` : '';
-        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${devourPrefix}${display.icon}</span>${growthBadge}${mechanicBadgeHtml}${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
-      } else if (skillId && state.affixSkills.has(skillId)) {
+      // 技能键位渲染
+      if (skillId && state.affixSkills.has(skillId)) {
         // 词条制技能键位渲染
         const affixSkill = state.affixSkills.get(skillId)!;
         const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#ffffff';
@@ -1928,55 +1641,21 @@ export function renderBuildManager(): void {
           score,
           frequency: freq,
         };
-        if (skillId && (PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId])) {
-          const display = getSkillDisplay(skillId);
-          const school = getSkillSchool(skillId);
-          const lvl = state.player.skills.get(skillId)?.level ?? 1;
-          tooltipData.skill = {
-            name: display.name,
-            icon: display.icon,
-            description: display.desc,
-            level: lvl,
-            school: school.label,
-            schoolCssClass: school.cssClass,
-          };
-          // 增幅者额外信息：叠层 + 范围内受影响技能
-          if (isAmplifier(skillId)) {
-            const amp = AMPLIFIERS[skillId];
-            tooltipData.skill.amplifierStacks = Math.floor(state.amplifierStacks.get(skillId) || 0);
-            const affected: string[] = [];
-            for (const [bk, bId] of state.player.bindings) {
-              if (bk === k) continue;
-              if (!isProducer(bId) && !isConverter(bId)) continue;
-              if (hasRelation(bk, k, amp.positionRelation)) {
-                const d = getSkillDisplayInfo(bId, undefined, state.player.enchantedSkills);
-                affected.push(`${d.icon}${d.name}`);
-              }
-            }
-            tooltipData.skill.affectedSkills = affected;
-          }
-          // Story 34.6 AC3: 机制信息
-          tooltipData.skill.mechanicInfo = buildMechanicInfo(skillId);
-          // 附魔状态信息
-          tooltipData.skill.enchantmentInfo = buildEnchantmentInfo(skillId);
-        }
         // 词条制技能 tooltip（Story 35.11 AC2/AC8）
         if (skillId && state.affixSkills.has(skillId)) {
           const affixSkill = state.affixSkills.get(skillId)!;
           const rt = state.affixSkillStates.get(skillId);
-          if (!tooltipData.skill) {
-            const baseVal = affixSkill.baseValues[affixSkill.level - 1] ?? affixSkill.baseValues[0];
-            const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
-            const resName = RESOURCE_NAMES[affixSkill.resource] || affixSkill.resource;
-            tooltipData.skill = {
-              name: affixSkill.name,
-              icon: affixSkill.icon,
-              description: `${resIcon}${resName}+${baseVal}`,
-              level: affixSkill.level,
-              school: RARITY_LABELS[affixSkill.rarity] ?? '普通',
-              schoolCssClass: `rarity-${affixSkill.rarity}`,
-            };
-          }
+          const baseVal = affixSkill.baseValues[affixSkill.level - 1] ?? affixSkill.baseValues[0];
+          const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
+          const resName = RESOURCE_NAMES[affixSkill.resource] || affixSkill.resource;
+          tooltipData.skill = {
+            name: affixSkill.name,
+            icon: affixSkill.icon,
+            description: `${resIcon}${resName}+${baseVal}`,
+            level: affixSkill.level,
+            school: RARITY_LABELS[affixSkill.rarity] ?? '普通',
+            schoolCssClass: `rarity-${affixSkill.rarity}`,
+          };
           const estimate = computeSmartEstimate(affixSkill, rt, k);
           const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['multiply', 'void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
           const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
@@ -1986,19 +1665,7 @@ export function renderBuildManager(): void {
           tooltipData.skill.smartEstimate = estimate ?? undefined;
         }
         highlightSkillRange(k);
-        // Story 34.6 AC7: 虚无范围空位高亮
-        if (skillId && isProducer(skillId)) {
-          const voidProd = PRODUCERS[skillId];
-          if (voidProd?.mechanic === 'void' && voidProd.mechanicParams && 'posRel' in voidProd.mechanicParams) {
-            const related = getKeysWithRelation(k, (voidProd.mechanicParams as any).posRel);
-            related.forEach(rk => {
-              if (!state.player.bindings.has(rk)) {
-                document.querySelector(`.key-slot[data-key="${rk}"]`)?.classList.add('void-range-empty');
-              }
-            });
-          }
-        }
-        // 词条制 Void 词条空位高亮
+        // Void 词条空位高亮
         if (skillId) {
           const affixSk = state.affixSkills.get(skillId);
           if (affixSk) {
@@ -2039,9 +1706,8 @@ export function renderBuildManager(): void {
   }
 
   state.player.skills.forEach((data, skillId) => {
-    const sk = PRODUCERS[skillId] || CONVERTERS[skillId] || CONNECTORS[skillId] || REPLICATORS[skillId] || AMPLIFIERS[skillId];
     const affixSkill = state.affixSkills.get(skillId);
-    if (!sk && !affixSkill) return;
+    if (!affixSkill) return;
 
     const boundKey = [...state.player.bindings.entries()].find(([, id]) => id === skillId)?.[0];
     const item = document.createElement('div');
@@ -2051,7 +1717,7 @@ export function renderBuildManager(): void {
     item.dataset.sellPrice = String(Math.floor((data.purchasePrice || 15) / 2));
     if (boundKey) item.classList.add('bound');
 
-    if (affixSkill) {
+    {
       // 词条制技能渲染
       const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#ffffff';
       const rarityLabel = RARITY_LABELS[affixSkill.rarity] || '普通';
@@ -2090,62 +1756,6 @@ export function renderBuildManager(): void {
         tooltipData.skill!.questProgress = fields.questProgress;
         tooltipData.skill!.apprenticeGrowth = estimate ? undefined : fields.apprenticeGrowth;
         tooltipData.skill!.smartEstimate = estimate ?? undefined;
-        if (boundKey) {
-          tooltipData.letter = boundKey.toUpperCase();
-          highlightSkillRange(boundKey);
-        }
-        keyTooltip.show(e.clientX, e.clientY, tooltipData);
-      });
-      item.addEventListener('mouseleave', () => {
-        keyTooltip.hide();
-        clearRangeHighlight();
-      });
-    } else {
-      // 旧版技能渲染
-      const display = getSkillDisplay(skillId);
-      const school = getSkillSchool(skillId);
-      const evolvedLabel = state.player.evolvedSkills.has(skillId) ? '<span class="inv-evolved">★</span>' : '';
-      item.innerHTML = `
-        <span class="inv-icon">${display.icon}</span>
-        <span class="inv-name">${display.name}</span>
-        ${evolvedLabel}
-        <span class="inv-school ${school.cssClass}">${school.label}</span>
-        ${data.level > 1 ? `<span class="inv-level">Lv.${data.level}</span>` : ''}
-        ${boundKey ? `<span class="inv-key">[${boundKey.toUpperCase()}]</span>` : ''}
-      `;
-
-      // 悬停预览技能效果
-      item.addEventListener('mouseenter', (e) => {
-        hideAllTooltips();
-        const tooltipData: KeyTooltipData = {
-          skill: {
-            name: display.name,
-            icon: display.icon,
-            description: display.desc,
-            level: data.level,
-            school: school.label,
-            schoolCssClass: school.cssClass,
-          },
-        };
-        // 增幅者额外信息：叠层 + 范围内受影响技能
-        if (isAmplifier(skillId) && boundKey) {
-          const ampDef = AMPLIFIERS[skillId];
-          tooltipData.skill!.amplifierStacks = Math.floor(state.amplifierStacks.get(skillId) || 0);
-          const affected: string[] = [];
-          for (const [bk, bId] of state.player.bindings) {
-            if (bk === boundKey) continue;
-            if (!isProducer(bId) && !isConverter(bId)) continue;
-            if (hasRelation(bk, boundKey, ampDef.positionRelation)) {
-              const d = getSkillDisplayInfo(bId, undefined, state.player.enchantedSkills);
-              affected.push(`${d.icon}${d.name}`);
-            }
-          }
-          tooltipData.skill!.affectedSkills = affected;
-        }
-        // Story 34.6 AC3: 机制信息
-        tooltipData.skill!.mechanicInfo = buildMechanicInfo(skillId);
-        // 附魔状态信息
-        tooltipData.skill!.enchantmentInfo = buildEnchantmentInfo(skillId);
         if (boundKey) {
           tooltipData.letter = boundKey.toUpperCase();
           highlightSkillRange(boundKey);

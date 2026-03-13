@@ -10,8 +10,6 @@ import {
   filterSkillPoolByClass,
   filterSkillIdsByClass,
 } from '../../../../src/systems/classes/ClassResourceFilter';
-import { PRODUCERS } from '../../../../src/data/producers';
-import { CONVERTERS } from '../../../../src/data/converters';
 
 describe('isResourceActiveForClass', () => {
   it('通用资源对任何职业激活', () => {
@@ -110,37 +108,3 @@ describe('filterSkillIdsByClass', () => {
   });
 });
 
-describe('碎片技能过滤（真实数据）', () => {
-  it('碎片产出者仅对 wordsmith 可见', () => {
-    const allProds = Object.values(PRODUCERS);
-    const wordsmithProds = filterSkillPoolByClass(allProds, 'wordsmith');
-    const noneProds = filterSkillPoolByClass(allProds, 'none');
-
-    expect(wordsmithProds.find(p => p.id === 'prod_harvest')).toBeTruthy();
-    expect(wordsmithProds.find(p => p.id === 'prod_refine')).toBeTruthy();
-    expect(noneProds.find(p => p.id === 'prod_harvest')).toBeFalsy();
-    expect(noneProds.find(p => p.id === 'prod_refine')).toBeFalsy();
-  });
-
-  it('碎片转化者仅对 wordsmith 可见', () => {
-    const allConvs = Object.values(CONVERTERS);
-    const wordsmithConvs = filterSkillPoolByClass(allConvs, 'wordsmith');
-    const noneConvs = filterSkillPoolByClass(allConvs, 'none');
-
-    // fragment→other 对 wordsmith 可见
-    expect(wordsmithConvs.find(c => c.id === 'conv_fragment_score_add')).toBeTruthy();
-    // other→fragment 对 wordsmith 可见
-    expect(wordsmithConvs.find(c => c.id === 'conv_base_fragment_add')).toBeTruthy();
-    // 非 wordsmith 不可见
-    expect(noneConvs.find(c => c.id === 'conv_fragment_score_add')).toBeFalsy();
-    expect(noneConvs.find(c => c.id === 'conv_base_fragment_add')).toBeFalsy();
-  });
-
-  it('非碎片技能不受影响', () => {
-    const allProds = Object.values(PRODUCERS);
-    const noneProds = filterSkillPoolByClass(allProds, 'none');
-    // 通用产出者仍然存在
-    expect(noneProds.find(p => p.id === 'prod_burst')).toBeTruthy();
-    expect(noneProds.find(p => p.id === 'prod_mint')).toBeTruthy();
-  });
-});

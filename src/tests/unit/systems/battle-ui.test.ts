@@ -129,12 +129,12 @@ describe('结算面板公式 (AC6)', () => {
 
 // === AC7: 已有效果保留 ===
 describe('已有效果保留 (AC7)', () => {
-  it('battle.ts 保留 showTriggerPopup 引用', async () => {
+  it('skills.ts 保留技能触发弹窗引用', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const skillsPath = path.resolve(__dirname, '../../../src/systems/skills.ts')
     const content = fs.readFileSync(skillsPath, 'utf-8')
-    expect(content).toContain('showTriggerPopup')
+    expect(content).toContain('skill-trigger-popup')
   })
 
   it('battle.ts 保留 spawnParticles 引用', async () => {

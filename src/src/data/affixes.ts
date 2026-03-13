@@ -136,6 +136,47 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestSacrifice]: AffixType.Taboo,
 }
 
+// ===== 附魔元数据（非任务类附魔的显示信息） =====
+
+export interface EnchantmentMeta {
+  type: EnchantmentType
+  name: string
+  icon: string
+  category: 'apprentice' | 'quest' | 'transmute' | 'passive' | 'operator'
+  desc: string
+  /** 衍生附魔目标资源（仅 Transmute 类使用） */
+  transmuteResource?: ResourceType
+}
+
+export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
+  // ── 学徒型（12） ──
+  [EnchantmentType.ApprenticeSelf]:     { type: EnchantmentType.ApprenticeSelf,     name: '学徒·自修', icon: '📖', category: 'apprentice', desc: '每次自身触发时永久成长 +1%' },
+  [EnchantmentType.ApprenticeNeighbor]: { type: EnchantmentType.ApprenticeNeighbor, name: '学徒·观摩', icon: '👀', category: 'apprentice', desc: '范围内技能触发时永久成长' },
+  [EnchantmentType.ApprenticeWord]:     { type: EnchantmentType.ApprenticeWord,     name: '学徒·造词', icon: '✍️', category: 'apprentice', desc: '完成单词时永久成长 +2%' },
+  [EnchantmentType.ApprenticeProc]:     { type: EnchantmentType.ApprenticeProc,     name: '学徒·悟道', icon: '💡', category: 'apprentice', desc: '词条特效触发时永久成长 +3%' },
+  [EnchantmentType.ApprenticeCrit]:     { type: EnchantmentType.ApprenticeCrit,     name: '学徒·暴击', icon: '💥', category: 'apprentice', desc: '暴击时永久成长 +5%' },
+  [EnchantmentType.ApprenticeOutcast]:  { type: EnchantmentType.ApprenticeOutcast,  name: '学徒·流放', icon: '🚀', category: 'apprentice', desc: '流放触发时永久成长 +4%' },
+  [EnchantmentType.ApprenticeLongWord]: { type: EnchantmentType.ApprenticeLongWord, name: '学徒·长词', icon: '📏', category: 'apprentice', desc: '完成6+字母单词时永久成长 +5%' },
+  [EnchantmentType.ApprenticePerfect]:  { type: EnchantmentType.ApprenticePerfect,  name: '学徒·精准', icon: '🎯', category: 'apprentice', desc: '零错误完成单词时永久成长 +8%' },
+  [EnchantmentType.ApprenticeCombo]:    { type: EnchantmentType.ApprenticeCombo,    name: '学徒·连击', icon: '🔥', category: 'apprentice', desc: '连击达15时永久成长 +10%' },
+  [EnchantmentType.ApprenticeStage]:    { type: EnchantmentType.ApprenticeStage,    name: '学徒·通关', icon: '🏆', category: 'apprentice', desc: '通关时永久成长 +15%' },
+  [EnchantmentType.ApprenticeHarvest]:  { type: EnchantmentType.ApprenticeHarvest,  name: '学徒·丰收', icon: '🌾', category: 'apprentice', desc: '造词师限定：完成单词时永久成长 +3%' },
+  [EnchantmentType.ApprenticeAdapt]:    { type: EnchantmentType.ApprenticeAdapt,    name: '学徒·适应', icon: '🧬', category: 'apprentice', desc: '蜕变师限定：每次蜕变永久成长 +15%' },
+  // ── 被动型（4） ──
+  [EnchantmentType.LetterAffinity]:  { type: EnchantmentType.LetterAffinity,  name: '字母亲和', icon: '🔤', category: 'passive', desc: '造词师限定：触发时将字母加入采集队列' },
+  [EnchantmentType.Overflow]:        { type: EnchantmentType.Overflow,        name: '满溢',     icon: '💧', category: 'passive', desc: '造词师限定：碎片库存满时溢出为分数' },
+  [EnchantmentType.Unstable]:        { type: EnchantmentType.Unstable,        name: '不稳定',   icon: '⚡', category: 'passive', desc: '蜕变师限定：每关随机额外产出一种资源' },
+  [EnchantmentType.MutationHunger]:  { type: EnchantmentType.MutationHunger,  name: '嗜变',     icon: '🧪', category: 'passive', desc: '蜕变师限定：触发时有概率产出变异素' },
+  // ── 运算符（1） ──
+  [EnchantmentType.MultiplyOperator]: { type: EnchantmentType.MultiplyOperator, name: '乘算化', icon: '✖️', category: 'operator', desc: '将加算层各项 bonus 转为独立乘数' },
+}
+
+/** 衍生附魔资源名称（运行时展开为 7 个候选项） */
+export const TRANSMUTE_NAMES: Record<ResourceType, string> = {
+  base: '衍生·基数', score: '衍生·分数', multiplier: '衍生·倍率',
+  time: '衍生·时间', gold: '衍生·金币', fragment: '衍生·碎片', mutagen: '衍生·变异素',
+}
+
 // ===== 词条实例（运行时生成，已掷骰） =====
 
 export interface AffixInstance {
@@ -195,6 +236,7 @@ export interface AffixSkillInstance {
   rarity: SkillRarity                    // 词条数量
   affixes: AffixInstance[]               // 0~3 个词条
   enchantmentIds: string[]               // 附魔列表（通常 0~1；双生词条时最多 2）
+  transmuteResource?: ResourceType       // 衍生附魔目标资源
   purchasePrice?: number                 // 购买价格（用于转卖计算）
 }
 
@@ -223,6 +265,7 @@ export interface AffixSkillSaveData {
   rarity: SkillRarity
   affixes: AffixInstance[]
   enchantmentIds: string[]
+  transmuteResource?: ResourceType
   runtime: SkillRuntimeState
 }
 

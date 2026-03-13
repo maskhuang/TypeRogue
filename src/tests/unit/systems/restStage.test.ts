@@ -7,7 +7,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { executeEffect } from '../../../src/systems/restStage'
 import { state, resetState } from '../../../src/core/state'
 import { RELICS } from '../../../src/data/relics'
-import { PRODUCERS } from '../../../src/data/producers'
 
 // Mock DOM 和音效
 vi.mock('../../../src/effects/sound', () => ({

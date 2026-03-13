@@ -5,9 +5,6 @@
 
 import { Container, Text } from 'pixi.js'
 import { CollectionItem, CollectionItemData } from '../components/CollectionItem'
-import { PRODUCERS } from '../../../data/producers'
-import { CONVERTERS } from '../../../data/converters'
-import { CONNECTORS, REPLICATORS } from '../../../data/connectors'
 import type { MetaState } from '../../../core/state/MetaState'
 
 /**
@@ -32,16 +29,13 @@ export class SkillTab extends Container {
    */
   getSkillItems(): CollectionItemData[] {
     const unlockedSkills = new Set(this.metaState.getUnlockedSkills())
-
-    const allSkills: Record<string, { name: string; desc: string; icon: string }> = {
-      ...PRODUCERS, ...CONVERTERS, ...CONNECTORS, ...REPLICATORS,
-    }
-    return Object.entries(allSkills).map(([skillId, skill]) => ({
+    // 词条制技能由 generateSkill 动态生成，图鉴仅显示已解锁的
+    return [...unlockedSkills].map(skillId => ({
       id: skillId,
-      name: skill.name,
-      description: skill.desc,
-      icon: skill.icon,
-      unlocked: unlockedSkills.has(skillId)
+      name: skillId,
+      description: '',
+      icon: '🔮',
+      unlocked: true,
     }))
   }
 
@@ -56,7 +50,7 @@ export class SkillTab extends Container {
    * 获取总技能数量
    */
   getTotalCount(): number {
-    return Object.keys(PRODUCERS).length + Object.keys(CONVERTERS).length + Object.keys(CONNECTORS).length
+    return this.getUnlockedCount()
   }
 
   /**

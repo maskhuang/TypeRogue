@@ -7,10 +7,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { state, resetState, resetResources } from '../../../../src/core/state'
 import { RunState } from '../../../../src/core/state/RunState'
 import { isFeatureEnabled } from '../../../../src/systems/classes/ClassFeatureGate'
-import { filterSkillPoolByClass, isResourceActiveForClass } from '../../../../src/systems/classes/ClassResourceFilter'
+import { isResourceActiveForClass } from '../../../../src/systems/classes/ClassResourceFilter'
 import { classManager } from '../../../../src/systems/classes/ClassManager'
-import { drawEnchantmentPair } from '../../../../src/data/enchantments'
-import { CONVERTERS } from '../../../../src/data/converters'
 import { generateRelicCandidates } from '../../../../src/systems/relicPicker'
 import { craftWord } from '../../../../src/systems/classes/CraftingStation'
 
@@ -23,7 +21,6 @@ vi.mock('../../../../src/systems/battle', () => ({
 }))
 vi.mock('../../../../src/systems/shop', () => ({
   renderBuildManager: vi.fn(),
-  applyRandomEnchantment: vi.fn(),
 }))
 vi.mock('../../../../src/core/seededRandom', () => ({
   random: vi.fn(() => 0.5),
@@ -55,9 +52,7 @@ describe('RunState 职业字段序列化 (Task 1)', () => {
     expect(serialized).toHaveProperty('craftedWords')
     expect(serialized).toHaveProperty('mutagenInventory', 0)
     expect(serialized).toHaveProperty('evolvedSkills')
-    expect(serialized).toHaveProperty('enchantedSkills')
     expect(serialized).toHaveProperty('seenSkillTypes')
-    expect(serialized).toHaveProperty('amplifierStacks')
     expect(serialized).toHaveProperty('wordDeck')
   })
 
@@ -70,7 +65,6 @@ describe('RunState 职业字段序列化 (Task 1)', () => {
     d.fragmentQueuePosition = 2
     d.craftedWords = ['ate', 'tea']
     d.wordDeck = ['hello', 'world', 'ate', 'tea']
-    d.enchantedSkills.set('prod_a', 'ench_harvest')
     d.evolvedSkills.set('conv_x', 'conv_x_evo')
 
     const serialized = rs.serialize()
@@ -84,7 +78,6 @@ describe('RunState 职业字段序列化 (Task 1)', () => {
     expect(rd.fragmentQueuePosition).toBe(2)
     expect(rd.craftedWords).toEqual(['ate', 'tea'])
     expect(rd.wordDeck).toEqual(['hello', 'world', 'ate', 'tea'])
-    expect(rd.enchantedSkills.get('prod_a')).toBe('ench_harvest')
     expect(rd.evolvedSkills.get('conv_x')).toBe('conv_x_evo')
   })
 
@@ -93,8 +86,6 @@ describe('RunState 职业字段序列化 (Task 1)', () => {
     const d = rs.getState() as any
     d.classId = 'metamorph'
     d.mutagenInventory = 7
-    d.enchantedSkills.set('prod_b', 'ench_adapt')
-    d.amplifierStacks.set('amp_1', 3.5)
     d.seenSkillTypes.add('producer')
     d.seenSkillTypes.add('converter')
 
@@ -105,8 +96,6 @@ describe('RunState 职业字段序列化 (Task 1)', () => {
 
     expect(rd.classId).toBe('metamorph')
     expect(rd.mutagenInventory).toBe(7)
-    expect(rd.enchantedSkills.get('prod_b')).toBe('ench_adapt')
-    expect(rd.amplifierStacks.get('amp_1')).toBe(3.5)
     expect(rd.seenSkillTypes.has('producer')).toBe(true)
     expect(rd.seenSkillTypes.has('converter')).toBe(true)
   })
@@ -124,9 +113,7 @@ describe('RunState 职业字段序列化 (Task 1)', () => {
     expect(rd.craftedWords).toEqual([])
     expect(rd.wordDeck).toEqual([])
     expect(rd.evolvedSkills.size).toBe(0)
-    expect(rd.enchantedSkills.size).toBe(0)
     expect(rd.seenSkillTypes.size).toBe(0)
-    expect(rd.amplifierStacks.size).toBe(0)
   })
 
   it('向后兼容：旧存档无职业字段 → 使用默认值', () => {
@@ -151,9 +138,7 @@ describe('RunState 职业字段序列化 (Task 1)', () => {
     expect(rd.mutagenInventory).toBe(0)
     expect(rd.wordDeck).toEqual([])
     expect(rd.evolvedSkills.size).toBe(0)
-    expect(rd.enchantedSkills.size).toBe(0)
     expect(rd.seenSkillTypes.size).toBe(0)
-    expect(rd.amplifierStacks.size).toBe(0)
     // 原有字段仍正确恢复
     expect(restored.getGold()).toBe(50)
     expect(restored.getCurrentStage()).toBe(3)
@@ -165,19 +150,15 @@ describe('RunState 职业字段序列化 (Task 1)', () => {
     const d = rs.getState() as any
     d.evolvedSkills.set('s1', 'e1')
     d.evolvedSkills.set('s2', 'e2')
-    d.enchantedSkills.set('s3', 'ench_x')
     d.seenSkillTypes.add('producer')
     d.seenSkillTypes.add('amplifier')
-    d.amplifierStacks.set('amp1', 2)
 
     const json = JSON.parse(JSON.stringify(rs.serialize()))
     const restored = RunState.deserialize(json)
     const rd = restored.getState()
 
     expect(rd.evolvedSkills.size).toBe(2)
-    expect(rd.enchantedSkills.size).toBe(1)
     expect(rd.seenSkillTypes.size).toBe(2)
-    expect(rd.amplifierStacks.size).toBe(1)
   })
 })
 
@@ -209,13 +190,11 @@ describe('职业切换状态隔离 (Task 2)', () => {
   it('resetResources() 清空每关产出计数', () => {
     state.classResourceProduced = { fragment: 10, mutagen: 5 }
     state.fragmentQueuePosition = 4
-    state.unstableResources.set('skill1', 'score' as any)
 
     resetResources()
 
     expect(state.classResourceProduced).toEqual({})
     expect(state.fragmentQueuePosition).toBe(0)
-    expect(state.unstableResources.size).toBe(0)
   })
 
   it('连续切换职业无残留（手动设置）', () => {
@@ -293,17 +272,6 @@ describe('无职业模式回归 (Task 3)', () => {
     }
   })
 
-  it('drawEnchantmentPair: 无职业时排除所有 class-exclusive 附魔', () => {
-    const classExclusiveIds = new Set([
-      'ench_harvest', 'ench_letter_affinity', 'ench_overflow',
-      'ench_adapt', 'ench_unstable', 'ench_mutation_hunger',
-    ])
-    for (let i = 0; i < 30; i++) {
-      const [id1, id2] = drawEnchantmentPair()
-      expect(classExclusiveIds.has(id1)).toBe(false)
-      expect(classExclusiveIds.has(id2)).toBe(false)
-    }
-  })
 })
 
 // ==================== Task 4: 造词师 E2E 集成 ====================
@@ -323,22 +291,6 @@ describe('造词师 End-to-End 集成 (Task 4)', () => {
     state.classId = 'wordsmith'
     expect(isFeatureEnabled('pack-system')).toBe(false)
     expect(isFeatureEnabled('enchant-choice')).toBe(true)
-  })
-
-  it('造词师附魔过滤: WORDSMITH 附魔可抽取, METAMORPH 不可', () => {
-    state.classId = 'wordsmith'
-    const wordsmithEnchs = new Set(['ench_harvest', 'ench_letter_affinity', 'ench_overflow'])
-    const metamorphEnchs = new Set(['ench_adapt', 'ench_unstable', 'ench_mutation_hunger'])
-
-    let foundWordsmith = false
-    let foundMetamorph = false
-    for (let i = 0; i < 100; i++) {
-      const [id1, id2] = drawEnchantmentPair()
-      if (wordsmithEnchs.has(id1) || wordsmithEnchs.has(id2)) foundWordsmith = true
-      if (metamorphEnchs.has(id1) || metamorphEnchs.has(id2)) foundMetamorph = true
-    }
-    expect(foundWordsmith).toBe(true)
-    expect(foundMetamorph).toBe(false)
   })
 
   it('craftWord 消耗碎片+金币 → word 进入 wordDeck 和 craftedWords', () => {
@@ -389,21 +341,6 @@ describe('蜕变师 End-to-End 集成 (Task 5)', () => {
     expect(isFeatureEnabled('pack-system')).toBe(true)
   })
 
-  it('蜕变师附魔过滤: METAMORPH 附魔可抽取, WORDSMITH 不可', () => {
-    state.classId = 'metamorph'
-    const wordsmithEnchs = new Set(['ench_harvest', 'ench_letter_affinity', 'ench_overflow'])
-    const metamorphEnchs = new Set(['ench_adapt', 'ench_unstable', 'ench_mutation_hunger'])
-
-    let foundMetamorph = false
-    let foundWordsmith = false
-    for (let i = 0; i < 100; i++) {
-      const [id1, id2] = drawEnchantmentPair()
-      if (metamorphEnchs.has(id1) || metamorphEnchs.has(id2)) foundMetamorph = true
-      if (wordsmithEnchs.has(id1) || wordsmithEnchs.has(id2)) foundWordsmith = true
-    }
-    expect(foundMetamorph).toBe(true)
-    expect(foundWordsmith).toBe(false)
-  })
 })
 
 // ==================== Task 6: FeatureGate 集成验证 ====================
@@ -508,27 +445,6 @@ describe('资源 UI 隔离逻辑验证 (Task 7)', () => {
     }
   })
 
-  it('filterSkillPoolByClass 过滤 fragment 技能（非造词师）', () => {
-    // 查找含 fragment 资源的转化者
-    const fragConverters = Object.values(CONVERTERS).filter(
-      c => c.source === 'fragment' || c.target === 'fragment'
-    )
-    if (fragConverters.length > 0) {
-      const filtered = filterSkillPoolByClass(fragConverters as any[], 'metamorph')
-      const hasFragment = filtered.some((c: any) => c.source === 'fragment' || c.target === 'fragment')
-      expect(hasFragment).toBe(false)
-    }
-  })
-
-  it('filterSkillPoolByClass 保留 fragment 技能（造词师）', () => {
-    const fragConverters = Object.values(CONVERTERS).filter(
-      c => c.source === 'fragment' || c.target === 'fragment'
-    )
-    if (fragConverters.length > 0) {
-      const filtered = filterSkillPoolByClass(fragConverters as any[], 'wordsmith')
-      expect(filtered.length).toBe(fragConverters.length)
-    }
-  })
 })
 
 // ==================== Task 8: 存档往返集成 ====================
@@ -543,10 +459,7 @@ describe('存档往返集成 (Task 8)', () => {
     d.fragmentQueuePosition = 3
     d.craftedWords = ['ate', 'tea', 'eat']
     d.wordDeck = ['hello', 'world', 'ate', 'tea', 'eat']
-    d.enchantedSkills.set('prod_frag_a', 'ench_harvest')
-    d.enchantedSkills.set('prod_frag_b', 'ench_overflow')
     d.evolvedSkills.set('conv_1', 'conv_1_evo')
-    d.growthValues.set('prod_frag_a', 0.45)
     d.relicStates = { apprentice_notes: 1 }
 
     const json = JSON.parse(JSON.stringify(rs.serialize()))
@@ -560,9 +473,7 @@ describe('存档往返集成 (Task 8)', () => {
     expect(rd.fragmentQueuePosition).toBe(3)
     expect(rd.craftedWords).toEqual(['ate', 'tea', 'eat'])
     expect(rd.wordDeck).toEqual(['hello', 'world', 'ate', 'tea', 'eat'])
-    expect(rd.enchantedSkills.get('prod_frag_a')).toBe('ench_harvest')
     expect(rd.evolvedSkills.get('conv_1')).toBe('conv_1_evo')
-    expect(rd.growthValues.get('prod_frag_a')).toBe(0.45)
     expect(rd.relicStates.apprentice_notes).toBe(1)
   })
 
@@ -571,13 +482,9 @@ describe('存档往返集成 (Task 8)', () => {
     const d = rs.getState() as any
     d.classId = 'metamorph'
     d.mutagenInventory = 12
-    d.enchantedSkills.set('conv_mut_1', 'ench_adapt')
-    d.enchantedSkills.set('conv_mut_2', 'ench_unstable')
-    d.amplifierStacks.set('amp_1', 4)
     d.seenSkillTypes.add('producer')
     d.seenSkillTypes.add('converter')
     d.seenSkillTypes.add('amplifier')
-    d.growthValues.set('conv_mut_1', 0.6)
     d.relicStates = { primal_mutant: 0, fittest_conv_mut_1: 1 }
 
     const json = JSON.parse(JSON.stringify(rs.serialize()))
@@ -586,10 +493,7 @@ describe('存档往返集成 (Task 8)', () => {
 
     expect(rd.classId).toBe('metamorph')
     expect(rd.mutagenInventory).toBe(12)
-    expect(rd.enchantedSkills.get('conv_mut_1')).toBe('ench_adapt')
-    expect(rd.amplifierStacks.get('amp_1')).toBe(4)
     expect(rd.seenSkillTypes.size).toBe(3)
-    expect(rd.growthValues.get('conv_mut_1')).toBe(0.6)
     expect(rd.relicStates.primal_mutant).toBe(0)
     expect(rd.relicStates.fittest_conv_mut_1).toBe(1)
   })

@@ -35,7 +35,6 @@ export function createInitialState(): GameState {
     fragmentQueuePosition: 0,
     craftedWords: [],
     mutagenInventory: 0,
-    unstableResources: new Map(),
     affixSkills: new Map(),
     affixSkillStates: new Map(),
     mutationACounts: new Map(),
@@ -55,18 +54,6 @@ export function createInitialState(): GameState {
     usedRestEvents: [],
     tempBuffs: [],
     sealedKeys: [],
-    converterPool: [],
-    connectorPool: [],
-    replicatorPool: [],
-    amplifierPool: [],
-    amplifierStacks: new Map(),
-    devourCounters: new Map(),
-    growthValues: new Map(),
-    masteryCounters: new Map(),
-    devourIcons: new Map(),
-    chargeAccumulated: new Map(),
-    decayMultipliers: new Map(),
-    pulseCounts: new Map(),
     pseudoInfiniteState: null,
     seenSkillTypes: new Set(),
     gameMode: 'normal',
@@ -85,7 +72,6 @@ export function createInitialState(): GameState {
       wordBonus: 0,
       timeBonus: 0,
       evolvedSkills: new Map(),
-      enchantedSkills: new Map(),
     },
     shop: {
       items: [],
@@ -149,9 +135,6 @@ export function resetResources(): void {
   state.resources.mutagen = 0;
   state.classResourceProduced = {};
   state.fragmentQueuePosition = 0;
-  state.unstableResources.clear();
-  state.chargeAccumulated.clear();
-  state.pulseCounts.clear();
 }
 
 // === 状态重置 ===

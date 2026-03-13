@@ -3,16 +3,11 @@
 // ============================================
 // Epic 26: 聚合所有数据源图标，用于跨类型唯一性检查
 
-import { PRODUCERS } from './producers';
-import { CONVERTERS } from './converters';
-import { CONNECTORS, REPLICATORS } from './connectors';
-import { AMPLIFIERS } from './amplifiers';
-import { ENCHANTMENTS } from './enchantments';
 import { RELICS } from './relics';
 import { BOSS_MODIFIER_META } from './bossModifiers';
 import { RESOURCE_ICONS } from '../core/constants';
 
-export type IconType = 'producer' | 'converter' | 'connector' | 'replicator' | 'amplifier' | 'enchantment' | 'relic' | 'bossModifier' | 'resource';
+export type IconType = 'relic' | 'bossModifier' | 'resource';
 
 export interface IconEntry {
   icon: string;
@@ -34,24 +29,6 @@ export function getAllIconEntries(): IconEntry[] {
   for (const [resource, icon] of Object.entries(RESOURCE_ICONS)) {
     entries.push({ icon, id: `resource:${resource}`, type: 'resource' });
   }
-  for (const p of Object.values(PRODUCERS)) {
-    entries.push({ icon: p.icon, id: p.id, type: 'producer' });
-  }
-  for (const c of Object.values(CONVERTERS)) {
-    entries.push({ icon: c.icon, id: c.id, type: 'converter' });
-  }
-  for (const c of Object.values(CONNECTORS)) {
-    entries.push({ icon: c.icon, id: c.id, type: 'connector' });
-  }
-  for (const r of Object.values(REPLICATORS)) {
-    entries.push({ icon: r.icon, id: r.id, type: 'replicator' });
-  }
-  for (const a of Object.values(AMPLIFIERS)) {
-    entries.push({ icon: a.icon, id: a.id, type: 'amplifier' });
-  }
-  for (const e of Object.values(ENCHANTMENTS)) {
-    entries.push({ icon: e.icon, id: e.id, type: 'enchantment' });
-  }
   for (const r of Object.values(RELICS)) {
     entries.push({ icon: r.icon, id: r.id, type: 'relic' });
   }
@@ -62,7 +39,7 @@ export function getAllIconEntries(): IconEntry[] {
   return entries;
 }
 
-/** 返回重复的原子图标及其使用者（排除组合图标 + 资源豁免） */
+/** 返回重复的原子图标及其使用者（排除组合图标） */
 export function findDuplicateIcons(): Map<string, IconEntry[]> {
   const entries = getAllIconEntries();
   const atomicEntries = entries.filter(e => !isCompositeIcon(e.icon));
@@ -75,33 +52,10 @@ export function findDuplicateIcons(): Map<string, IconEntry[]> {
     groups.set(entry.icon, list);
   }
 
-  // 资源图标反查：icon → resource name
-  const resourceIconMap = new Map<string, string>();
-  for (const [resource, icon] of Object.entries(RESOURCE_ICONS)) {
-    resourceIconMap.set(icon, resource);
-  }
-
   const duplicates = new Map<string, IconEntry[]>();
   for (const [icon, group] of groups) {
     if (group.length <= 1) continue;
-
-    const resourceName = resourceIconMap.get(icon);
-    if (resourceName) {
-      // 资源图标命名空间：豁免 resource 条目 + 同资源产出者
-      const nonExempt = group.filter(e => {
-        if (e.type === 'resource') return false;
-        if (e.type === 'producer') {
-          const prod = PRODUCERS[e.id];
-          return prod?.resource !== resourceName;
-        }
-        return true;
-      });
-      if (nonExempt.length > 0) {
-        duplicates.set(icon, group);
-      }
-    } else {
-      duplicates.set(icon, group);
-    }
+    duplicates.set(icon, group);
   }
 
   return duplicates;
