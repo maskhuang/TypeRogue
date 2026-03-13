@@ -63,6 +63,11 @@ export interface TriggerContext {
   relicMultiplier?: number
   /** chain_ban 生效时为 true：跳过连接/复制/共鸣词条 Phase 5-6 */
   chainAffixesDisabled?: boolean
+  // ── 附魔遗物注入（Story 36.5，避免 data→systems 依赖） ──
+  /** 学徒之袍：学徒成长乘数（默认 1） */
+  apprenticeGrowthMultiplier?: number
+  /** 试炼徽章：试炼堆叠增量（默认 1） */
+  questStackIncrement?: number
 }
 
 // ===== 状态变更 =====
@@ -785,7 +790,7 @@ export function resolvePhase5(
     }
 
     if (shouldGrow) {
-      runtimeState.apprenticeAccumulated += growth
+      runtimeState.apprenticeAccumulated += growth * (ctx.apprenticeGrowthMultiplier ?? 1)
     }
   }
 
@@ -799,7 +804,7 @@ export function resolvePhase5(
     const eventMet = checkQuestEventCondition(questDef.event, triggerFlags, skill, ctx, recurseProc)
 
     if (eventMet) {
-      runtimeState.questStacks++
+      runtimeState.questStacks += (ctx.questStackIncrement ?? 1)
 
       if (runtimeState.questStacks >= questDef.targetStacks) {
         runtimeState.questStacks = 0
@@ -1220,9 +1225,10 @@ export function getTransmuteEligibleResources(
 
 /**
  * 返回技能的附魔槽位数量。Twin 词条使附魔数量翻倍（1→2）。
+ * @param bonusSlots 额外槽位加成（附魔锚点遗物提供，默认 0）
  */
-export function getEnchantmentSlotCount(skill: AffixSkillInstance): number {
-  return skill.affixes.some(a => a.type === AffixType.Twin) ? 2 : 1
+export function getEnchantmentSlotCount(skill: AffixSkillInstance, bonusSlots: number = 0): number {
+  return (skill.affixes.some(a => a.type === AffixType.Twin) ? 2 : 1) + bonusSlots
 }
 
 // ===== 生命周期钩子 (Story 35.8) =====

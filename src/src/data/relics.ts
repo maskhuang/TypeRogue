@@ -469,6 +469,71 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '不戴王冠，却统御一切。',
   },
 
+  // ==================== 附魔系统遗物 (Story 36.5) ====================
+
+  apprentice_robe: {
+    id: 'apprentice_robe',
+    name: '学徒之袍',
+    icon: '👘',
+    description: '所有学徒型附魔的成长累积值×1.3。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'enchantment',
+    flavor: '穿上学徒之袍，感受魔力的加速流动。',
+  },
+
+  trial_badge: {
+    id: 'trial_badge',
+    name: '试炼徽章',
+    icon: '🏅',
+    description: '所有试炼型附魔的堆叠进度×1.3。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'enchantment',
+    flavor: '每一枚徽章，都是试炼的加速通行证。',
+  },
+
+  fate_fork: {
+    id: 'fate_fork',
+    name: '命运三岔',
+    icon: '🔱',
+    description: '附魔选择界面从2选1变为3选1。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'enchantment',
+    behaviorType: 'fate_fork',
+    flavor: '命运的分岔路，多一条选择。',
+  },
+
+  early_awakening: {
+    id: 'early_awakening',
+    name: '早期觉醒',
+    icon: '🌅',
+    description: '附魔触发条件从Lv3+放宽到Lv2+。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'enchantment',
+    behaviorType: 'early_awakening',
+    flavor: '黎明之光，提前唤醒沉睡的力量。',
+  },
+
+  enchant_anchor: {
+    id: 'enchant_anchor',
+    name: '附魔锚点',
+    icon: '⚓',
+    description: '所有技能附魔槽位+1，但每个已激活的附魔使商店所有商品价格+10%。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'enchantment',
+    category: 'risk-reward',
+    flavor: '锚定更多附魔，代价是日益攀升的物价。',
+  },
+
 }
 
 // === Relic Modifier 工厂类型 ===

@@ -17,6 +17,7 @@ import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { shouldBlockMultiplierResource, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, hasUncrownedKing, UK_GROWTH_RATE } from './relics/SkillRelicBehaviors';
+import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
 
 
 // === 战后统计：记录技能触发 ===
@@ -165,6 +166,9 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     randomFn: random,
     comboCount: state.combo,
     playerClass: state.classId,
+    // Story 36.5: 附魔遗物注入（避免 data→systems 依赖）
+    apprenticeGrowthMultiplier: getApprenticeGrowthMultiplier(),
+    questStackIncrement: getQuestStackIncrement(),
   };
 
   // Story 36.3 + 36.4: 遗物加算合并（倍率棱镜 + 首发强化 + 少而精）

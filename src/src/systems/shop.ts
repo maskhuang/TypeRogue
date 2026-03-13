@@ -49,6 +49,7 @@ import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TR
 import type { EnchantmentType } from '../data/affixes';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment } from './relics/SkillRelicBehaviors';
+import { getEnchantmentChoiceCount, getMinEnchantmentLevel, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier } from './relics/EnchantmentRelicBehaviors';
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
@@ -485,7 +486,8 @@ function updateGoldDisplay(): void {
 
 // === 价格调整 ===
 function getAdjustedPrice(baseCost: number): number {
-  return baseCost;
+  // Story 36.5: 附魔锚点 — 每个已激活附魔使价格 +10%
+  return Math.round(baseCost * getEnchantAnchorPriceMultiplier());
 }
 
 // === Fisher-Yates shuffle ===
@@ -1236,7 +1238,8 @@ function purchaseShopRelicItem(index: number): void {
 // === 自动进化检查 ===
 function checkAutoEnchantment(skillId: string): void {
   const data = state.player.skills.get(skillId);
-  if (!data || data.level < 3) return;
+  // Story 36.5: 早期觉醒 — 等级检查由遗物决定（默认 3，持有 early_awakening → 2）
+  if (!data || data.level < getMinEnchantmentLevel()) return;
 
   // T4 限制遗物：附魔锁定
   if (queryRelicFlag('enchant_lock') === true) {
@@ -1253,7 +1256,8 @@ function checkAutoEnchantment(skillId: string): void {
   // 词条制技能走新附魔流程（Quest 附魔 → enchantmentIds）
   const affixSkill = state.affixSkills.get(skillId);
   if (affixSkill) {
-    const slotCount = getEnchantmentSlotCount(affixSkill);
+    // Story 36.5: 附魔锚点 — 额外槽位加成
+    const slotCount = getEnchantmentSlotCount(affixSkill, getEnchantAnchorSlotBonus());
     if (affixSkill.enchantmentIds.length >= slotCount) return;
     const candidates = filterEnchantmentsByClass(
       filterEnchantmentCandidates(affixSkill),
@@ -1474,15 +1478,20 @@ function renderAffixEnchantmentModal(
     }
   }
 
-  // 取最多 2 个候选
-  const shown = expandedCandidates.length <= 2 ? expandedCandidates : (() => {
-    const a = expandedCandidates[Math.floor(random() * expandedCandidates.length)];
-    let b = expandedCandidates[Math.floor(random() * expandedCandidates.length)];
-    // dedupe by enchType + transmuteRes
-    if (a.enchType === b.enchType && a.transmuteRes === b.transmuteRes) {
-      return [a];
+  // Story 36.5: 命运三岔 — 候选数由遗物决定（默认 2，持有 fate_fork → 3）
+  const maxBranches = getEnchantmentChoiceCount();
+  const shown = expandedCandidates.length <= maxBranches ? expandedCandidates : (() => {
+    const picked: ShownCandidate[] = [];
+    const pool = [...expandedCandidates];
+    while (picked.length < maxBranches && pool.length > 0) {
+      const idx = Math.floor(random() * pool.length);
+      const candidate = pool.splice(idx, 1)[0];
+      // dedupe by enchType + transmuteRes
+      if (!picked.some(p => p.enchType === candidate.enchType && p.transmuteRes === candidate.transmuteRes)) {
+        picked.push(candidate);
+      }
     }
-    return [a, b];
+    return picked;
   })();
 
   titleEl.textContent = t('shop.enchant_choose', { name: affixSkill.name });

@@ -157,6 +157,7 @@ describe('遗物槽位系统 (Story 27.3)', () => {
         'glass_cannon_v2', // risk-reward 遗物，basePrice=0
         'immortal_combo', // risk-reward 遗物，basePrice=0
         'uncrowned_king', // risk-reward 遗物，basePrice=0
+        'enchant_anchor', // risk-reward 遗物，basePrice=0
       ])
       for (const relic of Object.values(RELICS)) {
         if (zeroPriceRelics.has(relic.id)) {

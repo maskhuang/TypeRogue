@@ -30,7 +30,8 @@ import { routeFragmentsToInventory, getMaxQueueLength } from './classes/Fragment
 import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, calculateRhythmAdapt, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors } from './relics/TypingRelicBehaviors';
 import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmortalCombo, shouldBlockMultiplierResource, syncRhythmDoctorMilestone, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing } from './relics/SkillRelicBehaviors';
-import { filterEnchantmentCandidates, getEnchantmentSlotCount, getTransmuteEligibleResources } from '../data/affixTrigger';
+import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors } from './relics/EnchantmentRelicBehaviors';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
 import { initDemoTutorial } from '../demo/demo-tutorial';
@@ -241,6 +242,8 @@ export function initInput(): void {
   initComboRelicBehaviors();
   // Story 36.4: 注册技能子系统遗物行为
   initSkillRelicBehaviors();
+  // Story 36.5: 注册附魔子系统遗物行为
+  initEnchantmentRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
 }
@@ -1034,6 +1037,8 @@ export async function startLevel(): Promise<void> {
   resetComboRelicState();
   // Story 36.4: 重置技能遗物关级别状态（爵士乐词条追踪）
   resetSkillRelicState();
+  // Story 36.5: 重置附魔遗物关级别状态
+  resetEnchantmentRelicState();
 
   // 初始化战后统计
   state.battleStats = createBattleStats();
