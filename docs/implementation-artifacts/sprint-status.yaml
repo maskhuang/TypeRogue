@@ -354,7 +354,7 @@ development_status:
   # ===== Epic 36: 遗物系统扩展（55 个通用遗物）=====
   # Source: docs/stories/epic-36-relic-system-expansion.md
   # Design: docs/design/relic-system.md
-  epic-36: in-progress
+  epic-36: done
   36-1-relic-infrastructure: done
   36-2-typing-input-relics: done
   36-3-combo-multiplier-relics: done
@@ -367,5 +367,5 @@ development_status:
   36-10-stage-progress-relics: done
   36-11-boss-modifier-relics: done
   36-12-scoring-relics: done
-  36-13-balance-integration-test: backlog
+  36-13-balance-integration-test: done
   epic-36-retrospective: optional
