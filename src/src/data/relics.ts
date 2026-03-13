@@ -115,9 +115,10 @@ export type RelicBehaviorType =
   // 键盘拓扑系统
   | 'row_select'           // 行会勋章：选一行加成
   | 'hand_alternation'     // 双手协奏：左右手交替击键加时间
-  | 'key_storm'            // 全键风暴：前 3 词完成时随机触发未命中技能
+  | 'punctuation_liberation' // 标点解放：解锁标点键位+词语混入标点
   // 单词/词库系统
   | 'word_dealer'          // 词语经销商：出售词语→下次刷新免费
+  | 'key_storm'            // 全键风暴：前 3 词完成时随机触发未命中技能
   // 商店系统
   | 'smuggle_free'         // 走私通道：每关免费拿走最便宜商品
   | 'timed_auction'        // 限时拍卖：刷新免费 + 30 秒倒计时
@@ -654,11 +655,12 @@ export const RELICS: Record<string, RelicData> = {
     id: 'punctuation_liberation',
     name: '标点解放',
     icon: '❗',
-    description: '解锁键盘标点键位。（即将推出）',
+    description: '解锁 ;,./ 四个标点键位可绑定技能，词语中随机混入标点符号。',
     rarity: 'legendary',
     basePrice: 0,
     effects: [],
     subsystem: 'word',
+    behaviorType: 'punctuation_liberation',
     flavor: '标点符号也有成为技能载体的权利。',
   },
 

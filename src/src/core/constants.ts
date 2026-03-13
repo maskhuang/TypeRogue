@@ -11,6 +11,15 @@ export const KEYBOARD_ROWS = [
 
 export const KEYS = KEYBOARD_ROWS.flat();
 
+// === 标点解放遗物：扩展键位 ===
+export const PUNCTUATION_KEYS = [';', ',', '.', '/'];
+export const PUNCTUATION_KEYBOARD_EXTENSION: Record<number, string[]> = {
+  1: [';'],           // home row 追加 ;
+  2: [',', '.', '/'], // bottom row 追加 , . /
+};
+export const RELIC_GARBLE_CHARS = ',.;/';
+export const RELIC_GARBLE_RATE = 0.15;
+
 // === 键盘相邻关系 ===
 export const ADJACENT_KEYS: Record<string, string[]> = {
   q: ['w', 'a'],
@@ -22,7 +31,7 @@ export const ADJACENT_KEYS: Record<string, string[]> = {
   u: ['y', 'i', 'h', 'j'],
   i: ['u', 'o', 'j', 'k'],
   o: ['i', 'p', 'k', 'l'],
-  p: ['o', 'l'],
+  p: ['o', 'l', ';'],
   a: ['q', 'w', 's', 'z'],
   s: ['a', 'w', 'e', 'd', 'z', 'x'],
   d: ['s', 'e', 'r', 'f', 'x', 'c'],
@@ -30,15 +39,20 @@ export const ADJACENT_KEYS: Record<string, string[]> = {
   g: ['f', 't', 'y', 'h', 'v', 'b'],
   h: ['g', 'y', 'u', 'j', 'b', 'n'],
   j: ['h', 'u', 'i', 'k', 'n', 'm'],
-  k: ['j', 'i', 'o', 'l', 'm'],
-  l: ['k', 'o', 'p'],
+  k: ['j', 'i', 'o', 'l', 'm', ','],
+  l: ['k', 'o', 'p', ';', ','],
   z: ['a', 's', 'x'],
   x: ['z', 's', 'd', 'c'],
   c: ['x', 'd', 'f', 'v'],
   v: ['c', 'f', 'g', 'b'],
   b: ['v', 'g', 'h', 'n'],
   n: ['b', 'h', 'j', 'm'],
-  m: ['n', 'j', 'k'],
+  m: ['n', 'j', 'k', ','],
+  // 标点键邻接（标点解放遗物）
+  ';': ['l', 'p', '.', '/'],
+  ',': ['m', '.', 'k', 'l'],
+  '.': [',', '/', 'l', ';'],
+  '/': ['.', ';'],
 };
 
 // === 游戏平衡数值 ===

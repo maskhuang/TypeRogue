@@ -20,7 +20,7 @@ import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getCycleTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode, TOTAL_NODES } from './stage/stageFlow';
-import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawBossModifiers, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss } from '../data/bossModifiers';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawBossModifiers, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive } from '../data/bossModifiers';
 import type { BossModifierMeta } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation, isModifierActive } from './bossModifierEngine';
 import { showBossModifierPicker } from './bossModifierPicker';
@@ -933,6 +933,7 @@ function endLevel(): void {
   clearFloatQueue();
   cleanupModifier();
   stopBossRotation();
+  setRelicGarbleActive(false);
   hideSettlement();
 
   // 计算关卡评级
@@ -1080,6 +1081,9 @@ export async function startLevel(): Promise<void> {
   resetEnchantmentRelicState();
   // Story 36.6: 重置拓扑遗物关级别状态（双手协奏手追踪 + 全键风暴计数）
   resetTopologyRelicState();
+
+  // 标点解放遗物：设置遗物乱码激活状态
+  setRelicGarbleActive(state.player.relics.has('punctuation_liberation'));
 
   // 初始化战后统计
   state.battleStats = createBattleStats();
@@ -1251,6 +1255,7 @@ function victory(): void {
   clearFloatQueue();
   cleanupModifier();
   stopBossRotation();
+  setRelicGarbleActive(false);
 
   if (IS_DEMO) {
     stopBGM();
@@ -1306,6 +1311,7 @@ function gameOver(): void {
   clearFloatQueue();
   cleanupModifier();
   stopBossRotation();
+  setRelicGarbleActive(false);
 
   if (IS_DEMO) {
     stopBGM();

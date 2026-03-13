@@ -19,7 +19,7 @@ import {
   isIsolatedSkill,
   isInPair,
 } from '../../../src/data/keyboardTopology';
-import { ADJACENT_KEYS, KEYBOARD_ROWS, KEYS } from '../../../src/core/constants';
+import { ADJACENT_KEYS, KEYBOARD_ROWS, KEYS, PUNCTUATION_KEYBOARD_EXTENSION } from '../../../src/core/constants';
 
 // === 数据完整性 ===
 
@@ -61,8 +61,8 @@ describe('数据映射完整性', () => {
     expect(right.length).toBe(11);
   });
 
-  it('SYMMETRIC_PAIRS 有 22 个条目（11 对双向映射）', () => {
-    expect(Object.keys(SYMMETRIC_PAIRS).length).toBe(22);
+  it('SYMMETRIC_PAIRS 有 30 个条目（15 对双向映射，含标点键）', () => {
+    expect(Object.keys(SYMMETRIC_PAIRS).length).toBe(30);
   });
 
   it('对称映射是双向的', () => {
@@ -71,10 +71,11 @@ describe('数据映射完整性', () => {
     }
   });
 
-  it('a/z/x/c 没有对称位', () => {
-    for (const key of ['a', 'z', 'x', 'c']) {
-      expect(SYMMETRIC_PAIRS[key]).toBeUndefined();
-    }
+  it('a/z/x/c 有标点键对称位', () => {
+    expect(SYMMETRIC_PAIRS['a']).toBe(';');
+    expect(SYMMETRIC_PAIRS['z']).toBe('/');
+    expect(SYMMETRIC_PAIRS['x']).toBe('.');
+    expect(SYMMETRIC_PAIRS['c']).toBe(',');
   });
 });
 
@@ -154,14 +155,14 @@ describe('isSameRow', () => {
     expect(row0.length).toBe(9); // 10 - self
   });
 
-  it('Row 1 有 9 个键', () => {
+  it('Row 1 有 10 个键（含 ;）', () => {
     const row1 = getKeysWithRelation('a', PositionRelation.SameRow);
-    expect(row1.length).toBe(8); // 9 - self
+    expect(row1.length).toBe(9); // 10 - self
   });
 
-  it('Row 2 有 7 个键', () => {
+  it('Row 2 有 10 个键（含 , . /）', () => {
     const row2 = getKeysWithRelation('z', PositionRelation.SameRow);
-    expect(row2.length).toBe(6); // 7 - self
+    expect(row2.length).toBe(9); // 10 - self
   });
 });
 
@@ -189,19 +190,19 @@ describe('isSameColumn', () => {
     expect(isSameColumn('q', 'q')).toBe(false);
   });
 
-  it('列 7 只有 2 个键 (I, K)', () => {
+  it('列 7 有 3 个键 (I, K, ,)', () => {
     const col7 = getKeysWithRelation('i', PositionRelation.SameColumn);
-    expect(col7).toEqual(['k']);
+    expect(col7.sort()).toEqual([',', 'k']);
   });
 
-  it('列 8 只有 2 个键 (O, L)', () => {
+  it('列 8 有 3 个键 (O, L, .)', () => {
     const col8 = getKeysWithRelation('o', PositionRelation.SameColumn);
-    expect(col8).toEqual(['l']);
+    expect(col8.sort()).toEqual(['.', 'l']);
   });
 
-  it('列 9 只有 P（无同列键）', () => {
+  it('列 9 有 P, ;, /（3 个键）', () => {
     const col9 = getKeysWithRelation('p', PositionRelation.SameColumn);
-    expect(col9).toEqual([]);
+    expect(col9.sort()).toEqual(['/', ';']);
   });
 
   it('3 行都有的列返回 2 个键', () => {
@@ -282,9 +283,9 @@ describe('isSameFinger', () => {
     expect(isSameFinger('y', 'i')).toBe(false);
   });
 
-  it('P 是唯一的右小指键（无同指键）', () => {
+  it('P 的右小指同指键包含 ; 和 /', () => {
     const sameFinger = getKeysWithRelation('p', PositionRelation.SameFinger);
-    expect(sameFinger).toEqual([]);
+    expect(sameFinger.sort()).toEqual(['/', ';']);
   });
 
   it('同键返回 false', () => {
@@ -318,27 +319,30 @@ describe('isSymmetric', () => {
     expect(isSymmetric('a', 'l')).toBe(false);
   });
 
-  it('无对称位的键 (a/z/x/c) 总返回 false', () => {
-    for (const key of ['a', 'z', 'x', 'c']) {
-      for (const other of KEYS) {
-        if (other !== key) {
-          expect(isSymmetric(key, other)).toBe(false);
-        }
-      }
-    }
+  it('a/z/x/c 与标点键有对称位', () => {
+    expect(isSymmetric('a', ';')).toBe(true);
+    expect(isSymmetric('z', '/')).toBe(true);
+    expect(isSymmetric('x', '.')).toBe(true);
+    expect(isSymmetric('c', ',')).toBe(true);
+    // 反向也成立
+    expect(isSymmetric(';', 'a')).toBe(true);
+    expect(isSymmetric('/', 'z')).toBe(true);
+    expect(isSymmetric('.', 'x')).toBe(true);
+    expect(isSymmetric(',', 'c')).toBe(true);
   });
 
   it('同键返回 false', () => {
     expect(isSymmetric('q', 'q')).toBe(false);
   });
 
-  it('11 对完整验证', () => {
+  it('15 对完整验证（含标点键）', () => {
     const pairs: [string, string][] = [
       ['q', 'p'], ['w', 'o'], ['e', 'i'], ['r', 'u'], ['t', 'y'],
       ['s', 'l'], ['d', 'k'], ['f', 'j'], ['g', 'h'],
       ['v', 'm'], ['b', 'n'],
+      ['a', ';'], ['z', '/'], ['x', '.'], ['c', ','],
     ];
-    expect(pairs.length).toBe(11);
+    expect(pairs.length).toBe(15);
     for (const [a, b] of pairs) {
       expect(isSymmetric(a, b)).toBe(true);
       expect(isSymmetric(b, a)).toBe(true);
@@ -350,9 +354,9 @@ describe('isSymmetric', () => {
     expect(getKeysWithRelation('f', PositionRelation.Symmetric)).toEqual(['j']);
   });
 
-  it('getKeysWithRelation 对无对称位的键返回空', () => {
-    expect(getKeysWithRelation('a', PositionRelation.Symmetric)).toEqual([]);
-    expect(getKeysWithRelation('z', PositionRelation.Symmetric)).toEqual([]);
+  it('getKeysWithRelation 对 a/z 返回标点键对称位', () => {
+    expect(getKeysWithRelation('a', PositionRelation.Symmetric)).toEqual([';']);
+    expect(getKeysWithRelation('z', PositionRelation.Symmetric)).toEqual(['/']);
   });
 });
 
@@ -427,11 +431,14 @@ describe('getKeysWithRelation', () => {
     }
   });
 
-  it('SameRow 返回同行所有其他键', () => {
-    for (const row of KEYBOARD_ROWS) {
+  it('SameRow 返回同行所有其他键（含标点键扩展）', () => {
+    for (let ri = 0; ri < KEYBOARD_ROWS.length; ri++) {
+      const row = KEYBOARD_ROWS[ri];
+      const extKeys = PUNCTUATION_KEYBOARD_EXTENSION[ri] || [];
+      const fullRow = [...row, ...extKeys];
       for (const key of row) {
         const result = getKeysWithRelation(key, PositionRelation.SameRow);
-        const expected = row.filter(k => k !== key);
+        const expected = fullRow.filter(k => k !== key);
         expect(result.sort()).toEqual(expected.sort());
       }
     }

@@ -12,7 +12,7 @@ import type { AffixSkillInstance, SkillRuntimeState } from '../../data/affixes'
 import { createSkillRuntimeState } from '../../data/affixes'
 import { serializeSkill, deserializeSkill, migrateLoadedSkills } from '../../data/affixTrigger'
 import { generateName } from '../../data/skillGeneration'
-import { RESOURCE_ICONS } from '../constants'
+import { RESOURCE_ICONS, PUNCTUATION_KEYS } from '../constants'
 
 /**
  * 技能实例（已获得的技能）
@@ -258,16 +258,18 @@ export class RunState {
    * @throws 无效键位或未拥有技能时抛出错误
    */
   bindSkill(key: string, skillId: string): void {
-    const upperKey = key.toUpperCase()
-    // 验证键位有效性 (A-Z)
-    if (!/^[A-Z]$/.test(upperKey)) {
+    // 标点键用原始字符存储（不 toUpperCase）
+    const isPunctuation = PUNCTUATION_KEYS.includes(key)
+    const normalizedKey = isPunctuation ? key : key.toUpperCase()
+    // 验证键位有效性 (A-Z 或标点键)
+    if (!/^[A-Z]$/.test(normalizedKey) && !isPunctuation) {
       throw new Error(`Invalid key: ${key}`)
     }
     // 验证技能已拥有
     if (!this.data.skills.some(s => s.id === skillId)) {
       throw new Error(`Skill not owned: ${skillId}`)
     }
-    this.data.bindings.set(upperKey, skillId)
+    this.data.bindings.set(normalizedKey, skillId)
   }
 
   /**

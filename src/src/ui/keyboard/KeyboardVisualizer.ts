@@ -10,6 +10,7 @@ import { eventBus } from '../../core/events/EventBus'
 import type { GameEvents } from '../../core/events/EventBus'
 import type { KeyTooltipData } from './KeyTooltip'
 import { state } from '../../core/state'
+import { PUNCTUATION_KEYBOARD_EXTENSION } from '../../core/constants'
 import { QUEST_ENCHANTMENT_DEFS } from '../../data/affixes'
 import type { QuestEnchantmentDef } from '../../data/affixes'
 
@@ -31,11 +32,18 @@ export class KeyboardVisualizer extends Container {
   private unsubKeyup: (() => void) | null = null
   private unsubSkillTriggered: (() => void) | null = null
 
-  // 键盘布局定义
+  // 键盘布局定义（26 字母键）
   private static readonly ROWS = [
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
     ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
     ['Z', 'X', 'C', 'V', 'B', 'N', 'M']
+  ]
+
+  // 扩展布局（含标点键，标点解放遗物激活时使用）
+  private static readonly EXTENDED_ROWS = [
+    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';'],
+    ['Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/']
   ]
 
   // 行偏移量 (模拟实际键盘错位)
@@ -52,7 +60,9 @@ export class KeyboardVisualizer extends Container {
    * 创建键盘布局
    */
   private createKeyboard(): void {
-    KeyboardVisualizer.ROWS.forEach((row, rowIndex) => {
+    const hasPunctuationRelic = state?.player?.relics?.has('punctuation_liberation') ?? false;
+    const rows = hasPunctuationRelic ? KeyboardVisualizer.EXTENDED_ROWS : KeyboardVisualizer.ROWS;
+    rows.forEach((row, rowIndex) => {
       const offsetX = KeyboardVisualizer.ROW_OFFSETS[rowIndex] *
                       (KeyVisual.KEY_SIZE + KeyVisual.KEY_GAP)
 

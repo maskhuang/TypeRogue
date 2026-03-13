@@ -4,7 +4,7 @@
 // Story 1.1: 实现 <16ms 延迟的键盘输入处理
 
 import { eventBus } from '../../core/events/EventBus'
-import { isGarbleActive, GARBLE_CHARS } from '../../data/bossModifiers'
+import { isGarbleActive, getActiveGarbleChars } from '../../data/bossModifiers'
 
 /**
  * 输入处理器配置
@@ -76,7 +76,7 @@ class InputHandler {
     // 只处理单个字母键 (A-Z) + garble 标点
     if (e.key.length !== 1) return
     const isLetter = /[a-zA-Z]/.test(e.key)
-    const isGarbleChar = isGarbleActive() && GARBLE_CHARS.includes(e.key)
+    const isGarbleChar = isGarbleActive() && getActiveGarbleChars().includes(e.key)
     if (!isLetter && !isGarbleChar) return
 
     // 统一转换为大写（标点不受影响）

@@ -5,7 +5,7 @@
 
 import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
-import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS } from '../core/constants';
+import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION } from '../core/constants';
 import { getKeysWithRelation, PositionRelation } from '../data/keyboardTopology';
 
 // === 位置关系标签（从旧 producers.ts 迁移） ===
@@ -1673,9 +1673,11 @@ export function renderBuildManager(): void {
     if (score > 0) letterScores.set(letter, score);
   });
 
-  // 低频键位自动解绑（频率<5 → 底分为0 → 锁定）
+  // 低频键位自动解绑（频率<5 → 底分为0 → 锁定）— 标点键绕过
+  const hasPunctuationRelic = state.player.relics.has('punctuation_liberation');
   const keysToUnbind: string[] = [];
   for (const [key] of state.player.bindings) {
+    if (PUNCTUATION_KEYS.includes(key)) continue; // 标点键不受字频限制
     if ((letterFreqs.get(key) ?? 0) < 5) keysToUnbind.push(key);
   }
   for (const key of keysToUnbind) {
@@ -1719,11 +1721,15 @@ export function renderBuildManager(): void {
   el.boundGrid.appendChild(relicRow);
 
   KEYBOARD_ROWS.forEach((row, rowIndex) => {
+    // 标点解放遗物：扩展键盘行
+    const extKeys = hasPunctuationRelic ? (PUNCTUATION_KEYBOARD_EXTENSION[rowIndex] || []) : [];
+    const extendedRow = [...row, ...extKeys];
+
     const rowDiv = document.createElement('div');
     rowDiv.className = 'keyboard-row';
     rowDiv.dataset.row = String(rowIndex);
 
-    row.forEach(k => {
+    extendedRow.forEach(k => {
       const slot = document.createElement('div');
       slot.className = 'key-slot';
       slot.dataset.key = k;
@@ -1732,8 +1738,9 @@ export function renderBuildManager(): void {
       const score = letterScores.get(k) ?? 0;
       const skillId = state.player.bindings.get(k);
 
-      // 低频键位锁定（频率<5 → 底分为0）
-      if (freq < 5) slot.classList.add('freq-locked');
+      // 低频键位锁定（频率<5 → 底分为0）— 标点键绕过
+      const isPunctKey = PUNCTUATION_KEYS.includes(k);
+      if (freq < 5 && !isPunctKey) slot.classList.add('freq-locked');
 
       // 底分分级样式
       if (score >= 6) slot.classList.add('score-high');
@@ -2211,9 +2218,12 @@ function renderHeatmapTab(container: HTMLElement, bs: import('../core/types').Ba
   });
 
   html += '<div class="heatmap-keyboard">';
-  KEYBOARD_ROWS.forEach(row => {
+  const heatmapHasPunctRelic = state.player.relics.has('punctuation_liberation');
+  KEYBOARD_ROWS.forEach((row, ri) => {
+    const heatExtKeys = heatmapHasPunctRelic ? (PUNCTUATION_KEYBOARD_EXTENSION[ri] || []) : [];
+    const heatRow = [...row, ...heatExtKeys];
     html += '<div class="heatmap-row">';
-    row.forEach(k => {
+    heatRow.forEach(k => {
       const ks = bs.keyStats.get(k);
       const val = getKeyValue(ks, currentHeatmapDimension);
       const ratio = maxVal > 0 ? val / maxVal : 0;

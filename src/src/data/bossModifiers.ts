@@ -404,29 +404,50 @@ const bossReverse: BossModifier = {
 
 export const GARBLE_CHARS = '.,;:!?'
 
+// === 遗物乱码（标点解放） ===
+import { RELIC_GARBLE_CHARS, RELIC_GARBLE_RATE } from '../core/constants'
+
+let _relicGarbleActive = false
+
+/** 设置遗物乱码激活状态（battle.ts 调用） */
+export function setRelicGarbleActive(active: boolean): void {
+  _relicGarbleActive = active
+}
+
+/** 遗物乱码是否激活 */
+export function isRelicGarbleActive(): boolean {
+  return _relicGarbleActive
+}
+
+/** 获取当前激活的乱码字符集 */
+export function getActiveGarbleChars(): string {
+  if (_relicGarbleActive) return RELIC_GARBLE_CHARS
+  return GARBLE_CHARS
+}
+
 /** 向词语中随机插入标点符号，至少插入 1 个 */
-export function garbleWord(word: string, rate: number): string {
-  const chars = word.split('')
+export function garbleWord(word: string, rate: number, chars: string = GARBLE_CHARS): string {
+  const wordChars = word.split('')
   const result: string[] = []
   let inserted = 0
-  for (let i = 0; i < chars.length; i++) {
-    result.push(chars[i])
+  for (let i = 0; i < wordChars.length; i++) {
+    result.push(wordChars[i])
     if (random() < rate) {
-      result.push(GARBLE_CHARS[Math.floor(random() * GARBLE_CHARS.length)])
+      result.push(chars[Math.floor(random() * chars.length)])
       inserted++
     }
   }
   // 保证至少插入 1 个标点
   if (inserted === 0) {
     const pos = Math.floor(random() * (result.length - 1)) + 1
-    result.splice(pos, 0, GARBLE_CHARS[Math.floor(random() * GARBLE_CHARS.length)])
+    result.splice(pos, 0, chars[Math.floor(random() * chars.length)])
   }
   return result.join('')
 }
 
-/** 是否乱码修饰器激活 */
+/** 是否任何乱码激活（boss 或遗物） */
 export function isGarbleActive(): boolean {
-  return !!getActiveParams()?.garbleActive
+  return !!getActiveParams()?.garbleActive || _relicGarbleActive
 }
 
 const bossGarble: BossModifier = {
@@ -535,19 +556,21 @@ const bossScroll: BossModifier = {
 /** 词语变换：reverse/scramble/garble 在 setWord 时调用（支持组合） */
 export function transformWordForModifier(word: string): string {
   const params = getActiveParams()
-  if (!params) return word
 
   let result = word
 
-  if (params.reverseActive) {
+  if (params?.reverseActive) {
     result = result.split('').reverse().join('')
   }
 
-  if (params.scrambleMode) {
+  if (params?.scrambleMode) {
     result = scrambleWord(result, params.scrambleMode === 2)
   }
 
-  if (params.garbleActive && params.garbleRate) {
+  // 遗物乱码优先于 boss 乱码（替换不叠加）
+  if (_relicGarbleActive) {
+    result = garbleWord(result, RELIC_GARBLE_RATE, RELIC_GARBLE_CHARS)
+  } else if (params?.garbleActive && params.garbleRate) {
     result = garbleWord(result, params.garbleRate)
   }
 

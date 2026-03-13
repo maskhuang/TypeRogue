@@ -3,7 +3,7 @@
 // 6 种位置关系查询：相邻/同行/同列/同手/同指/对称位
 // ============================================
 
-import { ADJACENT_KEYS, KEYBOARD_ROWS, KEYS } from '../core/constants';
+import { ADJACENT_KEYS, KEYBOARD_ROWS, KEYS, PUNCTUATION_KEYS } from '../core/constants';
 
 // === 位置关系枚举 ===
 export enum PositionRelation {
@@ -18,11 +18,15 @@ export enum PositionRelation {
 // === 逻辑列号（键在其行内的索引） ===
 const _COLUMN_MAP: Record<string, number> = {};
 KEYBOARD_ROWS.forEach(row => row.forEach((key, col) => { _COLUMN_MAP[key] = col; }));
+// 标点键列号（标点解放遗物）— ; 在 home row L 右侧, ,./在 bottom row M 右侧
+_COLUMN_MAP[';'] = 9; _COLUMN_MAP[','] = 7; _COLUMN_MAP['.'] = 8; _COLUMN_MAP['/'] = 9;
 export const COLUMN_MAP: Readonly<Record<string, number>> = Object.freeze(_COLUMN_MAP);
 
 // === 行号 ===
 const _ROW_MAP: Record<string, number> = {};
 KEYBOARD_ROWS.forEach((row, rowIdx) => row.forEach(key => { _ROW_MAP[key] = rowIdx; }));
+// 标点键行号（标点解放遗物）— ; 在 home row (1), ,./ 在 bottom row (2)
+_ROW_MAP[';'] = 1; _ROW_MAP[','] = 2; _ROW_MAP['.'] = 2; _ROW_MAP['/'] = 2;
 export const ROW_MAP: Readonly<Record<string, number>> = Object.freeze(_ROW_MAP);
 
 // === 手分配 ===
@@ -33,6 +37,8 @@ export const HAND_MAP: Record<string, 'left' | 'right'> = {
   y: 'right', u: 'right', i: 'right', o: 'right', p: 'right',
   h: 'right', j: 'right', k: 'right', l: 'right',
   n: 'right', m: 'right',
+  // 标点键（标点解放遗物）
+  ';': 'right', ',': 'right', '.': 'right', '/': 'right',
 };
 
 // === 手指分配（0-7，标准十指指法） ===
@@ -44,9 +50,9 @@ export const FINGER_MAP: Record<string, number> = {
   e: 2, d: 2, c: 2,
   r: 3, t: 3, f: 3, g: 3, v: 3, b: 3,
   y: 4, u: 4, h: 4, j: 4, n: 4, m: 4,
-  i: 5, k: 5,
-  o: 6, l: 6,
-  p: 7,
+  i: 5, k: 5, ',': 5,
+  o: 6, l: 6, '.': 6,
+  p: 7, ';': 7, '/': 7,
 };
 
 // === 对称位映射（双向，26 字母键中 11 对） ===
@@ -62,7 +68,11 @@ export const SYMMETRIC_PAIRS: Record<string, string> = {
   g: 'h', h: 'g',
   v: 'm', m: 'v',
   b: 'n', n: 'b',
-  // a, z, x, c: 无对称位（对应非字母键）
+  // 标点键对称位（标点解放遗物）
+  a: ';', ';': 'a',
+  z: '/', '/': 'z',
+  x: '.', '.': 'x',
+  c: ',', ',': 'c',
 };
 
 // === 关系判定函数 ===
@@ -117,6 +127,9 @@ const RELATION_CHECKERS: Record<PositionRelation, (a: string, b: string) => bool
   [PositionRelation.Symmetric]: isSymmetric,
 };
 
+// === 有效键集合（26 字母键 + 4 标点键） ===
+const VALID_KEYS = new Set([...KEYS, ...PUNCTUATION_KEYS]);
+
 // === 核心查询 API ===
 
 /** 检查两键之间是否存在指定关系 */
@@ -128,7 +141,7 @@ export function hasRelation(keyA: string, keyB: string, relation: PositionRelati
 export function getRelations(keyA: string, keyB: string): PositionRelation[] {
   const a = normalize(keyA);
   const b = normalize(keyB);
-  if (a === b || !KEYS.includes(a) || !KEYS.includes(b)) return [];
+  if (a === b || !VALID_KEYS.has(a) || !VALID_KEYS.has(b)) return [];
   const result: PositionRelation[] = [];
   for (const relation of Object.values(PositionRelation)) {
     if (RELATION_CHECKERS[relation](a, b)) {
@@ -174,7 +187,8 @@ export function isInPair(key: string, bindings: Map<string, string>): boolean {
 /** 返回与指定键有某种关系的所有键 */
 export function getKeysWithRelation(key: string, relation: PositionRelation): string[] {
   const k = normalize(key);
-  if (!KEYS.includes(k)) return [];
+  if (!VALID_KEYS.has(k)) return [];
   const checker = RELATION_CHECKERS[relation];
-  return KEYS.filter(other => other !== k && checker(k, other));
+  const allKeys = [...VALID_KEYS];
+  return allKeys.filter(other => other !== k && checker(k, other));
 }

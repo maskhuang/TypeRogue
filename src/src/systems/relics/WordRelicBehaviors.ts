@@ -85,6 +85,15 @@ export function consumeWordDealerFreeRefresh(): boolean {
   return true
 }
 
+// === 标点解放 (punctuation_liberation) ===
+
+/**
+ * 标点解放遗物是否激活
+ */
+export function isPunctuationRelicActive(): boolean {
+  return state.player.relics.has('punctuation_liberation')
+}
+
 // === Run 级别重置 ===
 
 /**
@@ -102,5 +111,8 @@ export function resetWordRelicRunState(): void {
 export function initWordRelicBehaviors(): void {
   registerRelicBehavior('word_dealer', (_relicId, _context) => {
     // 实际逻辑在 setWordDealerFlag() / consumeWordDealerFreeRefresh() 中
+  })
+  registerRelicBehavior('punctuation_liberation', (_relicId, _context) => {
+    // 乱码逻辑在 bossModifiers.ts / battle.ts 中，绑定逻辑在 shop.ts 中
   })
 }
