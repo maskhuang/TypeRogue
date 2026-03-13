@@ -631,31 +631,6 @@ function showGoldReward(onComplete: () => void): void {
   const relicGold = Math.floor(goldRelicResult.effects.gold);
   const totalGold = baseGold + skillGold + relicGold;
 
-  // T2 遗物状态更新：entropy 衰减 + schrodinger_dice 翻倍/消失 (Story 28.2+28.3)
-  if (state.player.relics.has('entropy')) {
-    const curr = state.player.relicStates['entropy'] ?? 30;
-    const next = curr - 5;
-    if (next <= 0) {
-      state.player.relics.delete('entropy');
-      delete state.player.relicStates['entropy'];
-      showFeedback(t('battle.entropy'), '#999');
-    } else {
-      state.player.relicStates['entropy'] = next;
-    }
-  }
-  if (state.player.relics.has('schrodinger_dice')) {
-    if (random() < 0.5) {
-      // 50% 翻倍
-      const curr = state.player.relicStates['schrodinger_dice'] ?? 1.25;
-      state.player.relicStates['schrodinger_dice'] = curr * 2;
-      showFeedback(t('battle.dice_double', { value: (curr * 2).toFixed(2) }), '#ffdd00');
-    } else {
-      // 50% 消失
-      state.player.relics.delete('schrodinger_dice');
-      delete state.player.relicStates['schrodinger_dice'];
-      showFeedback(t('battle.dice_gone'), '#999');
-    }
-  }
 
   // 设置数值
   const goldSkillEl = document.getElementById('gold-skill');
@@ -870,10 +845,6 @@ export async function startLevel(): Promise<void> {
     // T2 遗物事件钩子：幕切换时触发 on_act_end（跳过首次进入，lastAct=0 表示无前序幕）(Story 28.1)
     if (lastAct > 0) {
       resolveRelicEffectsWithBehaviors('on_act_end', { endedAct: lastAct });
-      // T2 campfire_ember 幕重置：购买计数归零 (Story 28.2)
-      if (state.player.relics.has('campfire_ember')) {
-        state.player.relicStates['campfire_ember'] = 0;
-      }
     }
     await showActTransition(currentAct);
     lastAct = currentAct;
@@ -1057,21 +1028,6 @@ export async function startLevel(): Promise<void> {
   startTimer();
   startScoreRoller(); // Story 31.4: 分数滚轮动画
 
-  // 时间遗物加成（在 startTimer 设置初始时间后应用，如 doomsday +30 秒）
-  if (startRelicResult.effects.time > 0) {
-    state.time += startRelicResult.effects.time;
-  }
-
-  // 时间窃贼代价：基础时间减半（在遗物加成之后应用）
-  if (queryRelicFlag('time_thief') === true) {
-    state.time = Math.floor(state.time / 2);
-  }
-
-  // 末日倒计时代价：每过一关基础时间 -5 秒（第1关不扣）
-  const doomPenalty = queryRelicFlag('doomsday') as number;
-  if (doomPenalty > 0) {
-    state.time = Math.max(5, state.time - doomPenalty);
-  }
 
 }
 

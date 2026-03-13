@@ -124,13 +124,11 @@ describe('ShopScene', () => {
       expect(skills.length).toBeLessThanOrEqual(4)
     })
 
-    it('should generate relic items based on config', () => {
+    it('should generate 0 relic items (TEMP_RELICS is empty)', () => {
       scene.onEnter()
       const state = scene.getShopState()
       const relics = state.items.filter(item => item.type === 'relic')
-      // 使用固定配置应生成 1-2 个遗物
-      expect(relics.length).toBeGreaterThanOrEqual(1)
-      expect(relics.length).toBeLessThanOrEqual(2)
+      expect(relics.length).toBe(0)
     })
 
     it('should create UI components', () => {
@@ -295,20 +293,14 @@ describe('ShopScene', () => {
       expect(runState.getSkillLevel(skillItem.id)).toBe(1)
     })
 
-    it('should add relic to inventory after purchase', () => {
+    it('should add relic to inventory via addRelic', () => {
       runState = createMockRunState(200)
-      scene = new ShopScene(runState, 1, FIXED_SHOP_CONFIG)
-      scene.onEnter()
-
-      const state = scene.getShopState()
-      const relicItem = state.items.find(i => i.type === 'relic')!
-
-      // 选中遗物商品
-      const relicIndex = state.items.indexOf(relicItem)
-      scene.setSelectedIndex(relicIndex)
-      scene.purchaseSelected()
-
-      expect(runState.hasRelic(relicItem.id)).toBe(true)
+      // TEMP_RELICS 已为空，直接测试 addRelic 行为
+      const result = runState.addRelic('test_relic')
+      expect(result).toBe(true)
+      expect(runState.hasRelic('test_relic')).toBe(true)
+      // 重复添加应失败
+      expect(runState.addRelic('test_relic')).toBe(false)
     })
 
     it('should mark item as purchased', () => {
@@ -408,19 +400,19 @@ describe('ShopScene', () => {
 
     it('should not allow relic purchase if already owned', () => {
       runState = createMockRunState(500)
-      runState.relics.add('lucky_coin')
+      runState.relics.add('test_relic')
       scene = new ShopScene(runState, 1, FIXED_SHOP_CONFIG)
       scene.onEnter()
 
-      // 强制设置遗物商品为已拥有
+      // 手动注入遗物商品（TEMP_RELICS 已为空）
       const state = scene.getShopState()
-      const relicIndex = state.items.findIndex(i => i.type === 'relic')
-      state.items[relicIndex] = {
-        id: 'lucky_coin',
+      state.items.push({
+        id: 'test_relic',
         type: 'relic',
         basePrice: 40,
         purchased: false
-      }
+      })
+      const relicIndex = state.items.length - 1
       scene.setSelectedIndex(relicIndex)
 
       const result = scene.purchaseSelected()

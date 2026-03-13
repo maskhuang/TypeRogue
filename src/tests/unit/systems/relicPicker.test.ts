@@ -16,6 +16,8 @@ import type { RelicWeights } from '../../../src/systems/relicPicker'
 describe('加权遗物候选生成 (Q2)', () => {
   beforeEach(() => {
     resetState()
+    // 所有遗物都是职业专属，需要设置职业才能获取候选
+    state.classId = 'wordsmith'
   })
 
   it('返回至多 3 个候选', () => {
@@ -26,26 +28,27 @@ describe('加权遗物候选生成 (Q2)', () => {
 
   it('不返回已拥有遗物', () => {
     const allIds = getAllRelicIds()
-    // 拥有前 5 个
-    allIds.slice(0, 5).forEach(id => state.player.relics.add(id))
+    // 拥有前 3 个
+    allIds.slice(0, 3).forEach(id => state.player.relics.add(id))
     const candidates = generateRelicCandidates()
     for (const c of candidates) {
       expect(state.player.relics.has(c)).toBe(false)
     }
   })
 
-  it('legendary:100 只返回传说遗物', () => {
+  it('bossDrop 只返回传说或史诗遗物', () => {
     const candidates = generateRelicCandidates(RELIC_WEIGHT_PRESETS.bossDrop)
     for (const c of candidates) {
-      expect(RELICS[c].rarity).toBe('legendary')
+      expect(['epic', 'legendary']).toContain(RELICS[c].rarity)
     }
   })
 
   it('common:0 不返回普通遗物', () => {
-    const weights: RelicWeights = { common: 0, rare: 60, legendary: 40 }
+    const weights: RelicWeights = { common: 0, rare: 60, epic: 20, legendary: 40 }
     // 多次运行确保无 common
     for (let i = 0; i < 20; i++) {
       resetState()
+      state.classId = 'wordsmith'
       const candidates = generateRelicCandidates(weights)
       for (const c of candidates) {
         expect(RELICS[c].rarity).not.toBe('common')
@@ -56,6 +59,7 @@ describe('加权遗物候选生成 (Q2)', () => {
   it('eliteDrop 权重不返回普通遗物', () => {
     for (let i = 0; i < 20; i++) {
       resetState()
+      state.classId = 'wordsmith'
       const candidates = generateRelicCandidates(RELIC_WEIGHT_PRESETS.eliteDrop)
       for (const c of candidates) {
         expect(RELICS[c].rarity).not.toBe('common')
@@ -69,16 +73,23 @@ describe('加权遗物候选生成 (Q2)', () => {
   })
 
   it('池不足时返回少于 3', () => {
-    const allIds = getAllRelicIds()
-    // 拥有除 1 个以外的所有遗物
-    allIds.slice(1).forEach(id => state.player.relics.add(id))
+    // 造词师有 5 个专属遗物，拥有 4 个后只剩 1 个
+    const wordsmithRelics = getAllRelicIds().filter(id =>
+      ['apprentice_notes', 'masters_lexicon', 'perpetual_queue', 'word_scissors', 'resonance_mold'].includes(id)
+    )
+    wordsmithRelics.slice(1).forEach(id => state.player.relics.add(id))
     const candidates = generateRelicCandidates()
     expect(candidates.length).toBe(1)
-    expect(candidates[0]).toBe(allIds[0])
   })
 
   it('全部拥有时返回空数组', () => {
     getAllRelicIds().forEach(id => state.player.relics.add(id))
+    const candidates = generateRelicCandidates()
+    expect(candidates.length).toBe(0)
+  })
+
+  it('无职业时全部遗物被过滤（均为职业专属）', () => {
+    state.classId = 'none'
     const candidates = generateRelicCandidates()
     expect(candidates.length).toBe(0)
   })

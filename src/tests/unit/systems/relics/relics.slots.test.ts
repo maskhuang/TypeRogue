@@ -61,13 +61,13 @@ describe('遗物槽位系统 (Story 27.3)', () => {
   // === addRelicWithCapacity ===
   describe('addRelicWithCapacity', () => {
     it('空槽位添加成功 → true', () => {
-      expect(addRelicWithCapacity('lucky_coin')).toBe(true)
-      expect(hasRelic('lucky_coin')).toBe(true)
+      expect(addRelicWithCapacity('apprentice_notes')).toBe(true)
+      expect(hasRelic('apprentice_notes')).toBe(true)
     })
 
     it('重复添加 → false', () => {
-      addRelicWithCapacity('lucky_coin')
-      expect(addRelicWithCapacity('lucky_coin')).toBe(false)
+      addRelicWithCapacity('apprentice_notes')
+      expect(addRelicWithCapacity('apprentice_notes')).toBe(false)
     })
 
     it('满 10 个后添加失败 → false', () => {
@@ -93,9 +93,9 @@ describe('遗物槽位系统 (Story 27.3)', () => {
   // === removeRelic ===
   describe('removeRelic', () => {
     it('移除已拥有的遗物', () => {
-      addRelicWithCapacity('lucky_coin')
-      removeRelic('lucky_coin')
-      expect(hasRelic('lucky_coin')).toBe(false)
+      addRelicWithCapacity('apprentice_notes')
+      removeRelic('apprentice_notes')
+      expect(hasRelic('apprentice_notes')).toBe(false)
       expect(state.player.relics.size).toBe(0)
     })
 
@@ -107,17 +107,17 @@ describe('遗物槽位系统 (Story 27.3)', () => {
   // === replaceRelic ===
   describe('replaceRelic', () => {
     it('替换遗物 — 旧的消失新的出现', () => {
-      addRelicWithCapacity('lucky_coin')
-      replaceRelic('lucky_coin', 'phoenix_feather')
-      expect(hasRelic('lucky_coin')).toBe(false)
-      expect(hasRelic('phoenix_feather')).toBe(true)
+      addRelicWithCapacity('apprentice_notes')
+      replaceRelic('apprentice_notes', 'primal_mutant')
+      expect(hasRelic('apprentice_notes')).toBe(false)
+      expect(hasRelic('primal_mutant')).toBe(true)
     })
 
     it('替换返还金币 = floor(basePrice * 0.5)', () => {
-      addRelicWithCapacity('lucky_coin')
+      addRelicWithCapacity('apprentice_notes')
       const oldGold = state.gold
-      const sellGold = replaceRelic('lucky_coin', 'phoenix_feather')
-      const expectedGold = Math.floor(RELICS['lucky_coin'].basePrice * 0.5)
+      const sellGold = replaceRelic('apprentice_notes', 'primal_mutant')
+      const expectedGold = Math.floor(RELICS['apprentice_notes'].basePrice * 0.5)
       expect(sellGold).toBe(expectedGold)
       expect(state.gold).toBe(oldGold + expectedGold)
     })
@@ -135,9 +135,9 @@ describe('遗物槽位系统 (Story 27.3)', () => {
     })
 
     it('替换不存在的旧遗物 → 返回 0 金币，仍添加新遗物', () => {
-      const gold = replaceRelic('nonexistent', 'lucky_coin')
+      const gold = replaceRelic('nonexistent', 'apprentice_notes')
       expect(gold).toBe(0)
-      expect(hasRelic('lucky_coin')).toBe(true)
+      expect(hasRelic('apprentice_notes')).toBe(true)
     })
   })
 
@@ -149,6 +149,7 @@ describe('遗物槽位系统 (Story 27.3)', () => {
         'apprentice_notes', 'primal_mutant',
         'masters_lexicon', 'resonance_mold',
         'ultimate_mutant_strain', 'fittest_survivors',
+        'chaos_seed', 'word_scissors',
       ])
       for (const relic of Object.values(RELICS)) {
         if (zeroPriceRelics.has(relic.id)) {

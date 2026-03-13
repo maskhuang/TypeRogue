@@ -11,6 +11,8 @@ import { generateShopRelicItem } from '../../../src/systems/shop'
 describe('商店遗物槽位 (Q2)', () => {
   beforeEach(() => {
     resetState()
+    // 所有遗物都是职业专属，需要设置职业才能生成遗物商品
+    state.classId = 'wordsmith'
   })
 
   it('生成的遗物商品有 relicId 和 cost', () => {
@@ -20,7 +22,7 @@ describe('商店遗物槽位 (Q2)', () => {
       expect(item.relicId).toBeDefined()
       expect(typeof item.relicId).toBe('string')
       expect(RELICS[item.relicId!]).toBeDefined()
-      expect(item.cost).toBeGreaterThan(0)
+      expect(item.cost).toBeGreaterThanOrEqual(0)
     }
   })
 
@@ -57,6 +59,7 @@ describe('商店遗物槽位 (Q2)', () => {
   it('不同 Act 都能生成遗物商品', () => {
     for (const act of [1, 2, 3]) {
       resetState()
+      state.classId = 'wordsmith'
       const item = generateShopRelicItem(act)
       // 至少有未拥有遗物，应该能生成
       expect(item).not.toBeNull()

@@ -51,17 +51,6 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
       milestone: { act: 3, minStages: 8 }
     }
   },
-  {
-    id: 'milestone_relic_act1',
-    type: 'relic',
-    targetId: 'phoenix_feather',
-    name: '连击守护者',
-    description: '首次通关 Act 1',
-    condition: {
-      type: 'milestone',
-      milestone: { act: 1, minStages: 3 }
-    }
-  },
 
   // ===========================================
   // Build 成就解锁 (特定技能组合) - AC: #3
@@ -122,17 +111,6 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     condition: {
       type: 'stats',
       stats: { field: 'victories', threshold: 5 }
-    }
-  },
-  {
-    id: 'stats_highscore',
-    type: 'relic',
-    targetId: 'overkill_blade',
-    name: '高分猎手',
-    description: '单局得分达到 50000',
-    condition: {
-      type: 'stats',
-      stats: { field: 'highestScore', threshold: 50000 }
     }
   },
   {

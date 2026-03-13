@@ -47,10 +47,7 @@ const TEMP_SKILLS: Record<string, { name: string; description: string; rarity: s
   'prod_boost': { name: '增幅', description: '倍率+0.2', rarity: 'common' },
   'prod_freeze': { name: '冻结', description: '时间+2', rarity: 'common' },
 }
-const TEMP_RELICS: Record<string, { name: string; description: string; rarity: string }> = {
-  'lucky_coin': { name: '幸运硬币', description: '商店价格降低 10%', rarity: 'common' },
-  'phoenix_feather': { name: '凤凰羽毛', description: '打错时 30% 概率保护连击', rarity: 'rare' }
-}
+const TEMP_RELICS: Record<string, { name: string; description: string; rarity: string }> = {}
 
 /**
  * RunState 接口（依赖注入）

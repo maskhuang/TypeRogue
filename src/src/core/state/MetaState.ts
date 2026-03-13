@@ -105,9 +105,7 @@ const DEFAULT_UNLOCKED_SKILLS = [
  * 默认解锁的遗物
  * 参考 gdd.md: 新手期解锁基础遗物
  */
-const DEFAULT_UNLOCKED_RELICS = [
-  'lucky_coin',       // 幸运硬币
-]
+const DEFAULT_UNLOCKED_RELICS: string[] = []
 
 /**
  * 默认解锁的职业

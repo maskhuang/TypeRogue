@@ -32,8 +32,8 @@ describe('MetaState', () => {
       expect(metaState.isSkillUnlocked('core_basic')).toBe(true)
     })
 
-    it('应包含默认解锁的遗物 (AC: #2, #11)', () => {
-      expect(metaState.isRelicUnlocked('lucky_coin')).toBe(true)
+    it('默认无解锁遗物 (AC: #2, #11)', () => {
+      expect(metaState.getUnlockedRelics()).toHaveLength(0)
     })
 
     it('未知技能应返回未解锁 (AC: #1)', () => {
@@ -151,8 +151,8 @@ describe('MetaState', () => {
 
     it('应能获取所有已解锁遗物列表 (AC: #9)', () => {
       const relics = metaState.getUnlockedRelics()
-      expect(relics).toContain('lucky_coin')
       expect(Array.isArray(relics)).toBe(true)
+      expect(relics).toHaveLength(0)
     })
 
     it('解锁新遗物后列表应更新', () => {
@@ -161,13 +161,7 @@ describe('MetaState', () => {
       expect(relics).toContain('new_relic')
     })
 
-    it('默认已解锁的遗物重复解锁返回 false', () => {
-      const result = metaState.unlockRelic('lucky_coin')
-      expect(result).toBe(false)
-    })
-
     it('isRelicUnlocked 应正确检查状态 (AC: #9)', () => {
-      expect(metaState.isRelicUnlocked('lucky_coin')).toBe(true)
       expect(metaState.isRelicUnlocked('nonexistent')).toBe(false)
       metaState.unlockRelic('test_relic')
       expect(metaState.isRelicUnlocked('test_relic')).toBe(true)
@@ -467,7 +461,6 @@ describe('MetaState', () => {
       const json = metaState.serialize()
       const data = JSON.parse(json)
       expect(data.unlockedRelics).toContain('test_relic')
-      expect(data.unlockedRelics).toContain('lucky_coin')
     })
 
     it('序列化应包含解锁职业 (Story 32.1)', () => {
@@ -552,11 +545,11 @@ describe('MetaState', () => {
       expect(metaState.isSkillUnlocked('score_boost')).toBe(true)
     })
 
-    it('reset 应恢复默认解锁遗物', () => {
+    it('reset 应恢复默认解锁遗物（无默认遗物）', () => {
       metaState.unlockRelic('extra_relic')
       metaState.reset()
       expect(metaState.isRelicUnlocked('extra_relic')).toBe(false)
-      expect(metaState.isRelicUnlocked('lucky_coin')).toBe(true)
+      expect(metaState.getUnlockedRelics()).toHaveLength(0)
     })
 
     it('reset 应恢复默认解锁职业 (Story 32.1)', () => {

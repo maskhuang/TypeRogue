@@ -105,8 +105,7 @@ export function generateAffixShopItem(
 ): ShopItem {
   const resourcePool = getAvailableResources(state.classId);
   const resource = options?.resource ?? resourcePool[Math.floor(random() * resourcePool.length)];
-  // pure_heart 白装限制：强制 rarity=0
-  const whiteOnly = queryRelicFlag('white_only') as boolean;
+  const whiteOnly = false;
   // Act 稀有度上限（仅影响随机掷骰，不影响外部指定的 rarity）
   const actMaxRarity = options?.maxRarity ?? getActMaxRarity();
   let rarity: SkillRarity | undefined;
@@ -485,9 +484,7 @@ function updateGoldDisplay(): void {
 
 // === 价格调整 ===
 function getAdjustedPrice(baseCost: number): number {
-  const discount = (queryRelicFlag('price_discount') as number) || 0;
-  const greedyMult = (queryRelicFlag('greedy_hand') as number) || 1;
-  return Math.ceil(baseCost * (1 - discount) * greedyMult);
+  return baseCost;
 }
 
 // === Fisher-Yates shuffle ===
@@ -505,7 +502,7 @@ function shuffleArray<T>(arr: T[]): T[] {
 function generateShopItems(count: number): ShopItem[] {
   if (count <= 0) return [];
 
-  const isSilenced = queryRelicFlag('silence_vow') === true;
+  const isSilenced = false;
   const items: ShopItem[] = [];
   let nextId = Date.now();
 
@@ -1088,14 +1085,8 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
       showFeedback(t('shop.skill_count_full'), '#ff6b6b');
       return null;
     }
-    // pure_heart 白装限制：禁止购买非白装新技能
-    if (queryRelicFlag('white_only') === true && item.affixSkill && item.affixSkill.rarity > 0) {
-      showFeedback(t('shop.white_only'), '#ff6b6b');
-      return null;
-    }
   } else {
-    // 升级时检查等级上限（keyboard_flood max_skill_level=1 等）
-    const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
+    const maxSkillLevel = Infinity;
     const currentLevel = state.player.skills.get(skillId)?.level ?? 0;
     if (maxSkillLevel !== Infinity && currentLevel >= maxSkillLevel) {
       showFeedback(t('shop.level_capped'), '#ff6b6b');
@@ -1140,10 +1131,6 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
     purchasedSkillId: skillId,
     isUpgrade: !isNew,
   });
-  // T2 campfire_ember 购买计数递增 (Story 28.2)
-  if (state.player.relics.has('campfire_ember')) {
-    state.player.relicStates['campfire_ember'] = (state.player.relicStates['campfire_ember'] ?? 0) + 1;
-  }
 
   return { skillId, isNew };
 }
@@ -1426,9 +1413,6 @@ function applyAffixRandomEnchantment(
     enchantedSkillId: skillId,
     enchantmentId: chosen,
   });
-  if (state.player.relics.has('star_chart')) {
-    state.player.relicStates['star_chart'] = (state.player.relicStates['star_chart'] ?? 0) + 1;
-  }
   playSound('buy');
 }
 
@@ -1965,7 +1949,6 @@ function registerShopDropZones(): void {
       key,
       accepts: (payload: DragPayload) => {
         if (slot.classList.contains('freq-locked')) return false;
-        if (queryRelicFlag('silence_vow') === true) return false;
         if (payload.type === 'shop-item') {
           // 只接受技能类商品
           const item = state.shop.items[payload.itemIndex ?? -1];

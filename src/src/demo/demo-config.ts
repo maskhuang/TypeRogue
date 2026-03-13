@@ -44,17 +44,8 @@ export const DEMO_CONVERTER_IDS = [
   'conv_score_mult_add',  // 乘势 — score → mult
 ]
 
-// === Demo 遗物池 ===
-export const DEMO_RELIC_IDS = [
-  'lucky_coin',      // 幸运硬币 — 商店折扣
-  'phoenix_feather', // 凤凰羽毛 — 容错
-  'perfect_rhythm',  // 完美韵律 — 奖励完美打字
-  'forge_heart',     // 熔炉之心 — 生产→转化 combo
-  'cornucopia',      // 聚宝盆 — 开局送金
-  'spark_core',      // 点火核心 — 多生产者奖励
-  'campfire_ember',  // 篝火余烬 — 购买技能累积奖励
-  'ramen',           // 拉面 — 打字快则强
-]
+// === Demo 遗物池（职业专属遗物在职业选择时发放） ===
+export const DEMO_RELIC_IDS: string[] = []
 
 // === 第一关预设绑定 ===
 export const DEMO_STARTER_SKILLS: Array<{ skillId: string; key: string }> = [

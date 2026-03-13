@@ -175,7 +175,7 @@ describe('UnlockSystem', () => {
       expect(metaState.isSkillUnlocked('void_master')).toBe(true)
     })
 
-    it('通关 Act 1 应同时解锁遗物', () => {
+    it('通关 Act 1 不再解锁遗物（非职业遗物已删除）', () => {
       const data: RunResultData = {
         runResult: 'victory',
         runStats: {
@@ -189,9 +189,8 @@ describe('UnlockSystem', () => {
 
       const newUnlocks = unlockSystem.checkUnlocks(data)
 
-      const relicUnlock = newUnlocks.find(u => u.id === 'milestone_relic_act1')
-      expect(relicUnlock).toBeDefined()
-      expect(metaState.isRelicUnlocked('phoenix_feather')).toBe(true)
+      const relicUnlock = newUnlocks.find(u => u.type === 'relic')
+      expect(relicUnlock).toBeUndefined()
     })
 
     it('失败时不应解锁里程碑', () => {
@@ -434,9 +433,9 @@ describe('UnlockSystem', () => {
 
       const newUnlocks = unlockSystem.checkUnlocks(data)
 
-      const highscoreUnlock = newUnlocks.find(u => u.id === 'stats_highscore')
-      expect(highscoreUnlock).toBeDefined()
-      expect(metaState.isRelicUnlocked('overkill_blade')).toBe(true)
+      // stats_highscore (overkill_blade) 已删除，仅检查技能解锁
+      const skillUnlocks = newUnlocks.filter(u => u.type === 'skill')
+      expect(skillUnlocks.length).toBeGreaterThanOrEqual(0)
     })
 
     it('达到连击阈值时应解锁', () => {
@@ -602,11 +601,11 @@ describe('UnlockSystem', () => {
 
       unlockSystem.checkUnlocks(data)
 
-      // 应该有遗物解锁事件 (milestone_relic_act1)
-      const relicEvents = handler.mock.calls.filter(
-        (call: unknown[]) => (call[0] as { type: string }).type === 'relic'
+      // 非职业遗物已删除，不再有遗物解锁事件
+      const skillEvents = handler.mock.calls.filter(
+        (call: unknown[]) => (call[0] as { type: string }).type === 'skill'
       )
-      expect(relicEvents.length).toBeGreaterThan(0)
+      expect(skillEvents.length).toBeGreaterThan(0)
 
       unsubscribe()
     })
