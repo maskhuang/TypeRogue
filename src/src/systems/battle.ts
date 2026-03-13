@@ -32,6 +32,7 @@ import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmort
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing } from './relics/SkillRelicBehaviors';
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors } from './relics/EnchantmentRelicBehaviors';
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, incrementStormWordCount, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
+import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -249,6 +250,8 @@ export function initInput(): void {
   initEnchantmentRelicBehaviors();
   // Story 36.6: 注册拓扑子系统遗物行为
   initTopologyRelicBehaviors();
+  // Story 36.7: 注册单词子系统遗物行为
+  initWordRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
 }
@@ -630,6 +633,21 @@ function completeWord(): void {
   }
   if (stormTargets.length > 0) {
     showFeedback(`⛈️ ×${stormTargets.length}`, '#aa88ff');
+  }
+
+  // Story 36.7: 词汇收藏 — 首次完成的单词+3金币
+  const collectionGold = checkWordCollection(state.player.word);
+  if (collectionGold > 0) {
+    state.gold += collectionGold;
+    showFeedback(`📚 +${collectionGold}💰`, '#ffe66d');
+  }
+
+  // Story 36.7: 长词达人 — 6+字母单词完成时+1s
+  const longWordTime = checkLongWordMaster(state.player.word.length);
+  if (longWordTime > 0) {
+    state.time += longWordTime;
+    showFeedback(`📏 +${longWordTime}秒`, '#00ff88');
+    bumpTimer();
   }
 
   // 词语完成 - 所有字母一起弹跳

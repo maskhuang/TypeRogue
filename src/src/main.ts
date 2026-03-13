@@ -14,6 +14,7 @@ import { MetaState } from './core/state/MetaState';
 import { initLeaderboardDisplay, renderLeaderboard } from './ui/leaderboardDisplay';
 import { eventBus } from './core/events/EventBus';
 import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode } from './core/seededRandom';
+import { resetWordRelicRunState } from './systems/relics/WordRelicBehaviors';
 import { showClassPicker } from './systems/classes/ClassPicker';
 import { saveManager } from './core/save/SaveManager';
 import {
@@ -71,6 +72,9 @@ async function init(): Promise<void> {
     state.classId = 'none';
     state.gameMode = 'normal';
     state.dailySeed = null;
+
+    // Story 36.7: 重置单词遗物 Run 级别状态
+    resetWordRelicRunState();
 
     // 初始词库
     state.player.wordDeck = getStarterWords();
@@ -154,6 +158,9 @@ async function init(): Promise<void> {
     state.gameMode = 'normal';
     state.dailySeed = null;
   }
+
+  // Story 36.7: 重置单词遗物 Run 级别状态（词汇收藏 Set）
+  resetWordRelicRunState();
 
   // 初始词库（必须在种子设置之后，确保每日模式确定性）
   state.player.wordDeck = getStarterWords();

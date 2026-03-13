@@ -30,6 +30,7 @@ import { calculateLetterFrequency, letterFrequencyToScore } from './letters/Lett
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI, showRowMedalSelection } from './relicPicker';
+import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
 import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
@@ -1291,13 +1292,18 @@ function checkPendingEnchantments(): void {
 
 // === 刷新商店 ===
 function refreshShop(): void {
-  const cost = (state.shop.refreshCount + 1) * 5;
-  if (state.gold < cost) {
+  let cost = (state.shop.refreshCount + 1) * 5;
+  // Story 36.7: 词语经销商 — 消费免费刷新 flag
+  if (consumeWordDealerFreeRefresh()) {
+    cost = 0;
+    showFeedback('🤑 免费刷新！', '#ffe66d');
+  }
+  if (cost > 0 && state.gold < cost) {
     showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
   state.gold -= cost;
-  state.shop.refreshCount++;
+  if (cost > 0) state.shop.refreshCount++;
   updateGoldDisplay();
   playSound('buy');
 
@@ -1342,11 +1348,19 @@ export function sellSkill(skillId: string): void {
 // === 卖出词语 ===
 export function sellWord(index: number): void {
   if (index < 0 || index >= state.player.wordDeck.length) return;
+  if (state.player.wordDeck.length <= MIN_WORD_COUNT) {
+    showFeedback(t('shop.min_words', { count: MIN_WORD_COUNT }), '#ff6b6b');
+    return;
+  }
   const word = state.player.wordDeck[index];
   state.gold += 3;
   state.player.wordDeck.splice(index, 1);
   updateGoldDisplay();
   showFeedback(t('shop.sell_word', { word }), '#ffe66d');
+  // Story 36.7: 词语经销商 — 卖词后下次刷新免费
+  if (setWordDealerFlag()) {
+    showFeedback('🤑 下次刷新免费', '#88ddff');
+  }
   playSound('buy');
   renderUnifiedShop();
   renderBuildManager();
@@ -1946,6 +1960,10 @@ function removeWord(index: number): void {
   state.player.wordDeck.splice(index, 1);
   updateGoldDisplay();
   showFeedback(t('shop.sell_word_feedback', { word }), '#ffe66d');
+  // Story 36.7: 词语经销商 — 卖词后下次刷新免费
+  if (setWordDealerFlag()) {
+    showFeedback('🤑 下次刷新免费', '#88ddff');
+  }
   playSound('buy');
   renderUnifiedShop();
   renderWordInventory();

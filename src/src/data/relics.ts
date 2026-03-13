@@ -599,6 +599,69 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '风暴席卷整个键盘，每个键都不会被遗忘。',
   },
 
+  // ==================== 单词/词库系统遗物 (Story 36.7) ====================
+
+  word_collection: {
+    id: 'word_collection',
+    name: '词汇收藏',
+    icon: '📚',
+    description: '首次打出的单词+3金币。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'word',
+    flavor: '每个新词都是一枚珍贵的收藏。',
+  },
+
+  short_sprint: {
+    id: 'short_sprint',
+    name: '短词冲刺',
+    icon: '🏃',
+    description: '≤4字母单词技能产出+20%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'word',
+    flavor: '短小精悍，快步如飞。',
+  },
+
+  long_word_master: {
+    id: 'long_word_master',
+    name: '长词达人',
+    icon: '📏',
+    description: '6+字母单词完成时+1s。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'word',
+    flavor: '长词之路，时间为伴。',
+  },
+
+  word_dealer: {
+    id: 'word_dealer',
+    name: '词语经销商',
+    icon: '🤑',
+    description: '出售词语时，下次刷新免费。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'word',
+    behaviorType: 'word_dealer',
+    flavor: '卖出一个词，赚回一次机会。',
+  },
+
+  punctuation_liberation: {
+    id: 'punctuation_liberation',
+    name: '标点解放',
+    icon: '❗',
+    description: '解锁键盘标点键位。（即将推出）',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'word',
+    flavor: '标点符号也有成为技能载体的权利。',
+  },
+
 }
 
 // === Relic Modifier 工厂类型 ===
