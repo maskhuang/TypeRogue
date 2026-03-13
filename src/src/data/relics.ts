@@ -338,6 +338,71 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '一击之间，荣耀与毁灭并存。',
   },
 
+  // ==================== 通用遗物：连击/倍率系统 (Story 36.3) ====================
+
+  combo_buffer: {
+    id: 'combo_buffer',
+    name: '连击缓冲',
+    icon: '🛡️',
+    description: 'combo 中断时保留 30%（向下取整）。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'combo',
+    flavor: '缓冲之盾，守护连击的余韵。',
+  },
+
+  multiplier_prism: {
+    id: 'multiplier_prism',
+    name: '倍率棱镜',
+    icon: '🔷',
+    description: '倍率≥2.5时，技能产出+20%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'combo',
+    flavor: '棱镜折射，将倍率化为真实的力量。',
+  },
+
+  rhythm_doctor: {
+    id: 'rhythm_doctor',
+    name: '节奏医生',
+    icon: '⏱️',
+    description: '每 10 combo +1s 时间。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'combo',
+    flavor: '节奏即生命，连击即脉搏。',
+  },
+
+  combo_detonator: {
+    id: 'combo_detonator',
+    name: '连击引爆',
+    icon: '💣',
+    description: 'combo 达 15/30/45 时，随机触发 3 个装备技能。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'combo',
+    behaviorType: 'combo_detonator',
+    flavor: '连击蓄满，引爆一切。',
+  },
+
+  immortal_combo: {
+    id: 'immortal_combo',
+    name: '不灭连击',
+    icon: '🔗',
+    description: 'combo 永不中断（跨关不重置），但技能不再产出 multiplier 资源。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'combo',
+    behaviorType: 'immortal_combo',
+    category: 'risk-reward',
+    flavor: '永不断裂的锁链，代价是禁锢的力量。',
+  },
+
 }
 
 // === Relic Modifier 工厂类型 ===
@@ -348,7 +413,16 @@ export type RelicModifierFactory = (
 
 // === RELIC_MODIFIER_DEFS — 每个遗物的 Modifier 工厂 ===
 // 玻璃大炮得分×2 改为 completeWord() 中直接整词翻倍，不走管道
-export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {}
+export const RELIC_MODIFIER_DEFS: Record<string, RelicModifierFactory> = {
+  // Story 36.3: 倍率棱镜 — 倍率≥2.5 时技能产出+20%
+  multiplier_prism: (_relicId, _context) => [{
+    id: 'multiplier_prism:skill_output', source: 'multiplier_prism', sourceType: 'relic' as const,
+    layer: 'base' as const, trigger: 'on_skill_trigger' as const, phase: 'calculate' as const,
+    condition: { field: 'multiplier', op: '>=' as const, value: 2.5 },
+    effect: { type: 'score' as const, value: 0.2, stacking: 'additive' as const },
+    priority: 100,
+  }],
+}
 
 // === T4 限制 Flag 映射表（已清空，无 T4 遗物） ===
 export const RELIC_FLAGS: Record<string, string[]> = {}

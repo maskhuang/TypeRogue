@@ -28,6 +28,7 @@ import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInf
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
 import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, calculateRhythmAdapt, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors } from './relics/TypingRelicBehaviors';
+import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmortalCombo, shouldBlockMultiplierResource, syncRhythmDoctorMilestone, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { filterEnchantmentCandidates, getEnchantmentSlotCount, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -233,6 +234,8 @@ export function initInput(): void {
   inputHandler.enable();
   // Story 36.2: 注册打字子系统遗物行为
   initTypingRelicBehaviors();
+  // Story 36.3: 注册连击子系统遗物行为
+  initComboRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
 }
@@ -355,6 +358,27 @@ function playerCorrect(k: string): void {
     showFeedback('Echo!', '#4ecdc4');
   }
 
+  // Story 36.3: 节奏医生 — 每 10 combo +1s（在 combo++ 和 echo combo++ 之后检查）
+  const rhythmDocTime = checkRhythmDoctor(state.combo);
+  if (rhythmDocTime > 0) {
+    state.time += rhythmDocTime;
+    showFeedback(`⏱️ +${rhythmDocTime}s`, '#00ff88');
+    bumpTimer();
+  }
+
+  // Story 36.3: 连击引爆 — combo 达 15/30/45 时随机触发 3 个装备技能
+  const detonateCount = checkComboDetonator(state.combo);
+  if (detonateCount > 0) {
+    const skillIds = Array.from(state.affixSkills.keys());
+    const count = Math.min(detonateCount, skillIds.length);
+    // 随机选 count 个技能触发
+    const shuffled = [...skillIds].sort(() => random() - 0.5);
+    for (let i = 0; i < count; i++) {
+      triggerSkill(shuffled[i], k);
+    }
+    showFeedback(`💣 ×${count}`, '#ff6b00');
+  }
+
   spawnParticles(letter, shouldTrigger ? 10 : 5, '#4ecdc4');
   playSound('type');
 
@@ -430,20 +454,33 @@ function playerWrong(): void {
   // 标记词语不完美
   state.wordPerfect = false;
 
-  if (state.combo > 5) showFeedback(t('battle.combo_break', { combo: state.combo }), '#ff6b6b');
+  // Story 36.3: 不灭连击 — combo 永不中断
+  if (hasImmortalCombo()) {
+    // combo、skillMultBonus、multiplier 全部保持不变，但仍标记不完美
+  } else {
+    if (state.combo > 5) showFeedback(t('battle.combo_break', { combo: state.combo }), '#ff6b6b');
 
-  // 遗物 on_combo_break 管道解析（完美主义者断连击失去遗物）
-  resolveRelicEffectsWithBehaviors('on_combo_break', {}, {
-    onRemoveRelic: (relicId: string) => {
-      state.player.relics.delete(relicId);
-      showFeedback(t('battle.relic_break'), '#ff4444');
-    },
-  });
+    // 遗物 on_combo_break 管道解析（完美主义者断连击失去遗物）
+    resolveRelicEffectsWithBehaviors('on_combo_break', {}, {
+      onRemoveRelic: (relicId: string) => {
+        state.player.relics.delete(relicId);
+        showFeedback(t('battle.relic_break'), '#ff4444');
+      },
+    });
 
-  state.combo = 0;
-  state.lastMilestone = 0;
-  synergy.skillMultBonus = 0;
-  state.multiplier = state.player.baseMultiplier;
+    // Story 36.3: 连击缓冲 — 保留 30% combo
+    const buffered = calculateComboBuffer(state.combo);
+    state.combo = buffered;
+    state.lastMilestone = 0;
+    synergy.skillMultBonus = 0;
+    if (buffered > 0) {
+      state.multiplier = state.player.baseMultiplier + buffered * state.player.comboBonus;
+    } else {
+      state.multiplier = state.player.baseMultiplier;
+    }
+    // 同步节奏医生 milestone
+    syncRhythmDoctorMilestone(buffered);
+  }
 
   // Boss 修饰器：断连即扣（combo_punish）
   const modEffect = getActiveParams();
@@ -928,9 +965,12 @@ export async function startLevel(): Promise<void> {
   state.score = 0;
   scoreRoller.reset(0); // Review H1: 重置滚轮，避免从旧分数回滚
   lastScoreTier = ''; // 重置分数分级缓存 (Review M1)
-  state.combo = 0;
-  state.maxCombo = 0;
-  state.multiplier = state.player.baseMultiplier;
+  // Story 36.3: 不灭连击 — combo 跨关不重置
+  if (!hasImmortalCombo()) {
+    state.combo = 0;
+    state.maxCombo = 0;
+    state.multiplier = state.player.baseMultiplier;
+  }
   state.wordScore = 0;
   state.overkill = 0;
 
@@ -970,6 +1010,9 @@ export async function startLevel(): Promise<void> {
   // Story 36.2: 重置打字遗物关级别状态（已见单词等）
   resetTypingRelicState();
 
+  // Story 36.3: 重置连击遗物关级别状态（引爆阈值、节奏 milestone）
+  resetComboRelicState();
+
   // 初始化战后统计
   state.battleStats = createBattleStats();
 
@@ -990,8 +1033,11 @@ export async function startLevel(): Promise<void> {
   // 混沌种子：移除上一关的临时附魔
   removeChaosSeedEnchantments();
 
-  synergy.skillMultBonus = 0;
-  state.multiplier = state.player.baseMultiplier;
+  // Story 36.3: 不灭连击 — skillMultBonus 跨关不重置
+  if (!hasImmortalCombo()) {
+    synergy.skillMultBonus = 0;
+    state.multiplier = state.player.baseMultiplier;
+  }
 
   // 构建字频底分修饰器注册表（整场战斗缓存）
   const letterMods = getLetterScoreModifiers(state.player.wordDeck);

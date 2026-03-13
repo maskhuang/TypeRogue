@@ -17,8 +17,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 15 relics (10 class-exclusive + 5 typing)', () => {
-      expect(Object.keys(RELICS)).toHaveLength(15)
+    it('should contain 20 relics (10 class-exclusive + 5 typing + 5 combo)', () => {
+      expect(Object.keys(RELICS)).toHaveLength(20)
     })
 
     it('每个图标唯一', () => {
@@ -40,24 +40,24 @@ describe('Relics Data', () => {
   })
 
   describe('Rarity distribution', () => {
-    it('should have 4 common relics (2 starter + 2 typing)', () => {
+    it('should have 6 common relics (2 starter + 2 typing + 2 combo)', () => {
       const commons = getRelicsByRarity('common')
-      expect(commons).toHaveLength(4)
+      expect(commons).toHaveLength(6)
     })
 
-    it('should have 3 rare relics', () => {
+    it('should have 4 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(3)
+      expect(rares).toHaveLength(4)
     })
 
-    it('should have 3 epic relics', () => {
+    it('should have 4 epic relics', () => {
       const epics = getRelicsByRarity('epic')
-      expect(epics).toHaveLength(3)
+      expect(epics).toHaveLength(4)
     })
 
-    it('should have 5 legendary relics', () => {
+    it('should have 6 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(5)
+      expect(legendaries).toHaveLength(6)
     })
   })
 
@@ -121,7 +121,7 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(15)
+      expect(ids).toHaveLength(20)
       expect(ids).toContain('apprentice_notes')
       expect(ids).toContain('primal_mutant')
       expect(ids).toContain('typing_wax_seal')
@@ -131,7 +131,7 @@ describe('Relics Data', () => {
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(15)
+      expect(relics).toHaveLength(20)
     })
   })
 

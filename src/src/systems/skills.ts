@@ -15,6 +15,7 @@ import { eventBus } from '../core/events/EventBus';
 import { routeFragmentsToInventory } from './classes/FragmentQueue';
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
+import { shouldBlockMultiplierResource, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 
 
 // === 战后统计：记录技能触发 ===
@@ -164,8 +165,16 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     playerClass: state.classId,
   };
 
+  // Story 36.3: 倍率棱镜 + 不灭连击
+  const prismBonus = getMultiplierPrismBonus();
+
   const result = orchestrateAffixTrigger(skillId, triggerKey, ctx, {
     applyResource: (resource: ResourceType, amount: number) => {
+      // 不灭连击：阻止 multiplier 资源产出
+      if (resource === 'multiplier' && shouldBlockMultiplierResource()) return;
+      // 倍率棱镜：技能产出 +20%
+      if (prismBonus > 0) amount = amount * (1 + prismBonus);
+
       if (resource === 'base') {
         synergy.skillBaseScore += amount;
       } else if (resource === 'multiplier') {
@@ -192,7 +201,10 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
   for (const tr of result.triggerResults) {
     if (!tr.phase4) continue;
     const resource = tr.phase4.targetResource;
-    const amount = tr.output;
+    // 不灭连击：multiplier 资源已被阻止，跳过反馈
+    if (resource === 'multiplier' && shouldBlockMultiplierResource()) continue;
+    // 倍率棱镜：同步缩放反馈值
+    let amount = prismBonus > 0 ? tr.output * (1 + prismBonus) : tr.output;
     if (amount === 0) continue;
 
     const color = RESOURCE_COLORS[resource] || '#ffffff';

@@ -45,8 +45,9 @@ function addRelic(id: string): void {
 // RELIC_MODIFIER_DEFS 工厂单元测试
 // ========================================
 describe('RELIC_MODIFIER_DEFS 工厂', () => {
-  it('玻璃大炮得分×2 改为 completeWord 直接翻倍，不走管道', () => {
-    expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(0)
+  it('仅 multiplier_prism 使用管道（1 个工厂）', () => {
+    expect(Object.keys(RELIC_MODIFIER_DEFS)).toHaveLength(1)
+    expect(RELIC_MODIFIER_DEFS['multiplier_prism']).toBeDefined()
   })
 })
 
