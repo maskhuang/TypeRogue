@@ -27,6 +27,8 @@ import { showBossModifierPicker } from './bossModifierPicker';
 import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
+import { filterEnchantmentCandidates, getEnchantmentSlotCount, getTransmuteEligibleResources } from '../data/affixTrigger';
+import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
 import { initDemoTutorial } from '../demo/demo-tutorial';
 import { showDemoEndScreen } from '../demo/demo-end-screen';
@@ -44,11 +46,54 @@ function getCurrentEliteModifierMeta(): BossModifierMeta | undefined {
   return modId ? getBossModifierMeta(modId) : undefined;
 }
 
+// === 混沌种子临时附魔追踪 ===
+// Map<skillId, enchantmentId> — 记录本关由混沌种子添加的临时附魔
+let chaosSeedEnchantments: Map<string, string> = new Map();
+
+/** 混沌种子：给所有未附魔技能随机临时附魔 */
+export function applyChaosSeedEnchantments(): void {
+  if (!state.player.relics.has('chaos_seed')) return;
+  const playerClass = state.classId !== 'none' ? state.classId : undefined;
+  for (const [skillId, skill] of state.affixSkills) {
+    if (skill.enchantmentIds.length > 0) continue;
+    const candidates = filterEnchantmentsByClass(
+      filterEnchantmentCandidates(skill),
+      playerClass,
+    );
+    if (candidates.length === 0) continue;
+    const chosen = candidates[Math.floor(random() * candidates.length)];
+    skill.enchantmentIds.push(chosen);
+    // Transmute：随机分配目标资源
+    if (chosen === EnchantmentTypeEnum.Transmute) {
+      const eligible = getTransmuteEligibleResources(skill.resource, playerClass);
+      if (eligible.length > 0) {
+        skill.transmuteResource = eligible[Math.floor(random() * eligible.length)];
+      }
+    }
+    chaosSeedEnchantments.set(skillId, chosen);
+  }
+}
+
+/** 混沌种子：移除本关添加的临时附魔 */
+export function removeChaosSeedEnchantments(): void {
+  for (const [skillId, enchId] of chaosSeedEnchantments) {
+    const skill = state.affixSkills.get(skillId);
+    if (!skill) continue;
+    const idx = skill.enchantmentIds.indexOf(enchId);
+    if (idx >= 0) skill.enchantmentIds.splice(idx, 1);
+    // 清理 transmuteResource（如果是 Transmute 且无其他 Transmute 附魔）
+    if (enchId === (EnchantmentTypeEnum.Transmute as string) && !skill.enchantmentIds.includes(enchId)) {
+      skill.transmuteResource = undefined;
+    }
+  }
+  chaosSeedEnchantments.clear();
+}
+
 // === Act 过渡追踪 ===
 let lastAct = 0;
 
 /** 重置 Act 过渡追踪（新游戏时调用） */
-export function resetLastAct(): void { lastAct = 0; }
+export function resetLastAct(): void { lastAct = 0; chaosSeedEnchantments.clear(); }
 
 /**
  * Boss 胜利后的周目推进状态变更（提取为独立函数以便测试）
@@ -896,6 +941,9 @@ export async function startLevel(): Promise<void> {
     }
   }
 
+  // 混沌种子：移除上一关的临时附魔
+  removeChaosSeedEnchantments();
+
   synergy.skillMultBonus = 0;
   state.multiplier = state.player.baseMultiplier;
 
@@ -921,6 +969,9 @@ export async function startLevel(): Promise<void> {
   if (state.player.relics.has('perpetual_queue')) {
     routeFragmentsToInventory(getMaxQueueLength());
   }
+
+  // 混沌种子：给所有未附魔技能一个随机临时附魔
+  applyChaosSeedEnchantments();
 
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;

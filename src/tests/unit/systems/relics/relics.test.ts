@@ -15,8 +15,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 53 relics', () => {
-      expect(Object.keys(RELICS)).toHaveLength(52)
+    it('should contain 48 relics', () => {
+      expect(Object.keys(RELICS)).toHaveLength(48)
     })
 
     it('每个图标唯一', () => {
@@ -30,7 +30,7 @@ describe('Relics Data', () => {
         expect(relic.name).toBeTruthy()
         expect(relic.icon).toBeTruthy()
         expect(relic.description).toBeTruthy()
-        expect(['common', 'rare', 'legendary']).toContain(relic.rarity)
+        expect(['common', 'rare', 'epic', 'legendary']).toContain(relic.rarity)
         expect(relic.basePrice).toBeGreaterThanOrEqual(0)
         expect(Array.isArray(relic.effects)).toBe(true)
         // 行为型遗物（T3 retrigger 等）使用 RELIC_MODIFIER_DEFS 而非 effects
@@ -45,14 +45,19 @@ describe('Relics Data', () => {
       expect(commons).toHaveLength(6)
     })
 
-    it('should have 31 rare relics', () => {
+    it('should have 27 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(31)
+      expect(rares).toHaveLength(27)
     })
 
-    it('should have 16 legendary relics', () => {
+    it('should have 6 epic relics', () => {
+      const epics = getRelicsByRarity('epic')
+      expect(epics).toHaveLength(6)
+    })
+
+    it('should have 9 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(15)
+      expect(legendaries).toHaveLength(9)
     })
   })
 
@@ -109,6 +114,14 @@ describe('Relics Data', () => {
       }
     })
 
+    it('epic relics should cost 0 (reward-only) or 60-100 gold', () => {
+      const epics = getRelicsByRarity('epic')
+      for (const relic of epics) {
+        const valid = relic.basePrice === 0 || (relic.basePrice >= 60 && relic.basePrice <= 100)
+        expect(valid, `${relic.id} basePrice=${relic.basePrice}`).toBe(true)
+      }
+    })
+
     it('legendary relics should cost 0 (reward-only) or 70-125 gold', () => {
       const legendaries = getRelicsByRarity('legendary')
       for (const relic of legendaries) {
@@ -120,7 +133,7 @@ describe('Relics Data', () => {
 
   describe('getRelicsByRarity', () => {
     it('should return array of relics for given rarity', () => {
-      const rarities: RelicRarity[] = ['common', 'rare', 'legendary']
+      const rarities: RelicRarity[] = ['common', 'rare', 'epic', 'legendary']
       for (const rarity of rarities) {
         const relics = getRelicsByRarity(rarity)
         expect(Array.isArray(relics)).toBe(true)
@@ -161,7 +174,7 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(52)
+      expect(ids).toHaveLength(48)
       expect(ids).toContain('lucky_coin')
       expect(ids).toContain('perfectionist')
       expect(ids).toContain('glass_cannon')
@@ -181,7 +194,7 @@ describe('Relics Data', () => {
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(52)
+      expect(relics).toHaveLength(48)
     })
 
     it('should return RelicData objects', () => {

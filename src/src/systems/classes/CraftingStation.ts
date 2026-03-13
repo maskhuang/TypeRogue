@@ -355,17 +355,16 @@ function renderWordBuilder(container: HTMLElement, onGoldUpdate: () => void): vo
   container.appendChild(section);
 }
 
-// === 拆词剪刀：拆解已造词，返还 50% 碎片 ===
+// === 拆词剪刀：拆解已造词，返还所有碎片 ===
 export function deconstructWord(word: string, onGoldUpdate: () => void): boolean {
   const idx = state.craftedWords.indexOf(word);
   if (idx === -1) return false;
 
-  // 计算返还碎片（50% 向下取整）
+  // 计算返还碎片（100%）
   const { fragments } = calculateCraftCost(word.split(''));
   for (const [letter, count] of Object.entries(fragments)) {
-    const refund = Math.floor(count * 0.5);
-    if (refund > 0) {
-      state.fragmentInventory[letter] = (state.fragmentInventory[letter] || 0) + refund;
+    if (count > 0) {
+      state.fragmentInventory[letter] = (state.fragmentInventory[letter] || 0) + count;
     }
   }
 
@@ -408,7 +407,7 @@ function renderCraftedWordList(container: HTMLElement): void {
       const btn = document.createElement('button');
       btn.className = 'craft-deconstruct-btn';
       btn.textContent = '✂';
-      btn.title = '拆解（返还50%碎片）';
+      btn.title = '拆解（返还所有碎片）';
       btn.onclick = (e) => {
         e.stopPropagation();
         if (cachedGoldUpdate) {

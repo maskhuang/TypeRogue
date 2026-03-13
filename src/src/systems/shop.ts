@@ -2237,7 +2237,7 @@ function hideHeatmapTooltip(): void {
 }
 
 // === 遗物悬停提示 ===
-const RELIC_RARITY_COLORS: Record<string, string> = { common: '#aaa', rare: '#4488cc', legendary: '#ffd700' };
+const RELIC_RARITY_COLORS: Record<string, string> = { common: '#aaa', rare: '#4488cc', epic: '#9b59b6', legendary: '#ffd700' };
 function getRarityLabel(rarity: string): string {
   return t(`shop.rarity.${rarity}`);
 }

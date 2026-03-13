@@ -259,11 +259,11 @@ describe('无职业模式回归 (Task 3)', () => {
   it('generateRelicCandidates: 无职业时排除所有专属遗物', () => {
     const wordsmithRelics = new Set([
       'apprentice_notes', 'masters_lexicon', 'perpetual_queue',
-      'refining_lens', 'word_scissors', 'resonance_mold', 'fragment_prism',
+      'word_scissors', 'resonance_mold',
     ])
     const metamorphRelics = new Set([
       'primal_mutant', 'ultimate_mutant_strain', 'gene_stabilizer',
-      'catalyst_injector', 'chaos_seed', 'abyss_eye', 'fittest_survivors',
+      'chaos_seed', 'fittest_survivors',
     ])
     const candidates = generateRelicCandidates()
     for (const id of candidates) {
@@ -384,11 +384,11 @@ describe('FeatureGate 2×3 矩阵全覆盖 (Task 6)', () => {
 describe('generateRelicCandidates 职业过滤 (Task 6.4)', () => {
   const wordsmithRelics = new Set([
     'apprentice_notes', 'masters_lexicon', 'perpetual_queue',
-    'refining_lens', 'word_scissors', 'resonance_mold', 'fragment_prism',
+    'word_scissors', 'resonance_mold',
   ])
   const metamorphRelics = new Set([
     'primal_mutant', 'ultimate_mutant_strain', 'gene_stabilizer',
-    'catalyst_injector', 'chaos_seed', 'abyss_eye', 'fittest_survivors',
+    'chaos_seed', 'fittest_survivors',
   ])
 
   beforeEach(() => {

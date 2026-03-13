@@ -27,16 +27,17 @@ const DEFAULT_SHOP_CONFIG: ShopData = {
   relicSlots: 1,
   priceMultiplierPerStage: 0.1,
   rarityWeights: {
-    common: 0.6,
-    rare: 0.3,
+    common: 0.5,
+    rare: 0.25,
+    epic: 0.15,
     legendary: 0.1
   }
 }
 
 /** 基础价格配置 */
 const BASE_PRICES: Record<string, Record<string, number>> = {
-  skill: { common: 30, rare: 50, legendary: 80 },
-  relic: { common: 40, rare: 70, legendary: 120 }
+  skill: { common: 30, rare: 50, epic: 70, legendary: 80 },
+  relic: { common: 40, rare: 70, epic: 100, legendary: 120 }
 }
 
 // 临时数据（旧 PixiJS 场景残留，已被 systems/shop.ts 替代）

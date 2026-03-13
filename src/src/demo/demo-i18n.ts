@@ -154,6 +154,7 @@ const ZH: Record<string, string> = {
   'shop.enchant_dual': '增幅效果同时作用于{icon}{label}（{pct}%效率）',
   'shop.rarity.common': '普通',
   'shop.rarity.rare': '稀有',
+  'shop.rarity.epic': '史诗',
   'shop.rarity.legendary': '传说',
 
   // --- skill tooltip ---
@@ -510,6 +511,7 @@ const EN: Record<string, string> = {
   'shop.enchant_dual': 'Also amplifies {icon}{label} ({pct}% eff.)',
   'shop.rarity.common': 'Common',
   'shop.rarity.rare': 'Rare',
+  'shop.rarity.epic': 'Epic',
   'shop.rarity.legendary': 'Legendary',
 
   // --- skill tooltip ---

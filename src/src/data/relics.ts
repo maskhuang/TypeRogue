@@ -7,7 +7,7 @@ import type { Modifier, PipelineContext } from '../systems/modifiers/ModifierTyp
 
 // === 遗物类型定义（从 RelicTypes.ts 迁入） ===
 
-export type RelicRarity = 'common' | 'rare' | 'legendary'
+export type RelicRarity = 'common' | 'rare' | 'epic' | 'legendary'
 
 export type RelicEffectType =
   | 'battle_start'     // 战斗开始时触发
@@ -177,7 +177,7 @@ export const RELICS: Record<string, RelicData> = {
     name: '末日倒计时',
     icon: '☢️',
     description: '每关 +30 秒，但每过一关 -5 秒基础时间',
-    rarity: 'legendary',
+    rarity: 'epic',
     basePrice: 70,
     category: 'risk-reward',
     effects: [
@@ -458,7 +458,7 @@ export const RELICS: Record<string, RelicData> = {
     name: '链式禁令',
     icon: '⛓️',
     description: '技能产出 +30%，但触发链词条（连接/复制/共鸣）被禁用',
-    rarity: 'legendary',
+    rarity: 'epic',
     basePrice: 80,
     effects: [
       { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 1.30 },
@@ -484,7 +484,7 @@ export const RELICS: Record<string, RelicData> = {
     name: '键盘洪水',
     icon: '⌨️',
     description: '≥15 技能时产出 +25%，但无法升级/附魔',
-    rarity: 'legendary',
+    rarity: 'epic',
     basePrice: 100,
     effects: [
       { type: 'on_skill_trigger', modifier: 'score_multiplier', value: 1.25 },
@@ -546,7 +546,7 @@ export const RELICS: Record<string, RelicData> = {
     name: '终幕',
     icon: '🎬',
     description: '连击≥20时技能触发两次',
-    rarity: 'legendary',
+    rarity: 'epic',
     basePrice: 100,
     effects: [],
     flavor: '当高潮来临，一切都要再来一次。',
@@ -648,9 +648,9 @@ export const RELICS: Record<string, RelicData> = {
     id: 'chaos_seed',
     name: '混沌种子',
     icon: '🌱',
-    description: '每关结束时随机一个未附魔技能获随机附魔。',
-    rarity: 'rare',
-    basePrice: 60,
+    description: '每关开始时，给所有未附魔技能一个随机附魔（临时，关结束移除）。',
+    rarity: 'legendary',
+    basePrice: 0,
     effects: [],
     flavor: '混沌中播下的种子，总会结出意外的果实。',
   },
@@ -660,7 +660,7 @@ export const RELICS: Record<string, RelicData> = {
     name: '适者生存',
     icon: '💪',
     description: '蜕变后的技能本关产出+20%。',
-    rarity: 'legendary',
+    rarity: 'epic',
     basePrice: 0,
     effects: [],
     flavor: '适者生存，强者愈强。',
@@ -696,8 +696,8 @@ export const RELICS: Record<string, RelicData> = {
     name: '拆词剪刀',
     icon: '✂️',
     description: '可拆解已造词，返还所有碎片。',
-    rarity: 'rare',
-    basePrice: 60,
+    rarity: 'legendary',
+    basePrice: 0,
     effects: [],
     flavor: '剪下一个词，重组一种可能。',
   },
@@ -707,7 +707,7 @@ export const RELICS: Record<string, RelicData> = {
     name: '共鸣字模',
     icon: '🧩',
     description: '造词时重复字母不收金币。',
-    rarity: 'legendary',
+    rarity: 'epic',
     basePrice: 0,
     effects: [],
     flavor: '每个字母都有平等的共鸣权。',

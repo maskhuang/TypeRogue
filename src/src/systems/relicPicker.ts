@@ -16,13 +16,14 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 export interface RelicWeights {
   common: number;
   rare: number;
+  epic: number;
   legendary: number;
 }
 
 export const RELIC_WEIGHT_PRESETS = {
-  gameStart:  { common: 70, rare: 25, legendary: 5 },
-  eliteDrop:  { common: 0,  rare: 60, legendary: 40 },
-  bossDrop:   { common: 0,  rare: 0,  legendary: 100 },
+  gameStart:  { common: 55, rare: 25, epic: 15, legendary: 5 },
+  eliteDrop:  { common: 0,  rare: 30, epic: 40, legendary: 30 },
+  bossDrop:   { common: 0,  rare: 0,  epic: 30, legendary: 70 },
 } as const;
 
 // === 是否还有未拥有的遗物 ===
@@ -34,13 +35,13 @@ export function hasUnownedRelics(): boolean {
 // 造词师专属遗物 ID 集合（非造词师时从候选池排除）
 const WORDSMITH_EXCLUSIVE_RELICS = new Set([
   'apprentice_notes', 'masters_lexicon', 'perpetual_queue',
-  'refining_lens', 'word_scissors', 'resonance_mold', 'fragment_prism',
+  'word_scissors', 'resonance_mold',
 ]);
 
 // 蜕变师专属遗物 ID 集合
 const METAMORPH_EXCLUSIVE_RELICS = new Set([
   'primal_mutant', 'ultimate_mutant_strain', 'gene_stabilizer',
-  'catalyst_injector', 'chaos_seed', 'abyss_eye', 'fittest_survivors',
+  'chaos_seed', 'fittest_survivors',
 ]);
 
 export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRESETS.gameStart): string[] {
@@ -55,7 +56,7 @@ export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRE
   });
 
   // 按稀有度分桶
-  const buckets: Record<RelicRarity, string[]> = { common: [], rare: [], legendary: [] };
+  const buckets: Record<RelicRarity, string[]> = { common: [], rare: [], epic: [], legendary: [] };
   for (const id of available) {
     const rarity = RELICS[id].rarity;
     buckets[rarity].push(id);
@@ -72,7 +73,7 @@ export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRE
 
   // 加权抽取 3 个不重复候选
   const candidates: string[] = [];
-  const rarities: RelicRarity[] = ['common', 'rare', 'legendary'];
+  const rarities: RelicRarity[] = ['common', 'rare', 'epic', 'legendary'];
   const activeRarities = rarities.filter(r => weights[r] > 0 && buckets[r].length > 0);
 
   while (candidates.length < 3 && activeRarities.length > 0) {

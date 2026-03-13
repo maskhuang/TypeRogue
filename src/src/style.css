@@ -559,6 +559,7 @@ body {
 /* 稀有度边框色 */
 .relic-key-slot.relic-common { border-color: #aaa; }
 .relic-key-slot.relic-rare { border-color: #4488cc; }
+.relic-key-slot.relic-epic { border-color: #9b59b6; }
 .relic-key-slot.relic-legendary { border-color: #ffd700; }
 
 .relic-key-slot.relic-slot-empty {
@@ -2253,6 +2254,15 @@ body {
     box-shadow: 0 8px 24px rgba(52, 152, 219, 0.3);
 }
 
+.relic-picker-card.relic-rarity-epic {
+    border-color: #9b59b6;
+}
+
+.relic-picker-card.relic-rarity-epic:hover {
+    border-color: #bb77dd;
+    box-shadow: 0 8px 24px rgba(155, 89, 182, 0.3);
+}
+
 .relic-picker-card.relic-rarity-legendary {
     border-color: #ffd700;
 }
@@ -3062,11 +3072,13 @@ body {
 .reward-card.relic-card { border-color: #555; }
 .reward-card.relic-card-common { border-color: #888; }
 .reward-card.relic-card-rare { border-color: #4488cc; box-shadow: 0 0 6px rgba(68,136,204,0.15); }
+.reward-card.relic-card-epic { border-color: #9b59b6; box-shadow: 0 0 8px rgba(155,89,182,0.2); }
 .reward-card.relic-card-legendary { border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.2); }
 
 .reward-type.relic-type { font-size: 9px; padding: 2px 6px; border-radius: 8px; text-transform: uppercase; }
 .reward-type.relic-rarity-common { background: rgba(150,150,150,0.2); color: #aaa; }
 .reward-type.relic-rarity-rare { background: rgba(68,136,204,0.2); color: #4488cc; }
+.reward-type.relic-rarity-epic { background: rgba(155,89,182,0.2); color: #9b59b6; }
 .reward-type.relic-rarity-legendary { background: rgba(255,215,0,0.2); color: #ffd700; }
 
 .reward-flavor { font-size: 9px; color: #555; font-style: italic; margin-top: 2px; }

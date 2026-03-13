@@ -38,18 +38,6 @@ export function distributeFragments(amount: number): Record<string, number> {
     safetyLimit = queue.length; // 遇到有效字母重置安全计数
     const portion = Math.min(remaining, 1);
     result[letter] = (result[letter] ?? 0) + portion;
-    // 碎片棱镜：同时产出字母表相邻字母
-    if (state.player.relics.has('fragment_prism')) {
-      const code = letter.charCodeAt(0);
-      if (code > 97) { // 'a' = 97, skip left for 'a'
-        const left = String.fromCharCode(code - 1);
-        result[left] = (result[left] ?? 0) + portion;
-      }
-      if (code < 122) { // 'z' = 122, skip right for 'z'
-        const right = String.fromCharCode(code + 1);
-        result[right] = (result[right] ?? 0) + portion;
-      }
-    }
     remaining -= portion;
   }
   return result;
