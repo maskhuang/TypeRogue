@@ -34,6 +34,7 @@ import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors } from './rel
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, incrementStormWordCount, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTimeDew, incrementWordParity, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
+import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -255,6 +256,8 @@ export function initInput(): void {
   initWordRelicBehaviors();
   // Story 36.8: 注册资源子系统遗物行为
   initResourceRelicBehaviors();
+  // Story 36.9: 注册商店子系统遗物行为
+  initShopRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
 }

@@ -122,7 +122,8 @@ export type RelicBehaviorType =
   // 资源系统
   | 'resource_tide'        // 资源潮汐：奇偶词交替加成 base/multiplier
   // 商店系统
-  | 'smuggle_free'         // 走私通道：每关免费拿走最便宜商品
+  | 'black_market'         // 黑市门票：商店+1商品位（保底稀有品质）
+  | 'smuggle_pass'         // 走私通道：每关免费拿走最便宜商品
   | 'timed_auction'        // 限时拍卖：刷新免费 + 30 秒倒计时
   // 关卡进度系统
   | 'phoenix'              // 不死鸟：失败后复活并移除此遗物
@@ -727,6 +728,71 @@ export const RELICS: Record<string, RelicData> = {
     effects: [],
     subsystem: 'resource',
     flavor: '万物皆可熔炼为金。',
+  },
+
+  // ─── 商店系统遗物 (Story 36.9) ───
+
+  discount_card: {
+    id: 'discount_card',
+    name: '折扣卡',
+    icon: '🏷️',
+    description: '所有商品价格-15%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'shop',
+    flavor: '会员专享，永久优惠。',
+  },
+
+  recycle_expert: {
+    id: 'recycle_expert',
+    name: '回收专家',
+    icon: '♻️',
+    description: '出售技能时回收价+50%（50%→75%）。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'shop',
+    flavor: '在别人眼中的废品，我看到的是财富。',
+  },
+
+  black_market: {
+    id: 'black_market',
+    name: '黑市门票',
+    icon: '🎫',
+    description: '商店+1商品位（保底稀有品质）。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'shop',
+    behaviorType: 'black_market',
+    flavor: '门票有价，机遇无价。',
+  },
+
+  smuggle_pass: {
+    id: 'smuggle_pass',
+    name: '走私通道',
+    icon: '🕳️',
+    description: '每关可免费拿走最便宜的商品。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'shop',
+    behaviorType: 'smuggle_pass',
+    flavor: '暗道通幽，拿了就走。',
+  },
+
+  timed_auction: {
+    id: 'timed_auction',
+    name: '限时拍卖',
+    icon: '⏳',
+    description: '刷新免费，但商店有30秒倒计时。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'shop',
+    behaviorType: 'timed_auction',
+    flavor: '时间就是金钱，字面意义上的。',
   },
 
 }

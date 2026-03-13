@@ -32,6 +32,7 @@ import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI, showRowMedalSelection } from './relicPicker';
 import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
 import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
+import { getDiscountMultiplier, getRecycleSellMultiplier, getBlackMarketExtraSlots, canSmuggleFree, consumeSmuggleFree, isTimedAuction, startAuctionTimer, clearAuctionTimer, resetShopRelicState } from './relics/ShopRelicBehaviors';
 import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
@@ -55,6 +56,9 @@ import { getEnchantmentChoiceCount, getMinEnchantmentLevel, getEnchantAnchorSlot
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
+
+// === 限时拍卖倒计时显示值（模块级，供 renderUnifiedShop 重建 UI） ===
+let _auctionRemaining: number = -1;
 
 // === 词条制技能定价（Story 35.9） ===
 
@@ -463,9 +467,12 @@ export function openShop(_won: boolean): void {
   el.shopTarget.textContent = String(state.targetScore);
   updateGoldDisplay();
 
-  // 保留锁定商品，补充新商品至5个
+  // Story 36.9: 走私通道 — 每关重置; 黑市门票 — +1 商品位
+  resetShopRelicState();
+  const shopSlots = 5 + getBlackMarketExtraSlots();
+  // 保留锁定商品，补充新商品
   const locked = state.shop.items.filter(item => item.locked);
-  const newItems = generateShopItems(5 - locked.length);
+  const newItems = generateShopItems(shopSlots - locked.length, getBlackMarketExtraSlots() > 0);
   state.shop.items = [...locked, ...newItems];
   state.shop.refreshCount = 0;
 
@@ -473,6 +480,25 @@ export function openShop(_won: boolean): void {
   renderBuildManager();  // 内部自动注册 drop zones
   renderRelicDisplay();
   initStatsTabs();
+
+  // Story 36.9: 限时拍卖 — 倒计时UI
+  if (isTimedAuction()) {
+    startAuctionTimer(
+      (remaining) => {
+        _auctionRemaining = remaining;
+        // 更新 DOM（如果 timer div 存在）
+        const timerDiv = document.getElementById('auction-timer');
+        if (timerDiv) timerDiv.textContent = `⏱ ${remaining}秒`;
+      },
+      () => {
+        // 倒计时结束 → 自动离开商店
+        _auctionRemaining = -1;
+        clearAuctionTimer();
+        el.startBattleBtn.click();
+      },
+    );
+  }
+
   dragManager.init();
   dragManager.onDragStart = (payload) => {
     if (payload.type === 'word' && payload.word) {
@@ -497,7 +523,8 @@ function updateGoldDisplay(): void {
 // === 价格调整 ===
 function getAdjustedPrice(baseCost: number): number {
   // Story 36.5: 附魔锚点 — 每个已激活附魔使价格 +10%
-  return Math.round(baseCost * getEnchantAnchorPriceMultiplier());
+  // Story 36.9: 折扣卡 — 所有商品价格 -15%（先涨后折）
+  return Math.round(baseCost * getEnchantAnchorPriceMultiplier() * getDiscountMultiplier());
 }
 
 // === Fisher-Yates shuffle ===
@@ -512,7 +539,7 @@ function shuffleArray<T>(arr: T[]): T[] {
 // buildMechanicWeightedBucket removed (old producer system)
 
 // === 生成统一商品 ===
-function generateShopItems(count: number): ShopItem[] {
+function generateShopItems(count: number, guaranteeRare: boolean = false): ShopItem[] {
   if (count <= 0) return [];
 
   const isSilenced = false;
@@ -673,7 +700,39 @@ function generateShopItems(count: number): ShopItem[] {
     items.push(remaining.shift()!);
   }
 
+  // Story 36.9: 黑市门票 — 额外商品位保底稀有品质技能
+  // 确保最后一项是 rarity ≥ 1 的技能（如果不是，替换为新生成的稀有技能）
+  if (guaranteeRare && items.length > 0) {
+    const lastItem = items[items.length - 1];
+    const isRareSkill = lastItem.type === 'skill' && lastItem.affixSkill && lastItem.affixSkill.rarity >= 1;
+    if (!isRareSkill) {
+      // 先尝试从剩余池中找稀有+技能
+      const rareInPool = remaining.find(i => i.type === 'skill' && i.affixSkill && i.affixSkill.rarity >= 1);
+      if (rareInPool) {
+        items[items.length - 1] = rareInPool;
+      } else {
+        // 兜底：直接生成一个 rarity=1 的技能替换
+        const rareItem = generateAffixShopItem(Date.now(), { rarity: 1 as SkillRarity });
+        items[items.length - 1] = rareItem;
+      }
+    }
+  }
+
   return items;
+}
+
+// === 走私通道：找最便宜商品的 index ===
+function getSmuggleFreeIndex(): number {
+  if (!canSmuggleFree()) return -1;
+  let minCost = Infinity;
+  let minIdx = -1;
+  state.shop.items.forEach((item, i) => {
+    if (item.cost < minCost) {
+      minCost = item.cost;
+      minIdx = i;
+    }
+  });
+  return minIdx;
 }
 
 // === 渲染统一商店 ===
@@ -682,6 +741,15 @@ function renderUnifiedShop(): void {
   const el = getElements();
   el.shopTabs.innerHTML = '';
   el.rewardCards.innerHTML = '';
+
+  // Story 36.9: 限时拍卖 — 重建倒计时 div（每次 renderUnifiedShop 都需重建，因为 innerHTML='' 会清除）
+  if (_auctionRemaining >= 0) {
+    const timerEl = document.createElement('div');
+    timerEl.id = 'auction-timer';
+    timerEl.className = 'auction-timer';
+    timerEl.textContent = `⏱ ${_auctionRemaining}秒`;
+    el.rewardCards.appendChild(timerEl);
+  }
 
   // 顶部：词库统计
   const stats = calculateDeckStats(state.player.wordDeck);
@@ -707,23 +775,35 @@ function renderUnifiedShop(): void {
   refreshBtn.onclick = () => refreshShop();
   el.shopTabs.appendChild(refreshBtn);
 
-  // 5个商品卡片
+  // Story 36.9: 限时拍卖 — 刷新免费提示
+  if (isTimedAuction()) {
+    refreshBtn.innerHTML = t('shop.refresh', { cost: 0 });
+    refreshBtn.classList.remove('cannot-afford');
+  }
+
+  // Story 36.9: 走私通道 — 找最便宜商品
+  const smuggleIdx = getSmuggleFreeIndex();
+
+  // 商品卡片
   state.shop.items.forEach((item, index) => {
-    renderUnifiedShopCard(item, index);
+    renderUnifiedShopCard(item, index, index === smuggleIdx);
   });
 
 }
 
 // === 渲染统一商品卡片 ===
-function renderUnifiedShopCard(item: ShopItem, index: number): void {
+function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boolean = false): void {
   const el = getElements();
   const card = document.createElement('div');
   card.className = 'reward-card';
   card.dataset.shopIndex = String(index);
   card.dataset.dragType = 'shop-item';
 
-  const canAfford = state.gold >= item.cost;
+  // Story 36.9: 走私通道 — 免费商品不显示"买不起"
+  const effectiveCost = isSmuggleFree ? 0 : item.cost;
+  const canAfford = state.gold >= effectiveCost;
   if (!canAfford) card.classList.add('cannot-afford');
+  const costHtml = isSmuggleFree ? '<div class="reward-cost smuggle-free">🆓</div>' : `<div class="reward-cost">💰${item.cost}</div>`;
 
   if (item.type === 'skill' && item.affixSkill) {
     // 词条制技能卡片（Story 35.9 AC3）
@@ -747,7 +827,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
         <div class="reward-desc affix-list">${affixNames || '无词条'}</div>
         ${!item.isUpgrade && affix.level > 1 ? `<div class="affix-level">Lv.${affix.level}</div>` : ''}
       </div>
-      <div class="reward-cost">💰${item.cost}</div>
+      ${costHtml}
       <div class="reward-type" style="color:${rarityColor}">${item.isUpgrade ? '升级' : rarityLabel}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
@@ -763,7 +843,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
         <div class="reward-name">${pack.name}</div>
         <div class="reward-desc pack-preview">${pack.desc} · ${preview}</div>
       </div>
-      <div class="reward-cost">💰${item.cost}</div>
+      ${costHtml}
       <div class="reward-type pack-type">${t('shop.pack_type')}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
@@ -781,7 +861,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number): void {
         <div class="reward-desc">${localizeItemDesc(item.relicId, relic.description)}</div>
         ${relic.flavor && getLocale() === 'zh' ? `<div class="reward-flavor">"${relic.flavor}"</div>` : ''}
       </div>
-      <div class="reward-cost">💰${item.cost}</div>
+      ${costHtml}
       <div class="reward-type relic-type relic-rarity-${rarityClass}">${t(`shop.rarity.${rarityClass}`)}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
@@ -1065,12 +1145,17 @@ function purchasePackItem(index: number): void {
   const item = state.shop.items[index];
   if (!item || item.type !== 'pack' || !item.pack) return;
 
-  if (state.gold < item.cost) {
+  // Story 36.9: 走私通道 — 最便宜商品免费
+  const smuggleFree = index === getSmuggleFreeIndex();
+  const cost = smuggleFree ? 0 : item.cost;
+
+  if (state.gold < cost) {
     showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
 
-  state.gold -= item.cost;
+  if (smuggleFree) consumeSmuggleFree();
+  state.gold -= cost;
   updateGoldDisplay();
   playSound('buy');
 
@@ -1091,7 +1176,11 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
   const item = state.shop.items[index];
   if (!item || item.type !== 'skill') return null;
 
-  if (state.gold < item.cost) {
+  // Story 36.9: 走私通道 — 最便宜商品免费
+  const smuggleFree = index === getSmuggleFreeIndex();
+  const cost = smuggleFree ? 0 : item.cost;
+
+  if (state.gold < cost) {
     showFeedback(t('shop.no_gold'), '#ff6b6b');
     return null;
   }
@@ -1114,7 +1203,8 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
     }
   }
 
-  state.gold -= item.cost;
+  if (smuggleFree) consumeSmuggleFree();
+  state.gold -= cost;
   updateGoldDisplay();
   playSound('buy');
 
@@ -1194,7 +1284,11 @@ function purchaseShopRelicItem(index: number): void {
   const relic = RELICS[relicId];
   if (!relic) return;
 
-  if (state.gold < item.cost) {
+  // Story 36.9: 走私通道 — 最便宜商品免费
+  const smuggleFree = index === getSmuggleFreeIndex();
+  const cost = smuggleFree ? 0 : item.cost;
+
+  if (state.gold < cost) {
     showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
@@ -1205,7 +1299,8 @@ function purchaseShopRelicItem(index: number): void {
   }
 
   if (!isRelicSlotsFull()) {
-    state.gold -= item.cost;
+    if (smuggleFree) consumeSmuggleFree();
+    state.gold -= cost;
     addRelicWithCapacity(relicId);
     updateGoldDisplay();
     showFeedback(t('shop.got_relic', { icon: relic.icon, name: localizeItemName(relicId, relic.name) }), '#ffe66d');
@@ -1231,7 +1326,8 @@ function purchaseShopRelicItem(index: number): void {
     showRelicReplaceUI(relicId, () => {
       // 检查是否成功替换（新遗物已在 relics 中）
       if (state.player.relics.has(relicId)) {
-        state.gold -= item.cost;
+        if (smuggleFree) consumeSmuggleFree();
+        state.gold -= cost;
         updateGoldDisplay();
         state.shop.items.splice(index, 1);
         // Story 36.4: 集训手册 — 替换购买时也触发一次性升级
@@ -1302,8 +1398,12 @@ function checkPendingEnchantments(): void {
 // === 刷新商店 ===
 function refreshShop(): void {
   let cost = (state.shop.refreshCount + 1) * 5;
+  // Story 36.9: 限时拍卖 — 刷新免费
+  if (isTimedAuction()) {
+    cost = 0;
+  }
   // Story 36.7: 词语经销商 — 消费免费刷新 flag
-  if (consumeWordDealerFreeRefresh()) {
+  if (cost > 0 && consumeWordDealerFreeRefresh()) {
     cost = 0;
     showFeedback('🤑 免费刷新！', '#ffe66d');
   }
@@ -1316,9 +1416,11 @@ function refreshShop(): void {
   updateGoldDisplay();
   playSound('buy');
 
+  // Story 36.9: 黑市门票 — +1 商品位
+  const shopSlots = 5 + getBlackMarketExtraSlots();
   // 保留锁定项，替换未锁定项
   const locked = state.shop.items.filter(item => item.locked);
-  const newItems = generateShopItems(5 - locked.length);
+  const newItems = generateShopItems(shopSlots - locked.length, getBlackMarketExtraSlots() > 0);
   state.shop.items = [...locked, ...newItems];
 
   renderUnifiedShop();
@@ -1329,7 +1431,8 @@ export function sellSkill(skillId: string): void {
   const data = state.player.skills.get(skillId);
   if (!data) return;
 
-  const sellPrice = Math.floor((data.purchasePrice || 15) / 2);
+  // Story 36.9: 回收专家 — 出售技能回收价从 50% 提升至 75%
+  const sellPrice = Math.floor((data.purchasePrice || 15) * getRecycleSellMultiplier());
   state.gold += sellPrice;
 
   // 移除绑定
@@ -2418,6 +2521,9 @@ export function initShopEvents(): void {
   const el = getElements();
   el.startBattleBtn.onclick = () => {
     dragManager.destroy();
+    // Story 36.9: 限时拍卖 — 离开商店时清理倒计时
+    _auctionRemaining = -1;
+    clearAuctionTimer();
     // 检测下一节点是否为休息关
     const nextNode = state.level + 1;
     if (nextNode <= TOTAL_NODES && isRestNode(nextNode)) {
