@@ -585,28 +585,29 @@ export function openShop(_won: boolean): void {
   state.shop.items = [...locked, ...newItems];
   state.shop.refreshCount = 0;
 
-  renderUnifiedShop();
-  renderBuildManager();  // 内部自动注册 drop zones
-  renderRelicDisplay();
-  initStatsTabs();
-
-  // Story 36.9: 限时拍卖 — 倒计时UI
+  // Story 36.9: 限时拍卖 — 倒计时（必须在 renderUnifiedShop 之前启动，确保首次渲染能显示）
   if (isTimedAuction()) {
     startAuctionTimer(
       (remaining) => {
         _auctionRemaining = remaining;
-        // 更新 DOM（如果 timer div 存在）
         const timerDiv = document.getElementById('auction-timer');
-        if (timerDiv) timerDiv.textContent = `⏱ ${remaining}秒`;
+        if (timerDiv) timerDiv.textContent = `⏱ ${remaining}s`;
       },
       () => {
         // 倒计时结束 → 自动离开商店
         _auctionRemaining = -1;
         clearAuctionTimer();
-        el.startBattleBtn.click();
+        if (el.startBattleBtn.onclick) {
+          (el.startBattleBtn.onclick as EventListener)(new MouseEvent('click'));
+        }
       },
     );
   }
+
+  renderUnifiedShop();
+  renderBuildManager();  // 内部自动注册 drop zones
+  renderRelicDisplay();
+  initStatsTabs();
 
   dragManager.init();
   dragManager.onDragStart = (payload) => {
@@ -808,7 +809,7 @@ function renderUnifiedShop(): void {
     const timerEl = document.createElement('div');
     timerEl.id = 'auction-timer';
     timerEl.className = 'auction-timer';
-    timerEl.textContent = `⏱ ${_auctionRemaining}秒`;
+    timerEl.textContent = `⏱ ${_auctionRemaining}s`;
     el.rewardCards.appendChild(timerEl);
   }
 

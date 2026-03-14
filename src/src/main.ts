@@ -174,7 +174,7 @@ async function init(): Promise<void> {
 
   // === DEBUG: 手动测试遗物 — 修改此数组切换子系统 ===
   const DEBUG_RELICS: string[] = [
-    'score_magnet', 'resource_sense', 'time_dew', 'resource_tide', 'universal_furnace', // resource
+    'discount_card', 'recycle_expert', 'black_market', 'smuggle_pass', 'timed_auction', // shop
   ];
 
   const startAfterClassSelect = () => {

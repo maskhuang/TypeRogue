@@ -869,6 +869,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   score_magnet: 'Score Magnet', resource_sense: 'Resource Sense',
   time_dew: 'Time Dew', resource_tide: 'Resource Tide',
   universal_furnace: 'Universal Furnace',
+  // Shop subsystem relics
+  discount_card: 'Discount Card', recycle_expert: 'Recycle Expert',
+  black_market: 'Black Market Pass', smuggle_pass: 'Smuggle Pass',
+  timed_auction: 'Timed Auction',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
   ench_growth_sameColumn: 'Pulse', ench_growth_sameHand: 'Permeate',
@@ -1000,6 +1004,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   time_dew: 'Every 3 words completed: +1s time',
   resource_tide: 'Odd words: base +40%. Even words: multiplier +40%',
   universal_furnace: 'On stage clear: overkill score + remaining time → gold, but no base clear gold',
+  // Shop subsystem relics
+  discount_card: 'All shop prices -15%',
+  recycle_expert: 'Skill sell price +50% (50% → 75%)',
+  black_market: 'Shop gains +1 item slot (guaranteed rare+)',
+  smuggle_pass: 'Each stage: take the cheapest shop item for free',
+  timed_auction: 'Refresh is free, but shop has a 30s countdown',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',
