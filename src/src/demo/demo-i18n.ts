@@ -137,6 +137,11 @@ const ZH: Record<string, string> = {
   // --- word relic feedback ---
   'battle.long_word_time': '📏 +{value}s',
 
+  // --- resource relic feedback ---
+  'battle.time_dew': '💧 +{value}s',
+  'battle.resource_tide_base': '🌊 基数+40%',
+  'battle.resource_tide_mult': '🌊 倍率+40%',
+
   // --- shop.ts ---
   'shop.cycle_title': '商店 · 周目{cycle}',
   'shop.no_gold': '金币不足!',
@@ -521,6 +526,11 @@ const EN: Record<string, string> = {
   // --- word relic feedback ---
   'battle.long_word_time': '📏 +{value}s',
 
+  // --- resource relic feedback ---
+  'battle.time_dew': '💧 +{value}s',
+  'battle.resource_tide_base': '🌊 Base +40%',
+  'battle.resource_tide_mult': '🌊 Mult +40%',
+
   // --- shop.ts ---
   'shop.cycle_title': 'Shop · Cycle {cycle}',
   'shop.no_gold': 'Not enough gold!',
@@ -855,6 +865,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   word_collection: 'Word Collection', short_sprint: 'Short Sprint',
   long_word_master: 'Long Word Master', word_dealer: 'Word Dealer',
   punctuation_liberation: 'Punctuation Liberation',
+  // Resource subsystem relics
+  score_magnet: 'Score Magnet', resource_sense: 'Resource Sense',
+  time_dew: 'Time Dew', resource_tide: 'Resource Tide',
+  universal_furnace: 'Universal Furnace',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
   ench_growth_sameColumn: 'Pulse', ench_growth_sameHand: 'Permeate',
@@ -980,6 +994,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   long_word_master: '6+ letter words on complete: +1s time',
   word_dealer: 'After selling a word, next shop refresh is free',
   punctuation_liberation: 'Unlock ;,./ keys for skill binding. Words include random punctuation.',
+  // Resource subsystem relics
+  score_magnet: 'Each keystroke: +1 score',
+  resource_sense: 'When a word produces 3+ resource types, the lowest gets +50%',
+  time_dew: 'Every 3 words completed: +1s time',
+  resource_tide: 'Odd words: base +40%. Even words: multiplier +40%',
+  universal_furnace: 'On stage clear: overkill score + remaining time → gold, but no base clear gold',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',

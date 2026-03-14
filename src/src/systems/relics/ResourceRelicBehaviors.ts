@@ -90,6 +90,11 @@ export function incrementWordParity(): void {
   _wordParity++
 }
 
+/** 当前潮汐增幅的资源类型：'base' 或 'multiplier' */
+export function getCurrentTideResource(): 'base' | 'multiplier' {
+  return _wordParity % 2 === 1 ? 'base' : 'multiplier'
+}
+
 /** 有遗物时按奇偶和资源类型返回加算率，否则 0 */
 export function getResourceTideBonus(resource: string): number {
   if (!state.player.relics.has('resource_tide')) return 0

@@ -33,7 +33,7 @@ import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncro
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
-import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTimeDew, incrementWordParity, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
+import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTimeDew, incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
@@ -407,6 +407,7 @@ function playerCorrect(k: string): void {
     } else {
       state.score += magnetBonus;
     }
+    showFeedback(`🧲 +${magnetBonus}`, '#ffe66d', 0.6);
   }
 
   // 字母升级加分：通过缓存的注册表解析 on_correct_keystroke
@@ -825,11 +826,16 @@ function completeWord(): void {
   const dewBonus = checkTimeDew();
   if (dewBonus > 0) {
     state.time += dewBonus;
-    showFeedback(`💧 +${dewBonus}秒`, '#00ff88');
+    showFeedback(t('battle.time_dew', { value: dewBonus }), '#00ff88');
     bumpTimer();
   }
 
   // Story 36.8: 资源潮汐 — 词序号递增（加算在 skills.ts applyResource 中）
+  if (state.player.relics.has('resource_tide')) {
+    const tideRes = getCurrentTideResource();
+    const tideLabel = tideRes === 'base' ? t('battle.resource_tide_base') : t('battle.resource_tide_mult');
+    showFeedback(tideLabel, '#4488ff', 0.8);
+  }
   incrementWordParity();
 
   // Story 36.7: 词汇收藏 — 首次完成的单词+3金币
