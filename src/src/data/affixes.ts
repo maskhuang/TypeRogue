@@ -275,27 +275,27 @@ export type AffixWeightKey = Exclude<AffixType, AffixType.Convert> | 'convert_cr
 
 /** 词条权重表（转化拆分异源/同源，生成时按 source === resource 判断） */
 export const AFFIX_WEIGHTS: Record<AffixWeightKey, number> = {
-  [AffixType.Multiply]: 4,
-  convert_cross: 10,    // 异源转化
-  convert_self: 3,      // 同源转化
-  [AffixType.Rainbow]: 6,
-  [AffixType.Charge]: 6,
-  [AffixType.Decay]: 6,
-  [AffixType.Pulse]: 6,
-  [AffixType.Crit]: 8,
-  [AffixType.Cascade]: 6,
-  [AffixType.Void]: 10,
-  [AffixType.Resonance]: 4,
-  [AffixType.Mirror]: 3,
-  [AffixType.Link]: 6,
-  [AffixType.Splash]: 5,
-  [AffixType.Amplify]: 5,
-  [AffixType.Outcast]: 8,
-  [AffixType.Gravity]: 3,
-  [AffixType.Ligature]: 6,
-  [AffixType.Twin]: 2,
-  [AffixType.Recurse]: 3,
-  [AffixType.Taboo]: 4,
+  [AffixType.Multiply]: 4,       // 无脑·保留
+  convert_cross: 8,              // 布局思考
+  convert_self: 3,               // 操作思考·保留
+  [AffixType.Rainbow]: 10,      // 无脑
+  [AffixType.Charge]: 8,        // 操作思考
+  [AffixType.Decay]: 10,        // 无脑
+  [AffixType.Pulse]: 10,        // 无脑
+  [AffixType.Crit]: 10,         // 无脑
+  [AffixType.Cascade]: 8,       // 操作思考
+  [AffixType.Void]: 8,          // 布局思考
+  [AffixType.Resonance]: 8,     // 布局思考
+  [AffixType.Mirror]: 8,        // 布局思考
+  [AffixType.Link]: 8,          // 布局思考
+  [AffixType.Splash]: 8,        // 布局思考
+  [AffixType.Amplify]: 8,       // 布局思考
+  [AffixType.Outcast]: 8,       // 操作思考
+  [AffixType.Gravity]: 3,       // 操作思考·保留
+  [AffixType.Ligature]: 8,      // 操作思考
+  [AffixType.Twin]: 2,          // 无脑·保留
+  [AffixType.Recurse]: 10,      // 无脑
+  [AffixType.Taboo]: 10,        // 无脑
 }
 
 /** 虚无词条 bonusPerSlot 按 PositionRelation */

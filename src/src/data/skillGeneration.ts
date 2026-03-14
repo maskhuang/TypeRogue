@@ -21,6 +21,14 @@ import { t } from '../demo/demo-i18n'
 const GENERIC_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
 const ALL_POS_RELATIONS: PositionRelation[] = Object.values(PositionRelation)
 
+/** 获取词条的有效权重（Convert 取两变体最大值） */
+function getAffixWeight(type: AffixType): number {
+  if (type === AffixType.Convert) {
+    return Math.max(AFFIX_WEIGHTS.convert_cross, AFFIX_WEIGHTS.convert_self)
+  }
+  return AFFIX_WEIGHTS[type as Exclude<AffixType, AffixType.Convert>] ?? 0
+}
+
 // ===== 辅助函数 =====
 
 /** 四舍五入到指定小数位 */
@@ -173,8 +181,8 @@ export function rollAffixParams(
       return { type, posRel: pickRandom(ALL_POS_RELATIONS) }
 
     case AffixType.Link: {
-      // 感应词条：随机选一个词条类型作为监听目标（排除自身避免自引用）
-      const watchCandidates = Object.values(AffixType).filter(t => t !== AffixType.Link)
+      // 感应词条：随机选一个词条类型作为监听目标（排除自身 + 权重<5 的词条）
+      const watchCandidates = Object.values(AffixType).filter(t => t !== AffixType.Link && getAffixWeight(t) >= 5)
       return { type, posRel: pickRandom(ALL_POS_RELATIONS), watchAffix: pickRandom(watchCandidates) }
     }
 
@@ -185,8 +193,8 @@ export function rollAffixParams(
         // 资源变体：只触发产出指定资源的技能
         return { type, posRel, resource: pickRandom(pool) }
       } else {
-        // 词条变体：只触发拥有指定词条的技能
-        const candidates = Object.values(AffixType).filter(t => t !== AffixType.Splash)
+        // 词条变体：只触发拥有指定词条的技能（排除权重<5 的词条）
+        const candidates = Object.values(AffixType).filter(t => t !== AffixType.Splash && getAffixWeight(t) >= 5)
         return { type, posRel, watchAffix: pickRandom(candidates) }
       }
     }
