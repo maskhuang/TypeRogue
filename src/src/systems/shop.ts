@@ -1480,7 +1480,7 @@ function refreshShop(): void {
   if (cost > 0 && hasIntermissionFreeRefresh()) {
     consumeIntermissionFreeRefresh();
     cost = 0;
-    showFeedback('🔋 幕间免费刷新！', '#88ddff');
+    showFeedback(t('shop.intermission_refresh'), '#88ddff');
   }
   if (cost > 0 && state.gold < cost) {
     showFeedback(t('shop.no_gold'), '#ff6b6b');

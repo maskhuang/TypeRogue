@@ -142,9 +142,13 @@ const ZH: Record<string, string> = {
   'battle.resource_tide_base': '🌊 基数+40%',
   'battle.resource_tide_mult': '🌊 倍率+40%',
 
+  // --- stage relic feedback ---
+  'battle.phoenix_revive': '🐦‍🔥 不死鸟复活！',
+
   // --- shop.ts ---
   'shop.cycle_title': '商店 · 周目{cycle}',
   'shop.no_gold': '金币不足!',
+  'shop.intermission_refresh': '🔋 幕间免费刷新！',
   'shop.skill_count_full': '技能数量已达上限!',
   'shop.white_only': '纯粹之心：仅允许白装技能!',
   'shop.level_capped': '技能等级已达上限!',
@@ -531,9 +535,13 @@ const EN: Record<string, string> = {
   'battle.resource_tide_base': '🌊 Base +40%',
   'battle.resource_tide_mult': '🌊 Mult +40%',
 
+  // --- stage relic feedback ---
+  'battle.phoenix_revive': '🐦‍🔥 Phoenix Revive!',
+
   // --- shop.ts ---
   'shop.cycle_title': 'Shop · Cycle {cycle}',
   'shop.no_gold': 'Not enough gold!',
+  'shop.intermission_refresh': '🔋 Free Refresh!',
   'shop.skill_count_full': 'Skill slots full!',
   'shop.white_only': 'Pure Heart: white skills only!',
   'shop.level_capped': 'Skill level capped!',
@@ -873,6 +881,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   discount_card: 'Discount Card', recycle_expert: 'Recycle Expert',
   black_market: 'Black Market Pass', smuggle_pass: 'Smuggle Pass',
   timed_auction: 'Timed Auction',
+  // Stage subsystem relics
+  warm_up: 'Warm-Up', intermission: 'Intermission',
+  endurance_battery: 'Endurance Battery', elite_hunter: 'Elite Hunter',
+  phoenix: 'Phoenix',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
   ench_growth_sameColumn: 'Pulse', ench_growth_sameHand: 'Permeate',
@@ -1010,6 +1022,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   black_market: 'Shop gains +1 item slot (guaranteed rare+)',
   smuggle_pass: 'Each stage: take the cheapest shop item for free',
   timed_auction: 'Refresh is free, but shop has a 30s countdown',
+  // Stage subsystem relics
+  warm_up: 'First 10s each stage: skill output +40%',
+  intermission: 'Rest stages grant +10 gold and 1 free refresh',
+  endurance_battery: 'Each stage base time +10s',
+  elite_hunter: 'Elite stage clear gold reward doubled',
+  phoenix: 'On stage fail: revive with 10s. Consumes this relic. Elite/Boss: also refreshes modifier.',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',

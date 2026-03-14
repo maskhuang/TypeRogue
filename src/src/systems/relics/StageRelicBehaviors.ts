@@ -96,7 +96,7 @@ export function consumePhoenix(): void {
 /** 每关开始时重置关级状态 */
 export function resetStageRelicBattleState(): void {
   _stageStartTime = Date.now()
-  _intermissionFreeRefreshes = 0
+  // 注意：_intermissionFreeRefreshes 不在此重置，它在商店关闭时自然过期
 }
 
 /** 注册关卡进度系统遗物行为 */

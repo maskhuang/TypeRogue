@@ -1250,7 +1250,7 @@ function endLevel(): void {
       // Review M2: endLevel 已 stopScoreRoller，需重启分数滚轮
       startScoreRoller();
       renderRelicDisplay();
-      showFeedback('🐦‍🔥 不死鸟复活！', '#ff6600');
+      showFeedback(t('battle.phoenix_revive'), '#ff6600');
       playSound('levelup');
       return;
     }
