@@ -531,8 +531,8 @@ export const APPRENTICE_GROWTH_DEFAULTS: Partial<Record<EnchantmentType, number>
   [EnchantmentType.ApprenticeWord]: 0.02,        // 2%   — wordComplete
   [EnchantmentType.ApprenticeLongWord]: 0.025,   // 2.5% — longWord(≥6)
   [EnchantmentType.ApprenticePerfect]: 0.03,     // 3%   — perfectWord
-  [EnchantmentType.ApprenticeHarvest]: 0.03,     // 3%   — wordComplete（造词师限定）
-  [EnchantmentType.ApprenticeAdapt]: 0.15,       // 15%  — mutationApplied（蜕变师限定）
+  [EnchantmentType.ApprenticeHarvest]: 0.15,     // 15%  — wordCrafted（造词师限定）
+  [EnchantmentType.ApprenticeAdapt]: 0.03,       // 3%   — mutationApplied（蜕变师限定）
   // 外部事件类型（由 applyApprenticeEvent 处理）
   [EnchantmentType.ApprenticeCombo]: 0.01,       // 1%   — comboReach(15)
   [EnchantmentType.ApprenticeStage]: 0.08,       // 8%   — stageCleared

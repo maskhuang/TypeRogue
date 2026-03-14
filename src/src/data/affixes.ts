@@ -151,8 +151,8 @@ export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
   [EnchantmentType.ApprenticePerfect]:  { type: EnchantmentType.ApprenticePerfect,  name: '学徒·精准', icon: '🎯', category: 'apprentice', desc: '零错误完成单词时永久成长 +8%' },
   [EnchantmentType.ApprenticeCombo]:    { type: EnchantmentType.ApprenticeCombo,    name: '学徒·连击', icon: '🔥', category: 'apprentice', desc: '连击达15时永久成长 +10%' },
   [EnchantmentType.ApprenticeStage]:    { type: EnchantmentType.ApprenticeStage,    name: '学徒·通关', icon: '🏆', category: 'apprentice', desc: '通关时永久成长 +15%' },
-  [EnchantmentType.ApprenticeHarvest]:  { type: EnchantmentType.ApprenticeHarvest,  name: '学徒·丰收', icon: '🌾', category: 'apprentice', desc: '造词师限定：每造一个词永久成长 +3%' },
-  [EnchantmentType.ApprenticeAdapt]:    { type: EnchantmentType.ApprenticeAdapt,    name: '学徒·适应', icon: '🧬', category: 'apprentice', desc: '蜕变师限定：每次蜕变永久成长 +15%' },
+  [EnchantmentType.ApprenticeHarvest]:  { type: EnchantmentType.ApprenticeHarvest,  name: '学徒·丰收', icon: '🌾', category: 'apprentice', desc: '造词师限定：每造一个词永久成长 +15%' },
+  [EnchantmentType.ApprenticeAdapt]:    { type: EnchantmentType.ApprenticeAdapt,    name: '学徒·适应', icon: '🧬', category: 'apprentice', desc: '蜕变师限定：每次蜕变永久成长 +3%' },
   // ── 运算符（1） ──
   [EnchantmentType.MultiplyOperator]: { type: EnchantmentType.MultiplyOperator, name: '乘算化', icon: '✖️', category: 'operator', desc: '将加算层各项加成转为独立乘数' },
 }

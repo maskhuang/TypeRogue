@@ -1998,8 +1998,8 @@ describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness', () => {
     expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeWord]).toBeCloseTo(0.02)
     expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeLongWord]).toBeCloseTo(0.025)
     expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticePerfect]).toBeCloseTo(0.03)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeHarvest]).toBeCloseTo(0.03)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeAdapt]).toBeCloseTo(0.15)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeHarvest]).toBeCloseTo(0.15)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeAdapt]).toBeCloseTo(0.03)
     expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeCombo]).toBeCloseTo(0.01)
     expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeStage]).toBeCloseTo(0.08)
   })
@@ -2077,7 +2077,7 @@ describe('Story 35.5: Phase 5 new apprentice self-trigger types', () => {
     const state = makeRuntimeState()
     const applied = applyApprenticeEvent('wordCrafted', state, [EnchantmentType.ApprenticeHarvest])
     expect(applied).toBe(true)
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.15)
   })
 
   it('ApprenticeAdapt: should NOT accumulate in Phase 5 (now external event)', () => {
