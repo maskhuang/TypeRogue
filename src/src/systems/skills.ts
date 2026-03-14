@@ -277,6 +277,17 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     recordSkillTrigger(skillId, triggerKey, resource, amount, false);
   }
 
+  // 衍生附魔额外资源反馈
+  for (const tr of result.triggerResults) {
+    if (!tr.phase5?.transmuteOutput) continue;
+    const { resource: tmRes, amount: tmAmt } = tr.phase5.transmuteOutput;
+    if (tmAmt === 0) continue;
+    const tmColor = RESOURCE_COLORS[tmRes] || '#e67e22';
+    const tmLabel = getResourceLabel(tmRes);
+    const tmDisplay = parseFloat(Math.abs(tmAmt).toPrecision(3));
+    showFeedback(`🔀+${tmDisplay}${tmLabel}`, tmColor);
+  }
+
   // 技能触发弹窗
   const el = getElements();
   const p = document.createElement('div');

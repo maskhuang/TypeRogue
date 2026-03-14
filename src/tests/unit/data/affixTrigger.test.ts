@@ -1770,37 +1770,50 @@ describe('resolvePhase6', () => {
   })
 
   describe('ApprenticeNeighbor enchantment', () => {
-    it('should produce growth action when posRel matches', () => {
+    it('should produce growth action when neighborPosRel matches', () => {
       const skill = makeSkill({ resource: 'base' as ResourceType })
       const neighborSkill = makeSkill({
         id: 'sk_neighbor',
         enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+        neighborPosRel: PositionRelation.Adjacent,
       })
+      // 'a' and 's' are adjacent
       const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
       const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
-      const enchParams = new Map([['sk_neighbor', { posRel: PositionRelation.SameRow }]])
       const state = makeRuntimeState()
-      const ctx = makeContext({
-        triggerKey: 'a',
-        bindings,
-        allSkills,
-        skillEnchantmentParams: enchParams,
-      })
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
 
       const result = resolvePhase6('a', skill, state, ctx)
       const apprenticeActions = result.actions.filter(a => a.type === 'apprentice_neighbor')
-      // 'a' and 's' are same row
-      if (apprenticeActions.length > 0) {
-        const growth = APPRENTICE_NEIGHBOR_GROWTH[PositionRelation.SameRow]
-        expect((apprenticeActions[0] as any).growthDelta).toBeCloseTo(growth)
-      }
+      expect(apprenticeActions.length).toBe(1)
+      expect((apprenticeActions[0] as any).growthDelta).toBeCloseTo(
+        APPRENTICE_NEIGHBOR_GROWTH[PositionRelation.Adjacent]
+      )
     })
 
-    it('should NOT produce action when no enchantmentParams', () => {
+    it('should NOT produce action when neighborPosRel does not match', () => {
       const skill = makeSkill({ resource: 'base' as ResourceType })
       const neighborSkill = makeSkill({
         id: 'sk_neighbor',
         enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+        neighborPosRel: PositionRelation.Symmetric, // a↔; 不是 a↔s
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
+      const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const apprenticeActions = result.actions.filter(a => a.type === 'apprentice_neighbor')
+      expect(apprenticeActions.length).toBe(0)
+    })
+
+    it('should NOT produce action when neighborPosRel is not set', () => {
+      const skill = makeSkill({ resource: 'base' as ResourceType })
+      const neighborSkill = makeSkill({
+        id: 'sk_neighbor',
+        enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+        // no neighborPosRel — legacy/missing data
       })
       const bindings = new Map([['a', 'test_skill'], ['s', 'sk_neighbor']])
       const allSkills = new Map([['test_skill', skill], ['sk_neighbor', neighborSkill]])
@@ -2043,96 +2056,88 @@ describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness', () => {
 })
 
 describe('Story 35.5: Phase 5 new apprentice self-trigger types', () => {
-  it('ApprenticeWord: should accumulate when wordCompleted is true', () => {
+  // ── Word/LongWord/Perfect/Harvest/Adapt 已从 Phase 5 迁移到外部事件 ──
+  // Phase 5 不再处理这些类型，全部在 applyApprenticeEvent 中处理
+
+  it('ApprenticeWord: should NOT accumulate in Phase 5 (now external event)', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeWord] })
     const state = makeRuntimeState()
     const ctx = makeContext({ currentWord: 'hello', wordCompleted: true })
     resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticeWord: should accumulate via applyApprenticeEvent wordComplete', () => {
+    const state = makeRuntimeState()
+    const applied = applyApprenticeEvent('wordComplete', state, [EnchantmentType.ApprenticeWord])
+    expect(applied).toBe(true)
     expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
   })
 
-  it('ApprenticeWord: should NOT accumulate when wordCompleted is false/undefined', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeWord] })
+  it('ApprenticeWord: should not accumulate for unrelated event', () => {
     const state = makeRuntimeState()
-    const ctx = makeContext({ currentWord: 'hello' })
+    const applied = applyApprenticeEvent('perfectWord', state, [EnchantmentType.ApprenticeWord])
+    expect(applied).toBe(false)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticeLongWord: should NOT accumulate in Phase 5 (now external event)', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeLongWord] })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ currentWord: 'banana', wordCompleted: true })
     resolvePhase5(skill, state, ctx, makeFlags(), 10)
     expect(state.apprenticeAccumulated).toBe(0)
   })
 
-  it('ApprenticeLongWord: should accumulate when wordCompleted and word length >= 6', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeLongWord] })
+  it('ApprenticeLongWord: should accumulate via applyApprenticeEvent longWordComplete', () => {
     const state = makeRuntimeState()
-    const ctx = makeContext({ currentWord: 'banana', wordCompleted: true }) // 6 letters
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    const applied = applyApprenticeEvent('longWordComplete', state, [EnchantmentType.ApprenticeLongWord])
+    expect(applied).toBe(true)
     expect(state.apprenticeAccumulated).toBeCloseTo(0.025)
   })
 
-  it('ApprenticeLongWord: should NOT accumulate when word length < 6', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeLongWord] })
-    const state = makeRuntimeState()
-    const ctx = makeContext({ currentWord: 'apple', wordCompleted: true }) // 5 letters
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBe(0)
-  })
-
-  it('ApprenticeLongWord: should NOT accumulate when wordCompleted is false', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeLongWord] })
-    const state = makeRuntimeState()
-    const ctx = makeContext({ currentWord: 'banana' }) // 6 letters but not completed
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBe(0)
-  })
-
-  it('ApprenticePerfect: should accumulate when perfectWord is true', () => {
+  it('ApprenticePerfect: should NOT accumulate in Phase 5 (now external event)', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticePerfect] })
     const state = makeRuntimeState()
     const ctx = makeContext({ perfectWord: true })
     resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticePerfect: should accumulate via applyApprenticeEvent perfectWord', () => {
+    const state = makeRuntimeState()
+    const applied = applyApprenticeEvent('perfectWord', state, [EnchantmentType.ApprenticePerfect])
+    expect(applied).toBe(true)
     expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
   })
 
-  it('ApprenticePerfect: should NOT accumulate when perfectWord is false/undefined', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticePerfect] })
-    const state = makeRuntimeState()
-    const ctx = makeContext({ perfectWord: false })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBe(0)
-
-    const state2 = makeRuntimeState()
-    const ctx2 = makeContext() // perfectWord undefined
-    resolvePhase5(skill, state2, ctx2, makeFlags(), 10)
-    expect(state2.apprenticeAccumulated).toBe(0)
-  })
-
-  it('ApprenticeHarvest: should accumulate when wordCompleted is true', () => {
+  it('ApprenticeHarvest: should NOT accumulate in Phase 5 (now external event)', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeHarvest] })
     const state = makeRuntimeState()
     const ctx = makeContext({ currentWord: 'test', wordCompleted: true })
     resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.08)
-  })
-
-  it('ApprenticeHarvest: should NOT accumulate when wordCompleted is false/undefined', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeHarvest] })
-    const state = makeRuntimeState()
-    const ctx = makeContext({ currentWord: 'test' })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
     expect(state.apprenticeAccumulated).toBe(0)
   })
 
-  it('ApprenticeAdapt: should accumulate when mutationApplied is true', () => {
+  it('ApprenticeHarvest: should accumulate via applyApprenticeEvent wordComplete', () => {
+    const state = makeRuntimeState()
+    const applied = applyApprenticeEvent('wordComplete', state, [EnchantmentType.ApprenticeHarvest])
+    expect(applied).toBe(true)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.08)
+  })
+
+  it('ApprenticeAdapt: should NOT accumulate in Phase 5 (now external event)', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeAdapt] })
     const state = makeRuntimeState()
     const ctx = makeContext({ mutationApplied: true })
     resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.15)
+    expect(state.apprenticeAccumulated).toBe(0)
   })
 
-  it('ApprenticeAdapt: should NOT accumulate when mutationApplied is false/undefined', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeAdapt] })
+  it('ApprenticeAdapt: should NOT respond to word events (handled via emitMutationApplied)', () => {
     const state = makeRuntimeState()
-    const ctx = makeContext() // mutationApplied undefined
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    const applied = applyApprenticeEvent('wordComplete', state, [EnchantmentType.ApprenticeAdapt])
+    expect(applied).toBe(false)
     expect(state.apprenticeAccumulated).toBe(0)
   })
 
@@ -2188,6 +2193,53 @@ describe('Story 35.5: applyApprenticeEvent', () => {
     applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeStage])
     expect(state.apprenticeAccumulated).toBeCloseTo(0.16)
   })
+
+  it('should apply growthMultiplier when provided', () => {
+    const state = makeRuntimeState()
+    applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeStage], 2.0)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.16) // 0.08 * 2.0
+  })
+
+  it('wordComplete should grow both ApprenticeWord and ApprenticeHarvest', () => {
+    const state = makeRuntimeState()
+    const applied = applyApprenticeEvent('wordComplete', state, [
+      EnchantmentType.ApprenticeWord,
+      EnchantmentType.ApprenticeHarvest,
+    ])
+    expect(applied).toBe(true)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.02 + 0.08) // Word(2%) + Harvest(8%)
+  })
+})
+
+describe('Story 35.6: applyQuestEvent external events', () => {
+  it('stageCleared should complete QuestMirror (targetStacks=1)', () => {
+    const state = makeRuntimeState()
+    const applied = applyQuestEvent('stageCleared', state, [EnchantmentType.QuestMirror])
+    expect(applied).toBe(true)
+    // QuestMirror targetStacks=1 → immediately completes
+    expect(state.questCompletions).toBe(1)
+    expect(state.questStacks).toBe(0)
+  })
+
+  it('comboReach should stack QuestPurify', () => {
+    const state = makeRuntimeState()
+    const applied = applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
+    expect(applied).toBe(true)
+    expect(state.questStacks).toBe(1) // targetStacks=3, so 1 stack remains
+  })
+
+  it('should apply stackIncrement when provided', () => {
+    const state = makeRuntimeState()
+    applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify], 2)
+    expect(state.questStacks).toBe(2) // targetStacks=3, +2 → 2 stacks
+  })
+
+  it('should return false for unknown event', () => {
+    const state = makeRuntimeState()
+    const applied = applyQuestEvent('unknownEvent', state, [EnchantmentType.QuestMirror])
+    expect(applied).toBe(false)
+    expect(state.questStacks).toBe(0)
+  })
 })
 
 describe('Story 35.5: filterEnchantmentsByClass', () => {
@@ -2232,8 +2284,10 @@ describe('Story 35.5: filterEnchantmentsByClass', () => {
 // ===== Story 35.6: 任务附魔完善 =====
 
 describe('Story 35.6: checkQuestEventCondition inline events', () => {
-  // checkQuestEventCondition is internal, test through Phase 5 quest stacking
-  it('perfectWord event: QuestAscend should stack on perfectWord', () => {
+  // ── Word-based quest enchantments migrated from Phase 5 to external events ──
+  // Phase 5 no longer processes these; test via applyQuestEvent instead
+
+  it('perfectWord event: QuestAscend should NOT stack in Phase 5 (now external event)', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
       enchantmentIds: [EnchantmentType.QuestAscend],
@@ -2241,61 +2295,41 @@ describe('Story 35.6: checkQuestEventCondition inline events', () => {
     const state = makeRuntimeState()
     const ctx = makeContext({ perfectWord: true })
     resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.questStacks).toBe(1)
-  })
-
-  it('perfectWord event: QuestAscend should NOT stack when perfectWord is false', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
-      enchantmentIds: [EnchantmentType.QuestAscend],
-    })
-    const state = makeRuntimeState()
-    const ctx = makeContext({ perfectWord: false })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
     expect(state.questStacks).toBe(0)
   })
 
-  it('wordComplete event: QuestEnergize should stack on wordCompleted', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Charge, maxBonus: 1.0 }],
-      enchantmentIds: [EnchantmentType.QuestEnergize],
-    })
+  it('perfectWord event: QuestAscend should stack via applyQuestEvent', () => {
     const state = makeRuntimeState()
-    const ctx = makeContext({ wordCompleted: true })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    const applied = applyQuestEvent('perfectWord', state, [EnchantmentType.QuestAscend])
+    expect(applied).toBe(true)
     expect(state.questStacks).toBe(1)
   })
 
-  it('wordComplete event: QuestPolarize should stack on wordCompleted', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Gravity, probMult: 1.5 }],
-      enchantmentIds: [EnchantmentType.QuestPolarize],
-    })
+  it('wordComplete event: QuestEnergize should stack via applyQuestEvent', () => {
     const state = makeRuntimeState()
-    const ctx = makeContext({ wordCompleted: true })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    const applied = applyQuestEvent('wordComplete', state, [EnchantmentType.QuestEnergize])
+    expect(applied).toBe(true)
     expect(state.questStacks).toBe(1)
   })
 
-  it('longWord:6 event: QuestFission should stack on wordCompleted + length >= 6', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Splash, posRel: PositionRelation.Adjacent }],
-      enchantmentIds: [EnchantmentType.QuestFission],
-    })
+  it('wordComplete event: QuestPolarize should stack via applyQuestEvent', () => {
     const state = makeRuntimeState()
-    const ctx = makeContext({ currentWord: 'banana', wordCompleted: true })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    const applied = applyQuestEvent('wordComplete', state, [EnchantmentType.QuestPolarize])
+    expect(applied).toBe(true)
     expect(state.questStacks).toBe(1)
   })
 
-  it('longWord:6 event: QuestFission should NOT stack on short word', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Splash, posRel: PositionRelation.Adjacent }],
-      enchantmentIds: [EnchantmentType.QuestFission],
-    })
+  it('longWordComplete event: QuestFission should stack via applyQuestEvent', () => {
     const state = makeRuntimeState()
-    const ctx = makeContext({ currentWord: 'apple', wordCompleted: true })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    const applied = applyQuestEvent('longWordComplete', state, [EnchantmentType.QuestFission])
+    expect(applied).toBe(true)
+    expect(state.questStacks).toBe(1)
+  })
+
+  it('QuestFission should NOT stack on unrelated event', () => {
+    const state = makeRuntimeState()
+    const applied = applyQuestEvent('wordComplete', state, [EnchantmentType.QuestFission])
+    expect(applied).toBe(false)
     expect(state.questStacks).toBe(0)
   })
 
@@ -2723,6 +2757,9 @@ describe('Transmute same-resource optimization', () => {
 })
 
 describe('MultiplyOperator — Phase 2 bonusBreakdown', () => {
+  // MULTIPLY_OPERATOR_BASE_VALUES['base'][0] = 2.0 (default makeSkill resource='base', level=1)
+  const multOpBase = 2.0
+
   it('should return bonusBreakdown with individual bonuses when MultiplyOperator active', () => {
     const skill = makeSkill({
       affixes: [
@@ -2734,8 +2771,8 @@ describe('MultiplyOperator — Phase 2 bonusBreakdown', () => {
     const state = makeRuntimeState()
     const ctx = makeContext({ triggerKey: 'h', currentWord: 'hello' }) // 'h' is first letter
     const result = resolvePhase2(skill, state, ctx, 10)
-    // MultiplyOperator: output = baseOutput (not multiplied by bonusPercent)
-    expect(result.output).toBe(10)
+    // MultiplyOperator: output = multiplicative base (not baseOutput, not multiplied by bonusPercent)
+    expect(result.output).toBe(multOpBase)
     expect(result.bonusPercent).toBeCloseTo(1.3) // 1.0 + 0.3
     expect(result.bonusBreakdown).toBeDefined()
     expect(result.bonusBreakdown!.length).toBe(2)
@@ -2755,7 +2792,7 @@ describe('MultiplyOperator — Phase 2 bonusBreakdown', () => {
     expect(result.bonusBreakdown).toBeUndefined()
   })
 
-  it('should return baseOutput when MultiplyOperator active and no bonuses', () => {
+  it('should return multiplicative base when MultiplyOperator active and no bonuses', () => {
     const skill = makeSkill({
       affixes: [],
       enchantmentIds: [EnchantmentType.MultiplyOperator],
@@ -2763,7 +2800,7 @@ describe('MultiplyOperator — Phase 2 bonusBreakdown', () => {
     const state = makeRuntimeState()
     const ctx = makeContext()
     const result = resolvePhase2(skill, state, ctx, 10)
-    expect(result.output).toBe(10)
+    expect(result.output).toBe(multOpBase)
     expect(result.bonusPercent).toBe(0)
     expect(result.bonusBreakdown).toEqual([])
   })
@@ -2866,8 +2903,8 @@ describe('MultiplyOperator + passive enchantment combo', () => {
       fragmentInventory: { a: 15, b: 15, c: 5 },  // 2 saturated fragments
     })
     const result = resolvePhase2(skill, state, ctx, 10)
-    // MultiplyOperator: output = baseOutput
-    expect(result.output).toBe(10)
+    // MultiplyOperator: output = multiplicative base (base Lv1 = 2.0)
+    expect(result.output).toBe(2.0)
     // Overflow: 2 × 0.20 = 0.40
     expect(result.bonusPercent).toBeCloseTo(0.40)
     expect(result.bonusBreakdown).toBeDefined()

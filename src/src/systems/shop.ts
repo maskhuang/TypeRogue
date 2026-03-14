@@ -52,7 +52,7 @@ import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, AFFIX_NAMES, AFFIX_DESCRIPTIONS, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
 import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, getQuestCompletions, countEmptySlots } from '../data/affixTrigger';
-import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_NAMES, TRANSMUTE_RATIO_TABLE, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
+import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_NAMES, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_CALIBRATION, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment, getUncrownedKingBaseValue } from './relics/SkillRelicBehaviors';
@@ -269,6 +269,7 @@ function getEffectiveBaseValue(baseValues: [number, number, number], level: numb
 /** 构建词条制技能的 tooltip 扩展字段 */
 export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRuntimeState, excludeTypes?: Set<string>): {
   affixInfo: AffixTooltipInfo[]
+  enchantments: Array<{ icon: string; name: string; desc: string; color: string }>
   questProgress?: string
   apprenticeGrowth?: string
 } {
@@ -280,6 +281,20 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       paramSummary: buildAffixParamSummary(a),
       description: AFFIX_DESCRIPTIONS[a.type] || '',
     }))
+
+  // 附魔列表
+  const enchantments: Array<{ icon: string; name: string; desc: string; color: string }> = [];
+  for (const enchId of skill.enchantmentIds) {
+    const info = getEnchantmentDisplayInfo(enchId as EnchantmentType, skill.transmuteResource, skill.neighborPosRel);
+    if (info) {
+      enchantments.push({
+        icon: info.icon,
+        name: info.name,
+        desc: info.desc,
+        color: info.categoryColor,
+      });
+    }
+  }
 
   let questProgress: string | undefined
   let apprenticeGrowth: string | undefined
@@ -295,12 +310,17 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       }
     }
     // 学徒成长
-    if (rt.apprenticeAccumulated > 0) {
-      apprenticeGrowth = `学徒: +${(rt.apprenticeAccumulated * 100).toFixed(1)}%`
+    const hasApprentice = skill.enchantmentIds.some(id => isApprenticeEnchantment(id as EnchantmentType))
+    if (hasApprentice) {
+      if (rt.apprenticeAccumulated > 0) {
+        apprenticeGrowth = `学徒: +${(rt.apprenticeAccumulated * 100).toFixed(1)}%`
+      } else {
+        apprenticeGrowth = `学徒: +0.0% (待成长)`
+      }
     }
   }
 
-  return { affixInfo, questProgress, apprenticeGrowth }
+  return { affixInfo, enchantments, questProgress, apprenticeGrowth }
 }
 
 /** 构建单个词条的参数摘要 */
@@ -352,12 +372,24 @@ export function computeSmartEstimate(
   const breakdown: EstimateBreakdownLine[] = []
 
   // Phase 1: 基础值
-  const base = resolvePhase1(skill)
-  breakdown.push({ typeKey: 'base', label: `基础值 ${base}`, detail: '' })
+  const hasMultOp = skill.enchantmentIds.includes(EnchantmentTypeEnum.MultiplyOperator as string)
+  const rawBase = resolvePhase1(skill)
+  const base = hasMultOp
+    ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? rawBase)
+    : rawBase
+  if (hasMultOp) {
+    breakdown.push({ typeKey: 'base', label: `基础值 ×${base}`, detail: '' })
+  } else {
+    breakdown.push({ typeKey: 'base', label: `基础值 ${base}`, detail: '' })
+  }
 
   // 收集 Phase 2 加性和 Phase 3 乘性
+  const calibration = hasMultOp ? (MULTIPLY_OPERATOR_CALIBRATION[skill.resource] ?? 1) : 1
   let addPercent = 0  // 加性总百分比
   let multProduct = 1 // 乘性连乘
+  /** 乘算化：格式化 bonus 为 ×X.XX 或 +XX% */
+  const fmtBonus = (name: string, bonus: number) =>
+    hasMultOp ? `${name} ×${(1 + bonus * calibration).toFixed(2)}` : `${name} +${Math.round(bonus * 100)}%`
 
   const questC = (questType: import('../data/affixes').EnchantmentType): number => {
     if (!rt) return 0
@@ -396,7 +428,8 @@ export function computeSmartEstimate(
         const detail = c > 0
           ? `(${emptyLabel}×${Math.round(slotEff * 100)}%${extraBonus > 0 ? ` +${Math.round(extraBonus * 100)}%额外` : ''})`
           : `(${emptyLabel}×${Math.round((affix.bonusPerSlot ?? 0) * 100)}%)`
-        breakdown.push({ typeKey: 'void', label: `虚无 +${Math.round(bonus * 100)}%${extraBonus > 0 ? `+${Math.round(extraBonus * 100)}%` : ''}`, detail })
+        const totalVoid = bonus + extraBonus
+        breakdown.push({ typeKey: 'void', label: fmtBonus('虚无', totalVoid), detail })
         break
       }
       case 'taboo': {
@@ -410,7 +443,7 @@ export function computeSmartEstimate(
         const detail = c > 0
           ? `(负产出${Math.round(effPenalty * 100)}%, 任务-${c}%)`
           : `(负产出${Math.round(effPenalty * 100)}%)`
-        breakdown.push({ typeKey: 'taboo', label: `禁忌 +100% 期望×${expectMult.toFixed(2)}`, detail })
+        breakdown.push({ typeKey: 'taboo', label: `${fmtBonus('禁忌', 1.0)} 期望×${expectMult.toFixed(2)}`, detail })
         break
       }
       // 其余词条不预估
@@ -420,14 +453,64 @@ export function computeSmartEstimate(
   }
 
   // 学徒附魔
-  if (rt && rt.apprenticeAccumulated > 0) {
+  {
     const hasApprentice = skill.enchantmentIds.some(id => isApprenticeEnchantment(id as import('../data/affixes').EnchantmentType))
     if (hasApprentice) {
-      addPercent += rt.apprenticeAccumulated
+      const acc = rt?.apprenticeAccumulated ?? 0
+      if (acc > 0) {
+        addPercent += acc
+        const accLabel = hasMultOp
+          ? `学徒 ×${(1 + acc * calibration).toFixed(2)}`
+          : `学徒 +${(acc * 100).toFixed(1)}%`
+        breakdown.push({ typeKey: 'apprentice', label: accLabel, detail: '' })
+      } else {
+        // 未成长时也显示标记
+        const isNeighbor = skill.enchantmentIds.includes(EnchantmentTypeEnum.ApprenticeNeighbor as string)
+        const relDetail = isNeighbor && skill.neighborPosRel
+          ? `(${RELATION_LABELS[skill.neighborPosRel] || skill.neighborPosRel}邻居成长)`
+          : isNeighbor ? '(邻居触发成长)' : '(待成长)'
+        breakdown.push({
+          typeKey: 'apprentice',
+          label: hasMultOp ? `学徒 ×1.00` : `学徒 +0.0%`,
+          detail: relDetail,
+        })
+      }
+    }
+  }
+
+  // 任务附魔进度
+  if (rt && (rt.questStacks > 0 || rt.questCompletions > 0)) {
+    const questEnch = skill.enchantmentIds
+      .map(id => QUEST_ENCHANTMENT_DEFS.find((d: QuestEnchantmentDef) => d.type === id))
+      .find((d): d is QuestEnchantmentDef => d != null)
+    if (questEnch) {
       breakdown.push({
         typeKey: 'apprentice',
-        label: `学徒 +${(rt.apprenticeAccumulated * 100).toFixed(1)}%`,
-        detail: '',
+        label: `任务 ${rt.questStacks}/${questEnch.targetStacks}层`,
+        detail: rt.questCompletions > 0 ? `(完成${rt.questCompletions}次)` : '',
+      })
+    }
+  }
+
+  // 衍生附魔额外产出
+  if (skill.enchantmentIds.includes('transmute' as any) && skill.transmuteResource) {
+    const ratio = TRANSMUTE_RATIO_TABLE[skill.transmuteResource]
+    const extraResName = RESOURCE_NAMES[skill.transmuteResource] || skill.transmuteResource
+    if (skill.transmuteResource === skill.resource) {
+      // 同资源：主产出增强
+      addPercent += ratio
+      breakdown.push({
+        typeKey: 'apprentice',
+        label: fmtBonus('衍生', ratio),
+        detail: `(同资源增强)`,
+      })
+    } else {
+      // 异资源：额外产出行（不影响主估算，单独展示）
+      const estimatedExtra = base * (1 + addPercent) * multProduct * ratio
+      breakdown.push({
+        typeKey: 'apprentice',
+        label: `🔀 衍生 +${formatEstimate(estimatedExtra)} ${extraResName}`,
+        detail: `(${Math.round(ratio * 100)}%)`,
       })
     }
   }
@@ -436,9 +519,21 @@ export function computeSmartEstimate(
   if (breakdown.length <= 1) return null
 
   const estimatedOutput = base * (1 + addPercent) * multProduct
-  breakdown.push({ typeKey: 'base', label: `≈ ${estimatedOutput.toFixed(1)}`, detail: '(单次预估)' })
+  if (hasMultOp) {
+    breakdown.push({ typeKey: 'base', label: `≈ ×${formatEstimate(estimatedOutput)}`, detail: '(单次乘算)' })
+  } else {
+    breakdown.push({ typeKey: 'base', label: `≈ ${formatEstimate(estimatedOutput)}`, detail: '(单次预估)' })
+  }
 
   return { estimatedOutput, breakdown }
+}
+
+/** 自适应精度格式化：小值保留更多小数位 */
+function formatEstimate(v: number): string {
+  const a = Math.abs(v)
+  if (a < 1) return v.toFixed(2)
+  if (a < 10) return v.toFixed(1)
+  return Math.round(v).toString()
 }
 
 // === 打开商店 ===
@@ -895,6 +990,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       }
       const fields = buildAffixTooltipFields(skill);
       tooltipData.skill!.affixInfo = fields.affixInfo;
+      tooltipData.skill!.enchantments = fields.enchantments;
       keyTooltip.show(e.clientX, e.clientY, tooltipData);
     });
     card.addEventListener('mouseleave', () => {
@@ -1008,7 +1104,7 @@ function buildComparisonColumn(skill: AffixSkillInstance, label: string, otherSk
 
   // 附魔（使用统一信息查找）
   for (const enchId of skill.enchantmentIds) {
-    const info = getEnchantmentDisplayInfo(enchId as EnchantmentType, skill.transmuteResource);
+    const info = getEnchantmentDisplayInfo(enchId as EnchantmentType, skill.transmuteResource, skill.neighborPosRel);
     const enchName = info ? info.name : enchId.replace(/_/g, ' ');
     const enchColor = info ? info.categoryColor : '#9b59b6';
     const enchIcon = info ? info.icon : '✦';
@@ -1457,7 +1553,10 @@ let _enchantmentOnClose: (() => void) | null = null;
 
 function closeEnchantmentModal(): void {
   const modal = document.getElementById('enchantment-modal');
-  if (modal) modal.classList.add('enchantment-hidden');
+  if (modal) {
+    modal.classList.add('enchantment-hidden');
+    modal.style.display = '';
+  }
   const cb = _enchantmentOnClose;
   _enchantmentOnClose = null;
   if (cb) cb();
@@ -1490,7 +1589,7 @@ const ENCHANTMENT_CATEGORY_LABELS: Record<string, string> = {
 }
 
 /** 统一附魔信息查找 */
-function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: import('../core/types').ResourceType): {
+function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: import('../core/types').ResourceType, neighborRel?: PositionRelation): {
   name: string; desc: string; icon: string; category: string; categoryColor: string;
 } | null {
   // Quest 类型
@@ -1513,6 +1612,28 @@ function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: import(
       icon: '🔀',
       category: ENCHANTMENT_CATEGORY_LABELS.transmute,
       categoryColor: ENCHANTMENT_CATEGORY_COLORS.transmute,
+    };
+  }
+  // ApprenticeNeighbor 特殊处理：显示分配的位置关系和成长率
+  if (type === EnchantmentTypeEnum.ApprenticeNeighbor) {
+    if (neighborRel) {
+      const growth = APPRENTICE_NEIGHBOR_GROWTH[neighborRel]
+      const relLabel = RELATION_LABELS[neighborRel] || neighborRel
+      return {
+        name: `学徒·观摩(${relLabel})`,
+        desc: `${relLabel}技能触发时永久成长 +${(growth * 100).toFixed(1)}%/次`,
+        icon: '👀',
+        category: ENCHANTMENT_CATEGORY_LABELS.apprentice,
+        categoryColor: ENCHANTMENT_CATEGORY_COLORS.apprentice,
+      };
+    }
+    // 无具体关系时（旧存档兼容）显示通用描述
+    return {
+      name: '学徒·观摩',
+      desc: '范围内技能触发时永久成长',
+      icon: '👀',
+      category: ENCHANTMENT_CATEGORY_LABELS.apprentice,
+      categoryColor: ENCHANTMENT_CATEGORY_COLORS.apprentice,
     };
   }
   // ENCHANTMENT_META 查找（学徒/被动/运算符）
@@ -1545,7 +1666,12 @@ function applyAffixRandomEnchantment(
       affixSkill.transmuteResource = eligible[Math.floor(random() * eligible.length)];
     }
   }
-  const info = getEnchantmentDisplayInfo(chosen, affixSkill.transmuteResource);
+  // ApprenticeNeighbor：随机分配位置关系
+  if (chosen === EnchantmentTypeEnum.ApprenticeNeighbor) {
+    const allRels = Object.values(PositionRelation);
+    affixSkill.neighborPosRel = allRels[Math.floor(random() * allRels.length)];
+  }
+  const info = getEnchantmentDisplayInfo(chosen, affixSkill.transmuteResource, affixSkill.neighborPosRel);
   if (info) {
     showFeedback(t('shop.random_enchant', { icon: info.icon, name: info.name }), '#f9ca24');
   }
@@ -1571,8 +1697,9 @@ function renderAffixEnchantmentModal(
 
   const playerClass = state.classId !== 'none' ? state.classId : undefined;
 
-  // 预处理 Transmute 候选：展开为资源变体并预分配
-  type ShownCandidate = { enchType: EnchantmentType; transmuteRes?: import('../core/types').ResourceType };
+  // 预处理候选：展开 Transmute 资源变体 + ApprenticeNeighbor 位置关系
+  type ShownCandidate = { enchType: EnchantmentType; transmuteRes?: import('../core/types').ResourceType; neighborRel?: PositionRelation };
+  const ALL_POS_RELS = Object.values(PositionRelation);
   const expandedCandidates: ShownCandidate[] = [];
   for (const enchType of candidates) {
     if (enchType === EnchantmentTypeEnum.Transmute) {
@@ -1582,6 +1709,10 @@ function renderAffixEnchantmentModal(
         const res = eligible[Math.floor(random() * eligible.length)];
         expandedCandidates.push({ enchType, transmuteRes: res });
       }
+    } else if (enchType === EnchantmentTypeEnum.ApprenticeNeighbor) {
+      // 预分配随机位置关系
+      const rel = ALL_POS_RELS[Math.floor(random() * ALL_POS_RELS.length)];
+      expandedCandidates.push({ enchType, neighborRel: rel });
     } else {
       expandedCandidates.push({ enchType });
     }
@@ -1606,8 +1737,8 @@ function renderAffixEnchantmentModal(
   titleEl.textContent = t('shop.enchant_choose', { name: affixSkill.name });
   branchesEl.innerHTML = '';
 
-  shown.forEach(({ enchType, transmuteRes }) => {
-    const info = getEnchantmentDisplayInfo(enchType, transmuteRes);
+  shown.forEach(({ enchType, transmuteRes, neighborRel }) => {
+    const info = getEnchantmentDisplayInfo(enchType, transmuteRes, neighborRel);
     if (!info) return;
     const card = document.createElement('div');
     card.className = 'enchantment-branch';
@@ -1622,6 +1753,10 @@ function renderAffixEnchantmentModal(
       // Transmute：保存目标资源
       if (enchType === EnchantmentTypeEnum.Transmute && transmuteRes) {
         affixSkill.transmuteResource = transmuteRes;
+      }
+      // ApprenticeNeighbor：保存位置关系
+      if (enchType === EnchantmentTypeEnum.ApprenticeNeighbor && neighborRel) {
+        affixSkill.neighborPosRel = neighborRel;
       }
       resolveRelicEffectsWithBehaviors('on_enchantment_acquire', {
         enchantedSkillId: skillId,
@@ -1640,7 +1775,7 @@ function renderAffixEnchantmentModal(
   });
 
   cancelBtn.onclick = () => closeEnchantmentModal();
-  modal.style.display = 'flex';
+  modal.classList.remove('enchantment-hidden');
 }
 
 // === 获取技能显示信息 ===
@@ -1693,6 +1828,10 @@ function highlightSkillRange(key: string): void {
       if (affix.posRel) {
         highlights.push({ rel: affix.posRel, color: AFFIX_COLORS[affix.type] || defaultColor })
       }
+    }
+    // 学徒·观摩：附魔的空间关系也需要高亮
+    if (affixSkill.neighborPosRel) {
+      highlights.push({ rel: affixSkill.neighborPosRel, color: AFFIX_COLORS['apprentice'] || defaultColor })
     }
   }
 
@@ -1878,6 +2017,7 @@ export function renderBuildManager(): void {
           const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['multiply', 'void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
           const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
           tooltipData.skill.affixInfo = fields.affixInfo;
+          tooltipData.skill.enchantments = fields.enchantments;
           tooltipData.skill.questProgress = fields.questProgress;
           tooltipData.skill.apprenticeGrowth = estimate ? undefined : fields.apprenticeGrowth;
           tooltipData.skill.smartEstimate = estimate ?? undefined;
@@ -1971,6 +2111,7 @@ export function renderBuildManager(): void {
         const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['multiply', 'void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
         const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
         tooltipData.skill!.affixInfo = fields.affixInfo;
+        tooltipData.skill!.enchantments = fields.enchantments;
         tooltipData.skill!.questProgress = fields.questProgress;
         tooltipData.skill!.apprenticeGrowth = estimate ? undefined : fields.apprenticeGrowth;
         tooltipData.skill!.smartEstimate = estimate ?? undefined;

@@ -261,10 +261,19 @@ function enqueuePhase6Action(
       })
       break
     }
-    // apprentice_neighbor 和 quest_resonance 不触发完整技能，仅状态更新
-    case 'apprentice_neighbor':
+    // apprentice_neighbor: 直接更新邻居 runtimeState（不入队触发）
+    case 'apprentice_neighbor': {
+      const neighborSkillId = ctx.bindings.get(action.neighborKey)
+      if (neighborSkillId) {
+        const neighborState = ctx.skillStates.get(neighborSkillId)
+        if (neighborState) {
+          neighborState.apprenticeAccumulated += action.growthDelta * (ctx.apprenticeGrowthMultiplier ?? 1)
+        }
+      }
+      break
+    }
+    // quest_resonance: triggerAffixSkill 内部已处理 runtimeState
     case 'quest_resonance':
-      // 这些动作在 triggerAffixSkill 内部已处理 runtimeState，无需入队
       break
   }
 }

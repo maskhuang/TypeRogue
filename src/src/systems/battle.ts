@@ -30,7 +30,7 @@ import { routeFragmentsToInventory, getMaxQueueLength } from './classes/Fragment
 import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, isRepeatWord, calculateRhythmAdapt, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors } from './relics/TypingRelicBehaviors';
 import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmortalCombo, shouldBlockMultiplierResource, syncRhythmDoctorMilestone, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing } from './relics/SkillRelicBehaviors';
-import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors } from './relics/EnchantmentRelicBehaviors';
+import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, incrementStormWordCount, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTimeDew, incrementWordParity, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
@@ -38,8 +38,9 @@ import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
-import { filterEnchantmentCandidates, getTransmuteEligibleResources } from '../data/affixTrigger';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
+import { PositionRelation } from '../data/keyboardTopology';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
 import { initDemoTutorial } from '../demo/demo-tutorial';
 import { showDemoEndScreen } from '../demo/demo-end-screen';
@@ -82,6 +83,11 @@ export function applyChaosSeedEnchantments(): void {
       if (eligible.length > 0) {
         skill.transmuteResource = eligible[Math.floor(random() * eligible.length)];
       }
+    }
+    // ApprenticeNeighbor：随机分配位置关系
+    if (chosen === EnchantmentTypeEnum.ApprenticeNeighbor) {
+      const allRels = Object.values(PositionRelation);
+      skill.neighborPosRel = allRels[Math.floor(random() * allRels.length)];
     }
     chaosSeedEnchantments.set(skillId, chosen);
   }
@@ -370,6 +376,7 @@ function playerCorrect(k: string): void {
   let skillProducedTime = false;
 
   // 连击增加
+  const prevComboMilestone = Math.floor(state.combo / 15);
   state.combo++;
   state.maxCombo = Math.max(state.maxCombo, state.combo);
   bumpCombo();
@@ -485,6 +492,21 @@ function playerCorrect(k: string): void {
       triggerSkill(sid, boundKey);
     }
     showFeedback(t('battle.detonate', { value: count }), '#ff6b00');
+  }
+
+  // 附魔外部事件：连击达 15 的倍数 → 学徒·连击/任务·净化 成长
+  const newComboMilestone = Math.floor(state.combo / 15);
+  if (newComboMilestone > prevComboMilestone) {
+    const _gm = getApprenticeGrowthMultiplier();
+    const _si = getQuestStackIncrement();
+    for (let m = 0; m < newComboMilestone - prevComboMilestone; m++) {
+      for (const [, skill] of state.affixSkills) {
+        const rt = state.affixSkillStates.get(skill.id);
+        if (!rt) continue;
+        applyApprenticeEvent('comboReach', rt, skill.enchantmentIds, _gm);
+        applyQuestEvent('comboReach', rt, skill.enchantmentIds, _si);
+      }
+    }
   }
 
   spawnParticles(letter, shouldTrigger ? 10 : 5, '#4ecdc4');
@@ -739,6 +761,24 @@ function completeWord(): void {
     score: finalWordScore,
     perfect: state.wordPerfect
   });
+
+  // 附魔外部事件：单词完成 → 学徒/任务成长
+  const _growthMult = getApprenticeGrowthMultiplier();
+  const _stackInc = getQuestStackIncrement();
+  for (const [, skill] of state.affixSkills) {
+    const rt = state.affixSkillStates.get(skill.id);
+    if (!rt) continue;
+    applyApprenticeEvent('wordComplete', rt, skill.enchantmentIds, _growthMult);
+    applyQuestEvent('wordComplete', rt, skill.enchantmentIds, _stackInc);
+    if (state.player.word.length >= 6) {
+      applyApprenticeEvent('longWordComplete', rt, skill.enchantmentIds, _growthMult);
+      applyQuestEvent('longWordComplete', rt, skill.enchantmentIds, _stackInc);
+    }
+    if (state.wordPerfect) {
+      applyApprenticeEvent('perfectWord', rt, skill.enchantmentIds, _growthMult);
+      applyQuestEvent('perfectWord', rt, skill.enchantmentIds, _stackInc);
+    }
+  }
 
   // Story 36.6: 全键风暴 — 前 3 词完成后触发未命中技能
   incrementStormWordCount();
@@ -1117,6 +1157,16 @@ function endLevel(): void {
   }
 
   if (state.score >= state.targetScore) {
+    // 附魔外部事件：通关 → 学徒·通关/任务·镜像 成长
+    const _sgm = getApprenticeGrowthMultiplier();
+    const _ssi = getQuestStackIncrement();
+    for (const [, skill] of state.affixSkills) {
+      const rt = state.affixSkillStates.get(skill.id);
+      if (!rt) continue;
+      applyApprenticeEvent('stageCleared', rt, skill.enchantmentIds, _sgm);
+      applyQuestEvent('stageCleared', rt, skill.enchantmentIds, _ssi);
+    }
+
     trackEvent('demo_stage_complete', { stage: state.level, score: state.score });
     const rating = state.battleStats?.rating || 'B';
     showRatingReveal(rating, () => {

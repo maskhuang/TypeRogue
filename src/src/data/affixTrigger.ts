@@ -13,7 +13,7 @@ import type { AffixInstance, AffixSkillInstance, AffixSkillSaveData, SkillRuntim
 import {
   AffixType,
   EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS, QUEST_AFFIX_MAP,
-  TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_CALIBRATION, BASE_VALUES,
+  TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_CALIBRATION, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES,
   isOldSystemSkill,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
@@ -56,7 +56,7 @@ export interface TriggerContext {
   transmuteResource?: ResourceType
   /** @deprecated 使用 TRANSMUTE_RATIO_TABLE[resource] 替代 */
   transmuteRatio?: number
-  /** 各技能附魔运行时参数（键为 skillId） */
+  /** @deprecated 不再使用——ApprenticeNeighbor 改用 skill.neighborPosRel */
   skillEnchantmentParams?: Map<string, { posRel?: PositionRelation }>
   // ── 遗物注入（由 skills.ts 提供，避免 data→systems 依赖）(Story 35.12) ──
   /** resolveRelicSkillTrigger() 结果乘数 */
@@ -264,6 +264,10 @@ export function resolvePhase2(
   baseOutput: number,
 ): Phase2Result {
   const hasMultOp = skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator)
+  // 乘算化：基础值替换为乘数基底
+  const effectiveBase = hasMultOp
+    ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? baseOutput)
+    : baseOutput
   let bonusPercent = 0
   const mutations: StateMutation[] = []
   const breakdown: number[] = []
@@ -371,7 +375,7 @@ export function resolvePhase2(
   // 注意：MultiplyOperator 模式下 bonusPercent 仅作信息参考（不反映在 output 中），
   // 实际乘算通过 bonusBreakdown 在 Phase 3 逐项应用
   return {
-    output: hasMultOp ? baseOutput : baseOutput * (1 + bonusPercent),
+    output: hasMultOp ? effectiveBase : baseOutput * (1 + bonusPercent),
     bonusPercent,
     mutations,
     bonusBreakdown: hasMultOp ? breakdown : undefined,
@@ -637,13 +641,10 @@ function checkQuestEventCondition(
     case 'affixProc:cascade': return triggerFlags.isCascade
     case 'affixProc:recurse': return recurseProc
     case 'affixProc:taboo_penalty': return triggerFlags.isTabooPenalty
-    // ── Phase 5 可判断的事件（使用 TriggerContext 字段） ──
-    case 'perfectWord': return ctx.perfectWord === true
-    case 'wordComplete': return ctx.wordCompleted === true
-    case 'longWord:6': return ctx.wordCompleted === true && ctx.currentWord.length >= 6
     // ── neighborTrigger 在 Phase 6 独立处理（QuestResonance），Phase 5 不重复叠层 ──
     case 'neighborTrigger': return false
-    // ── 外部事件（comboReach:15, stageCleared）由调用方通过 applyQuestEvent 处理 ──
+    // ── 外部事件（wordComplete, perfectWord, longWord:6, comboReach:15, stageCleared）
+    //    由调用方通过 applyQuestEvent 处理，Phase 5 不重复叠层 ──
     default: return false
   }
 }
@@ -765,24 +766,12 @@ export function resolvePhase5(
         shouldGrow = triggerFlags.isCrit || triggerFlags.isPulse
           || triggerFlags.isCascade || triggerFlags.isTabooPenalty
         break
+      // Word/LongWord/Perfect/Harvest/Adapt/Combo/Stage — 外部事件，不在 Phase 5 处理
       case EnchantmentType.ApprenticeWord:
-        shouldGrow = ctx.wordCompleted === true
-        break
       case EnchantmentType.ApprenticeLongWord:
-        shouldGrow = ctx.wordCompleted === true && ctx.currentWord.length >= 6
-        break
       case EnchantmentType.ApprenticePerfect:
-        shouldGrow = ctx.perfectWord === true
-        break
       case EnchantmentType.ApprenticeHarvest:
-        // 造词师限定 — 抽取时已过滤，触发时不再检查职业
-        shouldGrow = ctx.wordCompleted === true
-        break
       case EnchantmentType.ApprenticeAdapt:
-        // 蜕变师限定 — 抽取时已过滤，触发时不再检查职业
-        shouldGrow = ctx.mutationApplied === true
-        break
-      // ApprenticeCombo / ApprenticeStage — 外部事件，不在 Phase 5 处理
       case EnchantmentType.ApprenticeCombo:
       case EnchantmentType.ApprenticeStage:
         shouldGrow = false
@@ -884,10 +873,10 @@ export function resolvePhase6(
     }
 
     // 学徒·观摩附魔：邻居触发 → 自身永久成长（不触发技能）
-    if (neighborSkill.enchantmentIds.includes(EnchantmentType.ApprenticeNeighbor)) {
-      const params = ctx.skillEnchantmentParams?.get(neighborSkillId)
-      if (params?.posRel != null && hasRelation(triggerKey, neighborKey, params.posRel)) {
-        const growth = APPRENTICE_NEIGHBOR_GROWTH[params.posRel]
+    // 使用技能上随机分配的 neighborPosRel 判定
+    if (neighborSkill.enchantmentIds.includes(EnchantmentType.ApprenticeNeighbor) && neighborSkill.neighborPosRel) {
+      if (hasRelation(triggerKey, neighborKey, neighborSkill.neighborPosRel)) {
+        const growth = APPRENTICE_NEIGHBOR_GROWTH[neighborSkill.neighborPosRel]
         actions.push({ type: 'apprentice_neighbor', neighborKey, growthDelta: growth })
       }
     }
@@ -990,33 +979,40 @@ export function triggerAffixSkill(
 
 // ===== 外部事件回调 =====
 
-/** 学徒附魔事件→附魔类型映射 */
-const APPRENTICE_EVENT_MAP: Record<string, EnchantmentType> = {
-  stageCleared: EnchantmentType.ApprenticeStage,
-  comboReach: EnchantmentType.ApprenticeCombo,
+/** 学徒附魔事件→附魔类型映射（一个事件可映射多个附魔类型） */
+const APPRENTICE_EVENT_MAP: Record<string, EnchantmentType[]> = {
+  stageCleared: [EnchantmentType.ApprenticeStage],
+  comboReach: [EnchantmentType.ApprenticeCombo],
+  wordComplete: [EnchantmentType.ApprenticeWord, EnchantmentType.ApprenticeHarvest],
+  longWordComplete: [EnchantmentType.ApprenticeLongWord],
+  perfectWord: [EnchantmentType.ApprenticePerfect],
 }
 
 /**
  * 外部事件回调：系统层在对应事件发生时调用此函数。
  * 遍历 enchantmentIds，匹配事件→累加 growthPerProc 到 runtimeState.apprenticeAccumulated。
  * 纯函数（仅修改传入的 runtimeState），不调用系统层。
+ * @param growthMultiplier 学徒之袍遗物成长乘数（默认 1）
  */
 export function applyApprenticeEvent(
   event: string,
   runtimeState: SkillRuntimeState,
   enchantmentIds: string[],
+  growthMultiplier: number = 1,
 ): boolean {
-  const targetEnch = APPRENTICE_EVENT_MAP[event]
-  if (!targetEnch) return false
+  const targetEnchs = APPRENTICE_EVENT_MAP[event]
+  if (!targetEnchs) return false
 
-  const growth = APPRENTICE_GROWTH_DEFAULTS[targetEnch]
-  if (growth == null) return false
-
-  if (enchantmentIds.includes(targetEnch)) {
-    runtimeState.apprenticeAccumulated += growth
-    return true
+  let applied = false
+  for (const targetEnch of targetEnchs) {
+    const growth = APPRENTICE_GROWTH_DEFAULTS[targetEnch]
+    if (growth == null) continue
+    if (enchantmentIds.includes(targetEnch)) {
+      runtimeState.apprenticeAccumulated += growth * growthMultiplier
+      applied = true
+    }
   }
-  return false
+  return applied
 }
 
 // ===== 任务附魔外部事件回调 =====
@@ -1025,17 +1021,22 @@ export function applyApprenticeEvent(
 const QUEST_EXTERNAL_EVENT_MAP: Record<string, EnchantmentType[]> = {
   stageCleared: [EnchantmentType.QuestMirror],
   comboReach: [EnchantmentType.QuestPurify],
+  wordComplete: [EnchantmentType.QuestEnergize, EnchantmentType.QuestPolarize],
+  perfectWord: [EnchantmentType.QuestAscend],
+  longWordComplete: [EnchantmentType.QuestFission],
 }
 
 /**
  * 外部任务事件回调：系统层在对应事件发生时调用。
  * 遍历 enchantmentIds，匹配事件→questStacks++→满层 questCompletions++ 并重置。
  * 纯函数（仅修改传入的 runtimeState），不调用系统层。
+ * @param stackIncrement 试炼徽章遗物叠层增量（默认 1）
  */
 export function applyQuestEvent(
   event: string,
   runtimeState: SkillRuntimeState,
   enchantmentIds: string[],
+  stackIncrement: number = 1,
 ): boolean {
   const targetEnchs = QUEST_EXTERNAL_EVENT_MAP[event]
   if (!targetEnchs) return false
@@ -1046,7 +1047,7 @@ export function applyQuestEvent(
     const def = QUEST_ENCHANTMENT_DEFS.find(d => d.type === targetEnch)
     if (!def) continue
 
-    runtimeState.questStacks++
+    runtimeState.questStacks += stackIncrement
     if (runtimeState.questStacks >= def.targetStacks) {
       runtimeState.questStacks = 0
       runtimeState.questCompletions++
@@ -1348,6 +1349,7 @@ export function deserializeSkill(
     affixes: data.affixes.map(a => ({ ...a })),
     enchantmentIds: [...data.enchantmentIds],
     transmuteResource: data.transmuteResource,
+    neighborPosRel: data.neighborPosRel,
   }
   const runtimeState: SkillRuntimeState = {
     skillId: data.id,

@@ -158,7 +158,7 @@ export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
   [EnchantmentType.ApprenticeHarvest]:  { type: EnchantmentType.ApprenticeHarvest,  name: '学徒·丰收', icon: '🌾', category: 'apprentice', desc: '造词师限定：完成单词时永久成长 +3%' },
   [EnchantmentType.ApprenticeAdapt]:    { type: EnchantmentType.ApprenticeAdapt,    name: '学徒·适应', icon: '🧬', category: 'apprentice', desc: '蜕变师限定：每次蜕变永久成长 +15%' },
   // ── 运算符（1） ──
-  [EnchantmentType.MultiplyOperator]: { type: EnchantmentType.MultiplyOperator, name: '乘算化', icon: '✖️', category: 'operator', desc: '将加算层各项 bonus 转为独立乘数' },
+  [EnchantmentType.MultiplyOperator]: { type: EnchantmentType.MultiplyOperator, name: '乘算化', icon: '✖️', category: 'operator', desc: '将加算层各项加成转为独立乘数' },
 }
 
 /** 衍生附魔资源名称（运行时展开为 7 个候选项） */
@@ -227,6 +227,7 @@ export interface AffixSkillInstance {
   affixes: AffixInstance[]               // 0~3 个词条
   enchantmentIds: string[]               // 附魔列表（通常 0~1；双生词条时最多 2）
   transmuteResource?: ResourceType       // 衍生附魔目标资源
+  neighborPosRel?: PositionRelation      // 学徒·观摩：随机分配的位置关系
   purchasePrice?: number                 // 购买价格（用于转卖计算）
 }
 
@@ -256,6 +257,7 @@ export interface AffixSkillSaveData {
   affixes: AffixInstance[]
   enchantmentIds: string[]
   transmuteResource?: ResourceType
+  neighborPosRel?: PositionRelation      // 学徒·观摩：随机分配的位置关系
   runtime: SkillRuntimeState
 }
 
@@ -409,6 +411,17 @@ export const MULTIPLY_OPERATOR_CALIBRATION: Record<ResourceType, number> = {
   mutagen:    1.0,
 }
 
+/** 乘算化附魔：基础值替换表（加算基底 → 乘数基底，来源 Story 34.2 旧乘算产出者） */
+export const MULTIPLY_OPERATOR_BASE_VALUES: Record<ResourceType, [number, number, number]> = {
+  base:       [2.0, 2.3, 2.6],
+  score:      [1.1, 1.15, 1.2],
+  multiplier: [1.15, 1.2, 1.25],
+  time:       [1.2, 1.25, 1.3],
+  gold:       [1.3, 1.5, 1.7],
+  fragment:   [1.8, 2.1, 2.4],
+  mutagen:    [1.8, 2.1, 2.4],
+}
+
 // ===== 学徒·观摩 growthPerProc 按 PositionRelation =====
 
 export const APPRENTICE_NEIGHBOR_GROWTH: Record<PositionRelation, number> = {
@@ -470,24 +483,24 @@ export interface QuestEnchantmentDef {
 }
 
 export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
-  { type: EnchantmentType.QuestDevour, name: '吞噬', targetAffix: AffixType.Void, event: 'selfTrigger', targetStacks: 15, effectDesc: 'bonusPerSlot +5%' },
-  { type: EnchantmentType.QuestOverload, name: '过载', targetAffix: AffixType.Crit, event: 'critHit', targetStacks: 8, effectDesc: 'critMult +0.5' },
-  { type: EnchantmentType.QuestEcho, name: '回响', targetAffix: AffixType.Pulse, event: 'affixProc:pulse', targetStacks: 6, effectDesc: 'burstMult +0.3' },
-  { type: EnchantmentType.QuestAscend, name: '升华', targetAffix: AffixType.Multiply, event: 'perfectWord', targetStacks: 3, effectDesc: 'multiplier +0.15' },
-  { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'affixProc:cascade', targetStacks: 6, effectDesc: 'cascadeMult +0.2' },
-  { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'comboReach:15', targetStacks: 3, effectDesc: 'floor -0.05 (min 0.1)' },
+  { type: EnchantmentType.QuestDevour, name: '吞噬', targetAffix: AffixType.Void, event: 'selfTrigger', targetStacks: 15, effectDesc: '每空位加成 +5%' },
+  { type: EnchantmentType.QuestOverload, name: '过载', targetAffix: AffixType.Crit, event: 'critHit', targetStacks: 8, effectDesc: '暴击倍率 +0.5' },
+  { type: EnchantmentType.QuestEcho, name: '回响', targetAffix: AffixType.Pulse, event: 'affixProc:pulse', targetStacks: 6, effectDesc: '爆发倍率 +0.3' },
+  { type: EnchantmentType.QuestAscend, name: '升华', targetAffix: AffixType.Multiply, event: 'perfectWord', targetStacks: 3, effectDesc: '强化倍率 +0.15' },
+  { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'affixProc:cascade', targetStacks: 6, effectDesc: '级联倍率 +0.2' },
+  { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'comboReach:15', targetStacks: 3, effectDesc: '衰减下限 -0.05 (最低 0.1)' },
   { type: EnchantmentType.QuestResonance, name: '共振', targetAffix: [AffixType.Resonance, AffixType.Link], event: 'neighborTrigger', targetStacks: 20, effectDesc: '触发产出 +10%/层' },
-  { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'outcastProc', targetStacks: 10, effectDesc: 'bonusPercent +15%' },
-  { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'selfTrigger', targetStacks: 15, effectDesc: 'k ×1.1' },
-  { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'wordComplete', targetStacks: 5, effectDesc: 'maxBonus +0.3' },
+  { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'outcastProc', targetStacks: 10, effectDesc: '加成 +15%' },
+  { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'selfTrigger', targetStacks: 15, effectDesc: '转化系数 ×1.1' },
+  { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'wordComplete', targetStacks: 5, effectDesc: '蓄力上限 +0.3' },
   { type: EnchantmentType.QuestFission, name: '裂变', targetAffix: AffixType.Splash, event: 'longWord:6', targetStacks: 5, effectDesc: '额外触发 +1 邻居' },
-  { type: EnchantmentType.QuestStack, name: '层叠', targetAffix: AffixType.Amplify, event: 'selfTrigger', targetStacks: 25, effectDesc: 'valuePerStack +0.005' },
-  { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'wordComplete', targetStacks: 8, effectDesc: '|probMult−1| +0.15' },
+  { type: EnchantmentType.QuestStack, name: '层叠', targetAffix: AffixType.Amplify, event: 'selfTrigger', targetStacks: 25, effectDesc: '每层加成 +0.005' },
+  { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'wordComplete', targetStacks: 8, effectDesc: '概率偏移 +0.15' },
   { type: EnchantmentType.QuestSpectrum, name: '光谱', targetAffix: AffixType.Rainbow, event: 'selfTrigger', targetStacks: 20, effectDesc: '随机权重偏向最低资源 +15%/层' },
   { type: EnchantmentType.QuestMirror, name: '映射', targetAffix: AffixType.Mirror, event: 'stageCleared', targetStacks: 1, effectDesc: '复制参数 ×1.1/层' },
   { type: EnchantmentType.QuestOverlap, name: '重叠', targetAffix: AffixType.Ligature, event: 'selfTrigger', targetStacks: 15, effectDesc: '连字有效重复次数 +1/层' },
-  { type: EnchantmentType.QuestIterate, name: '迭代', targetAffix: AffixType.Recurse, event: 'affixProc:recurse', targetStacks: 5, effectDesc: 'recurseChance +3%/层' },
-  { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'affixProc:taboo_penalty', targetStacks: 3, effectDesc: 'penaltyChance -1%/层 (min 2%)' },
+  { type: EnchantmentType.QuestIterate, name: '迭代', targetAffix: AffixType.Recurse, event: 'affixProc:recurse', targetStacks: 5, effectDesc: '递归概率 +3%/层' },
+  { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'affixProc:taboo_penalty', targetStacks: 3, effectDesc: '惩罚概率 -1%/层 (最低 2%)' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====

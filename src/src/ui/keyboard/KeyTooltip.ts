@@ -66,6 +66,8 @@ export interface KeyTooltipData {
     enchantmentInfo?: string
     // 词条制技能扩展
     affixInfo?: AffixTooltipInfo[]
+    /** 已装备的附魔列表 */
+    enchantments?: Array<{ icon: string; name: string; desc: string; color: string }>
     questProgress?: string
     apprenticeGrowth?: string
     // 智能产出预估
@@ -155,7 +157,10 @@ class KeyTooltipManager {
       if (data.skill.smartEstimate) {
         const est = data.skill.smartEstimate
         html += `<div class="tooltip-estimate" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
-        html += `<div style="color:#fff;font-size:11px;font-weight:bold;">预估产出: ${est.estimatedOutput >= 0 ? '+' : ''}${est.estimatedOutput.toFixed(1)}</div>`
+        const fmtEst = Math.abs(est.estimatedOutput) < 1 ? est.estimatedOutput.toFixed(2)
+          : Math.abs(est.estimatedOutput) < 10 ? est.estimatedOutput.toFixed(1)
+          : Math.round(est.estimatedOutput).toString()
+        html += `<div style="color:#fff;font-size:11px;font-weight:bold;">预估产出: ${est.estimatedOutput >= 0 ? '+' : ''}${fmtEst}</div>`
         for (const line of est.breakdown) {
           const color = AFFIX_COLORS[line.typeKey] || '#aaa'
           html += `<div style="color:${color};font-size:10px;margin-left:4px;">${esc(line.label)}`
@@ -173,6 +178,15 @@ class KeyTooltipManager {
           if (affix.description) {
             html += `<div style="color:#888;font-size:10px;margin-left:2px;margin-bottom:2px;">${esc(affix.description)}</div>`
           }
+        }
+        html += `</div>`
+      }
+      // 词条制：附魔列表
+      if (data.skill.enchantments && data.skill.enchantments.length > 0) {
+        html += `<div class="tooltip-enchantments" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
+        for (const ench of data.skill.enchantments) {
+          html += `<div style="color:${ench.color};font-size:10px;">${esc(ench.icon)} ${esc(ench.name)}</div>`
+          html += `<div style="color:#888;font-size:9px;margin-left:2px;margin-bottom:2px;">${esc(ench.desc)}</div>`
         }
         html += `</div>`
       }
