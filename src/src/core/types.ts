@@ -294,6 +294,7 @@ export interface WordPack {
   desc: string;
   words: string[];
   cost: number;
+  rarity: 0 | 1 | 2 | 3;
 }
 
 // (旧 ShopReward/ShopWord/ShopSkillItem 已移除，由 ShopItem 替代)

@@ -92,11 +92,11 @@ export const RESOURCE_ICONS: Record<string, string> = {
 
 // === 资源颜色 ===
 export const RESOURCE_COLORS: Record<string, string> = {
-  base: '#e74c3c',       // 红
-  score: '#f1c40f',      // 金
-  multiplier: '#e67e22',  // 橙
-  time: '#3498db',       // 蓝
-  gold: '#ffd700',       // 金币
+  base: '#4488ff',       // 蓝
+  score: '#ffffff',      // 白
+  multiplier: '#e74c3c', // 红
+  time: '#00cccc',       // 青
+  gold: '#ffd700',       // 金
   fragment: '#9b59b6',   // 紫（造词师碎片）
   mutagen: '#2ecc71',    // 绿（蜕变师变异素）
 };

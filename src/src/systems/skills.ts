@@ -305,12 +305,13 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
 
     let prefix = '';
     if (tr.isCrit) prefix = '💥';
+    const anchor = { letterIndex: state.player.index, resource, amount };
     if (tr.isMultiplyOp) {
-      showFeedback(`${prefix}×${displayValue}${label}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1));
+      showFeedback(`${prefix}×${displayValue}${label}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1), anchor);
     } else if (tr.isTabooPenalty) {
-      showFeedback(`-${displayValue}${label}`, '#ff4444', scale);
+      showFeedback(`-${displayValue}${label}`, '#ff4444', scale, anchor);
     } else {
-      showFeedback(`${prefix}+${displayValue}${label}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1));
+      showFeedback(`${prefix}+${displayValue}${label}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1), anchor);
     }
     emitResourceSound(resource, scale, 0);
 
@@ -326,7 +327,7 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     const tmColor = RESOURCE_COLORS[tmRes] || '#e67e22';
     const tmLabel = getResourceLabel(tmRes);
     const tmDisplay = parseFloat(Math.abs(tmAmt).toPrecision(3));
-    showFeedback(`🔀+${tmDisplay}${tmLabel}`, tmColor);
+    showFeedback(`🔀+${tmDisplay}${tmLabel}`, tmColor, undefined, { letterIndex: state.player.index, resource: tmRes, amount: tmAmt });
   }
 
   // 技能触发弹窗

@@ -699,7 +699,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
   if (isFeatureEnabled('pack-system')) {
     const boundKeys = [...state.player.bindings.keys()];
     const playerFreqs = calculateLetterFrequency(state.player.wordDeck);
-    const packs = generateWordPacks(state.player.wordDeck, playerFreqs, boundKeys, 8, act);
+    const packs = generateWordPacks(state.player.wordDeck, playerFreqs, boundKeys, 8, act, getActMaxRarity());
     for (const pack of packs) {
       packPool.push({
         id: `si-${nextId++}`,
@@ -712,26 +712,19 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
     }
   }
 
-  // 保底：≥1 技能（优先升级） + ≥1 牌包（如果有的话）
+  // 保底：≥2 技能（优先升级） + ≥1 牌包（如果有的话）
   // 优先从升级项中选保底技能，确保玩家看到升级选项
-  const upgradeItems = skillPool.filter(i => i.isUpgrade);
-  if (count >= 2 && skillPool.length > 0 && packPool.length > 0) {
-    // 保底技能：有升级时优先升级
-    if (upgradeItems.length > 0) {
-      const idx = skillPool.indexOf(upgradeItems[0]);
+  const guaranteedSkillCount = Math.min(2, skillPool.length);
+  for (let g = 0; g < guaranteedSkillCount; g++) {
+    const remainUpgrades = skillPool.filter(i => i.isUpgrade);
+    if (remainUpgrades.length > 0) {
+      const idx = skillPool.indexOf(remainUpgrades[0]);
       items.push(skillPool.splice(idx, 1)[0]);
     } else {
       items.push(skillPool.splice(0, 1)[0]);
     }
-    items.push(packPool.splice(0, 1)[0]);
-  } else if (skillPool.length > 0 && packPool.length === 0) {
-    if (upgradeItems.length > 0) {
-      const idx = skillPool.indexOf(upgradeItems[0]);
-      items.push(skillPool.splice(idx, 1)[0]);
-    } else {
-      items.push(skillPool.splice(0, 1)[0]);
-    }
-  } else if (packPool.length > 0) {
+  }
+  if (packPool.length > 0) {
     items.push(packPool.splice(0, 1)[0]);
   }
 
@@ -885,8 +878,11 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
     // Pack item
     const pack = item.pack;
     const preview = pack.words.join(', ');
+    const packRarityColor = RARITY_COLORS[pack.rarity] || '#ffffff';
+    const packRarityLabel = RARITY_LABELS[pack.rarity] || '普通';
 
     card.classList.add('pack-card');
+    card.style.borderColor = packRarityColor;
     card.innerHTML = `
       <div class="reward-icon">${getPackIcon(pack.condition.type)}</div>
       <div class="reward-info">
@@ -894,7 +890,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
         <div class="reward-desc pack-preview">${pack.desc} · ${preview}</div>
       </div>
       ${costHtml}
-      <div class="reward-type pack-type">${t('shop.pack_type')}</div>
+      <div class="reward-type pack-type" style="color:${packRarityColor}">${packRarityLabel} ${t('shop.pack_type')}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
   } else if (item.type === 'relic' && item.relicId) {

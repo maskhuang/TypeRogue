@@ -3,9 +3,35 @@
 // ============================================
 
 import { WORD_POOL } from './words';
-import type { PackCondition, WordPack } from '../core/types';
+import type { PackCondition, PackConditionType, WordPack } from '../core/types';
 import { random } from '../core/seededRandom';
 import { t } from '../demo/demo-i18n';
+import { rollRarity } from './skillGeneration';
+import type { SkillRarity } from './affixes';
+
+// === 牌包稀有度常量 ===
+
+/** 稀有度 → 基础词数 [普通5, 稀有6, 史诗7, 传说9] */
+const PACK_RARITY_WORD_COUNT: [number, number, number, number] = [5, 6, 7, 9];
+
+/** 稀有度 → 定价系数 */
+const PACK_RARITY_PRICE_MULT: [number, number, number, number] = [1.0, 1.3, 1.6, 2.0];
+
+/** 稀有度 → 允许的条件类型集合（null = 全部允许） */
+const PACK_RARITY_ALLOWED_CONDITIONS: Record<SkillRarity, Set<PackConditionType> | null> = {
+  0: null, // 普通：全部
+  1: null, // 稀有：全部（但排除 contains_unowned，见过滤逻辑）
+  2: new Set(['contains_owned', 'high_freq', 'long', 'contains']),
+  3: new Set(['contains_owned', 'high_freq']),
+};
+
+/** 稀有度 → 排除的条件类型 */
+const PACK_RARITY_EXCLUDED_CONDITIONS: Record<SkillRarity, Set<PackConditionType> | null> = {
+  0: null,
+  1: new Set(['contains_unowned']),
+  2: null,
+  3: null,
+};
 
 // === 全量词汇缓存（惰性初始化） ===
 let _allWords: string[] | null = null;
@@ -295,50 +321,84 @@ function formatFreqHint(words: string[]): string {
  * @param count 要生成的牌包数量
  * @param act 当前 Act（Act 感知权重调整用）
  */
+/**
+ * 按稀有度过滤条件池
+ */
+function filterPoolByRarity(pool: WeightedCondition[], rarity: SkillRarity): WeightedCondition[] {
+  const allowed = PACK_RARITY_ALLOWED_CONDITIONS[rarity];
+  const excluded = PACK_RARITY_EXCLUDED_CONDITIONS[rarity];
+
+  return pool.filter(p => {
+    if (allowed && !allowed.has(p.condition.type)) return false;
+    if (excluded && excluded.has(p.condition.type)) return false;
+    return true;
+  });
+}
+
 export function generateWordPacks(
   ownedWords: string[],
   playerFreqs: Map<string, number> | undefined,
   boundKeys: string[],
   count: number,
   act?: number,
+  maxRarity?: SkillRarity,
 ): WordPack[] {
-  const pool = buildConditionPool(boundKeys, playerFreqs, act);
+  const fullPool = buildConditionPool(boundKeys, playerFreqs, act);
   const packs: WordPack[] = [];
+  const usedIndices = new Set<number>();
 
-  while (packs.length < count && pool.length > 0) {
+  while (packs.length < count) {
+    // 每个牌包先掷稀有度，clamp 到 Act 上限
+    let rarity = rollRarity();
+    if (maxRarity !== undefined && rarity > maxRarity) {
+      rarity = maxRarity;
+    }
+
+    // 按稀有度过滤条件池（排除已使用的条件）
+    const available = filterPoolByRarity(fullPool, rarity)
+      .filter(p => !usedIndices.has(fullPool.indexOf(p)));
+    if (available.length === 0) break;
+
     // 加权随机选取
-    const totalWeight = pool.reduce((sum, p) => sum + p.weight, 0);
+    const totalWeight = available.reduce((sum, p) => sum + p.weight, 0);
     let roll = random() * totalWeight;
-    let pickedIndex = pool.length - 1;
-    for (let i = 0; i < pool.length; i++) {
-      roll -= pool[i].weight;
+    let picked: WeightedCondition = available[available.length - 1];
+    for (let i = 0; i < available.length; i++) {
+      roll -= available[i].weight;
       if (roll <= 0) {
-        pickedIndex = i;
+        picked = available[i];
         break;
       }
     }
 
-    const picked = pool[pickedIndex];
-    // 从池中移除已选条件
-    pool.splice(pickedIndex, 1);
+    // 标记已使用
+    const originalIndex = fullPool.indexOf(picked);
+    usedIndices.add(originalIndex);
+
+    // 词数 = 基础词数 + random(-1, 0, +1)
+    const baseWordCount = PACK_RARITY_WORD_COUNT[rarity];
+    const wordCountVariation = [-1, 0, 1][Math.floor(random() * 3)];
+    const wordCount = baseWordCount + wordCountVariation;
 
     // 筛选候选词
     const candidates = filterWordsByCondition(picked.condition, ownedWords, playerFreqs);
-    if (candidates.length < 5) continue; // 候选不足，跳过
+    if (candidates.length < wordCount) continue; // 候选不足，跳过
 
-    // 随机抽 5 个
+    // 随机抽词
     const shuffled = shuffleArray(candidates);
-    const words = shuffled.slice(0, 5);
+    const words = shuffled.slice(0, wordCount);
 
     const meta = getConditionMeta(picked.condition);
     const freqHint = formatFreqHint(words);
     const desc = freqHint ? `${meta.desc} · ${freqHint}` : meta.desc;
+    const baseCost = calculatePackCost(picked.condition, words);
     packs.push({
       condition: picked.condition,
       name: meta.name,
       desc,
       words,
-      cost: calculatePackCost(picked.condition, words),
+      cost: Math.round(baseCost * PACK_RARITY_PRICE_MULT[rarity]),
+      rarity,
     });
   }
 

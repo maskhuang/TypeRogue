@@ -18,11 +18,11 @@
         <div id="battle-screen" class="screen">
             <!-- 顶部信息栏 -->
             <div id="top-bar">
-                <div id="level-info">
-                    <span id="level-label">LEVEL 1</span>
-                    <div id="hud-stage-info" class="hud-stage-info"></div>
-                    <div id="player-relics"></div>
+                <div id="timer-section">
+                    <div id="timer-bar"><div id="timer-bar-fill"></div><div id="timer-bar-ghost"></div></div>
+                    <span id="timer-display">30</span>
                 </div>
+                <div id="player-relics"></div>
                 <div id="modifier-info">
                     <span class="modifier-icon"></span>
                     <span class="modifier-name"></span>
@@ -40,10 +40,7 @@
                     <span class="class-resource-produced-label" data-i18n="hud.produced">本关产出</span>
                     <span id="mutagen-produced" class="class-resource-produced-value">0</span>
                 </div>
-                <div id="timer-section">
-                    <div id="timer-bar"><div id="timer-bar-fill"></div></div>
-                    <span id="timer-display">30</span>
-                </div>
+                <div id="battle-gold-display">💰 <span id="battle-gold-count">0</span></div>
             </div>
 
             <!-- 分数区域 -->
@@ -73,6 +70,10 @@
                 <div id="combo-display">
                     <span id="combo-count">0</span>
                     <span class="combo-label">COMBO</span>
+                </div>
+                <div id="battle-level-info">
+                    <span id="level-label">LEVEL 1</span>
+                    <div id="hud-stage-info" class="hud-stage-info"></div>
                 </div>
                 <div id="active-library"></div>
             </div>

@@ -369,3 +369,14 @@ development_status:
   36-12-scoring-relics: done
   36-13-balance-integration-test: done
   epic-36-retrospective: optional
+
+  # ===== Epic 37: 遗物反馈与飞行动画 =====
+  # Source: docs/epic-relic-feedback-flight.md
+  epic-37: backlog
+  37-1-flash-line-system: backlog           # 闪光连线系统 RelicFlash
+  37-2-relic-target-mapping: backlog        # 遗物影响目标映射 RELIC_TARGET_IDS
+  37-3-resource-relic-flight: backlog       # 资源遗物接入飞行 relicAnchor
+  37-4-non-resource-relic-flash: backlog    # 非资源遗物闪光反馈
+  37-5-chain-trigger-flash: backlog         # 连锁触发闪光 + 浮字定位
+  37-6-helper-functions: backlog            # 辅助函数 getRelicIndex
+  epic-37-retrospective: optional

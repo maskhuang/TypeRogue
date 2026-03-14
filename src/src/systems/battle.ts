@@ -8,7 +8,7 @@ import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
-import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
+import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput } from './skills';
@@ -150,6 +150,10 @@ let wordStartScore = 0; // 玻璃大炮：记录词开始时总分（用于整�
 
 // === 分数滚轮动画 (Story 31.4) ===
 const scoreRoller = new ScoreRoller();
+const goldRoller = new ScoreRoller();
+const comboRoller = new ScoreRoller();
+const timerRoller = new ScoreRoller();
+const multRoller = new ScoreRoller();  // 内部 ×10 存储，显示时 /10
 let scoreRollerRaf: number | null = null;
 let scoreRollerLastTime = 0;
 
@@ -158,9 +162,13 @@ function scoreRollerTick(now: number): void {
   if (!scoreRollerLastTime) scoreRollerLastTime = now;
   const dt = (now - scoreRollerLastTime) / 1000; // 转换为秒
   scoreRollerLastTime = now;
-  const display = scoreRoller.update(dt);
   const el = getElements();
-  el.score.textContent = String(display);
+  el.score.textContent = String(scoreRoller.update(dt));
+  el.combo.textContent = String(comboRoller.update(dt));
+  el.multiplier.textContent = (multRoller.update(dt) / 10).toFixed(1);
+  el.timerDisplay.textContent = String(timerRoller.update(dt));
+  const battleGoldEl = document.getElementById('battle-gold-count');
+  if (battleGoldEl) battleGoldEl.textContent = String(goldRoller.update(dt));
   scoreRollerRaf = requestAnimationFrame(scoreRollerTick);
 }
 
@@ -401,8 +409,6 @@ function playerCorrect(k: string): void {
 
   // Juice 动画 - 字母弹跳
   juiceUp(letter, 0.2, 2);
-  let skillProducedScore = false;
-  let skillProducedTime = false;
 
   // 连击增加
   const prevComboMilestone = Math.floor(state.combo / 15);
@@ -454,7 +460,6 @@ function playerCorrect(k: string): void {
   if (shouldTrigger) {
     letter.classList.add('skill-triggered');
     juiceUp(letter, 0.4, 5); // 强力弹跳
-    bumpMultiplier();
     // T5 遗物：追踪左右手触发
     const hand = HAND_MAP[k];
     if (hand === 'left') leftHandTriggered = true;
@@ -465,11 +470,7 @@ function playerCorrect(k: string): void {
       state.time += concertoBonus;
       showFeedback(t('battle.dual_concerto', { value: concertoBonus }), '#00ff88');
     }
-    const scoreBefore = state.score;
-    const timeBefore = state.time;
     triggerSkill(skillId, k);
-    if (state.score > scoreBefore) skillProducedScore = true;
-    if (state.time > timeBefore) skillProducedTime = true;
     // Story 36.4: 首发强化反馈（每词第一个技能）
     if (synergy.wordSkillCount === 1 && state.player.relics.has('first_strike')) {
       showFeedback(t('battle.first_strike'), '#ffaa00');
@@ -575,9 +576,7 @@ function playerCorrect(k: string): void {
 
   updateHUD();
 
-  // 技能产出分数/时间：在 updateHUD 更新数字后再弹跳
-  if (skillProducedScore) bumpScore();
-  if (skillProducedTime) bumpTimer();
+  // 技能产出的资源弹跳由飞行动画到达时触发（见 createFloatText）
 }
 
 function playerWrong(): void {
@@ -780,14 +779,12 @@ function completeWord(): void {
 
     // Story 36.2: 玻璃大炮 — 分两阶段演出：先显示原始得分，再翻倍
     if (hasGlassCannon()) {
-      // 阶段1：先 bump 原始得分
       bumpScore(finalWordScore);
       updateHUD();
       const wordGain = state.score - wordStartScore;
-      const extraGain = wordGain; // 翻倍多得的部分
-      // 阶段2：延迟后显示 ×2 并追加分数
+      const extraGain = wordGain;
       const doubledScore = wordStartScore + wordGain * 2;
-      finalWordScore = doubledScore - prevScore; // 与原公式一致
+      finalWordScore = doubledScore - prevScore;
       setTimeout(() => {
         showFeedback(t('battle.glass_double', { extra: extraGain }), '#ff4444', 1.3);
         state.score = doubledScore;
@@ -795,7 +792,7 @@ function completeWord(): void {
         updateHUD();
       }, 400);
     } else {
-      bumpScore(finalWordScore); // Story 31.4: 弹性缩放
+      bumpScore(finalWordScore);
     }
 
     // Story 36.6: 全键风暴 — 得分×0.5（同步扣分，避免绕过胜利判定的分数锁）
@@ -1216,9 +1213,27 @@ function startTimer(): void {
 
 function updateTimerDisplay(): void {
   const el = getElements();
-  const secs = Math.ceil(state.time);
-  el.timerDisplay.textContent = String(secs);
-  el.timerBar.style.width = (state.time / (state.timeMax + state.player.timeBonus) * 100) + '%';
+  const totalTime = state.timeMax + state.player.timeBonus;
+
+  // 滚轮目标：排除待确认的时间加成
+  timerRoller.setTarget(Math.ceil(Math.max(0, state.time - _pendingTimeBonus)));
+  // 显示由 rAF tick 更新
+
+  // 实条：排除待确认的时间加成
+  const confirmedTime = Math.max(0, state.time - _pendingTimeBonus);
+  el.timerBar.style.width = (confirmedTime / totalTime * 100) + '%';
+
+  // 虚条：覆盖待确认区域（从 0 到 state.time 的完整宽度）
+  const ghostEl = document.getElementById('timer-bar-ghost');
+  if (ghostEl) {
+    if (_pendingTimeBonus > 0) {
+      ghostEl.style.width = (state.time / totalTime * 100) + '%';
+      ghostEl.style.opacity = '0.35';
+    } else {
+      ghostEl.style.width = el.timerBar.style.width;
+      ghostEl.style.opacity = '0';
+    }
+  }
 
   if (state.time <= 5) {
     el.timerDisplay.style.color = '#ff6b6b';
@@ -1467,6 +1482,10 @@ export async function startLevel(): Promise<void> {
   startBGM('battle');
   state.score = 0;
   scoreRoller.reset(0); // Review H1: 重置滚轮，避免从旧分数回滚
+  goldRoller.reset(Math.floor(state.resources.gold));
+  comboRoller.reset(state.combo);
+  timerRoller.reset(Math.ceil(state.time));
+  multRoller.reset(Math.round(state.multiplier * 10));
   lastScoreTier = ''; // 重置分数分级缓存 (Review M1)
   // Story 36.3: 不灭连击 — combo 跨关不重置
   if (!hasImmortalCombo()) {
@@ -1907,7 +1926,11 @@ function gameOver(): void {
 // === UI 更新 ===
 export function updateHUD(): void {
   const el = getElements();
-  el.combo.textContent = String(state.combo);
+  // 各滚轮目标设置（显示由 rAF tick 更新）
+  comboRoller.setTarget(state.combo);
+  multRoller.setTarget(Math.round(state.multiplier * 10));
+  goldRoller.setTarget(Math.floor(Math.max(0, state.resources.gold - _pendingGoldBonus)));
+
   // Story 36.12: 分数黑洞 — HUD 分数显示 "???"（未结算时隐藏真实分数+进度色+tier class）
   const blackHoleHidden = isBlackHoleActive() && !hasBlackHoleSettled();
   if (blackHoleHidden) {
@@ -1918,7 +1941,6 @@ export function updateHUD(): void {
     el.score.textContent = String(scoreRoller.getValue()); // Review M1: rAF 未启动时 fallback
   }
   el.targetScore.textContent = String(state.targetScore);
-  el.multiplier.textContent = state.multiplier.toFixed(1);
 
   // 分数进度颜色（基础）— 黑洞隐藏时跳过
   if (!blackHoleHidden) {
@@ -1999,7 +2021,11 @@ function renderActiveLibrary(): void {
 const FLOAT_POOL_SIZE = 20;
 const FLOAT_INTERVAL = 150; // 链式浮字间隔 ms
 let floatPool: HTMLDivElement[] = [];
-let floatQueue: Array<{ text: string; color: string; scale?: number }> = [];
+let floatQueue: Array<{ text: string; color: string; scale?: number; skillAnchor?: { letterIndex: number; resource: string; amount?: number } }> = [];
+
+/** 飞行中待确认的资源加成 */
+let _pendingTimeBonus = 0;
+let _pendingGoldBonus = 0;
 let queueTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** 初始化浮字对象池 */
@@ -2023,18 +2049,129 @@ function acquireFloat(): HTMLDivElement | null {
 /** 回收浮字元素 */
 function releaseFloat(el: HTMLDivElement): void {
   el.style.display = 'none';
-  el.classList.remove('float-text-active');
+  el.classList.remove('float-text-active', 'float-text-anchored');
+  el.style.top = '';
+  el.style.opacity = '';
+  el.style.transform = '';
+}
+
+/** 资源类型 → HUD 元素 ID 映射 */
+const RESOURCE_TARGET_IDS: Record<string, string> = {
+  base: 'settlement-chips',
+  score: 'score-count',
+  multiplier: 'settlement-mult',
+  time: 'timer-display',
+  gold: 'battle-gold-count',
+};
+
+/** 资源类型 → 到达时弹跳函数 */
+const RESOURCE_BUMP_FNS: Record<string, () => void> = {
+  base: () => bumpScore(),
+  score: () => bumpScore(),
+  multiplier: () => bumpMultiplier(),
+  time: () => bumpTimer(),
+  gold: () => bumpGold(),
+};
+
+/** 二次贝塞尔曲线插值 */
+function quadBezier(p0: number, p1: number, p2: number, t: number): number {
+  const u = 1 - t;
+  return u * u * p0 + 2 * u * t * p1 + t * t * p2;
 }
 
 /** 创建一个浮字 */
-function createFloatText(text: string, color: string, scale = 1): void {
+function createFloatText(text: string, color: string, scale = 1, skillAnchor?: { letterIndex: number; resource: string; amount?: number }): void {
   const el = acquireFloat();
   if (!el) return; // 池满，跳过
 
   el.textContent = text;
   el.style.color = color;
-  el.style.left = (35 + Math.random() * 30) + '%';
   el.style.setProperty('--float-scale', String(scale));
+
+  // 技能触发浮字：从单词字母出发，沿曲线飞向对应资源 UI
+  if (skillAnchor) {
+    const wordEl = getElements().word;
+    const letterEl = wordEl.children[skillAnchor.letterIndex] as HTMLElement | undefined;
+    const targetId = RESOURCE_TARGET_IDS[skillAnchor.resource];
+    const targetEl = targetId ? document.getElementById(targetId) : null;
+
+    if (letterEl) {
+      const container = getElements().container;
+      const containerRect = container.getBoundingClientRect();
+      const letterRect = letterEl.getBoundingClientRect();
+      const startX = letterRect.left + letterRect.width / 2 - containerRect.left;
+      const startY = letterRect.top - containerRect.top - 30;
+
+      let endX = startX;
+      let endY = startY - 60;
+      if (targetEl) {
+        const targetRect = targetEl.getBoundingClientRect();
+        endX = targetRect.left + targetRect.width / 2 - containerRect.left;
+        endY = targetRect.top + targetRect.height / 2 - containerRect.top;
+      }
+
+      // 控制点：水平方向偏移制造弧线，垂直方向上抛
+      const midX = (startX + endX) / 2;
+      const midY = Math.min(startY, endY);
+      const cpX = midX + (startX - endX) * 0.4;
+      const cpY = midY - 40;
+
+      // JS 驱动贝塞尔曲线动画
+      el.style.position = 'absolute';
+      el.style.left = startX + 'px';
+      el.style.top = startY + 'px';
+      el.classList.add('float-text-anchored');
+      el.style.display = '';
+
+      const floatEl = el;
+      const dist = Math.hypot(endX - startX, endY - startY);
+      const FLIGHT_SPEED = 0.35; // px/ms
+      const duration = Math.max(250, Math.min(800, dist / FLIGHT_SPEED));
+      const startTime = performance.now();
+      const baseScale = scale;
+
+      // 飞行开始时加入待确认量（滚轮延迟显示）
+      const amt = skillAnchor.amount ?? 0;
+      let pendingTime = 0, pendingGold = 0;
+      if (amt > 0 && skillAnchor.resource === 'time') { pendingTime = amt; _pendingTimeBonus += amt; }
+      if (amt > 0 && skillAnchor.resource === 'gold') { pendingGold = amt; _pendingGoldBonus += amt; }
+
+      function animateCurve(now: number) {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+
+        const x = quadBezier(startX, cpX, endX, t);
+        const y = quadBezier(startY, cpY, endY, t);
+        const s = baseScale * (1.1 - 0.4 * t);
+        const alpha = t < 0.15 ? t / 0.15 : t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1;
+
+        floatEl.style.left = x + 'px';
+        floatEl.style.top = y + 'px';
+        floatEl.style.opacity = String(alpha);
+        floatEl.style.transform = `translateX(-50%) scale(${s})`;
+
+        if (t < 1) {
+          requestAnimationFrame(animateCurve);
+        } else {
+          releaseFloat(floatEl);
+          // 到达时确认待确认量 → 滚轮目标立即更新
+          if (pendingTime > 0) _pendingTimeBonus = Math.max(0, _pendingTimeBonus - pendingTime);
+          if (pendingGold > 0) _pendingGoldBonus = Math.max(0, _pendingGoldBonus - pendingGold);
+          // 飞行到达时触发对应 UI 弹跳
+          RESOURCE_BUMP_FNS[skillAnchor!.resource]?.();
+        }
+      }
+      requestAnimationFrame(animateCurve);
+      return; // 跳过 CSS 动画路径
+    } else {
+      el.style.left = (35 + Math.random() * 30) + '%';
+      el.style.top = '';
+    }
+  } else {
+    el.style.left = (35 + Math.random() * 30) + '%';
+    el.style.top = '';
+  }
+
   el.style.display = '';
   // 强制重排触发动画
   void el.offsetWidth;
@@ -2051,13 +2188,15 @@ function drainQueue(): void {
     return;
   }
   const item = floatQueue.shift()!;
-  createFloatText(item.text, item.color, item.scale);
+  createFloatText(item.text, item.color, item.scale, item.skillAnchor);
   queueTimer = setTimeout(drainQueue, FLOAT_INTERVAL);
 }
 
 /** 清空浮字队列和定时器（关卡结束时调用） */
 function clearFloatQueue(): void {
   floatQueue.length = 0;
+  _pendingTimeBonus = 0;
+  _pendingGoldBonus = 0;
   if (queueTimer) {
     clearTimeout(queueTimer);
     queueTimer = null;
@@ -2068,9 +2207,9 @@ function clearFloatQueue(): void {
   }
 }
 
-/** 浮字反馈（scale 控制字体缩放，默认 1） */
-export function showFeedback(txt: string, color: string, scale?: number): void {
-  floatQueue.push({ text: txt, color, scale });
+/** 浮字反馈（scale 控制字体缩放，默认 1；skillAnchor 指定时从字母飞向资源 UI） */
+export function showFeedback(txt: string, color: string, scale?: number, skillAnchor?: { letterIndex: number; resource: string; amount?: number }): void {
+  floatQueue.push({ text: txt, color, scale, skillAnchor });
   if (!queueTimer) drainQueue();
 }
 

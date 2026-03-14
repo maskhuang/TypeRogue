@@ -74,6 +74,14 @@ export function bumpTimer(): void {
   el.timerBar.classList.add('timer-bar-bump');
 }
 
+export function bumpGold(): void {
+  const el = document.getElementById('battle-gold-display');
+  if (!el) return;
+  el.classList.remove('gold-bump');
+  void el.offsetWidth;
+  el.classList.add('gold-bump');
+}
+
 // === 屏幕震动 5 档查表系统 ===
 export const SHAKE_TIERS = [
   { x: 2, y: 1, duration: 100 },   // intensity 1: 微震
