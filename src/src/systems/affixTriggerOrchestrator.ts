@@ -59,7 +59,7 @@ export interface OrchestratorResult {
 
 export interface OrchestratorCallbacks {
   /** 资源写入 */
-  applyResource?: (resource: ResourceType, amount: number) => void
+  applyResource?: (resource: ResourceType, amount: number, isMultiplyOp?: boolean) => void
   /** 反馈弹窗 */
   showFeedback?: (text: string, color: string) => void
   /** 音效 */
@@ -163,14 +163,15 @@ export function orchestrateAffixTrigger(
 
     // ── 副作用 ──
     if (result.phase4) {
-      callbacks?.applyResource?.(result.phase4.targetResource, effectiveOutput)
+      callbacks?.applyResource?.(result.phase4.targetResource, effectiveOutput, result.isMultiplyOp)
     }
 
-    // 衍生附魔额外资源
+    // 衍生附魔额外资源：始终加算（不受 MultiplyOperator 影响）
     if (result.phase5?.transmuteOutput) {
       callbacks?.applyResource?.(
         result.phase5.transmuteOutput.resource,
         result.phase5.transmuteOutput.amount,
+        false,
       )
     }
 

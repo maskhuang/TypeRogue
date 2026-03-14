@@ -7,6 +7,8 @@ import { state } from '../../core/state';
 import { playSound } from '../../effects/sound';
 import { showFeedback } from '../battle';
 import { getMaxQueueLength, setFragmentQueue } from './FragmentQueue';
+import { applyApprenticeEvent } from '../../data/affixTrigger';
+import { getApprenticeGrowthMultiplier } from '../relics/EnchantmentRelicBehaviors';
 
 // === 金币递增公式常量 ===
 const REPEAT_GOLD_COST = [0, 5, 15, 30] as const;
@@ -76,6 +78,14 @@ export function craftWord(letters: string[], onGoldUpdate: () => void): boolean 
   // 推入词库
   state.player.wordDeck.push(word);
   state.craftedWords.push(word);
+
+  // 学徒·丰收：造词时成长
+  const growthMult = getApprenticeGrowthMultiplier();
+  for (const [, skill] of state.affixSkills) {
+    const rt = state.affixSkillStates.get(skill.id);
+    if (!rt) continue;
+    applyApprenticeEvent('wordCrafted', rt, skill.enchantmentIds, growthMult);
+  }
 
   playSound('buy');
   return true;

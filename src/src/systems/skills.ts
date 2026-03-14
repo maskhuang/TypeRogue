@@ -205,7 +205,7 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     : 1;
 
   const result = orchestrateAffixTrigger(skillId, triggerKey, ctx, {
-    applyResource: (resource: ResourceType, amount: number) => {
+    applyResource: (resource: ResourceType, amount: number, isMultiplyOp?: boolean) => {
       // 不灭连击：阻止 multiplier 资源产出
       if (resource === 'multiplier' && shouldBlockMultiplierResource()) return;
       // 无冕之王：Lv4+ 基础值缩放
@@ -219,15 +219,30 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
       // Story 36.8: 资源感应 — 追踪正产出
       if (amount > 0) recordResourceProduction(resource, amount);
 
-      if (resource === 'base') {
-        synergy.skillBaseScore += amount;
-      } else if (resource === 'multiplier') {
-        synergy.skillMultBonus += amount;
-      } else if (resource === 'score') {
-        state.resources.score += amount;
-        state.score += amount;
+      if (isMultiplyOp) {
+        // 乘算化：resource *= amount（amount 即乘数）
+        if (resource === 'base') {
+          synergy.skillBaseScore *= amount;
+        } else if (resource === 'multiplier') {
+          synergy.skillMultBonus *= amount;
+        } else if (resource === 'score') {
+          state.resources.score *= amount;
+          state.score *= amount;
+        } else {
+          state.resources[resource] *= amount;
+        }
       } else {
-        state.resources[resource] += amount;
+        // 普通加算
+        if (resource === 'base') {
+          synergy.skillBaseScore += amount;
+        } else if (resource === 'multiplier') {
+          synergy.skillMultBonus += amount;
+        } else if (resource === 'score') {
+          state.resources.score += amount;
+          state.score += amount;
+        } else {
+          state.resources[resource] += amount;
+        }
       }
       if (resource === 'fragment') {
         routeFragmentsToInventory(Math.abs(amount));
@@ -266,7 +281,9 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
 
     let prefix = '';
     if (tr.isCrit) prefix = '💥';
-    if (tr.isTabooPenalty) {
+    if (tr.isMultiplyOp) {
+      showFeedback(`${prefix}×${displayValue}${label}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1));
+    } else if (tr.isTabooPenalty) {
       showFeedback(`-${displayValue}${label}`, '#ff4444', scale);
     } else {
       showFeedback(`${prefix}+${displayValue}${label}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1));

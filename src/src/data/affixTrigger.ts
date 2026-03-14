@@ -137,6 +137,8 @@ export interface TriggerResult {
   isCascade: boolean
   /** 是否禁忌负产出 */
   isTabooPenalty: boolean
+  /** 是否乘算化附魔（resource *= amount 而非 resource += amount） */
+  isMultiplyOp: boolean
   /** 连字倍数（0=无连字） */
   ligatureCount: number
   /** 需要应用的状态变更列表 */
@@ -525,13 +527,11 @@ export const MAX_CHAIN_DEPTH = 20
 export const APPRENTICE_GROWTH_DEFAULTS: Partial<Record<EnchantmentType, number>> = {
   // Phase 5 自触发类型
   [EnchantmentType.ApprenticeSelf]: 0.005,      // 0.5% — selfTrigger（每次触发）
-  [EnchantmentType.ApprenticeCrit]: 0.02,        // 2%   — critHit
-  [EnchantmentType.ApprenticeOutcast]: 0.015,    // 1.5% — outcastProc
   [EnchantmentType.ApprenticeProc]: 0.015,       // 1.5% — affixProc
   [EnchantmentType.ApprenticeWord]: 0.02,        // 2%   — wordComplete
   [EnchantmentType.ApprenticeLongWord]: 0.025,   // 2.5% — longWord(≥6)
   [EnchantmentType.ApprenticePerfect]: 0.03,     // 3%   — perfectWord
-  [EnchantmentType.ApprenticeHarvest]: 0.08,     // 8%   — wordComplete（造词师限定）
+  [EnchantmentType.ApprenticeHarvest]: 0.03,     // 3%   — wordComplete（造词师限定）
   [EnchantmentType.ApprenticeAdapt]: 0.15,       // 15%  — mutationApplied（蜕变师限定）
   // 外部事件类型（由 applyApprenticeEvent 处理）
   [EnchantmentType.ApprenticeCombo]: 0.01,       // 1%   — comboReach(15)
@@ -755,13 +755,6 @@ export function resolvePhase5(
       case EnchantmentType.ApprenticeSelf:
         shouldGrow = true
         break
-      case EnchantmentType.ApprenticeCrit:
-        shouldGrow = triggerFlags.isCrit
-        break
-      case EnchantmentType.ApprenticeOutcast:
-        shouldGrow = skill.affixes.some(a => a.type === AffixType.Outcast)
-          && isFirstOrLastLetter(ctx.triggerKey, ctx.currentWord)
-        break
       case EnchantmentType.ApprenticeProc:
         shouldGrow = triggerFlags.isCrit || triggerFlags.isPulse
           || triggerFlags.isCascade || triggerFlags.isTabooPenalty
@@ -969,6 +962,7 @@ export function triggerAffixSkill(
     isPulse: p3.flags.isPulse,
     isCascade: p3.flags.isCascade,
     isTabooPenalty: p3.flags.isTabooPenalty,
+    isMultiplyOp: skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator),
     ligatureCount: p3.flags.ligatureCount,
     stateMutations: allMutations,
     phase4: p4,
@@ -983,7 +977,8 @@ export function triggerAffixSkill(
 const APPRENTICE_EVENT_MAP: Record<string, EnchantmentType[]> = {
   stageCleared: [EnchantmentType.ApprenticeStage],
   comboReach: [EnchantmentType.ApprenticeCombo],
-  wordComplete: [EnchantmentType.ApprenticeWord, EnchantmentType.ApprenticeHarvest],
+  wordComplete: [EnchantmentType.ApprenticeWord],
+  wordCrafted: [EnchantmentType.ApprenticeHarvest],
   longWordComplete: [EnchantmentType.ApprenticeLongWord],
   perfectWord: [EnchantmentType.ApprenticePerfect],
 }
@@ -1176,7 +1171,6 @@ export function filterEnchantmentCandidates(skill: AffixSkillInstance): Enchantm
   const apprenticeTypes: EnchantmentType[] = [
     EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeNeighbor,
     EnchantmentType.ApprenticeWord, EnchantmentType.ApprenticeProc,
-    EnchantmentType.ApprenticeCrit, EnchantmentType.ApprenticeOutcast,
     EnchantmentType.ApprenticeLongWord, EnchantmentType.ApprenticePerfect,
     EnchantmentType.ApprenticeCombo, EnchantmentType.ApprenticeStage,
     EnchantmentType.ApprenticeHarvest, EnchantmentType.ApprenticeAdapt,
@@ -1404,8 +1398,6 @@ export function isApprenticeEnchantment(ench: EnchantmentType): boolean {
     || ench === EnchantmentType.ApprenticeNeighbor
     || ench === EnchantmentType.ApprenticeWord
     || ench === EnchantmentType.ApprenticeProc
-    || ench === EnchantmentType.ApprenticeCrit
-    || ench === EnchantmentType.ApprenticeOutcast
     || ench === EnchantmentType.ApprenticeLongWord
     || ench === EnchantmentType.ApprenticePerfect
     || ench === EnchantmentType.ApprenticeCombo

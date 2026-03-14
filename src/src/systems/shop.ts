@@ -520,7 +520,7 @@ export function computeSmartEstimate(
 
   const estimatedOutput = base * (1 + addPercent) * multProduct
   if (hasMultOp) {
-    breakdown.push({ typeKey: 'base', label: `≈ ×${formatEstimate(estimatedOutput)}`, detail: '(单次乘算)' })
+    breakdown.push({ typeKey: 'base', label: `≈ ×${formatEstimate(estimatedOutput)}`, detail: '(乘算已有资源)' })
   } else {
     breakdown.push({ typeKey: 'base', label: `≈ ${formatEstimate(estimatedOutput)}`, detail: '(单次预估)' })
   }
