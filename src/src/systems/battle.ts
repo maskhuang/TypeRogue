@@ -843,7 +843,7 @@ function completeWord(): void {
   const longWordTime = checkLongWordMaster(state.player.word.length);
   if (longWordTime > 0) {
     state.time += longWordTime;
-    showFeedback(`📏 +${longWordTime}秒`, '#00ff88');
+    showFeedback(t('battle.long_word_time', { value: longWordTime }), '#00ff88');
     bumpTimer();
   }
 

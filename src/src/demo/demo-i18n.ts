@@ -134,6 +134,9 @@ const ZH: Record<string, string> = {
   'battle.key_storm_penalty': '⛈️ ×0.5 (-{value})',
   'relic.row_medal_selected': '🎖️ 已选择{row}',
 
+  // --- word relic feedback ---
+  'battle.long_word_time': '📏 +{value}s',
+
   // --- shop.ts ---
   'shop.cycle_title': '商店 · 周目{cycle}',
   'shop.no_gold': '金币不足!',
@@ -515,6 +518,9 @@ const EN: Record<string, string> = {
   'battle.key_storm_penalty': '⛈️ ×0.5 (-{value})',
   'relic.row_medal_selected': '🎖️ Selected {row}',
 
+  // --- word relic feedback ---
+  'battle.long_word_time': '📏 +{value}s',
+
   // --- shop.ts ---
   'shop.cycle_title': 'Shop · Cycle {cycle}',
   'shop.no_gold': 'Not enough gold!',
@@ -845,6 +851,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   adjacent_power: 'Adjacent Power', symmetry_pact: 'Symmetry Pact',
   row_medal: 'Row Medal', dual_concerto: 'Dual Concerto',
   key_storm: 'Key Storm',
+  // Word subsystem relics
+  word_collection: 'Word Collection', short_sprint: 'Short Sprint',
+  long_word_master: 'Long Word Master', word_dealer: 'Word Dealer',
+  punctuation_liberation: 'Punctuation Liberation',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
   ench_growth_sameColumn: 'Pulse', ench_growth_sameHand: 'Permeate',
@@ -964,6 +974,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   row_medal: 'Randomly assigns a row — skills on that row gain +25% output',
   dual_concerto: 'Each left-right hand alternation on keypress: +0.5s time',
   key_storm: 'Score ×0.5. On word complete, each hit skill randomly triggers 1 unhit equipped skill.',
+  // Word subsystem relics
+  word_collection: 'First time completing a word: +3 gold',
+  short_sprint: '≤4-letter words: skill output +20%',
+  long_word_master: '6+ letter words on complete: +1s time',
+  word_dealer: 'After selling a word, next shop refresh is free',
+  punctuation_liberation: 'Unlock ;,./ keys for skill binding. Words include random punctuation.',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',
