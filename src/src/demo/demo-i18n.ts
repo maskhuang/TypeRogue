@@ -501,8 +501,8 @@ const ZH: Record<string, string> = {
   'affix_desc.taboo': '大幅提升产出，但有小概率产出负值',
 
   // --- position relations (6) ---
-  'rel.Adjacent': '相邻', 'rel.SameRow': '同行', 'rel.SameColumn': '同列',
-  'rel.SameHand': '同手', 'rel.SameFinger': '同指', 'rel.Symmetric': '对称位',
+  'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
+  'rel.sameHand': '同手', 'rel.sameFinger': '同指', 'rel.symmetric': '对称位',
 
   // --- enchantment categories (5) ---
   'ench_cat.apprentice': '学徒', 'ench_cat.quest': '任务',
@@ -783,8 +783,8 @@ const EN: Record<string, string> = {
   'battle.black_hole_settle': '🌀 Settled +{value}',
   'battle.deadly_gift_perfect': '🎁 Perfect Gift! +{value}g +All Relics',
   'battle.deadly_gift_excellent': '🎁 Excellent Gift! +{value}g +Epic/Legend Relic',
-  'battle.deadly_gift_great': '🎁 Great Gift +{value}g +5 Free Refreshes',
-  'battle.deadly_gift_good': '🎁 Gift +{value}g +Random Relic',
+  'battle.deadly_gift_great': '🎁 Great Gift +{value}g +Random Relic',
+  'battle.deadly_gift_good': '🎁 Gift +{value}g +5 Free Refreshes',
   'battle.deadly_gift_fair': '🎁 Small Gift +{value}g +8s Time',
   'battle.deadly_gift_minimal': '🎁 Tiny Gift +{value}g',
 
@@ -1113,8 +1113,8 @@ const EN: Record<string, string> = {
   'affix_desc.taboo': 'Greatly boosts output, but small chance of negative output',
 
   // --- position relations (6) ---
-  'rel.Adjacent': 'Adj', 'rel.SameRow': 'Row', 'rel.SameColumn': 'Col',
-  'rel.SameHand': 'Hand', 'rel.SameFinger': 'Finger', 'rel.Symmetric': 'Mirror',
+  'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',
+  'rel.sameHand': 'Hand', 'rel.sameFinger': 'Finger', 'rel.symmetric': 'Mirror',
 
   // --- enchantment categories (5) ---
   'ench_cat.apprentice': 'Apprentice', 'ench_cat.quest': 'Quest',
