@@ -79,7 +79,8 @@ export const AFFIX_SKILL_PRICE_CAP = 100;
 export function calculateAffixSkillPrice(rarity: number, level: number, fluctuation: number = 1): number {
   const base = AFFIX_RARITY_BASE_PRICES[Math.min(rarity, 3) as 0 | 1 | 2 | 3];
   const levelMult = 1 + (level - 1) * 0.2;
-  return Math.min(Math.round(base * levelMult * fluctuation), AFFIX_SKILL_PRICE_CAP);
+  const cap = hasUncrownedKing() ? Infinity : AFFIX_SKILL_PRICE_CAP;
+  return Math.min(Math.round(base * levelMult * fluctuation), cap);
 }
 
 /** 生成随机价格波动因子（±20%） */
