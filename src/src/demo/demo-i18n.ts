@@ -825,6 +825,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   first_strike: 'First Strike', less_is_more: 'Less is More',
   training_manual: 'Training Manual', jazz: 'Jazz',
   uncrowned_king: 'Uncrowned King',
+  // Enchantment subsystem relics
+  apprentice_robe: 'Apprentice Robe', trial_badge: 'Trial Badge',
+  fate_fork: 'Fork of Fate', early_awakening: 'Early Awakening',
+  enchant_anchor: 'Enchant Anchor',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
   ench_growth_sameColumn: 'Pulse', ench_growth_sameHand: 'Permeate',
@@ -932,6 +936,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   training_manual: 'On acquire: upgrade all Lv.1 skills to Lv.2',
   jazz: '≥3 unique affix types in one word: score +10% × unique count',
   uncrowned_king: 'Unenchanted skills can level past Lv.3 (+60%/lv), but enchanting is disabled',
+  // Enchantment subsystem relics
+  apprentice_robe: 'All Apprentice enchantment growth ×1.3',
+  trial_badge: 'All Trial enchantment stack progress ×1.3',
+  fate_fork: 'Enchantment selection offers 3 choices instead of 2',
+  early_awakening: 'Enchantment unlock threshold lowered from Lv.3 to Lv.2',
+  enchant_anchor: 'All skills gain +1 enchantment slot, but each active enchantment increases shop prices by 10%',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',
