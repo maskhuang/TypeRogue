@@ -174,13 +174,17 @@ async function init(): Promise<void> {
 
   // === DEBUG: 手动测试遗物 — 修改此数组切换子系统 ===
   const DEBUG_RELICS: string[] = [
-    'apprentice_robe', 'trial_badge', 'fate_fork', 'early_awakening', 'enchant_anchor', // enchantment
+    'adjacent_power', 'symmetry_pact', 'row_medal', 'dual_concerto', 'key_storm', // topology
   ];
 
   const startAfterClassSelect = () => {
     // DEBUG: 直接授予测试遗物，跳过三选一
     if (DEBUG_RELICS.length > 0) {
       for (const id of DEBUG_RELICS) state.player.relics.add(id);
+      // 行会勋章：自动随机选行
+      if (DEBUG_RELICS.includes('row_medal')) {
+        import('./systems/relics/TopologyRelicBehaviors').then(m => m.autoSelectRowMedal());
+      }
       void startLevel();
       return;
     }

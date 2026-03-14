@@ -31,7 +31,7 @@ import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, i
 import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmortalCombo, shouldBlockMultiplierResource, syncRhythmDoctorMilestone, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing } from './relics/SkillRelicBehaviors';
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
-import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, incrementStormWordCount, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
+import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTimeDew, incrementWordParity, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
@@ -433,7 +433,7 @@ function playerCorrect(k: string): void {
     const concertoBonus = checkDualConcerto(k);
     if (concertoBonus > 0) {
       state.time += concertoBonus;
-      showFeedback(`🎹 +${concertoBonus}秒`, '#00ff88');
+      showFeedback(t('battle.dual_concerto', { value: concertoBonus }), '#00ff88');
     }
     const scoreBefore = state.score;
     const timeBefore = state.time;
@@ -713,7 +713,8 @@ function completeWord(): void {
   // Story 36.12: 分数黑洞 — 累计到隐藏池，跳过分数结算和胜利检查
   let milestone: ReturnType<typeof checkMilestone> = null;
   if (isBlackHoleActive()) {
-    const poolScore = hasGlassCannon() ? finalWordScore * 2 : finalWordScore;
+    let poolScore = hasGlassCannon() ? finalWordScore * 2 : finalWordScore;
+    if (hasKeyStorm()) poolScore = Math.floor(poolScore * KEY_STORM_SCORE_PENALTY);
     accumulateBlackHole(poolScore);
   } else {
     const prevScore = state.score;
@@ -737,6 +738,16 @@ function completeWord(): void {
       }, 400);
     } else {
       bumpScore(finalWordScore); // Story 31.4: 弹性缩放
+    }
+
+    // Story 36.6: 全键风暴 — 得分×0.5（同步扣分，避免绕过胜利判定的分数锁）
+    if (hasKeyStorm()) {
+      const wordGain = state.score - wordStartScore;
+      const penalty = Math.floor(wordGain * (1 - KEY_STORM_SCORE_PENALTY));
+      state.score -= penalty;
+      bumpScore(-penalty);
+      updateHUD();
+      showFeedback(t('battle.key_storm_penalty', { value: penalty }), '#aa88ff', 1.3);
     }
 
     // Story 31.4: 高分慢动作结算（≥1000 分）
@@ -780,14 +791,13 @@ function completeWord(): void {
     }
   }
 
-  // Story 36.6: 全键风暴 — 前 3 词完成后触发未命中技能
-  incrementStormWordCount();
-  const stormTargets = checkKeyStorm(state.player.word, random);
+  // Story 36.6: 全键风暴 — 每命中1个技能，随机触发1个未命中技能
+  const stormTargets = checkKeyStorm(synergy.wordSkillCount, state.player.word, random);
   for (const target of stormTargets) {
     triggerSkill(target.skillId, target.key);
   }
   if (stormTargets.length > 0) {
-    showFeedback(`⛈️ ×${stormTargets.length}`, '#aa88ff');
+    showFeedback(t('battle.key_storm', { value: stormTargets.length }), '#aa88ff');
   }
 
   // Story 36.8: 资源感应 — ≥3种资源时最少那种+50%（基于本词产出量）

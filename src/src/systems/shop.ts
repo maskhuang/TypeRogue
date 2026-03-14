@@ -29,7 +29,8 @@ import { openRestStage } from './restStage';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
-import { generateRelicCandidates, showRelicReplaceUI, showRowMedalSelection } from './relicPicker';
+import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
+import { autoSelectRowMedal, getRowMedalRowName } from './relics/TopologyRelicBehaviors';
 import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
 import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
 import { checkEliteHunterGoldMultiplier } from './relics/StageRelicBehaviors';
@@ -1375,9 +1376,10 @@ function purchaseShopRelicItem(index: number): void {
       const upgraded = applyTrainingManual();
       if (upgraded > 0) showFeedback(`📖 ${upgraded}个技能升至Lv.2!`, '#00ff88');
     }
-    // Story 36.6: 行会勋章 — 购买时选择加成行
+    // Story 36.6: 行会勋章 — 购买时随机选行
     if (relicId === 'row_medal') {
-      showRowMedalSelection(showFeedback);
+      const row = autoSelectRowMedal();
+      showFeedback(t('relic.row_medal_selected', { row }), '#ffd700');
     }
     state.shop.items.splice(index, 1);
     renderRelicDisplay();
@@ -1400,9 +1402,10 @@ function purchaseShopRelicItem(index: number): void {
           const upgraded = applyTrainingManual();
           if (upgraded > 0) showFeedback(`📖 ${upgraded}个技能升至Lv.2!`, '#00ff88');
         }
-        // Story 36.6: 行会勋章 — 替换购买时也选择加成行
+        // Story 36.6: 行会勋章 — 替换购买时也随机选行
         if (relicId === 'row_medal') {
-          showRowMedalSelection(showFeedback);
+          const row = autoSelectRowMedal();
+          showFeedback(t('relic.row_medal_selected', { row }), '#ffd700');
         }
       }
       const m = document.getElementById('relic-picker-modal');
@@ -2531,10 +2534,16 @@ function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicDa
   tip.id = 'relic-tooltip';
   tip.className = 'key-tooltip';
   const rarityColor = RELIC_RARITY_COLORS[relic.rarity] || '#aaa';
+  // 行会勋章：动态追加已选行
+  let descText = localizeItemDesc(relic.id, relic.description);
+  if (relic.id === 'row_medal') {
+    const rowName = getRowMedalRowName();
+    if (rowName) descText += ` [${rowName}]`;
+  }
   tip.innerHTML =
     `<div style="font-size:14px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${localizeItemName(relic.id, relic.name)}</div>` +
     `<div style="font-size:9px;padding:1px 4px;border-radius:3px;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${getRarityLabel(relic.rarity)}</div>` +
-    `<div style="color:#aaa;font-size:10px;white-space:normal;">${localizeItemDesc(relic.id, relic.description)}</div>` +
+    `<div style="color:#aaa;font-size:10px;white-space:normal;">${descText}</div>` +
     (relic.flavor && getLocale() === 'zh' ? `<div style="color:#666;font-size:9px;font-style:italic;margin-top:4px;">${relic.flavor}</div>` : '');
   tip.style.left = e.clientX + 12 + 'px';
   tip.style.top = e.clientY + 12 + 'px';

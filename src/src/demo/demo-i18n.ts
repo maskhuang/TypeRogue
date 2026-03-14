@@ -128,6 +128,12 @@ const ZH: Record<string, string> = {
   'battle.less_is_more': '💎 少而精 → 技能+20%',
   'battle.jazz': '🎷 爵士 +{value}%',
 
+  // --- topology relic feedback ---
+  'battle.dual_concerto': '🎹 +{value}s',
+  'battle.key_storm': '⛈️ 风暴 ×{value}',
+  'battle.key_storm_penalty': '⛈️ ×0.5 (-{value})',
+  'relic.row_medal_selected': '🎖️ 已选择{row}',
+
   // --- shop.ts ---
   'shop.cycle_title': '商店 · 周目{cycle}',
   'shop.no_gold': '金币不足!',
@@ -503,6 +509,12 @@ const EN: Record<string, string> = {
   'battle.less_is_more': '💎 Less is More → Skill +20%',
   'battle.jazz': '🎷 Jazz +{value}%',
 
+  // --- topology relic feedback ---
+  'battle.dual_concerto': '🎹 +{value}s',
+  'battle.key_storm': '⛈️ Storm ×{value}',
+  'battle.key_storm_penalty': '⛈️ ×0.5 (-{value})',
+  'relic.row_medal_selected': '🎖️ Selected {row}',
+
   // --- shop.ts ---
   'shop.cycle_title': 'Shop · Cycle {cycle}',
   'shop.no_gold': 'Not enough gold!',
@@ -829,6 +841,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   apprentice_robe: 'Apprentice Robe', trial_badge: 'Trial Badge',
   fate_fork: 'Fork of Fate', early_awakening: 'Early Awakening',
   enchant_anchor: 'Enchant Anchor',
+  // Topology subsystem relics
+  adjacent_power: 'Adjacent Power', symmetry_pact: 'Symmetry Pact',
+  row_medal: 'Row Medal', dual_concerto: 'Dual Concerto',
+  key_storm: 'Key Storm',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
   ench_growth_sameColumn: 'Pulse', ench_growth_sameHand: 'Permeate',
@@ -942,6 +958,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   fate_fork: 'Enchantment selection offers 3 choices instead of 2',
   early_awakening: 'Enchantment unlock threshold lowered from Lv.3 to Lv.2',
   enchant_anchor: 'All skills gain +1 enchantment slot, but each active enchantment increases shop prices by 10%',
+  // Topology subsystem relics
+  adjacent_power: 'On skill trigger: +6% output per adjacent equipped skill',
+  symmetry_pact: 'When both symmetric keys have skills: each gains +15% output',
+  row_medal: 'Randomly assigns a row — skills on that row gain +25% output',
+  dual_concerto: 'Each left-right hand alternation on keypress: +0.5s time',
+  key_storm: 'Score ×0.5. On word complete, each hit skill randomly triggers 1 unhit equipped skill.',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',

@@ -19,15 +19,8 @@ export const ROW_MEDAL_RATE = 0.25
 /** 双手协奏：手切换时间加成 */
 export const DUAL_CONCERTO_TIME = 0.5
 
-/** 全键风暴：最多触发技能数 */
-export const KEY_STORM_MAX_TRIGGERS = 3
-
-/** 全键风暴：生效的前 N 个单词 */
-export const KEY_STORM_WORD_LIMIT = 3
-
 // === 模块级状态 ===
 let _lastKeyHand: 'left' | 'right' | null = null
-let _stormWordCount = 0
 
 // === 邻键之力 (adjacent_power) ===
 
@@ -61,11 +54,32 @@ export function getSymmetryPactBonus(triggerKey: string): number {
 
 // === 行会勋章 (row_medal) ===
 
+/** 行名称（用于反馈显示） */
+const ROW_NAMES = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'] as const
+
 /**
  * 设置行会勋章选择的行号
  */
 export function setRowMedalRow(rowIndex: number): void {
   state.player.relicStates['row_medal'] = rowIndex
+}
+
+/**
+ * 随机选择行会勋章的加成行，返回行名
+ */
+export function autoSelectRowMedal(): string {
+  const row = Math.floor(Math.random() * 3)
+  setRowMedalRow(row)
+  return ROW_NAMES[row]
+}
+
+/**
+ * 获取行会勋章已选行名称（用于 tooltip 动态显示）
+ */
+export function getRowMedalRowName(): string | null {
+  const selectedRow = state.player.relicStates['row_medal']
+  if (selectedRow === undefined) return null
+  return ROW_NAMES[selectedRow] ?? null
 }
 
 /**
@@ -104,30 +118,31 @@ export function resetDualConcertoHand(): void {
 
 // === 全键风暴 (key_storm) ===
 
-/**
- * 增加风暴单词计数
- */
-export function incrementStormWordCount(): void {
-  _stormWordCount++
-}
+/** 全键风暴得分惩罚系数 */
+export const KEY_STORM_SCORE_PENALTY = 0.5
 
 /**
- * 获取当前风暴单词计数
+ * 是否持有全键风暴
  */
-export function getStormWordCount(): number {
-  return _stormWordCount
+export function hasKeyStorm(): boolean {
+  return state.player.relics.has('key_storm')
 }
 
 /**
  * 检查全键风暴触发
- * 返回要触发的 {skillId, key}[]（最多 3 个）
+ * 每命中1个技能，随机触发1个未被该词命中的已装备技能
+ * @param hitCount 该词命中的技能数量
+ * @param currentWord 当前单词
+ * @param randomFn 随机函数
+ * @returns 要触发的 {skillId, key}[]
  */
 export function checkKeyStorm(
+  hitCount: number,
   currentWord: string,
   randomFn: () => number,
 ): { skillId: string; key: string }[] {
   if (!state.player.relics.has('key_storm')) return []
-  if (_stormWordCount > KEY_STORM_WORD_LIMIT) return []
+  if (hitCount <= 0) return []
 
   const wordLetters = new Set(currentWord.toLowerCase().split(''))
   const unhitSkills: { skillId: string; key: string }[] = []
@@ -135,15 +150,17 @@ export function checkKeyStorm(
     if (!wordLetters.has(key)) unhitSkills.push({ skillId, key })
   }
 
-  if (unhitSkills.length <= KEY_STORM_MAX_TRIGGERS) return unhitSkills
+  if (unhitSkills.length === 0) return []
 
-  // Fisher-Yates shuffle, take first 3
+  // Fisher-Yates shuffle
   const arr = [...unhitSkills]
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(randomFn() * (i + 1))
     ;[arr[i], arr[j]] = [arr[j], arr[i]]
   }
-  return arr.slice(0, KEY_STORM_MAX_TRIGGERS)
+
+  // 取 min(hitCount, unhitSkills.length) 个
+  return arr.slice(0, Math.min(hitCount, arr.length))
 }
 
 // === 模块重置（关级别） ===
@@ -153,7 +170,6 @@ export function checkKeyStorm(
  */
 export function resetTopologyRelicState(): void {
   _lastKeyHand = null
-  _stormWordCount = 0
 }
 
 // === 注册所有行为 ===

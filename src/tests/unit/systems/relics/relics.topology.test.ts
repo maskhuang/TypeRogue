@@ -9,16 +9,14 @@ import {
   SYMMETRY_PACT_RATE,
   ROW_MEDAL_RATE,
   DUAL_CONCERTO_TIME,
-  KEY_STORM_MAX_TRIGGERS,
-  KEY_STORM_WORD_LIMIT,
+  KEY_STORM_SCORE_PENALTY,
   getAdjacentPowerBonus,
   getSymmetryPactBonus,
   setRowMedalRow,
   getRowMedalBonus,
   checkDualConcerto,
   resetDualConcertoHand,
-  incrementStormWordCount,
-  getStormWordCount,
+  hasKeyStorm,
   checkKeyStorm,
   resetTopologyRelicState,
   initTopologyRelicBehaviors,
@@ -57,11 +55,8 @@ describe('键盘拓扑遗物行为 (Story 36.6)', () => {
     it('DUAL_CONCERTO_TIME = 0.5', () => {
       expect(DUAL_CONCERTO_TIME).toBe(0.5)
     })
-    it('KEY_STORM_MAX_TRIGGERS = 3', () => {
-      expect(KEY_STORM_MAX_TRIGGERS).toBe(3)
-    })
-    it('KEY_STORM_WORD_LIMIT = 3', () => {
-      expect(KEY_STORM_WORD_LIMIT).toBe(3)
+    it('KEY_STORM_SCORE_PENALTY = 0.5', () => {
+      expect(KEY_STORM_SCORE_PENALTY).toBe(0.5)
     })
   })
 
@@ -261,75 +256,79 @@ describe('键盘拓扑遗物行为 (Story 36.6)', () => {
 
     it('无遗物 → 空数组', () => {
       bindKey('a', 's1')
-      expect(checkKeyStorm('b', mockRandom)).toEqual([])
+      expect(checkKeyStorm(1, 'b', mockRandom)).toEqual([])
     })
 
-    it('有遗物 + 前3词内 + 未命中技能 → 触发', () => {
+    it('hasKeyStorm 正确判断', () => {
+      expect(hasKeyStorm()).toBe(false)
+      state.player.relics.add('key_storm')
+      expect(hasKeyStorm()).toBe(true)
+    })
+
+    it('KEY_STORM_SCORE_PENALTY 为 0.5', () => {
+      expect(KEY_STORM_SCORE_PENALTY).toBe(0.5)
+    })
+
+    it('hitCount=0 → 空数组', () => {
+      state.player.relics.add('key_storm')
+      bindKey('a', 's1')
+      bindKey('b', 's2')
+      expect(checkKeyStorm(0, 'x', mockRandom)).toEqual([])
+    })
+
+    it('每命中1个技能触发1个未命中技能', () => {
       state.player.relics.add('key_storm')
       bindKey('a', 's1')
       bindKey('b', 's2')
       bindKey('c', 's3')
-      // word = 'a' → b,c 未命中
-      const targets = checkKeyStorm('a', mockRandom)
+      // word = 'a'，命中1个 → 触发1个未命中
+      const targets = checkKeyStorm(1, 'a', mockRandom)
+      expect(targets).toHaveLength(1)
+      expect(['b', 'c']).toContain(targets[0].key)
+    })
+
+    it('hitCount=2 → 触发2个未命中技能', () => {
+      state.player.relics.add('key_storm')
+      bindKey('a', 's1')
+      bindKey('b', 's2')
+      bindKey('c', 's3')
+      bindKey('d', 's4')
+      // word = 'ab'，命中2个 → 触发2个未命中(c,d)
+      const targets = checkKeyStorm(2, 'ab', mockRandom)
       expect(targets).toHaveLength(2)
-      expect(targets.map(t => t.key).sort()).toEqual(['b', 'c'])
+      expect(targets.map(t => t.key).sort()).toEqual(['c', 'd'])
+    })
+
+    it('hitCount > 未命中数 → 最多返回未命中数', () => {
+      state.player.relics.add('key_storm')
+      bindKey('a', 's1')
+      bindKey('b', 's2')
+      bindKey('c', 's3')
+      // word = 'ab'，命中5 → 只有1个未命中(c)
+      const targets = checkKeyStorm(5, 'ab', mockRandom)
+      expect(targets).toHaveLength(1)
+      expect(targets[0].key).toBe('c')
     })
 
     it('所有键都在单词中 → 空数组', () => {
       state.player.relics.add('key_storm')
       bindKey('a', 's1')
       bindKey('b', 's2')
-      const targets = checkKeyStorm('ab', mockRandom)
+      const targets = checkKeyStorm(2, 'ab', mockRandom)
       expect(targets).toEqual([])
-    })
-
-    it('超过3个未命中 → 最多返回3个', () => {
-      state.player.relics.add('key_storm')
-      bindKey('a', 's1')
-      bindKey('b', 's2')
-      bindKey('c', 's3')
-      bindKey('d', 's4')
-      bindKey('e', 's5')
-      // word = 'x' → 全部5个未命中，返回3
-      const targets = checkKeyStorm('x', mockRandom)
-      expect(targets).toHaveLength(KEY_STORM_MAX_TRIGGERS)
-    })
-
-    it('超过 KEY_STORM_WORD_LIMIT 后不再触发', () => {
-      state.player.relics.add('key_storm')
-      bindKey('a', 's1')
-      bindKey('b', 's2')
-      // 增加到超过限制
-      for (let i = 0; i <= KEY_STORM_WORD_LIMIT; i++) {
-        incrementStormWordCount()
-      }
-      const targets = checkKeyStorm('a', mockRandom)
-      expect(targets).toEqual([])
-    })
-
-    it('incrementStormWordCount 正确递增', () => {
-      expect(getStormWordCount()).toBe(0)
-      incrementStormWordCount()
-      expect(getStormWordCount()).toBe(1)
-      incrementStormWordCount()
-      expect(getStormWordCount()).toBe(2)
     })
   })
 
   // === 模块重置 ===
   describe('resetTopologyRelicState', () => {
-    it('重置双手协奏和风暴计数', () => {
+    it('重置双手协奏状态', () => {
       state.player.relics.add('dual_concerto')
       checkDualConcerto('f')
-      incrementStormWordCount()
-      incrementStormWordCount()
 
       resetTopologyRelicState()
 
       // 双手协奏：重置后首次 → 0
       expect(checkDualConcerto('j')).toBe(0)
-      // 风暴计数：重置
-      expect(getStormWordCount()).toBe(0)
     })
   })
 
