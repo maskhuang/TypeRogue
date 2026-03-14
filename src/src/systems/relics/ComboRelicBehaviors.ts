@@ -14,7 +14,7 @@ import { registerRelicBehavior, setRelicState, getRelicState } from './RelicPipe
  */
 export function calculateComboBuffer(currentCombo: number): number {
   if (!state.player.relics.has('combo_buffer')) return 0
-  return Math.floor(currentCombo * 0.3)
+  return Math.floor(currentCombo * 0.5)
 }
 
 // === 倍率棱镜 (multiplier_prism) ===

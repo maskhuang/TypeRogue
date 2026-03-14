@@ -285,7 +285,7 @@ describe('全流程冒烟测试 (Story 36.13 AC5)', () => {
 
     // 各遗物独立返回正确值
     expect(applyBaseShield(5)).toBe(20);
-    expect(calculateComboBuffer(10)).toBe(3);     // floor(10 * 0.3) = 3
+    expect(calculateComboBuffer(10)).toBe(5);     // floor(10 * 0.5) = 5
 
     synergy.wordSkillCount = 1;
     expect(getFirstStrikeBonus()).toBe(0.2);

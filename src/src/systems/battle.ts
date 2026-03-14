@@ -129,6 +129,7 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 
 // === 分数结算 ===
 let wordBaseScore = 0; // 词语基础分（不含倍率）
+let prismActivated = false; // 倍率棱镜本关是否已显示激活反馈
 let wordStartTime = 0; // T1遗物：词语开始时的剩余时间（用于完美韵律时间返还）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
 let lastScoreTier = ''; // 缓存上一次分数分级，避免每帧重启 CSS 动画 (Review M1)
@@ -377,6 +378,12 @@ function playerCorrect(k: string): void {
   mult += synergy.skillMultBonus;
   state.multiplier = mult;
 
+  // Story 36.3: 倍率棱镜 — 首次激活时反馈
+  if (!prismActivated && state.player.relics.has('multiplier_prism') && state.multiplier >= 2.5) {
+    prismActivated = true;
+    showFeedback(t('battle.prism_active'), '#66ccff');
+  }
+
   // 字母基础分（每个正确击键基础 1 分）
   const letterBase = 1;
   const letterScore = letterBase * state.multiplier;
@@ -445,7 +452,7 @@ function playerCorrect(k: string): void {
   const rhythmDocTime = checkRhythmDoctor(state.combo);
   if (rhythmDocTime > 0) {
     state.time += rhythmDocTime;
-    showFeedback(`⏱️ +${rhythmDocTime}s`, '#00ff88');
+    showFeedback(t('battle.rhythm_doc', { value: rhythmDocTime }), '#00ff88');
     bumpTimer();
   }
 
@@ -467,7 +474,7 @@ function playerCorrect(k: string): void {
         .find(([, v]) => v === sid)?.[0] ?? k;
       triggerSkill(sid, boundKey);
     }
-    showFeedback(`💣 ×${count}`, '#ff6b00');
+    showFeedback(t('battle.detonate', { value: count }), '#ff6b00');
   }
 
   spawnParticles(letter, shouldTrigger ? 10 : 5, '#4ecdc4');
@@ -556,33 +563,29 @@ function playerWrong(): void {
   // 标记词语不完美
   state.wordPerfect = false;
 
-  // Story 36.3: 不灭连击 — combo 永不中断
-  if (hasImmortalCombo()) {
-    // combo、skillMultBonus、multiplier 全部保持不变，但仍标记不完美
+  if (state.combo > 5) showFeedback(t('battle.combo_break', { combo: state.combo }), '#ff6b6b');
+
+  // 遗物 on_combo_break 管道解析（完美主义者断连击失去遗物）
+  resolveRelicEffectsWithBehaviors('on_combo_break', {}, {
+    onRemoveRelic: (relicId: string) => {
+      state.player.relics.delete(relicId);
+      showFeedback(t('battle.relic_break'), '#ff4444');
+    },
+  });
+
+  // Story 36.3: 连击缓冲 — 保留 50% combo
+  const buffered = calculateComboBuffer(state.combo);
+  state.combo = buffered;
+  state.lastMilestone = 0;
+  synergy.skillMultBonus = 0;
+  if (buffered > 0) {
+    showFeedback(t('battle.combo_buffer', { value: buffered }), '#4ecdc4');
+    state.multiplier = state.player.baseMultiplier + buffered * state.player.comboBonus;
   } else {
-    if (state.combo > 5) showFeedback(t('battle.combo_break', { combo: state.combo }), '#ff6b6b');
-
-    // 遗物 on_combo_break 管道解析（完美主义者断连击失去遗物）
-    resolveRelicEffectsWithBehaviors('on_combo_break', {}, {
-      onRemoveRelic: (relicId: string) => {
-        state.player.relics.delete(relicId);
-        showFeedback(t('battle.relic_break'), '#ff4444');
-      },
-    });
-
-    // Story 36.3: 连击缓冲 — 保留 30% combo
-    const buffered = calculateComboBuffer(state.combo);
-    state.combo = buffered;
-    state.lastMilestone = 0;
-    synergy.skillMultBonus = 0;
-    if (buffered > 0) {
-      state.multiplier = state.player.baseMultiplier + buffered * state.player.comboBonus;
-    } else {
-      state.multiplier = state.player.baseMultiplier;
-    }
-    // 同步节奏医生 milestone
-    syncRhythmDoctorMilestone(buffered);
+    state.multiplier = state.player.baseMultiplier;
   }
+  // 同步节奏医生 milestone
+  syncRhythmDoctorMilestone(buffered);
 
   // Boss 修饰器：断连即扣（combo_punish）+ Story 36.11 护盾削弱
   const modEffect = getActiveParams();
@@ -1267,6 +1270,7 @@ export async function startLevel(): Promise<void> {
 
   // Story 36.3: 重置连击遗物关级别状态（引爆阈值、节奏 milestone）
   resetComboRelicState();
+  prismActivated = false;
   // Story 36.4: 重置技能遗物关级别状态（爵士乐词条追踪）
   resetSkillRelicState();
   // Story 36.5: 重置附魔遗物关级别状态

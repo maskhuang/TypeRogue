@@ -38,14 +38,14 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       expect(calculateComboBuffer(20)).toBe(0)
     })
 
-    it('combo=10 → 保留 3', () => {
+    it('combo=10 → 保留 5', () => {
       state.player.relics.add('combo_buffer')
-      expect(calculateComboBuffer(10)).toBe(3)
+      expect(calculateComboBuffer(10)).toBe(5)
     })
 
-    it('combo=15 → 保留 4 (floor)', () => {
+    it('combo=15 → 保留 7 (floor)', () => {
       state.player.relics.add('combo_buffer')
-      expect(calculateComboBuffer(15)).toBe(4)
+      expect(calculateComboBuffer(15)).toBe(7)
     })
 
     it('combo=0 → 保留 0', () => {
@@ -58,9 +58,9 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       expect(calculateComboBuffer(1)).toBe(0)
     })
 
-    it('combo=100 → 保留 30', () => {
+    it('combo=100 → 保留 50', () => {
       state.player.relics.add('combo_buffer')
-      expect(calculateComboBuffer(100)).toBe(30)
+      expect(calculateComboBuffer(100)).toBe(50)
     })
   })
 
@@ -270,13 +270,12 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
   // 交互测试 (Review L2)
   // =====================
   describe('遗物交互', () => {
-    it('immortal_combo + combo_buffer：immortal 优先，buffer 不生效', () => {
+    it('immortal_combo + combo_buffer：打错时 buffer 生效，跨关不重置', () => {
       state.player.relics.add('combo_buffer')
       state.player.relics.add('immortal_combo')
-      // immortal_combo 时 playerWrong 跳过整个重置块，buffer 不被调用
-      // 但 calculateComboBuffer 本身仍返回正常值（不受 immortal 影响）
-      expect(calculateComboBuffer(20)).toBe(6)
-      // hasImmortalCombo 为 true 时 battle.ts 会跳过 buffer 逻辑
+      // 打错时 combo 仍会中断，buffer 保留 50%
+      expect(calculateComboBuffer(20)).toBe(10)
+      // immortal_combo 只影响跨关不重置
       expect(hasImmortalCombo()).toBe(true)
     })
 
@@ -296,13 +295,13 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       // combo 到 25，触发 milestone 10 和 20
       checkRhythmDoctor(10)
       checkRhythmDoctor(20)
-      // combo 中断，buffer 保留 floor(25 * 0.3) = 7
+      // combo 中断，buffer 保留 floor(25 * 0.5) = 12
       const buffered = calculateComboBuffer(25)
-      expect(buffered).toBe(7)
+      expect(buffered).toBe(12)
       syncRhythmDoctorMilestone(buffered)
-      // milestone 同步为 0（floor(7/10)*10），下一个 milestone 是 10
-      expect(checkRhythmDoctor(8)).toBe(0)
-      expect(checkRhythmDoctor(10)).toBe(1)
+      // milestone 同步为 10（floor(12/10)*10），下一个 milestone 是 20
+      expect(checkRhythmDoctor(15)).toBe(0)
+      expect(checkRhythmDoctor(20)).toBe(1)
     })
   })
 })

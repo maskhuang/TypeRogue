@@ -117,6 +117,12 @@ const ZH: Record<string, string> = {
   'battle.rhythm_fast': '🎵 快速 → 得分 ×{value}',
   'battle.tab_hint': '⇥ Tab',
 
+  // --- combo relic feedback ---
+  'battle.prism_active': '🔷 棱镜激活 → 技能+20%',
+  'battle.combo_buffer': '🛡️ 余韵护盾 → combo {value}',
+  'battle.rhythm_doc': '⏱️ +{value}s',
+  'battle.detonate': '💣 ×{value}',
+
   // --- shop.ts ---
   'shop.cycle_title': '商店 · 周目{cycle}',
   'shop.no_gold': '金币不足!',
@@ -481,6 +487,12 @@ const EN: Record<string, string> = {
   'battle.rhythm_fast': '🎵 Fast → Score ×{value}',
   'battle.tab_hint': '⇥ Tab',
 
+  // --- combo relic feedback ---
+  'battle.prism_active': '🔷 Prism Active → Skill +20%',
+  'battle.combo_buffer': '🛡️ Buffered → combo {value}',
+  'battle.rhythm_doc': '⏱️ +{value}s',
+  'battle.detonate': '💣 ×{value}',
+
   // --- shop.ts ---
   'shop.cycle_title': 'Shop · Cycle {cycle}',
   'shop.no_gold': 'Not enough gold!',
@@ -795,6 +807,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   typing_wax_seal: 'Wax Seal', echo_thimble: 'Echo Thimble',
   little_helper: 'Little Helper', rhythm_adapt: 'Rhythm Adapt',
   glass_cannon_v2: 'Glass Cannon v2',
+  // Combo subsystem relics
+  combo_buffer: 'Combo Buffer', multiplier_prism: 'Multiplier Prism',
+  rhythm_doctor: 'Rhythm Doctor', combo_detonator: 'Combo Detonator',
+  immortal_combo: 'Immortal Chain',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
   ench_growth_sameColumn: 'Pulse', ench_growth_sameHand: 'Permeate',
@@ -890,6 +906,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   little_helper: 'Repeat words: press Tab after first letter to auto-complete',
   rhythm_adapt: 'Word time >3s: +1s time; <3s: word score +30%',
   glass_cannon_v2: 'Score ×2, but any typo = instant death. Wax Seal forgives still apply.',
+  // Combo subsystem relics
+  combo_buffer: 'On combo break, keep 50% combo (floor)',
+  multiplier_prism: 'Mult ≥2.5: skill output +20%',
+  rhythm_doctor: 'Every 10 combo: +1s time',
+  combo_detonator: 'At combo 15/30/45: randomly trigger 3 equipped skills',
+  immortal_combo: 'Combo persists across stages (still breaks on error), but skills no longer produce multiplier.',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',
