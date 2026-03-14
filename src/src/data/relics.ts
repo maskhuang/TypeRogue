@@ -107,7 +107,7 @@ export type RelicBehaviorType =
   | 'immortal_combo'       // 不灭连击：combo 永不中断，禁止 multiplier 产出
   // 技能系统
   | 'training_manual'      // 集训手册：一次性升级所有 Lv.1 技能
-  | 'jazz_diversity'       // 爵士乐：一词内不同词条类型越多加分越高
+  | 'jazz'                 // 爵士乐：一词内不同词条类型越多加分越高
   | 'uncrowned_king'       // 无冕之王：无附魔技能无限升级，禁止附魔
   // 附魔系统
   | 'fate_fork'            // 命运三岔：附魔选择变 3 选 1

@@ -130,6 +130,7 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 // === 分数结算 ===
 let wordBaseScore = 0; // 词语基础分（不含倍率）
 let prismActivated = false; // 倍率棱镜本关是否已显示激活反馈
+let lessIsMoreShown = false; // 少而精本关是否已显示激活反馈
 let wordStartTime = 0; // T1遗物：词语开始时的剩余时间（用于完美韵律时间返还）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
 let lastScoreTier = ''; // 缓存上一次分数分级，避免每帧重启 CSS 动画 (Review M1)
@@ -432,6 +433,15 @@ function playerCorrect(k: string): void {
     triggerSkill(skillId, k);
     if (state.score > scoreBefore) skillProducedScore = true;
     if (state.time > timeBefore) skillProducedTime = true;
+    // Story 36.4: 首发强化反馈（每词第一个技能）
+    if (synergy.wordSkillCount === 1 && state.player.relics.has('first_strike')) {
+      showFeedback(t('battle.first_strike'), '#ffaa00');
+    }
+    // Story 36.4: 少而精反馈（本关首次激活）
+    if (!lessIsMoreShown && state.player.relics.has('less_is_more') && state.player.skills.size < 10) {
+      lessIsMoreShown = true;
+      showFeedback(t('battle.less_is_more'), '#66ccff');
+    }
   }
 
   // Story 36.2: 回声指套 — 8% 概率双重击键（combo+1 + 倍率更新 + 技能二次触发）
@@ -638,7 +648,7 @@ function completeWord(): void {
   const jazzBonus = checkJazzBonus();
   if (jazzBonus > 0) {
     bonusMult += jazzBonus;
-    showFeedback(`🎷 +${Math.round(jazzBonus * 100)}%`, '#ffaa00');
+    showFeedback(t('battle.jazz', { value: Math.round(jazzBonus * 100) }), '#ffaa00');
   }
 
   // Story 36.2: 节奏适应 — 根据单词用时给予时间或分数奖励
@@ -1271,6 +1281,7 @@ export async function startLevel(): Promise<void> {
   // Story 36.3: 重置连击遗物关级别状态（引爆阈值、节奏 milestone）
   resetComboRelicState();
   prismActivated = false;
+  lessIsMoreShown = false;
   // Story 36.4: 重置技能遗物关级别状态（爵士乐词条追踪）
   resetSkillRelicState();
   // Story 36.5: 重置附魔遗物关级别状态

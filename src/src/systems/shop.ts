@@ -55,7 +55,7 @@ import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligi
 import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_NAMES, TRANSMUTE_RATIO_TABLE, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
-import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment } from './relics/SkillRelicBehaviors';
+import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment, getUncrownedKingBaseValue } from './relics/SkillRelicBehaviors';
 import { getEnchantmentChoiceCount, getMinEnchantmentLevel, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier } from './relics/EnchantmentRelicBehaviors';
 
 // === 零频键位缓存（供自动绑定使用） ===
@@ -257,6 +257,13 @@ export function buildEnchantmentInfo(_skillId: string): string | undefined {
 // === 词条制技能 tooltip 数据构建（Story 35.11 AC2/AC8） ===
 import type { AffixTooltipInfo, SmartEstimate, EstimateBreakdownLine } from '../ui/keyboard/KeyTooltip';
 import type { AffixSkillInstance, SkillRuntimeState, QuestEnchantmentDef } from '../data/affixes';
+
+/** 获取技能在指定等级的有效基础值（支持无冕之王 Lv4+） */
+function getEffectiveBaseValue(baseValues: [number, number, number], level: number): number {
+  if (level <= 3) return baseValues[level - 1] ?? baseValues[0];
+  if (hasUncrownedKing()) return Math.round(getUncrownedKingBaseValue(level, baseValues) * 100) / 100;
+  return baseValues[2]; // 无遗物时不应出现 Lv4+，兜底
+}
 
 /** 构建词条制技能的 tooltip 扩展字段 */
 export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRuntimeState, excludeTypes?: Set<string>): {
@@ -598,54 +605,6 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
         }
       }
       skillPool.push(...affixItems);
-
-      // 升级已有词条制技能（未满级的，排除已被上面转换过的）
-      const upgradableAffix: string[] = [];
-      for (const [skillId, data] of state.player.skills) {
-        const as = state.affixSkills.get(skillId);
-        const cap = (hasUK && as && as.enchantmentIds.length === 0) ? Infinity : levelCap;
-        if (data.level < cap && as && !convertedSkillIds.has(skillId)) {
-          upgradableAffix.push(skillId);
-        }
-      }
-      const shuffledUpgrade = shuffleArray(upgradableAffix);
-      for (const skillId of shuffledUpgrade) {
-        const affixSkill = state.affixSkills.get(skillId)!;
-        const nextLevel = (state.player.skills.get(skillId)?.level || 1) + 1;
-        skillPool.push({
-          id: `si-${nextId++}`,
-          type: 'skill',
-          skillId,
-          affixSkill: { ...affixSkill, level: nextLevel },
-          cost: getAdjustedPrice(calculateAffixSkillPrice(affixSkill.rarity, nextLevel, rollPriceFluctuation())),
-          isUpgrade: true,
-          locked: false,
-        });
-      }
-    } else {
-      // 技能数量已满：只生成升级项
-      const upgradableAffix: string[] = [];
-      for (const [skillId, data] of state.player.skills) {
-        const as2 = state.affixSkills.get(skillId);
-        const cap2 = (hasUK && as2 && as2.enchantmentIds.length === 0) ? Infinity : levelCap;
-        if (data.level < cap2 && as2) {
-          upgradableAffix.push(skillId);
-        }
-      }
-      const shuffledUpgrade = shuffleArray(upgradableAffix);
-      for (const skillId of shuffledUpgrade) {
-        const affixSkill = state.affixSkills.get(skillId)!;
-        const nextLevel = (state.player.skills.get(skillId)?.level || 1) + 1;
-        skillPool.push({
-          id: `si-${nextId++}`,
-          type: 'skill',
-          skillId,
-          affixSkill: { ...affixSkill, level: nextLevel },
-          cost: getAdjustedPrice(calculateAffixSkillPrice(affixSkill.rarity, nextLevel, rollPriceFluctuation())),
-          isUpgrade: true,
-          locked: false,
-        });
-      }
     }
   }
 
@@ -911,8 +870,12 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       const baseVals = skill.baseValues;
       const resIcon = RESOURCE_ICONS[skill.resource] || '';
       const resName = RESOURCE_NAMES[skill.resource] || skill.resource;
-      const baseVal = baseVals[skill.level - 1] ?? baseVals[0];
+      const baseVal = getEffectiveBaseValue(baseVals, skill.level);
 
+      let baseValuesText = `基础产出: Lv.1=${baseVals[0]} / Lv.2=${baseVals[1]} / Lv.3=${baseVals[2]}`;
+      if (hasUncrownedKing() && skill.level > 3) {
+        baseValuesText += ` / Lv.${skill.level}=${baseVal}`;
+      }
       const tooltipData: KeyTooltipData = {
         skill: {
           name: skill.name,
@@ -921,12 +884,12 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
           level: skill.level,
           school: RARITY_LABELS[skill.rarity] ?? '普通',
           schoolCssClass: `rarity-${skill.rarity}`,
-          baseValuesText: `基础产出: Lv.1=${baseVals[0]} / Lv.2=${baseVals[1]} / Lv.3=${baseVals[2]}`,
+          baseValuesText,
         },
       };
       if (item.isUpgrade) {
         const curLv = skill.level - 1;
-        const curBase = curLv >= 1 ? baseVals[curLv - 1] : 0;
+        const curBase = getEffectiveBaseValue(baseVals, curLv);
         tooltipData.skill!.upgradeInfo = `升级 Lv.${curLv} → Lv.${skill.level}　基础产出 ${curBase} → ${baseVal}`;
       }
       const fields = buildAffixTooltipFields(skill);
@@ -1899,7 +1862,7 @@ export function renderBuildManager(): void {
         if (skillId && state.affixSkills.has(skillId)) {
           const affixSkill = state.affixSkills.get(skillId)!;
           const rt = state.affixSkillStates.get(skillId);
-          const baseVal = affixSkill.baseValues[affixSkill.level - 1] ?? affixSkill.baseValues[0];
+          const baseVal = getEffectiveBaseValue(affixSkill.baseValues, affixSkill.level);
           const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
           const resName = RESOURCE_NAMES[affixSkill.resource] || affixSkill.resource;
           tooltipData.skill = {
@@ -1990,7 +1953,7 @@ export function renderBuildManager(): void {
       item.addEventListener('mouseenter', (e) => {
         hideAllTooltips();
         const rt = state.affixSkillStates.get(skillId);
-        const baseVal = affixSkill.baseValues[affixSkill.level - 1] ?? affixSkill.baseValues[0];
+        const baseVal = getEffectiveBaseValue(affixSkill.baseValues, affixSkill.level);
         const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
         const resName = RESOURCE_NAMES[affixSkill.resource] || affixSkill.resource;
         const tooltipData: KeyTooltipData = {

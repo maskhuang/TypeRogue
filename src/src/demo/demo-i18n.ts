@@ -123,6 +123,11 @@ const ZH: Record<string, string> = {
   'battle.rhythm_doc': '⏱️ +{value}s',
   'battle.detonate': '💣 ×{value}',
 
+  // --- skill relic feedback ---
+  'battle.first_strike': '⚡ 首发强化 +20%',
+  'battle.less_is_more': '💎 少而精 → 技能+20%',
+  'battle.jazz': '🎷 爵士 +{value}%',
+
   // --- shop.ts ---
   'shop.cycle_title': '商店 · 周目{cycle}',
   'shop.no_gold': '金币不足!',
@@ -493,6 +498,11 @@ const EN: Record<string, string> = {
   'battle.rhythm_doc': '⏱️ +{value}s',
   'battle.detonate': '💣 ×{value}',
 
+  // --- skill relic feedback ---
+  'battle.first_strike': '⚡ First Strike +20%',
+  'battle.less_is_more': '💎 Less is More → Skill +20%',
+  'battle.jazz': '🎷 Jazz +{value}%',
+
   // --- shop.ts ---
   'shop.cycle_title': 'Shop · Cycle {cycle}',
   'shop.no_gold': 'Not enough gold!',
@@ -811,6 +821,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   combo_buffer: 'Combo Buffer', multiplier_prism: 'Multiplier Prism',
   rhythm_doctor: 'Rhythm Doctor', combo_detonator: 'Combo Detonator',
   immortal_combo: 'Immortal Chain',
+  // Skill subsystem relics
+  first_strike: 'First Strike', less_is_more: 'Less is More',
+  training_manual: 'Training Manual', jazz: 'Jazz',
+  uncrowned_king: 'Uncrowned King',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
   ench_growth_sameColumn: 'Pulse', ench_growth_sameHand: 'Permeate',
@@ -912,6 +926,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   rhythm_doctor: 'Every 10 combo: +1s time',
   combo_detonator: 'At combo 15/30/45: randomly trigger 3 equipped skills',
   immortal_combo: 'Combo persists across stages (still breaks on error), but skills no longer produce multiplier.',
+  // Skill subsystem relics
+  first_strike: 'First skill trigger per word: output +20%',
+  less_is_more: 'With <10 skills equipped: skill output +20%',
+  training_manual: 'On acquire: upgrade all Lv.1 skills to Lv.2',
+  jazz: '≥3 unique affix types in one word: score +10% × unique count',
+  uncrowned_king: 'Unenchanted skills can level past Lv.3 (+60%/lv), but enchanting is disabled',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',

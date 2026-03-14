@@ -174,7 +174,7 @@ async function init(): Promise<void> {
 
   // === DEBUG: 手动测试遗物 — 修改此数组切换子系统 ===
   const DEBUG_RELICS: string[] = [
-    'combo_buffer', 'multiplier_prism', 'rhythm_doctor', 'combo_detonator', 'immortal_combo', // combo
+    'first_strike', 'less_is_more', 'training_manual', 'jazz', 'uncrowned_king', // skill
   ];
 
   const startAfterClassSelect = () => {
