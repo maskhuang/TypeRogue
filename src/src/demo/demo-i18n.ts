@@ -110,6 +110,13 @@ const ZH: Record<string, string> = {
   'battle.target_hint': '目标: {value}分',
   'battle.cycle_prefix': '周目{cycle} · ',
 
+  // --- typing relic feedback ---
+  'battle.glass_double': '💀 ×2 (+{extra})',
+  'battle.rhythm_slow': '🎵 慢速',
+  'battle.rhythm_time': '⏱️ +{value}s',
+  'battle.rhythm_fast': '🎵 快速 → 得分 ×{value}',
+  'battle.tab_hint': '⇥ Tab',
+
   // --- shop.ts ---
   'shop.cycle_title': '商店 · 周目{cycle}',
   'shop.no_gold': '金币不足!',
@@ -467,6 +474,13 @@ const EN: Record<string, string> = {
   'battle.target_hint': 'Target: {value}',
   'battle.cycle_prefix': 'Cycle {cycle} · ',
 
+  // --- typing relic feedback ---
+  'battle.glass_double': '💀 ×2 (+{extra})',
+  'battle.rhythm_slow': '🎵 Slow',
+  'battle.rhythm_time': '⏱️ +{value}s',
+  'battle.rhythm_fast': '🎵 Fast → Score ×{value}',
+  'battle.tab_hint': '⇥ Tab',
+
   // --- shop.ts ---
   'shop.cycle_title': 'Shop · Cycle {cycle}',
   'shop.no_gold': 'Not enough gold!',
@@ -777,6 +791,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   fittest_survivors: 'Fittest Survivors', masters_lexicon: "Master's Lexicon",
   perpetual_queue: 'Perpetual Queue',
   word_scissors: 'Word Scissors', resonance_mold: 'Resonance Mold',
+  // Typing subsystem relics
+  typing_wax_seal: 'Wax Seal', echo_thimble: 'Echo Thimble',
+  little_helper: 'Little Helper', rhythm_adapt: 'Rhythm Adapt',
+  glass_cannon_v2: 'Glass Cannon v2',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
   ench_growth_sameColumn: 'Pulse', ench_growth_sameHand: 'Permeate',
@@ -866,6 +884,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   perpetual_queue: 'Auto-harvest one round at battle start',
   word_scissors: 'Disassemble crafted words, refund all fragments',
   resonance_mold: 'Duplicate letters cost no gold when crafting',
+  // Typing subsystem relics
+  typing_wax_seal: 'First typo per word forgiven',
+  echo_thimble: '8% chance on correct key: double keystroke (combo+1, skill triggers again)',
+  little_helper: 'Repeat words: press Tab after first letter to auto-complete',
+  rhythm_adapt: 'Word time >3s: +1s time; <3s: word score +30%',
+  glass_cannon_v2: 'Score ×2, but any typo = instant death. Wax Seal forgives still apply.',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',

@@ -221,18 +221,13 @@ export function generateAffixShopItems(count: number): ShopItem[] {
 
 // Old producer/act skill weights removed (词条制 replaces old system)
 
-// === Act 遗物权重 ===
-const ACT_RELIC_WEIGHTS: Record<number, RelicWeights> = {
-  1: { common: 60, rare: 30, legendary: 10 },
-  2: { common: 30, rare: 50, legendary: 20 },
-  3: { common: 10, rare: 40, legendary: 50 },
-};
+// === 商店遗物权重（固定：legendary 只能通过 boss 获得） ===
+const SHOP_RELIC_WEIGHTS: RelicWeights = { common: 60, rare: 30, epic: 10, legendary: 0 };
 
 // === 生成商店遗物商品 ===
 export function generateShopRelicItem(act: number, itemId?: number): ShopItem | null {
   if (isRelicSlotsFull()) return null;
-  const weights = ACT_RELIC_WEIGHTS[act] || ACT_RELIC_WEIGHTS[3];
-  const candidates = generateRelicCandidates(weights);
+  const candidates = generateRelicCandidates(SHOP_RELIC_WEIGHTS);
   if (candidates.length === 0) return null;
 
   const relicId = candidates[0];

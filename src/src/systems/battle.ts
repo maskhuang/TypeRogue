@@ -27,7 +27,7 @@ import { showBossModifierPicker } from './bossModifierPicker';
 import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
-import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, calculateRhythmAdapt, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors } from './relics/TypingRelicBehaviors';
+import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, isRepeatWord, calculateRhythmAdapt, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors } from './relics/TypingRelicBehaviors';
 import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmortalCombo, shouldBlockMultiplierResource, syncRhythmDoctorMilestone, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing } from './relics/SkillRelicBehaviors';
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors } from './relics/EnchantmentRelicBehaviors';
@@ -212,9 +212,8 @@ function setWord(): void {
   synergy.lastTriggeredSkillId = null;
   // Story 36.6: 双手协奏手追踪重置
   resetDualConcertoHand();
-  // Story 36.2: 蜡封状态重置 + 单词追踪
+  // Story 36.2: 蜡封状态重置
   resetWaxSeal();
-  trackWord(state.player.word);
   renderWord();
   if (isScrollActive()) initScrollWord(state.player.word.length);
   updateSettlementLive(); // 初始化结算面板
@@ -224,6 +223,9 @@ function renderWord(): void {
   const el = getElements();
   const s = state.player;
   el.word.innerHTML = '';
+
+  // 小助手提示：重复单词且已打完首字母时显示
+  const showTabHint = state.player.relics.has('little_helper') && s.index >= 1 && isRepeatWord(s.word);
 
   for (let i = 0; i < s.word.length; i++) {
     const span = document.createElement('span');
@@ -237,6 +239,14 @@ function renderWord(): void {
 
     if (s.bindings.has(s.word[i].toLowerCase())) span.classList.add('has-skill');
     el.word.appendChild(span);
+  }
+
+  // Tab 补全提示（单词下方居中）
+  if (showTabHint) {
+    const hint = document.createElement('span');
+    hint.className = 'tab-hint';
+    hint.textContent = t('battle.tab_hint');
+    el.word.appendChild(hint);
   }
 }
 
@@ -465,6 +475,17 @@ function playerCorrect(k: string): void {
 
   state.player.index++;
 
+  // 小助手：首字母完成后显示 Tab 提示
+  if (state.player.index === 1 && state.player.relics.has('little_helper') && isRepeatWord(state.player.word)) {
+    const existing = el.word.querySelector('.tab-hint');
+    if (!existing) {
+      const hint = document.createElement('span');
+      hint.className = 'tab-hint';
+      hint.textContent = t('battle.tab_hint');
+      el.word.appendChild(hint);
+    }
+  }
+
   // 实时更新结算面板
   updateSettlementLive();
 
@@ -620,9 +641,15 @@ function completeWord(): void {
   // Story 36.2: 节奏适应 — 根据单词用时给予时间或分数奖励
   const rhythmResult = calculateRhythmAdapt(wordElapsed);
   if (rhythmResult.timeBonus > 0) {
-    state.time += rhythmResult.timeBonus;
-    showFeedback(`🎵 +${rhythmResult.timeBonus}s`, '#00ff88');
-    bumpTimer();
+    showFeedback(t('battle.rhythm_slow'), '#00ff88');
+    setTimeout(() => {
+      state.time += rhythmResult.timeBonus;
+      showFeedback(t('battle.rhythm_time', { value: rhythmResult.timeBonus }), '#00ff88');
+      bumpTimer();
+    }, 300);
+  }
+  if (rhythmResult.scoreMult > 1) {
+    showFeedback(t('battle.rhythm_fast', { value: rhythmResult.scoreMult }), '#ffe66d');
   }
   bonusMult *= rhythmResult.scoreMult;
 
@@ -657,14 +684,25 @@ function completeWord(): void {
     const prevScore = state.score;
     state.score += finalWordScore;
 
-    // Story 36.2: 玻璃大炮 — 整词得分翻倍（含技能直接加分 + 公式结算分）
+    // Story 36.2: 玻璃大炮 — 分两阶段演出：先显示原始得分，再翻倍
     if (hasGlassCannon()) {
+      // 阶段1：先 bump 原始得分
+      bumpScore(finalWordScore);
+      updateHUD();
       const wordGain = state.score - wordStartScore;
-      state.score = wordStartScore + wordGain * 2;
-      finalWordScore = state.score - prevScore; // 更新显示用分数
+      const extraGain = wordGain; // 翻倍多得的部分
+      // 阶段2：延迟后显示 ×2 并追加分数
+      const doubledScore = wordStartScore + wordGain * 2;
+      finalWordScore = doubledScore - prevScore; // 与原公式一致
+      setTimeout(() => {
+        showFeedback(t('battle.glass_double', { extra: extraGain }), '#ff4444', 1.3);
+        state.score = doubledScore;
+        bumpScore(extraGain);
+        updateHUD();
+      }, 400);
+    } else {
+      bumpScore(finalWordScore); // Story 31.4: 弹性缩放
     }
-
-    bumpScore(finalWordScore); // Story 31.4: 弹性缩放
 
     // Story 31.4: 高分慢动作结算（≥1000 分）
     if (finalWordScore >= 1000) {
@@ -765,6 +803,9 @@ function completeWord(): void {
 
   // 重置词语基础分
   wordBaseScore = 0;
+
+  // Story 36.2: 完成后记录单词（小助手补全需要"已打过"判定）
+  trackWord(state.player.word);
 
   // 检查是否达到目标分数 - 提前结束关卡（黑洞模式跳过，由 Enter 键手动判定）
   if (!isBlackHoleActive() && state.score >= state.targetScore) {

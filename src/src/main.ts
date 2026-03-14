@@ -172,7 +172,18 @@ async function init(): Promise<void> {
   resetLastAct();
   state.level = 1;
 
+  // === DEBUG: 手动测试遗物 — 修改此数组切换子系统 ===
+  const DEBUG_RELICS: string[] = [
+    'typing_wax_seal', 'echo_thimble', 'little_helper', 'rhythm_adapt', 'glass_cannon_v2', // typing
+  ];
+
   const startAfterClassSelect = () => {
+    // DEBUG: 直接授予测试遗物，跳过三选一
+    if (DEBUG_RELICS.length > 0) {
+      for (const id of DEBUG_RELICS) state.player.relics.add(id);
+      void startLevel();
+      return;
+    }
     // 有初始遗物的职业跳过开局三选一
     if (state.classId === 'none' && hasUnownedRelics()) {
       showRelicPicker(() => void startLevel(), RELIC_WEIGHT_PRESETS.gameStart);

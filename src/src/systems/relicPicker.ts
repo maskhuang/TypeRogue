@@ -22,7 +22,7 @@ export interface RelicWeights {
 }
 
 export const RELIC_WEIGHT_PRESETS = {
-  gameStart:  { common: 55, rare: 25, epic: 15, legendary: 5 },
+  gameStart:  { common: 100, rare: 0, epic: 0, legendary: 0 },
   eliteDrop:  { common: 0,  rare: 30, epic: 40, legendary: 30 },
   bossDrop:   { common: 0,  rare: 0,  epic: 30, legendary: 70 },
 } as const;
@@ -72,8 +72,19 @@ export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRE
     }
   }
 
-  // 加权抽取 3 个不重复候选
-  const candidates: string[] = [];
+  // 开局保底：宽容评审必定出现在候选中
+  const guaranteed: string[] = [];
+  if (weights === RELIC_WEIGHT_PRESETS.gameStart) {
+    const guaranteedId = 'lenient_judge';
+    const rarity = RELICS[guaranteedId]?.rarity;
+    if (rarity && buckets[rarity].includes(guaranteedId)) {
+      buckets[rarity] = buckets[rarity].filter(id => id !== guaranteedId);
+      guaranteed.push(guaranteedId);
+    }
+  }
+
+  // 加权抽取不重复候选（补齐到 3 个）
+  const candidates: string[] = [...guaranteed];
   const rarities: RelicRarity[] = ['common', 'rare', 'epic', 'legendary'];
   const activeRarities = rarities.filter(r => weights[r] > 0 && buckets[r].length > 0);
 

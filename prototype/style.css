@@ -235,6 +235,26 @@ body {
     text-shadow: 0 0 20px rgba(255,230,109,0.8);
 }
 
+/* 小助手 Tab 补全提示 */
+.tab-hint {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 4px;
+    font-size: 11px !important;
+    line-height: 1.4;
+    color: #4ecdc4 !important;
+    border: 1px solid #4ecdc4 !important;
+    border-radius: 3px;
+    background: rgba(78,205,196,0.08);
+    vertical-align: middle;
+    animation: tabHintPulse 2s ease-in-out infinite;
+}
+
+@keyframes tabHintPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+}
+
 /* 字母入场动画 */
 .letter.letter-enter {
     animation: letterEnter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;

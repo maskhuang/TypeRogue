@@ -221,6 +221,7 @@ body {
     display: flex;
     margin-bottom: 8px;
     transition: transform 0.1s ease-out;
+    position: relative;
 }
 
 /* boss_scroll 滚屏模式 */
@@ -323,6 +324,24 @@ body {
 .letter.skill-triggered {
     color: #ffe66d !important;
     text-shadow: 0 0 20px rgba(255,230,109,0.8);
+}
+
+/* 小助手 Tab 补全提示 */
+.tab-hint {
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 22px;
+    color: rgba(78,205,196,0.6);
+    white-space: nowrap;
+    pointer-events: none;
+    animation: tabHintPulse 2s ease-in-out infinite;
+}
+
+@keyframes tabHintPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
 }
 
 /* 字母入场动画 */
