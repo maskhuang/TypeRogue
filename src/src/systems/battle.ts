@@ -21,7 +21,7 @@ import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getCycleTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode, TOTAL_NODES } from './stage/stageFlow';
 import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawBossModifiers, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive, getEscalateTimeSpeedBonus, addFrostStack, getCurrentTaxResource, getTaxRate, onMirrorWordComplete, resetMirrorWordTimer } from '../data/bossModifiers';
-import type { BossModifierMeta } from '../data/bossModifiers';
+import type { BossModifierMeta, ModifierCategory, BossModifierId } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, stopBossRotation, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
 import { showBossModifierPicker } from './bossModifierPicker';
 import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
@@ -1295,8 +1295,8 @@ function endLevel(): void {
       }
 
       if (currentType === 'boss') {
-        if (state.endlessUnlocked) {
-          // 无尽模式已解锁 → 周目推进 + 修饰器选择 + 传说遗物三选一 + 进商店
+        if (state.cycle < 3 || state.endlessUnlocked) {
+          // 周目 1-2：继续下一周目 / 周目 3+（无尽模式）：继续
           advanceCycle();
           showBossModifierPicker(() => {
             continueAfterDeadlyGift(() => {
@@ -1308,7 +1308,7 @@ function endLevel(): void {
             });
           });
         } else {
-          // 无尽模式未解锁 → 通关结算
+          // 周目 3 通关（无尽未解锁）→ 胜利
           victory();
         }
         return;
@@ -1376,6 +1376,73 @@ function hideSettlement(): void {
   }
   settlementTimeouts.forEach(t => clearTimeout(t));
   settlementTimeouts = [];
+}
+
+/** 先知之眼模态框：显示三个修饰器类别，玩家选择禁用一个 */
+function showForesightModal(modIds: BossModifierId[]): Promise<ModifierCategory | null> {
+  return new Promise((resolve) => {
+    // 按类别分组修饰器
+    const groups: Record<ModifierCategory, { icon: string; name: string }[]> = {
+      offense: [], defense: [], disruption: [],
+    };
+    for (const id of modIds) {
+      const meta = getBossModifierMeta(id);
+      if (meta) {
+        groups[meta.category].push({ icon: meta.icon, name: t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name });
+      }
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'foresight-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;';
+
+    const panel = document.createElement('div');
+    panel.style.cssText = 'background:#1a1a2e;border:2px solid #e94560;border-radius:12px;padding:24px 32px;max-width:520px;width:90%;text-align:center;color:#fff;font-family:inherit;';
+
+    const title = document.createElement('h2');
+    title.textContent = t('battle.foresight_title');
+    title.style.cssText = 'margin:0 0 16px;font-size:1.3em;';
+    panel.appendChild(title);
+
+    const categoryLabels: Record<ModifierCategory, string> = {
+      offense: t('battle.foresight_offense'),
+      defense: t('battle.foresight_defense'),
+      disruption: t('battle.foresight_disruption'),
+    };
+
+    for (const cat of ['offense', 'defense', 'disruption'] as ModifierCategory[]) {
+      const btn = document.createElement('button');
+      btn.style.cssText = 'display:block;width:100%;margin:8px 0;padding:12px 16px;border:1px solid #555;border-radius:8px;background:#2a2a4a;color:#fff;font-size:1em;cursor:pointer;text-align:left;transition:background 0.15s;';
+      btn.onmouseenter = () => { btn.style.background = '#3a3a6a'; };
+      btn.onmouseleave = () => { btn.style.background = '#2a2a4a'; };
+
+      const catLabel = document.createElement('div');
+      catLabel.style.cssText = 'font-size:1.1em;font-weight:bold;margin-bottom:4px;';
+      catLabel.textContent = categoryLabels[cat];
+      btn.appendChild(catLabel);
+
+      if (groups[cat].length > 0) {
+        const modList = document.createElement('div');
+        modList.style.cssText = 'font-size:0.85em;color:#aaa;';
+        modList.textContent = groups[cat].map(m => `${m.icon}${m.name}`).join('  ');
+        btn.appendChild(modList);
+      } else {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'font-size:0.85em;color:#666;';
+        empty.textContent = '—';
+        btn.appendChild(empty);
+      }
+
+      btn.addEventListener('click', () => {
+        overlay.remove();
+        resolve(cat);
+      });
+      panel.appendChild(btn);
+    }
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+  });
 }
 
 export async function startLevel(): Promise<void> {
@@ -1542,8 +1609,46 @@ export async function startLevel(): Promise<void> {
   // Task 2.3: 精英关金色边框样式
   el.battleScreen.classList.toggle('elite-stage', currentStageType === 'elite');
 
-  // 应用跨周目永久修饰器（state.activeModifiers）
+  // 先知之眼：精英/Boss关修饰器应用前，预览并选择禁用一个类别
+  let foresightDisabledCategory: ModifierCategory | null = null;
+  if (state.player.relics.has('modifier_foresight') && (currentStageType === 'elite' || currentStageType === 'boss')) {
+    const modsToPreview: BossModifierId[] = [];
+    if (currentStageType === 'elite') {
+      const modIdx = getEliteModifierIndex(state.level);
+      const modId = state.bossModifierPool[modIdx];
+      if (modId) modsToPreview.push(modId);
+    } else {
+      for (const id of state.bossModifierPool) {
+        if (id) modsToPreview.push(id);
+      }
+    }
+    // 加上永久修饰器
+    for (const id of state.activeModifiers) {
+      modsToPreview.push(id);
+    }
+    if (modsToPreview.length > 0) {
+      foresightDisabledCategory = await showForesightModal(modsToPreview);
+      // 一次性：使用后移除遗物
+      state.player.relics.delete('modifier_foresight');
+      renderRelicDisplay();
+      if (foresightDisabledCategory) {
+        const categoryNames: Record<ModifierCategory, string> = {
+          offense: t('battle.foresight_offense'),
+          defense: t('battle.foresight_defense'),
+          disruption: t('battle.foresight_disruption'),
+        };
+        showFeedback(t('battle.foresight_disabled', { category: categoryNames[foresightDisabledCategory] }), '#ffaa00');
+        showFeedback(t('battle.foresight_consumed'), '#888888', 0.7);
+      }
+    }
+  }
+
+  // 应用跨周目永久修饰器（state.activeModifiers）— 跳过被先知之眼禁用的类别
   for (const permModId of state.activeModifiers) {
+    if (foresightDisabledCategory) {
+      const meta = getBossModifierMeta(permModId);
+      if (meta && meta.category === foresightDisabledCategory) continue;
+    }
     applyModifier(permModId, false, true);
   }
 
@@ -1564,16 +1669,22 @@ export async function startLevel(): Promise<void> {
     const modIdx = getEliteModifierIndex(state.level);
     const modId = state.bossModifierPool[modIdx];
     if (modId && !isModifierActive(modId)) {
-      if (shouldBarrierBlock()) {
+      // 先知之眼：跳过被禁用类别的修饰器
+      const eliteMeta = getBossModifierMeta(modId);
+      if (foresightDisabledCategory && eliteMeta && eliteMeta.category === foresightDisabledCategory) {
+        // 被先知之眼禁用，不应用
+      } else if (shouldBarrierBlock()) {
         showFeedback(t('battle.modifier_barrier'), '#44aaff');
       } else {
         applyModifier(modId, true);
       }
     }
   } else if (currentStageType === 'boss') {
-    // Boss 关：同时应用全部 3 个修饰器
+    // Boss 关：同时应用全部 3 个修饰器 — 跳过被先知之眼禁用的类别
     for (const bossModId of state.bossModifierPool) {
       if (bossModId && !isModifierActive(bossModId)) {
+        const bossMeta = getBossModifierMeta(bossModId);
+        if (foresightDisabledCategory && bossMeta && bossMeta.category === foresightDisabledCategory) continue;
         applyModifier(bossModId, false);
       }
     }
@@ -1584,6 +1695,7 @@ export async function startLevel(): Promise<void> {
         const allNames = state.bossModifierPool
           .map(id => getBossModifierMeta(id))
           .filter(Boolean)
+          .filter(m => !(foresightDisabledCategory && m!.category === foresightDisabledCategory))
           .map(m => `${m!.icon}${t(`modifier.${m!.id}`) !== `modifier.${m!.id}` ? t(`modifier.${m!.id}`) : m!.name}`)
           .join(' ');
         modInfo.querySelector('.modifier-icon')!.textContent = '';

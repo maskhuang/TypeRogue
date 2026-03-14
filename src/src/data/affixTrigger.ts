@@ -13,7 +13,7 @@ import type { AffixInstance, AffixSkillInstance, AffixSkillSaveData, SkillRuntim
 import {
   AffixType,
   EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS, QUEST_AFFIX_MAP,
-  TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_CALIBRATION, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES,
+  TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES,
   isOldSystemSkill,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
@@ -249,14 +249,11 @@ export interface Phase2Result {
   output: number
   bonusPercent: number
   mutations: StateMutation[]
-  /** 乘算化模式：各加算项独立拆分（Phase 3 逐项相乘） */
-  bonusBreakdown?: number[]
 }
 
 /**
  * Phase 2: 加算层 — 所有加算增益汇总为 bonusPercent，最后 output × (1 + bonusPercent)。
- * 乘算化附魔（MultiplyOperator）时，各项 bonus 独立记录到 bonusBreakdown，
- * output 保持 baseOutput 不变，由 Phase 3 逐项相乘。
+ * 乘算化附魔（MultiplyOperator）时，基础值替换为乘数基底，但加算逻辑与普通模式一致。
  * 蓄力清零作为必要副作用直接写入 runtimeState。
  */
 export function resolvePhase2(
@@ -272,15 +269,6 @@ export function resolvePhase2(
     : baseOutput
   let bonusPercent = 0
   const mutations: StateMutation[] = []
-  const breakdown: number[] = []
-
-  // 乘算化 breakdown 追踪辅助
-  let snap = 0
-  const track = () => {
-    const delta = bonusPercent - snap
-    if (hasMultOp && delta !== 0) breakdown.push(delta)
-    snap = bonusPercent
-  }
 
   // ── 词条加算 ──
   for (const affix of skill.affixes) {
@@ -290,7 +278,6 @@ export function resolvePhase2(
         const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestRefine)
         const kEff = (affix.k ?? 0) * (c > 0 ? Math.pow(1.1, c) : 1)
         bonusPercent += kEff * getAffixSourceValue(affix.source, ctx)
-        track()
         break
       }
 
@@ -300,7 +287,6 @@ export function resolvePhase2(
         const slotEff = (affix.bonusPerSlot ?? 0) + c * 0.05
         const empty = countEmptySlots(ctx.triggerKey, affix.posRel, ctx.bindings)
         bonusPercent += empty * slotEff
-        track()
         break
       }
 
@@ -310,7 +296,6 @@ export function resolvePhase2(
         bonusPercent += Math.min(runtimeState.chargeAccumulated, maxEff)
         // 蓄力释放清零 — 直接写入 runtimeState
         runtimeState.chargeAccumulated = 0
-        track()
         break
       }
 
@@ -319,7 +304,6 @@ export function resolvePhase2(
           const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestCharge)
           bonusPercent += (affix.bonusPercent ?? 0) + c * 0.15
         }
-        track()
         break
       }
 
@@ -335,13 +319,11 @@ export function resolvePhase2(
         if (skill.resource === affix.resource) {
           bonusPercent += runtimeState.amplifyStacks * vpsEff
         }
-        track()
         break
       }
 
       case AffixType.Taboo: {
         bonusPercent += 1.0
-        track()
         break
       }
 
@@ -356,7 +338,6 @@ export function resolvePhase2(
   // 学徒系列：永久成长累积（所有学徒共享同一累积值，只加一次）
   if (skill.enchantmentIds.some(id => isApprenticeEnchantment(id as EnchantmentType))) {
     bonusPercent += runtimeState.apprenticeAccumulated
-    track()
   }
 
   for (const enchId of skill.enchantmentIds) {
@@ -368,19 +349,15 @@ export function resolvePhase2(
       if (c >= 3) {
         bonusPercent += c * 0.10
       }
-      track()
     }
 
   }
 
-  // 乘算化模式：不应用 bonusPercent 到 output，由 Phase 3 逐项相乘
-  // 注意：MultiplyOperator 模式下 bonusPercent 仅作信息参考（不反映在 output 中），
-  // 实际乘算通过 bonusBreakdown 在 Phase 3 逐项应用
+  // 乘算化模式与普通模式统一：bonusPercent 加算后应用到 output
   return {
-    output: hasMultOp ? effectiveBase : baseOutput * (1 + bonusPercent),
+    output: effectiveBase * (1 + bonusPercent),
     bonusPercent,
     mutations,
-    bonusBreakdown: hasMultOp ? breakdown : undefined,
   }
 }
 
@@ -395,7 +372,6 @@ export interface Phase3Result {
 
 /**
  * Phase 3: 乘算层 — 各词条独立相乘。
- * 乘算化附魔（MultiplyOperator）时，bonusBreakdown 各项在末尾逐项相乘。
  * 衰减更新作为必要副作用直接写入 runtimeState。
  */
 export function resolvePhase3(
@@ -403,7 +379,6 @@ export function resolvePhase3(
   runtimeState: SkillRuntimeState,
   ctx: TriggerContext,
   input: number,
-  bonusBreakdown?: number[],
 ): Phase3Result {
   let output = input
   const multipliers: number[] = []
@@ -501,16 +476,6 @@ export function resolvePhase3(
       // 其余词条类型在 Phase 3 无乘算效果
       default:
         break
-    }
-  }
-
-  // 乘算化附魔（MultiplyOperator）— Phase 2 各加算项独立相乘
-  if (bonusBreakdown && bonusBreakdown.length > 0) {
-    const calibration = MULTIPLY_OPERATOR_CALIBRATION[skill.resource] ?? 1
-    for (const bonus of bonusBreakdown) {
-      const m = 1 + bonus * calibration
-      output *= m
-      multipliers.push(m)
     }
   }
 
@@ -939,8 +904,8 @@ export function triggerAffixSkill(
   // Phase 2: 加算层
   const p2 = resolvePhase2(effectiveSkill, runtimeState, ctx, base)
 
-  // Phase 3: 乘算层（乘算化模式传入 bonusBreakdown）
-  const p3 = resolvePhase3(effectiveSkill, runtimeState, ctx, p2.output, p2.bonusBreakdown)
+  // Phase 3: 乘算层
+  const p3 = resolvePhase3(effectiveSkill, runtimeState, ctx, p2.output)
 
   // Phase 4: 资源选择
   const p4 = resolvePhase4(effectiveSkill, p3.output, runtimeState, ctx)

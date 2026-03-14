@@ -23,7 +23,7 @@ export interface RelicWeights {
 
 export const RELIC_WEIGHT_PRESETS = {
   gameStart:  { common: 100, rare: 0, epic: 0, legendary: 0 },
-  eliteDrop:  { common: 0,  rare: 30, epic: 40, legendary: 30 },
+  eliteDrop:  { common: 0,  rare: 50, epic: 50, legendary: 0 },
   bossDrop:   { common: 0,  rare: 0,  epic: 30, legendary: 70 },
 } as const;
 

@@ -130,6 +130,7 @@ export type RelicBehaviorType =
   // Boss修饰器系统
   | 'modifier_barrier'     // 修饰器屏障：第一个修饰器无效化
   | 'chaos_roulette'       // 混沌轮盘：每 5 词替换一个修饰器
+  | 'modifier_foresight'   // 先知之眼：预知修饰器并禁用一个类别
   | 'modifier_reversal'    // 修饰器反转：一半修饰器反转为增益
   // 结算/评分系统
   | 'snowball'             // 雪球效应：每词得分递增
@@ -721,7 +722,7 @@ export const RELICS: Record<string, RelicData> = {
   universal_furnace: {
     id: 'universal_furnace',
     name: '万物熔炉',
-    icon: '🔥',
+    icon: '⚗️',
     description: '战斗结束时，超标分数+剩余时间→金币，但不获得基础通关金币。',
     rarity: 'legendary',
     basePrice: 0,
@@ -785,7 +786,7 @@ export const RELICS: Record<string, RelicData> = {
   timed_auction: {
     id: 'timed_auction',
     name: '限时拍卖',
-    icon: '⏳',
+    icon: '🔔',
     description: '刷新免费，但商店有30秒倒计时。',
     rarity: 'legendary',
     basePrice: 0,
@@ -902,12 +903,25 @@ export const RELICS: Record<string, RelicData> = {
     name: '混沌轮盘',
     icon: '🎰',
     description: 'Boss关中，每完成5个词随机替换一个活跃修饰器。',
-    rarity: 'epic',
-    basePrice: 120,
+    rarity: 'legendary',
+    basePrice: 0,
     effects: [],
     subsystem: 'boss_modifier',
     behaviorType: 'chaos_roulette',
     flavor: '转动命运之轮，拥抱混沌。',
+  },
+
+  modifier_foresight: {
+    id: 'modifier_foresight',
+    name: '先知之眼',
+    icon: '👁️',
+    description: '【一次性】精英/Boss关开始时，预览修饰器并选择禁用一个类别（进攻/防守/干扰）。使用后消耗。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'boss_modifier',
+    behaviorType: 'modifier_foresight',
+    flavor: '预知命运者，可以改写命运。',
   },
 
   modifier_reversal: {

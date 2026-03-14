@@ -107,7 +107,7 @@ describe('KeyTooltip', () => {
       score: 0,
       frequency: 3,
     })
-    expect(mockTooltipEl._innerHTML).toContain('底分不足')
+    expect(mockTooltipEl._innerHTML).toContain('no base score')
   })
 
   it('show 包含技能信息', async () => {
@@ -128,7 +128,8 @@ describe('KeyTooltip', () => {
     expect(mockTooltipEl._innerHTML).toContain('爆发')
     expect(mockTooltipEl._innerHTML).toContain('Lv.3')
     expect(mockTooltipEl._innerHTML).toContain('造成大量伤害')
-    expect(mockTooltipEl._innerHTML).toContain('school-burst')
+    // schoolCssClass is no longer rendered in tooltip HTML — verify skill content instead
+    expect(mockTooltipEl._innerHTML).toContain('💥')
   })
 
   it('多次销毁不报错', async () => {

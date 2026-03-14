@@ -16,7 +16,6 @@ import {
   QUEST_AFFIX_MAP,
   QUEST_ENCHANTMENT_DEFS,
   TRANSMUTE_RATIO_TABLE,
-  MULTIPLY_OPERATOR_CALIBRATION,
   filterEnchantmentsByClass,
   AffixSkillSaveData,
   OLD_SKILL_PREFIXES,
@@ -2710,11 +2709,11 @@ describe('Transmute same-resource optimization', () => {
   })
 })
 
-describe('MultiplyOperator — Phase 2 bonusBreakdown', () => {
+describe('MultiplyOperator — Phase 2 unified additive', () => {
   // MULTIPLY_OPERATOR_BASE_VALUES['base'][0] = 2.0 (default makeSkill resource='base', level=1)
   const multOpBase = 2.0
 
-  it('should return bonusBreakdown with individual bonuses when MultiplyOperator active', () => {
+  it('should use multiplicative base but apply bonuses additively', () => {
     const skill = makeSkill({
       affixes: [
         { type: AffixType.Taboo },          // +1.0
@@ -2725,16 +2724,12 @@ describe('MultiplyOperator — Phase 2 bonusBreakdown', () => {
     const state = makeRuntimeState()
     const ctx = makeContext({ triggerKey: 'h', currentWord: 'hello' }) // 'h' is first letter
     const result = resolvePhase2(skill, state, ctx, 10)
-    // MultiplyOperator: output = multiplicative base (not baseOutput, not multiplied by bonusPercent)
-    expect(result.output).toBe(multOpBase)
+    // MultiplyOperator: output = multOpBase × (1 + bonusPercent)
     expect(result.bonusPercent).toBeCloseTo(1.3) // 1.0 + 0.3
-    expect(result.bonusBreakdown).toBeDefined()
-    expect(result.bonusBreakdown!.length).toBe(2)
-    expect(result.bonusBreakdown![0]).toBeCloseTo(1.0)
-    expect(result.bonusBreakdown![1]).toBeCloseTo(0.3)
+    expect(result.output).toBeCloseTo(multOpBase * (1 + 1.3))
   })
 
-  it('should NOT return bonusBreakdown without MultiplyOperator', () => {
+  it('normal mode should use original base', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Taboo }],
       enchantmentIds: [],
@@ -2743,7 +2738,6 @@ describe('MultiplyOperator — Phase 2 bonusBreakdown', () => {
     const ctx = makeContext()
     const result = resolvePhase2(skill, state, ctx, 10)
     expect(result.output).toBe(10 * (1 + 1.0)) // normal: 10 × 2.0
-    expect(result.bonusBreakdown).toBeUndefined()
   })
 
   it('should return multiplicative base when MultiplyOperator active and no bonuses', () => {
@@ -2754,116 +2748,52 @@ describe('MultiplyOperator — Phase 2 bonusBreakdown', () => {
     const state = makeRuntimeState()
     const ctx = makeContext()
     const result = resolvePhase2(skill, state, ctx, 10)
-    expect(result.output).toBe(multOpBase)
+    expect(result.output).toBe(multOpBase) // multOpBase × (1 + 0)
     expect(result.bonusPercent).toBe(0)
-    expect(result.bonusBreakdown).toEqual([])
   })
 })
 
-describe('MultiplyOperator — Phase 3 multiplicative application', () => {
-  it('should multiply each breakdown bonus independently', () => {
+describe('MultiplyOperator — Phase 3 (no bonusBreakdown)', () => {
+  it('Phase 3 should pass through input without bonusBreakdown logic', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.MultiplyOperator] })
     const state = makeRuntimeState()
     const ctx = makeContext()
-    // bonusBreakdown = [0.30, 0.20] → output × 1.30 × 1.20 = input × 1.56
-    const result = resolvePhase3(skill, state, ctx, 100, [0.30, 0.20])
-    expect(result.output).toBeCloseTo(100 * 1.30 * 1.20)
-    expect(result.multipliers).toContain(1.30)
-    expect(result.multipliers).toContain(1.20)
-  })
-
-  it('additive vs multiplicative: MultiplyOperator produces larger result', () => {
-    const state = makeRuntimeState()
-    const ctx = makeContext()
-
-    // Additive mode: 100 × (1 + 0.30 + 0.20 + 0.25) = 100 × 1.75 = 175
-    const addSkill = makeSkill({ enchantmentIds: [] })
-    const addP3 = resolvePhase3(addSkill, state, ctx, 175) // Phase 2 already applied
-    // No bonusBreakdown → no MultiplyOperator effect
-    expect(addP3.output).toBe(175)
-
-    // MultiplyOperator mode: 100 × 1.30 × 1.20 × 1.25 = 100 × 1.95 = 195
-    const mulSkill = makeSkill({ enchantmentIds: [EnchantmentType.MultiplyOperator] })
-    const mulP3 = resolvePhase3(mulSkill, state, ctx, 100, [0.30, 0.20, 0.25])
-    expect(mulP3.output).toBeCloseTo(195)
-    expect(mulP3.output).toBeGreaterThan(addP3.output) // multiplicative > additive
-  })
-
-  it('should have no effect when bonusBreakdown is empty', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.MultiplyOperator] })
-    const state = makeRuntimeState()
-    const ctx = makeContext()
-    const result = resolvePhase3(skill, state, ctx, 100, [])
-    expect(result.output).toBe(100) // no change
+    // No bonusBreakdown parameter — Phase 2 already applied bonuses additively
+    const result = resolvePhase3(skill, state, ctx, 100)
+    expect(result.output).toBe(100) // no Phase 3 multipliers, just passes through
     expect(result.multipliers).toEqual([])
   })
 
-  it('should have no effect when bonusBreakdown is undefined', () => {
-    const skill = makeSkill({ enchantmentIds: [] })
+  it('MultiplyOperator calculation is same as additive (only base differs)', () => {
     const state = makeRuntimeState()
     const ctx = makeContext()
-    const result = resolvePhase3(skill, state, ctx, 100, undefined)
-    expect(result.output).toBe(100)
-  })
 
-  it('should apply resource calibration factor (default 1.0)', () => {
-    // MULTIPLY_OPERATOR_CALIBRATION defaults to 1.0 for all resources
+    // Normal mode: baseOutput=10, bonusPercent=0.75 → 10 × 1.75 = 17.5
+    const addSkill = makeSkill({ affixes: [], enchantmentIds: [] })
+    const addP2 = resolvePhase2(addSkill, state, ctx, 10)
+    expect(addP2.output).toBe(10) // no bonuses
+
+    // MultiplyOperator mode: base=2.0, same bonusPercent → 2.0 × (1+bonusPercent)
+    const mulSkill = makeSkill({ affixes: [], enchantmentIds: [EnchantmentType.MultiplyOperator] })
+    const mulP2 = resolvePhase2(mulSkill, state, ctx, 10)
+    expect(mulP2.output).toBe(2.0) // multiplicative base, no bonuses
+  })
+})
+
+describe('MultiplyOperator + affix combo', () => {
+  it('should apply affix bonus additively with multiplicative base', () => {
     const skill = makeSkill({
       resource: 'base' as ResourceType,
+      affixes: [{ type: AffixType.Taboo }], // +1.0
       enchantmentIds: [EnchantmentType.MultiplyOperator],
     })
     const state = makeRuntimeState()
     const ctx = makeContext()
-    const calibration = MULTIPLY_OPERATOR_CALIBRATION['base' as ResourceType]
-    expect(calibration).toBe(1.0)
-    const result = resolvePhase3(skill, state, ctx, 100, [0.50])
-    // 100 × (1 + 0.50 × 1.0) = 100 × 1.50 = 150
-    expect(result.output).toBeCloseTo(150)
-  })
-
-  it('should scale bonuses by non-1.0 calibration factor', () => {
-    // Temporarily patch calibration table to test non-default calibration
-    const origVal = MULTIPLY_OPERATOR_CALIBRATION['score' as ResourceType]
-    ;(MULTIPLY_OPERATOR_CALIBRATION as Record<string, number>)['score'] = 0.8
-    try {
-      const skill = makeSkill({
-        resource: 'score' as ResourceType,
-        enchantmentIds: [EnchantmentType.MultiplyOperator],
-      })
-      const state = makeRuntimeState()
-      const ctx = makeContext()
-      // breakdown has two bonuses: 0.50 and 0.20
-      const result = resolvePhase3(skill, state, ctx, 100, [0.50, 0.20])
-      // 100 × (1 + 0.50 × 0.8) × (1 + 0.20 × 0.8) = 100 × 1.40 × 1.16 = 162.4
-      expect(result.output).toBeCloseTo(162.4)
-      expect(result.multipliers).toHaveLength(2)
-      expect(result.multipliers[0]).toBeCloseTo(1.40)
-      expect(result.multipliers[1]).toBeCloseTo(1.16)
-    } finally {
-      ;(MULTIPLY_OPERATOR_CALIBRATION as Record<string, number>)['score'] = origVal
-    }
-  })
-})
-
-describe('MultiplyOperator + passive enchantment combo', () => {
-  it('should include passive enchantment bonus in bonusBreakdown', () => {
-    const skill = makeSkill({
-      resource: 'base' as ResourceType,
-      affixes: [],
-      enchantmentIds: [EnchantmentType.MultiplyOperator, EnchantmentType.Overflow],
-    })
-    const state = makeRuntimeState()
-    const ctx = makeContext({
-      fragmentInventory: { a: 15, b: 15, c: 5 },  // 2 saturated fragments
-    })
     const result = resolvePhase2(skill, state, ctx, 10)
-    // MultiplyOperator: output = multiplicative base (base Lv1 = 2.0)
-    expect(result.output).toBe(2.0)
-    // Overflow: 2 × 0.20 = 0.40
-    expect(result.bonusPercent).toBeCloseTo(0.40)
-    expect(result.bonusBreakdown).toBeDefined()
-    expect(result.bonusBreakdown!.length).toBe(1) // one bonus: 0.40
-    expect(result.bonusBreakdown![0]).toBeCloseTo(0.40)
+    // Taboo: +1.0
+    expect(result.bonusPercent).toBeCloseTo(1.0)
+    // MultiplyOperator: output = multOpBase × (1 + bonusPercent) = 2.0 × 2.0 = 4.0
+    expect(result.output).toBeCloseTo(2.0 * 2.0)
   })
 })
 

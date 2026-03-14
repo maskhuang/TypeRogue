@@ -174,7 +174,6 @@ async function init(): Promise<void> {
 
   // === DEBUG: 手动测试遗物 — 修改此数组切换子系统 ===
   const DEBUG_RELICS: string[] = [
-    'score_black_hole', // scoring — 黑洞单独测试
   ];
 
   const startAfterClassSelect = () => {

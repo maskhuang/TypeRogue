@@ -17,8 +17,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 65 relics (10 class-exclusive + 5 typing + 5 combo + 5 skill + 5 enchantment + 5 topology + 5 word + 5 resource + 5 shop + 5 stage + 5 boss_modifier + 5 scoring)', () => {
-      expect(Object.keys(RELICS)).toHaveLength(65)
+    it('should contain 66 relics (10 class-exclusive + 5 typing + 5 combo + 5 skill + 5 enchantment + 5 topology + 5 word + 5 resource + 5 shop + 5 stage + 6 boss_modifier + 5 scoring)', () => {
+      expect(Object.keys(RELICS)).toHaveLength(66)
     })
 
     it('每个图标唯一', () => {
@@ -55,9 +55,9 @@ describe('Relics Data', () => {
       expect(epics).toHaveLength(13)
     })
 
-    it('should have 15 legendary relics', () => {
+    it('should have 16 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(15)
+      expect(legendaries).toHaveLength(16)
     })
   })
 
@@ -121,7 +121,7 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(65)
+      expect(ids).toHaveLength(66)
       expect(ids).toContain('apprentice_notes')
       expect(ids).toContain('primal_mutant')
       expect(ids).toContain('typing_wax_seal')
@@ -131,7 +131,7 @@ describe('Relics Data', () => {
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(65)
+      expect(relics).toHaveLength(66)
     })
   })
 

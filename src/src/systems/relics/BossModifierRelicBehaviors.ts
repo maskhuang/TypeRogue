@@ -209,6 +209,9 @@ export function initBossModifierRelicBehaviors(): void {
   registerRelicBehavior('chaos_roulette', () => {
     // 行为逻辑由 checkChaosRoulette() 在 completeWord 中直接调用
   })
+  registerRelicBehavior('modifier_foresight', () => {
+    // 行为逻辑由 showForesightModal() 在 startLevel 中直接调用
+  })
   registerRelicBehavior('modifier_reversal', () => {
     // 行为逻辑由 applyModifierReversal() 在 startLevel 中直接调用
   })

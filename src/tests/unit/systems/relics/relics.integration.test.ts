@@ -474,7 +474,9 @@ describe('遗物数据完整性 (Story 36.13 AC4)', () => {
     }
 
     for (const subsystem of VALID_SUBSYSTEMS) {
-      expect(subsystemCounts[subsystem]).toBe(5);
+      // boss_modifier has 6 relics (including modifier_foresight)
+      const expected = subsystem === 'boss_modifier' ? 6 : 5;
+      expect(subsystemCounts[subsystem]).toBe(expected);
     }
   });
 
@@ -518,9 +520,9 @@ describe('遗物数据完整性 (Story 36.13 AC4)', () => {
     expect(uniqueIcons.size).toBe(icons.length);
   });
 
-  it('通用遗物总数为 55', () => {
+  it('通用遗物总数为 56', () => {
     const universalCount = getAllRelicIds().filter(id => RELICS[id].subsystem !== undefined).length;
-    expect(universalCount).toBe(55);
+    expect(universalCount).toBe(56);
   });
 
   it('职业专属遗物总数为 10（5 造词师 + 5 蜕变师）', () => {
