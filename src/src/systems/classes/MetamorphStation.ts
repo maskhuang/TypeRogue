@@ -7,7 +7,8 @@ import { state } from '../../core/state';
 import { playSound } from '../../effects/sound';
 import { showFeedback } from '../battle';
 import { renderBuildManager } from '../shop';
-import { AFFIX_NAMES, RARITY_COLORS, RARITY_NAMES } from '../../data/affixes';
+import { RARITY_COLORS, RARITY_NAMES } from '../../data/affixes';
+import { t } from '../../demo/demo-i18n';
 import {
   mutate, mutateSingle, getMutateCost, canMutate,
 } from '../../data/affixMutation';
@@ -27,7 +28,7 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
   // 标题
   const title = document.createElement('div');
   title.className = 'morph-title';
-  title.textContent = `🧬 词条蜕变 — ${skill.name}`;
+  title.textContent = t('metamorph.mutation_title', { name: skill.name });
   container.appendChild(title);
 
   // 技能信息
@@ -48,20 +49,20 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
       if (i > 0) affixRow.appendChild(document.createTextNode('  '));
       const span = document.createElement('span');
       span.style.color = '#aaa';
-      span.textContent = `[${i}] ${AFFIX_NAMES[a.type]}`;
+      span.textContent = `[${i}] ${t('affix.' + a.type)}`;
       affixRow.appendChild(span);
     });
   } else {
     const span = document.createElement('span');
     span.style.color = '#666';
-    span.textContent = '无词条';
+    span.textContent = t('metamorph.no_affix');
     affixRow.appendChild(span);
   }
   info.appendChild(affixRow);
 
   const mutagenRow = document.createElement('div');
   mutagenRow.style.cssText = 'margin-top:4px;font-size:11px;color:#888;';
-  mutagenRow.textContent = `🧬 变异素: ${Math.floor(state.mutagenInventory)}`;
+  mutagenRow.textContent = t('metamorph.mutagen', { count: Math.floor(state.mutagenInventory) });
   info.appendChild(mutagenRow);
 
   container.appendChild(info);
@@ -80,19 +81,19 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
     btn.className = 'morph-action-btn';
     btn.style.cssText = `padding:8px 12px;border:1px solid ${enabled ? '#e67e22' : '#555'};background:${enabled ? 'rgba(230,126,34,0.15)' : 'rgba(50,50,50,0.3)'};color:${enabled ? '#e67e22' : '#666'};border-radius:4px;cursor:${enabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
     btn.textContent = skill.affixes.length === 0
-      ? '🔄 蜕变 — 无词条'
-      : `🔄 蜕变全部词条 — 消耗 ${cost} 变异素`;
+      ? t('metamorph.mutate_no_affix')
+      : t('metamorph.mutate_all', { cost });
     if (enabled) {
       btn.onclick = () => {
         const monoCategory = getMonoAffixCategory() as AffixCategory | null;
         const result = mutate(skillId, monoCategory ?? undefined);
         if (result.success) {
           playSound('skill');
-          showFeedback(`🔄 蜕变完成`, '#e67e22', 1.2);
+          showFeedback(t('metamorph.mutate_done'), '#e67e22', 1.2);
           renderAffixMutationPanel(skillId, boundKey, container);
           renderBuildManager();
         } else {
-          showFeedback(result.error || '操作失败', '#ff6b6b');
+          showFeedback(result.error || t('metamorph.op_failed'), '#ff6b6b');
         }
       };
     }
@@ -106,7 +107,7 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
       const btn = document.createElement('button');
       btn.className = 'morph-action-btn';
       btn.style.cssText = `padding:8px 12px;border:1px solid ${enabled ? '#9b59b6' : '#555'};background:${enabled ? 'rgba(155,89,182,0.15)' : 'rgba(50,50,50,0.3)'};color:${enabled ? '#9b59b6' : '#666'};border-radius:4px;cursor:${enabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
-      btn.textContent = `🔒 蜕变 [${i}] ${AFFIX_NAMES[affix.type]} — 消耗 ${cost} 变异素`;
+      btn.textContent = t('metamorph.mutate_single', { idx: i, affix: t('affix.' + affix.type), cost });
       if (enabled) {
         const idx = i;
         btn.onclick = () => {
@@ -114,11 +115,11 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
           const result = mutateSingle(skillId, idx, monoCategory ?? undefined);
           if (result.success) {
             playSound('skill');
-            showFeedback(`🔒 ${AFFIX_NAMES[result.oldAffix!.type]} → ${AFFIX_NAMES[result.newAffix!.type]}`, '#9b59b6', 1.2);
+            showFeedback(t('metamorph.mutate_single_done', { old: t('affix.' + result.oldAffix!.type), new: t('affix.' + result.newAffix!.type) }), '#9b59b6', 1.2);
             renderAffixMutationPanel(skillId, boundKey, container);
             renderBuildManager();
           } else {
-            showFeedback(result.error || '操作失败', '#ff6b6b');
+            showFeedback(result.error || t('metamorph.op_failed'), '#ff6b6b');
           }
         };
       }
@@ -131,7 +132,7 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
   // 返回按钮
   const backBtn = document.createElement('button');
   backBtn.style.cssText = 'padding:6px 12px;border:1px solid #555;background:rgba(255,255,255,0.05);color:#aaa;border-radius:4px;cursor:pointer;font-size:11px;margin-top:8px;';
-  backBtn.textContent = '← 返回技能列表';
+  backBtn.textContent = t('metamorph.back');
   backBtn.onclick = () => renderMetamorphPanel(container);
   container.appendChild(backBtn);
 }
@@ -143,7 +144,7 @@ export function renderMetamorphPanel(container: HTMLElement): void {
   // 标题
   const title = document.createElement('div');
   title.className = 'morph-title';
-  title.textContent = '🧬 蜕变台';
+  title.textContent = t('metamorph.title');
   container.appendChild(title);
 
   // 变异素库存 + 免费次数提示
@@ -157,9 +158,9 @@ export function renderMetamorphPanel(container: HTMLElement): void {
   } else if (hasPrimalMutant && state.player.relicStates['primal_mutant'] === 0) {
     freeRemaining = 1;
   }
-  let infoText = `🧬 变异素: ${Math.floor(state.mutagenInventory)}`;
+  let infoText = t('metamorph.mutagen', { count: Math.floor(state.mutagenInventory) });
   if (freeRemaining > 0) {
-    infoText += `  |  🎁 本关免费剩余: ${freeRemaining}次`;
+    infoText += t('metamorph.free_remaining', { count: freeRemaining });
   }
   info.textContent = infoText;
   container.appendChild(info);
@@ -197,7 +198,7 @@ export function renderMetamorphPanel(container: HTMLElement): void {
     // 类型标签
     const typeLabel = document.createElement('div');
     typeLabel.className = 'morph-skill-type';
-    typeLabel.textContent = `${RARITY_NAMES[affixSkill.rarity]} (${affixSkill.affixes.length}词条)`;
+    typeLabel.textContent = t('metamorph.rarity_affixes', { rarity: RARITY_NAMES[affixSkill.rarity], count: affixSkill.affixes.length });
     typeLabel.style.color = RARITY_COLORS[affixSkill.rarity] || '#fff';
 
     card.appendChild(icon);
@@ -217,6 +218,6 @@ export function renderMetamorphPanel(container: HTMLElement): void {
   // 提示文字
   const hint = document.createElement('div');
   hint.className = 'morph-hint';
-  hint.textContent = '点击技能，消耗变异素进行词条蜕变';
+  hint.textContent = t('metamorph.hint');
   container.appendChild(hint);
 }

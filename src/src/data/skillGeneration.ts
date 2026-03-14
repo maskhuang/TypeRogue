@@ -13,8 +13,8 @@ import {
   AffixType,
   AFFIX_WEIGHTS, BASE_VALUES, RARITY_PROBABILITIES,
   VOID_BONUS_TABLE, CONVERT_K_TABLE,
-  AFFIX_NAMES, RESOURCE_NAMES,
 } from './affixes'
+import { t } from '../demo/demo-i18n'
 
 // ===== 常量 =====
 
@@ -223,8 +223,8 @@ export function rollAffixParams(
 
 /** "词条1·词条2·…·资源名" 格式 */
 export function generateName(resource: ResourceType, affixes: AffixInstance[]): string {
-  const prefix = affixes.map(a => AFFIX_NAMES[a.type]).join('·')
-  const base = RESOURCE_NAMES[resource]
+  const prefix = affixes.map(a => t('affix.' + a.type)).join('·')
+  const base = t('resource.' + resource)
   return prefix ? `${prefix}·${base}` : base
 }
 
