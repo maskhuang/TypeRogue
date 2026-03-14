@@ -2,7 +2,7 @@ import { state } from '../../core/state'
 import { registerRelicBehavior } from './RelicPipeline'
 
 // === 常量 ===
-export const BASE_SHIELD_MIN = 20
+export const BASE_SHIELD_MIN = 15
 export const LENIENT_REDUCE = 0.10
 export const S_RANK_GOLD: Record<string, number> = { S: 25, SS: 50, SSS: 100 }
 export const SNOWBALL_INCREMENT = 0.05
@@ -39,7 +39,50 @@ export function applySnowball(wordScore: number): number {
   return Math.floor(wordScore * (1 + SNOWBALL_INCREMENT * index))
 }
 
-// === 分数黑洞 (score_black_hole) ===
+export function getSnowballWordIndex(): number {
+  return _snowballWordIndex
+}
+
+// === 致命礼物 (score_black_hole) ===
+// 奖励表：overkill% 越低（越接近目标分），奖励越丰厚
+// perfect=获得所有遗物, excellent=史诗/传说三选一, great=5次免费刷新
+export type DeadlyGiftAction = 'all_relics' | 'epic_legendary_pick' | 'free_refreshes' | 'random_relic' | 'time_buff' | 'none'
+
+export interface DeadlyGiftResult {
+  gold: number
+  tier: string
+  action: DeadlyGiftAction
+}
+
+export const DEADLY_GIFT_REWARDS: { maxOverkill: number; gold: number; tier: string; action: DeadlyGiftAction }[] = [
+  { maxOverkill: 0,    gold: 100, tier: 'perfect',   action: 'all_relics' },         // 恰好达标：全部遗物
+  { maxOverkill: 0.05, gold: 70,  tier: 'excellent',  action: 'epic_legendary_pick' }, // 0-5%：史诗/传说三选一
+  { maxOverkill: 0.15, gold: 45,  tier: 'great',      action: 'random_relic' },       // 5-15%：随机获得1个遗物
+  { maxOverkill: 0.30, gold: 25,  tier: 'good',       action: 'free_refreshes' },     // 15-30%：5次免费刷新
+  { maxOverkill: 0.50, gold: 12,  tier: 'fair',       action: 'time_buff' },          // 30-50%：下关+8s时间
+  { maxOverkill: Infinity, gold: 5, tier: 'minimal',  action: 'none' },               // >50%：仅金币
+]
+
+export function getDeadlyGiftReward(score: number, target: number): DeadlyGiftResult {
+  if (target <= 0 || score < target) return { gold: 0, tier: 'none', action: 'none' }
+  const overkill = (score - target) / target
+  for (const row of DEADLY_GIFT_REWARDS) {
+    if (overkill <= row.maxOverkill) {
+      return { gold: row.gold, tier: row.tier, action: row.action }
+    }
+  }
+  return { gold: 5, tier: 'minimal', action: 'none' }
+}
+
+// 致命礼物免费刷新计数器
+let _deadlyGiftFreeRefreshes = 0
+export function getDeadlyGiftFreeRefreshes(): number { return _deadlyGiftFreeRefreshes }
+export function consumeDeadlyGiftFreeRefresh(): boolean {
+  if (_deadlyGiftFreeRefreshes > 0) { _deadlyGiftFreeRefreshes--; return true }
+  return false
+}
+export function grantDeadlyGiftFreeRefreshes(count: number): void { _deadlyGiftFreeRefreshes += count }
+
 export function isBlackHoleActive(): boolean {
   return _blackHoleActive
 }

@@ -35,7 +35,7 @@ import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRe
 import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
 import { checkEliteHunterGoldMultiplier } from './relics/StageRelicBehaviors';
 import { getBountyHunterGoldBonus } from './relics/BossModifierRelicBehaviors';
-import { getSRankTrophyGold } from './relics/ScoringRelicBehaviors';
+import { getSRankTrophyGold, consumeDeadlyGiftFreeRefresh } from './relics/ScoringRelicBehaviors';
 import { getDiscountMultiplier, getRecycleSellMultiplier, getBlackMarketExtraSlots, canSmuggleFree, consumeSmuggleFree, isTimedAuction, startAuctionTimer, clearAuctionTimer, resetShopRelicState } from './relics/ShopRelicBehaviors';
 import { hasIntermissionFreeRefresh, consumeIntermissionFreeRefresh } from './relics/StageRelicBehaviors';
 import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
@@ -1481,6 +1481,11 @@ function refreshShop(): void {
     consumeIntermissionFreeRefresh();
     cost = 0;
     showFeedback(t('shop.intermission_refresh'), '#88ddff');
+  }
+  // 致命礼物 — 消费免费刷新
+  if (cost > 0 && consumeDeadlyGiftFreeRefresh()) {
+    cost = 0;
+    showFeedback(t('shop.deadly_gift_refresh'), '#ffdd00');
   }
   if (cost > 0 && state.gold < cost) {
     showFeedback(t('shop.no_gold'), '#ff6b6b');

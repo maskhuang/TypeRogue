@@ -929,7 +929,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'base_shield',
     name: '基数护盾',
     icon: '🔰',
-    description: '每词结算分数不低于 20 分（在 Boss 修饰器之后应用）。',
+    description: '每词结算分数不低于 15 分（在 Boss 修饰器之后应用）。',
     rarity: 'common',
     basePrice: 50,
     effects: [],
@@ -976,15 +976,15 @@ export const RELICS: Record<string, RelicData> = {
 
   score_black_hole: {
     id: 'score_black_hole',
-    name: '分数黑洞',
+    name: '致命礼物',
     icon: '🌀',
-    description: '单词完成后分数不自动结算，累计到隐藏池。按回车键一次性结算——达标即通关，未达标即失败。',
+    description: '分数不自动结算，累计到隐藏池。按回车键一次性结算——达标通关并获得金币奖励（越接近目标分奖励越丰厚），未达标即失败。',
     rarity: 'legendary',
     basePrice: 0,
     effects: [],
     subsystem: 'scoring',
     behaviorType: 'score_black_hole',
-    flavor: '万物坠入虚空，直到奇点爆发。',
+    flavor: '越是刀尖上跳舞，礼物越是丰厚。',
   },
 
 }

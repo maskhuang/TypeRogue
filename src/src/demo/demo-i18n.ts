@@ -156,10 +156,24 @@ const ZH: Record<string, string> = {
   'battle.mirror_survived': '🪞 试炼通过！',
   'battle.resource_tax': '🏛️ 征税 -{value}s',
 
+  // --- scoring relic feedback ---
+  'battle.base_shield': '🔰 护盾保底 {value}',
+  'battle.lenient_judge': '⚖️ 目标 -{value}',
+  'battle.snowball': '❄️ 雪球 +{value}%',
+  'battle.s_rank_trophy': '🏆 {rating} 奖杯 +{value}g',
+  'battle.black_hole_settle': '🌀 结算 +{value}',
+  'battle.deadly_gift_perfect': '🎁 完美礼物！+{value}g +全部遗物',
+  'battle.deadly_gift_excellent': '🎁 丰厚礼物！+{value}g +史诗/传说遗物',
+  'battle.deadly_gift_great': '🎁 不错的礼物 +{value}g +随机遗物',
+  'battle.deadly_gift_good': '🎁 礼物 +{value}g +5次免费刷新',
+  'battle.deadly_gift_fair': '🎁 小礼物 +{value}g +8s时间',
+  'battle.deadly_gift_minimal': '🎁 微薄礼物 +{value}g',
+
   // --- shop.ts ---
   'shop.cycle_title': '商店 · 周目{cycle}',
   'shop.no_gold': '金币不足!',
   'shop.intermission_refresh': '🔋 幕间免费刷新！',
+  'shop.deadly_gift_refresh': '🎁 礼物免费刷新！',
   'shop.skill_count_full': '技能数量已达上限!',
   'shop.white_only': '纯粹之心：仅允许白装技能!',
   'shop.level_capped': '技能等级已达上限!',
@@ -578,10 +592,24 @@ const EN: Record<string, string> = {
   'battle.mirror_survived': '🪞 Survived!',
   'battle.resource_tax': '🏛️ Tax -{value}s',
 
+  // --- scoring relic feedback ---
+  'battle.base_shield': '🔰 Shield floor {value}',
+  'battle.lenient_judge': '⚖️ Target -{value}',
+  'battle.snowball': '❄️ Snowball +{value}%',
+  'battle.s_rank_trophy': '🏆 {rating} Trophy +{value}g',
+  'battle.black_hole_settle': '🌀 Settled +{value}',
+  'battle.deadly_gift_perfect': '🎁 Perfect Gift! +{value}g +All Relics',
+  'battle.deadly_gift_excellent': '🎁 Excellent Gift! +{value}g +Epic/Legend Relic',
+  'battle.deadly_gift_great': '🎁 Great Gift +{value}g +5 Free Refreshes',
+  'battle.deadly_gift_good': '🎁 Gift +{value}g +Random Relic',
+  'battle.deadly_gift_fair': '🎁 Small Gift +{value}g +8s Time',
+  'battle.deadly_gift_minimal': '🎁 Tiny Gift +{value}g',
+
   // --- shop.ts ---
   'shop.cycle_title': 'Shop · Cycle {cycle}',
   'shop.no_gold': 'Not enough gold!',
   'shop.intermission_refresh': '🔋 Free Refresh!',
+  'shop.deadly_gift_refresh': '🎁 Gift Free Refresh!',
   'shop.skill_count_full': 'Skill slots full!',
   'shop.white_only': 'Pure Heart: white skills only!',
   'shop.level_capped': 'Skill level capped!',
@@ -943,6 +971,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   warm_up: 'Warm-Up', intermission: 'Intermission',
   endurance_battery: 'Endurance Battery', elite_hunter: 'Elite Hunter',
   phoenix: 'Phoenix',
+  // Scoring subsystem relics
+  base_shield: 'Base Shield', lenient_judge: 'Lenient Judge',
+  s_rank_trophy: 'S-Rank Trophy', snowball: 'Snowball',
+  score_black_hole: 'Deadly Gift',
   // Boss modifier subsystem relics
   modifier_shield: 'Modifier Shield', bounty_hunter: 'Bounty Hunter',
   modifier_barrier: 'Modifier Barrier', chaos_roulette: 'Chaos Roulette',
@@ -1090,6 +1122,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   endurance_battery: 'Each stage base time +10s',
   elite_hunter: 'Elite stage clear gold reward doubled',
   phoenix: 'On stage fail: revive with 10s. Consumes this relic. Elite/Boss: also refreshes modifier.',
+  // Scoring subsystem relics
+  base_shield: 'Each word scores at least 15 (applied after Boss modifiers)',
+  lenient_judge: 'Target score reduced by 10%',
+  s_rank_trophy: 'Battle rating S: +25g, SS: +50g, SSS: +100g',
+  snowball: 'Each word scores +5% more (word 1: +0%, word 2: +5%, word 3: +10%...)',
+  score_black_hole: 'Scores accumulate in a hidden pool. Press Enter to settle — pass to win with gold reward (closer to target = richer reward), fail = game over.',
   // Boss modifier subsystem relics
   modifier_shield: 'All modifier negative effects reduced by 25%',
   bounty_hunter: 'Each permanent modifier: +20% clear gold (additive)',

@@ -37,7 +37,7 @@ import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTim
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
-import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
+import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
@@ -142,6 +142,7 @@ let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相
 let lastScoreTier = ''; // 缓存上一次分数分级，避免每帧重启 CSS 动画 (Review M1)
 let lastSkillBase = 0; // 技能基数产出缓存（变化时弹跳）
 let lastSkillMult = 0; // 技能倍率产出缓存（变化时弹跳）
+let _pendingDeadlyGiftRelicPick = false; // 致命礼物：丰厚层级待弹遗物三选一
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
 let leftHandTriggered = false; // T5遗物：本词左手技能是否触发过
 let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
@@ -301,7 +302,7 @@ function handleTabKey(e: KeyboardEvent): void {
   performAutocomplete();
 }
 
-/** Story 36.12: Enter 键处理（分数黑洞手动结算） — 独立于 InputHandler */
+/** Story 36.12: Enter 键处理（致命礼物手动结算） — 独立于 InputHandler */
 function handleEnterKey(e: KeyboardEvent): void {
   if (e.key !== 'Enter') return;
   if (state.phase !== 'battle') return;
@@ -309,13 +310,40 @@ function handleEnterKey(e: KeyboardEvent): void {
 
   const pool = settleBlackHole();
   state.score += pool;
-  showFeedback('🕳️ 黑洞结算！', '#8800ff');
+  showFeedback(t('battle.black_hole_settle', { value: String(pool) }), '#8800ff');
 
   // 恢复 HUD 正常显示
   updateHUD();
 
   // 立即判定
   if (state.score >= state.targetScore) {
+    // 致命礼物奖励：越接近目标分，奖励越丰厚
+    const reward = getDeadlyGiftReward(state.score, state.targetScore);
+    if (reward.gold > 0) {
+      state.gold += reward.gold;
+      showFeedback(t(`battle.deadly_gift_${reward.tier}`, { value: String(reward.gold) }), '#ffdd00');
+    }
+    // 高层级额外奖励
+    if (reward.action === 'all_relics') {
+      for (const id of Object.keys(RELICS)) {
+        state.player.relics.add(id);
+      }
+    } else if (reward.action === 'epic_legendary_pick') {
+      _pendingDeadlyGiftRelicPick = true;
+    } else if (reward.action === 'free_refreshes') {
+      grantDeadlyGiftFreeRefreshes(5);
+    } else if (reward.action === 'random_relic') {
+      // 随机获得1个未拥有遗物
+      const unowned = Object.keys(RELICS).filter(id => !state.player.relics.has(id));
+      if (unowned.length > 0) {
+        const picked = unowned[Math.floor(Math.random() * unowned.length)];
+        state.player.relics.add(picked);
+        const r = RELICS[picked];
+        if (r) showFeedback(`${r.icon} ${r.name}`, '#ffaa00');
+      }
+    } else if (reward.action === 'time_buff') {
+      state.tempBuffs.push({ type: 'time', value: 8, expiresAtNode: state.level + 1 });
+    }
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     hideSettlement();
     state.overkill = state.score - state.targetScore;
@@ -724,9 +752,18 @@ function completeWord(): void {
   }
 
   // Story 36.12: 基数护盾 — 每词最低 20 分（Boss 修饰器之后）
+  const preShield = finalWordScore;
   finalWordScore = applyBaseShield(finalWordScore);
+  if (finalWordScore > preShield) {
+    showFeedback(t('battle.base_shield', { value: String(finalWordScore) }), '#44ddaa', 0.6);
+  }
   // Story 36.12: 雪球效应 — 每词得分递增 5%
+  const preSnowball = finalWordScore;
   finalWordScore = applySnowball(finalWordScore);
+  if (finalWordScore > preSnowball) {
+    const pct = (getSnowballWordIndex() - 1) * 5;
+    showFeedback(t('battle.snowball', { value: String(pct) }), '#88ccff', 0.6);
+  }
 
   // 显示 Balatro 风格完成动画
   showSettlementComplete(baseChips, finalMult, finalWordScore);
@@ -1017,14 +1054,18 @@ function showSettlementComplete(chips: number, mult: number, total: number): voi
   const multEl = document.getElementById('settlement-mult');
   const finalEl = document.getElementById('settlement-final');
 
-  if (chipsEl) chipsEl.textContent = chips.toLocaleString();
-  if (multEl) multEl.textContent = mult.toFixed(1);
+  // 黑洞模式：结算面板照常播放动画但隐藏数值
+  const bhHidden = isBlackHoleActive() && !hasBlackHoleSettled();
+  if (chipsEl) chipsEl.textContent = bhHidden ? '?' : chips.toLocaleString();
+  if (multEl) multEl.textContent = bhHidden ? '?' : mult.toFixed(1);
   if (finalEl) {
-    finalEl.textContent = total.toLocaleString();
+    finalEl.textContent = bhHidden ? '???' : total.toLocaleString();
     // 分数颜色分级 (Story 31.1)
     finalEl.classList.remove(...SCORE_TIER_CLASSES);
-    const tier = getScoreTier(total);
-    if (tier) finalEl.classList.add(tier);
+    if (!bhHidden) {
+      const tier = getScoreTier(total);
+      if (tier) finalEl.classList.add(tier);
+    }
   }
 
   // 播放完成动画
@@ -1065,6 +1106,9 @@ function showGoldReward(onComplete: () => void): void {
   const bountyBonus = getBountyHunterGoldBonus();
   // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
   const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
+  if (trophyGold > 0) {
+    showFeedback(t('battle.s_rank_trophy', { value: String(trophyGold), rating: state.battleStats?.rating || 'S' }), '#ffdd00');
+  }
   const totalGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier * (1 + bountyBonus)) + trophyGold;
 
   // 设置数值
@@ -1229,6 +1273,19 @@ function endLevel(): void {
     const rating = state.battleStats?.rating || 'B';
     showRatingReveal(rating, () => {
       startBGM('chill');
+
+      // 致命礼物丰厚层级：弹出史诗/传说遗物三选一，完成后继续正常流程
+      const continueAfterDeadlyGift = (next: () => void) => {
+        if (_pendingDeadlyGiftRelicPick && hasUnownedRelics()) {
+          _pendingDeadlyGiftRelicPick = false;
+          const epicLegendary = { common: 0, rare: 0, epic: 50, legendary: 50 };
+          showRelicPicker(next, epicLegendary);
+        } else {
+          _pendingDeadlyGiftRelicPick = false;
+          next();
+        }
+      };
+
       const currentType = getStageType(state.level);
 
       // Demo: 最终关完成后直接结束
@@ -1242,11 +1299,13 @@ function endLevel(): void {
           // 无尽模式已解锁 → 周目推进 + 修饰器选择 + 传说遗物三选一 + 进商店
           advanceCycle();
           showBossModifierPicker(() => {
-            if (hasUnownedRelics()) {
-              showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.bossDrop);
-            } else {
-              openShop(true);
-            }
+            continueAfterDeadlyGift(() => {
+              if (hasUnownedRelics()) {
+                showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.bossDrop);
+              } else {
+                openShop(true);
+              }
+            });
           });
         } else {
           // 无尽模式未解锁 → 通关结算
@@ -1256,13 +1315,15 @@ function endLevel(): void {
       }
 
       if (currentType === 'elite' && hasUnownedRelics()) {
-        // 精英关胜利 → 遗物三选一（rare 60% / legendary 40%）→ 商店
-        showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.eliteDrop);
+        // 精英关胜利 → 致命礼物 → 遗物三选一 → 商店
+        continueAfterDeadlyGift(() => {
+          showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.eliteDrop);
+        });
         return;
       }
 
-      // 普通关胜利 → 直接进商店
-      openShop(true);
+      // 普通关胜利 → 致命礼物 → 商店
+      continueAfterDeadlyGift(() => openShop(true));
     }, playRatingSound);
   } else {
     // Story 36.10: 不死鸟 — 失败前检查复活
@@ -1372,7 +1433,11 @@ export async function startLevel(): Promise<void> {
   }
 
   // Story 36.12: 宽容评审 — 目标分数降低 10%（tempBuff 之前）
+  const preJudge = state.targetScore;
   state.targetScore = applyLenientJudge(state.targetScore);
+  if (state.targetScore < preJudge) {
+    showFeedback(t('battle.lenient_judge', { value: String(preJudge - state.targetScore) }), '#88dd44', 0.8);
+  }
 
   // 应用活跃临时 buff
   for (const buff of state.tempBuffs) {
@@ -1735,7 +1800,7 @@ export function updateHUD(): void {
   const blackHoleHidden = isBlackHoleActive() && !hasBlackHoleSettled();
   if (blackHoleHidden) {
     el.score.textContent = '???';
-    el.score.style.color = '#fff';
+    el.score.style.color = '#aa66ff';
   } else {
     scoreRoller.setTarget(Math.floor(state.score)); // Story 31.4: 平滑滚动
     el.score.textContent = String(scoreRoller.getValue()); // Review M1: rAF 未启动时 fallback
