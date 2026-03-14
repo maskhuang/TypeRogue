@@ -11,7 +11,7 @@ import {
   forceRebuildParams,
   replaceTemporaryModifier,
 } from '../bossModifierEngine'
-import { generateBossModifierCandidates } from '../../data/bossModifiers'
+import { generateBossModifierCandidates, BOSS_MODIFIER_META } from '../../data/bossModifiers'
 import type { BossModifierParams } from '../../data/bossModifiers'
 
 // === 常量 ===
@@ -22,6 +22,7 @@ export const CHAOS_WORD_INTERVAL = 5
 // === 数值型参数键（用于反转/翻倍） ===
 const NUMERIC_PARAM_KEYS: (keyof BossModifierParams)[] = [
   'decayRate', 'comboPunishRate', 'timeSpeed', 'scoreCap', 'diminishRate', 'targetMultiplier',
+  'keystrokeTax', 'escalateStep', 'frostPenalty', 'taxRate', 'scoreTaxFlat',
 ]
 
 // === 模块级状态 ===
@@ -125,50 +126,65 @@ export function applyModifierReversal(): void {
   for (let i = 0; i < instances.length; i++) {
     const inst = instances[i]
     const params = inst.params
+    const category = BOSS_MODIFIER_META[inst.modId]?.category
 
-    if (invertIndices.has(i)) {
-      // 反转：负面值取反或翻转
-      for (const key of NUMERIC_PARAM_KEYS) {
-        if (params[key] == null) continue
-        if (key === 'timeSpeed') {
-          // 1.5 → 2 - 1.5 = 0.5（减速）
-          params[key] = 2 - params[key]!
-        } else if (key === 'scoreCap') {
-          // 移除上限
-          params[key] = Infinity
-        } else if (key === 'targetMultiplier') {
-          // 2.0 → 2 - 2.0 = 0.0 → clamp 0.5 最低
-          const oldMult = params[key]!
-          params[key] = Math.max(0.5, 2 - oldMult)
-          // 需要重新缩放 state.targetScore
-          if (oldMult > 0) {
-            state.targetScore = Math.floor(state.targetScore / oldMult * params[key]!)
-          }
-        } else {
-          // decayRate, comboPunishRate, diminishRate → 取反
-          params[key] = -(params[key]!)
+    if (category === 'disruption') {
+      // 干扰类特殊处理：反转=禁用，增强=参数翻倍/减半
+      if (invertIndices.has(i)) {
+        // 禁用：所有打字干扰参数置零/极大值
+        for (const key of Object.keys(params) as (keyof BossModifierParams)[]) {
+          if (['fadeSpeed', 'fadeSpeedEnd'].includes(key)) (params as any)[key] = 999
+          else if (key === 'spotlightRadius') (params as any)[key] = 999
+          else if (key === 'scrollHitZone') (params as any)[key] = 999
+          else if (['scrambleMode', 'reverseActive', 'garbleActive'].includes(key)) (params as any)[key] = 0
+          else if (['garbleRate', 'scrollSpeed'].includes(key)) (params as any)[key] = 0
         }
+      } else {
+        // 增强：速度翻倍/范围减半
+        if (params.fadeSpeed) { params.fadeSpeed /= 2; if (params.fadeSpeedEnd) params.fadeSpeedEnd /= 2 }
+        if (params.spotlightRadius) params.spotlightRadius = Math.max(1, Math.floor(params.spotlightRadius / 2))
+        if (params.garbleRate) params.garbleRate = Math.min(params.garbleRate * 2, 0.8)
+        if (params.scrollSpeed) params.scrollSpeed *= 2
+        if (params.scrollHitZone) params.scrollHitZone = Math.max(20, Math.floor(params.scrollHitZone / 2))
       }
     } else {
-      // ×2：数值加倍
-      for (const key of NUMERIC_PARAM_KEYS) {
-        if (params[key] == null) continue
-        if (key === 'timeSpeed') {
-          // cap 2.0
-          params[key] = Math.min(params[key]! * 2, 2.0)
-        } else if (key === 'scoreCap') {
-          // 更严格：减半
-          params[key] = Math.floor(params[key]! / 2)
-        } else if (key === 'targetMultiplier') {
-          // 需要重新缩放 state.targetScore
-          const oldMult = params[key]!
-          params[key] = oldMult * 2
-          if (oldMult > 0) {
-            state.targetScore = Math.floor(state.targetScore / oldMult * params[key]!)
+      // offense / defense: NUMERIC_PARAM_KEYS 反转逻辑
+      if (invertIndices.has(i)) {
+        for (const key of NUMERIC_PARAM_KEYS) {
+          if (params[key] == null) continue
+          if (key === 'timeSpeed') {
+            params[key] = 2 - params[key]!
+          } else if (key === 'scoreCap') {
+            params[key] = Infinity
+          } else if (key === 'targetMultiplier') {
+            const oldMult = params[key]!
+            params[key] = Math.max(0.5, 2 - oldMult)
+            if (oldMult > 0) {
+              state.targetScore = Math.floor(state.targetScore / oldMult * params[key]!)
+            }
+          } else if (key === 'scoreTaxFlat') {
+            // 无效化：置 0
+            params[key] = 0
+          } else {
+            params[key] = -(params[key]!)
           }
-        } else {
-          // decayRate, comboPunishRate, diminishRate → ×2
-          params[key] = params[key]! * 2
+        }
+      } else {
+        for (const key of NUMERIC_PARAM_KEYS) {
+          if (params[key] == null) continue
+          if (key === 'timeSpeed') {
+            params[key] = Math.min(params[key]! * 2, 2.0)
+          } else if (key === 'scoreCap') {
+            params[key] = Math.floor(params[key]! / 2)
+          } else if (key === 'targetMultiplier') {
+            const oldMult = params[key]!
+            params[key] = oldMult * 2
+            if (oldMult > 0) {
+              state.targetScore = Math.floor(state.targetScore / oldMult * params[key]!)
+            }
+          } else {
+            params[key] = params[key]! * 2
+          }
         }
       }
     }

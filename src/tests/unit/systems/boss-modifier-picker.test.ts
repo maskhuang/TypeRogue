@@ -84,19 +84,19 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       })
     })
 
-    it('排除 10 个后仅剩 2 个可用', () => {
-      const active = BOSS_MODIFIER_IDS.slice(0, 10) as BossModifierId[]
+    it('排除 16 个后仅剩 2 个可用', () => {
+      const active = BOSS_MODIFIER_IDS.slice(0, 16) as BossModifierId[]
       const candidates = generateBossModifierCandidates(active)
       expect(candidates).toHaveLength(2)
     })
 
-    it('排除 11 个后仅剩 1 个可用', () => {
-      const active = BOSS_MODIFIER_IDS.slice(0, 11) as BossModifierId[]
+    it('排除 17 个后仅剩 1 个可用', () => {
+      const active = BOSS_MODIFIER_IDS.slice(0, 17) as BossModifierId[]
       const candidates = generateBossModifierCandidates(active)
       expect(candidates).toHaveLength(1)
     })
 
-    it('排除全部 12 个后返回空数组', () => {
+    it('排除全部 18 个后返回空数组', () => {
       const active = [...BOSS_MODIFIER_IDS] as BossModifierId[]
       const candidates = generateBossModifierCandidates(active)
       expect(candidates).toHaveLength(0)

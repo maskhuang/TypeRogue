@@ -11,7 +11,7 @@ import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
-import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers } from './skills';
+import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop } from './shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './relicPicker';
@@ -20,9 +20,9 @@ import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getCycleTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode, TOTAL_NODES } from './stage/stageFlow';
-import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawBossModifiers, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive } from '../data/bossModifiers';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawBossModifiers, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive, getEscalateTimeSpeedBonus, addFrostStack, getCurrentTaxResource, getTaxRate, onMirrorWordComplete, resetMirrorWordTimer } from '../data/bossModifiers';
 import type { BossModifierMeta } from '../data/bossModifiers';
-import { applyModifier, cleanupModifier, tickModifier, startBossRotation, stopBossRotation, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
+import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, stopBossRotation, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
 import { showBossModifierPicker } from './bossModifierPicker';
 import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
@@ -224,6 +224,7 @@ function setWord(): void {
   resetWaxSeal();
   renderWord();
   if (isScrollActive()) initScrollWord(state.player.word.length);
+  resetMirrorWordTimer(); // Boss 修饰器：镜像试炼计时重置
   updateSettlementLive(); // 初始化结算面板
 }
 
@@ -513,6 +514,12 @@ function playerCorrect(k: string): void {
   spawnParticles(letter, shouldTrigger ? 10 : 5, '#4ecdc4');
   playSound('type');
 
+  // Boss 修饰器：击键代价 — 每次正确击键扣时间
+  const keystrokeTax = getActiveParams()?.keystrokeTax;
+  if (keystrokeTax) {
+    state.time -= getShieldedValue(keystrokeTax, true);
+  }
+
   state.player.index++;
 
   // 小助手：首字母完成后显示 Tab 提示
@@ -630,6 +637,15 @@ function playerWrong(): void {
     bumpScore();
   }
 
+  // Boss 修饰器：寒霜侵蚀 — 打错累积冰霜层
+  const frost = addFrostStack();
+  if (frost) {
+    if (frost.burst) {
+      state.time -= frost.penalty;
+      showFeedback(t('battle.frostbite_burst', { value: frost.penalty.toFixed(1) }), '#00ccff');
+    }
+  }
+
   updateHUD();
 }
 
@@ -693,7 +709,7 @@ function completeWord(): void {
   // 分数类技能已在触发时即时计入 state.score，此处仅结算 基数×倍率
   let finalWordScore = Math.floor(baseChips * finalMult);
 
-  // Boss 修饰器：单词限额（cap）+ 递减收益（diminish）+ Story 36.11 护盾削弱
+  // Boss 修饰器：单词限额（cap）+ 递减收益（diminish）+ 得分税 + Story 36.11 护盾削弱
   const modEffect = getActiveParams();
   if (modEffect?.scoreCap) {
     finalWordScore = Math.min(finalWordScore, getShieldedScoreCap(modEffect.scoreCap));
@@ -701,6 +717,10 @@ function completeWord(): void {
   if (modEffect?.diminishRate) {
     finalWordScore = Math.floor(finalWordScore * getDiminishMultiplier());
     incrementDiminishCount();
+  }
+  if (modEffect?.scoreTaxFlat) {
+    const taxFlat = Math.floor(getShieldedValue(modEffect.scoreTaxFlat, true));
+    finalWordScore = Math.max(0, finalWordScore - taxFlat);
   }
 
   // Story 36.12: 基数护盾 — 每词最低 20 分（Boss 修饰器之后）
@@ -855,7 +875,27 @@ function completeWord(): void {
 
   // Story 36.11: 混沌轮盘 — Boss关每5词替换一个修饰器
   if (checkChaosRoulette()) {
-    showFeedback('🎰 混沌轮盘！', '#ff44ff');
+    showFeedback(t('battle.chaos_roulette'), '#ff44ff');
+  }
+
+  // Boss 修饰器：资源征税 — 按被征税资源产出×税率扣时间
+  const taxRate = getTaxRate();
+  if (taxRate > 0) {
+    const taxedResource = getCurrentTaxResource();
+    const resourceOutput = getWordResourceOutput(taxedResource);
+    if (resourceOutput > 0) {
+      const timePenalty = getShieldedValue(resourceOutput * taxRate, true);
+      state.time -= timePenalty;
+      showFeedback(t('battle.resource_tax', { value: timePenalty.toFixed(1) }), '#cc8800');
+    }
+  }
+
+  // Boss 修饰器：镜像试炼
+  const mirrorResult = onMirrorWordComplete();
+  if (mirrorResult === 'recorded') {
+    showFeedback(t('battle.mirror_recorded'), '#8888ff');
+  } else if (mirrorResult === 'survived') {
+    showFeedback(t('battle.mirror_survived'), '#00ff88');
   }
 
   // 词语完成 - 所有字母一起弹跳
@@ -1079,9 +1119,11 @@ function startTimer(): void {
       return;
     }
 
-    // Boss 修饰器：时间加速（fast_time）+ Story 36.11 护盾削弱
+    // Boss 修饰器：时间加速（fast_time）+ 渐进失控（escalation）+ Story 36.11 护盾削弱
     const modEffect = getActiveParams();
-    const timeSpeed = getShieldedTimeSpeed(modEffect?.timeSpeed ?? 1);
+    let timeSpeed = getShieldedTimeSpeed(modEffect?.timeSpeed ?? 1);
+    const escalateBonus = getEscalateTimeSpeedBonus();
+    if (escalateBonus > 0) timeSpeed += getShieldedValue(escalateBonus, true);
     state.time -= 0.1 * timeSpeed * getTimeScale(); // Story 31.4: 慢动作
 
     // 蓄力产出者：每帧累加充能值
@@ -1238,7 +1280,12 @@ function endLevel(): void {
             applyModifier(modId, true);
           }
         } else if (stageType === 'boss') {
-          startBossRotation();
+          // Boss 关：重新同时应用全部 3 个修饰器
+          for (const bossModId of state.bossModifierPool) {
+            if (bossModId && !isModifierActive(bossModId)) {
+              applyModifier(bossModId, false);
+            }
+          }
         }
       }
       // Review C1: startTimer 会覆盖 state.time，必须在之后设置复活时间
@@ -1453,18 +1500,37 @@ export async function startLevel(): Promise<void> {
     const modId = state.bossModifierPool[modIdx];
     if (modId && !isModifierActive(modId)) {
       if (shouldBarrierBlock()) {
-        showFeedback('🚧 修饰器屏障！', '#44aaff');
+        showFeedback(t('battle.modifier_barrier'), '#44aaff');
       } else {
         applyModifier(modId, true);
       }
     }
   } else if (currentStageType === 'boss') {
-    // Boss 关：启动 3 阶段轮换引擎
-    startBossRotation();
+    // Boss 关：同时应用全部 3 个修饰器
+    for (const bossModId of state.bossModifierPool) {
+      if (bossModId && !isModifierActive(bossModId)) {
+        applyModifier(bossModId, false);
+      }
+    }
+    // 更新 HUD：显示 Boss 修饰器信息（用第一个修饰器的图标/名字）
+    if (state.bossModifierPool.length > 0) {
+      const firstMeta = getBossModifierMeta(state.bossModifierPool[0]);
+      if (firstMeta) {
+        const allNames = state.bossModifierPool
+          .map(id => getBossModifierMeta(id))
+          .filter(Boolean)
+          .map(m => `${m!.icon}${t(`modifier.${m!.id}`) !== `modifier.${m!.id}` ? t(`modifier.${m!.id}`) : m!.name}`)
+          .join(' ');
+        modInfo.querySelector('.modifier-icon')!.textContent = '';
+        modInfo.querySelector('.modifier-name')!.textContent = allNames;
+        modInfo.querySelector('.modifier-hint')!.textContent = '';
+        modInfo.classList.add('visible');
+      }
+    }
     // Story 36.11: 修饰器屏障 — Boss 关首个修饰器无效化
     if (shouldBarrierBlock()) {
       undoLastTemporaryModifier();
-      showFeedback('🚧 修饰器屏障！', '#44aaff');
+      showFeedback(t('battle.modifier_barrier'), '#44aaff');
     }
   } else {
     modInfo.classList.remove('visible');
@@ -1480,7 +1546,7 @@ export async function startLevel(): Promise<void> {
   // Story 36.11: 修饰器反转
   if (state.player.relics.has('modifier_reversal') && getActiveModifierEffect()) {
     applyModifierReversal();
-    showFeedback('🔄 修饰器反转！', '#ff8800');
+    showFeedback(t('battle.modifier_reversal'), '#ff8800');
   }
 
   showScreen('battle');

@@ -7,25 +7,35 @@
 // Story 18.6: 认知类修饰器实现（boss_scramble, boss_reverse）
 
 /**
- * 所有 Boss 修饰器 ID
- * 打字难度类（4种）+ 数值规则类（6种）+ 认知/视觉类（2种）= 12种
+ * 修饰器分类
+ */
+export type ModifierCategory = 'offense' | 'defense' | 'disruption'
+
+/**
+ * 所有 Boss 修饰器 ID（6 offense + 6 defense + 6 disruption = 18）
  */
 export const BOSS_MODIFIER_IDS = [
-  // 打字难度类
-  'boss_fade',       // 渐隐之词
-  'boss_scramble',   // 乱序打字
-  'boss_reverse',    // 倒序输入
-  'boss_spotlight',  // 聚光灯
-  // 数值规则类
-  'boss_decay',      // 分数衰减
-  'boss_combo_punish', // 断连即扣
-  'boss_cap',        // 单词限额
-  'boss_fast_time',  // 时间加速
-  'boss_double_target', // 双倍目标
-  'boss_diminish',   // 递减收益
-  // 新增修饰器
-  'boss_garble',     // 乱码
-  'boss_scroll',     // 滚屏
+  // 进攻类 (offense) — 消耗时间
+  'boss_fast_time',      // 时间加速
+  'boss_keystroke_tax',  // 击键代价
+  'boss_escalation',     // 渐进失控
+  'boss_frostbite',      // 寒霜侵蚀
+  'boss_resource_tax',   // 资源征税
+  'boss_mirror',         // 镜像试炼
+  // 防守类 (defense) — 阻碍得分
+  'boss_decay',          // 分数衰减
+  'boss_combo_punish',   // 断连即扣
+  'boss_cap',            // 单词限额
+  'boss_double_target',  // 双倍目标
+  'boss_diminish',       // 递减收益
+  'boss_score_tax',      // 得分税
+  // 干扰类 (disruption) — 阻碍打字
+  'boss_fade',           // 渐隐之词
+  'boss_scramble',       // 乱序打字
+  'boss_reverse',        // 倒序输入
+  'boss_spotlight',      // 聚光灯
+  'boss_garble',         // 乱码
+  'boss_scroll',         // 滚屏
 ] as const
 
 export type BossModifierId = typeof BOSS_MODIFIER_IDS[number]
@@ -39,46 +49,70 @@ export interface BossModifierMeta {
   icon: string
   description: string
   eliteHint: string
+  category: ModifierCategory
 }
 
 /**
- * 12 个修饰器的元数据
+ * 18 个修饰器的元数据（6 offense + 6 defense + 6 disruption）
  */
 export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
-  boss_fade: {
-    id: 'boss_fade',
-    name: '渐隐之词',
-    icon: '👻',
-    description: '字母逐个淡出消失',
-    eliteHint: '字母缓慢淡出（速度减半）',
+  // === 进攻类 (offense) ===
+  boss_fast_time: {
+    id: 'boss_fast_time',
+    name: '时间加速',
+    icon: '⏩',
+    description: '计时器 1.5 倍速',
+    eliteHint: '计时器 1.25 倍速',
+    category: 'offense',
   },
-  boss_scramble: {
-    id: 'boss_scramble',
-    name: '乱序打字',
-    icon: '🔀',
-    description: '字母打乱显示，照乱序打',
-    eliteHint: '仅打乱中间字母，首尾保留',
+  boss_keystroke_tax: {
+    id: 'boss_keystroke_tax',
+    name: '击键代价',
+    icon: '⌨️',
+    description: '每次正确击键扣 0.12 秒',
+    eliteHint: '每次击键扣 0.06 秒',
+    category: 'offense',
   },
-  boss_reverse: {
-    id: 'boss_reverse',
-    name: '倒序输入',
-    icon: '⏪',
-    description: '从最后一个字母往前打',
-    eliteHint: '从最后一个字母往前打',
+  boss_escalation: {
+    id: 'boss_escalation',
+    name: '渐进失控',
+    icon: '📈',
+    description: '每 15 秒时间流速永久 +20%',
+    eliteHint: '每 20 秒 +10%',
+    category: 'offense',
   },
-  boss_spotlight: {
-    id: 'boss_spotlight',
-    name: '聚光灯',
-    icon: '🔦',
-    description: '只能看到当前 2-3 个字母',
-    eliteHint: '可见 3-4 个字母',
+  boss_frostbite: {
+    id: 'boss_frostbite',
+    name: '寒霜侵蚀',
+    icon: '🥶',
+    description: '打错累积冰霜，满 5 层爆发扣 4 秒',
+    eliteHint: '满 7 层扣 3 秒',
+    category: 'offense',
   },
+  boss_resource_tax: {
+    id: 'boss_resource_tax',
+    name: '资源征税',
+    icon: '🏛️',
+    description: '每词按被征税资源产出×10%扣时间',
+    eliteHint: '税率 5%，轮换更慢',
+    category: 'offense',
+  },
+  boss_mirror: {
+    id: 'boss_mirror',
+    name: '镜像试炼',
+    icon: '🫧',
+    description: '记录→挑战循环，超时扣全部时间',
+    eliteHint: '超时扣固定 5 秒',
+    category: 'offense',
+  },
+  // === 防守类 (defense) ===
   boss_decay: {
     id: 'boss_decay',
     name: '分数衰减',
     icon: '📉',
     description: '每秒扣 5% 当前总分',
     eliteHint: '每秒扣 2.5% 总分',
+    category: 'defense',
   },
   boss_combo_punish: {
     id: 'boss_combo_punish',
@@ -86,6 +120,7 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     icon: '☠️',
     description: '连击中断扣 20% 总分',
     eliteHint: '断连扣 10% 总分',
+    category: 'defense',
   },
   boss_cap: {
     id: 'boss_cap',
@@ -93,13 +128,7 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     icon: '📦',
     description: '单词得分上限 50 分',
     eliteHint: '单词得分上限 75 分',
-  },
-  boss_fast_time: {
-    id: 'boss_fast_time',
-    name: '时间加速',
-    icon: '⏩',
-    description: '计时器 1.5 倍速',
-    eliteHint: '计时器 1.25 倍速',
+    category: 'defense',
   },
   boss_double_target: {
     id: 'boss_double_target',
@@ -107,6 +136,7 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     icon: '⏫',
     description: '目标分数 ×2',
     eliteHint: '目标分数 ×1.5',
+    category: 'defense',
   },
   boss_diminish: {
     id: 'boss_diminish',
@@ -114,6 +144,48 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     icon: '⬇️',
     description: '每完成一词下个词分数 -10%',
     eliteHint: '每词 -5%',
+    category: 'defense',
+  },
+  boss_score_tax: {
+    id: 'boss_score_tax',
+    name: '得分税',
+    icon: '🧾',
+    description: '每词最终得分减少 15 分',
+    eliteHint: '每词减少 8 分',
+    category: 'defense',
+  },
+  // === 干扰类 (disruption) ===
+  boss_fade: {
+    id: 'boss_fade',
+    name: '渐隐之词',
+    icon: '👻',
+    description: '字母逐个淡出消失',
+    eliteHint: '字母缓慢淡出（速度减半）',
+    category: 'disruption',
+  },
+  boss_scramble: {
+    id: 'boss_scramble',
+    name: '乱序打字',
+    icon: '🔀',
+    description: '字母打乱显示，照乱序打',
+    eliteHint: '仅打乱中间字母，首尾保留',
+    category: 'disruption',
+  },
+  boss_reverse: {
+    id: 'boss_reverse',
+    name: '倒序输入',
+    icon: '⏪',
+    description: '从最后一个字母往前打',
+    eliteHint: '从最后一个字母往前打',
+    category: 'disruption',
+  },
+  boss_spotlight: {
+    id: 'boss_spotlight',
+    name: '聚光灯',
+    icon: '🔦',
+    description: '只能看到当前 2-3 个字母',
+    eliteHint: '可见 3-4 个字母',
+    category: 'disruption',
   },
   boss_garble: {
     id: 'boss_garble',
@@ -121,6 +193,7 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     icon: '🔣',
     description: '词语中插入随机标点符号',
     eliteHint: '插入较少标点符号',
+    category: 'disruption',
   },
   boss_scroll: {
     id: 'boss_scroll',
@@ -128,6 +201,7 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     icon: '📜',
     description: '字母从右向左滚动，对准箭头时打字',
     eliteHint: '滚动较慢，命中区更宽',
+    category: 'disruption',
   },
 }
 
@@ -139,9 +213,14 @@ export function getBossModifierMeta(id: BossModifierId): BossModifierMeta | unde
 }
 
 /**
- * 从修饰器池中随机抽取 n 个不重复的修饰器（共 12 个）
+ * 从修饰器池中抽取修饰器（每个分类各抽一个，保证 offense+defense+disruption 各一）
+ * count=3 时按分类抽取；其他 count 值退化为纯随机
  */
 export function drawBossModifiers(count: number): BossModifierId[] {
+  if (count === 3) {
+    return drawBossModifiersByCategory()
+  }
+  // 退化：纯随机
   const pool = [...BOSS_MODIFIER_IDS]
   const result: BossModifierId[] = []
   for (let i = 0; i < count && pool.length > 0; i++) {
@@ -151,9 +230,21 @@ export function drawBossModifiers(count: number): BossModifierId[] {
   return result
 }
 
+/** 每分类随机抽一个，返回 [offense, defense, disruption] 顺序 */
+function drawBossModifiersByCategory(): BossModifierId[] {
+  const categories: ModifierCategory[] = ['offense', 'defense', 'disruption']
+  const result: BossModifierId[] = []
+  for (const cat of categories) {
+    const pool = BOSS_MODIFIER_IDS.filter(id => BOSS_MODIFIER_META[id].category === cat)
+    const idx = Math.floor(random() * pool.length)
+    result.push(pool[idx])
+  }
+  return result
+}
+
 /**
  * 生成 Boss 修饰器候选（排除已激活的修饰器）
- * 从全部 12 个修饰器中排除 activeModifiers，随机取 3 个
+ * 从全部 18 个修饰器中排除 activeModifiers，随机取 3 个
  * 若可用不足 3 个，返回全部可用
  */
 export function generateBossModifierCandidates(activeModifiers: BossModifierId[]): BossModifierId[] {
@@ -197,6 +288,18 @@ export interface BossModifierParams {
   // 滚屏（boss_scroll）
   scrollSpeed?: number      // 滚动速度（px/s）
   scrollHitZone?: number    // 命中区宽度（px）
+  // 新增：进攻类
+  keystrokeTax?: number           // boss_keystroke_tax: 每次正确击键扣时(秒)
+  escalateStep?: number           // boss_escalation: 每阶段增速量
+  escalateInterval?: number       // boss_escalation: 阶段间隔(秒)
+  frostThreshold?: number         // boss_frostbite: 冰霜层爆发阈值
+  frostPenalty?: number           // boss_frostbite: 爆发扣时(秒)
+  taxRate?: number                // boss_resource_tax: 资源产出→时间的转换率
+  taxRotateInterval?: number      // boss_resource_tax: 征税目标轮换间隔(秒)
+  mirrorActive?: number           // boss_mirror: 1=激活
+  mirrorFailPenalty?: number      // boss_mirror: 超时扣时（0=扣全部剩余时间）
+  // 新增：防守类
+  scoreTaxFlat?: number           // boss_score_tax: 每词固定扣分
 }
 
 /**
@@ -581,23 +684,209 @@ export function transformWordForModifier(word: string): string {
   return result
 }
 
+// === 6 个新修饰器实现 ===
+
+// === boss_keystroke_tax: 参数由 battle.ts 读取 ===
+const bossKeystrokeTax: BossModifier = {
+  id: 'boss_keystroke_tax',
+  getParams: (isElite) => ({ keystrokeTax: isElite ? 0.06 : 0.12 }),
+  apply: () => {},
+  cleanup: () => {},
+}
+
+// === boss_escalation: onTick 累加器递增 timeSpeed ===
+let _escalateAccum = 0
+let _escalateStacks = 0
+
+const bossEscalation: BossModifier = {
+  id: 'boss_escalation',
+  getParams: (isElite) => ({
+    escalateStep: isElite ? 0.10 : 0.20,
+    escalateInterval: isElite ? 20 : 15,
+  }),
+  apply: () => { _escalateAccum = 0; _escalateStacks = 0 },
+  cleanup: () => { _escalateAccum = 0; _escalateStacks = 0 },
+  onTick(dt) {
+    const p = getActiveParams()
+    if (!p?.escalateInterval || !p?.escalateStep) return
+    _escalateAccum += dt
+    if (_escalateAccum >= p.escalateInterval) {
+      _escalateAccum -= p.escalateInterval
+      _escalateStacks++
+    }
+  },
+}
+
+/** 获取渐进失控的额外时间速度加成 */
+export function getEscalateTimeSpeedBonus(): number {
+  const p = getActiveParams()
+  if (!p?.escalateStep) return 0
+  return _escalateStacks * p.escalateStep
+}
+
+/** 获取当前渐进失控层数（UI 用） */
+export function getEscalateStacks(): number { return _escalateStacks }
+
+// === boss_frostbite: 错误累积 → 爆发 ===
+let _frostStacks = 0
+
+const bossFrostbite: BossModifier = {
+  id: 'boss_frostbite',
+  getParams: (isElite) => ({
+    frostThreshold: isElite ? 7 : 5,
+    frostPenalty: isElite ? 3 : 4,
+  }),
+  apply: () => { _frostStacks = 0 },
+  cleanup: () => { _frostStacks = 0 },
+}
+
+/** battle.ts 错误时调用：返回 { burst, penalty } 或 null（非冰霜修饰器） */
+export function addFrostStack(): { burst: boolean; penalty: number } | null {
+  const p = getActiveParams()
+  if (!p?.frostThreshold) return null
+  _frostStacks++
+  if (_frostStacks >= p.frostThreshold) {
+    const rawPenalty = p.frostPenalty!
+    const shielded = state.player.relics.has('modifier_shield')
+      ? rawPenalty * 0.75 : rawPenalty
+    _frostStacks = 0
+    return { burst: true, penalty: shielded }
+  }
+  return { burst: false, penalty: 0 }
+}
+
+/** 获取当前冰霜层数（UI 用） */
+export function getFrostStacks(): number { return _frostStacks }
+
+// === boss_resource_tax: 资源征税 ===
+const TAX_RESOURCES: import('../core/types').ResourceType[] = ['base', 'score', 'gold', 'multiplier']
+let _taxResourceIdx = 0
+let _taxRotateAccum = 0
+
+const bossResourceTax: BossModifier = {
+  id: 'boss_resource_tax',
+  getParams: (isElite) => ({
+    taxRate: isElite ? 0.05 : 0.10,
+    taxRotateInterval: isElite ? 25 : 20,
+  }),
+  apply: () => { _taxResourceIdx = 0; _taxRotateAccum = 0 },
+  cleanup: () => { _taxResourceIdx = 0; _taxRotateAccum = 0 },
+  onTick(dt) {
+    const p = getActiveParams()
+    if (!p?.taxRotateInterval) return
+    _taxRotateAccum += dt
+    if (_taxRotateAccum >= p.taxRotateInterval) {
+      _taxRotateAccum -= p.taxRotateInterval
+      _taxResourceIdx = (_taxResourceIdx + 1) % TAX_RESOURCES.length
+    }
+  },
+}
+
+/** 获取当前被征税的资源类型 */
+export function getCurrentTaxResource(): import('../core/types').ResourceType {
+  return TAX_RESOURCES[_taxResourceIdx]
+}
+
+/** 获取当前税率 */
+export function getTaxRate(): number {
+  return getActiveParams()?.taxRate ?? 0
+}
+
+// === boss_mirror: 镜像试炼（无限循环：录制→挑战→录制→…） ===
+let _mirrorPhase: 'recording' | 'challenging' | 'done' = 'done'
+let _mirrorRecordedTime = 0
+let _mirrorWordStart = 0
+
+const bossMirror: BossModifier = {
+  id: 'boss_mirror',
+  getParams: (isElite) => ({
+    mirrorActive: 1,
+    mirrorFailPenalty: isElite ? 5 : 0, // 0=扣全部，5=扣固定5秒
+  }),
+  apply: () => {
+    _mirrorPhase = 'recording'
+    _mirrorRecordedTime = 0
+    _mirrorWordStart = Date.now()
+  },
+  cleanup: () => { _mirrorPhase = 'done' },
+  onTick() {
+    if (_mirrorPhase === 'challenging') {
+      const elapsed = (Date.now() - _mirrorWordStart) / 1000
+      if (elapsed >= _mirrorRecordedTime) {
+        const p = getActiveParams()
+        const penalty = p?.mirrorFailPenalty ?? 0
+        if (penalty > 0) {
+          // 精英：扣固定秒数
+          const shielded = state.player.relics.has('modifier_shield') ? penalty * 0.75 : penalty
+          state.time -= shielded
+        } else {
+          // Boss：扣全部剩余时间
+          state.time = 0
+        }
+        _mirrorPhase = 'recording' // 超时后重新开始下一轮录制
+        _mirrorWordStart = Date.now()
+      }
+    }
+  },
+}
+
+/** battle.ts 完成一词时调用 */
+export function onMirrorWordComplete(): 'recorded' | 'survived' | 'inactive' {
+  if (_mirrorPhase === 'recording') {
+    _mirrorRecordedTime = (Date.now() - _mirrorWordStart) / 1000
+    _mirrorPhase = 'challenging'
+    return 'recorded'
+  }
+  if (_mirrorPhase === 'challenging') {
+    _mirrorPhase = 'recording' // 通过挑战，继续下一轮
+    return 'survived'
+  }
+  return 'inactive'
+}
+
+/** battle.ts 新词开始时重置计时 */
+export function resetMirrorWordTimer(): void {
+  _mirrorWordStart = Date.now()
+}
+
+/** 获取镜像试炼当前阶段（UI 用） */
+export function getMirrorPhase(): 'recording' | 'challenging' | 'done' { return _mirrorPhase }
+export function getMirrorRecordedTime(): number { return _mirrorRecordedTime }
+export function getMirrorElapsed(): number {
+  if (_mirrorPhase !== 'challenging') return 0
+  return (Date.now() - _mirrorWordStart) / 1000
+}
+
+// === boss_score_tax: 参数由 battle.ts 读取 ===
+const bossScoreTax: BossModifier = {
+  id: 'boss_score_tax',
+  getParams: (isElite) => ({ scoreTaxFlat: isElite ? 8 : 15 }),
+  apply: () => {},
+  cleanup: () => {},
+}
+
 // === 修饰器注册表 ===
 
 export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
-  // 数值规则类（完整实现）
+  // 进攻类
+  boss_fast_time: bossFastTime,
+  boss_keystroke_tax: bossKeystrokeTax,
+  boss_escalation: bossEscalation,
+  boss_frostbite: bossFrostbite,
+  boss_resource_tax: bossResourceTax,
+  boss_mirror: bossMirror,
+  // 防守类
   boss_decay: bossDecay,
   boss_combo_punish: bossComboPunish,
   boss_cap: bossCap,
-  boss_fast_time: bossFastTime,
   boss_double_target: bossDoubleTarget,
   boss_diminish: bossDiminish,
-  // 视觉类（Story 18.5 实现）
+  boss_score_tax: bossScoreTax,
+  // 干扰类
   boss_fade: bossFade,
   boss_spotlight: bossSpotlight,
-  // 认知类（Story 18.6 实现）
   boss_scramble: bossScramble,
   boss_reverse: bossReverse,
-  // 新增修饰器
   boss_garble: bossGarble,
   boss_scroll: bossScroll,
 }

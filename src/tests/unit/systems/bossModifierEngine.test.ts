@@ -103,9 +103,9 @@ describe('bossModifierEngine', () => {
   })
 
   describe('BOSS_MODIFIER_REGISTRY', () => {
-    it('包含全部 12 个修饰器', () => {
+    it('包含全部 18 个修饰器', () => {
       const keys = Object.keys(BOSS_MODIFIER_REGISTRY)
-      expect(keys).toHaveLength(12)
+      expect(keys).toHaveLength(18)
     })
 
     it('每个修饰器都有 id/getParams/apply/cleanup', () => {

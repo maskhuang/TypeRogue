@@ -15,9 +15,9 @@ describe('图标注册表', () => {
     }
   });
 
-  it('总条目数 = 79（7 资源 + 60 遗物 + 12 Boss）', () => {
+  it('总条目数 = 90（7 资源 + 65 遗物 + 18 Boss）', () => {
     const entries = getAllIconEntries();
-    expect(entries.length).toBe(79);
+    expect(entries.length).toBe(90);
   });
 
   it('跨类型原子图标无重复（资源豁免 + 组合图标排除）', () => {

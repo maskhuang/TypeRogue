@@ -61,6 +61,26 @@ const _wordResourceTypes = new Set<string>();
 // T1 遗物支持：本词是否有产出者触发过（熔炉之心使用）
 let _wordHasProducerTriggered = false;
 
+// === boss_resource_tax: 追踪本词各资源产出量 ===
+const _currentWordOutput: Record<string, number> = {};
+
+/** 重置本词资源产出追踪（每词开始时调用） */
+export function resetWordResourceOutput(): void {
+  for (const key of Object.keys(_currentWordOutput)) {
+    delete _currentWordOutput[key];
+  }
+}
+
+/** 记录本词资源产出（applyResource 中调用） */
+export function recordWordResourceOutput(resource: ResourceType, amount: number): void {
+  _currentWordOutput[resource] = (_currentWordOutput[resource] ?? 0) + amount;
+}
+
+/** 查询本词某资源产出量（completeWord 中查询被征税资源） */
+export function getWordResourceOutput(resource: string): number {
+  return _currentWordOutput[resource] ?? 0;
+}
+
 /** 获取本词已产出的资源种类数 */
 export function getWordResourceTypeCount(): number {
   return _wordResourceTypes.size;
@@ -78,6 +98,8 @@ export function resetWordResourceTypes(): void {
   resetWordAffixTypes();
   // Story 36.8: 同步清空资源感应追踪
   resetWordResourceAmounts();
+  // boss_resource_tax: 重置本词资源产出追踪
+  resetWordResourceOutput();
 }
 
 /** 蓄力产出者：每帧更新蓄力值（旧系统已移除，保留空实现供 battle.ts 调用） */
@@ -218,6 +240,8 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
       if (totalBonus > 0 && amount > 0) amount = amount * (1 + totalBonus);
       // Story 36.8: 资源感应 — 追踪正产出
       if (amount > 0) recordResourceProduction(resource, amount);
+      // boss_resource_tax: 追踪本词资源产出
+      if (amount > 0) recordWordResourceOutput(resource, amount);
 
       if (isMultiplyOp) {
         // 乘算化：resource *= amount（amount 即乘数）

@@ -145,6 +145,17 @@ const ZH: Record<string, string> = {
   // --- stage relic feedback ---
   'battle.phoenix_revive': '🐦‍🔥 不死鸟复活！',
 
+  // --- boss modifier relic feedback ---
+  'battle.chaos_roulette': '🎰 混沌轮盘！',
+  'battle.modifier_barrier': '🚧 修饰器屏障！',
+  'battle.modifier_reversal': '🔄 修饰器反转！',
+
+  // --- new boss modifier feedback ---
+  'battle.frostbite_burst': '🥶 冰霜爆发！-{value}s',
+  'battle.mirror_recorded': '🪞 已记录！',
+  'battle.mirror_survived': '🪞 试炼通过！',
+  'battle.resource_tax': '🏛️ 征税 -{value}s',
+
   // --- shop.ts ---
   'shop.cycle_title': '商店 · 周目{cycle}',
   'shop.no_gold': '金币不足!',
@@ -313,6 +324,24 @@ const ZH: Record<string, string> = {
   'modifier.boss_scroll': '滚屏',
   'modifier.boss_scroll.desc': '字母从右向左滚动，对准箭头时打字',
   'modifier.boss_scroll.elite': '滚动较慢，命中区更宽',
+  'modifier.boss_keystroke_tax': '击键代价',
+  'modifier.boss_keystroke_tax.desc': '每次正确击键扣 0.12 秒',
+  'modifier.boss_keystroke_tax.elite': '每次击键扣 0.06 秒',
+  'modifier.boss_escalation': '渐进失控',
+  'modifier.boss_escalation.desc': '每 15 秒时间流速永久 +20%',
+  'modifier.boss_escalation.elite': '每 20 秒 +10%',
+  'modifier.boss_frostbite': '寒霜侵蚀',
+  'modifier.boss_frostbite.desc': '打错累积冰霜，满 5 层爆发扣 4 秒',
+  'modifier.boss_frostbite.elite': '满 7 层扣 3 秒',
+  'modifier.boss_resource_tax': '资源征税',
+  'modifier.boss_resource_tax.desc': '每词按被征税资源产出×10%扣时间',
+  'modifier.boss_resource_tax.elite': '税率 5%，轮换更慢',
+  'modifier.boss_mirror': '镜像试炼',
+  'modifier.boss_mirror.desc': '记录→挑战循环，超时扣全部时间',
+  'modifier.boss_mirror.elite': '超时扣固定 5 秒',
+  'modifier.boss_score_tax': '得分税',
+  'modifier.boss_score_tax.desc': '每词最终得分减少 15 分',
+  'modifier.boss_score_tax.elite': '每词减少 8 分',
 
   // --- rest stage ---
   'rest.act_end': 'Act {act} 结束',
@@ -538,6 +567,17 @@ const EN: Record<string, string> = {
   // --- stage relic feedback ---
   'battle.phoenix_revive': '🐦‍🔥 Phoenix Revive!',
 
+  // --- boss modifier relic feedback ---
+  'battle.chaos_roulette': '🎰 Chaos Roulette!',
+  'battle.modifier_barrier': '🚧 Modifier Barrier!',
+  'battle.modifier_reversal': '🔄 Modifier Reversal!',
+
+  // --- new boss modifier feedback ---
+  'battle.frostbite_burst': '🥶 Frostbite! -{value}s',
+  'battle.mirror_recorded': '🪞 Recorded!',
+  'battle.mirror_survived': '🪞 Survived!',
+  'battle.resource_tax': '🏛️ Tax -{value}s',
+
   // --- shop.ts ---
   'shop.cycle_title': 'Shop · Cycle {cycle}',
   'shop.no_gold': 'Not enough gold!',
@@ -706,6 +746,24 @@ const EN: Record<string, string> = {
   'modifier.boss_scroll': 'Scroll',
   'modifier.boss_scroll.desc': 'Letters scroll left — type when aligned with arrow',
   'modifier.boss_scroll.elite': 'Slower scroll, wider hit zone',
+  'modifier.boss_keystroke_tax': 'Keystroke Tax',
+  'modifier.boss_keystroke_tax.desc': 'Each correct keystroke costs 0.12s',
+  'modifier.boss_keystroke_tax.elite': 'Each keystroke costs 0.06s',
+  'modifier.boss_escalation': 'Escalation',
+  'modifier.boss_escalation.desc': 'Time speed +20% every 15s (permanent)',
+  'modifier.boss_escalation.elite': '+10% every 20s',
+  'modifier.boss_frostbite': 'Frostbite',
+  'modifier.boss_frostbite.desc': 'Errors stack frost; 5 stacks = burst -4s',
+  'modifier.boss_frostbite.elite': '7 stacks = burst -3s',
+  'modifier.boss_resource_tax': 'Resource Tax',
+  'modifier.boss_resource_tax.desc': 'Each word: taxed resource output ×10% lost as time',
+  'modifier.boss_resource_tax.elite': '5% tax, slower rotation',
+  'modifier.boss_mirror': 'Mirror Trial',
+  'modifier.boss_mirror.desc': 'Record → challenge loop; exceed recorded time = lose all time',
+  'modifier.boss_mirror.elite': 'Timeout costs fixed 5s',
+  'modifier.boss_score_tax': 'Score Tax',
+  'modifier.boss_score_tax.desc': 'Each word score reduced by 15',
+  'modifier.boss_score_tax.elite': 'Reduced by 8',
 
   // --- rest stage ---
   'rest.act_end': 'Act {act} Complete',
@@ -885,6 +943,10 @@ const ITEM_NAMES_EN: Record<string, string> = {
   warm_up: 'Warm-Up', intermission: 'Intermission',
   endurance_battery: 'Endurance Battery', elite_hunter: 'Elite Hunter',
   phoenix: 'Phoenix',
+  // Boss modifier subsystem relics
+  modifier_shield: 'Modifier Shield', bounty_hunter: 'Bounty Hunter',
+  modifier_barrier: 'Modifier Barrier', chaos_roulette: 'Chaos Roulette',
+  modifier_reversal: 'Modifier Reversal',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
   ench_growth_sameColumn: 'Pulse', ench_growth_sameHand: 'Permeate',
@@ -1028,6 +1090,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   endurance_battery: 'Each stage base time +10s',
   elite_hunter: 'Elite stage clear gold reward doubled',
   phoenix: 'On stage fail: revive with 10s. Consumes this relic. Elite/Boss: also refreshes modifier.',
+  // Boss modifier subsystem relics
+  modifier_shield: 'All modifier negative effects reduced by 25%',
+  bounty_hunter: 'Each permanent modifier: +20% clear gold (additive)',
+  modifier_barrier: 'Elite/Boss stage start: first modifier is nullified. Once per stage.',
+  chaos_roulette: 'Boss stage: every 5 words, randomly replace one active modifier',
+  modifier_reversal: 'Stage start: half modifiers become buffs, the other half double in strength',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',

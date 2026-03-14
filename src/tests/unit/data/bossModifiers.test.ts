@@ -15,25 +15,36 @@ import type { BossModifierId } from '../../../src/data/bossModifiers'
 
 describe('bossModifiers', () => {
   describe('BOSS_MODIFIER_IDS', () => {
-    it('共 12 个修饰器', () => {
-      expect(BOSS_MODIFIER_IDS).toHaveLength(12)
+    it('共 18 个修饰器', () => {
+      expect(BOSS_MODIFIER_IDS).toHaveLength(18)
     })
 
-    it('包含 4 个打字难度类修饰器', () => {
-      const typingMods = [
-        'boss_fade', 'boss_scramble', 'boss_reverse', 'boss_spotlight',
+    it('包含 6 个进攻类修饰器', () => {
+      const offenseMods = [
+        'boss_fast_time', 'boss_keystroke_tax', 'boss_escalation',
+        'boss_frostbite', 'boss_resource_tax', 'boss_mirror',
       ]
-      typingMods.forEach(id => {
+      offenseMods.forEach(id => {
         expect(BOSS_MODIFIER_IDS).toContain(id)
       })
     })
 
-    it('包含 6 个数值规则类修饰器', () => {
-      const numericalMods = [
+    it('包含 6 个防守类修饰器', () => {
+      const defenseMods = [
         'boss_decay', 'boss_combo_punish', 'boss_cap',
-        'boss_fast_time', 'boss_double_target', 'boss_diminish',
+        'boss_double_target', 'boss_diminish', 'boss_score_tax',
       ]
-      numericalMods.forEach(id => {
+      defenseMods.forEach(id => {
+        expect(BOSS_MODIFIER_IDS).toContain(id)
+      })
+    })
+
+    it('包含 6 个干扰类修饰器', () => {
+      const disruptionMods = [
+        'boss_fade', 'boss_scramble', 'boss_reverse',
+        'boss_spotlight', 'boss_garble', 'boss_scroll',
+      ]
+      disruptionMods.forEach(id => {
         expect(BOSS_MODIFIER_IDS).toContain(id)
       })
     })
@@ -73,16 +84,16 @@ describe('bossModifiers', () => {
       expect(BOSS_MODIFIER_IDS).toContain(result[0])
     })
 
-    it('抽取 12 个返回全部修饰器', () => {
-      const result = drawBossModifiers(12)
-      expect(result).toHaveLength(12)
+    it('抽取 18 个返回全部修饰器', () => {
+      const result = drawBossModifiers(18)
+      expect(result).toHaveLength(18)
       const unique = new Set(result)
-      expect(unique.size).toBe(12)
+      expect(unique.size).toBe(18)
     })
 
-    it('抽取超过总数时最多返回 12 个', () => {
-      const result = drawBossModifiers(20)
-      expect(result).toHaveLength(12)
+    it('抽取超过总数时最多返回 18 个', () => {
+      const result = drawBossModifiers(25)
+      expect(result).toHaveLength(18)
     })
 
     it('多次抽取具有随机性', () => {
@@ -97,7 +108,7 @@ describe('bossModifiers', () => {
   })
 
   describe('BOSS_MODIFIER_META', () => {
-    it('包含所有 12 个修饰器的元数据', () => {
+    it('包含所有 18 个修饰器的元数据', () => {
       BOSS_MODIFIER_IDS.forEach(id => {
         expect(BOSS_MODIFIER_META[id]).toBeDefined()
       })
@@ -111,6 +122,7 @@ describe('bossModifiers', () => {
         expect(meta.icon).toBeTruthy()
         expect(meta.description).toBeTruthy()
         expect(meta.eliteHint).toBeTruthy()
+        expect(['offense', 'defense', 'disruption']).toContain(meta.category)
       })
     })
 
@@ -121,7 +133,7 @@ describe('bossModifiers', () => {
 
     it('没有多余的元数据条目', () => {
       const metaKeys = Object.keys(BOSS_MODIFIER_META)
-      expect(metaKeys).toHaveLength(12)
+      expect(metaKeys).toHaveLength(18)
       metaKeys.forEach(key => {
         expect(BOSS_MODIFIER_IDS).toContain(key)
       })
@@ -141,7 +153,7 @@ describe('bossModifiers', () => {
       expect(getBossModifierMeta('unknown_id' as BossModifierId)).toBeUndefined()
     })
 
-    it('所有 12 个修饰器都能查询', () => {
+    it('所有 18 个修饰器都能查询', () => {
       BOSS_MODIFIER_IDS.forEach(id => {
         const meta = getBossModifierMeta(id)
         expect(meta).toBeDefined()
@@ -152,9 +164,9 @@ describe('bossModifiers', () => {
 
   // Story 18.4: BossModifier 注册表
   describe('BOSS_MODIFIER_REGISTRY', () => {
-    it('注册表包含全部 12 个修饰器', () => {
+    it('注册表包含全部 18 个修饰器', () => {
       const keys = Object.keys(BOSS_MODIFIER_REGISTRY)
-      expect(keys).toHaveLength(12)
+      expect(keys).toHaveLength(18)
       BOSS_MODIFIER_IDS.forEach(id => {
         expect(BOSS_MODIFIER_REGISTRY[id]).toBeDefined()
       })
