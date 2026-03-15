@@ -25,6 +25,10 @@ let _timeDewCounter = 0
 /** 本关单词序号（resource_tide 奇偶判断） */
 let _wordParity = 0
 
+/** 延迟到下一词注入的 resource_sense base/multiplier 奖励 */
+let _deferredSenseBase = 0
+let _deferredSenseMult = 0
+
 // === 分数磁铁 (score_magnet) ===
 
 /** 有遗物 → SCORE_MAGNET_BONUS，否则 0 */
@@ -66,6 +70,20 @@ export function resetWordResourceAmounts(): void {
   for (const key of Object.keys(_wordResourceAmounts)) {
     delete _wordResourceAmounts[key]
   }
+}
+
+/** 延迟存储 base/multiplier 奖励，下一词 setWord 时注入管道 */
+export function storeDeferredSenseBonus(resource: 'base' | 'multiplier', amount: number): void {
+  if (resource === 'base') _deferredSenseBase += amount
+  else _deferredSenseMult += amount
+}
+
+/** 消费并清零延迟奖励 */
+export function consumeDeferredSenseBonus(): { base: number; multiplier: number } {
+  const result = { base: _deferredSenseBase, multiplier: _deferredSenseMult }
+  _deferredSenseBase = 0
+  _deferredSenseMult = 0
+  return result
 }
 
 // === 时间露珠 (time_dew) ===
@@ -123,6 +141,8 @@ export function checkUniversalFurnace(): { bonusGold: number; overrideBase: bool
 export function resetResourceRelicBattleState(): void {
   _timeDewCounter = 0
   _wordParity = 0
+  _deferredSenseBase = 0
+  _deferredSenseMult = 0
 }
 
 /** 注册资源系统遗物行为 */

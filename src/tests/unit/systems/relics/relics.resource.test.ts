@@ -15,6 +15,8 @@ import {
   recordResourceProduction,
   checkResourceSense,
   resetWordResourceAmounts,
+  storeDeferredSenseBonus,
+  consumeDeferredSenseBonus,
   checkTimeDew,
   incrementTimeDewCounter,
   getResourceTideBonus,
@@ -240,6 +242,46 @@ describe('资源系统遗物行为 (Story 36.8)', () => {
       const result = checkUniversalFurnace()
       expect(result).not.toBeNull()
       expect(result!.bonusGold).toBe(0)
+    })
+  })
+
+  // === 延迟感应奖励 (deferred sense bonus) ===
+  describe('延迟感应奖励 (deferred sense bonus)', () => {
+    it('storeDeferredSenseBonus base 累加', () => {
+      storeDeferredSenseBonus('base', 3);
+      storeDeferredSenseBonus('base', 2);
+      const result = consumeDeferredSenseBonus();
+      expect(result.base).toBe(5);
+      expect(result.multiplier).toBe(0);
+    })
+
+    it('storeDeferredSenseBonus multiplier 累加', () => {
+      storeDeferredSenseBonus('multiplier', 4);
+      storeDeferredSenseBonus('multiplier', 1);
+      const result = consumeDeferredSenseBonus();
+      expect(result.base).toBe(0);
+      expect(result.multiplier).toBe(5);
+    })
+
+    it('consumeDeferredSenseBonus 返回正确值并清零', () => {
+      storeDeferredSenseBonus('base', 3);
+      storeDeferredSenseBonus('multiplier', 2);
+      const first = consumeDeferredSenseBonus();
+      expect(first.base).toBe(3);
+      expect(first.multiplier).toBe(2);
+      // 第二次消费应为零
+      const second = consumeDeferredSenseBonus();
+      expect(second.base).toBe(0);
+      expect(second.multiplier).toBe(0);
+    })
+
+    it('resetResourceRelicBattleState 清零 deferred 状态', () => {
+      storeDeferredSenseBonus('base', 10);
+      storeDeferredSenseBonus('multiplier', 5);
+      resetResourceRelicBattleState();
+      const result = consumeDeferredSenseBonus();
+      expect(result.base).toBe(0);
+      expect(result.multiplier).toBe(0);
     })
   })
 

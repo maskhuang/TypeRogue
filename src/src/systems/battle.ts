@@ -33,7 +33,7 @@ import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncro
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
-import { checkScoreMagnet, checkResourceSense, incrementTimeDewCounter, checkTimeDew, incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
+import { checkScoreMagnet, checkResourceSense, storeDeferredSenseBonus, consumeDeferredSenseBonus, incrementTimeDewCounter, checkTimeDew, incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
@@ -137,6 +137,7 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 let wordBaseScore = 0; // 词语基础分（不含倍率）
 let prismActivated = false; // 倍率棱镜本关是否已显示激活反馈
 let lessIsMoreShown = false; // 少而精本关是否已显示激活反馈
+let _lastMagnetFlightTime = 0; // 分数磁铁飞行动画节流时间戳
 let wordStartTime = 0; // T1遗物：词语开始时的剩余时间（用于完美韵律时间返还）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
 let lastScoreTier = ''; // 缓存上一次分数分级，避免每帧重启 CSS 动画 (Review M1)
@@ -227,6 +228,18 @@ function setWord(): void {
   synergy.skillBaseScore = 0;
   synergy.letterBaseScore = 0;
   synergy.lastTriggeredSkillId = null;
+  // Story 36.8: 注入上一词延迟的 resource_sense base/multiplier 奖励
+  const deferred = consumeDeferredSenseBonus();
+  if (deferred.base > 0) {
+    synergy.skillBaseScore += deferred.base;
+    showFeedback(`🔮 +${deferred.base}`, '#cc88ff', undefined, undefined,
+      { relicId: 'resource_sense', resource: 'base', amount: deferred.base });
+  }
+  if (deferred.multiplier > 0) {
+    synergy.skillMultBonus += deferred.multiplier;
+    showFeedback(`🔮 +${deferred.multiplier}`, '#cc88ff', undefined, undefined,
+      { relicId: 'resource_sense', resource: 'multiplier', amount: deferred.multiplier });
+  }
   // Story 36.6: 双手协奏手追踪重置
   resetDualConcertoHand();
   // Story 36.2: 蜡封状态重置
@@ -442,7 +455,13 @@ function playerCorrect(k: string): void {
     } else {
       state.score += magnetBonus;
     }
-    showFeedback(`🧲 +${magnetBonus}`, '#ffe66d', 0.6);
+    const now = performance.now();
+    if (now - _lastMagnetFlightTime > 500) {
+      _lastMagnetFlightTime = now;
+      showFeedback(`🧲 +${magnetBonus}`, '#ffe66d', 0.6, undefined, { relicId: 'score_magnet', resource: 'score', amount: magnetBonus });
+    } else {
+      showFeedback(`🧲 +${magnetBonus}`, '#ffe66d', 0.6);
+    }
   }
 
   // 字母升级加分：通过缓存的注册表解析 on_correct_keystroke
@@ -468,7 +487,7 @@ function playerCorrect(k: string): void {
     const concertoBonus = checkDualConcerto(k);
     if (concertoBonus > 0) {
       state.time += concertoBonus;
-      showFeedback(t('battle.dual_concerto', { value: concertoBonus }), '#00ff88');
+      showFeedback(t('battle.dual_concerto', { value: concertoBonus }), '#00ff88', undefined, undefined, { relicId: 'dual_concerto', resource: 'time', amount: concertoBonus });
     }
     triggerSkill(skillId, k);
     // Story 36.4: 首发强化反馈（每词第一个技能）
@@ -500,8 +519,7 @@ function playerCorrect(k: string): void {
   const rhythmDocTime = checkRhythmDoctor(state.combo);
   if (rhythmDocTime > 0) {
     state.time += rhythmDocTime;
-    showFeedback(t('battle.rhythm_doc', { value: rhythmDocTime }), '#00ff88');
-    bumpTimer();
+    showFeedback(t('battle.rhythm_doc', { value: rhythmDocTime }), '#00ff88', undefined, undefined, { relicId: 'rhythm_doctor', resource: 'time', amount: rhythmDocTime });
   }
 
   // Story 36.3: 连击引爆 — combo 达 15/30/45 时随机触发 3 个装备技能
@@ -702,8 +720,7 @@ function completeWord(): void {
       const refund = wordElapsed * ratio;
       if (refund > 0) {
         state.time += refund;
-        showFeedback(`+${refund.toFixed(1)}s`, '#00ff88', getFloatScale('time', refund));
-        bumpTimer();
+        showFeedback(`+${refund.toFixed(1)}s`, '#00ff88', getFloatScale('time', refund), undefined, { relicId: 'perfect_rhythm', resource: 'time', amount: refund });
       }
     },
   });
@@ -786,9 +803,8 @@ function completeWord(): void {
       const doubledScore = wordStartScore + wordGain * 2;
       finalWordScore = doubledScore - prevScore;
       setTimeout(() => {
-        showFeedback(t('battle.glass_double', { extra: extraGain }), '#ff4444', 1.3);
+        showFeedback(t('battle.glass_double', { extra: extraGain }), '#ff4444', 1.3, undefined, { relicId: 'glass_cannon', resource: 'score', amount: extraGain });
         state.score = doubledScore;
-        bumpScore(extraGain);
         updateHUD();
       }, 400);
     } else {
@@ -860,19 +876,22 @@ function completeWord(): void {
   if (senseResult && senseResult.bonus > 0) {
     const senseResource = senseResult.resource;
     const senseBonus = senseResult.bonus;
-    // 按资源类型正确路由（与 skills.ts applyResource 对齐）
-    if (senseResource === 'base' || senseResource === 'score') {
-      state.score += senseBonus;
-    } else if (senseResource === 'multiplier') {
-      state.score += senseBonus; // multiplier 阶段已结束，转为直接加分
-    } else if (senseResource === 'time') {
-      state.time += senseBonus;
-      bumpTimer();
+    if (senseResource === 'base' || senseResource === 'multiplier') {
+      // 延迟到下一词管道注入，使其真正参与 base/multiplier 运算
+      storeDeferredSenseBonus(senseResource, senseBonus);
+      showFeedback(`🔮 +${senseBonus} ${senseResource} ⏳`, '#cc88ff');
     } else {
-      state.resources[senseResource as keyof typeof state.resources] += senseBonus;
+      // time/gold/score/fragment: 即时处理
+      if (senseResource === 'score') {
+        state.score += senseBonus;
+      } else if (senseResource === 'time') {
+        state.time += senseBonus;
+      } else {
+        state.resources[senseResource as keyof typeof state.resources] += senseBonus;
+      }
+      if (senseResource === 'fragment') routeFragmentsToInventory(senseBonus);
+      showFeedback(`🔮 +${senseBonus}`, '#cc88ff', undefined, undefined, { relicId: 'resource_sense', resource: senseResource, amount: senseBonus });
     }
-    if (senseResource === 'fragment') routeFragmentsToInventory(senseBonus);
-    showFeedback(`🔮 +${senseBonus}`, '#cc88ff');
   }
 
   // Story 36.8: 时间露珠 — 每3词+1s
@@ -880,8 +899,7 @@ function completeWord(): void {
   const dewBonus = checkTimeDew();
   if (dewBonus > 0) {
     state.time += dewBonus;
-    showFeedback(t('battle.time_dew', { value: dewBonus }), '#00ff88');
-    bumpTimer();
+    showFeedback(t('battle.time_dew', { value: dewBonus }), '#00ff88', undefined, undefined, { relicId: 'time_dew', resource: 'time', amount: dewBonus });
   }
 
   // Story 36.8: 资源潮汐 — 词序号递增（加算在 skills.ts applyResource 中）
@@ -896,15 +914,14 @@ function completeWord(): void {
   const collectionGold = checkWordCollection(state.player.word);
   if (collectionGold > 0) {
     state.gold += collectionGold;
-    showFeedback(`📚 +${collectionGold}💰`, '#ffe66d');
+    showFeedback(`📚 +${collectionGold}💰`, '#ffe66d', undefined, undefined, { relicId: 'word_collection', resource: 'gold', amount: collectionGold });
   }
 
   // Story 36.7: 长词达人 — 6+字母单词完成时+1s
   const longWordTime = checkLongWordMaster(state.player.word.length);
   if (longWordTime > 0) {
     state.time += longWordTime;
-    showFeedback(t('battle.long_word_time', { value: longWordTime }), '#00ff88');
-    bumpTimer();
+    showFeedback(t('battle.long_word_time', { value: longWordTime }), '#00ff88', undefined, undefined, { relicId: 'long_word_master', resource: 'time', amount: longWordTime });
   }
 
   // Story 36.11: 混沌轮盘 — Boss关每5词替换一个修饰器
@@ -1373,7 +1390,7 @@ function endLevel(): void {
       // Review M2: endLevel 已 stopScoreRoller，需重启分数滚轮
       startScoreRoller();
       renderRelicDisplay();
-      showFeedback(t('battle.phoenix_revive'), '#ff6600');
+      showFeedback(t('battle.phoenix_revive'), '#ff6600', undefined, undefined, { relicId: 'phoenix', resource: 'time' });
       playSound('levelup');
       return;
     }
@@ -2021,7 +2038,7 @@ function renderActiveLibrary(): void {
 const FLOAT_POOL_SIZE = 20;
 const FLOAT_INTERVAL = 150; // 链式浮字间隔 ms
 let floatPool: HTMLDivElement[] = [];
-let floatQueue: Array<{ text: string; color: string; scale?: number; skillAnchor?: { letterIndex: number; resource: string; amount?: number } }> = [];
+let floatQueue: Array<{ text: string; color: string; scale?: number; skillAnchor?: { letterIndex: number; resource: string; amount?: number }; relicAnchor?: { relicId: string; resource: string; amount?: number } }> = [];
 
 /** 飞行中待确认的资源加成 */
 let _pendingTimeBonus = 0;
@@ -2080,7 +2097,7 @@ function quadBezier(p0: number, p1: number, p2: number, t: number): number {
 }
 
 /** 创建一个浮字 */
-function createFloatText(text: string, color: string, scale = 1, skillAnchor?: { letterIndex: number; resource: string; amount?: number }): void {
+function createFloatText(text: string, color: string, scale = 1, skillAnchor?: { letterIndex: number; resource: string; amount?: number }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
   const el = acquireFloat();
   if (!el) return; // 池满，跳过
 
@@ -2088,85 +2105,101 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
   el.style.color = color;
   el.style.setProperty('--float-scale', String(scale));
 
-  // 技能触发浮字：从单词字母出发，沿曲线飞向对应资源 UI
+  // 确定飞行起点和资源类型（skillAnchor 从字母出发，relicAnchor 从遗物图标出发）
+  let startEl: HTMLElement | undefined;
+  let flightResource: string | undefined;
+  let flightAmount = 0;
+
   if (skillAnchor) {
     const wordEl = getElements().word;
-    const letterEl = wordEl.children[skillAnchor.letterIndex] as HTMLElement | undefined;
-    const targetId = RESOURCE_TARGET_IDS[skillAnchor.resource];
+    startEl = wordEl.children[skillAnchor.letterIndex] as HTMLElement | undefined;
+    flightResource = skillAnchor.resource;
+    flightAmount = skillAnchor.amount ?? 0;
+  } else if (relicAnchor) {
+    const idx = getRelicIndex(relicAnchor.relicId);
+    if (idx >= 0) {
+      startEl = getElements().playerRelics.children[idx] as HTMLElement | undefined;
+      flightResource = relicAnchor.resource;
+      flightAmount = relicAnchor.amount ?? 0;
+      // 闪光连线：从遗物图标到资源目标
+      if (startEl) {
+        const targetId = RESOURCE_TARGET_IDS[flightResource];
+        if (targetId) flashRelicLine(idx, targetId, color);
+      }
+    }
+  }
+
+  if (startEl && flightResource) {
+    const targetId = RESOURCE_TARGET_IDS[flightResource];
     const targetEl = targetId ? document.getElementById(targetId) : null;
 
-    if (letterEl) {
-      const container = getElements().container;
-      const containerRect = container.getBoundingClientRect();
-      const letterRect = letterEl.getBoundingClientRect();
-      const startX = letterRect.left + letterRect.width / 2 - containerRect.left;
-      const startY = letterRect.top - containerRect.top - 30;
+    const container = getElements().container;
+    const containerRect = container.getBoundingClientRect();
+    const startRect = startEl.getBoundingClientRect();
+    const startX = startRect.left + startRect.width / 2 - containerRect.left;
+    const startY = startRect.top - containerRect.top - 30;
 
-      let endX = startX;
-      let endY = startY - 60;
-      if (targetEl) {
-        const targetRect = targetEl.getBoundingClientRect();
-        endX = targetRect.left + targetRect.width / 2 - containerRect.left;
-        endY = targetRect.top + targetRect.height / 2 - containerRect.top;
-      }
-
-      // 控制点：水平方向偏移制造弧线，垂直方向上抛
-      const midX = (startX + endX) / 2;
-      const midY = Math.min(startY, endY);
-      const cpX = midX + (startX - endX) * 0.4;
-      const cpY = midY - 40;
-
-      // JS 驱动贝塞尔曲线动画
-      el.style.position = 'absolute';
-      el.style.left = startX + 'px';
-      el.style.top = startY + 'px';
-      el.classList.add('float-text-anchored');
-      el.style.display = '';
-
-      const floatEl = el;
-      const dist = Math.hypot(endX - startX, endY - startY);
-      const FLIGHT_SPEED = 0.35; // px/ms
-      const duration = Math.max(250, Math.min(800, dist / FLIGHT_SPEED));
-      const startTime = performance.now();
-      const baseScale = scale;
-
-      // 飞行开始时加入待确认量（滚轮延迟显示）
-      const amt = skillAnchor.amount ?? 0;
-      let pendingTime = 0, pendingGold = 0;
-      if (amt > 0 && skillAnchor.resource === 'time') { pendingTime = amt; _pendingTimeBonus += amt; }
-      if (amt > 0 && skillAnchor.resource === 'gold') { pendingGold = amt; _pendingGoldBonus += amt; }
-
-      function animateCurve(now: number) {
-        const elapsed = now - startTime;
-        const t = Math.min(elapsed / duration, 1);
-
-        const x = quadBezier(startX, cpX, endX, t);
-        const y = quadBezier(startY, cpY, endY, t);
-        const s = baseScale * (1.1 - 0.4 * t);
-        const alpha = t < 0.15 ? t / 0.15 : t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1;
-
-        floatEl.style.left = x + 'px';
-        floatEl.style.top = y + 'px';
-        floatEl.style.opacity = String(alpha);
-        floatEl.style.transform = `translateX(-50%) scale(${s})`;
-
-        if (t < 1) {
-          requestAnimationFrame(animateCurve);
-        } else {
-          releaseFloat(floatEl);
-          // 到达时确认待确认量 → 滚轮目标立即更新
-          if (pendingTime > 0) _pendingTimeBonus = Math.max(0, _pendingTimeBonus - pendingTime);
-          if (pendingGold > 0) _pendingGoldBonus = Math.max(0, _pendingGoldBonus - pendingGold);
-          // 飞行到达时触发对应 UI 弹跳
-          RESOURCE_BUMP_FNS[skillAnchor!.resource]?.();
-        }
-      }
-      requestAnimationFrame(animateCurve);
-      return; // 跳过 CSS 动画路径
-    } else {
-      el.style.left = (35 + Math.random() * 30) + '%';
-      el.style.top = '';
+    let endX = startX;
+    let endY = startY - 60;
+    if (targetEl) {
+      const targetRect = targetEl.getBoundingClientRect();
+      endX = targetRect.left + targetRect.width / 2 - containerRect.left;
+      endY = targetRect.top + targetRect.height / 2 - containerRect.top;
     }
+
+    // 控制点：水平方向偏移制造弧线，垂直方向上抛
+    const midX = (startX + endX) / 2;
+    const midY = Math.min(startY, endY);
+    const cpX = midX + (startX - endX) * 0.4;
+    const cpY = midY - 40;
+
+    // JS 驱动贝塞尔曲线动画
+    el.style.position = 'absolute';
+    el.style.left = startX + 'px';
+    el.style.top = startY + 'px';
+    el.classList.add('float-text-anchored');
+    el.style.display = '';
+
+    const floatEl = el;
+    const dist = Math.hypot(endX - startX, endY - startY);
+    const FLIGHT_SPEED = 0.35; // px/ms
+    const duration = Math.max(250, Math.min(800, dist / FLIGHT_SPEED));
+    const startTime = performance.now();
+    const baseScale = scale;
+    const res = flightResource;
+
+    // 飞行开始时加入待确认量（滚轮延迟显示）
+    let pendingTime = 0, pendingGold = 0;
+    if (flightAmount > 0 && res === 'time') { pendingTime = flightAmount; _pendingTimeBonus += flightAmount; }
+    if (flightAmount > 0 && res === 'gold') { pendingGold = flightAmount; _pendingGoldBonus += flightAmount; }
+
+    function animateCurve(now: number) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+
+      const x = quadBezier(startX, cpX, endX, t);
+      const y = quadBezier(startY, cpY, endY, t);
+      const s = baseScale * (1.1 - 0.4 * t);
+      const alpha = t < 0.15 ? t / 0.15 : t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1;
+
+      floatEl.style.left = x + 'px';
+      floatEl.style.top = y + 'px';
+      floatEl.style.opacity = String(alpha);
+      floatEl.style.transform = `translateX(-50%) scale(${s})`;
+
+      if (t < 1) {
+        requestAnimationFrame(animateCurve);
+      } else {
+        releaseFloat(floatEl);
+        // 到达时确认待确认量 → 滚轮目标立即更新
+        if (pendingTime > 0) _pendingTimeBonus = Math.max(0, _pendingTimeBonus - pendingTime);
+        if (pendingGold > 0) _pendingGoldBonus = Math.max(0, _pendingGoldBonus - pendingGold);
+        // 飞行到达时触发对应 UI 弹跳
+        RESOURCE_BUMP_FNS[res]?.();
+      }
+    }
+    requestAnimationFrame(animateCurve);
+    return; // 跳过 CSS 动画路径
   } else {
     el.style.left = (35 + Math.random() * 30) + '%';
     el.style.top = '';
@@ -2188,7 +2221,7 @@ function drainQueue(): void {
     return;
   }
   const item = floatQueue.shift()!;
-  createFloatText(item.text, item.color, item.scale, item.skillAnchor);
+  createFloatText(item.text, item.color, item.scale, item.skillAnchor, item.relicAnchor);
   queueTimer = setTimeout(drainQueue, FLOAT_INTERVAL);
 }
 
@@ -2252,9 +2285,9 @@ function clearFloatQueue(): void {
   clearFlashLines();
 }
 
-/** 浮字反馈（scale 控制字体缩放，默认 1；skillAnchor 指定时从字母飞向资源 UI） */
-export function showFeedback(txt: string, color: string, scale?: number, skillAnchor?: { letterIndex: number; resource: string; amount?: number }): void {
-  floatQueue.push({ text: txt, color, scale, skillAnchor });
+/** 浮字反馈（scale 控制字体缩放，默认 1；skillAnchor 指定时从字母飞向资源 UI；relicAnchor 指定时从遗物图标飞向资源 UI） */
+export function showFeedback(txt: string, color: string, scale?: number, skillAnchor?: { letterIndex: number; resource: string; amount?: number }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
+  floatQueue.push({ text: txt, color, scale, skillAnchor, relicAnchor });
   if (!queueTimer) drainQueue();
 }
 

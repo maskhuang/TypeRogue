@@ -686,7 +686,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'resource_sense',
     name: '资源感应',
     icon: '🔮',
-    description: '一词内产出3+种资源，最少那种+50%。',
+    description: '一词内产出3+种资源，最少那种+50%。基数/倍率在下一词生效。',
     rarity: 'rare',
     basePrice: 80,
     effects: [],
