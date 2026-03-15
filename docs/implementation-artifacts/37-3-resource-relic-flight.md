@@ -1,6 +1,6 @@
 # Story 37.3: 资源遗物接入飞行（relicAnchor）
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -293,8 +293,17 @@ Claude Opus 4.6
 ### Change Log
 
 - 2026-03-15: Implemented relicAnchor flight system + integrated 10 resource relic triggers (Story 37-3)
+- 2026-03-14: Code review fixes — glass cannon timer cancellation, black hole magnet skip, magnet throttle reset, tests
 
 ### File List
 
 - `src/src/systems/battle.ts` — Extended showFeedback/createFloatText with relicAnchor, refactored shared flight logic, integrated 10 relic trigger points
+- `src/tests/unit/systems/relic-anchor-flight.test.ts` — 新增 12 个测试（deferred sense bonus lifecycle, relicAnchor 结构验证, 资源映射覆盖）
 - `docs/implementation-artifacts/sprint-status.yaml` — Status tracking updates
+
+### Code Review Fixes
+
+- M1: `_glassCannonTimer` 存储 setTimeout ID，`clearFloatQueue()` 中取消，防止关卡结束后孤立回调
+- M2: 新增 `relic-anchor-flight.test.ts` 12 个测试
+- M3: 黑洞模式下 `score_magnet` 跳过 relicAnchor（避免错误飞行到 score-count + 虚假 bumpScore）
+- L1: `clearFloatQueue()` 中重置 `_lastMagnetFlightTime = 0`，防止跨关节流残留

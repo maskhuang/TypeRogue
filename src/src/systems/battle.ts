@@ -138,6 +138,7 @@ let wordBaseScore = 0; // 词语基础分（不含倍率）
 let prismActivated = false; // 倍率棱镜本关是否已显示激活反馈
 let lessIsMoreShown = false; // 少而精本关是否已显示激活反馈
 let _lastMagnetFlightTime = 0; // 分数磁铁飞行动画节流时间戳
+let _glassCannonTimer: ReturnType<typeof setTimeout> | null = null; // 玻璃大炮 phase 2 延时 ID
 let wordStartTime = 0; // T1遗物：词语开始时的剩余时间（用于完美韵律时间返还）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
 let lastScoreTier = ''; // 缓存上一次分数分级，避免每帧重启 CSS 动画 (Review M1)
@@ -455,12 +456,12 @@ function playerCorrect(k: string): void {
     } else {
       state.score += magnetBonus;
     }
-    const now = performance.now();
-    if (now - _lastMagnetFlightTime > 500) {
-      _lastMagnetFlightTime = now;
-      showFeedback(`🧲 +${magnetBonus}`, '#ffe66d', 0.6, undefined, { relicId: 'score_magnet', resource: 'score', amount: magnetBonus });
-    } else {
-      showFeedback(`🧲 +${magnetBonus}`, '#ffe66d', 0.6);
+    if (!isBlackHoleActive()) {
+      const now = performance.now();
+      if (now - _lastMagnetFlightTime > 500) {
+        _lastMagnetFlightTime = now;
+        showFeedback(`🧲 +${magnetBonus}`, '#ffe66d', 0.6, undefined, { relicId: 'score_magnet', resource: 'score', amount: magnetBonus });
+      }
     }
   }
 
@@ -762,8 +763,7 @@ function completeWord(): void {
     showFeedback(t('battle.rhythm_slow'), '#00ff88');
     setTimeout(() => {
       state.time += rhythmResult.timeBonus;
-      showFeedback(t('battle.rhythm_time', { value: rhythmResult.timeBonus }), '#00ff88');
-      bumpTimer();
+      showFeedback(t('battle.rhythm_time', { value: rhythmResult.timeBonus }), '#00ff88', undefined, undefined, { relicId: 'rhythm_adapt', resource: 'time', amount: rhythmResult.timeBonus });
     }, 300);
   }
   if (rhythmResult.scoreMult > 1) {
@@ -826,7 +826,8 @@ function completeWord(): void {
       const extraGain = wordGain;
       const doubledScore = wordStartScore + wordGain * 2;
       finalWordScore = doubledScore - prevScore;
-      setTimeout(() => {
+      _glassCannonTimer = setTimeout(() => {
+        _glassCannonTimer = null;
         showFeedback(t('battle.glass_double', { extra: extraGain }), '#ff4444', 1.3, undefined, { relicId: 'glass_cannon', resource: 'score', amount: extraGain });
         state.score = doubledScore;
         updateHUD();
@@ -1002,8 +1003,6 @@ function completeWord(): void {
   if (!isBlackHoleActive() && state.score >= state.targetScore) {
     // 立即停止计时器，防止评分动画期间时间继续走
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    // 隐藏结算面板，防止分数显示继续跳动
-    hideSettlement();
 
     // 计算 overkill：超出目标的总分数
     state.overkill = state.score - state.targetScore;
@@ -1025,11 +1024,10 @@ function completeWord(): void {
     return;
   }
 
-  // 遗物效果：完成词语时间加成
+  // 遗物效果：完成词语时间加成（当前 RELIC_MODIFIER_DEFS 为空，此分支不会触发）
   if (wordRelicResult.effects.time > 0) {
     state.time += wordRelicResult.effects.time;
     showFeedback(`+${wordRelicResult.effects.time.toFixed(1)}s`, '#00ff88', getFloatScale('time', wordRelicResult.effects.time));
-    bumpTimer();
   }
 
   setTimeout(() => {
@@ -2156,11 +2154,6 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
       startEl = getElements().playerRelics.children[idx] as HTMLElement | undefined;
       flightResource = relicAnchor.resource;
       flightAmount = relicAnchor.amount ?? 0;
-      // 闪光连线：从遗物图标到资源目标
-      if (startEl) {
-        const targetId = RESOURCE_TARGET_IDS[flightResource];
-        if (targetId) flashRelicLine(idx, targetId, color);
-      }
     }
   }
 
@@ -2182,11 +2175,13 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
       endY = targetRect.top + targetRect.height / 2 - containerRect.top;
     }
 
-    // 控制点：水平方向偏移制造弧线，垂直方向上抛
+    // 控制点：水平方向偏移制造弧线
     const midX = (startX + endX) / 2;
-    const midY = Math.min(startY, endY);
     const cpX = midX + (startX - endX) * 0.4;
-    const cpY = midY - 40;
+    // 遗物飞行向下抛物线（图标在顶部，向上会超出边界）；技能飞行向上抛物线
+    const cpY = relicAnchor
+      ? Math.max(startY, endY) + 40
+      : Math.min(startY, endY) - 40;
 
     // JS 驱动贝塞尔曲线动画
     el.style.position = 'absolute';
@@ -2342,6 +2337,11 @@ function clearFloatQueue(): void {
   floatQueue.length = 0;
   _pendingTimeBonus = 0;
   _pendingGoldBonus = 0;
+  _lastMagnetFlightTime = 0;
+  if (_glassCannonTimer) {
+    clearTimeout(_glassCannonTimer);
+    _glassCannonTimer = null;
+  }
   if (queueTimer) {
     clearTimeout(queueTimer);
     queueTimer = null;
