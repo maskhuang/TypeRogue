@@ -9,7 +9,7 @@ import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { t } from '../demo/demo-i18n';
 import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
-import { showFeedback, setPseudoInfiniteVisual } from './battle';
+import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor } from './battle';
 import { getFloatScale } from '../effects/juice';
 import { eventBus } from '../core/events/EventBus';
 import { routeFragmentsToInventory } from './classes/FragmentQueue';
@@ -168,15 +168,21 @@ export function clearPseudoInfinite(): void {
 }
 
 // === 触发技能（词条制） ===
-export function triggerSkill(skillId: string, triggerKey: string, _chainHistory?: string[]): void {
+export function triggerSkill(
+  skillId: string, triggerKey: string,
+  overrideAnchor?: { letterIndex?: number; fromElementId?: string },
+): void {
   if (state.affixSkills.has(skillId)) {
-    triggerAffixSkillWithFeedback(skillId, triggerKey);
+    triggerAffixSkillWithFeedback(skillId, triggerKey, overrideAnchor);
   }
   // 未知技能：静默忽略
 }
 
 // === 词条制技能触发 + 浮字反馈 ===
-function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): void {
+function triggerAffixSkillWithFeedback(
+  skillId: string, triggerKey: string,
+  overrideAnchor?: { letterIndex?: number; fromElementId?: string },
+): void {
   const skill = state.affixSkills.get(skillId)!;
 
   synergy.wordSkillCount++;
@@ -283,6 +289,22 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
   // Story 36.4: 爵士乐 — 追踪本词触发的词条类型
   trackWordAffixTypes(skill.affixes);
 
+  // Story 37.6: 缓存链式锚点（同一 triggerKey 只调一次 resolveChainAnchor，避免 random() 不一致）
+  const chainAnchorCache = new Map<string, { letterIndex?: number; fromElementId?: string }>();
+  function buildAnchor(trKey: string, resource: string, amount: number): { letterIndex?: number; fromElementId?: string; resource: string; amount: number } {
+    if (trKey !== triggerKey) {
+      let pos = chainAnchorCache.get(trKey);
+      if (!pos) { pos = resolveChainAnchor(trKey); chainAnchorCache.set(trKey, pos); }
+      return pos.fromElementId
+        ? { fromElementId: pos.fromElementId, resource, amount }
+        : { letterIndex: pos.letterIndex, resource, amount };
+    }
+    const letterIdx = overrideAnchor?.letterIndex ?? state.player.index;
+    return overrideAnchor?.fromElementId
+      ? { fromElementId: overrideAnchor.fromElementId, resource, amount }
+      : { letterIndex: letterIdx, resource, amount };
+  }
+
   // 浮字反馈：基于每次触发的结果
   for (const tr of result.triggerResults) {
     if (!tr.phase4) continue;
@@ -305,7 +327,7 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
 
     let prefix = '';
     if (tr.isCrit) prefix = '💥';
-    const anchor = { letterIndex: state.player.index, resource, amount };
+    const anchor = buildAnchor(tr.triggerKey, resource, amount);
     if (tr.isMultiplyOp) {
       showFeedback(`${prefix}×${displayValue}${label}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1), anchor);
     } else if (tr.isTabooPenalty) {
@@ -327,7 +349,8 @@ function triggerAffixSkillWithFeedback(skillId: string, triggerKey: string): voi
     const tmColor = RESOURCE_COLORS[tmRes] || '#e67e22';
     const tmLabel = getResourceLabel(tmRes);
     const tmDisplay = parseFloat(Math.abs(tmAmt).toPrecision(3));
-    showFeedback(`🔀+${tmDisplay}${tmLabel}`, tmColor, undefined, { letterIndex: state.player.index, resource: tmRes, amount: tmAmt });
+    const tmAnchor = buildAnchor(tr.triggerKey, tmRes, tmAmt);
+    showFeedback(`🔀+${tmDisplay}${tmLabel}`, tmColor, undefined, tmAnchor);
   }
 
   // 技能触发弹窗

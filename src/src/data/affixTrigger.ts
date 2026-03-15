@@ -149,6 +149,8 @@ export interface TriggerResult {
   phase5?: Phase5Result
   /** Phase 6 结果 */
   phase6?: Phase6Result
+  /** 本次触发的键位（链式飞行定位用） */
+  triggerKey: string
 }
 
 // ===== 辅助函数 =====
@@ -933,6 +935,7 @@ export function triggerAffixSkill(
     phase4: p4,
     phase5: p5,
     phase6: p6,
+    triggerKey: ctx.triggerKey,
   }
 }
 

@@ -375,7 +375,8 @@ development_status:
   epic-37: in-progress
   37-1-flash-line-system: done               # 闪光连线系统 RelicFlash
   37-2-helper-functions: done                  # 辅助函数 getRelicIndex
-  37-3-resource-relic-flight: backlog        # 资源遗物接入飞行 relicAnchor
-  37-4-chain-trigger-flight: backlog         # 连锁触发技能飞行定位
+  37-3-resource-relic-flight: review          # 资源遗物接入飞行 relicAnchor
+  37-4-chain-trigger-flight: done               # 连锁触发技能飞行定位
   37-5-non-resource-relic-feedback: backlog  # 非资源遗物触发反馈（标签+图标脉冲）
+  37-6-affix-chain-flight: done               # 词条链式触发飞行定位（溅射/共鸣/连接）
   epic-37-retrospective: optional

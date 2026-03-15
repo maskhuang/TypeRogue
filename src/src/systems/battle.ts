@@ -510,7 +510,15 @@ function playerCorrect(k: string): void {
     mult += synergy.skillMultBonus;
     state.multiplier = mult;
     if (skillId) {
-      triggerSkill(skillId, k);
+      // Story 37.4: 闪光连线 + 覆盖锚点（从遗物图标到刚输入的字母）
+      const echoIdx = getRelicIndex('echo_thimble');
+      const echoLetterIdx = state.player.index - 1;
+      if (echoIdx >= 0) {
+        const wordEl = getElements().word;
+        const letterEl = wordEl.children[echoLetterIdx] as HTMLElement | undefined;
+        if (letterEl) flashRelicLine(echoIdx, letterEl, '#4ecdc4');
+      }
+      triggerSkill(skillId, k, { letterIndex: echoLetterIdx });
     }
     showFeedback('Echo!', '#4ecdc4');
   }
@@ -534,11 +542,22 @@ function playerCorrect(k: string): void {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     // 用每个技能自身的绑定 key 触发
+    const detonateRelicIdx = getRelicIndex('combo_detonator');
     for (let i = 0; i < count; i++) {
       const sid = shuffled[i];
       const boundKey = [...state.player.bindings.entries()]
         .find(([, v]) => v === sid)?.[0] ?? k;
-      triggerSkill(sid, boundKey);
+      // Story 37.4: 计算锚点 + 闪光连线
+      const chainAnchor = resolveChainAnchor(boundKey);
+      if (detonateRelicIdx >= 0) {
+        if (chainAnchor.letterIndex !== undefined) {
+          const letterEl = getElements().word.children[chainAnchor.letterIndex] as HTMLElement | undefined;
+          if (letterEl) flashRelicLine(detonateRelicIdx, letterEl, '#ff6b00');
+        } else {
+          flashRelicLine(detonateRelicIdx, 'active-library', '#ff6b00');
+        }
+      }
+      triggerSkill(sid, boundKey, chainAnchor);
     }
     showFeedback(t('battle.detonate', { value: count }), '#ff6b00');
   }
@@ -864,8 +883,15 @@ function completeWord(): void {
 
   // Story 36.6: 全键风暴 — 每命中1个技能，随机触发1个未命中技能
   const stormTargets = checkKeyStorm(synergy.wordSkillCount, state.player.word, random);
-  for (const target of stormTargets) {
-    triggerSkill(target.skillId, target.key);
+  if (stormTargets.length > 0) {
+    // Story 37.4: 全键风暴触发的技能绑定键不在本词中，浮字从 active-library 生成
+    const stormRelicIdx = getRelicIndex('key_storm');
+    const stormAnchor = { fromElementId: 'active-library' };
+    // 闪光连线只发一次（所有目标都飞向同一个 active-library）
+    if (stormRelicIdx >= 0) flashRelicLine(stormRelicIdx, 'active-library', '#aa88ff');
+    for (const target of stormTargets) {
+      triggerSkill(target.skillId, target.key, stormAnchor);
+    }
   }
   if (stormTargets.length > 0) {
     showFeedback(t('battle.key_storm', { value: stormTargets.length }), '#aa88ff');
@@ -2038,7 +2064,7 @@ function renderActiveLibrary(): void {
 const FLOAT_POOL_SIZE = 20;
 const FLOAT_INTERVAL = 150; // 链式浮字间隔 ms
 let floatPool: HTMLDivElement[] = [];
-let floatQueue: Array<{ text: string; color: string; scale?: number; skillAnchor?: { letterIndex: number; resource: string; amount?: number }; relicAnchor?: { relicId: string; resource: string; amount?: number } }> = [];
+let floatQueue: Array<{ text: string; color: string; scale?: number; skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number }; relicAnchor?: { relicId: string; resource: string; amount?: number } }> = [];
 
 /** 飞行中待确认的资源加成 */
 let _pendingTimeBonus = 0;
@@ -2097,7 +2123,7 @@ function quadBezier(p0: number, p1: number, p2: number, t: number): number {
 }
 
 /** 创建一个浮字 */
-function createFloatText(text: string, color: string, scale = 1, skillAnchor?: { letterIndex: number; resource: string; amount?: number }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
+function createFloatText(text: string, color: string, scale = 1, skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
   const el = acquireFloat();
   if (!el) return; // 池满，跳过
 
@@ -2111,8 +2137,12 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
   let flightAmount = 0;
 
   if (skillAnchor) {
-    const wordEl = getElements().word;
-    startEl = wordEl.children[skillAnchor.letterIndex] as HTMLElement | undefined;
+    if (skillAnchor.letterIndex !== undefined) {
+      const wordEl = getElements().word;
+      startEl = wordEl.children[skillAnchor.letterIndex] as HTMLElement | undefined;
+    } else if (skillAnchor.fromElementId) {
+      startEl = document.getElementById(skillAnchor.fromElementId) ?? undefined;
+    }
     flightResource = skillAnchor.resource;
     flightAmount = skillAnchor.amount ?? 0;
   } else if (relicAnchor) {
@@ -2232,11 +2262,25 @@ function getRelicIndex(relicId: string): number {
   return [...state.player.relics].indexOf(relicId);
 }
 
-/** 遗物图标到目标 UI 的瞬间闪光连线 */
-function flashRelicLine(relicIndex: number, targetId: string, color: string): void {
+/** Story 37.4: 计算链式触发锚点（本词有绑定字母→字母索引，否则→active-library） */
+export function resolveChainAnchor(boundKey: string): { letterIndex?: number; fromElementId?: string } {
+  const word = state.player.word.toLowerCase();
+  const key = boundKey.toLowerCase();
+  const matchIndices: number[] = [];
+  for (let j = 0; j < word.length; j++) {
+    if (word[j] === key) matchIndices.push(j);
+  }
+  if (matchIndices.length > 0) {
+    return { letterIndex: matchIndices[Math.floor(random() * matchIndices.length)] };
+  }
+  return { fromElementId: 'active-library' };
+}
+
+/** 遗物图标到目标的瞬间闪光连线（target 可为元素 ID 字符串或直接 HTMLElement） */
+function flashRelicLine(relicIndex: number, target: string | HTMLElement, color: string): void {
   const el = getElements();
   const iconEl = el.playerRelics.children[relicIndex] as HTMLElement | undefined;
-  const targetEl = document.getElementById(targetId);
+  const targetEl = typeof target === 'string' ? document.getElementById(target) : target;
   if (!iconEl || !targetEl) return;
 
   const container = el.container;
@@ -2285,8 +2329,8 @@ function clearFloatQueue(): void {
   clearFlashLines();
 }
 
-/** 浮字反馈（scale 控制字体缩放，默认 1；skillAnchor 指定时从字母飞向资源 UI；relicAnchor 指定时从遗物图标飞向资源 UI） */
-export function showFeedback(txt: string, color: string, scale?: number, skillAnchor?: { letterIndex: number; resource: string; amount?: number }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
+/** 浮字反馈（scale 控制字体缩放，默认 1；skillAnchor 指定时从字母或指定元素飞向资源 UI；relicAnchor 指定时从遗物图标飞向资源 UI） */
+export function showFeedback(txt: string, color: string, scale?: number, skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
   floatQueue.push({ text: txt, color, scale, skillAnchor, relicAnchor });
   if (!queueTimer) drainQueue();
 }
