@@ -137,7 +137,6 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 let wordBaseScore = 0; // 词语基础分（不含倍率）
 let prismActivated = false; // 倍率棱镜本关是否已显示激活反馈
 let lessIsMoreShown = false; // 少而精本关是否已显示激活反馈
-let _lastMagnetFlightTime = 0; // 分数磁铁飞行动画节流时间戳
 let _glassCannonTimer: ReturnType<typeof setTimeout> | null = null; // 玻璃大炮 phase 2 延时 ID
 let wordStartTime = 0; // T1遗物：词语开始时的剩余时间（用于完美韵律时间返还）
 let settlementTimeouts: ReturnType<typeof setTimeout>[] = []; // 所有结算相关的定时器
@@ -148,6 +147,7 @@ let _pendingDeadlyGiftRelicPick = false; // 致命礼物：丰厚层级待弹遗
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
 let leftHandTriggered = false; // T5遗物：本词左手技能是否触发过
 let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
+let _battleRelicGold = 0; // 战斗中遗物产出的金币（用于结算面板）
 let wordStartScore = 0; // 玻璃大炮：记录词开始时总分（用于整词得分翻倍）
 
 // === 分数滚轮动画 (Story 31.4) ===
@@ -343,7 +343,9 @@ function handleEnterKey(e: KeyboardEvent): void {
     const reward = getDeadlyGiftReward(state.score, state.targetScore);
     if (reward.gold > 0) {
       state.gold += reward.gold;
-      showFeedback(t(`battle.deadly_gift_${reward.tier}`, { value: String(reward.gold) }), '#ffdd00');
+      state.resources.gold += reward.gold;
+      _battleRelicGold += reward.gold;
+      showFeedback(t(`battle.deadly_gift_${reward.tier}`, { value: String(reward.gold) }), '#ffdd00', undefined, undefined, { relicId: 'score_black_hole', resource: 'gold', amount: reward.gold });
     }
     // 高层级额外奖励
     if (reward.action === 'all_relics') {
@@ -438,7 +440,8 @@ function playerCorrect(k: string): void {
   // Story 36.3: 倍率棱镜 — 首次激活时反馈
   if (!prismActivated && state.player.relics.has('multiplier_prism') && state.multiplier >= 2.5) {
     prismActivated = true;
-    showFeedback(t('battle.prism_active'), '#66ccff');
+    showFeedback(t('battle.prism_active'), '#66ccff', undefined, { fromElementId: 'score-settlement', resource: 'settle' });
+    pulseRelicIcon('multiplier_prism', '#66ccff');
   }
 
   // 字母基础分（每个正确击键基础 1 分）
@@ -455,13 +458,7 @@ function playerCorrect(k: string): void {
       accumulateBlackHole(magnetBonus);
     } else {
       state.score += magnetBonus;
-    }
-    if (!isBlackHoleActive()) {
-      const now = performance.now();
-      if (now - _lastMagnetFlightTime > 500) {
-        _lastMagnetFlightTime = now;
-        showFeedback(`🧲 +${magnetBonus}`, '#ffe66d', 0.6, undefined, { relicId: 'score_magnet', resource: 'score', amount: magnetBonus });
-      }
+      showFeedback(`🧲 +${magnetBonus}`, '#ffe66d', 0.6, undefined, { relicId: 'score_magnet', resource: 'score', amount: magnetBonus });
     }
   }
 
@@ -493,12 +490,14 @@ function playerCorrect(k: string): void {
     triggerSkill(skillId, k);
     // Story 36.4: 首发强化反馈（每词第一个技能）
     if (synergy.wordSkillCount === 1 && state.player.relics.has('first_strike')) {
-      showFeedback(t('battle.first_strike'), '#ffaa00');
+      showFeedback(t('battle.first_strike'), '#ffaa00', undefined, { fromElementId: 'score-settlement', resource: 'settle' });
+      pulseRelicIcon('first_strike', '#ffaa00');
     }
     // Story 36.4: 少而精反馈（本关首次激活）
     if (!lessIsMoreShown && state.player.relics.has('less_is_more') && state.player.skills.size < 10) {
       lessIsMoreShown = true;
-      showFeedback(t('battle.less_is_more'), '#66ccff');
+      showFeedback(t('battle.less_is_more'), '#66ccff', undefined, { fromElementId: 'score-settlement', resource: 'settle' });
+      pulseRelicIcon('less_is_more', '#66ccff');
     }
   }
 
@@ -625,7 +624,7 @@ function playerWrong(): void {
   if (checkWaxSealForgive()) {
     letter?.classList.add('wrong');
     setTimeout(() => letter?.classList.remove('wrong'), 150);
-    showFeedback('🕯️', '#ff9500');
+    showFeedback('🕯️', '#ff9500', undefined, { letterIndex: state.player.index, resource: 'protect' });
     pulseRelicIcon('typing_wax_seal', '#ff9500');
     playSound('wrong');
     return; // 免除错误：不触发 on_error 管道、不断 combo、不触发玻璃大炮
@@ -685,7 +684,7 @@ function playerWrong(): void {
   state.lastMilestone = 0;
   synergy.skillMultBonus = 0;
   if (buffered > 0) {
-    showFeedback(t('battle.combo_buffer', { value: buffered }), '#4ecdc4');
+    showFeedback(t('battle.combo_buffer', { value: buffered }), '#4ecdc4', undefined, { letterIndex: state.player.index, resource: 'protect' });
     pulseRelicIcon('combo_buffer', '#4ecdc4');
     state.multiplier = state.player.baseMultiplier + buffered * state.player.comboBonus;
   } else {
@@ -753,7 +752,7 @@ function completeWord(): void {
   const jazzBonus = checkJazzBonus();
   if (jazzBonus > 0) {
     bonusMult += jazzBonus;
-    showFeedback(t('battle.jazz', { value: Math.round(jazzBonus * 100) }), '#ffaa00');
+    showFeedback(t('battle.jazz', { value: Math.round(jazzBonus * 100) }), '#ffaa00', undefined, { fromElementId: 'score-settlement', resource: 'settle' });
     pulseRelicIcon('jazz', '#ffaa00');
   }
 
@@ -767,7 +766,7 @@ function completeWord(): void {
     }, 300);
   }
   if (rhythmResult.scoreMult > 1) {
-    showFeedback(t('battle.rhythm_fast', { value: rhythmResult.scoreMult }), '#ffe66d');
+    showFeedback(t('battle.rhythm_fast', { value: rhythmResult.scoreMult }), '#ffe66d', undefined, { fromElementId: 'score-settlement', resource: 'settle' });
     pulseRelicIcon('rhythm_adapt', '#ffe66d');
   }
   bonusMult *= rhythmResult.scoreMult;
@@ -794,14 +793,15 @@ function completeWord(): void {
   const preShield = finalWordScore;
   finalWordScore = applyBaseShield(finalWordScore);
   if (finalWordScore > preShield) {
-    showFeedback(t('battle.base_shield', { value: String(finalWordScore) }), '#44ddaa', 0.6);
+    showFeedback(t('battle.base_shield', { value: String(finalWordScore) }), '#44ddaa', 0.6, { fromElementId: 'score-settlement', resource: 'settle' });
+    pulseRelicIcon('base_shield', '#44ddaa');
   }
   // Story 36.12: 雪球效应 — 每词得分递增 5%
   const preSnowball = finalWordScore;
   finalWordScore = applySnowball(finalWordScore);
   if (finalWordScore > preSnowball) {
     const pct = (getSnowballWordIndex() - 1) * 5;
-    showFeedback(t('battle.snowball', { value: String(pct) }), '#88ccff', 0.6);
+    showFeedback(t('battle.snowball', { value: String(pct) }), '#88ccff', 0.6, { fromElementId: 'score-settlement', resource: 'settle' });
     pulseRelicIcon('snowball', '#88ccff');
   }
 
@@ -946,6 +946,8 @@ function completeWord(): void {
   const collectionGold = checkWordCollection(state.player.word);
   if (collectionGold > 0) {
     state.gold += collectionGold;
+    state.resources.gold += collectionGold;
+    _battleRelicGold += collectionGold;
     showFeedback(`📚 +${collectionGold}💰`, '#ffe66d', undefined, undefined, { relicId: 'word_collection', resource: 'gold', amount: collectionGold });
   }
 
@@ -1132,9 +1134,9 @@ function showGoldReward(onComplete: () => void): void {
 
   // 计算奖励：基础100（结算时发放） + 技能产出 + 遗物加成
   let baseGold = 100;
-  const skillGold = Math.floor(state.resources.gold);
+  const skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
-  let relicGold = Math.floor(goldRelicResult.effects.gold);
+  let relicGold = Math.floor(goldRelicResult.effects.gold) + _battleRelicGold;
 
   // Story 36.8: 万物熔炉 — 覆盖默认金币计算
   const furnaceResult = checkUniversalFurnace();
@@ -1150,7 +1152,7 @@ function showGoldReward(onComplete: () => void): void {
   // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
   const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
   if (trophyGold > 0) {
-    showFeedback(t('battle.s_rank_trophy', { value: String(trophyGold), rating: state.battleStats?.rating || 'S' }), '#ffdd00');
+    showFeedback(t('battle.s_rank_trophy', { value: String(trophyGold), rating: state.battleStats?.rating || 'S' }), '#ffdd00', undefined, undefined, { relicId: 's_rank_trophy', resource: 'gold', amount: trophyGold });
   }
   const totalGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier * (1 + bountyBonus)) + trophyGold;
 
@@ -1584,6 +1586,7 @@ export async function startLevel(): Promise<void> {
   // 重置资源（在 timeMax 和 tempBuff 之后，确保 resources.time 使用正确的 timeMax）
   resetResources();
   state.resources.gold = 0;
+  _battleRelicGold = 0;
 
   // Story 36.2: 重置打字遗物关级别状态（已见单词等）
   resetTypingRelicState();
@@ -1653,6 +1656,8 @@ export async function startLevel(): Promise<void> {
   // cornucopia 等：战斗开始时金币加成
   if (startRelicResult.effects.gold > 0) {
     state.gold += startRelicResult.effects.gold;
+    state.resources.gold += startRelicResult.effects.gold;
+    _battleRelicGold += startRelicResult.effects.gold;
   }
   // 永动队列：战斗开始时自动采集完整一轮队列
   if (state.player.relics.has('perpetual_queue')) {
@@ -2165,7 +2170,9 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
     const containerRect = container.getBoundingClientRect();
     const startRect = startEl.getBoundingClientRect();
     const startX = startRect.left + startRect.width / 2 - containerRect.left;
-    const startY = startRect.top - containerRect.top - 30;
+    const startY = relicAnchor
+      ? startRect.bottom - containerRect.top + 10
+      : startRect.top - containerRect.top - 30;
 
     let endX = startX;
     let endY = startY - 60;
@@ -2193,6 +2200,7 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
     const floatEl = el;
     const dist = Math.hypot(endX - startX, endY - startY);
     const FLIGHT_SPEED = 0.35; // px/ms
+    const DWELL_TIME = 250; // 起点停顿时间（ms），让玩家看清数字
     const duration = Math.max(250, Math.min(800, dist / FLIGHT_SPEED));
     const startTime = performance.now();
     const baseScale = scale;
@@ -2205,12 +2213,24 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
 
     function animateCurve(now: number) {
       const elapsed = now - startTime;
-      const t = Math.min(elapsed / duration, 1);
+      const flightElapsed = Math.max(0, elapsed - DWELL_TIME);
+      const tLinear = Math.min(flightElapsed / duration, 1);
+      // easeInOutCubic：停顿后平滑起步 → 中段加速 → 到达前减速
+      const t = tLinear < 0.5
+        ? 4 * tLinear * tLinear * tLinear
+        : 1 - Math.pow(-2 * tLinear + 2, 3) / 2;
 
       const x = quadBezier(startX, cpX, endX, t);
       const y = quadBezier(startY, cpY, endY, t);
-      const s = baseScale * (1.1 - 0.4 * t);
-      const alpha = t < 0.15 ? t / 0.15 : t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1;
+      // 停顿期间微弹放大，飞行中逐渐缩小
+      const dwellProgress = Math.min(elapsed / DWELL_TIME, 1);
+      const dwellScale = elapsed < DWELL_TIME
+        ? 1 + 0.15 * Math.sin(dwellProgress * Math.PI)
+        : 1;
+      const s = baseScale * dwellScale * (1.1 - 0.4 * t);
+      // 淡入 → 停顿可见 → 飞行末段淡出
+      const alpha = elapsed < DWELL_TIME ? Math.min(1, elapsed / 80)
+        : t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1;
 
       floatEl.style.left = x + 'px';
       floatEl.style.top = y + 'px';
@@ -2337,7 +2357,6 @@ function clearFloatQueue(): void {
   floatQueue.length = 0;
   _pendingTimeBonus = 0;
   _pendingGoldBonus = 0;
-  _lastMagnetFlightTime = 0;
   if (_glassCannonTimer) {
     clearTimeout(_glassCannonTimer);
     _glassCannonTimer = null;
