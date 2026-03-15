@@ -122,6 +122,7 @@ export function rollAffixParams(
   resource: ResourceType,
   convertVariant?: 'cross' | 'self',
   availableResources?: ResourceType[],
+  sharedPosRel?: PositionRelation,
 ): AffixInstance {
   const pool = availableResources ?? GENERIC_RESOURCES
   switch (type) {
@@ -161,34 +162,34 @@ export function rollAffixParams(
       return { type, chance: 0.5, critMult: 2.0 }
 
     case AffixType.Cascade: {
-      const posRel = pickRandom(ALL_POS_RELATIONS)
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
       return { type, posRel, cascadeMult: roundTo(1.8 + random() * 0.7, 2) }
     }
 
     case AffixType.Void: {
-      const posRel = pickRandom(ALL_POS_RELATIONS)
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
       return { type, posRel, bonusPerSlot: VOID_BONUS_TABLE[posRel] }
     }
 
     case AffixType.Resonance: {
       // 共鸣词条：监听特定资源类型，范围内技能产出该资源时自动触发
-      const posRel = pickRandom(ALL_POS_RELATIONS)
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
       const watchResource = pickRandom(pool)
       return { type, posRel, resource: watchResource }
     }
 
     case AffixType.Mirror:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS) }
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
     case AffixType.Link: {
       // 感应词条：随机选一个词条类型作为监听目标（排除自身 + 权重<5 的词条）
       const watchCandidates = Object.values(AffixType).filter(t => t !== AffixType.Link && getAffixWeight(t) >= 5)
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), watchAffix: pickRandom(watchCandidates) }
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), watchAffix: pickRandom(watchCandidates) }
     }
 
     case AffixType.Splash: {
       // 溅射词条：触发后随机触发范围内1个匹配的技能（按资源或词条过滤）
-      const posRel = pickRandom(ALL_POS_RELATIONS)
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
       if (random() < 0.5) {
         // 资源变体：只触发产出指定资源的技能
         return { type, posRel, resource: pickRandom(pool) }
@@ -200,7 +201,7 @@ export function rollAffixParams(
     }
 
     case AffixType.Amplify:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), resource, valuePerStack: 0.02 }
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), resource, valuePerStack: 0.02 }
 
     case AffixType.Outcast:
       return { type, bonusPercent: roundTo(0.4 + random() * 0.4, 2) }
@@ -259,8 +260,11 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
   // 加权不重复抽取 rarity 个词条
   const samples = weightedSampleWithout(rarity)
 
+  // 同一技能共享同一个 posRel
+  const sharedPosRel = pickRandom(ALL_POS_RELATIONS)
+
   // 每个词条掷参数
-  const affixes = samples.map(s => rollAffixParams(s.type, resource, s.convertVariant, pool))
+  const affixes = samples.map(s => rollAffixParams(s.type, resource, s.convertVariant, pool, sharedPosRel))
 
   // 自动命名
   const name = generateName(resource, affixes)

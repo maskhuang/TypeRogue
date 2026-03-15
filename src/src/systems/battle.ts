@@ -38,7 +38,8 @@ import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
-import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent } from '../data/affixTrigger';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent, resolveMirrorCopy } from '../data/affixTrigger';
+import { AffixType } from '../data/affixes';
 import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
@@ -84,10 +85,11 @@ export function applyChaosSeedEnchantments(): void {
         skill.transmuteResource = eligible[Math.floor(random() * eligible.length)];
       }
     }
-    // ApprenticeNeighbor：随机分配位置关系
+    // ApprenticeNeighbor：复用技能已有词条的 posRel，否则随机
     if (chosen === EnchantmentTypeEnum.ApprenticeNeighbor) {
       const allRels = Object.values(PositionRelation);
-      skill.neighborPosRel = allRels[Math.floor(random() * allRels.length)];
+      const existing = skill.affixes.find(a => a.posRel != null)?.posRel;
+      skill.neighborPosRel = existing ?? allRels[Math.floor(random() * allRels.length)];
     }
     chaosSeedEnchantments.set(skillId, chosen);
   }
@@ -1327,6 +1329,28 @@ function endLevel(): void {
       if (!rt) continue;
       applyApprenticeEvent('stageCleared', rt, skill.enchantmentIds, _sgm);
       applyQuestEvent('stageCleared', rt, skill.enchantmentIds, _ssi);
+    }
+
+    // Mirror 词条复制：每关结束时刷新
+    for (const [, skill] of state.affixSkills) {
+      if (!skill.affixes.some(a => a.type === AffixType.Mirror)) continue;
+      const rt = state.affixSkillStates.get(skill.id);
+      if (!rt) continue;
+      let boundKey: string | undefined;
+      for (const [key, sid] of state.player.bindings) {
+        if (sid === skill.id) { boundKey = key; break; }
+      }
+      if (!boundKey) continue;
+      rt.mirrorCopiedAffix = resolveMirrorCopy(skill, rt, {
+        triggerKey: boundKey,
+        currentWord: '',
+        resources: { base: 0, score: 0, multiplier: 1, time: 0, gold: 0, fragment: 0, mutagen: 0 },
+        classResourceProduced: {},
+        bindings: state.player.bindings,
+        skillStates: state.affixSkillStates,
+        allSkills: state.affixSkills,
+        randomFn: random,
+      });
     }
 
     trackEvent('demo_stage_complete', { stage: state.level, score: state.score });

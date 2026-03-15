@@ -43,7 +43,7 @@ import { IS_DEMO } from '../demo/demo-config';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
-import type { SkillRarity } from '../data/affixes';
+import type { SkillRarity, AffixType } from '../data/affixes';
 import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, getQuestCompletions, countEmptySlots } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_NAMES, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
@@ -104,6 +104,21 @@ function getActMaxRarity(): SkillRarity {
   return 3 as SkillRarity;                  // Act3+: 0~3
 }
 
+/** 收集玩家已装备技能拥有的所有词条类型（去重，排除 link/splash 自身） */
+function collectPlayerAffixTypes(): AffixType[] {
+  const types = new Set<AffixType>();
+  for (const [, skillId] of state.player.bindings) {
+    const affix = state.affixSkills.get(skillId);
+    if (!affix) continue;
+    for (const a of affix.affixes) {
+      if (a.type !== 'link' && a.type !== 'splash') {
+        types.add(a.type as AffixType);
+      }
+    }
+  }
+  return [...types];
+}
+
 /** 生成单个词条制技能商品（避免与已有技能重名） */
 export function generateAffixShopItem(
   itemId: number,
@@ -147,6 +162,17 @@ export function generateAffixShopItem(
       );
       if (hasMatch) break;
       skill = generateSkill({ resource, rarity: skill.rarity as SkillRarity, availableResources: resourcePool });
+    }
+  }
+  // === Link/Splash watchAffix 偏向：50% 概率引用玩家已有词条类型 ===
+  if (skill.rarity > 0) {
+    const playerAffixTypes = collectPlayerAffixTypes();
+    if (playerAffixTypes.length > 0) {
+      for (const affix of skill.affixes) {
+        if ((affix.type === 'link' || affix.type === 'splash') && affix.watchAffix && random() < 0.5) {
+          affix.watchAffix = playerAffixTypes[Math.floor(random() * playerAffixTypes.length)];
+        }
+      }
     }
   }
   const cost = getAdjustedPrice(calculateAffixSkillPrice(skill.rarity, skill.level, rollPriceFluctuation()));
@@ -268,12 +294,20 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
 } {
   const affixInfo: AffixTooltipInfo[] = skill.affixes
     .filter(a => !excludeTypes || !excludeTypes.has(a.type))
-    .map(a => ({
-      typeName: t('affix.' + a.type),
-      typeKey: a.type,
-      paramSummary: buildAffixParamSummary(a),
-      description: t('affix_desc.' + a.type),
-    }))
+    .map(a => {
+      let desc = t('affix_desc.' + a.type);
+      // Mirror: tooltip 显示当前复制的词条
+      if (a.type === 'mirror' && rt?.mirrorCopiedAffix) {
+        const copied = rt.mirrorCopiedAffix;
+        desc += ` [${t('affix.' + copied.type)}: ${buildAffixParamSummary(copied)}]`;
+      }
+      return {
+        typeName: t('affix.' + a.type),
+        typeKey: a.type,
+        paramSummary: buildAffixParamSummary(a),
+        description: desc,
+      };
+    })
 
   // 附魔列表
   const enchantments: Array<{ icon: string; name: string; desc: string; color: string }> = [];
@@ -1024,9 +1058,16 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       tooltipData.skill!.affixInfo = fields.affixInfo;
       tooltipData.skill!.enchantments = fields.enchantments;
       keyTooltip.show(e.clientX, e.clientY, tooltipData);
+      // Link/Splash watchAffix 高亮
+      for (const affix of skill.affixes) {
+        if ((affix.type === 'link' || affix.type === 'splash') && affix.watchAffix) {
+          highlightWatchAffixKeys(affix.watchAffix);
+        }
+      }
     });
     card.addEventListener('mouseleave', () => {
       keyTooltip.hide();
+      clearRangeHighlight();
     });
   }
 
@@ -1705,6 +1746,11 @@ function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: import(
   return null;
 }
 
+/** 获取技能已有词条的共享 posRel（任一即可，因已统一） */
+function getSkillPosRel(skill: import('../data/affixes').AffixSkillInstance): PositionRelation | undefined {
+  return skill.affixes.find(a => a.posRel != null)?.posRel;
+}
+
 /** 词条制技能随机附魔（蜕变师路径） */
 function applyAffixRandomEnchantment(
   skillId: string,
@@ -1721,10 +1767,10 @@ function applyAffixRandomEnchantment(
       affixSkill.transmuteResource = eligible[Math.floor(random() * eligible.length)];
     }
   }
-  // ApprenticeNeighbor：随机分配位置关系
+  // ApprenticeNeighbor：复用技能已有词条的 posRel，否则随机
   if (chosen === EnchantmentTypeEnum.ApprenticeNeighbor) {
     const allRels = Object.values(PositionRelation);
-    affixSkill.neighborPosRel = allRels[Math.floor(random() * allRels.length)];
+    affixSkill.neighborPosRel = getSkillPosRel(affixSkill) ?? allRels[Math.floor(random() * allRels.length)];
   }
   const info = getEnchantmentDisplayInfo(chosen, affixSkill.transmuteResource, affixSkill.neighborPosRel);
   if (info) {
@@ -1765,8 +1811,8 @@ function renderAffixEnchantmentModal(
         expandedCandidates.push({ enchType, transmuteRes: res });
       }
     } else if (enchType === EnchantmentTypeEnum.ApprenticeNeighbor) {
-      // 预分配随机位置关系
-      const rel = ALL_POS_RELS[Math.floor(random() * ALL_POS_RELS.length)];
+      // 预分配位置关系：复用技能已有词条的 posRel，否则随机
+      const rel = getSkillPosRel(affixSkill) ?? ALL_POS_RELS[Math.floor(random() * ALL_POS_RELS.length)];
       expandedCandidates.push({ enchType, neighborRel: rel });
     } else {
       expandedCandidates.push({ enchType });
@@ -1916,6 +1962,23 @@ function clearRangeHighlight(): void {
     (el as HTMLElement).style.background = '';
     (el as HTMLElement).style.boxShadow = '';
   });
+}
+
+/** 高亮所有装备了包含指定词条类型的技能的键位 */
+function highlightWatchAffixKeys(watchAffix: AffixType): void {
+  const color = AFFIX_COLORS[watchAffix] || '#ffe66d';
+  for (const [key, skillId] of state.player.bindings) {
+    const affix = state.affixSkills.get(skillId);
+    if (!affix) continue;
+    const hasMatch = affix.affixes.some(a => a.type === watchAffix);
+    if (!hasMatch) continue;
+    const el = document.querySelector(`.key-slot[data-key="${key}"]`) as HTMLElement | null;
+    if (!el) continue;
+    el.classList.add('range-highlight');
+    el.style.borderColor = color;
+    el.style.background = hexToRgba(color, 0.15);
+    el.style.boxShadow = `0 0 8px ${hexToRgba(color, 0.3)}`;
+  }
 }
 
 /** 计算范围高亮键位+源键位的包围盒（用于tooltip避让） */
@@ -2094,6 +2157,10 @@ export function renderBuildManager(): void {
                     document.querySelector(`.key-slot[data-key="${rk}"]`)?.classList.add('void-range-empty');
                   }
                 });
+              }
+              // Link/Splash watchAffix 高亮（叠加在范围高亮之上）
+              if ((affix.type === 'link' || affix.type === 'splash') && affix.watchAffix) {
+                highlightWatchAffixKeys(affix.watchAffix);
               }
             }
           }
