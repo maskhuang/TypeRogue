@@ -625,6 +625,7 @@ function playerWrong(): void {
     letter?.classList.add('wrong');
     setTimeout(() => letter?.classList.remove('wrong'), 150);
     showFeedback('🕯️', '#ff9500');
+    pulseRelicIcon('typing_wax_seal', '#ff9500');
     playSound('wrong');
     return; // 免除错误：不触发 on_error 管道、不断 combo、不触发玻璃大炮
   }
@@ -684,6 +685,7 @@ function playerWrong(): void {
   synergy.skillMultBonus = 0;
   if (buffered > 0) {
     showFeedback(t('battle.combo_buffer', { value: buffered }), '#4ecdc4');
+    pulseRelicIcon('combo_buffer', '#4ecdc4');
     state.multiplier = state.player.baseMultiplier + buffered * state.player.comboBonus;
   } else {
     state.multiplier = state.player.baseMultiplier;
@@ -751,6 +753,7 @@ function completeWord(): void {
   if (jazzBonus > 0) {
     bonusMult += jazzBonus;
     showFeedback(t('battle.jazz', { value: Math.round(jazzBonus * 100) }), '#ffaa00');
+    pulseRelicIcon('jazz', '#ffaa00');
   }
 
   // Story 36.2: 节奏适应 — 根据单词用时给予时间或分数奖励
@@ -765,6 +768,7 @@ function completeWord(): void {
   }
   if (rhythmResult.scoreMult > 1) {
     showFeedback(t('battle.rhythm_fast', { value: rhythmResult.scoreMult }), '#ffe66d');
+    pulseRelicIcon('rhythm_adapt', '#ffe66d');
   }
   bonusMult *= rhythmResult.scoreMult;
 
@@ -798,6 +802,7 @@ function completeWord(): void {
   if (finalWordScore > preSnowball) {
     const pct = (getSnowballWordIndex() - 1) * 5;
     showFeedback(t('battle.snowball', { value: String(pct) }), '#88ccff', 0.6);
+    pulseRelicIcon('snowball', '#88ccff');
   }
 
   // 显示 Balatro 风格完成动画
@@ -2274,6 +2279,25 @@ export function resolveChainAnchor(boundKey: string): { letterIndex?: number; fr
     return { letterIndex: matchIndices[Math.floor(random() * matchIndices.length)] };
   }
   return { fromElementId: 'active-library' };
+}
+
+/** Story 37.5: 遗物图标脉冲动画（非资源遗物触发反馈） */
+function pulseRelicIcon(relicId: string, color?: string): void {
+  const idx = getRelicIndex(relicId);
+  if (idx < 0) return;
+  const el = getElements().playerRelics.children[idx] as HTMLElement | undefined;
+  if (!el) return;
+  if (color) el.style.setProperty('--pulse-color', color);
+  // CSS animation 重启：移除再添加 class（无需 reflow）
+  el.classList.remove('relic-pulse');
+  // requestAnimationFrame 确保浏览器在下一帧重新启动动画
+  requestAnimationFrame(() => {
+    el.classList.add('relic-pulse');
+    el.addEventListener('animationend', () => {
+      el.classList.remove('relic-pulse');
+      el.style.removeProperty('--pulse-color');
+    }, { once: true });
+  });
 }
 
 /** 遗物图标到目标的瞬间闪光连线（target 可为元素 ID 字符串或直接 HTMLElement） */
