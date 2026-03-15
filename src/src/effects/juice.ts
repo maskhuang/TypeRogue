@@ -281,18 +281,6 @@ export function checkMilestone(prevScore: number, newScore: number): MilestoneTi
 export function showMilestoneCelebration(tier: MilestoneTier): void {
   const el = getElements();
 
-  // 文字弹出
-  const popup = document.createElement('div');
-  popup.className = 'milestone-popup';
-  const text = document.createElement('div');
-  text.className = 'milestone-text';
-  text.textContent = tier.label;
-  text.style.fontSize = `${tier.fontSize}px`;
-  text.style.color = tier.color;
-  popup.appendChild(text);
-  el.container.appendChild(popup);
-  setTimeout(() => popup.remove(), 1200);
-
   // 屏幕闪光
   screenFlash(tier.flashColor, tier.flashOpacity);
 

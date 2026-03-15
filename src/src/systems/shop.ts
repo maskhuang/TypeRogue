@@ -690,6 +690,42 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
           }
         }
       }
+      // === 蓝紫橙保底升级 ===
+      const UPGRADE_GUARANTEE_BASE = 0.30;
+      const UPGRADE_GUARANTEE_PER_CYCLE = 0.15;
+      const upgradeChance = Math.min(1.0, UPGRADE_GUARANTEE_BASE + UPGRADE_GUARANTEE_PER_CYCLE * (state.cycle - 1));
+
+      // 仅当正常碰撞没产生蓝+升级时触发
+      const hasBlueUpgrade = affixItems.some(i => i.isUpgrade && i.affixSkill && i.affixSkill.rarity >= 1);
+      if (!hasBlueUpgrade && random() < upgradeChance) {
+        // 收集可升级的蓝+技能
+        const candidates: Array<{ skillId: string; affix: AffixSkillInstance }> = [];
+        for (const [skillId, skillData] of state.player.skills) {
+          const affix = state.affixSkills.get(skillId);
+          if (!affix || affix.rarity < 1) continue;
+          if (convertedSkillIds.has(skillId)) continue;
+          const cap = (hasUK && affix.enchantmentIds.length === 0) ? Infinity : levelCap;
+          if (skillData.level >= cap) continue;
+          candidates.push({ skillId, affix });
+        }
+        if (candidates.length > 0) {
+          const pick = candidates[Math.floor(random() * candidates.length)];
+          const nextLevel = state.player.skills.get(pick.skillId)!.level + 1;
+          // 替换第一个非升级项
+          const replaceIdx = affixItems.findIndex(i => !i.isUpgrade);
+          if (replaceIdx >= 0) {
+            affixItems[replaceIdx] = {
+              ...affixItems[replaceIdx],
+              skillId: pick.skillId,
+              affixSkill: { ...pick.affix, level: nextLevel },
+              cost: getAdjustedPrice(calculateAffixSkillPrice(pick.affix.rarity, nextLevel, rollPriceFluctuation())),
+              isUpgrade: true,
+            };
+            convertedSkillIds.add(pick.skillId);
+          }
+        }
+      }
+
       skillPool.push(...affixItems);
     }
   }
@@ -1368,8 +1404,20 @@ function purchaseShopRelicItem(index: number): void {
     playSound('buy');
     // Story 36.4: 集训手册 — 购买时一次性升级所有 Lv.1 技能
     if (relicId === 'training_manual') {
-      const upgraded = applyTrainingManual();
-      if (upgraded > 0) showFeedback(`📖 ${upgraded}个技能升至Lv.2!`, '#00ff88');
+      const upgradedIds = applyTrainingManual();
+      if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}个技能升至Lv.2!`, '#00ff88');
+      // 早期觉醒互动：升至 Lv.2 的技能触发附魔检查（链式弹窗）
+      if (upgradedIds.length > 0) {
+        const pending = [...upgradedIds];
+        const processNext = () => {
+          const id = pending.shift();
+          if (id) {
+            _enchantmentOnClose = processNext;
+            checkAutoEnchantment(id);
+          }
+        };
+        processNext();
+      }
     }
     // Story 36.6: 行会勋章 — 购买时随机选行
     if (relicId === 'row_medal') {
@@ -1394,8 +1442,19 @@ function purchaseShopRelicItem(index: number): void {
         state.shop.items.splice(index, 1);
         // Story 36.4: 集训手册 — 替换购买时也触发一次性升级
         if (relicId === 'training_manual') {
-          const upgraded = applyTrainingManual();
-          if (upgraded > 0) showFeedback(`📖 ${upgraded}个技能升至Lv.2!`, '#00ff88');
+          const upgradedIds = applyTrainingManual();
+          if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}个技能升至Lv.2!`, '#00ff88');
+          if (upgradedIds.length > 0) {
+            const pending = [...upgradedIds];
+            const processNext = () => {
+              const id = pending.shift();
+              if (id) {
+                _enchantmentOnClose = processNext;
+                checkAutoEnchantment(id);
+              }
+            };
+            processNext();
+          }
         }
         // Story 36.6: 行会勋章 — 替换购买时也随机选行
         if (relicId === 'row_medal') {

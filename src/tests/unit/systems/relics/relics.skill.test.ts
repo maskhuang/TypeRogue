@@ -132,8 +132,8 @@ describe('技能系统遗物行为 (Story 36.4)', () => {
       setupSkill('s1', 1)
       setupSkill('s2', 1)
       setupSkill('s3', 1)
-      const count = applyTrainingManual()
-      expect(count).toBe(3)
+      const ids = applyTrainingManual()
+      expect(ids.length).toBe(3)
       expect(state.player.skills.get('s1')?.level).toBe(2)
       expect(state.player.skills.get('s2')?.level).toBe(2)
       expect(state.player.skills.get('s3')?.level).toBe(2)
@@ -144,15 +144,15 @@ describe('技能系统遗物行为 (Story 36.4)', () => {
 
     it('Lv.2 不变', () => {
       setupSkill('s1', 2)
-      const count = applyTrainingManual()
-      expect(count).toBe(0)
+      const ids = applyTrainingManual()
+      expect(ids.length).toBe(0)
       expect(state.player.skills.get('s1')?.level).toBe(2)
     })
 
     it('Lv.3 不变', () => {
       setupSkill('s1', 3)
-      const count = applyTrainingManual()
-      expect(count).toBe(0)
+      const ids = applyTrainingManual()
+      expect(ids.length).toBe(0)
       expect(state.player.skills.get('s1')?.level).toBe(3)
     })
 
@@ -160,16 +160,16 @@ describe('技能系统遗物行为 (Story 36.4)', () => {
       setupSkill('s1', 1)
       setupSkill('s2', 2)
       setupSkill('s3', 3)
-      const count = applyTrainingManual()
-      expect(count).toBe(1)
+      const ids = applyTrainingManual()
+      expect(ids.length).toBe(1)
       expect(state.player.skills.get('s1')?.level).toBe(2)
       expect(state.player.skills.get('s2')?.level).toBe(2)
       expect(state.player.skills.get('s3')?.level).toBe(3)
     })
 
-    it('空技能集 → 返回 0', () => {
-      const count = applyTrainingManual()
-      expect(count).toBe(0)
+    it('空技能集 → 返回空数组', () => {
+      const ids = applyTrainingManual()
+      expect(ids.length).toBe(0)
     })
 
     it('AC6: 获取后新技能不自动升级', () => {

@@ -40,19 +40,19 @@ export function getLessIsMoreBonus(): number {
 
 /**
  * 应用集训手册效果 — 一次性将所有 Lv.1 技能升至 Lv.2
- * @returns 升级的技能数量
+ * @returns 升级的技能 ID 列表
  */
-export function applyTrainingManual(): number {
-  let upgraded = 0
+export function applyTrainingManual(): string[] {
+  const upgradedIds: string[] = []
   for (const [skillId, data] of state.player.skills) {
     if (data.level === 1) {
       data.level = 2
       const affixSkill = state.affixSkills.get(skillId)
       if (affixSkill) affixSkill.level = 2
-      upgraded++
+      upgradedIds.push(skillId)
     }
   }
-  return upgraded
+  return upgradedIds
 }
 
 // === 爵士乐 (jazz) ===

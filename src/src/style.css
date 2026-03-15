@@ -250,6 +250,7 @@ body {
 
 #word-zone.scroll-active #word-display {
     transition: none; /* 禁用 ease-out 避免抖动 */
+    will-change: transform; /* GPU 加速 */
 }
 
 #scroll-arrow {
@@ -1141,12 +1142,12 @@ body {
     100% { opacity: 0; }
 }
 
-/* 连击里程碑弹窗 */
+/* 连击里程碑弹窗（锚定在分数显示下方） */
 .milestone-popup {
     position: absolute;
-    top: 50%;
+    top: 100%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, 0);
     text-align: center;
     z-index: 300;
     animation: milestonePop 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -1170,25 +1171,25 @@ body {
 @keyframes milestonePop {
     0% {
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.3) rotate(-10deg);
+        transform: translate(-50%, 0) scale(0.3) rotate(-10deg);
     }
     15% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1.2) rotate(3deg);
+        transform: translate(-50%, 0) scale(1.2) rotate(3deg);
     }
     30% {
-        transform: translate(-50%, -50%) scale(0.95) rotate(-2deg);
+        transform: translate(-50%, 0) scale(0.95) rotate(-2deg);
     }
     45% {
-        transform: translate(-50%, -50%) scale(1.05) rotate(1deg);
+        transform: translate(-50%, 0) scale(1.05) rotate(1deg);
     }
     70% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        transform: translate(-50%, 0) scale(1) rotate(0deg);
     }
     100% {
         opacity: 0;
-        transform: translate(-50%, -50%) scale(1.5) rotate(0deg);
+        transform: translate(-50%, 0) scale(1.5) rotate(0deg);
     }
 }
 
@@ -1200,7 +1201,7 @@ body {
 /* 完美词语弹窗 */
 .perfect-popup {
     position: absolute;
-    top: 35%;
+    top: 55%;
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 48px;
@@ -1310,7 +1311,7 @@ body {
 
 .level-announce {
     position: absolute;
-    top: 35%;
+    top: 55%;
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 42px;

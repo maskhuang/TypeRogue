@@ -353,16 +353,6 @@ function triggerAffixSkillWithFeedback(
     showFeedback(`🔀+${tmDisplay}${tmLabel}`, tmColor, undefined, tmAnchor);
   }
 
-  // 技能触发弹窗
-  const el = getElements();
-  const p = document.createElement('div');
-  p.className = 'skill-trigger-popup';
-  if (result.triggerResults.some(r => r.isCrit)) p.classList.add('crit-trigger');
-  p.innerHTML = `<span class="trigger-icon">${skill.icon}</span>`;
-  p.style.left = (Math.random() * 60 - 30) + 'px';
-  el.triggerZone.appendChild(p);
-  setTimeout(() => p.remove(), 350);
-
   // 事件总线通知
   eventBus.emit('skill:triggered', {
     key: triggerKey,

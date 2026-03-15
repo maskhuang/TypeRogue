@@ -570,6 +570,8 @@ let scrollOffset = 0
 let scrollActive = false
 let scrollMissFlags: boolean[] = []
 let scrollArrowEl: HTMLElement | null = null
+let scrollRafId: number | null = null
+let scrollLastTime = 0
 
 export function isScrollActive(): boolean {
   return scrollActive
@@ -577,9 +579,17 @@ export function isScrollActive(): boolean {
 
 export function initScrollWord(len: number): void {
   scrollMissFlags = new Array(len).fill(false)
-  // 让词语从箭头右侧开始：初始偏移 = -(半个词宽 + 缓冲)
   const wordEl = document.getElementById('word-display')
   if (wordEl) {
+    // 随机化字母间距，让滚动节奏有变化
+    const letters = wordEl.children
+    for (let i = 0; i < letters.length; i++) {
+      const el = letters[i] as HTMLElement
+      if (!el.classList.contains('letter')) continue
+      // 最后一个字母不加右边距
+      el.style.marginRight = i < len - 1 ? `${Math.round(4 + random() * 20)}px` : '0'
+    }
+    // 让词语从箭头右侧开始：初始偏移 = -(半个词宽 + 缓冲)
     const halfWidth = wordEl.scrollWidth / 2
     scrollOffset = -(halfWidth + 40) // 额外 40px 缓冲让玩家看到第一个字母接近
   } else {
@@ -634,9 +644,30 @@ const bossScroll: BossModifier = {
       scrollArrowEl.textContent = '▼'
       zone.insertBefore(scrollArrowEl, zone.firstChild)
     }
+    // 启动 rAF 渲染循环
+    scrollLastTime = performance.now()
+    function scrollRender(now: number) {
+      if (!scrollActive) return
+      const dt = (now - scrollLastTime) / 1000
+      scrollLastTime = now
+      const params = getActiveParams()
+      if (params?.scrollSpeed) {
+        scrollOffset += params.scrollSpeed * dt
+        const wordEl = document.getElementById('word-display')
+        if (wordEl) {
+          wordEl.style.transform = `translateX(${-scrollOffset}px)`
+        }
+      }
+      scrollRafId = requestAnimationFrame(scrollRender)
+    }
+    scrollRafId = requestAnimationFrame(scrollRender)
   },
   cleanup: () => {
     scrollActive = false
+    if (scrollRafId !== null) {
+      cancelAnimationFrame(scrollRafId)
+      scrollRafId = null
+    }
     scrollOffset = 0
     scrollMissFlags = []
     if (scrollArrowEl) {
@@ -648,15 +679,8 @@ const bossScroll: BossModifier = {
     const wordEl = document.getElementById('word-display')
     if (wordEl) wordEl.style.transform = ''
   },
-  onTick(dt: number) {
-    if (!scrollActive) return
-    const params = getActiveParams()
-    if (!params?.scrollSpeed) return
-    scrollOffset += params.scrollSpeed * dt
-    const wordEl = document.getElementById('word-display')
-    if (wordEl) {
-      wordEl.style.transform = `translateX(${-scrollOffset}px)`
-    }
+  onTick(_dt: number) {
+    // 滚动渲染已由 rAF 驱动，此处无需操作
   },
 }
 
@@ -835,6 +859,7 @@ export function onMirrorWordComplete(): 'recorded' | 'survived' | 'inactive' {
   if (_mirrorPhase === 'recording') {
     _mirrorRecordedTime = (Date.now() - _mirrorWordStart) / 1000
     _mirrorPhase = 'challenging'
+    _mirrorWordStart = Date.now() // 立即重置计时，避免 onTick 在 setWord 之前判定超时
     return 'recorded'
   }
   if (_mirrorPhase === 'challenging') {

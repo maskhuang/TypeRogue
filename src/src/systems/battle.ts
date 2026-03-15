@@ -624,7 +624,6 @@ function playerWrong(): void {
   if (checkWaxSealForgive()) {
     letter?.classList.add('wrong');
     setTimeout(() => letter?.classList.remove('wrong'), 150);
-    showFeedback('🕯️', '#ff9500', undefined, { letterIndex: state.player.index, resource: 'protect' });
     pulseRelicIcon('typing_wax_seal', '#ff9500');
     playSound('wrong');
     return; // 免除错误：不触发 on_error 管道、不断 combo、不触发玻璃大炮
@@ -684,7 +683,6 @@ function playerWrong(): void {
   state.lastMilestone = 0;
   synergy.skillMultBonus = 0;
   if (buffered > 0) {
-    showFeedback(t('battle.combo_buffer', { value: buffered }), '#4ecdc4', undefined, { letterIndex: state.player.index, resource: 'protect' });
     pulseRelicIcon('combo_buffer', '#4ecdc4');
     state.multiplier = state.player.baseMultiplier + buffered * state.player.comboBonus;
   } else {
@@ -793,7 +791,6 @@ function completeWord(): void {
   const preShield = finalWordScore;
   finalWordScore = applyBaseShield(finalWordScore);
   if (finalWordScore > preShield) {
-    showFeedback(t('battle.base_shield', { value: String(finalWordScore) }), '#44ddaa', 0.6, { fromElementId: 'score-settlement', resource: 'settle' });
     pulseRelicIcon('base_shield', '#44ddaa');
   }
   // Story 36.12: 雪球效应 — 每词得分递增 5%
@@ -1813,7 +1810,6 @@ export async function startLevel(): Promise<void> {
     demoWordQueue = [...DEMO_FIRST_STAGE_WORDS];
   }
 
-  setWord();
   updateHUD();
   renderRelicDisplay();
   renderActiveLibrary();
@@ -1828,7 +1824,13 @@ export async function startLevel(): Promise<void> {
   }
 
   initFloatPool();
+  getElements().word.innerHTML = ''; // 清空上一关残留单词
   announceLevel();
+
+  // Level 提示消失后再开始关卡
+  await new Promise<void>(resolve => setTimeout(resolve, 1500));
+
+  setWord();
 
   // Demo 第一关：启动新手引导
   if (IS_DEMO && state.level === 1) {
@@ -2222,12 +2224,14 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
 
       const x = quadBezier(startX, cpX, endX, t);
       const y = quadBezier(startY, cpY, endY, t);
-      // 停顿期间微弹放大，飞行中逐渐缩小
+      // 停顿期间从小到大弹出，飞行中逐渐缩小
       const dwellProgress = Math.min(elapsed / DWELL_TIME, 1);
-      const dwellScale = elapsed < DWELL_TIME
-        ? 1 + 0.15 * Math.sin(dwellProgress * Math.PI)
+      // easeOutBack: 从 0 弹到 1，略微过冲
+      const growT = 1 - Math.pow(1 - dwellProgress, 3);
+      const overshoot = elapsed < DWELL_TIME
+        ? growT * (1 + 0.2 * Math.sin(dwellProgress * Math.PI))
         : 1;
-      const s = baseScale * dwellScale * (1.1 - 0.4 * t);
+      const s = baseScale * overshoot * (1.1 - 0.4 * t);
       // 淡入 → 停顿可见 → 飞行末段淡出
       const alpha = elapsed < DWELL_TIME ? Math.min(1, elapsed / 80)
         : t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1;
