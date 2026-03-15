@@ -458,6 +458,22 @@ export function filterEnchantmentsByClass(
   return candidates.filter(e => !ALL_CLASS_RESTRICTED.has(e) || allowedSet.has(e))
 }
 
+/**
+ * 按职业过滤分类附魔候选。对每个类别分别应用 filterEnchantmentsByClass。
+ */
+export function filterCategorizedByClass(
+  categorized: import('./affixTrigger').CategorizedEnchantments,
+  playerClass?: string,
+): import('./affixTrigger').CategorizedEnchantments {
+  const f = (arr: EnchantmentType[]) => filterEnchantmentsByClass(arr, playerClass)
+  return {
+    apprentice: f(categorized.apprentice),
+    quest: f(categorized.quest),
+    transmute: f(categorized.transmute),
+    operator: f(categorized.operator),
+  }
+}
+
 // ===== 事件类型（学徒/任务附魔可监听） =====
 
 export type AffixEventId =

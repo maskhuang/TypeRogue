@@ -1127,15 +1127,23 @@ export function filterQuestCandidates(skill: AffixSkillInstance): EnchantmentTyp
     .map(([enchType]) => enchType)
 }
 
-/**
- * 返回技能可获取的全部附魔候选列表（学徒+任务+衍生+运算符）。
- * 排除已装备的附魔。职业过滤由外部 filterEnchantmentsByClass 处理。
- */
-export function filterEnchantmentCandidates(skill: AffixSkillInstance): EnchantmentType[] {
-  const existingEnchs = new Set(skill.enchantmentIds)
-  const candidates: EnchantmentType[] = []
+// ===== 分类候选 + 两层加权抽取 =====
 
-  // 1. 学徒附魔（12 个，无词条要求）
+export interface CategorizedEnchantments {
+  apprentice: EnchantmentType[]
+  quest: EnchantmentType[]
+  transmute: EnchantmentType[]
+  operator: EnchantmentType[]
+}
+
+/**
+ * 返回按四大类分组的附魔候选（学徒/任务/衍生/运算符）。
+ * 排除已装备的附魔。职业过滤由外部处理。
+ */
+export function categorizeEnchantmentCandidates(skill: AffixSkillInstance): CategorizedEnchantments {
+  const existingEnchs = new Set(skill.enchantmentIds)
+
+  // 学徒附魔（无词条要求）
   const apprenticeTypes: EnchantmentType[] = [
     EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeNeighbor,
     EnchantmentType.ApprenticeWord, EnchantmentType.ApprenticeProc,
@@ -1143,27 +1151,44 @@ export function filterEnchantmentCandidates(skill: AffixSkillInstance): Enchantm
     EnchantmentType.ApprenticeCombo, EnchantmentType.ApprenticeStage,
     EnchantmentType.ApprenticeHarvest, EnchantmentType.ApprenticeAdapt,
   ]
-  for (const t of apprenticeTypes) {
-    if (!existingEnchs.has(t)) candidates.push(t)
-  }
+  const apprentice = apprenticeTypes.filter(t => !existingEnchs.has(t))
 
-  // 2. 任务附魔（需匹配词条）
-  const questCandidates = filterQuestCandidates(skill)
-  for (const t of questCandidates) {
-    candidates.push(t)
-  }
+  // 任务附魔（需匹配词条）
+  const quest = filterQuestCandidates(skill)
 
-  // 3. 衍生附魔（1 个枚举值，资源变体运行时展开）
-  if (!existingEnchs.has(EnchantmentType.Transmute)) {
-    candidates.push(EnchantmentType.Transmute)
-  }
+  // 衍生附魔
+  const transmute: EnchantmentType[] = !existingEnchs.has(EnchantmentType.Transmute)
+    ? [EnchantmentType.Transmute] : []
 
-  // 4. 运算符（1 个）
-  if (!existingEnchs.has(EnchantmentType.MultiplyOperator)) {
-    candidates.push(EnchantmentType.MultiplyOperator)
-  }
+  // 运算符
+  const operator: EnchantmentType[] = !existingEnchs.has(EnchantmentType.MultiplyOperator)
+    ? [EnchantmentType.MultiplyOperator] : []
 
-  return candidates
+  return { apprentice, quest, transmute, operator }
+}
+
+/**
+ * 两层加权抽取：先等权抽四大类，再在类内等权抽具体附魔。
+ * 空类跳过，权重均分给剩余类。
+ */
+export function weightedPickEnchantment(
+  categorized: CategorizedEnchantments,
+  randomFn: () => number = Math.random,
+): EnchantmentType | null {
+  const categories = [categorized.apprentice, categorized.quest, categorized.transmute, categorized.operator]
+    .filter(c => c.length > 0)
+  if (categories.length === 0) return null
+  const chosen = categories[Math.floor(randomFn() * categories.length)]
+  return chosen[Math.floor(randomFn() * chosen.length)]
+}
+
+/**
+ * 返回技能可获取的全部附魔候选列表（学徒+任务+衍生+运算符）。
+ * 排除已装备的附魔。职业过滤由外部 filterEnchantmentsByClass 处理。
+ */
+export function filterEnchantmentCandidates(skill: AffixSkillInstance): EnchantmentType[] {
+  const c = categorizeEnchantmentCandidates(skill)
+  return [...c.apprentice, ...c.quest, ...c.transmute, ...c.operator]
 }
 
 /**

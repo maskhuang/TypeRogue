@@ -44,9 +44,10 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity, AffixType } from '../data/affixes';
-import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, getQuestCompletions, countEmptySlots } from '../data/affixTrigger';
-import { filterEnchantmentsByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_NAMES, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH } from '../data/affixes';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, getQuestCompletions, countEmptySlots, categorizeEnchantmentCandidates, weightedPickEnchantment } from '../data/affixTrigger';
+import { filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_NAMES, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
+import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment, getUncrownedKingBaseValue } from './relics/SkillRelicBehaviors';
 import { getEnchantmentChoiceCount, getMinEnchantmentLevel, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier } from './relics/EnchantmentRelicBehaviors';
@@ -1536,18 +1537,17 @@ function checkAutoEnchantment(skillId: string): void {
     // Story 36.5: 附魔锚点 — 额外槽位加成
     const slotCount = getEnchantmentSlotCount(affixSkill, getEnchantAnchorSlotBonus());
     if (affixSkill.enchantmentIds.length >= slotCount) return;
-    const candidates = filterEnchantmentsByClass(
-      filterEnchantmentCandidates(affixSkill),
-      state.classId !== 'none' ? state.classId : undefined,
-    );
-    if (candidates.length === 0) return;
+    const playerClass = state.classId !== 'none' ? state.classId : undefined;
+    const categorized = filterCategorizedByClass(categorizeEnchantmentCandidates(affixSkill), playerClass);
+    const flat = [...categorized.apprentice, ...categorized.quest, ...categorized.transmute, ...categorized.operator];
+    if (flat.length === 0) return;
     // 职业门控：蜕变师失去附魔选择权 → 随机附魔
     if (!isFeatureEnabled('enchant-choice')) {
-      applyAffixRandomEnchantment(skillId, affixSkill, candidates);
+      applyAffixRandomEnchantment(skillId, affixSkill, categorized);
       renderUnifiedShop();
       renderBuildManager();
     } else {
-      renderAffixEnchantmentModal(skillId, affixSkill, candidates);
+      renderAffixEnchantmentModal(skillId, affixSkill, categorized);
     }
     return;
   }
@@ -1755,9 +1755,10 @@ function getSkillPosRel(skill: import('../data/affixes').AffixSkillInstance): Po
 function applyAffixRandomEnchantment(
   skillId: string,
   affixSkill: import('../data/affixes').AffixSkillInstance,
-  candidates: EnchantmentType[],
+  categorized: CategorizedEnchantments,
 ): void {
-  const chosen = candidates[Math.floor(random() * candidates.length)];
+  const chosen = weightedPickEnchantment(categorized, random);
+  if (!chosen) return;
   affixSkill.enchantmentIds.push(chosen);
   // Transmute：随机分配目标资源
   if (chosen === EnchantmentTypeEnum.Transmute) {
@@ -1787,7 +1788,7 @@ function applyAffixRandomEnchantment(
 function renderAffixEnchantmentModal(
   skillId: string,
   affixSkill: import('../data/affixes').AffixSkillInstance,
-  candidates: EnchantmentType[],
+  categorized: CategorizedEnchantments,
 ): void {
   _enchantmentOnClose = null;
   const modal = document.getElementById('enchantment-modal');
@@ -1797,36 +1798,58 @@ function renderAffixEnchantmentModal(
   if (!modal || !titleEl || !branchesEl || !cancelBtn) return;
 
   const playerClass = state.classId !== 'none' ? state.classId : undefined;
+  const candidates = [...categorized.apprentice, ...categorized.quest, ...categorized.transmute, ...categorized.operator];
 
-  // 预处理候选：展开 Transmute 资源变体 + ApprenticeNeighbor 位置关系
-  type ShownCandidate = { enchType: EnchantmentType; transmuteRes?: import('../core/types').ResourceType; neighborRel?: PositionRelation };
+  // 预处理候选：展开 Transmute 资源变体 + ApprenticeNeighbor 位置关系，并标记类别
+  type CategoryKey = 'apprentice' | 'quest' | 'transmute' | 'operator';
+  type ShownCandidate = { enchType: EnchantmentType; category: CategoryKey; transmuteRes?: import('../core/types').ResourceType; neighborRel?: PositionRelation };
   const ALL_POS_RELS = Object.values(PositionRelation);
+
+  // 建立 enchType → category 映射
+  const enchToCat = new Map<EnchantmentType, CategoryKey>();
+  for (const e of categorized.apprentice) enchToCat.set(e, 'apprentice');
+  for (const e of categorized.quest) enchToCat.set(e, 'quest');
+  for (const e of categorized.transmute) enchToCat.set(e, 'transmute');
+  for (const e of categorized.operator) enchToCat.set(e, 'operator');
+
   const expandedCandidates: ShownCandidate[] = [];
   for (const enchType of candidates) {
+    const cat = enchToCat.get(enchType)!;
     if (enchType === EnchantmentTypeEnum.Transmute) {
       const eligible = getTransmuteEligibleResources(affixSkill.resource, playerClass);
       if (eligible.length > 0) {
-        // 随机选一个资源作为此候选的展示
         const res = eligible[Math.floor(random() * eligible.length)];
-        expandedCandidates.push({ enchType, transmuteRes: res });
+        expandedCandidates.push({ enchType, category: cat, transmuteRes: res });
       }
     } else if (enchType === EnchantmentTypeEnum.ApprenticeNeighbor) {
-      // 预分配位置关系：复用技能已有词条的 posRel，否则随机
       const rel = getSkillPosRel(affixSkill) ?? ALL_POS_RELS[Math.floor(random() * ALL_POS_RELS.length)];
-      expandedCandidates.push({ enchType, neighborRel: rel });
+      expandedCandidates.push({ enchType, category: cat, neighborRel: rel });
     } else {
-      expandedCandidates.push({ enchType });
+      expandedCandidates.push({ enchType, category: cat });
     }
+  }
+
+  // 按类别分组（用于两层加权抽取）
+  const expandedByCategory = new Map<CategoryKey, ShownCandidate[]>();
+  for (const sc of expandedCandidates) {
+    let arr = expandedByCategory.get(sc.category);
+    if (!arr) { arr = []; expandedByCategory.set(sc.category, arr); }
+    arr.push(sc);
   }
 
   // Story 36.5: 命运三岔 — 候选数由遗物决定（默认 2，持有 fate_fork → 3）
   const maxBranches = getEnchantmentChoiceCount();
   const shown = expandedCandidates.length <= maxBranches ? expandedCandidates : (() => {
     const picked: ShownCandidate[] = [];
-    const pool = [...expandedCandidates];
-    while (picked.length < maxBranches && pool.length > 0) {
-      const idx = Math.floor(random() * pool.length);
-      const candidate = pool.splice(idx, 1)[0];
+    const nonEmptyCategories = [...expandedByCategory.values()].filter(a => a.length > 0);
+    while (picked.length < maxBranches && nonEmptyCategories.length > 0) {
+      // 两层加权：先等权选类别，再类内等权选候选
+      const catIdx = Math.floor(random() * nonEmptyCategories.length);
+      const catPool = nonEmptyCategories[catIdx];
+      const idx = Math.floor(random() * catPool.length);
+      const candidate = catPool.splice(idx, 1)[0];
+      // 类别池耗尽则移除
+      if (catPool.length === 0) nonEmptyCategories.splice(catIdx, 1);
       // dedupe by enchType + transmuteRes
       if (!picked.some(p => p.enchType === candidate.enchType && p.transmuteRes === candidate.transmuteRes)) {
         picked.push(candidate);

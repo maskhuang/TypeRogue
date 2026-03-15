@@ -38,9 +38,9 @@ import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
-import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent, resolveMirrorCopy } from '../data/affixTrigger';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent, resolveMirrorCopy, categorizeEnchantmentCandidates, weightedPickEnchantment } from '../data/affixTrigger';
 import { AffixType } from '../data/affixes';
-import { filterEnchantmentsByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
+import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
 import { initDemoTutorial } from '../demo/demo-tutorial';
@@ -71,12 +71,9 @@ export function applyChaosSeedEnchantments(): void {
     if (skill.enchantmentIds.length > 0) continue;
     // Story 36.4: 无冕之王 — 不给无附魔技能添加临时附魔
     if (hasUncrownedKing()) continue;
-    const candidates = filterEnchantmentsByClass(
-      filterEnchantmentCandidates(skill),
-      playerClass,
-    );
-    if (candidates.length === 0) continue;
-    const chosen = candidates[Math.floor(random() * candidates.length)];
+    const categorized = filterCategorizedByClass(categorizeEnchantmentCandidates(skill), playerClass);
+    const chosen = weightedPickEnchantment(categorized, random);
+    if (!chosen) continue;
     skill.enchantmentIds.push(chosen);
     // Transmute：随机分配目标资源
     if (chosen === EnchantmentTypeEnum.Transmute) {
