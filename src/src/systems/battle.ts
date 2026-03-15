@@ -439,7 +439,6 @@ function playerCorrect(k: string): void {
   // Story 36.3: 倍率棱镜 — 首次激活时反馈
   if (!prismActivated && state.player.relics.has('multiplier_prism') && state.multiplier >= 2.5) {
     prismActivated = true;
-    showFeedback(t('battle.prism_active'), '#66ccff', undefined, { fromElementId: 'score-settlement', resource: 'settle' });
     pulseRelicIcon('multiplier_prism', '#66ccff');
   }
 
@@ -489,13 +488,11 @@ function playerCorrect(k: string): void {
     triggerSkill(skillId, k);
     // Story 36.4: 首发强化反馈（每词第一个技能）
     if (synergy.wordSkillCount === 1 && state.player.relics.has('first_strike')) {
-      showFeedback(t('battle.first_strike'), '#ffaa00', undefined, { fromElementId: 'score-settlement', resource: 'settle' });
       pulseRelicIcon('first_strike', '#ffaa00');
     }
     // Story 36.4: 少而精反馈（本关首次激活）
     if (!lessIsMoreShown && state.player.relics.has('less_is_more') && state.player.skills.size < 10) {
       lessIsMoreShown = true;
-      showFeedback(t('battle.less_is_more'), '#66ccff', undefined, { fromElementId: 'score-settlement', resource: 'settle' });
       pulseRelicIcon('less_is_more', '#66ccff');
     }
   }
@@ -519,7 +516,6 @@ function playerCorrect(k: string): void {
       }
       triggerSkill(skillId, k, { letterIndex: echoLetterIdx });
     }
-    showFeedback('Echo!', '#4ecdc4');
   }
 
   // Story 36.3: 节奏医生 — 每 10 combo +1s（在 combo++ 和 echo combo++ 之后检查）
