@@ -41,12 +41,7 @@ export function showDemoEndScreen(stats: DemoStats): void {
       <div class="demo-end-features">
         <h3>${t('demo_end.features_title')}</h3>
         <ul>
-          <li>${t('demo_end.f1')}</li>
-          <li>${t('demo_end.f2')}</li>
-          <li>${t('demo_end.f3')}</li>
-          <li>${t('demo_end.f4')}</li>
-          <li>${t('demo_end.f5')}</li>
-          <li>${t('demo_end.f6')}</li>
+          ${[1,2,3,4,5,6].map(i => t('demo_end.f' + i)).filter(s => s).map(s => `<li>${s}</li>`).join('')}
         </ul>
       </div>
       <div class="demo-end-actions">

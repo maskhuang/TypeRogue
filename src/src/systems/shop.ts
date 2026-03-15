@@ -38,6 +38,7 @@ import { CLASS_DEFINITIONS } from '../data/classes';
 import { isFeatureEnabled, getFeatureLostReason } from './classes/ClassFeatureGate';
 import { renderCraftPanel, resetCraftInput } from './classes/CraftingStation';
 import { renderMetamorphPanel } from './classes/MetamorphStation';
+import { eventBus } from '../core/events/EventBus';
 import type { DragPayload } from './dragManager';
 import { IS_DEMO } from '../demo/demo-config';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
@@ -84,8 +85,11 @@ export function rollPriceFluctuation(): number {
 
 // RARITY_COLORS 从 affixes.ts 导入（白/蓝/黄/橙 四级稀有度边框颜色）
 
-// 使用 affixes.ts 的 RARITY_NAMES 作为单一来源；此处别名保持兼容
-const RARITY_LABELS = RARITY_NAMES as Record<number, string>;
+// 稀有度标签（i18n 优先，RARITY_NAMES 作为 fallback）
+const RARITY_KEYS = ['common', 'rare', 'epic', 'legendary'] as const;
+function rarityLabel(rarity: number): string {
+  return t('shop.rarity.' + (RARITY_KEYS[rarity] ?? 'common')) || RARITY_NAMES[rarity as SkillRarity] || '?';
+}
 
 /** 职业可用资源池（排除非对应职业的 fragment/mutagen） */
 function getAvailableResources(classId: string): ResourceType[] {
@@ -563,6 +567,7 @@ function formatEstimate(v: number): string {
 // === 打开商店 ===
 export function openShop(_won: boolean): void {
   state.phase = 'shop';
+  eventBus.emit('shop:opened');
   const el = getElements();
 
   // 遗物效果：通过管道解析 on_battle_end 金币加成
@@ -923,7 +928,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
     // 词条制技能卡片（Story 35.9 AC3）
     const affix = item.affixSkill;
     const rarityColor = RARITY_COLORS[affix.rarity] || '#ffffff';
-    const rarityLabel = RARITY_LABELS[affix.rarity] || '普通';
+    const rLabel = rarityLabel(affix.rarity);
     const affixNames = affix.affixes.map(a => t('affix.' + a.type)).join(' · ');
     const lvl = state.player.skills.get(item.skillId!)?.level || affix.level;
 
@@ -938,11 +943,11 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       <div class="reward-icon">${affix.icon}</div>
       <div class="reward-info">
         <div class="reward-name">${nameLabel}</div>
-        <div class="reward-desc affix-list">${affixNames || '无词条'}</div>
+        <div class="reward-desc affix-list">${affixNames || t('shop.no_affix')}</div>
         ${!item.isUpgrade && affix.level > 1 ? `<div class="affix-level">Lv.${affix.level}</div>` : ''}
       </div>
       ${costHtml}
-      <div class="reward-type" style="color:${rarityColor}">${item.isUpgrade ? '升级' : rarityLabel}</div>
+      <div class="reward-type" style="color:${rarityColor}">${item.isUpgrade ? t('shop.upgrade') : rLabel}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
   } else if (item.type === 'pack' && item.pack) {
@@ -950,7 +955,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
     const pack = item.pack;
     const preview = pack.words.join(', ');
     const packRarityColor = RARITY_COLORS[pack.rarity] || '#ffffff';
-    const packRarityLabel = RARITY_LABELS[pack.rarity] || '普通';
+    const packRarityLabel = rarityLabel(pack.rarity);
 
     card.classList.add('pack-card');
     card.style.borderColor = packRarityColor;
@@ -1022,7 +1027,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       const skill = item.affixSkill!;
       const baseVals = skill.baseValues;
       const resIcon = RESOURCE_ICONS[skill.resource] || '';
-      const resName = RESOURCE_NAMES[skill.resource] || skill.resource;
+      const resName = t('resource.' + skill.resource) || RESOURCE_NAMES[skill.resource] || skill.resource;
       const baseVal = getEffectiveBaseValue(baseVals, skill.level);
       const skillHasMultOp = skill.enchantmentIds.includes(EnchantmentTypeEnum.MultiplyOperator as string);
       const multOpBase = skillHasMultOp
@@ -1032,9 +1037,9 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       let baseValuesText: string;
       if (skillHasMultOp) {
         const mv = MULTIPLY_OPERATOR_BASE_VALUES[skill.resource];
-        baseValuesText = `乘算产出: Lv.1=×${mv?.[0]} / Lv.2=×${mv?.[1]} / Lv.3=×${mv?.[2]}`;
+        baseValuesText = t('tooltip.base_values_mult', { v1: mv?.[0], v2: mv?.[1], v3: mv?.[2] });
       } else {
-        baseValuesText = `基础产出: Lv.1=${baseVals[0]} / Lv.2=${baseVals[1]} / Lv.3=${baseVals[2]}`;
+        baseValuesText = t('tooltip.base_values_add', { v1: baseVals[0], v2: baseVals[1], v3: baseVals[2] });
         if (hasUncrownedKing() && skill.level > 3) {
           baseValuesText += ` / Lv.${skill.level}=${baseVal}`;
         }
@@ -1045,7 +1050,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
           icon: skill.icon,
           description: skillHasMultOp ? `${resIcon}${resName}×${multOpBase}` : `${resIcon}${resName}+${baseVal}`,
           level: skill.level,
-          school: RARITY_LABELS[skill.rarity] ?? '普通',
+          school: rarityLabel(skill.rarity),
           schoolCssClass: `rarity-${skill.rarity}`,
           baseValuesText,
         },
@@ -1053,7 +1058,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       if (item.isUpgrade) {
         const curLv = skill.level - 1;
         const curBase = getEffectiveBaseValue(baseVals, curLv);
-        tooltipData.skill!.upgradeInfo = `升级 Lv.${curLv} → Lv.${skill.level}　基础产出 ${curBase} → ${baseVal}`;
+        tooltipData.skill!.upgradeInfo = t('tooltip.upgrade_info', { from: curLv, to: skill.level, oldVal: curBase, newVal: baseVal });
       }
       const fields = buildAffixTooltipFields(skill);
       tooltipData.skill!.affixInfo = fields.affixInfo;
@@ -1163,7 +1168,7 @@ function buildComparisonColumn(skill: AffixSkillInstance, label: string, otherSk
   const rarityDiv = document.createElement('div');
   const rarityColor = skill.rarity > otherSkill.rarity ? '#2ecc71' : skill.rarity < otherSkill.rarity ? '#e74c3c' : '#ccc';
   rarityDiv.style.cssText = `color:${rarityColor};`;
-  rarityDiv.textContent = `${RARITY_LABELS[skill.rarity]} Lv.${skill.level}`;
+  rarityDiv.textContent = `${rarityLabel(skill.rarity)} Lv.${skill.level}`;
   col.appendChild(rarityDiv);
 
   // 词条列表（对方没有的词条类型→蓝色标注为"新增"）
@@ -2145,7 +2150,7 @@ export function renderBuildManager(): void {
           const rt = state.affixSkillStates.get(skillId);
           const baseVal = getEffectiveBaseValue(affixSkill.baseValues, affixSkill.level);
           const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
-          const resName = RESOURCE_NAMES[affixSkill.resource] || affixSkill.resource;
+          const resName = t('resource.' + affixSkill.resource) || RESOURCE_NAMES[affixSkill.resource] || affixSkill.resource;
           const kbHasMultOp = affixSkill.enchantmentIds.includes(EnchantmentTypeEnum.MultiplyOperator as string);
           const kbMultOpBase = kbHasMultOp
             ? (MULTIPLY_OPERATOR_BASE_VALUES[affixSkill.resource]?.[affixSkill.level - 1] ?? baseVal)
@@ -2155,7 +2160,7 @@ export function renderBuildManager(): void {
             icon: affixSkill.icon,
             description: kbHasMultOp ? `${resIcon}${resName}×${kbMultOpBase}` : `${resIcon}${resName}+${baseVal}`,
             level: affixSkill.level,
-            school: RARITY_LABELS[affixSkill.rarity] ?? '普通',
+            school: rarityLabel(affixSkill.rarity),
             schoolCssClass: `rarity-${affixSkill.rarity}`,
           };
           const estimate = computeSmartEstimate(affixSkill, rt, k);
@@ -2227,13 +2232,13 @@ export function renderBuildManager(): void {
     {
       // 词条制技能渲染
       const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#ffffff';
-      const rarityLabel = RARITY_LABELS[affixSkill.rarity] || '普通';
+      const rLabel = rarityLabel(affixSkill.rarity);
       const affixNames = affixSkill.affixes.map(a => t('affix.' + a.type)).join('·');
       item.style.borderColor = rarityColor;
       item.innerHTML = `
         <span class="inv-icon">${affixSkill.icon}</span>
         <span class="inv-name">${affixSkill.name}</span>
-        <span class="inv-school" style="color:${rarityColor}">${rarityLabel}</span>
+        <span class="inv-school" style="color:${rarityColor}">${rLabel}</span>
         ${data.level > 1 ? `<span class="inv-level">Lv.${data.level}</span>` : ''}
         ${affixNames ? `<span class="inv-affixes" style="color:#888;font-size:10px;">${affixNames}</span>` : ''}
         ${boundKey ? `<span class="inv-key">[${boundKey.toUpperCase()}]</span>` : ''}
@@ -2245,7 +2250,7 @@ export function renderBuildManager(): void {
         const rt = state.affixSkillStates.get(skillId);
         const baseVal = getEffectiveBaseValue(affixSkill.baseValues, affixSkill.level);
         const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
-        const resName = RESOURCE_NAMES[affixSkill.resource] || affixSkill.resource;
+        const resName = t('resource.' + affixSkill.resource) || RESOURCE_NAMES[affixSkill.resource] || affixSkill.resource;
         const invHasMultOp = affixSkill.enchantmentIds.includes(EnchantmentTypeEnum.MultiplyOperator as string);
         const invMultOpBase = invHasMultOp
           ? (MULTIPLY_OPERATOR_BASE_VALUES[affixSkill.resource]?.[affixSkill.level - 1] ?? baseVal)
@@ -2256,7 +2261,7 @@ export function renderBuildManager(): void {
             icon: affixSkill.icon,
             description: invHasMultOp ? `${resIcon}${resName}×${invMultOpBase}` : `${resIcon}${resName}+${baseVal}`,
             level: affixSkill.level,
-            school: rarityLabel,
+            school: rLabel,
             schoolCssClass: `rarity-${affixSkill.rarity}`,
           },
         };
@@ -2776,11 +2781,6 @@ function initStatsTabs(): void {
     if (metamorphTab) metamorphTab.style.display = '';
   } else {
     if (metamorphTab) metamorphTab.style.display = 'none';
-  }
-
-  // Demo: 隐藏词包标签
-  if (IS_DEMO && wordsTab) {
-    wordsTab.style.display = 'none';
   }
 
   switchTab('build');

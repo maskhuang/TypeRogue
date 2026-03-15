@@ -66,7 +66,7 @@ const NODE_BATTLE_NUMBER: Record<number, number> = IS_DEMO
 
 /** 精英关节点 → 修饰器序号映射 */
 const ELITE_MODIFIER_INDEX: Record<number, number> = IS_DEMO
-  ? { 3: 0 }  // Demo 仅 1 个精英关
+  ? DEMO_STAGE_MAP.eliteModifierIndex
   : {
     3: 0,  // 修饰器 A
     6: 1,  // 修饰器 B

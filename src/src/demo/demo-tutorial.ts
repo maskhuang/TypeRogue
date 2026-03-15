@@ -25,7 +25,7 @@ function showTip(text: string, anchorId: string): void {
   tipEl.style.left = `${rect.left + rect.width / 2 - 160}px`
   tipEl.style.top = `${rect.bottom + 12}px`
 
-  // 3 秒后自动消失
+  // 4 秒后自动消失
   setTimeout(removeTip, 4000)
 }
 
@@ -47,23 +47,25 @@ export function initDemoTutorial(): void {
     showTip(t('tutorial.step1'), 'word-display')
   }, 1000)
 
-  // Step 2: 首次触发技能后提示键盘高亮
-  const onSkill = () => {
+  // Step 2: 首次完成一个词后提示技能资源
+  const onWord = () => {
     if (step > 1) return
     step = 2
-    eventBus.off('skill:triggered', onSkill)
-    showTip(t('tutorial.step2'), 'bottom-hud')
-  }
-  eventBus.on('skill:triggered', onSkill)
-
-  // Step 3: 首次完成一个词后提示结算
-  const onWord = () => {
-    if (step > 2) return
-    step = 3
     eventBus.off('word:complete', onWord)
     setTimeout(() => {
-      showTip(t('tutorial.step3'), 'score-zone')
+      showTip(t('tutorial.step2'), 'word-display')
     }, 500)
   }
   eventBus.on('word:complete', onWord)
+
+  // Step 3: 首次进入商店后提示过关商店
+  const onShop = () => {
+    if (step > 2) return
+    step = 3
+    eventBus.off('shop:opened', onShop)
+    setTimeout(() => {
+      showTip(t('tutorial.step3'), 'shop-tabs')
+    }, 500)
+  }
+  eventBus.on('shop:opened', onShop)
 }

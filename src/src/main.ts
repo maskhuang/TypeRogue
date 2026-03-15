@@ -19,7 +19,7 @@ import { showClassPicker } from './systems/classes/ClassPicker';
 import { saveManager } from './core/save/SaveManager';
 import {
   IS_DEMO,
-  DEMO_STARTER_RELIC, DEMO_ELITE_MODIFIER
+  DEMO_STARTER_RELIC, DEMO_STARTER_BINDINGS
 } from './demo/demo-config';
 import { generateSkill } from './data/skillGeneration';
 import { createSkillRuntimeState } from './data/affixes';
@@ -47,13 +47,8 @@ async function init(): Promise<void> {
   if (IS_DEMO) {
     // === Demo 模式：精简初始化 ===
 
-    // 预设技能绑定（新词条制系统）
-    const demoResources: Array<{ resource: import('./core/types').ResourceType; key: string }> = [
-      { resource: 'base', key: 'e' },
-      { resource: 'score', key: 't' },
-      { resource: 'gold', key: 'a' },
-    ];
-    for (const { resource, key } of demoResources) {
+    // 预设技能绑定（词条制技能系统）
+    for (const { resource, key } of DEMO_STARTER_BINDINGS) {
       const sk = generateSkill({ resource, rarity: 0, level: 1 });
       state.player.skills.set(sk.id, { level: 1 });
       state.affixSkills.set(sk.id, sk);
@@ -65,8 +60,8 @@ async function init(): Promise<void> {
     // 赠送开局遗物
     state.player.relics.add(DEMO_STARTER_RELIC);
 
-    // 精英关使用单个视觉 modifier
-    state.bossModifierPool = [DEMO_ELITE_MODIFIER];
+    // 正常抽取 Boss 修饰器池（3 个精英关 + 1 个 Boss 关）
+    state.bossModifierPool = drawBossModifiers(3);
 
     // 跳过职业选择
     state.classId = 'none';

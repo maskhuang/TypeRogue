@@ -25,7 +25,7 @@ export default defineConfig({
     }
   },
   define: {
-    __APP_VERSION__: JSON.stringify('demo'),
+    __APP_VERSION__: JSON.stringify('demo-v0.2'),
     __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
     __GIT_COMMIT__: JSON.stringify('demo'),
     __DEMO_MODE__: JSON.stringify(true)

@@ -35,7 +35,8 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
   const info = document.createElement('div');
   info.style.cssText = 'color:#ccc;font-size:12px;margin:8px 0;padding:8px;background:rgba(255,255,255,0.05);border-radius:4px;';
   const rarityColor = RARITY_COLORS[skill.rarity] || '#fff';
-  const rarityName = RARITY_NAMES[skill.rarity] || '?';
+  const RARITY_KEYS = ['common', 'rare', 'epic', 'legendary'] as const;
+  const rarityName = t('shop.rarity.' + (RARITY_KEYS[skill.rarity] ?? 'common')) || RARITY_NAMES[skill.rarity] || '?';
 
   const nameRow = document.createElement('div');
   nameRow.style.cssText = `color:${rarityColor};font-weight:bold;`;
@@ -198,7 +199,9 @@ export function renderMetamorphPanel(container: HTMLElement): void {
     // 类型标签
     const typeLabel = document.createElement('div');
     typeLabel.className = 'morph-skill-type';
-    typeLabel.textContent = t('metamorph.rarity_affixes', { rarity: RARITY_NAMES[affixSkill.rarity], count: affixSkill.affixes.length });
+    const MR_KEYS = ['common', 'rare', 'epic', 'legendary'] as const;
+    const mrLabel = t('shop.rarity.' + (MR_KEYS[affixSkill.rarity] ?? 'common')) || RARITY_NAMES[affixSkill.rarity];
+    typeLabel.textContent = t('metamorph.rarity_affixes', { rarity: mrLabel, count: affixSkill.affixes.length });
     typeLabel.style.color = RARITY_COLORS[affixSkill.rarity] || '#fff';
 
     card.appendChild(icon);

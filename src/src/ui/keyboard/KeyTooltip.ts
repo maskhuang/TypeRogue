@@ -160,7 +160,7 @@ class KeyTooltipManager {
         const fmtEst = Math.abs(est.estimatedOutput) < 1 ? est.estimatedOutput.toFixed(2)
           : Math.abs(est.estimatedOutput) < 10 ? est.estimatedOutput.toFixed(1)
           : Math.round(est.estimatedOutput).toString()
-        html += `<div style="color:#fff;font-size:11px;font-weight:bold;">预估产出: ${est.estimatedOutput >= 0 ? '+' : ''}${fmtEst}</div>`
+        html += `<div style="color:#fff;font-size:11px;font-weight:bold;">${esc(t('est.estimated_output', { val: (est.estimatedOutput >= 0 ? '+' : '') + fmtEst }))}</div>`
         for (const line of est.breakdown) {
           const color = AFFIX_COLORS[line.typeKey] || '#aaa'
           html += `<div style="color:${color};font-size:10px;margin-left:4px;">${esc(line.label)}`

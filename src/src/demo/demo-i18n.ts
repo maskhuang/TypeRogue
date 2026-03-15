@@ -77,9 +77,9 @@ const ZH: Record<string, string> = {
   'demo.webgl.desc': '请使用 Chrome 90+ / Firefox 90+ / Safari 15+',
 
   // --- demo-tutorial.ts ---
-  'tutorial.step1': '打出屏幕上的单词！',
-  'tutorial.step2': '你的按键触发了技能！查看键盘上的高亮',
-  'tutorial.step3': '基础分 × 倍率 = 最终得分。用技能提升两者！',
+  'tutorial.step1': '打出单词触发绑定在键位上的技能！',
+  'tutorial.step2': '技能产出资源——在商店购买更多技能，用词条和附魔强化它们',
+  'tutorial.step3': '过关后进入商店：购买技能、获取遗物、升级词条',
 
   // --- demo-end-screen.ts ---
   'demo_end.title': '试玩结束！',
@@ -87,12 +87,12 @@ const ZH: Record<string, string> = {
   'demo_end.combo': '最高连击：{value}',
   'demo_end.skills': '触发技能：{value} 次',
   'demo_end.features_title': '完整版包含：',
-  'demo_end.f1': '10 关完整冒险 + Boss 战',
-  'demo_end.f2': '176 个技能 × 21 种附魔',
-  'demo_end.f3': '3 个职业（造词师 / 蜕变师 / …）',
-  'demo_end.f4': '49 个遗物',
-  'demo_end.f5': '无尽模式 + 每日挑战',
-  'demo_end.f6': 'Steam 成就 + 云存档',
+  'demo_end.f1': '3 个职业：造词师 / 蜕变师 / 无职业',
+  'demo_end.f2': '多周目挑战 + 15 级进阶难度',
+  'demo_end.f3': '无尽模式 + 每日挑战',
+  'demo_end.f4': '存档系统 + 排行榜',
+  'demo_end.f5': '',
+  'demo_end.f6': '',
   'demo_end.steam': '在 Steam 上获取完整版',
   'demo_end.replay': '再玩一次',
 
@@ -200,10 +200,12 @@ const ZH: Record<string, string> = {
   'shop.deck_stats': '📚 {total}词 · 均长{avg}',
   'shop.top_freq': '高频:',
   'shop.refresh': '🔄 刷新 (💰{cost})',
+  'shop.upgrade': '升级',
   'shop.upgrade_label': '{label}·升级',
   'shop.upgrade_name': '{name} (升级 Lv.{from}→{to})',
   'shop.pack_type': '词包',
   'shop.buy_skills_hint': '购买技能开始构筑',
+  'shop.no_affix': '无词条',
   'shop.no_stats': '暂无战斗数据',
   'shop.words_done': '完成 {count} 词',
   'shop.words_perfect': '完美 {count} 词',
@@ -607,6 +609,10 @@ const ZH: Record<string, string> = {
   'est.result_mult_detail': '(乘算已有资源)',
   'est.result_add': '≈ {val}',
   'est.result_add_detail': '(单次预估)',
+  'est.estimated_output': '预估产出: {val}',
+  'tooltip.base_values_add': '基础产出: Lv.1={v1} / Lv.2={v2} / Lv.3={v3}',
+  'tooltip.base_values_mult': '乘算产出: Lv.1=×{v1} / Lv.2=×{v2} / Lv.3=×{v3}',
+  'tooltip.upgrade_info': '升级 Lv.{from} → Lv.{to}　基础产出 {oldVal} → {newVal}',
 
   // --- tooltip quest / apprentice ---
   'tooltip.quest_progress': '任务: {stacks}/{target} 层 (完成 {completions} 次)',
@@ -690,9 +696,9 @@ const EN: Record<string, string> = {
   'demo.webgl.desc': 'Please use Chrome 90+ / Firefox 90+ / Safari 15+',
 
   // --- demo-tutorial.ts ---
-  'tutorial.step1': 'Type the words on screen!',
-  'tutorial.step2': 'Your key triggered a skill! Check the keyboard highlights',
-  'tutorial.step3': 'Base × Mult = Final Score. Use skills to boost both!',
+  'tutorial.step1': 'Type words to trigger skills bound to your keys!',
+  'tutorial.step2': 'Skills produce resources — buy more in the shop, enhance them with affixes and enchantments',
+  'tutorial.step3': 'After clearing a stage: buy skills, pick up relics, upgrade affixes',
 
   // --- demo-end-screen.ts ---
   'demo_end.title': 'Demo Complete!',
@@ -700,12 +706,12 @@ const EN: Record<string, string> = {
   'demo_end.combo': 'Max Combo: {value}',
   'demo_end.skills': 'Skills Triggered: {value}',
   'demo_end.features_title': 'Full Version Includes:',
-  'demo_end.f1': '10-stage adventure + Boss fights',
-  'demo_end.f2': '176 skills × 21 enchantments',
-  'demo_end.f3': '3 classes (Wordsmith / Metamorph / …)',
-  'demo_end.f4': '49 relics',
-  'demo_end.f5': 'Endless mode + Daily Challenge',
-  'demo_end.f6': 'Steam achievements + Cloud saves',
+  'demo_end.f1': '3 classes: Wordsmith / Metamorph / Classless',
+  'demo_end.f2': 'Multi-cycle runs + 15 advancement levels',
+  'demo_end.f3': 'Endless mode + Daily Challenge',
+  'demo_end.f4': 'Save system + Leaderboards',
+  'demo_end.f5': '',
+  'demo_end.f6': '',
   'demo_end.steam': 'Get Full Version on Steam',
   'demo_end.replay': 'Play Again',
 
@@ -813,10 +819,12 @@ const EN: Record<string, string> = {
   'shop.deck_stats': '📚 {total} words · avg {avg}',
   'shop.top_freq': 'Top:',
   'shop.refresh': '🔄 Refresh (💰{cost})',
+  'shop.upgrade': 'Upgrade',
   'shop.upgrade_label': '{label}·Upgrade',
   'shop.upgrade_name': '{name} (Lv.{from}→{to})',
   'shop.pack_type': 'Pack',
   'shop.buy_skills_hint': 'Buy skills to start building',
+  'shop.no_affix': 'No affixes',
   'shop.no_stats': 'No battle data yet',
   'shop.words_done': '{count} words done',
   'shop.words_perfect': '{count} perfect',
@@ -1219,6 +1227,10 @@ const EN: Record<string, string> = {
   'est.result_mult_detail': '(multiplies existing resource)',
   'est.result_add': '≈ {val}',
   'est.result_add_detail': '(per-trigger estimate)',
+  'est.estimated_output': 'Est. Output: {val}',
+  'tooltip.base_values_add': 'Base Output: Lv.1={v1} / Lv.2={v2} / Lv.3={v3}',
+  'tooltip.base_values_mult': 'Multiply Output: Lv.1=×{v1} / Lv.2=×{v2} / Lv.3=×{v3}',
+  'tooltip.upgrade_info': 'Upgrade Lv.{from} → Lv.{to}  Base {oldVal} → {newVal}',
 
   // --- tooltip quest / apprentice ---
   'tooltip.quest_progress': 'Quest: {stacks}/{target} stacks (done {completions}×)',

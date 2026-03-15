@@ -7,51 +7,47 @@ declare const __DEMO_MODE__: boolean
 
 export const IS_DEMO = typeof __DEMO_MODE__ !== 'undefined' && __DEMO_MODE__
 
-// === Demo 关卡地图 ===
+// === Demo 关卡地图（完整一周目：10 节点 / 3 Act） ===
 export const DEMO_STAGE_MAP = {
-  totalNodes: 4,
+  totalNodes: 10,
   nodeStageType: {
-    1: 'standard' as const,  // 引导关
-    2: 'standard' as const,  // 正常关
-    3: 'elite' as const,     // 精英关（展示压力感，带 1 个视觉 Modifier）
-    4: 'standard' as const,  // 最终关（Demo 结束）
+    1: 'standard' as const,
+    2: 'standard' as const,
+    3: 'elite' as const,
+    4: 'rest' as const,
+    5: 'standard' as const,
+    6: 'elite' as const,
+    7: 'standard' as const,
+    8: 'rest' as const,
+    9: 'elite' as const,
+    10: 'boss' as const,
   },
-  nodeAct: { 1: 1, 2: 1, 3: 1, 4: 1 },
-  nodeBattleNumber: { 1: 1, 2: 2, 3: 3, 4: 4 },
+  nodeAct: {
+    1: 1, 2: 1, 3: 1, 4: 1,
+    5: 2, 6: 2, 7: 2, 8: 2,
+    9: 3, 10: 3,
+  },
+  nodeBattleNumber: {
+    1: 1, 2: 2, 3: 3,
+    5: 4, 6: 5, 7: 6,
+    9: 7, 10: 8,
+  },
+  eliteModifierIndex: {
+    3: 0,
+    6: 1,
+    9: 2,
+  },
 }
-
-// === 精英关 Demo Modifier ===
-// boss_spotlight（聚光灯）— 视觉类修饰器，直觉易懂，不增加系统复杂度
-export const DEMO_ELITE_MODIFIER = 'boss_spotlight'
 
 // === Demo 开局赠送遗物 ===
 export const DEMO_STARTER_RELIC = 'cornucopia'
 
-// === Demo 技能池 ===
-export const DEMO_PRODUCER_IDS = [
-  'prod_burst',    // 爆发 — base +5
-  'prod_loot',     // 掠夺 — score +15
-  'prod_boost',    // 强化 — multiplier +0.2
-  'prod_freeze',   // 冻结 — time +2s
-  'prod_mint',     // 铸币 — gold +3
-]
-
-export const DEMO_CONVERTER_IDS = [
-  'conv_base_score_add',  // 变现 — base → score
-  'conv_mult_score_add',  // 溢光 — mult → score
-  'conv_time_base_add',   // 蚀刻 — time → base
-  'conv_gold_base_add',   // 收购 — gold → base
-  'conv_score_mult_add',  // 乘势 — score → mult
-]
-
-// === Demo 遗物池（职业专属遗物在职业选择时发放） ===
-export const DEMO_RELIC_IDS: string[] = []
-
-// === 第一关预设绑定 ===
-export const DEMO_STARTER_SKILLS: Array<{ skillId: string; key: string }> = [
-  { skillId: 'prod_burst', key: 'e' },  // E — 高频字母
-  { skillId: 'prod_loot',  key: 't' },  // T — 高频字母
-  { skillId: 'prod_mint',  key: 'a' },  // A — 高频字母
+// === Demo 初始技能资源 + 绑定 ===
+// 由 main.ts 使用 generateSkill() 生成新词条制技能
+export const DEMO_STARTER_BINDINGS: Array<{ resource: import('../core/types').ResourceType; key: string }> = [
+  { resource: 'base',  key: 'e' },  // E — 高频字母
+  { resource: 'score', key: 't' },  // T — 高频字母
+  { resource: 'gold',  key: 'a' },  // A — 高频字母
 ]
 
 // === 第一关固定词序（保证前 3 个词包含 E/T/A 触发技能） ===
@@ -63,10 +59,5 @@ export const DEMO_FIRST_STAGE_WORDS = [
   'late',    // a + t + e
 ]
 
-// === Demo 关卡目标分数（降低难度） ===
-export const DEMO_TARGET_SCORES: Record<number, number> = {
-  1: 60,   // 第一关：极低目标，保证通过
-  2: 120,  // 第二关：稍有挑战
-  3: 200,  // 精英关：需要技能组合
-  4: 250,  // 最终关：展示爽感
-}
+// === Demo 关卡目标分数（使用正式计算，不再覆盖） ===
+export const DEMO_TARGET_SCORES: Record<number, number> = {}
