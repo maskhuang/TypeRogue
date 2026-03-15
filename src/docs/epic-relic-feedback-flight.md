@@ -7,31 +7,47 @@
 ## 目标
 
 1. 资源遗物：浮字从遗物图标飞向资源 UI + 到达弹跳（与技能飞行一致）
-2. 非资源遗物：从遗物图标向影响目标发射闪光连线
-3. 复用现有飞行动画系统（贝塞尔曲线、到达弹跳、pending 滚轮同步）
+2. 连锁触发遗物：闪光连线表达因果关系，被触发技能产出飞向资源目标
+3. 非资源遗物：有明确触发时刻的遗物用闪光连线指向出错字母或结算面板
+4. 复用现有飞行动画系统（贝塞尔曲线、到达弹跳、pending 滚轮同步）
 
 ## 现状分析
 
 ### 遗物触发反馈（当前）
 
-| 遗物 | 触发点 | 当前反馈 | 产出资源 | 影响目标 |
-|------|--------|---------|---------|---------|
-| 节奏医生 | 每 10 combo | `+1s` 浮字 + `bumpTimer()` | time | 时间条 |
-| 时间露珠 | 每 3 词 | `+1s` 浮字 + `bumpTimer()` | time | 时间条 |
-| 长词达人 | 6+ 字母词 | `+1s` 浮字 + `bumpTimer()` | time | 时间条 |
-| 分数磁铁 | 每次击键 | `🧲 +1` 浮字 | score | 分数 |
-| 词汇收藏 | 首次完成词 | `📚 +3💰` 浮字 | gold | 金币 |
-| 资源感应 | ≥3 种资源 | `🔮 +N` 浮字 | 动态 | 动态 |
-| 回声指套 | 8% 概率 | `Echo!` 浮字 | 间接 | 当前字母 |
-| 双手协奏 | 左右手交替 | 文本浮字 | time | 时间条 |
-| 连击引爆 | 15/30/45 combo | 文本浮字 | 间接 | combo |
-| 打字蜡封 | 首次错误 | `🕯️` 浮字 | 无 | 当前字母 |
-| 玻璃大炮 | 打错时 | 碎裂反馈 | 无 | 分数 |
-| 倍率棱镜 | 倍率≥2.5 | 激活提示 | 无 | 倍率 |
-| 首发强化 | 每词首技能 | 文本提示 | 无 | 结算面板 |
-| 少而精 | 技能<10 | 文本提示 | 无 | 结算面板 |
-| on_word_complete 遗物 | 完成词 | `+Ns` 浮字 + `bumpTimer()` | time | 时间条 |
-| on_word_complete 时间退款 | 完成词 | `+Ns` 浮字 + `bumpTimer()` | time | 时间条 |
+**资源产出遗物（本 Epic 范围）：**
+
+| 遗物 | 触发点 | 当前反馈 | 产出资源 |
+|------|--------|---------|---------|
+| 节奏医生 | 每 10 combo | `+1s` 浮字 + `bumpTimer()` | time |
+| 时间露珠 | 每 3 词 | `+1s` 浮字 + `bumpTimer()` | time |
+| 长词达人 | 6+ 字母词 | `+1s` 浮字 + `bumpTimer()` | time |
+| 分数磁铁 | 每次击键 | `🧲 +1` 浮字 | score |
+| 词汇收藏 | 首次完成词 | `📚 +3💰` 浮字 | gold |
+| 资源感应 | ≥3 种资源 | `🔮 +N` 浮字 | 动态 |
+| 双手协奏 | 左右手交替 | 文本浮字 | time |
+| 玻璃大炮（加倍） | 完成词时 | `+N` 浮字 + `bumpScore()` | score |
+| 凤凰之羽 | 关卡失败复活 | 复活提示 + 恢复时间 | time |
+| on_word_complete 遗物 | 完成词 | `+Ns` 浮字 + `bumpTimer()` | time |
+| on_word_complete 时间退款 | 完成词 | `+Ns` 浮字 + `bumpTimer()` | time |
+
+**连锁触发遗物（本 Epic 范围）：**
+
+| 遗物 | 触发点 | 效果 |
+|------|--------|------|
+| 回声指套 | 8% 概率 | 重新触发技能（间接资源产出） |
+| 连击引爆 | 15/30/45 combo | 随机触发 3 个技能（间接资源产出） |
+| 全键风暴 | 前 3 词完成 | 随机触发 3 个未命中技能（间接资源产出） |
+
+**非资源遗物闪光反馈（本 Epic 范围）：**
+
+| 遗物 | 触发点 | 闪光目标 |
+|------|--------|---------|
+| 打字蜡封 | 首次错误免罚 | 出错字母 |
+| 余韵护盾 | combo 中断保留 30% | 出错字母 |
+| 爵士乐 | ≥3 种词条类型 | 结算面板 |
+| 节奏适应 | 用时 <3s 得分 +30% | 结算面板 |
+| 雪球效应 | 每词结算 +5% 递增 | 结算面板 |
 
 ### 飞行动画系统（已有）
 
@@ -63,38 +79,16 @@ function flashRelicLine(relicIndex: number, targetId: string, color: string): vo
 }
 ```
 
-### Story 2: 遗物影响目标映射
+### Story 2: 辅助函数
 
-**定义每个遗物触发时闪光连线的目标。**
+**提供遗物飞行反馈所需的工具函数。**
 
 修改文件：`battle.ts`
 
-资源产出遗物：目标 = `RESOURCE_TARGET_IDS[resource]`（已有映射）
-
-非资源遗物的目标映射：
-
-| 遗物 | 目标元素 ID |
-|------|-----------|
-| 打字蜡封 | `word-display`（当前单词区） |
-| 玻璃大炮碎裂 | `score-count` |
-| 倍率棱镜 | `multiplier-display` |
-| 首发强化 | `settlement-chips` |
-| 少而精 | `settlement-chips` |
-| 连击缓冲 | `combo-count` |
-| 凤凰之羽 | `timer-display` |
-
-注：连锁触发技能的遗物（回声指套、连击引爆、全键风暴）的目标在 Story 5 中动态决定。
-
 ```typescript
-const RELIC_TARGET_IDS: Record<string, string> = {
-  typing_wax_seal: 'word-display',
-  glass_cannon: 'score-count',
-  multiplier_prism: 'multiplier-display',
-  first_strike: 'settlement-chips',
-  less_is_more: 'settlement-chips',
-  combo_buffer: 'combo-count',
-  phoenix_feather: 'timer-display',
-};
+function getRelicIndex(relicId: string): number {
+  return [...state.player.relics].indexOf(relicId);
+}
 ```
 
 ### Story 3: 资源遗物接入飞行
@@ -116,6 +110,7 @@ const RELIC_TARGET_IDS: Record<string, string> = {
 - 长词达人（time）
 - 词汇收藏（gold）
 - 资源感应（动态资源）
+- 玻璃大炮加倍（score）
 - on_word_complete 遗物时间加成（time）
 - on_word_complete 时间退款（time）
 
@@ -123,46 +118,14 @@ const RELIC_TARGET_IDS: Record<string, string> = {
 - 分数磁铁（score）
 - 双手协奏（time）
 
+**特殊时机：**
+- 凤凰之羽（time — 关卡失败复活时恢复时间）
+
 对每个遗物：
 1. 将 `showFeedback(text, color)` 改为 `showFeedback(text, color, scale, undefined, { relicId, resource, amount })`
 2. 移除对应的即时 `bumpTimer()` / `bumpScore()` 调用（由飞行到达触发）
 
-### Story 4: 非资源遗物闪光反馈
-
-**不产出资源的遗物触发时：闪光连线指向影响目标，无飞行。**
-
-修改文件：`battle.ts`
-
-在各遗物触发点插入 `flashRelicLine` 调用：
-
-```typescript
-// 例：打字蜡封触发时
-if (checkWaxSealForgive()) {
-  flashRelicLine(getRelicIndex('typing_wax_seal'), 'word-display', '#ff9500');
-  showFeedback('🕯️', '#ff9500');
-  // ...
-}
-
-// 例：回声指套触发时
-if (checkEchoThimble(random())) {
-  flashRelicLine(getRelicIndex('echo_thimble'), 'word-display', '#4ecdc4');
-  showFeedback('Echo!', '#4ecdc4');
-  // ...
-}
-```
-
-涉及遗物：
-- 打字蜡封 → 连线到单词区
-- 倍率棱镜 → 连线到倍率
-- 首发强化 → 连线到结算面板基数
-- 少而精 → 连线到结算面板基数
-- 连击缓冲 → 连线到 combo
-- 凤凰之羽 → 连线到时间条
-- 玻璃大炮碎裂 → 连线到分数（红色闪光）
-
-注：连锁触发技能的遗物（回声指套、连击引爆、全键风暴）在 Story 5 中处理。
-
-### Story 5: 连锁触发技能的闪光 + 浮字定位
+### Story 4: 连锁触发技能的飞行定位
 
 **连锁触发其他技能的效果（遗物或技能触发的 `triggerSkill`），用闪光连线表达因果关系，浮字从被触发位置生成。**
 
@@ -231,17 +194,27 @@ export function triggerSkill(
 - `overrideAnchor.letterIndex`：浮字从指定字母位置生成（本词有该字母时）
 - `overrideAnchor.fromElementId`：浮字从指定 UI 元素位置生成（本词无该字母时，用 `active-library`）
 
-### Story 6: 辅助函数
+### Story 5: 非资源遗物触发反馈
 
-**提供通用工具函数。**
+**有明确触发时刻的非资源遗物，用就地视觉反馈表达效果。**
 
-修改文件：`battle.ts`
+修改文件：`battle.ts`, `style.css`
 
-```typescript
-function getRelicIndex(relicId: string): number {
-  return [...state.player.relics].indexOf(relicId);
-}
-```
+统一反馈模式：弹出标签 + 遗物图标脉冲。
+
+**遗物图标脉冲：** 触发时图标 `scale(1.3)` + 主题色 `box-shadow`，300ms 回弹。
+
+**弹出标签（在效果位置）：**
+
+| 遗物 | 标签位置 | 标签内容 |
+|------|---------|---------|
+| 打字蜡封 | 出错字母 | `🕯️` |
+| 余韵护盾 | 出错字母 | `🛡️` |
+| 爵士乐 | 结算分数 | `+N% 🎷`（含遗物图标） |
+| 节奏适应 | 结算分数 | `+30% 🎵`（含遗物图标） |
+| 雪球效应 | 结算分数 | `+N% ⛄`（含遗物图标） |
+
+**结算加成同步：** 爵士乐/节奏适应/雪球效应的标签弹出时机必须与结算分数数字更新同步——标签弹出的瞬间，结算分数同步反映加成后的值。
 
 ## 技术要点
 
@@ -303,13 +276,14 @@ relicAnchor 的 time/gold 资源复用现有 `_pendingTimeBonus` / `_pendingGold
 - 不改遗物的实际效果逻辑，仅改视觉反馈
 - 不为每个遗物定制独特的飞行轨迹（统一贝塞尔曲线）
 - 不添加遗物触发音效（沿用现有 playSound 调用）
-- 分数磁铁每次击键触发，闪光频率高 — 可考虑节流（如 500ms 内不重复闪光），或降低闪光亮度
+- 被动常驻遗物（少而精、不断之链、邻键之力等）不加闪光反馈
+- 分数磁铁每次击键触发，频率高 — 需在调用侧做节流
 
 ## 验证
 
 - `npm run build` 编译通过
 - 资源遗物触发：浮字从遗物图标飞向资源 UI + 到达弹跳（与技能飞行体验一致）
-- 非资源遗物触发：闪光连线指向影响目标，无飞行
 - 连锁触发（引爆/风暴/回声）：闪光从遗物图标射向本词字母或词库 UI，被触发技能的浮字从该位置飞出
+- 非资源遗物：效果位置弹标签 + 遗物图标脉冲（打字蜡封/余韵护盾/爵士乐/节奏适应/雪球效应）
 - 多遗物同时触发时闪光不冲突（每条线独立 div，动画结束后自动移除）
 - 高频遗物（分数磁铁）不产生视觉垃圾

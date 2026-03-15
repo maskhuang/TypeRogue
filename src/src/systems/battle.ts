@@ -2192,6 +2192,50 @@ function drainQueue(): void {
   queueTimer = setTimeout(drainQueue, FLOAT_INTERVAL);
 }
 
+// === 闪光连线系统 ===
+
+/** 获取遗物在 HUD 图标列表中的索引，未持有返回 -1 */
+function getRelicIndex(relicId: string): number {
+  return [...state.player.relics].indexOf(relicId);
+}
+
+/** 遗物图标到目标 UI 的瞬间闪光连线 */
+function flashRelicLine(relicIndex: number, targetId: string, color: string): void {
+  const el = getElements();
+  const iconEl = el.playerRelics.children[relicIndex] as HTMLElement | undefined;
+  const targetEl = document.getElementById(targetId);
+  if (!iconEl || !targetEl) return;
+
+  const container = el.container;
+  const containerRect = container.getBoundingClientRect();
+  const iconRect = iconEl.getBoundingClientRect();
+  const targetRect = targetEl.getBoundingClientRect();
+
+  const x1 = iconRect.left + iconRect.width / 2 - containerRect.left;
+  const y1 = iconRect.top + iconRect.height / 2 - containerRect.top;
+  const x2 = targetRect.left + targetRect.width / 2 - containerRect.left;
+  const y2 = targetRect.top + targetRect.height / 2 - containerRect.top;
+
+  const dist = Math.hypot(x2 - x1, y2 - y1);
+  const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+
+  const line = document.createElement('div');
+  line.className = 'relic-flash-line';
+  line.style.width = dist + 'px';
+  line.style.left = x1 + 'px';
+  line.style.top = (y1 - 1) + 'px';
+  line.style.color = color;
+  line.style.transform = `rotate(${angle}deg)`;
+  line.onanimationend = () => line.remove();
+
+  container.appendChild(line);
+}
+
+/** 清除所有残留闪光连线（关卡结束时调用） */
+function clearFlashLines(): void {
+  getElements().container.querySelectorAll('.relic-flash-line').forEach(el => el.remove());
+}
+
 /** 清空浮字队列和定时器（关卡结束时调用） */
 function clearFloatQueue(): void {
   floatQueue.length = 0;
@@ -2205,6 +2249,7 @@ function clearFloatQueue(): void {
   for (const el of floatPool) {
     releaseFloat(el);
   }
+  clearFlashLines();
 }
 
 /** 浮字反馈（scale 控制字体缩放，默认 1；skillAnchor 指定时从字母飞向资源 UI） */
