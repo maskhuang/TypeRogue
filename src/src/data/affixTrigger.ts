@@ -1231,31 +1231,7 @@ export function resetStageState(
     state.amplifyStacks = 0
     state.chargeAccumulated = 0
 
-    // Mirror 词条刷新
-    const skill = skills.get(skillId)
-    if (!skill) continue
-    const hasMirror = skill.affixes.some(a => a.type === AffixType.Mirror)
-    if (hasMirror) {
-      // 找到该技能绑定的键位
-      let boundKey: string | undefined
-      for (const [key, sid] of bindings) {
-        if (sid === skillId) { boundKey = key; break }
-      }
-      if (boundKey) {
-        // 构造最小 TriggerContext 供 resolveMirrorCopy 使用
-        const mirrorCtx: TriggerContext = {
-          triggerKey: boundKey,
-          currentWord: '',
-          resources: { base: 0, score: 0, multiplier: 1, time: 0, gold: 0, fragment: 0, mutagen: 0 },
-          classResourceProduced: {},
-          bindings,
-          skillStates,
-          allSkills: skills,
-          randomFn,
-        }
-        state.mirrorCopiedAffix = resolveMirrorCopy(skill, state, mirrorCtx)
-      }
-    }
+    // Mirror 词条复制已移至关卡结束时（battle.ts），此处不再刷新
   }
 }
 

@@ -3014,7 +3014,7 @@ describe('resetStageState (Task 2)', () => {
     expect(states.get('s1')!.questStacks).toBe(2)
   })
 
-  it('should refresh mirrorCopiedAffix for skills with Mirror affix', () => {
+  it('should NOT refresh mirrorCopiedAffix (mirror copy moved to stage end)', () => {
     const skills = new Map<string, AffixSkillInstance>()
     const states = new Map<string, SkillRuntimeState>()
     const bindings = new Map<string, string>()
@@ -3037,15 +3037,13 @@ describe('resetStageState (Task 2)', () => {
     states.set('neighbor_skill', makeRuntimeState({ skillId: 'neighbor_skill' }))
     bindings.set('s', 'neighbor_skill')
 
-    resetStageState(skills, states, bindings, () => 0.1) // randomFn returns 0.1
+    resetStageState(skills, states, bindings, () => 0.1)
 
-    // Mirror should have copied the neighbor's Crit affix
+    // Mirror copy no longer happens in resetStageState (moved to battle.ts stage end)
     const mirrorState = states.get('mirror_skill')!
     expect(mirrorState.triggerCount).toBe(0)
     expect(mirrorState.amplifyStacks).toBe(0)
-    // 'a' and 's' are Adjacent on QWERTY — Mirror should copy the neighbor's Crit affix
-    expect(mirrorState.mirrorCopiedAffix).not.toBeNull()
-    expect(mirrorState.mirrorCopiedAffix!.type).toBe(AffixType.Crit)
+    expect(mirrorState.mirrorCopiedAffix).toBeNull()
   })
 })
 

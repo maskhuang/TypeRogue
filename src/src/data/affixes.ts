@@ -356,7 +356,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Cascade]: '上一个按键与当前键满足指定位置关系时，产出倍增',
   [AffixType.Void]: '范围内空位越多加成越高',
   [AffixType.Resonance]: '范围内技能产出指定资源时，本技能自动触发',
-  [AffixType.Mirror]: '每关开始时复制一个范围内技能的随机词条',
+  [AffixType.Mirror]: '每关结束时复制一个范围内技能的随机词条',
   [AffixType.Link]: '范围内有指定词条的技能触发时，本技能自动触发',
   [AffixType.Splash]: '触发后随机触发范围内1个匹配的技能',
   [AffixType.Amplify]: '每次触发叠一层，与范围内同资源增幅技能共享层数加成',
