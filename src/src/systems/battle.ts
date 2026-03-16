@@ -429,6 +429,7 @@ function playerCorrect(k: string): void {
   const prevComboMilestone = Math.floor(state.combo / 15);
   state.combo++;
   state.maxCombo = Math.max(state.maxCombo, state.combo);
+  eventBus.emit('combo:update', { combo: state.combo });
   bumpCombo();
 
   // 计算倍率: 基础 + 连击加成 + 技能倍率加成
@@ -501,6 +502,7 @@ function playerCorrect(k: string): void {
   if (checkEchoThimble(random())) {
     state.combo++;
     state.maxCombo = Math.max(state.maxCombo, state.combo);
+    eventBus.emit('combo:update', { combo: state.combo });
     // 重新计算 multiplier 以反映新 combo
     mult = state.player.baseMultiplier + state.combo * state.player.comboBonus;
     mult += synergy.skillMultBonus;

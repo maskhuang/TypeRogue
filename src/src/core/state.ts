@@ -7,6 +7,7 @@ import type { StageType } from '../systems/stage/StageConfig';
 import { BALANCE } from './constants';
 import { MAX_RELIC_SLOTS, getRelicData } from '../data/relics';
 import { initRelicState } from '../systems/relics/RelicPipeline';
+import { eventBus } from './events/EventBus';
 
 // === 初始状态 ===
 export function createInitialState(): GameState {
@@ -178,6 +179,7 @@ export function addRelicWithCapacity(relicId: string): boolean {
   if (isRelicSlotsFull()) return false;
   state.player.relics.add(relicId);
   initRelicState(relicId);
+  eventBus.emit('relic:acquired', { relicId });
   return true;
 }
 
@@ -199,6 +201,7 @@ export function replaceRelic(oldId: string, newId: string): number {
   delete state.player.relicStates[oldId];
   state.player.relics.add(newId);
   initRelicState(newId);
+  eventBus.emit('relic:acquired', { relicId: newId });
   const sellGold = oldRelic ? Math.floor(oldRelic.basePrice * 0.5) : 0;
   state.gold += sellGold;
   return sellGold;

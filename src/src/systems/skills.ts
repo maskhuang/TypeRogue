@@ -232,6 +232,10 @@ function triggerAffixSkillWithFeedback(
     ? Math.pow(UK_GROWTH_RATE, skill.level - 3)
     : 1;
 
+  // 记录触发前的学徒成长值，用于计算 growthDelta
+  const runtimeState = state.affixSkillStates.get(skillId);
+  const growthBefore = runtimeState?.apprenticeAccumulated ?? 0;
+
   const result = orchestrateAffixTrigger(skillId, triggerKey, ctx, {
     applyResource: (resource: ResourceType, amount: number, isMultiplyOp?: boolean) => {
       // 不灭连击：阻止 multiplier 资源产出
@@ -353,10 +357,15 @@ function triggerAffixSkillWithFeedback(
     showFeedback(`🔀+${tmDisplay}${tmLabel}`, tmColor, undefined, tmAnchor);
   }
 
-  // 事件总线通知
+  // 事件总线通知（含附魔成长数据）
+  const growthAfter = runtimeState?.apprenticeAccumulated ?? 0;
+  const growthDelta = growthAfter - growthBefore;
+  const questCompleted = result.triggerResults.some(tr => tr.phase5?.questCompleted);
   eventBus.emit('skill:triggered', {
     key: triggerKey,
     skillId,
     type: 'active',
+    ...(growthDelta > 0 ? { growthValue: growthDelta } : {}),
+    ...(questCompleted ? { questCompleted: true } : {}),
   });
 }

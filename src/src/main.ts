@@ -28,6 +28,7 @@ import { trackEvent } from './demo/demo-analytics';
 import { initLocale, setLocale, getLocale, applyHtmlI18n } from './demo/demo-i18n';
 import type { Locale } from './demo/demo-i18n';
 import { tutorialManager } from './systems/tutorial/TutorialManager';
+import { initFullTutorial } from './systems/tutorial/tutorialInit';
 
 // === 游戏初始化 ===
 async function init(): Promise<void> {
@@ -108,6 +109,11 @@ async function init(): Promise<void> {
 
   // Story 39.3: 连接 TutorialManager 持久化后端
   tutorialManager.setPersistence(metaState);
+
+  // Story 39.4: 完整版引导（L0-L1），仅非 Demo 模式
+  if (!IS_DEMO) {
+    initFullTutorial();
+  }
 
   // 监听保存请求：Run 结束时自动持久化 MetaState
   eventBus.on('meta:request_save', () => {

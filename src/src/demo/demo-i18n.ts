@@ -84,6 +84,38 @@ const ZH: Record<string, string> = {
   'tutorial.got_it': '知道了',
   'tutorial.never_show': '不再提示',
 
+  // --- L0-L1 tutorial (Story 39.4) ---
+  'tutorial.L0_welcome_title': '欢迎',
+  'tutorial.L0_welcome_body': '输入单词来触发技能！每个字母对应一个绑定的技能。注意上方的计时条——在时间耗尽前达到目标分数即可过关',
+  'tutorial.L0_skill_triggered_title': '技能触发',
+  'tutorial.L0_skill_triggered_body': '技能触发了！它产出了资源，资源累计在单词结算时转化为分数',
+  'tutorial.L0_word_complete_title': '单词完成',
+  'tutorial.L0_word_complete_body': '单词完成！得分 = 基数 × 倍率。连续正确输入提升倍率',
+  'tutorial.L0_combo_title': '连击',
+  'tutorial.L0_combo_body': '连击 ×5！保持连击不中断，倍率越来越高',
+  'tutorial.L1_shop_intro_title': '商店',
+  'tutorial.L1_shop_intro_body': '欢迎来到商店！过关获得的金币可以在这里购买新技能，拖拽到键位上装备',
+  'tutorial.L1_skill_bind_title': '装备技能',
+  'tutorial.L1_skill_bind_body': '拖拽技能到键盘上绑定，或点击键位直接装备',
+  'tutorial.L1_upgrade_title': '技能升级',
+  'tutorial.L1_upgrade_body': '已有技能再次出现时可升级（Lv.1→2→3），升级提升基础产出',
+  'tutorial.L1_relic_title': '遗物',
+  'tutorial.L1_relic_body': '遗物提供被动效果，持续整个 Run！注意稀有度不同效果差异巨大',
+
+  // Story 39.5: L2-L3 引导
+  'tutorial.L2_affix_intro_title': '词条技能',
+  'tutorial.L2_affix_intro_body': '这个技能带有词条！词条赋予技能额外能力，颜色越亮词条越多——蓝色1个、紫色2个、橙色3个',
+  'tutorial.L2_affix_positional_title': '位置词条',
+  'tutorial.L2_affix_positional_body': '这个词条的效果取决于键盘上的位置关系！留意技能在键盘上的排列，相邻或同行/列的技能会互相影响',
+  'tutorial.L2_affix_variety_title': '多词条技能',
+  'tutorial.L2_affix_variety_body': '多词条技能效果叠加！不同词条组合可以产生强力协同——尝试寻找互相配合的词条',
+  'tutorial.L2_rarity_explain_title': '传说技能',
+  'tutorial.L2_rarity_explain_body': '橙色传说技能拥有三个词条，是构筑的核心选择！丰富的词条组合让每个橙色技能都独一无二',
+  'tutorial.L3_enchant_unlock_title': '附魔解锁',
+  'tutorial.L3_enchant_unlock_body': '技能满级了！选择一个附魔：学徒型随使用次数永久成长，任务型完成特定目标获得永久加成',
+  'tutorial.L3_enchant_growth_title': '附魔成长',
+  'tutorial.L3_enchant_growth_body': '附魔在成长！每次触发都在积累加成，这个效果会跨关卡保留到 Run 结束',
+
   // --- demo-end-screen.ts ---
   'demo_end.title': '试玩结束！',
   'demo_end.score': '得分：{value}',
@@ -706,6 +738,40 @@ const EN: Record<string, string> = {
   'tutorial.step3': 'After clearing a stage: buy skills, pick up relics, upgrade affixes',
   'tutorial.got_it': 'Got it',
   'tutorial.never_show': 'Don\'t show again',
+
+  // --- L0-L1 tutorial (Story 39.4) ---
+  'tutorial.L0_welcome_title': 'Welcome',
+  'tutorial.L0_welcome_body': 'Type words to trigger skills! Each letter activates its bound skill. Watch the timer bar — reach the target score before time runs out',
+  'tutorial.L0_skill_triggered_title': 'Skill Triggered',
+  'tutorial.L0_skill_triggered_body': 'A skill fired! It produced resources that convert to score when the word completes',
+  'tutorial.L0_word_complete_title': 'Word Complete',
+  'tutorial.L0_word_complete_body': 'Word done! Score = base × multiplier. Keep typing correctly to raise the multiplier',
+  'tutorial.L0_combo_title': 'Combo',
+  'tutorial.L0_combo_body': 'Combo ×5! Keep the streak going — higher combo means higher multiplier',
+  'tutorial.L1_shop_intro_title': 'Shop',
+  'tutorial.L1_shop_intro_body': 'Welcome to the shop! Spend the gold you earned from clearing stages to buy new skills, then drag them onto keys to equip',
+  'tutorial.L1_skill_bind_title': 'Equip Skill',
+  'tutorial.L1_skill_bind_body': 'Drag a skill onto a key to bind it, or click a key to equip directly',
+  'tutorial.L1_upgrade_title': 'Skill Upgrade',
+  'tutorial.L1_upgrade_body': 'When you see a skill you already own, you can upgrade it (Lv.1→2→3) for higher output',
+  'tutorial.L1_relic_title': 'Relic',
+  'tutorial.L1_relic_body': 'Relics give passive effects for the entire run! Rarity matters — higher rarity means stronger effects',
+
+  // L2 词条系统引导
+  'tutorial.L2_affix_intro_title': 'Affix Skills',
+  'tutorial.L2_affix_intro_body': 'This skill has affixes! Affixes grant extra abilities — brighter color = more affixes: blue 1, purple 2, orange 3',
+  'tutorial.L2_affix_positional_title': 'Spatial Affixes',
+  'tutorial.L2_affix_positional_body': 'Some affixes care about position on the keyboard — try arranging skills to maximize spatial synergies!',
+  'tutorial.L2_affix_variety_title': 'Multi-Affix Skills',
+  'tutorial.L2_affix_variety_body': 'Purple skills carry 2 affixes! Different affix combos create different playstyles — experiment with builds',
+  'tutorial.L2_rarity_explain_title': 'Orange Rarity',
+  'tutorial.L2_rarity_explain_body': 'Orange skills are the rarest — 3 affixes make them build-defining powerhouses. Build around them!',
+
+  // L3 附魔系统引导
+  'tutorial.L3_enchant_unlock_title': 'Enchantment Unlocked',
+  'tutorial.L3_enchant_unlock_body': 'This skill reached enchantment level! Choose an enchantment to add a growth effect that strengthens over time',
+  'tutorial.L3_enchant_growth_title': 'Enchantment Growth',
+  'tutorial.L3_enchant_growth_body': 'Your enchantment just grew! Enchantments gain power each time the skill triggers — keep using it to stack up',
 
   // --- demo-end-screen.ts ---
   'demo_end.title': 'Demo Complete!',

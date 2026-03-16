@@ -1370,6 +1370,7 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
       // 同步更新 affixSkills 中的 level
       const existing = state.affixSkills.get(skillId);
       if (existing) existing.level = data?.level || existing.level;
+      eventBus.emit('skill:upgraded', { skillId, newLevel: data?.level || 1 });
       showFeedback(t('shop.skill_upgrade', { name: affixSkill.name }), '#ffe66d');
     } else {
       // 新词条制技能
