@@ -2,6 +2,7 @@
 // 打字肉鸽 - KeyTooltip 键位悬停提示
 // ============================================
 // Story 16.4: 鼠标悬停显示底分详情和技能信息
+// Story 39.2: Tooltip 信息架构重构 — 分区块卡片式布局
 
 import { t } from '../../demo/demo-i18n'
 
@@ -83,6 +84,143 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+/** 清洁 CSS 颜色值，防止 style 注入 */
+function safeColor(c: string): string {
+  return /^[#a-zA-Z0-9(),.\s]+$/.test(c) ? c : '#aaa'
+}
+
+// ── 区块构建函数 ──
+
+/** 字母 + 分数 + 频率区 */
+function buildLetterSection(data: KeyTooltipData): string {
+  let html = ''
+  if (data.letter) {
+    html += `<div class="tooltip-letter">${esc(data.letter.toUpperCase())}</div>`
+  }
+  if (data.score != null && data.frequency != null) {
+    if (data.score > 0) {
+      html += `<div class="tooltip-score">${esc(t('tooltip.base_score', { score: data.score }))}</div>`
+      html += `<div class="tooltip-freq">${esc(t('tooltip.frequency', { count: data.frequency }))}</div>`
+    } else {
+      html += `<div class="tooltip-freq">${esc(t('tooltip.frequency_low', { count: data.frequency }))}</div>`
+    }
+  }
+  return html
+}
+
+/** 标题区：技能名 + 等级 + 学派 + 描述 */
+function buildHeaderSection(skill: NonNullable<KeyTooltipData['skill']>): string {
+  let html = '<div class="tooltip-section tooltip-header">'
+  if (skill.upgradeInfo) {
+    html += `<div class="tooltip-title">${esc(skill.icon)} ${esc(skill.name)}</div>`
+    html += `<div class="tooltip-upgrade-info">${esc(skill.upgradeInfo)}</div>`
+  } else {
+    html += `<div class="tooltip-title">${esc(skill.icon)} ${esc(skill.name)} Lv.${skill.level}</div>`
+  }
+  if (skill.schoolCssClass) {
+    html += `<span class="tooltip-skill-school ${esc(skill.schoolCssClass)}">${esc(skill.school)}</span>`
+  }
+  html += `<div class="tooltip-skill-desc">${esc(skill.description)}</div>`
+  if (skill.baseValuesText) {
+    html += `<div class="tooltip-base-values">${esc(skill.baseValuesText)}</div>`
+  }
+  html += '</div>'
+  return html
+}
+
+/** 词条区：词条列表 + 增幅/机制信息 */
+function buildAffixSection(skill: NonNullable<KeyTooltipData['skill']>): string {
+  const parts: string[] = []
+
+  // 词条列表
+  if (skill.affixInfo && skill.affixInfo.length > 0) {
+    for (const affix of skill.affixInfo) {
+      const color = AFFIX_COLORS[affix.typeKey || ''] || '#e67e22'
+      parts.push(`<div class="tooltip-affix-name" style="color:${color};">&lt;${esc(affix.typeName)}&gt; ${esc(affix.paramSummary)}</div>`)
+      if (affix.description) {
+        parts.push(`<div class="tooltip-affix-desc">${esc(affix.description)}</div>`)
+      }
+    }
+  }
+
+  // 增幅者堆叠
+  if (skill.amplifierStacks != null) {
+    parts.push(`<div class="tooltip-amp-stacks">${esc(t('tooltip.stacks', { count: skill.amplifierStacks }))}</div>`)
+  }
+
+  // 增幅者影响范围
+  if (skill.affectedSkills && skill.affectedSkills.length > 0) {
+    parts.push(`<div class="tooltip-amp-affects">${esc(t('tooltip.amp_range', { skills: skill.affectedSkills.join(', ') }))}</div>`)
+  }
+
+  // 机制信息
+  if (skill.mechanicInfo) {
+    parts.push(`<div class="tooltip-mechanic">${esc(skill.mechanicInfo)}</div>`)
+  }
+
+  // 旧式附魔描述文本
+  if (skill.enchantmentInfo) {
+    parts.push(`<div class="tooltip-enchantment-info">${esc(skill.enchantmentInfo)}</div>`)
+  }
+
+  if (parts.length === 0) return ''
+  return `<div class="tooltip-section tooltip-affix-list">${parts.join('')}</div>`
+}
+
+/** 附魔区：附魔列表 + 任务进度 + 学徒成长 */
+function buildEnchantSection(skill: NonNullable<KeyTooltipData['skill']>): string {
+  const parts: string[] = []
+
+  if (skill.enchantments && skill.enchantments.length > 0) {
+    for (const ench of skill.enchantments) {
+      parts.push(`<div class="tooltip-ench-name" style="color:${safeColor(ench.color)};">${esc(ench.icon)} ${esc(ench.name)}</div>`)
+      parts.push(`<div class="tooltip-ench-desc">${esc(ench.desc)}</div>`)
+    }
+  }
+
+  if (skill.questProgress) {
+    parts.push(`<div class="tooltip-quest">${esc(skill.questProgress)}</div>`)
+  }
+
+  if (skill.apprenticeGrowth) {
+    parts.push(`<div class="tooltip-apprentice">${esc(skill.apprenticeGrowth)}</div>`)
+  }
+
+  if (parts.length === 0) return ''
+  return `<div class="tooltip-section tooltip-enchant-list">${parts.join('')}</div>`
+}
+
+/** 摘要区：预估产出 + 明细 */
+function buildSummarySection(skill: NonNullable<KeyTooltipData['skill']>): string {
+  if (!skill.smartEstimate) return ''
+
+  const est = skill.smartEstimate
+  const fmtEst = Math.abs(est.estimatedOutput) < 1 ? est.estimatedOutput.toFixed(2)
+    : Math.abs(est.estimatedOutput) < 10 ? est.estimatedOutput.toFixed(1)
+    : Math.round(est.estimatedOutput).toString()
+
+  let html = '<div class="tooltip-section tooltip-summary">'
+  html += `<div class="tooltip-est-value">${esc(t('est.estimated_output', { val: (est.estimatedOutput >= 0 ? '+' : '') + fmtEst }))}</div>`
+
+  if (est.breakdown.length > 0) {
+    html += '<div class="tooltip-est-details">'
+    for (let i = 0; i < est.breakdown.length; i++) {
+      const line = est.breakdown[i]
+      const color = AFFIX_COLORS[line.typeKey] || '#aaa'
+      if (i > 0) {
+        html += '<span class="tooltip-est-sep">|</span>'
+      }
+      html += `<span class="tooltip-est-item" style="color:${color};">${esc(line.label)}`
+      if (line.detail) html += ` <span class="tooltip-est-detail">${esc(line.detail)}</span>`
+      html += '</span>'
+    }
+    html += '</div>'
+  }
+
+  html += '</div>'
+  return html
+}
+
 /**
  * 键位悬停提示（单例 DOM 浮层）
  */
@@ -114,91 +252,14 @@ class KeyTooltipManager {
   show(x: number, y: number, data: KeyTooltipData, avoidRect?: { top: number; left: number; right: number; bottom: number }): void {
     const el = this.ensureElement()
 
-    let html = ''
-
-    if (data.letter) {
-      html += `<div class="tooltip-letter">${esc(data.letter.toUpperCase())}</div>`
-    }
-
-    if (data.score != null && data.frequency != null) {
-      if (data.score > 0) {
-        html += `<div class="tooltip-score">${esc(t('tooltip.base_score', { score: data.score }))}</div>`
-        html += `<div class="tooltip-freq">${esc(t('tooltip.frequency', { count: data.frequency }))}</div>`
-      } else {
-        html += `<div class="tooltip-freq">${esc(t('tooltip.frequency_low', { count: data.frequency }))}</div>`
-      }
-    }
+    // 组合各区块（空区块不渲染）
+    let html = buildLetterSection(data)
 
     if (data.skill) {
-      html += `<div class="tooltip-skill">`
-      if (data.skill.upgradeInfo) {
-        html += `<div class="tooltip-skill-name">${esc(data.skill.icon)} ${esc(data.skill.name)}</div>`
-        html += `<div class="tooltip-upgrade" style="color:#2ecc71;font-size:var(--text-caption-size);margin-top:2px;">${esc(data.skill.upgradeInfo)}</div>`
-      } else {
-        html += `<div class="tooltip-skill-name">${esc(data.skill.icon)} ${esc(data.skill.name)} Lv.${data.skill.level}</div>`
-      }
-      html += `<div class="tooltip-skill-desc">${esc(data.skill.description)}</div>`
-      if (data.skill.baseValuesText) {
-        html += `<div class="tooltip-base-values" style="color:var(--text-caption-color);font-size:var(--text-caption-size);margin-top:2px;">${esc(data.skill.baseValuesText)}</div>`
-      }
-      if (data.skill.amplifierStacks != null) {
-        html += `<div class="tooltip-amp-stacks" style="color:#a29bfe;margin-top:3px;">${esc(t('tooltip.stacks', { count: data.skill.amplifierStacks }))}</div>`
-      }
-      if (data.skill.affectedSkills && data.skill.affectedSkills.length > 0) {
-        html += `<div class="tooltip-amp-affects" style="color:var(--text-caption-color);font-size:var(--text-caption-size);margin-top:2px;">${esc(t('tooltip.amp_range', { skills: data.skill.affectedSkills.join(', ') }))}</div>`
-      }
-      if (data.skill.mechanicInfo) {
-        html += `<div class="tooltip-mechanic" style="color:#4ecdc4;font-size:var(--text-caption-size);margin-top:3px;">${esc(data.skill.mechanicInfo)}</div>`
-      }
-      if (data.skill.enchantmentInfo) {
-        html += `<div class="tooltip-enchantment" style="color:#9b59b6;font-size:var(--text-caption-size);margin-top:3px;">${esc(data.skill.enchantmentInfo)}</div>`
-      }
-      // 智能产出预估区
-      if (data.skill.smartEstimate) {
-        const est = data.skill.smartEstimate
-        html += `<div class="tooltip-estimate" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
-        const fmtEst = Math.abs(est.estimatedOutput) < 1 ? est.estimatedOutput.toFixed(2)
-          : Math.abs(est.estimatedOutput) < 10 ? est.estimatedOutput.toFixed(1)
-          : Math.round(est.estimatedOutput).toString()
-        html += `<div style="color:#fff;font-size:var(--text-body-size);font-weight:bold;">${esc(t('est.estimated_output', { val: (est.estimatedOutput >= 0 ? '+' : '') + fmtEst }))}</div>`
-        for (const line of est.breakdown) {
-          const color = AFFIX_COLORS[line.typeKey] || '#aaa'
-          html += `<div style="color:${color};font-size:var(--text-caption-size);margin-left:4px;">${esc(line.label)}`
-          if (line.detail) html += ` <span style="color:var(--text-caption-color);">${esc(line.detail)}</span>`
-          html += `</div>`
-        }
-        html += `</div>`
-      }
-      // 词条制：词条信息区
-      if (data.skill.affixInfo && data.skill.affixInfo.length > 0) {
-        html += `<div class="tooltip-affix-section" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
-        for (const affix of data.skill.affixInfo) {
-          const affixColor = AFFIX_COLORS[affix.typeKey || ''] || '#e67e22'
-          html += `<div class="tooltip-affix" style="color:${affixColor};font-size:var(--text-caption-size);">&lt;${esc(affix.typeName)}&gt; ${esc(affix.paramSummary)}</div>`
-          if (affix.description) {
-            html += `<div style="color:var(--text-caption-color);font-size:var(--text-caption-size);margin-left:2px;margin-bottom:2px;">${esc(affix.description)}</div>`
-          }
-        }
-        html += `</div>`
-      }
-      // 词条制：附魔列表
-      if (data.skill.enchantments && data.skill.enchantments.length > 0) {
-        html += `<div class="tooltip-enchantments" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
-        for (const ench of data.skill.enchantments) {
-          html += `<div style="color:${ench.color};font-size:var(--text-caption-size);">${esc(ench.icon)} ${esc(ench.name)}</div>`
-          html += `<div style="color:var(--text-caption-color);font-size:var(--text-caption-size);margin-left:2px;margin-bottom:2px;">${esc(ench.desc)}</div>`
-        }
-        html += `</div>`
-      }
-      // 词条制：任务进度
-      if (data.skill.questProgress) {
-        html += `<div class="tooltip-quest" style="color:#f1c40f;font-size:var(--text-caption-size);margin-top:3px;">${esc(data.skill.questProgress)}</div>`
-      }
-      // 词条制：学徒成长
-      if (data.skill.apprenticeGrowth) {
-        html += `<div class="tooltip-apprentice" style="color:#2ecc71;font-size:var(--text-caption-size);margin-top:3px;">${esc(data.skill.apprenticeGrowth)}</div>`
-      }
-      html += `</div>`
+      html += buildHeaderSection(data.skill)
+      html += buildAffixSection(data.skill)
+      html += buildEnchantSection(data.skill)
+      html += buildSummarySection(data.skill)
     }
 
     el.innerHTML = html

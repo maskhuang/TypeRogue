@@ -1769,17 +1769,6 @@ body {
     font-size: var(--text-caption-size);
 }
 
-.key-tooltip .tooltip-skill {
-    margin-top: 6px;
-    padding-top: 6px;
-    border-top: 1px solid #333;
-}
-
-.key-tooltip .tooltip-skill-name {
-    font-weight: bold;
-    color: #fff;
-}
-
 .key-tooltip .tooltip-skill-desc {
     color: var(--text-caption-color);
     font-size: var(--text-caption-size);
@@ -1800,6 +1789,104 @@ body {
 .key-tooltip .tooltip-skill-school.school-chain { background: var(--school-chain-bg); color: var(--school-chain); }
 .key-tooltip .tooltip-skill-school.school-passive { background: var(--school-passive-bg); color: var(--school-passive); }
 .key-tooltip .tooltip-skill-school.school-amplifier { background: var(--school-amplifier-bg); color: var(--school-amplifier); }
+
+/* Tooltip 区块通用分隔 (Story 39.2) */
+.key-tooltip .tooltip-section {
+    margin-top: var(--spacing-xs);
+    padding-top: var(--spacing-xs);
+    border-top: 1px solid #333;
+}
+
+/* 标题区 */
+.key-tooltip .tooltip-header .tooltip-title {
+    font-size: var(--text-subtitle-size);
+    font-weight: bold;
+    color: var(--text-secondary);
+}
+.key-tooltip .tooltip-header .tooltip-upgrade-info {
+    color: #2ecc71;
+    font-size: var(--text-caption-size);
+    margin-top: 2px;
+}
+.key-tooltip .tooltip-header .tooltip-base-values {
+    color: var(--text-caption-color);
+    font-size: var(--text-caption-size);
+    margin-top: 2px;
+}
+
+/* 词条区 */
+.key-tooltip .tooltip-affix-list .tooltip-affix-name {
+    font-size: var(--text-caption-size);
+}
+.key-tooltip .tooltip-affix-list .tooltip-affix-desc {
+    font-size: var(--text-caption-size);
+    color: var(--text-caption-color);
+    margin-left: var(--spacing-xs);
+    margin-bottom: 2px;
+}
+.key-tooltip .tooltip-affix-list .tooltip-amp-stacks {
+    color: #a29bfe;
+    font-size: var(--text-caption-size);
+    margin-top: 3px;
+}
+.key-tooltip .tooltip-affix-list .tooltip-amp-affects {
+    color: var(--text-caption-color);
+    font-size: var(--text-caption-size);
+    margin-top: 2px;
+}
+.key-tooltip .tooltip-affix-list .tooltip-mechanic {
+    color: #4ecdc4;
+    font-size: var(--text-caption-size);
+    margin-top: 3px;
+}
+.key-tooltip .tooltip-affix-list .tooltip-enchantment-info {
+    color: #9b59b6;
+    font-size: var(--text-caption-size);
+    margin-top: 3px;
+}
+
+/* 附魔区 */
+.key-tooltip .tooltip-enchant-list .tooltip-ench-name {
+    font-size: var(--text-caption-size);
+}
+.key-tooltip .tooltip-enchant-list .tooltip-ench-desc {
+    font-size: var(--text-caption-size);
+    color: var(--text-caption-color);
+    margin-left: var(--spacing-xs);
+    margin-bottom: 2px;
+}
+.key-tooltip .tooltip-enchant-list .tooltip-quest {
+    color: #f1c40f;
+    font-size: var(--text-caption-size);
+    margin-top: 3px;
+}
+.key-tooltip .tooltip-enchant-list .tooltip-apprentice {
+    color: #2ecc71;
+    font-size: var(--text-caption-size);
+    margin-top: 3px;
+}
+
+/* 摘要区 */
+.key-tooltip .tooltip-summary .tooltip-est-value {
+    font-size: var(--text-body-size);
+    font-weight: bold;
+    color: #ffe66d;
+}
+.key-tooltip .tooltip-summary .tooltip-est-details {
+    font-size: var(--text-caption-size);
+    color: var(--text-caption-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px var(--spacing-sm);
+    margin-top: 2px;
+}
+.key-tooltip .tooltip-summary .tooltip-est-item {
+    white-space: nowrap;
+}
+.key-tooltip .tooltip-summary .tooltip-est-sep {
+    color: #555;
+    user-select: none;
+}
 
 /* ============================================ */
 /* SCORE SETTLEMENT (Balatro-style)            */
