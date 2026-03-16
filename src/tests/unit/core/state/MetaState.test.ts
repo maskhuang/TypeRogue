@@ -445,7 +445,7 @@ describe('MetaState', () => {
     it('序列化应包含版本号', () => {
       const json = metaState.serialize()
       const data = JSON.parse(json)
-      expect(data.version).toBe(5)
+      expect(data.version).toBe(6)
     })
 
     it('序列化应包含所有解锁技能', () => {
@@ -748,6 +748,71 @@ describe('MetaState', () => {
     it('unlockRelic null/undefined 应返回 false', () => {
       expect(metaState.unlockRelic(null as unknown as string)).toBe(false)
       expect(metaState.unlockRelic(undefined as unknown as string)).toBe(false)
+    })
+  })
+
+  // ===========================================
+  // 引导进度测试 (Story 39.3)
+  // ===========================================
+  describe('引导进度', () => {
+    it('初始时无引导完成', () => {
+      expect(metaState.isTutorialCompleted('any_step')).toBe(false)
+    })
+
+    it('标记引导完成后应返回 true', () => {
+      metaState.markTutorialCompleted('step1')
+      expect(metaState.isTutorialCompleted('step1')).toBe(true)
+    })
+
+    it('重复标记不应出错', () => {
+      metaState.markTutorialCompleted('step1')
+      metaState.markTutorialCompleted('step1')
+      expect(metaState.isTutorialCompleted('step1')).toBe(true)
+    })
+
+    it('resetTutorials 应清除所有进度', () => {
+      metaState.markTutorialCompleted('step1')
+      metaState.markTutorialCompleted('step2')
+      metaState.resetTutorials()
+      expect(metaState.isTutorialCompleted('step1')).toBe(false)
+      expect(metaState.isTutorialCompleted('step2')).toBe(false)
+    })
+
+    it('序列化应包含 tutorialProgress', () => {
+      metaState.markTutorialCompleted('demo_step1')
+      metaState.markTutorialCompleted('demo_step2')
+      const json = metaState.serialize()
+      const data = JSON.parse(json)
+      expect(data.tutorialProgress).toContain('demo_step1')
+      expect(data.tutorialProgress).toContain('demo_step2')
+    })
+
+    it('反序列化应恢复 tutorialProgress', () => {
+      metaState.markTutorialCompleted('demo_step1')
+      const json = metaState.serialize()
+
+      const newState = new MetaState()
+      newState.deserialize(json)
+      expect(newState.isTutorialCompleted('demo_step1')).toBe(true)
+      expect(newState.isTutorialCompleted('demo_step2')).toBe(false)
+    })
+
+    it('反序列化 v5 数据应默认空 tutorialProgress', () => {
+      const v5Data = {
+        version: 5,
+        unlockedSkills: ['score_boost'],
+        unlockedRelics: [],
+        unlockedClasses: ['none'],
+        victoriedClasses: [],
+        unlockedModes: [],
+        achievements: [],
+        stats: { totalRuns: 0 },
+        leaderboard: [],
+        dailyLeaderboard: [],
+      }
+      const newState = new MetaState()
+      newState.deserialize(JSON.stringify(v5Data))
+      expect(newState.isTutorialCompleted('any')).toBe(false)
     })
   })
 

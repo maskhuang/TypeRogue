@@ -4022,6 +4022,108 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ============================================ */
+/* Tutorial Overlay (Story 39.3)               */
+/* ============================================ */
+.tutorial-overlay {
+    position: fixed;
+    background: rgba(15, 15, 25, 0.97);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    max-width: 340px;
+    z-index: 9000;
+    animation: tutorial-fade-in 0.3s ease-out;
+    pointer-events: auto;
+}
+.tutorial-overlay-title {
+    font-size: var(--text-subtitle-size);
+    font-weight: bold;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+.tutorial-overlay-body {
+    font-size: var(--text-body-size);
+    color: var(--text-body-color);
+    line-height: 1.5;
+    margin-bottom: var(--spacing-sm);
+}
+.tutorial-overlay-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--spacing-sm);
+}
+.tutorial-overlay-never {
+    font-size: var(--text-caption-size);
+    color: var(--text-caption-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.tutorial-overlay-never input {
+    cursor: pointer;
+}
+.tutorial-overlay-btn {
+    background: rgba(78, 205, 196, 0.2);
+    color: #4ecdc4;
+    border: 1px solid #4ecdc4;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: var(--text-caption-size);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.tutorial-overlay-btn:hover {
+    background: rgba(78, 205, 196, 0.35);
+}
+/* 箭头（CSS 三角） */
+.tutorial-overlay-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+}
+.tutorial-arrow-bottom {
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: rgba(15, 15, 25, 0.97);
+}
+.tutorial-arrow-top {
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: rgba(15, 15, 25, 0.97);
+}
+.tutorial-arrow-left {
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-left-color: rgba(15, 15, 25, 0.97);
+}
+.tutorial-arrow-right {
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-right-color: rgba(15, 15, 25, 0.97);
+}
+/* 遮罩层 */
+.tutorial-overlay-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 8999;
+}
+@keyframes tutorial-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* Demo End Screen */
 .demo-end-overlay {
     position: fixed;

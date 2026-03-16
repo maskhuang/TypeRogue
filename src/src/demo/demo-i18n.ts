@@ -76,10 +76,13 @@ const ZH: Record<string, string> = {
   'demo.webgl.title': '浏览器不支持 WebGL',
   'demo.webgl.desc': '请使用 Chrome 90+ / Firefox 90+ / Safari 15+',
 
-  // --- demo-tutorial.ts ---
+  // --- tutorial system (Story 39.3) ---
+  'tutorial.demo_title': '引导',
   'tutorial.step1': '打出单词触发绑定在键位上的技能！',
   'tutorial.step2': '技能产出资源——在商店购买更多技能，用词条和附魔强化它们',
   'tutorial.step3': '过关后进入商店：购买技能、获取遗物、升级词条',
+  'tutorial.got_it': '知道了',
+  'tutorial.never_show': '不再提示',
 
   // --- demo-end-screen.ts ---
   'demo_end.title': '试玩结束！',
@@ -337,6 +340,7 @@ const ZH: Record<string, string> = {
   'relic.give_up': '放弃',
 
   // --- boss modifier ---
+  'modifier_picker.active_label': '已激活修饰器：',
   'modifier.boss_spotlight': '聚光灯',
   'modifier.boss_spotlight.desc': '只能看到当前 2-3 个字母',
   'modifier.boss_spotlight.elite': '可见 3-4 个字母',
@@ -695,10 +699,13 @@ const EN: Record<string, string> = {
   'demo.webgl.title': 'WebGL not supported',
   'demo.webgl.desc': 'Please use Chrome 90+ / Firefox 90+ / Safari 15+',
 
-  // --- demo-tutorial.ts ---
+  // --- tutorial system (Story 39.3) ---
+  'tutorial.demo_title': 'Tutorial',
   'tutorial.step1': 'Type words to trigger skills bound to your keys!',
   'tutorial.step2': 'Skills produce resources — buy more in the shop, enhance them with affixes and enchantments',
   'tutorial.step3': 'After clearing a stage: buy skills, pick up relics, upgrade affixes',
+  'tutorial.got_it': 'Got it',
+  'tutorial.never_show': 'Don\'t show again',
 
   // --- demo-end-screen.ts ---
   'demo_end.title': 'Demo Complete!',
@@ -956,6 +963,7 @@ const EN: Record<string, string> = {
   'relic.give_up': 'Give Up',
 
   // --- boss modifier ---
+  'modifier_picker.active_label': 'Active Modifiers:',
   'modifier.boss_spotlight': 'Spotlight',
   'modifier.boss_spotlight.desc': 'Only 2-3 letters visible at a time',
   'modifier.boss_spotlight.elite': '3-4 letters visible',

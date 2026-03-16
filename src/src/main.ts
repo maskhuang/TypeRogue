@@ -27,6 +27,7 @@ import { cleanDemoDom, installDemoErrorBoundary, checkWebGLSupport, showWebGLErr
 import { trackEvent } from './demo/demo-analytics';
 import { initLocale, setLocale, getLocale, applyHtmlI18n } from './demo/demo-i18n';
 import type { Locale } from './demo/demo-i18n';
+import { tutorialManager } from './systems/tutorial/TutorialManager';
 
 // === 游戏初始化 ===
 async function init(): Promise<void> {
@@ -104,6 +105,9 @@ async function init(): Promise<void> {
 
   state.endlessUnlocked = metaState.isModeUnlocked('endless');
   initLeaderboardDisplay(metaState);
+
+  // Story 39.3: 连接 TutorialManager 持久化后端
+  tutorialManager.setPersistence(metaState);
 
   // 监听保存请求：Run 结束时自动持久化 MetaState
   eventBus.on('meta:request_save', () => {

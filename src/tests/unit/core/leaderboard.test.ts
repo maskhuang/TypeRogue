@@ -229,11 +229,11 @@ describe('排行榜系统 (Story 25.5)', () => {
       expect(meta2.getLeaderboard()).toHaveLength(0)
     })
 
-    it('版本号升级到 5', () => {
+    it('版本号升级到 6', () => {
       meta.addLeaderboardEntry(makeEntry())
       const json = meta.serialize()
       const parsed = JSON.parse(json)
-      expect(parsed.version).toBe(5)
+      expect(parsed.version).toBe(6)
     })
   })
 

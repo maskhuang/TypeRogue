@@ -135,6 +135,7 @@ export class MetaState {
   private stats: MetaStats
   private leaderboard: LeaderboardEntry[]  // Story 25.5
   private dailyLeaderboard: LeaderboardEntry[]  // Story 25.6
+  private tutorialProgress: Set<string> = new Set()  // Story 39.3: 引导进度
   private eventUnsubscriber: (() => void) | null = null
   private unlockSystem: UnlockSystem | null = null  // Story 6.3: 解锁系统实例
 
@@ -539,6 +540,22 @@ export class MetaState {
   }
 
   // ===========================================
+  // 引导进度方法 (Story 39.3)
+  // ===========================================
+
+  isTutorialCompleted(stepId: string): boolean {
+    return this.tutorialProgress.has(stepId)
+  }
+
+  markTutorialCompleted(stepId: string): void {
+    this.tutorialProgress.add(stepId)
+  }
+
+  resetTutorials(): void {
+    this.tutorialProgress.clear()
+  }
+
+  // ===========================================
   // 序列化方法 (AC: #10)
   // ===========================================
 
@@ -547,7 +564,7 @@ export class MetaState {
    */
   serialize(): string {
     const data = {
-      version: 5,  // v5: 新增 victoriedClasses + unlockedModes
+      version: 6,  // v6: 新增 tutorialProgress
       unlockedSkills: Array.from(this.unlockedSkills),
       unlockedRelics: Array.from(this.unlockedRelics),
       unlockedClasses: Array.from(this.unlockedClasses),
@@ -557,6 +574,7 @@ export class MetaState {
       stats: this.stats,
       leaderboard: this.leaderboard,
       dailyLeaderboard: this.dailyLeaderboard,
+      tutorialProgress: Array.from(this.tutorialProgress),
     }
     return JSON.stringify(data)
   }
@@ -568,8 +586,8 @@ export class MetaState {
     try {
       const data = JSON.parse(json)
 
-      // 版本检查（v1-v5 均可加载）
-      if (data.version !== undefined && ![1, 2, 3, 4, 5].includes(data.version)) {
+      // 版本检查（v1-v6 均可加载）
+      if (data.version !== undefined && ![1, 2, 3, 4, 5, 6].includes(data.version)) {
         console.warn(`MetaState: Unknown save version ${data.version}, attempting to load anyway`)
       }
 
@@ -582,6 +600,7 @@ export class MetaState {
       this.stats = { ...this.createDefaultStats(), ...data.stats }
       this.leaderboard = data.leaderboard || []
       this.dailyLeaderboard = data.dailyLeaderboard || []
+      this.tutorialProgress = new Set(data.tutorialProgress || [])
     } catch (error) {
       console.error('MetaState: Failed to deserialize save data', error)
       // 保持当前状态不变

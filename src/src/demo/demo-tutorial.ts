@@ -1,71 +1,15 @@
 // ============================================
 // 打字肉鸽 - Demo 新手引导
 // ============================================
-// 3 步浮层提示，通过 EventBus 监听事件触发
+// Story 39.3: 迁移至 TutorialManager 系统
 
 import { IS_DEMO } from './demo-config'
-import { eventBus } from '../core/events/EventBus'
-import { t } from './demo-i18n'
-
-let step = 0
-let tipEl: HTMLElement | null = null
-
-function showTip(text: string, anchorId: string): void {
-  removeTip()
-  const anchor = document.getElementById(anchorId)
-  if (!anchor) return
-
-  tipEl = document.createElement('div')
-  tipEl.className = 'demo-tutorial-tip'
-  tipEl.textContent = text
-  document.body.appendChild(tipEl)
-
-  // 定位在 anchor 下方
-  const rect = anchor.getBoundingClientRect()
-  tipEl.style.left = `${rect.left + rect.width / 2 - 160}px`
-  tipEl.style.top = `${rect.bottom + 12}px`
-
-  // 4 秒后自动消失
-  setTimeout(removeTip, 4000)
-}
-
-function removeTip(): void {
-  if (tipEl && tipEl.parentNode) {
-    tipEl.parentNode.removeChild(tipEl)
-    tipEl = null
-  }
-}
+import { DEMO_TUTORIAL_STEPS } from '../data/tutorialSteps'
+import { tutorialManager } from '../systems/tutorial/TutorialManager'
 
 export function initDemoTutorial(): void {
   if (!IS_DEMO) return
-  step = 0
 
-  // Step 1: 战斗开始 1 秒后提示打字
-  setTimeout(() => {
-    if (step !== 0) return
-    step = 1
-    showTip(t('tutorial.step1'), 'word-display')
-  }, 1000)
-
-  // Step 2: 首次完成一个词后提示技能资源
-  const onWord = () => {
-    if (step > 1) return
-    step = 2
-    eventBus.off('word:complete', onWord)
-    setTimeout(() => {
-      showTip(t('tutorial.step2'), 'word-display')
-    }, 500)
-  }
-  eventBus.on('word:complete', onWord)
-
-  // Step 3: 首次进入商店后提示过关商店
-  const onShop = () => {
-    if (step > 2) return
-    step = 3
-    eventBus.off('shop:opened', onShop)
-    setTimeout(() => {
-      showTip(t('tutorial.step3'), 'shop-tabs')
-    }, 500)
-  }
-  eventBus.on('shop:opened', onShop)
+  tutorialManager.register(DEMO_TUTORIAL_STEPS)
+  tutorialManager.start()
 }

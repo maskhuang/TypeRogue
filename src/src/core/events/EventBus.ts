@@ -43,6 +43,7 @@ export interface GameEvents {
   }
 
   // 商店事件
+  'shop:opened': Record<string, never>
   'shop:purchase': { itemId: string; type: 'skill' | 'relic'; price: number }
   'shop:skip': Record<string, never>
 
@@ -201,6 +202,10 @@ export interface GameEvents {
   'audio:mute_change': {
     muted: boolean
   }
+
+  // 引导事件 (Story 39.3)
+  'tutorial:step_shown': { stepId: string }
+  'tutorial:step_completed': { stepId: string }
 }
 
 type EventHandler<T> = (data: T) => void
