@@ -4,6 +4,7 @@
 // Story 6.4: 图鉴场景 - 图鉴项组件 (AC: #2, #3)
 
 import { Container, Graphics, Text } from 'pixi.js'
+import { TEXT_LEVEL } from '../../../ui/theme'
 
 /**
  * 图鉴项数据
@@ -141,7 +142,7 @@ export class CollectionItem extends Container {
         text: descContent,
         style: {
           fontFamily: 'Arial',
-          fontSize: 11,
+          fontSize: TEXT_LEVEL.body.size,
           fill: isUnlocked ? 0xaaaaaa : 0x555555,
           wordWrap: true,
           wordWrapWidth: width - 16,

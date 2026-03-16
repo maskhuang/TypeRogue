@@ -133,25 +133,25 @@ class KeyTooltipManager {
       html += `<div class="tooltip-skill">`
       if (data.skill.upgradeInfo) {
         html += `<div class="tooltip-skill-name">${esc(data.skill.icon)} ${esc(data.skill.name)}</div>`
-        html += `<div class="tooltip-upgrade" style="color:#2ecc71;font-size:10px;margin-top:2px;">${esc(data.skill.upgradeInfo)}</div>`
+        html += `<div class="tooltip-upgrade" style="color:#2ecc71;font-size:var(--text-caption-size);margin-top:2px;">${esc(data.skill.upgradeInfo)}</div>`
       } else {
         html += `<div class="tooltip-skill-name">${esc(data.skill.icon)} ${esc(data.skill.name)} Lv.${data.skill.level}</div>`
       }
       html += `<div class="tooltip-skill-desc">${esc(data.skill.description)}</div>`
       if (data.skill.baseValuesText) {
-        html += `<div class="tooltip-base-values" style="color:#777;font-size:10px;margin-top:2px;">${esc(data.skill.baseValuesText)}</div>`
+        html += `<div class="tooltip-base-values" style="color:var(--text-caption-color);font-size:var(--text-caption-size);margin-top:2px;">${esc(data.skill.baseValuesText)}</div>`
       }
       if (data.skill.amplifierStacks != null) {
         html += `<div class="tooltip-amp-stacks" style="color:#a29bfe;margin-top:3px;">${esc(t('tooltip.stacks', { count: data.skill.amplifierStacks }))}</div>`
       }
       if (data.skill.affectedSkills && data.skill.affectedSkills.length > 0) {
-        html += `<div class="tooltip-amp-affects" style="color:#888;font-size:10px;margin-top:2px;">${esc(t('tooltip.amp_range', { skills: data.skill.affectedSkills.join(', ') }))}</div>`
+        html += `<div class="tooltip-amp-affects" style="color:var(--text-caption-color);font-size:var(--text-caption-size);margin-top:2px;">${esc(t('tooltip.amp_range', { skills: data.skill.affectedSkills.join(', ') }))}</div>`
       }
       if (data.skill.mechanicInfo) {
-        html += `<div class="tooltip-mechanic" style="color:#4ecdc4;font-size:10px;margin-top:3px;">${esc(data.skill.mechanicInfo)}</div>`
+        html += `<div class="tooltip-mechanic" style="color:#4ecdc4;font-size:var(--text-caption-size);margin-top:3px;">${esc(data.skill.mechanicInfo)}</div>`
       }
       if (data.skill.enchantmentInfo) {
-        html += `<div class="tooltip-enchantment" style="color:#9b59b6;font-size:10px;margin-top:3px;">${esc(data.skill.enchantmentInfo)}</div>`
+        html += `<div class="tooltip-enchantment" style="color:#9b59b6;font-size:var(--text-caption-size);margin-top:3px;">${esc(data.skill.enchantmentInfo)}</div>`
       }
       // 智能产出预估区
       if (data.skill.smartEstimate) {
@@ -160,11 +160,11 @@ class KeyTooltipManager {
         const fmtEst = Math.abs(est.estimatedOutput) < 1 ? est.estimatedOutput.toFixed(2)
           : Math.abs(est.estimatedOutput) < 10 ? est.estimatedOutput.toFixed(1)
           : Math.round(est.estimatedOutput).toString()
-        html += `<div style="color:#fff;font-size:11px;font-weight:bold;">${esc(t('est.estimated_output', { val: (est.estimatedOutput >= 0 ? '+' : '') + fmtEst }))}</div>`
+        html += `<div style="color:#fff;font-size:var(--text-body-size);font-weight:bold;">${esc(t('est.estimated_output', { val: (est.estimatedOutput >= 0 ? '+' : '') + fmtEst }))}</div>`
         for (const line of est.breakdown) {
           const color = AFFIX_COLORS[line.typeKey] || '#aaa'
-          html += `<div style="color:${color};font-size:10px;margin-left:4px;">${esc(line.label)}`
-          if (line.detail) html += ` <span style="color:#666;">${esc(line.detail)}</span>`
+          html += `<div style="color:${color};font-size:var(--text-caption-size);margin-left:4px;">${esc(line.label)}`
+          if (line.detail) html += ` <span style="color:var(--text-caption-color);">${esc(line.detail)}</span>`
           html += `</div>`
         }
         html += `</div>`
@@ -174,9 +174,9 @@ class KeyTooltipManager {
         html += `<div class="tooltip-affix-section" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
         for (const affix of data.skill.affixInfo) {
           const affixColor = AFFIX_COLORS[affix.typeKey || ''] || '#e67e22'
-          html += `<div class="tooltip-affix" style="color:${affixColor};font-size:10px;">&lt;${esc(affix.typeName)}&gt; ${esc(affix.paramSummary)}</div>`
+          html += `<div class="tooltip-affix" style="color:${affixColor};font-size:var(--text-caption-size);">&lt;${esc(affix.typeName)}&gt; ${esc(affix.paramSummary)}</div>`
           if (affix.description) {
-            html += `<div style="color:#888;font-size:10px;margin-left:2px;margin-bottom:2px;">${esc(affix.description)}</div>`
+            html += `<div style="color:var(--text-caption-color);font-size:var(--text-caption-size);margin-left:2px;margin-bottom:2px;">${esc(affix.description)}</div>`
           }
         }
         html += `</div>`
@@ -185,18 +185,18 @@ class KeyTooltipManager {
       if (data.skill.enchantments && data.skill.enchantments.length > 0) {
         html += `<div class="tooltip-enchantments" style="margin-top:4px;border-top:1px solid #333;padding-top:3px;">`
         for (const ench of data.skill.enchantments) {
-          html += `<div style="color:${ench.color};font-size:10px;">${esc(ench.icon)} ${esc(ench.name)}</div>`
-          html += `<div style="color:#888;font-size:9px;margin-left:2px;margin-bottom:2px;">${esc(ench.desc)}</div>`
+          html += `<div style="color:${ench.color};font-size:var(--text-caption-size);">${esc(ench.icon)} ${esc(ench.name)}</div>`
+          html += `<div style="color:var(--text-caption-color);font-size:var(--text-caption-size);margin-left:2px;margin-bottom:2px;">${esc(ench.desc)}</div>`
         }
         html += `</div>`
       }
       // 词条制：任务进度
       if (data.skill.questProgress) {
-        html += `<div class="tooltip-quest" style="color:#f1c40f;font-size:10px;margin-top:3px;">${esc(data.skill.questProgress)}</div>`
+        html += `<div class="tooltip-quest" style="color:#f1c40f;font-size:var(--text-caption-size);margin-top:3px;">${esc(data.skill.questProgress)}</div>`
       }
       // 词条制：学徒成长
       if (data.skill.apprenticeGrowth) {
-        html += `<div class="tooltip-apprentice" style="color:#2ecc71;font-size:10px;margin-top:3px;">${esc(data.skill.apprenticeGrowth)}</div>`
+        html += `<div class="tooltip-apprentice" style="color:#2ecc71;font-size:var(--text-caption-size);margin-top:3px;">${esc(data.skill.apprenticeGrowth)}</div>`
       }
       html += `</div>`
     }

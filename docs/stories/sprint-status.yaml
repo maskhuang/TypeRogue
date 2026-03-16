@@ -262,8 +262,18 @@ development_status:
   34-7-balance-tuning: backlog
   epic-34-retrospective: optional
 
+  # Epic 39: 新手引导与描述可读性优化
+  epic-39: in-progress
+  39-1-design-token-readability: done
+  39-2-tooltip-restructure: backlog
+  39-3-tutorial-manager-infra: backlog
+  39-4-tutorial-L0-L1: backlog
+  39-5-tutorial-L2-L3: backlog
+  39-6-tutorial-L4-help-system: backlog
+  epic-39-retrospective: optional
+
 # Summary:
-# - Total Epics: 27
-# - Total Stories: 117
+# - Total Epics: 28
+# - Total Stories: 123
 # - Epics Completed: 19
 # - Stories Completed: 78

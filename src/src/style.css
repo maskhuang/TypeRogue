@@ -1,6 +1,33 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
+  /* Design Token — 文字层级 */
+  --text-title-size: 18px;
+  --text-subtitle-size: 14px;
+  --text-body-size: 13px;
+  --text-caption-size: 11px;
+  --text-badge-size: 11px;
+  --text-min-size: 11px;
+
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --text-body-color: #cccccc;
+  --text-caption-color: #aaaaaa;
+
+  /* Design Token — Tooltip */
+  --tooltip-max-width: 340px;
+  --tooltip-padding: 12px 16px;
+  --tooltip-line-height: 1.5;
+  --tooltip-radius: 8px;
+
+  /* Design Token — 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* School colors */
   --school-burst: #ff6b6b;
   --school-burst-bg: rgba(255,107,107,0.2);
   --school-multiply: #ffe66d;
@@ -538,9 +565,9 @@ body {
 .reward-card .reward-icon { font-size: 24px; }
 .reward-card .reward-info { flex: 1; }
 .reward-card .reward-name { font-size: 13px; font-weight: bold; color: #fff; margin-bottom: 2px; }
-.reward-card .reward-desc { font-size: 10px; color: #888; }
+.reward-card .reward-desc { font-size: var(--text-body-size); color: var(--text-body-color); }
 .reward-card .reward-cost { font-size: 13px; color: #ffe66d; font-weight: bold; }
-.reward-card .reward-type { font-size: 9px; padding: 2px 6px; border-radius: 8px; }
+.reward-card .reward-type { font-size: var(--text-badge-size); padding: 2px 6px; border-radius: 8px; }
 .reward-card .reward-type.new { background: rgba(78,205,196,0.2); color: #4ecdc4; }
 .reward-card .reward-type.upgrade { background: rgba(255,230,109,0.2); color: #ffe66d; }
 .reward-card .reward-type.stat { background: rgba(255,107,107,0.2); color: #ff6b6b; }
@@ -579,7 +606,7 @@ body {
 .reward-card.library-card { border-color: #444; }
 .reward-card.library-card.owned { border-color: #4ecdc4; background: rgba(78,205,196,0.1); }
 .reward-card.library-card.active { border-color: #ffe66d; box-shadow: 0 0 10px rgba(255,230,109,0.3); }
-.library-freq { font-size: 9px; color: #666; margin-top: 3px; font-family: monospace; }
+.library-freq { font-size: var(--text-caption-size); color: var(--text-caption-color); margin-top: 3px; font-family: monospace; }
 .library-status { font-size: 11px; padding: 3px 8px; border-radius: 4px; }
 .library-status.active { background: #ffe66d; color: #000; }
 
@@ -788,9 +815,9 @@ body {
 .inventory-skill.synergy { border-color: #9b59b6; }
 .inventory-skill .inv-icon { font-size: 16px; }
 .inventory-skill .inv-name { font-size: 11px; color: #ccc; }
-.inventory-skill .inv-level { font-size: 9px; color: #ffe66d; }
-.inventory-skill .inv-key { font-size: 9px; color: #4ecdc4; margin-left: 3px; }
-.inventory-skill .inv-school { font-size: 8px; padding: 1px 4px; border-radius: 4px; margin-left: 2px; }
+.inventory-skill .inv-level { font-size: var(--text-caption-size); color: #ffe66d; }
+.inventory-skill .inv-key { font-size: var(--text-caption-size); color: #4ecdc4; margin-left: 3px; }
+.inventory-skill .inv-school { font-size: var(--text-caption-size); padding: 1px 4px; border-radius: 4px; margin-left: 2px; }
 .inventory-skill .inv-school.school-burst { background: var(--school-burst-bg); color: var(--school-burst); }
 .inventory-skill .inv-school.school-multiply { background: var(--school-multiply-bg); color: var(--school-multiply); }
 .inventory-skill .inv-school.school-sustain { background: var(--school-sustain-bg); color: var(--school-sustain); }
@@ -1712,15 +1739,16 @@ body {
 .key-tooltip {
     position: fixed;
     z-index: 9999;
-    padding: 8px 12px;
+    padding: var(--tooltip-padding);
     background: linear-gradient(145deg, #1a1a2e, #0d0d15);
     border: 1px solid #4a4a6a;
-    border-radius: 8px;
+    border-radius: var(--tooltip-radius);
     box-shadow: 0 4px 20px rgba(0,0,0,0.8);
     pointer-events: none;
-    font-size: 11px;
-    color: #ccc;
-    max-width: 260px;
+    font-size: var(--text-caption-size);
+    color: var(--text-body-color);
+    max-width: var(--tooltip-max-width);
+    line-height: var(--tooltip-line-height);
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
@@ -1737,8 +1765,8 @@ body {
 }
 
 .key-tooltip .tooltip-freq {
-    color: #888;
-    font-size: 10px;
+    color: var(--text-caption-color);
+    font-size: var(--text-caption-size);
 }
 
 .key-tooltip .tooltip-skill {
@@ -1753,13 +1781,13 @@ body {
 }
 
 .key-tooltip .tooltip-skill-desc {
-    color: #aaa;
-    font-size: 10px;
+    color: var(--text-caption-color);
+    font-size: var(--text-caption-size);
     white-space: normal;
 }
 
 .key-tooltip .tooltip-skill-school {
-    font-size: 9px;
+    font-size: var(--text-caption-size);
     padding: 1px 4px;
     border-radius: 3px;
     display: inline-block;
@@ -3186,13 +3214,13 @@ body {
 .reward-card.relic-card-epic { border-color: #9b59b6; box-shadow: 0 0 8px rgba(155,89,182,0.2); }
 .reward-card.relic-card-legendary { border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.2); }
 
-.reward-type.relic-type { font-size: 9px; padding: 2px 6px; border-radius: 8px; text-transform: uppercase; }
+.reward-type.relic-type { font-size: var(--text-badge-size); padding: 2px 6px; border-radius: 8px; text-transform: uppercase; }
 .reward-type.relic-rarity-common { background: rgba(150,150,150,0.2); color: #aaa; }
 .reward-type.relic-rarity-rare { background: rgba(68,136,204,0.2); color: #4488cc; }
 .reward-type.relic-rarity-epic { background: rgba(155,89,182,0.2); color: #9b59b6; }
 .reward-type.relic-rarity-legendary { background: rgba(255,215,0,0.2); color: #ffd700; }
 
-.reward-flavor { font-size: 9px; color: #555; font-style: italic; margin-top: 2px; }
+.reward-flavor { font-size: var(--text-caption-size); color: var(--text-caption-color); font-style: italic; margin-top: 2px; }
 
 /* === 评级揭示覆盖层 (Story 31.6) === */
 .rating-reveal {
