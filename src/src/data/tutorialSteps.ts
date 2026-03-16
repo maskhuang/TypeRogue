@@ -139,6 +139,7 @@ export const L1_STEPS: TutorialStep[] = [
       anchorPosition: 'top',
     },
     dismissAfter: 6000,
+    prerequisite: 'L0_welcome',
   },
   {
     id: 'L1_skill_bind',
@@ -154,6 +155,7 @@ export const L1_STEPS: TutorialStep[] = [
       anchorPosition: 'bottom',
     },
     dismissAfter: 6000,
+    prerequisite: 'L0_welcome',
   },
   {
     id: 'L1_upgrade',
@@ -169,6 +171,7 @@ export const L1_STEPS: TutorialStep[] = [
       anchorPosition: 'top',
     },
     dismissAfter: 6000,
+    prerequisite: 'L0_welcome',
   },
   {
     id: 'L1_relic',
@@ -183,6 +186,7 @@ export const L1_STEPS: TutorialStep[] = [
       anchorPosition: 'top',
     },
     dismissAfter: 6000,
+    prerequisite: 'L0_welcome',
   },
 ]
 
