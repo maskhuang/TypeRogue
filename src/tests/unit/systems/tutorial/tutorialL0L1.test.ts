@@ -123,8 +123,8 @@ describe('L1_STEPS 数据结构', () => {
 // FULL_TUTORIAL_STEPS
 // ===========================================
 describe('FULL_TUTORIAL_STEPS', () => {
-  it('应有 14 个步骤（L0×4 + L1×4 + L2×4 + L3×2）', () => {
-    expect(FULL_TUTORIAL_STEPS).toHaveLength(14)
+  it('应有 19 个步骤（L0×4 + L1×4 + L2×4 + L3×2 + L4×3 + L5×2）', () => {
+    expect(FULL_TUTORIAL_STEPS).toHaveLength(19)
   })
 
   it('所有 ID 全局唯一', () => {

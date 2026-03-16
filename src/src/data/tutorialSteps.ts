@@ -29,6 +29,8 @@ export interface TutorialContent {
   anchorPosition?: 'top' | 'bottom' | 'left' | 'right'
   /** 高亮区域选择器 */
   highlight?: string
+  /** 动态 i18n 参数提供者（由 tutorialInit.ts 注入） */
+  paramsProvider?: () => Record<string, string | number>
 }
 
 /**
@@ -289,8 +291,104 @@ export const L3_STEPS: TutorialStep[] = [
   },
 ]
 
-/** 完整版教程步骤（L0 + L1 + L2 + L3） */
-export const FULL_TUTORIAL_STEPS: TutorialStep[] = [...L0_STEPS, ...L1_STEPS, ...L2_STEPS, ...L3_STEPS]
+// ============================================
+// L4 精英/Boss 引导（战斗中触发）
+// Story 39.6: condition + paramsProvider 由 systems/tutorial/tutorialInit.ts 注入
+// ============================================
+export const L4_STEPS: TutorialStep[] = [
+  {
+    id: 'L4_elite_intro',
+    level: 4,
+    trigger: {
+      event: 'battle:start',
+      delay: 1500,
+      // condition 由 tutorialInit 注入（isEliteNode）
+    },
+    content: {
+      titleKey: 'tutorial.L4_elite_intro_title',
+      bodyKey: 'tutorial.L4_elite_intro_body',
+      anchorElement: 'modifier-info',
+      anchorPosition: 'bottom',
+    },
+    dismissAfter: 8000,
+  },
+  {
+    id: 'L4_boss_intro',
+    level: 4,
+    trigger: {
+      event: 'battle:start',
+      delay: 1500,
+      // condition 由 tutorialInit 注入（isBossNode）
+    },
+    content: {
+      titleKey: 'tutorial.L4_boss_intro_title',
+      bodyKey: 'tutorial.L4_boss_intro_body',
+      anchorElement: 'modifier-info',
+      anchorPosition: 'bottom',
+    },
+    dismissAfter: 8000,
+    prerequisite: 'L4_elite_intro',
+  },
+  {
+    id: 'L4_modifier_explain',
+    level: 4,
+    trigger: {
+      event: 'battle:start',
+      delay: 1500,
+      // condition 由 tutorialInit 注入（lastBattleHasModifier）
+    },
+    content: {
+      titleKey: 'tutorial.L4_modifier_explain_title',
+      bodyKey: 'tutorial.L4_modifier_explain_body',
+      anchorElement: 'modifier-info',
+      anchorPosition: 'bottom',
+      // paramsProvider 由 tutorialInit 注入（动态修饰器名称/描述）
+    },
+    dismissAfter: 10000,
+    prerequisite: 'L4_elite_intro',
+  },
+]
+
+// ============================================
+// L5 职业系统引导
+// Story 39.6: condition 由 systems/tutorial/tutorialInit.ts 注入
+// ============================================
+export const L5_STEPS: TutorialStep[] = [
+  {
+    id: 'L5_class_unlock',
+    level: 5,
+    trigger: {
+      event: 'meta:class_unlocked',
+      // 事件本身即足够，无需额外 condition
+    },
+    content: {
+      titleKey: 'tutorial.L5_class_unlock_title',
+      bodyKey: 'tutorial.L5_class_unlock_body',
+      anchorElement: 'game-container',
+      anchorPosition: 'top',
+    },
+    dismissAfter: 10000,
+  },
+  {
+    id: 'L5_class_resource',
+    level: 5,
+    trigger: {
+      event: 'skill:triggered',
+      // condition 由 tutorialInit 注入（职业 Run 中）
+    },
+    content: {
+      titleKey: 'tutorial.L5_class_resource_title',
+      bodyKey: 'tutorial.L5_class_resource_body',
+      anchorElement: 'skill-trigger-zone',
+      anchorPosition: 'top',
+    },
+    dismissAfter: 8000,
+    prerequisite: 'L5_class_unlock',
+  },
+]
+
+/** 完整版教程步骤（L0 + L1 + L2 + L3 + L4 + L5） */
+export const FULL_TUTORIAL_STEPS: TutorialStep[] = [...L0_STEPS, ...L1_STEPS, ...L2_STEPS, ...L3_STEPS, ...L4_STEPS, ...L5_STEPS]
 
 /**
  * Demo 模式 3 步教程（迁移自 demo-tutorial.ts）

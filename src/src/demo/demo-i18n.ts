@@ -116,6 +116,46 @@ const ZH: Record<string, string> = {
   'tutorial.L3_enchant_growth_title': '附魔成长',
   'tutorial.L3_enchant_growth_body': '附魔在成长！每次触发都在积累加成，这个效果会跨关卡保留到 Run 结束',
 
+  // L4 精英/Boss 引导 (Story 39.6)
+  'tutorial.L4_elite_intro_title': '精英关',
+  'tutorial.L4_elite_intro_body': '精英关！时间更长，但有修饰器改变规则。注意屏幕上方的修饰器图标',
+  'tutorial.L4_boss_intro_title': 'Boss 战',
+  'tutorial.L4_boss_intro_body': 'Boss 战！多个修饰器同时生效，这是本周目的最终考验',
+  'tutorial.L4_modifier_explain_title': '修饰器',
+  'tutorial.L4_modifier_explain_body': '修饰器正在影响你！{name}：{desc}。休息关可以提前查看下一关的修饰器',
+
+  // L5 职业系统引导 (Story 39.6)
+  'tutorial.L5_class_unlock_title': '职业解锁',
+  'tutorial.L5_class_unlock_body': '职业解锁了！每个职业有独特资源和专属机制，但也会失去一种通用能力',
+  'tutorial.L5_class_resource_title': '职业资源',
+  'tutorial.L5_class_resource_body': '职业专属资源！这种特殊资源可以用在职业专属的技能和机制中',
+
+  // HelpPanel 术语表 UI (Story 39.6)
+  'help.title': '术语表',
+  'help.search_placeholder': '搜索...',
+  'help.cat_affix': '词条',
+  'help.cat_enchantment': '附魔',
+  'help.cat_position': '位置关系',
+  'help.cat_resource': '资源',
+  'help.cat_modifier': '修饰器',
+  'help.cat_rarity': '稀有度',
+  'help.no_results': '未找到匹配条目',
+  'rarity.0': '白色 — 基础（0 词条）',
+  'rarity.1': '蓝色 — 普通（1 词条）',
+  'rarity.2': '紫色 — 稀有（2 词条）',
+  'rarity.3': '橙色 — 传说（3 词条）',
+  'rarity.0.desc': '无附加词条，纯基础产出技能',
+  'rarity.1.desc': '附带 1 个词条，提供额外效果',
+  'rarity.2.desc': '附带 2 个词条，组合效果更强',
+  'rarity.3.desc': '附带 3 个词条，最强组合潜力',
+  'settings.tutorial_section': '引导设置',
+  'settings.tutorial_toggle': '引导提示',
+  'settings.tutorial_reset': '重置所有引导',
+  'settings.tutorial_reset_confirm': '确定重置所有引导进度？',
+  'settings.confirm': '确定',
+  'settings.cancel': '取消',
+  'settings.stats_placeholder': '更多统计数据即将推出',
+
   // --- demo-end-screen.ts ---
   'demo_end.title': '试玩结束！',
   'demo_end.score': '得分：{value}',
@@ -283,6 +323,13 @@ const ZH: Record<string, string> = {
   'resource.gold': '金币',
   'resource.fragment': '碎片',
   'resource.mutagen': '变异素',
+  'resource.base.desc': '每个单词的基础分数，由产出技能累积',
+  'resource.score.desc': '直接加入总分的分数资源',
+  'resource.multiplier.desc': '乘以基数来放大单词最终得分',
+  'resource.time.desc': '剩余时间（秒），归零则关卡失败',
+  'resource.gold.desc': '商店中购买技能和升级的通用货币',
+  'resource.fragment.desc': '造词师职业专属资源',
+  'resource.mutagen.desc': '蜕变师职业专属资源',
 
   // --- skill school labels ---
   'school.producer': '产出',
@@ -541,6 +588,12 @@ const ZH: Record<string, string> = {
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
   'rel.sameHand': '同手', 'rel.sameFinger': '同指', 'rel.symmetric': '对称位',
+  'rel.adjacent.desc': '键盘上紧邻的按键（上下左右斜方向）',
+  'rel.sameRow.desc': '键盘上同一行的按键',
+  'rel.sameColumn.desc': '键盘上同一列的按键',
+  'rel.sameHand.desc': '由同一只手负责的按键',
+  'rel.sameFinger.desc': '由同一根手指负责的按键',
+  'rel.symmetric.desc': '键盘左右对称位置的按键',
 
   // --- enchantment categories (5) ---
   'ench_cat.apprentice': '学徒', 'ench_cat.quest': '任务',
@@ -773,6 +826,46 @@ const EN: Record<string, string> = {
   'tutorial.L3_enchant_growth_title': 'Enchantment Growth',
   'tutorial.L3_enchant_growth_body': 'Your enchantment just grew! Enchantments gain power each time the skill triggers — keep using it to stack up',
 
+  // L4 elite/boss tutorial (Story 39.6)
+  'tutorial.L4_elite_intro_title': 'Elite Stage',
+  'tutorial.L4_elite_intro_body': 'Elite stage! Longer time limit, but modifiers change the rules. Watch the modifier icon at the top',
+  'tutorial.L4_boss_intro_title': 'Boss Fight',
+  'tutorial.L4_boss_intro_body': 'Boss fight! Multiple modifiers active at once — the ultimate test of this cycle',
+  'tutorial.L4_modifier_explain_title': 'Modifier',
+  'tutorial.L4_modifier_explain_body': 'A modifier is active! {name}: {desc}. You can preview upcoming modifiers at rest stages',
+
+  // L5 class system tutorial (Story 39.6)
+  'tutorial.L5_class_unlock_title': 'Class Unlocked',
+  'tutorial.L5_class_unlock_body': 'Class unlocked! Each class has unique resources and mechanics, but you lose one general ability',
+  'tutorial.L5_class_resource_title': 'Class Resource',
+  'tutorial.L5_class_resource_body': 'Class-exclusive resource! This special resource powers class-specific skills and mechanics',
+
+  // HelpPanel glossary UI (Story 39.6)
+  'help.title': 'Glossary',
+  'help.search_placeholder': 'Search...',
+  'help.cat_affix': 'Affixes',
+  'help.cat_enchantment': 'Enchantments',
+  'help.cat_position': 'Positions',
+  'help.cat_resource': 'Resources',
+  'help.cat_modifier': 'Modifiers',
+  'help.cat_rarity': 'Rarity',
+  'help.no_results': 'No matching entries found',
+  'rarity.0': 'White — Basic (0 affixes)',
+  'rarity.1': 'Blue — Common (1 affix)',
+  'rarity.2': 'Purple — Rare (2 affixes)',
+  'rarity.3': 'Orange — Legendary (3 affixes)',
+  'rarity.0.desc': 'No affixes, pure base production skill',
+  'rarity.1.desc': 'Has 1 affix providing an extra effect',
+  'rarity.2.desc': 'Has 2 affixes with stronger combined effects',
+  'rarity.3.desc': 'Has 3 affixes with maximum combo potential',
+  'settings.tutorial_section': 'Tutorial Settings',
+  'settings.tutorial_toggle': 'Tutorial Tips',
+  'settings.tutorial_reset': 'Reset All Tutorials',
+  'settings.tutorial_reset_confirm': 'Reset all tutorial progress?',
+  'settings.confirm': 'Confirm',
+  'settings.cancel': 'Cancel',
+  'settings.stats_placeholder': 'More stats coming soon',
+
   // --- demo-end-screen.ts ---
   'demo_end.title': 'Demo Complete!',
   'demo_end.score': 'Score: {value}',
@@ -940,6 +1033,13 @@ const EN: Record<string, string> = {
   'resource.gold': 'Gold',
   'resource.fragment': 'Fragment',
   'resource.mutagen': 'Mutagen',
+  'resource.base.desc': 'Base score per word, accumulated by producer skills',
+  'resource.score.desc': 'Points added directly to total score',
+  'resource.multiplier.desc': 'Multiplied with base to amplify final word score',
+  'resource.time.desc': 'Remaining time in seconds; stage fails at zero',
+  'resource.gold.desc': 'Currency for buying skills and upgrades in shop',
+  'resource.fragment.desc': 'Wordsmith class-exclusive resource',
+  'resource.mutagen.desc': 'Metamorph class-exclusive resource',
 
   // --- skill school labels ---
   'school.producer': 'Producer',
@@ -1197,6 +1297,12 @@ const EN: Record<string, string> = {
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',
   'rel.sameHand': 'Hand', 'rel.sameFinger': 'Finger', 'rel.symmetric': 'Mirror',
+  'rel.adjacent.desc': 'Keys directly next to each other on the keyboard',
+  'rel.sameRow.desc': 'Keys on the same keyboard row',
+  'rel.sameColumn.desc': 'Keys in the same keyboard column',
+  'rel.sameHand.desc': 'Keys typed by the same hand',
+  'rel.sameFinger.desc': 'Keys typed by the same finger',
+  'rel.symmetric.desc': 'Keys at mirrored positions on left/right halves',
 
   // --- enchantment categories (5) ---
   'ench_cat.apprentice': 'Apprentice', 'ench_cat.quest': 'Quest',

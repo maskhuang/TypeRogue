@@ -3,13 +3,18 @@
 // ============================================
 // Story 39.4: L0-L1 引导步骤注入 condition + 注册
 // Story 39.5: L2-L3 引导步骤注入 condition + 注册
+// Story 39.6: L4-L5 引导步骤注入 condition + paramsProvider + 注册
 
-import { L0_STEPS, L1_STEPS, L2_STEPS, L3_STEPS } from '../../data/tutorialSteps'
+import { L0_STEPS, L1_STEPS, L2_STEPS, L3_STEPS, L4_STEPS, L5_STEPS } from '../../data/tutorialSteps'
 import { state } from '../../core/state'
 import { eventBus } from '../../core/events/EventBus'
 import { tutorialManager } from './TutorialManager'
 import { AFFIX_CATEGORY_MAP } from '../../data/affixes'
 import { getMinEnchantmentLevel } from '../relics/EnchantmentRelicBehaviors'
+import { getStageType } from '../stage/stageFlow'
+import { getBossModifierMeta } from '../../data/bossModifiers'
+import { t } from '../../demo/demo-i18n'
+import { initHelpButtons } from '../../ui/HelpPanel'
 
 /**
  * 初始化完整版引导系统（L0-L3）
@@ -119,7 +124,89 @@ export function initFullTutorial(): void {
     enchantGrowthStep.trigger.condition = () => lastTriggerHadGrowth
   }
 
+  // --- L4 condition 注入 ---
+
+  // 共享 flag 变量：battle:start 事件关卡类型信息
+  let lastBattleIsElite = false
+  let lastBattleIsBoss = false
+  let lastBattleHasModifier = false
+  let lastModifierName = ''
+  let lastModifierDesc = ''
+
+  eventBus.on('battle:start', (data) => {
+    const stageType = getStageType(data.stageId)
+    lastBattleIsElite = stageType === 'elite'
+    lastBattleIsBoss = stageType === 'boss'
+
+    // 精英/Boss 关都有修饰器
+    if (lastBattleIsElite || lastBattleIsBoss) {
+      lastBattleHasModifier = true
+      // 获取第一个修饰器信息用于动态插值
+      const pool = state.bossModifierPool
+      if (pool && pool.length > 0) {
+        const meta = getBossModifierMeta(pool[0])
+        if (meta) {
+          lastModifierName = `${meta.icon} ${t(`modifier.${meta.id}`)}`
+          lastModifierDesc = lastBattleIsElite
+            ? t(`modifier.${meta.id}.elite`)
+            : t(`modifier.${meta.id}.desc`)
+        } else {
+          lastModifierName = ''
+          lastModifierDesc = ''
+        }
+      } else {
+        lastModifierName = ''
+        lastModifierDesc = ''
+      }
+    } else {
+      lastBattleHasModifier = false
+      lastModifierName = ''
+      lastModifierDesc = ''
+    }
+  })
+
+  // L4_elite_intro condition: 精英关
+  const eliteIntroStep = L4_STEPS.find(s => s.id === 'L4_elite_intro')
+  if (eliteIntroStep) {
+    eliteIntroStep.trigger.condition = () => lastBattleIsElite
+  }
+
+  // L4_boss_intro condition: Boss 关
+  const bossIntroStep = L4_STEPS.find(s => s.id === 'L4_boss_intro')
+  if (bossIntroStep) {
+    bossIntroStep.trigger.condition = () => lastBattleIsBoss
+  }
+
+  // L4_modifier_explain condition + paramsProvider: 有修饰器的精英/Boss 关
+  const modExplainStep = L4_STEPS.find(s => s.id === 'L4_modifier_explain')
+  if (modExplainStep) {
+    modExplainStep.trigger.condition = () => lastBattleHasModifier
+    modExplainStep.content.paramsProvider = () => ({
+      name: lastModifierName,
+      desc: lastModifierDesc,
+    })
+  }
+
+  // --- L5 condition 注入 ---
+
+  // L5_class_unlock: meta:class_unlocked 事件本身即足够，无需额外 condition
+
+  // L5_class_resource: 职业 Run 中首次触发技能
+  let lastTriggerInClassRun = false
+  // 扩展已有 skill:triggered 监听（与 L3 的 lastTriggerHadGrowth 共存）
+  eventBus.on('skill:triggered', () => {
+    lastTriggerInClassRun = state.classId !== 'none'
+  })
+
+  const classResourceStep = L5_STEPS.find(s => s.id === 'L5_class_resource')
+  if (classResourceStep) {
+    classResourceStep.trigger.condition = () => lastTriggerInClassRun
+  }
+
   // --- 注册并启动 ---
-  tutorialManager.register([...L0_STEPS, ...L1_STEPS, ...L2_STEPS, ...L3_STEPS])
+  tutorialManager.register([...L0_STEPS, ...L1_STEPS, ...L2_STEPS, ...L3_STEPS, ...L4_STEPS, ...L5_STEPS])
   tutorialManager.start()
+
+  // --- 帮助按钮 ---
+  initHelpButtons()
 }

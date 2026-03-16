@@ -12,6 +12,8 @@ export interface TutorialOverlayOptions {
   anchorPosition?: 'top' | 'bottom' | 'left' | 'right'
   highlight?: string
   dismissAfter?: number
+  /** 动态 i18n 参数提供者 */
+  paramsProvider?: () => Record<string, string | number>
   onDismiss: (neverShowAgain: boolean) => void
 }
 
@@ -69,13 +71,14 @@ export class TutorialOverlay {
 
   private createOverlay(): void {
     const pos = this.options.anchorPosition || 'bottom'
+    const params = this.options.paramsProvider?.() ?? undefined
 
     this.container = document.createElement('div')
     this.container.className = 'tutorial-overlay'
     this.container.innerHTML = [
       `<div class="tutorial-overlay-arrow tutorial-arrow-${pos}"></div>`,
-      `<div class="tutorial-overlay-title">${esc(t(this.options.titleKey))}</div>`,
-      `<div class="tutorial-overlay-body">${esc(t(this.options.bodyKey))}</div>`,
+      `<div class="tutorial-overlay-title">${esc(t(this.options.titleKey, params))}</div>`,
+      `<div class="tutorial-overlay-body">${esc(t(this.options.bodyKey, params))}</div>`,
       '<div class="tutorial-overlay-actions">',
       `  <label class="tutorial-overlay-never"><input type="checkbox" class="tutorial-never-cb"> ${esc(t('tutorial.never_show'))}</label>`,
       `  <button class="tutorial-overlay-btn">${esc(t('tutorial.got_it'))}</button>`,

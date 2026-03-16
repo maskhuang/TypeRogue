@@ -98,6 +98,8 @@ class TutorialManagerImpl {
     this.enabled = enabled
     if (!enabled && this.running) {
       this.stop()
+    } else if (enabled && !this.running) {
+      this.start()
     }
   }
 
@@ -159,6 +161,7 @@ class TutorialManagerImpl {
       anchorPosition: step.content.anchorPosition,
       highlight: step.content.highlight,
       dismissAfter: step.dismissAfter ?? 6000,
+      paramsProvider: step.content.paramsProvider,
       onDismiss: (neverShowAgain: boolean) => {
         this.currentOverlay = null
         // "知道了" 总是标记完成；"不再提示" 也标记完成（两者效果相同）

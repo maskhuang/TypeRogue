@@ -6,6 +6,8 @@
 import { Container, Text, Graphics } from 'pixi.js'
 import { BaseScene } from '../BaseScene'
 import { eventBus } from '../../core/events/EventBus'
+import { tutorialManager } from '../../systems/tutorial/TutorialManager'
+import { t } from '../../demo/demo-i18n'
 
 /**
  * 标签页类型
@@ -272,13 +274,18 @@ export class CollectionScene extends BaseScene {
    */
   private renderCurrentTab(): void {
     this.renderTabs()
-    // 内容将在各个 Tab 组件中实现
-    // 这里先显示占位文本
     if (!this.contentContainer) return
 
     this.contentContainer.removeChildren()
 
     const currentTab = TABS[this.currentTabIndex]
+
+    if (currentTab.type === 'stats') {
+      this.renderStatsTab()
+      return
+    }
+
+    // 其他标签页显示占位文本
     const placeholderText = new Text({
       text: `${currentTab.label}内容区域`,
       style: {
@@ -290,6 +297,169 @@ export class CollectionScene extends BaseScene {
     placeholderText.x = 400
     placeholderText.anchor.set(0.5, 0)
     this.contentContainer.addChild(placeholderText)
+  }
+
+  /**
+   * 渲染统计标签页（含引导控制区域）
+   */
+  private renderStatsTab(): void {
+    if (!this.contentContainer) return
+
+    // 标题
+    const sectionTitle = new Text({
+      text: t('settings.tutorial_section'),
+      style: { fontFamily: 'Arial', fontSize: 20, fill: 0xffffff, fontWeight: 'bold' }
+    })
+    sectionTitle.x = 400
+    sectionTitle.anchor.set(0.5, 0)
+    this.contentContainer.addChild(sectionTitle)
+
+    // --- 引导开关 ---
+    const toggleY = 50
+    const toggleLabel = new Text({
+      text: t('settings.tutorial_toggle'),
+      style: { fontFamily: 'Arial', fontSize: 16, fill: 0xcccccc }
+    })
+    toggleLabel.x = 200
+    toggleLabel.y = toggleY
+    this.contentContainer.addChild(toggleLabel)
+
+    const isEnabled = tutorialManager.isEnabled()
+    const toggleBg = new Graphics()
+    toggleBg.roundRect(0, 0, 50, 26, 13)
+    toggleBg.fill(isEnabled ? 0x4ecdc4 : 0x555555)
+
+    const toggleKnob = new Graphics()
+    toggleKnob.circle(0, 0, 10)
+    toggleKnob.fill(0xffffff)
+    toggleKnob.x = isEnabled ? 37 : 13
+    toggleKnob.y = 13
+
+    const toggleContainer = new Container()
+    toggleContainer.addChild(toggleBg, toggleKnob)
+    toggleContainer.x = 500
+    toggleContainer.y = toggleY
+    toggleContainer.eventMode = 'static'
+    toggleContainer.cursor = 'pointer'
+    toggleContainer.on('pointertap', () => {
+      tutorialManager.setEnabled(!tutorialManager.isEnabled())
+      this.renderCurrentTab()
+    })
+    this.contentContainer.addChild(toggleContainer)
+
+    // --- 重置按钮 ---
+    const resetY = 100
+    const resetBg = new Graphics()
+    resetBg.roundRect(0, 0, 180, 36, 8)
+    resetBg.fill(0x663333)
+
+    const resetText = new Text({
+      text: t('settings.tutorial_reset'),
+      style: { fontFamily: 'Arial', fontSize: 14, fill: 0xffaaaa }
+    })
+    resetText.anchor.set(0.5)
+    resetText.x = 90
+    resetText.y = 18
+
+    const resetContainer = new Container()
+    resetContainer.addChild(resetBg, resetText)
+    resetContainer.x = 310
+    resetContainer.y = resetY
+    resetContainer.eventMode = 'static'
+    resetContainer.cursor = 'pointer'
+    resetContainer.on('pointertap', () => {
+      this.showResetConfirm()
+    })
+    this.contentContainer.addChild(resetContainer)
+
+    // 占位：其他统计数据将来扩展
+    const statsPlaceholder = new Text({
+      text: `（${t('settings.stats_placeholder')}）`,
+      style: { fontFamily: 'Arial', fontSize: 16, fill: 0x666666 }
+    })
+    statsPlaceholder.x = 400
+    statsPlaceholder.y = 180
+    statsPlaceholder.anchor.set(0.5, 0)
+    this.contentContainer.addChild(statsPlaceholder)
+  }
+
+  /**
+   * 显示重置确认弹窗
+   */
+  private showResetConfirm(): void {
+    // 使用覆盖层遮罩 + 居中确认框
+    const overlay = new Container()
+
+    const bg = new Graphics()
+    bg.rect(0, 0, 800, 600)
+    bg.fill({ color: 0x000000, alpha: 0.6 })
+    bg.eventMode = 'static' // 阻止点击穿透
+    overlay.addChild(bg)
+
+    const box = new Graphics()
+    box.roundRect(0, 0, 320, 160, 12)
+    box.fill(0x1a1a2e)
+    box.stroke({ color: 0x444444, width: 1 })
+    box.x = 240
+    box.y = 200
+    overlay.addChild(box)
+
+    const msg = new Text({
+      text: t('settings.tutorial_reset_confirm'),
+      style: { fontFamily: 'Arial', fontSize: 16, fill: 0xdddddd, wordWrap: true, wordWrapWidth: 280 }
+    })
+    msg.x = 400
+    msg.y = 230
+    msg.anchor.set(0.5, 0)
+    overlay.addChild(msg)
+
+    // 确认按钮
+    const confirmBg = new Graphics()
+    confirmBg.roundRect(0, 0, 100, 32, 6)
+    confirmBg.fill(0xcc4444)
+    const confirmText = new Text({
+      text: t('settings.confirm'),
+      style: { fontFamily: 'Arial', fontSize: 14, fill: 0xffffff }
+    })
+    confirmText.anchor.set(0.5)
+    confirmText.x = 50
+    confirmText.y = 16
+    const confirmBtn = new Container()
+    confirmBtn.addChild(confirmBg, confirmText)
+    confirmBtn.x = 280
+    confirmBtn.y = 310
+    confirmBtn.eventMode = 'static'
+    confirmBtn.cursor = 'pointer'
+    confirmBtn.on('pointertap', () => {
+      tutorialManager.resetAll()
+      this.container.removeChild(overlay)
+      this.renderCurrentTab()
+    })
+    overlay.addChild(confirmBtn)
+
+    // 取消按钮
+    const cancelBg = new Graphics()
+    cancelBg.roundRect(0, 0, 100, 32, 6)
+    cancelBg.fill(0x444444)
+    const cancelText = new Text({
+      text: t('settings.cancel'),
+      style: { fontFamily: 'Arial', fontSize: 14, fill: 0xcccccc }
+    })
+    cancelText.anchor.set(0.5)
+    cancelText.x = 50
+    cancelText.y = 16
+    const cancelBtn = new Container()
+    cancelBtn.addChild(cancelBg, cancelText)
+    cancelBtn.x = 420
+    cancelBtn.y = 310
+    cancelBtn.eventMode = 'static'
+    cancelBtn.cursor = 'pointer'
+    cancelBtn.on('pointertap', () => {
+      this.container.removeChild(overlay)
+    })
+    overlay.addChild(cancelBtn)
+
+    this.container.addChild(overlay)
   }
 
   /**
