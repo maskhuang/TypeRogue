@@ -124,6 +124,21 @@ function collectPlayerAffixTypes(): AffixType[] {
   return [...types];
 }
 
+/** 收集玩家已装备 Link/Splash 技能监听的词条类型（去重） */
+function collectPlayerWatchedAffixTypes(): Set<AffixType> {
+  const watched = new Set<AffixType>();
+  for (const [, skillId] of state.player.bindings) {
+    const skill = state.affixSkills.get(skillId);
+    if (!skill) continue;
+    for (const a of skill.affixes) {
+      if ((a.type === 'link' || a.type === 'splash') && a.watchAffix) {
+        watched.add(a.watchAffix as AffixType);
+      }
+    }
+  }
+  return watched;
+}
+
 /** 生成单个词条制技能商品（避免与已有技能重名） */
 export function generateAffixShopItem(
   itemId: number,
@@ -176,6 +191,20 @@ export function generateAffixShopItem(
       for (const affix of skill.affixes) {
         if ((affix.type === 'link' || affix.type === 'splash') && affix.watchAffix && random() < 0.5) {
           affix.watchAffix = playerAffixTypes[Math.floor(random() * playerAffixTypes.length)];
+        }
+      }
+    }
+  }
+  // === 反向吸引：玩家已装备感应/溅射监听的词条类型，商店更易刷出含该词条的技能 ===
+  if (skill.rarity > 0) {
+    const watched = collectPlayerWatchedAffixTypes();
+    if (watched.size > 0) {
+      const hasWatched = skill.affixes.some(a => watched.has(a.type as AffixType));
+      if (!hasWatched && random() < 0.5) {
+        // 50% 概率重试 1 次，尝试生成含被监听词条的技能
+        const candidate = generateSkill({ resource: skill.resource, rarity: skill.rarity as SkillRarity, availableResources: resourcePool });
+        if (candidate.affixes.some(a => watched.has(a.type as AffixType))) {
+          skill = candidate;
         }
       }
     }
@@ -1418,6 +1447,9 @@ function purchaseShopItem(index: number): void {
 
   renderUnifiedShop();
   renderBuildManager();
+
+  // 发送购买事件（引导系统 L1/L2 监听），放在所有后处理完成后
+  eventBus.emit('shop:purchase', { type: 'skill', itemId: result.skillId });
 }
 
 // === 购买遗物商品 ===
@@ -2487,6 +2519,9 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     if (result.skillId) checkAutoEnchantment(result.skillId);
     renderUnifiedShop();
     renderBuildManager();
+
+    // 发送购买事件（引导系统 L1/L2 监听）
+    eventBus.emit('shop:purchase', { type: 'skill', itemId: skillId });
   } else if (payload.type === 'skill-inventory' || payload.type === 'skill-key') {
     // 拖拽已有技能到键位 → 绑定/交换
     const skillId = payload.skillId;
