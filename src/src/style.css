@@ -563,7 +563,16 @@ body {
 .reward-card.cannot-afford:hover { border-color: #ff6b6b; transform: scale(1.01); box-shadow: none; }
 
 .reward-card .reward-icon { font-size: 24px; }
+.reward-card.affix-skill-card .reward-icon { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .reward-card .reward-info { flex: 1; }
+
+/* Story 40.4: 形状预览网格 */
+.shape-preview { display: inline-grid; gap: 1px; }
+.shape-preview .shape-cell { width: 5px; height: 5px; border-radius: 1px; }
+.shape-preview .shape-cell.filled { opacity: 0.9; }
+.shape-preview-r1 .shape-cell.filled { background: #4488ff; }
+.shape-preview-r2 .shape-cell.filled { background: #a855f7; }
+.shape-preview-r3 .shape-cell.filled { background: #ff8800; }
 .reward-card .reward-name { font-size: 13px; font-weight: bold; color: #fff; margin-bottom: 2px; }
 .reward-card .reward-desc { font-size: var(--text-body-size); color: var(--text-body-color); }
 .reward-card .reward-cost { font-size: 13px; color: #ffe66d; font-weight: bold; }
@@ -4077,6 +4086,17 @@ body {
 }
 .tutorial-overlay-btn:hover {
     background: rgba(78, 205, 196, 0.35);
+}
+.tutorial-overlay-hint {
+    text-align: center;
+    font-size: var(--text-caption-size);
+    color: rgba(255,255,255,0.45);
+    margin-top: var(--spacing-sm);
+    animation: tutorial-hint-pulse 1.5s ease-in-out infinite;
+}
+@keyframes tutorial-hint-pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.8; }
 }
 /* 箭头（CSS 三角） */
 .tutorial-overlay-arrow {

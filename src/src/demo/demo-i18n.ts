@@ -717,6 +717,20 @@ const ZH: Record<string, string> = {
   'ench_info.neighbor_generic': '学徒·观摩',
   'ench_info.neighbor_generic_desc': '范围内技能触发时永久成长',
 
+  // --- shape preview (Story 40.4) ---
+  'shape.domino': '条形',
+  'shape.triomino_I': 'I 形',
+  'shape.triomino_L': 'L 形',
+  'shape.tetromino_T': 'T 形',
+  'shape.tetromino_L': 'L 形',
+  'shape.tetromino_J': 'J 形',
+  'shape.tetromino_S': 'S 形',
+  'shape.tetromino_Z': 'Z 形',
+  'shape.tetromino_I': 'I 形',
+  'shape.tetromino_O': 'O 形',
+  'shape.desc': '占据 {count} 格 {name}区域',
+  'shape.desc_generic': '占据 {count} 格区域',
+
   // --- metamorph station ---
   'metamorph.title': '🧬 蜕变台',
   'metamorph.mutagen': '🧬 变异素: {count}',
@@ -1426,6 +1440,20 @@ const EN: Record<string, string> = {
   'ench_info.neighbor_desc': '{rel} skill trigger: perma growth +{pct}%/fire',
   'ench_info.neighbor_generic': 'Apprentice·Observe',
   'ench_info.neighbor_generic_desc': 'Perma growth when nearby skills trigger',
+
+  // --- shape preview (Story 40.4) ---
+  'shape.domino': 'Bar',
+  'shape.triomino_I': 'I-shape',
+  'shape.triomino_L': 'L-shape',
+  'shape.tetromino_T': 'T-shape',
+  'shape.tetromino_L': 'L-shape',
+  'shape.tetromino_J': 'J-shape',
+  'shape.tetromino_S': 'S-shape',
+  'shape.tetromino_Z': 'Z-shape',
+  'shape.tetromino_I': 'I-shape',
+  'shape.tetromino_O': 'O-shape',
+  'shape.desc': 'Occupies {count} cells ({name})',
+  'shape.desc_generic': 'Occupies {count} cells',
 
   // --- metamorph station ---
   'metamorph.title': '🧬 Metamorph Station',

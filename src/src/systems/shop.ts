@@ -53,6 +53,7 @@ import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment, getUncrownedKingBaseValue } from './relics/SkillRelicBehaviors';
 import { getEnchantmentChoiceCount, getMinEnchantmentLevel, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier } from './relics/EnchantmentRelicBehaviors';
 import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState } from './bindingManager';
+import { getShapeCells } from '../data/skillShapes';
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
@@ -90,6 +91,49 @@ export function rollPriceFluctuation(): number {
 const RARITY_KEYS = ['common', 'rare', 'epic', 'legendary'] as const;
 function rarityLabel(rarity: number): string {
   return t('shop.rarity.' + (RARITY_KEYS[rarity] ?? 'common')) || RARITY_NAMES[rarity as SkillRarity] || '?';
+}
+
+// === 形状预览（Story 40.4）===
+
+/**
+ * 生成形状预览的 HTML 字符串（CSS Grid 小型网格）
+ * @returns HTML 字符串，monomino 返回空字符串
+ */
+export function renderShapePreview(shapeId: string, rotation: number, rarity: number): string {
+  if (rarity <= 0 || shapeId === 'monomino' || !shapeId) return ''
+
+  const cells = getShapeCells(shapeId, rotation)
+  if (!cells || cells.length <= 1) return ''
+
+  const maxRow = Math.max(...cells.map(c => c[0])) + 1
+  const maxCol = Math.max(...cells.map(c => c[1])) + 1
+
+  // Build filled set for quick lookup
+  const filled = new Set(cells.map(([r, c]) => `${r},${c}`))
+
+  let gridHtml = ''
+  for (let r = 0; r < maxRow; r++) {
+    for (let c = 0; c < maxCol; c++) {
+      const isFilled = filled.has(`${r},${c}`)
+      gridHtml += `<div class="shape-cell${isFilled ? ' filled' : ''}"></div>`
+    }
+  }
+
+  return `<div class="shape-preview shape-preview-r${rarity}" style="grid-template-columns:repeat(${maxCol},1fr)">${gridHtml}</div>`
+}
+
+/**
+ * 返回人类可读的形状描述
+ * @returns 描述字符串，monomino 返回空字符串
+ */
+export function getShapeDescription(shapeId: string, cellCount: number): string {
+  if (!shapeId || shapeId === 'monomino' || cellCount <= 1) return ''
+  const name = t('shape.' + shapeId)
+  // t() returns key itself if not found — treat that as unknown shape
+  const hasName = name && name !== 'shape.' + shapeId
+  return hasName
+    ? t('shape.desc', { count: cellCount, name })
+    : t('shape.desc_generic', { count: cellCount })
 }
 
 /** 职业可用资源池（排除非对应职业的 fragment/mutagen） */
@@ -969,8 +1013,9 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
 
     card.classList.add('affix-skill-card');
     card.style.borderColor = rarityColor;
+    const shapePreviewHtml = renderShapePreview(affix.shapeId ?? 'monomino', affix.rotation ?? 0, affix.rarity);
     card.innerHTML = `
-      <div class="reward-icon">${affix.icon}</div>
+      <div class="reward-icon">${affix.icon}${shapePreviewHtml}</div>
       <div class="reward-info">
         <div class="reward-name">${nameLabel}</div>
         <div class="reward-desc affix-list">${affixNames || t('shop.no_affix')}</div>
@@ -1093,6 +1138,11 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       const fields = buildAffixTooltipFields(skill);
       tooltipData.skill!.affixInfo = fields.affixInfo;
       tooltipData.skill!.enchantments = fields.enchantments;
+      // Story 40.4: 形状描述
+      const shapeDesc = getShapeDescription(skill.shapeId ?? 'monomino', getShapeCells(skill.shapeId ?? 'monomino', skill.rotation ?? 0)?.length ?? 1);
+      if (shapeDesc) {
+        tooltipData.skill!.mechanicInfo = shapeDesc;
+      }
       keyTooltip.show(e.clientX, e.clientY, tooltipData);
       // Link/Splash watchAffix 高亮
       for (const affix of skill.affixes) {
