@@ -1,8 +1,9 @@
 // ============================================
-// 打字肉鸽 - Story 40.8/40.9 多格技能触发适配单元测试
+// 打字肉鸽 - Story 40.8/40.9/40.10 多格技能触发适配单元测试
 // ============================================
 // 40.8: getExtendedNeighbors, Phase 5/6 去重, TriggerContext.occupiedKeys
 // 40.9: 空间词条多格适配（Void/Amplify/Splash/Phase6/Mirror/Cascade 回归）
+// 40.10: 附魔系统多格适配（Phase 6 按技能分组遍历 + 双侧 any-match）
 
 import { describe, it, expect } from 'vitest'
 import {
@@ -17,7 +18,7 @@ import {
   type TriggerContext,
   type TriggerFlags,
 } from '../../../src/data/affixTrigger'
-import { AffixType, type AffixInstance, type AffixSkillInstance, type SkillRuntimeState } from '../../../src/data/affixes'
+import { AffixType, EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, type AffixInstance, type AffixSkillInstance, type SkillRuntimeState } from '../../../src/data/affixes'
 import { PositionRelation } from '../../../src/data/keyboardTopology'
 import type { ResourceState } from '../../../src/core/types'
 
@@ -971,5 +972,527 @@ describe('Cascade — 多格不影响回归', () => {
     // 即使 h 与 g（另一占据键）adjacent，Cascade 也不应生效
     expect(result.output).toBe(100) // 无 cascadeMult
     expect(result.flags.isCascade).toBe(false)
+  })
+})
+
+// ============================================
+// Story 40.10: 附魔系统多格适配（Phase 6 观察者侧）
+// ============================================
+
+// ===== 8.1: ApprenticeNeighbor 观察者侧多格匹配 =====
+
+describe('resolvePhase6 — ApprenticeNeighbor 多格观察者', () => {
+  it('8.1a: 观察者侧 — domino 附魔技能通过第二键位的邻接关系被触发', () => {
+    // 触发技能在 f（单格）
+    // 附魔技能（ApprenticeNeighbor, Adjacent）占 [j, g]
+    //   j 不是 f 的 adjacent（j→adj: h,u,i,k,m,n）
+    //   g IS f 的 adjacent（g→adj: f,t,y,h,v,b）
+    // 新代码：neighborKeys = [j, g]，双侧 any-match 检测到 (f, g) adjacent → 正确触发
+    // 且 neighborKey 应为实际匹配键 g（而非任意键 j）
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['j', 'skillB'],  // j 先于 g（模拟旧 bug 触发顺序）
+      ['g', 'skillB'],
+    ])
+    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+      neighborPosRel: PositionRelation.Adjacent,
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
+
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills,
+      skillStates,
+    })
+
+    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
+    const apprenticeActions = result.actions.filter(a => a.type === 'apprentice_neighbor')
+
+    // 新代码应检测到 g 与 f 相邻 → ApprenticeNeighbor 触发
+    expect(apprenticeActions.length).toBe(1)
+    expect(apprenticeActions[0].growthDelta).toBe(APPRENTICE_NEIGHBOR_GROWTH[PositionRelation.Adjacent])
+    // neighborKey 应为实际匹配键 g（而非 neighborKeys[0]=j）
+    expect(apprenticeActions[0].neighborKey).toBe('g')
+  })
+
+  it('8.1b: 双侧多格 — 触发技能多格 × 附魔技能多格', () => {
+    // 触发技能 domino [f, g]
+    // 附魔技能（ApprenticeNeighbor, Adjacent）domino [j, h]
+    //   f→adj: d,r,t,g,c,v → j 和 h 都不在
+    //   g→adj: f,t,y,h,v,b → h IS adjacent!
+    // 匹配路径: (g, h) → 双侧第二键互相匹配
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['g', 'skillA'],
+      ['j', 'skillB'],  // j 先于 h
+      ['h', 'skillB'],
+    ])
+    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+      neighborPosRel: PositionRelation.Adjacent,
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
+
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f', 'g'],
+      bindings,
+      allSkills,
+      skillStates,
+    })
+
+    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
+    const apprenticeActions = result.actions.filter(a => a.type === 'apprentice_neighbor')
+
+    // g→h adjacent → 双侧 any-match 成功
+    expect(apprenticeActions.length).toBe(1)
+  })
+
+  it('8.1c: 多格附魔技能范围确实更大 — domino 比 monomino 有更多有效触发邻居', () => {
+    // 附魔技能 domino [g, h] vs monomino [g]，都有 ApprenticeNeighbor(Adjacent)
+    // 检查：以 domino 配置可被更多触发键激活
+
+    // 测试 domino [g, h] 的有效触发键集合
+    const dominoValidTriggers: string[] = []
+    for (const testKey of ['d', 'r', 't', 'f', 'c', 'v', 'y', 'u', 'j', 'n', 'b']) {
+      const bindings = new Map<string, string>([
+        [testKey, 'skillA'],
+        ['g', 'skillB'],
+        ['h', 'skillB'],
+      ])
+      const ctx = makeContext({
+        triggerKey: testKey,
+        occupiedKeys: [testKey],
+        bindings,
+        allSkills: new Map([
+          ['skillA', makeSkill({ id: 'skillA', resource: 'base' })],
+          ['skillB', makeSkill({
+            id: 'skillB',
+            resource: 'base',
+            enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+            neighborPosRel: PositionRelation.Adjacent,
+          })],
+        ]),
+        skillStates: new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]]),
+      })
+      const result = resolvePhase6(testKey, makeSkill({ id: 'skillA' }), makeRuntimeState(), ctx, 'base')
+      if (result.actions.some(a => a.type === 'apprentice_neighbor')) {
+        dominoValidTriggers.push(testKey)
+      }
+    }
+
+    // 测试 monomino [g] 的有效触发键集合
+    const monoValidTriggers: string[] = []
+    for (const testKey of ['d', 'r', 't', 'f', 'c', 'v', 'y', 'u', 'j', 'n', 'b']) {
+      const bindings = new Map<string, string>([
+        [testKey, 'skillA'],
+        ['g', 'skillB'],
+      ])
+      const ctx = makeContext({
+        triggerKey: testKey,
+        occupiedKeys: [testKey],
+        bindings,
+        allSkills: new Map([
+          ['skillA', makeSkill({ id: 'skillA', resource: 'base' })],
+          ['skillB', makeSkill({
+            id: 'skillB',
+            resource: 'base',
+            enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+            neighborPosRel: PositionRelation.Adjacent,
+          })],
+        ]),
+        skillStates: new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]]),
+      })
+      const result = resolvePhase6(testKey, makeSkill({ id: 'skillA' }), makeRuntimeState(), ctx, 'base')
+      if (result.actions.some(a => a.type === 'apprentice_neighbor')) {
+        monoValidTriggers.push(testKey)
+      }
+    }
+
+    // domino 覆盖 g+h 的邻居并集 → 有效触发键应 ≥ monomino
+    expect(dominoValidTriggers.length).toBeGreaterThan(monoValidTriggers.length)
+  })
+})
+
+// ===== 8.2: QuestResonance 多格观察者匹配 =====
+
+describe('resolvePhase6 — QuestResonance 多格观察者', () => {
+  it('8.2a: QuestResonance 多格观察者 — 通过第二键位匹配', () => {
+    // 触发技能在 f（单格），产出 base
+    // 附魔技能占 [j, g]，有 QuestResonance + Resonance(base, Adjacent)
+    //   j 不是 f 的 adjacent
+    //   g IS f 的 adjacent
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['j', 'skillB'],
+      ['g', 'skillB'],
+    ])
+    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      enchantmentIds: [EnchantmentType.QuestResonance],
+      affixes: [{
+        type: AffixType.Resonance,
+        posRel: PositionRelation.Adjacent,
+        resource: 'base',
+      } as any],
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
+
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills,
+      skillStates,
+    })
+
+    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
+
+    // Resonance 匹配 + QuestResonance 叠层都应通过 g→f adjacent 触发
+    const resonanceActions = result.actions.filter(a => a.type === 'resonance')
+    const questActions = result.actions.filter(a => a.type === 'quest_resonance')
+    expect(resonanceActions.length).toBe(1)
+    expect(questActions.length).toBe(1)
+  })
+})
+
+// ===== 8.3: 单格回归 =====
+
+describe('resolvePhase6 — 40.10 单格回归', () => {
+  it('8.3a: ApprenticeNeighbor 单格 — 行为与改动前一致', () => {
+    // 触发技能 f，附魔技能 g（单格），ApprenticeNeighbor(Adjacent)
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['g', 'skillB'],
+    ])
+    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+      neighborPosRel: PositionRelation.Adjacent,
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
+
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills,
+      skillStates,
+    })
+
+    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
+    const apprenticeActions = result.actions.filter(a => a.type === 'apprentice_neighbor')
+
+    expect(apprenticeActions.length).toBe(1)
+    expect(apprenticeActions[0].growthDelta).toBe(APPRENTICE_NEIGHBOR_GROWTH[PositionRelation.Adjacent])
+  })
+
+  it('8.3b: QuestResonance 单格 — 行为与改动前一致', () => {
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['g', 'skillB'],
+    ])
+    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      enchantmentIds: [EnchantmentType.QuestResonance],
+      affixes: [{
+        type: AffixType.Resonance,
+        posRel: PositionRelation.Adjacent,
+        resource: 'base',
+      } as any],
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
+
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills,
+      skillStates,
+    })
+
+    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
+    const resonanceActions = result.actions.filter(a => a.type === 'resonance')
+    const questActions = result.actions.filter(a => a.type === 'quest_resonance')
+
+    expect(resonanceActions.length).toBe(1)
+    expect(questActions.length).toBe(1)
+  })
+
+  it('8.3c: Resonance/Link 单格 — 行为与改动前一致', () => {
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['g', 'skillB'],
+      ['d', 'skillC'],
+    ])
+    const skillA = makeSkill({
+      id: 'skillA',
+      resource: 'base',
+      affixes: [{ type: AffixType.Splash, posRel: PositionRelation.Adjacent, resource: 'base' } as any],
+    })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      affixes: [{
+        type: AffixType.Resonance,
+        posRel: PositionRelation.Adjacent,
+        resource: 'base',
+      } as any],
+    })
+    const skillC = makeSkill({
+      id: 'skillC',
+      resource: 'base',
+      affixes: [{
+        type: AffixType.Link,
+        watchAffix: AffixType.Splash,
+        posRel: PositionRelation.Adjacent,
+      } as any],
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB], ['skillC', skillC]])
+    const skillStates = new Map([
+      ['skillA', makeRuntimeState()],
+      ['skillB', makeRuntimeState()],
+      ['skillC', makeRuntimeState()],
+    ])
+
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills,
+      skillStates,
+    })
+
+    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
+    const resonanceActions = result.actions.filter(a => a.type === 'resonance')
+    const linkActions = result.actions.filter(a => a.type === 'link')
+
+    // g 是 f 的 adjacent → Resonance 应触发
+    expect(resonanceActions.length).toBe(1)
+    // d 是 f 的 adjacent, skillA 有 Splash → Link 应触发
+    expect(linkActions.length).toBe(1)
+  })
+})
+
+// ===== 8.4: Phase 6 去重验证（重构后仍然正确） =====
+
+describe('resolvePhase6 — 40.10 去重验证', () => {
+  it('8.4a: 多格邻居技能重构后仍只产生 1 个 action', () => {
+    // skillB 是 domino 占 [d, r]（都是 f 的 adjacent）
+    // skillB 有 Resonance(base, Adjacent) + ApprenticeNeighbor(Adjacent)
+    // 按技能分组后 neighborKeys = [d, r] → 每种 action 仍只产生 1 个
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['d', 'skillB'],
+      ['r', 'skillB'],
+    ])
+    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      affixes: [{
+        type: AffixType.Resonance,
+        posRel: PositionRelation.Adjacent,
+        resource: 'base',
+      } as any],
+      enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+      neighborPosRel: PositionRelation.Adjacent,
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
+
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills,
+      skillStates,
+    })
+
+    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
+
+    // Resonance: 1 个（不因 d+r 两个键而产生 2 个）
+    const resonanceActions = result.actions.filter(a => a.type === 'resonance')
+    expect(resonanceActions.length).toBe(1)
+    // ApprenticeNeighbor: 1 个
+    const apprenticeActions = result.actions.filter(a => a.type === 'apprentice_neighbor')
+    expect(apprenticeActions.length).toBe(1)
+  })
+})
+
+// ===== Code Review Fix: 补充测试 =====
+
+describe('resolvePhase6 — H1-fix: 负面测试', () => {
+  it('8.5a: 多格观察者所有键位均不满足空间关系时不触发', () => {
+    // 触发技能在 p，附魔技能（ApprenticeNeighbor, Adjacent）占 [a, z]
+    // p→adj: o,l,0,-  a→adj: q,w,s,z  z→adj: a,s,x
+    // a 和 z 都不是 p 的 adjacent → 不应触发
+    const bindings = new Map([
+      ['p', 'skillA'],
+      ['a', 'skillB'],
+      ['z', 'skillB'],
+    ])
+    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+      neighborPosRel: PositionRelation.Adjacent,
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
+
+    const ctx = makeContext({
+      triggerKey: 'p',
+      occupiedKeys: ['p'],
+      bindings,
+      allSkills,
+      skillStates,
+    })
+
+    const result = resolvePhase6('p', skillA, makeRuntimeState(), ctx, 'base')
+    expect(result.actions.length).toBe(0)
+  })
+})
+
+describe('resolvePhase6 — M2-fix: Link 观察者侧多格', () => {
+  it('8.6a: Link 观察者侧 — domino Link 技能通过第二键位匹配', () => {
+    // 触发技能 f（有 Splash 词条），Link 观察者占 [j, g]
+    // j 不是 f 的 adjacent，g IS f 的 adjacent
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['j', 'skillB'],
+      ['g', 'skillB'],
+    ])
+    const skillA = makeSkill({
+      id: 'skillA',
+      resource: 'base',
+      affixes: [{ type: AffixType.Splash, posRel: PositionRelation.Adjacent, resource: 'base' } as any],
+    })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      affixes: [{
+        type: AffixType.Link,
+        watchAffix: AffixType.Splash,
+        posRel: PositionRelation.Adjacent,
+      } as any],
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
+
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills,
+      skillStates,
+    })
+
+    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
+    const linkActions = result.actions.filter(a => a.type === 'link')
+
+    expect(linkActions.length).toBe(1)
+    // neighborKey 应为实际匹配键 g
+    expect(linkActions[0].neighborKey).toBe('g')
+  })
+})
+
+describe('resolvePhase6 — M3-fix: Resonance 观察者侧多格', () => {
+  it('8.7a: Resonance 观察者侧 — domino Resonance 技能通过第二键位匹配', () => {
+    // 触发技能 f 产出 base，Resonance 观察者占 [j, g]
+    // j 不是 f 的 adjacent，g IS f 的 adjacent
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['j', 'skillB'],
+      ['g', 'skillB'],
+    ])
+    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      affixes: [{
+        type: AffixType.Resonance,
+        posRel: PositionRelation.Adjacent,
+        resource: 'base',
+      } as any],
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
+
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills,
+      skillStates,
+    })
+
+    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
+    const resonanceActions = result.actions.filter(a => a.type === 'resonance')
+
+    expect(resonanceActions.length).toBe(1)
+    expect(resonanceActions[0].neighborKey).toBe('g')
+  })
+})
+
+describe('resolvePhase6 — M4-fix: chainAffixesDisabled 交互', () => {
+  it('8.8a: chainAffixesDisabled 阻止 Resonance/Link 但不阻止 ApprenticeNeighbor', () => {
+    // 邻居技能有 Resonance + ApprenticeNeighbor
+    // chainAffixesDisabled = true → Resonance 跳过，ApprenticeNeighbor 仍触发
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['g', 'skillB'],
+    ])
+    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
+    const skillB = makeSkill({
+      id: 'skillB',
+      resource: 'base',
+      affixes: [{
+        type: AffixType.Resonance,
+        posRel: PositionRelation.Adjacent,
+        resource: 'base',
+      } as any],
+      enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+      neighborPosRel: PositionRelation.Adjacent,
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
+
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills,
+      skillStates,
+      chainAffixesDisabled: true,
+    })
+
+    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
+
+    // Resonance 被 chain_ban 阻止
+    expect(result.actions.filter(a => a.type === 'resonance').length).toBe(0)
+    // ApprenticeNeighbor 不受 chain_ban 影响
+    expect(result.actions.filter(a => a.type === 'apprentice_neighbor').length).toBe(1)
   })
 })

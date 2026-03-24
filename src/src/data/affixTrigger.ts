@@ -829,17 +829,19 @@ export function resolvePhase6(
 ): Phase6Result {
   const actions: Phase6Action[] = []
 
-  // Story 40.8+40.9: 排除自身占据的所有键位 + 多格扩展空间判定
+  // Story 40.8+40.9: 排除自身占据的所有键位
   const occupiedKeySet = new Set(ctx.occupiedKeys)
   const occupiedKeys = ctx.occupiedKeys
-  // 去重：多格邻居技能占据多键时只处理一次（取第一个匹配的键位）
-  const processedNeighborSkills = new Set<string>()
 
-  for (const [neighborKey, neighborSkillId] of ctx.bindings) {
-    if (occupiedKeySet.has(neighborKey)) continue
-    if (processedNeighborSkills.has(neighborSkillId)) continue
-    processedNeighborSkills.add(neighborSkillId)
+  // Story 40.10: 预构建邻居技能→键位映射（按技能分组，天然去重）
+  const neighborSkillKeys = new Map<string, string[]>()
+  for (const [nk, nsid] of ctx.bindings) {
+    if (occupiedKeySet.has(nk)) continue
+    if (!neighborSkillKeys.has(nsid)) neighborSkillKeys.set(nsid, [])
+    neighborSkillKeys.get(nsid)!.push(nk)
+  }
 
+  for (const [neighborSkillId, neighborKeys] of neighborSkillKeys) {
     const neighborSkill = ctx.allSkills.get(neighborSkillId)
     if (!neighborSkill) continue
 
@@ -848,45 +850,45 @@ export function resolvePhase6(
       if (affix.type === AffixType.Resonance && ctx.chainAffixesDisabled) continue // chain_ban: 跳过共鸣
       if (affix.type === AffixType.Link && ctx.chainAffixesDisabled) continue // chain_ban: 跳过感应
 
-      // 共鸣词条：触发技能产出的资源匹配 → 邻居自动触发
-      if (affix.type === AffixType.Resonance && affix.posRel != null && affix.resource != null) {
-        if (actualResource === affix.resource && occupiedKeys.some(k => hasRelation(k, neighborKey, affix.posRel!))) {
-          actions.push({ type: 'resonance', neighborKey })
+      // 共鸣词条：触发技能产出的资源匹配 → 邻居自动触发（双侧 any-match，取实际匹配键）
+      if (affix.type === AffixType.Resonance && affix.posRel != null && affix.resource != null && actualResource === affix.resource) {
+        const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
+        if (matchedNk != null) {
+          actions.push({ type: 'resonance', neighborKey: matchedNk })
         }
       }
 
-      // 感应词条：触发技能拥有指定词条类型 → 邻居触发
+      // 感应词条：触发技能拥有指定词条类型 → 邻居触发（双侧 any-match，取实际匹配键）
       if (affix.type === AffixType.Link && affix.watchAffix != null && affix.posRel != null) {
         const triggerSkillHasAffix = skill.affixes.some(a => a.type === affix.watchAffix)
-        if (triggerSkillHasAffix && occupiedKeys.some(k => hasRelation(k, neighborKey, affix.posRel!))) {
-          actions.push({ type: 'link', neighborKey })
-        }
-      }
-    }
-
-    // 学徒·观摩附魔：邻居触发 → 自身永久成长（不触发技能）
-    if (neighborSkill.enchantmentIds.includes(EnchantmentType.ApprenticeNeighbor) && neighborSkill.neighborPosRel) {
-      if (occupiedKeys.some(k => hasRelation(k, neighborKey, neighborSkill.neighborPosRel!))) {
-        const growth = APPRENTICE_NEIGHBOR_GROWTH[neighborSkill.neighborPosRel]
-        actions.push({ type: 'apprentice_neighbor', neighborKey, growthDelta: growth })
-      }
-    }
-
-    // 任务·共振附魔：邻居触发 → 叠层
-    if (neighborSkill.enchantmentIds.includes(EnchantmentType.QuestResonance)) {
-      const hasResonanceOrLink = neighborSkill.affixes.some(a =>
-        a.type === AffixType.Resonance || a.type === AffixType.Link,
-      )
-      if (hasResonanceOrLink) {
-        const posRelMatch = neighborSkill.affixes.some(a => {
-          if ((a.type === AffixType.Resonance || a.type === AffixType.Link) && a.posRel != null) {
-            return occupiedKeys.some(k => hasRelation(k, neighborKey, a.posRel!))
+        if (triggerSkillHasAffix) {
+          const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
+          if (matchedNk != null) {
+            actions.push({ type: 'link', neighborKey: matchedNk })
           }
-          return false
-        })
-        if (posRelMatch) {
-          actions.push({ type: 'quest_resonance', neighborKey })
         }
+      }
+    }
+
+    // 学徒·观摩附魔：邻居触发 → 自身永久成长（双侧 any-match，取实际匹配键）
+    if (neighborSkill.enchantmentIds.includes(EnchantmentType.ApprenticeNeighbor) && neighborSkill.neighborPosRel) {
+      const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, neighborSkill.neighborPosRel!)))
+      if (matchedNk != null) {
+        const growth = APPRENTICE_NEIGHBOR_GROWTH[neighborSkill.neighborPosRel]
+        actions.push({ type: 'apprentice_neighbor', neighborKey: matchedNk, growthDelta: growth })
+      }
+    }
+
+    // 任务·共振附魔：邻居触发 → 叠层（双侧 any-match，取实际匹配键）
+    if (neighborSkill.enchantmentIds.includes(EnchantmentType.QuestResonance)) {
+      const matchedNk = neighborKeys.find(nk =>
+        neighborSkill.affixes.some(a =>
+          (a.type === AffixType.Resonance || a.type === AffixType.Link) && a.posRel != null &&
+          occupiedKeys.some(ok => hasRelation(ok, nk, a.posRel!)),
+        ),
+      )
+      if (matchedNk != null) {
+        actions.push({ type: 'quest_resonance', neighborKey: matchedNk })
       }
     }
   }
