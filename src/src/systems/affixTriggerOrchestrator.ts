@@ -140,9 +140,11 @@ export function orchestrateAffixTrigger(
     maxDepth = Math.max(maxDepth, item.depth)
 
     // ── 构建本次触发上下文 ──
+    // occupiedKeys: 当前触发技能占据的键位（40.8 monomino 假设，40.9 扩展多格）
     const triggerCtx: TriggerContext = {
       ...ctx,
       triggerKey: item.triggerKey,
+      occupiedKeys: [item.triggerKey],
       transmuteResource: skill.transmuteResource,
     }
 

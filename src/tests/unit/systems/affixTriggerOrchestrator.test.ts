@@ -65,8 +65,10 @@ function makeRuntimeState(overrides?: Partial<SkillRuntimeState>): SkillRuntimeS
 }
 
 function makeContext(overrides?: Partial<TriggerContext>): TriggerContext {
+  const triggerKey = overrides?.triggerKey ?? 'a'
   return {
-    triggerKey: 'a',
+    triggerKey,
+    occupiedKeys: [triggerKey],
     currentWord: 'apple',
     resources: makeResources(),
     classResourceProduced: {},

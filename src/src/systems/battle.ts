@@ -1359,6 +1359,7 @@ function endLevel(): void {
       if (!boundKey) continue;
       rt.mirrorCopiedAffix = resolveMirrorCopy(skill, rt, {
         triggerKey: boundKey,
+        occupiedKeys: [boundKey],
         currentWord: '',
         resources: { base: 0, score: 0, multiplier: 1, time: 0, gold: 0, fragment: 0, mutagen: 0 },
         classResourceProduced: {},

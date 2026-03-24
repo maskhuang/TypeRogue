@@ -18,6 +18,26 @@ import {
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 
+// ===== Story 40.8: 多格技能扩展邻居计算 =====
+
+/**
+ * 获取多格技能占据键位的所有邻居（并集），排除自身占据的键位。
+ * 单格技能等价于 getKeysWithRelation(triggerKey, posRel)。
+ */
+export function getExtendedNeighbors(
+  occupiedKeys: string[],
+  posRel: PositionRelation,
+): string[] {
+  const occupied = new Set(occupiedKeys)
+  const neighbors = new Set<string>()
+  for (const key of occupiedKeys) {
+    for (const n of getKeysWithRelation(key, posRel)) {
+      if (!occupied.has(n)) neighbors.add(n)
+    }
+  }
+  return Array.from(neighbors)
+}
+
 // ===== 触发上下文 =====
 
 /** 战斗中触发计算所需的只读上下文快照 */
@@ -68,6 +88,9 @@ export interface TriggerContext {
   apprenticeGrowthMultiplier?: number
   /** 试炼徽章：试炼堆叠增量（默认 1） */
   questStackIncrement?: number
+  // ── Story 40.8: 多格技能占据键位 ──
+  /** 触发技能占据的所有键位（单格 = [triggerKey]） */
+  occupiedKeys: string[]
 }
 
 // ===== 状态变更 =====
@@ -673,8 +696,10 @@ export function resolvePhase5(
         if (affix.posRel == null) break
         const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestFission)
         const targetCount = 1 + c
+        // Story 40.8: 排除自身占据键（多格技能不溅射到自己的键位）
+        const occupiedKeySet = new Set(ctx.occupiedKeys)
         const allKeys = getKeysWithRelation(ctx.triggerKey, affix.posRel)
-          .filter(k => ctx.bindings.has(k) && k !== ctx.triggerKey)
+          .filter(k => ctx.bindings.has(k) && !occupiedKeySet.has(k))
         // 按资源或词条类型过滤目标
         const filtered = allKeys.filter(k => {
           const sid = ctx.bindings.get(k)!
@@ -803,8 +828,11 @@ export function resolvePhase6(
 ): Phase6Result {
   const actions: Phase6Action[] = []
 
+  // Story 40.8: 排除自身占据的所有键位（多格技能不通知自己的键位）
+  const occupiedKeySet = new Set(ctx.occupiedKeys)
+
   for (const [neighborKey, neighborSkillId] of ctx.bindings) {
-    if (neighborKey === triggerKey) continue
+    if (occupiedKeySet.has(neighborKey)) continue
 
     const neighborSkill = ctx.allSkills.get(neighborSkillId)
     if (!neighborSkill) continue

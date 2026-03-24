@@ -19,6 +19,7 @@ import { shouldBlockMultiplierResource, getMultiplierPrismBonus } from './relics
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, hasUncrownedKing, UK_GROWTH_RATE } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
 import { getAdjacentPowerBonus, getSymmetryPactBonus, getRowMedalBonus } from './relics/TopologyRelicBehaviors';
+import { getSkillKeys, getBindingState } from './bindingManager';
 import { getShortSprintBonus } from './relics/WordRelicBehaviors';
 import { recordResourceProduction, getResourceTideBonus, resetWordResourceAmounts } from './relics/ResourceRelicBehaviors';
 import { getWarmUpBonus } from './relics/StageRelicBehaviors';
@@ -188,9 +189,14 @@ function triggerAffixSkillWithFeedback(
   synergy.wordSkillCount++;
   _wordHasProducerTriggered = true;
 
+  // Story 40.8: 获取多格技能占据的所有键位
+  const occupiedKeys = getSkillKeys(getBindingState(state), skillId);
+  if (occupiedKeys.length === 0) occupiedKeys.push(triggerKey); // 防御性回退
+
   // 构建触发上下文
   const ctx = {
     triggerKey,
+    occupiedKeys,
     currentWord: state.player.word,
     resources: { ...state.resources },
     classResourceProduced: { ...state.classResourceProduced },
