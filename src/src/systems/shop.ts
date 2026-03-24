@@ -2338,7 +2338,8 @@ export function renderBuildManager(): void {
       });
 
       // Story 40.6: 右键旋转已装备的多格技能
-      if (skillId && affixSkill && affixSkill.shapeId && affixSkill.shapeId !== 'monomino') {
+      const affixSkillForRotation = skillId ? state.affixSkills.get(skillId) : undefined;
+      if (skillId && affixSkillForRotation && affixSkillForRotation.shapeId && affixSkillForRotation.shapeId !== 'monomino') {
         slot.addEventListener('contextmenu', (e: MouseEvent) => {
           e.preventDefault();
           handleKeySlotRotation(k);
