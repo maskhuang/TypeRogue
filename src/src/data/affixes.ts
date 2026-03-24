@@ -225,6 +225,8 @@ export interface AffixSkillInstance {
   transmuteResource?: ResourceType       // 衍生附魔目标资源
   neighborPosRel?: PositionRelation      // 学徒·观摩：随机分配的位置关系
   purchasePrice?: number                 // 购买价格（用于转卖计算）
+  shapeId?: string                       // Polyomino 形状 ID（默认 'monomino'）
+  rotation?: number                      // 形状旋转态（0~3，默认 0）
 }
 
 // ===== 技能运行时状态（战斗中） =====
@@ -254,6 +256,8 @@ export interface AffixSkillSaveData {
   enchantmentIds: string[]
   transmuteResource?: ResourceType
   neighborPosRel?: PositionRelation      // 学徒·观摩：随机分配的位置关系
+  shapeId?: string                       // Polyomino 形状 ID（默认 'monomino'）
+  rotation?: number                      // 形状旋转态（0~3，默认 0）
   runtime: SkillRuntimeState
 }
 

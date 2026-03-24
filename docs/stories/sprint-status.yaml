@@ -272,8 +272,23 @@ development_status:
   39-6-tutorial-L4-help-system: done
   epic-39-retrospective: optional
 
+  # Epic 40: 多格技能形状系统（Polyomino）
+  epic-40: in-progress
+  40-1-shape-data-model: done
+  40-2-shape-generation: backlog
+  40-3-keyboard-multi-cell-binding: backlog
+  40-4-shop-shape-preview: backlog
+  40-5-drag-drop-shape-placement: backlog
+  40-6-right-click-rotation: backlog
+  40-7-keyboard-visualizer-multi-cell: backlog
+  40-8-trigger-and-battle-adaptation: backlog
+  40-9-spatial-affix-adaptation: backlog
+  40-10-enchantment-topology-adaptation: backlog
+  40-11-balance-and-integration: backlog
+  epic-40-retrospective: optional
+
 # Summary:
-# - Total Epics: 28
-# - Total Stories: 123
+# - Total Epics: 29
+# - Total Stories: 134
 # - Epics Completed: 19
 # - Stories Completed: 78
