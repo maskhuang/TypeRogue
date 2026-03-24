@@ -2939,6 +2939,27 @@ body {
     justify-content: center;
 }
 
+/* Story 40.6: 右键旋转动画 */
+.key-slot.shape-rotating {
+    animation: shape-rotate-pop 0.2s ease-out;
+}
+@keyframes shape-rotate-pop {
+    0% { transform: scale(0.8); opacity: 0.6; }
+    60% { transform: scale(1.08); }
+    100% { transform: scale(1); opacity: 1; }
+}
+.key-slot.shape-shake {
+    animation: shape-shake 0.3s ease-out;
+}
+@keyframes shape-shake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-3px); border-color: #ff6b6b !important; }
+    30% { transform: translateX(3px); border-color: #ff6b6b !important; }
+    45% { transform: translateX(-2px); }
+    60% { transform: translateX(2px); }
+    75% { transform: translateX(-1px); }
+}
+
 /* ============================================ */
 /* ACT TRANSITION OVERLAY                       */
 /* ============================================ */

@@ -235,11 +235,11 @@ development_status:
   epic-24-retrospective: optional
 
   # Epic 25: 无尽模式
-  epic-25: in-progress
+  epic-25: done
   25-1-cycle-state-loop-structure: done
   25-2-triple-difficulty-scaling: done
   25-3-boss-modifier-pick-stack: done
-  25-4-rare-shop-shelves: backlog
+  25-4-rare-shop-shelves: done
   25-5-leaderboard-system: done
   25-6-daily-seed-system: done
   epic-25-retrospective: optional
@@ -279,7 +279,7 @@ development_status:
   40-3-keyboard-multi-cell-binding: review
   40-4-shop-shape-preview: done
   40-5-drag-drop-shape-placement: review
-  40-6-right-click-rotation: backlog
+  40-6-right-click-rotation: done
   40-7-keyboard-visualizer-multi-cell: backlog
   40-8-trigger-and-battle-adaptation: backlog
   40-9-spatial-affix-adaptation: backlog

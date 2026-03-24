@@ -1167,6 +1167,26 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
     });
   }
 
+  // Story 40.6: 商店卡片右键预览旋转（仅视觉，不修改 state）
+  if (item.type === 'skill' && item.affixSkill && item.affixSkill.shapeId && item.affixSkill.shapeId !== 'monomino') {
+    let previewRotation = item.affixSkill.rotation ?? 0;
+    card.addEventListener('contextmenu', (e: MouseEvent) => {
+      e.preventDefault();
+      previewRotation = (previewRotation + 1) % 4;
+      // 更新卡片内的形状预览
+      const iconDiv = card.querySelector('.reward-icon');
+      if (iconDiv) {
+        const newPreview = renderShapePreview(item.affixSkill!.shapeId ?? 'monomino', previewRotation, item.affixSkill!.rarity);
+        const existingPreview = iconDiv.querySelector('.shape-preview');
+        if (existingPreview) existingPreview.remove();
+        if (newPreview) iconDiv.insertAdjacentHTML('beforeend', newPreview);
+      }
+      // 更新 dataset 供拖拽读取
+      card.dataset.rotation = String(previewRotation);
+      if (newPreview) card.dataset.shapePreview = newPreview;
+    });
+  }
+
   el.rewardCards.appendChild(card);
 }
 
@@ -2302,6 +2322,14 @@ export function renderBuildManager(): void {
         document.querySelectorAll('.key-slot.void-range-empty').forEach(el => el.classList.remove('void-range-empty'));
       });
 
+      // Story 40.6: 右键旋转已装备的多格技能
+      if (skillId && affixSkill && affixSkill.shapeId && affixSkill.shapeId !== 'monomino') {
+        slot.addEventListener('contextmenu', (e: MouseEvent) => {
+          e.preventDefault();
+          handleKeySlotRotation(k);
+        });
+      }
+
       rowDiv.appendChild(slot);
     });
 
@@ -2613,6 +2641,73 @@ export function clearShapePlacement(): void {
   document.querySelectorAll('.shape-preview-valid, .shape-preview-invalid, .shape-preview-displaced').forEach(el => {
     el.classList.remove('shape-preview-valid', 'shape-preview-invalid', 'shape-preview-displaced');
   });
+}
+
+// === Story 40.6: 右键旋转已装备技能 ===
+function handleKeySlotRotation(key: string): void {
+  const bs = getBindingState(state);
+  const skillId = state.player.bindings.get(key);
+  if (!skillId) return;
+
+  const affixSkill = state.affixSkills.get(skillId);
+  if (!affixSkill) return;
+
+  const shapeId = affixSkill.shapeId ?? 'monomino';
+  if (shapeId === 'monomino') return;
+
+  const anchorKey = getSkillAnchorKey(bs, skillId);
+  if (!anchorKey) return;
+
+  const currentRotation = affixSkill.rotation ?? 0;
+  const nextRotation = (currentRotation + 1) % 4;
+  const targetKeys = mapShapeToKeys(anchorKey, shapeId, nextRotation);
+
+  if (!targetKeys) {
+    // 旋转失败：音效 + 抖动动画
+    playSound('wrong');
+    showFeedback(t('shop.rotate_fail'), '#ff6b6b');
+    const skillKeys = [...state.player.bindings.entries()].filter(([, id]) => id === skillId).map(([k]) => k);
+    for (const sk of skillKeys) {
+      if (!KEYS.includes(sk)) continue;
+      const slotEl = document.querySelector(`.key-slot[data-key="${sk}"]`);
+      if (slotEl) {
+        slotEl.classList.add('shape-shake');
+        slotEl.addEventListener('animationend', () => slotEl.classList.remove('shape-shake'), { once: true });
+      }
+    }
+    return;
+  }
+
+  // 旋转成功：解绑 → 更新旋转 → 重新绑定
+  unbindSkill(bs, skillId);
+  affixSkill.rotation = nextRotation;
+  const result = bindShapeToKeys(bs, skillId, anchorKey);
+
+  if (!result.success) {
+    // 防御性回退：恢复旧 rotation 并重新绑定
+    affixSkill.rotation = currentRotation;
+    bindShapeToKeys(bs, skillId, anchorKey);
+    playSound('wrong');
+    showFeedback(t('shop.rotate_fail'), '#ff6b6b');
+    return;
+  }
+
+  if (result.displacedSkillIds.length > 0) {
+    showFeedback(t('shop.rotate_displaced'), '#ffaa00');
+  }
+
+  renderBuildManager();
+
+  // 旋转成功动画：对新绑定键位施加缩放动画
+  const newKeys = [...state.player.bindings.entries()].filter(([, id]) => id === skillId).map(([k]) => k);
+  for (const nk of newKeys) {
+    if (!KEYS.includes(nk)) continue;
+    const slotEl = document.querySelector(`.key-slot[data-key="${nk}"]`);
+    if (slotEl) {
+      slotEl.classList.add('shape-rotating');
+      slotEl.addEventListener('animationend', () => slotEl.classList.remove('shape-rotating'), { once: true });
+    }
+  }
 }
 
 // === 拖拽到键位处理 ===
