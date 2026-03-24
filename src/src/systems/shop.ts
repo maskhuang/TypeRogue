@@ -52,6 +52,7 @@ import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment, getUncrownedKingBaseValue } from './relics/SkillRelicBehaviors';
 import { getEnchantmentChoiceCount, getMinEnchantmentLevel, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier } from './relics/EnchantmentRelicBehaviors';
+import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState } from './bindingManager';
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
@@ -1429,8 +1430,7 @@ function purchaseShopItem(index: number): void {
 
   // 点击购买新技能时，自动绑定到第一个空且未锁定键位（频率≥5）
   if (result.isNew && result.skillId) {
-    const freeKey = KEYS.find(k => !state.player.bindings.has(k) && (cachedLetterFreqs?.get(k) ?? 0) >= 5);
-    if (freeKey) state.player.bindings.set(freeKey, result.skillId);
+    autoBindSkill(getBindingState(state), result.skillId, cachedLetterFreqs ?? undefined);
   }
 
   // T4 极简主义：新购买的技能自动升至 max_skill_level
@@ -1647,13 +1647,8 @@ export function sellSkill(skillId: string): void {
   const sellPrice = Math.floor((data.purchasePrice || 15) * getRecycleSellMultiplier());
   state.gold += sellPrice;
 
-  // 移除绑定
-  for (const [key, id] of state.player.bindings) {
-    if (id === skillId) {
-      state.player.bindings.delete(key);
-      break;
-    }
-  }
+  // 移除绑定（多格形状全解）
+  unbindSkill(getBindingState(state), skillId);
 
   // 移除词条制技能数据（AC4 — 运行时状态丢弃）
   state.affixSkills.delete(skillId);
@@ -2085,11 +2080,15 @@ export function renderBuildManager(): void {
     if (PUNCTUATION_KEYS.includes(key)) continue; // 标点键不受字频限制
     if ((letterFreqs.get(key) ?? 0) < 5) keysToUnbind.push(key);
   }
+  const unboundSkillIds = new Set<string>();
   for (const key of keysToUnbind) {
-    const skillId = state.player.bindings.get(key)!;
-    state.player.bindings.delete(key);
-    const affixSk = state.affixSkills.get(skillId);
-    if (affixSk) showFeedback(t('shop.unbound', { name: affixSk.name, key: key.toUpperCase() }), '#ff6b6b');
+    const skillId = state.player.bindings.get(key);
+    if (skillId && !unboundSkillIds.has(skillId)) {
+      unboundSkillIds.add(skillId);
+      unbindSkill(getBindingState(state), skillId);
+      const affixSk = state.affixSkills.get(skillId);
+      if (affixSk) showFeedback(t('shop.unbound', { name: affixSk.name, key: key.toUpperCase() }), '#ff6b6b');
+    }
   }
 
   // === 遗物数字行 ===
@@ -2459,9 +2458,8 @@ function registerShopDropZones(): void {
       accepts: (payload: DragPayload) => payload.type === 'skill-key',
       onDrop: (payload: DragPayload) => {
         const skillId = payload.skillId;
-        const sourceKey = payload.sourceKey;
-        if (!skillId || !sourceKey) return;
-        state.player.bindings.delete(sourceKey);
+        if (!skillId) return;
+        unbindSkill(getBindingState(state), skillId);
         renderBuildManager();
       },
     });
@@ -2495,6 +2493,8 @@ function registerShopDropZones(): void {
 
 // === 拖拽到键位处理 ===
 function handleDropOnKey(targetKey: string, payload: DragPayload): void {
+  const bs = getBindingState(state);
+
   if (payload.type === 'shop-item') {
     // 从商店拖拽技能到键位 → 购买并绑定
     const index = payload.itemIndex ?? -1;
@@ -2505,16 +2505,8 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     const result = executePurchase(index);
     if (!result) return;
 
-    // 绑定到目标键位（交换现有技能）
-    const existingSkill = state.player.bindings.get(targetKey);
-    for (const [k, id] of state.player.bindings) {
-      if (id === skillId) {
-        if (existingSkill) state.player.bindings.set(k, existingSkill);
-        else state.player.bindings.delete(k);
-        break;
-      }
-    }
-    state.player.bindings.set(targetKey, skillId);
+    // 绑定到目标键位（被覆盖技能自动解绑）
+    bindShapeToKeys(bs, skillId, targetKey);
 
     if (result.skillId) checkAutoEnchantment(result.skillId);
     renderUnifiedShop();
@@ -2531,16 +2523,17 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     const sourceKey = payload.sourceKey ||
       [...state.player.bindings.entries()].find(([, id]) => id === skillId)?.[0];
 
-    // 移除源位置的绑定
-    if (sourceKey) {
-      if (existingSkill) {
-        state.player.bindings.set(sourceKey, existingSkill);
-      } else {
-        state.player.bindings.delete(sourceKey);
-      }
+    // 交换逻辑：先暂存 → 解绑双方 → 重新绑定
+    if (existingSkill && sourceKey) {
+      // 两个技能互换位置
+      unbindSkill(bs, skillId);
+      unbindSkill(bs, existingSkill);
+      bindShapeToKeys(bs, skillId, targetKey);
+      bindShapeToKeys(bs, existingSkill, sourceKey);
+    } else {
+      // 绑定到目标键位（被覆盖技能自动解绑）
+      bindShapeToKeys(bs, skillId, targetKey);
     }
-
-    state.player.bindings.set(targetKey, skillId);
 
     renderBuildManager();
   }

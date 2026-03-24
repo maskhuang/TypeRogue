@@ -13,6 +13,7 @@ import { createSkillRuntimeState } from '../../data/affixes'
 import { serializeSkill, deserializeSkill, migrateLoadedSkills } from '../../data/affixTrigger'
 import { generateName } from '../../data/skillGeneration'
 import { RESOURCE_ICONS, PUNCTUATION_KEYS } from '../constants'
+import { unbindSkill as bmUnbindSkill, bindShapeToKeys, getSkillAnchorKey, getRunStateBindingState } from '../../systems/bindingManager'
 
 /**
  * 技能实例（已获得的技能）
@@ -241,12 +242,8 @@ export class RunState {
     // 移除技能
     this.data.skills.splice(index, 1)
 
-    // 解绑该技能的所有键位
-    for (const [key, boundSkillId] of this.data.bindings.entries()) {
-      if (boundSkillId === skillId) {
-        this.data.bindings.delete(key)
-      }
-    }
+    // 解绑该技能的所有键位（多格形状全解）
+    bmUnbindSkill(getRunStateBindingState(this.data), skillId)
 
     // 清理词条制技能数据（35.9 review fix）
     this.data.affixSkills.delete(skillId)
@@ -256,31 +253,35 @@ export class RunState {
   }
 
   /**
-   * 绑定技能到键位
-   * @param key 键位 (A-Z)
+   * 绑定技能到键位（多格形状：通过 BindingManager 处理）
+   * @param key 锚点键位
    * @param skillId 技能ID
    * @throws 无效键位或未拥有技能时抛出错误
    */
   bindSkill(key: string, skillId: string): void {
-    // 标点键用原始字符存储（不 toUpperCase）
+    // 标点键用原始字符存储
     const isPunctuation = PUNCTUATION_KEYS.includes(key)
-    const normalizedKey = isPunctuation ? key : key.toUpperCase()
-    // 验证键位有效性 (A-Z 或标点键)
-    if (!/^[A-Z]$/.test(normalizedKey) && !isPunctuation) {
+    const normalizedKey = isPunctuation ? key : key.toLowerCase()
+    // 验证键位有效性 (a-z 或标点键)
+    if (!/^[a-z]$/.test(normalizedKey) && !isPunctuation) {
       throw new Error(`Invalid key: ${key}`)
     }
     // 验证技能已拥有
     if (!this.data.skills.some(s => s.id === skillId)) {
       throw new Error(`Skill not owned: ${skillId}`)
     }
-    this.data.bindings.set(normalizedKey, skillId)
+    bindShapeToKeys(getRunStateBindingState(this.data), skillId, normalizedKey)
   }
 
   /**
-   * 解绑键位技能
+   * 解绑键位技能（多格技能：解绑该技能的所有键位）
    */
   unbindSkill(key: string): void {
-    this.data.bindings.delete(key.toUpperCase())
+    const normalizedKey = PUNCTUATION_KEYS.includes(key) ? key : key.toLowerCase()
+    const skillId = this.data.bindings.get(normalizedKey)
+    if (skillId) {
+      bmUnbindSkill(getRunStateBindingState(this.data), skillId)
+    }
   }
 
   /**
@@ -288,7 +289,7 @@ export class RunState {
    * @returns 技能ID，未绑定返回 undefined
    */
   getSkillAtKey(key: string): string | undefined {
-    return this.data.bindings.get(key.toUpperCase())
+    return this.data.bindings.get(key.toLowerCase())
   }
 
   /**
@@ -300,15 +301,10 @@ export class RunState {
 
   /**
    * 检查技能是否已绑定到某个键位
-   * @returns 绑定的键位，未绑定返回 undefined
+   * @returns 锚点键位，未绑定返回 undefined
    */
   getKeyForSkill(skillId: string): string | undefined {
-    for (const [key, boundSkillId] of this.data.bindings.entries()) {
-      if (boundSkillId === skillId) {
-        return key
-      }
-    }
-    return undefined
+    return getSkillAnchorKey(getRunStateBindingState(this.data), skillId)
   }
 
   /**

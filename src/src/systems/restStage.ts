@@ -14,6 +14,7 @@ import { queryRelicFlag } from './relics/RelicPipeline';
 import { checkIntermission, grantIntermissionFreeRefreshes } from './relics/StageRelicBehaviors';
 import { playSound } from '../effects/sound';
 import { t, localizeItemName } from '../demo/demo-i18n';
+import { sealSkillKeys, unbindSkill, getBindingState } from './bindingManager';
 
 let currentEvent: RestEvent | null = null;
 
@@ -222,16 +223,22 @@ export function executeEffect(effectId: string): string {
     }
 
     case 'curse_accept': {
-      const boundKeys = [...state.player.bindings.keys()];
-      const sealed: string[] = [];
-      const shuffled = [...boundKeys].sort(() => Math.random() - 0.5);
+      // 封印 2 个绑定技能（方案 A：封印整个形状）
+      // 收集不重复的 skillId
+      const boundSkillIds = [...new Set(state.player.bindings.values())];
+      const shuffled = [...boundSkillIds].sort(() => Math.random() - 0.5);
       const expireNode = getNextActEndNode(state.level);
+      const sealed: string[] = [];
+      const bs = getBindingState(state);
       for (let i = 0; i < Math.min(2, shuffled.length); i++) {
-        const key = shuffled[i];
-        const skillId = state.player.bindings.get(key)!;
-        state.player.bindings.delete(key);
-        state.sealedKeys.push({ key, skillId, expiresAtNode: expireNode });
-        sealed.push(key.toUpperCase());
+        const result = sealSkillKeys(bs, [...state.player.bindings.entries()]
+          .find(([, id]) => id === shuffled[i])?.[0] ?? '');
+        if (result) {
+          for (const key of result.keys) {
+            state.sealedKeys.push({ key, skillId: result.skillId, expiresAtNode: expireNode });
+            sealed.push(key.toUpperCase());
+          }
+        }
       }
       state.gold += 150;
       const relicId = grantRandomRelic();
@@ -275,7 +282,7 @@ export function executeEffect(effectId: string): string {
       if (mods.length === 0) return t('rest.meditate.empty');
       const previews = mods.map((id, i) => {
         const meta = getBossModifierMeta(id);
-        return meta ? t('rest.meditate.modifier', { idx: ['A', 'B', 'C'][i], icon: meta.icon, name: meta.name, hint: meta.eliteHint }) : '';
+        return meta ? t('rest.meditate.modifier', { idx: ['A', 'B', 'C'][i], icon: meta.icon, name: t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name, hint: t(`modifier.${meta.id}.elite`) !== `modifier.${meta.id}.elite` ? t(`modifier.${meta.id}.elite`) : meta.eliteHint }) : '';
       }).filter(Boolean);
       return t('rest.meditate.result', { previews: previews.join('\n') });
     }
@@ -340,13 +347,8 @@ function removeRandomSkill(): { id: string; name: string } | null {
   const skillId = skillIds[Math.floor(Math.random() * skillIds.length)];
   const affixSkill = state.affixSkills.get(skillId);
 
-  // 移除绑定
-  for (const [key, id] of state.player.bindings) {
-    if (id === skillId) {
-      state.player.bindings.delete(key);
-      break;
-    }
-  }
+  // 移除绑定（多格形状全解）
+  unbindSkill(getBindingState(state), skillId);
   // 移除词条制技能数据
   state.affixSkills.delete(skillId);
   state.affixSkillStates.delete(skillId);

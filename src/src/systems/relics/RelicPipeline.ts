@@ -11,6 +11,7 @@ import type { ModifierTrigger, PipelineContext, PipelineResult, BehaviorCallback
 import { ModifierRegistry } from '../modifiers/ModifierRegistry'
 import { EffectPipeline } from '../modifiers/EffectPipeline'
 import { BehaviorExecutor } from '../modifiers/BehaviorExecutor'
+import { unbindSkill, getBindingState } from '../bindingManager'
 
 /**
  * 解析遗物效果 — 遍历玩家拥有的遗物，调用工厂注册临时 ModifierRegistry，
@@ -168,10 +169,7 @@ export function setMonoAffixCategory(category: string): void {
   for (const skillId of toRemove) {
     state.affixSkills.delete(skillId)
     state.affixSkillStates.delete(skillId)
-    const boundKeys = [...state.player.bindings.entries()]
-      .filter(([, v]) => v === skillId)
-      .map(([k]) => k)
-    for (const k of boundKeys) state.player.bindings.delete(k)
+    unbindSkill(getBindingState(state), skillId)
   }
   if (toRemove.length > 0) {
     showFeedback(`纯血词条：${toRemove.length}个不符类别技能已移除!`, '#ff0000')

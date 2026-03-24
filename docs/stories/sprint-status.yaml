@@ -276,7 +276,7 @@ development_status:
   epic-40: in-progress
   40-1-shape-data-model: done
   40-2-shape-generation: done
-  40-3-keyboard-multi-cell-binding: backlog
+  40-3-keyboard-multi-cell-binding: review
   40-4-shop-shape-preview: backlog
   40-5-drag-drop-shape-placement: backlog
   40-6-right-click-rotation: backlog

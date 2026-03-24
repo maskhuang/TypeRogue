@@ -162,8 +162,8 @@ describe('RunState', () => {
       runState.bindSkill('F', 'fireBlast')
       runState.bindSkill('I', 'iceShield')
       const bindings = runState.getBindings()
-      expect(bindings.get('F')).toBe('fireBlast')
-      expect(bindings.get('I')).toBe('iceShield')
+      expect(bindings.get('f')).toBe('fireBlast')
+      expect(bindings.get('i')).toBe('iceShield')
     })
 
     it('覆盖绑定到同一键位', () => {
@@ -174,7 +174,7 @@ describe('RunState', () => {
 
     it('getKeyForSkill() 返回技能绑定的键位', () => {
       runState.bindSkill('F', 'fireBlast')
-      expect(runState.getKeyForSkill('fireBlast')).toBe('F')
+      expect(runState.getKeyForSkill('fireBlast')).toBe('f')
     })
 
     it('getKeyForSkill() 未绑定返回 undefined', () => {
@@ -543,7 +543,7 @@ describe('RunState', () => {
 
       const parsed = JSON.parse(jsonString)
       expect(parsed.skills).toEqual([{ id: 'fireBlast', level: 2 }])
-      expect(parsed.bindings).toEqual({ F: 'fireBlast' })
+      expect(parsed.bindings).toEqual({ f: 'fireBlast' })
       expect(parsed.gold).toBe(100)
       expect(parsed.relics).toEqual(['goldenKey'])
       expect(parsed.currentStage).toBe(2)

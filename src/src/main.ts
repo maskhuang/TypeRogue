@@ -23,6 +23,7 @@ import {
 } from './demo/demo-config';
 import { generateSkill } from './data/skillGeneration';
 import { createSkillRuntimeState } from './data/affixes';
+import { bindShapeToKeys, getBindingState } from './systems/bindingManager';
 import { cleanDemoDom, installDemoErrorBoundary, checkWebGLSupport, showWebGLError } from './demo/demo-dom-cleanup';
 import { trackEvent } from './demo/demo-analytics';
 import { initLocale, setLocale, getLocale, applyHtmlI18n } from './demo/demo-i18n';
@@ -55,7 +56,7 @@ async function init(): Promise<void> {
       state.player.skills.set(sk.id, { level: 1 });
       state.affixSkills.set(sk.id, sk);
       state.affixSkillStates.set(sk.id, createSkillRuntimeState(sk.id));
-      state.player.bindings.set(key, sk.id);
+      bindShapeToKeys(getBindingState(state), sk.id, key);
     }
     state.gold = 75;
 
@@ -85,12 +86,11 @@ async function init(): Promise<void> {
 
   // === 完整版流程 ===
 
-  // 初始技能（新词条制系统）
+  // 初始技能（新词条制系统）— 绑定键位延迟到词库生成后
   const starterSkill = generateSkill({ resource: 'base', rarity: 0, level: 1 });
   state.player.skills.set(starterSkill.id, { level: 1 });
   state.affixSkills.set(starterSkill.id, starterSkill);
   state.affixSkillStates.set(starterSkill.id, createSkillRuntimeState(starterSkill.id));
-  state.player.bindings.set('f', starterSkill.id);
 
   // 初始金币
   state.gold = 50;
@@ -109,6 +109,9 @@ async function init(): Promise<void> {
 
   // Story 39.3: 连接 TutorialManager 持久化后端
   tutorialManager.setPersistence(metaState);
+
+  // DEBUG: 暴露到全局，方便控制台重置教程进度
+  (window as unknown as Record<string, unknown>).__tutorialManager = tutorialManager;
 
   // Story 39.4: 完整版引导（L0-L1），仅非 Demo 模式
   if (!IS_DEMO) {
@@ -169,6 +172,9 @@ async function init(): Promise<void> {
 
   // 初始词库（必须在种子设置之后，确保每日模式确定性）
   state.player.wordDeck = getStarterWords();
+
+  // 初始技能绑定延迟到 startLevel → setWord 后，绑定到第一个单词首字母
+  // 见 battle.ts bindStarterSkillToFirstWord()
 
   // 抽取本局 Boss 修饰器池（3 个随机修饰器，精英关/Boss 关使用）
   state.bossModifierPool = drawBossModifiers(3);

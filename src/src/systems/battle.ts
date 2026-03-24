@@ -9,7 +9,7 @@ import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
-import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension } from '../effects/sound';
+import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension, emitResourceSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
@@ -47,6 +47,7 @@ import { initDemoTutorial } from '../demo/demo-tutorial';
 import { showDemoEndScreen } from '../demo/demo-end-screen';
 import { trackEvent } from '../demo/demo-analytics';
 import { t, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
+import { bindShapeToKeys, restoreSealedSkill, getBindingState } from './bindingManager';
 
 // === Demo 固定词序队列 ===
 let demoWordQueue: string[] = [];
@@ -131,6 +132,11 @@ export function advanceCycle(): void {
 
 // === 计时器 ===
 let timerInterval: ReturnType<typeof setInterval> | null = null;
+let battlePaused = false;
+
+// 引导暂停：冻结/恢复计时器
+eventBus.on('battle:pause', () => { battlePaused = true; });
+eventBus.on('battle:resume', () => { battlePaused = false; });
 
 // === 分数结算 ===
 let wordBaseScore = 0; // 词语基础分（不含倍率）
@@ -209,9 +215,23 @@ function pickWord(): string {
   return words[Math.floor(random() * words.length)].toUpperCase();
 }
 
+let _starterSkillBound = false;
+
 function setWord(): void {
   state.player.word = transformWordForModifier(pickWord());
   state.player.index = 0;
+
+  // 首关第二词：将初始技能绑定到本词首字母（第一词纯打字，第二词引入技能）
+  if (!_starterSkillBound && state.level === 1 && state.player.bindings.size === 0
+      && state.player.skills.size > 0 && state.player.word.length > 0
+      && state.battleStats && state.battleStats.wordsCompleted >= 1) {
+    const firstLetter = state.player.word[0].toLowerCase();
+    const firstSkillId = state.player.skills.keys().next().value;
+    if (firstSkillId) {
+      bindShapeToKeys(getBindingState(state), firstSkillId, firstLetter);
+      _starterSkillBound = true;
+    }
+  }
   state.wordScore = 0;
   wordBaseScore = 0; // 重置基础分
   lastSkillBase = 0; // 重置技能产出弹跳缓存
@@ -1201,6 +1221,7 @@ function startTimer(): void {
       if (timerInterval) clearInterval(timerInterval);
       return;
     }
+    if (battlePaused) return;
 
     // Boss 修饰器：时间加速（fast_time）+ 渐进失控（escalation）+ Story 36.11 护盾削弱
     const modEffect = getActiveParams();
@@ -1563,12 +1584,18 @@ export async function startLevel(): Promise<void> {
   // 清理过期临时 buff
   state.tempBuffs = state.tempBuffs.filter(b => state.level <= b.expiresAtNode);
 
-  // 恢复过期封印键位
+  // 恢复过期封印键位（多格技能：恢复所有封印键位）
   const expiredSeals = state.sealedKeys.filter(s => state.level > s.expiresAtNode);
+  // 按 skillId 分组封印键位
+  const sealsBySkill = new Map<string, string[]>();
   for (const seal of expiredSeals) {
-    if (!state.player.bindings.has(seal.key) && state.player.skills.has(seal.skillId)) {
-      state.player.bindings.set(seal.key, seal.skillId);
-    }
+    if (!state.player.skills.has(seal.skillId)) continue;
+    const keys = sealsBySkill.get(seal.skillId) ?? [];
+    keys.push(seal.key);
+    sealsBySkill.set(seal.skillId, keys);
+  }
+  for (const [skillId, keys] of sealsBySkill) {
+    restoreSealedSkill(getBindingState(state), skillId, keys);
   }
   state.sealedKeys = state.sealedKeys.filter(s => state.level <= s.expiresAtNode);
 
@@ -1844,6 +1871,10 @@ export async function startLevel(): Promise<void> {
 
   initFloatPool();
   getElements().word.innerHTML = ''; // 清空上一关残留单词
+
+  // 发送战斗开始事件（引导系统等监听）
+  eventBus.emit('battle:start', { stageId: state.level });
+
   announceLevel();
 
   // Level 提示消失后再开始关卡
@@ -2180,6 +2211,10 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
       startEl = getElements().playerRelics.children[idx] as HTMLElement | undefined;
       flightResource = relicAnchor.resource;
       flightAmount = relicAnchor.amount ?? 0;
+      // 遗物产出资源音效（较低音量，避免喧宾夺主）
+      if (flightResource && flightAmount > 0) {
+        emitResourceSound(flightResource, Math.min(scale, 1) * 0.5, 0);
+      }
     }
   }
 
