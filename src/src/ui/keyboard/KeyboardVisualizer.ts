@@ -5,6 +5,7 @@
 
 import { Container, Texture } from 'pixi.js'
 import { KeyVisual } from './KeyVisual'
+import type { EdgeMask } from './KeyVisual'
 import { adjacencyMap } from '../../systems/skills/passive/AdjacencyMap'
 import { eventBus } from '../../core/events/EventBus'
 import type { GameEvents } from '../../core/events/EventBus'
@@ -23,9 +24,60 @@ import type { QuestEnchantmentDef } from '../../data/affixes'
  * - 处理输入高亮和相邻联动
  * - 响应技能触发事件
  */
+// Story 40.7: 边缘掩码计算（纯函数，可测试）
+export function computeEdgeMasks(
+  skillKeyMap: Map<string, string[]>,
+  keyRowCol: Map<string, { row: number; col: number }>
+): Map<string, EdgeMask> {
+  const result = new Map<string, EdgeMask>()
+
+  // 初始化所有键为全部外部边
+  for (const keyName of keyRowCol.keys()) {
+    result.set(keyName, { top: true, right: true, bottom: true, left: true })
+  }
+
+  // 对每个多格技能，检查同行相邻关系
+  for (const [, keys] of skillKeyMap) {
+    if (keys.length <= 1) continue
+
+    for (const keyName of keys) {
+      const pos = keyRowCol.get(keyName)
+      if (!pos) continue
+      const mask = result.get(keyName)!
+
+      for (const otherKey of keys) {
+        if (otherKey === keyName) continue
+        const otherPos = keyRowCol.get(otherKey)
+        if (!otherPos) continue
+
+        // 同行相邻：移除共享边
+        if (otherPos.row === pos.row) {
+          if (otherPos.col === pos.col + 1) mask.right = false
+          if (otherPos.col === pos.col - 1) mask.left = false
+        }
+      }
+    }
+  }
+
+  return result
+}
+
+// Story 40.7: 词条圆点分布（纯函数，可测试）
+export function distributeAffixDots(totalAffixes: number, cellCount: number): number[] {
+  if (cellCount <= 0 || totalAffixes <= 0) return Array(Math.max(0, cellCount)).fill(0)
+  const base = Math.floor(totalAffixes / cellCount)
+  const remainder = totalAffixes % cellCount
+  return Array.from({ length: cellCount }, (_, i) => base + (i < remainder ? 1 : 0))
+}
+
 export class KeyboardVisualizer extends Container {
   private keys: Map<string, KeyVisual> = new Map()
   private currentPressed: string | null = null
+
+  // Story 40.7: 技能键位分组 + 键位坐标
+  private skillKeyGroups: Map<string, string[]> = new Map()
+  private keyRowCol: Map<string, { row: number; col: number }> = new Map()
+  private currentBindings: Map<string, string> = new Map()
 
   // 事件取消订阅函数
   private unsubKeypress: (() => void) | null = null
@@ -73,6 +125,8 @@ export class KeyboardVisualizer extends Container {
 
         this.keys.set(keyName, key)
         this.addChild(key)
+        // Story 40.7: 记录键位行列坐标（大写）
+        this.keyRowCol.set(keyName, { row: rowIndex, col: colIndex })
       })
     })
   }
@@ -125,8 +179,47 @@ export class KeyboardVisualizer extends Container {
     skillTextures?: Map<string, Texture>,
     schoolColors?: Map<string, number>
   ): void {
+    // Story 40.7: 保存绑定引用 + 构建技能键位分组
+    this.currentBindings = bindings
+    this.skillKeyGroups.clear()
+    for (const [key, skillId] of bindings) {
+      const upper = key.toUpperCase()
+      if (!this.skillKeyGroups.has(skillId)) {
+        this.skillKeyGroups.set(skillId, [])
+      }
+      this.skillKeyGroups.get(skillId)!.push(upper)
+    }
+
+    // Story 40.7: 计算边缘掩码
+    const edgeMasks = computeEdgeMasks(this.skillKeyGroups, this.keyRowCol)
+
     this.keys.forEach((keyVisual, keyName) => {
       const skillId = bindings.get(keyName.toLowerCase()) || bindings.get(keyName)
+
+      // Story 40.7: 设置形状信息
+      const skillKeys = skillId ? (this.skillKeyGroups.get(skillId) ?? []) : []
+      const isMultiCell = skillKeys.length > 1
+      const isAnchor = !isMultiCell || skillKeys[0] === keyName
+
+      if (isMultiCell && skillId) {
+        const affixSkill = state.affixSkills.get(skillId)
+        const totalAffixes = affixSkill?.affixes.length ?? 0
+        const dots = distributeAffixDots(totalAffixes, skillKeys.length)
+        const cellIndex = skillKeys.indexOf(keyName)
+
+        keyVisual.setShapeInfo({
+          edgeMask: edgeMasks.get(keyName) ?? { top: true, right: true, bottom: true, left: true },
+          isAnchor,
+          affixDotsOverride: dots[cellIndex] ?? 0,
+        })
+      } else {
+        // monomino / 未绑定：重置为默认
+        keyVisual.setShapeInfo({
+          edgeMask: { top: true, right: true, bottom: true, left: true },
+          isAnchor: true,
+        })
+      }
+
       if (skillId && skillTextures) {
         const texture = skillTextures.get(skillId)
         keyVisual.setSkillIcon(texture || null)
@@ -139,14 +232,18 @@ export class KeyboardVisualizer extends Container {
       } else {
         keyVisual.setSkillSchoolColor(null)
       }
-      // 词条制技能：稀有度边框 + 词条数圆点
+      // 词条制技能：稀有度边框（圆点已由 setShapeInfo 处理多格分配）
       if (skillId && state.affixSkills.has(skillId)) {
         const affixSkill = state.affixSkills.get(skillId)!
         keyVisual.setRarityBorder(affixSkill.rarity)
-        keyVisual.setAffixDots(affixSkill.affixes.length)
+        if (!isMultiCell) {
+          keyVisual.setAffixDots(affixSkill.affixes.length)
+        }
       } else {
         keyVisual.setRarityBorder(null)
-        keyVisual.setAffixDots(0)
+        if (!isMultiCell) {
+          keyVisual.setAffixDots(0)
+        }
       }
     })
   }
@@ -198,20 +295,35 @@ export class KeyboardVisualizer extends Container {
     // 清除之前的高亮
     this.clearHighlights()
 
-    // 高亮当前键
     const currentKey = this.keys.get(keyUpper)
-    if (currentKey) {
-      currentKey.setPressed(true)
-      this.currentPressed = keyUpper
+    if (!currentKey) return
 
-      // 高亮相邻键
-      const adjacentKeys = adjacencyMap.getAdjacent(keyUpper)
-      adjacentKeys.forEach(adjKey => {
-        const adjKeyVisual = this.keys.get(adjKey.toUpperCase())
-        if (adjKeyVisual) {
-          adjKeyVisual.setAdjacentHighlight(true)
-        }
+    this.currentPressed = keyUpper
+
+    // Story 40.7: 多格技能 → 高亮整个形状
+    const skillId = this.currentBindings.get(keyUpper.toLowerCase()) || this.currentBindings.get(keyUpper)
+    const shapeKeys = skillId ? (this.skillKeyGroups.get(skillId) ?? []) : []
+    const keysToPress = shapeKeys.length > 1 ? shapeKeys : [keyUpper]
+
+    // 高亮形状内所有键
+    const shapeKeySet = new Set(keysToPress)
+    for (const k of keysToPress) {
+      const kv = this.keys.get(k)
+      if (kv) kv.setPressed(true)
+    }
+
+    // 相邻高亮：形状所有键的邻居并集，排除形状自身
+    const adjacentSet = new Set<string>()
+    for (const k of keysToPress) {
+      const adj = adjacencyMap.getAdjacent(k)
+      adj.forEach(a => {
+        const au = a.toUpperCase()
+        if (!shapeKeySet.has(au)) adjacentSet.add(au)
       })
+    }
+    for (const adjKey of adjacentSet) {
+      const adjKv = this.keys.get(adjKey)
+      if (adjKv) adjKv.setAdjacentHighlight(true)
     }
   }
 
@@ -225,22 +337,35 @@ export class KeyboardVisualizer extends Container {
 
   /**
    * 处理技能触发
+   * Story 40.7: 多格技能 → 所有格子同步播放触发动画，叠层/成长/任务仅锚点键
    */
   private onSkillTriggered(data: GameEvents['skill:triggered']): void {
     if (this.destroyed) return
 
     const keyUpper = data.key.toUpperCase()
-    const keyVisual = this.keys.get(keyUpper)
 
-    if (keyVisual) {
-      keyVisual.playTriggerAnimation()
+    // Story 40.7: 获取技能的所有键位
+    const skillId = data.skillId || this.currentBindings.get(keyUpper.toLowerCase()) || this.currentBindings.get(keyUpper)
+    const shapeKeys = skillId ? (this.skillKeyGroups.get(skillId) ?? []) : []
+    const keysToAnimate = shapeKeys.length > 1 ? shapeKeys : [keyUpper]
+    const anchorKey = shapeKeys.length > 1 ? shapeKeys[0] : keyUpper
+
+    // 所有键位播放触发动画
+    for (const k of keysToAnimate) {
+      const kv = this.keys.get(k)
+      if (kv) kv.playTriggerAnimation()
+    }
+
+    // 叠层/成长标签仅显示在锚点键
+    const anchorKv = this.keys.get(anchorKey)
+    if (anchorKv) {
       if (data.amplifierStacks != null) {
-        keyVisual.setStackCount(data.amplifierStacks)
+        anchorKv.setStackCount(data.amplifierStacks)
       }
       if (data.growthValue != null) {
-        keyVisual.setGrowthLabel(data.growthValue)
+        anchorKv.setGrowthLabel(data.growthValue)
       }
-      // 词条制：同步任务进度环
+      // 词条制：同步任务进度环（仅锚点键）
       if (data.skillId && state.affixSkillStates.has(data.skillId)) {
         const rt = state.affixSkillStates.get(data.skillId)!
         const skill = state.affixSkills.get(data.skillId)
@@ -249,7 +374,7 @@ export class KeyboardVisualizer extends Container {
             .map((id: string) => QUEST_ENCHANTMENT_DEFS.find((d: QuestEnchantmentDef) => d.type === id))
             .find((d): d is QuestEnchantmentDef => d != null)
           if (questEnch) {
-            keyVisual.setQuestProgress(rt.questStacks / questEnch.targetStacks)
+            anchorKv.setQuestProgress(rt.questStacks / questEnch.targetStacks)
           }
         }
       }
@@ -314,23 +439,39 @@ export class KeyboardVisualizer extends Container {
 
   /**
    * 手动设置按键高亮（用于测试）
+   * Story 40.7: 多格技能 → 高亮整个形状
    */
   highlightKey(keyName: string): void {
     const keyUpper = keyName.toUpperCase()
     this.clearHighlights()
 
     const key = this.keys.get(keyUpper)
-    if (key) {
-      key.setPressed(true)
-      this.currentPressed = keyUpper
+    if (!key) return
 
-      const adjacentKeys = adjacencyMap.getAdjacent(keyUpper)
-      adjacentKeys.forEach(adjKey => {
-        const adjKeyVisual = this.keys.get(adjKey.toUpperCase())
-        if (adjKeyVisual) {
-          adjKeyVisual.setAdjacentHighlight(true)
-        }
+    this.currentPressed = keyUpper
+
+    // Story 40.7: 多格技能 → 高亮整个形状
+    const skillId = this.currentBindings.get(keyUpper.toLowerCase()) || this.currentBindings.get(keyUpper)
+    const shapeKeys = skillId ? (this.skillKeyGroups.get(skillId) ?? []) : []
+    const keysToPress = shapeKeys.length > 1 ? shapeKeys : [keyUpper]
+
+    const shapeKeySet = new Set(keysToPress)
+    for (const k of keysToPress) {
+      const kv = this.keys.get(k)
+      if (kv) kv.setPressed(true)
+    }
+
+    const adjacentSet = new Set<string>()
+    for (const k of keysToPress) {
+      const adj = adjacencyMap.getAdjacent(k)
+      adj.forEach(a => {
+        const au = a.toUpperCase()
+        if (!shapeKeySet.has(au)) adjacentSet.add(au)
       })
+    }
+    for (const adjKey of adjacentSet) {
+      const adjKv = this.keys.get(adjKey)
+      if (adjKv) adjKv.setAdjacentHighlight(true)
     }
   }
 

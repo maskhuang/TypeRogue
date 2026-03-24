@@ -9,6 +9,20 @@ import type { KeyTooltipData } from './KeyTooltip'
 import type { SkillRarity } from '../../data/affixes'
 import { RARITY_COLORS } from '../../data/affixes'
 
+// Story 40.7: 多格技能边缘掩码
+export interface EdgeMask {
+  top: boolean
+  right: boolean
+  bottom: boolean
+  left: boolean
+}
+
+export interface ShapeInfo {
+  edgeMask: EdgeMask
+  isAnchor: boolean
+  affixDotsOverride?: number
+}
+
 /**
  * 单个按键可视化组件
  *
@@ -17,6 +31,7 @@ import { RARITY_COLORS } from '../../data/affixes'
  * - 显示绑定的技能图标
  * - 支持多种高亮状态 (默认、按下、相邻)
  * - 支持触发动画
+ * - 支持多格技能边缘合并 (Story 40.7)
  */
 export class KeyVisual extends Container {
   private background: Graphics
@@ -34,6 +49,10 @@ export class KeyVisual extends Container {
   private questProgressRatio: number = 0
   private affixDotsGraphics: Graphics | null = null
   private questProgressGraphics: Graphics | null = null
+
+  // Story 40.7: 多格技能形状信息
+  private edgeMask: EdgeMask = { top: true, right: true, bottom: true, left: true }
+  private isAnchorCell: boolean = true
 
   // 动画状态
   private animationScale: number = 1.0
@@ -109,6 +128,45 @@ export class KeyVisual extends Container {
   }
 
   /**
+   * Story 40.7: 设置多格形状信息
+   */
+  setShapeInfo(info: ShapeInfo): void {
+    const maskChanged = this.edgeMask.top !== info.edgeMask.top ||
+      this.edgeMask.right !== info.edgeMask.right ||
+      this.edgeMask.bottom !== info.edgeMask.bottom ||
+      this.edgeMask.left !== info.edgeMask.left
+    const anchorChanged = this.isAnchorCell !== info.isAnchor
+
+    this.edgeMask = { ...info.edgeMask }
+    this.isAnchorCell = info.isAnchor
+
+    if (info.affixDotsOverride != null) {
+      this.setAffixDots(info.affixDotsOverride)
+    }
+
+    // 非锚点键隐藏键名标签
+    this.keyLabel.visible = this.isAnchorCell
+
+    if (maskChanged || anchorChanged) {
+      this.drawBackground()
+    }
+  }
+
+  /**
+   * Story 40.7: 获取边缘掩码（测试用）
+   */
+  getEdgeMask(): EdgeMask {
+    return { ...this.edgeMask }
+  }
+
+  /**
+   * Story 40.7: 获取是否锚点键（测试用）
+   */
+  getIsAnchor(): boolean {
+    return this.isAnchorCell
+  }
+
+  /**
    * 绘制背景
    */
   private drawBackground(): void {
@@ -138,17 +196,45 @@ export class KeyVisual extends Container {
       ? KeyVisual.BORDER_WIDTH + 1
       : KeyVisual.BORDER_WIDTH
 
-    // 绘制边框
-    this.background.roundRect(
-      0, 0,
-      KeyVisual.KEY_SIZE, KeyVisual.KEY_SIZE,
-      KeyVisual.BORDER_RADIUS
-    )
-    this.background.fill({ color: bgColor })
-    this.background.stroke({
-      color: borderColor,
-      width: borderWidth
-    })
+    const S = KeyVisual.KEY_SIZE
+    const isAllExternal = this.edgeMask.top && this.edgeMask.right &&
+      this.edgeMask.bottom && this.edgeMask.left
+
+    if (isAllExternal) {
+      // 原始渲染：roundRect + stroke（monomino / 单格技能 完全不变）
+      this.background.roundRect(0, 0, S, S, KeyVisual.BORDER_RADIUS)
+      this.background.fill({ color: bgColor })
+      this.background.stroke({ color: borderColor, width: borderWidth })
+    } else {
+      // 多格渲染：平面填充 + 选择性边框
+      this.background.rect(0, 0, S, S)
+      this.background.fill({ color: bgColor })
+
+      // 非锚点键叠加稀有度色调
+      if (!this.isAnchorCell && this.currentRarity !== null) {
+        const rarityHex = parseInt(RARITY_COLORS[this.currentRarity].replace('#', ''), 16)
+        this.background.rect(borderWidth, borderWidth, S - borderWidth * 2, S - borderWidth * 2)
+        this.background.fill({ color: rarityHex, alpha: 0.12 })
+      }
+
+      // 绘制外部边框
+      if (this.edgeMask.top) {
+        this.background.rect(0, 0, S, borderWidth)
+        this.background.fill({ color: borderColor })
+      }
+      if (this.edgeMask.bottom) {
+        this.background.rect(0, S - borderWidth, S, borderWidth)
+        this.background.fill({ color: borderColor })
+      }
+      if (this.edgeMask.left) {
+        this.background.rect(0, 0, borderWidth, S)
+        this.background.fill({ color: borderColor })
+      }
+      if (this.edgeMask.right) {
+        this.background.rect(S - borderWidth, 0, borderWidth, S)
+        this.background.fill({ color: borderColor })
+      }
+    }
   }
 
   /**
@@ -181,6 +267,9 @@ export class KeyVisual extends Container {
       this.skillIcon.destroy()
       this.skillIcon = null
     }
+
+    // Story 40.7: 非锚点键不显示图标
+    if (!this.isAnchorCell) return
 
     // 设置新图标
     if (iconTexture) {
