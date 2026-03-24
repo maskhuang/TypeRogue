@@ -275,7 +275,7 @@ development_status:
   # Epic 40: 多格技能形状系统（Polyomino）
   epic-40: in-progress
   40-1-shape-data-model: done
-  40-2-shape-generation: backlog
+  40-2-shape-generation: done
   40-3-keyboard-multi-cell-binding: backlog
   40-4-shop-shape-preview: backlog
   40-5-drag-drop-shape-placement: backlog

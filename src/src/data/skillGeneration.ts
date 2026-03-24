@@ -9,6 +9,7 @@ import { RESOURCE_ICONS } from '../core/constants'
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 import type { AffixInstance, AffixSkillInstance, SkillRarity } from './affixes'
+import { RARITY_TO_SHAPE_POOL, SHAPE_TEMPLATES } from './skillShapes'
 import {
   AffixType,
   AFFIX_WEIGHTS, BASE_VALUES, RARITY_PROBABILITIES,
@@ -248,6 +249,10 @@ export interface GenerateSkillOptions {
   level?: number
   /** 职业可用资源池（约束转化源/连接监听/增幅资源） */
   availableResources?: ResourceType[]
+  /** 强制形状 ID（不随机） */
+  shapeId?: string
+  /** 强制旋转态（不随机，0~3） */
+  rotation?: number
 }
 
 /** 生成一个随机词条制技能实例 */
@@ -274,6 +279,14 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
   const rnd = random() || 0.0001
   const id = `skill_${Date.now()}_${rnd.toString(36).slice(2, 6)}`
 
+  // 形状分配：根据 rarity 从形状池中随机选取
+  const shapeId = options?.shapeId != null && SHAPE_TEMPLATES[options.shapeId]
+    ? options.shapeId
+    : pickRandom(RARITY_TO_SHAPE_POOL[rarity])
+  const rotation = options?.rotation != null
+    ? ((options.rotation % 4) + 4) % 4
+    : Math.floor(random() * 4)
+
   return {
     id,
     name,
@@ -284,5 +297,7 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
     rarity: rarity as SkillRarity,
     affixes,
     enchantmentIds: [],
+    shapeId,
+    rotation,
   }
 }

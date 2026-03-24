@@ -30,6 +30,9 @@ import {
   generateSkill,
 } from '../../../src/data/skillGeneration'
 import type { SkillRarity } from '../../../src/data/affixes'
+import { RARITY_TO_SHAPE_POOL, SHAPE_TEMPLATES } from '../../../src/data/skillShapes'
+import { serializeSkill, deserializeSkill } from '../../../src/data/affixTrigger'
+import { createSkillRuntimeState } from '../../../src/data/affixes'
 
 const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
 const ALL_POS_RELATIONS = Object.values(PositionRelation)
@@ -549,6 +552,10 @@ describe('generateSkill', () => {
       // 词条不应重复
       const affTypes = skill.affixes.map(a => a.type)
       expect(new Set(affTypes).size).toBe(affTypes.length)
+      // 形状字段校验 (Story 40.2)
+      expect(RARITY_TO_SHAPE_POOL[skill.rarity as 0 | 1 | 2 | 3]).toContain(skill.shapeId)
+      expect(skill.rotation).toBeGreaterThanOrEqual(0)
+      expect(skill.rotation).toBeLessThanOrEqual(3)
     }
     setSeededMode(42)
   })
@@ -621,5 +628,177 @@ describe('Convert cross/self weight differentiation', () => {
       const a = rollAffixParams(AffixType.Convert, res, 'self')
       expect(a.source).toBe(res)
     }
+  })
+})
+
+// ===== Story 40.2: 形状分配测试 =====
+
+describe('generateSkill shape assignment (Story 40.2)', () => {
+  it('should include shapeId and rotation in generated skill', () => {
+    const skill = generateSkill()
+    expect(skill.shapeId).toBeDefined()
+    expect(typeof skill.shapeId).toBe('string')
+    expect(skill.rotation).toBeDefined()
+    expect(typeof skill.rotation).toBe('number')
+  })
+
+  it('rarity 0 → monomino', () => {
+    for (let i = 0; i < 20; i++) {
+      const skill = generateSkill({ rarity: 0 as SkillRarity })
+      expect(skill.shapeId).toBe('monomino')
+    }
+  })
+
+  it('rarity 1 → domino', () => {
+    for (let i = 0; i < 20; i++) {
+      const skill = generateSkill({ rarity: 1 as SkillRarity })
+      expect(skill.shapeId).toBe('domino')
+    }
+  })
+
+  it('rarity 2 → triomino_I or triomino_L', () => {
+    const pool = RARITY_TO_SHAPE_POOL[2]
+    for (let i = 0; i < 50; i++) {
+      const skill = generateSkill({ rarity: 2 as SkillRarity })
+      expect(pool).toContain(skill.shapeId)
+    }
+  })
+
+  it('rarity 3 → one of 7 tetrominoes', () => {
+    const pool = RARITY_TO_SHAPE_POOL[3]
+    for (let i = 0; i < 50; i++) {
+      const skill = generateSkill({ rarity: 3 as SkillRarity })
+      expect(pool).toContain(skill.shapeId)
+    }
+  })
+
+  it('shapeId should be a valid SHAPE_TEMPLATES key', () => {
+    for (let i = 0; i < 50; i++) {
+      const skill = generateSkill()
+      expect(SHAPE_TEMPLATES[skill.shapeId!]).toBeDefined()
+    }
+  })
+
+  it('rotation should be 0~3', () => {
+    for (let i = 0; i < 100; i++) {
+      const skill = generateSkill()
+      expect(skill.rotation).toBeGreaterThanOrEqual(0)
+      expect(skill.rotation).toBeLessThanOrEqual(3)
+      expect(Number.isInteger(skill.rotation)).toBe(true)
+    }
+  })
+
+  it('rarity 2 shapes should distribute approximately uniformly', () => {
+    setSeededMode(33333)
+    const counts: Record<string, number> = {}
+    const N = 2000
+    for (let i = 0; i < N; i++) {
+      const skill = generateSkill({ rarity: 2 as SkillRarity })
+      counts[skill.shapeId!] = (counts[skill.shapeId!] || 0) + 1
+    }
+    // 2 shapes: each ~50%, tolerance ±10%
+    const pool = RARITY_TO_SHAPE_POOL[2]
+    for (const id of pool) {
+      const ratio = (counts[id] || 0) / N
+      expect(ratio).toBeGreaterThan(0.3)
+      expect(ratio).toBeLessThan(0.7)
+    }
+    setSeededMode(42)
+  })
+
+  it('rarity 3 shapes should distribute approximately uniformly', () => {
+    setSeededMode(44444)
+    const counts: Record<string, number> = {}
+    const N = 7000
+    for (let i = 0; i < N; i++) {
+      const skill = generateSkill({ rarity: 3 as SkillRarity })
+      counts[skill.shapeId!] = (counts[skill.shapeId!] || 0) + 1
+    }
+    // 7 shapes: each ~14.3%, tolerance: ratio in [0.08, 0.22]
+    const pool = RARITY_TO_SHAPE_POOL[3]
+    for (const id of pool) {
+      const ratio = (counts[id] || 0) / N
+      expect(ratio).toBeGreaterThan(0.08)
+      expect(ratio).toBeLessThan(0.22)
+    }
+    setSeededMode(42)
+  })
+
+  it('rotation should distribute approximately uniformly', () => {
+    setSeededMode(55555)
+    const counts = [0, 0, 0, 0]
+    const N = 4000
+    for (let i = 0; i < N; i++) {
+      const skill = generateSkill()
+      counts[skill.rotation!]++
+    }
+    // Each ~25%, tolerance ±8%
+    for (let r = 0; r < 4; r++) {
+      const ratio = counts[r] / N
+      expect(ratio).toBeGreaterThan(0.17)
+      expect(ratio).toBeLessThan(0.33)
+    }
+    setSeededMode(42)
+  })
+
+  it('should respect forced shapeId option', () => {
+    const skill = generateSkill({ rarity: 3 as SkillRarity, shapeId: 'tetromino_T' })
+    expect(skill.shapeId).toBe('tetromino_T')
+  })
+
+  it('should respect forced rotation option', () => {
+    const skill = generateSkill({ rotation: 2 })
+    expect(skill.rotation).toBe(2)
+  })
+
+  it('should respect both forced shapeId and rotation', () => {
+    const skill = generateSkill({ rarity: 0 as SkillRarity, shapeId: 'domino', rotation: 1 })
+    expect(skill.shapeId).toBe('domino')
+    expect(skill.rotation).toBe(1)
+  })
+})
+
+// ===== Story 40.2: 序列化/反序列化形状字段 =====
+
+describe('serializeSkill / deserializeSkill shape fields (Story 40.2)', () => {
+  it('should preserve shapeId and rotation through serialize → deserialize', () => {
+    const skill = generateSkill({ rarity: 3 as SkillRarity })
+    const runtime = createSkillRuntimeState(skill.id)
+    const saved = serializeSkill(skill, runtime)
+    expect(saved.shapeId).toBe(skill.shapeId)
+    expect(saved.rotation).toBe(skill.rotation)
+
+    const { skill: restored } = deserializeSkill(saved)
+    expect(restored.shapeId).toBe(skill.shapeId)
+    expect(restored.rotation).toBe(skill.rotation)
+  })
+
+  it('should default to monomino/0 when save data has no shapeId/rotation', () => {
+    const skill = generateSkill({ rarity: 0 as SkillRarity })
+    const runtime = createSkillRuntimeState(skill.id)
+    const saved = serializeSkill(skill, runtime)
+    // Simulate old save data without shape fields
+    delete (saved as any).shapeId
+    delete (saved as any).rotation
+
+    const { skill: restored } = deserializeSkill(saved)
+    expect(restored.shapeId).toBe('monomino')
+    expect(restored.rotation).toBe(0)
+  })
+
+  it('should roundtrip all rarity levels with correct shapes', () => {
+    setSeededMode(66666)
+    for (const r of [0, 1, 2, 3] as SkillRarity[]) {
+      for (let i = 0; i < 5; i++) {
+        const skill = generateSkill({ rarity: r })
+        const runtime = createSkillRuntimeState(skill.id)
+        const saved = serializeSkill(skill, runtime)
+        const { skill: restored } = deserializeSkill(saved)
+        expect(restored.shapeId).toBe(skill.shapeId)
+        expect(restored.rotation).toBe(skill.rotation)
+        expect(RARITY_TO_SHAPE_POOL[r]).toContain(restored.shapeId)
+      }
+    }
+    setSeededMode(42)
   })
 })

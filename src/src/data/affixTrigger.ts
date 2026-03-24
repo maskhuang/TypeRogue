@@ -1291,6 +1291,9 @@ export function serializeSkill(
     affixes: skill.affixes.map(a => ({ ...a })),
     enchantmentIds: [...skill.enchantmentIds],
     transmuteResource: skill.transmuteResource,
+    neighborPosRel: skill.neighborPosRel,
+    shapeId: skill.shapeId,
+    rotation: skill.rotation,
     runtime: { ...runtimeState, mirrorCopiedAffix: runtimeState.mirrorCopiedAffix ? { ...runtimeState.mirrorCopiedAffix } : null },
   }
 }
@@ -1313,6 +1316,8 @@ export function deserializeSkill(
     enchantmentIds: [...data.enchantmentIds],
     transmuteResource: data.transmuteResource,
     neighborPosRel: data.neighborPosRel,
+    shapeId: data.shapeId ?? 'monomino',
+    rotation: data.rotation ?? 0,
   }
   const runtimeState: SkillRuntimeState = {
     skillId: data.id,
