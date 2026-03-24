@@ -52,8 +52,8 @@ import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment, getUncrownedKingBaseValue } from './relics/SkillRelicBehaviors';
 import { getEnchantmentChoiceCount, getMinEnchantmentLevel, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier } from './relics/EnchantmentRelicBehaviors';
-import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState } from './bindingManager';
-import { getShapeCells } from '../data/skillShapes';
+import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState, getSkillAnchorKey } from './bindingManager';
+import { getShapeCells, mapShapeToKeys } from '../data/skillShapes';
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
@@ -719,6 +719,7 @@ export function openShop(_won: boolean): void {
   };
   dragManager.onDragEnd = () => {
     clearFreqDropWarning();
+    clearShapePlacement();
   };
   showScreen('shop');
 
@@ -1013,7 +1014,16 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
 
     card.classList.add('affix-skill-card');
     card.style.borderColor = rarityColor;
+    // Story 40.5: 写入形状数据到 DOM dataset（供 buildPayload 读取）
+    if (affix.shapeId && affix.shapeId !== 'monomino') {
+      card.dataset.shapeId = affix.shapeId;
+      card.dataset.rotation = String(affix.rotation ?? 0);
+    }
     const shapePreviewHtml = renderShapePreview(affix.shapeId ?? 'monomino', affix.rotation ?? 0, affix.rarity);
+    // Story 40.5: 预渲染形状 HTML 供拖拽幽灵使用
+    if (shapePreviewHtml) {
+      card.dataset.shapePreview = shapePreviewHtml;
+    }
     card.innerHTML = `
       <div class="reward-icon">${affix.icon}${shapePreviewHtml}</div>
       <div class="reward-info">
@@ -2211,6 +2221,13 @@ export function renderBuildManager(): void {
         slot.dataset.boundSkill = skillId;
         const skData = state.player.skills.get(skillId);
         slot.dataset.sellPrice = String(Math.floor((skData?.purchasePrice || 15) / 2));
+        // Story 40.5: 形状数据供拖拽系统读取
+        if (affixSkill.shapeId && affixSkill.shapeId !== 'monomino') {
+          slot.dataset.shapeId = affixSkill.shapeId;
+          slot.dataset.rotation = String(affixSkill.rotation ?? 0);
+          const preview = renderShapePreview(affixSkill.shapeId, affixSkill.rotation ?? 0, affixSkill.rarity);
+          if (preview) slot.dataset.shapePreview = preview;
+        }
         slot.style.borderColor = rarityColor;
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${affixSkill.icon}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
       } else {
@@ -2309,6 +2326,13 @@ export function renderBuildManager(): void {
     item.dataset.dragType = 'skill-inventory';
     item.dataset.skillId = skillId;
     item.dataset.sellPrice = String(Math.floor((data.purchasePrice || 15) / 2));
+    // Story 40.5: 形状数据供拖拽系统读取
+    if (affixSkill.shapeId && affixSkill.shapeId !== 'monomino') {
+      item.dataset.shapeId = affixSkill.shapeId;
+      item.dataset.rotation = String(affixSkill.rotation ?? 0);
+      const preview = renderShapePreview(affixSkill.shapeId, affixSkill.rotation ?? 0, affixSkill.rarity);
+      if (preview) item.dataset.shapePreview = preview;
+    }
     if (boundKey) item.classList.add('bound');
 
     {
@@ -2496,6 +2520,13 @@ function registerShopDropZones(): void {
       onDrop: (payload: DragPayload) => {
         handleDropOnKey(key, payload);
       },
+      // Story 40.5: 形状放置预览
+      onDragEnter: (payload: DragPayload) => {
+        highlightShapePlacement(key, payload);
+      },
+      onDragLeave: (_payload: DragPayload) => {
+        clearShapePlacement();
+      },
     });
   });
 
@@ -2541,6 +2572,49 @@ function registerShopDropZones(): void {
   }
 }
 
+// === Story 40.5: 形状放置高亮系统 ===
+export function highlightShapePlacement(anchorKey: string, payload: DragPayload): void {
+  const shapeId = payload.shapeId ?? 'monomino';
+  const rotation = payload.rotation ?? 0;
+
+  // monomino 或无形状：仅高亮单键（沿用原有逻辑）
+  if (!shapeId || shapeId === 'monomino') return;
+
+  clearShapePlacement();
+
+  // 验证 anchorKey 合法性（防止 CSS selector 注入）
+  const normalizedKey = anchorKey.toLowerCase();
+  if (!KEYS.includes(normalizedKey)) return;
+
+  const targetKeys = mapShapeToKeys(normalizedKey, shapeId, rotation);
+
+  if (!targetKeys) {
+    // 放不下：红色高亮悬停键
+    const slot = document.querySelector(`.key-slot[data-key="${normalizedKey}"]`);
+    if (slot) slot.classList.add('shape-preview-invalid');
+    return;
+  }
+
+  // 可放置：绿色高亮所有目标键位
+  const dragSkillId = payload.skillId;
+  for (const key of targetKeys) {
+    const slot = document.querySelector(`.key-slot[data-key="${key}"]`);
+    if (!slot) continue;
+    slot.classList.add('shape-preview-valid');
+    // 检查被覆盖技能
+    const existing = state.player.bindings.get(key);
+    if (existing && existing !== dragSkillId) {
+      slot.classList.add('shape-preview-displaced');
+    }
+  }
+}
+
+export function clearShapePlacement(): void {
+  document.querySelectorAll('.shape-preview-valid, .shape-preview-invalid, .shape-preview-displaced').forEach(el => {
+    el.classList.remove('shape-preview-valid', 'shape-preview-invalid', 'shape-preview-displaced');
+  });
+}
+
 // === 拖拽到键位处理 ===
 function handleDropOnKey(targetKey: string, payload: DragPayload): void {
   const bs = getBindingState(state);
@@ -2552,6 +2626,21 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     if (!item || item.type !== 'skill') return;
 
     const skillId = item.skillId!;
+
+    // 预检形状是否能放下（在扣金币之前）
+    const affixSkill = item.affixSkill;
+    if (affixSkill) {
+      const shapeId = affixSkill.shapeId ?? 'monomino';
+      const rotation = affixSkill.rotation ?? 0;
+      if (shapeId !== 'monomino') {
+        const fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, rotation);
+        if (!fitKeys) {
+          showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
+          return;
+        }
+      }
+    }
+
     const result = executePurchase(index);
     if (!result) return;
 
@@ -2570,19 +2659,50 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     if (!skillId) return;
 
     const existingSkill = state.player.bindings.get(targetKey);
-    const sourceKey = payload.sourceKey ||
-      [...state.player.bindings.entries()].find(([, id]) => id === skillId)?.[0];
+    const sourceAnchorKey = payload.sourceKey
+      ? getSkillAnchorKey(bs, skillId) || payload.sourceKey
+      : getSkillAnchorKey(bs, skillId);
 
     // 交换逻辑：先暂存 → 解绑双方 → 重新绑定
-    if (existingSkill && sourceKey) {
+    if (existingSkill && existingSkill !== skillId && sourceAnchorKey) {
+      const existingAnchorKey = getSkillAnchorKey(bs, existingSkill);
       // 两个技能互换位置
       unbindSkill(bs, skillId);
       unbindSkill(bs, existingSkill);
-      bindShapeToKeys(bs, skillId, targetKey);
-      bindShapeToKeys(bs, existingSkill, sourceKey);
+      const r1 = bindShapeToKeys(bs, skillId, targetKey);
+      if (!r1.success) {
+        // 放不下：恢复双方原始绑定
+        if (sourceAnchorKey) bindShapeToKeys(bs, skillId, sourceAnchorKey);
+        if (existingAnchorKey) bindShapeToKeys(bs, existingSkill, existingAnchorKey);
+        showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
+      } else {
+        // 记录 r1 可能覆盖的第三方技能及其锚点（用于回退恢复）
+        const displacedAnchors = new Map<string, string>();
+        for (const dId of r1.displacedSkillIds) {
+          if (dId !== existingSkill) {
+            const dAnchor = getSkillAnchorKey(bs, dId);
+            if (dAnchor) displacedAnchors.set(dId, dAnchor);
+          }
+        }
+        const r2 = existingAnchorKey ? bindShapeToKeys(bs, existingSkill, sourceAnchorKey) : { success: false, displacedSkillIds: [] };
+        if (!r2.success && existingAnchorKey) {
+          // 对方放不回去：回退全部
+          unbindSkill(bs, skillId);
+          if (sourceAnchorKey) bindShapeToKeys(bs, skillId, sourceAnchorKey);
+          if (existingAnchorKey) bindShapeToKeys(bs, existingSkill, existingAnchorKey);
+          // 恢复被覆盖的第三方技能
+          for (const [dId, dAnchor] of displacedAnchors) {
+            bindShapeToKeys(bs, dId, dAnchor);
+          }
+          showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
+        }
+      }
     } else {
       // 绑定到目标键位（被覆盖技能自动解绑）
-      bindShapeToKeys(bs, skillId, targetKey);
+      const r = bindShapeToKeys(bs, skillId, targetKey);
+      if (!r.success) {
+        showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
+      }
     }
 
     renderBuildManager();

@@ -2911,6 +2911,34 @@ body {
     transform: scale(1.1);
 }
 
+/* Story 40.5: 形状放置高亮 */
+.key-slot.shape-preview-valid {
+    border-color: #4ecdc4 !important;
+    background: rgba(78, 205, 196, 0.25) !important;
+    box-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
+    transform: scale(1.05);
+}
+.key-slot.shape-preview-invalid {
+    border-color: #ff6b6b !important;
+    background: rgba(255, 107, 107, 0.25) !important;
+    box-shadow: 0 0 8px rgba(255, 107, 107, 0.4);
+}
+.key-slot.shape-preview-displaced {
+    border-color: #ffe66d !important;
+    animation: displaced-blink 0.5s ease infinite;
+}
+@keyframes displaced-blink {
+    0%, 100% { background: rgba(255, 230, 109, 0.1); }
+    50% { background: rgba(255, 230, 109, 0.35); }
+}
+
+/* Story 40.5: 拖拽幽灵形状缩略图 */
+.drag-ghost-shape {
+    margin-top: 2px;
+    display: flex;
+    justify-content: center;
+}
+
 /* ============================================ */
 /* ACT TRANSITION OVERLAY                       */
 /* ============================================ */

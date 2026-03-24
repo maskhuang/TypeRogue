@@ -15,6 +15,9 @@ export interface DragPayload {
   sellPrice?: number;  // 拖到卖出区时显示的售价
   label: string;    // 显示在幽灵元素中
   icon: string;     // emoji/icon
+  shapeId?: string;       // Story 40.5: 多格技能形状 ID
+  rotation?: number;      // Story 40.5: 形状旋转态
+  shapePreviewHtml?: string; // Story 40.5: 预渲染的形状预览 HTML
 }
 
 export interface DropZone {
@@ -237,7 +240,10 @@ class DragManager {
         const icon = el.querySelector('.reward-icon')?.textContent || '📦';
         const costText = el.querySelector('.reward-cost')?.textContent || '';
         const cost = parseInt(costText.replace(/[^0-9]/g, '') || '0', 10);
-        return { type, itemIndex: index, label, icon, cost };
+        const shapeId = el.dataset.shapeId || undefined;
+        const rotation = el.dataset.rotation != null ? parseInt(el.dataset.rotation, 10) : undefined;
+        const shapePreviewHtml = el.dataset.shapePreview || undefined;
+        return { type, itemIndex: index, label, icon, cost, shapeId, rotation, shapePreviewHtml };
       }
       case 'skill-inventory': {
         const skillId = el.dataset.skillId || '';
@@ -245,7 +251,10 @@ class DragManager {
         const label = el.querySelector('.inv-name')?.textContent || skillId;
         const icon = el.querySelector('.inv-icon')?.textContent || '⚡';
         const sellPrice = parseInt(el.dataset.sellPrice || '0', 10);
-        return { type, skillId, label, icon, sellPrice };
+        const shapeId = el.dataset.shapeId || undefined;
+        const rotation = el.dataset.rotation != null ? parseInt(el.dataset.rotation, 10) : undefined;
+        const shapePreviewHtml = el.dataset.shapePreview || undefined;
+        return { type, skillId, label, icon, sellPrice, shapeId, rotation, shapePreviewHtml };
       }
       case 'skill-key': {
         const key = el.dataset.key || '';
@@ -253,7 +262,10 @@ class DragManager {
         if (!key || !skillId) return null;
         const icon = el.querySelector('.key-skill')?.textContent || '⚡';
         const sellPrice = parseInt(el.dataset.sellPrice || '0', 10);
-        return { type, sourceKey: key, skillId, label: `[${key.toUpperCase()}]`, icon, sellPrice };
+        const shapeId = el.dataset.shapeId || undefined;
+        const rotation = el.dataset.rotation != null ? parseInt(el.dataset.rotation, 10) : undefined;
+        const shapePreviewHtml = el.dataset.shapePreview || undefined;
+        return { type, sourceKey: key, skillId, label: `[${key.toUpperCase()}]`, icon, sellPrice, shapeId, rotation, shapePreviewHtml };
       }
       case 'word': {
         const word = el.dataset.word || '';
@@ -281,6 +293,15 @@ class DragManager {
 
     ghost.appendChild(iconSpan);
     ghost.appendChild(labelSpan);
+
+    // Story 40.5: 多格技能幽灵显示形状缩略图
+    if (payload.shapePreviewHtml) {
+      const shapeDiv = document.createElement('div');
+      shapeDiv.className = 'drag-ghost-shape';
+      shapeDiv.innerHTML = payload.shapePreviewHtml;
+      ghost.appendChild(shapeDiv);
+    }
+
     ghost.style.position = 'fixed';
     ghost.style.pointerEvents = 'none';
     ghost.style.zIndex = '10000';
