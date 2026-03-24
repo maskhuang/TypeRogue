@@ -1,7 +1,7 @@
 ---
 title: "Epic 35: 词条制技能系统（方案 A）"
 epic_key: "epic-35"
-status: "backlog"
+status: "done"
 created: "2026-03-11"
 stories:
   - "35-1-core-data-affix-defs"

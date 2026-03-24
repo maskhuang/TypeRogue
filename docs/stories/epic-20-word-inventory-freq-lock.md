@@ -1,7 +1,7 @@
 ---
 title: "Epic 20: 词库管理 + 字频锁定"
 epic_key: "epic-20"
-status: "in-progress"
+status: "done"
 created: "2026-03-04"
 stories:
   - "20-1-word-inventory-delete"

@@ -1,7 +1,7 @@
 ---
 title: "Epic 34: 技能词条化重构（方案 B）"
 epic_key: "epic-34"
-status: "backlog"
+status: "done"
 created: "2026-03-10"
 stories:
   - "34-1-new-additive-producers"

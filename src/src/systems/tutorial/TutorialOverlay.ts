@@ -14,6 +14,8 @@ export interface TutorialOverlayOptions {
   dismissAfter?: number
   /** 动态 i18n 参数提供者 */
   paramsProvider?: () => Record<string, string | number>
+  /** 任意键关闭模式（用于暂停式引导） */
+  anyKeyDismiss?: boolean
   onDismiss: (neverShowAgain: boolean) => void
 }
 
@@ -25,6 +27,7 @@ export class TutorialOverlay {
   private container: HTMLElement | null = null
   private mask: HTMLElement | null = null
   private dismissTimer: ReturnType<typeof setTimeout> | null = null
+  private keyHandler: ((e: KeyboardEvent) => void) | null = null
   private options: TutorialOverlayOptions
 
   constructor(options: TutorialOverlayOptions) {
@@ -39,12 +42,31 @@ export class TutorialOverlay {
     if (this.options.dismissAfter && this.options.dismissAfter > 0) {
       this.dismissTimer = setTimeout(() => this.dismiss(false), this.options.dismissAfter)
     }
+
+    // 任意键关闭模式
+    if (this.options.anyKeyDismiss) {
+      this.keyHandler = (e: KeyboardEvent) => {
+        e.preventDefault()
+        e.stopImmediatePropagation()
+        this.dismiss(false)
+      }
+      // 延迟绑定：0.5s 内不响应按键，避免误触
+      setTimeout(() => {
+        if (this.keyHandler) {
+          document.addEventListener('keydown', this.keyHandler, { once: true })
+        }
+      }, 500)
+    }
   }
 
   dismiss(neverShowAgain: boolean): void {
     if (this.dismissTimer) {
       clearTimeout(this.dismissTimer)
       this.dismissTimer = null
+    }
+    if (this.keyHandler) {
+      document.removeEventListener('keydown', this.keyHandler)
+      this.keyHandler = null
     }
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container)
@@ -75,25 +97,38 @@ export class TutorialOverlay {
 
     this.container = document.createElement('div')
     this.container.className = 'tutorial-overlay'
-    this.container.innerHTML = [
+
+    const lines = [
       `<div class="tutorial-overlay-arrow tutorial-arrow-${pos}"></div>`,
       `<div class="tutorial-overlay-title">${esc(t(this.options.titleKey, params))}</div>`,
       `<div class="tutorial-overlay-body">${esc(t(this.options.bodyKey, params))}</div>`,
-      '<div class="tutorial-overlay-actions">',
-      `  <label class="tutorial-overlay-never"><input type="checkbox" class="tutorial-never-cb"> ${esc(t('tutorial.never_show'))}</label>`,
-      `  <button class="tutorial-overlay-btn">${esc(t('tutorial.got_it'))}</button>`,
-      '</div>',
-    ].join('')
+    ]
 
+    if (this.options.anyKeyDismiss) {
+      // 暂停模式：显示"按任意键继续"提示
+      lines.push(`<div class="tutorial-overlay-hint">${esc(t('tutorial.press_any_key'))}</div>`)
+    } else {
+      // 常规模式：显示"知道了"按钮 + "不再提示"复选框
+      lines.push(
+        '<div class="tutorial-overlay-actions">',
+        `  <label class="tutorial-overlay-never"><input type="checkbox" class="tutorial-never-cb"> ${esc(t('tutorial.never_show'))}</label>`,
+        `  <button class="tutorial-overlay-btn">${esc(t('tutorial.got_it'))}</button>`,
+        '</div>',
+      )
+    }
+
+    this.container.innerHTML = lines.join('')
     document.body.appendChild(this.container)
 
-    // 绑定按钮事件
-    const btn = this.container.querySelector('.tutorial-overlay-btn')
-    if (btn) {
-      btn.addEventListener('click', () => {
-        const cb = this.container?.querySelector('.tutorial-never-cb') as HTMLInputElement | null
-        this.dismiss(cb?.checked ?? false)
-      })
+    // 常规模式：绑定按钮事件
+    if (!this.options.anyKeyDismiss) {
+      const btn = this.container.querySelector('.tutorial-overlay-btn')
+      if (btn) {
+        btn.addEventListener('click', () => {
+          const cb = this.container?.querySelector('.tutorial-never-cb') as HTMLInputElement | null
+          this.dismiss(cb?.checked ?? false)
+        })
+      }
     }
   }
 

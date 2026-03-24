@@ -7,6 +7,7 @@ import { state } from '../core/state'
 import { generateBossModifierCandidates, getBossModifierMeta } from '../data/bossModifiers'
 import type { BossModifierId } from '../data/bossModifiers'
 import { playSound } from '../effects/sound'
+import { t } from '../demo/demo-i18n'
 
 /** 显示 Boss 修饰器选择模态框 */
 export function showBossModifierPicker(onComplete: () => void): void {
@@ -43,7 +44,7 @@ export function showBossModifierPicker(onComplete: () => void): void {
   if (state.activeModifiers.length > 0) {
     const label = document.createElement('div')
     label.className = 'modifier-picker-active-label'
-    label.textContent = '已激活修饰器：'
+    label.textContent = t('modifier_picker.active_label')
     activeEl.appendChild(label)
 
     const list = document.createElement('div')
@@ -53,8 +54,10 @@ export function showBossModifierPicker(onComplete: () => void): void {
       if (meta) {
         const tag = document.createElement('span')
         tag.className = 'modifier-picker-active-tag'
-        tag.textContent = `${meta.icon} ${meta.name}`
-        tag.title = meta.description
+        const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
+        const modDesc = t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description
+        tag.textContent = `${meta.icon} ${modName}`
+        tag.title = modDesc
         list.appendChild(tag)
       }
     }
@@ -71,8 +74,8 @@ export function showBossModifierPicker(onComplete: () => void): void {
     card.className = 'modifier-picker-card'
     card.innerHTML = `
       <div class="modifier-picker-icon">${meta.icon}</div>
-      <div class="modifier-picker-name">${meta.name}</div>
-      <div class="modifier-picker-desc">${meta.description}</div>
+      <div class="modifier-picker-name">${t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name}</div>
+      <div class="modifier-picker-desc">${t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description}</div>
     `
 
     card.onclick = () => {

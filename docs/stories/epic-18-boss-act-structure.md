@@ -1,7 +1,7 @@
 ---
 title: "Epic 18: Boss 战与 Act 结构"
 epic_key: "epic-18"
-status: "backlog"
+status: "done"
 created: "2026-03-02"
 stories:
   - "18-1-stage-type-act-structure"

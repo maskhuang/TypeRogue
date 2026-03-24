@@ -2,7 +2,7 @@
 title: "Story 19.9: 遗物清理与数据迁移"
 epic: "Epic 19: 技能体系重构"
 story_key: "19-9-relic-cleanup-migration"
-status: "review"
+status: "done"
 created: "2026-03-03"
 updated: "2026-03-04"
 depends_on: ["19-1-resource-system-core"]

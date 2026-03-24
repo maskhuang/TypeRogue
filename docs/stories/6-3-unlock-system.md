@@ -2,7 +2,7 @@
 title: "Story 6.3: 解锁系统"
 epic: "Epic 6: Meta 系统"
 story_key: "6-3-unlock-system"
-status: "review"
+status: "done"
 created: "2026-02-17"
 depends_on:
   - "6-1-meta-state-management"

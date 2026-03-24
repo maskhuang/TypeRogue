@@ -1,7 +1,7 @@
 ---
 title: "Epic 36: 遗物系统扩展（55 个通用遗物）"
 epic_key: "epic-36"
-status: "backlog"
+status: "done"
 created: "2026-03-12"
 design_doc: "docs/design/relic-system.md"
 stories:

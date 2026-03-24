@@ -1,7 +1,7 @@
 ---
 title: "Epic 23: 音效系统重构"
 epic_key: "epic-23"
-status: "backlog"
+status: "done"
 created: "2026-03-08"
 updated: "2026-03-09"
 stories: []

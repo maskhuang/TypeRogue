@@ -2,7 +2,7 @@
 title: "Story 5.1: Run 状态管理"
 epic: "Epic 5: Roguelike 循环"
 story_key: "5-1-run-state-management"
-status: "review"
+status: "done"
 created: "2026-02-17"
 depends_on:
   - "4-5-battle-flow-complete"

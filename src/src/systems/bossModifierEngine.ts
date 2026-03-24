@@ -16,6 +16,7 @@ import type {
   BossModifier,
   BossModifierParams,
 } from '../data/bossModifiers'
+import { t } from '../demo/demo-i18n'
 
 // === 修饰器实例 ===
 
@@ -213,8 +214,8 @@ function updateBossModifierHUD(modId: BossModifierId): void {
   const hintEl = modInfo.querySelector('.modifier-hint')
 
   if (iconEl) iconEl.textContent = meta.icon
-  if (nameEl) nameEl.textContent = meta.name
-  if (hintEl) hintEl.textContent = meta.description
+  if (nameEl) nameEl.textContent = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
+  if (hintEl) hintEl.textContent = t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description
 
   modInfo.classList.add('visible')
 }
@@ -236,7 +237,9 @@ function announceModifierSwitch(modId: BossModifierId): void {
   if (container) {
     const ann = document.createElement('div')
     ann.className = 'level-announce modifier-announce'
-    ann.innerHTML = `${meta.icon} ${meta.name}<br><span class="target-hint">${meta.description}</span>`
+    const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
+    const modDesc = t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description
+    ann.innerHTML = `${meta.icon} ${modName}<br><span class="target-hint">${modDesc}</span>`
     container.appendChild(ann)
     setTimeout(() => ann.remove(), 1500)
   }

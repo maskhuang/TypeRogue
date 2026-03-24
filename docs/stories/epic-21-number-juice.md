@@ -1,7 +1,7 @@
 ---
 title: "Epic 31: 数字 Juice 体系"
 epic_key: "epic-31"
-status: "backlog"
+status: "done"
 created: "2026-03-07"
 stories:
   - "31-1-number-color-grading"

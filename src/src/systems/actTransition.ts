@@ -40,7 +40,8 @@ export function showEliteAnnouncement(modId: string): Promise<void> {
 
     const banner = document.createElement('div')
     banner.id = 'elite-announcement'
-    banner.innerHTML = t('act.elite_announce', { icon: meta.icon, name: meta.name })
+    const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
+    banner.innerHTML = t('act.elite_announce', { icon: meta.icon, name: modName })
     document.body.appendChild(banner)
 
     requestAnimationFrame(() => {
@@ -73,7 +74,8 @@ export function showBossIntro(pool: string[]): Promise<void> {
       if (!meta) return
       const item = document.createElement('div')
       item.className = 'boss-intro-mod-item'
-      item.textContent = `${meta.icon} ${meta.name}`
+      const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
+      item.textContent = `${meta.icon} ${modName}`
       item.style.animationDelay = `${(0.6 + i * 0.3).toFixed(1)}s`
       modList.appendChild(item)
     })

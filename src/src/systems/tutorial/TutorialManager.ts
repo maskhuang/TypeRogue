@@ -6,6 +6,7 @@
 import { eventBus } from '../../core/events/EventBus'
 import type { TutorialStep } from '../../data/tutorialSteps'
 import { TutorialOverlay } from './TutorialOverlay'
+import { inputHandler } from '../typing/InputHandler'
 
 /** MetaState 引导进度接口（避免直接 import MetaState 实例） */
 export interface TutorialPersistence {
@@ -47,9 +48,19 @@ class TutorialManagerImpl {
     if (!this.enabled || this.running) return
     this.running = true
 
+    let bound = 0
+    const skippedIds: string[] = []
     for (const step of this.steps) {
-      if (this.isCompleted(step.id)) continue
+      if (this.isCompleted(step.id)) {
+        skippedIds.push(step.id)
+        continue
+      }
       this.bindStep(step)
+      bound++
+    }
+    console.log(`[Tutorial] start: ${bound} bound, ${skippedIds.length} skipped, ${this.steps.length} total`)
+    if (skippedIds.length > 0) {
+      console.log(`[Tutorial] already completed:`, skippedIds)
     }
   }
 
@@ -89,6 +100,12 @@ class TutorialManagerImpl {
    */
   resetAll(): void {
     this.persistence?.resetTutorials()
+    // 持久化清除结果 + 重新绑定事件
+    eventBus.emit('meta:request_save', {})
+    if (this.running) {
+      this.stop()
+      this.start()
+    }
   }
 
   /**
@@ -121,21 +138,38 @@ class TutorialManagerImpl {
   private bindStep(step: TutorialStep): void {
     const handler = () => {
       // 防重入：当前有浮窗时不触发新步骤
-      if (this.currentOverlay?.isVisible()) return
+      if (this.currentOverlay?.isVisible()) {
+        console.log(`[Tutorial] ${step.id}: blocked (overlay visible)`)
+        return
+      }
 
       // 检查前置步骤
-      if (step.prerequisite && !this.isCompleted(step.prerequisite)) return
+      if (step.prerequisite && !this.isCompleted(step.prerequisite)) {
+        console.log(`[Tutorial] ${step.id}: blocked (prerequisite ${step.prerequisite} not completed)`)
+        return
+      }
 
       // 检查额外条件
-      if (step.trigger.condition && !step.trigger.condition()) return
+      if (step.trigger.condition && !step.trigger.condition()) {
+        console.log(`[Tutorial] ${step.id}: blocked (condition false)`)
+        return
+      }
 
       // 已完成不重复
-      if (this.isCompleted(step.id)) return
+      if (this.isCompleted(step.id)) {
+        console.log(`[Tutorial] ${step.id}: blocked (already completed)`)
+        return
+      }
+
+      console.log(`[Tutorial] ${step.id}: will show (delay=${step.trigger.delay || 0}ms)`)
 
       const show = () => {
         // 再次检查（delay 期间可能已完成）
         if (this.isCompleted(step.id)) return
-        if (this.currentOverlay?.isVisible()) return
+        if (this.currentOverlay?.isVisible()) {
+          console.log(`[Tutorial] ${step.id}: post-delay blocked (overlay visible)`)
+          return
+        }
 
         this.showStep(step)
       }
@@ -154,6 +188,14 @@ class TutorialManagerImpl {
   }
 
   private showStep(step: TutorialStep): void {
+    const isPause = !!step.pauseGame
+
+    // 暂停模式：停止游戏计时 + 禁用打字输入
+    if (isPause) {
+      eventBus.emit('battle:pause', {})
+      inputHandler.disable()
+    }
+
     const overlay = new TutorialOverlay({
       titleKey: step.content.titleKey,
       bodyKey: step.content.bodyKey,
@@ -162,12 +204,17 @@ class TutorialManagerImpl {
       highlight: step.content.highlight,
       dismissAfter: step.dismissAfter ?? 6000,
       paramsProvider: step.content.paramsProvider,
+      anyKeyDismiss: isPause,
       onDismiss: (neverShowAgain: boolean) => {
         this.currentOverlay = null
-        // "知道了" 总是标记完成；"不再提示" 也标记完成（两者效果相同）
         this.markCompleted(step.id)
-        // neverShowAgain 可用于未来分析，当前行为与普通完成相同
         void neverShowAgain
+
+        // 恢复游戏（若下一个 pauseGame 步骤已在显示，跳过恢复）
+        if (isPause && !this.currentOverlay?.isVisible()) {
+          eventBus.emit('battle:resume', {})
+          inputHandler.enable()
+        }
       },
     })
 

@@ -1,7 +1,7 @@
 ---
 title: "Epic 32: 职业系统 + 造词师 + 蜕变师"
 epic_key: "epic-32"
-status: "backlog"
+status: "done"
 created: "2026-03-07"
 stories:
   - "32-1-class-framework"

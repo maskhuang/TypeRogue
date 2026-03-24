@@ -1,7 +1,7 @@
 ---
 title: "Epic 19: 技能体系重构"
 epic_key: "epic-19"
-status: "backlog"
+status: "done"
 created: "2026-03-03"
 stories:
   - "19-1-resource-system-core"
