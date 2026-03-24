@@ -1,9 +1,10 @@
 // ============================================
-// 打字肉鸽 - Story 40.8/40.9/40.10 多格技能触发适配单元测试
+// 打字肉鸽 - Story 40.8/40.9/40.10/40.11 多格技能触发适配单元测试
 // ============================================
 // 40.8: getExtendedNeighbors, Phase 5/6 去重, TriggerContext.occupiedKeys
 // 40.9: 空间词条多格适配（Void/Amplify/Splash/Phase6/Mirror/Cascade 回归）
 // 40.10: 附魔系统多格适配（Phase 6 按技能分组遍历 + 双侧 any-match）
+// 40.11: battle.ts Mirror 刷新多格修复 + 存档兼容验证
 
 import { describe, it, expect } from 'vitest'
 import {
@@ -1494,5 +1495,67 @@ describe('resolvePhase6 — M4-fix: chainAffixesDisabled 交互', () => {
     expect(result.actions.filter(a => a.type === 'resonance').length).toBe(0)
     // ApprenticeNeighbor 不受 chain_ban 影响
     expect(result.actions.filter(a => a.type === 'apprentice_neighbor').length).toBe(1)
+  })
+})
+
+// ===== 9.1: Story 40.11 — Mirror 刷新多格修复验证 =====
+
+describe('resolveMirrorCopy — 40.11 battle.ts Mirror 刷新修复', () => {
+  // 单元级回归测试：验证 resolveMirrorCopy 在不同 occupiedKeys 下的行为差异
+  // battle.ts 调用此函数时已改为传递完整占据键列表（getSkillKeys）
+  it('9.1a: 单键 occupiedKeys=[f] 无法到达 h（仅 g 的邻居）→ 复制失败', () => {
+    // skillA 是 Mirror 技能，occupiedKeys 只传 [f]（旧 battle.ts bug）
+    // skillC 在 h（g 的邻居，但不是 f 的邻居）
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['g', 'skillA'],
+      ['h', 'skillC'],
+    ])
+    const skillA = makeSkill({
+      id: 'skillA',
+      resource: 'base',
+      affixes: [{
+        type: AffixType.Mirror,
+        posRel: PositionRelation.Adjacent,
+      } as any],
+    })
+    const skillC = makeSkill({
+      id: 'skillC',
+      resource: 'base',
+      affixes: [{
+        type: AffixType.Splash,
+        posRel: PositionRelation.Adjacent,
+        resource: 'base',
+      } as any],
+    })
+    const allSkills = new Map([['skillA', skillA], ['skillC', skillC]])
+    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillC', makeRuntimeState()]])
+
+    // 旧行为：occupiedKeys 只含 anchor key
+    const ctxOld = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills,
+      skillStates,
+      randomFn: () => 0,
+    })
+    const copiedOld = resolveMirrorCopy(skillA, makeRuntimeState(), ctxOld)
+    // h 不是 f 的 adjacent → 单键模式无法到达 skillC
+    expect(copiedOld).toBeNull()
+
+    // 新行为：occupiedKeys 含所有占据键 [f, g]
+    const ctxNew = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f', 'g'],
+      bindings,
+      allSkills,
+      skillStates,
+      randomFn: () => 0,
+    })
+    const copiedNew = resolveMirrorCopy(skillA, makeRuntimeState(), ctxNew)
+    // h 是 g 的 adjacent → 多格模式可到达 skillC → 复制 Splash
+    expect(copiedNew).not.toBeNull()
+    expect(copiedNew!.type).toBe(AffixType.Splash)
   })
 })

@@ -34,21 +34,38 @@ export function initFullTutorial(): void {
 
   // L0_welcome: 无特殊 condition（prerequisite 链 + persistence 已防止重复触发）
 
-  // L0_combo: combo >= 5 时触发
+  // L0_combo: 第二词完成时触发（wordsCompleted >= 2）
   const comboStep = L0_STEPS.find(s => s.id === 'L0_combo')
   if (comboStep) {
-    comboStep.trigger.condition = () => state.combo >= 5
+    comboStep.trigger.condition = () =>
+      state.battleStats != null && state.battleStats.wordsCompleted >= 2
+    comboStep.content.paramsProvider = () => ({
+      combo: state.combo,
+    })
   }
 
   // --- L1 condition 注入 ---
+
+  // L1_relic: L1_shop_intro 完成后立即触发
+  let lastCompletedStepId = ''
+  eventBus.on('tutorial:step_completed', (data) => {
+    lastCompletedStepId = data.stepId
+  })
+
+  const relicStep = L1_STEPS.find(s => s.id === 'L1_relic')
+  if (relicStep) {
+    relicStep.trigger.condition = () => lastCompletedStepId === 'L1_shop_intro'
+  }
 
   // 共享 flag 变量：shop:purchase 事件信息
   let lastPurchaseWasSkill = false
   let lastPurchaseSkillRarity = -1
   let lastPurchaseHasTopologyAffix = false
+  let lastPurchaseIsMultiCell = false
 
   eventBus.on('shop:purchase', (data) => {
     lastPurchaseWasSkill = data.type === 'skill'
+    lastPurchaseIsMultiCell = false
     if (data.type === 'skill') {
       const skill = state.affixSkills.get(data.itemId)
       if (skill) {
@@ -56,6 +73,7 @@ export function initFullTutorial(): void {
         lastPurchaseHasTopologyAffix = skill.affixes.some(
           a => AFFIX_CATEGORY_MAP[a.type] === 'topology'
         )
+        lastPurchaseIsMultiCell = skill.shapeId != null && skill.shapeId !== 'monomino'
       } else {
         lastPurchaseSkillRarity = -1
         lastPurchaseHasTopologyAffix = false
@@ -70,6 +88,12 @@ export function initFullTutorial(): void {
   const skillBindStep = L1_STEPS.find(s => s.id === 'L1_skill_bind')
   if (skillBindStep) {
     skillBindStep.trigger.condition = () => lastPurchaseWasSkill
+  }
+
+  // L1_shape_hint: 最近一次购买为多格技能（Story 40.11）
+  const shapeHintStep = L1_STEPS.find(s => s.id === 'L1_shape_hint')
+  if (shapeHintStep) {
+    shapeHintStep.trigger.condition = () => lastPurchaseIsMultiCell
   }
 
   // L1_upgrade / L1_relic: 无特殊 condition（事件本身即足够）

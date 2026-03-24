@@ -3175,6 +3175,50 @@ describe('serializeSkill / deserializeSkill (Task 4)', () => {
     expect(runtimeState.questStacks).toBe(4)
   })
 
+  it('should default shapeId to monomino and rotation to 0 for old saves without shape data (Story 40.11)', () => {
+    // 模拟旧存档数据：没有 shapeId 和 rotation 字段
+    const oldSaveData = {
+      id: 'old_skill',
+      resource: 'base',
+      level: 1,
+      rarity: 0,
+      affixes: [],
+      enchantmentIds: [],
+      runtime: {},
+    } as any
+    const { skill, runtimeState } = deserializeSkill(oldSaveData)
+    expect(skill.shapeId).toBe('monomino')
+    expect(skill.rotation).toBe(0)
+    expect(skill.id).toBe('old_skill')
+    expect(skill.resource).toBe('base')
+    expect(skill.level).toBe(1)
+    expect(skill.rarity).toBe(0)
+    expect(skill.affixes).toEqual([])
+    expect(runtimeState.chargeAccumulated).toBe(0)
+    expect(runtimeState.mirrorCopiedAffix).toBeNull()
+  })
+
+  it('should preserve shapeId and rotation through roundtrip (Story 40.11)', () => {
+    const skill = makeSkill({ id: 'shape_test', resource: 'base' as ResourceType, level: 1, rarity: 1 as 1, shapeId: 'domino_h', rotation: 1 })
+    const state = makeRuntimeState({ skillId: 'shape_test' })
+
+    const saved = serializeSkill(skill, state)
+    const json = JSON.parse(JSON.stringify(saved))
+    const { skill: restored } = deserializeSkill(json)
+
+    expect(restored.shapeId).toBe('domino_h')
+    expect(restored.rotation).toBe(1)
+  })
+
+  it('should preserve rotation values 0-3 through roundtrip (Story 40.11 CR)', () => {
+    for (const rot of [0, 1, 2, 3]) {
+      const skill = makeSkill({ id: `rot_${rot}`, shapeId: 'triomino_l', rotation: rot })
+      const saved = serializeSkill(skill, makeRuntimeState({ skillId: `rot_${rot}` }))
+      const { skill: restored } = deserializeSkill(JSON.parse(JSON.stringify(saved)))
+      expect(restored.rotation).toBe(rot)
+    }
+  })
+
   it('should produce deep copies (no reference sharing)', () => {
     const affix: AffixInstance = { type: AffixType.Multiply, multiplier: 1.5 }
     const skill = makeSkill({ id: 'copy_test', affixes: [affix] })

@@ -49,6 +49,8 @@ export interface TutorialStep {
   dismissAfter?: number
   /** 前置步骤 ID（前置未完成时不触发） */
   prerequisite?: string
+  /** 显示时暂停游戏，任意键可提前关闭 */
+  pauseGame?: boolean
 }
 
 // ============================================
@@ -70,22 +72,8 @@ export const L0_STEPS: TutorialStep[] = [
       anchorElement: 'word-display',
       anchorPosition: 'bottom',
     },
-    dismissAfter: 6000,
-  },
-  {
-    id: 'L0_skill_triggered',
-    level: 0,
-    trigger: {
-      event: 'skill:triggered',
-    },
-    content: {
-      titleKey: 'tutorial.L0_skill_triggered_title',
-      bodyKey: 'tutorial.L0_skill_triggered_body',
-      anchorElement: 'skill-trigger-zone',
-      anchorPosition: 'top',
-    },
-    dismissAfter: 6000,
-    prerequisite: 'L0_welcome',
+    dismissAfter: 3000,
+    pauseGame: true,
   },
   {
     id: 'L0_word_complete',
@@ -99,24 +87,41 @@ export const L0_STEPS: TutorialStep[] = [
       anchorElement: 'score-count',
       anchorPosition: 'bottom',
     },
-    dismissAfter: 6000,
-    prerequisite: 'L0_skill_triggered',
+    dismissAfter: 3000,
+    pauseGame: true,
+    prerequisite: 'L0_welcome',
+  },
+  {
+    id: 'L0_skill_triggered',
+    level: 0,
+    trigger: {
+      event: 'skill:triggered',
+    },
+    content: {
+      titleKey: 'tutorial.L0_skill_triggered_title',
+      bodyKey: 'tutorial.L0_skill_triggered_body',
+    },
+    dismissAfter: 3000,
+    pauseGame: true,
+    prerequisite: 'L0_word_complete',
   },
   {
     id: 'L0_combo',
     level: 0,
     trigger: {
-      event: 'combo:update',
-      // condition 由 tutorialInit 注入（combo >= 5）
+      event: 'word:complete',
+      // condition 由 tutorialInit 注入（wordsCompleted >= 2，即第二词完成时）
     },
     content: {
       titleKey: 'tutorial.L0_combo_title',
       bodyKey: 'tutorial.L0_combo_body',
       anchorElement: 'combo-display',
-      anchorPosition: 'bottom',
+      anchorPosition: 'top',
+      // paramsProvider 由 tutorialInit 注入（动态 combo 值）
     },
-    dismissAfter: 6000,
-    prerequisite: 'L0_word_complete',
+    dismissAfter: 3000,
+    pauseGame: true,
+    prerequisite: 'L0_skill_triggered',
   },
 ]
 
@@ -135,11 +140,25 @@ export const L1_STEPS: TutorialStep[] = [
     content: {
       titleKey: 'tutorial.L1_shop_intro_title',
       bodyKey: 'tutorial.L1_shop_intro_body',
-      anchorElement: 'reward-cards',
-      anchorPosition: 'top',
     },
     dismissAfter: 6000,
+    pauseGame: true,
     prerequisite: 'L0_welcome',
+  },
+  {
+    id: 'L1_relic',
+    level: 1,
+    trigger: {
+      event: 'tutorial:step_completed',
+      // condition 由 tutorialInit 注入（L1_shop_intro 刚完成时）
+    },
+    content: {
+      titleKey: 'tutorial.L1_relic_title',
+      bodyKey: 'tutorial.L1_relic_body',
+    },
+    dismissAfter: 6000,
+    pauseGame: true,
+    prerequisite: 'L1_shop_intro',
   },
   {
     id: 'L1_skill_bind',
@@ -151,11 +170,23 @@ export const L1_STEPS: TutorialStep[] = [
     content: {
       titleKey: 'tutorial.L1_skill_bind_title',
       bodyKey: 'tutorial.L1_skill_bind_body',
-      anchorElement: 'skill-trigger-zone',
-      anchorPosition: 'bottom',
     },
     dismissAfter: 6000,
     prerequisite: 'L0_welcome',
+  },
+  {
+    id: 'L1_shape_hint',
+    level: 1,
+    trigger: {
+      event: 'shop:purchase',
+      // condition 由 tutorialInit 注入（购买的技能为多格 shapeId !== 'monomino'）
+    },
+    content: {
+      titleKey: 'tutorial.L1_shape_hint_title',
+      bodyKey: 'tutorial.L1_shape_hint_body',
+    },
+    dismissAfter: 8000,
+    prerequisite: 'L1_skill_bind',
   },
   {
     id: 'L1_upgrade',
@@ -168,21 +199,6 @@ export const L1_STEPS: TutorialStep[] = [
       titleKey: 'tutorial.L1_upgrade_title',
       bodyKey: 'tutorial.L1_upgrade_body',
       anchorElement: 'reward-cards',
-      anchorPosition: 'top',
-    },
-    dismissAfter: 6000,
-    prerequisite: 'L0_welcome',
-  },
-  {
-    id: 'L1_relic',
-    level: 1,
-    trigger: {
-      event: 'relic:acquired',
-    },
-    content: {
-      titleKey: 'tutorial.L1_relic_title',
-      bodyKey: 'tutorial.L1_relic_body',
-      anchorElement: 'player-relics',
       anchorPosition: 'top',
     },
     dismissAfter: 6000,
@@ -220,8 +236,6 @@ export const L2_STEPS: TutorialStep[] = [
     content: {
       titleKey: 'tutorial.L2_affix_positional_title',
       bodyKey: 'tutorial.L2_affix_positional_body',
-      anchorElement: 'skill-trigger-zone',
-      anchorPosition: 'bottom',
     },
     dismissAfter: 8000,
   },
@@ -287,8 +301,6 @@ export const L3_STEPS: TutorialStep[] = [
     content: {
       titleKey: 'tutorial.L3_enchant_growth_title',
       bodyKey: 'tutorial.L3_enchant_growth_body',
-      anchorElement: 'skill-trigger-zone',
-      anchorPosition: 'top',
     },
     dismissAfter: 8000,
     prerequisite: 'L3_enchant_unlock',
@@ -383,8 +395,6 @@ export const L5_STEPS: TutorialStep[] = [
     content: {
       titleKey: 'tutorial.L5_class_resource_title',
       bodyKey: 'tutorial.L5_class_resource_body',
-      anchorElement: 'skill-trigger-zone',
-      anchorPosition: 'top',
     },
     dismissAfter: 8000,
     prerequisite: 'L5_class_unlock',

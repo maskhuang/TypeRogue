@@ -7,6 +7,7 @@ import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION } from '../core/constants';
 import { getKeysWithRelation, PositionRelation } from '../data/keyboardTopology';
+import { getExtendedNeighbors } from '../data/affixTrigger';
 
 // === 位置关系标签（通过 t('rel.' + posRel) 获取） ===
 import { calculateDeckStats } from '../data/words';
@@ -468,12 +469,12 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
 /**
  * 计算战斗外可预估的产出：Multiply / Void / Taboo 词条 + 学徒附魔。
  * 返回 null 表示该技能没有可预估项。
- * @param boundKey 技能绑定的键位（无绑定时传 undefined，Void 需要）
+ * @param boundKeys 技能绑定的键位（无绑定时传 undefined，Void 需要；多格技能传所有占据键）
  */
 export function computeSmartEstimate(
   skill: AffixSkillInstance,
   rt?: SkillRuntimeState,
-  boundKey?: string,
+  boundKeys?: string | string[],
 ): SmartEstimate | null {
   const breakdown: EstimateBreakdownLine[] = []
 
@@ -515,8 +516,8 @@ export function computeSmartEstimate(
         if (affix.posRel == null) break
         const c = questC('quest_devour' as import('../data/affixes').EnchantmentType)
         const slotEff = (affix.bonusPerSlot ?? 0) + c * 0.05
-        const empty = boundKey
-          ? countEmptySlots(boundKey, affix.posRel, state.player.bindings)
+        const empty = boundKeys
+          ? countEmptySlots(boundKeys, affix.posRel, state.player.bindings)
           : 0
         const bonus = empty * slotEff
         addPercent += bonus
@@ -529,7 +530,7 @@ export function computeSmartEstimate(
             addPercent += extraBonus
           }
         }
-        const emptyLabel = boundKey ? t('est.void_slots', { count: empty }) : t('est.void_unbound')
+        const emptyLabel = boundKeys ? t('est.void_slots', { count: empty }) : t('est.void_unbound')
         const detail = c > 0
           ? `(${emptyLabel}×${Math.round(slotEff * 100)}%${extraBonus > 0 ? t('est.void_quest_extra', { pct: Math.round(extraBonus * 100) }) : ''})`
           : `(${emptyLabel}×${Math.round((affix.bonusPerSlot ?? 0) * 100)}%)`
@@ -2074,10 +2075,17 @@ function highlightSkillRange(key: string): void {
 
   if (highlights.length === 0) return;
 
+  // Story 40.11: 多格技能使用所有占据键计算邻居高亮范围
+  const allKeys: string[] = [];
+  for (const [k, sid] of state.player.bindings) {
+    if (sid === skillId) allKeys.push(k);
+  }
+  if (allKeys.length === 0) return;
+
   // 收集每个键位的颜色（后覆盖前）
   const keyColorMap = new Map<string, string>();
   for (const { rel, color } of highlights) {
-    for (const k of getKeysWithRelation(key, rel)) {
+    for (const k of getExtendedNeighbors(allKeys, rel)) {
       keyColorMap.set(k, color);
     }
   }
@@ -2264,6 +2272,13 @@ export function renderBuildManager(): void {
           frequency: freq,
         };
         // 词条制技能 tooltip（Story 35.11 AC2/AC8）
+        // Story 40.11 CR: 收集所有占据键一次，复用于 estimate + Void 高亮
+        const skillAllKeys: string[] = [];
+        if (skillId) {
+          for (const [bk, sid] of state.player.bindings) {
+            if (sid === skillId) skillAllKeys.push(bk);
+          }
+        }
         if (skillId && state.affixSkills.has(skillId)) {
           const affixSkill = state.affixSkills.get(skillId)!;
           const rt = state.affixSkillStates.get(skillId);
@@ -2282,7 +2297,7 @@ export function renderBuildManager(): void {
             school: rarityLabel(affixSkill.rarity),
             schoolCssClass: `rarity-${affixSkill.rarity}`,
           };
-          const estimate = computeSmartEstimate(affixSkill, rt, k);
+          const estimate = computeSmartEstimate(affixSkill, rt, skillAllKeys.length > 0 ? skillAllKeys : undefined);
           const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['multiply', 'void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
           const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
           tooltipData.skill.affixInfo = fields.affixInfo;
@@ -2292,13 +2307,13 @@ export function renderBuildManager(): void {
           tooltipData.skill.smartEstimate = estimate ?? undefined;
         }
         highlightSkillRange(k);
-        // Void 词条空位高亮
-        if (skillId) {
+        // Void 词条空位高亮（Story 40.11 CR: 复用 skillAllKeys 避免重复遍历）
+        if (skillId && skillAllKeys.length > 0) {
           const affixSk = state.affixSkills.get(skillId);
           if (affixSk) {
             for (const affix of affixSk.affixes) {
               if (affix.type === 'void' && affix.posRel) {
-                const related = getKeysWithRelation(k, affix.posRel);
+                const related = getExtendedNeighbors(skillAllKeys, affix.posRel);
                 related.forEach(rk => {
                   if (!state.player.bindings.has(rk)) {
                     document.querySelector(`.key-slot[data-key="${rk}"]`)?.classList.add('void-range-empty');
@@ -2348,7 +2363,12 @@ export function renderBuildManager(): void {
     const affixSkill = state.affixSkills.get(skillId);
     if (!affixSkill) return;
 
-    const boundKey = [...state.player.bindings.entries()].find(([, id]) => id === skillId)?.[0];
+    // Story 40.11 CR: 收集所有占据键（用于 estimate），取第一个作为锚点（用于显示）
+    const invAllKeys: string[] = [];
+    for (const [bk, sid] of state.player.bindings) {
+      if (sid === skillId) invAllKeys.push(bk);
+    }
+    const boundKey = invAllKeys[0];
     const item = document.createElement('div');
     item.className = 'inventory-skill';
     item.dataset.dragType = 'skill-inventory';
@@ -2399,7 +2419,7 @@ export function renderBuildManager(): void {
             schoolCssClass: `rarity-${affixSkill.rarity}`,
           },
         };
-        const estimate = computeSmartEstimate(affixSkill, rt, boundKey ?? undefined);
+        const estimate = computeSmartEstimate(affixSkill, rt, invAllKeys.length > 0 ? invAllKeys : undefined);
         const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['multiply', 'void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
         const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
         tooltipData.skill!.affixInfo = fields.affixInfo;

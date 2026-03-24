@@ -81,8 +81,8 @@ describe('L0_STEPS 数据结构', () => {
 // 6.2: L1 步骤数据测试
 // ===========================================
 describe('L1_STEPS 数据结构', () => {
-  it('应有 4 个步骤', () => {
-    expect(L1_STEPS).toHaveLength(4)
+  it('应有 5 个步骤', () => {
+    expect(L1_STEPS).toHaveLength(5)
   })
 
   it('所有步骤 ID 唯一', () => {
@@ -96,11 +96,16 @@ describe('L1_STEPS 数据结构', () => {
     }
   })
 
-  it('无互相 prerequisite', () => {
-    const l1Ids = new Set(L1_STEPS.map(s => s.id))
+  it('L1 内部 prerequisite 链无循环', () => {
+    // L1 允许有意的内部依赖（如 L1_relic→L1_shop_intro, L1_shape_hint→L1_skill_bind），但不得有循环
+    const l1Map = new Map(L1_STEPS.map(s => [s.id, s.prerequisite]))
     for (const step of L1_STEPS) {
-      if (step.prerequisite) {
-        expect(l1Ids.has(step.prerequisite)).toBe(false)
+      const visited = new Set<string>()
+      let cur = step.prerequisite
+      while (cur && l1Map.has(cur)) {
+        expect(visited.has(cur)).toBe(false)
+        visited.add(cur)
+        cur = l1Map.get(cur)
       }
     }
   })
@@ -110,12 +115,16 @@ describe('L1_STEPS 数据结构', () => {
     const skillBind = L1_STEPS.find(s => s.id === 'L1_skill_bind')!
     const upgrade = L1_STEPS.find(s => s.id === 'L1_upgrade')!
     const relic = L1_STEPS.find(s => s.id === 'L1_relic')!
+    const shapeHint = L1_STEPS.find(s => s.id === 'L1_shape_hint')!
 
     expect(shopIntro.trigger.event).toBe('shop:opened')
     expect(shopIntro.trigger.delay).toBe(500)
     expect(skillBind.trigger.event).toBe('shop:purchase')
     expect(upgrade.trigger.event).toBe('skill:upgraded')
-    expect(relic.trigger.event).toBe('relic:acquired')
+    expect(relic.trigger.event).toBe('tutorial:step_completed')
+    expect(shapeHint.trigger.event).toBe('shop:purchase')
+    expect(shapeHint.prerequisite).toBe('L1_skill_bind')
+    expect(shapeHint.dismissAfter).toBe(8000)
   })
 })
 
@@ -123,8 +132,8 @@ describe('L1_STEPS 数据结构', () => {
 // FULL_TUTORIAL_STEPS
 // ===========================================
 describe('FULL_TUTORIAL_STEPS', () => {
-  it('应有 19 个步骤（L0×4 + L1×4 + L2×4 + L3×2 + L4×3 + L5×2）', () => {
-    expect(FULL_TUTORIAL_STEPS).toHaveLength(19)
+  it('应有 20 个步骤（L0×4 + L1×5 + L2×4 + L3×2 + L4×3 + L5×2）', () => {
+    expect(FULL_TUTORIAL_STEPS).toHaveLength(20)
   })
 
   it('所有 ID 全局唯一', () => {

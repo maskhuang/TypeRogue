@@ -251,15 +251,15 @@ development_status:
   26-3-per-type-icon-uniqueness-tests: done
   epic-26-retrospective: optional
 
-  # Epic 34: 技能词条化重构（方案 B）
-  epic-34: backlog
-  34-1-new-additive-producers: backlog
-  34-2-multiply-to-enchantment: backlog
-  34-3-remove-multiply-converters: backlog
-  34-4-self-resource-convert-transmute: backlog
-  34-5-shop-pool-rebalance: backlog
-  34-6-ui-enchantment-display: backlog
-  34-7-balance-tuning: backlog
+  # Epic 34: 技能词条化重构（方案 B）— 已被 Epic 35（方案 A）取代，功能通过 35.1-35.13 实现
+  epic-34: done
+  34-1-new-additive-producers: done  # 通过 Epic 35 统一词条制实现
+  34-2-multiply-to-enchantment: done  # 通过 Epic 35 统一词条制实现
+  34-3-remove-multiply-converters: done  # 通过 Epic 35 统一词条制实现
+  34-4-self-resource-convert-transmute: done  # 通过 Epic 35 统一词条制实现
+  34-5-shop-pool-rebalance: done  # 通过 Epic 35 统一词条制实现
+  34-6-ui-enchantment-display: done  # 通过 Epic 35 统一词条制实现
+  34-7-balance-tuning: done  # 通过 Epic 35 统一词条制实现
   epic-34-retrospective: optional
 
   # Epic 39: 新手引导与描述可读性优化
@@ -284,7 +284,7 @@ development_status:
   40-8-trigger-and-battle-adaptation: done
   40-9-spatial-affix-adaptation: done
   40-10-enchantment-topology-adaptation: done
-  40-11-balance-and-integration: ready-for-dev
+  40-11-balance-and-integration: review
   epic-40-retrospective: optional
 
 # Summary:

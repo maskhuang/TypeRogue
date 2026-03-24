@@ -47,7 +47,7 @@ import { initDemoTutorial } from '../demo/demo-tutorial';
 import { showDemoEndScreen } from '../demo/demo-end-screen';
 import { trackEvent } from '../demo/demo-analytics';
 import { t, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
-import { bindShapeToKeys, restoreSealedSkill, getBindingState } from './bindingManager';
+import { bindShapeToKeys, restoreSealedSkill, getBindingState, getSkillKeys, getSkillAnchorKey } from './bindingManager';
 
 // === Demo 固定词序队列 ===
 let demoWordQueue: string[] = [];
@@ -1347,19 +1347,18 @@ function endLevel(): void {
       applyQuestEvent('stageCleared', rt, skill.enchantmentIds, _ssi);
     }
 
-    // Mirror 词条复制：每关结束时刷新
+    // Mirror 词条复制：每关结束时刷新（Story 40.11: 多格技能使用完整占据键）
+    const bs = getBindingState(state);
     for (const [, skill] of state.affixSkills) {
       if (!skill.affixes.some(a => a.type === AffixType.Mirror)) continue;
       const rt = state.affixSkillStates.get(skill.id);
       if (!rt) continue;
-      let boundKey: string | undefined;
-      for (const [key, sid] of state.player.bindings) {
-        if (sid === skill.id) { boundKey = key; break; }
-      }
-      if (!boundKey) continue;
+      const allKeys = getSkillKeys(bs, skill.id);
+      if (allKeys.length === 0) continue;
+      const anchorKey = getSkillAnchorKey(bs, skill.id) ?? allKeys[0];
       rt.mirrorCopiedAffix = resolveMirrorCopy(skill, rt, {
-        triggerKey: boundKey,
-        occupiedKeys: [boundKey],
+        triggerKey: anchorKey,
+        occupiedKeys: allKeys,
         currentWord: '',
         resources: { base: 0, score: 0, multiplier: 1, time: 0, gold: 0, fragment: 0, mutagen: 0 },
         classResourceProduced: {},
