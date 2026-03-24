@@ -193,13 +193,14 @@ export function getQuestCompletions(
   return runtimeState.questCompletions
 }
 
-/** 统计 posRel 范围内空位数 */
+/** 统计 posRel 范围内空位数（支持多格技能：传入 occupiedKeys 计算扩展邻居范围） */
 export function countEmptySlots(
-  key: string,
+  keyOrKeys: string | string[],
   posRel: PositionRelation,
   bindings: Map<string, string>,
 ): number {
-  const related = getKeysWithRelation(key, posRel)
+  const keys = Array.isArray(keyOrKeys) ? keyOrKeys : [keyOrKeys]
+  const related = getExtendedNeighbors(keys, posRel)
   return related.filter(k => !bindings.has(k)).length
 }
 
@@ -222,19 +223,21 @@ export function countOccurrences(key: string, word: string): number {
   return count
 }
 
-/** 邻居增幅层数加成：累加 posRel 范围内同资源技能的增幅层数 × vpsEff */
+/** 邻居增幅层数加成：累加 posRel 范围内同资源技能的增幅层数 × vpsEff（支持多格扩展邻居） */
 export function sumNeighborAmplifyStacks(
-  key: string,
+  occupiedKeys: string[],
   posRel: PositionRelation,
   resource: ResourceType,
   vpsEff: number,
   ctx: TriggerContext,
 ): number {
-  const neighbors = getKeysWithRelation(key, posRel)
+  const neighbors = getExtendedNeighbors(occupiedKeys, posRel)
   let bonus = 0
+  const counted = new Set<string>() // 去重：同一多格邻居技能不重复统计
   for (const nk of neighbors) {
     const nSkillId = ctx.bindings.get(nk)
-    if (!nSkillId) continue
+    if (!nSkillId || counted.has(nSkillId)) continue
+    counted.add(nSkillId)
     const nSkill = ctx.allSkills.get(nSkillId)
     if (!nSkill || nSkill.resource !== resource) continue
     const nState = ctx.skillStates.get(nSkillId)
@@ -310,7 +313,7 @@ export function resolvePhase2(
         if (affix.posRel == null) break
         const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestDevour)
         const slotEff = (affix.bonusPerSlot ?? 0) + c * 0.05
-        const empty = countEmptySlots(ctx.triggerKey, affix.posRel, ctx.bindings)
+        const empty = countEmptySlots(ctx.occupiedKeys, affix.posRel, ctx.bindings)
         bonusPercent += empty * slotEff
         break
       }
@@ -338,7 +341,7 @@ export function resolvePhase2(
         const vpsEff = (affix.valuePerStack ?? 0) + c * 0.005
         // 邻居增幅层数
         bonusPercent += sumNeighborAmplifyStacks(
-          ctx.triggerKey, affix.posRel, affix.resource, vpsEff, ctx,
+          ctx.occupiedKeys, affix.posRel, affix.resource, vpsEff, ctx,
         )
         // 自身增幅（同资源时）
         if (skill.resource === affix.resource) {
@@ -572,19 +575,18 @@ export function weightedRandomResource(ctx: TriggerContext, spectrumCompletions:
   return pool[pool.length - 1]
 }
 
-/** 找 posRel 范围内产出最低的邻居键位 */
+/** 找 posRel 范围内产出最低的邻居键位（支持多格扩展邻居） */
 export function findWeakestNeighbor(
-  triggerKey: string,
+  occupiedKeys: string[],
   posRel: PositionRelation,
   ctx: TriggerContext,
 ): string | null {
-  const neighbors = getKeysWithRelation(triggerKey, posRel)
+  const neighbors = getExtendedNeighbors(occupiedKeys, posRel)
   let weakestKey: string | null = null
   let weakestLevel = Infinity
   let weakestBase = Infinity
 
   for (const nk of neighbors) {
-    if (nk === triggerKey) continue
     const nSkillId = ctx.bindings.get(nk)
     if (!nSkillId) continue
     const nSkill = ctx.allSkills.get(nSkillId)
@@ -696,10 +698,9 @@ export function resolvePhase5(
         if (affix.posRel == null) break
         const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestFission)
         const targetCount = 1 + c
-        // Story 40.8: 排除自身占据键（多格技能不溅射到自己的键位）
-        const occupiedKeySet = new Set(ctx.occupiedKeys)
-        const allKeys = getKeysWithRelation(ctx.triggerKey, affix.posRel)
-          .filter(k => ctx.bindings.has(k) && !occupiedKeySet.has(k))
+        // Story 40.9: 扩展邻居范围（多格技能从所有占据键的邻居并集中选目标）
+        const allKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
+          .filter(k => ctx.bindings.has(k))
         // 按资源或词条类型过滤目标
         const filtered = allKeys.filter(k => {
           const sid = ctx.bindings.get(k)!
@@ -789,7 +790,7 @@ export function resolvePhase5(
         if (questEnchType === EnchantmentType.QuestDevour) {
           const voidAffix = skill.affixes.find(a => a.type === AffixType.Void)
           if (voidAffix?.posRel != null) {
-            result.devourTarget = findWeakestNeighbor(ctx.triggerKey, voidAffix.posRel, ctx)
+            result.devourTarget = findWeakestNeighbor(ctx.occupiedKeys, voidAffix.posRel, ctx)
           }
         }
       }
@@ -828,16 +829,19 @@ export function resolvePhase6(
 ): Phase6Result {
   const actions: Phase6Action[] = []
 
-  // Story 40.8: 排除自身占据的所有键位（多格技能不通知自己的键位）
+  // Story 40.8+40.9: 排除自身占据的所有键位 + 多格扩展空间判定
   const occupiedKeySet = new Set(ctx.occupiedKeys)
+  const occupiedKeys = ctx.occupiedKeys
+  // 去重：多格邻居技能占据多键时只处理一次（取第一个匹配的键位）
+  const processedNeighborSkills = new Set<string>()
 
   for (const [neighborKey, neighborSkillId] of ctx.bindings) {
     if (occupiedKeySet.has(neighborKey)) continue
+    if (processedNeighborSkills.has(neighborSkillId)) continue
+    processedNeighborSkills.add(neighborSkillId)
 
     const neighborSkill = ctx.allSkills.get(neighborSkillId)
     if (!neighborSkill) continue
-
-    const neighborState = ctx.skillStates.get(neighborSkillId)
 
     // 共鸣词条：范围内技能产出指定资源时自动触发 / 感应词条：范围内指定词条触发时自动触发
     for (const affix of neighborSkill.affixes) {
@@ -846,7 +850,7 @@ export function resolvePhase6(
 
       // 共鸣词条：触发技能产出的资源匹配 → 邻居自动触发
       if (affix.type === AffixType.Resonance && affix.posRel != null && affix.resource != null) {
-        if (actualResource === affix.resource && hasRelation(triggerKey, neighborKey, affix.posRel)) {
+        if (actualResource === affix.resource && occupiedKeys.some(k => hasRelation(k, neighborKey, affix.posRel!))) {
           actions.push({ type: 'resonance', neighborKey })
         }
       }
@@ -854,16 +858,15 @@ export function resolvePhase6(
       // 感应词条：触发技能拥有指定词条类型 → 邻居触发
       if (affix.type === AffixType.Link && affix.watchAffix != null && affix.posRel != null) {
         const triggerSkillHasAffix = skill.affixes.some(a => a.type === affix.watchAffix)
-        if (triggerSkillHasAffix && hasRelation(triggerKey, neighborKey, affix.posRel)) {
+        if (triggerSkillHasAffix && occupiedKeys.some(k => hasRelation(k, neighborKey, affix.posRel!))) {
           actions.push({ type: 'link', neighborKey })
         }
       }
     }
 
     // 学徒·观摩附魔：邻居触发 → 自身永久成长（不触发技能）
-    // 使用技能上随机分配的 neighborPosRel 判定
     if (neighborSkill.enchantmentIds.includes(EnchantmentType.ApprenticeNeighbor) && neighborSkill.neighborPosRel) {
-      if (hasRelation(triggerKey, neighborKey, neighborSkill.neighborPosRel)) {
+      if (occupiedKeys.some(k => hasRelation(k, neighborKey, neighborSkill.neighborPosRel!))) {
         const growth = APPRENTICE_NEIGHBOR_GROWTH[neighborSkill.neighborPosRel]
         actions.push({ type: 'apprentice_neighbor', neighborKey, growthDelta: growth })
       }
@@ -877,7 +880,7 @@ export function resolvePhase6(
       if (hasResonanceOrLink) {
         const posRelMatch = neighborSkill.affixes.some(a => {
           if ((a.type === AffixType.Resonance || a.type === AffixType.Link) && a.posRel != null) {
-            return hasRelation(triggerKey, neighborKey, a.posRel)
+            return occupiedKeys.some(k => hasRelation(k, neighborKey, a.posRel!))
           }
           return false
         })
@@ -1082,9 +1085,9 @@ export function resolveMirrorCopy(
   const mirrorAffix = skill.affixes.find(a => a.type === AffixType.Mirror)
   if (!mirrorAffix?.posRel) return null
 
-  // 获取范围内有绑定技能的邻居键位
-  const neighborKeys = getKeysWithRelation(ctx.triggerKey, mirrorAffix.posRel)
-    .filter(k => ctx.bindings.has(k) && k !== ctx.triggerKey)
+  // Story 40.9: 扩展邻居范围（多格技能从所有占据键的邻居中选取复制源）
+  const neighborKeys = getExtendedNeighbors(ctx.occupiedKeys, mirrorAffix.posRel)
+    .filter(k => ctx.bindings.has(k))
 
   if (neighborKeys.length === 0) return null
 

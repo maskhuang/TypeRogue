@@ -323,7 +323,7 @@ describe('getQuestCompletions', () => {
 describe('sumNeighborAmplifyStacks', () => {
   it('should return 0 with no neighbors', () => {
     const ctx = makeContext()
-    const result = sumNeighborAmplifyStacks('z', PositionRelation.Adjacent, 'base', 0.02, ctx)
+    const result = sumNeighborAmplifyStacks(['z'], PositionRelation.Adjacent, 'base', 0.02, ctx)
     expect(result).toBe(0)
   })
 })
@@ -1264,7 +1264,7 @@ describe('weightedRandomResource', () => {
 describe('findWeakestNeighbor', () => {
   it('should return null when no neighbors bound', () => {
     const ctx = makeContext({ bindings: new Map() })
-    expect(findWeakestNeighbor('a', PositionRelation.Adjacent, ctx)).toBeNull()
+    expect(findWeakestNeighbor(['a'], PositionRelation.Adjacent, ctx)).toBeNull()
   })
 
   it('should find lowest level neighbor', () => {
@@ -1277,7 +1277,7 @@ describe('findWeakestNeighbor', () => {
     // 'd' is level 1 (weaker) — but need 's' and 'd' to be adjacent to 'a'
     // In keyboard topology, 's' is adjacent to 'a', 'd' may or may not be
     // Let's just test the logic with the results
-    const result = findWeakestNeighbor('a', PositionRelation.SameRow, ctx)
+    const result = findWeakestNeighbor(['a'], PositionRelation.SameRow, ctx)
     // 'a', 's', 'd' are on the same row
     if (result) {
       const sk = allSkills.get(bindings.get(result)!)!
@@ -1938,7 +1938,7 @@ describe('Code review fixes', () => {
     const allSkills = new Map([['sk_weak', weakSkill], ['sk_strong', strongSkill]])
     const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
     // Even though 'a' is weakest on its row, findWeakestNeighbor should return 's' (not 'a')
-    const result = findWeakestNeighbor('a', PositionRelation.SameRow, ctx)
+    const result = findWeakestNeighbor(['a'], PositionRelation.SameRow, ctx)
     expect(result).not.toBe('a')
     // 's' is on the same row and is the only non-self neighbor → should be 's'
     if (result != null) {

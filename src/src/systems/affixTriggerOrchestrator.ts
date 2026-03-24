@@ -140,11 +140,14 @@ export function orchestrateAffixTrigger(
     maxDepth = Math.max(maxDepth, item.depth)
 
     // ── 构建本次触发上下文 ──
-    // occupiedKeys: 当前触发技能占据的键位（40.8 monomino 假设，40.9 扩展多格）
+    // Story 40.9: 从 bindings 反查连锁目标技能的实际占据键位
+    const chainedOccupiedKeys = [...ctx.bindings]
+      .filter(([_, sid]) => sid === item.skillId)
+      .map(([k]) => k)
     const triggerCtx: TriggerContext = {
       ...ctx,
       triggerKey: item.triggerKey,
-      occupiedKeys: [item.triggerKey],
+      occupiedKeys: chainedOccupiedKeys.length > 0 ? chainedOccupiedKeys : [item.triggerKey],
       transmuteResource: skill.transmuteResource,
     }
 

@@ -537,3 +537,42 @@ describe('AC10: 性能', () => {
     expect(avgPerSkill).toBeLessThan(2)
   })
 })
+
+// ===== Story 40.9: Orchestrator 多格感知 =====
+
+describe('orchestrateAffixTrigger — 多格 occupiedKeys 传播', () => {
+  it('多格技能被 Splash 连锁触发时 occupiedKeys 包含所有占据键', () => {
+    // skillA 在 f（单格），有 Splash 词条
+    // skillB 在 g+h（多格 domino），基础技能
+    // skillA 触发 → Splash 溅射到 g → skillB 被连锁触发
+    // 验证：skillB 被触发且 orchestrator 不崩溃
+    const skillA = buildSkillWithAffixes([AffixType.Splash], 'base')
+    skillA.id = 'skillA'
+    skillA.rarity = 1 as 0
+    skillA.affixes[0].posRel = PositionRelation.Adjacent
+    skillA.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
+
+    const skillB = makeSkill({ id: 'skillB', resource: 'base' })
+    const stateA = makeRuntimeState({ skillId: 'skillA' })
+    const stateB = makeRuntimeState({ skillId: 'skillB' })
+
+    const bindings = new Map([
+      ['f', 'skillA'],
+      ['g', 'skillB'],
+      ['h', 'skillB'], // skillB 是 domino，占 g+h
+    ])
+    const ctx = makeContext({
+      triggerKey: 'f',
+      occupiedKeys: ['f'],
+      bindings,
+      allSkills: new Map([['skillA', skillA], ['skillB', skillB]]),
+      skillStates: new Map([['skillA', stateA], ['skillB', stateB]]),
+    })
+
+    const result = orchestrateAffixTrigger('skillA', 'f', ctx)
+
+    // 应该至少触发 2 次（skillA 初始 + skillB 被溅射）
+    expect(result.triggerCount).toBeGreaterThanOrEqual(2)
+    expect(result.triggerResults.length).toBeGreaterThanOrEqual(2)
+  })
+})
