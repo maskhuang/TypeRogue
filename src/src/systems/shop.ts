@@ -51,8 +51,10 @@ import { filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
+import { applyRitualEnchantment } from './ritualEnchantment';
+import type { RitualCandidate } from './ritualEnchantment';
 import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment, getUncrownedKingBaseValue } from './relics/SkillRelicBehaviors';
-import { getEnchantmentChoiceCount, getMinEnchantmentLevel, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier } from './relics/EnchantmentRelicBehaviors';
+import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier } from './relics/EnchantmentRelicBehaviors';
 import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState, getSkillAnchorKey } from './bindingManager';
 import { getShapeCells, mapShapeToKeys } from '../data/skillShapes';
 
@@ -339,6 +341,80 @@ export function generateShopRelicItem(act: number, itemId?: number): ShopItem | 
     type: 'relic',
     relicId,
     cost: getAdjustedPrice(relic.basePrice),
+    isUpgrade: false,
+    locked: false,
+  };
+}
+
+// === Story 41.1: 附魔台商品生成 ===
+
+/** 附魔商品基础价格 */
+const ENCHANTMENT_SHOP_BASE_PRICE = 60;
+
+/** 生成一个附魔台商品（从有空槽的技能池中选取合适的附魔类型） */
+function generateShopEnchantmentItem(itemId: number): ShopItem | null {
+  // 必须有空槽技能
+  const eligible: AffixSkillInstance[] = [];
+  const anchorBonus = getEnchantAnchorSlotBonus();
+  for (const [, affixSkill] of state.affixSkills) {
+    const slotCount = getEnchantmentSlotCount(affixSkill, anchorBonus);
+    if (affixSkill.enchantmentIds.length < slotCount) {
+      eligible.push(affixSkill);
+    }
+  }
+  if (eligible.length === 0) return null;
+
+  // 合并所有空槽技能的可用附魔候选
+  const playerClass = state.classId !== 'none' ? state.classId : undefined;
+  const allCandidates: Array<{ enchType: EnchantmentTypeEnum; transmuteRes?: ResourceType; neighborRel?: PositionRelation }> = [];
+  const seenKeys = new Set<string>();
+  for (const affixSkill of eligible) {
+    const categorized = filterCategorizedByClass(
+      categorizeEnchantmentCandidates(affixSkill),
+      playerClass,
+    );
+    const allTypes = [...categorized.apprentice, ...categorized.quest, ...categorized.transmute, ...categorized.operator];
+    for (const enchType of allTypes) {
+      if (enchType === EnchantmentTypeEnum.Transmute) {
+        const eligibleRes = getTransmuteEligibleResources(affixSkill.resource, playerClass);
+        for (const res of eligibleRes) {
+          const key = `${enchType}:${res}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            allCandidates.push({ enchType, transmuteRes: res });
+          }
+        }
+      } else if (enchType === EnchantmentTypeEnum.ApprenticeNeighbor) {
+        const ALL_POS_RELS = Object.values(PositionRelation);
+        const rel = affixSkill.neighborPosRel as PositionRelation | undefined
+          ?? ALL_POS_RELS[Math.floor(random() * ALL_POS_RELS.length)];
+        const key = `${enchType}:${rel}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          allCandidates.push({ enchType, neighborRel: rel });
+        }
+      } else {
+        const key = enchType;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          allCandidates.push({ enchType });
+        }
+      }
+    }
+  }
+  if (allCandidates.length === 0) return null;
+
+  // 随机选一个附魔
+  const pick = allCandidates[Math.floor(random() * allCandidates.length)];
+  const price = getAdjustedPrice(Math.round(ENCHANTMENT_SHOP_BASE_PRICE * rollPriceFluctuation()));
+
+  return {
+    id: `si-${itemId}-ench`,
+    type: 'enchantment',
+    enchantmentType: pick.enchType,
+    transmuteRes: pick.transmuteRes,
+    neighborRel: pick.neighborRel as string | undefined,
+    cost: price,
     isUpgrade: false,
     locked: false,
   };
@@ -889,6 +965,22 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
     }
   }
 
+  // Story 41.1: 附魔台商品（Act 3 起，25% 概率，最多 1 个，fate_fork 时最多 2 个）
+  if (act >= 3) {
+    const ENCHANTMENT_SPAWN_CHANCE = 0.25;
+    const maxEnchItems = state.player.relics.has('fate_fork') ? 2 : 1;
+    let enchItemCount = 0;
+    for (let ei = 0; ei < maxEnchItems && items.length < count; ei++) {
+      if (random() < ENCHANTMENT_SPAWN_CHANCE) {
+        const enchItem = generateShopEnchantmentItem(nextId++);
+        if (enchItem) {
+          items.push(enchItem);
+          enchItemCount++;
+        }
+      }
+    }
+  }
+
   // 合并剩余池，随机填满
   const remaining = shuffleArray([...skillPool, ...packPool]);
   while (items.length < count && remaining.length > 0) {
@@ -1073,6 +1165,27 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       <div class="reward-type relic-type relic-rarity-${rarityClass}">${t(`shop.rarity.${rarityClass}`)}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
+  } else if (item.type === 'enchantment' && item.enchantmentType) {
+    // Story 41.1: 附魔台商品
+    const enchInfo = getEnchantmentDisplayInfo(
+      item.enchantmentType as EnchantmentType,
+      item.transmuteRes,
+      item.neighborRel as PositionRelation | undefined,
+    );
+    if (!enchInfo) return;
+
+    card.classList.add('enchantment-card');
+    card.style.borderColor = enchInfo.categoryColor;
+    card.innerHTML = `
+      <div class="reward-icon">${enchInfo.icon}</div>
+      <div class="reward-info">
+        <div class="reward-name">${enchInfo.name}</div>
+        <div class="reward-desc">${enchInfo.desc}</div>
+      </div>
+      ${costHtml}
+      <div class="reward-type" style="color:${enchInfo.categoryColor}">${enchInfo.category}</div>
+      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
+    `;
   }
 
   // 锁定按钮事件
@@ -1098,6 +1211,11 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
     card.onclick = () => {
       juiceUp(card, 0.2, 3);
       purchaseShopRelicItem(index);
+    };
+  } else if (item.type === 'enchantment') {
+    card.onclick = () => {
+      juiceUp(card, 0.2, 3);
+      purchaseShopEnchantmentItem(index);
     };
   } else {
     card.onclick = () => {
@@ -1524,8 +1642,7 @@ function purchaseShopItem(index: number): void {
     }
   }
 
-  if (result.skillId) checkAutoEnchantment(result.skillId);
-
+  // Story 41.1: 附魔不再由购买自动触发，改为仪式/商店/试炼三渠道获取
   renderUnifiedShop();
   renderBuildManager();
 
@@ -1567,18 +1684,7 @@ function purchaseShopRelicItem(index: number): void {
     if (relicId === 'training_manual') {
       const upgradedIds = applyTrainingManual();
       if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}个技能升至Lv.2!`, '#00ff88');
-      // 早期觉醒互动：升至 Lv.2 的技能触发附魔检查（链式弹窗）
-      if (upgradedIds.length > 0) {
-        const pending = [...upgradedIds];
-        const processNext = () => {
-          const id = pending.shift();
-          if (id) {
-            _enchantmentOnClose = processNext;
-            checkAutoEnchantment(id);
-          }
-        };
-        processNext();
-      }
+      // Story 41.1: 移除早期觉醒链式附魔弹窗
     }
     // Story 36.6: 行会勋章 — 购买时随机选行
     if (relicId === 'row_medal') {
@@ -1605,17 +1711,7 @@ function purchaseShopRelicItem(index: number): void {
         if (relicId === 'training_manual') {
           const upgradedIds = applyTrainingManual();
           if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}个技能升至Lv.2!`, '#00ff88');
-          if (upgradedIds.length > 0) {
-            const pending = [...upgradedIds];
-            const processNext = () => {
-              const id = pending.shift();
-              if (id) {
-                _enchantmentOnClose = processNext;
-                checkAutoEnchantment(id);
-              }
-            };
-            processNext();
-          }
+          // Story 41.1: 移除早期觉醒链式附魔弹窗
         }
         // Story 36.6: 行会勋章 — 替换购买时也随机选行
         if (relicId === 'row_medal') {
@@ -1632,44 +1728,118 @@ function purchaseShopRelicItem(index: number): void {
   }
 }
 
-// === 自动进化检查 ===
-function checkAutoEnchantment(skillId: string): void {
-  const data = state.player.skills.get(skillId);
-  // Story 36.5: 早期觉醒 — 等级检查由遗物决定（默认 3，持有 early_awakening → 2）
-  if (!data || data.level < getMinEnchantmentLevel()) return;
+// === Story 41.1: 购买附魔台商品 ===
+function purchaseShopEnchantmentItem(index: number): void {
+  const item = state.shop.items[index];
+  if (!item || item.type !== 'enchantment' || !item.enchantmentType) return;
 
-  // T4 限制遗物：附魔锁定
-  if (queryRelicFlag('enchant_lock') === true) {
-    showFeedback(t('shop.enchant_locked'), '#ff0000');
+  // 走私通道
+  const smuggleFree = index === getSmuggleFreeIndex();
+  const cost = smuggleFree ? 0 : item.cost;
+
+  if (state.gold < cost) {
+    showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
 
-  // Story 36.4: 无冕之王 — 无附魔技能不弹出附魔选择
-  const affixSkillForBlock = state.affixSkills.get(skillId);
-  if (affixSkillForBlock && shouldBlockEnchantment(affixSkillForBlock.enchantmentIds)) {
+  // 获取有空槽的技能列表
+  const anchorBonus = getEnchantAnchorSlotBonus();
+  const eligibleSkills: Array<{ skillId: string; affixSkill: AffixSkillInstance }> = [];
+  for (const [skillId, affixSkill] of state.affixSkills) {
+    const slotCount = getEnchantmentSlotCount(affixSkill, anchorBonus);
+    if (affixSkill.enchantmentIds.length < slotCount) {
+      eligibleSkills.push({ skillId, affixSkill });
+    }
+  }
+
+  if (eligibleSkills.length === 0) {
+    showFeedback(t('shop.no_enchant_target'), '#ff6b6b');
     return;
   }
 
-  // 词条制技能走新附魔流程（Quest 附魔 → enchantmentIds）
-  const affixSkill = state.affixSkills.get(skillId);
-  if (affixSkill) {
-    // Story 36.5: 附魔锚点 — 额外槽位加成
-    const slotCount = getEnchantmentSlotCount(affixSkill, getEnchantAnchorSlotBonus());
-    if (affixSkill.enchantmentIds.length >= slotCount) return;
-    const playerClass = state.classId !== 'none' ? state.classId : undefined;
-    const categorized = filterCategorizedByClass(categorizeEnchantmentCandidates(affixSkill), playerClass);
-    const flat = [...categorized.apprentice, ...categorized.quest, ...categorized.transmute, ...categorized.operator];
-    if (flat.length === 0) return;
-    // 职业门控：蜕变师失去附魔选择权 → 随机附魔
-    if (!isFeatureEnabled('enchant-choice')) {
-      applyAffixRandomEnchantment(skillId, affixSkill, categorized);
+  // 弹出技能选择界面（扣金在确认选择后执行）
+  showEnchantmentTargetSelect(item, index, eligibleSkills, cost, smuggleFree);
+}
+
+/** 附魔台：选择目标技能弹窗 */
+function showEnchantmentTargetSelect(
+  item: ShopItem,
+  shopIndex: number,
+  eligibleSkills: Array<{ skillId: string; affixSkill: AffixSkillInstance }>,
+  cost: number,
+  smuggleFree: boolean,
+): void {
+  let modal = document.getElementById('enchantment-target-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'enchantment-target-modal';
+    modal.className = 'ritual-enchantment-overlay';
+    document.body.appendChild(modal);
+  }
+
+  const enchInfo = getEnchantmentDisplayInfo(
+    item.enchantmentType as EnchantmentType,
+    item.transmuteRes,
+    item.neighborRel as PositionRelation | undefined,
+  );
+  const enchLabel = enchInfo ? `${enchInfo.icon} ${enchInfo.name}` : item.enchantmentType!;
+
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="ritual-enchantment-panel">
+      <h2 class="ritual-title">${t('shop.enchant_select_title')}</h2>
+      <p class="ritual-subtitle">${t('shop.enchant_select_desc', { name: enchLabel })}</p>
+      <div id="enchant-target-list" class="ritual-skill-list"></div>
+      <button id="enchant-target-cancel" class="ritual-continue-btn" style="margin-top:12px;opacity:0.7">${t('rest.leave')}</button>
+    </div>
+  `;
+
+  document.getElementById('enchant-target-cancel')!.onclick = () => {
+    modal!.style.display = 'none';
+    modal!.innerHTML = '';
+  };
+
+  const listEl = document.getElementById('enchant-target-list')!;
+  for (const { skillId, affixSkill } of eligibleSkills) {
+    const btn = document.createElement('button');
+    btn.className = 'ritual-skill-btn';
+    btn.innerHTML = `<span class="ritual-skill-icon">${affixSkill.icon}</span><span class="ritual-skill-name">${affixSkill.name}</span>`;
+    btn.onclick = () => {
+      // 扣金（确认选择后才扣）
+      if (smuggleFree) consumeSmuggleFree();
+      state.gold -= cost;
+      updateGoldDisplay();
+
+      // 写入附魔（复用统一逻辑）
+      const candidate: RitualCandidate = {
+        enchType: item.enchantmentType! as EnchantmentTypeEnum,
+        transmuteRes: item.transmuteRes,
+        neighborRel: item.neighborRel as PositionRelation | undefined,
+      };
+      applyRitualEnchantment(skillId, affixSkill, candidate);
+
+      state.shop.items.splice(shopIndex, 1);
+
+      modal!.style.display = 'none';
+      modal!.innerHTML = '';
+
+      const feedbackText = enchInfo
+        ? t('ritual.applied', { icon: enchInfo.icon, name: enchInfo.name, skill: affixSkill.name })
+        : t('ritual.applied_generic');
+      showFeedback(feedbackText, '#4ecdc4');
+
       renderUnifiedShop();
       renderBuildManager();
-    } else {
-      renderAffixEnchantmentModal(skillId, affixSkill, categorized);
-    }
-    return;
+    };
+    listEl.appendChild(btn);
   }
+}
+
+// === 自动附魔检查 — Story 41.1: 已废弃 ===
+// 附魔不再由技能购买/升级自动触发，改为仪式/商店/试炼三渠道获取
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function checkAutoEnchantment(_skillId: string): void {
+  // no-op: Story 41.1 废弃自动附魔触发
 }
 
 // === 补偿检查（旧系统已移除，保留空实现） ===
@@ -1799,7 +1969,7 @@ const ENCHANTMENT_CATEGORY_COLORS: Record<string, string> = {
 // 附魔类别名 — 通过 t('ench_cat.' + category) 获取
 
 /** 统一附魔信息查找 */
-function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: import('../core/types').ResourceType, neighborRel?: PositionRelation): {
+export function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: import('../core/types').ResourceType, neighborRel?: PositionRelation): {
   name: string; desc: string; icon: string; category: string; categoryColor: string;
 } | null {
   // Quest 类型
@@ -2763,7 +2933,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     // 绑定到目标键位（被覆盖技能自动解绑）
     bindShapeToKeys(bs, skillId, targetKey);
 
-    if (result.skillId) checkAutoEnchantment(result.skillId);
+    // Story 41.1: 附魔不再由购买自动触发
     renderUnifiedShop();
     renderBuildManager();
 

@@ -15,6 +15,11 @@ import { checkIntermission, grantIntermissionFreeRefreshes } from './relics/Stag
 import { playSound } from '../effects/sound';
 import { t, localizeItemName } from '../demo/demo-i18n';
 import { sealSkillKeys, unbindSkill, getBindingState } from './bindingManager';
+import { shouldShowRitual, openRitualEnchantment, getEligibleSkills, generateRitualCandidates, pickRitualChoices, applyRitualEnchantment } from './ritualEnchantment';
+import { random } from '../core/seededRandom';
+import type { RitualCandidate } from './ritualEnchantment';
+import { getEnchantmentDisplayInfo } from './shop';
+import type { EnchantmentType } from '../data/affixes';
 
 let currentEvent: RestEvent | null = null;
 
@@ -114,6 +119,17 @@ function handleOptionSelect(
 // === 完成休息关 ===
 function completeRestStage(): void {
   currentEvent = null;
+
+  // Story 41.1: Act 1→2 转折时触发仪式附魔
+  if (shouldShowRitual(state.level)) {
+    const nextBattle = getNextBattleNode(state.level);
+    if (nextBattle === -1 || nextBattle > TOTAL_NODES) return;
+    openRitualEnchantment(() => {
+      state.level = nextBattle;
+      void startLevel();
+    });
+    return;
+  }
 
   // 推进到下一个战斗节点
   const nextBattle = getNextBattleNode(state.level);
@@ -291,6 +307,31 @@ export function executeEffect(effectId: string): string {
       return t('rest.meditate.gold_r');
     }
 
+    case 'enchantment_trial_start': {
+      // Story 41.1: 附魔试炼 — 二选一附魔 → 打字挑战
+      const eligible = getEligibleSkills();
+      if (eligible.length === 0) return t('rest.ench_trial.no_target');
+
+      // 合并候选池
+      const allCandidates: RitualCandidate[] = [];
+      const seenKeys = new Set<string>();
+      for (const { affixSkill } of eligible) {
+        for (const c of generateRitualCandidates(affixSkill)) {
+          const key = `${c.enchType}:${c.transmuteRes ?? ''}:${c.neighborRel ?? ''}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            allCandidates.push(c);
+          }
+        }
+      }
+      if (allCandidates.length === 0) return t('rest.ench_trial.no_target');
+
+      const choices = pickRitualChoices(allCandidates);
+      // 延迟显示试炼 UI（executeEffect 返回提示文本后再弹出）
+      setTimeout(() => showEnchantmentTrialUI(choices), 300);
+      return t('rest.ench_trial.starting');
+    }
+
     default:
       return t('rest.default');
   }
@@ -369,4 +410,198 @@ function upgradeRandomSkill(): { id: string; name: string; newLevel: number } | 
   data.level++;
   const affixSkill = state.affixSkills.get(skillId);
   return affixSkill ? { id: skillId, name: affixSkill.name, newLevel: data.level } : null;
+}
+
+// === Story 41.1: 附魔试炼 UI ===
+
+const TRIAL_WORD_COUNT = 8;
+const TRIAL_TIME_LIMIT = 15000; // 15 秒
+
+function showEnchantmentTrialUI(choices: RitualCandidate[]): void {
+  let modal = document.getElementById('enchantment-trial-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'enchantment-trial-modal';
+    modal.className = 'ritual-enchantment-overlay';
+    document.body.appendChild(modal);
+  }
+
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="ritual-enchantment-panel">
+      <h2 class="ritual-title">${t('rest.ench_trial.choose_title')}</h2>
+      <p class="ritual-subtitle">${t('rest.ench_trial.choose_desc')}</p>
+      <div id="trial-choices" class="ritual-choices"></div>
+    </div>
+  `;
+
+  const choicesEl = document.getElementById('trial-choices')!;
+  for (const candidate of choices) {
+    const info = getEnchantmentDisplayInfo(
+      candidate.enchType as EnchantmentType,
+      candidate.transmuteRes,
+      candidate.neighborRel,
+    );
+    if (!info) continue;
+
+    const btn = document.createElement('button');
+    btn.className = 'ritual-choice-btn';
+    btn.innerHTML = `<span class="ritual-choice-icon">${info.icon}</span><span class="ritual-choice-name">${info.name}</span>`;
+    btn.onclick = () => {
+      startTrialChallenge(candidate, modal!);
+    };
+    choicesEl.appendChild(btn);
+  }
+}
+
+function startTrialChallenge(candidate: RitualCandidate, modal: HTMLElement): void {
+  // 从词库抽取 8 个词
+  const deck = [...state.player.wordDeck];
+  const words: string[] = [];
+  for (let i = 0; i < TRIAL_WORD_COUNT && deck.length > 0; i++) {
+    const idx = Math.floor(random() * deck.length);
+    words.push(deck.splice(idx, 1)[0]);
+  }
+  if (words.length < TRIAL_WORD_COUNT) {
+    // 词不够，补齐
+    while (words.length < TRIAL_WORD_COUNT) words.push('trial');
+  }
+
+  let currentWordIdx = 0;
+  let currentInput = '';
+  let errors = 0;
+  let timerExpired = false;
+
+  const renderWord = () => {
+    const panel = modal.querySelector('.ritual-enchantment-panel');
+    if (!panel) return;
+
+    const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+    panel.innerHTML = `
+      <h2 class="ritual-title">${t('rest.ench_trial.challenge_title')}</h2>
+      <p class="ritual-subtitle">${t('rest.ench_trial.timer', { sec: remaining })} · ${currentWordIdx}/${TRIAL_WORD_COUNT}</p>
+      <div class="trial-word-display">${words[currentWordIdx]}</div>
+      <div class="trial-input-display">${currentInput}<span class="trial-cursor">|</span></div>
+      <p class="trial-hint">${t('rest.ench_trial.hint')}</p>
+    `;
+  };
+
+  const deadline = Date.now() + TRIAL_TIME_LIMIT;
+
+  const timerInterval = setInterval(() => {
+    if (Date.now() >= deadline) {
+      timerExpired = true;
+      clearInterval(timerInterval);
+      document.removeEventListener('keydown', keyHandler);
+      showTrialResult(false, candidate, modal);
+    } else {
+      renderWord();
+    }
+  }, 500);
+
+  const keyHandler = (e: KeyboardEvent) => {
+    if (timerExpired) return;
+    if (e.key === 'Escape') {
+      clearInterval(timerInterval);
+      document.removeEventListener('keydown', keyHandler);
+      showTrialResult(false, candidate, modal);
+      return;
+    }
+    if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
+      e.preventDefault();
+      e.stopPropagation();
+      const expected = words[currentWordIdx][currentInput.length];
+      if (e.key.toLowerCase() === expected?.toLowerCase()) {
+        currentInput += e.key.toLowerCase();
+        if (currentInput === words[currentWordIdx].toLowerCase()) {
+          // 词完成
+          currentWordIdx++;
+          currentInput = '';
+          if (currentWordIdx >= TRIAL_WORD_COUNT) {
+            // 全部完成，成功！
+            clearInterval(timerInterval);
+            document.removeEventListener('keydown', keyHandler);
+            showTrialResult(errors === 0, candidate, modal);
+            return;
+          }
+        }
+      } else {
+        errors++;
+        // 任何错误立即失败
+        clearInterval(timerInterval);
+        document.removeEventListener('keydown', keyHandler);
+        showTrialResult(false, candidate, modal);
+        return;
+      }
+      renderWord();
+    }
+  };
+
+  document.addEventListener('keydown', keyHandler);
+  renderWord();
+}
+
+function showTrialResult(success: boolean, candidate: RitualCandidate, modal: HTMLElement): void {
+  if (success) {
+    // 成功：选择目标技能
+    const eligible = getEligibleSkills();
+    if (eligible.length === 0) {
+      closeTrialModal(modal);
+      return;
+    }
+
+    const panel = modal.querySelector('.ritual-enchantment-panel');
+    if (!panel) return;
+
+    const info = getEnchantmentDisplayInfo(
+      candidate.enchType as EnchantmentType,
+      candidate.transmuteRes,
+      candidate.neighborRel,
+    );
+
+    panel.innerHTML = `
+      <h2 class="ritual-title">${t('rest.ench_trial.success')}</h2>
+      <p class="ritual-subtitle">${t('ritual.select_skill')}</p>
+      <div id="trial-skill-list" class="ritual-skill-list"></div>
+    `;
+
+    const listEl = document.getElementById('trial-skill-list')!;
+    for (const { skillId, affixSkill } of eligible) {
+      const btn = document.createElement('button');
+      btn.className = 'ritual-skill-btn';
+      btn.innerHTML = `<span class="ritual-skill-icon">${affixSkill.icon}</span><span class="ritual-skill-name">${affixSkill.name}</span>`;
+      btn.onclick = () => {
+        // 写入附魔（复用统一逻辑）
+        applyRitualEnchantment(skillId, affixSkill, candidate);
+
+        const feedbackText = info
+          ? t('ritual.applied', { icon: info.icon, name: info.name, skill: affixSkill.name })
+          : t('ritual.applied_generic');
+
+        panel.innerHTML = `
+          <h2 class="ritual-title">${t('rest.ench_trial.success')}</h2>
+          <p class="ritual-feedback">${feedbackText}</p>
+          <button id="trial-done-btn" class="ritual-continue-btn">${t('ritual.continue')}</button>
+        `;
+        document.getElementById('trial-done-btn')!.onclick = () => closeTrialModal(modal);
+      };
+      listEl.appendChild(btn);
+    }
+  } else {
+    // 失败
+    const panel = modal.querySelector('.ritual-enchantment-panel');
+    if (!panel) { closeTrialModal(modal); return; }
+
+    panel.innerHTML = `
+      <h2 class="ritual-title">${t('rest.ench_trial.fail')}</h2>
+      <p class="ritual-feedback">${t('rest.ench_trial.fail_desc')}</p>
+      <button id="trial-fail-btn" class="ritual-continue-btn">${t('ritual.continue')}</button>
+    `;
+    document.getElementById('trial-fail-btn')!.onclick = () => closeTrialModal(modal);
+  }
+}
+
+function closeTrialModal(modal: HTMLElement): void {
+  modal.style.display = 'none';
+  modal.innerHTML = '';
 }

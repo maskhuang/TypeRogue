@@ -240,11 +240,14 @@ export interface PlayerState {
 
 export interface ShopItem {
   id: string;              // 商品唯一 ID
-  type: 'skill' | 'pack' | 'relic';
+  type: 'skill' | 'pack' | 'relic' | 'enchantment';
   skillId?: string;
   affixSkill?: AffixSkillInstance;  // 词条制技能数据（35.9）
   pack?: WordPack;         // 牌包数据（type='pack' 时）
   relicId?: string;        // 遗物 ID（type='relic' 时）
+  enchantmentType?: string;        // 附魔类型（type='enchantment' 时，Story 41.1）
+  transmuteRes?: ResourceType;     // 嬗变目标资源（附魔商品用，Story 41.1）
+  neighborRel?: string;            // 位置关系（附魔商品用，Story 41.1）
   cost: number;
   isUpgrade: boolean;      // 重复技能 → true
   locked: boolean;         // 锁定（17.3）

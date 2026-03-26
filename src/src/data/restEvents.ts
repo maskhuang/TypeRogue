@@ -5,6 +5,8 @@
 
 import type { GameState } from '../core/types'
 import { t } from '../demo/demo-i18n'
+import { getEnchantmentSlotCount } from './affixTrigger'
+import { getEnchantAnchorSlotBonus } from '../systems/relics/EnchantmentRelicBehaviors'
 
 // === 事件类型定义 ===
 
@@ -126,6 +128,25 @@ export function getRestEvents(): RestEvent[] { return [
       { label: t('rest.meditate.preview'), description: t('rest.meditate.preview_d'), effectId: 'meditate_preview' },
       { label: t('rest.meditate.gold'), description: t('rest.meditate.gold_d'), effectId: 'meditate_gold' },
     ],
+  },
+  // Story 41.1: 附魔试炼事件
+  {
+    id: 'enchantment_trial',
+    name: t('rest.ench_trial.name'), icon: '🔮',
+    description: t('rest.ench_trial.desc'),
+    options: [
+      { label: t('rest.ench_trial.accept'), description: t('rest.ench_trial.accept_d'), effectId: 'enchantment_trial_start' },
+      { label: t('rest.leave'), description: t('rest.ench_trial.leave_d'), effectId: 'noop' },
+    ],
+    prerequisite: (s) => {
+      // 必须有至少 1 个有空附魔槽的技能
+      const anchorBonus = getEnchantAnchorSlotBonus()
+      for (const [, affixSkill] of s.affixSkills) {
+        const slotCount = getEnchantmentSlotCount(affixSkill, anchorBonus)
+        if (affixSkill.enchantmentIds.length < slotCount) return true
+      }
+      return false
+    },
   },
 ]; }
 

@@ -517,7 +517,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'early_awakening',
     name: '早期觉醒',
     icon: '🌅',
-    description: '附魔触发条件从Lv3+放宽到Lv2+。',
+    description: '（待重设计）原效果已随附魔系统重构失效。',
     rarity: 'epic',
     basePrice: 120,
     effects: [],
