@@ -1,22 +1,20 @@
 // ============================================
 // 打字肉鸽 - Boss 修饰器引擎
 // ============================================
-// Story 18.4: 修饰器生命周期管理 + Boss 关轮换引擎
+// Story 18.4: 修饰器生命周期管理
 // Story 25.3: 多修饰器同时激活（跨周目叠加 + 精英/Boss 共存）
+// Story 42.6: 移除 Boss 关轮换引擎（改为单修饰器固定制）
 
-import { state } from '../core/state'
 import {
   BOSS_MODIFIER_REGISTRY,
   setActiveParams,
   getActiveParams,
-  getBossModifierMeta,
 } from '../data/bossModifiers'
 import type {
   BossModifierId,
   BossModifier,
   BossModifierParams,
 } from '../data/bossModifiers'
-import { t } from '../demo/demo-i18n'
 
 // === 修饰器实例 ===
 
@@ -24,18 +22,12 @@ interface ModifierInstance {
   modId: BossModifierId
   modifier: BossModifier
   params: BossModifierParams
-  isPermanent: boolean // true = 来自 state.activeModifiers（跨周目永久），false = 精英/Boss 轮换临时
+  isPermanent: boolean // true = 来自 state.activeModifiers（跨周目永久），false = Boss 关/精英关临时
 }
 
 // === 活跃修饰器状态（支持多个同时激活） ===
 
 let activeModifierInstances: ModifierInstance[] = []
-
-// === Boss 轮换状态 ===
-
-let bossRotationStart = 0
-let bossRotationPhase = -1 // -1 = not rotating, 0=A, 1=B, 2=C
-let isRotating = false
 
 // === 修饰器生命周期 ===
 
@@ -72,7 +64,7 @@ export function cleanupModifier(): void {
   setActiveParams(null)
 }
 
-/** 清理临时修饰器（Boss 轮换切换时调用，保留永久修饰器） */
+/** 清理临时修饰器（关卡结束时保留永久修饰器） */
 export function cleanupTemporaryModifiers(): void {
   const permanent: ModifierInstance[] = []
   for (const inst of activeModifierInstances) {
@@ -92,10 +84,6 @@ export function tickModifier(dt: number): void {
     if (inst.modifier.onTick) {
       inst.modifier.onTick(dt)
     }
-  }
-  // Boss 轮换检查
-  if (isRotating) {
-    checkBossRotation()
   }
 }
 
@@ -144,103 +132,3 @@ export function undoLastTemporaryModifier(): boolean {
 }
 
 export type { ModifierInstance }
-
-// === Boss 关轮换引擎 ===
-
-/** 启动 Boss 关 3 阶段轮换（20s 一换） */
-export function startBossRotation(): void {
-  if (state.bossModifierPool.length < 3) return
-
-  bossRotationStart = Date.now()
-  bossRotationPhase = -1
-  isRotating = true
-
-  // 立即应用第一个修饰器
-  switchToPhase(0)
-
-  // 更新 HUD：显示 Boss 关修饰器信息
-  updateBossModifierHUD(state.bossModifierPool[0])
-}
-
-/** 停止 Boss 关轮换 */
-export function stopBossRotation(): void {
-  isRotating = false
-  bossRotationPhase = -1
-}
-
-/** 检查是否需要切换阶段 */
-function checkBossRotation(): void {
-  const elapsed = (Date.now() - bossRotationStart) / 1000
-  const newPhase = Math.min(Math.floor(elapsed / 20), 2)
-  if (newPhase !== bossRotationPhase) {
-    switchToPhase(newPhase)
-  }
-}
-
-/** 切换到指定阶段（清理临时修饰器，保留永久修饰器） */
-function switchToPhase(phase: number): void {
-  const modId = state.bossModifierPool[phase]
-  if (!modId) return
-
-  // 清理旧的临时修饰器（保留永久修饰器）
-  cleanupTemporaryModifiers()
-
-  // 跳过已在永久修饰器中的（永久版已全力运行，不重复应用）
-  if (!isModifierActive(modId)) {
-    applyModifier(modId, false, false)
-  }
-
-  // 阶段切换视觉提示（非首次切换时）
-  if (bossRotationPhase >= 0) {
-    announceModifierSwitch(modId)
-  }
-
-  bossRotationPhase = phase
-
-  // 更新 HUD
-  updateBossModifierHUD(modId)
-}
-
-/** 更新 Boss 修饰器 HUD 显示 */
-function updateBossModifierHUD(modId: BossModifierId): void {
-  const modInfo = document.getElementById('modifier-info')
-  if (!modInfo) return
-
-  const meta = getBossModifierMeta(modId)
-  if (!meta) return
-
-  const iconEl = modInfo.querySelector('.modifier-icon')
-  const nameEl = modInfo.querySelector('.modifier-name')
-  const hintEl = modInfo.querySelector('.modifier-hint')
-
-  if (iconEl) iconEl.textContent = meta.icon
-  if (nameEl) nameEl.textContent = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
-  if (hintEl) hintEl.textContent = t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description
-
-  modInfo.classList.add('visible')
-}
-
-/** 修饰器切换视觉提示 */
-function announceModifierSwitch(modId: BossModifierId): void {
-  const meta = getBossModifierMeta(modId)
-  if (!meta) return
-
-  // 闪烁动画
-  const modInfo = document.getElementById('modifier-info')
-  if (modInfo) {
-    modInfo.classList.add('modifier-switch')
-    setTimeout(() => modInfo.classList.remove('modifier-switch'), 500)
-  }
-
-  // 中央公告
-  const container = document.getElementById('game-container')
-  if (container) {
-    const ann = document.createElement('div')
-    ann.className = 'level-announce modifier-announce'
-    const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
-    const modDesc = t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description
-    ann.innerHTML = `${meta.icon} ${modName}<br><span class="target-hint">${modDesc}</span>`
-    container.appendChild(ann)
-    setTimeout(() => ann.remove(), 1500)
-  }
-}

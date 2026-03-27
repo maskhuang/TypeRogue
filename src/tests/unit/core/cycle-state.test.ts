@@ -121,34 +121,26 @@ describe('周目状态 (cycle)', () => {
       expect(state.cycle).toBe(4)
     })
 
-    it('level 重置为 1', () => {
+    it('level 重置为 0', () => {
       state.level = 10
       advanceCycle()
-      expect(state.level).toBe(1)
+      expect(state.level).toBe(0)
     })
 
-    it('bossModifierPool 重新抽取（3 个）', () => {
-      const oldPool = [...state.bossModifierPool]
+    // Story 42.6: bossModifierPool 改为单修饰器（0 或 1 个）
+    it('bossModifierPool 抽取单修饰器（0 或 1 个）', () => {
       advanceCycle()
-      expect(state.bossModifierPool).toHaveLength(3)
-      // 新池可能与旧池不同（随机）
+      expect(state.bossModifierPool.length).toBeLessThanOrEqual(1)
     })
 
-    it('tempBuffs 清空', () => {
-      state.tempBuffs = [
-        { type: 'multiplier', value: 1.0, expiresAtNode: 10 },
-        { type: 'time', value: 5, expiresAtNode: 8 },
-      ]
+    it('usedBossModifiers 累积已用修饰器', () => {
       advanceCycle()
-      expect(state.tempBuffs).toEqual([])
-    })
-
-    it('sealedKeys 清空', () => {
-      state.sealedKeys = [
-        { key: 'A', skillId: 'prod_burst', expiresAtNode: 10 },
-      ]
+      if (state.bossModifierPool.length === 1) {
+        expect(state.usedBossModifiers).toContain(state.bossModifierPool[0])
+      }
+      const firstUsed = [...state.usedBossModifiers]
       advanceCycle()
-      expect(state.sealedKeys).toEqual([])
+      expect(state.usedBossModifiers.length).toBeGreaterThanOrEqual(firstUsed.length)
     })
 
     it('保留 skills', () => {

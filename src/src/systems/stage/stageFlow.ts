@@ -50,13 +50,3 @@ export function getCycleTimeLimit(stageNum: number, cycle: number): number {
 export function getNextBattleNode(currentStageNum: number): number {
   return currentStageNum + 1
 }
-
-/**
- * 获取 Boss 修饰器索引（每 Cycle 的 Boss 对应一个修饰器，3 个循环使用）
- * @returns 修饰器索引 (0, 1, 2)，非 Boss 关返回 -1
- */
-export function getEliteModifierIndex(stageNum: number): number {
-  if (!isBossNode(stageNum)) return -1
-  const cycle = getCycleForStage(stageNum)
-  return (cycle - 1) % 3
-}

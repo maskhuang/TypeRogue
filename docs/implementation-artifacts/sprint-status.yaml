@@ -389,7 +389,7 @@ development_status:
   42-3-overflow-score: done                         # 溢出分系统 — 跨关携带
   42-4-time-acceleration: done                       # 关内时间加速
   42-5-exponential-target: done                      # 目标分数指数增长
-  42-6-boss-fixed-interval: backlog               # Boss 固定间隔系统重构
+  42-6-boss-fixed-interval: review                   # Boss 固定间隔系统重构
   42-7-enchantment-ritual-event: backlog          # 附魔仪式 — Boss 后事件
   42-8-retry-with-overflow: backlog               # 续命机制 — 消耗溢出分重来
   42-9-acceleration-sensory-feedback: backlog     # 时间加速感官反馈

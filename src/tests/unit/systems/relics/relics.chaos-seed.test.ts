@@ -124,7 +124,6 @@ vi.mock('../../../../src/systems/stage/stageFlow', () => ({
   getStageType: vi.fn(() => 'normal'),
   getCycleTimeLimit: vi.fn(() => 60),
   getBattleNumber: vi.fn(() => 1),
-  getEliteModifierIndex: vi.fn(() => -1),
   getActForNode: vi.fn(() => 1),
   TOTAL_NODES: 15,
 }))
@@ -146,8 +145,6 @@ vi.mock('../../../../src/systems/bossModifierEngine', () => ({
   applyModifier: vi.fn(),
   cleanupModifier: vi.fn(),
   tickModifier: vi.fn(),
-  startBossRotation: vi.fn(),
-  stopBossRotation: vi.fn(),
   isModifierActive: vi.fn(),
 }))
 

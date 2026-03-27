@@ -20,9 +20,9 @@ import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getCycleTimeLimit, getBattleNumber } from './stage/stageFlow';
-import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawBossModifiers, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive, getEscalateTimeSpeedBonus, addFrostStack, getCurrentTaxResource, getTaxRate, onMirrorWordComplete, resetMirrorWordTimer } from '../data/bossModifiers';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, BOSS_MODIFIER_IDS, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive, getEscalateTimeSpeedBonus, addFrostStack, getCurrentTaxResource, getTaxRate, onMirrorWordComplete, resetMirrorWordTimer } from '../data/bossModifiers';
 import type { ModifierCategory, BossModifierId } from '../data/bossModifiers';
-import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, stopBossRotation, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
+import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
 import { showBossModifierPicker } from './bossModifierPicker';
 import { showActTransition, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
@@ -112,11 +112,18 @@ export function resetCycleTracking(): void { lastCycle = 0; chaosSeedEnchantment
  * - cycle++, level=1
  * - 重抽 bossModifierPool
  */
+// Story 42.6: 单修饰器制 — 每个 Cycle 抽 1 个不重复修饰器
 export function advanceCycle(): void {
   state.cycle++;
   state.level = 0; // 0 so that shop-leave's getNextBattleNode(0)=1 starts at level 1
   resetCycleTracking();
-  state.bossModifierPool = drawBossModifiers(3);
+  // Story 42.6 AC4: 耗尽重置 — 已用列表满了就清空重新循环
+  if (state.usedBossModifiers.length >= BOSS_MODIFIER_IDS.length) {
+    state.usedBossModifiers = [];
+  }
+  const newMod = drawSingleBossModifier(state.usedBossModifiers);
+  state.bossModifierPool = newMod ? [newMod] : [];
+  if (newMod) state.usedBossModifiers.push(newMod);
 }
 
 // === 计时器 ===
@@ -1415,7 +1422,6 @@ function endLevel(): void {
   clearPseudoInfinite();
   clearFloatQueue();
   cleanupModifier();
-  stopBossRotation();
   setRelicGarbleActive(false);
   hideSettlement();
 
@@ -1524,14 +1530,13 @@ function endLevel(): void {
     if (phoenixResult) {
       consumePhoenix();
       state.phase = 'battle';
-      // Boss 关刷新修饰器（endLevel 顶部已 cleanup，此处只需重新 apply）
+      // Story 42.6: Boss 关刷新修饰器（endLevel 顶部已 cleanup，此处只需重新 apply 单个）
       if (phoenixResult.refreshModifiers) {
         const stageType = getStageType(state.level);
-        if (stageType === 'boss') {
-          for (const bossModId of state.bossModifierPool) {
-            if (bossModId && !isModifierActive(bossModId)) {
-              applyModifier(bossModId, false);
-            }
+        if (stageType === 'boss' && state.bossModifierPool.length > 0) {
+          const bossModId = state.bossModifierPool[0];
+          if (bossModId && !isModifierActive(bossModId)) {
+            applyModifier(bossModId, false);
           }
         }
       }
@@ -1854,27 +1859,25 @@ export async function startLevel(): Promise<void> {
   // Task 3.3-3.4: 修饰器 HUD 显示/隐藏
   const modInfo = el.modifierInfo;
   if (currentStageType === 'boss') {
-    // Boss 关：同时应用全部 3 个修饰器 — 跳过被先知之眼禁用的类别
-    for (const bossModId of state.bossModifierPool) {
+    // Story 42.6: Boss 关只应用 1 个修饰器（bossModifierPool[0]）
+    if (state.bossModifierPool.length > 0) {
+      const bossModId = state.bossModifierPool[0];
       if (bossModId && !isModifierActive(bossModId)) {
         const bossMeta = getBossModifierMeta(bossModId);
-        if (foresightDisabledCategory && bossMeta && bossMeta.category === foresightDisabledCategory) continue;
-        applyModifier(bossModId, false);
+        if (!(foresightDisabledCategory && bossMeta && bossMeta.category === foresightDisabledCategory)) {
+          applyModifier(bossModId, false);
+        }
       }
     }
-    // 更新 HUD：显示 Boss 修饰器信息（用第一个修饰器的图标/名字）
+    // Story 42.6: HUD 只显示 1 个修饰器
     if (state.bossModifierPool.length > 0) {
-      const firstMeta = getBossModifierMeta(state.bossModifierPool[0]);
-      if (firstMeta) {
-        const allNames = state.bossModifierPool
-          .map(id => getBossModifierMeta(id))
-          .filter(Boolean)
-          .filter(m => !(foresightDisabledCategory && m!.category === foresightDisabledCategory))
-          .map(m => `${m!.icon}${t(`modifier.${m!.id}`) !== `modifier.${m!.id}` ? t(`modifier.${m!.id}`) : m!.name}`)
-          .join(' ');
-        modInfo.querySelector('.modifier-icon')!.textContent = '';
-        modInfo.querySelector('.modifier-name')!.textContent = allNames;
-        modInfo.querySelector('.modifier-hint')!.textContent = '';
+      const meta = getBossModifierMeta(state.bossModifierPool[0]);
+      if (meta && !(foresightDisabledCategory && meta.category === foresightDisabledCategory)) {
+        const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name;
+        const modDesc = t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description;
+        modInfo.querySelector('.modifier-icon')!.textContent = meta.icon;
+        modInfo.querySelector('.modifier-name')!.textContent = modName;
+        modInfo.querySelector('.modifier-hint')!.textContent = modDesc;
         modInfo.classList.add('visible');
       }
     }
@@ -1992,7 +1995,6 @@ function victory(): void {
   stopScoreRoller(); // Story 31.4
   clearFloatQueue();
   cleanupModifier();
-  stopBossRotation();
   setRelicGarbleActive(false);
 
   if (IS_DEMO) {
@@ -2048,7 +2050,6 @@ function gameOver(): void {
   clearPseudoInfinite();
   clearFloatQueue();
   cleanupModifier();
-  stopBossRotation();
   setRelicGarbleActive(false);
 
   if (IS_DEMO) {

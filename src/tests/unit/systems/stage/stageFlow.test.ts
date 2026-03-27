@@ -15,7 +15,6 @@ import {
   isBossNode,
   getTimeLimit,
   getNextBattleNode,
-  getEliteModifierIndex,
   hasRestAfter,
 } from '../../../../src/systems/stage/stageFlow'
 
@@ -224,25 +223,7 @@ describe('stageFlow', () => {
     })
   })
 
-  describe('getEliteModifierIndex()', () => {
-    it('节点 3 → 修饰器 A (index 0)', () => {
-      expect(getEliteModifierIndex(3)).toBe(0)
-    })
-
-    it('节点 6 → 修饰器 B (index 1)', () => {
-      expect(getEliteModifierIndex(6)).toBe(1)
-    })
-
-    it('节点 9 → 修饰器 C (index 2)', () => {
-      expect(getEliteModifierIndex(9)).toBe(2)
-    })
-
-    it('非精英关返回 -1', () => {
-      expect(getEliteModifierIndex(1)).toBe(-1)
-      expect(getEliteModifierIndex(4)).toBe(-1)
-      expect(getEliteModifierIndex(10)).toBe(-1)
-    })
-  })
+  // Story 42.6: getEliteModifierIndex removed — Boss 改为单修饰器固定制
 
   describe('hasRestAfter()', () => {
     it('节点 3 后有休息关', () => {

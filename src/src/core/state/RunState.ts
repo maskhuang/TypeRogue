@@ -4,7 +4,7 @@
 // Story 5.1: Run 状态管理
 
 import { BattleResult } from '../../scenes/battle/BattleFlowController'
-import { drawBossModifiers } from '../../data/bossModifiers'
+// Story 42.6: drawBossModifiers no longer used — pool starts empty
 import { DELETED_SKILL_IDS, DELETED_EVOLUTION_IDS } from '../../data/skills'
 import { DELETED_RELIC_IDS, MAX_RELIC_SLOTS } from '../../data/relics'
 import type { ClassId } from '../types'
@@ -80,8 +80,11 @@ export interface RunStateData {
   /** Run 统计 */
   stats: RunStats
 
-  /** Boss 修饰器池（3个随机修饰器 ID） */
+  /** Story 42.6: 当前 Cycle 的 Boss 修饰器（0 或 1 个） */
   bossModifierPool: string[]
+
+  /** Story 42.6: 本 Run 已用修饰器列表（不重复抽取用） */
+  usedBossModifiers: string[]
 
   /** Boss 修饰器分配（Stage 3→A, Stage 6→B, Stage 9→C） */
   bossModifierAssignment: BossModifierAssignment[]
@@ -176,6 +179,7 @@ export class RunState {
         startTime: 0
       },
       bossModifierPool: [],
+      usedBossModifiers: [],  // Story 42.6
       bossModifierAssignment: [],
       cycle: 1,
       activeModifiers: [],
@@ -415,9 +419,9 @@ export class RunState {
     this.data.isActive = true
     this.data.stats.startTime = Date.now()
 
-    // 抽取 3 个不重复的 Boss 修饰器（Cycle 间循环使用）
-    const modifiers = drawBossModifiers(3)
-    this.data.bossModifierPool = modifiers
+    // Story 42.6: Boss 修饰器池初始为空，等 advanceCycle 时再抽
+    this.data.bossModifierPool = []
+    this.data.usedBossModifiers = []
     this.data.bossModifierAssignment = []
   }
 
@@ -502,6 +506,7 @@ export class RunState {
       isActive: this.data.isActive,
       stats: { ...this.data.stats },
       bossModifierPool: [...this.data.bossModifierPool],
+      usedBossModifiers: [...this.data.usedBossModifiers],  // Story 42.6
       bossModifierAssignment: [...this.data.bossModifierAssignment],
       cycle: this.data.cycle,
       activeModifiers: [...this.data.activeModifiers],
@@ -569,7 +574,10 @@ export class RunState {
     runState.data.currentStage = parsed.currentStage
     runState.data.isActive = parsed.isActive
     runState.data.stats = { ...parsed.stats }
-    runState.data.bossModifierPool = (parsed as any).bossModifierPool || []
+    // Story 42.6: 旧存档 bossModifierPool 可能有 3 个元素，截取第一个即可
+    const savedPool: string[] = (parsed as any).bossModifierPool || []
+    runState.data.bossModifierPool = savedPool.length > 1 ? savedPool.slice(0, 1) : savedPool
+    runState.data.usedBossModifiers = (parsed as any).usedBossModifiers || []
     runState.data.bossModifierAssignment = (parsed as any).bossModifierAssignment || []
 
     // 恢复周目数和活跃修饰器（兼容旧存档）

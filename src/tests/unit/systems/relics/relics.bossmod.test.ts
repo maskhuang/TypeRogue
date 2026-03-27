@@ -28,7 +28,6 @@ import {
   forceRebuildParams,
   replaceTemporaryModifier,
   undoLastTemporaryModifier,
-  startBossRotation,
 } from '../../../../src/systems/bossModifierEngine'
 import { getActiveParams, setActiveParams } from '../../../../src/data/bossModifiers'
 import type { BossModifierId } from '../../../../src/data/bossModifiers'

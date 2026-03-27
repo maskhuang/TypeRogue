@@ -213,6 +213,22 @@ export function getBossModifierMeta(id: BossModifierId): BossModifierMeta | unde
 }
 
 /**
+ * Story 42.6: 从修饰器池中抽取 1 个修饰器，排除已用列表
+ * 如果所有修饰器都在 excluded 中，重置排除列表（AC4 耗尽重置），再抽 1 个
+ */
+export function drawSingleBossModifier(excluded: string[]): BossModifierId | null {
+  let pool = BOSS_MODIFIER_IDS.filter(id => !excluded.includes(id))
+  if (pool.length === 0) {
+    // AC4: 耗尽重置 — 从全部修饰器中抽取
+    pool = [...BOSS_MODIFIER_IDS]
+  }
+  if (pool.length === 0) return null
+  const idx = Math.floor(random() * pool.length)
+  return pool[idx]
+}
+
+/**
+ * @deprecated Story 42.6: 使用 drawSingleBossModifier 替代
  * 从修饰器池中抽取修饰器（每个分类各抽一个，保证 offense+defense+disruption 各一）
  * count=3 时按分类抽取；其他 count 值退化为纯随机
  */

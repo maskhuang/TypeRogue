@@ -19,7 +19,6 @@ import {
   tickModifier,
   getActiveModifierEffect,
   isModifierActive,
-  stopBossRotation,
 } from '../../../src/systems/bossModifierEngine'
 
 // Mock DOM
@@ -42,7 +41,6 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
   beforeEach(() => {
     resetState()
     cleanupModifier()
-    stopBossRotation()
     setActiveParams(null)
   })
 

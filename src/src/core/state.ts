@@ -54,6 +54,7 @@ export function createInitialState(): GameState {
     cycle: 1,
     activeModifiers: [],
     bossModifierPool: [],
+    usedBossModifiers: [],  // Story 42.6: 本 Run 已用修饰器
     tempBuffs: [],
     sealedKeys: [],
     pseudoInfiniteState: null,

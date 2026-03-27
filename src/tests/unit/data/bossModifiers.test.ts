@@ -7,6 +7,7 @@ import { describe, it, expect } from 'vitest'
 import {
   BOSS_MODIFIER_IDS,
   drawBossModifiers,
+  drawSingleBossModifier,
   BOSS_MODIFIER_META,
   getBossModifierMeta,
   BOSS_MODIFIER_REGISTRY,
@@ -104,6 +105,48 @@ describe('bossModifiers', () => {
       }
       // 20 次抽取应至少有 2 种不同组合（极低概率全相同）
       expect(results.size).toBeGreaterThanOrEqual(2)
+    })
+  })
+
+  // Story 42.6: 单修饰器抽取
+  describe('drawSingleBossModifier()', () => {
+    it('排除列表为空时返回一个合法修饰器', () => {
+      const result = drawSingleBossModifier([])
+      expect(result).not.toBeNull()
+      expect(BOSS_MODIFIER_IDS).toContain(result!)
+    })
+
+    it('排除列表中的修饰器不会被抽到', () => {
+      const excluded = ['boss_decay', 'boss_cap', 'boss_fast_time']
+      for (let i = 0; i < 30; i++) {
+        const result = drawSingleBossModifier(excluded)
+        expect(result).not.toBeNull()
+        expect(excluded).not.toContain(result!)
+      }
+    })
+
+    it('排除全部 18 个后触发耗尽重置（AC4）', () => {
+      const allExcluded = [...BOSS_MODIFIER_IDS]
+      const result = drawSingleBossModifier(allExcluded)
+      // 耗尽重置：从全池中重新抽取
+      expect(result).not.toBeNull()
+      expect(BOSS_MODIFIER_IDS).toContain(result!)
+    })
+
+    it('排除 17 个时从剩余 1 个中抽取', () => {
+      const excluded = BOSS_MODIFIER_IDS.slice(0, 17)
+      const remaining = BOSS_MODIFIER_IDS[17]
+      const result = drawSingleBossModifier(excluded)
+      expect(result).toBe(remaining)
+    })
+
+    it('多次调用有随机性', () => {
+      const results = new Set<string>()
+      for (let i = 0; i < 30; i++) {
+        const result = drawSingleBossModifier([])
+        if (result) results.add(result)
+      }
+      expect(results.size).toBeGreaterThan(1)
     })
   })
 

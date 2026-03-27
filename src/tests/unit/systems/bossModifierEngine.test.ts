@@ -31,8 +31,6 @@ import {
   tickModifier,
   getActiveModifierEffect,
   isModifierActive,
-  startBossRotation,
-  stopBossRotation,
 } from '../../../src/systems/bossModifierEngine'
 
 // Mock DOM — supports visual modifier tests
@@ -96,7 +94,6 @@ describe('bossModifierEngine', () => {
   beforeEach(() => {
     resetState()
     cleanupModifier()
-    stopBossRotation()
     setActiveParams(null)
     mockLetters = []
     mockWordDisplayStyle = {}
@@ -467,39 +464,6 @@ describe('bossModifierEngine', () => {
       const eliteValues = Object.values(eliteParams).filter(v => v !== undefined)
       expect(fullValues.length).toBeGreaterThan(0)
       expect(eliteValues.length).toBeGreaterThan(0)
-    })
-  })
-
-  describe('Boss 轮换引擎', () => {
-    beforeEach(() => {
-      state.bossModifierPool = ['boss_decay', 'boss_cap', 'boss_fast_time']
-    })
-
-    it('startBossRotation 立即应用第一个修饰器', () => {
-      startBossRotation()
-      const effect = getActiveModifierEffect()
-      expect(effect).not.toBeNull()
-      expect(effect!.decayRate).toBe(0.05)
-    })
-
-    it('startBossRotation 使用满功率参数', () => {
-      startBossRotation()
-      const effect = getActiveModifierEffect()
-      // boss_decay 满功率 = 0.05
-      expect(effect!.decayRate).toBe(0.05)
-    })
-
-    it('stopBossRotation 不清理当前修饰器', () => {
-      startBossRotation()
-      stopBossRotation()
-      // 修饰器仍然活跃（由 cleanupModifier 单独清理）
-      expect(getActiveModifierEffect()).not.toBeNull()
-    })
-
-    it('pool 不足 3 个时不启动轮换', () => {
-      state.bossModifierPool = ['boss_decay']
-      startBossRotation()
-      expect(getActiveModifierEffect()).toBeNull()
     })
   })
 

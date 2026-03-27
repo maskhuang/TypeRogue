@@ -184,7 +184,8 @@ export interface GameState {
   overflowScore: number;  // Story 42.3: 跨关累积溢出分（不在关卡间清零）
   cycle: number;                        // 当前周目数（默认 1，通关 Boss 后 +1）
   activeModifiers: BossModifierId[];    // 跨周目累积的 Boss 修饰器列表
-  bossModifierPool: BossModifierId[];  // Run 级别：3 个随机 Boss 修饰器 ID
+  bossModifierPool: BossModifierId[];  // Story 42.6: 当前 Cycle 的 Boss 修饰器（0 或 1 个）
+  usedBossModifiers: BossModifierId[];  // Story 42.6: 本 Run 已用修饰器列表（不重复抽取用）
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
   sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
