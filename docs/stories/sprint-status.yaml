@@ -410,12 +410,15 @@ development_status:
   # ===== Epic 41: 附魔系统改造 =====
   epic-41: in-progress
   41-1-enchantment-acquisition-rework: done
-  41-2-enchantment-redesign: ready-for-dev
+  41-2-enchantment-redesign: done
+  41-3-quest-transform-batch1: backlog
+  41-4-quest-transform-batch2: backlog
+  41-5-charge-mirror-redesign: backlog
   epic-41-retrospective: optional
 
 # Summary:
 # - Total Epics: 41
-# - Total Stories: 220
+# - Total Stories: 223
 # - Epics Completed: 37
 # - Epics In-Progress: 3 (39, 40, 41)
 # - Epics Backlog: 1 (38)

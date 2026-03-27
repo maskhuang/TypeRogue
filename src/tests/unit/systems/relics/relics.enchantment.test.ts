@@ -176,7 +176,7 @@ describe('附魔系统遗物行为 (Story 36.5)', () => {
       state.player.relics.add('enchant_anchor')
       setupAffixSkill('s1', ['quest_chain', 'apprentice_speed'])
       setupAffixSkill('s2', ['quest_devour'])
-      setupAffixSkill('s3', ['transmute', 'apprentice_perfect'])
+      setupAffixSkill('s3', ['transmute', 'apprentice_proc'])
       expect(getEnchantAnchorPriceMultiplier()).toBeCloseTo(1.5)
     })
 

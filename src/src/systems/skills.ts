@@ -103,7 +103,7 @@ export function resetWordResourceTypes(): void {
   resetWordResourceOutput();
 }
 
-/** 蓄力产出者：每帧更新蓄力值（旧系统已移除，保留空实现供 battle.ts 调用） */
+/** @deprecated 待 Story 41-5 重新实现 Charge 长按蓄力机制。当前为空实现。 */
 export function updateChargeProducers(_dt: number): void {
   // no-op: 旧产出者系统已移除
 }

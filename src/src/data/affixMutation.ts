@@ -6,7 +6,7 @@
 
 import { state } from '../core/state'
 import { RESOURCE_ICONS } from '../core/constants'
-import type { AffixInstance, SkillRarity } from './affixes'
+import type { AffixInstance } from './affixes'
 import {
   AffixType, EnchantmentType,
   QUEST_AFFIX_MAP, AFFIX_WEIGHTS,
@@ -19,9 +19,6 @@ import {
 import { random } from '../core/seededRandom'
 
 // ===== 常量 =====
-
-/** ApprenticeAdapt 每次蜕变成长值 */
-const ADAPT_GROWTH = 0.15
 
 // ===== 结果类型 =====
 
@@ -89,25 +86,8 @@ export function invalidateQuestEnchantment(skillId: string, removedAffixType: Af
     rt.questCompletions = 0
   }
   // 若 Transmute 附魔被移除，清理 transmuteResource
-  if (!skill.enchantmentIds.includes(EnchantmentType.Transmute)) {
+  if (!skill.enchantmentIds.includes('transmute')) {
     skill.transmuteResource = undefined
-  }
-}
-
-// ===== mutationApplied 事件广播 =====
-
-/**
- * 蜕变操作后广播 mutationApplied 事件。
- * 所有带 ApprenticeAdapt 附魔的技能获得成长。
- */
-function emitMutationApplied(): void {
-  for (const [skillId, skill] of state.affixSkills) {
-    if (skill.enchantmentIds.includes(EnchantmentType.ApprenticeAdapt)) {
-      const rt = state.affixSkillStates.get(skillId)
-      if (rt) {
-        rt.apprenticeAccumulated += ADAPT_GROWTH
-      }
-    }
   }
 }
 
@@ -223,9 +203,6 @@ export function mutateSingle(skillId: string, affixIndex: number, allowedCategor
   skill.name = generateName(skill.resource, skill.affixes)
   skill.icon = RESOURCE_ICONS[skill.resource] || '?'
 
-  // 广播 mutationApplied
-  emitMutationApplied()
-
   return {
     success: true,
     oldAffix,
@@ -288,9 +265,6 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
   // 更新名称和图标
   skill.name = generateName(skill.resource, skill.affixes)
   skill.icon = RESOURCE_ICONS[skill.resource] || '?'
-
-  // 广播 mutationApplied
-  emitMutationApplied()
 
   return {
     success: true,

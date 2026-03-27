@@ -77,7 +77,7 @@ export function generateRitualCandidates(affixSkill: AffixSkillInstance): Ritual
 
   const allTypes = [...categorized.apprentice, ...categorized.quest, ...categorized.transmute, ...categorized.operator];
   for (const enchType of allTypes) {
-    if (enchType === EnchantmentTypeEnum.Transmute) {
+    if ((enchType as string) === 'transmute') {
       const eligible = getTransmuteEligibleResources(affixSkill.resource, playerClass);
       if (eligible.length > 0) {
         const res = eligible[Math.floor(random() * eligible.length)];
@@ -117,7 +117,7 @@ export function applyRitualEnchantment(
   affixSkill.enchantmentIds.push(candidate.enchType);
 
   // Transmute：分配目标资源
-  if (candidate.enchType === EnchantmentTypeEnum.Transmute && candidate.transmuteRes) {
+  if ((candidate.enchType as string) === 'transmute' && candidate.transmuteRes) {
     affixSkill.transmuteResource = candidate.transmuteRes;
   }
 

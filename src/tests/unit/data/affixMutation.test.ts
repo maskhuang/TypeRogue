@@ -330,38 +330,7 @@ describe('invalidateQuestEnchantment', () => {
   })
 })
 
-// ============================================================
-// mutationApplied 事件 → ApprenticeAdapt 成长
-// ============================================================
-describe('mutationApplied event', () => {
-  it('mutate triggers ApprenticeAdapt growth (+0.15)', () => {
-    const skill = makeSkill({ id: 'skill_mutated' })
-    setupSkill(skill)
-    state.mutagenInventory = 10
-
-    const adaptSkill = makeSkill({
-      id: 'skill_adapt',
-      enchantmentIds: [EnchantmentType.ApprenticeAdapt],
-    })
-    setupSkill(adaptSkill)
-
-    mutate('skill_mutated')
-
-    const adaptRt = state.affixSkillStates.get('skill_adapt')!
-    expect(adaptRt.apprenticeAccumulated).toBeCloseTo(0.15, 4)
-  })
-
-  it('no growth when no skill has ApprenticeAdapt', () => {
-    const skill = makeSkill()
-    setupSkill(skill)
-    state.mutagenInventory = 10
-
-    mutate(skill.id)
-
-    const rt = state.affixSkillStates.get(skill.id)!
-    expect(rt.apprenticeAccumulated).toBe(0)
-  })
-})
+// Story 41.2: ApprenticeAdapt removed — mutationApplied no longer broadcasts
 
 // ============================================================
 // mutateSingle: 基因稳定器 — 单词条蜕变

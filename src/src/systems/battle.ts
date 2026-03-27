@@ -38,7 +38,7 @@ import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
-import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent, resolveMirrorCopy, categorizeEnchantmentCandidates, weightedPickEnchantment } from '../data/affixTrigger';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent, resolveMirrorCopy, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult } from '../data/affixTrigger';
 import { AffixType } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
@@ -77,7 +77,7 @@ export function applyChaosSeedEnchantments(): void {
     if (!chosen) continue;
     skill.enchantmentIds.push(chosen);
     // Transmute：随机分配目标资源
-    if (chosen === EnchantmentTypeEnum.Transmute) {
+    if ((chosen as string) === 'transmute') {
       const eligible = getTransmuteEligibleResources(skill.resource, playerClass);
       if (eligible.length > 0) {
         skill.transmuteResource = eligible[Math.floor(random() * eligible.length)];
@@ -101,7 +101,7 @@ export function removeChaosSeedEnchantments(): void {
     const idx = skill.enchantmentIds.indexOf(enchId);
     if (idx >= 0) skill.enchantmentIds.splice(idx, 1);
     // 清理 transmuteResource（如果是 Transmute 且无其他 Transmute 附魔）
-    if (enchId === (EnchantmentTypeEnum.Transmute as string) && !skill.enchantmentIds.includes(enchId)) {
+    if (enchId === ('transmute' as string) && !skill.enchantmentIds.includes(enchId)) {
       skill.transmuteResource = undefined;
     }
   }
@@ -212,7 +212,54 @@ function pickWord(): string {
     return demoWordQueue.shift()!.toUpperCase();
   }
   const words = getActiveWords();
+
+  // Gravity 词选：收集所有 Gravity 词条的 probMult，按字母加权选词
+  const gravityWeights = collectGravityWeights();
+  if (gravityWeights.size > 0) {
+    const weights: number[] = [];
+    for (const word of words) {
+      let w = 1;
+      const upper = word.toUpperCase();
+      const seen = new Set<string>();
+      for (const ch of upper) {
+        if (seen.has(ch)) continue;
+        seen.add(ch);
+        const mult = gravityWeights.get(ch);
+        if (mult !== undefined) w *= mult;
+      }
+      weights.push(w);
+    }
+    const total = weights.reduce((a, b) => a + b, 0);
+    if (total > 0) {
+      let r = random() * total;
+      for (let i = 0; i < words.length; i++) {
+        r -= weights[i];
+        if (r <= 0) return words[i].toUpperCase();
+      }
+    }
+  }
+
   return words[Math.floor(random() * words.length)].toUpperCase();
+}
+
+/** 收集所有 Gravity 词条的有效 probMult，按字母聚合（同字母取乘积） */
+function collectGravityWeights(): Map<string, number> {
+  const result = new Map<string, number>();
+  for (const [key, skillId] of state.player.bindings) {
+    const skill = state.affixSkills.get(skillId);
+    if (!skill) continue;
+    const runtimeState = state.affixSkillStates.get(skillId);
+    if (!runtimeState) continue;
+    for (const affix of skill.affixes) {
+      if (affix.type !== AffixType.Gravity) continue;
+      const probMult = getEffectiveProbMult(affix, runtimeState, skill);
+      if (probMult === 1) continue; // 中性，不影响
+      const letter = key.toUpperCase();
+      const existing = result.get(letter) ?? 1;
+      result.set(letter, existing * probMult);
+    }
+  }
+  return result;
 }
 
 let _starterSkillBound = false;

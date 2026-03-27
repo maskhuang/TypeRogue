@@ -43,10 +43,10 @@ describe('AffixType', () => {
 
   it('should contain all expected types', () => {
     const expected = [
-      'multiply', 'convert', 'rainbow',
+      'convert', 'rainbow',
       'charge', 'decay', 'pulse', 'crit', 'cascade',
       'void', 'resonance', 'mirror',
-      'link', 'splash', 'amplify',
+      'link', 'splash', 'amplify', 'conduit',
       'outcast', 'gravity', 'ligature',
       'twin', 'recurse', 'taboo',
     ]
@@ -73,23 +73,24 @@ describe('AFFIX_CATEGORY_MAP', () => {
   })
 
   it('should have correct category assignments', () => {
-    expect(AFFIX_CATEGORY_MAP[AffixType.Multiply]).toBe('numeric')
+    expect(AFFIX_CATEGORY_MAP[AffixType.Convert]).toBe('numeric')
     expect(AFFIX_CATEGORY_MAP[AffixType.Charge]).toBe('rhythm')
     expect(AFFIX_CATEGORY_MAP[AffixType.Void]).toBe('topology')
     expect(AFFIX_CATEGORY_MAP[AffixType.Link]).toBe('trigger_chain')
+    expect(AFFIX_CATEGORY_MAP[AffixType.Conduit]).toBe('trigger_chain')
     expect(AFFIX_CATEGORY_MAP[AffixType.Outcast]).toBe('word_sense')
     expect(AFFIX_CATEGORY_MAP[AffixType.Twin]).toBe('meta_rule')
   })
 
-  it('should have 3 numeric, 5 rhythm, 3 topology, 3 trigger_chain, 3 word_sense, 3 meta_rule', () => {
+  it('should have 2 numeric, 5 rhythm, 3 topology, 4 trigger_chain, 3 word_sense, 3 meta_rule', () => {
     const counts: Record<AffixCategory, number> = { numeric: 0, rhythm: 0, topology: 0, trigger_chain: 0, word_sense: 0, meta_rule: 0 }
     for (const cat of Object.values(AFFIX_CATEGORY_MAP)) {
       counts[cat]++
     }
-    expect(counts.numeric).toBe(3)
+    expect(counts.numeric).toBe(2)
     expect(counts.rhythm).toBe(5)
     expect(counts.topology).toBe(3)
-    expect(counts.trigger_chain).toBe(3)
+    expect(counts.trigger_chain).toBe(4)
     expect(counts.word_sense).toBe(3)
     expect(counts.meta_rule).toBe(3)
   })
@@ -100,23 +101,23 @@ describe('AFFIX_CATEGORY_MAP', () => {
 describe('EnchantmentType', () => {
   const allEnchTypes = Object.values(EnchantmentType)
 
-  it('should have exactly 36 values', () => {
-    expect(allEnchTypes).toHaveLength(36)
+  it('should have exactly 46 values', () => {
+    expect(allEnchTypes).toHaveLength(46)
   })
 
   it('should have unique string values', () => {
     const unique = new Set(allEnchTypes)
-    expect(unique.size).toBe(36)
+    expect(unique.size).toBe(46)
   })
 
-  it('should have 12 apprentice types', () => {
+  it('should have 28 apprentice types (3 generic + 5 resource + 20 affix)', () => {
     const apprentice = allEnchTypes.filter(v => v.startsWith('apprentice_'))
-    expect(apprentice).toHaveLength(12)
+    expect(apprentice).toHaveLength(28)
   })
 
-  it('should have 18 quest types', () => {
+  it('should have 17 quest types', () => {
     const quest = allEnchTypes.filter(v => v.startsWith('quest_'))
-    expect(quest).toHaveLength(18)
+    expect(quest).toHaveLength(17)
   })
 })
 
@@ -145,7 +146,7 @@ describe('QUEST_AFFIX_MAP', () => {
     expect(QUEST_AFFIX_MAP[EnchantmentType.QuestEnergize]).toBe(AffixType.Charge)
   })
 
-  it('should cover all affix types except Twin (no quest)', () => {
+  it('should cover all affix types except Twin and Conduit (no quest)', () => {
     const coveredAffixes = new Set<AffixType>()
     for (const mapping of Object.values(QUEST_AFFIX_MAP)) {
       if (Array.isArray(mapping)) {
@@ -154,7 +155,7 @@ describe('QUEST_AFFIX_MAP', () => {
         coveredAffixes.add(mapping)
       }
     }
-    const noQuestTypes = new Set([AffixType.Twin])
+    const noQuestTypes = new Set([AffixType.Twin, AffixType.Conduit])
     const allAffixTypes = Object.values(AffixType)
     for (const at of allAffixTypes) {
       if (noQuestTypes.has(at)) {
@@ -169,13 +170,13 @@ describe('QUEST_AFFIX_MAP', () => {
 // ===== QUEST_ENCHANTMENT_DEFS =====
 
 describe('QUEST_ENCHANTMENT_DEFS', () => {
-  it('should have 18 definitions', () => {
-    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(18)
+  it('should have 17 definitions', () => {
+    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(17)
   })
 
   it('should have unique enchantment types', () => {
     const types = QUEST_ENCHANTMENT_DEFS.map(d => d.type)
-    expect(new Set(types).size).toBe(18)
+    expect(new Set(types).size).toBe(17)
   })
 
   it('should have positive targetStacks for all', () => {
@@ -400,7 +401,7 @@ describe('AffixSkillSaveData', () => {
       resource: 'base',
       level: 1,
       rarity: 2,
-      affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
+      affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
       enchantmentIds: [],
       runtime: createSkillRuntimeState('test_save'),
     }

@@ -86,9 +86,9 @@ describe('Story 41.1: 仪式附魔系统', () => {
     it('候选超过上限时截断为 2 个（无 fate_fork）', () => {
       const candidates: RitualCandidate[] = [
         { enchType: EnchantmentType.ApprenticeSelf },
-        { enchType: EnchantmentType.ApprenticeWord },
-        { enchType: EnchantmentType.ApprenticeCombo },
-        { enchType: EnchantmentType.ApprenticeStage },
+        { enchType: EnchantmentType.ApprenticeProc },
+        { enchType: EnchantmentType.ApprenticeNeighbor },
+        { enchType: EnchantmentType.QuestDevour },
       ]
       const choices = pickRitualChoices(candidates)
       expect(choices).toHaveLength(2)
@@ -98,9 +98,9 @@ describe('Story 41.1: 仪式附魔系统', () => {
       state.player.relics.add('fate_fork')
       const candidates: RitualCandidate[] = [
         { enchType: EnchantmentType.ApprenticeSelf },
-        { enchType: EnchantmentType.ApprenticeWord },
-        { enchType: EnchantmentType.ApprenticeCombo },
-        { enchType: EnchantmentType.ApprenticeStage },
+        { enchType: EnchantmentType.ApprenticeProc },
+        { enchType: EnchantmentType.ApprenticeNeighbor },
+        { enchType: EnchantmentType.QuestDevour },
       ]
       const choices = pickRitualChoices(candidates)
       expect(choices).toHaveLength(3)
@@ -120,13 +120,13 @@ describe('Story 41.1: 仪式附魔系统', () => {
     it('Transmute 候选分配 transmuteResource', () => {
       const skill = makeAffixSkill('s1')
       const candidate: RitualCandidate = {
-        enchType: EnchantmentType.Transmute,
+        enchType: 'transmute',
         transmuteRes: 'gold',
       }
 
       applyRitualEnchantment('s1', skill, candidate)
 
-      expect(skill.enchantmentIds).toContain(EnchantmentType.Transmute)
+      expect(skill.enchantmentIds).toContain('transmute')
       expect(skill.transmuteResource).toBe('gold')
     })
 

@@ -136,6 +136,7 @@ export interface Phase5Result {
 export type Phase6Action =
   | { type: 'resonance', neighborKey: string }
   | { type: 'link', neighborKey: string }
+  | { type: 'conduit', targetKey: string }
   | { type: 'apprentice_neighbor', neighborKey: string, growthDelta: number }
   | { type: 'quest_resonance', neighborKey: string }
 
@@ -318,6 +319,7 @@ export function resolvePhase2(
         break
       }
 
+      /** @deprecated Charge 待 Story 41-5 重新实现长按蓄力机制 */
       case AffixType.Charge: {
         const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestEnergize)
         const maxEff = (affix.maxBonus ?? 0) + c * 0.3
@@ -351,7 +353,8 @@ export function resolvePhase2(
       }
 
       case AffixType.Taboo: {
-        bonusPercent += 1.0
+        const cSacrifice = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestSacrifice)
+        bonusPercent += 1.0 + cSacrifice * 0.30
         break
       }
 
@@ -421,14 +424,6 @@ export function resolvePhase3(
 
   for (const affix of skill.affixes) {
     switch (affix.type) {
-      case AffixType.Multiply: {
-        const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestAscend)
-        const m = (affix.multiplier ?? 1) + c * 0.15
-        output *= m
-        multipliers.push(m)
-        break
-      }
-
       case AffixType.Crit: {
         const roll = ctx.randomFn()
         if (roll < (affix.chance ?? 0)) {
@@ -461,7 +456,7 @@ export function resolvePhase3(
         multipliers.push(m)
         // 计算衰减后的新值
         const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestPurify)
-        const floorEff = Math.max(0.1, (affix.floor ?? 0.5) - c * 0.05)
+        const floorEff = Math.max(0.1, (affix.floor ?? 0.5) + c * 0.05)
         const newDecay = Math.max(floorEff, runtimeState.currentDecayMult - (affix.decayPerTrigger ?? 0))
         runtimeState.currentDecayMult = newDecay
         break
@@ -491,8 +486,7 @@ export function resolvePhase3(
       }
 
       case AffixType.Taboo: {
-        const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestSacrifice)
-        const effPenalty = Math.max(0.02, (affix.penaltyChance ?? 0.1) - c * 0.01)
+        const effPenalty = affix.penaltyChance ?? 0.1
         if (ctx.randomFn() < effPenalty) {
           output *= -1
           multipliers.push(-1)
@@ -521,15 +515,107 @@ export const APPRENTICE_GROWTH_DEFAULTS: Partial<Record<EnchantmentType, number>
   // Phase 5 自触发类型
   [EnchantmentType.ApprenticeSelf]: 0.005,      // 0.5% — selfTrigger（每次触发）
   [EnchantmentType.ApprenticeProc]: 0.015,       // 1.5% — affixProc
-  [EnchantmentType.ApprenticeWord]: 0.02,        // 2%   — wordComplete
-  [EnchantmentType.ApprenticeLongWord]: 0.025,   // 2.5% — longWord(≥6)
-  [EnchantmentType.ApprenticePerfect]: 0.03,     // 3%   — perfectWord
-  [EnchantmentType.ApprenticeHarvest]: 0.15,     // 15%  — wordCrafted（造词师限定）
-  [EnchantmentType.ApprenticeAdapt]: 0.03,       // 3%   — mutationApplied（蜕变师限定）
-  // 外部事件类型（由 applyApprenticeEvent 处理）
-  [EnchantmentType.ApprenticeCombo]: 0.01,       // 1%   — comboReach(15)
-  [EnchantmentType.ApprenticeStage]: 0.08,       // 8%   — stageCleared
+  // 资源专精类型（Phase 5 资源匹配时成长）
+  [EnchantmentType.ApprenticeResBase]: 0.02,       // 2% — 产出 base 资源
+  [EnchantmentType.ApprenticeResScore]: 0.02,      // 2% — 产出 score 资源
+  [EnchantmentType.ApprenticeResMultiplier]: 0.02,  // 2% — 产出 multiplier 资源
+  [EnchantmentType.ApprenticeResTime]: 0.02,       // 2% — 产出 time 资源
+  [EnchantmentType.ApprenticeResGold]: 0.02,       // 2% — 产出 gold 资源
   // ApprenticeNeighbor 不在此表，按 APPRENTICE_NEIGHBOR_GROWTH 查 posRel 表
+}
+
+/** 资源专精附魔→目标资源映射 */
+export const APPRENTICE_RESOURCE_MAP: Partial<Record<EnchantmentType, ResourceType>> = {
+  [EnchantmentType.ApprenticeResBase]: 'base',
+  [EnchantmentType.ApprenticeResScore]: 'score',
+  [EnchantmentType.ApprenticeResMultiplier]: 'multiplier',
+  [EnchantmentType.ApprenticeResTime]: 'time',
+  [EnchantmentType.ApprenticeResGold]: 'gold',
+}
+
+/** 悟道·词条附魔：AffixType → 对应 EnchantmentType */
+export const APPRENTICE_AFFIX_MAP: Record<AffixType, EnchantmentType> = {
+  [AffixType.Convert]: EnchantmentType.ApprenticeAffixConvert,
+  [AffixType.Rainbow]: EnchantmentType.ApprenticeAffixRainbow,
+  [AffixType.Charge]: EnchantmentType.ApprenticeAffixCharge,
+  [AffixType.Decay]: EnchantmentType.ApprenticeAffixDecay,
+  [AffixType.Pulse]: EnchantmentType.ApprenticeAffixPulse,
+  [AffixType.Crit]: EnchantmentType.ApprenticeAffixCrit,
+  [AffixType.Cascade]: EnchantmentType.ApprenticeAffixCascade,
+  [AffixType.Void]: EnchantmentType.ApprenticeAffixVoid,
+  [AffixType.Resonance]: EnchantmentType.ApprenticeAffixResonance,
+  [AffixType.Mirror]: EnchantmentType.ApprenticeAffixMirror,
+  [AffixType.Link]: EnchantmentType.ApprenticeAffixLink,
+  [AffixType.Splash]: EnchantmentType.ApprenticeAffixSplash,
+  [AffixType.Amplify]: EnchantmentType.ApprenticeAffixAmplify,
+  [AffixType.Conduit]: EnchantmentType.ApprenticeAffixConduit,
+  [AffixType.Outcast]: EnchantmentType.ApprenticeAffixOutcast,
+  [AffixType.Gravity]: EnchantmentType.ApprenticeAffixGravity,
+  [AffixType.Ligature]: EnchantmentType.ApprenticeAffixLigature,
+  [AffixType.Twin]: EnchantmentType.ApprenticeAffixTwin,
+  [AffixType.Recurse]: EnchantmentType.ApprenticeAffixRecurse,
+  [AffixType.Taboo]: EnchantmentType.ApprenticeAffixTaboo,
+}
+
+/** 悟道·词条附魔成长率（权重低的词条成长更快） */
+export const APPRENTICE_AFFIX_GROWTH: Record<AffixType, number> = {
+  [AffixType.Convert]: 0.02,     // weight 8
+  [AffixType.Rainbow]: 0.015,    // weight 10
+  [AffixType.Charge]: 0.02,      // weight 8
+  [AffixType.Decay]: 0.015,      // weight 10
+  [AffixType.Pulse]: 0.015,      // weight 10
+  [AffixType.Crit]: 0.015,       // weight 10
+  [AffixType.Cascade]: 0.02,     // weight 8
+  [AffixType.Void]: 0.02,        // weight 8
+  [AffixType.Resonance]: 0.02,   // weight 8
+  [AffixType.Mirror]: 0.02,      // weight 8
+  [AffixType.Link]: 0.02,        // weight 8
+  [AffixType.Splash]: 0.02,      // weight 8
+  [AffixType.Amplify]: 0.02,     // weight 8
+  [AffixType.Conduit]: 0.025,    // weight 6
+  [AffixType.Outcast]: 0.02,     // weight 8
+  [AffixType.Gravity]: 0.04,     // weight 3
+  [AffixType.Ligature]: 0.02,    // weight 8
+  [AffixType.Twin]: 0.05,        // weight 2
+  [AffixType.Recurse]: 0.015,    // weight 10
+  [AffixType.Taboo]: 0.015,      // weight 10
+}
+
+/**
+ * 悟道·词条：触发后跨技能通知。
+ * 场上任何技能触发时，如果该技能拥有词条 X，
+ * 则所有拥有"悟道·X"附魔的其他技能获得成长。
+ * 由 orchestrator 在每次 trigger 完成后调用。
+ */
+export function applyApprenticeAffixGrowth(
+  triggeredSkillId: string,
+  triggeredAffixTypes: AffixType[],
+  allSkills: Map<string, AffixSkillInstance>,
+  skillStates: Map<string, SkillRuntimeState>,
+  growthMultiplier: number = 1,
+): void {
+  // 收集触发技能的词条类型对应的悟道附魔类型
+  const targetEnchs = new Set<EnchantmentType>()
+  for (const affixType of triggeredAffixTypes) {
+    targetEnchs.add(APPRENTICE_AFFIX_MAP[affixType])
+  }
+
+  // 遍历所有技能，检查是否有匹配的悟道附魔
+  for (const [skillId, skill] of allSkills) {
+    if (skillId === triggeredSkillId) continue // 不含自身
+    const rt = skillStates.get(skillId)
+    if (!rt) continue
+
+    for (const enchId of skill.enchantmentIds) {
+      if (!targetEnchs.has(enchId as EnchantmentType)) continue
+      // 找到对应词条类型以获取成长率
+      for (const affixType of triggeredAffixTypes) {
+        if (APPRENTICE_AFFIX_MAP[affixType] === enchId) {
+          rt.apprenticeAccumulated += APPRENTICE_AFFIX_GROWTH[affixType] * growthMultiplier
+        }
+      }
+    }
+  }
 }
 
 // ===== Phase 4-6 辅助函数 =====
@@ -678,6 +764,7 @@ export function resolvePhase5(
   triggerFlags: TriggerFlags,
   output: number,
   recurseDepth: number = 0,
+  targetResource?: ResourceType,
 ): Phase5Result {
   const result: Phase5Result = {
     recurse: { shouldRecurse: false, newChance: 0 },
@@ -752,15 +839,12 @@ export function resolvePhase5(
         shouldGrow = triggerFlags.isCrit || triggerFlags.isPulse
           || triggerFlags.isCascade || triggerFlags.isTabooPenalty
         break
-      // Word/LongWord/Perfect/Harvest/Adapt/Combo/Stage — 外部事件，不在 Phase 5 处理
-      case EnchantmentType.ApprenticeWord:
-      case EnchantmentType.ApprenticeLongWord:
-      case EnchantmentType.ApprenticePerfect:
-      case EnchantmentType.ApprenticeHarvest:
-      case EnchantmentType.ApprenticeAdapt:
-      case EnchantmentType.ApprenticeCombo:
-      case EnchantmentType.ApprenticeStage:
-        shouldGrow = false
+      case EnchantmentType.ApprenticeResBase:
+      case EnchantmentType.ApprenticeResScore:
+      case EnchantmentType.ApprenticeResMultiplier:
+      case EnchantmentType.ApprenticeResTime:
+      case EnchantmentType.ApprenticeResGold:
+        shouldGrow = targetResource != null && APPRENTICE_RESOURCE_MAP[ench] === targetResource
         break
     }
 
@@ -797,8 +881,8 @@ export function resolvePhase5(
     }
   }
 
-  // 衍生附魔（per-resource ratio，同资源时直接增强主产出）
-  if (skill.enchantmentIds.includes(EnchantmentType.Transmute)) {
+  // @deprecated 嬗变系已删除（Story 41.2），保留供旧存档向后兼容
+  if (skill.enchantmentIds.includes('transmute')) {
     const extraResource = ctx.transmuteResource
     if (extraResource) {
       const ratio = TRANSMUTE_RATIO_TABLE[extraResource]
@@ -879,6 +963,23 @@ export function resolvePhase6(
       }
     }
 
+    // 导能词条：邻居有 Conduit 且触发技能拥有 Conduit 技能的其他词条类型 → 触发技能 +1 触发
+    for (const affix of neighborSkill.affixes) {
+      if (affix.type !== AffixType.Conduit || affix.posRel == null) continue
+      // 检查范围匹配（双侧 any-match）
+      const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
+      if (matchedNk == null) continue
+      // 检查触发技能是否拥有 Conduit 技能的其他词条类型
+      const conduitOtherTypes = neighborSkill.affixes
+        .filter(a => a.type !== AffixType.Conduit)
+        .map(a => a.type)
+      const triggerHasMatch = skill.affixes.some(a => conduitOtherTypes.includes(a.type))
+      if (triggerHasMatch) {
+        // 让触发技能再触发一次（targetKey 指向触发技能的键位）
+        actions.push({ type: 'conduit', targetKey: triggerKey })
+      }
+    }
+
     // 任务·共振附魔：邻居触发 → 叠层（双侧 any-match，取实际匹配键）
     if (neighborSkill.enchantmentIds.includes(EnchantmentType.QuestResonance)) {
       const matchedNk = neighborKeys.find(nk =>
@@ -933,8 +1034,9 @@ export function triggerAffixSkill(
   // Mirror 词条替换：将 Mirror 替换为运行时复制的词条，使其参与所有 Phase 计算
   const effectiveSkill = buildEffectiveSkill(skill, runtimeState)
 
-  // Phase 1: 基础值
-  const base = resolvePhase1(effectiveSkill)
+  // Phase 1: 基础值（Conduit 技能自身不产出，基础值为 0）
+  const hasConduit = effectiveSkill.affixes.some(a => a.type === AffixType.Conduit)
+  const base = hasConduit ? 0 : resolvePhase1(effectiveSkill)
 
   // Phase 2: 加算层
   const p2 = resolvePhase2(effectiveSkill, runtimeState, ctx, base)
@@ -946,7 +1048,7 @@ export function triggerAffixSkill(
   const p4 = resolvePhase4(effectiveSkill, p3.output, runtimeState, ctx)
 
   // Phase 5: 后触发
-  const p5 = resolvePhase5(effectiveSkill, runtimeState, ctx, p3.flags, p3.output, recurseDepth)
+  const p5 = resolvePhase5(effectiveSkill, runtimeState, ctx, p3.flags, p3.output, recurseDepth, p4.targetResource)
 
   // Phase 6: 邻居通知（感应词条检查触发技能词条类型）
   const p6 = resolvePhase6(ctx.triggerKey, effectiveSkill, runtimeState, ctx, p4.targetResource)
@@ -976,12 +1078,7 @@ export function triggerAffixSkill(
 
 /** 学徒附魔事件→附魔类型映射（一个事件可映射多个附魔类型） */
 const APPRENTICE_EVENT_MAP: Record<string, EnchantmentType[]> = {
-  stageCleared: [EnchantmentType.ApprenticeStage],
-  comboReach: [EnchantmentType.ApprenticeCombo],
-  wordComplete: [EnchantmentType.ApprenticeWord],
-  wordCrafted: [EnchantmentType.ApprenticeHarvest],
-  longWordComplete: [EnchantmentType.ApprenticeLongWord],
-  perfectWord: [EnchantmentType.ApprenticePerfect],
+  // 精简后仅保留 Self/Neighbor/Proc，无外部事件类型
 }
 
 /**
@@ -1018,7 +1115,6 @@ const QUEST_EXTERNAL_EVENT_MAP: Record<string, EnchantmentType[]> = {
   stageCleared: [EnchantmentType.QuestMirror],
   comboReach: [EnchantmentType.QuestPurify],
   wordComplete: [EnchantmentType.QuestEnergize, EnchantmentType.QuestPolarize],
-  perfectWord: [EnchantmentType.QuestAscend],
   longWordComplete: [EnchantmentType.QuestFission],
 }
 
@@ -1129,7 +1225,6 @@ export function resolveMirrorCopy(
     if (copied.probMult != null) copied.probMult *= boost
     if (copied.interval != null) copied.interval *= boost
     // 乘算类参数：boost 作用于 (m-1) 增量
-    if (copied.multiplier != null) copied.multiplier = 1 + (copied.multiplier - 1) * boost
     if (copied.critMult != null) copied.critMult = 1 + (copied.critMult - 1) * boost
     if (copied.burstMult != null) copied.burstMult = 1 + (copied.burstMult - 1) * boost
     if (copied.cascadeMult != null) copied.cascadeMult = 1 + (copied.cascadeMult - 1) * boost
@@ -1176,22 +1271,22 @@ export interface CategorizedEnchantments {
 export function categorizeEnchantmentCandidates(skill: AffixSkillInstance): CategorizedEnchantments {
   const existingEnchs = new Set(skill.enchantmentIds)
 
-  // 学徒附魔（无词条要求）
+  // 学徒附魔（无词条要求）— 3 通用 + 5 资源专精 + 20 悟道·词条
   const apprenticeTypes: EnchantmentType[] = [
     EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeNeighbor,
-    EnchantmentType.ApprenticeWord, EnchantmentType.ApprenticeProc,
-    EnchantmentType.ApprenticeLongWord, EnchantmentType.ApprenticePerfect,
-    EnchantmentType.ApprenticeCombo, EnchantmentType.ApprenticeStage,
-    EnchantmentType.ApprenticeHarvest, EnchantmentType.ApprenticeAdapt,
+    EnchantmentType.ApprenticeProc,
+    EnchantmentType.ApprenticeResBase, EnchantmentType.ApprenticeResScore,
+    EnchantmentType.ApprenticeResMultiplier, EnchantmentType.ApprenticeResTime,
+    EnchantmentType.ApprenticeResGold,
+    ...Object.values(APPRENTICE_AFFIX_MAP),
   ]
   const apprentice = apprenticeTypes.filter(t => !existingEnchs.has(t))
 
   // 任务附魔（需匹配词条）
   const quest = filterQuestCandidates(skill)
 
-  // 衍生附魔
-  const transmute: EnchantmentType[] = !existingEnchs.has(EnchantmentType.Transmute)
-    ? [EnchantmentType.Transmute] : []
+  // 衍生附魔（@deprecated — 嬗变系已删除，始终返回空）
+  const transmute: EnchantmentType[] = []
 
   // 运算符
   const operator: EnchantmentType[] = !existingEnchs.has(EnchantmentType.MultiplyOperator)
@@ -1225,8 +1320,8 @@ export function filterEnchantmentCandidates(skill: AffixSkillInstance): Enchantm
 }
 
 /**
+ * @deprecated 嬗变系已删除（Story 41.2），保留供旧存档兼容。
  * 返回衍生附魔可选的目标资源列表。
- * 排除与技能自身相同的资源，并根据职业限制排除 fragment/mutagen。
  */
 export function getTransmuteEligibleResources(
   skillResource: ResourceType,
@@ -1255,6 +1350,7 @@ export function getEnchantmentSlotCount(skill: AffixSkillInstance, bonusSlots: n
 // ===== 生命周期钩子 (Story 35.8) =====
 
 /**
+ * @deprecated Decay 跨单词不再重置，仅跨关重置（Story 41.2 AC7）。
  * 每词初始化：重置所有技能的 Decay 词条 currentDecayMult 为该词条的 initialMult。
  * 纯函数——直接修改传入的 skillStates。
  */
@@ -1288,6 +1384,16 @@ export function resetStageState(
     state.triggerCount = 0
     state.amplifyStacks = 0
     state.chargeAccumulated = 0
+
+    // Decay: 每关重置 currentDecayMult（Story 41.2 AC7 — 跨单词不重置，仅跨关重置）
+    const skill = skills.get(skillId)
+    if (skill) {
+      for (const affix of skill.affixes) {
+        if (affix.type === AffixType.Decay) {
+          state.currentDecayMult = affix.initialMult ?? 1
+        }
+      }
+    }
 
     // Mirror 词条复制已移至关卡结束时（battle.ts），此处不再刷新
   }
@@ -1400,15 +1506,16 @@ export function migrateLoadedSkills(
 // ===== 内部辅助 =====
 
 /** 判断附魔类型是否为学徒系列 */
+const APPRENTICE_AFFIX_ENCH_SET = new Set<EnchantmentType>(Object.values(APPRENTICE_AFFIX_MAP))
+
 export function isApprenticeEnchantment(ench: EnchantmentType): boolean {
   return ench === EnchantmentType.ApprenticeSelf
     || ench === EnchantmentType.ApprenticeNeighbor
-    || ench === EnchantmentType.ApprenticeWord
     || ench === EnchantmentType.ApprenticeProc
-    || ench === EnchantmentType.ApprenticeLongWord
-    || ench === EnchantmentType.ApprenticePerfect
-    || ench === EnchantmentType.ApprenticeCombo
-    || ench === EnchantmentType.ApprenticeStage
-    || ench === EnchantmentType.ApprenticeHarvest
-    || ench === EnchantmentType.ApprenticeAdapt
+    || ench === EnchantmentType.ApprenticeResBase
+    || ench === EnchantmentType.ApprenticeResScore
+    || ench === EnchantmentType.ApprenticeResMultiplier
+    || ench === EnchantmentType.ApprenticeResTime
+    || ench === EnchantmentType.ApprenticeResGold
+    || APPRENTICE_AFFIX_ENCH_SET.has(ench)
 }

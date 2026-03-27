@@ -47,7 +47,7 @@ import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity, AffixType } from '../data/affixes';
 import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, getQuestCompletions, countEmptySlots, categorizeEnchantmentCandidates, weightedPickEnchantment } from '../data/affixTrigger';
-import { filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_NAMES, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH } from '../data/affixes';
+import { filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
@@ -375,7 +375,7 @@ function generateShopEnchantmentItem(itemId: number): ShopItem | null {
     );
     const allTypes = [...categorized.apprentice, ...categorized.quest, ...categorized.transmute, ...categorized.operator];
     for (const enchType of allTypes) {
-      if (enchType === EnchantmentTypeEnum.Transmute) {
+      if ((enchType as string) === 'transmute') {
         const eligibleRes = getTransmuteEligibleResources(affixSkill.resource, playerClass);
         for (const res of eligibleRes) {
           const key = `${enchType}:${res}`;
@@ -510,7 +510,6 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
 function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): string {
   const rel = a.posRel ? t('rel.' + a.posRel) : '';
   switch (a.type) {
-    case 'multiply': return `×${a.multiplier?.toFixed(1) ?? '?'}`
     case 'convert': return t('param.convert_to_self', { icon: RESOURCE_ICONS[a.source!] || '', name: t('resource.' + a.source!), k: a.k?.toFixed(3) ?? '?' })
     case 'charge': return t('param.charge', { gain: Math.round((a.gainPerSec ?? 0) * 100), max: Math.round((a.maxBonus ?? 0) * 100) })
     case 'decay': return t('param.decay', { init: a.initialMult ?? '?', decay: a.decayPerTrigger ?? '?', floor: a.floor ?? '?' })
@@ -543,7 +542,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
 // APPRENTICE_ENCHANTMENT_IDS 已被 isApprenticeEnchantment() 取代
 
 /**
- * 计算战斗外可预估的产出：Multiply / Void / Taboo 词条 + 学徒附魔。
+ * 计算战斗外可预估的产出：Void / Taboo 词条 + 学徒附魔。
  * 返回 null 表示该技能没有可预估项。
  * @param boundKeys 技能绑定的键位（无绑定时传 undefined，Void 需要；多格技能传所有占据键）
  */
@@ -580,14 +579,6 @@ export function computeSmartEstimate(
 
   for (const affix of skill.affixes) {
     switch (affix.type) {
-      case 'multiply': {
-        const c = questC('quest_ascend' as import('../data/affixes').EnchantmentType)
-        const m = (affix.multiplier ?? 1) + c * 0.15
-        multProduct *= m
-        const detail = c > 0 ? t('est.multiply_quest', { base: affix.multiplier?.toFixed(1) ?? '?', c }) : ''
-        breakdown.push({ typeKey: 'multiply', label: t('est.multiply', { val: m.toFixed(2) }), detail })
-        break
-      }
       case 'void': {
         if (affix.posRel == null) break
         const c = questC('quest_devour' as import('../data/affixes').EnchantmentType)
@@ -1984,7 +1975,7 @@ export function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: 
     };
   }
   // Transmute 特殊处理
-  if (type === EnchantmentTypeEnum.Transmute && transmuteRes) {
+  if ((type as string) === 'transmute' && transmuteRes) {
     const ratio = TRANSMUTE_RATIO_TABLE[transmuteRes];
     return {
       name: t('transmute_name.' + transmuteRes),
@@ -2045,7 +2036,7 @@ function applyAffixRandomEnchantment(
   if (!chosen) return;
   affixSkill.enchantmentIds.push(chosen);
   // Transmute：随机分配目标资源
-  if (chosen === EnchantmentTypeEnum.Transmute) {
+  if ((chosen as string) === 'transmute') {
     const playerClass = state.classId !== 'none' ? state.classId : undefined;
     const eligible = getTransmuteEligibleResources(affixSkill.resource, playerClass);
     if (eligible.length > 0) {
@@ -2099,7 +2090,7 @@ function renderAffixEnchantmentModal(
   const expandedCandidates: ShownCandidate[] = [];
   for (const enchType of candidates) {
     const cat = enchToCat.get(enchType)!;
-    if (enchType === EnchantmentTypeEnum.Transmute) {
+    if ((enchType as string) === 'transmute') {
       const eligible = getTransmuteEligibleResources(affixSkill.resource, playerClass);
       if (eligible.length > 0) {
         const res = eligible[Math.floor(random() * eligible.length)];
@@ -2159,7 +2150,7 @@ function renderAffixEnchantmentModal(
     card.onclick = () => {
       affixSkill.enchantmentIds.push(enchType);
       // Transmute：保存目标资源
-      if (enchType === EnchantmentTypeEnum.Transmute && transmuteRes) {
+      if ((enchType as string) === 'transmute' && transmuteRes) {
         affixSkill.transmuteResource = transmuteRes;
       }
       // ApprenticeNeighbor：保存位置关系
@@ -2468,7 +2459,7 @@ export function renderBuildManager(): void {
             schoolCssClass: `rarity-${affixSkill.rarity}`,
           };
           const estimate = computeSmartEstimate(affixSkill, rt, skillAllKeys.length > 0 ? skillAllKeys : undefined);
-          const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['multiply', 'void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
+          const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
           const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
           tooltipData.skill.affixInfo = fields.affixInfo;
           tooltipData.skill.enchantments = fields.enchantments;
@@ -2591,7 +2582,7 @@ export function renderBuildManager(): void {
           },
         };
         const estimate = computeSmartEstimate(affixSkill, rt, invAllKeys.length > 0 ? invAllKeys : undefined);
-        const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['multiply', 'void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
+        const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
         const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
         tooltipData.skill!.affixInfo = fields.affixInfo;
         tooltipData.skill!.enchantments = fields.enchantments;

@@ -238,7 +238,10 @@ describe('AC1: 20 种词条单独平衡', () => {
       // 范围断言: baseValue × [0.5, 10.0]
       expect(avgOutput).not.toBeNaN()
       expect(Number.isFinite(avgOutput)).toBe(true)
-      if (affixType !== AffixType.Taboo) {
+      if (affixType === AffixType.Conduit) {
+        // Conduit 自身不产出
+        expect(avgOutput).toBe(0)
+      } else if (affixType !== AffixType.Taboo) {
         expect(avgOutput).toBeGreaterThanOrEqual(baseValue * 0.5)
         expect(avgOutput).toBeLessThanOrEqual(baseValue * 10.0)
       }
@@ -299,10 +302,11 @@ describe('AC2: 稀有度递进', () => {
   })
 
   it('蓝装平均 > 白装（1 个数值型词条增益显著）', () => {
-    // 使用 Multiply 词条（最稳定的增益词条）
-    const blue = buildSkillWithAffixes([AffixType.Multiply], 'base')
+    // 使用 Crit 词条（确定性增益）
+    const blue = buildSkillWithAffixes([AffixType.Crit], 'base')
     blue.rarity = 1 as 0
-    blue.affixes[0].multiplier = 1.5
+    blue.affixes[0].chance = 1.0  // 100% 暴击
+    blue.affixes[0].critMult = 2.0
 
     const white = makeSkill({ resource: 'base', rarity: 0 as 0, affixes: [] })
 
@@ -315,23 +319,26 @@ describe('AC2: 稀有度递进', () => {
 
   it('橙装（3 数值词条）> 黄装（2 词条）> 蓝装（1 词条）', () => {
     // 使用确定性数值词条排除随机性
-    const blue = buildSkillWithAffixes([AffixType.Multiply], 'base')
+    const blue = buildSkillWithAffixes([AffixType.Crit], 'base')
     blue.rarity = 1 as 0
-    blue.affixes[0].multiplier = 1.5
+    blue.affixes[0].chance = 1.0
+    blue.affixes[0].critMult = 1.5
 
-    const yellow = buildSkillWithAffixes([AffixType.Multiply, AffixType.Crit], 'base')
+    const yellow = buildSkillWithAffixes([AffixType.Crit, AffixType.Taboo], 'base')
     yellow.rarity = 2 as 0
-    yellow.affixes[0].multiplier = 1.5
-    yellow.affixes[1].chance = 0.5
-    yellow.affixes[1].critMult = 2.0
+    yellow.affixes[0].chance = 1.0
+    yellow.affixes[0].critMult = 1.5
+    yellow.affixes[1].bonusPercent = 1.0
+    yellow.affixes[1].penaltyChance = 0  // 无惩罚，纯 +100%
 
     const orange = buildSkillWithAffixes(
-      [AffixType.Multiply, AffixType.Crit, AffixType.Outcast], 'base',
+      [AffixType.Crit, AffixType.Taboo, AffixType.Outcast], 'base',
     )
     orange.rarity = 3 as 0
-    orange.affixes[0].multiplier = 1.5
-    orange.affixes[1].chance = 0.5
-    orange.affixes[1].critMult = 2.0
+    orange.affixes[0].chance = 1.0
+    orange.affixes[0].critMult = 1.5
+    orange.affixes[1].bonusPercent = 1.0
+    orange.affixes[1].penaltyChance = 0
     orange.affixes[2].bonusPercent = 0.5
 
     const avgBlue = avg(batchTrigger(blue, 30))
@@ -411,8 +418,8 @@ describe('AC4: 任务附魔循环', () => {
     })
   }
 
-  it('18 个任务定义完整，覆盖所有词条', () => {
-    expect(QUEST_ENCHANTMENT_DEFS.length).toBe(18)
+  it('17 个任务定义完整，覆盖所有词条', () => {
+    expect(QUEST_ENCHANTMENT_DEFS.length).toBe(17)
 
     // 所有 targetAffix 应为有效 AffixType
     for (const def of QUEST_ENCHANTMENT_DEFS) {

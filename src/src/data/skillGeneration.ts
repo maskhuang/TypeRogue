@@ -76,6 +76,8 @@ export function weightedSampleWithout(count: number): WeightedSampleResult[] {
   // 构建带权重的可变池
   const pool = new Map<string, number>()
   for (const [key, weight] of Object.entries(AFFIX_WEIGHTS)) {
+    // Conduit 仅在 ≥2 词条技能上生成（需要"其他词条"作为导能条件）
+    if (key === AffixType.Conduit && count < 2) continue
     pool.set(key, weight)
   }
 
@@ -127,9 +129,6 @@ export function rollAffixParams(
 ): AffixInstance {
   const pool = availableResources ?? GENERIC_RESOURCES
   switch (type) {
-    case AffixType.Multiply:
-      return { type, multiplier: roundTo(1.3 + random() * 0.7, 2) }
-
     case AffixType.Convert: {
       let source: ResourceType
       if (convertVariant === 'self') {
@@ -203,6 +202,9 @@ export function rollAffixParams(
 
     case AffixType.Amplify:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), resource, valuePerStack: 0.02 }
+
+    case AffixType.Conduit:
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
     case AffixType.Outcast:
       return { type, bonusPercent: roundTo(0.4 + random() * 0.4, 2) }

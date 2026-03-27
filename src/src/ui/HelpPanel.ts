@@ -28,7 +28,6 @@ type GlossaryCategory = typeof CATEGORIES[number]
  */
 export const GLOSSARY_DATA: GlossaryEntry[] = [
   // 词条（20 种）
-  { category: 'affix', id: 'multiply', icon: '✖️', nameKey: 'affix.multiply', descKey: 'affix_desc.multiply' },
   { category: 'affix', id: 'convert', icon: '🔄', nameKey: 'affix.convert', descKey: 'affix_desc.convert' },
   { category: 'affix', id: 'rainbow', icon: '🌈', nameKey: 'affix.rainbow', descKey: 'affix_desc.rainbow' },
   { category: 'affix', id: 'charge', icon: '🔋', nameKey: 'affix.charge', descKey: 'affix_desc.charge' },
@@ -42,6 +41,7 @@ export const GLOSSARY_DATA: GlossaryEntry[] = [
   { category: 'affix', id: 'link', icon: '🔗', nameKey: 'affix.link', descKey: 'affix_desc.link' },
   { category: 'affix', id: 'splash', icon: '💦', nameKey: 'affix.splash', descKey: 'affix_desc.splash' },
   { category: 'affix', id: 'amplify', icon: '📢', nameKey: 'affix.amplify', descKey: 'affix_desc.amplify' },
+  { category: 'affix', id: 'conduit', icon: '⚡', nameKey: 'affix.conduit', descKey: 'affix_desc.conduit' },
   { category: 'affix', id: 'outcast', icon: '🏴', nameKey: 'affix.outcast', descKey: 'affix_desc.outcast' },
   { category: 'affix', id: 'gravity', icon: '🌍', nameKey: 'affix.gravity', descKey: 'affix_desc.gravity' },
   { category: 'affix', id: 'ligature', icon: '🔠', nameKey: 'affix.ligature', descKey: 'affix_desc.ligature' },
@@ -49,18 +49,16 @@ export const GLOSSARY_DATA: GlossaryEntry[] = [
   { category: 'affix', id: 'recurse', icon: '🔁', nameKey: 'affix.recurse', descKey: 'affix_desc.recurse' },
   { category: 'affix', id: 'taboo', icon: '⚠️', nameKey: 'affix.taboo', descKey: 'affix_desc.taboo' },
 
-  // 附魔（10 种标准 + 2 种职业）
+  // 附魔（3 种学徒 + 5 资源专精 + 运算符）
   { category: 'enchantment', id: 'apprentice_self', icon: '📖', nameKey: 'ench_meta.apprentice_self', descKey: 'ench_meta.apprentice_self.desc' },
   { category: 'enchantment', id: 'apprentice_neighbor', icon: '📖', nameKey: 'ench_meta.apprentice_neighbor', descKey: 'ench_meta.apprentice_neighbor.desc' },
-  { category: 'enchantment', id: 'apprentice_word', icon: '📖', nameKey: 'ench_meta.apprentice_word', descKey: 'ench_meta.apprentice_word.desc' },
   { category: 'enchantment', id: 'apprentice_proc', icon: '📖', nameKey: 'ench_meta.apprentice_proc', descKey: 'ench_meta.apprentice_proc.desc' },
-  { category: 'enchantment', id: 'apprentice_longword', icon: '📖', nameKey: 'ench_meta.apprentice_longword', descKey: 'ench_meta.apprentice_longword.desc' },
-  { category: 'enchantment', id: 'apprentice_perfect', icon: '📖', nameKey: 'ench_meta.apprentice_perfect', descKey: 'ench_meta.apprentice_perfect.desc' },
-  { category: 'enchantment', id: 'apprentice_combo', icon: '📖', nameKey: 'ench_meta.apprentice_combo', descKey: 'ench_meta.apprentice_combo.desc' },
-  { category: 'enchantment', id: 'apprentice_stage', icon: '📖', nameKey: 'ench_meta.apprentice_stage', descKey: 'ench_meta.apprentice_stage.desc' },
+  { category: 'enchantment', id: 'apprentice_res_base', icon: '🔢', nameKey: 'ench_meta.apprentice_res_base', descKey: 'ench_meta.apprentice_res_base.desc' },
+  { category: 'enchantment', id: 'apprentice_res_score', icon: '🏅', nameKey: 'ench_meta.apprentice_res_score', descKey: 'ench_meta.apprentice_res_score.desc' },
+  { category: 'enchantment', id: 'apprentice_res_multiplier', icon: '📈', nameKey: 'ench_meta.apprentice_res_multiplier', descKey: 'ench_meta.apprentice_res_multiplier.desc' },
+  { category: 'enchantment', id: 'apprentice_res_time', icon: '⏳', nameKey: 'ench_meta.apprentice_res_time', descKey: 'ench_meta.apprentice_res_time.desc' },
+  { category: 'enchantment', id: 'apprentice_res_gold', icon: '💰', nameKey: 'ench_meta.apprentice_res_gold', descKey: 'ench_meta.apprentice_res_gold.desc' },
   { category: 'enchantment', id: 'multiply_operator', icon: '⚙️', nameKey: 'ench_meta.multiply_operator', descKey: 'ench_meta.multiply_operator.desc' },
-  { category: 'enchantment', id: 'apprentice_harvest', icon: '🌾', nameKey: 'ench_meta.apprentice_harvest', descKey: 'ench_meta.apprentice_harvest.desc' },
-  { category: 'enchantment', id: 'apprentice_adapt', icon: '🧬', nameKey: 'ench_meta.apprentice_adapt', descKey: 'ench_meta.apprentice_adapt.desc' },
 
   // 位置关系（6 种）
   { category: 'position', id: 'adjacent', icon: '↔️', nameKey: 'rel.adjacent', descKey: 'rel.adjacent.desc' },

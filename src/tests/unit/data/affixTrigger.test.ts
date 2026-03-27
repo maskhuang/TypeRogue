@@ -63,6 +63,9 @@ import {
   ALL_RESOURCES,
   MAX_RECURSE_DEPTH,
   APPRENTICE_GROWTH_DEFAULTS,
+  APPRENTICE_AFFIX_MAP,
+  APPRENTICE_AFFIX_GROWTH,
+  applyApprenticeAffixGrowth,
   MUTATION_HUNGER_CHANCE,
   buildEffectiveSkill,
 } from '../../../src/data/affixTrigger'
@@ -510,6 +513,20 @@ describe('resolvePhase2', () => {
       // output = 5 * (1 + 1.0) = 10
       expect(result.output).toBeCloseTo(10)
     })
+
+    it('QuestSacrifice: should add +30% per completion to Phase 2 bonusPercent', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Taboo, bonusPercent: 1.0, penaltyChance: 0.1 }],
+        enchantmentIds: [EnchantmentType.QuestSacrifice],
+      })
+      const state = makeRuntimeState({ questCompletions: 3 })
+      const ctx = makeContext()
+      const result = resolvePhase2(skill, state, ctx, 5)
+      // bonusPercent = 1.0 + 3*0.30 = 1.9
+      expect(result.bonusPercent).toBeCloseTo(1.9)
+      // output = 5 * (1 + 1.9) = 14.5
+      expect(result.output).toBeCloseTo(14.5)
+    })
   })
 
   describe('Enchantment bonuses', () => {
@@ -648,31 +665,6 @@ describe('resolvePhase2', () => {
 // ===== Phase 3 测试 =====
 
 describe('resolvePhase3', () => {
-  describe('Multiply affix', () => {
-    it('should multiply output by multiplier', () => {
-      const skill = makeSkill({
-        affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
-      })
-      const state = makeRuntimeState()
-      const ctx = makeContext()
-      const result = resolvePhase3(skill, state, ctx, 10)
-      expect(result.output).toBeCloseTo(15)
-      expect(result.multipliers).toEqual([1.5])
-    })
-
-    it('should apply quest ascend enhancement (multiplier + c*0.15)', () => {
-      const skill = makeSkill({
-        affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
-        enchantmentIds: [EnchantmentType.QuestAscend],
-      })
-      const state = makeRuntimeState({ questCompletions: 2 })
-      const ctx = makeContext()
-      const result = resolvePhase3(skill, state, ctx, 10)
-      // m = 1.5 + 2*0.15 = 1.8
-      expect(result.output).toBeCloseTo(18)
-    })
-  })
-
   describe('Crit affix', () => {
     it('should multiply output when roll succeeds', () => {
       const skill = makeSkill({
@@ -785,7 +777,7 @@ describe('resolvePhase3', () => {
       expect(state.currentDecayMult).toBeCloseTo(0.5)
     })
 
-    it('should apply quest purify enhancement (floor - c*0.05, min 0.1)', () => {
+    it('should apply quest purify enhancement (floor + c*0.05, positive effect)', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 }],
         enchantmentIds: [EnchantmentType.QuestPurify],
@@ -793,22 +785,23 @@ describe('resolvePhase3', () => {
       const state = makeRuntimeState({ currentDecayMult: 0.55, questCompletions: 4 })
       const ctx = makeContext()
       resolvePhase3(skill, state, ctx, 10)
-      // floorEff = max(0.1, 0.5 - 4*0.05) = max(0.1, 0.3) = 0.3
-      // max(0.3, 0.55 - 0.15) = max(0.3, 0.4) = 0.4
-      expect(state.currentDecayMult).toBeCloseTo(0.4)
+      // floorEff = max(0.1, 0.5 + 4*0.05) = max(0.1, 0.7) = 0.7
+      // max(0.7, 0.55 - 0.15) = max(0.7, 0.4) = 0.7
+      expect(state.currentDecayMult).toBeCloseTo(0.7)
     })
 
-    it('should enforce minimum floor of 0.1', () => {
+    it('should enforce minimum floor of 0.1 even with QuestPurify', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 }],
         enchantmentIds: [EnchantmentType.QuestPurify],
       })
+      // With QuestPurify raising floor, the floor is 0.5 + 20*0.05 = 1.5, capped by the Decay mult itself
       const state = makeRuntimeState({ currentDecayMult: 0.2, questCompletions: 20 })
       const ctx = makeContext()
       resolvePhase3(skill, state, ctx, 10)
-      // floorEff = max(0.1, 0.5 - 20*0.05) = max(0.1, -0.5) = 0.1
-      // max(0.1, 0.2 - 0.15) = max(0.1, 0.05) = 0.1
-      expect(state.currentDecayMult).toBeCloseTo(0.1)
+      // floorEff = max(0.1, 0.5 + 20*0.05) = max(0.1, 1.5) = 1.5
+      // max(1.5, 0.2 - 0.15) = max(1.5, 0.05) = 1.5
+      expect(state.currentDecayMult).toBeCloseTo(1.5)
     })
   })
 
@@ -899,28 +892,15 @@ describe('resolvePhase3', () => {
       expect(result.flags.isTabooPenalty).toBe(false)
     })
 
-    it('should apply quest sacrifice enhancement (penaltyChance - c*0.01, min 0.02)', () => {
+    it('QuestSacrifice: penalty chance stays fixed (no longer reduces)', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Taboo, bonusPercent: 1.0, penaltyChance: 0.1 }],
         enchantmentIds: [EnchantmentType.QuestSacrifice],
       })
       const state = makeRuntimeState({ questCompletions: 5 })
-      // effPenalty = max(0.02, 0.1 - 5*0.01) = max(0.02, 0.05) = 0.05
-      // randomFn returns 0.04 < 0.05 → penalty
-      const ctx = makeContext({ randomFn: () => 0.04 })
-      const result = resolvePhase3(skill, state, ctx, 10)
-      expect(result.output).toBeCloseTo(-10)
-    })
-
-    it('should enforce minimum penaltyChance of 0.02', () => {
-      const skill = makeSkill({
-        affixes: [{ type: AffixType.Taboo, bonusPercent: 1.0, penaltyChance: 0.1 }],
-        enchantmentIds: [EnchantmentType.QuestSacrifice],
-      })
-      const state = makeRuntimeState({ questCompletions: 20 })
-      // effPenalty = max(0.02, 0.1 - 20*0.01) = max(0.02, -0.1) = 0.02
-      // randomFn returns 0.01 < 0.02 → penalty still possible
-      const ctx = makeContext({ randomFn: () => 0.01 })
+      // effPenalty = 0.1 (fixed, no longer reduced by QuestSacrifice)
+      // randomFn returns 0.09 < 0.1 → penalty
+      const ctx = makeContext({ randomFn: () => 0.09 })
       const result = resolvePhase3(skill, state, ctx, 10)
       expect(result.output).toBeCloseTo(-10)
     })
@@ -930,17 +910,17 @@ describe('resolvePhase3', () => {
     it('should apply multiple multipliers independently', () => {
       const skill = makeSkill({
         affixes: [
-          { type: AffixType.Multiply, multiplier: 1.5 },
           { type: AffixType.Crit, chance: 0.5, critMult: 2.0 },
+          { type: AffixType.Decay, initialMult: 1.5, decayPerTrigger: 0.15, floor: 0.5 },
         ],
         rarity: 2 as 2,
       })
-      const state = makeRuntimeState()
+      const state = makeRuntimeState({ currentDecayMult: 1.5 })
       const ctx = makeContext({ randomFn: () => 0.3 }) // crit hits
       const result = resolvePhase3(skill, state, ctx, 10)
-      // 10 * 1.5 * 2.0 = 30
+      // 10 * 2.0 (crit) * 1.5 (decay) = 30
       expect(result.output).toBeCloseTo(30)
-      expect(result.multipliers).toEqual([1.5, 2.0])
+      expect(result.multipliers).toEqual([2.0, 1.5])
     })
   })
 })
@@ -1037,10 +1017,10 @@ describe('triggerAffixSkill', () => {
     const skill = makeSkill({
       level: 1,
       rarity: 1 as 1,
-      affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
+      affixes: [{ type: AffixType.Crit, chance: 1.0, critMult: 1.5 }],
     })
     const state = makeRuntimeState()
-    const ctx = makeContext()
+    const ctx = makeContext({ randomFn: () => 0.0 }) // crit always hits
     const result = triggerAffixSkill(skill, state, ctx)
     // Phase 1: 5
     // Phase 2: no additive affix → 5 * (1+0) = 5
@@ -1057,15 +1037,15 @@ describe('triggerAffixSkill', () => {
       baseValues: [5, 8, 12] as [number, number, number],
       affixes: [
         { type: AffixType.Taboo, bonusPercent: 1.0, penaltyChance: 0.1 },
-        { type: AffixType.Multiply, multiplier: 1.5 },
+        { type: AffixType.Crit, chance: 1.0, critMult: 1.5 },
       ],
     })
     const state = makeRuntimeState()
-    const ctx = makeContext({ randomFn: () => 0.5 }) // no taboo penalty
+    const ctx = makeContext({ randomFn: () => 0.5 }) // no taboo penalty (0.5 > 0.1), but crit needs roll < chance
     const result = triggerAffixSkill(skill, state, ctx)
     // Phase 1: 8 (level 2)
     // Phase 2: taboo +100% → 8 * (1 + 1.0) = 16
-    // Phase 3: multiply 1.5 → 16 * 1.5 = 24; taboo no penalty (0.5 > 0.1)
+    // Phase 3: crit 1.5 → 16 * 1.5 = 24; taboo no penalty (0.5 > 0.1)
     expect(result.output).toBeCloseTo(24)
   })
 
@@ -1075,17 +1055,17 @@ describe('triggerAffixSkill', () => {
       rarity: 3 as 3,
       affixes: [
         { type: AffixType.Outcast, bonusPercent: 0.5 },
-        { type: AffixType.Multiply, multiplier: 1.5 },
+        { type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 },
         { type: AffixType.Crit, chance: 0.5, critMult: 2.0 },
       ],
     })
-    const state = makeRuntimeState()
+    const state = makeRuntimeState({ currentDecayMult: 1.5 })
     // 'a' is first letter of 'apple'; crit hits (0.3 < 0.5)
     const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple', randomFn: () => 0.3 })
     const result = triggerAffixSkill(skill, state, ctx)
     // Phase 1: 5
     // Phase 2: outcast +50% → 5 * 1.5 = 7.5
-    // Phase 3: multiply 1.5 → 7.5 * 1.5 = 11.25; crit 2.0 → 11.25 * 2.0 = 22.5
+    // Phase 3: decay 1.5 → 7.5 * 1.5 = 11.25; crit 2.0 → 11.25 * 2.0 = 22.5
     expect(result.output).toBeCloseTo(22.5)
     expect(result.isCrit).toBe(true)
   })
@@ -1503,7 +1483,7 @@ describe('resolvePhase5', () => {
   describe('Transmute enchantment', () => {
     it('should produce extra resource output using per-resource ratio', () => {
       const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.Transmute],
+        enchantmentIds: ['transmute'],
       })
       const state = makeRuntimeState()
       const ctx = makeContext({
@@ -1517,7 +1497,7 @@ describe('resolvePhase5', () => {
 
     it('should use per-resource ratio from TRANSMUTE_RATIO_TABLE', () => {
       const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.Transmute],
+        enchantmentIds: ['transmute'],
       })
       const state = makeRuntimeState()
       const ctx = makeContext({ transmuteResource: 'score' as ResourceType })
@@ -1529,7 +1509,7 @@ describe('resolvePhase5', () => {
 
     it('should return null when no transmuteResource', () => {
       const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.Transmute],
+        enchantmentIds: ['transmute'],
       })
       const state = makeRuntimeState()
       const ctx = makeContext()
@@ -1541,7 +1521,7 @@ describe('resolvePhase5', () => {
     it('should set transmuteSameResourceBoost when extraResource === skill.resource', () => {
       const skill = makeSkill({
         resource: 'base' as ResourceType,
-        enchantmentIds: [EnchantmentType.Transmute],
+        enchantmentIds: ['transmute'],
       })
       const state = makeRuntimeState()
       const ctx = makeContext({ transmuteResource: 'base' as ResourceType })
@@ -1708,10 +1688,10 @@ describe('resolvePhase6', () => {
     })
 
     it('should NOT produce link action when trigger skill does not have the watched affix', () => {
-      // Trigger skill has Multiply, not Crit
+      // Trigger skill has Decay, not Crit
       const skill = makeSkill({
         resource: 'gold' as ResourceType,
-        affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
+        affixes: [{ type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 }],
       })
       const neighborSkill = makeSkill({
         id: 'sk_neighbor',
@@ -1848,6 +1828,99 @@ describe('resolvePhase6', () => {
       expect(result.actions).toEqual([])
     })
   })
+
+  describe('Conduit affix', () => {
+    it('should produce conduit action when neighbor has Conduit and trigger skill shares an affix type', () => {
+      // Trigger skill has Crit
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+      })
+      // Neighbor has Conduit + Crit (Conduit's "other" affix is Crit)
+      const neighborSkill = makeSkill({
+        id: 'sk_conduit',
+        affixes: [
+          { type: AffixType.Conduit, posRel: PositionRelation.SameRow },
+          { type: AffixType.Crit, chance: 0.5, critMult: 2.0 },
+        ],
+        rarity: 2 as 2,
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_conduit']])
+      const allSkills = new Map([['test_skill', skill], ['sk_conduit', neighborSkill]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const conduitActions = result.actions.filter(a => a.type === 'conduit')
+      // 'a' and 's' are same row → conduit triggers
+      expect(conduitActions.length).toBe(1)
+      expect(conduitActions[0].targetKey).toBe('a') // re-triggers the original skill
+    })
+
+    it('should NOT produce conduit action when trigger skill does not share any affix type', () => {
+      // Trigger skill has Decay (no match with Conduit's other affix Crit)
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 }],
+      })
+      const neighborSkill = makeSkill({
+        id: 'sk_conduit',
+        affixes: [
+          { type: AffixType.Conduit, posRel: PositionRelation.SameRow },
+          { type: AffixType.Crit, chance: 0.5, critMult: 2.0 },
+        ],
+        rarity: 2 as 2,
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_conduit']])
+      const allSkills = new Map([['test_skill', skill], ['sk_conduit', neighborSkill]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const conduitActions = result.actions.filter(a => a.type === 'conduit')
+      expect(conduitActions.length).toBe(0)
+    })
+
+    it('should NOT produce conduit action when posRel does not match', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+      })
+      const neighborSkill = makeSkill({
+        id: 'sk_conduit',
+        affixes: [
+          { type: AffixType.Conduit, posRel: PositionRelation.Symmetric }, // a↔; not a↔s
+          { type: AffixType.Crit, chance: 0.5, critMult: 2.0 },
+        ],
+        rarity: 2 as 2,
+      })
+      const bindings = new Map([['a', 'test_skill'], ['s', 'sk_conduit']])
+      const allSkills = new Map([['test_skill', skill], ['sk_conduit', neighborSkill]])
+      const state = makeRuntimeState()
+      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+      const result = resolvePhase6('a', skill, state, ctx)
+      const conduitActions = result.actions.filter(a => a.type === 'conduit')
+      expect(conduitActions.length).toBe(0)
+    })
+  })
+})
+
+// ===== Conduit 零产出测试 =====
+
+describe('Conduit zero output', () => {
+  it('should produce 0 output when skill has Conduit affix', () => {
+    const skill = makeSkill({
+      affixes: [
+        { type: AffixType.Conduit, posRel: PositionRelation.SameRow },
+        { type: AffixType.Crit, chance: 1.0, critMult: 2.0 },
+      ],
+      rarity: 2 as 2,
+      level: 1,
+    })
+    const state = makeRuntimeState()
+    const ctx = makeContext({ randomFn: () => 0.0 })
+    const result = triggerAffixSkill(skill, state, ctx)
+    // Conduit zeroes base → output = 0 regardless of other affixes
+    expect(result.output).toBe(0)
+  })
 })
 
 // ===== Phase 1-6 组合端到端测试 =====
@@ -1946,19 +2019,6 @@ describe('Code review fixes', () => {
     }
   })
 
-  it('QuestAscend (event=perfectWord) should NOT stack during Phase 5', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
-      enchantmentIds: [EnchantmentType.QuestAscend],
-    })
-    const state = makeRuntimeState({ questStacks: 0 })
-    const ctx = makeContext()
-    const flags = makeFlags()
-    // QuestAscend event = 'perfectWord' → external event → should NOT stack in Phase 5
-    resolvePhase5(skill, state, ctx, flags, 10)
-    expect(state.questStacks).toBe(0)
-  })
-
   it('QuestEnergize (event=wordComplete) should NOT stack during Phase 5', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Charge, gainPerSec: 0.08, maxBonus: 2.0 }],
@@ -1974,18 +2034,11 @@ describe('Code review fixes', () => {
 
 // ===== Story 35.5: 附魔系统 — 溅射 + 学徒(12) =====
 
-describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness', () => {
-  it('should contain all 9 Phase-5 + event apprentice types (excluding Neighbor)', () => {
+describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness (精简后)', () => {
+  it('should contain only Self + Proc (excluding Neighbor)', () => {
     const expectedTypes = [
       EnchantmentType.ApprenticeSelf,
       EnchantmentType.ApprenticeProc,
-      EnchantmentType.ApprenticeWord,
-      EnchantmentType.ApprenticeLongWord,
-      EnchantmentType.ApprenticePerfect,
-      EnchantmentType.ApprenticeHarvest,
-      EnchantmentType.ApprenticeAdapt,
-      EnchantmentType.ApprenticeCombo,
-      EnchantmentType.ApprenticeStage,
     ]
     for (const t of expectedTypes) {
       expect(APPRENTICE_GROWTH_DEFAULTS[t]).toBeDefined()
@@ -1996,13 +2049,14 @@ describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness', () => {
   it('growthPerProc values should match design document', () => {
     expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeSelf]).toBeCloseTo(0.005)
     expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeProc]).toBeCloseTo(0.015)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeWord]).toBeCloseTo(0.02)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeLongWord]).toBeCloseTo(0.025)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticePerfect]).toBeCloseTo(0.03)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeHarvest]).toBeCloseTo(0.15)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeAdapt]).toBeCloseTo(0.03)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeCombo]).toBeCloseTo(0.01)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeStage]).toBeCloseTo(0.08)
+  })
+
+  it('resource specialization types should have 2% growth', () => {
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResBase]).toBeCloseTo(0.02)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResScore]).toBeCloseTo(0.02)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResMultiplier]).toBeCloseTo(0.02)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResTime]).toBeCloseTo(0.02)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResGold]).toBeCloseTo(0.02)
   })
 
   it('ApprenticeNeighbor should NOT be in APPRENTICE_GROWTH_DEFAULTS', () => {
@@ -2010,160 +2064,95 @@ describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness', () => {
   })
 })
 
-describe('Story 35.5: Phase 5 new apprentice self-trigger types', () => {
-  // ── Word/LongWord/Perfect/Harvest/Adapt 已从 Phase 5 迁移到外部事件 ──
-  // Phase 5 不再处理这些类型，全部在 applyApprenticeEvent 中处理
-
-  it('ApprenticeWord: should NOT accumulate in Phase 5 (now external event)', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeWord] })
+describe('Story 41.2: Resource specialization enchantments — Phase 5 growth', () => {
+  it('ApprenticeResBase: should grow when targetResource is base', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
     const state = makeRuntimeState()
-    const ctx = makeContext({ currentWord: 'hello', wordCompleted: true })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBe(0)
-  })
-
-  it('ApprenticeWord: should accumulate via applyApprenticeEvent wordComplete', () => {
-    const state = makeRuntimeState()
-    const applied = applyApprenticeEvent('wordComplete', state, [EnchantmentType.ApprenticeWord])
-    expect(applied).toBe(true)
+    resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'base')
     expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
   })
 
-  it('ApprenticeWord: should not accumulate for unrelated event', () => {
+  it('ApprenticeResBase: should NOT grow when targetResource is score', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
     const state = makeRuntimeState()
-    const applied = applyApprenticeEvent('perfectWord', state, [EnchantmentType.ApprenticeWord])
-    expect(applied).toBe(false)
+    resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'score')
     expect(state.apprenticeAccumulated).toBe(0)
   })
 
-  it('ApprenticeLongWord: should NOT accumulate in Phase 5 (now external event)', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeLongWord] })
+  it('ApprenticeResGold: should grow when targetResource is gold', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResGold] })
     const state = makeRuntimeState()
-    const ctx = makeContext({ currentWord: 'banana', wordCompleted: true })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBe(0)
+    resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'gold')
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
   })
 
-  it('ApprenticeLongWord: should accumulate via applyApprenticeEvent longWordComplete', () => {
+  it('should NOT grow when targetResource is undefined', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
     const state = makeRuntimeState()
-    const applied = applyApprenticeEvent('longWordComplete', state, [EnchantmentType.ApprenticeLongWord])
-    expect(applied).toBe(true)
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.025)
-  })
-
-  it('ApprenticePerfect: should NOT accumulate in Phase 5 (now external event)', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticePerfect] })
-    const state = makeRuntimeState()
-    const ctx = makeContext({ perfectWord: true })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBe(0)
-  })
-
-  it('ApprenticePerfect: should accumulate via applyApprenticeEvent perfectWord', () => {
-    const state = makeRuntimeState()
-    const applied = applyApprenticeEvent('perfectWord', state, [EnchantmentType.ApprenticePerfect])
-    expect(applied).toBe(true)
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
-  })
-
-  it('ApprenticeHarvest: should NOT accumulate in Phase 5 (now external event)', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeHarvest] })
-    const state = makeRuntimeState()
-    const ctx = makeContext({ currentWord: 'test', wordCompleted: true })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBe(0)
-  })
-
-  it('ApprenticeHarvest: should accumulate via applyApprenticeEvent wordCrafted', () => {
-    const state = makeRuntimeState()
-    const applied = applyApprenticeEvent('wordCrafted', state, [EnchantmentType.ApprenticeHarvest])
-    expect(applied).toBe(true)
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.15)
-  })
-
-  it('ApprenticeAdapt: should NOT accumulate in Phase 5 (now external event)', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeAdapt] })
-    const state = makeRuntimeState()
-    const ctx = makeContext({ mutationApplied: true })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBe(0)
-  })
-
-  it('ApprenticeAdapt: should NOT respond to word events (handled via emitMutationApplied)', () => {
-    const state = makeRuntimeState()
-    const applied = applyApprenticeEvent('wordComplete', state, [EnchantmentType.ApprenticeAdapt])
-    expect(applied).toBe(false)
-    expect(state.apprenticeAccumulated).toBe(0)
-  })
-
-  it('ApprenticeCombo: should NOT accumulate in Phase 5 (external event)', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeCombo] })
-    const state = makeRuntimeState()
-    const ctx = makeContext({ comboCount: 15 })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.apprenticeAccumulated).toBe(0)
-  })
-
-  it('ApprenticeStage: should NOT accumulate in Phase 5 (external event)', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeStage] })
-    const state = makeRuntimeState()
-    const ctx = makeContext()
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0)
     expect(state.apprenticeAccumulated).toBe(0)
   })
 })
 
-describe('Story 35.5: applyApprenticeEvent', () => {
-  it('stageCleared should accumulate ApprenticeStage growth', () => {
-    const state = makeRuntimeState()
-    const result = applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeStage])
-    expect(result).toBe(true)
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.08)
+describe('Story 41.2: 悟道·词条附魔 — applyApprenticeAffixGrowth', () => {
+  it('should grow when matching affix type triggers on another skill', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+
+    // Skill A: has Crit affix (triggers)
+    const skillA = makeSkill({ id: 'A', affixes: [{ type: AffixType.Crit, chance: 0.3, critMult: 2 }] })
+    skills.set('A', skillA)
+    states.set('A', makeRuntimeState())
+
+    // Skill B: has ApprenticeAffixCrit enchantment (should grow)
+    const skillB = makeSkill({ id: 'B', enchantmentIds: [EnchantmentType.ApprenticeAffixCrit] })
+    skills.set('B', skillB)
+    states.set('B', makeRuntimeState())
+
+    applyApprenticeAffixGrowth('A', [AffixType.Crit], skills, states)
+
+    expect(states.get('B')!.apprenticeAccumulated).toBeCloseTo(APPRENTICE_AFFIX_GROWTH[AffixType.Crit])
+    expect(states.get('A')!.apprenticeAccumulated).toBe(0) // self excluded
   })
 
-  it('comboReach should accumulate ApprenticeCombo growth', () => {
-    const state = makeRuntimeState()
-    const result = applyApprenticeEvent('comboReach', state, [EnchantmentType.ApprenticeCombo])
-    expect(result).toBe(true)
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.01)
+  it('should NOT grow when no matching affix', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+
+    const skillA = makeSkill({ id: 'A', affixes: [{ type: AffixType.Crit, chance: 0.3, critMult: 2 }] })
+    skills.set('A', skillA)
+    states.set('A', makeRuntimeState())
+
+    const skillB = makeSkill({ id: 'B', enchantmentIds: [EnchantmentType.ApprenticeAffixDecay] })
+    skills.set('B', skillB)
+    states.set('B', makeRuntimeState())
+
+    applyApprenticeAffixGrowth('A', [AffixType.Crit], skills, states)
+
+    expect(states.get('B')!.apprenticeAccumulated).toBe(0)
   })
 
-  it('should return false for unknown event', () => {
+  it('rare affixes should have higher growth rates', () => {
+    // Twin (weight 2) should have higher growth than Crit (weight 10)
+    expect(APPRENTICE_AFFIX_GROWTH[AffixType.Twin]).toBeGreaterThan(APPRENTICE_AFFIX_GROWTH[AffixType.Crit])
+    expect(APPRENTICE_AFFIX_GROWTH[AffixType.Gravity]).toBeGreaterThan(APPRENTICE_AFFIX_GROWTH[AffixType.Rainbow])
+  })
+
+  it('APPRENTICE_AFFIX_MAP should cover all 20 AffixTypes', () => {
+    expect(Object.keys(APPRENTICE_AFFIX_MAP).length).toBe(20)
+  })
+})
+
+describe('Story 41.2: Pruned apprentice types should no longer exist in APPRENTICE_EVENT_MAP', () => {
+  it('applyApprenticeEvent returns false for all pruned events', () => {
     const state = makeRuntimeState()
-    const result = applyApprenticeEvent('unknownEvent', state, [EnchantmentType.ApprenticeStage])
-    expect(result).toBe(false)
+    for (const event of ['wordComplete', 'longWordComplete', 'perfectWord', 'wordCrafted', 'stageCleared', 'comboReach']) {
+      const applied = applyApprenticeEvent(event, state, [EnchantmentType.ApprenticeSelf])
+      expect(applied).toBe(false)
+    }
     expect(state.apprenticeAccumulated).toBe(0)
   })
 
-  it('should return false when enchantment not in list', () => {
-    const state = makeRuntimeState()
-    const result = applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeSelf])
-    expect(result).toBe(false)
-    expect(state.apprenticeAccumulated).toBe(0)
-  })
-
-  it('should accumulate incrementally on repeated calls', () => {
-    const state = makeRuntimeState()
-    applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeStage])
-    applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeStage])
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.16)
-  })
-
-  it('should apply growthMultiplier when provided', () => {
-    const state = makeRuntimeState()
-    applyApprenticeEvent('stageCleared', state, [EnchantmentType.ApprenticeStage], 2.0)
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.16) // 0.08 * 2.0
-  })
-
-  it('wordComplete should grow ApprenticeWord but NOT ApprenticeHarvest', () => {
-    const state = makeRuntimeState()
-    const applied = applyApprenticeEvent('wordComplete', state, [
-      EnchantmentType.ApprenticeWord,
-      EnchantmentType.ApprenticeHarvest,
-    ])
-    expect(applied).toBe(true)
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.02) // only Word(2%), Harvest uses wordCrafted
-  })
 })
 
 describe('Story 35.6: applyQuestEvent external events', () => {
@@ -2197,42 +2186,26 @@ describe('Story 35.6: applyQuestEvent external events', () => {
   })
 })
 
-describe('Story 35.5: filterEnchantmentsByClass', () => {
+describe('Story 41.2: filterEnchantmentsByClass (精简后无职业限定)', () => {
   const candidates = [
     EnchantmentType.ApprenticeSelf,
-    EnchantmentType.ApprenticeHarvest,
-    EnchantmentType.ApprenticeAdapt,
+    EnchantmentType.ApprenticeProc,
     EnchantmentType.QuestDevour,
   ]
 
-  it('no class: should exclude all class-restricted enchantments', () => {
+  it('no class: should pass all candidates through (no restrictions)', () => {
     const result = filterEnchantmentsByClass(candidates)
-    expect(result).toContain(EnchantmentType.ApprenticeSelf)
-    expect(result).toContain(EnchantmentType.QuestDevour)
-    expect(result).not.toContain(EnchantmentType.ApprenticeHarvest)
-    expect(result).not.toContain(EnchantmentType.ApprenticeAdapt)
+    expect(result).toEqual(candidates)
   })
 
-  it('wordsmith: should keep Harvest but exclude Adapt', () => {
+  it('wordsmith: should pass all candidates through', () => {
     const result = filterEnchantmentsByClass(candidates, 'wordsmith')
-    expect(result).toContain(EnchantmentType.ApprenticeSelf)
-    expect(result).toContain(EnchantmentType.QuestDevour)
-    expect(result).toContain(EnchantmentType.ApprenticeHarvest)
-    expect(result).not.toContain(EnchantmentType.ApprenticeAdapt)
+    expect(result).toEqual(candidates)
   })
 
-  it('metamorph: should keep Adapt but exclude Harvest', () => {
-    const result = filterEnchantmentsByClass(candidates, 'metamorph')
-    expect(result).toContain(EnchantmentType.ApprenticeSelf)
-    expect(result).toContain(EnchantmentType.QuestDevour)
-    expect(result).not.toContain(EnchantmentType.ApprenticeHarvest)
-    expect(result).toContain(EnchantmentType.ApprenticeAdapt)
-  })
-
-  it('unknown class: should exclude all class-restricted', () => {
+  it('unknown class: should pass all candidates through', () => {
     const result = filterEnchantmentsByClass(candidates, 'unknown')
-    expect(result).not.toContain(EnchantmentType.ApprenticeHarvest)
-    expect(result).not.toContain(EnchantmentType.ApprenticeAdapt)
+    expect(result).toEqual(candidates)
   })
 })
 
@@ -2241,24 +2214,6 @@ describe('Story 35.5: filterEnchantmentsByClass', () => {
 describe('Story 35.6: checkQuestEventCondition inline events', () => {
   // ── Word-based quest enchantments migrated from Phase 5 to external events ──
   // Phase 5 no longer processes these; test via applyQuestEvent instead
-
-  it('perfectWord event: QuestAscend should NOT stack in Phase 5 (now external event)', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Multiply, multiplier: 1.5 }],
-      enchantmentIds: [EnchantmentType.QuestAscend],
-    })
-    const state = makeRuntimeState()
-    const ctx = makeContext({ perfectWord: true })
-    resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    expect(state.questStacks).toBe(0)
-  })
-
-  it('perfectWord event: QuestAscend should stack via applyQuestEvent', () => {
-    const state = makeRuntimeState()
-    const applied = applyQuestEvent('perfectWord', state, [EnchantmentType.QuestAscend])
-    expect(applied).toBe(true)
-    expect(state.questStacks).toBe(1)
-  })
 
   it('wordComplete event: QuestEnergize should stack via applyQuestEvent', () => {
     const state = makeRuntimeState()
@@ -2614,8 +2569,8 @@ describe('Story 35.6: getEnchantmentSlotCount', () => {
 })
 
 describe('Story 35.6: QUEST_ENCHANTMENT_DEFS completeness', () => {
-  it('should have exactly 18 quest enchantment definitions', () => {
-    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(18)
+  it('should have exactly 17 quest enchantment definitions', () => {
+    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(17)
   })
 
   it('every quest enchantment should have a matching QUEST_AFFIX_MAP entry', () => {
@@ -2647,7 +2602,7 @@ describe('TRANSMUTE_RATIO_TABLE', () => {
 
 describe('Transmute per-resource ratios in Phase 5', () => {
   it('should use multiplier ratio (10%) for multiplier resource', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.Transmute] })
+    const skill = makeSkill({ enchantmentIds: ['transmute'] })
     const state = makeRuntimeState()
     const ctx = makeContext({ transmuteResource: 'multiplier' as ResourceType })
     const flags = makeFlags()
@@ -2656,7 +2611,7 @@ describe('Transmute per-resource ratios in Phase 5', () => {
   })
 
   it('should use fragment ratio (15%) for fragment resource', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.Transmute] })
+    const skill = makeSkill({ enchantmentIds: ['transmute'] })
     const state = makeRuntimeState()
     const ctx = makeContext({ transmuteResource: 'fragment' as ResourceType })
     const flags = makeFlags()
@@ -2665,7 +2620,7 @@ describe('Transmute per-resource ratios in Phase 5', () => {
   })
 
   it('should use time ratio (20%) for time resource', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.Transmute] })
+    const skill = makeSkill({ enchantmentIds: ['transmute'] })
     const state = makeRuntimeState()
     const ctx = makeContext({ transmuteResource: 'time' as ResourceType })
     const flags = makeFlags()
@@ -2678,7 +2633,7 @@ describe('Transmute same-resource optimization', () => {
   it('should boost main output via transmuteSameResourceBoost when same resource', () => {
     const skill = makeSkill({
       resource: 'gold' as ResourceType,
-      enchantmentIds: [EnchantmentType.Transmute],
+      enchantmentIds: ['transmute'],
     })
     const state = makeRuntimeState()
     const ctx = makeContext({ transmuteResource: 'gold' as ResourceType })
@@ -2691,7 +2646,7 @@ describe('Transmute same-resource optimization', () => {
   it('should produce transmuteOutput when different resource', () => {
     const skill = makeSkill({
       resource: 'base' as ResourceType,
-      enchantmentIds: [EnchantmentType.Transmute],
+      enchantmentIds: ['transmute'],
     })
     const state = makeRuntimeState()
     const ctx = makeContext({ transmuteResource: 'gold' as ResourceType })
@@ -3047,6 +3002,32 @@ describe('resetStageState (Task 2)', () => {
     expect(mirrorState.amplifyStacks).toBe(0)
     expect(mirrorState.mirrorCopiedAffix).toBeNull()
   })
+
+  it('should reset Decay currentDecayMult to initialMult at stage start (AC7)', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+
+    const skill = makeSkill({
+      id: 'decay_skill',
+      affixes: [{ type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.1, floor: 0.5 } as AffixInstance],
+    })
+    skills.set('decay_skill', skill)
+    states.set('decay_skill', makeRuntimeState({ skillId: 'decay_skill', currentDecayMult: 0.6 }))
+
+    resetStageState(skills, states, new Map(), () => 0.5)
+    expect(states.get('decay_skill')!.currentDecayMult).toBe(2.0)
+  })
+
+  it('should not reset currentDecayMult for skills without Decay affix', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+
+    skills.set('no_decay', makeSkill({ id: 'no_decay', affixes: [] }))
+    states.set('no_decay', makeRuntimeState({ skillId: 'no_decay', currentDecayMult: 0.5 }))
+
+    resetStageState(skills, states, new Map(), () => 0.5)
+    expect(states.get('no_decay')!.currentDecayMult).toBe(0.5)
+  })
 })
 
 describe('resetRunState (Task 3)', () => {
@@ -3149,11 +3130,11 @@ describe('serializeSkill / deserializeSkill (Task 4)', () => {
       level: 3,
       rarity: 3 as 3,
       affixes: [
-        { type: AffixType.Multiply, multiplier: 1.5 } as AffixInstance,
+        { type: AffixType.Rainbow } as AffixInstance,
         { type: AffixType.Crit, chance: 0.3, critMult: 3.0 } as AffixInstance,
         { type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.1, floor: 0.5 } as AffixInstance,
       ],
-      enchantmentIds: [EnchantmentType.QuestOverload, EnchantmentType.Transmute],
+      enchantmentIds: [EnchantmentType.QuestOverload, 'transmute'],
     })
     const state = makeRuntimeState({
       skillId: 'full_skill',
@@ -3167,10 +3148,10 @@ describe('serializeSkill / deserializeSkill (Task 4)', () => {
     const { skill: restored, runtimeState } = deserializeSkill(json)
 
     expect(restored.affixes).toHaveLength(3)
-    expect(restored.affixes[0].type).toBe(AffixType.Multiply)
+    expect(restored.affixes[0].type).toBe(AffixType.Rainbow)
     expect(restored.affixes[1].chance).toBe(0.3)
     expect(restored.affixes[2].initialMult).toBe(2.0)
-    expect(restored.enchantmentIds).toEqual([EnchantmentType.QuestOverload, EnchantmentType.Transmute])
+    expect(restored.enchantmentIds).toEqual([EnchantmentType.QuestOverload, 'transmute'])
     expect(runtimeState.currentDecayMult).toBe(1.5)
     expect(runtimeState.questStacks).toBe(4)
   })
@@ -3220,14 +3201,14 @@ describe('serializeSkill / deserializeSkill (Task 4)', () => {
   })
 
   it('should produce deep copies (no reference sharing)', () => {
-    const affix: AffixInstance = { type: AffixType.Multiply, multiplier: 1.5 }
+    const affix: AffixInstance = { type: AffixType.Crit, chance: 0.5, critMult: 1.5 }
     const skill = makeSkill({ id: 'copy_test', affixes: [affix] })
     const state = makeRuntimeState({ skillId: 'copy_test' })
 
     const saved = serializeSkill(skill, state)
     // Mutate original
-    affix.multiplier = 999
-    expect(saved.affixes[0].multiplier).toBe(1.5)
+    affix.critMult = 999
+    expect(saved.affixes[0].critMult).toBe(1.5)
   })
 })
 
@@ -3279,7 +3260,7 @@ describe('migrateLoadedSkills (Task 5)', () => {
   })
 
   it('should not modify skills that already have affixes field', () => {
-    const affix = { type: AffixType.Multiply, multiplier: 1.5 }
+    const affix = { type: AffixType.Crit, chance: 0.5, critMult: 1.5 }
     const loaded = [
       { id: 'new_skill', level: 3, resource: 'multiplier', affixes: [affix], rarity: 2, enchantmentIds: [] },
     ]
@@ -3332,7 +3313,7 @@ describe('buildEffectiveSkill (Mirror replacement)', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 } as AffixInstance],
     })
-    const copiedAffix: AffixInstance = { type: AffixType.Multiply, multiplier: 1.5 }
+    const copiedAffix: AffixInstance = { type: AffixType.Rainbow }
     const state = makeRuntimeState({ mirrorCopiedAffix: copiedAffix })
     const result = buildEffectiveSkill(skill, state)
     expect(result).toBe(skill)
@@ -3359,8 +3340,8 @@ describe('buildEffectiveSkill (Mirror replacement)', () => {
   it('should not mutate original skill affixes', () => {
     const mirrorAffix: AffixInstance = { type: AffixType.Mirror, posRel: PositionRelation.Adjacent }
     const skill = makeSkill({ affixes: [mirrorAffix] })
-    const copiedMultiply: AffixInstance = { type: AffixType.Multiply, multiplier: 1.8 }
-    const state = makeRuntimeState({ mirrorCopiedAffix: copiedMultiply })
+    const copiedRainbow: AffixInstance = { type: AffixType.Rainbow }
+    const state = makeRuntimeState({ mirrorCopiedAffix: copiedRainbow })
 
     buildEffectiveSkill(skill, state)
     expect(skill.affixes[0].type).toBe(AffixType.Mirror) // original unchanged
@@ -3368,21 +3349,6 @@ describe('buildEffectiveSkill (Mirror replacement)', () => {
 })
 
 describe('Mirror affix participates in trigger pipeline', () => {
-  it('Mirror copying Multiply should apply multiplier in Phase 3', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent } as AffixInstance],
-      level: 1,
-    })
-    const copiedMultiply: AffixInstance = { type: AffixType.Multiply, multiplier: 2.0 }
-    const state = makeRuntimeState({ mirrorCopiedAffix: copiedMultiply })
-    const ctx = makeContext()
-
-    const result = triggerAffixSkill(skill, state, ctx)
-    // base = 5, × 2.0 = 10
-    expect(result.output).toBe(10)
-    expect(result.multipliers).toContain(2.0)
-  })
-
   it('Mirror copying Crit should enable crit when roll succeeds', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent } as AffixInstance],

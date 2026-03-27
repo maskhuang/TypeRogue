@@ -9,6 +9,7 @@ import {
   triggerAffixSkill,
   MAX_RECURSE_DEPTH,
   MAX_CHAIN_DEPTH,
+  applyApprenticeAffixGrowth,
 } from '../data/affixTrigger'
 import type {
   TriggerContext,
@@ -24,6 +25,7 @@ export type TriggerWorkType =
   | 'resonance'
   | 'link'
   | 'splash'
+  | 'conduit'
 
 export interface TriggerWorkItem {
   /** 目标技能 ID */
@@ -117,7 +119,7 @@ export function orchestrateAffixTrigger(
 
     // ── 循环检测：仅对链式类型（resonance/link/splash）检查 ──
     const isChainType = item.type === 'resonance'
-      || item.type === 'link' || item.type === 'splash'
+      || item.type === 'link' || item.type === 'splash' || item.type === 'conduit'
     if (isChainType && item.chainHistory.includes(item.triggerKey)) {
       // 检测到循环 → 进入伪无限模式
       // chainHistory 中已包含所有参与键位（item.triggerKey 也在其中）
@@ -165,6 +167,18 @@ export function orchestrateAffixTrigger(
     results.push(result)
     totalOutput += effectiveOutput
     triggerCount++
+
+    // ── 悟道·词条：跨技能成长通知 ──
+    const triggeredAffixTypes = skill.affixes.map(a => a.type)
+    if (triggeredAffixTypes.length > 0) {
+      applyApprenticeAffixGrowth(
+        item.skillId,
+        triggeredAffixTypes,
+        ctx.allSkills,
+        ctx.skillStates,
+        ctx.apprenticeGrowthMultiplier,
+      )
+    }
 
     // ── 副作用 ──
     if (result.phase4) {
@@ -276,6 +290,19 @@ function enqueuePhase6Action(
           neighborState.apprenticeAccumulated += action.growthDelta * (ctx.apprenticeGrowthMultiplier ?? 1)
         }
       }
+      break
+    }
+    // conduit: 导能 — 让触发技能再触发一次
+    case 'conduit': {
+      const targetSkillId = ctx.bindings.get(action.targetKey)
+      if (!targetSkillId) return
+      queue.push({
+        skillId: targetSkillId,
+        triggerKey: action.targetKey,
+        type: 'conduit',
+        depth: parentChildHistory.length,
+        chainHistory: parentChildHistory,
+      })
       break
     }
     // quest_resonance: triggerAffixSkill 内部已处理 runtimeState

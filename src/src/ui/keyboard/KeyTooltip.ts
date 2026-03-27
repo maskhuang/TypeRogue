@@ -28,7 +28,7 @@ export interface SmartEstimate {
 export const AFFIX_COLORS: Record<string, string> = {
   base:      '#cccccc', // 灰白 — 基础值
   apprentice:'#2ecc71', // 绿 — 学徒
-  multiply:  '#e74c3c', // 红 — 强化
+  conduit:   '#e74c3c', // 红 — 导能
   convert:   '#f39c12', // 橙 — 转化
   rainbow:   '#ff6bcb', // 粉 — 彩虹
   charge:    '#3498db', // 蓝 — 蓄力
