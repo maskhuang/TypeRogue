@@ -414,7 +414,9 @@ describe('RunState', () => {
       maxCombo: 10,
       accuracy: 0.95,
       wordsCompleted: 25,
-      timeUsed: 45
+      timeUsed: 45,
+      perfectWords: 20,
+      overflowScore: 100,
     }
 
     const mockLoseResult: BattleResult = {
@@ -423,7 +425,9 @@ describe('RunState', () => {
       maxCombo: 5,
       accuracy: 0.80,
       wordsCompleted: 10,
-      timeUsed: 60
+      timeUsed: 60,
+      perfectWords: 5,
+      overflowScore: 0,
     }
 
     it('applyBattleResult() 应更新统计', () => {
@@ -594,7 +598,9 @@ describe('RunState', () => {
         maxCombo: 15,
         accuracy: 0.95,
         wordsCompleted: 30,
-        timeUsed: 60
+        timeUsed: 60,
+        perfectWords: 25,
+        overflowScore: 50,
       })
 
       const serialized = runState.serialize()

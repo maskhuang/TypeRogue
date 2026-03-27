@@ -385,7 +385,7 @@ development_status:
   # Source: docs/stories/epic-42-stage-flow-redesign.md
   epic-42: in-progress
   42-1-run-structure-simplify: dev-complete          # Run 结构简化 — 去休息关 + 无限循环
-  42-2-battle-continuation: backlog               # 战斗继续机制 — 达标不停，打到时间耗尽
+  42-2-battle-continuation: done                     # 战斗继续机制 — 达标不停，打到时间耗尽
   42-3-overflow-score: backlog                    # 溢出分系统 — 跨关携带
   42-4-time-acceleration: backlog                 # 关内时间加速
   42-5-exponential-target: backlog                # 目标分数指数增长

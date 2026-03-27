@@ -142,6 +142,8 @@ let leftHandTriggered = false; // T5遗物：本词左手技能是否触发过
 let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
 let _battleRelicGold = 0; // 战斗中遗物产出的金币（用于结算面板）
 let wordStartScore = 0; // 玻璃大炮：记录词开始时总分（用于整词得分翻倍）
+let _targetReached = false; // Story 42.2: 达标标志（达标后继续战斗直到时间耗尽）
+let _targetReachedTime = 0; // Story 42.2: 达标时的剩余时间（万物熔炉等遗物需要）
 
 // === 分数滚轮动画 (Story 31.4) ===
 const scoreRoller = new ScoreRoller();
@@ -405,9 +407,20 @@ function handleEnterKey(e: KeyboardEvent): void {
   // 恢复 HUD 正常显示
   updateHUD();
 
-  // 立即判定
+  // Review Fix #4: 黑洞结算后隐藏结算面板
+  hideSettlement();
+
+  // Story 42.2: 黑洞结算后 — 首次达标设标志+反馈
+  if (!_targetReached && state.score >= state.targetScore) {
+    _targetReached = true;
+    _targetReachedTime = state.time;
+    showFeedback(t('battle.target_reached'), '#4ecdc4');
+    playSound('levelup');
+    screenShake(3); // Review Fix #5: 达标脉冲
+  }
+
+  // Review Fix #3: 致命礼物奖励独立于 _targetReached — 每次黑洞结算达标都给奖励
   if (state.score >= state.targetScore) {
-    // 致命礼物奖励：越接近目标分，奖励越丰厚
     const reward = getDeadlyGiftReward(state.score, state.targetScore);
     if (reward.gold > 0) {
       state.gold += reward.gold;
@@ -415,7 +428,6 @@ function handleEnterKey(e: KeyboardEvent): void {
       _battleRelicGold += reward.gold;
       showFeedback(t(`battle.deadly_gift_${reward.tier}`, { value: String(reward.gold) }), '#ffdd00', undefined, undefined, { relicId: 'score_black_hole', resource: 'gold', amount: reward.gold });
     }
-    // 高层级额外奖励
     if (reward.action === 'all_relics') {
       for (const id of Object.keys(RELICS)) {
         state.player.relics.add(id);
@@ -425,7 +437,6 @@ function handleEnterKey(e: KeyboardEvent): void {
     } else if (reward.action === 'free_refreshes') {
       grantDeadlyGiftFreeRefreshes(5);
     } else if (reward.action === 'random_relic') {
-      // 随机获得1个未拥有遗物
       const unowned = Object.keys(RELICS).filter(id => !state.player.relics.has(id));
       if (unowned.length > 0) {
         const picked = unowned[Math.floor(Math.random() * unowned.length)];
@@ -436,12 +447,6 @@ function handleEnterKey(e: KeyboardEvent): void {
     } else if (reward.action === 'time_buff') {
       state.tempBuffs.push({ type: 'time', value: 8, expiresAtNode: state.level + 1 });
     }
-    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    hideSettlement();
-    state.overkill = state.score - state.targetScore;
-    endLevel();
-  } else {
-    gameOver();
   }
 }
 
@@ -1080,29 +1085,13 @@ function completeWord(): void {
   // Story 36.2: 完成后记录单词（小助手补全需要"已打过"判定）
   trackWord(state.player.word);
 
-  // 检查是否达到目标分数 - 提前结束关卡（黑洞模式跳过，由 Enter 键手动判定）
-  if (!isBlackHoleActive() && state.score >= state.targetScore) {
-    // 立即停止计时器，防止评分动画期间时间继续走
-    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-
-    // 计算 overkill：超出目标的总分数
-    state.overkill = state.score - state.targetScore;
-
-    const currentType = getStageType(state.level);
-    if (currentType === 'boss') {
-      // Boss 关胜利跳过金币奖励动画（Boss 后无商店，金币无意义）
-      setTimeout(() => {
-        if (state.phase === 'battle') endLevel();
-      }, 600);
-    } else {
-      // 显示金币奖励动画，然后结束关卡
-      setTimeout(() => {
-        if (state.phase === 'battle') {
-          showGoldReward(() => endLevel());
-        }
-      }, 600);
-    }
-    return;
+  // Story 42.2: 达标后继续战斗 — 设标志+反馈，不中断
+  if (!isBlackHoleActive() && !_targetReached && state.score >= state.targetScore) {
+    _targetReached = true;
+    _targetReachedTime = state.time; // 记录达标时剩余时间（万物熔炉等遗物需要）
+    showFeedback(t('battle.target_reached'), '#4ecdc4');
+    playSound('levelup');
+    screenShake(3); // Review Fix #5: 达标绿色脉冲
   }
 
   // 遗物效果：完成词语时间加成（当前 RELIC_MODIFIER_DEFS 为空，此分支不会触发）
@@ -1218,7 +1207,8 @@ function showGoldReward(onComplete: () => void): void {
   let relicGold = Math.floor(goldRelicResult.effects.gold) + _battleRelicGold;
 
   // Story 36.8: 万物熔炉 — 覆盖默认金币计算
-  const furnaceResult = checkUniversalFurnace();
+  // Story 42.2: 传入达标时的剩余时间（战斗打到时间耗尽后 state.time=0）
+  const furnaceResult = checkUniversalFurnace(_targetReachedTime);
   if (furnaceResult) {
     baseGold = 0;
     relicGold = furnaceResult.bonusGold;
@@ -1334,6 +1324,8 @@ function startTimer(): void {
     if (state.time <= 0) {
       state.time = 0;
       if (timerInterval) clearInterval(timerInterval);
+      // Story 42.2: 时间耗尽 — 计算 overkill 后结算
+      state.overkill = Math.max(0, state.score - state.targetScore);
       endLevel();
     }
   }, 100);
@@ -1482,8 +1474,8 @@ function endLevel(): void {
         return;
       }
 
-      // 普通关胜利 → 致命礼物 → 商店
-      continueAfterDeadlyGift(() => openShop(true));
+      // Story 42.2: 普通关胜利 → 金币奖励 → 致命礼物 → 商店
+      showGoldReward(() => continueAfterDeadlyGift(() => openShop(true)));
     }, playRatingSound);
   } else {
     // Story 36.10: 不死鸟 — 失败前检查复活
@@ -1502,6 +1494,8 @@ function endLevel(): void {
           }
         }
       }
+      _targetReached = false; // Story 42.2: 复活=重新开始，重置达标标志
+      _targetReachedTime = 0;
       // Review C1: startTimer 会覆盖 state.time，必须在之后设置复活时间
       startTimer();
       state.time = phoenixResult.reviveTime;
@@ -1631,6 +1625,8 @@ export async function startLevel(): Promise<void> {
   }
   state.wordScore = 0;
   state.overkill = 0;
+  _targetReached = false; // Story 42.2: 每关重置达标标志
+  _targetReachedTime = 0;
 
   // 清理过期临时 buff
   state.tempBuffs = state.tempBuffs.filter(b => state.level <= b.expiresAtNode);
@@ -2056,24 +2052,34 @@ export function updateHUD(): void {
     scoreRoller.setTarget(Math.floor(state.score)); // Story 31.4: 平滑滚动
     el.score.textContent = String(scoreRoller.getValue()); // Review M1: rAF 未启动时 fallback
   }
-  el.targetScore.textContent = String(state.targetScore);
+  // Story 42.2: 达标后目标分数显示 ✓ + 绿色
+  if (_targetReached) {
+    el.targetScore.textContent = `✓ ${state.targetScore}`;
+    el.targetScore.style.color = '#4ecdc4';
+  } else {
+    el.targetScore.textContent = String(state.targetScore);
+    el.targetScore.style.color = '';
+  }
 
   // 分数进度颜色（基础）— 黑洞隐藏时跳过
   if (!blackHoleHidden) {
-    const progress = state.score / state.targetScore;
-    if (progress >= 1) {
-      el.score.style.color = '#4ecdc4';
-    } else if (progress >= 0.7) {
-      el.score.style.color = '#ffe66d';
+    if (_targetReached) {
+      el.score.style.color = '#ffd700'; // Story 42.2: 溢出=金色
     } else {
-      el.score.style.color = '#fff';
+      const progress = state.score / state.targetScore;
+      if (progress >= 0.7) {
+        el.score.style.color = '#ffe66d';
+      } else {
+        el.score.style.color = '#fff';
+      }
     }
   }
 
   // 分数颜色分级 — 高分时覆盖进度颜色 (Story 31.1)
   // 仅在 tier 变化时更新 class，避免重启 CSS 动画 (Review M1)
   // 黑洞隐藏时清除 tier class
-  const scoreTier = blackHoleHidden ? '' : getScoreTier(state.score);
+  // Review Fix #2: 达标后清除 tier class — CSS !important 会覆盖内联金色
+  const scoreTier = (blackHoleHidden || _targetReached) ? '' : getScoreTier(state.score);
   if (scoreTier !== lastScoreTier) {
     el.score.classList.remove(...SCORE_TIER_CLASSES);
     if (scoreTier) el.score.classList.add(scoreTier);

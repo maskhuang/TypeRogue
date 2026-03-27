@@ -222,6 +222,7 @@ const ZH: Record<string, string> = {
 
   // --- stage relic feedback ---
   'battle.phoenix_revive': '🐦‍🔥 不死鸟复活！',
+  'battle.target_reached': '🎯 TARGET!',
 
   // --- boss modifier relic feedback ---
   'battle.chaos_roulette': '🎰 混沌轮盘！',
@@ -1030,6 +1031,7 @@ const EN: Record<string, string> = {
 
   // --- stage relic feedback ---
   'battle.phoenix_revive': '🐦‍🔥 Phoenix Revive!',
+  'battle.target_reached': '🎯 TARGET!',
 
   // --- boss modifier relic feedback ---
   'battle.chaos_roulette': '🎰 Chaos Roulette!',

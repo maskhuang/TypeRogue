@@ -31,6 +31,7 @@ export interface BattleResult {
   wordsCompleted: number
   timeUsed: number        // 秒
   perfectWords: number    // 无错误完成的词语数 (Story 5.5)
+  overflowScore: number   // Story 42.2: 溢出分 = max(0, finalScore - targetScore)
 }
 
 /**
@@ -239,7 +240,8 @@ export class BattleFlowController {
       accuracy: Math.round(accuracy * 100) / 100,
       wordsCompleted: state.wordsCompleted,
       timeUsed: Math.round(timeUsed * 10) / 10,
-      perfectWords
+      perfectWords,
+      overflowScore: Math.max(0, state.score - this.targetScore),
     }
   }
 

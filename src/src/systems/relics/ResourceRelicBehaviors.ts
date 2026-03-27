@@ -124,11 +124,14 @@ export function getResourceTideBonus(resource: string): number {
 
 // === 万物熔炉 (universal_furnace) ===
 
-/** 有遗物 → 返回转化金币和覆盖标记，否则 null */
-export function checkUniversalFurnace(): { bonusGold: number; overrideBase: boolean } | null {
+/** 有遗物 → 返回转化金币和覆盖标记，否则 null
+ * @param targetReachedTime Story 42.2: 达标时的剩余时间（战斗打到时间耗尽后 state.time=0）
+ */
+export function checkUniversalFurnace(targetReachedTime?: number): { bonusGold: number; overrideBase: boolean } | null {
   if (!state.player.relics.has('universal_furnace')) return null
   const overkill = Math.max(0, state.score - state.targetScore)
-  const remainingTime = Math.max(0, Math.floor(state.time))
+  // Story 42.2: 战斗总是打到时间耗尽，用达标时的剩余时间代替当前时间
+  const remainingTime = Math.max(0, Math.floor(targetReachedTime ?? state.time))
   return {
     bonusGold: overkill + remainingTime,
     overrideBase: true,
