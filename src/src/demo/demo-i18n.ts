@@ -770,7 +770,8 @@ const ZH: Record<string, string> = {
   'est.estimated_output': '预估产出: {val}',
   'tooltip.base_values_add': '基础产出: Lv.1={v1} / Lv.2={v2} / Lv.3={v3}',
   'tooltip.base_values_mult': '乘算产出: Lv.1=×{v1} / Lv.2=×{v2} / Lv.3=×{v3}',
-  'tooltip.upgrade_info': '升级 Lv.{from} → Lv.{to}　基础产出 {oldVal} → {newVal}',
+  'tooltip.upgrade_info': '升级 Lv.{from} → Lv.{to}　基础产出 {oldVal} → {newVal} (+{pct}%)',
+  'tooltip.upgrade_estimate': '预估产出: {old} → {new} ({delta})',
 
   // --- tooltip quest / apprentice ---
   'tooltip.quest_progress': '任务: {task} ({stacks}/{target})',
@@ -818,6 +819,19 @@ const ZH: Record<string, string> = {
 
   // --- comparison panel ---
   'affix.new_tag': '✦新',
+
+  // --- affix param names (upgrade preview) ---
+  'affix_param.critMult': '暴击倍率',
+  'affix_param.burstMult': '爆发倍率',
+  'affix_param.cascadeMult': '级联倍率',
+  'affix_param.floor': '衰减下限',
+  'affix_param.bonusPerSlot': '空位加成',
+  'affix_param.maxBonus': '蓄力上限',
+  'affix_param.bonusPercent': '加成比例',
+  'affix_param.k': '转化系数',
+  'affix_param.valuePerStack': '每层加成',
+  'affix_param.probMult': '概率倍率',
+  'affix_param.recurseChance': '递归概率',
 }
 
 // === EN 字典 ===
@@ -1563,7 +1577,8 @@ const EN: Record<string, string> = {
   'est.estimated_output': 'Est. Output: {val}',
   'tooltip.base_values_add': 'Base Output: Lv.1={v1} / Lv.2={v2} / Lv.3={v3}',
   'tooltip.base_values_mult': 'Multiply Output: Lv.1=×{v1} / Lv.2=×{v2} / Lv.3=×{v3}',
-  'tooltip.upgrade_info': 'Upgrade Lv.{from} → Lv.{to}  Base {oldVal} → {newVal}',
+  'tooltip.upgrade_info': 'Upgrade Lv.{from} → Lv.{to}  Base {oldVal} → {newVal} (+{pct}%)',
+  'tooltip.upgrade_estimate': 'Est. Output: {old} → {new} ({delta})',
 
   // --- tooltip quest / apprentice ---
   'tooltip.quest_progress': 'Quest: {task} ({stacks}/{target})',
@@ -1611,6 +1626,19 @@ const EN: Record<string, string> = {
 
   // --- comparison panel ---
   'affix.new_tag': '✦New',
+
+  // --- affix param names (upgrade preview) ---
+  'affix_param.critMult': 'Crit Mult',
+  'affix_param.burstMult': 'Burst Mult',
+  'affix_param.cascadeMult': 'Cascade Mult',
+  'affix_param.floor': 'Decay Floor',
+  'affix_param.bonusPerSlot': 'Slot Bonus',
+  'affix_param.maxBonus': 'Max Charge',
+  'affix_param.bonusPercent': 'Bonus %',
+  'affix_param.k': 'Convert K',
+  'affix_param.valuePerStack': 'Stack Value',
+  'affix_param.probMult': 'Prob Mult',
+  'affix_param.recurseChance': 'Recurse %',
 }
 
 // === Demo 物品名翻译（仅 Demo 池 ~48 个） ===

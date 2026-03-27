@@ -589,3 +589,96 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     questTransformed: false,
   }
 }
+
+// ===== 词条参数随等级缩放 =====
+
+/** 缩放模式 */
+type ScalingMode = 'add' | 'mult' | 'add-dir'
+
+interface AffixScalingEntry {
+  param: keyof AffixInstance
+  delta: number
+  mode: ScalingMode
+}
+
+/** 词条参数每级增量表（来源：旧任务附魔数值强化） */
+export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> = {
+  [AffixType.Crit]:     { param: 'critMult',       delta: 0.5,   mode: 'add' },
+  [AffixType.Pulse]:    { param: 'burstMult',      delta: 0.3,   mode: 'add' },
+  [AffixType.Cascade]:  { param: 'cascadeMult',    delta: 0.2,   mode: 'add' },
+  [AffixType.Decay]:    { param: 'floor',           delta: 0.05,  mode: 'add' },
+  [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
+  [AffixType.Charge]:   { param: 'maxBonus',       delta: 0.3,   mode: 'add' },
+  [AffixType.Outcast]:  { param: 'bonusPercent',   delta: 0.15,  mode: 'add' },
+  [AffixType.Convert]:  { param: 'k',              delta: 1.1,   mode: 'mult' },
+  [AffixType.Amplify]:  { param: 'valuePerStack',  delta: 0.005, mode: 'add' },
+  [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
+  [AffixType.Recurse]:  { param: 'recurseChance',  delta: 0.03,  mode: 'add' },
+  [AffixType.Taboo]:    { param: 'bonusPercent',   delta: 0.3,   mode: 'add' },
+}
+
+/** 四舍五入到指定小数位 */
+function roundTo(n: number, decimals: number): number {
+  const f = 10 ** decimals
+  return Math.round(n * f) / f
+}
+
+/**
+ * 就地修改词条参数，按升级级数缩放。
+ * @param affixes 词条列表（就地修改）
+ * @param levelsGained 升了几级（通常 1）
+ */
+export function applyAffixLevelScaling(affixes: AffixInstance[], levelsGained: number): void {
+  for (const affix of affixes) {
+    const entry = AFFIX_LEVEL_SCALING[affix.type]
+    if (!entry) continue
+    const cur = affix[entry.param] as number | undefined
+    if (cur == null) continue
+
+    if (entry.mode === 'add') {
+      ;(affix as any)[entry.param] = roundTo(cur + entry.delta * levelsGained, 4)
+    } else if (entry.mode === 'mult') {
+      ;(affix as any)[entry.param] = roundTo(cur * (entry.delta ** levelsGained), 4)
+    } else if (entry.mode === 'add-dir') {
+      // Gravity: 吸引(>1) +delta, 排斥(<1) -delta, 中性(=1) 不变
+      if (cur > 1) {
+        ;(affix as any)[entry.param] = roundTo(Math.min(cur + entry.delta * levelsGained, 2), 4)
+      } else if (cur < 1) {
+        ;(affix as any)[entry.param] = roundTo(Math.max(cur - entry.delta * levelsGained, 0), 4)
+      }
+      // cur === 1 → 中性，不缩放
+    }
+  }
+}
+
+/**
+ * 预览词条参数缩放后的值（不修改原词条）。
+ * @returns null 表示该词条无缩放
+ */
+export function previewAffixScaledValue(
+  affix: AffixInstance,
+  levelsGained: number,
+): { param: keyof AffixInstance; oldVal: number; newVal: number } | null {
+  const entry = AFFIX_LEVEL_SCALING[affix.type]
+  if (!entry) return null
+  const cur = affix[entry.param] as number | undefined
+  if (cur == null) return null
+
+  let newVal: number
+  if (entry.mode === 'add') {
+    newVal = roundTo(cur + entry.delta * levelsGained, 4)
+  } else if (entry.mode === 'mult') {
+    newVal = roundTo(cur * (entry.delta ** levelsGained), 4)
+  } else {
+    // add-dir
+    if (cur > 1) {
+      newVal = roundTo(Math.min(cur + entry.delta * levelsGained, 2), 4)
+    } else if (cur < 1) {
+      newVal = roundTo(Math.max(cur - entry.delta * levelsGained, 0), 4)
+    } else {
+      return null // 中性不缩放
+    }
+  }
+
+  return { param: entry.param, oldVal: cur, newVal }
+}

@@ -47,7 +47,7 @@ import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity, AffixType } from '../data/affixes';
 import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, categorizeEnchantmentCandidates, weightedPickEnchantment } from '../data/affixTrigger';
-import { filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH } from '../data/affixes';
+import { filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
@@ -701,6 +701,14 @@ function formatEstimate(v: number): string {
   return Math.round(v).toString()
 }
 
+/** 格式化词条参数缩放值（智能精度） */
+function formatScaledValue(v: number): string {
+  if (v === Math.floor(v)) return v.toString()
+  if (Math.abs(v) < 0.01) return v.toFixed(4)
+  if (Math.abs(v) < 1) return v.toFixed(2)
+  return v.toFixed(1)
+}
+
 // === 打开商店 ===
 export function openShop(_won: boolean): void {
   state.phase = 'shop';
@@ -1245,14 +1253,60 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
           baseValuesText,
         },
       };
-      if (item.isUpgrade) {
+      if (item.isUpgrade && item.skillId) {
         const curLv = skill.level - 1;
         const curBase = getEffectiveBaseValue(baseVals, curLv);
-        tooltipData.skill!.upgradeInfo = t('tooltip.upgrade_info', { from: curLv, to: skill.level, oldVal: curBase, newVal: baseVal });
+        const pctChange = curBase > 0 ? Math.round((baseVal / curBase - 1) * 100) : 0;
+        tooltipData.skill!.upgradeInfo = t('tooltip.upgrade_info', { from: curLv, to: skill.level, oldVal: curBase, newVal: baseVal, pct: pctChange });
+
+        // 升级前后产出预估对比
+        const rt = state.affixSkillStates.get(item.skillId);
+        const upgBoundKeys: string[] = [];
+        for (const [bk, sid] of state.player.bindings) {
+          if (sid === item.skillId) upgBoundKeys.push(bk);
+        }
+        const bk = upgBoundKeys.length > 0 ? upgBoundKeys : undefined;
+        const newEstimate = computeSmartEstimate(skill, rt, bk);
+        if (newEstimate) {
+          const oldSkill = { ...skill, level: curLv };
+          const oldEstimate = computeSmartEstimate(oldSkill, rt, bk);
+          // 逐行标注 old→new 变化
+          if (oldEstimate) {
+            for (let i = 0; i < newEstimate.breakdown.length; i++) {
+              const oldLine = oldEstimate.breakdown[i];
+              if (oldLine && oldLine.label !== newEstimate.breakdown[i].label) {
+                newEstimate.breakdown[i].oldLabel = oldLine.label;
+              }
+            }
+            const delta = newEstimate.estimatedOutput - oldEstimate.estimatedOutput;
+            const sign = delta >= 0 ? '+' : '';
+            tooltipData.skill!.upgradeEstimate = t('tooltip.upgrade_estimate', {
+              old: formatEstimate(oldEstimate.estimatedOutput),
+              new: formatEstimate(newEstimate.estimatedOutput),
+              delta: sign + formatEstimate(delta),
+            });
+          }
+          tooltipData.skill!.smartEstimate = newEstimate;
+        }
+        const estimatedTypes = newEstimate ? new Set(skill.affixes.filter(a => ['void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
+        const fields = buildAffixTooltipFields(skill, rt, estimatedTypes);
+        tooltipData.skill!.affixInfo = fields.affixInfo;
+        // 词条参数升级预览
+        for (let i = 0; i < skill.affixes.length; i++) {
+          const preview = previewAffixScaledValue(skill.affixes[i], 1);
+          if (preview && fields.affixInfo[i]) {
+            const paramLabel = t('affix_param.' + (preview.param as string));
+            fields.affixInfo[i].upgradeEffect = `${paramLabel}: ${formatScaledValue(preview.oldVal)} → ${formatScaledValue(preview.newVal)}`;
+          }
+        }
+        tooltipData.skill!.enchantments = fields.enchantments;
+        tooltipData.skill!.questProgress = fields.questProgress;
+        tooltipData.skill!.apprenticeGrowth = newEstimate ? undefined : fields.apprenticeGrowth;
+      } else {
+        const fields = buildAffixTooltipFields(skill);
+        tooltipData.skill!.affixInfo = fields.affixInfo;
+        tooltipData.skill!.enchantments = fields.enchantments;
       }
-      const fields = buildAffixTooltipFields(skill);
-      tooltipData.skill!.affixInfo = fields.affixInfo;
-      tooltipData.skill!.enchantments = fields.enchantments;
       // Story 40.4: 形状描述
       const shapeDesc = getShapeDescription(skill.shapeId ?? 'monomino', getShapeCells(skill.shapeId ?? 'monomino', skill.rotation ?? 0)?.length ?? 1);
       if (shapeDesc) {
@@ -1582,9 +1636,12 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
         data.level = Math.min(ukCap, data.level + 1);
         data.purchasePrice = (data.purchasePrice || 0) + item.cost;
       }
-      // 同步更新 affixSkills 中的 level
+      // 同步更新 affixSkills 中的 level + 词条参数缩放
       const existing = state.affixSkills.get(skillId);
-      if (existing) existing.level = data?.level || existing.level;
+      if (existing) {
+        existing.level = data?.level || existing.level;
+        applyAffixLevelScaling(existing.affixes, 1);
+      }
       eventBus.emit('skill:upgraded', { skillId, newLevel: data?.level || 1 });
       showFeedback(t('shop.skill_upgrade', { name: affixSkill.name }), '#ffe66d');
     } else {
@@ -1624,6 +1681,8 @@ function purchaseShopItem(index: number): void {
     const data = state.player.skills.get(result.skillId);
     if (data && data.level < minMaxLevel) {
       data.level = minMaxLevel;
+      const affixSkill = state.affixSkills.get(result.skillId);
+      if (affixSkill) applyAffixLevelScaling(affixSkill.affixes, minMaxLevel - 1);
       showFeedback(t('shop.auto_level', { level: minMaxLevel }), '#ffe66d');
     }
   }

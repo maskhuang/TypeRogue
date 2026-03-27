@@ -5,6 +5,7 @@
 import { state, synergy } from '../../core/state'
 import { registerRelicBehavior } from './RelicPipeline'
 import type { AffixType } from '../../data/affixes'
+import { applyAffixLevelScaling } from '../../data/affixes'
 
 /** 无冕之王 Lv4+ 每级递增倍率 */
 export const UK_GROWTH_RATE = 1.6
@@ -48,7 +49,10 @@ export function applyTrainingManual(): string[] {
     if (data.level === 1) {
       data.level = 2
       const affixSkill = state.affixSkills.get(skillId)
-      if (affixSkill) affixSkill.level = 2
+      if (affixSkill) {
+        affixSkill.level = 2
+        applyAffixLevelScaling(affixSkill.affixes, 1)
+      }
       upgradedIds.push(skillId)
     }
   }

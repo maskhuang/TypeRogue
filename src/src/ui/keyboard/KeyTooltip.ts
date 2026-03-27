@@ -11,12 +11,15 @@ export interface AffixTooltipInfo {
   typeKey?: string
   paramSummary: string
   description?: string
+  /** 升级预览：旧效果 → 新效果（仅升级 tooltip） */
+  upgradeEffect?: string
 }
 
 export interface EstimateBreakdownLine {
   typeKey: string   // affix/enchant type for coloring
   label: string     // e.g. "基础值" / "强化 ×1.65"
   detail: string    // e.g. "= 15" / "+0.15×1任务"
+  oldLabel?: string // upgrade preview: old level's label (shown as oldLabel → label)
 }
 
 export interface SmartEstimate {
@@ -75,6 +78,7 @@ export interface KeyTooltipData {
     smartEstimate?: SmartEstimate
     // 商店扩展
     upgradeInfo?: string
+    upgradeEstimate?: string
     baseValuesText?: string
   }
 }
@@ -114,6 +118,9 @@ function buildHeaderSection(skill: NonNullable<KeyTooltipData['skill']>): string
   if (skill.upgradeInfo) {
     html += `<div class="tooltip-title">${esc(skill.icon)} ${esc(skill.name)}</div>`
     html += `<div class="tooltip-upgrade-info">${esc(skill.upgradeInfo)}</div>`
+    if (skill.upgradeEstimate) {
+      html += `<div class="tooltip-upgrade-estimate">${esc(skill.upgradeEstimate)}</div>`
+    }
   } else {
     html += `<div class="tooltip-title">${esc(skill.icon)} ${esc(skill.name)} Lv.${skill.level}</div>`
   }
@@ -137,6 +144,9 @@ function buildAffixSection(skill: NonNullable<KeyTooltipData['skill']>): string 
     for (const affix of skill.affixInfo) {
       const color = AFFIX_COLORS[affix.typeKey || ''] || '#e67e22'
       parts.push(`<div class="tooltip-affix-name" style="color:${color};">&lt;${esc(affix.typeName)}&gt; ${esc(affix.paramSummary)}</div>`)
+      if (affix.upgradeEffect) {
+        parts.push(`<div class="tooltip-affix-upgrade">${esc(affix.upgradeEffect)}</div>`)
+      }
       if (affix.description) {
         parts.push(`<div class="tooltip-affix-desc">${esc(affix.description)}</div>`)
       }
@@ -210,7 +220,11 @@ function buildSummarySection(skill: NonNullable<KeyTooltipData['skill']>): strin
       if (i > 0) {
         html += '<span class="tooltip-est-sep">|</span>'
       }
-      html += `<span class="tooltip-est-item" style="color:${color};">${esc(line.label)}`
+      if (line.oldLabel) {
+        html += `<span class="tooltip-est-item" style="color:${color};"><span class="tooltip-est-old">${esc(line.oldLabel)}</span> → ${esc(line.label)}`
+      } else {
+        html += `<span class="tooltip-est-item" style="color:${color};">${esc(line.label)}`
+      }
       if (line.detail) html += ` <span class="tooltip-est-detail">${esc(line.detail)}</span>`
       html += '</span>'
     }

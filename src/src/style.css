@@ -1817,6 +1817,12 @@ body {
     font-size: var(--text-caption-size);
     margin-top: 2px;
 }
+.key-tooltip .tooltip-header .tooltip-upgrade-estimate {
+    color: #f1c40f;
+    font-size: var(--text-caption-size);
+    margin-top: 2px;
+    font-weight: bold;
+}
 .key-tooltip .tooltip-header .tooltip-base-values {
     color: var(--text-caption-color);
     font-size: var(--text-caption-size);
@@ -1830,6 +1836,12 @@ body {
 .key-tooltip .tooltip-affix-list .tooltip-affix-desc {
     font-size: var(--text-caption-size);
     color: var(--text-caption-color);
+    margin-left: var(--spacing-xs);
+    margin-bottom: 2px;
+}
+.key-tooltip .tooltip-affix-list .tooltip-affix-upgrade {
+    font-size: var(--text-caption-size);
+    color: #2ecc71;
     margin-left: var(--spacing-xs);
     margin-bottom: 2px;
 }
@@ -1895,6 +1907,10 @@ body {
 .key-tooltip .tooltip-summary .tooltip-est-sep {
     color: #555;
     user-select: none;
+}
+.key-tooltip .tooltip-summary .tooltip-est-old {
+    text-decoration: line-through;
+    opacity: 0.55;
 }
 
 /* ============================================ */

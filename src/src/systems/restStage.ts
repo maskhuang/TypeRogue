@@ -19,6 +19,7 @@ import { shouldShowRitual, openRitualEnchantment, getEligibleSkills, generateRit
 import { random } from '../core/seededRandom';
 import type { RitualCandidate } from './ritualEnchantment';
 import { getEnchantmentDisplayInfo } from './shop';
+import { applyAffixLevelScaling } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 
 let currentEvent: RestEvent | null = null;
@@ -409,6 +410,7 @@ function upgradeRandomSkill(): { id: string; name: string; newLevel: number } | 
   const [skillId, data] = upgradable[Math.floor(Math.random() * upgradable.length)];
   data.level++;
   const affixSkill = state.affixSkills.get(skillId);
+  if (affixSkill) applyAffixLevelScaling(affixSkill.affixes, 1);
   return affixSkill ? { id: skillId, name: affixSkill.name, newLevel: data.level } : null;
 }
 
