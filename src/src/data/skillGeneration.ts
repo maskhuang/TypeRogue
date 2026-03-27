@@ -9,7 +9,8 @@ import { RESOURCE_ICONS } from '../core/constants'
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 import type { AffixInstance, AffixSkillInstance, SkillRarity } from './affixes'
-import { RARITY_TO_SHAPE_POOL, SHAPE_TEMPLATES } from './skillShapes'
+import { RARITY_TO_SHAPE_POOL, SHAPE_TEMPLATES, mapShapeToKeys } from './skillShapes'
+import { KEYS } from '../core/constants'
 import {
   AffixType,
   AFFIX_WEIGHTS, BASE_VALUES, RARITY_PROBABILITIES,
@@ -240,6 +241,29 @@ export function generateName(resource: ResourceType, affixes: AffixInstance[]): 
   return prefix ? `${prefix}·${base}` : base
 }
 
+// ===== 放置约束检查 =====
+
+/**
+ * 检查给定 shapeId+rotation 是否能在键盘上找到至少一个合法放置位置。
+ * 若 preferredRotation 可行直接返回；否则依次尝试其余 3 个旋转态。
+ * 全部不可行时回退到 0。
+ */
+export function findPlaceableRotation(shapeId: string, preferredRotation: number): number {
+  // 快速路径：preferred 可行
+  if (KEYS.some(k => mapShapeToKeys(k, shapeId, preferredRotation) !== null)) {
+    return preferredRotation
+  }
+  // 尝试其余 3 个旋转态
+  for (let d = 1; d <= 3; d++) {
+    const rot = (preferredRotation + d) % 4
+    if (KEYS.some(k => mapShapeToKeys(k, shapeId, rot) !== null)) {
+      return rot
+    }
+  }
+  // 理论上不应到达此处
+  return 0
+}
+
 // ===== 完整生成 =====
 
 export interface GenerateSkillOptions {
@@ -285,9 +309,13 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
   const shapeId = options?.shapeId != null && SHAPE_TEMPLATES[options.shapeId]
     ? options.shapeId
     : pickRandom(RARITY_TO_SHAPE_POOL[rarity])
-  const rotation = options?.rotation != null
+  let rotation = options?.rotation != null
     ? ((options.rotation % 4) + 4) % 4
     : Math.floor(random() * 4)
+  // 商店刷新时确保初始姿态能在键盘上放置
+  if (options?.rotation == null) {
+    rotation = findPlaceableRotation(shapeId, rotation)
+  }
 
   return {
     id,
