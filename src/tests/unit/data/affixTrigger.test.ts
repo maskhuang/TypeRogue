@@ -1462,6 +1462,7 @@ function makeFlags(overrides?: Partial<TriggerFlags>): TriggerFlags {
     isPulse: false,
     isCascade: false,
     isTabooPenalty: false,
+    isDecayFloor: false,
     ligatureCount: 0,
     tabooConvertResource: null,
     ...overrides,
@@ -1678,54 +1679,60 @@ describe('resolvePhase5', () => {
   })
 
   describe('Quest enchantment stacking', () => {
-    it('should increment questStacks when event condition met', () => {
+    it('should complete QuestDevour when rangeFull condition met (all neighbors filled)', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
         enchantmentIds: [EnchantmentType.QuestDevour],
       })
       const state = makeRuntimeState({ questStacks: 0 })
-      const ctx = makeContext()
+      // Use countEmptySlots to verify setup: fill all adjacent neighbors of 'f'
+      // Adjacent keys of 'f' on QWERTY: d, g, r, t, v, c (varies by topology)
+      // Brute-force: bind every key so countEmptySlots returns 0
+      const bindings = new Map<string, string>()
+      for (const k of 'abcdefghijklmnopqrstuvwxyz') bindings.set(k, 'sk_' + k)
+      expect(countEmptySlots(['f'], PositionRelation.Adjacent, bindings)).toBe(0)
+      const ctx = makeContext({ bindings, occupiedKeys: ['f'] })
       const flags = makeFlags()
-      // QuestDevour event = 'selfTrigger' → always true
+      // QuestDevour event = 'rangeFull' → true, targetStacks = 1 → immediately completes
       resolvePhase5(skill, state, ctx, flags, 10)
-      expect(state.questStacks).toBe(1)
+      expect(state.questCompletions).toBe(1)
+      expect(state.questStacks).toBe(0)
+    })
+
+    it('should NOT stack QuestDevour when range has empty slots', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
+        enchantmentIds: [EnchantmentType.QuestDevour],
+      })
+      const state = makeRuntimeState({ questStacks: 0 })
+      // Only self bound, neighbors empty → rangeFull = false
+      const ctx = makeContext({ bindings: new Map([['f', 'sk_self']]), occupiedKeys: ['f'] })
+      const flags = makeFlags()
+      resolvePhase5(skill, state, ctx, flags, 10)
+      expect(state.questStacks).toBe(0)
       expect(state.questCompletions).toBe(0)
     })
 
-    it('should complete quest cycle when stacks >= target', () => {
+    it('QuestDevour should return devourTarget on completion (rangeFull)', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
         enchantmentIds: [EnchantmentType.QuestDevour],
       })
-      // QuestDevour targetStacks = 15, start at 14
-      const state = makeRuntimeState({ questStacks: 14 })
-      const ctx = makeContext()
-      const flags = makeFlags()
-      const result = resolvePhase5(skill, state, ctx, flags, 10)
-      expect(state.questStacks).toBe(0) // reset
-      expect(state.questCompletions).toBe(1)
-      expect(result.questCompleted).toBe(true)
-    })
-
-    it('QuestDevour should return devourTarget on completion', () => {
-      const skill = makeSkill({
-        affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
-        enchantmentIds: [EnchantmentType.QuestDevour],
-      })
-      const bindings = new Map([['s', 'sk_s']])
-      const allSkills = new Map<string, AffixSkillInstance>([
-        ['sk_s', makeSkill({ id: 'sk_s', level: 1 })],
-      ])
-      const state = makeRuntimeState({ questStacks: 14 })
-      const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
-      const flags = makeFlags()
-      const result = resolvePhase5(skill, state, ctx, flags, 10)
-      expect(result.questCompleted).toBe(true)
-      // devourTarget should be the weakest neighbor in Void's posRel range
-      // Whether 's' is adjacent to 'a' depends on topology — if it is, devourTarget = 's'
-      if (result.devourTarget != null) {
-        expect(typeof result.devourTarget).toBe('string')
+      // Fill all keys so rangeFull is satisfied
+      const bindings = new Map<string, string>()
+      const allSkills = new Map<string, AffixSkillInstance>()
+      for (const k of 'abcdefghijklmnopqrstuvwxyz') {
+        const sid = `sk_${k}`
+        bindings.set(k, sid)
+        allSkills.set(sid, makeSkill({ id: sid, level: 1 }))
       }
+      allSkills.set('sk_f', skill) // override with void skill
+      const state = makeRuntimeState({ questStacks: 0 })
+      const ctx = makeContext({ triggerKey: 'f', bindings, allSkills, occupiedKeys: ['f'] })
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10)
+      expect(result.questCompleted).toBe(true)
+      expect(result.devourTarget).toBeDefined()
     })
 
     it('QuestOverload: should stack on crit hit only', () => {
@@ -2460,17 +2467,19 @@ describe('Story 35.6: applyQuestEvent external events', () => {
     expect(state.questStacks).toBe(0)
   })
 
-  it('comboReach should stack QuestPurify', () => {
+  it('QuestPurify should NOT stack via external comboReach (now uses internal decayFloor)', () => {
     const state = makeRuntimeState()
     const applied = applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
-    expect(applied).toBe(true)
-    expect(state.questStacks).toBe(1) // targetStacks=3, so 1 stack remains
+    expect(applied).toBe(false)
+    expect(state.questStacks).toBe(0)
   })
 
   it('should apply stackIncrement when provided', () => {
     const state = makeRuntimeState()
-    applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify], 2)
-    expect(state.questStacks).toBe(2) // targetStacks=3, +2 → 2 stacks
+    applyQuestEvent('stageCleared', state, [EnchantmentType.QuestMirror], 2)
+    // QuestMirror targetStacks=1, +2 → completes (stacks reset)
+    expect(state.questStacks).toBe(0)
+    expect(state.questCompletions).toBe(1)
   })
 
   it('should return false for unknown event', () => {
@@ -2517,22 +2526,16 @@ describe('Story 35.6: checkQuestEventCondition inline events', () => {
     expect(state.questStacks).toBe(1)
   })
 
-  it('wordComplete event: QuestPolarize should stack via applyQuestEvent', () => {
+  it('QuestPolarize should NOT stack via wordComplete (now uses gravityWordMatch)', () => {
     const state = makeRuntimeState()
     const applied = applyQuestEvent('wordComplete', state, [EnchantmentType.QuestPolarize])
-    expect(applied).toBe(true)
-    expect(state.questStacks).toBe(1)
+    expect(applied).toBe(false)
+    expect(state.questStacks).toBe(0)
   })
 
-  it('longWordComplete event: QuestFission should stack via applyQuestEvent', () => {
+  it('QuestFission should NOT stack via external applyQuestEvent (uses internal affixProc:splash)', () => {
     const state = makeRuntimeState()
-    const applied = applyQuestEvent('longWordComplete', state, [EnchantmentType.QuestFission])
-    expect(applied).toBe(true)
-    expect(state.questStacks).toBe(1)
-  })
-
-  it('QuestFission should NOT stack on unrelated event', () => {
-    const state = makeRuntimeState()
+    // QuestFission now uses internal event 'affixProc:splash', not external longWordComplete
     const applied = applyQuestEvent('wordComplete', state, [EnchantmentType.QuestFission])
     expect(applied).toBe(false)
     expect(state.questStacks).toBe(0)
@@ -2940,21 +2943,28 @@ describe('Story 35.6: applyQuestEvent', () => {
     expect(state.questCompletions).toBe(1)
   })
 
-  it('comboReach: QuestPurify (targetStacks=3) should increment stacks', () => {
+  it('gravityWordMatch: QuestPolarize should increment stacks', () => {
     const state = makeRuntimeState()
-    const result = applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
+    const result = applyQuestEvent('gravityWordMatch', state, [EnchantmentType.QuestPolarize])
     expect(result).toBe(true)
-    expect(state.questStacks).toBe(1) // 1 of 3 target
+    expect(state.questStacks).toBe(1)
     expect(state.questCompletions).toBe(0)
   })
 
-  it('should cycle: QuestPurify completions++ after 3 comboReach events', () => {
+  it('multiResourceWord: QuestSpectrum should increment stacks', () => {
     const state = makeRuntimeState()
-    applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
-    applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
-    applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
-    expect(state.questStacks).toBe(0) // reset after 3
-    expect(state.questCompletions).toBe(1)
+    const result = applyQuestEvent('multiResourceWord', state, [EnchantmentType.QuestSpectrum])
+    expect(result).toBe(true)
+    expect(state.questStacks).toBe(1)
+    expect(state.questCompletions).toBe(0)
+  })
+
+  it('stageCleared: QuestTwin should increment stacks', () => {
+    const state = makeRuntimeState()
+    const result = applyQuestEvent('stageCleared', state, [EnchantmentType.QuestTwin])
+    expect(result).toBe(true)
+    expect(state.questStacks).toBe(1)
+    expect(state.questCompletions).toBe(0)
   })
 
   it('should return false for unknown event', () => {

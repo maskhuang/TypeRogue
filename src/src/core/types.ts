@@ -163,7 +163,7 @@ export interface ResourceState {
 }
 
 // === 游戏状态 ===
-export type GamePhase = 'battle' | 'shop' | 'gameover' | 'victory' | 'rest';
+export type GamePhase = 'battle' | 'shop' | 'gameover' | 'victory' | 'rest' | 'ritual';
 
 export interface GameState {
   classId: ClassId;
@@ -350,6 +350,8 @@ export interface UIElements {
   startBattleBtn: HTMLElement;
   // Rest
   restScreen: HTMLElement;
+  // Ritual
+  ritualScreen: HTMLElement;
   // Gameover
   gameoverScreen: HTMLElement;
   gameoverStats: HTMLElement;

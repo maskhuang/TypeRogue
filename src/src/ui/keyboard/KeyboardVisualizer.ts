@@ -369,13 +369,15 @@ export class KeyboardVisualizer extends Container {
       if (data.skillId && state.affixSkillStates.has(data.skillId)) {
         const rt = state.affixSkillStates.get(data.skillId)!
         const skill = state.affixSkills.get(data.skillId)
-        if (skill && rt.questStacks > 0) {
+        if (skill && rt.questStacks > 0 && !rt.questTransformed) {
           const questEnch = skill.enchantmentIds
             .map((id: string) => QUEST_ENCHANTMENT_DEFS.find((d: QuestEnchantmentDef) => d.type === id))
             .find((d): d is QuestEnchantmentDef => d != null)
           if (questEnch) {
             anchorKv.setQuestProgress(rt.questStacks / questEnch.targetStacks)
           }
+        } else if (rt.questTransformed) {
+          anchorKv.setQuestProgress(0) // 质变完成，隐藏进度环
         }
       }
     }

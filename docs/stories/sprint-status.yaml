@@ -383,42 +383,42 @@ development_status:
   epic-38-retrospective: optional
 
   # ===== Epic 39: 新手引导与描述可读性优化 =====
-  epic-39: in-progress
+  epic-39: done
   39-1-design-token-readability: done
-  39-2-tooltip-restructure: review
-  39-3-tutorial-manager-infra: review
-  39-4-tutorial-L0-L1: review
+  39-2-tooltip-restructure: done
+  39-3-tutorial-manager-infra: done
+  39-4-tutorial-L0-L1: done
   39-5-tutorial-L2-L3: done
   39-6-tutorial-L4-help-system: done
   epic-39-retrospective: optional
 
   # ===== Epic 40: 多格技能形状系统（Polyomino） =====
-  epic-40: in-progress
+  epic-40: done
   40-1-shape-data-model: done
   40-2-shape-generation: done
-  40-3-keyboard-multi-cell-binding: review
+  40-3-keyboard-multi-cell-binding: done
   40-4-shop-shape-preview: done
-  40-5-drag-drop-shape-placement: review
+  40-5-drag-drop-shape-placement: done
   40-6-right-click-rotation: done
-  40-7-keyboard-visualizer-multi-cell: review
+  40-7-keyboard-visualizer-multi-cell: done
   40-8-trigger-and-battle-adaptation: done
   40-9-spatial-affix-adaptation: done
   40-10-enchantment-topology-adaptation: done
-  40-11-balance-and-integration: review
+  40-11-balance-and-integration: done
   epic-40-retrospective: optional
 
   # ===== Epic 41: 附魔系统改造 =====
-  epic-41: in-progress
+  epic-41: done
   41-1-enchantment-acquisition-rework: done
   41-2-enchantment-redesign: done
   41-3-quest-transform-batch1: done
   41-4-quest-transform-batch2: done
   41-5-charge-mirror-redesign: done
-  epic-41-retrospective: optional
+  epic-41-retrospective: done
 
 # Summary:
 # - Total Epics: 41
 # - Total Stories: 223
-# - Epics Completed: 37
-# - Epics In-Progress: 3 (39, 40, 41)
+# - Epics Completed: 40
+# - Epics In-Progress: 0
 # - Epics Backlog: 1 (38)

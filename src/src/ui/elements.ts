@@ -40,6 +40,8 @@ export function initElements(): UIElements {
     startBattleBtn: document.getElementById('start-battle-btn')!,
     // Rest
     restScreen: document.getElementById('rest-screen')!,
+    // Ritual
+    ritualScreen: document.getElementById('ritual-screen')!,
     // Gameover
     gameoverScreen: document.getElementById('gameover-screen')!,
     gameoverStats: document.getElementById('gameover-stats')!,

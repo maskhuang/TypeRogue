@@ -24,9 +24,9 @@ so that 附魔从被动数值加成变为行为质变，增加构筑深度.
 |------|------|---------|---------|
 | **Crit** | QuestOverload | 暴击 8 次 | 必定暴击（跳过概率 roll） |
 | **Pulse** | QuestEcho | 脉冲爆发 6 次 | 爆发时所有 Pulse 技能 triggerCount +1 |
-| **Splash** | QuestFission | 长词≥6 出现 5 次 | 被溅射邻居也溅射一次（额外一跳） |
+| **Splash** | QuestFission | 溅射触发 8 次 | 被溅射邻居也溅射一次（额外一跳） |
 | **Amplify** | QuestStack | 触发 25 次 | 每关保留 50% 增幅层数 |
-| **Decay** | QuestPurify | 连击≥15 出现 3 次 | 衰减方向逆转为递增（无上限） |
+| **Decay** | QuestPurify | 衰减到 floor 3 次 | 衰减方向逆转为递增（无上限） |
 | **Recurse** | QuestIterate | 递归触发 5 次 | 递归概率不减半 |
 | **Taboo** | QuestSacrifice | 惩罚触发 3 次 | 惩罚转化为随机资源（不再负产出） |
 | **Ligature** | QuestOverlap | 触发 15 次 | 计数改为关卡累计按键次数 |

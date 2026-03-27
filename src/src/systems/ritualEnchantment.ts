@@ -6,7 +6,7 @@
 import { state } from '../core/state';
 import { random } from '../core/seededRandom';
 import type { AffixSkillInstance } from '../data/affixes';
-import { EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
+import { EnchantmentType as EnchantmentTypeEnum, RARITY_COLORS } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
 import {
   categorizeEnchantmentCandidates,
@@ -21,11 +21,12 @@ import {
   getEnchantAnchorSlotBonus,
 } from './relics/EnchantmentRelicBehaviors';
 import { resolveRelicEffectsWithBehaviors } from './relics/RelicPipeline';
-import { getEnchantmentDisplayInfo } from './shop';
+import { getEnchantmentDisplayInfo, buildAffixTooltipFields } from './shop';
 import { playSound } from '../effects/sound';
 import { t } from '../demo/demo-i18n';
 import { eventBus } from '../core/events/EventBus';
 import { getActForNode } from './stage/stageFlow';
+import { RESOURCE_ICONS } from '../core/constants';
 
 // === 配置常量（待流程调整后可由外部覆盖） ===
 
@@ -163,18 +164,22 @@ export function getRitualRounds(): number {
   return RITUAL_ROUNDS;
 }
 
-// === UI 渲染 ===
+// === UI 渲染（独立 ritual-screen）===
+
+import { showScreen } from './battle';
 
 let _ritualOnComplete: (() => void) | null = null;
 let _remainingRounds = 0;
 
 /**
- * 打开仪式附魔界面
+ * 打开仪式附魔界面（独立阶段）
  * @param onComplete 仪式结束后的回调（推进到下一关）
  */
 export function openRitualEnchantment(onComplete: () => void): void {
+  state.phase = 'ritual';
   _ritualOnComplete = onComplete;
   _remainingRounds = getRitualRounds();
+  showScreen('ritual');
   renderRitualRound();
 }
 
@@ -185,7 +190,6 @@ function renderRitualRound(): void {
     return;
   }
 
-  // 为第一个有候选的技能生成候选（仪式：玩家先选附魔，再选技能）
   // 合并所有可附魔技能的候选池
   const allCandidates: RitualCandidate[] = [];
   const seenTypes = new Set<string>();
@@ -209,29 +213,17 @@ function renderRitualRound(): void {
 }
 
 function showRitualChoiceUI(choices: RitualCandidate[], eligible: EligibleSkill[]): void {
-  // 创建或获取仪式 modal
-  let modal = document.getElementById('ritual-enchantment-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'ritual-enchantment-modal';
-    modal.className = 'ritual-enchantment-overlay';
-    document.body.appendChild(modal);
-  }
-
-  modal.style.display = 'flex';
-  modal.innerHTML = `
-    <div class="ritual-enchantment-panel">
-      <h2 class="ritual-title">${t('ritual.title')}</h2>
-      <p class="ritual-subtitle">${t('ritual.subtitle')}</p>
-      <div id="ritual-choices" class="ritual-choices"></div>
-      <div id="ritual-skill-select" class="ritual-skill-select" style="display:none">
-        <p class="ritual-skill-prompt">${t('ritual.select_skill')}</p>
-        <div id="ritual-skill-list" class="ritual-skill-list"></div>
-      </div>
-    </div>
-  `;
-
+  const titleEl = document.getElementById('ritual-title')!;
+  const subtitleEl = document.getElementById('ritual-subtitle')!;
   const choicesEl = document.getElementById('ritual-choices')!;
+  const skillSelectEl = document.getElementById('ritual-skill-select')!;
+  const feedbackEl = document.getElementById('ritual-feedback-area')!;
+
+  titleEl.textContent = t('ritual.title');
+  subtitleEl.textContent = t('ritual.subtitle');
+  choicesEl.innerHTML = '';
+  skillSelectEl.style.display = 'none';
+  feedbackEl.style.display = 'none';
 
   // 渲染附魔候选
   for (const candidate of choices) {
@@ -240,12 +232,15 @@ function showRitualChoiceUI(choices: RitualCandidate[], eligible: EligibleSkill[
 
     const btn = document.createElement('button');
     btn.className = 'ritual-choice-btn';
-    btn.innerHTML = `<span class="ritual-choice-icon">${info.icon}</span><span class="ritual-choice-name">${info.name}</span>`;
+    btn.innerHTML = `
+      <div class="ritual-choice-category" style="color:${info.categoryColor}">${info.category}</div>
+      <span class="ritual-choice-icon">${info.icon}</span>
+      <span class="ritual-choice-name">${info.name}</span>
+      <div class="ritual-choice-desc">${info.desc}</div>
+    `;
     btn.onclick = () => {
-      // 高亮选中
       choicesEl.querySelectorAll('.ritual-choice-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      // 显示技能选择
       showRitualSkillSelect(candidate, eligible);
     };
     choicesEl.appendChild(btn);
@@ -254,15 +249,41 @@ function showRitualChoiceUI(choices: RitualCandidate[], eligible: EligibleSkill[
 
 function showRitualSkillSelect(candidate: RitualCandidate, eligible: EligibleSkill[]): void {
   const selectEl = document.getElementById('ritual-skill-select')!;
+  const promptEl = document.getElementById('ritual-skill-prompt')!;
   const listEl = document.getElementById('ritual-skill-list')!;
+
+  promptEl.textContent = t('ritual.select_skill');
   selectEl.style.display = 'block';
   listEl.innerHTML = '';
 
-  // 过滤：只显示对该附魔类型有效的技能（能接受该附魔的技能）
-  for (const { skillId, affixSkill } of eligible) {
+  for (const { skillId, affixSkill, emptySlots } of eligible) {
     const btn = document.createElement('button');
     btn.className = 'ritual-skill-btn';
-    btn.innerHTML = `<span class="ritual-skill-icon">${affixSkill.icon}</span><span class="ritual-skill-name">${affixSkill.name}</span>`;
+
+    const fields = buildAffixTooltipFields(affixSkill);
+    const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#fff';
+    const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
+
+    // 词条摘要
+    const affixHtml = fields.affixInfo
+      .map(a => `<span class="ritual-skill-affix">[${a.typeName}] ${a.paramSummary}</span>`)
+      .join('');
+
+    // 已有附魔
+    const enchHtml = fields.enchantments
+      .map(e => `<span class="ritual-skill-ench" style="color:${e.color}">${e.icon} ${e.name}</span>`)
+      .join('');
+
+    btn.innerHTML = `
+      <div class="ritual-skill-header" style="color:${rarityColor}">
+        <span class="ritual-skill-icon">${affixSkill.icon}</span>
+        <span class="ritual-skill-name">${affixSkill.name}</span>
+        <span class="ritual-skill-res">${resIcon}</span>
+      </div>
+      <div class="ritual-skill-affixes">${affixHtml}</div>
+      ${enchHtml ? `<div class="ritual-skill-enchants">${enchHtml}</div>` : ''}
+      <div class="ritual-skill-slots">${t('ritual.empty_slots', { count: emptySlots })}</div>
+    `;
     btn.onclick = () => {
       applyRitualEnchantment(skillId, affixSkill, candidate);
       _remainingRounds--;
@@ -278,20 +299,25 @@ function showRitualSkillSelect(candidate: RitualCandidate, eligible: EligibleSki
 }
 
 function showRitualFeedback(message: string): void {
-  const modal = document.getElementById('ritual-enchantment-modal');
-  if (!modal) return;
+  // 隐藏选择区域，显示反馈
+  document.getElementById('ritual-choices')!.style.display = 'none';
+  document.getElementById('ritual-skill-select')!.style.display = 'none';
+  document.getElementById('ritual-subtitle')!.style.display = 'none';
 
-  const panel = modal.querySelector('.ritual-enchantment-panel');
-  if (!panel) return;
+  const feedbackEl = document.getElementById('ritual-feedback-area')!;
+  const feedbackText = document.getElementById('ritual-feedback-text')!;
+  const continueBtn = document.getElementById('ritual-continue-btn')!;
 
-  panel.innerHTML = `
-    <h2 class="ritual-title">${t('ritual.title')}</h2>
-    <p class="ritual-feedback">${message}</p>
-    <button id="ritual-continue-btn" class="ritual-continue-btn">${t('ritual.continue')}</button>
-  `;
+  feedbackText.textContent = message;
+  continueBtn.textContent = t('ritual.continue');
+  feedbackEl.style.display = 'block';
 
-  document.getElementById('ritual-continue-btn')!.onclick = () => {
+  continueBtn.onclick = () => {
     if (_remainingRounds > 0 && getEligibleSkills().length > 0) {
+      // 恢复选择区域用于下一轮
+      document.getElementById('ritual-choices')!.style.display = 'flex';
+      document.getElementById('ritual-subtitle')!.style.display = 'block';
+      feedbackEl.style.display = 'none';
       renderRitualRound();
     } else {
       completeRitual();
@@ -300,12 +326,6 @@ function showRitualFeedback(message: string): void {
 }
 
 function completeRitual(): void {
-  const modal = document.getElementById('ritual-enchantment-modal');
-  if (modal) {
-    modal.style.display = 'none';
-    modal.innerHTML = '';
-  }
-
   const cb = _ritualOnComplete;
   _ritualOnComplete = null;
   _remainingRounds = 0;

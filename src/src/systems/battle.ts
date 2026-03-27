@@ -193,11 +193,12 @@ function stopScoreRoller(): void {
 }
 
 // === 屏幕管理 ===
-export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'rest'): void {
+export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'rest' | 'ritual'): void {
   const el = getElements();
   el.battleScreen.style.display = name === 'battle' ? 'flex' : 'none';
   el.shopScreen.style.display = name === 'shop' ? 'flex' : 'none';
   el.restScreen.style.display = name === 'rest' ? 'flex' : 'none';
+  el.ritualScreen.style.display = name === 'ritual' ? 'flex' : 'none';
   el.gameoverScreen.style.display = name === 'gameover' ? 'flex' : 'none';
 }
 
@@ -641,17 +642,15 @@ function playerCorrect(k: string): void {
     showFeedback(t('battle.detonate', { value: count }), '#ff6b00');
   }
 
-  // 附魔外部事件：连击达 15 的倍数 → 学徒·连击/任务·净化 成长
+  // 附魔外部事件：连击达 15 的倍数 → 学徒·连击成长
   const newComboMilestone = Math.floor(state.combo / 15);
   if (newComboMilestone > prevComboMilestone) {
     const _gm = getApprenticeGrowthMultiplier();
-    const _si = getQuestStackIncrement();
     for (let m = 0; m < newComboMilestone - prevComboMilestone; m++) {
       for (const [, skill] of state.affixSkills) {
         const rt = state.affixSkillStates.get(skill.id);
         if (!rt) continue;
         applyApprenticeEvent('comboReach', rt, skill.enchantmentIds, _gm);
-        applyQuestEvent('comboReach', rt, skill.enchantmentIds, _si);
       }
     }
   }
@@ -948,6 +947,8 @@ function completeWord(): void {
   // 附魔外部事件：单词完成 → 学徒/任务成长
   const _growthMult = getApprenticeGrowthMultiplier();
   const _stackInc = getQuestStackIncrement();
+  const wordLower = state.player.word.toLowerCase();
+  const wordResCount = getWordResourceTypeCount();
   for (const [, skill] of state.affixSkills) {
     const rt = state.affixSkillStates.get(skill.id);
     if (!rt) continue;
@@ -955,11 +956,26 @@ function completeWord(): void {
     applyQuestEvent('wordComplete', rt, skill.enchantmentIds, _stackInc);
     if (state.player.word.length >= 6) {
       applyApprenticeEvent('longWordComplete', rt, skill.enchantmentIds, _growthMult);
-      applyQuestEvent('longWordComplete', rt, skill.enchantmentIds, _stackInc);
     }
     if (state.wordPerfect) {
       applyApprenticeEvent('perfectWord', rt, skill.enchantmentIds, _growthMult);
-      applyQuestEvent('perfectWord', rt, skill.enchantmentIds, _stackInc);
+    }
+    // QuestPolarize: 完成包含/不包含绑定字母的词
+    const gravAffix = skill.affixes.find(a => a.type === AffixType.Gravity);
+    if (gravAffix) {
+      const boundKeys = [...state.player.bindings.entries()]
+        .filter(([, sid]) => sid === skill.id).map(([k]) => k.toLowerCase());
+      const isAttract = (gravAffix.probMult ?? 1) > 1;
+      const match = isAttract
+        ? boundKeys.some(k => wordLower.includes(k))
+        : boundKeys.every(k => !wordLower.includes(k));
+      if (match) {
+        applyQuestEvent('gravityWordMatch', rt, skill.enchantmentIds, _stackInc);
+      }
+    }
+    // QuestSpectrum: 一个单词内产出 5 种资源
+    if (wordResCount >= 5) {
+      applyQuestEvent('multiResourceWord', rt, skill.enchantmentIds, _stackInc);
     }
   }
 

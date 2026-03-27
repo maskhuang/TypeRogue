@@ -23,12 +23,12 @@ so that 每个词条都有独特的质变路径，形成多样化构筑策略.
 | **Cascade** | QuestChain | 触发 6 次连锁 | `cascadeMult + c×0.2` | 双向连锁：反向键也触发级联 | 循环风险→chainDepth 限深 |
 | **Outcast** | QuestCharge | 触发 10 次流放 | `bonusPercent + c×0.15` | 首尾呼应：额外触发对端技能 | 互触发循环→单次限制 |
 | **Convert** | QuestRefine | 触发 15 次 | `k × 1.1^c` | 双向转化：source↔target 互换 | 资源路由规则 |
-| **Void** | QuestDevour | 触发 15 次 | `bonusPerSlot + c×0.05` | 每关吞噬一次最弱邻居 | 解绑技能影响 bindings |
-| **Gravity** | QuestPolarize | 完成 8 个词 | `probMult ± c×0.15` | 双向锁定：吸引→必含，排斥→必不含 | 词库过滤空集风险 |
-| **Rainbow** | QuestSpectrum | 触发 20 次 | 最低资源偏向 `+15%/c` | 同时产出所有资源（按比例分摊） | 多资源同时写入 |
+| **Void** | QuestDevour | 范围内被技能填满 | `bonusPerSlot + c×0.05` | 每关吞噬一次最弱邻居 | 解绑技能影响 bindings |
+| **Gravity** | QuestPolarize | 完成 8 个包含/不包含绑定字母的词 | `probMult ± c×0.15` | 双向锁定：吸引→必含，排斥→必不含 | 词库过滤空集风险 |
+| **Rainbow** | QuestSpectrum | 一个单词内产出 5 种资源 3 次 | 最低资源偏向 `+15%/c` | 同时产出所有资源（按比例分摊） | 多资源同时写入 |
 | **Resonance** | QuestResonance (共享) | 被邻居触发 20 次 | `+10%/c` 产出 | 共鸣增强：Phase 2 额外加成而非仅触发 | orchestrator 伪无限模式 |
 | **Link** | QuestResonance (共享) | 被邻居触发 20 次 | `+10%/c` 产出 | 同上（与 Resonance 共享质变） | 同上 |
-| **Twin** | **新建 QuestTwin** | 2 槽满+通关 N 次 | 无 | 词条复制：等效双倍（排除 Twin 自身） | 复制后词条数超限 |
+| **Twin** | **新建 QuestTwin** | 通关 3 次 | 无 | 词条复制：等效双倍（排除 Twin 自身） | 复制后词条数超限 |
 | **Conduit** | **新建 QuestConduit** | 累计导能 N 次 | 无 | 额外触发 +1→+2 | — |
 
 ### 前提
@@ -142,7 +142,7 @@ so that 每个词条都有独特的质变路径，形成多样化构筑策略.
 
 **2. Twin/Conduit 无 quest 附魔——需新建**
 - 当前 QUEST_ENCHANTMENT_DEFS 无 Twin/Conduit 条目
-- Twin 的质变任务：`event: 'stageCleared'`（通关时检查），`targetStacks: 3`
+- Twin 的质变任务：`event: 'stageCleared'`（通关时通过 QUEST_EXTERNAL_EVENT_MAP 叠层），`targetStacks: 3`
 - Conduit 的质变任务：`event: 'selfTrigger'`，`targetStacks: 15`（实际是邻居触发的回调）
 - 需同步更新 `QUEST_AFFIX_MAP`、`ENCHANTMENT_META`、枚举测试
 

@@ -489,13 +489,15 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
   let apprenticeGrowth: string | undefined
 
   if (rt) {
-    // 任务进度
-    if (rt.questStacks > 0 || rt.questCompletions > 0) {
-      const questEnch = skill.enchantmentIds
-        .map(id => QUEST_ENCHANTMENT_DEFS.find((d: QuestEnchantmentDef) => d.type === id))
-        .find((d): d is QuestEnchantmentDef => d != null)
-      if (questEnch) {
-        questProgress = t('tooltip.quest_progress', { stacks: rt.questStacks, target: questEnch.targetStacks, completions: rt.questCompletions })
+    // 任务进度 / 质变状态
+    const questEnch = skill.enchantmentIds
+      .map(id => QUEST_ENCHANTMENT_DEFS.find((d: QuestEnchantmentDef) => d.type === id))
+      .find((d): d is QuestEnchantmentDef => d != null)
+    if (questEnch) {
+      if (rt.questTransformed) {
+        questProgress = t('tooltip.quest_done', { effect: t('quest.' + questEnch.type + '.effect') })
+      } else if (rt.questStacks > 0 || rt.questCompletions > 0) {
+        questProgress = t('tooltip.quest_progress', { task: t('quest.' + questEnch.type + '.task'), stacks: rt.questStacks, target: questEnch.targetStacks })
       }
     }
     // 学徒成长
@@ -635,16 +637,22 @@ export function computeSmartEstimate(
     }
   }
 
-  // 任务附魔进度
-  if (rt && (rt.questStacks > 0 || rt.questCompletions > 0)) {
-    const questEnch = skill.enchantmentIds
-      .map(id => QUEST_ENCHANTMENT_DEFS.find((d: QuestEnchantmentDef) => d.type === id))
-      .find((d): d is QuestEnchantmentDef => d != null)
-    if (questEnch) {
+  // 任务附魔进度 / 质变状态
+  const questEnchEst = skill.enchantmentIds
+    .map(id => QUEST_ENCHANTMENT_DEFS.find((d: QuestEnchantmentDef) => d.type === id))
+    .find((d): d is QuestEnchantmentDef => d != null)
+  if (rt && questEnchEst) {
+    if (rt.questTransformed) {
       breakdown.push({
         typeKey: 'apprentice',
-        label: t('est.quest_progress', { stacks: rt.questStacks, target: questEnch.targetStacks }),
-        detail: rt.questCompletions > 0 ? t('est.quest_completions', { count: rt.questCompletions }) : '',
+        label: t('est.quest_done', { effect: t('quest.' + questEnchEst.type + '.effect') }),
+        detail: '',
+      })
+    } else if (rt.questStacks > 0) {
+      breakdown.push({
+        typeKey: 'apprentice',
+        label: t('est.quest_progress', { task: t('quest.' + questEnchEst.type + '.task'), stacks: rt.questStacks, target: questEnchEst.targetStacks }),
+        detail: '',
       })
     }
   }
@@ -1955,7 +1963,7 @@ export function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: 
   if (questDef) {
     return {
       name: t('quest.' + questDef.type),
-      desc: t('ench_info.quest_desc', { effect: t('quest.' + questDef.type + '.effect'), stacks: questDef.targetStacks }),
+      desc: t('ench_info.quest_desc', { effect: t('quest.' + questDef.type + '.effect'), task: t('quest.' + questDef.type + '.task') }),
       icon: '✨',
       category: t('ench_cat.quest'),
       categoryColor: ENCHANTMENT_CATEGORY_COLORS.quest,

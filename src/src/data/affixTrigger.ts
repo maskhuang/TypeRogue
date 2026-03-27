@@ -111,6 +111,8 @@ export interface TriggerFlags {
   isPulse: boolean
   isCascade: boolean
   isTabooPenalty: boolean
+  /** 衰减到达 floor（QuestPurify 叠层条件） */
+  isDecayFloor: boolean
   ligatureCount: number
   tabooConvertResource: import('../core/types').ResourceType | null
 }
@@ -437,6 +439,7 @@ export function resolvePhase3(
     isPulse: false,
     isCascade: false,
     isTabooPenalty: false,
+    isDecayFloor: false,
     ligatureCount: 0,
     tabooConvertResource: null,
   }
@@ -478,6 +481,10 @@ export function resolvePhase3(
         } else {
           const floorEff = Math.max(0.1, affix.floor ?? 0.5)
           const newDecay = Math.max(floorEff, runtimeState.currentDecayMult - (affix.decayPerTrigger ?? 0))
+          // 到达 floor 时标记（QuestPurify 叠层条件）
+          if (newDecay <= floorEff) {
+            flags.isDecayFloor = true
+          }
           runtimeState.currentDecayMult = newDecay
         }
         break
@@ -732,10 +739,16 @@ function checkQuestEventCondition(
     case 'affixProc:pulse': return triggerFlags.isPulse
     case 'affixProc:cascade': return triggerFlags.isCascade
     case 'affixProc:recurse': return recurseProc
+    case 'affixProc:splash': return triggerFlags.splashTargets.length > 0
     case 'affixProc:taboo_penalty': return triggerFlags.isTabooPenalty
+    case 'decayFloor': return triggerFlags.isDecayFloor
+    case 'rangeFull': {
+      const voidAffix = skill.affixes.find(a => a.type === AffixType.Void)
+      return voidAffix?.posRel != null && countEmptySlots(ctx.occupiedKeys, voidAffix.posRel, ctx.bindings) === 0
+    }
     // ── neighborTrigger 在 Phase 6 独立处理（QuestResonance），Phase 5 不重复叠层 ──
     case 'neighborTrigger': return false
-    // ── 外部事件（wordComplete, perfectWord, longWord:6, comboReach:15, stageCleared）
+    // ── 外部事件（wordComplete, gravityWordMatch, multiResourceWord, stageCleared）
     //    由调用方通过 applyQuestEvent 处理，Phase 5 不重复叠层 ──
     default: return false
   }
@@ -1210,10 +1223,10 @@ export function applyApprenticeEvent(
 
 /** 任务附魔外部事件→附魔类型映射（可多对一） */
 const QUEST_EXTERNAL_EVENT_MAP: Record<string, EnchantmentType[]> = {
-  stageCleared: [EnchantmentType.QuestMirror],
-  comboReach: [EnchantmentType.QuestPurify],
-  wordComplete: [EnchantmentType.QuestEnergize, EnchantmentType.QuestPolarize],
-  longWordComplete: [EnchantmentType.QuestFission],
+  stageCleared: [EnchantmentType.QuestMirror, EnchantmentType.QuestTwin],
+  wordComplete: [EnchantmentType.QuestEnergize],
+  gravityWordMatch: [EnchantmentType.QuestPolarize],
+  multiResourceWord: [EnchantmentType.QuestSpectrum],
 }
 
 /**

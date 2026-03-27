@@ -124,7 +124,7 @@ describe('getExtendedNeighbors', () => {
 // ===== Phase 5 Splash 去重 =====
 
 function makeFlags(): TriggerFlags {
-  return { isCrit: false, isPulse: false, isCascade: false, isTabooPenalty: false, ligatureCount: 0 }
+  return { isCrit: false, isPulse: false, isCascade: false, isTabooPenalty: false, isDecayFloor: false, ligatureCount: 0, tabooConvertResource: null }
 }
 
 describe('resolvePhase5 — Splash 多格去重', () => {
