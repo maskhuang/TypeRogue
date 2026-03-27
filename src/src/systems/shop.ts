@@ -453,9 +453,15 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
     .map(a => {
       let desc = t('affix_desc.' + a.type);
       // Mirror: tooltip 显示当前复制的词条
-      if (a.type === 'mirror' && rt?.mirrorCopiedAffix) {
-        const copied = rt.mirrorCopiedAffix;
-        desc += ` [${t('affix.' + copied.type)}: ${buildAffixParamSummary(copied)}]`;
+      if (a.type === 'mirror' && rt) {
+        // Story 41-5: 质变模式显示所有复制词条
+        if (rt.mirrorCopiedAffixes && rt.mirrorCopiedAffixes.length > 0) {
+          const summaries = rt.mirrorCopiedAffixes.map(c => `${t('affix.' + c.type)}: ${buildAffixParamSummary(c)}`);
+          desc += ` [${summaries.join(' | ')}]`;
+        } else if (rt.mirrorCopiedAffix) {
+          const copied = rt.mirrorCopiedAffix;
+          desc += ` [${t('affix.' + copied.type)}: ${buildAffixParamSummary(copied)}]`;
+        }
       }
       return {
         typeName: t('affix.' + a.type),

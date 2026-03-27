@@ -187,6 +187,8 @@ export interface TriggerResult {
   phase6?: Phase6Result
   /** 本次触发的键位（链式飞行定位用） */
   triggerKey: string
+  /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
+  chargeAutoComplete?: boolean
 }
 
 // ===== 辅助函数 =====
@@ -292,6 +294,8 @@ export interface Phase2Result {
   mutations: StateMutation[]
   /** 质变Convert双向转化：反向产出到source资源 */
   convertReverseOutputs: { resource: ResourceType, amount: number }[]
+  /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
+  chargeAutoComplete: boolean
 }
 
 /**
@@ -311,6 +315,7 @@ export function resolvePhase2(
     ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? baseOutput)
     : baseOutput
   let bonusPercent = 0
+  let chargeAutoComplete = false
   const mutations: StateMutation[] = []
   const convertReverseOutputs: { resource: ResourceType, amount: number }[] = []
 
@@ -341,11 +346,13 @@ export function resolvePhase2(
         break
       }
 
-      /** @deprecated Charge 待 Story 41-5 重新实现长按蓄力机制 */
       case AffixType.Charge: {
-        const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestEnergize)
-        const maxEff = (affix.maxBonus ?? 0) + c * 0.3
-        bonusPercent += Math.min(runtimeState.chargeAccumulated, maxEff)
+        const maxBonus = affix.maxBonus ?? 0
+        bonusPercent += Math.min(runtimeState.chargeAccumulated, maxBonus)
+        // Story 41-5: 质变 — 满蓄力释放自动完成当前单词
+        if (runtimeState.questTransformed && runtimeState.chargeAccumulated >= maxBonus && maxBonus > 0) {
+          chargeAutoComplete = true
+        }
         // 蓄力释放清零 — 直接写入 runtimeState
         runtimeState.chargeAccumulated = 0
         break
@@ -399,6 +406,7 @@ export function resolvePhase2(
     bonusPercent,
     mutations,
     convertReverseOutputs,
+    chargeAutoComplete,
   }
 }
 
@@ -1062,16 +1070,32 @@ export function resolvePhase6(
 
 /**
  * 构建有效技能：将 Mirror 词条替换为运行时复制的词条。
- * 若无 Mirror 或 mirrorCopiedAffix 为 null，直接返回原 skill（零分配）。
+ * - 非质变：替换为单个 mirrorCopiedAffix
+ * - 质变（Story 41-5）：替换为 mirrorCopiedAffixes 数组（数组膨胀）
+ * 若无 Mirror 或无复制词条，直接返回原 skill（零分配）。
  */
 export function buildEffectiveSkill(
   skill: AffixSkillInstance,
   runtimeState: SkillRuntimeState,
 ): AffixSkillInstance {
-  if (!runtimeState.mirrorCopiedAffix) return skill
   const hasMirror = skill.affixes.some(a => a.type === AffixType.Mirror)
   if (!hasMirror) return skill
 
+  // Story 41-5: 质变模式 — Mirror 替换为所有复制词条（数组膨胀）
+  if (runtimeState.mirrorCopiedAffixes && runtimeState.mirrorCopiedAffixes.length > 0) {
+    const expanded: AffixInstance[] = []
+    for (const a of skill.affixes) {
+      if (a.type === AffixType.Mirror) {
+        expanded.push(...runtimeState.mirrorCopiedAffixes)
+      } else {
+        expanded.push(a)
+      }
+    }
+    return { ...skill, affixes: expanded }
+  }
+
+  // 非质变：单个替换
+  if (!runtimeState.mirrorCopiedAffix) return skill
   return {
     ...skill,
     affixes: skill.affixes.map(a =>
@@ -1144,6 +1168,7 @@ export function triggerAffixSkill(
     phase5: p5,
     phase6: p6,
     triggerKey: ctx.triggerKey,
+    chargeAutoComplete: p2.chargeAutoComplete || undefined,
   }
 }
 
@@ -1245,8 +1270,10 @@ export function getEffectiveProbMult(
 }
 
 /**
- * Mirror 词条关卡初始化：从邻居复制一个词条（含 QuestMirror ×1.1^c 增强）。
- * 供系统层在关卡开始时调用，返回复制的 AffixInstance 或 null。
+ * Mirror 词条关卡初始化：从邻居复制词条。
+ * - 非质变：随机复制一个邻居的一个词条，返回单个 AffixInstance。
+ * - 质变（Story 41-5）：复制范围内所有邻居的不同类型词条，返回数组。
+ * 供系统层在关卡开始时调用。
  * 注意：调用方须将 ctx.triggerKey 设为 Mirror 技能的绑定键位（非当前按键）。
  */
 export function resolveMirrorCopy(
@@ -1263,7 +1290,12 @@ export function resolveMirrorCopy(
 
   if (neighborKeys.length === 0) return null
 
-  // 随机选一个邻居
+  // Story 41-5: 质变模式 — 复制所有邻居的不同类型词条
+  if (runtimeState.questTransformed) {
+    return resolveMirrorCopyAll(neighborKeys, ctx)
+  }
+
+  // 非质变：随机选一个邻居 → 随机选一个词条
   const neighborKey = neighborKeys[Math.floor(ctx.randomFn() * neighborKeys.length)]
   const neighborSkillId = ctx.bindings.get(neighborKey)
   if (!neighborSkillId) return null
@@ -1271,41 +1303,73 @@ export function resolveMirrorCopy(
   const neighborSkill = ctx.allSkills.get(neighborSkillId)
   if (!neighborSkill || neighborSkill.affixes.length === 0) return null
 
-  // 随机选一个词条（排除 Mirror 和 Twin）
   const copyable = neighborSkill.affixes.filter(
     a => a.type !== AffixType.Mirror && a.type !== AffixType.Twin,
   )
   if (copyable.length === 0) return null
 
   const source = copyable[Math.floor(ctx.randomFn() * copyable.length)]
-  const copied: AffixInstance = { ...source }
+  return { ...source }
+}
 
-  // QuestMirror 增强：所有数值参数 ×1.1^c（设计文档："复制参数 ×1.1"）
-  const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestMirror)
-  if (c > 0) {
-    const boost = Math.pow(1.1, c)
-    // 加算类参数：直接 ×boost
-    if (copied.k != null) copied.k *= boost
-    if (copied.bonusPercent != null) copied.bonusPercent *= boost
-    if (copied.bonusPerSlot != null) copied.bonusPerSlot *= boost
-    if (copied.valuePerStack != null) copied.valuePerStack *= boost
-    if (copied.maxBonus != null) copied.maxBonus *= boost
-    if (copied.recurseChance != null) copied.recurseChance *= boost
-    if (copied.chance != null) copied.chance *= boost
-    if (copied.gainPerSec != null) copied.gainPerSec *= boost
-    if (copied.floor != null) copied.floor *= boost
-    if (copied.penaltyChance != null) copied.penaltyChance *= boost
-    if (copied.decayPerTrigger != null) copied.decayPerTrigger *= boost
-    if (copied.probMult != null) copied.probMult *= boost
-    if (copied.interval != null) copied.interval *= boost
-    // 乘算类参数：boost 作用于 (m-1) 增量
-    if (copied.critMult != null) copied.critMult = 1 + (copied.critMult - 1) * boost
-    if (copied.burstMult != null) copied.burstMult = 1 + (copied.burstMult - 1) * boost
-    if (copied.cascadeMult != null) copied.cascadeMult = 1 + (copied.cascadeMult - 1) * boost
-    if (copied.initialMult != null) copied.initialMult = 1 + (copied.initialMult - 1) * boost
+/**
+ * Story 41-5: 从邻居键列表中收集所有不同类型词条（去重、排除 Mirror/Twin）。
+ * 共用逻辑，供 resolveMirrorCopyAll 和 resolveMirrorCopyAllAffixes 调用。
+ */
+function collectNeighborAffixes(
+  neighborKeys: string[],
+  ctx: TriggerContext,
+): AffixInstance[] {
+  const seen = new Set<string>()
+  const collected: AffixInstance[] = []
+
+  for (const nk of neighborKeys) {
+    const neighborSkillId = ctx.bindings.get(nk)
+    if (!neighborSkillId) continue
+    const neighborSkill = ctx.allSkills.get(neighborSkillId)
+    if (!neighborSkill) continue
+
+    for (const affix of neighborSkill.affixes) {
+      if (affix.type === AffixType.Mirror || affix.type === AffixType.Twin) continue
+      if (seen.has(affix.type)) continue
+      seen.add(affix.type)
+      collected.push({ ...affix })
+    }
   }
 
-  return copied
+  return collected
+}
+
+/**
+ * Story 41-5: Mirror 质变 — 复制范围内所有邻居的不同类型词条。
+ * 返回单个代表（用于兼容 mirrorCopiedAffix），完整数组通过 runtimeState.mirrorCopiedAffixes 存储。
+ */
+function resolveMirrorCopyAll(
+  neighborKeys: string[],
+  ctx: TriggerContext,
+): AffixInstance | null {
+  const collected = collectNeighborAffixes(neighborKeys, ctx)
+  return collected.length > 0 ? collected[0] : null
+}
+
+/**
+ * Story 41-5: Mirror 质变 — 获取所有复制词条的完整数组。
+ * 供 battle.ts endLevel() 在质变模式下调用。
+ */
+export function resolveMirrorCopyAllAffixes(
+  skill: AffixSkillInstance,
+  runtimeState: SkillRuntimeState,
+  ctx: TriggerContext,
+): AffixInstance[] {
+  const mirrorAffix = skill.affixes.find(a => a.type === AffixType.Mirror)
+  if (!mirrorAffix?.posRel) return []
+
+  const neighborKeys = getExtendedNeighbors(ctx.occupiedKeys, mirrorAffix.posRel)
+    .filter(k => ctx.bindings.has(k))
+
+  if (neighborKeys.length === 0) return []
+
+  return collectNeighborAffixes(neighborKeys, ctx)
 }
 
 // ===== 任务附魔抽取过滤 + Twin =====
@@ -1509,7 +1573,11 @@ export function serializeSkill(
     neighborPosRel: skill.neighborPosRel,
     shapeId: skill.shapeId,
     rotation: skill.rotation,
-    runtime: { ...runtimeState, mirrorCopiedAffix: runtimeState.mirrorCopiedAffix ? { ...runtimeState.mirrorCopiedAffix } : null },
+    runtime: {
+      ...runtimeState,
+      mirrorCopiedAffix: runtimeState.mirrorCopiedAffix ? { ...runtimeState.mirrorCopiedAffix } : null,
+      mirrorCopiedAffixes: runtimeState.mirrorCopiedAffixes.map(a => ({ ...a })),
+    },
   }
 }
 
@@ -1539,6 +1607,7 @@ export function deserializeSkill(
     chargeAccumulated: data.runtime.chargeAccumulated ?? 0,
     currentDecayMult: data.runtime.currentDecayMult ?? 1,
     mirrorCopiedAffix: data.runtime.mirrorCopiedAffix ? { ...data.runtime.mirrorCopiedAffix } : null,
+    mirrorCopiedAffixes: (data.runtime as any).mirrorCopiedAffixes?.map((a: any) => ({ ...a })) ?? [],
     triggerCount: data.runtime.triggerCount ?? 0,
     amplifyStacks: data.runtime.amplifyStacks ?? 0,
     apprenticeAccumulated: data.runtime.apprenticeAccumulated ?? 0,
@@ -1569,6 +1638,7 @@ export function migrateLoadedSkills(
           chargeAccumulated: 0,
           currentDecayMult: 1,
           mirrorCopiedAffix: null,
+          mirrorCopiedAffixes: [],
           triggerCount: 0,
           amplifyStacks: 0,
           apprenticeAccumulated: 0,

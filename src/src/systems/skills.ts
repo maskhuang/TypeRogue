@@ -9,7 +9,7 @@ import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { t } from '../demo/demo-i18n';
 import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
-import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor } from './battle';
+import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete } from './battle';
 import { getFloatScale } from '../effects/juice';
 import { eventBus } from '../core/events/EventBus';
 import { routeFragmentsToInventory } from './classes/FragmentQueue';
@@ -23,6 +23,8 @@ import { getSkillKeys, getBindingState } from './bindingManager';
 import { getShortSprintBonus } from './relics/WordRelicBehaviors';
 import { recordResourceProduction, getResourceTideBonus, resetWordResourceAmounts } from './relics/ResourceRelicBehaviors';
 import { getWarmUpBonus } from './relics/StageRelicBehaviors';
+import { AffixType } from '../data/affixes';
+import { inputHandler } from './typing/InputHandler';
 
 
 // === 战后统计：记录技能触发 ===
@@ -103,9 +105,34 @@ export function resetWordResourceTypes(): void {
   resetWordResourceOutput();
 }
 
-/** @deprecated 待 Story 41-5 重新实现 Charge 长按蓄力机制。当前为空实现。 */
-export function updateChargeProducers(_dt: number): void {
-  // no-op: 旧产出者系统已移除
+/**
+ * Story 41-5: Charge 长按蓄力 — 每帧更新充能值。
+ * 遍历当前 held keys → 查 bindings → 找 Charge affix → 累加 chargeAccumulated。
+ */
+export function updateChargeProducers(dt: number): void {
+  const heldKeys = inputHandler.getHeldKeys()
+  if (heldKeys.size === 0) return
+
+  for (const [key] of heldKeys) {
+    const skillId = state.player.bindings.get(key)
+    if (!skillId) continue
+    const skill = state.affixSkills.get(skillId)
+    if (!skill) continue
+    const rt = state.affixSkillStates.get(skillId)
+    if (!rt) continue
+
+    // 找 Charge affix
+    const chargeAffix = skill.affixes.find(a => a.type === AffixType.Charge)
+    if (!chargeAffix) continue
+
+    const maxBonus = chargeAffix.maxBonus ?? 0
+    if (rt.chargeAccumulated >= maxBonus) continue // 已满
+
+    rt.chargeAccumulated = Math.min(
+      rt.chargeAccumulated + (chargeAffix.gainPerSec ?? 0) * dt,
+      maxBonus,
+    )
+  }
 }
 
 // === 技能键命中率计算 ===
@@ -299,6 +326,8 @@ function triggerAffixSkillWithFeedback(
     showFeedback: (text: string, color: string) => showFeedback(text, color),
     playSound: (type: string) => playSound(type),
     enterPseudoInfinite: (_keys: string[]) => setPseudoInfiniteVisual(true),
+    // Story 41-5: Charge 质变 — 满蓄力自动完成当前单词
+    chargeAutoComplete: () => performAutocomplete('charge'),
   });
 
   // Story 36.4: 爵士乐 — 追踪本词触发的词条类型

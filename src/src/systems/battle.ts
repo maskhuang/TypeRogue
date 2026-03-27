@@ -38,7 +38,7 @@ import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
-import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent, resolveMirrorCopy, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult } from '../data/affixTrigger';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult } from '../data/affixTrigger';
 import { AffixType } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
@@ -484,10 +484,11 @@ function handleKeyPress(data: { key: string; timestamp: number }): void {
 
 /**
  * Story 36.2: 小助手自动补全 — 按顺序执行剩余字母的 playerCorrect 逻辑
+ * Story 41-5: 导出供 Charge 质变满蓄力自动完成使用
  */
-function performAutocomplete(): void {
+export function performAutocomplete(source: 'tab' | 'charge' = 'tab'): void {
   const word = state.player.word;
-  showFeedback('Tab ✓', '#00ff88');
+  showFeedback(source === 'charge' ? '⚡ Auto ✓' : 'Tab ✓', '#00ff88');
   while (state.player.index < word.length) {
     const k = word[state.player.index].toLowerCase();
     playerCorrect(k);
@@ -1417,7 +1418,7 @@ function endLevel(): void {
       const allKeys = getSkillKeys(bs, skill.id);
       if (allKeys.length === 0) continue;
       const anchorKey = getSkillAnchorKey(bs, skill.id) ?? allKeys[0];
-      rt.mirrorCopiedAffix = resolveMirrorCopy(skill, rt, {
+      const mirrorCtx = {
         triggerKey: anchorKey,
         occupiedKeys: allKeys,
         currentWord: '',
@@ -1427,7 +1428,15 @@ function endLevel(): void {
         skillStates: state.affixSkillStates,
         allSkills: state.affixSkills,
         randomFn: random,
-      });
+      };
+      // Story 41-5: 质变模式 — 复制所有不同类型词条
+      if (rt.questTransformed) {
+        rt.mirrorCopiedAffixes = resolveMirrorCopyAllAffixes(skill, rt, mirrorCtx);
+        rt.mirrorCopiedAffix = rt.mirrorCopiedAffixes.length > 0 ? rt.mirrorCopiedAffixes[0] : null;
+      } else {
+        rt.mirrorCopiedAffix = resolveMirrorCopy(skill, rt, mirrorCtx);
+        rt.mirrorCopiedAffixes = [];
+      }
     }
 
     trackEvent('demo_stage_complete', { stage: state.level, score: state.score });

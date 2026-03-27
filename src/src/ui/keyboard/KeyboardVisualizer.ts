@@ -12,7 +12,7 @@ import type { GameEvents } from '../../core/events/EventBus'
 import type { KeyTooltipData } from './KeyTooltip'
 import { state } from '../../core/state'
 import { PUNCTUATION_KEYBOARD_EXTENSION } from '../../core/constants'
-import { QUEST_ENCHANTMENT_DEFS } from '../../data/affixes'
+import { AffixType, QUEST_ENCHANTMENT_DEFS } from '../../data/affixes'
 import type { QuestEnchantmentDef } from '../../data/affixes'
 
 /**
@@ -480,9 +480,38 @@ export class KeyboardVisualizer extends Container {
    * @param dt delta time（秒）
    */
   update(dt: number): void {
+    // Story 41-5: 同步 Charge 蓄力进度条（每帧更新）
+    this.syncChargeProgress()
+
     this.keys.forEach(keyVisual => {
       keyVisual.update(dt)
     })
+  }
+
+  /**
+   * Story 41-5: 同步所有 Charge 技能键的蓄力进度条
+   */
+  private syncChargeProgress(): void {
+    for (const [keyName, keyVisual] of this.keys) {
+      const skillId = this.currentBindings.get(keyName.toLowerCase()) || this.currentBindings.get(keyName)
+      if (!skillId) {
+        if (keyVisual.getChargeProgressRatio() > 0) keyVisual.setChargeProgress(0)
+        continue
+      }
+      const skill = state.affixSkills.get(skillId)
+      const rt = state.affixSkillStates.get(skillId)
+      if (!skill || !rt) {
+        if (keyVisual.getChargeProgressRatio() > 0) keyVisual.setChargeProgress(0)
+        continue
+      }
+      const chargeAffix = skill.affixes.find(a => a.type === AffixType.Charge)
+      if (!chargeAffix) {
+        if (keyVisual.getChargeProgressRatio() > 0) keyVisual.setChargeProgress(0)
+        continue
+      }
+      const maxBonus = chargeAffix.maxBonus ?? 1
+      keyVisual.setChargeProgress(Math.min(rt.chargeAccumulated / maxBonus, 1))
+    }
   }
 
   /**

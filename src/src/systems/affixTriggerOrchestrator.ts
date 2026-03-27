@@ -76,6 +76,8 @@ export interface OrchestratorCallbacks {
   enterPseudoInfinite?: (participantKeys: string[]) => void
   /** 吞噬目标 */
   devourTarget?: (targetKey: string) => void
+  /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
+  chargeAutoComplete?: () => void
 }
 
 // ===== 迭代调度器 =====
@@ -229,6 +231,11 @@ export function orchestrateAffixTrigger(
     if (result.phase5?.devourTarget && !devourConsumed) {
       callbacks?.devourTarget?.(result.phase5.devourTarget)
       devourConsumed = true
+    }
+
+    // Story 41-5: Charge 质变 — 满蓄力自动完成当前单词（仅初始触发，不对链式传播）
+    if (result.chargeAutoComplete && item.type === 'initial') {
+      callbacks?.chargeAutoComplete?.()
     }
 
     // ── 入队 Phase 5 后续触发 ──

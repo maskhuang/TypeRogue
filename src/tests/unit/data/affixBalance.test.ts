@@ -69,11 +69,13 @@ function makeRuntimeState(overrides?: Partial<SkillRuntimeState>): SkillRuntimeS
     chargeAccumulated: 0,
     currentDecayMult: 1,
     mirrorCopiedAffix: null,
+    mirrorCopiedAffixes: [],
     triggerCount: 0,
     amplifyStacks: 0,
     apprenticeAccumulated: 0,
     questStacks: 0,
     questCompletions: 0,
+    questTransformed: false,
     ...overrides,
   }
 }
@@ -418,8 +420,8 @@ describe('AC4: 任务附魔循环', () => {
     })
   }
 
-  it('17 个任务定义完整，覆盖所有词条', () => {
-    expect(QUEST_ENCHANTMENT_DEFS.length).toBe(17)
+  it('19 个任务定义完整，覆盖所有词条', () => {
+    expect(QUEST_ENCHANTMENT_DEFS.length).toBe(19)
 
     // 所有 targetAffix 应为有效 AffixType
     for (const def of QUEST_ENCHANTMENT_DEFS) {

@@ -86,11 +86,13 @@ describe('商店对比面板数据', () => {
       chargeAccumulated: 0,
       currentDecayMult: 1,
       mirrorCopiedAffix: null,
+      mirrorCopiedAffixes: [],
       triggerCount: 15,
       amplifyStacks: 0,
       apprenticeAccumulated: 0.125,
       questStacks: 5,
       questCompletions: 2,
+      questTransformed: false,
     }
 
     it('应该包含学徒成长数据', () => {

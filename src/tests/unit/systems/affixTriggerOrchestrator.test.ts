@@ -55,6 +55,7 @@ function makeRuntimeState(overrides?: Partial<SkillRuntimeState>): SkillRuntimeS
     chargeAccumulated: 0,
     currentDecayMult: 1,
     mirrorCopiedAffix: null,
+    mirrorCopiedAffixes: [],
     triggerCount: 0,
     amplifyStacks: 0,
     apprenticeAccumulated: 0,

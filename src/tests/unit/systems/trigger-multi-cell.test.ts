@@ -61,8 +61,11 @@ function makeRuntimeState(): SkillRuntimeState {
   return {
     apprenticeAccumulated: 0,
     questStacks: 0,
+    questCompletions: 0,
+    questTransformed: false,
     amplifyStacks: 0,
     mirrorCopiedAffix: null,
+    mirrorCopiedAffixes: [],
     devourStacks: 0,
     growthStacks: 0,
   } as SkillRuntimeState

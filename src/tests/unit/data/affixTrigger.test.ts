@@ -52,6 +52,7 @@ import {
   applyQuestEvent,
   getEffectiveProbMult,
   resolveMirrorCopy,
+  resolveMirrorCopyAllAffixes,
   filterQuestCandidates,
   getEnchantmentSlotCount,
   resetDecayForWord,
@@ -101,11 +102,13 @@ function makeRuntimeState(overrides?: Partial<SkillRuntimeState>): SkillRuntimeS
     chargeAccumulated: 0,
     currentDecayMult: 1,
     mirrorCopiedAffix: null,
+    mirrorCopiedAffixes: [],
     triggerCount: 0,
     amplifyStacks: 0,
     apprenticeAccumulated: 0,
     questStacks: 0,
     questCompletions: 0,
+    questTransformed: false,
     ...overrides,
   }
 }
@@ -429,7 +432,8 @@ describe('resolvePhase2', () => {
       expect(state.chargeAccumulated).toBe(0)
     })
 
-    it('should apply quest energize enhancement (maxBonus + c*0.3)', () => {
+    // Story 41-5: Quest stacking removed; maxBonus is cap directly
+    it('should cap at maxBonus (no quest stacking)', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Charge, gainPerSec: 0.08, maxBonus: 2.0 }],
         enchantmentIds: [EnchantmentType.QuestEnergize],
@@ -437,8 +441,8 @@ describe('resolvePhase2', () => {
       const state = makeRuntimeState({ chargeAccumulated: 3.0, questCompletions: 2 })
       const ctx = makeContext()
       const result = resolvePhase2(skill, state, ctx, 5)
-      // maxEff = 2.0 + 2*0.3 = 2.6; min(3.0, 2.6) = 2.6
-      expect(result.bonusPercent).toBeCloseTo(2.6)
+      // Story 41-5: cap is maxBonus=2.0 directly (no + c*0.3)
+      expect(result.bonusPercent).toBeCloseTo(2.0)
     })
   })
 
@@ -2852,7 +2856,8 @@ describe('Story 35.6: resolveMirrorCopy', () => {
     expect(resolveMirrorCopy(skill, state, ctx)).toBeNull()
   })
 
-  it('should apply QuestMirror boost to copied affix params (additive)', () => {
+  // Story 41-5: QuestMirror ×1.1^c stacking removed; plain copy without boost
+  it('should copy affix params without QuestMirror boost (41-5)', () => {
     const neighborSkill = makeSkill({
       id: 'neighbor',
       affixes: [{ type: AffixType.Convert, k: 0.1, source: 'base' as ResourceType }],
@@ -2873,11 +2878,11 @@ describe('Story 35.6: resolveMirrorCopy', () => {
 
     const copied = resolveMirrorCopy(skill, state, ctx)
     expect(copied).not.toBeNull()
-    // k boosted by 1.1^2 = 1.21 → 0.1 * 1.21 = 0.121
-    expect(copied!.k).toBeCloseTo(0.121, 2)
+    // Story 41-5: no boost, plain copy
+    expect(copied!.k).toBeCloseTo(0.1)
   })
 
-  it('should boost all numeric params including chance/gainPerSec/floor', () => {
+  it('should copy numeric params without boost (41-5)', () => {
     const neighborSkill = makeSkill({
       id: 'neighbor',
       affixes: [{ type: AffixType.Crit, chance: 0.2, critMult: 2.0 }],
@@ -2898,10 +2903,9 @@ describe('Story 35.6: resolveMirrorCopy', () => {
 
     const copied = resolveMirrorCopy(skill, state, ctx)
     expect(copied).not.toBeNull()
-    // chance: 0.2 * 1.1 = 0.22 (additive boost)
-    expect(copied!.chance).toBeCloseTo(0.22)
-    // critMult: 1 + (2.0-1)*1.1 = 1 + 1.1 = 2.1 (multiplicative boost)
-    expect(copied!.critMult).toBeCloseTo(2.1)
+    // Story 41-5: no boost, plain copy
+    expect(copied!.chance).toBeCloseTo(0.2)
+    expect(copied!.critMult).toBeCloseTo(2.0)
   })
 
   it('should return null when neighbor has only Mirror/Twin affixes', () => {
@@ -3852,5 +3856,250 @@ describe('Mirror affix participates in trigger pipeline', () => {
     expect(result.output).toBe(5)
     expect(result.multipliers).toHaveLength(0)
     expect(result.bonusPercent).toBe(0)
+  })
+})
+
+// =============================================
+// Story 41-5: Charge 质变 + Mirror 质变 单元测试
+// =============================================
+
+describe('Story 41-5: Charge chargeAutoComplete', () => {
+  it('should set chargeAutoComplete when questTransformed and charge >= maxBonus', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Charge, gainPerSec: 0.08, maxBonus: 2.0 }],
+      enchantmentIds: [EnchantmentType.QuestEnergize],
+    })
+    const state = makeRuntimeState({ chargeAccumulated: 2.0, questTransformed: true })
+    const ctx = makeContext()
+    const result = triggerAffixSkill(skill, state, ctx)
+    expect(result.chargeAutoComplete).toBe(true)
+  })
+
+  it('should NOT set chargeAutoComplete when charge < maxBonus', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Charge, gainPerSec: 0.08, maxBonus: 2.0 }],
+      enchantmentIds: [EnchantmentType.QuestEnergize],
+    })
+    const state = makeRuntimeState({ chargeAccumulated: 1.5, questTransformed: true })
+    const ctx = makeContext()
+    const result = triggerAffixSkill(skill, state, ctx)
+    expect(result.chargeAutoComplete).toBeUndefined()
+  })
+
+  it('should NOT set chargeAutoComplete when not questTransformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Charge, gainPerSec: 0.08, maxBonus: 2.0 }],
+      enchantmentIds: [EnchantmentType.QuestEnergize],
+    })
+    const state = makeRuntimeState({ chargeAccumulated: 2.0, questTransformed: false })
+    const ctx = makeContext()
+    const result = triggerAffixSkill(skill, state, ctx)
+    expect(result.chargeAutoComplete).toBeUndefined()
+  })
+
+  it('should reset chargeAccumulated to 0 after trigger regardless of transform', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Charge, gainPerSec: 0.08, maxBonus: 2.0 }],
+      enchantmentIds: [EnchantmentType.QuestEnergize],
+    })
+    const state = makeRuntimeState({ chargeAccumulated: 2.5, questTransformed: true })
+    const ctx = makeContext()
+    triggerAffixSkill(skill, state, ctx)
+    expect(state.chargeAccumulated).toBe(0)
+  })
+
+  it('Phase 2: chargeAutoComplete flag in resolvePhase2 result', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Charge, gainPerSec: 0.08, maxBonus: 2.0 }],
+      enchantmentIds: [EnchantmentType.QuestEnergize],
+    })
+    const state = makeRuntimeState({ chargeAccumulated: 2.0, questTransformed: true })
+    const ctx = makeContext()
+    const p2 = resolvePhase2(skill, state, ctx, 5)
+    expect(p2.chargeAutoComplete).toBe(true)
+    expect(p2.bonusPercent).toBeCloseTo(2.0)
+  })
+})
+
+describe('Story 41-5: Mirror questTransformed — full affix copy', () => {
+  it('resolveMirrorCopy should collect all unique affixes when questTransformed', () => {
+    const neighbor1 = makeSkill({
+      id: 'n1',
+      affixes: [
+        { type: AffixType.Crit, chance: 0.2, critMult: 2.0 },
+        { type: AffixType.Pulse, interval: 3, pulseMult: 1.5 },
+      ],
+    })
+    const neighbor2 = makeSkill({
+      id: 'n2',
+      affixes: [
+        { type: AffixType.Decay, initialMult: 1.0, decayPerTrigger: 0.1, floor: 0.5 },
+      ],
+    })
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+      enchantmentIds: [EnchantmentType.QuestMirror],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const bindings = new Map([['a', 'test_skill'], ['s', 'n1'], ['d', 'n2']])
+    const allSkills = new Map([['test_skill', skill], ['n1', neighbor1], ['n2', neighbor2]])
+    const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+    const copied = resolveMirrorCopy(skill, state, ctx)
+    // Returns first collected affix as compat value
+    expect(copied).not.toBeNull()
+    expect(copied!.type).toBe(AffixType.Crit)
+  })
+
+  it('resolveMirrorCopyAllAffixes should return all unique neighbor affixes', () => {
+    const neighbor1 = makeSkill({
+      id: 'n1',
+      affixes: [
+        { type: AffixType.Crit, chance: 0.2, critMult: 2.0 },
+        { type: AffixType.Pulse, interval: 3, pulseMult: 1.5 },
+      ],
+    })
+    const neighbor2 = makeSkill({
+      id: 'n2',
+      affixes: [
+        { type: AffixType.Decay, initialMult: 1.0, decayPerTrigger: 0.1, floor: 0.5 },
+        { type: AffixType.Crit, chance: 0.5, critMult: 3.0 }, // dup type — should be deduped
+      ],
+    })
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+      enchantmentIds: [EnchantmentType.QuestMirror],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    // 'a' adjacent: q, w, s, z — use 's' and 'w' as neighbors
+    const bindings = new Map([['a', 'test_skill'], ['s', 'n1'], ['w', 'n2']])
+    const allSkills = new Map([['test_skill', skill], ['n1', neighbor1], ['n2', neighbor2]])
+    const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+    const affixes = resolveMirrorCopyAllAffixes(skill, state, ctx)
+    expect(affixes).toHaveLength(3) // Crit, Pulse, Decay (deduped)
+    const types = affixes.map(a => a.type)
+    expect(types).toContain(AffixType.Crit)
+    expect(types).toContain(AffixType.Pulse)
+    expect(types).toContain(AffixType.Decay)
+  })
+
+  it('resolveMirrorCopyAllAffixes should exclude Mirror and Twin', () => {
+    const neighbor = makeSkill({
+      id: 'n1',
+      affixes: [
+        { type: AffixType.Mirror, posRel: PositionRelation.Adjacent },
+        { type: AffixType.Twin },
+        { type: AffixType.Crit, chance: 0.3, critMult: 2.0 },
+      ],
+    })
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const bindings = new Map([['a', 'test_skill'], ['s', 'n1']])
+    const allSkills = new Map([['test_skill', skill], ['n1', neighbor]])
+    const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+    const affixes = resolveMirrorCopyAllAffixes(skill, state, ctx)
+    expect(affixes).toHaveLength(1)
+    expect(affixes[0].type).toBe(AffixType.Crit)
+  })
+
+  it('resolveMirrorCopyAllAffixes should return empty when no neighbors', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const bindings = new Map([['a', 'test_skill']])
+    const allSkills = new Map([['test_skill', skill]])
+    const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+    const affixes = resolveMirrorCopyAllAffixes(skill, state, ctx)
+    expect(affixes).toHaveLength(0)
+  })
+
+  it('resolveMirrorCopyAllAffixes should return empty when neighbors only have Mirror/Twin', () => {
+    const neighbor = makeSkill({
+      id: 'n1',
+      affixes: [
+        { type: AffixType.Mirror, posRel: PositionRelation.Adjacent },
+        { type: AffixType.Twin },
+      ],
+    })
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const bindings = new Map([['a', 'test_skill'], ['s', 'n1']])
+    const allSkills = new Map([['test_skill', skill], ['n1', neighbor]])
+    const ctx = makeContext({ triggerKey: 'a', bindings, allSkills })
+
+    const affixes = resolveMirrorCopyAllAffixes(skill, state, ctx)
+    expect(affixes).toHaveLength(0)
+  })
+})
+
+describe('Story 41-5: buildEffectiveSkill — transformed Mirror expansion', () => {
+  it('should expand Mirror into mirrorCopiedAffixes array', () => {
+    const mirrorAffix: AffixInstance = { type: AffixType.Mirror, posRel: PositionRelation.Adjacent }
+    const critAffix: AffixInstance = { type: AffixType.Crit, chance: 0.5, critMult: 2.0 }
+    const copiedAffixes: AffixInstance[] = [
+      { type: AffixType.Pulse, interval: 3, pulseMult: 1.5 },
+      { type: AffixType.Decay, initialMult: 1.0, decayPerTrigger: 0.1, floor: 0.5 },
+    ]
+
+    const skill = makeSkill({ affixes: [critAffix, mirrorAffix] })
+    const state = makeRuntimeState({ mirrorCopiedAffixes: copiedAffixes })
+    const result = buildEffectiveSkill(skill, state)
+
+    expect(result).not.toBe(skill) // new object
+    expect(result.affixes).toHaveLength(3) // Crit + Pulse + Decay
+    expect(result.affixes[0].type).toBe(AffixType.Crit)
+    expect(result.affixes[1].type).toBe(AffixType.Pulse)
+    expect(result.affixes[2].type).toBe(AffixType.Decay)
+  })
+
+  it('should prefer mirrorCopiedAffixes over mirrorCopiedAffix', () => {
+    const mirrorAffix: AffixInstance = { type: AffixType.Mirror, posRel: PositionRelation.Adjacent }
+    const copiedSingle: AffixInstance = { type: AffixType.Crit, chance: 0.5, critMult: 2.0 }
+    const copiedMulti: AffixInstance[] = [
+      { type: AffixType.Pulse, interval: 3 },
+      { type: AffixType.Decay, initialMult: 1.0 },
+    ]
+
+    const skill = makeSkill({ affixes: [mirrorAffix] })
+    const state = makeRuntimeState({ mirrorCopiedAffix: copiedSingle, mirrorCopiedAffixes: copiedMulti })
+    const result = buildEffectiveSkill(skill, state)
+
+    // mirrorCopiedAffixes takes priority
+    expect(result.affixes).toHaveLength(2)
+    expect(result.affixes[0].type).toBe(AffixType.Pulse)
+    expect(result.affixes[1].type).toBe(AffixType.Decay)
+  })
+
+  it('should fall back to mirrorCopiedAffix when mirrorCopiedAffixes is empty', () => {
+    const mirrorAffix: AffixInstance = { type: AffixType.Mirror, posRel: PositionRelation.Adjacent }
+    const copiedSingle: AffixInstance = { type: AffixType.Crit, chance: 0.5, critMult: 2.0 }
+
+    const skill = makeSkill({ affixes: [mirrorAffix] })
+    const state = makeRuntimeState({ mirrorCopiedAffix: copiedSingle, mirrorCopiedAffixes: [] })
+    const result = buildEffectiveSkill(skill, state)
+
+    expect(result.affixes).toHaveLength(1)
+    expect(result.affixes[0].type).toBe(AffixType.Crit)
+  })
+
+  it('expanded Mirror affixes should participate in full trigger pipeline', () => {
+    const mirrorAffix: AffixInstance = { type: AffixType.Mirror, posRel: PositionRelation.Adjacent }
+    const copiedCrit: AffixInstance = { type: AffixType.Crit, chance: 1.0, critMult: 3.0 }
+
+    const skill = makeSkill({ affixes: [mirrorAffix] })
+    const state = makeRuntimeState({ mirrorCopiedAffixes: [copiedCrit] })
+    const ctx = makeContext({ randomFn: () => 0.5 }) // 0.5 < 1.0 → crit
+
+    const result = triggerAffixSkill(skill, state, ctx)
+    expect(result.isCrit).toBe(true)
+    expect(result.output).toBe(15) // base 5 × 3.0
   })
 })

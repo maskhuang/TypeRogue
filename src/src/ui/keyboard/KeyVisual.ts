@@ -50,6 +50,11 @@ export class KeyVisual extends Container {
   private affixDotsGraphics: Graphics | null = null
   private questProgressGraphics: Graphics | null = null
 
+  // Story 41-5: Charge 蓄力进度条
+  private chargeProgressRatio: number = 0
+  private chargeProgressGraphics: Graphics | null = null
+  private chargeFullPulsePhase: number = 0
+
   // Story 40.7: 多格技能形状信息
   private edgeMask: EdgeMask = { top: true, right: true, bottom: true, left: true }
   private isAnchorCell: boolean = true
@@ -602,6 +607,58 @@ export class KeyVisual extends Container {
   }
 
   /**
+   * Story 41-5: 设置 Charge 蓄力进度（0~1）
+   */
+  setChargeProgress(ratio: number): void {
+    const clamped = Math.max(0, Math.min(1, ratio))
+    if (this.chargeProgressRatio === clamped) return
+    this.chargeProgressRatio = clamped
+    if (clamped <= 0) this.chargeFullPulsePhase = 0
+    this.drawChargeProgress()
+  }
+
+  /**
+   * Story 41-5: 获取 Charge 蓄力进度
+   */
+  getChargeProgressRatio(): number {
+    return this.chargeProgressRatio
+  }
+
+  /**
+   * Story 41-5: 绘制 Charge 蓄力进度条（底部水平条）
+   */
+  private drawChargeProgress(): void {
+    if (this.chargeProgressRatio <= 0) {
+      if (this.chargeProgressGraphics) {
+        this.removeChild(this.chargeProgressGraphics)
+        this.chargeProgressGraphics.destroy()
+        this.chargeProgressGraphics = null
+      }
+      return
+    }
+
+    if (!this.chargeProgressGraphics) {
+      this.chargeProgressGraphics = new Graphics()
+      this.addChild(this.chargeProgressGraphics)
+    }
+    this.chargeProgressGraphics.clear()
+
+    const barWidth = (KeyVisual.KEY_SIZE - 4) * this.chargeProgressRatio
+    const barHeight = 3
+    const barX = 2
+    const barY = KeyVisual.KEY_SIZE - 10  // 避免与词条圆点 (cy=KEY_SIZE-6) 重叠
+
+    // 蓄满时用金色脉冲，否则用蓝色
+    const color = this.chargeProgressRatio >= 1 ? 0xffd700 : 0x3498db
+    const alpha = this.chargeProgressRatio >= 1
+      ? 0.6 + 0.4 * Math.abs(Math.sin(this.chargeFullPulsePhase))
+      : 0.8
+
+    this.chargeProgressGraphics.rect(barX, barY, barWidth, barHeight)
+    this.chargeProgressGraphics.fill({ color, alpha })
+  }
+
+  /**
    * 播放闪光特效
    * @param color 闪光颜色（PixiJS hex）
    * @param alpha 初始透明度
@@ -685,6 +742,12 @@ export class KeyVisual extends Container {
    * @param dt delta time（秒）
    */
   update(dt: number): void {
+    // Story 41-5: 蓄满脉冲动画（独立于 isAnimating）
+    if (this.chargeProgressRatio >= 1) {
+      this.chargeFullPulsePhase += dt * 4  // 4 rad/s pulse speed
+      this.drawChargeProgress()
+    }
+
     if (!this.isAnimating) return
 
     let stillAnimating = false
@@ -744,6 +807,10 @@ export class KeyVisual extends Container {
     if (this.questProgressGraphics) {
       this.questProgressGraphics.destroy()
       this.questProgressGraphics = null
+    }
+    if (this.chargeProgressGraphics) {
+      this.chargeProgressGraphics.destroy()
+      this.chargeProgressGraphics = null
     }
     if (this.flashGraphics) {
       this.flashGraphics.destroy()
