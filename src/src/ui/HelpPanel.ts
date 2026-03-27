@@ -341,22 +341,7 @@ class HelpPanelImpl {
       }
 
       .help-btn {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.15);
-        color: #aaa;
-        font-size: 16px;
-        cursor: pointer;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
+        display: none;
       }
       .help-btn:hover {
         background: rgba(255, 255, 255, 0.3);
@@ -386,22 +371,7 @@ export function initHelpButtons(): void {
     style.id = 'help-btn-styles'
     style.textContent = `
       .help-btn {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.15);
-        color: #aaa;
-        font-size: 16px;
-        cursor: pointer;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
+        display: none;
       }
       .help-btn:hover {
         background: rgba(255, 255, 255, 0.3);
