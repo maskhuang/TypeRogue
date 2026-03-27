@@ -181,6 +181,7 @@ export interface GameState {
   wordPerfect: boolean;
   lastMilestone: number;
   overkill: number;  // 最后一击超出目标的分数
+  overflowScore: number;  // Story 42.3: 跨关累积溢出分（不在关卡间清零）
   cycle: number;                        // 当前周目数（默认 1，通关 Boss 后 +1）
   activeModifiers: BossModifierId[];    // 跨周目累积的 Boss 修饰器列表
   bossModifierPool: BossModifierId[];  // Run 级别：3 个随机 Boss 修饰器 ID

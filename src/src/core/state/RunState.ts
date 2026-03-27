@@ -135,6 +135,9 @@ export interface RunStateData {
 
   /** 词汇收藏：本 Run 已完成单词集合（36.7） */
   collectedWords: Set<string>
+
+  /** Story 42.3: 跨关累积溢出分 */
+  overflowScore: number
 }
 
 /**
@@ -190,6 +193,7 @@ export class RunState {
       affixSkillStates: new Map(),
       mutationACounts: new Map(),
       collectedWords: new Set(),
+      overflowScore: 0,
     }
   }
 
@@ -459,6 +463,8 @@ export class RunState {
 
     if (result.result === 'win') {
       this.data.stats.battlesWon++
+      // Story 42.3: overflowScore 由 battle.ts endLevel() 更新 state.overflowScore（运行时 source of truth）
+      // 此处不累积，避免与 endLevel() 双倍计数
       // 战斗胜利奖励金币（基于分数，每 100 分 1 金币）
       const goldReward = Math.floor(result.score / 100)
       this.addGold(goldReward)
@@ -515,6 +521,7 @@ export class RunState {
       }),
       mutationACounts: Object.fromEntries(this.data.mutationACounts),
       collectedWords: Array.from(this.data.collectedWords),
+      overflowScore: this.data.overflowScore,
     }
   }
 
@@ -608,6 +615,9 @@ export class RunState {
     // 恢复词汇收藏（36.7）
     const savedWords: string[] = (parsed as any).collectedWords || []
     savedWords.forEach(w => runState.data.collectedWords.add(w))
+
+    // Story 42.3: 恢复溢出分
+    runState.data.overflowScore = (parsed as any).overflowScore || 0
 
     return runState
   }

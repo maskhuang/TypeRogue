@@ -27,6 +27,7 @@ export function createInitialState(): GameState {
     wordPerfect: true,
     lastMilestone: 0,
     overkill: 0,
+    overflowScore: 0,
     classResourceProduced: {},
     fragmentInventory: {
       a: 0, b: 0, c: 0, d: 0, e: 0, f: 0, g: 0, h: 0, i: 0, j: 0, k: 0, l: 0, m: 0,

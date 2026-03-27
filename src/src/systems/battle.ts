@@ -144,6 +144,7 @@ let _battleRelicGold = 0; // 战斗中遗物产出的金币（用于结算面板
 let wordStartScore = 0; // 玻璃大炮：记录词开始时总分（用于整词得分翻倍）
 let _targetReached = false; // Story 42.2: 达标标志（达标后继续战斗直到时间耗尽）
 let _targetReachedTime = 0; // Story 42.2: 达标时的剩余时间（万物熔炉等遗物需要）
+let _initialOverflow = 0; // Story 42.3: 本关注入的初始溢出分（HUD 颜色区分用）
 
 // === 分数滚轮动画 (Story 31.4) ===
 const scoreRoller = new ScoreRoller();
@@ -1394,6 +1395,9 @@ function endLevel(): void {
   }
 
   if (state.score >= state.targetScore) {
+    // Story 42.3: 累积溢出分（overkill 已在 timer tick 中计算）
+    state.overflowScore += state.overkill;
+
     // 附魔外部事件：通关 → 学徒·通关/任务·镜像 成长
     const _sgm = getApprenticeGrowthMultiplier();
     const _ssi = getQuestStackIncrement();
@@ -1610,8 +1614,9 @@ export async function startLevel(): Promise<void> {
   state.phase = 'battle';
   initAudio();
   startBGM('battle');
-  state.score = 0;
-  scoreRoller.reset(0); // Review H1: 重置滚轮，避免从旧分数回滚
+  // Story 42.3: 注入累积溢出分作为初始分数
+  state.score = state.overflowScore;
+  scoreRoller.reset(state.overflowScore);
   goldRoller.reset(Math.floor(state.resources.gold));
   comboRoller.reset(state.combo);
   timerRoller.reset(Math.ceil(state.time));
@@ -1856,6 +1861,15 @@ export async function startLevel(): Promise<void> {
     showFeedback(t('battle.modifier_reversal'), '#ff8800');
   }
 
+  // Story 42.3: 记录初始溢出量（HUD 颜色区分用）
+  _initialOverflow = state.overflowScore;
+
+  // Story 42.3: 边界情况 — 如果初始溢出分已 >= 目标分数，立即标记达标
+  if (state.overflowScore > 0 && state.score >= state.targetScore) {
+    _targetReached = true;
+    _targetReachedTime = state.timeMax;
+  }
+
   showScreen('battle');
 
   // 职业资源 HUD 显示切换
@@ -1898,6 +1912,13 @@ export async function startLevel(): Promise<void> {
   // Demo 第一关：启动新手引导
   if (IS_DEMO && state.level === 1) {
     initDemoTutorial();
+  }
+
+  // Review Fix 42.3#3: 初始溢出已达标时触发 TARGET! 反馈（announceLevel 消失后）
+  if (_targetReached && _initialOverflow > 0) {
+    showFeedback(t('battle.target_reached'), '#4ecdc4');
+    playSound('levelup');
+    screenShake(3);
   }
 
   startTimer();
@@ -2065,6 +2086,8 @@ export function updateHUD(): void {
   if (!blackHoleHidden) {
     if (_targetReached) {
       el.score.style.color = '#ffd700'; // Story 42.2: 溢出=金色
+    } else if (_initialOverflow > 0 && state.score <= _initialOverflow) {
+      el.score.style.color = '#88d8c0'; // Story 42.3: 淡青（仍在初始溢出范围）
     } else {
       const progress = state.score / state.targetScore;
       if (progress >= 0.7) {
@@ -2079,7 +2102,9 @@ export function updateHUD(): void {
   // 仅在 tier 变化时更新 class，避免重启 CSS 动画 (Review M1)
   // 黑洞隐藏时清除 tier class
   // Review Fix #2: 达标后清除 tier class — CSS !important 会覆盖内联金色
-  const scoreTier = (blackHoleHidden || _targetReached) ? '' : getScoreTier(state.score);
+  // Review Fix 42.3#2: 初始溢出范围内也清除 tier class — 避免覆盖淡青色
+  const inOverflowRange = _initialOverflow > 0 && state.score <= _initialOverflow && !_targetReached;
+  const scoreTier = (blackHoleHidden || _targetReached || inOverflowRange) ? '' : getScoreTier(state.score);
   if (scoreTier !== lastScoreTier) {
     el.score.classList.remove(...SCORE_TIER_CLASSES);
     if (scoreTier) el.score.classList.add(scoreTier);
