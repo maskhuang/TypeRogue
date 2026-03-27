@@ -193,6 +193,32 @@ body {
     text-align: right;
 }
 
+/* Story 42.4: 时间加速倍率显示 */
+.time-accel {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    min-width: 30px;
+    text-align: left;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.time-accel.visible {
+    opacity: 1;
+}
+
+.accel-pulse {
+    animation: accel-pulse 0.3s ease-out;
+}
+
+@keyframes accel-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
 /* ===== 分数区域 - 主要焦点 ===== */
 #score-zone {
     display: flex;

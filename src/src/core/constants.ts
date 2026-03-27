@@ -79,6 +79,10 @@ export const BALANCE = {
   // 周目难度缩放
   CYCLE_SCORE_BASE: 2,      // 目标分数指数底数（每周目翻倍）
   CYCLE_TIME_DECAY: 0.9,    // 时间衰减系数（每周目 ×0.9）
+
+  // Story 42.4: 关内时间加速（二次方：1 + rate × t²）
+  ACCEL_RATE_STANDARD: 0.001,   // 标准关加速率
+  ACCEL_RATE_BOSS: 0.0015,      // Boss 关加速率（更高压力）
 };
 
 // === 资源标签 ===

@@ -327,6 +327,7 @@ export interface UIElements {
   targetScore: HTMLElement;
   multiplier: HTMLElement;
   timerDisplay: HTMLElement;
+  timeAccel: HTMLElement;
   timerBar: HTMLElement;
   levelLabel: HTMLElement;
   triggerZone: HTMLElement;

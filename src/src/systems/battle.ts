@@ -42,6 +42,7 @@ import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyAppren
 import { AffixType } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
+import { BALANCE } from '../core/constants';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
 import { initDemoTutorial } from '../demo/demo-tutorial';
 import { showDemoEndScreen } from '../demo/demo-end-screen';
@@ -145,6 +146,9 @@ let wordStartScore = 0; // 玻璃大炮：记录词开始时总分（用于整�
 let _targetReached = false; // Story 42.2: 达标标志（达标后继续战斗直到时间耗尽）
 let _targetReachedTime = 0; // Story 42.2: 达标时的剩余时间（万物熔炉等遗物需要）
 let _initialOverflow = 0; // Story 42.3: 本关注入的初始溢出分（HUD 颜色区分用）
+let _elapsedSeconds = 0; // Story 42.4: 关内已流逝秒数（时间加速计算用）
+let _lastAccelText = ''; // Story 42.4: 上次显示的加速倍率文本（脉冲动画检测用）
+let _isBoss = false; // Story 42.4: 当前关是否 Boss（startTimer 缓存，避免每 tick 调用 getStageType）
 
 // === 分数滚轮动画 (Story 31.4) ===
 const scoreRoller = new ScoreRoller();
@@ -1267,10 +1271,17 @@ function showGoldReward(onComplete: () => void): void {
 }
 
 // === 计时器 ===
+// Story 42.4: 二次方时间加速 — 1.0 + rate × t²（越加越快）
+function getTimeAcceleration(elapsedSeconds: number, isBoss: boolean): number {
+  const rate = isBoss ? BALANCE.ACCEL_RATE_BOSS : BALANCE.ACCEL_RATE_STANDARD;
+  return 1.0 + rate * elapsedSeconds * elapsedSeconds;
+}
+
 function startTimer(): void {
   state.time = state.timeMax + state.player.timeBonus;
   state.resources.time = state.time; // 同步资源
   if (timerInterval) clearInterval(timerInterval);
+  _isBoss = getStageType(state.level) === 'boss'; // Story 42.4: 模块级缓存
 
   timerInterval = setInterval(() => {
     if (state.phase !== 'battle') {
@@ -1279,12 +1290,15 @@ function startTimer(): void {
     }
     if (battlePaused) return;
 
+    _elapsedSeconds += 0.1; // Story 42.4: 追踪已流逝时间
+
     // Boss 修饰器：时间加速（fast_time）+ 渐进失控（escalation）+ Story 36.11 护盾削弱
     const modEffect = getActiveParams();
     let timeSpeed = getShieldedTimeSpeed(modEffect?.timeSpeed ?? 1);
     const escalateBonus = getEscalateTimeSpeedBonus();
     if (escalateBonus > 0) timeSpeed += getShieldedValue(escalateBonus, true);
-    state.time -= 0.1 * timeSpeed * getTimeScale(); // Story 31.4: 慢动作
+    const timeAccel = getTimeAcceleration(_elapsedSeconds, _isBoss); // Story 42.4: 二次方加速
+    state.time -= 0.1 * timeSpeed * getTimeScale() * timeAccel; // Story 31.4: 慢动作 + 42.4 加速
 
     // 蓄力产出者：每帧累加充能值
     updateChargeProducers(0.1);
@@ -1366,6 +1380,29 @@ function updateTimerDisplay(): void {
     el.timerDisplay.style.color = '#4ecdc4';
     el.timerBar.style.background = '#4ecdc4';
   }
+
+  // Story 42.4: 倍率 HUD 更新
+  const accel = getTimeAcceleration(_elapsedSeconds, _isBoss);
+  const accelText = '×' + accel.toFixed(1);
+  // Review Fix #1: 检查显示文本而非数值 — toFixed(1) 的 "×1.0" 应隐藏
+  if (accelText === '×1.0') {
+    el.timeAccel.classList.remove('visible');
+  } else {
+    el.timeAccel.classList.add('visible');
+    el.timeAccel.textContent = accelText;
+    // 颜色渐变
+    if (accel < 1.3) el.timeAccel.style.color = '#fff';
+    else if (accel < 1.6) el.timeAccel.style.color = '#ffe66d';
+    else if (accel < 2.0) el.timeAccel.style.color = '#ff8844';
+    else el.timeAccel.style.color = '#ff4444';
+    // 脉冲动画：显示文本变化时触发
+    if (accelText !== _lastAccelText && _lastAccelText !== '') {
+      el.timeAccel.classList.remove('accel-pulse');
+      void el.timeAccel.offsetWidth; // force reflow
+      el.timeAccel.classList.add('accel-pulse');
+    }
+  }
+  _lastAccelText = accelText;
 }
 
 // === 关卡评级 ===
@@ -1632,6 +1669,8 @@ export async function startLevel(): Promise<void> {
   state.overkill = 0;
   _targetReached = false; // Story 42.2: 每关重置达标标志
   _targetReachedTime = 0;
+  _elapsedSeconds = 0; // Story 42.4: 每关重置已流逝时间
+  _lastAccelText = ''; // Story 42.4: 重置倍率显示缓存
 
   // 清理过期临时 buff
   state.tempBuffs = state.tempBuffs.filter(b => state.level <= b.expiresAtNode);

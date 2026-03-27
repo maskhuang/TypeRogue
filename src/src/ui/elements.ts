@@ -17,6 +17,7 @@ export function initElements(): UIElements {
     targetScore: document.getElementById('target-score')!,
     multiplier: document.getElementById('multiplier-display')!,
     timerDisplay: document.getElementById('timer-display')!,
+    timeAccel: document.getElementById('time-accel')!,
     timerBar: document.getElementById('timer-bar-fill')!,
     levelLabel: document.getElementById('level-label')!,
     triggerZone: document.getElementById('skill-trigger-zone')!,
