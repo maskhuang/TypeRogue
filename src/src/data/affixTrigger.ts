@@ -91,6 +91,9 @@ export interface TriggerContext {
   // ── Story 40.8: 多格技能占据键位 ──
   /** 触发技能占据的所有键位（单格 = [triggerKey]） */
   occupiedKeys: string[]
+  // ── Story 41.3: Ligature 质变关卡累计按键计数 ──
+  /** 关卡内每个键被按下的累计次数（质变 Ligature 使用） */
+  ligatureStageCounts?: Map<string, number>
 }
 
 // ===== 状态变更 =====
@@ -109,6 +112,7 @@ export interface TriggerFlags {
   isCascade: boolean
   isTabooPenalty: boolean
   ligatureCount: number
+  tabooConvertResource: import('../core/types').ResourceType | null
 }
 
 // ===== Phase 4-6 返回类型 =====
@@ -127,6 +131,8 @@ export interface Phase5Result {
   transmuteSameResourceBoost: number
   /** 溅射词条需触发的邻居键位 */
   splashTargets: string[]
+  /** 质变后溅射：被溅射目标也向自己的邻居溅射一次 */
+  chainSplash?: boolean
   /** 吞噬目标键位（QuestDevour 满层时） */
   devourTarget: string | null
   /** 是否完成一次任务循环 */
@@ -339,8 +345,7 @@ export function resolvePhase2(
 
       case AffixType.Amplify: {
         if (affix.posRel == null || affix.resource == null) break
-        const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestStack)
-        const vpsEff = (affix.valuePerStack ?? 0) + c * 0.005
+        const vpsEff = affix.valuePerStack ?? 0
         // 邻居增幅层数
         bonusPercent += sumNeighborAmplifyStacks(
           ctx.occupiedKeys, affix.posRel, affix.resource, vpsEff, ctx,
@@ -353,8 +358,7 @@ export function resolvePhase2(
       }
 
       case AffixType.Taboo: {
-        const cSacrifice = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestSacrifice)
-        bonusPercent += 1.0 + cSacrifice * 0.30
+        bonusPercent += 1.0
         break
       }
 
@@ -420,15 +424,15 @@ export function resolvePhase3(
     isCascade: false,
     isTabooPenalty: false,
     ligatureCount: 0,
+    tabooConvertResource: null,
   }
 
   for (const affix of skill.affixes) {
     switch (affix.type) {
       case AffixType.Crit: {
         const roll = ctx.randomFn()
-        if (roll < (affix.chance ?? 0)) {
-          const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestOverload)
-          const m = (affix.critMult ?? 1) + c * 0.5
+        if (runtimeState.questTransformed || roll < (affix.chance ?? 0)) {
+          const m = affix.critMult ?? 1
           output *= m
           multipliers.push(m)
           flags.isCrit = true
@@ -441,8 +445,7 @@ export function resolvePhase3(
         // 设计文档仅写 triggerCount % interval === 0，但 triggerCount=0 时不应爆发
         // （首次触发即爆发属于免费收益，不符合"蓄力后爆发"的节奏设计意图）
         if (runtimeState.triggerCount > 0 && runtimeState.triggerCount % interval === 0) {
-          const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestEcho)
-          const m = (affix.burstMult ?? 1) + c * 0.3
+          const m = affix.burstMult ?? 1
           output *= m
           multipliers.push(m)
           flags.isPulse = true
@@ -455,10 +458,14 @@ export function resolvePhase3(
         output *= m
         multipliers.push(m)
         // 计算衰减后的新值
-        const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestPurify)
-        const floorEff = Math.max(0.1, (affix.floor ?? 0.5) + c * 0.05)
-        const newDecay = Math.max(floorEff, runtimeState.currentDecayMult - (affix.decayPerTrigger ?? 0))
-        runtimeState.currentDecayMult = newDecay
+        if (runtimeState.questTransformed) {
+          // 质变后：衰减逆转为递增（无上限）
+          runtimeState.currentDecayMult = runtimeState.currentDecayMult + (affix.decayPerTrigger ?? 0)
+        } else {
+          const floorEff = Math.max(0.1, affix.floor ?? 0.5)
+          const newDecay = Math.max(floorEff, runtimeState.currentDecayMult - (affix.decayPerTrigger ?? 0))
+          runtimeState.currentDecayMult = newDecay
+        }
         break
       }
 
@@ -474,9 +481,13 @@ export function resolvePhase3(
       }
 
       case AffixType.Ligature: {
-        const n = countOccurrences(ctx.triggerKey, ctx.currentWord)
-        const cLig = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestOverlap)
-        const nEff = n + cLig
+        let nEff: number
+        if (runtimeState.questTransformed && ctx.ligatureStageCounts) {
+          // 质变后：使用关卡累计按键次数
+          nEff = ctx.ligatureStageCounts.get(ctx.triggerKey) ?? 0
+        } else {
+          nEff = countOccurrences(ctx.triggerKey, ctx.currentWord)
+        }
         if (nEff >= 2) {
           output *= nEff
           multipliers.push(nEff)
@@ -488,8 +499,19 @@ export function resolvePhase3(
       case AffixType.Taboo: {
         const effPenalty = affix.penaltyChance ?? 0.1
         if (ctx.randomFn() < effPenalty) {
-          output *= -1
-          multipliers.push(-1)
+          if (runtimeState.questTransformed) {
+            // 质变后：惩罚转化为随机资源（不产生负值，排除职业限制资源）
+            const otherResources = ALL_RESOURCES.filter(r => {
+              if (r === skill.resource) return false
+              if (r === 'fragment' && (!ctx.playerClass || ctx.playerClass === 'metamorph')) return false
+              if (r === 'mutagen' && (!ctx.playerClass || ctx.playerClass === 'wordsmith')) return false
+              return true
+            })
+            flags.tabooConvertResource = otherResources[Math.floor(ctx.randomFn() * otherResources.length)]
+          } else {
+            output *= -1
+            multipliers.push(-1)
+          }
           flags.isTabooPenalty = true
         }
         break
@@ -783,8 +805,7 @@ export function resolvePhase5(
       case AffixType.Splash: {
         if (ctx.chainAffixesDisabled) break // chain_ban: 跳过溅射词条
         if (affix.posRel == null) break
-        const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestFission)
-        const targetCount = 1 + c
+        const targetCount = 1
         // Story 40.9: 扩展邻居范围（多格技能从所有占据键的邻居并集中选目标）
         const allKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
           .filter(k => ctx.bindings.has(k))
@@ -798,6 +819,10 @@ export function resolvePhase5(
           return true
         })
         result.splashTargets = pickRandomKeys(filtered, targetCount, ctx.randomFn)
+        // 质变后：溅射目标也会向自己的邻居溅射一次（额外一跳）
+        if (runtimeState.questTransformed) {
+          result.chainSplash = true
+        }
         break
       }
 
@@ -808,10 +833,11 @@ export function resolvePhase5(
 
       case AffixType.Recurse: {
         if (recurseDepth >= MAX_RECURSE_DEPTH) break
-        const cRec = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestIterate)
-        const chanceEff = (affix.recurseChance ?? 0) + cRec * 0.03
+        const chanceEff = affix.recurseChance ?? 0
         if (ctx.randomFn() < chanceEff) {
-          result.recurse = { shouldRecurse: true, newChance: chanceEff / 2 }
+          // 质变后：递归概率不减半
+          const nextChance = runtimeState.questTransformed ? chanceEff : chanceEff / 2
+          result.recurse = { shouldRecurse: true, newChance: nextChance }
           recurseProc = true
         }
         break
@@ -819,6 +845,18 @@ export function resolvePhase5(
 
       default:
         break
+    }
+  }
+
+  // ── Pulse 质变：爆发时同步其他 Pulse 技能的 triggerCount ──
+  if (triggerFlags.isPulse && runtimeState.questTransformed) {
+    for (const [otherId, otherSkill] of ctx.allSkills) {
+      if (otherId === skill.id) continue
+      if (!otherSkill.affixes.some(a => a.type === AffixType.Pulse)) continue
+      const otherState = ctx.skillStates.get(otherId)
+      if (otherState) {
+        otherState.triggerCount += 1
+      }
     }
   }
 
@@ -868,6 +906,9 @@ export function resolvePhase5(
       if (runtimeState.questStacks >= questDef.targetStacks) {
         runtimeState.questStacks = 0
         runtimeState.questCompletions++
+        if (!runtimeState.questTransformed) {
+          runtimeState.questTransformed = true
+        }
         result.questCompleted = true
 
         // QuestDevour 特殊：吃最弱邻居
@@ -1047,6 +1088,11 @@ export function triggerAffixSkill(
   // Phase 4: 资源选择
   const p4 = resolvePhase4(effectiveSkill, p3.output, runtimeState, ctx)
 
+  // Taboo 质变：惩罚转化为随机资源
+  if (p3.flags.tabooConvertResource) {
+    p4.targetResource = p3.flags.tabooConvertResource
+  }
+
   // Phase 5: 后触发
   const p5 = resolvePhase5(effectiveSkill, runtimeState, ctx, p3.flags, p3.output, recurseDepth, p4.targetResource)
 
@@ -1143,6 +1189,9 @@ export function applyQuestEvent(
     if (runtimeState.questStacks >= def.targetStacks) {
       runtimeState.questStacks = 0
       runtimeState.questCompletions++
+      if (!runtimeState.questTransformed) {
+        runtimeState.questTransformed = true
+      }
     }
     applied = true
   }
@@ -1382,7 +1431,8 @@ export function resetStageState(
 ): void {
   for (const [skillId, state] of skillStates) {
     state.triggerCount = 0
-    state.amplifyStacks = 0
+    // Amplify 质变：保留 50% 增幅层数（向下取整）
+    state.amplifyStacks = state.questTransformed ? Math.floor(state.amplifyStacks * 0.5) : 0
     state.chargeAccumulated = 0
 
     // Decay: 每关重置 currentDecayMult（Story 41.2 AC7 — 跨单词不重置，仅跨关重置）
@@ -1410,6 +1460,7 @@ export function resetRunState(
     state.apprenticeAccumulated = 0
     state.questCompletions = 0
     state.questStacks = 0
+    state.questTransformed = false
   }
 }
 
@@ -1468,6 +1519,7 @@ export function deserializeSkill(
     apprenticeAccumulated: data.runtime.apprenticeAccumulated ?? 0,
     questStacks: data.runtime.questStacks ?? 0,
     questCompletions: data.runtime.questCompletions ?? 0,
+    questTransformed: data.runtime.questTransformed ?? ((data.runtime.questCompletions ?? 0) > 0),
   }
   return { skill, runtimeState }
 }
@@ -1497,6 +1549,7 @@ export function migrateLoadedSkills(
           apprenticeAccumulated: 0,
           questStacks: 0,
           questCompletions: 0,
+          questTransformed: false,
         }
       }
       return patched

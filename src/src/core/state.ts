@@ -38,6 +38,7 @@ export function createInitialState(): GameState {
     mutagenInventory: 0,
     affixSkills: new Map(),
     affixSkillStates: new Map(),
+    ligatureStageCounts: new Map(),
     mutationACounts: new Map(),
     endlessUnlocked: false,
     resources: {

@@ -38,6 +38,8 @@ export interface TriggerWorkItem {
   depth: number
   /** 链式历史（用于循环检测） */
   chainHistory: string[]
+  /** Story 41-3: 质变溅射 — 允许被溅射技能的 Splash 词条再触发一跳 */
+  chainSplash?: boolean
 }
 
 // ===== 调度器结果 =====
@@ -151,6 +153,8 @@ export function orchestrateAffixTrigger(
       triggerKey: item.triggerKey,
       occupiedKeys: chainedOccupiedKeys.length > 0 ? chainedOccupiedKeys : [item.triggerKey],
       transmuteResource: skill.transmuteResource,
+      // Story 41-3: splash 项默认禁用链式词条，chainSplash 允许一跳
+      ...(item.type === 'splash' && !item.chainSplash ? { chainAffixesDisabled: true } : {}),
     }
 
     // ── 执行纯计算（triggerAffixSkill 签名不变） ──
@@ -216,6 +220,10 @@ export function orchestrateAffixTrigger(
 
     // Splash: 溅射邻居
     if (result.phase5?.splashTargets) {
+      // Story 41-3: 质变溅射 — 首跳传播 chainSplash，后续强制 false（仅一跳）
+      const propagateChainSplash = item.type !== 'splash'
+        ? (result.phase5.chainSplash ?? false)
+        : false
       for (const targetKey of result.phase5.splashTargets) {
         const targetSkillId = ctx.bindings.get(targetKey)
         if (!targetSkillId) continue
@@ -226,6 +234,7 @@ export function orchestrateAffixTrigger(
           type: 'splash',
           depth: item.depth + 1,
           chainHistory: childHistory,
+          chainSplash: propagateChainSplash,
         })
       }
     }

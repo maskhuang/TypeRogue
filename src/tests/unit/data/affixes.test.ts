@@ -389,6 +389,7 @@ describe('createSkillRuntimeState', () => {
     expect(state.apprenticeAccumulated).toBe(0)
     expect(state.questStacks).toBe(0)
     expect(state.questCompletions).toBe(0)
+    expect(state.questTransformed).toBe(false)
   })
 })
 

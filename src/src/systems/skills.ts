@@ -209,7 +209,12 @@ function triggerAffixSkillWithFeedback(
     // Story 36.5: 附魔遗物注入（避免 data→systems 依赖）
     apprenticeGrowthMultiplier: getApprenticeGrowthMultiplier(),
     questStackIncrement: getQuestStackIncrement(),
+    // Story 41-3: 质变 Ligature 关卡累计按键计数
+    ligatureStageCounts: state.ligatureStageCounts,
   };
+
+  // Story 41-3: 递增当前键的关卡累计计数
+  state.ligatureStageCounts.set(triggerKey, (state.ligatureStageCounts.get(triggerKey) ?? 0) + 1);
 
   // Story 36.3 + 36.4 + 36.6 + 36.7: 遗物加算合并（倍率棱镜 + 首发强化 + 少而精 + 拓扑系遗物 + 短词冲刺）
   let relicBonus = 0;

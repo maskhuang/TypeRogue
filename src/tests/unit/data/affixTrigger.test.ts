@@ -514,18 +514,18 @@ describe('resolvePhase2', () => {
       expect(result.output).toBeCloseTo(10)
     })
 
-    it('QuestSacrifice: should add +30% per completion to Phase 2 bonusPercent', () => {
+    it('QuestSacrifice: should provide fixed +100% bonus (no quest numeric stacking)', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Taboo, bonusPercent: 1.0, penaltyChance: 0.1 }],
         enchantmentIds: [EnchantmentType.QuestSacrifice],
       })
-      const state = makeRuntimeState({ questCompletions: 3 })
+      const state = makeRuntimeState({ questCompletions: 3, questTransformed: true })
       const ctx = makeContext()
       const result = resolvePhase2(skill, state, ctx, 5)
-      // bonusPercent = 1.0 + 3*0.30 = 1.9
-      expect(result.bonusPercent).toBeCloseTo(1.9)
-      // output = 5 * (1 + 1.9) = 14.5
-      expect(result.output).toBeCloseTo(14.5)
+      // bonusPercent = 1.0 (fixed, no quest stacking)
+      expect(result.bonusPercent).toBeCloseTo(1.0)
+      // output = 5 * (1 + 1.0) = 10.0
+      expect(result.output).toBeCloseTo(10.0)
     })
   })
 
@@ -692,16 +692,17 @@ describe('resolvePhase3', () => {
       expect(result.multipliers).toEqual([])
     })
 
-    it('should apply quest overload enhancement (critMult + c*0.5)', () => {
+    it('should guarantee crit when questTransformed (no roll needed)', () => {
       const skill = makeSkill({
-        affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+        affixes: [{ type: AffixType.Crit, chance: 0.1, critMult: 2.0 }],
         enchantmentIds: [EnchantmentType.QuestOverload],
       })
-      const state = makeRuntimeState({ questCompletions: 3 })
-      const ctx = makeContext({ randomFn: () => 0.3 })
+      // roll > chance but questTransformed → always crit
+      const state = makeRuntimeState({ questTransformed: true })
+      const ctx = makeContext({ randomFn: () => 0.99 })
       const result = resolvePhase3(skill, state, ctx, 10)
-      // critMult = 2.0 + 3*0.5 = 3.5
-      expect(result.output).toBeCloseTo(35)
+      expect(result.output).toBeCloseTo(20)
+      expect(result.flags.isCrit).toBe(true)
     })
   })
 
@@ -740,16 +741,16 @@ describe('resolvePhase3', () => {
       expect(result.flags.isPulse).toBe(false)
     })
 
-    it('should apply quest echo enhancement (burstMult + c*0.3)', () => {
+    it('should use base burstMult without quest numeric stacking', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Pulse, interval: 4, burstMult: 3.0 }],
         enchantmentIds: [EnchantmentType.QuestEcho],
       })
-      const state = makeRuntimeState({ triggerCount: 8, questCompletions: 2 })
+      const state = makeRuntimeState({ triggerCount: 8, questCompletions: 2, questTransformed: true })
       const ctx = makeContext()
       const result = resolvePhase3(skill, state, ctx, 10)
-      // burstMult = 3.0 + 2*0.3 = 3.6
-      expect(result.output).toBeCloseTo(36)
+      // burstMult = 3.0 (no quest stacking)
+      expect(result.output).toBeCloseTo(30)
     })
   })
 
@@ -777,31 +778,29 @@ describe('resolvePhase3', () => {
       expect(state.currentDecayMult).toBeCloseTo(0.5)
     })
 
-    it('should apply quest purify enhancement (floor + c*0.05, positive effect)', () => {
+    it('should use base floor without quest numeric stacking', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 }],
         enchantmentIds: [EnchantmentType.QuestPurify],
       })
-      const state = makeRuntimeState({ currentDecayMult: 0.55, questCompletions: 4 })
+      const state = makeRuntimeState({ currentDecayMult: 0.55, questCompletions: 4, questTransformed: false })
       const ctx = makeContext()
       resolvePhase3(skill, state, ctx, 10)
-      // floorEff = max(0.1, 0.5 + 4*0.05) = max(0.1, 0.7) = 0.7
-      // max(0.7, 0.55 - 0.15) = max(0.7, 0.4) = 0.7
-      expect(state.currentDecayMult).toBeCloseTo(0.7)
+      // floorEff = max(0.1, 0.5) = 0.5 (no quest stacking)
+      // max(0.5, 0.55 - 0.15) = max(0.5, 0.4) = 0.5
+      expect(state.currentDecayMult).toBeCloseTo(0.5)
     })
 
-    it('should enforce minimum floor of 0.1 even with QuestPurify', () => {
+    it('should reverse decay direction when questTransformed', () => {
       const skill = makeSkill({
-        affixes: [{ type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 }],
+        affixes: [{ type: AffixType.Decay, initialMult: 1.0, decayPerTrigger: 0.15, floor: 0.5 }],
         enchantmentIds: [EnchantmentType.QuestPurify],
       })
-      // With QuestPurify raising floor, the floor is 0.5 + 20*0.05 = 1.5, capped by the Decay mult itself
-      const state = makeRuntimeState({ currentDecayMult: 0.2, questCompletions: 20 })
+      const state = makeRuntimeState({ currentDecayMult: 1.0, questTransformed: true })
       const ctx = makeContext()
       resolvePhase3(skill, state, ctx, 10)
-      // floorEff = max(0.1, 0.5 + 20*0.05) = max(0.1, 1.5) = 1.5
-      // max(1.5, 0.2 - 0.15) = max(1.5, 0.05) = 1.5
-      expect(state.currentDecayMult).toBeCloseTo(1.5)
+      // questTransformed: decay reverses → 1.0 + 0.15 = 1.15
+      expect(state.currentDecayMult).toBeCloseTo(1.15)
     })
   })
 
@@ -941,31 +940,32 @@ describe('Quest enhancement formulas', () => {
     expect(result.bonusPercent).toBeCloseTo(0.6655, 2)
   })
 
-  it('Crit: critMult + c*0.5', () => {
+  it('Crit: guaranteed crit when questTransformed', () => {
     const skill = makeSkill({
-      affixes: [{ type: AffixType.Crit, chance: 1.0, critMult: 2.0 }],
+      affixes: [{ type: AffixType.Crit, chance: 0.0, critMult: 2.0 }],
       enchantmentIds: [EnchantmentType.QuestOverload],
     })
-    const state = makeRuntimeState({ questCompletions: 4 })
-    const ctx = makeContext({ randomFn: () => 0.0 })
+    const state = makeRuntimeState({ questTransformed: true })
+    // roll 0.99 > chance 0.0, but questTransformed overrides → guaranteed crit
+    const ctx = makeContext({ randomFn: () => 0.99 })
     const result = resolvePhase3(skill, state, ctx, 10)
-    // critMult = 2.0 + 4*0.5 = 4.0
-    expect(result.output).toBeCloseTo(40)
+    expect(result.output).toBeCloseTo(20) // 10 * 2.0 (base critMult, no stacking)
+    expect(result.flags.isCrit).toBe(true)
   })
 
-  it('Pulse: burstMult + c*0.3', () => {
+  it('Pulse: burstMult without quest numeric stacking', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Pulse, interval: 4, burstMult: 3.0 }],
       enchantmentIds: [EnchantmentType.QuestEcho],
     })
-    const state = makeRuntimeState({ triggerCount: 4, questCompletions: 5 })
+    const state = makeRuntimeState({ triggerCount: 4, questTransformed: true })
     const ctx = makeContext()
     const result = resolvePhase3(skill, state, ctx, 10)
-    // burstMult = 3.0 + 5*0.3 = 4.5
-    expect(result.output).toBeCloseTo(45)
+    // burstMult = 3.0 (base only, no c*0.3 stacking)
+    expect(result.output).toBeCloseTo(30)
   })
 
-  it('Decay: floor - c*0.05 (min 0.1)', () => {
+  it('Decay: base floor without quest numeric stacking (questTransformed=false)', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 }],
       enchantmentIds: [EnchantmentType.QuestPurify],
@@ -973,8 +973,8 @@ describe('Quest enhancement formulas', () => {
     const state = makeRuntimeState({ currentDecayMult: 1.0, questCompletions: 3 })
     const ctx = makeContext()
     resolvePhase3(skill, state, ctx, 10)
-    // floorEff = max(0.1, 0.5 - 3*0.05) = max(0.1, 0.35) = 0.35
-    // newDecay = max(0.35, 1.0 - 0.15) = max(0.35, 0.85) = 0.85
+    // Story 41-3: quest stacking removed → floorEff = max(0.1, 0.5) = 0.5
+    // newDecay = max(0.5, 1.0 - 0.15) = 0.85
     expect(state.currentDecayMult).toBeCloseTo(0.85)
   })
 
@@ -1136,6 +1136,7 @@ function makeFlags(overrides?: Partial<TriggerFlags>): TriggerFlags {
     isCascade: false,
     isTabooPenalty: false,
     ligatureCount: 0,
+    tabooConvertResource: null,
     ...overrides,
   }
 }
@@ -2257,14 +2258,14 @@ describe('Story 35.6: checkQuestEventCondition inline events', () => {
 })
 
 describe('Story 35.6: QuestOverlap — Phase 3 Ligature integration', () => {
-  it('should use nEff = n + questCompletions as multiplier', () => {
+  it('should use ligatureStageCounts when questTransformed', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Ligature }],
       enchantmentIds: [EnchantmentType.QuestOverlap],
     })
-    // 'a' appears 1 time in 'apple', + 2 quest completions = nEff = 3
-    const state = makeRuntimeState({ questCompletions: 2 })
-    const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple' })
+    const state = makeRuntimeState({ questTransformed: true })
+    const ligatureStageCounts = new Map([['a', 3]])
+    const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple', ligatureStageCounts })
     const result = resolvePhase3(skill, state, ctx, 10)
     expect(result.output).toBeCloseTo(30) // 10 * 3
     expect(result.flags.ligatureCount).toBe(3)
@@ -2282,13 +2283,14 @@ describe('Story 35.6: QuestOverlap — Phase 3 Ligature integration', () => {
     expect(result.flags.ligatureCount).toBe(0)
   })
 
-  it('should trigger when quest makes nEff reach 2 (n=1, c=1)', () => {
+  it('should use base count without stacking when not questTransformed', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Ligature }],
       enchantmentIds: [EnchantmentType.QuestOverlap],
     })
-    const state = makeRuntimeState({ questCompletions: 1 })
-    const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple' })
+    // Not transformed → uses countOccurrences('p', 'apple') = 2
+    const state = makeRuntimeState({ questTransformed: false })
+    const ctx = makeContext({ triggerKey: 'p', currentWord: 'apple' })
     const result = resolvePhase3(skill, state, ctx, 10)
     expect(result.output).toBeCloseTo(20) // 10 * 2
     expect(result.flags.ligatureCount).toBe(2)
@@ -2296,17 +2298,18 @@ describe('Story 35.6: QuestOverlap — Phase 3 Ligature integration', () => {
 })
 
 describe('Story 35.6: QuestIterate — Phase 5 Recurse integration', () => {
-  it('should increase recurse chance with quest completions', () => {
+  it('should skip probability halving when questTransformed', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Recurse, recurseChance: 0.1 }],
       enchantmentIds: [EnchantmentType.QuestIterate],
     })
-    const state = makeRuntimeState({ questCompletions: 2 })
-    // chanceEff = 0.1 + 2*0.03 = 0.16, randomFn returns 0.15 → should recurse
-    const ctx = makeContext({ randomFn: () => 0.15 })
+    const state = makeRuntimeState({ questTransformed: true })
+    // randomFn returns 0.05 < 0.1 → should recurse
+    const ctx = makeContext({ randomFn: () => 0.05 })
     const result = resolvePhase5(skill, state, ctx, makeFlags(), 10)
     expect(result.recurse.shouldRecurse).toBe(true)
-    expect(result.recurse.newChance).toBeCloseTo(0.08) // 0.16 / 2
+    // questTransformed → newChance stays at 0.1 (no halving)
+    expect(result.recurse.newChance).toBeCloseTo(0.1)
   })
 
   it('should use base chance when no quest completions', () => {
@@ -2318,6 +2321,178 @@ describe('Story 35.6: QuestIterate — Phase 5 Recurse integration', () => {
     const ctx = makeContext({ randomFn: () => 0.15 })
     const result = resolvePhase5(skill, state, ctx, makeFlags(), 10)
     expect(result.recurse.shouldRecurse).toBe(false)
+  })
+})
+
+// ===== Story 41-3: Quest Transform Batch 1 — 质变专属测试 =====
+
+describe('Story 41-3: Taboo 质变 — 惩罚转为随机资源', () => {
+  it('should set tabooConvertResource when questTransformed and penalty triggers', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Taboo, penaltyChance: 1.0 }],
+      resource: 'base' as ResourceType,
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const ctx = makeContext({ randomFn: () => 0.0, playerClass: 'none' })
+    const result = resolvePhase3(skill, state, ctx, 10)
+    // output 应保持正值（不取反）
+    expect(result.output).toBe(10)
+    // tabooConvertResource 应被设置为非 skill.resource 的资源
+    expect(result.flags.tabooConvertResource).toBeDefined()
+    expect(result.flags.tabooConvertResource).not.toBe('base')
+    expect(result.flags.isTabooPenalty).toBe(true)
+  })
+
+  it('should NOT include class-restricted resources for wordsmith', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Taboo, penaltyChance: 1.0 }],
+      resource: 'base' as ResourceType,
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    // 多次测试确保 mutagen 不会被选中
+    for (let i = 0; i < 20; i++) {
+      const ctx = makeContext({ randomFn: () => i / 20, playerClass: 'wordsmith' })
+      const result = resolvePhase3(skill, state, ctx, 10)
+      expect(result.flags.tabooConvertResource).not.toBe('mutagen')
+    }
+  })
+
+  it('should use normal penalty (output *= -1) when NOT questTransformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Taboo, penaltyChance: 1.0 }],
+    })
+    const state = makeRuntimeState({ questTransformed: false })
+    const ctx = makeContext({ randomFn: () => 0.0 })
+    const result = resolvePhase3(skill, state, ctx, 10)
+    expect(result.output).toBe(-10)
+    expect(result.flags.tabooConvertResource).toBeNull()
+    expect(result.flags.isTabooPenalty).toBe(true)
+  })
+})
+
+describe('Story 41-3: Splash 质变 — chainSplash', () => {
+  it('should set chainSplash=true in Phase 5 when questTransformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Splash, posRel: PositionRelation.Adjacent }],
+      rarity: 1 as 0,
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const neighbors = new Map([['s', PositionRelation.Adjacent]])
+    const bindings = new Map([['s', 'other_skill']])
+    const ctx = makeContext({ triggerKey: 'f', randomFn: () => 0.0, neighbors, bindings })
+    const result = resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(result.chainSplash).toBe(true)
+  })
+
+  it('should NOT set chainSplash when not questTransformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Splash, posRel: PositionRelation.Adjacent }],
+      rarity: 1 as 0,
+    })
+    const state = makeRuntimeState({ questTransformed: false })
+    const neighbors = new Map([['s', PositionRelation.Adjacent]])
+    const bindings = new Map([['s', 'other_skill']])
+    const ctx = makeContext({ triggerKey: 'f', randomFn: () => 0.0, neighbors, bindings })
+    const result = resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    expect(result.chainSplash).toBeFalsy()
+  })
+})
+
+describe('Story 41-3: Amplify 质变 — 50% 层数保留', () => {
+  it('should retain 50% amplifyStacks when questTransformed in resetStageState', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+    skills.set('s1', makeSkill({ id: 's1' }))
+    states.set('s1', makeRuntimeState({ skillId: 's1', amplifyStacks: 30, questTransformed: true }))
+
+    resetStageState(skills, states, new Map(), () => 0.5)
+    expect(states.get('s1')!.amplifyStacks).toBe(15)
+  })
+
+  it('should floor the retained stacks (odd number)', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+    skills.set('s1', makeSkill({ id: 's1' }))
+    states.set('s1', makeRuntimeState({ skillId: 's1', amplifyStacks: 31, questTransformed: true }))
+
+    resetStageState(skills, states, new Map(), () => 0.5)
+    expect(states.get('s1')!.amplifyStacks).toBe(15) // floor(31 * 0.5) = 15
+  })
+
+  it('should reset amplifyStacks to 0 when NOT questTransformed', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const states = new Map<string, SkillRuntimeState>()
+    skills.set('s1', makeSkill({ id: 's1' }))
+    states.set('s1', makeRuntimeState({ skillId: 's1', amplifyStacks: 30, questTransformed: false }))
+
+    resetStageState(skills, states, new Map(), () => 0.5)
+    expect(states.get('s1')!.amplifyStacks).toBe(0)
+  })
+})
+
+describe('Story 41-3: Pulse 质变 — 跨技能 triggerCount 同步', () => {
+  it('should increment other Pulse skills triggerCount when questTransformed', () => {
+    const skillA = makeSkill({
+      id: 'pulseA',
+      affixes: [{ type: AffixType.Pulse, interval: 1, burstMult: 2.0 }],
+    })
+    const skillB = makeSkill({
+      id: 'pulseB',
+      affixes: [{ type: AffixType.Pulse, interval: 3, burstMult: 2.0 }],
+    })
+    const skillC = makeSkill({
+      id: 'noPulse',
+      affixes: [{ type: AffixType.Crit, chance: 0.5 }],
+    })
+    const allSkills = new Map([['pulseA', skillA], ['pulseB', skillB], ['noPulse', skillC]])
+    const stateA = makeRuntimeState({ skillId: 'pulseA', triggerCount: 1, questTransformed: true })
+    const stateB = makeRuntimeState({ skillId: 'pulseB', triggerCount: 5 })
+    const stateC = makeRuntimeState({ skillId: 'noPulse', triggerCount: 0 })
+    const skillStates = new Map([['pulseA', stateA], ['pulseB', stateB], ['noPulse', stateC]])
+
+    const ctx = makeContext({ allSkills, skillStates })
+    const flags = makeFlags()
+    flags.isPulse = true
+    resolvePhase5(skillA, stateA, ctx, flags, 10)
+
+    // pulseB 应被 +1
+    expect(stateB.triggerCount).toBe(6)
+    // noPulse 不受影响
+    expect(stateC.triggerCount).toBe(0)
+  })
+
+  it('should NOT sync when questTransformed=false', () => {
+    const skillA = makeSkill({
+      id: 'pulseA',
+      affixes: [{ type: AffixType.Pulse, interval: 1, burstMult: 2.0 }],
+    })
+    const skillB = makeSkill({
+      id: 'pulseB',
+      affixes: [{ type: AffixType.Pulse, interval: 3, burstMult: 2.0 }],
+    })
+    const allSkills = new Map([['pulseA', skillA], ['pulseB', skillB]])
+    const stateA = makeRuntimeState({ skillId: 'pulseA', triggerCount: 1, questTransformed: false })
+    const stateB = makeRuntimeState({ skillId: 'pulseB', triggerCount: 5 })
+    const skillStates = new Map([['pulseA', stateA], ['pulseB', stateB]])
+
+    const ctx = makeContext({ allSkills, skillStates })
+    const flags = makeFlags()
+    flags.isPulse = true
+    resolvePhase5(skillA, stateA, ctx, flags, 10)
+
+    expect(stateB.triggerCount).toBe(5) // 不变
+  })
+})
+
+describe('Story 41-3: questTransformed 生命周期', () => {
+  it('resetRunState should reset questTransformed to false', () => {
+    const states = new Map<string, SkillRuntimeState>()
+    states.set('s1', makeRuntimeState({ skillId: 's1', questTransformed: true, questCompletions: 3 }))
+
+    resetRunState(states)
+
+    expect(states.get('s1')!.questTransformed).toBe(false)
+    expect(states.get('s1')!.questCompletions).toBe(0)
   })
 })
 

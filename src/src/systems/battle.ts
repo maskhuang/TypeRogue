@@ -1699,6 +1699,8 @@ export async function startLevel(): Promise<void> {
   resetBossModifierRelicBattleState();
   // Story 36.12: 重置结算/评分遗物关级别状态（雪球序号 + 黑洞池）
   resetScoringRelicBattleState();
+  // Story 41-3: 清空质变 Ligature 关卡累计按键计数
+  state.ligatureStageCounts.clear();
 
   // 标点解放遗物：设置遗物乱码激活状态
   setRelicGarbleActive(state.player.relics.has('punctuation_liberation'));

@@ -60,6 +60,7 @@ function makeRuntimeState(overrides?: Partial<SkillRuntimeState>): SkillRuntimeS
     apprenticeAccumulated: 0,
     questStacks: 0,
     questCompletions: 0,
+    questTransformed: false,
     ...overrides,
   }
 }
@@ -263,8 +264,8 @@ describe('AC4: Phase 6 伪循环', () => {
     expect(Number.isFinite(result.totalOutput)).toBe(true)
   })
 
-  it('循环检测触发 pseudoInfinite', () => {
-    // skill_a(Splash) → skill_b(Splash) → skill_a → 循环
+  it('Story 41-3: splash 项默认禁用链式词条，不再形成循环', () => {
+    // skill_a(Splash) → skill_b(Splash): B 作为 splash 项 chainAffixesDisabled
     const skillA = buildSkillWithAffixes([AffixType.Splash], 'base')
     skillA.id = 'skill_a'
     skillA.rarity = 1 as 0
@@ -286,14 +287,11 @@ describe('AC4: Phase 6 伪循环', () => {
 
     const result = orchestrateAffixTrigger('skill_a', 'a', ctx, callbacks)
 
-    // A Splash→B, B Splash→A: 检测到 'a' 已在 chainHistory 中
-    expect(result.enteredPseudoInfinite).toBe(true)
-    expect(pseudoInfiniteSpy).toHaveBeenCalled()
-    // pseudoInfiniteKeys 应包含参与循环的键位
-    const keys = pseudoInfiniteSpy.mock.calls[0][0] as string[]
-    expect(keys).toContain('a')
-    expect(keys).toContain('s')
-    expect(result.triggerCount).toBeLessThanOrEqual(MAX_CHAIN_DEPTH)
+    // Story 41-3: splash 项 chainAffixesDisabled=true → B 不会再溅射回 A
+    expect(result.enteredPseudoInfinite).toBe(false)
+    expect(pseudoInfiniteSpy).not.toHaveBeenCalled()
+    // A 触发 + B 被溅射 = 2 次触发
+    expect(result.triggerCount).toBe(2)
   })
 })
 
@@ -302,9 +300,8 @@ describe('AC4: Phase 6 伪循环', () => {
 // =============================================
 
 describe('AC5: chainHistory 统一', () => {
-  it('chainHistory 传播使循环检测在第二次访问时生效', () => {
-    // A(Splash)→B(Splash)→A: 第二次访问 A 时 chainHistory=['a','s','a']
-    // 循环检测在 B→A 时发现 'a' 已在 history 中 → pseudoInfinite
+  it('Story 41-3: splash 项 chainAffixesDisabled 阻止链式传播', () => {
+    // A(Splash)→B(Splash): B 作为 splash 项不会再溅射
     const skillA = buildSkillWithAffixes([AffixType.Splash], 'base')
     skillA.id = 'skill_a'
     skillA.rarity = 1 as 0
@@ -324,13 +321,99 @@ describe('AC5: chainHistory 统一', () => {
       enterPseudoInfinite: pseudoInfiniteSpy,
     })
 
-    // chainHistory 传播正确时，循环检测应在 B→A 时生效
-    expect(result.enteredPseudoInfinite).toBe(true)
-    // pseudoInfiniteKeys 应反映完整链路
-    if (pseudoInfiniteSpy.mock.calls.length > 0) {
-      const keys = pseudoInfiniteSpy.mock.calls[0][0] as string[]
-      expect(keys.length).toBeGreaterThanOrEqual(2)
-    }
+    // splash 项 chainAffixesDisabled → 无循环
+    expect(result.enteredPseudoInfinite).toBe(false)
+    expect(result.triggerCount).toBe(2)
+  })
+})
+
+// =============================================
+// Story 41-3: chainSplash 正向验证
+// =============================================
+
+describe('Story 41-3: chainSplash 质变溅射额外一跳', () => {
+  it('questTransformed=true 时 splash 项获得 chainSplash，可再溅射一次', () => {
+    // A(Splash, questTransformed) → 溅射 B(Splash) → B 获得 chainSplash → 溅射 C
+    const skillA = buildSkillWithAffixes([AffixType.Splash], 'base')
+    skillA.id = 'skill_a'
+    skillA.rarity = 1 as 0
+    skillA.affixes[0].posRel = PositionRelation.Adjacent
+    skillA.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
+
+    const skillB = buildSkillWithAffixes([AffixType.Splash], 'base')
+    skillB.id = 'skill_b'
+    skillB.rarity = 1 as 0
+    skillB.affixes[0].posRel = PositionRelation.Adjacent
+    skillB.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
+
+    const skillC = makeSkill({ id: 'skill_c', resource: 'base' })
+
+    const bindings = new Map<string, string>([['a', 'skill_a'], ['s', 'skill_b'], ['d', 'skill_c']])
+    const allSkills = new Map([['skill_a', skillA], ['skill_b', skillB], ['skill_c', skillC]])
+    const skillStates = new Map([
+      ['skill_a', makeRuntimeState({ skillId: 'skill_a', questTransformed: true })],
+      ['skill_b', makeRuntimeState({ skillId: 'skill_b' })],
+      ['skill_c', makeRuntimeState({ skillId: 'skill_c' })],
+    ])
+
+    const ctx = makeContext({
+      triggerKey: 'a',
+      bindings,
+      allSkills,
+      skillStates,
+      randomFn: () => 0.99, // B 的邻居为 [a,d]，0.99 选 index 1 → d（避开 a 的循环检测）
+    })
+
+    const result = orchestrateAffixTrigger('skill_a', 'a', ctx)
+
+    // A 触发(1) + B 被溅射(chainSplash=true)(2) + C 被 B 再溅射(3) = 3 次触发
+    expect(result.triggerCount).toBe(3)
+    expect(result.enteredPseudoInfinite).toBe(false)
+  })
+
+  it('chainSplash 只传播一跳，第二跳不再溅射', () => {
+    // A(Splash, questTransformed) → B(Splash) → C(Splash): C 不应再溅射
+    const skillA = buildSkillWithAffixes([AffixType.Splash], 'base')
+    skillA.id = 'skill_a'
+    skillA.rarity = 1 as 0
+    skillA.affixes[0].posRel = PositionRelation.Adjacent
+    skillA.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
+
+    const skillB = buildSkillWithAffixes([AffixType.Splash], 'base')
+    skillB.id = 'skill_b'
+    skillB.rarity = 1 as 0
+    skillB.affixes[0].posRel = PositionRelation.Adjacent
+    skillB.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
+
+    const skillC = buildSkillWithAffixes([AffixType.Splash], 'base')
+    skillC.id = 'skill_c'
+    skillC.rarity = 1 as 0
+    skillC.affixes[0].posRel = PositionRelation.Adjacent
+    skillC.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
+
+    // A-s, B-d, C-f (linear adjacency)
+    const bindings = new Map<string, string>([['s', 'skill_a'], ['d', 'skill_b'], ['f', 'skill_c']])
+    const allSkills = new Map([['skill_a', skillA], ['skill_b', skillB], ['skill_c', skillC]])
+    const skillStates = new Map([
+      ['skill_a', makeRuntimeState({ skillId: 'skill_a', questTransformed: true })],
+      ['skill_b', makeRuntimeState({ skillId: 'skill_b' })],
+      ['skill_c', makeRuntimeState({ skillId: 'skill_c' })],
+    ])
+
+    const ctx = makeContext({
+      triggerKey: 's',
+      bindings,
+      allSkills,
+      skillStates,
+      randomFn: () => 0.99, // 确保选到最后一个邻居（向右传播）
+    })
+
+    const result = orchestrateAffixTrigger('skill_a', 's', ctx)
+
+    // A→B(chainSplash=true)→C(chainSplash=false, chainAffixesDisabled): C 不再溅射
+    // A(1) + B(2) + C(3) = 最多 3 次
+    expect(result.triggerCount).toBeLessThanOrEqual(3)
+    expect(result.enteredPseudoInfinite).toBe(false)
   })
 })
 
