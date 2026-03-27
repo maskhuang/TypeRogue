@@ -66,11 +66,12 @@ export function getEnduranceTimeBonus(): number {
 }
 
 // === 精英猎手 (elite_hunter) ===
+// 注意：精英关已移除（Story 42.1），此遗物暂时不会触发
 
-/** 有遗物 + 精英关 → 2，否则 1 */
+/** 有遗物 + Boss 关 → 2，否则 1（原精英猎手，暂改为 Boss 关生效） */
 export function checkEliteHunterGoldMultiplier(): number {
   if (!state.player.relics.has('elite_hunter')) return 1
-  if (getStageType(state.level) !== 'elite') return 1
+  if (getStageType(state.level) !== 'boss') return 1
   return 2
 }
 
@@ -82,7 +83,7 @@ export function checkPhoenixRevive(): { reviveTime: number; refreshModifiers: bo
   const stageType = getStageType(state.level)
   return {
     reviveTime: PHOENIX_REVIVE_TIME,
-    refreshModifiers: stageType === 'elite' || stageType === 'boss',
+    refreshModifiers: stageType === 'boss',
   }
 }
 

@@ -6,7 +6,7 @@
 /**
  * 关卡类型
  */
-export type StageType = 'standard' | 'elite' | 'boss' | 'rest'
+export type StageType = 'standard' | 'boss'
 
 /**
  * 关卡修饰符类型
@@ -16,7 +16,6 @@ export type StageModifier =
   | 'time_pressure' // 时间压力（额外减时）
   | 'bonus_combo'   // 连击加成
   | 'boss'          // Boss 战特殊规则
-  | 'elite'         // 精英关修饰器
 
 /**
  * 单个关卡配置
@@ -57,23 +56,6 @@ export interface StageConfig {
 }
 
 /**
- * 幕信息
- */
-export interface ActInfo {
-  /** 幕编号 (1-3) */
-  id: number
-
-  /** 幕名称 */
-  name: string
-
-  /** 包含的关卡编号范围 [start, end] */
-  stages: [number, number]
-
-  /** 幕主题描述 */
-  description: string
-}
-
-/**
  * 全局难度设置
  */
 export interface GlobalSettings {
@@ -93,9 +75,6 @@ export interface GlobalSettings {
 export interface LevelsData {
   /** 所有关卡配置 */
   stages: StageConfig[]
-
-  /** 幕信息 */
-  acts: ActInfo[]
 
   /** 全局难度设置 */
   globalSettings: GlobalSettings

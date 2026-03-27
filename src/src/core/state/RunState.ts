@@ -8,6 +8,7 @@ import { drawBossModifiers } from '../../data/bossModifiers'
 import { DELETED_SKILL_IDS, DELETED_EVOLUTION_IDS } from '../../data/skills'
 import { DELETED_RELIC_IDS, MAX_RELIC_SLOTS } from '../../data/relics'
 import type { ClassId } from '../types'
+import { BALANCE } from '../constants'
 import type { AffixSkillInstance, SkillRuntimeState } from '../../data/affixes'
 import { createSkillRuntimeState } from '../../data/affixes'
 import { serializeSkill, deserializeSkill, migrateLoadedSkills } from '../../data/affixTrigger'
@@ -70,11 +71,8 @@ export interface RunStateData {
   /** 金币数量 */
   gold: number
 
-  /** 当前关卡编号 (1-10, 含休息节点) */
+  /** 当前关卡编号（Cycle 内，1-CYCLE_LENGTH） */
   currentStage: number
-
-  /** 当前幕数 (1-3) */
-  currentAct: number
 
   /** Run 是否进行中 */
   isActive: boolean
@@ -166,7 +164,6 @@ export class RunState {
       relics: [],
       gold: 0,
       currentStage: 1,
-      currentAct: 1,
       isActive: false,
       stats: {
         totalScore: 0,
@@ -382,35 +379,24 @@ export class RunState {
   }
 
   /**
-   * 获取当前幕数
+   * 获取当前 Cycle
    */
-  getCurrentAct(): number {
-    return this.data.currentAct
+  getCurrentCycle(): number {
+    return this.data.cycle
   }
 
   /**
-   * 推进到下一关
-   * 同时更新幕数 (Act 1: 1-4, Act 2: 5-8, Act 3: 9-10)
-   * 如果已在最终关卡（10），不再推进
+   * 推进到下一关（Cycle 内递增，无上限）
    */
   advanceStage(): void {
-    if (this.data.currentStage >= 10) return
     this.data.currentStage++
-    // Act 边界映射（与 systems/stage/stageFlow.ts NODE_ACT 保持同步）
-    if (this.data.currentStage <= 4) {
-      this.data.currentAct = 1
-    } else if (this.data.currentStage <= 8) {
-      this.data.currentAct = 2
-    } else {
-      this.data.currentAct = 3
-    }
   }
 
   /**
-   * 检查是否为 Boss 关卡
+   * 检查当前是否为 Boss 关卡（每 CYCLE_LENGTH 关）
    */
   isBossStage(): boolean {
-    return this.data.currentStage === 10
+    return this.data.currentStage > 0 && this.data.currentStage % BALANCE.CYCLE_LENGTH === 0
   }
 
   // ==================== Run 生命周期 (AC6) ====================
@@ -425,15 +411,10 @@ export class RunState {
     this.data.isActive = true
     this.data.stats.startTime = Date.now()
 
-    // 抽取 3 个不重复的 Boss 修饰器
+    // 抽取 3 个不重复的 Boss 修饰器（Cycle 间循环使用）
     const modifiers = drawBossModifiers(3)
     this.data.bossModifierPool = modifiers
-    // 分配到精英关节点: Stage 3→A, Stage 6→B, Stage 9→C
-    this.data.bossModifierAssignment = [
-      { stageId: 3, modifierId: modifiers[0] || '' },
-      { stageId: 6, modifierId: modifiers[1] || '' },
-      { stageId: 9, modifierId: modifiers[2] || '' },
-    ]
+    this.data.bossModifierAssignment = []
   }
 
   /**
@@ -512,7 +493,6 @@ export class RunState {
       relics: [...this.data.relics],
       gold: this.data.gold,
       currentStage: this.data.currentStage,
-      currentAct: this.data.currentAct,
       isActive: this.data.isActive,
       stats: { ...this.data.stats },
       bossModifierPool: [...this.data.bossModifierPool],
@@ -550,7 +530,6 @@ export class RunState {
       relics: string[]
       gold: number
       currentStage: number
-      currentAct: number
       isActive: boolean
       stats: {
         totalScore: number
@@ -581,7 +560,6 @@ export class RunState {
       .slice(0, MAX_RELIC_SLOTS)
     runState.data.gold = parsed.gold
     runState.data.currentStage = parsed.currentStage
-    runState.data.currentAct = parsed.currentAct
     runState.data.isActive = parsed.isActive
     runState.data.stats = { ...parsed.stats }
     runState.data.bossModifierPool = (parsed as any).bossModifierPool || []

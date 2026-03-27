@@ -7,7 +7,6 @@ export { StageManager, stageManager } from './StageManager'
 export type {
   StageConfig,
   StageType,
-  ActInfo,
   LevelsData,
   StageModifier,
   GlobalSettings,

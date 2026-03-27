@@ -1,139 +1,62 @@
 // ============================================
-// 打字肉鸽 - 关卡流程辅助（Legacy 系统用）
+// 打字肉鸽 - 关卡流程辅助（Cycle 制）
 // ============================================
-// Story 18.1: 10 节点关卡流程
+// Story 42.1: 无限循环 — 每 CYCLE_LENGTH 关一个 Boss
 
 import type { StageType } from './StageConfig'
 import { BALANCE } from '../../core/constants'
-import { IS_DEMO, DEMO_STAGE_MAP } from '../../demo/demo-config'
 
-/**
- * 10 节点流程定义
- *
- * 节点 1:  Stage 1 [standard] 30s
- * 节点 2:  Stage 2 [standard] 30s
- * 节点 3:  Stage 3 [elite]    45s  ← 修饰器 A
- * 节点 4:  休息关  [rest]
- * 节点 5:  Stage 4 [standard] 30s
- * 节点 6:  Stage 5 [elite]    45s  ← 修饰器 B
- * 节点 7:  Stage 6 [standard] 30s
- * 节点 8:  休息关  [rest]
- * 节点 9:  Stage 7 [elite]    45s  ← 修饰器 C
- * 节点 10: Stage 8 [boss]     60s  ← A/B/C 交替
- */
+/** 每个 Cycle 包含的关卡数（2 standard + 1 boss） */
+export const CYCLE_LENGTH = BALANCE.CYCLE_LENGTH
 
 /** 每种关卡类型的固定时间 */
 export const STAGE_TIME_LIMITS: Record<StageType, number> = {
   standard: 30,
-  elite: 45,
   boss: 60,
-  rest: 0,
 }
 
-/** 节点 → 关卡类型映射 */
-const NODE_STAGE_TYPE: Record<number, StageType> = IS_DEMO
-  ? DEMO_STAGE_MAP.nodeStageType
-  : {
-    1: 'standard',
-    2: 'standard',
-    3: 'elite',
-    4: 'rest',
-    5: 'standard',
-    6: 'elite',
-    7: 'standard',
-    8: 'rest',
-    9: 'elite',
-    10: 'boss',
-  }
-
-/** 节点 → Act 映射 */
-const NODE_ACT: Record<number, number> = IS_DEMO
-  ? DEMO_STAGE_MAP.nodeAct
-  : {
-    1: 1, 2: 1, 3: 1, 4: 1,
-    5: 2, 6: 2, 7: 2, 8: 2,
-    9: 3, 10: 3,
-  }
-
-/** 节点 → 战斗编号映射（休息关无战斗编号） */
-const NODE_BATTLE_NUMBER: Record<number, number> = IS_DEMO
-  ? DEMO_STAGE_MAP.nodeBattleNumber
-  : {
-    1: 1, 2: 2, 3: 3,
-    5: 4, 6: 5, 7: 6,
-    9: 7, 10: 8,
-  }
-
-/** 精英关节点 → 修饰器序号映射 */
-const ELITE_MODIFIER_INDEX: Record<number, number> = IS_DEMO
-  ? DEMO_STAGE_MAP.eliteModifierIndex
-  : {
-    3: 0,  // 修饰器 A
-    6: 1,  // 修饰器 B
-    9: 2,  // 修饰器 C
-  }
-
-export const TOTAL_NODES = IS_DEMO ? DEMO_STAGE_MAP.totalNodes : 10
-
-export function getStageType(nodeId: number): StageType {
-  return NODE_STAGE_TYPE[nodeId] || 'standard'
+/** 动态获取关卡类型：每 CYCLE_LENGTH 关一个 Boss */
+export function getStageType(stageNum: number): StageType {
+  return isBossNode(stageNum) ? 'boss' : 'standard'
 }
 
-export function getActForNode(nodeId: number): number {
-  return NODE_ACT[nodeId] || 1
+/** 获取战斗编号（无限循环中 battleNumber = stageNum） */
+export function getBattleNumber(stageNum: number): number {
+  return stageNum
 }
 
-export function getBattleNumber(nodeId: number): number {
-  return NODE_BATTLE_NUMBER[nodeId] || 0
+/** 检查是否为 Boss 关（每 CYCLE_LENGTH 关） */
+export function isBossNode(stageNum: number): boolean {
+  return stageNum > 0 && stageNum % CYCLE_LENGTH === 0
 }
 
-export function isRestNode(nodeId: number): boolean {
-  return getStageType(nodeId) === 'rest'
+/** 获取关卡所属 Cycle（从 1 开始） */
+export function getCycleForStage(stageNum: number): number {
+  return Math.ceil(stageNum / CYCLE_LENGTH)
 }
 
-export function isEliteNode(nodeId: number): boolean {
-  return getStageType(nodeId) === 'elite'
-}
-
-export function isBossNode(nodeId: number): boolean {
-  return getStageType(nodeId) === 'boss'
-}
-
-export function getTimeLimit(nodeId: number): number {
-  return STAGE_TIME_LIMITS[getStageType(nodeId)]
+/** 获取基础时间限制 */
+export function getTimeLimit(stageNum: number): number {
+  return STAGE_TIME_LIMITS[getStageType(stageNum)]
 }
 
 /** 获取 cycle 衰减后的时间限制（取整） */
-export function getCycleTimeLimit(nodeId: number, cycle: number): number {
-  const base = STAGE_TIME_LIMITS[getStageType(nodeId)]
+export function getCycleTimeLimit(stageNum: number, cycle: number): number {
+  const base = STAGE_TIME_LIMITS[getStageType(stageNum)]
   return Math.round(base * Math.pow(BALANCE.CYCLE_TIME_DECAY, cycle - 1))
 }
 
-/**
- * 获取下一个战斗节点（跳过休息关）
- * @returns 下一个节点 ID，或 -1 表示通关
- */
-export function getNextBattleNode(currentNodeId: number): number {
-  let next = currentNodeId + 1
-  while (next <= TOTAL_NODES) {
-    if (!isRestNode(next)) return next
-    next++
-  }
-  return -1 // 通关
+/** 获取下一个战斗节点（无限循环，始终 +1） */
+export function getNextBattleNode(currentStageNum: number): number {
+  return currentStageNum + 1
 }
 
 /**
- * 获取精英关对应的修饰器索引 (0=A, 1=B, 2=C)
- * @returns 修饰器索引，非精英关返回 -1
+ * 获取 Boss 修饰器索引（每 Cycle 的 Boss 对应一个修饰器，3 个循环使用）
+ * @returns 修饰器索引 (0, 1, 2)，非 Boss 关返回 -1
  */
-export function getEliteModifierIndex(nodeId: number): number {
-  return ELITE_MODIFIER_INDEX[nodeId] ?? -1
-}
-
-/**
- * 检查当前节点后是否有休息关（Act 边界）
- */
-export function hasRestAfter(nodeId: number): boolean {
-  const next = nodeId + 1
-  return next <= TOTAL_NODES && isRestNode(next)
+export function getEliteModifierIndex(stageNum: number): number {
+  if (!isBossNode(stageNum)) return -1
+  const cycle = getCycleForStage(stageNum)
+  return (cycle - 1) % 3
 }

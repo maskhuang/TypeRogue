@@ -7,38 +7,6 @@ declare const __DEMO_MODE__: boolean
 
 export const IS_DEMO = typeof __DEMO_MODE__ !== 'undefined' && __DEMO_MODE__
 
-// === Demo 关卡地图（完整一周目：10 节点 / 3 Act） ===
-export const DEMO_STAGE_MAP = {
-  totalNodes: 10,
-  nodeStageType: {
-    1: 'standard' as const,
-    2: 'standard' as const,
-    3: 'elite' as const,
-    4: 'rest' as const,
-    5: 'standard' as const,
-    6: 'elite' as const,
-    7: 'standard' as const,
-    8: 'rest' as const,
-    9: 'elite' as const,
-    10: 'boss' as const,
-  },
-  nodeAct: {
-    1: 1, 2: 1, 3: 1, 4: 1,
-    5: 2, 6: 2, 7: 2, 8: 2,
-    9: 3, 10: 3,
-  },
-  nodeBattleNumber: {
-    1: 1, 2: 2, 3: 3,
-    5: 4, 6: 5, 7: 6,
-    9: 7, 10: 8,
-  },
-  eliteModifierIndex: {
-    3: 0,
-    6: 1,
-    9: 2,
-  },
-}
-
 // === Demo 开局赠送遗物 ===
 export const DEMO_STARTER_RELIC = 'cornucopia'
 

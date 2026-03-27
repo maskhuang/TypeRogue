@@ -163,7 +163,7 @@ export interface ResourceState {
 }
 
 // === 游戏状态 ===
-export type GamePhase = 'battle' | 'shop' | 'gameover' | 'victory' | 'rest' | 'ritual';
+export type GamePhase = 'battle' | 'shop' | 'gameover' | 'victory' | 'ritual';
 
 export interface GameState {
   classId: ClassId;
@@ -184,7 +184,6 @@ export interface GameState {
   cycle: number;                        // 当前周目数（默认 1，通关 Boss 后 +1）
   activeModifiers: BossModifierId[];    // 跨周目累积的 Boss 修饰器列表
   bossModifierPool: BossModifierId[];  // Run 级别：3 个随机 Boss 修饰器 ID
-  usedRestEvents: string[];            // Run 级别：已使用的休息事件 ID
   tempBuffs: TempBuff[];               // 临时 buff 列表（Act 级别过期）
   sealedKeys: SealedKey[];             // 封印键位列表（Act 结束后恢复）
   pseudoInfiniteState: PseudoInfiniteState | null;  // 伪无限模式状态
@@ -348,8 +347,6 @@ export interface UIElements {
   wordCount: HTMLElement;
   ownedWords: HTMLElement;
   startBattleBtn: HTMLElement;
-  // Rest
-  restScreen: HTMLElement;
   // Ritual
   ritualScreen: HTMLElement;
   // Gameover

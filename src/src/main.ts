@@ -7,7 +7,7 @@ import { initElements } from './ui/elements';
 import { state } from './core/state';
 import { getStarterWords } from './data/words';
 import { drawBossModifiers } from './data/bossModifiers';
-import { startLevel, initInput, resetLastAct } from './systems/battle';
+import { startLevel, initInput, resetCycleTracking } from './systems/battle';
 import { initShopEvents } from './systems/shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
 import { MetaState } from './core/state/MetaState';
@@ -78,7 +78,7 @@ async function init(): Promise<void> {
     state.player.wordDeck = getStarterWords();
 
     // 直接开始
-    resetLastAct();
+    resetCycleTracking();
     state.level = 1;
     void startLevel();
     return;
@@ -180,7 +180,7 @@ async function init(): Promise<void> {
   state.bossModifierPool = drawBossModifiers(3);
 
   // 启动游戏流程：职业选择 → 遗物选择 → 开始关卡
-  resetLastAct();
+  resetCycleTracking();
   state.level = 1;
 
   // === DEBUG: 手动测试遗物 — 修改此数组切换子系统 ===

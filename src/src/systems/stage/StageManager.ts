@@ -6,7 +6,6 @@
 import {
   StageConfig,
   StageType,
-  ActInfo,
   LevelsData,
   GlobalSettings,
   WordDifficultyParams,
@@ -44,7 +43,6 @@ const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
 export class StageManager {
   private data: LevelsData | null = null
   private stageMap: Map<number, StageConfig> = new Map()
-  private actMap: Map<number, ActInfo> = new Map()
 
   /**
    * 加载关卡配置数据
@@ -57,12 +55,6 @@ export class StageManager {
     this.stageMap.clear()
     for (const stage of levelsData.stages) {
       this.stageMap.set(stage.id, stage)
-    }
-
-    // 建立幕索引
-    this.actMap.clear()
-    for (const act of levelsData.acts) {
-      this.actMap.set(act.id, act)
     }
   }
 
@@ -79,7 +71,6 @@ export class StageManager {
   reset(): void {
     this.data = null
     this.stageMap.clear()
-    this.actMap.clear()
   }
 
   // ==================== 关卡查询 ====================
@@ -107,50 +98,6 @@ export class StageManager {
     return this.data?.stages.length || 0
   }
 
-  // ==================== 幕查询 ====================
-
-  /**
-   * 获取幕信息
-   * @param actId 幕编号 (1-3)
-   */
-  getAct(actId: number): ActInfo | undefined {
-    return this.actMap.get(actId)
-  }
-
-  /**
-   * 获取所有幕信息
-   */
-  getAllActs(): readonly ActInfo[] {
-    return this.data?.acts || []
-  }
-
-  /**
-   * 获取总幕数
-   */
-  getTotalActs(): number {
-    return this.data?.acts.length || 0
-  }
-
-  /**
-   * 获取指定幕的所有关卡（按 id 升序排列）
-   * @param actId 幕编号 (1-3)
-   */
-  getStagesInAct(actId: number): StageConfig[] {
-    const act = this.actMap.get(actId)
-    if (!act) return []
-
-    const [start, end] = act.stages
-    const stages = this.data?.stages.filter(s => s.id >= start && s.id <= end) || []
-    return stages.sort((a, b) => a.id - b.id)
-  }
-
-  /**
-   * 获取关卡所属幕
-   */
-  getActForStage(stageId: number): number {
-    return this.stageMap.get(stageId)?.act || 1
-  }
-
   // ==================== 关卡类型查询 ====================
 
   /**
@@ -158,20 +105,6 @@ export class StageManager {
    */
   getStageType(stageId: number): StageType {
     return this.stageMap.get(stageId)?.stageType || 'standard'
-  }
-
-  /**
-   * 检查是否为精英关
-   */
-  isEliteStage(stageId: number): boolean {
-    return this.getStageType(stageId) === 'elite'
-  }
-
-  /**
-   * 检查是否为休息关
-   */
-  isRestStage(stageId: number): boolean {
-    return this.getStageType(stageId) === 'rest'
   }
 
   /**

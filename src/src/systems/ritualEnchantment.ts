@@ -25,13 +25,11 @@ import { getEnchantmentDisplayInfo, buildAffixTooltipFields } from './shop';
 import { playSound } from '../effects/sound';
 import { t } from '../demo/demo-i18n';
 import { eventBus } from '../core/events/EventBus';
-import { getActForNode } from './stage/stageFlow';
 import { RESOURCE_ICONS } from '../core/constants';
 
 // === 配置常量（待流程调整后可由外部覆盖） ===
 
-/** 仪式触发的 Act（默认 Act 2） */
-const RITUAL_ACT = 2;
+// Story 42.7 将重新设计仪式触发条件（Boss 后触发）
 /** 仪式可进行的附魔轮数（暂定 1） */
 const RITUAL_ROUNDS = 1;
 
@@ -146,16 +144,8 @@ export function applyRitualEnchantment(
   }
 }
 
-/** 是否应在当前节点后触发仪式附魔 */
-export function shouldShowRitual(currentNodeId: number): boolean {
-  // 仪式在 Act 1 最后的休息关（node 4）完成后触发
-  const nextNode = currentNodeId + 1;
-  const nextAct = getActForNode(nextNode);
-  const currentAct = getActForNode(currentNodeId);
-  // 从 Act 1 → Act 2 的转折点
-  if (currentAct < RITUAL_ACT && nextAct >= RITUAL_ACT) {
-    return getEligibleSkills().length > 0;
-  }
+/** 是否应在当前节点后触发仪式附魔（暂时禁用，Story 42.7 改为 Boss 后触发） */
+export function shouldShowRitual(_currentNodeId: number): boolean {
   return false;
 }
 

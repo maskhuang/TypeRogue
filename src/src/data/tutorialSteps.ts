@@ -318,7 +318,7 @@ export const L4_STEPS: TutorialStep[] = [
     trigger: {
       event: 'battle:start',
       delay: 1500,
-      // condition 由 tutorialInit 注入（isEliteNode）
+      // condition 由 tutorialInit 注入（elite 已移除，始终 false）
     },
     content: {
       titleKey: 'tutorial.L4_elite_intro_title',

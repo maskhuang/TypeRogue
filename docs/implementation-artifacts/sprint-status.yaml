@@ -380,3 +380,18 @@ development_status:
   37-5-non-resource-relic-feedback: done  # 非资源遗物触发反馈（标签+图标脉冲）
   37-6-affix-chain-flight: done               # 词条链式触发飞行定位（溅射/共鸣/连接）
   epic-37-retrospective: optional
+
+  # ===== Epic 42: 关卡心流重设计 =====
+  # Source: docs/stories/epic-42-stage-flow-redesign.md
+  epic-42: in-progress
+  42-1-run-structure-simplify: dev-complete          # Run 结构简化 — 去休息关 + 无限循环
+  42-2-battle-continuation: backlog               # 战斗继续机制 — 达标不停，打到时间耗尽
+  42-3-overflow-score: backlog                    # 溢出分系统 — 跨关携带
+  42-4-time-acceleration: backlog                 # 关内时间加速
+  42-5-exponential-target: backlog                # 目标分数指数增长
+  42-6-boss-fixed-interval: backlog               # Boss 固定间隔系统重构
+  42-7-enchantment-ritual-event: backlog          # 附魔仪式 — Boss 后事件
+  42-8-retry-with-overflow: backlog               # 续命机制 — 消耗溢出分重来
+  42-9-acceleration-sensory-feedback: backlog     # 时间加速感官反馈
+  42-10-balance-integration: backlog              # 平衡调整与集成测试
+  epic-42-retrospective: optional

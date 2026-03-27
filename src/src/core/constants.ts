@@ -73,6 +73,9 @@ export const BALANCE = {
   SKILL_UPGRADE_PRICE: 25,
   WORD_REMOVE_BASE: 1,
 
+  // 周目结构
+  CYCLE_LENGTH: 3,           // 每 Cycle 关卡数（2 standard + 1 boss）
+
   // 周目难度缩放
   CYCLE_SCORE_BASE: 2,      // 目标分数指数底数（每周目翻倍）
   CYCLE_TIME_DECAY: 0.9,    // 时间衰减系数（每周目 ×0.9）

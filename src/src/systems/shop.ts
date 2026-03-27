@@ -17,8 +17,7 @@ import { playSound } from '../effects/sound';
 import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
-import { getNextBattleNode, isRestNode, getActForNode, TOTAL_NODES } from './stage/stageFlow';
-import { openRestStage } from './restStage';
+import { getNextBattleNode } from './stage/stageFlow';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
@@ -149,12 +148,10 @@ function getAvailableResources(classId: string): ResourceType[] {
 
 /** Act → 最大稀有度（词条数）映射；Act1 只刷无词条/单词条，Act2 开始双词条，Act3+ 无限制 */
 function getActMaxRarity(): SkillRarity {
-  // 无尽模式（cycle ≥ 2）无稀有度上限
-  if (state.cycle >= 2) return 3 as SkillRarity;
-  const act = getActForNode(state.level);
-  if (act <= 1) return 1 as SkillRarity;   // Act1: 0~1
-  if (act === 2) return 2 as SkillRarity;   // Act2: 0~2
-  return 3 as SkillRarity;                  // Act3+: 0~3
+  const cycle = state.cycle;
+  if (cycle <= 1) return 1 as SkillRarity;   // Cycle 1: 0~1
+  if (cycle === 2) return 2 as SkillRarity;   // Cycle 2: 0~2
+  return 3 as SkillRarity;                    // Cycle 3+: 0~3
 }
 
 /** 收集玩家已装备技能拥有的所有词条类型（去重，排除 link/splash 自身） */
@@ -830,8 +827,8 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
   const items: ShopItem[] = [];
   let nextId = Date.now();
 
-  // 当前 Act（技能权重 + 牌包权重共用）
-  const act = getActForNode(state.level);
+  // 当前 Cycle（技能权重 + 牌包权重共用）
+  const act = state.cycle;
 
   // 构建词条制技能池（Story 35.9 — 替代旧固定池）
   const skillPool: ShopItem[] = [];
@@ -3329,18 +3326,8 @@ export function initShopEvents(): void {
     // Story 36.9: 限时拍卖 — 离开商店时清理倒计时
     _auctionRemaining = -1;
     clearAuctionTimer();
-    // 检测下一节点是否为休息关
-    const nextNode = state.level + 1;
-    if (nextNode <= TOTAL_NODES && isRestNode(nextNode)) {
-      state.level = nextNode;
-      openRestStage();
-    } else {
-      const nextBattle = getNextBattleNode(state.level);
-      if (nextBattle === -1 || nextBattle > TOTAL_NODES) {
-        return;
-      }
-      state.level = nextBattle;
-      void startLevel();
-    }
+    // 无限循环：直接进入下一关
+    state.level = getNextBattleNode(state.level);
+    void startLevel();
   };
 }

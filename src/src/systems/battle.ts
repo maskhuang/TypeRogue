@@ -19,12 +19,12 @@ import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
-import { getStageType, getCycleTimeLimit, getBattleNumber, getEliteModifierIndex, getActForNode, TOTAL_NODES } from './stage/stageFlow';
+import { getStageType, getCycleTimeLimit, getBattleNumber } from './stage/stageFlow';
 import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawBossModifiers, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive, getEscalateTimeSpeedBonus, addFrostStack, getCurrentTaxResource, getTaxRate, onMirrorWordComplete, resetMirrorWordTimer } from '../data/bossModifiers';
-import type { BossModifierMeta, ModifierCategory, BossModifierId } from '../data/bossModifiers';
+import type { ModifierCategory, BossModifierId } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, stopBossRotation, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
 import { showBossModifierPicker } from './bossModifierPicker';
-import { showActTransition, showEliteAnnouncement, showBossIntro, updateStageInfo } from './actTransition';
+import { showActTransition, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
 import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, isRepeatWord, calculateRhythmAdapt, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors } from './relics/TypingRelicBehaviors';
@@ -51,14 +51,6 @@ import { bindShapeToKeys, restoreSealedSkill, getBindingState, getSkillKeys, get
 
 // === Demo 固定词序队列 ===
 let demoWordQueue: string[] = [];
-
-/** 获取当前精英关的修饰器元数据（非精英关返回 undefined） */
-function getCurrentEliteModifierMeta(): BossModifierMeta | undefined {
-  const modIdx = getEliteModifierIndex(state.level);
-  if (modIdx < 0) return undefined;
-  const modId = state.bossModifierPool[modIdx];
-  return modId ? getBossModifierMeta(modId) : undefined;
-}
 
 // === 混沌种子临时附魔追踪 ===
 // Map<skillId, enchantmentId> — 记录本关由混沌种子添加的临时附魔
@@ -108,25 +100,21 @@ export function removeChaosSeedEnchantments(): void {
   chaosSeedEnchantments.clear();
 }
 
-// === Act 过渡追踪 ===
-let lastAct = 0;
+// === Cycle 过渡追踪 ===
+let lastCycle = 0;
 
-/** 重置 Act 过渡追踪（新游戏时调用） */
-export function resetLastAct(): void { lastAct = 0; chaosSeedEnchantments.clear(); }
+/** 重置 Cycle 过渡追踪（新游戏时调用） */
+export function resetCycleTracking(): void { lastCycle = 0; chaosSeedEnchantments.clear(); }
 
 /**
- * Boss 胜利后的周目推进状态变更（提取为独立函数以便测试）
+ * Boss 胜利后的周目推进状态变更
  * - cycle++, level=1
- * - 清除 tempBuffs/sealedKeys
- * - 重置 Act 过渡状态
  * - 重抽 bossModifierPool
  */
 export function advanceCycle(): void {
   state.cycle++;
-  state.level = 1;
-  resetLastAct();
-  state.tempBuffs = [];
-  state.sealedKeys = [];
+  state.level = 0; // 0 so that shop-leave's getNextBattleNode(0)=1 starts at level 1
+  resetCycleTracking();
   state.bossModifierPool = drawBossModifiers(3);
 }
 
@@ -193,11 +181,10 @@ function stopScoreRoller(): void {
 }
 
 // === 屏幕管理 ===
-export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'rest' | 'ritual'): void {
+export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'ritual'): void {
   const el = getElements();
   el.battleScreen.style.display = name === 'battle' ? 'flex' : 'none';
   el.shopScreen.style.display = name === 'shop' ? 'flex' : 'none';
-  el.restScreen.style.display = name === 'rest' ? 'flex' : 'none';
   el.ritualScreen.style.display = name === 'ritual' ? 'flex' : 'none';
   el.gameoverScreen.style.display = name === 'gameover' ? 'flex' : 'none';
 }
@@ -1474,36 +1461,23 @@ function endLevel(): void {
 
       const currentType = getStageType(state.level);
 
-      // Demo: 最终关完成后直接结束
-      if (IS_DEMO && state.level >= TOTAL_NODES) {
+      // Demo: Boss 通关后直接结束
+      if (IS_DEMO && currentType === 'boss') {
         victory();
         return;
       }
 
       if (currentType === 'boss') {
-        if (state.cycle < 3 || state.endlessUnlocked) {
-          // 周目 1-2：继续下一周目 / 周目 3+（无尽模式）：继续
-          advanceCycle();
-          showBossModifierPicker(() => {
-            continueAfterDeadlyGift(() => {
-              if (hasUnownedRelics()) {
-                showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.bossDrop);
-              } else {
-                openShop(true);
-              }
-            });
+        // 无限循环：Boss 胜利 → 周目推进 → 修饰器选择 → 遗物 → 商店
+        advanceCycle();
+        showBossModifierPicker(() => {
+          continueAfterDeadlyGift(() => {
+            if (hasUnownedRelics()) {
+              showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.bossDrop);
+            } else {
+              openShop(true);
+            }
           });
-        } else {
-          // 周目 3 通关（无尽未解锁）→ 胜利
-          victory();
-        }
-        return;
-      }
-
-      if (currentType === 'elite' && hasUnownedRelics()) {
-        // 精英关胜利 → 致命礼物 → 遗物三选一 → 商店
-        continueAfterDeadlyGift(() => {
-          showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.eliteDrop);
         });
         return;
       }
@@ -1517,17 +1491,10 @@ function endLevel(): void {
     if (phoenixResult) {
       consumePhoenix();
       state.phase = 'battle';
-      // 精英/Boss 关刷新修饰器（endLevel 顶部已 cleanup，此处只需重新 apply）
+      // Boss 关刷新修饰器（endLevel 顶部已 cleanup，此处只需重新 apply）
       if (phoenixResult.refreshModifiers) {
         const stageType = getStageType(state.level);
-        if (stageType === 'elite') {
-          const modIdx = getEliteModifierIndex(state.level);
-          const modId = state.bossModifierPool[modIdx];
-          if (modId && !isModifierActive(modId)) {
-            applyModifier(modId, true);
-          }
-        } else if (stageType === 'boss') {
-          // Boss 关：重新同时应用全部 3 个修饰器
+        if (stageType === 'boss') {
           for (const bossModId of state.bossModifierPool) {
             if (bossModId && !isModifierActive(bossModId)) {
               applyModifier(bossModId, false);
@@ -1634,18 +1601,16 @@ function showForesightModal(modIds: BossModifierId[]): Promise<ModifierCategory 
 export async function startLevel(): Promise<void> {
   keyTooltip.hide();
 
-  // === Act 过渡演出（在切换到战斗画面前显示） ===
-  // 先隐藏所有屏幕，避免过渡动画期间暴露gameover等界面
+  // === Cycle 过渡演出（在切换到战斗画面前显示） ===
   showScreen('battle');
   const currentStageType = getStageType(state.level);
-  const currentAct = getActForNode(state.level);
-  if (currentAct !== lastAct) {
-    // T2 遗物事件钩子：幕切换时触发 on_act_end（跳过首次进入，lastAct=0 表示无前序幕）(Story 28.1)
-    if (lastAct > 0) {
-      resolveRelicEffectsWithBehaviors('on_act_end', { endedAct: lastAct });
+  const currentCycle = state.cycle;
+  if (currentCycle !== lastCycle) {
+    if (lastCycle > 0) {
+      resolveRelicEffectsWithBehaviors('on_act_end', { endedAct: lastCycle });
     }
-    await showActTransition(currentAct);
-    lastAct = currentAct;
+    await showActTransition(currentCycle);
+    lastCycle = currentCycle;
   }
 
   state.phase = 'battle';
@@ -1800,25 +1765,18 @@ export async function startLevel(): Promise<void> {
 
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;
-  const stageLabel = currentStageType === 'elite' ? ' [ELITE]' : currentStageType === 'boss' ? ' [BOSS]' : '';
+  const stageLabel = currentStageType === 'boss' ? ' [BOSS]' : '';
   const cyclePrefix = state.cycle >= 2 ? t('battle.cycle_prefix', { cycle: state.cycle }) : '';
   el.levelLabel.textContent = `${cyclePrefix}LEVEL ${displayLevel}${stageLabel}`;
 
-  // HUD: 显示当前 Act / StageType
-  updateStageInfo(currentAct, currentStageType);
-
-  // Task 2.3: 精英关金色边框样式
-  el.battleScreen.classList.toggle('elite-stage', currentStageType === 'elite');
+  // HUD: 显示当前 Cycle / StageType
+  updateStageInfo(currentCycle, currentStageType);
 
   // 先知之眼：精英/Boss关修饰器应用前，预览并选择禁用一个类别
   let foresightDisabledCategory: ModifierCategory | null = null;
-  if (state.player.relics.has('modifier_foresight') && (currentStageType === 'elite' || currentStageType === 'boss')) {
+  if (state.player.relics.has('modifier_foresight') && currentStageType === 'boss') {
     const modsToPreview: BossModifierId[] = [];
-    if (currentStageType === 'elite') {
-      const modIdx = getEliteModifierIndex(state.level);
-      const modId = state.bossModifierPool[modIdx];
-      if (modId) modsToPreview.push(modId);
-    } else {
+    {
       for (const id of state.bossModifierPool) {
         if (id) modsToPreview.push(id);
       }
@@ -1855,32 +1813,7 @@ export async function startLevel(): Promise<void> {
 
   // Task 3.3-3.4: 修饰器 HUD 显示/隐藏
   const modInfo = el.modifierInfo;
-  if (currentStageType === 'elite') {
-    const meta = getCurrentEliteModifierMeta();
-    if (meta) {
-      modInfo.querySelector('.modifier-icon')!.textContent = meta.icon;
-      modInfo.querySelector('.modifier-name')!.textContent = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name;
-      modInfo.querySelector('.modifier-hint')!.textContent = t(`modifier.${meta.id}.elite`) !== `modifier.${meta.id}.elite` ? t(`modifier.${meta.id}.elite`) : meta.eliteHint;
-      modInfo.classList.add('visible');
-    } else {
-      modInfo.classList.remove('visible');
-    }
-    // 应用减弱版修饰器（精英关）— 跳过已在永久修饰器中的
-    // Story 36.11: 修饰器屏障 — 精英关首个修饰器无效化
-    const modIdx = getEliteModifierIndex(state.level);
-    const modId = state.bossModifierPool[modIdx];
-    if (modId && !isModifierActive(modId)) {
-      // 先知之眼：跳过被禁用类别的修饰器
-      const eliteMeta = getBossModifierMeta(modId);
-      if (foresightDisabledCategory && eliteMeta && eliteMeta.category === foresightDisabledCategory) {
-        // 被先知之眼禁用，不应用
-      } else if (shouldBarrierBlock()) {
-        showFeedback(t('battle.modifier_barrier'), '#44aaff');
-      } else {
-        applyModifier(modId, true);
-      }
-    }
-  } else if (currentStageType === 'boss') {
+  if (currentStageType === 'boss') {
     // Boss 关：同时应用全部 3 个修饰器 — 跳过被先知之眼禁用的类别
     for (const bossModId of state.bossModifierPool) {
       if (bossModId && !isModifierActive(bossModId)) {
@@ -1948,12 +1881,8 @@ export async function startLevel(): Promise<void> {
   renderRelicDisplay();
   renderActiveLibrary();
 
-  // 精英关 / Boss 关入场演出（在战斗画面显示后）
-  if (currentStageType === 'elite') {
-    const modIdx = getEliteModifierIndex(state.level);
-    const modId = state.bossModifierPool[modIdx];
-    if (modId) await showEliteAnnouncement(modId);
-  } else if (currentStageType === 'boss') {
+  // Boss 关入场演出（在战斗画面显示后）
+  if (currentStageType === 'boss') {
     await showBossIntro(state.bossModifierPool);
   }
 
@@ -1989,11 +1918,7 @@ function announceLevel(): void {
   const stageType = getStageType(state.level);
 
   let typeLabel = '';
-  if (stageType === 'elite') {
-    const meta = getCurrentEliteModifierMeta();
-    const modName = meta ? ` ${meta.icon} ${meta.name}` : '';
-    typeLabel = `<br><span class="elite-hint">${t('battle.elite_hint')}${modName}</span>`;
-  } else if (stageType === 'boss') {
+  if (stageType === 'boss') {
     typeLabel = `<br><span class="boss-hint">${t('battle.boss_hint')}</span>`;
   }
 

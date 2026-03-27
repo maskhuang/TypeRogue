@@ -159,21 +159,18 @@ export function initFullTutorial(): void {
 
   eventBus.on('battle:start', (data) => {
     const stageType = getStageType(data.stageId)
-    lastBattleIsElite = stageType === 'elite'
+    lastBattleIsElite = false
     lastBattleIsBoss = stageType === 'boss'
 
-    // 精英/Boss 关都有修饰器
-    if (lastBattleIsElite || lastBattleIsBoss) {
+    // Boss 关有修饰器
+    if (lastBattleIsBoss) {
       lastBattleHasModifier = true
-      // 获取第一个修饰器信息用于动态插值
       const pool = state.bossModifierPool
       if (pool && pool.length > 0) {
         const meta = getBossModifierMeta(pool[0])
         if (meta) {
           lastModifierName = `${meta.icon} ${t(`modifier.${meta.id}`)}`
-          lastModifierDesc = lastBattleIsElite
-            ? t(`modifier.${meta.id}.elite`)
-            : t(`modifier.${meta.id}.desc`)
+          lastModifierDesc = t(`modifier.${meta.id}.desc`)
         } else {
           lastModifierName = ''
           lastModifierDesc = ''

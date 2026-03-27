@@ -245,7 +245,7 @@ export interface RelicConditionContext {
   equippedSkillCount?: number
   wordLength?: number
   timeElapsed?: number
-  stageType?: 'normal' | 'elite' | 'boss' | 'rest'
+  stageType?: 'normal' | 'boss'
   resourceTypesThisWord?: number
 }
 

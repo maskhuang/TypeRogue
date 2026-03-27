@@ -70,7 +70,7 @@ export interface RelicCondition {
   /** 数值阈值（用于 combo_threshold, multiplier_threshold, skill_count_lt, word_length, time_elapsed_lt, resource_types_gte） */
   threshold?: number
   /** 关卡类型匹配值（stage_type 使用） */
-  stageType?: 'normal' | 'elite' | 'boss' | 'rest'
+  stageType?: 'normal' | 'boss'
 }
 
 export interface RelicEffect {

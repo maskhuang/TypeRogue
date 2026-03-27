@@ -53,7 +53,6 @@ export function createInitialState(): GameState {
     cycle: 1,
     activeModifiers: [],
     bossModifierPool: [],
-    usedRestEvents: [],
     tempBuffs: [],
     sealedKeys: [],
     pseudoInfiniteState: null,
@@ -151,7 +150,6 @@ export function calculateTargetScore(level: number, stageType: StageType = 'stan
   const { TARGET_BASE, TARGET_LINEAR, TARGET_QUADRATIC, CYCLE_SCORE_BASE } = BALANCE;
   const base = Math.floor(TARGET_BASE + level * TARGET_LINEAR + level * level * TARGET_QUADRATIC);
   const scaled = Math.floor(base * Math.pow(CYCLE_SCORE_BASE, cycle - 1));
-  if (stageType === 'elite') return Math.floor(scaled * 1.3);
   if (stageType === 'boss') return Math.floor(scaled * 1.5);
   return scaled;
 }

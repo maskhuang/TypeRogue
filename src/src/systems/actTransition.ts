@@ -14,7 +14,7 @@ export function showActTransition(actNum: number): Promise<void> {
     const overlay = document.createElement('div')
     overlay.id = 'act-transition-overlay'
     overlay.innerHTML = `
-      <div class="act-title">Act ${actNum}</div>
+      <div class="act-title">Cycle ${actNum}</div>
       <div class="act-subtitle">${subtitle}</div>
     `
     document.body.appendChild(overlay)
@@ -28,28 +28,6 @@ export function showActTransition(actNum: number): Promise<void> {
         overlay.classList.add('act-exit')
       }, 1200)
       setTimeout(() => { overlay.remove(); resolve() }, 1500)
-    })
-  })
-}
-
-/** 显示精英关开场提示（约 1.2s） */
-export function showEliteAnnouncement(modId: string): Promise<void> {
-  return new Promise(resolve => {
-    const meta = getBossModifierMeta(modId as any)
-    if (!meta) { resolve(); return }
-
-    const banner = document.createElement('div')
-    banner.id = 'elite-announcement'
-    const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
-    banner.innerHTML = t('act.elite_announce', { icon: meta.icon, name: modName })
-    document.body.appendChild(banner)
-
-    requestAnimationFrame(() => {
-      banner.classList.add('elite-announce-enter')
-      setTimeout(() => {
-        banner.classList.add('elite-announce-exit')
-      }, 900)
-      setTimeout(() => { banner.remove(); resolve() }, 1200)
     })
   })
 }
@@ -93,18 +71,17 @@ export function showBossIntro(pool: string[]): Promise<void> {
   })
 }
 
-/** 更新 HUD 中的 Act / StageType 信息 */
-export function updateStageInfo(actNum: number, stageType: string): void {
+/** 更新 HUD 中的 Cycle / StageType 信息 */
+export function updateStageInfo(cycleNum: number, stageType: string): void {
   const el = document.getElementById('hud-stage-info')
   if (!el) return
 
   const icons: Record<string, string> = {
     standard: '⚔️',
-    elite: '⚡',
     boss: '💀',
   }
   const icon = icons[stageType] || '⚔️'
-  el.textContent = `Act ${actNum} ${icon}`
+  el.textContent = `Cycle ${cycleNum} ${icon}`
   el.className = `hud-stage-info stage-${stageType}`
 
   // 脉冲动画

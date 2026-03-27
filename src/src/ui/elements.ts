@@ -38,8 +38,6 @@ export function initElements(): UIElements {
     wordCount: document.getElementById('word-count')!,
     ownedWords: document.getElementById('owned-words')!,
     startBattleBtn: document.getElementById('start-battle-btn')!,
-    // Rest
-    restScreen: document.getElementById('rest-screen')!,
     // Ritual
     ritualScreen: document.getElementById('ritual-screen')!,
     // Gameover

@@ -67,11 +67,11 @@ export function getBountyHunterGoldBonus(): number {
 
 // === 修饰器屏障 (modifier_barrier) ===
 
-/** 有遗物 + 精英/Boss关 + 未使用 → true（设置已使用标记），否则 false */
+/** 有遗物 + Boss关 + 未使用 → true（设置已使用标记），否则 false */
 export function shouldBarrierBlock(): boolean {
   if (!state.player.relics.has('modifier_barrier')) return false
   const stageType = getStageType(state.level)
-  if (stageType !== 'elite' && stageType !== 'boss') return false
+  if (stageType !== 'boss') return false
   if (_barrierUsedThisStage) return false
   _barrierUsedThisStage = true
   return true
