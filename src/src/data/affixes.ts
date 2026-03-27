@@ -120,6 +120,8 @@ export enum EnchantmentType {
   QuestOverlap = 'quest_overlap',
   QuestIterate = 'quest_iterate',
   QuestSacrifice = 'quest_sacrifice',
+  QuestTwin = 'quest_twin',
+  QuestConduit = 'quest_conduit',
   // ── 运算符（1） ──
   MultiplyOperator = 'multiply_operator',
 }
@@ -144,6 +146,8 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestOverlap]: AffixType.Ligature,
   [EnchantmentType.QuestIterate]: AffixType.Recurse,
   [EnchantmentType.QuestSacrifice]: AffixType.Taboo,
+  [EnchantmentType.QuestTwin]: AffixType.Twin,
+  [EnchantmentType.QuestConduit]: AffixType.Conduit,
 }
 
 // ===== 附魔元数据（非任务类附魔的显示信息） =====
@@ -537,23 +541,25 @@ export interface QuestEnchantmentDef {
 }
 
 export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
-  { type: EnchantmentType.QuestDevour, name: '吞噬', targetAffix: AffixType.Void, event: 'selfTrigger', targetStacks: 15, effectDesc: '每空位加成 +5%' },
+  { type: EnchantmentType.QuestDevour, name: '吞噬', targetAffix: AffixType.Void, event: 'selfTrigger', targetStacks: 15, effectDesc: '质变：每次吞噬', transformDesc: '完成后每次触发都寻找最弱邻居吞噬' },
   { type: EnchantmentType.QuestOverload, name: '过载', targetAffix: AffixType.Crit, event: 'critHit', targetStacks: 8, effectDesc: '质变：保底暴击', transformDesc: '完成后暴击必定触发' },
   { type: EnchantmentType.QuestEcho, name: '回响', targetAffix: AffixType.Pulse, event: 'affixProc:pulse', targetStacks: 6, effectDesc: '质变：跨技能脉冲同步', transformDesc: '完成后脉冲同步所有脉冲技能' },
-  { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'affixProc:cascade', targetStacks: 6, effectDesc: '级联倍率 +0.2' },
+  { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'affixProc:cascade', targetStacks: 6, effectDesc: '质变：双向连锁', transformDesc: '完成后级联双向判定，反向键也触发' },
   { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'comboReach:15', targetStacks: 3, effectDesc: '质变：衰减反转为增长', transformDesc: '完成后衰减方向反转，越触发越强' },
-  { type: EnchantmentType.QuestResonance, name: '共振', targetAffix: [AffixType.Resonance, AffixType.Link], event: 'neighborTrigger', targetStacks: 20, effectDesc: '触发产出 +10%/层' },
-  { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'outcastProc', targetStacks: 10, effectDesc: '加成 +15%' },
-  { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'selfTrigger', targetStacks: 15, effectDesc: '转化系数 ×1.1' },
+  { type: EnchantmentType.QuestResonance, name: '共振', targetAffix: [AffixType.Resonance, AffixType.Link], event: 'neighborTrigger', targetStacks: 20, effectDesc: '质变：共鸣增强', transformDesc: '完成后共鸣/链接触发产出 +50%' },
+  { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'outcastProc', targetStacks: 10, effectDesc: '质变：首尾呼应', transformDesc: '完成后触发词首/词尾时额外触发对端技能' },
+  { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'selfTrigger', targetStacks: 15, effectDesc: '质变：双向转化', transformDesc: '完成后转化同时反向产出到源资源' },
   { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'wordComplete', targetStacks: 5, effectDesc: '蓄力上限 +0.3' },
   { type: EnchantmentType.QuestFission, name: '裂变', targetAffix: AffixType.Splash, event: 'longWord:6', targetStacks: 5, effectDesc: '质变：溅射链一跳', transformDesc: '完成后溅射目标可再溅射一次' },
   { type: EnchantmentType.QuestStack, name: '层叠', targetAffix: AffixType.Amplify, event: 'selfTrigger', targetStacks: 25, effectDesc: '质变：换词保留50%层数', transformDesc: '完成后换词时保留一半增幅层数' },
-  { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'wordComplete', targetStacks: 8, effectDesc: '概率偏移 +0.15' },
-  { type: EnchantmentType.QuestSpectrum, name: '光谱', targetAffix: AffixType.Rainbow, event: 'selfTrigger', targetStacks: 20, effectDesc: '随机权重偏向最低资源 +15%/层' },
+  { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'wordComplete', targetStacks: 8, effectDesc: '质变：双向锁定', transformDesc: '完成后吸引字母必含，排斥字母必不含' },
+  { type: EnchantmentType.QuestSpectrum, name: '光谱', targetAffix: AffixType.Rainbow, event: 'selfTrigger', targetStacks: 20, effectDesc: '质变：全资源产出', transformDesc: '完成后产出等比分摊到所有资源' },
   { type: EnchantmentType.QuestMirror, name: '映射', targetAffix: AffixType.Mirror, event: 'stageCleared', targetStacks: 1, effectDesc: '复制参数 ×1.1/层' },
   { type: EnchantmentType.QuestOverlap, name: '重叠', targetAffix: AffixType.Ligature, event: 'selfTrigger', targetStacks: 15, effectDesc: '质变：关卡累计计数', transformDesc: '完成后连字按关卡累计按键计数' },
   { type: EnchantmentType.QuestIterate, name: '迭代', targetAffix: AffixType.Recurse, event: 'affixProc:recurse', targetStacks: 5, effectDesc: '质变：递归不衰减', transformDesc: '完成后递归概率不再每次减半' },
   { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'affixProc:taboo_penalty', targetStacks: 3, effectDesc: '质变：惩罚转为随机资源', transformDesc: '完成后惩罚触发时产出转为随机其他资源' },
+  { type: EnchantmentType.QuestTwin, name: '镜像', targetAffix: AffixType.Twin, event: 'stageCleared', targetStacks: 3, effectDesc: '质变：词条效果加倍', transformDesc: '完成后所有非 Twin 词条效果翻倍' },
+  { type: EnchantmentType.QuestConduit, name: '导引', targetAffix: AffixType.Conduit, event: 'selfTrigger', targetStacks: 15, effectDesc: '质变：导能 +2', transformDesc: '完成后为邻居提供 2 次额外触发' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====

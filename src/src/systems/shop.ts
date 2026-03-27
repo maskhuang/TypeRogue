@@ -46,7 +46,7 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity, AffixType } from '../data/affixes';
-import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, getQuestCompletions, countEmptySlots, categorizeEnchantmentCandidates, weightedPickEnchantment } from '../data/affixTrigger';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, categorizeEnchantmentCandidates, weightedPickEnchantment } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
@@ -572,50 +572,31 @@ export function computeSmartEstimate(
   const fmtBonus = (name: string, bonus: number) =>
     `${name} +${Math.round(bonus * 100)}%`
 
-  const questC = (questType: import('../data/affixes').EnchantmentType): number => {
-    if (!rt) return 0
-    return getQuestCompletions(skill, rt, questType)
-  }
-
   for (const affix of skill.affixes) {
     switch (affix.type) {
       case 'void': {
         if (affix.posRel == null) break
-        const c = questC('quest_devour' as import('../data/affixes').EnchantmentType)
-        const slotEff = (affix.bonusPerSlot ?? 0) + c * 0.05
+        // 41-4: quest stacking removed — 直接使用 affix.bonusPerSlot
+        const slotEff = affix.bonusPerSlot ?? 0
         const empty = boundKeys
           ? countEmptySlots(boundKeys, affix.posRel, state.player.bindings)
           : 0
         const bonus = empty * slotEff
         addPercent += bonus
-        // quest_devour c >= 3 额外加成
-        let extraBonus = 0
-        if (rt && skill.enchantmentIds.includes('quest_devour' as any)) {
-          const cd = rt.questCompletions
-          if (cd >= 3) {
-            extraBonus = cd * 0.10
-            addPercent += extraBonus
-          }
-        }
         const emptyLabel = boundKeys ? t('est.void_slots', { count: empty }) : t('est.void_unbound')
-        const detail = c > 0
-          ? `(${emptyLabel}×${Math.round(slotEff * 100)}%${extraBonus > 0 ? t('est.void_quest_extra', { pct: Math.round(extraBonus * 100) }) : ''})`
-          : `(${emptyLabel}×${Math.round((affix.bonusPerSlot ?? 0) * 100)}%)`
-        const totalVoid = bonus + extraBonus
-        breakdown.push({ typeKey: 'void', label: t('est.void', { pct: Math.round(totalVoid * 100) }), detail })
+        const detail = `(${emptyLabel}×${Math.round(slotEff * 100)}%)`
+        breakdown.push({ typeKey: 'void', label: t('est.void', { pct: Math.round(bonus * 100) }), detail })
         break
       }
       case 'taboo': {
         // Phase 2: +100%
         addPercent += 1.0
         // Phase 3: 期望 = ×(1 - 2×effPenalty)
-        const c = questC('quest_sacrifice' as import('../data/affixes').EnchantmentType)
-        const effPenalty = Math.max(0.02, (affix.penaltyChance ?? 0.1) - c * 0.01)
+        // 41-3/41-4: quest stacking removed — 直接使用 affix.penaltyChance
+        const effPenalty = affix.penaltyChance ?? 0.1
         const expectMult = 1 - 2 * effPenalty
         multProduct *= expectMult
-        const detail = c > 0
-          ? t('est.taboo_quest', { pct: Math.round(effPenalty * 100), c })
-          : t('est.taboo_penalty', { pct: Math.round(effPenalty * 100) })
+        const detail = t('est.taboo_penalty', { pct: Math.round(effPenalty * 100) })
         breakdown.push({ typeKey: 'taboo', label: t('est.taboo', { val: expectMult.toFixed(2) }), detail })
         break
       }

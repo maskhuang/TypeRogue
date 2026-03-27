@@ -120,6 +120,8 @@ export interface TriggerFlags {
 export interface Phase4Result {
   targetResource: ResourceType
   output: number
+  /** 质变Rainbow：同时产出所有资源（按资源数等比分摊） */
+  allResources?: boolean
 }
 
 export interface Phase5Result {
@@ -137,11 +139,13 @@ export interface Phase5Result {
   devourTarget: string | null
   /** 是否完成一次任务循环 */
   questCompleted: boolean
+  /** 质变Outcast首尾呼应：对端技能触发键位 */
+  outcastEchoTarget: string | null
 }
 
 export type Phase6Action =
-  | { type: 'resonance', neighborKey: string }
-  | { type: 'link', neighborKey: string }
+  | { type: 'resonance', neighborKey: string, transformedBoost?: number }
+  | { type: 'link', neighborKey: string, transformedBoost?: number }
   | { type: 'conduit', targetKey: string }
   | { type: 'apprentice_neighbor', neighborKey: string, growthDelta: number }
   | { type: 'quest_resonance', neighborKey: string }
@@ -173,6 +177,8 @@ export interface TriggerResult {
   ligatureCount: number
   /** 需要应用的状态变更列表 */
   stateMutations: StateMutation[]
+  /** 质变Convert双向转化：反向产出 */
+  convertReverseOutputs?: { resource: ResourceType, amount: number }[]
   /** Phase 4 结果 */
   phase4?: Phase4Result
   /** Phase 5 结果 */
@@ -284,6 +290,8 @@ export interface Phase2Result {
   output: number
   bonusPercent: number
   mutations: StateMutation[]
+  /** 质变Convert双向转化：反向产出到source资源 */
+  convertReverseOutputs: { resource: ResourceType, amount: number }[]
 }
 
 /**
@@ -304,22 +312,30 @@ export function resolvePhase2(
     : baseOutput
   let bonusPercent = 0
   const mutations: StateMutation[] = []
+  const convertReverseOutputs: { resource: ResourceType, amount: number }[] = []
 
   // ── 词条加算 ──
   for (const affix of skill.affixes) {
     switch (affix.type) {
       case AffixType.Convert: {
         if (affix.source == null) break
-        const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestRefine)
-        const kEff = (affix.k ?? 0) * (c > 0 ? Math.pow(1.1, c) : 1)
+        const kEff = affix.k ?? 0
         bonusPercent += kEff * getAffixSourceValue(affix.source, ctx)
+        // 质变：双向转化 — 反向也转化（source资源获得基于target资源的加成）
+        // 注意：反向产出使用 effectiveBase（未加成基值），不受其他词条 bonusPercent 影响
+        // 这是设计意图：反向产出为额外收益，不与正向加成叠加
+        if (runtimeState.questTransformed) {
+          const reverseBonus = kEff * getAffixSourceValue(skill.resource, ctx)
+          if (reverseBonus > 0) {
+            convertReverseOutputs.push({ resource: affix.source, amount: reverseBonus * effectiveBase })
+          }
+        }
         break
       }
 
       case AffixType.Void: {
         if (affix.posRel == null) break
-        const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestDevour)
-        const slotEff = (affix.bonusPerSlot ?? 0) + c * 0.05
+        const slotEff = affix.bonusPerSlot ?? 0
         const empty = countEmptySlots(ctx.occupiedKeys, affix.posRel, ctx.bindings)
         bonusPercent += empty * slotEff
         break
@@ -337,8 +353,7 @@ export function resolvePhase2(
 
       case AffixType.Outcast: {
         if (isFirstOrLastLetter(ctx.triggerKey, ctx.currentWord)) {
-          const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestCharge)
-          bonusPercent += (affix.bonusPercent ?? 0) + c * 0.15
+          bonusPercent += affix.bonusPercent ?? 0
         }
         break
       }
@@ -375,24 +390,15 @@ export function resolvePhase2(
     bonusPercent += runtimeState.apprenticeAccumulated
   }
 
-  for (const enchId of skill.enchantmentIds) {
-    const ench = enchId as EnchantmentType
-
-    // 任务·吞噬 额外加成（c >= 3 时）
-    if (ench === EnchantmentType.QuestDevour) {
-      const c = runtimeState.questCompletions
-      if (c >= 3) {
-        bonusPercent += c * 0.10
-      }
-    }
-
-  }
+  // 附魔循环（预留）
+  // 41-4: QuestDevour 额外数值加成已移除，质变行为在 Phase 5 实现
 
   // 乘算化模式与普通模式统一：bonusPercent 加算后应用到 output
   return {
     output: effectiveBase * (1 + bonusPercent),
     bonusPercent,
     mutations,
+    convertReverseOutputs,
   }
 }
 
@@ -470,12 +476,16 @@ export function resolvePhase3(
       }
 
       case AffixType.Cascade: {
-        if (ctx.prevKey && affix.posRel != null && hasRelation(ctx.prevKey, ctx.triggerKey, affix.posRel)) {
-          const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestChain)
-          const m = (affix.cascadeMult ?? 1) + c * 0.2
-          output *= m
-          multipliers.push(m)
-          flags.isCascade = true
+        if (ctx.prevKey && affix.posRel != null) {
+          // 质变：双向连锁 — 正向 OR 反向都算连锁
+          const forward = hasRelation(ctx.prevKey, ctx.triggerKey, affix.posRel)
+          const reverse = runtimeState.questTransformed && hasRelation(ctx.triggerKey, ctx.prevKey, affix.posRel)
+          if (forward || reverse) {
+            const m = affix.cascadeMult ?? 1
+            output *= m
+            multipliers.push(m)
+            flags.isCascade = true
+          }
         }
         break
       }
@@ -643,44 +653,18 @@ export function applyApprenticeAffixGrowth(
 // ===== Phase 4-6 辅助函数 =====
 
 /** 根据职业过滤可用资源 */
-function getClassResources(playerClass?: string): ResourceType[] {
+export function getClassResources(playerClass?: string): ResourceType[] {
   const pool: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
   if (playerClass === 'wordsmith') pool.push('fragment')
   if (playerClass === 'metamorph') pool.push('mutagen')
   return pool
 }
 
-/** 加权随机资源选择（光谱附魔偏向最低资源，职业约束） */
-export function weightedRandomResource(ctx: TriggerContext, spectrumCompletions: number): ResourceType {
+/** 随机资源选择（等概率，职业约束） */
+export function weightedRandomResource(ctx: TriggerContext): ResourceType {
   const pool = getClassResources(ctx.playerClass)
-  if (spectrumCompletions <= 0) {
-    // 等概率随机
-    const idx = Math.floor(ctx.randomFn() * pool.length)
-    return pool[Math.min(idx, pool.length - 1)]
-  }
-
-  // 找到当前值最低的资源
-  let minVal = Infinity
-  let minIdx = 0
-  for (let i = 0; i < pool.length; i++) {
-    const val = getAffixSourceValue(pool[i], ctx)
-    if (val < minVal) {
-      minVal = val
-      minIdx = i
-    }
-  }
-
-  // 加权：base = 1，最低资源额外 + completions × 0.15
-  const weights: number[] = pool.map(() => 1)
-  weights[minIdx] += spectrumCompletions * 0.15
-
-  const totalWeight = weights.reduce((a, b) => a + b, 0)
-  let roll = ctx.randomFn() * totalWeight
-  for (let i = 0; i < pool.length; i++) {
-    roll -= weights[i]
-    if (roll <= 0) return pool[i]
-  }
-  return pool[pool.length - 1]
+  const idx = Math.floor(ctx.randomFn() * pool.length)
+  return pool[Math.min(idx, pool.length - 1)]
 }
 
 /** 找 posRel 范围内产出最低的邻居键位（支持多格扩展邻居） */
@@ -767,8 +751,12 @@ export function resolvePhase4(
     return { targetResource: skill.resource, output }
   }
 
-  const spectrumCompletions = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestSpectrum)
-  const targetResource = weightedRandomResource(ctx, spectrumCompletions)
+  // 质变：同时产出所有资源
+  if (runtimeState.questTransformed) {
+    return { targetResource: skill.resource, output, allResources: true }
+  }
+
+  const targetResource = weightedRandomResource(ctx)
   return { targetResource, output }
 }
 
@@ -795,6 +783,7 @@ export function resolvePhase5(
     splashTargets: [],
     devourTarget: null,
     questCompleted: false,
+    outcastEchoTarget: null,
   }
 
   let recurseProc = false
@@ -856,6 +845,20 @@ export function resolvePhase5(
       const otherState = ctx.skillStates.get(otherId)
       if (otherState) {
         otherState.triggerCount += 1
+      }
+    }
+  }
+
+  // ── Outcast 质变：首尾呼应 — 找到对端技能并触发 ──
+  if (runtimeState.questTransformed && !ctx.chainAffixesDisabled) {
+    const outcastAffix = skill.affixes.find(a => a.type === AffixType.Outcast)
+    if (outcastAffix && isFirstOrLastLetter(ctx.triggerKey, ctx.currentWord)) {
+      const word = ctx.currentWord.toLowerCase()
+      const firstKey = word[0]
+      const lastKey = word[word.length - 1]
+      const oppositeKey = ctx.triggerKey === firstKey ? lastKey : firstKey
+      if (oppositeKey !== ctx.triggerKey && ctx.bindings.has(oppositeKey)) {
+        result.outcastEchoTarget = oppositeKey
       }
     }
   }
@@ -922,6 +925,14 @@ export function resolvePhase5(
     }
   }
 
+  // Void 质变：每次触发都产出 devourTarget（系统层限制每关一次）
+  if (runtimeState.questTransformed && !result.devourTarget) {
+    const voidAffix = skill.affixes.find(a => a.type === AffixType.Void)
+    if (voidAffix?.posRel != null) {
+      result.devourTarget = findWeakestNeighbor(ctx.occupiedKeys, voidAffix.posRel, ctx)
+    }
+  }
+
   // @deprecated 嬗变系已删除（Story 41.2），保留供旧存档向后兼容
   if (skill.enchantmentIds.includes('transmute')) {
     const extraResource = ctx.transmuteResource
@@ -979,7 +990,10 @@ export function resolvePhase6(
       if (affix.type === AffixType.Resonance && affix.posRel != null && affix.resource != null && actualResource === affix.resource) {
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk != null) {
-          actions.push({ type: 'resonance', neighborKey: matchedNk })
+          // 质变：共鸣增强 — 被触发技能获得 +50% 产出加成
+          const neighborState = ctx.skillStates.get(neighborSkillId)
+          const boost = neighborState?.questTransformed ? 0.5 : undefined
+          actions.push({ type: 'resonance', neighborKey: matchedNk, transformedBoost: boost })
         }
       }
 
@@ -989,7 +1003,9 @@ export function resolvePhase6(
         if (triggerSkillHasAffix) {
           const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
           if (matchedNk != null) {
-            actions.push({ type: 'link', neighborKey: matchedNk })
+            const neighborState = ctx.skillStates.get(neighborSkillId)
+            const boost = neighborState?.questTransformed ? 0.5 : undefined
+            actions.push({ type: 'link', neighborKey: matchedNk, transformedBoost: boost })
           }
         }
       }
@@ -1004,7 +1020,7 @@ export function resolvePhase6(
       }
     }
 
-    // 导能词条：邻居有 Conduit 且触发技能拥有 Conduit 技能的其他词条类型 → 触发技能 +1 触发
+    // 导能词条：邻居有 Conduit 且触发技能拥有 Conduit 技能的其他词条类型 → 触发技能 +N 触发
     for (const affix of neighborSkill.affixes) {
       if (affix.type !== AffixType.Conduit || affix.posRel == null) continue
       // 检查范围匹配（双侧 any-match）
@@ -1016,8 +1032,12 @@ export function resolvePhase6(
         .map(a => a.type)
       const triggerHasMatch = skill.affixes.some(a => conduitOtherTypes.includes(a.type))
       if (triggerHasMatch) {
-        // 让触发技能再触发一次（targetKey 指向触发技能的键位）
-        actions.push({ type: 'conduit', targetKey: triggerKey })
+        // 质变：+2 触发（而非 +1）
+        const neighborState = ctx.skillStates.get(neighborSkillId)
+        const conduitCount = neighborState?.questTransformed ? 2 : 1
+        for (let i = 0; i < conduitCount; i++) {
+          actions.push({ type: 'conduit', targetKey: triggerKey })
+        }
       }
     }
 
@@ -1085,6 +1105,12 @@ export function triggerAffixSkill(
   // Phase 3: 乘算层
   const p3 = resolvePhase3(effectiveSkill, runtimeState, ctx, p2.output)
 
+  // Twin 质变：非 Twin 词条效果翻倍（等效词条复制）
+  const hasTwin = effectiveSkill.affixes.some(a => a.type === AffixType.Twin)
+  if (hasTwin && runtimeState.questTransformed) {
+    p3.output *= 2
+  }
+
   // Phase 4: 资源选择
   const p4 = resolvePhase4(effectiveSkill, p3.output, runtimeState, ctx)
 
@@ -1113,6 +1139,7 @@ export function triggerAffixSkill(
     isMultiplyOp: skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator),
     ligatureCount: p3.flags.ligatureCount,
     stateMutations: allMutations,
+    convertReverseOutputs: p2.convertReverseOutputs.length > 0 ? p2.convertReverseOutputs : undefined,
     phase4: p4,
     phase5: p5,
     phase6: p6,
@@ -1201,9 +1228,8 @@ export function applyQuestEvent(
 // ===== Gravity / Mirror 数据助手 =====
 
 /**
- * 获取 Gravity 词条的有效 probMult（含 QuestPolarize 增强）。
+ * 获取 Gravity 词条的有效 probMult。
  * 供词选系统在触发流水线外调用，data 层纯函数。
- * 注意：probMult=1.0（中性）时，quest 增强偏向引力方向（>=1 分支）。
  */
 export function getEffectiveProbMult(
   affix: AffixInstance,
@@ -1211,12 +1237,11 @@ export function getEffectiveProbMult(
   skill: AffixSkillInstance,
 ): number {
   const baseProbMult = affix.probMult ?? 1
-  const c = getQuestCompletions(skill, runtimeState, EnchantmentType.QuestPolarize)
-  if (c === 0) return baseProbMult
-
-  const delta = Math.abs(baseProbMult - 1)
-  const enhancedDelta = delta + c * 0.15
-  return baseProbMult >= 1 ? 1 + enhancedDelta : 1 - enhancedDelta
+  if (!runtimeState.questTransformed) return baseProbMult
+  // 质变：双向锁定 — 吸引→必含(Infinity)，排斥→必不含(0)，中性→不变(1)
+  if (baseProbMult > 1) return Infinity
+  if (baseProbMult < 1) return 0
+  return 1
 }
 
 /**

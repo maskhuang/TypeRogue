@@ -101,13 +101,13 @@ describe('AFFIX_CATEGORY_MAP', () => {
 describe('EnchantmentType', () => {
   const allEnchTypes = Object.values(EnchantmentType)
 
-  it('should have exactly 46 values', () => {
-    expect(allEnchTypes).toHaveLength(46)
+  it('should have exactly 48 values', () => {
+    expect(allEnchTypes).toHaveLength(48)
   })
 
   it('should have unique string values', () => {
     const unique = new Set(allEnchTypes)
-    expect(unique.size).toBe(46)
+    expect(unique.size).toBe(48)
   })
 
   it('should have 28 apprentice types (3 generic + 5 resource + 20 affix)', () => {
@@ -115,16 +115,16 @@ describe('EnchantmentType', () => {
     expect(apprentice).toHaveLength(28)
   })
 
-  it('should have 17 quest types', () => {
+  it('should have 19 quest types', () => {
     const quest = allEnchTypes.filter(v => v.startsWith('quest_'))
-    expect(quest).toHaveLength(17)
+    expect(quest).toHaveLength(19)
   })
 })
 
 // ===== QUEST_AFFIX_MAP =====
 
 describe('QUEST_AFFIX_MAP', () => {
-  it('should have 18 quest enchantment mappings', () => {
+  it('should have 20 quest enchantment mappings', () => {
     const questTypes = Object.values(EnchantmentType).filter(v => v.startsWith('quest_'))
     for (const qt of questTypes) {
       expect(QUEST_AFFIX_MAP[qt as EnchantmentType]).toBeDefined()
@@ -146,7 +146,7 @@ describe('QUEST_AFFIX_MAP', () => {
     expect(QUEST_AFFIX_MAP[EnchantmentType.QuestEnergize]).toBe(AffixType.Charge)
   })
 
-  it('should cover all affix types except Twin and Conduit (no quest)', () => {
+  it('should cover all affix types', () => {
     const coveredAffixes = new Set<AffixType>()
     for (const mapping of Object.values(QUEST_AFFIX_MAP)) {
       if (Array.isArray(mapping)) {
@@ -155,28 +155,28 @@ describe('QUEST_AFFIX_MAP', () => {
         coveredAffixes.add(mapping)
       }
     }
-    const noQuestTypes = new Set([AffixType.Twin, AffixType.Conduit])
     const allAffixTypes = Object.values(AffixType)
     for (const at of allAffixTypes) {
-      if (noQuestTypes.has(at)) {
-        expect(coveredAffixes.has(at)).toBe(false)
-      } else {
-        expect(coveredAffixes.has(at)).toBe(true)
-      }
+      expect(coveredAffixes.has(at)).toBe(true)
     }
+  })
+
+  it('should map QuestTwin to Twin and QuestConduit to Conduit', () => {
+    expect(QUEST_AFFIX_MAP[EnchantmentType.QuestTwin]).toBe(AffixType.Twin)
+    expect(QUEST_AFFIX_MAP[EnchantmentType.QuestConduit]).toBe(AffixType.Conduit)
   })
 })
 
 // ===== QUEST_ENCHANTMENT_DEFS =====
 
 describe('QUEST_ENCHANTMENT_DEFS', () => {
-  it('should have 17 definitions', () => {
-    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(17)
+  it('should have 19 definitions', () => {
+    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(19)
   })
 
   it('should have unique enchantment types', () => {
     const types = QUEST_ENCHANTMENT_DEFS.map(d => d.type)
-    expect(new Set(types).size).toBe(17)
+    expect(new Set(types).size).toBe(19)
   })
 
   it('should have positive targetStacks for all', () => {

@@ -10,6 +10,7 @@ import {
   MAX_RECURSE_DEPTH,
   MAX_CHAIN_DEPTH,
   applyApprenticeAffixGrowth,
+  getClassResources,
 } from '../data/affixTrigger'
 import type {
   TriggerContext,
@@ -26,6 +27,7 @@ export type TriggerWorkType =
   | 'link'
   | 'splash'
   | 'conduit'
+  | 'outcast_echo'
 
 export interface TriggerWorkItem {
   /** 目标技能 ID */
@@ -40,6 +42,8 @@ export interface TriggerWorkItem {
   chainHistory: string[]
   /** Story 41-3: 质变溅射 — 允许被溅射技能的 Splash 词条再触发一跳 */
   chainSplash?: boolean
+  /** 41-4: 质变 Resonance/Link 产出加成 */
+  transformedBoost?: number
 }
 
 // ===== 调度器结果 =====
@@ -100,6 +104,7 @@ export function orchestrateAffixTrigger(
   let maxDepth = 0
   let enteredPseudoInfinite = false
   let pseudoInfiniteKeys: string[] | undefined
+  let devourConsumed = false  // 41-4: 质变Void吞噬每调度周期限一次
 
   // 入队初始触发（chainHistory 为空：初始键尚未处理过）
   queue.push({
@@ -155,6 +160,8 @@ export function orchestrateAffixTrigger(
       transmuteResource: skill.transmuteResource,
       // Story 41-3: splash 项默认禁用链式词条，chainSplash 允许一跳
       ...(item.type === 'splash' && !item.chainSplash ? { chainAffixesDisabled: true } : {}),
+      // 41-4: outcast_echo 禁用链式词条防止循环
+      ...(item.type === 'outcast_echo' ? { chainAffixesDisabled: true } : {}),
     }
 
     // ── 执行纯计算（triggerAffixSkill 签名不变） ──
@@ -166,6 +173,10 @@ export function orchestrateAffixTrigger(
     // 同资源衍生附魔增强（系统层应用 output × (1 + boost)）
     if (result.phase5?.transmuteSameResourceBoost) {
       effectiveOutput *= (1 + result.phase5.transmuteSameResourceBoost)
+    }
+    // 41-4: 质变 Resonance/Link 产出加成
+    if (item.transformedBoost) {
+      effectiveOutput *= (1 + item.transformedBoost)
     }
 
     results.push(result)
@@ -186,7 +197,23 @@ export function orchestrateAffixTrigger(
 
     // ── 副作用 ──
     if (result.phase4) {
-      callbacks?.applyResource?.(result.phase4.targetResource, effectiveOutput, result.isMultiplyOp)
+      if (result.phase4.allResources) {
+        // 质变Rainbow：等比分摊到所有可用资源
+        const pool = getClassResources(ctx.playerClass)
+        const share = effectiveOutput / pool.length
+        for (const r of pool) {
+          callbacks?.applyResource?.(r, share, result.isMultiplyOp)
+        }
+      } else {
+        callbacks?.applyResource?.(result.phase4.targetResource, effectiveOutput, result.isMultiplyOp)
+      }
+    }
+
+    // Convert质变反向产出
+    if (result.convertReverseOutputs) {
+      for (const ro of result.convertReverseOutputs) {
+        callbacks?.applyResource?.(ro.resource, ro.amount, false)
+      }
     }
 
     // 衍生附魔额外资源：始终加算（不受 MultiplyOperator 影响）
@@ -198,9 +225,10 @@ export function orchestrateAffixTrigger(
       )
     }
 
-    // 吞噬
-    if (result.phase5?.devourTarget) {
+    // 吞噬（41-4: 质变Void每次触发都产出devourTarget，调度层限一次）
+    if (result.phase5?.devourTarget && !devourConsumed) {
       callbacks?.devourTarget?.(result.phase5.devourTarget)
+      devourConsumed = true
     }
 
     // ── 入队 Phase 5 后续触发 ──
@@ -235,6 +263,21 @@ export function orchestrateAffixTrigger(
           depth: item.depth + 1,
           chainHistory: childHistory,
           chainSplash: propagateChainSplash,
+        })
+      }
+    }
+
+    // Outcast echo: 首尾呼应 — 对端技能触发（chainAffixesDisabled 防循环）
+    if (result.phase5?.outcastEchoTarget) {
+      const echoSkillId = ctx.bindings.get(result.phase5.outcastEchoTarget)
+      if (echoSkillId) {
+        queue.push({
+          skillId: echoSkillId,
+          triggerKey: result.phase5.outcastEchoTarget,
+          type: 'outcast_echo',
+          depth: childHistory.length,
+          chainHistory: childHistory,
+          chainSplash: false,
         })
       }
     }
@@ -275,6 +318,7 @@ function enqueuePhase6Action(
         type: 'resonance',
         depth: parentChildHistory.length,
         chainHistory: parentChildHistory,
+        transformedBoost: action.transformedBoost,
       })
       break
     }
@@ -287,6 +331,7 @@ function enqueuePhase6Action(
         type: 'link',
         depth: parentChildHistory.length,
         chainHistory: parentChildHistory,
+        transformedBoost: action.transformedBoost,
       })
       break
     }

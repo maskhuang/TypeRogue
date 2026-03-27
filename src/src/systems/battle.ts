@@ -227,14 +227,28 @@ function pickWord(): string {
         const mult = gravityWeights.get(ch);
         if (mult !== undefined) w *= mult;
       }
+      // 质变Gravity: Infinity×0 = NaN → 视为冲突约束，降为 0（排除该词）
+      if (Number.isNaN(w)) w = 0;
       weights.push(w);
     }
-    const total = weights.reduce((a, b) => a + b, 0);
-    if (total > 0) {
-      let r = random() * total;
-      for (let i = 0; i < words.length; i++) {
-        r -= weights[i];
-        if (r <= 0) return words[i].toUpperCase();
+    // 质变Gravity: 处理 Infinity/0 极端权重
+    const hasInfinity = weights.some(w => w === Infinity)
+    if (hasInfinity) {
+      // 仅从 Infinity 权重的词中随机选（满足所有必含约束）
+      const infiniteIndices = weights.map((w, i) => w === Infinity ? i : -1).filter(i => i >= 0)
+      if (infiniteIndices.length > 0) {
+        const idx = infiniteIndices[Math.floor(random() * infiniteIndices.length)]
+        return words[idx].toUpperCase()
+      }
+      // fallback: 所有词都被排除约束过滤（Infinity * 0 = NaN），均匀随机
+    } else {
+      const total = weights.reduce((a, b) => a + b, 0);
+      if (total > 0) {
+        let r = random() * total;
+        for (let i = 0; i < words.length; i++) {
+          r -= weights[i];
+          if (r <= 0) return words[i].toUpperCase();
+        }
       }
     }
   }

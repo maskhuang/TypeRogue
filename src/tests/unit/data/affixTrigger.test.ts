@@ -348,7 +348,7 @@ describe('resolvePhase2', () => {
       expect(result.output).toBeCloseTo(10)
     })
 
-    it('should apply quest refine enhancement (k × 1.1^c)', () => {
+    it('should NOT apply quest stacking (41-4: stacking removed)', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Convert, source: 'base' as ResourceType, k: 0.05 }],
         enchantmentIds: [EnchantmentType.QuestRefine],
@@ -356,9 +356,8 @@ describe('resolvePhase2', () => {
       const state = makeRuntimeState({ questCompletions: 2 })
       const ctx = makeContext({ resources: makeResources({ base: 20 }) })
       const result = resolvePhase2(skill, state, ctx, 5)
-      // k_eff = 0.05 * 1.1^2 = 0.05 * 1.21 = 0.0605
-      // bonusPercent = 0.0605 * 20 = 1.21
-      expect(result.bonusPercent).toBeCloseTo(1.21, 1)
+      // 41-4: k直接使用，不再乘 1.1^c → bonusPercent = 0.05 * 20 = 1.0
+      expect(result.bonusPercent).toBeCloseTo(1.0)
     })
   })
 
@@ -378,7 +377,7 @@ describe('resolvePhase2', () => {
       expect(result.output).toBeCloseTo(5 * (1 + expectedEmpty * 0.25))
     })
 
-    it('should apply quest devour enhancement (bonusPerSlot + c*0.05)', () => {
+    it('should NOT apply quest stacking (41-4: stacking removed)', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
         enchantmentIds: [EnchantmentType.QuestDevour],
@@ -392,8 +391,8 @@ describe('resolvePhase2', () => {
         5,
       )
       const result = resolvePhase2(skill, state, ctx, 5)
-      // Enhanced bonusPerSlot = 0.25 + 2*0.05 = 0.35 vs 0.25
-      expect(result.bonusPercent).toBeGreaterThan(resultNoQuest.bonusPercent)
+      // 41-4: bonusPerSlot直接使用，不再加 c*0.05 → 与无quest相同
+      expect(result.bonusPercent).toBeCloseTo(resultNoQuest.bonusPercent)
     })
   })
 
@@ -540,27 +539,22 @@ describe('resolvePhase2', () => {
       expect(result.bonusPercent).toBeCloseTo(0.35)
     })
 
-    it('should add QuestDevour extra bonus when c >= 3', () => {
+    it('should NOT add QuestDevour stacking bonus (41-4: removed)', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Void, posRel: PositionRelation.SameColumn, bonusPerSlot: 0.30 }],
         enchantmentIds: [EnchantmentType.QuestDevour],
       })
       const state = makeRuntimeState({ questCompletions: 5 })
       const ctx = makeContext({ bindings: new Map() })
+      const resultNoQuest = resolvePhase2(
+        makeSkill({ affixes: [{ type: AffixType.Void, posRel: PositionRelation.SameColumn, bonusPerSlot: 0.30 }] }),
+        makeRuntimeState(),
+        ctx,
+        5,
+      )
       const result = resolvePhase2(skill, state, ctx, 5)
-      // Should include both void bonus AND quest devour extra (5 * 0.10 = 0.50)
-      expect(result.bonusPercent).toBeGreaterThan(0.50)
-    })
-
-    it('should NOT add QuestDevour extra bonus when c < 3', () => {
-      const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.QuestDevour],
-      })
-      const state = makeRuntimeState({ questCompletions: 2 })
-      const ctx = makeContext()
-      const result = resolvePhase2(skill, state, ctx, 5)
-      // No void affix, c < 3 → no extra bonus
-      expect(result.bonusPercent).toBe(0)
+      // 41-4: quest stacking removed → same as without quest
+      expect(result.bonusPercent).toBeCloseTo(resultNoQuest.bonusPercent)
     })
 
     it('should add LetterAffinity +25% when queue contains triggerKey', () => {
@@ -927,7 +921,7 @@ describe('resolvePhase3', () => {
 // ===== 任务增强综合测试 =====
 
 describe('Quest enhancement formulas', () => {
-  it('Convert: k × 1.1^c', () => {
+  it('Convert: k直接使用，无quest stacking (41-4)', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Convert, source: 'base' as ResourceType, k: 0.05 }],
       enchantmentIds: [EnchantmentType.QuestRefine],
@@ -935,9 +929,8 @@ describe('Quest enhancement formulas', () => {
     const state = makeRuntimeState({ questCompletions: 3 })
     const ctx = makeContext({ resources: makeResources({ base: 10 }) })
     const result = resolvePhase2(skill, state, ctx, 5)
-    // k_eff = 0.05 * 1.1^3 = 0.05 * 1.331 = 0.06655
-    // bonusPercent = 0.06655 * 10 = 0.6655
-    expect(result.bonusPercent).toBeCloseTo(0.6655, 2)
+    // 41-4: k直接使用 → bonusPercent = 0.05 * 10 = 0.5
+    expect(result.bonusPercent).toBeCloseTo(0.5)
   })
 
   it('Crit: guaranteed crit when questTransformed', () => {
@@ -978,7 +971,7 @@ describe('Quest enhancement formulas', () => {
     expect(state.currentDecayMult).toBeCloseTo(0.85)
   })
 
-  it('Void: bonusPerSlot + c*0.05', () => {
+  it('Void: bonusPerSlot直接使用，无quest stacking (41-4)', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
       enchantmentIds: [EnchantmentType.QuestDevour],
@@ -986,15 +979,345 @@ describe('Quest enhancement formulas', () => {
     const state = makeRuntimeState({ questCompletions: 4 })
     const ctx = makeContext({ bindings: new Map() })
     const result = resolvePhase2(skill, state, ctx, 5)
-    // slotEff = 0.25 + 4*0.05 = 0.45 per empty slot (vs 0.25 without quest)
-    // Should be higher than without quest
+    // 41-4: bonusPerSlot直接使用 → 与无quest相同
     const noQuest = resolvePhase2(
       makeSkill({ affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }] }),
       makeRuntimeState(),
       ctx,
       5,
     )
-    expect(result.bonusPercent).toBeGreaterThan(noQuest.bonusPercent)
+    expect(result.bonusPercent).toBeCloseTo(noQuest.bonusPercent)
+  })
+})
+
+// ===== 41-4: 质变行为测试 =====
+
+describe('41-4: Convert transformation — 双向转化', () => {
+  it('should produce convertReverseOutputs when questTransformed', () => {
+    const skill = makeSkill({
+      resource: 'score',
+      affixes: [{ type: AffixType.Convert, source: 'base' as ResourceType, k: 0.05 }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const ctx = makeContext({ resources: makeResources({ base: 20, score: 50 }) })
+    const result = resolvePhase2(skill, state, ctx, 5)
+    // 正向：k * base = 0.05 * 20 = 1.0 → bonusPercent
+    expect(result.bonusPercent).toBeCloseTo(1.0)
+    // 反向：k * getAffixSourceValue('score') = 0.05 * (50+20*1) = 0.05*70 = 3.5
+    // amount = 3.5 * effectiveBase(5) = 17.5
+    expect(result.convertReverseOutputs).toHaveLength(1)
+    expect(result.convertReverseOutputs[0].resource).toBe('base')
+    expect(result.convertReverseOutputs[0].amount).toBeCloseTo(17.5)
+  })
+
+  it('should NOT produce convertReverseOutputs when not transformed', () => {
+    const skill = makeSkill({
+      resource: 'score',
+      affixes: [{ type: AffixType.Convert, source: 'base' as ResourceType, k: 0.05 }],
+    })
+    const state = makeRuntimeState({ questTransformed: false })
+    const ctx = makeContext({ resources: makeResources({ base: 20, score: 50 }) })
+    const result = resolvePhase2(skill, state, ctx, 5)
+    expect(result.bonusPercent).toBeCloseTo(1.0)
+    expect(result.convertReverseOutputs).toHaveLength(0)
+  })
+})
+
+describe('41-4: Void transformation — 吞噬', () => {
+  it('should produce devourTarget when questTransformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Void, posRel: PositionRelation.SameRow, bonusPerSlot: 0.25 }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const bindings = new Map([['s', 'sk_s'], ['d', 'sk_d']])
+    const allSkills = new Map([
+      ['sk_s', makeSkill({ id: 'sk_s', level: 1 })],
+      ['sk_d', makeSkill({ id: 'sk_d', level: 2 })],
+    ])
+    const ctx = makeContext({ bindings, allSkills })
+    const result = resolvePhase5(skill, state, ctx, makeFlags(), 10, 0, 'base')
+    // questTransformed + Void affix → devourTarget should be set
+    expect(result.devourTarget).toBeDefined()
+  })
+
+  it('should NOT produce devourTarget when not transformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Void, posRel: PositionRelation.SameRow, bonusPerSlot: 0.25 }],
+    })
+    const state = makeRuntimeState({ questTransformed: false })
+    const ctx = makeContext()
+    const result = resolvePhase5(skill, state, ctx, makeFlags(), 10, 0, 'base')
+    expect(result.devourTarget).toBeNull()
+  })
+})
+
+describe('41-4: Gravity transformation — 双向锁定', () => {
+  it('should return Infinity for attraction when questTransformed', () => {
+    const affix: AffixInstance = { type: AffixType.Gravity, probMult: 1.5 }
+    const skill = makeSkill({ affixes: [affix] })
+    const state = makeRuntimeState({ questTransformed: true })
+    expect(getEffectiveProbMult(affix, state, skill)).toBe(Infinity)
+  })
+
+  it('should return 0 for repulsion when questTransformed', () => {
+    const affix: AffixInstance = { type: AffixType.Gravity, probMult: 0.5 }
+    const skill = makeSkill({ affixes: [affix] })
+    const state = makeRuntimeState({ questTransformed: true })
+    expect(getEffectiveProbMult(affix, state, skill)).toBe(0)
+  })
+
+  it('should return 1 for neutral when questTransformed', () => {
+    const affix: AffixInstance = { type: AffixType.Gravity, probMult: 1.0 }
+    const skill = makeSkill({ affixes: [affix] })
+    const state = makeRuntimeState({ questTransformed: true })
+    expect(getEffectiveProbMult(affix, state, skill)).toBe(1)
+  })
+
+  it('should return base probMult when not transformed', () => {
+    const affix: AffixInstance = { type: AffixType.Gravity, probMult: 1.5 }
+    const skill = makeSkill({ affixes: [affix] })
+    const state = makeRuntimeState({ questTransformed: false })
+    expect(getEffectiveProbMult(affix, state, skill)).toBe(1.5)
+  })
+})
+
+describe('41-4: Rainbow transformation — 全资源产出', () => {
+  it('should set allResources=true when questTransformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Rainbow }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const ctx = makeContext()
+    const result = resolvePhase4(skill, 10, state, ctx)
+    expect(result.allResources).toBe(true)
+    expect(result.output).toBe(10)
+  })
+
+  it('should NOT set allResources when not transformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Rainbow }],
+    })
+    const state = makeRuntimeState({ questTransformed: false })
+    const ctx = makeContext()
+    const result = resolvePhase4(skill, 10, state, ctx)
+    expect(result.allResources).toBeUndefined()
+  })
+
+  it('should not affect non-Rainbow skills', () => {
+    const skill = makeSkill({ resource: 'gold' as ResourceType })
+    const state = makeRuntimeState({ questTransformed: true })
+    const ctx = makeContext()
+    const result = resolvePhase4(skill, 10, state, ctx)
+    expect(result.targetResource).toBe('gold')
+    expect(result.allResources).toBeUndefined()
+  })
+})
+
+describe('41-4: Outcast transformation — 首尾呼应', () => {
+  it('should produce outcastEchoTarget for first letter when transformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Outcast, bonusPercent: 0.3 }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    // word='apple', triggerKey='a' (first letter), 'e' is last letter
+    const bindings = new Map([['a', 'sk_a'], ['e', 'sk_e']])
+    const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple', bindings })
+    const result = resolvePhase5(skill, state, ctx, makeFlags(), 10, 0, 'base')
+    expect(result.outcastEchoTarget).toBe('e')
+  })
+
+  it('should produce outcastEchoTarget for last letter when transformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Outcast, bonusPercent: 0.3 }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const bindings = new Map([['a', 'sk_a'], ['e', 'sk_e']])
+    const ctx = makeContext({ triggerKey: 'e', currentWord: 'apple', bindings })
+    const result = resolvePhase5(skill, state, ctx, makeFlags(), 10, 0, 'base')
+    expect(result.outcastEchoTarget).toBe('a')
+  })
+
+  it('should NOT produce echo when not transformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Outcast, bonusPercent: 0.3 }],
+    })
+    const state = makeRuntimeState({ questTransformed: false })
+    const bindings = new Map([['a', 'sk_a'], ['e', 'sk_e']])
+    const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple', bindings })
+    const result = resolvePhase5(skill, state, ctx, makeFlags(), 10, 0, 'base')
+    expect(result.outcastEchoTarget).toBeNull()
+  })
+
+  it('should NOT echo when chainAffixesDisabled (prevents loop)', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Outcast, bonusPercent: 0.3 }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const bindings = new Map([['a', 'sk_a'], ['e', 'sk_e']])
+    const ctx = makeContext({ triggerKey: 'a', currentWord: 'apple', bindings, chainAffixesDisabled: true })
+    const result = resolvePhase5(skill, state, ctx, makeFlags(), 10, 0, 'base')
+    expect(result.outcastEchoTarget).toBeNull()
+  })
+})
+
+describe('41-4: Cascade transformation — 双向连锁', () => {
+  it('should trigger cascade with forward relation', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Cascade, posRel: PositionRelation.SameRow, cascadeMult: 2.0 }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const ctx = makeContext({ triggerKey: 's', prevKey: 'a' })
+    const result = resolvePhase3(skill, state, ctx, 10)
+    expect(result.output).toBeCloseTo(20)
+    expect(result.flags.isCascade).toBe(true)
+  })
+
+  it('should trigger cascade with reverse relation when transformed', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Cascade, posRel: PositionRelation.SameRow, cascadeMult: 2.0 }],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    // 反向：triggerKey='a', prevKey='s' — same row 天然对称，但逻辑上走 reverse 分支
+    const ctx = makeContext({ triggerKey: 'a', prevKey: 's' })
+    const result = resolvePhase3(skill, state, ctx, 10)
+    expect(result.output).toBeCloseTo(20)
+    expect(result.flags.isCascade).toBe(true)
+  })
+
+  it('should NOT trigger cascade when no relation matches', () => {
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Cascade, posRel: PositionRelation.SameRow, cascadeMult: 2.0 }],
+    })
+    const state = makeRuntimeState({ questTransformed: false })
+    // 'a' (row 1) and 'q' (row 0) → different rows → no cascade
+    const ctx = makeContext({ triggerKey: 'q', prevKey: 'a' })
+    const result = resolvePhase3(skill, state, ctx, 10)
+    expect(result.flags.isCascade).toBe(false)
+    expect(result.output).toBeCloseTo(10)
+  })
+})
+
+describe('41-4: Resonance/Link transformation — 共鸣增强', () => {
+  it('should add transformedBoost=0.5 to resonance action when neighbor transformed', () => {
+    const triggerSkill = makeSkill({
+      id: 'trigger_sk',
+      resource: 'base',
+      affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+    })
+    const neighborSkill = makeSkill({
+      id: 'neighbor_sk',
+      affixes: [{ type: AffixType.Resonance, posRel: PositionRelation.SameRow, resource: 'base' as ResourceType }],
+    })
+    const neighborState = makeRuntimeState({ questTransformed: true })
+    const bindings = new Map([['a', 'trigger_sk'], ['s', 'neighbor_sk']])
+    const allSkills = new Map([['trigger_sk', triggerSkill], ['neighbor_sk', neighborSkill]])
+    const skillStates = new Map([['trigger_sk', makeRuntimeState()], ['neighbor_sk', neighborState]])
+    const ctx = makeContext({ bindings, allSkills, skillStates })
+    const triggerState = makeRuntimeState()
+    const result = resolvePhase6('a', triggerSkill, triggerState, ctx, 'base')
+    const resActions = result.actions.filter(a => a.type === 'resonance')
+    expect(resActions).toHaveLength(1)
+    expect((resActions[0] as any).transformedBoost).toBe(0.5)
+  })
+
+  it('should NOT add transformedBoost when neighbor is not transformed', () => {
+    const triggerSkill = makeSkill({
+      id: 'trigger_sk',
+      resource: 'base',
+      affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+    })
+    const neighborSkill = makeSkill({
+      id: 'neighbor_sk',
+      affixes: [{ type: AffixType.Resonance, posRel: PositionRelation.SameRow, resource: 'base' as ResourceType }],
+    })
+    const neighborState = makeRuntimeState({ questTransformed: false })
+    const bindings = new Map([['a', 'trigger_sk'], ['s', 'neighbor_sk']])
+    const allSkills = new Map([['trigger_sk', triggerSkill], ['neighbor_sk', neighborSkill]])
+    const skillStates = new Map([['trigger_sk', makeRuntimeState()], ['neighbor_sk', neighborState]])
+    const ctx = makeContext({ bindings, allSkills, skillStates })
+    const triggerState = makeRuntimeState()
+    const result = resolvePhase6('a', triggerSkill, triggerState, ctx, 'base')
+    const resActions = result.actions.filter(a => a.type === 'resonance')
+    expect(resActions).toHaveLength(1)
+    expect((resActions[0] as any).transformedBoost).toBeUndefined()
+  })
+})
+
+describe('41-4: Twin transformation — 词条翻倍', () => {
+  it('should double output when questTransformed', () => {
+    const skill = makeSkill({
+      affixes: [
+        { type: AffixType.Twin },
+        { type: AffixType.Crit, chance: 1.0, critMult: 2.0 },
+      ],
+    })
+    const state = makeRuntimeState({ questTransformed: true })
+    const ctx = makeContext({ randomFn: () => 0.0 }) // crit guaranteed
+    const result = triggerAffixSkill(skill, state, ctx)
+    // base=5, crit×2=10, Twin质变×2=20
+    expect(result.output).toBeCloseTo(20)
+  })
+
+  it('should NOT double output when not transformed', () => {
+    const skill = makeSkill({
+      affixes: [
+        { type: AffixType.Twin },
+        { type: AffixType.Crit, chance: 1.0, critMult: 2.0 },
+      ],
+    })
+    const state = makeRuntimeState({ questTransformed: false })
+    const ctx = makeContext({ randomFn: () => 0.0 })
+    const result = triggerAffixSkill(skill, state, ctx)
+    // base=5, crit×2=10, no Twin doubling
+    expect(result.output).toBeCloseTo(10)
+  })
+})
+
+describe('41-4: Conduit transformation — 导能 +2', () => {
+  it('should produce 2 conduit actions when neighbor is transformed', () => {
+    const triggerSkill = makeSkill({
+      id: 'trigger_sk',
+      affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+    })
+    const neighborSkill = makeSkill({
+      id: 'neighbor_sk',
+      affixes: [
+        { type: AffixType.Conduit, posRel: PositionRelation.SameRow },
+        { type: AffixType.Crit, chance: 0.3, critMult: 1.5 }, // match type
+      ],
+    })
+    const neighborState = makeRuntimeState({ questTransformed: true })
+    const bindings = new Map([['a', 'trigger_sk'], ['s', 'neighbor_sk']])
+    const allSkills = new Map([['trigger_sk', triggerSkill], ['neighbor_sk', neighborSkill]])
+    const skillStates = new Map([['trigger_sk', makeRuntimeState()], ['neighbor_sk', neighborState]])
+    const ctx = makeContext({ bindings, allSkills, skillStates })
+    const triggerState = makeRuntimeState()
+    const result = resolvePhase6('a', triggerSkill, triggerState, ctx, 'base')
+    const conduitActions = result.actions.filter(a => a.type === 'conduit')
+    expect(conduitActions).toHaveLength(2)
+  })
+
+  it('should produce 1 conduit action when neighbor is NOT transformed', () => {
+    const triggerSkill = makeSkill({
+      id: 'trigger_sk',
+      affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+    })
+    const neighborSkill = makeSkill({
+      id: 'neighbor_sk',
+      affixes: [
+        { type: AffixType.Conduit, posRel: PositionRelation.SameRow },
+        { type: AffixType.Crit, chance: 0.3, critMult: 1.5 },
+      ],
+    })
+    const neighborState = makeRuntimeState({ questTransformed: false })
+    const bindings = new Map([['a', 'trigger_sk'], ['s', 'neighbor_sk']])
+    const allSkills = new Map([['trigger_sk', triggerSkill], ['neighbor_sk', neighborSkill]])
+    const skillStates = new Map([['trigger_sk', makeRuntimeState()], ['neighbor_sk', neighborState]])
+    const ctx = makeContext({ bindings, allSkills, skillStates })
+    const triggerState = makeRuntimeState()
+    const result = resolvePhase6('a', triggerSkill, triggerState, ctx, 'base')
+    const conduitActions = result.actions.filter(a => a.type === 'conduit')
+    expect(conduitActions).toHaveLength(1)
   })
 })
 
@@ -1177,47 +1500,15 @@ describe('resolvePhase4', () => {
     }
   })
 
-  it('should weight toward lowest resource with QuestSpectrum', () => {
+  it('should use equal probability with QuestSpectrum (41-4: stacking removed)', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Rainbow }],
       enchantmentIds: [EnchantmentType.QuestSpectrum],
     })
     const state = makeRuntimeState({ questCompletions: 10 })
-    // Gold is lowest (0), others positive
-    const ctx = makeContext({
-      resources: makeResources({ base: 100, score: 100, multiplier: 5, time: 30, gold: 0, fragment: 50, mutagen: 50 }),
-      classResourceProduced: { fragment: 50, mutagen: 50 },
-      randomFn: () => 0.99, // near end → weighted toward gold (index 4)
-    })
-    // With high completions and gold=0, gold should get heavy weight
-    // Weight: base=1, score=1, mult=1, time=1, gold=1+10*0.15=2.5, frag=1, mut=1
-    // Total = 8.5
-    // At 0.99 * 8.5 = 8.415 → sum 1+1+1+1+2.5+1+1 = 8.5, so it wraps around
-    // Let's test that gold gets more hits
-    let goldCount = 0
-    const trials = 100
-    for (let i = 0; i < trials; i++) {
-      const ctx2 = makeContext({
-        resources: makeResources({ base: 100, score: 100, multiplier: 5, time: 30, gold: 0, fragment: 50, mutagen: 50 }),
-        classResourceProduced: { fragment: 50, mutagen: 50 },
-        randomFn: () => i / trials,
-      })
-      const r = resolvePhase4(skill, 10, state, ctx2)
-      if (r.targetResource === 'gold') goldCount++
-    }
-    // Gold should get more than 1/7 (~14%) of hits due to weighting
-    expect(goldCount).toBeGreaterThan(14)
-  })
-
-  it('should degrade to equal probability when QuestSpectrum completions=0', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Rainbow }],
-      enchantmentIds: [EnchantmentType.QuestSpectrum],
-    })
-    const state = makeRuntimeState({ questCompletions: 0 })
+    // 41-4: quest stacking removed → equal probability regardless of completions
     const ctx = makeContext({ randomFn: () => 0.0 })
     const result = resolvePhase4(skill, 10, state, ctx)
-    // With 0 completions, equal probability → same as no spectrum
     expect(result.targetResource).toBe('base')
   })
 })
@@ -1225,18 +1516,17 @@ describe('resolvePhase4', () => {
 // ===== weightedRandomResource 测试 =====
 
 describe('weightedRandomResource', () => {
-  it('should return equal probability when spectrumCompletions=0', () => {
-    const ctx = makeContext({ randomFn: () => 2 / 7 })
-    // floor(2/7 * 7) = floor(2) = 2 → 'multiplier'
-    expect(weightedRandomResource(ctx, 0)).toBe('multiplier')
+  it('should return equal probability across pool (41-4: stacking removed)', () => {
+    // 默认无playerClass → pool = ['base','score','multiplier','time','gold'] (5个)
+    const ctx = makeContext({ randomFn: () => 2 / 5 })
+    // floor(2/5 * 5) = floor(2) = 2 → 'multiplier'
+    expect(weightedRandomResource(ctx)).toBe('multiplier')
   })
 
-  it('should bias toward lowest resource', () => {
-    const ctx = makeContext({
-      resources: makeResources({ base: 0, score: 100, multiplier: 5, time: 30, gold: 50 }),
-      randomFn: () => 0.01, // very low roll → should hit base (index 0)
-    })
-    expect(weightedRandomResource(ctx, 5)).toBe('base')
+  it('should select resource by randomFn index', () => {
+    const ctx = makeContext({ randomFn: () => 0.01 })
+    // floor(0.01 * 5) = 0 → 'base'
+    expect(weightedRandomResource(ctx)).toBe('base')
   })
 })
 
@@ -2504,37 +2794,25 @@ describe('Story 35.6: getEffectiveProbMult', () => {
     expect(getEffectiveProbMult(affix, state, skill)).toBeCloseTo(1.5)
   })
 
-  it('should enhance attraction (probMult > 1) with quest completions', () => {
+  it('should return base probMult regardless of quest completions (41-4: stacking removed)', () => {
     const affix: AffixInstance = { type: AffixType.Gravity, probMult: 1.5 }
     const skill = makeSkill({
       affixes: [affix],
       enchantmentIds: [EnchantmentType.QuestPolarize],
     })
     const state = makeRuntimeState({ questCompletions: 2 })
-    // delta=0.5, enhanced=0.5+2*0.15=0.8, result=1+0.8=1.8
-    expect(getEffectiveProbMult(affix, state, skill)).toBeCloseTo(1.8)
+    // 41-4: quest stacking removed → always return base probMult
+    expect(getEffectiveProbMult(affix, state, skill)).toBeCloseTo(1.5)
   })
 
-  it('should enhance repulsion (probMult < 1) with quest completions', () => {
+  it('should return base probMult for repulsion regardless of quest (41-4)', () => {
     const affix: AffixInstance = { type: AffixType.Gravity, probMult: 0.5 }
     const skill = makeSkill({
       affixes: [affix],
       enchantmentIds: [EnchantmentType.QuestPolarize],
     })
     const state = makeRuntimeState({ questCompletions: 2 })
-    // delta=0.5, enhanced=0.5+2*0.15=0.8, result=1-0.8=0.2
-    expect(getEffectiveProbMult(affix, state, skill)).toBeCloseTo(0.2)
-  })
-
-  it('should handle probMult = 1 (no deviation) with quest', () => {
-    const affix: AffixInstance = { type: AffixType.Gravity, probMult: 1.0 }
-    const skill = makeSkill({
-      affixes: [affix],
-      enchantmentIds: [EnchantmentType.QuestPolarize],
-    })
-    const state = makeRuntimeState({ questCompletions: 3 })
-    // delta=0, enhanced=0+3*0.15=0.45, result=1+0.45=1.45
-    expect(getEffectiveProbMult(affix, state, skill)).toBeCloseTo(1.45)
+    expect(getEffectiveProbMult(affix, state, skill)).toBeCloseTo(0.5)
   })
 })
 
@@ -2744,8 +3022,8 @@ describe('Story 35.6: getEnchantmentSlotCount', () => {
 })
 
 describe('Story 35.6: QUEST_ENCHANTMENT_DEFS completeness', () => {
-  it('should have exactly 17 quest enchantment definitions', () => {
-    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(17)
+  it('should have exactly 19 quest enchantment definitions', () => {
+    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(19)
   })
 
   it('every quest enchantment should have a matching QUEST_AFFIX_MAP entry', () => {
