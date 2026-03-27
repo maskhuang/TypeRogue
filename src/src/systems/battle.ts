@@ -1693,7 +1693,7 @@ export async function startLevel(): Promise<void> {
   // 使用 stageType-based 固定时间和目标分数
   const battleNum = getBattleNumber(state.level);
   state.timeMax = getCycleTimeLimit(state.level, state.cycle);
-  state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType, state.cycle);
+  state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
 
   // Demo: 使用降低难度的固定目标分数
   if (IS_DEMO && DEMO_TARGET_SCORES[state.level] !== undefined) {

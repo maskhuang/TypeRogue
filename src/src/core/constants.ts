@@ -62,10 +62,10 @@ export const BALANCE = {
   COMBO_BONUS: 0.1,
   TIME_PER_LEVEL: 30,
 
-  // 关卡目标公式参数
-  TARGET_BASE: 80,
-  TARGET_LINEAR: 40,
-  TARGET_QUADRATIC: 5,
+  // Story 42.5: 目标分数指数增长公式参数
+  TARGET_BASE_EXP: 300,    // 第 1 关目标分数
+  TARGET_GROWTH: 1.45,     // 每关增长系数
+  BOSS_TARGET_MULT: 1.5,   // Boss 关目标倍率
 
   // 商店价格
   SKILL_PRICE_MIN: 15,
@@ -77,7 +77,6 @@ export const BALANCE = {
   CYCLE_LENGTH: 3,           // 每 Cycle 关卡数（2 standard + 1 boss）
 
   // 周目难度缩放
-  CYCLE_SCORE_BASE: 2,      // 目标分数指数底数（每周目翻倍）
   CYCLE_TIME_DECAY: 0.9,    // 时间衰减系数（每周目 ×0.9）
 
   // Story 42.4: 关内时间加速（二次方：1 + rate × t²）

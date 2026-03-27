@@ -146,13 +146,11 @@ export function resetState(): void {
   synergy = createSynergyState();
 }
 
-// === 关卡目标计算 ===
-export function calculateTargetScore(level: number, stageType: StageType = 'standard', cycle: number = 1): number {
-  const { TARGET_BASE, TARGET_LINEAR, TARGET_QUADRATIC, CYCLE_SCORE_BASE } = BALANCE;
-  const base = Math.floor(TARGET_BASE + level * TARGET_LINEAR + level * level * TARGET_QUADRATIC);
-  const scaled = Math.floor(base * Math.pow(CYCLE_SCORE_BASE, cycle - 1));
-  if (stageType === 'boss') return Math.floor(scaled * 1.5);
-  return scaled;
+// === 关卡目标计算（Story 42.5: 指数增长）===
+export function calculateTargetScore(stageNum: number, stageType: StageType = 'standard'): number {
+  const { TARGET_BASE_EXP, TARGET_GROWTH, BOSS_TARGET_MULT } = BALANCE;
+  const target = Math.round(TARGET_BASE_EXP * Math.pow(TARGET_GROWTH, stageNum - 1));
+  return stageType === 'boss' ? Math.round(target * BOSS_TARGET_MULT) : target;
 }
 
 // === 遗物管理 ===
