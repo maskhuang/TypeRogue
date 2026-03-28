@@ -318,29 +318,51 @@ export const BASE_VALUES: Record<ResourceType, [number, number, number]> = {
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
 export type AffixWeightKey = Exclude<AffixType, AffixType.Convert> | 'convert_cross' | 'convert_self'
 
-/** 词条权重表（转化拆分异源/同源，生成时按 source === resource 判断） */
-export const AFFIX_WEIGHTS: Record<AffixWeightKey, number> = {
-  convert_cross: 8,              // 布局思考
-  convert_self: 3,               // 操作思考·保留
-  [AffixType.Rainbow]: 10,      // 无脑
-  [AffixType.Charge]: 8,        // 操作思考
-  [AffixType.Decay]: 10,        // 无脑
-  [AffixType.Pulse]: 10,        // 无脑
-  [AffixType.Crit]: 10,         // 无脑
-  [AffixType.Cascade]: 8,       // 操作思考
-  [AffixType.Void]: 8,          // 布局思考
-  [AffixType.Resonance]: 8,     // 布局思考
-  [AffixType.Mirror]: 8,        // 布局思考
-  [AffixType.Link]: 8,          // 布局思考
-  [AffixType.Splash]: 8,        // 布局思考
-  [AffixType.Amplify]: 8,       // 布局思考
-  [AffixType.Conduit]: 6,       // 布局+构筑思考（仅≥2词条技能）
-  [AffixType.Outcast]: 8,       // 操作思考
-  [AffixType.Gravity]: 3,       // 操作思考·保留
-  [AffixType.Ligature]: 8,      // 操作思考
-  [AffixType.Twin]: 2,          // 无脑·保留
-  [AffixType.Recurse]: 10,      // 无脑
-  [AffixType.Taboo]: 10,        // 无脑
+/** 词条权重分档：'high' = 6-10 随机，'low' = 1-4 随机 */
+export type AffixWeightTier = 'high' | 'low'
+
+/** 词条基准分档表（每局开始时据此随机生成实际权重） */
+export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
+  convert_cross: 'high',
+  convert_self: 'low',
+  [AffixType.Rainbow]: 'high',
+  [AffixType.Charge]: 'high',
+  [AffixType.Decay]: 'high',
+  [AffixType.Pulse]: 'high',
+  [AffixType.Crit]: 'high',
+  [AffixType.Cascade]: 'high',
+  [AffixType.Void]: 'high',
+  [AffixType.Resonance]: 'high',
+  [AffixType.Mirror]: 'high',
+  [AffixType.Link]: 'high',
+  [AffixType.Splash]: 'high',
+  [AffixType.Amplify]: 'high',
+  [AffixType.Conduit]: 'low',
+  [AffixType.Outcast]: 'high',
+  [AffixType.Gravity]: 'low',
+  [AffixType.Ligature]: 'high',
+  [AffixType.Twin]: 'low',
+  [AffixType.Recurse]: 'high',
+  [AffixType.Taboo]: 'high',
+}
+
+/** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
+export let AFFIX_WEIGHTS: Record<AffixWeightKey, number> = Object.fromEntries(
+  Object.entries(AFFIX_WEIGHT_TIERS).map(([k, tier]) => [k, tier === 'high' ? 8 : 2])
+) as Record<AffixWeightKey, number>;
+
+/** 根据分档随机生成本局词条权重，需传入 RNG 函数 */
+export function rollAffixWeights(rng: () => number): void {
+  const entries = Object.entries(AFFIX_WEIGHT_TIERS) as [AffixWeightKey, AffixWeightTier][];
+  const result = {} as Record<AffixWeightKey, number>;
+  for (const [key, tier] of entries) {
+    if (tier === 'high') {
+      result[key] = 6 + Math.floor(rng() * 5); // 6-10
+    } else {
+      result[key] = 1 + Math.floor(rng() * 4); // 1-4
+    }
+  }
+  AFFIX_WEIGHTS = result;
 }
 
 /** 虚无词条 bonusPerSlot 按 PositionRelation */
@@ -404,7 +426,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Link]: '范围内有指定词条的技能触发时，本技能自动触发',
   [AffixType.Splash]: '触发后随机触发范围内1个匹配的技能',
   [AffixType.Amplify]: '每次触发叠一层，与范围内同资源增幅技能共享层数加成',
-  [AffixType.Conduit]: '自身不产出，范围内拥有相同词条的邻居触发时额外触发一次',
+  [AffixType.Conduit]: '自身不产出，范围内拥有相同词条或相同资源的邻居触发时额外触发一次',
   [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
   [AffixType.Gravity]: '调整含本键字母的单词出现概率',
   [AffixType.Ligature]: '字母在当前单词中重复出现时，按出现次数倍增产出',

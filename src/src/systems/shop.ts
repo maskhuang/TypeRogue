@@ -17,7 +17,7 @@ import { playSound } from '../effects/sound';
 import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
-import { getNextBattleNode, isSecondHalf } from './stage/stageFlow';
+import { getNextBattleNode, isSecondHalf, getPositionInCycle } from './stage/stageFlow';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
@@ -151,6 +151,33 @@ function getActMaxRarity(): SkillRarity {
   // level===0 表示 Boss 胜利后的商店（advanceCycle 把 level 设为 0）
   if (state.level === 0 || isSecondHalf(state.level)) return 3 as SkillRarity;
   return 1 as SkillRarity; // 前半段: 0~1 (white + blue)
+}
+
+/** 技能在备战席中占据的格子数（每个技能固定 1 格） */
+function getSkillSlotCost(_skillId: string): number {
+  return 1;
+}
+
+/** 备战席容量固定为 5 */
+export function getInventoryCapacity(): number {
+  return 5;
+}
+
+/** 备战席已用格子数（仅计未装备技能） */
+export function getInventoryUsed(): number {
+  let used = 0;
+  const boundSkills = new Set(state.player.bindings.values());
+  for (const [skillId] of state.player.skills) {
+    if (!boundSkills.has(skillId)) {
+      used += getSkillSlotCost(skillId);
+    }
+  }
+  return used;
+}
+
+/** 备战席是否已满（新技能无法放入） */
+export function isInventoryFull(newSkillSlots: number = 1): boolean {
+  return getInventoryUsed() + newSkillSlots > getInventoryCapacity();
 }
 
 /** 收集玩家已装备技能拥有的所有词条类型（去重，排除 link/splash 自身） */
@@ -719,8 +746,9 @@ export function openShop(_won: boolean): void {
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
   let relicGold = Math.floor(goldRelicResult.effects.gold);
 
-  // 基础100 + 技能产出 + 遗物加成（金币跨关累计）
-  let baseGold = 100;
+  // 基础100 + 溢出增幅（上限100%） + 技能产出 + 遗物加成（金币跨关累计）
+  const overflowBonus = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
+  let baseGold = Math.floor(100 * (1 + overflowBonus));
   const skillGold = Math.floor(state.resources.gold);
 
   // Story 36.8: 万物熔炉 — 覆盖默认金币计算
@@ -879,7 +907,12 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
       // === 蓝紫橙保底升级 ===
       const UPGRADE_GUARANTEE_BASE = 0.30;
       const UPGRADE_GUARANTEE_PER_CYCLE = 0.15;
-      const upgradeChance = Math.min(1.0, UPGRADE_GUARANTEE_BASE + UPGRADE_GUARANTEE_PER_CYCLE * (state.cycle - 1));
+      let upgradeChance = Math.min(1.0, UPGRADE_GUARANTEE_BASE + UPGRADE_GUARANTEE_PER_CYCLE * (state.cycle - 1));
+      // 前半段（位置 1-5）概率按位置线性递增：pos/5 倍率
+      if (!isSecondHalf(state.level)) {
+        const pos = getPositionInCycle(state.level);
+        upgradeChance *= pos / 5;
+      }
 
       // 仅当正常碰撞没产生蓝+升级时触发
       const hasBlueUpgrade = affixItems.some(i => i.isUpgrade && i.affixSkill && i.affixSkill.rarity >= 1);
@@ -1607,6 +1640,11 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
       showFeedback(t('shop.skill_count_full'), '#ff6b6b');
       return null;
     }
+    // 备战席容量检查
+    if (isInventoryFull(1)) {
+      showFeedback(t('shop.inventory_full'), '#ff6b6b');
+      return null;
+    }
   } else {
     const maxSkillLevel = Infinity;
     const currentLevel = state.player.skills.get(skillId)?.level ?? 0;
@@ -1878,13 +1916,6 @@ function showEnchantmentTargetSelect(
     };
     listEl.appendChild(btn);
   }
-}
-
-// === 自动附魔检查 — Story 41.1: 已废弃 ===
-// 附魔不再由技能购买/升级自动触发，改为仪式/商店/试炼三渠道获取
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function checkAutoEnchantment(_skillId: string): void {
-  // no-op: Story 41.1 废弃自动附魔触发
 }
 
 // === 补偿检查（旧系统已移除，保留空实现） ===
@@ -2572,24 +2603,30 @@ export function renderBuildManager(): void {
     el.boundGrid.appendChild(rowDiv);
   });
 
-  // 已拥有技能
+  // 备战席容量显示（替代原"已拥有技能"标题）
   el.ownedSkills.innerHTML = '';
+  const invUsed = getInventoryUsed();
+  const invCap = getInventoryCapacity();
+  const invLabelEl = el.ownedSkills.parentElement?.querySelector('.inventory-label');
+  if (invLabelEl) {
+    invLabelEl.textContent = `${t('shop.inventory_label')} ${invUsed}/${invCap}`;
+    (invLabelEl as HTMLElement).style.color = invUsed >= invCap ? '#ff6b6b' : '';
+  }
   if (state.player.skills.size === 0) {
     el.ownedSkills.innerHTML = `<div style="color:#444;font-size:11px;">${t('shop.buy_skills_hint')}</div>`;
     registerShopDropZones();
     return;
   }
 
+  const boundSkillIds = new Set(state.player.bindings.values());
   state.player.skills.forEach((data, skillId) => {
     const affixSkill = state.affixSkills.get(skillId);
     if (!affixSkill) return;
 
-    // Story 40.11 CR: 收集所有占据键（用于 estimate），取第一个作为锚点（用于显示）
-    const invAllKeys: string[] = [];
-    for (const [bk, sid] of state.player.bindings) {
-      if (sid === skillId) invAllKeys.push(bk);
-    }
-    const boundKey = invAllKeys[0];
+    // 仅显示未装备技能
+    if (boundSkillIds.has(skillId)) return;
+
+    const boundKey: string | undefined = undefined;
     const item = document.createElement('div');
     item.className = 'inventory-skill';
     item.dataset.dragType = 'skill-inventory';

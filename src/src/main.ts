@@ -13,7 +13,7 @@ import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './syste
 import { MetaState } from './core/state/MetaState';
 import { initLeaderboardDisplay, renderLeaderboard } from './ui/leaderboardDisplay';
 import { eventBus } from './core/events/EventBus';
-import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode } from './core/seededRandom';
+import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode, random } from './core/seededRandom';
 import { resetWordRelicRunState } from './systems/relics/WordRelicBehaviors';
 import { showClassPicker } from './systems/classes/ClassPicker';
 import { saveManager } from './core/save/SaveManager';
@@ -22,7 +22,7 @@ import {
   DEMO_STARTER_RELIC, DEMO_STARTER_BINDINGS
 } from './demo/demo-config';
 import { generateSkill } from './data/skillGeneration';
-import { createSkillRuntimeState } from './data/affixes';
+import { createSkillRuntimeState, rollAffixWeights } from './data/affixes';
 import { bindShapeToKeys, getBindingState } from './systems/bindingManager';
 import { cleanDemoDom, installDemoErrorBoundary, checkWebGLSupport, showWebGLError } from './demo/demo-dom-cleanup';
 import { trackEvent } from './demo/demo-analytics';
@@ -49,6 +49,9 @@ async function init(): Promise<void> {
 
   if (IS_DEMO) {
     // === Demo 模式：精简初始化 ===
+
+    // 每局随机词条权重
+    rollAffixWeights(random);
 
     // 预设技能绑定（词条制技能系统）
     for (const { resource, key } of DEMO_STARTER_BINDINGS) {
@@ -172,6 +175,9 @@ async function init(): Promise<void> {
 
   // Story 36.7: 重置单词遗物 Run 级别状态（词汇收藏 Set）
   resetWordRelicRunState();
+
+  // 每局随机词条权重（必须在种子设置之后）
+  rollAffixWeights(random);
 
   // 初始词库（必须在种子设置之后，确保每日模式确定性）
   state.player.wordDeck = getStarterWords();

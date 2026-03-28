@@ -22,7 +22,7 @@ export interface TutorialPersistence {
 class TutorialManagerImpl {
   private steps: TutorialStep[] = []
   private unsubscribers: Array<() => void> = []
-  private enabled = true
+  private enabled = false
   private running = false
   private persistence: TutorialPersistence | null = null
   private currentOverlay: TutorialOverlay | null = null

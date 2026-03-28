@@ -28,6 +28,7 @@ export function createInitialState(): GameState {
     lastMilestone: 0,
     overkill: 0,
     overflowScore: 0,
+    lastOverflowRatio: 0,
     classResourceProduced: {},
     fragmentInventory: {
       a: 0, b: 0, c: 0, d: 0, e: 0, f: 0, g: 0, h: 0, i: 0, j: 0, k: 0, l: 0, m: 0,
@@ -147,10 +148,12 @@ export function resetState(): void {
   synergy = createSynergyState();
 }
 
-// === 关卡目标计算（Story 42.5: 指数增长）===
+// === 关卡目标计算（线性增长 + 溢出比例放大增量）===
 export function calculateTargetScore(stageNum: number, stageType: StageType = 'standard'): number {
-  const { TARGET_BASE_EXP, TARGET_GROWTH, BOSS_TARGET_MULT } = BALANCE;
-  const target = Math.round(TARGET_BASE_EXP * Math.pow(TARGET_GROWTH, stageNum - 1));
+  const { TARGET_BASE, TARGET_INCREMENT, TARGET_OVERFLOW_SCALE, BOSS_TARGET_MULT } = BALANCE;
+  // 增量随上关溢出比例放大：increment * (1 + overflowRatio * scale)
+  const scaledIncrement = TARGET_INCREMENT * (1 + state.lastOverflowRatio * TARGET_OVERFLOW_SCALE);
+  const target = Math.round(TARGET_BASE + scaledIncrement * (stageNum - 1));
   return stageType === 'boss' ? Math.round(target * BOSS_TARGET_MULT) : target;
 }
 

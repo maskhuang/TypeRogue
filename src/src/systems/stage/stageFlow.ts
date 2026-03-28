@@ -7,7 +7,7 @@
 import type { StageType } from './StageConfig'
 import { BALANCE } from '../../core/constants'
 
-/** 每个 Cycle 包含的关卡数（5 standard + ritual + 5 standard + boss = 12） */
+/** 每个 Cycle 包含的关卡数（10 standard + 1 ritual + 1 boss = 12） */
 export const CYCLE_LENGTH = BALANCE.CYCLE_LENGTH
 
 /** 每种关卡类型的固定时间 */
@@ -22,36 +22,32 @@ export function getPositionInCycle(stageNum: number): number {
   return ((stageNum - 1) % CYCLE_LENGTH) + 1
 }
 
-/** 检查是否为仪式节点（Cycle 内第 6 关） */
-export function isRitualNode(stageNum: number): boolean {
-  return getPositionInCycle(stageNum) === 6
-}
-
 /** 检查是否为 Cycle 后半段（位置 7-12） */
 export function isSecondHalf(stageNum: number): boolean {
   return getPositionInCycle(stageNum) >= 7
 }
 
-/** 动态获取关卡类型：boss → ritual → standard */
-export function getStageType(stageNum: number): StageType {
-  if (isBossNode(stageNum)) return 'boss'
-  if (isRitualNode(stageNum)) return 'ritual'
-  return 'standard'
+/** 检查是否为仪式节点（Cycle 内位置 6） */
+export function isRitualNode(stageNum: number): boolean {
+  return getPositionInCycle(stageNum) === 6
 }
 
-/** 获取战斗编号（跳过仪式节点：位置 7→battle 6, 位置 12→battle 10, boss=11th battle） */
+/** 动态获取关卡类型：ritual → boss → standard */
+export function getStageType(stageNum: number): StageType {
+  if (isRitualNode(stageNum)) return 'ritual'
+  return isBossNode(stageNum) ? 'boss' : 'standard'
+}
+
+/** 获取战斗编号（跳过位置 6 的仪式节点） */
 export function getBattleNumber(stageNum: number): number {
   const cycle = getCycleForStage(stageNum)
   const pos = getPositionInCycle(stageNum)
-  const cycleOffset = (cycle - 1) * 11 // each cycle has 11 battles (12 stages - 1 ritual)
-  // positions 1-5: battles 1-5
-  if (pos <= 5) return cycleOffset + pos
-  // position 6: ritual (no battle, but shouldn't be called)
-  if (pos === 6) return cycleOffset + 5
-  // positions 7-11: battles 6-10
-  if (pos <= 11) return cycleOffset + (pos - 1)
-  // position 12 (boss): battle 11
-  return cycleOffset + 11
+  const completedCycles = cycle - 1
+  // 每个 cycle 有 11 场战斗（位置 6 是仪式，不算战斗）
+  const battlesPerCycle = CYCLE_LENGTH - 1
+  // 当前 cycle 内：位置 1-5 → battle 1-5; 位置 7-12 → battle 6-11
+  const battleInCycle = pos <= 5 ? pos : pos - 1
+  return completedCycles * battlesPerCycle + battleInCycle
 }
 
 /** 检查是否为 Boss 关（每 CYCLE_LENGTH 关） */

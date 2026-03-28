@@ -34,6 +34,8 @@ import { t } from '../demo/demo-i18n';
 
 // === 常量 ===
 const DRAG_THRESHOLD = 5; // 最小移动距离才启动拖拽
+const EDGE_ZONE = 40;     // 距容器边缘多少 px 开始自动滚动
+const SCROLL_SPEED = 8;   // 每帧滚动像素
 
 // === DragManager 类 ===
 class DragManager {
@@ -48,6 +50,8 @@ class DragManager {
   private active = false;
   private _onDragStart: ((payload: DragPayload) => void) | null = null;
   private _onDragEnd: ((payload: DragPayload) => void) | null = null;
+  private scrollRaf = 0;
+  private scrollDir = 0; // -1 up, +1 down, 0 stop
 
   // 绑定的事件处理器（用于移除）
   private boundMouseDown: ((e: MouseEvent) => void) | null = null;
@@ -180,6 +184,9 @@ class DragManager {
 
     // 检测放置区
     this.updateDropTarget(x, y);
+
+    // 自动滚动：指针靠近 #build-manager 上下边缘时滚动
+    this.updateAutoScroll(y);
   }
 
   private onPointerUp(): void {
@@ -193,6 +200,8 @@ class DragManager {
   }
 
   private cancel(): void {
+    this.stopAutoScroll();
+
     // 清理幽灵
     if (this.ghost) {
       this.ghost.remove();
@@ -358,6 +367,36 @@ class DragManager {
       document.removeEventListener('click', handler, true);
     };
     document.addEventListener('click', handler, true);
+  }
+
+  private updateAutoScroll(y: number): void {
+    const container = document.getElementById('build-manager');
+    if (!container) { this.stopAutoScroll(); return; }
+
+    const rect = container.getBoundingClientRect();
+    if (y < rect.top + EDGE_ZONE && container.scrollTop > 0) {
+      this.startAutoScroll(-1, container);
+    } else if (y > rect.bottom - EDGE_ZONE && container.scrollTop < container.scrollHeight - container.clientHeight) {
+      this.startAutoScroll(1, container);
+    } else {
+      this.stopAutoScroll();
+    }
+  }
+
+  private startAutoScroll(dir: number, container: HTMLElement): void {
+    if (this.scrollDir === dir) return; // already scrolling same direction
+    this.stopAutoScroll();
+    this.scrollDir = dir;
+    const tick = () => {
+      container.scrollTop += dir * SCROLL_SPEED;
+      this.scrollRaf = requestAnimationFrame(tick);
+    };
+    this.scrollRaf = requestAnimationFrame(tick);
+  }
+
+  private stopAutoScroll(): void {
+    if (this.scrollRaf) { cancelAnimationFrame(this.scrollRaf); this.scrollRaf = 0; }
+    this.scrollDir = 0;
   }
 
   private clearHighlights(): void {

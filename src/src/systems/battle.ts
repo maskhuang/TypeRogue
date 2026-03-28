@@ -11,20 +11,20 @@ import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension, emitResourceSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
-import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput } from './skills';
+import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput, isChargeSkill } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop } from './shop';
+import { shouldShowRitual, openRitualEnchantment } from './ritualEnchantment';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './relicPicker';
 import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
-import { getStageType, getCycleTimeLimit, getBattleNumber, isRitualNode, getNextBattleNode as getNextNode } from './stage/stageFlow';
+import { getStageType, getCycleTimeLimit, getBattleNumber, isRitualNode, getNextBattleNode } from './stage/stageFlow';
 import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, BOSS_MODIFIER_IDS, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive, getEscalateTimeSpeedBonus, addFrostStack, getCurrentTaxResource, getTaxRate, onMirrorWordComplete, resetMirrorWordTimer } from '../data/bossModifiers';
 import type { ModifierCategory, BossModifierId } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
 import { showBossModifierPicker } from './bossModifierPicker';
-import { shouldShowRitual, openRitualEnchantment } from './ritualEnchantment';
 import { showActTransition, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
@@ -152,11 +152,24 @@ let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
 let _battleRelicGold = 0; // 战斗中遗物产出的金币（用于结算面板）
 let wordStartScore = 0; // 玻璃大炮：记录词开始时总分（用于整词得分翻倍）
 let _targetReached = false; // Story 42.2: 达标标志（达标后继续战斗直到时间耗尽）
+let _accelAtTarget = 1.0;  // 达标时刻的加速倍率（指数基底）
+let _elapsedAtTarget = 0;  // 达标时刻的已流逝秒数
 let _targetReachedTime = 0; // Story 42.2: 达标时的剩余时间（万物熔炉等遗物需要）
 let _initialOverflow = 0; // Story 42.3: 本关注入的初始溢出分（HUD 颜色区分用）
 let _elapsedSeconds = 0; // Story 42.4: 关内已流逝秒数（时间加速计算用）
 let _lastAccelText = ''; // Story 42.4: 上次显示的加速倍率文本（脉冲动画检测用）
 let _isBoss = false; // Story 42.4: 当前关是否 Boss（startTimer 缓存，避免每 tick 调用 getStageType）
+
+// === Charge hold-release: 延迟触发 ===
+const _pendingChargeTriggers = new Map<string, { skillId: string; key: string }>();
+
+function handleChargeRelease(e: { key: string }): void {
+  if (state.phase !== 'battle') return;
+  const pending = _pendingChargeTriggers.get(e.key);
+  if (!pending) return;
+  _pendingChargeTriggers.delete(e.key);
+  triggerSkill(pending.skillId, pending.key);
+}
 
 // === 分数滚轮动画 (Story 31.4) ===
 const scoreRoller = new ScoreRoller();
@@ -375,6 +388,7 @@ function renderWord(): void {
 export function initInput(): void {
   // 使用新的 InputHandler + EventBus 架构
   eventBus.on('input:keypress', handleKeyPress);
+  eventBus.on('input:keyup', handleChargeRelease);
   inputHandler.enable();
   // Story 36.2: 注册打字子系统遗物行为
   initTypingRelicBehaviors();
@@ -433,6 +447,8 @@ function handleEnterKey(e: KeyboardEvent): void {
   if (!_targetReached && state.score >= state.targetScore) {
     _targetReached = true;
     _targetReachedTime = state.time;
+    _accelAtTarget = getTimeAcceleration(_elapsedSeconds, _isBoss);
+    _elapsedAtTarget = _elapsedSeconds;
     getElements().container.classList.add('glow-target-reached');
     showFeedback(t('battle.target_reached'), '#4ecdc4');
     playSound('levelup');
@@ -581,7 +597,12 @@ function playerCorrect(k: string): void {
       state.time += concertoBonus;
       showFeedback(t('battle.dual_concerto', { value: concertoBonus }), '#00ff88', undefined, undefined, { relicId: 'dual_concerto', resource: 'time', amount: concertoBonus });
     }
-    triggerSkill(skillId, k);
+    // Charge: hold-release — 延迟到 keyup 触发
+    if (isChargeSkill(skillId)) {
+      _pendingChargeTriggers.set(k.toUpperCase(), { skillId, key: k });
+    } else {
+      triggerSkill(skillId, k);
+    }
     // Story 36.4: 首发强化反馈（每词第一个技能）
     if (synergy.wordSkillCount === 1 && state.player.relics.has('first_strike')) {
       pulseRelicIcon('first_strike', '#ffaa00');
@@ -1109,6 +1130,8 @@ function completeWord(): void {
   if (!isBlackHoleActive() && !_targetReached && state.score >= state.targetScore) {
     _targetReached = true;
     _targetReachedTime = state.time; // 记录达标时剩余时间（万物熔炉等遗物需要）
+    _accelAtTarget = getTimeAcceleration(_elapsedSeconds, _isBoss);
+    _elapsedAtTarget = _elapsedSeconds;
     getElements().container.classList.add('glow-target-reached');
     showFeedback(t('battle.target_reached'), '#4ecdc4');
     playSound('levelup');
@@ -1222,8 +1245,9 @@ function showGoldReward(onComplete: () => void): void {
     return;
   }
 
-  // 计算奖励：基础100（结算时发放） + 技能产出 + 遗物加成
-  let baseGold = 100;
+  // ��算奖励：���础100 + 溢出增��（上限100%）（结算时发放��� + 技能产出 + 遗物加成
+  const overflowBonus = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
+  let baseGold = Math.floor(100 * (1 + overflowBonus));
   const skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
   let relicGold = Math.floor(goldRelicResult.effects.gold) + _battleRelicGold;
@@ -1251,6 +1275,17 @@ function showGoldReward(onComplete: () => void): void {
   const goldSkillEl = document.getElementById('gold-skill');
   const goldTreasureEl = document.getElementById('gold-treasure');
   const goldTotalEl = document.getElementById('gold-total');
+
+  // 基础金币行：显示溢出加成
+  const baseRow = document.getElementById('gold-base-row');
+  if (baseRow) {
+    const baseValEl = baseRow.querySelector('.gold-reward-value');
+    if (baseValEl) {
+      baseValEl.textContent = overflowBonus > 0
+        ? `100 +${Math.floor(100 * overflowBonus)}`
+        : '100';
+    }
+  }
 
   if (goldSkillEl) goldSkillEl.textContent = `+${skillGold}`;
   if (goldTotalEl) goldTotalEl.textContent = String(totalGold);
@@ -1288,9 +1323,13 @@ function showGoldReward(onComplete: () => void): void {
 }
 
 // === 计时器 ===
-// Story 42.4: 二次方时间加速 — 1.0 + rate × t²（越加越快）
+// Story 42.4: 时间加速 — 达标前二次方，达标后三次方（从达标倍率无缝衔接）
 function getTimeAcceleration(elapsedSeconds: number, isBoss: boolean): number {
   const rate = isBoss ? BALANCE.ACCEL_RATE_BOSS : BALANCE.ACCEL_RATE_STANDARD;
+  if (_targetReached) {
+    const dt = elapsedSeconds - _elapsedAtTarget;
+    return _accelAtTarget + rate * dt * dt * dt;
+  }
   return 1.0 + rate * elapsedSeconds * elapsedSeconds;
 }
 
@@ -1429,6 +1468,7 @@ function updateTimerDisplay(): void {
 // === 关卡系统 ===
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
+  _pendingChargeTriggers.clear();
   releaseBGMTension();
   stopBGM();
   stopScoreRoller(); // Story 31.4
@@ -1452,8 +1492,8 @@ function endLevel(): void {
   }
 
   if (state.score >= state.targetScore) {
-    // Story 42.3: 累积溢出分（overkill 已在 timer tick 中计算）
-    state.overflowScore += state.overkill;
+    // Story 42.3: 仅保留本关溢出分到下一关（不跨关累积）
+    state.overflowScore = state.overkill;
 
     // 动态增长系数：记录溢出比例供下关目标分数计算
     state.lastOverflowRatio = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
@@ -1658,17 +1698,11 @@ function showForesightModal(modIds: BossModifierId[]): Promise<ModifierCategory 
 export async function startLevel(): Promise<void> {
   keyTooltip.hide();
 
-  // === 仪式节点：跳过战斗，直接打开仪式附魔 UI ===
+  // === 仪式节点：跳过战斗，打开仪式附魔 ===
   if (isRitualNode(state.level)) {
-    const afterRitual = () => {
-      state.level = getNextNode(state.level);
-      startLevel();
-    };
-    if (shouldShowRitual()) {
-      openRitualEnchantment(afterRitual);
-    } else {
-      afterRitual();
-    }
+    const afterRitual = () => { state.level = getNextBattleNode(state.level); startLevel(); };
+    if (shouldShowRitual()) openRitualEnchantment(afterRitual);
+    else afterRitual();
     return;
   }
 
@@ -1941,6 +1975,8 @@ export async function startLevel(): Promise<void> {
   if (state.overflowScore > 0 && state.score >= state.targetScore) {
     _targetReached = true;
     _targetReachedTime = state.timeMax;
+    _accelAtTarget = 1.0; // 开局即达标，从 1.0 开始
+    _elapsedAtTarget = 0;
     getElements().container.classList.add('glow-target-reached');
   }
 

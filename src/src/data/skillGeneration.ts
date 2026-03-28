@@ -77,8 +77,7 @@ export function weightedSampleWithout(count: number): WeightedSampleResult[] {
   // 构建带权重的可变池
   const pool = new Map<string, number>()
   for (const [key, weight] of Object.entries(AFFIX_WEIGHTS)) {
-    // Conduit 仅在 ≥2 词条技能上生成（需要"其他词条"作为导能条件）
-    if (key === AffixType.Conduit && count < 2) continue
+    // Conduit 可在单词条技能上出现（通过相同资源也能导能）
     pool.set(key, weight)
   }
 

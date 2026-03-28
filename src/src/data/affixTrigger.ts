@@ -1041,18 +1041,19 @@ export function resolvePhase6(
       }
     }
 
-    // 导能词条：邻居有 Conduit 且触发技能拥有 Conduit 技能的其他词条类型 → 触发技能 +N 触发
+    // 导能词条：邻居有 Conduit 且（触发技能拥有 Conduit 技能的其他词条类型 OR 产出相同资源）→ 触发技能 +N 触发
     for (const affix of neighborSkill.affixes) {
       if (affix.type !== AffixType.Conduit || affix.posRel == null) continue
       // 检查范围匹配（双侧 any-match）
       const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
       if (matchedNk == null) continue
-      // 检查触发技能是否拥有 Conduit 技能的其他词条类型
+      // 检查触发技能是否拥有 Conduit 技能的其他词条类型 OR 产出相同资源
       const conduitOtherTypes = neighborSkill.affixes
         .filter(a => a.type !== AffixType.Conduit)
         .map(a => a.type)
-      const triggerHasMatch = skill.affixes.some(a => conduitOtherTypes.includes(a.type))
-      if (triggerHasMatch) {
+      const hasSharedAffix = skill.affixes.some(a => conduitOtherTypes.includes(a.type))
+      const hasSameResource = skill.resource === neighborSkill.resource
+      if (hasSharedAffix || hasSameResource) {
         // 质变：+2 触发（而非 +1）
         const neighborState = ctx.skillStates.get(neighborSkillId)
         const conduitCount = neighborState?.questTransformed ? 2 : 1

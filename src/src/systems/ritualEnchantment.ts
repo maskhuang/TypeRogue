@@ -144,9 +144,9 @@ export function applyRitualEnchantment(
   }
 }
 
-/** 是否应在当前节点后触发仪式附魔（暂时禁用，Story 42.7 改为 Boss 后触发） */
-export function shouldShowRitual(_currentNodeId: number): boolean {
-  return false;
+/** Boss 胜利后是否应触发仪式附魔（有可附魔技能即触发） */
+export function shouldShowRitual(): boolean {
+  return getEligibleSkills().length > 0;
 }
 
 /** 仪式可进行的轮数 */
@@ -155,6 +155,7 @@ export function getRitualRounds(): number {
 }
 
 // === UI 渲染（独立 ritual-screen）===
+// 新流程：先选技能 → 再从 2 个附魔候选中选 1 个
 
 import { showScreen } from './battle';
 
@@ -173,6 +174,7 @@ export function openRitualEnchantment(onComplete: () => void): void {
   renderRitualRound();
 }
 
+/** 渲染仪式轮次：展示可附魔技能卡片供玩家选择 */
 function renderRitualRound(): void {
   const eligible = getEligibleSkills();
   if (eligible.length === 0 || _remainingRounds <= 0) {
@@ -180,29 +182,6 @@ function renderRitualRound(): void {
     return;
   }
 
-  // 合并所有可附魔技能的候选池
-  const allCandidates: RitualCandidate[] = [];
-  const seenTypes = new Set<string>();
-  for (const { affixSkill } of eligible) {
-    for (const c of generateRitualCandidates(affixSkill)) {
-      const key = `${c.enchType}:${c.transmuteRes ?? ''}:${c.neighborRel ?? ''}`;
-      if (!seenTypes.has(key)) {
-        seenTypes.add(key);
-        allCandidates.push(c);
-      }
-    }
-  }
-
-  if (allCandidates.length === 0) {
-    completeRitual();
-    return;
-  }
-
-  const choices = pickRitualChoices(allCandidates);
-  showRitualChoiceUI(choices, eligible);
-}
-
-function showRitualChoiceUI(choices: RitualCandidate[], eligible: EligibleSkill[]): void {
   const titleEl = document.getElementById('ritual-title')!;
   const subtitleEl = document.getElementById('ritual-subtitle')!;
   const choicesEl = document.getElementById('ritual-choices')!;
@@ -210,40 +189,17 @@ function showRitualChoiceUI(choices: RitualCandidate[], eligible: EligibleSkill[
   const feedbackEl = document.getElementById('ritual-feedback-area')!;
 
   titleEl.textContent = t('ritual.title');
-  subtitleEl.textContent = t('ritual.subtitle');
-  choicesEl.innerHTML = '';
+  subtitleEl.textContent = t('ritual.select_skill');
+  subtitleEl.style.display = 'block';
+  choicesEl.style.display = 'none';
   skillSelectEl.style.display = 'none';
   feedbackEl.style.display = 'none';
 
-  // 渲染附魔候选
-  for (const candidate of choices) {
-    const info = getEnchantmentDisplayInfo(candidate.enchType, candidate.transmuteRes, candidate.neighborRel);
-    if (!info) continue;
-
-    const btn = document.createElement('button');
-    btn.className = 'ritual-choice-btn';
-    btn.innerHTML = `
-      <div class="ritual-choice-category" style="color:${info.categoryColor}">${info.category}</div>
-      <span class="ritual-choice-icon">${info.icon}</span>
-      <span class="ritual-choice-name">${info.name}</span>
-      <div class="ritual-choice-desc">${info.desc}</div>
-    `;
-    btn.onclick = () => {
-      choicesEl.querySelectorAll('.ritual-choice-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      showRitualSkillSelect(candidate, eligible);
-    };
-    choicesEl.appendChild(btn);
-  }
-}
-
-function showRitualSkillSelect(candidate: RitualCandidate, eligible: EligibleSkill[]): void {
-  const selectEl = document.getElementById('ritual-skill-select')!;
+  // 使用 skill-list 区域展示技能卡片
   const promptEl = document.getElementById('ritual-skill-prompt')!;
   const listEl = document.getElementById('ritual-skill-list')!;
-
-  promptEl.textContent = t('ritual.select_skill');
-  selectEl.style.display = 'block';
+  promptEl.textContent = '';
+  skillSelectEl.style.display = 'block';
   listEl.innerHTML = '';
 
   for (const { skillId, affixSkill, emptySlots } of eligible) {
@@ -254,12 +210,10 @@ function showRitualSkillSelect(candidate: RitualCandidate, eligible: EligibleSki
     const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#fff';
     const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
 
-    // 词条摘要
     const affixHtml = fields.affixInfo
       .map(a => `<span class="ritual-skill-affix">[${a.typeName}] ${a.paramSummary}</span>`)
       .join('');
 
-    // 已有附魔
     const enchHtml = fields.enchantments
       .map(e => `<span class="ritual-skill-ench" style="color:${e.color}">${e.icon} ${e.name}</span>`)
       .join('');
@@ -275,21 +229,58 @@ function showRitualSkillSelect(candidate: RitualCandidate, eligible: EligibleSki
       <div class="ritual-skill-slots">${t('ritual.empty_slots', { count: emptySlots })}</div>
     `;
     btn.onclick = () => {
-      applyRitualEnchantment(skillId, affixSkill, candidate);
-      _remainingRounds--;
-
-      const info = getEnchantmentDisplayInfo(candidate.enchType, candidate.transmuteRes, candidate.neighborRel);
-      const feedbackText = info
-        ? t('ritual.applied', { icon: info.icon, name: info.name, skill: affixSkill.name })
-        : t('ritual.applied_generic');
-      showRitualFeedback(feedbackText);
+      showEnchantmentChoices(skillId, affixSkill);
     };
     listEl.appendChild(btn);
   }
 }
 
+/** 玩家选定技能后，展示该技能可用的 2 个附魔候选 */
+function showEnchantmentChoices(skillId: string, affixSkill: AffixSkillInstance): void {
+  const candidates = generateRitualCandidates(affixSkill);
+  if (candidates.length === 0) {
+    completeRitual();
+    return;
+  }
+
+  const choices = pickRitualChoices(candidates);
+
+  const subtitleEl = document.getElementById('ritual-subtitle')!;
+  const skillSelectEl = document.getElementById('ritual-skill-select')!;
+  const choicesEl = document.getElementById('ritual-choices')!;
+
+  subtitleEl.textContent = t('ritual.subtitle');
+  skillSelectEl.style.display = 'none';
+  choicesEl.style.display = 'flex';
+  choicesEl.innerHTML = '';
+
+  for (const candidate of choices) {
+    const info = getEnchantmentDisplayInfo(candidate.enchType, candidate.transmuteRes, candidate.neighborRel);
+    if (!info) continue;
+
+    const btn = document.createElement('button');
+    btn.className = 'ritual-choice-btn';
+    btn.innerHTML = `
+      <div class="ritual-choice-category" style="color:${info.categoryColor}">${info.category}</div>
+      <span class="ritual-choice-icon">${info.icon}</span>
+      <span class="ritual-choice-name">${info.name}</span>
+      <div class="ritual-choice-desc">${info.desc}</div>
+    `;
+    btn.onclick = () => {
+      applyRitualEnchantment(skillId, affixSkill, candidate);
+      _remainingRounds--;
+
+      const appliedInfo = getEnchantmentDisplayInfo(candidate.enchType, candidate.transmuteRes, candidate.neighborRel);
+      const feedbackText = appliedInfo
+        ? t('ritual.applied', { icon: appliedInfo.icon, name: appliedInfo.name, skill: affixSkill.name })
+        : t('ritual.applied_generic');
+      showRitualFeedback(feedbackText);
+    };
+    choicesEl.appendChild(btn);
+  }
+}
+
 function showRitualFeedback(message: string): void {
-  // 隐藏选择区域，显示反馈
   document.getElementById('ritual-choices')!.style.display = 'none';
   document.getElementById('ritual-skill-select')!.style.display = 'none';
   document.getElementById('ritual-subtitle')!.style.display = 'none';
@@ -304,7 +295,6 @@ function showRitualFeedback(message: string): void {
 
   continueBtn.onclick = () => {
     if (_remainingRounds > 0 && getEligibleSkills().length > 0) {
-      // 恢复选择区域用于下一轮
       document.getElementById('ritual-choices')!.style.display = 'flex';
       document.getElementById('ritual-subtitle')!.style.display = 'block';
       feedbackEl.style.display = 'none';

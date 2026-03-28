@@ -62,13 +62,11 @@ export const BALANCE = {
   COMBO_BONUS: 0.1,
   TIME_PER_LEVEL: 30,
 
-  // Story 42.5: 目标分数指数增长公式参数
-  TARGET_BASE_EXP: 300,    // 第 1 关目标分数
-  TARGET_GROWTH: 1.65,     // 每关增长系数（基础值，溢出为 0 时）
-  TARGET_GROWTH_MIN: 1.5,         // 动态增长系数下限
-  TARGET_GROWTH_MAX: 2.5,         // 动态增长系数上限
-  TARGET_GROWTH_SENSITIVITY: 0.5, // 溢出比例对增长系数的放大因子
-  BOSS_TARGET_MULT: 1.5,   // Boss 关目标倍率
+  // 目标分数线性增长公式参数
+  TARGET_BASE: 150,              // 第 1 关目标分数
+  TARGET_INCREMENT: 100,         // 每关目标分数增量
+  TARGET_OVERFLOW_SCALE: 0.5,    // 溢出比例对增量的放大因子
+  BOSS_TARGET_MULT: 1.5,        // Boss 关目标倍率
 
   // 商店价格
   SKILL_PRICE_MIN: 15,

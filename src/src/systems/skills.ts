@@ -114,7 +114,7 @@ export function updateChargeProducers(dt: number): void {
   if (heldKeys.size === 0) return
 
   for (const [key] of heldKeys) {
-    const skillId = state.player.bindings.get(key)
+    const skillId = state.player.bindings.get(key.toLowerCase())
     if (!skillId) continue
     const skill = state.affixSkills.get(skillId)
     if (!skill) continue
@@ -133,6 +133,12 @@ export function updateChargeProducers(dt: number): void {
       maxBonus,
     )
   }
+}
+
+/** 检查技能是否有 Charge 词条 */
+export function isChargeSkill(skillId: string): boolean {
+  const skill = state.affixSkills.get(skillId)
+  return !!skill && skill.affixes.some(a => a.type === AffixType.Charge)
 }
 
 // === 技能键命中率计算 ===
@@ -296,9 +302,12 @@ function triggerAffixSkillWithFeedback(
         if (resource === 'base') {
           synergy.skillBaseScore *= amount;
         } else if (resource === 'multiplier') {
-          synergy.skillMultBonus *= amount;
+          // skillMultBonus 是加算到 mult 的增量，初始 0；
+          // 乘算化需要把当前累积的倍率加成乘以 amount：
+          // (1 + bonus) * amount - 1 → 使 mult += bonus 等效于 mult *= amount
+          synergy.skillMultBonus = (1 + synergy.skillMultBonus) * amount - 1;
         } else if (resource === 'score') {
-          state.resources.score *= amount;
+          // 乘算化：直接放大已获得的总分
           state.score *= amount;
         } else {
           state.resources[resource] *= amount;
