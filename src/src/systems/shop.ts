@@ -17,7 +17,7 @@ import { playSound } from '../effects/sound';
 import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
-import { getNextBattleNode } from './stage/stageFlow';
+import { getNextBattleNode, isSecondHalf } from './stage/stageFlow';
 import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
@@ -146,12 +146,11 @@ function getAvailableResources(classId: string): ResourceType[] {
   return all;
 }
 
-/** Act → 最大稀有度（词条数）映射；Act1 只刷无词条/单词条，Act2 开始双词条，Act3+ 无限制 */
+/** 位置 → 最大稀有度映射；Boss 商店(level===0)或后半段 → 全稀有度，前半段仅 white+blue */
 function getActMaxRarity(): SkillRarity {
-  const cycle = state.cycle;
-  if (cycle <= 1) return 1 as SkillRarity;   // Cycle 1: 0~1
-  if (cycle === 2) return 2 as SkillRarity;   // Cycle 2: 0~2
-  return 3 as SkillRarity;                    // Cycle 3+: 0~3
+  // level===0 表示 Boss 胜利后的商店（advanceCycle 把 level 设为 0）
+  if (state.level === 0 || isSecondHalf(state.level)) return 3 as SkillRarity;
+  return 1 as SkillRarity; // 前半段: 0~1 (white + blue)
 }
 
 /** 收集玩家已装备技能拥有的所有词条类型（去重，排除 link/splash 自身） */
@@ -320,13 +319,17 @@ export function generateAffixShopItems(count: number): ShopItem[] {
 
 // Old producer/act skill weights removed (词条制 replaces old system)
 
-// === 商店遗物权重（固定：legendary 只能通过 boss 获得） ===
-const SHOP_RELIC_WEIGHTS: RelicWeights = { common: 60, rare: 30, epic: 10, legendary: 0 };
+// === 商店遗物权重：前半段 common+rare，后半段含 epic+legendary ===
+const SHOP_RELIC_WEIGHTS_FIRST: RelicWeights = { common: 70, rare: 30, epic: 0, legendary: 0 };
+const SHOP_RELIC_WEIGHTS_SECOND: RelicWeights = { common: 45, rare: 30, epic: 20, legendary: 5 };
 
 // === 生成商店遗物商品 ===
 export function generateShopRelicItem(act: number, itemId?: number): ShopItem | null {
   if (isRelicSlotsFull()) return null;
-  const candidates = generateRelicCandidates(SHOP_RELIC_WEIGHTS);
+  const weights = (state.level === 0 || isSecondHalf(state.level))
+    ? SHOP_RELIC_WEIGHTS_SECOND
+    : SHOP_RELIC_WEIGHTS_FIRST;
+  const candidates = generateRelicCandidates(weights);
   if (candidates.length === 0) return null;
 
   const relicId = candidates[0];
@@ -2541,12 +2544,17 @@ export function renderBuildManager(): void {
         }
         const avoidRect = getRangeHighlightRect(slot);
         keyTooltip.show(e.clientX, e.clientY, tooltipData, avoidRect ?? undefined);
+        // 交叉高亮：键盘→备战席
+        if (skillId) {
+          document.querySelector(`.inventory-skill[data-skill-id="${skillId}"]`)?.classList.add('cross-highlight');
+        }
       });
       slot.addEventListener('mouseleave', () => {
         keyTooltip.hide();
         clearRangeHighlight();
         // Story 34.6 AC7: 清除虚无范围高亮
         document.querySelectorAll('.key-slot.void-range-empty').forEach(el => el.classList.remove('void-range-empty'));
+        document.querySelectorAll('.inventory-skill.cross-highlight').forEach(el => el.classList.remove('cross-highlight'));
       });
 
       // Story 40.6: 右键旋转已装备的多格技能
@@ -2645,10 +2653,13 @@ export function renderBuildManager(): void {
           highlightSkillRange(boundKey);
         }
         keyTooltip.show(e.clientX, e.clientY, tooltipData);
+        // 交叉高亮：备战席→键盘
+        document.querySelectorAll(`.key-slot[data-bound-skill="${skillId}"]`).forEach(el => el.classList.add('cross-highlight'));
       });
       item.addEventListener('mouseleave', () => {
         keyTooltip.hide();
         clearRangeHighlight();
+        document.querySelectorAll('.key-slot.cross-highlight').forEach(el => el.classList.remove('cross-highlight'));
       });
     }
 

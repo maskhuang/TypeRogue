@@ -6,7 +6,7 @@
 /**
  * 关卡类型
  */
-export type StageType = 'standard' | 'boss'
+export type StageType = 'standard' | 'boss' | 'ritual'
 
 /**
  * 关卡修饰符类型

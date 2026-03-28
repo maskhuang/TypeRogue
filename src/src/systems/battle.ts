@@ -19,11 +19,12 @@ import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
-import { getStageType, getCycleTimeLimit, getBattleNumber } from './stage/stageFlow';
+import { getStageType, getCycleTimeLimit, getBattleNumber, isRitualNode, getNextBattleNode as getNextNode } from './stage/stageFlow';
 import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, BOSS_MODIFIER_IDS, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive, getEscalateTimeSpeedBonus, addFrostStack, getCurrentTaxResource, getTaxRate, onMirrorWordComplete, resetMirrorWordTimer } from '../data/bossModifiers';
 import type { ModifierCategory, BossModifierId } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
 import { showBossModifierPicker } from './bossModifierPicker';
+import { shouldShowRitual, openRitualEnchantment } from './ritualEnchantment';
 import { showActTransition, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
@@ -201,6 +202,12 @@ export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'ritual'): voi
   el.shopScreen.style.display = name === 'shop' ? 'flex' : 'none';
   el.ritualScreen.style.display = name === 'ritual' ? 'flex' : 'none';
   el.gameoverScreen.style.display = name === 'gameover' ? 'flex' : 'none';
+
+  // 离开战斗屏幕时确保结算面板隐藏
+  if (name !== 'battle') {
+    const settlement = document.getElementById('score-settlement');
+    if (settlement) settlement.classList.add('settlement-hidden');
+  }
 }
 
 // === 词语系统 ===
@@ -426,6 +433,7 @@ function handleEnterKey(e: KeyboardEvent): void {
   if (!_targetReached && state.score >= state.targetScore) {
     _targetReached = true;
     _targetReachedTime = state.time;
+    getElements().container.classList.add('glow-target-reached');
     showFeedback(t('battle.target_reached'), '#4ecdc4');
     playSound('levelup');
     screenShake(3); // Review Fix #5: 达标脉冲
@@ -1101,6 +1109,7 @@ function completeWord(): void {
   if (!isBlackHoleActive() && !_targetReached && state.score >= state.targetScore) {
     _targetReached = true;
     _targetReachedTime = state.time; // 记录达标时剩余时间（万物熔炉等遗物需要）
+    getElements().container.classList.add('glow-target-reached');
     showFeedback(t('battle.target_reached'), '#4ecdc4');
     playSound('levelup');
     screenShake(3); // Review Fix #5: 达标绿色脉冲
@@ -1197,8 +1206,9 @@ function showSettlementComplete(chips: number, mult: number, total: number): voi
   settlement.classList.remove('settlement-live');
   settlement.classList.add('settlement-complete');
 
-  // 完成动画后恢复到实时模式
+  // 完成动画后恢复到实时模式（仅在未被 hideSettlement 隐藏时）
   settlementTimeouts.push(setTimeout(() => {
+    if (settlement.classList.contains('settlement-hidden')) return;
     settlement.classList.remove('settlement-complete');
     settlement.classList.add('settlement-live');
   }, 400));
@@ -1388,6 +1398,9 @@ function updateTimerDisplay(): void {
     el.timerBar.style.background = '#4ecdc4';
   }
 
+  // 危险光晕：time <= 10s 时显示（达标光晕通过 CSS 顺序覆盖）
+  el.container.classList.toggle('glow-danger', state.time <= 10);
+
   // Story 42.4: 倍率 HUD 更新
   const accel = getTimeAcceleration(_elapsedSeconds, _isBoss);
   const accelText = '×' + accel.toFixed(1);
@@ -1420,6 +1433,7 @@ function endLevel(): void {
   stopBGM();
   stopScoreRoller(); // Story 31.4
   clearPseudoInfinite();
+  getElements().container.classList.remove('glow-danger', 'glow-target-reached');
   clearFloatQueue();
   cleanupModifier();
   setRelicGarbleActive(false);
@@ -1440,6 +1454,9 @@ function endLevel(): void {
   if (state.score >= state.targetScore) {
     // Story 42.3: 累积溢出分（overkill 已在 timer tick 中计算）
     state.overflowScore += state.overkill;
+
+    // 动态增长系数：记录溢出比例供下关目标分数计算
+    state.lastOverflowRatio = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
 
     // 附魔外部事件：通关 → 学徒·通关/任务·镜像 成长
     const _sgm = getApprenticeGrowthMultiplier();
@@ -1507,7 +1524,7 @@ function endLevel(): void {
       }
 
       if (currentType === 'boss') {
-        // 无限循环：Boss 胜利 → 周目推进 → 修饰器选择 → 遗物 → 商店
+        // 无限循环：Boss 胜利 → 周目推进 → 修饰器选择 → 致命礼物 → 遗物 → 商店（仪式现为独立节点）
         advanceCycle();
         showBossModifierPicker(() => {
           continueAfterDeadlyGift(() => {
@@ -1640,6 +1657,20 @@ function showForesightModal(modIds: BossModifierId[]): Promise<ModifierCategory 
 
 export async function startLevel(): Promise<void> {
   keyTooltip.hide();
+
+  // === 仪式节点：跳过战斗，直接打开仪式附魔 UI ===
+  if (isRitualNode(state.level)) {
+    const afterRitual = () => {
+      state.level = getNextNode(state.level);
+      startLevel();
+    };
+    if (shouldShowRitual()) {
+      openRitualEnchantment(afterRitual);
+    } else {
+      afterRitual();
+    }
+    return;
+  }
 
   // === Cycle 过渡演出（在切换到战斗画面前显示） ===
   showScreen('battle');
@@ -1910,6 +1941,7 @@ export async function startLevel(): Promise<void> {
   if (state.overflowScore > 0 && state.score >= state.targetScore) {
     _targetReached = true;
     _targetReachedTime = state.timeMax;
+    getElements().container.classList.add('glow-target-reached');
   }
 
   showScreen('battle');
@@ -2048,6 +2080,7 @@ function gameOver(): void {
   if (timerInterval) clearInterval(timerInterval);
   releaseBGMTension();
   clearPseudoInfinite();
+  getElements().container.classList.remove('glow-danger', 'glow-target-reached');
   clearFloatQueue();
   cleanupModifier();
   setRelicGarbleActive(false);
