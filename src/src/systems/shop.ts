@@ -52,7 +52,8 @@ import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyRitualEnchantment, generateRitualCandidates, pickRitualChoices, getEligibleSkills as getRitualEligibleSkills } from './ritualEnchantment';
 import type { RitualCandidate } from './ritualEnchantment';
-import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment, getUncrownedKingBaseValue } from './relics/SkillRelicBehaviors';
+import { applyTrainingManual } from './relics/SkillRelicBehaviors';
+import { canAscend, executeAscend, getAscendGoldCost, getAscendBaseScale } from '../data/affixTrigger';
 import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier, getMinEnchantmentLevel } from './relics/EnchantmentRelicBehaviors';
 import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState, getSkillAnchorKey } from './bindingManager';
 import { getShapeCells, mapShapeToKeys } from '../data/skillShapes';
@@ -78,8 +79,7 @@ export const AFFIX_SKILL_PRICE_CAP = 100;
 export function calculateAffixSkillPrice(rarity: number, level: number, fluctuation: number = 1): number {
   const base = AFFIX_RARITY_BASE_PRICES[Math.min(rarity, 3) as 0 | 1 | 2 | 3];
   const levelMult = 1 + (level - 1) * 0.2;
-  const cap = hasUncrownedKing() ? Infinity : AFFIX_SKILL_PRICE_CAP;
-  return Math.min(Math.round(base * levelMult * fluctuation), cap);
+  return Math.min(Math.round(base * levelMult * fluctuation), AFFIX_SKILL_PRICE_CAP);
 }
 
 /** 生成随机价格波动因子（±20%） */
@@ -466,11 +466,10 @@ export function buildEnchantmentInfo(_skillId: string): string | undefined {
 import type { AffixTooltipInfo, SmartEstimate, EstimateBreakdownLine } from '../ui/keyboard/KeyTooltip';
 import type { AffixSkillInstance, SkillRuntimeState, QuestEnchantmentDef } from '../data/affixes';
 
-/** 获取技能在指定等级的有效基础值（支持无冕之王 Lv4+） */
+/** 获取技能在指定等级的有效基础值（支持升华 Lv4+） */
 function getEffectiveBaseValue(baseValues: [number, number, number], level: number): number {
   if (level <= 3) return baseValues[level - 1] ?? baseValues[0];
-  if (hasUncrownedKing()) return Math.round(getUncrownedKingBaseValue(level, baseValues) * 100) / 100;
-  return baseValues[2]; // 无遗物时不应出现 Lv4+，兜底
+  return Math.round(baseValues[2] * getAscendBaseScale(level) * 100) / 100;
 }
 
 /** 构建词条制技能的 tooltip 扩展字段 */
@@ -855,6 +854,30 @@ function shuffleArray<T>(arr: T[]): T[] {
 
 // buildMechanicWeightedBucket removed (old producer system)
 
+// === 升华商品生成 ===
+function generateAscendItems(startId: number): ShopItem[] {
+  const items: ShopItem[] = []
+  let nextId = startId
+  for (const [skillId, skillData] of state.player.skills) {
+    const skill = state.affixSkills.get(skillId)
+    if (!skill) continue
+    const rt = state.affixSkillStates.get(skillId)
+    if (!rt) continue
+    if (!canAscend(skill, rt)) continue
+    const cost = getAscendGoldCost(skill.level)
+    items.push({
+      id: `ascend_${nextId++}`,
+      type: 'ascend',
+      skillId,
+      affixSkill: { ...skill, level: skill.level + 1 },
+      cost,
+      isUpgrade: true,
+      locked: false,
+    })
+  }
+  return items
+}
+
 // === 生成统一商品 ===
 function generateShopItems(count: number, guaranteeRare: boolean = false): ShopItem[] {
   if (count <= 0) return [];
@@ -870,8 +893,6 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
   const skillPool: ShopItem[] = [];
   const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
   const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel;
-  // Story 36.4: 无冕之王 — 无附魔技能突破等级上限
-  const hasUK = hasUncrownedKing();
   if (!isSilenced) {
     // T4 极简主义：技能数量达上限时不生成新技能
     const maxSkillCount = queryRelicFlag('max_skill_count') as number;
@@ -894,7 +915,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
         if (ownedSkillId && !convertedSkillIds.has(ownedSkillId)) {
           const ownedData = state.player.skills.get(ownedSkillId);
           const ownedAffix = state.affixSkills.get(ownedSkillId);
-          const effectiveCap1 = (hasUK && ownedAffix?.enchantmentIds.length === 0) ? Infinity : levelCap;
+          const effectiveCap1 = (ownedAffix?.enchantmentIds.some(id => isApprenticeEnchantment(id as any))) ? Infinity : levelCap;
           if (ownedData && ownedAffix && ownedData.level < effectiveCap1) {
             // 转为升级
             const nextLevel = ownedData.level + 1;
@@ -928,7 +949,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
           const affix = state.affixSkills.get(skillId);
           if (!affix || affix.rarity < 1) continue;
           if (convertedSkillIds.has(skillId)) continue;
-          const cap = (hasUK && affix.enchantmentIds.length === 0) ? Infinity : levelCap;
+          const cap = (affix.enchantmentIds.some(id => isApprenticeEnchantment(id as any))) ? Infinity : levelCap;
           if (skillData.level >= cap) continue;
           candidates.push({ skillId, affix });
         }
@@ -1010,6 +1031,15 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
           enchItemCount++;
         }
       }
+    }
+  }
+
+  // 升华商品：为满足条件的技能生成升华选项
+  const ascendItems = generateAscendItems(nextId);
+  for (const ai of ascendItems) {
+    if (items.length < count) {
+      items.push(ai);
+      nextId++;
     }
   }
 
@@ -1218,6 +1248,22 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       <div class="reward-type" style="color:${enchInfo.categoryColor}">${enchInfo.category}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
+  } else if (item.type === 'ascend' && item.affixSkill) {
+    // 升华商品卡片
+    const skill = item.affixSkill;
+    const rarityColor = RARITY_COLORS[skill.rarity] || '#ffffff';
+    card.classList.add('affix-skill-card', 'ascend-card');
+    card.style.borderColor = '#ffd700';
+    card.innerHTML = `
+      <div class="reward-icon">✨${skill.icon}</div>
+      <div class="reward-info">
+        <div class="reward-name">${t('shop.ascend_name', { name: skill.name, level: skill.level }) || `${skill.name} → Lv.${skill.level}`}</div>
+        <div class="reward-desc">${t('shop.ascend_desc') || '升华：学徒经验兑换等级突破'}</div>
+      </div>
+      ${costHtml}
+      <div class="reward-type" style="color:#ffd700">${t('shop.ascend') || '升华'}</div>
+      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
+    `;
   }
 
   // 锁定按钮事件
@@ -1249,6 +1295,11 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       juiceUp(card, 0.2, 3);
       purchaseShopEnchantmentItem(index);
     };
+  } else if (item.type === 'ascend') {
+    card.onclick = () => {
+      juiceUp(card, 0.2, 3);
+      purchaseAscendItem(index);
+    };
   } else {
     card.onclick = () => {
       juiceUp(card, 0.2, 3);
@@ -1276,7 +1327,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
         baseValuesText = t('tooltip.base_values_mult', { v1: mv?.[0], v2: mv?.[1], v3: mv?.[2] });
       } else {
         baseValuesText = t('tooltip.base_values_add', { v1: baseVals[0], v2: baseVals[1], v3: baseVals[2] });
-        if (hasUncrownedKing() && skill.level > 3) {
+        if (skill.level > 3) {
           baseValuesText += ` / Lv.${skill.level}=${baseVal}`;
         }
       }
@@ -1623,9 +1674,6 @@ function purchasePackItem(index: number): void {
 
 // === Lv.3 自动附魔检查（概率递减） ===
 function checkAutoEnchantment(skillId: string): void {
-  // 无冕之王：无附魔技能禁止获得附魔
-  const affixSkillCheck = state.affixSkills.get(skillId);
-  if (affixSkillCheck && shouldBlockEnchantment(affixSkillCheck.enchantmentIds)) return;
   // 统计场上全部技能已有附魔总数
   let totalEnch = 0;
   for (const [, affixSkill] of state.affixSkills) {
@@ -1744,10 +1792,10 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
     if (item.isUpgrade) {
       const data = state.player.skills.get(skillId);
       if (data) {
-        // Story 36.4: 无冕之王 — 无附魔技能不受 Lv.3 上限
+        // 升华系统：有学徒附魔的技能突破 Lv.3 上限
         const existingSkill = state.affixSkills.get(skillId);
-        const ukCap = (hasUncrownedKing() && existingSkill && existingSkill.enchantmentIds.length === 0) ? Infinity : 3;
-        data.level = Math.min(ukCap, data.level + 1);
+        const ascendCap = (existingSkill?.enchantmentIds.some(id => isApprenticeEnchantment(id as any))) ? Infinity : 3;
+        data.level = Math.min(ascendCap, data.level + 1);
         data.purchasePrice = (data.purchasePrice || 0) + item.cost;
       }
       // 同步更新 affixSkills 中的 level + 词条参数缩放
@@ -1844,11 +1892,17 @@ function purchaseShopRelicItem(index: number): void {
     updateGoldDisplay();
     showFeedback(t('shop.got_relic', { icon: relic.icon, name: localizeItemName(relicId, relic.name) }), '#ffe66d');
     playSound('buy');
-    // Story 36.4: 集训手册 — 购买时一次性升级所有 Lv.1 技能
+    // 集训手册 — 购买时所有技能等级+1（上限 Lv.3）
     if (relicId === 'training_manual') {
       const upgradedIds = applyTrainingManual();
-      if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}个技能升至Lv.2!`, '#00ff88');
-      // Story 41.1: 移除早期觉醒链式附魔弹窗
+      if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}${t('shop.training_manual_feedback') || '个技能升级!'}`, '#00ff88');
+      // 达到附魔等级门槛时触发附魔检查
+      for (const uid of upgradedIds) {
+        const uData = state.player.skills.get(uid);
+        if (uData?.level === getMinEnchantmentLevel()) {
+          checkAutoEnchantment(uid);
+        }
+      }
     }
     // Story 36.6: 行会勋章 — 购买时随机选行
     if (relicId === 'row_medal') {
@@ -1871,11 +1925,16 @@ function purchaseShopRelicItem(index: number): void {
         state.gold -= cost;
         updateGoldDisplay();
         state.shop.items.splice(index, 1);
-        // Story 36.4: 集训手册 — 替换购买时也触发一次性升级
+        // 集训手册 — 替换购买时也触发等级+1
         if (relicId === 'training_manual') {
           const upgradedIds = applyTrainingManual();
-          if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}个技能升至Lv.2!`, '#00ff88');
-          // Story 41.1: 移除早期觉醒链式附魔弹窗
+          if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}${t('shop.training_manual_feedback') || '个技能升级!'}`, '#00ff88');
+          for (const uid of upgradedIds) {
+            const uData = state.player.skills.get(uid);
+            if (uData?.level === getMinEnchantmentLevel()) {
+              checkAutoEnchantment(uid);
+            }
+          }
         }
         // Story 36.6: 行会勋章 — 替换购买时也随机选行
         if (relicId === 'row_medal') {
@@ -1923,6 +1982,44 @@ function purchaseShopEnchantmentItem(index: number): void {
 
   // 弹出技能选择界面（扣金在确认选择后执行）
   showEnchantmentTargetSelect(item, index, eligibleSkills, cost, smuggleFree);
+}
+
+// === 购买升华商品 ===
+function purchaseAscendItem(index: number): void {
+  const item = state.shop.items[index];
+  if (!item || item.type !== 'ascend' || !item.skillId) return;
+
+  const cost = item.cost;
+  if (state.gold < cost) {
+    showFeedback(t('shop.no_gold'), '#ff6b6b');
+    return;
+  }
+
+  const skillId = item.skillId;
+  const skill = state.affixSkills.get(skillId);
+  const rt = state.affixSkillStates.get(skillId);
+  if (!skill || !rt) return;
+
+  // 再次检查条件
+  if (!canAscend(skill, rt)) {
+    showFeedback(t('shop.ascend_fail') || '升华条件不满足', '#ff6b6b');
+    return;
+  }
+
+  state.gold -= cost;
+  const oldLevel = skill.level;
+  executeAscend(skill, rt);
+  // 同步 player.skills 等级
+  const data = state.player.skills.get(skillId);
+  if (data) data.level = skill.level;
+
+  updateGoldDisplay();
+  showFeedback(t('shop.ascend_success', { name: skill.name, level: skill.level }) || `✨ ${skill.name} 升华至 Lv.${skill.level}!`, '#ffd700');
+  playSound('buy');
+  state.shop.items.splice(index, 1);
+  eventBus.emit('skill:upgraded', { skillId, newLevel: skill.level });
+  renderUnifiedShop();
+  renderBuildManager();
 }
 
 /** 附魔台：选择目标技能弹窗 */

@@ -243,7 +243,7 @@ export interface PlayerState {
 
 export interface ShopItem {
   id: string;              // 商品唯一 ID
-  type: 'skill' | 'pack' | 'relic' | 'enchantment';
+  type: 'skill' | 'pack' | 'relic' | 'enchantment' | 'ascend';
   skillId?: string;
   affixSkill?: AffixSkillInstance;  // 词条制技能数据（35.9）
   pack?: WordPack;         // 牌包数据（type='pack' 时）

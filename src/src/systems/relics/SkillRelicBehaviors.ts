@@ -7,8 +7,6 @@ import { registerRelicBehavior } from './RelicPipeline'
 import type { AffixType } from '../../data/affixes'
 import { applyAffixLevelScaling } from '../../data/affixes'
 
-/** 无冕之王 Lv4+ 每级递增倍率 */
-export const UK_GROWTH_RATE = 1.6
 
 // === 首发强化 (first_strike) ===
 
@@ -40,17 +38,17 @@ export function getLessIsMoreBonus(): number {
 // === 集训手册 (training_manual) ===
 
 /**
- * 应用集训手册效果 — 一次性将所有 Lv.1 技能升至 Lv.2
+ * 应用集训手册效果 — 一次性将所有技能等级 +1（上限 Lv.3）
  * @returns 升级的技能 ID 列表
  */
 export function applyTrainingManual(): string[] {
   const upgradedIds: string[] = []
   for (const [skillId, data] of state.player.skills) {
-    if (data.level === 1) {
-      data.level = 2
+    if (data.level < 3) {
+      data.level++
       const affixSkill = state.affixSkills.get(skillId)
       if (affixSkill) {
-        affixSkill.level = 2
+        affixSkill.level = data.level
         applyAffixLevelScaling(affixSkill.affixes, 1)
       }
       upgradedIds.push(skillId)
@@ -110,29 +108,19 @@ export function hasUncrownedKing(): boolean {
 }
 
 /**
- * 计算 Lv4+ 技能的 baseValue（无冕之王）
- * Lv4+ 按 Lv3 值 × 1.6^(level-3) 递增
- * @param level 技能等级（≥4）
- * @param baseValues [Lv1, Lv2, Lv3] 基础值数组
- * @returns 计算后的 baseValue
+ * 获取无冕之王无词缀加成
+ * 持有无冕之王时，无词缀的技能产出 +30%
  */
-export function getUncrownedKingBaseValue(
-  level: number,
-  baseValues: [number, number, number],
-): number {
-  if (level <= 3) return baseValues[level - 1]
-  return baseValues[2] * Math.pow(UK_GROWTH_RATE, level - 3)
+export function getUncrownedKingAffixlessBonus(): number {
+  return hasUncrownedKing() ? 0.3 : 0
 }
 
 /**
  * 检查是否应阻止技能获得附魔
- * 有无冕之王 + 技能无附魔 → 阻止
- * @param enchantmentIds 技能的附魔列表
- * @returns true 表示应阻止附魔
+ * 重设计后始终返回 false（不再阻止附魔）
  */
-export function shouldBlockEnchantment(enchantmentIds: string[]): boolean {
-  if (!state.player.relics.has('uncrowned_king')) return false
-  return enchantmentIds.length === 0
+export function shouldBlockEnchantment(_enchantmentIds: string[]): boolean {
+  return false
 }
 
 // === 模块重置（关级别） ===

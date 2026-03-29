@@ -67,40 +67,18 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Taboo]: 'meta_rule',
 }
 
-// ===== 附魔类型枚举（46 个枚举值） =====
-// 3 通用学徒 + 5 资源专精 + 20 悟道·词条 + 17 任务型 + 1 运算符 = 46
+// ===== 附魔类型枚举（25 个枚举值） =====
+// 2 通用学徒 + 5 资源专精 + 17 任务型 + 1 运算符 = 25
 
 export enum EnchantmentType {
-  // ── 学徒型（3 通用 + 5 资源专精） ──
+  // ── 学徒型（2 通用 + 5 资源专精） ──
   ApprenticeSelf = 'apprentice_self',
   ApprenticeNeighbor = 'apprentice_neighbor',
-  ApprenticeProc = 'apprentice_proc',
   ApprenticeResBase = 'apprentice_res_base',
   ApprenticeResScore = 'apprentice_res_score',
   ApprenticeResMultiplier = 'apprentice_res_multiplier',
   ApprenticeResTime = 'apprentice_res_time',
   ApprenticeResGold = 'apprentice_res_gold',
-  // ── 悟道·词条型（20，对应词条被触发时成长） ──
-  ApprenticeAffixConvert = 'apprentice_affix_convert',
-  ApprenticeAffixRainbow = 'apprentice_affix_rainbow',
-  ApprenticeAffixCharge = 'apprentice_affix_charge',
-  ApprenticeAffixDecay = 'apprentice_affix_decay',
-  ApprenticeAffixPulse = 'apprentice_affix_pulse',
-  ApprenticeAffixCrit = 'apprentice_affix_crit',
-  ApprenticeAffixCascade = 'apprentice_affix_cascade',
-  ApprenticeAffixVoid = 'apprentice_affix_void',
-  ApprenticeAffixResonance = 'apprentice_affix_resonance',
-  ApprenticeAffixMirror = 'apprentice_affix_mirror',
-  ApprenticeAffixLink = 'apprentice_affix_link',
-  ApprenticeAffixSplash = 'apprentice_affix_splash',
-  ApprenticeAffixAmplify = 'apprentice_affix_amplify',
-  ApprenticeAffixConduit = 'apprentice_affix_conduit',
-  ApprenticeAffixOutcast = 'apprentice_affix_outcast',
-  ApprenticeAffixGravity = 'apprentice_affix_gravity',
-  ApprenticeAffixLigature = 'apprentice_affix_ligature',
-  ApprenticeAffixTwin = 'apprentice_affix_twin',
-  ApprenticeAffixRecurse = 'apprentice_affix_recurse',
-  ApprenticeAffixTaboo = 'apprentice_affix_taboo',
   // ── 任务型（18，需技能拥有对应词条） ──
   QuestDevour = 'quest_devour',
   QuestOverload = 'quest_overload',
@@ -162,37 +140,15 @@ export interface EnchantmentMeta {
 }
 
 export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
-  // ── 学徒型（12） ──
+  // ── 学徒型（7） ──
   [EnchantmentType.ApprenticeSelf]:     { type: EnchantmentType.ApprenticeSelf,     name: '学徒·自修', icon: '📖', category: 'apprentice', desc: '每次自身触发时永久成长 +1%' },
   [EnchantmentType.ApprenticeNeighbor]: { type: EnchantmentType.ApprenticeNeighbor, name: '学徒·观摩', icon: '👀', category: 'apprentice', desc: '范围内技能触发时永久成长' },
-  [EnchantmentType.ApprenticeProc]:     { type: EnchantmentType.ApprenticeProc,     name: '学徒·悟道', icon: '💡', category: 'apprentice', desc: '词条特效触发时永久成长 +3%' },
   // ── 资源专精型（5） ──
   [EnchantmentType.ApprenticeResBase]:       { type: EnchantmentType.ApprenticeResBase,       name: '专精·基数', icon: '🔢', category: 'apprentice', desc: '产出基数资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeResScore]:      { type: EnchantmentType.ApprenticeResScore,      name: '专精·分数', icon: '🏅', category: 'apprentice', desc: '产出分数资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeResMultiplier]: { type: EnchantmentType.ApprenticeResMultiplier, name: '专精·倍率', icon: '📈', category: 'apprentice', desc: '产出倍率资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeResTime]:       { type: EnchantmentType.ApprenticeResTime,       name: '专精·时间', icon: '⏳', category: 'apprentice', desc: '产出时间资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeResGold]:       { type: EnchantmentType.ApprenticeResGold,       name: '专精·金币', icon: '💰', category: 'apprentice', desc: '产出金币资源时永久成长 +2%' },
-  // ── 悟道·词条型（20） ──
-  [EnchantmentType.ApprenticeAffixConvert]:   { type: EnchantmentType.ApprenticeAffixConvert,   name: '悟道·转化', icon: '💡', category: 'apprentice', desc: '场上转化词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixRainbow]:   { type: EnchantmentType.ApprenticeAffixRainbow,   name: '悟道·彩虹', icon: '💡', category: 'apprentice', desc: '场上彩虹词条触发时成长 +1.5%' },
-  [EnchantmentType.ApprenticeAffixCharge]:    { type: EnchantmentType.ApprenticeAffixCharge,    name: '悟道·蓄力', icon: '💡', category: 'apprentice', desc: '场上蓄力词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixDecay]:     { type: EnchantmentType.ApprenticeAffixDecay,     name: '悟道·衰减', icon: '💡', category: 'apprentice', desc: '场上衰减词条触发时成长 +1.5%' },
-  [EnchantmentType.ApprenticeAffixPulse]:     { type: EnchantmentType.ApprenticeAffixPulse,     name: '悟道·脉冲', icon: '💡', category: 'apprentice', desc: '场上脉冲词条触发时成长 +1.5%' },
-  [EnchantmentType.ApprenticeAffixCrit]:      { type: EnchantmentType.ApprenticeAffixCrit,      name: '悟道·暴击', icon: '💡', category: 'apprentice', desc: '场上暴击词条触发时成长 +1.5%' },
-  [EnchantmentType.ApprenticeAffixCascade]:   { type: EnchantmentType.ApprenticeAffixCascade,   name: '悟道·级联', icon: '💡', category: 'apprentice', desc: '场上级联词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixVoid]:      { type: EnchantmentType.ApprenticeAffixVoid,      name: '悟道·虚无', icon: '💡', category: 'apprentice', desc: '场上虚无词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixResonance]: { type: EnchantmentType.ApprenticeAffixResonance, name: '悟道·共鸣', icon: '💡', category: 'apprentice', desc: '场上共鸣词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixMirror]:    { type: EnchantmentType.ApprenticeAffixMirror,    name: '悟道·倒影', icon: '💡', category: 'apprentice', desc: '场上倒影词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixLink]:      { type: EnchantmentType.ApprenticeAffixLink,      name: '悟道·连接', icon: '💡', category: 'apprentice', desc: '场上连接词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixSplash]:    { type: EnchantmentType.ApprenticeAffixSplash,    name: '悟道·溅射', icon: '💡', category: 'apprentice', desc: '场上溅射词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixAmplify]:   { type: EnchantmentType.ApprenticeAffixAmplify,   name: '悟道·增幅', icon: '💡', category: 'apprentice', desc: '场上增幅词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixConduit]:   { type: EnchantmentType.ApprenticeAffixConduit,   name: '悟道·导能', icon: '💡', category: 'apprentice', desc: '场上导能词条触发时成长 +2.5%' },
-  [EnchantmentType.ApprenticeAffixOutcast]:   { type: EnchantmentType.ApprenticeAffixOutcast,   name: '悟道·流放', icon: '💡', category: 'apprentice', desc: '场上流放词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixGravity]:   { type: EnchantmentType.ApprenticeAffixGravity,   name: '悟道·引力', icon: '💡', category: 'apprentice', desc: '场上引力词条触发时成长 +4%' },
-  [EnchantmentType.ApprenticeAffixLigature]:  { type: EnchantmentType.ApprenticeAffixLigature,  name: '悟道·连字', icon: '💡', category: 'apprentice', desc: '场上连字词条触发时成长 +2%' },
-  [EnchantmentType.ApprenticeAffixTwin]:      { type: EnchantmentType.ApprenticeAffixTwin,      name: '悟道·双生', icon: '💡', category: 'apprentice', desc: '场上双生词条触发时成长 +5%' },
-  [EnchantmentType.ApprenticeAffixRecurse]:   { type: EnchantmentType.ApprenticeAffixRecurse,   name: '悟道·递归', icon: '💡', category: 'apprentice', desc: '场上递归词条触发时成长 +1.5%' },
-  [EnchantmentType.ApprenticeAffixTaboo]:     { type: EnchantmentType.ApprenticeAffixTaboo,     name: '悟道·禁忌', icon: '💡', category: 'apprentice', desc: '场上禁忌词条触发时成长 +1.5%' },
   // ── 运算符（1） ──
   [EnchantmentType.MultiplyOperator]: { type: EnchantmentType.MultiplyOperator, name: '乘算化', icon: '✖️', category: 'operator', desc: '将加算层各项加成转为独立乘数' },
 }
@@ -488,12 +444,12 @@ export const MULTIPLY_OPERATOR_BASE_VALUES: Record<ResourceType, [number, number
 // ===== 学徒·观摩 growthPerProc 按 PositionRelation =====
 
 export const APPRENTICE_NEIGHBOR_GROWTH: Record<PositionRelation, number> = {
-  [PositionRelation.Adjacent]: 0.015,
-  [PositionRelation.SameRow]: 0.01,
-  [PositionRelation.SameColumn]: 0.02,
-  [PositionRelation.SameHand]: 0.005,
-  [PositionRelation.SameFinger]: 0.025,
-  [PositionRelation.Symmetric]: 0.03,
+  [PositionRelation.Adjacent]: 0.06,
+  [PositionRelation.SameRow]: 0.04,
+  [PositionRelation.SameColumn]: 0.08,
+  [PositionRelation.SameHand]: 0.02,
+  [PositionRelation.SameFinger]: 0.10,
+  [PositionRelation.Symmetric]: 0.12,
 }
 
 // ===== 职业限定附魔 =====

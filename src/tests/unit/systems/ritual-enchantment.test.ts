@@ -86,7 +86,7 @@ describe('Story 41.1: 仪式附魔系统', () => {
     it('候选超过上限时截断为 2 个（无 fate_fork）', () => {
       const candidates: RitualCandidate[] = [
         { enchType: EnchantmentType.ApprenticeSelf },
-        { enchType: EnchantmentType.ApprenticeProc },
+        { enchType: EnchantmentType.ApprenticeResBase },
         { enchType: EnchantmentType.ApprenticeNeighbor },
         { enchType: EnchantmentType.QuestDevour },
       ]
@@ -98,7 +98,7 @@ describe('Story 41.1: 仪式附魔系统', () => {
       state.player.relics.add('fate_fork')
       const candidates: RitualCandidate[] = [
         { enchType: EnchantmentType.ApprenticeSelf },
-        { enchType: EnchantmentType.ApprenticeProc },
+        { enchType: EnchantmentType.ApprenticeResBase },
         { enchType: EnchantmentType.ApprenticeNeighbor },
         { enchType: EnchantmentType.QuestDevour },
       ]

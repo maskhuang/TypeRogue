@@ -14,7 +14,7 @@ import {
   AffixType,
   EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS, QUEST_AFFIX_MAP,
   TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES,
-  isOldSystemSkill,
+  isOldSystemSkill, applyAffixLevelScaling,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 
@@ -394,10 +394,8 @@ export function resolvePhase2(
 
   // ── 附魔加算 ──
 
-  // 学徒系列：永久成长累积（所有学徒共享同一累积值，只加一次）
-  if (skill.enchantmentIds.some(id => isApprenticeEnchantment(id as EnchantmentType))) {
-    bonusPercent += runtimeState.apprenticeAccumulated
-  }
+  // 学徒系列：升华系统重设计 — apprenticeAccumulated 不再提供 bonusPercent 加成
+  // 价值改为解锁升华能力 + EXP 积累（见 canAscend / executeAscend）
 
   // 附魔循环（预留）
   // 41-4: QuestDevour 额外数值加成已移除，质变行为在 Phase 5 实现
@@ -559,15 +557,14 @@ export const MAX_CHAIN_DEPTH = 20
 
 /** 学徒附魔 growthPerProc 默认值（Phase 5 自触发类型 + 外部事件类型） */
 export const APPRENTICE_GROWTH_DEFAULTS: Partial<Record<EnchantmentType, number>> = {
-  // Phase 5 自触发类型
-  [EnchantmentType.ApprenticeSelf]: 0.005,      // 0.5% — selfTrigger（每次触发）
-  [EnchantmentType.ApprenticeProc]: 0.015,       // 1.5% — affixProc
+  // Phase 5 自触发类型（翻倍：解决"成长太慢"问题）
+  [EnchantmentType.ApprenticeSelf]: 0.01,        // 1% — selfTrigger（每次触发）
   // 资源专精类型（Phase 5 资源匹配时成长）
-  [EnchantmentType.ApprenticeResBase]: 0.02,       // 2% — 产出 base 资源
-  [EnchantmentType.ApprenticeResScore]: 0.02,      // 2% — 产出 score 资源
-  [EnchantmentType.ApprenticeResMultiplier]: 0.02,  // 2% — 产出 multiplier 资源
-  [EnchantmentType.ApprenticeResTime]: 0.02,       // 2% — 产出 time 资源
-  [EnchantmentType.ApprenticeResGold]: 0.02,       // 2% — 产出 gold 资源
+  [EnchantmentType.ApprenticeResBase]: 0.04,       // 4% — 产出 base 资源
+  [EnchantmentType.ApprenticeResScore]: 0.04,      // 4% — 产出 score 资源
+  [EnchantmentType.ApprenticeResMultiplier]: 0.04,  // 4% — 产出 multiplier 资源
+  [EnchantmentType.ApprenticeResTime]: 0.04,       // 4% — 产出 time 资源
+  [EnchantmentType.ApprenticeResGold]: 0.04,       // 4% — 产出 gold 资源
   // ApprenticeNeighbor 不在此表，按 APPRENTICE_NEIGHBOR_GROWTH 查 posRel 表
 }
 
@@ -580,90 +577,7 @@ export const APPRENTICE_RESOURCE_MAP: Partial<Record<EnchantmentType, ResourceTy
   [EnchantmentType.ApprenticeResGold]: 'gold',
 }
 
-/** 悟道·词条附魔：AffixType → 对应 EnchantmentType */
-export const APPRENTICE_AFFIX_MAP: Record<AffixType, EnchantmentType> = {
-  [AffixType.Convert]: EnchantmentType.ApprenticeAffixConvert,
-  [AffixType.Rainbow]: EnchantmentType.ApprenticeAffixRainbow,
-  [AffixType.Charge]: EnchantmentType.ApprenticeAffixCharge,
-  [AffixType.Decay]: EnchantmentType.ApprenticeAffixDecay,
-  [AffixType.Pulse]: EnchantmentType.ApprenticeAffixPulse,
-  [AffixType.Crit]: EnchantmentType.ApprenticeAffixCrit,
-  [AffixType.Cascade]: EnchantmentType.ApprenticeAffixCascade,
-  [AffixType.Void]: EnchantmentType.ApprenticeAffixVoid,
-  [AffixType.Resonance]: EnchantmentType.ApprenticeAffixResonance,
-  [AffixType.Mirror]: EnchantmentType.ApprenticeAffixMirror,
-  [AffixType.Link]: EnchantmentType.ApprenticeAffixLink,
-  [AffixType.Splash]: EnchantmentType.ApprenticeAffixSplash,
-  [AffixType.Amplify]: EnchantmentType.ApprenticeAffixAmplify,
-  [AffixType.Conduit]: EnchantmentType.ApprenticeAffixConduit,
-  [AffixType.Outcast]: EnchantmentType.ApprenticeAffixOutcast,
-  [AffixType.Gravity]: EnchantmentType.ApprenticeAffixGravity,
-  [AffixType.Ligature]: EnchantmentType.ApprenticeAffixLigature,
-  [AffixType.Twin]: EnchantmentType.ApprenticeAffixTwin,
-  [AffixType.Recurse]: EnchantmentType.ApprenticeAffixRecurse,
-  [AffixType.Taboo]: EnchantmentType.ApprenticeAffixTaboo,
-}
-
-/** 悟道·词条附魔成长率（权重低的词条成长更快） */
-export const APPRENTICE_AFFIX_GROWTH: Record<AffixType, number> = {
-  [AffixType.Convert]: 0.02,     // weight 8
-  [AffixType.Rainbow]: 0.015,    // weight 10
-  [AffixType.Charge]: 0.02,      // weight 8
-  [AffixType.Decay]: 0.015,      // weight 10
-  [AffixType.Pulse]: 0.015,      // weight 10
-  [AffixType.Crit]: 0.015,       // weight 10
-  [AffixType.Cascade]: 0.02,     // weight 8
-  [AffixType.Void]: 0.02,        // weight 8
-  [AffixType.Resonance]: 0.02,   // weight 8
-  [AffixType.Mirror]: 0.02,      // weight 8
-  [AffixType.Link]: 0.02,        // weight 8
-  [AffixType.Splash]: 0.02,      // weight 8
-  [AffixType.Amplify]: 0.02,     // weight 8
-  [AffixType.Conduit]: 0.025,    // weight 6
-  [AffixType.Outcast]: 0.02,     // weight 8
-  [AffixType.Gravity]: 0.04,     // weight 3
-  [AffixType.Ligature]: 0.02,    // weight 8
-  [AffixType.Twin]: 0.05,        // weight 2
-  [AffixType.Recurse]: 0.015,    // weight 10
-  [AffixType.Taboo]: 0.015,      // weight 10
-}
-
-/**
- * 悟道·词条：触发后跨技能通知。
- * 场上任何技能触发时，如果该技能拥有词条 X，
- * 则所有拥有"悟道·X"附魔的其他技能获得成长。
- * 由 orchestrator 在每次 trigger 完成后调用。
- */
-export function applyApprenticeAffixGrowth(
-  triggeredSkillId: string,
-  triggeredAffixTypes: AffixType[],
-  allSkills: Map<string, AffixSkillInstance>,
-  skillStates: Map<string, SkillRuntimeState>,
-  growthMultiplier: number = 1,
-): void {
-  // 收集触发技能的词条类型对应的悟道附魔类型
-  const targetEnchs = new Set<EnchantmentType>()
-  for (const affixType of triggeredAffixTypes) {
-    targetEnchs.add(APPRENTICE_AFFIX_MAP[affixType])
-  }
-
-  // 遍历所有技能，检查是否有匹配的悟道附魔
-  for (const [skillId, skill] of allSkills) {
-    if (skillId === triggeredSkillId) continue // 不含自身
-    const rt = skillStates.get(skillId)
-    if (!rt) continue
-
-    for (const enchId of skill.enchantmentIds) {
-      if (!targetEnchs.has(enchId as EnchantmentType)) continue
-      // 找到对应词条类型以获取成长率
-      for (const affixType of triggeredAffixTypes) {
-        if (APPRENTICE_AFFIX_MAP[affixType] === enchId) {
-          rt.apprenticeAccumulated += APPRENTICE_AFFIX_GROWTH[affixType] * growthMultiplier
-        }
-      }
-    }
-  }
-}
+// 悟道·词条附魔已删除（ApprenticeProc + ApprenticeAffix* 全系移除）
 
 // ===== Phase 4-6 辅助函数 =====
 
@@ -896,10 +810,6 @@ export function resolvePhase5(
     switch (ench) {
       case EnchantmentType.ApprenticeSelf:
         shouldGrow = true
-        break
-      case EnchantmentType.ApprenticeProc:
-        shouldGrow = triggerFlags.isCrit || triggerFlags.isPulse
-          || triggerFlags.isCascade || triggerFlags.isTabooPenalty
         break
       case EnchantmentType.ApprenticeResBase:
       case EnchantmentType.ApprenticeResScore:
@@ -1423,27 +1333,16 @@ export interface CategorizedEnchantments {
  * 返回按四大类分组的附魔候选（学徒/任务/衍生/运算符）。
  * 排除已装备的附魔。职业过滤由外部处理。
  */
-export function categorizeEnchantmentCandidates(skill: AffixSkillInstance, equippedAffixTypes?: Set<AffixType>): CategorizedEnchantments {
+export function categorizeEnchantmentCandidates(skill: AffixSkillInstance, _equippedAffixTypes?: Set<AffixType>): CategorizedEnchantments {
   const existingEnchs = new Set(skill.enchantmentIds)
 
-  // 学徒附魔 — 3 通用 + 5 资源专精 + 悟道·词条（仅场上已装备词条）
+  // 学徒附魔 — 2 通用 + 5 资源专精
   const apprenticeTypes: EnchantmentType[] = [
     EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeNeighbor,
-    EnchantmentType.ApprenticeProc,
     EnchantmentType.ApprenticeResBase, EnchantmentType.ApprenticeResScore,
     EnchantmentType.ApprenticeResMultiplier, EnchantmentType.ApprenticeResTime,
     EnchantmentType.ApprenticeResGold,
   ]
-  // 悟道·词条附魔：仅保留场上已装备的词条类型对应的附魔
-  if (equippedAffixTypes) {
-    for (const [affixType, enchType] of Object.entries(APPRENTICE_AFFIX_MAP)) {
-      if (equippedAffixTypes.has(Number(affixType) as AffixType)) {
-        apprenticeTypes.push(enchType)
-      }
-    }
-  } else {
-    apprenticeTypes.push(...Object.values(APPRENTICE_AFFIX_MAP))
-  }
   const apprentice = apprenticeTypes.filter(t => !existingEnchs.has(t))
 
   // 任务附魔（需匹配词条）
@@ -1680,16 +1579,56 @@ export function migrateLoadedSkills(
 // ===== 内部辅助 =====
 
 /** 判断附魔类型是否为学徒系列 */
-const APPRENTICE_AFFIX_ENCH_SET = new Set<EnchantmentType>(Object.values(APPRENTICE_AFFIX_MAP))
-
 export function isApprenticeEnchantment(ench: EnchantmentType): boolean {
   return ench === EnchantmentType.ApprenticeSelf
     || ench === EnchantmentType.ApprenticeNeighbor
-    || ench === EnchantmentType.ApprenticeProc
     || ench === EnchantmentType.ApprenticeResBase
     || ench === EnchantmentType.ApprenticeResScore
     || ench === EnchantmentType.ApprenticeResMultiplier
     || ench === EnchantmentType.ApprenticeResTime
     || ench === EnchantmentType.ApprenticeResGold
-    || APPRENTICE_AFFIX_ENCH_SET.has(ench)
+}
+
+// ===== 升华系统 (Apprentice Ascension) =====
+
+/** 升华基础阈值（Lv.3→4 所需 EXP） */
+export const ASCEND_BASE_THRESHOLD = 0.5
+/** 每级额外阈值增长 */
+export const ASCEND_THRESHOLD_GROWTH = 0.3
+/** 升华后基础值指数增长率 */
+export const ASCEND_GROWTH_RATE = 1.6
+
+/** 升华所需 EXP 阈值: 0.5 + 0.3 × (level - 3) */
+export function getAscendThreshold(level: number): number {
+  return ASCEND_BASE_THRESHOLD + ASCEND_THRESHOLD_GROWTH * (level - 3)
+}
+
+/** 升华所需金币: 30 × (level - 2) */
+export function getAscendGoldCost(level: number): number {
+  return 30 * (level - 2)
+}
+
+/** 检查技能是否可以升华 */
+export function canAscend(skill: AffixSkillInstance, runtimeState: SkillRuntimeState): boolean {
+  // 必须有学徒附魔
+  if (!skill.enchantmentIds.some(id => isApprenticeEnchantment(id as EnchantmentType))) return false
+  // 必须 Lv.3+
+  if (skill.level < 3) return false
+  // EXP 必须达到阈值
+  const threshold = getAscendThreshold(skill.level)
+  return runtimeState.apprenticeAccumulated >= threshold
+}
+
+/** 执行升华：level++, 扣减 EXP, 词缀参数缩放 */
+export function executeAscend(skill: AffixSkillInstance, runtimeState: SkillRuntimeState): void {
+  const threshold = getAscendThreshold(skill.level)
+  runtimeState.apprenticeAccumulated -= threshold
+  skill.level++
+  applyAffixLevelScaling(skill.affixes, 1)
+}
+
+/** 升华后基础值缩放: level <= 3 ? 1 : 1.6^(level-3) */
+export function getAscendBaseScale(level: number): number {
+  if (level <= 3) return 1
+  return Math.pow(ASCEND_GROWTH_RATE, level - 3)
 }

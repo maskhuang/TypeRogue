@@ -13,7 +13,7 @@ import {
   resetWordAffixTypes,
   checkJazzBonus,
   hasUncrownedKing,
-  getUncrownedKingBaseValue,
+  getUncrownedKingAffixlessBonus,
   shouldBlockEnchantment,
   resetSkillRelicState,
   initSkillRelicBehaviors,
@@ -142,28 +142,29 @@ describe('技能系统遗物行为 (Story 36.4)', () => {
       expect(state.affixSkills.get('s3')?.level).toBe(2)
     })
 
-    it('Lv.2 不变', () => {
+    it('Lv.2 → Lv.3（新行为：level < 3 → level++）', () => {
       setupSkill('s1', 2)
       const ids = applyTrainingManual()
-      expect(ids.length).toBe(0)
-      expect(state.player.skills.get('s1')?.level).toBe(2)
+      expect(ids.length).toBe(1)
+      expect(state.player.skills.get('s1')?.level).toBe(3)
+      expect(state.affixSkills.get('s1')?.level).toBe(3)
     })
 
-    it('Lv.3 不变', () => {
+    it('Lv.3 不变（上限）', () => {
       setupSkill('s1', 3)
       const ids = applyTrainingManual()
       expect(ids.length).toBe(0)
       expect(state.player.skills.get('s1')?.level).toBe(3)
     })
 
-    it('混合场景：Lv.1 升级，Lv.2/3 不变', () => {
+    it('混合场景：Lv.1→2, Lv.2→3, Lv.3 不变', () => {
       setupSkill('s1', 1)
       setupSkill('s2', 2)
       setupSkill('s3', 3)
       const ids = applyTrainingManual()
-      expect(ids.length).toBe(1)
+      expect(ids.length).toBe(2)
       expect(state.player.skills.get('s1')?.level).toBe(2)
-      expect(state.player.skills.get('s2')?.level).toBe(2)
+      expect(state.player.skills.get('s2')?.level).toBe(3)
       expect(state.player.skills.get('s3')?.level).toBe(3)
     })
 
@@ -259,7 +260,7 @@ describe('技能系统遗物行为 (Story 36.4)', () => {
   })
 
   // =====================
-  // AC5 + AC7: 无冕之王
+  // AC5: 无冕之王（重设计：无词缀加成）
   // =====================
   describe('无冕之王 (uncrowned_king)', () => {
     it('未持有 → hasUncrownedKing false', () => {
@@ -271,53 +272,20 @@ describe('技能系统遗物行为 (Story 36.4)', () => {
       expect(hasUncrownedKing()).toBe(true)
     })
 
-    it('未持有 → shouldBlockEnchantment 返回 false', () => {
+    it('shouldBlockEnchantment 始终返回 false（不再阻止附魔）', () => {
       expect(shouldBlockEnchantment([])).toBe(false)
-    })
-
-    it('持有 + 无附魔 → shouldBlockEnchantment 返回 true', () => {
       state.player.relics.add('uncrowned_king')
-      expect(shouldBlockEnchantment([])).toBe(true)
-    })
-
-    it('持有 + 有附魔 → shouldBlockEnchantment 返回 false', () => {
-      state.player.relics.add('uncrowned_king')
+      expect(shouldBlockEnchantment([])).toBe(false)
       expect(shouldBlockEnchantment(['some_enchant'])).toBe(false)
     })
-  })
 
-  // =====================
-  // AC5: 无冕之王 baseValue
-  // =====================
-  describe('无冕之王 baseValue 计算', () => {
-    const baseValues: [number, number, number] = [5, 8, 12]
-
-    it('Lv1 → baseValues[0]', () => {
-      expect(getUncrownedKingBaseValue(1, baseValues)).toBe(5)
+    it('未持有 → getUncrownedKingAffixlessBonus 返回 0', () => {
+      expect(getUncrownedKingAffixlessBonus()).toBe(0)
     })
 
-    it('Lv2 → baseValues[1]', () => {
-      expect(getUncrownedKingBaseValue(2, baseValues)).toBe(8)
-    })
-
-    it('Lv3 → baseValues[2]', () => {
-      expect(getUncrownedKingBaseValue(3, baseValues)).toBe(12)
-    })
-
-    it('Lv4 → Lv3 × 1.6', () => {
-      expect(getUncrownedKingBaseValue(4, baseValues)).toBeCloseTo(12 * 1.6)
-    })
-
-    it('Lv5 → Lv3 × 1.6²', () => {
-      expect(getUncrownedKingBaseValue(5, baseValues)).toBeCloseTo(12 * 1.6 * 1.6)
-    })
-
-    it('Lv6 → Lv3 × 1.6³', () => {
-      expect(getUncrownedKingBaseValue(6, baseValues)).toBeCloseTo(12 * Math.pow(1.6, 3))
-    })
-
-    it('Lv10 → Lv3 × 1.6⁷', () => {
-      expect(getUncrownedKingBaseValue(10, baseValues)).toBeCloseTo(12 * Math.pow(1.6, 7))
+    it('持有 → getUncrownedKingAffixlessBonus 返回 0.3', () => {
+      state.player.relics.add('uncrowned_king')
+      expect(getUncrownedKingAffixlessBonus()).toBe(0.3)
     })
   })
 
@@ -371,17 +339,10 @@ describe('技能系统遗物行为 (Story 36.4)', () => {
       expect(getLessIsMoreBonus()).toBe(0.2)
     })
 
-    it('uncrowned_king + 有附魔技能 → 不能突破 Lv3', () => {
+    it('uncrowned_king 不再阻止附魔', () => {
       state.player.relics.add('uncrowned_king')
-      // 有附魔的技能 → shouldBlockEnchantment false → 不阻止附魔
+      expect(shouldBlockEnchantment([])).toBe(false)
       expect(shouldBlockEnchantment(['quest_devour'])).toBe(false)
-      // 有附魔的技能不受 uncrowned_king 影响（仍受 Lv.3 上限）
-      // 这由 shop.ts 的 effectiveCap 逻辑保证（有附魔 → levelCap=3）
-    })
-
-    it('uncrowned_king + 无附魔技能 → 阻止附魔', () => {
-      state.player.relics.add('uncrowned_king')
-      expect(shouldBlockEnchantment([])).toBe(true)
     })
   })
 })

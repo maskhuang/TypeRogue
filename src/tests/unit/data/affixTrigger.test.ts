@@ -64,9 +64,6 @@ import {
   ALL_RESOURCES,
   MAX_RECURSE_DEPTH,
   APPRENTICE_GROWTH_DEFAULTS,
-  APPRENTICE_AFFIX_MAP,
-  APPRENTICE_AFFIX_GROWTH,
-  applyApprenticeAffixGrowth,
   MUTATION_HUNGER_CHANCE,
   buildEffectiveSkill,
 } from '../../../src/data/affixTrigger'
@@ -533,14 +530,15 @@ describe('resolvePhase2', () => {
   })
 
   describe('Enchantment bonuses', () => {
-    it('should add apprenticeAccumulated for apprentice enchantments', () => {
+    it('should NOT add apprenticeAccumulated for apprentice enchantments (ascension redesign)', () => {
       const skill = makeSkill({
         enchantmentIds: [EnchantmentType.ApprenticeSelf],
       })
       const state = makeRuntimeState({ apprenticeAccumulated: 0.35 })
       const ctx = makeContext()
       const result = resolvePhase2(skill, state, ctx, 5)
-      expect(result.bonusPercent).toBeCloseTo(0.35)
+      // 升华重设计：apprenticeAccumulated 不再提供 bonusPercent
+      expect(result.bonusPercent).toBeCloseTo(0)
     })
 
     it('should NOT add QuestDevour stacking bonus (41-4: removed)', () => {
@@ -623,28 +621,28 @@ describe('resolvePhase2', () => {
     })
   })
 
-  describe('Apprentice accumulated bonus', () => {
-    it('should apply apprenticeAccumulated exactly once even with multiple apprentice enchantments', () => {
+  describe('Apprentice accumulated bonus (ascension redesign)', () => {
+    it('should NOT apply apprenticeAccumulated as bonusPercent (even with multiple apprentice enchantments)', () => {
       const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeProc],
+        enchantmentIds: [EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeResBase],
       })
       const state = makeRuntimeState({ apprenticeAccumulated: 0.5 })
       const ctx = makeContext()
       const result = resolvePhase2(skill, state, ctx, 10)
-      // 0.5 should be added once, not twice: output = 10 * (1 + 0.5) = 15
-      expect(result.bonusPercent).toBeCloseTo(0.5)
-      expect(result.output).toBeCloseTo(15)
+      // 升华重设计：apprenticeAccumulated 不再提供 bonusPercent
+      expect(result.bonusPercent).toBeCloseTo(0)
+      expect(result.output).toBeCloseTo(10)
     })
 
-    it('should apply apprenticeAccumulated once with single apprentice enchantment', () => {
+    it('should NOT apply apprenticeAccumulated with single apprentice enchantment', () => {
       const skill = makeSkill({
         enchantmentIds: [EnchantmentType.ApprenticeSelf],
       })
       const state = makeRuntimeState({ apprenticeAccumulated: 0.3 })
       const ctx = makeContext()
       const result = resolvePhase2(skill, state, ctx, 10)
-      expect(result.bonusPercent).toBeCloseTo(0.3)
-      expect(result.output).toBeCloseTo(13)
+      expect(result.bonusPercent).toBeCloseTo(0)
+      expect(result.output).toBeCloseTo(10)
     })
 
     it('should not apply apprenticeAccumulated when no apprentice enchantments', () => {
@@ -654,7 +652,6 @@ describe('resolvePhase2', () => {
       const state = makeRuntimeState({ apprenticeAccumulated: 0.5 })
       const ctx = makeContext()
       const result = resolvePhase2(skill, state, ctx, 10)
-      // QuestDevour with 0 completions adds nothing, and no apprentice enchantment
       expect(result.bonusPercent).toBeCloseTo(0)
     })
   })
@@ -1652,30 +1649,10 @@ describe('resolvePhase5', () => {
       const ctx = makeContext()
       const flags = makeFlags()
       resolvePhase5(skill, state, ctx, flags, 10)
-      expect(state.apprenticeAccumulated).toBeCloseTo(0.10 + 0.005)
+      // 成长速率翻倍后: 0.01 (原 0.005)
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.10 + 0.01)
     })
 
-    it('ApprenticeProc: should accumulate on any affix proc', () => {
-      const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.ApprenticeProc],
-      })
-      const state = makeRuntimeState()
-      const ctx = makeContext()
-
-      // Pulse proc → growth
-      resolvePhase5(skill, state, ctx, makeFlags({ isPulse: true }), 10)
-      expect(state.apprenticeAccumulated).toBeCloseTo(0.015)
-    })
-
-    it('ApprenticeProc: should NOT accumulate when no affix proc', () => {
-      const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.ApprenticeProc],
-      })
-      const state = makeRuntimeState()
-      const ctx = makeContext()
-      resolvePhase5(skill, state, ctx, makeFlags(), 10)
-      expect(state.apprenticeAccumulated).toBe(0)
-    })
   })
 
   describe('Quest enchantment stacking', () => {
@@ -2337,28 +2314,21 @@ describe('Code review fixes', () => {
 // ===== Story 35.5: 附魔系统 — 溅射 + 学徒(12) =====
 
 describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness (精简后)', () => {
-  it('should contain only Self + Proc (excluding Neighbor)', () => {
-    const expectedTypes = [
-      EnchantmentType.ApprenticeSelf,
-      EnchantmentType.ApprenticeProc,
-    ]
-    for (const t of expectedTypes) {
-      expect(APPRENTICE_GROWTH_DEFAULTS[t]).toBeDefined()
-      expect(APPRENTICE_GROWTH_DEFAULTS[t]).toBeGreaterThan(0)
-    }
+  it('should contain Self + resource specializations (excluding Neighbor)', () => {
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeSelf]).toBeDefined()
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeSelf]).toBeGreaterThan(0)
   })
 
-  it('growthPerProc values should match design document', () => {
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeSelf]).toBeCloseTo(0.005)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeProc]).toBeCloseTo(0.015)
+  it('growthPerProc values should match design document (doubled)', () => {
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeSelf]).toBeCloseTo(0.01)
   })
 
-  it('resource specialization types should have 2% growth', () => {
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResBase]).toBeCloseTo(0.02)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResScore]).toBeCloseTo(0.02)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResMultiplier]).toBeCloseTo(0.02)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResTime]).toBeCloseTo(0.02)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResGold]).toBeCloseTo(0.02)
+  it('resource specialization types should have 4% growth (doubled)', () => {
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResBase]).toBeCloseTo(0.04)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResScore]).toBeCloseTo(0.04)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResMultiplier]).toBeCloseTo(0.04)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResTime]).toBeCloseTo(0.04)
+    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResGold]).toBeCloseTo(0.04)
   })
 
   it('ApprenticeNeighbor should NOT be in APPRENTICE_GROWTH_DEFAULTS', () => {
@@ -2367,11 +2337,11 @@ describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness (精简后)', () =
 })
 
 describe('Story 41.2: Resource specialization enchantments — Phase 5 growth', () => {
-  it('ApprenticeResBase: should grow when targetResource is base', () => {
+  it('ApprenticeResBase: should grow when targetResource is base (doubled rate)', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
     const state = makeRuntimeState()
     resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'base')
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.04)
   })
 
   it('ApprenticeResBase: should NOT grow when targetResource is score', () => {
@@ -2381,11 +2351,11 @@ describe('Story 41.2: Resource specialization enchantments — Phase 5 growth', 
     expect(state.apprenticeAccumulated).toBe(0)
   })
 
-  it('ApprenticeResGold: should grow when targetResource is gold', () => {
+  it('ApprenticeResGold: should grow when targetResource is gold (doubled rate)', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResGold] })
     const state = makeRuntimeState()
     resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'gold')
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.04)
   })
 
   it('should NOT grow when targetResource is undefined', () => {
@@ -2396,54 +2366,7 @@ describe('Story 41.2: Resource specialization enchantments — Phase 5 growth', 
   })
 })
 
-describe('Story 41.2: 悟道·词条附魔 — applyApprenticeAffixGrowth', () => {
-  it('should grow when matching affix type triggers on another skill', () => {
-    const skills = new Map<string, AffixSkillInstance>()
-    const states = new Map<string, SkillRuntimeState>()
-
-    // Skill A: has Crit affix (triggers)
-    const skillA = makeSkill({ id: 'A', affixes: [{ type: AffixType.Crit, chance: 0.3, critMult: 2 }] })
-    skills.set('A', skillA)
-    states.set('A', makeRuntimeState())
-
-    // Skill B: has ApprenticeAffixCrit enchantment (should grow)
-    const skillB = makeSkill({ id: 'B', enchantmentIds: [EnchantmentType.ApprenticeAffixCrit] })
-    skills.set('B', skillB)
-    states.set('B', makeRuntimeState())
-
-    applyApprenticeAffixGrowth('A', [AffixType.Crit], skills, states)
-
-    expect(states.get('B')!.apprenticeAccumulated).toBeCloseTo(APPRENTICE_AFFIX_GROWTH[AffixType.Crit])
-    expect(states.get('A')!.apprenticeAccumulated).toBe(0) // self excluded
-  })
-
-  it('should NOT grow when no matching affix', () => {
-    const skills = new Map<string, AffixSkillInstance>()
-    const states = new Map<string, SkillRuntimeState>()
-
-    const skillA = makeSkill({ id: 'A', affixes: [{ type: AffixType.Crit, chance: 0.3, critMult: 2 }] })
-    skills.set('A', skillA)
-    states.set('A', makeRuntimeState())
-
-    const skillB = makeSkill({ id: 'B', enchantmentIds: [EnchantmentType.ApprenticeAffixDecay] })
-    skills.set('B', skillB)
-    states.set('B', makeRuntimeState())
-
-    applyApprenticeAffixGrowth('A', [AffixType.Crit], skills, states)
-
-    expect(states.get('B')!.apprenticeAccumulated).toBe(0)
-  })
-
-  it('rare affixes should have higher growth rates', () => {
-    // Twin (weight 2) should have higher growth than Crit (weight 10)
-    expect(APPRENTICE_AFFIX_GROWTH[AffixType.Twin]).toBeGreaterThan(APPRENTICE_AFFIX_GROWTH[AffixType.Crit])
-    expect(APPRENTICE_AFFIX_GROWTH[AffixType.Gravity]).toBeGreaterThan(APPRENTICE_AFFIX_GROWTH[AffixType.Rainbow])
-  })
-
-  it('APPRENTICE_AFFIX_MAP should cover all 20 AffixTypes', () => {
-    expect(Object.keys(APPRENTICE_AFFIX_MAP).length).toBe(20)
-  })
-})
+// Story 41.2 悟道·词条附魔已删除（ApprenticeProc + ApprenticeAffix* 全系移除）
 
 describe('Story 41.2: Pruned apprentice types should no longer exist in APPRENTICE_EVENT_MAP', () => {
   it('applyApprenticeEvent returns false for all pruned events', () => {
@@ -2493,7 +2416,7 @@ describe('Story 35.6: applyQuestEvent external events', () => {
 describe('Story 41.2: filterEnchantmentsByClass (精简后无职业限定)', () => {
   const candidates = [
     EnchantmentType.ApprenticeSelf,
-    EnchantmentType.ApprenticeProc,
+    EnchantmentType.ApprenticeResBase,
     EnchantmentType.QuestDevour,
   ]
 

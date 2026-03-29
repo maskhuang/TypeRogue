@@ -15,8 +15,9 @@ import { eventBus } from '../core/events/EventBus';
 import { routeFragmentsToInventory } from './classes/FragmentQueue';
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
+import { getAscendBaseScale } from '../data/affixTrigger';
 import { getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
-import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, hasUncrownedKing, UK_GROWTH_RATE } from './relics/SkillRelicBehaviors';
+import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
 import { getAdjacentPowerBonus, getSymmetryPactBonus, getRowMedalBonus } from './relics/TopologyRelicBehaviors';
 import { getSkillKeys, getBindingState } from './bindingManager';
@@ -276,10 +277,14 @@ function triggerAffixSkillWithFeedback(
   const warmUpBonus = getWarmUpBonus();
   if (warmUpBonus > 0) relicBonus += warmUpBonus;
 
-  // Story 36.4: 无冕之王 — Lv4+ 按 Lv3 值 × 1.6^(level-3) 缩放
-  const ukScale = (hasUncrownedKing() && skill.level > 3 && skill.enchantmentIds.length === 0)
-    ? Math.pow(UK_GROWTH_RATE, skill.level - 3)
-    : 1;
+  // 升华缩放：Lv4+ 按 1.6^(level-3) 缩放基础值
+  const ascendScale = getAscendBaseScale(skill.level);
+
+  // 无冕之王���无词缀技能产出 +30%
+  if (skill.affixes.length === 0) {
+    const ukBonus = getUncrownedKingAffixlessBonus();
+    if (ukBonus > 0) relicBonus += ukBonus;
+  }
 
   // 记录触发前的学徒成长值，用于计算 growthDelta
   const runtimeState = state.affixSkillStates.get(skillId);
@@ -287,8 +292,8 @@ function triggerAffixSkillWithFeedback(
 
   const result = orchestrateAffixTrigger(skillId, triggerKey, ctx, {
     applyResource: (resource: ResourceType, amount: number, isMultiplyOp?: boolean) => {
-      // 无冕之王：Lv4+ 基础值缩放
-      if (ukScale > 1) amount = amount * ukScale;
+      // 升华缩放：Lv4+ 基础值缩放
+      if (ascendScale > 1) amount = amount * ascendScale;
       // 遗物加算：正产出 + relicBonus%（不放大 taboo 惩罚）
       let totalBonus = relicBonus;
       // Story 36.8: 资源潮汐 — 按资源类型条件加算
@@ -365,9 +370,9 @@ function triggerAffixSkillWithFeedback(
   for (const tr of result.triggerResults) {
     if (!tr.phase4) continue;
     const resource = tr.phase4.targetResource;
-    // 遗物缩放：同步缩放反馈值（无冕之王 + 加算遗物 + 资源潮汐，仅正产出）
+    // 遗物缩放：同步缩放反馈值（升华缩放 + 加算遗物 + 资源潮汐，仅正产出）
     let amount = tr.output;
-    if (ukScale > 1) amount = amount * ukScale;
+    if (ascendScale > 1) amount = amount * ascendScale;
     let feedbackBonus = relicBonus;
     const feedbackTide = getResourceTideBonus(resource);
     if (feedbackTide > 0) feedbackBonus += feedbackTide;

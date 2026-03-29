@@ -176,7 +176,7 @@ describe('附魔系统遗物行为 (Story 36.5)', () => {
       state.player.relics.add('enchant_anchor')
       setupAffixSkill('s1', ['quest_chain', 'apprentice_speed'])
       setupAffixSkill('s2', ['quest_devour'])
-      setupAffixSkill('s3', ['transmute', 'apprentice_proc'])
+      setupAffixSkill('s3', ['transmute', 'apprentice_res_base'])
       expect(getEnchantAnchorPriceMultiplier()).toBeCloseTo(1.5)
     })
 
@@ -215,22 +215,19 @@ describe('附魔系统遗物行为 (Story 36.5)', () => {
   // 交互测试
   // =====================
   describe('遗物交互', () => {
-    it('AC7: early_awakening + uncrowned_king — UK 阻止附魔优先于 EA', () => {
+    it('AC7: early_awakening — EA 降低附魔门槛', () => {
       state.player.relics.add('early_awakening')
-      state.player.relics.add('uncrowned_king')
-      // EA 让 Lv2 可附魔，但 UK 阻止无附魔技能的附魔
       expect(getMinEnchantmentLevel()).toBe(2)
-      expect(shouldBlockEnchantment([])).toBe(true) // UK 阻止
-      expect(shouldBlockEnchantment(['some_ench'])).toBe(false) // 有附魔的不阻止
+      // shouldBlockEnchantment 始终返回 false（UK 不再阻止）
+      expect(shouldBlockEnchantment([])).toBe(false)
+      expect(shouldBlockEnchantment(['some_ench'])).toBe(false)
     })
 
-    it('AC8: enchant_anchor + uncrowned_king — UK 无附魔技能 slot+1 无效', () => {
+    it('AC8: enchant_anchor — slot+1 对所有技能都有效', () => {
       state.player.relics.add('enchant_anchor')
-      state.player.relics.add('uncrowned_king')
-      // enchant_anchor 提供 +1 slot，但 UK 阻止无附魔技能获得附魔
-      // 所以对于无附魔技能，slot+1 实际无效（因为 shouldBlockEnchantment 先拦截）
       expect(getEnchantAnchorSlotBonus()).toBe(1)
-      expect(shouldBlockEnchantment([])).toBe(true) // UK 先拦截
+      // shouldBlockEnchantment 不再拦截
+      expect(shouldBlockEnchantment([])).toBe(false)
     })
   })
 })

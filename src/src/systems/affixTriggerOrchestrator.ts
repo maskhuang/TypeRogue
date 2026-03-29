@@ -9,7 +9,6 @@ import {
   triggerAffixSkill,
   MAX_RECURSE_DEPTH,
   MAX_CHAIN_DEPTH,
-  applyApprenticeAffixGrowth,
   getClassResources,
 } from '../data/affixTrigger'
 import type {
@@ -184,18 +183,6 @@ export function orchestrateAffixTrigger(
     results.push(result)
     totalOutput += effectiveOutput
     triggerCount++
-
-    // ── 悟道·词条：跨技能成长通知 ──
-    const triggeredAffixTypes = skill.affixes.map(a => a.type)
-    if (triggeredAffixTypes.length > 0) {
-      applyApprenticeAffixGrowth(
-        item.skillId,
-        triggeredAffixTypes,
-        ctx.allSkills,
-        ctx.skillStates,
-        ctx.apprenticeGrowthMultiplier,
-      )
-    }
 
     // ── 副作用 ──
     if (result.phase4) {

@@ -1807,9 +1807,9 @@ export async function startLevel(): Promise<void> {
   state.phase = 'battle';
   initAudio();
   startBGM('battle');
-  // Story 42.3: 注入累积溢出分作为初始分数
-  state.score = state.overflowScore;
-  scoreRoller.reset(state.overflowScore);
+  // 溢出分扣减目标分数，初始分数始终为 0
+  state.score = 0;
+  scoreRoller.reset(0);
   goldRoller.reset(Math.floor(state.resources.gold));
   comboRoller.reset(state.combo);
   timerRoller.reset(Math.ceil(state.time));
@@ -1856,6 +1856,12 @@ export async function startLevel(): Promise<void> {
     state.timeMax = Math.max(1, state.combo);
   }
   state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
+
+  // 溢出分扣减目标分数（最低 0），然后清零
+  if (state.overflowScore > 0) {
+    state.targetScore = Math.max(0, state.targetScore - state.overflowScore);
+    state.overflowScore = 0;
+  }
 
   // Demo: 使用降低难度的固定目标分数
   if (IS_DEMO && DEMO_TARGET_SCORES[state.level] !== undefined) {
