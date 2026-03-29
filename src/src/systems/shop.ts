@@ -649,32 +649,7 @@ export function computeSmartEstimate(
     }
   }
 
-  // 学徒附魔
-  {
-    const hasApprentice = skill.enchantmentIds.some(id => isApprenticeEnchantment(id as import('../data/affixes').EnchantmentType))
-    if (hasApprentice) {
-      const acc = rt?.apprenticeAccumulated ?? 0
-      const threshold = skill.level >= 3 ? getAscendThreshold(skill.level) : 0
-      if (threshold > 0) {
-        // 显示 EXP/阈值 进度
-        breakdown.push({ typeKey: 'apprentice', label: t('est.apprentice_exp', { exp: (acc * 100).toFixed(1), threshold: (threshold * 100).toFixed(0), level: skill.level + 1 }), detail: '' })
-      } else if (acc > 0) {
-        addPercent += acc
-        breakdown.push({ typeKey: 'apprentice', label: t('est.apprentice', { pct: (acc * 100).toFixed(1) }), detail: '' })
-      } else {
-        // 未成长时也显示标记
-        const isNeighbor = skill.enchantmentIds.includes(EnchantmentTypeEnum.ApprenticeNeighbor as string)
-        const relDetail = isNeighbor && skill.neighborPosRel
-          ? t('est.apprentice_neighbor_rel', { rel: t('rel.' + skill.neighborPosRel) })
-          : isNeighbor ? t('est.apprentice_neighbor') : t('est.apprentice_pending')
-        breakdown.push({
-          typeKey: 'apprentice',
-          label: t('est.apprentice_zero'),
-          detail: relDetail,
-        })
-      }
-    }
-  }
+  // 学徒附魔：直接改面板值，不需要额外预估行
 
   // 任务附魔进度 / 质变状态
   const questEnchEst = skill.enchantmentIds
@@ -696,28 +671,7 @@ export function computeSmartEstimate(
     }
   }
 
-  // 衍生附魔额外产出
-  if (skill.enchantmentIds.includes('transmute' as any) && skill.transmuteResource) {
-    const ratio = TRANSMUTE_RATIO_TABLE[skill.transmuteResource]
-    const extraResName = t('resource.' + skill.transmuteResource)
-    if (skill.transmuteResource === skill.resource) {
-      // 同资源：主产出增强
-      addPercent += ratio
-      breakdown.push({
-        typeKey: 'apprentice',
-        label: t('est.transmute_same', { pct: Math.round(ratio * 100) }),
-        detail: t('est.transmute_same_detail'),
-      })
-    } else {
-      // 异资源：额外产出行（不影响主估算，单独展示）
-      const estimatedExtra = base * (1 + addPercent) * multProduct * ratio
-      breakdown.push({
-        typeKey: 'apprentice',
-        label: t('est.transmute_extra', { val: formatEstimate(estimatedExtra), name: extraResName }),
-        detail: `(${Math.round(ratio * 100)}%)`,
-      })
-    }
-  }
+  // 衍生附魔已删除（Story 41.2）
 
   // 如果只有基础值行、没有任何预估项，返回 null
   if (breakdown.length <= 1) return null

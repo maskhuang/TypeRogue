@@ -64,6 +64,7 @@ import {
   ALL_RESOURCES,
   MAX_RECURSE_DEPTH,
   APPRENTICE_GROWTH_DEFAULTS,
+  RES_ENCHANTMENT_BY_RESOURCE,
   MUTATION_HUNGER_CHANCE,
   buildEffectiveSkill,
 } from '../../../src/data/affixTrigger'
@@ -1678,20 +1679,12 @@ describe('resolvePhase5', () => {
       expect(state.apprenticeAccumulated).toBeCloseTo(0.10 + 0.06)
     })
 
-    it('ApprenticeResBase: should grow proportional to output when targetResource matches', () => {
+    it('ApprenticeResBase: Phase 5 no longer grows (moved to global listener)', () => {
       const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
       const state = makeRuntimeState()
-      // output=10, baseLv1=5 → (10/5)*0.01 = 0.02
       resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'base')
-      expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
-    })
-
-    it('ApprenticeResBase: higher output → more EXP', () => {
-      const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
-      const state = makeRuntimeState()
-      // output=50, baseLv1=5 → (50/5)*0.01 = 0.10
-      resolvePhase5(skill, state, makeContext(), makeFlags(), 50, 0, 'base')
-      expect(state.apprenticeAccumulated).toBeCloseTo(0.10)
+      // Res* 已移至 skills.ts applyResource 全场监听
+      expect(state.apprenticeAccumulated).toBe(0)
     })
 
   })
@@ -2366,43 +2359,28 @@ describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS (redesigned — now empty, Res*
   })
 })
 
-describe('Story 41.2: Resource specialization enchantments — Phase 5 growth (output-scaled)', () => {
-  it('ApprenticeResBase: should grow proportional to output (output=10, baseLv1=5 → 0.02)', () => {
+describe('Story 41.2: Resource specialization enchantments — Phase 5 no longer self-triggers (moved to global listener)', () => {
+  it('ApprenticeResBase: Phase 5 should NOT grow (Res* now uses global resource listener)', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
     const state = makeRuntimeState()
-    // (10/5)*0.01 = 0.02
     resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'base')
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
-  })
-
-  it('ApprenticeResBase: should NOT grow when targetResource is score', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
-    const state = makeRuntimeState()
-    resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'score')
+    // Res* 已移至 skills.ts applyResource 全场监听，Phase 5 不再自增长
     expect(state.apprenticeAccumulated).toBe(0)
   })
 
-  it('ApprenticeResGold: should grow proportional to output (output=9, goldLv1=3 → 0.03)', () => {
+  it('ApprenticeResGold: Phase 5 should NOT grow', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResGold] })
     const state = makeRuntimeState()
-    // (9/3)*0.01 = 0.03
     resolvePhase5(skill, state, makeContext(), makeFlags(), 9, 0, 'gold')
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
-  })
-
-  it('should NOT grow when targetResource is undefined', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
-    const state = makeRuntimeState()
-    resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0)
     expect(state.apprenticeAccumulated).toBe(0)
   })
 
-  it('ApprenticeResScore: higher output → more EXP (output=45, scoreLv1=15 → 0.03)', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResScore] })
-    const state = makeRuntimeState()
-    // (45/15)*0.01 = 0.03
-    resolvePhase5(skill, state, makeContext(), makeFlags(), 45, 0, 'score')
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
+  it('RES_ENCHANTMENT_BY_RESOURCE maps resource types to Res* enchantments', () => {
+    expect(RES_ENCHANTMENT_BY_RESOURCE['base']).toBe(EnchantmentType.ApprenticeResBase)
+    expect(RES_ENCHANTMENT_BY_RESOURCE['score']).toBe(EnchantmentType.ApprenticeResScore)
+    expect(RES_ENCHANTMENT_BY_RESOURCE['gold']).toBe(EnchantmentType.ApprenticeResGold)
+    expect(RES_ENCHANTMENT_BY_RESOURCE['multiplier']).toBe(EnchantmentType.ApprenticeResMultiplier)
+    expect(RES_ENCHANTMENT_BY_RESOURCE['time']).toBe(EnchantmentType.ApprenticeResTime)
   })
 })
 

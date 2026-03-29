@@ -622,6 +622,148 @@ describe('AC10: 性能', () => {
   })
 })
 
+// =============================================
+// Conduit 修复：额外触发实际执行 + 不级联
+// =============================================
+
+describe('Conduit 额外触发', () => {
+  it('Conduit 邻居使触发技能产出翻倍（+1 额外触发）', () => {
+    // skillA(Crit) 在 'a'，skillC(Conduit+Crit) 在 's' — 同行
+    // A 触发 → C 的 Conduit 给 A 额外 +1 触发 → 总共 2 次 A 的产出
+    const skillA = makeSkill({
+      id: 'skill_a',
+      resource: 'base',
+      affixes: [{ type: AffixType.Crit, chance: 0, critMult: 1.0 }], // Crit chance=0 不暴击
+    })
+    const skillC = makeSkill({
+      id: 'skill_c',
+      resource: 'base',
+      affixes: [
+        { type: AffixType.Conduit, posRel: PositionRelation.SameRow },
+        { type: AffixType.Crit, chance: 0, critMult: 1.0 }, // 共享词条类型
+      ],
+    })
+
+    const bindings = new Map([['a', 'skill_a'], ['s', 'skill_c']])
+    const allSkills = new Map([['skill_a', skillA], ['skill_c', skillC]])
+    const skillStates = new Map([
+      ['skill_a', makeRuntimeState({ skillId: 'skill_a' })],
+      ['skill_c', makeRuntimeState({ skillId: 'skill_c' })],
+    ])
+
+    const ctx = makeContext({ triggerKey: 'a', bindings, allSkills, skillStates })
+    const result = orchestrateAffixTrigger('skill_a', 'a', ctx)
+
+    // A 初始触发(1) + Conduit 额外触发(2) = 2 次
+    expect(result.triggerCount).toBe(2)
+    expect(result.enteredPseudoInfinite).toBe(false)
+    // 产出约为 A 基础值 × 2
+    expect(result.totalOutput).toBeCloseTo(5 * 2, 0)
+  })
+
+  it('质变 Conduit 给 +2 额外触发', () => {
+    const skillA = makeSkill({
+      id: 'skill_a',
+      resource: 'base',
+      affixes: [{ type: AffixType.Crit, chance: 0, critMult: 1.0 }],
+    })
+    const skillC = makeSkill({
+      id: 'skill_c',
+      resource: 'base',
+      affixes: [
+        { type: AffixType.Conduit, posRel: PositionRelation.SameRow },
+        { type: AffixType.Crit, chance: 0, critMult: 1.0 },
+      ],
+    })
+
+    const bindings = new Map([['a', 'skill_a'], ['s', 'skill_c']])
+    const allSkills = new Map([['skill_a', skillA], ['skill_c', skillC]])
+    const skillStates = new Map([
+      ['skill_a', makeRuntimeState({ skillId: 'skill_a' })],
+      ['skill_c', makeRuntimeState({ skillId: 'skill_c', questTransformed: true })],
+    ])
+
+    const ctx = makeContext({ triggerKey: 'a', bindings, allSkills, skillStates })
+    const result = orchestrateAffixTrigger('skill_a', 'a', ctx)
+
+    // A 初始触发(1) + 质变 Conduit 额外触发 ×2 = 3 次
+    expect(result.triggerCount).toBe(3)
+    expect(result.enteredPseudoInfinite).toBe(false)
+  })
+
+  it('Conduit 额外触发不会级联（chainAffixesDisabled）', () => {
+    // A(Crit) ← Conduit 邻居 C(Conduit+Crit)
+    // A 额外触发时 chainAffixesDisabled=true → C 的 Conduit 不再产生 action → 不无限
+    const skillA = makeSkill({
+      id: 'skill_a',
+      resource: 'base',
+      affixes: [{ type: AffixType.Crit, chance: 0, critMult: 1.0 }],
+    })
+    const skillC = makeSkill({
+      id: 'skill_c',
+      resource: 'base',
+      affixes: [
+        { type: AffixType.Conduit, posRel: PositionRelation.SameRow },
+        { type: AffixType.Crit, chance: 0, critMult: 1.0 },
+      ],
+    })
+
+    const bindings = new Map([['a', 'skill_a'], ['s', 'skill_c']])
+    const allSkills = new Map([['skill_a', skillA], ['skill_c', skillC]])
+    const skillStates = new Map([
+      ['skill_a', makeRuntimeState({ skillId: 'skill_a' })],
+      ['skill_c', makeRuntimeState({ skillId: 'skill_c' })],
+    ])
+
+    const ctx = makeContext({ triggerKey: 'a', bindings, allSkills, skillStates })
+    const result = orchestrateAffixTrigger('skill_a', 'a', ctx)
+
+    // 仅 2 次（初始 + 1 conduit），不会无限级联
+    expect(result.triggerCount).toBe(2)
+    expect(result.enteredPseudoInfinite).toBe(false)
+  })
+
+  it('Conduit 额外触发不会触发邻居的 Resonance/Link', () => {
+    // A(Crit) 在 'a'，Conduit 邻居 C(Conduit+Crit) 在 's'
+    // B(Resonance→base) 在 'd' — A 额外触发时 chainAffixesDisabled → B 不被共鸣触发
+    const skillA = makeSkill({
+      id: 'skill_a',
+      resource: 'base',
+      affixes: [{ type: AffixType.Crit, chance: 0, critMult: 1.0 }],
+    })
+    const skillC = makeSkill({
+      id: 'skill_c',
+      resource: 'score', // 不同资源，靠共享 Crit 词条类型触发 Conduit
+      affixes: [
+        { type: AffixType.Conduit, posRel: PositionRelation.SameRow },
+        { type: AffixType.Crit, chance: 0, critMult: 1.0 },
+      ],
+    })
+    const skillB = makeSkill({
+      id: 'skill_b',
+      resource: 'base',
+      affixes: [{ type: AffixType.Resonance, posRel: PositionRelation.SameRow, resource: 'base' as any }],
+    })
+
+    const bindings = new Map([['a', 'skill_a'], ['s', 'skill_c'], ['d', 'skill_b']])
+    const allSkills = new Map([['skill_a', skillA], ['skill_c', skillC], ['skill_b', skillB]])
+    const skillStates = new Map([
+      ['skill_a', makeRuntimeState({ skillId: 'skill_a' })],
+      ['skill_c', makeRuntimeState({ skillId: 'skill_c' })],
+      ['skill_b', makeRuntimeState({ skillId: 'skill_b' })],
+    ])
+
+    const ctx = makeContext({ triggerKey: 'a', bindings, allSkills, skillStates })
+    const result = orchestrateAffixTrigger('skill_a', 'a', ctx)
+
+    // A 初始触发(1) → Resonance 触发 B(2) + Conduit 额外触发 A(3)
+    // Conduit 的额外触发 A chainAffixesDisabled → 不触发 B 的 Resonance
+    // 总共 3 次（不是 4 或更多）
+    expect(result.triggerCount).toBe(3)
+    expect(result.enteredPseudoInfinite).toBe(false)
+  })
+})
+
 // ===== Story 40.9: Orchestrator 多格感知 =====
 
 describe('orchestrateAffixTrigger — 多格 occupiedKeys 传播', () => {

@@ -15,7 +15,7 @@ import { eventBus } from '../core/events/EventBus';
 import { routeFragmentsToInventory } from './classes/FragmentQueue';
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
-import { getAscendBaseScale, canAscend, executeAscend } from '../data/affixTrigger';
+import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE } from '../data/affixTrigger';
 import { getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
@@ -24,7 +24,7 @@ import { getSkillKeys, getBindingState } from './bindingManager';
 import { getShortSprintBonus } from './relics/WordRelicBehaviors';
 import { recordResourceProduction, getResourceTideBonus, resetWordResourceAmounts } from './relics/ResourceRelicBehaviors';
 import { getWarmUpBonus } from './relics/StageRelicBehaviors';
-import { AffixType } from '../data/affixes';
+import { AffixType, BASE_VALUES } from '../data/affixes';
 import { inputHandler } from './typing/InputHandler';
 
 
@@ -304,6 +304,17 @@ function triggerAffixSkillWithFeedback(
       if (amount > 0) recordResourceProduction(resource, amount);
       // boss_resource_tax: 追踪本词资源产出
       if (amount > 0) recordWordResourceOutput(resource, amount);
+
+      // Res* 学徒附魔：全场资源产出监听（任何技能/遗物产出时，所有匹配 Res* 附魔的技能积累 EXP）
+      const resEnch = RES_ENCHANTMENT_BY_RESOURCE[resource];
+      if (resEnch && amount > 0) {
+        const resGrowth = (amount / BASE_VALUES[resource][0]) * APPRENTICE_RES_EXP_RATE * (ctx.apprenticeGrowthMultiplier ?? 1);
+        for (const [sid, sk] of state.affixSkills) {
+          if (!sk.enchantmentIds.includes(resEnch)) continue;
+          const rt = state.affixSkillStates.get(sid);
+          if (rt) rt.apprenticeAccumulated += resGrowth;
+        }
+      }
 
       if (isMultiplyOp) {
         // 乘算化：resource *= amount（amount 即乘数）

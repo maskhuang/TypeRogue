@@ -576,6 +576,15 @@ export const APPRENTICE_RESOURCE_MAP: Partial<Record<EnchantmentType, ResourceTy
   [EnchantmentType.ApprenticeResGold]: 'gold',
 }
 
+/** 资源类型→资源专精附魔映射（APPRENTICE_RESOURCE_MAP 反向） */
+export const RES_ENCHANTMENT_BY_RESOURCE: Partial<Record<ResourceType, EnchantmentType>> = {
+  base: EnchantmentType.ApprenticeResBase,
+  score: EnchantmentType.ApprenticeResScore,
+  multiplier: EnchantmentType.ApprenticeResMultiplier,
+  time: EnchantmentType.ApprenticeResTime,
+  gold: EnchantmentType.ApprenticeResGold,
+}
+
 // 悟道·词条附魔已删除（ApprenticeProc + ApprenticeAffix* 全系移除）
 
 // ===== Phase 4-6 辅助函数 =====
@@ -811,17 +820,7 @@ export function resolvePhase5(
         shouldGrow = true
         overrideGrowth = APPRENTICE_NEIGHBOR_GROWTH[skill.neighborPosRel!] ?? 0.04
         break
-      case EnchantmentType.ApprenticeResBase:
-      case EnchantmentType.ApprenticeResScore:
-      case EnchantmentType.ApprenticeResMultiplier:
-      case EnchantmentType.ApprenticeResTime:
-      case EnchantmentType.ApprenticeResGold:
-        if (targetResource != null && APPRENTICE_RESOURCE_MAP[ench] === targetResource) {
-          shouldGrow = true
-          // 按产出量缩放: (output / baseLv1Value) × rate
-          overrideGrowth = (output / BASE_VALUES[targetResource][0]) * APPRENTICE_RES_EXP_RATE
-        }
-        break
+      // Res* 系列已改为全场资源产出监听（见 skills.ts applyResource），不再在 Phase 5 自触发
     }
 
     if (shouldGrow && overrideGrowth > 0) {
@@ -1340,7 +1339,7 @@ export interface CategorizedEnchantments {
 export function categorizeEnchantmentCandidates(skill: AffixSkillInstance, _equippedAffixTypes?: Set<AffixType>): CategorizedEnchantments {
   const existingEnchs = new Set(skill.enchantmentIds)
 
-  // 学徒附魔 — 1 通用 + 5 资源专精（ApprenticeSelf 已删除）
+  // 学徒附魔 — 1 通用 + 5 资源专精（全局监听，不限制技能资源类型）
   const apprenticeTypes: EnchantmentType[] = [
     EnchantmentType.ApprenticeNeighbor,
     EnchantmentType.ApprenticeResBase, EnchantmentType.ApprenticeResScore,
