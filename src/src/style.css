@@ -393,6 +393,43 @@ body {
     50% { transform: translateX(-50%) scale(1.3); opacity: 1; }
 }
 
+/* Charge 蓄力字母：蓝色圆点 + 呼吸脉冲，提示玩家长按 */
+.letter.is-charge::after {
+    background: #3498db;
+    box-shadow: 0 0 10px rgba(52,152,219,0.9);
+    width: 8px;
+    height: 8px;
+    animation: chargeDotPulse 1s ease-in-out infinite;
+}
+
+@keyframes chargeDotPulse {
+    0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.7; }
+    50% { transform: translateX(-50%) scale(1.5); opacity: 1; }
+}
+
+/* Charge 蓄力中：字母发光 + 底部进度条 */
+.letter.charging {
+    color: #3498db !important;
+    text-shadow: 0 0 12px rgba(52,152,219,0.8);
+}
+
+.letter.charging::before {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3498db, #5dade2);
+    box-shadow: 0 0 8px rgba(52,152,219,0.8);
+    border-radius: 2px;
+    animation: chargeBar var(--charge-duration, 1.5s) linear forwards;
+}
+
+@keyframes chargeBar {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
 .letter.skill-triggered {
     color: #ffe66d !important;
     text-shadow: 0 0 20px rgba(255,230,109,0.8);

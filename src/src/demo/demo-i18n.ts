@@ -1413,8 +1413,8 @@ const EN: Record<string, string> = {
   // --- affix descriptions (20) ---
   'affix_desc.convert': 'Reads another resource value, adds scaled bonus to this output',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
-  'affix_desc.charge': 'Charges while idle, releases bonus on trigger',
-  'affix_desc.decay': 'Highest bonus on first trigger per word, decays each trigger, resets per word',
+  'affix_desc.charge': 'Hold to charge, auto-release when full or early release on key up; bonus scales with charge',
+  'affix_desc.decay': 'Highest bonus on first trigger, decays each trigger to floor, resets per stage',
   'affix_desc.pulse': 'Bursts every N triggers',
   'affix_desc.crit': 'Chance to crit on trigger',
   'affix_desc.cascade': 'When prev key and current key match a position relation, output multiplied',

@@ -106,12 +106,14 @@ export function resetWordResourceTypes(): void {
 }
 
 /**
- * Story 41-5: Charge 长按蓄力 — 每帧更新充能值。
+ * Charge 按住蓄力 — 每帧更新充能值。
  * 遍历当前 held keys → 查 bindings → 找 Charge affix → 累加 chargeAccumulated。
+ * 返回本帧刚蓄满的 key 列表（大写），供 battle.ts 自动释放。
  */
-export function updateChargeProducers(dt: number): void {
+export function updateChargeProducers(dt: number): string[] {
   const heldKeys = inputHandler.getHeldKeys()
-  if (heldKeys.size === 0) return
+  const justFull: string[] = []
+  if (heldKeys.size === 0) return justFull
 
   for (const [key] of heldKeys) {
     const skillId = state.player.bindings.get(key.toLowerCase())
@@ -121,18 +123,21 @@ export function updateChargeProducers(dt: number): void {
     const rt = state.affixSkillStates.get(skillId)
     if (!rt) continue
 
-    // 找 Charge affix
     const chargeAffix = skill.affixes.find(a => a.type === AffixType.Charge)
     if (!chargeAffix) continue
 
     const maxBonus = chargeAffix.maxBonus ?? 0
-    if (rt.chargeAccumulated >= maxBonus) continue // 已满
+    if (rt.chargeAccumulated >= maxBonus) continue
 
     rt.chargeAccumulated = Math.min(
       rt.chargeAccumulated + (chargeAffix.gainPerSec ?? 0) * dt,
       maxBonus,
     )
+    if (rt.chargeAccumulated >= maxBonus) {
+      justFull.push(key.toUpperCase())
+    }
   }
+  return justFull
 }
 
 /** 检查技能是否有 Charge 词条 */
