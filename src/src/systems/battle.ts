@@ -62,11 +62,16 @@ let chaosSeedEnchantments: Map<string, string> = new Map();
 export function applyChaosSeedEnchantments(): void {
   if (!state.player.relics.has('chaos_seed')) return;
   const playerClass = state.classId !== 'none' ? state.classId : undefined;
+  // 收集场上所有已装备词条类型
+  const equippedAffixTypes = new Set<import('../data/affixes').AffixType>();
+  for (const [, s] of state.affixSkills) {
+    for (const affix of s.affixes) equippedAffixTypes.add(affix.type);
+  }
   for (const [skillId, skill] of state.affixSkills) {
     if (skill.enchantmentIds.length > 0) continue;
     // Story 36.4: 无冕之王 — 不给无附魔技能添加临时附魔
     if (hasUncrownedKing()) continue;
-    const categorized = filterCategorizedByClass(categorizeEnchantmentCandidates(skill), playerClass);
+    const categorized = filterCategorizedByClass(categorizeEnchantmentCandidates(skill, equippedAffixTypes), playerClass);
     const chosen = weightedPickEnchantment(categorized, random);
     if (!chosen) continue;
     skill.enchantmentIds.push(chosen);
@@ -160,15 +165,52 @@ let _elapsedSeconds = 0; // Story 42.4: 关内已流逝秒数（时间加速计�
 let _lastAccelText = ''; // Story 42.4: 上次显示的加速倍率文本（脉冲动画检测用）
 let _isBoss = false; // Story 42.4: 当前关是否 Boss（startTimer 缓存，避免每 tick 调用 getStageType）
 
-// === Charge hold-release: 延迟触发 ===
-const _pendingChargeTriggers = new Map<string, { skillId: string; key: string }>();
+// === Charge 按住蓄力：按下暂停推进，蓄满自动释放或松开提前释放 ===
+const _pendingChargeTriggers = new Map<string, { skillId: string; key: string; letterIndex: number }>();
+let _chargeHolding = false;
+
+/** 释放 Charge（蓄满自动 or keyup 提前） */
+function releaseCharge(key: string): void {
+  const pending = _pendingChargeTriggers.get(key);
+  if (!pending) return;
+  _pendingChargeTriggers.delete(key);
+  _chargeHolding = false;
+
+  // 检测是否满蓄力 → 触发 QuestEnergize 任务事件
+  const _skill = state.affixSkills.get(pending.skillId);
+  const _rt = state.affixSkillStates.get(pending.skillId);
+  if (_skill && _rt) {
+    const chargeAffix = _skill.affixes.find(a => a.type === AffixType.Charge);
+    const maxBonus = chargeAffix?.maxBonus ?? 1;
+    if (_rt.chargeAccumulated >= maxBonus) {
+      applyQuestEvent('chargeFull', _rt, _skill.enchantmentIds, getQuestStackIncrement());
+    }
+  }
+
+  triggerSkill(pending.skillId, pending.key);
+
+  // 推进字母
+  const el = getElements();
+  const letterEl = el.word.children[pending.letterIndex] as HTMLElement;
+  if (letterEl) {
+    letterEl.classList.remove('charging', 'current');
+    letterEl.classList.add('correct');
+  }
+
+  state.player.index = pending.letterIndex + 1;
+  if (state.player.index >= state.player.word.length) {
+    completeWord();
+  } else {
+    const nextLetter = el.word.children[state.player.index] as HTMLElement;
+    nextLetter?.classList.remove('pending');
+    nextLetter?.classList.add('current');
+  }
+  updateHUD();
+}
 
 function handleChargeRelease(e: { key: string }): void {
   if (state.phase !== 'battle') return;
-  const pending = _pendingChargeTriggers.get(e.key);
-  if (!pending) return;
-  _pendingChargeTriggers.delete(e.key);
-  triggerSkill(pending.skillId, pending.key);
+  releaseCharge(e.key);
 }
 
 // === 分数滚轮动画 (Story 31.4) ===
@@ -371,7 +413,11 @@ function renderWord(): void {
     else if (i === s.index) span.classList.add('current');
     else span.classList.add('pending');
 
-    if (s.bindings.has(s.word[i].toLowerCase())) span.classList.add('has-skill');
+    const boundSkillId = s.bindings.get(s.word[i].toLowerCase());
+    if (boundSkillId) {
+      span.classList.add('has-skill');
+      if (isChargeSkill(boundSkillId)) span.classList.add('is-charge');
+    }
     el.word.appendChild(span);
   }
 
@@ -515,13 +561,39 @@ function handleKeyPress(data: { key: string; timestamp: number }): void {
  * Story 36.2: 小助手自动补全 — 按顺序执行剩余字母的 playerCorrect 逻辑
  * Story 41-5: 导出供 Charge 质变满蓄力自动完成使用
  */
+/** 自动补全剩余字母（小助手 Tab / Charge 质变） */
 export function performAutocomplete(source: 'tab' | 'charge' = 'tab'): void {
   const word = state.player.word;
   showFeedback(source === 'charge' ? '⚡ Auto ✓' : 'Tab ✓', '#00ff88');
+
+  // Charge 质变：保存蓄力值，自动补全期间每次触发都吃到本次加成
+  let chargeSnapshots: Map<string, number> | null = null;
+  if (source === 'charge') {
+    chargeSnapshots = new Map();
+    for (const [skillId, rt] of state.affixSkillStates) {
+      if (rt.chargeAccumulated > 0) chargeSnapshots.set(skillId, rt.chargeAccumulated);
+    }
+  }
+
   while (state.player.index < word.length) {
+    // 恢复蓄力快照，让每个字母都吃到加成
+    if (chargeSnapshots) {
+      for (const [skillId, val] of chargeSnapshots) {
+        const rt = state.affixSkillStates.get(skillId);
+        if (rt) rt.chargeAccumulated = val;
+      }
+    }
     const k = word[state.player.index].toLowerCase();
     playerCorrect(k);
     eventBus.emit('word:correct', { key: k, index: state.player.index - 1 });
+  }
+
+  // 自动补全结束后清零蓄力
+  if (chargeSnapshots) {
+    for (const [skillId] of chargeSnapshots) {
+      const rt = state.affixSkillStates.get(skillId);
+      if (rt) rt.chargeAccumulated = 0;
+    }
   }
 }
 
@@ -597,9 +669,19 @@ function playerCorrect(k: string): void {
       state.time += concertoBonus;
       showFeedback(t('battle.dual_concerto', { value: concertoBonus }), '#00ff88', undefined, undefined, { relicId: 'dual_concerto', resource: 'time', amount: concertoBonus });
     }
-    // Charge: hold-release — 延迟到 keyup 触发
+    // Charge: 按住蓄力，暂停字母推进
     if (isChargeSkill(skillId)) {
-      _pendingChargeTriggers.set(k.toUpperCase(), { skillId, key: k });
+      _pendingChargeTriggers.set(k.toUpperCase(), { skillId, key: k, letterIndex: state.player.index });
+      _chargeHolding = true;
+      // 计算蓄满所需时间，驱动进度条动画
+      const chargeAffix = state.affixSkills.get(skillId)?.affixes.find(a => a.type === AffixType.Charge);
+      const rt = state.affixSkillStates.get(skillId);
+      const maxBonus = chargeAffix?.maxBonus ?? 1;
+      const gainPerSec = chargeAffix?.gainPerSec ?? 0.08;
+      const remaining = maxBonus - (rt?.chargeAccumulated ?? 0);
+      const duration = remaining / gainPerSec;
+      letter.style.setProperty('--charge-duration', `${duration}s`);
+      letter.classList.add('charging');
     } else {
       triggerSkill(skillId, k);
     }
@@ -697,29 +779,32 @@ function playerCorrect(k: string): void {
     state.time -= getShieldedValue(keystrokeTax, true);
   }
 
-  state.player.index++;
+  // Charge 按住蓄力：字母推进延迟到释放（releaseCharge）
+  if (!_chargeHolding) {
+    state.player.index++;
 
-  // 小助手：首字母完成后显示 Tab 提示
-  if (state.player.index === 1 && state.player.relics.has('little_helper') && isRepeatWord(state.player.word)) {
-    const existing = el.word.querySelector('.tab-hint');
-    if (!existing) {
-      const hint = document.createElement('span');
-      hint.className = 'tab-hint';
-      hint.textContent = t('battle.tab_hint');
-      el.word.appendChild(hint);
+    // 小助手：首字母完成后显示 Tab 提示
+    if (state.player.index === 1 && state.player.relics.has('little_helper') && isRepeatWord(state.player.word)) {
+      const existing = el.word.querySelector('.tab-hint');
+      if (!existing) {
+        const hint = document.createElement('span');
+        hint.className = 'tab-hint';
+        hint.textContent = t('battle.tab_hint');
+        el.word.appendChild(hint);
+      }
     }
-  }
 
-  // 实时更新结算面板
-  updateSettlementLive();
+    // 实时更新结算面板
+    updateSettlementLive();
 
-  // 完成词语
-  if (state.player.index >= state.player.word.length) {
-    completeWord();
-  } else {
-    const nextLetter = el.word.children[state.player.index] as HTMLElement;
-    nextLetter?.classList.remove('pending');
-    nextLetter?.classList.add('current');
+    // 完成词语
+    if (state.player.index >= state.player.word.length) {
+      completeWord();
+    } else {
+      const nextLetter = el.word.children[state.player.index] as HTMLElement;
+      nextLetter?.classList.remove('pending');
+      nextLetter?.classList.add('current');
+    }
   }
 
   updateHUD();
@@ -1246,8 +1331,7 @@ function showGoldReward(onComplete: () => void): void {
   }
 
   // ��算奖励：���础100 + 溢出增��（上限100%）（结算时发放��� + 技能产出 + 遗物加成
-  const overflowBonus = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
-  let baseGold = Math.floor(100 * (1 + overflowBonus));
+  let baseGold = 100;
   const skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
   const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
   let relicGold = Math.floor(goldRelicResult.effects.gold) + _battleRelicGold;
@@ -1276,14 +1360,12 @@ function showGoldReward(onComplete: () => void): void {
   const goldTreasureEl = document.getElementById('gold-treasure');
   const goldTotalEl = document.getElementById('gold-total');
 
-  // 基础金币行：显示溢出加成
+  // 基础金币行：固定100
   const baseRow = document.getElementById('gold-base-row');
   if (baseRow) {
     const baseValEl = baseRow.querySelector('.gold-reward-value');
     if (baseValEl) {
-      baseValEl.textContent = overflowBonus > 0
-        ? `100 +${Math.floor(100 * overflowBonus)}`
-        : '100';
+      baseValEl.textContent = '100';
     }
   }
 
@@ -1356,8 +1438,11 @@ function startTimer(): void {
     const timeAccel = getTimeAcceleration(_elapsedSeconds, _isBoss); // Story 42.4: 二次方加速
     state.time -= 0.1 * timeSpeed * getTimeScale() * timeAccel; // Story 31.4: 慢动作 + 42.4 加速
 
-    // 蓄力产出者：每帧累加充能值
-    updateChargeProducers(0.1);
+    // Charge 按住蓄力：每帧累加，蓄满自动释放
+    const chargeFull = updateChargeProducers(0.1);
+    for (const fullKey of chargeFull) {
+      releaseCharge(fullKey);
+    }
 
     // Boss 修饰器：每帧更新（decay / scroll 等）
     tickModifier(0.1);
@@ -1469,6 +1554,7 @@ function updateTimerDisplay(): void {
 function endLevel(): void {
   if (timerInterval) clearInterval(timerInterval);
   _pendingChargeTriggers.clear();
+  _chargeHolding = false;
   releaseBGMTension();
   stopBGM();
   stopScoreRoller(); // Story 31.4

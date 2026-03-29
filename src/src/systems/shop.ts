@@ -50,7 +50,7 @@ import { filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
-import { applyRitualEnchantment } from './ritualEnchantment';
+import { applyRitualEnchantment, generateRitualCandidates, pickRitualChoices, getEligibleSkills as getRitualEligibleSkills } from './ritualEnchantment';
 import type { RitualCandidate } from './ritualEnchantment';
 import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment, getUncrownedKingBaseValue } from './relics/SkillRelicBehaviors';
 import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier } from './relics/EnchantmentRelicBehaviors';
@@ -393,11 +393,16 @@ function generateShopEnchantmentItem(itemId: number): ShopItem | null {
 
   // 合并所有空槽技能的可用附魔候选
   const playerClass = state.classId !== 'none' ? state.classId : undefined;
+  // 收集场上所有已装备词条类型
+  const equippedAffixTypes = new Set<import('../data/affixes').AffixType>();
+  for (const [, s] of state.affixSkills) {
+    for (const affix of s.affixes) equippedAffixTypes.add(affix.type);
+  }
   const allCandidates: Array<{ enchType: EnchantmentTypeEnum; transmuteRes?: ResourceType; neighborRel?: PositionRelation }> = [];
   const seenKeys = new Set<string>();
   for (const affixSkill of eligible) {
     const categorized = filterCategorizedByClass(
-      categorizeEnchantmentCandidates(affixSkill),
+      categorizeEnchantmentCandidates(affixSkill, equippedAffixTypes),
       playerClass,
     );
     const allTypes = [...categorized.apprentice, ...categorized.quest, ...categorized.transmute, ...categorized.operator];
@@ -522,8 +527,8 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       .find((d): d is QuestEnchantmentDef => d != null)
     if (questEnch) {
       if (rt.questTransformed) {
-        questProgress = t('tooltip.quest_done', { effect: t('quest.' + questEnch.type + '.effect') })
-      } else if (rt.questStacks > 0 || rt.questCompletions > 0) {
+        questProgress = t('tooltip.quest_done', { effect: questEnch.transformDesc || t('quest.' + questEnch.type + '.effect') })
+      } else {
         questProgress = t('tooltip.quest_progress', { task: t('quest.' + questEnch.type + '.task'), stacks: rt.questStacks, target: questEnch.targetStacks })
       }
     }
@@ -672,10 +677,10 @@ export function computeSmartEstimate(
     if (rt.questTransformed) {
       breakdown.push({
         typeKey: 'apprentice',
-        label: t('est.quest_done', { effect: t('quest.' + questEnchEst.type + '.effect') }),
+        label: t('est.quest_done', { effect: questEnchEst.transformDesc || t('quest.' + questEnchEst.type + '.effect') }),
         detail: '',
       })
-    } else if (rt.questStacks > 0) {
+    } else {
       breakdown.push({
         typeKey: 'apprentice',
         label: t('est.quest_progress', { task: t('quest.' + questEnchEst.type + '.task'), stacks: rt.questStacks, target: questEnchEst.targetStacks }),
@@ -1616,6 +1621,74 @@ function purchasePackItem(index: number): void {
   renderBuildManager();
 }
 
+// === Lv.3 自动附魔检查（概率递减） ===
+function checkAutoEnchantment(skillId: string): void {
+  // 统计场上全部技能已有附魔总数
+  let totalEnch = 0;
+  for (const [, affixSkill] of state.affixSkills) {
+    totalEnch += affixSkill.enchantmentIds.length;
+  }
+  // 概率 = max(0.1, 0.8 - 0.15 * totalEnch)
+  const prob = Math.max(0.1, 0.8 - 0.15 * totalEnch);
+  if (random() >= prob) {
+    showFeedback('附魔失败', '#ff6b6b');
+    return;
+  }
+  // 成功：展示 2 选 1 附魔面板
+  const affixSkill = state.affixSkills.get(skillId);
+  if (!affixSkill) return;
+  const candidates = generateRitualCandidates(affixSkill);
+  if (candidates.length === 0) return;
+  const choices = pickRitualChoices(candidates);
+  showAutoEnchantmentPanel(skillId, affixSkill, choices);
+}
+
+/** 展示 Lv.3 触发的附魔选择面板（复用仪式附魔 UI 逻辑） */
+function showAutoEnchantmentPanel(
+  skillId: string,
+  affixSkill: import('../data/affixes').AffixSkillInstance,
+  choices: RitualCandidate[],
+): void {
+  const overlay = document.createElement('div');
+  overlay.className = 'enchantment-picker-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;';
+
+  const panel = document.createElement('div');
+  panel.style.cssText = 'background:#1a1a2e;border:2px solid #ffd700;border-radius:12px;padding:24px;max-width:500px;text-align:center;';
+
+  const title = document.createElement('h3');
+  title.textContent = '✨ 附魔成功！选择一个附魔';
+  title.style.cssText = 'color:#ffd700;margin:0 0 16px;';
+  panel.appendChild(title);
+
+  const choicesDiv = document.createElement('div');
+  choicesDiv.style.cssText = 'display:flex;gap:12px;justify-content:center;';
+
+  for (const candidate of choices) {
+    const info = getEnchantmentDisplayInfo(candidate.enchType, candidate.transmuteRes, candidate.neighborRel);
+    if (!info) continue;
+
+    const btn = document.createElement('button');
+    btn.className = 'ritual-choice-btn';
+    btn.innerHTML = `
+      <div class="ritual-choice-category" style="color:${info.categoryColor}">${info.category}</div>
+      <span class="ritual-choice-icon">${info.icon}</span>
+      <span class="ritual-choice-name">${info.name}</span>
+      <div class="ritual-choice-desc">${info.desc}</div>
+    `;
+    btn.onclick = () => {
+      applyRitualEnchantment(skillId, affixSkill, candidate);
+      overlay.remove();
+      renderUnifiedShop();
+    };
+    choicesDiv.appendChild(btn);
+  }
+
+  panel.appendChild(choicesDiv);
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+}
+
 // === 核心购买逻辑（仅技能） ===
 // 返回购买的 skillId 或 null（非技能/失败），供调用者做后续绑定/进化
 function executePurchase(index: number): { skillId: string; isNew: boolean } | null {
@@ -1681,6 +1754,10 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
         applyAffixLevelScaling(existing.affixes, 1);
       }
       eventBus.emit('skill:upgraded', { skillId, newLevel: data?.level || 1 });
+      // Lv.3 升级触发附魔（概率递减）
+      if (data?.level === 3) {
+        checkAutoEnchantment(skillId);
+      }
       showFeedback(t('shop.skill_upgrade', { name: affixSkill.name }), '#ffe66d');
     } else {
       // 新词条制技能
@@ -2677,6 +2754,10 @@ export function renderBuildManager(): void {
             schoolCssClass: `rarity-${affixSkill.rarity}`,
           },
         };
+        const invAllKeys: string[] = [];
+        for (const [bk, sid] of state.player.bindings) {
+          if (sid === skillId) invAllKeys.push(bk);
+        }
         const estimate = computeSmartEstimate(affixSkill, rt, invAllKeys.length > 0 ? invAllKeys : undefined);
         const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
         const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);

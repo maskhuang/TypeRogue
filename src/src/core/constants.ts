@@ -62,10 +62,9 @@ export const BALANCE = {
   COMBO_BONUS: 0.1,
   TIME_PER_LEVEL: 30,
 
-  // 目标分数线性增长公式参数
-  TARGET_BASE: 150,              // 第 1 关目标分数
-  TARGET_INCREMENT: 100,         // 每关目标分数增量
-  TARGET_OVERFLOW_SCALE: 0.5,    // 溢出比例对增量的放大因子
+  // 目标分数指数增长公式参数
+  TARGET_BASE: 300,              // 第 1 关目标分数
+  TARGET_GROWTH: 1.45,           // 每关目标增长倍率
   BOSS_TARGET_MULT: 1.5,        // Boss 关目标倍率
 
   // 商店价格

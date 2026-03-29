@@ -6,7 +6,8 @@
 import { state } from '../core/state';
 import { random } from '../core/seededRandom';
 import type { AffixSkillInstance } from '../data/affixes';
-import { EnchantmentType as EnchantmentTypeEnum, RARITY_COLORS } from '../data/affixes';
+import type { AffixType } from '../data/affixes';
+import { EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
 import {
   categorizeEnchantmentCandidates,
@@ -21,17 +22,10 @@ import {
   getEnchantAnchorSlotBonus,
 } from './relics/EnchantmentRelicBehaviors';
 import { resolveRelicEffectsWithBehaviors } from './relics/RelicPipeline';
-import { getEnchantmentDisplayInfo, buildAffixTooltipFields } from './shop';
+import { getEnchantmentDisplayInfo } from './shop';
+import { hasUnownedRelics, showRelicPicker } from './relicPicker';
 import { playSound } from '../effects/sound';
-import { t } from '../demo/demo-i18n';
 import { eventBus } from '../core/events/EventBus';
-import { RESOURCE_ICONS } from '../core/constants';
-
-// === 配置常量（待流程调整后可由外部覆盖） ===
-
-// Story 42.7 将重新设计仪式触发条件（Boss 后触发）
-/** 仪式可进行的附魔轮数（暂定 1） */
-const RITUAL_ROUNDS = 1;
 
 // === 核心接口 ===
 
@@ -45,6 +39,17 @@ export interface EligibleSkill {
   skillId: string;
   affixSkill: AffixSkillInstance;
   emptySlots: number;
+}
+
+/** 收集场上所有技能已装备的词条类型 */
+function collectEquippedAffixTypes(): Set<AffixType> {
+  const types = new Set<AffixType>();
+  for (const [, skill] of state.affixSkills) {
+    for (const affix of skill.affixes) {
+      types.add(affix.type);
+    }
+  }
+  return types;
 }
 
 // === 查询函数（导出供测试） ===
@@ -67,7 +72,7 @@ export function getEligibleSkills(): EligibleSkill[] {
 export function generateRitualCandidates(affixSkill: AffixSkillInstance): RitualCandidate[] {
   const playerClass = state.classId !== 'none' ? state.classId : undefined;
   const categorized = filterCategorizedByClass(
-    categorizeEnchantmentCandidates(affixSkill),
+    categorizeEnchantmentCandidates(affixSkill, collectEquippedAffixTypes()),
     playerClass,
   );
 
@@ -144,170 +149,18 @@ export function applyRitualEnchantment(
   }
 }
 
-/** Boss 胜利后是否应触发仪式附魔（有可附魔技能即触发） */
+/** 仪式节点是否应显示（有未拥有遗物时触发） */
 export function shouldShowRitual(): boolean {
-  return getEligibleSkills().length > 0;
+  return hasUnownedRelics();
 }
 
-/** 仪式可进行的轮数 */
-export function getRitualRounds(): number {
-  return RITUAL_ROUNDS;
-}
-
-// === UI 渲染（独立 ritual-screen）===
-// 新流程：先选技能 → 再从 2 个附魔候选中选 1 个
-
-import { showScreen } from './battle';
-
-let _ritualOnComplete: (() => void) | null = null;
-let _remainingRounds = 0;
+// === 仪式入口：三选一传说遗物 ===
 
 /**
- * 打开仪式附魔界面（独立阶段）
+ * 打开仪式界面 — 展示三选一传说遗物
  * @param onComplete 仪式结束后的回调（推进到下一关）
  */
 export function openRitualEnchantment(onComplete: () => void): void {
   state.phase = 'ritual';
-  _ritualOnComplete = onComplete;
-  _remainingRounds = getRitualRounds();
-  showScreen('ritual');
-  renderRitualRound();
-}
-
-/** 渲染仪式轮次：展示可附魔技能卡片供玩家选择 */
-function renderRitualRound(): void {
-  const eligible = getEligibleSkills();
-  if (eligible.length === 0 || _remainingRounds <= 0) {
-    completeRitual();
-    return;
-  }
-
-  const titleEl = document.getElementById('ritual-title')!;
-  const subtitleEl = document.getElementById('ritual-subtitle')!;
-  const choicesEl = document.getElementById('ritual-choices')!;
-  const skillSelectEl = document.getElementById('ritual-skill-select')!;
-  const feedbackEl = document.getElementById('ritual-feedback-area')!;
-
-  titleEl.textContent = t('ritual.title');
-  subtitleEl.textContent = t('ritual.select_skill');
-  subtitleEl.style.display = 'block';
-  choicesEl.style.display = 'none';
-  skillSelectEl.style.display = 'none';
-  feedbackEl.style.display = 'none';
-
-  // 使用 skill-list 区域展示技能卡片
-  const promptEl = document.getElementById('ritual-skill-prompt')!;
-  const listEl = document.getElementById('ritual-skill-list')!;
-  promptEl.textContent = '';
-  skillSelectEl.style.display = 'block';
-  listEl.innerHTML = '';
-
-  for (const { skillId, affixSkill, emptySlots } of eligible) {
-    const btn = document.createElement('button');
-    btn.className = 'ritual-skill-btn';
-
-    const fields = buildAffixTooltipFields(affixSkill);
-    const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#fff';
-    const resIcon = RESOURCE_ICONS[affixSkill.resource] || '';
-
-    const affixHtml = fields.affixInfo
-      .map(a => `<span class="ritual-skill-affix">[${a.typeName}] ${a.paramSummary}</span>`)
-      .join('');
-
-    const enchHtml = fields.enchantments
-      .map(e => `<span class="ritual-skill-ench" style="color:${e.color}">${e.icon} ${e.name}</span>`)
-      .join('');
-
-    btn.innerHTML = `
-      <div class="ritual-skill-header" style="color:${rarityColor}">
-        <span class="ritual-skill-icon">${affixSkill.icon}</span>
-        <span class="ritual-skill-name">${affixSkill.name}</span>
-        <span class="ritual-skill-res">${resIcon}</span>
-      </div>
-      <div class="ritual-skill-affixes">${affixHtml}</div>
-      ${enchHtml ? `<div class="ritual-skill-enchants">${enchHtml}</div>` : ''}
-      <div class="ritual-skill-slots">${t('ritual.empty_slots', { count: emptySlots })}</div>
-    `;
-    btn.onclick = () => {
-      showEnchantmentChoices(skillId, affixSkill);
-    };
-    listEl.appendChild(btn);
-  }
-}
-
-/** 玩家选定技能后，展示该技能可用的 2 个附魔候选 */
-function showEnchantmentChoices(skillId: string, affixSkill: AffixSkillInstance): void {
-  const candidates = generateRitualCandidates(affixSkill);
-  if (candidates.length === 0) {
-    completeRitual();
-    return;
-  }
-
-  const choices = pickRitualChoices(candidates);
-
-  const subtitleEl = document.getElementById('ritual-subtitle')!;
-  const skillSelectEl = document.getElementById('ritual-skill-select')!;
-  const choicesEl = document.getElementById('ritual-choices')!;
-
-  subtitleEl.textContent = t('ritual.subtitle');
-  skillSelectEl.style.display = 'none';
-  choicesEl.style.display = 'flex';
-  choicesEl.innerHTML = '';
-
-  for (const candidate of choices) {
-    const info = getEnchantmentDisplayInfo(candidate.enchType, candidate.transmuteRes, candidate.neighborRel);
-    if (!info) continue;
-
-    const btn = document.createElement('button');
-    btn.className = 'ritual-choice-btn';
-    btn.innerHTML = `
-      <div class="ritual-choice-category" style="color:${info.categoryColor}">${info.category}</div>
-      <span class="ritual-choice-icon">${info.icon}</span>
-      <span class="ritual-choice-name">${info.name}</span>
-      <div class="ritual-choice-desc">${info.desc}</div>
-    `;
-    btn.onclick = () => {
-      applyRitualEnchantment(skillId, affixSkill, candidate);
-      _remainingRounds--;
-
-      const appliedInfo = getEnchantmentDisplayInfo(candidate.enchType, candidate.transmuteRes, candidate.neighborRel);
-      const feedbackText = appliedInfo
-        ? t('ritual.applied', { icon: appliedInfo.icon, name: appliedInfo.name, skill: affixSkill.name })
-        : t('ritual.applied_generic');
-      showRitualFeedback(feedbackText);
-    };
-    choicesEl.appendChild(btn);
-  }
-}
-
-function showRitualFeedback(message: string): void {
-  document.getElementById('ritual-choices')!.style.display = 'none';
-  document.getElementById('ritual-skill-select')!.style.display = 'none';
-  document.getElementById('ritual-subtitle')!.style.display = 'none';
-
-  const feedbackEl = document.getElementById('ritual-feedback-area')!;
-  const feedbackText = document.getElementById('ritual-feedback-text')!;
-  const continueBtn = document.getElementById('ritual-continue-btn')!;
-
-  feedbackText.textContent = message;
-  continueBtn.textContent = t('ritual.continue');
-  feedbackEl.style.display = 'block';
-
-  continueBtn.onclick = () => {
-    if (_remainingRounds > 0 && getEligibleSkills().length > 0) {
-      document.getElementById('ritual-choices')!.style.display = 'flex';
-      document.getElementById('ritual-subtitle')!.style.display = 'block';
-      feedbackEl.style.display = 'none';
-      renderRitualRound();
-    } else {
-      completeRitual();
-    }
-  };
-}
-
-function completeRitual(): void {
-  const cb = _ritualOnComplete;
-  _ritualOnComplete = null;
-  _remainingRounds = 0;
-  if (cb) cb();
+  showRelicPicker(onComplete, { common: 0, rare: 0, epic: 0, legendary: 100 });
 }

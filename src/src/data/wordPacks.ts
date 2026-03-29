@@ -222,11 +222,14 @@ export function buildConditionPool(
   }
 
   // starts_with / ends_with / contains — 26 个字母各一个变体
+  // QJXV 稀有字母首尾词包权重提升
+  const RARE_LETTERS = new Set(['q', 'j', 'x', 'v']);
   for (let i = 0; i < 26; i++) {
     const letter = String.fromCharCode(97 + i);
     const w = letterWeight(letter);
-    pool.push({ condition: { type: 'starts_with', letter }, weight: w });
-    pool.push({ condition: { type: 'ends_with', letter }, weight: w });
+    const rareBoost = (RARE_LETTERS.has(letter) && !owned.has(letter)) ? 3 : 1;
+    pool.push({ condition: { type: 'starts_with', letter }, weight: w * rareBoost });
+    pool.push({ condition: { type: 'ends_with', letter }, weight: w * rareBoost });
     pool.push({ condition: { type: 'contains', letter }, weight: w });
   }
 

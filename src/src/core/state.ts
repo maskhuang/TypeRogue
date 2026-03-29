@@ -148,12 +148,10 @@ export function resetState(): void {
   synergy = createSynergyState();
 }
 
-// === 关卡目标计算（线性增长 + 溢出比例放大增量）===
+// === 关卡目标计算（指数增长）===
 export function calculateTargetScore(stageNum: number, stageType: StageType = 'standard'): number {
-  const { TARGET_BASE, TARGET_INCREMENT, TARGET_OVERFLOW_SCALE, BOSS_TARGET_MULT } = BALANCE;
-  // 增量随上关溢出比例放大：increment * (1 + overflowRatio * scale)
-  const scaledIncrement = TARGET_INCREMENT * (1 + state.lastOverflowRatio * TARGET_OVERFLOW_SCALE);
-  const target = Math.round(TARGET_BASE + scaledIncrement * (stageNum - 1));
+  const { TARGET_BASE, TARGET_GROWTH, BOSS_TARGET_MULT } = BALANCE;
+  const target = Math.round(TARGET_BASE * Math.pow(TARGET_GROWTH, stageNum - 1));
   return stageType === 'boss' ? Math.round(target * BOSS_TARGET_MULT) : target;
 }
 

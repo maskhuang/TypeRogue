@@ -1140,6 +1140,9 @@ export function triggerAffixSkill(
   // Phase 2: 加算层
   const p2 = resolvePhase2(effectiveSkill, runtimeState, ctx, base)
 
+  // 递增触发计数（Pulse 在 Phase 3 读取该值判断爆发）
+  runtimeState.triggerCount += 1
+
   // Phase 3: 乘算层
   const p3 = resolvePhase3(effectiveSkill, runtimeState, ctx, p2.output)
 
@@ -1225,7 +1228,7 @@ export function applyApprenticeEvent(
 /** 任务附魔外部事件→附魔类型映射（可多对一） */
 const QUEST_EXTERNAL_EVENT_MAP: Record<string, EnchantmentType[]> = {
   stageCleared: [EnchantmentType.QuestMirror, EnchantmentType.QuestTwin],
-  wordComplete: [EnchantmentType.QuestEnergize],
+  chargeFull: [EnchantmentType.QuestEnergize],
   gravityWordMatch: [EnchantmentType.QuestPolarize],
   multiResourceWord: [EnchantmentType.QuestSpectrum],
 }
@@ -1420,18 +1423,27 @@ export interface CategorizedEnchantments {
  * 返回按四大类分组的附魔候选（学徒/任务/衍生/运算符）。
  * 排除已装备的附魔。职业过滤由外部处理。
  */
-export function categorizeEnchantmentCandidates(skill: AffixSkillInstance): CategorizedEnchantments {
+export function categorizeEnchantmentCandidates(skill: AffixSkillInstance, equippedAffixTypes?: Set<AffixType>): CategorizedEnchantments {
   const existingEnchs = new Set(skill.enchantmentIds)
 
-  // 学徒附魔（无词条要求）— 3 通用 + 5 资源专精 + 20 悟道·词条
+  // 学徒附魔 — 3 通用 + 5 资源专精 + 悟道·词条（仅场上已装备词条）
   const apprenticeTypes: EnchantmentType[] = [
     EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeNeighbor,
     EnchantmentType.ApprenticeProc,
     EnchantmentType.ApprenticeResBase, EnchantmentType.ApprenticeResScore,
     EnchantmentType.ApprenticeResMultiplier, EnchantmentType.ApprenticeResTime,
     EnchantmentType.ApprenticeResGold,
-    ...Object.values(APPRENTICE_AFFIX_MAP),
   ]
+  // 悟道·词条附魔：仅保留场上已装备的词条类型对应的附魔
+  if (equippedAffixTypes) {
+    for (const [affixType, enchType] of Object.entries(APPRENTICE_AFFIX_MAP)) {
+      if (equippedAffixTypes.has(Number(affixType) as AffixType)) {
+        apprenticeTypes.push(enchType)
+      }
+    }
+  } else {
+    apprenticeTypes.push(...Object.values(APPRENTICE_AFFIX_MAP))
+  }
   const apprentice = apprenticeTypes.filter(t => !existingEnchs.has(t))
 
   // 任务附魔（需匹配词条）

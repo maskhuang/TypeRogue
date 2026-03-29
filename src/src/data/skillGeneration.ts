@@ -150,7 +150,7 @@ export function rollAffixParams(
       return { type }
 
     case AffixType.Charge:
-      return { type, gainPerSec: 0.08, maxBonus: 2.0 }
+      return { type, gainPerSec: 2.0, maxBonus: 2.0 }
 
     case AffixType.Decay:
       return { type, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 }
