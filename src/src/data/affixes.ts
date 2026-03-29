@@ -140,9 +140,8 @@ export interface EnchantmentMeta {
 }
 
 export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
-  // ── 学徒型（7） ──
-  [EnchantmentType.ApprenticeSelf]:     { type: EnchantmentType.ApprenticeSelf,     name: '学徒·自修', icon: '📖', category: 'apprentice', desc: '每次自身触发时永久成长 +1%' },
-  [EnchantmentType.ApprenticeNeighbor]: { type: EnchantmentType.ApprenticeNeighbor, name: '学徒·观摩', icon: '👀', category: 'apprentice', desc: '范围内技能触发时永久成长' },
+  // ── 学徒型（6） ──  ApprenticeSelf 已删除（观摩可覆盖自身）
+  [EnchantmentType.ApprenticeNeighbor]: { type: EnchantmentType.ApprenticeNeighbor, name: '学徒·观摩', icon: '👀', category: 'apprentice', desc: '自身或范围内技能触发时永久成长' },
   // ── 资源专精型（5） ──
   [EnchantmentType.ApprenticeResBase]:       { type: EnchantmentType.ApprenticeResBase,       name: '专精·基数', icon: '🔢', category: 'apprentice', desc: '产出基数资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeResScore]:      { type: EnchantmentType.ApprenticeResScore,      name: '专精·分数', icon: '🏅', category: 'apprentice', desc: '产出分数资源时永久成长 +2%' },

@@ -10,7 +10,6 @@ import {
   ASCEND_THRESHOLD_GROWTH,
   ASCEND_GROWTH_RATE,
   getAscendThreshold,
-  getAscendGoldCost,
   canAscend,
   executeAscend,
   getAscendBaseScale,
@@ -26,7 +25,7 @@ function makeSkill(overrides?: Partial<AffixSkillInstance>): AffixSkillInstance 
     level: 3,
     rarity: 0 as 0,
     affixes: [],
-    enchantmentIds: [EnchantmentType.ApprenticeSelf],
+    enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
     ...overrides,
   }
 }
@@ -66,20 +65,6 @@ describe('升华系统 (Apprentice Ascension)', () => {
       expect(ASCEND_BASE_THRESHOLD).toBe(0.5)
       expect(ASCEND_THRESHOLD_GROWTH).toBe(0.3)
       expect(ASCEND_GROWTH_RATE).toBe(1.6)
-    })
-  })
-
-  describe('getAscendGoldCost', () => {
-    it('Lv.3→4: 30g', () => {
-      expect(getAscendGoldCost(3)).toBe(30)
-    })
-
-    it('Lv.4→5: 60g', () => {
-      expect(getAscendGoldCost(4)).toBe(60)
-    })
-
-    it('Lv.5→6: 90g', () => {
-      expect(getAscendGoldCost(5)).toBe(90)
     })
   })
 

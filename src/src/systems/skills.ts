@@ -15,7 +15,7 @@ import { eventBus } from '../core/events/EventBus';
 import { routeFragmentsToInventory } from './classes/FragmentQueue';
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
-import { getAscendBaseScale } from '../data/affixTrigger';
+import { getAscendBaseScale, canAscend, executeAscend } from '../data/affixTrigger';
 import { getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
@@ -410,6 +410,18 @@ function triggerAffixSkillWithFeedback(
     const tmDisplay = parseFloat(Math.abs(tmAmt).toPrecision(3));
     const tmAnchor = buildAnchor(tr.triggerKey, tmRes, tmAmt);
     showFeedback(`🔀+${tmDisplay}${tmLabel}`, tmColor, undefined, tmAnchor);
+  }
+
+  // 自动升华：EXP 满即升级
+  if (runtimeState) {
+    while (canAscend(skill, runtimeState)) {
+      executeAscend(skill, runtimeState);
+      const data = state.player.skills.get(skillId);
+      if (data) data.level = skill.level;
+      showFeedback(`✨ ${skill.name} → Lv.${skill.level}!`, '#ffd700', 2.0);
+      playSound('buy');
+      eventBus.emit('skill:upgraded', { skillId, newLevel: skill.level });
+    }
   }
 
   // 事件总线通知（含附魔成长数据）

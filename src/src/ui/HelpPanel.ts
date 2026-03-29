@@ -49,9 +49,8 @@ export const GLOSSARY_DATA: GlossaryEntry[] = [
   { category: 'affix', id: 'recurse', icon: '🔁', nameKey: 'affix.recurse', descKey: 'affix_desc.recurse' },
   { category: 'affix', id: 'taboo', icon: '⚠️', nameKey: 'affix.taboo', descKey: 'affix_desc.taboo' },
 
-  // 附魔（2 种学徒 + 5 资源专精 + 运算符）
-  { category: 'enchantment', id: 'apprentice_self', icon: '📖', nameKey: 'ench_meta.apprentice_self', descKey: 'ench_meta.apprentice_self.desc' },
-  { category: 'enchantment', id: 'apprentice_neighbor', icon: '📖', nameKey: 'ench_meta.apprentice_neighbor', descKey: 'ench_meta.apprentice_neighbor.desc' },
+  // 附魔（1 种学徒 + 5 资源专精 + 运算符）
+  { category: 'enchantment', id: 'apprentice_neighbor', icon: '👀', nameKey: 'ench_meta.apprentice_neighbor', descKey: 'ench_meta.apprentice_neighbor.desc' },
   { category: 'enchantment', id: 'apprentice_res_base', icon: '🔢', nameKey: 'ench_meta.apprentice_res_base', descKey: 'ench_meta.apprentice_res_base.desc' },
   { category: 'enchantment', id: 'apprentice_res_score', icon: '🏅', nameKey: 'ench_meta.apprentice_res_score', descKey: 'ench_meta.apprentice_res_score.desc' },
   { category: 'enchantment', id: 'apprentice_res_multiplier', icon: '📈', nameKey: 'ench_meta.apprentice_res_multiplier', descKey: 'ench_meta.apprentice_res_multiplier.desc' },

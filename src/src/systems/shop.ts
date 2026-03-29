@@ -53,7 +53,7 @@ import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyRitualEnchantment, generateRitualCandidates, pickRitualChoices, getEligibleSkills as getRitualEligibleSkills } from './ritualEnchantment';
 import type { RitualCandidate } from './ritualEnchantment';
 import { applyTrainingManual } from './relics/SkillRelicBehaviors';
-import { canAscend, executeAscend, getAscendGoldCost, getAscendBaseScale } from '../data/affixTrigger';
+import { getAscendBaseScale } from '../data/affixTrigger';
 import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier, getMinEnchantmentLevel } from './relics/EnchantmentRelicBehaviors';
 import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState, getSkillAnchorKey } from './bindingManager';
 import { getShapeCells, mapShapeToKeys } from '../data/skillShapes';
@@ -854,30 +854,6 @@ function shuffleArray<T>(arr: T[]): T[] {
 
 // buildMechanicWeightedBucket removed (old producer system)
 
-// === 升华商品生成 ===
-function generateAscendItems(startId: number): ShopItem[] {
-  const items: ShopItem[] = []
-  let nextId = startId
-  for (const [skillId, skillData] of state.player.skills) {
-    const skill = state.affixSkills.get(skillId)
-    if (!skill) continue
-    const rt = state.affixSkillStates.get(skillId)
-    if (!rt) continue
-    if (!canAscend(skill, rt)) continue
-    const cost = getAscendGoldCost(skill.level)
-    items.push({
-      id: `ascend_${nextId++}`,
-      type: 'ascend',
-      skillId,
-      affixSkill: { ...skill, level: skill.level + 1 },
-      cost,
-      isUpgrade: true,
-      locked: false,
-    })
-  }
-  return items
-}
-
 // === 生成统一商品 ===
 function generateShopItems(count: number, guaranteeRare: boolean = false): ShopItem[] {
   if (count <= 0) return [];
@@ -1031,15 +1007,6 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
           enchItemCount++;
         }
       }
-    }
-  }
-
-  // 升华商品：为满足条件的技能生成升华选项
-  const ascendItems = generateAscendItems(nextId);
-  for (const ai of ascendItems) {
-    if (items.length < count) {
-      items.push(ai);
-      nextId++;
     }
   }
 
@@ -1248,22 +1215,6 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       <div class="reward-type" style="color:${enchInfo.categoryColor}">${enchInfo.category}</div>
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
-  } else if (item.type === 'ascend' && item.affixSkill) {
-    // 升华商品卡片
-    const skill = item.affixSkill;
-    const rarityColor = RARITY_COLORS[skill.rarity] || '#ffffff';
-    card.classList.add('affix-skill-card', 'ascend-card');
-    card.style.borderColor = '#ffd700';
-    card.innerHTML = `
-      <div class="reward-icon">✨${skill.icon}</div>
-      <div class="reward-info">
-        <div class="reward-name">${t('shop.ascend_name', { name: skill.name, level: skill.level }) || `${skill.name} → Lv.${skill.level}`}</div>
-        <div class="reward-desc">${t('shop.ascend_desc') || '升华：学徒经验兑换等级突破'}</div>
-      </div>
-      ${costHtml}
-      <div class="reward-type" style="color:#ffd700">${t('shop.ascend') || '升华'}</div>
-      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
-    `;
   }
 
   // 锁定按钮事件
@@ -1294,11 +1245,6 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
     card.onclick = () => {
       juiceUp(card, 0.2, 3);
       purchaseShopEnchantmentItem(index);
-    };
-  } else if (item.type === 'ascend') {
-    card.onclick = () => {
-      juiceUp(card, 0.2, 3);
-      purchaseAscendItem(index);
     };
   } else {
     card.onclick = () => {
@@ -1982,44 +1928,6 @@ function purchaseShopEnchantmentItem(index: number): void {
 
   // 弹出技能选择界面（扣金在确认选择后执行）
   showEnchantmentTargetSelect(item, index, eligibleSkills, cost, smuggleFree);
-}
-
-// === 购买升华商品 ===
-function purchaseAscendItem(index: number): void {
-  const item = state.shop.items[index];
-  if (!item || item.type !== 'ascend' || !item.skillId) return;
-
-  const cost = item.cost;
-  if (state.gold < cost) {
-    showFeedback(t('shop.no_gold'), '#ff6b6b');
-    return;
-  }
-
-  const skillId = item.skillId;
-  const skill = state.affixSkills.get(skillId);
-  const rt = state.affixSkillStates.get(skillId);
-  if (!skill || !rt) return;
-
-  // 再次检查条件
-  if (!canAscend(skill, rt)) {
-    showFeedback(t('shop.ascend_fail') || '升华条件不满足', '#ff6b6b');
-    return;
-  }
-
-  state.gold -= cost;
-  const oldLevel = skill.level;
-  executeAscend(skill, rt);
-  // 同步 player.skills 等级
-  const data = state.player.skills.get(skillId);
-  if (data) data.level = skill.level;
-
-  updateGoldDisplay();
-  showFeedback(t('shop.ascend_success', { name: skill.name, level: skill.level }) || `✨ ${skill.name} 升华至 Lv.${skill.level}!`, '#ffd700');
-  playSound('buy');
-  state.shop.items.splice(index, 1);
-  eventBus.emit('skill:upgraded', { skillId, newLevel: skill.level });
-  renderUnifiedShop();
-  renderBuildManager();
 }
 
 /** 附魔台：选择目标技能弹窗 */

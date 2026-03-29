@@ -241,19 +241,19 @@ describe('chaos_seed 混沌种子', () => {
 
   it('已附魔技能不受影响', () => {
     state.player.relics.add('chaos_seed')
-    const skill = makeSkill({ id: 'sk1', enchantmentIds: ['apprentice_self'] })
+    const skill = makeSkill({ id: 'sk1', enchantmentIds: ['apprentice_neighbor'] })
     state.affixSkills.set('sk1', skill)
 
     applyChaosSeedEnchantments()
     expect(skill.enchantmentIds).toHaveLength(1)
-    expect(skill.enchantmentIds[0]).toBe('apprentice_self')
+    expect(skill.enchantmentIds[0]).toBe('apprentice_neighbor')
   })
 
   it('多个未附魔技能全部获得附魔', () => {
     state.player.relics.add('chaos_seed')
     const sk1 = makeSkill({ id: 'sk1' })
     const sk2 = makeSkill({ id: 'sk2' })
-    const sk3 = makeSkill({ id: 'sk3', enchantmentIds: ['apprentice_self'] })
+    const sk3 = makeSkill({ id: 'sk3', enchantmentIds: ['apprentice_neighbor'] })
     state.affixSkills.set('sk1', sk1)
     state.affixSkills.set('sk2', sk2)
     state.affixSkills.set('sk3', sk3)
@@ -262,13 +262,13 @@ describe('chaos_seed 混沌种子', () => {
     expect(sk1.enchantmentIds).toHaveLength(1)
     expect(sk2.enchantmentIds).toHaveLength(1)
     expect(sk3.enchantmentIds).toHaveLength(1) // 原有的不变
-    expect(sk3.enchantmentIds[0]).toBe('apprentice_self')
+    expect(sk3.enchantmentIds[0]).toBe('apprentice_neighbor')
   })
 
   it('removeChaosSeedEnchantments 移除临时附魔', () => {
     state.player.relics.add('chaos_seed')
     const sk1 = makeSkill({ id: 'sk1' })
-    const sk2 = makeSkill({ id: 'sk2', enchantmentIds: ['apprentice_self'] })
+    const sk2 = makeSkill({ id: 'sk2', enchantmentIds: ['apprentice_neighbor'] })
     state.affixSkills.set('sk1', sk1)
     state.affixSkills.set('sk2', sk2)
 
@@ -280,7 +280,7 @@ describe('chaos_seed 混沌种子', () => {
     expect(sk1.enchantmentIds).toHaveLength(0)
     // 原有附魔不受影响
     expect(sk2.enchantmentIds).toHaveLength(1)
-    expect(sk2.enchantmentIds[0]).toBe('apprentice_self')
+    expect(sk2.enchantmentIds[0]).toBe('apprentice_neighbor')
   })
 
   it('连续两关：清除后重新分配', () => {

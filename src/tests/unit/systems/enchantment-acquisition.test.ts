@@ -90,13 +90,13 @@ describe('Story 41.1: 附魔获取改造', () => {
       const item: ShopItem = {
         id: 'si-ench-1',
         type: 'enchantment',
-        enchantmentType: 'apprentice_self',
+        enchantmentType: 'apprentice_neighbor',
         cost: 60,
         isUpgrade: false,
         locked: false,
       }
       expect(item.type).toBe('enchantment')
-      expect(item.enchantmentType).toBe('apprentice_self')
+      expect(item.enchantmentType).toBe('apprentice_neighbor')
     })
 
     it('附魔商品支持 transmuteRes 和 neighborRel 可选字段', () => {

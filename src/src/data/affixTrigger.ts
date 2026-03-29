@@ -148,7 +148,7 @@ export interface Phase5Result {
 export type Phase6Action =
   | { type: 'resonance', neighborKey: string, transformedBoost?: number }
   | { type: 'link', neighborKey: string, transformedBoost?: number }
-  | { type: 'conduit', targetKey: string }
+  | { type: 'conduit', targetKey: string, conduitCount: number }
   | { type: 'apprentice_neighbor', neighborKey: string, growthDelta: number }
   | { type: 'quest_resonance', neighborKey: string }
 
@@ -555,18 +555,17 @@ export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'ti
 export const MAX_RECURSE_DEPTH = 10
 export const MAX_CHAIN_DEPTH = 20
 
-/** 学徒附魔 growthPerProc 默认值（Phase 5 自触发类型 + 外部事件类型） */
+/** 学徒附魔 growthPerProc 默认值（Phase 5 自触发类型 + 外部事件类型）
+ * ApprenticeSelf 已删除（观摩可覆盖自身）
+ * ApprenticeRes* 已改为按产出量缩放，不再使用固定值
+ * ApprenticeNeighbor 按 APPRENTICE_NEIGHBOR_GROWTH 查 posRel 表
+ */
 export const APPRENTICE_GROWTH_DEFAULTS: Partial<Record<EnchantmentType, number>> = {
-  // Phase 5 自触发类型（翻倍：解决"成长太慢"问题）
-  [EnchantmentType.ApprenticeSelf]: 0.01,        // 1% — selfTrigger（每次触发）
-  // 资源专精类型（Phase 5 资源匹配时成长）
-  [EnchantmentType.ApprenticeResBase]: 0.04,       // 4% — 产出 base 资源
-  [EnchantmentType.ApprenticeResScore]: 0.04,      // 4% — 产出 score 资源
-  [EnchantmentType.ApprenticeResMultiplier]: 0.04,  // 4% — 产出 multiplier 资源
-  [EnchantmentType.ApprenticeResTime]: 0.04,       // 4% — 产出 time 资源
-  [EnchantmentType.ApprenticeResGold]: 0.04,       // 4% — 产出 gold 资源
-  // ApprenticeNeighbor 不在此表，按 APPRENTICE_NEIGHBOR_GROWTH 查 posRel 表
+  // 保留空表供旧代码兼容查询（返回 undefined → 走新逻辑）
 }
+
+/** 资源专精 EXP = (output / baseLv1Value) × rate × growthMultiplier */
+export const APPRENTICE_RES_EXP_RATE = 0.01
 
 /** 资源专精附魔→目标资源映射 */
 export const APPRENTICE_RESOURCE_MAP: Partial<Record<EnchantmentType, ResourceType>> = {
@@ -803,25 +802,30 @@ export function resolvePhase5(
   // 学徒附魔（Phase 5 自触发类型）
   for (const enchId of skill.enchantmentIds) {
     const ench = enchId as EnchantmentType
-    const growth = APPRENTICE_GROWTH_DEFAULTS[ench]
-    if (growth == null) continue
 
     let shouldGrow = false
+    let overrideGrowth = 0
     switch (ench) {
-      case EnchantmentType.ApprenticeSelf:
+      case EnchantmentType.ApprenticeNeighbor:
+        // 自触发也成长（替代旧 ApprenticeSelf 的角色）
         shouldGrow = true
+        overrideGrowth = APPRENTICE_NEIGHBOR_GROWTH[skill.neighborPosRel!] ?? 0.04
         break
       case EnchantmentType.ApprenticeResBase:
       case EnchantmentType.ApprenticeResScore:
       case EnchantmentType.ApprenticeResMultiplier:
       case EnchantmentType.ApprenticeResTime:
       case EnchantmentType.ApprenticeResGold:
-        shouldGrow = targetResource != null && APPRENTICE_RESOURCE_MAP[ench] === targetResource
+        if (targetResource != null && APPRENTICE_RESOURCE_MAP[ench] === targetResource) {
+          shouldGrow = true
+          // 按产出量缩放: (output / baseLv1Value) × rate
+          overrideGrowth = (output / BASE_VALUES[targetResource][0]) * APPRENTICE_RES_EXP_RATE
+        }
         break
     }
 
-    if (shouldGrow) {
-      runtimeState.apprenticeAccumulated += growth * (ctx.apprenticeGrowthMultiplier ?? 1)
+    if (shouldGrow && overrideGrowth > 0) {
+      runtimeState.apprenticeAccumulated += overrideGrowth * (ctx.apprenticeGrowthMultiplier ?? 1)
     }
   }
 
@@ -952,23 +956,23 @@ export function resolvePhase6(
     }
 
     // 导能词条：邻居有 Conduit 且（触发技能拥有 Conduit 技能的其他词条类型 OR 产出相同资源）→ 触发技能 +N 触发
-    for (const affix of neighborSkill.affixes) {
-      if (affix.type !== AffixType.Conduit || affix.posRel == null) continue
-      // 检查范围匹配（双侧 any-match）
-      const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
-      if (matchedNk == null) continue
-      // 检查触发技能是否拥有 Conduit 技能的其他词条类型 OR 产出相同资源
-      const conduitOtherTypes = neighborSkill.affixes
-        .filter(a => a.type !== AffixType.Conduit)
-        .map(a => a.type)
-      const hasSharedAffix = skill.affixes.some(a => conduitOtherTypes.includes(a.type))
-      const hasSameResource = skill.resource === neighborSkill.resource
-      if (hasSharedAffix || hasSameResource) {
-        // 质变：+2 触发（而非 +1）
-        const neighborState = ctx.skillStates.get(neighborSkillId)
-        const conduitCount = neighborState?.questTransformed ? 2 : 1
-        for (let i = 0; i < conduitCount; i++) {
-          actions.push({ type: 'conduit', targetKey: triggerKey })
+    if (!ctx.chainAffixesDisabled) { // chain_ban: 跳过导能（防止 Conduit→Conduit 级联）
+      for (const affix of neighborSkill.affixes) {
+        if (affix.type !== AffixType.Conduit || affix.posRel == null) continue
+        // 检查范围匹配（双侧 any-match）
+        const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
+        if (matchedNk == null) continue
+        // 检查触发技能是否拥有 Conduit 技能的其他词条类型 OR 产出相同资源
+        const conduitOtherTypes = neighborSkill.affixes
+          .filter(a => a.type !== AffixType.Conduit)
+          .map(a => a.type)
+        const hasSharedAffix = skill.affixes.some(a => conduitOtherTypes.includes(a.type))
+        const hasSameResource = skill.resource === neighborSkill.resource
+        if (hasSharedAffix || hasSameResource) {
+          // 质变：+2 触发（而非 +1）
+          const neighborState = ctx.skillStates.get(neighborSkillId)
+          const conduitCount = neighborState?.questTransformed ? 2 : 1
+          actions.push({ type: 'conduit', targetKey: triggerKey, conduitCount })
         }
       }
     }
@@ -1336,9 +1340,9 @@ export interface CategorizedEnchantments {
 export function categorizeEnchantmentCandidates(skill: AffixSkillInstance, _equippedAffixTypes?: Set<AffixType>): CategorizedEnchantments {
   const existingEnchs = new Set(skill.enchantmentIds)
 
-  // 学徒附魔 — 2 通用 + 5 资源专精
+  // 学徒附魔 — 1 通用 + 5 资源专精（ApprenticeSelf 已删除）
   const apprenticeTypes: EnchantmentType[] = [
-    EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeNeighbor,
+    EnchantmentType.ApprenticeNeighbor,
     EnchantmentType.ApprenticeResBase, EnchantmentType.ApprenticeResScore,
     EnchantmentType.ApprenticeResMultiplier, EnchantmentType.ApprenticeResTime,
     EnchantmentType.ApprenticeResGold,
@@ -1580,8 +1584,7 @@ export function migrateLoadedSkills(
 
 /** 判断附魔类型是否为学徒系列 */
 export function isApprenticeEnchantment(ench: EnchantmentType): boolean {
-  return ench === EnchantmentType.ApprenticeSelf
-    || ench === EnchantmentType.ApprenticeNeighbor
+  return ench === EnchantmentType.ApprenticeNeighbor
     || ench === EnchantmentType.ApprenticeResBase
     || ench === EnchantmentType.ApprenticeResScore
     || ench === EnchantmentType.ApprenticeResMultiplier
@@ -1601,11 +1604,6 @@ export const ASCEND_GROWTH_RATE = 1.6
 /** 升华所需 EXP 阈值: 0.5 + 0.3 × (level - 3) */
 export function getAscendThreshold(level: number): number {
   return ASCEND_BASE_THRESHOLD + ASCEND_THRESHOLD_GROWTH * (level - 3)
-}
-
-/** 升华所需金币: 30 × (level - 2) */
-export function getAscendGoldCost(level: number): number {
-  return 30 * (level - 2)
 }
 
 /** 检查技能是否可以升华 */

@@ -61,7 +61,7 @@ describe('Story 41.1: 仪式附魔系统', () => {
 
     it('跳过已填满附魔槽的技能', () => {
       const skill = makeAffixSkill('s1', {
-        enchantmentIds: [EnchantmentType.ApprenticeSelf],
+        enchantmentIds: [EnchantmentType.ApprenticeResBase],
       })
       state.affixSkills.set('s1', skill)
 
@@ -77,7 +77,7 @@ describe('Story 41.1: 仪式附魔系统', () => {
   describe('pickRitualChoices', () => {
     it('候选不超过上限时返回全部', () => {
       const candidates: RitualCandidate[] = [
-        { enchType: EnchantmentType.ApprenticeSelf },
+        { enchType: EnchantmentType.ApprenticeResBase },
       ]
       const choices = pickRitualChoices(candidates)
       expect(choices).toHaveLength(1)
@@ -85,7 +85,7 @@ describe('Story 41.1: 仪式附魔系统', () => {
 
     it('候选超过上限时截断为 2 个（无 fate_fork）', () => {
       const candidates: RitualCandidate[] = [
-        { enchType: EnchantmentType.ApprenticeSelf },
+        { enchType: EnchantmentType.ApprenticeResBase },
         { enchType: EnchantmentType.ApprenticeResBase },
         { enchType: EnchantmentType.ApprenticeNeighbor },
         { enchType: EnchantmentType.QuestDevour },
@@ -97,7 +97,7 @@ describe('Story 41.1: 仪式附魔系统', () => {
     it('持有 fate_fork 时截断为 3 个', () => {
       state.player.relics.add('fate_fork')
       const candidates: RitualCandidate[] = [
-        { enchType: EnchantmentType.ApprenticeSelf },
+        { enchType: EnchantmentType.ApprenticeResBase },
         { enchType: EnchantmentType.ApprenticeResBase },
         { enchType: EnchantmentType.ApprenticeNeighbor },
         { enchType: EnchantmentType.QuestDevour },
@@ -110,11 +110,11 @@ describe('Story 41.1: 仪式附魔系统', () => {
   describe('applyRitualEnchantment', () => {
     it('写入附魔到技能的 enchantmentIds', () => {
       const skill = makeAffixSkill('s1')
-      const candidate: RitualCandidate = { enchType: EnchantmentType.ApprenticeSelf }
+      const candidate: RitualCandidate = { enchType: EnchantmentType.ApprenticeResBase }
 
       applyRitualEnchantment('s1', skill, candidate)
 
-      expect(skill.enchantmentIds).toContain(EnchantmentType.ApprenticeSelf)
+      expect(skill.enchantmentIds).toContain(EnchantmentType.ApprenticeResBase)
     })
 
     it('Transmute 候选分配 transmuteResource', () => {

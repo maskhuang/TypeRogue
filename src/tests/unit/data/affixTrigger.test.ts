@@ -299,13 +299,13 @@ describe('countOccurrences', () => {
 
 describe('hasEnchantment', () => {
   it('should return true when skill has the enchantment', () => {
-    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeSelf] })
-    expect(hasEnchantment(skill, EnchantmentType.ApprenticeSelf)).toBe(true)
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeNeighbor] })
+    expect(hasEnchantment(skill, EnchantmentType.ApprenticeNeighbor)).toBe(true)
   })
 
   it('should return false when skill does not have the enchantment', () => {
     const skill = makeSkill({ enchantmentIds: [] })
-    expect(hasEnchantment(skill, EnchantmentType.ApprenticeSelf)).toBe(false)
+    expect(hasEnchantment(skill, EnchantmentType.ApprenticeNeighbor)).toBe(false)
   })
 })
 
@@ -532,7 +532,7 @@ describe('resolvePhase2', () => {
   describe('Enchantment bonuses', () => {
     it('should NOT add apprenticeAccumulated for apprentice enchantments (ascension redesign)', () => {
       const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.ApprenticeSelf],
+        enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
       })
       const state = makeRuntimeState({ apprenticeAccumulated: 0.35 })
       const ctx = makeContext()
@@ -624,7 +624,7 @@ describe('resolvePhase2', () => {
   describe('Apprentice accumulated bonus (ascension redesign)', () => {
     it('should NOT apply apprenticeAccumulated as bonusPercent (even with multiple apprentice enchantments)', () => {
       const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.ApprenticeSelf, EnchantmentType.ApprenticeResBase],
+        enchantmentIds: [EnchantmentType.ApprenticeNeighbor, EnchantmentType.ApprenticeResBase],
       })
       const state = makeRuntimeState({ apprenticeAccumulated: 0.5 })
       const ctx = makeContext()
@@ -636,7 +636,7 @@ describe('resolvePhase2', () => {
 
     it('should NOT apply apprenticeAccumulated with single apprentice enchantment', () => {
       const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.ApprenticeSelf],
+        enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
       })
       const state = makeRuntimeState({ apprenticeAccumulated: 0.3 })
       const ctx = makeContext()
@@ -1275,7 +1275,7 @@ describe('41-4: Twin transformation — 词条翻倍', () => {
 })
 
 describe('41-4: Conduit transformation — 导能 +2', () => {
-  it('should produce 2 conduit actions when neighbor is transformed', () => {
+  it('should produce conduit action with conduitCount=2 when neighbor is transformed', () => {
     const triggerSkill = makeSkill({
       id: 'trigger_sk',
       affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
@@ -1295,10 +1295,11 @@ describe('41-4: Conduit transformation — 导能 +2', () => {
     const triggerState = makeRuntimeState()
     const result = resolvePhase6('a', triggerSkill, triggerState, ctx, 'base')
     const conduitActions = result.actions.filter(a => a.type === 'conduit')
-    expect(conduitActions).toHaveLength(2)
+    expect(conduitActions).toHaveLength(1)
+    expect((conduitActions[0] as any).conduitCount).toBe(2)
   })
 
-  it('should produce 1 conduit action when neighbor is NOT transformed', () => {
+  it('should produce conduit action with conduitCount=1 when neighbor is NOT transformed', () => {
     const triggerSkill = makeSkill({
       id: 'trigger_sk',
       affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
@@ -1319,6 +1320,29 @@ describe('41-4: Conduit transformation — 导能 +2', () => {
     const result = resolvePhase6('a', triggerSkill, triggerState, ctx, 'base')
     const conduitActions = result.actions.filter(a => a.type === 'conduit')
     expect(conduitActions).toHaveLength(1)
+    expect((conduitActions[0] as any).conduitCount).toBe(1)
+  })
+
+  it('should NOT produce conduit action when chainAffixesDisabled', () => {
+    const triggerSkill = makeSkill({
+      id: 'trigger_sk',
+      affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+    })
+    const neighborSkill = makeSkill({
+      id: 'neighbor_sk',
+      affixes: [
+        { type: AffixType.Conduit, posRel: PositionRelation.SameRow },
+        { type: AffixType.Crit, chance: 0.3, critMult: 1.5 },
+      ],
+    })
+    const bindings = new Map([['a', 'trigger_sk'], ['s', 'neighbor_sk']])
+    const allSkills = new Map([['trigger_sk', triggerSkill], ['neighbor_sk', neighborSkill]])
+    const skillStates = new Map([['trigger_sk', makeRuntimeState()], ['neighbor_sk', makeRuntimeState()]])
+    const ctx = makeContext({ bindings, allSkills, skillStates, chainAffixesDisabled: true } as any)
+    const triggerState = makeRuntimeState()
+    const result = resolvePhase6('a', triggerSkill, triggerState, ctx, 'base')
+    const conduitActions = result.actions.filter(a => a.type === 'conduit')
+    expect(conduitActions).toHaveLength(0)
   })
 })
 
@@ -1641,16 +1665,33 @@ describe('resolvePhase5', () => {
   })
 
   describe('Apprentice enchantments (Phase 5 self-trigger types)', () => {
-    it('ApprenticeSelf: should always accumulate growth', () => {
+    it('ApprenticeNeighbor: should accumulate growth on self-trigger', () => {
       const skill = makeSkill({
-        enchantmentIds: [EnchantmentType.ApprenticeSelf],
+        enchantmentIds: [EnchantmentType.ApprenticeNeighbor],
+        neighborPosRel: PositionRelation.Adjacent,
       })
       const state = makeRuntimeState({ apprenticeAccumulated: 0.10 })
       const ctx = makeContext()
       const flags = makeFlags()
       resolvePhase5(skill, state, ctx, flags, 10)
-      // 成长速率翻倍后: 0.01 (原 0.005)
-      expect(state.apprenticeAccumulated).toBeCloseTo(0.10 + 0.01)
+      // Adjacent growth = 0.06
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.10 + 0.06)
+    })
+
+    it('ApprenticeResBase: should grow proportional to output when targetResource matches', () => {
+      const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
+      const state = makeRuntimeState()
+      // output=10, baseLv1=5 → (10/5)*0.01 = 0.02
+      resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'base')
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
+    })
+
+    it('ApprenticeResBase: higher output → more EXP', () => {
+      const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
+      const state = makeRuntimeState()
+      // output=50, baseLv1=5 → (50/5)*0.01 = 0.10
+      resolvePhase5(skill, state, makeContext(), makeFlags(), 50, 0, 'base')
+      expect(state.apprenticeAccumulated).toBeCloseTo(0.10)
     })
 
   })
@@ -2135,9 +2176,10 @@ describe('resolvePhase6', () => {
       expect(conduitActions[0].targetKey).toBe('a') // re-triggers the original skill
     })
 
-    it('should NOT produce conduit action when trigger skill does not share any affix type', () => {
-      // Trigger skill has Decay (no match with Conduit's other affix Crit)
+    it('should NOT produce conduit action when trigger skill does not share any affix type nor resource', () => {
+      // Trigger skill has Decay (no match with Conduit's other affix Crit) + different resource
       const skill = makeSkill({
+        resource: 'score',
         affixes: [{ type: AffixType.Decay, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 }],
       })
       const neighborSkill = makeSkill({
@@ -2313,22 +2355,10 @@ describe('Code review fixes', () => {
 
 // ===== Story 35.5: 附魔系统 — 溅射 + 学徒(12) =====
 
-describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness (精简后)', () => {
-  it('should contain Self + resource specializations (excluding Neighbor)', () => {
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeSelf]).toBeDefined()
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeSelf]).toBeGreaterThan(0)
-  })
-
-  it('growthPerProc values should match design document (doubled)', () => {
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeSelf]).toBeCloseTo(0.01)
-  })
-
-  it('resource specialization types should have 4% growth (doubled)', () => {
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResBase]).toBeCloseTo(0.04)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResScore]).toBeCloseTo(0.04)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResMultiplier]).toBeCloseTo(0.04)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResTime]).toBeCloseTo(0.04)
-    expect(APPRENTICE_GROWTH_DEFAULTS[EnchantmentType.ApprenticeResGold]).toBeCloseTo(0.04)
+describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS (redesigned — now empty, Res* use output scaling)', () => {
+  it('should be empty (all types use new output-scaled or posRel-based growth)', () => {
+    // ApprenticeSelf deleted, Res* now use output scaling, Neighbor uses posRel table
+    expect(Object.keys(APPRENTICE_GROWTH_DEFAULTS)).toHaveLength(0)
   })
 
   it('ApprenticeNeighbor should NOT be in APPRENTICE_GROWTH_DEFAULTS', () => {
@@ -2336,12 +2366,13 @@ describe('Story 35.5: APPRENTICE_GROWTH_DEFAULTS completeness (精简后)', () =
   })
 })
 
-describe('Story 41.2: Resource specialization enchantments — Phase 5 growth', () => {
-  it('ApprenticeResBase: should grow when targetResource is base (doubled rate)', () => {
+describe('Story 41.2: Resource specialization enchantments — Phase 5 growth (output-scaled)', () => {
+  it('ApprenticeResBase: should grow proportional to output (output=10, baseLv1=5 → 0.02)', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResBase] })
     const state = makeRuntimeState()
+    // (10/5)*0.01 = 0.02
     resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'base')
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.04)
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.02)
   })
 
   it('ApprenticeResBase: should NOT grow when targetResource is score', () => {
@@ -2351,11 +2382,12 @@ describe('Story 41.2: Resource specialization enchantments — Phase 5 growth', 
     expect(state.apprenticeAccumulated).toBe(0)
   })
 
-  it('ApprenticeResGold: should grow when targetResource is gold (doubled rate)', () => {
+  it('ApprenticeResGold: should grow proportional to output (output=9, goldLv1=3 → 0.03)', () => {
     const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResGold] })
     const state = makeRuntimeState()
-    resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0, 'gold')
-    expect(state.apprenticeAccumulated).toBeCloseTo(0.04)
+    // (9/3)*0.01 = 0.03
+    resolvePhase5(skill, state, makeContext(), makeFlags(), 9, 0, 'gold')
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
   })
 
   it('should NOT grow when targetResource is undefined', () => {
@@ -2363,6 +2395,14 @@ describe('Story 41.2: Resource specialization enchantments — Phase 5 growth', 
     const state = makeRuntimeState()
     resolvePhase5(skill, state, makeContext(), makeFlags(), 10, 0)
     expect(state.apprenticeAccumulated).toBe(0)
+  })
+
+  it('ApprenticeResScore: higher output → more EXP (output=45, scoreLv1=15 → 0.03)', () => {
+    const skill = makeSkill({ enchantmentIds: [EnchantmentType.ApprenticeResScore] })
+    const state = makeRuntimeState()
+    // (45/15)*0.01 = 0.03
+    resolvePhase5(skill, state, makeContext(), makeFlags(), 45, 0, 'score')
+    expect(state.apprenticeAccumulated).toBeCloseTo(0.03)
   })
 })
 
@@ -2372,7 +2412,7 @@ describe('Story 41.2: Pruned apprentice types should no longer exist in APPRENTI
   it('applyApprenticeEvent returns false for all pruned events', () => {
     const state = makeRuntimeState()
     for (const event of ['wordComplete', 'longWordComplete', 'perfectWord', 'wordCrafted', 'stageCleared', 'comboReach']) {
-      const applied = applyApprenticeEvent(event, state, [EnchantmentType.ApprenticeSelf])
+      const applied = applyApprenticeEvent(event, state, [EnchantmentType.ApprenticeNeighbor])
       expect(applied).toBe(false)
     }
     expect(state.apprenticeAccumulated).toBe(0)
@@ -2415,7 +2455,7 @@ describe('Story 35.6: applyQuestEvent external events', () => {
 
 describe('Story 41.2: filterEnchantmentsByClass (精简后无职业限定)', () => {
   const candidates = [
-    EnchantmentType.ApprenticeSelf,
+    EnchantmentType.ApprenticeNeighbor,
     EnchantmentType.ApprenticeResBase,
     EnchantmentType.QuestDevour,
   ]
@@ -3247,25 +3287,25 @@ describe('CLASS_RESTRICTED_ENCHANTMENTS — passive coverage', () => {
 
   it('filterEnchantmentsByClass should exclude passive enchantments for no class', () => {
     const candidates = [
-      EnchantmentType.ApprenticeSelf,
+      EnchantmentType.ApprenticeNeighbor,
       EnchantmentType.LetterAffinity,
       EnchantmentType.Overflow,
       EnchantmentType.Unstable,
       EnchantmentType.MutationHunger,
     ]
     const filtered = filterEnchantmentsByClass(candidates)
-    expect(filtered).toEqual([EnchantmentType.ApprenticeSelf])
+    expect(filtered).toEqual([EnchantmentType.ApprenticeNeighbor])
   })
 
   it('filterEnchantmentsByClass should include wordsmith passives for wordsmith', () => {
     const candidates = [
-      EnchantmentType.ApprenticeSelf,
+      EnchantmentType.ApprenticeNeighbor,
       EnchantmentType.LetterAffinity,
       EnchantmentType.Overflow,
       EnchantmentType.Unstable,
     ]
     const filtered = filterEnchantmentsByClass(candidates, 'wordsmith')
-    expect(filtered).toContain(EnchantmentType.ApprenticeSelf)
+    expect(filtered).toContain(EnchantmentType.ApprenticeNeighbor)
     expect(filtered).toContain(EnchantmentType.LetterAffinity)
     expect(filtered).toContain(EnchantmentType.Overflow)
     expect(filtered).not.toContain(EnchantmentType.Unstable)
