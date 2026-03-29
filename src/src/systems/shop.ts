@@ -45,7 +45,7 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity, AffixType } from '../data/affixes';
-import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, categorizeEnchantmentCandidates, weightedPickEnchantment } from '../data/affixTrigger';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold } from '../data/affixTrigger';
 import { filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
@@ -531,11 +531,15 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
         questProgress = t('tooltip.quest_progress', { task: t('quest.' + questEnch.type + '.task'), stacks: rt.questStacks, target: questEnch.targetStacks })
       }
     }
-    // 学徒成长
+    // 学徒成长（显示 EXP / 升华阈值）
     const hasApprentice = skill.enchantmentIds.some(id => isApprenticeEnchantment(id as EnchantmentType))
     if (hasApprentice) {
-      if (rt.apprenticeAccumulated > 0) {
-        apprenticeGrowth = t('tooltip.apprentice_growth', { pct: (rt.apprenticeAccumulated * 100).toFixed(1) })
+      const acc = rt.apprenticeAccumulated
+      const threshold = skill.level >= 3 ? getAscendThreshold(skill.level) : 0
+      if (threshold > 0) {
+        apprenticeGrowth = t('tooltip.apprentice_exp', { exp: (acc * 100).toFixed(1), threshold: (threshold * 100).toFixed(0), level: skill.level + 1 })
+      } else if (acc > 0) {
+        apprenticeGrowth = t('tooltip.apprentice_growth', { pct: (acc * 100).toFixed(1) })
       } else {
         apprenticeGrowth = t('tooltip.apprentice_pending')
       }
@@ -650,7 +654,11 @@ export function computeSmartEstimate(
     const hasApprentice = skill.enchantmentIds.some(id => isApprenticeEnchantment(id as import('../data/affixes').EnchantmentType))
     if (hasApprentice) {
       const acc = rt?.apprenticeAccumulated ?? 0
-      if (acc > 0) {
+      const threshold = skill.level >= 3 ? getAscendThreshold(skill.level) : 0
+      if (threshold > 0) {
+        // 显示 EXP/阈值 进度
+        breakdown.push({ typeKey: 'apprentice', label: t('est.apprentice_exp', { exp: (acc * 100).toFixed(1), threshold: (threshold * 100).toFixed(0), level: skill.level + 1 }), detail: '' })
+      } else if (acc > 0) {
         addPercent += acc
         breakdown.push({ typeKey: 'apprentice', label: t('est.apprentice', { pct: (acc * 100).toFixed(1) }), detail: '' })
       } else {

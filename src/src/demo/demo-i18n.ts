@@ -716,6 +716,7 @@ const ZH: Record<string, string> = {
   'est.taboo_penalty': '(负产出{pct}%)',
   'est.taboo_quest': '(负产出{pct}%, 任务-{c}%)',
   'est.apprentice': '学徒 +{pct}%',
+  'est.apprentice_exp': 'EXP {exp}%/{threshold}% → Lv.{level}',
   'est.apprentice_zero': '学徒 +0.0%',
   'est.apprentice_neighbor_rel': '({rel}邻居成长)',
   'est.apprentice_neighbor': '(邻居触发成长)',
@@ -739,6 +740,7 @@ const ZH: Record<string, string> = {
   'tooltip.quest_progress': '任务: {task} ({stacks}/{target})',
   'tooltip.quest_done': '✦ 已质变: {effect}',
   'tooltip.apprentice_growth': '学徒: +{pct}%',
+  'tooltip.apprentice_exp': '学徒 EXP: {exp}% / {threshold}% → Lv.{level}',
   'tooltip.apprentice_pending': '学徒: +0.0% (待成长)',
 
   // --- enchantment display info ---
@@ -1485,6 +1487,7 @@ const EN: Record<string, string> = {
   'est.taboo_penalty': '(negative {pct}%)',
   'est.taboo_quest': '(negative {pct}%, quest -{c}%)',
   'est.apprentice': 'Apprentice +{pct}%',
+  'est.apprentice_exp': 'EXP {exp}%/{threshold}% → Lv.{level}',
   'est.apprentice_zero': 'Apprentice +0.0%',
   'est.apprentice_neighbor_rel': '({rel} neighbor growth)',
   'est.apprentice_neighbor': '(neighbor trigger growth)',
@@ -1508,6 +1511,7 @@ const EN: Record<string, string> = {
   'tooltip.quest_progress': 'Quest: {task} ({stacks}/{target})',
   'tooltip.quest_done': '✦ Transformed: {effect}',
   'tooltip.apprentice_growth': 'Apprentice: +{pct}%',
+  'tooltip.apprentice_exp': 'EXP: {exp}% / {threshold}% → Lv.{level}',
   'tooltip.apprentice_pending': 'Apprentice: +0.0% (pending)',
 
   // --- enchantment display info ---
