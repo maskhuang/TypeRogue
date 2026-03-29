@@ -891,8 +891,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
         if (ownedSkillId && !convertedSkillIds.has(ownedSkillId)) {
           const ownedData = state.player.skills.get(ownedSkillId);
           const ownedAffix = state.affixSkills.get(ownedSkillId);
-          const effectiveCap1 = (ownedAffix?.enchantmentIds.some(id => isApprenticeEnchantment(id as any))) ? Infinity : levelCap;
-          if (ownedData && ownedAffix && ownedData.level < effectiveCap1) {
+          if (ownedData && ownedAffix && ownedData.level < levelCap) {
             // 转为升级
             const nextLevel = ownedData.level + 1;
             affixItems[i] = {
@@ -925,8 +924,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
           const affix = state.affixSkills.get(skillId);
           if (!affix || affix.rarity < 1) continue;
           if (convertedSkillIds.has(skillId)) continue;
-          const cap = (affix.enchantmentIds.some(id => isApprenticeEnchantment(id as any))) ? Infinity : levelCap;
-          if (skillData.level >= cap) continue;
+          if (skillData.level >= levelCap) continue;
           candidates.push({ skillId, affix });
         }
         if (candidates.length > 0) {
@@ -1738,10 +1736,8 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
     if (item.isUpgrade) {
       const data = state.player.skills.get(skillId);
       if (data) {
-        // 升华系统：有学徒附魔的技能突破 Lv.3 上限
-        const existingSkill = state.affixSkills.get(skillId);
-        const ascendCap = (existingSkill?.enchantmentIds.some(id => isApprenticeEnchantment(id as any))) ? Infinity : 3;
-        data.level = Math.min(ascendCap, data.level + 1);
+        // 商店升级上限 Lv.3（Lv.4+ 通过战斗中自动升华获得）
+        data.level = Math.min(3, data.level + 1);
         data.purchasePrice = (data.purchasePrice || 0) + item.cost;
       }
       // 同步更新 affixSkills 中的 level + 词条参数缩放
