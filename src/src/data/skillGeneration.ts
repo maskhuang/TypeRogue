@@ -23,10 +23,10 @@ import { t } from '../demo/demo-i18n'
 const GENERIC_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
 const ALL_POS_RELATIONS: PositionRelation[] = Object.values(PositionRelation)
 
-/** 获取词条的有效权重（Convert 取两变体最大值） */
+/** 获取词条的有效权重（Convert 仅使用 cross 变体权重） */
 function getAffixWeight(type: AffixType): number {
   if (type === AffixType.Convert) {
-    return Math.max(AFFIX_WEIGHTS.convert_cross, AFFIX_WEIGHTS.convert_self)
+    return AFFIX_WEIGHTS.convert_cross
   }
   return AFFIX_WEIGHTS[type as Exclude<AffixType, AffixType.Convert>] ?? 0
 }
@@ -42,6 +42,19 @@ export function roundTo(n: number, decimals: number): number {
 /** 随机选取数组中一个元素 */
 export function pickRandom<T>(arr: readonly T[]): T {
   return arr[Math.floor(random() * arr.length)]
+}
+
+/** 按本局词条权重加权选取一个 AffixType（权重高的更容易被选中） */
+function pickAffixWeighted(candidates: AffixType[]): AffixType {
+  const weights = candidates.map(t => getAffixWeight(t))
+  const total = weights.reduce((a, b) => a + b, 0)
+  if (total <= 0) return pickRandom(candidates)
+  let roll = random() * total
+  for (let i = 0; i < candidates.length; i++) {
+    roll -= weights[i]
+    if (roll <= 0) return candidates[i]
+  }
+  return candidates[candidates.length - 1]
 }
 
 // ===== 稀有度掷骰 =====
@@ -182,9 +195,9 @@ export function rollAffixParams(
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
     case AffixType.Link: {
-      // 感应词条：随机选一个词条类型作为监听目标（排除自身 + 权重<5 的词条）
+      // 感应词条：按本局权重加权选一个词条类型作为监听目标（排除自身 + 权重<5 的词条）
       const watchCandidates = Object.values(AffixType).filter(t => t !== AffixType.Link && getAffixWeight(t) >= 5)
-      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), watchAffix: pickRandom(watchCandidates) }
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), watchAffix: pickAffixWeighted(watchCandidates) }
     }
 
     case AffixType.Splash: {
@@ -194,9 +207,9 @@ export function rollAffixParams(
         // 资源变体：只触发产出指定资源的技能
         return { type, posRel, resource: pickRandom(pool) }
       } else {
-        // 词条变体：只触发拥有指定词条的技能（排除权重<5 的词条）
+        // 词条变体：按本局权重加权选词条（排除权重<5 的词条）
         const candidates = Object.values(AffixType).filter(t => t !== AffixType.Splash && getAffixWeight(t) >= 5)
-        return { type, posRel, watchAffix: pickRandom(candidates) }
+        return { type, posRel, watchAffix: pickAffixWeighted(candidates) }
       }
     }
 

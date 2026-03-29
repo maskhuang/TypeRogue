@@ -214,19 +214,25 @@ describe('AFFIX_WEIGHTS', () => {
     }
   })
 
-  it('should have all positive weights', () => {
+  it('should have all positive weights except convert_self (disabled)', () => {
     for (const [key, weight] of Object.entries(AFFIX_WEIGHTS)) {
-      expect(weight).toBeGreaterThan(0)
+      if (key === 'convert_self') {
+        expect(weight).toBe(0)
+      } else {
+        expect(weight).toBeGreaterThan(0)
+      }
     }
   })
 
-  it('should have convert_cross > convert_self', () => {
-    expect(AFFIX_WEIGHTS['convert_cross']).toBeGreaterThan(AFFIX_WEIGHTS['convert_self'])
+  it('convert_self should be disabled (weight 0)', () => {
+    expect(AFFIX_WEIGHTS['convert_self']).toBe(0)
+    expect(AFFIX_WEIGHTS['convert_cross']).toBeGreaterThan(0)
   })
 
-  it('should have twin as the rarest (weight 2)', () => {
+  it('should have twin as the rarest active affix (weight 2)', () => {
     expect(AFFIX_WEIGHTS[AffixType.Twin]).toBe(2)
     for (const [key, weight] of Object.entries(AFFIX_WEIGHTS)) {
+      if (key === 'convert_self') continue // disabled
       expect(weight).toBeGreaterThanOrEqual(2)
     }
   })

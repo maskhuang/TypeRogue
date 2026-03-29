@@ -592,7 +592,7 @@ describe('JSON serialization roundtrip', () => {
 // ===== 转化同源/异源权重差异测试 =====
 
 describe('Convert cross/self weight differentiation', () => {
-  it('convert_cross should appear more frequently than convert_self', () => {
+  it('convert_self should never appear (weight 0, disabled)', () => {
     setSeededMode(11111)
     let crossCount = 0
     let selfCount = 0
@@ -604,13 +604,8 @@ describe('Convert cross/self weight differentiation', () => {
         else if (result[0].convertVariant === 'self') selfCount++
       }
     }
-    // convert_cross: 10, convert_self: 3, 所以 cross 应出现约 3.3 倍
-    if (selfCount > 0) {
-      expect(crossCount / selfCount).toBeGreaterThan(1.5) // 保守
-    } else {
-      // selfCount 太少也合理（权重低），但 cross 应有足够量
-      expect(crossCount).toBeGreaterThan(0)
-    }
+    expect(selfCount).toBe(0)
+    expect(crossCount).toBeGreaterThan(0)
     setSeededMode(42)
   })
 

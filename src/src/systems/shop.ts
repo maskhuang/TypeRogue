@@ -346,9 +346,9 @@ export function generateAffixShopItems(count: number): ShopItem[] {
 
 // Old producer/act skill weights removed (词条制 replaces old system)
 
-// === 商店遗物权重：前半段 common+rare，后半段含 epic+legendary ===
+// === 商店遗物权重：前半段 common+rare，后半段含 epic（传说仅 Boss 掉落） ===
 const SHOP_RELIC_WEIGHTS_FIRST: RelicWeights = { common: 70, rare: 30, epic: 0, legendary: 0 };
-const SHOP_RELIC_WEIGHTS_SECOND: RelicWeights = { common: 45, rare: 30, epic: 20, legendary: 5 };
+const SHOP_RELIC_WEIGHTS_SECOND: RelicWeights = { common: 45, rare: 30, epic: 25, legendary: 0 };
 
 // === 生成商店遗物商品 ===
 export function generateShopRelicItem(act: number, itemId?: number): ShopItem | null {
@@ -1585,8 +1585,8 @@ function checkAutoEnchantment(skillId: string): void {
   for (const [, affixSkill] of state.affixSkills) {
     totalEnch += affixSkill.enchantmentIds.length;
   }
-  // 概率 = max(0.1, 0.8 - 0.15 * totalEnch)
-  const prob = Math.max(0.1, 0.8 - 0.15 * totalEnch);
+  // 第一个附魔必定成功；之后概率 = max(0.1, 0.8 - 0.15 * (totalEnch - 1))
+  const prob = totalEnch === 0 ? 1.0 : Math.max(0.1, 0.8 - 0.15 * (totalEnch - 1));
   if (random() >= prob) {
     showFeedback('附魔失败', '#ff6b6b');
     return;

@@ -273,13 +273,13 @@ export const BASE_VALUES: Record<ResourceType, [number, number, number]> = {
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
 export type AffixWeightKey = Exclude<AffixType, AffixType.Convert> | 'convert_cross' | 'convert_self'
 
-/** 词条权重分档：'high' = 6-10 随机，'low' = 1-4 随机 */
-export type AffixWeightTier = 'high' | 'low'
+/** 词条权重分档：'high' = 6-10 随机，'low' = 1-4 随机，'none' = 0（禁用） */
+export type AffixWeightTier = 'high' | 'low' | 'none'
 
 /** 词条基准分档表（每局开始时据此随机生成实际权重） */
 export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   convert_cross: 'high',
-  convert_self: 'low',
+  convert_self: 'none', // 自源转化已禁用
   [AffixType.Rainbow]: 'low',
   [AffixType.Charge]: 'high',
   [AffixType.Decay]: 'high',
@@ -303,7 +303,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
 export let AFFIX_WEIGHTS: Record<AffixWeightKey, number> = Object.fromEntries(
-  Object.entries(AFFIX_WEIGHT_TIERS).map(([k, tier]) => [k, tier === 'high' ? 8 : 2])
+  Object.entries(AFFIX_WEIGHT_TIERS).map(([k, tier]) => [k, tier === 'high' ? 8 : tier === 'low' ? 2 : 0])
 ) as Record<AffixWeightKey, number>;
 
 /** 根据分档随机生成本局词条权重，需传入 RNG 函数 */
@@ -311,7 +311,9 @@ export function rollAffixWeights(rng: () => number): void {
   const entries = Object.entries(AFFIX_WEIGHT_TIERS) as [AffixWeightKey, AffixWeightTier][];
   const result = {} as Record<AffixWeightKey, number>;
   for (const [key, tier] of entries) {
-    if (tier === 'high') {
+    if (tier === 'none') {
+      result[key] = 0;
+    } else if (tier === 'high') {
       result[key] = 6 + Math.floor(rng() * 5); // 6-10
     } else {
       result[key] = 1 + Math.floor(rng() * 4); // 1-4

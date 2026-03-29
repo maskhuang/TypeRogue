@@ -1859,7 +1859,7 @@ export async function startLevel(): Promise<void> {
 
   // 溢出分扣减目标分数（最低 0），然后清零
   if (state.overflowScore > 0) {
-    state.targetScore = Math.max(0, state.targetScore - state.overflowScore);
+    state.targetScore = Math.max(0, Math.round(state.targetScore - state.overflowScore));
     state.overflowScore = 0;
   }
 
