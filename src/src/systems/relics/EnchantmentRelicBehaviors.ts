@@ -40,10 +40,7 @@ export function getEnchantmentChoiceCount(): number {
 
 // === 早期觉醒 (early_awakening) ===
 
-/**
- * @deprecated Story 41.1: 附魔与技能等级已解耦，不再需要等级门槛。
- * 保留以兼容现有测试，后续清理。
- */
+/** 获取附魔触发等级门槛（早期觉醒降至 Lv.2） */
 export function getMinEnchantmentLevel(): number {
   return state.player.relics.has('early_awakening') ? 2 : 3
 }

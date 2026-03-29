@@ -53,7 +53,7 @@ import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyRitualEnchantment, generateRitualCandidates, pickRitualChoices, getEligibleSkills as getRitualEligibleSkills } from './ritualEnchantment';
 import type { RitualCandidate } from './ritualEnchantment';
 import { applyTrainingManual, hasUncrownedKing, shouldBlockEnchantment, getUncrownedKingBaseValue } from './relics/SkillRelicBehaviors';
-import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier } from './relics/EnchantmentRelicBehaviors';
+import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier, getMinEnchantmentLevel } from './relics/EnchantmentRelicBehaviors';
 import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState, getSkillAnchorKey } from './bindingManager';
 import { getShapeCells, mapShapeToKeys } from '../data/skillShapes';
 
@@ -1623,6 +1623,9 @@ function purchasePackItem(index: number): void {
 
 // === Lv.3 自动附魔检查（概率递减） ===
 function checkAutoEnchantment(skillId: string): void {
+  // 无冕之王：无附魔技能禁止获得附魔
+  const affixSkillCheck = state.affixSkills.get(skillId);
+  if (affixSkillCheck && shouldBlockEnchantment(affixSkillCheck.enchantmentIds)) return;
   // 统计场上全部技能已有附魔总数
   let totalEnch = 0;
   for (const [, affixSkill] of state.affixSkills) {
@@ -1754,8 +1757,9 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
         applyAffixLevelScaling(existing.affixes, 1);
       }
       eventBus.emit('skill:upgraded', { skillId, newLevel: data?.level || 1 });
-      // Lv.3 升级触发附魔（概率递减）
-      if (data?.level === 3) {
+      // 达到附魔等级门槛时触发附魔（概率递减）
+      // 早期觉醒遗物将门槛从 Lv.3 降至 Lv.2
+      if (data?.level === getMinEnchantmentLevel()) {
         checkAutoEnchantment(skillId);
       }
       showFeedback(t('shop.skill_upgrade', { name: affixSkill.name }), '#ffe66d');

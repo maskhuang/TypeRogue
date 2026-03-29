@@ -398,7 +398,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'immortal_combo',
     name: '不断之链',
     icon: '🔗',
-    description: 'combo 跨关不重置（打错仍会中断），但技能不再产出 multiplier 资源。',
+    description: 'combo 跨关不重置（打错仍会中断），每关初始时间变为当前 combo 数。',
     rarity: 'legendary',
     basePrice: 0,
     effects: [],

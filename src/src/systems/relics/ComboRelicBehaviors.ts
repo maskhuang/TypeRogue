@@ -4,6 +4,7 @@
 
 import { state } from '../../core/state'
 import { registerRelicBehavior, setRelicState, getRelicState } from './RelicPipeline'
+import { eventBus } from '../../core/events/EventBus'
 
 // === 连击缓冲 (combo_buffer) ===
 
@@ -92,17 +93,18 @@ export function resetComboDetonator(): void {
 
 // === 不灭连击 (immortal_combo) ===
 
+/** 上关结束时的 combo 数（获得不断之链时追溯用） */
+let _lastBattleCombo = 0
+
+/** 由 battle.ts 在关卡初始化时调用，保存上关 combo */
+export function saveLastBattleCombo(combo: number): void {
+  _lastBattleCombo = combo
+}
+
 /**
  * 检查是否持有不灭连击
  */
 export function hasImmortalCombo(): boolean {
-  return state.player.relics.has('immortal_combo')
-}
-
-/**
- * 检查是否应阻止 multiplier 资源产出
- */
-export function shouldBlockMultiplierResource(): boolean {
   return state.player.relics.has('immortal_combo')
 }
 
@@ -132,6 +134,13 @@ export function initComboRelicBehaviors(): void {
   })
 
   registerRelicBehavior('immortal_combo', (_relicId, _context) => {
-    // 实际逻辑在 hasImmortalCombo() / shouldBlockMultiplierResource() 中
+    // 实际逻辑在 hasImmortalCombo() 中
+  })
+
+  // 获得不断之链时追溯上关 combo
+  eventBus.on('relic:acquired', ({ relicId }) => {
+    if (relicId === 'immortal_combo' && _lastBattleCombo > 0) {
+      state.combo = _lastBattleCombo
+    }
   })
 }

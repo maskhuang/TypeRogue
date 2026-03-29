@@ -15,7 +15,7 @@ import { eventBus } from '../core/events/EventBus';
 import { routeFragmentsToInventory } from './classes/FragmentQueue';
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
-import { shouldBlockMultiplierResource, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
+import { getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, hasUncrownedKing, UK_GROWTH_RATE } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
 import { getAdjacentPowerBonus, getSymmetryPactBonus, getRowMedalBonus } from './relics/TopologyRelicBehaviors';
@@ -287,8 +287,6 @@ function triggerAffixSkillWithFeedback(
 
   const result = orchestrateAffixTrigger(skillId, triggerKey, ctx, {
     applyResource: (resource: ResourceType, amount: number, isMultiplyOp?: boolean) => {
-      // 不灭连击：阻止 multiplier 资源产出
-      if (resource === 'multiplier' && shouldBlockMultiplierResource()) return;
       // 无冕之王：Lv4+ 基础值缩放
       if (ukScale > 1) amount = amount * ukScale;
       // 遗物加算：正产出 + relicBonus%（不放大 taboo 惩罚）
@@ -367,8 +365,6 @@ function triggerAffixSkillWithFeedback(
   for (const tr of result.triggerResults) {
     if (!tr.phase4) continue;
     const resource = tr.phase4.targetResource;
-    // 不灭连击：multiplier 资源已被阻止，跳过反馈
-    if (resource === 'multiplier' && shouldBlockMultiplierResource()) continue;
     // 遗物缩放：同步缩放反馈值（无冕之王 + 加算遗物 + 资源潮汐，仅正产出）
     let amount = tr.output;
     if (ukScale > 1) amount = amount * ukScale;

@@ -93,7 +93,7 @@ async function init(): Promise<void> {
   // === 完整版流程 ===
 
   // 初始技能（新词条制系统）— 绑定键位延迟到词库生成后
-  const starterSkill = generateSkill({ resource: 'base', rarity: 0, level: 1 });
+  const starterSkill = generateSkill({ rarity: 0, level: 1 });
   state.player.skills.set(starterSkill.id, { level: 1 });
   state.affixSkills.set(starterSkill.id, starterSkill);
   state.affixSkillStates.set(starterSkill.id, createSkillRuntimeState(starterSkill.id));

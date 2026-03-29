@@ -1828,7 +1828,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   multiplier_prism: 'Mult ≥2.5: skill output +20%',
   rhythm_doctor: 'Every 10 combo: +1s time',
   combo_detonator: 'At combo 15/30/45: randomly trigger 3 equipped skills',
-  immortal_combo: 'Combo persists across stages (still breaks on error), but skills no longer produce multiplier.',
+  immortal_combo: 'Combo persists across stages (still breaks on error); stage time equals current combo count.',
   // Skill subsystem relics
   first_strike: 'First skill trigger per word: output +20%',
   less_is_more: 'With <10 skills equipped: skill output +20%',

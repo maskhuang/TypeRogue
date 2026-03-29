@@ -29,7 +29,7 @@ import { showActTransition, showBossIntro, updateStageInfo } from './actTransiti
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
 import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, isRepeatWord, calculateRhythmAdapt, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors } from './relics/TypingRelicBehaviors';
-import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmortalCombo, shouldBlockMultiplierResource, syncRhythmDoctorMilestone, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
+import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmortalCombo, saveLastBattleCombo, syncRhythmDoctorMilestone, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing } from './relics/SkillRelicBehaviors';
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
@@ -1815,6 +1815,8 @@ export async function startLevel(): Promise<void> {
   timerRoller.reset(Math.ceil(state.time));
   multRoller.reset(Math.round(state.multiplier * 10));
   lastScoreTier = ''; // 重置分数分级缓存 (Review M1)
+  // 保存上关结束 combo（不断之链追溯用）
+  saveLastBattleCombo(state.combo);
   // Story 36.3: 不灭连击 — combo 跨关不重置
   if (!hasImmortalCombo()) {
     state.combo = 0;
@@ -1849,6 +1851,10 @@ export async function startLevel(): Promise<void> {
   // 使用 stageType-based 固定时间和目标分数
   const battleNum = getBattleNumber(state.level);
   state.timeMax = getCycleTimeLimit(state.level, state.cycle);
+  // 不断之链：初始时间 = 当前 combo 数（而非固定时间）
+  if (hasImmortalCombo()) {
+    state.timeMax = Math.max(1, state.combo);
+  }
   state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
 
   // Demo: 使用降低难度的固定目标分数
