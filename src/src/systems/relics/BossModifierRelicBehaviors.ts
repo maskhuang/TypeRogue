@@ -21,8 +21,8 @@ export const CHAOS_WORD_INTERVAL = 5
 
 // === 数值型参数键（用于反转/翻倍） ===
 const NUMERIC_PARAM_KEYS: (keyof BossModifierParams)[] = [
-  'decayRate', 'comboPunishRate', 'timeSpeed', 'scoreCap', 'diminishRate', 'targetMultiplier',
-  'keystrokeTax', 'escalateStep', 'frostPenalty', 'taxRate', 'scoreTaxFlat',
+  'decayRate', 'scoreCapPct', 'diminishRate', 'targetMultiplier',
+  'escalateStep', 'scoreTaxPct',
 ]
 
 // === 模块级状态 ===
@@ -45,7 +45,7 @@ export function getShieldedTimeSpeed(rawSpeed: number): number {
   return (rawSpeed - 1) * (1 - SHIELD_REDUCE) + 1
 }
 
-/** scoreCap 护盾：提高上限 25%（50 → 67） */
+/** scoreCap 护盾：提高上限 25% */
 export function getShieldedScoreCap(rawCap: number): number {
   if (!state.player.relics.has('modifier_shield')) return rawCap
   return Math.ceil(rawCap / (1 - SHIELD_REDUCE))
@@ -134,18 +134,14 @@ export function applyModifierReversal(): void {
         // 禁用：所有打字干扰参数置零/极大值
         for (const key of Object.keys(params) as (keyof BossModifierParams)[]) {
           if (['fadeSpeed', 'fadeSpeedEnd'].includes(key)) (params as any)[key] = 999
-          else if (key === 'spotlightRadius') (params as any)[key] = 999
-          else if (key === 'scrollHitZone') (params as any)[key] = 999
           else if (['scrambleMode', 'reverseActive', 'garbleActive'].includes(key)) (params as any)[key] = 0
-          else if (['garbleRate', 'scrollSpeed'].includes(key)) (params as any)[key] = 0
+          else if (['garbleRate', 'decoyChance'].includes(key)) (params as any)[key] = 0
         }
       } else {
         // 增强：速度翻倍/范围减半
         if (params.fadeSpeed) { params.fadeSpeed /= 2; if (params.fadeSpeedEnd) params.fadeSpeedEnd /= 2 }
-        if (params.spotlightRadius) params.spotlightRadius = Math.max(1, Math.floor(params.spotlightRadius / 2))
         if (params.garbleRate) params.garbleRate = Math.min(params.garbleRate * 2, 0.8)
-        if (params.scrollSpeed) params.scrollSpeed *= 2
-        if (params.scrollHitZone) params.scrollHitZone = Math.max(20, Math.floor(params.scrollHitZone / 2))
+        if (params.decoyChance) params.decoyChance = Math.min(params.decoyChance * 2, 0.8)
       }
     } else {
       // offense / defense: NUMERIC_PARAM_KEYS 反转逻辑
@@ -154,7 +150,8 @@ export function applyModifierReversal(): void {
           if (params[key] == null) continue
           if (key === 'timeSpeed') {
             params[key] = 2 - params[key]!
-          } else if (key === 'scoreCap') {
+          } else if (key === 'scoreCapPct') {
+            // 反转：上限极大化（无效化限额）
             params[key] = Infinity
           } else if (key === 'targetMultiplier') {
             const oldMult = params[key]!
@@ -162,7 +159,7 @@ export function applyModifierReversal(): void {
             if (oldMult > 0) {
               state.targetScore = Math.floor(state.targetScore / oldMult * params[key]!)
             }
-          } else if (key === 'scoreTaxFlat') {
+          } else if (key === 'scoreTaxPct') {
             // 无效化：置 0
             params[key] = 0
           } else {
@@ -174,8 +171,9 @@ export function applyModifierReversal(): void {
           if (params[key] == null) continue
           if (key === 'timeSpeed') {
             params[key] = Math.min(params[key]! * 2, 2.0)
-          } else if (key === 'scoreCap') {
-            params[key] = Math.floor(params[key]! / 2)
+          } else if (key === 'scoreCapPct') {
+            // 增强：上限减半（更严格）
+            params[key] = params[key]! / 2
           } else if (key === 'targetMultiplier') {
             const oldMult = params[key]!
             params[key] = oldMult * 2

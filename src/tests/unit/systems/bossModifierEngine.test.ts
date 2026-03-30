@@ -2,9 +2,9 @@
 // 打字肉鸽 - bossModifierEngine 单元测试
 // ============================================
 // Story 18.4: Boss 修饰器引擎 + 数值修饰器
-// Story 18.5: 视觉类修饰器（boss_fade, boss_spotlight）
+// Story 18.5: 视觉类修饰器（boss_fade）
 // Story 18.6: 认知类修饰器（boss_scramble, boss_reverse）
-// Story 18.8: 6 个数值修饰器集成测试（combo_punish, cap, fast_time）
+// Story 18.8: 数值修饰器集成测试（cap, fast_time 等）
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { state, resetState } from '../../../src/core/state'
@@ -18,10 +18,6 @@ import {
   garbleWord,
   isGarbleActive,
   GARBLE_CHARS,
-  isScrollActive,
-  initScrollWord,
-  checkScrollLetterState,
-  markScrollMiss,
 } from '../../../src/data/bossModifiers'
 import type { BossModifierId, BossModifier, BossModifierParams } from '../../../src/data/bossModifiers'
 import {
@@ -100,9 +96,9 @@ describe('bossModifierEngine', () => {
   })
 
   describe('BOSS_MODIFIER_REGISTRY', () => {
-    it('包含全部 18 个修饰器', () => {
+    it('包含全部 15 个修饰器', () => {
       const keys = Object.keys(BOSS_MODIFIER_REGISTRY)
-      expect(keys).toHaveLength(18)
+      expect(keys).toHaveLength(15)
     })
 
     it('每个修饰器都有 id/getParams/apply/cleanup', () => {
@@ -122,8 +118,8 @@ describe('bossModifierEngine', () => {
       }
     })
 
-    it('2 个视觉类修饰器返回非空参数', () => {
-      const visual: BossModifierId[] = ['boss_fade', 'boss_spotlight']
+    it('1 个视觉类修饰器返回非空参数', () => {
+      const visual: BossModifierId[] = ['boss_fade']
       visual.forEach(id => {
         const params = BOSS_MODIFIER_REGISTRY[id].getParams(false)
         const values = Object.values(params).filter(v => v !== undefined)
@@ -147,7 +143,7 @@ describe('bossModifierEngine', () => {
       applyModifier('boss_cap', false)
       const effect = getActiveModifierEffect()
       expect(effect).not.toBeNull()
-      expect(effect!.scoreCap).toBe(50)
+      expect(effect!.scoreCapPct).toBe(0.10)
     })
 
     it('清理后效果参数为 null', () => {
@@ -161,7 +157,7 @@ describe('bossModifierEngine', () => {
       applyModifier('boss_decay', false)
       const effect = getActiveModifierEffect()
       expect(effect!.decayRate).toBe(0.05)
-      expect(effect!.scoreCap).toBe(50)
+      expect(effect!.scoreCapPct).toBe(0.10)
     })
   })
 
@@ -192,182 +188,78 @@ describe('bossModifierEngine', () => {
     })
   })
 
-  describe('boss_combo_punish 修饰器', () => {
-    it('满功率参数: comboPunishRate = 0.20', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_combo_punish.getParams(false)
-      expect(params.comboPunishRate).toBe(0.20)
-    })
-
-    it('精英参数: comboPunishRate = 0.10', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_combo_punish.getParams(true)
-      expect(params.comboPunishRate).toBe(0.10)
-    })
-
-    it('集成：满功率扣 20% 总分（模拟 playerWrong 钩子）', () => {
-      applyModifier('boss_combo_punish', false)
-      state.score = 1000
-      const modEffect = getActiveParams()
-      if (modEffect?.comboPunishRate && state.score > 0) {
-        const penalty = Math.floor(state.score * modEffect.comboPunishRate)
-        state.score = Math.max(0, state.score - penalty)
-      }
-      expect(state.score).toBe(800) // 1000 - 200 = 800
-      cleanupModifier()
-    })
-
-    it('集成：精英版扣 10% 总分', () => {
-      applyModifier('boss_combo_punish', true)
-      state.score = 1000
-      const modEffect = getActiveParams()
-      if (modEffect?.comboPunishRate && state.score > 0) {
-        const penalty = Math.floor(state.score * modEffect.comboPunishRate)
-        state.score = Math.max(0, state.score - penalty)
-      }
-      expect(state.score).toBe(900) // 1000 - 100 = 900
-      cleanupModifier()
-    })
-
-    it('集成：分数为 0 时不扣减', () => {
-      applyModifier('boss_combo_punish', false)
-      state.score = 0
-      const modEffect = getActiveParams()
-      if (modEffect?.comboPunishRate && state.score > 0) {
-        const penalty = Math.floor(state.score * modEffect.comboPunishRate)
-        state.score = Math.max(0, state.score - penalty)
-      }
-      expect(state.score).toBe(0)
-      cleanupModifier()
-    })
-
-    it('集成：penalty 向下取整', () => {
-      applyModifier('boss_combo_punish', false)
-      state.score = 333 // 333 * 0.20 = 66.6 → floor = 66
-      const modEffect = getActiveParams()
-      if (modEffect?.comboPunishRate && state.score > 0) {
-        const penalty = Math.floor(state.score * modEffect.comboPunishRate)
-        state.score = Math.max(0, state.score - penalty)
-      }
-      expect(state.score).toBe(267) // 333 - 66 = 267
-      cleanupModifier()
-    })
-
-    it('集成：视觉反馈字符串格式正确（AC2）', () => {
-      applyModifier('boss_combo_punish', false)
-      state.score = 1000
-      const modEffect = getActiveParams()
-      if (modEffect?.comboPunishRate && state.score > 0) {
-        const penalty = Math.floor(state.score * modEffect.comboPunishRate)
-        // 验证 battle.ts showFeedback(`-${penalty}分!`) 的格式
-        const feedbackMsg = `-${penalty}分!`
-        expect(feedbackMsg).toBe('-200分!')
-        expect(penalty).toBe(200)
-      }
-      cleanupModifier()
-    })
-
-    it('集成：连续断连复合扣分（1000→800→640）', () => {
-      applyModifier('boss_combo_punish', false)
-      state.score = 1000
-      // 第一次断连
-      const mod1 = getActiveParams()
-      if (mod1?.comboPunishRate && state.score > 0) {
-        const penalty = Math.floor(state.score * mod1.comboPunishRate)
-        state.score = Math.max(0, state.score - penalty)
-      }
-      expect(state.score).toBe(800)
-      // 第二次断连
-      const mod2 = getActiveParams()
-      if (mod2?.comboPunishRate && state.score > 0) {
-        const penalty = Math.floor(state.score * mod2.comboPunishRate)
-        state.score = Math.max(0, state.score - penalty)
-      }
-      expect(state.score).toBe(640) // 800 - 160 = 640
-      cleanupModifier()
-    })
-  })
-
   describe('boss_cap 修饰器', () => {
-    it('满功率参数: scoreCap = 50', () => {
+    it('满功率参数: scoreCapPct = 0.10', () => {
       const params = BOSS_MODIFIER_REGISTRY.boss_cap.getParams(false)
-      expect(params.scoreCap).toBe(50)
+      expect(params.scoreCapPct).toBe(0.10)
     })
 
-    it('精英参数: scoreCap = 75', () => {
+    it('精英参数: scoreCapPct = 0.15', () => {
       const params = BOSS_MODIFIER_REGISTRY.boss_cap.getParams(true)
-      expect(params.scoreCap).toBe(75)
+      expect(params.scoreCapPct).toBe(0.15)
     })
 
-    it('集成：高分词被截断到 cap=50（模拟 completeWord 钩子）', () => {
+    it('集成：高分词被截断到 targetScore×10%（模拟 completeWord 钩子）', () => {
+      state.targetScore = 500
       applyModifier('boss_cap', false)
       let finalWordScore = 100
       const modEffect = getActiveParams()
-      if (modEffect?.scoreCap) {
-        finalWordScore = Math.min(finalWordScore, modEffect.scoreCap)
+      if (modEffect?.scoreCapPct) {
+        const cap = Math.floor(state.targetScore * modEffect.scoreCapPct)
+        finalWordScore = Math.min(finalWordScore, cap)
       }
-      expect(finalWordScore).toBe(50)
+      expect(finalWordScore).toBe(50) // 500 × 0.10 = 50
       cleanupModifier()
     })
 
     it('集成：低于 cap 的分数不截断', () => {
+      state.targetScore = 500
       applyModifier('boss_cap', false)
       let finalWordScore = 30
       const modEffect = getActiveParams()
-      if (modEffect?.scoreCap) {
-        finalWordScore = Math.min(finalWordScore, modEffect.scoreCap)
+      if (modEffect?.scoreCapPct) {
+        const cap = Math.floor(state.targetScore * modEffect.scoreCapPct)
+        finalWordScore = Math.min(finalWordScore, cap)
       }
       expect(finalWordScore).toBe(30)
       cleanupModifier()
     })
 
-    it('集成：精英版 scoreCap=75 截断', () => {
+    it('集成：精英版 scoreCapPct=0.15 截断', () => {
+      state.targetScore = 500
       applyModifier('boss_cap', true)
       let finalWordScore = 100
       const modEffect = getActiveParams()
-      if (modEffect?.scoreCap) {
-        finalWordScore = Math.min(finalWordScore, modEffect.scoreCap)
+      if (modEffect?.scoreCapPct) {
+        const cap = Math.floor(state.targetScore * modEffect.scoreCapPct)
+        finalWordScore = Math.min(finalWordScore, cap)
       }
-      expect(finalWordScore).toBe(75)
+      expect(finalWordScore).toBe(75) // 500 × 0.15 = 75
       cleanupModifier()
     })
   })
 
   describe('boss_fast_time 修饰器', () => {
-    it('满功率参数: timeSpeed = 1.5', () => {
+    it('返回 timeSpeed 标志位 = 1', () => {
       const params = BOSS_MODIFIER_REGISTRY.boss_fast_time.getParams(false)
-      expect(params.timeSpeed).toBe(1.5)
+      expect(params.timeSpeed).toBe(1)
     })
 
-    it('精英参数: timeSpeed = 1.25', () => {
+    it('精英参数与满功率相同（标志位）', () => {
       const params = BOSS_MODIFIER_REGISTRY.boss_fast_time.getParams(true)
-      expect(params.timeSpeed).toBe(1.25)
+      expect(params.timeSpeed).toBe(1)
     })
 
-    it('集成：timer 以 1.5x 速度消耗时间（模拟 startTimer 钩子）', () => {
+    it('激活后 timeSpeed 标志为 truthy', () => {
       applyModifier('boss_fast_time', false)
-      state.time = 30.0
       const modEffect = getActiveParams()
-      const timeSpeed = modEffect?.timeSpeed ?? 1
-      state.time -= 0.1 * timeSpeed // 模拟 1 次 100ms tick
-      expect(state.time).toBeCloseTo(29.85) // 30 - 0.15 = 29.85
+      expect(!!modEffect?.timeSpeed).toBe(true)
       cleanupModifier()
     })
 
-    it('集成：精英版 1.25x 速度', () => {
-      applyModifier('boss_fast_time', true)
-      state.time = 30.0
+    it('无修饰器时 timeSpeed 为 undefined', () => {
       const modEffect = getActiveParams()
-      const timeSpeed = modEffect?.timeSpeed ?? 1
-      state.time -= 0.1 * timeSpeed
-      expect(state.time).toBeCloseTo(29.875) // 30 - 0.125 = 29.875
-      cleanupModifier()
-    })
-
-    it('集成：无修饰器时 timeSpeed 默认为 1', () => {
-      state.time = 30.0
-      const modEffect = getActiveParams()
-      const timeSpeed = modEffect?.timeSpeed ?? 1
-      state.time -= 0.1 * timeSpeed
-      expect(state.time).toBeCloseTo(29.9) // 30 - 0.1 = 29.9
+      expect(modEffect?.timeSpeed).toBeUndefined()
     })
   })
 
@@ -451,8 +343,8 @@ describe('bossModifierEngine', () => {
 
   describe('精英版参数约为满功率的 50%', () => {
     const numericalMods: BossModifierId[] = [
-      'boss_decay', 'boss_combo_punish', 'boss_cap',
-      'boss_fast_time', 'boss_double_target', 'boss_diminish',
+      'boss_decay', 'boss_cap',
+      'boss_double_target', 'boss_diminish',
     ]
 
     it.each(numericalMods)('%s 精英参数弱于满功率', (modId) => {
@@ -538,65 +430,9 @@ describe('bossModifierEngine', () => {
     })
   })
 
-  describe('boss_spotlight 修饰器', () => {
-    it('满功率参数: spotlightRadius=2', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_spotlight.getParams(false)
-      expect(params.spotlightRadius).toBe(2)
-    })
-
-    it('精英参数: spotlightRadius=3', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_spotlight.getParams(true)
-      expect(params.spotlightRadius).toBe(3)
-    })
-
-    it('精英参数弱于满功率（半径更大 = 更容易）', () => {
-      const full = BOSS_MODIFIER_REGISTRY.boss_spotlight.getParams(false)
-      const elite = BOSS_MODIFIER_REGISTRY.boss_spotlight.getParams(true)
-      expect(elite.spotlightRadius!).toBeGreaterThan(full.spotlightRadius!)
-    })
-
-    it('onTick 根据 player.index 设置 opacity', () => {
-      state.player.index = 1
-      state.player.word = 'HELLO'
-      mockLetters = [
-        createMockLetterEl('letter correct'),
-        createMockLetterEl('letter current'),
-        createMockLetterEl('letter pending'),
-        createMockLetterEl('letter pending'),
-        createMockLetterEl('letter pending'),
-      ]
-      applyModifier('boss_spotlight', false)
-      tickModifier(0.1)
-      // correct 字母保持不变
-      expect(mockLetters[0].style.opacity).toBe('')
-      // current (index=1) 在 radius/2=1 范围内，opacity=1
-      expect(mockLetters[1].style.opacity).toBe('1')
-      // index 4 距离 1 = 3，超出 radius=2，opacity=0.05
-      expect(mockLetters[4].style.opacity).toBe('0.05')
-    })
-
-    it('cleanup 恢复所有 letter opacity', () => {
-      mockLetters = [
-        createMockLetterEl('letter pending'),
-        createMockLetterEl('letter pending'),
-      ]
-      state.player.index = 0
-      state.player.word = 'AB'
-      applyModifier('boss_spotlight', false)
-      tickModifier(0.1)
-      cleanupModifier()
-      expect(mockLetters[0].style.opacity).toBe('')
-      expect(mockLetters[1].style.opacity).toBe('')
-    })
-
-    it('有 onTick 方法', () => {
-      expect(typeof BOSS_MODIFIER_REGISTRY.boss_spotlight.onTick).toBe('function')
-    })
-  })
-
   describe('视觉类修饰器生命周期', () => {
     it('apply → onTick → cleanup 完整周期不报错', () => {
-      const visualMods: BossModifierId[] = ['boss_fade', 'boss_spotlight']
+      const visualMods: BossModifierId[] = ['boss_fade']
       mockLetters = [
         createMockLetterEl('letter current'),
         createMockLetterEl('letter pending'),
@@ -615,7 +451,7 @@ describe('bossModifierEngine', () => {
     })
 
     it('精英版 apply → onTick → cleanup 完整周期不报错', () => {
-      const visualMods: BossModifierId[] = ['boss_fade', 'boss_spotlight']
+      const visualMods: BossModifierId[] = ['boss_fade']
       mockLetters = [
         createMockLetterEl('letter current'),
         createMockLetterEl('letter pending'),
@@ -630,22 +466,6 @@ describe('bossModifierEngine', () => {
           cleanupModifier()
         }).not.toThrow()
       })
-    })
-
-    it('连续切换视觉修饰器不报错', () => {
-      mockLetters = [
-        createMockLetterEl('letter pending'),
-      ]
-      state.player.index = 0
-      state.player.word = 'A'
-
-      expect(() => {
-        applyModifier('boss_fade', false)
-        tickModifier(0.5)
-        applyModifier('boss_spotlight', false)
-        tickModifier(0.5)
-        cleanupModifier()
-      }).not.toThrow()
     })
   })
 
@@ -844,71 +664,6 @@ describe('bossModifierEngine', () => {
     it('apply → cleanup 完整周期不报错', () => {
       expect(() => {
         applyModifier('boss_garble', false)
-        tickModifier(0.1)
-        cleanupModifier()
-      }).not.toThrow()
-    })
-  })
-
-  // === boss_scroll 滚屏修饰器 ===
-
-  describe('boss_scroll 修饰器', () => {
-    it('满功率参数: scrollSpeed=100, scrollHitZone=40', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_scroll.getParams(false)
-      expect(params.scrollSpeed).toBe(100)
-      expect(params.scrollHitZone).toBe(40)
-    })
-
-    it('精英参数: scrollSpeed=60, scrollHitZone=60', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_scroll.getParams(true)
-      expect(params.scrollSpeed).toBe(60)
-      expect(params.scrollHitZone).toBe(60)
-    })
-
-    it('精英参数弱于满功率（速度更慢，命中区更宽）', () => {
-      const full = BOSS_MODIFIER_REGISTRY.boss_scroll.getParams(false)
-      const elite = BOSS_MODIFIER_REGISTRY.boss_scroll.getParams(true)
-      expect(elite.scrollSpeed!).toBeLessThan(full.scrollSpeed!)
-      expect(elite.scrollHitZone!).toBeGreaterThan(full.scrollHitZone!)
-    })
-
-    it('apply 设置 scrollActive', () => {
-      applyModifier('boss_scroll', false)
-      expect(isScrollActive()).toBe(true)
-      cleanupModifier()
-    })
-
-    it('cleanup 重置 scrollActive', () => {
-      applyModifier('boss_scroll', false)
-      cleanupModifier()
-      expect(isScrollActive()).toBe(false)
-    })
-
-    it('initScrollWord 重置 miss 标记', () => {
-      expect(() => initScrollWord(5)).not.toThrow()
-    })
-
-    it('markScrollMiss 标记指定索引', () => {
-      initScrollWord(3)
-      expect(() => markScrollMiss(0)).not.toThrow()
-    })
-
-    it('有 onTick 方法', () => {
-      expect(typeof BOSS_MODIFIER_REGISTRY.boss_scroll.onTick).toBe('function')
-    })
-
-    it('apply → onTick → cleanup 完整周期不报错', () => {
-      expect(() => {
-        applyModifier('boss_scroll', false)
-        tickModifier(0.1)
-        tickModifier(0.5)
-        cleanupModifier()
-      }).not.toThrow()
-    })
-
-    it('精英版生命周期不报错', () => {
-      expect(() => {
-        applyModifier('boss_scroll', true)
         tickModifier(0.1)
         cleanupModifier()
       }).not.toThrow()

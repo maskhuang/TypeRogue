@@ -8,78 +8,72 @@ import { calculateTargetScore } from '../../../src/core/state'
 
 describe('calculateTargetScore', () => {
   it('默认 stageType 为 standard', () => {
-    const score = calculateTargetScore(1)
-    const scoreExplicit = calculateTargetScore(1, 'standard')
+    const score = calculateTargetScore(2)
+    const scoreExplicit = calculateTargetScore(2, 'standard')
     expect(score).toBe(scoreExplicit)
   })
 
-  it('Stage 1 返回 TARGET_BASE_EXP (300)', () => {
-    expect(calculateTargetScore(1, 'standard')).toBe(300)
+  it('Stage 1 返回 0（校准关，无目标）', () => {
+    expect(calculateTargetScore(1, 'standard')).toBe(0)
+    expect(calculateTargetScore(1, 'boss')).toBe(0)
   })
 
-  it('Stage 2 返回 Math.round(300 × 1.45) = 435', () => {
-    expect(calculateTargetScore(2, 'standard')).toBe(435)
+  it('Stage 2 返回 TARGET_BASE (300)（未校准时回退默认值）', () => {
+    expect(calculateTargetScore(2, 'standard')).toBe(300)
   })
 
-  it('指数增长公式: Math.round(300 × 1.45^(n-1))', () => {
-    const expected = [300, 435, 631, 915, 1326, 1923, 2788, 4043, 5862]
+  it('Stage 3 返回 Math.round(300 × 1.45) = 435', () => {
+    expect(calculateTargetScore(3, 'standard')).toBe(435)
+  })
+
+  it('指数增长公式: Math.round(300 × 1.45^(n-2))，Stage 1 = 0', () => {
+    const expected = [0, 300, 435, 631, 915, 1326, 1923, 2788, 4043, 5862]
     for (let i = 0; i < expected.length; i++) {
       expect(calculateTargetScore(i + 1, 'standard')).toBe(expected[i])
     }
   })
 
-  it('Boss 关 = 标准关 × 1.5', () => {
-    const standard = calculateTargetScore(1, 'standard')
-    const boss = calculateTargetScore(1, 'boss')
+  it('Boss 关 = 标准关 × 1.5（Stage 2+）', () => {
+    const standard = calculateTargetScore(2, 'standard')
+    const boss = calculateTargetScore(2, 'boss')
     expect(boss).toBe(Math.round(standard * 1.5))
   })
 
-  it('Boss Stage 3: Math.round(631 × 1.5) = 947', () => {
-    expect(calculateTargetScore(3, 'boss')).toBe(947)
+  it('Boss Stage 4: Math.round(631 × 1.5) = 947', () => {
+    expect(calculateTargetScore(4, 'boss')).toBe(947)
   })
 
-  it('Boss Stage 6: Math.round(1923 × 1.5) = 2885', () => {
-    expect(calculateTargetScore(6, 'boss')).toBe(2885)
+  it('Boss Stage 7: Math.round(1923 × 1.5) = 2885', () => {
+    expect(calculateTargetScore(7, 'boss')).toBe(2885)
   })
 
-  it('分数随关卡递增', () => {
-    for (let level = 2; level <= 10; level++) {
+  it('分数从 Stage 2 起递增', () => {
+    for (let level = 3; level <= 10; level++) {
       expect(calculateTargetScore(level, 'standard')).toBeGreaterThan(
         calculateTargetScore(level - 1, 'standard')
       )
     }
   })
 
-  it('Boss 关分数高于标准关', () => {
-    for (let level = 1; level <= 10; level++) {
+  it('Boss 关分数高于标准关（Stage 2+）', () => {
+    for (let level = 2; level <= 10; level++) {
       expect(calculateTargetScore(level, 'boss')).toBeGreaterThan(
         calculateTargetScore(level, 'standard')
       )
     }
   })
 
-  it('rest/elite stageType 返回标准分数（无特殊倍率）', () => {
-    const standard = calculateTargetScore(1, 'standard')
-    expect(calculateTargetScore(1, 'rest')).toBe(standard)
-    expect(calculateTargetScore(1, 'elite')).toBe(standard)
-  })
-
   it('不再需要 cycle 参数 — 签名只有 stageNum 和 stageType', () => {
-    // 编译时验证：calculateTargetScore(1) 和 calculateTargetScore(1, 'boss') 都合法
-    expect(calculateTargetScore(1)).toBe(300)
-    expect(calculateTargetScore(1, 'boss')).toBe(450)
+    expect(calculateTargetScore(1)).toBe(0)
+    expect(calculateTargetScore(2, 'boss')).toBe(450)
   })
 
   it('tempBuff 管道顺序：目标分数 → buff 乘法叠加', () => {
-    // 模拟 battle.ts startLevel 中的计算顺序：
-    // 1. calculateTargetScore 计算基础目标
-    // 2. tempBuff type='targetScore' 在之后 Math.floor(target * buff.value)
-    const target = calculateTargetScore(3, 'boss') // 947
-    const buffValue = 2.0 // boss_double_target 效果
+    const target = calculateTargetScore(4, 'boss') // 947
+    const buffValue = 2.0
     const afterBuff = Math.floor(target * buffValue) // 1894
     expect(afterBuff).toBe(1894)
-    // 对比标准关
-    const stdTarget = calculateTargetScore(3, 'standard') // 631
+    const stdTarget = calculateTargetScore(4, 'standard') // 631
     const stdAfterBuff = Math.floor(stdTarget * buffValue) // 1262
     expect(afterBuff).toBeGreaterThan(stdAfterBuff)
   })

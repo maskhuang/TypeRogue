@@ -8,6 +8,8 @@ import { state, resetState } from '../../../src/core/state'
 import {
   BOSS_MODIFIER_IDS,
   generateBossModifierCandidates,
+  generateBossModifierCandidatesByCategory,
+  BOSS_MODIFIER_META,
   getActiveParams,
   setActiveParams,
 } from '../../../src/data/bossModifiers'
@@ -46,67 +48,65 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
 
   // === AC2: 候选池排除 ===
 
-  describe('generateBossModifierCandidates', () => {
-    it('无已激活修饰器时返回 3 个候选', () => {
-      const candidates = generateBossModifierCandidates([])
-      expect(candidates).toHaveLength(3)
+  describe('generateBossModifierCandidatesByCategory', () => {
+    it('返回 3 组候选（offense/defense/disruption）', () => {
+      const groups = generateBossModifierCandidatesByCategory([])
+      expect(groups).toHaveLength(3)
+    })
+
+    it('每组返回 2 个候选', () => {
+      const groups = generateBossModifierCandidatesByCategory([])
+      for (const group of groups) {
+        expect(group).toHaveLength(2)
+      }
+    })
+
+    it('各组候选属于正确的类别', () => {
+      const categories = ['offense', 'defense', 'disruption'] as const
+      const groups = generateBossModifierCandidatesByCategory([])
+      for (let i = 0; i < 3; i++) {
+        for (const id of groups[i]) {
+          expect(BOSS_MODIFIER_META[id].category).toBe(categories[i])
+        }
+      }
     })
 
     it('候选全部来自 BOSS_MODIFIER_IDS', () => {
-      const candidates = generateBossModifierCandidates([])
-      candidates.forEach(id => {
+      const all = generateBossModifierCandidatesByCategory([]).flat()
+      all.forEach(id => {
         expect(BOSS_MODIFIER_IDS).toContain(id)
       })
     })
 
-    it('候选不重复', () => {
-      const candidates = generateBossModifierCandidates([])
-      expect(new Set(candidates).size).toBe(candidates.length)
-    })
-
     it('排除已激活的修饰器', () => {
-      const active: BossModifierId[] = ['boss_fade', 'boss_decay', 'boss_cap']
-      const candidates = generateBossModifierCandidates(active)
-      expect(candidates).toHaveLength(3)
+      const active: BossModifierId[] = ['boss_fade', 'boss_decay', 'boss_fast_time']
+      const all = generateBossModifierCandidatesByCategory(active).flat()
       active.forEach(id => {
-        expect(candidates).not.toContain(id)
+        expect(all).not.toContain(id)
       })
     })
 
-    it('排除 9 个后仅剩 3 个可用', () => {
-      const active = BOSS_MODIFIER_IDS.slice(0, 9) as BossModifierId[]
-      const candidates = generateBossModifierCandidates(active)
-      expect(candidates).toHaveLength(3)
-      active.forEach(id => {
-        expect(candidates).not.toContain(id)
-      })
+    it('某类别全部排除后该组为空', () => {
+      // 排除所有 offense（前 6 个）
+      const allOffense = BOSS_MODIFIER_IDS.filter(id => BOSS_MODIFIER_META[id].category === 'offense') as BossModifierId[]
+      const groups = generateBossModifierCandidatesByCategory(allOffense)
+      expect(groups[0]).toHaveLength(0) // offense 为空
+      expect(groups[1]).toHaveLength(2) // defense 正常
+      expect(groups[2]).toHaveLength(2) // disruption 正常
     })
 
-    it('排除 16 个后仅剩 2 个可用', () => {
-      const active = BOSS_MODIFIER_IDS.slice(0, 16) as BossModifierId[]
-      const candidates = generateBossModifierCandidates(active)
-      expect(candidates).toHaveLength(2)
-    })
-
-    it('排除 17 个后仅剩 1 个可用', () => {
-      const active = BOSS_MODIFIER_IDS.slice(0, 17) as BossModifierId[]
-      const candidates = generateBossModifierCandidates(active)
-      expect(candidates).toHaveLength(1)
-    })
-
-    it('排除全部 18 个后返回空数组', () => {
+    it('排除全部 14 个后所有组为空', () => {
       const active = [...BOSS_MODIFIER_IDS] as BossModifierId[]
-      const candidates = generateBossModifierCandidates(active)
-      expect(candidates).toHaveLength(0)
+      const groups = generateBossModifierCandidatesByCategory(active)
+      expect(groups.flat()).toHaveLength(0)
     })
 
-    it('多次调用结果随机（至少一次不同）', () => {
+    it('多次调用结果随机', () => {
       const results = new Set<string>()
       for (let i = 0; i < 20; i++) {
-        const c = generateBossModifierCandidates([])
+        const c = generateBossModifierCandidatesByCategory([]).flat()
         results.add(c.sort().join(','))
       }
-      // 从 12 个中取 3 个，组合数 C(12,3)=220，20 次内大概率不全相同
       expect(results.size).toBeGreaterThan(1)
     })
   })
@@ -119,8 +119,8 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       applyModifier('boss_fast_time', false)
       const effect = getActiveModifierEffect()
       expect(effect).not.toBeNull()
-      expect(effect!.scoreCap).toBe(50)
-      expect(effect!.timeSpeed).toBe(1.5)
+      expect(effect!.scoreCapPct).toBe(0.10)
+      expect(effect!.timeSpeed).toBe(1)
     })
 
     it('同时应用三个修饰器', () => {
@@ -128,8 +128,8 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       applyModifier('boss_fast_time', false)
       applyModifier('boss_decay', false)
       const effect = getActiveModifierEffect()
-      expect(effect!.scoreCap).toBe(50)
-      expect(effect!.timeSpeed).toBe(1.5)
+      expect(effect!.scoreCapPct).toBe(0.10)
+      expect(effect!.timeSpeed).toBe(1)
       expect(effect!.decayRate).toBe(0.05)
     })
 
@@ -172,7 +172,7 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       applyModifier('boss_fast_time', false, false) // temporary
       cleanupTemporaryModifiers()
       const effect = getActiveModifierEffect()
-      expect(effect!.scoreCap).toBe(50)
+      expect(effect!.scoreCapPct).toBe(0.10)
       expect(effect!.timeSpeed).toBeUndefined()
     })
 
@@ -188,8 +188,8 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       applyModifier('boss_fast_time', false, true)
       cleanupTemporaryModifiers()
       const effect = getActiveModifierEffect()
-      expect(effect!.scoreCap).toBe(50)
-      expect(effect!.timeSpeed).toBe(1.5)
+      expect(effect!.scoreCapPct).toBe(0.10)
+      expect(effect!.timeSpeed).toBe(1)
     })
 
     it('多次调用幂等', () => {
@@ -198,7 +198,7 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       cleanupTemporaryModifiers()
       cleanupTemporaryModifiers()
       const effect = getActiveModifierEffect()
-      expect(effect!.scoreCap).toBe(50)
+      expect(effect!.scoreCapPct).toBe(0.10)
     })
   })
 
@@ -239,15 +239,15 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
         applyModifier(modId, false, true)
       }
       const effect = getActiveModifierEffect()
-      expect(effect!.scoreCap).toBe(50)
-      expect(effect!.timeSpeed).toBe(1.5)
+      expect(effect!.scoreCapPct).toBe(0.10)
+      expect(effect!.timeSpeed).toBe(1)
     })
 
     it('永久修饰器使用满功率参数（isElite=false）', () => {
       state.activeModifiers = ['boss_cap']
       applyModifier('boss_cap', false, true)
       const effect = getActiveModifierEffect()
-      expect(effect!.scoreCap).toBe(50) // 满功率
+      expect(effect!.scoreCapPct).toBe(0.10) // 满功率
     })
   })
 
@@ -260,8 +260,8 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       // 精英关修饰器
       applyModifier('boss_fast_time', true, false) // elite, temporary
       const effect = getActiveModifierEffect()
-      expect(effect!.scoreCap).toBe(50) // permanent full power
-      expect(effect!.timeSpeed).toBe(1.25) // elite reduced
+      expect(effect!.scoreCapPct).toBe(0.10) // permanent full power
+      expect(effect!.timeSpeed).toBe(1) // elite reduced
     })
 
     it('精英关跳过已在永久列表中的修饰器', () => {
@@ -285,21 +285,21 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       // 应用新的临时修饰器（阶段 B）
       applyModifier('boss_fast_time', false, false)
       const effect = getActiveModifierEffect()
-      expect(effect!.scoreCap).toBe(50) // permanent still active
-      expect(effect!.timeSpeed).toBe(1.5) // new temporary
+      expect(effect!.scoreCapPct).toBe(0.10) // permanent still active
+      expect(effect!.timeSpeed).toBe(1) // new temporary
       expect(effect!.decayRate).toBeUndefined() // old temporary gone
     })
 
     it('Boss 轮换跳过已在永久列表中的修饰器（不双重应用）', () => {
       // 永久修饰器 boss_cap
-      applyModifier('boss_cap', false, true) // permanent, scoreCap: 50
+      applyModifier('boss_cap', false, true) // permanent, scoreCapPct: 0.10
       // 模拟 Boss 轮换 cleanupTemporary + 尝试应用同一个修饰器
       cleanupTemporaryModifiers()
       // switchToPhase 中的逻辑：isModifierActive(boss_cap) → true → 不重复应用
       expect(isModifierActive('boss_cap')).toBe(true)
       // 验证不会出现双重实例
       const effect = getActiveModifierEffect()
-      expect(effect!.scoreCap).toBe(50)
+      expect(effect!.scoreCapPct).toBe(0.10)
     })
 
     it('endLevel cleanupModifier 清理全部（永久 + 临时）', () => {
@@ -316,12 +316,12 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
 
   describe('getActiveParams 合并', () => {
     it('多个修饰器参数合并（Object.assign 语义）', () => {
-      applyModifier('boss_cap', false, true) // scoreCap: 50
-      applyModifier('boss_fast_time', false, true) // timeSpeed: 1.5
+      applyModifier('boss_cap', false, true) // scoreCapPct: 0.10
+      applyModifier('boss_fast_time', false, true) // timeSpeed: 1
       applyModifier('boss_decay', false, true) // decayRate: 0.05
       const params = getActiveParams()
-      expect(params!.scoreCap).toBe(50)
-      expect(params!.timeSpeed).toBe(1.5)
+      expect(params!.scoreCapPct).toBe(0.10)
+      expect(params!.timeSpeed).toBe(1)
       expect(params!.decayRate).toBe(0.05)
     })
 
@@ -333,11 +333,11 @@ describe('Boss 修饰器选择与叠加 (Story 25.3)', () => {
       applyModifier('boss_cap', false, true) // permanent
       applyModifier('boss_fast_time', false, false) // temporary
       const before = getActiveParams()
-      expect(before!.timeSpeed).toBe(1.5)
+      expect(before!.timeSpeed).toBe(1)
 
       cleanupTemporaryModifiers()
       const after = getActiveParams()
-      expect(after!.scoreCap).toBe(50)
+      expect(after!.scoreCapPct).toBe(0.10)
       expect(after!.timeSpeed).toBeUndefined()
     })
   })

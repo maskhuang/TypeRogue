@@ -29,6 +29,7 @@ export function createInitialState(): GameState {
     overkill: 0,
     overflowScore: 0,
     lastOverflowRatio: 0,
+    calibratedTargetBase: 0,
     classResourceProduced: {},
     fragmentInventory: {
       a: 0, b: 0, c: 0, d: 0, e: 0, f: 0, g: 0, h: 0, i: 0, j: 0, k: 0, l: 0, m: 0,
@@ -150,8 +151,12 @@ export function resetState(): void {
 
 // === 关卡目标计算（指数增长）===
 export function calculateTargetScore(stageNum: number, stageType: StageType = 'standard'): number {
+  // 第一关（校准关）：无目标分数
+  if (stageNum === 1) return 0;
   const { TARGET_BASE, TARGET_GROWTH, BOSS_TARGET_MULT } = BALANCE;
-  const target = Math.round(TARGET_BASE * Math.pow(TARGET_GROWTH, stageNum - 1));
+  // 使用校准基数（第一关得分）替代固定 TARGET_BASE；未校准时回退默认值
+  const base = state.calibratedTargetBase > 0 ? state.calibratedTargetBase : TARGET_BASE;
+  const target = Math.round(base * Math.pow(TARGET_GROWTH, stageNum - 2));
   return stageType === 'boss' ? Math.round(target * BOSS_TARGET_MULT) : target;
 }
 

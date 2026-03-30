@@ -80,13 +80,10 @@ export const GLOSSARY_DATA: GlossaryEntry[] = [
   { category: 'modifier', id: 'boss_keystroke_tax', icon: '⌨️', nameKey: 'modifier.boss_keystroke_tax', descKey: 'modifier.boss_keystroke_tax.desc' },
   { category: 'modifier', id: 'boss_escalation', icon: '📈', nameKey: 'modifier.boss_escalation', descKey: 'modifier.boss_escalation.desc' },
   { category: 'modifier', id: 'boss_frostbite', icon: '❄️', nameKey: 'modifier.boss_frostbite', descKey: 'modifier.boss_frostbite.desc' },
-  { category: 'modifier', id: 'boss_resource_tax', icon: '💸', nameKey: 'modifier.boss_resource_tax', descKey: 'modifier.boss_resource_tax.desc' },
   { category: 'modifier', id: 'boss_mirror', icon: '🔀', nameKey: 'modifier.boss_mirror', descKey: 'modifier.boss_mirror.desc' },
   { category: 'modifier', id: 'boss_score_tax', icon: '🏦', nameKey: 'modifier.boss_score_tax', descKey: 'modifier.boss_score_tax.desc' },
-  { category: 'modifier', id: 'boss_spotlight', icon: '🔦', nameKey: 'modifier.boss_spotlight', descKey: 'modifier.boss_spotlight.desc' },
   { category: 'modifier', id: 'boss_garble', icon: '🤪', nameKey: 'modifier.boss_garble', descKey: 'modifier.boss_garble.desc' },
-  { category: 'modifier', id: 'boss_scroll', icon: '📜', nameKey: 'modifier.boss_scroll', descKey: 'modifier.boss_scroll.desc' },
-
+  { category: 'modifier', id: 'boss_decoy', icon: '🎭', nameKey: 'modifier.boss_decoy', descKey: 'modifier.boss_decoy.desc' },
   // 稀有度（4 级）
   { category: 'rarity', id: 'rarity_0', icon: '⬜', nameKey: 'rarity.0', descKey: 'rarity.0.desc' },
   { category: 'rarity', id: 'rarity_1', icon: '🟦', nameKey: 'rarity.1', descKey: 'rarity.1.desc' },

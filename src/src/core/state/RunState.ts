@@ -141,6 +141,9 @@ export interface RunStateData {
 
   /** Story 42.3: 跨关累积溢出分 */
   overflowScore: number
+
+  /** 第一关校准基数（第一关得分，替代 TARGET_BASE） */
+  calibratedTargetBase: number
 }
 
 /**
@@ -198,6 +201,7 @@ export class RunState {
       mutationACounts: new Map(),
       collectedWords: new Set(),
       overflowScore: 0,
+      calibratedTargetBase: 0,
     }
   }
 
@@ -527,6 +531,7 @@ export class RunState {
       mutationACounts: Object.fromEntries(this.data.mutationACounts),
       collectedWords: Array.from(this.data.collectedWords),
       overflowScore: this.data.overflowScore,
+      calibratedTargetBase: this.data.calibratedTargetBase,
     }
   }
 
@@ -626,6 +631,7 @@ export class RunState {
 
     // Story 42.3: 恢复溢出分
     runState.data.overflowScore = (parsed as any).overflowScore || 0
+    runState.data.calibratedTargetBase = (parsed as any).calibratedTargetBase || 0
 
     return runState
   }

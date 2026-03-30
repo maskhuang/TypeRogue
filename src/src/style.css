@@ -295,40 +295,6 @@ body {
     position: relative;
 }
 
-/* boss_scroll 滚屏模式 */
-#word-zone.scroll-active {
-    position: relative;
-    overflow: hidden;
-}
-
-#word-zone.scroll-active #word-display {
-    transition: none; /* 禁用 ease-out 避免抖动 */
-    will-change: transform; /* GPU 加速 */
-}
-
-#scroll-arrow {
-    position: absolute;
-    top: -4px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #ffe66d;
-    font-size: 22px;
-    z-index: 10;
-    pointer-events: none;
-    animation: scrollArrowPulse 0.8s ease-in-out infinite;
-}
-
-@keyframes scrollArrowPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-.letter.scroll-missed {
-    color: #555 !important;
-    opacity: 0.4 !important;
-    text-decoration: line-through;
-}
-
 .letter {
     display: inline-block;
     padding: 3px 5px;

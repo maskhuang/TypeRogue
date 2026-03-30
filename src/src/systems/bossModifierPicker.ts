@@ -1,42 +1,73 @@
 // ============================================
-// 打字肉鸽 - Boss 修饰器三选一
+// 打字肉鸽 - Boss 修饰器选择（每类各选一）
 // ============================================
-// Story 25.3: 每周目 Boss 胜利后选 1 个修饰器叠加
+// Story 25.3: 每周目 Boss 胜利后从 offense/defense/disruption 各选 1 个
 
 import { state } from '../core/state'
-import { generateBossModifierCandidates, getBossModifierMeta } from '../data/bossModifiers'
-import type { BossModifierId } from '../data/bossModifiers'
+import { generateBossModifierCandidatesByCategory, getBossModifierMeta } from '../data/bossModifiers'
+import type { BossModifierId, ModifierCategory } from '../data/bossModifiers'
 import { playSound } from '../effects/sound'
 import { t } from '../demo/demo-i18n'
 
-/** 显示 Boss 修饰器选择模态框 */
+const CATEGORY_LABELS: Record<ModifierCategory, string> = {
+  offense: 'modifier_picker.cat_offense',
+  defense: 'modifier_picker.cat_defense',
+  disruption: 'modifier_picker.cat_disruption',
+}
+
+/** 显示 Boss 修饰器选择模态框（每类各选一，共 3 轮） */
 export function showBossModifierPicker(onComplete: () => void): void {
-  const candidates = generateBossModifierCandidates(state.activeModifiers)
-  if (candidates.length === 0) {
+  const categoryGroups = generateBossModifierCandidatesByCategory(state.activeModifiers)
+  const categories: ModifierCategory[] = ['offense', 'defense', 'disruption']
+
+  // 过滤掉空类别
+  const rounds: Array<{ category: ModifierCategory; candidates: BossModifierId[] }> = []
+  for (let i = 0; i < categories.length; i++) {
+    if (categoryGroups[i].length > 0) {
+      rounds.push({ category: categories[i], candidates: categoryGroups[i] })
+    }
+  }
+
+  if (rounds.length === 0) {
     onComplete()
     return
   }
 
+  let roundIdx = 0
+
+  const showRound = () => {
+    if (roundIdx >= rounds.length) {
+      closeModifierPicker()
+      onComplete()
+      return
+    }
+    const { category, candidates } = rounds[roundIdx]
+    renderPickerRound(category, candidates, (modId) => {
+      state.activeModifiers.push(modId)
+      playSound('skill')
+      roundIdx++
+      showRound()
+    })
+  }
+
+  showRound()
+}
+
+function renderPickerRound(
+  category: ModifierCategory,
+  candidates: BossModifierId[],
+  onPick: (id: BossModifierId) => void,
+): void {
   const modal = document.getElementById('modifier-picker-modal')
-  if (!modal) {
-    onComplete()
-    return
-  }
-
   const cardsEl = document.getElementById('modifier-picker-cards')
   const activeEl = document.getElementById('modifier-picker-active')
-  if (!cardsEl || !activeEl) {
-    onComplete()
-    return
-  }
+  const titleEl = modal?.querySelector('.modifier-picker-title') as HTMLElement | null
+  if (!modal || !cardsEl || !activeEl) return
 
-  // Guard flag 防止快速点击多次触发
-  let completed = false
-  const finish = () => {
-    if (completed) return
-    completed = true
-    closeModifierPicker()
-    onComplete()
+  // 更新标题（显示当前类别）
+  const catLabel = t(CATEGORY_LABELS[category]) || category
+  if (titleEl) {
+    titleEl.textContent = `⚔️ ${catLabel} ⚔️`
   }
 
   // 渲染已激活修饰器列表
@@ -66,6 +97,7 @@ export function showBossModifierPicker(onComplete: () => void): void {
 
   // 渲染候选卡片
   cardsEl.innerHTML = ''
+  let picked = false
   candidates.forEach(modId => {
     const meta = getBossModifierMeta(modId)
     if (!meta) return
@@ -79,9 +111,9 @@ export function showBossModifierPicker(onComplete: () => void): void {
     `
 
     card.onclick = () => {
-      state.activeModifiers.push(modId)
-      playSound('skill')
-      finish()
+      if (picked) return
+      picked = true
+      onPick(modId)
     }
 
     cardsEl.appendChild(card)

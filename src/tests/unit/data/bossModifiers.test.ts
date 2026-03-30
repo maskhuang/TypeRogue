@@ -11,28 +11,30 @@ import {
   BOSS_MODIFIER_META,
   getBossModifierMeta,
   BOSS_MODIFIER_REGISTRY,
+  generateDecoyWord,
+  DECOY_MIN_LENGTH,
 } from '../../../src/data/bossModifiers'
 import type { BossModifierId } from '../../../src/data/bossModifiers'
 
 describe('bossModifiers', () => {
   describe('BOSS_MODIFIER_IDS', () => {
-    it('共 18 个修饰器', () => {
-      expect(BOSS_MODIFIER_IDS).toHaveLength(18)
+    it('共 15 个修饰器', () => {
+      expect(BOSS_MODIFIER_IDS).toHaveLength(15)
     })
 
-    it('包含 6 个进攻类修饰器', () => {
+    it('包含 5 个进攻类修饰器', () => {
       const offenseMods = [
         'boss_fast_time', 'boss_keystroke_tax', 'boss_escalation',
-        'boss_frostbite', 'boss_resource_tax', 'boss_mirror',
+        'boss_frostbite', 'boss_mirror',
       ]
       offenseMods.forEach(id => {
         expect(BOSS_MODIFIER_IDS).toContain(id)
       })
     })
 
-    it('包含 6 个防守类修饰器', () => {
+    it('包含 5 个防守类修饰器', () => {
       const defenseMods = [
-        'boss_decay', 'boss_combo_punish', 'boss_cap',
+        'boss_decay', 'boss_cap',
         'boss_double_target', 'boss_diminish', 'boss_score_tax',
       ]
       defenseMods.forEach(id => {
@@ -40,10 +42,10 @@ describe('bossModifiers', () => {
       })
     })
 
-    it('包含 6 个干扰类修饰器', () => {
+    it('包含 5 个干扰类修饰器', () => {
       const disruptionMods = [
         'boss_fade', 'boss_scramble', 'boss_reverse',
-        'boss_spotlight', 'boss_garble', 'boss_scroll',
+        'boss_garble', 'boss_decoy',
       ]
       disruptionMods.forEach(id => {
         expect(BOSS_MODIFIER_IDS).toContain(id)
@@ -85,16 +87,16 @@ describe('bossModifiers', () => {
       expect(BOSS_MODIFIER_IDS).toContain(result[0])
     })
 
-    it('抽取 18 个返回全部修饰器', () => {
-      const result = drawBossModifiers(18)
-      expect(result).toHaveLength(18)
+    it('抽取 15 个返回全部修饰器', () => {
+      const result = drawBossModifiers(15)
+      expect(result).toHaveLength(15)
       const unique = new Set(result)
-      expect(unique.size).toBe(18)
+      expect(unique.size).toBe(15)
     })
 
-    it('抽取超过总数时最多返回 18 个', () => {
+    it('抽取超过总数时最多返回 15 个', () => {
       const result = drawBossModifiers(25)
-      expect(result).toHaveLength(18)
+      expect(result).toHaveLength(15)
     })
 
     it('多次抽取具有随机性', () => {
@@ -125,7 +127,7 @@ describe('bossModifiers', () => {
       }
     })
 
-    it('排除全部 18 个后触发耗尽重置（AC4）', () => {
+    it('排除全部 15 个后触发耗尽重置（AC4）', () => {
       const allExcluded = [...BOSS_MODIFIER_IDS]
       const result = drawSingleBossModifier(allExcluded)
       // 耗尽重置：从全池中重新抽取
@@ -133,9 +135,9 @@ describe('bossModifiers', () => {
       expect(BOSS_MODIFIER_IDS).toContain(result!)
     })
 
-    it('排除 17 个时从剩余 1 个中抽取', () => {
-      const excluded = BOSS_MODIFIER_IDS.slice(0, 17)
-      const remaining = BOSS_MODIFIER_IDS[17]
+    it('排除 14 个时从剩余 1 个中抽取', () => {
+      const excluded = BOSS_MODIFIER_IDS.slice(0, 14)
+      const remaining = BOSS_MODIFIER_IDS[14]
       const result = drawSingleBossModifier(excluded)
       expect(result).toBe(remaining)
     })
@@ -151,7 +153,7 @@ describe('bossModifiers', () => {
   })
 
   describe('BOSS_MODIFIER_META', () => {
-    it('包含所有 18 个修饰器的元数据', () => {
+    it('包含所有 15 个修饰器的元数据', () => {
       BOSS_MODIFIER_IDS.forEach(id => {
         expect(BOSS_MODIFIER_META[id]).toBeDefined()
       })
@@ -176,7 +178,7 @@ describe('bossModifiers', () => {
 
     it('没有多余的元数据条目', () => {
       const metaKeys = Object.keys(BOSS_MODIFIER_META)
-      expect(metaKeys).toHaveLength(18)
+      expect(metaKeys).toHaveLength(15)
       metaKeys.forEach(key => {
         expect(BOSS_MODIFIER_IDS).toContain(key)
       })
@@ -196,7 +198,7 @@ describe('bossModifiers', () => {
       expect(getBossModifierMeta('unknown_id' as BossModifierId)).toBeUndefined()
     })
 
-    it('所有 18 个修饰器都能查询', () => {
+    it('所有 15 个修饰器都能查询', () => {
       BOSS_MODIFIER_IDS.forEach(id => {
         const meta = getBossModifierMeta(id)
         expect(meta).toBeDefined()
@@ -207,9 +209,9 @@ describe('bossModifiers', () => {
 
   // Story 18.4: BossModifier 注册表
   describe('BOSS_MODIFIER_REGISTRY', () => {
-    it('注册表包含全部 18 个修饰器', () => {
+    it('注册表包含全部 15 个修饰器', () => {
       const keys = Object.keys(BOSS_MODIFIER_REGISTRY)
-      expect(keys).toHaveLength(18)
+      expect(keys).toHaveLength(15)
       BOSS_MODIFIER_IDS.forEach(id => {
         expect(BOSS_MODIFIER_REGISTRY[id]).toBeDefined()
       })
@@ -221,9 +223,9 @@ describe('bossModifiers', () => {
       }
     })
 
-    it('6 个数值修饰器返回非空参数', () => {
+    it('5 个数值修饰器返回非空参数', () => {
       const numerical: BossModifierId[] = [
-        'boss_decay', 'boss_combo_punish', 'boss_cap',
+        'boss_decay', 'boss_cap',
         'boss_fast_time', 'boss_double_target', 'boss_diminish',
       ]
       numerical.forEach(id => {
@@ -239,15 +241,82 @@ describe('bossModifiers', () => {
       expect(params.garbleActive).toBe(1)
     })
 
-    it('boss_scroll 返回 scrollSpeed 和 scrollHitZone', () => {
-      const params = BOSS_MODIFIER_REGISTRY.boss_scroll.getParams(false)
-      expect(params.scrollSpeed).toBe(100)
-      expect(params.scrollHitZone).toBe(40)
+    it('包含 boss_garble', () => {
+      expect(BOSS_MODIFIER_IDS).toContain('boss_garble')
     })
 
-    it('包含 boss_garble 和 boss_scroll', () => {
-      expect(BOSS_MODIFIER_IDS).toContain('boss_garble')
-      expect(BOSS_MODIFIER_IDS).toContain('boss_scroll')
+    it('boss_decoy 返回 decoyChance', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_decoy.getParams(false)
+      expect(params.decoyChance).toBe(0.30)
+    })
+
+    it('boss_decoy elite 返回较低的 decoyChance', () => {
+      const params = BOSS_MODIFIER_REGISTRY.boss_decoy.getParams(true)
+      expect(params.decoyChance).toBe(0.20)
+    })
+
+    it('包含 boss_decoy', () => {
+      expect(BOSS_MODIFIER_IDS).toContain('boss_decoy')
+    })
+  })
+
+  // === generateDecoyWord 字母突变 ===
+  describe('generateDecoyWord', () => {
+    it('返回与原词不同的字符串', () => {
+      const word = 'FLAME'
+      for (let i = 0; i < 20; i++) {
+        const { decoy } = generateDecoyWord(word)
+        expect(decoy).not.toBe(word)
+        expect(decoy).toHaveLength(word.length)
+      }
+    })
+
+    it('仅替换 1-2 个字符', () => {
+      const word = 'ADVENTURE'
+      for (let i = 0; i < 20; i++) {
+        const { decoy } = generateDecoyWord(word)
+        let diff = 0
+        for (let j = 0; j < word.length; j++) {
+          if (decoy[j] !== word[j]) diff++
+        }
+        expect(diff).toBeGreaterThanOrEqual(1)
+        expect(diff).toBeLessThanOrEqual(2)
+      }
+    })
+
+    it('4-5 字母词只突变 1 个字符', () => {
+      const word = 'FIRE'
+      for (let i = 0; i < 20; i++) {
+        const { decoy } = generateDecoyWord(word)
+        let diff = 0
+        for (let j = 0; j < word.length; j++) {
+          if (decoy[j] !== word[j]) diff++
+        }
+        expect(diff).toBe(1)
+      }
+    })
+
+    it('长度不变', () => {
+      for (const word of ['SPARK', 'PHOENIX', 'DRAGON']) {
+        const { decoy } = generateDecoyWord(word)
+        expect(decoy).toHaveLength(word.length)
+      }
+    })
+
+    it('originals 记录突变位置和原字母', () => {
+      const word = 'FLAME'
+      for (let i = 0; i < 20; i++) {
+        const { decoy, originals } = generateDecoyWord(word)
+        expect(originals.size).toBeGreaterThanOrEqual(1)
+        for (const [pos, orig] of originals) {
+          expect(orig).toBe(word[pos]) // 原字母正确
+          expect(decoy[pos]).not.toBe(word[pos]) // 突变后不同
+        }
+      }
+    })
+
+    it('DECOY_MIN_LENGTH 为 4', () => {
+      expect(DECOY_MIN_LENGTH).toBe(4)
     })
   })
 })

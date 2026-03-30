@@ -87,7 +87,7 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
         expect(getShieldedValue(0.05, true)).toBeCloseTo(0.0375)
       })
 
-      it('comboPunishRate 0.20 → 0.15', () => {
+      it('0.20 → 0.15', () => {
         state.player.relics.add('modifier_shield')
         expect(getShieldedValue(0.20, true)).toBeCloseTo(0.15)
       })
@@ -269,7 +269,7 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
 
       // 获取原始值
       const origDecay = getActiveInstances()[0].params.decayRate!
-      const origCap = getActiveInstances()[1].params.scoreCap!
+      const origCap = getActiveInstances()[1].params.scoreCapPct!
 
       // 固定 Math.random 使 shuffle 可预测
       vi.spyOn(Math, 'random').mockReturnValue(0.99) // 不交换 → 索引顺序不变 → 第一个反转，第二个加倍
@@ -286,8 +286,8 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
 
       // 反转：decayRate 取反
       expect(decayParams.decayRate).toBeCloseTo(-origDecay)
-      // 加倍：scoreCap 减半
-      expect(capParams.scoreCap).toBe(Math.floor(origCap / 2))
+      // 增强：scoreCapPct 减半（更严格）
+      expect(capParams.scoreCapPct).toBe(origCap / 2)
     })
 
     it('timeSpeed 反转为减速（2 - original）', () => {
@@ -310,7 +310,7 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
       expect(speedParams.timeSpeed).toBeCloseTo(2 - origSpeed)
     })
 
-    it('scoreCap 反转为 Infinity', () => {
+    it('scoreCapPct 反转为 Infinity', () => {
       state.player.relics.add('modifier_reversal')
       applyModifier('boss_cap' as BossModifierId, false, false)
       applyModifier('boss_decay' as BossModifierId, false, false)
@@ -320,7 +320,7 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
       vi.restoreAllMocks()
 
       // 第一个（boss_cap）反转
-      expect(getActiveInstances()[0].params.scoreCap).toBe(Infinity)
+      expect(getActiveInstances()[0].params.scoreCapPct).toBe(Infinity)
     })
 
     it('targetMultiplier 反转缩放 state.targetScore (H2)', () => {

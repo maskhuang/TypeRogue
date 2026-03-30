@@ -65,7 +65,7 @@ const _wordResourceTypes = new Set<string>();
 // T1 遗物支持：本词是否有产出者触发过（熔炉之心使用）
 let _wordHasProducerTriggered = false;
 
-// === boss_resource_tax: 追踪本词各资源产出量 ===
+// === 追踪本词各资源产出量（boss_keystroke_tax 资源触发用）===
 const _currentWordOutput: Record<string, number> = {};
 
 /** 重置本词资源产出追踪（每词开始时调用） */
@@ -102,7 +102,7 @@ export function resetWordResourceTypes(): void {
   resetWordAffixTypes();
   // Story 36.8: 同步清空资源感应追踪
   resetWordResourceAmounts();
-  // boss_resource_tax: 重置本词资源产出追踪
+  // 重置本词资源产出追踪
   resetWordResourceOutput();
 }
 
@@ -302,7 +302,7 @@ function triggerAffixSkillWithFeedback(
       if (totalBonus > 0 && amount > 0) amount = amount * (1 + totalBonus);
       // Story 36.8: 资源感应 — 追踪正产出
       if (amount > 0) recordResourceProduction(resource, amount);
-      // boss_resource_tax: 追踪本词资源产出
+      // 追踪本词资源产出（击键代价修饰器用）
       if (amount > 0) recordWordResourceOutput(resource, amount);
 
       // Res* 学徒附魔：全场资源产出监听（任何技能/遗物产出时，所有匹配 Res* 附魔的技能积累 EXP）

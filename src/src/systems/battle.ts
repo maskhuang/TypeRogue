@@ -21,7 +21,7 @@ import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getCycleTimeLimit, getBattleNumber, isRitualNode, getNextBattleNode } from './stage/stageFlow';
-import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, BOSS_MODIFIER_IDS, isScrollActive, initScrollWord, checkScrollLetterState, markScrollMiss, setRelicGarbleActive, getEscalateTimeSpeedBonus, addFrostStack, getCurrentTaxResource, getTaxRate, onMirrorWordComplete, resetMirrorWordTimer } from '../data/bossModifiers';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, BOSS_MODIFIER_IDS, setRelicGarbleActive, getEscalateTimeSpeedBonus, triggerFrostFreeze, isFrostFrozen, onMirrorTargetReached, getMirrorPhase, rollDecoyWord, isDecoyWord, isDecoyRecognized, getDecoyOriginalAt, markDecoyRecognized } from '../data/bossModifiers';
 import type { ModifierCategory, BossModifierId } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
 import { showBossModifierPicker } from './bossModifierPicker';
@@ -37,7 +37,7 @@ import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from
 import { checkScoreMagnet, checkResourceSense, storeDeferredSenseBonus, consumeDeferredSenseBonus, incrementTimeDewCounter, checkTimeDew, incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
-import { getShieldedTimeSpeed, getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
+import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult } from '../data/affixTrigger';
 import { AffixType } from '../data/affixes';
@@ -164,6 +164,7 @@ let _initialOverflow = 0; // Story 42.3: 本关注入的初始溢出分（HUD �
 let _elapsedSeconds = 0; // Story 42.4: 关内已流逝秒数（时间加速计算用）
 let _lastAccelText = ''; // Story 42.4: 上次显示的加速倍率文本（脉冲动画检测用）
 let _isBoss = false; // Story 42.4: 当前关是否 Boss（startTimer 缓存，避免每 tick 调用 getStageType）
+let _isCalibrationLevel = false; // 第一关校准关：无目标，时间结束后校准基数
 
 // === Charge 按住蓄力：按下暂停推进，蓄满自动释放或松开提前释放 ===
 const _pendingChargeTriggers = new Map<string, { skillId: string; key: string; letterIndex: number }>();
@@ -343,7 +344,9 @@ function collectGravityWeights(): Map<string, number> {
 let _starterSkillBound = false;
 
 function setWord(): void {
-  state.player.word = transformWordForModifier(pickWord());
+  const picked = transformWordForModifier(pickWord());
+  const decoyResult = rollDecoyWord(picked);
+  state.player.word = decoyResult.word;
   state.player.index = 0;
 
   // 首关第二词：将初始技能绑定到本词首字母（第一词纯打字，第二词引入技能）
@@ -390,8 +393,6 @@ function setWord(): void {
   // Story 36.2: 蜡封状态重置
   resetWaxSeal();
   renderWord();
-  if (isScrollActive()) initScrollWord(state.player.word.length);
-  resetMirrorWordTimer(); // Boss 修饰器：镜像试炼计时重置
   updateSettlementLive(); // 初始化结算面板
 }
 
@@ -489,16 +490,23 @@ function handleEnterKey(e: KeyboardEvent): void {
   // Review Fix #4: 黑洞结算后隐藏结算面板
   hideSettlement();
 
-  // Story 42.2: 黑洞结算后 — 首次达标设标志+反馈
-  if (!_targetReached && state.score >= state.targetScore) {
-    _targetReached = true;
-    _targetReachedTime = state.time;
-    _accelAtTarget = getTimeAcceleration(_elapsedSeconds, _isBoss);
-    _elapsedAtTarget = _elapsedSeconds;
-    getElements().container.classList.add('glow-target-reached');
-    showFeedback(t('battle.target_reached'), '#4ecdc4');
-    playSound('levelup');
-    screenShake(3); // Review Fix #5: 达标脉冲
+  // Story 42.2: 黑洞结算后 — 首次达标设标志+反馈（校准关跳过）
+  if (!_isCalibrationLevel && !_targetReached && state.score >= state.targetScore) {
+    const mirrorAction = onMirrorTargetReached(_elapsedSeconds);
+    if (mirrorAction === 'reset') {
+      state.score = 0;
+      showFeedback(t('battle.mirror_first_clear'), '#8888ff');
+      playSound('levelup');
+    } else {
+      _targetReached = true;
+      _targetReachedTime = state.time;
+      _accelAtTarget = getTimeAcceleration(_elapsedSeconds, _isBoss);
+      _elapsedAtTarget = _elapsedSeconds;
+      getElements().container.classList.add('glow-target-reached');
+      showFeedback(getMirrorPhase() === 'done' ? t('battle.mirror_survived') : t('battle.target_reached'), '#4ecdc4');
+      playSound('levelup');
+      screenShake(3); // Review Fix #5: 达标脉冲
+    }
   }
 
   // Review Fix #3: 致命礼物奖励独立于 _targetReached — 每次黑洞结算达标都给奖励
@@ -537,20 +545,29 @@ function handleEnterKey(e: KeyboardEvent): void {
  */
 function handleKeyPress(data: { key: string; timestamp: number }): void {
   if (state.phase !== 'battle') return;
+  if (isFrostFrozen()) return; // 寒霜冻结期间忽略输入
   initAudio();
-
-  // 滚屏模式：字母 locked 时忽略按键
-  if (isScrollActive()) {
-    const scrollState = checkScrollLetterState(state.player.index);
-    if (scrollState === 'locked') return;
-  }
 
   const k = data.key.toLowerCase();
   const expect = state.player.word[state.player.index]?.toLowerCase();
 
+  // 伪词突变位置：接受原字母不卡住，且任何非突变字母都算识破
+  const decoyOrig = getDecoyOriginalAt(state.player.index)
   if (k === expect) {
     playerCorrect(k);
     eventBus.emit('word:correct', { key: k, index: state.player.index - 1 });
+  } else if (decoyOrig) {
+    // 突变位置打出非突变字母 → 识破伪词，不卡住继续
+    markDecoyRecognized()
+    if (k === decoyOrig) {
+      // 原字母：静默通过
+      playerCorrect(k);
+      eventBus.emit('word:correct', { key: k, index: state.player.index - 1 });
+    } else {
+      // 其他字母：算打错，但也算识破
+      playerWrong();
+      eventBus.emit('word:error', { key: k, expected: expect || '' });
+    }
   } else {
     playerWrong();
     eventBus.emit('word:error', { key: k, expected: expect || '' });
@@ -773,10 +790,9 @@ function playerCorrect(k: string): void {
   spawnParticles(letter, shouldTrigger ? 10 : 5, '#4ecdc4');
   playSound('type');
 
-  // Boss 修饰器：击键代价 — 每次正确击键扣时间
-  const keystrokeTax = getActiveParams()?.keystrokeTax;
-  if (keystrokeTax) {
-    state.time -= getShieldedValue(keystrokeTax, true);
+  // Boss 修饰器：击键代价 — 每次正确击键 -1s
+  if (getActiveParams()?.keystrokeTaxActive) {
+    state.time -= getShieldedValue(1, true);
   }
 
   // Charge 按住蓄力：字母推进延迟到释放（releaseCharge）
@@ -887,23 +903,10 @@ function playerWrong(): void {
   // 同步节奏医生 milestone
   syncRhythmDoctorMilestone(buffered);
 
-  // Boss 修饰器：断连即扣（combo_punish）+ Story 36.11 护盾削弱
-  const modEffect = getActiveParams();
-  if (modEffect?.comboPunishRate && state.score > 0) {
-    const shieldedRate = getShieldedValue(modEffect.comboPunishRate, true);
-    const penalty = Math.floor(state.score * shieldedRate);
-    state.score = Math.max(0, state.score - penalty);
-    showFeedback(t('battle.penalty', { value: penalty }), '#ff4444', getFloatScale('score', penalty));
-    bumpScore();
-  }
-
-  // Boss 修饰器：寒霜侵蚀 — 打错累积冰霜层
-  const frost = addFrostStack();
-  if (frost) {
-    if (frost.burst) {
-      state.time -= frost.penalty;
-      showFeedback(t('battle.frostbite_burst', { value: frost.penalty.toFixed(1) }), '#00ccff');
-    }
+  // Boss 修饰器：寒霜侵蚀 — 打错冻结 1+N 秒
+  const frostDuration = triggerFrostFreeze();
+  if (frostDuration > 0) {
+    showFeedback(t('battle.frostbite_freeze', { value: frostDuration }), '#00ccff');
   }
 
   updateHUD();
@@ -971,16 +974,18 @@ function completeWord(): void {
 
   // Boss 修饰器：单词限额（cap）+ 递减收益（diminish）+ 得分税 + Story 36.11 护盾削弱
   const modEffect = getActiveParams();
-  if (modEffect?.scoreCap) {
-    finalWordScore = Math.min(finalWordScore, getShieldedScoreCap(modEffect.scoreCap));
+  if (modEffect?.scoreCapPct) {
+    const cap = Math.floor(state.targetScore * modEffect.scoreCapPct);
+    finalWordScore = Math.min(finalWordScore, getShieldedScoreCap(cap));
   }
   if (modEffect?.diminishRate) {
     finalWordScore = Math.floor(finalWordScore * getDiminishMultiplier());
     incrementDiminishCount();
   }
-  if (modEffect?.scoreTaxFlat) {
-    const taxFlat = Math.floor(getShieldedValue(modEffect.scoreTaxFlat, true));
-    finalWordScore = Math.max(0, finalWordScore - taxFlat);
+  if (modEffect?.scoreTaxPct) {
+    const tax = Math.floor(state.targetScore * modEffect.scoreTaxPct);
+    const taxShielded = Math.floor(getShieldedValue(tax, true));
+    finalWordScore = Math.max(0, finalWordScore - taxShielded);
   }
 
   // Story 36.12: 基数护盾 — 每词最低 20 分（Boss 修饰器之后）
@@ -996,6 +1001,12 @@ function completeWord(): void {
     const pct = (getSnowballWordIndex() - 1) * 5;
     showFeedback(t('battle.snowball', { value: String(pct) }), '#88ccff', 0.6, { fromElementId: 'score-settlement', resource: 'settle' });
     pulseRelicIcon('snowball', '#88ccff');
+  }
+
+  // Boss 修饰器：伪词干扰 — 未识破伪词则反扣分数
+  if (isDecoyWord() && !isDecoyRecognized()) {
+    finalWordScore = -finalWordScore;
+    showFeedback(t('battle.decoy_penalty'), '#ff4444');
   }
 
   // 显示 Balatro 风格完成动画
@@ -1173,24 +1184,13 @@ function completeWord(): void {
     showFeedback(t('battle.chaos_roulette'), '#ff44ff');
   }
 
-  // Boss 修饰器：资源征税 — 按被征税资源产出×税率扣时间
-  const taxRate = getTaxRate();
-  if (taxRate > 0) {
-    const taxedResource = getCurrentTaxResource();
-    const resourceOutput = getWordResourceOutput(taxedResource);
-    if (resourceOutput > 0) {
-      const timePenalty = getShieldedValue(resourceOutput * taxRate, true);
-      state.time -= timePenalty;
-      showFeedback(t('battle.resource_tax', { value: timePenalty.toFixed(1) }), '#cc8800');
+  // Boss 修饰器：击键代价 — 产出资源时也 -1s（每种资源各扣一次）
+  if (getActiveParams()?.keystrokeTaxActive) {
+    const resCount = getWordResourceTypeCount();
+    if (resCount > 0) {
+      const penalty = getShieldedValue(1, true) * resCount;
+      state.time -= penalty;
     }
-  }
-
-  // Boss 修饰器：镜像试炼
-  const mirrorResult = onMirrorWordComplete();
-  if (mirrorResult === 'recorded') {
-    showFeedback(t('battle.mirror_recorded'), '#8888ff');
-  } else if (mirrorResult === 'survived') {
-    showFeedback(t('battle.mirror_survived'), '#00ff88');
   }
 
   // 词语完成 - 所有字母一起弹跳
@@ -1211,16 +1211,25 @@ function completeWord(): void {
   // Story 36.2: 完成后记录单词（小助手补全需要"已打过"判定）
   trackWord(state.player.word);
 
-  // Story 42.2: 达标后继续战斗 — 设标志+反馈，不中断
-  if (!isBlackHoleActive() && !_targetReached && state.score >= state.targetScore) {
-    _targetReached = true;
-    _targetReachedTime = state.time; // 记录达标时剩余时间（万物熔炉等遗物需要）
-    _accelAtTarget = getTimeAcceleration(_elapsedSeconds, _isBoss);
-    _elapsedAtTarget = _elapsedSeconds;
-    getElements().container.classList.add('glow-target-reached');
-    showFeedback(t('battle.target_reached'), '#4ecdc4');
-    playSound('levelup');
-    screenShake(3); // Review Fix #5: 达标绿色脉冲
+  // Story 42.2: 达标后继续战斗 — 设标志+反馈，不中断（校准关跳过）
+  // 镜像试炼：首次达标 → 记录用时、重置分数、进入 mirror_run
+  if (!_isCalibrationLevel && !isBlackHoleActive() && !_targetReached && state.score >= state.targetScore) {
+    const mirrorAction = onMirrorTargetReached(_elapsedSeconds);
+    if (mirrorAction === 'reset') {
+      // 镜像首通：重置分数，进入 mirror_run（倒计时由 onTick 驱动）
+      state.score = 0;
+      showFeedback(t('battle.mirror_first_clear'), '#8888ff');
+      playSound('levelup');
+    } else {
+      _targetReached = true;
+      _targetReachedTime = state.time; // 记录达标时剩余时间（万物熔炉等遗物需要）
+      _accelAtTarget = getTimeAcceleration(_elapsedSeconds, _isBoss);
+      _elapsedAtTarget = _elapsedSeconds;
+      getElements().container.classList.add('glow-target-reached');
+      showFeedback(getMirrorPhase() === 'done' ? t('battle.mirror_survived') : t('battle.target_reached'), '#4ecdc4');
+      playSound('levelup');
+      screenShake(3); // Review Fix #5: 达标绿色脉冲
+    }
   }
 
   // 遗物效果：完成词语时间加成（当前 RELIC_MODIFIER_DEFS 为空，此分支不会触发）
@@ -1406,11 +1415,17 @@ function showGoldReward(onComplete: () => void): void {
 
 // === 计时器 ===
 // Story 42.4: 时间加速 — 达标前二次方，达标后三次方（从达标倍率无缝衔接）
+// boss_fast_time: 开局即进入达标后加速阶段（三次方从 t=0 开始）
 function getTimeAcceleration(elapsedSeconds: number, isBoss: boolean): number {
   const rate = isBoss ? BALANCE.ACCEL_RATE_BOSS : BALANCE.ACCEL_RATE_STANDARD;
+  const fastTime = !!getActiveParams()?.timeSpeed;
   if (_targetReached) {
     const dt = elapsedSeconds - _elapsedAtTarget;
     return _accelAtTarget + rate * dt * dt * dt;
+  }
+  if (fastTime) {
+    // 视作从 t=0 即达标：三次方加速
+    return 1.0 + rate * elapsedSeconds * elapsedSeconds * elapsedSeconds;
   }
   return 1.0 + rate * elapsedSeconds * elapsedSeconds;
 }
@@ -1430,9 +1445,9 @@ function startTimer(): void {
 
     _elapsedSeconds += 0.1; // Story 42.4: 追踪已流逝时间
 
-    // Boss 修饰器：时间加速（fast_time）+ 渐进失控（escalation）+ Story 36.11 护盾削弱
-    const modEffect = getActiveParams();
-    let timeSpeed = getShieldedTimeSpeed(modEffect?.timeSpeed ?? 1);
+    // Boss 修饰器：渐进失控（escalation）+ Story 36.11 护盾削弱
+    // boss_fast_time 已由 getTimeAcceleration 处理（开局即三次方加速）
+    let timeSpeed = 1;
     const escalateBonus = getEscalateTimeSpeedBonus();
     if (escalateBonus > 0) timeSpeed += getShieldedValue(escalateBonus, true);
     const timeAccel = getTimeAcceleration(_elapsedSeconds, _isBoss); // Story 42.4: 二次方加速
@@ -1444,26 +1459,8 @@ function startTimer(): void {
       releaseCharge(fullKey);
     }
 
-    // Boss 修饰器：每帧更新（decay / scroll 等）
-    tickModifier(0.1);
-
-    // 滚屏模式：检测 miss 并自动推进
-    if (isScrollActive() && state.player.index < state.player.word.length) {
-      while (state.player.index < state.player.word.length) {
-        const ls = checkScrollLetterState(state.player.index);
-        if (ls !== 'miss') break;
-        markScrollMiss(state.player.index);
-        // 视觉标记
-        const el = getElements();
-        const letterEl = el.word.children[state.player.index] as HTMLElement | undefined;
-        if (letterEl) letterEl.classList.add('scroll-missed');
-        state.player.index++;
-        state.wordPerfect = false;
-      }
-      if (state.player.index >= state.player.word.length) {
-        completeWord();
-      }
-    }
+    // Boss 修饰器：每帧更新（decay 等），dt 随时间加速缩放
+    tickModifier(0.1 * timeSpeed);
 
     updateTimerDisplay();
 
@@ -1577,9 +1574,14 @@ function endLevel(): void {
     });
   }
 
-  if (state.score >= state.targetScore) {
+  // 校准关：保存得分作为后续目标基数，视为通关
+  if (_isCalibrationLevel) {
+    state.calibratedTargetBase = Math.max(1, Math.round(state.score));
+  }
+
+  if (_isCalibrationLevel || state.score >= state.targetScore) {
     // Story 42.3: 仅保留本关溢出分到下一关（不跨关累积）
-    state.overflowScore = state.overkill;
+    state.overflowScore = _isCalibrationLevel ? 0 : state.overkill;
 
     // 动态增长系数：记录溢出比例供下关目标分数计算
     state.lastOverflowRatio = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
@@ -1856,6 +1858,7 @@ export async function startLevel(): Promise<void> {
     state.timeMax = Math.max(1, state.combo);
   }
   state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
+  _isCalibrationLevel = state.targetScore === 0 && state.calibratedTargetBase === 0;
 
   // 溢出分扣减目标分数（最低 0），然后清零
   if (state.overflowScore > 0) {
@@ -2069,8 +2072,8 @@ export async function startLevel(): Promise<void> {
   // Story 42.3: 记录初始溢出量（HUD 颜色区分用）
   _initialOverflow = state.overflowScore;
 
-  // Story 42.3: 边界情况 — 如果初始溢出分已 >= 目标分数，立即标记达标
-  if (state.overflowScore > 0 && state.score >= state.targetScore) {
+  // Story 42.3: 边界情况 — 如果初始溢出分已 >= 目标分数，立即标记达标（校准关跳过）
+  if (!_isCalibrationLevel && state.overflowScore > 0 && state.score >= state.targetScore) {
     _targetReached = true;
     _targetReachedTime = state.timeMax;
     _accelAtTarget = 1.0; // 开局即达标，从 1.0 开始
@@ -2281,7 +2284,10 @@ export function updateHUD(): void {
     el.score.textContent = String(scoreRoller.getValue()); // Review M1: rAF 未启动时 fallback
   }
   // Story 42.2: 达标后目标分数显示 ✓ + 绿色
-  if (_targetReached) {
+  if (_isCalibrationLevel) {
+    el.targetScore.textContent = t('battle.calibration') || '—';
+    el.targetScore.style.color = '#aaaaaa';
+  } else if (_targetReached) {
     el.targetScore.textContent = `✓ ${state.targetScore}`;
     el.targetScore.style.color = '#4ecdc4';
   } else {
