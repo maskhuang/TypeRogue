@@ -1578,26 +1578,35 @@ function purchasePackItem(index: number): void {
   renderBuildManager();
 }
 
-// === Lv.3 自动附魔检查（概率递减） ===
+// === Lv.3 自动附魔检查（概率递减，按稀有度分组） ===
 function checkAutoEnchantment(skillId: string): void {
-  // 统计场上全部技能已有附魔总数
+  const targetSkill = state.affixSkills.get(skillId);
+  if (!targetSkill) return;
+  const targetRarity = targetSkill.rarity;
+
+  // 统计同稀有度技能已有附魔总数
+  let sameRarityEnch = 0;
+  // 统计全局附魔总数（用于递减概率）
   let totalEnch = 0;
   for (const [, affixSkill] of state.affixSkills) {
     totalEnch += affixSkill.enchantmentIds.length;
+    if (affixSkill.rarity === targetRarity) {
+      sameRarityEnch += affixSkill.enchantmentIds.length;
+    }
   }
-  // 第一个附魔必定成功；之后概率 = max(0.1, 0.8 - 0.15 * (totalEnch - 1))
-  const prob = totalEnch === 0 ? 1.0 : Math.max(0.1, 0.8 - 0.15 * (totalEnch - 1));
+  // 同稀有度无附魔 → 必定成功；否则概率 = max(0.1, 0.8 - 0.15 * (totalEnch - 1))
+  const prob = sameRarityEnch === 0 ? 1.0
+    : totalEnch === 0 ? 1.0
+    : Math.max(0.1, 0.8 - 0.15 * (totalEnch - 1));
   if (random() >= prob) {
     showFeedback('附魔失败', '#ff6b6b');
     return;
   }
   // 成功：展示 2 选 1 附魔面板
-  const affixSkill = state.affixSkills.get(skillId);
-  if (!affixSkill) return;
-  const candidates = generateRitualCandidates(affixSkill);
+  const candidates = generateRitualCandidates(targetSkill);
   if (candidates.length === 0) return;
   const choices = pickRitualChoices(candidates);
-  showAutoEnchantmentPanel(skillId, affixSkill, choices);
+  showAutoEnchantmentPanel(skillId, targetSkill, choices);
 }
 
 /** 展示 Lv.3 触发的附魔选择面板（复用仪式附魔 UI 逻辑） */
