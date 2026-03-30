@@ -115,9 +115,9 @@ describe('EnchantmentType', () => {
     expect(apprentice).toHaveLength(28)
   })
 
-  it('should have 19 quest types', () => {
+  it('should have 20 quest types', () => {
     const quest = allEnchTypes.filter(v => v.startsWith('quest_'))
-    expect(quest).toHaveLength(19)
+    expect(quest).toHaveLength(20)
   })
 })
 
@@ -170,18 +170,18 @@ describe('QUEST_AFFIX_MAP', () => {
 // ===== QUEST_ENCHANTMENT_DEFS =====
 
 describe('QUEST_ENCHANTMENT_DEFS', () => {
-  it('should have 19 definitions', () => {
-    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(19)
+  it('should have 20 definitions', () => {
+    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(20)
   })
 
   it('should have unique enchantment types', () => {
     const types = QUEST_ENCHANTMENT_DEFS.map(d => d.type)
-    expect(new Set(types).size).toBe(19)
+    expect(new Set(types).size).toBe(20)
   })
 
-  it('should have positive targetStacks for all', () => {
+  it('should all use equip_count event', () => {
     for (const def of QUEST_ENCHANTMENT_DEFS) {
-      expect(def.targetStacks).toBeGreaterThan(0)
+      expect(def.event).toBe('equip_count')
     }
   })
 
@@ -246,23 +246,24 @@ describe('BASE_VALUES', () => {
   it('should cover all 7 resource types', () => {
     for (const r of ALL_RESOURCES) {
       expect(BASE_VALUES[r]).toBeDefined()
-      expect(BASE_VALUES[r]).toHaveLength(3)
+      expect(BASE_VALUES[r]).toHaveLength(4)
     }
   })
 
   it('should have strictly increasing values per level', () => {
     for (const r of ALL_RESOURCES) {
-      const [lv1, lv2, lv3] = BASE_VALUES[r]
-      expect(lv2).toBeGreaterThan(lv1)
-      expect(lv3).toBeGreaterThan(lv2)
+      const vals = BASE_VALUES[r]
+      for (let i = 1; i < vals.length; i++) {
+        expect(vals[i]).toBeGreaterThan(vals[i - 1])
+      }
     }
   })
 
   it('should match design doc values', () => {
-    expect(BASE_VALUES.base).toEqual([5, 8, 12])
-    expect(BASE_VALUES.score).toEqual([15, 24, 36])
-    expect(BASE_VALUES.multiplier).toEqual([0.2, 0.32, 0.48])
-    expect(BASE_VALUES.gold).toEqual([3, 5, 8])
+    expect(BASE_VALUES.base).toEqual([5, 8, 12, 17])
+    expect(BASE_VALUES.score).toEqual([15, 24, 36, 50])
+    expect(BASE_VALUES.multiplier).toEqual([0.2, 0.32, 0.48, 0.67])
+    expect(BASE_VALUES.gold).toEqual([3, 5, 8, 11])
   })
 })
 
@@ -311,10 +312,10 @@ describe('CONVERT_K_TABLE', () => {
     }
   })
 
-  it('should have score k values much smaller than others (score accumulates)', () => {
+  it('should have unified k values (BASE_VALUES normalization handles scale)', () => {
     const [scoreMin] = CONVERT_K_TABLE.score
     const [baseMin] = CONVERT_K_TABLE.base
-    expect(scoreMin).toBeLessThan(baseMin)
+    expect(scoreMin).toBe(baseMin)
   })
 })
 

@@ -14,6 +14,7 @@ import {
   QUEST_ENCHANTMENT_DEFS,
   AFFIX_CATEGORY_MAP,
   isOldSystemSkill,
+  getQuestEquipTarget,
 } from '../../../src/data/affixes'
 import type { ResourceType, ResourceState } from '../../../src/core/types'
 import {
@@ -21,6 +22,7 @@ import {
   TriggerResult,
   triggerAffixSkill,
   applyQuestEvent,
+  evaluateEquipQuests,
   migrateLoadedSkills,
   MAX_RECURSE_DEPTH,
   MAX_CHAIN_DEPTH,
@@ -411,17 +413,17 @@ describe('AC3: 传说组合抽检', () => {
 // Task 5: AC4 — 任务附魔循环验证
 // =============================================
 
-describe('AC4: 任务附魔循环', () => {
+describe('AC4: 任务附魔循环（装备数量型）', () => {
   for (const questDef of QUEST_ENCHANTMENT_DEFS) {
-    it(`${questDef.name}(${questDef.type}): targetStacks=${questDef.targetStacks} 合理`, () => {
-      // 任务的目标层数应在合理范围 (1~30)
-      expect(questDef.targetStacks).toBeGreaterThanOrEqual(1)
-      expect(questDef.targetStacks).toBeLessThanOrEqual(30)
+    it(`${questDef.name}(${questDef.type}): event=equip_count`, () => {
+      // 所有任务附魔统一为装备数量型
+      expect(questDef.event).toBe('equip_count')
+      expect(questDef.targetStacks).toBe(0) // 动态目标由 getQuestEquipTarget 计算
     })
   }
 
-  it('19 个任务定义完整，覆盖所有词条', () => {
-    expect(QUEST_ENCHANTMENT_DEFS.length).toBe(19)
+  it('20 个任务定义完整，覆盖所有词条', () => {
+    expect(QUEST_ENCHANTMENT_DEFS.length).toBe(20)
 
     // 所有 targetAffix 应为有效 AffixType
     for (const def of QUEST_ENCHANTMENT_DEFS) {
@@ -432,59 +434,63 @@ describe('AC4: 任务附魔循环', () => {
     }
   })
 
-  it('任务叠层目标设计：10 关（~300 触发）内预期完成 2~5 次合理性', () => {
-    // 估算每任务完成次数 = 总事件数 / targetStacks
-    // 典型事件频率：selfTrigger~300/10关, critHit~150, wordComplete~60, etc
-    const eventFrequencyPer10Stages: Record<string, number> = {
-      selfTrigger: 300,
-      neighborTrigger: 200,
-      wordComplete: 60,
-      critHit: 150,
-      'affixProc:pulse': 75,
-      'affixProc:cascade': 100,
-      'affixProc:recurse': 30,
-      'affixProc:taboo_penalty': 30,
-      outcastProc: 100,
-      perfectWord: 20,
-      'comboReach:15': 15,
-      'longWord:6': 30,
-      stageCleared: 10,
-      mutationApplied: 5,
-    }
+  it('evaluateEquipQuests: 装备足够数量的技能后质变', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const skillStates = new Map<string, SkillRuntimeState>()
+    const bindings = new Map<string, string>()
 
-    for (const def of QUEST_ENCHANTMENT_DEFS) {
-      const freq = eventFrequencyPer10Stages[def.event] ?? 50
-      const expectedCompletions = freq / def.targetStacks
-      // 至少应在 10 关内完成 1 次以上
-      expect(expectedCompletions).toBeGreaterThanOrEqual(0.5)
+    // 创建一个带 QuestMirror 附魔的 Mirror 技能
+    const skill1 = makeSkill({
+      id: 'mirror_1', resource: 'base',
+      affixes: [{ type: AffixType.Mirror, posRel: 'adjacent' as any }],
+      enchantmentIds: [EnchantmentType.QuestMirror],
+    })
+    const rt1 = makeRuntimeState({ skillId: 'mirror_1' })
+    skills.set('mirror_1', skill1)
+    skillStates.set('mirror_1', rt1)
+    bindings.set('a', 'mirror_1')
+
+    // 绑定 Mirror 技能（1 个），执行评估
+    evaluateEquipQuests(skills, skillStates, bindings)
+    // 目标取决于权重，至少需要 1 个
+    const target = getQuestEquipTarget(AffixType.Mirror)
+    if (target <= 1) {
+      expect(rt1.questTransformed).toBe(true)
+    } else {
+      expect(rt1.questTransformed).toBe(false)
+      expect(rt1.questStacks).toBe(1)
     }
   })
 
-  it('applyQuestEvent: stageCleared 事件触发 QuestMirror 叠层→完成循环', () => {
-    const questMirrorDef = QUEST_ENCHANTMENT_DEFS.find(
-      d => d.type === EnchantmentType.QuestMirror,
-    )!
-    const rt = makeRuntimeState({ skillId: 'quest_test' })
-    const enchantmentIds = [EnchantmentType.QuestMirror as string]
+  it('evaluateEquipQuests: 卸下技能后取消质变', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const skillStates = new Map<string, SkillRuntimeState>()
+    const bindings = new Map<string, string>()
 
-    // 叠满 targetStacks 次 stageCleared 事件
-    for (let i = 0; i < questMirrorDef.targetStacks; i++) {
-      const applied = applyQuestEvent('stageCleared', rt, enchantmentIds)
-      expect(applied).toBe(true)
+    // 创建 3 个 Mirror 技能（确保超过任何可能的 target）
+    for (let i = 0; i < 3; i++) {
+      const sk = makeSkill({
+        id: `mirror_${i}`, resource: 'base',
+        affixes: [{ type: AffixType.Mirror, posRel: 'adjacent' as any }],
+        enchantmentIds: i === 0 ? [EnchantmentType.QuestMirror] : [],
+      })
+      skills.set(sk.id, sk)
+      skillStates.set(sk.id, makeRuntimeState({ skillId: sk.id }))
+      bindings.set(String.fromCharCode(97 + i), sk.id) // a, b, c
     }
-    // 叠满后 questCompletions 应 +1，questStacks 重置为 0
-    expect(rt.questCompletions).toBe(1)
-    expect(rt.questStacks).toBe(0)
-  })
 
-  it('applyQuestEvent: 不匹配的事件返回 false 且不改变状态', () => {
-    const rt = makeRuntimeState({ skillId: 'quest_test_2' })
-    const enchantmentIds = [EnchantmentType.QuestMirror as string]
+    evaluateEquipQuests(skills, skillStates, bindings)
+    expect(skillStates.get('mirror_0')!.questTransformed).toBe(true)
 
-    const applied = applyQuestEvent('critHit', rt, enchantmentIds)
-    expect(applied).toBe(false)
-    expect(rt.questStacks).toBe(0)
-    expect(rt.questCompletions).toBe(0)
+    // 卸下所有其他 Mirror 技能（只留 1 个绑定）
+    bindings.delete('b')
+    bindings.delete('c')
+    evaluateEquipQuests(skills, skillStates, bindings)
+    // 如果 target > 1，质变应被取消
+    const target = getQuestEquipTarget(AffixType.Mirror)
+    if (target > 1) {
+      expect(skillStates.get('mirror_0')!.questTransformed).toBe(false)
+    }
   })
 })
 

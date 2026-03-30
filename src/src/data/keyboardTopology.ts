@@ -20,6 +20,7 @@ const _COLUMN_MAP: Record<string, number> = {};
 KEYBOARD_ROWS.forEach(row => row.forEach((key, col) => { _COLUMN_MAP[key] = col; }));
 // 标点键列号（标点解放遗物）— ; 在 home row L 右侧, ,./在 bottom row M 右侧
 _COLUMN_MAP[';'] = 9; _COLUMN_MAP[','] = 7; _COLUMN_MAP['.'] = 8; _COLUMN_MAP['/'] = 9;
+_COLUMN_MAP['['] = 10; _COLUMN_MAP[']'] = 11;
 export const COLUMN_MAP: Readonly<Record<string, number>> = Object.freeze(_COLUMN_MAP);
 
 // === 行号 ===
@@ -27,6 +28,7 @@ const _ROW_MAP: Record<string, number> = {};
 KEYBOARD_ROWS.forEach((row, rowIdx) => row.forEach(key => { _ROW_MAP[key] = rowIdx; }));
 // 标点键行号（标点解放遗物）— ; 在 home row (1), ,./ 在 bottom row (2)
 _ROW_MAP[';'] = 1; _ROW_MAP[','] = 2; _ROW_MAP['.'] = 2; _ROW_MAP['/'] = 2;
+_ROW_MAP['['] = 0; _ROW_MAP[']'] = 0;
 export const ROW_MAP: Readonly<Record<string, number>> = Object.freeze(_ROW_MAP);
 
 // === 手分配 ===
@@ -39,6 +41,7 @@ export const HAND_MAP: Record<string, 'left' | 'right'> = {
   n: 'right', m: 'right',
   // 标点键（标点解放遗物）
   ';': 'right', ',': 'right', '.': 'right', '/': 'right',
+  '[': 'right', ']': 'right',
 };
 
 // === 手指分配（0-7，标准十指指法） ===
@@ -52,7 +55,7 @@ export const FINGER_MAP: Record<string, number> = {
   y: 4, u: 4, h: 4, j: 4, n: 4, m: 4,
   i: 5, k: 5, ',': 5,
   o: 6, l: 6, '.': 6,
-  p: 7, ';': 7, '/': 7,
+  p: 7, ';': 7, '/': 7, '[': 7, ']': 7,
 };
 
 // === 对称位映射（双向，26 字母键中 11 对） ===

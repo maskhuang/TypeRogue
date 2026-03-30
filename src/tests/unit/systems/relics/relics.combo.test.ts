@@ -5,16 +5,23 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { state } from '../../../../src/core/state'
 import {
+  checkEchoThimble,
   calculateComboBuffer,
   getMultiplierPrismBonus,
-  checkRhythmDoctor,
-  syncRhythmDoctorMilestone,
   checkComboDetonator,
   resetComboDetonator,
+  onComboBreakDetonator,
   hasImmortalCombo,
-  shouldBlockMultiplierResource,
   resetComboRelicState,
   initComboRelicBehaviors,
+  onNewWordForCancel,
+  checkCancelOnFirstLetter,
+  getCancelChainBonus,
+  getCancelChainCount,
+  onCancelledWordComplete,
+  onCancelledWordError,
+  isWordCancelled,
+  resetCancelChainState,
 } from '../../../../src/systems/relics/ComboRelicBehaviors'
 import { clearBehaviorHandlers, getRegisteredBehaviors } from '../../../../src/systems/relics/RelicPipeline'
 
@@ -22,12 +29,44 @@ import { clearBehaviorHandlers, getRegisteredBehaviors } from '../../../../src/s
 function clearRelics(): void {
   state.player.relics.clear()
   state.player.relicStates = {}
+  resetCancelChainState()
 }
 
 describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
   beforeEach(() => {
     clearRelics()
     clearBehaviorHandlers()
+  })
+
+  // =====================
+  // AC0: 回声指套（从 typing 迁入）
+  // =====================
+  describe('回声指套 (echo_thimble)', () => {
+    beforeEach(() => {
+      state.player.relics.add('echo_thimble')
+    })
+
+    it('随机值 < 0.08 触发双重击键', () => {
+      expect(checkEchoThimble(0.05)).toBe(true)
+    })
+
+    it('随机值 >= 0.08 不触发', () => {
+      expect(checkEchoThimble(0.08)).toBe(false)
+      expect(checkEchoThimble(0.5)).toBe(false)
+    })
+
+    it('随机值 = 0 触发', () => {
+      expect(checkEchoThimble(0)).toBe(true)
+    })
+
+    it('边界值 0.079 触发', () => {
+      expect(checkEchoThimble(0.079)).toBe(true)
+    })
+
+    it('未持有指套时不触发', () => {
+      state.player.relics.delete('echo_thimble')
+      expect(checkEchoThimble(0.01)).toBe(false)
+    })
   })
 
   // =====================
@@ -99,57 +138,7 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
   })
 
   // =====================
-  // AC3: 节奏医生
-  // =====================
-  describe('节奏医生 (rhythm_doctor)', () => {
-    beforeEach(() => {
-      state.player.relics.add('rhythm_doctor')
-    })
-
-    it('未持有 → 返回 0', () => {
-      state.player.relics.delete('rhythm_doctor')
-      expect(checkRhythmDoctor(10)).toBe(0)
-    })
-
-    it('combo 达到 10 → +1s', () => {
-      expect(checkRhythmDoctor(10)).toBe(1)
-    })
-
-    it('combo 9 → 不触发', () => {
-      expect(checkRhythmDoctor(9)).toBe(0)
-    })
-
-    it('combo 10 后再到 20 → 再次 +1s', () => {
-      checkRhythmDoctor(10)
-      expect(checkRhythmDoctor(15)).toBe(0)
-      expect(checkRhythmDoctor(20)).toBe(1)
-    })
-
-    it('combo 跳跃直接到 10 → 触发', () => {
-      expect(checkRhythmDoctor(10)).toBe(1)
-    })
-
-    it('milestone 同步：combo 中断到 5 后重新计算', () => {
-      checkRhythmDoctor(10)
-      syncRhythmDoctorMilestone(5)
-      // milestone 被同步为 0（floor(5/10)*10 = 0）
-      // 下一个 milestone 是 10
-      expect(checkRhythmDoctor(10)).toBe(1)
-    })
-
-    it('milestone 同步：combo 缓冲到 12 后保持 milestone=10', () => {
-      checkRhythmDoctor(10)
-      checkRhythmDoctor(20)
-      syncRhythmDoctorMilestone(12)
-      // milestone 被同步为 10（floor(12/10)*10 = 10）
-      // 下一个 milestone 是 20
-      expect(checkRhythmDoctor(15)).toBe(0)
-      expect(checkRhythmDoctor(20)).toBe(1)
-    })
-  })
-
-  // =====================
-  // AC4: 连击引爆
+  // AC3: 连击引爆（稀有，combo 达 15 触发一次，归零后可再次触发）
   // =====================
   describe('连击引爆 (combo_detonator)', () => {
     beforeEach(() => {
@@ -169,23 +158,11 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       expect(checkComboDetonator(14)).toBe(0)
     })
 
-    it('combo 达到 30 → 再次触发 3', () => {
+    it('触发后继续升 combo 不再触发', () => {
       checkComboDetonator(15)
-      expect(checkComboDetonator(25)).toBe(0)
-      expect(checkComboDetonator(30)).toBe(3)
-    })
-
-    it('combo 达到 45 → 第三次触发', () => {
-      checkComboDetonator(15)
-      checkComboDetonator(30)
-      expect(checkComboDetonator(45)).toBe(3)
-    })
-
-    it('45 之后不再触发', () => {
-      checkComboDetonator(15)
-      checkComboDetonator(30)
-      checkComboDetonator(45)
-      expect(checkComboDetonator(60)).toBe(0)
+      expect(checkComboDetonator(20)).toBe(0)
+      expect(checkComboDetonator(30)).toBe(0)
+      expect(checkComboDetonator(100)).toBe(0)
     })
 
     it('同一阈值不重复触发', () => {
@@ -193,10 +170,130 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       expect(checkComboDetonator(15)).toBe(0)
     })
 
-    it('重置后可重新触发', () => {
+    it('combo 中断（onComboBreakDetonator）后可重新触发', () => {
+      checkComboDetonator(15)
+      onComboBreakDetonator()
+      expect(checkComboDetonator(15)).toBe(3)
+    })
+
+    it('resetComboDetonator 也可重置', () => {
       checkComboDetonator(15)
       resetComboDetonator()
       expect(checkComboDetonator(15)).toBe(3)
+    })
+  })
+
+  // =====================
+  // AC4: 取消连锁（史诗，基于阅读硬直的取消机制）
+  // =====================
+  describe('取消连锁 (cancel)', () => {
+    beforeEach(() => {
+      state.player.relics.add('cancel')
+    })
+
+    it('未持有 → 无效果', () => {
+      state.player.relics.delete('cancel')
+      onNewWordForCancel()
+      expect(checkCancelOnFirstLetter()).toBe(false)
+      expect(getCancelChainBonus()).toBe(0)
+    })
+
+    it('在窗口内打对首字母 → 取消成功', () => {
+      onNewWordForCancel()
+      // performance.now() 在同一 tick 内，elapsed ≈ 0 < 400ms
+      expect(checkCancelOnFirstLetter()).toBe(true)
+      expect(isWordCancelled()).toBe(true)
+    })
+
+    it('首字母只判定一次', () => {
+      onNewWordForCancel()
+      expect(checkCancelOnFirstLetter()).toBe(true)
+      expect(checkCancelOnFirstLetter()).toBe(false) // 第二次不再判定
+    })
+
+    it('取消词零失误完成 → 连锁+1', () => {
+      onNewWordForCancel()
+      checkCancelOnFirstLetter()
+      onCancelledWordComplete() // wordPerfect 时调用
+      expect(getCancelChainCount()).toBe(1)
+    })
+
+    it('连锁叠加至上限 5', () => {
+      for (let i = 0; i < 7; i++) {
+        onNewWordForCancel()
+        checkCancelOnFirstLetter()
+        onCancelledWordComplete()
+      }
+      expect(getCancelChainCount()).toBe(5)
+    })
+
+    it('getCancelChainBonus 返回 层数×0.10（仅取消词有效）', () => {
+      // 先攒 3 层
+      for (let i = 0; i < 3; i++) {
+        onNewWordForCancel()
+        checkCancelOnFirstLetter()
+        onCancelledWordComplete()
+      }
+      expect(getCancelChainCount()).toBe(3)
+      // 新词取消状态下才有加成
+      onNewWordForCancel()
+      checkCancelOnFirstLetter()
+      expect(getCancelChainBonus()).toBeCloseTo(0.30)
+    })
+
+    it('非取消词无加成（即使有层数）', () => {
+      // 攒 2 层
+      for (let i = 0; i < 2; i++) {
+        onNewWordForCancel()
+        checkCancelOnFirstLetter()
+        onCancelledWordComplete()
+      }
+      expect(getCancelChainCount()).toBe(2)
+      // 这次不取消（不调 checkCancelOnFirstLetter）
+      onNewWordForCancel()
+      expect(getCancelChainBonus()).toBe(0) // 非取消词
+      expect(getCancelChainCount()).toBe(2) // 层数不变
+    })
+
+    it('取消词打错 → 连锁归零 + 返回惩罚时间', () => {
+      // 攒 3 层
+      for (let i = 0; i < 3; i++) {
+        onNewWordForCancel()
+        checkCancelOnFirstLetter()
+        onCancelledWordComplete()
+      }
+      // 新词取消
+      onNewWordForCancel()
+      checkCancelOnFirstLetter()
+      // 打错
+      const penalty = onCancelledWordError()
+      expect(penalty).toBe(0.5)
+      expect(getCancelChainCount()).toBe(0)
+      expect(isWordCancelled()).toBe(false)
+    })
+
+    it('非取消词打错 → 无额外惩罚，连锁不变', () => {
+      // 攒 2 层
+      for (let i = 0; i < 2; i++) {
+        onNewWordForCancel()
+        checkCancelOnFirstLetter()
+        onCancelledWordComplete()
+      }
+      // 不取消
+      onNewWordForCancel()
+      const penalty = onCancelledWordError()
+      expect(penalty).toBe(0) // 非取消词无惩罚
+      expect(getCancelChainCount()).toBe(2) // 层数不变
+    })
+
+    it('关级别重置清零所有状态', () => {
+      for (let i = 0; i < 3; i++) {
+        onNewWordForCancel()
+        checkCancelOnFirstLetter()
+        onCancelledWordComplete()
+      }
+      resetCancelChainState()
+      expect(getCancelChainCount()).toBe(0)
     })
   })
 
@@ -213,13 +310,8 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       expect(hasImmortalCombo()).toBe(true)
     })
 
-    it('未持有 → multiplier 资源不阻止', () => {
-      expect(shouldBlockMultiplierResource()).toBe(false)
-    })
-
-    it('持有 → multiplier 资源被阻止', () => {
-      state.player.relics.add('immortal_combo')
-      expect(shouldBlockMultiplierResource()).toBe(true)
+    it('未持有 → hasImmortalCombo 返回 false', () => {
+      expect(hasImmortalCombo()).toBe(false)
     })
   })
 
@@ -234,23 +326,14 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       expect(checkComboDetonator(15)).toBe(3)
     })
 
-    it('重置 rhythm_doctor milestone（无 immortal_combo）', () => {
-      state.player.relics.add('rhythm_doctor')
-      checkRhythmDoctor(10)
+    it('重置 cancel 状态', () => {
+      state.player.relics.add('cancel')
+      onNewWordForCancel()
+      checkCancelOnFirstLetter()
+      onCancelledWordComplete()
+      expect(getCancelChainCount()).toBe(1)
       resetComboRelicState()
-      // milestone 重置为 0，combo 到 10 可以再次触发
-      expect(checkRhythmDoctor(10)).toBe(1)
-    })
-
-    it('有 immortal_combo 时不重置 rhythm_doctor milestone', () => {
-      state.player.relics.add('rhythm_doctor')
-      state.player.relics.add('immortal_combo')
-      checkRhythmDoctor(10)
-      checkRhythmDoctor(20)
-      resetComboRelicState()
-      // milestone 保持在 20，下一个是 30
-      expect(checkRhythmDoctor(25)).toBe(0)
-      expect(checkRhythmDoctor(30)).toBe(1)
+      expect(getCancelChainCount()).toBe(0)
     })
   })
 
@@ -258,24 +341,24 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
   // 行为注册
   // =====================
   describe('initComboRelicBehaviors', () => {
-    it('注册 combo_detonator 和 immortal_combo 行为', () => {
+    it('注册 double_keystroke, combo_detonator, cancel 和 immortal_combo 行为', () => {
       initComboRelicBehaviors()
       const registered = getRegisteredBehaviors()
+      expect(registered).toContain('double_keystroke')
       expect(registered).toContain('combo_detonator')
+      expect(registered).toContain('cancel')
       expect(registered).toContain('immortal_combo')
     })
   })
 
   // =====================
-  // 交互测试 (Review L2)
+  // 交互测试
   // =====================
   describe('遗物交互', () => {
     it('immortal_combo + combo_buffer：打错时 buffer 生效，跨关不重置', () => {
       state.player.relics.add('combo_buffer')
       state.player.relics.add('immortal_combo')
-      // 打错时 combo 仍会中断，buffer 保留 50%
       expect(calculateComboBuffer(20)).toBe(10)
-      // immortal_combo 只影响跨关不重置
       expect(hasImmortalCombo()).toBe(true)
     })
 
@@ -283,25 +366,20 @@ describe('连击/倍率系统遗物行为 (Story 36.3)', () => {
       state.player.relics.add('multiplier_prism')
       state.player.relics.add('immortal_combo')
       state.multiplier = 3.0
-      // 棱镜仍提供 +20%（独立于 multiplier 资源阻止）
       expect(getMultiplierPrismBonus()).toBe(0.2)
-      // multiplier 资源被阻止
-      expect(shouldBlockMultiplierResource()).toBe(true)
+      expect(hasImmortalCombo()).toBe(true)
     })
 
-    it('combo_buffer + rhythm_doctor：缓冲后 milestone 正确同步', () => {
-      state.player.relics.add('combo_buffer')
-      state.player.relics.add('rhythm_doctor')
-      // combo 到 25，触发 milestone 10 和 20
-      checkRhythmDoctor(10)
-      checkRhythmDoctor(20)
-      // combo 中断，buffer 保留 floor(25 * 0.5) = 12
-      const buffered = calculateComboBuffer(25)
-      expect(buffered).toBe(12)
-      syncRhythmDoctorMilestone(buffered)
-      // milestone 同步为 10（floor(12/10)*10），下一个 milestone 是 20
-      expect(checkRhythmDoctor(15)).toBe(0)
-      expect(checkRhythmDoctor(20)).toBe(1)
+    it('cancel + combo_detonator：两者独立运作', () => {
+      state.player.relics.add('cancel')
+      state.player.relics.add('combo_detonator')
+      // 取消连锁攒层
+      onNewWordForCancel()
+      checkCancelOnFirstLetter()
+      onCancelledWordComplete()
+      expect(getCancelChainCount()).toBe(1)
+      // 连击引爆正常触发
+      expect(checkComboDetonator(15)).toBe(3)
     })
   })
 })

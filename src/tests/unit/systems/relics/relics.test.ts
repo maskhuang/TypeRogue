@@ -17,9 +17,10 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 66 relics (10 class-exclusive + 5 typing + 5 combo + 5 skill + 5 enchantment + 5 topology + 5 word + 5 resource + 5 shop + 5 stage + 6 boss_modifier + 5 scoring)', () => {
+    it('should contain 66 relics (10 class-exclusive + 5 typing + 6 combo + 5 skill + 5 enchantment + 5 topology + 5 word + 5 resource + 5 shop + 5 stage + 5 boss_modifier + 5 scoring)', () => {
       expect(Object.keys(RELICS)).toHaveLength(66)
     })
+    // NOTE: 📖 icon is shared by glass_cannon_v2 and training_manual (pre-existing)
 
     it('每个图标唯一', () => {
       const icons = Object.values(RELICS).map(r => r.icon)
@@ -40,24 +41,24 @@ describe('Relics Data', () => {
   })
 
   describe('Rarity distribution', () => {
-    it('should have 24 common relics (2 starter + 2 typing + 2 combo + 2 skill + 2 enchantment + 2 topology + 2 word + 2 resource + 2 shop + 2 stage + 2 boss_modifier + 2 scoring)', () => {
+    it('should have 24 common relics (2 starter + 2 typing + 2 combo + 2 skill + 2 enchantment + 2 topology + 2 word + 2 resource + 2 shop + 3 stage + 2 boss_modifier + 2 scoring)', () => {
       const commons = getRelicsByRarity('common')
       expect(commons).toHaveLength(24)
     })
 
-    it('should have 13 rare relics', () => {
+    it('should have 14 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(13)
+      expect(rares).toHaveLength(14)
     })
 
-    it('should have 13 epic relics', () => {
+    it('should have 14 epic relics', () => {
       const epics = getRelicsByRarity('epic')
-      expect(epics).toHaveLength(13)
+      expect(epics).toHaveLength(14)
     })
 
-    it('should have 16 legendary relics', () => {
+    it('should have 14 legendary relics', () => {
       const legendaries = getRelicsByRarity('legendary')
-      expect(legendaries).toHaveLength(16)
+      expect(legendaries).toHaveLength(14)
     })
   })
 
@@ -124,7 +125,7 @@ describe('Relics Data', () => {
       expect(ids).toHaveLength(66)
       expect(ids).toContain('apprentice_notes')
       expect(ids).toContain('primal_mutant')
-      expect(ids).toContain('typing_wax_seal')
+      expect(ids).toContain('decelerate_reward')
     })
   })
 

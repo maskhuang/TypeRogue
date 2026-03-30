@@ -172,7 +172,7 @@ export function rollAffixParams(
       return { type, interval: 4, burstMult: 3.0 }
 
     case AffixType.Crit:
-      return { type, chance: 0.5, critMult: 2.0 }
+      return { type, chance: roundTo(0.1 + random() * 0.2, 2) }
 
     case AffixType.Cascade: {
       const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)

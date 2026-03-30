@@ -40,9 +40,10 @@ export function getEnchantmentChoiceCount(): number {
 
 // === 早期觉醒 (early_awakening) ===
 
-/** 获取附魔触发等级门槛（早期觉醒降至 Lv.2） */
-export function getMinEnchantmentLevel(): number {
-  return state.player.relics.has('early_awakening') ? 2 : 3
+/** 获取附魔触发等级门槛（按稀有度递减，早期觉醒再 -1） */
+export function getMinEnchantmentLevel(rarity: number = 1): number {
+  const base = Math.max(1, 4 - rarity)
+  return state.player.relics.has('early_awakening') ? Math.max(1, base - 1) : base
 }
 
 // === 附魔锚点 (enchant_anchor) ===

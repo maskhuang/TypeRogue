@@ -215,8 +215,8 @@ export interface AffixSkillInstance {
   name: string
   icon: string
   resource: ResourceType
-  baseValues: [number, number, number]  // Lv1/2/3 加算基础值
-  level: number                          // 1-3
+  baseValues: number[]                   // Lv1~N 加算基础值（白装4级，蓝+3级）
+  level: number                          // 1-4（白装）或 1-3（蓝+）
   rarity: SkillRarity                    // 词条数量
   affixes: AffixInstance[]               // 0~3 个词条
   enchantmentIds: string[]               // 附魔列表（通常 0~1；双生词条时最多 2）
@@ -261,17 +261,30 @@ export interface AffixSkillSaveData {
   runtime: SkillRuntimeState
 }
 
+/** 技能最大等级（白装4级，蓝+3级） */
+export function getSkillMaxLevel(rarity: number): number {
+  return rarity === 0 ? 4 : 3
+}
+
+/** 附魔触发等级门槛（4 - 稀有度） */
+export function getEnchantmentThreshold(rarity: number): number {
+  return Math.max(1, 4 - rarity)
+}
+
 // ===== 常量表 =====
 
-/** 基底值：7 种资源 × 3 等级 */
-export const BASE_VALUES: Record<ResourceType, [number, number, number]> = {
-  base:       [5, 8, 12],
-  score:      [15, 24, 36],
-  multiplier: [0.2, 0.32, 0.48],
-  time:       [0.2, 0.32, 0.48],
-  gold:       [3, 5, 8],
-  fragment:   [1, 1.6, 2.4],
-  mutagen:    [1, 1.6, 2.4],
+/** 暴击固定乘数（全局暴击子系统） */
+export const CRIT_MULTIPLIER = 2
+
+/** 基底值：7 种资源 × 4 等级（白装可达 Lv4） */
+export const BASE_VALUES: Record<ResourceType, number[]> = {
+  base:       [5, 8, 12, 17],
+  score:      [15, 24, 36, 50],
+  multiplier: [0.2, 0.32, 0.48, 0.67],
+  time:       [0.2, 0.32, 0.48, 0.67],
+  gold:       [3, 5, 8, 11],
+  fragment:   [1, 1.6, 2.4, 3.4],
+  mutagen:    [1, 1.6, 2.4, 3.4],
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
@@ -311,6 +324,21 @@ export let AFFIX_WEIGHTS: Record<AffixWeightKey, number> = Object.fromEntries(
   Object.entries(AFFIX_WEIGHT_TIERS).map(([k, tier]) => [k, tier === 'high' ? 8 : tier === 'low' ? 2 : 0])
 ) as Record<AffixWeightKey, number>;
 
+/**
+ * 根据词条类型的当前权重计算质变任务所需装备格数。
+ * N = max(1, round(weight / 3))
+ * 高权重(6-10)→2-3格，低权重(1-4)→1格
+ */
+export function getQuestEquipTarget(targetAffix: AffixType | AffixType[]): number {
+  const affixes = Array.isArray(targetAffix) ? targetAffix : [targetAffix]
+  let maxWeight = 0
+  for (const at of affixes) {
+    const key: AffixWeightKey = at === AffixType.Convert ? 'convert_cross' : at as Exclude<AffixType, AffixType.Convert>
+    maxWeight = Math.max(maxWeight, AFFIX_WEIGHTS[key] ?? 0)
+  }
+  return Math.max(1, Math.round(maxWeight / 3))
+}
+
 /** 根据分档随机生成本局词条权重，需传入 RNG 函数 */
 export function rollAffixWeights(rng: () => number): void {
   const entries = Object.entries(AFFIX_WEIGHT_TIERS) as [AffixWeightKey, AffixWeightTier][];
@@ -337,13 +365,13 @@ export const VOID_BONUS_TABLE: Record<PositionRelation, number> = {
   [PositionRelation.Symmetric]: 0.50,
 }
 
-/** 转化词条 k 值校准表：[k_min, k_max] */
+/** 转化词条 k 值校准表：[k_min, k_max]（触发层已按 BASE_VALUES 归一化，统一区间） */
 export const CONVERT_K_TABLE: Record<ResourceType, [number, number]> = {
   base:       [0.02, 0.05],
-  score:      [0.0005, 0.001],
-  multiplier: [0.10, 0.25],
-  time:       [0.01, 0.025],
-  gold:       [0.003, 0.008],
+  score:      [0.02, 0.05],
+  multiplier: [0.02, 0.05],
+  time:       [0.02, 0.05],
+  gold:       [0.02, 0.05],
   fragment:   [0.02, 0.05],
   mutagen:    [0.02, 0.05],
 }
@@ -439,14 +467,14 @@ export const MULTIPLY_OPERATOR_CALIBRATION: Record<ResourceType, number> = {
 }
 
 /** 乘算化附魔：基础值替换表（加算基底 → 乘数基底，来源 Story 34.2 旧乘算产出者） */
-export const MULTIPLY_OPERATOR_BASE_VALUES: Record<ResourceType, [number, number, number]> = {
-  base:       [2.0, 2.3, 2.6],
-  score:      [1.1, 1.15, 1.2],
-  multiplier: [1.15, 1.2, 1.25],
-  time:       [1.2, 1.25, 1.3],
-  gold:       [1.3, 1.5, 1.7],
-  fragment:   [1.8, 2.1, 2.4],
-  mutagen:    [1.8, 2.1, 2.4],
+export const MULTIPLY_OPERATOR_BASE_VALUES: Record<ResourceType, number[]> = {
+  base:       [2.0, 2.3, 2.6, 2.9],
+  score:      [1.1, 1.15, 1.2, 1.25],
+  multiplier: [1.15, 1.2, 1.25, 1.3],
+  time:       [1.2, 1.25, 1.3, 1.35],
+  gold:       [1.3, 1.5, 1.7, 1.9],
+  fragment:   [1.8, 2.1, 2.4, 2.7],
+  mutagen:    [1.8, 2.1, 2.4, 2.7],
 }
 
 // ===== 学徒·观摩 growthPerProc 按 PositionRelation =====
@@ -527,26 +555,26 @@ export interface QuestEnchantmentDef {
 }
 
 export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
-  { type: EnchantmentType.QuestDevour, name: '吞噬', targetAffix: AffixType.Void, event: 'rangeFull', targetStacks: 1, effectDesc: '质变：每次吞噬', transformDesc: '完成后每次触发都寻找最弱邻居吞噬' },
-  { type: EnchantmentType.QuestOverload, name: '过载', targetAffix: AffixType.Crit, event: 'critHit', targetStacks: 8, effectDesc: '质变：保底暴击', transformDesc: '完成后暴击必定触发' },
-  { type: EnchantmentType.QuestEcho, name: '回响', targetAffix: AffixType.Pulse, event: 'affixProc:pulse', targetStacks: 6, effectDesc: '质变：跨技能脉冲同步', transformDesc: '完成后脉冲同步所有脉冲技能' },
-  { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'affixProc:cascade', targetStacks: 6, effectDesc: '质变：双向连锁', transformDesc: '完成后级联双向判定，反向键也触发' },
-  { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'decayFloor', targetStacks: 3, effectDesc: '质变：衰减反转为增长', transformDesc: '完成后衰减方向反转，越触发越强' },
-  { type: EnchantmentType.QuestResonance, name: '共振', targetAffix: [AffixType.Resonance, AffixType.Link], event: 'neighborTrigger', targetStacks: 20, effectDesc: '质变：共鸣增强', transformDesc: '完成后共鸣/链接触发产出 +50%' },
-  { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'outcastProc', targetStacks: 10, effectDesc: '质变：首尾呼应', transformDesc: '完成后触发词首/词尾时额外触发对端技能' },
-  { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'selfTrigger', targetStacks: 15, effectDesc: '质变：双向转化', transformDesc: '完成后转化同时反向产出到源资源' },
-  { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'chargeFull', targetStacks: 3, effectDesc: '质变：满蓄力自动完成', transformDesc: '满蓄力释放时自动打完当前单词剩余字母，且吃到本次蓄力加成' },
-  { type: EnchantmentType.QuestFission, name: '裂变', targetAffix: AffixType.Splash, event: 'affixProc:splash', targetStacks: 8, effectDesc: '质变：溅射链一跳', transformDesc: '完成后溅射目标可再溅射一次' },
-  { type: EnchantmentType.QuestStack, name: '层叠', targetAffix: AffixType.Amplify, event: 'selfTrigger', targetStacks: 25, effectDesc: '质变：换词保留50%层数', transformDesc: '完成后换词时保留一半增幅层数' },
-  { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'gravityWordMatch', targetStacks: 8, effectDesc: '质变：双向锁定', transformDesc: '完成后吸引字母必含，排斥字母必不含' },
-  { type: EnchantmentType.QuestSpectrum, name: '光谱', targetAffix: AffixType.Rainbow, event: 'multiResourceWord', targetStacks: 3, effectDesc: '质变：全资源产出', transformDesc: '完成后产出等比分摊到所有资源' },
-  { type: EnchantmentType.QuestMirror, name: '映射', targetAffix: AffixType.Mirror, event: 'stageCleared', targetStacks: 1, effectDesc: '质变：全词条复制', transformDesc: '完成后复制范围内所有邻居的不同类型词条' },
-  { type: EnchantmentType.QuestOverlap, name: '重叠', targetAffix: AffixType.Ligature, event: 'selfTrigger', targetStacks: 15, effectDesc: '质变：关卡累计计数', transformDesc: '完成后连字按关卡累计按键计数' },
-  { type: EnchantmentType.QuestIterate, name: '迭代', targetAffix: AffixType.Recurse, event: 'affixProc:recurse', targetStacks: 5, effectDesc: '质变：递归不衰减', transformDesc: '完成后递归概率不再每次减半' },
-  { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'affixProc:taboo_penalty', targetStacks: 3, effectDesc: '质变：惩罚转为随机资源', transformDesc: '完成后惩罚触发时产出转为随机其他资源' },
-  { type: EnchantmentType.QuestTwin, name: '镜像', targetAffix: AffixType.Twin, event: 'stageCleared', targetStacks: 3, effectDesc: '质变：词条效果加倍', transformDesc: '完成后所有非 Twin 词条效果翻倍' },
-  { type: EnchantmentType.QuestConduit, name: '导引', targetAffix: AffixType.Conduit, event: 'selfTrigger', targetStacks: 15, effectDesc: '质变：导能 +2', transformDesc: '完成后为邻居提供 2 次额外触发' },
-  { type: EnchantmentType.QuestMultiplyOp, name: '乘算化', targetAffix: AffixType.Multiply, event: 'selfTrigger', targetStacks: 15, effectDesc: '质变：乘算化', transformDesc: '完成后产出变为乘算模式（资源×N 而非资源+N）' },
+  { type: EnchantmentType.QuestDevour, name: '吞噬', targetAffix: AffixType.Void, event: 'equip_count', targetStacks: 0, effectDesc: '质变：每次吞噬', transformDesc: '完成后每次触发都寻找最弱邻居吞噬' },
+  { type: EnchantmentType.QuestOverload, name: '过载', targetAffix: AffixType.Crit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：保底暴击', transformDesc: '完成后暴击必定触发' },
+  { type: EnchantmentType.QuestEcho, name: '回响', targetAffix: AffixType.Pulse, event: 'equip_count', targetStacks: 0, effectDesc: '质变：跨技能脉冲同步', transformDesc: '完成后脉冲同步所有脉冲技能' },
+  { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向连锁', transformDesc: '完成后级联双向判定，反向键也触发' },
+  { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'equip_count', targetStacks: 0, effectDesc: '质变：衰减反转为增长', transformDesc: '完成后衰减方向反转，越触发越强' },
+  { type: EnchantmentType.QuestResonance, name: '共振', targetAffix: [AffixType.Resonance, AffixType.Link], event: 'equip_count', targetStacks: 0, effectDesc: '质变：共鸣增强', transformDesc: '完成后共鸣/链接触发产出 +50%' },
+  { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'equip_count', targetStacks: 0, effectDesc: '质变：首尾呼应', transformDesc: '完成后触发词首/词尾时额外触发对端技能' },
+  { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向转化', transformDesc: '完成后转化同时反向产出到源资源' },
+  { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'equip_count', targetStacks: 0, effectDesc: '质变：满蓄力自动完成', transformDesc: '满蓄力释放时自动打完当前单词剩余字母，且吃到本次蓄力加成' },
+  { type: EnchantmentType.QuestFission, name: '裂变', targetAffix: AffixType.Splash, event: 'equip_count', targetStacks: 0, effectDesc: '质变：溅射链一跳', transformDesc: '完成后溅射目标可再溅射一次' },
+  { type: EnchantmentType.QuestStack, name: '层叠', targetAffix: AffixType.Amplify, event: 'equip_count', targetStacks: 0, effectDesc: '质变：换词保留50%层数', transformDesc: '完成后换词时保留一半增幅层数' },
+  { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向锁定', transformDesc: '完成后吸引字母必含，排斥字母必不含' },
+  { type: EnchantmentType.QuestSpectrum, name: '光谱', targetAffix: AffixType.Rainbow, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全资源产出', transformDesc: '完成后产出等比分摊到所有资源' },
+  { type: EnchantmentType.QuestMirror, name: '映射', targetAffix: AffixType.Mirror, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全词条复制', transformDesc: '完成后复制范围内所有邻居的不同类型词条' },
+  { type: EnchantmentType.QuestOverlap, name: '重叠', targetAffix: AffixType.Ligature, event: 'equip_count', targetStacks: 0, effectDesc: '质变：关卡累计计数', transformDesc: '完成后连字按关卡累计按键计数' },
+  { type: EnchantmentType.QuestIterate, name: '迭代', targetAffix: AffixType.Recurse, event: 'equip_count', targetStacks: 0, effectDesc: '质变：递归不衰减', transformDesc: '完成后递归概率不再每次减半' },
+  { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'equip_count', targetStacks: 0, effectDesc: '质变：惩罚转为随机资源', transformDesc: '完成后惩罚触发时产出转为随机其他资源' },
+  { type: EnchantmentType.QuestTwin, name: '镜像', targetAffix: AffixType.Twin, event: 'equip_count', targetStacks: 0, effectDesc: '质变：词条效果加倍', transformDesc: '完成后所有非 Twin 词条效果翻倍' },
+  { type: EnchantmentType.QuestConduit, name: '导引', targetAffix: AffixType.Conduit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：导能 +2', transformDesc: '完成后为邻居提供 2 次额外触发' },
+  { type: EnchantmentType.QuestMultiplyOp, name: '乘算化', targetAffix: AffixType.Multiply, event: 'equip_count', targetStacks: 0, effectDesc: '质变：乘算化', transformDesc: '完成后产出变为乘算模式（资源×N 而非资源+N）' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====
@@ -590,7 +618,7 @@ interface AffixScalingEntry {
 
 /** 词条参数每级增量表（来源：旧任务附魔数值强化） */
 export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> = {
-  [AffixType.Crit]:     { param: 'critMult',       delta: 0.5,   mode: 'add' },
+  [AffixType.Crit]:     { param: 'chance',          delta: 0.05,  mode: 'add' },
   [AffixType.Pulse]:    { param: 'burstMult',      delta: 0.3,   mode: 'add' },
   [AffixType.Cascade]:  { param: 'cascadeMult',    delta: 0.2,   mode: 'add' },
   [AffixType.Decay]:    { param: 'floor',           delta: 0.05,  mode: 'add' },

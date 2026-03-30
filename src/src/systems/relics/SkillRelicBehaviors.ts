@@ -5,7 +5,7 @@
 import { state, synergy } from '../../core/state'
 import { registerRelicBehavior } from './RelicPipeline'
 import type { AffixType } from '../../data/affixes'
-import { applyAffixLevelScaling } from '../../data/affixes'
+import { applyAffixLevelScaling, getSkillMaxLevel } from '../../data/affixes'
 
 
 // === 首发强化 (first_strike) ===
@@ -44,9 +44,10 @@ export function getLessIsMoreBonus(): number {
 export function applyTrainingManual(): string[] {
   const upgradedIds: string[] = []
   for (const [skillId, data] of state.player.skills) {
-    if (data.level < 3) {
+    const affixSkill = state.affixSkills.get(skillId)
+    const maxLv = affixSkill ? getSkillMaxLevel(affixSkill.rarity) : 3
+    if (data.level < maxLv) {
       data.level++
-      const affixSkill = state.affixSkills.get(skillId)
       if (affixSkill) {
         affixSkill.level = data.level
         applyAffixLevelScaling(affixSkill.affixes, 1)

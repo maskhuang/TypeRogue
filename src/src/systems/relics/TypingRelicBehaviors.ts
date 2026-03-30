@@ -3,18 +3,40 @@
 // ============================================
 
 import { state } from '../../core/state'
-import { registerRelicBehavior, setRelicState, getRelicState } from './RelicPipeline'
+import { registerRelicBehavior } from './RelicPipeline'
+import { eventBus } from '../../core/events/EventBus'
+import { unbindSkill, getBindingState } from '../bindingManager'
+import { getRecycleSellMultiplier } from './ShopRelicBehaviors'
 
 // === 模块级状态（关级别，不需持久化） ===
 
 /** 本关已出现过的单词（小助手用） */
 let seenWords: Set<string> = new Set()
 
+/** 上个词的用时（秒），减速津贴/加速奖金用 */
+let lastWordElapsed = -1
+
+// === 太鼓节拍系统状态 ===
+
+interface TaikoBall { id: number; startTime: number; duration: number }
+let taikoBalls: TaikoBall[] = []
+let taikoSpeed = 1500          // ms, 小球移动时间
+let recentKeyTimes: number[] = []
+let taikoSpawnTimer: ReturnType<typeof setTimeout> | null = null
+let nextBallId = 0
+
+const TAIKO_HIT_WINDOW = 150   // ms, 判定窗口
+const TAIKO_BONUS = 0.30
+const SPAWN_MIN = 400           // ms
+const SPAWN_MAX = 1200          // ms
+
 /**
  * 重置关级别状态 — 在 startLevel() 中调用
  */
 export function resetTypingRelicState(): void {
   seenWords.clear()
+  lastWordElapsed = -1
+  resetTaikoState()
 }
 
 /**
@@ -31,46 +53,6 @@ export function isRepeatWord(word: string): boolean {
   return seenWords.has(word.toUpperCase())
 }
 
-// === 蜡封检查（在 playerWrong 最前面调用） ===
-
-/**
- * 检查打字蜡封是否免除本次错误
- * @returns true 如果错误被免除（应跳过后续 on_error 管道）
- */
-export function checkWaxSealForgive(): boolean {
-  if (!state.player.relics.has('typing_wax_seal')) return false
-  const used = getRelicState('typing_wax_seal') ?? 0
-  if (used === 0) {
-    setRelicState('typing_wax_seal', 1)
-    return true
-  }
-  return false
-}
-
-/**
- * 重置蜡封状态（每个新词调用）
- */
-export function resetWaxSeal(): void {
-  if (state.player.relics.has('typing_wax_seal')) {
-    setRelicState('typing_wax_seal', 0)
-  }
-}
-
-// === 回声指套检查（在 playerCorrect 技能触发后调用） ===
-
-/** 回声指套触发概率 */
-const ECHO_THIMBLE_CHANCE = 0.08
-
-/**
- * 检查回声指套是否触发双重击键
- * @param randomValue 0-1 随机数（外部传入便于测试）
- * @returns true 如果触发双重击键
- */
-export function checkEchoThimble(randomValue: number): boolean {
-  if (!state.player.relics.has('echo_thimble')) return false
-  return randomValue < ECHO_THIMBLE_CHANCE
-}
-
 // === 小助手 Tab 自动补全检查 ===
 
 /**
@@ -83,44 +65,179 @@ export function canAutocomplete(): boolean {
   return isRepeatWord(state.player.word)
 }
 
-// === 节奏适应（在 completeWord 中调用） ===
-
-/** 节奏适应时间阈值（秒） */
-const RHYTHM_THRESHOLD = 3
-/** 慢速奖励时间（秒） */
-const RHYTHM_SLOW_TIME_BONUS = 1
-/** 快速奖励分数倍率 */
-const RHYTHM_FAST_SCORE_MULT = 1.3
-
-export interface RhythmAdaptResult {
-  timeBonus: number
-  scoreMult: number
-}
+// === 减速津贴 + 加速奖金（在 completeWord 中调用） ===
 
 /**
- * 计算节奏适应效果
- * @param wordElapsed 单词用时（秒）
- * @returns 时间加成和分数倍率
+ * 检查减速/加速遗物
+ * @param wordElapsed 当前词用时（秒）
+ * @returns 时间加成和金币加成
  */
-export function calculateRhythmAdapt(wordElapsed: number): RhythmAdaptResult {
-  if (!state.player.relics.has('rhythm_adapt')) {
-    return { timeBonus: 0, scoreMult: 1 }
+export function checkSpeedRelics(wordElapsed: number): { timeBonus: number; goldBonus: number } {
+  let timeBonus = 0, goldBonus = 0
+  if (lastWordElapsed >= 0) {
+    if (state.player.relics.has('decelerate_reward') && wordElapsed > lastWordElapsed) timeBonus = 0.5
+    if (state.player.relics.has('accelerate_reward') && wordElapsed < lastWordElapsed) goldBonus = 2
   }
-  if (wordElapsed > RHYTHM_THRESHOLD) {
-    return { timeBonus: RHYTHM_SLOW_TIME_BONUS, scoreMult: 1 }
-  }
-  if (wordElapsed < RHYTHM_THRESHOLD) {
-    return { timeBonus: 0, scoreMult: RHYTHM_FAST_SCORE_MULT }
-  }
-  // 恰好 3s：无额外效果
-  return { timeBonus: 0, scoreMult: 1 }
+  lastWordElapsed = wordElapsed
+  return { timeBonus, goldBonus }
 }
 
-// === 玻璃大炮检查（在 on_error 管道中） ===
+// === 太鼓节拍系统（rhythm_adapt 重做） ===
 
 /**
- * 检查玻璃大炮是否应触发即死
- * @returns true 如果持有玻璃大炮
+ * 记录击键时间，动态调整小球速度
+ */
+export function recordKeypressForTaiko(): void {
+  const now = performance.now()
+  recentKeyTimes.push(now)
+  // 只保留最近 10 次击键
+  if (recentKeyTimes.length > 10) recentKeyTimes.shift()
+  // 根据平均击键间隔调整小球移动速度
+  if (recentKeyTimes.length >= 3) {
+    let totalInterval = 0
+    for (let i = 1; i < recentKeyTimes.length; i++) {
+      totalInterval += recentKeyTimes[i] - recentKeyTimes[i - 1]
+    }
+    const avgInterval = totalInterval / (recentKeyTimes.length - 1)
+    // 小球移动时间 = 平均间隔 × 5，限制在 800~2500ms
+    taikoSpeed = Math.max(800, Math.min(2500, avgInterval * 5))
+  }
+}
+
+/** 上次 checkTaikoHit 的命中加成（供 skills.ts 读取） */
+let _lastTaikoBonus = 0
+
+/**
+ * 获取上次 checkTaikoHit 的命中加成（0 或 TAIKO_BONUS）
+ * 由 skills.ts 在 triggerSkill 中读取
+ */
+export function getTaikoBonus(): number {
+  return _lastTaikoBonus
+}
+
+/**
+ * 检查当前是否命中节拍球
+ * @returns bonus 倍率 (1.0 无命中, 1.0 + TAIKO_BONUS 命中)
+ */
+export function checkTaikoHit(): number {
+  if (!state.player.relics.has('rhythm_adapt')) { _lastTaikoBonus = 0; return 1 }
+  const now = performance.now()
+  for (let i = 0; i < taikoBalls.length; i++) {
+    const ball = taikoBalls[i]
+    const elapsed = now - ball.startTime
+    const arrivalTime = ball.duration
+    // 判定窗口：球到达判定点前后 TAIKO_HIT_WINDOW ms
+    if (Math.abs(elapsed - arrivalTime) <= TAIKO_HIT_WINDOW) {
+      // 命中 — 移除该球
+      taikoBalls.splice(i, 1)
+      // 视觉反馈：标记命中
+      markTaikoBallHit(ball.id)
+      _lastTaikoBonus = TAIKO_BONUS
+      return 1 + TAIKO_BONUS
+    }
+  }
+  _lastTaikoBonus = 0
+  return 1
+}
+
+/**
+ * 标记某个球被命中（用于 DOM 动画）
+ */
+function markTaikoBallHit(ballId: number): void {
+  if (typeof document === 'undefined') return
+  const el = document.getElementById(`taiko-ball-${ballId}`)
+  if (el) {
+    el.classList.add('hit')
+    setTimeout(() => el.remove(), 200)
+  }
+  // 闪烁判定点
+  const judge = document.querySelector('.taiko-judge') as HTMLElement
+  if (judge) {
+    judge.classList.add('flash')
+    setTimeout(() => judge.classList.remove('flash'), 150)
+  }
+}
+
+/**
+ * 生成一个小球并定时生成下一个
+ */
+export function startTaikoSpawner(): void {
+  if (!state.player.relics.has('rhythm_adapt')) return
+  if (typeof document === 'undefined') return
+  // 显示太鼓条
+  const bar = document.getElementById('taiko-bar')
+  if (bar) bar.classList.add('active')
+
+  function spawnBall(): void {
+    const id = nextBallId++
+    const duration = taikoSpeed
+    const ball: TaikoBall = { id, startTime: performance.now(), duration }
+    taikoBalls.push(ball)
+
+    // 创建 DOM 元素
+    if (typeof document !== 'undefined') {
+      const bar = document.getElementById('taiko-bar')
+      if (bar) {
+        const el = document.createElement('div')
+        el.className = 'taiko-ball'
+        el.id = `taiko-ball-${id}`
+        el.style.setProperty('--duration', `${duration}ms`)
+        bar.appendChild(el)
+        // 球到达终点后自动移除
+        setTimeout(() => {
+          el.remove()
+          // 从数据中也移除
+          const idx = taikoBalls.findIndex(b => b.id === id)
+          if (idx >= 0) taikoBalls.splice(idx, 1)
+        }, duration + 50)
+      }
+    }
+
+    // 随机间隔后生成下一个
+    const nextDelay = SPAWN_MIN + Math.random() * (SPAWN_MAX - SPAWN_MIN)
+    taikoSpawnTimer = setTimeout(spawnBall, nextDelay)
+  }
+
+  // 首个球延迟生成
+  const firstDelay = SPAWN_MIN + Math.random() * (SPAWN_MAX - SPAWN_MIN)
+  taikoSpawnTimer = setTimeout(spawnBall, firstDelay)
+}
+
+/**
+ * 停止太鼓生成器
+ */
+export function stopTaikoSpawner(): void {
+  if (taikoSpawnTimer !== null) {
+    clearTimeout(taikoSpawnTimer)
+    taikoSpawnTimer = null
+  }
+  // 隐藏太鼓条
+  if (typeof document !== 'undefined') {
+    const bar = document.getElementById('taiko-bar')
+    if (bar) {
+      bar.classList.remove('active')
+      // 清除所有球 DOM
+      bar.querySelectorAll('.taiko-ball').forEach(el => el.remove())
+    }
+  }
+}
+
+/**
+ * 重置太鼓状态
+ */
+export function resetTaikoState(): void {
+  stopTaikoSpawner()
+  taikoBalls = []
+  taikoSpeed = 1500
+  recentKeyTimes = []
+  nextBallId = 0
+}
+
+// === 回归基本功检查（得分×10，禁止装备技能） ===
+
+/**
+ * 检查是否持有回归基本功遗物
+ * @returns true 如果持有回归基本功
  */
 export function hasGlassCannon(): boolean {
   return state.player.relics.has('glass_cannon_v2')
@@ -133,13 +250,12 @@ export function hasGlassCannon(): boolean {
  * 在应用启动时调用一次
  */
 export function initTypingRelicBehaviors(): void {
-  registerRelicBehavior('error_forgive_first', (_relicId, _context) => {
-    // 蜡封的实际逻辑在 checkWaxSealForgive() 中，由 battle.ts 直接调用
-    // 此注册仅为行为分发框架的完整性
+  registerRelicBehavior('decelerate_reward', (_relicId, _context) => {
+    // 实际逻辑在 checkSpeedRelics() 中，由 battle.ts 直接调用
   })
 
-  registerRelicBehavior('double_keystroke', (_relicId, _context) => {
-    // 回声指套的实际逻辑在 checkEchoThimble() 中，由 battle.ts 直接调用
+  registerRelicBehavior('accelerate_reward', (_relicId, _context) => {
+    // 实际逻辑在 checkSpeedRelics() 中，由 battle.ts 直接调用
   })
 
   registerRelicBehavior('autocomplete', (_relicId, _context) => {
@@ -147,11 +263,37 @@ export function initTypingRelicBehaviors(): void {
   })
 
   registerRelicBehavior('rhythm_adapt', (_relicId, _context) => {
-    // 节奏适应的实际逻辑在 calculateRhythmAdapt() 中，由 battle.ts 直接调用
+    // 节奏适应的实际逻辑在太鼓系统函数中，由 battle.ts 直接调用
   })
 
   registerRelicBehavior('glass_cannon', (_relicId, _context) => {
-    // 玻璃大炮的 instant_fail 逻辑在 battle.ts playerWrong() 中直接处理
-    // score×2 通过 RELIC_MODIFIER_DEFS factory 实现
+    // 回归基本功：score×10 在 battle.ts completeWord() 中直接处理
+    // 获取时卖出所有技能 + 禁止装备 在 relic:acquired 事件中处理
+  })
+
+  // 回归基本功：获取时卖出所有已有技能并回收金币
+  eventBus.on('relic:acquired', ({ relicId }) => {
+    if (relicId !== 'glass_cannon_v2') return
+    const bs = getBindingState(state)
+    const sellMult = getRecycleSellMultiplier()
+    let totalGold = 0
+
+    // 遍历所有技能，累加回收金币
+    for (const [skillId, data] of state.player.skills) {
+      const sellPrice = Math.floor((data.purchasePrice || 15) * sellMult)
+      totalGold += sellPrice
+      unbindSkill(bs, skillId)
+    }
+
+    // 清空技能相关数据
+    state.affixSkills.clear()
+    state.affixSkillStates.clear()
+    state.player.skills.clear()
+    state.player.bindings.clear()
+
+    // 回收金币
+    if (totalGold > 0) {
+      state.player.gold += totalGold
+    }
   })
 }

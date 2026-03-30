@@ -44,15 +44,16 @@ import { IS_DEMO } from '../demo/demo-config';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
-import type { SkillRarity, AffixType } from '../data/affixes';
-import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold } from '../data/affixTrigger';
-import { filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue } from '../data/affixes';
+import type { SkillRarity } from '../data/affixes';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
+import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyRitualEnchantment, generateRitualCandidates, pickRitualChoices, getEligibleSkills as getRitualEligibleSkills } from './ritualEnchantment';
 import type { RitualCandidate } from './ritualEnchantment';
 import { applyTrainingManual } from './relics/SkillRelicBehaviors';
+import { hasGlassCannon } from './relics/TypingRelicBehaviors';
 import { getAscendBaseScale } from '../data/affixTrigger';
 import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier, getMinEnchantmentLevel } from './relics/EnchantmentRelicBehaviors';
 import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState, getSkillAnchorKey } from './bindingManager';
@@ -467,9 +468,10 @@ import type { AffixTooltipInfo, SmartEstimate, EstimateBreakdownLine } from '../
 import type { AffixSkillInstance, SkillRuntimeState, QuestEnchantmentDef } from '../data/affixes';
 
 /** 获取技能在指定等级的有效基础值（支持升华 Lv4+） */
-function getEffectiveBaseValue(baseValues: [number, number, number], level: number): number {
-  if (level <= 3) return baseValues[level - 1] ?? baseValues[0];
-  return Math.round(baseValues[2] * getAscendBaseScale(level) * 100) / 100;
+function getEffectiveBaseValue(baseValues: number[], level: number): number {
+  const maxIdx = baseValues.length - 1;
+  if (level - 1 <= maxIdx) return baseValues[level - 1] ?? baseValues[0];
+  return Math.round(baseValues[maxIdx] * getAscendBaseScale(level) * 100) / 100;
 }
 
 /** 构建词条制技能的 tooltip 扩展字段 */
@@ -528,7 +530,11 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       if (rt.questTransformed) {
         questProgress = t('tooltip.quest_done', { effect: questEnch.transformDesc || t('quest.' + questEnch.type + '.effect') })
       } else {
-        questProgress = t('tooltip.quest_progress', { task: t('quest.' + questEnch.type + '.task'), stacks: rt.questStacks, target: questEnch.targetStacks })
+        const equipTarget = getQuestEquipTarget(questEnch.targetAffix)
+        const affixNames = (Array.isArray(questEnch.targetAffix) ? questEnch.targetAffix : [questEnch.targetAffix])
+          .map(at => t('affix.' + at) || AFFIX_NAMES[at] || at)
+          .join('/')
+        questProgress = t('tooltip.quest_equip', { stacks: rt.questStacks, target: equipTarget, affix: affixNames })
       }
     }
     // 学徒成长（显示 EXP / 升华阈值）
@@ -557,7 +563,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'charge': return t('param.charge', { gain: Math.round((a.gainPerSec ?? 0) * 100), max: Math.round((a.maxBonus ?? 0) * 100) })
     case 'decay': return t('param.decay', { init: a.initialMult ?? '?', decay: a.decayPerTrigger ?? '?', floor: a.floor ?? '?' })
     case 'pulse': return t('param.pulse', { interval: a.interval ?? '?', mult: a.burstMult?.toFixed(1) ?? '?' })
-    case 'crit': return t('param.crit', { chance: Math.round((a.chance ?? 0) * 100), mult: a.critMult?.toFixed(1) ?? '?' })
+    case 'crit': return t('param.crit', { chance: Math.round((a.chance ?? 0) * 100) })
     case 'void': return t('param.void', { rel, pct: Math.round((a.bonusPerSlot ?? 0) * 100) })
     case 'resonance': return t('param.resonance', { rel, icon: RESOURCE_ICONS[a.resource!] || '', name: t('resource.' + a.resource!) })
     case 'amplify': return t('param.amplify', { rel, icon: RESOURCE_ICONS[a.resource!] || '', name: t('resource.' + a.resource!), pct: Math.round((a.valuePerStack ?? 0) * 100) })
@@ -598,7 +604,9 @@ export function computeSmartEstimate(
   const breakdown: EstimateBreakdownLine[] = []
 
   // Phase 1: 基础值
-  const hasMultOp = skill.enchantmentIds.includes(EnchantmentTypeEnum.MultiplyOperator as string)
+  const hasMultOp = (skill.enchantmentIds.includes(EnchantmentTypeEnum.MultiplyOperator as string)
+    || skill.enchantmentIds.includes(EnchantmentTypeEnum.QuestMultiplyOp as string))
+    && isAffixGloballyTransformed(AffixTypeEnum.Multiply, state.affixSkills, state.affixSkillStates)
   const rawBase = resolvePhase1(skill)
   const base = hasMultOp
     ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? rawBase)
@@ -644,6 +652,45 @@ export function computeSmartEstimate(
         breakdown.push({ typeKey: 'taboo', label: t('est.taboo', { val: expectMult.toFixed(2) }), detail })
         break
       }
+      case 'multiply': {
+        // Phase 3: 乘算 ×N
+        const m = affix.multiplyValue ?? 1
+        multProduct *= m
+        breakdown.push({ typeKey: 'multiply', label: t('est.multiply', { val: m.toFixed(1) }), detail: '' })
+        break
+      }
+      case 'decay': {
+        // Phase 3: 每词重置为 initialMult，每次触发衰减 decayPerTrigger 到 floor
+        // 期望乘数取决于每词平均触发次数（绑定键在词中出现频率）
+        const init = affix.initialMult ?? 1
+        const floorVal = affix.floor ?? 0.5
+        const decayPer = affix.decayPerTrigger ?? 0.15
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        const avgTriggers = keys.length > 0 ? computeAvgTriggersPerWord(keys) : 1
+        const avgMult = computeDecayAvgMult(init, decayPer, floorVal, avgTriggers)
+        multProduct *= avgMult
+        const detail = `(${t('est.decay_triggers', { n: avgTriggers.toFixed(1) })})`
+        breakdown.push({ typeKey: 'decay', label: t('est.decay', { val: avgMult.toFixed(2) }), detail })
+        break
+      }
+      case 'outcast': {
+        // Phase 2: 首尾字母命中时 +bonusPercent
+        const bonus = affix.bonusPercent ?? 0
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        const hitRate = keys.length > 0 ? computeOutcastHitRate(keys) : 0
+        const expectedBonus = bonus * hitRate
+        addPercent += expectedBonus
+        const detail = `(${Math.round(hitRate * 100)}%${t('est.outcast_hit')}×${Math.round(bonus * 100)}%)`
+        breakdown.push({ typeKey: 'outcast', label: t('est.outcast', { pct: Math.round(expectedBonus * 100) }), detail })
+        break
+      }
+      case 'crit': {
+        const chance = affix.chance ?? 0
+        const expectedMult = 1 + chance * (CRIT_MULTIPLIER - 1)
+        multProduct *= expectedMult
+        breakdown.push({ typeKey: 'crit', label: t('est.crit', { pct: Math.round(chance * 100) }), detail: `(\u00d7${CRIT_MULTIPLIER})` })
+        break
+      }
       // 其余词条不预估
       default:
         break
@@ -664,9 +711,13 @@ export function computeSmartEstimate(
         detail: '',
       })
     } else {
+      const equipTarget = getQuestEquipTarget(questEnchEst.targetAffix)
+      const affixNames = (Array.isArray(questEnchEst.targetAffix) ? questEnchEst.targetAffix : [questEnchEst.targetAffix])
+        .map(at => t('affix.' + at) || AFFIX_NAMES[at] || at)
+        .join('/')
       breakdown.push({
         typeKey: 'apprentice',
-        label: t('est.quest_progress', { task: t('quest.' + questEnchEst.type + '.task'), stacks: rt.questStacks, target: questEnchEst.targetStacks }),
+        label: t('est.quest_equip', { stacks: rt.questStacks, target: equipTarget, affix: affixNames }),
         detail: '',
       })
     }
@@ -685,6 +736,47 @@ export function computeSmartEstimate(
   }
 
   return { estimatedOutput, breakdown }
+}
+
+/** 统计流放词条命中率：词库中首/尾字母命中 boundKeys 的比例 */
+function computeOutcastHitRate(boundKeys: string[]): number {
+  const deck = state.player.wordDeck
+  if (!deck || deck.length === 0) return 0
+  const keySet = new Set(boundKeys.map(k => k.toLowerCase()))
+  let hits = 0
+  for (const word of deck) {
+    if (word.length === 0) continue
+    const first = word[0].toLowerCase()
+    const last = word[word.length - 1].toLowerCase()
+    if (keySet.has(first) || keySet.has(last)) hits++
+  }
+  return hits / deck.length
+}
+
+/** 统计词库中每词平均触发次数：绑定键字母在词中出现的次数 */
+function computeAvgTriggersPerWord(boundKeys: string[]): number {
+  const deck = state.player.wordDeck
+  if (!deck || deck.length === 0) return 1
+  const keySet = new Set(boundKeys.map(k => k.toLowerCase()))
+  let totalTriggers = 0
+  for (const word of deck) {
+    for (const ch of word) {
+      if (keySet.has(ch.toLowerCase())) totalTriggers++
+    }
+  }
+  return totalTriggers / deck.length
+}
+
+/** 计算衰减词条期望乘数：基于每词平均触发次数 */
+function computeDecayAvgMult(init: number, decayPer: number, floor: number, avgTriggers: number): number {
+  const n = Math.max(1, Math.round(avgTriggers))
+  let sum = 0
+  let cur = init
+  for (let i = 0; i < n; i++) {
+    sum += cur
+    cur = Math.max(floor, cur - decayPer)
+  }
+  return sum / n
 }
 
 /** 自适应精度格式化：小值保留更多小数位 */
@@ -830,7 +922,8 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
   // 构建词条制技能池（Story 35.9 — 替代旧固定池）
   const skillPool: ShopItem[] = [];
   const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
-  const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel;
+  /** 按稀有度获取等级上限（白装4级，蓝+3级；遗物可覆盖） */
+  const getLevelCap = (rarity: number) => maxSkillLevel === Infinity ? getSkillMaxLevel(rarity) : maxSkillLevel;
   if (!isSilenced) {
     // T4 极简主义：技能数量达上限时不生成新技能
     const maxSkillCount = queryRelicFlag('max_skill_count') as number;
@@ -853,7 +946,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
         if (ownedSkillId && !convertedSkillIds.has(ownedSkillId)) {
           const ownedData = state.player.skills.get(ownedSkillId);
           const ownedAffix = state.affixSkills.get(ownedSkillId);
-          if (ownedData && ownedAffix && ownedData.level < levelCap) {
+          if (ownedData && ownedAffix && ownedData.level < getLevelCap(ownedAffix.rarity)) {
             // 转为升级
             const nextLevel = ownedData.level + 1;
             affixItems[i] = {
@@ -886,7 +979,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
           const affix = state.affixSkills.get(skillId);
           if (!affix || affix.rarity < 1) continue;
           if (convertedSkillIds.has(skillId)) continue;
-          if (skillData.level >= levelCap) continue;
+          if (skillData.level >= getLevelCap(affix.rarity)) continue;
           candidates.push({ skillId, affix });
         }
         if (candidates.length > 0) {
@@ -1222,20 +1315,21 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       const resIcon = RESOURCE_ICONS[skill.resource] || '';
       const resName = t('resource.' + skill.resource) || RESOURCE_NAMES[skill.resource] || skill.resource;
       const baseVal = getEffectiveBaseValue(baseVals, skill.level);
-      const skillHasMultOp = skill.enchantmentIds.includes(EnchantmentTypeEnum.MultiplyOperator as string);
+      const skillRt = state.affixSkillStates?.get(skill.id)
+      const skillHasMultOp = (skill.enchantmentIds.includes(EnchantmentTypeEnum.MultiplyOperator as string)
+        || skill.enchantmentIds.includes(EnchantmentTypeEnum.QuestMultiplyOp as string))
+        && isAffixGloballyTransformed(AffixTypeEnum.Multiply, state.affixSkills, state.affixSkillStates);
       const multOpBase = skillHasMultOp
         ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? baseVal)
         : null;
 
       let baseValuesText: string;
+      const maxLv = getSkillMaxLevel(skill.rarity);
       if (skillHasMultOp) {
         const mv = MULTIPLY_OPERATOR_BASE_VALUES[skill.resource];
-        baseValuesText = t('tooltip.base_values_mult', { v1: mv?.[0], v2: mv?.[1], v3: mv?.[2] });
+        baseValuesText = Array.from({ length: maxLv }, (_, i) => `Lv.${i + 1}=×${mv?.[i] ?? '?'}`).join(' / ');
       } else {
-        baseValuesText = t('tooltip.base_values_add', { v1: baseVals[0], v2: baseVals[1], v3: baseVals[2] });
-        if (skill.level > 3) {
-          baseValuesText += ` / Lv.${skill.level}=${baseVal}`;
-        }
+        baseValuesText = Array.from({ length: maxLv }, (_, i) => `Lv.${i + 1}=${baseVals[i] ?? '?'}`).join(' / ');
       }
       const tooltipData: KeyTooltipData = {
         skill: {
@@ -1718,9 +1812,8 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
         applyAffixLevelScaling(existing.affixes, 1);
       }
       eventBus.emit('skill:upgraded', { skillId, newLevel: data?.level || 1 });
-      // 达到附魔等级门槛时触发附魔（概率递减）
-      // 早期觉醒遗物将门槛从 Lv.3 降至 Lv.2
-      if (data?.level === getMinEnchantmentLevel()) {
+      // 达到附魔等级门槛时触发附魔（按稀有度递减：白lv4/蓝lv3/紫lv2/橙lv1）
+      if (data?.level === getMinEnchantmentLevel(affixSkill.rarity)) {
         checkAutoEnchantment(skillId);
       }
       showFeedback(t('shop.skill_upgrade', { name: affixSkill.name }), '#ffe66d');
@@ -1731,6 +1824,10 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
       state.affixSkills.set(skillId, affixSkill);
       state.affixSkillStates.set(skillId, createSkillRuntimeState(skillId));
       showFeedback(t('shop.got_skill', { name: affixSkill.name }), '#4ecdc4');
+      // 高稀有度技能购买即达附魔门槛（紫lv2需升级，橙lv1即购买触发）
+      if (1 === getMinEnchantmentLevel(affixSkill.rarity)) {
+        checkAutoEnchantment(skillId);
+      }
     }
   }
 
@@ -1751,7 +1848,7 @@ function purchaseShopItem(index: number): void {
   if (!result) return;
 
   // 点击购买新技能时，自动绑定到第一个空且未锁定键位（频率≥5）
-  if (result.isNew && result.skillId) {
+  if (result.isNew && result.skillId && !hasGlassCannon()) {
     autoBindSkill(getBindingState(state), result.skillId, cachedLetterFreqs ?? undefined);
   }
 
@@ -1768,6 +1865,7 @@ function purchaseShopItem(index: number): void {
   }
 
   // Story 41.1: 附魔不再由购买自动触发，改为仪式/商店/试炼三渠道获取
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
   renderUnifiedShop();
   renderBuildManager();
 
@@ -1812,7 +1910,8 @@ function purchaseShopRelicItem(index: number): void {
       // 达到附魔等级门槛时触发附魔检查
       for (const uid of upgradedIds) {
         const uData = state.player.skills.get(uid);
-        if (uData?.level === getMinEnchantmentLevel()) {
+        const uAffix = state.affixSkills.get(uid);
+        if (uData && uAffix && uData.level === getMinEnchantmentLevel(uAffix.rarity)) {
           checkAutoEnchantment(uid);
         }
       }
@@ -1844,7 +1943,8 @@ function purchaseShopRelicItem(index: number): void {
           if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}${t('shop.training_manual_feedback') || '个技能升级!'}`, '#00ff88');
           for (const uid of upgradedIds) {
             const uData = state.player.skills.get(uid);
-            if (uData?.level === getMinEnchantmentLevel()) {
+            const uAffix = state.affixSkills.get(uid);
+            if (uData && uAffix && uData.level === getMinEnchantmentLevel(uAffix.rarity)) {
               checkAutoEnchantment(uid);
             }
           }
@@ -2040,6 +2140,7 @@ export function sellSkill(skillId: string): void {
   updateGoldDisplay();
   showFeedback(t('shop.sell', { price: sellPrice }), '#ffe66d');
   playSound('buy');
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
   renderUnifiedShop();
   renderBuildManager();
 }
@@ -2104,9 +2205,13 @@ export function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: 
   // Quest 类型
   const questDef = getQuestEnchantmentDef(type);
   if (questDef) {
+    const equipTarget = getQuestEquipTarget(questDef.targetAffix)
+    const affixNames = (Array.isArray(questDef.targetAffix) ? questDef.targetAffix : [questDef.targetAffix])
+      .map(at => t('affix.' + at) || AFFIX_NAMES[at] || at)
+      .join('/')
     return {
       name: t('quest.' + questDef.type),
-      desc: t('ench_info.quest_desc', { effect: t('quest.' + questDef.type + '.effect'), task: t('quest.' + questDef.type + '.task') }),
+      desc: t('ench_info.quest_equip_desc', { effect: t('quest.' + questDef.type + '.effect'), target: equipTarget, affix: affixNames }),
       icon: '✨',
       category: t('ench_cat.quest'),
       categoryColor: ENCHANTMENT_CATEGORY_COLORS.quest,
@@ -2477,6 +2582,9 @@ export function renderBuildManager(): void {
       if (affixSk) showFeedback(t('shop.unbound', { name: affixSk.name, key: key.toUpperCase() }), '#ff6b6b');
     }
   }
+  if (unboundSkillIds.size > 0) {
+    evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
+  }
 
   // === 遗物数字行 ===
   const relicArray = [...state.player.relics];
@@ -2533,17 +2641,17 @@ export function renderBuildManager(): void {
       const isPunctKey = PUNCTUATION_KEYS.includes(k);
       if (freq < 5 && !isPunctKey) slot.classList.add('freq-locked');
 
-      // 底分分级样式
-      if (score >= 6) slot.classList.add('score-high');
-      else if (score >= 3) slot.classList.add('score-mid');
-      else if (score >= 1) slot.classList.add('score-low');
-
       // 技能键位渲染
       if (skillId && state.affixSkills.has(skillId)) {
         // 词条制技能键位渲染
         const affixSkill = state.affixSkills.get(skillId)!;
         const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#ffffff';
         slot.classList.add('has-skill', 'affix-skill-slot');
+        // 有附魔的技能加光晕（匹配稀有度）
+        if (affixSkill.enchantmentIds.length > 0) {
+          slot.classList.add('enchanted-glow');
+          slot.style.setProperty('--enchant-color', rarityColor);
+        }
         slot.dataset.dragType = 'skill-key';
         slot.dataset.boundSkill = skillId;
         const skData = state.player.skills.get(skillId);
@@ -2907,6 +3015,7 @@ function registerShopDropZones(): void {
         const skillId = payload.skillId;
         if (!skillId) return;
         unbindSkill(getBindingState(state), skillId);
+        evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
         renderBuildManager();
       },
     });
@@ -3034,6 +3143,7 @@ function handleKeySlotRotation(key: string): void {
     showFeedback(t('shop.rotate_displaced'), '#ffaa00');
   }
 
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
   renderBuildManager();
 
   // 旋转成功动画：对新绑定键位施加缩放动画
@@ -3050,6 +3160,12 @@ function handleKeySlotRotation(key: string): void {
 
 // === 拖拽到键位处理 ===
 function handleDropOnKey(targetKey: string, payload: DragPayload): void {
+  // 回归基本功：禁止装备技能
+  if (hasGlassCannon()) {
+    showFeedback(t('shop.no_equip_basic'), '#ff6b6b');
+    return;
+  }
+
   const bs = getBindingState(state);
 
   if (payload.type === 'shop-item') {
@@ -3081,6 +3197,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     bindShapeToKeys(bs, skillId, targetKey);
 
     // Story 41.1: 附魔不再由购买自动触发
+    evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
     renderUnifiedShop();
     renderBuildManager();
 
@@ -3138,6 +3255,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
       }
     }
 
+    evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
     renderBuildManager();
   }
 }

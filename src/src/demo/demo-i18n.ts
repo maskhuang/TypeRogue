@@ -181,7 +181,7 @@ const ZH: Record<string, string> = {
 
   // --- battle.ts ---
   'battle.phoenix': '凤凰羽毛!',
-  'battle.glass_break': '玻璃大炮碎了!',
+  'battle.glass_break': '回归基本功!',
   'battle.combo_break': '{combo}× 断了!',
   'battle.relic_break': '遗物碎裂!',
   'battle.penalty': '-{value}分!',
@@ -194,17 +194,18 @@ const ZH: Record<string, string> = {
   'battle.cycle_prefix': '周目{cycle} · ',
 
   // --- typing relic feedback ---
-  'battle.glass_double': '💀 ×2 (+{extra})',
-  'battle.rhythm_slow': '🎵 慢速',
-  'battle.rhythm_time': '⏱️ +{value}s',
-  'battle.rhythm_fast': '🎵 快速 → 得分 ×{value}',
+  'battle.glass_double': '📖 ×10 (+{extra})',
+  'shop.no_equip_basic': '回归基本功: 不能装备技能',
+  'battle.decelerate_reward': '🐢 +{value}s',
+  'battle.accelerate_reward': '⚡ +{value}金币',
   'battle.tab_hint': '⇥ Tab',
 
   // --- combo relic feedback ---
   'battle.prism_active': '🔷 棱镜激活 → 技能+20%',
   'battle.combo_buffer': '🛡️ 余韵护盾 → combo {value}',
-  'battle.rhythm_doc': '⏱️ +{value}s',
   'battle.detonate': '💣 ×{value}',
+  'battle.cancel': '⛓️‍💥 CANCEL {value}',
+  'battle.cancel_error': '⛓️‍💥 -{value}s',
 
   // --- skill relic feedback ---
   'battle.first_strike': '⚡ 首发强化 +20%',
@@ -678,13 +679,14 @@ const ZH: Record<string, string> = {
   'quest.quest_sacrifice': '献祭', 'quest.quest_sacrifice.effect': '质变：惩罚转为随机资源', 'quest.quest_sacrifice.task': '惩罚触发3次',
   'quest.quest_twin': '镜像', 'quest.quest_twin.effect': '质变：词条效果加倍', 'quest.quest_twin.task': '通关3次',
   'quest.quest_conduit': '导引', 'quest.quest_conduit.effect': '质变：导能 +2', 'quest.quest_conduit.task': '触发15次',
+  'quest.quest_multiply_op': '乘算化', 'quest.quest_multiply_op.effect': '质变：乘算模式', 'quest.quest_multiply_op.task': '触发15次',
 
   // --- param summary / estimate / tooltip labels ---
   'param.convert_to_self': '{icon}{name}→本资源 k={k}',
   'param.charge': '{gain}%/s 上限{max}%',
   'param.decay': '初始×{init} 衰减{decay} 下限×{floor}',
   'param.pulse': '每{interval}次 ×{mult}',
-  'param.crit': '{chance}% ×{mult}',
+  'param.crit': '{chance}% 暴击率',
   'param.void': '{rel}每空位+{pct}%',
   'param.resonance': '{rel}产出{icon}{name}时触发',
   'param.amplify': '{rel}{icon}{name}每层+{pct}%',
@@ -712,7 +714,14 @@ const ZH: Record<string, string> = {
   'est.taboo': '禁忌 +100% 期望×{val}',
   'est.taboo_penalty': '(负产出{pct}%)',
   'est.taboo_quest': '(负产出{pct}%, 任务-{c}%)',
+  'est.multiply': '乘算 ×{val}',
+  'est.decay': '衰减 期望×{val}',
+  'est.decay_triggers': '每词约{n}次触发',
+  'est.outcast': '流放 +{pct}%',
+  'est.outcast_hit': '命中',
+  'est.crit': '暴击 +{pct}%',
   'est.quest_progress': '任务 {task} ({stacks}/{target})',
+  'est.quest_equip': '任务: 装备 {stacks}/{target} 个{affix}技能',
   'est.quest_done': '✦ {effect}',
   'est.result_mult': '≈ ×{val}',
   'est.result_mult_detail': '(乘算已有资源)',
@@ -726,6 +735,7 @@ const ZH: Record<string, string> = {
 
   // --- tooltip quest / apprentice ---
   'tooltip.quest_progress': '任务: {task} ({stacks}/{target})',
+  'tooltip.quest_equip': '任务: 装备 {stacks}/{target} 个{affix}技能',
   'tooltip.quest_done': '✦ 已质变: {effect}',
   'tooltip.apprentice_growth': '学徒: +{pct}%',
   'tooltip.apprentice_exp': '学徒 EXP: {exp}% / {threshold}% → Lv.{level}',
@@ -733,6 +743,7 @@ const ZH: Record<string, string> = {
 
   // --- enchantment display info ---
   'ench_info.quest_desc': '{effect} (任务: {task})',
+  'ench_info.quest_equip_desc': '{effect} (任务: 装备 {target} 个{affix}技能)',
   'ench_info.transmute_desc': '额外产出 {pct}% 的{name}',
   'ench_info.neighbor_label': '学徒·观摩({rel})',
   'ench_info.neighbor_desc': '{rel}技能触发时永久成长 +{pct}%/次',
@@ -773,7 +784,7 @@ const ZH: Record<string, string> = {
   'affix.new_tag': '✦新',
 
   // --- affix param names (upgrade preview) ---
-  'affix_param.critMult': '暴击倍率',
+  'affix_param.chance': '暴击率',
   'affix_param.burstMult': '爆发倍率',
   'affix_param.cascadeMult': '级联倍率',
   'affix_param.floor': '衰减下限',
@@ -942,7 +953,7 @@ const EN: Record<string, string> = {
 
   // --- battle.ts ---
   'battle.phoenix': 'Phoenix Feather!',
-  'battle.glass_break': 'Glass Cannon shattered!',
+  'battle.glass_break': 'Back to Basics!',
   'battle.combo_break': '{combo}× combo lost!',
   'battle.relic_break': 'Relic shattered!',
   'battle.penalty': '-{value} pts!',
@@ -955,17 +966,18 @@ const EN: Record<string, string> = {
   'battle.cycle_prefix': 'Cycle {cycle} · ',
 
   // --- typing relic feedback ---
-  'battle.glass_double': '💀 ×2 (+{extra})',
-  'battle.rhythm_slow': '🎵 Slow',
-  'battle.rhythm_time': '⏱️ +{value}s',
-  'battle.rhythm_fast': '🎵 Fast → Score ×{value}',
+  'battle.glass_double': '📖 ×10 (+{extra})',
+  'shop.no_equip_basic': 'Back to Basics: cannot equip skills',
+  'battle.decelerate_reward': '🐢 +{value}s',
+  'battle.accelerate_reward': '⚡ +{value} gold',
   'battle.tab_hint': '⇥ Tab',
 
   // --- combo relic feedback ---
   'battle.prism_active': '🔷 Prism Active → Skill +20%',
   'battle.combo_buffer': '🛡️ Buffered → combo {value}',
-  'battle.rhythm_doc': '⏱️ +{value}s',
   'battle.detonate': '💣 ×{value}',
+  'battle.cancel': '⛓️‍💥 CANCEL {value}',
+  'battle.cancel_error': '⛓️‍💥 -{value}s',
 
   // --- skill relic feedback ---
   'battle.first_strike': '⚡ First Strike +20%',
@@ -1438,13 +1450,14 @@ const EN: Record<string, string> = {
   'quest.quest_sacrifice': 'Sacrifice', 'quest.quest_sacrifice.effect': 'Transform: penalty converts to random resource', 'quest.quest_sacrifice.task': 'Penalty 3 times',
   'quest.quest_twin': 'Mirror', 'quest.quest_twin.effect': 'Transform: double affix effects', 'quest.quest_twin.task': 'Clear 3 stages',
   'quest.quest_conduit': 'Channel', 'quest.quest_conduit.effect': 'Transform: conduit +2 triggers', 'quest.quest_conduit.task': 'Trigger 15 times',
+  'quest.quest_multiply_op': 'Multiply', 'quest.quest_multiply_op.effect': 'Transform: multiply mode', 'quest.quest_multiply_op.task': 'Trigger 15 times',
 
   // --- param summary / estimate / tooltip labels ---
   'param.convert_to_self': '{icon}{name}→self k={k}',
   'param.charge': '{gain}%/s cap {max}%',
   'param.decay': 'init ×{init} decay {decay} floor ×{floor}',
   'param.pulse': 'every {interval} ×{mult}',
-  'param.crit': '{chance}% ×{mult}',
+  'param.crit': '{chance}% crit rate',
   'param.void': '{rel} per slot +{pct}%',
   'param.resonance': '{rel} on {icon}{name} trigger',
   'param.amplify': '{rel}{icon}{name} per stack +{pct}%',
@@ -1472,7 +1485,14 @@ const EN: Record<string, string> = {
   'est.taboo': 'Taboo +100% E[×{val}]',
   'est.taboo_penalty': '(negative {pct}%)',
   'est.taboo_quest': '(negative {pct}%, quest -{c}%)',
+  'est.multiply': 'Multiply ×{val}',
+  'est.decay': 'Decay E[×{val}]',
+  'est.decay_triggers': '~{n} triggers/word',
+  'est.outcast': 'Outcast +{pct}%',
+  'est.outcast_hit': ' hit',
+  'est.crit': 'Crit +{pct}%',
   'est.quest_progress': 'Quest {task} ({stacks}/{target})',
+  'est.quest_equip': 'Quest: Equip {stacks}/{target} {affix} skills',
   'est.quest_done': '✦ {effect}',
   'est.result_mult': '≈ ×{val}',
   'est.result_mult_detail': '(multiplies existing resource)',
@@ -1486,6 +1506,7 @@ const EN: Record<string, string> = {
 
   // --- tooltip quest / apprentice ---
   'tooltip.quest_progress': 'Quest: {task} ({stacks}/{target})',
+  'tooltip.quest_equip': 'Quest: Equip {stacks}/{target} {affix} skills',
   'tooltip.quest_done': '✦ Transformed: {effect}',
   'tooltip.apprentice_growth': 'Apprentice: +{pct}%',
   'tooltip.apprentice_exp': 'EXP: {exp}% / {threshold}% → Lv.{level}',
@@ -1493,6 +1514,7 @@ const EN: Record<string, string> = {
 
   // --- enchantment display info ---
   'ench_info.quest_desc': '{effect} (Task: {task})',
+  'ench_info.quest_equip_desc': '{effect} (Task: Equip {target} {affix} skills)',
   'ench_info.transmute_desc': 'Extra {pct}% {name} output',
   'ench_info.neighbor_label': 'Apprentice·Observe({rel})',
   'ench_info.neighbor_desc': '{rel} skill trigger: perma growth +{pct}%/fire',
@@ -1533,7 +1555,7 @@ const EN: Record<string, string> = {
   'affix.new_tag': '✦New',
 
   // --- affix param names (upgrade preview) ---
-  'affix_param.critMult': 'Crit Mult',
+  'affix_param.chance': 'Crit Rate',
   'affix_param.burstMult': 'Burst Mult',
   'affix_param.cascadeMult': 'Cascade Mult',
   'affix_param.floor': 'Decay Floor',
@@ -1584,12 +1606,13 @@ const ITEM_NAMES_EN: Record<string, string> = {
   perpetual_queue: 'Perpetual Queue',
   word_scissors: 'Word Scissors', resonance_mold: 'Resonance Mold',
   // Typing subsystem relics
-  typing_wax_seal: 'Wax Seal', echo_thimble: 'Echo Thimble',
+  decelerate_reward: 'Deceleration Bonus', accelerate_reward: 'Acceleration Bonus',
   little_helper: 'Little Helper', rhythm_adapt: 'Rhythm Adapt',
-  glass_cannon_v2: 'Glass Cannon v2',
+  glass_cannon_v2: 'Back to Basics',
   // Combo subsystem relics
+  echo_thimble: 'Echo Thimble',
   combo_buffer: 'Combo Buffer', multiplier_prism: 'Multiplier Prism',
-  rhythm_doctor: 'Rhythm Doctor', combo_detonator: 'Combo Detonator',
+  combo_detonator: 'Combo Detonator', cancel: 'Cancel Chain',
   immortal_combo: 'Immortal Chain',
   // Skill subsystem relics
   first_strike: 'First Strike', less_is_more: 'Less is More',
@@ -1717,16 +1740,17 @@ const ITEM_DESCS_EN: Record<string, string> = {
   word_scissors: 'Disassemble crafted words, refund all fragments',
   resonance_mold: 'Duplicate letters cost no gold when crafting',
   // Typing subsystem relics
-  typing_wax_seal: 'First typo per word forgiven',
-  echo_thimble: '8% chance on correct key: double keystroke (combo+1, skill triggers again)',
+  decelerate_reward: 'Current word slower than last: +0.5s time',
+  accelerate_reward: 'Current word faster than last: +2 gold',
   little_helper: 'Repeat words: press Tab after first letter to auto-complete',
-  rhythm_adapt: 'Word time >3s: +1s time; <3s: word score +30%',
-  glass_cannon_v2: 'Score ×2, but any typo = instant death. Wax Seal forgives still apply.',
+  rhythm_adapt: 'Beat bar above word; hit a beat ball on keypress for +30% skill output',
+  glass_cannon_v2: 'Score ×10. Sells all skills on acquire; cannot equip skills.',
   // Combo subsystem relics
+  echo_thimble: '8% chance on correct key: double keystroke (combo+1, skill triggers again)',
   combo_buffer: 'On combo break, keep 50% combo (floor)',
   multiplier_prism: 'Mult ≥2.5: skill output +20%',
-  rhythm_doctor: 'Every 10 combo: +1s time',
-  combo_detonator: 'At combo 15/30/45: randomly trigger 3 equipped skills',
+  combo_detonator: 'At combo 15: randomly trigger 3 equipped skills. Resets on combo break.',
+  cancel: 'Type first letter within 0.4s of word appearing = Cancel. Each flawless cancelled word: chain+1 (max 5), skill output +10%/stack. Error during cancel: chain resets + lose 0.5s.',
   immortal_combo: 'Combo persists across stages (still breaks on error); stage time equals current combo count.',
   // Skill subsystem relics
   first_strike: 'First skill trigger per word: output +20%',
@@ -1751,7 +1775,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   short_sprint: '≤4-letter words: skill output +20%',
   long_word_master: '6+ letter words on complete: +1s time',
   word_dealer: 'After selling a word, next shop refresh is free',
-  punctuation_liberation: 'Unlock ;,./ keys for skill binding. Words include random punctuation.',
+  punctuation_liberation: 'Unlock ;,./[] keys for skill binding. Words include random punctuation.',
   // Resource subsystem relics
   score_magnet: 'Each keystroke: +1 score',
   resource_sense: 'When a word produces 3+ resource types, the lowest gets +50%',

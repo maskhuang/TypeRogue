@@ -29,10 +29,10 @@ import { showBossModifierPicker, showEliteModifierPicker } from './bossModifierP
 import { showActTransition, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
-import { checkWaxSealForgive, resetWaxSeal, checkEchoThimble, canAutocomplete, isRepeatWord, calculateRhythmAdapt, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors } from './relics/TypingRelicBehaviors';
-import { calculateComboBuffer, checkRhythmDoctor, checkComboDetonator, hasImmortalCombo, saveLastBattleCombo, syncRhythmDoctorMilestone, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
+import { canAutocomplete, isRepeatWord, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors, checkSpeedRelics, recordKeypressForTaiko, checkTaikoHit, startTaikoSpawner, stopTaikoSpawner } from './relics/TypingRelicBehaviors';
+import { checkEchoThimble, calculateComboBuffer, checkComboDetonator, onComboBreakDetonator, hasImmortalCombo, saveLastBattleCombo, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus, onNewWordForCancel, checkCancelOnFirstLetter, getCancelChainBonus, getCancelChainCount, onCancelledWordComplete, onCancelledWordError, isWordCancelled } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing } from './relics/SkillRelicBehaviors';
-import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
+import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier } from './relics/EnchantmentRelicBehaviors';
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { checkScoreMagnet, checkResourceSense, storeDeferredSenseBonus, consumeDeferredSenseBonus, incrementTimeDewCounter, checkTimeDew, incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
@@ -40,7 +40,7 @@ import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, shouldBarrierDelay, startBarrierDelay, addDeferredModifier, checkBarrierActivation, isBarrierDelaying, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
-import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult } from '../data/affixTrigger';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
 import { AffixType } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
@@ -173,17 +173,6 @@ function releaseCharge(key: string): void {
   if (!pending) return;
   _pendingChargeTriggers.delete(key);
   _chargeHolding = false;
-
-  // 检测是否满蓄力 → 触发 QuestEnergize 任务事件
-  const _skill = state.affixSkills.get(pending.skillId);
-  const _rt = state.affixSkillStates.get(pending.skillId);
-  if (_skill && _rt) {
-    const chargeAffix = _skill.affixes.find(a => a.type === AffixType.Charge);
-    const maxBonus = chargeAffix?.maxBonus ?? 1;
-    if (_rt.chargeAccumulated >= maxBonus) {
-      applyQuestEvent('chargeFull', _rt, _skill.enchantmentIds, getQuestStackIncrement());
-    }
-  }
 
   triggerSkill(pending.skillId, pending.key);
 
@@ -330,7 +319,7 @@ function collectGravityWeights(): Map<string, number> {
     if (!runtimeState) continue;
     for (const affix of skill.affixes) {
       if (affix.type !== AffixType.Gravity) continue;
-      const probMult = getEffectiveProbMult(affix, runtimeState, skill);
+      const probMult = getEffectiveProbMult(affix, runtimeState, skill, state.affixSkills, state.affixSkillStates);
       if (probMult === 1) continue; // 中性，不影响
       const letter = key.toUpperCase();
       const existing = result.get(letter) ?? 1;
@@ -367,6 +356,7 @@ function setWord(): void {
   state.resources.score = 0; // 重置即时加分
   state.wordPerfect = true;
   wordStartTime = state.time; // 记录词语开始时的剩余时间
+  onNewWordForCancel(); // 取消连锁：记录新词出现时间
   wordStartScore = state.score; // 玻璃大炮：记录词开始时总分
   resetWordResourceTypes(); // 重置词级资源追踪
   leftHandTriggered = false; // 重置左右手追踪
@@ -389,8 +379,6 @@ function setWord(): void {
   }
   // Story 36.6: 双手协奏手追踪重置
   resetDualConcertoHand();
-  // Story 36.2: 蜡封状态重置
-  resetWaxSeal();
   renderWord();
   updateSettlementLive(); // 初始化结算面板
 }
@@ -670,6 +658,22 @@ function playerCorrect(k: string): void {
     }
   }
 
+  // 太鼓节拍：记录击键 + 检查命中（结果存储在模块级变量，由 skills.ts 读取）
+  if (state.player.relics.has('rhythm_adapt')) {
+    recordKeypressForTaiko();
+    const taikoMult = checkTaikoHit();
+    if (taikoMult > 1) {
+      pulseRelicIcon('rhythm_adapt', '#ffe66d');
+    }
+  }
+
+  // 取消连锁：首字母时检查是否在取消窗口内
+  if (state.player.index === 0 && checkCancelOnFirstLetter()) {
+    const chainLv = getCancelChainCount();
+    pulseRelicIcon('cancel', '#ff6b00');
+    showFeedback(t('battle.cancel', { value: chainLv > 0 ? `+${chainLv * 10}%` : '' }), '#ff6b00');
+  }
+
   // 触发技能（新系统：所有绑定技能都应触发）
   const shouldTrigger = !!skillId;
   if (shouldTrigger) {
@@ -734,14 +738,7 @@ function playerCorrect(k: string): void {
     }
   }
 
-  // Story 36.3: 节奏医生 — 每 10 combo +1s（在 combo++ 和 echo combo++ 之后检查）
-  const rhythmDocTime = checkRhythmDoctor(state.combo);
-  if (rhythmDocTime > 0) {
-    state.time += rhythmDocTime;
-    showFeedback(t('battle.rhythm_doc', { value: rhythmDocTime }), '#00ff88', undefined, undefined, { relicId: 'rhythm_doctor', resource: 'time', amount: rhythmDocTime });
-  }
-
-  // Story 36.3: 连击引爆 — combo 达 15/30/45 时随机触发 3 个装备技能
+  // Story 36.3: 连击引爆 — combo 达 15 时随机触发 3 个装备技能
   const detonateCount = checkComboDetonator(state.combo);
   if (detonateCount > 0) {
     const skillIds = Array.from(state.affixSkills.keys());
@@ -831,15 +828,6 @@ function playerWrong(): void {
   const el = getElements();
   const letter = el.word.children[state.player.index] as HTMLElement;
 
-  // Story 36.2: 打字蜡封 — 每词首次错误免除（在 on_error 管道之前检查）
-  if (checkWaxSealForgive()) {
-    letter?.classList.add('wrong');
-    setTimeout(() => letter?.classList.remove('wrong'), 150);
-    pulseRelicIcon('typing_wax_seal', '#ff9500');
-    playSound('wrong');
-    return; // 免除错误：不触发 on_error 管道、不断 combo、不触发玻璃大炮
-  }
-
   letter?.classList.add('wrong');
   setTimeout(() => letter?.classList.remove('wrong'), 150);
 
@@ -848,12 +836,7 @@ function playerWrong(): void {
 
   playSound('wrong');
 
-  // Story 36.2: 玻璃大炮 — 打错即死（蜡封免除的错误已 return，不会到达这里）
-  if (hasGlassCannon()) {
-    showFeedback(t('battle.glass_break'), '#ff0000');
-    gameOver();
-    return;
-  }
+  // Story 36.2: 回归基本功 — 不再即死（旧玻璃大炮逻辑已移除）
 
   // 遗物 on_error 管道解析（凤凰羽毛等）
   {
@@ -878,6 +861,13 @@ function playerWrong(): void {
   // 标记词语不完美
   state.wordPerfect = false;
 
+  // 取消连锁：取消状态下打错 → 连锁归零 + 扣时间（没看清就打的代价）
+  const cancelPenalty = onCancelledWordError();
+  if (cancelPenalty > 0) {
+    state.time -= cancelPenalty;
+    showFeedback(t('battle.cancel_error', { value: cancelPenalty }), '#ff4444');
+  }
+
   if (state.combo > 5) showFeedback(t('battle.combo_break', { combo: state.combo }), '#ff6b6b');
 
   // 遗物 on_combo_break 管道解析（完美主义者断连击失去遗物）
@@ -899,9 +889,8 @@ function playerWrong(): void {
   } else {
     state.multiplier = state.player.baseMultiplier;
   }
-  // 同步节奏医生 milestone
-  syncRhythmDoctorMilestone(buffered);
-
+  // 蓄势引爆：combo 中断后重置（允许再次蓄力）
+  onComboBreakDetonator();
   // Boss 修饰器：寒霜侵蚀 — 打错冻结 1+N 秒
   const frostDuration = triggerFrostFreeze();
   if (frostDuration > 0) {
@@ -952,20 +941,19 @@ function completeWord(): void {
     pulseRelicIcon('jazz', '#ffaa00');
   }
 
-  // Story 36.2: 节奏适应 — 根据单词用时给予时间或分数奖励
-  const rhythmResult = calculateRhythmAdapt(wordElapsed);
-  if (rhythmResult.timeBonus > 0) {
-    showFeedback(t('battle.rhythm_slow'), '#00ff88');
-    setTimeout(() => {
-      state.time += rhythmResult.timeBonus;
-      showFeedback(t('battle.rhythm_time', { value: rhythmResult.timeBonus }), '#00ff88', undefined, undefined, { relicId: 'rhythm_adapt', resource: 'time', amount: rhythmResult.timeBonus });
-    }, 300);
+  // Story 36.2: 减速津贴 / 加速奖金 — 当前词与上个词用时比较
+  const speedResult = checkSpeedRelics(wordElapsed);
+  if (speedResult.timeBonus > 0) {
+    state.time += speedResult.timeBonus;
+    showFeedback(t('battle.decelerate_reward', { value: speedResult.timeBonus }), '#00ff88', undefined, undefined, { relicId: 'decelerate_reward', resource: 'time', amount: speedResult.timeBonus });
+    pulseRelicIcon('decelerate_reward', '#00ff88');
   }
-  if (rhythmResult.scoreMult > 1) {
-    showFeedback(t('battle.rhythm_fast', { value: rhythmResult.scoreMult }), '#ffe66d', undefined, { fromElementId: 'score-settlement', resource: 'settle' });
-    pulseRelicIcon('rhythm_adapt', '#ffe66d');
+  if (speedResult.goldBonus > 0) {
+    state.player.gold += speedResult.goldBonus;
+    state.resources.gold += speedResult.goldBonus;
+    showFeedback(t('battle.accelerate_reward', { value: speedResult.goldBonus }), '#ffe66d', undefined, undefined, { relicId: 'accelerate_reward', resource: 'gold', amount: speedResult.goldBonus });
+    pulseRelicIcon('accelerate_reward', '#ffe66d');
   }
-  bonusMult *= rhythmResult.scoreMult;
 
   const finalMult = mult * bonusMult;
   // 分数类技能已在触发时即时计入 state.score，此处仅结算 基数×倍率
@@ -1014,20 +1002,20 @@ function completeWord(): void {
   // Story 36.12: 分数黑洞 — 累计到隐藏池，跳过分数结算和胜利检查
   let milestone: ReturnType<typeof checkMilestone> = null;
   if (isBlackHoleActive()) {
-    let poolScore = hasGlassCannon() ? finalWordScore * 2 : finalWordScore;
+    let poolScore = hasGlassCannon() ? finalWordScore * 10 : finalWordScore;
     if (hasKeyStorm()) poolScore = Math.floor(poolScore * KEY_STORM_SCORE_PENALTY);
     accumulateBlackHole(poolScore);
   } else {
     const prevScore = state.score;
     state.score += finalWordScore;
 
-    // Story 36.2: 玻璃大炮 — 分两阶段演出：先显示原始得分，再翻倍
+    // Story 36.2: 回归基本功 — 分两阶段演出：先显示原始得分，再 ×10
     if (hasGlassCannon()) {
       bumpScore(finalWordScore);
       updateHUD();
       const wordGain = state.score - wordStartScore;
-      const extraGain = wordGain;
-      const doubledScore = wordStartScore + wordGain * 2;
+      const extraGain = wordGain * 9;
+      const doubledScore = wordStartScore + wordGain * 10;
       finalWordScore = doubledScore - prevScore;
       _glassCannonTimer = setTimeout(() => {
         _glassCannonTimer = null;
@@ -1074,36 +1062,15 @@ function completeWord(): void {
 
   // 附魔外部事件：单词完成 → 学徒/任务成长
   const _growthMult = getApprenticeGrowthMultiplier();
-  const _stackInc = getQuestStackIncrement();
-  const wordLower = state.player.word.toLowerCase();
-  const wordResCount = getWordResourceTypeCount();
   for (const [, skill] of state.affixSkills) {
     const rt = state.affixSkillStates.get(skill.id);
     if (!rt) continue;
     applyApprenticeEvent('wordComplete', rt, skill.enchantmentIds, _growthMult);
-    applyQuestEvent('wordComplete', rt, skill.enchantmentIds, _stackInc);
     if (state.player.word.length >= 6) {
       applyApprenticeEvent('longWordComplete', rt, skill.enchantmentIds, _growthMult);
     }
     if (state.wordPerfect) {
       applyApprenticeEvent('perfectWord', rt, skill.enchantmentIds, _growthMult);
-    }
-    // QuestPolarize: 完成包含/不包含绑定字母的词
-    const gravAffix = skill.affixes.find(a => a.type === AffixType.Gravity);
-    if (gravAffix) {
-      const boundKeys = [...state.player.bindings.entries()]
-        .filter(([, sid]) => sid === skill.id).map(([k]) => k.toLowerCase());
-      const isAttract = (gravAffix.probMult ?? 1) > 1;
-      const match = isAttract
-        ? boundKeys.some(k => wordLower.includes(k))
-        : boundKeys.every(k => !wordLower.includes(k));
-      if (match) {
-        applyQuestEvent('gravityWordMatch', rt, skill.enchantmentIds, _stackInc);
-      }
-    }
-    // QuestSpectrum: 一个单词内产出 5 种资源
-    if (wordResCount >= 5) {
-      applyQuestEvent('multiResourceWord', rt, skill.enchantmentIds, _stackInc);
     }
   }
 
@@ -1236,6 +1203,11 @@ function completeWord(): void {
 
   // 重置词语基础分
   wordBaseScore = 0;
+
+  // 取消连锁：被取消的词零失误完成 → 连锁+1
+  if (state.wordPerfect) {
+    onCancelledWordComplete();
+  }
 
   // Story 36.2: 完成后记录单词（小助手补全需要"已打过"判定）
   trackWord(state.player.word);
@@ -1582,6 +1554,7 @@ function endLevel(): void {
   releaseBGMTension();
   stopBGM();
   stopScoreRoller(); // Story 31.4
+  stopTaikoSpawner();
   clearPseudoInfinite();
   getElements().container.classList.remove('glow-danger', 'glow-target-reached');
   clearFloatQueue();
@@ -1613,14 +1586,12 @@ function endLevel(): void {
     // 动态增长系数：记录溢出比例供下关目标分数计算
     state.lastOverflowRatio = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
 
-    // 附魔外部事件：通关 → 学徒·通关/任务·镜像 成长
+    // 附魔外部事件：通关 → 学徒·通关成长
     const _sgm = getApprenticeGrowthMultiplier();
-    const _ssi = getQuestStackIncrement();
     for (const [, skill] of state.affixSkills) {
       const rt = state.affixSkillStates.get(skill.id);
       if (!rt) continue;
       applyApprenticeEvent('stageCleared', rt, skill.enchantmentIds, _sgm);
-      applyQuestEvent('stageCleared', rt, skill.enchantmentIds, _ssi);
     }
 
     // Mirror 词条复制：每关结束时刷新（Story 40.11: 多格技能使用完整占据键）
@@ -1644,7 +1615,7 @@ function endLevel(): void {
         randomFn: random,
       };
       // Story 41-5: 质变模式 — 复制所有不同类型词条
-      if (rt.questTransformed) {
+      if (isAffixGloballyTransformed(AffixType.Mirror, state.affixSkills, state.affixSkillStates)) {
         rt.mirrorCopiedAffixes = resolveMirrorCopyAllAffixes(skill, rt, mirrorCtx);
         rt.mirrorCopiedAffix = rt.mirrorCopiedAffixes.length > 0 ? rt.mirrorCopiedAffixes[0] : null;
       } else {
@@ -1959,6 +1930,9 @@ export async function startLevel(): Promise<void> {
   // 混沌种子：给所有未附魔技能一个随机临时附魔
   applyChaosSeedEnchantments();
 
+  // 装备数量型任务：根据当前绑定状态评估质变
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
+
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;
   const stageLabel = currentStageType === 'boss' ? ' [BOSS]' : currentStageType === 'elite' ? ' [ELITE]' : '';
@@ -2132,7 +2106,8 @@ export async function startLevel(): Promise<void> {
 
   startTimer();
   startScoreRoller(); // Story 31.4: 分数滚轮动画
-
+  // 太鼓节拍：有 rhythm_adapt 时启动小球生成器
+  startTaikoSpawner();
 
 }
 
@@ -2162,6 +2137,7 @@ function victory(): void {
   state.phase = 'victory';
   if (timerInterval) clearInterval(timerInterval);
   stopScoreRoller(); // Story 31.4
+  stopTaikoSpawner();
   clearFloatQueue();
   cleanupModifier();
   setRelicGarbleActive(false);

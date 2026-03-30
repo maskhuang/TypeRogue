@@ -13,8 +13,8 @@ import type { AffixInstance, AffixSkillInstance, AffixSkillSaveData, SkillRuntim
 import {
   AffixType,
   EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS, QUEST_AFFIX_MAP,
-  TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES,
-  isOldSystemSkill, applyAffixLevelScaling,
+  TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, CRIT_MULTIPLIER,
+  isOldSystemSkill, applyAffixLevelScaling, getQuestEquipTarget,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 
@@ -94,6 +94,66 @@ export interface TriggerContext {
   // ── Story 41.3: Ligature 质变关卡累计按键计数 ──
   /** 关卡内每个键被按下的累计次数（质变 Ligature 使用） */
   ligatureStageCounts?: Map<string, number>
+  // ── 暴击子系统 ──
+  /** 基础暴击率（默认 0，遗物可注入） */
+  baseCritRate?: number
+}
+
+// ===== 全场质变检查 =====
+
+/**
+ * 检查某词条类型是否已被全场任意技能质变。
+ * 遍历所有技能：找到任一已完成质变且任务附魔目标含指定词条类型的技能即返回 true。
+ * 质变效果全场共享：只要有一个技能完成了针对该词条类型的任务，所有带此词条的技能都受益。
+ */
+export function isAffixGloballyTransformed(
+  affixType: AffixType,
+  allSkills: Map<string, AffixSkillInstance>,
+  skillStates: Map<string, SkillRuntimeState>,
+): boolean {
+  for (const [skillId, skill] of allSkills) {
+    const rt = skillStates.get(skillId)
+    if (!rt?.questTransformed) continue
+    if (_skillMatchesTransform(skill, affixType)) return true
+  }
+  return false
+}
+
+/** 内部：检查单个已质变技能是否匹配指定词条类型 */
+function _skillMatchesTransform(skill: AffixSkillInstance, affixType: AffixType): boolean {
+  // 精确匹配：通过任务附魔映射表判断
+  let hasQuestEnch = false
+  for (const enchId of skill.enchantmentIds) {
+    // MultiplyOperator 是被动附魔但等效于 Multiply 质变
+    if (enchId === EnchantmentType.MultiplyOperator && affixType === AffixType.Multiply) return true
+    const mapping = QUEST_AFFIX_MAP[enchId as EnchantmentType]
+    if (!mapping) continue
+    hasQuestEnch = true
+    if (Array.isArray(mapping)) {
+      if (mapping.includes(affixType)) return true
+    } else if (mapping === affixType) {
+      return true
+    }
+  }
+  // 回退：无任务附魔但拥有该词条 → 视为已质变
+  if (!hasQuestEnch && skill.affixes.some(a => a.type === affixType)) return true
+  return false
+}
+
+/**
+ * 流水线内用：先检查当前技能自身质变，再全场扫描。
+ * 保证单技能单元测试（ctx.allSkills 为空）也能正确判断。
+ */
+function isTransformedForAffix(
+  affixType: AffixType,
+  runtimeState: SkillRuntimeState,
+  skill: AffixSkillInstance,
+  ctx: TriggerContext,
+): boolean {
+  // 快速路径：当前技能自身已质变且匹配
+  if (runtimeState.questTransformed && _skillMatchesTransform(skill, affixType)) return true
+  // 全场扫描
+  return isAffixGloballyTransformed(affixType, ctx.allSkills, ctx.skillStates)
 }
 
 // ===== 状态变更 =====
@@ -115,6 +175,8 @@ export interface TriggerFlags {
   isDecayFloor: boolean
   ligatureCount: number
   tabooConvertResource: import('../core/types').ResourceType | null
+  /** 暴击子系统：Crit 词条已质变（Phase 5 crit echo 使用） */
+  critTransformed: boolean
 }
 
 // ===== Phase 4-6 返回类型 =====
@@ -122,8 +184,12 @@ export interface TriggerFlags {
 export interface Phase4Result {
   targetResource: ResourceType
   output: number
-  /** 质变Rainbow：同时产出所有资源（按资源数等比分摊） */
+  /** 质变Rainbow：同时产出所有资源（按比例缩放） */
   allResources?: boolean
+  /** Rainbow 按比例缩放用：技能本资源基础值 */
+  rainbowSkillBase?: number
+  /** Rainbow 按比例缩放用：技能等级 */
+  rainbowSkillLevel?: number
 }
 
 export interface Phase5Result {
@@ -143,6 +209,8 @@ export interface Phase5Result {
   questCompleted: boolean
   /** 质变Outcast首尾呼应：对端技能触发键位 */
   outcastEchoTarget: string | null
+  /** 暴击质变回响：暴击时触发随机无Crit技能的键位 */
+  critEchoTarget?: string
 }
 
 export type Phase6Action =
@@ -311,7 +379,7 @@ export function resolvePhase2(
   ctx: TriggerContext,
   baseOutput: number,
 ): Phase2Result {
-  const hasMultOp = (skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator) || skill.enchantmentIds.includes(EnchantmentType.QuestMultiplyOp)) && runtimeState.questTransformed
+  const hasMultOp = (skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator) || skill.enchantmentIds.includes(EnchantmentType.QuestMultiplyOp)) && isTransformedForAffix(AffixType.Multiply, runtimeState, skill, ctx)
   // 乘算化（质变后）：基础值替换为乘数基底
   const effectiveBase = hasMultOp
     ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? baseOutput)
@@ -327,14 +395,19 @@ export function resolvePhase2(
       case AffixType.Convert: {
         if (affix.source == null) break
         const kEff = affix.k ?? 0
-        bonusPercent += kEff * getAffixSourceValue(affix.source, ctx)
-        // 质变：双向转化 — 反向也转化（source资源获得基于target资源的加成）
-        // 注意：反向产出使用 effectiveBase（未加成基值），不受其他词条 bonusPercent 影响
-        // 这是设计意图：反向产出为额外收益，不与正向加成叠加
-        if (runtimeState.questTransformed) {
+        // 按 BASE_VALUES 比例归一化源资源值（与 Rainbow 同理）
+        const cvtLvIdx = Math.max(0, Math.min(skill.level - 1, 2))
+        const cvtSkillBase = BASE_VALUES[skill.resource]?.[cvtLvIdx] ?? 1
+        const cvtSourceBase = BASE_VALUES[affix.source]?.[cvtLvIdx] ?? 1
+        bonusPercent += kEff * getAffixSourceValue(affix.source, ctx) * (cvtSkillBase / cvtSourceBase)
+        // 质变：双向转化 — 反向产出按比例缩放到源资源
+        if (isTransformedForAffix(AffixType.Convert, runtimeState, skill, ctx)) {
           const reverseBonus = kEff * getAffixSourceValue(skill.resource, ctx)
           if (reverseBonus > 0) {
-            convertReverseOutputs.push({ resource: affix.source, amount: reverseBonus * effectiveBase })
+            convertReverseOutputs.push({
+              resource: affix.source,
+              amount: reverseBonus * effectiveBase * (cvtSourceBase / cvtSkillBase),
+            })
           }
         }
         break
@@ -352,7 +425,7 @@ export function resolvePhase2(
         const maxBonus = affix.maxBonus ?? 0
         bonusPercent += Math.min(runtimeState.chargeAccumulated, maxBonus)
         // Story 41-5: 质变 — 满蓄力释放自动完成当前单词
-        if (runtimeState.questTransformed && runtimeState.chargeAccumulated >= maxBonus && maxBonus > 0) {
+        if (isTransformedForAffix(AffixType.Charge, runtimeState, skill, ctx) && runtimeState.chargeAccumulated >= maxBonus && maxBonus > 0) {
           chargeAutoComplete = true
         }
         // 蓄力释放清零 — 直接写入 runtimeState
@@ -440,17 +513,19 @@ export function resolvePhase3(
     isDecayFloor: false,
     ligatureCount: 0,
     tabooConvertResource: null,
+    critTransformed: false,
   }
+
+  // 暴击子系统：累计暴击率（affix loop 内只累加，loop 后统一判定）
+  let totalCritChance = 0
+  let critTransformed = false
 
   for (const affix of skill.affixes) {
     switch (affix.type) {
       case AffixType.Crit: {
-        const roll = ctx.randomFn()
-        if (runtimeState.questTransformed || roll < (affix.chance ?? 0)) {
-          const m = affix.critMult ?? 1
-          output *= m
-          multipliers.push(m)
-          flags.isCrit = true
+        totalCritChance += affix.chance ?? 0
+        if (isTransformedForAffix(AffixType.Crit, runtimeState, skill, ctx)) {
+          critTransformed = true
         }
         break
       }
@@ -473,7 +548,7 @@ export function resolvePhase3(
         output *= m
         multipliers.push(m)
         // 计算衰减后的新值
-        if (runtimeState.questTransformed) {
+        if (isTransformedForAffix(AffixType.Decay, runtimeState, skill, ctx)) {
           // 质变后：衰减逆转为递增（无上限）
           runtimeState.currentDecayMult = runtimeState.currentDecayMult + (affix.decayPerTrigger ?? 0)
         } else {
@@ -492,7 +567,7 @@ export function resolvePhase3(
         if (ctx.prevKey && affix.posRel != null) {
           // 质变：双向连锁 — 正向 OR 反向都算连锁
           const forward = hasRelation(ctx.prevKey, ctx.triggerKey, affix.posRel)
-          const reverse = runtimeState.questTransformed && hasRelation(ctx.triggerKey, ctx.prevKey, affix.posRel)
+          const reverse = isTransformedForAffix(AffixType.Cascade, runtimeState, skill, ctx) && hasRelation(ctx.triggerKey, ctx.prevKey, affix.posRel)
           if (forward || reverse) {
             const m = affix.cascadeMult ?? 1
             output *= m
@@ -505,7 +580,7 @@ export function resolvePhase3(
 
       case AffixType.Ligature: {
         let nEff: number
-        if (runtimeState.questTransformed && ctx.ligatureStageCounts) {
+        if (isTransformedForAffix(AffixType.Ligature, runtimeState, skill, ctx) && ctx.ligatureStageCounts) {
           // 质变后：使用关卡累计按键次数
           nEff = ctx.ligatureStageCounts.get(ctx.triggerKey) ?? 0
         } else {
@@ -522,7 +597,7 @@ export function resolvePhase3(
       case AffixType.Taboo: {
         const effPenalty = affix.penaltyChance ?? 0.1
         if (ctx.randomFn() < effPenalty) {
-          if (runtimeState.questTransformed) {
+          if (isTransformedForAffix(AffixType.Taboo, runtimeState, skill, ctx)) {
             // 质变后：惩罚转化为随机资源（不产生负值，排除职业限制资源）
             const otherResources = ALL_RESOURCES.filter(r => {
               if (r === skill.resource) return false
@@ -551,6 +626,15 @@ export function resolvePhase3(
       default:
         break
     }
+  }
+
+  // ── 暴击子系统：affix 循环后统一判定 ──
+  const finalCritChance = (ctx.baseCritRate ?? 0) + totalCritChance
+  if (critTransformed || (finalCritChance > 0 && ctx.randomFn() < finalCritChance)) {
+    output *= CRIT_MULTIPLIER
+    multipliers.push(CRIT_MULTIPLIER)
+    flags.isCrit = true
+    flags.critTransformed = critTransformed
   }
 
   return { output, multipliers, flags, mutations }
@@ -675,6 +759,8 @@ function checkQuestEventCondition(
       const voidAffix = skill.affixes.find(a => a.type === AffixType.Void)
       return voidAffix?.posRel != null && countEmptySlots(ctx.occupiedKeys, voidAffix.posRel, ctx.bindings) === 0
     }
+    // ── equip_count：装备数量型任务，由 evaluateEquipQuests 统一处理，Phase 5 不叠层 ──
+    case 'equip_count': return false
     // ── neighborTrigger 在 Phase 6 独立处理（QuestResonance），Phase 5 不重复叠层 ──
     case 'neighborTrigger': return false
     // ── 外部事件（wordComplete, gravityWordMatch, multiResourceWord, stageCleared）
@@ -701,13 +787,18 @@ export function resolvePhase4(
     return { targetResource: skill.resource, output }
   }
 
-  // 质变：同时产出所有资源
-  if (runtimeState.questTransformed) {
-    return { targetResource: skill.resource, output, allResources: true }
+  // 质变：同时产出所有资源（按比例缩放）
+  if (isTransformedForAffix(AffixType.Rainbow, runtimeState, skill, ctx)) {
+    const skillBase = BASE_VALUES[skill.resource]?.[skill.level - 1] ?? 1
+    return { targetResource: skill.resource, output, allResources: true, rainbowSkillBase: skillBase, rainbowSkillLevel: skill.level }
   }
 
   const targetResource = weightedRandomResource(ctx)
-  return { targetResource, output }
+  // 按目标资源与技能本资源的基础值比例缩放产出
+  const skillBase = BASE_VALUES[skill.resource]?.[skill.level - 1] ?? 1
+  const targetBase = BASE_VALUES[targetResource]?.[skill.level - 1] ?? 1
+  const scaledOutput = skillBase > 0 ? output * (targetBase / skillBase) : output
+  return { targetResource, output: scaledOutput }
 }
 
 // ===== Phase 5: 后触发效果 =====
@@ -759,7 +850,7 @@ export function resolvePhase5(
         })
         result.splashTargets = pickRandomKeys(filtered, targetCount, ctx.randomFn)
         // 质变后：溅射目标也会向自己的邻居溅射一次（额外一跳）
-        if (runtimeState.questTransformed) {
+        if (isTransformedForAffix(AffixType.Splash, runtimeState, skill, ctx)) {
           result.chainSplash = true
         }
         break
@@ -775,7 +866,7 @@ export function resolvePhase5(
         const chanceEff = affix.recurseChance ?? 0
         if (ctx.randomFn() < chanceEff) {
           // 质变后：递归概率不减半
-          const nextChance = runtimeState.questTransformed ? chanceEff : chanceEff / 2
+          const nextChance = isTransformedForAffix(AffixType.Recurse, runtimeState, skill, ctx) ? chanceEff : chanceEff / 2
           result.recurse = { shouldRecurse: true, newChance: nextChance }
           recurseProc = true
         }
@@ -788,7 +879,7 @@ export function resolvePhase5(
   }
 
   // ── Pulse 质变：爆发时同步其他 Pulse 技能的 triggerCount ──
-  if (triggerFlags.isPulse && runtimeState.questTransformed) {
+  if (triggerFlags.isPulse && isTransformedForAffix(AffixType.Pulse, runtimeState, skill, ctx)) {
     for (const [otherId, otherSkill] of ctx.allSkills) {
       if (otherId === skill.id) continue
       if (!otherSkill.affixes.some(a => a.type === AffixType.Pulse)) continue
@@ -800,7 +891,7 @@ export function resolvePhase5(
   }
 
   // ── Outcast 质变：首尾呼应 — 找到对端技能并触发 ──
-  if (runtimeState.questTransformed && !ctx.chainAffixesDisabled) {
+  if (isTransformedForAffix(AffixType.Outcast, runtimeState, skill, ctx) && !ctx.chainAffixesDisabled) {
     const outcastAffix = skill.affixes.find(a => a.type === AffixType.Outcast)
     if (outcastAffix && isFirstOrLastLetter(ctx.triggerKey, ctx.currentWord)) {
       const word = ctx.currentWord.toLowerCase()
@@ -810,6 +901,22 @@ export function resolvePhase5(
       if (oppositeKey !== ctx.triggerKey && ctx.bindings.has(oppositeKey)) {
         result.outcastEchoTarget = oppositeKey
       }
+    }
+  }
+
+  // ── Crit 质变回响：暴击时触发随机无 Crit 技能 ──
+  if (triggerFlags.isCrit && triggerFlags.critTransformed && !ctx.chainAffixesDisabled) {
+    const candidates = [...ctx.allSkills.entries()]
+      .filter(([id, s]) => id !== skill.id && !s.affixes.some(a => a.type === AffixType.Crit))
+      .filter(([id]) => {
+        // 必须已绑定到键位
+        const boundKey = [...ctx.bindings].find(([_, v]) => v === id)?.[0]
+        return boundKey != null
+      })
+    if (candidates.length > 0) {
+      const [targetId] = candidates[Math.floor(ctx.randomFn() * candidates.length)]
+      const targetKey = [...ctx.bindings].find(([_, v]) => v === targetId)?.[0]
+      if (targetKey) result.critEchoTarget = targetKey
     }
   }
 
@@ -867,7 +974,7 @@ export function resolvePhase5(
   }
 
   // Void 质变：每次触发都产出 devourTarget（系统层限制每关一次）
-  if (runtimeState.questTransformed && !result.devourTarget) {
+  if (isTransformedForAffix(AffixType.Void, runtimeState, skill, ctx) && !result.devourTarget) {
     const voidAffix = skill.affixes.find(a => a.type === AffixType.Void)
     if (voidAffix?.posRel != null) {
       result.devourTarget = findWeakestNeighbor(ctx.occupiedKeys, voidAffix.posRel, ctx)
@@ -932,8 +1039,7 @@ export function resolvePhase6(
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk != null) {
           // 质变：共鸣增强 — 被触发技能获得 +50% 产出加成
-          const neighborState = ctx.skillStates.get(neighborSkillId)
-          const boost = neighborState?.questTransformed ? 0.5 : undefined
+          const boost = isAffixGloballyTransformed(AffixType.Resonance, ctx.allSkills, ctx.skillStates) ? 0.5 : undefined
           actions.push({ type: 'resonance', neighborKey: matchedNk, transformedBoost: boost })
         }
       }
@@ -944,8 +1050,7 @@ export function resolvePhase6(
         if (triggerSkillHasAffix) {
           const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
           if (matchedNk != null) {
-            const neighborState = ctx.skillStates.get(neighborSkillId)
-            const boost = neighborState?.questTransformed ? 0.5 : undefined
+            const boost = isAffixGloballyTransformed(AffixType.Link, ctx.allSkills, ctx.skillStates) ? 0.5 : undefined
             actions.push({ type: 'link', neighborKey: matchedNk, transformedBoost: boost })
           }
         }
@@ -976,8 +1081,7 @@ export function resolvePhase6(
         const hasSameResource = skill.resource === neighborSkill.resource
         if (hasSharedAffix || hasSameResource) {
           // 质变：+2 触发（而非 +1）
-          const neighborState = ctx.skillStates.get(neighborSkillId)
-          const conduitCount = neighborState?.questTransformed ? 2 : 1
+          const conduitCount = isAffixGloballyTransformed(AffixType.Conduit, ctx.allSkills, ctx.skillStates) ? 2 : 1
           actions.push({ type: 'conduit', targetKey: triggerKey, conduitCount })
         }
       }
@@ -1068,7 +1172,7 @@ export function triggerAffixSkill(
 
   // Twin 质变：非 Twin 词条效果翻倍（等效词条复制）
   const hasTwin = effectiveSkill.affixes.some(a => a.type === AffixType.Twin)
-  if (hasTwin && runtimeState.questTransformed) {
+  if (hasTwin && isTransformedForAffix(AffixType.Twin, runtimeState, skill, ctx)) {
     p3.output *= 2
   }
 
@@ -1097,7 +1201,7 @@ export function triggerAffixSkill(
     isPulse: p3.flags.isPulse,
     isCascade: p3.flags.isCascade,
     isTabooPenalty: p3.flags.isTabooPenalty,
-    isMultiplyOp: (skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator) || skill.enchantmentIds.includes(EnchantmentType.QuestMultiplyOp)) && runtimeState.questTransformed,
+    isMultiplyOp: (skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator) || skill.enchantmentIds.includes(EnchantmentType.QuestMultiplyOp)) && isTransformedForAffix(AffixType.Multiply, runtimeState, skill, ctx),
     ligatureCount: p3.flags.ligatureCount,
     stateMutations: allMutations,
     convertReverseOutputs: p2.convertReverseOutputs.length > 0 ? p2.convertReverseOutputs : undefined,
@@ -1145,13 +1249,8 @@ export function applyApprenticeEvent(
 
 // ===== 任务附魔外部事件回调 =====
 
-/** 任务附魔外部事件→附魔类型映射（可多对一） */
-const QUEST_EXTERNAL_EVENT_MAP: Record<string, EnchantmentType[]> = {
-  stageCleared: [EnchantmentType.QuestMirror, EnchantmentType.QuestTwin],
-  chargeFull: [EnchantmentType.QuestEnergize],
-  gravityWordMatch: [EnchantmentType.QuestPolarize],
-  multiResourceWord: [EnchantmentType.QuestSpectrum],
-}
+/** @deprecated 所有任务附魔已改为 equip_count 型，外部事件映射已清空 */
+const QUEST_EXTERNAL_EVENT_MAP: Record<string, EnchantmentType[]> = {}
 
 /**
  * 外部任务事件回调：系统层在对应事件发生时调用。
@@ -1187,6 +1286,71 @@ export function applyQuestEvent(
   return applied
 }
 
+// ===== 装备数量型任务评估 =====
+
+/**
+ * 评估所有装备数量型任务附魔（equip_count）的质变状态。
+ * 统计每种目标词条类型已绑定的技能数量，与 getQuestEquipTarget 对比：
+ * - 达标 → questTransformed = true
+ * - 未达标 → questTransformed = false（可逆，卸下技能后取消质变）
+ *
+ * questStacks 记录当前已装备数量（用于 UI 进度显示）。
+ *
+ * 应在绑定变更（购买/出售/拖拽/旋转）和战斗开始时调用。
+ * 纯函数——仅修改传入的 skillStates。
+ */
+export function evaluateEquipQuests(
+  skills: Map<string, AffixSkillInstance>,
+  skillStates: Map<string, SkillRuntimeState>,
+  bindings: Map<string, string>,
+): void {
+  // 1. 统计已绑定技能按词条类型计数
+  const boundSkillIds = new Set(bindings.values())
+  const affixTypeCount = new Map<AffixType, number>()
+  for (const skillId of boundSkillIds) {
+    const skill = skills.get(skillId)
+    if (!skill) continue
+    const seenTypes = new Set<AffixType>()
+    for (const affix of skill.affixes) {
+      if (!seenTypes.has(affix.type)) {
+        seenTypes.add(affix.type)
+        affixTypeCount.set(affix.type, (affixTypeCount.get(affix.type) ?? 0) + 1)
+      }
+    }
+  }
+
+  // 2. 遍历所有技能的任务附魔，更新质变状态
+  for (const [skillId, skill] of skills) {
+    const rt = skillStates.get(skillId)
+    if (!rt) continue
+
+    const questEnchType = skill.enchantmentIds.find(id =>
+      QUEST_ENCHANTMENT_DEFS.some(d => d.type === id && d.event === 'equip_count'),
+    ) as EnchantmentType | undefined
+    if (!questEnchType) continue
+
+    const questDef = QUEST_ENCHANTMENT_DEFS.find(d => d.type === questEnchType)!
+    const targetAffixes = Array.isArray(questDef.targetAffix) ? questDef.targetAffix : [questDef.targetAffix]
+    const target = getQuestEquipTarget(questDef.targetAffix)
+
+    // 统计目标词条中装备数量最大值（多词条取最高）
+    let equipped = 0
+    for (const at of targetAffixes) {
+      equipped = Math.max(equipped, affixTypeCount.get(at) ?? 0)
+    }
+
+    // 更新 questStacks 为当前装备数量（用于 UI 进度显示）
+    rt.questStacks = equipped
+
+    // 达标 → 质变；未达标 → 取消质变（equip_count 可逆）
+    const wasTransformed = rt.questTransformed
+    rt.questTransformed = equipped >= target
+    if (rt.questTransformed && !wasTransformed) {
+      rt.questCompletions++
+    }
+  }
+}
+
 // ===== Gravity / Mirror 数据助手 =====
 
 /**
@@ -1197,9 +1361,14 @@ export function getEffectiveProbMult(
   affix: AffixInstance,
   runtimeState: SkillRuntimeState,
   skill: AffixSkillInstance,
+  allSkills?: Map<string, AffixSkillInstance>,
+  skillStates?: Map<string, SkillRuntimeState>,
 ): number {
   const baseProbMult = affix.probMult ?? 1
-  if (!runtimeState.questTransformed) return baseProbMult
+  const transformed = allSkills && skillStates
+    ? isAffixGloballyTransformed(AffixType.Gravity, allSkills, skillStates)
+    : runtimeState.questTransformed
+  if (!transformed) return baseProbMult
   // 质变：双向锁定 — 吸引→必含(Infinity)，排斥→必不含(0)，中性→不变(1)
   if (baseProbMult > 1) return Infinity
   if (baseProbMult < 1) return 0
@@ -1228,7 +1397,7 @@ export function resolveMirrorCopy(
   if (neighborKeys.length === 0) return null
 
   // Story 41-5: 质变模式 — 复制所有邻居的不同类型词条
-  if (runtimeState.questTransformed) {
+  if (isTransformedForAffix(AffixType.Mirror, runtimeState, skill, ctx)) {
     return resolveMirrorCopyAll(neighborKeys, ctx)
   }
 
@@ -1456,7 +1625,7 @@ export function resetStageState(
   for (const [skillId, state] of skillStates) {
     state.triggerCount = 0
     // Amplify 质变：保留 50% 增幅层数（向下取整）
-    state.amplifyStacks = state.questTransformed ? Math.floor(state.amplifyStacks * 0.5) : 0
+    state.amplifyStacks = isAffixGloballyTransformed(AffixType.Amplify, skills, skillStates) ? Math.floor(state.amplifyStacks * 0.5) : 0
     state.chargeAccumulated = 0
 
     // Decay: 每关重置 currentDecayMult（Story 41.2 AC7 — 跨单词不重置，仅跨关重置）

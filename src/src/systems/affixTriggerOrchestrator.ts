@@ -5,6 +5,7 @@
 // 用 FIFO work queue 替代真递归，O(1) 调用栈深度
 
 import type { ResourceType } from '../core/types'
+import { BASE_VALUES } from '../data/affixes'
 import {
   triggerAffixSkill,
   MAX_RECURSE_DEPTH,
@@ -27,6 +28,7 @@ export type TriggerWorkType =
   | 'splash'
   | 'conduit'
   | 'outcast_echo'
+  | 'crit_echo'
 
 export interface TriggerWorkItem {
   /** 目标技能 ID */
@@ -162,8 +164,8 @@ export function orchestrateAffixTrigger(
       transmuteResource: skill.transmuteResource,
       // Story 41-3: splash 项默认禁用链式词条，chainSplash 允许一跳
       ...(item.type === 'splash' && !item.chainSplash ? { chainAffixesDisabled: true } : {}),
-      // 41-4: outcast_echo 禁用链式词条防止循环
-      ...(item.type === 'outcast_echo' ? { chainAffixesDisabled: true } : {}),
+      // 41-4: outcast_echo / crit_echo 禁用链式词条防止循环
+      ...(item.type === 'outcast_echo' || item.type === 'crit_echo' ? { chainAffixesDisabled: true } : {}),
       // conduit 额外触发禁用链式词条，防止 Conduit→Conduit 无限级联
       ...(item.type === 'conduit' ? { chainAffixesDisabled: true } : {}),
     }
@@ -173,7 +175,8 @@ export function orchestrateAffixTrigger(
     const result = triggerAffixSkill(skill, runtimeState, triggerCtx, recurseDepth)
 
     // ── 同资源衍生增强 ──
-    let effectiveOutput = result.output
+    // 使用 phase4.output（Rainbow 非质变时含比例缩放）
+    let effectiveOutput = result.phase4?.output ?? result.output
     // 同资源衍生附魔增强（系统层应用 output × (1 + boost)）
     if (result.phase5?.transmuteSameResourceBoost) {
       effectiveOutput *= (1 + result.phase5.transmuteSameResourceBoost)
@@ -190,10 +193,13 @@ export function orchestrateAffixTrigger(
     // ── 副作用 ──
     if (result.phase4) {
       if (result.phase4.allResources) {
-        // 质变Rainbow：等比分摊到所有可用资源
+        // 质变Rainbow：按比例分配到所有可用资源
         const pool = getClassResources(ctx.playerClass)
-        const share = effectiveOutput / pool.length
+        const skillBase = result.phase4.rainbowSkillBase ?? 1
+        const lvIdx = (result.phase4.rainbowSkillLevel ?? 1) - 1
         for (const r of pool) {
+          const targetBase = BASE_VALUES[r]?.[lvIdx] ?? 1
+          const share = skillBase > 0 ? effectiveOutput * (targetBase / skillBase) : effectiveOutput / pool.length
           callbacks?.applyResource?.(r, share, result.isMultiplyOp)
         }
       } else {
@@ -272,6 +278,21 @@ export function orchestrateAffixTrigger(
           skillId: echoSkillId,
           triggerKey: result.phase5.outcastEchoTarget,
           type: 'outcast_echo',
+          depth: childHistory.length,
+          chainHistory: childHistory,
+          chainSplash: false,
+        })
+      }
+    }
+
+    // Crit echo: 暴击质变回响 — 触发随机无 Crit 技能（chainAffixesDisabled 防循环）
+    if (result.phase5?.critEchoTarget) {
+      const echoSkillId = ctx.bindings.get(result.phase5.critEchoTarget)
+      if (echoSkillId) {
+        queue.push({
+          skillId: echoSkillId,
+          triggerKey: result.phase5.critEchoTarget,
+          type: 'crit_echo',
           depth: childHistory.length,
           chainHistory: childHistory,
           chainSplash: false,

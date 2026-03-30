@@ -8,7 +8,7 @@ import { RELICS, getAllRelicIds, DELETED_RELIC_IDS } from '../../../../src/data/
 import type { RelicSubsystem, RelicBehaviorType, RelicRarity } from '../../../../src/data/relics';
 
 // Behavior modules
-import { checkWaxSealForgive, hasGlassCannon, resetWaxSeal } from '../../../../src/systems/relics/TypingRelicBehaviors';
+import { hasGlassCannon, checkSpeedRelics, resetTypingRelicState } from '../../../../src/systems/relics/TypingRelicBehaviors';
 import {
   hasImmortalCombo,
   checkComboDetonator,
@@ -55,36 +55,34 @@ describe('遗物联动矩阵 (Story 36.13 AC1)', () => {
     resetResourceRelicBattleState();
   });
 
-  // === #1: 玻璃大炮 + 打字蜡封 ===
-  describe('glass_cannon + typing_wax_seal', () => {
+  // === #1: 减速津贴 + 加速奖金 ===
+  describe('decelerate_reward + accelerate_reward', () => {
     beforeEach(() => {
+      state.player.relics.add('decelerate_reward');
+      state.player.relics.add('accelerate_reward');
+      resetTypingRelicState();
+    });
+
+    it('第二个词比第一个慢 → 获得减速津贴', () => {
+      checkSpeedRelics(2.0); // 第一个词
+      const result = checkSpeedRelics(3.0); // 更慢
+      expect(result.timeBonus).toBe(0.5);
+      expect(result.goldBonus).toBe(0);
+    });
+
+    it('第二个词比第一个快 → 获得加速奖金', () => {
+      checkSpeedRelics(3.0); // 第一个词
+      const result = checkSpeedRelics(2.0); // 更快
+      expect(result.timeBonus).toBe(0);
+      expect(result.goldBonus).toBe(2);
+    });
+
+    it('玻璃大炮与速度遗物独立', () => {
       state.player.relics.add('glass_cannon_v2');
-      state.player.relics.add('typing_wax_seal');
-    });
-
-    it('蜡封免除的错误不触发 glass_cannon 致死', () => {
-      // 两者同时持有
       expect(hasGlassCannon()).toBe(true);
-
-      // 蜡封首次宽恕 — 游戏逻辑应先检查 waxSeal
-      resetWaxSeal();
-      const forgiven = checkWaxSealForgive();
-      expect(forgiven).toBe(true);
-
-      // 宽恕后 glass_cannon 仍然持有，但此次错误不算致死
-      // （战斗系统中：if waxSeal forgive → skip glass_cannon death）
-      expect(hasGlassCannon()).toBe(true);
-    });
-
-    it('蜡封已用尽时 glass_cannon 正常触发', () => {
-      resetWaxSeal();
-      // 消耗一次宽恕
-      checkWaxSealForgive();
-      // 第二次不再宽恕
-      const forgiven2 = checkWaxSealForgive();
-      expect(forgiven2).toBe(false);
-      // glass_cannon 仍然激活 — 此时错误应触发死亡
-      expect(hasGlassCannon()).toBe(true);
+      checkSpeedRelics(3.0);
+      const result = checkSpeedRelics(2.0);
+      expect(result.goldBonus).toBe(2);
     });
   });
 
@@ -454,7 +452,7 @@ describe('遗物数据完整性 (Story 36.13 AC4)', () => {
     'word', 'resource', 'shop', 'stage', 'boss_modifier', 'scoring',
   ];
 
-  it('所有 55 通用遗物的 subsystem 字段对应 11 个合法值之一', () => {
+  it('所有 56 通用遗物的 subsystem 字段对应 11 个合法值之一', () => {
     const allIds = getAllRelicIds();
     const universalRelics = allIds.filter(id => RELICS[id].subsystem !== undefined);
 
@@ -464,7 +462,7 @@ describe('遗物数据完整性 (Story 36.13 AC4)', () => {
     }
   });
 
-  it('每子系统恰好 5 个遗物', () => {
+  it('每子系统遗物数量正确', () => {
     const subsystemCounts: Record<string, number> = {};
     for (const id of getAllRelicIds()) {
       const relic = RELICS[id];
@@ -474,8 +472,8 @@ describe('遗物数据完整性 (Story 36.13 AC4)', () => {
     }
 
     for (const subsystem of VALID_SUBSYSTEMS) {
-      // boss_modifier has 6 relics (including modifier_foresight)
-      const expected = subsystem === 'boss_modifier' ? 6 : 5;
+      // combo has 6 relics (echo_thimble moved from typing)
+      const expected = subsystem === 'combo' ? 6 : 5;
       expect(subsystemCounts[subsystem]).toBe(expected);
     }
   });
@@ -514,7 +512,7 @@ describe('遗物数据完整性 (Story 36.13 AC4)', () => {
     }
   });
 
-  it('icon 在 65 个遗物中完全唯一', () => {
+  it('icon 在所有遗物中完全唯一', () => {
     const icons = getAllRelicIds().map(id => RELICS[id].icon);
     const uniqueIcons = new Set(icons);
     expect(uniqueIcons.size).toBe(icons.length);

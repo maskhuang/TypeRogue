@@ -150,9 +150,9 @@ describe('isSameRow', () => {
     expect(isSameRow('w', 'q')).toBe(true);
   });
 
-  it('Row 0 有 10 个键', () => {
+  it('Row 0 有 12 个键（含 [ ]）', () => {
     const row0 = getKeysWithRelation('q', PositionRelation.SameRow);
-    expect(row0.length).toBe(9); // 10 - self
+    expect(row0.length).toBe(11); // 12 - self (10 letters + [ ])
   });
 
   it('Row 1 有 10 个键（含 ;）', () => {
@@ -283,9 +283,9 @@ describe('isSameFinger', () => {
     expect(isSameFinger('y', 'i')).toBe(false);
   });
 
-  it('P 的右小指同指键包含 ; 和 /', () => {
+  it('P 的右小指同指键包含 ; / [ ]', () => {
     const sameFinger = getKeysWithRelation('p', PositionRelation.SameFinger);
-    expect(sameFinger.sort()).toEqual(['/', ';']);
+    expect(sameFinger.sort()).toEqual(['/', ';', '[', ']']);
   });
 
   it('同键返回 false', () => {

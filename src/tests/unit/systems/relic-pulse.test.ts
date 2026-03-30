@@ -24,9 +24,9 @@ describe('遗物图标脉冲 (Story 37.5)', () => {
   })
 
   it('getRelicIndex 返回正确索引', () => {
-    state.player.relics = new Set(['typing_wax_seal', 'jazz', 'snowball'])
+    state.player.relics = new Set(['decelerate_reward', 'jazz', 'snowball'])
     const relics = [...state.player.relics]
-    expect(relics.indexOf('typing_wax_seal')).toBe(0)
+    expect(relics.indexOf('decelerate_reward')).toBe(0)
     expect(relics.indexOf('jazz')).toBe(1)
     expect(relics.indexOf('snowball')).toBe(2)
   })
@@ -35,11 +35,11 @@ describe('遗物图标脉冲 (Story 37.5)', () => {
     state.player.relics = new Set(['jazz'])
     const relics = [...state.player.relics]
     expect(relics.indexOf('combo_buffer')).toBe(-1)
-    expect(relics.indexOf('typing_wax_seal')).toBe(-1)
+    expect(relics.indexOf('decelerate_reward')).toBe(-1)
   })
 
   it('所有 5 个目标遗物 ID 与 Set 操作兼容', () => {
-    const targetRelics = ['typing_wax_seal', 'combo_buffer', 'jazz', 'rhythm_adapt', 'snowball']
+    const targetRelics = ['decelerate_reward', 'combo_buffer', 'jazz', 'rhythm_adapt', 'snowball']
     state.player.relics = new Set(targetRelics)
     for (const id of targetRelics) {
       expect(state.player.relics.has(id)).toBe(true)

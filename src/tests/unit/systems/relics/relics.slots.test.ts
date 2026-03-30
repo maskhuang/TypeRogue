@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 遗物槽位系统测试
 // ============================================
-// Story 27.3: 12 槽位限制 + 替换 + 卖出
+// Story 27.3: 10 槽位限制 + 替换 + 卖出
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import {
@@ -40,8 +40,8 @@ describe('遗物槽位系统 (Story 27.3)', () => {
 
   // === 常量 ===
   describe('MAX_RELIC_SLOTS 常量', () => {
-    it('等于 12', () => {
-      expect(MAX_RELIC_SLOTS).toBe(12)
+    it('等于 10', () => {
+      expect(MAX_RELIC_SLOTS).toBe(10)
     })
   })
 
@@ -56,8 +56,8 @@ describe('遗物槽位系统 (Story 27.3)', () => {
       expect(isRelicSlotsFull()).toBe(false)
     })
 
-    it('恰好满 12 个 → true', () => {
-      fillRelics(12)
+    it('恰好满 10 个 → true', () => {
+      fillRelics(10)
       expect(isRelicSlotsFull()).toBe(true)
     })
   })
@@ -74,23 +74,23 @@ describe('遗物槽位系统 (Story 27.3)', () => {
       expect(addRelicWithCapacity('apprentice_notes')).toBe(false)
     })
 
-    it('满 12 个后添加失败 → false', () => {
-      fillRelics(12)
-      // 尝试添加一个不在前 12 里的
+    it('满 10 个后添加失败 → false', () => {
+      fillRelics(10)
+      // 尝试添加一个不在前 10 里的
       const allIds = getAllRelicIds()
       const extraId = allIds.find(id => !state.player.relics.has(id))
       if (extraId) {
         expect(addRelicWithCapacity(extraId)).toBe(false)
-        expect(state.player.relics.size).toBe(12)
+        expect(state.player.relics.size).toBe(10)
       }
     })
 
-    it('11 个时仍可添加第 12 个', () => {
-      fillRelics(11)
+    it('9 个时仍可添加第 10 个', () => {
+      fillRelics(9)
       const allIds = getAllRelicIds()
-      const twelfthId = allIds.find(id => !state.player.relics.has(id))!
-      expect(addRelicWithCapacity(twelfthId)).toBe(true)
-      expect(state.player.relics.size).toBe(12)
+      const tenthId = allIds.find(id => !state.player.relics.has(id))!
+      expect(addRelicWithCapacity(tenthId)).toBe(true)
+      expect(state.player.relics.size).toBe(10)
     })
   })
 
@@ -126,13 +126,13 @@ describe('遗物槽位系统 (Story 27.3)', () => {
       expect(state.gold).toBe(oldGold + expectedGold)
     })
 
-    it('满槽替换后仍为 12 个', () => {
-      const filled = fillRelics(12)
+    it('满槽替换后仍为 10 个', () => {
+      const filled = fillRelics(10)
       const allIds = getAllRelicIds()
       const newId = allIds.find(id => !state.player.relics.has(id))
       if (newId) {
         replaceRelic(filled[0], newId)
-        expect(state.player.relics.size).toBe(12)
+        expect(state.player.relics.size).toBe(10)
         expect(hasRelic(filled[0])).toBe(false)
         expect(hasRelic(newId)).toBe(true)
       }

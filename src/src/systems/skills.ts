@@ -16,7 +16,8 @@ import { routeFragmentsToInventory } from './classes/FragmentQueue';
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE } from '../data/affixTrigger';
-import { getMultiplierPrismBonus } from './relics/ComboRelicBehaviors';
+import { getMultiplierPrismBonus, getCancelChainBonus } from './relics/ComboRelicBehaviors';
+import { getTaikoBonus } from './relics/TypingRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
 import { getAdjacentPowerBonus, getSymmetryPactBonus, getRowMedalBonus } from './relics/TopologyRelicBehaviors';
@@ -276,6 +277,12 @@ function triggerAffixSkillWithFeedback(
   // Story 36.10: 暖身操加算（前 10 秒 +40%）
   const warmUpBonus = getWarmUpBonus();
   if (warmUpBonus > 0) relicBonus += warmUpBonus;
+  // 太鼓节拍命中加算（+30%）
+  const taikoBonus = getTaikoBonus();
+  if (taikoBonus > 0) relicBonus += taikoBonus;
+  // 取消连锁加算（取消状态下 +10%×层数）
+  const cancelBonus = getCancelChainBonus();
+  if (cancelBonus > 0) relicBonus += cancelBonus;
 
   // 升华缩放：Lv4+ 按 1.6^(level-3) 缩放基础值
   const ascendScale = getAscendBaseScale(skill.level);

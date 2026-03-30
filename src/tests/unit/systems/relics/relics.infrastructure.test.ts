@@ -234,9 +234,9 @@ describe('RelicSubsystem', () => {
 describe('RelicBehaviorType', () => {
   it('should cover all behavior types', () => {
     const behaviors: RelicBehaviorType[] = [
-      'error_forgive_first', 'double_keystroke', 'autocomplete',
+      'decelerate_reward', 'accelerate_reward', 'autocomplete',
       'rhythm_adapt', 'glass_cannon',
-      'combo_detonator', 'immortal_combo',
+      'double_keystroke', 'combo_detonator', 'cancel', 'immortal_combo',
       'training_manual', 'jazz_diversity', 'uncrowned_king',
       'fate_fork', 'early_awakening',
       'row_select', 'hand_alternation', 'key_storm',
@@ -246,7 +246,7 @@ describe('RelicBehaviorType', () => {
       'modifier_barrier', 'chaos_roulette', 'modifier_reversal',
       'snowball', 'score_black_hole',
     ]
-    expect(behaviors).toHaveLength(24)
+    expect(behaviors).toHaveLength(26)
   })
 
   it('should be assignable to RelicData.behaviorType', () => {
@@ -315,7 +315,7 @@ describe('Universal relic class filtering (AC4)', () => {
       basePrice: 50,
       effects: [],
       subsystem: 'typing',
-      behaviorType: 'error_forgive_first',
+      behaviorType: 'decelerate_reward',
     }
 
     // Universal relics should pass through class filtering for any class
@@ -354,10 +354,10 @@ describe('RelicData with new fields', () => {
       basePrice: 50,
       effects: [],
       subsystem: 'typing',
-      behaviorType: 'error_forgive_first',
+      behaviorType: 'decelerate_reward',
     }
     expect(relic.subsystem).toBe('typing')
-    expect(relic.behaviorType).toBe('error_forgive_first')
+    expect(relic.behaviorType).toBe('decelerate_reward')
   })
 
   it('should accept RelicData without subsystem and behaviorType (backward compat)', () => {

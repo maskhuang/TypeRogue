@@ -93,17 +93,20 @@ export type RelicSubsystem =
   | 'stage'          // 关卡进度系统
   | 'boss_modifier'  // Boss修饰器系统
   | 'scoring'        // 结算/评分系统
+  | 'crit'           // 暴击系统
 
 /** 遗物行为类型 — 标记需要自定义逻辑的遗物 */
 export type RelicBehaviorType =
   // 打字/输入系统
-  | 'error_forgive_first'  // 打字蜡封：每词首次错误免除
-  | 'double_keystroke'     // 回声指套：正确击键概率算两次
+  | 'decelerate_reward'    // 减速津贴：当前词比上个词慢时+时间
+  | 'accelerate_reward'    // 加速奖金：当前词比上个词快时+金币
   | 'autocomplete'         // 小助手：Tab 自动补全重复单词
-  | 'rhythm_adapt'         // 节奏适应：根据单词用时给予不同奖励
+  | 'rhythm_adapt'         // 节奏适应：太鼓节拍系统
   | 'glass_cannon'         // 玻璃大炮：得分×2，打错即死
   // 连击/倍率系统
+  | 'double_keystroke'     // 回声指套：正确击键概率算两次
   | 'combo_detonator'      // 连击引爆：combo 达阈值时触发技能
+  | 'cancel'         // 取消连锁：连续无失误完成单词叠层，每层技能+8%
   | 'immortal_combo'       // 不灭连击：combo 永不中断，禁止 multiplier 产出
   // 技能系统
   | 'training_manual'      // 集训手册：一次性升级所有 Lv.1 技能
@@ -151,8 +154,8 @@ export interface RelicData {
   behaviorType?: RelicBehaviorType
 }
 
-/** 遗物槽位上限（F1-F12） */
-export const MAX_RELIC_SLOTS = 12
+/** 遗物槽位上限（1-0） */
+export const MAX_RELIC_SLOTS = 10
 
 /**
  * 所有遗物数据（职业专属 + 通用遗物）
@@ -276,30 +279,30 @@ export const RELICS: Record<string, RelicData> = {
 
   // ==================== 通用遗物：打字/输入系统 (Story 36.2) ====================
 
-  typing_wax_seal: {
-    id: 'typing_wax_seal',
-    name: '打字蜡封',
-    icon: '🕯️',
-    description: '每词首次打错免除惩罚。',
+  decelerate_reward: {
+    id: 'decelerate_reward',
+    name: '减速津贴',
+    icon: '🐢',
+    description: '当前词用时比上个词长时，+0.5s 时间。',
     rarity: 'common',
     basePrice: 50,
     effects: [],
     subsystem: 'typing',
-    behaviorType: 'error_forgive_first',
-    flavor: '蜡封之下，第一次失误悄然消融。',
+    behaviorType: 'decelerate_reward',
+    flavor: '慢下来，也有奖赏。',
   },
 
-  echo_thimble: {
-    id: 'echo_thimble',
-    name: '回声指套',
-    icon: '🧤',
-    description: '正确击键时 8% 概率触发双重击键（combo+1，技能额外触发一次）。',
+  accelerate_reward: {
+    id: 'accelerate_reward',
+    name: '加速奖金',
+    icon: '💨',
+    description: '当前词用时比上个词短时，+2 金币。',
     rarity: 'common',
     basePrice: 50,
     effects: [],
     subsystem: 'typing',
-    behaviorType: 'double_keystroke',
-    flavor: '指尖的余韵，化为第二次敲击。',
+    behaviorType: 'accelerate_reward',
+    flavor: '快人一步，财源广进。',
   },
 
   little_helper: {
@@ -319,30 +322,43 @@ export const RELICS: Record<string, RelicData> = {
     id: 'rhythm_adapt',
     name: '节奏适应',
     icon: '🎵',
-    description: '单词用时>3s加1秒时间；用时<3s该词得分+30%。',
+    description: '单词上方出现节拍条，按键时命中节拍球可使该次技能产出+30%。',
     rarity: 'rare',
     basePrice: 80,
     effects: [],
     subsystem: 'typing',
     behaviorType: 'rhythm_adapt',
-    flavor: '快与慢，皆有其奖赏。',
+    flavor: '踩准节拍，力量倍增。',
   },
 
   glass_cannon_v2: {
     id: 'glass_cannon_v2',
-    name: '玻璃大炮',
-    icon: '💥',
-    description: '得分×2，打错即死。蜡封免除的错误不触发死亡。',
+    name: '回归基本功',
+    icon: '📖',
+    description: '得分×10。获取时卖出所有技能，且不再能装备技能。',
     rarity: 'legendary',
     basePrice: 0,
     effects: [],
     subsystem: 'typing',
     behaviorType: 'glass_cannon',
     category: 'risk-reward',
-    flavor: '一击之间，荣耀与毁灭并存。',
+    flavor: '大道至简，唯手熟尔。',
   },
 
   // ==================== 通用遗物：连击/倍率系统 (Story 36.3) ====================
+
+  echo_thimble: {
+    id: 'echo_thimble',
+    name: '回声指套',
+    icon: '🧤',
+    description: '正确击键时 8% 概率触发双重击键（combo+1，技能额外触发一次）。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'combo',
+    behaviorType: 'double_keystroke',
+    flavor: '指尖的余韵，化为第二次敲击。',
+  },
 
   combo_buffer: {
     id: 'combo_buffer',
@@ -368,29 +384,30 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '棱镜折射，将倍率化为真实的力量。',
   },
 
-  rhythm_doctor: {
-    id: 'rhythm_doctor',
-    name: '节奏医生',
-    icon: '⏱️',
-    description: '每 10 combo +1s 时间。',
-    rarity: 'common',
-    basePrice: 50,
-    effects: [],
-    subsystem: 'combo',
-    flavor: '节奏即生命，连击即脉搏。',
-  },
-
   combo_detonator: {
     id: 'combo_detonator',
     name: '蓄势引爆',
     icon: '💣',
-    description: 'combo 达 15/30/45 时，随机触发 3 个装备技能。',
-    rarity: 'epic',
-    basePrice: 120,
+    description: 'combo 达 15 时随机触发 3 个装备技能。需 combo 归零后才能再次触发。',
+    rarity: 'rare',
+    basePrice: 80,
     effects: [],
     subsystem: 'combo',
     behaviorType: 'combo_detonator',
     flavor: '连击蓄满，引爆一切。',
+  },
+
+  cancel: {
+    id: 'cancel',
+    name: '取消连锁',
+    icon: '⛓️‍💥',
+    description: '新词出现0.4s内打对首字母="取消"。取消词零失误完成→连锁+1（上限5），每层技能产出+10%。取消词打错→连锁归零并扣0.5s。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'combo',
+    behaviorType: 'cancel',
+    flavor: '精准连锁，一击即碎。',
   },
 
   immortal_combo: {
@@ -426,8 +443,8 @@ export const RELICS: Record<string, RelicData> = {
     name: '少而精',
     icon: '💎',
     description: '装备技能数量<10时，技能产出+20%。',
-    rarity: 'common',
-    basePrice: 50,
+    rarity: 'rare',
+    basePrice: 80,
     effects: [],
     subsystem: 'skill',
     flavor: '少即是多，精即是强。',
@@ -451,12 +468,11 @@ export const RELICS: Record<string, RelicData> = {
     name: '爵士乐',
     icon: '🎷',
     description: '一词内触发≥3种不同词条类型时，该词得分+10%×独特词条数。',
-    rarity: 'legendary',
-    basePrice: 0,
+    rarity: 'epic',
+    basePrice: 120,
     effects: [],
     subsystem: 'skill',
     behaviorType: 'jazz_diversity',
-    category: 'risk-reward',
     flavor: '即兴演奏，多样生辉。',
   },
 
@@ -557,8 +573,8 @@ export const RELICS: Record<string, RelicData> = {
     name: '对称契约',
     icon: '🪞',
     description: '对称位两技能都装备时，各自产出+15%。',
-    rarity: 'common',
-    basePrice: 50,
+    rarity: 'rare',
+    basePrice: 80,
     effects: [],
     subsystem: 'topology',
     flavor: '左右呼应，对称之美蕴含力量。',
@@ -582,8 +598,8 @@ export const RELICS: Record<string, RelicData> = {
     name: '双手协奏',
     icon: '🎹',
     description: '每当交替击键（左右手切换）时，+0.5s时间。',
-    rarity: 'rare',
-    basePrice: 80,
+    rarity: 'common',
+    basePrice: 50,
     effects: [],
     subsystem: 'topology',
     behaviorType: 'hand_alternation',
@@ -658,7 +674,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'punctuation_liberation',
     name: '标点解放',
     icon: '❗',
-    description: '解锁 ;,./ 四个标点键位可绑定技能，词语中随机混入标点符号。',
+    description: '解锁 ;,./[] 六个标点键位可绑定技能，词语中随机混入标点符号。',
     rarity: 'legendary',
     basePrice: 0,
     effects: [],
@@ -826,8 +842,8 @@ export const RELICS: Record<string, RelicData> = {
     name: '续航电池',
     icon: '🔌',
     description: '每关基础时间+10秒。',
-    rarity: 'rare',
-    basePrice: 80,
+    rarity: 'common',
+    basePrice: 50,
     effects: [],
     subsystem: 'stage',
     flavor: '充满电的战斗，永不断电。',
@@ -877,8 +893,8 @@ export const RELICS: Record<string, RelicData> = {
     name: '困境红利',
     icon: '🏴‍☠️',
     description: '每个永久修饰器使商店价格-5%（上限30%）。',
-    rarity: 'common',
-    basePrice: 50,
+    rarity: 'rare',
+    basePrice: 80,
     effects: [],
     subsystem: 'boss_modifier',
     flavor: '困难越多，折扣越大。',
@@ -889,8 +905,8 @@ export const RELICS: Record<string, RelicData> = {
     name: '修饰器屏障',
     icon: '🚧',
     description: '精英/Boss关：临时修饰器延迟至完成前3个词后才生效。',
-    rarity: 'rare',
-    basePrice: 80,
+    rarity: 'common',
+    basePrice: 50,
     effects: [],
     subsystem: 'boss_modifier',
     behaviorType: 'modifier_barrier',
@@ -987,6 +1003,10 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '越是刀尖上跳舞，礼物越是丰厚。',
   },
 
+  // ===== 暴击系统遗物 (crit) — 占位 =====
+
+  // TODO: 设计5个暴击子系统遗物（2普通 + 1稀有 + 1史诗 + 1传说）
+
 }
 
 // === Relic Modifier 工厂类型 ===
@@ -1062,4 +1082,6 @@ export const DELETED_RELIC_IDS = [
   'echo_bell', 'storm_drum', 'finale',
   'affix_spectrum', 'legendary_aura', 'quest_momentum',
   'modifier_foresight',
+  'typing_wax_seal',
+  'rhythm_doctor',
 ]

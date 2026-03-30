@@ -286,6 +286,16 @@ body {
     align-items: center;
 }
 
+/* 太鼓节拍条 */
+#taiko-bar { position: relative; height: 12px; width: 100%; max-width: 400px; margin-bottom: 4px; display: none; overflow: hidden; border-radius: 6px; background: rgba(255,255,255,0.05); }
+#taiko-bar.active { display: block; }
+.taiko-judge { position: absolute; left: 0; width: 4px; height: 100%; background: #4ecdc4; border-radius: 2px; z-index: 2; transition: background 0.15s; }
+.taiko-judge.flash { background: #fff; box-shadow: 0 0 8px #4ecdc4; }
+.taiko-ball { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #ffe66d; top: 2px; animation: taikoBallMove var(--duration) linear forwards; }
+@keyframes taikoBallMove { from { left: 100%; } to { left: 0; } }
+.taiko-ball.hit { background: #4ecdc4; animation: taikoHit 0.2s ease-out forwards; }
+@keyframes taikoHit { to { transform: scale(2); opacity: 0; } }
+
 #word-display {
     font-size: 52px;
     letter-spacing: 5px;
@@ -1638,13 +1648,15 @@ body {
     right: 3px;
 }
 
-.key-slot.score-low .key-score { color: #88bbdd; }
-.key-slot.score-mid .key-score { color: #4488cc; }
-.key-slot.score-high .key-score { color: #ffd700; }
-
-.key-slot.score-low { border-color: #88bbdd; }
-.key-slot.score-mid { border-color: #4488cc; }
-.key-slot.score-high { border-color: #ffd700; }
+/* 附魔光晕（稀有度颜色通过 --enchant-color 注入） */
+.key-slot.enchanted-glow {
+    box-shadow: 0 0 6px 1px var(--enchant-color, #fff);
+    animation: enchantPulse 2.5s ease-in-out infinite;
+}
+@keyframes enchantPulse {
+    0%, 100% { box-shadow: 0 0 6px 1px var(--enchant-color, #fff); }
+    50% { box-shadow: 0 0 12px 3px var(--enchant-color, #fff); }
+}
 
 /* 技能流派底色 */
 .key-slot.school-burst { background: linear-gradient(180deg, rgba(255,107,107,0.15), rgba(255,107,107,0.05)); }

@@ -67,6 +67,7 @@ import {
   RES_ENCHANTMENT_BY_RESOURCE,
   MUTATION_HUNGER_CHANCE,
   buildEffectiveSkill,
+  evaluateEquipQuests,
 } from '../../../src/data/affixTrigger'
 
 // ===== 工厂辅助 =====
@@ -905,7 +906,7 @@ describe('resolvePhase3', () => {
     it('should apply multiple multipliers independently', () => {
       const skill = makeSkill({
         affixes: [
-          { type: AffixType.Crit, chance: 0.5, critMult: 2.0 },
+          { type: AffixType.Crit, chance: 0.5 },
           { type: AffixType.Decay, initialMult: 1.5, decayPerTrigger: 0.15, floor: 0.5 },
         ],
         rarity: 2 as 2,
@@ -913,9 +914,9 @@ describe('resolvePhase3', () => {
       const state = makeRuntimeState({ currentDecayMult: 1.5 })
       const ctx = makeContext({ randomFn: () => 0.3 }) // crit hits
       const result = resolvePhase3(skill, state, ctx, 10)
-      // 10 * 2.0 (crit) * 1.5 (decay) = 30
+      // 10 * 1.5 (decay) * 2 (CRIT_MULTIPLIER) = 30
       expect(result.output).toBeCloseTo(30)
-      expect(result.multipliers).toEqual([2.0, 1.5])
+      expect(result.multipliers).toEqual([1.5, 2])
     })
   })
 })
@@ -1003,13 +1004,13 @@ describe('41-4: Convert transformation — 双向转化', () => {
     const state = makeRuntimeState({ questTransformed: true })
     const ctx = makeContext({ resources: makeResources({ base: 20, score: 50 }) })
     const result = resolvePhase2(skill, state, ctx, 5)
-    // 正向：k * base = 0.05 * 20 = 1.0 → bonusPercent
-    expect(result.bonusPercent).toBeCloseTo(1.0)
-    // 反向：k * getAffixSourceValue('score') = 0.05 * (50+20*1) = 0.05*70 = 3.5
-    // amount = 3.5 * effectiveBase(5) = 17.5
+    // 正向：k * base * (scoreBase/baseBase) = 0.05 * 20 * (15/5) = 3.0
+    expect(result.bonusPercent).toBeCloseTo(3.0)
+    // 反向：reverseBonus = k * getAffixSourceValue('score') = 0.05 * 70 = 3.5
+    // amount = 3.5 * effectiveBase(5) * (baseBase/scoreBase) = 3.5 * 5 * (5/15) ≈ 5.833
     expect(result.convertReverseOutputs).toHaveLength(1)
     expect(result.convertReverseOutputs[0].resource).toBe('base')
-    expect(result.convertReverseOutputs[0].amount).toBeCloseTo(17.5)
+    expect(result.convertReverseOutputs[0].amount).toBeCloseTo(5.833, 2)
   })
 
   it('should NOT produce convertReverseOutputs when not transformed', () => {
@@ -1020,7 +1021,8 @@ describe('41-4: Convert transformation — 双向转化', () => {
     const state = makeRuntimeState({ questTransformed: false })
     const ctx = makeContext({ resources: makeResources({ base: 20, score: 50 }) })
     const result = resolvePhase2(skill, state, ctx, 5)
-    expect(result.bonusPercent).toBeCloseTo(1.0)
+    // 正向：k * base * (scoreBase/baseBase) = 0.05 * 20 * (15/5) = 3.0
+    expect(result.bonusPercent).toBeCloseTo(3.0)
     expect(result.convertReverseOutputs).toHaveLength(0)
   })
 })
@@ -1366,16 +1368,16 @@ describe('triggerAffixSkill', () => {
     const skill = makeSkill({
       level: 1,
       rarity: 1 as 1,
-      affixes: [{ type: AffixType.Crit, chance: 1.0, critMult: 1.5 }],
+      affixes: [{ type: AffixType.Crit, chance: 1.0 }],
     })
     const state = makeRuntimeState()
     const ctx = makeContext({ randomFn: () => 0.0 }) // crit always hits
     const result = triggerAffixSkill(skill, state, ctx)
     // Phase 1: 5
     // Phase 2: no additive affix → 5 * (1+0) = 5
-    // Phase 3: 5 * 1.5 = 7.5
-    expect(result.output).toBeCloseTo(7.5)
-    expect(result.multipliers).toEqual([1.5])
+    // Phase 3: 5 * CRIT_MULTIPLIER(2) = 10
+    expect(result.output).toBeCloseTo(10)
+    expect(result.multipliers).toEqual([2])
   })
 
   it('should combine multiple affixes for yellow rarity (2 affixes)', () => {
@@ -1386,16 +1388,16 @@ describe('triggerAffixSkill', () => {
       baseValues: [5, 8, 12] as [number, number, number],
       affixes: [
         { type: AffixType.Taboo, bonusPercent: 1.0, penaltyChance: 0.1 },
-        { type: AffixType.Crit, chance: 1.0, critMult: 1.5 },
+        { type: AffixType.Crit, chance: 1.0 },
       ],
     })
     const state = makeRuntimeState()
-    const ctx = makeContext({ randomFn: () => 0.5 }) // no taboo penalty (0.5 > 0.1), but crit needs roll < chance
+    const ctx = makeContext({ randomFn: () => 0.5 }) // no taboo penalty (0.5 > 0.1), crit chance 1.0 always hits
     const result = triggerAffixSkill(skill, state, ctx)
     // Phase 1: 8 (level 2)
     // Phase 2: taboo +100% → 8 * (1 + 1.0) = 16
-    // Phase 3: crit 1.5 → 16 * 1.5 = 24; taboo no penalty (0.5 > 0.1)
-    expect(result.output).toBeCloseTo(24)
+    // Phase 3: CRIT_MULTIPLIER(2) → 16 * 2 = 32; taboo no penalty (0.5 > 0.1)
+    expect(result.output).toBeCloseTo(32)
   })
 
   it('should combine 3 affixes for orange rarity', () => {
@@ -1689,107 +1691,72 @@ describe('resolvePhase5', () => {
 
   })
 
-  describe('Quest enchantment stacking', () => {
-    it('should complete QuestDevour when rangeFull condition met (all neighbors filled)', () => {
+  describe('Quest enchantment stacking (equip_count)', () => {
+    it('equip_count quests do not stack in Phase 5', () => {
       const skill = makeSkill({
         affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
         enchantmentIds: [EnchantmentType.QuestDevour],
       })
       const state = makeRuntimeState({ questStacks: 0 })
-      // Use countEmptySlots to verify setup: fill all adjacent neighbors of 'f'
-      // Adjacent keys of 'f' on QWERTY: d, g, r, t, v, c (varies by topology)
-      // Brute-force: bind every key so countEmptySlots returns 0
       const bindings = new Map<string, string>()
       for (const k of 'abcdefghijklmnopqrstuvwxyz') bindings.set(k, 'sk_' + k)
-      expect(countEmptySlots(['f'], PositionRelation.Adjacent, bindings)).toBe(0)
       const ctx = makeContext({ bindings, occupiedKeys: ['f'] })
       const flags = makeFlags()
-      // QuestDevour event = 'rangeFull' → true, targetStacks = 1 → immediately completes
-      resolvePhase5(skill, state, ctx, flags, 10)
-      expect(state.questCompletions).toBe(1)
-      expect(state.questStacks).toBe(0)
-    })
-
-    it('should NOT stack QuestDevour when range has empty slots', () => {
-      const skill = makeSkill({
-        affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
-        enchantmentIds: [EnchantmentType.QuestDevour],
-      })
-      const state = makeRuntimeState({ questStacks: 0 })
-      // Only self bound, neighbors empty → rangeFull = false
-      const ctx = makeContext({ bindings: new Map([['f', 'sk_self']]), occupiedKeys: ['f'] })
-      const flags = makeFlags()
+      // equip_count returns false in checkQuestEventCondition → no stacking in Phase 5
       resolvePhase5(skill, state, ctx, flags, 10)
       expect(state.questStacks).toBe(0)
       expect(state.questCompletions).toBe(0)
     })
 
-    it('QuestDevour should return devourTarget on completion (rangeFull)', () => {
-      const skill = makeSkill({
-        affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
-        enchantmentIds: [EnchantmentType.QuestDevour],
-      })
-      // Fill all keys so rangeFull is satisfied
+    it('evaluateEquipQuests: transforms when enough skills equipped', () => {
+      const skills = new Map<string, AffixSkillInstance>()
+      const skillStates = new Map<string, SkillRuntimeState>()
       const bindings = new Map<string, string>()
-      const allSkills = new Map<string, AffixSkillInstance>()
-      for (const k of 'abcdefghijklmnopqrstuvwxyz') {
-        const sid = `sk_${k}`
-        bindings.set(k, sid)
-        allSkills.set(sid, makeSkill({ id: sid, level: 1 }))
+
+      // Create 4 Void skills — enough for any weight target
+      for (let i = 0; i < 4; i++) {
+        const sk = makeSkill({
+          id: `void_${i}`, resource: 'base',
+          affixes: [{ type: AffixType.Void, posRel: PositionRelation.Adjacent, bonusPerSlot: 0.25 }],
+          enchantmentIds: i === 0 ? [EnchantmentType.QuestDevour] : [],
+        })
+        skills.set(sk.id, sk)
+        skillStates.set(sk.id, makeRuntimeState({ skillId: sk.id }))
+        bindings.set(String.fromCharCode(97 + i), sk.id)
       }
-      allSkills.set('sk_f', skill) // override with void skill
-      const state = makeRuntimeState({ questStacks: 0 })
-      const ctx = makeContext({ triggerKey: 'f', bindings, allSkills, occupiedKeys: ['f'] })
-      const flags = makeFlags()
-      const result = resolvePhase5(skill, state, ctx, flags, 10)
-      expect(result.questCompleted).toBe(true)
-      expect(result.devourTarget).toBeDefined()
+
+      evaluateEquipQuests(skills, skillStates, bindings)
+      expect(skillStates.get('void_0')!.questTransformed).toBe(true)
+      expect(skillStates.get('void_0')!.questStacks).toBeGreaterThanOrEqual(4)
     })
 
-    it('QuestOverload: should stack on crit hit only', () => {
-      const skill = makeSkill({
-        affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
-        enchantmentIds: [EnchantmentType.QuestOverload],
-      })
-      const state = makeRuntimeState({ questStacks: 0 })
-      const ctx = makeContext()
+    it('evaluateEquipQuests: reverts when skills unequipped', () => {
+      const skills = new Map<string, AffixSkillInstance>()
+      const skillStates = new Map<string, SkillRuntimeState>()
+      const bindings = new Map<string, string>()
 
-      // No crit → no stack
-      resolvePhase5(skill, state, ctx, makeFlags({ isCrit: false }), 10)
-      expect(state.questStacks).toBe(0)
+      // Create 4 Crit skills
+      for (let i = 0; i < 4; i++) {
+        const sk = makeSkill({
+          id: `crit_${i}`, resource: 'base',
+          affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],
+          enchantmentIds: i === 0 ? [EnchantmentType.QuestOverload] : [],
+        })
+        skills.set(sk.id, sk)
+        skillStates.set(sk.id, makeRuntimeState({ skillId: sk.id }))
+        bindings.set(String.fromCharCode(97 + i), sk.id)
+      }
 
-      // Crit → +1 stack
-      resolvePhase5(skill, state, ctx, makeFlags({ isCrit: true }), 10)
-      expect(state.questStacks).toBe(1)
-    })
+      evaluateEquipQuests(skills, skillStates, bindings)
+      expect(skillStates.get('crit_0')!.questTransformed).toBe(true)
 
-    it('QuestSacrifice: should stack on taboo penalty', () => {
-      const skill = makeSkill({
-        affixes: [{ type: AffixType.Taboo, bonusPercent: 1.0, penaltyChance: 0.1 }],
-        enchantmentIds: [EnchantmentType.QuestSacrifice],
-      })
-      const state = makeRuntimeState({ questStacks: 0 })
-      const ctx = makeContext()
-
-      // Taboo penalty → +1 stack
-      resolvePhase5(skill, state, ctx, makeFlags({ isTabooPenalty: true }), 10)
-      expect(state.questStacks).toBe(1)
-
-      // No penalty → no stack
-      resolvePhase5(skill, state, ctx, makeFlags({ isTabooPenalty: false }), 10)
-      expect(state.questStacks).toBe(1) // unchanged
-    })
-
-    it('QuestIterate: should stack on recurse proc', () => {
-      const skill = makeSkill({
-        affixes: [{ type: AffixType.Recurse, recurseChance: 1.0 }], // always recurse
-        enchantmentIds: [EnchantmentType.QuestIterate],
-      })
-      const state = makeRuntimeState({ questStacks: 0 })
-      const ctx = makeContext({ randomFn: () => 0.0 }) // recurse succeeds
-      const flags = makeFlags()
-      resolvePhase5(skill, state, ctx, flags, 10, 0)
-      expect(state.questStacks).toBe(1)
+      // Remove all but one binding
+      bindings.delete('b')
+      bindings.delete('c')
+      bindings.delete('d')
+      evaluateEquipQuests(skills, skillStates, bindings)
+      // questStacks should reflect current equipped count (1)
+      expect(skillStates.get('crit_0')!.questStacks).toBe(1)
     })
   })
 
@@ -2398,29 +2365,15 @@ describe('Story 41.2: Pruned apprentice types should no longer exist in APPRENTI
 
 })
 
-describe('Story 35.6: applyQuestEvent external events', () => {
-  it('stageCleared should complete QuestMirror (targetStacks=1)', () => {
+describe('Story 35.6: applyQuestEvent external events (deprecated — equip_count)', () => {
+  it('applyQuestEvent still works for legacy external events (backward compat)', () => {
+    // applyQuestEvent is deprecated since all quests are equip_count,
+    // but function still exists for backward compat. External events no longer in map.
     const state = makeRuntimeState()
     const applied = applyQuestEvent('stageCleared', state, [EnchantmentType.QuestMirror])
-    expect(applied).toBe(true)
-    // QuestMirror targetStacks=1 → immediately completes
-    expect(state.questCompletions).toBe(1)
-    expect(state.questStacks).toBe(0)
-  })
-
-  it('QuestPurify should NOT stack via external comboReach (now uses internal decayFloor)', () => {
-    const state = makeRuntimeState()
-    const applied = applyQuestEvent('comboReach', state, [EnchantmentType.QuestPurify])
+    // QuestMirror now uses equip_count, so stageCleared is no longer in QUEST_EXTERNAL_EVENT_MAP
     expect(applied).toBe(false)
     expect(state.questStacks).toBe(0)
-  })
-
-  it('should apply stackIncrement when provided', () => {
-    const state = makeRuntimeState()
-    applyQuestEvent('stageCleared', state, [EnchantmentType.QuestMirror], 2)
-    // QuestMirror targetStacks=1, +2 → completes (stacks reset)
-    expect(state.questStacks).toBe(0)
-    expect(state.questCompletions).toBe(1)
   })
 
   it('should return false for unknown event', () => {
@@ -2456,29 +2409,17 @@ describe('Story 41.2: filterEnchantmentsByClass (精简后无职业限定)', () 
 
 // ===== Story 35.6: 任务附魔完善 =====
 
-describe('Story 35.6: checkQuestEventCondition inline events', () => {
-  // ── Word-based quest enchantments migrated from Phase 5 to external events ──
-  // Phase 5 no longer processes these; test via applyQuestEvent instead
-
-  it('wordComplete event: QuestEnergize should stack via applyQuestEvent', () => {
+describe('Story 35.6: checkQuestEventCondition — equip_count returns false', () => {
+  it('equip_count events return false in Phase 5 (all quests now use equip_count)', () => {
+    // All quest enchantments now use event='equip_count' which returns false in checkQuestEventCondition
+    const skill = makeSkill({
+      affixes: [{ type: AffixType.Charge, gainPerSec: 0.5, maxBonus: 1.0 }],
+      enchantmentIds: [EnchantmentType.QuestEnergize],
+    })
     const state = makeRuntimeState()
-    const applied = applyQuestEvent('wordComplete', state, [EnchantmentType.QuestEnergize])
-    expect(applied).toBe(true)
-    expect(state.questStacks).toBe(1)
-  })
-
-  it('QuestPolarize should NOT stack via wordComplete (now uses gravityWordMatch)', () => {
-    const state = makeRuntimeState()
-    const applied = applyQuestEvent('wordComplete', state, [EnchantmentType.QuestPolarize])
-    expect(applied).toBe(false)
-    expect(state.questStacks).toBe(0)
-  })
-
-  it('QuestFission should NOT stack via external applyQuestEvent (uses internal affixProc:splash)', () => {
-    const state = makeRuntimeState()
-    // QuestFission now uses internal event 'affixProc:splash', not external longWordComplete
-    const applied = applyQuestEvent('wordComplete', state, [EnchantmentType.QuestFission])
-    expect(applied).toBe(false)
+    const ctx = makeContext()
+    resolvePhase5(skill, state, ctx, makeFlags(), 10)
+    // equip_count → false → no stacking in Phase 5
     expect(state.questStacks).toBe(0)
   })
 
@@ -2490,7 +2431,6 @@ describe('Story 35.6: checkQuestEventCondition inline events', () => {
     const state = makeRuntimeState()
     const ctx = makeContext()
     resolvePhase5(skill, state, ctx, makeFlags(), 10)
-    // neighborTrigger returns false in Phase 5 → no stacking
     expect(state.questStacks).toBe(0)
   })
 })
@@ -2640,7 +2580,7 @@ describe('Story 41-3: Amplify 质变 — 50% 层数保留', () => {
   it('should retain 50% amplifyStacks when questTransformed in resetStageState', () => {
     const skills = new Map<string, AffixSkillInstance>()
     const states = new Map<string, SkillRuntimeState>()
-    skills.set('s1', makeSkill({ id: 's1' }))
+    skills.set('s1', makeSkill({ id: 's1', affixes: [{ type: AffixType.Amplify }], enchantmentIds: [EnchantmentType.QuestStack] }))
     states.set('s1', makeRuntimeState({ skillId: 's1', amplifyStacks: 30, questTransformed: true }))
 
     resetStageState(skills, states, new Map(), () => 0.5)
@@ -2650,7 +2590,7 @@ describe('Story 41-3: Amplify 质变 — 50% 层数保留', () => {
   it('should floor the retained stacks (odd number)', () => {
     const skills = new Map<string, AffixSkillInstance>()
     const states = new Map<string, SkillRuntimeState>()
-    skills.set('s1', makeSkill({ id: 's1' }))
+    skills.set('s1', makeSkill({ id: 's1', affixes: [{ type: AffixType.Amplify }], enchantmentIds: [EnchantmentType.QuestStack] }))
     states.set('s1', makeRuntimeState({ skillId: 's1', amplifyStacks: 31, questTransformed: true }))
 
     resetStageState(skills, states, new Map(), () => 0.5)
@@ -2874,49 +2814,64 @@ describe('Story 35.6: resolveMirrorCopy', () => {
   })
 })
 
-describe('Story 35.6: applyQuestEvent', () => {
-  it('stageCleared: QuestMirror (targetStacks=1) should immediately cycle', () => {
-    const state = makeRuntimeState()
-    const result = applyQuestEvent('stageCleared', state, [EnchantmentType.QuestMirror])
-    expect(result).toBe(true)
-    // targetStacks=1, so stacks immediately hit target → reset + completion
-    expect(state.questStacks).toBe(0)
-    expect(state.questCompletions).toBe(1)
+describe('Story 35.6: evaluateEquipQuests (replaces applyQuestEvent)', () => {
+  it('should transform when equipped count meets target', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const skillStates = new Map<string, SkillRuntimeState>()
+    const bindings = new Map<string, string>()
+
+    // 4 Twin skills — enough to satisfy any target
+    for (let i = 0; i < 4; i++) {
+      const sk = makeSkill({
+        id: `twin_${i}`, resource: 'base',
+        affixes: [{ type: AffixType.Twin }],
+        enchantmentIds: i === 0 ? [EnchantmentType.QuestTwin] : [],
+      })
+      skills.set(sk.id, sk)
+      skillStates.set(sk.id, makeRuntimeState({ skillId: sk.id }))
+      bindings.set(String.fromCharCode(97 + i), sk.id)
+    }
+
+    evaluateEquipQuests(skills, skillStates, bindings)
+    expect(skillStates.get('twin_0')!.questTransformed).toBe(true)
+    expect(skillStates.get('twin_0')!.questCompletions).toBe(1)
   })
 
-  it('gravityWordMatch: QuestPolarize should increment stacks', () => {
-    const state = makeRuntimeState()
-    const result = applyQuestEvent('gravityWordMatch', state, [EnchantmentType.QuestPolarize])
-    expect(result).toBe(true)
-    expect(state.questStacks).toBe(1)
-    expect(state.questCompletions).toBe(0)
+  it('should track questStacks as equipped count', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const skillStates = new Map<string, SkillRuntimeState>()
+    const bindings = new Map<string, string>()
+
+    const sk = makeSkill({
+      id: 'gravity_0', resource: 'base',
+      affixes: [{ type: AffixType.Gravity, probMult: 1.5 }],
+      enchantmentIds: [EnchantmentType.QuestPolarize],
+    })
+    skills.set(sk.id, sk)
+    skillStates.set(sk.id, makeRuntimeState({ skillId: sk.id }))
+    bindings.set('a', sk.id)
+
+    evaluateEquipQuests(skills, skillStates, bindings)
+    expect(skillStates.get('gravity_0')!.questStacks).toBe(1) // 1 Gravity skill equipped
   })
 
-  it('multiResourceWord: QuestSpectrum should increment stacks', () => {
-    const state = makeRuntimeState()
-    const result = applyQuestEvent('multiResourceWord', state, [EnchantmentType.QuestSpectrum])
-    expect(result).toBe(true)
-    expect(state.questStacks).toBe(1)
-    expect(state.questCompletions).toBe(0)
-  })
+  it('should not transform unbound skills', () => {
+    const skills = new Map<string, AffixSkillInstance>()
+    const skillStates = new Map<string, SkillRuntimeState>()
+    const bindings = new Map<string, string>()
 
-  it('stageCleared: QuestTwin should increment stacks', () => {
-    const state = makeRuntimeState()
-    const result = applyQuestEvent('stageCleared', state, [EnchantmentType.QuestTwin])
-    expect(result).toBe(true)
-    expect(state.questStacks).toBe(1)
-    expect(state.questCompletions).toBe(0)
-  })
+    const sk = makeSkill({
+      id: 'spec_0', resource: 'base',
+      affixes: [{ type: AffixType.Rainbow }],
+      enchantmentIds: [EnchantmentType.QuestSpectrum],
+    })
+    skills.set(sk.id, sk)
+    skillStates.set(sk.id, makeRuntimeState({ skillId: sk.id }))
+    // No bindings → equipped count = 0
 
-  it('should return false for unknown event', () => {
-    const state = makeRuntimeState()
-    expect(applyQuestEvent('unknownEvent', state, [EnchantmentType.QuestMirror])).toBe(false)
-    expect(state.questStacks).toBe(0)
-  })
-
-  it('should return false when enchantment not in list', () => {
-    const state = makeRuntimeState()
-    expect(applyQuestEvent('stageCleared', state, [EnchantmentType.QuestDevour])).toBe(false)
+    evaluateEquipQuests(skills, skillStates, bindings)
+    expect(skillStates.get('spec_0')!.questTransformed).toBe(false)
+    expect(skillStates.get('spec_0')!.questStacks).toBe(0)
   })
 })
 
@@ -2977,8 +2932,8 @@ describe('Story 35.6: getEnchantmentSlotCount', () => {
 })
 
 describe('Story 35.6: QUEST_ENCHANTMENT_DEFS completeness', () => {
-  it('should have exactly 19 quest enchantment definitions', () => {
-    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(19)
+  it('should have exactly 20 quest enchantment definitions', () => {
+    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(20)
   })
 
   it('every quest enchantment should have a matching QUEST_AFFIX_MAP entry', () => {
@@ -3763,14 +3718,14 @@ describe('Mirror affix participates in trigger pipeline', () => {
       affixes: [{ type: AffixType.Mirror, posRel: PositionRelation.Adjacent } as AffixInstance],
       level: 1,
     })
-    const copiedCrit: AffixInstance = { type: AffixType.Crit, chance: 1.0, critMult: 3.0 }
+    const copiedCrit: AffixInstance = { type: AffixType.Crit, chance: 1.0 }
     const state = makeRuntimeState({ mirrorCopiedAffix: copiedCrit })
     const ctx = makeContext({ randomFn: () => 0.5 }) // 0.5 < 1.0 → crit
 
     const result = triggerAffixSkill(skill, state, ctx)
     expect(result.isCrit).toBe(true)
-    // base = 5, × 3.0 = 15
-    expect(result.output).toBe(15)
+    // base = 5, × CRIT_MULTIPLIER(2) = 10
+    expect(result.output).toBe(10)
   })
 
   it('Mirror copying Void should add bonus from empty slots in Phase 2', () => {
@@ -4044,7 +3999,7 @@ describe('Story 41-5: buildEffectiveSkill — transformed Mirror expansion', () 
 
   it('expanded Mirror affixes should participate in full trigger pipeline', () => {
     const mirrorAffix: AffixInstance = { type: AffixType.Mirror, posRel: PositionRelation.Adjacent }
-    const copiedCrit: AffixInstance = { type: AffixType.Crit, chance: 1.0, critMult: 3.0 }
+    const copiedCrit: AffixInstance = { type: AffixType.Crit, chance: 1.0 }
 
     const skill = makeSkill({ affixes: [mirrorAffix] })
     const state = makeRuntimeState({ mirrorCopiedAffixes: [copiedCrit] })
@@ -4052,6 +4007,6 @@ describe('Story 41-5: buildEffectiveSkill — transformed Mirror expansion', () 
 
     const result = triggerAffixSkill(skill, state, ctx)
     expect(result.isCrit).toBe(true)
-    expect(result.output).toBe(15) // base 5 × 3.0
+    expect(result.output).toBe(10) // base 5 × CRIT_MULTIPLIER(2)
   })
 })
