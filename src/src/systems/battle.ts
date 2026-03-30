@@ -20,11 +20,11 @@ import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
-import { getStageType, getCycleTimeLimit, getBattleNumber, isRitualNode, getNextBattleNode } from './stage/stageFlow';
+import { getStageType, getCycleTimeLimit, getBattleNumber, isRitualNode, isEliteNode, getNextBattleNode } from './stage/stageFlow';
 import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, BOSS_MODIFIER_IDS, setRelicGarbleActive, getEscalateTimeSpeedBonus, triggerFrostFreeze, isFrostFrozen, onMirrorTargetReached, getMirrorPhase, rollDecoyWord, isDecoyWord, isDecoyRecognized, getDecoyOriginalAt, markDecoyRecognized } from '../data/bossModifiers';
-import type { ModifierCategory, BossModifierId } from '../data/bossModifiers';
-import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, isModifierActive, undoLastTemporaryModifier } from './bossModifierEngine';
-import { showBossModifierPicker } from './bossModifierPicker';
+import type { BossModifierId } from '../data/bossModifiers';
+import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, isModifierActive } from './bossModifierEngine';
+import { showBossModifierPicker, showEliteModifierPicker } from './bossModifierPicker';
 import { showActTransition, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
@@ -37,7 +37,7 @@ import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from
 import { checkScoreMagnet, checkResourceSense, storeDeferredSenseBonus, consumeDeferredSenseBonus, incrementTimeDewCounter, checkTimeDew, incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
-import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, getBountyHunterGoldBonus, shouldBarrierBlock, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
+import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, shouldBarrierDelay, startBarrierDelay, addDeferredModifier, checkBarrierActivation, isBarrierDelaying, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, applyQuestEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult } from '../data/affixTrigger';
 import { AffixType } from '../data/affixes';
@@ -120,6 +120,8 @@ export function resetCycleTracking(): void { lastCycle = 0; chaosSeedEnchantment
  */
 // Story 42.6: 单修饰器制 — 每个 Cycle 抽 1 个不重复修饰器
 export function advanceCycle(): void {
+  // 新周目第一关目标分数 = 上周目 Boss 关获得分数
+  state.calibratedTargetBase = Math.max(1, Math.round(state.score));
   state.cycle++;
   state.level = 0; // 0 so that shop-leave's getNextBattleNode(0)=1 starts at level 1
   resetCycleTracking();
@@ -1179,6 +1181,36 @@ function completeWord(): void {
     showFeedback(t('battle.long_word_time', { value: longWordTime }), '#00ff88', undefined, undefined, { relicId: 'long_word_master', resource: 'time', amount: longWordTime });
   }
 
+  // 修饰器屏障：前 3 词完成后激活延迟的临时修饰器
+  const barrierMods = checkBarrierActivation();
+  if (barrierMods) {
+    for (const { modId, isElite } of barrierMods) {
+      if (!isModifierActive(modId)) {
+        applyModifier(modId, isElite, false);
+      }
+    }
+    // 激活后补充：修饰器护盾 targetMultiplier 修正
+    const modParams = getActiveParams();
+    if (modParams?.targetMultiplier && state.player.relics.has('modifier_shield')) {
+      const shielded = getShieldedTargetMultiplier(modParams.targetMultiplier);
+      state.targetScore = Math.floor(state.targetScore * shielded / modParams.targetMultiplier);
+    }
+    // 激活后补充：修饰器反转
+    if (state.player.relics.has('modifier_reversal') && getActiveModifierEffect()) {
+      applyModifierReversal();
+      showFeedback(t('battle.modifier_reversal'), '#ff8800');
+    }
+    showFeedback(t('battle.barrier_activate'), '#ff4444');
+    // 更新 HUD 移除延迟标记
+    const hintEl = document.querySelector('#modifier-info .modifier-hint');
+    if (hintEl) {
+      const delayTag = ` (${t('battle.barrier_delayed')})`;
+      if (hintEl.textContent?.endsWith(delayTag)) {
+        hintEl.textContent = hintEl.textContent.slice(0, -delayTag.length);
+      }
+    }
+  }
+
   // Story 36.11: 混沌轮盘 — Boss关每5词替换一个修饰器
   if (checkChaosRoulette()) {
     showFeedback(t('battle.chaos_roulette'), '#ff44ff');
@@ -1355,14 +1387,12 @@ function showGoldReward(onComplete: () => void): void {
 
   // Story 36.10: 精英猎手 — 精英关金币翻倍
   const eliteMultiplier = checkEliteHunterGoldMultiplier();
-  // Story 36.11: 赏金猎人 — 永久修饰器数量×20%金币加成
-  const bountyBonus = getBountyHunterGoldBonus();
   // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
   const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
   if (trophyGold > 0) {
     showFeedback(t('battle.s_rank_trophy', { value: String(trophyGold), rating: state.battleStats?.rating || 'S' }), '#ffdd00', undefined, undefined, { relicId: 's_rank_trophy', resource: 'gold', amount: trophyGold });
   }
-  const totalGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier * (1 + bountyBonus)) + trophyGold;
+  const totalGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier) + trophyGold;
 
   // 设置数值
   const goldSkillEl = document.getElementById('gold-skill');
@@ -1684,6 +1714,10 @@ function endLevel(): void {
             applyModifier(bossModId, false);
           }
         }
+        // 精英关：重新应用精英修饰器（临时）
+        if (stageType === 'elite' && state.eliteModifier && !isModifierActive(state.eliteModifier)) {
+          applyModifier(state.eliteModifier, true, false);
+        }
       }
       _targetReached = false; // Story 42.2: 复活=重新开始，重置达标标志
       _targetReachedTime = 0;
@@ -1717,71 +1751,6 @@ function hideSettlement(): void {
 }
 
 /** 先知之眼模态框：显示三个修饰器类别，玩家选择禁用一个 */
-function showForesightModal(modIds: BossModifierId[]): Promise<ModifierCategory | null> {
-  return new Promise((resolve) => {
-    // 按类别分组修饰器
-    const groups: Record<ModifierCategory, { icon: string; name: string }[]> = {
-      offense: [], defense: [], disruption: [],
-    };
-    for (const id of modIds) {
-      const meta = getBossModifierMeta(id);
-      if (meta) {
-        groups[meta.category].push({ icon: meta.icon, name: t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name });
-      }
-    }
-
-    const overlay = document.createElement('div');
-    overlay.className = 'foresight-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;';
-
-    const panel = document.createElement('div');
-    panel.style.cssText = 'background:#1a1a2e;border:2px solid #e94560;border-radius:12px;padding:24px 32px;max-width:520px;width:90%;text-align:center;color:#fff;font-family:inherit;';
-
-    const title = document.createElement('h2');
-    title.textContent = t('battle.foresight_title');
-    title.style.cssText = 'margin:0 0 16px;font-size:1.3em;';
-    panel.appendChild(title);
-
-    const categoryLabels: Record<ModifierCategory, string> = {
-      offense: t('battle.foresight_offense'),
-      defense: t('battle.foresight_defense'),
-      disruption: t('battle.foresight_disruption'),
-    };
-
-    for (const cat of ['offense', 'defense', 'disruption'] as ModifierCategory[]) {
-      const btn = document.createElement('button');
-      btn.style.cssText = 'display:block;width:100%;margin:8px 0;padding:12px 16px;border:1px solid #555;border-radius:8px;background:#2a2a4a;color:#fff;font-size:1em;cursor:pointer;text-align:left;transition:background 0.15s;';
-      btn.onmouseenter = () => { btn.style.background = '#3a3a6a'; };
-      btn.onmouseleave = () => { btn.style.background = '#2a2a4a'; };
-
-      const catLabel = document.createElement('div');
-      catLabel.style.cssText = 'font-size:1.1em;font-weight:bold;margin-bottom:4px;';
-      catLabel.textContent = categoryLabels[cat];
-      btn.appendChild(catLabel);
-
-      if (groups[cat].length > 0) {
-        const modList = document.createElement('div');
-        modList.style.cssText = 'font-size:0.85em;color:#aaa;';
-        modList.textContent = groups[cat].map(m => `${m.icon}${m.name}`).join('  ');
-        btn.appendChild(modList);
-      } else {
-        const empty = document.createElement('div');
-        empty.style.cssText = 'font-size:0.85em;color:#666;';
-        empty.textContent = '—';
-        btn.appendChild(empty);
-      }
-
-      btn.addEventListener('click', () => {
-        overlay.remove();
-        resolve(cat);
-      });
-      panel.appendChild(btn);
-    }
-
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-  });
-}
 
 export async function startLevel(): Promise<void> {
   keyTooltip.hide();
@@ -1976,50 +1945,37 @@ export async function startLevel(): Promise<void> {
 
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;
-  const stageLabel = currentStageType === 'boss' ? ' [BOSS]' : '';
+  const stageLabel = currentStageType === 'boss' ? ' [BOSS]' : currentStageType === 'elite' ? ' [ELITE]' : '';
   const cyclePrefix = state.cycle >= 2 ? t('battle.cycle_prefix', { cycle: state.cycle }) : '';
   el.levelLabel.textContent = `${cyclePrefix}LEVEL ${displayLevel}${stageLabel}`;
 
   // HUD: 显示当前 Cycle / StageType
   updateStageInfo(currentCycle, currentStageType);
 
-  // 先知之眼：精英/Boss关修饰器应用前，预览并选择禁用一个类别
-  let foresightDisabledCategory: ModifierCategory | null = null;
-  if (state.player.relics.has('modifier_foresight') && currentStageType === 'boss') {
-    const modsToPreview: BossModifierId[] = [];
-    {
-      for (const id of state.bossModifierPool) {
-        if (id) modsToPreview.push(id);
-      }
-    }
-    // 加上永久修饰器
-    for (const id of state.activeModifiers) {
-      modsToPreview.push(id);
-    }
-    if (modsToPreview.length > 0) {
-      foresightDisabledCategory = await showForesightModal(modsToPreview);
-      // 一次性：使用后移除遗物
-      state.player.relics.delete('modifier_foresight');
-      renderRelicDisplay();
-      if (foresightDisabledCategory) {
-        const categoryNames: Record<ModifierCategory, string> = {
-          offense: t('battle.foresight_offense'),
-          defense: t('battle.foresight_defense'),
-          disruption: t('battle.foresight_disruption'),
-        };
-        showFeedback(t('battle.foresight_disabled', { category: categoryNames[foresightDisabledCategory] }), '#ffaa00');
-        showFeedback(t('battle.foresight_consumed'), '#888888', 0.7);
-      }
-    }
+  // 应用跨周目永久修饰器（state.activeModifiers）
+  for (const permModId of state.activeModifiers) {
+    applyModifier(permModId, false, true);
   }
 
-  // 应用跨周目永久修饰器（state.activeModifiers）— 跳过被先知之眼禁用的类别
-  for (const permModId of state.activeModifiers) {
-    if (foresightDisabledCategory) {
-      const meta = getBossModifierMeta(permModId);
-      if (meta && meta.category === foresightDisabledCategory) continue;
+  // 修饰器屏障：精英/Boss 关临时修饰器延迟生效（剩余时间 < 50% 时激活）
+  const barrierDelay = shouldBarrierDelay();
+  if (barrierDelay) {
+    startBarrierDelay();
+  }
+
+  // 精英战：选取修饰器 → 以削弱参数临时应用（或延迟）
+  if (currentStageType === 'elite') {
+    const eliteModId = await new Promise<BossModifierId>((resolve) => {
+      showEliteModifierPicker((modId) => resolve(modId));
+    });
+    if (eliteModId) {
+      state.eliteModifier = eliteModId;
+      if (barrierDelay) {
+        addDeferredModifier(eliteModId, true);
+      } else {
+        applyModifier(eliteModId, true, false); // isElite=true, temporary
+      }
     }
-    applyModifier(permModId, false, true);
   }
 
   // Task 3.3-3.4: 修饰器 HUD 显示/隐藏
@@ -2029,8 +1985,9 @@ export async function startLevel(): Promise<void> {
     if (state.bossModifierPool.length > 0) {
       const bossModId = state.bossModifierPool[0];
       if (bossModId && !isModifierActive(bossModId)) {
-        const bossMeta = getBossModifierMeta(bossModId);
-        if (!(foresightDisabledCategory && bossMeta && bossMeta.category === foresightDisabledCategory)) {
+        if (barrierDelay) {
+          addDeferredModifier(bossModId, false);
+        } else {
           applyModifier(bossModId, false);
         }
       }
@@ -2038,33 +1995,45 @@ export async function startLevel(): Promise<void> {
     // Story 42.6: HUD 只显示 1 个修饰器
     if (state.bossModifierPool.length > 0) {
       const meta = getBossModifierMeta(state.bossModifierPool[0]);
-      if (meta && !(foresightDisabledCategory && meta.category === foresightDisabledCategory)) {
+      if (meta) {
         const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name;
         const modDesc = t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description;
         modInfo.querySelector('.modifier-icon')!.textContent = meta.icon;
         modInfo.querySelector('.modifier-name')!.textContent = modName;
-        modInfo.querySelector('.modifier-hint')!.textContent = modDesc;
+        modInfo.querySelector('.modifier-hint')!.textContent = modDesc + (barrierDelay ? ` (${t('battle.barrier_delayed')})` : '');
         modInfo.classList.add('visible');
       }
     }
-    // Story 36.11: 修饰器屏障 — Boss 关首个修饰器无效化
-    if (shouldBarrierBlock()) {
-      undoLastTemporaryModifier();
-      showFeedback(t('battle.modifier_barrier'), '#44aaff');
+  } else if (currentStageType === 'elite' && state.eliteModifier) {
+    // 精英战 HUD：显示选中的精英修饰器
+    const eliteMeta = getBossModifierMeta(state.eliteModifier);
+    if (eliteMeta) {
+      const modName = t(`modifier.${eliteMeta.id}`) !== `modifier.${eliteMeta.id}` ? t(`modifier.${eliteMeta.id}`) : eliteMeta.name;
+      const eliteDesc = t(`modifier.${eliteMeta.id}.elite`) !== `modifier.${eliteMeta.id}.elite` ? t(`modifier.${eliteMeta.id}.elite`) : eliteMeta.eliteHint;
+      modInfo.querySelector('.modifier-icon')!.textContent = eliteMeta.icon;
+      modInfo.querySelector('.modifier-name')!.textContent = modName;
+      modInfo.querySelector('.modifier-hint')!.textContent = eliteDesc + (barrierDelay ? ` (${t('battle.barrier_delayed')})` : '');
+      modInfo.classList.add('visible');
     }
   } else {
     modInfo.classList.remove('visible');
   }
 
-  // Story 36.11: 修饰器护盾 — targetMultiplier 事后修正
-  const modParams = getActiveParams();
-  if (modParams?.targetMultiplier && state.player.relics.has('modifier_shield')) {
-    const shielded = getShieldedTargetMultiplier(modParams.targetMultiplier);
-    state.targetScore = Math.floor(state.targetScore * shielded / modParams.targetMultiplier);
+  if (barrierDelay) {
+    showFeedback(t('battle.barrier_delay'), '#44aaff');
   }
 
-  // Story 36.11: 修饰器反转
-  if (state.player.relics.has('modifier_reversal') && getActiveModifierEffect()) {
+  // Story 36.11: 修饰器护盾 — targetMultiplier 事后修正（屏障延迟时跳过）
+  if (!isBarrierDelaying()) {
+    const modParams = getActiveParams();
+    if (modParams?.targetMultiplier && state.player.relics.has('modifier_shield')) {
+      const shielded = getShieldedTargetMultiplier(modParams.targetMultiplier);
+      state.targetScore = Math.floor(state.targetScore * shielded / modParams.targetMultiplier);
+    }
+  }
+
+  // Story 36.11: 修饰器反转（屏障延迟时跳过）
+  if (!isBarrierDelaying() && state.player.relics.has('modifier_reversal') && getActiveModifierEffect()) {
     applyModifierReversal();
     showFeedback(t('battle.modifier_reversal'), '#ff8800');
   }
@@ -2148,6 +2117,8 @@ function announceLevel(): void {
   let typeLabel = '';
   if (stageType === 'boss') {
     typeLabel = `<br><span class="boss-hint">${t('battle.boss_hint')}</span>`;
+  } else if (stageType === 'elite') {
+    typeLabel = `<br><span class="boss-hint">${t('battle.elite_hint')}</span>`;
   }
 
   const cyclePfx = state.cycle >= 2 ? t('battle.cycle_prefix', { cycle: state.cycle }) : '';

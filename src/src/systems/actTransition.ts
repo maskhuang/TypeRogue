@@ -80,6 +80,7 @@ export function updateStageInfo(cycleNum: number, stageType: string): void {
     standard: '⚔️',
     boss: '💀',
     ritual: '🔮',
+    elite: '⚔️',
   }
   const icon = icons[stageType] || '⚔️'
   el.textContent = `Cycle ${cycleNum} ${icon}`

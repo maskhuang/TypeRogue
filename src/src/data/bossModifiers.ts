@@ -234,9 +234,16 @@ function drawBossModifiersByCategory(): BossModifierId[] {
 /**
  * 生成 Boss 修饰器候选（每类各 2 个，排除已激活）
  * 返回 3 组候选，顺序：offense → defense → disruption
+ * @param guaranteedModId 若提供且不在 activeModifiers 中，保证出现在对应类别候选中
  */
-export function generateBossModifierCandidatesByCategory(activeModifiers: BossModifierId[]): BossModifierId[][] {
+export function generateBossModifierCandidatesByCategory(
+  activeModifiers: BossModifierId[],
+  guaranteedModId?: BossModifierId | null,
+): BossModifierId[][] {
   const excluded = new Set(activeModifiers)
+  const guaranteedCategory = guaranteedModId && !excluded.has(guaranteedModId)
+    ? BOSS_MODIFIER_META[guaranteedModId]?.category ?? null
+    : null
   const categories: ModifierCategory[] = ['offense', 'defense', 'disruption']
   const result: BossModifierId[][] = []
   for (const cat of categories) {
@@ -246,7 +253,16 @@ export function generateBossModifierCandidatesByCategory(activeModifiers: BossMo
       const j = Math.floor(random() * (i + 1))
       ;[pool[i], pool[j]] = [pool[j], pool[i]]
     }
-    result.push(pool.slice(0, 2))
+    let candidates = pool.slice(0, 2)
+    // 保证精英修饰器出现在对应类别
+    if (guaranteedCategory === cat && guaranteedModId && !candidates.includes(guaranteedModId)) {
+      if (candidates.length >= 2) {
+        candidates[candidates.length - 1] = guaranteedModId
+      } else {
+        candidates.push(guaranteedModId)
+      }
+    }
+    result.push(candidates)
   }
   return result
 }

@@ -1,249 +1,198 @@
 // ============================================
 // 打字肉鸽 - stageFlow 单元测试
 // ============================================
-// Story 18.1: 10 节点关卡流程辅助
+// Story 42.1: 12-Stage Cycle — (battle-shop)×5 → ritual → (battle-shop)×5 → boss
+// Elite: position 5 in cycle
 
 import { describe, it, expect } from 'vitest'
 import {
+  CYCLE_LENGTH,
   STAGE_TIME_LIMITS,
-  TOTAL_NODES,
-  getStageType,
-  getActForNode,
-  getBattleNumber,
-  isRestNode,
+  getPositionInCycle,
+  isSecondHalf,
+  isRitualNode,
   isEliteNode,
   isBossNode,
+  getStageType,
+  getBattleNumber,
   getTimeLimit,
+  getCycleForStage,
   getNextBattleNode,
-  hasRestAfter,
 } from '../../../../src/systems/stage/stageFlow'
 
 describe('stageFlow', () => {
+  describe('CYCLE_LENGTH', () => {
+    it('每 Cycle 12 关', () => {
+      expect(CYCLE_LENGTH).toBe(12)
+    })
+  })
+
   describe('STAGE_TIME_LIMITS', () => {
     it('标准关 30 秒', () => {
       expect(STAGE_TIME_LIMITS.standard).toBe(30)
     })
 
-    it('精英关 45 秒', () => {
-      expect(STAGE_TIME_LIMITS.elite).toBe(45)
+    it('精英关 30 秒', () => {
+      expect(STAGE_TIME_LIMITS.elite).toBe(30)
     })
 
     it('Boss 关 60 秒', () => {
       expect(STAGE_TIME_LIMITS.boss).toBe(60)
     })
 
-    it('休息关 0 秒', () => {
-      expect(STAGE_TIME_LIMITS.rest).toBe(0)
+    it('仪式关 0 秒', () => {
+      expect(STAGE_TIME_LIMITS.ritual).toBe(0)
     })
   })
 
-  describe('TOTAL_NODES', () => {
-    it('总节点数为 10', () => {
-      expect(TOTAL_NODES).toBe(10)
+  describe('getPositionInCycle()', () => {
+    it('第 1 关 → 位置 1', () => {
+      expect(getPositionInCycle(1)).toBe(1)
+    })
+
+    it('第 12 关 → 位置 12', () => {
+      expect(getPositionInCycle(12)).toBe(12)
+    })
+
+    it('第 13 关 → 位置 1（第二周期）', () => {
+      expect(getPositionInCycle(13)).toBe(1)
     })
   })
 
-  describe('getStageType()', () => {
-    it('节点 1, 2 为 standard', () => {
-      expect(getStageType(1)).toBe('standard')
-      expect(getStageType(2)).toBe('standard')
+  describe('isRitualNode()', () => {
+    it('位置 6 是仪式节点', () => {
+      expect(isRitualNode(6)).toBe(true)
+      expect(isRitualNode(18)).toBe(true) // 第二周期
     })
 
-    it('节点 3 为 elite', () => {
-      expect(getStageType(3)).toBe('elite')
-    })
-
-    it('节点 4 为 rest', () => {
-      expect(getStageType(4)).toBe('rest')
-    })
-
-    it('节点 5 为 standard', () => {
-      expect(getStageType(5)).toBe('standard')
-    })
-
-    it('节点 6 为 elite', () => {
-      expect(getStageType(6)).toBe('elite')
-    })
-
-    it('节点 7 为 standard', () => {
-      expect(getStageType(7)).toBe('standard')
-    })
-
-    it('节点 8 为 rest', () => {
-      expect(getStageType(8)).toBe('rest')
-    })
-
-    it('节点 9 为 elite', () => {
-      expect(getStageType(9)).toBe('elite')
-    })
-
-    it('节点 10 为 boss', () => {
-      expect(getStageType(10)).toBe('boss')
-    })
-
-    it('无效节点返回 standard', () => {
-      expect(getStageType(0)).toBe('standard')
-      expect(getStageType(11)).toBe('standard')
-    })
-  })
-
-  describe('getActForNode()', () => {
-    it('Act 1: 节点 1-4', () => {
-      expect(getActForNode(1)).toBe(1)
-      expect(getActForNode(2)).toBe(1)
-      expect(getActForNode(3)).toBe(1)
-      expect(getActForNode(4)).toBe(1)
-    })
-
-    it('Act 2: 节点 5-8', () => {
-      expect(getActForNode(5)).toBe(2)
-      expect(getActForNode(6)).toBe(2)
-      expect(getActForNode(7)).toBe(2)
-      expect(getActForNode(8)).toBe(2)
-    })
-
-    it('Act 3: 节点 9-10', () => {
-      expect(getActForNode(9)).toBe(3)
-      expect(getActForNode(10)).toBe(3)
-    })
-
-    it('无效节点返回 1', () => {
-      expect(getActForNode(0)).toBe(1)
-    })
-  })
-
-  describe('getBattleNumber()', () => {
-    it('标准/精英/Boss 节点有战斗编号 1-8', () => {
-      expect(getBattleNumber(1)).toBe(1)
-      expect(getBattleNumber(2)).toBe(2)
-      expect(getBattleNumber(3)).toBe(3)
-      expect(getBattleNumber(5)).toBe(4)
-      expect(getBattleNumber(6)).toBe(5)
-      expect(getBattleNumber(7)).toBe(6)
-      expect(getBattleNumber(9)).toBe(7)
-      expect(getBattleNumber(10)).toBe(8)
-    })
-
-    it('休息关无战斗编号（返回 0）', () => {
-      expect(getBattleNumber(4)).toBe(0)
-      expect(getBattleNumber(8)).toBe(0)
-    })
-  })
-
-  describe('isRestNode()', () => {
-    it('节点 4 和 8 为休息关', () => {
-      expect(isRestNode(4)).toBe(true)
-      expect(isRestNode(8)).toBe(true)
-    })
-
-    it('其他节点不是休息关', () => {
-      expect(isRestNode(1)).toBe(false)
-      expect(isRestNode(3)).toBe(false)
-      expect(isRestNode(10)).toBe(false)
+    it('其他位置不是仪式节点', () => {
+      expect(isRitualNode(1)).toBe(false)
+      expect(isRitualNode(5)).toBe(false)
+      expect(isRitualNode(12)).toBe(false)
     })
   })
 
   describe('isEliteNode()', () => {
-    it('节点 3, 6, 9 为精英关', () => {
-      expect(isEliteNode(3)).toBe(true)
-      expect(isEliteNode(6)).toBe(true)
-      expect(isEliteNode(9)).toBe(true)
+    it('位置 5 是精英节点', () => {
+      expect(isEliteNode(5)).toBe(true)
+      expect(isEliteNode(17)).toBe(true) // 第二周期
     })
 
-    it('其他节点不是精英关', () => {
+    it('其他位置不是精英节点', () => {
       expect(isEliteNode(1)).toBe(false)
       expect(isEliteNode(4)).toBe(false)
-      expect(isEliteNode(10)).toBe(false)
+      expect(isEliteNode(6)).toBe(false)
+      expect(isEliteNode(12)).toBe(false)
     })
   })
 
   describe('isBossNode()', () => {
-    it('节点 10 为 Boss 关', () => {
-      expect(isBossNode(10)).toBe(true)
+    it('位置 12 是 Boss 节点', () => {
+      expect(isBossNode(12)).toBe(true)
+      expect(isBossNode(24)).toBe(true)
     })
 
-    it('其他节点不是 Boss 关', () => {
+    it('其他位置不是 Boss 节点', () => {
       expect(isBossNode(1)).toBe(false)
-      expect(isBossNode(9)).toBe(false)
+      expect(isBossNode(6)).toBe(false)
+      expect(isBossNode(11)).toBe(false)
+    })
+  })
+
+  describe('getStageType()', () => {
+    it('位置 1-4 为 standard', () => {
+      expect(getStageType(1)).toBe('standard')
+      expect(getStageType(2)).toBe('standard')
+      expect(getStageType(3)).toBe('standard')
+      expect(getStageType(4)).toBe('standard')
+    })
+
+    it('位置 5 为 elite', () => {
+      expect(getStageType(5)).toBe('elite')
+    })
+
+    it('位置 6 为 ritual', () => {
+      expect(getStageType(6)).toBe('ritual')
+    })
+
+    it('位置 7-11 为 standard（除位置无特殊）', () => {
+      expect(getStageType(7)).toBe('standard')
+      expect(getStageType(8)).toBe('standard')
+      expect(getStageType(9)).toBe('standard')
+      expect(getStageType(10)).toBe('standard')
+      expect(getStageType(11)).toBe('standard')
+    })
+
+    it('位置 12 为 boss', () => {
+      expect(getStageType(12)).toBe('boss')
+    })
+
+    it('第二周期同理', () => {
+      expect(getStageType(17)).toBe('elite')  // 位置 5
+      expect(getStageType(18)).toBe('ritual') // 位置 6
+      expect(getStageType(24)).toBe('boss')   // 位置 12
+    })
+  })
+
+  describe('isSecondHalf()', () => {
+    it('位置 1-6 不是后半段', () => {
+      expect(isSecondHalf(1)).toBe(false)
+      expect(isSecondHalf(6)).toBe(false)
+    })
+
+    it('位置 7-12 是后半段', () => {
+      expect(isSecondHalf(7)).toBe(true)
+      expect(isSecondHalf(12)).toBe(true)
+    })
+  })
+
+  describe('getCycleForStage()', () => {
+    it('前 12 关属于 Cycle 1', () => {
+      expect(getCycleForStage(1)).toBe(1)
+      expect(getCycleForStage(12)).toBe(1)
+    })
+
+    it('13-24 关属于 Cycle 2', () => {
+      expect(getCycleForStage(13)).toBe(2)
+      expect(getCycleForStage(24)).toBe(2)
+    })
+  })
+
+  describe('getBattleNumber()', () => {
+    it('位置 1-5 → battle 1-5', () => {
+      expect(getBattleNumber(1)).toBe(1)
+      expect(getBattleNumber(5)).toBe(5)
+    })
+
+    it('位置 7-12 → battle 6-11', () => {
+      expect(getBattleNumber(7)).toBe(6)
+      expect(getBattleNumber(12)).toBe(11)
     })
   })
 
   describe('getTimeLimit()', () => {
     it('标准关返回 30 秒', () => {
       expect(getTimeLimit(1)).toBe(30)
-      expect(getTimeLimit(2)).toBe(30)
-      expect(getTimeLimit(5)).toBe(30)
-      expect(getTimeLimit(7)).toBe(30)
     })
 
-    it('精英关返回 45 秒', () => {
-      expect(getTimeLimit(3)).toBe(45)
-      expect(getTimeLimit(6)).toBe(45)
-      expect(getTimeLimit(9)).toBe(45)
+    it('精英关返回 30 秒', () => {
+      expect(getTimeLimit(5)).toBe(30)
     })
 
     it('Boss 关返回 60 秒', () => {
-      expect(getTimeLimit(10)).toBe(60)
+      expect(getTimeLimit(12)).toBe(60)
     })
 
-    it('休息关返回 0 秒', () => {
-      expect(getTimeLimit(4)).toBe(0)
-      expect(getTimeLimit(8)).toBe(0)
+    it('仪式关返回 0 秒', () => {
+      expect(getTimeLimit(6)).toBe(0)
     })
   })
 
   describe('getNextBattleNode()', () => {
-    it('标准节点下一个为相邻节点', () => {
+    it('每关 +1', () => {
       expect(getNextBattleNode(1)).toBe(2)
-      expect(getNextBattleNode(2)).toBe(3)
-    })
-
-    it('跳过休息关（节点 3 → 5）', () => {
-      expect(getNextBattleNode(3)).toBe(5)
-    })
-
-    it('跳过休息关（节点 7 → 9）', () => {
-      expect(getNextBattleNode(7)).toBe(9)
-    })
-
-    it('节点 5 → 6', () => {
-      expect(getNextBattleNode(5)).toBe(6)
-    })
-
-    it('节点 6 → 7', () => {
-      expect(getNextBattleNode(6)).toBe(7)
-    })
-
-    it('节点 9 → 10', () => {
-      expect(getNextBattleNode(9)).toBe(10)
-    })
-
-    it('节点 10 后通关（返回 -1）', () => {
-      expect(getNextBattleNode(10)).toBe(-1)
-    })
-  })
-
-  // Story 42.6: getEliteModifierIndex removed — Boss 改为单修饰器固定制
-
-  describe('hasRestAfter()', () => {
-    it('节点 3 后有休息关', () => {
-      expect(hasRestAfter(3)).toBe(true)
-    })
-
-    it('节点 7 后有休息关', () => {
-      expect(hasRestAfter(7)).toBe(true)
-    })
-
-    it('节点 1 后无休息关', () => {
-      expect(hasRestAfter(1)).toBe(false)
-    })
-
-    it('节点 9 后无休息关', () => {
-      expect(hasRestAfter(9)).toBe(false)
-    })
-
-    it('节点 10 后无休息关（超出范围）', () => {
-      expect(hasRestAfter(10)).toBe(false)
+      expect(getNextBattleNode(11)).toBe(12)
+      expect(getNextBattleNode(12)).toBe(13)
     })
   })
 })

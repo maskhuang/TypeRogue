@@ -60,6 +60,8 @@ const ZH: Record<string, string> = {
   'modifier_picker.cat_offense': '选择进攻修饰器',
   'modifier_picker.cat_defense': '选择防御修饰器',
   'modifier_picker.cat_disruption': '选择干扰修饰器',
+  'stage.elite': '精英战',
+  'battle.elite_pick': '选择精英修饰器',
   'enchantment.title': '⚡ 技能附魔 ⚡',
   'enchantment.cancel': '取消',
   'settlement.base': '基数',
@@ -230,14 +232,10 @@ const ZH: Record<string, string> = {
 
   // --- boss modifier relic feedback ---
   'battle.chaos_roulette': '🎰 混沌轮盘！',
-  'battle.modifier_barrier': '🚧 修饰器屏障！',
+  'battle.barrier_delay': '🚧 修饰器延迟生效！',
+  'battle.barrier_delayed': '延迟中',
+  'battle.barrier_activate': '🚧 修饰器已激活！',
   'battle.modifier_reversal': '🔄 修饰器反转！',
-  'battle.foresight_title': '👁️ 先知之眼 — 选择禁用一个类别',
-  'battle.foresight_offense': '⚔️ 进攻',
-  'battle.foresight_defense': '🛡️ 防守',
-  'battle.foresight_disruption': '🌀 干扰',
-  'battle.foresight_disabled': '👁️ 已禁用{category}',
-  'battle.foresight_consumed': '👁️ 先知之眼已消耗',
 
   // --- new boss modifier feedback ---
   'battle.frostbite_freeze': '🥶 冻结 {value}s！',
@@ -819,6 +817,8 @@ const EN: Record<string, string> = {
   'modifier_picker.cat_offense': 'Pick an Offense Modifier',
   'modifier_picker.cat_defense': 'Pick a Defense Modifier',
   'modifier_picker.cat_disruption': 'Pick a Disruption Modifier',
+  'stage.elite': 'Elite',
+  'battle.elite_pick': 'Choose Elite Modifier',
   'enchantment.title': '⚡ Enchantment ⚡',
   'enchantment.cancel': 'Cancel',
   'settlement.base': 'Base',
@@ -991,14 +991,10 @@ const EN: Record<string, string> = {
 
   // --- boss modifier relic feedback ---
   'battle.chaos_roulette': '🎰 Chaos Roulette!',
-  'battle.modifier_barrier': '🚧 Modifier Barrier!',
+  'battle.barrier_delay': '🚧 Modifiers Delayed!',
+  'battle.barrier_delayed': 'Delayed',
+  'battle.barrier_activate': '🚧 Modifiers Activated!',
   'battle.modifier_reversal': '🔄 Modifier Reversal!',
-  'battle.foresight_title': "👁️ Prophet's Eye — Disable a Category",
-  'battle.foresight_offense': '⚔️ Offense',
-  'battle.foresight_defense': '🛡️ Defense',
-  'battle.foresight_disruption': '🌀 Disruption',
-  'battle.foresight_disabled': '👁️ Disabled {category}',
-  'battle.foresight_consumed': "👁️ Prophet's Eye consumed",
 
   // --- new boss modifier feedback ---
   'battle.frostbite_freeze': '🥶 Frozen {value}s!',
@@ -1624,9 +1620,8 @@ const ITEM_NAMES_EN: Record<string, string> = {
   s_rank_trophy: 'S-Rank Trophy', snowball: 'Snowball',
   score_black_hole: 'Deadly Gift',
   // Boss modifier subsystem relics
-  modifier_shield: 'Modifier Shield', bounty_hunter: 'Bounty Hunter',
+  modifier_shield: 'Modifier Shield', bounty_hunter: 'Hardship Dividend',
   modifier_barrier: 'Modifier Barrier', chaos_roulette: 'Chaos Roulette',
-  modifier_foresight: "Prophet's Eye",
   modifier_reversal: 'Modifier Reversal',
   // Enchantments — Growth
   ench_growth_adjacent: 'Absorb', ench_growth_sameRow: 'Infect',
@@ -1779,11 +1774,10 @@ const ITEM_DESCS_EN: Record<string, string> = {
   score_black_hole: 'Scores accumulate in a hidden pool. Press Enter to settle — pass to win with gold reward (closer to target = richer reward), fail = game over.',
   // Boss modifier subsystem relics
   modifier_shield: 'All modifier negative effects reduced by 25%',
-  bounty_hunter: 'Each permanent modifier: +20% clear gold (additive)',
-  modifier_barrier: 'Elite/Boss stage start: first modifier is nullified. Once per stage.',
+  bounty_hunter: 'Each permanent modifier: -5% shop prices (max 30%)',
+  modifier_barrier: 'Elite/Boss: temporary modifiers only activate after completing 3 words.',
   chaos_roulette: 'Boss stage: every 5 words, randomly replace one active modifier',
-  modifier_foresight: '[One-time] Elite/Boss start: preview modifiers and disable one category (offense/defense/disruption). Consumed after use.',
-  modifier_reversal: 'Stage start: half modifiers become buffs, the other half double in strength',
+  modifier_reversal: 'Stage start: randomly invert one offense/defense modifier into a buff, double the other.',
   // Enchantments — Growth
   ench_growth_adjacent: '🔗Adj skill fires: own output perma +3%',
   ench_growth_sameRow: '📡Row skill fires: own output perma +2%',

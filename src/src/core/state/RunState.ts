@@ -144,6 +144,9 @@ export interface RunStateData {
 
   /** 第一关校准基数（第一关得分，替代 TARGET_BASE） */
   calibratedTargetBase: number
+
+  /** 精英战选中的修饰器（保证出现在 Boss 选取中） */
+  eliteModifier: string | null
 }
 
 /**
@@ -202,6 +205,7 @@ export class RunState {
       collectedWords: new Set(),
       overflowScore: 0,
       calibratedTargetBase: 0,
+      eliteModifier: null,
     }
   }
 
@@ -532,6 +536,7 @@ export class RunState {
       collectedWords: Array.from(this.data.collectedWords),
       overflowScore: this.data.overflowScore,
       calibratedTargetBase: this.data.calibratedTargetBase,
+      eliteModifier: this.data.eliteModifier,
     }
   }
 
@@ -632,6 +637,7 @@ export class RunState {
     // Story 42.3: 恢复溢出分
     runState.data.overflowScore = (parsed as any).overflowScore || 0
     runState.data.calibratedTargetBase = (parsed as any).calibratedTargetBase || 0
+    runState.data.eliteModifier = (parsed as any).eliteModifier || null
 
     return runState
   }

@@ -57,6 +57,7 @@ export function createInitialState(): GameState {
     activeModifiers: [],
     bossModifierPool: [],
     usedBossModifiers: [],  // Story 42.6: 本 Run 已用修饰器
+    eliteModifier: null,
     tempBuffs: [],
     sealedKeys: [],
     pseudoInfiniteState: null,
@@ -151,10 +152,12 @@ export function resetState(): void {
 
 // === 关卡目标计算（指数增长）===
 export function calculateTargetScore(stageNum: number, stageType: StageType = 'standard'): number {
-  // 第一关（校准关）：无目标分数
-  if (stageNum === 1) return 0;
+  // 第一关：未校准时为校准关（无目标），已校准时直接用 base 作为目标
+  if (stageNum === 1) {
+    return state.calibratedTargetBase > 0 ? state.calibratedTargetBase : 0;
+  }
   const { TARGET_BASE, TARGET_GROWTH, BOSS_TARGET_MULT } = BALANCE;
-  // 使用校准基数（第一关得分）替代固定 TARGET_BASE；未校准时回退默认值
+  // 使用校准基数替代固定 TARGET_BASE；未校准时回退默认值
   const base = state.calibratedTargetBase > 0 ? state.calibratedTargetBase : TARGET_BASE;
   const target = Math.round(base * Math.pow(TARGET_GROWTH, stageNum - 2));
   return stageType === 'boss' ? Math.round(target * BOSS_TARGET_MULT) : target;

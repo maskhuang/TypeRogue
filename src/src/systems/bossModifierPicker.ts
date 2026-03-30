@@ -17,7 +17,8 @@ const CATEGORY_LABELS: Record<ModifierCategory, string> = {
 
 /** 显示 Boss 修饰器选择模态框（每类各选一，共 3 轮） */
 export function showBossModifierPicker(onComplete: () => void): void {
-  const categoryGroups = generateBossModifierCandidatesByCategory(state.activeModifiers)
+  // 传入精英修饰器保证出现在对应类别
+  const categoryGroups = generateBossModifierCandidatesByCategory(state.activeModifiers, state.eliteModifier)
   const categories: ModifierCategory[] = ['offense', 'defense', 'disruption']
 
   // 过滤掉空类别
@@ -29,6 +30,7 @@ export function showBossModifierPicker(onComplete: () => void): void {
   }
 
   if (rounds.length === 0) {
+    state.eliteModifier = null
     onComplete()
     return
   }
@@ -38,6 +40,7 @@ export function showBossModifierPicker(onComplete: () => void): void {
   const showRound = () => {
     if (roundIdx >= rounds.length) {
       closeModifierPicker()
+      state.eliteModifier = null
       onComplete()
       return
     }
@@ -51,6 +54,86 @@ export function showBossModifierPicker(onComplete: () => void): void {
   }
 
   showRound()
+}
+
+/** 显示精英修饰器选择（全部候选平铺，选 1 个） */
+export function showEliteModifierPicker(onComplete: (modId: BossModifierId) => void): void {
+  const categoryGroups = generateBossModifierCandidatesByCategory(state.activeModifiers)
+  // 每类取 1 个（共 3 选 1）
+  const allCandidates: BossModifierId[] = categoryGroups
+    .map(group => group[0])
+    .filter((id): id is BossModifierId => !!id)
+
+  if (allCandidates.length === 0) {
+    onComplete(null as any)
+    return
+  }
+
+  const modal = document.getElementById('modifier-picker-modal')
+  const cardsEl = document.getElementById('modifier-picker-cards')
+  const activeEl = document.getElementById('modifier-picker-active')
+  const titleEl = modal?.querySelector('.modifier-picker-title') as HTMLElement | null
+  if (!modal || !cardsEl || !activeEl) return
+
+  // 标题
+  if (titleEl) {
+    titleEl.textContent = `⚔️ ${t('battle.elite_pick')} ⚔️`
+  }
+
+  // 已激活修饰器列表
+  activeEl.innerHTML = ''
+  if (state.activeModifiers.length > 0) {
+    const label = document.createElement('div')
+    label.className = 'modifier-picker-active-label'
+    label.textContent = t('modifier_picker.active_label')
+    activeEl.appendChild(label)
+
+    const list = document.createElement('div')
+    list.className = 'modifier-picker-active-list'
+    for (const modId of state.activeModifiers) {
+      const meta = getBossModifierMeta(modId)
+      if (meta) {
+        const tag = document.createElement('span')
+        tag.className = 'modifier-picker-active-tag'
+        const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
+        const modDesc = t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description
+        tag.textContent = `${meta.icon} ${modName}`
+        tag.title = modDesc
+        list.appendChild(tag)
+      }
+    }
+    activeEl.appendChild(list)
+  }
+
+  // 渲染候选卡片
+  cardsEl.innerHTML = ''
+  let picked = false
+  allCandidates.forEach(modId => {
+    const meta = getBossModifierMeta(modId)
+    if (!meta) return
+
+    const card = document.createElement('div')
+    card.className = 'modifier-picker-card'
+    // 显示 eliteHint 而非完整描述
+    const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
+    const eliteDesc = t(`modifier.${meta.id}.elite`) !== `modifier.${meta.id}.elite` ? t(`modifier.${meta.id}.elite`) : meta.eliteHint
+    card.innerHTML = `
+      <div class="modifier-picker-icon">${meta.icon}</div>
+      <div class="modifier-picker-name">${modName}</div>
+      <div class="modifier-picker-desc">${eliteDesc}</div>
+    `
+
+    card.onclick = () => {
+      if (picked) return
+      picked = true
+      closeModifierPicker()
+      onComplete(modId)
+    }
+
+    cardsEl.appendChild(card)
+  })
+
+  modal.classList.remove('modifier-picker-hidden')
 }
 
 function renderPickerRound(

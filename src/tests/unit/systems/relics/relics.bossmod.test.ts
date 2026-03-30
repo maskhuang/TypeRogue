@@ -6,14 +6,20 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { state } from '../../../../src/core/state'
 import {
   SHIELD_REDUCE,
-  BOUNTY_GOLD_PER_MOD,
+  BOUNTY_DISCOUNT_PER_MOD,
+  BOUNTY_DISCOUNT_CAP,
+  BARRIER_WORD_THRESHOLD,
   CHAOS_WORD_INTERVAL,
   getShieldedValue,
   getShieldedTimeSpeed,
   getShieldedScoreCap,
   getShieldedTargetMultiplier,
-  getBountyHunterGoldBonus,
-  shouldBarrierBlock,
+  getBountyHunterDiscount,
+  shouldBarrierDelay,
+  startBarrierDelay,
+  addDeferredModifier,
+  isBarrierDelaying,
+  checkBarrierActivation,
   checkChaosRoulette,
   applyModifierReversal,
   resetBossModifierRelicBattleState,
@@ -61,7 +67,9 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
   // === 常量 ===
   describe('常量', () => {
     it('SHIELD_REDUCE = 0.25', () => expect(SHIELD_REDUCE).toBe(0.25))
-    it('BOUNTY_GOLD_PER_MOD = 0.20', () => expect(BOUNTY_GOLD_PER_MOD).toBe(0.20))
+    it('BOUNTY_DISCOUNT_PER_MOD = 0.05', () => expect(BOUNTY_DISCOUNT_PER_MOD).toBe(0.05))
+    it('BOUNTY_DISCOUNT_CAP = 0.30', () => expect(BOUNTY_DISCOUNT_CAP).toBe(0.30))
+    it('BARRIER_WORD_THRESHOLD = 3', () => expect(BARRIER_WORD_THRESHOLD).toBe(3))
     it('CHAOS_WORD_INTERVAL = 5', () => expect(CHAOS_WORD_INTERVAL).toBe(5))
   })
 
@@ -142,58 +150,109 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
     })
   })
 
-  // === 赏金猎人 (bounty_hunter) ===
-  describe('赏金猎人 (bounty_hunter)', () => {
+  // === 困境红利 (bounty_hunter) ===
+  describe('困境红利 (bounty_hunter)', () => {
     it('无遗物 → 0', () => {
-      expect(getBountyHunterGoldBonus()).toBe(0)
+      expect(getBountyHunterDiscount()).toBe(0)
     })
 
     it('有遗物 + 0 个永久修饰器 → 0', () => {
       state.player.relics.add('bounty_hunter')
       state.activeModifiers = []
-      expect(getBountyHunterGoldBonus()).toBe(0)
+      expect(getBountyHunterDiscount()).toBe(0)
     })
 
-    it('有遗物 + 2 个永久修饰器 → 0.40', () => {
+    it('有遗物 + 2 个永久修饰器 → 0.10', () => {
       state.player.relics.add('bounty_hunter')
       state.activeModifiers = ['boss_decay', 'boss_cap'] as BossModifierId[]
-      expect(getBountyHunterGoldBonus()).toBeCloseTo(0.40)
+      expect(getBountyHunterDiscount()).toBeCloseTo(0.10)
     })
 
-    it('有遗物 + 3 个永久修饰器 → 0.60', () => {
+    it('有遗物 + 6 个永久修饰器 → 0.30（上限）', () => {
       state.player.relics.add('bounty_hunter')
-      state.activeModifiers = ['boss_decay', 'boss_cap', 'boss_fast_time'] as BossModifierId[]
-      expect(getBountyHunterGoldBonus()).toBeCloseTo(0.60)
+      state.activeModifiers = ['boss_decay', 'boss_cap', 'boss_fast_time', 'boss_diminish', 'boss_double_target', 'boss_escalate'] as BossModifierId[]
+      expect(getBountyHunterDiscount()).toBeCloseTo(0.30)
+    })
+
+    it('有遗物 + 10 个永久修饰器 → 不超过 0.30', () => {
+      state.player.relics.add('bounty_hunter')
+      state.activeModifiers = Array(10).fill('boss_decay') as BossModifierId[]
+      expect(getBountyHunterDiscount()).toBe(0.30)
     })
   })
 
-  // === 修饰器屏障 (modifier_barrier) ===
-  describe('修饰器屏障 (modifier_barrier)', () => {
-    it('无遗物 → false', () => {
-      // 设置精英关 (level=3)
-      state.level = 3
-      expect(shouldBarrierBlock()).toBe(false)
+  // === 修饰器屏障 — 延迟生效 (modifier_barrier) ===
+  describe('修饰器屏障 — 延迟生效 (modifier_barrier)', () => {
+    it('无遗物 → shouldBarrierDelay false', () => {
+      state.level = 5 // elite
+      expect(shouldBarrierDelay()).toBe(false)
     })
 
     it('有遗物 + 普通关 → false', () => {
       state.player.relics.add('modifier_barrier')
       state.level = 1 // standard
-      expect(shouldBarrierBlock()).toBe(false)
+      expect(shouldBarrierDelay()).toBe(false)
     })
 
-    it('有遗物 + 精英关 → 首次 true, 第二次 false', () => {
+    it('有遗物 + 精英关 → true', () => {
       state.player.relics.add('modifier_barrier')
-      state.level = 3 // elite
-      expect(shouldBarrierBlock()).toBe(true)
-      expect(shouldBarrierBlock()).toBe(false)
+      state.level = 5 // elite
+      expect(shouldBarrierDelay()).toBe(true)
     })
 
-    it('resetBossModifierRelicBattleState 重置后可再次触发', () => {
+    it('有遗物 + Boss关 → true', () => {
       state.player.relics.add('modifier_barrier')
-      state.level = 3
-      shouldBarrierBlock() // 消耗
+      state.level = 12 // boss
+      expect(shouldBarrierDelay()).toBe(true)
+    })
+
+    it('startBarrierDelay + isBarrierDelaying', () => {
+      expect(isBarrierDelaying()).toBe(false)
+      startBarrierDelay()
+      expect(isBarrierDelaying()).toBe(true)
+    })
+
+    it('addDeferredModifier + checkBarrierActivation 前2词返回 null', () => {
+      startBarrierDelay()
+      addDeferredModifier('boss_decay' as BossModifierId, false)
+      expect(checkBarrierActivation()).toBeNull() // 第1词
+      expect(checkBarrierActivation()).toBeNull() // 第2词
+      expect(isBarrierDelaying()).toBe(true)
+    })
+
+    it('checkBarrierActivation 第3词返回延迟列表', () => {
+      startBarrierDelay()
+      addDeferredModifier('boss_decay' as BossModifierId, false)
+      addDeferredModifier('boss_cap' as BossModifierId, true)
+
+      checkBarrierActivation() // 第1词
+      checkBarrierActivation() // 第2词
+      const result = checkBarrierActivation() // 第3词触发
+      expect(result).not.toBeNull()
+      expect(result!.length).toBe(2)
+      expect(result![0].modId).toBe('boss_decay')
+      expect(result![0].isElite).toBe(false)
+      expect(result![1].modId).toBe('boss_cap')
+      expect(result![1].isElite).toBe(true)
+      expect(isBarrierDelaying()).toBe(false)
+    })
+
+    it('checkBarrierActivation 只触发一次', () => {
+      startBarrierDelay()
+      addDeferredModifier('boss_decay' as BossModifierId, false)
+      checkBarrierActivation() // 1
+      checkBarrierActivation() // 2
+      checkBarrierActivation() // 3 — 触发
+      expect(checkBarrierActivation()).toBeNull() // 之后不再触发
+    })
+
+    it('resetBossModifierRelicBattleState 重置延迟状态', () => {
+      startBarrierDelay()
+      addDeferredModifier('boss_decay' as BossModifierId, false)
       resetBossModifierRelicBattleState()
-      expect(shouldBarrierBlock()).toBe(true)
+      expect(isBarrierDelaying()).toBe(false)
+      // 重置后即使调 3 次也不触发（因为不再延迟）
+      expect(checkBarrierActivation()).toBeNull()
     })
   })
 
@@ -263,99 +322,89 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
 
     it('有遗物 → 反转半数 + 加倍半数 (AC6)', () => {
       state.player.relics.add('modifier_reversal')
-      // 应用两个数值修饰器
-      applyModifier('boss_decay' as BossModifierId, false, false)
-      applyModifier('boss_cap' as BossModifierId, false, false)
+      // 应用 offense + defense 各一个
+      applyModifier('boss_escalation' as BossModifierId, false, false) // offense: escalateStep=0.20
+      applyModifier('boss_decay' as BossModifierId, false, false)      // defense: decayRate
 
-      // 获取原始值
-      const origDecay = getActiveInstances()[0].params.decayRate!
-      const origCap = getActiveInstances()[1].params.scoreCapPct!
+      const origStep = getActiveInstances()[0].params.escalateStep!
+      const origDecay = getActiveInstances()[1].params.decayRate!
 
-      // 固定 Math.random 使 shuffle 可预测
-      vi.spyOn(Math, 'random').mockReturnValue(0.99) // 不交换 → 索引顺序不变 → 第一个反转，第二个加倍
-
-      applyModifierReversal()
-
-      vi.restoreAllMocks()
-
-      const instances = getActiveInstances()
-      // 一个应该被反转，一个应该被加倍
-      // 由于 halfLen = floor(2/2) = 1，第一个反转（indices[0]），第二个加倍
-      const decayParams = instances[0].params
-      const capParams = instances[1].params
-
-      // 反转：decayRate 取反
-      expect(decayParams.decayRate).toBeCloseTo(-origDecay)
-      // 增强：scoreCapPct 减半（更严格）
-      expect(capParams.scoreCapPct).toBe(origCap / 2)
-    })
-
-    it('timeSpeed 反转为减速（2 - original）', () => {
-      state.player.relics.add('modifier_reversal')
-      applyModifier('boss_fast_time' as BossModifierId, false, false)
-
-      const origSpeed = getActiveInstances()[0].params.timeSpeed!
-      // 只有1个修饰器，halfLen=0，全部加倍（0个反转）
-      // 需要2个才能有反转
-      cleanupModifier()
-      applyModifier('boss_fast_time' as BossModifierId, false, false)
-      applyModifier('boss_decay' as BossModifierId, false, false)
-
+      // Math.random()=0.99 → invertIdx=1 → defense(boss_decay) 反转, offense(boss_escalation) 翻倍
       vi.spyOn(Math, 'random').mockReturnValue(0.99)
       applyModifierReversal()
       vi.restoreAllMocks()
 
-      // halfLen = floor(2/2) = 1, 第一个（fast_time）反转
-      const speedParams = getActiveInstances()[0].params
-      expect(speedParams.timeSpeed).toBeCloseTo(2 - origSpeed)
+      const instances = getActiveInstances()
+      // offense 翻倍: escalateStep * 2
+      expect(instances[0].params.escalateStep).toBeCloseTo(origStep * 2)
+      // defense 反转: decayRate 取反
+      expect(instances[1].params.decayRate).toBeCloseTo(-origDecay)
+    })
+
+    it('escalateStep 反转为负值', () => {
+      state.player.relics.add('modifier_reversal')
+      // offense + defense pair
+      applyModifier('boss_escalation' as BossModifierId, false, false) // offense
+      applyModifier('boss_decay' as BossModifierId, false, false)      // defense
+
+      const origStep = getActiveInstances()[0].params.escalateStep!
+
+      // Math.random()=0.0 → invertIdx=0 → offense(boss_escalation) 反转, defense(boss_decay) 翻倍
+      vi.spyOn(Math, 'random').mockReturnValue(0.0)
+      applyModifierReversal()
+      vi.restoreAllMocks()
+
+      expect(getActiveInstances()[0].params.escalateStep).toBeCloseTo(-origStep)
     })
 
     it('scoreCapPct 反转为 Infinity', () => {
       state.player.relics.add('modifier_reversal')
-      applyModifier('boss_cap' as BossModifierId, false, false)
-      applyModifier('boss_decay' as BossModifierId, false, false)
+      // offense + defense(boss_cap)
+      applyModifier('boss_escalation' as BossModifierId, false, false) // offense
+      applyModifier('boss_cap' as BossModifierId, false, false)         // defense
 
+      // Math.random()=0.99 → invertIdx=1 → defense(boss_cap) 反转
       vi.spyOn(Math, 'random').mockReturnValue(0.99)
       applyModifierReversal()
       vi.restoreAllMocks()
 
-      // 第一个（boss_cap）反转
-      expect(getActiveInstances()[0].params.scoreCapPct).toBe(Infinity)
+      expect(getActiveInstances()[1].params.scoreCapPct).toBe(Infinity)
     })
 
     it('targetMultiplier 反转缩放 state.targetScore (H2)', () => {
       state.player.relics.add('modifier_reversal')
       state.targetScore = 1000
-      // boss_double_target: targetMultiplier=2.0, apply() 时 state.targetScore *= 2 → 2000
-      applyModifier('boss_double_target' as BossModifierId, false, false)
+      // offense + defense(boss_double_target: targetMultiplier=2.0)
+      applyModifier('boss_escalation' as BossModifierId, false, false)  // offense
+      applyModifier('boss_double_target' as BossModifierId, false, false) // defense, targetMultiplier=2.0
       expect(state.targetScore).toBe(2000)
-      // 加第二个修饰器使 halfLen=1（第一个反转，第二个加倍）
-      applyModifier('boss_decay' as BossModifierId, false, false)
 
+      // Math.random()=0.99 → invertIdx=1 → defense(boss_double_target) 反转
       vi.spyOn(Math, 'random').mockReturnValue(0.99)
       applyModifierReversal()
       vi.restoreAllMocks()
 
       // 反转 targetMultiplier: 2.0 → max(0.5, 2-2.0) = 0.5
-      const inst = getActiveInstances()[0]
+      const inst = getActiveInstances()[1]
       expect(inst.params.targetMultiplier).toBeCloseTo(0.5)
-      // state.targetScore 应从 2000 按 oldMult=2.0→newMult=0.5 缩放: floor(2000 / 2.0 * 0.5) = 500
+      // state.targetScore: floor(2000 / 2.0 * 0.5) = 500
       expect(state.targetScore).toBe(500)
     })
 
     it('targetMultiplier ×2 加倍缩放 state.targetScore', () => {
       state.player.relics.add('modifier_reversal')
       state.targetScore = 1000
-      applyModifier('boss_decay' as BossModifierId, false, false)
-      // boss_double_target 第二个 → 加倍分支
-      applyModifier('boss_double_target' as BossModifierId, false, false)
+      // offense + defense(boss_double_target: targetMultiplier=2.0)
+      applyModifier('boss_escalation' as BossModifierId, false, false)  // offense
+      applyModifier('boss_double_target' as BossModifierId, false, false) // defense, targetMultiplier=2.0
       expect(state.targetScore).toBe(2000)
 
-      vi.spyOn(Math, 'random').mockReturnValue(0.99)
+      // Math.random()=0.0 → invertIdx=0 → offense(boss_escalation) 反转, defense(boss_double_target) 翻倍
+      vi.spyOn(Math, 'random').mockReturnValue(0.0)
       applyModifierReversal()
       vi.restoreAllMocks()
 
-      // 第二个（boss_double_target）加倍: targetMultiplier 2.0 → 4.0
+      // defense 翻倍: targetMultiplier 2.0 → 4.0
       const inst = getActiveInstances()[1]
       expect(inst.params.targetMultiplier).toBeCloseTo(4.0)
       // state.targetScore: floor(2000 / 2.0 * 4.0) = 4000
@@ -368,22 +417,22 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
     it('resetBossModifierRelicBattleState 重置 barrier + chaosWordCount', () => {
       state.player.relics.add('modifier_barrier')
       state.player.relics.add('chaos_roulette')
-      state.level = 3 // elite
+      state.level = 5 // elite
       state.bossModifierPool = ['boss_decay', 'boss_cap', 'boss_fast_time'] as BossModifierId[]
 
-      // 消耗 barrier
-      shouldBarrierBlock()
+      // 启动 barrier 延迟
+      startBarrierDelay()
+      addDeferredModifier('boss_decay' as BossModifierId, false)
       // 推进 chaos word count
+      state.level = 12 // boss for chaos roulette
       for (let i = 0; i < 3; i++) checkChaosRoulette()
 
       resetBossModifierRelicBattleState()
 
-      // barrier 可再次触发
-      expect(shouldBarrierBlock()).toBe(true)
+      // barrier 延迟状态重置
+      expect(isBarrierDelaying()).toBe(false)
       // chaos word count 重置（需要再 5 词才触发）
-      // 验证：再调 2 词不应触发（因为已经重置为 0，需要完整 5 词）
       applyModifier('boss_decay' as BossModifierId, false, false)
-      state.level = 10 // boss
       for (let i = 0; i < 4; i++) checkChaosRoulette()
       expect(getActiveInstances()[0].modId).toBe('boss_decay') // 没被替换
     })

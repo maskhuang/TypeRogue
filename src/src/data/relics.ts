@@ -130,7 +130,6 @@ export type RelicBehaviorType =
   // Boss修饰器系统
   | 'modifier_barrier'     // 修饰器屏障：第一个修饰器无效化
   | 'chaos_roulette'       // 混沌轮盘：每 5 词替换一个修饰器
-  | 'modifier_foresight'   // 先知之眼：预知修饰器并禁用一个类别
   | 'modifier_reversal'    // 修饰器反转：一半修饰器反转为增益
   // 结算/评分系统
   | 'snowball'             // 雪球效应：每词得分递增
@@ -875,27 +874,27 @@ export const RELICS: Record<string, RelicData> = {
 
   bounty_hunter: {
     id: 'bounty_hunter',
-    name: '赏金猎人',
+    name: '困境红利',
     icon: '🏴‍☠️',
-    description: '每个永久修饰器使通关金币+20%（加算）。',
+    description: '每个永久修饰器使商店价格-5%（上限30%）。',
     rarity: 'common',
     basePrice: 50,
     effects: [],
     subsystem: 'boss_modifier',
-    flavor: '风险越大，赏金越高。',
+    flavor: '困难越多，折扣越大。',
   },
 
   modifier_barrier: {
     id: 'modifier_barrier',
     name: '修饰器屏障',
     icon: '🚧',
-    description: '精英/Boss关开始时，第一个修饰器被无效化。每关仅一次。',
+    description: '精英/Boss关：临时修饰器延迟至完成前3个词后才生效。',
     rarity: 'rare',
     basePrice: 80,
     effects: [],
     subsystem: 'boss_modifier',
     behaviorType: 'modifier_barrier',
-    flavor: '先发制人，挡住第一波。',
+    flavor: '稳住前半场，后半场再战。',
   },
 
   chaos_roulette: {
@@ -911,26 +910,13 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '转动命运之轮，拥抱混沌。',
   },
 
-  modifier_foresight: {
-    id: 'modifier_foresight',
-    name: '先知之眼',
-    icon: '👁️',
-    description: '【一次性】精英/Boss关开始时，预览修饰器并选择禁用一个类别（进攻/防守/干扰）。使用后消耗。',
-    rarity: 'epic',
-    basePrice: 120,
-    effects: [],
-    subsystem: 'boss_modifier',
-    behaviorType: 'modifier_foresight',
-    flavor: '预知命运者，可以改写命运。',
-  },
-
   modifier_reversal: {
     id: 'modifier_reversal',
     name: '修饰器反转',
     icon: '🔄',
-    description: '关卡开始时，随机一半修饰器反转为增益，另一半数值翻倍。',
-    rarity: 'legendary',
-    basePrice: 0,
+    description: '关卡开始时，进攻/防御修饰器随机一个反转为增益，另一个数值翻倍。',
+    rarity: 'epic',
+    basePrice: 120,
     effects: [],
     subsystem: 'boss_modifier',
     behaviorType: 'modifier_reversal',
@@ -1075,4 +1061,5 @@ export const DELETED_RELIC_IDS = [
   'pure_heart', 'minimalist',
   'echo_bell', 'storm_drum', 'finale',
   'affix_spectrum', 'legendary_aura', 'quest_momentum',
+  'modifier_foresight',
 ]

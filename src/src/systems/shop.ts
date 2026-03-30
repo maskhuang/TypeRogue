@@ -26,7 +26,7 @@ import { autoSelectRowMedal, getRowMedalRowName } from './relics/TopologyRelicBe
 import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
 import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
 import { checkEliteHunterGoldMultiplier } from './relics/StageRelicBehaviors';
-import { getBountyHunterGoldBonus } from './relics/BossModifierRelicBehaviors';
+import { getBountyHunterDiscount } from './relics/BossModifierRelicBehaviors';
 import { getSRankTrophyGold, consumeDeadlyGiftFreeRefresh } from './relics/ScoringRelicBehaviors';
 import { getDiscountMultiplier, getRecycleSellMultiplier, getBlackMarketExtraSlots, canSmuggleFree, consumeSmuggleFree, isTimedAuction, startAuctionTimer, clearAuctionTimer, resetShopRelicState } from './relics/ShopRelicBehaviors';
 import { hasIntermissionFreeRefresh, consumeIntermissionFreeRefresh } from './relics/StageRelicBehaviors';
@@ -726,11 +726,9 @@ export function openShop(_won: boolean): void {
 
   // Review H1: 精英猎手 — 精英关金币翻倍（同步 showGoldReward 显示）
   const eliteMultiplier = checkEliteHunterGoldMultiplier();
-  // Story 36.11: 赏金猎人 — 永久修饰器数量×20%金币加成
-  const bountyBonus = getBountyHunterGoldBonus();
   // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
   const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
-  const battleGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier * (1 + bountyBonus)) + trophyGold;
+  const battleGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier) + trophyGold;
   state.gold += battleGold;
 
   el.shopLevelNum.textContent = String(state.level);
@@ -802,7 +800,8 @@ function updateGoldDisplay(): void {
 function getAdjustedPrice(baseCost: number): number {
   // Story 36.5: 附魔锚点 — 每个已激活附魔使价格 +10%
   // Story 36.9: 折扣卡 — 所有商品价格 -15%（先涨后折）
-  return Math.round(baseCost * getEnchantAnchorPriceMultiplier() * getDiscountMultiplier());
+  // 困境红利：每个永久修饰器 -5%（上限 30%）
+  return Math.round(baseCost * getEnchantAnchorPriceMultiplier() * getDiscountMultiplier() * (1 - getBountyHunterDiscount()));
 }
 
 // === Fisher-Yates shuffle ===

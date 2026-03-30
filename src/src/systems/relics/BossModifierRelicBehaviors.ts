@@ -16,7 +16,9 @@ import type { BossModifierParams } from '../../data/bossModifiers'
 
 // === 常量 ===
 export const SHIELD_REDUCE = 0.25
-export const BOUNTY_GOLD_PER_MOD = 0.20
+export const BOUNTY_DISCOUNT_PER_MOD = 0.05
+export const BOUNTY_DISCOUNT_CAP = 0.30
+export const BARRIER_WORD_THRESHOLD = 3
 export const CHAOS_WORD_INTERVAL = 5
 
 // === 数值型参数键（用于反转/翻倍） ===
@@ -27,7 +29,9 @@ const NUMERIC_PARAM_KEYS: (keyof BossModifierParams)[] = [
 
 // === 模块级状态 ===
 
-let _barrierUsedThisStage = false
+let _barrierDelaying = false
+let _barrierWordCount = 0
+let _deferredModifiers: Array<{ modId: import('../../data/bossModifiers').BossModifierId; isElite: boolean }> = []
 let _chaosWordCount = 0
 
 // === 修饰器护盾 (modifier_shield) ===
@@ -57,24 +61,48 @@ export function getShieldedTargetMultiplier(rawMult: number): number {
   return (rawMult - 1) * (1 - SHIELD_REDUCE) + 1
 }
 
-// === 赏金猎人 (bounty_hunter) ===
+// === 困境红利 (bounty_hunter) ===
 
-/** 有遗物 → 返回永久修饰器数量 × BOUNTY_GOLD_PER_MOD 的加算比例，否则 0 */
-export function getBountyHunterGoldBonus(): number {
+/** 有遗物 → 返回永久修饰器数量 × 5% 的商店折扣比例（上限 30%），否则 0 */
+export function getBountyHunterDiscount(): number {
   if (!state.player.relics.has('bounty_hunter')) return 0
-  return state.activeModifiers.length * BOUNTY_GOLD_PER_MOD
+  return Math.min(state.activeModifiers.length * BOUNTY_DISCOUNT_PER_MOD, BOUNTY_DISCOUNT_CAP)
 }
 
-// === 修饰器屏障 (modifier_barrier) ===
+// === 修饰器屏障 (modifier_barrier) — 延迟生效 ===
 
-/** 有遗物 + Boss关 + 未使用 → true（设置已使用标记），否则 false */
-export function shouldBarrierBlock(): boolean {
+/** 有遗物 + 精英/Boss 关 → 应延迟临时修饰器 */
+export function shouldBarrierDelay(): boolean {
   if (!state.player.relics.has('modifier_barrier')) return false
   const stageType = getStageType(state.level)
-  if (stageType !== 'boss') return false
-  if (_barrierUsedThisStage) return false
-  _barrierUsedThisStage = true
-  return true
+  return stageType === 'boss' || stageType === 'elite'
+}
+
+/** 开始屏障延迟：存储待应用的临时修饰器 */
+export function startBarrierDelay(): void {
+  _barrierDelaying = true
+  _deferredModifiers = []
+}
+
+/** 将一个临时修饰器加入延迟队列 */
+export function addDeferredModifier(modId: import('../../data/bossModifiers').BossModifierId, isElite: boolean): void {
+  _deferredModifiers.push({ modId, isElite })
+}
+
+/** 当前是否正在延迟 */
+export function isBarrierDelaying(): boolean {
+  return _barrierDelaying
+}
+
+/** 每完成一词调用：完成第 3 个词后返回待应用列表并结束延迟，否则 null */
+export function checkBarrierActivation(): Array<{ modId: import('../../data/bossModifiers').BossModifierId; isElite: boolean }> | null {
+  if (!_barrierDelaying) return null
+  _barrierWordCount++
+  if (_barrierWordCount < BARRIER_WORD_THRESHOLD) return null
+  _barrierDelaying = false
+  const deferred = [..._deferredModifiers]
+  _deferredModifiers = []
+  return deferred
 }
 
 // === 混沌轮盘 (chaos_roulette) ===
@@ -106,83 +134,65 @@ export function checkChaosRoulette(): boolean {
 
 // === 修饰器反转 (modifier_reversal) ===
 
-/** 关卡开始、所有修饰器应用后调用：随机分两半，一半反转为增益，另一半数值 ×2 */
+/**
+ * 关卡开始、所有修饰器应用后调用：
+ * 在进攻类和防御类修饰器中各找一个，随机反转其中一个、翻倍另一个。
+ * 干扰类不受影响。
+ */
 export function applyModifierReversal(): void {
   if (!state.player.relics.has('modifier_reversal')) return
 
   const instances = getActiveInstances()
   if (instances.length === 0) return
 
-  // Fisher-Yates shuffle 一份索引数组
-  const indices = instances.map((_, i) => i)
-  for (let i = indices.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[indices[i], indices[j]] = [indices[j], indices[i]]
-  }
+  // 找到第一个 offense 和第一个 defense 实例
+  const offenseInst = instances.find(inst => BOSS_MODIFIER_META[inst.modId]?.category === 'offense')
+  const defenseInst = instances.find(inst => BOSS_MODIFIER_META[inst.modId]?.category === 'defense')
 
-  const halfLen = Math.floor(indices.length / 2)
-  const invertIndices = new Set(indices.slice(0, halfLen))
+  const targets = [offenseInst, defenseInst].filter(Boolean) as typeof instances[number][]
+  if (targets.length === 0) return
 
-  for (let i = 0; i < instances.length; i++) {
-    const inst = instances[i]
-    const params = inst.params
-    const category = BOSS_MODIFIER_META[inst.modId]?.category
+  // 随机选一个反转，其余翻倍
+  const invertIdx = Math.floor(Math.random() * targets.length)
 
-    if (category === 'disruption') {
-      // 干扰类特殊处理：反转=禁用，增强=参数翻倍/减半
-      if (invertIndices.has(i)) {
-        // 禁用：所有打字干扰参数置零/极大值
-        for (const key of Object.keys(params) as (keyof BossModifierParams)[]) {
-          if (['fadeSpeed', 'fadeSpeedEnd'].includes(key)) (params as any)[key] = 999
-          else if (['scrambleMode', 'reverseActive', 'garbleActive'].includes(key)) (params as any)[key] = 0
-          else if (['garbleRate', 'decoyChance'].includes(key)) (params as any)[key] = 0
+  for (let i = 0; i < targets.length; i++) {
+    const params = targets[i].params
+    if (i === invertIdx) {
+      // 反转：数值取反/无效化
+      for (const key of NUMERIC_PARAM_KEYS) {
+        if (params[key] == null) continue
+        if (key === 'timeSpeed') {
+          params[key] = 2 - params[key]!
+        } else if (key === 'scoreCapPct') {
+          params[key] = Infinity
+        } else if (key === 'targetMultiplier') {
+          const oldMult = params[key]!
+          params[key] = Math.max(0.5, 2 - oldMult)
+          if (oldMult > 0) {
+            state.targetScore = Math.floor(state.targetScore / oldMult * params[key]!)
+          }
+        } else if (key === 'scoreTaxPct') {
+          params[key] = 0
+        } else {
+          params[key] = -(params[key]!)
         }
-      } else {
-        // 增强：速度翻倍/范围减半
-        if (params.fadeSpeed) { params.fadeSpeed /= 2; if (params.fadeSpeedEnd) params.fadeSpeedEnd /= 2 }
-        if (params.garbleRate) params.garbleRate = Math.min(params.garbleRate * 2, 0.8)
-        if (params.decoyChance) params.decoyChance = Math.min(params.decoyChance * 2, 0.8)
       }
     } else {
-      // offense / defense: NUMERIC_PARAM_KEYS 反转逻辑
-      if (invertIndices.has(i)) {
-        for (const key of NUMERIC_PARAM_KEYS) {
-          if (params[key] == null) continue
-          if (key === 'timeSpeed') {
-            params[key] = 2 - params[key]!
-          } else if (key === 'scoreCapPct') {
-            // 反转：上限极大化（无效化限额）
-            params[key] = Infinity
-          } else if (key === 'targetMultiplier') {
-            const oldMult = params[key]!
-            params[key] = Math.max(0.5, 2 - oldMult)
-            if (oldMult > 0) {
-              state.targetScore = Math.floor(state.targetScore / oldMult * params[key]!)
-            }
-          } else if (key === 'scoreTaxPct') {
-            // 无效化：置 0
-            params[key] = 0
-          } else {
-            params[key] = -(params[key]!)
+      // 翻倍
+      for (const key of NUMERIC_PARAM_KEYS) {
+        if (params[key] == null) continue
+        if (key === 'timeSpeed') {
+          params[key] = Math.min(params[key]! * 2, 2.0)
+        } else if (key === 'scoreCapPct') {
+          params[key] = params[key]! / 2
+        } else if (key === 'targetMultiplier') {
+          const oldMult = params[key]!
+          params[key] = oldMult * 2
+          if (oldMult > 0) {
+            state.targetScore = Math.floor(state.targetScore / oldMult * params[key]!)
           }
-        }
-      } else {
-        for (const key of NUMERIC_PARAM_KEYS) {
-          if (params[key] == null) continue
-          if (key === 'timeSpeed') {
-            params[key] = Math.min(params[key]! * 2, 2.0)
-          } else if (key === 'scoreCapPct') {
-            // 增强：上限减半（更严格）
-            params[key] = params[key]! / 2
-          } else if (key === 'targetMultiplier') {
-            const oldMult = params[key]!
-            params[key] = oldMult * 2
-            if (oldMult > 0) {
-              state.targetScore = Math.floor(state.targetScore / oldMult * params[key]!)
-            }
-          } else {
-            params[key] = params[key]! * 2
-          }
+        } else {
+          params[key] = params[key]! * 2
         }
       }
     }
@@ -195,7 +205,9 @@ export function applyModifierReversal(): void {
 
 /** 每关开始时重置关级状态 */
 export function resetBossModifierRelicBattleState(): void {
-  _barrierUsedThisStage = false
+  _barrierDelaying = false
+  _barrierWordCount = 0
+  _deferredModifiers = []
   _chaosWordCount = 0
 }
 
@@ -206,9 +218,6 @@ export function initBossModifierRelicBehaviors(): void {
   })
   registerRelicBehavior('chaos_roulette', () => {
     // 行为逻辑由 checkChaosRoulette() 在 completeWord 中直接调用
-  })
-  registerRelicBehavior('modifier_foresight', () => {
-    // 行为逻辑由 showForesightModal() 在 startLevel 中直接调用
   })
   registerRelicBehavior('modifier_reversal', () => {
     // 行为逻辑由 applyModifierReversal() 在 startLevel 中直接调用

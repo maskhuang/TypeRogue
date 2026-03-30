@@ -15,6 +15,7 @@ export const STAGE_TIME_LIMITS: Record<StageType, number> = {
   standard: 30,
   boss: 60,
   ritual: 0,
+  elite: 30,
 }
 
 /** 获取当前关在 Cycle 内的位置（1-12） */
@@ -32,10 +33,17 @@ export function isRitualNode(stageNum: number): boolean {
   return getPositionInCycle(stageNum) === 6
 }
 
-/** 动态获取关卡类型：ritual → boss → standard */
+/** 检查是否为精英节点（Cycle 内位置 5） */
+export function isEliteNode(stageNum: number): boolean {
+  return getPositionInCycle(stageNum) === 5
+}
+
+/** 动态获取关卡类型：ritual → boss → elite → standard */
 export function getStageType(stageNum: number): StageType {
   if (isRitualNode(stageNum)) return 'ritual'
-  return isBossNode(stageNum) ? 'boss' : 'standard'
+  if (isBossNode(stageNum)) return 'boss'
+  if (isEliteNode(stageNum)) return 'elite'
+  return 'standard'
 }
 
 /** 获取战斗编号（跳过位置 6 的仪式节点） */
