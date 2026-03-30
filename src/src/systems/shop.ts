@@ -576,6 +576,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     }
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
+    case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
     default: return ''
   }
 }

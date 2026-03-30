@@ -47,14 +47,14 @@ function createTestState(overrides?: Partial<GameState>): GameState {
 
 describe('restEvents', () => {
   describe('REST_EVENTS 完整性', () => {
-    it('共 10 个事件', () => {
-      expect(REST_EVENTS).toHaveLength(10)
+    it('共 11 个事件', () => {
+      expect(REST_EVENTS).toHaveLength(11)
     })
 
     it('所有事件 ID 不重复', () => {
       const ids = REST_EVENTS.map(e => e.id)
       const unique = new Set(ids)
-      expect(unique.size).toBe(10)
+      expect(unique.size).toBe(11)
     })
 
     it('每个事件包含必要字段', () => {

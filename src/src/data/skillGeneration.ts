@@ -237,6 +237,9 @@ export function rollAffixParams(
     case AffixType.Taboo:
       return { type, bonusPercent: 1.0, penaltyChance: 0.10 }
 
+    case AffixType.Multiply:
+      return { type, multiplyValue: roundTo(1.5 + random() * 0.5, 2) }  // ×1.5~2.0
+
     default: {
       const _exhaustive: never = type
       throw new Error(`Unknown AffixType: ${type}`)

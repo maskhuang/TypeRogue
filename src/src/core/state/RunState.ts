@@ -80,10 +80,10 @@ export interface RunStateData {
   /** Run 统计 */
   stats: RunStats
 
-  /** Story 42.6: 当前 Cycle 的 Boss 修饰器（0 或 1 个） */
+  /** Boss 战前选择的临时修饰器（0-3 个） */
   bossModifierPool: string[]
 
-  /** Story 42.6: 本 Run 已用修饰器列表（不重复抽取用） */
+  /** 本 Run 已用修饰器列表（不重复抽取用） */
   usedBossModifiers: string[]
 
   /** Boss 修饰器分配（Stage 3→A, Stage 6→B, Stage 9→C） */
@@ -584,9 +584,8 @@ export class RunState {
     runState.data.currentStage = parsed.currentStage
     runState.data.isActive = parsed.isActive
     runState.data.stats = { ...parsed.stats }
-    // Story 42.6: 旧存档 bossModifierPool 可能有 3 个元素，截取第一个即可
-    const savedPool: string[] = (parsed as any).bossModifierPool || []
-    runState.data.bossModifierPool = savedPool.length > 1 ? savedPool.slice(0, 1) : savedPool
+    // bossModifierPool: Boss 战前选择的临时修饰器（0-3 个），直接还原
+    runState.data.bossModifierPool = (parsed as any).bossModifierPool || []
     runState.data.usedBossModifiers = (parsed as any).usedBossModifiers || []
     runState.data.bossModifierAssignment = (parsed as any).bossModifierAssignment || []
 

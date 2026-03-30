@@ -6,7 +6,6 @@ import './style.css';
 import { initElements } from './ui/elements';
 import { state } from './core/state';
 import { getStarterWords } from './data/words';
-import { drawSingleBossModifier } from './data/bossModifiers';
 import { startLevel, initInput, resetCycleTracking } from './systems/battle';
 import { initShopEvents } from './systems/shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
@@ -66,11 +65,8 @@ async function init(): Promise<void> {
     // 赠送开局遗物
     state.player.relics.add(DEMO_STARTER_RELIC);
 
-    // Story 42.6: 抽取首个 Boss 修饰器（Cycle 1 使用）
-    state.usedBossModifiers = [];
-    const firstMod = drawSingleBossModifier(state.usedBossModifiers);
-    state.bossModifierPool = firstMod ? [firstMod] : [];
-    if (firstMod) state.usedBossModifiers.push(firstMod);
+    // Boss 修饰器池初始为空（Boss 战前由 picker 填充）
+    state.bossModifierPool = [];
 
     // 跳过职业选择
     state.classId = 'none';
@@ -185,11 +181,8 @@ async function init(): Promise<void> {
   // 初始技能绑定延迟到 startLevel → setWord 后，绑定到第一个单词首字母
   // 见 battle.ts bindStarterSkillToFirstWord()
 
-  // Story 42.6: 抽取首个 Boss 修饰器（Cycle 1 使用）
-  state.usedBossModifiers = [];
-  const firstMod = drawSingleBossModifier(state.usedBossModifiers);
-  state.bossModifierPool = firstMod ? [firstMod] : [];
-  if (firstMod) state.usedBossModifiers.push(firstMod);
+  // Boss 修饰器池初始为空（Boss 战前由 picker 填充）
+  state.bossModifierPool = [];
 
   // 启动游戏流程：职业选择 → 遗物选择 → 开始关卡
   resetCycleTracking();

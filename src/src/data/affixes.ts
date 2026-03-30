@@ -7,14 +7,14 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（20 类，6 类别） ====
+// ===== 词条类型枚举（21 类，6 类别） ====
 // Replicate 已合并入 Splash
-// Story 41.2: Multiply 已删除，被 Conduit 替代
 
 export enum AffixType {
   // ── 数值型 ──
   Convert = 'convert',
   Rainbow = 'rainbow',
+  Multiply = 'multiply',
   // ── 节奏型 ──
   Charge = 'charge',
   Decay = 'decay',
@@ -47,6 +47,7 @@ export type AffixCategory = 'numeric' | 'rhythm' | 'topology' | 'trigger_chain' 
 export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Convert]: 'numeric',
   [AffixType.Rainbow]: 'numeric',
+  [AffixType.Multiply]: 'numeric',
   [AffixType.Charge]: 'rhythm',
   [AffixType.Decay]: 'rhythm',
   [AffixType.Pulse]: 'rhythm',
@@ -67,8 +68,8 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Taboo]: 'meta_rule',
 }
 
-// ===== 附魔类型枚举（25 个枚举值） =====
-// 2 通用学徒 + 5 资源专精 + 17 任务型 + 1 运算符 = 25
+// ===== 附魔类型枚举（26 个枚举值） =====
+// 2 通用学徒 + 5 资源专精 + 18 任务型 + 1 运算符 = 26
 
 export enum EnchantmentType {
   // ── 学徒型（2 通用 + 5 资源专精） ──
@@ -79,7 +80,7 @@ export enum EnchantmentType {
   ApprenticeResMultiplier = 'apprentice_res_multiplier',
   ApprenticeResTime = 'apprentice_res_time',
   ApprenticeResGold = 'apprentice_res_gold',
-  // ── 任务型（18，需技能拥有对应词条） ──
+  // ── 任务型（19，需技能拥有对应词条） ──
   QuestDevour = 'quest_devour',
   QuestOverload = 'quest_overload',
   QuestEcho = 'quest_echo',
@@ -99,7 +100,8 @@ export enum EnchantmentType {
   QuestSacrifice = 'quest_sacrifice',
   QuestTwin = 'quest_twin',
   QuestConduit = 'quest_conduit',
-  // ── 运算符（1） ──
+  QuestMultiplyOp = 'quest_multiply_op',
+  // ── 运算符（保留类型，现通过质变获取） ──
   MultiplyOperator = 'multiply_operator',
 }
 
@@ -125,6 +127,7 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestSacrifice]: AffixType.Taboo,
   [EnchantmentType.QuestTwin]: AffixType.Twin,
   [EnchantmentType.QuestConduit]: AffixType.Conduit,
+  [EnchantmentType.QuestMultiplyOp]: AffixType.Multiply,
 }
 
 // ===== 附魔元数据（非任务类附魔的显示信息） =====
@@ -148,7 +151,7 @@ export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
   [EnchantmentType.ApprenticeResMultiplier]: { type: EnchantmentType.ApprenticeResMultiplier, name: '专精·倍率', icon: '📈', category: 'apprentice', desc: '产出倍率资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeResTime]:       { type: EnchantmentType.ApprenticeResTime,       name: '专精·时间', icon: '⏳', category: 'apprentice', desc: '产出时间资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeResGold]:       { type: EnchantmentType.ApprenticeResGold,       name: '专精·金币', icon: '💰', category: 'apprentice', desc: '产出金币资源时永久成长 +2%' },
-  // ── 运算符（1） ──
+  // ── 运算符（通过质变获取） ──
   [EnchantmentType.MultiplyOperator]: { type: EnchantmentType.MultiplyOperator, name: '乘算化', icon: '✖️', category: 'operator', desc: '将加算层各项加成转为独立乘数' },
 }
 
@@ -184,6 +187,7 @@ export interface AffixInstance {
   probMult?: number                // Gravity: 单词出现概率倍率（0~2）
   recurseChance?: number           // Recurse: 重触发概率 15%~30%
   penaltyChance?: number           // Taboo: 负产出概率 10%
+  multiplyValue?: number           // Multiply: 产出乘数 ×N
 }
 
 // ===== 稀有度 =====
@@ -281,6 +285,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   convert_cross: 'high',
   convert_self: 'none', // 自源转化已禁用
   [AffixType.Rainbow]: 'low',
+  [AffixType.Multiply]: 'low',
   [AffixType.Charge]: 'high',
   [AffixType.Decay]: 'high',
   [AffixType.Pulse]: 'high',
@@ -348,6 +353,7 @@ export const CONVERT_K_TABLE: Record<ResourceType, [number, number]> = {
 export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Convert]: '转化',
   [AffixType.Rainbow]: '彩虹',
+  [AffixType.Multiply]: '乘算',
   [AffixType.Charge]: '蓄力',
   [AffixType.Decay]: '衰减',
   [AffixType.Pulse]: '脉冲',
@@ -372,6 +378,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
 export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Convert]: '读取一种资源的当前值，按系数加成本资源产出',
   [AffixType.Rainbow]: '每次触发时随机选择一种资源类型产出',
+  [AffixType.Multiply]: '产出直接乘以固定倍数',
   [AffixType.Charge]: '按住蓄力，蓄满自动释放或松开提前释放，加成随蓄力量增长',
   [AffixType.Decay]: '首次触发加成最高，逐次衰减至下限，每关重置',
   [AffixType.Pulse]: '每隔固定次数触发一次爆发',
@@ -539,6 +546,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'affixProc:taboo_penalty', targetStacks: 3, effectDesc: '质变：惩罚转为随机资源', transformDesc: '完成后惩罚触发时产出转为随机其他资源' },
   { type: EnchantmentType.QuestTwin, name: '镜像', targetAffix: AffixType.Twin, event: 'stageCleared', targetStacks: 3, effectDesc: '质变：词条效果加倍', transformDesc: '完成后所有非 Twin 词条效果翻倍' },
   { type: EnchantmentType.QuestConduit, name: '导引', targetAffix: AffixType.Conduit, event: 'selfTrigger', targetStacks: 15, effectDesc: '质变：导能 +2', transformDesc: '完成后为邻居提供 2 次额外触发' },
+  { type: EnchantmentType.QuestMultiplyOp, name: '乘算化', targetAffix: AffixType.Multiply, event: 'selfTrigger', targetStacks: 15, effectDesc: '质变：乘算化', transformDesc: '完成后产出变为乘算模式（资源×N 而非资源+N）' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====
@@ -594,6 +602,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
   [AffixType.Recurse]:  { param: 'recurseChance',  delta: 0.03,  mode: 'add' },
   [AffixType.Taboo]:    { param: 'bonusPercent',   delta: 0.3,   mode: 'add' },
+  [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
 }
 
 /** 四舍五入到指定小数位 */

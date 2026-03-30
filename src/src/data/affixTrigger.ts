@@ -311,8 +311,8 @@ export function resolvePhase2(
   ctx: TriggerContext,
   baseOutput: number,
 ): Phase2Result {
-  const hasMultOp = skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator)
-  // 乘算化：基础值替换为乘数基底
+  const hasMultOp = (skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator) || skill.enchantmentIds.includes(EnchantmentType.QuestMultiplyOp)) && runtimeState.questTransformed
+  // 乘算化（质变后）：基础值替换为乘数基底
   const effectiveBase = hasMultOp
     ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? baseOutput)
     : baseOutput
@@ -537,6 +537,13 @@ export function resolvePhase3(
           }
           flags.isTabooPenalty = true
         }
+        break
+      }
+
+      case AffixType.Multiply: {
+        const m = affix.multiplyValue ?? 1
+        output *= m
+        multipliers.push(m)
         break
       }
 
@@ -1090,7 +1097,7 @@ export function triggerAffixSkill(
     isPulse: p3.flags.isPulse,
     isCascade: p3.flags.isCascade,
     isTabooPenalty: p3.flags.isTabooPenalty,
-    isMultiplyOp: skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator),
+    isMultiplyOp: (skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator) || skill.enchantmentIds.includes(EnchantmentType.QuestMultiplyOp)) && runtimeState.questTransformed,
     ligatureCount: p3.flags.ligatureCount,
     stateMutations: allMutations,
     convertReverseOutputs: p2.convertReverseOutputs.length > 0 ? p2.convertReverseOutputs : undefined,
@@ -1339,14 +1346,15 @@ export interface CategorizedEnchantments {
 export function categorizeEnchantmentCandidates(skill: AffixSkillInstance, _equippedAffixTypes?: Set<AffixType>): CategorizedEnchantments {
   const existingEnchs = new Set(skill.enchantmentIds)
 
-  // 学徒附魔 — 1 通用 + 5 资源专精（全局监听，不限制技能资源类型）
+  // 学徒附魔 — 1 通用 + 5 资源专精（排除本技能产出资源对应的专精）
+  const sameResEnch = RES_ENCHANTMENT_BY_RESOURCE[skill.resource]
   const apprenticeTypes: EnchantmentType[] = [
     EnchantmentType.ApprenticeNeighbor,
     EnchantmentType.ApprenticeResBase, EnchantmentType.ApprenticeResScore,
     EnchantmentType.ApprenticeResMultiplier, EnchantmentType.ApprenticeResTime,
     EnchantmentType.ApprenticeResGold,
   ]
-  const apprentice = apprenticeTypes.filter(t => !existingEnchs.has(t))
+  const apprentice = apprenticeTypes.filter(t => !existingEnchs.has(t) && t !== sameResEnch)
 
   // 任务附魔（需匹配词条）
   const quest = filterQuestCandidates(skill)
@@ -1354,9 +1362,8 @@ export function categorizeEnchantmentCandidates(skill: AffixSkillInstance, _equi
   // 衍生附魔（@deprecated — 嬗变系已删除，始终返回空）
   const transmute: EnchantmentType[] = []
 
-  // 运算符
-  const operator: EnchantmentType[] = !existingEnchs.has(EnchantmentType.MultiplyOperator)
-    ? [EnchantmentType.MultiplyOperator] : []
+  // 运算符（不再独立提供，通过 Multiply 词条的质变附魔获取）
+  const operator: EnchantmentType[] = []
 
   return { apprentice, quest, transmute, operator }
 }
@@ -1595,14 +1602,12 @@ export function isApprenticeEnchantment(ench: EnchantmentType): boolean {
 
 /** 升华基础阈值（Lv.3→4 所需 EXP） */
 export const ASCEND_BASE_THRESHOLD = 0.5
-/** 每级额外阈值增长 */
-export const ASCEND_THRESHOLD_GROWTH = 0.3
 /** 升华后基础值指数增长率 */
 export const ASCEND_GROWTH_RATE = 1.6
 
-/** 升华所需 EXP 阈值: 0.5 + 0.3 × (level - 3) */
+/** 升华所需 EXP 阈值: 每级翻倍 — 0.5 × 2^(level - 3) */
 export function getAscendThreshold(level: number): number {
-  return ASCEND_BASE_THRESHOLD + ASCEND_THRESHOLD_GROWTH * (level - 3)
+  return ASCEND_BASE_THRESHOLD * Math.pow(2, level - 3)
 }
 
 /** 检查技能是否可以升华 */

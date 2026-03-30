@@ -3086,7 +3086,7 @@ describe('MultiplyOperator — Phase 2 unified additive', () => {
       ],
       enchantmentIds: [EnchantmentType.MultiplyOperator],
     })
-    const state = makeRuntimeState()
+    const state = makeRuntimeState({ questTransformed: true })
     const ctx = makeContext({ triggerKey: 'h', currentWord: 'hello' }) // 'h' is first letter
     const result = resolvePhase2(skill, state, ctx, 10)
     // MultiplyOperator: output = multOpBase × (1 + bonusPercent)
@@ -3110,7 +3110,7 @@ describe('MultiplyOperator — Phase 2 unified additive', () => {
       affixes: [],
       enchantmentIds: [EnchantmentType.MultiplyOperator],
     })
-    const state = makeRuntimeState()
+    const state = makeRuntimeState({ questTransformed: true })
     const ctx = makeContext()
     const result = resolvePhase2(skill, state, ctx, 10)
     expect(result.output).toBe(multOpBase) // multOpBase × (1 + 0)
@@ -3130,17 +3130,18 @@ describe('MultiplyOperator — Phase 3 (no bonusBreakdown)', () => {
   })
 
   it('MultiplyOperator calculation is same as additive (only base differs)', () => {
-    const state = makeRuntimeState()
     const ctx = makeContext()
 
     // Normal mode: baseOutput=10, bonusPercent=0.75 → 10 × 1.75 = 17.5
+    const addState = makeRuntimeState()
     const addSkill = makeSkill({ affixes: [], enchantmentIds: [] })
-    const addP2 = resolvePhase2(addSkill, state, ctx, 10)
+    const addP2 = resolvePhase2(addSkill, addState, ctx, 10)
     expect(addP2.output).toBe(10) // no bonuses
 
-    // MultiplyOperator mode: base=2.0, same bonusPercent → 2.0 × (1+bonusPercent)
+    // MultiplyOperator mode (questTransformed): base=2.0, same bonusPercent → 2.0 × (1+bonusPercent)
+    const mulState = makeRuntimeState({ questTransformed: true })
     const mulSkill = makeSkill({ affixes: [], enchantmentIds: [EnchantmentType.MultiplyOperator] })
-    const mulP2 = resolvePhase2(mulSkill, state, ctx, 10)
+    const mulP2 = resolvePhase2(mulSkill, mulState, ctx, 10)
     expect(mulP2.output).toBe(2.0) // multiplicative base, no bonuses
   })
 })
@@ -3152,7 +3153,7 @@ describe('MultiplyOperator + affix combo', () => {
       affixes: [{ type: AffixType.Taboo }], // +1.0
       enchantmentIds: [EnchantmentType.MultiplyOperator],
     })
-    const state = makeRuntimeState()
+    const state = makeRuntimeState({ questTransformed: true })
     const ctx = makeContext()
     const result = resolvePhase2(skill, state, ctx, 10)
     // Taboo: +1.0

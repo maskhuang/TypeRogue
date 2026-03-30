@@ -588,8 +588,8 @@ const ZH: Record<string, string> = {
   'rest.meditate.gold_r': '积蓄力量，获得 80 金币！',
   'rest.default': '无事发生。',
 
-  // --- affix names (20) ---
-  'affix.convert': '转化', 'affix.rainbow': '彩虹',
+  // --- affix names (21) ---
+  'affix.convert': '转化', 'affix.rainbow': '彩虹', 'affix.multiply': '乘算',
   'affix.charge': '蓄力', 'affix.decay': '衰减', 'affix.pulse': '脉冲',
   'affix.crit': '暴击', 'affix.cascade': '级联',
   'affix.void': '虚无', 'affix.resonance': '共鸣', 'affix.mirror': '倒影',
@@ -597,9 +597,10 @@ const ZH: Record<string, string> = {
   'affix.outcast': '流放', 'affix.gravity': '引力', 'affix.ligature': '连字',
   'affix.twin': '双生', 'affix.recurse': '递归', 'affix.taboo': '禁忌',
 
-  // --- affix descriptions (20) ---
+  // --- affix descriptions (21) ---
   'affix_desc.convert': '读取一种资源的当前值，按系数加成本资源产出',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
+  'affix_desc.multiply': '产出直接乘以固定倍数',
   'affix_desc.charge': '未触发时持续蓄力，触发时释放加成',
   'affix_desc.decay': '每个单词首次触发加成最高，逐次衰减，换词重置',
   'affix_desc.pulse': '每隔固定次数触发一次爆发',
@@ -783,6 +784,7 @@ const ZH: Record<string, string> = {
   'affix_param.valuePerStack': '每层加成',
   'affix_param.probMult': '概率倍率',
   'affix_param.recurseChance': '递归概率',
+  'affix_param.multiplyValue': '乘算倍数',
 }
 
 // === EN 字典 ===
@@ -1346,8 +1348,8 @@ const EN: Record<string, string> = {
   'rest.meditate.gold_r': 'Gathered strength, got 80 gold!',
   'rest.default': 'Nothing happens.',
 
-  // --- affix names (20) ---
-  'affix.convert': 'Convert', 'affix.rainbow': 'Rainbow',
+  // --- affix names (21) ---
+  'affix.convert': 'Convert', 'affix.rainbow': 'Rainbow', 'affix.multiply': 'Multiply',
   'affix.charge': 'Charge', 'affix.decay': 'Decay', 'affix.pulse': 'Pulse',
   'affix.crit': 'Crit', 'affix.cascade': 'Cascade',
   'affix.void': 'Void', 'affix.resonance': 'Resonance', 'affix.mirror': 'Mirror',
@@ -1355,9 +1357,10 @@ const EN: Record<string, string> = {
   'affix.outcast': 'Outcast', 'affix.gravity': 'Gravity', 'affix.ligature': 'Ligature',
   'affix.twin': 'Twin', 'affix.recurse': 'Recurse', 'affix.taboo': 'Taboo',
 
-  // --- affix descriptions (20) ---
+  // --- affix descriptions (21) ---
   'affix_desc.convert': 'Reads another resource value, adds scaled bonus to this output',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
+  'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
   'affix_desc.charge': 'Hold to charge, auto-release when full or early release on key up; bonus scales with charge',
   'affix_desc.decay': 'Highest bonus on first trigger, decays each trigger to floor, resets per stage',
   'affix_desc.pulse': 'Bursts every N triggers',
@@ -1541,6 +1544,7 @@ const EN: Record<string, string> = {
   'affix_param.valuePerStack': 'Stack Value',
   'affix_param.probMult': 'Prob Mult',
   'affix_param.recurseChance': 'Recurse %',
+  'affix_param.multiplyValue': 'Multiply',
 }
 
 // === Demo 物品名翻译（仅 Demo 池 ~48 个） ===

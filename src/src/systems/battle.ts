@@ -16,12 +16,13 @@ import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop } from './shop';
 import { shouldShowRitual, openRitualEnchantment } from './ritualEnchantment';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './relicPicker';
+import { openRestStage } from './restStage';
 import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getCycleTimeLimit, getBattleNumber, isRitualNode, isEliteNode, getNextBattleNode } from './stage/stageFlow';
-import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, BOSS_MODIFIER_IDS, setRelicGarbleActive, getEscalateTimeSpeedBonus, triggerFrostFreeze, isFrostFrozen, onMirrorTargetReached, getMirrorPhase, rollDecoyWord, isDecoyWord, isDecoyRecognized, getDecoyOriginalAt, markDecoyRecognized } from '../data/bossModifiers';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, setRelicGarbleActive, getEscalateTimeSpeedBonus, triggerFrostFreeze, isFrostFrozen, onMirrorTargetReached, getMirrorPhase, rollDecoyWord, isDecoyWord, isDecoyRecognized, getDecoyOriginalAt, markDecoyRecognized } from '../data/bossModifiers';
 import type { BossModifierId } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, isModifierActive } from './bossModifierEngine';
 import { showBossModifierPicker, showEliteModifierPicker } from './bossModifierPicker';
@@ -116,22 +117,16 @@ export function resetCycleTracking(): void { lastCycle = 0; chaosSeedEnchantment
 /**
  * Boss 胜利后的周目推进状态变更
  * - cycle++, level=1
- * - 重抽 bossModifierPool
+ * - bossModifierPool 清空（下次 Boss 战前由 picker 填充）
  */
-// Story 42.6: 单修饰器制 — 每个 Cycle 抽 1 个不重复修饰器
 export function advanceCycle(): void {
-  // 新周目第一关目标分数 = 上周目 Boss 关获得分数
-  state.calibratedTargetBase = Math.max(1, Math.round(state.score));
+  // Boss 关溢出分作为下周目第一关目标分数（不保留到下周目）
+  state.calibratedTargetBase = Math.max(1, Math.round(state.overkill));
+  state.overflowScore = 0;
   state.cycle++;
   state.level = 0; // 0 so that shop-leave's getNextBattleNode(0)=1 starts at level 1
   resetCycleTracking();
-  // Story 42.6 AC4: 耗尽重置 — 已用列表满了就清空重新循环
-  if (state.usedBossModifiers.length >= BOSS_MODIFIER_IDS.length) {
-    state.usedBossModifiers = [];
-  }
-  const newMod = drawSingleBossModifier(state.usedBossModifiers);
-  state.bossModifierPool = newMod ? [newMod] : [];
-  if (newMod) state.usedBossModifiers.push(newMod);
+  state.bossModifierPool = [];
 }
 
 // === 计时器 ===
@@ -254,12 +249,14 @@ function stopScoreRoller(): void {
 }
 
 // === 屏幕管理 ===
-export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'ritual'): void {
+export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'ritual' | 'rest'): void {
   const el = getElements();
   el.battleScreen.style.display = name === 'battle' ? 'flex' : 'none';
   el.shopScreen.style.display = name === 'shop' ? 'flex' : 'none';
   el.ritualScreen.style.display = name === 'ritual' ? 'flex' : 'none';
   el.gameoverScreen.style.display = name === 'gameover' ? 'flex' : 'none';
+  const restScreen = document.getElementById('rest-screen');
+  if (restScreen) restScreen.style.display = name === 'rest' ? 'flex' : 'none';
 
   // 离开战斗屏幕时确保结算面板隐藏
   if (name !== 'battle') {
@@ -1444,18 +1441,18 @@ function showGoldReward(onComplete: () => void): void {
 }
 
 // === 计时器 ===
-// Story 42.4: 时间加速 — 达标前二次方，达标后三次方（从达标倍率无缝衔接）
-// boss_fast_time: 开局即进入达标后加速阶段（三次方从 t=0 开始）
+// 时间加速 — 达标前二次方，达标后 1.6 指数增长（从达标倍率无缝衔接）
+// boss_fast_time: 开局即进入达标后加速阶段（指数增长从 t=0 开始）
 function getTimeAcceleration(elapsedSeconds: number, isBoss: boolean): number {
   const rate = isBoss ? BALANCE.ACCEL_RATE_BOSS : BALANCE.ACCEL_RATE_STANDARD;
   const fastTime = !!getActiveParams()?.timeSpeed;
   if (_targetReached) {
     const dt = elapsedSeconds - _elapsedAtTarget;
-    return _accelAtTarget + rate * dt * dt * dt;
+    return _accelAtTarget * Math.pow(1.6, rate * dt * dt * dt);
   }
   if (fastTime) {
-    // 视作从 t=0 即达标：三次方加速
-    return 1.0 + rate * elapsedSeconds * elapsedSeconds * elapsedSeconds;
+    // 视作从 t=0 即达标：指数增长
+    return 1.0 * Math.pow(1.6, rate * elapsedSeconds * elapsedSeconds * elapsedSeconds);
   }
   return 1.0 + rate * elapsedSeconds * elapsedSeconds;
 }
@@ -1675,28 +1672,48 @@ function endLevel(): void {
 
       const currentType = getStageType(state.level);
 
-      // Demo: Boss 通关后直接结束
-      if (IS_DEMO && currentType === 'boss') {
-        victory();
-        return;
-      }
-
       if (currentType === 'boss') {
-        // 无限循环：Boss 胜利 → 周目推进 → 修饰器选择 → 致命礼物 → 遗物 → 商店（仪式现为独立节点）
+        // 第 3 周目 Boss 通关 → 游戏胜利
+        if (state.cycle >= 3) {
+          victory();
+          return;
+        }
+        // 非最终周目：周目推进 → 永久修饰器 → 传说遗物 → 致命礼物 → 商店
         advanceCycle();
-        showBossModifierPicker(() => {
-          continueAfterDeadlyGift(() => {
-            if (hasUnownedRelics()) {
-              showRelicPicker(() => openShop(true), RELIC_WEIGHT_PRESETS.bossDrop);
-            } else {
-              openShop(true);
-            }
-          });
+        const permMod = drawSingleBossModifier(state.activeModifiers);
+        if (permMod) {
+          state.activeModifiers.push(permMod);
+          const meta = getBossModifierMeta(permMod);
+          if (meta) {
+            const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name;
+            showFeedback(`${meta.icon} ${modName}`, '#ff4444');
+          }
+        }
+        const legendaryWeights = { common: 0, rare: 0, epic: 0, legendary: 100 };
+        continueAfterDeadlyGift(() => {
+          if (hasUnownedRelics()) {
+            showRelicPicker(() => openShop(true), legendaryWeights);
+          } else {
+            openShop(true);
+          }
         });
         return;
       }
 
-      // Story 42.2: 普通关胜利 → 金币奖励 → 致命礼物 → 商店
+      // 精英战胜利 → 金币奖励 → 致命礼物 → 史诗遗物 → 商店
+      if (currentType === 'elite') {
+        const epicWeights = { common: 0, rare: 0, epic: 100, legendary: 0 };
+        showGoldReward(() => continueAfterDeadlyGift(() => {
+          if (hasUnownedRelics()) {
+            showRelicPicker(() => openShop(true), epicWeights);
+          } else {
+            openShop(true);
+          }
+        }));
+        return;
+      }
+
+      // 普通关胜利 → 金币奖励 → 致命礼物 → 商店
       showGoldReward(() => continueAfterDeadlyGift(() => openShop(true)));
     }, playRatingSound);
   } else {
@@ -1705,13 +1722,14 @@ function endLevel(): void {
     if (phoenixResult) {
       consumePhoenix();
       state.phase = 'battle';
-      // Story 42.6: Boss 关刷新修饰器（endLevel 顶部已 cleanup，此处只需重新 apply 单个）
+      // Boss 关刷新修饰器（endLevel 顶部已 cleanup，此处重新 apply 所有临时修饰器）
       if (phoenixResult.refreshModifiers) {
         const stageType = getStageType(state.level);
-        if (stageType === 'boss' && state.bossModifierPool.length > 0) {
-          const bossModId = state.bossModifierPool[0];
-          if (bossModId && !isModifierActive(bossModId)) {
-            applyModifier(bossModId, false);
+        if (stageType === 'boss') {
+          for (const bossModId of state.bossModifierPool) {
+            if (bossModId && !isModifierActive(bossModId)) {
+              applyModifier(bossModId, false);
+            }
           }
         }
         // 精英关：重新应用精英修饰器（临时）
@@ -1755,11 +1773,9 @@ function hideSettlement(): void {
 export async function startLevel(): Promise<void> {
   keyTooltip.hide();
 
-  // === 仪式节点：跳过战斗，打开仪式附魔 ===
+  // === 仪式节点（精英关后）：打开休息关 ===
   if (isRitualNode(state.level)) {
-    const afterRitual = () => { state.level = getNextBattleNode(state.level); startLevel(); };
-    if (shouldShowRitual()) openRitualEnchantment(afterRitual);
-    else afterRitual();
+    openRestStage();
     return;
   }
 
@@ -1829,8 +1845,8 @@ export async function startLevel(): Promise<void> {
   state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
   _isCalibrationLevel = state.targetScore === 0 && state.calibratedTargetBase === 0;
 
-  // 溢出分扣减目标分数（最低 0），然后清零
-  if (state.overflowScore > 0) {
+  // 溢出分扣减目标分数（最低 0），然后清零；Boss 战不受溢出扣减
+  if (state.overflowScore > 0 && currentStageType !== 'boss') {
     state.targetScore = Math.max(0, Math.round(state.targetScore - state.overflowScore));
     state.overflowScore = 0;
   }
@@ -1981,9 +1997,13 @@ export async function startLevel(): Promise<void> {
   // Task 3.3-3.4: 修饰器 HUD 显示/隐藏
   const modInfo = el.modifierInfo;
   if (currentStageType === 'boss') {
-    // Story 42.6: Boss 关只应用 1 个修饰器（bossModifierPool[0]）
-    if (state.bossModifierPool.length > 0) {
-      const bossModId = state.bossModifierPool[0];
+    // Boss 战前：3 轮修饰器选择（每类 2 选 1），结果存入 bossModifierPool 作为临时修饰器
+    const selectedMods = await new Promise<BossModifierId[]>((resolve) => {
+      showBossModifierPicker((mods) => resolve(mods));
+    });
+    state.bossModifierPool = selectedMods;
+    // 应用选中的临时修饰器
+    for (const bossModId of state.bossModifierPool) {
       if (bossModId && !isModifierActive(bossModId)) {
         if (barrierDelay) {
           addDeferredModifier(bossModId, false);
@@ -1992,15 +2012,24 @@ export async function startLevel(): Promise<void> {
         }
       }
     }
-    // Story 42.6: HUD 只显示 1 个修饰器
+    // HUD: 显示所有选中的修饰器
     if (state.bossModifierPool.length > 0) {
-      const meta = getBossModifierMeta(state.bossModifierPool[0]);
-      if (meta) {
+      const parts = state.bossModifierPool.map(id => {
+        const meta = getBossModifierMeta(id);
+        if (!meta) return '';
         const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name;
-        const modDesc = t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description;
-        modInfo.querySelector('.modifier-icon')!.textContent = meta.icon;
-        modInfo.querySelector('.modifier-name')!.textContent = modName;
-        modInfo.querySelector('.modifier-hint')!.textContent = modDesc + (barrierDelay ? ` (${t('battle.barrier_delayed')})` : '');
+        return `${meta.icon} ${modName}`;
+      }).filter(Boolean);
+      const firstMeta = getBossModifierMeta(state.bossModifierPool[0]);
+      if (firstMeta) {
+        modInfo.querySelector('.modifier-icon')!.textContent = parts.join('  ');
+        modInfo.querySelector('.modifier-name')!.textContent = '';
+        const descs = state.bossModifierPool.map(id => {
+          const m = getBossModifierMeta(id);
+          if (!m) return '';
+          return t(`modifier.${m.id}.desc`) !== `modifier.${m.id}.desc` ? t(`modifier.${m.id}.desc`) : m.description;
+        }).filter(Boolean);
+        modInfo.querySelector('.modifier-hint')!.textContent = descs.join(' / ') + (barrierDelay ? ` (${t('battle.barrier_delayed')})` : '');
         modInfo.classList.add('visible');
       }
     }

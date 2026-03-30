@@ -216,12 +216,12 @@ describe('rollAffixParams', () => {
   const resource: ResourceType = 'base'
 
   describe('Multiply', () => {
-    it('should return multiplier in [1.3, 2.0]', () => {
+    it('should return multiplyValue in [1.5, 2.0]', () => {
       for (let i = 0; i < 100; i++) {
         const a = rollAffixParams(AffixType.Multiply, resource)
         expect(a.type).toBe(AffixType.Multiply)
-        expect(a.multiplier).toBeGreaterThanOrEqual(1.3)
-        expect(a.multiplier).toBeLessThanOrEqual(2.0)
+        expect(a.multiplyValue).toBeGreaterThanOrEqual(1.5)
+        expect(a.multiplyValue).toBeLessThanOrEqual(2.0)
       }
     })
   })

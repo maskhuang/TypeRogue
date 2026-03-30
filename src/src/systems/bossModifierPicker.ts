@@ -15,8 +15,9 @@ const CATEGORY_LABELS: Record<ModifierCategory, string> = {
   disruption: 'modifier_picker.cat_disruption',
 }
 
-/** 显示 Boss 修饰器选择模态框（每类各选一，共 3 轮） */
-export function showBossModifierPicker(onComplete: () => void): void {
+/** 显示 Boss 修饰器选择模态框（每类各选一，共 3 轮）
+ *  选中的修饰器不再自动加入 activeModifiers，而是收集后通过回调返回 */
+export function showBossModifierPicker(onComplete: (selectedMods: BossModifierId[]) => void): void {
   // 传入精英修饰器保证出现在对应类别
   const categoryGroups = generateBossModifierCandidatesByCategory(state.activeModifiers, state.eliteModifier)
   const categories: ModifierCategory[] = ['offense', 'defense', 'disruption']
@@ -31,22 +32,23 @@ export function showBossModifierPicker(onComplete: () => void): void {
 
   if (rounds.length === 0) {
     state.eliteModifier = null
-    onComplete()
+    onComplete([])
     return
   }
 
   let roundIdx = 0
+  const sessionPicks: BossModifierId[] = []
 
   const showRound = () => {
     if (roundIdx >= rounds.length) {
       closeModifierPicker()
       state.eliteModifier = null
-      onComplete()
+      onComplete(sessionPicks)
       return
     }
     const { category, candidates } = rounds[roundIdx]
-    renderPickerRound(category, candidates, (modId) => {
-      state.activeModifiers.push(modId)
+    renderPickerRound(category, candidates, sessionPicks, (modId) => {
+      sessionPicks.push(modId)
       playSound('skill')
       roundIdx++
       showRound()
@@ -139,6 +141,7 @@ export function showEliteModifierPicker(onComplete: (modId: BossModifierId) => v
 function renderPickerRound(
   category: ModifierCategory,
   candidates: BossModifierId[],
+  sessionPicks: BossModifierId[],
   onPick: (id: BossModifierId) => void,
 ): void {
   const modal = document.getElementById('modifier-picker-modal')
@@ -153,9 +156,10 @@ function renderPickerRound(
     titleEl.textContent = `⚔️ ${catLabel} ⚔️`
   }
 
-  // 渲染已激活修饰器列表
+  // 渲染已激活修饰器列表（永久 + 本轮已选）
   activeEl.innerHTML = ''
-  if (state.activeModifiers.length > 0) {
+  const allDisplay = [...state.activeModifiers, ...sessionPicks]
+  if (allDisplay.length > 0) {
     const label = document.createElement('div')
     label.className = 'modifier-picker-active-label'
     label.textContent = t('modifier_picker.active_label')
@@ -163,7 +167,7 @@ function renderPickerRound(
 
     const list = document.createElement('div')
     list.className = 'modifier-picker-active-list'
-    for (const modId of state.activeModifiers) {
+    for (const modId of allDisplay) {
       const meta = getBossModifierMeta(modId)
       if (meta) {
         const tag = document.createElement('span')

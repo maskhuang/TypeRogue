@@ -58,6 +58,7 @@ export function createInitialState(): GameState {
     bossModifierPool: [],
     usedBossModifiers: [],  // Story 42.6: 本 Run 已用修饰器
     eliteModifier: null,
+    usedRestEvents: [],
     tempBuffs: [],
     sealedKeys: [],
     pseudoInfiniteState: null,

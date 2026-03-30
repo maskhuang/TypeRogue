@@ -7,7 +7,6 @@ import type { AffixSkillInstance, SkillRuntimeState } from '../../../src/data/af
 import { EnchantmentType } from '../../../src/data/affixes'
 import {
   ASCEND_BASE_THRESHOLD,
-  ASCEND_THRESHOLD_GROWTH,
   ASCEND_GROWTH_RATE,
   getAscendThreshold,
   canAscend,
@@ -53,17 +52,16 @@ describe('升华系统 (Apprentice Ascension)', () => {
       expect(getAscendThreshold(3)).toBeCloseTo(0.5)
     })
 
-    it('Lv.4→5: 阈值 = 0.8', () => {
-      expect(getAscendThreshold(4)).toBeCloseTo(0.8)
+    it('Lv.4→5: 阈值 = 1.0（翻倍）', () => {
+      expect(getAscendThreshold(4)).toBeCloseTo(1.0)
     })
 
-    it('Lv.5→6: 阈值 = 1.1', () => {
-      expect(getAscendThreshold(5)).toBeCloseTo(1.1)
+    it('Lv.5→6: 阈值 = 2.0（再翻倍）', () => {
+      expect(getAscendThreshold(5)).toBeCloseTo(2.0)
     })
 
     it('常量正确', () => {
       expect(ASCEND_BASE_THRESHOLD).toBe(0.5)
-      expect(ASCEND_THRESHOLD_GROWTH).toBe(0.3)
       expect(ASCEND_GROWTH_RATE).toBe(1.6)
     })
   })
@@ -102,8 +100,8 @@ describe('升华系统 (Apprentice Ascension)', () => {
     it('Lv.4 需要更高阈值', () => {
       const skill = makeSkill({ level: 4 })
       const rt = makeRuntimeState({ apprenticeAccumulated: 0.5 })
-      expect(canAscend(skill, rt)).toBe(false) // 需要 0.8
-      rt.apprenticeAccumulated = 0.8
+      expect(canAscend(skill, rt)).toBe(false) // 需要 1.0
+      rt.apprenticeAccumulated = 1.0
       expect(canAscend(skill, rt)).toBe(true)
     })
 
@@ -137,15 +135,15 @@ describe('升华系统 (Apprentice Ascension)', () => {
 
     it('连续升华', () => {
       const skill = makeSkill({ level: 3 })
-      const rt = makeRuntimeState({ apprenticeAccumulated: 1.5 })
+      const rt = makeRuntimeState({ apprenticeAccumulated: 1.8 })
       executeAscend(skill, rt)
       expect(skill.level).toBe(4)
-      expect(rt.apprenticeAccumulated).toBeCloseTo(1.0) // 1.5 - 0.5
+      expect(rt.apprenticeAccumulated).toBeCloseTo(1.3) // 1.8 - 0.5
 
-      // 第二次升华 (Lv.4→5, 阈值 0.8)
+      // 第二次升华 (Lv.4→5, 阈值 1.0)
       executeAscend(skill, rt)
       expect(skill.level).toBe(5)
-      expect(rt.apprenticeAccumulated).toBeCloseTo(0.2) // 1.0 - 0.8
+      expect(rt.apprenticeAccumulated).toBeCloseTo(0.3) // 1.3 - 1.0
     })
   })
 
