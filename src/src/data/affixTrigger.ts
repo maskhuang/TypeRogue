@@ -115,6 +115,8 @@ export interface TriggerContext {
   baseCritRate?: number
   /** 命运硬币激活（覆盖暴击判定） */
   fateCoinActive?: boolean
+  /** 递归概率覆盖（由调度器传入，每次递归减半） */
+  recurseChanceOverride?: number
 }
 
 // ===== 全场质变检查 =====
@@ -905,7 +907,8 @@ export function resolvePhase5(
 
       case AffixType.Recurse: {
         if (recurseDepth >= MAX_RECURSE_DEPTH) break
-        const chanceEff = affix.recurseChance ?? 0
+        // 使用调度器传入的衰减概率（首次为原始值）
+        const chanceEff = ctx.recurseChanceOverride ?? affix.recurseChance ?? 0
         if (ctx.randomFn() < chanceEff) {
           // 质变后：递归概率不减半
           const nextChance = isTransformedForAffix(AffixType.Recurse, runtimeState, skill, ctx) ? chanceEff : chanceEff / 2

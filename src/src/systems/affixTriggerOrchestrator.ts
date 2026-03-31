@@ -42,6 +42,8 @@ export interface TriggerWorkItem {
   chainHistory: string[]
   /** Story 41-3: 质变溅射 — 允许被溅射技能的 Splash 词条再触发一跳 */
   chainSplash?: boolean
+  /** 递归概率覆盖（每次递归减半，防止概率不衰减导致卡死） */
+  recurseChanceOverride?: number
 }
 
 // ===== 调度器结果 =====
@@ -165,6 +167,10 @@ export function orchestrateAffixTrigger(
       ...(item.type === 'outcast_echo' || item.type === 'crit_echo' ? { chainAffixesDisabled: true } : {}),
       // conduit 额外触发禁用链式词条，防止 Conduit→Conduit 无限级联
       ...(item.type === 'conduit' ? { chainAffixesDisabled: true } : {}),
+      // recurse 重触发禁用链式词条，防止 Recurse→Splash/Resonance 指数增长
+      ...(item.type === 'recurse' ? { chainAffixesDisabled: true } : {}),
+      // recurse 概率覆盖（每次递归减半）
+      ...(item.recurseChanceOverride != null ? { recurseChanceOverride: item.recurseChanceOverride } : {}),
     }
 
     // ── 执行纯计算（triggerAffixSkill 签名不变） ──
@@ -238,6 +244,7 @@ export function orchestrateAffixTrigger(
         type: 'recurse',
         depth: (item.type === 'recurse' ? item.depth : 0) + 1,
         chainHistory: item.chainHistory,
+        recurseChanceOverride: result.phase5.recurse.newChance,
       })
     }
 

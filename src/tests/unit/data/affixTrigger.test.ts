@@ -1648,6 +1648,31 @@ describe('resolvePhase5', () => {
       const result = resolvePhase5(skill, state, ctx, flags, 10, MAX_RECURSE_DEPTH)
       expect(result.recurse.shouldRecurse).toBe(false)
     })
+
+    it('should use recurseChanceOverride from context when provided', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Recurse, recurseChance: 0.5 }],
+      })
+      const state = makeRuntimeState()
+      // override = 0.1, roll = 0.2 → 0.2 > 0.1 → fail (would succeed with original 0.5)
+      const ctx = makeContext({ randomFn: () => 0.2, recurseChanceOverride: 0.1 } as any)
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10, 0)
+      expect(result.recurse.shouldRecurse).toBe(false)
+    })
+
+    it('should halve recurseChanceOverride in newChance', () => {
+      const skill = makeSkill({
+        affixes: [{ type: AffixType.Recurse, recurseChance: 0.5 }],
+      })
+      const state = makeRuntimeState()
+      // override = 0.2, roll = 0.1 → success; newChance = 0.2 / 2 = 0.1
+      const ctx = makeContext({ randomFn: () => 0.1, recurseChanceOverride: 0.2 } as any)
+      const flags = makeFlags()
+      const result = resolvePhase5(skill, state, ctx, flags, 10, 0)
+      expect(result.recurse.shouldRecurse).toBe(true)
+      expect(result.recurse.newChance).toBeCloseTo(0.1)
+    })
   })
 
   describe('Apprentice enchantments (Phase 5 self-trigger types)', () => {
