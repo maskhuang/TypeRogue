@@ -1,125 +1,98 @@
 // ============================================
 // 打字肉鸽 - 资源系统遗物行为 (Story 36.8)
 // ============================================
-// 5 个资源系统遗物的纯函数行为模块
+// 6 个资源系统遗物的纯函数行为模块
 
 import { state } from '../../core/state'
 import { registerRelicBehavior } from './RelicPipeline'
 
-// === 常量 ===
-export const SCORE_MAGNET_BONUS = 1
-export const RESOURCE_SENSE_THRESHOLD = 3
-export const RESOURCE_SENSE_BOOST = 0.50
-export const TIME_DEW_INTERVAL = 3
-export const TIME_DEW_BONUS = 1
-export const RESOURCE_TIDE_RATE = 0.40
+// === 产出分红 (production_dividend) ===
+export const DIVIDEND_CHANCE = 0.05
+export const DIVIDEND_GOLD = 2
 
-// === 模块级状态 ===
-
-/** 本词各资源类型产出量（每词开始时清空） */
-const _wordResourceAmounts: Record<string, number> = {}
-
-/** 本关已完成单词数（time_dew 计数器） */
-let _timeDewCounter = 0
-
-/** 本关单词序号（resource_tide 奇偶判断） */
-let _wordParity = 0
-
-/** 延迟到下一词注入的 resource_sense base/multiplier 奖励 */
-let _deferredSenseBase = 0
-let _deferredSenseMult = 0
-
-// === 分数磁铁 (score_magnet) ===
-
-/** 有遗物 → SCORE_MAGNET_BONUS，否则 0 */
-export function checkScoreMagnet(): number {
-  if (!state.player.relics.has('score_magnet')) return 0
-  return SCORE_MAGNET_BONUS
+/** 产出分红：5%概率+2金币。在 applyResource 正产出时调用 */
+export function rollProductionDividend(): number {
+  if (!state.player.relics.has('production_dividend')) return 0
+  return Math.random() < DIVIDEND_CHANCE ? DIVIDEND_GOLD : 0
 }
 
-// === 资源感应 (resource_sense) ===
+// === 续命涓流 (time_trickle) ===
+export const TRICKLE_TIME = 0.05
 
-/** 记录本词资源产出（正产出时调用） */
-export function recordResourceProduction(resource: string, amount: number): void {
-  if (amount <= 0) return
-  _wordResourceAmounts[resource] = (_wordResourceAmounts[resource] || 0) + amount
+/** 续命涓流：+0.05s。在 applyResource 正产出时调用 */
+export function getTimeTrickle(): number {
+  if (!state.player.relics.has('time_trickle')) return 0
+  return TRICKLE_TIME
 }
 
-/** 有遗物 + ≥3 种资源 → 返回最少那种 + 预计算bonus，否则 null */
-export function checkResourceSense(): { resource: string; bonus: number } | null {
-  if (!state.player.relics.has('resource_sense')) return null
-  const types = Object.keys(_wordResourceAmounts)
-  if (types.length < RESOURCE_SENSE_THRESHOLD) return null
+// === 资源专精 (resource_focus) ===
+export const RESOURCE_FOCUS_RATE = 0.25
 
-  // 找出产出量最少的资源
-  let minResource = types[0]
-  let minAmount = _wordResourceAmounts[types[0]]
-  for (let i = 1; i < types.length; i++) {
-    if (_wordResourceAmounts[types[i]] < minAmount) {
-      minAmount = _wordResourceAmounts[types[i]]
-      minResource = types[i]
-    }
+/** 分析已装备技能，找出产出最多的资源类型 */
+export function getResourceFocusType(): string | null {
+  if (!state.player.relics.has('resource_focus')) return null
+  const counts: Record<string, number> = {}
+  for (const [, sk] of state.affixSkills) {
+    const res = sk.resource
+    counts[res] = (counts[res] || 0) + 1
   }
-
-  const bonus = Math.floor(minAmount * RESOURCE_SENSE_BOOST)
-  return { resource: minResource, bonus }
-}
-
-/** 每词开始时清空资源产出追踪 */
-export function resetWordResourceAmounts(): void {
-  for (const key of Object.keys(_wordResourceAmounts)) {
-    delete _wordResourceAmounts[key]
+  let maxRes: string | null = null
+  let maxCount = 0
+  for (const [res, count] of Object.entries(counts)) {
+    if (count > maxCount) { maxCount = count; maxRes = res }
   }
+  return maxRes
 }
 
-/** 延迟存储 base/multiplier 奖励，下一词 setWord 时注入管道 */
-export function storeDeferredSenseBonus(resource: 'base' | 'multiplier', amount: number): void {
-  if (resource === 'base') _deferredSenseBase += amount
-  else _deferredSenseMult += amount
+/** 返回对指定资源的加成率（加算到 relicBonus） */
+export function getResourceFocusBonus(resource: string): number {
+  const focusType = getResourceFocusType()
+  if (!focusType || focusType !== resource) return 0
+  return RESOURCE_FOCUS_RATE
 }
 
-/** 消费并清零延迟奖励 */
-export function consumeDeferredSenseBonus(): { base: number; multiplier: number } {
-  const result = { base: _deferredSenseBase, multiplier: _deferredSenseMult }
-  _deferredSenseBase = 0
-  _deferredSenseMult = 0
-  return result
-}
+// === 多元投资 (resource_diversity) ===
+export const DIVERSITY_THRESHOLD = 3
+export const DIVERSITY_RATE = 0.20
 
-// === 时间露珠 (time_dew) ===
-
-/** 递增本关单词计数器 */
-export function incrementTimeDewCounter(): void {
-  _timeDewCounter++
-}
-
-/** 有遗物 + counter 是 INTERVAL 的倍数 → TIME_DEW_BONUS，否则 0 */
-export function checkTimeDew(): number {
-  if (!state.player.relics.has('time_dew')) return 0
-  if (_timeDewCounter === 0) return 0
-  if (_timeDewCounter % TIME_DEW_INTERVAL === 0) return TIME_DEW_BONUS
-  return 0
+/** 检查装备技能是否覆盖≥3种资源类型 */
+export function getResourceDiversityBonus(): number {
+  if (!state.player.relics.has('resource_diversity')) return 0
+  const types = new Set<string>()
+  for (const [, sk] of state.affixSkills) {
+    types.add(sk.resource)
+  }
+  return types.size >= DIVERSITY_THRESHOLD ? DIVERSITY_RATE : 0
 }
 
 // === 资源潮汐 (resource_tide) ===
+export const RESOURCE_TIDE_RATE = 0.80
+
+/** 本关单词序号（resource_tide 相位判断） */
+let _wordParity = 0
+
+const TIDE_PHASE_RESOURCE = ['base', 'multiplier', 'time', 'gold'] as const
 
 /** 递增本关单词序号 */
 export function incrementWordParity(): void {
   _wordParity++
 }
 
-/** 当前潮汐增幅的资源类型：'base' 或 'multiplier' */
-export function getCurrentTideResource(): 'base' | 'multiplier' {
-  return _wordParity % 2 === 1 ? 'base' : 'multiplier'
+/** 获取当前潮汐相位（0=底分, 1=倍率, 2=时间, 3=金币） */
+export function getCurrentTidePhase(): number {
+  return _wordParity % 4
 }
 
-/** 有遗物时按奇偶和资源类型返回加算率，否则 0 */
+/** 获取当前潮汐相位对应的资源类型名（用于 UI 展示） */
+export function getCurrentTideResource(): string {
+  return TIDE_PHASE_RESOURCE[getCurrentTidePhase()]
+}
+
+/** 有遗物时按相位和资源类型返回加算率，否则 0 */
 export function getResourceTideBonus(resource: string): number {
   if (!state.player.relics.has('resource_tide')) return 0
-  const isOdd = _wordParity % 2 === 1
-  if (isOdd && resource === 'base') return RESOURCE_TIDE_RATE
-  if (!isOdd && resource === 'multiplier') return RESOURCE_TIDE_RATE
-  return 0
+  return resource === TIDE_PHASE_RESOURCE[getCurrentTidePhase()]
+    ? RESOURCE_TIDE_RATE : 0
 }
 
 // === 万物熔炉 (universal_furnace) ===
@@ -142,10 +115,7 @@ export function checkUniversalFurnace(targetReachedTime?: number): { bonusGold: 
 
 /** 每关开始时重置关级状态 */
 export function resetResourceRelicBattleState(): void {
-  _timeDewCounter = 0
   _wordParity = 0
-  _deferredSenseBase = 0
-  _deferredSenseMult = 0
 }
 
 /** 注册资源系统遗物行为 */

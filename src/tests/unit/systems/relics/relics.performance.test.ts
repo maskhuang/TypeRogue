@@ -8,7 +8,7 @@ import { RELICS } from '../../../../src/data/relics';
 
 // 11 个行为模块的关键 pipeline 函数
 import { applyBaseShield, applySnowball, resetScoringRelicBattleState } from '../../../../src/systems/relics/ScoringRelicBehaviors';
-import { checkScoreMagnet, getResourceTideBonus, resetResourceRelicBattleState } from '../../../../src/systems/relics/ResourceRelicBehaviors';
+import { rollProductionDividend, getResourceTideBonus, resetResourceRelicBattleState } from '../../../../src/systems/relics/ResourceRelicBehaviors';
 import { getAdjacentPowerBonus, resetTopologyRelicState } from '../../../../src/systems/relics/TopologyRelicBehaviors';
 import { calculateComboBuffer, getMultiplierPrismBonus, resetComboRelicState } from '../../../../src/systems/relics/ComboRelicBehaviors';
 import { getFirstStrikeBonus, resetSkillRelicState } from '../../../../src/systems/relics/SkillRelicBehaviors';
@@ -29,7 +29,7 @@ describe('遗物 Pipeline 性能测试 (Story 36.13 AC2)', () => {
     const relicsToActivate = [
       'base_shield',       // scoring
       'snowball',          // scoring (2nd)
-      'score_magnet',      // resource
+      'production_dividend',      // resource
       'adjacent_power',    // topology
       'combo_buffer',      // combo
       'multiplier_prism',  // combo (2nd)
@@ -67,7 +67,7 @@ describe('遗物 Pipeline 性能测试 (Story 36.13 AC2)', () => {
       // 模拟 completeWord 中遗物相关函数调用链
       applyBaseShield(50);
       applySnowball(50);
-      checkScoreMagnet();
+      rollProductionDividend();
       getAdjacentPowerBonus('a');
       calculateComboBuffer(10);
       getMultiplierPrismBonus();
@@ -123,7 +123,7 @@ describe('遗物 Pipeline 性能测试 (Story 36.13 AC2)', () => {
       // 同样的 pipeline 调用链
       applyBaseShield(50);
       applySnowball(50);
-      checkScoreMagnet();
+      rollProductionDividend();
       getAdjacentPowerBonus('a');
       calculateComboBuffer(10);
       getMultiplierPrismBonus();

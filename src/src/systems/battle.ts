@@ -17,7 +17,7 @@ import { openShop } from './shop';
 import { shouldShowRitual, openRitualEnchantment } from './ritualEnchantment';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './relicPicker';
 import { openRestStage } from './restStage';
-import { getLetterScoreModifiers } from './letters/LetterFrequencySystem';
+import { getWordEffectModifiers } from './letters/LetterFrequencySystem';
 import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
@@ -35,7 +35,7 @@ import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncro
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestEquipReduction, getGreedyInscriptionTargetMult } from './relics/EnchantmentRelicBehaviors';
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, checkRowSwitch, checkLineClear, LINE_CLEAR_OUTPUT_RATIO, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
-import { checkScoreMagnet, checkResourceSense, storeDeferredSenseBonus, consumeDeferredSenseBonus, incrementTimeDewCounter, checkTimeDew, incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
+import { incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, shouldBarrierDelay, startBarrierDelay, addDeferredModifier, checkBarrierActivation, isBarrierDelaying, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
@@ -365,18 +365,6 @@ function setWord(): void {
   synergy.skillBaseScore = 0;
   synergy.letterBaseScore = 0;
   synergy.lastTriggeredSkillId = null;
-  // Story 36.8: 注入上一词延迟的 resource_sense base/multiplier 奖励
-  const deferred = consumeDeferredSenseBonus();
-  if (deferred.base > 0) {
-    synergy.skillBaseScore += deferred.base;
-    showFeedback(`🔮 +${deferred.base}`, '#cc88ff', undefined, undefined,
-      { relicId: 'resource_sense', resource: 'base', amount: deferred.base });
-  }
-  if (deferred.multiplier > 0) {
-    synergy.skillMultBonus += deferred.multiplier;
-    showFeedback(`🔮 +${deferred.multiplier}`, '#cc88ff', undefined, undefined,
-      { relicId: 'resource_sense', resource: 'multiplier', amount: deferred.multiplier });
-  }
   // Story 36.6: 双手协奏手追踪重置
   resetDualConcertoHand();
   renderWord();
@@ -637,24 +625,22 @@ function playerCorrect(k: string): void {
   state.resources.base += letterBase; // 写入资源
   state.wordScore += letterScore;
 
-  // Story 36.8: 分数磁铁 — 每打一个字+1分（黑洞模式重定向到隐藏池）
-  const magnetBonus = checkScoreMagnet();
-  if (magnetBonus > 0) {
-    if (isBlackHoleActive()) {
-      accumulateBlackHole(magnetBonus);
-    } else {
-      state.score += magnetBonus;
-      showFeedback(`🧲 +${magnetBonus}`, '#ffe66d', 0.6, undefined, { relicId: 'score_magnet', resource: 'score', amount: magnetBonus });
-    }
-  }
-
-  // 字母升级加分：通过缓存的注册表解析 on_correct_keystroke
+  // 词语效果加成：通过缓存的注册表解析 on_correct_keystroke
   if (letterRegistry) {
     const letterResult = EffectPipeline.resolve(letterRegistry, 'on_correct_keystroke', {
       currentKeystrokeKey: k,
     });
     if (letterResult.effects.score > 0) {
       synergy.letterBaseScore += letterResult.effects.score;
+    }
+    if (letterResult.effects.multiply > 0) {
+      state.multiplier += letterResult.effects.multiply;
+    }
+    if (letterResult.effects.time > 0) {
+      state.time = Math.min(state.time + letterResult.effects.time, state.timeMax);
+    }
+    if (letterResult.effects.gold > 0) {
+      state.resources.gold += letterResult.effects.gold;
     }
   }
 
@@ -911,7 +897,7 @@ function playerWrong(): void {
 function completeWord(): void {
   const el = getElements();
 
-  // 计算基础分（字母击键 + 技能基础分 + 字母升级底分 + 字母底分加成）
+  // 计算基础分（字母击键 + 技能基础分 + 词语效果底分 + 字母底分加成）
   const baseChips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore + state.player.wordBonus);
   state.resources.base = baseChips;
   state.resources.multiplier = state.multiplier;
@@ -1108,41 +1094,9 @@ function completeWord(): void {
     showFeedback(t('battle.key_storm', { value: stormTargets.length }), '#aa88ff');
   }
 
-  // Story 36.8: 资源感应 — ≥3种资源时最少那种+50%（基于本词产出量）
-  const senseResult = checkResourceSense();
-  if (senseResult && senseResult.bonus > 0) {
-    const senseResource = senseResult.resource;
-    const senseBonus = senseResult.bonus;
-    if (senseResource === 'base' || senseResource === 'multiplier') {
-      // 延迟到下一词管道注入，使其真正参与 base/multiplier 运算
-      storeDeferredSenseBonus(senseResource, senseBonus);
-      showFeedback(`🔮 +${senseBonus} ${senseResource} ⏳`, '#cc88ff');
-    } else {
-      // time/gold/score/fragment: 即时处理
-      if (senseResource === 'score') {
-        state.score += senseBonus;
-      } else if (senseResource === 'time') {
-        state.time += senseBonus;
-      } else {
-        state.resources[senseResource as keyof typeof state.resources] += senseBonus;
-      }
-      if (senseResource === 'fragment') routeFragmentsToInventory(senseBonus);
-      showFeedback(`🔮 +${senseBonus}`, '#cc88ff', undefined, undefined, { relicId: 'resource_sense', resource: senseResource, amount: senseBonus });
-    }
-  }
-
-  // Story 36.8: 时间露珠 — 每3词+1s
-  incrementTimeDewCounter();
-  const dewBonus = checkTimeDew();
-  if (dewBonus > 0) {
-    state.time += dewBonus;
-    showFeedback(t('battle.time_dew', { value: dewBonus }), '#00ff88', undefined, undefined, { relicId: 'time_dew', resource: 'time', amount: dewBonus });
-  }
-
-  // Story 36.8: 资源潮汐 — 词序号递增（加算在 skills.ts applyResource 中）
+  // Story 36.8: 资源潮汐 — 4词循环提示
   if (state.player.relics.has('resource_tide')) {
-    const tideRes = getCurrentTideResource();
-    const tideLabel = tideRes === 'base' ? t('battle.resource_tide_base') : t('battle.resource_tide_mult');
+    const tideLabel = t(`battle.resource_tide_${getCurrentTideResource()}`);
     showFeedback(tideLabel, '#4488ff', 0.8);
   }
   incrementWordParity();
@@ -1928,8 +1882,8 @@ export async function startLevel(): Promise<void> {
     state.multiplier = state.player.baseMultiplier;
   }
 
-  // 构建字频底分修饰器注册表（整场战斗缓存）
-  const letterMods = getLetterScoreModifiers(state.player.wordDeck);
+  // 构建词语效果修饰器注册表（整场战斗缓存）
+  const letterMods = getWordEffectModifiers(state.wordEffects);
   if (letterMods.length > 0) {
     letterRegistry = new ModifierRegistry();
     letterRegistry.registerMany(letterMods);

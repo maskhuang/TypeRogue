@@ -23,7 +23,7 @@ import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostB
 import { getAdjacentPowerBonus, getCornerPowerBonus, recordLineClearHit } from './relics/TopologyRelicBehaviors';
 import { getSkillKeys, getBindingState } from './bindingManager';
 import { getShortSprintBonus } from './relics/WordRelicBehaviors';
-import { recordResourceProduction, getResourceTideBonus, resetWordResourceAmounts } from './relics/ResourceRelicBehaviors';
+import { getResourceTideBonus, getResourceFocusBonus, getResourceDiversityBonus, rollProductionDividend, getTimeTrickle } from './relics/ResourceRelicBehaviors';
 import { getWarmUpBonus } from './relics/StageRelicBehaviors';
 import { AffixType, BASE_VALUES } from '../data/affixes';
 import { inputHandler } from './typing/InputHandler';
@@ -101,8 +101,6 @@ export function resetWordResourceTypes(): void {
   _wordResourceTypes.clear();
   _wordHasProducerTriggered = false;
   resetWordAffixTypes();
-  // Story 36.8: 同步清空资源感应追踪
-  resetWordResourceAmounts();
   // 重置本词资源产出追踪
   resetWordResourceOutput();
 }
@@ -315,12 +313,16 @@ function triggerAffixSkillWithFeedback(
       if (ascendScale > 1) amount = amount * ascendScale;
       // 遗物加算：正产出 + relicBonus%（不放大 taboo 惩罚）
       let totalBonus = relicBonus;
-      // Story 36.8: 资源潮汐 — 按资源类型条件加算
+      // Story 36.8: 资源潮汐 — 按资源类型条件加算（4相位+80%）
       const tideBonus = getResourceTideBonus(resource);
       if (tideBonus > 0) totalBonus += tideBonus;
+      // 资源专精：产出最多的资源类型+25%
+      const focusBonus = getResourceFocusBonus(resource);
+      if (focusBonus > 0) totalBonus += focusBonus;
+      // 多元投资：≥3种资源类型时+20%
+      const diversityBonus = getResourceDiversityBonus();
+      if (diversityBonus > 0) totalBonus += diversityBonus;
       if (totalBonus > 0 && amount > 0) amount = amount * (1 + totalBonus);
-      // Story 36.8: 资源感应 — 追踪正产出
-      if (amount > 0) recordResourceProduction(resource, amount);
       // 追踪本词资源产出（击键代价修饰器用）
       if (amount > 0) recordWordResourceOutput(resource, amount);
 
@@ -361,6 +363,18 @@ function triggerAffixSkillWithFeedback(
           state.score += amount;
         } else {
           state.resources[resource] += amount;
+        }
+      }
+      // 产出分红 + 续命涓流：正产出后触发（非乘算）
+      if (amount > 0 && !isMultiplyOp) {
+        const dividendGold = rollProductionDividend();
+        if (dividendGold > 0) {
+          state.player.gold += dividendGold;
+          state.resources.gold += dividendGold;
+        }
+        const trickleTime = getTimeTrickle();
+        if (trickleTime > 0) {
+          state.time = Math.min(state.time + trickleTime, state.timeMax);
         }
       }
       if (resource === 'fragment') {

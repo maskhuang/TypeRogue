@@ -5,10 +5,11 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { state, resetState } from '../../../src/core/state'
 import {
-  storeDeferredSenseBonus,
-  consumeDeferredSenseBonus,
   resetResourceRelicBattleState,
-  checkScoreMagnet,
+  rollProductionDividend,
+  getTimeTrickle,
+  DIVIDEND_GOLD,
+  TRICKLE_TIME,
 } from '../../../src/systems/relics/ResourceRelicBehaviors'
 
 describe('遗物飞行动画 relicAnchor (Story 37.3)', () => {
@@ -17,69 +18,38 @@ describe('遗物飞行动画 relicAnchor (Story 37.3)', () => {
     resetResourceRelicBattleState()
   })
 
-  // === deferred sense bonus lifecycle ===
-  describe('storeDeferredSenseBonus / consumeDeferredSenseBonus', () => {
-    it('base 奖励存储并消费', () => {
-      storeDeferredSenseBonus('base', 10)
-      const result = consumeDeferredSenseBonus()
-      expect(result.base).toBe(10)
-      expect(result.multiplier).toBe(0)
+  // === production_dividend 遗物检查 ===
+  describe('production_dividend 检查', () => {
+    it('无遗物返回 0', () => {
+      expect(rollProductionDividend()).toBe(0)
     })
 
-    it('multiplier 奖励存储并消费', () => {
-      storeDeferredSenseBonus('multiplier', 5)
-      const result = consumeDeferredSenseBonus()
-      expect(result.base).toBe(0)
-      expect(result.multiplier).toBe(5)
-    })
-
-    it('累积多次存储', () => {
-      storeDeferredSenseBonus('base', 3)
-      storeDeferredSenseBonus('base', 7)
-      storeDeferredSenseBonus('multiplier', 2)
-      const result = consumeDeferredSenseBonus()
-      expect(result.base).toBe(10)
-      expect(result.multiplier).toBe(2)
-    })
-
-    it('消费后清零', () => {
-      storeDeferredSenseBonus('base', 10)
-      storeDeferredSenseBonus('multiplier', 5)
-      consumeDeferredSenseBonus()
-      const result = consumeDeferredSenseBonus()
-      expect(result.base).toBe(0)
-      expect(result.multiplier).toBe(0)
-    })
-
-    it('resetResourceRelicBattleState 清零 deferred', () => {
-      storeDeferredSenseBonus('base', 10)
-      storeDeferredSenseBonus('multiplier', 5)
-      resetResourceRelicBattleState()
-      const result = consumeDeferredSenseBonus()
-      expect(result.base).toBe(0)
-      expect(result.multiplier).toBe(0)
+    it('有遗物返回 0 或 DIVIDEND_GOLD', () => {
+      state.player.relics.add('production_dividend')
+      const result = rollProductionDividend()
+      expect(result === 0 || result === DIVIDEND_GOLD).toBe(true)
     })
   })
 
-  // === score_magnet 遗物检查 ===
-  describe('score_magnet 检查', () => {
+  // === time_trickle 遗物检查 ===
+  describe('time_trickle 检查', () => {
     it('无遗物返回 0', () => {
-      expect(checkScoreMagnet()).toBe(0)
+      expect(getTimeTrickle()).toBe(0)
     })
 
-    it('有遗物返回 SCORE_MAGNET_BONUS', () => {
-      state.player.relics.add('score_magnet')
-      expect(checkScoreMagnet()).toBe(1)
+    it('有遗物返回 TRICKLE_TIME', () => {
+      state.player.relics.add('time_trickle')
+      expect(getTimeTrickle()).toBe(TRICKLE_TIME)
     })
   })
 
   // === relicAnchor 结构验证 ===
   describe('relicAnchor 结构', () => {
-    it('10 个资源遗物 ID 与 Set 操作兼容', () => {
+    it('资源遗物 ID 与 Set 操作兼容', () => {
       const relicIds = [
-        'score_magnet', 'dual_concerto', 'rhythm_doctor',
-        'glass_cannon', 'resource_sense', 'time_dew',
-        'word_collection', 'long_word_master', 'perfect_rhythm', 'phoenix',
+        'production_dividend', 'dual_concerto',
+        'time_trickle', 'word_collection',
+        'long_word_master', 'phoenix',
       ]
       state.player.relics = new Set(relicIds)
       for (const id of relicIds) {
@@ -90,7 +60,7 @@ describe('遗物飞行动画 relicAnchor (Story 37.3)', () => {
     })
 
     it('relicAnchor 对象格式正确', () => {
-      const anchor = { relicId: 'score_magnet', resource: 'score', amount: 1 }
+      const anchor = { relicId: 'production_dividend', resource: 'gold', amount: 2 }
       expect(anchor).toHaveProperty('relicId')
       expect(anchor).toHaveProperty('resource')
       expect(anchor).toHaveProperty('amount')
@@ -110,23 +80,16 @@ describe('遗物飞行动画 relicAnchor (Story 37.3)', () => {
 
     it('所有资源遗物使用的 resource 类型都在映射范围内', () => {
       const relicResources: Record<string, string> = {
-        score_magnet: 'score',
+        production_dividend: 'gold',
+        time_trickle: 'time',
         dual_concerto: 'time',
-        rhythm_doctor: 'time',
-        glass_cannon: 'score',
-        time_dew: 'time',
         word_collection: 'gold',
         long_word_master: 'time',
-        perfect_rhythm: 'time',
         phoenix: 'time',
       }
-      for (const [relicId, resource] of Object.entries(relicResources)) {
+      for (const [, resource] of Object.entries(relicResources)) {
         expect(validResources).toContain(resource)
       }
-    })
-
-    it('resource_sense 动态资源中 fragment 不在映射范围内（降级为非飞行）', () => {
-      expect(validResources).not.toContain('fragment')
     })
   })
 })

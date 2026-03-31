@@ -18,7 +18,7 @@ import {
   initScoringRelicBehaviors,
 } from '../../../../src/systems/relics/ScoringRelicBehaviors';
 import {
-  checkScoreMagnet,
+  rollProductionDividend,
   getResourceTideBonus,
   incrementWordParity,
   resetResourceRelicBattleState,
@@ -94,7 +94,7 @@ function simulateCompleteWord(baseScore: number) {
   const shielded = applyBaseShield(baseScore);
   const snowballed = applySnowball(shielded);
   // 调用其余 pipeline 函数以触发副作用（返回值在此 helper 中不使用）
-  checkScoreMagnet();
+  rollProductionDividend();
   getWarmUpBonus();
   getAdjacentPowerBonus('a');
   calculateComboBuffer(state.combo);
@@ -142,7 +142,7 @@ describe('全流程冒烟测试 (Story 36.13 AC5)', () => {
 
     // === 获取 3 个遗物 ===
     state.player.relics.add('base_shield');      // scoring: 保底 20 分
-    state.player.relics.add('score_magnet');      // resource: 每词 +1 分
+    state.player.relics.add('production_dividend');      // resource: 产出分红
     state.player.relics.add('warm_up');           // stage: 前 10s +40%
 
     // === 初始化行为 ===
@@ -226,7 +226,7 @@ describe('全流程冒烟测试 (Story 36.13 AC5)', () => {
 
   it('遗物 reset 生命周期正确', () => {
     state.player.relics.add('snowball');
-    state.player.relics.add('score_magnet');
+    state.player.relics.add('production_dividend');
 
     initAllBehaviors();
 

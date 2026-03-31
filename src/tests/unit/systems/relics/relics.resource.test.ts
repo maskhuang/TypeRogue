@@ -5,28 +5,27 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { state } from '../../../../src/core/state'
 import {
-  SCORE_MAGNET_BONUS,
-  RESOURCE_SENSE_THRESHOLD,
-  RESOURCE_SENSE_BOOST,
-  TIME_DEW_INTERVAL,
-  TIME_DEW_BONUS,
+  DIVIDEND_CHANCE,
+  DIVIDEND_GOLD,
+  TRICKLE_TIME,
+  RESOURCE_FOCUS_RATE,
+  DIVERSITY_THRESHOLD,
+  DIVERSITY_RATE,
   RESOURCE_TIDE_RATE,
-  checkScoreMagnet,
-  recordResourceProduction,
-  checkResourceSense,
-  resetWordResourceAmounts,
-  storeDeferredSenseBonus,
-  consumeDeferredSenseBonus,
-  checkTimeDew,
-  incrementTimeDewCounter,
+  rollProductionDividend,
+  getTimeTrickle,
+  getResourceFocusType,
+  getResourceFocusBonus,
+  getResourceDiversityBonus,
   getResourceTideBonus,
   incrementWordParity,
+  getCurrentTidePhase,
+  getCurrentTideResource,
   checkUniversalFurnace,
   resetResourceRelicBattleState,
   initResourceRelicBehaviors,
 } from '../../../../src/systems/relics/ResourceRelicBehaviors'
 import { clearBehaviorHandlers, getRegisteredBehaviors } from '../../../../src/systems/relics/RelicPipeline'
-import { getShortSprintBonus } from '../../../../src/systems/relics/WordRelicBehaviors'
 
 // === 辅助 ===
 function clearRelics(): void {
@@ -34,172 +33,202 @@ function clearRelics(): void {
   state.player.relicStates = {}
 }
 
+/** 设置 affixSkills mock 数据 */
+function setAffixSkills(skills: Array<{ id: string; resource: string }>): void {
+  state.affixSkills.clear()
+  for (const sk of skills) {
+    state.affixSkills.set(sk.id, {
+      id: sk.id,
+      name: sk.id,
+      icon: '',
+      resource: sk.resource as any,
+      baseValues: [1],
+      level: 1,
+      rarity: 'common' as any,
+      affixes: [],
+      enchantmentIds: [],
+    })
+  }
+}
+
 describe('资源系统遗物行为 (Story 36.8)', () => {
   beforeEach(() => {
     clearRelics()
     clearBehaviorHandlers()
     resetResourceRelicBattleState()
-    resetWordResourceAmounts()
+    state.affixSkills.clear()
   })
 
   // === 常量校验 ===
   describe('常量', () => {
-    it('SCORE_MAGNET_BONUS = 1', () => {
-      expect(SCORE_MAGNET_BONUS).toBe(1)
+    it('DIVIDEND_CHANCE = 0.05', () => {
+      expect(DIVIDEND_CHANCE).toBe(0.05)
     })
-    it('RESOURCE_SENSE_THRESHOLD = 3', () => {
-      expect(RESOURCE_SENSE_THRESHOLD).toBe(3)
+    it('DIVIDEND_GOLD = 2', () => {
+      expect(DIVIDEND_GOLD).toBe(2)
     })
-    it('RESOURCE_SENSE_BOOST = 0.50', () => {
-      expect(RESOURCE_SENSE_BOOST).toBe(0.50)
+    it('TRICKLE_TIME = 0.05', () => {
+      expect(TRICKLE_TIME).toBe(0.05)
     })
-    it('TIME_DEW_INTERVAL = 3', () => {
-      expect(TIME_DEW_INTERVAL).toBe(3)
+    it('RESOURCE_FOCUS_RATE = 0.25', () => {
+      expect(RESOURCE_FOCUS_RATE).toBe(0.25)
     })
-    it('TIME_DEW_BONUS = 1', () => {
-      expect(TIME_DEW_BONUS).toBe(1)
+    it('DIVERSITY_THRESHOLD = 3', () => {
+      expect(DIVERSITY_THRESHOLD).toBe(3)
     })
-    it('RESOURCE_TIDE_RATE = 0.40', () => {
-      expect(RESOURCE_TIDE_RATE).toBe(0.40)
+    it('DIVERSITY_RATE = 0.20', () => {
+      expect(DIVERSITY_RATE).toBe(0.20)
+    })
+    it('RESOURCE_TIDE_RATE = 0.80', () => {
+      expect(RESOURCE_TIDE_RATE).toBe(0.80)
     })
   })
 
-  // === 分数磁铁 (score_magnet) ===
-  describe('分数磁铁 (score_magnet)', () => {
+  // === 产出分红 (production_dividend) ===
+  describe('产出分红 (production_dividend)', () => {
     it('无遗物 → 0', () => {
-      expect(checkScoreMagnet()).toBe(0)
+      expect(rollProductionDividend()).toBe(0)
     })
 
-    it('有遗物 → 1', () => {
-      state.player.relics.add('score_magnet')
-      expect(checkScoreMagnet()).toBe(SCORE_MAGNET_BONUS)
-    })
-  })
-
-  // === 资源感应 (resource_sense) ===
-  describe('资源感应 (resource_sense)', () => {
-    it('无遗物 → null', () => {
-      expect(checkResourceSense()).toBeNull()
-    })
-
-    it('有遗物 + <3种资源 → null', () => {
-      state.player.relics.add('resource_sense')
-      // 记录2种资源产出
-      recordResourceProduction('base', 5)
-      recordResourceProduction('gold', 3)
-      expect(checkResourceSense()).toBeNull()
-    })
-
-    it('有遗物 + ≥3种资源 → 返回最少那种的预计算bonus', () => {
-      state.player.relics.add('resource_sense')
-      // 记录3种资源：base最少(2)
-      recordResourceProduction('base', 2)
-      recordResourceProduction('gold', 10)
-      recordResourceProduction('time', 8)
-      const result = checkResourceSense()
-      expect(result).not.toBeNull()
-      expect(result!.resource).toBe('base')
-      expect(result!.bonus).toBe(Math.floor(2 * RESOURCE_SENSE_BOOST)) // floor(2*0.5) = 1
-    })
-
-    it('多种数量相同时取任一', () => {
-      state.player.relics.add('resource_sense')
-      // 3种资源数量相同
-      recordResourceProduction('base', 5)
-      recordResourceProduction('gold', 5)
-      recordResourceProduction('time', 5)
-      const result = checkResourceSense()
-      expect(result).not.toBeNull()
-      expect(['base', 'gold', 'time']).toContain(result!.resource)
-      expect(result!.bonus).toBe(Math.floor(5 * RESOURCE_SENSE_BOOST)) // floor(5*0.5) = 2
-    })
-
-    it('恰好3种资源触发，返回最少的那种', () => {
-      state.player.relics.add('resource_sense')
-      recordResourceProduction('multiplier', 1)
-      recordResourceProduction('score', 4)
-      recordResourceProduction('time', 6)
-      const result = checkResourceSense()
-      expect(result).not.toBeNull()
-      expect(result!.resource).toBe('multiplier')
+    it('有遗物 → 0 或 DIVIDEND_GOLD', () => {
+      state.player.relics.add('production_dividend')
+      const result = rollProductionDividend()
+      expect(result === 0 || result === DIVIDEND_GOLD).toBe(true)
     })
   })
 
-  // === 时间露珠 (time_dew) ===
-  describe('时间露珠 (time_dew)', () => {
+  // === 续命涓流 (time_trickle) ===
+  describe('续命涓流 (time_trickle)', () => {
     it('无遗物 → 0', () => {
-      // counter=0，无遗物
-      expect(checkTimeDew()).toBe(0)
+      expect(getTimeTrickle()).toBe(0)
     })
 
-    it('有遗物 + 第1词 → 0', () => {
-      state.player.relics.add('time_dew')
-      incrementTimeDewCounter() // counter = 1
-      expect(checkTimeDew()).toBe(0)
-    })
-
-    it('有遗物 + 第2词 → 0', () => {
-      state.player.relics.add('time_dew')
-      incrementTimeDewCounter() // counter = 1
-      incrementTimeDewCounter() // counter = 2
-      expect(checkTimeDew()).toBe(0)
-    })
-
-    it('有遗物 + 第3词 → 1', () => {
-      state.player.relics.add('time_dew')
-      incrementTimeDewCounter() // counter = 1
-      incrementTimeDewCounter() // counter = 2
-      incrementTimeDewCounter() // counter = 3
-      expect(checkTimeDew()).toBe(TIME_DEW_BONUS)
-    })
-
-    it('有遗物 + 第4词 → 0', () => {
-      state.player.relics.add('time_dew')
-      incrementTimeDewCounter() // counter = 1
-      incrementTimeDewCounter() // counter = 2
-      incrementTimeDewCounter() // counter = 3
-      incrementTimeDewCounter() // counter = 4
-      expect(checkTimeDew()).toBe(0)
-    })
-
-    it('有遗物 + 第6词 → 1', () => {
-      state.player.relics.add('time_dew')
-      for (let i = 0; i < 6; i++) incrementTimeDewCounter()
-      expect(checkTimeDew()).toBe(TIME_DEW_BONUS)
+    it('有遗物 → TRICKLE_TIME', () => {
+      state.player.relics.add('time_trickle')
+      expect(getTimeTrickle()).toBe(TRICKLE_TIME)
     })
   })
 
-  // === 资源潮汐 (resource_tide) ===
+  // === 资源专精 (resource_focus) ===
+  describe('资源专精 (resource_focus)', () => {
+    it('无遗物 → focusType null', () => {
+      expect(getResourceFocusType()).toBeNull()
+    })
+
+    it('无遗物 → bonus 0', () => {
+      expect(getResourceFocusBonus('base')).toBe(0)
+    })
+
+    it('有遗物 + 单一资源类型 → 该类型+25%', () => {
+      state.player.relics.add('resource_focus')
+      setAffixSkills([
+        { id: 's1', resource: 'base' },
+        { id: 's2', resource: 'base' },
+        { id: 's3', resource: 'gold' },
+      ])
+      expect(getResourceFocusType()).toBe('base')
+      expect(getResourceFocusBonus('base')).toBe(RESOURCE_FOCUS_RATE)
+      expect(getResourceFocusBonus('gold')).toBe(0)
+    })
+
+    it('有遗物 + 无技能 → null', () => {
+      state.player.relics.add('resource_focus')
+      expect(getResourceFocusType()).toBeNull()
+    })
+  })
+
+  // === 多元投资 (resource_diversity) ===
+  describe('多元投资 (resource_diversity)', () => {
+    it('无遗物 → 0', () => {
+      expect(getResourceDiversityBonus()).toBe(0)
+    })
+
+    it('有遗物 + <3种 → 0', () => {
+      state.player.relics.add('resource_diversity')
+      setAffixSkills([
+        { id: 's1', resource: 'base' },
+        { id: 's2', resource: 'gold' },
+      ])
+      expect(getResourceDiversityBonus()).toBe(0)
+    })
+
+    it('有遗物 + ≥3种 → DIVERSITY_RATE', () => {
+      state.player.relics.add('resource_diversity')
+      setAffixSkills([
+        { id: 's1', resource: 'base' },
+        { id: 's2', resource: 'gold' },
+        { id: 's3', resource: 'time' },
+      ])
+      expect(getResourceDiversityBonus()).toBe(DIVERSITY_RATE)
+    })
+
+    it('有遗物 + 恰好3种（含重复） → DIVERSITY_RATE', () => {
+      state.player.relics.add('resource_diversity')
+      setAffixSkills([
+        { id: 's1', resource: 'base' },
+        { id: 's2', resource: 'gold' },
+        { id: 's3', resource: 'time' },
+        { id: 's4', resource: 'base' },
+      ])
+      expect(getResourceDiversityBonus()).toBe(DIVERSITY_RATE)
+    })
+  })
+
+  // === 资源潮汐 (resource_tide) — 4相位 ===
   describe('资源潮汐 (resource_tide)', () => {
     it('无遗物 → 0', () => {
-      incrementWordParity() // 奇数词
       expect(getResourceTideBonus('base')).toBe(0)
     })
 
-    it('奇数词 + base → 0.40', () => {
+    it('phase 0 (初始) → base +80%', () => {
       state.player.relics.add('resource_tide')
-      incrementWordParity() // 奇数词（第1词）
+      expect(getCurrentTidePhase()).toBe(0)
+      expect(getCurrentTideResource()).toBe('base')
       expect(getResourceTideBonus('base')).toBe(RESOURCE_TIDE_RATE)
-    })
-
-    it('奇数词 + multiplier → 0', () => {
-      state.player.relics.add('resource_tide')
-      incrementWordParity() // 奇数词（第1词）
       expect(getResourceTideBonus('multiplier')).toBe(0)
+      expect(getResourceTideBonus('time')).toBe(0)
+      expect(getResourceTideBonus('gold')).toBe(0)
     })
 
-    it('偶数词 + multiplier → 0.40', () => {
+    it('phase 1 → multiplier +80%', () => {
       state.player.relics.add('resource_tide')
-      incrementWordParity() // 奇数（第1词）
-      incrementWordParity() // 偶数（第2词）
+      incrementWordParity() // phase 1
+      expect(getCurrentTidePhase()).toBe(1)
+      expect(getCurrentTideResource()).toBe('multiplier')
       expect(getResourceTideBonus('multiplier')).toBe(RESOURCE_TIDE_RATE)
+      expect(getResourceTideBonus('base')).toBe(0)
     })
 
-    it('偶数词 + base → 0', () => {
+    it('phase 2 → time +80%', () => {
       state.player.relics.add('resource_tide')
-      incrementWordParity() // 奇数（第1词）
-      incrementWordParity() // 偶数（第2词）
+      incrementWordParity() // phase 1
+      incrementWordParity() // phase 2
+      expect(getCurrentTidePhase()).toBe(2)
+      expect(getCurrentTideResource()).toBe('time')
+      expect(getResourceTideBonus('time')).toBe(RESOURCE_TIDE_RATE)
       expect(getResourceTideBonus('base')).toBe(0)
+    })
+
+    it('phase 3 → gold +80%', () => {
+      state.player.relics.add('resource_tide')
+      incrementWordParity() // 1
+      incrementWordParity() // 2
+      incrementWordParity() // 3
+      expect(getCurrentTidePhase()).toBe(3)
+      expect(getCurrentTideResource()).toBe('gold')
+      expect(getResourceTideBonus('gold')).toBe(RESOURCE_TIDE_RATE)
+      expect(getResourceTideBonus('time')).toBe(0)
+    })
+
+    it('phase 4 → 循环回 base (phase 0)', () => {
+      state.player.relics.add('resource_tide')
+      incrementWordParity() // 1
+      incrementWordParity() // 2
+      incrementWordParity() // 3
+      incrementWordParity() // 4 → phase 0
+      expect(getCurrentTidePhase()).toBe(0)
+      expect(getCurrentTideResource()).toBe('base')
+      expect(getResourceTideBonus('base')).toBe(RESOURCE_TIDE_RATE)
     })
   })
 
@@ -245,67 +274,15 @@ describe('资源系统遗物行为 (Story 36.8)', () => {
     })
   })
 
-  // === 延迟感应奖励 (deferred sense bonus) ===
-  describe('延迟感应奖励 (deferred sense bonus)', () => {
-    it('storeDeferredSenseBonus base 累加', () => {
-      storeDeferredSenseBonus('base', 3);
-      storeDeferredSenseBonus('base', 2);
-      const result = consumeDeferredSenseBonus();
-      expect(result.base).toBe(5);
-      expect(result.multiplier).toBe(0);
-    })
-
-    it('storeDeferredSenseBonus multiplier 累加', () => {
-      storeDeferredSenseBonus('multiplier', 4);
-      storeDeferredSenseBonus('multiplier', 1);
-      const result = consumeDeferredSenseBonus();
-      expect(result.base).toBe(0);
-      expect(result.multiplier).toBe(5);
-    })
-
-    it('consumeDeferredSenseBonus 返回正确值并清零', () => {
-      storeDeferredSenseBonus('base', 3);
-      storeDeferredSenseBonus('multiplier', 2);
-      const first = consumeDeferredSenseBonus();
-      expect(first.base).toBe(3);
-      expect(first.multiplier).toBe(2);
-      // 第二次消费应为零
-      const second = consumeDeferredSenseBonus();
-      expect(second.base).toBe(0);
-      expect(second.multiplier).toBe(0);
-    })
-
-    it('resetResourceRelicBattleState 清零 deferred 状态', () => {
-      storeDeferredSenseBonus('base', 10);
-      storeDeferredSenseBonus('multiplier', 5);
-      resetResourceRelicBattleState();
-      const result = consumeDeferredSenseBonus();
-      expect(result.base).toBe(0);
-      expect(result.multiplier).toBe(0);
-    })
-  })
-
   // === 生命周期 ===
   describe('生命周期', () => {
-    it('resetResourceRelicBattleState 重置 counter 和 parity', () => {
-      state.player.relics.add('time_dew')
+    it('resetResourceRelicBattleState 重置 parity', () => {
       state.player.relics.add('resource_tide')
-      // 推进计数器
-      incrementTimeDewCounter()
-      incrementTimeDewCounter()
-      incrementTimeDewCounter() // counter = 3，下一次 checkTimeDew() 应该返回1
       incrementWordParity()
-      incrementWordParity() // parity = 2（偶数）
-
-      // 重置
+      incrementWordParity() // parity = 2
       resetResourceRelicBattleState()
-
-      // counter 归零后推进1次仍为奇数词，不触发time_dew
-      incrementTimeDewCounter() // counter = 1
-      expect(checkTimeDew()).toBe(0)
-
-      // parity 归零后推进1次为奇数
-      incrementWordParity()
+      // parity 归零后 phase=0 → base
+      expect(getCurrentTidePhase()).toBe(0)
       expect(getResourceTideBonus('base')).toBe(RESOURCE_TIDE_RATE)
     })
 
@@ -313,26 +290,6 @@ describe('资源系统遗物行为 (Story 36.8)', () => {
       initResourceRelicBehaviors()
       const handlers = getRegisteredBehaviors()
       expect(handlers.length).toBeGreaterThan(0)
-    })
-  })
-
-  // === 遗物组合交互 ===
-  describe('遗物组合交互', () => {
-    it('资源潮汐 + 短词冲刺可叠加（各自返回独立加成）', () => {
-      state.player.relics.add('resource_tide')
-      state.player.relics.add('short_sprint')
-      incrementWordParity() // 奇数词（第1词）
-
-      // 资源潮汐：奇数词 + base → 0.40
-      const tideBonus = getResourceTideBonus('base')
-      expect(tideBonus).toBe(RESOURCE_TIDE_RATE)
-
-      // 短词冲刺：长度≤4 → 0.20
-      const sprintBonus = getShortSprintBonus(3)
-      expect(sprintBonus).toBeGreaterThan(0)
-
-      // 两者独立，叠加由 skills.ts 完成
-      expect(tideBonus + sprintBonus).toBeGreaterThan(RESOURCE_TIDE_RATE)
     })
   })
 })

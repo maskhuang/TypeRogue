@@ -676,11 +676,23 @@ export const RELICS: Record<string, RelicData> = {
     name: '短词冲刺',
     icon: '🏃',
     description: '≤4字母单词技能产出+20%。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'word',
+    flavor: '短小精悍，快步如飞。',
+  },
+
+  thick_deck: {
+    id: 'thick_deck',
+    name: '词库丰收',
+    icon: '📖',
+    description: '词库每5个词，商店词包-1金币。',
     rarity: 'common',
     basePrice: 50,
     effects: [],
     subsystem: 'word',
-    flavor: '短小精悍，快步如飞。',
+    flavor: '词海无涯，积少成多。',
   },
 
   long_word_master: {
@@ -723,47 +735,59 @@ export const RELICS: Record<string, RelicData> = {
 
   // ─── 资源系统遗物 (Story 36.8) ───
 
-  score_magnet: {
-    id: 'score_magnet',
-    name: '分数磁铁',
-    icon: '🧲',
-    description: '每打一个字+1分数。',
+  production_dividend: {
+    id: 'production_dividend',
+    name: '产出分红',
+    icon: '🪙',
+    description: '技能每次产出资源时，5%概率+2金币。',
     rarity: 'common',
     basePrice: 50,
     effects: [],
     subsystem: 'resource',
-    flavor: '分数自然被你吸引。',
+    flavor: '每一份产出，都有一丝回报。',
   },
 
-  resource_sense: {
-    id: 'resource_sense',
-    name: '资源感应',
-    icon: '🔮',
-    description: '一词内产出3+种资源，最少那种+50%。基数/倍率在下一词生效。',
+  time_trickle: {
+    id: 'time_trickle',
+    name: '续命涓流',
+    icon: '💧',
+    description: '技能每次产出资源时，+0.05s时间。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'resource',
+    flavor: '涓涓细流，延续生命。',
+  },
+
+  resource_focus: {
+    id: 'resource_focus',
+    name: '资源专精',
+    icon: '🔬',
+    description: '装备技能产出最多的资源类型，该类型产出+25%。',
     rarity: 'rare',
     basePrice: 80,
     effects: [],
     subsystem: 'resource',
-    flavor: '感知每一种资源的流动。',
+    flavor: '专注一道，事半功倍。',
   },
 
-  time_dew: {
-    id: 'time_dew',
-    name: '时间露珠',
-    icon: '💧',
-    description: '每完成3个单词+1秒。',
-    rarity: 'common',
-    basePrice: 50,
+  resource_diversity: {
+    id: 'resource_diversity',
+    name: '多元投资',
+    icon: '🌈',
+    description: '装备技能覆盖≥3种不同资源类型时，所有技能产出+20%。',
+    rarity: 'rare',
+    basePrice: 80,
     effects: [],
     subsystem: 'resource',
-    flavor: '三词一露，滴水成河。',
+    flavor: '不把鸡蛋放在一个篮子里。',
   },
 
   resource_tide: {
     id: 'resource_tide',
     name: '资源潮汐',
     icon: '🌊',
-    description: '奇数词base+40%，偶数词multiplier+40%。',
+    description: '4词一个潮汐周期，依次底分→倍率→时间→金币各+80%。',
     rarity: 'epic',
     basePrice: 120,
     effects: [],
@@ -1124,4 +1148,5 @@ export const DELETED_RELIC_IDS = [
   'rhythm_doctor',
   'early_awakening', 'enchant_anchor',
   'symmetry_pact', 'row_medal',
+  'score_magnet', 'time_dew', 'resource_sense',
 ]

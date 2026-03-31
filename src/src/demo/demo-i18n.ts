@@ -222,9 +222,10 @@ const ZH: Record<string, string> = {
   'battle.long_word_time': '📏 +{value}s',
 
   // --- resource relic feedback ---
-  'battle.time_dew': '💧 +{value}s',
-  'battle.resource_tide_base': '🌊 基数+40%',
-  'battle.resource_tide_mult': '🌊 倍率+40%',
+  'battle.resource_tide_base': '🌊 底分潮!',
+  'battle.resource_tide_multiplier': '🌊 倍率潮!',
+  'battle.resource_tide_time': '🌊 时间潮!',
+  'battle.resource_tide_gold': '🌊 金币潮!',
 
   // --- stage relic feedback ---
   'battle.phoenix_revive': '🐦‍🔥 不死鸟复活！',
@@ -283,7 +284,10 @@ const ZH: Record<string, string> = {
   'shop.rotate_fail': '无法旋转！',
   'shop.rotate_displaced': '旋转覆盖了其他技能！',
   'shop.add_words': '+{count}词',
+  'shop.add_word': '已加入: {word}',
+  'shop.choose_one': '三选一',
   'shop.buy_pack': '购买整包 ({count}词) 💰{cost}',
+  'word_picker.title': '选择一个词加入词库',
   'shop.letters': '字母',
   'shop.deck_stats': '📚 {total}词 · 均长{avg}',
   'shop.top_freq': '高频:',
@@ -796,6 +800,13 @@ const ZH: Record<string, string> = {
   'affix_param.probMult': '概率倍率',
   'affix_param.recurseChance': '递归概率',
   'affix_param.multiplyValue': '乘算倍数',
+
+  // --- 词语效果系统 ---
+  'wordeffect.base_score': '底分+{value}',
+  'wordeffect.multiplier': '倍率+{value}',
+  'wordeffect.time': '续命+{value}s',
+  'wordeffect.gold': '淘金+{value}',
+  'wordeffect.desc': '含有字母击键时额外产出',
 }
 
 // === EN 字典 ===
@@ -994,9 +1005,10 @@ const EN: Record<string, string> = {
   'battle.long_word_time': '📏 +{value}s',
 
   // --- resource relic feedback ---
-  'battle.time_dew': '💧 +{value}s',
-  'battle.resource_tide_base': '🌊 Base +40%',
-  'battle.resource_tide_mult': '🌊 Mult +40%',
+  'battle.resource_tide_base': '🌊 Base Tide!',
+  'battle.resource_tide_multiplier': '🌊 Mult Tide!',
+  'battle.resource_tide_time': '🌊 Time Tide!',
+  'battle.resource_tide_gold': '🌊 Gold Tide!',
 
   // --- stage relic feedback ---
   'battle.phoenix_revive': '🐦‍🔥 Phoenix Revive!',
@@ -1055,7 +1067,10 @@ const EN: Record<string, string> = {
   'shop.rotate_fail': 'Cannot rotate!',
   'shop.rotate_displaced': 'Rotation displaced other skills!',
   'shop.add_words': '+{count} words',
+  'shop.add_word': 'Added: {word}',
+  'shop.choose_one': 'Pick 1 of 3',
   'shop.buy_pack': 'Buy pack ({count} words) 💰{cost}',
+  'word_picker.title': 'Choose a word to add',
   'shop.letters': 'letters',
   'shop.deck_stats': '📚 {total} words · avg {avg}',
   'shop.top_freq': 'Top:',
@@ -1567,6 +1582,13 @@ const EN: Record<string, string> = {
   'affix_param.probMult': 'Prob Mult',
   'affix_param.recurseChance': 'Recurse %',
   'affix_param.multiplyValue': 'Multiply',
+
+  // --- Word Effect System ---
+  'wordeffect.base_score': 'Base+{value}',
+  'wordeffect.multiplier': 'Mult+{value}',
+  'wordeffect.time': 'Time+{value}s',
+  'wordeffect.gold': 'Gold+{value}',
+  'wordeffect.desc': 'Keystroke bonus for contained letters',
 }
 
 // === Demo 物品名翻译（仅 Demo 池 ~48 个） ===
@@ -1627,13 +1649,13 @@ const ITEM_NAMES_EN: Record<string, string> = {
   row_switch: 'Row Switch', line_clear: 'Line Clear',
   dual_concerto: 'Dual Concerto', key_storm: 'Key Storm',
   // Word subsystem relics
-  word_collection: 'Word Collection', short_sprint: 'Short Sprint',
+  word_collection: 'Word Collection', short_sprint: 'Short Sprint', thick_deck: 'Lexicon Harvest',
   long_word_master: 'Long Word Master', word_dealer: 'Word Dealer',
   punctuation_liberation: 'Punctuation Liberation',
   // Resource subsystem relics
-  score_magnet: 'Score Magnet', resource_sense: 'Resource Sense',
-  time_dew: 'Time Dew', resource_tide: 'Resource Tide',
-  universal_furnace: 'Universal Furnace',
+  production_dividend: 'Production Dividend', time_trickle: 'Time Trickle',
+  resource_focus: 'Resource Focus', resource_diversity: 'Resource Diversity',
+  resource_tide: 'Resource Tide', universal_furnace: 'Universal Furnace',
   // Shop subsystem relics
   discount_card: 'Discount Card', recycle_expert: 'Recycle Expert',
   black_market: 'Black Market Pass', smuggle_pass: 'Smuggle Pass',
@@ -1776,14 +1798,16 @@ const ITEM_DESCS_EN: Record<string, string> = {
   // Word subsystem relics
   word_collection: 'First time completing a word: +3 gold',
   short_sprint: '≤4-letter words: skill output +20%',
+  thick_deck: 'Every 5 words in deck: word packs cost 1 less gold',
   long_word_master: '6+ letter words on complete: +1s time',
   word_dealer: 'After selling a word, next shop refresh is free',
   punctuation_liberation: 'Unlock ;,./[] keys for skill binding. Words include random punctuation.',
   // Resource subsystem relics
-  score_magnet: 'Each keystroke: +1 score',
-  resource_sense: 'When a word produces 3+ resource types, the lowest gets +50%',
-  time_dew: 'Every 3 words completed: +1s time',
-  resource_tide: 'Odd words: base +40%. Even words: multiplier +40%',
+  production_dividend: 'Each skill resource output: 5% chance for +2 gold',
+  time_trickle: 'Each skill resource output: +0.05s time',
+  resource_focus: 'The most common resource type among equipped skills gets +25% output',
+  resource_diversity: 'When equipped skills cover 3+ resource types, all skill output +20%',
+  resource_tide: '4-word tide cycle: base → mult → time → gold, each +80%',
   universal_furnace: 'On stage clear: overkill score + remaining time → gold, but no base clear gold',
   // Shop subsystem relics
   discount_card: 'All shop prices -15%',
