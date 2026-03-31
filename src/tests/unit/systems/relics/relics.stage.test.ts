@@ -46,7 +46,7 @@ describe('关卡进度系统遗物行为 (Story 36.10)', () => {
   // === 常量 ===
   describe('常量', () => {
     it('WARMUP_DURATION = 10', () => expect(WARMUP_DURATION).toBe(10))
-    it('WARMUP_BONUS = 0.40', () => expect(WARMUP_BONUS).toBe(0.40))
+    it('WARMUP_BONUS = 0.10', () => expect(WARMUP_BONUS).toBe(0.10))
     it('INTERMISSION_GOLD = 10', () => expect(INTERMISSION_GOLD).toBe(10))
     it('INTERMISSION_FREE_REFRESH = 1', () => expect(INTERMISSION_FREE_REFRESH).toBe(1))
     it('ENDURANCE_TIME_BONUS = 10', () => expect(ENDURANCE_TIME_BONUS).toBe(10))

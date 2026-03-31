@@ -9,7 +9,7 @@ import { registerRelicBehavior } from './RelicPipeline'
 
 // === 常量 ===
 export const WARMUP_DURATION = 10
-export const WARMUP_BONUS = 0.40
+export const WARMUP_BONUS = 0.10
 export const INTERMISSION_GOLD = 10
 export const INTERMISSION_FREE_REFRESH = 1
 export const ENDURANCE_TIME_BONUS = 10

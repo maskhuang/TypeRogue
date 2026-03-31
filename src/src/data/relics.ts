@@ -891,7 +891,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'warm_up',
     name: '暖身操',
     icon: '🏋️',
-    description: '每关前10秒技能产出+40%。',
+    description: '每关前10秒技能产出+10%。',
     rarity: 'common',
     basePrice: 50,
     effects: [],

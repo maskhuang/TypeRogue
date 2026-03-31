@@ -293,7 +293,7 @@ describe('遗物联动矩阵 (Story 36.13 AC1)', () => {
       // 暖身在关卡开始后 <10s 内生效（基于 Date.now()）
       // 刚 reset 后立即调用 — 应在窗口内
       const warmUp = getWarmUpBonus();
-      expect(warmUp).toBe(WARMUP_BONUS); // 0.40
+      expect(warmUp).toBe(WARMUP_BONUS); // 0.10
 
       // 两个效果独立：电池加了 10s 到计时器，
       // 但暖身窗口仍基于 _stageStartTime（Date.now()），不是游戏计时器

@@ -1817,7 +1817,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   smuggle_pass: 'Each stage: take the cheapest shop item for free',
   timed_auction: 'Refresh is free, but shop has a 30s countdown',
   // Stage subsystem relics
-  warm_up: 'First 10s each stage: skill output +40%',
+  warm_up: 'First 10s each stage: skill output +10%',
   intermission: 'Rest stages grant +10 gold and 1 free refresh',
   endurance_battery: 'Each stage base time +10s',
   elite_hunter: 'Elite stage clear gold reward doubled',
