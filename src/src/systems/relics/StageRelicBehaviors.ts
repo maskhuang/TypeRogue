@@ -83,7 +83,7 @@ export function checkPhoenixRevive(): { reviveTime: number; refreshModifiers: bo
   const stageType = getStageType(state.level)
   return {
     reviveTime: PHOENIX_REVIVE_TIME,
-    refreshModifiers: stageType === 'boss',
+    refreshModifiers: stageType === 'boss' || stageType === 'elite',
   }
 }
 
@@ -97,7 +97,7 @@ export function consumePhoenix(): void {
 /** 每关开始时重置关级状态 */
 export function resetStageRelicBattleState(): void {
   _stageStartTime = Date.now()
-  // 注意：_intermissionFreeRefreshes 不在此重置，它在商店关闭时自然过期
+  _intermissionFreeRefreshes = 0
 }
 
 /** 注册关卡进度系统遗物行为 */

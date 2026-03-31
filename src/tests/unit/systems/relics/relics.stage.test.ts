@@ -137,15 +137,15 @@ describe('关卡进度系统遗物行为 (Story 36.10)', () => {
       expect(checkEliteHunterGoldMultiplier()).toBe(1)
     })
 
-    it('有遗物 + 非精英关 → 1', () => {
+    it('有遗物 + 非Boss关 → 1', () => {
       state.player.relics.add('elite_hunter')
       state.level = 1 // 普通关
       expect(checkEliteHunterGoldMultiplier()).toBe(1)
     })
 
-    it('有遗物 + 精英关 → 2', () => {
+    it('有遗物 + Boss关 → 2', () => {
       state.player.relics.add('elite_hunter')
-      state.level = 3 // 精英关（node 3）
+      state.level = 12 // Boss关（CYCLE_LENGTH=12，12%12===0）
       expect(checkEliteHunterGoldMultiplier()).toBe(2)
     })
   })
@@ -165,14 +165,14 @@ describe('关卡进度系统遗物行为 (Story 36.10)', () => {
 
     it('有遗物 + 精英关 → refreshModifiers: true (AC: #7)', () => {
       state.player.relics.add('phoenix')
-      state.level = 3 // 精英关
+      state.level = 5 // 精英关（position 5）
       const result = checkPhoenixRevive()
       expect(result).toEqual({ reviveTime: PHOENIX_REVIVE_TIME, refreshModifiers: true })
     })
 
     it('有遗物 + Boss 关 → refreshModifiers: true', () => {
       state.player.relics.add('phoenix')
-      state.level = 10 // Boss 关
+      state.level = 12 // Boss关（CYCLE_LENGTH=12）
       const result = checkPhoenixRevive()
       expect(result).toEqual({ reviveTime: PHOENIX_REVIVE_TIME, refreshModifiers: true })
     })
