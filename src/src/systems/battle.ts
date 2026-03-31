@@ -36,7 +36,7 @@ import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprentic
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, checkRowSwitch, checkLineClear, LINE_CLEAR_OUTPUT_RATIO, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
-import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
+import { initShopRelicBehaviors, applyGoldInterest } from './relics/ShopRelicBehaviors';
 import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, shouldBarrierDelay, startBarrierDelay, addDeferredModifier, checkBarrierActivation, isBarrierDelaying, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
@@ -1828,6 +1828,12 @@ export async function startLevel(): Promise<void> {
   resetResources();
   state.resources.gold = 0;
   _battleRelicGold = 0;
+
+  // 金库利息：每关开始时获得金币10%利息
+  const interestGold = applyGoldInterest();
+  if (interestGold > 0) {
+    showFeedback(`🏦 +${interestGold}💰`, '#ffe66d');
+  }
 
   // Story 36.2: 重置打字遗物关级别状态（已见单词等）
   resetTypingRelicState();

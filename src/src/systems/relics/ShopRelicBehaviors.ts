@@ -11,6 +11,8 @@ export const DISCOUNT_RATE = 0.15
 export const RECYCLE_BONUS = 0.50
 export const BLACK_MARKET_EXTRA = 1
 export const AUCTION_TIMER = 30
+export const INTEREST_RATE = 0.10
+export const INTEREST_CAP = 20
 
 // === 模块级状态 ===
 
@@ -94,6 +96,19 @@ export function clearAuctionTimer(): void {
     clearInterval(_auctionTimerId)
     _auctionTimerId = null
   }
+}
+
+// === 金库利息 (gold_interest) ===
+
+/** 每关开始时，获得当前金币10%的利息（上限20金币），返回实际获得利息 */
+export function applyGoldInterest(): number {
+  if (!state.player.relics.has('gold_interest')) return 0
+  const interest = Math.min(Math.floor(state.player.gold * INTEREST_RATE), INTEREST_CAP)
+  if (interest > 0) {
+    state.player.gold += interest
+    state.gold += interest
+  }
+  return interest
 }
 
 // === 生命周期 ===

@@ -1658,8 +1658,8 @@ const ITEM_NAMES_EN: Record<string, string> = {
   resource_tide: 'Resource Tide', universal_furnace: 'Universal Furnace',
   // Shop subsystem relics
   discount_card: 'Discount Card', recycle_expert: 'Recycle Expert',
-  black_market: 'Black Market Pass', smuggle_pass: 'Smuggle Pass',
-  timed_auction: 'Timed Auction',
+  black_market: 'Black Market Pass', gold_interest: 'Gold Interest',
+  smuggle_pass: 'Smuggle Pass', timed_auction: 'Timed Auction',
   // Stage subsystem relics
   warm_up: 'Warm-Up', intermission: 'Intermission',
   endurance_battery: 'Endurance Battery', elite_hunter: 'Elite Hunter',
@@ -1813,6 +1813,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   discount_card: 'All shop prices -15%',
   recycle_expert: 'Skill sell price +50% (50% → 75%)',
   black_market: 'Shop gains +1 item slot (guaranteed rare+)',
+  gold_interest: 'Each stage start: gain 10% of current gold as interest (max 20)',
   smuggle_pass: 'Each stage: take the cheapest shop item for free',
   timed_auction: 'Refresh is free, but shop has a 30s countdown',
   // Stage subsystem relics

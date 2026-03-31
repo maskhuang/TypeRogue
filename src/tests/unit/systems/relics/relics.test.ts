@@ -17,8 +17,8 @@ import type { RelicRarity } from '../../../../src/data/relics'
 
 describe('Relics Data', () => {
   describe('RELICS constant', () => {
-    it('should contain 71 relics (10 class-exclusive + 5 typing + 6 combo + 6 skill + 6 enchantment + 6 topology + 6 word + 7 resource + 5 shop + 5 stage + 5 boss_modifier + 5 scoring)', () => {
-      expect(Object.keys(RELICS)).toHaveLength(71)
+    it('should contain 72 relics (10 class-exclusive + 5 typing + 6 combo + 6 skill + 6 enchantment + 6 topology + 6 word + 7 resource + 6 shop + 5 stage + 5 boss_modifier + 5 scoring)', () => {
+      expect(Object.keys(RELICS)).toHaveLength(72)
     })
     // NOTE: 📖 icon is shared by glass_cannon_v2 and training_manual (pre-existing)
 
@@ -46,9 +46,9 @@ describe('Relics Data', () => {
       expect(commons).toHaveLength(24)
     })
 
-    it('should have 18 rare relics', () => {
+    it('should have 19 rare relics', () => {
       const rares = getRelicsByRarity('rare')
-      expect(rares).toHaveLength(18)
+      expect(rares).toHaveLength(19)
     })
 
     it('should have 14 epic relics', () => {
@@ -122,7 +122,7 @@ describe('Relics Data', () => {
   describe('getAllRelicIds', () => {
     it('should return array of all relic ids', () => {
       const ids = getAllRelicIds()
-      expect(ids).toHaveLength(71)
+      expect(ids).toHaveLength(72)
       expect(ids).toContain('apprentice_notes')
       expect(ids).toContain('primal_mutant')
       expect(ids).toContain('decelerate_reward')
@@ -132,7 +132,7 @@ describe('Relics Data', () => {
   describe('getAllRelics', () => {
     it('should return array of all relics', () => {
       const relics = getAllRelics()
-      expect(relics).toHaveLength(71)
+      expect(relics).toHaveLength(72)
     })
   })
 
