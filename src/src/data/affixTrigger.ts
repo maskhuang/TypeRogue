@@ -13,7 +13,7 @@ import type { AffixInstance, AffixSkillInstance, AffixSkillSaveData, SkillRuntim
 import {
   AffixType,
   EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS, QUEST_AFFIX_MAP,
-  TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, CRIT_MULTIPLIER,
+  TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, CRIT_MULTIPLIER, FATE_COIN_MULTIPLIER,
   isOldSystemSkill, applyAffixLevelScaling, getQuestEquipTarget,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
@@ -97,6 +97,8 @@ export interface TriggerContext {
   // ── 暴击子系统 ──
   /** 基础暴击率（默认 0，遗物可注入） */
   baseCritRate?: number
+  /** 命运硬币激活（覆盖暴击判定） */
+  fateCoinActive?: boolean
 }
 
 // ===== 全场质变检查 =====
@@ -629,12 +631,23 @@ export function resolvePhase3(
   }
 
   // ── 暴击子系统：affix 循环后统一判定 ──
-  const finalCritChance = (ctx.baseCritRate ?? 0) + totalCritChance
-  if (critTransformed || (finalCritChance > 0 && ctx.randomFn() < finalCritChance)) {
-    output *= CRIT_MULTIPLIER
-    multipliers.push(CRIT_MULTIPLIER)
-    flags.isCrit = true
-    flags.critTransformed = critTransformed
+  if (ctx.fateCoinActive) {
+    // 命运硬币：50% ×3 暴击 / 50% 产出归 0
+    if (ctx.randomFn() < 0.5) {
+      output *= FATE_COIN_MULTIPLIER
+      multipliers.push(FATE_COIN_MULTIPLIER)
+      flags.isCrit = true
+    } else {
+      output = 0
+    }
+  } else {
+    const finalCritChance = (ctx.baseCritRate ?? 0) + totalCritChance
+    if (critTransformed || (finalCritChance > 0 && ctx.randomFn() < finalCritChance)) {
+      output *= CRIT_MULTIPLIER
+      multipliers.push(CRIT_MULTIPLIER)
+      flags.isCrit = true
+      flags.critTransformed = critTransformed
+    }
   }
 
   return { output, multipliers, flags, mutations }

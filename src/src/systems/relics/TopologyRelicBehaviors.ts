@@ -193,6 +193,20 @@ export function checkKeyStorm(
 
 // === 模块重置（关级别） ===
 
+// === 精准打击 (precision_strike) — 跨子系统暴击率遗物 ===
+
+/** Home Row 键位集合 */
+const HOME_ROW_KEYS = new Set(['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'])
+/** 精准打击暴击率加成 */
+export const PRECISION_STRIKE_CRIT_RATE = 0.10
+
+/** Home Row 按键时持有遗物 → +10% 暴击率，否则 0 */
+export function getPrecisionStrikeCritRate(triggerKey: string): number {
+  if (!state.player.relics.has('precision_strike')) return 0
+  if (!HOME_ROW_KEYS.has(triggerKey.toLowerCase())) return 0
+  return PRECISION_STRIKE_CRIT_RATE
+}
+
 /**
  * 重置关级别状态 — 在 startLevel() 中调用
  */

@@ -58,31 +58,31 @@ describe('filterWordsByCondition', () => {
     });
   });
 
-  describe('contains_owned（高频字母≥5）', () => {
-    it('返回包含高频字母的词', () => {
+  describe('contains_owned（高频字母≥1）', () => {
+    it('返回包含已拥有字母的词', () => {
       const freqs = new Map([['e', 10], ['a', 6], ['z', 1]]);
       const condition: PackCondition = { type: 'contains_owned' };
       const result = filterWordsByCondition(condition, [], freqs);
       expect(result.length).toBeGreaterThan(0);
-      // 每个词至少包含 e 或 a
+      // 每个词至少包含 e, a 或 z（全部 >= 1 threshold）
       result.forEach(w => {
-        expect(w.includes('e') || w.includes('a')).toBe(true);
+        expect(w.includes('e') || w.includes('a') || w.includes('z')).toBe(true);
       });
     });
 
-    it('频率恰好为5的字母算高频', () => {
-      const freqs = new Map([['q', 5]]);
+    it('频率恰好为1的字母算已拥有', () => {
+      const freqs = new Map([['q', 1]]);
       const condition: PackCondition = { type: 'contains_owned' };
       const result = filterWordsByCondition(condition, [], freqs);
-      // q 频率=5 算高频
+      // q 频率=1 >= threshold → 算已拥有
       result.forEach(w => expect(w.includes('q')).toBe(true));
     });
 
-    it('频率=4的字母不算高频', () => {
-      const freqs = new Map([['x', 4]]);
+    it('频率=0的字母不算已拥有', () => {
+      // 只有 freq=0 的字母，即空 Map
+      const freqs = new Map<string, number>();
       const condition: PackCondition = { type: 'contains_owned' };
       const result = filterWordsByCondition(condition, [], freqs);
-      // x 频率<5，没有高频字母 → 空结果
       expect(result).toEqual([]);
     });
 
@@ -93,9 +93,9 @@ describe('filterWordsByCondition', () => {
     });
   });
 
-  describe('contains_unowned（低频字母<5）', () => {
-    it('返回包含低频字母的词', () => {
-      // 除 e 外全部低频
+  describe('contains_unowned（低频字母<1）', () => {
+    it('返回包含未拥有字母的词', () => {
+      // 只有 e 有频率，其余 25 个字母 freq=0 → 未拥有
       const freqs = new Map([['e', 10]]);
       const condition: PackCondition = { type: 'contains_unowned' };
       const result = filterWordsByCondition(condition, [], freqs);
@@ -108,17 +108,15 @@ describe('filterWordsByCondition', () => {
       expect(result).toEqual([]);
     });
 
-    it('频率=4的字母算低频', () => {
-      // 只有 a 高频，其余低频
+    it('所有字母都已拥有时返回空', () => {
       const freqs = new Map<string, number>();
       for (let i = 0; i < 26; i++) {
         freqs.set(String.fromCharCode(97 + i), 10);
       }
-      freqs.set('x', 4);
       const condition: PackCondition = { type: 'contains_unowned' };
       const result = filterWordsByCondition(condition, [], freqs);
-      // 只有 x 是低频，结果中的词都包含 x
-      result.forEach(w => expect(w.includes('x')).toBe(true));
+      // 所有字母 freq >= 1，没有未拥有字母 → 空结果
+      expect(result).toEqual([]);
     });
   });
 
@@ -273,17 +271,17 @@ describe('buildConditionPool', () => {
     expect(aHighFreq!.weight).toBe(3);
   });
 
-  it('未绑定键位的条件权重为1', () => {
+  it('未绑定键位的条件权重为2（未拥有）', () => {
     const pool = buildConditionPool(['e']);
     const bStartsWith = pool.find(p => p.condition.type === 'starts_with' && p.condition.letter === 'b');
-    expect(bStartsWith!.weight).toBe(1);
+    expect(bStartsWith!.weight).toBe(2);
   });
 
-  it('Act 2 时 contains_owned/contains_unowned 基础权重2', () => {
+  it('Act 2 时 contains_owned/contains_unowned 权重固定', () => {
     const pool = buildConditionPool([], undefined, 2);
     const owned = pool.find(p => p.condition.type === 'contains_owned');
     const unowned = pool.find(p => p.condition.type === 'contains_unowned');
-    expect(owned!.weight).toBe(2);
+    expect(owned!.weight).toBe(3);
     expect(unowned!.weight).toBe(2);
   });
 
@@ -342,9 +340,12 @@ describe('generateWordPacks', () => {
     expect(packs.length).toBe(1);
   });
 
-  it('每包恰好包含 3 个词', () => {
+  it('每包包含 1 或 3 个词（单词制）', () => {
     const packs = generateWordPacks([], undefined, [], 5);
-    packs.forEach(p => expect(p.words.length).toBe(3));
+    packs.forEach(p => {
+      expect([1, 3]).toContain(p.words.length);
+      expect(p.pickCount).toBe(1);
+    });
   });
 
   it('同一批牌包条件不重复', () => {
@@ -357,7 +358,7 @@ describe('generateWordPacks', () => {
     expect(unique.size).toBe(condKeys.length);
   });
 
-  it('候选不足 3 个的条件被跳过', () => {
+  it('候选不足的条件被跳过', () => {
     // 拥有几乎所有词，使大部分条件候选不足
     const allWords: string[] = [];
     for (const pool of Object.values(WORD_POOL)) {
@@ -367,7 +368,7 @@ describe('generateWordPacks', () => {
     const owned = allWords.slice(0, allWords.length - 5);
     const packs = generateWordPacks(owned, undefined, [], 10);
     // 应该生成极少包（或 0 包），不崩溃
-    packs.forEach(p => expect(p.words.length).toBe(3));
+    packs.forEach(p => expect([1, 3]).toContain(p.words.length));
   });
 
   it('绑定键位的条件更容易出现（权重倾向性）', () => {
@@ -406,7 +407,7 @@ describe('generateWordPacks', () => {
     const packs = generateWordPacks([], undefined, [], 200);
     expect(packs.length).toBeLessThan(200);
     expect(packs.length).toBeGreaterThan(0);
-    packs.forEach(p => expect(p.words.length).toBe(3));
+    packs.forEach(p => expect([1, 3]).toContain(p.words.length));
   });
 
   it('生成的词不包含已拥有词', () => {
@@ -486,107 +487,108 @@ describe('generateWordPacks', () => {
   });
 });
 
-describe('buildConditionPool — 低频绑定键 high_freq 提权', () => {
-  it('绑定键且频率 5-8 时 high_freq 权重为 6', () => {
+describe('generateWordPacks — 词语效果', () => {
+  it('rarity >= 2 的牌包包含 wordEffect', () => {
+    // 多次生成找到至少一个 rarity >= 2 的包
+    let found = false;
+    for (let i = 0; i < 50; i++) {
+      const packs = generateWordPacks([], undefined, [], 5);
+      for (const p of packs) {
+        if (p.rarity >= 2) {
+          expect(p.wordEffect).toBeDefined();
+          expect(['base_score', 'multiplier', 'time', 'gold']).toContain(p.wordEffect!.type);
+          expect(p.wordEffect!.value).toBeGreaterThan(0);
+          found = true;
+        }
+      }
+      if (found) break;
+    }
+    expect(found).toBe(true);
+  });
+
+  it('rarity < 2 的牌包不包含 wordEffect', () => {
+    const packs = generateWordPacks([], undefined, [], 20);
+    for (const p of packs) {
+      if (p.rarity < 2) {
+        expect(p.wordEffect).toBeUndefined();
+      }
+    }
+  });
+
+  it('传说牌包 wordEffect value > 史诗牌包 value（同类型比较）', () => {
+    // 统计效果值范围
+    const epicValues: number[] = [];
+    const legendValues: number[] = [];
+    for (let i = 0; i < 100; i++) {
+      const packs = generateWordPacks([], undefined, [], 5);
+      for (const p of packs) {
+        if (p.rarity === 2 && p.wordEffect) epicValues.push(p.wordEffect.value);
+        if (p.rarity === 3 && p.wordEffect) legendValues.push(p.wordEffect.value);
+      }
+    }
+    if (epicValues.length > 0 && legendValues.length > 0) {
+      const avgEpic = epicValues.reduce((a, b) => a + b, 0) / epicValues.length;
+      const avgLegend = legendValues.reduce((a, b) => a + b, 0) / legendValues.length;
+      expect(avgLegend).toBeGreaterThan(avgEpic);
+    }
+  });
+});
+
+describe('buildConditionPool — high_freq 权重', () => {
+  it('绑定键 high_freq 权重为 3', () => {
     const freqs = new Map([['e', 6]]);
     const pool = buildConditionPool(['e'], freqs);
     const eHighFreq = pool.find(p => p.condition.type === 'high_freq' && p.condition.letter === 'e');
-    expect(eHighFreq!.weight).toBe(6);
-  });
-
-  it('绑定键且频率 5 时 high_freq 权重为 6', () => {
-    const freqs = new Map([['e', 5]]);
-    const pool = buildConditionPool(['e'], freqs);
-    const eHighFreq = pool.find(p => p.condition.type === 'high_freq' && p.condition.letter === 'e');
-    expect(eHighFreq!.weight).toBe(6);
-  });
-
-  it('绑定键且频率 8 时 high_freq 权重为 6', () => {
-    const freqs = new Map([['e', 8]]);
-    const pool = buildConditionPool(['e'], freqs);
-    const eHighFreq = pool.find(p => p.condition.type === 'high_freq' && p.condition.letter === 'e');
-    expect(eHighFreq!.weight).toBe(6);
-  });
-
-  it('绑定键但频率 > 8 时 high_freq 权重保持 3', () => {
-    const freqs = new Map([['e', 9]]);
-    const pool = buildConditionPool(['e'], freqs);
-    const eHighFreq = pool.find(p => p.condition.type === 'high_freq' && p.condition.letter === 'e');
     expect(eHighFreq!.weight).toBe(3);
   });
 
-  it('绑定键但频率 < 5 时 high_freq 权重保持 3', () => {
-    const freqs = new Map([['e', 4]]);
-    const pool = buildConditionPool(['e'], freqs);
-    const eHighFreq = pool.find(p => p.condition.type === 'high_freq' && p.condition.letter === 'e');
-    expect(eHighFreq!.weight).toBe(3);
-  });
-
-  it('未绑定键即使低频也不提权', () => {
+  it('未绑定但已拥有 high_freq 权重为 0.5', () => {
     const freqs = new Map([['e', 6]]);
     const pool = buildConditionPool([], freqs);
     const eHighFreq = pool.find(p => p.condition.type === 'high_freq' && p.condition.letter === 'e');
-    expect(eHighFreq!.weight).toBe(1);
+    expect(eHighFreq!.weight).toBe(0.5);
   });
 
-  it('无 playerFreqs 时绑定键 high_freq 权重仍为 3', () => {
+  it('无 playerFreqs 时绑定键 high_freq 权重为 3', () => {
     const pool = buildConditionPool(['e']);
     const eHighFreq = pool.find(p => p.condition.type === 'high_freq' && p.condition.letter === 'e');
     expect(eHighFreq!.weight).toBe(3);
   });
+
+  it('无 playerFreqs 且未绑定时 high_freq 权重为 2', () => {
+    const pool = buildConditionPool([]);
+    const eHighFreq = pool.find(p => p.condition.type === 'high_freq' && p.condition.letter === 'e');
+    expect(eHighFreq!.weight).toBe(2);
+  });
 });
 
-describe('buildConditionPool — Act 感知权重', () => {
-  it('Act 1 时 short 权重为 3', () => {
+describe('buildConditionPool — 固定权重', () => {
+  it('short/long/special 权重为 1', () => {
     const pool = buildConditionPool([], undefined, 1);
-    const short = pool.find(p => p.condition.type === 'short');
-    expect(short!.weight).toBe(3);
-  });
-
-  it('Act 1 时 contains_owned 权重为 6', () => {
-    const pool = buildConditionPool([], undefined, 1);
-    const owned = pool.find(p => p.condition.type === 'contains_owned');
-    expect(owned!.weight).toBe(6);
-  });
-
-  it('Act 1 时 long/special 权重保持 1', () => {
-    const pool = buildConditionPool([], undefined, 1);
-    const long = pool.find(p => p.condition.type === 'long');
-    const special = pool.find(p => p.condition.type === 'special');
-    expect(long!.weight).toBe(1);
-    expect(special!.weight).toBe(1);
-  });
-
-  it('Act 3 时 long 权重为 3', () => {
-    const pool = buildConditionPool([], undefined, 3);
-    const long = pool.find(p => p.condition.type === 'long');
-    expect(long!.weight).toBe(3);
-  });
-
-  it('Act 3 时 special 权重为 3', () => {
-    const pool = buildConditionPool([], undefined, 3);
-    const special = pool.find(p => p.condition.type === 'special');
-    expect(special!.weight).toBe(3);
-  });
-
-  it('Act 3 时 short/contains_owned 权重保持默认', () => {
-    const pool = buildConditionPool([], undefined, 3);
-    const short = pool.find(p => p.condition.type === 'short');
-    const owned = pool.find(p => p.condition.type === 'contains_owned');
-    expect(short!.weight).toBe(1);
-    expect(owned!.weight).toBe(2);
-  });
-
-  it('Act 2 时所有特殊条件权重为默认值', () => {
-    const pool = buildConditionPool([], undefined, 2);
     const short = pool.find(p => p.condition.type === 'short');
     const long = pool.find(p => p.condition.type === 'long');
     const special = pool.find(p => p.condition.type === 'special');
-    const owned = pool.find(p => p.condition.type === 'contains_owned');
     expect(short!.weight).toBe(1);
     expect(long!.weight).toBe(1);
     expect(special!.weight).toBe(1);
-    expect(owned!.weight).toBe(2);
+  });
+
+  it('contains_owned 权重为 3, contains_unowned 权重为 2', () => {
+    const pool = buildConditionPool([], undefined, 1);
+    const owned = pool.find(p => p.condition.type === 'contains_owned');
+    const unowned = pool.find(p => p.condition.type === 'contains_unowned');
+    expect(owned!.weight).toBe(3);
+    expect(unowned!.weight).toBe(2);
+  });
+
+  it('Act 参数不影响固定权重', () => {
+    for (const act of [1, 2, 3]) {
+      const pool = buildConditionPool([], undefined, act);
+      const short = pool.find(p => p.condition.type === 'short');
+      const owned = pool.find(p => p.condition.type === 'contains_owned');
+      expect(short!.weight).toBe(1);
+      expect(owned!.weight).toBe(3);
+    }
   });
 });
 

@@ -22,9 +22,13 @@ import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWord
 import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostBonus } from './relics/EnchantmentRelicBehaviors';
 import { getAdjacentPowerBonus, getCornerPowerBonus, recordLineClearHit } from './relics/TopologyRelicBehaviors';
 import { getSkillKeys, getBindingState } from './bindingManager';
-import { getShortSprintBonus } from './relics/WordRelicBehaviors';
+import { getShortSprintBonus, getLongWordCritBonus } from './relics/WordRelicBehaviors';
 import { getResourceTideBonus, getResourceFocusBonus, getResourceDiversityBonus, rollProductionDividend, getTimeTrickle } from './relics/ResourceRelicBehaviors';
-import { getWarmUpBonus } from './relics/StageRelicBehaviors';
+import { getWarmUpBonus, getDesperateCritRate } from './relics/StageRelicBehaviors';
+import { getLuckyStrikeCritRate, getCritBonusGold, isCritChargeReady, consumeCritCharge, advanceCritCharge, recordWordCrit, isFateCoinActive } from './relics/CritRelicBehaviors';
+import { getFuryBeatCritRate } from './relics/ComboRelicBehaviors';
+import { getRuneSpikeCritRate } from './relics/EnchantmentRelicBehaviors';
+import { getPrecisionStrikeCritRate } from './relics/TopologyRelicBehaviors';
 import { AffixType, BASE_VALUES } from '../data/affixes';
 import { inputHandler } from './typing/InputHandler';
 
@@ -233,6 +237,11 @@ function triggerAffixSkillWithFeedback(
   const occupiedKeys = getSkillKeys(getBindingState(state), skillId);
   if (occupiedKeys.length === 0) occupiedKeys.push(triggerKey); // 防御性回退
 
+  // 暴击蓄力：在 ctx 构建前检查，构建后立即消耗
+  // 命运硬币激活时跳过蓄力消耗（避免浪费保底暴击）
+  const fateCoinActive = isFateCoinActive();
+  const critChargeReady = !fateCoinActive && isCritChargeReady();
+
   // 构建触发上下文
   const ctx = {
     triggerKey,
@@ -250,7 +259,19 @@ function triggerAffixSkillWithFeedback(
     apprenticeGrowthMultiplier: getApprenticeGrowthMultiplier(),
     // Story 41-3: 质变 Ligature 关卡累计按键计数
     ligatureStageCounts: state.ligatureStageCounts,
+    // §12 暴击遗物注入
+    baseCritRate: getLuckyStrikeCritRate()
+      + (critChargeReady ? 1.0 : 0)
+      + getFuryBeatCritRate()
+      + getRuneSpikeCritRate()
+      + getPrecisionStrikeCritRate(triggerKey)
+      + getLongWordCritBonus(state.player.word.length)
+      + getDesperateCritRate(),
+    fateCoinActive,
   };
+
+  // 暴击蓄力消耗（本次触发已注入 baseCritRate=1.0）
+  if (critChargeReady) consumeCritCharge();
 
   // Story 41-3: 递增当前键的关卡累计计数
   state.ligatureStageCounts.set(triggerKey, (state.ligatureStageCounts.get(triggerKey) ?? 0) + 1);
@@ -444,6 +465,18 @@ function triggerAffixSkillWithFeedback(
 
     // 战后统计
     recordSkillTrigger(skillId, triggerKey, resource, amount, false);
+
+    // §12 暴击遗物：暴击奖金 + 风暴计数 + 蓄力推进
+    if (tr.isCrit) {
+      const critGold = getCritBonusGold();
+      if (critGold > 0) {
+        state.player.gold += critGold;
+        state.resources.gold += critGold;
+        showFeedback(t('battle.crit_bonus', { value: critGold }), RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'crit_bonus', resource: 'gold', amount: critGold });
+      }
+      recordWordCrit();
+    }
+    advanceCritCharge(tr.isCrit);
   }
 
   // 衍生附魔额外资源反馈

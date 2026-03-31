@@ -98,6 +98,21 @@ export function getGreedyInscriptionTargetMult(): number {
   return totalEnch === 0 ? 1 : Math.pow(2, totalEnch)
 }
 
+// === 符文尖刺 (rune_spike) — 跨子系统暴击率遗物 ===
+
+/** 符文尖刺：每个已附魔技能提供的暴击率 */
+export const RUNE_SPIKE_RATE_PER_ENCHANT = 0.03
+
+/** 每个已附魔的装备技能提供 +3% 全局暴击率 */
+export function getRuneSpikeCritRate(): number {
+  if (!state.player.relics.has('rune_spike')) return 0
+  let enchantedCount = 0
+  for (const [, skill] of state.affixSkills) {
+    if (skill.enchantmentIds.length > 0) enchantedCount++
+  }
+  return enchantedCount * RUNE_SPIKE_RATE_PER_ENCHANT
+}
+
 // === 附魔锚点（已删除，保留空桩避免消费端报错） ===
 
 /** @deprecated enchant_anchor 已删除，始终返回 0 */

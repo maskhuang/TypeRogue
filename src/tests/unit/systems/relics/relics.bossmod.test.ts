@@ -22,6 +22,8 @@ import {
   checkBarrierActivation,
   checkChaosRoulette,
   applyModifierReversal,
+  hasModifierPardon,
+  consumeModifierPardon,
   resetBossModifierRelicBattleState,
   initBossModifierRelicBehaviors,
 } from '../../../../src/systems/relics/BossModifierRelicBehaviors'
@@ -412,6 +414,32 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
     })
   })
 
+  // === 赦免状 (modifier_pardon) ===
+  describe('赦免状 (modifier_pardon)', () => {
+    it('无遗物 → hasModifierPardon() false', () => {
+      expect(hasModifierPardon()).toBe(false)
+    })
+
+    it('有遗物 → hasModifierPardon() true', () => {
+      state.player.relics.add('modifier_pardon')
+      expect(hasModifierPardon()).toBe(true)
+    })
+
+    it('consumeModifierPardon 后 → false', () => {
+      state.player.relics.add('modifier_pardon')
+      consumeModifierPardon()
+      expect(hasModifierPardon()).toBe(false)
+    })
+
+    it('resetBossModifierRelicBattleState 重置后 → 恢复 true', () => {
+      state.player.relics.add('modifier_pardon')
+      consumeModifierPardon()
+      expect(hasModifierPardon()).toBe(false)
+      resetBossModifierRelicBattleState()
+      expect(hasModifierPardon()).toBe(true)
+    })
+  })
+
   // === 生命周期 ===
   describe('生命周期', () => {
     it('resetBossModifierRelicBattleState 重置 barrier + chaosWordCount', () => {
@@ -440,12 +468,13 @@ describe('Boss修饰器系统遗物行为 (Story 36.11)', () => {
 
   // === 注册 ===
   describe('注册', () => {
-    it('initBossModifierRelicBehaviors 注册 3 个行为', () => {
+    it('initBossModifierRelicBehaviors 注册 4 个行为', () => {
       initBossModifierRelicBehaviors()
       const behaviors = getRegisteredBehaviors()
       expect(behaviors.includes('modifier_barrier')).toBe(true)
       expect(behaviors.includes('chaos_roulette')).toBe(true)
       expect(behaviors.includes('modifier_reversal')).toBe(true)
+      expect(behaviors.includes('modifier_pardon')).toBe(true)
     })
   })
 

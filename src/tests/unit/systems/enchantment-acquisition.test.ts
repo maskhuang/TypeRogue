@@ -12,7 +12,7 @@ import { getEnchantmentSlotCount } from '../../../src/data/affixTrigger'
 import { AffixType } from '../../../src/data/affixes'
 import type { AffixSkillInstance } from '../../../src/data/affixes'
 import type { ShopItem } from '../../../src/core/types'
-import { getRestEvents } from '../../../src/data/restEvents'
+// getRestEvents removed — rest events replaced by multi-option system
 
 function makeAffixSkill(id: string, enchantmentIds: string[] = []): AffixSkillInstance {
   return {
@@ -124,34 +124,5 @@ describe('Story 41.1: 附魔获取改造', () => {
     })
   })
 
-  describe('AC5: 休息关附魔试炼事件', () => {
-    it('enchantment_trial 事件存在于事件池中', () => {
-      const events = getRestEvents()
-      const trial = events.find(e => e.id === 'enchantment_trial')
-      expect(trial).toBeDefined()
-      expect(trial!.options.length).toBeGreaterThanOrEqual(2)
-    })
-
-    it('enchantment_trial 前置条件：无空槽技能时不满足', () => {
-      const events = getRestEvents()
-      const trial = events.find(e => e.id === 'enchantment_trial')!
-      // 无技能
-      expect(trial.prerequisite?.(state)).toBe(false)
-    })
-
-    it('enchantment_trial 前置条件：有空槽技能时满足', () => {
-      const events = getRestEvents()
-      const trial = events.find(e => e.id === 'enchantment_trial')!
-      // 添加一个有空槽的技能
-      state.affixSkills.set('s1', makeAffixSkill('s1'))
-      expect(trial.prerequisite?.(state)).toBe(true)
-    })
-
-    it('enchantment_trial 前置条件：技能已满槽时不满足', () => {
-      const events = getRestEvents()
-      const trial = events.find(e => e.id === 'enchantment_trial')!
-      state.affixSkills.set('s1', makeAffixSkill('s1', ['existing']))
-      expect(trial.prerequisite?.(state)).toBe(false)
-    })
-  })
+  // AC5: 附魔试炼事件已移除（休息关改为多选项制）
 })

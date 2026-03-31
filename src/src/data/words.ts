@@ -493,8 +493,12 @@ export const WORD_POOL: Record<string, WordPool> = {
   },
 };
 
-// === 获取起始词库（从 Tier 1-2 词池随机抽取 10 词） ===
+// === 获取起始词库（贪心选词，覆盖 ≤ MAX_STARTER_LETTERS 个不同字母） ===
+const MAX_STARTER_LETTERS = 10;
+const STARTER_WORD_COUNT = 10;
+
 export function getStarterWords(): string[] {
+  // 1. 收集 tier 1-2 候选词并洗牌
   const candidates: string[] = [];
   for (const pool of Object.values(WORD_POOL)) {
     if (pool.tier >= 1 && pool.tier <= 2) {
@@ -505,7 +509,57 @@ export function getStarterWords(): string[] {
     const j = Math.floor(random() * (i + 1));
     [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
   }
-  return candidates.slice(0, 10);
+
+  // 2. 贪心选词：每个词计算新增字母数
+  const selected: string[] = [];
+  const coveredLetters = new Set<string>();
+
+  for (const word of candidates) {
+    if (selected.length >= STARTER_WORD_COUNT) break;
+
+    const wordLetters = new Set<string>();
+    for (const ch of word.toLowerCase()) {
+      if (ch >= 'a' && ch <= 'z') wordLetters.add(ch);
+    }
+
+    // 计算新增字母数
+    let newLetterCount = 0;
+    for (const l of wordLetters) {
+      if (!coveredLetters.has(l)) newLetterCount++;
+    }
+
+    // 若加入后总字母种类 > MAX_STARTER_LETTERS → 跳过（除非新增=0，全覆盖则始终接受）
+    if (newLetterCount > 0 && coveredLetters.size + newLetterCount > MAX_STARTER_LETTERS) continue;
+
+    selected.push(word);
+    for (const l of wordLetters) coveredLetters.add(l);
+  }
+
+  // 3. 兜底：若不足 STARTER_WORD_COUNT，从候选中补选仅含已覆盖字母的词
+  if (selected.length < STARTER_WORD_COUNT) {
+    const selectedSet = new Set(selected);
+    for (const word of candidates) {
+      if (selected.length >= STARTER_WORD_COUNT) break;
+      if (selectedSet.has(word)) continue;
+
+      const wordLetters = new Set<string>();
+      for (const ch of word.toLowerCase()) {
+        if (ch >= 'a' && ch <= 'z') wordLetters.add(ch);
+      }
+
+      // 只接受不引入新字母的词
+      let allCovered = true;
+      for (const l of wordLetters) {
+        if (!coveredLetters.has(l)) { allCovered = false; break; }
+      }
+      if (allCovered) {
+        selected.push(word);
+        selectedSet.add(word);
+      }
+    }
+  }
+
+  return selected;
 }
 
 // === 词库统计 ===

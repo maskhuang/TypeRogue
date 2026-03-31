@@ -1,12 +1,14 @@
 // ============================================
-// 打字肉鸽 - LetterFrequencySystem 字频底分系统
+// 打字肉鸽 - LetterFrequencySystem 字频系统
 // ============================================
-// Story 16.1: 根据词库字频自动计算字母底分
+// Story 16.1: 字频解锁
+// 词语效果系统: 效果词字母产出加成
 
-import type { Modifier } from '../modifiers/ModifierTypes'
+import type { Modifier, ModifierEffectType } from '../modifiers/ModifierTypes'
+import type { WordEffect } from '../../core/types'
 
-/** 每 5 次出现 +1 底分 */
-const FREQ_DIVISOR = 5
+/** 字频解锁阈值：字母出现 ≥ 此值即解锁格子 */
+export const FREQ_UNLOCK_THRESHOLD = 1
 
 /**
  * 计算词库中各字母的出现频率
@@ -25,50 +27,60 @@ export function calculateLetterFrequency(words: string[]): Map<string, number> {
   return freq
 }
 
-/**
- * 将字频转换为底分: floor(freq / 5)
- */
-export function letterFrequencyToScore(freq: number): number {
-  return Math.floor(freq / FREQ_DIVISOR)
+/** WordEffectType → ModifierEffectType 映射 */
+const EFFECT_TYPE_MAP: Record<string, ModifierEffectType> = {
+  base_score: 'score',
+  multiplier: 'multiply',
+  time: 'time',
+  gold: 'gold',
 }
 
 /**
- * 根据词库计算所有字母的底分
- * @param wordDeck 玩家词库
- * @returns Map<字母, 底分>
+ * 根据词语效果生成修饰器数组
+ * 遍历效果词，提取独特字母，按 (letter, effectType) 叠加 value
+ * @param wordEffects Map<word, WordEffect>
  */
-export function getLetterScores(wordDeck: string[]): Map<string, number> {
-  const freq = calculateLetterFrequency(wordDeck)
-  const scores = new Map<string, number>()
-  freq.forEach((count, letter) => {
-    const score = letterFrequencyToScore(count)
-    if (score > 0) {
-      scores.set(letter, score)
+export function getWordEffectModifiers(wordEffects: Map<string, WordEffect>): Modifier[] {
+  // 按 (letter, effectType) 叠加 value
+  const accumulated = new Map<string, Map<ModifierEffectType, number>>()
+
+  for (const [word, effect] of wordEffects) {
+    const effectType = EFFECT_TYPE_MAP[effect.type]
+    if (!effectType) continue
+
+    // 提取独特字母
+    const uniqueLetters = new Set<string>()
+    for (const char of word.toLowerCase()) {
+      if (char >= 'a' && char <= 'z') {
+        uniqueLetters.add(char)
+      }
     }
-  })
-  return scores
-}
 
-/**
- * 根据词库生成字母底分修饰器数组
- * 与旧 getLetterModifiers() 形状一致，复用 key_is 条件 + on_correct_keystroke 触发
- * @param wordDeck 玩家词库
- */
-export function getLetterScoreModifiers(wordDeck: string[]): Modifier[] {
-  const scores = getLetterScores(wordDeck)
+    for (const letter of uniqueLetters) {
+      if (!accumulated.has(letter)) {
+        accumulated.set(letter, new Map())
+      }
+      const letterMap = accumulated.get(letter)!
+      letterMap.set(effectType, (letterMap.get(effectType) ?? 0) + effect.value)
+    }
+  }
+
+  // 生成修饰器
   const modifiers: Modifier[] = []
-  scores.forEach((score, key) => {
-    modifiers.push({
-      id: `letter:${key}:score`,
-      source: `letter:${key}`,
-      sourceType: 'letter',
-      layer: 'base',
-      trigger: 'on_correct_keystroke',
-      phase: 'calculate',
-      condition: { type: 'key_is', key },
-      effect: { type: 'score', value: score, stacking: 'additive' },
-      priority: 50,
-    })
-  })
+  for (const [letter, effectMap] of accumulated) {
+    for (const [effectType, value] of effectMap) {
+      modifiers.push({
+        id: `wordeffect:${letter}:${effectType}`,
+        source: `wordeffect:${letter}`,
+        sourceType: 'letter',
+        layer: 'base',
+        trigger: 'on_correct_keystroke',
+        phase: 'calculate',
+        condition: { type: 'key_is', key: letter },
+        effect: { type: effectType, value, stacking: 'additive' },
+        priority: 50,
+      })
+    }
+  }
   return modifiers
 }

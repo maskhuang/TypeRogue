@@ -37,9 +37,10 @@ import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, K
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors, applyGoldInterest } from './relics/ShopRelicBehaviors';
-import { getEnduranceTimeBonus, checkEliteHunterGoldMultiplier, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
+import { getEnduranceTimeBonus, getActiveBounty, onBountyError, checkBountyOnWordComplete, checkBountyOnStageEnd, checkPhoenixRevive, consumePhoenix, resetStageRelicBattleState, initStageRelicBehaviors } from './relics/StageRelicBehaviors';
 import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, shouldBarrierDelay, startBarrierDelay, addDeferredModifier, checkBarrierActivation, isBarrierDelaying, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
-import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
+import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, getUnderdogBonusGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
+import { resetCritRelicBattleState, resetCritRelicWordState, getCritStormBonus, initCritRelicBehaviors } from './relics/CritRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
 import { AffixType } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
@@ -162,6 +163,8 @@ let _elapsedSeconds = 0; // Story 42.4: 关内已流逝秒数（时间加速计�
 let _lastAccelText = ''; // Story 42.4: 上次显示的加速倍率文本（脉冲动画检测用）
 let _isBoss = false; // Story 42.4: 当前关是否 Boss（startTimer 缓存，避免每 tick 调用 getStageType）
 let _isCalibrationLevel = false; // 第一关校准关：无目标，时间结束后校准基数
+let _overflowDeduction = 0; // 溢出扣减量（用于 announceLevel 动画）
+let _preDeductionTarget = 0; // 扣减前的目标分数
 
 // === Charge 按住蓄力：按下暂停推进，蓄满自动释放或松开提前释放 ===
 const _pendingChargeTriggers = new Map<string, { skillId: string; key: string; letterIndex: number }>();
@@ -434,6 +437,8 @@ export function initInput(): void {
   initBossModifierRelicBehaviors();
   // Story 36.12: 注册结算/评分子系统遗物行为
   initScoringRelicBehaviors();
+  // §12: 注册暴击子系统遗物行为
+  initCritRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
   // Story 36.12: Enter 键独立监听（分数黑洞手动结算）
@@ -855,6 +860,9 @@ function playerWrong(): void {
   // 标记词语不完美
   state.wordPerfect = false;
 
+  // 猎物悬赏：打错通知
+  onBountyError();
+
   // 取消连锁：取消状态下打错 → 连锁归零 + 扣时间（没看清就打的代价）
   const cancelPenalty = onCancelledWordError();
   if (cancelPenalty > 0) {
@@ -984,6 +992,15 @@ function completeWord(): void {
     pulseRelicIcon('snowball', '#88ccff');
   }
 
+  // §12: 暴击风暴 — 单词内 ≥2 次暴击时整词产出 +50%
+  const critStormBonus = getCritStormBonus();
+  if (critStormBonus > 0) {
+    finalWordScore = Math.floor(finalWordScore * (1 + critStormBonus));
+    showFeedback(t('battle.crit_storm', { value: '50' }), '#f1c40f', undefined, { fromElementId: 'score-settlement', resource: 'settle' });
+    pulseRelicIcon('crit_storm', '#f1c40f');
+  }
+  resetCritRelicWordState();
+
   // Boss 修饰器：伪词干扰 — 未识破伪词则反扣分数
   if (isDecoyWord() && !isDecoyRecognized()) {
     finalWordScore = -finalWordScore;
@@ -1045,6 +1062,20 @@ function completeWord(): void {
   if (state.battleStats) {
     state.battleStats.wordsCompleted++;
     if (state.wordPerfect) state.battleStats.perfectWords++;
+  }
+
+  // 猎物悬赏：检查完成
+  const bountyGold = checkBountyOnWordComplete({
+    combo: state.combo,
+    wordsCompleted: state.battleStats?.wordsCompleted || 0,
+    wordTime: wordElapsed,
+    perfect: state.wordPerfect,
+  });
+  if (bountyGold > 0) {
+    state.gold += bountyGold;
+    state.resources.gold += bountyGold;
+    showFeedback(t('battle.bounty_complete', { value: String(bountyGold) }), '#ffaa00');
+    pulseRelicIcon('elite_hunter', '#ffaa00');
   }
 
   // 发送词语完成事件
@@ -1326,14 +1357,23 @@ function showGoldReward(onComplete: () => void): void {
     relicGold = furnaceResult.bonusGold;
   }
 
-  // Story 36.10: 精英猎手 — 精英关金币翻倍
-  const eliteMultiplier = checkEliteHunterGoldMultiplier();
+  // 猎物悬赏：zero_errors 在关卡结束时检查
+  const bountyEndGold = checkBountyOnStageEnd();
+  if (bountyEndGold > 0) {
+    showFeedback(t('battle.bounty_complete', { value: String(bountyEndGold) }), '#ffaa00');
+    pulseRelicIcon('elite_hunter', '#ffaa00');
+  }
   // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
   const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
   if (trophyGold > 0) {
     showFeedback(t('battle.s_rank_trophy', { value: String(trophyGold), rating: state.battleStats?.rating || 'S' }), '#ffdd00', undefined, undefined, { relicId: 's_rank_trophy', resource: 'gold', amount: trophyGold });
   }
-  const totalGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier) + trophyGold;
+  // 及格万岁 — 低评级额外金币（独立加算）
+  const underdogGold = getUnderdogBonusGold(state.battleStats?.rating || 'B');
+  if (underdogGold > 0) {
+    showFeedback(t('battle.underdog_bonus', { value: String(underdogGold), rating: state.battleStats?.rating || 'B' }), '#4ecdc4', undefined, undefined, { relicId: 'underdog_bonus', resource: 'gold', amount: underdogGold });
+  }
+  const totalGold = Math.floor(baseGold + skillGold + relicGold) + trophyGold + underdogGold + bountyEndGold;
 
   // 设置数值
   const goldSkillEl = document.getElementById('gold-skill');
@@ -1385,14 +1425,22 @@ function showGoldReward(onComplete: () => void): void {
 }
 
 // === 计时器 ===
-// 时间加速 — 达标前二次方，达标后 1.6 指数增长（从达标倍率无缝衔接）
+// 时间加速 — 达标前二次方，达标后先三次方 30 秒再转指数
 // boss_fast_time: 开局即进入达标后加速阶段（指数增长从 t=0 开始）
 function getTimeAcceleration(elapsedSeconds: number, isBoss: boolean): number {
   const rate = isBoss ? BALANCE.ACCEL_RATE_BOSS : BALANCE.ACCEL_RATE_STANDARD;
   const fastTime = !!getActiveParams()?.timeSpeed;
   if (_targetReached) {
     const dt = elapsedSeconds - _elapsedAtTarget;
-    return _accelAtTarget * Math.pow(1.6, rate * dt * dt * dt);
+    if (dt <= BALANCE.POST_TARGET_CUBIC_WINDOW) {
+      // 三次方阶段：从达标倍率无缝衔接
+      return _accelAtTarget + rate * dt * dt * dt;
+    }
+    // 指数阶段：从三次方末端倍率无缝衔接
+    const w = BALANCE.POST_TARGET_CUBIC_WINDOW;
+    const cubicEnd = _accelAtTarget + rate * w * w * w;
+    const expDt = dt - w;
+    return cubicEnd * Math.pow(1.6, rate * expDt * expDt * expDt);
   }
   if (fastTime) {
     // 视作从 t=0 即达标：指数增长
@@ -1789,7 +1837,11 @@ export async function startLevel(): Promise<void> {
   _isCalibrationLevel = state.targetScore === 0 && state.calibratedTargetBase === 0;
 
   // 溢出分扣减目标分数（最低 0），然后清零；Boss 战不受溢出扣减
+  _overflowDeduction = 0;
+  _preDeductionTarget = 0;
   if (state.overflowScore > 0 && currentStageType !== 'boss') {
+    _preDeductionTarget = state.targetScore;
+    _overflowDeduction = Math.min(state.overflowScore, state.targetScore); // 实际扣除量
     state.targetScore = Math.max(0, Math.round(state.targetScore - state.overflowScore));
     state.overflowScore = 0;
   }
@@ -1850,12 +1902,19 @@ export async function startLevel(): Promise<void> {
   resetTopologyRelicState();
   // Story 36.8: 重置资源遗物关级别状态（时间露珠计数器 + 资源潮汐奇偶）
   resetResourceRelicBattleState();
-  // Story 36.10: 重置关卡进度遗物关级别状态（暖身操计时 + 幕间免费刷新）
+  // Story 36.10: 重置关卡进度遗物关级别状态（暖身操计时 + 幕间免费刷新 + 悬赏抽取）
   resetStageRelicBattleState();
+  // 猎物悬赏：关卡开始显示悬赏任务
+  const bounty = getActiveBounty();
+  if (bounty) {
+    showFeedback(t(`battle.bounty_${bounty.type}`), '#ffaa00', 1.2);
+  }
   // Story 36.11: 重置Boss修饰器遗物关级别状态（屏障标记 + 混沌轮盘计数）
   resetBossModifierRelicBattleState();
   // Story 36.12: 重置结算/评分遗物关级别状态（雪球序号 + 黑洞池）
   resetScoringRelicBattleState();
+  // §12: 重置暴击遗物关级别状态（蓄力计数 + 风暴计数）
+  resetCritRelicBattleState();
   // Story 41-3: 清空质变 Ligature 关卡累计按键计数
   state.ligatureStageCounts.clear();
 
@@ -2067,6 +2126,11 @@ export async function startLevel(): Promise<void> {
   renderRelicDisplay();
   renderActiveLibrary();
 
+  // 溢出扣减动画：HUD 先显示原始目标
+  if (_overflowDeduction > 0) {
+    getElements().targetScore.textContent = String(_preDeductionTarget);
+  }
+
   // Boss 关入场演出（在战斗画面显示后）
   if (currentStageType === 'boss') {
     await showBossIntro(state.bossModifierPool);
@@ -2079,6 +2143,11 @@ export async function startLevel(): Promise<void> {
   eventBus.emit('battle:start', { stageId: state.level });
 
   announceLevel();
+
+  // 溢出扣减动画：在 HUD 目标分数上播放扣减过程
+  if (_overflowDeduction > 0) {
+    animateOverflowDeduction(_preDeductionTarget, _overflowDeduction, state.targetScore);
+  }
 
   // Level 提示消失后再开始关卡
   await new Promise<void>(resolve => setTimeout(resolve, 1500));
@@ -2123,6 +2192,49 @@ function announceLevel(): void {
   el.container.appendChild(ann);
   playSound('levelup');
   setTimeout(() => ann.remove(), 1500);
+}
+
+/** 溢出扣减 HUD 动画：目标分数从原始值滚动递减到最终值 */
+function animateOverflowDeduction(preTarget: number, deduction: number, finalTarget: number): void {
+  const el = getElements();
+  const targetEl = el.targetScore;
+  const scoreDisplay = document.getElementById('score-display');
+
+  // 阶段 1（0-400ms）：显示原始目标，等待
+  // 阶段 2（400ms）：弹出扣减浮字 + 开始数字滚动
+  setTimeout(() => {
+    // 扣减浮字：在 score-display 旁弹出
+    if (scoreDisplay) {
+      const deductFloat = document.createElement('span');
+      deductFloat.className = 'overflow-deduct-float';
+      deductFloat.textContent = `-${Math.round(deduction)}`;
+      scoreDisplay.appendChild(deductFloat);
+      setTimeout(() => deductFloat.remove(), 1200);
+    }
+    playSound('skill');
+
+    // 数字滚动
+    const duration = 500;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - startTime) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      const current = Math.round(preTarget - (preTarget - finalTarget) * eased);
+      targetEl.textContent = String(current);
+      targetEl.style.color = '#4ecdc4';
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        // 滚动结束后闪一下
+        targetEl.classList.add('overflow-deduct-done');
+        setTimeout(() => {
+          targetEl.classList.remove('overflow-deduct-done');
+          targetEl.style.color = '';
+        }, 600);
+      }
+    };
+    requestAnimationFrame(tick);
+  }, 400);
 }
 
 // === 胜利 ===

@@ -8,6 +8,7 @@ import { generateBossModifierCandidatesByCategory, getBossModifierMeta } from '.
 import type { BossModifierId, ModifierCategory } from '../data/bossModifiers'
 import { playSound } from '../effects/sound'
 import { t } from '../demo/demo-i18n'
+import { hasModifierPardon, consumeModifierPardon } from './relics/BossModifierRelicBehaviors'
 
 const CATEGORY_LABELS: Record<ModifierCategory, string> = {
   offense: 'modifier_picker.cat_offense',
@@ -47,12 +48,18 @@ export function showBossModifierPicker(onComplete: (selectedMods: BossModifierId
       return
     }
     const { category, candidates } = rounds[roundIdx]
+    const onSkip = hasModifierPardon() ? () => {
+      consumeModifierPardon()
+      playSound('skill')
+      roundIdx++
+      showRound()
+    } : undefined
     renderPickerRound(category, candidates, sessionPicks, (modId) => {
       sessionPicks.push(modId)
       playSound('skill')
       roundIdx++
       showRound()
-    })
+    }, onSkip)
   }
 
   showRound()
@@ -143,6 +150,7 @@ function renderPickerRound(
   candidates: BossModifierId[],
   sessionPicks: BossModifierId[],
   onPick: (id: BossModifierId) => void,
+  onSkip?: () => void,
 ): void {
   const modal = document.getElementById('modifier-picker-modal')
   const cardsEl = document.getElementById('modifier-picker-cards')
@@ -205,6 +213,14 @@ function renderPickerRound(
 
     cardsEl.appendChild(card)
   })
+
+  if (onSkip) {
+    const skipBtn = document.createElement('button')
+    skipBtn.className = 'modifier-picker-skip-btn'
+    skipBtn.textContent = t('modifier_picker.skip_round')
+    skipBtn.onclick = () => { if (!picked) { picked = true; onSkip() } }
+    cardsEl.after(skipBtn)
+  }
 
   modal.classList.remove('modifier-picker-hidden')
 }

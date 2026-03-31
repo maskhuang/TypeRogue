@@ -3,19 +3,23 @@
 // ============================================
 
 import { WORD_POOL } from './words';
-import type { PackCondition, PackConditionType, WordPack } from '../core/types';
+import type { PackCondition, PackConditionType, WordPack, WordEffect, WordEffectType } from '../core/types';
 import { random } from '../core/seededRandom';
 import { t } from '../demo/demo-i18n';
 import { rollRarity } from './skillGeneration';
 import type { SkillRarity } from './affixes';
+import { FREQ_UNLOCK_THRESHOLD } from '../systems/letters/LetterFrequencySystem';
 
 // === 牌包稀有度常量 ===
 
-/** 稀有度 → 基础词数 [普通5, 稀有6, 史诗7, 传说9] */
-const PACK_RARITY_WORD_COUNT: [number, number, number, number] = [5, 6, 7, 9];
+/** 稀有度 → 候选词数 [普通1, 稀有3, 史诗3, 传说3] */
+const PACK_RARITY_CANDIDATE_COUNT: [number, number, number, number] = [1, 3, 3, 3];
 
-/** 稀有度 → 定价系数 */
-const PACK_RARITY_PRICE_MULT: [number, number, number, number] = [1.0, 1.3, 1.6, 2.0];
+/** 稀有度 → 玩家选几个（全部=1） */
+const PACK_RARITY_PICK_COUNT: [number, number, number, number] = [1, 1, 1, 1];
+
+/** 稀有度 → 定价基础 */
+const PACK_RARITY_BASE_PRICE: [number, number, number, number] = [5, 12, 18, 25];
 
 /** 稀有度 → 允许的条件类型集合（null = 全部允许） */
 const PACK_RARITY_ALLOWED_CONDITIONS: Record<SkillRarity, Set<PackConditionType> | null> = {
@@ -93,7 +97,7 @@ export function filterWordsByCondition(
       const highFreqLetters = new Set<string>();
       if (playerFreqs) {
         playerFreqs.forEach((count, letter) => {
-          if (count >= 5) highFreqLetters.add(letter.toLowerCase());
+          if (count >= FREQ_UNLOCK_THRESHOLD) highFreqLetters.add(letter.toLowerCase());
         });
       }
       if (highFreqLetters.size === 0) return [];
@@ -105,11 +109,11 @@ export function filterWordsByCondition(
     case 'contains_unowned': {
       if (!playerFreqs) return [];
       const lowFreqLetters = new Set<string>();
-      // 所有26个字母中，频率<5的视为低频
+      // 所有26个字母中，频率<阈值的视为低频
       for (let i = 0; i < 26; i++) {
         const letter = String.fromCharCode(97 + i);
         const count = playerFreqs.get(letter) || 0;
-        if (count < 5) lowFreqLetters.add(letter);
+        if (count < FREQ_UNLOCK_THRESHOLD) lowFreqLetters.add(letter);
       }
       if (lowFreqLetters.size === 0) return [];
       candidates = getAllWords().filter(w =>
@@ -213,7 +217,7 @@ export function buildConditionPool(
   // 按键位状态分配权重：已有+绑定=3，未拥有=2，已有+未绑定=0.5
   const owned = new Set<string>();
   if (playerFreqs) {
-    playerFreqs.forEach((freq, letter) => { if (freq >= 5) owned.add(letter); });
+    playerFreqs.forEach((freq, letter) => { if (freq >= FREQ_UNLOCK_THRESHOLD) owned.add(letter); });
   }
   function letterWeight(letter: string): number {
     if (bound.has(letter)) return 3;       // 已有且绑定技能
@@ -271,6 +275,23 @@ export function calculatePackCost(condition: PackCondition, words: string[]): nu
     ? words.reduce((sum, w) => sum + w.length, 0) / words.length
     : 0;
   return baseCost + Math.floor(avgLen / 2);
+}
+
+// === 词语效果池（史诗/传说词包附带效果） ===
+
+const WORD_EFFECT_POOL: { type: WordEffectType; epicVal: number; legendVal: number }[] = [
+  { type: 'base_score', epicVal: 1, legendVal: 2 },
+  { type: 'multiplier', epicVal: 0.1, legendVal: 0.2 },
+  { type: 'time',       epicVal: 0.3, legendVal: 0.5 },
+  { type: 'gold',       epicVal: 1, legendVal: 2 },
+];
+
+function rollWordEffect(rarity: 2 | 3): WordEffect {
+  const entry = WORD_EFFECT_POOL[Math.floor(random() * WORD_EFFECT_POOL.length)];
+  return {
+    type: entry.type,
+    value: rarity === 3 ? entry.legendVal : entry.epicVal,
+  };
 }
 
 // === Fisher-Yates shuffle ===
@@ -378,10 +399,9 @@ export function generateWordPacks(
     const originalIndex = fullPool.indexOf(picked);
     usedIndices.add(originalIndex);
 
-    // 词数 = 基础词数 + random(-1, 0, +1)
-    const baseWordCount = PACK_RARITY_WORD_COUNT[rarity];
-    const wordCountVariation = [-1, 0, 1][Math.floor(random() * 3)];
-    const wordCount = baseWordCount + wordCountVariation;
+    // 候选词数 = 稀有度对应数量（普通1，稀有/史诗/传说3）
+    const wordCount = PACK_RARITY_CANDIDATE_COUNT[rarity];
+    const pickCount = PACK_RARITY_PICK_COUNT[rarity];
 
     // 筛选候选词
     const candidates = filterWordsByCondition(picked.condition, ownedWords, playerFreqs);
@@ -394,15 +414,22 @@ export function generateWordPacks(
     const meta = getConditionMeta(picked.condition);
     const freqHint = formatFreqHint(words);
     const desc = freqHint ? `${meta.desc} · ${freqHint}` : meta.desc;
-    const baseCost = calculatePackCost(picked.condition, words);
-    packs.push({
+    // 定价 = 基础价 + 平均词长
+    const avgWordLen = words.reduce((sum, w) => sum + w.length, 0) / words.length;
+    const pack: WordPack = {
       condition: picked.condition,
       name: meta.name,
       desc,
       words,
-      cost: Math.round(baseCost * PACK_RARITY_PRICE_MULT[rarity]),
+      pickCount,
+      cost: PACK_RARITY_BASE_PRICE[rarity] + Math.floor(avgWordLen),
       rarity,
-    });
+    };
+    // 史诗/传说牌包附带词语效果
+    if (rarity >= 2) {
+      pack.wordEffect = rollWordEffect(rarity as 2 | 3);
+    }
+    packs.push(pack);
   }
 
   return packs;

@@ -11,7 +11,6 @@ import { renderRelicDisplay, showFeedback } from './battle';
 import { playSound } from '../effects/sound';
 import { random } from '../core/seededRandom';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
-import { autoSelectRowMedal } from './relics/TopologyRelicBehaviors';
 
 // === 加权遗物类型 ===
 export interface RelicWeights {
@@ -172,11 +171,6 @@ export function showRelicPicker(onComplete: () => void, weights?: RelicWeights):
         addRelicWithCapacity(relicId);
         showFeedback(t('shop.got_relic', { icon: relic.icon, name: localizeItemName(relicId, relic.name) }), '#ffe66d');
         playSound('skill');
-        // Story 36.6: 行会勋章 — 获取时随机选行
-        if (relicId === 'row_medal') {
-          const row = autoSelectRowMedal();
-          showFeedback(t('relic.row_medal_selected', { row }), '#ffd700');
-        }
         renderRelicDisplay();
         finish();
       } else {
@@ -236,11 +230,6 @@ export function showRelicReplaceUI(newRelicId: string, onDone: () => void): void
       const gold = replaceRelic(ownedId, newRelicId);
       showFeedback(t('relic.replace', { icon: newRelic.icon, name: localizeItemName(newRelicId, newRelic.name), gold }), '#ffe66d');
       playSound('skill');
-      // Story 36.6: 行会勋章 — 替换获取时随机选行
-      if (newRelicId === 'row_medal') {
-        const row = autoSelectRowMedal();
-        showFeedback(t('relic.row_medal_selected', { row }), '#ffd700');
-      }
       renderRelicDisplay();
       onDone();
     };

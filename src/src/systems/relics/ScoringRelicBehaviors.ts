@@ -5,6 +5,7 @@ import { registerRelicBehavior } from './RelicPipeline'
 export const BASE_SHIELD_MIN = 15
 export const LENIENT_REDUCE = 0.10
 export const S_RANK_GOLD: Record<string, number> = { S: 25, SS: 50, SSS: 100 }
+export const UNDERDOG_GOLD: Record<string, number> = { B: 40, A: 20 }
 export const SNOWBALL_INCREMENT = 0.05
 
 // === 模块级状态 ===
@@ -29,6 +30,12 @@ export function applyLenientJudge(targetScore: number): number {
 export function getSRankTrophyGold(rating: string): number {
   if (!state.player.relics.has('s_rank_trophy')) return 0
   return S_RANK_GOLD[rating] ?? 0
+}
+
+// === 及格万岁 (underdog_bonus) ===
+export function getUnderdogBonusGold(rating: string): number {
+  if (!state.player.relics.has('underdog_bonus')) return 0
+  return UNDERDOG_GOLD[rating] ?? 0
 }
 
 // === 雪球效应 (snowball) ===

@@ -17,12 +17,19 @@ import {
   hasIntermissionFreeRefresh,
   consumeIntermissionFreeRefresh,
   getEnduranceTimeBonus,
-  checkEliteHunterGoldMultiplier,
+  getActiveBounty,
+  onBountyError,
+  checkBountyOnWordComplete,
+  checkBountyOnStageEnd,
+  rollBounty,
+  BOUNTY_REWARDS,
+  BOUNTY_TYPES,
   checkPhoenixRevive,
   consumePhoenix,
   resetStageRelicBattleState,
   initStageRelicBehaviors,
 } from '../../../../src/systems/relics/StageRelicBehaviors'
+import * as seededRandom from '../../../../src/core/seededRandom'
 import { clearBehaviorHandlers, getRegisteredBehaviors } from '../../../../src/systems/relics/RelicPipeline'
 
 // === 辅助 ===
@@ -47,8 +54,8 @@ describe('关卡进度系统遗物行为 (Story 36.10)', () => {
   describe('常量', () => {
     it('WARMUP_DURATION = 10', () => expect(WARMUP_DURATION).toBe(10))
     it('WARMUP_BONUS = 0.10', () => expect(WARMUP_BONUS).toBe(0.10))
-    it('INTERMISSION_GOLD = 10', () => expect(INTERMISSION_GOLD).toBe(10))
-    it('INTERMISSION_FREE_REFRESH = 1', () => expect(INTERMISSION_FREE_REFRESH).toBe(1))
+    it('INTERMISSION_GOLD = 25', () => expect(INTERMISSION_GOLD).toBe(25))
+    it('INTERMISSION_FREE_REFRESH = 2', () => expect(INTERMISSION_FREE_REFRESH).toBe(2))
     it('ENDURANCE_TIME_BONUS = 10', () => expect(ENDURANCE_TIME_BONUS).toBe(10))
     it('PHOENIX_REVIVE_TIME = 10', () => expect(PHOENIX_REVIVE_TIME).toBe(10))
   })
@@ -131,22 +138,114 @@ describe('关卡进度系统遗物行为 (Story 36.10)', () => {
     })
   })
 
-  // === 精英猎手 (elite_hunter) ===
-  describe('精英猎手 (elite_hunter)', () => {
-    it('无遗物 → 1', () => {
-      expect(checkEliteHunterGoldMultiplier()).toBe(1)
+  // === 猎物悬赏 (elite_hunter → bounty hunt) ===
+  describe('猎物悬赏 (elite_hunter)', () => {
+    let randomSpy: ReturnType<typeof vi.spyOn>
+
+    beforeEach(() => {
+      randomSpy = vi.spyOn(seededRandom, 'random')
     })
 
-    it('有遗物 + 非Boss关 → 1', () => {
-      state.player.relics.add('elite_hunter')
-      state.level = 1 // 普通关
-      expect(checkEliteHunterGoldMultiplier()).toBe(1)
+    afterEach(() => {
+      randomSpy.mockRestore()
     })
 
-    it('有遗物 + Boss关 → 2', () => {
+    it('无遗物 → getActiveBounty 返回 null', () => {
+      expect(getActiveBounty()).toBeNull()
+    })
+
+    it('有遗物 → rollBounty 后返回有效悬赏', () => {
       state.player.relics.add('elite_hunter')
-      state.level = 12 // Boss关（CYCLE_LENGTH=12，12%12===0）
-      expect(checkEliteHunterGoldMultiplier()).toBe(2)
+      resetStageRelicBattleState()
+      const bounty = getActiveBounty()
+      expect(bounty).not.toBeNull()
+      expect(BOUNTY_TYPES).toContain(bounty!.type)
+      expect(bounty!.completed).toBe(false)
+      expect(bounty!.reward).toBe(BOUNTY_REWARDS[bounty!.type])
+    })
+
+    it('combo_20: combo 达 20 → 完成', () => {
+      state.player.relics.add('elite_hunter')
+      randomSpy.mockReturnValue(0.2) // floor(0.2*5)=1 → combo_20
+      resetStageRelicBattleState()
+      expect(getActiveBounty()!.type).toBe('combo_20')
+      expect(checkBountyOnWordComplete({ combo: 19, wordsCompleted: 1, wordTime: 3, perfect: false })).toBe(0)
+      expect(checkBountyOnWordComplete({ combo: 20, wordsCompleted: 2, wordTime: 3, perfect: false })).toBe(BOUNTY_REWARDS.combo_20)
+      expect(getActiveBounty()!.completed).toBe(true)
+    })
+
+    it('words_8: 完成 8 个单词 → 完成', () => {
+      state.player.relics.add('elite_hunter')
+      randomSpy.mockReturnValue(0.4) // floor(0.4*5)=2 → words_8
+      resetStageRelicBattleState()
+      expect(getActiveBounty()!.type).toBe('words_8')
+      expect(checkBountyOnWordComplete({ combo: 1, wordsCompleted: 7, wordTime: 3, perfect: false })).toBe(0)
+      expect(checkBountyOnWordComplete({ combo: 1, wordsCompleted: 8, wordTime: 3, perfect: false })).toBe(BOUNTY_REWARDS.words_8)
+    })
+
+    it('speed_word: wordTime ≤ 2 → 完成', () => {
+      state.player.relics.add('elite_hunter')
+      randomSpy.mockReturnValue(0.6) // floor(0.6*5)=3 → speed_word
+      resetStageRelicBattleState()
+      expect(getActiveBounty()!.type).toBe('speed_word')
+      expect(checkBountyOnWordComplete({ combo: 1, wordsCompleted: 1, wordTime: 3, perfect: false })).toBe(0)
+      expect(checkBountyOnWordComplete({ combo: 1, wordsCompleted: 2, wordTime: 1.5, perfect: false })).toBe(BOUNTY_REWARDS.speed_word)
+    })
+
+    it('perfect_3: 连续 3 个完美 → 完成', () => {
+      state.player.relics.add('elite_hunter')
+      randomSpy.mockReturnValue(0.8) // floor(0.8*5)=4 → perfect_3
+      resetStageRelicBattleState()
+      expect(getActiveBounty()!.type).toBe('perfect_3')
+      expect(checkBountyOnWordComplete({ combo: 1, wordsCompleted: 1, wordTime: 3, perfect: true })).toBe(0)
+      expect(checkBountyOnWordComplete({ combo: 2, wordsCompleted: 2, wordTime: 3, perfect: true })).toBe(0)
+      expect(checkBountyOnWordComplete({ combo: 3, wordsCompleted: 3, wordTime: 3, perfect: true })).toBe(BOUNTY_REWARDS.perfect_3)
+    })
+
+    it('perfect_3: 中间打错重置计数', () => {
+      state.player.relics.add('elite_hunter')
+      randomSpy.mockReturnValue(0.8) // perfect_3
+      resetStageRelicBattleState()
+      checkBountyOnWordComplete({ combo: 1, wordsCompleted: 1, wordTime: 3, perfect: true })
+      checkBountyOnWordComplete({ combo: 2, wordsCompleted: 2, wordTime: 3, perfect: true })
+      onBountyError() // 打错重置
+      // 需要重新连续3个
+      expect(checkBountyOnWordComplete({ combo: 1, wordsCompleted: 3, wordTime: 3, perfect: true })).toBe(0)
+      expect(checkBountyOnWordComplete({ combo: 2, wordsCompleted: 4, wordTime: 3, perfect: true })).toBe(0)
+      expect(checkBountyOnWordComplete({ combo: 3, wordsCompleted: 5, wordTime: 3, perfect: true })).toBe(BOUNTY_REWARDS.perfect_3)
+    })
+
+    it('zero_errors: 无错完关 → checkBountyOnStageEnd 返回奖励', () => {
+      state.player.relics.add('elite_hunter')
+      randomSpy.mockReturnValue(0.0) // floor(0.0*5)=0 → zero_errors
+      resetStageRelicBattleState()
+      expect(getActiveBounty()!.type).toBe('zero_errors')
+      // 没有调用 onBountyError
+      expect(checkBountyOnStageEnd()).toBe(BOUNTY_REWARDS.zero_errors)
+      expect(getActiveBounty()!.completed).toBe(true)
+    })
+
+    it('zero_errors: 打错后 → checkBountyOnStageEnd 返回 0', () => {
+      state.player.relics.add('elite_hunter')
+      randomSpy.mockReturnValue(0.0) // zero_errors
+      resetStageRelicBattleState()
+      onBountyError()
+      expect(checkBountyOnStageEnd()).toBe(0)
+    })
+
+    it('已完成后再次检查 → 0（不重复奖励）', () => {
+      state.player.relics.add('elite_hunter')
+      randomSpy.mockReturnValue(0.6) // speed_word
+      resetStageRelicBattleState()
+      checkBountyOnWordComplete({ combo: 1, wordsCompleted: 1, wordTime: 1.5, perfect: false })
+      // 再次检查
+      expect(checkBountyOnWordComplete({ combo: 1, wordsCompleted: 2, wordTime: 1.0, perfect: false })).toBe(0)
+    })
+
+    it('resetStageRelicBattleState 重新抽取悬赏', () => {
+      state.player.relics.add('elite_hunter')
+      resetStageRelicBattleState()
+      expect(getActiveBounty()).not.toBeNull()
     })
   })
 

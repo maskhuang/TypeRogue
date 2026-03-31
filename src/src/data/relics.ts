@@ -138,6 +138,9 @@ export type RelicBehaviorType =
   // 结算/评分系统
   | 'snowball'             // 雪球效应：每词得分递增
   | 'score_black_hole'     // 分数黑洞：隐藏累计，单次手动结算
+  // 暴击系统
+  | 'crit_storm'           // 暴击风暴：单词内≥2次暴击时全词产出+50%
+  | 'fate_coin'            // 命运硬币：50%暴击×3 / 50%哑火
 
 export interface RelicData {
   id: string
@@ -425,6 +428,18 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '永不断裂的锁链，代价是禁锢的力量。',
   },
 
+  fury_beat: {
+    id: 'fury_beat',
+    name: '暴走节拍',
+    icon: '💢',
+    description: 'combo ≥ 10 时，暴击率 +10%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'combo',
+    flavor: '连击越高，拳头越硬。',
+  },
+
   // ==================== 技能系统（词条制）遗物 ====================
 
   first_strike: {
@@ -579,6 +594,17 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '贪婪地刻下每一道铭文，代价是无尽的追赶。',
   },
 
+  rune_spike: {
+    id: 'rune_spike',
+    name: '符文尖刺',
+    icon: '💎',
+    description: '每个已附魔的装备技能提供 +3% 全局暴击率。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'enchantment',
+    flavor: '铭刻越多，锋芒越盛。',
+  },
 
   // ==================== 键盘拓扑系统遗物 (Story 36.6) ====================
 
@@ -642,6 +668,18 @@ export const RELICS: Record<string, RelicData> = {
     subsystem: 'topology',
     behaviorType: 'hand_alternation',
     flavor: '双手在键盘上翩翩起舞。',
+  },
+
+  precision_strike: {
+    id: 'precision_strike',
+    name: '精准打击',
+    icon: '🎯',
+    description: '中间行（Home Row: ASDFGHJKL）按键暴击率 +10%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'topology',
+    flavor: '最熟悉的位置，最致命的一击。',
   },
 
   key_storm: {
@@ -718,6 +756,18 @@ export const RELICS: Record<string, RelicData> = {
     subsystem: 'word',
     behaviorType: 'word_dealer',
     flavor: '卖出一个词，赚回一次机会。',
+  },
+
+  long_word_crit: {
+    id: 'long_word_crit',
+    name: '长词蓄力',
+    icon: '📏',
+    description: '≥6 字母单词暴击率 +12%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'word',
+    flavor: '越长的单词，爆发越猛。',
   },
 
   punctuation_liberation: {
@@ -903,12 +953,24 @@ export const RELICS: Record<string, RelicData> = {
     id: 'intermission',
     name: '幕间准备',
     icon: '🔋',
-    description: '休息关额外获得+10金币和1次免费刷新。',
-    rarity: 'common',
-    basePrice: 50,
+    description: '休息关解锁「幕间补给」选项：+25金币、2次免费刷新。',
+    rarity: 'rare',
+    basePrice: 80,
     effects: [],
     subsystem: 'stage',
     flavor: '幕间休息，养精蓄锐。',
+  },
+
+  gamblers_creed: {
+    id: 'gamblers_creed',
+    name: '赌徒信条',
+    icon: '🎲',
+    description: '休息关解锁「赌一把」选项：押100金币，60%赢300。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'stage',
+    flavor: '赌徒从不休息，只是换个赌桌。',
   },
 
   endurance_battery: {
@@ -925,14 +987,14 @@ export const RELICS: Record<string, RelicData> = {
 
   elite_hunter: {
     id: 'elite_hunter',
-    name: '精英猎手',
+    name: '猎物悬赏',
     icon: '🎯',
-    description: '精英关通关金币奖励翻倍。',
+    description: '每关随机分配一个悬赏任务，完成后获得金币奖励。',
     rarity: 'epic',
     basePrice: 120,
     effects: [],
     subsystem: 'stage',
-    flavor: '猎杀精英，双倍回报。',
+    flavor: '赏金猎人的每一关都是新挑战。',
   },
 
   phoenix: {
@@ -946,6 +1008,18 @@ export const RELICS: Record<string, RelicData> = {
     subsystem: 'stage',
     behaviorType: 'phoenix',
     flavor: '浴火重生，涅槃一次。',
+  },
+
+  desperate_crit: {
+    id: 'desperate_crit',
+    name: '绝境暴击',
+    icon: '🔥',
+    description: '剩余时间 ≤ 5s 时，暴击率 +20%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'stage',
+    flavor: '背水一战，绝处逢生。',
   },
 
   // ===== Boss修饰器系统遗物 (5) =====
@@ -967,11 +1041,23 @@ export const RELICS: Record<string, RelicData> = {
     name: '困境红利',
     icon: '🏴‍☠️',
     description: '每个永久修饰器使商店价格-5%（上限30%）。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'boss_modifier',
+    flavor: '困难越多，折扣越大。',
+  },
+
+  modifier_pardon: {
+    id: 'modifier_pardon',
+    name: '赦免状',
+    icon: '📜',
+    description: 'Boss关选修饰器时可跳过1轮（每Boss一次）。',
     rarity: 'rare',
     basePrice: 80,
     effects: [],
     subsystem: 'boss_modifier',
-    flavor: '困难越多，折扣越大。',
+    flavor: '陛下开恩，免去一罪。',
   },
 
   modifier_barrier: {
@@ -1051,6 +1137,18 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '追求卓越，回报自来。',
   },
 
+  underdog_bonus: {
+    id: 'underdog_bonus',
+    name: '及格万岁',
+    icon: '🎓',
+    description: '战斗评级 B 时 +40 金币，A 时 +20 金币。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'scoring',
+    flavor: '不求出彩，但求过关。',
+  },
+
   snowball: {
     id: 'snowball',
     name: '雪球效应',
@@ -1077,9 +1175,69 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '越是刀尖上跳舞，礼物越是丰厚。',
   },
 
-  // ===== 暴击系统遗物 (crit) — 占位 =====
+  // ===== 暴击系统遗物 (crit) =====
 
-  // TODO: 设计5个暴击子系统遗物（2普通 + 1稀有 + 1史诗 + 1传说）
+  lucky_strike: {
+    id: 'lucky_strike',
+    name: '幸运一击',
+    icon: '🍀',
+    description: '所有技能获得 +8% 基础暴击率。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'crit',
+    flavor: '有时候，运气也是实力。',
+  },
+
+  crit_bonus: {
+    id: 'crit_bonus',
+    name: '暴击奖金',
+    icon: '⚡',
+    description: '每次暴击时 +3 金币。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'crit',
+    flavor: '暴击就是真金白银。',
+  },
+
+  crit_charge: {
+    id: 'crit_charge',
+    name: '暴击蓄力',
+    icon: '🔋',
+    description: '每 5 次非暴击技能触发后，下一次触发必定暴击。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'crit',
+    flavor: '蓄势待发，一击必杀。',
+  },
+
+  crit_storm: {
+    id: 'crit_storm',
+    name: '暴击风暴',
+    icon: '🌩️',
+    description: '单词内触发 ≥2 次暴击时，该词所有技能产出额外 +50%。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'crit',
+    behaviorType: 'crit_storm',
+    flavor: '雷声隆隆，万物震颤。',
+  },
+
+  fate_coin: {
+    id: 'fate_coin',
+    name: '命运硬币',
+    icon: '🪙',
+    description: '所有技能触发变为掷硬币：50% 暴击（×3），50% 哑火（产出为 0）。忽略其他暴击率来源。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'crit',
+    behaviorType: 'fate_coin',
+    flavor: '命运女神不偏不倚——除非她今天心情好。',
+  },
 
 }
 
@@ -1138,7 +1296,7 @@ export function relicExists(relicId: string): boolean {
 export const DELETED_RELIC_IDS = [
   'magnet', 'combo_badge', 'berserker_mask',
   'combo_crown', 'treasure_map', 'piggy_bank',
-  'chain_amplifier', 'fortress', 'passive_mastery', 'gamblers_creed',
+  'chain_amplifier', 'fortress', 'passive_mastery',
   'golden_keyboard', 'void_heart', 'rhyme_master',
   'keyboard_storm', 'time_lord', 'time_crystal',
   'mono_affix',

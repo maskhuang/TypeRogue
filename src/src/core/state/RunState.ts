@@ -7,7 +7,7 @@ import { BattleResult } from '../../scenes/battle/BattleFlowController'
 // Story 42.6: drawBossModifiers no longer used — pool starts empty
 import { DELETED_SKILL_IDS, DELETED_EVOLUTION_IDS } from '../../data/skills'
 import { DELETED_RELIC_IDS, MAX_RELIC_SLOTS } from '../../data/relics'
-import type { ClassId } from '../types'
+import type { ClassId, WordEffect } from '../types'
 import { BALANCE } from '../constants'
 import type { AffixSkillInstance, SkillRuntimeState } from '../../data/affixes'
 import { createSkillRuntimeState } from '../../data/affixes'
@@ -139,6 +139,9 @@ export interface RunStateData {
   /** 词汇收藏：本 Run 已完成单词集合（36.7） */
   collectedWords: Set<string>
 
+  /** 词语效果 Map<word, WordEffect>（效果词击键加成） */
+  wordEffects: Map<string, WordEffect>
+
   /** Story 42.3: 跨关累积溢出分 */
   overflowScore: number
 
@@ -203,6 +206,7 @@ export class RunState {
       affixSkillStates: new Map(),
       mutationACounts: new Map(),
       collectedWords: new Set(),
+      wordEffects: new Map(),
       overflowScore: 0,
       calibratedTargetBase: 0,
       eliteModifier: null,
@@ -534,6 +538,7 @@ export class RunState {
       }),
       mutationACounts: Object.fromEntries(this.data.mutationACounts),
       collectedWords: Array.from(this.data.collectedWords),
+      wordEffects: Object.fromEntries(this.data.wordEffects),
       overflowScore: this.data.overflowScore,
       calibratedTargetBase: this.data.calibratedTargetBase,
       eliteModifier: this.data.eliteModifier,
@@ -632,6 +637,12 @@ export class RunState {
     // 恢复词汇收藏（36.7）
     const savedWords: string[] = (parsed as any).collectedWords || []
     savedWords.forEach(w => runState.data.collectedWords.add(w))
+
+    // 恢复词语效果（兼容旧存档）
+    const wordEffectsRaw = (parsed as any).wordEffects || {}
+    Object.entries(wordEffectsRaw).forEach(([word, effect]) => {
+      runState.data.wordEffects.set(word, effect as WordEffect)
+    })
 
     // Story 42.3: 恢复溢出分
     runState.data.overflowScore = (parsed as any).overflowScore || 0

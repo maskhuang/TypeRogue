@@ -85,6 +85,9 @@ export const BALANCE = {
   // Story 42.4: 关内时间加速（二次方：1 + rate × t²）
   ACCEL_RATE_STANDARD: 0.001,   // 标准关加速率
   ACCEL_RATE_BOSS: 0.0015,      // Boss 关加速率（更高压力）
+
+  // 达标后加速：先三次方，超过窗口后转指数
+  POST_TARGET_CUBIC_WINDOW: 30, // 三次方阶段持续秒数
 };
 
 // === 资源标签 ===

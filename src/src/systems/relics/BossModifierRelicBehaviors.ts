@@ -33,6 +33,7 @@ let _barrierDelaying = false
 let _barrierWordCount = 0
 let _deferredModifiers: Array<{ modId: import('../../data/bossModifiers').BossModifierId; isElite: boolean }> = []
 let _chaosWordCount = 0
+let _pardonUsedThisBoss = false
 
 // === 修饰器护盾 (modifier_shield) ===
 
@@ -67,6 +68,18 @@ export function getShieldedTargetMultiplier(rawMult: number): number {
 export function getBountyHunterDiscount(): number {
   if (!state.player.relics.has('bounty_hunter')) return 0
   return Math.min(state.activeModifiers.length * BOUNTY_DISCOUNT_PER_MOD, BOUNTY_DISCOUNT_CAP)
+}
+
+// === 赦免状 (modifier_pardon) ===
+
+/** 有遗物且本Boss未使用过 → true */
+export function hasModifierPardon(): boolean {
+  return state.player.relics.has('modifier_pardon') && !_pardonUsedThisBoss
+}
+
+/** 消耗本Boss的赦免次数 */
+export function consumeModifierPardon(): void {
+  _pardonUsedThisBoss = true
 }
 
 // === 修饰器屏障 (modifier_barrier) — 延迟生效 ===
@@ -209,6 +222,7 @@ export function resetBossModifierRelicBattleState(): void {
   _barrierWordCount = 0
   _deferredModifiers = []
   _chaosWordCount = 0
+  _pardonUsedThisBoss = false
 }
 
 /** 注册Boss修饰器系统遗物行为 */
@@ -221,5 +235,8 @@ export function initBossModifierRelicBehaviors(): void {
   })
   registerRelicBehavior('modifier_reversal', () => {
     // 行为逻辑由 applyModifierReversal() 在 startLevel 中直接调用
+  })
+  registerRelicBehavior('modifier_pardon', () => {
+    // 行为逻辑由 hasModifierPardon/consumeModifierPardon 在 bossModifierPicker 中调用
   })
 }

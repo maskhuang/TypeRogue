@@ -11,6 +11,9 @@ export const WORD_COLLECTION_GOLD = 3
 /** 短词冲刺：≤4字母单词的技能产出加成 */
 export const SHORT_SPRINT_RATE = 0.20
 
+/** 厚积薄发：每N词减1金币 */
+export const THICK_DECK_WORDS_PER_DISCOUNT = 5
+
 /** 长词达人：≥6字母单词完成时的时间奖励（秒） */
 export const LONG_WORD_TIME_BONUS = 1
 
@@ -34,6 +37,17 @@ export function checkWordCollection(word: string): number {
  */
 export function getCollectedWords(): ReadonlySet<string> {
   return state.player.collectedWords
+}
+
+// === 厚积薄发 (thick_deck) ===
+
+/**
+ * 获取厚积薄发词包折扣（绝对值）
+ * 持有 thick_deck → floor(词库数 / 5)，否则 0
+ */
+export function getThickDeckPackDiscount(): number {
+  if (!state.player.relics.has('thick_deck')) return 0
+  return Math.floor(state.player.wordDeck.length / THICK_DECK_WORDS_PER_DISCOUNT)
 }
 
 // === 短词冲刺 (short_sprint) ===
@@ -80,6 +94,19 @@ export function consumeWordDealerFreeRefresh(): boolean {
   if (state.player.relicStates['word_dealer'] !== 1) return false
   state.player.relicStates['word_dealer'] = 0
   return true
+}
+
+// === 长词蓄力 (long_word_crit) — 跨子系统暴击率遗物 ===
+
+/** 长词蓄力：最小单词长度 */
+export const LONG_WORD_CRIT_MIN_LENGTH = 6
+/** 长词蓄力：暴击率加成 */
+export const LONG_WORD_CRIT_RATE = 0.12
+
+/** ≥6 字母单词时持有遗物 → +12% 暴击率，否则 0 */
+export function getLongWordCritBonus(wordLength: number): number {
+  if (!state.player.relics.has('long_word_crit')) return 0
+  return wordLength >= LONG_WORD_CRIT_MIN_LENGTH ? LONG_WORD_CRIT_RATE : 0
 }
 
 // === 标点解放 (punctuation_liberation) ===

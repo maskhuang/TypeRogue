@@ -43,6 +43,7 @@ export function createInitialState(): GameState {
     affixSkillStates: new Map(),
     ligatureStageCounts: new Map(),
     mutationACounts: new Map(),
+    wordEffects: new Map(),
     endlessUnlocked: false,
     resources: {
       base: 0,

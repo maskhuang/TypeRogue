@@ -200,6 +200,20 @@ export function hasImmortalCombo(): boolean {
   return state.player.relics.has('immortal_combo')
 }
 
+// === 暴走节拍 (fury_beat) — 跨子系统暴击率遗物 ===
+
+/** 暴走节拍 combo 阈值 */
+export const FURY_BEAT_COMBO_THRESHOLD = 10
+/** 暴走节拍暴击率加成 */
+export const FURY_BEAT_CRIT_RATE = 0.10
+
+/** combo ≥ 阈值且持有遗物 → FURY_BEAT_CRIT_RATE，否则 0 */
+export function getFuryBeatCritRate(): number {
+  if (!state.player.relics.has('fury_beat')) return 0
+  if (state.combo < FURY_BEAT_COMBO_THRESHOLD) return 0
+  return FURY_BEAT_CRIT_RATE
+}
+
 // === 模块重置（关级别） ===
 
 /**

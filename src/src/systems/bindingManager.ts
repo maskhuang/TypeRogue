@@ -9,6 +9,7 @@
 
 import { mapShapeToKeys } from '../data/skillShapes'
 import { KEYS, PUNCTUATION_KEYS } from '../core/constants'
+import { FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem'
 
 // ===== Types =====
 
@@ -169,7 +170,7 @@ export function autoBindSkill(
     // 标点键不参与自动绑定
     if (PUNCTUATION_KEYS.includes(anchorKey)) continue
     // 字频过低的键跳过
-    if (letterFreqs && (letterFreqs.get(anchorKey) ?? 0) < 5) continue
+    if (letterFreqs && (letterFreqs.get(anchorKey) ?? 0) < FREQ_UNLOCK_THRESHOLD) continue
 
     // 获取形状映射到的键位列表
     const targetKeys = mapShapeToKeys(anchorKey, shapeId, rotation)
@@ -180,7 +181,7 @@ export function autoBindSkill(
     if (!allFree) continue
 
     // 对于多格技能，也检查所有键的字频
-    if (letterFreqs && targetKeys.some(k => (letterFreqs.get(k) ?? 0) < 5)) continue
+    if (letterFreqs && targetKeys.some(k => (letterFreqs.get(k) ?? 0) < FREQ_UNLOCK_THRESHOLD)) continue
 
     // 找到空闲位置，执行绑定
     return bindShapeToKeys(st, skillId, anchorKey)

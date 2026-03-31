@@ -276,6 +276,9 @@ export function getEnchantmentThreshold(rarity: number): number {
 /** 暴击固定乘数（全局暴击子系统） */
 export const CRIT_MULTIPLIER = 2
 
+/** 命运硬币暴击乘数 */
+export const FATE_COIN_MULTIPLIER = 3
+
 /** 基底值：7 种资源 × 4 等级（白装可达 Lv4） */
 export const BASE_VALUES: Record<ResourceType, number[]> = {
   base:       [5, 8, 12, 17],

@@ -208,6 +208,7 @@ export interface GameState {
   endlessUnlocked: boolean;                // 无尽模式是否解锁
   gameMode: 'normal' | 'daily';           // 游戏模式
   dailySeed: number | null;                // 每日挑战种子（daily 模式时非 null）
+  wordEffects: Map<string, WordEffect>;
   resources: ResourceState;
   player: PlayerState;
   shop: ShopState;
@@ -272,6 +273,10 @@ export interface SkillInstance {
   purchasePrice?: number;  // 购买价格（用于卖出半价计算）
 }
 
+// === 词语效果系统 ===
+export type WordEffectType = 'base_score' | 'multiplier' | 'time' | 'gold';
+export interface WordEffect { type: WordEffectType; value: number; }
+
 // === 词库系统 ===
 export interface WordPool {
   words: string[];
@@ -301,9 +306,11 @@ export interface WordPack {
   condition: PackCondition;
   name: string;
   desc: string;
-  words: string[];
+  words: string[];       // 候选词（普通1个，稀有/史诗3个）
+  pickCount: number;     // 玩家选几个（当前全部=1）
   cost: number;
   rarity: 0 | 1 | 2 | 3;
+  wordEffect?: WordEffect;
 }
 
 // (旧 ShopReward/ShopWord/ShopSkillItem 已移除，由 ShopItem 替代)

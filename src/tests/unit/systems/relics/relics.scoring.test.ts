@@ -8,10 +8,12 @@ import {
   BASE_SHIELD_MIN,
   LENIENT_REDUCE,
   S_RANK_GOLD,
+  UNDERDOG_GOLD,
   SNOWBALL_INCREMENT,
   applyBaseShield,
   applyLenientJudge,
   getSRankTrophyGold,
+  getUnderdogBonusGold,
   applySnowball,
   isBlackHoleActive,
   accumulateBlackHole,
@@ -117,6 +119,35 @@ describe('结算/评分系统遗物 (Story 36.12)', () => {
       expect(getSRankTrophyGold('A')).toBe(0);
       expect(getSRankTrophyGold('B')).toBe(0);
       expect(getSRankTrophyGold('C')).toBe(0);
+    });
+  });
+
+  // === 及格万岁 (underdog_bonus) ===
+  describe('及格万岁 (underdog_bonus)', () => {
+    it('UNDERDOG_GOLD 映射正确', () => {
+      expect(UNDERDOG_GOLD).toEqual({ B: 40, A: 20 });
+    });
+
+    it('无遗物 → 返回 0', () => {
+      expect(getUnderdogBonusGold('B')).toBe(0);
+      expect(getUnderdogBonusGold('A')).toBe(0);
+    });
+
+    it('有遗物 + rating B → 40', () => {
+      state.player.relics.add('underdog_bonus');
+      expect(getUnderdogBonusGold('B')).toBe(40);
+    });
+
+    it('有遗物 + rating A → 20', () => {
+      state.player.relics.add('underdog_bonus');
+      expect(getUnderdogBonusGold('A')).toBe(20);
+    });
+
+    it('有遗物 + rating S → 0（高评级无奖励）', () => {
+      state.player.relics.add('underdog_bonus');
+      expect(getUnderdogBonusGold('S')).toBe(0);
+      expect(getUnderdogBonusGold('SS')).toBe(0);
+      expect(getUnderdogBonusGold('SSS')).toBe(0);
     });
   });
 

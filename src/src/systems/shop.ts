@@ -6,7 +6,7 @@
 import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION } from '../core/constants';
-import { getKeysWithRelation, PositionRelation } from '../data/keyboardTopology';
+import { getKeysWithRelation, hasRelation, PositionRelation } from '../data/keyboardTopology';
 import { getExtendedNeighbors } from '../data/affixTrigger';
 
 // === 位置关系标签（通过 t('rel.' + posRel) 获取） ===
@@ -18,14 +18,14 @@ import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
 import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
 import { getNextBattleNode, isSecondHalf, getPositionInCycle } from './stage/stageFlow';
-import { calculateLetterFrequency, letterFrequencyToScore } from './letters/LetterFrequencySystem';
+import { calculateLetterFrequency, FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
 // row_medal deleted — autoSelectRowMedal/getRowMedalRowName removed
-import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
+import { setWordDealerFlag, consumeWordDealerFreeRefresh, getThickDeckPackDiscount } from './relics/WordRelicBehaviors';
 import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
-import { checkEliteHunterGoldMultiplier } from './relics/StageRelicBehaviors';
+import { checkBountyOnStageEnd } from './relics/StageRelicBehaviors';
 import { getBountyHunterDiscount } from './relics/BossModifierRelicBehaviors';
 import { getSRankTrophyGold, consumeDeadlyGiftFreeRefresh } from './relics/ScoringRelicBehaviors';
 import { getDiscountMultiplier, getRecycleSellMultiplier, getBlackMarketExtraSlots, canSmuggleFree, consumeSmuggleFree, isTimedAuction, startAuctionTimer, clearAuctionTimer, resetShopRelicState } from './relics/ShopRelicBehaviors';
@@ -691,6 +691,17 @@ export function computeSmartEstimate(
         breakdown.push({ typeKey: 'crit', label: t('est.crit', { pct: Math.round(chance * 100) }), detail: `(\u00d7${CRIT_MULTIPLIER})` })
         break
       }
+      case 'cascade': {
+        if (affix.posRel == null) break
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        const hitRate = keys.length > 0 ? computeCascadeHitRate(keys, affix.posRel) : 0
+        const m = affix.cascadeMult ?? 1
+        const expectedMult = 1 + hitRate * (m - 1)
+        multProduct *= expectedMult
+        const detail = `(${Math.round(hitRate * 100)}%${t('est.cascade_hit')}×${m.toFixed(1)})`
+        breakdown.push({ typeKey: 'cascade', label: t('est.cascade', { val: expectedMult.toFixed(2) }), detail })
+        break
+      }
       // 其余词条不预估
       default:
         break
@@ -779,6 +790,27 @@ function computeDecayAvgMult(init: number, decayPer: number, floor: number, avgT
   return sum / n
 }
 
+/** 统计级联词条命中率：绑定键按下时前一个字母满足位置关系的比例 */
+function computeCascadeHitRate(boundKeys: string[], posRel: PositionRelation): number {
+  const deck = state.player.wordDeck
+  if (!deck || deck.length === 0) return 0
+  const keySet = new Set(boundKeys.map(k => k.toLowerCase()))
+  let hits = 0
+  let total = 0
+  for (const word of deck) {
+    for (let i = 0; i < word.length; i++) {
+      const ch = word[i].toLowerCase()
+      if (!keySet.has(ch)) continue
+      total++
+      if (i > 0) {
+        const prev = word[i - 1].toLowerCase()
+        if (hasRelation(prev, ch, posRel)) hits++
+      }
+    }
+  }
+  return total > 0 ? hits / total : 0
+}
+
 /** 自适应精度格式化：小值保留更多小数位 */
 function formatEstimate(v: number): string {
   const a = Math.abs(v)
@@ -817,11 +849,11 @@ export function openShop(_won: boolean): void {
     relicGold = furnaceResult.bonusGold;
   }
 
-  // Review H1: 精英猎手 — 精英关金币翻倍（同步 showGoldReward 显示）
-  const eliteMultiplier = checkEliteHunterGoldMultiplier();
+  // 猎物悬赏：zero_errors 在关卡结束时检查
+  const bountyEndGold = checkBountyOnStageEnd();
   // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
   const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
-  const battleGold = Math.floor((baseGold + skillGold + relicGold) * eliteMultiplier) + trophyGold;
+  const battleGold = Math.floor(baseGold + skillGold + relicGold) + trophyGold + bountyEndGold;
   state.gold += battleGold;
 
   el.shopLevelNum.textContent = String(state.level);
@@ -1015,7 +1047,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
         id: `si-${nextId++}`,
         type: 'pack',
         pack,
-        cost: getAdjustedPrice(pack.cost),
+        cost: Math.max(1, getAdjustedPrice(pack.cost) - getThickDeckPackDiscount()),
         isUpgrade: false,
         locked: false,
       });
@@ -1034,7 +1066,8 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
       items.push(skillPool.splice(0, 1)[0]);
     }
   }
-  if (packPool.length > 0) {
+  // 保底2个牌包（单词更便宜，需要更多购买机会）
+  for (let p = 0; p < 2 && packPool.length > 0; p++) {
     items.push(packPool.splice(0, 1)[0]);
   }
 
@@ -1211,24 +1244,47 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
     `;
   } else if (item.type === 'pack' && item.pack) {
-    // Pack item
+    // Pack item — 单词制
     const pack = item.pack;
-    const preview = pack.words.join(', ');
     const packRarityColor = RARITY_COLORS[pack.rarity] || '#ffffff';
     const packRarityLabel = rarityLabel(pack.rarity);
+    const boundKeySet = new Set([...state.player.bindings.keys()]);
 
     card.classList.add('pack-card');
     card.style.borderColor = packRarityColor;
-    card.innerHTML = `
-      <div class="reward-icon">${getPackIcon(pack.condition.type)}</div>
-      <div class="reward-info">
-        <div class="reward-name">${pack.name}</div>
-        <div class="reward-desc pack-preview">${pack.desc} · ${preview}</div>
-      </div>
-      ${costHtml}
-      <div class="reward-type pack-type" style="color:${packRarityColor}">${packRarityLabel} ${t('shop.pack_type')}</div>
-      <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
-    `;
+
+    const effectHtml = pack.wordEffect
+      ? `<div class="word-effect-label" style="color:${packRarityColor};font-size:11px;margin-top:2px;">${formatWordEffectLabel(pack.wordEffect)}</div>`
+      : '';
+
+    if (pack.words.length === 1) {
+      // 普通(1词): 直接在卡片上显示单词（高亮绑定字母）
+      const wordHtml = highlightWord(pack.words[0], boundKeySet);
+      card.innerHTML = `
+        <div class="reward-icon">${getPackIcon(pack.condition.type)}</div>
+        <div class="reward-info">
+          <div class="reward-name" style="font-size:16px;letter-spacing:1px;">${wordHtml}</div>
+          <div class="reward-desc pack-preview">${pack.desc}</div>
+          ${effectHtml}
+        </div>
+        ${costHtml}
+        <div class="reward-type pack-type" style="color:${packRarityColor}">${packRarityLabel} ${t('shop.pack_type')}</div>
+        <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
+      `;
+    } else {
+      // 稀有/史诗(3候选): 显示条件名 + "三选一"标签
+      card.innerHTML = `
+        <div class="reward-icon">${getPackIcon(pack.condition.type)}</div>
+        <div class="reward-info">
+          <div class="reward-name">${pack.name}</div>
+          <div class="reward-desc pack-preview">${pack.desc}</div>
+          ${effectHtml}
+        </div>
+        ${costHtml}
+        <div class="reward-type pack-type" style="color:${packRarityColor}">${packRarityLabel} · ${t('shop.choose_one')}</div>
+        <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
+      `;
+    }
   } else if (item.type === 'relic' && item.relicId) {
     // Relic item
     const relic = RELICS[item.relicId];
@@ -1563,6 +1619,20 @@ function hideAffixComparisonPanel(): void {
 
 // === 牌包辅助函数 ===
 
+import type { WordEffect } from '../core/types';
+
+const WORD_EFFECT_ICONS: Record<string, string> = {
+  base_score: '⬆',
+  multiplier: '✖',
+  time: '⏳',
+  gold: '🪙',
+};
+
+function formatWordEffectLabel(effect: WordEffect): string {
+  const icon = WORD_EFFECT_ICONS[effect.type] || '';
+  return `${icon} ${t('wordeffect.' + effect.type, { value: effect.value })}`;
+}
+
 function getPackIcon(condType: PackConditionType): string {
   const meta = getConditionMeta({ type: condType });
   return meta.icon;
@@ -1586,61 +1656,46 @@ function getFreqHints(word: string): string {
   return hints.join(' ');
 }
 
-function togglePackExpand(card: HTMLElement, item: ShopItem, index: number): void {
-  const existing = card.querySelector('.pack-expanded');
-  if (existing) {
-    existing.remove();
-    card.classList.remove('expanded');
+// === 词语三选一模态框 ===
+
+function showWordPicker(words: string[], onPick: (word: string) => void, wordEffect?: WordEffect): void {
+  const modal = document.getElementById('word-picker-modal');
+  const cardsEl = document.getElementById('word-picker-cards');
+  if (!modal || !cardsEl) {
+    // fallback: 直接选第一个词
+    onPick(words[0]);
     return;
   }
 
-  // 折叠其他已展开的牌包
-  document.querySelectorAll('.reward-card.expanded').forEach(c => {
-    c.querySelector('.pack-expanded')?.remove();
-    c.classList.remove('expanded');
-  });
-
-  const pack = item.pack!;
-  card.classList.add('expanded');
+  cardsEl.innerHTML = '';
   const boundKeySet = new Set([...state.player.bindings.keys()]);
+  const effectLabelHtml = wordEffect
+    ? `<div class="word-effect-label" style="color:#e67e22;font-size:11px;margin-top:4px;">${formatWordEffectLabel(wordEffect)}</div>`
+    : '';
 
-  const expandDiv = document.createElement('div');
-  expandDiv.className = 'pack-expanded';
+  words.forEach(word => {
+    const card = document.createElement('div');
+    card.className = 'word-picker-card';
 
-  // 渲染每个词行（无 checkbox，仅展示）
-  pack.words.forEach((word) => {
-    const row = document.createElement('div');
-    row.className = 'pack-word-row';
+    const wordHtml = highlightWord(word, boundKeySet);
+    const freqHint = getFreqHints(word);
 
-    const wordSpan = document.createElement('span');
-    wordSpan.className = 'word-text';
-    wordSpan.innerHTML = highlightWord(word, boundKeySet);
+    card.innerHTML = `
+      <div class="word-picker-word">${wordHtml}</div>
+      <div class="word-picker-len">${word.length} ${t('shop.letters')}</div>
+      ${freqHint ? `<div class="word-picker-freq">${freqHint}</div>` : ''}
+      ${effectLabelHtml}
+    `;
 
-    const lenSpan = document.createElement('span');
-    lenSpan.className = 'pack-word-len';
-    lenSpan.textContent = `${word.length} ${t('shop.letters')}`;
+    card.onclick = () => {
+      modal.classList.add('word-picker-hidden');
+      onPick(word);
+    };
 
-    const freqSpan = document.createElement('span');
-    freqSpan.className = 'pack-freq-hint';
-    freqSpan.textContent = getFreqHints(word);
-
-    row.append(wordSpan, lenSpan, freqSpan);
-    expandDiv.appendChild(row);
+    cardsEl.appendChild(card);
   });
 
-  // 购买按钮（整包购买）
-  const buyBtn = document.createElement('button');
-  buyBtn.className = 'pack-buy-btn';
-  buyBtn.textContent = t('shop.buy_pack', { count: pack.words.length, cost: item.cost });
-  buyBtn.disabled = state.gold < item.cost;
-
-  buyBtn.onclick = (e) => {
-    e.stopPropagation();
-    purchasePackItem(index);
-  };
-  expandDiv.appendChild(buyBtn);
-
-  card.appendChild(expandDiv);
+  modal.classList.remove('word-picker-hidden');
 }
 
 function purchasePackItem(index: number): void {
@@ -1656,20 +1711,35 @@ function purchasePackItem(index: number): void {
     return;
   }
 
+  const pack = item.pack;
+
+  const finalizePurchase = (word: string) => {
+    state.player.wordDeck.push(word);
+    // 词语效果：史诗/传说词包附带效果写入 state
+    if (pack.wordEffect) {
+      state.wordEffects.set(word, pack.wordEffect);
+    }
+    showFeedback(t('shop.add_word', { word }), '#4ecdc4');
+    state.shop.items.splice(index, 1);
+    renderUnifiedShop();
+    renderBuildManager();
+  };
+
+  // 先扣金币
   if (smuggleFree) consumeSmuggleFree();
   state.gold -= cost;
   updateGoldDisplay();
   playSound('buy');
 
-  // 整包词全部加入词库
-  for (const word of item.pack.words) {
-    state.player.wordDeck.push(word);
+  if (pack.words.length <= pack.pickCount) {
+    // 普通: 直接加入词库
+    finalizePurchase(pack.words[0]);
+  } else {
+    // 稀有/史诗: 弹出三选一
+    showWordPicker(pack.words, (pickedWord) => {
+      finalizePurchase(pickedWord);
+    }, pack.wordEffect);
   }
-
-  showFeedback(t('shop.add_words', { count: item.pack.words.length }), '#4ecdc4');
-  state.shop.items.splice(index, 1);
-  renderUnifiedShop();
-  renderBuildManager();
 }
 
 // === Lv.3 自动附魔检查（概率递减，按稀有度分组） ===
@@ -2154,6 +2224,8 @@ export function sellWord(index: number): void {
   const word = state.player.wordDeck[index];
   state.gold += 3;
   state.player.wordDeck.splice(index, 1);
+  // 移除词语效果
+  state.wordEffects.delete(word);
   updateGoldDisplay();
   showFeedback(t('shop.sell_word', { word }), '#ffe66d');
   // Story 36.7: 词语经销商 — 卖词后下次刷新免费
@@ -2555,21 +2627,16 @@ export function renderBuildManager(): void {
   const el = getElements();
   el.boundGrid.innerHTML = '';
 
-  // 计算字频（一次遍历），再导出底分
+  // 计算字频（一次遍历）
   const letterFreqs = calculateLetterFrequency(state.player.wordDeck);
   cachedLetterFreqs = letterFreqs;
-  const letterScores = new Map<string, number>();
-  letterFreqs.forEach((count, letter) => {
-    const score = letterFrequencyToScore(count);
-    if (score > 0) letterScores.set(letter, score);
-  });
 
-  // 低频键位自动解绑（频率<5 → 底分为0 → 锁定）— 标点键绕过
+  // 低频键位自动解绑（频率<阈值 → 底分为0 → 锁定）— 标点键绕过
   const hasPunctuationRelic = state.player.relics.has('punctuation_liberation');
   const keysToUnbind: string[] = [];
   for (const [key] of state.player.bindings) {
     if (PUNCTUATION_KEYS.includes(key)) continue; // 标点键不受字频限制
-    if ((letterFreqs.get(key) ?? 0) < 5) keysToUnbind.push(key);
+    if ((letterFreqs.get(key) ?? 0) < FREQ_UNLOCK_THRESHOLD) keysToUnbind.push(key);
   }
   const unboundSkillIds = new Set<string>();
   for (const key of keysToUnbind) {
@@ -2633,12 +2700,19 @@ export function renderBuildManager(): void {
       slot.dataset.key = k;
 
       const freq = letterFreqs.get(k) ?? 0;
-      const score = letterScores.get(k) ?? 0;
+      // 词语效果加成：统计该字母的总底分效果
+      let score = 0;
+      for (const [word, effect] of state.wordEffects) {
+        if (effect.type === 'base_score') {
+          const unique = new Set(word.toLowerCase());
+          if (unique.has(k)) score += effect.value;
+        }
+      }
       const skillId = state.player.bindings.get(k);
 
       // 低频键位锁定（频率<5 → 底分为0）— 标点键绕过
       const isPunctKey = PUNCTUATION_KEYS.includes(k);
-      if (freq < 5 && !isPunctKey) slot.classList.add('freq-locked');
+      if (freq < FREQ_UNLOCK_THRESHOLD && !isPunctKey) slot.classList.add('freq-locked');
 
       // 技能键位渲染
       if (skillId && state.affixSkills.has(skillId)) {
@@ -2663,14 +2737,18 @@ export function renderBuildManager(): void {
           if (preview) slot.dataset.shapePreview = preview;
         }
         slot.style.borderColor = rarityColor;
-        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${affixSkill.icon}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
+        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${affixSkill.icon}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}${freq > 0 ? `<span class="key-freq">${freq}</span>` : ''}`;
       } else {
-        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}`;
+        slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}${freq > 0 ? `<span class="key-freq">${freq}</span>` : ''}`;
       }
 
-      // Tooltip 悬停 + 范围预览
+      // Tooltip 悬停 + 范围预览（仅有额外信息时显示，否则只靠格子上的字频数字）
       slot.addEventListener('mouseenter', (e: MouseEvent) => {
         hideAllTooltips();
+        const hasSkill = !!(skillId && state.affixSkills.has(skillId));
+        const hasWordEffect = score > 0;
+        if (!hasSkill && !hasWordEffect) return; // 无额外信息，不弹 tooltip
+
         const freq = letterFreqs.get(k) ?? 0;
         const tooltipData: KeyTooltipData = {
           letter: k,
@@ -2685,7 +2763,7 @@ export function renderBuildManager(): void {
             if (sid === skillId) skillAllKeys.push(bk);
           }
         }
-        if (skillId && state.affixSkills.has(skillId)) {
+        if (hasSkill) {
           const affixSkill = state.affixSkills.get(skillId)!;
           const rt = state.affixSkillStates.get(skillId);
           const baseVal = getEffectiveBaseValue(affixSkill.baseValues, affixSkill.level);
@@ -2889,7 +2967,7 @@ function renderWordInventory(): void {
     const freq = freqs.get(letter) || 0;
     const block = document.createElement('div');
     block.className = 'freq-letter';
-    if (freq < 5) block.classList.add('freq-low');
+    if (freq < FREQ_UNLOCK_THRESHOLD) block.classList.add('freq-low');
     else if (freq >= 10) block.classList.add('freq-high');
     else block.classList.add('freq-mid');
     block.dataset.letter = letter;
@@ -2915,6 +2993,17 @@ function renderWordInventory(): void {
     ).join('');
 
     item.appendChild(wordSpan);
+
+    // 显示词语效果标签
+    const effect = state.wordEffects.get(word);
+    if (effect) {
+      const effectSpan = document.createElement('span');
+      effectSpan.className = 'word-effect-tag';
+      effectSpan.style.cssText = 'font-size:10px;margin-left:4px;opacity:0.85;';
+      effectSpan.textContent = formatWordEffectLabel(effect);
+      item.appendChild(effectSpan);
+    }
+
     el.ownedWords.appendChild(item);
   });
 }
@@ -2930,6 +3019,8 @@ function removeWord(index: number): void {
   const word = state.player.wordDeck[index];
   state.gold += 3;
   state.player.wordDeck.splice(index, 1);
+  // 移除词语效果
+  state.wordEffects.delete(word);
   updateGoldDisplay();
   showFeedback(t('shop.sell_word_feedback', { word }), '#ffe66d');
   // Story 36.7: 词语经销商 — 卖词后下次刷新免费
@@ -2951,7 +3042,7 @@ function highlightFreqDropWarning(word: string): void {
   const warnLetters = new Set<string>();
   wordCounts.forEach((count, letter) => {
     const current = freqs.get(letter) || 0;
-    if (current >= 5 && current - count < 5) {
+    if (current >= FREQ_UNLOCK_THRESHOLD && current - count < FREQ_UNLOCK_THRESHOLD) {
       warnLetters.add(letter);
     }
   });
