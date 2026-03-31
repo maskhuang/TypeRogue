@@ -18,6 +18,22 @@ import {
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 
+// ===== Conduit 模式共享匹配 =====
+
+/**
+ * 判断两个技能是否共享资源或词条类型（Conduit 匹配模式）。
+ * 条件：同资源 OR skillB 拥有 excludeType 以外的词条类型且 skillA 也拥有该类型。
+ */
+export function hasSharedMatch(
+  skillA: AffixSkillInstance,
+  skillB: AffixSkillInstance,
+  excludeType: AffixType,
+): boolean {
+  if (skillA.resource === skillB.resource) return true
+  const otherTypes = skillB.affixes.filter(a => a.type !== excludeType).map(a => a.type)
+  return skillA.affixes.some(a => otherTypes.includes(a.type))
+}
+
 // ===== Story 40.8: 多格技能扩展邻居计算 =====
 
 /**
@@ -216,11 +232,9 @@ export interface Phase5Result {
 }
 
 export type Phase6Action =
-  | { type: 'resonance', neighborKey: string, transformedBoost?: number }
-  | { type: 'link', neighborKey: string, transformedBoost?: number }
+  | { type: 'resonance', neighborKey: string, triggerCount: number }
   | { type: 'conduit', targetKey: string, conduitCount: number }
   | { type: 'apprentice_neighbor', neighborKey: string, growthDelta: number }
-  | { type: 'quest_resonance', neighborKey: string }
 
 export interface Phase6Result {
   actions: Phase6Action[]
@@ -310,28 +324,48 @@ export function countOccurrences(key: string, word: string): number {
   return count
 }
 
-/** 邻居增幅层数加成：累加 posRel 范围内同资源技能的增幅层数 × vpsEff（支持多格扩展邻居） */
-export function sumNeighborAmplifyStacks(
+/**
+ * 被触发技能视角：扫描所有邻居中的增幅技能，累加其 amplifyStacks。
+ * 匹配条件：增幅技能的 posRel 范围覆盖被触发技能 AND（同资源 OR 共享任意词条类型）。
+ * @param triggeredSkill 被触发的技能（接受增幅的一方）
+ * @param occupiedKeys 被触发技能占据的键位
+ */
+export function sumNeighborAmplifyBonus(
+  triggeredSkill: AffixSkillInstance,
   occupiedKeys: string[],
-  posRel: PositionRelation,
-  resource: ResourceType,
-  vpsEff: number,
   ctx: TriggerContext,
 ): number {
-  const neighbors = getExtendedNeighbors(occupiedKeys, posRel)
-  let bonus = 0
-  const counted = new Set<string>() // 去重：同一多格邻居技能不重复统计
-  for (const nk of neighbors) {
-    const nSkillId = ctx.bindings.get(nk)
-    if (!nSkillId || counted.has(nSkillId)) continue
+  const occupiedSet = new Set(occupiedKeys)
+  let stacks = 0
+  const counted = new Set<string>()
+
+  for (const [nk, nSkillId] of ctx.bindings) {
+    if (occupiedSet.has(nk)) continue // 跳过自身键位
+    if (counted.has(nSkillId)) continue
     counted.add(nSkillId)
     const nSkill = ctx.allSkills.get(nSkillId)
-    if (!nSkill || nSkill.resource !== resource) continue
+    if (!nSkill) continue
     const nState = ctx.skillStates.get(nSkillId)
-    if (!nState) continue
-    bonus += nState.amplifyStacks * vpsEff
+    if (!nState || nState.amplifyStacks <= 0) continue
+
+    // 邻居必须有 Amplify 词条
+    for (const affix of nSkill.affixes) {
+      if (affix.type !== AffixType.Amplify || affix.posRel == null) continue
+      // 范围检查：增幅技能的 posRel 覆盖被触发技能任意键位
+      const inRange = occupiedKeys.some(ok => {
+        // 获取增幅技能自身占据的键位
+        const ampKeys = [...ctx.bindings].filter(([, sid]) => sid === nSkillId).map(([k]) => k)
+        return ampKeys.some(ak => hasRelation(ak, ok, affix.posRel!))
+      })
+      if (!inRange) continue
+      // 匹配条件：同资源 OR 共享任意词条类型（排除 Amplify 自身）
+      if (hasSharedMatch(triggeredSkill, nSkill, AffixType.Amplify)) {
+        stacks += nState.amplifyStacks
+      }
+      break // 同一技能只计一次
+    }
   }
-  return bonus
+  return stacks
 }
 
 // ===== Phase 1: 基础值 =====
@@ -387,6 +421,7 @@ export function resolvePhase2(
     ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? baseOutput)
     : baseOutput
   let bonusPercent = 0
+  let flatBonus = 0 // 增幅词条：绝对值加成
   let chargeAutoComplete = false
   const mutations: StateMutation[] = []
   const convertReverseOutputs: { resource: ResourceType, amount: number }[] = []
@@ -442,19 +477,9 @@ export function resolvePhase2(
         break
       }
 
-      case AffixType.Amplify: {
-        if (affix.posRel == null || affix.resource == null) break
-        const vpsEff = affix.valuePerStack ?? 0
-        // 邻居增幅层数
-        bonusPercent += sumNeighborAmplifyStacks(
-          ctx.occupiedKeys, affix.posRel, affix.resource, vpsEff, ctx,
-        )
-        // 自身增幅（同资源时）
-        if (skill.resource === affix.resource) {
-          bonusPercent += runtimeState.amplifyStacks * vpsEff
-        }
+      case AffixType.Amplify:
+        // 增幅技能自身不产出（base=0），增幅效果在下方「被增幅」逻辑中施加给邻居
         break
-      }
 
       case AffixType.Taboo: {
         bonusPercent += 1.0
@@ -475,9 +500,15 @@ export function resolvePhase2(
   // 附魔循环（预留）
   // 41-4: QuestDevour 额外数值加成已移除，质变行为在 Phase 5 实现
 
-  // 乘算化模式与普通模式统一：bonusPercent 加算后应用到 output
+  // ── 被增幅：扫描邻居增幅技能，按层数获得绝对值加成 ──
+  if (effectiveBase > 0) { // 自身不产出的技能（Conduit/Amplify）不享受增幅
+    const ampStacks = sumNeighborAmplifyBonus(skill, ctx.occupiedKeys, ctx)
+    flatBonus += ampStacks * effectiveBase
+  }
+
+  // 乘算化模式与普通模式统一：bonusPercent 加算后应用到 output + 增幅绝对值
   return {
-    output: effectiveBase * (1 + bonusPercent),
+    output: effectiveBase * (1 + bonusPercent) + flatBonus,
     bonusPercent,
     mutations,
     convertReverseOutputs,
@@ -774,7 +805,7 @@ function checkQuestEventCondition(
     }
     // ── equip_count：装备数量型任务，由 evaluateEquipQuests 统一处理，Phase 5 不叠层 ──
     case 'equip_count': return false
-    // ── neighborTrigger 在 Phase 6 独立处理（QuestResonance），Phase 5 不重复叠层 ──
+    // ── neighborTrigger 在 Phase 6 独立处理，Phase 5 不重复叠层 ──
     case 'neighborTrigger': return false
     // ── 外部事件（wordComplete, gravityWordMatch, multiResourceWord, stageCleared）
     //    由调用方通过 applyQuestEvent 处理，Phase 5 不重复叠层 ──
@@ -848,18 +879,16 @@ export function resolvePhase5(
       case AffixType.Splash: {
         if (ctx.chainAffixesDisabled) break // chain_ban: 跳过溅射词条
         if (affix.posRel == null) break
-        const targetCount = 1
+        const targetCount = affix.splashCount ?? 1
         // Story 40.9: 扩展邻居范围（多格技能从所有占据键的邻居并集中选目标）
         const allKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
           .filter(k => ctx.bindings.has(k))
-        // 按资源或词条类型过滤目标
+        // Conduit 模式匹配：同资源 OR 共享词条类型（排除 Splash 自身）
         const filtered = allKeys.filter(k => {
           const sid = ctx.bindings.get(k)!
           const target = ctx.allSkills.get(sid)
           if (!target) return false
-          if (affix.resource) return target.resource === affix.resource
-          if (affix.watchAffix) return target.affixes.some(a => a.type === affix.watchAffix)
-          return true
+          return hasSharedMatch(skill, target, AffixType.Splash)
         })
         result.splashTargets = pickRandomKeys(filtered, targetCount, ctx.randomFn)
         // 质变后：溅射目标也会向自己的邻居溅射一次（额外一跳）
@@ -1014,7 +1043,7 @@ export function resolvePhase5(
 // ===== Phase 6: 邻居通知 =====
 
 /**
- * Phase 6: 遍历所有已绑定邻居，检查共鸣/感应/学徒·观摩/任务·共振。
+ * Phase 6: 遍历所有已绑定邻居，检查共鸣/导能/学徒·观摩。
  * 返回动作描述符，由调用方执行对应触发/成长/叠层。
  */
 export function resolvePhase6(
@@ -1042,30 +1071,17 @@ export function resolvePhase6(
     const neighborSkill = ctx.allSkills.get(neighborSkillId)
     if (!neighborSkill) continue
 
-    // 共鸣词条：范围内技能产出指定资源时自动触发 / 感应词条：范围内指定词条触发时自动触发
+    // 共鸣词条：范围内共享资源或词条的技能触发时，本技能自动触发N次
     for (const affix of neighborSkill.affixes) {
       if (affix.type === AffixType.Resonance && ctx.chainAffixesDisabled) continue // chain_ban: 跳过共鸣
-      if (affix.type === AffixType.Link && ctx.chainAffixesDisabled) continue // chain_ban: 跳过感应
 
-      // 共鸣词条：触发技能产出的资源匹配 → 邻居自动触发（双侧 any-match，取实际匹配键）
-      if (affix.type === AffixType.Resonance && affix.posRel != null && affix.resource != null && actualResource === affix.resource) {
+      if (affix.type === AffixType.Resonance && affix.posRel != null) {
+        // Conduit 模式匹配：同资源 OR 共享词条类型（排除 Resonance 自身）
+        if (!hasSharedMatch(skill, neighborSkill, AffixType.Resonance)) continue
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk != null) {
-          // 质变：共鸣增强 — 被触发技能获得 +50% 产出加成
-          const boost = isAffixGloballyTransformed(AffixType.Resonance, ctx.allSkills, ctx.skillStates) ? 0.5 : undefined
-          actions.push({ type: 'resonance', neighborKey: matchedNk, transformedBoost: boost })
-        }
-      }
-
-      // 感应词条：触发技能拥有指定词条类型 → 邻居触发（双侧 any-match，取实际匹配键）
-      if (affix.type === AffixType.Link && affix.watchAffix != null && affix.posRel != null) {
-        const triggerSkillHasAffix = skill.affixes.some(a => a.type === affix.watchAffix)
-        if (triggerSkillHasAffix) {
-          const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
-          if (matchedNk != null) {
-            const boost = isAffixGloballyTransformed(AffixType.Link, ctx.allSkills, ctx.skillStates) ? 0.5 : undefined
-            actions.push({ type: 'link', neighborKey: matchedNk, transformedBoost: boost })
-          }
+          const triggerCount = affix.resonanceCount ?? 1
+          actions.push({ type: 'resonance', neighborKey: matchedNk, triggerCount })
         }
       }
     }
@@ -1087,12 +1103,7 @@ export function resolvePhase6(
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk == null) continue
         // 检查触发技能是否拥有 Conduit 技能的其他词条类型 OR 产出相同资源
-        const conduitOtherTypes = neighborSkill.affixes
-          .filter(a => a.type !== AffixType.Conduit)
-          .map(a => a.type)
-        const hasSharedAffix = skill.affixes.some(a => conduitOtherTypes.includes(a.type))
-        const hasSameResource = skill.resource === neighborSkill.resource
-        if (hasSharedAffix || hasSameResource) {
+        if (hasSharedMatch(skill, neighborSkill, AffixType.Conduit)) {
           // 质变：+2 触发（而非 +1）
           const conduitCount = isAffixGloballyTransformed(AffixType.Conduit, ctx.allSkills, ctx.skillStates) ? 2 : 1
           actions.push({ type: 'conduit', targetKey: triggerKey, conduitCount })
@@ -1100,18 +1111,6 @@ export function resolvePhase6(
       }
     }
 
-    // 任务·共振附魔：邻居触发 → 叠层（双侧 any-match，取实际匹配键）
-    if (neighborSkill.enchantmentIds.includes(EnchantmentType.QuestResonance)) {
-      const matchedNk = neighborKeys.find(nk =>
-        neighborSkill.affixes.some(a =>
-          (a.type === AffixType.Resonance || a.type === AffixType.Link) && a.posRel != null &&
-          occupiedKeys.some(ok => hasRelation(ok, nk, a.posRel!)),
-        ),
-      )
-      if (matchedNk != null) {
-        actions.push({ type: 'quest_resonance', neighborKey: matchedNk })
-      }
-    }
   }
 
   return { actions }
@@ -1170,9 +1169,9 @@ export function triggerAffixSkill(
   // Mirror 词条替换：将 Mirror 替换为运行时复制的词条，使其参与所有 Phase 计算
   const effectiveSkill = buildEffectiveSkill(skill, runtimeState)
 
-  // Phase 1: 基础值（Conduit 技能自身不产出，基础值为 0）
-  const hasConduit = effectiveSkill.affixes.some(a => a.type === AffixType.Conduit)
-  const base = hasConduit ? 0 : resolvePhase1(effectiveSkill)
+  // Phase 1: 基础值（Conduit/Amplify/Splash 技能自身不产出，基础值为 0）
+  const hasSelfZero = effectiveSkill.affixes.some(a => a.type === AffixType.Conduit || a.type === AffixType.Amplify || a.type === AffixType.Splash)
+  const base = hasSelfZero ? 0 : resolvePhase1(effectiveSkill)
 
   // Phase 2: 加算层
   const p2 = resolvePhase2(effectiveSkill, runtimeState, ctx, base)

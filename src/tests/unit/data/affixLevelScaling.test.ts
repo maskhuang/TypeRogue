@@ -12,16 +12,16 @@ import {
 import type { AffixInstance } from '../../../src/data/affixes'
 
 describe('AFFIX_LEVEL_SCALING table', () => {
-  it('should have 12 entries for scalable affixes', () => {
-    expect(Object.keys(AFFIX_LEVEL_SCALING).length).toBe(12)
+  it('should have 14 entries for scalable affixes', () => {
+    expect(Object.keys(AFFIX_LEVEL_SCALING).length).toBe(14)
   })
 })
 
 describe('applyAffixLevelScaling', () => {
-  it('add mode: Crit critMult +0.5 per level', () => {
+  it('add mode: Crit chance +0.05 per level', () => {
     const affix: AffixInstance = { type: AffixType.Crit, chance: 0.3, critMult: 2.0 }
     applyAffixLevelScaling([affix], 1)
-    expect(affix.critMult).toBe(2.5)
+    expect(affix.chance).toBe(0.35)
   })
 
   it('add mode: Pulse burstMult +0.3 per level', () => {
@@ -42,10 +42,10 @@ describe('applyAffixLevelScaling', () => {
     expect(affix.floor).toBe(0.55)
   })
 
-  it('add mode: Charge maxBonus +0.3 per level', () => {
+  it('add mode: Charge maxBonus +0.5 per level', () => {
     const affix: AffixInstance = { type: AffixType.Charge, gainPerSec: 0.1, maxBonus: 2.0 }
     applyAffixLevelScaling([affix], 1)
-    expect(affix.maxBonus).toBe(2.3)
+    expect(affix.maxBonus).toBe(2.5)
   })
 
   it('add mode: Outcast bonusPercent +0.15 per level', () => {
@@ -54,10 +54,11 @@ describe('applyAffixLevelScaling', () => {
     expect(affix.bonusPercent).toBe(0.65)
   })
 
-  it('add mode: Amplify valuePerStack +0.005 per level', () => {
-    const affix: AffixInstance = { type: AffixType.Amplify, valuePerStack: 0.02 }
+  it('no-scale: Amplify (flat base per stack, no param scaling)', () => {
+    const affix: AffixInstance = { type: AffixType.Amplify }
+    const before = { ...affix }
     applyAffixLevelScaling([affix], 1)
-    expect(affix.valuePerStack).toBe(0.025)
+    expect(affix).toEqual(before)
   })
 
   it('add mode: Recurse recurseChance +0.03 per level', () => {
@@ -117,7 +118,7 @@ describe('applyAffixLevelScaling', () => {
   it('multi-level scaling (3 levels)', () => {
     const affix: AffixInstance = { type: AffixType.Crit, chance: 0.3, critMult: 2.0 }
     applyAffixLevelScaling([affix], 3)
-    expect(affix.critMult).toBe(3.5) // 2.0 + 3×0.5
+    expect(affix.chance).toBe(0.45) // 0.3 + 3×0.05
   })
 
   it('no-scale affix: Rainbow unchanged', () => {
@@ -141,9 +142,21 @@ describe('applyAffixLevelScaling', () => {
       { type: AffixType.Rainbow },
     ]
     applyAffixLevelScaling(affixes, 1)
-    expect(affixes[0].critMult).toBe(2.5)
+    expect(affixes[0].chance).toBe(0.35)
     expect(affixes[1].burstMult).toBe(3.3)
     expect(affixes[2]).toEqual({ type: AffixType.Rainbow })
+  })
+
+  it('add mode: Splash splashCount +1 per level', () => {
+    const affix: AffixInstance = { type: AffixType.Splash, splashCount: 1 }
+    applyAffixLevelScaling([affix], 1)
+    expect(affix.splashCount).toBe(2)
+  })
+
+  it('add mode: Resonance resonanceCount +1 per level', () => {
+    const affix: AffixInstance = { type: AffixType.Resonance, resonanceCount: 1 }
+    applyAffixLevelScaling([affix], 1)
+    expect(affix.resonanceCount).toBe(2)
   })
 })
 
@@ -152,9 +165,9 @@ describe('previewAffixScaledValue', () => {
     const affix: AffixInstance = { type: AffixType.Crit, chance: 0.3, critMult: 2.0 }
     const result = previewAffixScaledValue(affix, 1)
     expect(result).not.toBeNull()
-    expect(result!.param).toBe('critMult')
-    expect(result!.oldVal).toBe(2.0)
-    expect(result!.newVal).toBe(2.5)
+    expect(result!.param).toBe('chance')
+    expect(result!.oldVal).toBe(0.3)
+    expect(result!.newVal).toBe(0.35)
   })
 
   it('returns correct preview for mult mode', () => {
@@ -181,13 +194,13 @@ describe('previewAffixScaledValue', () => {
   it('does not modify original affix', () => {
     const affix: AffixInstance = { type: AffixType.Crit, chance: 0.3, critMult: 2.0 }
     previewAffixScaledValue(affix, 1)
-    expect(affix.critMult).toBe(2.0)
+    expect(affix.chance).toBe(0.3)
   })
 
   it('preview for multi-level', () => {
     const affix: AffixInstance = { type: AffixType.Crit, chance: 0.3, critMult: 2.0 }
     const result = previewAffixScaledValue(affix, 2)
     expect(result).not.toBeNull()
-    expect(result!.newVal).toBe(3.0) // 2.0 + 2×0.5
+    expect(result!.newVal).toBe(0.4) // 0.3 + 2×0.05
   })
 })

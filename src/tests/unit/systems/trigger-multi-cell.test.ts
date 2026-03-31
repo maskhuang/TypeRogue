@@ -10,7 +10,7 @@ import { describe, it, expect } from 'vitest'
 import {
   getExtendedNeighbors,
   countEmptySlots,
-  sumNeighborAmplifyStacks,
+  sumNeighborAmplifyBonus,
   findWeakestNeighbor,
   resolvePhase3,
   resolvePhase5,
@@ -410,97 +410,65 @@ describe('countEmptySlots — 多格空位计算', () => {
   })
 })
 
-// ===== 7.2: Amplify 多格邻居增幅栈计算 =====
+// ===== 7.2: Amplify 多格邻居增幅栈计算（被触发技能视角） =====
 
-describe('sumNeighborAmplifyStacks — 多格增幅栈计算', () => {
-  it('7.2a: domino [f,g] — 统计 f 和 g 的增幅邻居栈', () => {
-    // skillB 在 d（f 的邻居）, skillC 在 h（g 的邻居）
-    const bindings = new Map([
-      ['f', 'skillA'],
-      ['g', 'skillA'],
-      ['d', 'skillB'],
-      ['h', 'skillC'],
-    ])
-    const skillB = makeSkill({ id: 'skillB', resource: 'base' })
-    const skillC = makeSkill({ id: 'skillC', resource: 'base' })
-    const stateB = makeRuntimeState()
-    stateB.amplifyStacks = 3
-    const stateC = makeRuntimeState()
-    stateC.amplifyStacks = 2
+describe('sumNeighborAmplifyBonus — 多格增幅栈计算', () => {
+  it('7.2a: 被触发技能 [f,g] — 统计邻居增幅技能的栈', () => {
+    // ampB 在 d（f 的邻居，有 Amplify 词条）, ampC 在 h（g 的邻居，有 Amplify 词条）
+    const triggeredSkill = makeSkill({ id: 'skillA', resource: 'base', affixes: [] })
+    const ampB = makeSkill({ id: 'ampB', resource: 'base', affixes: [{ type: AffixType.Amplify, posRel: PositionRelation.Adjacent, resource: 'base' as any }] })
+    const ampC = makeSkill({ id: 'ampC', resource: 'base', affixes: [{ type: AffixType.Amplify, posRel: PositionRelation.Adjacent, resource: 'base' as any }] })
+    const stateB = makeRuntimeState(); stateB.amplifyStacks = 3
+    const stateC = makeRuntimeState(); stateC.amplifyStacks = 2
+    const bindings = new Map([['f', 'skillA'], ['g', 'skillA'], ['d', 'ampB'], ['h', 'ampC']])
 
     const ctx = makeContext({
       triggerKey: 'f',
       occupiedKeys: ['f', 'g'],
       bindings,
-      allSkills: new Map([
-        ['skillA', makeSkill({ id: 'skillA', resource: 'base' })],
-        ['skillB', skillB],
-        ['skillC', skillC],
-      ]),
-      skillStates: new Map([
-        ['skillA', makeRuntimeState()],
-        ['skillB', stateB],
-        ['skillC', stateC],
-      ]),
+      allSkills: new Map([['skillA', triggeredSkill], ['ampB', ampB], ['ampC', ampC]]),
+      skillStates: new Map([['skillA', makeRuntimeState()], ['ampB', stateB], ['ampC', stateC]]),
     })
 
-    // vpsEff = 1.0 → bonus = 3 + 2 = 5
-    const bonus = sumNeighborAmplifyStacks(['f', 'g'], PositionRelation.Adjacent, 'base', 1.0, ctx)
+    // 3 + 2 = 5 stacks
+    const bonus = sumNeighborAmplifyBonus(triggeredSkill, ['f', 'g'], ctx)
     expect(bonus).toBe(5)
   })
 
-  it('7.2b: skillId 去重 — 多格邻居技能占多键只统计一次', () => {
-    // skillB 是 domino，占 d 和 r（都是 f 的邻居）
-    const bindings = new Map([
-      ['f', 'skillA'],
-      ['d', 'skillB'],
-      ['r', 'skillB'], // 同一技能两个键
-    ])
-    const stateB = makeRuntimeState()
-    stateB.amplifyStacks = 4
+  it('7.2b: skillId 去重 — 多格增幅技能占多键只统计一次', () => {
+    const triggeredSkill = makeSkill({ id: 'skillA', resource: 'base', affixes: [] })
+    const ampB = makeSkill({ id: 'ampB', resource: 'base', affixes: [{ type: AffixType.Amplify, posRel: PositionRelation.Adjacent, resource: 'base' as any }] })
+    const stateB = makeRuntimeState(); stateB.amplifyStacks = 4
+    const bindings = new Map([['f', 'skillA'], ['d', 'ampB'], ['r', 'ampB']])
 
     const ctx = makeContext({
       triggerKey: 'f',
       occupiedKeys: ['f'],
       bindings,
-      allSkills: new Map([
-        ['skillA', makeSkill({ id: 'skillA', resource: 'base' })],
-        ['skillB', makeSkill({ id: 'skillB', resource: 'base' })],
-      ]),
-      skillStates: new Map([
-        ['skillA', makeRuntimeState()],
-        ['skillB', stateB],
-      ]),
+      allSkills: new Map([['skillA', triggeredSkill], ['ampB', ampB]]),
+      skillStates: new Map([['skillA', makeRuntimeState()], ['ampB', stateB]]),
     })
 
-    // skillB 虽然 d 和 r 都是邻居，但 counted Set 去重 → 只统计一次 = 4
-    const bonus = sumNeighborAmplifyStacks(['f'], PositionRelation.Adjacent, 'base', 1.0, ctx)
+    // counted Set 去重 → 只统计一次 = 4
+    const bonus = sumNeighborAmplifyBonus(triggeredSkill, ['f'], ctx)
     expect(bonus).toBe(4)
   })
 
-  it('7.2c: 资源不匹配的邻居不参与统计', () => {
-    const bindings = new Map([
-      ['f', 'skillA'],
-      ['d', 'skillB'],
-    ])
-    const stateB = makeRuntimeState()
-    stateB.amplifyStacks = 5
+  it('7.2c: 资源和词条都不匹配的增幅邻居不参与统计', () => {
+    const triggeredSkill = makeSkill({ id: 'skillA', resource: 'base', affixes: [] })
+    const ampB = makeSkill({ id: 'ampB', resource: 'score', affixes: [{ type: AffixType.Amplify, posRel: PositionRelation.Adjacent, resource: 'score' as any }] })
+    const stateB = makeRuntimeState({ skillId: 'ampB', amplifyStacks: 5 })
+    const bindings = new Map([['f', 'skillA'], ['d', 'ampB']])
 
     const ctx = makeContext({
       triggerKey: 'f',
       occupiedKeys: ['f'],
       bindings,
-      allSkills: new Map([
-        ['skillA', makeSkill({ id: 'skillA', resource: 'base' })],
-        ['skillB', makeSkill({ id: 'skillB', resource: 'score' })], // 资源不同
-      ]),
-      skillStates: new Map([
-        ['skillA', makeRuntimeState()],
-        ['skillB', stateB],
-      ]),
+      allSkills: new Map([['skillA', triggeredSkill], ['ampB', ampB]]),
+      skillStates: new Map([['skillA', makeRuntimeState()], ['ampB', stateB]]),
     })
 
-    const bonus = sumNeighborAmplifyStacks(['f'], PositionRelation.Adjacent, 'base', 1.0, ctx)
+    const bonus = sumNeighborAmplifyBonus(triggeredSkill, ['f'], ctx)
     expect(bonus).toBe(0)
   })
 })
@@ -555,7 +523,7 @@ describe('resolvePhase5 — Splash 多格扩展范围', () => {
   })
 })
 
-// ===== 7.4: Phase 6 Resonance/Link 多格匹配 =====
+// ===== 7.4: Phase 6 Resonance 多格匹配 =====
 
 describe('resolvePhase6 — 多格空间匹配', () => {
   it('7.4a: domino [f,g] — g 的邻居 h 上的 Resonance 技能也能被触发', () => {
@@ -652,53 +620,6 @@ describe('resolvePhase6 — 多格空间匹配', () => {
 
     // g 是 f 的 adjacent → 应被共鸣
     expect(resonanceKeys).toContain('g')
-  })
-
-  it('7.4c: Link 词条多格匹配 — domino [f,g] 扩展 Link 检测范围', () => {
-    const bindings = new Map([
-      ['f', 'skillA'],
-      ['g', 'skillA'],
-      ['h', 'skillB'],
-    ])
-    const skillA = makeSkill({
-      id: 'skillA',
-      resource: 'base',
-      affixes: [{ type: AffixType.Splash, posRel: PositionRelation.Adjacent, resource: 'base' } as any],
-    })
-    const skillB = makeSkill({
-      id: 'skillB',
-      resource: 'base',
-      affixes: [{
-        type: AffixType.Link,
-        watchAffix: AffixType.Splash,
-        posRel: PositionRelation.Adjacent,
-        resource: 'base',
-      } as any],
-    })
-    const allSkills = new Map([
-      ['skillA', skillA],
-      ['skillB', skillB],
-    ])
-    const skillStates = new Map([
-      ['skillA', makeRuntimeState()],
-      ['skillB', makeRuntimeState()],
-    ])
-
-    const ctx = makeContext({
-      triggerKey: 'f',
-      occupiedKeys: ['f', 'g'],
-      bindings,
-      allSkills,
-      skillStates,
-    })
-
-    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
-    const linkKeys = result.actions
-      .filter(a => a.type === 'link')
-      .map(a => a.neighborKey)
-
-    // h 和 g 是 adjacent → Link 应检测到
-    expect(linkKeys).toContain('h')
   })
 })
 
@@ -880,25 +801,21 @@ describe('单格回归测试 — occupiedKeys = [triggerKey]', () => {
     expect(result1).toBe(result2)
   })
 
-  it('7.7b: sumNeighborAmplifyStacks 单格无回归', () => {
-    const bindings = new Map([['f', 'skillA'], ['d', 'skillB']])
+  it('7.7b: sumNeighborAmplifyBonus 单格无回归', () => {
+    const triggeredSkill = makeSkill({ id: 'skillA', resource: 'base', affixes: [] })
+    const ampB = makeSkill({ id: 'ampB', resource: 'base', affixes: [{ type: AffixType.Amplify, posRel: PositionRelation.Adjacent, resource: 'base' as any }] })
     const stateB = makeRuntimeState()
     stateB.amplifyStacks = 2
+    const bindings = new Map([['f', 'skillA'], ['d', 'ampB']])
     const ctx = makeContext({
       triggerKey: 'f',
       occupiedKeys: ['f'],
       bindings,
-      allSkills: new Map([
-        ['skillA', makeSkill({ id: 'skillA', resource: 'base' })],
-        ['skillB', makeSkill({ id: 'skillB', resource: 'base' })],
-      ]),
-      skillStates: new Map([
-        ['skillA', makeRuntimeState()],
-        ['skillB', stateB],
-      ]),
+      allSkills: new Map([['skillA', triggeredSkill], ['ampB', ampB]]),
+      skillStates: new Map([['skillA', makeRuntimeState()], ['ampB', stateB]]),
     })
 
-    const bonus = sumNeighborAmplifyStacks(['f'], PositionRelation.Adjacent, 'base', 1.0, ctx)
+    const bonus = sumNeighborAmplifyBonus(triggeredSkill, ['f'], ctx)
     expect(bonus).toBe(2)
   })
 
@@ -1129,51 +1046,6 @@ describe('resolvePhase6 — ApprenticeNeighbor 多格观察者', () => {
   })
 })
 
-// ===== 8.2: QuestResonance 多格观察者匹配 =====
-
-describe('resolvePhase6 — QuestResonance 多格观察者', () => {
-  it('8.2a: QuestResonance 多格观察者 — 通过第二键位匹配', () => {
-    // 触发技能在 f（单格），产出 base
-    // 附魔技能占 [j, g]，有 QuestResonance + Resonance(base, Adjacent)
-    //   j 不是 f 的 adjacent
-    //   g IS f 的 adjacent
-    const bindings = new Map([
-      ['f', 'skillA'],
-      ['j', 'skillB'],
-      ['g', 'skillB'],
-    ])
-    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
-    const skillB = makeSkill({
-      id: 'skillB',
-      resource: 'base',
-      enchantmentIds: [EnchantmentType.QuestResonance],
-      affixes: [{
-        type: AffixType.Resonance,
-        posRel: PositionRelation.Adjacent,
-        resource: 'base',
-      } as any],
-    })
-    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
-    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
-
-    const ctx = makeContext({
-      triggerKey: 'f',
-      occupiedKeys: ['f'],
-      bindings,
-      allSkills,
-      skillStates,
-    })
-
-    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
-
-    // Resonance 匹配 + QuestResonance 叠层都应通过 g→f adjacent 触发
-    const resonanceActions = result.actions.filter(a => a.type === 'resonance')
-    const questActions = result.actions.filter(a => a.type === 'quest_resonance')
-    expect(resonanceActions.length).toBe(1)
-    expect(questActions.length).toBe(1)
-  })
-})
-
 // ===== 8.3: 单格回归 =====
 
 describe('resolvePhase6 — 40.10 单格回归', () => {
@@ -1206,95 +1078,6 @@ describe('resolvePhase6 — 40.10 单格回归', () => {
 
     expect(apprenticeActions.length).toBe(1)
     expect(apprenticeActions[0].growthDelta).toBe(APPRENTICE_NEIGHBOR_GROWTH[PositionRelation.Adjacent])
-  })
-
-  it('8.3b: QuestResonance 单格 — 行为与改动前一致', () => {
-    const bindings = new Map([
-      ['f', 'skillA'],
-      ['g', 'skillB'],
-    ])
-    const skillA = makeSkill({ id: 'skillA', resource: 'base' })
-    const skillB = makeSkill({
-      id: 'skillB',
-      resource: 'base',
-      enchantmentIds: [EnchantmentType.QuestResonance],
-      affixes: [{
-        type: AffixType.Resonance,
-        posRel: PositionRelation.Adjacent,
-        resource: 'base',
-      } as any],
-    })
-    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
-    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
-
-    const ctx = makeContext({
-      triggerKey: 'f',
-      occupiedKeys: ['f'],
-      bindings,
-      allSkills,
-      skillStates,
-    })
-
-    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
-    const resonanceActions = result.actions.filter(a => a.type === 'resonance')
-    const questActions = result.actions.filter(a => a.type === 'quest_resonance')
-
-    expect(resonanceActions.length).toBe(1)
-    expect(questActions.length).toBe(1)
-  })
-
-  it('8.3c: Resonance/Link 单格 — 行为与改动前一致', () => {
-    const bindings = new Map([
-      ['f', 'skillA'],
-      ['g', 'skillB'],
-      ['d', 'skillC'],
-    ])
-    const skillA = makeSkill({
-      id: 'skillA',
-      resource: 'base',
-      affixes: [{ type: AffixType.Splash, posRel: PositionRelation.Adjacent, resource: 'base' } as any],
-    })
-    const skillB = makeSkill({
-      id: 'skillB',
-      resource: 'base',
-      affixes: [{
-        type: AffixType.Resonance,
-        posRel: PositionRelation.Adjacent,
-        resource: 'base',
-      } as any],
-    })
-    const skillC = makeSkill({
-      id: 'skillC',
-      resource: 'base',
-      affixes: [{
-        type: AffixType.Link,
-        watchAffix: AffixType.Splash,
-        posRel: PositionRelation.Adjacent,
-      } as any],
-    })
-    const allSkills = new Map([['skillA', skillA], ['skillB', skillB], ['skillC', skillC]])
-    const skillStates = new Map([
-      ['skillA', makeRuntimeState()],
-      ['skillB', makeRuntimeState()],
-      ['skillC', makeRuntimeState()],
-    ])
-
-    const ctx = makeContext({
-      triggerKey: 'f',
-      occupiedKeys: ['f'],
-      bindings,
-      allSkills,
-      skillStates,
-    })
-
-    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
-    const resonanceActions = result.actions.filter(a => a.type === 'resonance')
-    const linkActions = result.actions.filter(a => a.type === 'link')
-
-    // g 是 f 的 adjacent → Resonance 应触发
-    expect(resonanceActions.length).toBe(1)
-    // d 是 f 的 adjacent, skillA 有 Splash → Link 应触发
-    expect(linkActions.length).toBe(1)
   })
 })
 
@@ -1379,49 +1162,6 @@ describe('resolvePhase6 — H1-fix: 负面测试', () => {
   })
 })
 
-describe('resolvePhase6 — M2-fix: Link 观察者侧多格', () => {
-  it('8.6a: Link 观察者侧 — domino Link 技能通过第二键位匹配', () => {
-    // 触发技能 f（有 Splash 词条），Link 观察者占 [j, g]
-    // j 不是 f 的 adjacent，g IS f 的 adjacent
-    const bindings = new Map([
-      ['f', 'skillA'],
-      ['j', 'skillB'],
-      ['g', 'skillB'],
-    ])
-    const skillA = makeSkill({
-      id: 'skillA',
-      resource: 'base',
-      affixes: [{ type: AffixType.Splash, posRel: PositionRelation.Adjacent, resource: 'base' } as any],
-    })
-    const skillB = makeSkill({
-      id: 'skillB',
-      resource: 'base',
-      affixes: [{
-        type: AffixType.Link,
-        watchAffix: AffixType.Splash,
-        posRel: PositionRelation.Adjacent,
-      } as any],
-    })
-    const allSkills = new Map([['skillA', skillA], ['skillB', skillB]])
-    const skillStates = new Map([['skillA', makeRuntimeState()], ['skillB', makeRuntimeState()]])
-
-    const ctx = makeContext({
-      triggerKey: 'f',
-      occupiedKeys: ['f'],
-      bindings,
-      allSkills,
-      skillStates,
-    })
-
-    const result = resolvePhase6('f', skillA, makeRuntimeState(), ctx, 'base')
-    const linkActions = result.actions.filter(a => a.type === 'link')
-
-    expect(linkActions.length).toBe(1)
-    // neighborKey 应为实际匹配键 g
-    expect(linkActions[0].neighborKey).toBe('g')
-  })
-})
-
 describe('resolvePhase6 — M3-fix: Resonance 观察者侧多格', () => {
   it('8.7a: Resonance 观察者侧 — domino Resonance 技能通过第二键位匹配', () => {
     // 触发技能 f 产出 base，Resonance 观察者占 [j, g]
@@ -1461,7 +1201,7 @@ describe('resolvePhase6 — M3-fix: Resonance 观察者侧多格', () => {
 })
 
 describe('resolvePhase6 — M4-fix: chainAffixesDisabled 交互', () => {
-  it('8.8a: chainAffixesDisabled 阻止 Resonance/Link 但不阻止 ApprenticeNeighbor', () => {
+  it('8.8a: chainAffixesDisabled 阻止 Resonance 但不阻止 ApprenticeNeighbor', () => {
     // 邻居技能有 Resonance + ApprenticeNeighbor
     // chainAffixesDisabled = true → Resonance 跳过，ApprenticeNeighbor 仍触发
     const bindings = new Map([

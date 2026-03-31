@@ -273,7 +273,7 @@ describe('rollAffixParams', () => {
   describe('Charge', () => {
     it('should have fixed parameters', () => {
       const a = rollAffixParams(AffixType.Charge, resource)
-      expect(a.gainPerSec).toBe(0.08)
+      expect(a.gainPerSec).toBe(2.0)
       expect(a.maxBonus).toBe(2.0)
     })
   })
@@ -296,10 +296,12 @@ describe('rollAffixParams', () => {
   })
 
   describe('Crit', () => {
-    it('should have fixed parameters', () => {
-      const a = rollAffixParams(AffixType.Crit, resource)
-      expect(a.chance).toBe(0.5)
-      expect(a.critMult).toBe(2.0)
+    it('should have chance in [0.1, 0.3]', () => {
+      for (let i = 0; i < 50; i++) {
+        const a = rollAffixParams(AffixType.Crit, resource)
+        expect(a.chance).toBeGreaterThanOrEqual(0.1)
+        expect(a.chance).toBeLessThanOrEqual(0.3)
+      }
     })
   })
 
@@ -325,11 +327,11 @@ describe('rollAffixParams', () => {
   })
 
   describe('Resonance', () => {
-    it('should have posRel and watchResource', () => {
+    it('should have posRel and resonanceCount=1', () => {
       for (let i = 0; i < 50; i++) {
         const a = rollAffixParams(AffixType.Resonance, resource)
         expect(ALL_POS_RELATIONS).toContain(a.posRel)
-        expect(a.resource).toBeDefined()
+        expect(a.resonanceCount).toBe(1)
       }
     })
   })
@@ -341,26 +343,13 @@ describe('rollAffixParams', () => {
     })
   })
 
-  describe('Link (感应)', () => {
-    it('should have posRel and random watchAffix (excluding Link itself)', () => {
-      const allAffixTypes = Object.values(AffixType)
-      for (let i = 0; i < 30; i++) {
-        const a = rollAffixParams(AffixType.Link, resource)
-        expect(ALL_POS_RELATIONS).toContain(a.posRel)
-        expect(a.watchAffix).toBeDefined()
-        expect(allAffixTypes).toContain(a.watchAffix)
-        expect(a.watchAffix).not.toBe(AffixType.Link)
-      }
-    })
-  })
-
   describe('Amplify', () => {
-    it('should use skill resource (not random) and have valuePerStack', () => {
+    it('should use skill resource (not random), no valuePerStack (flat base per stack)', () => {
       for (const res of ALL_RESOURCES) {
         const a = rollAffixParams(AffixType.Amplify, res)
         expect(ALL_POS_RELATIONS).toContain(a.posRel)
         expect(a.resource).toBe(res) // 设计文档 §八：使用技能本身的资源
-        expect(a.valuePerStack).toBe(0.02)
+        expect(a.valuePerStack).toBeUndefined() // 每层 = 基础产出绝对值，无需百分比参数
       }
     })
   })

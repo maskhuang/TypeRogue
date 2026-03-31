@@ -7,8 +7,8 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（21 类，6 类别） ====
-// Replicate 已合并入 Splash
+// ===== 词条类型枚举（20 类，6 类别） ====
+// Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
   // ── 数值型 ──
@@ -23,10 +23,9 @@ export enum AffixType {
   Cascade = 'cascade',
   // ── 键盘拓扑型 ──
   Void = 'void',
-  Resonance = 'resonance',
   Mirror = 'mirror',
   // ── 触发链型 ──
-  Link = 'link',
+  Resonance = 'resonance',
   Splash = 'splash',
   Amplify = 'amplify',
   Conduit = 'conduit',
@@ -54,9 +53,8 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Crit]: 'rhythm',
   [AffixType.Cascade]: 'rhythm',
   [AffixType.Void]: 'topology',
-  [AffixType.Resonance]: 'topology',
   [AffixType.Mirror]: 'topology',
-  [AffixType.Link]: 'trigger_chain',
+  [AffixType.Resonance]: 'trigger_chain',
   [AffixType.Splash]: 'trigger_chain',
   [AffixType.Amplify]: 'trigger_chain',
   [AffixType.Conduit]: 'trigger_chain',
@@ -86,7 +84,6 @@ export enum EnchantmentType {
   QuestEcho = 'quest_echo',
   QuestChain = 'quest_chain',
   QuestPurify = 'quest_purify',
-  QuestResonance = 'quest_resonance',
   QuestCharge = 'quest_charge',
   QuestRefine = 'quest_refine',
   QuestEnergize = 'quest_energize',
@@ -113,7 +110,6 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestEcho]: AffixType.Pulse,
   [EnchantmentType.QuestChain]: AffixType.Cascade,
   [EnchantmentType.QuestPurify]: AffixType.Decay,
-  [EnchantmentType.QuestResonance]: [AffixType.Resonance, AffixType.Link],
   [EnchantmentType.QuestCharge]: AffixType.Outcast,    // 蓄势→流放
   [EnchantmentType.QuestRefine]: AffixType.Convert,
   [EnchantmentType.QuestEnergize]: AffixType.Charge,    // 充能→蓄力
@@ -177,11 +173,12 @@ export interface AffixInstance {
   burstMult?: number               // Pulse: 爆发乘数
   chance?: number                  // Crit: 暴击概率
   critMult?: number                // Crit: 暴击乘数
-  posRel?: PositionRelation        // Void/Resonance/Mirror/Link/Splash/Amplify/Cascade
+  posRel?: PositionRelation        // Void/Resonance/Mirror/Splash/Amplify/Cascade
   bonusPerSlot?: number            // Void: 每空位加成%
-  resource?: ResourceType          // Resonance: 监听资源 / Amplify: 关联资源 / Splash: 目标资源
-  watchAffix?: AffixType           // Link: 监听词条类型 / Splash: 目标词条类型
-  valuePerStack?: number           // Amplify: 每层加成%
+  resource?: ResourceType          // Amplify: 关联资源
+  splashCount?: number             // Splash: 触发范围内N个共享技能
+  resonanceCount?: number          // Resonance: 共享技能触发时自触发N次
+  valuePerStack?: number           // Amplify: 已废弃（现每层 = 基础产出绝对值），保留供旧存档兼容
   cascadeMult?: number             // Cascade: 级联乘数
   bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: +100% 固定
   probMult?: number                // Gravity: 单词出现概率倍率（0~2）
@@ -310,7 +307,6 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Void]: 'high',
   [AffixType.Resonance]: 'high',
   [AffixType.Mirror]: 'high',
-  [AffixType.Link]: 'high',
   [AffixType.Splash]: 'high',
   [AffixType.Amplify]: 'high',
   [AffixType.Conduit]: 'low',
@@ -394,7 +390,6 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Void]: '虚无',
   [AffixType.Resonance]: '共鸣',
   [AffixType.Mirror]: '倒影',
-  [AffixType.Link]: '感应',
   [AffixType.Splash]: '溅射',
   [AffixType.Amplify]: '增幅',
   [AffixType.Conduit]: '导能',
@@ -417,11 +412,10 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Crit]: '触发时有概率暴击',
   [AffixType.Cascade]: '上一个按键与当前键满足指定位置关系时，产出倍增',
   [AffixType.Void]: '范围内空位越多加成越高',
-  [AffixType.Resonance]: '范围内技能产出指定资源时，本技能自动触发',
+  [AffixType.Resonance]: '范围内共享资源或词条的技能触发时，本技能自动触发N次',
   [AffixType.Mirror]: '每关结束时复制一个范围内技能的随机词条',
-  [AffixType.Link]: '范围内有指定词条的技能触发时，本技能自动触发',
-  [AffixType.Splash]: '触发后随机触发范围内1个匹配的技能',
-  [AffixType.Amplify]: '每次触发叠一层，与范围内同资源增幅技能共享层数加成',
+  [AffixType.Splash]: '自身不产出；触发后触发范围内N个共享资源或词条的技能',
+  [AffixType.Amplify]: '自身不产出，每次触发叠一层；范围内同资源或同词条的技能每层获得额外基础产出',
   [AffixType.Conduit]: '自身不产出，范围内拥有相同词条或相同资源的邻居触发时额外触发一次',
   [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
   [AffixType.Gravity]: '调整含本键字母的单词出现概率',
@@ -564,7 +558,6 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestEcho, name: '回响', targetAffix: AffixType.Pulse, event: 'equip_count', targetStacks: 0, effectDesc: '质变：跨技能脉冲同步', transformDesc: '完成后脉冲同步所有脉冲技能' },
   { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向连锁', transformDesc: '完成后级联双向判定，反向键也触发' },
   { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'equip_count', targetStacks: 0, effectDesc: '质变：衰减反转为增长', transformDesc: '完成后衰减方向反转，越触发越强' },
-  { type: EnchantmentType.QuestResonance, name: '共振', targetAffix: [AffixType.Resonance, AffixType.Link], event: 'equip_count', targetStacks: 0, effectDesc: '质变：共鸣增强', transformDesc: '完成后共鸣/链接触发产出 +50%' },
   { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'equip_count', targetStacks: 0, effectDesc: '质变：首尾呼应', transformDesc: '完成后触发词首/词尾时额外触发对端技能' },
   { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向转化', transformDesc: '完成后转化同时反向产出到源资源' },
   { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'equip_count', targetStacks: 0, effectDesc: '质变：满蓄力自动完成', transformDesc: '满蓄力释放时自动打完当前单词剩余字母，且吃到本次蓄力加成' },
@@ -630,11 +623,13 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Charge]:   { param: 'maxBonus',       delta: 0.5,   mode: 'add' },
   [AffixType.Outcast]:  { param: 'bonusPercent',   delta: 0.15,  mode: 'add' },
   [AffixType.Convert]:  { param: 'k',              delta: 1.1,   mode: 'mult' },
-  [AffixType.Amplify]:  { param: 'valuePerStack',  delta: 0.005, mode: 'add' },
+  // Amplify 每层加成 = 基础产出（绝对值），无需额外参数缩放；升级通过 baseValues 自然增长
   [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
   [AffixType.Recurse]:  { param: 'recurseChance',  delta: 0.03,  mode: 'add' },
   [AffixType.Taboo]:    { param: 'bonusPercent',   delta: 0.3,   mode: 'add' },
   [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
+  [AffixType.Splash]:   { param: 'splashCount',    delta: 1,     mode: 'add' },
+  [AffixType.Resonance]:{ param: 'resonanceCount', delta: 1,     mode: 'add' },
 }
 
 /** 四舍五入到指定小数位 */

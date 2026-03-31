@@ -245,7 +245,7 @@ describe('AC3: Splash 伪循环', () => {
 })
 
 // =============================================
-// AC4: Phase 6 伪循环（Resonance/Link）
+// AC4: Phase 6 伪循环（Resonance）
 // =============================================
 
 describe('AC4: Phase 6 伪循环', () => {
@@ -512,9 +512,9 @@ describe('AC8: 副作用集中', () => {
 // =============================================
 
 describe('AC9: 队列深度与循环检测', () => {
-  it('Splash+Resonance+Link 全链场景不栈溢出', () => {
+  it('Splash+Resonance 全链场景不栈溢出', () => {
     const skillA = buildSkillWithAffixes(
-      [AffixType.Splash, AffixType.Resonance, AffixType.Link],
+      [AffixType.Splash, AffixType.Resonance],
       'base',
     )
     skillA.id = 'skill_a'
@@ -523,8 +523,6 @@ describe('AC9: 队列深度与循环检测', () => {
     skillA.affixes[0].resource = 'base' as import('../../../src/core/types').ResourceType
     skillA.affixes[1].posRel = PositionRelation.Adjacent
     skillA.affixes[1].resource = 'base' as import('../../../src/core/types').ResourceType
-    skillA.affixes[2].posRel = PositionRelation.Adjacent
-    skillA.affixes[2].watchAffix = AffixType.Splash
 
     const skillB = makeSkill({ id: 'skill_b', resource: 'base' })
 
@@ -723,7 +721,7 @@ describe('Conduit 额外触发', () => {
     expect(result.enteredPseudoInfinite).toBe(false)
   })
 
-  it('Conduit 额外触发不会触发邻居的 Resonance/Link', () => {
+  it('Conduit 额外触发不会触发邻居的 Resonance', () => {
     // A(Crit) 在 'a'，Conduit 邻居 C(Conduit+Crit) 在 's'
     // B(Resonance→base) 在 'd' — A 额外触发时 chainAffixesDisabled → B 不被共鸣触发
     const skillA = makeSkill({

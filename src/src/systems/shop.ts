@@ -188,7 +188,7 @@ function collectPlayerAffixTypes(): AffixType[] {
     const affix = state.affixSkills.get(skillId);
     if (!affix) continue;
     for (const a of affix.affixes) {
-      if (a.type !== 'link' && a.type !== 'splash') {
+      if (a.type !== 'splash') {
         types.add(a.type as AffixType);
       }
     }
@@ -196,20 +196,6 @@ function collectPlayerAffixTypes(): AffixType[] {
   return [...types];
 }
 
-/** 收集玩家已装备 Link/Splash 技能监听的词条类型（去重） */
-function collectPlayerWatchedAffixTypes(): Set<AffixType> {
-  const watched = new Set<AffixType>();
-  for (const [, skillId] of state.player.bindings) {
-    const skill = state.affixSkills.get(skillId);
-    if (!skill) continue;
-    for (const a of skill.affixes) {
-      if ((a.type === 'link' || a.type === 'splash') && a.watchAffix) {
-        watched.add(a.watchAffix as AffixType);
-      }
-    }
-  }
-  return watched;
-}
 
 /** 生成单个词条制技能商品（避免与已有技能重名） */
 export function generateAffixShopItem(
@@ -254,31 +240,6 @@ export function generateAffixShopItem(
       );
       if (hasMatch) break;
       skill = generateSkill({ resource, rarity: skill.rarity as SkillRarity, availableResources: resourcePool });
-    }
-  }
-  // === Link/Splash watchAffix 偏向：50% 概率引用玩家已有词条类型 ===
-  if (skill.rarity > 0) {
-    const playerAffixTypes = collectPlayerAffixTypes();
-    if (playerAffixTypes.length > 0) {
-      for (const affix of skill.affixes) {
-        if ((affix.type === 'link' || affix.type === 'splash') && affix.watchAffix && random() < 0.5) {
-          affix.watchAffix = playerAffixTypes[Math.floor(random() * playerAffixTypes.length)];
-        }
-      }
-    }
-  }
-  // === 反向吸引：玩家已装备感应/溅射监听的词条类型，商店更易刷出含该词条的技能 ===
-  if (skill.rarity > 0) {
-    const watched = collectPlayerWatchedAffixTypes();
-    if (watched.size > 0) {
-      const hasWatched = skill.affixes.some(a => watched.has(a.type as AffixType));
-      if (!hasWatched && random() < 0.5) {
-        // 50% 概率重试 1 次，尝试生成含被监听词条的技能
-        const candidate = generateSkill({ resource: skill.resource, rarity: skill.rarity as SkillRarity, availableResources: resourcePool });
-        if (candidate.affixes.some(a => watched.has(a.type as AffixType))) {
-          skill = candidate;
-        }
-      }
     }
   }
   const cost = getAdjustedPrice(calculateAffixSkillPrice(skill.rarity, skill.level, rollPriceFluctuation()));
@@ -565,8 +526,8 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'pulse': return t('param.pulse', { interval: a.interval ?? '?', mult: a.burstMult?.toFixed(1) ?? '?' })
     case 'crit': return t('param.crit', { chance: Math.round((a.chance ?? 0) * 100) })
     case 'void': return t('param.void', { rel, pct: Math.round((a.bonusPerSlot ?? 0) * 100) })
-    case 'resonance': return t('param.resonance', { rel, icon: RESOURCE_ICONS[a.resource!] || '', name: t('resource.' + a.resource!) })
-    case 'amplify': return t('param.amplify', { rel, icon: RESOURCE_ICONS[a.resource!] || '', name: t('resource.' + a.resource!), pct: Math.round((a.valuePerStack ?? 0) * 100) })
+    case 'resonance': return t('param.resonance', { rel, n: a.resonanceCount ?? 1 })
+    case 'amplify': return t('param.amplify', { rel, icon: RESOURCE_ICONS[a.resource!] || '', name: t('resource.' + a.resource!) })
     case 'cascade': return `${rel || t('param.cascade_fallback')} ×${a.cascadeMult?.toFixed(1) ?? '?'}`
     case 'outcast': return t('param.outcast', { pct: Math.round((a.bonusPercent ?? 0) * 100) })
     case 'gravity': return t('param.gravity', { mult: a.probMult?.toFixed(1) ?? '?' })
@@ -574,12 +535,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'taboo': return t('param.taboo', { pct: Math.round((a.penaltyChance ?? 0) * 100) })
     case 'rainbow': return t('param.rainbow')
     case 'mirror': return t('param.mirror', { rel })
-    case 'link': return t('param.link', { rel, affix: t('affix.' + a.watchAffix!) })
-    case 'splash': {
-      if (a.resource) return t('param.splash_res', { rel, name: t('resource.' + a.resource) })
-      if (a.watchAffix) return t('param.splash_affix', { rel, affix: t('affix.' + a.watchAffix) })
-      return t('param.splash_default', { rel })
-    }
+    case 'splash': return t('param.splash', { rel, n: a.splashCount ?? 1 })
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
@@ -1458,12 +1414,6 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
         tooltipData.skill!.mechanicInfo = shapeDesc;
       }
       keyTooltip.show(e.clientX, e.clientY, tooltipData);
-      // Link/Splash watchAffix 高亮
-      for (const affix of skill.affixes) {
-        if ((affix.type === 'link' || affix.type === 'splash') && affix.watchAffix) {
-          highlightWatchAffixKeys(affix.watchAffix);
-        }
-      }
     });
     card.addEventListener('mouseleave', () => {
       keyTooltip.hide();
@@ -2583,23 +2533,6 @@ function clearRangeHighlight(): void {
   });
 }
 
-/** 高亮所有装备了包含指定词条类型的技能的键位 */
-function highlightWatchAffixKeys(watchAffix: AffixType): void {
-  const color = AFFIX_COLORS[watchAffix] || '#ffe66d';
-  for (const [key, skillId] of state.player.bindings) {
-    const affix = state.affixSkills.get(skillId);
-    if (!affix) continue;
-    const hasMatch = affix.affixes.some(a => a.type === watchAffix);
-    if (!hasMatch) continue;
-    const el = document.querySelector(`.key-slot[data-key="${key}"]`) as HTMLElement | null;
-    if (!el) continue;
-    el.classList.add('range-highlight');
-    el.style.borderColor = color;
-    el.style.background = hexToRgba(color, 0.15);
-    el.style.boxShadow = `0 0 8px ${hexToRgba(color, 0.3)}`;
-  }
-}
-
 /** 计算范围高亮键位+源键位的包围盒（用于tooltip避让） */
 function getRangeHighlightRect(sourceSlot: HTMLElement): { top: number; left: number; right: number; bottom: number } | null {
   const highlighted = document.querySelectorAll('.key-slot.range-highlight');
@@ -2803,10 +2736,6 @@ export function renderBuildManager(): void {
                     document.querySelector(`.key-slot[data-key="${rk}"]`)?.classList.add('void-range-empty');
                   }
                 });
-              }
-              // Link/Splash watchAffix 高亮（叠加在范围高亮之上）
-              if ((affix.type === 'link' || affix.type === 'splash') && affix.watchAffix) {
-                highlightWatchAffixKeys(affix.watchAffix);
               }
             }
           }

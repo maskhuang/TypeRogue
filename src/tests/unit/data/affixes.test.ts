@@ -43,10 +43,10 @@ describe('AffixType', () => {
 
   it('should contain all expected types', () => {
     const expected = [
-      'convert', 'rainbow',
+      'convert', 'rainbow', 'multiply',
       'charge', 'decay', 'pulse', 'crit', 'cascade',
-      'void', 'resonance', 'mirror',
-      'link', 'splash', 'amplify', 'conduit',
+      'void', 'mirror',
+      'splash', 'amplify', 'conduit', 'resonance',
       'outcast', 'gravity', 'ligature',
       'twin', 'recurse', 'taboo',
     ]
@@ -76,20 +76,20 @@ describe('AFFIX_CATEGORY_MAP', () => {
     expect(AFFIX_CATEGORY_MAP[AffixType.Convert]).toBe('numeric')
     expect(AFFIX_CATEGORY_MAP[AffixType.Charge]).toBe('rhythm')
     expect(AFFIX_CATEGORY_MAP[AffixType.Void]).toBe('topology')
-    expect(AFFIX_CATEGORY_MAP[AffixType.Link]).toBe('trigger_chain')
+    expect(AFFIX_CATEGORY_MAP[AffixType.Resonance]).toBe('trigger_chain')
     expect(AFFIX_CATEGORY_MAP[AffixType.Conduit]).toBe('trigger_chain')
     expect(AFFIX_CATEGORY_MAP[AffixType.Outcast]).toBe('word_sense')
     expect(AFFIX_CATEGORY_MAP[AffixType.Twin]).toBe('meta_rule')
   })
 
-  it('should have 2 numeric, 5 rhythm, 3 topology, 4 trigger_chain, 3 word_sense, 3 meta_rule', () => {
+  it('should have 3 numeric, 5 rhythm, 2 topology, 4 trigger_chain, 3 word_sense, 3 meta_rule', () => {
     const counts: Record<AffixCategory, number> = { numeric: 0, rhythm: 0, topology: 0, trigger_chain: 0, word_sense: 0, meta_rule: 0 }
     for (const cat of Object.values(AFFIX_CATEGORY_MAP)) {
       counts[cat]++
     }
-    expect(counts.numeric).toBe(2)
+    expect(counts.numeric).toBe(3)
     expect(counts.rhythm).toBe(5)
-    expect(counts.topology).toBe(3)
+    expect(counts.topology).toBe(2)
     expect(counts.trigger_chain).toBe(4)
     expect(counts.word_sense).toBe(3)
     expect(counts.meta_rule).toBe(3)
@@ -101,41 +101,34 @@ describe('AFFIX_CATEGORY_MAP', () => {
 describe('EnchantmentType', () => {
   const allEnchTypes = Object.values(EnchantmentType)
 
-  it('should have exactly 48 values', () => {
-    expect(allEnchTypes).toHaveLength(48)
+  it('should have exactly 27 values', () => {
+    expect(allEnchTypes).toHaveLength(27)
   })
 
   it('should have unique string values', () => {
     const unique = new Set(allEnchTypes)
-    expect(unique.size).toBe(48)
+    expect(unique.size).toBe(27)
   })
 
-  it('should have 28 apprentice types (3 generic + 5 resource + 20 affix)', () => {
+  it('should have 7 apprentice types (2 generic + 5 resource)', () => {
     const apprentice = allEnchTypes.filter(v => v.startsWith('apprentice_'))
-    expect(apprentice).toHaveLength(28)
+    expect(apprentice).toHaveLength(7)
   })
 
-  it('should have 20 quest types', () => {
+  it('should have 19 quest types', () => {
     const quest = allEnchTypes.filter(v => v.startsWith('quest_'))
-    expect(quest).toHaveLength(20)
+    expect(quest).toHaveLength(19)
   })
 })
 
 // ===== QUEST_AFFIX_MAP =====
 
 describe('QUEST_AFFIX_MAP', () => {
-  it('should have 20 quest enchantment mappings', () => {
+  it('should have 19 quest enchantment mappings', () => {
     const questTypes = Object.values(EnchantmentType).filter(v => v.startsWith('quest_'))
     for (const qt of questTypes) {
       expect(QUEST_AFFIX_MAP[qt as EnchantmentType]).toBeDefined()
     }
-  })
-
-  it('should map QuestResonance to both Resonance and Link', () => {
-    const mapping = QUEST_AFFIX_MAP[EnchantmentType.QuestResonance]
-    expect(Array.isArray(mapping)).toBe(true)
-    expect(mapping).toContain(AffixType.Resonance)
-    expect(mapping).toContain(AffixType.Link)
   })
 
   it('should map QuestCharge to Outcast (蓄势→流放)', () => {
@@ -146,7 +139,7 @@ describe('QUEST_AFFIX_MAP', () => {
     expect(QUEST_AFFIX_MAP[EnchantmentType.QuestEnergize]).toBe(AffixType.Charge)
   })
 
-  it('should cover all affix types', () => {
+  it('should cover all affix types except Resonance (no quest enchantment)', () => {
     const coveredAffixes = new Set<AffixType>()
     for (const mapping of Object.values(QUEST_AFFIX_MAP)) {
       if (Array.isArray(mapping)) {
@@ -157,6 +150,7 @@ describe('QUEST_AFFIX_MAP', () => {
     }
     const allAffixTypes = Object.values(AffixType)
     for (const at of allAffixTypes) {
+      if (at === AffixType.Resonance) continue
       expect(coveredAffixes.has(at)).toBe(true)
     }
   })
@@ -170,13 +164,13 @@ describe('QUEST_AFFIX_MAP', () => {
 // ===== QUEST_ENCHANTMENT_DEFS =====
 
 describe('QUEST_ENCHANTMENT_DEFS', () => {
-  it('should have 20 definitions', () => {
-    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(20)
+  it('should have 19 definitions', () => {
+    expect(QUEST_ENCHANTMENT_DEFS).toHaveLength(19)
   })
 
   it('should have unique enchantment types', () => {
     const types = QUEST_ENCHANTMENT_DEFS.map(d => d.type)
-    expect(new Set(types).size).toBe(20)
+    expect(new Set(types).size).toBe(19)
   })
 
   it('should all use equip_count event', () => {

@@ -38,7 +38,6 @@ export const GLOSSARY_DATA: GlossaryEntry[] = [
   { category: 'affix', id: 'void', icon: '🌑', nameKey: 'affix.void', descKey: 'affix_desc.void' },
   { category: 'affix', id: 'resonance', icon: '🔔', nameKey: 'affix.resonance', descKey: 'affix_desc.resonance' },
   { category: 'affix', id: 'mirror', icon: '🪞', nameKey: 'affix.mirror', descKey: 'affix_desc.mirror' },
-  { category: 'affix', id: 'link', icon: '🔗', nameKey: 'affix.link', descKey: 'affix_desc.link' },
   { category: 'affix', id: 'splash', icon: '💦', nameKey: 'affix.splash', descKey: 'affix_desc.splash' },
   { category: 'affix', id: 'amplify', icon: '📢', nameKey: 'affix.amplify', descKey: 'affix_desc.amplify' },
   { category: 'affix', id: 'conduit', icon: '⚡', nameKey: 'affix.conduit', descKey: 'affix_desc.conduit' },

@@ -185,36 +185,22 @@ export function rollAffixParams(
     }
 
     case AffixType.Resonance: {
-      // 共鸣词条：监听特定资源类型，范围内技能产出该资源时自动触发
+      // 共鸣词条：范围内共享资源或词条的技能触发时，本技能自动触发N次
       const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      const watchResource = pickRandom(pool)
-      return { type, posRel, resource: watchResource }
+      return { type, posRel, resonanceCount: 1 }
     }
 
     case AffixType.Mirror:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
-    case AffixType.Link: {
-      // 感应词条：按本局权重加权选一个词条类型作为监听目标（排除自身 + 权重<5 的词条）
-      const watchCandidates = Object.values(AffixType).filter(t => t !== AffixType.Link && getAffixWeight(t) >= 5)
-      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), watchAffix: pickAffixWeighted(watchCandidates) }
-    }
-
     case AffixType.Splash: {
-      // 溅射词条：触发后随机触发范围内1个匹配的技能（按资源或词条过滤）
+      // 溅射词条：自身不产出；触发后触发范围内N个共享资源或词条的技能
       const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      if (random() < 0.5) {
-        // 资源变体：只触发产出指定资源的技能
-        return { type, posRel, resource: pickRandom(pool) }
-      } else {
-        // 词条变体：按本局权重加权选词条（排除权重<5 的词条）
-        const candidates = Object.values(AffixType).filter(t => t !== AffixType.Splash && getAffixWeight(t) >= 5)
-        return { type, posRel, watchAffix: pickAffixWeighted(candidates) }
-      }
+      return { type, posRel, splashCount: 1 }
     }
 
     case AffixType.Amplify:
-      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), resource, valuePerStack: 0.02 }
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), resource }
 
     case AffixType.Conduit:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }

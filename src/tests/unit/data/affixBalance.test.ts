@@ -196,7 +196,6 @@ describe('AC1: 20 种词条单独平衡', () => {
     AffixType.Rainbow,    // 输出到随机资源
     AffixType.Mirror,     // 需要邻居
     AffixType.Resonance,  // 被动触发
-    AffixType.Link,       // 被动触发
     AffixType.Splash,    // 触发邻居
     AffixType.Amplify,    // 需要叠层
     AffixType.Twin,       // 纯元数据
@@ -422,8 +421,8 @@ describe('AC4: 任务附魔循环（装备数量型）', () => {
     })
   }
 
-  it('20 个任务定义完整，覆盖所有词条', () => {
-    expect(QUEST_ENCHANTMENT_DEFS.length).toBe(20)
+  it('19 个任务定义完整，覆盖所有词条', () => {
+    expect(QUEST_ENCHANTMENT_DEFS.length).toBe(19)
 
     // 所有 targetAffix 应为有效 AffixType
     for (const def of QUEST_ENCHANTMENT_DEFS) {
@@ -576,20 +575,18 @@ describe('AC7: 触发链深度防护', () => {
     expect(MAX_CHAIN_DEPTH).toBe(20)
   })
 
-  it('Splash + Resonance + Link 全链场景不栈溢出', () => {
+  it('Splash + Resonance 全链场景不栈溢出', () => {
     // 构建两个互相引用的技能
     const skillA = buildSkillWithAffixes(
-      [AffixType.Splash, AffixType.Resonance, AffixType.Link],
+      [AffixType.Splash, AffixType.Resonance],
       'base',
     )
     skillA.id = 'skill_a'
     skillA.rarity = 3 as 0
     skillA.affixes[0].posRel = PositionRelation.Adjacent
-    skillA.affixes[0].resource = 'base' as ResourceType
+    skillA.affixes[0].splashCount = 1
     skillA.affixes[1].posRel = PositionRelation.Adjacent
-    skillA.affixes[1].resource = 'base' as ResourceType
-    skillA.affixes[2].posRel = PositionRelation.Adjacent
-    skillA.affixes[2].watchAffix = AffixType.Splash
+    skillA.affixes[1].resonanceCount = 1
 
     const skillB = makeSkill({
       id: 'skill_b',
@@ -742,11 +739,11 @@ describe('AC9: 遗物×词条交互', () => {
     }
   })
 
-  it('chain_ban: chainAffixesDisabled=true 时 Resonance/Link 在 Phase 6 无效', () => {
+  it('chain_ban: chainAffixesDisabled=true 时 Resonance 在 Phase 6 无效', () => {
     const skill = buildSkillWithAffixes([AffixType.Resonance], 'base')
     skill.rarity = 1 as 0
     skill.affixes[0].posRel = PositionRelation.Adjacent
-    skill.affixes[0].resource = 'base' as ResourceType
+    skill.affixes[0].resonanceCount = 1
 
     const ctx = makeContext({
       chainAffixesDisabled: true,
@@ -756,10 +753,10 @@ describe('AC9: 遗物×词条交互', () => {
     const result = triggerOnce(skill, state, ctx)
 
     expect(result.output).not.toBeNaN()
-    // Phase 6 不应产生 resonance/link 触发动作
+    // Phase 6 不应产生 resonance 触发动作
     if (result.phase6) {
       const chainActions = result.phase6.actions.filter(
-        a => a.type === 'resonance' || a.type === 'link',
+        a => a.type === 'resonance',
       )
       expect(chainActions.length).toBe(0)
     }

@@ -292,19 +292,6 @@ describe('invalidateQuestEnchantment', () => {
     expect(updatedRt.questCompletions).toBe(3)
   })
 
-  it('handles QuestResonance mapping to [Resonance, Link]', () => {
-    const skill = makeSkill({
-      affixes: [{ type: AffixType.Resonance, posRel: 'adjacent' as any, resource: 'base' as any }],
-      enchantmentIds: [EnchantmentType.QuestResonance],
-    })
-    setupSkill(skill)
-
-    invalidateQuestEnchantment(skill.id, AffixType.Resonance)
-
-    const updated = state.affixSkills.get(skill.id)!
-    expect(updated.enchantmentIds).not.toContain(EnchantmentType.QuestResonance)
-  })
-
   it('mutate triggers invalidation when affix type changes', () => {
     const skill = makeSkill({
       affixes: [{ type: AffixType.Crit, chance: 0.5, critMult: 2.0 }],

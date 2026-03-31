@@ -24,7 +24,6 @@ export type TriggerWorkType =
   | 'initial'
   | 'recurse'
   | 'resonance'
-  | 'link'
   | 'splash'
   | 'conduit'
   | 'outcast_echo'
@@ -43,8 +42,6 @@ export interface TriggerWorkItem {
   chainHistory: string[]
   /** Story 41-3: 质变溅射 — 允许被溅射技能的 Splash 词条再触发一跳 */
   chainSplash?: boolean
-  /** 41-4: 质变 Resonance/Link 产出加成 */
-  transformedBoost?: number
 }
 
 // ===== 调度器结果 =====
@@ -130,7 +127,7 @@ export function orchestrateAffixTrigger(
     // ── 循环检测：仅对链式类型（resonance/link/splash）检查 ──
     // Conduit 不参与循环检测：用 chainAffixesDisabled 阻止级联（见下方 triggerCtx 构建）
     const isChainType = item.type === 'resonance'
-      || item.type === 'link' || item.type === 'splash'
+      || item.type === 'splash'
     if (isChainType && item.chainHistory.includes(item.triggerKey)) {
       // 检测到循环 → 进入伪无限模式
       // chainHistory 中已包含所有参与键位（item.triggerKey 也在其中）
@@ -181,11 +178,6 @@ export function orchestrateAffixTrigger(
     if (result.phase5?.transmuteSameResourceBoost) {
       effectiveOutput *= (1 + result.phase5.transmuteSameResourceBoost)
     }
-    // 41-4: 质变 Resonance/Link 产出加成
-    if (item.transformedBoost) {
-      effectiveOutput *= (1 + item.transformedBoost)
-    }
-
     results.push(result)
     totalOutput += effectiveOutput
     triggerCount++
@@ -330,27 +322,15 @@ function enqueuePhase6Action(
     case 'resonance': {
       const targetSkillId = ctx.bindings.get(action.neighborKey)
       if (!targetSkillId) return
-      queue.push({
-        skillId: targetSkillId,
-        triggerKey: action.neighborKey,
-        type: 'resonance',
-        depth: parentChildHistory.length,
-        chainHistory: parentChildHistory,
-        transformedBoost: action.transformedBoost,
-      })
-      break
-    }
-    case 'link': {
-      const targetSkillId = ctx.bindings.get(action.neighborKey)
-      if (!targetSkillId) return
-      queue.push({
-        skillId: targetSkillId,
-        triggerKey: action.neighborKey,
-        type: 'link',
-        depth: parentChildHistory.length,
-        chainHistory: parentChildHistory,
-        transformedBoost: action.transformedBoost,
-      })
+      for (let i = 0; i < action.triggerCount; i++) {
+        queue.push({
+          skillId: targetSkillId,
+          triggerKey: action.neighborKey,
+          type: 'resonance',
+          depth: parentChildHistory.length,
+          chainHistory: parentChildHistory,
+        })
+      }
       break
     }
     // apprentice_neighbor: 直接更新邻居 runtimeState（不入队触发）
@@ -379,8 +359,5 @@ function enqueuePhase6Action(
       }
       break
     }
-    // quest_resonance: triggerAffixSkill 内部已处理 runtimeState
-    case 'quest_resonance':
-      break
   }
 }
