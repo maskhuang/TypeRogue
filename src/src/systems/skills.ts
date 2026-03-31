@@ -19,7 +19,7 @@ import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOUR
 import { getMultiplierPrismBonus, getCancelChainBonus } from './relics/ComboRelicBehaviors';
 import { getTaikoBonus } from './relics/TypingRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
-import { getApprenticeGrowthMultiplier, getQuestStackIncrement } from './relics/EnchantmentRelicBehaviors';
+import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostBonus } from './relics/EnchantmentRelicBehaviors';
 import { getAdjacentPowerBonus, getSymmetryPactBonus, getRowMedalBonus } from './relics/TopologyRelicBehaviors';
 import { getSkillKeys, getBindingState } from './bindingManager';
 import { getShortSprintBonus } from './relics/WordRelicBehaviors';
@@ -248,7 +248,6 @@ function triggerAffixSkillWithFeedback(
     playerClass: state.classId,
     // Story 36.5: 附魔遗物注入（避免 data→systems 依赖）
     apprenticeGrowthMultiplier: getApprenticeGrowthMultiplier(),
-    questStackIncrement: getQuestStackIncrement(),
     // Story 41-3: 质变 Ligature 关卡累计按键计数
     ligatureStageCounts: state.ligatureStageCounts,
   };
@@ -260,8 +259,8 @@ function triggerAffixSkillWithFeedback(
   let relicBonus = 0;
   const prismBonus = getMultiplierPrismBonus();
   if (prismBonus > 0) relicBonus += prismBonus;
-  const firstStrikeBonus = getFirstStrikeBonus();
-  if (firstStrikeBonus > 0) relicBonus += firstStrikeBonus;
+  const firstStrikeScore = getFirstStrikeBonus();
+  if (firstStrikeScore > 0) state.score += firstStrikeScore;
   const lessIsMoreBonus = getLessIsMoreBonus();
   if (lessIsMoreBonus > 0) relicBonus += lessIsMoreBonus;
   // Story 36.6: 键盘拓扑遗物加算
@@ -283,6 +282,17 @@ function triggerAffixSkillWithFeedback(
   // 取消连锁加算（取消状态下 +10%×层数）
   const cancelBonus = getCancelChainBonus();
   if (cancelBonus > 0) relicBonus += cancelBonus;
+  // 附魔增幅：已附魔技能产出+15%
+  const hasEnchantment = skill.enchantmentIds.length > 0;
+  const enchantBoost = getEnchantBoostBonus(hasEnchantment);
+  if (enchantBoost > 0) relicBonus += enchantBoost;
+  // 附魔红利：已附魔技能触发时+2金币
+  const enchantGold = getEnchantDividendGold(hasEnchantment);
+  if (enchantGold > 0) {
+    state.player.gold += enchantGold;
+    state.resources.gold += enchantGold;
+    showFeedback(`💰 +${enchantGold}g`, RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'enchant_dividend', resource: 'gold', amount: enchantGold });
+  }
 
   // 升华缩放：Lv4+ 按 1.6^(level-3) 缩放基础值
   const ascendScale = getAscendBaseScale(skill.level);

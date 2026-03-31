@@ -1303,6 +1303,7 @@ export function evaluateEquipQuests(
   skills: Map<string, AffixSkillInstance>,
   skillStates: Map<string, SkillRuntimeState>,
   bindings: Map<string, string>,
+  questEquipReduction: number = 0,
 ): void {
   // 1. 统计已绑定技能按词条类型计数
   const boundSkillIds = new Set(bindings.values())
@@ -1331,7 +1332,7 @@ export function evaluateEquipQuests(
 
     const questDef = QUEST_ENCHANTMENT_DEFS.find(d => d.type === questEnchType)!
     const targetAffixes = Array.isArray(questDef.targetAffix) ? questDef.targetAffix : [questDef.targetAffix]
-    const target = getQuestEquipTarget(questDef.targetAffix)
+    const target = getQuestEquipTarget(questDef.targetAffix, questEquipReduction)
 
     // 统计目标词条中装备数量最大值（多词条取最高）
     let equipped = 0

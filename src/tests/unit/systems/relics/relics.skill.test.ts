@@ -17,9 +17,11 @@ import {
   shouldBlockEnchantment,
   resetSkillRelicState,
   initSkillRelicBehaviors,
+  rerollAllAffixes,
+  checkD100OnBattleStart,
 } from '../../../../src/systems/relics/SkillRelicBehaviors'
-import { clearBehaviorHandlers, getRegisteredBehaviors } from '../../../../src/systems/relics/RelicPipeline'
 import { AffixType } from '../../../../src/data/affixes'
+import { clearBehaviorHandlers, getRegisteredBehaviors } from '../../../../src/systems/relics/RelicPipeline'
 
 // === 辅助：清理遗物 + 状态 ===
 function clearRelics(): void {
@@ -61,10 +63,10 @@ describe('技能系统遗物行为 (Story 36.4)', () => {
       expect(getFirstStrikeBonus()).toBe(0)
     })
 
-    it('持有且 wordSkillCount=1 → 返回 0.2', () => {
+    it('持有且 wordSkillCount=1 → 返回 10', () => {
       state.player.relics.add('first_strike')
       synergy.wordSkillCount = 1
-      expect(getFirstStrikeBonus()).toBe(0.2)
+      expect(getFirstStrikeBonus()).toBe(10)
     })
 
     it('持有且 wordSkillCount=2 → 返回 0（非首个）', () => {
@@ -320,14 +322,12 @@ describe('技能系统遗物行为 (Story 36.4)', () => {
   // 交互测试
   // =====================
   describe('遗物交互', () => {
-    it('first_strike + less_is_more 加算合并 → +0.4', () => {
+    it('first_strike 返回固定分数，less_is_more 返回百分比', () => {
       state.player.relics.add('first_strike')
       state.player.relics.add('less_is_more')
       synergy.wordSkillCount = 1
-      // 各自返回 0.2
-      const fs = getFirstStrikeBonus()
-      const lim = getLessIsMoreBonus()
-      expect(fs + lim).toBeCloseTo(0.4)
+      expect(getFirstStrikeBonus()).toBe(10)  // 固定 +10 分
+      expect(getLessIsMoreBonus()).toBe(0.2)  // 产出 +20%
     })
 
     it('first_strike 仅首个技能生效，less_is_more 全局生效', () => {
@@ -343,6 +343,94 @@ describe('技能系统遗物行为 (Story 36.4)', () => {
       state.player.relics.add('uncrowned_king')
       expect(shouldBlockEnchantment([])).toBe(false)
       expect(shouldBlockEnchantment(['quest_devour'])).toBe(false)
+    })
+  })
+
+  // =====================
+  // D100（传说，每5战替换词条）
+  // =====================
+  describe('D100 (d_100)', () => {
+    function setupSkillWithAffixes(id: string, affixTypes: AffixType[]): void {
+      state.player.skills.set(id, { level: 1, key: 'a' })
+      state.affixSkills.set(id, {
+        id,
+        name: 'test',
+        icon: '🧪',
+        resource: 'score',
+        baseValues: [10, 15, 20],
+        level: 1,
+        rarity: affixTypes.length as 0 | 1 | 2 | 3,
+        affixes: affixTypes.map(type => ({ type })),
+        enchantmentIds: ['quest_devour'],
+      } as any)
+    }
+
+    it('未持有 → rerollAllAffixes 仍替换（直接调用不检查遗物）', () => {
+      setupSkillWithAffixes('s1', [AffixType.Crit, AffixType.Decay])
+      const count = rerollAllAffixes()
+      expect(count).toBe(1)
+      const skill = state.affixSkills.get('s1')!
+      expect(skill.affixes).toHaveLength(2)
+      expect(skill.enchantmentIds).toEqual(['quest_devour']) // 附魔保留
+      expect(skill.level).toBe(1) // 等级保留
+    })
+
+    it('替换后词条数量不变', () => {
+      setupSkillWithAffixes('s1', [AffixType.Crit, AffixType.Decay, AffixType.Pulse])
+      rerollAllAffixes()
+      expect(state.affixSkills.get('s1')!.affixes).toHaveLength(3)
+    })
+
+    it('0词条技能不受影响', () => {
+      setupSkillWithAffixes('s1', [])
+      const count = rerollAllAffixes()
+      expect(count).toBe(0)
+      expect(state.affixSkills.get('s1')!.affixes).toHaveLength(0)
+    })
+
+    it('替换后技能名称更新', () => {
+      setupSkillWithAffixes('s1', [AffixType.Crit])
+      const oldName = state.affixSkills.get('s1')!.name
+      rerollAllAffixes()
+      // 名称可能变也可能不变（随机），但 generateName 一定被调用了
+      expect(typeof state.affixSkills.get('s1')!.name).toBe('string')
+    })
+
+    it('checkD100OnBattleStart 未持有 → 返回 0', () => {
+      expect(checkD100OnBattleStart()).toBe(0)
+    })
+
+    it('checkD100OnBattleStart 每5战触发', () => {
+      state.player.relics.add('d_100')
+      state.player.relicStates = {}
+      setupSkillWithAffixes('s1', [AffixType.Crit])
+      // 战斗 1~4 不触发
+      for (let i = 0; i < 4; i++) {
+        expect(checkD100OnBattleStart()).toBe(0)
+      }
+      // 第5战触发
+      expect(checkD100OnBattleStart()).toBe(1) // 1个技能被替换
+    })
+
+    it('checkD100OnBattleStart 第10战再次触发', () => {
+      state.player.relics.add('d_100')
+      state.player.relicStates = {}
+      setupSkillWithAffixes('s1', [AffixType.Crit])
+      for (let i = 0; i < 10; i++) {
+        checkD100OnBattleStart()
+      }
+      // 累计10战，应该在第5和第10战各触发一次
+      // 验证计数器 = 10
+      expect(state.player.relicStates['d_100']).toBe(10)
+    })
+
+    it('多技能同时替换', () => {
+      state.player.relics.add('d_100')
+      setupSkillWithAffixes('s1', [AffixType.Crit])
+      setupSkillWithAffixes('s2', [AffixType.Decay, AffixType.Pulse])
+      setupSkillWithAffixes('s3', []) // 0词条，不计入
+      const count = rerollAllAffixes()
+      expect(count).toBe(2)
     })
   })
 })

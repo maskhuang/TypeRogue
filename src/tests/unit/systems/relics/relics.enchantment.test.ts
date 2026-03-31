@@ -6,11 +6,15 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { state } from '../../../../src/core/state'
 import {
   getApprenticeGrowthMultiplier,
-  getQuestStackIncrement,
+  getQuestEquipReduction,
   getEnchantmentChoiceCount,
   getMinEnchantmentLevel,
   getEnchantAnchorSlotBonus,
   getEnchantAnchorPriceMultiplier,
+  getEnchantDividendGold,
+  getEnchantBoostBonus,
+  isEnchantGuaranteed,
+  getGreedyInscriptionTargetMult,
   resetEnchantmentRelicState,
   initEnchantmentRelicBehaviors,
 } from '../../../../src/systems/relics/EnchantmentRelicBehaviors'
@@ -48,6 +52,46 @@ describe('附魔系统遗物行为 (Story 36.5)', () => {
   })
 
   // =====================
+  // 附魔红利 (enchant_dividend)
+  // =====================
+  describe('附魔红利 (enchant_dividend)', () => {
+    it('未持有 → 返回 0', () => {
+      expect(getEnchantDividendGold(true)).toBe(0)
+      expect(getEnchantDividendGold(false)).toBe(0)
+    })
+
+    it('持有 + 有附魔 → 返回 2', () => {
+      state.player.relics.add('enchant_dividend')
+      expect(getEnchantDividendGold(true)).toBe(2)
+    })
+
+    it('持有 + 无附魔 → 返回 0', () => {
+      state.player.relics.add('enchant_dividend')
+      expect(getEnchantDividendGold(false)).toBe(0)
+    })
+  })
+
+  // =====================
+  // 附魔增幅 (enchant_boost)
+  // =====================
+  describe('附魔增幅 (enchant_boost)', () => {
+    it('未持有 → 返回 0', () => {
+      expect(getEnchantBoostBonus(true)).toBe(0)
+      expect(getEnchantBoostBonus(false)).toBe(0)
+    })
+
+    it('持有 + 有附魔 → 返回 0.15', () => {
+      state.player.relics.add('enchant_boost')
+      expect(getEnchantBoostBonus(true)).toBe(0.15)
+    })
+
+    it('持有 + 无附魔 → 返回 0', () => {
+      state.player.relics.add('enchant_boost')
+      expect(getEnchantBoostBonus(false)).toBe(0)
+    })
+  })
+
+  // =====================
   // AC1: 学徒之袍
   // =====================
   describe('学徒之袍 (apprentice_robe)', () => {
@@ -65,13 +109,13 @@ describe('附魔系统遗物行为 (Story 36.5)', () => {
   // AC2: 试炼徽章
   // =====================
   describe('试炼徽章 (trial_badge)', () => {
-    it('未持有 → 返回 1', () => {
-      expect(getQuestStackIncrement()).toBe(1)
+    it('未持有 → 返回 0', () => {
+      expect(getQuestEquipReduction()).toBe(0)
     })
 
-    it('持有 → 返回 1.3', () => {
+    it('持有 → 返回 1', () => {
       state.player.relics.add('trial_badge')
-      expect(getQuestStackIncrement()).toBe(1.3)
+      expect(getQuestEquipReduction()).toBe(1)
     })
   })
 
@@ -90,37 +134,39 @@ describe('附魔系统遗物行为 (Story 36.5)', () => {
   })
 
   // =====================
-  // AC4: 早期觉醒
+  // 附魔等级门槛
   // =====================
-  describe('早期觉醒 (early_awakening)', () => {
-    it('未持有 → 返回 3', () => {
+  describe('附魔等级门槛 (getMinEnchantmentLevel)', () => {
+    it('统一返回 3', () => {
       expect(getMinEnchantmentLevel()).toBe(3)
-    })
-
-    it('持有 → 返回 2', () => {
-      state.player.relics.add('early_awakening')
-      expect(getMinEnchantmentLevel()).toBe(2)
+      expect(getMinEnchantmentLevel(0)).toBe(3)
+      expect(getMinEnchantmentLevel(1)).toBe(3)
+      expect(getMinEnchantmentLevel(2)).toBe(3)
+      expect(getMinEnchantmentLevel(3)).toBe(3)
     })
   })
 
   // =====================
-  // AC5: 附魔锚点 - 槽位
+  // 已删除遗物存根
   // =====================
-  describe('附魔锚点 - 槽位 (enchant_anchor)', () => {
-    it('未持有 → slotBonus 0', () => {
+  describe('已删除遗物存根', () => {
+    it('getEnchantAnchorSlotBonus 始终返回 0', () => {
+      expect(getEnchantAnchorSlotBonus()).toBe(0)
+      state.player.relics.add('enchant_anchor')
       expect(getEnchantAnchorSlotBonus()).toBe(0)
     })
 
-    it('持有 → slotBonus 1', () => {
+    it('getEnchantAnchorPriceMultiplier 始终返回 1', () => {
+      expect(getEnchantAnchorPriceMultiplier()).toBe(1)
       state.player.relics.add('enchant_anchor')
-      expect(getEnchantAnchorSlotBonus()).toBe(1)
+      expect(getEnchantAnchorPriceMultiplier()).toBe(1)
     })
   })
 
   // =====================
-  // AC5: 附魔锚点 - getEnchantmentSlotCount 集成
+  // getEnchantmentSlotCount 集成
   // =====================
-  describe('附魔锚点 - getEnchantmentSlotCount 集成', () => {
+  describe('getEnchantmentSlotCount 集成', () => {
     const makeSkill = (hasTwin: boolean) => ({
       id: 'test',
       name: 'Test',
@@ -133,60 +179,65 @@ describe('附魔系统遗物行为 (Story 36.5)', () => {
       enchantmentIds: [],
     })
 
-    it('无 Twin + 无锚点 → 1 槽', () => {
+    it('无 Twin → 1 槽', () => {
       expect(getEnchantmentSlotCount(makeSkill(false))).toBe(1)
     })
 
-    it('有 Twin + 无锚点 → 2 槽', () => {
+    it('有 Twin → 2 槽', () => {
       expect(getEnchantmentSlotCount(makeSkill(true))).toBe(2)
     })
 
-    it('无 Twin + 锚点 bonus=1 → 2 槽', () => {
+    it('无 Twin + bonus=1 → 2 槽', () => {
       expect(getEnchantmentSlotCount(makeSkill(false), 1)).toBe(2)
     })
 
-    it('有 Twin + 锚点 bonus=1 → 3 槽', () => {
+    it('有 Twin + bonus=1 → 3 槽', () => {
       expect(getEnchantmentSlotCount(makeSkill(true), 1)).toBe(3)
     })
   })
 
   // =====================
-  // AC5 + AC6: 附魔锚点 - 价格
+  // 贪婪铭刻 (greedy_inscription)
   // =====================
-  describe('附魔锚点 - 价格乘数 (enchant_anchor)', () => {
-    it('未持有 → 返回 1', () => {
-      expect(getEnchantAnchorPriceMultiplier()).toBe(1)
+  describe('贪婪铭刻 (greedy_inscription)', () => {
+    it('未持有 → isEnchantGuaranteed 返回 false', () => {
+      expect(isEnchantGuaranteed()).toBe(false)
     })
 
-    it('持有 + 0 个附魔 → 返回 1 (0% 增加)', () => {
-      state.player.relics.add('enchant_anchor')
+    it('持有 → isEnchantGuaranteed 返回 true', () => {
+      state.player.relics.add('greedy_inscription')
+      expect(isEnchantGuaranteed()).toBe(true)
+    })
+
+    it('未持有 → 目标倍率 1', () => {
+      expect(getGreedyInscriptionTargetMult()).toBe(1)
+    })
+
+    it('持有 + 0 附魔 → 目标倍率 1', () => {
+      state.player.relics.add('greedy_inscription')
       setupAffixSkill('s1', [])
-      setupAffixSkill('s2', [])
-      expect(getEnchantAnchorPriceMultiplier()).toBe(1)
+      expect(getGreedyInscriptionTargetMult()).toBe(1)
     })
 
-    it('持有 + 1 个附魔 → 返回 1.1 (10% 增加)', () => {
-      state.player.relics.add('enchant_anchor')
-      setupAffixSkill('s1', ['quest_chain'])
-      setupAffixSkill('s2', [])
-      expect(getEnchantAnchorPriceMultiplier()).toBeCloseTo(1.1)
+    it('持有 + 1 附魔 → 目标倍率 2', () => {
+      state.player.relics.add('greedy_inscription')
+      setupAffixSkill('s1', ['ench_a'])
+      expect(getGreedyInscriptionTargetMult()).toBe(2)
     })
 
-    it('持有 + 5 个附魔 → 返回 1.5 (50% 增加)', () => {
-      state.player.relics.add('enchant_anchor')
-      setupAffixSkill('s1', ['quest_chain', 'apprentice_speed'])
-      setupAffixSkill('s2', ['quest_devour'])
-      setupAffixSkill('s3', ['transmute', 'apprentice_res_base'])
-      expect(getEnchantAnchorPriceMultiplier()).toBeCloseTo(1.5)
+    it('持有 + 3 附魔 → 目标倍率 8', () => {
+      state.player.relics.add('greedy_inscription')
+      setupAffixSkill('s1', ['ench_a', 'ench_b'])
+      setupAffixSkill('s2', ['ench_c'])
+      expect(getGreedyInscriptionTargetMult()).toBe(8)
     })
 
-    it('持有 + 10 个附魔 → 返回 2.0 (100% 增加)', () => {
-      state.player.relics.add('enchant_anchor')
-      // 5 skills × 2 enchantments each = 10
-      for (let i = 0; i < 5; i++) {
-        setupAffixSkill(`s${i}`, [`ench_a_${i}`, `ench_b_${i}`])
-      }
-      expect(getEnchantAnchorPriceMultiplier()).toBeCloseTo(2.0)
+    it('持有 + 5 附魔 → 目标倍率 32', () => {
+      state.player.relics.add('greedy_inscription')
+      setupAffixSkill('s1', ['a', 'b'])
+      setupAffixSkill('s2', ['c', 'd'])
+      setupAffixSkill('s3', ['e'])
+      expect(getGreedyInscriptionTargetMult()).toBe(32)
     })
   })
 
@@ -203,31 +254,10 @@ describe('附魔系统遗物行为 (Story 36.5)', () => {
   // 行为注册
   // =====================
   describe('initEnchantmentRelicBehaviors', () => {
-    it('注册 fate_fork、early_awakening 行为', () => {
+    it('注册 fate_fork 行为', () => {
       initEnchantmentRelicBehaviors()
       const registered = getRegisteredBehaviors()
       expect(registered).toContain('fate_fork')
-      expect(registered).toContain('early_awakening')
-    })
-  })
-
-  // =====================
-  // 交互测试
-  // =====================
-  describe('遗物交互', () => {
-    it('AC7: early_awakening — EA 降低附魔门槛', () => {
-      state.player.relics.add('early_awakening')
-      expect(getMinEnchantmentLevel()).toBe(2)
-      // shouldBlockEnchantment 始终返回 false（UK 不再阻止）
-      expect(shouldBlockEnchantment([])).toBe(false)
-      expect(shouldBlockEnchantment(['some_ench'])).toBe(false)
-    })
-
-    it('AC8: enchant_anchor — slot+1 对所有技能都有效', () => {
-      state.player.relics.add('enchant_anchor')
-      expect(getEnchantAnchorSlotBonus()).toBe(1)
-      // shouldBlockEnchantment 不再拦截
-      expect(shouldBlockEnchantment([])).toBe(false)
     })
   })
 })

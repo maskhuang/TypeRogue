@@ -52,10 +52,10 @@ import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyRitualEnchantment, generateRitualCandidates, pickRitualChoices, getEligibleSkills as getRitualEligibleSkills } from './ritualEnchantment';
 import type { RitualCandidate } from './ritualEnchantment';
-import { applyTrainingManual } from './relics/SkillRelicBehaviors';
+import { applyTrainingManual, rerollAllAffixes } from './relics/SkillRelicBehaviors';
 import { hasGlassCannon } from './relics/TypingRelicBehaviors';
 import { getAscendBaseScale } from '../data/affixTrigger';
-import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier, getMinEnchantmentLevel } from './relics/EnchantmentRelicBehaviors';
+import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier, getMinEnchantmentLevel, getQuestEquipReduction, isEnchantGuaranteed } from './relics/EnchantmentRelicBehaviors';
 import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState, getSkillAnchorKey } from './bindingManager';
 import { getShapeCells, mapShapeToKeys } from '../data/skillShapes';
 
@@ -530,7 +530,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       if (rt.questTransformed) {
         questProgress = t('tooltip.quest_done', { effect: questEnch.transformDesc || t('quest.' + questEnch.type + '.effect') })
       } else {
-        const equipTarget = getQuestEquipTarget(questEnch.targetAffix)
+        const equipTarget = getQuestEquipTarget(questEnch.targetAffix, getQuestEquipReduction())
         const affixNames = (Array.isArray(questEnch.targetAffix) ? questEnch.targetAffix : [questEnch.targetAffix])
           .map(at => t('affix.' + at) || AFFIX_NAMES[at] || at)
           .join('/')
@@ -711,7 +711,7 @@ export function computeSmartEstimate(
         detail: '',
       })
     } else {
-      const equipTarget = getQuestEquipTarget(questEnchEst.targetAffix)
+      const equipTarget = getQuestEquipTarget(questEnchEst.targetAffix, getQuestEquipReduction())
       const affixNames = (Array.isArray(questEnchEst.targetAffix) ? questEnchEst.targetAffix : [questEnchEst.targetAffix])
         .map(at => t('affix.' + at) || AFFIX_NAMES[at] || at)
         .join('/')
@@ -1688,8 +1688,9 @@ function checkAutoEnchantment(skillId: string): void {
       sameRarityEnch += affixSkill.enchantmentIds.length;
     }
   }
-  // 同稀有度无附魔 → 必定成功；否则概率 = max(0.1, 0.8 - 0.15 * (totalEnch - 1))
-  const prob = sameRarityEnch === 0 ? 1.0
+  // 贪婪铭刻 → 必定成功；同稀有度无附魔 → 必定成功；否则概率递减
+  const prob = isEnchantGuaranteed() ? 1.0
+    : sameRarityEnch === 0 ? 1.0
     : totalEnch === 0 ? 1.0
     : Math.max(0.1, 0.8 - 0.15 * (totalEnch - 1));
   if (random() >= prob) {
@@ -1812,8 +1813,8 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
         applyAffixLevelScaling(existing.affixes, 1);
       }
       eventBus.emit('skill:upgraded', { skillId, newLevel: data?.level || 1 });
-      // 达到附魔等级门槛时触发附魔（按稀有度递减：白lv4/蓝lv3/紫lv2/橙lv1）
-      if (data?.level === getMinEnchantmentLevel(affixSkill.rarity)) {
+      // 达到附魔等级门槛时触发附魔（统一 Lv.3）
+      if (data?.level === getMinEnchantmentLevel()) {
         checkAutoEnchantment(skillId);
       }
       showFeedback(t('shop.skill_upgrade', { name: affixSkill.name }), '#ffe66d');
@@ -1824,8 +1825,8 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
       state.affixSkills.set(skillId, affixSkill);
       state.affixSkillStates.set(skillId, createSkillRuntimeState(skillId));
       showFeedback(t('shop.got_skill', { name: affixSkill.name }), '#4ecdc4');
-      // 高稀有度技能购买即达附魔门槛（紫lv2需升级，橙lv1即购买触发）
-      if (1 === getMinEnchantmentLevel(affixSkill.rarity)) {
+      // 购买时等级=1，统一门槛 Lv.3，不会触发
+      if (1 === getMinEnchantmentLevel()) {
         checkAutoEnchantment(skillId);
       }
     }
@@ -1865,7 +1866,7 @@ function purchaseShopItem(index: number): void {
   }
 
   // Story 41.1: 附魔不再由购买自动触发，改为仪式/商店/试炼三渠道获取
-  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   renderUnifiedShop();
   renderBuildManager();
 
@@ -1911,10 +1912,15 @@ function purchaseShopRelicItem(index: number): void {
       for (const uid of upgradedIds) {
         const uData = state.player.skills.get(uid);
         const uAffix = state.affixSkills.get(uid);
-        if (uData && uAffix && uData.level === getMinEnchantmentLevel(uAffix.rarity)) {
+        if (uData && uAffix && uData.level === getMinEnchantmentLevel()) {
           checkAutoEnchantment(uid);
         }
       }
+    }
+    // D100 — 购买时立即替换所有技能词条
+    if (relicId === 'd_100') {
+      const count = rerollAllAffixes();
+      if (count > 0) showFeedback(`🎲 ${count}${t('shop.d100_feedback') || '个技能词条已重置!'}`, '#ff6b00');
     }
     // Story 36.6: 行会勋章 — 购买时随机选行
     if (relicId === 'row_medal') {
@@ -1944,7 +1950,7 @@ function purchaseShopRelicItem(index: number): void {
           for (const uid of upgradedIds) {
             const uData = state.player.skills.get(uid);
             const uAffix = state.affixSkills.get(uid);
-            if (uData && uAffix && uData.level === getMinEnchantmentLevel(uAffix.rarity)) {
+            if (uData && uAffix && uData.level === getMinEnchantmentLevel()) {
               checkAutoEnchantment(uid);
             }
           }
@@ -2140,7 +2146,7 @@ export function sellSkill(skillId: string): void {
   updateGoldDisplay();
   showFeedback(t('shop.sell', { price: sellPrice }), '#ffe66d');
   playSound('buy');
-  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   renderUnifiedShop();
   renderBuildManager();
 }
@@ -2205,7 +2211,7 @@ export function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: 
   // Quest 类型
   const questDef = getQuestEnchantmentDef(type);
   if (questDef) {
-    const equipTarget = getQuestEquipTarget(questDef.targetAffix)
+    const equipTarget = getQuestEquipTarget(questDef.targetAffix, getQuestEquipReduction())
     const affixNames = (Array.isArray(questDef.targetAffix) ? questDef.targetAffix : [questDef.targetAffix])
       .map(at => t('affix.' + at) || AFFIX_NAMES[at] || at)
       .join('/')
@@ -2583,7 +2589,7 @@ export function renderBuildManager(): void {
     }
   }
   if (unboundSkillIds.size > 0) {
-    evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
+    evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   }
 
   // === 遗物数字行 ===
@@ -3015,7 +3021,7 @@ function registerShopDropZones(): void {
         const skillId = payload.skillId;
         if (!skillId) return;
         unbindSkill(getBindingState(state), skillId);
-        evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
+        evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
         renderBuildManager();
       },
     });
@@ -3143,7 +3149,7 @@ function handleKeySlotRotation(key: string): void {
     showFeedback(t('shop.rotate_displaced'), '#ffaa00');
   }
 
-  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   renderBuildManager();
 
   // 旋转成功动画：对新绑定键位施加缩放动画
@@ -3197,7 +3203,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     bindShapeToKeys(bs, skillId, targetKey);
 
     // Story 41.1: 附魔不再由购买自动触发
-    evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
+    evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
     renderUnifiedShop();
     renderBuildManager();
 
@@ -3255,7 +3261,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
       }
     }
 
-    evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
+    evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
     renderBuildManager();
   }
 }

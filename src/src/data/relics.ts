@@ -112,9 +112,10 @@ export type RelicBehaviorType =
   | 'training_manual'      // 集训手册：一次性升级所有 Lv.1 技能
   | 'jazz'                 // 爵士乐：一词内不同词条类型越多加分越高
   | 'uncrowned_king'       // 无冕之王：无附魔技能无限升级，禁止附魔
+  | 'd_100'                // D100：拾取时及每5战替换所有技能词条
   // 附魔系统
   | 'fate_fork'            // 命运三岔：附魔选择变 3 选 1
-  | 'early_awakening'      // 早期觉醒：Lv2 技能可获得附魔
+  | 'greedy_inscription'   // 贪婪铭刻：附魔必定成功，每附魔目标×2
   // 键盘拓扑系统
   | 'row_select'           // 行会勋章：选一行加成
   | 'hand_alternation'     // 双手协奏：左右手交替击键加时间
@@ -430,7 +431,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'first_strike',
     name: '首发强化',
     icon: '⚡',
-    description: '每个单词第一个技能触发，产出+20%。',
+    description: '每个单词第一个技能触发，+10分。',
     rarity: 'common',
     basePrice: 50,
     effects: [],
@@ -489,15 +490,52 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '不戴王冠，却统御一切。',
   },
 
+  d_100: {
+    id: 'd_100',
+    name: 'D100',
+    icon: '🎲',
+    description: '拾取时以及每5场战斗，用随机词条替换所有装备技能的词条（保留数量/等级/附魔）。',
+    rarity: 'legendary',
+    basePrice: 200,
+    effects: [],
+    subsystem: 'skill',
+    behaviorType: 'd_100',
+    flavor: '掷骰决定一切。',
+  },
+
   // ==================== 附魔系统遗物 (Story 36.5) ====================
+
+  enchant_dividend: {
+    id: 'enchant_dividend',
+    name: '附魔红利',
+    icon: '💰',
+    description: '触发已附魔的技能时，+2金币。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'enchantment',
+    flavor: '附魔之力化为真金白银。',
+  },
+
+  enchant_boost: {
+    id: 'enchant_boost',
+    name: '附魔增幅',
+    icon: '✴️',
+    description: '已附魔的技能产出+15%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'enchantment',
+    flavor: '魔力涌动，技能更强。',
+  },
 
   apprentice_robe: {
     id: 'apprentice_robe',
     name: '学徒之袍',
     icon: '👘',
     description: '所有学徒型附魔的成长累积值×1.3。',
-    rarity: 'common',
-    basePrice: 50,
+    rarity: 'rare',
+    basePrice: 80,
     effects: [],
     subsystem: 'enchantment',
     flavor: '穿上学徒之袍，感受魔力的加速流动。',
@@ -507,9 +545,9 @@ export const RELICS: Record<string, RelicData> = {
     id: 'trial_badge',
     name: '试炼徽章',
     icon: '🏅',
-    description: '所有试炼型附魔的堆叠进度×1.3。',
-    rarity: 'common',
-    basePrice: 50,
+    description: '任务型附魔所需装备技能数-1（最低1）。',
+    rarity: 'rare',
+    basePrice: 80,
     effects: [],
     subsystem: 'enchantment',
     flavor: '每一枚徽章，都是试炼的加速通行证。',
@@ -520,39 +558,27 @@ export const RELICS: Record<string, RelicData> = {
     name: '命运三岔',
     icon: '🔱',
     description: '附魔选择界面从2选1变为3选1。',
-    rarity: 'rare',
-    basePrice: 80,
+    rarity: 'epic',
+    basePrice: 120,
     effects: [],
     subsystem: 'enchantment',
     behaviorType: 'fate_fork',
     flavor: '命运的分岔路，多一条选择。',
   },
 
-  early_awakening: {
-    id: 'early_awakening',
-    name: '早期觉醒',
-    icon: '🌅',
-    description: '（待重设计）原效果已随附魔系统重构失效。',
-    rarity: 'epic',
-    basePrice: 120,
+  greedy_inscription: {
+    id: 'greedy_inscription',
+    name: '贪婪铭刻',
+    icon: '🩸',
+    description: '附魔必定成功。但每拥有一个附魔，目标分数×2。',
+    rarity: 'legendary',
+    basePrice: 200,
     effects: [],
     subsystem: 'enchantment',
-    behaviorType: 'early_awakening',
-    flavor: '黎明之光，提前唤醒沉睡的力量。',
+    behaviorType: 'greedy_inscription',
+    flavor: '贪婪地刻下每一道铭文，代价是无尽的追赶。',
   },
 
-  enchant_anchor: {
-    id: 'enchant_anchor',
-    name: '附魔锚点',
-    icon: '⚓',
-    description: '所有技能附魔槽位+1，但每个已激活的附魔使商店所有商品价格+10%。',
-    rarity: 'legendary',
-    basePrice: 0,
-    effects: [],
-    subsystem: 'enchantment',
-    category: 'risk-reward',
-    flavor: '锚定更多附魔，代价是日益攀升的物价。',
-  },
 
   // ==================== 键盘拓扑系统遗物 (Story 36.6) ====================
 
@@ -1084,4 +1110,5 @@ export const DELETED_RELIC_IDS = [
   'modifier_foresight',
   'typing_wax_seal',
   'rhythm_doctor',
+  'early_awakening', 'enchant_anchor',
 ]

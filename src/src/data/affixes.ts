@@ -326,17 +326,18 @@ export let AFFIX_WEIGHTS: Record<AffixWeightKey, number> = Object.fromEntries(
 
 /**
  * 根据词条类型的当前权重计算质变任务所需装备格数。
- * N = max(1, round(weight / 3))
+ * N = max(1, round(weight / 3) - reduction)
  * 高权重(6-10)→2-3格，低权重(1-4)→1格
+ * @param reduction 试炼徽章等遗物提供的减少量（默认 0）
  */
-export function getQuestEquipTarget(targetAffix: AffixType | AffixType[]): number {
+export function getQuestEquipTarget(targetAffix: AffixType | AffixType[], reduction: number = 0): number {
   const affixes = Array.isArray(targetAffix) ? targetAffix : [targetAffix]
   let maxWeight = 0
   for (const at of affixes) {
     const key: AffixWeightKey = at === AffixType.Convert ? 'convert_cross' : at as Exclude<AffixType, AffixType.Convert>
     maxWeight = Math.max(maxWeight, AFFIX_WEIGHTS[key] ?? 0)
   }
-  return Math.max(1, Math.round(maxWeight / 3))
+  return Math.max(1, Math.round(maxWeight / 3) - reduction)
 }
 
 /** 根据分档随机生成本局词条权重，需传入 RNG 函数 */

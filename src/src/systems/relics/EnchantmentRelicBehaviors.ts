@@ -8,6 +8,36 @@ import { registerRelicBehavior } from './RelicPipeline'
 /** 附魔加速遗物的加成倍率（学徒之袍 + 试炼徽章共用） */
 export const ENCHANTMENT_BOOST_RATE = 1.3
 
+// === 附魔红利 (enchant_dividend) ===
+
+const ENCHANT_DIVIDEND_GOLD = 2
+
+/**
+ * 获取附魔红利金币奖励
+ * 触发已附魔技能时 +2 金币
+ * @param hasEnchantment 该技能是否有附魔
+ * @returns 2 当持有遗物且技能有附魔；否则 0
+ */
+export function getEnchantDividendGold(hasEnchantment: boolean): number {
+  if (!state.player.relics.has('enchant_dividend')) return 0
+  return hasEnchantment ? ENCHANT_DIVIDEND_GOLD : 0
+}
+
+// === 附魔增幅 (enchant_boost) ===
+
+const ENCHANT_BOOST_PERCENT = 0.15
+
+/**
+ * 获取附魔增幅加成
+ * 已附魔技能产出 +15%
+ * @param hasEnchantment 该技能是否有附魔
+ * @returns 0.15 当持有遗物且技能有附魔；否则 0
+ */
+export function getEnchantBoostBonus(hasEnchantment: boolean): number {
+  if (!state.player.relics.has('enchant_boost')) return 0
+  return hasEnchantment ? ENCHANT_BOOST_PERCENT : 0
+}
+
 // === 学徒之袍 (apprentice_robe) ===
 
 /**
@@ -21,11 +51,11 @@ export function getApprenticeGrowthMultiplier(): number {
 // === 试炼徽章 (trial_badge) ===
 
 /**
- * 获取试炼型附魔堆叠增量
- * 持有 trial_badge → 1.3，否则 1
+ * 获取任务型附魔所需装备数减少量
+ * 持有 trial_badge → -1，否则 0
  */
-export function getQuestStackIncrement(): number {
-  return state.player.relics.has('trial_badge') ? ENCHANTMENT_BOOST_RATE : 1
+export function getQuestEquipReduction(): number {
+  return state.player.relics.has('trial_badge') ? 1 : 0
 }
 
 // === 命运三岔 (fate_fork) ===
@@ -38,35 +68,46 @@ export function getEnchantmentChoiceCount(): number {
   return state.player.relics.has('fate_fork') ? 3 : 2
 }
 
-// === 早期觉醒 (early_awakening) ===
+// === 附魔等级门槛 ===
 
-/** 获取附魔触发等级门槛（按稀有度递减，早期觉醒再 -1） */
-export function getMinEnchantmentLevel(rarity: number = 1): number {
-  const base = Math.max(1, 4 - rarity)
-  return state.player.relics.has('early_awakening') ? Math.max(1, base - 1) : base
+/** 获取附魔触发等级门槛（统一 Lv.3） */
+export function getMinEnchantmentLevel(_rarity?: number): number {
+  return 3
 }
 
-// === 附魔锚点 (enchant_anchor) ===
+// === 贪婪铭刻 (greedy_inscription) ===
 
 /**
- * 获取附魔锚点额外槽位加成
- * 持有 → 1，否则 0
+ * 附魔是否必定成功（贪婪铭刻）
  */
-export function getEnchantAnchorSlotBonus(): number {
-  return state.player.relics.has('enchant_anchor') ? 1 : 0
+export function isEnchantGuaranteed(): boolean {
+  return state.player.relics.has('greedy_inscription')
 }
 
 /**
- * 获取附魔锚点价格乘数
- * 持有 → 1 + 0.1 × 所有技能附魔总数，否则 1
+ * 获取贪婪铭刻对目标分数的倍率
+ * 每个拥有的附魔使目标分数 ×2
+ * @returns 2^(附魔总数)，无遗物时返回 1
  */
-export function getEnchantAnchorPriceMultiplier(): number {
-  if (!state.player.relics.has('enchant_anchor')) return 1
-  let totalEnchantments = 0
+export function getGreedyInscriptionTargetMult(): number {
+  if (!state.player.relics.has('greedy_inscription')) return 1
+  let totalEnch = 0
   for (const [, skill] of state.affixSkills) {
-    totalEnchantments += skill.enchantmentIds.length
+    totalEnch += skill.enchantmentIds.length
   }
-  return 1 + 0.1 * totalEnchantments
+  return totalEnch === 0 ? 1 : Math.pow(2, totalEnch)
+}
+
+// === 附魔锚点（已删除，保留空桩避免消费端报错） ===
+
+/** @deprecated enchant_anchor 已删除，始终返回 0 */
+export function getEnchantAnchorSlotBonus(): number {
+  return 0
+}
+
+/** @deprecated enchant_anchor 已删除，始终返回 1 */
+export function getEnchantAnchorPriceMultiplier(): number {
+  return 1
 }
 
 // === 模块重置（关级别） ===
@@ -89,7 +130,4 @@ export function initEnchantmentRelicBehaviors(): void {
     // 实际逻辑在 getEnchantmentChoiceCount() 中，由 shop.ts 调用
   })
 
-  registerRelicBehavior('early_awakening', (_relicId, _context) => {
-    // 实际逻辑在 getMinEnchantmentLevel() 中，由 shop.ts 调用
-  })
 }

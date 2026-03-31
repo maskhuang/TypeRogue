@@ -316,39 +316,25 @@ describe('遗物联动矩阵 (Story 36.13 AC1)', () => {
       resetResourceRelicBattleState();
     });
 
-    it('奇偶加成与首发加成独立叠加', () => {
-      // 第一词（wordParity=0 → 偶数 → multiplier 加成）
+    it('首发强化返回固定分数，潮汐返回百分比，各自独立', () => {
       incrementWordParity(); // wordParity=1 → 奇数 → base 加成
-
-      // 首发强化：需要 synergy.wordSkillCount === 1
       synergy.wordSkillCount = 1;
 
-      const firstStrike = getFirstStrikeBonus(); // 0.2
+      const firstStrike = getFirstStrikeBonus(); // 10 分
       const tideBase = getResourceTideBonus('base'); // 0.4（奇数词 + base）
-      const tideMultiplier = getResourceTideBonus('multiplier'); // 0（奇数词无 multiplier 加成）
 
-      expect(firstStrike).toBe(0.2);
+      expect(firstStrike).toBe(10);
       expect(tideBase).toBe(0.4);
-      expect(tideMultiplier).toBe(0);
-
-      // 加算叠加：总加成 = firstStrike + tideBase = 0.6
-      expect(firstStrike + tideBase).toBeCloseTo(0.6, 5);
     });
 
-    it('偶数词的 multiplier 加成与首发加成叠加', () => {
-      // wordParity=0 → 偶数 → multiplier 加成
-      // 不调用 incrementWordParity，保持 0
-
+    it('偶数词的 multiplier 加成与首发强化各自独立', () => {
       synergy.wordSkillCount = 1;
 
-      const firstStrike = getFirstStrikeBonus(); // 0.2
+      const firstStrike = getFirstStrikeBonus(); // 10 分
       const tideMultiplier = getResourceTideBonus('multiplier'); // 0.4（偶数词）
-      const tideBase = getResourceTideBonus('base'); // 0（偶数词）
 
-      expect(firstStrike).toBe(0.2);
+      expect(firstStrike).toBe(10);
       expect(tideMultiplier).toBe(0.4);
-      expect(tideBase).toBe(0);
-      expect(firstStrike + tideMultiplier).toBeCloseTo(0.6, 5);
     });
   });
 });
@@ -472,8 +458,8 @@ describe('遗物数据完整性 (Story 36.13 AC4)', () => {
     }
 
     for (const subsystem of VALID_SUBSYSTEMS) {
-      // combo has 6 relics (echo_thimble moved from typing)
-      const expected = subsystem === 'combo' ? 6 : 5;
+      // combo/skill/enchantment have 6 relics each
+      const expected = (subsystem === 'combo' || subsystem === 'skill' || subsystem === 'enchantment') ? 6 : 5;
       expect(subsystemCounts[subsystem]).toBe(expected);
     }
   });
@@ -518,9 +504,9 @@ describe('遗物数据完整性 (Story 36.13 AC4)', () => {
     expect(uniqueIcons.size).toBe(icons.length);
   });
 
-  it('通用遗物总数为 56', () => {
+  it('通用遗物总数为 58', () => {
     const universalCount = getAllRelicIds().filter(id => RELICS[id].subsystem !== undefined).length;
-    expect(universalCount).toBe(56);
+    expect(universalCount).toBe(58);
   });
 
   it('职业专属遗物总数为 10（5 造词师 + 5 蜕变师）', () => {

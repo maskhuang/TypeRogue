@@ -237,8 +237,8 @@ describe('RelicBehaviorType', () => {
       'decelerate_reward', 'accelerate_reward', 'autocomplete',
       'rhythm_adapt', 'glass_cannon',
       'double_keystroke', 'combo_detonator', 'cancel', 'immortal_combo',
-      'training_manual', 'jazz_diversity', 'uncrowned_king',
-      'fate_fork', 'early_awakening',
+      'training_manual', 'jazz_diversity', 'uncrowned_king', 'd_100',
+      'fate_fork', 'greedy_inscription',
       'row_select', 'hand_alternation', 'key_storm',
       'word_dealer',
       'smuggle_free', 'timed_auction',
@@ -246,7 +246,7 @@ describe('RelicBehaviorType', () => {
       'modifier_barrier', 'chaos_roulette', 'modifier_reversal',
       'snowball', 'score_black_hole',
     ]
-    expect(behaviors).toHaveLength(26)
+    expect(behaviors).toHaveLength(27)
   })
 
   it('should be assignable to RelicData.behaviorType', () => {

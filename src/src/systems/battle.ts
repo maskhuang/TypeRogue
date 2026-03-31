@@ -31,8 +31,8 @@ import { random, setNormalMode } from '../core/seededRandom';
 import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
 import { canAutocomplete, isRepeatWord, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors, checkSpeedRelics, recordKeypressForTaiko, checkTaikoHit, startTaikoSpawner, stopTaikoSpawner } from './relics/TypingRelicBehaviors';
 import { checkEchoThimble, calculateComboBuffer, checkComboDetonator, onComboBreakDetonator, hasImmortalCombo, saveLastBattleCombo, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus, onNewWordForCancel, checkCancelOnFirstLetter, getCancelChainBonus, getCancelChainCount, onCancelledWordComplete, onCancelledWordError, isWordCancelled } from './relics/ComboRelicBehaviors';
-import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing } from './relics/SkillRelicBehaviors';
-import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier } from './relics/EnchantmentRelicBehaviors';
+import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing, checkD100OnBattleStart } from './relics/SkillRelicBehaviors';
+import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestEquipReduction, getGreedyInscriptionTargetMult } from './relics/EnchantmentRelicBehaviors';
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { checkScoreMagnet, checkResourceSense, storeDeferredSenseBonus, consumeDeferredSenseBonus, incrementTimeDewCounter, checkTimeDew, incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
@@ -705,9 +705,10 @@ function playerCorrect(k: string): void {
     } else {
       triggerSkill(skillId, k);
     }
-    // Story 36.4: 首发强化反馈（每词第一个技能）
+    // Story 36.4: 首发强化反馈（每词第一个技能 +10分）
     if (synergy.wordSkillCount === 1 && state.player.relics.has('first_strike')) {
       pulseRelicIcon('first_strike', '#ffaa00');
+      showFeedback(t('battle.first_strike'), '#ffaa00', undefined, undefined, { relicId: 'first_strike', resource: 'score', amount: 10 });
     }
     // Story 36.4: 少而精反馈（本关首次激活）
     if (!lessIsMoreShown && state.player.relics.has('less_is_more') && state.player.skills.size < 10) {
@@ -1834,6 +1835,14 @@ export async function startLevel(): Promise<void> {
     showFeedback(t('battle.lenient_judge', { value: String(preJudge - state.targetScore) }), '#88dd44', 0.8);
   }
 
+  // 贪婪铭刻 — 每个附魔使目标分数 ×2
+  const greedyMult = getGreedyInscriptionTargetMult();
+  if (greedyMult > 1) {
+    state.targetScore = Math.round(state.targetScore * greedyMult);
+    showFeedback(`🔥 目标 ×${greedyMult}`, '#ff4444', 0.8);
+    pulseRelicIcon('greedy_inscription', '#ff4444');
+  }
+
   // 应用活跃临时 buff
   for (const buff of state.tempBuffs) {
     if (buff.type === 'multiplier') state.player.baseMultiplier += buff.value;
@@ -1927,11 +1936,18 @@ export async function startLevel(): Promise<void> {
     routeFragmentsToInventory(getMaxQueueLength());
   }
 
+  // D100：每5场战斗替换所有技能词条
+  const d100Count = checkD100OnBattleStart();
+  if (d100Count > 0) {
+    showFeedback(`🎲 D100! ${d100Count}${t('battle.d100_reroll') || '个技能词条已重置'}`, '#ff6b00');
+    pulseRelicIcon('d_100', '#ff6b00');
+  }
+
   // 混沌种子：给所有未附魔技能一个随机临时附魔
   applyChaosSeedEnchantments();
 
   // 装备数量型任务：根据当前绑定状态评估质变
-  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings);
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
 
   const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;

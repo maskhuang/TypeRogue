@@ -208,7 +208,7 @@ const ZH: Record<string, string> = {
   'battle.cancel_error': '⛓️‍💥 -{value}s',
 
   // --- skill relic feedback ---
-  'battle.first_strike': '⚡ 首发强化 +20%',
+  'battle.first_strike': '⚡ 首发 +10分',
   'battle.less_is_more': '💎 少而精 → 技能+20%',
   'battle.jazz': '🎷 爵士 +{value}%',
 
@@ -980,7 +980,7 @@ const EN: Record<string, string> = {
   'battle.cancel_error': '⛓️‍💥 -{value}s',
 
   // --- skill relic feedback ---
-  'battle.first_strike': '⚡ First Strike +20%',
+  'battle.first_strike': '⚡ First Strike +10',
   'battle.less_is_more': '💎 Less is More → Skill +20%',
   'battle.jazz': '🎷 Jazz +{value}%',
 
@@ -1617,11 +1617,11 @@ const ITEM_NAMES_EN: Record<string, string> = {
   // Skill subsystem relics
   first_strike: 'First Strike', less_is_more: 'Less is More',
   training_manual: 'Training Manual', jazz: 'Jazz',
-  uncrowned_king: 'Uncrowned King',
+  uncrowned_king: 'Uncrowned King', d_100: 'D100',
   // Enchantment subsystem relics
+  enchant_dividend: 'Enchant Dividend', enchant_boost: 'Enchant Boost',
   apprentice_robe: 'Apprentice Robe', trial_badge: 'Trial Badge',
-  fate_fork: 'Fork of Fate', early_awakening: 'Early Awakening',
-  enchant_anchor: 'Enchant Anchor',
+  fate_fork: 'Fork of Fate', greedy_inscription: 'Greedy Inscription',
   // Topology subsystem relics
   adjacent_power: 'Adjacent Power', symmetry_pact: 'Symmetry Pact',
   row_medal: 'Row Medal', dual_concerto: 'Dual Concerto',
@@ -1753,17 +1753,19 @@ const ITEM_DESCS_EN: Record<string, string> = {
   cancel: 'Type first letter within 0.4s of word appearing = Cancel. Each flawless cancelled word: chain+1 (max 5), skill output +10%/stack. Error during cancel: chain resets + lose 0.5s.',
   immortal_combo: 'Combo persists across stages (still breaks on error); stage time equals current combo count.',
   // Skill subsystem relics
-  first_strike: 'First skill trigger per word: output +20%',
+  first_strike: 'First skill trigger per word: +10 score',
   less_is_more: 'With <10 skills equipped: skill output +20%',
   training_manual: 'On acquire: all skills gain +1 level (cap Lv.3)',
   jazz: '≥3 unique affix types in one word: score +10% × unique count',
   uncrowned_king: 'Skills with no affixes gain +30% output',
+  d_100: 'On acquire and every 5 battles: replace all skill affixes with random ones (preserving count/level/enchantments)',
   // Enchantment subsystem relics
+  enchant_dividend: 'Triggering an enchanted skill grants +2 gold',
+  enchant_boost: 'Enchanted skills gain +15% output',
   apprentice_robe: 'All Apprentice enchantment growth ×1.3',
-  trial_badge: 'All Trial enchantment stack progress ×1.3',
+  trial_badge: 'Quest enchantment required equipped skill count -1 (min 1)',
   fate_fork: 'Enchantment selection offers 3 choices instead of 2',
-  early_awakening: 'Enchantment unlock threshold lowered from Lv.3 to Lv.2',
-  enchant_anchor: 'All skills gain +1 enchantment slot, but each active enchantment increases shop prices by 10%',
+  greedy_inscription: 'Enchantments always succeed. But each enchantment doubles target score.',
   // Topology subsystem relics
   adjacent_power: 'On skill trigger: +6% output per adjacent equipped skill',
   symmetry_pact: 'When both symmetric keys have skills: each gains +15% output',

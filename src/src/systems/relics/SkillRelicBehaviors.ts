@@ -3,23 +3,27 @@
 // ============================================
 
 import { state, synergy } from '../../core/state'
-import { registerRelicBehavior } from './RelicPipeline'
+import { registerRelicBehavior, getRelicState, setRelicState } from './RelicPipeline'
 import type { AffixType } from '../../data/affixes'
 import { applyAffixLevelScaling, getSkillMaxLevel } from '../../data/affixes'
+import { weightedSampleWithout, rollAffixParams, generateName, pickRandom } from '../../data/skillGeneration'
+import { PositionRelation } from '../../data/keyboardTopology'
 
 
 // === 首发强化 (first_strike) ===
 
+const FIRST_STRIKE_SCORE = 10
+
 /**
  * 获取首发强化加成
- * 每词第一个技能触发时产出 +20%
- * @returns 0.2 当持有遗物且为本词第一个技能；否则 0
+ * 每词第一个技能触发时 +10 分
+ * @returns 10 当持有遗物且为本词第一个技能；否则 0
  */
 export function getFirstStrikeBonus(): number {
   if (!state.player.relics.has('first_strike')) return 0
   // wordSkillCount 在 triggerAffixSkillWithFeedback 入口处 ++ 后为 1 表示第一个
   if (synergy.wordSkillCount !== 1) return 0
-  return 0.2
+  return FIRST_STRIKE_SCORE
 }
 
 // === 少而精 (less_is_more) ===
@@ -124,6 +128,40 @@ export function shouldBlockEnchantment(_enchantmentIds: string[]): boolean {
   return false
 }
 
+// === D100（传说，每5战替换所有词条） ===
+
+const D100_INTERVAL = 5
+
+/**
+ * 替换所有装备技能的词条为随机词条（保留词条数量、等级、附魔）
+ * @returns 被替换的技能数量
+ */
+export function rerollAllAffixes(): number {
+  let count = 0
+  for (const [, skill] of state.affixSkills) {
+    const affixCount = skill.affixes.length
+    if (affixCount === 0) continue
+    const samples = weightedSampleWithout(affixCount)
+    const sharedPosRel = pickRandom(Object.values(PositionRelation))
+    skill.affixes = samples.map(s => rollAffixParams(s.type, skill.resource, s.convertVariant, undefined, sharedPosRel))
+    skill.name = generateName(skill.resource, skill.affixes)
+    count++
+  }
+  return count
+}
+
+/**
+ * 战斗开始时检查 D100 是否触发（每5战）
+ * @returns 触发时返回替换的技能数，否则 0
+ */
+export function checkD100OnBattleStart(): number {
+  if (!state.player.relics.has('d_100')) return 0
+  const battles = (getRelicState('d_100') ?? 0) + 1
+  setRelicState('d_100', battles)
+  if (battles % D100_INTERVAL !== 0) return 0
+  return rerollAllAffixes()
+}
+
 // === 模块重置（关级别） ===
 
 /**
@@ -149,5 +187,9 @@ export function initSkillRelicBehaviors(): void {
 
   registerRelicBehavior('uncrowned_king', (_relicId, _context) => {
     // 实际逻辑在 hasUncrownedKing() / shouldBlockEnchantment() 中
+  })
+
+  registerRelicBehavior('d_100', (_relicId, _context) => {
+    // 实际逻辑在 rerollAllAffixes() / checkD100OnBattleStart() 中
   })
 }
