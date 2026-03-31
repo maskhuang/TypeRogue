@@ -22,7 +22,7 @@ import { calculateLetterFrequency, letterFrequencyToScore } from './letters/Lett
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
-import { autoSelectRowMedal, getRowMedalRowName } from './relics/TopologyRelicBehaviors';
+// row_medal deleted — autoSelectRowMedal/getRowMedalRowName removed
 import { setWordDealerFlag, consumeWordDealerFreeRefresh } from './relics/WordRelicBehaviors';
 import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
 import { checkEliteHunterGoldMultiplier } from './relics/StageRelicBehaviors';
@@ -1922,11 +1922,7 @@ function purchaseShopRelicItem(index: number): void {
       const count = rerollAllAffixes();
       if (count > 0) showFeedback(`🎲 ${count}${t('shop.d100_feedback') || '个技能词条已重置!'}`, '#ff6b00');
     }
-    // Story 36.6: 行会勋章 — 购买时随机选行
-    if (relicId === 'row_medal') {
-      const row = autoSelectRowMedal();
-      showFeedback(t('relic.row_medal_selected', { row }), '#ffd700');
-    }
+    // (row_medal deleted)
     state.shop.items.splice(index, 1);
     renderRelicDisplay();
     renderUnifiedShop();
@@ -1956,10 +1952,7 @@ function purchaseShopRelicItem(index: number): void {
           }
         }
         // Story 36.6: 行会勋章 — 替换购买时也随机选行
-        if (relicId === 'row_medal') {
-          const row = autoSelectRowMedal();
-          showFeedback(t('relic.row_medal_selected', { row }), '#ffd700');
-        }
+        // (row_medal deleted)
       }
       const m = document.getElementById('relic-picker-modal');
       if (m) m.classList.add('relic-picker-hidden');
@@ -3445,12 +3438,7 @@ function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicDa
   tip.id = 'relic-tooltip';
   tip.className = 'key-tooltip';
   const rarityColor = RELIC_RARITY_COLORS[relic.rarity] || '#aaa';
-  // 行会勋章：动态追加已选行
   let descText = localizeItemDesc(relic.id, relic.description);
-  if (relic.id === 'row_medal') {
-    const rowName = getRowMedalRowName();
-    if (rowName) descText += ` [${rowName}]`;
-  }
   tip.innerHTML =
     `<div style="font-size:14px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${localizeItemName(relic.id, relic.name)}</div>` +
     `<div style="font-size:9px;padding:1px 4px;border-radius:3px;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${getRarityLabel(relic.rarity)}</div>` +

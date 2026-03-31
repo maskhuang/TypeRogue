@@ -20,7 +20,7 @@ import { getMultiplierPrismBonus, getCancelChainBonus } from './relics/ComboReli
 import { getTaikoBonus } from './relics/TypingRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostBonus } from './relics/EnchantmentRelicBehaviors';
-import { getAdjacentPowerBonus, getSymmetryPactBonus, getRowMedalBonus } from './relics/TopologyRelicBehaviors';
+import { getAdjacentPowerBonus, getCornerPowerBonus, recordLineClearHit } from './relics/TopologyRelicBehaviors';
 import { getSkillKeys, getBindingState } from './bindingManager';
 import { getShortSprintBonus } from './relics/WordRelicBehaviors';
 import { recordResourceProduction, getResourceTideBonus, resetWordResourceAmounts } from './relics/ResourceRelicBehaviors';
@@ -212,9 +212,10 @@ export function clearPseudoInfinite(): void {
 export function triggerSkill(
   skillId: string, triggerKey: string,
   overrideAnchor?: { letterIndex?: number; fromElementId?: string },
+  outputScale?: number,
 ): void {
   if (state.affixSkills.has(skillId)) {
-    triggerAffixSkillWithFeedback(skillId, triggerKey, overrideAnchor);
+    triggerAffixSkillWithFeedback(skillId, triggerKey, overrideAnchor, outputScale);
   }
   // 未知技能：静默忽略
 }
@@ -223,6 +224,7 @@ export function triggerSkill(
 function triggerAffixSkillWithFeedback(
   skillId: string, triggerKey: string,
   overrideAnchor?: { letterIndex?: number; fromElementId?: string },
+  outputScale?: number,
 ): void {
   const skill = state.affixSkills.get(skillId)!;
 
@@ -266,10 +268,8 @@ function triggerAffixSkillWithFeedback(
   // Story 36.6: 键盘拓扑遗物加算
   const adjacentBonus = getAdjacentPowerBonus(triggerKey);
   if (adjacentBonus > 0) relicBonus += adjacentBonus;
-  const symmetryBonus = getSymmetryPactBonus(triggerKey);
-  if (symmetryBonus > 0) relicBonus += symmetryBonus;
-  const rowBonus = getRowMedalBonus(triggerKey);
-  if (rowBonus > 0) relicBonus += rowBonus;
+  const cornerBonus = getCornerPowerBonus(triggerKey);
+  if (cornerBonus > 0) relicBonus += cornerBonus;
   // Story 36.7: 短词冲刺加算
   const shortSprintBonus = getShortSprintBonus(state.player.word.length);
   if (shortSprintBonus > 0) relicBonus += shortSprintBonus;
@@ -309,6 +309,8 @@ function triggerAffixSkillWithFeedback(
 
   const result = orchestrateAffixTrigger(skillId, triggerKey, ctx, {
     applyResource: (resource: ResourceType, amount: number, isMultiplyOp?: boolean) => {
+      // 消行满贯等额外触发的产出缩放
+      if (outputScale !== undefined && outputScale !== 1) amount = amount * outputScale;
       // 升华缩放：Lv4+ 基础值缩放
       if (ascendScale > 1) amount = amount * ascendScale;
       // 遗物加算：正产出 + relicBonus%（不放大 taboo 惩罚）
@@ -377,6 +379,8 @@ function triggerAffixSkillWithFeedback(
 
   // Story 36.4: 爵士乐 — 追踪本词触发的词条类型
   trackWordAffixTypes(skill.affixes);
+  // 消行满贯 — 追踪本词技能命中行
+  recordLineClearHit(triggerKey);
 
   // Story 37.6: 缓存链式锚点（同一 triggerKey 只调一次 resolveChainAnchor，避免 random() 不一致）
   const chainAnchorCache = new Map<string, { letterIndex?: number; fromElementId?: string }>();

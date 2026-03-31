@@ -117,7 +117,7 @@ export type RelicBehaviorType =
   | 'fate_fork'            // 命运三岔：附魔选择变 3 选 1
   | 'greedy_inscription'   // 贪婪铭刻：附魔必定成功，每附魔目标×2
   // 键盘拓扑系统
-  | 'row_select'           // 行会勋章：选一行加成
+  | 'line_clear'           // 消行满贯：命中一行所有技能→额外触发（跨词累积）
   | 'hand_alternation'     // 双手协奏：左右手交替击键加时间
   | 'punctuation_liberation' // 标点解放：解锁标点键位+词语混入标点
   // 单词/词库系统
@@ -587,36 +587,48 @@ export const RELICS: Record<string, RelicData> = {
     name: '邻键之力',
     icon: '🤝',
     description: '技能触发时，每个相邻已装备技能使产出+6%。',
-    rarity: 'common',
-    basePrice: 50,
+    rarity: 'rare',
+    basePrice: 80,
     effects: [],
     subsystem: 'topology',
     flavor: '键盘上的邻居守望相助。',
   },
 
-  symmetry_pact: {
-    id: 'symmetry_pact',
-    name: '对称契约',
+  corner_power: {
+    id: 'corner_power',
+    name: '角隅之力',
     icon: '🪞',
-    description: '对称位两技能都装备时，各自产出+15%。',
+    description: '位于键盘角落(Q/P/Z/M)的技能产出+20%。',
     rarity: 'rare',
     basePrice: 80,
     effects: [],
     subsystem: 'topology',
-    flavor: '左右呼应，对称之美蕴含力量。',
+    flavor: '角落虽小，蕴含着不可忽视的力量。',
   },
 
-  row_medal: {
-    id: 'row_medal',
-    name: '行会勋章',
+  row_switch: {
+    id: 'row_switch',
+    name: '换行奖励',
+    icon: '↕️',
+    description: '当前按键与上一个按键不在同一行时，+1金币。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'topology',
+    flavor: '指尖在键盘行间跳跃，金币随之落下。',
+  },
+
+  line_clear: {
+    id: 'line_clear',
+    name: '消行满贯',
     icon: '🎖️',
-    description: '随机指定一行，该行技能产出+25%。',
+    description: '命中某一行所有已装备技能(≥2)时「消行」——该行所有技能额外触发一次(50%产出)，跨词累积。',
     rarity: 'epic',
     basePrice: 120,
     effects: [],
     subsystem: 'topology',
-    behaviorType: 'row_select',
-    flavor: '加入行会，享受专属加成。',
+    behaviorType: 'line_clear',
+    flavor: '满行消除，爽快连锁。',
   },
 
   dual_concerto: {
@@ -1111,4 +1123,5 @@ export const DELETED_RELIC_IDS = [
   'typing_wax_seal',
   'rhythm_doctor',
   'early_awakening', 'enchant_anchor',
+  'symmetry_pact', 'row_medal',
 ]

@@ -6,14 +6,16 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { state } from '../../../../src/core/state'
 import {
   ADJACENT_POWER_RATE,
-  SYMMETRY_PACT_RATE,
-  ROW_MEDAL_RATE,
+  CORNER_POWER_RATE,
   DUAL_CONCERTO_TIME,
+  ROW_SWITCH_GOLD,
+  LINE_CLEAR_OUTPUT_RATIO,
   KEY_STORM_SCORE_PENALTY,
   getAdjacentPowerBonus,
-  getSymmetryPactBonus,
-  setRowMedalRow,
-  getRowMedalBonus,
+  getCornerPowerBonus,
+  checkRowSwitch,
+  recordLineClearHit,
+  checkLineClear,
   checkDualConcerto,
   resetDualConcertoHand,
   hasKeyStorm,
@@ -46,14 +48,17 @@ describe('键盘拓扑遗物行为 (Story 36.6)', () => {
     it('ADJACENT_POWER_RATE = 0.06', () => {
       expect(ADJACENT_POWER_RATE).toBe(0.06)
     })
-    it('SYMMETRY_PACT_RATE = 0.15', () => {
-      expect(SYMMETRY_PACT_RATE).toBe(0.15)
-    })
-    it('ROW_MEDAL_RATE = 0.25', () => {
-      expect(ROW_MEDAL_RATE).toBe(0.25)
+    it('CORNER_POWER_RATE = 0.20', () => {
+      expect(CORNER_POWER_RATE).toBe(0.20)
     })
     it('DUAL_CONCERTO_TIME = 0.5', () => {
       expect(DUAL_CONCERTO_TIME).toBe(0.5)
+    })
+    it('ROW_SWITCH_GOLD = 1', () => {
+      expect(ROW_SWITCH_GOLD).toBe(1)
+    })
+    it('LINE_CLEAR_OUTPUT_RATIO = 0.5', () => {
+      expect(LINE_CLEAR_OUTPUT_RATIO).toBe(0.5)
     })
     it('KEY_STORM_SCORE_PENALTY = 0.5', () => {
       expect(KEY_STORM_SCORE_PENALTY).toBe(0.5)
@@ -98,93 +103,196 @@ describe('键盘拓扑遗物行为 (Story 36.6)', () => {
     })
   })
 
-  // === 对称契约 (symmetry_pact) ===
-  describe('对称契约 (symmetry_pact)', () => {
+  // === 角隅之力 (corner_power) ===
+  describe('角隅之力 (corner_power)', () => {
     it('无遗物 → 0', () => {
-      bindKey('q', 'skill_q')
-      bindKey('p', 'skill_p')
-      expect(getSymmetryPactBonus('q')).toBe(0)
+      expect(getCornerPowerBonus('q')).toBe(0)
     })
 
-    it('有遗物 + 对称位有装备 → 0.15', () => {
-      state.player.relics.add('symmetry_pact')
-      bindKey('q', 'skill_q')
-      bindKey('p', 'skill_p') // q↔p 对称
-      expect(getSymmetryPactBonus('q')).toBe(SYMMETRY_PACT_RATE)
+    it('有遗物 + 角落键(Q) → 0.20', () => {
+      state.player.relics.add('corner_power')
+      expect(getCornerPowerBonus('q')).toBe(CORNER_POWER_RATE)
     })
 
-    it('有遗物 + 对称位无装备 → 0', () => {
-      state.player.relics.add('symmetry_pact')
-      bindKey('q', 'skill_q')
-      // p 未装备
-      expect(getSymmetryPactBonus('q')).toBe(0)
+    it('有遗物 + 角落键(P) → 0.20', () => {
+      state.player.relics.add('corner_power')
+      expect(getCornerPowerBonus('p')).toBe(CORNER_POWER_RATE)
     })
 
-    it('双向对称：q→p 和 p→q 都生效', () => {
-      state.player.relics.add('symmetry_pact')
-      bindKey('q', 'skill_q')
-      bindKey('p', 'skill_p')
-      expect(getSymmetryPactBonus('q')).toBe(SYMMETRY_PACT_RATE)
-      expect(getSymmetryPactBonus('p')).toBe(SYMMETRY_PACT_RATE)
+    it('有遗物 + 角落键(Z) → 0.20', () => {
+      state.player.relics.add('corner_power')
+      expect(getCornerPowerBonus('z')).toBe(CORNER_POWER_RATE)
     })
 
-    it('无对称位的键(a,z,x,c) → 0 (AC2)', () => {
-      state.player.relics.add('symmetry_pact')
-      bindKey('a', 'skill_a')
-      bindKey('z', 'skill_z')
-      bindKey('x', 'skill_x')
-      bindKey('c', 'skill_c')
-      expect(getSymmetryPactBonus('a')).toBe(0)
-      expect(getSymmetryPactBonus('z')).toBe(0)
-      expect(getSymmetryPactBonus('x')).toBe(0)
-      expect(getSymmetryPactBonus('c')).toBe(0)
+    it('有遗物 + 角落键(M) → 0.20', () => {
+      state.player.relics.add('corner_power')
+      expect(getCornerPowerBonus('m')).toBe(CORNER_POWER_RATE)
+    })
+
+    it('有遗物 + 非角落键(F) → 0', () => {
+      state.player.relics.add('corner_power')
+      expect(getCornerPowerBonus('f')).toBe(0)
+    })
+
+    it('有遗物 + 非角落键(A) → 0', () => {
+      state.player.relics.add('corner_power')
+      expect(getCornerPowerBonus('a')).toBe(0)
     })
   })
 
-  // === 行会勋章 (row_medal) ===
-  describe('行会勋章 (row_medal)', () => {
+  // === 换行奖励 (row_switch) ===
+  describe('换行奖励 (row_switch)', () => {
     it('无遗物 → 0', () => {
-      expect(getRowMedalBonus('f')).toBe(0)
+      expect(checkRowSwitch('f')).toBe(0)
     })
 
-    it('有遗物但未选择行 → 0', () => {
-      state.player.relics.add('row_medal')
-      expect(getRowMedalBonus('f')).toBe(0)
+    it('首次按键 → 0（无前行记录）', () => {
+      state.player.relics.add('row_switch')
+      expect(checkRowSwitch('f')).toBe(0)
     })
 
-    it('选择上行(0) + 上行键触发 → 0.25', () => {
-      state.player.relics.add('row_medal')
-      setRowMedalRow(0)
-      expect(getRowMedalBonus('q')).toBe(ROW_MEDAL_RATE) // q 在上行
-      expect(getRowMedalBonus('w')).toBe(ROW_MEDAL_RATE)
-      expect(getRowMedalBonus('p')).toBe(ROW_MEDAL_RATE)
+    it('同行连续按键 → 0', () => {
+      state.player.relics.add('row_switch')
+      checkRowSwitch('f') // 中行
+      expect(checkRowSwitch('d')).toBe(0) // 中行 → 中行
     })
 
-    it('选择上行(0) + 中行键触发 → 0', () => {
-      state.player.relics.add('row_medal')
-      setRowMedalRow(0)
-      expect(getRowMedalBonus('a')).toBe(0) // a 在中行
-      expect(getRowMedalBonus('f')).toBe(0)
+    it('跨行 → 1 金币', () => {
+      state.player.relics.add('row_switch')
+      checkRowSwitch('f') // 中行 (row 1)
+      expect(checkRowSwitch('q')).toBe(ROW_SWITCH_GOLD) // 上行 (row 0)
     })
 
-    it('选择中行(1) + 中行键触发 → 0.25', () => {
-      state.player.relics.add('row_medal')
-      setRowMedalRow(1)
-      expect(getRowMedalBonus('a')).toBe(ROW_MEDAL_RATE)
-      expect(getRowMedalBonus('f')).toBe(ROW_MEDAL_RATE)
-      expect(getRowMedalBonus('l')).toBe(ROW_MEDAL_RATE)
+    it('连续跨行连续触发', () => {
+      state.player.relics.add('row_switch')
+      checkRowSwitch('f')  // 中行, 首次 → 0
+      expect(checkRowSwitch('q')).toBe(ROW_SWITCH_GOLD)  // 中→上
+      expect(checkRowSwitch('z')).toBe(ROW_SWITCH_GOLD)  // 上→下
+      expect(checkRowSwitch('a')).toBe(ROW_SWITCH_GOLD)  // 下→中
     })
 
-    it('选择下行(2) + 下行键触发 → 0.25', () => {
-      state.player.relics.add('row_medal')
-      setRowMedalRow(2)
-      expect(getRowMedalBonus('z')).toBe(ROW_MEDAL_RATE)
-      expect(getRowMedalBonus('m')).toBe(ROW_MEDAL_RATE)
+    it('无遗物时也更新行号状态', () => {
+      // 先不加遗物，按一个键更新行号
+      checkRowSwitch('q') // 上行
+      // 加遗物后，从上行切到中行应触发
+      state.player.relics.add('row_switch')
+      expect(checkRowSwitch('f')).toBe(ROW_SWITCH_GOLD)
+    })
+  })
+
+  // === 消行满贯 (line_clear) ===
+  describe('消行满贯 (line_clear)', () => {
+    it('无遗物 → 不记录', () => {
+      bindKey('a', 's1')
+      bindKey('s', 's2')
+      recordLineClearHit('a')
+      recordLineClearHit('s')
+      expect(checkLineClear()).toEqual([])
     })
 
-    it('setRowMedalRow 存储到 relicStates', () => {
-      setRowMedalRow(1)
-      expect(state.player.relicStates['row_medal']).toBe(1)
+    it('有遗物但未满行 → 空数组', () => {
+      state.player.relics.add('line_clear')
+      bindKey('a', 's1')
+      bindKey('s', 's2')
+      bindKey('d', 's3')
+      // 只命中 a 和 s，d 未命中
+      recordLineClearHit('a')
+      recordLineClearHit('s')
+      expect(checkLineClear()).toEqual([])
+    })
+
+    it('一行只有1个已装备技能 → 不触发（需 ≥2）', () => {
+      state.player.relics.add('line_clear')
+      bindKey('a', 's1') // 中行唯一
+      recordLineClearHit('a')
+      expect(checkLineClear()).toEqual([])
+    })
+
+    it('一行2个已装备技能全部命中 → 消行', () => {
+      state.player.relics.add('line_clear')
+      bindKey('a', 's1')
+      bindKey('s', 's2')
+      recordLineClearHit('a')
+      recordLineClearHit('s')
+      const result = checkLineClear()
+      expect(result).toHaveLength(2)
+      expect(result.map(r => r.key).sort()).toEqual(['a', 's'])
+      expect(result.map(r => r.skillId).sort()).toEqual(['s1', 's2'])
+    })
+
+    it('一行3个已装备技能全部命中 → 消行返回3个', () => {
+      state.player.relics.add('line_clear')
+      bindKey('a', 's1')
+      bindKey('s', 's2')
+      bindKey('d', 's3')
+      recordLineClearHit('a')
+      recordLineClearHit('s')
+      recordLineClearHit('d')
+      const result = checkLineClear()
+      expect(result).toHaveLength(3)
+    })
+
+    it('多行可同时消行', () => {
+      state.player.relics.add('line_clear')
+      bindKey('q', 's1')
+      bindKey('w', 's2')
+      bindKey('a', 's3')
+      bindKey('s', 's4')
+      recordLineClearHit('q')
+      recordLineClearHit('w')
+      recordLineClearHit('a')
+      recordLineClearHit('s')
+      const result = checkLineClear()
+      expect(result).toHaveLength(4) // 上行2 + 中行2
+    })
+
+    it('非装备键不计入', () => {
+      state.player.relics.add('line_clear')
+      bindKey('a', 's1')
+      bindKey('s', 's2')
+      // 'f' 未装备，recordLineClearHit 应忽略
+      recordLineClearHit('a')
+      recordLineClearHit('f')
+      expect(checkLineClear()).toEqual([]) // a 命中但 s 未命中
+    })
+
+    it('跨词累积：第一词命中 a，第二词命中 s → 消行', () => {
+      state.player.relics.add('line_clear')
+      bindKey('a', 's1')
+      bindKey('s', 's2')
+      // 第一词：命中 a
+      recordLineClearHit('a')
+      expect(checkLineClear()).toEqual([]) // 未满行
+      // 第二词：命中 s → 跨词累积触发消行
+      recordLineClearHit('s')
+      const result = checkLineClear()
+      expect(result).toHaveLength(2)
+    })
+
+    it('消行后清除该行记录，需重新积累', () => {
+      state.player.relics.add('line_clear')
+      bindKey('a', 's1')
+      bindKey('s', 's2')
+      recordLineClearHit('a')
+      recordLineClearHit('s')
+      checkLineClear() // 消行 → 清除中行记录
+      // 再次检查，不应重复触发
+      expect(checkLineClear()).toEqual([])
+      // 重新积累后可再次触发
+      recordLineClearHit('a')
+      recordLineClearHit('s')
+      expect(checkLineClear()).toHaveLength(2)
+    })
+
+    it('resetTopologyRelicState 清空消行追踪', () => {
+      state.player.relics.add('line_clear')
+      bindKey('a', 's1')
+      bindKey('s', 's2')
+      recordLineClearHit('a')
+      resetTopologyRelicState()
+      recordLineClearHit('s')
+      // a 的记录被重置，只有 s，不够消行
+      expect(checkLineClear()).toEqual([])
     })
   })
 
@@ -330,14 +438,36 @@ describe('键盘拓扑遗物行为 (Story 36.6)', () => {
       // 双手协奏：重置后首次 → 0
       expect(checkDualConcerto('j')).toBe(0)
     })
+
+    it('重置换行奖励行号', () => {
+      state.player.relics.add('row_switch')
+      checkRowSwitch('f') // 中行
+
+      resetTopologyRelicState()
+
+      // 重置后首次按键 → 0（无前行记录）
+      expect(checkRowSwitch('q')).toBe(0)
+    })
+
+    it('重置消行追踪', () => {
+      state.player.relics.add('line_clear')
+      bindKey('a', 's1')
+      bindKey('s', 's2')
+      recordLineClearHit('a')
+
+      resetTopologyRelicState()
+
+      // 重置后应无记录
+      expect(checkLineClear()).toEqual([])
+    })
   })
 
   // === 行为注册 ===
   describe('initTopologyRelicBehaviors', () => {
-    it('注册 row_select, hand_alternation, key_storm 行为', () => {
+    it('注册 line_clear, hand_alternation, key_storm 行为', () => {
       initTopologyRelicBehaviors()
       const handlers = getRegisteredBehaviors()
-      expect(handlers).toContain('row_select')
+      expect(handlers).toContain('line_clear')
       expect(handlers).toContain('hand_alternation')
       expect(handlers).toContain('key_storm')
     })
@@ -345,33 +475,32 @@ describe('键盘拓扑遗物行为 (Story 36.6)', () => {
 
   // === 遗物组合交互 ===
   describe('遗物组合交互', () => {
-    it('邻键之力 + 对称契约 可叠加', () => {
+    it('邻键之力 + 角隅之力 可叠加', () => {
       state.player.relics.add('adjacent_power')
-      state.player.relics.add('symmetry_pact')
-      // q↔p 对称，q 相邻 w,a
+      state.player.relics.add('corner_power')
+      // q 是角落键，q 相邻 w
       bindKey('q', 'skill_q')
-      bindKey('p', 'skill_p')
       bindKey('w', 'skill_w')
 
       const adj = getAdjacentPowerBonus('q')
-      const sym = getSymmetryPactBonus('q')
+      const corner = getCornerPowerBonus('q')
       expect(adj).toBeCloseTo(ADJACENT_POWER_RATE) // 1 neighbor (w)
-      expect(sym).toBe(SYMMETRY_PACT_RATE) // p is symmetric
-      expect(adj + sym).toBeCloseTo(ADJACENT_POWER_RATE + SYMMETRY_PACT_RATE)
+      expect(corner).toBe(CORNER_POWER_RATE) // q is corner
+      expect(adj + corner).toBeCloseTo(ADJACENT_POWER_RATE + CORNER_POWER_RATE)
     })
 
-    it('行会勋章 + 邻键之力 可叠加', () => {
-      state.player.relics.add('row_medal')
-      state.player.relics.add('adjacent_power')
-      setRowMedalRow(1) // 中行
-      bindKey('f', 'skill_f')
-      bindKey('d', 'skill_d')
-      bindKey('g', 'skill_g')
+    it('换行奖励 + 双手协奏 同时触发', () => {
+      state.player.relics.add('row_switch')
+      state.player.relics.add('dual_concerto')
+      // f(中行,左手) → j(中行,右手): 双手协奏触发，换行不触发
+      checkRowSwitch('f')
+      checkDualConcerto('f')
+      expect(checkRowSwitch('j')).toBe(0) // 同行
+      expect(checkDualConcerto('j')).toBe(DUAL_CONCERTO_TIME) // 换手
 
-      const row = getRowMedalBonus('f')
-      const adj = getAdjacentPowerBonus('f')
-      expect(row).toBe(ROW_MEDAL_RATE)
-      expect(adj).toBeCloseTo(2 * ADJACENT_POWER_RATE) // d,g both adjacent
+      // j(中行,右手) → q(上行,左手): 两者都触发
+      expect(checkRowSwitch('q')).toBe(ROW_SWITCH_GOLD) // 跨行
+      expect(checkDualConcerto('q')).toBe(DUAL_CONCERTO_TIME) // 换手
     })
   })
 })

@@ -33,7 +33,7 @@ import { canAutocomplete, isRepeatWord, hasGlassCannon, resetTypingRelicState, t
 import { checkEchoThimble, calculateComboBuffer, checkComboDetonator, onComboBreakDetonator, hasImmortalCombo, saveLastBattleCombo, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus, onNewWordForCancel, checkCancelOnFirstLetter, getCancelChainBonus, getCancelChainCount, onCancelledWordComplete, onCancelledWordError, isWordCancelled } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing, checkD100OnBattleStart } from './relics/SkillRelicBehaviors';
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestEquipReduction, getGreedyInscriptionTargetMult } from './relics/EnchantmentRelicBehaviors';
-import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
+import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, checkRowSwitch, checkLineClear, LINE_CLEAR_OUTPUT_RATIO, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
 import { checkWordCollection, checkLongWordMaster, initWordRelicBehaviors } from './relics/WordRelicBehaviors';
 import { checkScoreMagnet, checkResourceSense, storeDeferredSenseBonus, consumeDeferredSenseBonus, incrementTimeDewCounter, checkTimeDew, incrementWordParity, getCurrentTideResource, checkUniversalFurnace, resetResourceRelicBattleState, initResourceRelicBehaviors } from './relics/ResourceRelicBehaviors';
 import { initShopRelicBehaviors } from './relics/ShopRelicBehaviors';
@@ -689,6 +689,13 @@ function playerCorrect(k: string): void {
       state.time += concertoBonus;
       showFeedback(t('battle.dual_concerto', { value: concertoBonus }), '#00ff88', undefined, undefined, { relicId: 'dual_concerto', resource: 'time', amount: concertoBonus });
     }
+    // 换行奖励 — 跨行按键+1金币
+    const rowSwitchGold = checkRowSwitch(k);
+    if (rowSwitchGold > 0) {
+      state.player.gold += rowSwitchGold;
+      state.resources.gold += rowSwitchGold;
+      showFeedback(`↕️ +${rowSwitchGold}g`, RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'row_switch', resource: 'gold', amount: rowSwitchGold });
+    }
     // Charge: 按住蓄力，暂停字母推进
     if (isChargeSkill(skillId)) {
       _pendingChargeTriggers.set(k.toUpperCase(), { skillId, key: k, letterIndex: state.player.index });
@@ -1072,6 +1079,16 @@ function completeWord(): void {
     }
     if (state.wordPerfect) {
       applyApprenticeEvent('perfectWord', rt, skill.enchantmentIds, _growthMult);
+    }
+  }
+
+  // 消行满贯 — 一词命中一行所有已装备技能时额外触发(50%产出)
+  const lineClearTargets = checkLineClear();
+  if (lineClearTargets.length > 0) {
+    showFeedback(`🎖️ 消行! ×${lineClearTargets.length}`, '#ffd700');
+    pulseRelicIcon('line_clear', '#ffd700');
+    for (const target of lineClearTargets) {
+      triggerSkill(target.skillId, target.key, undefined, LINE_CLEAR_OUTPUT_RATIO);
     }
   }
 

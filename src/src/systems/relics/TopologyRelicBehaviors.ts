@@ -3,24 +3,33 @@
 // ============================================
 
 import { state } from '../../core/state'
-import { ADJACENT_KEYS } from '../../core/constants'
-import { HAND_MAP, ROW_MAP, SYMMETRIC_PAIRS } from '../../data/keyboardTopology'
+import { ADJACENT_KEYS, KEYBOARD_ROWS } from '../../core/constants'
+import { HAND_MAP, ROW_MAP } from '../../data/keyboardTopology'
 import { registerRelicBehavior } from './RelicPipeline'
 
 /** 邻键之力：每个相邻已装备技能的加成 */
 export const ADJACENT_POWER_RATE = 0.06
 
-/** 对称契约：对称位双装备的加成 */
-export const SYMMETRY_PACT_RATE = 0.15
+/** 角隅之力：角落键加成 */
+export const CORNER_POWER_RATE = 0.20
 
-/** 行会勋章：选定行的加成 */
-export const ROW_MEDAL_RATE = 0.25
+/** 角落键集合 (Q/P/Z/M) */
+const CORNER_KEYS = new Set(['q', 'p', 'z', 'm'])
 
 /** 双手协奏：手切换时间加成 */
 export const DUAL_CONCERTO_TIME = 0.5
 
+/** 换行奖励：跨行金币 */
+export const ROW_SWITCH_GOLD = 1
+
+/** 消行满贯：额外触发的产出比例 */
+export const LINE_CLEAR_OUTPUT_RATIO = 0.5
+
 // === 模块级状态 ===
 let _lastKeyHand: 'left' | 'right' | null = null
+let _lastKeyRow: number | null = null
+/** 消行追踪：本词每行已命中的已装备技能键集合 */
+let _wordRowHits: Map<number, Set<string>> = new Map()
 
 // === 邻键之力 (adjacent_power) ===
 
@@ -39,58 +48,82 @@ export function getAdjacentPowerBonus(triggerKey: string): number {
   return count * ADJACENT_POWER_RATE
 }
 
-// === 对称契约 (symmetry_pact) ===
+// === 角隅之力 (corner_power) ===
 
 /**
- * 获取对称契约加成
- * 持有 symmetry_pact + 对称位有装备技能 → 0.15，否则 0
+ * 获取角隅之力加成
+ * 触发键在角落(Q/P/Z/M) → +20%，否则 0
  */
-export function getSymmetryPactBonus(triggerKey: string): number {
-  if (!state.player.relics.has('symmetry_pact')) return 0
-  const symmetricKey = SYMMETRIC_PAIRS[triggerKey]
-  if (!symmetricKey) return 0
-  return state.player.bindings.has(symmetricKey) ? SYMMETRY_PACT_RATE : 0
+export function getCornerPowerBonus(triggerKey: string): number {
+  if (!state.player.relics.has('corner_power')) return 0
+  return CORNER_KEYS.has(triggerKey) ? CORNER_POWER_RATE : 0
 }
 
-// === 行会勋章 (row_medal) ===
-
-/** 行名称（用于反馈显示） */
-const ROW_NAMES = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'] as const
+// === 换行奖励 (row_switch) ===
 
 /**
- * 设置行会勋章选择的行号
+ * 检查换行奖励
+ * 当前按键与上一个按键不在同一行 → +1 金币
+ * @returns 金币数（0 或 1）
  */
-export function setRowMedalRow(rowIndex: number): void {
-  state.player.relicStates['row_medal'] = rowIndex
+export function checkRowSwitch(key: string): number {
+  if (!state.player.relics.has('row_switch')) {
+    // 即使没有遗物也更新行号（为其他系统准备）
+    _lastKeyRow = ROW_MAP[key] ?? null
+    return 0
+  }
+  const currentRow = ROW_MAP[key]
+  if (currentRow === undefined) return 0
+  const bonus = (_lastKeyRow !== null && _lastKeyRow !== currentRow) ? ROW_SWITCH_GOLD : 0
+  _lastKeyRow = currentRow
+  return bonus
+}
+
+// === 消行满贯 (line_clear) ===
+
+/**
+ * 记录本词技能命中（由 battle.ts 在技能触发后调用）
+ */
+export function recordLineClearHit(triggerKey: string): void {
+  if (!state.player.relics.has('line_clear')) return
+  const row = ROW_MAP[triggerKey]
+  if (row === undefined) return
+  if (!state.player.bindings.has(triggerKey)) return
+  if (!_wordRowHits.has(row)) _wordRowHits.set(row, new Set())
+  _wordRowHits.get(row)!.add(triggerKey)
 }
 
 /**
- * 随机选择行会勋章的加成行，返回行名
+ * 检查消行满贯触发（在单词完成时调用）
+ * @returns 要额外触发的 {skillId, key}[]，空数组表示未触发
  */
-export function autoSelectRowMedal(): string {
-  const row = Math.floor(Math.random() * 3)
-  setRowMedalRow(row)
-  return ROW_NAMES[row]
-}
+export function checkLineClear(): { skillId: string; key: string }[] {
+  if (!state.player.relics.has('line_clear')) return []
+  const result: { skillId: string; key: string }[] = []
+  const clearedRows: number[] = []
 
-/**
- * 获取行会勋章已选行名称（用于 tooltip 动态显示）
- */
-export function getRowMedalRowName(): string | null {
-  const selectedRow = state.player.relicStates['row_medal']
-  if (selectedRow === undefined) return null
-  return ROW_NAMES[selectedRow] ?? null
-}
+  for (const [row, hitKeys] of _wordRowHits) {
+    // 获取该行所有已装备技能的键
+    const rowEquippedKeys: string[] = []
+    for (const [key] of state.player.bindings) {
+      if (ROW_MAP[key] === row) rowEquippedKeys.push(key)
+    }
+    // 该行至少有2个已装备技能，且全部命中 → 消行
+    if (rowEquippedKeys.length >= 2 && rowEquippedKeys.every(k => hitKeys.has(k))) {
+      for (const key of rowEquippedKeys) {
+        const skillId = state.player.bindings.get(key)
+        if (skillId) result.push({ skillId, key })
+      }
+      clearedRows.push(row)
+    }
+  }
 
-/**
- * 获取行会勋章加成
- * 持有 row_medal + 触发键在选定行 → 0.25，否则 0
- */
-export function getRowMedalBonus(triggerKey: string): number {
-  if (!state.player.relics.has('row_medal')) return 0
-  const selectedRow = state.player.relicStates['row_medal']
-  if (selectedRow === undefined) return 0
-  return ROW_MAP[triggerKey] === selectedRow ? ROW_MEDAL_RATE : 0
+  // 消行后清除已消行的记录，允许重新积累
+  for (const row of clearedRows) {
+    _wordRowHits.delete(row)
+  }
+
+  return result
 }
 
 // === 双手协奏 (dual_concerto) ===
@@ -131,10 +164,6 @@ export function hasKeyStorm(): boolean {
 /**
  * 检查全键风暴触发
  * 每命中1个技能，随机触发1个未被该词命中的已装备技能
- * @param hitCount 该词命中的技能数量
- * @param currentWord 当前单词
- * @param randomFn 随机函数
- * @returns 要触发的 {skillId, key}[]
  */
 export function checkKeyStorm(
   hitCount: number,
@@ -159,7 +188,6 @@ export function checkKeyStorm(
     ;[arr[i], arr[j]] = [arr[j], arr[i]]
   }
 
-  // 取 min(hitCount, unhitSkills.length) 个
   return arr.slice(0, Math.min(hitCount, arr.length))
 }
 
@@ -170,6 +198,8 @@ export function checkKeyStorm(
  */
 export function resetTopologyRelicState(): void {
   _lastKeyHand = null
+  _lastKeyRow = null
+  _wordRowHits.clear()
 }
 
 // === 注册所有行为 ===
@@ -178,8 +208,8 @@ export function resetTopologyRelicState(): void {
  * 初始化拓扑子系统遗物行为注册
  */
 export function initTopologyRelicBehaviors(): void {
-  registerRelicBehavior('row_select', (_relicId, _context) => {
-    // 实际逻辑在 getRowMedalBonus() 中，由 skills.ts 调用
+  registerRelicBehavior('line_clear', (_relicId, _context) => {
+    // 实际逻辑在 checkLineClear() 中，由 battle.ts 调用
   })
 
   registerRelicBehavior('hand_alternation', (_relicId, _context) => {

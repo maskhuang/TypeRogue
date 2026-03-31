@@ -239,7 +239,7 @@ describe('RelicBehaviorType', () => {
       'double_keystroke', 'combo_detonator', 'cancel', 'immortal_combo',
       'training_manual', 'jazz_diversity', 'uncrowned_king', 'd_100',
       'fate_fork', 'greedy_inscription',
-      'row_select', 'hand_alternation', 'key_storm',
+      'line_clear', 'hand_alternation', 'key_storm',
       'word_dealer',
       'smuggle_free', 'timed_auction',
       'phoenix',

@@ -458,8 +458,8 @@ describe('遗物数据完整性 (Story 36.13 AC4)', () => {
     }
 
     for (const subsystem of VALID_SUBSYSTEMS) {
-      // combo/skill/enchantment have 6 relics each
-      const expected = (subsystem === 'combo' || subsystem === 'skill' || subsystem === 'enchantment') ? 6 : 5;
+      // combo/skill/enchantment/topology have 6 relics each
+      const expected = (subsystem === 'combo' || subsystem === 'skill' || subsystem === 'enchantment' || subsystem === 'topology') ? 6 : 5;
       expect(subsystemCounts[subsystem]).toBe(expected);
     }
   });
@@ -504,9 +504,9 @@ describe('遗物数据完整性 (Story 36.13 AC4)', () => {
     expect(uniqueIcons.size).toBe(icons.length);
   });
 
-  it('通用遗物总数为 58', () => {
+  it('通用遗物总数为 59', () => {
     const universalCount = getAllRelicIds().filter(id => RELICS[id].subsystem !== undefined).length;
-    expect(universalCount).toBe(58);
+    expect(universalCount).toBe(59);
   });
 
   it('职业专属遗物总数为 10（5 造词师 + 5 蜕变师）', () => {

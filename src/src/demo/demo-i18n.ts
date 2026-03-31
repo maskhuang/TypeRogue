@@ -216,7 +216,7 @@ const ZH: Record<string, string> = {
   'battle.dual_concerto': '🎹 +{value}s',
   'battle.key_storm': '⛈️ 风暴 ×{value}',
   'battle.key_storm_penalty': '⛈️ ×0.5 (-{value})',
-  'relic.row_medal_selected': '🎖️ 已选择{row}',
+  // (row_medal deleted)
 
   // --- word relic feedback ---
   'battle.long_word_time': '📏 +{value}s',
@@ -988,7 +988,7 @@ const EN: Record<string, string> = {
   'battle.dual_concerto': '🎹 +{value}s',
   'battle.key_storm': '⛈️ Storm ×{value}',
   'battle.key_storm_penalty': '⛈️ ×0.5 (-{value})',
-  'relic.row_medal_selected': '🎖️ Selected {row}',
+  // (row_medal deleted)
 
   // --- word relic feedback ---
   'battle.long_word_time': '📏 +{value}s',
@@ -1623,9 +1623,9 @@ const ITEM_NAMES_EN: Record<string, string> = {
   apprentice_robe: 'Apprentice Robe', trial_badge: 'Trial Badge',
   fate_fork: 'Fork of Fate', greedy_inscription: 'Greedy Inscription',
   // Topology subsystem relics
-  adjacent_power: 'Adjacent Power', symmetry_pact: 'Symmetry Pact',
-  row_medal: 'Row Medal', dual_concerto: 'Dual Concerto',
-  key_storm: 'Key Storm',
+  adjacent_power: 'Adjacent Power', corner_power: 'Corner Power',
+  row_switch: 'Row Switch', line_clear: 'Line Clear',
+  dual_concerto: 'Dual Concerto', key_storm: 'Key Storm',
   // Word subsystem relics
   word_collection: 'Word Collection', short_sprint: 'Short Sprint',
   long_word_master: 'Long Word Master', word_dealer: 'Word Dealer',
@@ -1768,8 +1768,9 @@ const ITEM_DESCS_EN: Record<string, string> = {
   greedy_inscription: 'Enchantments always succeed. But each enchantment doubles target score.',
   // Topology subsystem relics
   adjacent_power: 'On skill trigger: +6% output per adjacent equipped skill',
-  symmetry_pact: 'When both symmetric keys have skills: each gains +15% output',
-  row_medal: 'Randomly assigns a row — skills on that row gain +25% output',
+  corner_power: 'Skills on corner keys (Q/P/Z/M): +20% output',
+  row_switch: 'When current key is in a different row than previous key: +1 gold',
+  line_clear: 'Hit all equipped skills (≥2) in a keyboard row: "Line Clear" — all skills in that row trigger again (50% output). Accumulates across words.',
   dual_concerto: 'Each left-right hand alternation on keypress: +0.5s time',
   key_storm: 'Score ×0.5. On word complete, each hit skill randomly triggers 1 unhit equipped skill.',
   // Word subsystem relics
