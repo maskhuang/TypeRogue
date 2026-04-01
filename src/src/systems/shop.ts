@@ -537,6 +537,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'mirror': return t('param.mirror', { rel })
     case 'splash': return t('param.splash', { rel, n: a.splashCount ?? 1 })
     case 'relay': return t('param.relay', { rel, n: a.relayCount ?? 1 })
+    case 'war_drum': return t('param.war_drum', { rel, pct: Math.round((a.critPerStack ?? 0) * 100) })
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`

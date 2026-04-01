@@ -379,6 +379,43 @@ export function sumNeighborAmplifyBaseBonus(
   return bonus
 }
 
+/**
+ * 被触发技能视角：扫描范围内战鼓技能，累加 stacks × critPerStack 作为暴击率加成。
+ */
+export function sumNeighborWarDrumCrit(
+  triggeredSkill: AffixSkillInstance,
+  occupiedKeys: string[],
+  ctx: TriggerContext,
+): number {
+  const occupiedSet = new Set(occupiedKeys)
+  let critBonus = 0
+  const counted = new Set<string>()
+
+  for (const [nk, nSkillId] of ctx.bindings) {
+    if (occupiedSet.has(nk)) continue
+    if (counted.has(nSkillId)) continue
+    counted.add(nSkillId)
+    const nSkill = ctx.allSkills.get(nSkillId)
+    if (!nSkill) continue
+    const nState = ctx.skillStates.get(nSkillId)
+    if (!nState || nState.stacks <= 0) continue
+
+    for (const affix of nSkill.affixes) {
+      if (affix.type !== AffixType.WarDrum || affix.posRel == null) continue
+      const ampKeys = [...ctx.bindings].filter(([, sid]) => sid === nSkillId).map(([k]) => k)
+      const inRange = occupiedKeys.some(ok =>
+        ampKeys.some(ak => hasRelation(ak, ok, affix.posRel!))
+      )
+      if (!inRange) continue
+      if (hasSharedMatch(triggeredSkill, nSkill, AffixType.WarDrum)) {
+        critBonus += nState.stacks * (affix.critPerStack ?? 0)
+      }
+      break
+    }
+  }
+  return critBonus
+}
+
 // ===== Phase 1: 基础值 =====
 
 /** Phase 1: 返回基础值 baseValues[level-1] */
@@ -671,6 +708,8 @@ export function resolvePhase3(
 
   // ── 暴击子系统：affix 循环后统一判定 ──
   {
+    // 战鼓暴击率贡献（范围内战鼓技能 stacks × critPerStack）
+    totalCritChance += sumNeighborWarDrumCrit(skill, ctx.occupiedKeys, ctx)
     // 回声指套暴击率贡献（暴击重触发时与递归一同减半）
     const echoCrit = ctx.echoThimbleCritRate ?? 0
     recurseCritContribution += echoCrit
@@ -714,6 +753,14 @@ export function resolvePhase3(
 }
 
 // ===== Phase 4-6 常量 =====
+
+/** 叠层式词条：每 N 层额外 +1 效果数量 */
+export const STACKS_PER_EXTRA_COUNT = 4
+
+/** 叠层式效果数量：baseCount + floor(stacks / STACKS_PER_EXTRA_COUNT) */
+export function getStackScaledCount(baseCount: number, stacks: number): number {
+  return baseCount + Math.floor(stacks / STACKS_PER_EXTRA_COUNT)
+}
 
 export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
 export const MAX_RECURSE_DEPTH = 10
@@ -908,7 +955,7 @@ export function resolvePhase5(
       case AffixType.Splash: {
         if (ctx.chainAffixesDisabled) break // chain_ban: 跳过溅射词条
         if (affix.posRel == null) break
-        const targetCount = affix.splashCount ?? 1
+        const targetCount = getStackScaledCount(affix.splashCount ?? 1, runtimeState.stacks)
         // Story 40.9: 扩展邻居范围（多格技能从所有占据键的邻居并集中选目标）
         const allKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
           .filter(k => ctx.bindings.has(k))
@@ -928,32 +975,22 @@ export function resolvePhase5(
       }
 
       case AffixType.Amplify: {
-        // 自身叠层
+        // 自身叠层（不再给范围内技能叠层）
         runtimeState.stacks += 1
-        // 范围内叠层技能（增幅/脉冲）+1 层
-        const ampPosRel = affix.posRel
-        if (ampPosRel != null) {
-          const ampNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, ampPosRel)
+        // 质变：层数增加时触发范围内匹配技能
+        if (affix.posRel != null && isTransformedForAffix(AffixType.Amplify, runtimeState, skill, ctx)) {
+          const ampNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
           const ampCounted = new Set<string>()
-          const ampTransformed = isTransformedForAffix(AffixType.Amplify, runtimeState, skill, ctx)
           for (const nk of ampNeighborKeys) {
             const nSkillId = ctx.bindings.get(nk)
             if (!nSkillId || ampCounted.has(nSkillId)) continue
-            if (nSkillId === skill.id) continue // 自身已叠过
+            if (nSkillId === skill.id) continue
             ampCounted.add(nSkillId)
             const nSkill = ctx.allSkills.get(nSkillId)
             if (!nSkill) continue
-            const nState = ctx.skillStates.get(nSkillId)
-            if (!nState) continue
-            // 叠层目标：范围内匹配技能
             if (!hasSharedMatch(nSkill, skill, AffixType.Amplify)) continue
-            // 匹配技能叠层
-            nState.stacks += 1
-            // 质变：层数增加时触发范围内匹配技能
-            if (ampTransformed) {
-              if (!result.amplifyTriggerTargets) result.amplifyTriggerTargets = []
-              result.amplifyTriggerTargets.push(nk)
-            }
+            if (!result.amplifyTriggerTargets) result.amplifyTriggerTargets = []
+            result.amplifyTriggerTargets.push(nk)
           }
         }
         break
@@ -1152,7 +1189,7 @@ export function resolvePhase6(
         if (!hasSharedMatch(skill, neighborSkill, AffixType.Resonance)) continue
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk != null) {
-          const triggerCount = affix.resonanceCount ?? 1
+          const triggerCount = getStackScaledCount(affix.resonanceCount ?? 1, runtimeState.stacks)
           actions.push({ type: 'resonance', neighborKey: matchedNk, triggerCount })
         }
       }
@@ -1177,7 +1214,8 @@ export function resolvePhase6(
         // 检查触发技能是否拥有 Conduit 技能的其他词条类型 OR 产出相同资源
         if (hasSharedMatch(skill, neighborSkill, AffixType.Conduit)) {
           // 质变：+2 触发（而非 +1）
-          const conduitCount = isAffixGloballyTransformed(AffixType.Conduit, ctx.allSkills, ctx.skillStates) ? 2 : 1
+          const conduitBase = isAffixGloballyTransformed(AffixType.Conduit, ctx.allSkills, ctx.skillStates) ? 2 : 1
+          const conduitCount = getStackScaledCount(conduitBase, runtimeState.stacks)
           actions.push({ type: 'conduit', targetKey: triggerKey, conduitCount })
         }
       }
@@ -1212,7 +1250,8 @@ export function resolvePhase6(
 
         // 质变：触发 ALL；非质变：触发 N 个
         const relayTransformed = isAffixGloballyTransformed(AffixType.Relay, ctx.allSkills, ctx.skillStates)
-        const count = relayTransformed ? validTargets.length : Math.min(affix.relayCount ?? 1, validTargets.length)
+        const relayEffective = getStackScaledCount(affix.relayCount ?? 1, runtimeState.stacks)
+        const count = relayTransformed ? validTargets.length : Math.min(relayEffective, validTargets.length)
         const targets = relayTransformed ? validTargets : pickRandomKeys(validTargets, count, ctx.randomFn)
         for (const targetKey of targets) {
           actions.push({ type: 'relay', targetKey })
@@ -1279,7 +1318,7 @@ export function triggerAffixSkill(
   const effectiveSkill = buildEffectiveSkill(skill, runtimeState)
 
   // Phase 1: 基础值（Conduit/Amplify/Splash 技能自身不产出，基础值为 0）
-  const hasSelfZero = effectiveSkill.affixes.some(a => a.type === AffixType.Conduit || a.type === AffixType.Amplify || a.type === AffixType.Splash || a.type === AffixType.Relay)
+  const hasSelfZero = effectiveSkill.affixes.some(a => a.type === AffixType.Conduit || a.type === AffixType.Amplify || a.type === AffixType.Splash || a.type === AffixType.Relay || a.type === AffixType.WarDrum)
   const base = hasSelfZero ? 0 : resolvePhase1(effectiveSkill)
 
   // Phase 2: 加算层

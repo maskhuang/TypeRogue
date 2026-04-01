@@ -211,6 +211,9 @@ export function rollAffixParams(
       return { type, posRel, relayCount: 1 }
     }
 
+    case AffixType.WarDrum:
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), critPerStack: 0.02 }
+
     case AffixType.Outcast:
       return { type, bonusPercent: roundTo(0.4 + random() * 0.4, 2) }
 

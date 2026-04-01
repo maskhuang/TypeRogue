@@ -559,6 +559,7 @@ const ZH: Record<string, string> = {
   'affix.void': '虚无', 'affix.mirror': '倒影',
   'affix.resonance': '共鸣', 'affix.splash': '溅射', 'affix.amplify': '增幅', 'affix.conduit': '导能', 'affix.relay': '中转',
   'affix.outcast': '流放', 'affix.gravity': '引力', 'affix.ligature': '连字',
+  'affix.war_drum': '战鼓',
   'affix.twin': '双生', 'affix.recurse': '递归', 'affix.taboo': '禁忌',
 
   // --- affix descriptions (21) ---
@@ -662,6 +663,7 @@ const ZH: Record<string, string> = {
   'param.mirror': '{rel}镜像复制',
   'param.splash': '{rel}触发{n}个匹配技能',
   'param.relay': '{rel}中转{n}个匹配技能',
+  'param.war_drum': '{rel}每层+{pct}%暴击率',
   'param.ligature': '连字加成',
   'param.twin': '双附魔',
 
@@ -1305,6 +1307,7 @@ const EN: Record<string, string> = {
   'affix.void': 'Void', 'affix.mirror': 'Mirror',
   'affix.resonance': 'Resonance', 'affix.splash': 'Splash', 'affix.amplify': 'Amplify', 'affix.conduit': 'Conduit', 'affix.relay': 'Relay',
   'affix.outcast': 'Outcast', 'affix.gravity': 'Gravity', 'affix.ligature': 'Ligature',
+  'affix.war_drum': 'War Drum',
   'affix.twin': 'Twin', 'affix.recurse': 'Recurse', 'affix.taboo': 'Taboo',
 
   // --- affix descriptions (21) ---
@@ -1408,6 +1411,7 @@ const EN: Record<string, string> = {
   'param.mirror': '{rel} mirror copy',
   'param.splash': '{rel} triggers {n} matched skills',
   'param.relay': '{rel} relays {n} matching skills',
+  'param.war_drum': '{rel} +{pct}% crit/stack',
   'param.ligature': 'ligature bonus',
   'param.twin': 'dual enchant',
 
