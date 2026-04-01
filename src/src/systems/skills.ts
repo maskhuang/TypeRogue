@@ -17,6 +17,7 @@ import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE } from '../data/affixTrigger';
 import { getMultiplierPrismBonus, getCancelChainBonus, getEchoThimbleCritRate } from './relics/ComboRelicBehaviors';
+import { getStackDividendBonus, checkStackDividend, isPerpetualEngineActive, getPerpetualEngineIntervalMult, getCritOverflowStacks, getInscriptionFlowGrowth, isOverloadCircuitActive, isSurgeActive, isNeighborWatchActive, onStackEffectTriggered } from './relics/StackingRelicBehaviors';
 import { getTaikoBonus } from './relics/TypingRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostBonus } from './relics/EnchantmentRelicBehaviors';
@@ -269,6 +270,13 @@ function triggerAffixSkillWithFeedback(
       + getChargeAutoCritBonus(),  // 蓄力质变：自动补全期间所有技能获得等量暴击率
     fateCoinActive,
     echoThimbleCritRate: getEchoThimbleCritRate(),
+    // 叠层子系统遗物
+    perpetualIntervalMult: getPerpetualEngineIntervalMult(),
+    critOverflowStacks: getCritOverflowStacks(),
+    surgeActive: isSurgeActive(),
+    overloadCircuitActive: isOverloadCircuitActive(),
+    neighborWatchActive: isNeighborWatchActive(),
+    inscriptionFlowGrowth: getInscriptionFlowGrowth(),
   };
 
   // 暴击蓄力消耗（本次触发已注入 baseCritRate=1.0）
@@ -313,6 +321,10 @@ function triggerAffixSkillWithFeedback(
     state.resources.gold += enchantGold;
     showFeedback(`💰 +${enchantGold}g`, RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'enchant_dividend', resource: 'gold', amount: enchantGold });
   }
+
+  // 积少成多：每10层+5%产出
+  const dividendBonus = getStackDividendBonus(skillId);
+  if (dividendBonus > 0) relicBonus += dividendBonus;
 
   // 升华缩放：Lv4+ 按 1.6^(level-3) 缩放基础值
   const ascendScale = getAscendBaseScale(skill.level);

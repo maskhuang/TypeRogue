@@ -119,6 +119,21 @@ export interface TriggerContext {
   recurseCritOverride?: number
   /** 回声指套暴击率（遗物注入，暴击时额外触发） */
   echoThimbleCritRate?: number
+  // ── 叠层子系统遗物 ──
+  /** 层层递进：每技能间隔减少量 */
+  stackMomentumReduction?: Map<string, number>
+  /** 永动引擎：间隔倍数（默认 1） */
+  perpetualIntervalMult?: number
+  /** 暴击溢层：暴击时额外叠层数（默认 0） */
+  critOverflowStacks?: number
+  /** 浪涌激活 */
+  surgeActive?: boolean
+  /** 过载电路激活 */
+  overloadCircuitActive?: boolean
+  /** 邻里守望激活 */
+  neighborWatchActive?: boolean
+  /** 铭文涌流成长加成 */
+  inscriptionFlowGrowth?: number
 }
 
 // ===== 全场质变检查 =====
@@ -201,6 +216,8 @@ export interface TriggerFlags {
   critTransformed: boolean
   /** 递归+回声暴击率贡献（Phase 5 暴击重触发减半用） */
   recurseCritContribution: number
+  /** 叠层效果是否触发（供遗物钩子使用） */
+  stackEffectFired: boolean
 }
 
 // ===== Phase 4-6 返回类型 =====
@@ -288,6 +305,8 @@ export interface TriggerResult {
   triggerKey: string
   /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
   chargeAutoComplete?: boolean
+  /** 叠层效果是否触发（遗物钩子用） */
+  stackEffectFired?: boolean
 }
 
 // ===== 辅助函数 =====
@@ -593,6 +612,7 @@ export function resolvePhase3(
     tabooConvertResource: null,
     critTransformed: false,
     recurseCritContribution: 0,
+    stackEffectFired: false,
   }
 
   // 暴击子系统：累计暴击率（affix loop 内只累加，loop 后统一判定）
@@ -654,10 +674,10 @@ export function resolvePhase3(
       }
 
       case AffixType.Pulse: {
-        const interval = affix.interval ?? 1
-        // 每叠 N 层标记爆发（stacks=0 不爆发：首次触发无免费收益）
-        if (runtimeState.stacks > 0 && runtimeState.stacks % interval === 0) {
+        const pulseInterval = getEffectiveInterval(affix.interval ?? 1, skill.id, ctx)
+        if (runtimeState.stacks > 0 && runtimeState.stacks % pulseInterval === 0) {
           flags.isPulse = true
+          flags.stackEffectFired = true
         }
         break
       }
@@ -730,6 +750,8 @@ export function resolvePhase3(
       multipliers.push(critMult)
       flags.isCrit = true
       flags.critTransformed = critTransformed
+      // 暴击溢层：暴击时额外叠层
+      runtimeState.stacks += (ctx.critOverflowStacks ?? 0)
     } else if (hasTaboo) {
       // 禁忌：未暴击时产出负值
       if (isAffixGloballyTransformed(AffixType.Taboo, ctx.allSkills, ctx.skillStates)) {
@@ -756,6 +778,16 @@ export function resolvePhase3(
 
 /** 叠层式词条默认间隔（每 N 层触发一次效果） */
 export const DEFAULT_STACK_INTERVAL = 4
+
+/** 计算有效叠层间隔（应用遗物修正） */
+export function getEffectiveInterval(baseInterval: number, skillId: string, ctx: TriggerContext): number {
+  let interval = baseInterval
+  // 永动引擎：间隔 ×N
+  interval *= (ctx.perpetualIntervalMult ?? 1)
+  // 层层递进：间隔 -N
+  interval -= (ctx.stackMomentumReduction?.get(skillId) ?? 0)
+  return Math.max(1, Math.round(interval))
+}
 
 export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
 export const MAX_RECURSE_DEPTH = 10
@@ -951,7 +983,7 @@ export function resolvePhase5(
         if (ctx.chainAffixesDisabled) break
         if (affix.posRel == null) break
         // 叠层式：每叠 N 层触发 1 个匹配技能
-        const splashInterval = Math.max(1, affix.splashCount ?? DEFAULT_STACK_INTERVAL)
+        const splashInterval = getEffectiveInterval(affix.splashCount ?? DEFAULT_STACK_INTERVAL, skill.id, ctx)
         if (runtimeState.stacks > 0 && runtimeState.stacks % splashInterval === 0) {
           const allKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
             .filter(k => ctx.bindings.has(k))
@@ -962,6 +994,7 @@ export function resolvePhase5(
             return hasSharedMatch(skill, target, AffixType.Splash)
           })
           result.splashTargets = pickRandomKeys(filtered, 1, ctx.randomFn)
+          triggerFlags.stackEffectFired = true
           if (isTransformedForAffix(AffixType.Splash, runtimeState, skill, ctx)) {
             result.chainSplash = true
           }
@@ -1188,7 +1221,7 @@ export function resolvePhase6(
           const neighborState = ctx.skillStates.get(neighborSkillId)
           if (neighborState) {
             neighborState.stacks += 1
-            const resInterval = Math.max(1, affix.resonanceCount ?? DEFAULT_STACK_INTERVAL)
+            const resInterval = getEffectiveInterval(affix.resonanceCount ?? DEFAULT_STACK_INTERVAL, neighborSkillId, ctx)
             if (neighborState.stacks > 0 && neighborState.stacks % resInterval === 0) {
               actions.push({ type: 'resonance', neighborKey: matchedNk, triggerCount: 1 })
             }
@@ -1230,7 +1263,7 @@ export function resolvePhase6(
         const neighborState = ctx.skillStates.get(neighborSkillId)
         if (!neighborState) continue
         neighborState.stacks += 1
-        const relayInterval = Math.max(1, affix.relayCount ?? DEFAULT_STACK_INTERVAL)
+        const relayInterval = getEffectiveInterval(affix.relayCount ?? DEFAULT_STACK_INTERVAL, neighborSkillId, ctx)
         if (!(neighborState.stacks > 0 && neighborState.stacks % relayInterval === 0)) continue
 
         // 从 Relay 技能的邻居中找匹配目标
@@ -1370,6 +1403,7 @@ export function triggerAffixSkill(
     phase6: p6,
     triggerKey: ctx.triggerKey,
     chargeAutoComplete: p2.chargeAutoComplete || undefined,
+    stackEffectFired: p3.flags.stackEffectFired || undefined,
   }
 }
 
@@ -1782,9 +1816,10 @@ export function resetStageState(
   skillStates: Map<string, SkillRuntimeState>,
   bindings: Map<string, string>,
   randomFn: () => number,
+  perpetualEngine: boolean = false,
 ): void {
   for (const [skillId, state] of skillStates) {
-    state.stacks = 0
+    if (!perpetualEngine) state.stacks = 0
     state.chargeAccumulated = 0
 
     // Decay: 每关重置 currentDecayMult（Story 41.2 AC7 — 跨单词不重置，仅跨关重置）

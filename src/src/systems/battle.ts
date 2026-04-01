@@ -41,6 +41,7 @@ import { getEnduranceTimeBonus, getActiveBounty, onBountyError, checkBountyOnWor
 import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, shouldBarrierDelay, startBarrierDelay, addDeferredModifier, checkBarrierActivation, isBarrierDelaying, checkChaosRoulette, applyModifierReversal, resetBossModifierRelicBattleState, initBossModifierRelicBehaviors } from './relics/BossModifierRelicBehaviors';
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, getUnderdogBonusGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
 import { resetCritRelicBattleState, resetCritRelicWordState, getCritStormBonus, initCritRelicBehaviors } from './relics/CritRelicBehaviors';
+import { checkDrumPass, getWordResonanceStacks, resetStackingRelicBattleState, initStackingRelicBehaviors, isPerpetualEngineActive, isStackingAffix } from './relics/StackingRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
 import { AffixType } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
@@ -439,6 +440,8 @@ export function initInput(): void {
   initScoringRelicBehaviors();
   // §12: 注册暴击子系统遗物行为
   initCritRelicBehaviors();
+  // 叠层子系统遗物行为
+  initStackingRelicBehaviors();
   // Story 36.2: Tab 键独立监听（InputHandler 只接受单字符键，Tab 需要单独处理）
   document.addEventListener('keydown', handleTabKey);
   // Story 36.12: Enter 键独立监听（分数黑洞手动结算）
@@ -630,6 +633,13 @@ function playerCorrect(k: string): void {
   state.maxCombo = Math.max(state.maxCombo, state.combo);
   eventBus.emit('combo:update', { combo: state.combo });
   bumpCombo();
+
+  // 击鼓传花：combo+5 → 随机叠层技能+3层
+  const drumResult = checkDrumPass(state.combo);
+  if (drumResult) {
+    const rt = state.affixSkillStates.get(drumResult.skillId);
+    if (rt) rt.stacks += drumResult.stacks;
+  }
 
   // 计算倍率: 基础 + 连击加成 + 技能倍率加成
   let mult = state.player.baseMultiplier + state.combo * state.player.comboBonus;
@@ -1019,6 +1029,17 @@ function completeWord(): void {
     pulseRelicIcon('crit_storm', '#f1c40f');
   }
   resetCritRelicWordState();
+
+  // 词根共振：完词 → 所有叠层技能+N层
+  const wordResStacks = getWordResonanceStacks(state.player.word.length);
+  if (wordResStacks > 0) {
+    for (const [sid, sk] of state.affixSkills) {
+      if (sk.affixes.some(a => isStackingAffix(a.type))) {
+        const rt = state.affixSkillStates.get(sid);
+        if (rt) rt.stacks += wordResStacks;
+      }
+    }
+  }
 
   // Boss 修饰器：伪词干扰 — 未识破伪词则反扣分数
   if (isDecoyWord() && !isDecoyRecognized()) {
@@ -1934,6 +1955,8 @@ export async function startLevel(): Promise<void> {
   resetScoringRelicBattleState();
   // §12: 重置暴击遗物关级别状态（蓄力计数 + 风暴计数）
   resetCritRelicBattleState();
+  // 叠层遗物关级别状态重置
+  resetStackingRelicBattleState();
   // Story 41-3: 清空质变 Ligature 关卡累计按键计数
   state.ligatureStageCounts.clear();
 

@@ -5,7 +5,9 @@
 // 用 FIFO work queue 替代真递归，O(1) 调用栈深度
 
 import type { ResourceType } from '../core/types'
-import { BASE_VALUES } from '../data/affixes'
+import { AffixType, BASE_VALUES } from '../data/affixes'
+import { hasRelation } from '../data/keyboardTopology'
+import { onStackEffectTriggered, checkStackDividend, isStackingAffix } from './relics/StackingRelicBehaviors'
 import {
   triggerAffixSkill,
   MAX_RECURSE_DEPTH,
@@ -32,6 +34,7 @@ export type TriggerWorkType =
   | 'pulse_self'
   | 'pulse_burst'
   | 'amplify_trigger'
+  | 'overload'
 
 export interface TriggerWorkItem {
   /** 目标技能 ID */
@@ -176,8 +179,8 @@ export function orchestrateAffixTrigger(
       ...(item.type === 'conduit' ? { chainAffixesDisabled: true } : {}),
       // relay 额外触发禁用链式词条，防止 Relay→Relay 级联
       ...(item.type === 'relay' ? { chainAffixesDisabled: true } : {}),
-      // amplify_trigger 禁用链式词条，防止指数增长
-      ...(item.type === 'amplify_trigger' ? { chainAffixesDisabled: true } : {}),
+      // amplify_trigger / overload 禁用链式词条，防止指数增长
+      ...(item.type === 'amplify_trigger' || item.type === 'overload' ? { chainAffixesDisabled: true } : {}),
       // recurse 重触发禁用链式词条，防止 Recurse→Splash/Resonance 指数增长
       ...(item.type === 'recurse' ? { chainAffixesDisabled: true } : {}),
       // recurse 概率覆盖（每次递归减半）
@@ -355,6 +358,59 @@ export function orchestrateAffixTrigger(
     if (result.phase6?.actions) {
       for (const action of result.phase6.actions) {
         enqueuePhase6Action(action, childHistory, ctx, queue)
+      }
+    }
+
+    // ── 叠层遗物钩子 ──
+    if (result.stackEffectFired) {
+      // 层层递进：间隔临时 -1
+      onStackEffectTriggered(item.skillId)
+      // 积少成多：检查产出加成
+      checkStackDividend(item.skillId, runtimeState.stacks)
+      // 铭文涌流：附魔叠层技能 → 成长+2%
+      if (ctx.inscriptionFlowGrowth && skill.enchantmentIds.length > 0) {
+        runtimeState.apprenticeAccumulated += ctx.inscriptionFlowGrowth
+      }
+      // 浪涌：层数归零，记录加成
+      if (ctx.surgeActive) {
+        const surgeStacks = runtimeState.stacks
+        runtimeState.stacks = 0
+        // 浪涌加成通过 surgeBonus 字段在下次触发周期应用（简化：直接修改邻居产出太复杂，这里记录到 result）
+        // TODO: 浪涌加成需要更复杂的集成，暂记录日志
+      }
+      // 邻里守望：相邻叠层技能+1层
+      if (ctx.neighborWatchActive) {
+        for (const [nk, nSid] of ctx.bindings) {
+          if (nSid === item.skillId) continue
+          // 检查相邻
+          const isAdj = [...ctx.bindings]
+            .filter(([, sid]) => sid === item.skillId)
+            .some(([k]) => hasRelation(k, nk, 0)) // PositionRelation.Adjacent = 0
+          if (!isAdj) continue
+          const nSkill = ctx.allSkills.get(nSid)
+          if (!nSkill?.affixes.some(a => isStackingAffix(a.type))) continue
+          const nState = ctx.skillStates.get(nSid)
+          if (nState) nState.stacks += 1
+        }
+      }
+      // 过载电路：额外触发相邻叠层技能（不叠层）
+      if (ctx.overloadCircuitActive && item.type !== 'overload') {
+        for (const [nk, nSid] of ctx.bindings) {
+          if (nSid === item.skillId) continue
+          const isAdj = [...ctx.bindings]
+            .filter(([, sid]) => sid === item.skillId)
+            .some(([k]) => hasRelation(k, nk, 0))
+          if (!isAdj) continue
+          const nSkill = ctx.allSkills.get(nSid)
+          if (!nSkill?.affixes.some(a => isStackingAffix(a.type))) continue
+          queue.push({
+            skillId: nSid,
+            triggerKey: nk,
+            type: 'overload' as TriggerWorkType,
+            depth: item.depth + 1,
+            chainHistory: childHistory,
+          })
+        }
       }
     }
   }
