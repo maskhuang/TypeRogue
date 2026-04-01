@@ -231,6 +231,10 @@ export interface Phase5Result {
   outcastEchoTarget: string | null
   /** 暴击质变回响：暴击时触发随机无Crit技能的键位 */
   critEchoTarget?: string
+  /** 脉冲质变：爆发时触发的匹配技能键位（进入伪循环） */
+  pulseBurstTargets?: string[]
+  /** 增幅质变：层数增加时触发的匹配技能键位 */
+  amplifyTriggerTargets?: string[]
 }
 
 export type Phase6Action =
@@ -328,18 +332,17 @@ export function countOccurrences(key: string, word: string): number {
 }
 
 /**
- * 被触发技能视角：扫描所有邻居中的增幅技能，累加其 amplifyStacks。
- * 匹配条件：增幅技能的 posRel 范围覆盖被触发技能 AND（同资源 OR 共享任意词条类型）。
- * @param triggeredSkill 被触发的技能（接受增幅的一方）
- * @param occupiedKeys 被触发技能占据的键位
+ * 被触发技能视角：扫描范围内增幅技能，累加其基础产出值作为加成。
+ * 每个增幅技能提供其 baseValues[level-1] 的绝对值加成。
+ * 匹配条件：增幅技能的 posRel 范围覆盖被触发技能 AND 匹配（同资源 OR 共享词条类型）。
  */
-export function sumNeighborAmplifyBonus(
+export function sumNeighborAmplifyBaseBonus(
   triggeredSkill: AffixSkillInstance,
   occupiedKeys: string[],
   ctx: TriggerContext,
 ): number {
   const occupiedSet = new Set(occupiedKeys)
-  let stacks = 0
+  let bonus = 0
   const counted = new Set<string>()
 
   for (const [nk, nSkillId] of ctx.bindings) {
@@ -348,27 +351,26 @@ export function sumNeighborAmplifyBonus(
     counted.add(nSkillId)
     const nSkill = ctx.allSkills.get(nSkillId)
     if (!nSkill) continue
-    const nState = ctx.skillStates.get(nSkillId)
-    if (!nState || nState.amplifyStacks <= 0) continue
 
     // 邻居必须有 Amplify 词条
     for (const affix of nSkill.affixes) {
       if (affix.type !== AffixType.Amplify || affix.posRel == null) continue
       // 范围检查：增幅技能的 posRel 覆盖被触发技能任意键位
-      const inRange = occupiedKeys.some(ok => {
-        // 获取增幅技能自身占据的键位
-        const ampKeys = [...ctx.bindings].filter(([, sid]) => sid === nSkillId).map(([k]) => k)
-        return ampKeys.some(ak => hasRelation(ak, ok, affix.posRel!))
-      })
+      const ampKeys = [...ctx.bindings].filter(([, sid]) => sid === nSkillId).map(([k]) => k)
+      const inRange = occupiedKeys.some(ok =>
+        ampKeys.some(ak => hasRelation(ak, ok, affix.posRel!))
+      )
       if (!inRange) continue
       // 匹配条件：同资源 OR 共享任意词条类型（排除 Amplify 自身）
       if (hasSharedMatch(triggeredSkill, nSkill, AffixType.Amplify)) {
-        stacks += nState.amplifyStacks
+        // 加成 = 增幅技能的 baseValues[level-1]
+        const lvIdx = Math.max(0, Math.min(nSkill.level - 1, nSkill.baseValues.length - 1))
+        bonus += nSkill.baseValues[lvIdx]
       }
       break // 同一技能只计一次
     }
   }
-  return stacks
+  return bonus
 }
 
 // ===== Phase 1: 基础值 =====
@@ -501,10 +503,9 @@ export function resolvePhase2(
   // 附魔循环（预留）
   // 41-4: QuestDevour 额外数值加成已移除，质变行为在 Phase 5 实现
 
-  // ── 被增幅：扫描邻居增幅技能，按层数获得绝对值加成 ──
-  if (effectiveBase > 0) { // 自身不产出的技能（Conduit/Amplify）不享受增幅
-    const ampStacks = sumNeighborAmplifyBonus(skill, ctx.occupiedKeys, ctx)
-    flatBonus += ampStacks * effectiveBase
+  // ── 被增幅：扫描范围内增幅技能，获得其基础产出值作为加成 ──
+  if (effectiveBase > 0) {
+    flatBonus += sumNeighborAmplifyBaseBonus(skill, ctx.occupiedKeys, ctx)
   }
 
   // 乘算化模式与普通模式统一：bonusPercent 加算后应用到 output + 增幅绝对值
@@ -911,7 +912,35 @@ export function resolvePhase5(
       }
 
       case AffixType.Amplify: {
+        // 自身叠层
         runtimeState.amplifyStacks += 1
+        // 范围内叠层技能（增幅/脉冲）+1 层
+        const ampPosRel = affix.posRel
+        if (ampPosRel != null) {
+          const ampNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, ampPosRel)
+          const ampCounted = new Set<string>()
+          const ampTransformed = isTransformedForAffix(AffixType.Amplify, runtimeState, skill, ctx)
+          for (const nk of ampNeighborKeys) {
+            const nSkillId = ctx.bindings.get(nk)
+            if (!nSkillId || ampCounted.has(nSkillId)) continue
+            if (nSkillId === skill.id) continue // 自身已叠过
+            ampCounted.add(nSkillId)
+            const nSkill = ctx.allSkills.get(nSkillId)
+            if (!nSkill) continue
+            const nState = ctx.skillStates.get(nSkillId)
+            if (!nState) continue
+            // 叠层目标：范围内匹配技能
+            if (!hasSharedMatch(nSkill, skill, AffixType.Amplify)) continue
+            // 匹配技能叠层：Amplify→amplifyStacks, Pulse→triggerCount, 通用→amplifyStacks
+            if (nSkill.affixes.some(a => a.type === AffixType.Pulse)) nState.triggerCount += 1
+            else nState.amplifyStacks += 1
+            // 质变：层数增加时触发范围内匹配技能
+            if (ampTransformed) {
+              if (!result.amplifyTriggerTargets) result.amplifyTriggerTargets = []
+              result.amplifyTriggerTargets.push(nk)
+            }
+          }
+        }
         break
       }
 
@@ -933,15 +962,22 @@ export function resolvePhase5(
     }
   }
 
-  // ── Pulse 质变：爆发时同步其他 Pulse 技能的 triggerCount ──
-  if (triggerFlags.isPulse && isTransformedForAffix(AffixType.Pulse, runtimeState, skill, ctx)) {
-    for (const [otherId, otherSkill] of ctx.allSkills) {
-      if (otherId === skill.id) continue
-      if (!otherSkill.affixes.some(a => a.type === AffixType.Pulse)) continue
-      const otherState = ctx.skillStates.get(otherId)
-      if (otherState) {
-        otherState.triggerCount += 1
-      }
+  // ── Pulse 质变：爆发时触发所有匹配技能（可进入伪循环） ──
+  if (triggerFlags.isPulse && isTransformedForAffix(AffixType.Pulse, runtimeState, skill, ctx) && !ctx.chainAffixesDisabled) {
+    const pulseTargets: string[] = []
+    const pulseCounted = new Set<string>()
+    for (const [nk, nSkillId] of ctx.bindings) {
+      if (pulseCounted.has(nSkillId)) continue
+      pulseCounted.add(nSkillId)
+      if (nSkillId === skill.id) continue
+      const nSkill = ctx.allSkills.get(nSkillId)
+      if (!nSkill) continue
+      // 合法目标：共享资源或词条类型
+      if (!hasSharedMatch(nSkill, skill, AffixType.Pulse)) continue
+      pulseTargets.push(nk)
+    }
+    if (pulseTargets.length > 0) {
+      result.pulseBurstTargets = pulseTargets
     }
   }
 
@@ -1687,8 +1723,7 @@ export function resetStageState(
 ): void {
   for (const [skillId, state] of skillStates) {
     state.triggerCount = 0
-    // Amplify 质变：保留 50% 增幅层数（向下取整）
-    state.amplifyStacks = isAffixGloballyTransformed(AffixType.Amplify, skills, skillStates) ? Math.floor(state.amplifyStacks * 0.5) : 0
+    state.amplifyStacks = 0
     state.chargeAccumulated = 0
 
     // Decay: 每关重置 currentDecayMult（Story 41.2 AC7 — 跨单词不重置，仅跨关重置）

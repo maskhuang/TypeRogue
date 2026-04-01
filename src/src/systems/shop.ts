@@ -527,7 +527,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'crit': return t('param.crit', { chance: Math.round((a.chance ?? 0) * 100) })
     case 'void': return t('param.void', { rel, pct: Math.round((a.bonusPerSlot ?? 0) * 100) })
     case 'resonance': return t('param.resonance', { rel, n: a.resonanceCount ?? 1 })
-    case 'amplify': return t('param.amplify', { rel, icon: RESOURCE_ICONS[a.resource!] || '', name: t('resource.' + a.resource!) })
+    case 'amplify': return t('param.amplify', { rel })
     case 'cascade': return `${rel || t('param.cascade_fallback')} ×${a.cascadeMult?.toFixed(1) ?? '?'}`
     case 'outcast': return t('param.outcast', { pct: Math.round((a.bonusPercent ?? 0) * 100) })
     case 'gravity': return t('param.gravity', { mult: a.probMult?.toFixed(1) ?? '?' })

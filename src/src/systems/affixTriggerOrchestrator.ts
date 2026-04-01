@@ -29,6 +29,8 @@ export type TriggerWorkType =
   | 'relay'
   | 'outcast_echo'
   | 'crit_echo'
+  | 'pulse_burst'
+  | 'amplify_trigger'
 
 export interface TriggerWorkItem {
   /** 目标技能 ID */
@@ -132,6 +134,8 @@ export function orchestrateAffixTrigger(
     const isChainType = item.type === 'resonance'
       || item.type === 'splash'
       || item.type === 'relay'
+      || item.type === 'pulse_burst'
+      || item.type === 'amplify_trigger'
     if (isChainType && item.chainHistory.includes(item.triggerKey)) {
       // 检测到循环 → 进入伪无限模式
       // chainHistory 中已包含所有参与键位（item.triggerKey 也在其中）
@@ -171,6 +175,8 @@ export function orchestrateAffixTrigger(
       ...(item.type === 'conduit' ? { chainAffixesDisabled: true } : {}),
       // relay 额外触发禁用链式词条，防止 Relay→Relay 级联
       ...(item.type === 'relay' ? { chainAffixesDisabled: true } : {}),
+      // amplify_trigger 禁用链式词条，防止指数增长
+      ...(item.type === 'amplify_trigger' ? { chainAffixesDisabled: true } : {}),
       // recurse 重触发禁用链式词条，防止 Recurse→Splash/Resonance 指数增长
       ...(item.type === 'recurse' ? { chainAffixesDisabled: true } : {}),
       // recurse 概率覆盖（每次递归减半）
@@ -299,6 +305,36 @@ export function orchestrateAffixTrigger(
           depth: childHistory.length,
           chainHistory: childHistory,
           chainSplash: false,
+        })
+      }
+    }
+
+    // Pulse burst: 脉冲质变 — 爆发时触发匹配技能（可进入伪循环）
+    if (result.phase5?.pulseBurstTargets) {
+      for (const targetKey of result.phase5.pulseBurstTargets) {
+        const targetSkillId = ctx.bindings.get(targetKey)
+        if (!targetSkillId) continue
+        queue.push({
+          skillId: targetSkillId,
+          triggerKey: targetKey,
+          type: 'pulse_burst',
+          depth: item.depth + 1,
+          chainHistory: childHistory,
+        })
+      }
+    }
+
+    // Amplify trigger: 增幅质变 — 层数增加时触发匹配技能
+    if (result.phase5?.amplifyTriggerTargets) {
+      for (const targetKey of result.phase5.amplifyTriggerTargets) {
+        const targetSkillId = ctx.bindings.get(targetKey)
+        if (!targetSkillId) continue
+        queue.push({
+          skillId: targetSkillId,
+          triggerKey: targetKey,
+          type: 'amplify_trigger',
+          depth: item.depth + 1,
+          chainHistory: childHistory,
         })
       }
     }
