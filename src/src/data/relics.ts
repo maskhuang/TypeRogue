@@ -94,6 +94,7 @@ export type RelicSubsystem =
   | 'boss_modifier'  // Boss修饰器系统
   | 'scoring'        // 结算/评分系统
   | 'crit'           // 暴击系统
+  | 'stacking'       // 叠层系统
 
 /** 遗物行为类型 — 标记需要自定义逻辑的遗物 */
 export type RelicBehaviorType =
@@ -141,6 +142,17 @@ export type RelicBehaviorType =
   // 暴击系统
   | 'crit_storm'           // 暴击风暴：单词内≥2次暴击时全词产出+50%
   | 'fate_coin'            // 命运硬币：超出50%暴击率转化为暴击倍数
+  // 叠层系统（系统内 + 跨系统）
+  | 'stack_momentum'       // 层层递进：叠层效果触发后间隔临时-1
+  | 'stack_dividend'       // 积少成多：每10层产出永久+5%
+  | 'overload_circuit'     // 过载电路：叠层效果触发时额外触发相邻叠层技能
+  | 'surge'                // 浪涌：叠层效果触发时层数归零，邻居产出+层数×10%
+  | 'perpetual_engine'     // 永动引擎：叠层不重置，间隔×2
+  | 'drum_pass'            // 击鼓传花：combo+5→叠层+3
+  | 'word_resonance'       // 词根共振：完词→叠层+N
+  | 'crit_overflow'        // 暴击溢层：暴击→叠层+3
+  | 'inscription_flow'     // 铭文涌流：附魔叠层→成长+2%
+  | 'neighbor_watch'       // 邻里守望：叠层→相邻叠层+1
 
 export interface RelicData {
   id: string
@@ -1237,6 +1249,142 @@ export const RELICS: Record<string, RelicData> = {
     subsystem: 'crit',
     behaviorType: 'fate_coin',
     flavor: '硬币的两面都是你的——只要你翻得够多。',
+  },
+
+  // ==================== 叠层子系统遗物 ====================
+
+  // ── 系统内 ──
+
+  stack_momentum: {
+    id: 'stack_momentum',
+    name: '层层递进',
+    icon: '📶',
+    description: '技能每触发一次叠层效果，该技能本关叠层间隔临时 -1（最低 1，每关重置）。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'stacking',
+    behaviorType: 'stack_momentum',
+    flavor: '第一下是试探，第二下是节奏，第三下是习惯。',
+  },
+
+  stack_dividend: {
+    id: 'stack_dividend',
+    name: '积少成多',
+    icon: '🧱',
+    description: '技能每累计 10 层，该技能本关产出永久 +5%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'stacking',
+    behaviorType: 'stack_dividend',
+    flavor: '每一块砖都是地基。',
+  },
+
+  overload_circuit: {
+    id: 'overload_circuit',
+    name: '过载电路',
+    icon: '🔌',
+    description: '叠层技能触发叠层效果时，额外触发所有相邻叠层技能一次（额外触发不叠层）。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'stacking',
+    behaviorType: 'overload_circuit',
+    flavor: '电流不问方向，只问通路。',
+  },
+
+  surge: {
+    id: 'surge',
+    name: '浪涌',
+    icon: '🌊',
+    description: '技能触发叠层效果时，层数归零。范围内匹配技能本次产出 +层数 × 10%。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    subsystem: 'stacking',
+    behaviorType: 'surge',
+    flavor: '潮水退去时，才知道谁在裸泳。',
+  },
+
+  perpetual_engine: {
+    id: 'perpetual_engine',
+    name: '永动引擎',
+    icon: '⚙️',
+    description: '叠层不再每关重置。所有叠层间隔 ×2。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    subsystem: 'stacking',
+    behaviorType: 'perpetual_engine',
+    flavor: '永恒的代价是缓慢——但永恒就是永恒。',
+  },
+
+  // ── 跨系统 ──
+
+  drum_pass: {
+    id: 'drum_pass',
+    name: '击鼓传花',
+    icon: '🥁',
+    description: 'combo 每 +5 时，随机一个叠层技能 +3 层。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'combo',
+    behaviorType: 'drum_pass',
+    flavor: '鼓声不停，花就不落。',
+  },
+
+  word_resonance: {
+    id: 'word_resonance',
+    name: '词根共振',
+    icon: '📖',
+    description: '完成单词时，所有叠层技能额外 +N 层（N = 字母数 ÷ 3，向下取整）。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'word',
+    behaviorType: 'word_resonance',
+    flavor: '长词是沉默的鼓手。',
+  },
+
+  crit_overflow: {
+    id: 'crit_overflow',
+    name: '暴击溢层',
+    icon: '⚡',
+    description: '暴击时，被触发技能额外 +3 层。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    subsystem: 'crit',
+    behaviorType: 'crit_overflow',
+    flavor: '力量溢出的余波，也能推动齿轮。',
+  },
+
+  inscription_flow: {
+    id: 'inscription_flow',
+    name: '铭文涌流',
+    icon: '📜',
+    description: '已附魔技能触发叠层效果时，附魔成长额外 +2%。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'enchantment',
+    behaviorType: 'inscription_flow',
+    flavor: '铭文与叠层共振，笔墨自会加深。',
+  },
+
+  neighbor_watch: {
+    id: 'neighbor_watch',
+    name: '邻里守望',
+    icon: '🏘️',
+    description: '技能触发叠层效果时，相邻键位的叠层技能也 +1 层。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'topology',
+    behaviorType: 'neighbor_watch',
+    flavor: '守望相助，层层相传。',
   },
 
 }
