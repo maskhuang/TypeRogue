@@ -432,16 +432,16 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '卖出一个词，赚回一次机会。',
   },
 
-  key_storm: {
-    id: 'key_storm',
-    name: '全键风暴',
-    icon: '⛈️',
-    description: '得分×0.5。单词完成时，该词每命中1个技能，随机触发1个未被该词命中的已装备技能。',
+  punctuation_liberation: {
+    id: 'punctuation_liberation',
+    name: '标点解放',
+    icon: '❗',
+    description: '解锁 ;,./[] 六个标点键位可绑定技能，词语中随机混入标点符号。',
     rarity: 'legendary',
     basePrice: 0,
     effects: [],
-    behaviorType: 'key_storm',
-    flavor: '风暴席卷整个键盘，每个键都不会被遗忘。',
+    behaviorType: 'punctuation_liberation',
+    flavor: '标点符号也有成为技能载体的权利。',
   },
 
   // ==================== 通用遗物：打字/输入系统 (Story 36.2) ====================
@@ -761,17 +761,17 @@ export const RELICS: Record<string, RelicData> = {
 
   // ==================== 单词/词库系统遗物 → 已迁移至造词师专属遗物 ====================
 
-  punctuation_liberation: {
-    id: 'punctuation_liberation',
-    name: '标点解放',
-    icon: '❗',
-    description: '解锁 ;,./[] 六个标点键位可绑定技能，词语中随机混入标点符号。',
+  key_storm: {
+    id: 'key_storm',
+    name: '全键风暴',
+    icon: '⛈️',
+    description: '得分×0.5。单词完成时，该词每命中1个技能，随机触发1个未被该词命中的已装备技能。',
     rarity: 'legendary',
     basePrice: 0,
     effects: [],
     subsystem: 'topology',
-    behaviorType: 'punctuation_liberation',
-    flavor: '标点符号也有成为技能载体的权利。',
+    behaviorType: 'key_storm',
+    flavor: '风暴席卷整个键盘，每个键都不会被遗忘。',
   },
 
   // ─── 资源系统遗物 (Story 36.8) ───
