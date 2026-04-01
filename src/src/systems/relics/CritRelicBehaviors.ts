@@ -4,7 +4,7 @@
 
 import { state } from '../../core/state'
 import { registerRelicBehavior } from './RelicPipeline'
-import { FATE_COIN_MULTIPLIER } from '../../data/affixes'
+import { FATE_COIN_CRIT_CAP, FATE_COIN_CONVERSION } from '../../data/affixes'
 
 // === 常量 ===
 export const LUCKY_STRIKE_RATE = 0.08
@@ -12,8 +12,8 @@ export const CRIT_BONUS_GOLD = 3
 export const CRIT_CHARGE_THRESHOLD = 5
 export const CRIT_STORM_MIN_CRITS = 2
 export const CRIT_STORM_BONUS = 0.50
-// FATE_COIN_MULTIPLIER re-exported from affixes.ts (single source of truth)
-export { FATE_COIN_MULTIPLIER }
+// 命运硬币常量 re-exported from affixes.ts (single source of truth)
+export { FATE_COIN_CRIT_CAP, FATE_COIN_CONVERSION }
 
 // === 模块级状态 ===
 let _critChargeCount = 0

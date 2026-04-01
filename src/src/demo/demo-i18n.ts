@@ -250,8 +250,8 @@ const ZH: Record<string, string> = {
   'battle.crit_bonus': '⚡ 暴击 +{value}g',
   'battle.crit_charge': '🔋 蓄力满！下一击必暴',
   'battle.crit_storm': '🌩️ 暴击风暴！全词 +{value}%',
-  'battle.fate_coin_crit': '🪙 正面！×3',
-  'battle.fate_coin_miss': '🪙 反面…哑火',
+  'battle.fate_coin_crit': '🪙 暴击！',
+  'battle.fate_coin_miss': '🪙 反面…哑火',  // @deprecated 命运硬币已改版，保留供旧代码兼容
 
   // --- scoring relic feedback ---
   'battle.base_shield': '🔰 护盾保底 {value}',
@@ -996,8 +996,8 @@ const EN: Record<string, string> = {
   'battle.crit_bonus': '⚡ Crit +{value}g',
   'battle.crit_charge': '🔋 Charged! Next hit guaranteed crit',
   'battle.crit_storm': '🌩️ Crit Storm! Word +{value}%',
-  'battle.fate_coin_crit': '🪙 Heads! ×3',
-  'battle.fate_coin_miss': '🪙 Tails… misfire',
+  'battle.fate_coin_crit': '🪙 Crit!',
+  'battle.fate_coin_miss': '🪙 Tails… misfire',  // @deprecated
 
   // --- scoring relic feedback ---
   'battle.base_shield': '🔰 Shield floor {value}',
@@ -1781,7 +1781,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   crit_bonus: '+3 gold per crit.',
   crit_charge: 'After 5 non-crit skill triggers, next trigger is guaranteed crit.',
   crit_storm: 'When ≥2 crits in a word, all skill output for that word +50%.',
-  fate_coin: 'Every skill trigger is a coin flip: 50% crit (×3), 50% misfire (output 0). Ignores other crit rate sources.',
+  fate_coin: 'Crit rate capped at 50%. Excess crit rate converts to crit multiplier bonus (+2% per 1% excess).',
   // Boss modifier subsystem relics
   modifier_shield: 'All modifier negative effects reduced by 25%',
   bounty_hunter: 'Each permanent modifier: -5% shop prices (max 30%)',

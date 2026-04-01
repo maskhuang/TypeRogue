@@ -238,9 +238,8 @@ function triggerAffixSkillWithFeedback(
   if (occupiedKeys.length === 0) occupiedKeys.push(triggerKey); // 防御性回退
 
   // 暴击蓄力：在 ctx 构建前检查，构建后立即消耗
-  // 命运硬币激活时跳过蓄力消耗（避免浪费保底暴击）
   const fateCoinActive = isFateCoinActive();
-  const critChargeReady = !fateCoinActive && isCritChargeReady();
+  const critChargeReady = isCritChargeReady();
 
   // 构建触发上下文
   const ctx = {

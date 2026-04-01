@@ -140,7 +140,7 @@ export type RelicBehaviorType =
   | 'score_black_hole'     // 分数黑洞：隐藏累计，单次手动结算
   // 暴击系统
   | 'crit_storm'           // 暴击风暴：单词内≥2次暴击时全词产出+50%
-  | 'fate_coin'            // 命运硬币：50%暴击×3 / 50%哑火
+  | 'fate_coin'            // 命运硬币：超出50%暴击率转化为暴击倍数
 
 export interface RelicData {
   id: string
@@ -1230,13 +1230,13 @@ export const RELICS: Record<string, RelicData> = {
     id: 'fate_coin',
     name: '命运硬币',
     icon: '🪙',
-    description: '所有技能触发变为掷硬币：50% 暴击（×3），50% 哑火（产出为 0）。忽略其他暴击率来源。',
+    description: '暴击率上限锁定为 50%，超出部分转化为暴击倍数加成（每 1% 超出 = +2% 暴击倍数）。',
     rarity: 'legendary',
     basePrice: 0,
     effects: [],
     subsystem: 'crit',
     behaviorType: 'fate_coin',
-    flavor: '命运女神不偏不倚——除非她今天心情好。',
+    flavor: '硬币的两面都是你的——只要你翻得够多。',
   },
 
 }
