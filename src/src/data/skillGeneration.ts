@@ -169,7 +169,7 @@ export function rollAffixParams(
       return { type, initialMult: 0.40, decayPerTrigger: 0.05, floor: 0.05 }
 
     case AffixType.Pulse:
-      return { type, interval: 4, burstMult: 3.0 }
+      return { type, interval: 4 }
 
     case AffixType.Crit:
       return { type, chance: roundTo(0.1 + random() * 0.2, 2) }

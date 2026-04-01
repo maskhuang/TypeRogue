@@ -231,6 +231,8 @@ export interface Phase5Result {
   outcastEchoTarget: string | null
   /** 暴击质变回响：暴击时触发随机无Crit技能的键位 */
   critEchoTarget?: string
+  /** 脉冲：爆发时立刻自触发一次 */
+  pulseSelfTrigger?: boolean
   /** 脉冲质变：爆发时触发的匹配技能键位（进入伪循环） */
   pulseBurstTargets?: string[]
   /** 增幅质变：层数增加时触发的匹配技能键位 */
@@ -602,12 +604,8 @@ export function resolvePhase3(
 
       case AffixType.Pulse: {
         const interval = affix.interval ?? 1
-        // 设计文档仅写 triggerCount % interval === 0，但 triggerCount=0 时不应爆发
-        // （首次触发即爆发属于免费收益，不符合"蓄力后爆发"的节奏设计意图）
+        // 每叠 N 层标记爆发（stacks=0 不爆发：首次触发无免费收益）
         if (runtimeState.stacks > 0 && runtimeState.stacks % interval === 0) {
-          const m = affix.burstMult ?? 1
-          output *= m
-          multipliers.push(m)
           flags.isPulse = true
         }
         break
@@ -959,6 +957,11 @@ export function resolvePhase5(
       default:
         break
     }
+  }
+
+  // ── Pulse 爆发：立刻自触发一次 ──
+  if (triggerFlags.isPulse) {
+    result.pulseSelfTrigger = true
   }
 
   // ── Pulse 质变：爆发时触发所有匹配技能（可进入伪循环） ──

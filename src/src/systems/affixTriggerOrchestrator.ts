@@ -29,6 +29,7 @@ export type TriggerWorkType =
   | 'relay'
   | 'outcast_echo'
   | 'crit_echo'
+  | 'pulse_self'
   | 'pulse_burst'
   | 'amplify_trigger'
 
@@ -124,8 +125,8 @@ export function orchestrateAffixTrigger(
   while (queue.length > 0 && triggerCount < MAX_CHAIN_DEPTH) {
     const item = queue.shift()!
 
-    // ── 深度检查：Recurse 类型使用 depth 防护（自触发，不受链检测） ──
-    if (item.type === 'recurse' && item.depth >= MAX_RECURSE_DEPTH) {
+    // ── 深度检查：自触发类型（recurse / pulse_self）使用 depth 防护 ──
+    if ((item.type === 'recurse' || item.type === 'pulse_self') && item.depth >= MAX_RECURSE_DEPTH) {
       continue
     }
 
@@ -307,6 +308,17 @@ export function orchestrateAffixTrigger(
           chainSplash: false,
         })
       }
+    }
+
+    // Pulse self: 脉冲爆发 — 立刻自触发一次
+    if (result.phase5?.pulseSelfTrigger) {
+      queue.push({
+        skillId: item.skillId,
+        triggerKey: item.triggerKey,
+        type: 'pulse_self',
+        depth: (item.type === 'pulse_self' ? item.depth : 0) + 1,
+        chainHistory: item.chainHistory,
+      })
     }
 
     // Pulse burst: 脉冲质变 — 爆发时触发匹配技能（可进入伪循环）

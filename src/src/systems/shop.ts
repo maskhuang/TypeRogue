@@ -523,7 +523,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'convert': return t('param.convert_to_self', { icon: RESOURCE_ICONS[a.source!] || '', name: t('resource.' + a.source!), k: a.k?.toFixed(3) ?? '?' })
     case 'charge': return t('param.charge', { gain: Math.round((a.gainPerSec ?? 0) * 100), max: Math.round((a.maxBonus ?? 0) * 100) })
     case 'decay': return t('param.decay', { init: Math.round((a.initialMult ?? 0) * 100), decay: Math.round((a.decayPerTrigger ?? 0) * 100), floor: Math.round((a.floor ?? 0) * 100) })
-    case 'pulse': return t('param.pulse', { interval: a.interval ?? '?', mult: a.burstMult?.toFixed(1) ?? '?' })
+    case 'pulse': return t('param.pulse', { interval: a.interval ?? '?' })
     case 'crit': return t('param.crit', { chance: Math.round((a.chance ?? 0) * 100) })
     case 'void': return t('param.void', { rel, pct: Math.round((a.bonusPerSlot ?? 0) * 100) })
     case 'resonance': return t('param.resonance', { rel, n: a.resonanceCount ?? 1 })

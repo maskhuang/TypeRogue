@@ -174,7 +174,7 @@ export interface AffixInstance {
   decayPerTrigger?: number         // Decay: 每次触发暴击率衰减量
   floor?: number                   // Decay: 暴击率衰减下限
   interval?: number                // Pulse: 间隔次数
-  burstMult?: number               // Pulse: 爆发乘数
+  burstMult?: number               // @deprecated Pulse: 旧版爆发乘数（现改为自触发），保留供旧存档兼容
   chance?: number                  // Crit: 暴击概率
   critMult?: number                // Crit: 暴击乘数
   posRel?: PositionRelation        // Void/Resonance/Mirror/Splash/Amplify/Cascade
@@ -416,7 +416,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Multiply]: '产出直接乘以固定倍数',
   [AffixType.Charge]: '按住蓄力，暴击率随蓄力量增长，蓄满自动释放或松开提前释放',
   [AffixType.Decay]: '首次触发暴击率最高，逐次衰减至下限，每关重置',
-  [AffixType.Pulse]: '每次触发叠层，每叠N层爆发一次（产出倍增）',
+  [AffixType.Pulse]: '每次触发叠层，每叠N层立刻自触发一次',
   [AffixType.Crit]: '触发时有概率暴击',
   [AffixType.Cascade]: '上一个按键与当前键满足指定位置关系时，产出倍增',
   [AffixType.Void]: '范围内空位越多加成越高',
@@ -625,7 +625,7 @@ interface AffixScalingEntry {
 /** 词条参数每级增量表（来源：旧任务附魔数值强化） */
 export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> = {
   [AffixType.Crit]:     { param: 'chance',          delta: 0.05,  mode: 'add' },
-  [AffixType.Pulse]:    { param: 'burstMult',      delta: 0.3,   mode: 'add' },
+  // Pulse: burstMult 已废弃（改为自触发），interval 无需缩放
   [AffixType.Cascade]:  { param: 'cascadeMult',    delta: 0.2,   mode: 'add' },
   [AffixType.Decay]:    { param: 'floor',           delta: 0.02,  mode: 'add' },
   [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
