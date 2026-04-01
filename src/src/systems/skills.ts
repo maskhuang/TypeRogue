@@ -16,7 +16,7 @@ import { routeFragmentsToInventory } from './classes/FragmentQueue';
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE } from '../data/affixTrigger';
-import { getMultiplierPrismBonus, getCancelChainBonus } from './relics/ComboRelicBehaviors';
+import { getMultiplierPrismBonus, getCancelChainBonus, getEchoThimbleCritRate } from './relics/ComboRelicBehaviors';
 import { getTaikoBonus } from './relics/TypingRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostBonus } from './relics/EnchantmentRelicBehaviors';
@@ -268,6 +268,7 @@ function triggerAffixSkillWithFeedback(
       + getDesperateCritRate()
       + getChargeAutoCritBonus(),  // 蓄力质变：自动补全期间所有技能获得等量暴击率
     fateCoinActive,
+    echoThimbleCritRate: getEchoThimbleCritRate(),
   };
 
   // 暴击蓄力消耗（本次触发已注入 baseCritRate=1.0）

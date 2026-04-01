@@ -8,17 +8,17 @@ import { eventBus } from '../../core/events/EventBus'
 
 // === 回声指套 (echo_thimble) — 从 TypingRelicBehaviors 迁入 ===
 
-/** 回声指套触发概率 */
-const ECHO_THIMBLE_CHANCE = 0.08
+/** 回声指套暴击率（并入暴击子系统，暴击时额外触发） */
+export const ECHO_THIMBLE_CRIT_RATE = 0.08
 
-/**
- * 检查回声指套是否触发双重击键
- * @param randomValue 0-1 随机数（外部传入便于测试）
- * @returns true 如果触发双重击键
- */
-export function checkEchoThimble(randomValue: number): boolean {
-  if (!state.player.relics.has('echo_thimble')) return false
-  return randomValue < ECHO_THIMBLE_CHANCE
+/** 获取回声指套暴击率（未装备返回 0） */
+export function getEchoThimbleCritRate(): number {
+  return state.player.relics.has('echo_thimble') ? ECHO_THIMBLE_CRIT_RATE : 0
+}
+
+/** @deprecated 回声指套已并入暴击子系统，保留供旧代码兼容 */
+export function checkEchoThimble(_randomValue: number): boolean {
+  return false
 }
 
 // === 连击缓冲 (combo_buffer) ===

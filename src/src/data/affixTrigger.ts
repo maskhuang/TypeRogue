@@ -115,8 +115,10 @@ export interface TriggerContext {
   baseCritRate?: number
   /** 命运硬币激活（覆盖暴击判定） */
   fateCoinActive?: boolean
-  /** 递归概率覆盖（由调度器传入，每次递归减半） */
-  recurseChanceOverride?: number
+  /** 递归暴击率覆盖（由调度器传入，每次暴击重触发减半） */
+  recurseCritOverride?: number
+  /** 回声指套暴击率（遗物注入，暴击时额外触发） */
+  echoThimbleCritRate?: number
 }
 
 // ===== 全场质变检查 =====
@@ -197,6 +199,8 @@ export interface TriggerFlags {
   tabooConvertResource: import('../core/types').ResourceType | null
   /** 暴击子系统：Crit 词条已质变（Phase 5 crit echo 使用） */
   critTransformed: boolean
+  /** 递归+回声暴击率贡献（Phase 5 暴击重触发减半用） */
+  recurseCritContribution: number
 }
 
 // ===== Phase 4-6 返回类型 =====
@@ -551,12 +555,14 @@ export function resolvePhase3(
     ligatureCount: 0,
     tabooConvertResource: null,
     critTransformed: false,
+    recurseCritContribution: 0,
   }
 
   // 暴击子系统：累计暴击率（affix loop 内只累加，loop 后统一判定）
   let totalCritChance = 0
   let critTransformed = false
   let hasTaboo = false
+  let recurseCritContribution = 0 // 递归暴击率贡献（暴击重触发时减半）
 
   for (const affix of skill.affixes) {
     switch (affix.type) {
@@ -599,6 +605,14 @@ export function resolvePhase3(
         // 禁忌并入暴击：大幅增加暴击率，若未暴击则产出负值
         totalCritChance += affix.bonusPercent ?? 0
         hasTaboo = true
+        break
+      }
+
+      case AffixType.Recurse: {
+        // 递归并入暴击：增加暴击率，暴击时额外触发一次（每次减半）
+        const rc = ctx.recurseCritOverride ?? affix.recurseChance ?? 0
+        recurseCritContribution = rc
+        totalCritChance += rc
         break
       }
 
@@ -657,7 +671,11 @@ export function resolvePhase3(
 
   // ── 暴击子系统：affix 循环后统一判定 ──
   {
-    const rawCritChance = (ctx.baseCritRate ?? 0) + totalCritChance
+    // 回声指套暴击率贡献（暴击重触发时与递归一同减半）
+    const echoCrit = ctx.echoThimbleCritRate ?? 0
+    recurseCritContribution += echoCrit
+    flags.recurseCritContribution = recurseCritContribution
+    const rawCritChance = (ctx.baseCritRate ?? 0) + totalCritChance + echoCrit
 
     // 命运硬币：超出 50% 的暴击率转化为暴击倍数加成
     let effectiveCritChance = rawCritChance
@@ -941,18 +959,9 @@ export function resolvePhase5(
         break
       }
 
-      case AffixType.Recurse: {
-        if (recurseDepth >= MAX_RECURSE_DEPTH) break
-        // 使用调度器传入的衰减概率（首次为原始值）
-        const chanceEff = ctx.recurseChanceOverride ?? affix.recurseChance ?? 0
-        if (ctx.randomFn() < chanceEff) {
-          // 质变后：递归概率不减半
-          const nextChance = isTransformedForAffix(AffixType.Recurse, runtimeState, skill, ctx) ? chanceEff : chanceEff / 2
-          result.recurse = { shouldRecurse: true, newChance: nextChance }
-          recurseProc = true
-        }
+      case AffixType.Recurse:
+        // 递归重触发已移至暴击子系统（Phase 3 贡献暴击率，下方统一处理暴击重触发）
         break
-      }
 
       default:
         break
@@ -981,6 +990,18 @@ export function resolvePhase5(
     if (pulseTargets.length > 0) {
       result.pulseBurstTargets = pulseTargets
     }
+  }
+
+  // ── 暴击重触发：递归词条/回声指套 — 暴击时自触发一次，暴击率减半 ──
+  if (triggerFlags.isCrit && triggerFlags.recurseCritContribution > 0 && recurseDepth < MAX_RECURSE_DEPTH) {
+    const rcc = triggerFlags.recurseCritContribution
+    const hasRecurseAffix = skill.affixes.some(a => a.type === AffixType.Recurse)
+    // 质变（迭代）：暴击率不减半
+    const nextCrit = (hasRecurseAffix && isTransformedForAffix(AffixType.Recurse, runtimeState, skill, ctx))
+      ? rcc
+      : rcc / 2
+    result.recurse = { shouldRecurse: true, newChance: nextCrit }
+    recurseProc = true
   }
 
   // ── Outcast 质变：首尾呼应 — 找到对端技能并触发 ──

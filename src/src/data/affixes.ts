@@ -430,7 +430,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Gravity]: '调整含本键字母的单词出现概率',
   [AffixType.Ligature]: '字母在当前单词中重复出现时，按出现次数倍增产出',
   [AffixType.Twin]: '获得附魔时同时获得两个（而非二选一）',
-  [AffixType.Recurse]: '触发后有概率再次触发',
+  [AffixType.Recurse]: '增加暴击率，暴击时额外触发一次（每次暴击率减半）',
   [AffixType.Taboo]: '大幅增加暴击率，若未暴击则产出负值',
 }
 
@@ -576,7 +576,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestSpectrum, name: '光谱', targetAffix: AffixType.Rainbow, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全资源产出', transformDesc: '完成后产出等比分摊到所有资源' },
   { type: EnchantmentType.QuestMirror, name: '映射', targetAffix: AffixType.Mirror, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全词条复制', transformDesc: '完成后复制范围内所有邻居的不同类型词条' },
   { type: EnchantmentType.QuestOverlap, name: '重叠', targetAffix: AffixType.Ligature, event: 'equip_count', targetStacks: 0, effectDesc: '质变：关卡累计计数', transformDesc: '完成后连字按关卡累计按键计数' },
-  { type: EnchantmentType.QuestIterate, name: '迭代', targetAffix: AffixType.Recurse, event: 'equip_count', targetStacks: 0, effectDesc: '质变：递归不衰减', transformDesc: '完成后递归概率不再每次减半' },
+  { type: EnchantmentType.QuestIterate, name: '迭代', targetAffix: AffixType.Recurse, event: 'equip_count', targetStacks: 0, effectDesc: '质变：暴击率不衰减', transformDesc: '完成后暴击重触发时暴击率不再减半' },
   { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'equip_count', targetStacks: 0, effectDesc: '质变：惩罚转为随机资源', transformDesc: '完成后惩罚触发时产出转为随机其他资源' },
   { type: EnchantmentType.QuestTwin, name: '镜像', targetAffix: AffixType.Twin, event: 'equip_count', targetStacks: 0, effectDesc: '质变：词条效果加倍', transformDesc: '完成后所有非 Twin 词条效果翻倍' },
   { type: EnchantmentType.QuestConduit, name: '导引', targetAffix: AffixType.Conduit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：导能 +2', transformDesc: '完成后为邻居提供 2 次额外触发' },

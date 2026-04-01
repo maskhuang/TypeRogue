@@ -581,7 +581,7 @@ const ZH: Record<string, string> = {
   'affix_desc.gravity': '调整含本键字母的单词出现概率',
   'affix_desc.ligature': '字母在当前单词中重复出现时，按出现次数倍增产出',
   'affix_desc.twin': '获得附魔时同时获得两个（而非二选一）',
-  'affix_desc.recurse': '触发后有概率再次触发',
+  'affix_desc.recurse': '增加暴击率，暴击时额外触发一次（每次暴击率减半）',
   'affix_desc.taboo': '大幅提升产出，但有小概率产出负值',
 
   // --- position relations (6) ---
@@ -637,7 +637,7 @@ const ZH: Record<string, string> = {
   'quest.quest_spectrum': '光谱', 'quest.quest_spectrum.effect': '质变：全资源产出', 'quest.quest_spectrum.task': '5资源词3次',
   'quest.quest_mirror': '映射', 'quest.quest_mirror.effect': '质变：全词条复制', 'quest.quest_mirror.task': '通关1次',
   'quest.quest_overlap': '重叠', 'quest.quest_overlap.effect': '质变：关卡累计计数', 'quest.quest_overlap.task': '触发15次',
-  'quest.quest_iterate': '迭代', 'quest.quest_iterate.effect': '质变：递归不衰减', 'quest.quest_iterate.task': '递归触发5次',
+  'quest.quest_iterate': '迭代', 'quest.quest_iterate.effect': '质变：暴击率不衰减', 'quest.quest_iterate.task': '暴击重触发5次',
   'quest.quest_sacrifice': '献祭', 'quest.quest_sacrifice.effect': '质变：惩罚转为随机资源', 'quest.quest_sacrifice.task': '惩罚触发3次',
   'quest.quest_twin': '镜像', 'quest.quest_twin.effect': '质变：词条效果加倍', 'quest.quest_twin.task': '通关3次',
   'quest.quest_conduit': '导引', 'quest.quest_conduit.effect': '质变：导能 +2', 'quest.quest_conduit.task': '触发15次',
@@ -656,7 +656,7 @@ const ZH: Record<string, string> = {
   'param.cascade_fallback': '上键范围内',
   'param.outcast': '+{pct}%',
   'param.gravity': '概率×{mult}',
-  'param.recurse': '{pct}%重触发',
+  'param.recurse': '+{pct}%暴击率 暴击重触发',
   'param.taboo': '+{pct}%暴击率 / 未暴击负产出',
   'param.rainbow': '随机资源',
   'param.mirror': '{rel}镜像复制',
@@ -1327,7 +1327,7 @@ const EN: Record<string, string> = {
   'affix_desc.gravity': 'Adjusts probability of words containing this key\'s letter',
   'affix_desc.ligature': 'When letter repeats in current word, output scales with repeat count',
   'affix_desc.twin': 'Gains two enchantments at once instead of choosing one',
-  'affix_desc.recurse': 'Chance to re-trigger after activation',
+  'affix_desc.recurse': 'Adds crit rate; crits trigger again (halves each time)',
   'affix_desc.taboo': 'Greatly boosts output, but small chance of negative output',
 
   // --- position relations (6) ---
@@ -1383,7 +1383,7 @@ const EN: Record<string, string> = {
   'quest.quest_spectrum': 'Spectrum', 'quest.quest_spectrum.effect': 'Transform: all-resource output', 'quest.quest_spectrum.task': '5-resource word 3 times',
   'quest.quest_mirror': 'Reflect', 'quest.quest_mirror.effect': 'Transform: copy all neighbor affixes', 'quest.quest_mirror.task': 'Clear 1 stage',
   'quest.quest_overlap': 'Overlap', 'quest.quest_overlap.effect': 'Transform: stage cumulative count', 'quest.quest_overlap.task': 'Trigger 15 times',
-  'quest.quest_iterate': 'Iterate', 'quest.quest_iterate.effect': 'Transform: no recurse decay', 'quest.quest_iterate.task': 'Recurse 5 times',
+  'quest.quest_iterate': 'Iterate', 'quest.quest_iterate.effect': 'Transform: no crit decay on retrigger', 'quest.quest_iterate.task': 'Crit retrigger 5 times',
   'quest.quest_sacrifice': 'Sacrifice', 'quest.quest_sacrifice.effect': 'Transform: penalty converts to random resource', 'quest.quest_sacrifice.task': 'Penalty 3 times',
   'quest.quest_twin': 'Mirror', 'quest.quest_twin.effect': 'Transform: double affix effects', 'quest.quest_twin.task': 'Clear 3 stages',
   'quest.quest_conduit': 'Channel', 'quest.quest_conduit.effect': 'Transform: conduit +2 triggers', 'quest.quest_conduit.task': 'Trigger 15 times',
@@ -1402,7 +1402,7 @@ const EN: Record<string, string> = {
   'param.cascade_fallback': 'prev-key range',
   'param.outcast': '+{pct}%',
   'param.gravity': 'prob ×{mult}',
-  'param.recurse': '{pct}% retrigger',
+  'param.recurse': '+{pct}% crit, retrigger on crit',
   'param.taboo': '+{pct}% crit / negative on miss',
   'param.rainbow': 'random resource',
   'param.mirror': '{rel} mirror copy',
@@ -1709,7 +1709,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   rhythm_adapt: 'Beat bar above word; hit a beat ball on keypress for +30% skill output',
   glass_cannon_v2: 'Score ×10. Sells all skills on acquire; cannot equip skills.',
   // Combo subsystem relics
-  echo_thimble: '8% chance on correct key: double keystroke (combo+1, skill triggers again)',
+  echo_thimble: '+8% crit rate; crits trigger skill again (halves each time)',
   combo_buffer: 'On combo break, keep 50% combo (floor)',
   multiplier_prism: 'Mult ≥2.5: skill output +20%',
   combo_detonator: 'At combo 15: randomly trigger 3 equipped skills. Resets on combo break.',

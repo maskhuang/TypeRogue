@@ -355,7 +355,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'echo_thimble',
     name: '回声指套',
     icon: '🧤',
-    description: '正确击键时 8% 概率触发双重击键（combo+1，技能额外触发一次）。',
+    description: '所有技能 +8% 暴击率，暴击时额外触发一次（每次暴击率减半）。',
     rarity: 'common',
     basePrice: 50,
     effects: [],
