@@ -430,7 +430,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Mirror]: '每关结束时复制一个范围内技能的随机词条',
   [AffixType.Splash]: '自身不产出；触发叠层，每叠N层触发1个匹配技能（升级降低N）',
   [AffixType.Amplify]: '自身不产出；触发叠层，范围内匹配技能产出+自身基础值',
-  [AffixType.Conduit]: '自身不产出，范围内匹配技能触发时叠层，每叠N层回调触发一次',
+  [AffixType.Conduit]: '自身不产出，范围内匹配技能触发时额外触发一次',
   [AffixType.Relay]: '自身不产出；范围内匹配技能触发时叠层，每叠N层中转触发1个匹配技能（升级降低N，不含其他中转）',
   [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
   [AffixType.Gravity]: '调整含本键字母的单词出现概率',

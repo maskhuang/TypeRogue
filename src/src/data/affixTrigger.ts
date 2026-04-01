@@ -1206,21 +1206,15 @@ export function resolvePhase6(
       }
     }
 
-    // 导能词条：叠层式 — 匹配技能触发时+1层，每叠 N 层回调触发一次
+    // 导能词条：匹配技能触发时额外触发一次（质变：+2 次）
     if (!ctx.chainAffixesDisabled) {
       for (const affix of neighborSkill.affixes) {
         if (affix.type !== AffixType.Conduit || affix.posRel == null) continue
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk == null) continue
         if (hasSharedMatch(skill, neighborSkill, AffixType.Conduit)) {
-          const neighborState = ctx.skillStates.get(neighborSkillId)
-          if (neighborState) {
-            neighborState.stacks += 1
-            const conduitInterval = Math.max(1, isAffixGloballyTransformed(AffixType.Conduit, ctx.allSkills, ctx.skillStates) ? 2 : DEFAULT_STACK_INTERVAL)
-            if (neighborState.stacks > 0 && neighborState.stacks % conduitInterval === 0) {
-              actions.push({ type: 'conduit', targetKey: triggerKey, conduitCount: 1 })
-            }
-          }
+          const conduitCount = isAffixGloballyTransformed(AffixType.Conduit, ctx.allSkills, ctx.skillStates) ? 2 : 1
+          actions.push({ type: 'conduit', targetKey: triggerKey, conduitCount })
         }
       }
     }
