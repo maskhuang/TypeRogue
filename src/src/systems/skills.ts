@@ -17,7 +17,7 @@ import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE } from '../data/affixTrigger';
 import { getMultiplierPrismBonus, getCancelChainBonus, getEchoThimbleCritRate } from './relics/ComboRelicBehaviors';
-import { getStackDividendBonus, checkStackDividend, isPerpetualEngineActive, getPerpetualEngineIntervalMult, getCritOverflowStacks, getInscriptionFlowGrowth, isOverloadCircuitActive, isSurgeActive, isNeighborWatchActive, onStackEffectTriggered } from './relics/StackingRelicBehaviors';
+import { getStackDividendBonus, checkStackDividend, getPerpetualEngineIntervalMult, getCritOverflowStacks, getInscriptionFlowGrowth, isOverloadCircuitActive, isSurgeActive, isNeighborWatchActive, onStackEffectTriggered } from './relics/StackingRelicBehaviors';
 import { getTaikoBonus } from './relics/TypingRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostBonus } from './relics/EnchantmentRelicBehaviors';
@@ -325,6 +325,7 @@ function triggerAffixSkillWithFeedback(
   // 积少成多：每10层+5%产出
   const dividendBonus = getStackDividendBonus(skillId);
   if (dividendBonus > 0) relicBonus += dividendBonus;
+  // 浪涌：通过 ctx.surgeBonus 在 Phase 2 内应用（编排器设置）
 
   // 升华缩放：Lv4+ 按 1.6^(level-3) 缩放基础值
   const ascendScale = getAscendBaseScale(skill.level);

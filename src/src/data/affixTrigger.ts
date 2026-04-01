@@ -128,6 +128,8 @@ export interface TriggerContext {
   critOverflowStacks?: number
   /** 浪涌激活 */
   surgeActive?: boolean
+  /** 浪涌当前加成%（编排器运行时更新） */
+  surgeBonus?: number
   /** 过载电路激活 */
   overloadCircuitActive?: boolean
   /** 邻里守望激活 */
@@ -555,6 +557,11 @@ export function resolvePhase2(
       default:
         break
     }
+  }
+
+  // ── 浪涌加成 ──
+  if (ctx.surgeBonus && ctx.surgeBonus > 0 && effectiveBase > 0) {
+    bonusPercent += ctx.surgeBonus
   }
 
   // ── 附魔加算 ──

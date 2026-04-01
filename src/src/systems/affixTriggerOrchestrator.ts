@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { AffixType, BASE_VALUES } from '../data/affixes'
 import { hasRelation } from '../data/keyboardTopology'
-import { onStackEffectTriggered, checkStackDividend, isStackingAffix } from './relics/StackingRelicBehaviors'
+import { onStackEffectTriggered, checkStackDividend, isStackingAffix, SURGE_BONUS_PER_STACK } from './relics/StackingRelicBehaviors'
 import {
   triggerAffixSkill,
   MAX_RECURSE_DEPTH,
@@ -371,12 +371,14 @@ export function orchestrateAffixTrigger(
       if (ctx.inscriptionFlowGrowth && skill.enchantmentIds.length > 0) {
         runtimeState.apprenticeAccumulated += ctx.inscriptionFlowGrowth
       }
-      // 浪涌：层数归零，记录加成
+      // 浪涌：层数归零，范围内匹配技能产出 +层数×10%
       if (ctx.surgeActive) {
         const surgeStacks = runtimeState.stacks
         runtimeState.stacks = 0
-        // 浪涌加成通过 surgeBonus 字段在下次触发周期应用（简化：直接修改邻居产出太复杂，这里记录到 result）
-        // TODO: 浪涌加成需要更复杂的集成，暂记录日志
+        if (surgeStacks > 0) {
+          const bonus = surgeStacks * SURGE_BONUS_PER_STACK
+          ctx.surgeBonus = (ctx.surgeBonus ?? 0) + bonus
+        }
       }
       // 邻里守望：相邻叠层技能+1层
       if (ctx.neighborWatchActive) {
