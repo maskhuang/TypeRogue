@@ -225,17 +225,6 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '稳定基因链，精准操控变异。',
   },
 
-  chaos_seed: {
-    id: 'chaos_seed',
-    name: '混沌种子',
-    icon: '🌱',
-    description: '每关开始时，给所有未附魔技能一个随机附魔（临时，关结束移除）。',
-    rarity: 'legendary',
-    basePrice: 0,
-    effects: [],
-    flavor: '混沌中播下的种子，总会结出意外的果实。',
-  },
-
   fittest_survivors: {
     id: 'fittest_survivors',
     name: '适者生存',
@@ -245,6 +234,87 @@ export const RELICS: Record<string, RelicData> = {
     basePrice: 0,
     effects: [],
     flavor: '适者生存，强者愈强。',
+  },
+
+  // ── 蜕变师附魔遗物（原附魔子系统，现为蜕变师专属） ──
+
+  enchant_dividend: {
+    id: 'enchant_dividend',
+    name: '附魔红利',
+    icon: '💰',
+    description: '触发已附魔的技能时，+2金币。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    flavor: '附魔之力化为真金白银。',
+  },
+
+  enchant_boost: {
+    id: 'enchant_boost',
+    name: '附魔增幅',
+    icon: '✴️',
+    description: '已附魔的技能产出+15%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    flavor: '魔力涌动，技能更强。',
+  },
+
+  rune_spike: {
+    id: 'rune_spike',
+    name: '符文尖刺',
+    icon: '💎',
+    description: '每个已附魔的装备技能提供 +3% 全局暴击率。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    flavor: '铭刻越多，锋芒越盛。',
+  },
+
+  apprentice_robe: {
+    id: 'apprentice_robe',
+    name: '学徒之袍',
+    icon: '👘',
+    description: '所有学徒型附魔的成长累积值×1.3。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    flavor: '穿上学徒之袍，感受魔力的加速流动。',
+  },
+
+  trial_badge: {
+    id: 'trial_badge',
+    name: '试炼徽章',
+    icon: '🏅',
+    description: '任务型附魔所需装备技能数-1（最低1）。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    flavor: '每一枚徽章，都是试炼的加速通行证。',
+  },
+
+  fate_fork: {
+    id: 'fate_fork',
+    name: '命运三岔',
+    icon: '🔱',
+    description: '附魔选择界面从2选1变为3选1。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    behaviorType: 'fate_fork',
+    flavor: '命运的分岔路，多一条选择。',
+  },
+
+  greedy_inscription: {
+    id: 'greedy_inscription',
+    name: '贪婪铭刻',
+    icon: '🩸',
+    description: '附魔必定成功。但每拥有一个附魔，目标分数×2。',
+    rarity: 'legendary',
+    basePrice: 200,
+    effects: [],
+    behaviorType: 'greedy_inscription',
+    flavor: '贪婪地刻下每一道铭文，代价是无尽的追赶。',
   },
 
   // ==================== 造词师专属遗物 ====================
@@ -530,93 +600,7 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '掷骰决定一切。',
   },
 
-  // ==================== 附魔系统遗物 (Story 36.5) ====================
-
-  enchant_dividend: {
-    id: 'enchant_dividend',
-    name: '附魔红利',
-    icon: '💰',
-    description: '触发已附魔的技能时，+2金币。',
-    rarity: 'common',
-    basePrice: 50,
-    effects: [],
-    subsystem: 'enchantment',
-    flavor: '附魔之力化为真金白银。',
-  },
-
-  enchant_boost: {
-    id: 'enchant_boost',
-    name: '附魔增幅',
-    icon: '✴️',
-    description: '已附魔的技能产出+15%。',
-    rarity: 'common',
-    basePrice: 50,
-    effects: [],
-    subsystem: 'enchantment',
-    flavor: '魔力涌动，技能更强。',
-  },
-
-  apprentice_robe: {
-    id: 'apprentice_robe',
-    name: '学徒之袍',
-    icon: '👘',
-    description: '所有学徒型附魔的成长累积值×1.3。',
-    rarity: 'rare',
-    basePrice: 80,
-    effects: [],
-    subsystem: 'enchantment',
-    flavor: '穿上学徒之袍，感受魔力的加速流动。',
-  },
-
-  trial_badge: {
-    id: 'trial_badge',
-    name: '试炼徽章',
-    icon: '🏅',
-    description: '任务型附魔所需装备技能数-1（最低1）。',
-    rarity: 'rare',
-    basePrice: 80,
-    effects: [],
-    subsystem: 'enchantment',
-    flavor: '每一枚徽章，都是试炼的加速通行证。',
-  },
-
-  fate_fork: {
-    id: 'fate_fork',
-    name: '命运三岔',
-    icon: '🔱',
-    description: '附魔选择界面从2选1变为3选1。',
-    rarity: 'epic',
-    basePrice: 120,
-    effects: [],
-    subsystem: 'enchantment',
-    behaviorType: 'fate_fork',
-    flavor: '命运的分岔路，多一条选择。',
-  },
-
-  greedy_inscription: {
-    id: 'greedy_inscription',
-    name: '贪婪铭刻',
-    icon: '🩸',
-    description: '附魔必定成功。但每拥有一个附魔，目标分数×2。',
-    rarity: 'legendary',
-    basePrice: 200,
-    effects: [],
-    subsystem: 'enchantment',
-    behaviorType: 'greedy_inscription',
-    flavor: '贪婪地刻下每一道铭文，代价是无尽的追赶。',
-  },
-
-  rune_spike: {
-    id: 'rune_spike',
-    name: '符文尖刺',
-    icon: '💎',
-    description: '每个已附魔的装备技能提供 +3% 全局暴击率。',
-    rarity: 'common',
-    basePrice: 50,
-    effects: [],
-    subsystem: 'enchantment',
-    flavor: '铭刻越多，锋芒越盛。',
-  },
+  // ==================== 附魔系统遗物 → 已迁移至蜕变师专属遗物 ====================
 
   // ==================== 键盘拓扑系统遗物 (Story 36.6) ====================
 
