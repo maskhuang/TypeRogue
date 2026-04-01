@@ -238,8 +238,7 @@ export interface SkillRuntimeState {
   currentDecayMult: number         // 衰减: 当前暴击率加成（每关重置）
   mirrorCopiedAffix: AffixInstance | null  // 倒影: 每关刷新时复制的词条
   mirrorCopiedAffixes: AffixInstance[]     // 倒影质变: 全词条复制（Story 41-5）
-  triggerCount: number             // 脉冲: 触发计数
-  amplifyStacks: number            // 增幅: 当前增幅层数（每关重置）
+  stacks: number                   // 通用叠层计数（脉冲爆发/增幅加成等，每关重置）
   // ── 附魔状态 ──
   apprenticeAccumulated: number    // 学徒(含丰收/适应): 永久成长累积%
   questStacks: number              // 任务: 当前叠层进度
@@ -604,8 +603,7 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     currentDecayMult: 0,        // 衰减暴击率加成（每关重置为 initialMult）
     mirrorCopiedAffix: null,
     mirrorCopiedAffixes: [],
-    triggerCount: 0,
-    amplifyStacks: 0,
+    stacks: 0,
     apprenticeAccumulated: 0,
     questStacks: 0,
     questCompletions: 0,

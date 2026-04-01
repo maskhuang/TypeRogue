@@ -604,7 +604,7 @@ export function resolvePhase3(
         const interval = affix.interval ?? 1
         // 设计文档仅写 triggerCount % interval === 0，但 triggerCount=0 时不应爆发
         // （首次触发即爆发属于免费收益，不符合"蓄力后爆发"的节奏设计意图）
-        if (runtimeState.triggerCount > 0 && runtimeState.triggerCount % interval === 0) {
+        if (runtimeState.stacks > 0 && runtimeState.stacks % interval === 0) {
           const m = affix.burstMult ?? 1
           output *= m
           multipliers.push(m)
@@ -913,7 +913,7 @@ export function resolvePhase5(
 
       case AffixType.Amplify: {
         // 自身叠层
-        runtimeState.amplifyStacks += 1
+        runtimeState.stacks += 1
         // 范围内叠层技能（增幅/脉冲）+1 层
         const ampPosRel = affix.posRel
         if (ampPosRel != null) {
@@ -931,9 +931,8 @@ export function resolvePhase5(
             if (!nState) continue
             // 叠层目标：范围内匹配技能
             if (!hasSharedMatch(nSkill, skill, AffixType.Amplify)) continue
-            // 匹配技能叠层：Amplify→amplifyStacks, Pulse→triggerCount, 通用→amplifyStacks
-            if (nSkill.affixes.some(a => a.type === AffixType.Pulse)) nState.triggerCount += 1
-            else nState.amplifyStacks += 1
+            // 匹配技能叠层
+            nState.stacks += 1
             // 质变：层数增加时触发范围内匹配技能
             if (ampTransformed) {
               if (!result.amplifyTriggerTargets) result.amplifyTriggerTargets = []
@@ -1263,7 +1262,7 @@ export function triggerAffixSkill(
   const p2 = resolvePhase2(effectiveSkill, runtimeState, ctx, base)
 
   // 递增触发计数（Pulse 在 Phase 3 读取该值判断爆发）
-  runtimeState.triggerCount += 1
+  runtimeState.stacks += 1
 
   // Phase 3: 乘算层
   const p3 = resolvePhase3(effectiveSkill, runtimeState, ctx, p2.output)
@@ -1711,7 +1710,7 @@ export function resetDecayForWord(
 }
 
 /**
- * 每关初始化：重置所有技能的 triggerCount/amplifyStacks，刷新 Mirror 词条。
+ * 每关初始化：重置所有技能的 stacks，刷新 Mirror 词条。
  * 纯函数——直接修改传入的 skillStates。
  * Mirror 刷新通过 resolveMirrorCopy 实现，需要构造最小 TriggerContext。
  */
@@ -1722,8 +1721,7 @@ export function resetStageState(
   randomFn: () => number,
 ): void {
   for (const [skillId, state] of skillStates) {
-    state.triggerCount = 0
-    state.amplifyStacks = 0
+    state.stacks = 0
     state.chargeAccumulated = 0
 
     // Decay: 每关重置 currentDecayMult（Story 41.2 AC7 — 跨单词不重置，仅跨关重置）
@@ -1810,8 +1808,7 @@ export function deserializeSkill(
     currentDecayMult: data.runtime.currentDecayMult ?? 1,
     mirrorCopiedAffix: data.runtime.mirrorCopiedAffix ? { ...data.runtime.mirrorCopiedAffix } : null,
     mirrorCopiedAffixes: (data.runtime as any).mirrorCopiedAffixes?.map((a: any) => ({ ...a })) ?? [],
-    triggerCount: data.runtime.triggerCount ?? 0,
-    amplifyStacks: data.runtime.amplifyStacks ?? 0,
+    stacks: (data.runtime as any).stacks ?? (data.runtime as any).triggerCount ?? (data.runtime as any).amplifyStacks ?? 0,
     apprenticeAccumulated: data.runtime.apprenticeAccumulated ?? 0,
     questStacks: data.runtime.questStacks ?? 0,
     questCompletions: data.runtime.questCompletions ?? 0,
@@ -1841,8 +1838,7 @@ export function migrateLoadedSkills(
           currentDecayMult: 1,
           mirrorCopiedAffix: null,
           mirrorCopiedAffixes: [],
-          triggerCount: 0,
-          amplifyStacks: 0,
+          stacks: 0,
           apprenticeAccumulated: 0,
           questStacks: 0,
           questCompletions: 0,
