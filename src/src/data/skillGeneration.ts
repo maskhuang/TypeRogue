@@ -205,6 +205,12 @@ export function rollAffixParams(
     case AffixType.Conduit:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
+    case AffixType.Relay: {
+      // 中转词条：范围内共享技能触发时，中转触发N个匹配技能（不含其他中转）
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
+      return { type, posRel, relayCount: 1 }
+    }
+
     case AffixType.Outcast:
       return { type, bonusPercent: roundTo(0.4 + random() * 0.4, 2) }
 

@@ -236,6 +236,7 @@ export interface Phase5Result {
 export type Phase6Action =
   | { type: 'resonance', neighborKey: string, triggerCount: number }
   | { type: 'conduit', targetKey: string, conduitCount: number }
+  | { type: 'relay', targetKey: string }
   | { type: 'apprentice_neighbor', neighborKey: string, growthDelta: number }
 
 export interface Phase6Result {
@@ -1114,6 +1115,43 @@ export function resolvePhase6(
       }
     }
 
+    // 中转词条：邻居有 Relay 且共享资源/词条 → 中转触发范围内 N 个匹配技能（排除其他 Relay）
+    if (!ctx.chainAffixesDisabled) {
+      for (const affix of neighborSkill.affixes) {
+        if (affix.type !== AffixType.Relay || affix.posRel == null) continue
+        // 范围检查：Relay 技能的 posRel 覆盖触发技能
+        const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
+        if (matchedNk == null) continue
+        // 匹配条件：触发技能与 Relay 技能共享资源或词条（排除 Relay 自身）
+        if (!hasSharedMatch(skill, neighborSkill, AffixType.Relay)) continue
+
+        // 从 Relay 技能的邻居中找匹配目标（排除原触发技能 + 排除含 Relay 词条的技能）
+        const relayNeighborKeys = getExtendedNeighbors(neighborKeys, affix.posRel)
+          .filter(k => ctx.bindings.has(k) && !occupiedKeySet.has(k))
+        const validTargets: string[] = []
+        const seenSkillIds = new Set<string>()
+        for (const k of relayNeighborKeys) {
+          const sid = ctx.bindings.get(k)!
+          if (sid === neighborSkillId) continue // 排除 Relay 自身
+          if (seenSkillIds.has(sid)) continue   // 多格技能去重
+          const target = ctx.allSkills.get(sid)
+          if (!target) continue
+          if (target.affixes.some(a => a.type === AffixType.Relay)) continue // 排除其他 Relay
+          if (!hasSharedMatch(neighborSkill, target, AffixType.Relay)) continue
+          seenSkillIds.add(sid)
+          validTargets.push(k)
+        }
+
+        // 质变：触发 ALL；非质变：触发 N 个
+        const relayTransformed = isAffixGloballyTransformed(AffixType.Relay, ctx.allSkills, ctx.skillStates)
+        const count = relayTransformed ? validTargets.length : Math.min(affix.relayCount ?? 1, validTargets.length)
+        const targets = relayTransformed ? validTargets : pickRandomKeys(validTargets, count, ctx.randomFn)
+        for (const targetKey of targets) {
+          actions.push({ type: 'relay', targetKey })
+        }
+      }
+    }
+
   }
 
   return { actions }
@@ -1173,7 +1211,7 @@ export function triggerAffixSkill(
   const effectiveSkill = buildEffectiveSkill(skill, runtimeState)
 
   // Phase 1: 基础值（Conduit/Amplify/Splash 技能自身不产出，基础值为 0）
-  const hasSelfZero = effectiveSkill.affixes.some(a => a.type === AffixType.Conduit || a.type === AffixType.Amplify || a.type === AffixType.Splash)
+  const hasSelfZero = effectiveSkill.affixes.some(a => a.type === AffixType.Conduit || a.type === AffixType.Amplify || a.type === AffixType.Splash || a.type === AffixType.Relay)
   const base = hasSelfZero ? 0 : resolvePhase1(effectiveSkill)
 
   // Phase 2: 加算层

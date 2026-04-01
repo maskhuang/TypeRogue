@@ -29,6 +29,7 @@ export enum AffixType {
   Splash = 'splash',
   Amplify = 'amplify',
   Conduit = 'conduit',
+  Relay = 'relay',
   // ── 单词感知型 ──
   Outcast = 'outcast',
   Gravity = 'gravity',
@@ -58,6 +59,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Splash]: 'trigger_chain',
   [AffixType.Amplify]: 'trigger_chain',
   [AffixType.Conduit]: 'trigger_chain',
+  [AffixType.Relay]: 'trigger_chain',
   [AffixType.Outcast]: 'word_sense',
   [AffixType.Gravity]: 'word_sense',
   [AffixType.Ligature]: 'word_sense',
@@ -97,6 +99,7 @@ export enum EnchantmentType {
   QuestSacrifice = 'quest_sacrifice',
   QuestTwin = 'quest_twin',
   QuestConduit = 'quest_conduit',
+  QuestRelay = 'quest_relay',
   QuestMultiplyOp = 'quest_multiply_op',
   // ── 运算符（保留类型，现通过质变获取） ──
   MultiplyOperator = 'multiply_operator',
@@ -123,6 +126,7 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestSacrifice]: AffixType.Taboo,
   [EnchantmentType.QuestTwin]: AffixType.Twin,
   [EnchantmentType.QuestConduit]: AffixType.Conduit,
+  [EnchantmentType.QuestRelay]: AffixType.Relay,
   [EnchantmentType.QuestMultiplyOp]: AffixType.Multiply,
 }
 
@@ -178,6 +182,7 @@ export interface AffixInstance {
   resource?: ResourceType          // Amplify: 关联资源
   splashCount?: number             // Splash: 触发范围内N个共享技能
   resonanceCount?: number          // Resonance: 共享技能触发时自触发N次
+  relayCount?: number              // Relay: 中转触发范围内N个匹配技能
   valuePerStack?: number           // Amplify: 已废弃（现每层 = 基础产出绝对值），保留供旧存档兼容
   cascadeMult?: number             // Cascade: 级联乘数
   bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: +100% 固定
@@ -310,6 +315,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Splash]: 'high',
   [AffixType.Amplify]: 'high',
   [AffixType.Conduit]: 'low',
+  [AffixType.Relay]: 'low',
   [AffixType.Outcast]: 'high',
   [AffixType.Gravity]: 'low',
   [AffixType.Ligature]: 'high',
@@ -393,6 +399,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Splash]: '溅射',
   [AffixType.Amplify]: '增幅',
   [AffixType.Conduit]: '导能',
+  [AffixType.Relay]: '中转',
   [AffixType.Outcast]: '流放',
   [AffixType.Gravity]: '引力',
   [AffixType.Ligature]: '连字',
@@ -417,6 +424,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Splash]: '自身不产出；触发后触发范围内N个共享资源或词条的技能',
   [AffixType.Amplify]: '自身不产出，每次触发叠一层；范围内同资源或同词条的技能每层获得额外基础产出',
   [AffixType.Conduit]: '自身不产出，范围内拥有相同词条或相同资源的邻居触发时额外触发一次',
+  [AffixType.Relay]: '自身不产出；范围内共享资源或词条的技能触发时，中转触发N个范围内匹配技能（不含其他中转）',
   [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
   [AffixType.Gravity]: '调整含本键字母的单词出现概率',
   [AffixType.Ligature]: '字母在当前单词中重复出现时，按出现次数倍增产出',
@@ -571,6 +579,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'equip_count', targetStacks: 0, effectDesc: '质变：惩罚转为随机资源', transformDesc: '完成后惩罚触发时产出转为随机其他资源' },
   { type: EnchantmentType.QuestTwin, name: '镜像', targetAffix: AffixType.Twin, event: 'equip_count', targetStacks: 0, effectDesc: '质变：词条效果加倍', transformDesc: '完成后所有非 Twin 词条效果翻倍' },
   { type: EnchantmentType.QuestConduit, name: '导引', targetAffix: AffixType.Conduit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：导能 +2', transformDesc: '完成后为邻居提供 2 次额外触发' },
+  { type: EnchantmentType.QuestRelay, name: '中继', targetAffix: AffixType.Relay, event: 'equip_count', targetStacks: 0, effectDesc: '质变：中转全匹配', transformDesc: '完成后每次中转触发范围内所有匹配技能' },
   { type: EnchantmentType.QuestMultiplyOp, name: '乘算化', targetAffix: AffixType.Multiply, event: 'equip_count', targetStacks: 0, effectDesc: '质变：乘算化', transformDesc: '完成后产出变为乘算模式（资源×N 而非资源+N）' },
 ]
 
@@ -630,6 +639,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
   [AffixType.Splash]:   { param: 'splashCount',    delta: 1,     mode: 'add' },
   [AffixType.Resonance]:{ param: 'resonanceCount', delta: 1,     mode: 'add' },
+  [AffixType.Relay]:    { param: 'relayCount',     delta: 1,     mode: 'add' },
 }
 
 /** 四舍五入到指定小数位 */

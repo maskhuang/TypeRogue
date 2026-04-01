@@ -26,6 +26,7 @@ export type TriggerWorkType =
   | 'resonance'
   | 'splash'
   | 'conduit'
+  | 'relay'
   | 'outcast_echo'
   | 'crit_echo'
 
@@ -130,6 +131,7 @@ export function orchestrateAffixTrigger(
     // Conduit 不参与循环检测：用 chainAffixesDisabled 阻止级联（见下方 triggerCtx 构建）
     const isChainType = item.type === 'resonance'
       || item.type === 'splash'
+      || item.type === 'relay'
     if (isChainType && item.chainHistory.includes(item.triggerKey)) {
       // 检测到循环 → 进入伪无限模式
       // chainHistory 中已包含所有参与键位（item.triggerKey 也在其中）
@@ -167,6 +169,8 @@ export function orchestrateAffixTrigger(
       ...(item.type === 'outcast_echo' || item.type === 'crit_echo' ? { chainAffixesDisabled: true } : {}),
       // conduit 额外触发禁用链式词条，防止 Conduit→Conduit 无限级联
       ...(item.type === 'conduit' ? { chainAffixesDisabled: true } : {}),
+      // relay 额外触发禁用链式词条，防止 Relay→Relay 级联
+      ...(item.type === 'relay' ? { chainAffixesDisabled: true } : {}),
       // recurse 重触发禁用链式词条，防止 Recurse→Splash/Resonance 指数增长
       ...(item.type === 'recurse' ? { chainAffixesDisabled: true } : {}),
       // recurse 概率覆盖（每次递归减半）
@@ -364,6 +368,19 @@ function enqueuePhase6Action(
           chainHistory: parentChildHistory,
         })
       }
+      break
+    }
+    // relay: 中转 — 触发匹配技能（chainAffixesDisabled 防止级联）
+    case 'relay': {
+      const targetSkillId = ctx.bindings.get(action.targetKey)
+      if (!targetSkillId) return
+      queue.push({
+        skillId: targetSkillId,
+        triggerKey: action.targetKey,
+        type: 'relay',
+        depth: parentChildHistory.length,
+        chainHistory: parentChildHistory,
+      })
       break
     }
   }

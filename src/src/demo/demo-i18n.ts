@@ -557,7 +557,7 @@ const ZH: Record<string, string> = {
   'affix.charge': '蓄力', 'affix.decay': '衰减', 'affix.pulse': '脉冲',
   'affix.crit': '暴击', 'affix.cascade': '级联',
   'affix.void': '虚无', 'affix.mirror': '倒影',
-  'affix.resonance': '共鸣', 'affix.splash': '溅射', 'affix.amplify': '增幅', 'affix.conduit': '导能',
+  'affix.resonance': '共鸣', 'affix.splash': '溅射', 'affix.amplify': '增幅', 'affix.conduit': '导能', 'affix.relay': '中转',
   'affix.outcast': '流放', 'affix.gravity': '引力', 'affix.ligature': '连字',
   'affix.twin': '双生', 'affix.recurse': '递归', 'affix.taboo': '禁忌',
 
@@ -576,6 +576,7 @@ const ZH: Record<string, string> = {
   'affix_desc.splash': '自身不产出；触发后触发范围内N个共享资源或词条的技能',
   'affix_desc.amplify': '自身不产出，每次触发叠一层；范围内同资源或同词条的技能每层获得额外基础产出',
   'affix_desc.conduit': '自身不产出，范围内拥有相同词条的邻居触发时额外触发一次',
+  'affix_desc.relay': '自身不产出；范围内共享资源或词条的技能触发时，中转触发N个匹配技能',
   'affix_desc.outcast': '单词首尾字母触发时获得额外加成',
   'affix_desc.gravity': '调整含本键字母的单词出现概率',
   'affix_desc.ligature': '字母在当前单词中重复出现时，按出现次数倍增产出',
@@ -640,6 +641,7 @@ const ZH: Record<string, string> = {
   'quest.quest_sacrifice': '献祭', 'quest.quest_sacrifice.effect': '质变：惩罚转为随机资源', 'quest.quest_sacrifice.task': '惩罚触发3次',
   'quest.quest_twin': '镜像', 'quest.quest_twin.effect': '质变：词条效果加倍', 'quest.quest_twin.task': '通关3次',
   'quest.quest_conduit': '导引', 'quest.quest_conduit.effect': '质变：导能 +2', 'quest.quest_conduit.task': '触发15次',
+  'quest.quest_relay': '中继', 'quest.quest_relay.effect': '质变：中转全匹配', 'quest.quest_relay.task': '装备N个',
   'quest.quest_multiply_op': '乘算化', 'quest.quest_multiply_op.effect': '质变：乘算模式', 'quest.quest_multiply_op.task': '触发15次',
 
   // --- param summary / estimate / tooltip labels ---
@@ -659,6 +661,7 @@ const ZH: Record<string, string> = {
   'param.rainbow': '随机资源',
   'param.mirror': '{rel}镜像复制',
   'param.splash': '{rel}触发{n}个共享技能',
+  'param.relay': '{rel}中转{n}个匹配技能',
   'param.ligature': '连字加成',
   'param.twin': '双附魔',
 
@@ -1296,7 +1299,7 @@ const EN: Record<string, string> = {
   'affix.charge': 'Charge', 'affix.decay': 'Decay', 'affix.pulse': 'Pulse',
   'affix.crit': 'Crit', 'affix.cascade': 'Cascade',
   'affix.void': 'Void', 'affix.mirror': 'Mirror',
-  'affix.resonance': 'Resonance', 'affix.splash': 'Splash', 'affix.amplify': 'Amplify', 'affix.conduit': 'Conduit',
+  'affix.resonance': 'Resonance', 'affix.splash': 'Splash', 'affix.amplify': 'Amplify', 'affix.conduit': 'Conduit', 'affix.relay': 'Relay',
   'affix.outcast': 'Outcast', 'affix.gravity': 'Gravity', 'affix.ligature': 'Ligature',
   'affix.twin': 'Twin', 'affix.recurse': 'Recurse', 'affix.taboo': 'Taboo',
 
@@ -1315,6 +1318,7 @@ const EN: Record<string, string> = {
   'affix_desc.splash': 'Produces no output; triggers N shared-resource or shared-affix nearby skills',
   'affix_desc.amplify': 'Produces no output; stacks per trigger. Nearby skills with same resource or shared affixes gain +1× base per stack',
   'affix_desc.conduit': 'Produces no output; grants +1 trigger to nearby skills that share its other affixes',
+  'affix_desc.relay': 'Produces no output; when nearby shared skills trigger, relays to N matching skills in range (excl. other Relays)',
   'affix_desc.outcast': 'Extra bonus when triggered by first/last letter of a word',
   'affix_desc.gravity': 'Adjusts probability of words containing this key\'s letter',
   'affix_desc.ligature': 'When letter repeats in current word, output scales with repeat count',
@@ -1379,6 +1383,7 @@ const EN: Record<string, string> = {
   'quest.quest_sacrifice': 'Sacrifice', 'quest.quest_sacrifice.effect': 'Transform: penalty converts to random resource', 'quest.quest_sacrifice.task': 'Penalty 3 times',
   'quest.quest_twin': 'Mirror', 'quest.quest_twin.effect': 'Transform: double affix effects', 'quest.quest_twin.task': 'Clear 3 stages',
   'quest.quest_conduit': 'Channel', 'quest.quest_conduit.effect': 'Transform: conduit +2 triggers', 'quest.quest_conduit.task': 'Trigger 15 times',
+  'quest.quest_relay': 'Relay', 'quest.quest_relay.effect': 'Transform: relay all matches', 'quest.quest_relay.task': 'Equip N',
   'quest.quest_multiply_op': 'Multiply', 'quest.quest_multiply_op.effect': 'Transform: multiply mode', 'quest.quest_multiply_op.task': 'Trigger 15 times',
 
   // --- param summary / estimate / tooltip labels ---
@@ -1398,6 +1403,7 @@ const EN: Record<string, string> = {
   'param.rainbow': 'random resource',
   'param.mirror': '{rel} mirror copy',
   'param.splash': '{rel} triggers {n} shared skills',
+  'param.relay': '{rel} relays {n} matching skills',
   'param.ligature': 'ligature bonus',
   'param.twin': 'dual enchant',
 
