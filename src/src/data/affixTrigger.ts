@@ -754,13 +754,8 @@ export function resolvePhase3(
 
 // ===== Phase 4-6 常量 =====
 
-/** 叠层式词条：每 N 层额外 +1 效果数量 */
-export const STACKS_PER_EXTRA_COUNT = 4
-
-/** 叠层式效果数量：baseCount + floor(stacks / STACKS_PER_EXTRA_COUNT) */
-export function getStackScaledCount(baseCount: number, stacks: number): number {
-  return baseCount + Math.floor(stacks / STACKS_PER_EXTRA_COUNT)
-}
+/** 叠层式词条默认间隔（每 N 层触发一次效果） */
+export const DEFAULT_STACK_INTERVAL = 4
 
 export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
 export const MAX_RECURSE_DEPTH = 10
@@ -953,23 +948,23 @@ export function resolvePhase5(
   for (const affix of skill.affixes) {
     switch (affix.type) {
       case AffixType.Splash: {
-        if (ctx.chainAffixesDisabled) break // chain_ban: 跳过溅射词条
+        if (ctx.chainAffixesDisabled) break
         if (affix.posRel == null) break
-        const targetCount = getStackScaledCount(affix.splashCount ?? 1, runtimeState.stacks)
-        // Story 40.9: 扩展邻居范围（多格技能从所有占据键的邻居并集中选目标）
-        const allKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
-          .filter(k => ctx.bindings.has(k))
-        // Conduit 模式匹配：同资源 OR 共享词条类型（排除 Splash 自身）
-        const filtered = allKeys.filter(k => {
-          const sid = ctx.bindings.get(k)!
-          const target = ctx.allSkills.get(sid)
-          if (!target) return false
-          return hasSharedMatch(skill, target, AffixType.Splash)
-        })
-        result.splashTargets = pickRandomKeys(filtered, targetCount, ctx.randomFn)
-        // 质变后：溅射目标也会向自己的邻居溅射一次（额外一跳）
-        if (isTransformedForAffix(AffixType.Splash, runtimeState, skill, ctx)) {
-          result.chainSplash = true
+        // 叠层式：每叠 N 层触发 1 个匹配技能
+        const splashInterval = Math.max(1, affix.splashCount ?? DEFAULT_STACK_INTERVAL)
+        if (runtimeState.stacks > 0 && runtimeState.stacks % splashInterval === 0) {
+          const allKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
+            .filter(k => ctx.bindings.has(k))
+          const filtered = allKeys.filter(k => {
+            const sid = ctx.bindings.get(k)!
+            const target = ctx.allSkills.get(sid)
+            if (!target) return false
+            return hasSharedMatch(skill, target, AffixType.Splash)
+          })
+          result.splashTargets = pickRandomKeys(filtered, 1, ctx.randomFn)
+          if (isTransformedForAffix(AffixType.Splash, runtimeState, skill, ctx)) {
+            result.chainSplash = true
+          }
         }
         break
       }
@@ -1189,8 +1184,15 @@ export function resolvePhase6(
         if (!hasSharedMatch(skill, neighborSkill, AffixType.Resonance)) continue
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk != null) {
-          const triggerCount = getStackScaledCount(affix.resonanceCount ?? 1, runtimeState.stacks)
-          actions.push({ type: 'resonance', neighborKey: matchedNk, triggerCount })
+          // 叠层式：匹配技能触发时+1层，每叠 N 层自触发一次
+          const neighborState = ctx.skillStates.get(neighborSkillId)
+          if (neighborState) {
+            neighborState.stacks += 1
+            const resInterval = Math.max(1, affix.resonanceCount ?? DEFAULT_STACK_INTERVAL)
+            if (neighborState.stacks > 0 && neighborState.stacks % resInterval === 0) {
+              actions.push({ type: 'resonance', neighborKey: matchedNk, triggerCount: 1 })
+            }
+          }
         }
       }
     }
@@ -1204,55 +1206,59 @@ export function resolvePhase6(
       }
     }
 
-    // 导能词条：邻居有 Conduit 且（触发技能拥有 Conduit 技能的其他词条类型 OR 产出相同资源）→ 触发技能 +N 触发
-    if (!ctx.chainAffixesDisabled) { // chain_ban: 跳过导能（防止 Conduit→Conduit 级联）
+    // 导能词条：叠层式 — 匹配技能触发时+1层，每叠 N 层回调触发一次
+    if (!ctx.chainAffixesDisabled) {
       for (const affix of neighborSkill.affixes) {
         if (affix.type !== AffixType.Conduit || affix.posRel == null) continue
-        // 检查范围匹配（双侧 any-match）
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk == null) continue
-        // 检查触发技能是否拥有 Conduit 技能的其他词条类型 OR 产出相同资源
         if (hasSharedMatch(skill, neighborSkill, AffixType.Conduit)) {
-          // 质变：+2 触发（而非 +1）
-          const conduitBase = isAffixGloballyTransformed(AffixType.Conduit, ctx.allSkills, ctx.skillStates) ? 2 : 1
-          const conduitCount = getStackScaledCount(conduitBase, runtimeState.stacks)
-          actions.push({ type: 'conduit', targetKey: triggerKey, conduitCount })
+          const neighborState = ctx.skillStates.get(neighborSkillId)
+          if (neighborState) {
+            neighborState.stacks += 1
+            const conduitInterval = Math.max(1, isAffixGloballyTransformed(AffixType.Conduit, ctx.allSkills, ctx.skillStates) ? 2 : DEFAULT_STACK_INTERVAL)
+            if (neighborState.stacks > 0 && neighborState.stacks % conduitInterval === 0) {
+              actions.push({ type: 'conduit', targetKey: triggerKey, conduitCount: 1 })
+            }
+          }
         }
       }
     }
 
-    // 中转词条：邻居有 Relay 且共享资源/词条 → 中转触发范围内 N 个匹配技能（排除其他 Relay）
+    // 中转词条：叠层式 — 匹配技能触发时+1层，每叠 N 层中转触发 1 个匹配技能
     if (!ctx.chainAffixesDisabled) {
       for (const affix of neighborSkill.affixes) {
         if (affix.type !== AffixType.Relay || affix.posRel == null) continue
-        // 范围检查：Relay 技能的 posRel 覆盖触发技能
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk == null) continue
-        // 匹配条件：触发技能与 Relay 技能共享资源或词条（排除 Relay 自身）
         if (!hasSharedMatch(skill, neighborSkill, AffixType.Relay)) continue
 
-        // 从 Relay 技能的邻居中找匹配目标（排除原触发技能 + 排除含 Relay 词条的技能）
+        const neighborState = ctx.skillStates.get(neighborSkillId)
+        if (!neighborState) continue
+        neighborState.stacks += 1
+        const relayInterval = Math.max(1, affix.relayCount ?? DEFAULT_STACK_INTERVAL)
+        if (!(neighborState.stacks > 0 && neighborState.stacks % relayInterval === 0)) continue
+
+        // 从 Relay 技能的邻居中找匹配目标
         const relayNeighborKeys = getExtendedNeighbors(neighborKeys, affix.posRel)
           .filter(k => ctx.bindings.has(k) && !occupiedKeySet.has(k))
         const validTargets: string[] = []
         const seenSkillIds = new Set<string>()
         for (const k of relayNeighborKeys) {
           const sid = ctx.bindings.get(k)!
-          if (sid === neighborSkillId) continue // 排除 Relay 自身
-          if (seenSkillIds.has(sid)) continue   // 多格技能去重
+          if (sid === neighborSkillId) continue
+          if (seenSkillIds.has(sid)) continue
           const target = ctx.allSkills.get(sid)
           if (!target) continue
-          if (target.affixes.some(a => a.type === AffixType.Relay)) continue // 排除其他 Relay
+          if (target.affixes.some(a => a.type === AffixType.Relay)) continue
           if (!hasSharedMatch(neighborSkill, target, AffixType.Relay)) continue
           seenSkillIds.add(sid)
           validTargets.push(k)
         }
 
-        // 质变：触发 ALL；非质变：触发 N 个
+        // 质变：触发 ALL；非质变：触发 1 个
         const relayTransformed = isAffixGloballyTransformed(AffixType.Relay, ctx.allSkills, ctx.skillStates)
-        const relayEffective = getStackScaledCount(affix.relayCount ?? 1, runtimeState.stacks)
-        const count = relayTransformed ? validTargets.length : Math.min(relayEffective, validTargets.length)
-        const targets = relayTransformed ? validTargets : pickRandomKeys(validTargets, count, ctx.randomFn)
+        const targets = relayTransformed ? validTargets : pickRandomKeys(validTargets, 1, ctx.randomFn)
         for (const targetKey of targets) {
           actions.push({ type: 'relay', targetKey })
         }

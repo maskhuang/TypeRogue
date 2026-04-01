@@ -185,18 +185,16 @@ export function rollAffixParams(
     }
 
     case AffixType.Resonance: {
-      // 共鸣词条：范围内共享资源或词条的技能触发时，本技能自动触发N次
       const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, resonanceCount: 1 }
+      return { type, posRel, resonanceCount: 4 } // 叠层间隔
     }
 
     case AffixType.Mirror:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
     case AffixType.Splash: {
-      // 溅射词条：自身不产出；触发后触发范围内N个共享资源或词条的技能
       const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, splashCount: 1 }
+      return { type, posRel, splashCount: 4 } // 叠层间隔（每 N 层触发 1 个匹配技能）
     }
 
     case AffixType.Amplify:
@@ -206,9 +204,8 @@ export function rollAffixParams(
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
     case AffixType.Relay: {
-      // 中转词条：范围内共享技能触发时，中转触发N个匹配技能（不含其他中转）
       const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, relayCount: 1 }
+      return { type, posRel, relayCount: 4 } // 叠层间隔
     }
 
     case AffixType.WarDrum:

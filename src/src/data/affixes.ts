@@ -426,12 +426,12 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Crit]: '触发时有概率暴击',
   [AffixType.Cascade]: '上一个按键与当前键满足指定位置关系时，产出倍增',
   [AffixType.Void]: '范围内空位越多加成越高',
-  [AffixType.Resonance]: '范围内匹配技能触发时，本技能自动触发（次数随层数增长）',
+  [AffixType.Resonance]: '范围内匹配技能触发时叠层，每叠N层自触发一次（升级降低N）',
   [AffixType.Mirror]: '每关结束时复制一个范围内技能的随机词条',
-  [AffixType.Splash]: '自身不产出；触发后触发范围内匹配技能（数量随层数增长）',
+  [AffixType.Splash]: '自身不产出；触发叠层，每叠N层触发1个匹配技能（升级降低N）',
   [AffixType.Amplify]: '自身不产出；触发叠层，范围内匹配技能产出+自身基础值',
-  [AffixType.Conduit]: '自身不产出，范围内匹配技能触发时额外触发（次数随层数增长）',
-  [AffixType.Relay]: '自身不产出；范围内匹配技能触发时，中转触发匹配技能（数量随层数增长，不含其他中转）',
+  [AffixType.Conduit]: '自身不产出，范围内匹配技能触发时叠层，每叠N层回调触发一次',
+  [AffixType.Relay]: '自身不产出；范围内匹配技能触发时叠层，每叠N层中转触发1个匹配技能（升级降低N，不含其他中转）',
   [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
   [AffixType.Gravity]: '调整含本键字母的单词出现概率',
   [AffixType.Ligature]: '字母在当前单词中重复出现时，按出现次数倍增产出',
@@ -645,9 +645,9 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Taboo]:    { param: 'bonusPercent',   delta: 0.08,  mode: 'add' },
   [AffixType.WarDrum]:  { param: 'critPerStack',   delta: 0.005, mode: 'add' },
   [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
-  [AffixType.Splash]:   { param: 'splashCount',    delta: 1,     mode: 'add' },
-  [AffixType.Resonance]:{ param: 'resonanceCount', delta: 1,     mode: 'add' },
-  [AffixType.Relay]:    { param: 'relayCount',     delta: 1,     mode: 'add' },
+  [AffixType.Splash]:   { param: 'splashCount',    delta: -1,    mode: 'add' },  // 间隔降低（升级更频繁触发）
+  [AffixType.Resonance]:{ param: 'resonanceCount', delta: -1,    mode: 'add' },
+  [AffixType.Relay]:    { param: 'relayCount',     delta: -1,    mode: 'add' },
 }
 
 /** 四舍五入到指定小数位 */
