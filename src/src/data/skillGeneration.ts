@@ -163,10 +163,10 @@ export function rollAffixParams(
       return { type }
 
     case AffixType.Charge:
-      return { type, gainPerSec: 2.0, maxBonus: 2.0 }
+      return { type, gainPerSec: 0.25, maxBonus: 0.50 }
 
     case AffixType.Decay:
-      return { type, initialMult: 2.0, decayPerTrigger: 0.15, floor: 0.5 }
+      return { type, initialMult: 0.40, decayPerTrigger: 0.05, floor: 0.05 }
 
     case AffixType.Pulse:
       return { type, interval: 4, burstMult: 3.0 }
@@ -227,7 +227,7 @@ export function rollAffixParams(
       return { type, recurseChance: roundTo(0.15 + random() * 0.15, 2) }
 
     case AffixType.Taboo:
-      return { type, bonusPercent: 1.0, penaltyChance: 0.10 }
+      return { type, bonusPercent: 0.60 }
 
     case AffixType.Multiply:
       return { type, multiplyValue: roundTo(1.5 + random() * 0.5, 2) }  // ×1.5~2.0

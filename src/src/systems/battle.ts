@@ -558,6 +558,11 @@ function handleKeyPress(data: { key: string; timestamp: number }): void {
  * Story 36.2: 小助手自动补全 — 按顺序执行剩余字母的 playerCorrect 逻辑
  * Story 41-5: 导出供 Charge 质变满蓄力自动完成使用
  */
+/** 蓄力质变自动补全期间的额外暴击率（所有被触发技能共享） */
+let _chargeAutoCritBonus = 0;
+/** 获取蓄力质变自动补全期间的额外暴击率 */
+export function getChargeAutoCritBonus(): number { return _chargeAutoCritBonus; }
+
 /** 自动补全剩余字母（小助手 Tab / Charge 质变） */
 export function performAutocomplete(source: 'tab' | 'charge' = 'tab'): void {
   const word = state.player.word;
@@ -567,9 +572,22 @@ export function performAutocomplete(source: 'tab' | 'charge' = 'tab'): void {
   let chargeSnapshots: Map<string, number> | null = null;
   if (source === 'charge') {
     chargeSnapshots = new Map();
+    let maxCritBonus = 0;
     for (const [skillId, rt] of state.affixSkillStates) {
-      if (rt.chargeAccumulated > 0) chargeSnapshots.set(skillId, rt.chargeAccumulated);
+      if (rt.chargeAccumulated > 0) {
+        chargeSnapshots.set(skillId, rt.chargeAccumulated);
+        // 计算蓄力暴击率：取所有蓄力技能中的最高值（受 maxBonus 限制）
+        const skill = state.affixSkills.get(skillId);
+        if (skill) {
+          const chargeAffix = skill.affixes.find(a => a.type === AffixType.Charge);
+          if (chargeAffix) {
+            maxCritBonus = Math.max(maxCritBonus, Math.min(rt.chargeAccumulated, chargeAffix.maxBonus ?? 0));
+          }
+        }
+      }
     }
+    // 质变加成：所有被触发技能获得等量暴击率
+    _chargeAutoCritBonus = maxCritBonus;
   }
 
   while (state.player.index < word.length) {
@@ -585,7 +603,8 @@ export function performAutocomplete(source: 'tab' | 'charge' = 'tab'): void {
     eventBus.emit('word:correct', { key: k, index: state.player.index - 1 });
   }
 
-  // 自动补全结束后清零蓄力
+  // 自动补全结束后清零蓄力 + 重置暴击率加成
+  _chargeAutoCritBonus = 0;
   if (chargeSnapshots) {
     for (const [skillId] of chargeSnapshots) {
       const rt = state.affixSkillStates.get(skillId);

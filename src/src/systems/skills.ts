@@ -9,7 +9,7 @@ import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { t } from '../demo/demo-i18n';
 import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
-import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete } from './battle';
+import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete, getChargeAutoCritBonus } from './battle';
 import { getFloatScale } from '../effects/juice';
 import { eventBus } from '../core/events/EventBus';
 import { routeFragmentsToInventory } from './classes/FragmentQueue';
@@ -266,7 +266,8 @@ function triggerAffixSkillWithFeedback(
       + getRuneSpikeCritRate()
       + getPrecisionStrikeCritRate(triggerKey)
       + getLongWordCritBonus(state.player.word.length)
-      + getDesperateCritRate(),
+      + getDesperateCritRate()
+      + getChargeAutoCritBonus(),  // 蓄力质变：自动补全期间所有技能获得等量暴击率
     fateCoinActive,
   };
 

@@ -522,7 +522,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
   switch (a.type) {
     case 'convert': return t('param.convert_to_self', { icon: RESOURCE_ICONS[a.source!] || '', name: t('resource.' + a.source!), k: a.k?.toFixed(3) ?? '?' })
     case 'charge': return t('param.charge', { gain: Math.round((a.gainPerSec ?? 0) * 100), max: Math.round((a.maxBonus ?? 0) * 100) })
-    case 'decay': return t('param.decay', { init: a.initialMult ?? '?', decay: a.decayPerTrigger ?? '?', floor: a.floor ?? '?' })
+    case 'decay': return t('param.decay', { init: Math.round((a.initialMult ?? 0) * 100), decay: Math.round((a.decayPerTrigger ?? 0) * 100), floor: Math.round((a.floor ?? 0) * 100) })
     case 'pulse': return t('param.pulse', { interval: a.interval ?? '?', mult: a.burstMult?.toFixed(1) ?? '?' })
     case 'crit': return t('param.crit', { chance: Math.round((a.chance ?? 0) * 100) })
     case 'void': return t('param.void', { rel, pct: Math.round((a.bonusPerSlot ?? 0) * 100) })
@@ -532,7 +532,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'outcast': return t('param.outcast', { pct: Math.round((a.bonusPercent ?? 0) * 100) })
     case 'gravity': return t('param.gravity', { mult: a.probMult?.toFixed(1) ?? '?' })
     case 'recurse': return t('param.recurse', { pct: Math.round((a.recurseChance ?? 0) * 100) })
-    case 'taboo': return t('param.taboo', { pct: Math.round((a.penaltyChance ?? 0) * 100) })
+    case 'taboo': return t('param.taboo', { pct: Math.round((a.bonusPercent ?? 0) * 100) })
     case 'rainbow': return t('param.rainbow')
     case 'mirror': return t('param.mirror', { rel })
     case 'splash': return t('param.splash', { rel, n: a.splashCount ?? 1 })
@@ -577,6 +577,8 @@ export function computeSmartEstimate(
   // 收集 Phase 2 加性和 Phase 3 乘性
   let addPercent = 0  // 加性总百分比
   let multProduct = 1 // 乘性连乘
+  let critChanceAccum = 0 // 暴击子系统：累计暴击率
+  let hasTabooFlag = false // 禁忌：未暴击时负产出
   /** 格式化 bonus 为 +XX% */
   const fmtBonus = (name: string, bonus: number) =>
     `${name} +${Math.round(bonus * 100)}%`
@@ -598,15 +600,13 @@ export function computeSmartEstimate(
         break
       }
       case 'taboo': {
-        // Phase 2: +100%
-        addPercent += 1.0
-        // Phase 3: 期望 = ×(1 - 2×effPenalty)
-        // 41-3/41-4: quest stacking removed — 直接使用 affix.penaltyChance
-        const effPenalty = affix.penaltyChance ?? 0.1
-        const expectMult = 1 - 2 * effPenalty
-        multProduct *= expectMult
-        const detail = t('est.taboo_penalty', { pct: Math.round(effPenalty * 100) })
-        breakdown.push({ typeKey: 'taboo', label: t('est.taboo', { val: expectMult.toFixed(2) }), detail })
+        // 禁忌并入暴击系统：+critRate 暴击率，未暴击则负产出
+        // 期望 = critRate × CRIT_MULTIPLIER + (1 - critRate) × (-1)
+        // 此处只显示 Taboo 自身贡献的暴击率，最终暴击在 crit 行合并
+        const tabooCrit = affix.bonusPercent ?? 0
+        critChanceAccum += tabooCrit
+        hasTabooFlag = true
+        breakdown.push({ typeKey: 'taboo', label: t('est.taboo', { pct: Math.round(tabooCrit * 100) }), detail: t('est.taboo_penalty') })
         break
       }
       case 'multiply': {
@@ -617,17 +617,17 @@ export function computeSmartEstimate(
         break
       }
       case 'decay': {
-        // Phase 3: 每词重置为 initialMult，每次触发衰减 decayPerTrigger 到 floor
-        // 期望乘数取决于每词平均触发次数（绑定键在词中出现频率）
-        const init = affix.initialMult ?? 1
-        const floorVal = affix.floor ?? 0.5
-        const decayPer = affix.decayPerTrigger ?? 0.15
+        // 衰减并入暴击系统：首次触发暴击率最高，逐次衰减至下限
+        // 计算期望暴击率加成（取决于每词平均触发次数）
+        const init = affix.initialMult ?? 0.40
+        const floorVal = affix.floor ?? 0.05
+        const decayPer = affix.decayPerTrigger ?? 0.05
         const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
         const avgTriggers = keys.length > 0 ? computeAvgTriggersPerWord(keys) : 1
-        const avgMult = computeDecayAvgMult(init, decayPer, floorVal, avgTriggers)
-        multProduct *= avgMult
+        const avgCritBonus = computeDecayAvgMult(init, decayPer, floorVal, avgTriggers)
+        critChanceAccum += avgCritBonus
         const detail = `(${t('est.decay_triggers', { n: avgTriggers.toFixed(1) })})`
-        breakdown.push({ typeKey: 'decay', label: t('est.decay', { val: avgMult.toFixed(2) }), detail })
+        breakdown.push({ typeKey: 'decay', label: t('est.decay', { pct: Math.round(avgCritBonus * 100) }), detail })
         break
       }
       case 'outcast': {
@@ -641,10 +641,17 @@ export function computeSmartEstimate(
         breakdown.push({ typeKey: 'outcast', label: t('est.outcast', { pct: Math.round(expectedBonus * 100) }), detail })
         break
       }
+      case 'charge': {
+        // 蓄力并入暴击系统：暴击率随蓄力量增长（预估取 maxBonus 的一半作为平均值）
+        const maxCrit = affix.maxBonus ?? 0
+        const avgChargeCrit = maxCrit * 0.5
+        critChanceAccum += avgChargeCrit
+        breakdown.push({ typeKey: 'charge', label: t('est.charge', { pct: Math.round(avgChargeCrit * 100) }), detail: t('est.charge_max', { pct: Math.round(maxCrit * 100) }) })
+        break
+      }
       case 'crit': {
         const chance = affix.chance ?? 0
-        const expectedMult = 1 + chance * (CRIT_MULTIPLIER - 1)
-        multProduct *= expectedMult
+        critChanceAccum += chance
         breakdown.push({ typeKey: 'crit', label: t('est.crit', { pct: Math.round(chance * 100) }), detail: `(\u00d7${CRIT_MULTIPLIER})` })
         break
       }
@@ -662,6 +669,21 @@ export function computeSmartEstimate(
       // 其余词条不预估
       default:
         break
+    }
+  }
+
+  // 暴击子系统合并预估：Crit / Charge / Decay / Taboo 共同贡献暴击率
+  if (critChanceAccum > 0) {
+    const clampedCrit = Math.min(critChanceAccum, 1)
+    if (hasTabooFlag) {
+      // 禁忌：暴击 → ×CRIT_MULTIPLIER，未暴击 → ×(-1)
+      const expectedMult = clampedCrit * CRIT_MULTIPLIER + (1 - clampedCrit) * (-1)
+      multProduct *= Math.max(0, expectedMult) // 防止负期望显示
+      breakdown.push({ typeKey: 'crit_summary', label: t('est.crit_taboo', { pct: Math.round(clampedCrit * 100), val: expectedMult.toFixed(2) }), detail: '' })
+    } else {
+      const expectedMult = 1 + clampedCrit * (CRIT_MULTIPLIER - 1)
+      multProduct *= expectedMult
+      breakdown.push({ typeKey: 'crit_summary', label: t('est.crit_summary', { pct: Math.round(clampedCrit * 100), val: expectedMult.toFixed(2) }), detail: `(\u00d7${CRIT_MULTIPLIER})` })
     }
   }
 

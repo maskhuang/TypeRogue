@@ -168,11 +168,11 @@ export interface AffixInstance {
   // 各类型的参数，按需填充
   source?: ResourceType            // Convert: 源资源
   k?: number                       // Convert: 系数（按源资源校准）
-  gainPerSec?: number              // Charge: 每秒蓄力%
-  maxBonus?: number                // Charge: 蓄力上限%
-  initialMult?: number             // Decay: 初始乘数
-  decayPerTrigger?: number         // Decay: 每次触发衰减量
-  floor?: number                   // Decay: 衰减下限
+  gainPerSec?: number              // Charge: 每秒蓄力暴击率
+  maxBonus?: number                // Charge: 蓄力暴击率上限
+  initialMult?: number             // Decay: 初始暴击率加成
+  decayPerTrigger?: number         // Decay: 每次触发暴击率衰减量
+  floor?: number                   // Decay: 暴击率衰减下限
   interval?: number                // Pulse: 间隔次数
   burstMult?: number               // Pulse: 爆发乘数
   chance?: number                  // Crit: 暴击概率
@@ -185,10 +185,10 @@ export interface AffixInstance {
   relayCount?: number              // Relay: 中转触发范围内N个匹配技能
   valuePerStack?: number           // Amplify: 已废弃（现每层 = 基础产出绝对值），保留供旧存档兼容
   cascadeMult?: number             // Cascade: 级联乘数
-  bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: +100% 固定
+  bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: 暴击率加成
   probMult?: number                // Gravity: 单词出现概率倍率（0~2）
   recurseChance?: number           // Recurse: 重触发概率 15%~30%
-  penaltyChance?: number           // Taboo: 负产出概率 10%
+  penaltyChance?: number           // @deprecated Taboo: 旧版负产出概率（现并入暴击系统）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
 }
 
@@ -234,8 +234,8 @@ export interface AffixSkillInstance {
 export interface SkillRuntimeState {
   skillId: string
   // ── 词条状态 ──
-  chargeAccumulated: number        // 蓄力: 当前蓄力百分比
-  currentDecayMult: number         // 衰减: 当前衰减乘数（每词重置）
+  chargeAccumulated: number        // 蓄力: 当前蓄力暴击率
+  currentDecayMult: number         // 衰减: 当前暴击率加成（每关重置）
   mirrorCopiedAffix: AffixInstance | null  // 倒影: 每关刷新时复制的词条
   mirrorCopiedAffixes: AffixInstance[]     // 倒影质变: 全词条复制（Story 41-5）
   triggerCount: number             // 脉冲: 触发计数
@@ -413,8 +413,8 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Convert]: '读取一种资源的当前值，按系数加成本资源产出',
   [AffixType.Rainbow]: '每次触发时随机选择一种资源类型产出',
   [AffixType.Multiply]: '产出直接乘以固定倍数',
-  [AffixType.Charge]: '按住蓄力，蓄满自动释放或松开提前释放，加成随蓄力量增长',
-  [AffixType.Decay]: '首次触发加成最高，逐次衰减至下限，每关重置',
+  [AffixType.Charge]: '按住蓄力，暴击率随蓄力量增长，蓄满自动释放或松开提前释放',
+  [AffixType.Decay]: '首次触发暴击率最高，逐次衰减至下限，每关重置',
   [AffixType.Pulse]: '每隔固定次数触发一次爆发',
   [AffixType.Crit]: '触发时有概率暴击',
   [AffixType.Cascade]: '上一个按键与当前键满足指定位置关系时，产出倍增',
@@ -430,7 +430,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Ligature]: '字母在当前单词中重复出现时，按出现次数倍增产出',
   [AffixType.Twin]: '获得附魔时同时获得两个（而非二选一）',
   [AffixType.Recurse]: '触发后有概率再次触发',
-  [AffixType.Taboo]: '大幅提升产出，但有小概率产出负值',
+  [AffixType.Taboo]: '大幅增加暴击率，若未暴击则产出负值',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -568,7 +568,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'equip_count', targetStacks: 0, effectDesc: '质变：衰减反转为增长', transformDesc: '完成后衰减方向反转，越触发越强' },
   { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'equip_count', targetStacks: 0, effectDesc: '质变：首尾呼应', transformDesc: '完成后触发词首/词尾时额外触发对端技能' },
   { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向转化', transformDesc: '完成后转化同时反向产出到源资源' },
-  { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'equip_count', targetStacks: 0, effectDesc: '质变：满蓄力自动完成', transformDesc: '满蓄力释放时自动打完当前单词剩余字母，且吃到本次蓄力加成' },
+  { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'equip_count', targetStacks: 0, effectDesc: '质变：满蓄力自动完成', transformDesc: '满蓄力释放时自动打完当前单词，所有被触发技能获得等量暴击率' },
   { type: EnchantmentType.QuestFission, name: '裂变', targetAffix: AffixType.Splash, event: 'equip_count', targetStacks: 0, effectDesc: '质变：溅射链一跳', transformDesc: '完成后溅射目标可再溅射一次' },
   { type: EnchantmentType.QuestStack, name: '层叠', targetAffix: AffixType.Amplify, event: 'equip_count', targetStacks: 0, effectDesc: '质变：换词保留50%层数', transformDesc: '完成后换词时保留一半增幅层数' },
   { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向锁定', transformDesc: '完成后吸引字母必含，排斥字母必不含' },
@@ -599,7 +599,7 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
   return {
     skillId,
     chargeAccumulated: 0,
-    currentDecayMult: 1,        // 中性乘数（衰减词条每词重置为 initialMult）
+    currentDecayMult: 0,        // 衰减暴击率加成（每关重置为 initialMult）
     mirrorCopiedAffix: null,
     mirrorCopiedAffixes: [],
     triggerCount: 0,
@@ -627,15 +627,15 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Crit]:     { param: 'chance',          delta: 0.05,  mode: 'add' },
   [AffixType.Pulse]:    { param: 'burstMult',      delta: 0.3,   mode: 'add' },
   [AffixType.Cascade]:  { param: 'cascadeMult',    delta: 0.2,   mode: 'add' },
-  [AffixType.Decay]:    { param: 'floor',           delta: 0.05,  mode: 'add' },
+  [AffixType.Decay]:    { param: 'floor',           delta: 0.02,  mode: 'add' },
   [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
-  [AffixType.Charge]:   { param: 'maxBonus',       delta: 0.5,   mode: 'add' },
+  [AffixType.Charge]:   { param: 'maxBonus',       delta: 0.10,  mode: 'add' },
   [AffixType.Outcast]:  { param: 'bonusPercent',   delta: 0.15,  mode: 'add' },
   [AffixType.Convert]:  { param: 'k',              delta: 1.1,   mode: 'mult' },
   // Amplify 每层加成 = 基础产出（绝对值），无需额外参数缩放；升级通过 baseValues 自然增长
   [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
   [AffixType.Recurse]:  { param: 'recurseChance',  delta: 0.03,  mode: 'add' },
-  [AffixType.Taboo]:    { param: 'bonusPercent',   delta: 0.3,   mode: 'add' },
+  [AffixType.Taboo]:    { param: 'bonusPercent',   delta: 0.08,  mode: 'add' },
   [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
   [AffixType.Splash]:   { param: 'splashCount',    delta: 1,     mode: 'add' },
   [AffixType.Resonance]:{ param: 'resonanceCount', delta: 1,     mode: 'add' },

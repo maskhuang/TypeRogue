@@ -462,14 +462,13 @@ export function resolvePhase2(
       }
 
       case AffixType.Charge: {
+        // 蓄力并入暴击系统：暴击率贡献在 Phase 3 处理
         const maxBonus = affix.maxBonus ?? 0
-        bonusPercent += Math.min(runtimeState.chargeAccumulated, maxBonus)
         // Story 41-5: 质变 — 满蓄力释放自动完成当前单词
         if (isTransformedForAffix(AffixType.Charge, runtimeState, skill, ctx) && runtimeState.chargeAccumulated >= maxBonus && maxBonus > 0) {
           chargeAutoComplete = true
         }
-        // 蓄力释放清零 — 直接写入 runtimeState
-        runtimeState.chargeAccumulated = 0
+        // 蓄力清零移至 Phase 3（读取暴击率后再清零）
         break
       }
 
@@ -484,10 +483,9 @@ export function resolvePhase2(
         // 增幅技能自身不产出（base=0），增幅效果在下方「被增幅」逻辑中施加给邻居
         break
 
-      case AffixType.Taboo: {
-        bonusPercent += 1.0
+      case AffixType.Taboo:
+        // 禁忌并入暴击系统：暴击率贡献在 Phase 3 处理
         break
-      }
 
       // 其余词条类型在 Phase 2 无加算效果
       default:
@@ -555,6 +553,7 @@ export function resolvePhase3(
   // 暴击子系统：累计暴击率（affix loop 内只累加，loop 后统一判定）
   let totalCritChance = 0
   let critTransformed = false
+  let hasTaboo = false
 
   for (const affix of skill.affixes) {
     switch (affix.type) {
@@ -563,6 +562,40 @@ export function resolvePhase3(
         if (isTransformedForAffix(AffixType.Crit, runtimeState, skill, ctx)) {
           critTransformed = true
         }
+        break
+      }
+
+      case AffixType.Charge: {
+        // 蓄力并入暴击：暴击率随蓄力量增长
+        totalCritChance += Math.min(runtimeState.chargeAccumulated, affix.maxBonus ?? 0)
+        // 蓄力释放清零
+        runtimeState.chargeAccumulated = 0
+        break
+      }
+
+      case AffixType.Decay: {
+        // 衰减并入暴击：首次触发暴击率最高，逐次衰减至下限
+        totalCritChance += runtimeState.currentDecayMult
+        // 计算衰减后的新值
+        if (isTransformedForAffix(AffixType.Decay, runtimeState, skill, ctx)) {
+          // 质变后：衰减逆转为递增（无上限）
+          runtimeState.currentDecayMult = runtimeState.currentDecayMult + (affix.decayPerTrigger ?? 0)
+        } else {
+          const floorEff = Math.max(0, affix.floor ?? 0.05)
+          const newDecay = Math.max(floorEff, runtimeState.currentDecayMult - (affix.decayPerTrigger ?? 0))
+          // 到达 floor 时标记（QuestPurify 叠层条件）
+          if (newDecay <= floorEff) {
+            flags.isDecayFloor = true
+          }
+          runtimeState.currentDecayMult = newDecay
+        }
+        break
+      }
+
+      case AffixType.Taboo: {
+        // 禁忌并入暴击：大幅增加暴击率，若未暴击则产出负值
+        totalCritChance += affix.bonusPercent ?? 0
+        hasTaboo = true
         break
       }
 
@@ -575,26 +608,6 @@ export function resolvePhase3(
           output *= m
           multipliers.push(m)
           flags.isPulse = true
-        }
-        break
-      }
-
-      case AffixType.Decay: {
-        const m = runtimeState.currentDecayMult
-        output *= m
-        multipliers.push(m)
-        // 计算衰减后的新值
-        if (isTransformedForAffix(AffixType.Decay, runtimeState, skill, ctx)) {
-          // 质变后：衰减逆转为递增（无上限）
-          runtimeState.currentDecayMult = runtimeState.currentDecayMult + (affix.decayPerTrigger ?? 0)
-        } else {
-          const floorEff = Math.max(0.1, affix.floor ?? 0.5)
-          const newDecay = Math.max(floorEff, runtimeState.currentDecayMult - (affix.decayPerTrigger ?? 0))
-          // 到达 floor 时标记（QuestPurify 叠层条件）
-          if (newDecay <= floorEff) {
-            flags.isDecayFloor = true
-          }
-          runtimeState.currentDecayMult = newDecay
         }
         break
       }
@@ -630,27 +643,6 @@ export function resolvePhase3(
         break
       }
 
-      case AffixType.Taboo: {
-        const effPenalty = affix.penaltyChance ?? 0.1
-        if (ctx.randomFn() < effPenalty) {
-          if (isTransformedForAffix(AffixType.Taboo, runtimeState, skill, ctx)) {
-            // 质变后：惩罚转化为随机资源（不产生负值，排除职业限制资源）
-            const otherResources = ALL_RESOURCES.filter(r => {
-              if (r === skill.resource) return false
-              if (r === 'fragment' && (!ctx.playerClass || ctx.playerClass === 'metamorph')) return false
-              if (r === 'mutagen' && (!ctx.playerClass || ctx.playerClass === 'wordsmith')) return false
-              return true
-            })
-            flags.tabooConvertResource = otherResources[Math.floor(ctx.randomFn() * otherResources.length)]
-          } else {
-            output *= -1
-            multipliers.push(-1)
-          }
-          flags.isTabooPenalty = true
-        }
-        break
-      }
-
       case AffixType.Multiply: {
         const m = affix.multiplyValue ?? 1
         output *= m
@@ -681,6 +673,22 @@ export function resolvePhase3(
       multipliers.push(CRIT_MULTIPLIER)
       flags.isCrit = true
       flags.critTransformed = critTransformed
+    } else if (hasTaboo) {
+      // 禁忌：未暴击时产出负值
+      if (isAffixGloballyTransformed(AffixType.Taboo, ctx.allSkills, ctx.skillStates)) {
+        // 质变后：惩罚转化为随机资源（不产生负值，排除职业限制资源）
+        const otherResources = ALL_RESOURCES.filter(r => {
+          if (r === skill.resource) return false
+          if (r === 'fragment' && (!ctx.playerClass || ctx.playerClass === 'metamorph')) return false
+          if (r === 'mutagen' && (!ctx.playerClass || ctx.playerClass === 'wordsmith')) return false
+          return true
+        })
+        flags.tabooConvertResource = otherResources[Math.floor(ctx.randomFn() * otherResources.length)]
+      } else {
+        output *= -1
+        multipliers.push(-1)
+      }
+      flags.isTabooPenalty = true
     }
   }
 
