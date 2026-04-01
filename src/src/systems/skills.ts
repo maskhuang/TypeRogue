@@ -35,7 +35,7 @@ import { inputHandler } from './typing/InputHandler';
 
 
 // === 战后统计：记录技能触发 ===
-const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, gold: 0, fragment: 0, mutagen: 0 };
+const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, gold: 0, energy: 0, mutagen: 0 };
 
 function recordSkillTrigger(
   skillId: string,
@@ -412,7 +412,7 @@ function triggerAffixSkillWithFeedback(
           state.time = Math.min(state.time + trickleTime, state.timeMax);
         }
       }
-      if (resource === 'fragment') {
+      if (resource === 'energy') {
         routeFragmentsToInventory(Math.abs(amount));
       } else if (resource === 'mutagen') {
         state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + Math.abs(amount);

@@ -161,7 +161,7 @@ export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
 /** @deprecated 嬗变系已删除（Story 41.2），保留供旧存档兼容 */
 export const TRANSMUTE_NAMES: Record<ResourceType, string> = {
   base: '衍生·基数', score: '衍生·分数', multiplier: '衍生·倍率',
-  time: '衍生·时间', gold: '衍生·金币', fragment: '衍生·碎片', mutagen: '衍生·变异素',
+  time: '衍生·时间', gold: '衍生·金币', energy: '衍生·能量', mutagen: '衍生·变异素',
 }
 
 // ===== 词条实例（运行时生成，已掷骰） =====
@@ -293,7 +293,7 @@ export const BASE_VALUES: Record<ResourceType, number[]> = {
   multiplier: [0.2, 0.32, 0.48, 0.67],
   time:       [0.2, 0.32, 0.48, 0.67],
   gold:       [3, 5, 8, 11],
-  fragment:   [1, 1.6, 2.4, 3.4],
+  energy:   [1, 1.6, 2.4, 3.4],
   mutagen:    [1, 1.6, 2.4, 3.4],
 }
 
@@ -384,7 +384,7 @@ export const CONVERT_K_TABLE: Record<ResourceType, [number, number]> = {
   multiplier: [0.02, 0.05],
   time:       [0.02, 0.05],
   gold:       [0.02, 0.05],
-  fragment:   [0.02, 0.05],
+  energy:   [0.02, 0.05],
   mutagen:    [0.02, 0.05],
 }
 
@@ -447,7 +447,7 @@ export const RESOURCE_NAMES: Record<ResourceType, string> = {
   multiplier: '倍率',
   time: '时间',
   gold: '金币',
-  fragment: '碎片',
+  energy: '能量',
   mutagen: '变异素',
 }
 
@@ -463,7 +463,7 @@ export const TRANSMUTE_RATIO_TABLE: Record<ResourceType, number> = {
   multiplier: 0.10,
   time:       0.20,
   gold:       0.20,
-  fragment:   0.15,
+  energy:   0.15,
   mutagen:    0.15,
 }
 
@@ -476,7 +476,7 @@ export const MULTIPLY_OPERATOR_CALIBRATION: Record<ResourceType, number> = {
   multiplier: 1.0,
   time:       1.0,
   gold:       1.0,
-  fragment:   1.0,
+  energy:   1.0,
   mutagen:    1.0,
 }
 
@@ -487,7 +487,7 @@ export const MULTIPLY_OPERATOR_BASE_VALUES: Record<ResourceType, number[]> = {
   multiplier: [1.15, 1.2, 1.25, 1.3],
   time:       [1.2, 1.25, 1.3, 1.35],
   gold:       [1.3, 1.5, 1.7, 1.9],
-  fragment:   [1.8, 2.1, 2.4, 2.7],
+  energy:   [1.8, 2.1, 2.4, 2.7],
   mutagen:    [1.8, 2.1, 2.4, 2.7],
 }
 

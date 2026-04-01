@@ -72,7 +72,7 @@ export const GLOSSARY_DATA: GlossaryEntry[] = [
   { category: 'resource', id: 'multiplier', icon: '✖️', nameKey: 'resource.multiplier', descKey: 'resource.multiplier.desc' },
   { category: 'resource', id: 'time', icon: '⏱️', nameKey: 'resource.time', descKey: 'resource.time.desc' },
   { category: 'resource', id: 'gold', icon: '🪙', nameKey: 'resource.gold', descKey: 'resource.gold.desc' },
-  { category: 'resource', id: 'fragment', icon: '💎', nameKey: 'resource.fragment', descKey: 'resource.fragment.desc' },
+  { category: 'resource', id: 'energy', icon: '⚡', nameKey: 'resource.energy', descKey: 'resource.energy.desc' },
   { category: 'resource', id: 'mutagen', icon: '🧪', nameKey: 'resource.mutagen', descKey: 'resource.mutagen.desc' },
 
   // 修饰器（仅包含已有 i18n key 的 9 种）

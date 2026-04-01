@@ -1667,7 +1667,7 @@ function endLevel(): void {
         triggerKey: anchorKey,
         occupiedKeys: allKeys,
         currentWord: '',
-        resources: { base: 0, score: 0, multiplier: 1, time: 0, gold: 0, fragment: 0, mutagen: 0 },
+        resources: { base: 0, score: 0, multiplier: 1, time: 0, gold: 0, energy: 0, mutagen: 0 },
         classResourceProduced: {},
         bindings: state.player.bindings,
         skillStates: state.affixSkillStates,

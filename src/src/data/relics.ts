@@ -363,6 +363,87 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '每个字母都有平等的共鸣权。',
   },
 
+  // ── 造词师词库遗物（原单词/词库子系统，现为造词师专属） ──
+
+  word_collection: {
+    id: 'word_collection',
+    name: '词汇收藏',
+    icon: '📚',
+    description: '首次打出的单词+3金币。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    flavor: '每个新词都是一枚珍贵的收藏。',
+  },
+
+  thick_deck: {
+    id: 'thick_deck',
+    name: '词库丰收',
+    icon: '📖',
+    description: '词库每5个词，商店词包-1金币。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    flavor: '词海无涯，积少成多。',
+  },
+
+  long_word_crit: {
+    id: 'long_word_crit',
+    name: '长词蓄力',
+    icon: '📏',
+    description: '≥6 字母单词暴击率 +12%。',
+    rarity: 'common',
+    basePrice: 50,
+    effects: [],
+    flavor: '越长的单词，爆发越猛。',
+  },
+
+  short_sprint: {
+    id: 'short_sprint',
+    name: '短词冲刺',
+    icon: '🏃',
+    description: '≤4字母单词技能产出+20%。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    flavor: '短小精悍，快步如飞。',
+  },
+
+  long_word_master: {
+    id: 'long_word_master',
+    name: '长词达人',
+    icon: '📏',
+    description: '6+字母单词完成时+1s。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    flavor: '长词之路，时间为伴。',
+  },
+
+  word_dealer: {
+    id: 'word_dealer',
+    name: '词语经销商',
+    icon: '🤑',
+    description: '出售词语时，下次刷新免费。',
+    rarity: 'epic',
+    basePrice: 120,
+    effects: [],
+    behaviorType: 'word_dealer',
+    flavor: '卖出一个词，赚回一次机会。',
+  },
+
+  key_storm: {
+    id: 'key_storm',
+    name: '全键风暴',
+    icon: '⛈️',
+    description: '得分×0.5。单词完成时，该词每命中1个技能，随机触发1个未被该词命中的已装备技能。',
+    rarity: 'legendary',
+    basePrice: 0,
+    effects: [],
+    behaviorType: 'key_storm',
+    flavor: '风暴席卷整个键盘，每个键都不会被遗忘。',
+  },
+
   // ==================== 通用遗物：打字/输入系统 (Story 36.2) ====================
 
   decelerate_reward: {
@@ -678,93 +759,7 @@ export const RELICS: Record<string, RelicData> = {
     flavor: '最熟悉的位置，最致命的一击。',
   },
 
-  key_storm: {
-    id: 'key_storm',
-    name: '全键风暴',
-    icon: '⛈️',
-    description: '得分×0.5。单词完成时，该词每命中1个技能，随机触发1个未被该词命中的已装备技能。',
-    rarity: 'legendary',
-    basePrice: 0,
-    effects: [],
-    subsystem: 'word',
-    behaviorType: 'key_storm',
-    flavor: '风暴席卷整个键盘，每个键都不会被遗忘。',
-  },
-
-  // ==================== 单词/词库系统遗物 (Story 36.7) ====================
-
-  word_collection: {
-    id: 'word_collection',
-    name: '词汇收藏',
-    icon: '📚',
-    description: '首次打出的单词+3金币。',
-    rarity: 'common',
-    basePrice: 50,
-    effects: [],
-    subsystem: 'word',
-    flavor: '每个新词都是一枚珍贵的收藏。',
-  },
-
-  short_sprint: {
-    id: 'short_sprint',
-    name: '短词冲刺',
-    icon: '🏃',
-    description: '≤4字母单词技能产出+20%。',
-    rarity: 'rare',
-    basePrice: 80,
-    effects: [],
-    subsystem: 'word',
-    flavor: '短小精悍，快步如飞。',
-  },
-
-  thick_deck: {
-    id: 'thick_deck',
-    name: '词库丰收',
-    icon: '📖',
-    description: '词库每5个词，商店词包-1金币。',
-    rarity: 'common',
-    basePrice: 50,
-    effects: [],
-    subsystem: 'word',
-    flavor: '词海无涯，积少成多。',
-  },
-
-  long_word_master: {
-    id: 'long_word_master',
-    name: '长词达人',
-    icon: '📏',
-    description: '6+字母单词完成时+1s。',
-    rarity: 'rare',
-    basePrice: 80,
-    effects: [],
-    subsystem: 'word',
-    flavor: '长词之路，时间为伴。',
-  },
-
-  word_dealer: {
-    id: 'word_dealer',
-    name: '词语经销商',
-    icon: '🤑',
-    description: '出售词语时，下次刷新免费。',
-    rarity: 'epic',
-    basePrice: 120,
-    effects: [],
-    subsystem: 'word',
-    behaviorType: 'word_dealer',
-    flavor: '卖出一个词，赚回一次机会。',
-  },
-
-  long_word_crit: {
-    id: 'long_word_crit',
-    name: '长词蓄力',
-    icon: '📏',
-    description: '≥6 字母单词暴击率 +12%。',
-    rarity: 'common',
-    basePrice: 50,
-    effects: [],
-    subsystem: 'word',
-    flavor: '越长的单词，爆发越猛。',
-  },
+  // ==================== 单词/词库系统遗物 → 已迁移至造词师专属遗物 ====================
 
   punctuation_liberation: {
     id: 'punctuation_liberation',

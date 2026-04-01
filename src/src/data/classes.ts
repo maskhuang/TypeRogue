@@ -42,7 +42,7 @@ export const CLASS_DEFINITIONS: Record<ClassId, ClassDefinition> = {
     name: '造词师',
     description: '操控输入层，通过字母碎片和采集队列手动构建词库。高确定性，精密工程师风格。',
     icon: '✍️',
-    uniqueResource: 'fragment',
+    uniqueResource: 'energy',
     loseFeature: 'pack-system',
     loseDescription: '失去牌包系统（商店无牌包 tab）',
     starterRelic: 'apprentice_notes',

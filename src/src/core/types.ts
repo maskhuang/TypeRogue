@@ -11,7 +11,7 @@ export type ClassId = 'none' | 'wordsmith' | 'metamorph';
 export type FeatureId = 'pack-system' | 'enchant-choice';
 
 // === 资源系统 ===
-export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'gold' | 'fragment' | 'mutagen';
+export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'gold' | 'energy' | 'mutagen';
 
 // === 产出者系统 ===
 export type ProducerOperator = 'add' | 'multiply';
@@ -158,7 +158,7 @@ export interface ResourceState {
   multiplier: number;  // 倍率（基础 + 连击 + 技能加成）
   time: number;        // 时间资源（倒计时秒数）
   gold: number;        // 金币资源（跨词累加，战斗结束转入 state.gold）
-  fragment: number;    // 字母碎片（造词师专属，本关累计）
+  energy: number;      // 能量（造词师专属，本关累计）
   mutagen: number;     // 变异素（蜕变师专属，本关累计）
 }
 

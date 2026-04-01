@@ -452,7 +452,7 @@ export function resolvePhase1(skill: AffixSkillInstance): number {
  * 对齐设计文档 §五 和现有 converters.ts:getSourceValue。
  */
 export function getAffixSourceValue(source: ResourceType, ctx: TriggerContext): number {
-  if (source === 'fragment' || source === 'mutagen') {
+  if (source === 'energy' || source === 'mutagen') {
     return ctx.classResourceProduced[source] ?? 0
   }
   if (source === 'score') {
@@ -765,7 +765,7 @@ export function resolvePhase3(
         // 质变后：惩罚转化为随机资源（不产生负值，排除职业限制资源）
         const otherResources = ALL_RESOURCES.filter(r => {
           if (r === skill.resource) return false
-          if (r === 'fragment' && (!ctx.playerClass || ctx.playerClass === 'metamorph')) return false
+          if (r === 'energy' && (!ctx.playerClass || ctx.playerClass === 'metamorph')) return false
           if (r === 'mutagen' && (!ctx.playerClass || ctx.playerClass === 'wordsmith')) return false
           return true
         })
@@ -796,7 +796,7 @@ export function getEffectiveInterval(baseInterval: number, skillId: string, ctx:
   return Math.max(1, Math.round(interval))
 }
 
-export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
+export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'energy', 'mutagen']
 export const MAX_RECURSE_DEPTH = 10
 export const MAX_CHAIN_DEPTH = 20
 
@@ -837,7 +837,7 @@ export const RES_ENCHANTMENT_BY_RESOURCE: Partial<Record<ResourceType, Enchantme
 /** 根据职业过滤可用资源 */
 export function getClassResources(playerClass?: string): ResourceType[] {
   const pool: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
-  if (playerClass === 'wordsmith') pool.push('fragment')
+  if (playerClass === 'wordsmith') pool.push('energy')
   if (playerClass === 'metamorph') pool.push('mutagen')
   return pool
 }
@@ -1771,12 +1771,12 @@ export function getTransmuteEligibleResources(
   skillResource: ResourceType,
   playerClass?: string,
 ): ResourceType[] {
-  const allResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'fragment', 'mutagen']
+  const allResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'energy', 'mutagen']
   return allResources.filter(r => {
     // 排除与自身相同的资源
     if (r === skillResource) return false
     // fragment: 仅造词师可用
-    if (r === 'fragment' && (!playerClass || playerClass === 'metamorph')) return false
+    if (r === 'energy' && (!playerClass || playerClass === 'metamorph')) return false
     // mutagen: 仅蜕变师可用
     if (r === 'mutagen' && (!playerClass || playerClass === 'wordsmith')) return false
     return true

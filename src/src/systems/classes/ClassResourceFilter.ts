@@ -7,12 +7,12 @@ import type { ResourceType, ClassId } from '../../core/types';
 
 /** 职业资源 → 所需职业 ID 映射 */
 const CLASS_RESOURCE_MAP: Partial<Record<ResourceType, ClassId>> = {
-  fragment: 'wordsmith',
+  energy: 'wordsmith',
   mutagen: 'metamorph',
 };
 
 /** 所有职业资源类型 */
-const CLASS_RESOURCES: ResourceType[] = ['fragment', 'mutagen'];
+const CLASS_RESOURCES: ResourceType[] = ['energy', 'mutagen'];
 
 /**
  * 判断资源类型是否对当前职业激活

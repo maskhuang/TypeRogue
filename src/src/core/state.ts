@@ -51,7 +51,7 @@ export function createInitialState(): GameState {
       multiplier: BALANCE.BASE_MULTIPLIER,
       time: BALANCE.TIME_PER_LEVEL,
       gold: 0,
-      fragment: 0,
+      energy: 0,
       mutagen: 0,
     },
     cycle: 1,

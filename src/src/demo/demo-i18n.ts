@@ -353,14 +353,14 @@ const ZH: Record<string, string> = {
   'resource.multiplier': '倍率',
   'resource.time': '时间',
   'resource.gold': '金币',
-  'resource.fragment': '碎片',
+  'resource.energy': '能量',
   'resource.mutagen': '变异素',
   'resource.base.desc': '每个单词的基础分数，由产出技能累积',
   'resource.score.desc': '直接加入总分的分数资源',
   'resource.multiplier.desc': '乘以基数来放大单词最终得分',
   'resource.time.desc': '剩余时间（秒），归零则关卡失败',
   'resource.gold.desc': '商店中购买技能和升级的通用货币',
-  'resource.fragment.desc': '造词师职业专属资源',
+  'resource.energy.desc': '造词师职业专属资源',
   'resource.mutagen.desc': '蜕变师职业专属资源',
 
   // --- skill school labels ---
@@ -392,7 +392,7 @@ const ZH: Record<string, string> = {
   'unit.multiplier': '倍率',
   'unit.time': '秒',
   'unit.gold': '币',
-  'unit.fragment': '碎片',
+  'unit.energy': '能量',
   'unit.mutagen': '变异素',
 
   // --- skill feedback ---
@@ -602,7 +602,7 @@ const ZH: Record<string, string> = {
   // --- transmute names (7) ---
   'transmute_name.base': '衍生·基数', 'transmute_name.score': '衍生·分数',
   'transmute_name.multiplier': '衍生·倍率', 'transmute_name.time': '衍生·时间',
-  'transmute_name.gold': '衍生·金币', 'transmute_name.fragment': '衍生·碎片',
+  'transmute_name.gold': '衍生·金币', 'transmute_name.energy': '衍生·能量',
   'transmute_name.mutagen': '衍生·变异素',
 
   // --- enchantment meta (name + desc) ---
@@ -1101,14 +1101,14 @@ const EN: Record<string, string> = {
   'resource.multiplier': 'Multiplier',
   'resource.time': 'Time',
   'resource.gold': 'Gold',
-  'resource.fragment': 'Fragment',
+  'resource.energy': 'Energy',
   'resource.mutagen': 'Mutagen',
   'resource.base.desc': 'Base score per word, accumulated by producer skills',
   'resource.score.desc': 'Points added directly to total score',
   'resource.multiplier.desc': 'Multiplied with base to amplify final word score',
   'resource.time.desc': 'Remaining time in seconds; stage fails at zero',
   'resource.gold.desc': 'Currency for buying skills and upgrades in shop',
-  'resource.fragment.desc': 'Wordsmith class-exclusive resource',
+  'resource.energy.desc': 'Wordsmith class-exclusive resource',
   'resource.mutagen.desc': 'Metamorph class-exclusive resource',
 
   // --- skill school labels ---
@@ -1140,7 +1140,7 @@ const EN: Record<string, string> = {
   'unit.multiplier': 'mult',
   'unit.time': 's',
   'unit.gold': 'g',
-  'unit.fragment': 'frag',
+  'unit.energy': 'energy',
   'unit.mutagen': 'mut',
 
   // --- skill feedback ---
@@ -1350,7 +1350,7 @@ const EN: Record<string, string> = {
   // --- transmute names (7) ---
   'transmute_name.base': 'Transmute·Base', 'transmute_name.score': 'Transmute·Score',
   'transmute_name.multiplier': 'Transmute·Mult', 'transmute_name.time': 'Transmute·Time',
-  'transmute_name.gold': 'Transmute·Gold', 'transmute_name.fragment': 'Transmute·Fragment',
+  'transmute_name.gold': 'Transmute·Gold', 'transmute_name.energy': 'Transmute·Energy',
   'transmute_name.mutagen': 'Transmute·Mutagen',
 
   // --- enchantment meta (name + desc) ---

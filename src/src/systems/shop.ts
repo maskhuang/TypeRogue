@@ -142,7 +142,7 @@ export function getShapeDescription(shapeId: string, cellCount: number): string 
 /** 职业可用资源池（排除非对应职业的 fragment/mutagen） */
 function getAvailableResources(classId: string): ResourceType[] {
   const all: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
-  if (classId === 'wordsmith') all.push('fragment');
+  if (classId === 'wordsmith') all.push('energy');
   if (classId === 'metamorph') all.push('mutagen');
   return all;
 }
