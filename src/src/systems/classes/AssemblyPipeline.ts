@@ -14,6 +14,21 @@ export const ENERGY_PER_SLOT = 5;
 /** 流水线最大长度（防止超长词） */
 export const MAX_PIPELINE_LENGTH = 12;
 
+/** 获取有效能量需求/槽位（应用遗物修正） */
+export function getEffectiveEnergyPerSlot(letter?: string, targetWord?: string): number {
+  let eps = ENERGY_PER_SLOT;
+  // 大师词典：能量需求-20%
+  if (state.player.relics.has('masters_lexicon')) {
+    eps *= 0.8;
+  }
+  // 共鸣字模：重复字母槽位能量需求-50%
+  if (letter && targetWord && state.player.relics.has('resonance_mold')) {
+    const count = targetWord.split('').filter(ch => ch === letter).length;
+    if (count >= 2) eps *= 0.5;
+  }
+  return eps;
+}
+
 // === 流水线操作 ===
 
 /**
@@ -83,6 +98,35 @@ export function advancePipeline(
   return { pipeline, completed, remainingEnergy: remaining };
 }
 
+/**
+ * 遗物感知版推进：每个槽位使用 getEffectiveEnergyPerSlot 计算能量需求。
+ */
+function advancePipelineWithRelics(
+  pipeline: AssemblyPipeline,
+  energy: number,
+): { pipeline: AssemblyPipeline; completed: boolean; remainingEnergy: number } {
+  let remaining = energy;
+
+  for (const slot of pipeline.slots) {
+    if (slot.completed) continue;
+    if (remaining <= 0) break;
+
+    const eps = getEffectiveEnergyPerSlot(slot.letter, pipeline.targetWord);
+    const needed = (1 - slot.progress) * eps;
+    if (remaining >= needed) {
+      slot.progress = 1;
+      slot.completed = true;
+      remaining -= needed;
+    } else {
+      slot.progress += remaining / eps;
+      remaining = 0;
+    }
+  }
+
+  const completed = pipeline.slots.every(s => s.completed);
+  return { pipeline, completed, remainingEnergy: remaining };
+}
+
 // === 状态操作 ===
 
 /**
@@ -93,7 +137,7 @@ export function advancePipeline(
 export function routeEnergyToPipeline(energy: number): void {
   if (!state.assemblyPipeline) return;
 
-  const result = advancePipeline(state.assemblyPipeline, energy);
+  const result = advancePipelineWithRelics(state.assemblyPipeline, energy);
   state.assemblyPipeline = result.pipeline;
 
   if (result.completed) {

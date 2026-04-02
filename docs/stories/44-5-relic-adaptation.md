@@ -1,6 +1,6 @@
 # Story 44.5: 遗物适配 + 存档迁移
 
-## Status: ready-for-dev
+## Status: done
 
 ## Story
 

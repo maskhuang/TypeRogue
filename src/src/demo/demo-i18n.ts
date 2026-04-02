@@ -1708,10 +1708,10 @@ const ITEM_DESCS_EN: Record<string, string> = {
   gene_stabilizer: 'Unlock single-affix mutation (replace one affix only)',
   chaos_seed: 'Random unenchanted skill gets enchanted each stage',
   fittest_survivors: 'Metamorphed skills output +20% this stage',
-  masters_lexicon: 'All letter fragments +2, harvest queue +2 slots',
-  perpetual_queue: 'Auto-harvest one round at battle start',
+  masters_lexicon: 'All letter fragments +2, pipeline energy cost -20%',
+  perpetual_queue: 'Pipeline auto-advances 2 slots at battle start',
   word_scissors: 'Disassemble crafted words, refund all fragments',
-  resonance_mold: 'Duplicate letters cost no gold when crafting',
+  resonance_mold: 'Duplicate letter slots in pipeline cost -50% energy',
   // Typing subsystem relics
   decelerate_reward: 'Current word slower than last: +0.5s time',
   accelerate_reward: 'Current word faster than last: +2 gold',
