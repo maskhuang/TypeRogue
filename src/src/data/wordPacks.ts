@@ -40,7 +40,7 @@ const PACK_RARITY_EXCLUDED_CONDITIONS: Record<SkillRarity, Set<PackConditionType
 // === 全量词汇缓存（惰性初始化） ===
 let _allWords: string[] | null = null;
 
-function getAllWords(): string[] {
+export function getAllWords(): string[] {
   if (!_allWords) {
     const seen = new Set<string>();
     _allWords = [];

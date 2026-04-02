@@ -7,6 +7,7 @@ import { state } from '../../core/state';
 import { playSound } from '../../effects/sound';
 import { showFeedback } from '../battle';
 import { createPipeline, MAX_PIPELINE_LENGTH } from './AssemblyPipeline';
+import { getAllWords } from '../../data/wordPacks';
 import { applyApprenticeEvent } from '../../data/affixTrigger';
 import { getApprenticeGrowthMultiplier } from '../relics/EnchantmentRelicBehaviors';
 
@@ -99,6 +100,23 @@ function renderPipelineStatus(container: HTMLElement): void {
     }
 
     section.appendChild(slotsRow);
+
+    // 取消组装按钮（返还碎片）
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'craft-confirm-btn craft-cancel-btn';
+    cancelBtn.textContent = '取消组装（返还碎片）';
+    cancelBtn.onclick = () => {
+      // 返还碎片
+      for (const slot of pipeline.slots) {
+        if (/[a-z]/.test(slot.letter)) {
+          state.fragmentInventory[slot.letter] = (state.fragmentInventory[slot.letter] || 0) + 1;
+        }
+      }
+      state.assemblyPipeline = null;
+      showFeedback('组装已取消，碎片已返还', '#88ccff');
+      rerender();
+    };
+    section.appendChild(cancelBtn);
   }
 
   container.appendChild(section);
@@ -203,7 +221,8 @@ function renderWordBuilder(container: HTMLElement): void {
   if (currentWordLetters.length >= 2) {
     const word = currentWordLetters.join('').toLowerCase();
     const tooLong = word.length > MAX_PIPELINE_LENGTH;
-    const canStart = !tooLong;
+    const hasFragments = canBuildWord(word, state.fragmentInventory);
+    const canStart = !tooLong && hasFragments;
 
     const btn = document.createElement('button');
     btn.className = 'craft-confirm-btn';
@@ -268,7 +287,12 @@ function renderSuggestedWords(container: HTMLElement): void {
     tag.textContent = word;
     tag.title = '点击选择';
     tag.onclick = () => {
-      currentWordLetters = word.split('');
+      // 验证碎片仍然足够（可能在选择前被消耗）
+      if (canBuildWord(word, state.fragmentInventory)) {
+        currentWordLetters = word.split('');
+      } else {
+        showFeedback('碎片已不足!', '#ff6b6b');
+      }
       rerender();
     };
     list.appendChild(tag);
@@ -278,26 +302,18 @@ function renderSuggestedWords(container: HTMLElement): void {
   container.appendChild(section);
 }
 
-/** 从全局词库候选中筛选当前碎片可拼出的词，按词长排序 */
+/** 从全局词库中筛选当前碎片可拼出且未拥有的词，按词长排序 */
 function findBuildableWords(): string[] {
   const inv = state.fragmentInventory;
-  // 候选来源：所有已见过的词（不在 wordDeck 中的）
-  const allWords = new Set<string>();
-  // 从词库备选池中收集候选（如果有）
-  if ((state as any).wordPool) {
-    for (const w of (state as any).wordPool) allWords.add(w.toLowerCase());
-  }
-  // 也从 craftedWords 的反面考虑——已在词库中的词不需要再组装
   const owned = new Set(state.player.wordDeck.map(w => w.toLowerCase()));
 
   const result: string[] = [];
-  for (const word of allWords) {
+  for (const word of getAllWords()) {
     if (owned.has(word)) continue;
     if (word.length < 2 || word.length > MAX_PIPELINE_LENGTH) continue;
     if (canBuildWord(word, inv)) result.push(word);
   }
 
-  // 按词长排序（短词优先）
   result.sort((a, b) => a.length - b.length);
   return result;
 }
