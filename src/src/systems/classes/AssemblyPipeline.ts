@@ -5,8 +5,6 @@
 
 import { state } from '../../core/state';
 import type { AssemblyPipeline, AssemblySlot } from '../../core/types';
-import { showFeedback } from '../battle';
-import { playSound } from '../../effects/sound';
 
 // === 常量 ===
 
@@ -110,16 +108,22 @@ export function routeEnergyToPipeline(energy: number): void {
     }
     // 清空流水线
     state.assemblyPipeline = null;
-    // AC3: 组装完成反馈
-    showFeedback(`✨ 词语组装完成: ${word}`, '#4ecdc4');
-    playSound('buy');
+    // 返回完成的词供调用方处理反馈
+    _lastCompletedWord = word;
   }
-
-  // AC2: 刷新战斗 HUD（如果在战斗中）
-  updatePipelineHUD();
 }
 
-/** 战斗 HUD 流水线进度更新 */
+/** 上次完成的词（供调用方读取后清零） */
+let _lastCompletedWord: string | null = null;
+
+/** 获取并清除上次完成的词 */
+export function consumeCompletedWord(): string | null {
+  const w = _lastCompletedWord;
+  _lastCompletedWord = null;
+  return w;
+}
+
+/** 战斗 HUD 流水线进度更新（纯 DOM API，无 innerHTML） */
 export function updatePipelineHUD(): void {
   const el = document.getElementById('pipeline-hud');
   if (!el) return;
@@ -132,15 +136,19 @@ export function updatePipelineHUD(): void {
   }
 
   el.style.display = '';
-  let html = '';
+  el.textContent = '';
   for (const slot of pipeline.slots) {
+    const span = document.createElement('span');
     if (slot.completed) {
-      html += `<span class="ph-done">${slot.letter.toUpperCase()}✓</span>`;
+      span.className = 'ph-done';
+      span.textContent = `${slot.letter.toUpperCase()}✓`;
     } else if (slot.progress > 0) {
-      html += `<span class="ph-active">${slot.letter.toUpperCase()}▶</span>`;
+      span.className = 'ph-active';
+      span.textContent = `${slot.letter.toUpperCase()}▶`;
     } else {
-      html += `<span class="ph-pending">${slot.letter.toUpperCase()}</span>`;
+      span.className = 'ph-pending';
+      span.textContent = slot.letter.toUpperCase();
     }
+    el.appendChild(span);
   }
-  el.innerHTML = html;
 }

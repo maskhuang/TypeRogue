@@ -10,7 +10,7 @@ import { t } from '../demo/demo-i18n';
 import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
 import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete, getChargeAutoCritBonus } from './battle';
-import { routeEnergyToPipeline } from './classes/AssemblyPipeline';
+import { routeEnergyToPipeline, consumeCompletedWord, updatePipelineHUD } from './classes/AssemblyPipeline';
 import { getFloatScale } from '../effects/juice';
 import { eventBus } from '../core/events/EventBus';
 import { random } from '../core/seededRandom';
@@ -413,7 +413,15 @@ function triggerAffixSkillWithFeedback(
         }
       }
       if (resource === 'energy') {
+        state.classResourceProduced.energy = (state.classResourceProduced.energy ?? 0) + Math.abs(amount);
         routeEnergyToPipeline(Math.abs(amount));
+        // 组装完成反馈（AssemblyPipeline 纯数据层不含 UI 依赖）
+        const completedWord = consumeCompletedWord();
+        if (completedWord) {
+          showFeedback(`✨ 词语组装完成: ${completedWord}`, '#4ecdc4');
+          playSound('buy');
+        }
+        updatePipelineHUD();
       } else if (resource === 'mutagen') {
         state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + Math.abs(amount);
         state.mutagenInventory += Math.abs(amount);

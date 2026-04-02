@@ -48,7 +48,7 @@ export function distributeFragments(amount: number): Record<string, number> {
  * 统一入口，供 triggerProducer / triggerConverter / triggerConverterWithReduction 调用
  */
 export function routeFragmentsToInventory(absDelta: number): void {
-  state.classResourceProduced.fragment = (state.classResourceProduced.fragment ?? 0) + absDelta;
+  state.classResourceProduced.energy = (state.classResourceProduced.energy ?? 0) + absDelta;
   const distributed = distributeFragments(absDelta);
   for (const [letter, count] of Object.entries(distributed)) {
     state.fragmentInventory[letter] = (state.fragmentInventory[letter] ?? 0) + count;
