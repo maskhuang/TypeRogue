@@ -1,6 +1,6 @@
 # Story 44.3: 造词台流水线 UI
 
-## Status: ready-for-dev
+## Status: done
 
 ## Story
 
