@@ -416,9 +416,42 @@ development_status:
   41-5-charge-mirror-redesign: done
   epic-41-retrospective: done
 
+  # ===== Epic 42: 暴击/叠层子系统重构 =====
+  epic-42: done
+  42-1-crit-subsystem-merge: done        # 蓄力/衰减/禁忌并入暴击子系统
+  42-2-charge-transform-shared-crit: done # 蓄力质变：自动补全共享暴击率
+  42-3-fate-coin-rework: done            # 命运硬币：超出50%暴击率→暴击倍数
+  42-4-pulse-amplify-rework: done        # 脉冲/增幅重做 + 描述统一「匹配」
+  42-5-unified-stacks: done              # triggerCount + amplifyStacks → stacks
+  42-6-pulse-self-trigger: done          # 脉冲爆发改为自触发
+  42-7-recurse-echo-crit: done           # 递归/回声指套并入暴击重触发
+  42-8-war-drum-affix: done              # 新词条「战鼓」+ 触发链叠层式统一
+  42-9-stacking-chain-interval: done     # 溅射/共鸣/中转改为叠层间隔式
+  42-10-stacking-relics: done            # 叠层子系统10个遗物（定义+行为+实现）
+  42-11-surge-implementation: done       # 浪涌遗物完成（ctx.surgeBonus）
+  epic-42-retrospective: optional
+
+  # ===== Epic 43: 职业遗物重组 =====
+  epic-43: done
+  43-1-enchantment-to-metamorph: done    # 附魔系统遗物→蜕变师专属
+  43-2-word-to-wordsmith: done           # 单词/词库遗物→造词师专属
+  43-3-fragment-to-energy: done          # 碎片资源→能量资源（数据层改名）
+  43-4-key-storm-punctuation-swap: done  # 全键风暴↔标点解放位置互换
+  43-5-relic-system-doc-update: done     # relic-system.md 更新
+  epic-43-retrospective: optional
+
+  # ===== Epic 44: 造词师词语组装流水线 =====
+  epic-44: backlog
+  44-1-assembly-pipeline-data: backlog   # AssemblyPipeline 接口 + GameState
+  44-2-word-pack-disassemble: backlog    # 词包购买→碎片拆解
+  44-3-crafting-station-ui: backlog      # 造词台流水线 UI
+  44-4-battle-energy-routing: backlog    # 能量产出→流水线推进
+  44-5-relic-adaptation: backlog         # 遗物适配（大师词典/永动队列/共鸣字模）
+  epic-44-retrospective: optional
+
 # Summary:
-# - Total Epics: 41
-# - Total Stories: 223
-# - Epics Completed: 40
+# - Total Epics: 44
+# - Total Stories: 240
+# - Epics Completed: 42
 # - Epics In-Progress: 0
-# - Epics Backlog: 1 (38)
+# - Epics Backlog: 2 (38, 44)
