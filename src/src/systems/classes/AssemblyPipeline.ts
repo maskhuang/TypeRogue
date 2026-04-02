@@ -5,6 +5,8 @@
 
 import { state } from '../../core/state';
 import type { AssemblyPipeline, AssemblySlot } from '../../core/types';
+import { showFeedback } from '../battle';
+import { playSound } from '../../effects/sound';
 
 // === 常量 ===
 
@@ -108,5 +110,37 @@ export function routeEnergyToPipeline(energy: number): void {
     }
     // 清空流水线
     state.assemblyPipeline = null;
+    // AC3: 组装完成反馈
+    showFeedback(`✨ 词语组装完成: ${word}`, '#4ecdc4');
+    playSound('buy');
   }
+
+  // AC2: 刷新战斗 HUD（如果在战斗中）
+  updatePipelineHUD();
+}
+
+/** 战斗 HUD 流水线进度更新 */
+export function updatePipelineHUD(): void {
+  const el = document.getElementById('pipeline-hud');
+  if (!el) return;
+
+  const pipeline = state.assemblyPipeline;
+  if (!pipeline) {
+    el.textContent = '';
+    el.style.display = 'none';
+    return;
+  }
+
+  el.style.display = '';
+  let html = '';
+  for (const slot of pipeline.slots) {
+    if (slot.completed) {
+      html += `<span class="ph-done">${slot.letter.toUpperCase()}✓</span>`;
+    } else if (slot.progress > 0) {
+      html += `<span class="ph-active">${slot.letter.toUpperCase()}▶</span>`;
+    } else {
+      html += `<span class="ph-pending">${slot.letter.toUpperCase()}</span>`;
+    }
+  }
+  el.innerHTML = html;
 }

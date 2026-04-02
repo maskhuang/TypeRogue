@@ -2452,6 +2452,13 @@ export function updateHUD(): void {
   if (state.classId === 'wordsmith') {
     const el = document.getElementById('fragment-produced');
     if (el) el.textContent = String(Math.floor(state.classResourceProduced.energy ?? 0));
+    // 流水线 HUD（由 AssemblyPipeline.updatePipelineHUD 管理，此处确保元素存在）
+    if (!document.getElementById('pipeline-hud')) {
+      const hud = document.createElement('div');
+      hud.id = 'pipeline-hud';
+      hud.className = 'pipeline-hud';
+      document.getElementById('battle-hud')?.appendChild(hud);
+    }
   } else if (state.classId === 'metamorph') {
     const mutagenEl = document.getElementById('mutagen-count');
     if (mutagenEl) mutagenEl.textContent = String(Math.floor(state.mutagenInventory));

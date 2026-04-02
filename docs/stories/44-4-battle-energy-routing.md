@@ -1,6 +1,6 @@
 # Story 44.4: 战斗能量路由 → 流水线推进
 
-## Status: ready-for-dev
+## Status: done
 
 ## Story
 
