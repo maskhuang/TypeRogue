@@ -15,7 +15,7 @@ export const ENERGY_PER_SLOT = 5;
 export const MAX_PIPELINE_LENGTH = 12;
 
 /** 获取有效能量需求/槽位（应用遗物修正） */
-export function getEffectiveEnergyPerSlot(letter?: string, targetWord?: string): number {
+function getEffectiveEnergyPerSlot(letter?: string, targetWord?: string): number {
   let eps = ENERGY_PER_SLOT;
   // 大师词典：能量需求-20%
   if (state.player.relics.has('masters_lexicon')) {
@@ -68,40 +68,9 @@ export function createPipeline(
 }
 
 /**
- * 推进流水线：能量从左到右填充槽位。
- * @param energyPerSlot 每槽位能量需求（可被遗物修正）
- * @returns 更新后的流水线 + 是否完成 + 剩余能量
+ * 推进流水线：能量从左到右填充槽位（每槽位应用遗物修正）。
  */
-export function advancePipeline(
-  pipeline: AssemblyPipeline,
-  energy: number,
-  energyPerSlot: number = ENERGY_PER_SLOT,
-): { pipeline: AssemblyPipeline; completed: boolean; remainingEnergy: number } {
-  let remaining = energy;
-
-  for (const slot of pipeline.slots) {
-    if (slot.completed) continue;
-    if (remaining <= 0) break;
-
-    const needed = (1 - slot.progress) * energyPerSlot;
-    if (remaining >= needed) {
-      slot.progress = 1;
-      slot.completed = true;
-      remaining -= needed;
-    } else {
-      slot.progress += remaining / energyPerSlot;
-      remaining = 0;
-    }
-  }
-
-  const completed = pipeline.slots.every(s => s.completed);
-  return { pipeline, completed, remainingEnergy: remaining };
-}
-
-/**
- * 遗物感知版推进：每个槽位使用 getEffectiveEnergyPerSlot 计算能量需求。
- */
-function advancePipelineWithRelics(
+function advancePipeline(
   pipeline: AssemblyPipeline,
   energy: number,
 ): { pipeline: AssemblyPipeline; completed: boolean; remainingEnergy: number } {
@@ -137,7 +106,7 @@ function advancePipelineWithRelics(
 export function routeEnergyToPipeline(energy: number): void {
   if (!state.assemblyPipeline) return;
 
-  const result = advancePipelineWithRelics(state.assemblyPipeline, energy);
+  const result = advancePipeline(state.assemblyPipeline, energy);
   state.assemblyPipeline = result.pipeline;
 
   if (result.completed) {
