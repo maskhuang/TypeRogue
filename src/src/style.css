@@ -1692,12 +1692,12 @@ body {
 
 /* 附魔光晕（稀有度颜色通过 --enchant-color 注入） */
 .key-slot.enchanted-glow {
-    box-shadow: 0 0 6px 1px var(--enchant-color, #fff);
+    box-shadow: 0 0 4px 0px color-mix(in srgb, var(--enchant-color, #fff) 50%, transparent);
     animation: enchantPulse 2.5s ease-in-out infinite;
 }
 @keyframes enchantPulse {
-    0%, 100% { box-shadow: 0 0 6px 1px var(--enchant-color, #fff); }
-    50% { box-shadow: 0 0 12px 3px var(--enchant-color, #fff); }
+    0%, 100% { box-shadow: 0 0 4px 0px color-mix(in srgb, var(--enchant-color, #fff) 50%, transparent); }
+    50% { box-shadow: 0 0 8px 1px color-mix(in srgb, var(--enchant-color, #fff) 50%, transparent); }
 }
 
 /* 技能流派底色 */

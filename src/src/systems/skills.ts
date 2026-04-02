@@ -134,8 +134,9 @@ export function updateChargeProducers(dt: number): string[] {
     const maxBonus = chargeAffix.maxBonus ?? 0
     if (rt.chargeAccumulated >= maxBonus) continue
 
+    // 始终 1 秒蓄满：速率 = maxBonus / 1s（忽略 gainPerSec）
     rt.chargeAccumulated = Math.min(
-      rt.chargeAccumulated + (chargeAffix.gainPerSec ?? 0) * dt,
+      rt.chargeAccumulated + maxBonus * dt,
       maxBonus,
     )
     if (rt.chargeAccumulated >= maxBonus) {

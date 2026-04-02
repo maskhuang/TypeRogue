@@ -354,10 +354,14 @@ class KeyTooltipManager {
       this.glossaryTimerId = setTimeout(() => {
         const glossaryEl = el.querySelector('.tooltip-glossary') as HTMLElement | null
         if (glossaryEl) {
-          glossaryEl.style.maxHeight = glossaryEl.scrollHeight + 'px'
+          // border-box 下 maxHeight 包含 padding，需额外补偿 paddingTop
+          const GLOSSARY_PAD_TOP = 6
+          glossaryEl.style.maxHeight = (glossaryEl.scrollHeight + GLOSSARY_PAD_TOP) + 'px'
           glossaryEl.style.opacity = '1'
-          glossaryEl.style.marginTop = '6px'
-          glossaryEl.style.paddingTop = '6px'
+          glossaryEl.style.marginTop = `${GLOSSARY_PAD_TOP}px`
+          glossaryEl.style.paddingTop = `${GLOSSARY_PAD_TOP}px`
+          // 展开动画(0.3s)结束后重新检测视口边界，防止底部遮挡
+          setTimeout(() => this.clampToViewport(el), 320)
         }
       }, GLOSSARY_DELAY_MS)
     }
@@ -392,6 +396,25 @@ class KeyTooltipManager {
    */
   isVisible(): boolean {
     return !!this.tooltip && this.tooltip.style.display !== 'none' && this.tooltip.style.display !== ''
+  }
+
+  /**
+   * 将 tooltip 限制在视口内（用于术语展开后重新定位）
+   */
+  private clampToViewport(el: HTMLElement): void {
+    if (typeof el.getBoundingClientRect !== 'function') return
+    const rect = el.getBoundingClientRect()
+    const vh = window.innerHeight
+    const vw = window.innerWidth
+    const margin = 8
+    if (rect.bottom > vh - margin) {
+      const top = Math.max(margin, vh - rect.height - margin)
+      el.style.top = `${top}px`
+    }
+    if (rect.right > vw - margin) {
+      const left = Math.max(margin, vw - rect.width - margin)
+      el.style.left = `${left}px`
+    }
   }
 
   /**

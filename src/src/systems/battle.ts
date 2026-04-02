@@ -725,9 +725,9 @@ function playerCorrect(k: string): void {
       const chargeAffix = state.affixSkills.get(skillId)?.affixes.find(a => a.type === AffixType.Charge);
       const rt = state.affixSkillStates.get(skillId);
       const maxBonus = chargeAffix?.maxBonus ?? 1;
-      const gainPerSec = chargeAffix?.gainPerSec ?? 0.08;
       const remaining = maxBonus - (rt?.chargeAccumulated ?? 0);
-      const duration = remaining / gainPerSec;
+      // 始终 1 秒蓄满：速率 = maxBonus/s
+      const duration = remaining / maxBonus;
       letter.style.setProperty('--charge-duration', `${duration}s`);
       letter.classList.add('charging');
     } else {
