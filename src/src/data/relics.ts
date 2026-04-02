@@ -168,6 +168,8 @@ export interface RelicData {
   subsystem?: RelicSubsystem
   /** 行为类型（需要自定义逻辑的遗物） */
   behaviorType?: RelicBehaviorType
+  /** 效果依赖的子系统（与 subsystem 不同时使用；开局时该子系统不可用则排除） */
+  requiresSubsystem?: RelicSubsystem
 }
 
 /** 遗物槽位上限（1-0） */
@@ -804,7 +806,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'resource_focus',
     name: '资源专精',
     icon: '🔬',
-    description: '装备技能产出最多的资源类型，该类型产出+25%。',
+    description: '装备中数量最多的资源类型，该类型产出+25%。',
     rarity: 'rare',
     basePrice: 80,
     effects: [],
@@ -1311,6 +1313,7 @@ export const RELICS: Record<string, RelicData> = {
     effects: [],
     subsystem: 'combo',
     behaviorType: 'drum_pass',
+    requiresSubsystem: 'stacking',
     flavor: '鼓声不停，花就不落。',
   },
 
@@ -1324,6 +1327,7 @@ export const RELICS: Record<string, RelicData> = {
     effects: [],
     subsystem: 'word',
     behaviorType: 'word_resonance',
+    requiresSubsystem: 'stacking',
     flavor: '长词是沉默的鼓手。',
   },
 
@@ -1337,6 +1341,7 @@ export const RELICS: Record<string, RelicData> = {
     effects: [],
     subsystem: 'crit',
     behaviorType: 'crit_overflow',
+    requiresSubsystem: 'stacking',
     flavor: '力量溢出的余波，也能推动齿轮。',
   },
 

@@ -93,6 +93,67 @@ function safeColor(c: string): string {
   return /^[#a-zA-Z0-9(),.\s]+$/.test(c) ? c : '#aaa'
 }
 
+/**
+ * 机制关键词高亮：对描述中出现的游戏术语加下划线 + 微亮色，
+ * 帮助玩家识别需要理解的核心概念。
+ *
+ * 关键词按长度降序排列，避免短词误匹配长词的子串。
+ */
+const KW_STYLE = 'color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,0.35);text-underline-offset:2px'
+
+/** 术语 ID → 匹配模式（中英共享同一 ID） */
+const MECHANIC_KEYWORD_DEFS: Array<{ id: string; keywords: string[] }> = [
+  { id: 'matched',        keywords: ['匹配技能', 'matched skills', '匹配', 'matched'] },
+  { id: 'stack',           keywords: ['叠层', 'stack'] },
+  { id: 'range',           keywords: ['范围', 'range'] },
+  { id: 'transform',      keywords: ['质变', 'transform'] },
+  { id: 'crit',            keywords: ['暴击', 'crit'] },
+]
+
+/** 编译后的匹配列表（长词优先） */
+const MECHANIC_KW_PATTERNS: Array<{ id: string; pattern: RegExp }> = MECHANIC_KEYWORD_DEFS
+  .flatMap(def => def.keywords.map(kw => ({ id: def.id, kw, len: kw.length })))
+  .sort((a, b) => b.len - a.len)
+  .map(({ id, kw }) => ({ id, pattern: new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi') }))
+
+/** 当前 tooltip 中出现的术语 ID（每次 highlightKeywords 调用时重建） */
+let _matchedKeywordIds: Set<string> = new Set()
+
+/** 在已转义的 HTML 文本中高亮机制关键词，同时收集命中的术语 ID */
+function highlightKeywords(escaped: string): string {
+  const placeholders: string[] = []
+  for (const { id, pattern } of MECHANIC_KW_PATTERNS) {
+    escaped = escaped.replace(pattern, m => {
+      _matchedKeywordIds.add(id)
+      const idx = placeholders.length
+      placeholders.push(`<span style="${KW_STYLE}">${m}</span>`)
+      return `\x00KW${idx}\x00`
+    })
+  }
+  for (let i = 0; i < placeholders.length; i++) {
+    escaped = escaped.replace(`\x00KW${i}\x00`, placeholders[i])
+  }
+  return escaped
+}
+
+/** 术语详情（延迟展开用） */
+function buildGlossarySection(ids: Set<string>): string {
+  if (ids.size === 0) return ''
+  const lines: string[] = []
+  for (const def of MECHANIC_KEYWORD_DEFS) {
+    if (!ids.has(def.id)) continue
+    const term = t('glossary.' + def.id + '.term')
+    const detail = t('glossary.' + def.id + '.detail')
+    if (!term || term.startsWith('glossary.')) continue
+    lines.push(`<div class="tooltip-glossary-item"><span style="${KW_STYLE}">${esc(term)}</span> <span class="tooltip-glossary-detail">${esc(detail)}</span></div>`)
+  }
+  if (lines.length === 0) return ''
+  return `<div class="tooltip-section tooltip-glossary" style="border-top:1px solid rgba(255,255,255,0.15);margin-top:0;padding-top:0;max-height:0;overflow:hidden;opacity:0;transition:max-height 0.3s ease,opacity 0.3s ease,margin-top 0.3s ease,padding-top 0.3s ease;">${lines.join('')}</div>`
+}
+
+/** 延迟展开的时间（毫秒） */
+const GLOSSARY_DELAY_MS = 1500
+
 // ── 区块构建函数 ──
 
 /** 字母 + 分数 + 频率区 */
@@ -148,7 +209,7 @@ function buildAffixSection(skill: NonNullable<KeyTooltipData['skill']>): string 
         parts.push(`<div class="tooltip-affix-upgrade">${esc(affix.upgradeEffect)}</div>`)
       }
       if (affix.description) {
-        parts.push(`<div class="tooltip-affix-desc">${esc(affix.description)}</div>`)
+        parts.push(`<div class="tooltip-affix-desc">${highlightKeywords(esc(affix.description))}</div>`)
       }
     }
   }
@@ -165,12 +226,12 @@ function buildAffixSection(skill: NonNullable<KeyTooltipData['skill']>): string 
 
   // 机制信息
   if (skill.mechanicInfo) {
-    parts.push(`<div class="tooltip-mechanic">${esc(skill.mechanicInfo)}</div>`)
+    parts.push(`<div class="tooltip-mechanic">${highlightKeywords(esc(skill.mechanicInfo))}</div>`)
   }
 
   // 旧式附魔描述文本
   if (skill.enchantmentInfo) {
-    parts.push(`<div class="tooltip-enchantment-info">${esc(skill.enchantmentInfo)}</div>`)
+    parts.push(`<div class="tooltip-enchantment-info">${highlightKeywords(esc(skill.enchantmentInfo))}</div>`)
   }
 
   if (parts.length === 0) return ''
@@ -184,12 +245,12 @@ function buildEnchantSection(skill: NonNullable<KeyTooltipData['skill']>): strin
   if (skill.enchantments && skill.enchantments.length > 0) {
     for (const ench of skill.enchantments) {
       parts.push(`<div class="tooltip-ench-name" style="color:${safeColor(ench.color)};">${esc(ench.icon)} ${esc(ench.name)}</div>`)
-      parts.push(`<div class="tooltip-ench-desc">${esc(ench.desc)}</div>`)
+      parts.push(`<div class="tooltip-ench-desc">${highlightKeywords(esc(ench.desc))}</div>`)
     }
   }
 
   if (skill.questProgress) {
-    parts.push(`<div class="tooltip-quest">${esc(skill.questProgress)}</div>`)
+    parts.push(`<div class="tooltip-quest">${highlightKeywords(esc(skill.questProgress))}</div>`)
   }
 
   if (skill.apprenticeGrowth) {
@@ -241,6 +302,7 @@ function buildSummarySection(skill: NonNullable<KeyTooltipData['skill']>): strin
 class KeyTooltipManager {
   private tooltip: HTMLElement | null = null
   private positionRafId: number = 0
+  private glossaryTimerId: ReturnType<typeof setTimeout> | null = null
 
   /**
    * 确保 tooltip DOM 元素存在
@@ -265,6 +327,10 @@ class KeyTooltipManager {
    */
   show(x: number, y: number, data: KeyTooltipData, avoidRect?: { top: number; left: number; right: number; bottom: number }): void {
     const el = this.ensureElement()
+    this.clearGlossaryTimer()
+
+    // 重置关键词收集
+    _matchedKeywordIds = new Set()
 
     // 组合各区块（空区块不渲染）
     let html = buildLetterSection(data)
@@ -276,8 +342,25 @@ class KeyTooltipManager {
       html += buildSummarySection(data.skill)
     }
 
+    // 术语详情区（初始隐藏，延迟淡入）
+    const glossaryHtml = buildGlossarySection(_matchedKeywordIds)
+    html += glossaryHtml
+
     el.innerHTML = html
     el.style.display = 'block'
+
+    // 延迟展开术语详情
+    if (glossaryHtml) {
+      this.glossaryTimerId = setTimeout(() => {
+        const glossaryEl = el.querySelector('.tooltip-glossary') as HTMLElement | null
+        if (glossaryEl) {
+          glossaryEl.style.maxHeight = glossaryEl.scrollHeight + 'px'
+          glossaryEl.style.opacity = '1'
+          glossaryEl.style.marginTop = '6px'
+          glossaryEl.style.paddingTop = '6px'
+        }
+      }, GLOSSARY_DELAY_MS)
+    }
 
     // 定位（避免溢出视口，可选避开高亮区域）
     if (avoidRect) {
@@ -291,8 +374,16 @@ class KeyTooltipManager {
    * 隐藏 tooltip
    */
   hide(): void {
+    this.clearGlossaryTimer()
     if (this.tooltip) {
       this.tooltip.style.display = 'none'
+    }
+  }
+
+  private clearGlossaryTimer(): void {
+    if (this.glossaryTimerId != null) {
+      clearTimeout(this.glossaryTimerId)
+      this.glossaryTimerId = null
     }
   }
 

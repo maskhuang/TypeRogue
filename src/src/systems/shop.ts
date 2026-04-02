@@ -667,6 +667,16 @@ export function computeSmartEstimate(
         breakdown.push({ typeKey: 'cascade', label: t('est.cascade', { val: expectedMult.toFixed(2) }), detail })
         break
       }
+      case 'ligature': {
+        // Phase 3: 连字乘数 — 字母在单词中出现 ≥2 次时倍增
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        const avgMult = keys.length > 0 ? computeAvgLigatureMult(keys) : 1
+        if (avgMult > 1) {
+          multProduct *= avgMult
+          breakdown.push({ typeKey: 'ligature', label: t('est.ligature', { val: avgMult.toFixed(2) }), detail: '' })
+        }
+        break
+      }
       // 其余词条不预估
       default:
         break
@@ -789,6 +799,30 @@ function computeCascadeHitRate(boundKeys: string[], posRel: PositionRelation): n
     }
   }
   return total > 0 ? hits / total : 0
+}
+
+/** 统计连字词条期望乘数：绑定键字母在词中出现次数的加权平均 */
+function computeAvgLigatureMult(boundKeys: string[]): number {
+  const deck = state.player.wordDeck
+  if (!deck || deck.length === 0) return 1
+  const keySet = new Set(boundKeys.map(k => k.toLowerCase()))
+  let totalMult = 0
+  let totalTriggers = 0
+  for (const word of deck) {
+    const w = word.toLowerCase()
+    for (const key of keySet) {
+      let count = 0
+      for (const ch of w) {
+        if (ch === key) count++
+      }
+      if (count > 0) {
+        // 连字：出现 ≥2 次时乘以 count，否则 ×1
+        totalMult += count >= 2 ? count : 1
+        totalTriggers++
+      }
+    }
+  }
+  return totalTriggers > 0 ? totalMult / totalTriggers : 1
 }
 
 /** 自适应精度格式化：小值保留更多小数位 */

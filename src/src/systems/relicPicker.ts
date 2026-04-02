@@ -52,14 +52,24 @@ const METAMORPH_EXCLUSIVE_RELICS = new Set([
   'greedy_inscription',
 ]);
 
+/** 开局时不可用的子系统（玩家尚无对应类型技能） */
+const GAME_START_EXCLUDED_SUBSYSTEMS: Set<string> = new Set(['stacking']);
+
 export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRESETS.gameStart): string[] {
   const owned = state.player.relics;
   const classId = state.classId;
+  const isGameStart = weights === RELIC_WEIGHT_PRESETS.gameStart;
   const available = Object.keys(RELICS).filter(id => {
     if (owned.has(id)) return false;
     // 职业专属遗物过滤
     if (WORDSMITH_EXCLUSIVE_RELICS.has(id) && classId !== 'wordsmith') return false;
     if (METAMORPH_EXCLUSIVE_RELICS.has(id) && classId !== 'metamorph') return false;
+    // 开局排除依赖尚不可用子系统的遗物
+    if (isGameStart) {
+      const relic = RELICS[id];
+      if (relic.subsystem && GAME_START_EXCLUDED_SUBSYSTEMS.has(relic.subsystem)) return false;
+      if (relic.requiresSubsystem && GAME_START_EXCLUDED_SUBSYSTEMS.has(relic.requiresSubsystem)) return false;
+    }
     return true;
   });
 
