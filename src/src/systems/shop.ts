@@ -1688,12 +1688,26 @@ function purchasePackItem(index: number): void {
   const pack = item.pack;
 
   const finalizePurchase = (word: string) => {
-    state.player.wordDeck.push(word);
-    // 词语效果：史诗/传说词包附带效果写入 state
+    if (state.classId === 'wordsmith') {
+      // 造词师：词包拆解为碎片，不直接加入词库
+      const letters = word.toLowerCase().split('');
+      for (const ch of letters) {
+        state.fragmentInventory[ch] = (state.fragmentInventory[ch] ?? 0) + 1;
+      }
+      // 碎片明细
+      const counts: Record<string, number> = {};
+      for (const ch of letters) counts[ch] = (counts[ch] ?? 0) + 1;
+      const detail = Object.entries(counts).map(([l, n]) => `+${n}${l}`).join(' ');
+      showFeedback(t('shop.disassemble_word', { word, detail }), '#9b59b6');
+    } else {
+      // 非造词师：直接加入词库
+      state.player.wordDeck.push(word);
+      showFeedback(t('shop.add_word', { word }), '#4ecdc4');
+    }
+    // 词语效果：史诗/传说词包附带效果写入 state（造词师也保留效果绑定）
     if (pack.wordEffect) {
       state.wordEffects.set(word, pack.wordEffect);
     }
-    showFeedback(t('shop.add_word', { word }), '#4ecdc4');
     state.shop.items.splice(index, 1);
     renderUnifiedShop();
     renderBuildManager();

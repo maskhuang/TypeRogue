@@ -1,6 +1,6 @@
 # Story 44.2: 词包购买 → 碎片拆解
 
-## Status: ready-for-dev
+## Status: done
 
 ## Story
 

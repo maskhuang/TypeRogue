@@ -443,7 +443,7 @@ development_status:
   # ===== Epic 44: 造词师词语组装流水线 =====
   epic-44: in-progress
   44-1-assembly-pipeline-data: done              # AssemblyPipeline 接口 + GameState + 纯函数
-  44-2-word-pack-disassemble: ready-for-dev    # 词包购买→碎片拆解
+  44-2-word-pack-disassemble: done               # 词包购买→碎片拆解
   44-3-crafting-station-ui: ready-for-dev      # 造词台流水线 UI
   44-4-battle-energy-routing: ready-for-dev    # 能量产出→流水线推进 + HUD
   44-5-relic-adaptation: ready-for-dev         # 遗物适配 + 存档迁移
