@@ -36,12 +36,20 @@ export function hasUnownedRelics(): boolean {
 const WORDSMITH_EXCLUSIVE_RELICS = new Set([
   'apprentice_notes', 'masters_lexicon', 'perpetual_queue',
   'word_scissors', 'resonance_mold',
+  // 造词师词库遗物
+  'word_collection', 'thick_deck', 'long_word_crit',
+  'short_sprint', 'long_word_master', 'word_dealer',
+  'punctuation_liberation',
 ]);
 
 // 蜕变师专属遗物 ID 集合
 const METAMORPH_EXCLUSIVE_RELICS = new Set([
   'primal_mutant', 'ultimate_mutant_strain', 'gene_stabilizer',
   'chaos_seed', 'fittest_survivors',
+  // 蜕变师附魔遗物
+  'enchant_dividend', 'enchant_boost', 'rune_spike',
+  'apprentice_robe', 'trial_badge', 'fate_fork',
+  'greedy_inscription',
 ]);
 
 export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRESETS.gameStart): string[] {

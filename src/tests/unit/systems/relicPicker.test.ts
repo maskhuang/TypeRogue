@@ -73,11 +73,9 @@ describe('加权遗物候选生成 (Q2)', () => {
   })
 
   it('池不足时返回少于 3', () => {
-    // 造词师有 5 个专属遗物，拥有 4 个后只剩 1 个
-    const wordsmithRelics = getAllRelicIds().filter(id =>
-      ['apprentice_notes', 'masters_lexicon', 'perpetual_queue', 'word_scissors', 'resonance_mold'].includes(id)
-    )
-    wordsmithRelics.slice(1).forEach(id => state.player.relics.add(id))
+    // 拥有全部遗物，仅留 1 个未拥有
+    const allIds = getAllRelicIds()
+    allIds.slice(1).forEach(id => state.player.relics.add(id))
     const candidates = generateRelicCandidates()
     expect(candidates.length).toBe(1)
   })
@@ -88,10 +86,24 @@ describe('加权遗物候选生成 (Q2)', () => {
     expect(candidates.length).toBe(0)
   })
 
-  it('无职业时全部遗物被过滤（均为职业专属）', () => {
+  it('无职业时职业专属遗物被过滤', () => {
     state.classId = 'none'
     const candidates = generateRelicCandidates()
-    expect(candidates.length).toBe(0)
+    const exclusiveIds = [
+      'apprentice_notes', 'masters_lexicon', 'perpetual_queue',
+      'word_scissors', 'resonance_mold',
+      'word_collection', 'thick_deck', 'long_word_crit',
+      'short_sprint', 'long_word_master', 'word_dealer',
+      'punctuation_liberation',
+      'primal_mutant', 'ultimate_mutant_strain', 'gene_stabilizer',
+      'chaos_seed', 'fittest_survivors',
+      'enchant_dividend', 'enchant_boost', 'rune_spike',
+      'apprentice_robe', 'trial_badge', 'fate_fork',
+      'greedy_inscription',
+    ]
+    for (const c of candidates) {
+      expect(exclusiveIds).not.toContain(c)
+    }
   })
 })
 
