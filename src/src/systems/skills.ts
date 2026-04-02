@@ -13,7 +13,6 @@ import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutoc
 import { routeEnergyToPipeline } from './classes/AssemblyPipeline';
 import { getFloatScale } from '../effects/juice';
 import { eventBus } from '../core/events/EventBus';
-// routeFragmentsToInventory 已替换为 routeEnergyToPipeline (Epic 44)
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE } from '../data/affixTrigger';

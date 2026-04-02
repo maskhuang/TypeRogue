@@ -28,7 +28,8 @@ import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, 
 import { showBossModifierPicker, showEliteModifierPicker } from './bossModifierPicker';
 import { showActTransition, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
-import { routeFragmentsToInventory, getMaxQueueLength } from './classes/FragmentQueue';
+import { getMaxQueueLength } from './classes/FragmentQueue';
+import { routeEnergyToPipeline, ENERGY_PER_SLOT } from './classes/AssemblyPipeline';
 import { canAutocomplete, isRepeatWord, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors, checkSpeedRelics, recordKeypressForTaiko, checkTaikoHit, startTaikoSpawner, stopTaikoSpawner } from './relics/TypingRelicBehaviors';
 import { checkEchoThimble, calculateComboBuffer, checkComboDetonator, onComboBreakDetonator, hasImmortalCombo, saveLastBattleCombo, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus, onNewWordForCancel, checkCancelOnFirstLetter, getCancelChainBonus, getCancelChainCount, onCancelledWordComplete, onCancelledWordError, isWordCancelled } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing, checkD100OnBattleStart } from './relics/SkillRelicBehaviors';
@@ -2009,9 +2010,9 @@ export async function startLevel(): Promise<void> {
     state.resources.gold += startRelicResult.effects.gold;
     _battleRelicGold += startRelicResult.effects.gold;
   }
-  // 永动队列：战斗开始时自动采集完整一轮队列
+  // 永动队列：战斗开始时自动推进流水线（注入一轮队列等量能量）
   if (state.player.relics.has('perpetual_queue')) {
-    routeFragmentsToInventory(getMaxQueueLength());
+    routeEnergyToPipeline(ENERGY_PER_SLOT * 2);
   }
 
   // D100：每5场战斗替换所有技能词条
@@ -2450,7 +2451,7 @@ export function updateHUD(): void {
   // 职业资源 HUD 更新
   if (state.classId === 'wordsmith') {
     const el = document.getElementById('fragment-produced');
-    if (el) el.textContent = String(Math.floor(state.classResourceProduced.fragment ?? 0));
+    if (el) el.textContent = String(Math.floor(state.classResourceProduced.energy ?? 0));
   } else if (state.classId === 'metamorph') {
     const mutagenEl = document.getElementById('mutagen-count');
     if (mutagenEl) mutagenEl.textContent = String(Math.floor(state.mutagenInventory));

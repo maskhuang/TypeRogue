@@ -1690,7 +1690,7 @@ function purchasePackItem(index: number): void {
   const finalizePurchase = (word: string) => {
     if (state.classId === 'wordsmith') {
       // 造词师：词包拆解为碎片，不直接加入词库
-      const letters = word.toLowerCase().split('');
+      const letters = word.toLowerCase().replace(/[^a-z]/g, '').split('');
       for (const ch of letters) {
         state.fragmentInventory[ch] = (state.fragmentInventory[ch] ?? 0) + 1;
       }
@@ -1704,8 +1704,8 @@ function purchasePackItem(index: number): void {
       state.player.wordDeck.push(word);
       showFeedback(t('shop.add_word', { word }), '#4ecdc4');
     }
-    // 词语效果：史诗/传说词包附带效果写入 state（造词师也保留效果绑定）
-    if (pack.wordEffect) {
+    // 词语效果：非造词师绑定到词（造词师拆解了词，效果无法绑定）
+    if (pack.wordEffect && state.classId !== 'wordsmith') {
       state.wordEffects.set(word, pack.wordEffect);
     }
     state.shop.items.splice(index, 1);

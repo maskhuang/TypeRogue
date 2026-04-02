@@ -14,17 +14,18 @@ export const ENERGY_PER_SLOT = 5;
 /** 流水线最大长度（防止超长词） */
 export const MAX_PIPELINE_LENGTH = 12;
 
-// === 纯函数 ===
+// === 流水线操作 ===
 
 /**
- * 创建组装流水线：消耗碎片，生成槽位。
- * @returns 流水线实例，碎片不足或词太长时返回 null
+ * 创建组装流水线：检查碎片库存并消耗，生成槽位。
+ * 副作用：修改传入的 fragmentInventory（扣除消耗的碎片）。
+ * @returns 流水线实例，碎片不足或词太长时返回 null（不消耗）
  */
 export function createPipeline(
   word: string,
   fragmentInventory: Record<string, number>,
 ): AssemblyPipeline | null {
-  const w = word.toLowerCase();
+  const w = word.toLowerCase().replace(/[^a-z]/g, '');
   if (w.length < 2 || w.length > MAX_PIPELINE_LENGTH) return null;
 
   // 检查碎片是否足够
@@ -96,7 +97,7 @@ export function routeEnergyToPipeline(energy: number): void {
   state.assemblyPipeline = result.pipeline;
 
   if (result.completed) {
-    const word = state.assemblyPipeline.targetWord;
+    const word = result.pipeline.targetWord;
     // 加入词库
     if (!state.player.wordDeck.includes(word)) {
       state.player.wordDeck.push(word);
