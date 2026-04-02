@@ -13,6 +13,18 @@ export type FeatureId = 'pack-system' | 'enchant-choice';
 // === 资源系统 ===
 export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'gold' | 'energy' | 'mutagen';
 
+// === 造词师组装流水线 ===
+export interface AssemblySlot {
+  letter: string;       // 目标字母
+  progress: number;     // 当前进度 0~1
+  completed: boolean;   // 是否完成
+}
+
+export interface AssemblyPipeline {
+  slots: AssemblySlot[];  // 流水线槽位（= 目标词的每个字母）
+  targetWord: string;     // 正在组装的目标词
+}
+
 // === 产出者系统 ===
 export type ProducerOperator = 'add' | 'multiply';
 export type ProducerMechanic = 'standard' | 'charge' | 'decay' | 'pulse' | 'crit' | 'void';
@@ -200,6 +212,7 @@ export interface GameState {
   fragmentQueue: string[];                          // 造词师：采集队列字母序列（如 ['e','e','a','t','_','_']），跨关保持
   fragmentQueuePosition: number;                    // 造词师：采集队列当前位置（每关重置）
   craftedWords: string[];                           // 造词师：本 Run 已造词列表，跨关保持，Run 重置
+  assemblyPipeline: AssemblyPipeline | null;       // 造词师：词语组装流水线（跨关保持）
   mutagenInventory: number;                        // 蜕变师：变异素库存，跨关保持，Run 重置
   affixSkills: Map<string, AffixSkillInstance>;      // 词条制技能定义（skillId → 完整技能数据），35.9
   affixSkillStates: Map<string, SkillRuntimeState>;  // 词条制技能运行时状态（skillId → 8字段状态），35.9

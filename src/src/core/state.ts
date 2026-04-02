@@ -38,6 +38,7 @@ export function createInitialState(): GameState {
     fragmentQueue: ['_', '_', '_', '_', '_', '_'],
     fragmentQueuePosition: 0,
     craftedWords: [],
+    assemblyPipeline: null,
     mutagenInventory: 0,
     affixSkills: new Map(),
     affixSkillStates: new Map(),
@@ -140,7 +141,7 @@ export function resetResources(): void {
   state.resources.score = 0;
   state.resources.multiplier = BALANCE.BASE_MULTIPLIER;
   state.resources.time = state.timeMax;
-  state.resources.fragment = 0;
+  state.resources.energy = 0;
   state.resources.mutagen = 0;
   state.classResourceProduced = {};
   state.fragmentQueuePosition = 0;

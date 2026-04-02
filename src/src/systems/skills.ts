@@ -10,9 +10,10 @@ import { t } from '../demo/demo-i18n';
 import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
 import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete, getChargeAutoCritBonus } from './battle';
+import { routeEnergyToPipeline } from './classes/AssemblyPipeline';
 import { getFloatScale } from '../effects/juice';
 import { eventBus } from '../core/events/EventBus';
-import { routeFragmentsToInventory } from './classes/FragmentQueue';
+// routeFragmentsToInventory 已替换为 routeEnergyToPipeline (Epic 44)
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE } from '../data/affixTrigger';
@@ -413,7 +414,7 @@ function triggerAffixSkillWithFeedback(
         }
       }
       if (resource === 'energy') {
-        routeFragmentsToInventory(Math.abs(amount));
+        routeEnergyToPipeline(Math.abs(amount));
       } else if (resource === 'mutagen') {
         state.classResourceProduced.mutagen = (state.classResourceProduced.mutagen ?? 0) + Math.abs(amount);
         state.mutagenInventory += Math.abs(amount);

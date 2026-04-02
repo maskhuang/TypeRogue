@@ -1,6 +1,6 @@
 # Story 44.1: 词语组装流水线 — 数据层
 
-## Status: ready-for-dev
+## Status: done
 
 ## Story
 
