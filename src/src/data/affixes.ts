@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（42 类，6 类别） ====
+// ===== 词条类型枚举（43 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -18,6 +18,7 @@ export enum AffixType {
   PhaseShift = 'phase_shift',
   EndoExo = 'endo_exo',
   Fusion = 'fusion',
+  Leverage = 'leverage',
   // ── 暴击型 crit ──
   Crit = 'crit',
   Charge = 'charge',
@@ -73,6 +74,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.PhaseShift]: 'numeric',
   [AffixType.EndoExo]: 'numeric',
   [AffixType.Fusion]: 'numeric',
+  [AffixType.Leverage]: 'numeric',
   // ── 暴击型 ──
   [AffixType.Crit]: 'crit',
   [AffixType.Charge]: 'crit',
@@ -245,6 +247,8 @@ export interface AffixInstance {
   entropyK?: number                // Entropy: Shannon 熵 × K 的 bonusPercent
   cipherK?: number                 // Cipher: 相邻字母表距离均值 × K 的 bonusPercent
   patternK?: number                // Pattern: 模式签名稀有度 × K 的 bonusPercent
+  leverageK?: number               // Leverage: 杠杆系数
+  marginThreshold?: number         // Leverage: 保证金阈值
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
@@ -438,6 +442,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Entropy]: 'high',
   [AffixType.Cipher]: 'high',
   [AffixType.Pattern]: 'high',
+  [AffixType.Leverage]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -543,6 +548,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Entropy]: '熵',
   [AffixType.Cipher]: '密文',
   [AffixType.Pattern]: '模式',
+  [AffixType.Leverage]: '杠杆',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -589,6 +595,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Entropy]: '单词字母分布越均匀，产出加成越高',
   [AffixType.Cipher]: '单词相邻字母在字母表上跳跃越大，产出加成越高',
   [AffixType.Pattern]: '单词的字母重复结构越独特，产出加成越高',
+  [AffixType.Leverage]: '读取一种资源，高于保证金时放大收益，低于时产生亏损',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

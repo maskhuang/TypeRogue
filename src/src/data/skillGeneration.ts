@@ -301,6 +301,12 @@ export function rollAffixParams(
       return { type, fusionSourceA: srcA, fusionSourceB: srcB, ignitionA: roundTo((15 + random() * 20) * baseA, 1), ignitionB: roundTo((15 + random() * 20) * baseB, 1), fusionK: roundTo(0.02 + random() * 0.02, 4), fusionConsumeA: roundTo((1 + random() * 3) * baseA, 2), fusionConsumeB: roundTo((1 + random() * 3) * baseB, 2), fusionPenalty: roundTo(0.05 + random() * 0.10, 3) }
     }
 
+    case AffixType.Leverage: {
+      const levSrc = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))
+      const levBase = BASE_VALUES[levSrc]?.[0] ?? 1
+      return { type, source: levSrc, leverageK: roundTo(0.06 + random() * 0.06, 2), marginThreshold: roundTo((2 + random() * 2) * levBase, 1) }
+    }
+
     case AffixType.Innate:
       return { type }
 

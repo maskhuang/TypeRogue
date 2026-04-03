@@ -75,6 +75,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   entropy:     '#2d98da', // 天蓝 — 熵
   cipher:      '#45aaf2', // 浅蓝 — 密文
   pattern:     '#20bf6b', // 翠绿 — 模式
+  leverage:    '#f39c12', // 金橙 — 杠杆
 }
 
 export interface KeyTooltipData {

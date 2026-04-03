@@ -568,8 +568,9 @@ const ZH: Record<string, string> = {
   'affix.innate': '先天', 'affix.counter': '反制', 'affix.exhaust': '消耗', 'affix.ethereal': '虚无',
   'affix.parity': '奇偶', 'affix.prime': '素数', 'affix.match': '配对',
   'affix.entropy': '熵', 'affix.cipher': '密文', 'affix.pattern': '模式',
+  'affix.leverage': '杠杆',
 
-  // --- affix descriptions (41) ---
+  // --- affix descriptions (42) ---
   'affix_desc.convert': '读取一种资源的当前值，按系数加成本资源产出',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
   'affix_desc.multiply': '产出直接乘以固定倍数',
@@ -612,6 +613,7 @@ const ZH: Record<string, string> = {
   'affix_desc.entropy': '单词字母分布越均匀，产出加成越高',
   'affix_desc.cipher': '单词相邻字母在字母表上跳跃越大，产出加成越高',
   'affix_desc.pattern': '单词的字母重复结构越独特，产出加成越高',
+  'affix_desc.leverage': '读取一种资源，高于保证金时放大收益，低于时产生亏损',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -1360,8 +1362,9 @@ const EN: Record<string, string> = {
   'affix.innate': 'Innate', 'affix.counter': 'Counter', 'affix.exhaust': 'Exhaust', 'affix.ethereal': 'Ethereal',
   'affix.parity': 'Parity', 'affix.prime': 'Prime', 'affix.match': 'Match',
   'affix.entropy': 'Entropy', 'affix.cipher': 'Cipher', 'affix.pattern': 'Pattern',
+  'affix.leverage': 'Leverage',
 
-  // --- affix descriptions (41) ---
+  // --- affix descriptions (42) ---
   'affix_desc.convert': 'Reads another resource value, adds scaled bonus to this output',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
   'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
@@ -1404,6 +1407,7 @@ const EN: Record<string, string> = {
   'affix_desc.entropy': 'More uniform letter distribution in word = more output',
   'affix_desc.cipher': 'Bigger alphabetical jumps between adjacent letters = more output',
   'affix_desc.pattern': 'Rarer letter repetition structure in word = more output',
+  'affix_desc.leverage': 'Reads a resource; above margin = amplified gains, below = losses',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',

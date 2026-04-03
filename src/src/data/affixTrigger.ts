@@ -674,6 +674,17 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.Leverage: {
+        // 杠杆：excess = 资源值 - 保证金阈值，可为负
+        if (affix.source == null) break
+        const levVal = getAffixSourceValue(affix.source, ctx)
+        const levLvl = Math.max(0, Math.min(skill.level - 1, 2))
+        const levNorm = (BASE_VALUES[skill.resource]?.[levLvl] ?? 1) / (BASE_VALUES[affix.source]?.[levLvl] ?? 1)
+        const excess = levVal - (affix.marginThreshold ?? 0)
+        bonusPercent += (affix.leverageK ?? 0) * excess * levNorm
+        break
+      }
+
       case AffixType.Void: {
         if (affix.posRel == null) break
         const slotEff = affix.bonusPerSlot ?? 0
