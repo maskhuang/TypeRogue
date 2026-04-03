@@ -17,6 +17,7 @@ import {
   isOldSystemSkill, applyAffixLevelScaling, getQuestEquipTarget,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
+import { BIGRAM_FREQ_TABLE } from './bigramFrequency'
 
 // ===== Conduit 模式共享匹配 =====
 
@@ -340,6 +341,13 @@ export function countEmptySlots(
 }
 
 /** 流放判定：键是否为单词首字母或尾字母 */
+const VOWELS = new Set(['a', 'e', 'i', 'o', 'u'])
+/** 判断字母是否为辅音（非元音字母） */
+export function isConsonant(ch: string): boolean {
+  const lower = ch.toLowerCase()
+  return lower >= 'a' && lower <= 'z' && !VOWELS.has(lower)
+}
+
 export function isFirstOrLastLetter(key: string, word: string): boolean {
   if (!word || word.length === 0) return false
   const k = key.toLowerCase()
@@ -552,6 +560,50 @@ export function resolvePhase2(
       case AffixType.Taboo:
         // 禁忌并入暴击系统：暴击率贡献在 Phase 3 处理
         break
+
+      case AffixType.Cluster: {
+        // 辅音丛：单词中最长连续辅音段长度，每单位(减1)加 bonusPercent
+        const w = ctx.currentWord?.toLowerCase() ?? ''
+        let maxCluster = 0, curCluster = 0
+        for (const ch of w) {
+          if (isConsonant(ch)) { curCluster++; if (curCluster > maxCluster) maxCluster = curCluster }
+          else curCluster = 0
+        }
+        bonusPercent += (affix.clusterK ?? 0) * Math.max(0, maxCluster - 1)
+        break
+      }
+
+      case AffixType.Bigram: {
+        // 双字组：相邻字母对的平均罕见度加 bonusPercent
+        const w2 = ctx.currentWord?.toLowerCase() ?? ''
+        if (w2.length >= 2) {
+          let totalRarity = 0
+          let pairCount = 0
+          for (let i = 0; i < w2.length - 1; i++) {
+            const a = w2[i], b = w2[i + 1]
+            if (a >= 'a' && a <= 'z' && b >= 'a' && b <= 'z') {
+              const freq = BIGRAM_FREQ_TABLE[a + b] ?? 0
+              totalRarity += (1 - freq)
+              pairCount++
+            }
+          }
+          if (pairCount > 0) {
+            bonusPercent += (affix.bigramK ?? 0) * (totalRarity / pairCount)
+          }
+        }
+        break
+      }
+
+      case AffixType.Coverage: {
+        // 覆盖度：单词中不同字母种类数（仅 a-z），每种加 bonusPercent
+        const w3 = ctx.currentWord?.toLowerCase() ?? ''
+        const letterSet = new Set<string>()
+        for (const ch of w3) {
+          if (ch >= 'a' && ch <= 'z') letterSet.add(ch)
+        }
+        bonusPercent += (affix.coverageK ?? 0) * letterSet.size
+        break
+      }
 
       // 其余词条类型在 Phase 2 无加算效果
       default:

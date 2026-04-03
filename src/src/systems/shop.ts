@@ -541,6 +541,9 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
+    case 'cluster': return `+${Math.round(a.clusterK ?? 0)}%/辅音段`
+    case 'coverage': return `+${Math.round(a.coverageK ?? 0)}%/字母种类`
+    case 'bigram': return `+${Math.round(a.bigramK ?? 0)}%×罕见度`
     default: return ''
   }
 }

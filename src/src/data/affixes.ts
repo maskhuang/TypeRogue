@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（22 类，6 类别） ====
+// ===== 词条类型枚举（24 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -36,6 +36,9 @@ export enum AffixType {
   Outcast = 'outcast',
   Gravity = 'gravity',
   Ligature = 'ligature',
+  Cluster = 'cluster',
+  Coverage = 'coverage',
+  Bigram = 'bigram',
   // ── 元规则型 meta_rule ──
   Conduit = 'conduit',
   Twin = 'twin',
@@ -71,6 +74,9 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Outcast]: 'word_sense',
   [AffixType.Gravity]: 'word_sense',
   [AffixType.Ligature]: 'word_sense',
+  [AffixType.Cluster]: 'word_sense',
+  [AffixType.Coverage]: 'word_sense',
+  [AffixType.Bigram]: 'word_sense',
   // ── 元规则型 ──
   [AffixType.Conduit]: 'meta_rule',
   [AffixType.Twin]: 'meta_rule',
@@ -199,6 +205,9 @@ export interface AffixInstance {
   penaltyChance?: number           // @deprecated Taboo: 旧版负产出概率（现并入暴击系统）
   critPerStack?: number            // WarDrum: 每层暴击率
   multiplyValue?: number           // Multiply: 产出乘数 ×N
+  clusterK?: number                // Cluster: 每单位辅音丛长度的 bonusPercent
+  coverageK?: number               // Coverage: 每个不同字母的 bonusPercent
+  bigramK?: number                 // Bigram: 平均 bigram 罕见度 × K 的 bonusPercent
 }
 
 // ===== 稀有度 =====
@@ -329,6 +338,9 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Outcast]: 'high',
   [AffixType.Gravity]: 'low',
   [AffixType.Ligature]: 'high',
+  [AffixType.Cluster]: 'high',
+  [AffixType.Coverage]: 'high',
+  [AffixType.Bigram]: 'high',
   [AffixType.WarDrum]: 'high',
   [AffixType.Twin]: 'low',
   [AffixType.Recurse]: 'high',
@@ -418,6 +430,9 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Twin]: '双生',
   [AffixType.Recurse]: '递归',
   [AffixType.Taboo]: '禁忌',
+  [AffixType.Cluster]: '辅音丛',
+  [AffixType.Coverage]: '覆盖度',
+  [AffixType.Bigram]: '双字组',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -444,6 +459,9 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Twin]: '获得附魔时同时获得两个（而非二选一）',
   [AffixType.Recurse]: '增加暴击率，暴击时额外触发一次（每次暴击率减半）',
   [AffixType.Taboo]: '大幅增加暴击率，若未暴击则产出负值',
+  [AffixType.Cluster]: '单词中连续辅音越长（至少2个），产出加成越高',
+  [AffixType.Coverage]: '单词中不同字母种类越多，产出加成越高',
+  [AffixType.Bigram]: '单词中相邻字母对越罕见，产出加成越高',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

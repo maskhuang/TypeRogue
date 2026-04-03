@@ -232,6 +232,15 @@ export function rollAffixParams(
     case AffixType.Multiply:
       return { type, multiplyValue: roundTo(1.5 + random() * 0.5, 2) }  // ×1.5~2.0
 
+    case AffixType.Cluster:
+      return { type, clusterK: roundTo(8 + random() * 7, 1) }  // 8~15 per cluster unit
+
+    case AffixType.Coverage:
+      return { type, coverageK: roundTo(3 + random() * 3, 1) }  // 3~6 per unique letter
+
+    case AffixType.Bigram:
+      return { type, bigramK: roundTo(30 + random() * 30, 1) }  // 30~60 per avg rarity
+
     default: {
       const _exhaustive: never = type
       throw new Error(`Unknown AffixType: ${type}`)

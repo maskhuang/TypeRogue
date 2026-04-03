@@ -452,8 +452,8 @@ development_status:
   # ===== Epic 45: 词条扩展 — 13 新词条 + 分类重构 + consume 基础设施 =====
   epic-45: in-progress
   45-1-category-restructure: done               # 词条分类重构（crit/stack 替代 rhythm/trigger_chain）
-  45-2-word-sense-cluster-coverage: backlog    # 词感：辅音丛 + 覆盖度
-  45-3-word-sense-bigram: backlog             # 词感：双字组（含 bigram 频率表）
+  45-2-word-sense-cluster-coverage: done             # 词感：辅音丛 + 覆盖度
+  45-3-word-sense-bigram: done                # 词感：双字组（含 bigram 频率表）
   45-4-topology-flow-confluence-turbulence: backlog  # 拓扑：落差 + 汇流 + 湍流
   45-5-consume-infrastructure: backlog        # consume() 资源消耗共享基础设施
   45-6-numeric-phase-shift: backlog           # 数值：相变（阶梯函数 + consume）
