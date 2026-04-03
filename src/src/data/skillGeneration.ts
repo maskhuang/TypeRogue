@@ -254,19 +254,26 @@ export function rollAffixParams(
 
     case AffixType.PhaseShift: {
       const src = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))
-      return { type, phaseSource: src, phaseT1: roundTo(15 + random() * 15, 0), phaseT2: roundTo(40 + random() * 30, 0), kSolid: roundTo(0.005 + random() * 0.005, 4), kLiquid: roundTo(0.015 + random() * 0.015, 4), kGas: roundTo(0.03 + random() * 0.02, 4), sustainCost: roundTo(1 + random() * 3, 1) }
+      const srcBase = BASE_VALUES[src]?.[0] ?? 1
+      // 阈值 = N次标准触发的产出量（T1≈15~30次, T2≈40~70次）
+      return { type, phaseSource: src, phaseT1: roundTo((15 + random() * 15) * srcBase, 1), phaseT2: roundTo((40 + random() * 30) * srcBase, 1), kSolid: roundTo(0.005 + random() * 0.005, 4), kLiquid: roundTo(0.015 + random() * 0.015, 4), kGas: roundTo(0.03 + random() * 0.02, 4), sustainCost: roundTo((0.5 + random() * 1.5) * srcBase, 2) }
     }
 
     case AffixType.EndoExo: {
       const src = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))
-      return { type, endoSource: src, endoThreshold: roundTo(15 + random() * 20, 0), kExo: roundTo(0.02 + random() * 0.02, 4), kEndo: roundTo(-0.005 + random() * 0.008, 4), endoConsumeRate: roundTo(1 + random() * 4, 1) }
+      const srcBase = BASE_VALUES[src]?.[0] ?? 1
+      // 阈值 = N次标准触发的产出量（≈15~35次）
+      return { type, endoSource: src, endoThreshold: roundTo((15 + random() * 20) * srcBase, 1), kExo: roundTo(0.02 + random() * 0.02, 4), kEndo: roundTo(-0.005 + random() * 0.008, 4), endoConsumeRate: roundTo((0.5 + random() * 2) * srcBase, 2) }
     }
 
     case AffixType.Fusion: {
       const pool = READABLE_SOURCE_RESOURCES.filter(r => r !== resource)
       const srcA = pickRandom(pool)
       const srcB = pickRandom(pool.filter(r => r !== srcA))
-      return { type, fusionSourceA: srcA, fusionSourceB: srcB, ignitionA: roundTo(15 + random() * 20, 0), ignitionB: roundTo(15 + random() * 20, 0), fusionK: roundTo(0.02 + random() * 0.02, 4), fusionConsumeA: roundTo(2 + random() * 5, 1), fusionConsumeB: roundTo(2 + random() * 5, 1), fusionPenalty: roundTo(0.05 + random() * 0.10, 3) }
+      const baseA = BASE_VALUES[srcA]?.[0] ?? 1
+      const baseB = BASE_VALUES[srcB]?.[0] ?? 1
+      // 阈值 = N次标准触发的产出量（≈15~35次）
+      return { type, fusionSourceA: srcA, fusionSourceB: srcB, ignitionA: roundTo((15 + random() * 20) * baseA, 1), ignitionB: roundTo((15 + random() * 20) * baseB, 1), fusionK: roundTo(0.02 + random() * 0.02, 4), fusionConsumeA: roundTo((1 + random() * 3) * baseA, 2), fusionConsumeB: roundTo((1 + random() * 3) * baseB, 2), fusionPenalty: roundTo(0.05 + random() * 0.10, 3) }
     }
 
     case AffixType.Innate:
