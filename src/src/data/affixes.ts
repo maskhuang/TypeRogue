@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（45 类，6 类别） ====
+// ===== 词条类型枚举（46 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -28,6 +28,7 @@ export enum AffixType {
   Recurse = 'recurse',
   Taboo = 'taboo',
   Fallacy = 'fallacy',
+  Burst = 'burst',
   // ── 叠层型 stack ──
   Pulse = 'pulse',
   Resonance = 'resonance',
@@ -86,6 +87,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Recurse]: 'crit',
   [AffixType.Taboo]: 'crit',
   [AffixType.Fallacy]: 'crit',
+  [AffixType.Burst]: 'crit',
   // ── 叠层型 ──
   [AffixType.Pulse]: 'stack',
   [AffixType.Resonance]: 'stack',
@@ -259,6 +261,7 @@ export interface AffixInstance {
   hedgeSourceA?: ResourceType      // Hedge: 第一种资源
   hedgeSourceB?: ResourceType      // Hedge: 第二种资源
   hedgeK?: number                  // Hedge: 接近度系数
+  burstK?: number                  // Burst: 每连击层的 critMult 加成
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
@@ -458,6 +461,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Leverage]: 'high',
   [AffixType.Option]: 'high',
   [AffixType.Hedge]: 'high',
+  [AffixType.Burst]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -566,6 +570,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Leverage]: '杠杆',
   [AffixType.Option]: '期权',
   [AffixType.Hedge]: '对冲',
+  [AffixType.Burst]: '连射',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -615,6 +620,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Leverage]: '资源值超过阈值时加成产出，低于阈值时扣减产出',
   [AffixType.Option]: '本关累积产出超过阈值时加成产出，未达时每次触发扣减固定产出',
   [AffixType.Hedge]: '两种资源的本关累积产出越接近，产出越高',
+  [AffixType.Burst]: '连续暴击次数越多，暴击倍率越高；未暴击时连击归零',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

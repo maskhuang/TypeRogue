@@ -1142,6 +1142,17 @@ export function resolvePhase3(
       multipliers.push(critMult)
       flags.isCrit = true
       flags.critTransformed = critTransformed
+      // Burst: 连续暴击加成（读上一次的 critStreak）
+      for (const a of skill.affixes) {
+        if (a.type === AffixType.Burst && (a.burstK ?? 0) > 0) {
+          const streak = runtimeState.critStreak ?? 0
+          if (streak > 0) {
+            const burstMult = 1 + (a.burstK ?? 0) * streak
+            output *= burstMult
+            multipliers.push(burstMult)
+          }
+        }
+      }
       // 暴击溢层：暴击时额外叠层
       runtimeState.stacks += (ctx.critOverflowStacks ?? 0)
     } else if (hasTaboo) {

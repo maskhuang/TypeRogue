@@ -495,7 +495,7 @@ development_status:
   # ===== Epic 49: 暴击型扩展 — 精密射击领域 =====
   epic-49: in-progress
   49-0-crit-streak-infrastructure: done       # critStreak/missStreak 共享基础设施
-  49-1-crit-burst: backlog                   # 暴击：连射 — 连续暴击→critMult递增
+  49-1-crit-burst: done                      # 暴击：连射 — 连续暴击→critMult递增
   49-2-crit-zero-in: backlog                 # 暴击：校准 — 连续miss→下次暴击critMult大增
   49-3-crit-sharpshooter: backlog            # 暴击：神射 — 低critChance时暴击倍率更高
   49-4-generation-integration: backlog       # 技能生成集成
