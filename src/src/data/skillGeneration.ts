@@ -233,22 +233,22 @@ export function rollAffixParams(
       return { type, multiplyValue: roundTo(1.5 + random() * 0.5, 2) }  // ×1.5~2.0
 
     case AffixType.Cluster:
-      return { type, clusterK: roundTo(8 + random() * 7, 1) }  // 8~15 per cluster unit
+      return { type, clusterK: roundTo(0.08 + random() * 0.07, 3) }  // 0.08~0.15 per cluster unit
 
     case AffixType.Coverage:
-      return { type, coverageK: roundTo(3 + random() * 3, 1) }  // 3~6 per unique letter
+      return { type, coverageK: roundTo(0.03 + random() * 0.03, 3) }  // 0.03~0.06 per unique letter
 
     case AffixType.Bigram:
-      return { type, bigramK: roundTo(30 + random() * 30, 1) }  // 30~60 per avg rarity
+      return { type, bigramK: roundTo(0.30 + random() * 0.30, 3) }  // 0.30~0.60 per avg rarity
 
     case AffixType.Flow:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), flowK: roundTo(3 + random() * 5, 1) }  // 3~8
+      return { type, posRel: pickRandom(ALL_POS_RELATIONS), flowK: roundTo(0.03 + random() * 0.05, 3) }  // 0.03~0.08
 
     case AffixType.Confluence:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), confluenceK: roundTo(15 + random() * 15, 1) }  // 15~30
+      return { type, posRel: pickRandom(ALL_POS_RELATIONS), confluenceK: roundTo(0.15 + random() * 0.15, 3) }  // 0.15~0.30
 
     case AffixType.Turbulence:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), turbulenceK: roundTo(5 + random() * 7, 1) }  // 5~12
+      return { type, posRel: pickRandom(ALL_POS_RELATIONS), turbulenceK: roundTo(0.05 + random() * 0.07, 3) }  // 0.05~0.12
 
     case AffixType.PhaseShift: {
       const src = pickRandom(GENERIC_RESOURCES.filter(r => r !== resource))
@@ -264,7 +264,7 @@ export function rollAffixParams(
       const pool = GENERIC_RESOURCES.filter(r => r !== resource)
       const srcA = pickRandom(pool)
       const srcB = pickRandom(pool.filter(r => r !== srcA))
-      return { type, fusionSourceA: srcA, fusionSourceB: srcB, ignitionA: roundTo(15 + random() * 20, 0), ignitionB: roundTo(15 + random() * 20, 0), fusionK: roundTo(0.08 + random() * 0.07, 3), fusionConsumeA: roundTo(2 + random() * 5, 1), fusionConsumeB: roundTo(2 + random() * 5, 1), fusionPenalty: roundTo(5 + random() * 10, 0) }
+      return { type, fusionSourceA: srcA, fusionSourceB: srcB, ignitionA: roundTo(15 + random() * 20, 0), ignitionB: roundTo(15 + random() * 20, 0), fusionK: roundTo(0.08 + random() * 0.07, 3), fusionConsumeA: roundTo(2 + random() * 5, 1), fusionConsumeB: roundTo(2 + random() * 5, 1), fusionPenalty: roundTo(0.05 + random() * 0.10, 3) }
     }
 
     case AffixType.Innate:

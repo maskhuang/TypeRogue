@@ -542,12 +542,12 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
-    case 'cluster': return `+${Math.round(a.clusterK ?? 0)}%/辅音段`
-    case 'coverage': return `+${Math.round(a.coverageK ?? 0)}%/字母种类`
-    case 'bigram': return `+${Math.round(a.bigramK ?? 0)}%×罕见度`
-    case 'flow': return `${rel} +${Math.round(a.flowK ?? 0)}%/落差`
-    case 'confluence': return `${rel} +${Math.round(a.confluenceK ?? 0)}%×多样性`
-    case 'turbulence': return `${rel} +${Math.round(a.turbulenceK ?? 0)}%×极差`
+    case 'cluster': return `+${Math.round((a.clusterK ?? 0) * 100)}%/辅音段`
+    case 'coverage': return `+${Math.round((a.coverageK ?? 0) * 100)}%/字母种类`
+    case 'bigram': return `+${Math.round((a.bigramK ?? 0) * 100)}%×罕见度`
+    case 'flow': return `${rel} +${Math.round((a.flowK ?? 0) * 100)}%/落差`
+    case 'confluence': return `${rel} +${Math.round((a.confluenceK ?? 0) * 100)}%×多样性`
+    case 'turbulence': return `${rel} +${Math.round((a.turbulenceK ?? 0) * 100)}%×极差`
     case 'phase_shift': return `读${RESOURCE_ICONS[a.phaseSource!] || ''}:T1=${a.phaseT1},T2=${a.phaseT2}`
     case 'endo_exo': return `读${RESOURCE_ICONS[a.endoSource!] || ''}:阈值${a.endoThreshold}`
     case 'fusion': return `${RESOURCE_ICONS[a.fusionSourceA!] || ''}+${RESOURCE_ICONS[a.fusionSourceB!] || ''}点火`

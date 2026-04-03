@@ -122,7 +122,7 @@ describe('Fusion bonusPercent calculation', () => {
     return { bonusPercent: -params.fusionPenalty, consumeA: 0, consumeB: 0 }
   }
 
-  const params = { fusionK: 0.10, ignitionA: 20, ignitionB: 15, fusionConsumeA: 5, fusionConsumeB: 3, fusionPenalty: 10 }
+  const params = { fusionK: 0.10, ignitionA: 20, ignitionB: 15, fusionConsumeA: 5, fusionConsumeB: 3, fusionPenalty: 0.10 }
 
   it('双达阈值 → 高正加成 + 双消耗', () => {
     const r = calcFusion(30, 20, 'base', 'time', 'score', 1, params)
@@ -133,23 +133,23 @@ describe('Fusion bonusPercent calculation', () => {
 
   it('A 不达阈值 → 惩罚 + 无消耗', () => {
     const r = calcFusion(10, 20, 'base', 'time', 'score', 1, params)
-    expect(r.bonusPercent).toBe(-10)
+    expect(r.bonusPercent).toBe(-0.10)
     expect(r.consumeA).toBe(0)
   })
 
   it('B 不达阈值 → 惩罚 + 无消耗', () => {
     const r = calcFusion(30, 5, 'base', 'time', 'score', 1, params)
-    expect(r.bonusPercent).toBe(-10)
+    expect(r.bonusPercent).toBe(-0.10)
     expect(r.consumeB).toBe(0)
   })
 
   it('双不达 → 惩罚', () => {
     const r = calcFusion(5, 5, 'base', 'time', 'score', 1, params)
-    expect(r.bonusPercent).toBe(-10)
+    expect(r.bonusPercent).toBe(-0.10)
   })
 
   it('成功的加成远高于失败的惩罚', () => {
     const success = calcFusion(30, 20, 'base', 'time', 'score', 1, params)
-    expect(success.bonusPercent).toBeGreaterThan(params.fusionPenalty * 2)
+    expect(success.bonusPercent).toBeGreaterThan(Math.abs(params.fusionPenalty) * 2)
   })
 })
