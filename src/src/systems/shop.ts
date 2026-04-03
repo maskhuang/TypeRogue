@@ -559,7 +559,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'innate': return '开局自动触发'
     case 'counter': return `充能${a.maxCharges ?? 0}次`
     case 'exhaust': return `×${a.exhaustMult?.toFixed(1) ?? '?'} 共${a.maxTriggers ?? '?'}次`
-    case 'ethereal': return `×${a.etherealMult?.toFixed(1) ?? '?'} 限1关`
+    case 'ethereal': return '词条+1级 限1关'
     default: return ''
   }
 }
@@ -864,12 +864,8 @@ export function computeSmartEstimate(
         break
       }
       case 'ethereal': {
-        // 虚无：base 倍率（固定已知）
-        const m = affix.etherealMult ?? 1
-        if (m > 1) {
-          multProduct *= m
-          breakdown.push({ typeKey: 'ethereal', label: `虚无 ×${m.toFixed(1)}`, detail: '(限1关)' })
-        }
+        // 虚无：其他词条+1级（不直接改 base，无法量化预估）
+        breakdown.push({ typeKey: 'ethereal', label: '虚无：词条+1级', detail: '(限1关)' })
         break
       }
       // 其余词条不预估

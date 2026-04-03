@@ -602,7 +602,7 @@ const ZH: Record<string, string> = {
   'affix_desc.innate': '每关开始时自动触发一次（不需按键）',
   'affix_desc.counter': '产出为负时消耗充能取消负面效果（每关恢复充能）',
   'affix_desc.exhaust': '每次触发产出倍增，但触发次数有限，用完词条消失',
-  'affix_desc.ethereal': '产出大幅倍增，但只生效一关，关卡结束后词条消失',
+  'affix_desc.ethereal': '本关内其他词条效果提升一级；关卡结束后词条消失',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -1382,7 +1382,7 @@ const EN: Record<string, string> = {
   'affix_desc.innate': 'Auto-triggers once at stage start (no keypress needed)',
   'affix_desc.counter': 'Cancels negative output by spending a charge (recharges each stage)',
   'affix_desc.exhaust': 'Each trigger multiplies base output, but limited uses before removal',
-  'affix_desc.ethereal': 'Greatly multiplies base output, but removed after one stage',
+  'affix_desc.ethereal': 'Boosts other affixes by one level this stage; removed at stage end',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',

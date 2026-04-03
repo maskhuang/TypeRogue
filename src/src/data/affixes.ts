@@ -544,7 +544,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Innate]: '每关开始时自动触发一次（不需按键）',
   [AffixType.Counter]: '产出为负时消耗充能取消负面效果（每关恢复充能）',
   [AffixType.Exhaust]: '每次触发产出倍增，但触发次数有限，用完词条消失',
-  [AffixType.Ethereal]: '产出大幅倍增，但只生效一关，关卡结束后词条消失',
+  [AffixType.Ethereal]: '本关内其他词条效果提升一级；关卡结束后词条消失',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

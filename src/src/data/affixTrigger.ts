@@ -544,13 +544,11 @@ export function resolvePhase2(
     ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? baseOutput)
     : baseOutput
 
-  // Story 45.9: Exhaust/Ethereal base 倍率（Phase 1 后立即应用）
+  // Story 45.9: Exhaust base 倍率（Phase 1 后立即应用）
+  // Ethereal 不再修改 base——改为在 startLevel 时对其他词条 +1 级缩放
   for (const affix of skill.affixes) {
     if (affix.type === AffixType.Exhaust && (affix.exhaustMult ?? 0) > 1) {
       effectiveBase *= affix.exhaustMult!
-    }
-    if (affix.type === AffixType.Ethereal && (affix.etherealMult ?? 0) > 1) {
-      effectiveBase *= affix.etherealMult!
     }
   }
 

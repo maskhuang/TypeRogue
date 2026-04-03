@@ -92,6 +92,8 @@ export function weightedSampleWithout(count: number): WeightedSampleResult[] {
   // 构建带权重的可变池
   const pool = new Map<string, number>()
   for (const [key, weight] of Object.entries(AFFIX_WEIGHTS)) {
+    // Ethereal 只在多词条技能(rarity≥2)上出现——需要其他词条来增幅
+    if (key === AffixType.Ethereal && count < 2) continue
     // Conduit 可在单词条技能上出现（通过相同资源也能导能）
     pool.set(key, weight)
   }
@@ -283,10 +285,10 @@ export function rollAffixParams(
       return { type, maxCharges: Math.floor(2 + random() * 3) }  // 2~4 charges
 
     case AffixType.Exhaust:
-      return { type, exhaustMult: roundTo(1.8 + random() * 0.4, 1), maxTriggers: Math.floor(5 + random() * 6) }  // ×1.8~2.2, 5~10 uses
+      return { type, exhaustMult: roundTo(2.5 + random() * 1.0, 1), maxTriggers: Math.floor(5 + random() * 6) }  // ×2.5~3.5, 5~10 uses
 
     case AffixType.Ethereal:
-      return { type, etherealMult: roundTo(2.5 + random() * 1.0, 1) }  // ×2.5~3.5
+      return { type }  // 效果固定：其他词条+1级，无需参数
 
     default: {
       const _exhaustive: never = type

@@ -44,7 +44,7 @@ import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, getUnderdogBonu
 import { resetCritRelicBattleState, resetCritRelicWordState, getCritStormBonus, initCritRelicBehaviors } from './relics/CritRelicBehaviors';
 import { checkDrumPass, getWordResonanceStacks, resetStackingRelicBattleState, initStackingRelicBehaviors, isPerpetualEngineActive, isStackingAffix } from './relics/StackingRelicBehaviors';
 import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests, removeAffixAtRuntime } from '../data/affixTrigger';
-import { AffixType } from '../data/affixes';
+import { AffixType, applyAffixLevelScaling } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
 import { BALANCE } from '../core/constants';
@@ -1627,6 +1627,11 @@ function endLevel(): void {
   for (const [skillId, skill] of state.affixSkills) {
     const rt = state.affixSkillStates.get(skillId);
     if (rt?.etherealTriggered) {
+      // 还原 +1 级增幅（排除 Ethereal 自身——它即将被移除）
+      const otherAffixes = skill.affixes.filter(a => a.type !== AffixType.Ethereal);
+      if (otherAffixes.length > 0) {
+        applyAffixLevelScaling(otherAffixes, -1);
+      }
       removeAffixAtRuntime(skill, AffixType.Ethereal);
       // etherealTriggered 保持 true 作为永久消耗标记（商店排除用）
     }
@@ -2230,9 +2235,14 @@ export async function startLevel(): Promise<void> {
     if (counterAffix) {
       rt.counterCharges = counterAffix.maxCharges ?? 0;
     }
-    // Ethereal: 仅词条仍存在时重置触发标记（已消耗的保持 true 供商店排除）
+    // Ethereal: 仅词条仍存在时重置触发标记 + 对其他词条 +1 级增幅
     if (skill.affixes.some(a => a.type === AffixType.Ethereal)) {
       rt.etherealTriggered = false;
+      // 增幅其他词条（排除 Ethereal 自身）
+      const otherAffixes = skill.affixes.filter(a => a.type !== AffixType.Ethereal);
+      if (otherAffixes.length > 0) {
+        applyAffixLevelScaling(otherAffixes, 1);
+      }
     }
     // Innate: 自动触发一次
     if (skill.affixes.some(a => a.type === AffixType.Innate)) {
