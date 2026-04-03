@@ -563,29 +563,29 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
 
 // APPRENTICE_ENCHANTMENT_IDS 已被 isApprenticeEnchantment() 取代
 
-// ===== 词感型词条预估缓存（基于当前词库统计） =====
+// ===== 词感型词条预估缓存（按绑定字母过滤词库） =====
 
-let _wordSenseCache: { deck: string[], avgCluster: number, avgCoverage: number, avgBigramRarity: number } | null = null
+type WordSenseStats = { avgCluster: number, avgCoverage: number, avgBigramRarity: number, wordCount: number }
+let _wordSenseCacheMap: Map<string, WordSenseStats> | null = null
+let _wordSenseCacheDeck: string[] | null = null
+const WORD_SENSE_FALLBACK: WordSenseStats = { avgCluster: 1.2, avgCoverage: 4.5, avgBigramRarity: 0.75, wordCount: 0 }
 
-function getWordSenseAvg(): { avgCluster: number, avgCoverage: number, avgBigramRarity: number } {
-  const deck = state.player?.wordDeck
-  if (!deck || deck.length === 0) return { avgCluster: 1.2, avgCoverage: 4.5, avgBigramRarity: 0.75 }
-  // 缓存命中（同一个词库实例）
-  if (_wordSenseCache && _wordSenseCache.deck === deck) return _wordSenseCache
+/** 计算指定字母在词库中出现的单词的平均词感特征 */
+function computeWordSenseForLetter(letter: string, deck: string[]): WordSenseStats {
+  const target = letter.toLowerCase()
+  const filtered = deck.filter(w => w.toLowerCase().includes(target))
+  if (filtered.length === 0) return WORD_SENSE_FALLBACK
   let totalCluster = 0, totalCoverage = 0, totalBigramRarity = 0, totalPairs = 0
-  for (const word of deck) {
+  for (const word of filtered) {
     const w = word.toLowerCase()
-    // Cluster
     let maxC = 0, curC = 0
     for (const ch of w) {
       if (isConsonant(ch)) { curC++; if (curC > maxC) maxC = curC } else curC = 0
     }
     totalCluster += Math.max(0, maxC - 1)
-    // Coverage
     const letters = new Set<string>()
     for (const ch of w) if (ch >= 'a' && ch <= 'z') letters.add(ch)
     totalCoverage += letters.size
-    // Bigram
     for (let i = 0; i < w.length - 1; i++) {
       const a = w[i], b = w[i + 1]
       if (a >= 'a' && a <= 'z' && b >= 'a' && b <= 'z') {
@@ -594,14 +594,42 @@ function getWordSenseAvg(): { avgCluster: number, avgCoverage: number, avgBigram
       }
     }
   }
-  const n = deck.length
-  _wordSenseCache = {
-    deck,
+  const n = filtered.length
+  return {
     avgCluster: totalCluster / n,
     avgCoverage: totalCoverage / n,
     avgBigramRarity: totalPairs > 0 ? totalBigramRarity / totalPairs : 0.75,
+    wordCount: n,
   }
-  return _wordSenseCache
+}
+
+/** 获取绑定键位的词感预估（按字母过滤词库，缓存） */
+function getWordSenseAvgForKeys(boundKeys?: string | string[]): WordSenseStats {
+  const deck = state.player?.wordDeck
+  if (!deck || deck.length === 0) return WORD_SENSE_FALLBACK
+  // 缓存失效检查
+  if (_wordSenseCacheDeck !== deck) {
+    _wordSenseCacheMap = new Map()
+    _wordSenseCacheDeck = deck
+  }
+  const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+  if (keys.length === 0) return WORD_SENSE_FALLBACK
+  // 多键技能：取所有键的加权平均（各键触发频率不同，简化为均值）
+  const cacheKey = keys.sort().join(',')
+  if (_wordSenseCacheMap!.has(cacheKey)) return _wordSenseCacheMap!.get(cacheKey)!
+  let totalC = 0, totalCov = 0, totalBR = 0, totalW = 0
+  for (const k of keys) {
+    const s = computeWordSenseForLetter(k, deck)
+    totalC += s.avgCluster * s.wordCount
+    totalCov += s.avgCoverage * s.wordCount
+    totalBR += s.avgBigramRarity * s.wordCount
+    totalW += s.wordCount
+  }
+  const result: WordSenseStats = totalW > 0
+    ? { avgCluster: totalC / totalW, avgCoverage: totalCov / totalW, avgBigramRarity: totalBR / totalW, wordCount: totalW }
+    : WORD_SENSE_FALLBACK
+  _wordSenseCacheMap!.set(cacheKey, result)
+  return result
 }
 
 /**
@@ -792,32 +820,32 @@ export function computeSmartEstimate(
         break
       }
       case 'cluster': {
-        // 辅音丛：词库平均最长辅音丛加成
-        const avg = getWordSenseAvg()
+        // 辅音丛：按绑定字母过滤词库的平均辅音丛加成
+        const avg = getWordSenseAvgForKeys(boundKeys)
         const bonus = (affix.clusterK ?? 0) * avg.avgCluster
         if (bonus > 0) {
           addPercent += bonus
-          breakdown.push({ typeKey: 'cluster', label: `辅音丛 +${Math.round(bonus * 100)}%`, detail: '(词库平均)' })
+          breakdown.push({ typeKey: 'cluster', label: `辅音丛 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
         }
         break
       }
       case 'coverage': {
-        // 覆盖度：词库平均不同字母数
-        const avg = getWordSenseAvg()
+        // 覆盖度：按绑定字母过滤词库的平均不同字母数
+        const avg = getWordSenseAvgForKeys(boundKeys)
         const bonus = (affix.coverageK ?? 0) * avg.avgCoverage
         if (bonus > 0) {
           addPercent += bonus
-          breakdown.push({ typeKey: 'coverage', label: `覆盖度 +${Math.round(bonus * 100)}%`, detail: '(词库平均)' })
+          breakdown.push({ typeKey: 'coverage', label: `覆盖度 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
         }
         break
       }
       case 'bigram': {
-        // 双字组：词库平均 bigram 罕见度
-        const avg = getWordSenseAvg()
+        // 双字组：按绑定字母过滤词库的平均 bigram 罕见度
+        const avg = getWordSenseAvgForKeys(boundKeys)
         const bonus = (affix.bigramK ?? 0) * avg.avgBigramRarity
         if (bonus > 0) {
           addPercent += bonus
-          breakdown.push({ typeKey: 'bigram', label: `双字组 +${Math.round(bonus * 100)}%`, detail: '(词库平均)' })
+          breakdown.push({ typeKey: 'bigram', label: `双字组 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
         }
         break
       }
