@@ -464,9 +464,66 @@ development_status:
   45-13-balance-playtest: backlog             # 数值平衡与 playtest
   epic-45-retrospective: optional
 
+  # ===== Epic 46: 叠层型扩展 — 组合数学领域 =====
+  epic-46: in-progress
+  46-1-stack-parity: done                     # 叠层：奇偶 — 奇数加产出/偶数加暴击
+  46-2-stack-prime: backlog                  # 叠层：素数 — 叠层为素数时大额加成
+  46-3-stack-match: backlog                  # 叠层：配对 — 邻居叠层相等配对数→加成
+  46-4-generation-integration: backlog       # 技能生成集成
+  46-5-balance-playtest: backlog             # 数值平衡与 playtest
+  epic-46-retrospective: optional
+
+  # ===== Epic 47: 词感型扩展 — 密码学领域 =====
+  epic-47: backlog
+  47-1-word-sense-entropy: backlog           # 词感：熵 — Shannon 熵→加成
+  47-2-word-sense-cipher: backlog            # 词感：密文 — 相邻字母表距离→加成
+  47-3-pattern-freq-table: backlog           # 模式频率表基础设施（PATTERN_FREQ_TABLE）
+  47-4-word-sense-pattern: backlog           # 词感：模式 — 模式签名稀有度→加成
+  47-5-generation-integration: backlog       # 技能生成集成
+  47-6-balance-playtest: backlog             # 数值平衡与 playtest
+  epic-47-retrospective: optional
+
+  # ===== Epic 48: 数值型扩展 — 金融工程领域 =====
+  epic-48: backlog
+  48-1-numeric-leverage: backlog             # 数值：杠杆 — 超/低于保证金线→放大正/负bonus
+  48-2-numeric-option: backlog               # 数值：期权 — 行权价+权利金 hockey stick
+  48-3-numeric-hedge: backlog                # 数值：对冲 — 双资源接近度→加成
+  48-4-generation-integration: backlog       # 技能生成集成
+  48-5-balance-playtest: backlog             # 数值平衡与 playtest
+  epic-48-retrospective: optional
+
+  # ===== Epic 49: 暴击型扩展 — 精密射击领域 =====
+  epic-49: backlog
+  49-0-crit-streak-infrastructure: backlog   # critStreak/missStreak 共享基础设施
+  49-1-crit-burst: backlog                   # 暴击：连射 — 连续暴击→critMult递增
+  49-2-crit-zero-in: backlog                 # 暴击：校准 — 连续miss→下次暴击critMult大增
+  49-3-crit-sharpshooter: backlog            # 暴击：神射 — 低critChance时暴击倍率更高
+  49-4-generation-integration: backlog       # 技能生成集成
+  49-5-balance-playtest: backlog             # 数值平衡与 playtest
+  epic-49-retrospective: optional
+
+  # ===== Epic 50: 拓扑型扩展 — 图论领域 =====
+  epic-50: backlog
+  50-1-topology-bridge: backlog              # 拓扑：桥 — 移除后邻居断裂→大额bonus
+  50-2-topology-clique: backlog              # 拓扑：团 — 最大全连接子集→bonus
+  50-3-topology-component: backlog           # 拓扑：连通 — 连通分量大小→bonus
+  50-4-generation-integration: backlog       # 技能生成集成
+  50-5-balance-playtest: backlog             # 数值平衡与 playtest
+  epic-50-retrospective: optional
+
+  # ===== Epic 51: 元规则型扩展 — 元编程领域 =====
+  epic-51: backlog
+  51-1-meta-decorator: backlog               # 元规则：装饰器 — Phase 2末尾放大bonusPercent
+  51-2-meta-reflect: backlog                 # 元规则：反射 — 读affixCount×level→bonus
+  51-3-meta-monkey-patch: backlog            # 元规则：猴子补丁 — 每关随机修改同伴词条效果
+  51-4-generation-integration: backlog       # 技能生成集成
+  51-5-balance-playtest: backlog             # 数值平衡与 playtest
+  epic-51-retrospective: optional
+
 # Summary:
-# - Total Epics: 45
-# - Total Stories: 253
+# - Total Epics: 51
+# - Total Stories: 286
 # - Epics Completed: 43
-# - Epics In-Progress: 0
-# - Epics Backlog: 2 (38, 45)
+# - Epics In-Progress: 1 (45)
+# - Epics Backlog: 7 (38, 46, 47, 48, 49, 50, 51)
+# - New affix expansion (Epics 46-51): 18 new affixes, 125 story points total

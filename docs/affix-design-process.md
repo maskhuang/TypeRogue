@@ -33,17 +33,18 @@
 - 一个类别选一个领域（不分散）
 - 领域应能提供 **3+ 个可区分的概念**
 - 领域概念应有清晰的游戏映射
+- **领域的核心变量类型应匹配类别的运行时变量类型**（如叠层是离散整数 → 优先选天然操作离散量的领域）
 
 **各类别推荐领域矩阵：**
 
-| 类别 | 范式 | 已验证领域 | 备选领域 |
-|------|------|-----------|---------|
-| 数值 | `read(resource) → f(value) → bonusPercent [+ consume]` | 热力学 | 核物理、金融、流体力学 |
-| 拓扑 | `scan(posRel, neighbors) → 统计运算 → bonusPercent` | 流体力学 | 电路学、细胞自动机、生态学 |
-| 词感 | `analyze(word) → f(feature) → bonusPercent` | 语言学 | 密码学、音乐理论 |
-| 元规则 | `在生命周期节点插入修改` | 卡牌游戏 | 元编程、博弈论 |
-| 暴击 | `modify(critChance) → onCrit/onMiss` | — | 赌博、量子力学、精密射击 |
-| 叠层 | `accumulate → threshold → release` | — | 电容、水利工程、地震学 |
+| 类别 | 范式 | 变量类型 | 已验证领域 | 备选领域 |
+|------|------|---------|-----------|---------|
+| 数值 | `read(resource) → f(value) → bonusPercent [+ consume]` | 连续 | 热力学 | 核物理、金融、流体力学 |
+| 拓扑 | `scan(posRel, neighbors) → 统计运算 → bonusPercent` | 离散(邻居数) | 流体力学 | 电路学、细胞自动机、生态学 |
+| 词感 | `analyze(word) → f(feature) → bonusPercent` | 离散(字符数) | 语言学 | 密码学、音乐理论 |
+| 元规则 | `在生命周期节点插入修改` | 事件 | 卡牌游戏 | 元编程、博弈论 |
+| 暴击 | `modify(critChance) → onCrit/onMiss` | 连续(概率) | 赌博(Fallacy) | 量子力学、精密射击 |
+| 叠层 | `accumulate → threshold → release` | **离散(整数计数器)** | — | 组合数学、数论、细胞自动机、遗传学、库存管理 |
 
 **方法：**
 1. 列出候选领域（每类别 5~10 个）
@@ -287,3 +288,21 @@ const estimatedTypes = new Set(estimate.breakdown.map(b => b.typeKey).filter(k =
 | 卡牌·反制 | Counter | Counter | 生命周期·负值 |
 | 卡牌·消耗 | Exhaust | Exhaust | 生命周期·N 次 |
 | 卡牌·虚无 | Ethereal | Ethereal | 生命周期·1 关 |
+| 组合数学·奇偶 | n%2 交替效果 | Parity | 交替方波 |
+| 组合数学·素数 | isPrime(n) 窗口触发 | Prime | 不规则脉冲 |
+| 组合数学·配对 | 邻居叠层相等配对数 | Match | 离散阶梯 |
+| 密码学·熵 | Shannon 熵 H(word) | Entropy | 连续平滑 |
+| 密码学·距离 | 相邻字母表距离均值 | Cipher | 连续平滑 |
+| 密码学·模式 | 模式签名稀有度 -log₂(freq) | Pattern | 对数曲线 |
+| 金融工程·杠杆 | excess × k（保证金线） | Leverage | 线性过零点 |
+| 金融工程·期权 | hockey stick（行权价+权利金） | Option | 折线 |
+| ��融工程·对冲 | 双资��� min/max 比值 | Hedge | 倒 V 型 |
+| 精密射击·连射 | critStreak × k → critMult | Burst | 线性+断裂 |
+| 精密射击·校准 | missStreak × k → critMult(释放) | Zero-In | 阶梯+释放 |
+| 精密射击·神射 | (1-critChance) × k → critMult | Sharpshooter | 反比例 |
+| 图论·桥 | 移除后邻居断裂 → bonus | Bridge | 二值 |
+| 图论·团 | 最大全连接子集大小 → bonus | Clique | 离散阶梯 |
+| 图论·连通 | BFS 连通分量大小 → bonus | Component | 线性 |
+| 元编程·装饰器 | bonusPercent × (1+k) Phase 2 末尾 | Decorator | 乘法放大 |
+| 元编程·反射 | affixCount × level × k → bonus | Reflect | 离散阶梯 |
+| 元编程·猴子补丁 | target.bonus × randomMult 每关随机 | MonkeyPatch | 随机修改 |
