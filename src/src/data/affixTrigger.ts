@@ -18,6 +18,7 @@ import {
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 import { BIGRAM_FREQ_TABLE } from './bigramFrequency'
+import { getPatternRarity } from './patternFrequency'
 
 // ===== Conduit 模式共享匹配 =====
 
@@ -823,6 +824,15 @@ export function resolvePhase2(
           }
           const avgDist = totalDist / (cipherLetters.length - 1)
           bonusPercent += (affix.cipherK ?? 0) * avgDist
+        }
+        break
+      }
+
+      case AffixType.Pattern: {
+        // 模式：单词的模式签名稀有度 → bonusPercent
+        const patternWord = ctx.currentWord ?? ''
+        if (patternWord.length > 0) {
+          bonusPercent += (affix.patternK ?? 0) * getPatternRarity(patternWord)
         }
         break
       }

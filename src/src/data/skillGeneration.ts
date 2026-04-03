@@ -221,6 +221,9 @@ export function rollAffixParams(
     case AffixType.Cipher:
       return { type, cipherK: roundTo(0.01 + random() * 0.02, 2) }
 
+    case AffixType.Pattern:
+      return { type, patternK: roundTo(0.03 + random() * 0.03, 2) }
+
     case AffixType.Parity:
       return { type, oddK: roundTo(0.15 + random() * 0.10, 2), evenK: roundTo(0.08 + random() * 0.07, 2) }
 
