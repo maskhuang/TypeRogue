@@ -45,7 +45,7 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
-import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
 import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
@@ -687,6 +687,83 @@ export function computeSmartEstimate(
         if (avgMult > 1) {
           multProduct *= avgMult
           breakdown.push({ typeKey: 'ligature', label: t('est.ligature', { val: avgMult.toFixed(2) }), detail: '' })
+        }
+        break
+      }
+      case 'flow': {
+        // 落差：邻居 baseValue 比自己高时加成
+        if (affix.posRel == null) break
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        if (keys.length === 0) break
+        const selfLvl = Math.max(0, Math.min(skill.level - 1, 3))
+        const selfBase = BASE_VALUES[skill.resource]?.[selfLvl] ?? 1
+        const neighbors = getNeighborSkills(keys, affix.posRel, { bindings: state.player.bindings, allSkills: state.affixSkills })
+        let flowBonus = 0
+        for (const ns of neighbors) {
+          const nLvl = Math.max(0, Math.min(ns.level - 1, 3))
+          const nBase = BASE_VALUES[ns.resource]?.[nLvl] ?? 1
+          const delta = nBase - selfBase
+          if (delta > 0) flowBonus += (affix.flowK ?? 0) * delta * (selfBase / nBase)
+        }
+        if (flowBonus > 0) {
+          addPercent += flowBonus
+          breakdown.push({ typeKey: 'flow', label: `落差 +${Math.round(flowBonus * 100)}%`, detail: `(${neighbors.length}邻居)` })
+        }
+        break
+      }
+      case 'confluence': {
+        // 汇流：邻居资源多样性
+        if (affix.posRel == null) break
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        if (keys.length === 0) break
+        const neighbors = getNeighborSkills(keys, affix.posRel, { bindings: state.player.bindings, allSkills: state.affixSkills })
+        const resTypes = new Set<string>()
+        for (const ns of neighbors) resTypes.add(ns.resource)
+        if (resTypes.size > 0) {
+          const bonus = (affix.confluenceK ?? 0) * (1 - 1 / (resTypes.size + 1))
+          addPercent += bonus
+          breakdown.push({ typeKey: 'confluence', label: `汇流 +${Math.round(bonus * 100)}%`, detail: `(${resTypes.size}种资源)` })
+        }
+        break
+      }
+      case 'turbulence': {
+        // 湍流：邻居 baseValue 极差
+        if (affix.posRel == null) break
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        if (keys.length === 0) break
+        const neighbors = getNeighborSkills(keys, affix.posRel, { bindings: state.player.bindings, allSkills: state.affixSkills })
+        if (neighbors.length >= 2) {
+          let minB = Infinity, maxB = -Infinity
+          for (const ns of neighbors) {
+            const nLvl = Math.max(0, Math.min(ns.level - 1, 3))
+            const nBase = BASE_VALUES[ns.resource]?.[nLvl] ?? 1
+            if (nBase < minB) minB = nBase
+            if (nBase > maxB) maxB = nBase
+          }
+          if (maxB > 0) {
+            const spread = (maxB - minB) / maxB
+            const bonus = (affix.turbulenceK ?? 0) * spread * neighbors.length
+            addPercent += bonus
+            breakdown.push({ typeKey: 'turbulence', label: `湍流 +${Math.round(bonus * 100)}%`, detail: `(极差${Math.round(spread * 100)}%)` })
+          }
+        }
+        break
+      }
+      case 'exhaust': {
+        // 消耗：base 倍率（固定已知）
+        const m = affix.exhaustMult ?? 1
+        if (m > 1) {
+          multProduct *= m
+          breakdown.push({ typeKey: 'exhaust', label: `消耗 ×${m.toFixed(1)}`, detail: `(剩${affix.maxTriggers ?? '?'}次)` })
+        }
+        break
+      }
+      case 'ethereal': {
+        // 虚无：base 倍率（固定已知）
+        const m = affix.etherealMult ?? 1
+        if (m > 1) {
+          multProduct *= m
+          breakdown.push({ typeKey: 'ethereal', label: `虚无 ×${m.toFixed(1)}`, detail: '(限1关)' })
         }
         break
       }
