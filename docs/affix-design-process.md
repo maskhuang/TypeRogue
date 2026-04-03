@@ -123,6 +123,10 @@
 | BIGRAM_FREQ_TABLE | bigram 频率 | — | Bigram |
 | skill.affixes | 词条列表 | removeAffixAtRuntime | Exhaust/Ethereal |
 | applyAffixLevelScaling | 词条参数 | +/-级缩放 | Ethereal |
+| critStreak | 连续暴击数 | 暴击+1/miss归零 | Burst |
+| missStreak | 连续miss数 | miss+1/暴击归零 | ZeroIn |
+| effectiveCritChance | 当前暴击率 | — | Sharpshooter |
+| getPatternRarity | 模式稀有度 | — | Pattern |
 
 **检查项：**
 - [ ] 新词条读哪个共享机制？
@@ -268,6 +272,84 @@ const estimatedTypes = new Set(estimate.breakdown.map(b => b.typeKey).filter(k =
 - [ ] K 值在极端资源值下不爆炸（late game score=500+）
 - [ ] 存档兼容（SkillRuntimeState 新字段有默认值）
 - [ ] TypeScript exhaustive switch 编译通过
+
+---
+
+## 步骤 11：质变设计
+
+**目标：** 为词条设计质变（Quest Transform）效果——通过装备足够多同类型技能解锁的永久强化。
+
+### 11.1 质变设计模式库
+
+从 20 个已有质变中提炼出 8 种可复用的设计模式：
+
+| 模式 | 描述 | 本质 | 使用次数 | 代表 |
+|------|------|------|---------|------|
+| **范围扩大** | 影响 1 个目标 → 影响全部 | 移除数量限制 | 5 | Pulse→回响, Relay→中继, Mirror→映射 |
+| **条件移除** | 概率判定 → 确定性触发 | 移除不确定性 | 3 | Crit→过载, Gravity→极化 |
+| **条件放宽** | 限制性条件变宽松 | 降低触发门槛 | 2 | Cascade→连锁(双向), Recurse→迭代(不衰减) |
+| **极性反转** | 效果方向翻转 | 弱点变优势 | 2 | Decay→净化, Taboo→献祭 |
+| **触发新增** | 被动词条获得主动触发能力 | 增加触发链 | 2 | Amplify→层叠, Outcast→蓄势 |
+| **时间窗口扩大** | 单词内 → 全关 / 瞬时 → 持续 | 移除时间限制 | 1 | Ligature→重叠 |
+| **方向扩展** | 单向操作 → 双向操作 | 增加维度 | 1 | Convert→精炼 |
+| **机制转换** | 改变运算方式（加→乘） | 质的改变 | 1 | Multiply→乘算化 |
+| **数值提升** | 简单数字翻倍 | 量的改变 | 2 | Twin→镜像, Conduit→导引 |
+
+### 11.2 质变设计流程
+
+```
+1. 识别词条的「限制因子」
+   问：什么限制了这个词条发挥最大价值？
+   常见限制因子：
+   - 范围（只影响 1 个 / 只读邻居 / 只读自身）
+   - 条件（概率触发 / 需要特定状态 / 单向判定）
+   - 时间（只在当前单词 / 只在当前关）
+   - 极性（有负面效果 / 有惩罚）
+   - 数值（固定值 / 线性增长）
+
+2. 从模式库中选择匹配的质变模式
+   优先级：范围扩大 > 条件移除/放宽 > 极性反转 > 触发新增 > 数值提升
+   原则：质变应该是「质的改变」而非「量的改变」
+   - ✅ 好的质变：改变词条的行为方式或触发逻辑
+   - ❌ 差的质变：只是把 K 值翻倍
+
+3. 设计具体效果
+   - 效果应该一句话能说清
+   - 应该改变玩家的使用策略（不只是数字更大）
+   - 与原始效果有清晰的「之前→之后」对比
+
+4. 验证平衡性
+   - 质变通过 getQuestEquipTarget 控制解锁难度（需装备 N 个同类型技能）
+   - 高权重词条(6-10) → 需要 2-3 格
+   - 低权重词条(1-4) → 需要 1 格
+   - 质变后效果不应让其他词条变得完全无用
+
+5. 验证实现复杂度
+   - 质变逻辑通过 isTransformedForAffix() 检查
+   - 在现有 Phase 代码中用 if 分支实现
+   - 不应需要新的共享基础设施
+```
+
+### 11.3 质变效果验证检查清单
+
+- [ ] 质变前后有体感区分（不只是数字变化）
+- [ ] 质变描述一句话能说清
+- [ ] 质变不与其他词条的质变效果重复
+- [ ] 质变不破坏现有词条交互（不让某个组合变成必选）
+- [ ] 质变逻辑可在现有 Phase 代码中实现（无需新基础设施）
+- [ ] 质变后的极端场景不爆炸（late game 验证）
+
+### 11.4 无质变词条清单（待设计）
+
+**Epic 45 新增（无质变）：**
+PhaseShift, EndoExo, Fusion, Innate, Counter, Exhaust, Ethereal,
+Cluster, Coverage, Bigram, Flow, Confluence, Turbulence
+
+**Epic 46-49 新增（无质变）：**
+Parity, Prime, Match, Entropy, Cipher, Pattern,
+Leverage, Option, Hedge, Burst, ZeroIn, Sharpshooter
+
+**旧词条无质变：** Resonance, WarDrum, Fallacy
 
 ---
 
