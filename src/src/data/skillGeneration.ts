@@ -221,6 +221,11 @@ export function rollAffixParams(
     case AffixType.Prime:
       return { type, primeK: roundTo(0.04 + random() * 0.04, 2) }
 
+    case AffixType.Match: {
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
+      return { type, posRel, matchK: roundTo(0.08 + random() * 0.07, 2) }
+    }
+
     case AffixType.Outcast:
       return { type, bonusPercent: roundTo(0.4 + random() * 0.4, 2) }
 

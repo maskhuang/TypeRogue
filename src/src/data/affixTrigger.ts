@@ -802,6 +802,30 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.Match: {
+        // 配对：邻居叠层相等的配对数 → bonusPercent
+        if (affix.posRel == null) break
+        const matchNeighbors = getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)
+        const stackValues: number[] = []
+        for (const ns of matchNeighbors) {
+          const nState = ctx.skillStates.get(ns.id)
+          const s = nState?.stacks ?? 0
+          if (s > 0) stackValues.push(s)
+        }
+        if (stackValues.length >= 2) {
+          const freq = new Map<number, number>()
+          for (const s of stackValues) {
+            freq.set(s, (freq.get(s) ?? 0) + 1)
+          }
+          let pairs = 0
+          for (const count of freq.values()) {
+            if (count >= 2) pairs += count * (count - 1) / 2
+          }
+          bonusPercent += (affix.matchK ?? 0) * pairs
+        }
+        break
+      }
+
       // 其余词条类型在 Phase 2 无加算效果
       default:
         break
