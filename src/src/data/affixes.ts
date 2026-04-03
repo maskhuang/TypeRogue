@@ -7,68 +7,73 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（20 类，6 类别） ====
+// ===== 词条类型枚举（22 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
-  // ── 数值型 ──
+  // ── 数值型 numeric ──
   Convert = 'convert',
   Rainbow = 'rainbow',
   Multiply = 'multiply',
-  // ── 节奏型 ──
+  // ── 暴击型 crit ──
+  Crit = 'crit',
   Charge = 'charge',
   Decay = 'decay',
+  Recurse = 'recurse',
+  Taboo = 'taboo',
+  // ── 叠层型 stack ──
   Pulse = 'pulse',
-  Crit = 'crit',
-  Cascade = 'cascade',
-  // ── 键盘拓扑型 ──
-  Void = 'void',
-  Mirror = 'mirror',
-  // ── 触发链型 ──
   Resonance = 'resonance',
   Splash = 'splash',
   Amplify = 'amplify',
-  Conduit = 'conduit',
   Relay = 'relay',
-  // ── 单词感知型 ──
+  WarDrum = 'war_drum',
+  // ── 拓扑型 topology ──
+  Void = 'void',
+  Mirror = 'mirror',
+  Cascade = 'cascade',
+  // ── 词感型 word_sense ──
   Outcast = 'outcast',
   Gravity = 'gravity',
   Ligature = 'ligature',
-  // ── 辅助叠层型 ──
-  WarDrum = 'war_drum',
-  // ── 元规则型 ──
+  // ── 元规则型 meta_rule ──
+  Conduit = 'conduit',
   Twin = 'twin',
-  Recurse = 'recurse',
-  Taboo = 'taboo',
 }
 
 // ===== 词条类别 =====
 
-export type AffixCategory = 'numeric' | 'rhythm' | 'topology' | 'trigger_chain' | 'word_sense' | 'meta_rule'
+export type AffixCategory = 'numeric' | 'crit' | 'stack' | 'topology' | 'word_sense' | 'meta_rule'
 
 export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
+  // ── 数值型 ──
   [AffixType.Convert]: 'numeric',
   [AffixType.Rainbow]: 'numeric',
   [AffixType.Multiply]: 'numeric',
-  [AffixType.Charge]: 'rhythm',
-  [AffixType.Decay]: 'rhythm',
-  [AffixType.Pulse]: 'rhythm',
-  [AffixType.Crit]: 'rhythm',
-  [AffixType.Cascade]: 'rhythm',
+  // ── 暴击型 ──
+  [AffixType.Crit]: 'crit',
+  [AffixType.Charge]: 'crit',
+  [AffixType.Decay]: 'crit',
+  [AffixType.Recurse]: 'crit',
+  [AffixType.Taboo]: 'crit',
+  // ── 叠层型 ──
+  [AffixType.Pulse]: 'stack',
+  [AffixType.Resonance]: 'stack',
+  [AffixType.Splash]: 'stack',
+  [AffixType.Amplify]: 'stack',
+  [AffixType.Relay]: 'stack',
+  [AffixType.WarDrum]: 'stack',
+  // ── 拓扑型 ──
   [AffixType.Void]: 'topology',
   [AffixType.Mirror]: 'topology',
-  [AffixType.Resonance]: 'trigger_chain',
-  [AffixType.Splash]: 'trigger_chain',
-  [AffixType.Amplify]: 'trigger_chain',
-  [AffixType.Conduit]: 'trigger_chain',
-  [AffixType.Relay]: 'trigger_chain',
+  [AffixType.Cascade]: 'topology',
+  // ── 词感型 ──
   [AffixType.Outcast]: 'word_sense',
   [AffixType.Gravity]: 'word_sense',
   [AffixType.Ligature]: 'word_sense',
-  [AffixType.WarDrum]: 'trigger_chain',
+  // ── 元规则型 ──
+  [AffixType.Conduit]: 'meta_rule',
   [AffixType.Twin]: 'meta_rule',
-  [AffixType.Recurse]: 'meta_rule',
-  [AffixType.Taboo]: 'meta_rule',
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====

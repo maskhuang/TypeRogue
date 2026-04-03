@@ -32,23 +32,23 @@ import type { ResourceType } from '../../../src/core/types'
 describe('AffixType', () => {
   const allAffixTypes = Object.values(AffixType)
 
-  it('should have exactly 20 values', () => {
-    expect(allAffixTypes).toHaveLength(20)
+  it('should have exactly 22 values', () => {
+    expect(allAffixTypes).toHaveLength(22)
   })
 
   it('should have unique string values', () => {
     const unique = new Set(allAffixTypes)
-    expect(unique.size).toBe(20)
+    expect(unique.size).toBe(22)
   })
 
   it('should contain all expected types', () => {
     const expected = [
       'convert', 'rainbow', 'multiply',
-      'charge', 'decay', 'pulse', 'crit', 'cascade',
-      'void', 'mirror',
-      'splash', 'amplify', 'conduit', 'resonance',
+      'crit', 'charge', 'decay', 'recurse', 'taboo',
+      'pulse', 'resonance', 'splash', 'amplify', 'relay', 'war_drum',
+      'void', 'mirror', 'cascade',
       'outcast', 'gravity', 'ligature',
-      'twin', 'recurse', 'taboo',
+      'conduit', 'twin',
     ]
     expect(allAffixTypes.sort()).toEqual(expected.sort())
   })
@@ -59,14 +59,14 @@ describe('AffixType', () => {
 describe('AFFIX_CATEGORY_MAP', () => {
   const allAffixTypes = Object.values(AffixType)
 
-  it('should cover all 20 AffixType values', () => {
+  it('should cover all 22 AffixType values', () => {
     for (const t of allAffixTypes) {
       expect(AFFIX_CATEGORY_MAP[t]).toBeDefined()
     }
   })
 
   it('should only use valid category values', () => {
-    const validCategories: AffixCategory[] = ['numeric', 'rhythm', 'topology', 'trigger_chain', 'word_sense', 'meta_rule']
+    const validCategories: AffixCategory[] = ['numeric', 'crit', 'stack', 'topology', 'word_sense', 'meta_rule']
     for (const cat of Object.values(AFFIX_CATEGORY_MAP)) {
       expect(validCategories).toContain(cat)
     }
@@ -74,25 +74,28 @@ describe('AFFIX_CATEGORY_MAP', () => {
 
   it('should have correct category assignments', () => {
     expect(AFFIX_CATEGORY_MAP[AffixType.Convert]).toBe('numeric')
-    expect(AFFIX_CATEGORY_MAP[AffixType.Charge]).toBe('rhythm')
+    expect(AFFIX_CATEGORY_MAP[AffixType.Crit]).toBe('crit')
+    expect(AFFIX_CATEGORY_MAP[AffixType.Charge]).toBe('crit')
+    expect(AFFIX_CATEGORY_MAP[AffixType.Pulse]).toBe('stack')
+    expect(AFFIX_CATEGORY_MAP[AffixType.Resonance]).toBe('stack')
     expect(AFFIX_CATEGORY_MAP[AffixType.Void]).toBe('topology')
-    expect(AFFIX_CATEGORY_MAP[AffixType.Resonance]).toBe('trigger_chain')
-    expect(AFFIX_CATEGORY_MAP[AffixType.Conduit]).toBe('trigger_chain')
+    expect(AFFIX_CATEGORY_MAP[AffixType.Cascade]).toBe('topology')
     expect(AFFIX_CATEGORY_MAP[AffixType.Outcast]).toBe('word_sense')
+    expect(AFFIX_CATEGORY_MAP[AffixType.Conduit]).toBe('meta_rule')
     expect(AFFIX_CATEGORY_MAP[AffixType.Twin]).toBe('meta_rule')
   })
 
-  it('should have 3 numeric, 5 rhythm, 2 topology, 4 trigger_chain, 3 word_sense, 3 meta_rule', () => {
-    const counts: Record<AffixCategory, number> = { numeric: 0, rhythm: 0, topology: 0, trigger_chain: 0, word_sense: 0, meta_rule: 0 }
+  it('should have 3 numeric, 5 crit, 6 stack, 3 topology, 3 word_sense, 2 meta_rule', () => {
+    const counts: Record<AffixCategory, number> = { numeric: 0, crit: 0, stack: 0, topology: 0, word_sense: 0, meta_rule: 0 }
     for (const cat of Object.values(AFFIX_CATEGORY_MAP)) {
       counts[cat]++
     }
     expect(counts.numeric).toBe(3)
-    expect(counts.rhythm).toBe(5)
-    expect(counts.topology).toBe(2)
-    expect(counts.trigger_chain).toBe(4)
+    expect(counts.crit).toBe(5)
+    expect(counts.stack).toBe(6)
+    expect(counts.topology).toBe(3)
     expect(counts.word_sense).toBe(3)
-    expect(counts.meta_rule).toBe(3)
+    expect(counts.meta_rule).toBe(2)
   })
 })
 

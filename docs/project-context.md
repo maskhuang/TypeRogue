@@ -196,16 +196,16 @@ AffixSkillInstance {
 - Rarity 3: + tetromino (1-4 keys)
 - `mapShapeToKeys(anchor, shapeId, rotation)` maps shape onto QWERTY grid; returns null if off-keyboard
 
-**20 Affix Types (6 categories):**
+**22 Affix Types (6 categories):**
 
 | Category | Affixes | Behavior |
 |----------|---------|----------|
-| Numeric | Convert, Rainbow | Convert reads a resource to scale output; Rainbow randomizes target resource |
-| Rhythm | Charge, Decay, Pulse, Crit, Cascade | Charge=hold key; Decay=diminishing; Pulse=burst every N; Crit=chance×mult; Cascade=bonus if prev key in relation |
-| Topology | Void, Resonance, Mirror | Void=bonus per empty neighbor; Resonance=auto-fire on neighbor trigger; Mirror=copy neighbor affix per stage |
-| Trigger Chain | Link, Splash, Amplify, Conduit | Link=fire when watched-affix neighbor fires; Splash=re-trigger random neighbor; Amplify=stacking bonus; Conduit=give extra triggers to neighbors |
+| Numeric | Convert, Rainbow, Multiply | Convert reads a resource to scale output; Rainbow randomizes target resource; Multiply=fixed output multiplier |
+| Crit | Crit, Charge, Decay, Recurse, Taboo | Crit=chance×mult; Charge=hold key for crit bonus; Decay=diminishing crit; Recurse=crit re-trigger; Taboo=high crit + negative on miss |
+| Stack | Pulse, Resonance, Splash, Amplify, Relay, WarDrum | Pulse=stack→self-trigger; Resonance=neighbor-stack→self-trigger; Splash=stack→trigger neighbor; Amplify=stack→add base to neighbor; Relay=neighbor-stack→relay trigger; WarDrum=stack→add crit to neighbor |
+| Topology | Void, Mirror, Cascade | Void=bonus per empty neighbor; Mirror=copy neighbor affix per stage; Cascade=bonus if prev key in relation |
 | Word Sense | Outcast, Gravity, Ligature | Outcast=bonus at word start/end; Gravity=alter word probability; Ligature=bonus per repeated letter |
-| Meta Rule | Twin, Recurse, Taboo | Twin=2 enchantments; Recurse=chance to re-trigger; Taboo=big bonus + penalty chance |
+| Meta Rule | Conduit, Twin | Conduit=give extra triggers to neighbors; Twin=2 enchantments |
 
 **Skill Generation:** `generateSkill(rarity?, resource?, forceAffixes?)` in `data/skillGeneration.ts` — procedurally generates skills. Per-run affix weights randomized via `rollAffixWeights(rng)`.
 

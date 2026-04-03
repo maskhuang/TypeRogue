@@ -449,9 +449,26 @@ development_status:
   44-5-relic-adaptation: done                    # 遗物适配 + 存档迁移
   epic-44-retrospective: optional
 
+  # ===== Epic 45: 词条扩展 — 13 新词条 + 分类重构 + consume 基础设施 =====
+  epic-45: in-progress
+  45-1-category-restructure: done               # 词条分类重构（crit/stack 替代 rhythm/trigger_chain）
+  45-2-word-sense-cluster-coverage: backlog    # 词感：辅音丛 + 覆盖度
+  45-3-word-sense-bigram: backlog             # 词感：双字组（含 bigram 频率表）
+  45-4-topology-flow-confluence-turbulence: backlog  # 拓扑：落差 + 汇流 + 湍流
+  45-5-consume-infrastructure: backlog        # consume() 资源消耗共享基础设施
+  45-6-numeric-phase-shift: backlog           # 数值：相变（阶梯函数 + consume）
+  45-7-numeric-endo-exo: backlog              # 数值：吸热/放热（方波振荡 + consume）
+  45-8-numeric-fusion: backlog                # 数值：聚变（双源与门 + 双 consume）
+  45-9-meta-innate: backlog                   # 元规则：先天（关卡开始自动触发）
+  45-10-meta-counter: backlog                 # 元规则：反制（充能取消负面产出）
+  45-11-meta-exhaust-ethereal: backlog        # 元规则：消耗 + 虚无（词条运行时移除）
+  45-12-skill-generation-integration: backlog # 技能生成集成（权重/参数/商店/tooltip）
+  45-13-balance-playtest: backlog             # 数值平衡与 playtest
+  epic-45-retrospective: optional
+
 # Summary:
-# - Total Epics: 44
-# - Total Stories: 240
+# - Total Epics: 45
+# - Total Stories: 253
 # - Epics Completed: 43
 # - Epics In-Progress: 0
-# - Epics Backlog: 1 (38)
+# - Epics Backlog: 2 (38, 45)

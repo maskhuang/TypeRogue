@@ -147,9 +147,9 @@ export function setRelicState(relicId: string, value: number): void {
  */
 export const AFFIX_CATEGORY_LABELS: Record<string, string> = {
   numeric: '数值型',
-  rhythm: '节奏型',
+  crit: '暴击型',
+  stack: '叠层型',
   topology: '拓扑型',
-  trigger_chain: '触发链型',
   word_sense: '单词感知型',
   meta_rule: '元规则型',
 }
@@ -176,24 +176,26 @@ export function setMonoAffixCategory(category: string): void {
   }
 }
 
-/** 类别名 → 编号映射（1-6，0=未选） */
+/** 类别名 → 编号映射（0=未选，旧编号 2/4 已废弃不复用以保存档兼容） */
 const AFFIX_CATEGORY_INDEX: Record<string, number> = {
   numeric: 1,
-  rhythm: 2,
+  // 2: 旧 rhythm（已废弃，不复用）
   topology: 3,
-  trigger_chain: 4,
+  // 4: 旧 trigger_chain（已废弃，不复用）
   word_sense: 5,
   meta_rule: 6,
+  crit: 7,
+  stack: 8,
 }
 
-/** 编号 → 类别名映射 */
+/** 编号 → 类别名映射（旧编号 2/4 不映射，读到时返回 undefined→null） */
 export const AFFIX_CATEGORY_BY_INDEX: Record<number, string> = {
   1: 'numeric',
-  2: 'rhythm',
   3: 'topology',
-  4: 'trigger_chain',
   5: 'word_sense',
   6: 'meta_rule',
+  7: 'crit',
+  8: 'stack',
 }
 
 /**
