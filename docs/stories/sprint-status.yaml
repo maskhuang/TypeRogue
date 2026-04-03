@@ -474,8 +474,8 @@ development_status:
   epic-46-retrospective: optional
 
   # ===== Epic 47: 词感型扩展 — 密码学领域 =====
-  epic-47: backlog
-  47-1-word-sense-entropy: backlog           # 词感：熵 — Shannon 熵→加成
+  epic-47: in-progress
+  47-1-word-sense-entropy: done              # 词感：熵 — Shannon 熵→加成
   47-2-word-sense-cipher: backlog            # 词感：密文 — 相邻字母表距离→加成
   47-3-pattern-freq-table: backlog           # 模式频率表基础设施（PATTERN_FREQ_TABLE）
   47-4-word-sense-pattern: backlog           # 词感：模式 — 模式签名稀有度→加成

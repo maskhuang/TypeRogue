@@ -72,6 +72,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   parity:      '#a29bfe', // 淡紫 — 奇偶
   prime:       '#5f27cd', // 深紫 — 素数
   match:       '#e056a0', // 玫红 — 配对
+  entropy:     '#2d98da', // 天蓝 — 熵
 }
 
 export interface KeyTooltipData {

@@ -395,6 +395,24 @@ export function isPrime(n: number): boolean {
   return true
 }
 
+/** Shannon 熵：字母分布越均匀越高（纯函数） */
+export function shannonEntropy(word: string): number {
+  if (!word || word.length === 0) return 0
+  const freq = new Map<string, number>()
+  const lower = word.toLowerCase()
+  for (const ch of lower) {
+    if (ch >= 'a' && ch <= 'z') freq.set(ch, (freq.get(ch) ?? 0) + 1)
+  }
+  const total = Array.from(freq.values()).reduce((a, b) => a + b, 0)
+  if (total === 0) return 0
+  let h = 0
+  for (const count of freq.values()) {
+    const p = count / total
+    h -= p * Math.log2(p)
+  }
+  return h
+}
+
 export function isFirstOrLastLetter(key: string, word: string): boolean {
   if (!key || !word || word.length === 0) return false
   const k = key.toLowerCase()
@@ -780,6 +798,15 @@ export function resolvePhase2(
           if (ch >= 'a' && ch <= 'z') letterSet.add(ch)
         }
         bonusPercent += (affix.coverageK ?? 0) * letterSet.size
+        break
+      }
+
+      case AffixType.Entropy: {
+        // 熵：单词字母分布的 Shannon 熵越高，bonusPercent 越大
+        const entropyWord = ctx.currentWord ?? ''
+        if (entropyWord.length > 0) {
+          bonusPercent += (affix.entropyK ?? 0) * shannonEntropy(entropyWord)
+        }
         break
       }
 

@@ -567,8 +567,9 @@ const ZH: Record<string, string> = {
   'affix.cluster': '辅音丛', 'affix.coverage': '覆盖度', 'affix.bigram': '双字组',
   'affix.innate': '先天', 'affix.counter': '反制', 'affix.exhaust': '消耗', 'affix.ethereal': '虚无',
   'affix.parity': '奇偶', 'affix.prime': '素数', 'affix.match': '配对',
+  'affix.entropy': '熵',
 
-  // --- affix descriptions (38) ---
+  // --- affix descriptions (39) ---
   'affix_desc.convert': '读取一种资源的当前值，按系数加成本资源产出',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
   'affix_desc.multiply': '产出直接乘以固定倍数',
@@ -608,6 +609,7 @@ const ZH: Record<string, string> = {
   'affix_desc.parity': '叠层为奇数时增加产出，偶数时增加暴击率',
   'affix_desc.prime': '叠层为素数时，按叠层数给予大额产出加成',
   'affix_desc.match': '邻居中叠层相等的配对越多，产出越高',
+  'affix_desc.entropy': '单词字母分布越均匀，产出加成越高',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -1355,8 +1357,9 @@ const EN: Record<string, string> = {
   'affix.cluster': 'Cluster', 'affix.coverage': 'Coverage', 'affix.bigram': 'Bigram',
   'affix.innate': 'Innate', 'affix.counter': 'Counter', 'affix.exhaust': 'Exhaust', 'affix.ethereal': 'Ethereal',
   'affix.parity': 'Parity', 'affix.prime': 'Prime', 'affix.match': 'Match',
+  'affix.entropy': 'Entropy',
 
-  // --- affix descriptions (38) ---
+  // --- affix descriptions (39) ---
   'affix_desc.convert': 'Reads another resource value, adds scaled bonus to this output',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
   'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
@@ -1396,6 +1399,7 @@ const EN: Record<string, string> = {
   'affix_desc.parity': 'Odd stacks: +output bonus; Even stacks: +crit chance',
   'affix_desc.prime': 'When stacks are a prime number: +output scaled by stack count',
   'affix_desc.match': 'More pairs of neighbors with equal stacks = more output',
+  'affix_desc.entropy': 'More uniform letter distribution in word = more output',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',

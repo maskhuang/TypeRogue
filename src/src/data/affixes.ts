@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（39 类，6 类别） ====
+// ===== 词条类型枚举（40 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -49,6 +49,7 @@ export enum AffixType {
   Cluster = 'cluster',
   Coverage = 'coverage',
   Bigram = 'bigram',
+  Entropy = 'entropy',
   // ── 元规则型 meta_rule ──
   Conduit = 'conduit',
   Twin = 'twin',
@@ -101,6 +102,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Cluster]: 'word_sense',
   [AffixType.Coverage]: 'word_sense',
   [AffixType.Bigram]: 'word_sense',
+  [AffixType.Entropy]: 'word_sense',
   // ── 元规则型 ──
   [AffixType.Conduit]: 'meta_rule',
   [AffixType.Twin]: 'meta_rule',
@@ -236,6 +238,7 @@ export interface AffixInstance {
   evenK?: number                   // Parity: 偶数叠层时 critChance 加成
   primeK?: number                  // Prime: 素数叠层时 bonusPercent 系数（× stacks）
   matchK?: number                  // Match: 每配对的 bonusPercent 加成
+  entropyK?: number                // Entropy: Shannon 熵 × K 的 bonusPercent
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
@@ -426,6 +429,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Parity]: 'high',
   [AffixType.Prime]: 'high',
   [AffixType.Match]: 'high',
+  [AffixType.Entropy]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -528,6 +532,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Parity]: '奇偶',
   [AffixType.Prime]: '素数',
   [AffixType.Match]: '配对',
+  [AffixType.Entropy]: '熵',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -571,6 +576,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Parity]: '叠层为奇数时增加产出，偶数时增加暴击率',
   [AffixType.Prime]: '叠层为素数时，按叠层数给予大额产出加成',
   [AffixType.Match]: '邻居中叠层相等的配对越多，产出越高',
+  [AffixType.Entropy]: '单词字母分布越均匀，产出加成越高',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

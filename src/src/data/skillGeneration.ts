@@ -215,6 +215,9 @@ export function rollAffixParams(
     case AffixType.WarDrum:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), critPerStack: 0.02 }
 
+    case AffixType.Entropy:
+      return { type, entropyK: roundTo(0.06 + random() * 0.06, 2) }
+
     case AffixType.Parity:
       return { type, oddK: roundTo(0.15 + random() * 0.10, 2), evenK: roundTo(0.08 + random() * 0.07, 2) }
 

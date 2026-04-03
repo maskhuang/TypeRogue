@@ -548,6 +548,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'parity': return `奇+${Math.round((a.oddK ?? 0) * 100)}%产出 / 偶+${Math.round((a.evenK ?? 0) * 100)}%暴击`
     case 'prime': return `素数时+${Math.round((a.primeK ?? 0) * 100)}%×叠层数`
     case 'match': return `${rel} +${Math.round((a.matchK ?? 0) * 100)}%/配对`
+    case 'entropy': return `+${Math.round((a.entropyK ?? 0) * 100)}%×信息熵`
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
