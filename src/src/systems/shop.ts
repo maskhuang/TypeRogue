@@ -1637,7 +1637,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
           }
           tooltipData.skill!.smartEstimate = newEstimate;
         }
-        const estimatedTypes = newEstimate ? new Set(skill.affixes.filter(a => ['void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
+        const estimatedTypes = newEstimate ? new Set(newEstimate.breakdown.map(b => b.typeKey).filter(k => k !== 'base' && k !== 'crit_combined')) : undefined;
         const fields = buildAffixTooltipFields(skill, rt, estimatedTypes);
         tooltipData.skill!.affixInfo = fields.affixInfo;
         // 词条参数升级预览
@@ -2977,7 +2977,7 @@ export function renderBuildManager(): void {
             schoolCssClass: `rarity-${affixSkill.rarity}`,
           };
           const estimate = computeSmartEstimate(affixSkill, rt, skillAllKeys.length > 0 ? skillAllKeys : undefined);
-          const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
+          const estimatedTypes = estimate ? new Set(estimate.breakdown.map(b => b.typeKey).filter(k => k !== 'base' && k !== 'crit_combined')) : undefined;
           const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
           tooltipData.skill.affixInfo = fields.affixInfo;
           tooltipData.skill.enchantments = fields.enchantments;
@@ -3111,7 +3111,7 @@ export function renderBuildManager(): void {
           if (sid === skillId) invAllKeys.push(bk);
         }
         const estimate = computeSmartEstimate(affixSkill, rt, invAllKeys.length > 0 ? invAllKeys : undefined);
-        const estimatedTypes = estimate ? new Set(affixSkill.affixes.filter(a => ['void', 'taboo'].includes(a.type)).map(a => a.type)) : undefined;
+        const estimatedTypes = estimate ? new Set(estimate.breakdown.map(b => b.typeKey).filter(k => k !== 'base' && k !== 'crit_combined')) : undefined;
         const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
         tooltipData.skill!.affixInfo = fields.affixInfo;
         tooltipData.skill!.enchantments = fields.enchantments;

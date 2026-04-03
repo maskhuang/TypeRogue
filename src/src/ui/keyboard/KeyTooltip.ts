@@ -51,6 +51,23 @@ export const AFFIX_COLORS: Record<string, string> = {
   twin:      '#fdcb6e', // 淡金 — 双生
   recurse:   '#00b894', // 薄荷 — 递归
   taboo:     '#ff4757', // 亮红 — 禁忌
+  // Story 45: 新词条
+  war_drum:    '#e17055', // 陶红 — 战鼓
+  relay:       '#74b9ff', // 淡蓝 — 中转
+  multiply:    '#ffeaa7', // 淡黄 — 乘算
+  phase_shift: '#e84393', // 洋红 — 相变
+  endo_exo:    '#00cec9', // 湖蓝 — 吸放热
+  fusion:      '#ff7675', // 珊瑚 — 聚变
+  flow:        '#0984e3', // 深蓝 — 落差
+  confluence:  '#00b894', // 薄荷 — 汇流
+  turbulence:  '#636e72', // 灰蓝 — 湍流
+  cluster:     '#b2bec3', // 银灰 — 辅音丛
+  coverage:    '#55efc4', // 翠绿 — 覆盖度
+  bigram:      '#81ecec', // 浅青 — 双字组
+  innate:      '#dfe6e9', // 亮灰 — 先天
+  counter:     '#fab1a0', // 蜜桃 — 反制
+  exhaust:     '#ffa502', // 琥珀 — 消耗
+  ethereal:    '#c8d6e5', // 雾灰 — 虚无(词条)
 }
 
 export interface KeyTooltipData {
