@@ -58,15 +58,15 @@ status: 'refined'
 
 **领域：热力学 | 映射：资源当前值 → 温度**
 
-同一个 `getAffixSourceValue(source)` 读取源，三个不同的 f() 函数：
+同一个 `getStageProducedValue(source)` 读取本关累积产出量，三个不同的 f() 函数：
 
 ### 相变 (Phase Shift) — 阶梯函数
 
-读取一种资源值当「温度」，跨阈值时产出跳升，高相态持续消耗资源。
+读取一种资源的本关累积产出当「温度」，跨阈值时产出跳升，高相态持续消耗资源。
 
 ```
 Phase 2:
-  val = getAffixSourceValue(source)
+  val = getStageProducedValue(source)
   norm = BASE_VALUES[skill.resource][lvl] / BASE_VALUES[source][lvl]
 
   if val < threshold1:       // 固态
@@ -83,11 +83,11 @@ Phase 2:
 
 ### 吸热/放热 (Endo/Exo) — 方波振荡
 
-读取一种资源值，高于阈值时高产出+消耗，低于阈值时低产出+不消耗，形成自然振荡。
+读取一种资源的本关累积产出，高于阈值时高产出+消耗，低于阈值时低产出+不消耗，形成自然振荡。
 
 ```
 Phase 2:
-  val = getAffixSourceValue(source)
+  val = getStageProducedValue(source)
   norm = BASE_VALUES[skill.resource][lvl] / BASE_VALUES[source][lvl]
 
   if val >= threshold:       // 放热(Exo)
@@ -102,12 +102,12 @@ Phase 2:
 
 ### 聚变 (Fusion) — 与门
 
-读取两种资源值，同时高于各自阈值时高倍产出+双消耗，否则惩罚。
+读取两种资源的本关累积产出，同时高于各自阈值时高倍产出+双消耗，否则惩罚。
 
 ```
 Phase 2:
-  valA = getAffixSourceValue(sourceA)
-  valB = getAffixSourceValue(sourceB)
+  valA = getStageProducedValue(sourceA)
+  valB = getStageProducedValue(sourceB)
   normA/normB = 归一化系数
 
   if valA >= ignitionA && valB >= ignitionB:
