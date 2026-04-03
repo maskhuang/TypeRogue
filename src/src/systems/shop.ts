@@ -546,6 +546,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'relay': return t('param.relay', { rel, n: a.relayCount ?? 1 })
     case 'war_drum': return t('param.war_drum', { rel, pct: Math.round((a.critPerStack ?? 0) * 100) })
     case 'parity': return `奇+${Math.round((a.oddK ?? 0) * 100)}%产出 / 偶+${Math.round((a.evenK ?? 0) * 100)}%暴击`
+    case 'prime': return `素数时+${Math.round((a.primeK ?? 0) * 100)}%×叠层数`
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`

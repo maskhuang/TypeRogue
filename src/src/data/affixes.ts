@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（37 类，6 类别） ====
+// ===== 词条类型枚举（38 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -33,6 +33,7 @@ export enum AffixType {
   Relay = 'relay',
   WarDrum = 'war_drum',
   Parity = 'parity',
+  Prime = 'prime',
   // ── 拓扑型 topology ──
   Void = 'void',
   Mirror = 'mirror',
@@ -83,6 +84,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Relay]: 'stack',
   [AffixType.WarDrum]: 'stack',
   [AffixType.Parity]: 'stack',
+  [AffixType.Prime]: 'stack',
   // ── 拓扑型 ──
   [AffixType.Void]: 'topology',
   [AffixType.Mirror]: 'topology',
@@ -230,6 +232,7 @@ export interface AffixInstance {
   critPerStack?: number            // WarDrum: 每层暴击率
   oddK?: number                    // Parity: 奇数叠层时 bonusPercent 加成
   evenK?: number                   // Parity: 偶数叠层时 critChance 加成
+  primeK?: number                  // Prime: 素数叠层时 bonusPercent 系数（× stacks）
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
@@ -418,6 +421,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Taboo]: 'high',
   [AffixType.Fallacy]: 'high',
   [AffixType.Parity]: 'high',
+  [AffixType.Prime]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -518,6 +522,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Ethereal]: '虚无',
   [AffixType.Fallacy]: '赌徒',
   [AffixType.Parity]: '奇偶',
+  [AffixType.Prime]: '素数',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -559,6 +564,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Ethereal]: '本关内其他词条效果提升一级；关卡结束后词条消失',
   [AffixType.Fallacy]: '连续未暴击时暴击率逐次递增，暴击后归零重新累积',
   [AffixType.Parity]: '叠层为奇数时增加产出，偶数时增加暴击率',
+  [AffixType.Prime]: '叠层为素数时，按叠层数给予大额产出加成',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

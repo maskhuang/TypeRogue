@@ -467,7 +467,7 @@ development_status:
   # ===== Epic 46: 叠层型扩展 — 组合数学领域 =====
   epic-46: in-progress
   46-1-stack-parity: done                     # 叠层：奇偶 — 奇数加产出/偶数加暴击
-  46-2-stack-prime: backlog                  # 叠层：素数 — 叠层为素数时大额加成
+  46-2-stack-prime: done                      # 叠层：素数 — 叠层为素数时大额加成
   46-3-stack-match: backlog                  # 叠层：配对 — 邻居叠层相等配对数→加成
   46-4-generation-integration: backlog       # 技能生成集成
   46-5-balance-playtest: backlog             # 数值平衡与 playtest

@@ -384,6 +384,17 @@ export function isConsonant(ch: string): boolean {
   return lower >= 'a' && lower <= 'z' && !VOWELS.has(lower)
 }
 
+/** 素数判定（纯函数） */
+export function isPrime(n: number): boolean {
+  if (n < 2) return false
+  if (n < 4) return true
+  if (n % 2 === 0 || n % 3 === 0) return false
+  for (let i = 5; i * i <= n; i += 6) {
+    if (n % i === 0 || n % (i + 2) === 0) return false
+  }
+  return true
+}
+
 export function isFirstOrLastLetter(key: string, word: string): boolean {
   if (!key || !word || word.length === 0) return false
   const k = key.toLowerCase()
@@ -779,6 +790,15 @@ export function resolvePhase2(
           bonusPercent += affix.oddK ?? 0
         }
         // 偶数叠层时加暴击率 → 在 Phase 3 处理（暴击子系统）
+        break
+      }
+
+      case AffixType.Prime: {
+        // 素数：叠层为素数时 bonusPercent += primeK × stacks
+        const primeStacks = runtimeState.stacks
+        if (primeStacks >= 2 && isPrime(primeStacks)) {
+          bonusPercent += (affix.primeK ?? 0) * primeStacks
+        }
         break
       }
 

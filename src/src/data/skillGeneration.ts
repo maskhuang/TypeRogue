@@ -218,6 +218,9 @@ export function rollAffixParams(
     case AffixType.Parity:
       return { type, oddK: roundTo(0.15 + random() * 0.10, 2), evenK: roundTo(0.08 + random() * 0.07, 2) }
 
+    case AffixType.Prime:
+      return { type, primeK: roundTo(0.04 + random() * 0.04, 2) }
+
     case AffixType.Outcast:
       return { type, bonusPercent: roundTo(0.4 + random() * 0.4, 2) }
 
