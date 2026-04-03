@@ -73,6 +73,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   prime:       '#5f27cd', // 深紫 — 素数
   match:       '#e056a0', // 玫红 — 配对
   entropy:     '#2d98da', // 天蓝 — 熵
+  cipher:      '#45aaf2', // 浅蓝 — 密文
 }
 
 export interface KeyTooltipData {

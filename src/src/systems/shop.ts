@@ -549,6 +549,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'prime': return `素数时+${Math.round((a.primeK ?? 0) * 100)}%×叠层数`
     case 'match': return `${rel} +${Math.round((a.matchK ?? 0) * 100)}%/配对`
     case 'entropy': return `+${Math.round((a.entropyK ?? 0) * 100)}%×信息熵`
+    case 'cipher': return `+${Math.round((a.cipherK ?? 0) * 100)}%×字母跳跃`
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`

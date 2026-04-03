@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（40 类，6 类别） ====
+// ===== 词条类型枚举（41 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -50,6 +50,7 @@ export enum AffixType {
   Coverage = 'coverage',
   Bigram = 'bigram',
   Entropy = 'entropy',
+  Cipher = 'cipher',
   // ── 元规则型 meta_rule ──
   Conduit = 'conduit',
   Twin = 'twin',
@@ -103,6 +104,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Coverage]: 'word_sense',
   [AffixType.Bigram]: 'word_sense',
   [AffixType.Entropy]: 'word_sense',
+  [AffixType.Cipher]: 'word_sense',
   // ── 元规则型 ──
   [AffixType.Conduit]: 'meta_rule',
   [AffixType.Twin]: 'meta_rule',
@@ -239,6 +241,7 @@ export interface AffixInstance {
   primeK?: number                  // Prime: 素数叠层时 bonusPercent 系数（× stacks）
   matchK?: number                  // Match: 每配对的 bonusPercent 加成
   entropyK?: number                // Entropy: Shannon 熵 × K 的 bonusPercent
+  cipherK?: number                 // Cipher: 相邻字母表距离均值 × K 的 bonusPercent
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
@@ -430,6 +433,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Prime]: 'high',
   [AffixType.Match]: 'high',
   [AffixType.Entropy]: 'high',
+  [AffixType.Cipher]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -533,6 +537,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Prime]: '素数',
   [AffixType.Match]: '配对',
   [AffixType.Entropy]: '熵',
+  [AffixType.Cipher]: '密文',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -577,6 +582,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Prime]: '叠层为素数时，按叠层数给予大额产出加成',
   [AffixType.Match]: '邻居中叠层相等的配对越多，产出越高',
   [AffixType.Entropy]: '单词字母分布越均匀，产出加成越高',
+  [AffixType.Cipher]: '单词相邻字母在字母表上跳跃越大，产出加成越高',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

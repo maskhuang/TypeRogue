@@ -810,6 +810,23 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.Cipher: {
+        // 密文：相邻字母在字母表上的距离均值 → bonusPercent
+        const cipherLetters: number[] = []
+        for (const ch of (ctx.currentWord ?? '').toLowerCase()) {
+          if (ch >= 'a' && ch <= 'z') cipherLetters.push(ch.charCodeAt(0))
+        }
+        if (cipherLetters.length >= 2) {
+          let totalDist = 0
+          for (let i = 0; i < cipherLetters.length - 1; i++) {
+            totalDist += Math.abs(cipherLetters[i + 1] - cipherLetters[i])
+          }
+          const avgDist = totalDist / (cipherLetters.length - 1)
+          bonusPercent += (affix.cipherK ?? 0) * avgDist
+        }
+        break
+      }
+
       case AffixType.Parity: {
         // 奇偶：奇数叠层时加产出（Phase 2 加算）
         const parityStacks = runtimeState.stacks
