@@ -74,6 +74,24 @@ let _wordHasProducerTriggered = false;
 // === 追踪本词各资源产出量（boss_keystroke_tax 资源触发用）===
 const _currentWordOutput: Record<string, number> = {};
 
+/** Story 45: 本关累积资源产出追踪（供 PhaseShift/EndoExo/Fusion 读取） */
+const _stageProduced: Partial<Record<ResourceType, number>> = {};
+
+/** 重置本关累积产出（每关开始时调用） */
+export function resetStageProduced(): void {
+  for (const key of Object.keys(_stageProduced)) delete _stageProduced[key as ResourceType];
+}
+
+/** 记录本关资源产出（applyResource 正产出时调用） */
+export function recordStageProduced(resource: ResourceType, amount: number): void {
+  if (amount > 0) _stageProduced[resource] = (_stageProduced[resource] ?? 0) + amount;
+}
+
+/** 获取本关累积产出快照（注入 TriggerContext） */
+export function getStageProduced(): Partial<Record<ResourceType, number>> {
+  return { ..._stageProduced };
+}
+
 /** 重置本词资源产出追踪（每词开始时调用） */
 export function resetWordResourceOutput(): void {
   for (const key of Object.keys(_currentWordOutput)) {
@@ -278,6 +296,7 @@ function triggerAffixSkillWithFeedback(
     overloadCircuitActive: isOverloadCircuitActive(),
     neighborWatchActive: isNeighborWatchActive(),
     inscriptionFlowGrowth: getInscriptionFlowGrowth(),
+    stageProduced: getStageProduced(),
   };
 
   // 暴击蓄力消耗（本次触发已注入 baseCritRate=1.0）
@@ -361,6 +380,8 @@ function triggerAffixSkillWithFeedback(
       if (totalBonus > 0 && amount > 0) amount = amount * (1 + totalBonus);
       // 追踪本词资源产出（击键代价修饰器用）
       if (amount > 0) recordWordResourceOutput(resource, amount);
+      // Story 45: 追踪本关累积产出（PhaseShift/EndoExo/Fusion 用）
+      if (amount > 0) recordStageProduced(resource, amount);
 
       // Res* 学徒附魔：全场资源产出监听（任何技能/遗物产出时，所有匹配 Res* 附魔的技能积累 EXP）
       const resEnch = RES_ENCHANTMENT_BY_RESOURCE[resource];

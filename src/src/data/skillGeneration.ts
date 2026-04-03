@@ -21,6 +21,8 @@ import { t } from '../demo/demo-i18n'
 // ===== 常量 =====
 
 const GENERIC_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
+/** 可作为「读取源」的资源（新词条读产出量而非池量，所有资源均可） */
+const READABLE_SOURCE_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
 const ALL_POS_RELATIONS: PositionRelation[] = Object.values(PositionRelation)
 
 /** 获取词条的有效权重（Convert 仅使用 cross 变体权重） */
@@ -251,17 +253,17 @@ export function rollAffixParams(
       return { type, posRel: pickRandom(ALL_POS_RELATIONS), turbulenceK: roundTo(0.05 + random() * 0.07, 3) }  // 0.05~0.12
 
     case AffixType.PhaseShift: {
-      const src = pickRandom(GENERIC_RESOURCES.filter(r => r !== resource))
+      const src = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))
       return { type, phaseSource: src, phaseT1: roundTo(15 + random() * 15, 0), phaseT2: roundTo(40 + random() * 30, 0), kSolid: roundTo(0.005 + random() * 0.005, 4), kLiquid: roundTo(0.015 + random() * 0.015, 4), kGas: roundTo(0.03 + random() * 0.02, 4), sustainCost: roundTo(1 + random() * 3, 1) }
     }
 
     case AffixType.EndoExo: {
-      const src = pickRandom(GENERIC_RESOURCES.filter(r => r !== resource))
+      const src = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))
       return { type, endoSource: src, endoThreshold: roundTo(15 + random() * 20, 0), kExo: roundTo(0.02 + random() * 0.02, 4), kEndo: roundTo(-0.005 + random() * 0.008, 4), endoConsumeRate: roundTo(1 + random() * 4, 1) }
     }
 
     case AffixType.Fusion: {
-      const pool = GENERIC_RESOURCES.filter(r => r !== resource)
+      const pool = READABLE_SOURCE_RESOURCES.filter(r => r !== resource)
       const srcA = pickRandom(pool)
       const srcB = pickRandom(pool.filter(r => r !== srcA))
       return { type, fusionSourceA: srcA, fusionSourceB: srcB, ignitionA: roundTo(15 + random() * 20, 0), ignitionB: roundTo(15 + random() * 20, 0), fusionK: roundTo(0.02 + random() * 0.02, 4), fusionConsumeA: roundTo(2 + random() * 5, 1), fusionConsumeB: roundTo(2 + random() * 5, 1), fusionPenalty: roundTo(0.05 + random() * 0.10, 3) }

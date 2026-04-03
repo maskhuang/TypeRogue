@@ -120,6 +120,9 @@ export interface TriggerContext {
   recurseCritOverride?: number
   /** 回声指套暴击率（遗物注入，暴击时额外触发） */
   echoThimbleCritRate?: number
+  // ── Story 45: 累积产出追踪 ──
+  /** 本关各资源累积产出量（PhaseShift/EndoExo/Fusion 读取此值而非池量） */
+  stageProduced?: Partial<Record<ResourceType, number>>
   // ── 叠层子系统遗物 ──
   /** 层层递进：每技能间隔减少量 */
   stackMomentumReduction?: Map<string, number>
@@ -502,6 +505,14 @@ export function getAffixSourceValue(source: ResourceType, ctx: TriggerContext): 
   return ctx.resources[source]
 }
 
+/**
+ * 读取本关累积产出量（而非资源池值）。
+ * 用于 PhaseShift/EndoExo/Fusion——避免 time/multiplier 池量级与产出量级差异过大。
+ */
+export function getStageProducedValue(source: ResourceType, ctx: TriggerContext): number {
+  return ctx.stageProduced?.[source] ?? 0
+}
+
 // ===== Phase 2: 加算层 =====
 
 export interface Phase2Result {
@@ -578,7 +589,7 @@ export function resolvePhase2(
         // 相变：读资源当温度，阶梯式 bonusPercent + 气态 consume
         if (affix.phaseSource == null) break
         const psLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        const psVal = getAffixSourceValue(affix.phaseSource, ctx)
+        const psVal = getStageProducedValue(affix.phaseSource, ctx)
         const psNorm = (BASE_VALUES[skill.resource]?.[psLvl] ?? 1) / (BASE_VALUES[affix.phaseSource]?.[psLvl] ?? 1)
         if (psVal < (affix.phaseT1 ?? Infinity)) {
           bonusPercent += (affix.kSolid ?? 0) * psVal * psNorm
@@ -597,7 +608,7 @@ export function resolvePhase2(
         // 吸热/放热：方波振荡 — 高于阈值 Exo（高+消耗），低于阈值 Endo（低/负）
         if (affix.endoSource == null) break
         const eeLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        const eeVal = getAffixSourceValue(affix.endoSource, ctx)
+        const eeVal = getStageProducedValue(affix.endoSource, ctx)
         const eeNorm = (BASE_VALUES[skill.resource]?.[eeLvl] ?? 1) / (BASE_VALUES[affix.endoSource]?.[eeLvl] ?? 1)
         if (eeVal >= (affix.endoThreshold ?? Infinity)) {
           bonusPercent += (affix.kExo ?? 0) * eeVal * eeNorm
@@ -615,8 +626,8 @@ export function resolvePhase2(
         // 归一化：各源值除以自身 BASE_VALUES（标准化为「几个基础单位」），然后求和
         if (affix.fusionSourceA == null || affix.fusionSourceB == null) break
         const fuLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        const valA = getAffixSourceValue(affix.fusionSourceA, ctx)
-        const valB = getAffixSourceValue(affix.fusionSourceB, ctx)
+        const valA = getStageProducedValue(affix.fusionSourceA, ctx)
+        const valB = getStageProducedValue(affix.fusionSourceB, ctx)
         const baseA = BASE_VALUES[affix.fusionSourceA]?.[fuLvl] ?? 1
         const baseB = BASE_VALUES[affix.fusionSourceB]?.[fuLvl] ?? 1
         if (valA >= (affix.ignitionA ?? Infinity) && valB >= (affix.ignitionB ?? Infinity)) {
