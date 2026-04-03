@@ -267,6 +267,18 @@ export function rollAffixParams(
       return { type, fusionSourceA: srcA, fusionSourceB: srcB, ignitionA: roundTo(15 + random() * 20, 0), ignitionB: roundTo(15 + random() * 20, 0), fusionK: roundTo(0.08 + random() * 0.07, 3), fusionConsumeA: roundTo(2 + random() * 5, 1), fusionConsumeB: roundTo(2 + random() * 5, 1), fusionPenalty: roundTo(5 + random() * 10, 0) }
     }
 
+    case AffixType.Innate:
+      return { type }
+
+    case AffixType.Counter:
+      return { type, maxCharges: Math.floor(2 + random() * 3) }  // 2~4 charges
+
+    case AffixType.Exhaust:
+      return { type, exhaustMult: roundTo(1.8 + random() * 0.4, 1), maxTriggers: Math.floor(5 + random() * 6) }  // ×1.8~2.2, 5~10 uses
+
+    case AffixType.Ethereal:
+      return { type, etherealMult: roundTo(2.5 + random() * 1.0, 1) }  // ×2.5~3.5
+
     default: {
       const _exhaustive: never = type
       throw new Error(`Unknown AffixType: ${type}`)

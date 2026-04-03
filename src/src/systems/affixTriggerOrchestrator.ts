@@ -13,6 +13,7 @@ import {
   MAX_RECURSE_DEPTH,
   MAX_CHAIN_DEPTH,
   getClassResources,
+  removeAffixAtRuntime,
 } from '../data/affixTrigger'
 import type {
   TriggerContext,
@@ -201,6 +202,35 @@ export function orchestrateAffixTrigger(
     results.push(result)
     totalOutput += effectiveOutput
     triggerCount++
+
+    // Story 45.9: Counter — 负产出拦截
+    if (effectiveOutput < 0) {
+      const skill = ctx.allSkills.get(item.skillId)
+      const rt = ctx.skillStates.get(item.skillId)
+      if (skill && rt && skill.affixes.some(a => a.type === AffixType.Counter) && (rt as any).counterCharges > 0) {
+        (rt as any).counterCharges--
+        effectiveOutput = 0
+      }
+    }
+
+    // Story 45.9: Exhaust — 触发计数 + 词条移除
+    {
+      const skill = ctx.allSkills.get(item.skillId)
+      const rt = ctx.skillStates.get(item.skillId)
+      if (skill && rt) {
+        const exhaustAffix = skill.affixes.find(a => a.type === AffixType.Exhaust)
+        if (exhaustAffix) {
+          (rt as any).exhaustCount = ((rt as any).exhaustCount ?? 0) + 1
+          if ((rt as any).exhaustCount >= (exhaustAffix.maxTriggers ?? Infinity)) {
+            removeAffixAtRuntime(skill, AffixType.Exhaust)
+          }
+        }
+        // Ethereal: 标记已触发
+        if (skill.affixes.some(a => a.type === AffixType.Ethereal)) {
+          (rt as any).etherealTriggered = true
+        }
+      }
+    }
 
     // ── 副作用 ──
     if (result.phase4) {

@@ -550,6 +550,10 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'phase_shift': return `读${RESOURCE_ICONS[a.phaseSource!] || ''}:T1=${a.phaseT1},T2=${a.phaseT2}`
     case 'endo_exo': return `读${RESOURCE_ICONS[a.endoSource!] || ''}:阈值${a.endoThreshold}`
     case 'fusion': return `${RESOURCE_ICONS[a.fusionSourceA!] || ''}+${RESOURCE_ICONS[a.fusionSourceB!] || ''}点火`
+    case 'innate': return '开局自动触发'
+    case 'counter': return `充能${a.maxCharges ?? 0}次`
+    case 'exhaust': return `×${a.exhaustMult?.toFixed(1) ?? '?'} 共${a.maxTriggers ?? '?'}次`
+    case 'ethereal': return `×${a.etherealMult?.toFixed(1) ?? '?'} 限1关`
     default: return ''
   }
 }

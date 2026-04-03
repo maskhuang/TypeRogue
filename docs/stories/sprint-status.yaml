@@ -458,9 +458,8 @@ development_status:
   45-5-consume-infrastructure: done           # consume() 资源消耗共享基础设施
   45-6-numeric-phase-shift-endo-exo-fusion: done           # 数值：相变+吸热/放热+聚变（合并45.6~45.8）
   # 45-7, 45-8 已合并入 45-6
-  45-9-meta-innate: backlog                   # 元规则：先天（关卡开始自动触发）
-  45-10-meta-counter: backlog                 # 元规则：反制（充能取消负面产出）
-  45-11-meta-exhaust-ethereal: backlog        # 元规则：消耗 + 虚无（词条运行时移除）
+  45-9-meta-innate-counter-exhaust-ethereal: done           # 元规则：先天+反制+消耗+虚无（合并45.9~45.11）
+  # 45-10, 45-11 已合并入 45-9
   45-12-skill-generation-integration: backlog # 技能生成集成（权重/参数/商店/tooltip）
   45-13-balance-playtest: backlog             # 数值平衡与 playtest
   epic-45-retrospective: optional

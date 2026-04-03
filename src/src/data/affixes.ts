@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（31 类，6 类别） ====
+// ===== 词条类型枚举（35 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -48,6 +48,10 @@ export enum AffixType {
   // ── 元规则型 meta_rule ──
   Conduit = 'conduit',
   Twin = 'twin',
+  Innate = 'innate',
+  Counter = 'counter',
+  Exhaust = 'exhaust',
+  Ethereal = 'ethereal',
 }
 
 // ===== 词条类别 =====
@@ -92,6 +96,10 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   // ── 元规则型 ──
   [AffixType.Conduit]: 'meta_rule',
   [AffixType.Twin]: 'meta_rule',
+  [AffixType.Innate]: 'meta_rule',
+  [AffixType.Counter]: 'meta_rule',
+  [AffixType.Exhaust]: 'meta_rule',
+  [AffixType.Ethereal]: 'meta_rule',
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -244,6 +252,11 @@ export interface AffixInstance {
   fusionConsumeA?: number          // Fusion: A 消耗量
   fusionConsumeB?: number          // Fusion: B 消耗量
   fusionPenalty?: number           // Fusion: 失败惩罚 bonusPercent
+  // ── 元规则型新词条 ──
+  maxCharges?: number              // Counter: 每关充能上限
+  maxTriggers?: number             // Exhaust: 最大触发次数
+  exhaustMult?: number             // Exhaust: 每次触发 base 倍率
+  etherealMult?: number            // Ethereal: base 倍率（一关有效）
 }
 
 // ===== 稀有度 =====
@@ -298,6 +311,10 @@ export interface SkillRuntimeState {
   questStacks: number              // 任务: 当前叠层进度
   questCompletions: number         // 任务: 已完成次数
   questTransformed: boolean        // 任务: 已质变（首次完成后永久 true）
+  // ── 元规则型运行时 ──
+  counterCharges: number           // Counter: 当前充能数（每关恢复）
+  exhaustCount: number             // Exhaust: 累计触发次数（跨关）
+  etherealTriggered: boolean       // Ethereal: 本关是否已触发
 }
 
 // ===== 存档数据 =====
@@ -385,6 +402,10 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Turbulence]: 'high',
   [AffixType.WarDrum]: 'high',
   [AffixType.Twin]: 'low',
+  [AffixType.Innate]: 'low',
+  [AffixType.Counter]: 'low',
+  [AffixType.Exhaust]: 'low',
+  [AffixType.Ethereal]: 'low',
   [AffixType.Recurse]: 'high',
   [AffixType.Taboo]: 'high',
 }
@@ -481,6 +502,10 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.PhaseShift]: '相变',
   [AffixType.EndoExo]: '吸放热',
   [AffixType.Fusion]: '聚变',
+  [AffixType.Innate]: '先天',
+  [AffixType.Counter]: '反制',
+  [AffixType.Exhaust]: '消耗',
+  [AffixType.Ethereal]: '虚无',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -516,6 +541,10 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.PhaseShift]: '读取一种资源当温度，跨阈值时产出跳升；高温持续消耗资源',
   [AffixType.EndoExo]: '读取一种资源，高于阈值时高产出+消耗（放热），低于阈值时低产出（吸热）',
   [AffixType.Fusion]: '需要两种资源同时达到阈值才能点火；成功时高倍产出+双消耗，失败则惩罚',
+  [AffixType.Innate]: '每关开始时自动触发一次（不需按键）',
+  [AffixType.Counter]: '产出为负时消耗充能取消负面效果（每关恢复充能）',
+  [AffixType.Exhaust]: '每次触发产出倍增，但触发次数有限，用完词条消失',
+  [AffixType.Ethereal]: '产出大幅倍增，但只生效一关，关卡结束后词条消失',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -692,6 +721,9 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     questStacks: 0,
     questCompletions: 0,
     questTransformed: false,
+    counterCharges: 0,
+    exhaustCount: 0,
+    etherealTriggered: false,
   }
 }
 

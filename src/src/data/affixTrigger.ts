@@ -363,6 +363,16 @@ export function getNeighborSkills(
   return result
 }
 
+/** Story 45.9: 运行时移除技能的指定类型词条 */
+export function removeAffixAtRuntime(skill: AffixSkillInstance, affixType: AffixType): boolean {
+  const idx = skill.affixes.findIndex(a => a.type === affixType)
+  if (idx >= 0) {
+    skill.affixes.splice(idx, 1)
+    return true
+  }
+  return false
+}
+
 /** 流放判定：键是否为单词首字母或尾字母 */
 const VOWELS = new Set(['a', 'e', 'i', 'o', 'u'])
 /** 判断字母是否为辅音（非元音字母） */
@@ -519,9 +529,20 @@ export function resolvePhase2(
 ): Phase2Result {
   const hasMultOp = (skill.enchantmentIds.includes(EnchantmentType.MultiplyOperator) || skill.enchantmentIds.includes(EnchantmentType.QuestMultiplyOp)) && isTransformedForAffix(AffixType.Multiply, runtimeState, skill, ctx)
   // 乘算化（质变后）：基础值替换为乘数基底
-  const effectiveBase = hasMultOp
+  let effectiveBase = hasMultOp
     ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? baseOutput)
     : baseOutput
+
+  // Story 45.9: Exhaust/Ethereal base 倍率（Phase 1 后立即应用）
+  for (const affix of skill.affixes) {
+    if (affix.type === AffixType.Exhaust && (affix.exhaustMult ?? 0) > 1) {
+      effectiveBase *= affix.exhaustMult!
+    }
+    if (affix.type === AffixType.Ethereal && (affix.etherealMult ?? 0) > 1) {
+      effectiveBase *= affix.etherealMult!
+    }
+  }
+
   let bonusPercent = 0
   let flatBonus = 0 // 增幅词条：绝对值加成
   let chargeAutoComplete = false
@@ -2106,6 +2127,9 @@ export function deserializeSkill(
     questStacks: data.runtime.questStacks ?? 0,
     questCompletions: data.runtime.questCompletions ?? 0,
     questTransformed: data.runtime.questTransformed ?? ((data.runtime.questCompletions ?? 0) > 0),
+    counterCharges: (data.runtime as any).counterCharges ?? 0,
+    exhaustCount: (data.runtime as any).exhaustCount ?? 0,
+    etherealTriggered: (data.runtime as any).etherealTriggered ?? false,
   }
   return { skill, runtimeState }
 }
