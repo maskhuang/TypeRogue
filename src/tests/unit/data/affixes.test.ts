@@ -32,13 +32,13 @@ import type { ResourceType } from '../../../src/core/types'
 describe('AffixType', () => {
   const allAffixTypes = Object.values(AffixType)
 
-  it('should have exactly 25 values', () => {
-    expect(allAffixTypes).toHaveLength(25)
+  it('should have exactly 28 values', () => {
+    expect(allAffixTypes).toHaveLength(28)
   })
 
   it('should have unique string values', () => {
     const unique = new Set(allAffixTypes)
-    expect(unique.size).toBe(25)
+    expect(unique.size).toBe(28)
   })
 
   it('should contain all expected types', () => {
@@ -46,7 +46,7 @@ describe('AffixType', () => {
       'convert', 'rainbow', 'multiply',
       'crit', 'charge', 'decay', 'recurse', 'taboo',
       'pulse', 'resonance', 'splash', 'amplify', 'relay', 'war_drum',
-      'void', 'mirror', 'cascade',
+      'void', 'mirror', 'cascade', 'flow', 'confluence', 'turbulence',
       'outcast', 'gravity', 'ligature', 'cluster', 'coverage', 'bigram',
       'conduit', 'twin',
     ]
@@ -59,7 +59,7 @@ describe('AffixType', () => {
 describe('AFFIX_CATEGORY_MAP', () => {
   const allAffixTypes = Object.values(AffixType)
 
-  it('should cover all 25 AffixType values', () => {
+  it('should cover all 28 AffixType values', () => {
     for (const t of allAffixTypes) {
       expect(AFFIX_CATEGORY_MAP[t]).toBeDefined()
     }
@@ -85,7 +85,7 @@ describe('AFFIX_CATEGORY_MAP', () => {
     expect(AFFIX_CATEGORY_MAP[AffixType.Twin]).toBe('meta_rule')
   })
 
-  it('should have 3 numeric, 5 crit, 6 stack, 3 topology, 6 word_sense, 2 meta_rule', () => {
+  it('should have 3 numeric, 5 crit, 6 stack, 6 topology, 6 word_sense, 2 meta_rule', () => {
     const counts: Record<AffixCategory, number> = { numeric: 0, crit: 0, stack: 0, topology: 0, word_sense: 0, meta_rule: 0 }
     for (const cat of Object.values(AFFIX_CATEGORY_MAP)) {
       counts[cat]++
@@ -93,7 +93,7 @@ describe('AFFIX_CATEGORY_MAP', () => {
     expect(counts.numeric).toBe(3)
     expect(counts.crit).toBe(5)
     expect(counts.stack).toBe(6)
-    expect(counts.topology).toBe(3)
+    expect(counts.topology).toBe(6)
     expect(counts.word_sense).toBe(6)
     expect(counts.meta_rule).toBe(2)
   })

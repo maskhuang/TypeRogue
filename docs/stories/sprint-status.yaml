@@ -454,7 +454,7 @@ development_status:
   45-1-category-restructure: done               # 词条分类重构（crit/stack 替代 rhythm/trigger_chain）
   45-2-word-sense-cluster-coverage: done             # 词感：辅音丛 + 覆盖度
   45-3-word-sense-bigram: done                # 词感：双字组（含 bigram 频率表）
-  45-4-topology-flow-confluence-turbulence: backlog  # 拓扑：落差 + 汇流 + 湍流
+  45-4-topology-flow-confluence-turbulence: done           # 拓扑：落差 + 汇流 + 湍流
   45-5-consume-infrastructure: backlog        # consume() 资源消耗共享基础设施
   45-6-numeric-phase-shift: backlog           # 数值：相变（阶梯函数 + consume）
   45-7-numeric-endo-exo: backlog              # 数值：吸热/放热（方波振荡 + consume）

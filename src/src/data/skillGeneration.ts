@@ -241,6 +241,15 @@ export function rollAffixParams(
     case AffixType.Bigram:
       return { type, bigramK: roundTo(30 + random() * 30, 1) }  // 30~60 per avg rarity
 
+    case AffixType.Flow:
+      return { type, posRel: pickRandom(ALL_POS_RELATIONS), flowK: roundTo(3 + random() * 5, 1) }  // 3~8
+
+    case AffixType.Confluence:
+      return { type, posRel: pickRandom(ALL_POS_RELATIONS), confluenceK: roundTo(15 + random() * 15, 1) }  // 15~30
+
+    case AffixType.Turbulence:
+      return { type, posRel: pickRandom(ALL_POS_RELATIONS), turbulenceK: roundTo(5 + random() * 7, 1) }  // 5~12
+
     default: {
       const _exhaustive: never = type
       throw new Error(`Unknown AffixType: ${type}`)

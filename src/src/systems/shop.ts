@@ -544,6 +544,9 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'cluster': return `+${Math.round(a.clusterK ?? 0)}%/辅音段`
     case 'coverage': return `+${Math.round(a.coverageK ?? 0)}%/字母种类`
     case 'bigram': return `+${Math.round(a.bigramK ?? 0)}%×罕见度`
+    case 'flow': return `${rel} +${Math.round(a.flowK ?? 0)}%/落差`
+    case 'confluence': return `${rel} +${Math.round(a.confluenceK ?? 0)}%×多样性`
+    case 'turbulence': return `${rel} +${Math.round(a.turbulenceK ?? 0)}%×极差`
     default: return ''
   }
 }

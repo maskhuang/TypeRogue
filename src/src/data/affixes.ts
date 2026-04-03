@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（24 类，6 类别） ====
+// ===== 词条类型枚举（28 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -32,6 +32,9 @@ export enum AffixType {
   Void = 'void',
   Mirror = 'mirror',
   Cascade = 'cascade',
+  Flow = 'flow',
+  Confluence = 'confluence',
+  Turbulence = 'turbulence',
   // ── 词感型 word_sense ──
   Outcast = 'outcast',
   Gravity = 'gravity',
@@ -70,6 +73,9 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Void]: 'topology',
   [AffixType.Mirror]: 'topology',
   [AffixType.Cascade]: 'topology',
+  [AffixType.Flow]: 'topology',
+  [AffixType.Confluence]: 'topology',
+  [AffixType.Turbulence]: 'topology',
   // ── 词感型 ──
   [AffixType.Outcast]: 'word_sense',
   [AffixType.Gravity]: 'word_sense',
@@ -208,6 +214,9 @@ export interface AffixInstance {
   clusterK?: number                // Cluster: 每单位辅音丛长度的 bonusPercent
   coverageK?: number               // Coverage: 每个不同字母的 bonusPercent
   bigramK?: number                 // Bigram: 平均 bigram 罕见度 × K 的 bonusPercent
+  flowK?: number                   // Flow: 每单位归一化落差的 bonusPercent
+  confluenceK?: number             // Confluence: 资源多样性加成系数
+  turbulenceK?: number             // Turbulence: 极差×邻居数加成系数
 }
 
 // ===== 稀有度 =====
@@ -341,6 +350,9 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Cluster]: 'high',
   [AffixType.Coverage]: 'high',
   [AffixType.Bigram]: 'high',
+  [AffixType.Flow]: 'high',
+  [AffixType.Confluence]: 'high',
+  [AffixType.Turbulence]: 'high',
   [AffixType.WarDrum]: 'high',
   [AffixType.Twin]: 'low',
   [AffixType.Recurse]: 'high',
@@ -433,6 +445,9 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Cluster]: '辅音丛',
   [AffixType.Coverage]: '覆盖度',
   [AffixType.Bigram]: '双字组',
+  [AffixType.Flow]: '落差',
+  [AffixType.Confluence]: '汇流',
+  [AffixType.Turbulence]: '湍流',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -462,6 +477,9 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Cluster]: '单词中连续辅音越长（至少2个），产出加成越高',
   [AffixType.Coverage]: '单词中不同字母种类越多，产出加成越高',
   [AffixType.Bigram]: '单词中相邻字母对越罕见，产出加成越高',
+  [AffixType.Flow]: '范围内比自己强的邻居越多，产出加成越高（水往低处流）',
+  [AffixType.Confluence]: '范围内邻居的资源类型越多样，产出加成越高（多源汇流）',
+  [AffixType.Turbulence]: '范围内邻居的强弱差异越大，产出加成越高（湍流高能）',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

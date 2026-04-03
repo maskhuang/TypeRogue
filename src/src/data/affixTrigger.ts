@@ -340,6 +340,27 @@ export function countEmptySlots(
   return related.filter(k => !bindings.has(k)).length
 }
 
+/** 获取 posRel 范围内的邻居技能实例（去重，排除自身） */
+export function getNeighborSkills(
+  occupiedKeys: string[],
+  posRel: PositionRelation,
+  ctx: { bindings: Map<string, string>; allSkills: Map<string, AffixSkillInstance> },
+): AffixSkillInstance[] {
+  const neighbors = getExtendedNeighbors(occupiedKeys, posRel)
+  const occupiedSet = new Set(occupiedKeys)
+  const counted = new Set<string>()
+  const result: AffixSkillInstance[] = []
+  for (const nk of neighbors) {
+    if (occupiedSet.has(nk)) continue
+    const nSkillId = ctx.bindings.get(nk)
+    if (!nSkillId || counted.has(nSkillId)) continue
+    counted.add(nSkillId)
+    const nSkill = ctx.allSkills?.get(nSkillId)
+    if (nSkill) result.push(nSkill)
+  }
+  return result
+}
+
 /** 流放判定：键是否为单词首字母或尾字母 */
 const VOWELS = new Set(['a', 'e', 'i', 'o', 'u'])
 /** 判断字母是否为辅音（非元音字母） */
@@ -532,6 +553,56 @@ export function resolvePhase2(
         const slotEff = affix.bonusPerSlot ?? 0
         const empty = countEmptySlots(ctx.occupiedKeys, affix.posRel, ctx.bindings)
         bonusPercent += empty * slotEff
+        break
+      }
+
+      case AffixType.Flow: {
+        // 落差：邻居 base value 比自己高时，按归一化差值加 bonusPercent
+        if (affix.posRel == null) break
+        const lvlIdx = Math.max(0, Math.min(skill.level - 1, 3))
+        const selfBase = BASE_VALUES[skill.resource]?.[lvlIdx] ?? 1
+        for (const ns of getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)) {
+          const nLvlIdx = Math.max(0, Math.min(ns.level - 1, 3))
+          const nBase = BASE_VALUES[ns.resource]?.[nLvlIdx] ?? 1
+          const delta = nBase - selfBase
+          if (delta > 0) {
+            const norm = selfBase / nBase  // 归一化到 0~1 范围
+            bonusPercent += (affix.flowK ?? 0) * delta * norm
+          }
+        }
+        break
+      }
+
+      case AffixType.Confluence: {
+        // 汇流：邻居资源类型种类数越多，加成越高（边际递减）
+        if (affix.posRel == null) break
+        const resTypes = new Set<string>()
+        for (const ns of getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)) {
+          resTypes.add(ns.resource)
+        }
+        if (resTypes.size > 0) {
+          bonusPercent += (affix.confluenceK ?? 0) * (1 - 1 / (resTypes.size + 1))
+        }
+        break
+      }
+
+      case AffixType.Turbulence: {
+        // 湍流：邻居 base value 极差越大，加成越高（需 ≥2 邻居）
+        if (affix.posRel == null) break
+        const nSkills = getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)
+        if (nSkills.length >= 2) {
+          let minBase = Infinity, maxBase = -Infinity
+          for (const ns of nSkills) {
+            const nLvlIdx = Math.max(0, Math.min(ns.level - 1, 3))
+            const nBase = BASE_VALUES[ns.resource]?.[nLvlIdx] ?? 1
+            if (nBase < minBase) minBase = nBase
+            if (nBase > maxBase) maxBase = nBase
+          }
+          if (maxBase > 0) {
+            const spread = (maxBase - minBase) / maxBase
+            bonusPercent += (affix.turbulenceK ?? 0) * spread * nSkills.length
+          }
+        }
         break
       }
 
