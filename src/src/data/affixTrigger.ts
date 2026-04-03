@@ -385,7 +385,7 @@ export function isConsonant(ch: string): boolean {
 }
 
 export function isFirstOrLastLetter(key: string, word: string): boolean {
-  if (!word || word.length === 0) return false
+  if (!key || !word || word.length === 0) return false
   const k = key.toLowerCase()
   const w = word.toLowerCase()
   return w[0] === k || w[w.length - 1] === k
@@ -393,6 +393,7 @@ export function isFirstOrLastLetter(key: string, word: string): boolean {
 
 /** 连字：统计字母在单词中出现的次数 */
 export function countOccurrences(key: string, word: string): number {
+  if (!key || !word) return 0
   const k = key.toLowerCase()
   const w = word.toLowerCase()
   let count = 0
