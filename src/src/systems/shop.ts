@@ -547,6 +547,9 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'flow': return `${rel} +${Math.round(a.flowK ?? 0)}%/落差`
     case 'confluence': return `${rel} +${Math.round(a.confluenceK ?? 0)}%×多样性`
     case 'turbulence': return `${rel} +${Math.round(a.turbulenceK ?? 0)}%×极差`
+    case 'phase_shift': return `读${RESOURCE_ICONS[a.phaseSource!] || ''}:T1=${a.phaseT1},T2=${a.phaseT2}`
+    case 'endo_exo': return `读${RESOURCE_ICONS[a.endoSource!] || ''}:阈值${a.endoThreshold}`
+    case 'fusion': return `${RESOURCE_ICONS[a.fusionSourceA!] || ''}+${RESOURCE_ICONS[a.fusionSourceB!] || ''}点火`
     default: return ''
   }
 }

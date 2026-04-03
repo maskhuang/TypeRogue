@@ -250,6 +250,23 @@ export function rollAffixParams(
     case AffixType.Turbulence:
       return { type, posRel: pickRandom(ALL_POS_RELATIONS), turbulenceK: roundTo(5 + random() * 7, 1) }  // 5~12
 
+    case AffixType.PhaseShift: {
+      const src = pickRandom(GENERIC_RESOURCES.filter(r => r !== resource))
+      return { type, phaseSource: src, phaseT1: roundTo(15 + random() * 15, 0), phaseT2: roundTo(40 + random() * 30, 0), kSolid: roundTo(0.01 + random() * 0.01, 3), kLiquid: roundTo(0.04 + random() * 0.04, 3), kGas: roundTo(0.10 + random() * 0.10, 3), sustainCost: roundTo(1 + random() * 3, 1) }
+    }
+
+    case AffixType.EndoExo: {
+      const src = pickRandom(GENERIC_RESOURCES.filter(r => r !== resource))
+      return { type, endoSource: src, endoThreshold: roundTo(15 + random() * 20, 0), kExo: roundTo(0.06 + random() * 0.06, 3), kEndo: roundTo(-0.02 + random() * 0.03, 3), endoConsumeRate: roundTo(1 + random() * 4, 1) }
+    }
+
+    case AffixType.Fusion: {
+      const pool = GENERIC_RESOURCES.filter(r => r !== resource)
+      const srcA = pickRandom(pool)
+      const srcB = pickRandom(pool.filter(r => r !== srcA))
+      return { type, fusionSourceA: srcA, fusionSourceB: srcB, ignitionA: roundTo(15 + random() * 20, 0), ignitionB: roundTo(15 + random() * 20, 0), fusionK: roundTo(0.08 + random() * 0.07, 3), fusionConsumeA: roundTo(2 + random() * 5, 1), fusionConsumeB: roundTo(2 + random() * 5, 1), fusionPenalty: roundTo(5 + random() * 10, 0) }
+    }
+
     default: {
       const _exhaustive: never = type
       throw new Error(`Unknown AffixType: ${type}`)

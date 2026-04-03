@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（28 类，6 类别） ====
+// ===== 词条类型枚举（31 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -15,6 +15,9 @@ export enum AffixType {
   Convert = 'convert',
   Rainbow = 'rainbow',
   Multiply = 'multiply',
+  PhaseShift = 'phase_shift',
+  EndoExo = 'endo_exo',
+  Fusion = 'fusion',
   // ── 暴击型 crit ──
   Crit = 'crit',
   Charge = 'charge',
@@ -56,6 +59,9 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Convert]: 'numeric',
   [AffixType.Rainbow]: 'numeric',
   [AffixType.Multiply]: 'numeric',
+  [AffixType.PhaseShift]: 'numeric',
+  [AffixType.EndoExo]: 'numeric',
+  [AffixType.Fusion]: 'numeric',
   // ── 暴击型 ──
   [AffixType.Crit]: 'crit',
   [AffixType.Charge]: 'crit',
@@ -217,6 +223,27 @@ export interface AffixInstance {
   flowK?: number                   // Flow: 每单位归一化落差的 bonusPercent
   confluenceK?: number             // Confluence: 资源多样性加成系数
   turbulenceK?: number             // Turbulence: 极差×邻居数加成系数
+  // ── 数值型新词条（热力学） ──
+  phaseSource?: ResourceType       // PhaseShift: 温度源资源
+  phaseT1?: number                 // PhaseShift: 固→液阈值
+  phaseT2?: number                 // PhaseShift: 液→气阈值
+  kSolid?: number                  // PhaseShift: 固态 k
+  kLiquid?: number                 // PhaseShift: 液态 k
+  kGas?: number                    // PhaseShift: 气态 k
+  sustainCost?: number             // PhaseShift: 气态每触发消耗量
+  endoSource?: ResourceType        // EndoExo: 读取源资源
+  endoThreshold?: number           // EndoExo: Exo/Endo 切换阈值
+  kExo?: number                    // EndoExo: 放热 k
+  kEndo?: number                   // EndoExo: 吸热 k（可为负）
+  endoConsumeRate?: number         // EndoExo: 放热消耗量
+  fusionSourceA?: ResourceType     // Fusion: 燃料 A
+  fusionSourceB?: ResourceType     // Fusion: 燃料 B
+  ignitionA?: number               // Fusion: A 点火阈值
+  ignitionB?: number               // Fusion: B 点火阈值
+  fusionK?: number                 // Fusion: 成功倍率
+  fusionConsumeA?: number          // Fusion: A 消耗量
+  fusionConsumeB?: number          // Fusion: B 消耗量
+  fusionPenalty?: number           // Fusion: 失败惩罚 bonusPercent
 }
 
 // ===== 稀有度 =====
@@ -332,6 +359,9 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   convert_self: 'none', // 自源转化已禁用
   [AffixType.Rainbow]: 'low',
   [AffixType.Multiply]: 'low',
+  [AffixType.PhaseShift]: 'high',
+  [AffixType.EndoExo]: 'high',
+  [AffixType.Fusion]: 'low',
   [AffixType.Charge]: 'high',
   [AffixType.Decay]: 'high',
   [AffixType.Pulse]: 'high',
@@ -448,6 +478,9 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Flow]: '落差',
   [AffixType.Confluence]: '汇流',
   [AffixType.Turbulence]: '湍流',
+  [AffixType.PhaseShift]: '相变',
+  [AffixType.EndoExo]: '吸放热',
+  [AffixType.Fusion]: '聚变',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -480,6 +513,9 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Flow]: '范围内比自己强的邻居越多，产出加成越高（水往低处流）',
   [AffixType.Confluence]: '范围内邻居的资源类型越多样，产出加成越高（多源汇流）',
   [AffixType.Turbulence]: '范围内邻居的强弱差异越大，产出加成越高（湍流高能）',
+  [AffixType.PhaseShift]: '读取一种资源当温度，跨阈值时产出跳升；高温持续消耗资源',
+  [AffixType.EndoExo]: '读取一种资源，高于阈值时高产出+消耗（放热），低于阈值时低产出（吸热）',
+  [AffixType.Fusion]: '需要两种资源同时达到阈值才能点火；成功时高倍产出+双消耗，失败则惩罚',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

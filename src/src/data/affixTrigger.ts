@@ -553,6 +553,64 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.PhaseShift: {
+        // 相变：读资源当温度，阶梯式 bonusPercent + 气态 consume
+        if (affix.phaseSource == null) break
+        const psLvl = Math.max(0, Math.min(skill.level - 1, 2))
+        const psVal = getAffixSourceValue(affix.phaseSource, ctx)
+        const psNorm = (BASE_VALUES[skill.resource]?.[psLvl] ?? 1) / (BASE_VALUES[affix.phaseSource]?.[psLvl] ?? 1)
+        if (psVal < (affix.phaseT1 ?? Infinity)) {
+          bonusPercent += (affix.kSolid ?? 0) * psVal * psNorm
+        } else if (psVal < (affix.phaseT2 ?? Infinity)) {
+          bonusPercent += (affix.kLiquid ?? 0) * psVal * psNorm
+        } else {
+          bonusPercent += (affix.kGas ?? 0) * psVal * psNorm
+          if ((affix.sustainCost ?? 0) > 0) {
+            consumeRequests.push({ resource: affix.phaseSource, amount: affix.sustainCost! })
+          }
+        }
+        break
+      }
+
+      case AffixType.EndoExo: {
+        // 吸热/放热：方波振荡 — 高于阈值 Exo（高+消耗），低于阈值 Endo（低/负）
+        if (affix.endoSource == null) break
+        const eeLvl = Math.max(0, Math.min(skill.level - 1, 2))
+        const eeVal = getAffixSourceValue(affix.endoSource, ctx)
+        const eeNorm = (BASE_VALUES[skill.resource]?.[eeLvl] ?? 1) / (BASE_VALUES[affix.endoSource]?.[eeLvl] ?? 1)
+        if (eeVal >= (affix.endoThreshold ?? Infinity)) {
+          bonusPercent += (affix.kExo ?? 0) * eeVal * eeNorm
+          if ((affix.endoConsumeRate ?? 0) > 0) {
+            consumeRequests.push({ resource: affix.endoSource, amount: affix.endoConsumeRate! })
+          }
+        } else {
+          bonusPercent += (affix.kEndo ?? 0) * eeVal * eeNorm
+        }
+        break
+      }
+
+      case AffixType.Fusion: {
+        // 聚变：双资源与门 — 同时达阈值时高倍+双消耗，否则惩罚
+        if (affix.fusionSourceA == null || affix.fusionSourceB == null) break
+        const fuLvl = Math.max(0, Math.min(skill.level - 1, 2))
+        const valA = getAffixSourceValue(affix.fusionSourceA, ctx)
+        const valB = getAffixSourceValue(affix.fusionSourceB, ctx)
+        const normA = (BASE_VALUES[skill.resource]?.[fuLvl] ?? 1) / (BASE_VALUES[affix.fusionSourceA]?.[fuLvl] ?? 1)
+        const normB = (BASE_VALUES[skill.resource]?.[fuLvl] ?? 1) / (BASE_VALUES[affix.fusionSourceB]?.[fuLvl] ?? 1)
+        if (valA >= (affix.ignitionA ?? Infinity) && valB >= (affix.ignitionB ?? Infinity)) {
+          bonusPercent += (affix.fusionK ?? 0) * (valA * normA + valB * normB)
+          if ((affix.fusionConsumeA ?? 0) > 0) {
+            consumeRequests.push({ resource: affix.fusionSourceA, amount: affix.fusionConsumeA! })
+          }
+          if ((affix.fusionConsumeB ?? 0) > 0) {
+            consumeRequests.push({ resource: affix.fusionSourceB, amount: affix.fusionConsumeB! })
+          }
+        } else {
+          bonusPercent -= (affix.fusionPenalty ?? 0)
+        }
+        break
+      }
+
       case AffixType.Void: {
         if (affix.posRel == null) break
         const slotEff = affix.bonusPerSlot ?? 0

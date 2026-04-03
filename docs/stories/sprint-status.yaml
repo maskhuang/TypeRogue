@@ -456,9 +456,8 @@ development_status:
   45-3-word-sense-bigram: done                # 词感：双字组（含 bigram 频率表）
   45-4-topology-flow-confluence-turbulence: done           # 拓扑：落差 + 汇流 + 湍流
   45-5-consume-infrastructure: done           # consume() 资源消耗共享基础设施
-  45-6-numeric-phase-shift: backlog           # 数值：相变（阶梯函数 + consume）
-  45-7-numeric-endo-exo: backlog              # 数值：吸热/放热（方波振荡 + consume）
-  45-8-numeric-fusion: backlog                # 数值：聚变（双源与门 + 双 consume）
+  45-6-numeric-phase-shift-endo-exo-fusion: done           # 数值：相变+吸热/放热+聚变（合并45.6~45.8）
+  # 45-7, 45-8 已合并入 45-6
   45-9-meta-innate: backlog                   # 元规则：先天（关卡开始自动触发）
   45-10-meta-counter: backlog                 # 元规则：反制（充能取消负面产出）
   45-11-meta-exhaust-ethereal: backlog        # 元规则：消耗 + 虚无（词条运行时移除）
