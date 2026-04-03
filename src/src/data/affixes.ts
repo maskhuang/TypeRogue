@@ -352,6 +352,9 @@ export interface SkillRuntimeState {
   counterCharges: number           // Counter: 当前充能数（每关恢复）
   exhaustCount: number             // Exhaust: 累计触发次数（跨关）
   etherealTriggered: boolean       // Ethereal: 本关是否已触发
+  // ── 暴击连击追踪 ──
+  critStreak: number               // 连续暴击次数（miss 归零，每关重置）
+  missStreak: number               // 连续 miss 次数（暴击归零，每关重置）
 }
 
 // ===== 存档数据 =====
@@ -791,6 +794,8 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     counterCharges: 0,
     exhaustCount: 0,
     etherealTriggered: false,
+    critStreak: 0,
+    missStreak: 0,
   }
 }
 

@@ -1174,6 +1174,17 @@ export function resolvePhase3(
     }
   }
 
+  // critStreak / missStreak 更新（暴击判定后）
+  if (totalCritChance > 0) {
+    if (flags.isCrit) {
+      runtimeState.critStreak = (runtimeState.critStreak ?? 0) + 1
+      runtimeState.missStreak = 0
+    } else {
+      runtimeState.missStreak = (runtimeState.missStreak ?? 0) + 1
+      runtimeState.critStreak = 0
+    }
+  }
+
   return { output, multipliers, flags, mutations }
 }
 
@@ -2237,6 +2248,10 @@ export function resetStageState(
     }
 
     // Mirror 词条复制已移至关卡结束时（battle.ts），此处不再刷新
+
+    // critStreak / missStreak 每关重置
+    state.critStreak = 0
+    state.missStreak = 0
   }
 }
 
