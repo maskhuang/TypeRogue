@@ -45,7 +45,7 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
-import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
 import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
 import { BIGRAM_FREQ_TABLE } from '../data/bigramFrequency';
 import type { EnchantmentType } from '../data/affixes';
@@ -578,7 +578,7 @@ function getWordSenseAvg(): { avgCluster: number, avgCoverage: number, avgBigram
     // Cluster
     let maxC = 0, curC = 0
     for (const ch of w) {
-      if (ch >= 'a' && ch <= 'z' && !('aeiou'.includes(ch))) { curC++; if (curC > maxC) maxC = curC } else curC = 0
+      if (isConsonant(ch)) { curC++; if (curC > maxC) maxC = curC } else curC = 0
     }
     totalCluster += Math.max(0, maxC - 1)
     // Coverage
