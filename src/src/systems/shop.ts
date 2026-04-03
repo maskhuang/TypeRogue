@@ -447,6 +447,11 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
     .filter(a => !excludeTypes || !excludeTypes.has(a.type))
     .map(a => {
       let desc = t('affix_desc.' + a.type);
+      // 将「指定关系的」替换为具体位置关系名（如「同行的」「相邻的」）
+      if (a.posRel != null) {
+        const relName = t('rel.' + a.posRel);
+        desc = desc.replace('指定关系的', relName + '的');
+      }
       // Mirror: tooltip 显示当前复制的词条
       if (a.type === 'mirror' && rt) {
         // Story 41-5: 质变模式显示所有复制词条
