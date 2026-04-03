@@ -310,6 +310,8 @@ export interface TriggerResult {
   chargeAutoComplete?: boolean
   /** 叠层效果是否触发（遗物钩子用） */
   stackEffectFired?: boolean
+  /** Story 45.5: 延迟消耗请求列表 */
+  consumeRequests?: { resource: ResourceType, amount: number }[]
 }
 
 // ===== 辅助函数 =====
@@ -500,6 +502,8 @@ export interface Phase2Result {
   convertReverseOutputs: { resource: ResourceType, amount: number }[]
   /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
   chargeAutoComplete: boolean
+  /** Story 45.5: 延迟消耗请求，Phase 4 后统一执行 */
+  consumeRequests: { resource: ResourceType, amount: number }[]
 }
 
 /**
@@ -523,6 +527,7 @@ export function resolvePhase2(
   let chargeAutoComplete = false
   const mutations: StateMutation[] = []
   const convertReverseOutputs: { resource: ResourceType, amount: number }[] = []
+  const consumeRequests: { resource: ResourceType, amount: number }[] = []
 
   // ── 词条加算 ──
   for (const affix of skill.affixes) {
@@ -707,6 +712,7 @@ export function resolvePhase2(
     mutations,
     convertReverseOutputs,
     chargeAutoComplete,
+    consumeRequests,
   }
 }
 
@@ -1534,6 +1540,7 @@ export function triggerAffixSkill(
     triggerKey: ctx.triggerKey,
     chargeAutoComplete: p2.chargeAutoComplete || undefined,
     stackEffectFired: p3.flags.stackEffectFired || undefined,
+    consumeRequests: p2.consumeRequests.length > 0 ? p2.consumeRequests : undefined,
   }
 }
 

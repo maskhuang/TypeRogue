@@ -246,6 +246,18 @@ export function orchestrateAffixTrigger(
       callbacks?.chargeAutoComplete?.()
     }
 
+    // Story 45.5: 延迟资源消耗（Phase 4 后执行）
+    // 注意：ctx.resources 是触发开始时的快照，consume 基于触发前的资源值限制消耗量
+    if (result.consumeRequests) {
+      for (const req of result.consumeRequests) {
+        const current = ctx.resources[req.resource] ?? 0
+        const consumeAmount = Math.min(req.amount, Math.max(0, current))
+        if (consumeAmount > 0) {
+          callbacks?.applyResource?.(req.resource, -consumeAmount, false)
+        }
+      }
+    }
+
     // ── 入队 Phase 5 后续触发 ──
     // childHistory = 当前项的 history + 当前项自己（"我之前处理过的所有键"）
     const childHistory = [...item.chainHistory, item.triggerKey]
