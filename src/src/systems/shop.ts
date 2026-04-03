@@ -47,6 +47,7 @@ import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MA
 import type { SkillRarity } from '../data/affixes';
 import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
 import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
+import { BIGRAM_FREQ_TABLE } from '../data/bigramFrequency';
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
@@ -562,6 +563,47 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
 
 // APPRENTICE_ENCHANTMENT_IDS 已被 isApprenticeEnchantment() 取代
 
+// ===== 词感型词条预估缓存（基于当前词库统计） =====
+
+let _wordSenseCache: { deck: string[], avgCluster: number, avgCoverage: number, avgBigramRarity: number } | null = null
+
+function getWordSenseAvg(): { avgCluster: number, avgCoverage: number, avgBigramRarity: number } {
+  const deck = state.player?.wordDeck
+  if (!deck || deck.length === 0) return { avgCluster: 1.2, avgCoverage: 4.5, avgBigramRarity: 0.75 }
+  // 缓存命中（同一个词库实例）
+  if (_wordSenseCache && _wordSenseCache.deck === deck) return _wordSenseCache
+  let totalCluster = 0, totalCoverage = 0, totalBigramRarity = 0, totalPairs = 0
+  for (const word of deck) {
+    const w = word.toLowerCase()
+    // Cluster
+    let maxC = 0, curC = 0
+    for (const ch of w) {
+      if (ch >= 'a' && ch <= 'z' && !('aeiou'.includes(ch))) { curC++; if (curC > maxC) maxC = curC } else curC = 0
+    }
+    totalCluster += Math.max(0, maxC - 1)
+    // Coverage
+    const letters = new Set<string>()
+    for (const ch of w) if (ch >= 'a' && ch <= 'z') letters.add(ch)
+    totalCoverage += letters.size
+    // Bigram
+    for (let i = 0; i < w.length - 1; i++) {
+      const a = w[i], b = w[i + 1]
+      if (a >= 'a' && a <= 'z' && b >= 'a' && b <= 'z') {
+        totalBigramRarity += (1 - (BIGRAM_FREQ_TABLE[a + b] ?? 0))
+        totalPairs++
+      }
+    }
+  }
+  const n = deck.length
+  _wordSenseCache = {
+    deck,
+    avgCluster: totalCluster / n,
+    avgCoverage: totalCoverage / n,
+    avgBigramRarity: totalPairs > 0 ? totalBigramRarity / totalPairs : 0.75,
+  }
+  return _wordSenseCache
+}
+
 /**
  * 计算战斗外可预估的产出：Void / Taboo 词条 + 学徒附魔。
  * 返回 null 表示该技能没有可预估项。
@@ -746,6 +788,36 @@ export function computeSmartEstimate(
             addPercent += bonus
             breakdown.push({ typeKey: 'turbulence', label: `湍流 +${Math.round(bonus * 100)}%`, detail: `(极差${Math.round(spread * 100)}%)` })
           }
+        }
+        break
+      }
+      case 'cluster': {
+        // 辅音丛：词库平均最长辅音丛加成
+        const avg = getWordSenseAvg()
+        const bonus = (affix.clusterK ?? 0) * avg.avgCluster
+        if (bonus > 0) {
+          addPercent += bonus
+          breakdown.push({ typeKey: 'cluster', label: `辅音丛 +${Math.round(bonus * 100)}%`, detail: '(词库平均)' })
+        }
+        break
+      }
+      case 'coverage': {
+        // 覆盖度：词库平均不同字母数
+        const avg = getWordSenseAvg()
+        const bonus = (affix.coverageK ?? 0) * avg.avgCoverage
+        if (bonus > 0) {
+          addPercent += bonus
+          breakdown.push({ typeKey: 'coverage', label: `覆盖度 +${Math.round(bonus * 100)}%`, detail: '(词库平均)' })
+        }
+        break
+      }
+      case 'bigram': {
+        // 双字组：词库平均 bigram 罕见度
+        const avg = getWordSenseAvg()
+        const bonus = (affix.bigramK ?? 0) * avg.avgBigramRarity
+        if (bonus > 0) {
+          addPercent += bonus
+          breakdown.push({ typeKey: 'bigram', label: `双字组 +${Math.round(bonus * 100)}%`, detail: '(词库平均)' })
         }
         break
       }
