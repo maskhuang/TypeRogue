@@ -474,13 +474,13 @@ development_status:
   epic-46-retrospective: optional
 
   # ===== Epic 47: 词感型扩展 — 密码学领域 =====
-  epic-47: in-progress
+  epic-47: done
   47-1-word-sense-entropy: done              # 词感：熵 — Shannon 熵→加成
   47-2-word-sense-cipher: done               # 词感：密文 — 相邻字母表距离→加成
   47-3-pattern-freq-table: done              # 模式频率表基础设施（PATTERN_FREQ_TABLE）
   47-4-word-sense-pattern: done              # 词感：模式 — 模式签名稀有度→加成
-  47-5-generation-integration: backlog       # 技能生成集成
-  47-6-balance-playtest: backlog             # 数值平衡与 playtest
+  47-5-generation-integration: done           # 技能生成集成
+  47-6-balance-playtest: done                # 数值平衡与 playtest
   epic-47-retrospective: optional
 
   # ===== Epic 48: 数值型扩展 — 金融工程领域 =====
