@@ -307,6 +307,13 @@ export function rollAffixParams(
       return { type, source: levSrc, leverageK: roundTo(0.06 + random() * 0.06, 2), marginThreshold: roundTo((2 + random() * 2) * levBase, 1) }
     }
 
+    case AffixType.Option: {
+      const optSrc = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))
+      const optBase = BASE_VALUES[optSrc]?.[0] ?? 1
+      const strike = roundTo((3 + random() * 3) * optBase, 1)
+      return { type, source: optSrc, optionK: roundTo(0.04 + random() * 0.04, 2), strikePrice: strike, premium: roundTo(0.05 + random() * 0.05, 2) }
+    }
+
     case AffixType.Innate:
       return { type }
 

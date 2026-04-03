@@ -685,6 +685,21 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.Option: {
+        // 期权：超行权价线性收益，未达时扣除权利金
+        if (affix.source == null) break
+        const optVal = getStageProducedValue(affix.source, ctx)
+        const optLvl = Math.max(0, Math.min(skill.level - 1, 2))
+        const optNorm = (BASE_VALUES[skill.resource]?.[optLvl] ?? 1) / (BASE_VALUES[affix.source]?.[optLvl] ?? 1)
+        const strike = affix.strikePrice ?? 0
+        if (optVal >= strike) {
+          bonusPercent += (affix.optionK ?? 0) * (optVal - strike) * optNorm
+        } else {
+          bonusPercent -= affix.premium ?? 0
+        }
+        break
+      }
+
       case AffixType.Void: {
         if (affix.posRel == null) break
         const slotEff = affix.bonusPerSlot ?? 0
