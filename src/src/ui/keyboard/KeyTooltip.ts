@@ -77,6 +77,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   pattern:     '#20bf6b', // 翠绿 — 模式
   leverage:    '#f39c12', // 金橙 — 杠杆
   option:      '#d4ac0d', // 暗金 — 期权
+  hedge:       '#1abc9c', // 青绿 — 对冲
 }
 
 export interface KeyTooltipData {

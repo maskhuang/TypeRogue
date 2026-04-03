@@ -568,9 +568,9 @@ const ZH: Record<string, string> = {
   'affix.innate': '先天', 'affix.counter': '反制', 'affix.exhaust': '消耗', 'affix.ethereal': '虚无',
   'affix.parity': '奇偶', 'affix.prime': '素数', 'affix.match': '配对',
   'affix.entropy': '熵', 'affix.cipher': '密文', 'affix.pattern': '模式',
-  'affix.leverage': '杠杆', 'affix.option': '期权',
+  'affix.leverage': '杠杆', 'affix.option': '期权', 'affix.hedge': '对冲',
 
-  // --- affix descriptions (43) ---
+  // --- affix descriptions (44) ---
   'affix_desc.convert': '读取一种资源的当前值，按系数加成本资源产出',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
   'affix_desc.multiply': '产出直接乘以固定倍数',
@@ -607,14 +607,15 @@ const ZH: Record<string, string> = {
   'affix_desc.counter': '产出为负时消耗充能取消负面效果（每关恢复充能）',
   'affix_desc.exhaust': '每次触发产出倍增，但触发次数有限，用完词条消失',
   'affix_desc.ethereal': '本关内其他词条效果提升一级；关卡结束后词条消失',
-  'affix_desc.parity': '叠层为奇数时增加产出，偶数时增加暴击率',
-  'affix_desc.prime': '叠层为素数时，按叠层数给予大额产出加成',
-  'affix_desc.match': '邻居中叠层相等的配对越多，产出越高',
-  'affix_desc.entropy': '单词字母分布越均匀，产出加成越高',
-  'affix_desc.cipher': '单词相邻字母在字母表上跳跃越大，产出加成越高',
-  'affix_desc.pattern': '单词的字母重复结构越独特，产出加成越高',
-  'affix_desc.leverage': '读取一种资源，高于保证金时放大收益，低于时产生亏损',
-  'affix_desc.option': '读取一种资源的累积产出，超过行权价后线性收益，未达时扣除权利金',
+  'affix_desc.parity': '奇数层+产出，偶数层+暴击率',
+  'affix_desc.prime': '叠层为素数（2,3,5,7,11…）时产出大幅加成，非素数无效',
+  'affix_desc.match': '指定关系的邻居中叠层值相同的对子越多，产出越高',
+  'affix_desc.entropy': '单词中不同字母分布越均匀，产出越高',
+  'affix_desc.cipher': '单词中相邻字母在字母表上距离越远，产出越高',
+  'affix_desc.pattern': '单词的字母重复结构越罕见，产出越高',
+  'affix_desc.leverage': '资源值超过阈值时加成产出，低于阈值时扣减产出',
+  'affix_desc.option': '本关累积产出超过阈值时加成产出，未达时每次触发扣减固定产出',
+  'affix_desc.hedge': '两种资源的本关累积产出越接近，产出越高',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -1363,9 +1364,9 @@ const EN: Record<string, string> = {
   'affix.innate': 'Innate', 'affix.counter': 'Counter', 'affix.exhaust': 'Exhaust', 'affix.ethereal': 'Ethereal',
   'affix.parity': 'Parity', 'affix.prime': 'Prime', 'affix.match': 'Match',
   'affix.entropy': 'Entropy', 'affix.cipher': 'Cipher', 'affix.pattern': 'Pattern',
-  'affix.leverage': 'Leverage', 'affix.option': 'Option',
+  'affix.leverage': 'Leverage', 'affix.option': 'Option', 'affix.hedge': 'Hedge',
 
-  // --- affix descriptions (43) ---
+  // --- affix descriptions (44) ---
   'affix_desc.convert': 'Reads another resource value, adds scaled bonus to this output',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
   'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
@@ -1402,14 +1403,15 @@ const EN: Record<string, string> = {
   'affix_desc.counter': 'Cancels negative output by spending a charge (recharges each stage)',
   'affix_desc.exhaust': 'Each trigger multiplies base output, but limited uses before removal',
   'affix_desc.ethereal': 'Boosts other affixes by one level this stage; removed at stage end',
-  'affix_desc.parity': 'Odd stacks: +output bonus; Even stacks: +crit chance',
-  'affix_desc.prime': 'When stacks are a prime number: +output scaled by stack count',
-  'affix_desc.match': 'More pairs of neighbors with equal stacks = more output',
-  'affix_desc.entropy': 'More uniform letter distribution in word = more output',
-  'affix_desc.cipher': 'Bigger alphabetical jumps between adjacent letters = more output',
-  'affix_desc.pattern': 'Rarer letter repetition structure in word = more output',
-  'affix_desc.leverage': 'Reads a resource; above margin = amplified gains, below = losses',
-  'affix_desc.option': 'Reads stage production; above strike = linear gains, below = fixed premium loss',
+  'affix_desc.parity': 'Odd stacks: +output; Even stacks: +crit chance',
+  'affix_desc.prime': 'At prime stacks (2,3,5,7,11…): big output bonus; composites: nothing',
+  'affix_desc.match': 'More pairs of matched-relation neighbors sharing the same stack count = more output',
+  'affix_desc.entropy': 'More evenly distributed letters in word = more output',
+  'affix_desc.cipher': 'Larger alphabet distance between adjacent letters = more output',
+  'affix_desc.pattern': 'Rarer letter repetition pattern in word = more output',
+  'affix_desc.leverage': 'Resource above threshold = bonus; below = penalty',
+  'affix_desc.option': 'Stage production above threshold = bonus; below = fixed penalty per trigger',
+  'affix_desc.hedge': 'Two resources\' stage production closer together = more output',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',

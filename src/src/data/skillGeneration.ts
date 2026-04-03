@@ -314,6 +314,13 @@ export function rollAffixParams(
       return { type, source: optSrc, optionK: roundTo(0.04 + random() * 0.04, 2), strikePrice: strike, premium: roundTo(0.05 + random() * 0.05, 2) }
     }
 
+    case AffixType.Hedge: {
+      const hedgePool = READABLE_SOURCE_RESOURCES.filter(r => r !== resource)
+      const hSrcA = pickRandom(hedgePool)
+      const hSrcB = pickRandom(hedgePool.filter(r => r !== hSrcA))
+      return { type, hedgeSourceA: hSrcA, hedgeSourceB: hSrcB, hedgeK: roundTo(0.20 + random() * 0.20, 2) }
+    }
+
     case AffixType.Innate:
       return { type }
 

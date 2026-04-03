@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（44 类，6 类别） ====
+// ===== 词条类型枚举（45 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -20,6 +20,7 @@ export enum AffixType {
   Fusion = 'fusion',
   Leverage = 'leverage',
   Option = 'option',
+  Hedge = 'hedge',
   // ── 暴击型 crit ──
   Crit = 'crit',
   Charge = 'charge',
@@ -77,6 +78,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Fusion]: 'numeric',
   [AffixType.Leverage]: 'numeric',
   [AffixType.Option]: 'numeric',
+  [AffixType.Hedge]: 'numeric',
   // ── 暴击型 ──
   [AffixType.Crit]: 'crit',
   [AffixType.Charge]: 'crit',
@@ -254,6 +256,9 @@ export interface AffixInstance {
   optionK?: number                 // Option: 行权后收益斜率
   strikePrice?: number             // Option: 行权价
   premium?: number                 // Option: 未行权时的固定 bonusPercent 扣减
+  hedgeSourceA?: ResourceType      // Hedge: 第一种资源
+  hedgeSourceB?: ResourceType      // Hedge: 第二种资源
+  hedgeK?: number                  // Hedge: 接近度系数
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
@@ -449,6 +454,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Pattern]: 'high',
   [AffixType.Leverage]: 'high',
   [AffixType.Option]: 'high',
+  [AffixType.Hedge]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -556,6 +562,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Pattern]: '模式',
   [AffixType.Leverage]: '杠杆',
   [AffixType.Option]: '期权',
+  [AffixType.Hedge]: '对冲',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -596,14 +603,15 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Exhaust]: '每次触发产出倍增，但触发次数有限，用完词条消失',
   [AffixType.Ethereal]: '本关内其他词条效果提升一级；关卡结束后词条消失',
   [AffixType.Fallacy]: '连续未暴击时暴击率逐次递增，暴击后归零重新累积',
-  [AffixType.Parity]: '叠层为奇数时增加产出，偶数时增加暴击率',
-  [AffixType.Prime]: '叠层为素数时，按叠层数给予大额产出加成',
-  [AffixType.Match]: '邻居中叠层相等的配对越多，产出越高',
-  [AffixType.Entropy]: '单词字母分布越均匀，产出加成越高',
-  [AffixType.Cipher]: '单词相邻字母在字母表上跳跃越大，产出加成越高',
-  [AffixType.Pattern]: '单词的字母重复结构越独特，产出加成越高',
-  [AffixType.Leverage]: '读取一种资源，高于保证金时放大收益，低于时产生亏损',
-  [AffixType.Option]: '读取一种资源的累积产出，超过行权价后线性收益，未达时扣除权利金',
+  [AffixType.Parity]: '奇数层+产出，偶数层+暴击率',
+  [AffixType.Prime]: '叠层为素数（2,3,5,7,11…）时产出大幅加成，非素数无效',
+  [AffixType.Match]: '指定关系的邻居中叠层值相同的对子越多，产出越高',
+  [AffixType.Entropy]: '单词中不同字母分布越均匀，产出越高',
+  [AffixType.Cipher]: '单词中相邻字母在字母表上距离越远，产出越高',
+  [AffixType.Pattern]: '单词的字母重复结构越罕见，产出越高',
+  [AffixType.Leverage]: '资源值超过阈值时加成产出，低于阈值时扣减产出',
+  [AffixType.Option]: '本关累积产出超过阈值时加成产出，未达时每次触发扣减固定产出',
+  [AffixType.Hedge]: '两种资源的本关累积产出越接近，产出越高',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

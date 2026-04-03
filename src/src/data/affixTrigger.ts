@@ -700,6 +700,20 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.Hedge: {
+        // 对冲：双资源累积产出越接近，bonus 越高
+        if (affix.hedgeSourceA == null || affix.hedgeSourceB == null) break
+        const hedgeLvl = Math.max(0, Math.min(skill.level - 1, 2))
+        const hValA = getStageProducedValue(affix.hedgeSourceA, ctx) / (BASE_VALUES[affix.hedgeSourceA]?.[hedgeLvl] ?? 1)
+        const hValB = getStageProducedValue(affix.hedgeSourceB, ctx) / (BASE_VALUES[affix.hedgeSourceB]?.[hedgeLvl] ?? 1)
+        const hMax = Math.max(hValA, hValB)
+        if (hMax > 0) {
+          const ratio = Math.min(hValA, hValB) / hMax
+          bonusPercent += (affix.hedgeK ?? 0) * ratio
+        }
+        break
+      }
+
       case AffixType.Void: {
         if (affix.posRel == null) break
         const slotEff = affix.bonusPerSlot ?? 0

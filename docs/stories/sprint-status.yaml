@@ -484,12 +484,12 @@ development_status:
   epic-47-retrospective: optional
 
   # ===== Epic 48: 数值型扩展 — 金融工程领域 =====
-  epic-48: in-progress
+  epic-48: done
   48-1-numeric-leverage: done                # 数值：杠杆 — 超/低于保证金线→放大正/负bonus
   48-2-numeric-option: done                  # 数值：期权 — 行权价+权利金 hockey stick
-  48-3-numeric-hedge: backlog                # 数值：对冲 — 双资源接近度→加成
-  48-4-generation-integration: backlog       # 技能生成集成
-  48-5-balance-playtest: backlog             # 数值平衡与 playtest
+  48-3-numeric-hedge: done                   # 数值：对冲 — 双资源接近度→加成
+  48-4-generation-integration: done           # 技能生成集成
+  48-5-balance-playtest: done                # 数值平衡与 playtest
   epic-48-retrospective: optional
 
   # ===== Epic 49: 暴击型扩展 — 精密射击领域 =====

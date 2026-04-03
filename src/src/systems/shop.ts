@@ -553,6 +553,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'pattern': return `+${Math.round((a.patternK ?? 0) * 100)}%×模式稀有度`
     case 'leverage': return `读${RESOURCE_ICONS[a.source!] || ''}:+${Math.round((a.leverageK ?? 0) * 100)}%×超额(保证金${a.marginThreshold ?? '?'})`
     case 'option': return `读${RESOURCE_ICONS[a.source!] || ''}:行权${a.strikePrice ?? '?'},权利金-${Math.round((a.premium ?? 0) * 100)}%`
+    case 'hedge': return `读${RESOURCE_ICONS[a.hedgeSourceA!] || ''}+${RESOURCE_ICONS[a.hedgeSourceB!] || ''}:均衡+${Math.round((a.hedgeK ?? 0) * 100)}%`
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
