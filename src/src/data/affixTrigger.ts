@@ -612,14 +612,16 @@ export function resolvePhase2(
 
       case AffixType.Fusion: {
         // 聚变：双资源与门 — 同时达阈值时高倍+双消耗，否则惩罚
+        // 归一化：各源值除以自身 BASE_VALUES（标准化为「几个基础单位」），然后求和
         if (affix.fusionSourceA == null || affix.fusionSourceB == null) break
         const fuLvl = Math.max(0, Math.min(skill.level - 1, 2))
         const valA = getAffixSourceValue(affix.fusionSourceA, ctx)
         const valB = getAffixSourceValue(affix.fusionSourceB, ctx)
-        const normA = (BASE_VALUES[skill.resource]?.[fuLvl] ?? 1) / (BASE_VALUES[affix.fusionSourceA]?.[fuLvl] ?? 1)
-        const normB = (BASE_VALUES[skill.resource]?.[fuLvl] ?? 1) / (BASE_VALUES[affix.fusionSourceB]?.[fuLvl] ?? 1)
+        const baseA = BASE_VALUES[affix.fusionSourceA]?.[fuLvl] ?? 1
+        const baseB = BASE_VALUES[affix.fusionSourceB]?.[fuLvl] ?? 1
         if (valA >= (affix.ignitionA ?? Infinity) && valB >= (affix.ignitionB ?? Infinity)) {
-          bonusPercent += (affix.fusionK ?? 0) * (valA * normA + valB * normB)
+          // 各源归一化为标准单位后求和：valA/baseA = "几倍基础值"
+          bonusPercent += (affix.fusionK ?? 0) * (valA / baseA + valB / baseB)
           if ((affix.fusionConsumeA ?? 0) > 0) {
             consumeRequests.push({ resource: affix.fusionSourceA, amount: affix.fusionConsumeA! })
           }
