@@ -1160,6 +1160,11 @@ export function resolvePhase3(
             multipliers.push(zeroMult)
           }
         }
+        if (a.type === AffixType.Sharpshooter && (a.sharpK ?? 0) > 0) {
+          const sharpMult = 1 + (a.sharpK ?? 0) * Math.max(0, 1 - effectiveCritChance)
+          output *= sharpMult
+          multipliers.push(sharpMult)
+        }
       }
       // 暴击溢层：暴击时额外叠层
       runtimeState.stacks += (ctx.critOverflowStacks ?? 0)

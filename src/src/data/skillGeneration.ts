@@ -221,6 +221,9 @@ export function rollAffixParams(
     case AffixType.ZeroIn:
       return { type, zeroInK: roundTo(0.15 + random() * 0.15, 2) }
 
+    case AffixType.Sharpshooter:
+      return { type, sharpK: roundTo(1.00 + random() * 1.00, 2) }
+
     case AffixType.Entropy:
       return { type, entropyK: roundTo(0.06 + random() * 0.06, 2) }
 

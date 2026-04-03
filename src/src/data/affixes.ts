@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（47 类，6 类别） ====
+// ===== 词条类型枚举（48 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -30,6 +30,7 @@ export enum AffixType {
   Fallacy = 'fallacy',
   Burst = 'burst',
   ZeroIn = 'zero_in',
+  Sharpshooter = 'sharpshooter',
   // ── 叠层型 stack ──
   Pulse = 'pulse',
   Resonance = 'resonance',
@@ -90,6 +91,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Fallacy]: 'crit',
   [AffixType.Burst]: 'crit',
   [AffixType.ZeroIn]: 'crit',
+  [AffixType.Sharpshooter]: 'crit',
   // ── 叠层型 ──
   [AffixType.Pulse]: 'stack',
   [AffixType.Resonance]: 'stack',
@@ -265,6 +267,7 @@ export interface AffixInstance {
   hedgeK?: number                  // Hedge: 接近度系数
   burstK?: number                  // Burst: 每连击层的 critMult 加成
   zeroInK?: number                 // ZeroIn: 每 miss 层的 critMult 补偿
+  sharpK?: number                  // Sharpshooter: (1-critChance) × K 的 critMult 加成
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
@@ -466,6 +469,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Hedge]: 'high',
   [AffixType.Burst]: 'high',
   [AffixType.ZeroIn]: 'high',
+  [AffixType.Sharpshooter]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -576,6 +580,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Hedge]: '对冲',
   [AffixType.Burst]: '连射',
   [AffixType.ZeroIn]: '校准',
+  [AffixType.Sharpshooter]: '神射',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -627,6 +632,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Hedge]: '两种资源的本关累积产出越接近，产出越高',
   [AffixType.Burst]: '连续暴击次数越多，暴击倍率越高；未暴击时连击归零',
   [AffixType.ZeroIn]: '连续未暴击次数越多，下次暴击的倍率越高',
+  [AffixType.Sharpshooter]: '暴击率越低，暴击时的倍率加成越高',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

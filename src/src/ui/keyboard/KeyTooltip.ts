@@ -80,6 +80,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   hedge:       '#1abc9c', // 青绿 — 对冲
   burst:       '#ff6348', // 火红 — 连射
   zero_in:     '#7bed9f', // 浅绿 — 校准
+  sharpshooter:'#c0392b', // 深红 — 神射
 }
 
 export interface KeyTooltipData {

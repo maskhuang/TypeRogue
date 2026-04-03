@@ -556,6 +556,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'hedge': return `读${RESOURCE_ICONS[a.hedgeSourceA!] || ''}+${RESOURCE_ICONS[a.hedgeSourceB!] || ''}:均衡+${Math.round((a.hedgeK ?? 0) * 100)}%`
     case 'burst': return `连击+${Math.round((a.burstK ?? 0) * 100)}%暴击倍率/层`
     case 'zero_in': return `miss补偿+${Math.round((a.zeroInK ?? 0) * 100)}%暴击倍率/层`
+    case 'sharpshooter': return `低暴击率+${Math.round((a.sharpK ?? 0) * 100)}%暴击倍率`
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
