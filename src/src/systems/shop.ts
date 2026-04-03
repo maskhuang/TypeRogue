@@ -1187,7 +1187,10 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
         if (ownedSkillId && !convertedSkillIds.has(ownedSkillId)) {
           const ownedData = state.player.skills.get(ownedSkillId);
           const ownedAffix = state.affixSkills.get(ownedSkillId);
-          if (ownedData && ownedAffix && ownedData.level < getLevelCap(ownedAffix.rarity)) {
+          // Story 45: Exhaust 已消耗完的技能不再出现升级
+          const exhaustConsumed = ownedAffix && !ownedAffix.affixes.some(a => a.type === 'exhaust') &&
+            state.affixSkillStates.get(ownedSkillId)?.exhaustCount != null && state.affixSkillStates.get(ownedSkillId)!.exhaustCount > 0;
+          if (ownedData && ownedAffix && ownedData.level < getLevelCap(ownedAffix.rarity) && !exhaustConsumed) {
             // 转为升级
             const nextLevel = ownedData.level + 1;
             affixItems[i] = {
@@ -1221,6 +1224,9 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
           if (!affix || affix.rarity < 1) continue;
           if (convertedSkillIds.has(skillId)) continue;
           if (skillData.level >= getLevelCap(affix.rarity)) continue;
+          // Story 45: Exhaust 已消耗完的技能不参与保底升级
+          const rt = state.affixSkillStates.get(skillId);
+          if (rt && (rt.exhaustCount ?? 0) > 0 && !affix.affixes.some(a => a.type === 'exhaust')) continue;
           candidates.push({ skillId, affix });
         }
         if (candidates.length > 0) {
@@ -2098,6 +2104,11 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
       if (existing) {
         existing.level = data?.level || existing.level;
         applyAffixLevelScaling(existing.affixes, 1);
+        // Story 45: 升级含 Exhaust 的技能时重置消耗计数（补充使用次数）
+        const rt = state.affixSkillStates.get(skillId);
+        if (rt && existing.affixes.some(a => a.type === 'exhaust')) {
+          rt.exhaustCount = 0;
+        }
       }
       eventBus.emit('skill:upgraded', { skillId, newLevel: data?.level || 1 });
       // 达到附魔等级门槛时触发附魔（统一 Lv.3）
