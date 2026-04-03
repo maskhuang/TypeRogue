@@ -460,7 +460,7 @@ development_status:
   # 45-7, 45-8 已合并入 45-6
   45-9-meta-innate-counter-exhaust-ethereal: done           # 元规则：先天+反制+消耗+虚无（合并45.9~45.11）
   # 45-10, 45-11 已合并入 45-9
-  45-12-skill-generation-integration: backlog # 技能生成集成（权重/参数/商店/tooltip）
+  45-12-skill-generation-integration: done           # 技能生成集成 + 生命周期钩子
   45-13-balance-playtest: backlog             # 数值平衡与 playtest
   epic-45-retrospective: optional
 

@@ -43,7 +43,7 @@ import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, sho
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, getUnderdogBonusGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
 import { resetCritRelicBattleState, resetCritRelicWordState, getCritStormBonus, initCritRelicBehaviors } from './relics/CritRelicBehaviors';
 import { checkDrumPass, getWordResonanceStacks, resetStackingRelicBattleState, initStackingRelicBehaviors, isPerpetualEngineActive, isStackingAffix } from './relics/StackingRelicBehaviors';
-import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests, removeAffixAtRuntime } from '../data/affixTrigger';
 import { AffixType } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
@@ -1623,6 +1623,15 @@ function endLevel(): void {
   setRelicGarbleActive(false);
   hideSettlement();
 
+  // Story 45.12: Ethereal 关卡结束移除
+  for (const [skillId, skill] of state.affixSkills) {
+    const rt = state.affixSkillStates.get(skillId);
+    if (rt?.etherealTriggered) {
+      removeAffixAtRuntime(skill, AffixType.Ethereal);
+      rt.etherealTriggered = false;
+    }
+  }
+
   // 计算关卡评级
   if (state.battleStats) {
     state.battleStats.rating = calculateRating({
@@ -2207,6 +2216,23 @@ export async function startLevel(): Promise<void> {
     showFeedback(t('battle.target_reached'), '#4ecdc4');
     playSound('levelup');
     screenShake(3);
+  }
+
+  // Story 45.12: Counter 每关充能恢复 + Innate 自动触发
+  for (const [skillId, skill] of state.affixSkills) {
+    const rt = state.affixSkillStates.get(skillId);
+    if (!rt) continue;
+    // Counter: 恢复充能
+    const counterAffix = skill.affixes.find(a => a.type === AffixType.Counter);
+    if (counterAffix) {
+      rt.counterCharges = counterAffix.maxCharges ?? 0;
+    }
+    // Ethereal: 重置触发标记
+    rt.etherealTriggered = false;
+    // Innate: 自动触发一次
+    if (skill.affixes.some(a => a.type === AffixType.Innate)) {
+      triggerSkill(skillId, null as any);
+    }
   }
 
   startTimer();
