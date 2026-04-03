@@ -562,8 +562,12 @@ const ZH: Record<string, string> = {
   'affix.outcast': '流放', 'affix.gravity': '引力', 'affix.ligature': '连字',
   'affix.war_drum': '战鼓',
   'affix.twin': '双生', 'affix.recurse': '递归', 'affix.taboo': '禁忌',
+  'affix.phase_shift': '相变', 'affix.endo_exo': '吸放热', 'affix.fusion': '聚变',
+  'affix.flow': '落差', 'affix.confluence': '汇流', 'affix.turbulence': '湍流',
+  'affix.cluster': '辅音丛', 'affix.coverage': '覆盖度', 'affix.bigram': '双字组',
+  'affix.innate': '先天', 'affix.counter': '反制', 'affix.exhaust': '消耗', 'affix.ethereal': '虚无',
 
-  // --- affix descriptions (21) ---
+  // --- affix descriptions (35) ---
   'affix_desc.convert': '读取一种资源的当前值，按系数加成本资源产出',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
   'affix_desc.multiply': '产出直接乘以固定倍数',
@@ -585,6 +589,19 @@ const ZH: Record<string, string> = {
   'affix_desc.twin': '获得附魔时同时获得两个（而非二选一）',
   'affix_desc.recurse': '增加暴击率，暴击时额外触发一次（每次暴击率减半）',
   'affix_desc.taboo': '大幅提升产出，但有小概率产出负值',
+  'affix_desc.phase_shift': '读取一种资源当温度，跨阈值时产出跳升；高温持续消耗资源',
+  'affix_desc.endo_exo': '读取一种资源，高于阈值时高产出+消耗（放热），低于阈值时低产出（吸热）',
+  'affix_desc.fusion': '需要两种资源同时达到阈值才能点火；成功时高倍产出+双消耗，失败则惩罚',
+  'affix_desc.flow': '范围内比自己强的邻居越多，产出加成越高（水往低处流）',
+  'affix_desc.confluence': '范围内邻居的资源类型越多样，产出加成越高（多源汇流）',
+  'affix_desc.turbulence': '范围内邻居的强弱差异越大，产出加成越高（湍流高能）',
+  'affix_desc.cluster': '单词中连续辅音越长（至少2个），产出加成越高',
+  'affix_desc.coverage': '单词中不同字母种类越多，产出加成越高',
+  'affix_desc.bigram': '单词中相邻字母对越罕见，产出加成越高',
+  'affix_desc.innate': '每关开始时自动触发一次（不需按键）',
+  'affix_desc.counter': '产出为负时消耗充能取消负面效果（每关恢复充能）',
+  'affix_desc.exhaust': '每次触发产出倍增，但触发次数有限，用完词条消失',
+  'affix_desc.ethereal': '产出大幅倍增，但只生效一关，关卡结束后词条消失',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -1324,8 +1341,12 @@ const EN: Record<string, string> = {
   'affix.outcast': 'Outcast', 'affix.gravity': 'Gravity', 'affix.ligature': 'Ligature',
   'affix.war_drum': 'War Drum',
   'affix.twin': 'Twin', 'affix.recurse': 'Recurse', 'affix.taboo': 'Taboo',
+  'affix.phase_shift': 'Phase Shift', 'affix.endo_exo': 'Endo/Exo', 'affix.fusion': 'Fusion',
+  'affix.flow': 'Flow', 'affix.confluence': 'Confluence', 'affix.turbulence': 'Turbulence',
+  'affix.cluster': 'Cluster', 'affix.coverage': 'Coverage', 'affix.bigram': 'Bigram',
+  'affix.innate': 'Innate', 'affix.counter': 'Counter', 'affix.exhaust': 'Exhaust', 'affix.ethereal': 'Ethereal',
 
-  // --- affix descriptions (21) ---
+  // --- affix descriptions (35) ---
   'affix_desc.convert': 'Reads another resource value, adds scaled bonus to this output',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
   'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
@@ -1347,6 +1368,19 @@ const EN: Record<string, string> = {
   'affix_desc.twin': 'Gains two enchantments at once instead of choosing one',
   'affix_desc.recurse': 'Adds crit rate; crits trigger again (halves each time)',
   'affix_desc.taboo': 'Greatly boosts output, but small chance of negative output',
+  'affix_desc.phase_shift': 'Reads a resource as temperature; output jumps at thresholds; high temp consumes resource',
+  'affix_desc.endo_exo': 'Reads a resource; above threshold = high output + consume (exo); below = low output (endo)',
+  'affix_desc.fusion': 'Requires two resources above ignition thresholds; success = high output + dual consume; failure = penalty',
+  'affix_desc.flow': 'Stronger neighbors in range boost output (water flows downhill)',
+  'affix_desc.confluence': 'More diverse resource types among neighbors = higher bonus (streams converge)',
+  'affix_desc.turbulence': 'Greater strength variance among neighbors = higher bonus (turbulent energy)',
+  'affix_desc.cluster': 'Longer consecutive consonant runs in word = higher bonus (min 2)',
+  'affix_desc.coverage': 'More unique letters in word = higher bonus',
+  'affix_desc.bigram': 'Rarer adjacent letter pairs in word = higher bonus',
+  'affix_desc.innate': 'Auto-triggers once at stage start (no keypress needed)',
+  'affix_desc.counter': 'Cancels negative output by spending a charge (recharges each stage)',
+  'affix_desc.exhaust': 'Each trigger multiplies base output, but limited uses before removal',
+  'affix_desc.ethereal': 'Greatly multiplies base output, but removed after one stage',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',
