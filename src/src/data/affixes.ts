@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（35 类，6 类别） ====
+// ===== 词条类型枚举（36 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -24,6 +24,7 @@ export enum AffixType {
   Decay = 'decay',
   Recurse = 'recurse',
   Taboo = 'taboo',
+  Fallacy = 'fallacy',
   // ── 叠层型 stack ──
   Pulse = 'pulse',
   Resonance = 'resonance',
@@ -72,6 +73,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Decay]: 'crit',
   [AffixType.Recurse]: 'crit',
   [AffixType.Taboo]: 'crit',
+  [AffixType.Fallacy]: 'crit',
   // ── 叠层型 ──
   [AffixType.Pulse]: 'stack',
   [AffixType.Resonance]: 'stack',
@@ -224,6 +226,8 @@ export interface AffixInstance {
   recurseChance?: number           // Recurse: 重触发概率 15%~30%
   penaltyChance?: number           // @deprecated Taboo: 旧版负产出概率（现并入暴击系统）
   critPerStack?: number            // WarDrum: 每层暴击率
+  fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
+  fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
   clusterK?: number                // Cluster: 每单位辅音丛长度的 bonusPercent
   coverageK?: number               // Coverage: 每个不同字母的 bonusPercent
@@ -408,6 +412,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Ethereal]: 'low',
   [AffixType.Recurse]: 'high',
   [AffixType.Taboo]: 'high',
+  [AffixType.Fallacy]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -506,6 +511,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Counter]: '反制',
   [AffixType.Exhaust]: '消耗',
   [AffixType.Ethereal]: '虚无',
+  [AffixType.Fallacy]: '赌徒',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -545,6 +551,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Counter]: '产出为负时消耗充能取消负面效果（每关恢复充能）',
   [AffixType.Exhaust]: '每次触发产出倍增，但触发次数有限，用完词条消失',
   [AffixType.Ethereal]: '本关内其他词条效果提升一级；关卡结束后词条消失',
+  [AffixType.Fallacy]: '连续未暴击时暴击率逐次递增，暴击后归零重新累积',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -752,6 +759,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
   [AffixType.Recurse]:  { param: 'recurseChance',  delta: 0.03,  mode: 'add' },
   [AffixType.Taboo]:    { param: 'bonusPercent',   delta: 0.08,  mode: 'add' },
+  [AffixType.Fallacy]:  { param: 'fallacyK',       delta: 0.02,  mode: 'add' },
   [AffixType.WarDrum]:  { param: 'critPerStack',   delta: 0.005, mode: 'add' },
   [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
   [AffixType.Splash]:   { param: 'splashCount',    delta: -1,    mode: 'add' },  // 间隔降低（升级更频繁触发）

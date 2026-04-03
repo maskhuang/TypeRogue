@@ -68,6 +68,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   counter:     '#fab1a0', // 蜜桃 — 反制
   exhaust:     '#ffa502', // 琥珀 — 消耗
   ethereal:    '#c8d6e5', // 雾灰 — 虚无(词条)
+  fallacy:     '#9b59b6', // 紫 — 赌徒
 }
 
 export interface KeyTooltipData {

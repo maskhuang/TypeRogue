@@ -233,6 +233,9 @@ export function rollAffixParams(
     case AffixType.Taboo:
       return { type, bonusPercent: 0.60 }
 
+    case AffixType.Fallacy:
+      return { type, fallacyK: roundTo(0.05 + random() * 0.07, 3), fallacyStacks: 0 }  // 0.05~0.12 per non-crit
+
     case AffixType.Multiply:
       return { type, multiplyValue: roundTo(1.5 + random() * 0.5, 2) }  // ×1.5~2.0
 

@@ -900,6 +900,13 @@ export function resolvePhase3(
         break
       }
 
+      case AffixType.Fallacy: {
+        // 赌徒谬误：连续未暴击次数 × K → 暴击率加成
+        if (affix.fallacyK == null) break
+        totalCritChance += (affix.fallacyStacks ?? 0) * affix.fallacyK
+        break
+      }
+
       case AffixType.Pulse: {
         const pulseInterval = getEffectiveInterval(affix.interval ?? 1, skill.id, ctx)
         if (runtimeState.stacks > 0 && runtimeState.stacks % pulseInterval === 0) {
@@ -995,6 +1002,17 @@ export function resolvePhase3(
         multipliers.push(-1)
       }
       flags.isTabooPenalty = true
+    }
+
+    // 赌徒谬误：暴击后归零，未暴击后 stacks+1
+    for (const affix of skill.affixes) {
+      if (affix.type === AffixType.Fallacy) {
+        if (flags.isCrit) {
+          affix.fallacyStacks = 0
+        } else {
+          affix.fallacyStacks = (affix.fallacyStacks ?? 0) + 1
+        }
+      }
     }
   }
 

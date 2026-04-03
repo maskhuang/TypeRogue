@@ -539,6 +539,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'gravity': return t('param.gravity', { mult: a.probMult?.toFixed(1) ?? '?' })
     case 'recurse': return t('param.recurse', { pct: Math.round((a.recurseChance ?? 0) * 100) })
     case 'taboo': return t('param.taboo', { pct: Math.round((a.bonusPercent ?? 0) * 100) })
+    case 'fallacy': return t('param.fallacy', { k: Math.round((a.fallacyK ?? 0) * 100) })
     case 'rainbow': return t('param.rainbow')
     case 'mirror': return t('param.mirror', { rel })
     case 'splash': return t('param.splash', { rel, n: a.splashCount ?? 1 })
@@ -742,6 +743,16 @@ export function computeSmartEstimate(
         const chance = affix.chance ?? 0
         critChanceAccum += chance
         breakdown.push({ typeKey: 'crit', label: t('est.crit', { pct: Math.round(chance * 100) }), detail: `(\u00d7${CRIT_MULTIPLIER})` })
+        break
+      }
+      case 'fallacy': {
+        // 赌徒谬误：期望平均 stacks ≈ (1-p)/(2p)，p = 当前累积暴击率
+        const k = affix.fallacyK ?? 0
+        const baseCrit = Math.max(critChanceAccum, 0.1)
+        const avgStacks = (1 - baseCrit) / (2 * baseCrit)
+        const avgBonus = k * avgStacks
+        critChanceAccum += avgBonus
+        breakdown.push({ typeKey: 'fallacy', label: t('est.fallacy', { pct: Math.round(avgBonus * 100) }), detail: `(+${Math.round(k * 100)}%/${t('est.fallacy_per')})` })
         break
       }
       case 'cascade': {

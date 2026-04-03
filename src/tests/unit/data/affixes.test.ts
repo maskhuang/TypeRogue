@@ -32,19 +32,19 @@ import type { ResourceType } from '../../../src/core/types'
 describe('AffixType', () => {
   const allAffixTypes = Object.values(AffixType)
 
-  it('should have exactly 35 values', () => {
-    expect(allAffixTypes).toHaveLength(35)
+  it('should have exactly 36 values', () => {
+    expect(allAffixTypes).toHaveLength(36)
   })
 
   it('should have unique string values', () => {
     const unique = new Set(allAffixTypes)
-    expect(unique.size).toBe(35)
+    expect(unique.size).toBe(36)
   })
 
   it('should contain all expected types', () => {
     const expected = [
       'convert', 'rainbow', 'multiply', 'phase_shift', 'endo_exo', 'fusion',
-      'crit', 'charge', 'decay', 'recurse', 'taboo',
+      'crit', 'charge', 'decay', 'recurse', 'taboo', 'fallacy',
       'pulse', 'resonance', 'splash', 'amplify', 'relay', 'war_drum',
       'void', 'mirror', 'cascade', 'flow', 'confluence', 'turbulence',
       'outcast', 'gravity', 'ligature', 'cluster', 'coverage', 'bigram',
@@ -59,7 +59,7 @@ describe('AffixType', () => {
 describe('AFFIX_CATEGORY_MAP', () => {
   const allAffixTypes = Object.values(AffixType)
 
-  it('should cover all 35 AffixType values', () => {
+  it('should cover all 36 AffixType values', () => {
     for (const t of allAffixTypes) {
       expect(AFFIX_CATEGORY_MAP[t]).toBeDefined()
     }
@@ -85,13 +85,13 @@ describe('AFFIX_CATEGORY_MAP', () => {
     expect(AFFIX_CATEGORY_MAP[AffixType.Twin]).toBe('meta_rule')
   })
 
-  it('should have 6 numeric, 5 crit, 6 stack, 6 topology, 6 word_sense, 6 meta_rule', () => {
+  it('should have 6 numeric, 6 crit, 6 stack, 6 topology, 6 word_sense, 6 meta_rule', () => {
     const counts: Record<AffixCategory, number> = { numeric: 0, crit: 0, stack: 0, topology: 0, word_sense: 0, meta_rule: 0 }
     for (const cat of Object.values(AFFIX_CATEGORY_MAP)) {
       counts[cat]++
     }
     expect(counts.numeric).toBe(6)
-    expect(counts.crit).toBe(5)
+    expect(counts.crit).toBe(6)
     expect(counts.stack).toBe(6)
     expect(counts.topology).toBe(6)
     expect(counts.word_sense).toBe(6)
