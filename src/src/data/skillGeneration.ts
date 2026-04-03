@@ -218,6 +218,9 @@ export function rollAffixParams(
     case AffixType.Burst:
       return { type, burstK: roundTo(0.20 + random() * 0.20, 2) }
 
+    case AffixType.ZeroIn:
+      return { type, zeroInK: roundTo(0.15 + random() * 0.15, 2) }
+
     case AffixType.Entropy:
       return { type, entropyK: roundTo(0.06 + random() * 0.06, 2) }
 

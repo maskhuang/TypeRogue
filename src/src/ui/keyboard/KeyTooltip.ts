@@ -79,6 +79,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   option:      '#d4ac0d', // 暗金 — 期权
   hedge:       '#1abc9c', // 青绿 — 对冲
   burst:       '#ff6348', // 火红 — 连射
+  zero_in:     '#7bed9f', // 浅绿 — 校准
 }
 
 export interface KeyTooltipData {

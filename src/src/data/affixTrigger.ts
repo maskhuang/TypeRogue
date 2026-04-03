@@ -1142,7 +1142,7 @@ export function resolvePhase3(
       multipliers.push(critMult)
       flags.isCrit = true
       flags.critTransformed = critTransformed
-      // Burst: 连续暴击加成（读上一次的 critStreak）
+      // Burst / Zero-In: 暴击时读 critStreak/missStreak 追加倍率
       for (const a of skill.affixes) {
         if (a.type === AffixType.Burst && (a.burstK ?? 0) > 0) {
           const streak = runtimeState.critStreak ?? 0
@@ -1150,6 +1150,14 @@ export function resolvePhase3(
             const burstMult = 1 + (a.burstK ?? 0) * streak
             output *= burstMult
             multipliers.push(burstMult)
+          }
+        }
+        if (a.type === AffixType.ZeroIn && (a.zeroInK ?? 0) > 0) {
+          const misses = runtimeState.missStreak ?? 0
+          if (misses > 0) {
+            const zeroMult = 1 + (a.zeroInK ?? 0) * misses
+            output *= zeroMult
+            multipliers.push(zeroMult)
           }
         }
       }
