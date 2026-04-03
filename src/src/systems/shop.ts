@@ -1187,10 +1187,11 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
         if (ownedSkillId && !convertedSkillIds.has(ownedSkillId)) {
           const ownedData = state.player.skills.get(ownedSkillId);
           const ownedAffix = state.affixSkills.get(ownedSkillId);
-          // Story 45: Exhaust 已消耗完的技能不再出现升级
-          const exhaustConsumed = ownedAffix && !ownedAffix.affixes.some(a => a.type === 'exhaust') &&
-            state.affixSkillStates.get(ownedSkillId)?.exhaustCount != null && state.affixSkillStates.get(ownedSkillId)!.exhaustCount > 0;
-          if (ownedData && ownedAffix && ownedData.level < getLevelCap(ownedAffix.rarity) && !exhaustConsumed) {
+          // Story 45: Exhaust/Ethereal 已消耗完的技能不再出现升级
+          const rtOwned = state.affixSkillStates.get(ownedSkillId);
+          const exhaustConsumed = ownedAffix && !ownedAffix.affixes.some(a => a.type === 'exhaust') && (rtOwned?.exhaustCount ?? 0) > 0;
+          const etherealConsumed = ownedAffix && !ownedAffix.affixes.some(a => a.type === 'ethereal') && rtOwned?.etherealTriggered;
+          if (ownedData && ownedAffix && ownedData.level < getLevelCap(ownedAffix.rarity) && !exhaustConsumed && !etherealConsumed) {
             // 转为升级
             const nextLevel = ownedData.level + 1;
             affixItems[i] = {
@@ -1224,9 +1225,10 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
           if (!affix || affix.rarity < 1) continue;
           if (convertedSkillIds.has(skillId)) continue;
           if (skillData.level >= getLevelCap(affix.rarity)) continue;
-          // Story 45: Exhaust 已消耗完的技能不参与保底升级
+          // Story 45: Exhaust/Ethereal 已消耗完的技能不参与保底升级
           const rt = state.affixSkillStates.get(skillId);
           if (rt && (rt.exhaustCount ?? 0) > 0 && !affix.affixes.some(a => a.type === 'exhaust')) continue;
+          if (rt?.etherealTriggered && !affix.affixes.some(a => a.type === 'ethereal')) continue;
           candidates.push({ skillId, affix });
         }
         if (candidates.length > 0) {

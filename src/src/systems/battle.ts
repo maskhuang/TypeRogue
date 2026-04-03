@@ -1628,7 +1628,7 @@ function endLevel(): void {
     const rt = state.affixSkillStates.get(skillId);
     if (rt?.etherealTriggered) {
       removeAffixAtRuntime(skill, AffixType.Ethereal);
-      rt.etherealTriggered = false;
+      // etherealTriggered 保持 true 作为永久消耗标记（商店排除用）
     }
   }
 
@@ -2230,8 +2230,10 @@ export async function startLevel(): Promise<void> {
     if (counterAffix) {
       rt.counterCharges = counterAffix.maxCharges ?? 0;
     }
-    // Ethereal: 重置触发标记
-    rt.etherealTriggered = false;
+    // Ethereal: 仅词条仍存在时重置触发标记（已消耗的保持 true 供商店排除）
+    if (skill.affixes.some(a => a.type === AffixType.Ethereal)) {
+      rt.etherealTriggered = false;
+    }
     // Innate: 自动触发一次
     if (skill.affixes.some(a => a.type === AffixType.Innate)) {
       triggerSkill(skillId, null as any);
