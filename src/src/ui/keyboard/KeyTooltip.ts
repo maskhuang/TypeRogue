@@ -69,6 +69,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   exhaust:     '#ffa502', // 琥珀 — 消耗
   ethereal:    '#c8d6e5', // 雾灰 — 虚无(词条)
   fallacy:     '#9b59b6', // 紫 — 赌徒
+  parity:      '#a29bfe', // 淡紫 — 奇偶
 }
 
 export interface KeyTooltipData {

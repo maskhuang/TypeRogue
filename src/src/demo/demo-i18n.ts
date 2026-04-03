@@ -566,8 +566,9 @@ const ZH: Record<string, string> = {
   'affix.flow': '落差', 'affix.confluence': '汇流', 'affix.turbulence': '湍流',
   'affix.cluster': '辅音丛', 'affix.coverage': '覆盖度', 'affix.bigram': '双字组',
   'affix.innate': '先天', 'affix.counter': '反制', 'affix.exhaust': '消耗', 'affix.ethereal': '虚无',
+  'affix.parity': '奇偶',
 
-  // --- affix descriptions (35) ---
+  // --- affix descriptions (36) ---
   'affix_desc.convert': '读取一种资源的当前值，按系数加成本资源产出',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
   'affix_desc.multiply': '产出直接乘以固定倍数',
@@ -604,6 +605,7 @@ const ZH: Record<string, string> = {
   'affix_desc.counter': '产出为负时消耗充能取消负面效果（每关恢复充能）',
   'affix_desc.exhaust': '每次触发产出倍增，但触发次数有限，用完词条消失',
   'affix_desc.ethereal': '本关内其他词条效果提升一级；关卡结束后词条消失',
+  'affix_desc.parity': '叠层为奇数时增加产出，偶数时增加暴击率',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -1350,8 +1352,9 @@ const EN: Record<string, string> = {
   'affix.flow': 'Flow', 'affix.confluence': 'Confluence', 'affix.turbulence': 'Turbulence',
   'affix.cluster': 'Cluster', 'affix.coverage': 'Coverage', 'affix.bigram': 'Bigram',
   'affix.innate': 'Innate', 'affix.counter': 'Counter', 'affix.exhaust': 'Exhaust', 'affix.ethereal': 'Ethereal',
+  'affix.parity': 'Parity',
 
-  // --- affix descriptions (35) ---
+  // --- affix descriptions (36) ---
   'affix_desc.convert': 'Reads another resource value, adds scaled bonus to this output',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
   'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
@@ -1388,6 +1391,7 @@ const EN: Record<string, string> = {
   'affix_desc.counter': 'Cancels negative output by spending a charge (recharges each stage)',
   'affix_desc.exhaust': 'Each trigger multiplies base output, but limited uses before removal',
   'affix_desc.ethereal': 'Boosts other affixes by one level this stage; removed at stage end',
+  'affix_desc.parity': 'Odd stacks: +output bonus; Even stacks: +crit chance',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',

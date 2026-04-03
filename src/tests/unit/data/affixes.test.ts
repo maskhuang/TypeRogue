@@ -32,20 +32,20 @@ import type { ResourceType } from '../../../src/core/types'
 describe('AffixType', () => {
   const allAffixTypes = Object.values(AffixType)
 
-  it('should have exactly 36 values', () => {
-    expect(allAffixTypes).toHaveLength(36)
+  it('should have exactly 37 values', () => {
+    expect(allAffixTypes).toHaveLength(37)
   })
 
   it('should have unique string values', () => {
     const unique = new Set(allAffixTypes)
-    expect(unique.size).toBe(36)
+    expect(unique.size).toBe(37)
   })
 
   it('should contain all expected types', () => {
     const expected = [
       'convert', 'rainbow', 'multiply', 'phase_shift', 'endo_exo', 'fusion',
       'crit', 'charge', 'decay', 'recurse', 'taboo', 'fallacy',
-      'pulse', 'resonance', 'splash', 'amplify', 'relay', 'war_drum',
+      'pulse', 'resonance', 'splash', 'amplify', 'relay', 'war_drum', 'parity',
       'void', 'mirror', 'cascade', 'flow', 'confluence', 'turbulence',
       'outcast', 'gravity', 'ligature', 'cluster', 'coverage', 'bigram',
       'conduit', 'twin', 'innate', 'counter', 'exhaust', 'ethereal',
@@ -85,14 +85,14 @@ describe('AFFIX_CATEGORY_MAP', () => {
     expect(AFFIX_CATEGORY_MAP[AffixType.Twin]).toBe('meta_rule')
   })
 
-  it('should have 6 numeric, 6 crit, 6 stack, 6 topology, 6 word_sense, 6 meta_rule', () => {
+  it('should have 6 numeric, 6 crit, 7 stack, 6 topology, 6 word_sense, 6 meta_rule', () => {
     const counts: Record<AffixCategory, number> = { numeric: 0, crit: 0, stack: 0, topology: 0, word_sense: 0, meta_rule: 0 }
     for (const cat of Object.values(AFFIX_CATEGORY_MAP)) {
       counts[cat]++
     }
     expect(counts.numeric).toBe(6)
     expect(counts.crit).toBe(6)
-    expect(counts.stack).toBe(6)
+    expect(counts.stack).toBe(7)
     expect(counts.topology).toBe(6)
     expect(counts.word_sense).toBe(6)
     expect(counts.meta_rule).toBe(6)

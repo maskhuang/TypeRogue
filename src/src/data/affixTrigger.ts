@@ -772,6 +772,16 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.Parity: {
+        // 奇偶：奇数叠层时加产出（Phase 2 加算）
+        const parityStacks = runtimeState.stacks
+        if (parityStacks > 0 && parityStacks % 2 === 1) {
+          bonusPercent += affix.oddK ?? 0
+        }
+        // 偶数叠层时加暴击率 → 在 Phase 3 处理（暴击子系统）
+        break
+      }
+
       // 其余词条类型在 Phase 2 无加算效果
       default:
         break
@@ -904,6 +914,16 @@ export function resolvePhase3(
         // 赌徒谬误：连续未暴击次数 × K → 暴击率加成
         if (affix.fallacyK == null) break
         totalCritChance += (affix.fallacyStacks ?? 0) * affix.fallacyK
+        break
+      }
+
+      case AffixType.Parity: {
+        // 奇偶：偶数叠层时加暴击率（Phase 3 暴击子系统）
+        const parityStacks = runtimeState.stacks
+        if (parityStacks > 0 && parityStacks % 2 === 0) {
+          totalCritChance += affix.evenK ?? 0
+        }
+        // 奇数叠层时加产出 → 已在 Phase 2 处理
         break
       }
 
