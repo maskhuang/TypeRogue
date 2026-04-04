@@ -38,6 +38,7 @@ export function bindShapeToKeys(
   st: BindingState,
   skillId: string,
   anchorKey: string,
+  allowPunctuation: boolean = false,
 ): BindShapeResult {
   const skill = st.affixSkills.get(skillId)
   const shapeId = skill?.shapeId ?? 'monomino'
@@ -47,7 +48,7 @@ export function bindShapeToKeys(
   const normalizedAnchor = anchorKey.toLowerCase()
 
   // 获取形状映射到的键位列表
-  const targetKeys = mapShapeToKeys(normalizedAnchor, shapeId, rotation)
+  const targetKeys = mapShapeToKeys(normalizedAnchor, shapeId, rotation, allowPunctuation)
   if (!targetKeys) {
     return { success: false, displacedSkillIds: [] }
   }

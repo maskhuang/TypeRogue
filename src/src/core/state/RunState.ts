@@ -299,7 +299,7 @@ export class RunState {
     if (!this.data.skills.some(s => s.id === skillId)) {
       throw new Error(`Skill not owned: ${skillId}`)
     }
-    bindShapeToKeys(getRunStateBindingState(this.data), skillId, normalizedKey)
+    bindShapeToKeys(getRunStateBindingState(this.data), skillId, normalizedKey, true)
   }
 
   /**

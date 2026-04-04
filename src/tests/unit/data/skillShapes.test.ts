@@ -313,18 +313,28 @@ describe('mapShapeToKeys boundary cases', () => {
     expect(areKeysConnected(result!)).toBe(true)
   })
 
-  it('punctuation key anchor', () => {
-    const result = mapShapeToKeys(';', 'monomino', 0)
+  it('punctuation key anchor (with relic)', () => {
+    const result = mapShapeToKeys(';', 'monomino', 0, true)
     expect(result).toEqual([';'])
   })
 
-  it('tetromino_I horizontal at m extends into punctuation keys', () => {
-    const result = mapShapeToKeys('m', 'tetromino_I', 0)
+  it('punctuation key anchor blocked without relic', () => {
+    const result = mapShapeToKeys(';', 'monomino', 0)
+    expect(result).toBeNull()
+  })
+
+  it('tetromino_I horizontal at m extends into punctuation keys (with relic)', () => {
+    const result = mapShapeToKeys('m', 'tetromino_I', 0, true)
     // Bottom row with punctuation extension: z,x,c,v,b,n,m,',',.','/' — m fits with ,./
     expect(result).not.toBeNull()
     expect(result).toHaveLength(4)
     expect(result![0]).toBe('m')
     expect(areKeysConnected(result!)).toBe(true)
+  })
+
+  it('tetromino_I at m blocked without punctuation relic', () => {
+    const result = mapShapeToKeys('m', 'tetromino_I', 0)
+    expect(result).toBeNull()
   })
 })
 

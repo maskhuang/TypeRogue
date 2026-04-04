@@ -3615,7 +3615,8 @@ export function highlightShapePlacement(anchorKey: string, payload: DragPayload)
   const normalizedKey = anchorKey.toLowerCase();
   if (!KEYS.includes(normalizedKey)) return;
 
-  const targetKeys = mapShapeToKeys(normalizedKey, shapeId, rotation);
+  const allowPunctHL = state.player.relics.has('punctuation_liberation');
+  const targetKeys = mapShapeToKeys(normalizedKey, shapeId, rotation, allowPunctHL);
 
   if (!targetKeys) {
     // 放不下：红色高亮悬停键
@@ -3666,11 +3667,12 @@ function handleKeySlotRotation(key: string, reverse = false): void {
   const step = reverse ? maxRot - 1 : 1; // +(maxRot-1) mod maxRot = -1
 
   // 尝试所有其他旋转态，找到第一个能放下的
+  const allowPunctRot = state.player.relics.has('punctuation_liberation');
   let nextRotation = -1;
   let targetKeys: string[] | null = null;
   for (let attempt = 1; attempt < maxRot; attempt++) {
     const candidate = (currentRotation + step * attempt) % maxRot;
-    targetKeys = mapShapeToKeys(anchorKey, shapeId, candidate);
+    targetKeys = mapShapeToKeys(anchorKey, shapeId, candidate, allowPunctRot);
     if (targetKeys) {
       nextRotation = candidate;
       break;
@@ -3696,12 +3698,12 @@ function handleKeySlotRotation(key: string, reverse = false): void {
   // 旋转成功：解绑 → 更新旋转 → 重新绑定
   unbindSkill(bs, skillId);
   affixSkill.rotation = nextRotation;
-  const result = bindShapeToKeys(bs, skillId, anchorKey);
+  const result = bindShapeToKeys(bs, skillId, anchorKey, allowPunctRot);
 
   if (!result.success) {
     // 防御性回退：恢复旧 rotation 并重新绑定
     affixSkill.rotation = currentRotation;
-    bindShapeToKeys(bs, skillId, anchorKey);
+    bindShapeToKeys(bs, skillId, anchorKey, allowPunctRot);
     playSound('wrong');
     showFeedback(t('shop.rotate_fail'), '#ff6b6b');
     return;
@@ -3735,6 +3737,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
   }
 
   const bs = getBindingState(state);
+  const allowPunct = state.player.relics.has('punctuation_liberation');
 
   if (payload.type === 'shop-item') {
     // 从商店拖拽技能到键位 → 购买并绑定
@@ -3750,13 +3753,13 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
       const shapeId = affixSkill.shapeId ?? 'monomino';
       let rotation = affixSkill.rotation ?? 0;
       if (shapeId !== 'monomino') {
-        let fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, rotation);
+        let fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, rotation, allowPunct);
         // 当前旋转不 fit → 自动尝试其他旋转态
         if (!fitKeys) {
           const rotCount = getShapeRotationCount(shapeId);
           for (let attempt = 1; attempt < rotCount; attempt++) {
             const candidate = (rotation + attempt) % rotCount;
-            fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, candidate);
+            fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, candidate, allowPunct);
             if (fitKeys) {
               rotation = candidate;
               affixSkill.rotation = rotation;
@@ -3775,7 +3778,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     if (!result) return;
 
     // 绑定到目标键位（被覆盖技能自动解绑）
-    bindShapeToKeys(bs, skillId, targetKey);
+    bindShapeToKeys(bs, skillId, targetKey, allowPunct);
 
     // Story 41.1: 附魔不再由购买自动触发
     evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
@@ -3801,7 +3804,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
       unbindSkill(bs, skillId);
       unbindSkill(bs, existingSkill);
       // 尝试绑定到目标键位，失败时自动尝试其他旋转态
-      let r1 = bindShapeToKeys(bs, skillId, targetKey);
+      let r1 = bindShapeToKeys(bs, skillId, targetKey, allowPunct);
       if (!r1.success) {
         const affixSkill = state.affixSkills.get(skillId);
         const shapeId = affixSkill?.shapeId ?? 'monomino';
@@ -3810,10 +3813,10 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
           const rotCount = getShapeRotationCount(shapeId);
           for (let attempt = 1; attempt < rotCount; attempt++) {
             const candidate = (currentRot + attempt) % rotCount;
-            const fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, candidate);
+            const fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, candidate, allowPunct);
             if (fitKeys) {
               affixSkill.rotation = candidate;
-              r1 = bindShapeToKeys(bs, skillId, targetKey);
+              r1 = bindShapeToKeys(bs, skillId, targetKey, allowPunct);
               if (r1.success) break;
             }
           }
@@ -3821,8 +3824,8 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
       }
       if (!r1.success) {
         // 放不下：恢复双方原始绑定
-        if (sourceAnchorKey) bindShapeToKeys(bs, skillId, sourceAnchorKey);
-        if (existingAnchorKey) bindShapeToKeys(bs, existingSkill, existingAnchorKey);
+        if (sourceAnchorKey) bindShapeToKeys(bs, skillId, sourceAnchorKey, allowPunct);
+        if (existingAnchorKey) bindShapeToKeys(bs, existingSkill, existingAnchorKey, allowPunct);
         showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
       } else {
         // 记录 r1 可能覆盖的第三方技能及其锚点（用于回退恢复）
@@ -3833,22 +3836,22 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
             if (dAnchor) displacedAnchors.set(dId, dAnchor);
           }
         }
-        const r2 = existingAnchorKey ? bindShapeToKeys(bs, existingSkill, sourceAnchorKey) : { success: false, displacedSkillIds: [] };
+        const r2 = existingAnchorKey ? bindShapeToKeys(bs, existingSkill, sourceAnchorKey, allowPunct) : { success: false, displacedSkillIds: [] };
         if (!r2.success && existingAnchorKey) {
           // 对方放不回去：回退全部
           unbindSkill(bs, skillId);
-          if (sourceAnchorKey) bindShapeToKeys(bs, skillId, sourceAnchorKey);
-          if (existingAnchorKey) bindShapeToKeys(bs, existingSkill, existingAnchorKey);
+          if (sourceAnchorKey) bindShapeToKeys(bs, skillId, sourceAnchorKey, allowPunct);
+          if (existingAnchorKey) bindShapeToKeys(bs, existingSkill, existingAnchorKey, allowPunct);
           // 恢复被覆盖的第三方技能
           for (const [dId, dAnchor] of displacedAnchors) {
-            bindShapeToKeys(bs, dId, dAnchor);
+            bindShapeToKeys(bs, dId, dAnchor, allowPunct);
           }
           showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
         }
       }
     } else {
       // 绑定到目标键位（被覆盖技能自动解绑）
-      let r = bindShapeToKeys(bs, skillId, targetKey);
+      let r = bindShapeToKeys(bs, skillId, targetKey, allowPunct);
       // 当前旋转放不下 → 自动尝试其他旋转态
       if (!r.success) {
         const affixSkill = state.affixSkills.get(skillId);
@@ -3858,10 +3861,10 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
           const rotCount = getShapeRotationCount(shapeId);
           for (let attempt = 1; attempt < rotCount; attempt++) {
             const candidate = (currentRot + attempt) % rotCount;
-            const fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, candidate);
+            const fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, candidate, allowPunct);
             if (fitKeys) {
               affixSkill.rotation = candidate;
-              r = bindShapeToKeys(bs, skillId, targetKey);
+              r = bindShapeToKeys(bs, skillId, targetKey, allowPunct);
               if (r.success) break;
             }
           }

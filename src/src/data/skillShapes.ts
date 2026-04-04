@@ -4,7 +4,7 @@
 // Story 40.1: 形状数据模型
 // Epic 40: 多格技能形状系统
 
-import { ADJACENT_KEYS, KEYBOARD_ROWS, PUNCTUATION_KEYBOARD_EXTENSION } from '../core/constants'
+import { ADJACENT_KEYS, KEYBOARD_ROWS, PUNCTUATION_KEYBOARD_EXTENSION, PUNCTUATION_KEYS } from '../core/constants'
 import type { SkillRarity } from './affixes'
 
 // ===== 形状模板接口 =====
@@ -246,10 +246,13 @@ export function areKeysConnected(keys: string[]): boolean {
  * @param rotation 旋转次数（0~3）
  * @returns 映射到的键位数组（含锚点），或 null（放不下/越界/不连通）
  */
+const PUNCTUATION_SET = new Set(PUNCTUATION_KEYS)
+
 export function mapShapeToKeys(
   anchorKey: string,
   shapeId: string,
   rotation: number,
+  allowPunctuation: boolean = false,
 ): string[] | null {
   const template = SHAPE_TEMPLATES[shapeId]
   if (!template) return null
@@ -278,6 +281,8 @@ export function mapShapeToKeys(
 
     const key = findClosestKeyInRow(targetRow, targetCol)
     if (!key) return null
+    // 无标点解放遗物时，形状不得延伸到标点键
+    if (!allowPunctuation && PUNCTUATION_SET.has(key)) return null
     if (keySet.has(key)) return null  // 两个 cell 映射到同一键
     keys.push(key)
     keySet.add(key)
