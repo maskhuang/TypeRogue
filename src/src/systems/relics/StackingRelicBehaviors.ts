@@ -3,7 +3,7 @@
 // ============================================
 
 import { state } from '../../core/state'
-import { AffixType } from '../../data/affixes'
+import { AffixType, AFFIX_CATEGORY_MAP } from '../../data/affixes'
 import { registerRelicBehavior } from './RelicPipeline'
 
 // === 常量 ===
@@ -161,13 +161,7 @@ export function getWordResonanceStacks(wordLength: number): number {
 
 /** 判断词条类型是否为叠层式 */
 export function isStackingAffix(type: AffixType): boolean {
-  return type === AffixType.Splash
-    || type === AffixType.Resonance
-    || type === AffixType.Relay
-    || type === AffixType.Pulse
-    || type === AffixType.Amplify
-    || type === AffixType.WarDrum
-    || type === AffixType.Match
+  return AFFIX_CATEGORY_MAP[type] === 'stack'
 }
 
 // === 生命周期 ===

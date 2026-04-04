@@ -14,7 +14,7 @@ import {
   AffixType,
   EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS, QUEST_AFFIX_MAP,
   TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, CRIT_MULTIPLIER, FATE_COIN_CRIT_CAP, FATE_COIN_CONVERSION,
-  isOldSystemSkill, applyAffixLevelScaling, getQuestEquipTarget,
+  isOldSystemSkill, applyAffixLevelScaling, getQuestEquipTarget, AFFIX_CATEGORY_MAP,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 import { BIGRAM_FREQ_TABLE } from './bigramFrequency'
@@ -56,11 +56,9 @@ export function getExtendedNeighbors(
   return Array.from(neighbors)
 }
 
-/** 判断词条类型是否属于叠层类（Pulse 爆发范围触发用） */
+/** 判断词条类型是否属于叠层类（基于 AFFIX_CATEGORY_MAP） */
 function isStackingAffixType(type: AffixType): boolean {
-  return type === AffixType.Pulse || type === AffixType.Splash || type === AffixType.Resonance
-    || type === AffixType.Relay || type === AffixType.Amplify || type === AffixType.WarDrum
-    || type === AffixType.Match
+  return AFFIX_CATEGORY_MAP[type] === 'stack'
 }
 
 // ===== 触发上下文 =====
