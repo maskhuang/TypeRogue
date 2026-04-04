@@ -90,6 +90,39 @@ export const BALANCE = {
   POST_TARGET_CUBIC_WINDOW: 30, // 三次方阶段持续秒数
 };
 
+// === Ascension: 练习关金币映射 (Story 54.2) ===
+export const PRACTICE_GOLD = {
+  BASE: 100,           // 底金（effectiveScore=0 也拿这么多）
+  TIER1_CAP: 200,      // 第一段上限分数
+  TIER1_RATE: 0.1,     // 0-200 分：0.1g/分
+  TIER2_CAP: 500,      // 第二段上限分数
+  TIER2_RATE: 0.06,    // 200-500 分：0.06g/分
+  TIER3_RATE: 0.02,    // 500+ 分：0.02g/分
+  HARD_CAP: 160,       // 金币硬上限
+  A1_MULT: 0.75,       // A1+ 效率系数
+  FLOOR_PER_LEVEL: 50, // 地板分 = ascensionLevel × 此值
+};
+
+/**
+ * 练习关得分 → 初始金币映射（纯函数）
+ * 100g 底 + 分段递减奖励，A1+ 效率 ×0.75，上限 160g
+ */
+export function computePracticeGold(effectiveScore: number, ascensionLevel: number): number {
+  const { BASE, TIER1_CAP, TIER1_RATE, TIER2_CAP, TIER2_RATE, TIER3_RATE, HARD_CAP, A1_MULT } = PRACTICE_GOLD;
+  const score = Math.max(0, effectiveScore);
+  let bonus = 0;
+  if (score <= TIER1_CAP) {
+    bonus = score * TIER1_RATE;
+  } else if (score <= TIER2_CAP) {
+    bonus = TIER1_CAP * TIER1_RATE + (score - TIER1_CAP) * TIER2_RATE;
+  } else {
+    bonus = TIER1_CAP * TIER1_RATE + (TIER2_CAP - TIER1_CAP) * TIER2_RATE + (score - TIER2_CAP) * TIER3_RATE;
+  }
+  const rawGold = BASE + bonus;
+  const mult = ascensionLevel >= 1 ? A1_MULT : 1.0;
+  return Math.min(Math.floor(rawGold * mult), HARD_CAP);
+}
+
 // === 资源标签 ===
 export const RESOURCE_LABELS: Record<string, string> = {
   base: '基数', score: '分数', multiplier: '倍率', time: '时间', gold: '金币',

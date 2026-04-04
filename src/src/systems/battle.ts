@@ -47,7 +47,7 @@ import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyAppren
 import { AffixType, applyAffixLevelScaling } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
-import { BALANCE, RESOURCE_COLORS } from '../core/constants';
+import { BALANCE, RESOURCE_COLORS, PRACTICE_GOLD, computePracticeGold } from '../core/constants';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
 import { initDemoTutorial } from '../demo/demo-tutorial';
 import { showDemoEndScreen } from '../demo/demo-end-screen';
@@ -1660,8 +1660,12 @@ function endLevel(): void {
   }
 
   // 校准关：保存得分作为后续目标基数，视为通关
+  // Story 54.2: effectiveScore = max(practiceScore, ascensionLevel × floorPerLevel)
+  let _calibrationEffectiveScore = 0;
   if (_isCalibrationLevel) {
-    state.calibratedTargetBase = Math.max(1, Math.round(state.score));
+    const floor = state.ascensionLevel * PRACTICE_GOLD.FLOOR_PER_LEVEL;
+    _calibrationEffectiveScore = Math.max(state.score, floor);
+    state.calibratedTargetBase = Math.max(1, Math.round(_calibrationEffectiveScore));
   }
 
   if (_isCalibrationLevel || state.score >= state.targetScore) {
@@ -1766,6 +1770,15 @@ function endLevel(): void {
             openShop(true);
           }
         }));
+        return;
+      }
+
+      // Story 54.2: 校准关 → 练习关金币映射（替代标准战斗金币）
+      if (_isCalibrationLevel) {
+        const practiceGold = computePracticeGold(_calibrationEffectiveScore, state.ascensionLevel);
+        state.gold += practiceGold;
+        showFeedback(t('practice.gold_earned', { gold: practiceGold }), '#ffe66d');
+        continueAfterDeadlyGift(() => openShop(true));
         return;
       }
 

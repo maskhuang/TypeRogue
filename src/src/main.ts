@@ -60,7 +60,7 @@ async function init(): Promise<void> {
       state.affixSkillStates.set(sk.id, createSkillRuntimeState(sk.id));
       bindShapeToKeys(getBindingState(state), sk.id, key);
     }
-    state.gold = 75;
+    // Story 54.2: 初始金币由练习关得分映射，不再固定赋值
 
     // 赠送开局遗物
     state.player.relics.add(DEMO_STARTER_RELIC);
@@ -94,8 +94,7 @@ async function init(): Promise<void> {
   state.affixSkills.set(starterSkill.id, starterSkill);
   state.affixSkillStates.set(starterSkill.id, createSkillRuntimeState(starterSkill.id));
 
-  // 初始金币
-  state.gold = 50;
+  // Story 54.2: 初始金币由练习关得分映射，不再固定赋值
 
   // Story 25.5: 初始化 MetaState（排行榜 + 统计）
   const metaState = new MetaState();
