@@ -813,6 +813,36 @@ body {
     background: rgba(78, 205, 196, 0.2);
     box-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
 }
+.pack-expand-panel {
+    margin-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 4px;
+}
+.pack-word-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.pack-word-row:hover {
+    background: rgba(78, 205, 196, 0.15);
+}
+.pack-word-row .word-text {
+    font-size: 15px;
+    letter-spacing: 1px;
+    flex: 1;
+}
+.pack-word-row .pack-word-len {
+    font-size: 10px;
+    opacity: 0.6;
+}
+.pack-word-row .pack-freq-hint {
+    font-size: 10px;
+    opacity: 0.5;
+}
 .key-slot .key-letter { font-size: 8px; color: #666; font-weight: bold; }
 .key-slot.has-skill .key-letter { color: #4ecdc4; }
 .key-slot .key-skill { font-size: 12px; }

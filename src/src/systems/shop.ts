@@ -1694,7 +1694,13 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
   if (item.type === 'pack') {
     card.onclick = () => {
       juiceUp(card, 0.2, 3);
-      purchasePackItem(index);
+      const pack = item.pack!
+      if (pack.words.length > 1 && !card.classList.contains('pack-expanded')) {
+        // 三选一：展开候选词行
+        expandPackCard(card, item, index)
+      } else {
+        purchasePackItem(index);
+      }
     };
   } else if (item.type === 'relic') {
     card.onclick = () => {
@@ -2046,6 +2052,70 @@ function showWordPicker(words: string[], onPick: (word: string) => void, wordEff
   });
 
   modal.classList.remove('word-picker-hidden');
+}
+
+/** 展开三选一词包：在卡片下方显示候选词行 */
+function expandPackCard(card: HTMLElement, item: ShopItem, index: number): void {
+  // 折叠其他已展开的词包
+  document.querySelectorAll('.reward-card.pack-expanded').forEach(c => {
+    c.querySelector('.pack-expand-panel')?.remove()
+    c.classList.remove('pack-expanded')
+  })
+
+  const pack = item.pack!
+  card.classList.add('pack-expanded')
+
+  const panel = document.createElement('div')
+  panel.className = 'pack-expand-panel'
+
+  pack.words.forEach(word => {
+    const row = document.createElement('div')
+    row.className = 'pack-word-row'
+    row.innerHTML = `
+      <span class="word-text">${highlightWord(word, new Set())}</span>
+      <span class="pack-word-len">${word.length}${t('shop.letters')}</span>
+      <span class="pack-freq-hint">${getFreqHints(word)}</span>
+    `
+    row.addEventListener('mouseenter', () => {
+      const letters = new Set(word.toLowerCase().split('').filter(c => c >= 'a' && c <= 'z'))
+      for (const l of letters) document.querySelector(`.key-slot[data-key="${l}"]`)?.classList.add('word-hover-highlight')
+    })
+    row.addEventListener('mouseleave', () => {
+      document.querySelectorAll('.key-slot.word-hover-highlight').forEach(el => el.classList.remove('word-hover-highlight'))
+    })
+    row.onclick = (e) => {
+      e.stopPropagation()
+      // 选中该词，直接购买
+      const smuggleFree = index === getSmuggleFreeIndex()
+      const cost = smuggleFree ? 0 : item.cost
+      if (state.gold < cost) { showFeedback(t('shop.no_gold'), '#ff6b6b'); return }
+      if (smuggleFree) consumeSmuggleFree()
+      state.gold -= cost
+      updateGoldDisplay()
+      playSound('buy')
+      // finalize
+      if (state.classId === 'wordsmith') {
+        const letters = word.toLowerCase().replace(/[^a-z]/g, '').split('')
+        for (const ch of letters) state.fragmentInventory[ch] = (state.fragmentInventory[ch] ?? 0) + 1
+        const counts: Record<string, number> = {}
+        for (const ch of letters) counts[ch] = (counts[ch] ?? 0) + 1
+        const detail = Object.entries(counts).map(([l, n]) => `+${n}${l}`).join(' ')
+        showFeedback(t('shop.disassemble_word', { word, detail }), '#9b59b6')
+      } else {
+        state.player.wordDeck.push(word)
+        showFeedback(t('shop.add_word', { word }), '#4ecdc4')
+      }
+      if (pack.wordEffect && state.classId !== 'wordsmith') {
+        state.wordEffects.set(word, pack.wordEffect)
+      }
+      state.shop.items.splice(index, 1)
+      renderUnifiedShop()
+      renderBuildManager()
+    }
+    panel.appendChild(row)
+  })
+
+  card.appendChild(panel)
 }
 
 function purchasePackItem(index: number): void {
