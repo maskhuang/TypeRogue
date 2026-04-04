@@ -728,7 +728,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.EndoExo]: '读取一种资源的本关累积产出，高于阈值时高产出+消耗（放热），低于阈值时低产出（吸热）',
   [AffixType.Fusion]: '需要两种资源的本关累积产出同时达到阈值才能点火；成功时高倍产出+双消耗，失败则惩罚',
   [AffixType.Innate]: '每关开始时自动触发一次（不需按键）',
-  [AffixType.Counter]: '自身或相邻技能产出为负时消耗充能取消（每关恢复充能）',
+  [AffixType.Counter]: '自身或指定关系的技能产出为负时消耗充能取消（每关恢复充能）',
   [AffixType.Exhaust]: '每次触发产出倍增，但触发次数有限，用完词条消失',
   [AffixType.Ethereal]: '本关内其他词条效果提升一级；关卡结束后词条消失',
   [AffixType.Fallacy]: '连续未暴击时暴击率逐次递增，暴击后归零重新累积',

@@ -359,8 +359,10 @@ export function rollAffixParams(
     case AffixType.Innate:
       return { type }
 
-    case AffixType.Counter:
-      return { type, maxCharges: Math.floor(2 + random() * 3) }  // 2~4 charges
+    case AffixType.Counter: {
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
+      return { type, posRel, maxCharges: Math.floor(2 + random() * 3) }  // 2~4 charges
+    }
 
     case AffixType.Exhaust:
       return { type, exhaustMult: roundTo(2.5 + random() * 1.0, 1), maxTriggers: Math.floor(5 + random() * 6) }  // ×2.5~3.5, 5~10 uses

@@ -201,27 +201,32 @@ export function orchestrateAffixTrigger(
     }
     results.push(result)
 
-    // Counter — 负产出拦截：扫描自身 + Adjacent 邻居寻找 Counter 充能
+    // Counter — 负产出拦截：扫描自身 + Counter.posRel 邻居寻找 Counter 充能
     if (effectiveOutput < 0) {
-      // 收集候选 Counter 技能（自身 + 相邻键位上的技能）
-      const counterCandidateKeys = [item.triggerKey, ...getKeysWithRelation(item.triggerKey, PositionRelation.Adjacent)]
       const checked = new Set<string>()
-      for (const ck of counterCandidateKeys) {
-        const cSkillId = ctx.bindings.get(ck)
-        if (!cSkillId || checked.has(cSkillId)) continue
+      let counterFound = false
+      // 遍历所有技能寻找有 Counter 且在范围内的
+      for (const [cSkillId, cSkill] of ctx.allSkills) {
+        if (checked.has(cSkillId)) continue
         checked.add(cSkillId)
-        const cSkill = ctx.allSkills.get(cSkillId)
+        const counterAffix = cSkill.affixes.find(a => a.type === AffixType.Counter)
+        if (!counterAffix) continue
         const cRt = ctx.skillStates.get(cSkillId)
-        if (!cSkill || !cRt) continue
-        if (!cSkill.affixes.some(a => a.type === AffixType.Counter)) continue
-        if ((cRt as any).counterCharges <= 0) continue
-        // 找到有充能的 Counter
+        if (!cRt || (cRt as any).counterCharges <= 0) continue
+        // 检查范围：自身或 posRel 匹配
+        if (cSkillId !== item.skillId) {
+          if (counterAffix.posRel == null) continue
+          const cKeys = [...ctx.bindings].filter(([, sid]) => sid === cSkillId).map(([k]) => k)
+          const inRange = cKeys.some(ck => hasRelation(ck, item.triggerKey, counterAffix.posRel!))
+          if (!inRange) continue
+        }
+        // 找到有充能且在范围内的 Counter
         (cRt as any).counterCharges--
-        // 质变·反噬：负值转为 Counter 技能的下次 bonus
         if (cRt.questTransformed && cSkill.enchantmentIds?.includes(EnchantmentType.QuestCounter)) {
           (cRt as any).counterAbsorbed = Math.abs(effectiveOutput)
         }
         effectiveOutput = 0
+        counterFound = true
         break
       }
     }

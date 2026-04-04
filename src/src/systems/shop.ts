@@ -577,7 +577,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'endo_exo': return `读${RESOURCE_ICONS[a.endoSource!] || ''}:阈值${a.endoThreshold}`
     case 'fusion': return `${RESOURCE_ICONS[a.fusionSourceA!] || ''}+${RESOURCE_ICONS[a.fusionSourceB!] || ''}点火`
     case 'innate': return '开局自动触发'
-    case 'counter': return `充能${a.maxCharges ?? 0}次`
+    case 'counter': return `${rel} 充能${a.maxCharges ?? 0}次`
     case 'exhaust': return `×${a.exhaustMult?.toFixed(1) ?? '?'} 共${a.maxTriggers ?? '?'}次`
     case 'ethereal': return '词条+1级 限1关'
     default: return ''
