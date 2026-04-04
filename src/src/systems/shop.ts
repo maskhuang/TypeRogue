@@ -3250,7 +3250,8 @@ export function renderBuildManager(): void {
         for (const [bk, sid] of state.player.bindings) {
           if (sid === skillId) invAllKeys.push(bk);
         }
-        const estimate = computeSmartEstimate(affixSkill, rt, invAllKeys.length > 0 ? invAllKeys : undefined);
+        // 备战席未绑定时不做预估，显示完整词条详情
+        const estimate = invAllKeys.length > 0 ? computeSmartEstimate(affixSkill, rt, invAllKeys) : null;
         const estimatedTypes = estimate ? new Set(estimate.breakdown.map(b => b.typeKey).filter(k => k !== 'base' && k !== 'crit_combined')) : undefined;
         const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
         tooltipData.skill!.affixInfo = fields.affixInfo;
