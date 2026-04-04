@@ -203,7 +203,7 @@ export const PRECISION_STRIKE_CRIT_RATE = 0.10
 /** Home Row 按键时持有遗物 → +10% 暴击率，否则 0 */
 export function getPrecisionStrikeCritRate(triggerKey: string): number {
   if (!state.player.relics.has('precision_strike')) return 0
-  if (!HOME_ROW_KEYS.has(triggerKey.toLowerCase())) return 0
+  if (!triggerKey || !HOME_ROW_KEYS.has(triggerKey.toLowerCase())) return 0
   return PRECISION_STRIKE_CRIT_RATE
 }
 
