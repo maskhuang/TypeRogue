@@ -96,6 +96,8 @@ export function weightedSampleWithout(count: number): WeightedSampleResult[] {
   for (const [key, weight] of Object.entries(AFFIX_WEIGHTS)) {
     // Ethereal 只在多词条技能(rarity≥2)上出现——需要其他词条来增幅
     if (key === AffixType.Ethereal && count < 2) continue
+    // MonkeyPatch/Decorator 只在多词条技能(rarity≥2)上出现——需要其他词条来 patch/放大
+    if ((key === AffixType.MonkeyPatch || key === AffixType.Decorator) && count < 2) continue
     // Conduit 可在单词条技能上出现（通过相同资源也能导能）
     pool.set(key, weight)
   }
