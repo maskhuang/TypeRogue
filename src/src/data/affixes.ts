@@ -486,9 +486,9 @@ export function getSkillMaxLevel(rarity: number): number {
   return 3
 }
 
-/** 附魔触发等级门槛（4 - 稀有度） */
+/** 附魔触发等级门槛（统一 Lv.3） */
 export function getEnchantmentThreshold(rarity: number): number {
-  return Math.max(1, 4 - rarity)
+  return 3
 }
 
 // ===== 常量表 =====
