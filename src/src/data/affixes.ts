@@ -696,7 +696,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
 
 /** 词条功能说明（玩家可读） */
 export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
-  [AffixType.Convert]: '读取一种资源的当前值，按系数加成本资源产出',
+  [AffixType.Convert]: '读取一种资源的产出，按系数加成',
   [AffixType.Rainbow]: '每次触发时随机选择一种资源类型产出',
   [AffixType.Multiply]: '产出直接乘以固定倍数',
   [AffixType.Charge]: '按住1秒蓄满，触发时释放暴击率加成；蓄满自动释放或松开提前释放',
@@ -724,9 +724,9 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Flow]: '同资源邻居实际产出比自己高时，按差值加成',
   [AffixType.Confluence]: '指定关系的邻居资源类型越多样，产出加成越高',
   [AffixType.Turbulence]: '指定关系的邻居强弱差异越大，产出加成越高',
-  [AffixType.PhaseShift]: '读取一种资源的本关累积产出当温度，跨阈值时产出跳升；高温持续消耗资源',
-  [AffixType.EndoExo]: '读取一种资源的本关累积产出，高于阈值时高产出+消耗（放热），低于阈值时低产出（吸热）',
-  [AffixType.Fusion]: '需要两种资源的本关累积产出同时达到阈值才能点火；成功时高倍产出+双消耗，失败则惩罚',
+  [AffixType.PhaseShift]: '读取一种资源的产出当温度，跨阈值时产出跳升；高温消耗资源',
+  [AffixType.EndoExo]: '读取一种资源的产出，高于阈值时高产出+消耗，低于时低产出',
+  [AffixType.Fusion]: '读取两种资源的产出，同时达到阈值时高倍产出+双消耗，否则惩罚',
   [AffixType.Innate]: '每关开始时自动触发一次（不需按键）',
   [AffixType.Counter]: '自身或指定关系的技能受到负面词条效果时消耗充能取消减产（每关恢复充能）',
   [AffixType.Exhaust]: '每次触发产出倍增，但触发次数有限，用完词条消失',

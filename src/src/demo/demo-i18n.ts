@@ -577,7 +577,7 @@ const ZH: Record<string, string> = {
   'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁',
 
   // --- affix descriptions (53) ---
-  'affix_desc.convert': '读取一种资源的当前值，按系数加成本资源产出',
+  'affix_desc.convert': '读取一种资源的产出，按系数加成',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
   'affix_desc.multiply': '产出直接乘以固定倍数',
   'affix_desc.charge': '按住1秒蓄满，触发时释放暴击率加成',
@@ -600,9 +600,9 @@ const ZH: Record<string, string> = {
   'affix_desc.taboo': '大幅提升产出，但有小概率产出负值',
   'affix_desc.fallacy': '连续未暴击时暴击率逐次递增，暴击后重置',
   'affix_desc.war_drum': '自身不产出；触发叠层，指定关系的匹配技能+暴击率（取决于层数）',
-  'affix_desc.phase_shift': '读取一种资源的本关累积产出当温度，跨阈值时产出跳升；高温持续消耗资源',
-  'affix_desc.endo_exo': '读取一种资源的本关累积产出，高于阈值时高产出+消耗（放热），低于阈值时低产出（吸热）',
-  'affix_desc.fusion': '需要两种资源的本关累积产出同时达到阈值才能点火；成功时高倍产出+双消耗，失败则惩罚',
+  'affix_desc.phase_shift': '读取一种资源的产出当温度，跨阈值时产出跳升；高温消耗资源',
+  'affix_desc.endo_exo': '读取一种资源的产出，高于阈值时高产出+消耗，低于时低产出',
+  'affix_desc.fusion': '读取两种资源的产出，同时达到阈值时高倍产出+双消耗，否则惩罚',
   'affix_desc.flow': '同资源邻居实际产出比自己高时，按差值加成',
   'affix_desc.confluence': '指定关系的邻居资源类型越多样，产出加成越高',
   'affix_desc.turbulence': '指定关系的邻居强弱差异越大，产出加成越高',
@@ -1423,7 +1423,7 @@ const EN: Record<string, string> = {
   'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch',
 
   // --- affix descriptions (53) ---
-  'affix_desc.convert': 'Reads another resource value, adds scaled bonus to this output',
+  'affix_desc.convert': 'Reads one resource output, adds scaled bonus',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
   'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
   'affix_desc.charge': 'Hold 1s to fully charge; releases crit bonus on trigger',
@@ -1446,9 +1446,9 @@ const EN: Record<string, string> = {
   'affix_desc.taboo': 'Greatly boosts output, but small chance of negative output',
   'affix_desc.fallacy': 'Crit chance rises with each non-crit; resets when you crit',
   'affix_desc.war_drum': 'Produces no output; stacks on trigger, matched skills in range gain crit rate based on stacks',
-  'affix_desc.phase_shift': 'Reads stage production of a resource as temperature; output jumps at thresholds; high temp consumes resource',
-  'affix_desc.endo_exo': 'Reads stage production of a resource; above threshold = high output + consume (exo); below = low output (endo)',
-  'affix_desc.fusion': 'Requires stage production of two resources above ignition thresholds; success = high output + dual consume; failure = penalty',
+  'affix_desc.phase_shift': 'Reads one resource output as temperature; jumps at thresholds; high temp consumes resource',
+  'affix_desc.endo_exo': 'Reads one resource output; above threshold = high output + consume; below = low output',
+  'affix_desc.fusion': 'Reads two resource outputs; both above threshold = high output + dual consume; else penalty',
   'affix_desc.flow': 'Same-resource neighbors with higher output boost yours by the difference',
   'affix_desc.confluence': 'More diverse resource types among neighbors = higher bonus (streams converge)',
   'affix_desc.turbulence': 'Greater strength variance among neighbors = higher bonus (turbulent energy)',
