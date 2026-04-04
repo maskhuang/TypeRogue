@@ -3341,6 +3341,17 @@ function renderWordInventory(): void {
       item.appendChild(effectSpan);
     }
 
+    // 悬停时高亮键盘上对应字母的键位
+    item.addEventListener('mouseenter', () => {
+      const letters = new Set(word.toLowerCase().split('').filter(c => c >= 'a' && c <= 'z'))
+      for (const letter of letters) {
+        document.querySelector(`.key-slot[data-key="${letter}"]`)?.classList.add('word-hover-highlight')
+      }
+    })
+    item.addEventListener('mouseleave', () => {
+      document.querySelectorAll('.key-slot.word-hover-highlight').forEach(el => el.classList.remove('word-hover-highlight'))
+    })
+
     el.ownedWords.appendChild(item);
   });
 }

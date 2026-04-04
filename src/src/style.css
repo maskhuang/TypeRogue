@@ -808,6 +808,11 @@ body {
     background: rgba(255, 230, 109, 0.15);
     box-shadow: 0 0 8px rgba(255, 230, 109, 0.3);
 }
+.key-slot.word-hover-highlight {
+    border-color: #4ecdc4;
+    background: rgba(78, 205, 196, 0.2);
+    box-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
+}
 .key-slot .key-letter { font-size: 8px; color: #666; font-weight: bold; }
 .key-slot.has-skill .key-letter { color: #4ecdc4; }
 .key-slot .key-skill { font-size: 12px; }
