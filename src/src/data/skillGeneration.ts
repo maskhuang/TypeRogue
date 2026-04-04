@@ -244,7 +244,7 @@ export function rollAffixParams(
     }
 
     case AffixType.Component:
-      return { type, componentK: roundTo(0.03 + random() * 0.03, 2) }
+      return { type, componentK: roundTo(0.03 + random() * 0.03, 2), componentInterval: 6 }
 
     case AffixType.Entropy:
       return { type, entropyK: roundTo(0.06 + random() * 0.06, 2) }
@@ -306,7 +306,7 @@ export function rollAffixParams(
       return { type, posRel: pickRandom(ALL_POS_RELATIONS), confluenceK: roundTo(0.15 + random() * 0.15, 3) }  // 0.15~0.30
 
     case AffixType.Turbulence:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), turbulenceK: roundTo(0.05 + random() * 0.07, 3) }  // 0.05~0.12
+      return { type, posRel: pickRandom(ALL_POS_RELATIONS), turbulenceK: roundTo(0.05 + random() * 0.07, 3), turbulenceInterval: 6 }  // 0.05~0.12
 
     case AffixType.PhaseShift: {
       const src = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))

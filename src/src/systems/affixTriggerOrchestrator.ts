@@ -424,6 +424,34 @@ export function orchestrateAffixTrigger(
         })
       }
     }
+    // Component 满层：触发链最远端技能
+    if (result.phase5?.componentFarTarget) {
+      const compSkillId = ctx.bindings.get(result.phase5.componentFarTarget)
+      if (compSkillId) {
+        queue.push({
+          skillId: compSkillId,
+          triggerKey: result.phase5.componentFarTarget,
+          type: 'pulse_burst' as TriggerWorkType,
+          depth: item.depth + 1,
+          chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
+        })
+      }
+    }
+
+    // Turbulence 满层：触发最弱邻居技能
+    if (result.phase5?.turbulenceWeakTarget) {
+      const turbSkillId = ctx.bindings.get(result.phase5.turbulenceWeakTarget)
+      if (turbSkillId) {
+        queue.push({
+          skillId: turbSkillId,
+          triggerKey: result.phase5.turbulenceWeakTarget,
+          type: 'pulse_burst' as TriggerWorkType,
+          depth: item.depth + 1,
+          chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
+        })
+      }
+    }
+
     // Outcast 满层：触发词另一端字母键技能
     if (result.phase5?.outcastTarget) {
       const outcastSkillId = ctx.bindings.get(result.phase5.outcastTarget)

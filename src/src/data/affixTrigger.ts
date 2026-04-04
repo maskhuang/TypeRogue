@@ -281,6 +281,10 @@ export interface Phase5Result {
   clusterVowelTarget?: string
   /** Outcast 满层：触发词另一端字母键技能 */
   outcastTarget?: string
+  /** Component 满层：触发链最远端技能 */
+  componentFarTarget?: string
+  /** Turbulence 满层：触发最弱邻居技能 */
+  turbulenceWeakTarget?: string
   /** 脉冲质变：爆发时触发的匹配技能键位（进入伪循环） */
   pulseBurstTargets?: string[]
   /** 脉冲：爆发时触发范围内叠层类邻居技能 */
@@ -916,25 +920,32 @@ export function resolvePhase2(
       }
 
       case AffixType.Turbulence: {
-        // 湍流：邻居 base value 极差越大，加成越高（需 ≥2 邻居）
+        // 湍流 → 额外叠层：邻居强弱差异越大叠越多，满层触发最弱邻居
         if (affix.posRel == null) break
-        const nSkills = getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)
-        if (nSkills.length >= 2) {
+        const turbNeighbors = getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)
+        if (turbNeighbors.length >= 2) {
           let minBase = Infinity, maxBase = -Infinity
-          for (const ns of nSkills) {
+          let weakestId = ''
+          for (const ns of turbNeighbors) {
             const nLvlIdx = Math.max(0, Math.min(ns.level - 1, 3))
             const nBase = BASE_VALUES[ns.resource]?.[nLvlIdx] ?? 1
-            if (nBase < minBase) minBase = nBase
+            if (nBase < minBase) { minBase = nBase; weakestId = ns.id }
             if (nBase > maxBase) maxBase = nBase
           }
           if (maxBase > 0) {
             const spread = (maxBase - minBase) / maxBase
-            bonusPercent += (affix.turbulenceK ?? 0) * spread * nSkills.length
+            const turbStacks = Math.max(1, Math.round(spread * turbNeighbors.length * (1 + (affix.turbulenceK ?? 0) * 10)))
+            runtimeState.stacks += turbStacks
+            flags.stackEffectFired = true
+            const turbInterval = getEffectiveInterval(affix.turbulenceInterval ?? 6, skill.id, ctx)
+            if (runtimeState.stacks > 0 && runtimeState.stacks % turbInterval === 0) {
+              mutations.push({ type: 'turbulenceWeak' as any, value: weakestId })
+            }
           }
-          // 质变·风暴：额外读邻居 stacks 极差
+          // 质变·风暴：额外读邻居 stacks 极差加叠层
           if (isTransformedForAffix(AffixType.Turbulence, runtimeState, skill, ctx)) {
             let minStacks = Infinity, maxStacks = -Infinity
-            for (const ns of nSkills) {
+            for (const ns of turbNeighbors) {
               const nState = ctx.skillStates.get(ns.id)
               const s = nState?.stacks ?? 0
               if (s < minStacks) minStacks = s
@@ -942,49 +953,37 @@ export function resolvePhase2(
             }
             if (maxStacks > 0) {
               const stackSpread = (maxStacks - minStacks) / maxStacks
-              bonusPercent += (affix.turbulenceK ?? 0) * stackSpread * nSkills.length
+              runtimeState.stacks += Math.max(1, Math.round(stackSpread * turbNeighbors.length))
             }
           }
         }
         break
       }
 
-      case AffixType.Bridge: {
-        // 桥：移除自身（所有占据键）后邻居断裂时大额 bonus
-        if (affix.posRel == null) break
-        const bridgeNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
-          .filter(k => ctx.bindings.has(k))
-        if (bridgeNeighborKeys.length >= 2) {
-          if (!areConnectedWithout(bridgeNeighborKeys, ctx.occupiedKeys, affix.posRel, ctx.bindings)) {
-            bonusPercent += affix.bridgeK ?? 0
-          }
-        }
+      case AffixType.Bridge:
+        // 桥 → 移至 Phase 3 暴击子系统
         break
-      }
 
-      case AffixType.Clique: {
-        // 团：触发键 + posRel 邻居中最大全连接子集
-        if (affix.posRel == null) break
+      case AffixType.Clique:
+        // 团 → 移至 Phase 3 暴击子系统
         // 质变·方阵：消费从团内成员接收的 bonus
         if ((runtimeState.cliqueBonusAccum ?? 0) > 0) {
           bonusPercent += runtimeState.cliqueBonusAccum
           runtimeState.cliqueBonusAccum = 0
         }
-        const cliqueNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
-          .filter(k => ctx.bindings.has(k))
-        const cliqueCandidates = [ctx.triggerKey, ...cliqueNeighborKeys]
-        const maxClique = findMaxClique(cliqueCandidates, affix.posRel)
-        if (maxClique > 1) {
-          bonusPercent += (affix.cliqueK ?? 0) * (maxClique - 1)
-        }
         break
-      }
 
       case AffixType.Component: {
-        // 连通：沿 Adjacent 的连通分量大小（固定 Adjacent，不带 posRel）
+        // 连通 → 额外叠层：连通分量越大叠越多，满层触发链最远端
         const compSize = bfsComponentSize(ctx.triggerKey, PositionRelation.Adjacent, ctx.bindings)
         if (compSize > 1) {
-          bonusPercent += (affix.componentK ?? 0) * (compSize - 1)
+          runtimeState.stacks += compSize - 1
+          flags.stackEffectFired = true
+          const compInterval = getEffectiveInterval(affix.componentInterval ?? 6, skill.id, ctx)
+          if (runtimeState.stacks > 0 && runtimeState.stacks % compInterval === 0) {
+            // 找链最远端（BFS 最后访问的节点）
+            mutations.push({ type: 'componentFar' as any, value: ctx.triggerKey })
+          }
         }
         // 质变·网络：本关每次触发累积 +1% bonus
         if (isTransformedForAffix(AffixType.Component, runtimeState, skill, ctx)) {
@@ -1387,6 +1386,30 @@ export function resolvePhase3(
               avgRarity = rarities.reduce((a, b) => a + b, 0) / rarities.length
             }
             totalCritChance += (affix.bigramK ?? 0) * avgRarity
+          }
+        }
+        break
+      }
+
+      case AffixType.Bridge: {
+        // 桥 → 暴击率：是桥时加暴击率
+        if (affix.posRel != null) {
+          const bridgeNKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel).filter(k => ctx.bindings.has(k))
+          if (bridgeNKeys.length >= 2 && !areConnectedWithout(bridgeNKeys, ctx.occupiedKeys, affix.posRel, ctx.bindings)) {
+            totalCritChance += affix.bridgeK ?? 0
+          }
+        }
+        break
+      }
+
+      case AffixType.Clique: {
+        // 团 → 暴击率：互连组越大暴击率越高
+        if (affix.posRel != null) {
+          const cliqueNKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel).filter(k => ctx.bindings.has(k))
+          const cliqueCands = [ctx.triggerKey, ...cliqueNKeys]
+          const maxClq = findMaxClique(cliqueCands, affix.posRel)
+          if (maxClq > 1) {
+            totalCritChance += (affix.cliqueK ?? 0) * (maxClq - 1)
           }
         }
         break
@@ -2355,6 +2378,32 @@ export function triggerAffixSkill(
       }
     }
     if ((m as any).type === 'outcastTarget') p5.outcastTarget = (m as any).value
+    if ((m as any).type === 'componentFar') {
+      // BFS 从触发键出发，找连通分量中最远的键
+      const startKey = (m as any).value as string
+      const boundKeys = new Set(ctx.bindings.keys())
+      const visited = new Set<string>()
+      const queue = [startKey]
+      visited.add(startKey)
+      let farthest = startKey
+      while (queue.length > 0) {
+        const current = queue.shift()!
+        farthest = current
+        for (const n of getKeysWithRelation(current, PositionRelation.Adjacent)) {
+          if (!visited.has(n) && boundKeys.has(n)) { visited.add(n); queue.push(n) }
+        }
+      }
+      if (farthest !== startKey && ctx.bindings.get(farthest) !== skill.id) {
+        p5.componentFarTarget = farthest
+      }
+    }
+    if ((m as any).type === 'turbulenceWeak') {
+      // 找最弱邻居的一个键
+      const weakId = (m as any).value as string
+      for (const [k, sid] of ctx.bindings) {
+        if (sid === weakId) { p5.turbulenceWeakTarget = k; break }
+      }
+    }
   }
 
   return {

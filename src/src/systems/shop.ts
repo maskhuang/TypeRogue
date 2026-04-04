@@ -588,11 +588,11 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     // ── 拓扑类（变化值） ──
     case 'bridge': return `+${Math.round((a.bridgeK ?? 0) * 100)}%`
     case 'clique': return `+${Math.round((a.cliqueK ?? 0) * 100)}%/${t('param.clique_per')}`
-    case 'component': return `+${Math.round((a.componentK ?? 0) * 100)}%/${t('param.component_per')}`
+    case 'component': return `${t('param.interval_label')} ${a.componentInterval ?? 6}`
     case 'match': return `${t('param.interval_label')} ${a.matchInterval ?? 3}`
     case 'flow': return `+${Math.round((a.flowK ?? 0) * 100)}%`
     case 'confluence': return `+${Math.round((a.confluenceK ?? 0) * 100)}%`
-    case 'turbulence': return `+${Math.round((a.turbulenceK ?? 0) * 100)}%`
+    case 'turbulence': return `${t('param.interval_label')} ${a.turbulenceInterval ?? 6}`
     // ── 词感类（变化值） ──
     case 'cluster': return `${t('param.interval_label')} ${a.clusterInterval ?? 8}`
     case 'coverage': return `+${Math.round((a.coverageK ?? 0) * 100)}%`
@@ -868,26 +868,9 @@ export function computeSmartEstimate(
         break
       }
       case 'turbulence': {
-        // 湍流：邻居 baseValue 极差
-        if (affix.posRel == null) break
-        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
-        if (keys.length === 0) break
-        const neighbors = getNeighborSkills(keys, affix.posRel, { bindings: state.player.bindings, allSkills: state.affixSkills })
-        if (neighbors.length >= 2) {
-          let minB = Infinity, maxB = -Infinity
-          for (const ns of neighbors) {
-            const nLvl = Math.max(0, Math.min(ns.level - 1, 3))
-            const nBase = BASE_VALUES[ns.resource]?.[nLvl] ?? 1
-            if (nBase < minB) minB = nBase
-            if (nBase > maxB) maxB = nBase
-          }
-          if (maxB > 0) {
-            const spread = (maxB - minB) / maxB
-            const bonus = (affix.turbulenceK ?? 0) * spread * neighbors.length
-            addPercent += bonus
-            breakdown.push({ typeKey: 'turbulence', label: t('est.turbulence', { pct: Math.round(bonus * 100) }), detail: t('est.turbulence_detail', { pct: Math.round(spread * 100) }) })
-          }
-        }
+        // 湍流 → 额外叠层（显示间隔）
+        const interval = affix.turbulenceInterval ?? 6
+        breakdown.push({ typeKey: 'turbulence', label: t('est.turbulence', { n: interval }), detail: '' })
         break
       }
       case 'cluster': {
@@ -950,6 +933,7 @@ export function computeSmartEstimate(
         break
       }
       case 'bridge': {
+        // 桥 → 暴击率
         if (affix.posRel == null) break
         const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
         if (keys.length === 0) break
@@ -958,12 +942,13 @@ export function computeSmartEstimate(
         if (neighborKeys.length >= 2) {
           isBridge = !areConnectedWithout(neighborKeys, keys, affix.posRel, state.player.bindings)
         }
-        const bonus = isBridge ? (affix.bridgeK ?? 0) : 0
-        addPercent += bonus
-        breakdown.push({ typeKey: 'bridge', label: isBridge ? t('est.bridge', { pct: Math.round(bonus * 100) }) : t('est.bridge_no'), detail: '' })
+        const bridgeCrit = isBridge ? (affix.bridgeK ?? 0) : 0
+        critChanceAccum += bridgeCrit
+        breakdown.push({ typeKey: 'bridge', label: isBridge ? t('est.bridge', { pct: Math.round(bridgeCrit * 100) }) : t('est.bridge_no'), detail: '' })
         break
       }
       case 'clique': {
+        // 团 → 暴击率
         if (affix.posRel == null) break
         const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
         if (keys.length === 0) break
@@ -972,21 +957,19 @@ export function computeSmartEstimate(
         const candidates = [trigKey, ...cNeighborKeys]
         const maxClq = findMaxClique(candidates, affix.posRel)
         if (maxClq > 1) {
-          const bonus = (affix.cliqueK ?? 0) * (maxClq - 1)
-          addPercent += bonus
-          breakdown.push({ typeKey: 'clique', label: t('est.clique', { pct: Math.round(bonus * 100) }), detail: t('est.clique_detail', { n: maxClq }) })
+          const cliqueCrit = (affix.cliqueK ?? 0) * (maxClq - 1)
+          critChanceAccum += cliqueCrit
+          breakdown.push({ typeKey: 'clique', label: t('est.clique', { pct: Math.round(cliqueCrit * 100) }), detail: t('est.clique_detail', { n: maxClq }) })
         }
         break
       }
       case 'component': {
+        // 连通 → 额外叠层（显示间隔+链长）
         const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
         if (keys.length === 0) break
         const compSize = bfsComponentSize(keys[0], PositionRelation.Adjacent, state.player.bindings)
-        if (compSize > 1) {
-          const bonus = (affix.componentK ?? 0) * (compSize - 1)
-          addPercent += bonus
-          breakdown.push({ typeKey: 'component', label: t('est.component', { pct: Math.round(bonus * 100) }), detail: t('est.component_detail', { n: compSize }) })
-        }
+        const interval = affix.componentInterval ?? 6
+        breakdown.push({ typeKey: 'component', label: t('est.component', { n: interval }), detail: t('est.component_detail', { n: compSize }) })
         break
       }
       case 'reflect': {

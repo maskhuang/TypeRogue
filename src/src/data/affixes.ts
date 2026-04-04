@@ -343,6 +343,8 @@ export interface AffixInstance {
   matchInterval?: number           // Match: 叠层满层间隔（每当邻居叠层相同时+1层）
   clusterInterval?: number         // Cluster: 叠层满层间隔（满层触发元音键）
   outcastInterval?: number         // Outcast: 叠层满层间隔（满层触发词另一端）
+  componentInterval?: number       // Component: 叠层满层间隔（满层触发链最远端）
+  turbulenceInterval?: number      // Turbulence: 叠层满层间隔（满层触发最弱邻居）
   entropyK?: number                // Entropy: Shannon 熵 × K 的 bonusPercent
   cipherK?: number                 // Cipher: 相邻字母表距离均值 × K 的 bonusPercent
   patternK?: number                // Pattern: 模式签名稀有度 × K 的 bonusPercent
@@ -1069,11 +1071,11 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   // ── 拓扑类 ──
   [AffixType.Bridge]:   { param: 'bridgeK',        delta: 0.08,  mode: 'add' },
   [AffixType.Clique]:   { param: 'cliqueK',        delta: 0.03,  mode: 'add' },
-  [AffixType.Component]:{ param: 'componentK',     delta: 0.01,  mode: 'add' },
+  [AffixType.Component]:{ param: 'componentInterval', delta: -1,  mode: 'add' },
   [AffixType.Match]:    { param: 'matchInterval',   delta: -1,    mode: 'add' },
   [AffixType.Flow]:     { param: 'flowK',          delta: 0.02,  mode: 'add' },
   [AffixType.Confluence]:{ param: 'confluenceK',   delta: 0.05,  mode: 'add' },
-  [AffixType.Turbulence]:{ param: 'turbulenceK',   delta: 0.02,  mode: 'add' },
+  [AffixType.Turbulence]:{ param: 'turbulenceInterval', delta: -1, mode: 'add' },
   // ── 词感类 ──
   [AffixType.Cluster]:  { param: 'clusterInterval', delta: -2,    mode: 'add' },
   [AffixType.Coverage]: { param: 'coverageK',      delta: 0.01,  mode: 'add' },
