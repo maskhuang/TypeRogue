@@ -95,6 +95,8 @@ export const BALANCE = {
 export const A2_PRICE_MULT = 1.15;
 /** A4: 加剧的 cycle 时间衰减 (Story 54.5) */
 export const A4_CYCLE_TIME_DECAY = 0.85;
+/** A5: 商店刷新费用倍率 (Story 54.6) */
+export const A5_REFRESH_COST_MULT = 2;
 
 // === Ascension: 练习关金币映射 (Story 54.2) ===
 export const PRACTICE_GOLD = {

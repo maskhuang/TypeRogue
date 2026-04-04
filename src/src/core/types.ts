@@ -197,6 +197,7 @@ export interface GameState {
   lastOverflowRatio: number;  // 上关溢出比例（overkill/targetScore），用于动态增长系数
   calibratedTargetBase: number;  // 第一关校准基数（第一关得分，替代 TARGET_BASE）
   ascensionLevel: number;        // Story 54.1: 本局 Ascension 级别（0-10）
+  ascensionInitialModifier: string | null;  // Story 54.6: A6 初始弱化 modifier ID
   cycle: number;                        // 当前周目数（默认 1，通关 Boss 后 +1）
   activeModifiers: BossModifierId[];    // 跨周目累积的 Boss 修饰器列表
   bossModifierPool: BossModifierId[];  // Boss 战前选择的临时修饰器（0-3 个）

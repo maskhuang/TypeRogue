@@ -22,7 +22,7 @@ import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getCycleTimeLimit, getBattleNumber, isRitualNode, isEliteNode, getNextBattleNode } from './stage/stageFlow';
-import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, setRelicGarbleActive, getEscalateTimeSpeedBonus, triggerFrostFreeze, isFrostFrozen, onMirrorTargetReached, getMirrorPhase, rollDecoyWord, isDecoyWord, isDecoyRecognized, getDecoyOriginalAt, markDecoyRecognized } from '../data/bossModifiers';
+import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, setRelicGarbleActive, getEscalateTimeSpeedBonus, triggerFrostFreeze, isFrostFrozen, onMirrorTargetReached, getMirrorPhase, rollDecoyWord, isDecoyWord, isDecoyRecognized, getDecoyOriginalAt, markDecoyRecognized, getOffenseDefenseModifierIds } from '../data/bossModifiers';
 import type { BossModifierId } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, isModifierActive } from './bossModifierEngine';
 import { showBossModifierPicker, showEliteModifierPicker } from './bossModifierPicker';
@@ -2074,9 +2074,21 @@ export async function startLevel(): Promise<void> {
   // HUD: 显示当前 Cycle / StageType
   updateStageInfo(currentCycle, currentStageType);
 
+  // Story 54.6: A6+ 第 2 关注入初始弱化 modifier（仅执行一次）
+  if (state.ascensionLevel >= 6 && state.level === 2 && !state.ascensionInitialModifier) {
+    const candidates = getOffenseDefenseModifierIds().filter(id => !state.activeModifiers.includes(id));
+    if (candidates.length > 0) {
+      const pick = candidates[Math.floor(random() * candidates.length)];
+      state.activeModifiers.push(pick);
+      state.ascensionInitialModifier = pick;
+    }
+  }
+
   // 应用跨周目永久修饰器（state.activeModifiers）
   for (const permModId of state.activeModifiers) {
-    applyModifier(permModId, false, true);
+    // A6 初始 modifier 以弱化参数应用（isElite=true）
+    const isElite = permModId === state.ascensionInitialModifier;
+    applyModifier(permModId, isElite, true);
   }
 
   // 修饰器屏障：精英/Boss 关临时修饰器延迟生效（剩余时间 < 50% 时激活）

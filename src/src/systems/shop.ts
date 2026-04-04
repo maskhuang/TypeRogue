@@ -5,7 +5,7 @@
 
 import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
-import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION, A2_PRICE_MULT } from '../core/constants';
+import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION, A2_PRICE_MULT, A5_REFRESH_COST_MULT } from '../core/constants';
 import { getKeysWithRelation, hasRelation, PositionRelation } from '../data/keyboardTopology';
 
 
@@ -1260,6 +1260,13 @@ export function getAscensionPriceMultiplier(): number {
   return state.ascensionLevel >= 2 ? A2_PRICE_MULT : 1.0;
 }
 
+/** Story 54.6: 计算刷新费用（A5+ 费用翻倍） */
+function getRefreshCost(): number {
+  const base = (state.shop.refreshCount + 1) * 5;
+  const a5Mult = state.ascensionLevel >= 5 ? A5_REFRESH_COST_MULT : 1;
+  return Math.round(base * a5Mult * getAscensionPriceMultiplier());
+}
+
 function getAdjustedPrice(baseCost: number): number {
   // Story 36.5: 附魔锚点 — 每个已激活附魔使价格 +10%
   // Story 36.9: 折扣卡 — 所有商品价格 -15%（先涨后折）
@@ -1516,7 +1523,7 @@ function renderUnifiedShop(): void {
   el.rewardCards.appendChild(statsRow);
 
   // 刷新按钮
-  const refreshCost = Math.round((state.shop.refreshCount + 1) * 5 * getAscensionPriceMultiplier());
+  const refreshCost = getRefreshCost();
   const refreshBtn = document.createElement('button');
   refreshBtn.className = 'shop-refresh-btn';
   refreshBtn.innerHTML = t('shop.refresh', { cost: refreshCost });
@@ -2607,7 +2614,7 @@ function checkPendingEnchantments(): void {
 
 // === 刷新商店 ===
 function refreshShop(): void {
-  let cost = Math.round((state.shop.refreshCount + 1) * 5 * getAscensionPriceMultiplier());
+  let cost = getRefreshCost();
   // Story 36.9: 限时拍卖 — 刷新免费
   if (isTimedAuction()) {
     cost = 0;

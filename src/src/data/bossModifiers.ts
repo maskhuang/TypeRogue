@@ -194,6 +194,14 @@ export function getBossModifierMeta(id: BossModifierId): BossModifierMeta | unde
   return BOSS_MODIFIER_META[id]
 }
 
+/** Story 54.6: 获取 offense + defense 类 modifier ID 列表（排除 disruption） */
+export function getOffenseDefenseModifierIds(): BossModifierId[] {
+  return BOSS_MODIFIER_IDS.filter(id => {
+    const meta = BOSS_MODIFIER_META[id]
+    return meta && (meta.category === 'offense' || meta.category === 'defense')
+  })
+}
+
 /**
  * Story 42.6: 从修饰器池中抽取 1 个修饰器，排除已用列表
  * 如果所有修饰器都在 excluded 中，重置排除列表（AC4 耗尽重置），再抽 1 个

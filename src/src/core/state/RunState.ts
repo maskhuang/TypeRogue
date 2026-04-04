@@ -156,6 +156,9 @@ export interface RunStateData {
 
   /** Story 54.1: 本局选择的 Ascension 级别（0-10） */
   ascensionLevel: number
+
+  /** Story 54.6: A6 初始弱化 modifier ID */
+  ascensionInitialModifier: string | null
 }
 
 /**
@@ -218,6 +221,7 @@ export class RunState {
       calibratedTargetBase: 0,
       eliteModifier: null,
       ascensionLevel: 0,
+      ascensionInitialModifier: null,
     }
   }
 
@@ -552,6 +556,7 @@ export class RunState {
       calibratedTargetBase: this.data.calibratedTargetBase,
       eliteModifier: this.data.eliteModifier,
       ascensionLevel: this.data.ascensionLevel,
+      ascensionInitialModifier: this.data.ascensionInitialModifier,
     }
   }
 
@@ -662,6 +667,7 @@ export class RunState {
     runState.data.calibratedTargetBase = (parsed as any).calibratedTargetBase || 0
     runState.data.eliteModifier = (parsed as any).eliteModifier || null
     runState.data.ascensionLevel = (parsed as any).ascensionLevel || 0
+    runState.data.ascensionInitialModifier = (parsed as any).ascensionInitialModifier || null
 
     return runState
   }
