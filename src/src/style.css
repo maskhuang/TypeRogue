@@ -813,14 +813,12 @@ body {
     background: rgba(78, 205, 196, 0.2);
     box-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
 }
-.reward-card.pack-expanded {
-    flex-wrap: wrap;
-}
 .pack-expand-panel {
-    width: 100%;
-    margin-top: 6px;
-    border-top: 1px solid rgba(255,255,255,0.15);
-    padding-top: 6px;
+    margin: 4px 0 8px;
+    padding: 8px 12px;
+    background: linear-gradient(145deg, #1a1a2e, #252535);
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    border-radius: 6px;
 }
 .pack-word-row {
     display: flex;

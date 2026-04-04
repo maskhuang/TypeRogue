@@ -1699,7 +1699,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       if (pack.words.length > 1) {
         // 三选一词包：切换展开/折叠
         if (card.classList.contains('pack-expanded')) {
-          card.querySelector('.pack-expand-panel')?.remove()
+          card.nextElementSibling?.classList.contains('pack-expand-panel') && card.nextElementSibling.remove()
           card.classList.remove('pack-expanded')
         } else {
           juiceUp(card, 0.2, 3)
@@ -2066,7 +2066,7 @@ function showWordPicker(words: string[], onPick: (word: string) => void, wordEff
 function expandPackCard(card: HTMLElement, item: ShopItem, index: number): void {
   // 折叠其他已展开的词包
   document.querySelectorAll('.reward-card.pack-expanded').forEach(c => {
-    c.querySelector('.pack-expand-panel')?.remove()
+    if (c.nextElementSibling?.classList.contains('pack-expand-panel')) c.nextElementSibling.remove()
     c.classList.remove('pack-expanded')
   })
 
@@ -2123,7 +2123,8 @@ function expandPackCard(card: HTMLElement, item: ShopItem, index: number): void 
     panel.appendChild(row)
   })
 
-  card.appendChild(panel)
+  // 插入到卡片之后（而非内部），避免 card flex 布局干扰
+  card.parentElement?.insertBefore(panel, card.nextSibling)
 }
 
 function purchasePackItem(index: number): void {
