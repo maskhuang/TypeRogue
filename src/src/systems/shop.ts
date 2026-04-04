@@ -552,9 +552,9 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'entropy': return `+${Math.round((a.entropyK ?? 0) * 100)}%×信息熵`
     case 'cipher': return `+${Math.round((a.cipherK ?? 0) * 100)}%×字母跳跃`
     case 'pattern': return `+${Math.round((a.patternK ?? 0) * 100)}%×模式稀有度`
-    case 'leverage': return `读${RESOURCE_ICONS[a.source!] || ''}:+${Math.round((a.leverageK ?? 0) * 100)}%×超额(保证金${a.marginThreshold ?? '?'})`
-    case 'option': return `读${RESOURCE_ICONS[a.source!] || ''}:行权${a.strikePrice ?? '?'},权利金-${Math.round((a.premium ?? 0) * 100)}%`
-    case 'hedge': return `读${RESOURCE_ICONS[a.hedgeSourceA!] || ''}+${RESOURCE_ICONS[a.hedgeSourceB!] || ''}:均衡+${Math.round((a.hedgeK ?? 0) * 100)}%`
+    case 'leverage': return `读${RESOURCE_ICONS[a.source!] || ''}:阈值${a.marginThreshold ?? '?'} +${Math.round((a.leverageK ?? 0) * 100)}%×超出量`
+    case 'option': return `读${RESOURCE_ICONS[a.source!] || ''}:阈值${a.strikePrice ?? '?'} 未达-${Math.round((a.premium ?? 0) * 100)}%/次`
+    case 'hedge': return `读${RESOURCE_ICONS[a.hedgeSourceA!] || ''}+${RESOURCE_ICONS[a.hedgeSourceB!] || ''}:接近+${Math.round((a.hedgeK ?? 0) * 100)}%`
     case 'burst': return `连击+${Math.round((a.burstK ?? 0) * 100)}%暴击倍率/层`
     case 'zero_in': return `miss补偿+${Math.round((a.zeroInK ?? 0) * 100)}%暴击倍率/层`
     case 'sharpshooter': return `低暴击率+${Math.round((a.sharpK ?? 0) * 100)}%暴击倍率`
