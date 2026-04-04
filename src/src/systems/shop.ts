@@ -46,7 +46,7 @@ import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
 import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
-import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
+import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
 import { BIGRAM_FREQ_TABLE } from '../data/bigramFrequency';
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
