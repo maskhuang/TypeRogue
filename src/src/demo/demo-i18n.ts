@@ -644,7 +644,7 @@ const ZH: Record<string, string> = {
   'affix_desc.decay': '初始暴击率{init}，每次衰减{decayRate}，换词重置',
   'affix_desc.pulse': '每次触发叠层，满层时立刻自触发一次',
   'affix_desc.crit': '触发时有概率暴击',
-  'affix_desc.cascade': '上一个按键与当前键满足指定关系时，产出倍增',
+  'affix_desc.cascade': '上一个按键与当前键为指定关系时，产出倍增',
   'affix_desc.void': '指定关系的空位越多加成越高',
   'affix_desc.resonance': '指定关系的匹配技能触发时叠层，满层自触发一次',
   'affix_desc.mirror': '每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效',

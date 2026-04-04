@@ -448,11 +448,13 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
     .filter(a => !excludeTypes || !excludeTypes.has(a.type))
     .map(a => {
       let desc = t('affix_desc.' + a.type);
-      // 将「指定关系的」替换为具体位置关系名（如「同行的」「相邻的」）
+      // 将「指定关系」/「in range」替换为具体位置关系名（如「同行」「相邻」/「adjacent」）
       if (a.posRel != null) {
         const relName = t('rel.' + a.posRel);
         desc = desc.replace('指定关系的', relName + '的');
         desc = desc.replace('指定关系', relName);
+        desc = desc.replace(/\bin range\b/g, relName);
+        desc = desc.replace('position relation', relName);
       }
       // 将资源占位符替换为具体资源（Convert/PhaseShift/EndoExo/Fusion/Leverage/Option/Hedge）
       if (a.source) {
