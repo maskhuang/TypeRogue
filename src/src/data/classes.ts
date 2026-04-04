@@ -44,7 +44,7 @@ export const CLASS_DEFINITIONS: Record<ClassId, ClassDefinition> = {
     icon: '✍️',
     uniqueResource: 'energy',
     loseFeature: 'pack-system',
-    loseDescription: '失去牌包系统（商店无牌包 tab）',
+    loseDescription: '不再能获取单词',
     starterRelic: 'apprentice_notes',
   },
   metamorph: {
