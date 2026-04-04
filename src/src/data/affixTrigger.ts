@@ -2667,6 +2667,8 @@ export function resetStageState(
     state.critStreak = 0
     state.missStreak = 0
     state.prevEntropy = 0
+    state.componentAccum = 0
+    state.exoCount = 0
 
     // MonkeyPatch：每关随机设定 patchTargetIndex 和 patchMultiplier
     state.patchTargetIndex = -1
