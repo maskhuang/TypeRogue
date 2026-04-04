@@ -452,7 +452,35 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       if (a.posRel != null) {
         const relName = t('rel.' + a.posRel);
         desc = desc.replace('指定关系的', relName + '的');
+        desc = desc.replace('指定关系', relName);
       }
+      // 将资源占位符替换为具体资源（Convert/PhaseShift/EndoExo/Fusion/Leverage/Option/Hedge）
+      if (a.source) {
+        const icon = RESOURCE_ICONS[a.source] || '';
+        const name = t('resource.' + a.source) || a.source;
+        desc = desc.replace('{source}', `${icon}${name}`);
+      }
+      if (a.phaseSource) desc = desc.replace('{source}', `${RESOURCE_ICONS[a.phaseSource] || ''}${t('resource.' + a.phaseSource) || a.phaseSource}`);
+      if (a.endoSource) desc = desc.replace('{source}', `${RESOURCE_ICONS[a.endoSource] || ''}${t('resource.' + a.endoSource) || a.endoSource}`);
+      if (a.fusionSourceA && a.fusionSourceB) {
+        desc = desc.replace('{sourceA}', `${RESOURCE_ICONS[a.fusionSourceA] || ''}${t('resource.' + a.fusionSourceA) || a.fusionSourceA}`);
+        desc = desc.replace('{sourceB}', `${RESOURCE_ICONS[a.fusionSourceB] || ''}${t('resource.' + a.fusionSourceB) || a.fusionSourceB}`);
+      }
+      if (a.hedgeSourceA && a.hedgeSourceB) {
+        desc = desc.replace('{sourceA}', `${RESOURCE_ICONS[a.hedgeSourceA] || ''}${t('resource.' + a.hedgeSourceA) || a.hedgeSourceA}`);
+        desc = desc.replace('{sourceB}', `${RESOURCE_ICONS[a.hedgeSourceB] || ''}${t('resource.' + a.hedgeSourceB) || a.hedgeSourceB}`);
+      }
+      // 静态数值占位符（从参数移出的固定信息）
+      if (a.initialMult != null) desc = desc.replace('{init}', `${Math.round(a.initialMult * 100)}%`);
+      if (a.decayPerTrigger != null) desc = desc.replace('{decayRate}', `${Math.round(a.decayPerTrigger * 100)}%`);
+      if (a.gainPerSec != null) desc = desc.replace('{gain}', `${a.gainPerSec}s`);
+      if (a.marginThreshold != null) desc = desc.replace('{threshold}', String(a.marginThreshold));
+      if (a.strikePrice != null) desc = desc.replace('{threshold}', String(a.strikePrice));
+      if (a.endoThreshold != null) desc = desc.replace('{threshold}', String(a.endoThreshold));
+      if (a.phaseT1 != null && a.phaseT2 != null) { desc = desc.replace('{t1}', String(a.phaseT1)); desc = desc.replace('{t2}', String(a.phaseT2)); }
+      if (a.maxTriggers != null) desc = desc.replace('{maxTriggers}', String(a.maxTriggers));
+      if (a.patchLow != null) desc = desc.replace('{low}', String(a.patchLow));
+      if (a.evenK != null) desc = desc.replace('{evenK}', `${Math.round(a.evenK * 100)}%`);
       // Mirror: tooltip 显示当前复制的词条
       if (a.type === 'mirror' && rt) {
         // Story 41-5: 质变模式显示所有复制词条
@@ -523,63 +551,70 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
   return { affixInfo, enchantments, questProgress, apprenticeGrowth }
 }
 
-/** 构建单个词条的参数摘要 */
+/** 构建单个词条的参数摘要（仅显示会随升级变化的数值） */
 function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): string {
-  const rel = a.posRel ? t('rel.' + a.posRel) : '';
   switch (a.type) {
-    case 'convert': return t('param.convert_to_self', { icon: RESOURCE_ICONS[a.source!] || '', name: t('resource.' + a.source!), k: a.k?.toFixed(3) ?? '?' })
-    case 'charge': return t('param.charge', { gain: Math.round((a.gainPerSec ?? 0) * 100), max: Math.round((a.maxBonus ?? 0) * 100) })
-    case 'decay': return t('param.decay', { init: Math.round((a.initialMult ?? 0) * 100), decay: Math.round((a.decayPerTrigger ?? 0) * 100), floor: Math.round((a.floor ?? 0) * 100) })
-    case 'pulse': return t('param.pulse', { interval: a.interval ?? '?' })
-    case 'crit': return t('param.crit', { chance: Math.round((a.chance ?? 0) * 100) })
-    case 'void': return t('param.void', { rel, pct: Math.round((a.bonusPerSlot ?? 0) * 100) })
-    case 'resonance': return t('param.resonance', { rel, n: a.resonanceCount ?? 1 })
-    case 'amplify': return t('param.amplify', { rel })
-    case 'cascade': return `${rel || t('param.cascade_fallback')} ×${a.cascadeMult?.toFixed(1) ?? '?'}`
-    case 'outcast': return t('param.outcast', { pct: Math.round((a.bonusPercent ?? 0) * 100) })
-    case 'gravity': return t('param.gravity', { mult: a.probMult?.toFixed(1) ?? '?' })
-    case 'recurse': return t('param.recurse', { pct: Math.round((a.recurseChance ?? 0) * 100) })
-    case 'taboo': return t('param.taboo', { pct: Math.round((a.bonusPercent ?? 0) * 100) })
-    case 'fallacy': return t('param.fallacy', { k: Math.round((a.fallacyK ?? 0) * 100) })
-    case 'rainbow': return t('param.rainbow')
-    case 'mirror': return t('param.mirror', { rel })
-    case 'splash': return t('param.splash', { rel, n: a.splashCount ?? 1 })
-    case 'relay': return t('param.relay', { rel, n: a.relayCount ?? 1 })
-    case 'war_drum': return t('param.war_drum', { rel, pct: Math.round((a.critPerStack ?? 0) * 100) })
-    case 'parity': return t('param.parity', { odd: Math.round((a.oddK ?? 0) * 100), even: Math.round((a.evenK ?? 0) * 100) })
-    case 'prime': return t('param.prime', { k: Math.round((a.primeK ?? 0) * 100) })
-    case 'match': return t('param.match', { rel, k: Math.round((a.matchK ?? 0) * 100) })
-    case 'entropy': return t('param.entropy', { k: Math.round((a.entropyK ?? 0) * 100) })
-    case 'cipher': return t('param.cipher', { k: Math.round((a.cipherK ?? 0) * 100) })
-    case 'pattern': return t('param.pattern', { k: Math.round((a.patternK ?? 0) * 100) })
-    case 'leverage': return t('param.leverage', { icon: RESOURCE_ICONS[a.source!] || '', threshold: a.marginThreshold ?? '?', k: Math.round((a.leverageK ?? 0) * 100) })
-    case 'option': return t('param.option', { icon: RESOURCE_ICONS[a.source!] || '', threshold: a.strikePrice ?? '?', k: Math.round((a.premium ?? 0) * 100) })
-    case 'hedge': return t('param.hedge', { iconA: RESOURCE_ICONS[a.hedgeSourceA!] || '', iconB: RESOURCE_ICONS[a.hedgeSourceB!] || '', k: Math.round((a.hedgeK ?? 0) * 100) })
-    case 'burst': return t('param.burst', { k: Math.round((a.burstK ?? 0) * 100) })
-    case 'zero_in': return t('param.zero_in', { k: Math.round((a.zeroInK ?? 0) * 100) })
-    case 'sharpshooter': return t('param.sharpshooter', { k: Math.round((a.sharpK ?? 0) * 100) })
-    case 'bridge': return t('param.bridge', { k: Math.round((a.bridgeK ?? 0) * 100) })
-    case 'clique': return t('param.clique', { rel, k: Math.round((a.cliqueK ?? 0) * 100) })
-    case 'component': return t('param.component', { k: Math.round((a.componentK ?? 0) * 100) })
-    case 'decorator': return t('param.decorator', { k: Math.round((a.decoratorK ?? 0) * 100) })
-    case 'reflect': return t('param.reflect', { k: Math.round((a.reflectK ?? 0) * 100) })
-    case 'monkey_patch': return t('param.monkey_patch', { low: a.patchLow ?? 0.5, high: a.patchHigh ?? 2.0 })
-    case 'ligature': return t('param.ligature', { pct: Math.round((a.ligatureBonus ?? 1.0) * 100) })
-    case 'twin': return t('param.twin')
-    case 'multiply': return t('param.multiply', { val: a.multiplyValue?.toFixed(1) ?? '?' })
-    case 'cluster': return t('param.cluster', { k: Math.round((a.clusterK ?? 0) * 100) })
-    case 'coverage': return t('param.coverage', { k: Math.round((a.coverageK ?? 0) * 100) })
-    case 'bigram': return t('param.bigram', { k: Math.round((a.bigramK ?? 0) * 100) })
-    case 'flow': return t('param.flow', { rel, k: Math.round((a.flowK ?? 0) * 100) })
-    case 'confluence': return t('param.confluence', { rel, k: Math.round((a.confluenceK ?? 0) * 100) })
-    case 'turbulence': return t('param.turbulence', { rel, k: Math.round((a.turbulenceK ?? 0) * 100) })
-    case 'phase_shift': return t('param.phase_shift', { icon: RESOURCE_ICONS[a.phaseSource!] || '', t1: a.phaseT1 ?? '?', t2: a.phaseT2 ?? '?' })
-    case 'endo_exo': return t('param.endo_exo', { icon: RESOURCE_ICONS[a.endoSource!] || '', threshold: a.endoThreshold ?? '?' })
-    case 'fusion': return t('param.fusion', { iconA: RESOURCE_ICONS[a.fusionSourceA!] || '', iconB: RESOURCE_ICONS[a.fusionSourceB!] || '' })
-    case 'innate': return t('param.innate', { n: a.innateCount ?? 1 })
-    case 'counter': return t('param.counter', { rel, n: a.maxCharges ?? 0 })
-    case 'exhaust': return t('param.exhaust', { mult: a.exhaustMult?.toFixed(1) ?? '?', n: a.maxTriggers ?? '?' })
-    case 'ethereal': return t('param.ethereal')
+    // ── 暴击类（变化值） ──
+    case 'crit': return `+${Math.round((a.chance ?? 0) * 100)}%`
+    case 'charge': return `${t('param.charge_label')} ${Math.round((a.maxBonus ?? 0) * 100)}%`
+    case 'decay': return `${t('param.decay_label')} ${Math.round((a.floor ?? 0) * 100)}%`
+    case 'recurse': return `+${Math.round((a.recurseChance ?? 0) * 100)}%`
+    case 'taboo': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
+    case 'fallacy': return `+${Math.round((a.fallacyK ?? 0) * 100)}%/${t('param.fallacy_per')}`
+    case 'burst': return `+${Math.round((a.burstK ?? 0) * 100)}%/${t('param.burst_per')}`
+    case 'zero_in': return `+${Math.round((a.zeroInK ?? 0) * 100)}%/${t('param.zeroin_per')}`
+    case 'sharpshooter': return `+${Math.round((a.sharpK ?? 0) * 100)}%`
+    // ── 数值类（变化值） ──
+    case 'convert': return `k=${a.k?.toFixed(3) ?? '?'}`
+    case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
+    case 'cascade': return `×${a.cascadeMult?.toFixed(1) ?? '?'}`
+    case 'outcast': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
+    case 'void': return `+${Math.round((a.bonusPerSlot ?? 0) * 100)}%/${t('param.void_per')}`
+    case 'gravity': return `×${a.probMult?.toFixed(1) ?? '?'}`
+    case 'exhaust': return `×${a.exhaustMult?.toFixed(1) ?? '?'}`
+    case 'decorator': return `+${Math.round((a.decoratorK ?? 0) * 100)}%`
+    case 'reflect': return `+${Math.round((a.reflectK ?? 0) * 100)}%`
+    // ── 叠层类（变化值） ──
+    case 'pulse': return `${t('param.pulse_label')} ${a.interval ?? '?'}`
+    case 'splash': return `${t('param.interval_label')} ${a.splashCount ?? '?'}`
+    case 'resonance': return `${t('param.interval_label')} ${a.resonanceCount ?? '?'}`
+    case 'relay': return `${t('param.interval_label')} ${a.relayCount ?? '?'}`
+    case 'war_drum': return `+${Math.round((a.critPerStack ?? 0) * 100)}%/${t('param.wardrum_per')}`
+    case 'counter': return `${t('param.counter_label')} ${a.maxCharges ?? 0}`
+    // ── 拓扑类（变化值） ──
+    case 'bridge': return `+${Math.round((a.bridgeK ?? 0) * 100)}%`
+    case 'clique': return `+${Math.round((a.cliqueK ?? 0) * 100)}%/${t('param.clique_per')}`
+    case 'component': return `+${Math.round((a.componentK ?? 0) * 100)}%/${t('param.component_per')}`
+    case 'match': return `+${Math.round((a.matchK ?? 0) * 100)}%/${t('param.match_per')}`
+    case 'flow': return `+${Math.round((a.flowK ?? 0) * 100)}%`
+    case 'confluence': return `+${Math.round((a.confluenceK ?? 0) * 100)}%`
+    case 'turbulence': return `+${Math.round((a.turbulenceK ?? 0) * 100)}%`
+    // ── 词感类（变化值） ──
+    case 'cluster': return `+${Math.round((a.clusterK ?? 0) * 100)}%`
+    case 'coverage': return `+${Math.round((a.coverageK ?? 0) * 100)}%`
+    case 'bigram': return `+${Math.round((a.bigramK ?? 0) * 100)}%`
+    case 'entropy': return `+${Math.round((a.entropyK ?? 0) * 100)}%`
+    case 'cipher': return `+${Math.round((a.cipherK ?? 0) * 100)}%`
+    case 'pattern': return `+${Math.round((a.patternK ?? 0) * 100)}%`
+    // ── 金融类（变化值） ──
+    case 'leverage': return `+${Math.round((a.leverageK ?? 0) * 100)}%`
+    case 'option': return `-${Math.round((a.premium ?? 0) * 100)}%/${t('param.option_per')}`
+    case 'hedge': return `+${Math.round((a.hedgeK ?? 0) * 100)}%`
+    // ── 温度类（变化值） ──
+    case 'phase_shift': return `k=${(a.kGas ?? 0).toFixed(3)}`
+    case 'endo_exo': return `k=${(a.kExo ?? 0).toFixed(3)}`
+    case 'fusion': return `k=${(a.fusionK ?? 0).toFixed(3)}`
+    // ── 奇偶/素数 ──
+    case 'parity': return `${t('param.parity_odd')}+${Math.round((a.oddK ?? 0) * 100)}%`
+    case 'prime': return `+${Math.round((a.primeK ?? 0) * 100)}%`
+    // ── 其他（变化值） ──
+    case 'ligature': return `×${Math.round((a.ligatureBonus ?? 1.0) * 100)}%`
+    case 'innate': return `${a.innateCount ?? 1}${t('param.innate_unit')}`
+    case 'monkey_patch': return `~×${(a.patchHigh ?? 2.0).toFixed(1)}`
+    // ── 无缩放参数 ──
+    case 'rainbow': case 'twin': case 'mirror': case 'amplify':
+    case 'conduit': case 'ethereal':
+      return ''
     default: return ''
   }
 }
