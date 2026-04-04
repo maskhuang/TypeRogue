@@ -1027,35 +1027,18 @@ export function resolvePhase2(
         const clusterVal = isTransformedForAffix(AffixType.Cluster, runtimeState, skill, ctx)
           ? Math.max(0, sumClusters - 1)
           : Math.max(0, maxCluster - 1)
-        bonusPercent += (affix.clusterK ?? 0) * clusterVal
-        break
-      }
-
-      case AffixType.Bigram: {
-        const w2 = ctx.currentWord?.toLowerCase() ?? ''
-        if (w2.length >= 2) {
-          const rarities: number[] = []
-          for (let i = 0; i < w2.length - 1; i++) {
-            const a = w2[i], b = w2[i + 1]
-            if (a >= 'a' && a <= 'z' && b >= 'a' && b <= 'z') {
-              rarities.push(1 - (BIGRAM_FREQ_TABLE[a + b] ?? 0))
-            }
-          }
-          if (rarities.length > 0) {
-            let avgRarity: number
-            // 质变·密码：只取罕见度前 50%
-            if (isTransformedForAffix(AffixType.Bigram, runtimeState, skill, ctx) && rarities.length >= 2) {
-              rarities.sort((a, b) => b - a) // 降序
-              const topHalf = rarities.slice(0, Math.ceil(rarities.length / 2))
-              avgRarity = topHalf.reduce((a, b) => a + b, 0) / topHalf.length
-            } else {
-              avgRarity = rarities.reduce((a, b) => a + b, 0) / rarities.length
-            }
-            bonusPercent += (affix.bigramK ?? 0) * avgRarity
-          }
+        // 辅音丛 → 额外叠层（而非 bonusPercent）
+        const clusterStacks = Math.floor((affix.clusterK ?? 0) * clusterVal * 10) // K×val×10 转为整数层
+        if (clusterStacks > 0) {
+          runtimeState.stacks += clusterStacks
+          flags.stackEffectFired = true
         }
         break
       }
+
+      case AffixType.Bigram:
+        // 双字组：移至 Phase 3 暴击子系统
+        break
 
       case AffixType.Coverage: {
         const w3 = ctx.currentWord?.toLowerCase() ?? ''
@@ -1089,28 +1072,19 @@ export function resolvePhase2(
         break
       }
 
-      case AffixType.Cipher: {
-        // 密文：相邻字母在字母表上的距离均值 → bonusPercent
-        const cipherLetters: number[] = []
-        for (const ch of (ctx.currentWord ?? '').toLowerCase()) {
-          if (ch >= 'a' && ch <= 'z') cipherLetters.push(ch.charCodeAt(0))
-        }
-        if (cipherLetters.length >= 2) {
-          let totalDist = 0
-          for (let i = 0; i < cipherLetters.length - 1; i++) {
-            totalDist += Math.abs(cipherLetters[i + 1] - cipherLetters[i])
-          }
-          const avgDist = totalDist / (cipherLetters.length - 1)
-          bonusPercent += (affix.cipherK ?? 0) * avgDist
-        }
+      case AffixType.Cipher:
+        // 密文：移至 Phase 3 暴击子系统
         break
-      }
 
       case AffixType.Pattern: {
-        // 模式：单词的模式签名稀有度 → bonusPercent
+        // 模式：单词的模式签名稀有度 → 额外叠层
         const patternWord = ctx.currentWord ?? ''
         if (patternWord.length > 0) {
-          bonusPercent += (affix.patternK ?? 0) * getPatternRarity(patternWord)
+          const patternStacks = Math.floor((affix.patternK ?? 0) * getPatternRarity(patternWord) * 10)
+          if (patternStacks > 0) {
+            runtimeState.stacks += patternStacks
+            flags.stackEffectFired = true
+          }
         }
         break
       }
@@ -1348,17 +1322,45 @@ export function resolvePhase3(
       }
 
       case AffixType.Cipher: {
-        // 质变·破译：最大字母距离额外转为暴击率
-        if (isTransformedForAffix(AffixType.Cipher, runtimeState, skill, ctx)) {
-          const cw = (ctx.currentWord ?? '').toLowerCase()
-          let maxDist = 0
-          for (let i = 0; i < cw.length - 1; i++) {
-            if (cw[i] >= 'a' && cw[i] <= 'z' && cw[i + 1] >= 'a' && cw[i + 1] <= 'z') {
-              const d = Math.abs(cw.charCodeAt(i + 1) - cw.charCodeAt(i))
-              if (d > maxDist) maxDist = d
+        // 密文：字母跳跃 → 暴击率
+        const cw = (ctx.currentWord ?? '').toLowerCase()
+        const cipherCodes: number[] = []
+        for (const ch of cw) {
+          if (ch >= 'a' && ch <= 'z') cipherCodes.push(ch.charCodeAt(0))
+        }
+        if (cipherCodes.length >= 2) {
+          let totalDist = 0
+          for (let i = 0; i < cipherCodes.length - 1; i++) {
+            totalDist += Math.abs(cipherCodes[i + 1] - cipherCodes[i])
+          }
+          const avgDist = totalDist / (cipherCodes.length - 1)
+          totalCritChance += (affix.cipherK ?? 0) * avgDist
+        }
+        break
+      }
+
+      case AffixType.Bigram: {
+        // 双字组：罕见字母对 → 暴击率
+        const bw = ctx.currentWord?.toLowerCase() ?? ''
+        if (bw.length >= 2) {
+          const rarities: number[] = []
+          for (let i = 0; i < bw.length - 1; i++) {
+            const a = bw[i], b = bw[i + 1]
+            if (a >= 'a' && a <= 'z' && b >= 'a' && b <= 'z') {
+              rarities.push(1 - (BIGRAM_FREQ_TABLE[a + b] ?? 0))
             }
           }
-          totalCritChance += maxDist * 0.01 // 每点距离 +1% 暴击率
+          if (rarities.length > 0) {
+            let avgRarity: number
+            if (isTransformedForAffix(AffixType.Bigram, runtimeState, skill, ctx) && rarities.length >= 2) {
+              rarities.sort((a, b) => b - a)
+              const topHalf = rarities.slice(0, Math.ceil(rarities.length / 2))
+              avgRarity = topHalf.reduce((a, b) => a + b, 0) / topHalf.length
+            } else {
+              avgRarity = rarities.reduce((a, b) => a + b, 0) / rarities.length
+            }
+            totalCritChance += (affix.bigramK ?? 0) * avgRarity
+          }
         }
         break
       }

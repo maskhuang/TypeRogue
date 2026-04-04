@@ -896,12 +896,11 @@ export function computeSmartEstimate(
         break
       }
       case 'cluster': {
-        // 辅音丛：按绑定字母过滤词库的平均辅音丛加成
+        // 辅音丛 → 额外叠层
         const avg = getWordSenseAvgForKeys(boundKeys)
-        const bonus = (affix.clusterK ?? 0) * avg.avgCluster
-        if (bonus > 0) {
-          addPercent += bonus
-          breakdown.push({ typeKey: 'cluster', label: t('est.cluster', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
+        const stacks = Math.floor((affix.clusterK ?? 0) * avg.avgCluster * 10)
+        if (stacks > 0) {
+          breakdown.push({ typeKey: 'cluster', label: t('est.cluster', { n: stacks }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }
@@ -916,12 +915,12 @@ export function computeSmartEstimate(
         break
       }
       case 'bigram': {
-        // 双字组：按绑定字母过滤词库的平均 bigram 罕见度
+        // 双字组 → 暴击率
         const avg = getWordSenseAvgForKeys(boundKeys)
-        const bonus = (affix.bigramK ?? 0) * avg.avgBigramRarity
-        if (bonus > 0) {
-          addPercent += bonus
-          breakdown.push({ typeKey: 'bigram', label: t('est.bigram', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
+        const critBonus = (affix.bigramK ?? 0) * avg.avgBigramRarity
+        if (critBonus > 0) {
+          critChanceAccum += critBonus
+          breakdown.push({ typeKey: 'bigram', label: t('est.bigram', { pct: Math.round(critBonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }
@@ -935,20 +934,21 @@ export function computeSmartEstimate(
         break
       }
       case 'cipher': {
+        // 密文 → 暴击率
         const avg = getWordSenseAvgForKeys(boundKeys)
-        const bonus = (affix.cipherK ?? 0) * avg.avgCipherDist
-        if (bonus > 0) {
-          addPercent += bonus
-          breakdown.push({ typeKey: 'cipher', label: t('est.cipher', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
+        const critBonus = (affix.cipherK ?? 0) * avg.avgCipherDist
+        if (critBonus > 0) {
+          critChanceAccum += critBonus
+          breakdown.push({ typeKey: 'cipher', label: t('est.cipher', { pct: Math.round(critBonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }
       case 'pattern': {
+        // 模式 → 额外叠层
         const avg = getWordSenseAvgForKeys(boundKeys)
-        const bonus = (affix.patternK ?? 0) * avg.avgPatternRarity
-        if (bonus > 0) {
-          addPercent += bonus
-          breakdown.push({ typeKey: 'pattern', label: t('est.pattern', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
+        const stacks = Math.floor((affix.patternK ?? 0) * avg.avgPatternRarity * 10)
+        if (stacks > 0) {
+          breakdown.push({ typeKey: 'pattern', label: t('est.pattern', { n: stacks }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }
