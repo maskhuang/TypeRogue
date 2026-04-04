@@ -532,6 +532,14 @@ development_status:
   52-8-balance-playtest: done                 # 数值平衡（已贯穿各 story 验证）
   epic-52-retrospective: optional
 
+  # ===== Epic 53: 造词台流水线重做 =====
+  epic-53: backlog
+  53-1-assembly-queue-data: backlog          # 组装队列数据层
+  53-2-queue-ui: backlog                     # 队列 UI
+  53-3-crafting-i18n: backlog                # 造词台 i18n
+  53-4-balance-polish: backlog               # 平衡打磨
+  epic-53-retrospective: optional
+
 # Summary:
 # - Total Epics: 51
 # - Total Stories: 286
