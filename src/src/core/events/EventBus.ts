@@ -171,6 +171,9 @@ export interface GameEvents {
     totalNewUnlocks: number
   }
 
+  // Story 54.9: Ascension 升级事件
+  'ascension:advanced': { classId: string; newLevel: number }
+
   // 请求保存事件 (Story 6.3)
   'meta:request_save': Record<string, never>
 

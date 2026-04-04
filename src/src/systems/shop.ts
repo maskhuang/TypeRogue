@@ -1192,7 +1192,8 @@ export function openShop(_won: boolean): void {
   // 周目≥2时在商店标题显示周目数
   const shopTitle = document.getElementById('shop-title');
   if (shopTitle) {
-    shopTitle.textContent = state.cycle >= 2 ? t('shop.cycle_title', { cycle: state.cycle }) : t('shop.title');
+    const base = state.cycle >= 2 ? t('shop.cycle_title', { cycle: state.cycle }) : t('shop.title');
+    shopTitle.textContent = state.ascensionLevel > 0 ? `${base} [A${state.ascensionLevel}]` : base;
   }
   el.shopScore.textContent = String(state.score);
   el.shopTarget.textContent = String(state.targetScore);

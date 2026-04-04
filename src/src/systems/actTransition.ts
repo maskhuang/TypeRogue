@@ -6,6 +6,7 @@
 import { getBossModifierMeta } from '../data/bossModifiers'
 import { screenShake } from '../effects/juice'
 import { t } from '../demo/demo-i18n'
+import { state } from '../core/state'
 
 /** 显示 Act 标题卡过渡动画（约 1.5s） */
 export function showActTransition(actNum: number): Promise<void> {
@@ -83,7 +84,8 @@ export function updateStageInfo(cycleNum: number, stageType: string): void {
     elite: '⚔️',
   }
   const icon = icons[stageType] || '⚔️'
-  el.textContent = `Cycle ${cycleNum} ${icon}`
+  const badge = state.ascensionLevel > 0 ? ` A${state.ascensionLevel}` : ''
+  el.textContent = `Cycle ${cycleNum} ${icon}${badge}`
   el.className = `hud-stage-info stage-${stageType}`
 
   // 脉冲动画

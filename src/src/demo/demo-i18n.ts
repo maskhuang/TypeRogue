@@ -291,6 +291,7 @@ const ZH: Record<string, string> = {
   // --- Ascension 选择器 (Story 54.3) ---
   'ascension.title': '⚔️ 选择进阶难度 ⚔️',
   'ascension.confirm': '开始 A{level}',
+  'ascension.unlocked': '🏆 Ascension {level} 已解锁！',
   'ascension.a0_name': '标准',
   'ascension.a0_desc': '无额外难度',
   'ascension.a1_name': '贫穷起步',
@@ -1250,6 +1251,7 @@ const EN: Record<string, string> = {
   // --- Ascension selector (Story 54.3) ---
   'ascension.title': '⚔️ Select Ascension ⚔️',
   'ascension.confirm': 'Start A{level}',
+  'ascension.unlocked': '🏆 Ascension {level} Unlocked!',
   'ascension.a0_name': 'Standard',
   'ascension.a0_desc': 'No extra difficulty',
   'ascension.a1_name': 'Poverty',

@@ -139,6 +139,10 @@ let battlePaused = false;
 // 引导暂停：冻结/恢复计时器
 eventBus.on('battle:pause', () => { battlePaused = true; });
 eventBus.on('battle:resume', () => { battlePaused = false; });
+// Story 54.9: Ascension 升级反馈
+eventBus.on('ascension:advanced', ({ newLevel }) => {
+  showFeedback(t('ascension.unlocked', { level: newLevel }), '#ffe66d');
+});
 
 // === 分数结算 ===
 let wordBaseScore = 0; // 词语基础分（不含倍率）
@@ -2392,8 +2396,9 @@ function victory(): void {
   const endlessHint = state.endlessUnlocked
     ? ''
     : `<br><span style="color:#ffe66d;font-size:0.85em">${t('battle.unlock_endless')}</span>`;
+  const ascBadge = state.ascensionLevel > 0 ? `<br><span style="color:#ffe66d">A${state.ascensionLevel}</span>` : '';
   el.gameoverStats.innerHTML = `
-    ${t('battle.victory')}<br>
+    ${t('battle.victory')}${ascBadge}<br>
     ${t('battle.final_score', { score: state.score })}<br>
     ${t('battle.max_combo', { combo: state.maxCombo })}<br>
     ${t('battle.skills_owned', { count: state.player.skills.size })}${endlessHint}

@@ -334,6 +334,7 @@ export class MetaState {
     const current = this.ascension[classId] ?? 0
     if (ascensionLevel !== current || current >= MAX_ASCENSION_LEVEL) return false
     this.ascension[classId] = current + 1
+    eventBus.emit('ascension:advanced', { classId, newLevel: current + 1 })
     return true
   }
 
