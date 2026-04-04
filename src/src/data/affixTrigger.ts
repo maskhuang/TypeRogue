@@ -1851,7 +1851,7 @@ export function resolvePhase5(
     }
   }
 
-  // ── Pulse 质变：爆发时触发所有匹配技能（可进入伪循环） ──
+  // ── Pulse 质变：爆发时触发所有叠层类技能（无范围限制） ──
   if (triggerFlags.isPulse && isTransformedForAffix(AffixType.Pulse, runtimeState, skill, ctx) && !ctx.chainAffixesDisabled) {
     const pulseTargets: string[] = []
     const pulseCounted = new Set<string>()
@@ -1861,8 +1861,7 @@ export function resolvePhase5(
       if (nSkillId === skill.id) continue
       const nSkill = ctx.allSkills.get(nSkillId)
       if (!nSkill) continue
-      // 合法目标：共享资源或词条类型
-      if (!hasSharedMatch(nSkill, skill, AffixType.Pulse)) continue
+      if (!nSkill.affixes.some(a => isStackingAffixType(a.type))) continue
       pulseTargets.push(nk)
     }
     if (pulseTargets.length > 0) {

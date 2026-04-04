@@ -908,7 +908,7 @@ export interface QuestEnchantmentDef {
 export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestDevour, name: '吞噬', targetAffix: AffixType.Void, event: 'equip_count', targetStacks: 0, effectDesc: '质变：每次吞噬', transformDesc: '完成后每次触发都寻找最弱邻居吞噬' },
   { type: EnchantmentType.QuestOverload, name: '过载', targetAffix: AffixType.Crit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：保底暴击', transformDesc: '完成后暴击必定触发' },
-  { type: EnchantmentType.QuestEcho, name: '回响', targetAffix: AffixType.Pulse, event: 'equip_count', targetStacks: 0, effectDesc: '质变：脉冲连锁', transformDesc: '完成后爆发时触发所有匹配技能（可进入伪循环）' },
+  { type: EnchantmentType.QuestEcho, name: '回响', targetAffix: AffixType.Pulse, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全域脉冲', transformDesc: '完成后爆发时触发全键盘所有叠层类技能（无范围限制）' },
   { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向连锁', transformDesc: '完成后级联双向判定，反向键也触发' },
   { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'equip_count', targetStacks: 0, effectDesc: '质变：衰减反转为增长', transformDesc: '完成后衰减方向反转，越触发越强' },
   { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'equip_count', targetStacks: 0, effectDesc: '质变：首尾呼应', transformDesc: '完成后触发词首/词尾时额外触发对端技能' },
