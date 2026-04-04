@@ -352,9 +352,25 @@ const estimatedTypes = new Set(estimate.breakdown.map(b => b.typeKey).filter(k =
 | Leverage | 保险 | 惩罚移除 | 负 excess 保底为 0（不再亏损） | 高风险高回报 → 只有回报 |
 | Option | 加杠 | 数值提升 | 行权后 optionK 翻倍（权利金不变） | 以小博大 → 以小博超大 |
 | Hedge | 全衡 | 范围扩大 | 自动从所有可读资源中选最均衡的一对 | 绑定两种 → 自动最优 |
-| Burst | 余焰 | 条件放宽 | miss 时连击减半（向下取整）而非归零 | 一断全没 → 保留余焰 |
-| Zero-In | 瞄具 | 触发新增 | miss 时也获得半额 bonusPercent（产出） | 纯等待 → miss 也有补偿 |
-| Sharpshooter | 直觉 | 条件放宽 | (1-critChance) 最低值改为 0.3 | 高暴击率废弃 → 任何暴击率都有用 |
+| Burst | 弹幕 | 触发新增 | 3连击时每次暴击额外触发一个邻居 | 自身倍率 → 暴击溅射 |
+| Zero-In | 蓄能 | 机制转换 | 暴击释放时missStreak转化为等量stacks | crit补偿 → stack转化 |
+| Sharpshooter | 狙击 | 范围扩大 | (1-critChance)×sharpK 同时作为bonusPercent和critMult | 单维 → 双维输出 |
+
+**Epic 50 拓扑型：**
+
+| 词条 | 质变名 | 模式 | 效果 | 体感变化 |
+|------|--------|------|------|---------|
+| Bridge | 枢纽 | 触发新增 | 是桥时每次触发额外触发断裂两侧各一个邻居 | 被动bonus → 中转触发站 |
+| Clique | 方阵 | 触发新增 | 团内任何成员触发时本技能也获得等额bonusPercent | 读结构 → 团内联动共享 |
+| Component | 网络 | 时间窗口扩大 | 连通分量内每次技能触发+1%bonus（本关累积） | 静态大小 → 动态网络活跃度 |
+
+**Epic 51 元规则型：**
+
+| 词条 | 质变名 | 模式 | 效果 | 体感变化 |
+|------|--------|------|------|---------|
+| Decorator | 编译 | 条件放宽 | 放大率从固定变为动态：每多一个同技能词条+decoratorK | 固定放大 → 词条数驱动 |
+| Reflect | 内省 | 范围扩大 | reflectScore额外作为同技能所有词条的效果加成% | 自身bonus → 全词条增幅器 |
+| MonkeyPatch | 热更新 | 范围扩大 | 同时patch所有同技能词条（倍率缩为×0.8~1.5） | 随机单点 → 全体温和修改 |
 
 ### 11.5 已设计质变（旧词条 + Epic 45）
 
