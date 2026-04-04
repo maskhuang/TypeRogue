@@ -1627,13 +1627,21 @@ function endLevel(): void {
   for (const [skillId, skill] of state.affixSkills) {
     const rt = state.affixSkillStates.get(skillId);
     if (rt?.etherealTriggered) {
-      // 还原 +1 级增幅（排除 Ethereal 自身——它即将被移除）
-      const otherAffixes = skill.affixes.filter(a => a.type !== AffixType.Ethereal);
-      if (otherAffixes.length > 0) {
-        applyAffixLevelScaling(otherAffixes, -1);
+      // 质变·永恒：50% 概率续命
+      const etherealSurvives = rt.questTransformed
+        && skill.enchantmentIds?.includes(EnchantmentTypeEnum.QuestEthereal)
+        && Math.random() < 0.5;
+      if (!etherealSurvives) {
+        // 还原 +1 级增幅（排除 Ethereal 自身——它即将被移除）
+        const otherAffixes = skill.affixes.filter(a => a.type !== AffixType.Ethereal);
+        if (otherAffixes.length > 0) {
+          applyAffixLevelScaling(otherAffixes, -1);
+        }
+        removeAffixAtRuntime(skill, AffixType.Ethereal);
+        // etherealTriggered 保持 true 作为永久消耗标记（商店排除用）
       }
-      removeAffixAtRuntime(skill, AffixType.Ethereal);
-      // etherealTriggered 保持 true 作为永久消耗标记（商店排除用）
+      // 续命时保留词条但重置触发标记（下关重新判定）
+      if (etherealSurvives) rt.etherealTriggered = false;
     }
   }
 
@@ -2244,9 +2252,10 @@ export async function startLevel(): Promise<void> {
         applyAffixLevelScaling(otherAffixes, 1);
       }
     }
-    // Innate: 自动触发一次
+    // Innate: 自动触发（质变·觉醒：3 次）
     if (skill.affixes.some(a => a.type === AffixType.Innate)) {
-      triggerSkill(skillId, null as any);
+      const innateCount = (rt.questTransformed && skill.enchantmentIds?.includes(EnchantmentTypeEnum.QuestInnate)) ? 3 : 1;
+      for (let i = 0; i < innateCount; i++) triggerSkill(skillId, null as any);
     }
   }
 

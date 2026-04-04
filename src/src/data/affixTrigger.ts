@@ -654,10 +654,20 @@ export function resolvePhase2(
   for (const affix of skill.affixes) {
     if (affix.type === AffixType.Exhaust && (affix.exhaustMult ?? 0) > 1) {
       effectiveBase *= affix.exhaustMult!
+      // 质变·燃尽：最后一次触发 ×3
+      const isLastExhaust = (runtimeState.exhaustCount + 1) >= (affix.maxTriggers ?? Infinity)
+      if (isLastExhaust && isTransformedForAffix(AffixType.Exhaust, runtimeState, skill, ctx)) {
+        effectiveBase *= 3
+      }
     }
   }
 
   let bonusPercent = 0
+  // 质变·反噬：消费上次 Counter 吸收的负值
+  if ((runtimeState.counterAbsorbed ?? 0) > 0) {
+    bonusPercent += runtimeState.counterAbsorbed
+    runtimeState.counterAbsorbed = 0
+  }
   let flatBonus = 0 // 增幅词条：绝对值加成
   let chargeAutoComplete = false
   const mutations: StateMutation[] = []
@@ -721,12 +731,22 @@ export function resolvePhase2(
         const eeVal = getStageProducedValue(affix.endoSource, ctx)
         const eeNorm = (BASE_VALUES[skill.resource]?.[eeLvl] ?? 1) / (BASE_VALUES[affix.endoSource]?.[eeLvl] ?? 1)
         if (eeVal >= (affix.endoThreshold ?? Infinity)) {
-          bonusPercent += (affix.kExo ?? 0) * eeVal * eeNorm
-          if ((affix.endoConsumeRate ?? 0) > 0) {
-            consumeRequests.push({ resource: affix.endoSource, amount: affix.endoConsumeRate! })
+          // 质变·永动：连续 3 次放热后超导（翻倍且不消耗）
+          const eeTransformed = isTransformedForAffix(AffixType.EndoExo, runtimeState, skill, ctx)
+          const isSuperconduct = eeTransformed && (runtimeState.exoCount ?? 0) >= 2
+          if (isSuperconduct) {
+            bonusPercent += (affix.kExo ?? 0) * eeVal * eeNorm * 2
+            runtimeState.exoCount = 0 // 超导后重置
+          } else {
+            bonusPercent += (affix.kExo ?? 0) * eeVal * eeNorm
+            if ((affix.endoConsumeRate ?? 0) > 0) {
+              consumeRequests.push({ resource: affix.endoSource, amount: affix.endoConsumeRate! })
+            }
+            if (eeTransformed) runtimeState.exoCount = (runtimeState.exoCount ?? 0) + 1
           }
         } else {
           bonusPercent += (affix.kEndo ?? 0) * eeVal * eeNorm
+          runtimeState.exoCount = 0 // 吸热时重置放热计数
         }
         break
       }
@@ -748,6 +768,11 @@ export function resolvePhase2(
           }
           if ((affix.fusionConsumeB ?? 0) > 0) {
             consumeRequests.push({ resource: affix.fusionSourceB, amount: affix.fusionConsumeB! })
+          }
+          // 质变·恒星：成功后阈值永久降 10%（最低 50%）
+          if (isTransformedForAffix(AffixType.Fusion, runtimeState, skill, ctx)) {
+            affix.ignitionA = Math.max((affix.ignitionA ?? 0) * 0.5, (affix.ignitionA ?? 0) * 0.9)
+            affix.ignitionB = Math.max((affix.ignitionB ?? 0) * 0.5, (affix.ignitionB ?? 0) * 0.9)
           }
         } else {
           bonusPercent -= (affix.fusionPenalty ?? 0)
@@ -933,6 +958,11 @@ export function resolvePhase2(
         const compSize = bfsComponentSize(ctx.triggerKey, PositionRelation.Adjacent, ctx.bindings)
         if (compSize > 1) {
           bonusPercent += (affix.componentK ?? 0) * (compSize - 1)
+        }
+        // 质变·网络：本关每次触发累积 +1% bonus
+        if (isTransformedForAffix(AffixType.Component, runtimeState, skill, ctx)) {
+          bonusPercent += runtimeState.componentAccum ?? 0
+          runtimeState.componentAccum = (runtimeState.componentAccum ?? 0) + 0.01
         }
         break
       }

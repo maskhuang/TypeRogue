@@ -458,6 +458,9 @@ export interface SkillRuntimeState {
   cliqueBonusAccum: number         // Clique 质变：从团内成员接收的 bonus 累积（触发后清零）
   leverageLoss: number             // Leverage 质变·对赌：本次触发的亏损值（Phase 6 分摊给邻居）
   optionAccum: number              // Option 质变·期货：累积的权利金（行权时释放）
+  counterAbsorbed: number          // Counter 质变·反噬：上次反制吸收的负值
+  exoCount: number                 // EndoExo 质变·永动：连续放热次数
+  componentAccum: number           // Component 质变·网络：本关活跃度累积%
   patchTargetIndex: number         // 被补丁的词条索引（-1=无效，每关重置）
   patchMultiplier: number          // 随机系数（每关重置，默认 1.0）
 }
@@ -904,7 +907,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestPhaseShift, name: '超临界', targetAffix: AffixType.PhaseShift, event: 'equip_count', targetStacks: 0, effectDesc: '质变：三态叠加', transformDesc: '气态时额外叠加液态和固态K值' },
   { type: EnchantmentType.QuestEndoExo, name: '永动', targetAffix: AffixType.EndoExo, event: 'equip_count', targetStacks: 0, effectDesc: '质变：超导爆发', transformDesc: '连续3次放热后下次翻倍且不消耗' },
   { type: EnchantmentType.QuestFusion, name: '恒星', targetAffix: AffixType.Fusion, event: 'equip_count', targetStacks: 0, effectDesc: '质变：阈值递降', transformDesc: '成功聚变后阈值永久降10%' },
-  { type: EnchantmentType.QuestInnate, name: '觉醒', targetAffix: AffixType.Innate, event: 'equip_count', targetStacks: 0, effectDesc: '质变：每词触发', transformDesc: '每打完一个单词时也自动触发一次' },
+  { type: EnchantmentType.QuestInnate, name: '觉醒', targetAffix: AffixType.Innate, event: 'equip_count', targetStacks: 0, effectDesc: '质变：三连触发', transformDesc: '关卡开始自动触发从1次变为3次' },
   { type: EnchantmentType.QuestCounter, name: '反噬', targetAffix: AffixType.Counter, event: 'equip_count', targetStacks: 0, effectDesc: '质变：负值转化', transformDesc: '反制时将负值转为下次触发的bonus' },
   { type: EnchantmentType.QuestExhaust, name: '燃尽', targetAffix: AffixType.Exhaust, event: 'equip_count', targetStacks: 0, effectDesc: '质变：终结技', transformDesc: '最后一次触发时bonus额外×3' },
   { type: EnchantmentType.QuestEthereal, name: '永恒', targetAffix: AffixType.Ethereal, event: 'equip_count', targetStacks: 0, effectDesc: '质变：概率续命', transformDesc: '关卡结束时50%概率保留到下一关' },
@@ -967,6 +970,9 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     cliqueBonusAccum: 0,
     leverageLoss: 0,
     optionAccum: 0,
+    counterAbsorbed: 0,
+    exoCount: 0,
+    componentAccum: 0,
     patchTargetIndex: -1,
     patchMultiplier: 1.0,
   }

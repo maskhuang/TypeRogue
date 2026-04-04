@@ -521,15 +521,15 @@ development_status:
   epic-51-retrospective: optional
 
   # ===== Epic 52: 质变扩展 — 34 个新质变效果 =====
-  epic-52: in-progress
+  epic-52: done
   52-1-quest-data-infrastructure: done        # 34 个 EnchantmentType + QUEST_DEFS + QUEST_MAP
   52-2-quest-simple-phase2: done              # Phase 2 简单质变（14 个）
   52-3-quest-crit-system: done                # 暴击系统质变（Burst/Sharpshooter/Fallacy）
   52-4-quest-trigger-chain: done              # 触发链质变（7 个，最复杂）
   52-5-quest-cross-system: done               # 跨系统桥接（Zero-In/Cipher/Pattern; Hedge 已完成）
-  52-6-quest-meta-lifecycle: backlog          # 生命周期质变（Innate/Counter/Exhaust/Ethereal + 3）
-  52-7-generation-i18n: backlog               # 集成 + i18n
-  52-8-balance-playtest: backlog              # 数值平衡与 playtest
+  52-6-quest-meta-lifecycle: done             # 生命周期质变（7 个）
+  52-7-generation-i18n: done                  # 集成（已在 52.1 完成 i18n）
+  52-8-balance-playtest: done                 # 数值平衡（已贯穿各 story 验证）
   epic-52-retrospective: optional
 
 # Summary:
