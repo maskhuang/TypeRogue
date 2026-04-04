@@ -24,7 +24,7 @@ export function renderCraftPanel(container: HTMLElement, onGoldUpdate: () => voi
 
   const title = document.createElement('div');
   title.className = 'craft-title';
-  title.textContent = '🔤 造词台';
+  title.textContent = '⚡ 造词台';
   container.appendChild(title);
 
   // --- 流水线状态 ---

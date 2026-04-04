@@ -42,7 +42,7 @@ const ZH: Record<string, string> = {
   'shop.tab.build': '构筑',
   'shop.tab.stats': '📊 统计',
   'shop.tab.words': '📚 词库',
-  'shop.tab.craft': '🔤 造词台',
+  'shop.tab.craft': '⚡ 造词台',
   'shop.tab.metamorph': '🧬 蜕变台',
   'shop.word_panel_label': '词库',
   'shop.owned_skills': '已拥有技能',
@@ -886,7 +886,7 @@ const EN: Record<string, string> = {
   'shop.tab.build': 'Build',
   'shop.tab.stats': '📊 Stats',
   'shop.tab.words': '📚 Words',
-  'shop.tab.craft': '🔤 Forge',
+  'shop.tab.craft': '⚡ Forge',
   'shop.tab.metamorph': '🧬 Metamorph',
   'shop.word_panel_label': 'Words',
   'shop.owned_skills': 'Owned Skills',
@@ -1859,7 +1859,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   conv_time_base_add: '⚔️Base+(⏳Time×0.15)', conv_gold_base_add: '⚔️Base+(💰Gold×0.4)',
   conv_score_mult_add: '🔥Mult+(🪙Score×0.0002)',
   // Producers (class-specific, in case they appear)
-  prod_harvest: '🔤Fragment +1', prod_refine: '🔤Fragment ×1.5',
+  prod_harvest: '⚡Fragment +1', prod_refine: '⚡Fragment ×1.5',
   // Relics — all
   lucky_coin: 'Shop prices -10%',
   phoenix_feather: '30% chance to protect combo on error',
