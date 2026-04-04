@@ -517,12 +517,21 @@ export const BASE_VALUES: Record<ResourceType, number[]> = {
 
 /** 词条职业限制：仅指定职业可使用（未列出=全职业通用） */
 export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
+  // 造词师专属：词感类（与单词结构相关）
   [AffixType.Cluster]: 'wordsmith',
   [AffixType.Coverage]: 'wordsmith',
   [AffixType.Bigram]: 'wordsmith',
   [AffixType.Entropy]: 'wordsmith',
   [AffixType.Cipher]: 'wordsmith',
   [AffixType.Pattern]: 'wordsmith',
+  // 蜕变师专属：随机性/词条操控/附魔相关
+  [AffixType.Rainbow]: 'metamorph',
+  [AffixType.Twin]: 'metamorph',
+  [AffixType.Mirror]: 'metamorph',
+  [AffixType.Decorator]: 'metamorph',
+  [AffixType.Reflect]: 'metamorph',
+  [AffixType.MonkeyPatch]: 'metamorph',
+  [AffixType.Ethereal]: 'metamorph',
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
