@@ -399,7 +399,7 @@ development_status:
   # ===== Epic 54: Ascension（进阶）难度递进系统 =====
   # Source: docs/stories/epic-54-ascension-system.md
   # Design: docs/planning-artifacts/ascension-system-design.md
-  epic-54: in-progress
+  epic-54: done
   54-1-ascension-state-persistence: done               # Ascension 状态持久化
   54-2-practice-stage-gold-mapping: done               # 练习关金币映射
   54-3-ascension-level-selector-ui: done               # Ascension 级别选择器 UI
@@ -409,5 +409,5 @@ development_status:
   54-7-a7-a8-resource-scarcity: done                   # A7-A8 资源稀缺
   54-8-a9-a10-ultimate-trial: done                     # A9-A10 终极试炼
   54-9-hud-unlock-feedback: done                       # HUD 显示 + 解锁反馈
-  54-10-balance-integration-test: backlog             # 平衡调整与集成测试
+  54-10-balance-integration-test: done                 # 平衡调整与集成测试
   epic-54-retrospective: optional
