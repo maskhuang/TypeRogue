@@ -240,6 +240,7 @@ export interface TriggerFlags {
   /** 叠层效果是否触发（供遗物钩子使用） */
   stackEffectFired: boolean
   burstSplash: boolean  // 质变·弹幕：3连击时溅射邻居
+  cipherCritMultBonus: number  // 质变·破译：字母跳跃加到暴击倍率
 }
 
 // ===== Phase 4-6 返回类型 =====
@@ -1261,6 +1262,7 @@ export function resolvePhase3(
     recurseCritContribution: 0,
     stackEffectFired: false,
     burstSplash: false,
+    cipherCritMultBonus: 0,
   }
 
   // 暴击子系统：累计暴击率（affix loop 内只累加，loop 后统一判定）
@@ -1340,7 +1342,7 @@ export function resolvePhase3(
       }
 
       case AffixType.Cipher: {
-        // 密文：字母跳跃 → 暴击率
+        // 密文：字母跳跃 → 暴击率（质变：���跃同时加暴击倍率）
         const cw = (ctx.currentWord ?? '').toLowerCase()
         const cipherCodes: number[] = []
         for (const ch of cw) {
@@ -1348,11 +1350,18 @@ export function resolvePhase3(
         }
         if (cipherCodes.length >= 2) {
           let totalDist = 0
+          let maxDist = 0
           for (let i = 0; i < cipherCodes.length - 1; i++) {
-            totalDist += Math.abs(cipherCodes[i + 1] - cipherCodes[i])
+            const d = Math.abs(cipherCodes[i + 1] - cipherCodes[i])
+            totalDist += d
+            if (d > maxDist) maxDist = d
           }
           const avgDist = totalDist / (cipherCodes.length - 1)
           totalCritChance += (affix.cipherK ?? 0) * avgDist
+          // 质变·破译：最大跳跃距离额外加到暴击倍率
+          if (isTransformedForAffix(AffixType.Cipher, runtimeState, skill, ctx)) {
+            flags.cipherCritMultBonus = maxDist * 0.02 // 每点距离 +2% 暴击倍率
+          }
         }
         break
       }
@@ -1454,6 +1463,8 @@ export function resolvePhase3(
     const hasCritTransform = skill.affixes.some(a => a.type === AffixType.Crit)
       && isTransformedForAffix(AffixType.Crit, runtimeState, skill, ctx)
     if (hasCritTransform) critMult *= 2
+    // Cipher 质变·破译：字母跳跃加到暴击倍率
+    if (flags.cipherCritMultBonus > 0) critMult += flags.cipherCritMultBonus
     if (ctx.fateCoinActive && rawCritChance > FATE_COIN_CRIT_CAP) {
       const excess = rawCritChance - FATE_COIN_CRIT_CAP
       effectiveCritChance = FATE_COIN_CRIT_CAP
