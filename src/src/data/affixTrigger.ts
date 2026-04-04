@@ -122,8 +122,10 @@ export interface TriggerContext {
   /** 回声指套暴击率（遗物注入，暴击时额外触发） */
   echoThimbleCritRate?: number
   // ── Story 45: 累积产出追踪 ──
-  /** 本关各资源累积产出量（PhaseShift/EndoExo/Fusion 读取此值而非池量） */
+  /** 本关各资源累积产出量（备用） */
   stageProduced?: Partial<Record<ResourceType, number>>
+  /** 本词 base 累积产出（synergy.skillBaseScore，每词重置） */
+  wordBaseScore?: number
   // ── 叠层子系统遗物 ──
   /** 层层递进：每技能间隔减少量 */
   stackMomentumReduction?: Map<string, number>
@@ -611,10 +613,12 @@ export function getAffixSourceValue(source: ResourceType, ctx: TriggerContext): 
 }
 
 /**
- * 读取本关累积产出量（而非资源池值）。
- * 用于 PhaseShift/EndoExo/Fusion——避免 time/multiplier 池量级与产出量级差异过大。
+ * 读取产出量（PhaseShift/EndoExo/Fusion/Option/Hedge 用）。
+ * base: 读本词累积（synergy.skillBaseScore，每词重置）—— 温度每词重新积累。
+ * 其他: 读本关累积（stageProduced）—— 长周期积累。
  */
 export function getStageProducedValue(source: ResourceType, ctx: TriggerContext): number {
+  if (source === 'base') return ctx.wordBaseScore ?? 0
   return ctx.stageProduced?.[source] ?? 0
 }
 

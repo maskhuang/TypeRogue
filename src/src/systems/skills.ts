@@ -302,6 +302,7 @@ function triggerAffixSkillWithFeedback(
     neighborWatchActive: isNeighborWatchActive(),
     inscriptionFlowGrowth: getInscriptionFlowGrowth(),
     stageProduced: getStageProduced(),
+    wordBaseScore: synergy.skillBaseScore,
   };
 
   // 暴击蓄力消耗（本次触发已注入 baseCritRate=1.0）
