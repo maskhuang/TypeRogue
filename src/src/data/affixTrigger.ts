@@ -606,8 +606,12 @@ export function getAffixSourceValue(source: ResourceType, ctx: TriggerContext): 
   if (source === 'energy' || source === 'mutagen') {
     return ctx.classResourceProduced[source] ?? 0
   }
+  if (source === 'base') {
+    // base 读本词实时累积（synergy.skillBaseScore），与 getStageProducedValue 一致
+    return ctx.wordBaseScore ?? 0
+  }
   if (source === 'score') {
-    return ctx.resources.score + ctx.resources.base * ctx.resources.multiplier
+    return ctx.resources.score + (ctx.wordBaseScore ?? 0) * ctx.resources.multiplier
   }
   return ctx.resources[source]
 }
