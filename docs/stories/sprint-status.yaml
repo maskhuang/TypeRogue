@@ -520,6 +520,18 @@ development_status:
   51-5-balance-playtest: done                # 数值平衡与 playtest
   epic-51-retrospective: optional
 
+  # ===== Epic 52: 质变扩展 — 34 个新质变效果 =====
+  epic-52: backlog
+  52-1-quest-data-infrastructure: backlog     # 34 个 EnchantmentType + QUEST_DEFS + QUEST_MAP
+  52-2-quest-simple-phase2: backlog           # Phase 2 简单质变（14 个）
+  52-3-quest-crit-system: backlog             # 暴击系统质变（Burst/Sharpshooter/Fallacy）
+  52-4-quest-trigger-chain: backlog           # 触发链质变（7 个，最复杂）
+  52-5-quest-cross-system: backlog            # 跨系统桥接（Zero-In/Cipher/Pattern/Hedge）
+  52-6-quest-meta-lifecycle: backlog          # 生命周期质变（Innate/Counter/Exhaust/Ethereal + 3）
+  52-7-generation-i18n: backlog               # 集成 + i18n
+  52-8-balance-playtest: backlog              # 数值平衡与 playtest
+  epic-52-retrospective: optional
+
 # Summary:
 # - Total Epics: 51
 # - Total Stories: 286
