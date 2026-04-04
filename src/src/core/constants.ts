@@ -93,6 +93,8 @@ export const BALANCE = {
 // === Ascension 常量 ===
 /** A2: 商店价格上涨系数 (Story 54.4) */
 export const A2_PRICE_MULT = 1.15;
+/** A4: 加剧的 cycle 时间衰减 (Story 54.5) */
+export const A4_CYCLE_TIME_DECAY = 0.85;
 
 // === Ascension: 练习关金币映射 (Story 54.2) ===
 export const PRACTICE_GOLD = {

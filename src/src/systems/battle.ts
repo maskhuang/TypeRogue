@@ -1803,7 +1803,7 @@ function endLevel(): void {
         }
         // 精英关：重新应用精英修饰器（临时）
         if (stageType === 'elite' && state.eliteModifier && !isModifierActive(state.eliteModifier)) {
-          applyModifier(state.eliteModifier, true, false);
+          applyModifier(state.eliteModifier, state.ascensionLevel < 3, false); // A3+: 不弱化
         }
       }
       _targetReached = false; // Story 42.2: 复活=重新开始，重置达标标志
@@ -2093,9 +2093,9 @@ export async function startLevel(): Promise<void> {
     if (eliteModId) {
       state.eliteModifier = eliteModId;
       if (barrierDelay) {
-        addDeferredModifier(eliteModId, true);
+        addDeferredModifier(eliteModId, state.ascensionLevel < 3); // A3+: 不弱化
       } else {
-        applyModifier(eliteModId, true, false); // isElite=true, temporary
+        applyModifier(eliteModId, state.ascensionLevel < 3, false); // A3+: 不弱化
       }
     }
   }

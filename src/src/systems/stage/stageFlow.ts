@@ -5,7 +5,8 @@
 // 12-Stage Cycle: (battle-shop)×5 → ritual → (battle-shop)×5 → boss
 
 import type { StageType } from './StageConfig'
-import { BALANCE } from '../../core/constants'
+import { BALANCE, A4_CYCLE_TIME_DECAY } from '../../core/constants'
+import { state } from '../../core/state'
 
 /** 每个 Cycle 包含的关卡数（10 standard + 1 ritual + 1 boss = 12） */
 export const CYCLE_LENGTH = BALANCE.CYCLE_LENGTH
@@ -73,10 +74,11 @@ export function getTimeLimit(stageNum: number): number {
   return STAGE_TIME_LIMITS[getStageType(stageNum)]
 }
 
-/** 获取 cycle 衰减后的时间限制（取整） */
+/** 获取 cycle 衰减后的时间限制（取整）— A4+ 衰减更快 */
 export function getCycleTimeLimit(stageNum: number, cycle: number): number {
   const base = STAGE_TIME_LIMITS[getStageType(stageNum)]
-  return Math.round(base * Math.pow(BALANCE.CYCLE_TIME_DECAY, cycle - 1))
+  const decay = state.ascensionLevel >= 4 ? A4_CYCLE_TIME_DECAY : BALANCE.CYCLE_TIME_DECAY
+  return Math.round(base * Math.pow(decay, cycle - 1))
 }
 
 /** 获取下一个战斗节点（无限循环，始终 +1） */

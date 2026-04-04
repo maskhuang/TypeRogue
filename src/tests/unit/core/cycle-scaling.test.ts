@@ -4,9 +4,10 @@
 // Story 25.2: triple difficulty scaling (time × decay)
 // Story 42.5: calculateTargetScore cycle 缩放已移除（指数增长替代）
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { getCycleTimeLimit } from '../../../src/systems/stage/stageFlow'
-import { BALANCE } from '../../../src/core/constants'
+import { BALANCE, A4_CYCLE_TIME_DECAY } from '../../../src/core/constants'
+import { state } from '../../../src/core/state'
 
 describe('周目难度缩放 (cycle scaling)', () => {
   // === AC2: 时间限制指数衰减 ===
@@ -90,6 +91,39 @@ describe('周目难度缩放 (cycle scaling)', () => {
       } finally {
         ;(BALANCE as any).CYCLE_TIME_DECAY = original
       }
+    })
+  })
+
+  // === A4: 加剧时间衰减 (Story 54.5) ===
+
+  describe('A4 时间衰减加剧', () => {
+    afterEach(() => { state.ascensionLevel = 0 })
+
+    it('A0 使用默认衰减 0.9', () => {
+      state.ascensionLevel = 0
+      expect(getCycleTimeLimit(1, 2)).toBe(Math.round(30 * 0.9))
+    })
+
+    it('A3 仍使用默认衰减 0.9', () => {
+      state.ascensionLevel = 3
+      expect(getCycleTimeLimit(1, 2)).toBe(Math.round(30 * 0.9))
+    })
+
+    it('A4 使用加剧衰减 0.85', () => {
+      state.ascensionLevel = 4
+      expect(getCycleTimeLimit(1, 2)).toBe(Math.round(30 * A4_CYCLE_TIME_DECAY))
+      // 30 × 0.85 = 25.5 → 26
+      expect(getCycleTimeLimit(1, 2)).toBe(26)
+    })
+
+    it('A4 cycle 3: 30 × 0.85² ≈ 21.7 → 22', () => {
+      state.ascensionLevel = 4
+      expect(getCycleTimeLimit(1, 3)).toBe(Math.round(30 * Math.pow(0.85, 2)))
+    })
+
+    it('A10 也使用 0.85', () => {
+      state.ascensionLevel = 10
+      expect(getCycleTimeLimit(1, 2)).toBe(26)
     })
   })
 })
