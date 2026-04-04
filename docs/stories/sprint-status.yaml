@@ -503,12 +503,12 @@ development_status:
   epic-49-retrospective: optional
 
   # ===== Epic 50: 拓扑型扩展 — 图论领域 =====
-  epic-50: backlog
-  50-1-topology-bridge: backlog              # 拓扑：桥 — 移除后邻居断裂→大额bonus
-  50-2-topology-clique: backlog              # 拓扑：团 — 最大全连接子集→bonus
-  50-3-topology-component: backlog           # 拓扑：连通 — 连通分量大小→bonus
-  50-4-generation-integration: backlog       # 技能生成集成
-  50-5-balance-playtest: backlog             # 数值平衡与 playtest
+  epic-50: done
+  50-1-topology-bridge: done                 # 拓扑：桥 — 移除后邻居断裂→大额bonus
+  50-2-topology-clique: done                 # 拓扑：团 — 最大全连接子集→bonus
+  50-3-topology-component: done              # 拓扑：连通 — 连通分量大小→bonus
+  50-4-generation-integration: done          # 技能生成集成
+  50-5-balance-playtest: done                # 数值平衡与 playtest
   epic-50-retrospective: optional
 
   # ===== Epic 51: 元规则型扩展 — 元编程领域 =====

@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（48 类，6 类别） ====
+// ===== 词条类型枚举（51 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -48,6 +48,9 @@ export enum AffixType {
   Flow = 'flow',
   Confluence = 'confluence',
   Turbulence = 'turbulence',
+  Bridge = 'bridge',
+  Clique = 'clique',
+  Component = 'component',
   // ── 词感型 word_sense ──
   Outcast = 'outcast',
   Gravity = 'gravity',
@@ -109,6 +112,9 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Flow]: 'topology',
   [AffixType.Confluence]: 'topology',
   [AffixType.Turbulence]: 'topology',
+  [AffixType.Bridge]: 'topology',
+  [AffixType.Clique]: 'topology',
+  [AffixType.Component]: 'topology',
   // ── 词感型 ──
   [AffixType.Outcast]: 'word_sense',
   [AffixType.Gravity]: 'word_sense',
@@ -268,6 +274,9 @@ export interface AffixInstance {
   burstK?: number                  // Burst: 每连击层的 critMult 加成
   zeroInK?: number                 // ZeroIn: 每 miss 层的 critMult 补偿
   sharpK?: number                  // Sharpshooter: (1-critChance) × K 的 critMult 加成
+  bridgeK?: number                 // Bridge: 是桥时的 bonusPercent 加成
+  cliqueK?: number                 // Clique: 每团成员的 bonusPercent
+  componentK?: number              // Component: 每连通成员的 bonusPercent
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
@@ -470,6 +479,9 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Burst]: 'high',
   [AffixType.ZeroIn]: 'high',
   [AffixType.Sharpshooter]: 'high',
+  [AffixType.Bridge]: 'high',
+  [AffixType.Clique]: 'high',
+  [AffixType.Component]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -581,6 +593,9 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Burst]: '连射',
   [AffixType.ZeroIn]: '校准',
   [AffixType.Sharpshooter]: '神射',
+  [AffixType.Bridge]: '桥',
+  [AffixType.Clique]: '团',
+  [AffixType.Component]: '连通',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -633,6 +648,9 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Burst]: '连续暴击次数越多，暴击倍率越高；未暴击时连击归零',
   [AffixType.ZeroIn]: '连续未暴击次数越多，下次暴击的倍率越高',
   [AffixType.Sharpshooter]: '暴击率越低，暴击时的倍率加成越高',
+  [AffixType.Bridge]: '自身是连接关键位置（移除后邻居断裂）时，大额加成',
+  [AffixType.Clique]: '指定关系的邻居中互相连接的最大群组越大，产出越高',
+  [AffixType.Component]: '沿相邻关系的连片技能区域越大，产出越高',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

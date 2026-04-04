@@ -414,6 +414,78 @@ export function shannonEntropy(word: string): number {
   return h
 }
 
+/** 检查移除 excludeKey 后 nodes 是否仍然连通（BFS） */
+export function areConnectedWithout(
+  nodes: string[],
+  excludeKey: string,
+  posRel: PositionRelation,
+  bindings: Map<string, string>,
+): boolean {
+  if (nodes.length < 2) return true
+  const boundKeys = new Set([...bindings.keys()].filter(k => k !== excludeKey))
+  const visited = new Set<string>()
+  const queue = [nodes[0]]
+  visited.add(nodes[0])
+  while (queue.length > 0) {
+    const current = queue.shift()!
+    for (const neighbor of getKeysWithRelation(current, posRel)) {
+      if (!visited.has(neighbor) && boundKeys.has(neighbor)) {
+        visited.add(neighbor)
+        queue.push(neighbor)
+      }
+    }
+  }
+  return nodes.every(n => visited.has(n))
+}
+
+/** 最大全连接子集大小（暴力枚举，规模 ≤ 7） */
+export function findMaxClique(
+  nodes: string[],
+  posRel: PositionRelation,
+): number {
+  if (nodes.length <= 1) return nodes.length
+  let maxSize = 1
+  const n = nodes.length
+  for (let mask = 3; mask < (1 << n); mask++) {
+    const subset: string[] = []
+    for (let i = 0; i < n; i++) {
+      if (mask & (1 << i)) subset.push(nodes[i])
+    }
+    if (subset.length <= maxSize) continue
+    let allConnected = true
+    for (let i = 0; i < subset.length && allConnected; i++) {
+      for (let j = i + 1; j < subset.length && allConnected; j++) {
+        if (!hasRelation(subset[i], subset[j], posRel)) allConnected = false
+      }
+    }
+    if (allConnected && subset.length > maxSize) maxSize = subset.length
+  }
+  return maxSize
+}
+
+/** BFS 连通分量大小（沿 posRel 关系，只走已绑定键位） */
+export function bfsComponentSize(
+  startKey: string,
+  posRel: PositionRelation,
+  bindings: Map<string, string>,
+): number {
+  const boundKeys = new Set(bindings.keys())
+  if (!boundKeys.has(startKey)) return 0
+  const visited = new Set<string>()
+  const queue = [startKey]
+  visited.add(startKey)
+  while (queue.length > 0) {
+    const current = queue.shift()!
+    for (const neighbor of getKeysWithRelation(current, posRel)) {
+      if (!visited.has(neighbor) && boundKeys.has(neighbor)) {
+        visited.add(neighbor)
+        queue.push(neighbor)
+      }
+    }
+  }
+  return visited.size
+}
+
 export function isFirstOrLastLetter(key: string, word: string): boolean {
   if (!key || !word || word.length === 0) return false
   const k = key.toLowerCase()
@@ -768,6 +840,41 @@ export function resolvePhase2(
             const spread = (maxBase - minBase) / maxBase
             bonusPercent += (affix.turbulenceK ?? 0) * spread * nSkills.length
           }
+        }
+        break
+      }
+
+      case AffixType.Bridge: {
+        // 桥：移除自身后邻居断裂时大额 bonus
+        if (affix.posRel == null) break
+        const bridgeNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
+          .filter(k => ctx.bindings.has(k))
+        if (bridgeNeighborKeys.length >= 2) {
+          if (!areConnectedWithout(bridgeNeighborKeys, ctx.triggerKey, affix.posRel, ctx.bindings)) {
+            bonusPercent += affix.bridgeK ?? 0
+          }
+        }
+        break
+      }
+
+      case AffixType.Clique: {
+        // 团：自身+posRel 邻居中最大全连接子集
+        if (affix.posRel == null) break
+        const cliqueNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
+          .filter(k => ctx.bindings.has(k))
+        const cliqueCandidates = [...ctx.occupiedKeys, ...cliqueNeighborKeys]
+        const maxClique = findMaxClique(cliqueCandidates, affix.posRel)
+        if (maxClique > 1) {
+          bonusPercent += (affix.cliqueK ?? 0) * (maxClique - 1)
+        }
+        break
+      }
+
+      case AffixType.Component: {
+        // 连通：沿 Adjacent 的连通分量大小（固定 Adjacent，不带 posRel）
+        const compSize = bfsComponentSize(ctx.triggerKey, PositionRelation.Adjacent, ctx.bindings)
+        if (compSize > 1) {
+          bonusPercent += (affix.componentK ?? 0) * (compSize - 1)
         }
         break
       }

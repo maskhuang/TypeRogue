@@ -224,6 +224,19 @@ export function rollAffixParams(
     case AffixType.Sharpshooter:
       return { type, sharpK: roundTo(1.00 + random() * 1.00, 2) }
 
+    case AffixType.Bridge: {
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
+      return { type, posRel, bridgeK: roundTo(0.25 + random() * 0.20, 2) }
+    }
+
+    case AffixType.Clique: {
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
+      return { type, posRel, cliqueK: roundTo(0.10 + random() * 0.10, 2) }
+    }
+
+    case AffixType.Component:
+      return { type, componentK: roundTo(0.03 + random() * 0.03, 2) }
+
     case AffixType.Entropy:
       return { type, entropyK: roundTo(0.06 + random() * 0.06, 2) }
 

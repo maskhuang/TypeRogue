@@ -81,6 +81,9 @@ export const AFFIX_COLORS: Record<string, string> = {
   burst:       '#ff6348', // 火红 — 连射
   zero_in:     '#7bed9f', // 浅绿 — 校准
   sharpshooter:'#c0392b', // 深红 — 神射
+  bridge:      '#7f8c8d', // 石灰 — 桥
+  clique:      '#e74c3c', // 红 — 团
+  component:   '#3498db', // 蓝 — 连通
 }
 
 export interface KeyTooltipData {

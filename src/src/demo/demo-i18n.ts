@@ -570,8 +570,9 @@ const ZH: Record<string, string> = {
   'affix.entropy': '熵', 'affix.cipher': '密文', 'affix.pattern': '模式',
   'affix.leverage': '杠杆', 'affix.option': '期权', 'affix.hedge': '对冲',
   'affix.burst': '连射', 'affix.zero_in': '校准', 'affix.sharpshooter': '神射',
+  'affix.bridge': '桥', 'affix.clique': '团', 'affix.component': '连通',
 
-  // --- affix descriptions (47) ---
+  // --- affix descriptions (50) ---
   'affix_desc.convert': '读取一种资源的当前值，按系数加成本资源产出',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
   'affix_desc.multiply': '产出直接乘以固定倍数',
@@ -620,6 +621,9 @@ const ZH: Record<string, string> = {
   'affix_desc.burst': '连续暴击次数越多，暴击倍率越高；未暴击时连击归零',
   'affix_desc.zero_in': '连续未暴击次数越多，下次暴击的倍率越高',
   'affix_desc.sharpshooter': '暴击率越低，暴击时的倍率加成越高',
+  'affix_desc.bridge': '自身是连接关键位置（移除后邻居断裂）时，大额加成',
+  'affix_desc.clique': '指定关系的邻居中互相连接的最大群组越大，产出越高',
+  'affix_desc.component': '沿相邻关系的连片技能区域越大，产出越高',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -1370,8 +1374,9 @@ const EN: Record<string, string> = {
   'affix.entropy': 'Entropy', 'affix.cipher': 'Cipher', 'affix.pattern': 'Pattern',
   'affix.leverage': 'Leverage', 'affix.option': 'Option', 'affix.hedge': 'Hedge',
   'affix.burst': 'Burst', 'affix.zero_in': 'Zero-In', 'affix.sharpshooter': 'Sharpshooter',
+  'affix.bridge': 'Bridge', 'affix.clique': 'Clique', 'affix.component': 'Component',
 
-  // --- affix descriptions (47) ---
+  // --- affix descriptions (50) ---
   'affix_desc.convert': 'Reads another resource value, adds scaled bonus to this output',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
   'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
@@ -1420,6 +1425,9 @@ const EN: Record<string, string> = {
   'affix_desc.burst': 'More consecutive crits = higher crit multiplier; resets on miss',
   'affix_desc.zero_in': 'More consecutive misses = higher crit multiplier on next crit',
   'affix_desc.sharpshooter': 'Lower crit chance = higher crit multiplier when you do crit',
+  'affix_desc.bridge': 'Big bonus when this key is a bridge (removing it disconnects neighbors)',
+  'affix_desc.clique': 'Larger fully-connected group among matched neighbors = more output',
+  'affix_desc.component': 'Larger contiguous skill region (via adjacency) = more output',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',
