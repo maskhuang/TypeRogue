@@ -444,8 +444,8 @@ function triggerAffixSkillWithFeedback(
         state.classResourceProduced.energy = (state.classResourceProduced.energy ?? 0) + Math.abs(amount);
         routeEnergyToPipeline(Math.abs(amount));
         // 组装完成反馈（AssemblyPipeline 纯数据层不含 UI 依赖）
-        const completedWord = consumeCompletedWord();
-        if (completedWord) {
+        let completedWord: string | null
+        while ((completedWord = consumeCompletedWord()) !== null) {
           showFeedback(`✨ 词语组装完成: ${completedWord}`, '#4ecdc4');
           playSound('buy');
         }
