@@ -7,7 +7,7 @@
 // 所有 binding 写入操作（set/delete）统一通过本模块，
 // 外部不应直接操作 state.player.bindings。
 
-import { mapShapeToKeys } from '../data/skillShapes'
+import { mapShapeToKeys, getShapeRotationCount } from '../data/skillShapes'
 import { KEYS, PUNCTUATION_KEYS } from '../core/constants'
 import { FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem'
 
@@ -163,28 +163,41 @@ export function autoBindSkill(
 ): BindShapeResult | null {
   const skill = st.affixSkills.get(skillId)
   const shapeId = skill?.shapeId ?? 'monomino'
-  const rotation = skill?.rotation ?? 0
+  const preferredRotation = skill?.rotation ?? 0
+  const rotCount = getShapeRotationCount(shapeId)
 
-  // 遍历所有键位作为候选锚点
-  for (const anchorKey of KEYS) {
-    // 标点键不参与自动绑定
-    if (PUNCTUATION_KEYS.includes(anchorKey)) continue
-    // 字频过低的键跳过
-    if (letterFreqs && (letterFreqs.get(anchorKey) ?? 0) < FREQ_UNLOCK_THRESHOLD) continue
+  // 构建旋转候选列表：优先使用当前���转态，再尝试其他旋转态
+  const rotations = [preferredRotation]
+  for (let i = 1; i < rotCount; i++) {
+    rotations.push((preferredRotation + i) % rotCount)
+  }
 
-    // 获取形状映射到的键位列表
-    const targetKeys = mapShapeToKeys(anchorKey, shapeId, rotation)
-    if (!targetKeys) continue
+  // 遍历所有旋转态 × 所有键位作为候选锚点
+  for (const rotation of rotations) {
+    for (const anchorKey of KEYS) {
+      // 标点键不参与自动绑定
+      if (PUNCTUATION_KEYS.includes(anchorKey)) continue
+      // 字频过低的键跳过
+      if (letterFreqs && (letterFreqs.get(anchorKey) ?? 0) < FREQ_UNLOCK_THRESHOLD) continue
 
-    // 检查所有目标键位都空闲
-    const allFree = targetKeys.every(k => !st.bindings.has(k))
-    if (!allFree) continue
+      // 获取形状映射到的键位列表
+      const targetKeys = mapShapeToKeys(anchorKey, shapeId, rotation)
+      if (!targetKeys) continue
 
-    // 对于多格技能，也检查所有键的字频
-    if (letterFreqs && targetKeys.some(k => (letterFreqs.get(k) ?? 0) < FREQ_UNLOCK_THRESHOLD)) continue
+      // 检查所有目标键位都空闲
+      const allFree = targetKeys.every(k => !st.bindings.has(k))
+      if (!allFree) continue
 
-    // 找到空闲位置，执行绑定
-    return bindShapeToKeys(st, skillId, anchorKey)
+      // 对于多格技能，也检查所有键的字频
+      if (letterFreqs && targetKeys.some(k => (letterFreqs.get(k) ?? 0) < FREQ_UNLOCK_THRESHOLD)) continue
+
+      // 使用该旋转态绑定（如果和原始 rotation 不同则更新技能��
+      if (rotation !== preferredRotation && skill) {
+        skill.rotation = rotation
+      }
+      // 找到空闲位置，执行绑定
+      return bindShapeToKeys(st, skillId, anchorKey)
+    }
   }
 
   return null

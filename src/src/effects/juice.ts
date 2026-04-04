@@ -20,7 +20,7 @@ export function juiceUpStrong(element: HTMLElement | null): void {
 
 // === 资源产出浮字缩放（以 Lv1 产出者为基准 x1.0，log 放大，无上限，下限 x1.0） ===
 const LV1_ADD_BASE: Record<string, number> = {
-  base: 5, score: 15, multiplier: 0.2, time: 2, gold: 3,
+  base: 4, score: 11, multiplier: 0.35, time: 2, gold: 3,
 };
 const LV1_MUL_BASE: Record<string, number> = {
   base: 1.0, score: 0.1, multiplier: 0.15, time: 0.2, gold: 0.3,

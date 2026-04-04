@@ -3800,7 +3800,25 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
       // 两个技能互换位置
       unbindSkill(bs, skillId);
       unbindSkill(bs, existingSkill);
-      const r1 = bindShapeToKeys(bs, skillId, targetKey);
+      // 尝试绑定到目标键位，失败时自动尝试其他旋转态
+      let r1 = bindShapeToKeys(bs, skillId, targetKey);
+      if (!r1.success) {
+        const affixSkill = state.affixSkills.get(skillId);
+        const shapeId = affixSkill?.shapeId ?? 'monomino';
+        if (affixSkill && shapeId !== 'monomino') {
+          const currentRot = affixSkill.rotation ?? 0;
+          const rotCount = getShapeRotationCount(shapeId);
+          for (let attempt = 1; attempt < rotCount; attempt++) {
+            const candidate = (currentRot + attempt) % rotCount;
+            const fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, candidate);
+            if (fitKeys) {
+              affixSkill.rotation = candidate;
+              r1 = bindShapeToKeys(bs, skillId, targetKey);
+              if (r1.success) break;
+            }
+          }
+        }
+      }
       if (!r1.success) {
         // 放不下：恢复双方原始绑定
         if (sourceAnchorKey) bindShapeToKeys(bs, skillId, sourceAnchorKey);
@@ -3830,7 +3848,25 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
       }
     } else {
       // 绑定到目标键位（被覆盖技能自动解绑）
-      const r = bindShapeToKeys(bs, skillId, targetKey);
+      let r = bindShapeToKeys(bs, skillId, targetKey);
+      // 当前旋转放不下 → 自动尝试其他旋转态
+      if (!r.success) {
+        const affixSkill = state.affixSkills.get(skillId);
+        const shapeId = affixSkill?.shapeId ?? 'monomino';
+        if (affixSkill && shapeId !== 'monomino') {
+          const currentRot = affixSkill.rotation ?? 0;
+          const rotCount = getShapeRotationCount(shapeId);
+          for (let attempt = 1; attempt < rotCount; attempt++) {
+            const candidate = (currentRot + attempt) % rotCount;
+            const fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, candidate);
+            if (fitKeys) {
+              affixSkill.rotation = candidate;
+              r = bindShapeToKeys(bs, skillId, targetKey);
+              if (r.success) break;
+            }
+          }
+        }
+      }
       if (!r.success) {
         showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
       }

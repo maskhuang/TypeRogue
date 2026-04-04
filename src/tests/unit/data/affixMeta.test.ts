@@ -24,7 +24,7 @@ describe('removeAffixAtRuntime', () => {
   function mockSkill(affixTypes: AffixType[]): AffixSkillInstance {
     return {
       id: 'test', name: 'test', icon: '', resource: 'base',
-      baseValues: [5, 8, 12, 17], level: 1, rarity: 0 as any,
+      baseValues: [4, 7, 10, 14], level: 1, rarity: 0 as any,
       affixes: affixTypes.map(type => ({ type } as AffixInstance)),
       enchantmentIds: [],
     }

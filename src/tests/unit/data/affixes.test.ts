@@ -259,9 +259,9 @@ describe('BASE_VALUES', () => {
   })
 
   it('should match design doc values', () => {
-    expect(BASE_VALUES.base).toEqual([5, 8, 12, 17])
-    expect(BASE_VALUES.score).toEqual([15, 24, 36, 50])
-    expect(BASE_VALUES.multiplier).toEqual([0.2, 0.32, 0.48, 0.67])
+    expect(BASE_VALUES.base).toEqual([4, 7, 10, 14])
+    expect(BASE_VALUES.score).toEqual([11, 18, 27, 38])
+    expect(BASE_VALUES.multiplier).toEqual([0.35, 0.56, 0.84, 1.17])
     expect(BASE_VALUES.gold).toEqual([3, 5, 8, 11])
   })
 })

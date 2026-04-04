@@ -503,9 +503,9 @@ export const FATE_COIN_CONVERSION = 2
 
 /** 基底值：7 种资源 × 4 等级（白装可达 Lv4） */
 export const BASE_VALUES: Record<ResourceType, number[]> = {
-  base:       [5, 8, 12, 17],
-  score:      [15, 24, 36, 50],
-  multiplier: [0.2, 0.32, 0.48, 0.67],
+  base:       [4, 7, 10, 14],
+  score:      [11, 18, 27, 38],
+  multiplier: [0.35, 0.56, 0.84, 1.17],
   time:       [0.2, 0.32, 0.48, 0.67],
   gold:       [3, 5, 8, 11],
   energy:   [1, 1.6, 2.4, 3.4],
