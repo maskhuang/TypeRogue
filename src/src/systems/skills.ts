@@ -523,6 +523,19 @@ function triggerAffixSkillWithFeedback(
     advanceCritCharge(tr.isCrit);
   }
 
+  // 消耗反馈（PhaseShift 气态 / EndoExo 放热 / Fusion 双消耗）
+  for (const tr of result.triggerResults) {
+    if (!tr.consumeRequests) continue
+    for (const req of tr.consumeRequests) {
+      if (req.amount <= 0) continue
+      const cColor = RESOURCE_COLORS[req.resource] || '#ff4444'
+      const cLabel = getResourceLabel(req.resource)
+      const cDisplay = parseFloat(req.amount.toPrecision(3))
+      const cAnchor = buildAnchor(tr.triggerKey, req.resource, -req.amount)
+      showFeedback(`-${cDisplay}${cLabel}`, cColor, 0.6, cAnchor)
+    }
+  }
+
   // 衍生附魔额外资源反馈
   for (const tr of result.triggerResults) {
     if (!tr.phase5?.transmuteOutput) continue;
