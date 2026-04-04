@@ -98,42 +98,35 @@ function advancePipeline(
 
 // === 状态操作 ===
 
+/** 组装队列上限 */
+export const MAX_QUEUE_SIZE = 5;
+
 /**
- * 能量路由入口：将能量注入当前流水线。
- * 替代旧版 routeFragmentsToInventory（造词师专用）。
- * 完成时自动将词加入 wordDeck + craftedWords。
+ * 能量路由入口：将能量注入队列头部流水线。
+ * 完成后自动开始下一个，剩余能量溢出。
  */
 export function routeEnergyToPipeline(energy: number): void {
-  if (!state.assemblyPipeline) return;
-
-  const result = advancePipeline(state.assemblyPipeline, energy);
-  state.assemblyPipeline = result.pipeline;
-
-  if (result.completed) {
-    const word = result.pipeline.targetWord;
-    // 加入词库
-    if (!state.player.wordDeck.includes(word)) {
-      state.player.wordDeck.push(word);
+  let remaining = energy
+  while (remaining > 0 && state.assemblyQueue.length > 0) {
+    const current = state.assemblyQueue[0]
+    const result = advancePipeline(current, remaining)
+    remaining = result.remainingEnergy
+    if (result.completed) {
+      const word = current.targetWord
+      if (!state.player.wordDeck.includes(word)) state.player.wordDeck.push(word)
+      if (!state.craftedWords.includes(word)) state.craftedWords.push(word)
+      state.assemblyQueue.shift()
+      _completedWords.push(word)
     }
-    // 记录已造词
-    if (!state.craftedWords.includes(word)) {
-      state.craftedWords.push(word);
-    }
-    // 清空流水线
-    state.assemblyPipeline = null;
-    // 返回完成的词供调用方处理反馈
-    _lastCompletedWord = word;
   }
 }
 
-/** 上次完成的词（供调用方读取后清零） */
-let _lastCompletedWord: string | null = null;
+/** 本次能量路由中完成的词列表 */
+let _completedWords: string[] = [];
 
-/** 获取并清除上次完成的词 */
+/** 获取并清除完成的词列表 */
 export function consumeCompletedWord(): string | null {
-  const w = _lastCompletedWord;
-  _lastCompletedWord = null;
-  return w;
+  return _completedWords.shift() ?? null
 }
 
 /** 战斗 HUD 流水线进度更新（纯 DOM API，无 innerHTML） */
@@ -141,7 +134,7 @@ export function updatePipelineHUD(): void {
   const el = document.getElementById('pipeline-hud');
   if (!el) return;
 
-  const pipeline = state.assemblyPipeline;
+  const pipeline = state.assemblyQueue[0];
   if (!pipeline) {
     el.textContent = '';
     el.style.display = 'none';

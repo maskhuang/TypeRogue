@@ -115,8 +115,8 @@ export interface RunStateData {
   /** 造词师：本 Run 已造词列表 */
   craftedWords: string[]
 
-  /** 造词师：词语组装流水线（跨关保持） */
-  assemblyPipeline: import('../../core/types').AssemblyPipeline | null
+  /** 造词师：组装队列（跨关保持） */
+  assemblyQueue: import('../../core/types').AssemblyPipeline[]
 
   /** 蜕变师：变异素库存 */
   mutagenInventory: number
@@ -201,7 +201,7 @@ export class RunState {
       fragmentQueue: ['_', '_', '_', '_', '_', '_'],
       fragmentQueuePosition: 0,
       craftedWords: [],
-      assemblyPipeline: null,
+      assemblyQueue: [],
       mutagenInventory: 0,
       evolvedSkills: new Map(),
       seenSkillTypes: new Set(),
@@ -532,7 +532,7 @@ export class RunState {
       fragmentQueue: [...this.data.fragmentQueue],
       fragmentQueuePosition: this.data.fragmentQueuePosition,
       craftedWords: [...this.data.craftedWords],
-      assemblyPipeline: this.data.assemblyPipeline ? JSON.parse(JSON.stringify(this.data.assemblyPipeline)) : null,
+      assemblyQueue: this.data.assemblyQueue ? JSON.parse(JSON.stringify(this.data.assemblyQueue)) : [],
       mutagenInventory: this.data.mutagenInventory,
       evolvedSkills: Object.fromEntries(this.data.evolvedSkills),
       seenSkillTypes: Array.from(this.data.seenSkillTypes),
@@ -610,7 +610,9 @@ export class RunState {
     runState.data.fragmentQueue = (parsed as any).fragmentQueue || ['_', '_', '_', '_', '_', '_']
     runState.data.fragmentQueuePosition = (parsed as any).fragmentQueuePosition || 0
     runState.data.craftedWords = (parsed as any).craftedWords || []
-    runState.data.assemblyPipeline = (parsed as any).assemblyPipeline || null
+    // 存档迁移：旧版 assemblyPipeline → assemblyQueue[0]
+    const oldPipeline = (parsed as any).assemblyPipeline
+    runState.data.assemblyQueue = (parsed as any).assemblyQueue || (oldPipeline ? [oldPipeline] : [])
     runState.data.mutagenInventory = (parsed as any).mutagenInventory || 0
     runState.data.wordDeck = (parsed as any).wordDeck || []
 

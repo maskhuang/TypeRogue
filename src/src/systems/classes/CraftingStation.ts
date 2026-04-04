@@ -6,7 +6,7 @@
 import { state } from '../../core/state';
 import { playSound } from '../../effects/sound';
 import { showFeedback } from '../battle';
-import { createPipeline, MAX_PIPELINE_LENGTH } from './AssemblyPipeline';
+import { createPipeline, MAX_PIPELINE_LENGTH, MAX_QUEUE_SIZE } from './AssemblyPipeline';
 import { getAllWords } from '../../data/wordPacks';
 import { applyApprenticeEvent } from '../../data/affixTrigger';
 import { getApprenticeGrowthMultiplier } from '../relics/EnchantmentRelicBehaviors';
@@ -33,11 +33,9 @@ export function renderCraftPanel(container: HTMLElement, onGoldUpdate: () => voi
   // --- 碎片库存 ---
   renderFragmentInventory(container);
 
-  // --- 组装新词 ---
-  if (!state.assemblyPipeline) {
-    renderWordBuilder(container);
-    renderSuggestedWords(container);
-  }
+  // --- 组装新词（队列版：随时可排队） ---
+  renderWordBuilder(container);
+  renderSuggestedWords(container);
 
   // --- 已造词列表 ---
   renderCraftedWordList(container);
@@ -53,7 +51,7 @@ function renderPipelineStatus(container: HTMLElement): void {
   header.textContent = '⚡ 组装流水线';
   section.appendChild(header);
 
-  const pipeline = state.assemblyPipeline;
+  const pipeline = state.assemblyQueue[0] ?? null;
   if (!pipeline) {
     const empty = document.createElement('div');
     empty.className = 'craft-pipeline-empty';
@@ -112,7 +110,7 @@ function renderPipelineStatus(container: HTMLElement): void {
           state.fragmentInventory[slot.letter] = (state.fragmentInventory[slot.letter] || 0) + 1;
         }
       }
-      state.assemblyPipeline = null;
+      state.assemblyQueue.shift();
       showFeedback('组装已取消，碎片已返还', '#88ccff');
       rerender();
     };
@@ -155,7 +153,7 @@ function renderFragmentInventory(container: HTMLElement): void {
     cell.appendChild(countEl);
 
     // 有流水线时不可点击；无流水线时点击添加字母
-    if (!state.assemblyPipeline && available > 0) {
+    if (available > 0) {
       cell.onclick = () => addLetterToWord(letter);
     }
 
@@ -222,7 +220,8 @@ function renderWordBuilder(container: HTMLElement): void {
     const word = currentWordLetters.join('').toLowerCase();
     const tooLong = word.length > MAX_PIPELINE_LENGTH;
     const hasFragments = canBuildWord(word, state.fragmentInventory);
-    const canStart = !tooLong && hasFragments;
+    const queueFull = state.assemblyQueue.length >= MAX_QUEUE_SIZE;
+    const canStart = !tooLong && hasFragments && !queueFull;
 
     const btn = document.createElement('button');
     btn.className = 'craft-confirm-btn';
@@ -234,7 +233,7 @@ function renderWordBuilder(container: HTMLElement): void {
       if (!canStart) return;
       const pipeline = createPipeline(word, state.fragmentInventory);
       if (pipeline) {
-        state.assemblyPipeline = pipeline;
+        state.assemblyQueue.push(pipeline);
         currentWordLetters = [];
 
         // 学徒事件

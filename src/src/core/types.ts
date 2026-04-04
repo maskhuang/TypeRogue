@@ -212,7 +212,7 @@ export interface GameState {
   fragmentQueue: string[];                          // 造词师：采集队列字母序列（如 ['e','e','a','t','_','_']），跨关保持
   fragmentQueuePosition: number;                    // 造词师：采集队列当前位置（每关重置）
   craftedWords: string[];                           // 造词师：本 Run 已造词列表，跨关保持，Run 重置
-  assemblyPipeline: AssemblyPipeline | null;       // 造词师：词语组装流水线（跨关保持）
+  assemblyQueue: AssemblyPipeline[];               // 造词师：组装队列（跨关保持，完成后自动下一个）
   mutagenInventory: number;                        // 蜕变师：变异素库存，跨关保持，Run 重置
   affixSkills: Map<string, AffixSkillInstance>;      // 词条制技能定义（skillId → 完整技能数据），35.9
   affixSkillStates: Map<string, SkillRuntimeState>;  // 词条制技能运行时状态（skillId → 8字段状态），35.9

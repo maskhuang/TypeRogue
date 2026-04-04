@@ -38,7 +38,7 @@ export function createInitialState(): GameState {
     fragmentQueue: ['_', '_', '_', '_', '_', '_'],
     fragmentQueuePosition: 0,
     craftedWords: [],
-    assemblyPipeline: null,
+    assemblyQueue: [],
     mutagenInventory: 0,
     affixSkills: new Map(),
     affixSkillStates: new Map(),
