@@ -84,7 +84,12 @@ export function resetStageProduced(): void {
 
 /** 记录本关资源产出（applyResource 正产出时调用） */
 export function recordStageProduced(resource: ResourceType, amount: number): void {
-  if (amount > 0) _stageProduced[resource] = (_stageProduced[resource] ?? 0) + amount;
+  if (amount > 0) {
+    _stageProduced[resource] = (_stageProduced[resource] ?? 0) + amount;
+  } else if (amount < 0) {
+    // 消耗扣减累积产出（不低于 0）
+    _stageProduced[resource] = Math.max(0, (_stageProduced[resource] ?? 0) + amount);
+  }
 }
 
 /** 获取本关累积产出快照（注入 TriggerContext） */
@@ -380,8 +385,8 @@ function triggerAffixSkillWithFeedback(
       if (totalBonus > 0 && amount > 0) amount = amount * (1 + totalBonus);
       // 追踪本词资源产出（击键代价修饰器用）
       if (amount > 0) recordWordResourceOutput(resource, amount);
-      // Story 45: 追踪本关累积产出（PhaseShift/EndoExo/Fusion 用）
-      if (amount > 0) recordStageProduced(resource, amount);
+      // 追踪本关累积产出（正值累积，负值扣减——消耗会降低温度）
+      recordStageProduced(resource, amount);
 
       // Res* 学徒附魔：全场资源产出监听（任何技能/遗物产出时，所有匹配 Res* 附魔的技能积累 EXP）
       const resEnch = RES_ENCHANTMENT_BY_RESOURCE[resource];

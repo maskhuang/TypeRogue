@@ -315,6 +315,26 @@ export function orchestrateAffixTrigger(
     // 注意：ctx.resources 是触发开始时的快照，consume 基于触发前的资源值限制消耗量
     if (result.consumeRequests) {
       for (const req of result.consumeRequests) {
+        // Counter 保护消耗：扫描范围内 Counter 取消本次消耗
+        let consumeBlocked = false
+        const checkedC = new Set<string>()
+        for (const [cSkillId, cSkill] of ctx.allSkills) {
+          if (checkedC.has(cSkillId)) continue
+          checkedC.add(cSkillId)
+          const counterAffix = cSkill.affixes.find(a => a.type === AffixType.Counter)
+          if (!counterAffix) continue
+          const cRt = ctx.skillStates.get(cSkillId)
+          if (!cRt || (cRt as any).counterCharges <= 0) continue
+          if (cSkillId !== item.skillId) {
+            if (counterAffix.posRel == null) continue
+            const cKeys = [...ctx.bindings].filter(([, sid]) => sid === cSkillId).map(([k]) => k)
+            if (!cKeys.some(ck => hasRelation(ck, item.triggerKey, counterAffix.posRel!))) continue
+          }
+          (cRt as any).counterCharges--
+          consumeBlocked = true
+          break
+        }
+        if (consumeBlocked) continue
         const current = ctx.resources[req.resource] ?? 0
         const consumeAmount = Math.min(req.amount, Math.max(0, current))
         if (consumeAmount > 0) {
