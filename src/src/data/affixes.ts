@@ -358,6 +358,8 @@ export interface AffixInstance {
   reflectK?: number                // Reflect: affixCount × level × K
   patchLow?: number                // MonkeyPatch: 随机系数下界
   patchHigh?: number               // MonkeyPatch: 随机系数上界
+  ligatureBonus?: number           // Ligature: 每重复字母的额外乘数加成（1.0 = ×nOccurrences, 1.5 = ×nOcc×1.5）
+  innateCount?: number             // Innate: 每关开始自动触发次数
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
@@ -1045,8 +1047,12 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.PhaseShift]:{ param: 'kGas',          delta: 0.008, mode: 'add' },
   [AffixType.EndoExo]:  { param: 'kExo',           delta: 0.005, mode: 'add' },
   [AffixType.Fusion]:   { param: 'fusionK',        delta: 0.005, mode: 'add' },
+  // ── 其他 ──
+  [AffixType.Ligature]:  { param: 'ligatureBonus',  delta: 0.25,  mode: 'add' },
+  [AffixType.Innate]:    { param: 'innateCount',    delta: 1,     mode: 'add' },
+  [AffixType.MonkeyPatch]:{ param: 'patchHigh',     delta: 0.3,   mode: 'add' },
   // Amplify: 每层加成=基础产出，升级通过 baseValues 自然增长
-  // Rainbow / Ligature / Twin / Mirror / Conduit / Innate / Ethereal / MonkeyPatch: 无可缩放数值参数
+  // Rainbow / Twin / Mirror / Conduit / Ethereal: 无可缩放数值参数
 }
 
 /** 四舍五入到指定小数位 */

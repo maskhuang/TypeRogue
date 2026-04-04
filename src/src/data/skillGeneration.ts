@@ -268,7 +268,7 @@ export function rollAffixParams(
       return { type, probMult: roundTo(random() * 2.0, 2) }
 
     case AffixType.Ligature:
-      return { type }
+      return { type, ligatureBonus: 1.0 }
 
     case AffixType.Twin:
       return { type }
@@ -357,7 +357,7 @@ export function rollAffixParams(
       return { type, patchLow: 0.5, patchHigh: 2.0 }
 
     case AffixType.Innate:
-      return { type }
+      return { type, innateCount: 1 }
 
     case AffixType.Counter: {
       const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)

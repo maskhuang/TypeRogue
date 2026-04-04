@@ -2299,9 +2299,11 @@ export async function startLevel(): Promise<void> {
         applyAffixLevelScaling(otherAffixes, 1);
       }
     }
-    // Innate: 自动触发（质变·觉醒：3 次）
-    if (skill.affixes.some(a => a.type === AffixType.Innate)) {
-      const innateCount = (rt.questTransformed && skill.enchantmentIds?.includes(EnchantmentTypeEnum.QuestInnate)) ? 3 : 1;
+    // Innate: 自动触发（基础次数由参数决定，质变·觉醒：×3）
+    const innateAffix = skill.affixes.find(a => a.type === AffixType.Innate);
+    if (innateAffix) {
+      const baseCount = innateAffix.innateCount ?? 1;
+      const innateCount = (rt.questTransformed && skill.enchantmentIds?.includes(EnchantmentTypeEnum.QuestInnate)) ? baseCount * 3 : baseCount;
       for (let i = 0; i < innateCount; i++) triggerSkill(skillId, null as any);
     }
   }

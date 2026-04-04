@@ -1378,8 +1378,9 @@ export function resolvePhase3(
           nEff = countOccurrences(ctx.triggerKey, ctx.currentWord)
         }
         if (nEff >= 2) {
-          output *= nEff
-          multipliers.push(nEff)
+          const ligMult = nEff * (affix.ligatureBonus ?? 1.0)
+          output *= ligMult
+          multipliers.push(ligMult)
           flags.ligatureCount = nEff
         }
         break
