@@ -1474,13 +1474,12 @@ export function resolvePhase3(
       }
       // 暴击溢层（遗物）：暴击时自身额外叠层
       runtimeState.stacks += (ctx.critOverflowStacks ?? 0)
-      // Overflow 词条：暴击时范围内 1 个叠层类邻居 +N 层
+      // Overflow 词条：暴击时范围内叠层类邻居 +N 层（质变后全部，否则随机1个）
       for (const a of skill.affixes) {
         if (a.type === AffixType.Overflow && a.posRel != null && (a.overflowStacks ?? 0) > 0) {
           const overflowNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, a.posRel)
             .filter(k => ctx.bindings.has(k))
-          // 找叠层类邻居
-          const candidates: string[] = []
+          const candidates: { key: string, id: string }[] = []
           const seen = new Set<string>()
           for (const nk of overflowNeighborKeys) {
             const nId = ctx.bindings.get(nk)
@@ -1488,15 +1487,16 @@ export function resolvePhase3(
             seen.add(nId)
             const nSkill = ctx.allSkills.get(nId)
             if (nSkill?.affixes.some(na => isStackingAffixType(na.type))) {
-              candidates.push(nk)
+              candidates.push({ key: nk, id: nId })
             }
           }
           if (candidates.length > 0) {
-            // 随机选 1 个
-            const targetKey = candidates[Math.floor(ctx.randomFn() * candidates.length)]
-            const targetId = ctx.bindings.get(targetKey)
-            if (targetId) {
-              const targetState = ctx.skillStates.get(targetId)
+            const isTransformed = isTransformedForAffix(AffixType.Overflow, runtimeState, skill, ctx)
+            const targets = isTransformed
+              ? candidates  // 质变：全部
+              : [candidates[Math.floor(ctx.randomFn() * candidates.length)]]  // 普通：随机1个
+            for (const t of targets) {
+              const targetState = ctx.skillStates.get(t.id)
               if (targetState) targetState.stacks += a.overflowStacks!
             }
           }
