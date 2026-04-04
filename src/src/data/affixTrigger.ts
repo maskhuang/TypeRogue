@@ -56,6 +56,12 @@ export function getExtendedNeighbors(
   return Array.from(neighbors)
 }
 
+/** 判断词条类型是否属于叠层类（Pulse 爆发范围触发用） */
+function isStackingAffixType(type: AffixType): boolean {
+  return type === AffixType.Pulse || type === AffixType.Splash || type === AffixType.Resonance
+    || type === AffixType.Relay || type === AffixType.Amplify || type === AffixType.WarDrum
+}
+
 // ===== 触发上下文 =====
 
 /** 战斗中触发计算所需的只读上下文快照 */
@@ -266,6 +272,8 @@ export interface Phase5Result {
   pulseSelfTrigger?: boolean
   /** 脉冲质变：爆发时触发的匹配技能键位（进入伪循环） */
   pulseBurstTargets?: string[]
+  /** 脉冲：爆发时触发范围内叠层类邻居技能 */
+  pulseNeighborTargets?: string[]
   /** 增幅质变：层数增加时触发的匹配技能键位 */
   amplifyTriggerTargets?: string[]
 }
@@ -1789,9 +1797,32 @@ export function resolvePhase5(
     }
   }
 
-  // ── Pulse 爆发：立刻自触发一次 ──
+  // ── Pulse 爆发：触发范围内所有叠层类技能一次（含自身） ──
   if (triggerFlags.isPulse) {
     result.pulseSelfTrigger = true
+    // 查找范围内的叠层类邻居技能
+    if (!ctx.chainAffixesDisabled) {
+      const pulseAffix = skill.affixes.find(a => a.type === AffixType.Pulse)
+      if (pulseAffix?.posRel != null) {
+        const pulseNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, pulseAffix.posRel)
+          .filter(k => ctx.bindings.has(k))
+        const targets: string[] = []
+        const seen = new Set<string>()
+        for (const nk of pulseNeighborKeys) {
+          const nSkillId = ctx.bindings.get(nk)
+          if (!nSkillId || nSkillId === skill.id || seen.has(nSkillId)) continue
+          seen.add(nSkillId)
+          const nSkill = ctx.allSkills.get(nSkillId)
+          if (!nSkill) continue
+          if (nSkill.affixes.some(a => isStackingAffixType(a.type))) {
+            targets.push(nk)
+          }
+        }
+        if (targets.length > 0) {
+          result.pulseNeighborTargets = targets
+        }
+      }
+    }
   }
 
   // ── Parity 质变·相变：奇数叠层时额外自触发 ──

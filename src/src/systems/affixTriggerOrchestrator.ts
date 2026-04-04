@@ -421,6 +421,21 @@ export function orchestrateAffixTrigger(
       })
     }
 
+    // Pulse neighbors: 脉冲爆发 — 触发范围内叠层类邻居技能
+    if (result.phase5?.pulseNeighborTargets) {
+      for (const targetKey of result.phase5.pulseNeighborTargets) {
+        const targetSkillId = ctx.bindings.get(targetKey)
+        if (!targetSkillId) continue
+        queue.push({
+          skillId: targetSkillId,
+          triggerKey: targetKey,
+          type: 'pulse_burst',
+          depth: item.depth + 1,
+          chainHistory: childHistory,
+        })
+      }
+    }
+
     // Pulse burst: 脉冲质变 — 爆发时触发匹配技能（可进入伪循环）
     if (result.phase5?.pulseBurstTargets) {
       for (const targetKey of result.phase5.pulseBurstTargets) {
