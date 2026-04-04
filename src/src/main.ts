@@ -30,6 +30,7 @@ import { initLocale, setLocale, getLocale, applyHtmlI18n } from './demo/demo-i18
 import type { Locale } from './demo/demo-i18n';
 import { tutorialManager } from './systems/tutorial/TutorialManager';
 import { initFullTutorial } from './systems/tutorial/tutorialInit';
+import { A8_WORD_COMPRESS_RATIO } from './core/constants';
 
 // === 游戏初始化 ===
 async function init(): Promise<void> {
@@ -193,6 +194,19 @@ async function init(): Promise<void> {
   ];
 
   const startAfterClassSelect = () => {
+    // Story 54.7: A8+ 词库压缩 30%（ascensionLevel 已由 AscensionPicker 设置）
+    if (state.ascensionLevel >= 8) {
+      const deck = state.player.wordDeck;
+      const removeCount = Math.floor(deck.length * A8_WORD_COMPRESS_RATIO);
+      const indices = Array.from({ length: deck.length }, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      const toRemove = new Set(indices.slice(0, removeCount));
+      state.player.wordDeck = deck.filter((_, i) => !toRemove.has(i));
+    }
+
     // DEBUG: 直接授予测试遗物，跳过三选一
     if (DEBUG_RELICS.length > 0) {
       for (const id of DEBUG_RELICS) state.player.relics.add(id);

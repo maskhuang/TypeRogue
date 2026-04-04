@@ -4,7 +4,7 @@
 
 import type { GameState, SynergyState } from './types';
 import type { StageType } from '../systems/stage/StageConfig';
-import { BALANCE } from './constants';
+import { BALANCE, A7_RELIC_SLOTS } from './constants';
 import { MAX_RELIC_SLOTS, getRelicData } from '../data/relics';
 import { initRelicState } from '../systems/relics/RelicPipeline';
 import { eventBus } from './events/EventBus';
@@ -180,7 +180,7 @@ export function hasRelic(relicId: string): boolean {
  * 遗物槽位是否已满
  */
 export function isRelicSlotsFull(): boolean {
-  return state.player.relics.size >= MAX_RELIC_SLOTS;
+  return state.player.relics.size >= getMaxRelicSlots();
 }
 
 /**
@@ -220,9 +220,14 @@ export function replaceRelic(oldId: string, newId: string): number {
   return sellGold;
 }
 
-// === Ascension 工具函数 (Story 54.1) ===
+// === Ascension 工具函数 ===
 
-/** 获取当前局的 Ascension 级别 */
+/** 获取当前局的 Ascension 级别 (Story 54.1) */
 export function getAscensionLevel(): number {
   return state.ascensionLevel;
+}
+
+/** A7+: 遗物槽位上限（默认 10，A7+ 降为 8）(Story 54.7) */
+export function getMaxRelicSlots(): number {
+  return state.ascensionLevel >= 7 ? A7_RELIC_SLOTS : MAX_RELIC_SLOTS;
 }

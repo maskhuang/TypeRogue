@@ -97,6 +97,10 @@ export const A2_PRICE_MULT = 1.15;
 export const A4_CYCLE_TIME_DECAY = 0.85;
 /** A5: 商店刷新费用倍率 (Story 54.6) */
 export const A5_REFRESH_COST_MULT = 2;
+/** A7: 遗物槽位缩减值 (Story 54.7) */
+export const A7_RELIC_SLOTS = 8;
+/** A8: 词库压缩比例 (Story 54.7) */
+export const A8_WORD_COMPRESS_RATIO = 0.3;
 
 // === Ascension: 练习关金币映射 (Story 54.2) ===
 export const PRACTICE_GOLD = {

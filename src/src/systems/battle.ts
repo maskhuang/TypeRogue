@@ -2,7 +2,7 @@
 // 打字肉鸽 - 战斗系统
 // ============================================
 
-import { state, synergy, calculateTargetScore, resetResources, createBattleStats } from '../core/state';
+import { state, synergy, calculateTargetScore, resetResources, createBattleStats, getMaxRelicSlots } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
@@ -2557,10 +2557,10 @@ export function renderRelicDisplay(): void {
   const el = getElements();
   const relicArray = [...state.player.relics];
 
-  // 渲染 10 槽位到指定容器
+  // 渲染槽位到指定容器（A7+ 槽位缩减）
   function renderSlots(container: HTMLElement) {
     container.innerHTML = '';
-    for (let i = 0; i < MAX_RELIC_SLOTS; i++) {
+    for (let i = 0; i < getMaxRelicSlots(); i++) {
       const slot = document.createElement('span');
       const keyLabel = i < 9 ? `${i + 1}` : '0';
       if (relicArray[i]) {

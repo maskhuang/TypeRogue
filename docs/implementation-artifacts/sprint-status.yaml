@@ -406,7 +406,7 @@ development_status:
   54-4-a1-a2-economy-modifiers: done                   # A1-A2 经济修正器
   54-5-a3-a4-combat-pressure: done                     # A3-A4 战斗压力
   54-6-a5-a6-rule-changes: done                        # A5-A6 规则变更
-  54-7-a7-a8-resource-scarcity: backlog               # A7-A8 资源稀缺
+  54-7-a7-a8-resource-scarcity: done                   # A7-A8 资源稀缺
   54-8-a9-a10-ultimate-trial: backlog                 # A9-A10 终极试炼
   54-9-hud-unlock-feedback: backlog                   # HUD 显示 + 解锁反馈
   54-10-balance-integration-test: backlog             # 平衡调整与集成测试
