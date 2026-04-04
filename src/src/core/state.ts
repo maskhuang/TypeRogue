@@ -4,7 +4,7 @@
 
 import type { GameState, SynergyState } from './types';
 import type { StageType } from '../systems/stage/StageConfig';
-import { BALANCE, A7_RELIC_SLOTS } from './constants';
+import { BALANCE, A7_RELIC_SLOTS, A10_TARGET_GROWTH } from './constants';
 import { MAX_RELIC_SLOTS, getRelicData } from '../data/relics';
 import { initRelicState } from '../systems/relics/RelicPipeline';
 import { eventBus } from './events/EventBus';
@@ -164,7 +164,9 @@ export function calculateTargetScore(stageNum: number, stageType: StageType = 's
   const { TARGET_BASE, TARGET_GROWTH, BOSS_TARGET_MULT } = BALANCE;
   // 使用校准基数替代固定 TARGET_BASE；未校准时回退默认值
   const base = state.calibratedTargetBase > 0 ? state.calibratedTargetBase : TARGET_BASE;
-  const target = Math.round(base * Math.pow(TARGET_GROWTH, stageNum - 2));
+  // Story 54.8: A10+ 增长率 1.45→1.55
+  const growth = state.ascensionLevel >= 10 ? A10_TARGET_GROWTH : TARGET_GROWTH;
+  const target = Math.round(base * Math.pow(growth, stageNum - 2));
   return stageType === 'boss' ? Math.round(target * BOSS_TARGET_MULT) : target;
 }
 

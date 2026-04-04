@@ -101,6 +101,10 @@ export const A5_REFRESH_COST_MULT = 2;
 export const A7_RELIC_SLOTS = 8;
 /** A8: 词库压缩比例 (Story 54.7) */
 export const A8_WORD_COMPRESS_RATIO = 0.3;
+/** A10: 目标分增长率 (Story 54.8) */
+export const A10_TARGET_GROWTH = 1.55;
+/** A10: 错误扣时间秒数 (Story 54.8) */
+export const A10_ERROR_TIME_PENALTY = 2;
 
 // === Ascension: 练习关金币映射 (Story 54.2) ===
 export const PRACTICE_GOLD = {

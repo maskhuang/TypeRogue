@@ -47,7 +47,7 @@ import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyAppren
 import { AffixType, applyAffixLevelScaling } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
-import { BALANCE, RESOURCE_COLORS, PRACTICE_GOLD, computePracticeGold } from '../core/constants';
+import { BALANCE, RESOURCE_COLORS, PRACTICE_GOLD, computePracticeGold, A10_ERROR_TIME_PENALTY } from '../core/constants';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
 import { initDemoTutorial } from '../demo/demo-tutorial';
 import { showDemoEndScreen } from '../demo/demo-end-screen';
@@ -887,6 +887,12 @@ function playerWrong(): void {
       showFeedback(t('battle.phoenix'), '#ff9500');
       return;
     }
+  }
+
+  // Story 54.8: A10+ 错误扣时间
+  if (state.ascensionLevel >= 10) {
+    state.time = Math.max(0, state.time - A10_ERROR_TIME_PENALTY);
+    showFeedback(t('battle.a10_error_penalty', { sec: A10_ERROR_TIME_PENALTY }), '#ff2222');
   }
 
   // 标记词语不完美
@@ -1740,13 +1746,17 @@ function endLevel(): void {
         }
         // 非最终周目：周目推进 → 永久修饰器 → 传说遗物 → 致命礼物 → 商店
         advanceCycle();
-        const permMod = drawSingleBossModifier(state.activeModifiers);
-        if (permMod) {
-          state.activeModifiers.push(permMod);
-          const meta = getBossModifierMeta(permMod);
-          if (meta) {
-            const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name;
-            showFeedback(`${meta.icon} ${modName}`, '#ff4444');
+        // Story 54.8: A9+ Boss 叠 2 个 modifier
+        const modCount = state.ascensionLevel >= 9 ? 2 : 1;
+        for (let mi = 0; mi < modCount; mi++) {
+          const permMod = drawSingleBossModifier(state.activeModifiers);
+          if (permMod) {
+            state.activeModifiers.push(permMod);
+            const meta = getBossModifierMeta(permMod);
+            if (meta) {
+              const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name;
+              showFeedback(`${meta.icon} ${modName}`, '#ff4444');
+            }
           }
         }
         const legendaryWeights = { common: 0, rare: 0, epic: 0, legendary: 100 };
