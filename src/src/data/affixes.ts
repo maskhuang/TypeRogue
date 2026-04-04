@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（51 类，6 类别） ====
+// ===== 词条类型枚举（54 类，6 类别） ====
 // Replicate 已合并入 Splash; Link 已合并入 Resonance
 
 export enum AffixType {
@@ -68,6 +68,9 @@ export enum AffixType {
   Counter = 'counter',
   Exhaust = 'exhaust',
   Ethereal = 'ethereal',
+  Decorator = 'decorator',
+  Reflect = 'reflect',
+  MonkeyPatch = 'monkey_patch',
 }
 
 // ===== 词条类别 =====
@@ -132,6 +135,9 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Counter]: 'meta_rule',
   [AffixType.Exhaust]: 'meta_rule',
   [AffixType.Ethereal]: 'meta_rule',
+  [AffixType.Decorator]: 'meta_rule',
+  [AffixType.Reflect]: 'meta_rule',
+  [AffixType.MonkeyPatch]: 'meta_rule',
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -277,6 +283,10 @@ export interface AffixInstance {
   bridgeK?: number                 // Bridge: 是桥时的 bonusPercent 加成
   cliqueK?: number                 // Clique: 每团成员的 bonusPercent
   componentK?: number              // Component: 每连通成员的 bonusPercent
+  decoratorK?: number              // Decorator: 放大比例
+  reflectK?: number                // Reflect: affixCount × level × K
+  patchLow?: number                // MonkeyPatch: 随机系数下界
+  patchHigh?: number               // MonkeyPatch: 随机系数上界
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number            // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
@@ -373,6 +383,9 @@ export interface SkillRuntimeState {
   // ── 暴击连击追踪 ──
   critStreak: number               // 连续暴击次数（miss 归零，每关重置）
   missStreak: number               // 连续 miss 次数（暴击归零，每关重置）
+  // ── MonkeyPatch 运行时 ──
+  patchTargetIndex: number         // 被补丁的词条索引（-1=无效，每关重置）
+  patchMultiplier: number          // 随机系数（每关重置，默认 1.0）
 }
 
 // ===== 存档数据 =====
@@ -482,6 +495,9 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Bridge]: 'high',
   [AffixType.Clique]: 'high',
   [AffixType.Component]: 'high',
+  [AffixType.Decorator]: 'low',
+  [AffixType.Reflect]: 'high',
+  [AffixType.MonkeyPatch]: 'low',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -596,6 +612,9 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Bridge]: '桥',
   [AffixType.Clique]: '团',
   [AffixType.Component]: '连通',
+  [AffixType.Decorator]: '装饰器',
+  [AffixType.Reflect]: '反射',
+  [AffixType.MonkeyPatch]: '猴子补丁',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -648,9 +667,12 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Burst]: '连续暴击次数越多，暴击倍率越高；未暴击时连击归零',
   [AffixType.ZeroIn]: '连续未暴击次数越多，下次暴击的倍率越高',
   [AffixType.Sharpshooter]: '暴击率越低，暴击时的倍率加成越高',
-  [AffixType.Bridge]: '自身是连接关键位置（移除后邻居断裂）时，大额加成',
-  [AffixType.Clique]: '指定关系的邻居中互相连接的最大群组越大，产出越高',
-  [AffixType.Component]: '沿相邻关系的连片技能区域越大，产出越高',
+  [AffixType.Bridge]: '指定关系的邻居之间的唯一连接点时，大额加成',
+  [AffixType.Clique]: '自身与指定关系的邻居中两两相连的最大组越大，产出越高',
+  [AffixType.Component]: '沿相邻关系连成一片的技能数量越多，产出越高',
+  [AffixType.Decorator]: '放大同技能其他词条的产出加成',
+  [AffixType.Reflect]: '技能词条越多、等级越高，产出越高',
+  [AffixType.MonkeyPatch]: '每关随机修改同技能一个词条的效果倍率',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -832,6 +854,8 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     etherealTriggered: false,
     critStreak: 0,
     missStreak: 0,
+    patchTargetIndex: -1,
+    patchMultiplier: 1.0,
   }
 }
 

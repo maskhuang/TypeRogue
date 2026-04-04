@@ -414,15 +414,16 @@ export function shannonEntropy(word: string): number {
   return h
 }
 
-/** 检查移除 excludeKey 后 nodes 是否仍然连通（BFS） */
+/** 检查移除 excludeKeys 后 nodes 是否仍然连通（BFS） */
 export function areConnectedWithout(
   nodes: string[],
-  excludeKey: string,
+  excludeKeys: string[],
   posRel: PositionRelation,
   bindings: Map<string, string>,
 ): boolean {
   if (nodes.length < 2) return true
-  const boundKeys = new Set([...bindings.keys()].filter(k => k !== excludeKey))
+  const excludeSet = new Set(excludeKeys)
+  const boundKeys = new Set([...bindings.keys()].filter(k => !excludeSet.has(k)))
   const visited = new Set<string>()
   const queue = [nodes[0]]
   visited.add(nodes[0])
@@ -663,7 +664,10 @@ export function resolvePhase2(
   const consumeRequests: { resource: ResourceType, amount: number }[] = []
 
   // ── 词条加算 ──
-  for (const affix of skill.affixes) {
+  for (let _affixIdx = 0; _affixIdx < skill.affixes.length; _affixIdx++) {
+    const affix = skill.affixes[_affixIdx]
+    // MonkeyPatch: 记录 patch 前的 bonusPercent，用于计算 delta
+    const _prePatchBonus = bonusPercent
     switch (affix.type) {
       case AffixType.Convert: {
         if (affix.source == null) break
@@ -845,12 +849,12 @@ export function resolvePhase2(
       }
 
       case AffixType.Bridge: {
-        // 桥：移除自身后邻居断裂时大额 bonus
+        // 桥：移除自身（所有占据键）后邻居断裂时大额 bonus
         if (affix.posRel == null) break
         const bridgeNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
           .filter(k => ctx.bindings.has(k))
         if (bridgeNeighborKeys.length >= 2) {
-          if (!areConnectedWithout(bridgeNeighborKeys, ctx.triggerKey, affix.posRel, ctx.bindings)) {
+          if (!areConnectedWithout(bridgeNeighborKeys, ctx.occupiedKeys, affix.posRel, ctx.bindings)) {
             bonusPercent += affix.bridgeK ?? 0
           }
         }
@@ -858,11 +862,12 @@ export function resolvePhase2(
       }
 
       case AffixType.Clique: {
-        // 团：自身+posRel 邻居中最大全连接子集
+        // 团：触发键 + posRel 邻居中最大全连接子集
+        // 只用 triggerKey（1 个代表键）+ 邻居键，避免多格技能的非互连键拉低团
         if (affix.posRel == null) break
         const cliqueNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
           .filter(k => ctx.bindings.has(k))
-        const cliqueCandidates = [...ctx.occupiedKeys, ...cliqueNeighborKeys]
+        const cliqueCandidates = [ctx.triggerKey, ...cliqueNeighborKeys]
         const maxClique = findMaxClique(cliqueCandidates, affix.posRel)
         if (maxClique > 1) {
           bonusPercent += (affix.cliqueK ?? 0) * (maxClique - 1)
@@ -1027,9 +1032,29 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.Reflect: {
+        // 反射：读自身技能 affixCount × level → bonus
+        const reflectScore = skill.affixes.length * skill.level
+        bonusPercent += (affix.reflectK ?? 0) * reflectScore
+        break
+      }
+
+      // Decorator 在循环外处理
       // 其余词条类型在 Phase 2 无加算效果
       default:
         break
+    }
+    // MonkeyPatch: 如果当前词条是被 patch 的目标，修改其 bonusPercent 贡献
+    if (_affixIdx === (runtimeState.patchTargetIndex ?? -1) && runtimeState.patchMultiplier !== 1.0) {
+      const delta = bonusPercent - _prePatchBonus
+      bonusPercent = _prePatchBonus + delta * runtimeState.patchMultiplier
+    }
+  }
+
+  // Decorator：Phase 2 末尾放大 bonusPercent
+  for (const affix of skill.affixes) {
+    if (affix.type === AffixType.Decorator && (affix.decoratorK ?? 0) > 0) {
+      bonusPercent += bonusPercent * (affix.decoratorK ?? 0)
     }
   }
 
@@ -2383,6 +2408,26 @@ export function resetStageState(
     // critStreak / missStreak 每关重置
     state.critStreak = 0
     state.missStreak = 0
+
+    // MonkeyPatch：每关随机设定 patchTargetIndex 和 patchMultiplier
+    state.patchTargetIndex = -1
+    state.patchMultiplier = 1.0
+    if (skill) {
+      for (const affix of skill.affixes) {
+        if (affix.type === AffixType.MonkeyPatch) {
+          const candidates = skill.affixes
+            .map((a, i) => ({ a, i }))
+            .filter(({ a }) => a.type !== AffixType.MonkeyPatch)
+          if (candidates.length > 0) {
+            const pick = candidates[Math.floor(randomFn() * candidates.length)]
+            state.patchTargetIndex = pick.i
+            const low = affix.patchLow ?? 0.5
+            const high = affix.patchHigh ?? 2.0
+            state.patchMultiplier = low + randomFn() * (high - low)
+          }
+        }
+      }
+    }
   }
 }
 

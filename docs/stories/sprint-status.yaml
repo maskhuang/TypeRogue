@@ -512,12 +512,12 @@ development_status:
   epic-50-retrospective: optional
 
   # ===== Epic 51: 元规则型扩展 — 元编程领域 =====
-  epic-51: backlog
-  51-1-meta-decorator: backlog               # 元规则：装饰器 — Phase 2末尾放大bonusPercent
-  51-2-meta-reflect: backlog                 # 元规则：反射 — 读affixCount×level→bonus
-  51-3-meta-monkey-patch: backlog            # 元规则：猴子补丁 — 每关随机修改同伴词条效果
-  51-4-generation-integration: backlog       # 技能生成集成
-  51-5-balance-playtest: backlog             # 数值平衡与 playtest
+  epic-51: done
+  51-1-meta-decorator: done                  # 元规则：装饰器 — Phase 2末尾放大bonusPercent
+  51-2-meta-reflect: done                    # 元规则：反射 — 读affixCount×level→bonus
+  51-3-meta-monkey-patch: done               # 元规则：猴子补丁 — 每关随机修改同伴词条效果
+  51-4-generation-integration: done          # 技能生成集成
+  51-5-balance-playtest: done                # 数值平衡与 playtest
   epic-51-retrospective: optional
 
 # Summary:

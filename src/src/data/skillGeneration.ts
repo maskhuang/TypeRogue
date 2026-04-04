@@ -24,6 +24,8 @@ const GENERIC_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time'
 /** 可作为「读取源」的资源（新词条读产出量而非池量，所有资源均可） */
 const READABLE_SOURCE_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
 const ALL_POS_RELATIONS: PositionRelation[] = Object.values(PositionRelation)
+/** Clique 过滤掉 Symmetric（最多 2-clique，无意义） */
+const CLIQUE_POS_RELATIONS = ALL_POS_RELATIONS.filter(r => r !== PositionRelation.Symmetric)
 
 /** 获取词条的有效权重（Convert 仅使用 cross 变体权重） */
 function getAffixWeight(type: AffixType): number {
@@ -224,13 +226,13 @@ export function rollAffixParams(
     case AffixType.Sharpshooter:
       return { type, sharpK: roundTo(1.00 + random() * 1.00, 2) }
 
-    case AffixType.Bridge: {
-      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, bridgeK: roundTo(0.25 + random() * 0.20, 2) }
-    }
+    case AffixType.Bridge:
+      // Bridge 固定 Adjacent（其他关系下人人互连，永远不是桥）
+      return { type, posRel: PositionRelation.Adjacent, bridgeK: roundTo(0.25 + random() * 0.20, 2) }
 
     case AffixType.Clique: {
-      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
+      // Clique 过滤 Symmetric（最多 2-clique，无意义）
+      const posRel = sharedPosRel ?? pickRandom(CLIQUE_POS_RELATIONS)
       return { type, posRel, cliqueK: roundTo(0.10 + random() * 0.10, 2) }
     }
 
@@ -342,6 +344,15 @@ export function rollAffixParams(
       const hSrcB = pickRandom(hedgePool.filter(r => r !== hSrcA))
       return { type, hedgeSourceA: hSrcA, hedgeSourceB: hSrcB, hedgeK: roundTo(0.20 + random() * 0.20, 2) }
     }
+
+    case AffixType.Decorator:
+      return { type, decoratorK: roundTo(0.20 + random() * 0.20, 2) }
+
+    case AffixType.Reflect:
+      return { type, reflectK: roundTo(0.04 + random() * 0.04, 2) }
+
+    case AffixType.MonkeyPatch:
+      return { type, patchLow: 0.5, patchHigh: 2.0 }
 
     case AffixType.Innate:
       return { type }

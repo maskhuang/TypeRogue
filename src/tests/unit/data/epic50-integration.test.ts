@@ -68,7 +68,7 @@ describe('Graph algorithm utilities', () => {
 
   it('areConnectedWithout returns boolean', () => {
     const bindings = new Map([['q', 's1'], ['w', 's2'], ['e', 's3']])
-    const result = areConnectedWithout(['q', 'e'], 'w', PositionRelation.Adjacent, bindings)
+    const result = areConnectedWithout(['q', 'e'], ['w'], PositionRelation.Adjacent, bindings)
     expect(typeof result).toBe('boolean')
   })
 })

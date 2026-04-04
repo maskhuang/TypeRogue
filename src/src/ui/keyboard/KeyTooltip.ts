@@ -84,6 +84,9 @@ export const AFFIX_COLORS: Record<string, string> = {
   bridge:      '#7f8c8d', // 石灰 — 桥
   clique:      '#e74c3c', // 红 — 团
   component:   '#3498db', // 蓝 — 连通
+  decorator:   '#f1c40f', // 金黄 — 装饰器
+  reflect:     '#1e90ff', // 道奇蓝 — 反射
+  monkey_patch:'#cf6a87', // 玫瑰 — 猴子补丁
 }
 
 export interface KeyTooltipData {

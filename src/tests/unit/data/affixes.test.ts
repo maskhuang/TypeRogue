@@ -32,13 +32,13 @@ import type { ResourceType } from '../../../src/core/types'
 describe('AffixType', () => {
   const allAffixTypes = Object.values(AffixType)
 
-  it('should have exactly 51 values', () => {
-    expect(allAffixTypes).toHaveLength(51)
+  it('should have exactly 54 values', () => {
+    expect(allAffixTypes).toHaveLength(54)
   })
 
   it('should have unique string values', () => {
     const unique = new Set(allAffixTypes)
-    expect(unique.size).toBe(51)
+    expect(unique.size).toBe(54)
   })
 
   it('should contain all expected types', () => {
@@ -47,7 +47,7 @@ describe('AffixType', () => {
       'crit', 'charge', 'decay', 'recurse', 'taboo', 'fallacy',
       'pulse', 'resonance', 'splash', 'amplify', 'relay', 'war_drum', 'parity', 'prime', 'match',
       'entropy', 'cipher', 'pattern', 'leverage', 'option', 'hedge', 'burst', 'zero_in', 'sharpshooter',
-      'bridge', 'clique', 'component',
+      'bridge', 'clique', 'component', 'decorator', 'reflect', 'monkey_patch',
       'void', 'mirror', 'cascade', 'flow', 'confluence', 'turbulence',
       'outcast', 'gravity', 'ligature', 'cluster', 'coverage', 'bigram',
       'conduit', 'twin', 'innate', 'counter', 'exhaust', 'ethereal',
@@ -97,7 +97,7 @@ describe('AFFIX_CATEGORY_MAP', () => {
     expect(counts.stack).toBe(9)
     expect(counts.topology).toBe(9)
     expect(counts.word_sense).toBe(9)
-    expect(counts.meta_rule).toBe(6)
+    expect(counts.meta_rule).toBe(9)
   })
 })
 

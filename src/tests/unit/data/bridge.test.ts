@@ -22,21 +22,21 @@ describe('areConnectedWithout', () => {
   }
 
   it('should return true for single node', () => {
-    expect(areConnectedWithout(['q'], 'w', PositionRelation.Adjacent, makeBindings(['q', 'w']))).toBe(true)
+    expect(areConnectedWithout(['q'], ['w'], PositionRelation.Adjacent, makeBindings(['q', 'w']))).toBe(true)
   })
 
   it('should return true for empty nodes', () => {
-    expect(areConnectedWithout([], 'w', PositionRelation.Adjacent, makeBindings(['w']))).toBe(true)
+    expect(areConnectedWithout([], ['w'], PositionRelation.Adjacent, makeBindings(['w']))).toBe(true)
   })
 
   it('should return true with SameHand (wide relation)', () => {
     // SameHand: q,w,e,a,s,d all left hand → removing any one, rest connected
     const bindings = makeBindings(['q', 'w', 'e', 'a', 's', 'd'])
-    expect(areConnectedWithout(['q', 'e', 'a', 's', 'd'], 'w', PositionRelation.SameHand, bindings)).toBe(true)
+    expect(areConnectedWithout(['q', 'e', 'a', 's', 'd'], ['w'], PositionRelation.SameHand, bindings)).toBe(true)
   })
 
   it('should return boolean for any input', () => {
-    const result = areConnectedWithout(['q', 'z'], 'x', PositionRelation.Adjacent, makeBindings(['q', 'z', 'x']))
+    const result = areConnectedWithout(['q', 'z'], ['x'], PositionRelation.Adjacent, makeBindings(['q', 'z', 'x']))
     expect(typeof result).toBe('boolean')
   })
 })

@@ -557,9 +557,12 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'burst': return `连击+${Math.round((a.burstK ?? 0) * 100)}%暴击倍率/层`
     case 'zero_in': return `miss补偿+${Math.round((a.zeroInK ?? 0) * 100)}%暴击倍率/层`
     case 'sharpshooter': return `低暴击率+${Math.round((a.sharpK ?? 0) * 100)}%暴击倍率`
-    case 'bridge': return `${rel} 桥+${Math.round((a.bridgeK ?? 0) * 100)}%`
+    case 'bridge': return `相邻 桥+${Math.round((a.bridgeK ?? 0) * 100)}%`
     case 'clique': return `${rel} 团+${Math.round((a.cliqueK ?? 0) * 100)}%/成员`
     case 'component': return `连通+${Math.round((a.componentK ?? 0) * 100)}%/成员`
+    case 'decorator': return `放大+${Math.round((a.decoratorK ?? 0) * 100)}%`
+    case 'reflect': return `+${Math.round((a.reflectK ?? 0) * 100)}%×(词条数×等级)`
+    case 'monkey_patch': return `随机×${a.patchLow ?? 0.5}~${a.patchHigh ?? 2.0}`
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
