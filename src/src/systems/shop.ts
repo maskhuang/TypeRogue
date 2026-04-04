@@ -5,7 +5,7 @@
 
 import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
-import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION } from '../core/constants';
+import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION, A2_PRICE_MULT } from '../core/constants';
 import { getKeysWithRelation, hasRelation, PositionRelation } from '../data/keyboardTopology';
 
 
@@ -1254,11 +1254,18 @@ function updateGoldDisplay(): void {
 }
 
 // === 价格调整 ===
+
+/** Story 54.4: A2+ 商店价格上涨系数 */
+export function getAscensionPriceMultiplier(): number {
+  return state.ascensionLevel >= 2 ? A2_PRICE_MULT : 1.0;
+}
+
 function getAdjustedPrice(baseCost: number): number {
   // Story 36.5: 附魔锚点 — 每个已激活附魔使价格 +10%
   // Story 36.9: 折扣卡 — 所有商品价格 -15%（先涨后折）
   // 困境红利：每个永久修饰器 -5%（上限 30%）
-  return Math.round(baseCost * getEnchantAnchorPriceMultiplier() * getDiscountMultiplier() * (1 - getBountyHunterDiscount()));
+  // Story 54.4: A2+ 价格 ×1.15
+  return Math.round(baseCost * getAscensionPriceMultiplier() * getEnchantAnchorPriceMultiplier() * getDiscountMultiplier() * (1 - getBountyHunterDiscount()));
 }
 
 // === Fisher-Yates shuffle ===
@@ -1509,7 +1516,7 @@ function renderUnifiedShop(): void {
   el.rewardCards.appendChild(statsRow);
 
   // 刷新按钮
-  const refreshCost = (state.shop.refreshCount + 1) * 5;
+  const refreshCost = Math.round((state.shop.refreshCount + 1) * 5 * getAscensionPriceMultiplier());
   const refreshBtn = document.createElement('button');
   refreshBtn.className = 'shop-refresh-btn';
   refreshBtn.innerHTML = t('shop.refresh', { cost: refreshCost });
@@ -2600,7 +2607,7 @@ function checkPendingEnchantments(): void {
 
 // === 刷新商店 ===
 function refreshShop(): void {
-  let cost = (state.shop.refreshCount + 1) * 5;
+  let cost = Math.round((state.shop.refreshCount + 1) * 5 * getAscensionPriceMultiplier());
   // Story 36.9: 限时拍卖 — 刷新免费
   if (isTimedAuction()) {
     cost = 0;

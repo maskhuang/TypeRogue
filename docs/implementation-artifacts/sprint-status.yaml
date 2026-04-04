@@ -403,7 +403,7 @@ development_status:
   54-1-ascension-state-persistence: done               # Ascension 状态持久化
   54-2-practice-stage-gold-mapping: done               # 练习关金币映射
   54-3-ascension-level-selector-ui: done               # Ascension 级别选择器 UI
-  54-4-a1-a2-economy-modifiers: backlog               # A1-A2 经济修正器
+  54-4-a1-a2-economy-modifiers: done                   # A1-A2 经济修正器
   54-5-a3-a4-combat-pressure: backlog                 # A3-A4 战斗压力
   54-6-a5-a6-rule-changes: backlog                    # A5-A6 规则变更
   54-7-a7-a8-resource-scarcity: backlog               # A7-A8 资源稀缺

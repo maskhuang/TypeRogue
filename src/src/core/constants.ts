@@ -90,6 +90,10 @@ export const BALANCE = {
   POST_TARGET_CUBIC_WINDOW: 30, // 三次方阶段持续秒数
 };
 
+// === Ascension 常量 ===
+/** A2: 商店价格上涨系数 (Story 54.4) */
+export const A2_PRICE_MULT = 1.15;
+
 // === Ascension: 练习关金币映射 (Story 54.2) ===
 export const PRACTICE_GOLD = {
   BASE: 100,           // 底金（effectiveScore=0 也拿这么多）
