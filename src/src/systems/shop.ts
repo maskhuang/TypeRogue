@@ -220,17 +220,18 @@ export function generateAffixShopItem(
   // mono_affix 类别限制：重试直到技能含已选类别词条
   const lockedCategory = getMonoAffixCategory();
   const excludeNames = options?.excludeNames;
-  let skill = generateSkill({ resource, rarity, availableResources: resourcePool });
+  const playerClass = state.classId !== 'none' ? state.classId : undefined;
+  let skill = generateSkill({ resource, rarity, availableResources: resourcePool, playerClass });
   // clamp：如果 rarity 未指定（随机掷骰），超过 actMaxRarity 时重生成
   if (rarity === undefined && skill.rarity > actMaxRarity) {
-    skill = generateSkill({ resource, rarity: actMaxRarity, availableResources: resourcePool });
+    skill = generateSkill({ resource, rarity: actMaxRarity, availableResources: resourcePool, playerClass });
   }
   // 重试：避免与已有技能/本批其他技能重名（最多 10 次）
   if (excludeNames && excludeNames.has(skill.name)) {
     for (let attempt = 0; attempt < 10; attempt++) {
-      skill = generateSkill({ resource: resourcePool[Math.floor(random() * resourcePool.length)], rarity: skill.rarity as SkillRarity, availableResources: resourcePool });
+      skill = generateSkill({ resource: resourcePool[Math.floor(random() * resourcePool.length)], rarity: skill.rarity as SkillRarity, availableResources: resourcePool, playerClass });
       if (rarity === undefined && skill.rarity > actMaxRarity) {
-        skill = generateSkill({ resource: skill.resource, rarity: actMaxRarity, availableResources: resourcePool });
+        skill = generateSkill({ resource: skill.resource, rarity: actMaxRarity, availableResources: resourcePool, playerClass });
       }
       if (!excludeNames.has(skill.name)) break;
     }
@@ -241,7 +242,7 @@ export function generateAffixShopItem(
         a => AFFIX_CATEGORY_MAP[a.type as keyof typeof AFFIX_CATEGORY_MAP] === lockedCategory,
       );
       if (hasMatch) break;
-      skill = generateSkill({ resource, rarity: skill.rarity as SkillRarity, availableResources: resourcePool });
+      skill = generateSkill({ resource, rarity: skill.rarity as SkillRarity, availableResources: resourcePool, playerClass });
     }
   }
   const cost = getAdjustedPrice(calculateAffixSkillPrice(skill.rarity, skill.level, rollPriceFluctuation()));

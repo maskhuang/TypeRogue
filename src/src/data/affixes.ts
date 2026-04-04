@@ -515,6 +515,16 @@ export const BASE_VALUES: Record<ResourceType, number[]> = {
   mutagen:    [1, 1.6, 2.4, 3.4],
 }
 
+/** 词条职业限制：仅指定职业可使用（未列出=全职业通用） */
+export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
+  [AffixType.Cluster]: 'wordsmith',
+  [AffixType.Coverage]: 'wordsmith',
+  [AffixType.Bigram]: 'wordsmith',
+  [AffixType.Entropy]: 'wordsmith',
+  [AffixType.Cipher]: 'wordsmith',
+  [AffixType.Pattern]: 'wordsmith',
+}
+
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
 export type AffixWeightKey = Exclude<AffixType, AffixType.Convert> | 'convert_cross' | 'convert_self'
 

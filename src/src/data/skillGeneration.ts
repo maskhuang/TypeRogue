@@ -14,7 +14,7 @@ import { KEYS } from '../core/constants'
 import {
   AffixType,
   AFFIX_WEIGHTS, BASE_VALUES, RARITY_PROBABILITIES,
-  VOID_BONUS_TABLE, CONVERT_K_TABLE,
+  VOID_BONUS_TABLE, CONVERT_K_TABLE, AFFIX_CLASS_RESTRICTION,
 } from './affixes'
 import { t } from '../demo/demo-i18n'
 
@@ -88,12 +88,14 @@ export interface WeightedSampleResult {
   convertVariant?: 'cross' | 'self'  // 仅 Convert 类型有此字段
 }
 
-export function weightedSampleWithout(count: number): WeightedSampleResult[] {
+export function weightedSampleWithout(count: number, excludeTypes?: Set<string>): WeightedSampleResult[] {
   if (count <= 0) return []
 
   // 构建带权重的可变池
   const pool = new Map<string, number>()
   for (const [key, weight] of Object.entries(AFFIX_WEIGHTS)) {
+    // 职业限制：排除非本职业的词条
+    if (excludeTypes && excludeTypes.has(key)) continue
     // Ethereal 只在多词条技能(rarity≥2)上出现——需要其他词条来增幅
     if (key === AffixType.Ethereal && count < 2) continue
     // MonkeyPatch/Decorator 只在多词条技能(rarity≥2)上出现——需要其他词条来 patch/放大
@@ -425,6 +427,8 @@ export interface GenerateSkillOptions {
   shapeId?: string
   /** 强制旋转态（不随机，0~3） */
   rotation?: number
+  /** 当前职业 ID（过滤职业专属词条） */
+  playerClass?: string
 }
 
 /** 生成一个随机词条制技能实例 */
@@ -434,8 +438,20 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
   const rarity = options?.rarity ?? rollRarity()
   const level = options?.level ?? 1
 
+  // 构建职业排除集：非当前职业的专属词条不参与抽取
+  let excludeTypes: Set<string> | undefined
+  if (options?.playerClass) {
+    excludeTypes = new Set<string>()
+    for (const [affixType, requiredClass] of Object.entries(AFFIX_CLASS_RESTRICTION)) {
+      if (requiredClass !== options.playerClass) excludeTypes.add(affixType)
+    }
+  } else {
+    // 无职业时排除所有职业专属词条
+    excludeTypes = new Set(Object.keys(AFFIX_CLASS_RESTRICTION))
+  }
+
   // 加权不重复抽取 rarity 个词条
-  const samples = weightedSampleWithout(rarity)
+  const samples = weightedSampleWithout(rarity, excludeTypes.size > 0 ? excludeTypes : undefined)
 
   // 同一技能共享同一个 posRel
   const sharedPosRel = pickRandom(ALL_POS_RELATIONS)
