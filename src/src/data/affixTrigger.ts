@@ -855,7 +855,11 @@ export function resolvePhase2(
           resTypes.add(ns.resource)
         }
         if (resTypes.size > 0) {
-          bonusPercent += (affix.confluenceK ?? 0) * (1 - 1 / (resTypes.size + 1))
+          // 质变·洪流：每种独特资源额外加成 → K 按资源种类数乘
+          const effConfK = isTransformedForAffix(AffixType.Confluence, runtimeState, skill, ctx)
+            ? (affix.confluenceK ?? 0) * resTypes.size
+            : (affix.confluenceK ?? 0)
+          bonusPercent += effConfK * (1 - 1 / (resTypes.size + 1))
         }
         break
       }
@@ -876,6 +880,20 @@ export function resolvePhase2(
             const spread = (maxBase - minBase) / maxBase
             bonusPercent += (affix.turbulenceK ?? 0) * spread * nSkills.length
           }
+          // 质变·风暴：额外读邻居 stacks 极差
+          if (isTransformedForAffix(AffixType.Turbulence, runtimeState, skill, ctx)) {
+            let minStacks = Infinity, maxStacks = -Infinity
+            for (const ns of nSkills) {
+              const nState = ctx.skillStates.get(ns.id)
+              const s = nState?.stacks ?? 0
+              if (s < minStacks) minStacks = s
+              if (s > maxStacks) maxStacks = s
+            }
+            if (maxStacks > 0) {
+              const stackSpread = (maxStacks - minStacks) / maxStacks
+              bonusPercent += (affix.turbulenceK ?? 0) * stackSpread * nSkills.length
+            }
+          }
         }
         break
       }
@@ -895,8 +913,12 @@ export function resolvePhase2(
 
       case AffixType.Clique: {
         // 团：触发键 + posRel 邻居中最大全连接子集
-        // 只用 triggerKey（1 个代表键）+ 邻居键，避免多格技能的非互连键拉低团
         if (affix.posRel == null) break
+        // 质变·方阵：消费从团内成员接收的 bonus
+        if ((runtimeState.cliqueBonusAccum ?? 0) > 0) {
+          bonusPercent += runtimeState.cliqueBonusAccum
+          runtimeState.cliqueBonusAccum = 0
+        }
         const cliqueNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
           .filter(k => ctx.bindings.has(k))
         const cliqueCandidates = [ctx.triggerKey, ...cliqueNeighborKeys]
@@ -1693,6 +1715,32 @@ export function resolvePhase5(
     result.pulseSelfTrigger = true
   }
 
+  // ── Parity 质变·相变：奇数叠层时额外自触发 ──
+  if (!ctx.chainAffixesDisabled && runtimeState.stacks % 2 === 1) {
+    for (const a of skill.affixes) {
+      if (a.type === AffixType.Parity && isTransformedForAffix(AffixType.Parity, runtimeState, skill, ctx)) {
+        result.pulseSelfTrigger = true
+        break
+      }
+    }
+  }
+
+  // ── Bridge 质变·枢纽：是桥时触发两侧各一个邻居 ──
+  if (!ctx.chainAffixesDisabled) {
+    for (const a of skill.affixes) {
+      if (a.type === AffixType.Bridge && a.posRel != null && isTransformedForAffix(AffixType.Bridge, runtimeState, skill, ctx)) {
+        const bridgeNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, a.posRel)
+          .filter(k => ctx.bindings.has(k))
+        if (bridgeNeighborKeys.length >= 2 && !areConnectedWithout(bridgeNeighborKeys, ctx.occupiedKeys, a.posRel, ctx.bindings)) {
+          // 是桥：选最多 2 个邻居触发
+          const targets = pickRandomKeys(bridgeNeighborKeys, Math.min(2, bridgeNeighborKeys.length), ctx.randomFn)
+          result.splashTargets = [...(result.splashTargets ?? []), ...targets]
+        }
+        break
+      }
+    }
+  }
+
   // ── Pulse 质变：爆发时触发所有匹配技能（可进入伪循环） ──
   if (triggerFlags.isPulse && isTransformedForAffix(AffixType.Pulse, runtimeState, skill, ctx) && !ctx.chainAffixesDisabled) {
     const pulseTargets: string[] = []
@@ -1844,6 +1892,8 @@ export function resolvePhase6(
   runtimeState: SkillRuntimeState,
   ctx: TriggerContext,
   actualResource?: ResourceType,
+  isCrit?: boolean,
+  triggerBonusPercent?: number,
 ): Phase6Result {
   const actions: Phase6Action[] = []
 
@@ -1879,9 +1929,45 @@ export function resolvePhase6(
             const resInterval = getEffectiveInterval(affix.resonanceCount ?? DEFAULT_STACK_INTERVAL, neighborSkillId, ctx)
             if (neighborState.stacks > 0 && neighborState.stacks % resInterval === 0) {
               actions.push({ type: 'resonance', neighborKey: matchedNk, triggerCount: 1 })
+              // 质变·共振：自触发时也给触发源+1叠层
+              if (isTransformedForAffix(AffixType.Resonance, neighborState, neighborSkill, ctx)) {
+                runtimeState.stacks += 1
+              }
             }
           }
         }
+      }
+    }
+
+    // 质变·战号：触发技能暴击时，WarDrum 邻居+2叠层
+    if (isCrit && neighborState) {
+      for (const nAffix of neighborSkill.affixes) {
+        if (nAffix.type !== AffixType.WarDrum || nAffix.posRel == null) continue
+        if (!isTransformedForAffix(AffixType.WarDrum, neighborState, neighborSkill, ctx)) continue
+        const wdKeys = [...ctx.bindings].filter(([, sid]) => sid === neighborSkillId).map(([k]) => k)
+        const wdInRange = occupiedKeys.some(ok => wdKeys.some(wk => hasRelation(wk, ok, nAffix.posRel!)))
+        if (wdInRange && hasSharedMatch(skill, neighborSkill, AffixType.WarDrum)) {
+          neighborState.stacks += 2
+        }
+        break
+      }
+    }
+
+    // 质变·方阵：分享 bonusPercent 给团内 Clique 邻居
+    if (triggerBonusPercent && triggerBonusPercent > 0 && neighborState) {
+      for (const nAffix of neighborSkill.affixes) {
+        if (nAffix.type !== AffixType.Clique || nAffix.posRel == null) continue
+        if (!isTransformedForAffix(AffixType.Clique, neighborState, neighborSkill, ctx)) continue
+        // 检查触发技能和邻居是否在同一个团中
+        const nCliqueKeys = getExtendedNeighbors(
+          [...ctx.bindings].filter(([, sid]) => sid === neighborSkillId).map(([k]) => k),
+          nAffix.posRel,
+        ).filter(k => ctx.bindings.has(k))
+        const inClique = occupiedKeys.some(ok => nCliqueKeys.includes(ok) || [...ctx.bindings].filter(([, sid]) => sid === neighborSkillId).some(([nk]) => hasRelation(ok, nk, nAffix.posRel!)))
+        if (inClique) {
+          neighborState.cliqueBonusAccum = (neighborState.cliqueBonusAccum ?? 0) + triggerBonusPercent * 0.5
+        }
+        break
       }
     }
 
@@ -2036,7 +2122,7 @@ export function triggerAffixSkill(
   const p5 = resolvePhase5(effectiveSkill, runtimeState, ctx, p3.flags, p3.output, recurseDepth, p4.targetResource)
 
   // Phase 6: 邻居通知（感应词条检查触发技能词条类型）
-  const p6 = resolvePhase6(ctx.triggerKey, effectiveSkill, runtimeState, ctx, p4.targetResource)
+  const p6 = resolvePhase6(ctx.triggerKey, effectiveSkill, runtimeState, ctx, p4.targetResource, p3.flags.isCrit, p2.bonusPercent)
 
   // 合并状态变更
   const allMutations = [...p2.mutations, ...p3.mutations]
