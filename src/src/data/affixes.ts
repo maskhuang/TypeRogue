@@ -517,13 +517,18 @@ export const BASE_VALUES: Record<ResourceType, number[]> = {
 
 /** 词条职业限制：仅指定职业可使用（未列出=全职业通用） */
 export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
-  // 造词师专属：词感类（与单词结构相关）
+  // 造词师专属：词感类（单词结构分析）+ 精密控制类（释放顺序/时机）
   [AffixType.Cluster]: 'wordsmith',
   [AffixType.Coverage]: 'wordsmith',
   [AffixType.Bigram]: 'wordsmith',
   [AffixType.Entropy]: 'wordsmith',
   [AffixType.Cipher]: 'wordsmith',
   [AffixType.Pattern]: 'wordsmith',
+  [AffixType.Outcast]: 'wordsmith',   // 首尾字母 → 选词规划
+  [AffixType.Gravity]: 'wordsmith',   // 操控出词概率 → 词库控制
+  [AffixType.Ligature]: 'wordsmith',  // 重复字母 → 词感敏锐
+  [AffixType.Cascade]: 'wordsmith',   // 上一键关系 → 击键顺序规划
+  [AffixType.Charge]: 'wordsmith',    // 蓄力释放 → 精确时机控制
   // 蜕变师专属：随机性/词条操控/附魔相关
   [AffixType.Rainbow]: 'metamorph',
   [AffixType.Twin]: 'metamorph',
