@@ -15,6 +15,7 @@ import { eventBus } from './core/events/EventBus';
 import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode, random } from './core/seededRandom';
 import { resetWordRelicRunState } from './systems/relics/WordRelicBehaviors';
 import { showClassPicker } from './systems/classes/ClassPicker';
+import { showAscensionPicker } from './systems/classes/AscensionPicker';
 import { saveManager } from './core/save/SaveManager';
 import {
   IS_DEMO,
@@ -210,8 +211,10 @@ async function init(): Promise<void> {
     }
   };
 
-  // Story 32.1: 显示职业选择界面
-  showClassPicker(metaState, startAfterClassSelect);
+  // Story 32.1 → 54.3: 职业选择 → Ascension 选择 → 开始
+  showClassPicker(metaState, () => {
+    showAscensionPicker(metaState, state.classId, startAfterClassSelect);
+  });
 }
 
 // === 启动 ===
