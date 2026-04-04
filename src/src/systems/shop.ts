@@ -1624,18 +1624,20 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
         <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
       `;
     }
-    // 词包卡片悬停时高亮键盘上对应字母键位
-    const packWords = pack.words
-    card.addEventListener('mouseenter', () => {
-      const letters = new Set<string>()
-      for (const w of packWords) for (const c of w.toLowerCase()) if (c >= 'a' && c <= 'z') letters.add(c)
-      for (const letter of letters) {
-        document.querySelector(`.key-slot[data-key="${letter}"]`)?.classList.add('word-hover-highlight')
-      }
-    })
-    card.addEventListener('mouseleave', () => {
-      document.querySelectorAll('.key-slot.word-hover-highlight').forEach(el => el.classList.remove('word-hover-highlight'))
-    })
+    // 单词包：悬停时高亮键盘；三选一：仅展开后的候选词行悬停时高亮
+    if (pack.words.length === 1) {
+      const singleWord = pack.words[0]
+      card.addEventListener('mouseenter', () => {
+        const letters = new Set<string>()
+        for (const c of singleWord.toLowerCase()) if (c >= 'a' && c <= 'z') letters.add(c)
+        for (const letter of letters) {
+          document.querySelector(`.key-slot[data-key="${letter}"]`)?.classList.add('word-hover-highlight')
+        }
+      })
+      card.addEventListener('mouseleave', () => {
+        document.querySelectorAll('.key-slot.word-hover-highlight').forEach(el => el.classList.remove('word-hover-highlight'))
+      })
+    }
   } else if (item.type === 'relic' && item.relicId) {
     // Relic item
     const relic = RELICS[item.relicId];
@@ -1692,14 +1694,20 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
   init3DCardEffect(card);
 
   if (item.type === 'pack') {
-    card.onclick = () => {
-      juiceUp(card, 0.2, 3);
+    card.onclick = (e) => {
       const pack = item.pack!
-      if (pack.words.length > 1 && !card.classList.contains('pack-expanded')) {
-        // 三选一：展开候选词行
-        expandPackCard(card, item, index)
+      if (pack.words.length > 1) {
+        // 三选一词包：切换展开/折叠
+        if (card.classList.contains('pack-expanded')) {
+          card.querySelector('.pack-expand-panel')?.remove()
+          card.classList.remove('pack-expanded')
+        } else {
+          juiceUp(card, 0.2, 3)
+          expandPackCard(card, item, index)
+        }
       } else {
-        purchasePackItem(index);
+        juiceUp(card, 0.2, 3)
+        purchasePackItem(index)
       }
     };
   } else if (item.type === 'relic') {
