@@ -341,6 +341,8 @@ export interface AffixInstance {
   primeK?: number                  // Prime: 素数叠层时 bonusPercent 系数（× stacks）
   matchK?: number                  // Match: 每配对的 bonusPercent 加成
   matchInterval?: number           // Match: 叠层满层间隔（每当邻居叠层相同时+1层）
+  clusterInterval?: number         // Cluster: 叠层满层间隔（满层+时间）
+  patternInterval?: number         // Pattern: 叠层满层间隔（满层重复词）
   entropyK?: number                // Entropy: Shannon 熵 × K 的 bonusPercent
   cipherK?: number                 // Cipher: 相邻字母表距离均值 × K 的 bonusPercent
   patternK?: number                // Pattern: 模式签名稀有度 × K 的 bonusPercent
@@ -1073,12 +1075,12 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Confluence]:{ param: 'confluenceK',   delta: 0.05,  mode: 'add' },
   [AffixType.Turbulence]:{ param: 'turbulenceK',   delta: 0.02,  mode: 'add' },
   // ── 词感类 ──
-  [AffixType.Cluster]:  { param: 'clusterK',       delta: 0.03,  mode: 'add' },
+  [AffixType.Cluster]:  { param: 'clusterInterval', delta: -2,    mode: 'add' },
   [AffixType.Coverage]: { param: 'coverageK',      delta: 0.01,  mode: 'add' },
   [AffixType.Bigram]:   { param: 'bigramK',        delta: 0.10,  mode: 'add' },
   [AffixType.Entropy]:  { param: 'entropyK',       delta: 0.02,  mode: 'add' },
   [AffixType.Cipher]:   { param: 'cipherK',        delta: 0.005, mode: 'add' },
-  [AffixType.Pattern]:  { param: 'patternK',       delta: 0.01,  mode: 'add' },
+  [AffixType.Pattern]:  { param: 'patternInterval', delta: -1,    mode: 'add' },
   // ── 奇偶/素数 ──
   [AffixType.Parity]:   { param: 'oddK',           delta: 0.04,  mode: 'add' },
   [AffixType.Prime]:    { param: 'primeK',         delta: 0.01,  mode: 'add' },

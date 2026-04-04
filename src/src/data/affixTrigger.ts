@@ -276,6 +276,10 @@ export interface Phase5Result {
   critEchoTarget?: string
   /** 脉冲：爆发时立刻自触发一次 */
   pulseSelfTrigger?: boolean
+  /** Cluster 满层：+时间秒数 */
+  clusterTimeBonus?: number
+  /** Pattern 满层：重复当前词 */
+  patternRepeatWord?: boolean
   /** 脉冲质变：爆发时触发的匹配技能键位（进入伪循环） */
   pulseBurstTargets?: string[]
   /** 脉冲：爆发时触发范围内叠层类邻居技能 */
@@ -1032,6 +1036,10 @@ export function resolvePhase2(
         if (clusterStacks > 0) {
           runtimeState.stacks += clusterStacks
           flags.stackEffectFired = true
+          const clInterval = getEffectiveInterval(affix.clusterInterval ?? 8, skill.id, ctx)
+          if (runtimeState.stacks > 0 && runtimeState.stacks % clInterval === 0) {
+            mutations.push({ type: 'clusterTime' as any, value: 0.5 + clusterVal * 0.3 })
+          }
         }
         break
       }
@@ -1085,6 +1093,10 @@ export function resolvePhase2(
           if (patternStacks > 0) {
             runtimeState.stacks += patternStacks
             flags.stackEffectFired = true
+            const ptInterval = getEffectiveInterval(affix.patternInterval ?? 6, skill.id, ctx)
+            if (runtimeState.stacks > 0 && runtimeState.stacks % ptInterval === 0) {
+              mutations.push({ type: 'patternRepeat' as any, value: 1 })
+            }
           }
         }
         break
@@ -2313,6 +2325,12 @@ export function triggerAffixSkill(
 
   // 合并状态变更
   const allMutations = [...p2.mutations, ...p3.mutations]
+
+  // Cluster/Pattern 满层效果：从 Phase 2 mutations 提取
+  for (const m of p2.mutations) {
+    if ((m as any).type === 'clusterTime') p5.clusterTimeBonus = (p5.clusterTimeBonus ?? 0) + (m as any).value
+    if ((m as any).type === 'patternRepeat') p5.patternRepeatWord = true
+  }
 
   return {
     output: p3.output,

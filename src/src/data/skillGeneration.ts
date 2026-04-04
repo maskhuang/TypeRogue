@@ -253,7 +253,7 @@ export function rollAffixParams(
       return { type, cipherK: roundTo(0.01 + random() * 0.02, 2) }
 
     case AffixType.Pattern:
-      return { type, patternK: roundTo(0.03 + random() * 0.03, 2) }
+      return { type, patternK: roundTo(0.03 + random() * 0.03, 2), patternInterval: 6 }  // 每6叠层重复词
 
     case AffixType.Parity:
       return { type, oddK: roundTo(0.15 + random() * 0.10, 2), evenK: roundTo(0.08 + random() * 0.07, 2) }
@@ -291,7 +291,7 @@ export function rollAffixParams(
       return { type, multiplyValue: roundTo(1.5 + random() * 0.5, 2) }  // ×1.5~2.0
 
     case AffixType.Cluster:
-      return { type, clusterK: roundTo(0.08 + random() * 0.07, 3) }  // 0.08~0.15 per cluster unit
+      return { type, clusterK: roundTo(0.08 + random() * 0.07, 3), clusterInterval: 8 }  // 每8叠层+时间
 
     case AffixType.Coverage:
       return { type, coverageK: roundTo(0.03 + random() * 0.03, 3) }  // 0.03~0.06 per unique letter

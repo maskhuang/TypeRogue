@@ -9,7 +9,7 @@ import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { t } from '../demo/demo-i18n';
 import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
-import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete, getChargeAutoCritBonus } from './battle';
+import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete, getChargeAutoCritBonus, addClusterTimeBonus, setPatternRepeatWord } from './battle';
 import { routeEnergyToPipeline, consumeCompletedWord, updatePipelineHUD } from './classes/AssemblyPipeline';
 import { getFloatScale } from '../effects/juice';
 import { eventBus } from '../core/events/EventBus';
@@ -460,6 +460,8 @@ function triggerAffixSkillWithFeedback(
     enterPseudoInfinite: (_keys: string[]) => setPseudoInfiniteVisual(true),
     // Story 41-5: Charge 质变 — 满蓄力自动完成当前单词
     chargeAutoComplete: () => performAutocomplete('charge'),
+    onClusterTime: (seconds: number) => addClusterTimeBonus(seconds),
+    onPatternRepeat: () => setPatternRepeatWord(),
   });
 
   // Story 36.4: 爵士乐 — 追踪本词触发的词条类型

@@ -233,6 +233,7 @@ const ZH: Record<string, string> = {
   'battle.detonate': '💣 ×{value}',
   'battle.cancel': '⛓️‍💥 CANCEL {value}',
   'battle.cancel_error': '⛓️‍💥 -{value}s',
+  'battle.pattern_repeat': '📝 再来一次！',
 
   // --- skill relic feedback ---
   'battle.first_strike': '⚡ 首发 +10分',
@@ -666,7 +667,7 @@ const ZH: Record<string, string> = {
   'affix_desc.flow': '同资源邻居实际产出比自己高时，按差值加成',
   'affix_desc.confluence': '指定关系的邻居产出的资源种类越多，加成越高',
   'affix_desc.turbulence': '指定关系的邻居中最强与最弱的产出差距越大，加成越高',
-  'affix_desc.cluster': '单词中连续辅音（如str、ng）越长，额外叠层越多',
+  'affix_desc.cluster': '单词中连续辅音（如str、ng）越长，额外叠层越多；叠满时+时间',
   'affix_desc.coverage': '单词中用到的不同字母越多，产出加成越高',
   'affix_desc.bigram': '单词中相邻两个字母的组合越少见（如qz），暴击率越高',
   'affix_desc.innate': '每关开始时自动触发（不需按键）',
@@ -678,7 +679,7 @@ const ZH: Record<string, string> = {
   'affix_desc.match': '每当指定关系的邻居叠层数与自身相同时额外叠层，叠满自触发',
   'affix_desc.entropy': '单词中每个字母出现次数越接近（如abcde优于aaabb），产出越高',
   'affix_desc.cipher': '单词中相邻字母在字母表中跨度越大（如az、mx），暴击率越高',
-  'affix_desc.pattern': '单词的字母重复规律越罕见（如abcabc比aabbcc少见），额外叠层越多',
+  'affix_desc.pattern': '单词的字母重复规律越罕见（如abcabc比aabbcc少见），额外叠层越多；叠满时重复当前词',
   'affix_desc.leverage': '追踪{source}的累积产出，超过{threshold}时加成，低于时扣减',
   'affix_desc.option': '追踪{source}的累积产出，超过{threshold}时按超出量加成，未达时每次扣减',
   'affix_desc.hedge': '同时追踪{sourceA}和{sourceB}的累积产出，两者越接近加成越高',
@@ -1165,6 +1166,7 @@ const EN: Record<string, string> = {
   'battle.detonate': '💣 ×{value}',
   'battle.cancel': '⛓️‍💥 CANCEL {value}',
   'battle.cancel_error': '⛓️‍💥 -{value}s',
+  'battle.pattern_repeat': '📝 Repeat!',
 
   // --- skill relic feedback ---
   'battle.first_strike': '⚡ First Strike +10',
@@ -1598,7 +1600,7 @@ const EN: Record<string, string> = {
   'affix_desc.flow': 'Same-resource neighbors with higher output boost yours by the difference',
   'affix_desc.confluence': 'More different resource types produced by neighbors = higher bonus',
   'affix_desc.turbulence': 'Bigger gap between strongest and weakest neighbor output = higher bonus',
-  'affix_desc.cluster': 'Longer consonant sequences in word (e.g. str, ng) = more extra stacks',
+  'affix_desc.cluster': 'Longer consonant sequences (e.g. str, ng) = more stacks; when full: +time',
   'affix_desc.coverage': 'More different letters used in word = higher bonus',
   'affix_desc.bigram': 'Rarer adjacent letter combos in word (e.g. qz) = higher crit rate',
   'affix_desc.innate': 'Auto-triggers at stage start (no keypress needed)',
@@ -1610,7 +1612,7 @@ const EN: Record<string, string> = {
   'affix_desc.match': 'Extra stack when a neighbor in range has the same stack count; self-triggers when full',
   'affix_desc.entropy': 'Each letter appears roughly equal times in word (e.g. abcde > aaabb) = more output',
   'affix_desc.cipher': 'Bigger alphabet jumps between adjacent letters (e.g. a→z, m→x) = higher crit rate',
-  'affix_desc.pattern': 'Rarer letter repetition structure (e.g. abcabc rarer than aabbcc) = more extra stacks',
+  'affix_desc.pattern': 'Rarer letter repetition (e.g. abcabc rarer than aabbcc) = more stacks; when full: repeat current word',
   'affix_desc.leverage': 'Tracks {source} output; above {threshold} = bonus; below = penalty',
   'affix_desc.option': 'Tracks {source} output; above {threshold} = scaled bonus; below = penalty/trigger',
   'affix_desc.hedge': 'Tracks {sourceA} and {sourceB}; closer their output = more bonus',

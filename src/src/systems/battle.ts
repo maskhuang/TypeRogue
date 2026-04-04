@@ -170,6 +170,10 @@ let _lastAccelText = ''; // Story 42.4: 上次显示的加速倍率文本（脉�
 let _isBoss = false; // Story 42.4: 当前关是否 Boss（startTimer 缓存，避免每 tick 调用 getStageType）
 let _isCalibrationLevel = false; // 第一关校准关：无目标，时间结束后校准基数
 let _calibrationEffectiveScore = 0; // Story 54.2: 校准关 effectiveScore（供 showGoldReward 读取）
+let _patternRepeatWord = false; // Pattern 满层：下次完词后重复当前词
+let _clusterTimeBonus = 0; // Cluster 满层：完词时加时间
+export function setPatternRepeatWord(): void { _patternRepeatWord = true }
+export function addClusterTimeBonus(seconds: number): void { _clusterTimeBonus += seconds }
 let _overflowDeduction = 0; // 溢出扣减量（用于 announceLevel 动画）
 let _preDeductionTarget = 0; // 扣减前的目标分数
 
@@ -1296,9 +1300,34 @@ function completeWord(): void {
     showFeedback(`+${wordRelicResult.effects.time.toFixed(1)}s`, '#00ff88', getFloatScale('time', wordRelicResult.effects.time));
   }
 
-  setTimeout(() => {
-    if (state.phase === 'battle') setWord();
-  }, 200);
+  // Cluster 满层：+时间
+  if (_clusterTimeBonus > 0) {
+    state.time += _clusterTimeBonus;
+    showFeedback(`+${_clusterTimeBonus.toFixed(1)}s`, '#00cccc', getFloatScale('time', _clusterTimeBonus));
+    _clusterTimeBonus = 0;
+  }
+
+  // Pattern 满层：重复当前词（不换新词）
+  if (_patternRepeatWord) {
+    _patternRepeatWord = false;
+    showFeedback(t('battle.pattern_repeat'), '#9b59b6');
+    setTimeout(() => {
+      if (state.phase === 'battle') {
+        state.player.index = 0;
+        state.wordScore = 0;
+        wordBaseScore = 0;
+        synergy.wordSkillCount = 0;
+        synergy.skillBaseScore = 0;
+        synergy.letterBaseScore = 0;
+        renderWord();
+        updateSettlementLive();
+      }
+    }, 200);
+  } else {
+    setTimeout(() => {
+      if (state.phase === 'battle') setWord();
+    }, 200);
+  }
 }
 
 // === Balatro 风格分数结算展示 ===

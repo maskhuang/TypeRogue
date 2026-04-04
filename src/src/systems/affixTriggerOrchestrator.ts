@@ -88,6 +88,10 @@ export interface OrchestratorCallbacks {
   devourTarget?: (targetKey: string) => void
   /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
   chargeAutoComplete?: () => void
+  /** Cluster 满层：+时间 */
+  onClusterTime?: (seconds: number) => void
+  /** Pattern 满层：重复当前词 */
+  onPatternRepeat?: () => void
 }
 
 // ===== 迭代调度器 =====
@@ -409,6 +413,15 @@ export function orchestrateAffixTrigger(
           chainSplash: false,
         })
       }
+    }
+
+    // Cluster 满层：通知 battle 加时间
+    if (result.phase5?.clusterTimeBonus) {
+      callbacks.onClusterTime?.(result.phase5.clusterTimeBonus)
+    }
+    // Pattern 满层：通知 battle 重复当前词
+    if (result.phase5?.patternRepeatWord) {
+      callbacks.onPatternRepeat?.()
     }
 
     // Pulse self: 脉冲爆发 — 立刻自触发一次
