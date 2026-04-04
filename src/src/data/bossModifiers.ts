@@ -140,8 +140,8 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     id: 'boss_output_drain',
     name: '产出削弱',
     icon: '🩸',
-    description: '所有技能产出 ×0.7',
-    eliteHint: '所有技能产出 ×0.85',
+    description: '随机2种资源的技能产出被削弱（覆盖越多削弱越轻）',
+    eliteHint: '随机3种资源，每种削弱更轻',
     category: 'defense',
   },
   // === 干扰类 (disruption) ===
@@ -295,7 +295,8 @@ export interface BossModifierParams {
   timeSpeed?: number        // boss_fast_time: 计时器速度倍率
   targetMultiplier?: number // boss_double_target: 目标分倍率
   diminishRate?: number     // boss_diminish: 每词递减百分比
-  outputDrainMult?: number  // boss_output_drain: 产出倍率
+  outputDrainMult?: number           // boss_output_drain: 被削弱资源的产出倍率
+  outputDrainResources?: ResourceType[] // boss_output_drain: 受影响的资源列表
   // 视觉类（Story 18.5）
   fadeSpeed?: number        // boss_fade: 初始淡出速度（秒/字母）
   fadeSpeedEnd?: number     // boss_fade: 最终淡出速度
@@ -806,19 +807,41 @@ const bossScoreTax: BossModifier = {
 
 // === boss_output_drain: 产出削弱 ===
 
+const DRAIN_TOTAL_PENALTY = 0.30 // boss: 总削弱预算 30%
+const DRAIN_TOTAL_PENALTY_ELITE = 0.15 // elite: 15%
+const DRAINABLE_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
+let _drainResources: Set<ResourceType> = new Set()
+let _drainMult = 1
+
 const bossOutputDrain: BossModifier = {
   id: 'boss_output_drain',
-  getParams: (isElite) => ({ outputDrainMult: isElite ? 0.85 : 0.70 }),
-  apply: () => {},
-  cleanup: () => {},
+  getParams: (isElite) => {
+    const n = isElite ? 3 : 2
+    const totalPenalty = isElite ? DRAIN_TOTAL_PENALTY_ELITE : DRAIN_TOTAL_PENALTY
+    const perResource = totalPenalty / n
+    // 随机选 N 种资源
+    const shuffled = [...DRAINABLE_RESOURCES].sort(() => Math.random() - 0.5)
+    const resources = shuffled.slice(0, n)
+    return { outputDrainMult: 1 - perResource, outputDrainResources: resources }
+  },
+  apply: () => {
+    const params = getActiveParams()
+    _drainResources = new Set(params?.outputDrainResources ?? [])
+    _drainMult = params?.outputDrainMult ?? 1
+  },
+  cleanup: () => { _drainResources = new Set(); _drainMult = 1 },
 }
 
-/** 获取产出削弱倍率（调度器使用） */
-export function getOutputDrainMultiplier(): number {
-  const mult = getActiveParams()?.outputDrainMult
-  if (!mult) return 1
-  const shieldedMult = state.player.relics.has('modifier_shield') ? 1 - (1 - mult) * 0.75 : mult
-  return shieldedMult
+/** 获取指定资源的产出削弱倍率（调度器使用） */
+export function getOutputDrainMultiplier(resource: ResourceType): number {
+  if (!_drainResources.has(resource)) return 1
+  const shielded = state.player.relics.has('modifier_shield') ? 1 - (1 - _drainMult) * 0.75 : _drainMult
+  return shielded
+}
+
+/** 获取当前受削弱的资源列表（UI 用） */
+export function getOutputDrainResources(): ResourceType[] {
+  return [..._drainResources]
 }
 
 // === 修饰器注册表 ===

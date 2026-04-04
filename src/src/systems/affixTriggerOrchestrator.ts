@@ -200,8 +200,9 @@ export function orchestrateAffixTrigger(
     if (result.phase5?.transmuteSameResourceBoost) {
       effectiveOutput *= (1 + result.phase5.transmuteSameResourceBoost)
     }
-    // boss_output_drain：产出削弱
-    effectiveOutput *= getOutputDrainMultiplier()
+    // boss_output_drain：产出削弱（按技能目标资源判定）
+    const drainResource = result.phase4?.targetResource ?? skill.resource
+    effectiveOutput *= getOutputDrainMultiplier(drainResource)
 
     results.push(result)
 
