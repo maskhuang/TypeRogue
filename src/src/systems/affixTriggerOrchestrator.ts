@@ -7,6 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { AffixType, EnchantmentType, BASE_VALUES } from '../data/affixes'
 import { hasRelation, PositionRelation, getKeysWithRelation } from '../data/keyboardTopology'
+import { getOutputDrainMultiplier } from '../data/bossModifiers'
 import { onStackEffectTriggered, checkStackDividend, isStackingAffix, SURGE_BONUS_PER_STACK } from './relics/StackingRelicBehaviors'
 import {
   triggerAffixSkill,
@@ -199,6 +200,9 @@ export function orchestrateAffixTrigger(
     if (result.phase5?.transmuteSameResourceBoost) {
       effectiveOutput *= (1 + result.phase5.transmuteSameResourceBoost)
     }
+    // boss_output_drain：产出削弱
+    effectiveOutput *= getOutputDrainMultiplier()
+
     results.push(result)
 
     // Counter — 负面效果拦截：产出为负 OR bonusPercent < 0（词条整体减产）

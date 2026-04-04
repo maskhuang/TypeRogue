@@ -27,6 +27,7 @@ export const BOSS_MODIFIER_IDS = [
   'boss_double_target',  // 双倍目标
   'boss_diminish',       // 递减收益
   'boss_score_tax',      // 得分税
+  'boss_output_drain',   // 产出削弱
   // 干扰类 (disruption) — 阻碍打字
   'boss_fade',           // 渐隐之词
   'boss_scramble',       // 乱序打字
@@ -133,6 +134,14 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     icon: '🧾',
     description: '每词最终得分减少目标分数的 3%',
     eliteHint: '每词减少目标分数的 2%',
+    category: 'defense',
+  },
+  boss_output_drain: {
+    id: 'boss_output_drain',
+    name: '产出削弱',
+    icon: '🩸',
+    description: '所有技能产出 ×0.7',
+    eliteHint: '所有技能产出 ×0.85',
     category: 'defense',
   },
   // === 干扰类 (disruption) ===
@@ -286,6 +295,7 @@ export interface BossModifierParams {
   timeSpeed?: number        // boss_fast_time: 计时器速度倍率
   targetMultiplier?: number // boss_double_target: 目标分倍率
   diminishRate?: number     // boss_diminish: 每词递减百分比
+  outputDrainMult?: number  // boss_output_drain: 产出倍率
   // 视觉类（Story 18.5）
   fadeSpeed?: number        // boss_fade: 初始淡出速度（秒/字母）
   fadeSpeedEnd?: number     // boss_fade: 最终淡出速度
@@ -794,6 +804,23 @@ const bossScoreTax: BossModifier = {
   cleanup: () => {},
 }
 
+// === boss_output_drain: 产出削弱 ===
+
+const bossOutputDrain: BossModifier = {
+  id: 'boss_output_drain',
+  getParams: (isElite) => ({ outputDrainMult: isElite ? 0.85 : 0.70 }),
+  apply: () => {},
+  cleanup: () => {},
+}
+
+/** 获取产出削弱倍率（调度器使用） */
+export function getOutputDrainMultiplier(): number {
+  const mult = getActiveParams()?.outputDrainMult
+  if (!mult) return 1
+  const shieldedMult = state.player.relics.has('modifier_shield') ? 1 - (1 - mult) * 0.75 : mult
+  return shieldedMult
+}
+
 // === 修饰器注册表 ===
 
 export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
@@ -809,6 +836,7 @@ export const BOSS_MODIFIER_REGISTRY: Record<BossModifierId, BossModifier> = {
   boss_double_target: bossDoubleTarget,
   boss_diminish: bossDiminish,
   boss_score_tax: bossScoreTax,
+  boss_output_drain: bossOutputDrain,
   // 干扰类
   boss_fade: bossFade,
   boss_scramble: bossScramble,
