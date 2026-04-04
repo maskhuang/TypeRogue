@@ -171,9 +171,7 @@ let _isBoss = false; // Story 42.4: 当前关是否 Boss（startTimer 缓存，�
 let _isCalibrationLevel = false; // 第一关校准关：无目标，时间结束后校准基数
 let _calibrationEffectiveScore = 0; // Story 54.2: 校准关 effectiveScore（供 showGoldReward 读取）
 let _patternRepeatWord = false; // Pattern 满层：下次完词后重复当前词
-let _clusterTimeBonus = 0; // Cluster 满层：完词时加时间
 export function setPatternRepeatWord(): void { _patternRepeatWord = true }
-export function addClusterTimeBonus(seconds: number): void { _clusterTimeBonus += seconds }
 let _overflowDeduction = 0; // 溢出扣减量（用于 announceLevel 动画）
 let _preDeductionTarget = 0; // 扣减前的目标分数
 
@@ -1298,13 +1296,6 @@ function completeWord(): void {
   if (wordRelicResult.effects.time > 0) {
     state.time += wordRelicResult.effects.time;
     showFeedback(`+${wordRelicResult.effects.time.toFixed(1)}s`, '#00ff88', getFloatScale('time', wordRelicResult.effects.time));
-  }
-
-  // Cluster 满层：+时间
-  if (_clusterTimeBonus > 0) {
-    state.time += _clusterTimeBonus;
-    showFeedback(`+${_clusterTimeBonus.toFixed(1)}s`, '#00cccc', getFloatScale('time', _clusterTimeBonus));
-    _clusterTimeBonus = 0;
   }
 
   // Pattern 满层：重复当前词（不换新词）

@@ -88,8 +88,6 @@ export interface OrchestratorCallbacks {
   devourTarget?: (targetKey: string) => void
   /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
   chargeAutoComplete?: () => void
-  /** Cluster 满层：+时间 */
-  onClusterTime?: (seconds: number) => void
   /** Pattern 满层：重复当前词 */
   onPatternRepeat?: () => void
 }
@@ -415,9 +413,18 @@ export function orchestrateAffixTrigger(
       }
     }
 
-    // Cluster 满层：通知 battle 加时间
-    if (result.phase5?.clusterTimeBonus) {
-      callbacks.onClusterTime?.(result.phase5.clusterTimeBonus)
+    // Cluster 满层：触发元音键上的技能
+    if (result.phase5?.clusterVowelTarget) {
+      const vowelSkillId = ctx.bindings.get(result.phase5.clusterVowelTarget)
+      if (vowelSkillId) {
+        queue.push({
+          skillId: vowelSkillId,
+          triggerKey: result.phase5.clusterVowelTarget,
+          type: 'pulse_burst' as TriggerWorkType,
+          depth: item.depth + 1,
+          chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
+        })
+      }
     }
     // Pattern 满层：通知 battle 重复当前词
     if (result.phase5?.patternRepeatWord) {

@@ -276,8 +276,8 @@ export interface Phase5Result {
   critEchoTarget?: string
   /** 脉冲：爆发时立刻自触发一次 */
   pulseSelfTrigger?: boolean
-  /** Cluster 满层：+时间秒数 */
-  clusterTimeBonus?: number
+  /** Cluster 满层：触发元音键位技能 */
+  clusterVowelTarget?: string
   /** Pattern 满层：重复当前词 */
   patternRepeatWord?: boolean
   /** 脉冲质变：爆发时触发的匹配技能键位（进入伪循环） */
@@ -1038,7 +1038,9 @@ export function resolvePhase2(
           flags.stackEffectFired = true
           const clInterval = getEffectiveInterval(affix.clusterInterval ?? 8, skill.id, ctx)
           if (runtimeState.stacks > 0 && runtimeState.stacks % clInterval === 0) {
-            mutations.push({ type: 'clusterTime' as any, value: 0.5 + clusterVal * 0.3 })
+            flags.stackEffectFired = true
+            // 标记需要触发元音键技能（Phase 5 处理）
+            mutations.push({ type: 'clusterVowel' as any, value: 1 })
           }
         }
         break
@@ -2328,7 +2330,16 @@ export function triggerAffixSkill(
 
   // Cluster/Pattern 满层效果：从 Phase 2 mutations 提取
   for (const m of p2.mutations) {
-    if ((m as any).type === 'clusterTime') p5.clusterTimeBonus = (p5.clusterTimeBonus ?? 0) + (m as any).value
+    if ((m as any).type === 'clusterVowel') {
+      // 找一个绑定在元音键上的技能
+      const vowelCandidates: string[] = []
+      for (const [k, sid] of ctx.bindings) {
+        if (VOWELS.has(k) && sid !== skill.id) vowelCandidates.push(k)
+      }
+      if (vowelCandidates.length > 0) {
+        p5.clusterVowelTarget = vowelCandidates[Math.floor(ctx.randomFn() * vowelCandidates.length)]
+      }
+    }
     if ((m as any).type === 'patternRepeat') p5.patternRepeatWord = true
   }
 
