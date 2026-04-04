@@ -981,6 +981,27 @@ export function computeSmartEstimate(
         }
         break
       }
+      case 'burst': {
+        // 连暴：基础暴击率 + 连暴加成（无法预估连暴层数，只显示暴击率）
+        const burstCrit = affix.critChance ?? 0
+        if (burstCrit > 0) critChanceAccum += burstCrit
+        breakdown.push({ typeKey: 'burst', label: t('est.burst', { pct: Math.round((affix.burstK ?? 0) * 100) }), detail: `(${t('est.crit_base')} ${Math.round(burstCrit * 100)}%)` })
+        break
+      }
+      case 'zeroIn': {
+        // 归零：基础暴击率 + 失误补偿（无法预估失误层数，只显示暴击率）
+        const zeroCrit = affix.critChance ?? 0
+        if (zeroCrit > 0) critChanceAccum += zeroCrit
+        breakdown.push({ typeKey: 'zeroIn', label: t('est.zeroin', { pct: Math.round((affix.zeroInK ?? 0) * 100) }), detail: `(${t('est.crit_base')} ${Math.round(zeroCrit * 100)}%)` })
+        break
+      }
+      case 'sharpshooter': {
+        // 狙击：基础暴击率 + 反比加成（取决于总暴击率，此处只加基础值）
+        const sharpCrit = affix.critChance ?? 0
+        if (sharpCrit > 0) critChanceAccum += sharpCrit
+        breakdown.push({ typeKey: 'sharpshooter', label: t('est.sharpshooter', { pct: Math.round((affix.sharpK ?? 0) * 100) }), detail: `(${t('est.crit_base')} ${Math.round(sharpCrit * 100)}%)` })
+        break
+      }
       case 'exhaust': {
         // 消耗：base 倍率（固定已知）
         const m = affix.exhaustMult ?? 1
