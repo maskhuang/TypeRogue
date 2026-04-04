@@ -721,7 +721,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Cluster]: '单词中连续辅音越长（至少2个），产出加成越高',
   [AffixType.Coverage]: '单词中不同字母种类越多，产出加成越高',
   [AffixType.Bigram]: '单词中相邻字母对越罕见，产出加成越高',
-  [AffixType.Flow]: '指定关系的邻居中比自己强的越多，产出加成越高',
+  [AffixType.Flow]: '同资源邻居实际产出比自己高时，按差值加成',
   [AffixType.Confluence]: '指定关系的邻居资源类型越多样，产出加成越高',
   [AffixType.Turbulence]: '指定关系的邻居强弱差异越大，产出加成越高',
   [AffixType.PhaseShift]: '读取一种资源的本关累积产出当温度，跨阈值时产出跳升；高温持续消耗资源',

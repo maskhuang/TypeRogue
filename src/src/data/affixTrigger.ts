@@ -858,21 +858,19 @@ export function resolvePhase2(
       }
 
       case AffixType.Flow: {
-        // 落差：邻居 base value 比自己高时，按归一化差值加 bonusPercent
+        // 落差：同资源邻居实际产出比自己高时，按差值加成
         if (affix.posRel == null) break
-        const lvlIdx = Math.max(0, Math.min(skill.level - 1, 3))
-        const selfBase = BASE_VALUES[skill.resource]?.[lvlIdx] ?? 1
+        const selfProduced = getAffixSourceValue(skill.resource, ctx)
+        const flowTransformed = isTransformedForAffix(AffixType.Flow, runtimeState, skill, ctx)
         for (const ns of getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)) {
-          const nLvlIdx = Math.max(0, Math.min(ns.level - 1, 3))
-          const nBase = BASE_VALUES[ns.resource]?.[nLvlIdx] ?? 1
-          const delta = nBase - selfBase
+          if (ns.resource !== skill.resource) continue // 仅同资源比较
+          const nProduced = getAffixSourceValue(ns.resource, ctx)
+          const delta = nProduced - selfProduced
           // 质变·瀑布：双向取绝对差值
-          const flowTransformed = isTransformedForAffix(AffixType.Flow, runtimeState, skill, ctx)
           if (delta > 0 || flowTransformed) {
-            const absDelta = Math.abs(delta)
-            const maxBase = Math.max(selfBase, nBase)
-            const norm = Math.min(selfBase, nBase) / maxBase
-            bonusPercent += (affix.flowK ?? 0) * absDelta * norm
+            const flowLvl = Math.max(0, Math.min(skill.level - 1, 2))
+            const norm = BASE_VALUES[skill.resource]?.[flowLvl] ?? 1
+            bonusPercent += (affix.flowK ?? 0) * Math.abs(delta) / norm
           }
         }
         break

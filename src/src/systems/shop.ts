@@ -816,19 +816,20 @@ export function computeSmartEstimate(
         break
       }
       case 'flow': {
-        // 落差：邻居 baseValue 比自己高时加成
+        // 落差：同资源邻居基础产出比自己高时加成（预估用 baseValues 比较）
         if (affix.posRel == null) break
         const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
         if (keys.length === 0) break
-        const selfLvl = Math.max(0, Math.min(skill.level - 1, 3))
-        const selfBase = BASE_VALUES[skill.resource]?.[selfLvl] ?? 1
+        const selfLvl = Math.max(0, Math.min(skill.level - 1, 2))
+        const selfBase = skill.baseValues[selfLvl] ?? BASE_VALUES[skill.resource]?.[selfLvl] ?? 1
         const neighbors = getNeighborSkills(keys, affix.posRel, { bindings: state.player.bindings, allSkills: state.affixSkills })
         let flowBonus = 0
         for (const ns of neighbors) {
-          const nLvl = Math.max(0, Math.min(ns.level - 1, 3))
-          const nBase = BASE_VALUES[ns.resource]?.[nLvl] ?? 1
+          if (ns.resource !== skill.resource) continue // 仅同资源
+          const nLvl = Math.max(0, Math.min(ns.level - 1, 2))
+          const nBase = ns.baseValues[nLvl] ?? BASE_VALUES[ns.resource]?.[nLvl] ?? 1
           const delta = nBase - selfBase
-          if (delta > 0) flowBonus += (affix.flowK ?? 0) * delta * (selfBase / nBase)
+          if (delta > 0) flowBonus += (affix.flowK ?? 0) * delta / selfBase
         }
         if (flowBonus > 0) {
           addPercent += flowBonus
