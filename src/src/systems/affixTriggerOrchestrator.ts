@@ -201,11 +201,10 @@ export function orchestrateAffixTrigger(
     }
     results.push(result)
 
-    // Counter — 负产出拦截：扫描自身 + Counter.posRel 邻居寻找 Counter 充能
-    if (effectiveOutput < 0) {
+    // Counter — 负面效果拦截：产出为负 OR bonusPercent < 0（词条整体减产）
+    const needsCounter = effectiveOutput < 0 || (result.bonusPercent != null && result.bonusPercent < 0)
+    if (needsCounter) {
       const checked = new Set<string>()
-      let counterFound = false
-      // 遍历所有技能寻找有 Counter 且在范围内的
       for (const [cSkillId, cSkill] of ctx.allSkills) {
         if (checked.has(cSkillId)) continue
         checked.add(cSkillId)
@@ -220,13 +219,23 @@ export function orchestrateAffixTrigger(
           const inRange = cKeys.some(ck => hasRelation(ck, item.triggerKey, counterAffix.posRel!))
           if (!inRange) continue
         }
-        // 找到有充能且在范围内的 Counter
         (cRt as any).counterCharges--
-        if (cRt.questTransformed && cSkill.enchantmentIds?.includes(EnchantmentType.QuestCounter)) {
-          (cRt as any).counterAbsorbed = Math.abs(effectiveOutput)
+        if (effectiveOutput < 0) {
+          // 产出为负：归零 + 质变·反噬
+          if (cRt.questTransformed && cSkill.enchantmentIds?.includes(EnchantmentType.QuestCounter)) {
+            (cRt as any).counterAbsorbed = Math.abs(effectiveOutput)
+          }
+          effectiveOutput = 0
+        } else {
+          // bonusPercent < 0 但产出仍为正：取消负面加成，回到基础值
+          const baseOutput = result.phase4?.output != null
+            ? effectiveOutput / Math.max(0.01, 1 + result.bonusPercent)
+            : effectiveOutput
+          if (cRt.questTransformed && cSkill.enchantmentIds?.includes(EnchantmentType.QuestCounter)) {
+            (cRt as any).counterAbsorbed = baseOutput - effectiveOutput
+          }
+          effectiveOutput = baseOutput
         }
-        effectiveOutput = 0
-        counterFound = true
         break
       }
     }
