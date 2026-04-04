@@ -108,6 +108,21 @@ export function onNewWordForCancel(): void {
   _wordAppearTime = performance.now()
   _cancelCheckedThisWord = false
   _wordCancelled = false
+  // 窗口提示：显示闪烁的取消提示
+  showCancelWindowHint()
+}
+
+/** 显示取消窗口提示（400ms 后消失） */
+function showCancelWindowHint(): void {
+  if (typeof document === 'undefined') return
+  const existing = document.getElementById('cancel-window-hint')
+  if (existing) existing.remove()
+  const hint = document.createElement('div')
+  hint.id = 'cancel-window-hint'
+  hint.textContent = '⚡'
+  const wordZone = document.getElementById('word-zone')
+  if (wordZone) wordZone.appendChild(hint)
+  setTimeout(() => hint.remove(), CANCEL_WINDOW_MS)
 }
 
 /**

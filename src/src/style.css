@@ -813,6 +813,21 @@ body {
     background: rgba(78, 205, 196, 0.2);
     box-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
 }
+#cancel-window-hint {
+    position: absolute;
+    top: -8px;
+    right: -20px;
+    font-size: 18px;
+    animation: cancelHintPulse 0.4s ease-out forwards;
+    pointer-events: none;
+    z-index: 10;
+}
+@keyframes cancelHintPulse {
+    0% { opacity: 1; transform: scale(1.2); }
+    60% { opacity: 0.8; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.8); }
+}
+
 .pack-expand-panel {
     margin: 4px 0 8px;
     padding: 8px 12px;
