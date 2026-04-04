@@ -992,24 +992,61 @@ interface AffixScalingEntry {
 
 /** 词条参数每级增量表（来源：旧任务附魔数值强化） */
 export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> = {
+  // ── 暴击类 ──
   [AffixType.Crit]:     { param: 'chance',          delta: 0.05,  mode: 'add' },
-  // Pulse: burstMult 已废弃（改为自触发），interval 无需缩放
-  [AffixType.Cascade]:  { param: 'cascadeMult',    delta: 0.2,   mode: 'add' },
-  [AffixType.Decay]:    { param: 'floor',           delta: 0.02,  mode: 'add' },
-  [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
   [AffixType.Charge]:   { param: 'maxBonus',       delta: 0.10,  mode: 'add' },
-  [AffixType.Outcast]:  { param: 'bonusPercent',   delta: 0.15,  mode: 'add' },
-  [AffixType.Convert]:  { param: 'k',              delta: 1.1,   mode: 'mult' },
-  // Amplify 每层加成 = 基础产出（绝对值），无需额外参数缩放；升级通过 baseValues 自然增长
-  [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
+  [AffixType.Decay]:    { param: 'floor',           delta: 0.02,  mode: 'add' },
   [AffixType.Recurse]:  { param: 'recurseChance',  delta: 0.03,  mode: 'add' },
   [AffixType.Taboo]:    { param: 'bonusPercent',   delta: 0.08,  mode: 'add' },
   [AffixType.Fallacy]:  { param: 'fallacyK',       delta: 0.02,  mode: 'add' },
-  [AffixType.WarDrum]:  { param: 'critPerStack',   delta: 0.005, mode: 'add' },
+  [AffixType.Burst]:    { param: 'burstK',         delta: 0.05,  mode: 'add' },
+  [AffixType.ZeroIn]:   { param: 'zeroInK',        delta: 0.05,  mode: 'add' },
+  [AffixType.Sharpshooter]: { param: 'sharpK',     delta: 0.3,   mode: 'add' },
+  // ── 数值类 ──
+  [AffixType.Convert]:  { param: 'k',              delta: 1.1,   mode: 'mult' },
   [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
-  [AffixType.Splash]:   { param: 'splashCount',    delta: -1,    mode: 'add' },  // 间隔降低（升级更频繁触发）
+  [AffixType.Cascade]:  { param: 'cascadeMult',    delta: 0.2,   mode: 'add' },
+  [AffixType.Outcast]:  { param: 'bonusPercent',   delta: 0.15,  mode: 'add' },
+  [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
+  [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
+  [AffixType.Exhaust]:  { param: 'exhaustMult',    delta: 0.3,   mode: 'add' },
+  [AffixType.Decorator]:{ param: 'decoratorK',     delta: 0.05,  mode: 'add' },
+  [AffixType.Reflect]:  { param: 'reflectK',       delta: 0.01,  mode: 'add' },
+  // ── 叠层类 ──
+  [AffixType.Pulse]:    { param: 'interval',       delta: -1,    mode: 'add' },  // 间隔降低（更频繁）
+  [AffixType.Splash]:   { param: 'splashCount',    delta: -1,    mode: 'add' },
   [AffixType.Resonance]:{ param: 'resonanceCount', delta: -1,    mode: 'add' },
   [AffixType.Relay]:    { param: 'relayCount',     delta: -1,    mode: 'add' },
+  [AffixType.WarDrum]:  { param: 'critPerStack',   delta: 0.005, mode: 'add' },
+  [AffixType.Counter]:  { param: 'maxCharges',     delta: 1,     mode: 'add' },
+  // ── 拓扑类 ──
+  [AffixType.Bridge]:   { param: 'bridgeK',        delta: 0.08,  mode: 'add' },
+  [AffixType.Clique]:   { param: 'cliqueK',        delta: 0.03,  mode: 'add' },
+  [AffixType.Component]:{ param: 'componentK',     delta: 0.01,  mode: 'add' },
+  [AffixType.Match]:    { param: 'matchK',         delta: 0.03,  mode: 'add' },
+  [AffixType.Flow]:     { param: 'flowK',          delta: 0.02,  mode: 'add' },
+  [AffixType.Confluence]:{ param: 'confluenceK',   delta: 0.05,  mode: 'add' },
+  [AffixType.Turbulence]:{ param: 'turbulenceK',   delta: 0.02,  mode: 'add' },
+  // ── 词感类 ──
+  [AffixType.Cluster]:  { param: 'clusterK',       delta: 0.03,  mode: 'add' },
+  [AffixType.Coverage]: { param: 'coverageK',      delta: 0.01,  mode: 'add' },
+  [AffixType.Bigram]:   { param: 'bigramK',        delta: 0.10,  mode: 'add' },
+  [AffixType.Entropy]:  { param: 'entropyK',       delta: 0.02,  mode: 'add' },
+  [AffixType.Cipher]:   { param: 'cipherK',        delta: 0.005, mode: 'add' },
+  [AffixType.Pattern]:  { param: 'patternK',       delta: 0.01,  mode: 'add' },
+  // ── 奇偶/素数 ──
+  [AffixType.Parity]:   { param: 'oddK',           delta: 0.04,  mode: 'add' },
+  [AffixType.Prime]:    { param: 'primeK',         delta: 0.01,  mode: 'add' },
+  // ── 金融类 ──
+  [AffixType.Leverage]: { param: 'leverageK',      delta: 0.02,  mode: 'add' },
+  [AffixType.Option]:   { param: 'premium',        delta: 0.02,  mode: 'add' },
+  [AffixType.Hedge]:    { param: 'hedgeK',         delta: 0.05,  mode: 'add' },
+  // ── 温度类 ──
+  [AffixType.PhaseShift]:{ param: 'kGas',          delta: 0.008, mode: 'add' },
+  [AffixType.EndoExo]:  { param: 'kExo',           delta: 0.005, mode: 'add' },
+  [AffixType.Fusion]:   { param: 'fusionK',        delta: 0.005, mode: 'add' },
+  // Amplify: 每层加成=基础产出，升级通过 baseValues 自然增长
+  // Rainbow / Ligature / Twin / Mirror / Conduit / Innate / Ethereal / MonkeyPatch: 无可缩放数值参数
 }
 
 /** 四舍五入到指定小数位 */
