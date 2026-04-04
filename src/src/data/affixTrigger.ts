@@ -791,7 +791,7 @@ export function resolvePhase2(
       }
 
       case AffixType.Leverage: {
-        // 杠杆：excess = 资源值 - 保证金阈值，可为负
+        // 杠杆：excess = 本词产出 - 阈值，可为负（前几次按键亏损，后面盈利）
         if (affix.source == null) break
         const levVal = getAffixSourceValue(affix.source, ctx)
         const levLvl = Math.max(0, Math.min(skill.level - 1, 2))
