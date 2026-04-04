@@ -487,7 +487,7 @@ function handleEnterKey(e: KeyboardEvent): void {
       _accelAtTarget = getTimeAcceleration(_elapsedSeconds, _isBoss);
       _elapsedAtTarget = _elapsedSeconds;
       getElements().container.classList.add('glow-target-reached');
-      showFeedback(getMirrorPhase() === 'done' ? t('battle.mirror_survived') : t('battle.target_reached'), '#4ecdc4');
+      showFeedback(getMirrorPhase() === 'done' && isModifierActive('boss_mirror') ? t('battle.mirror_survived') : t('battle.target_reached'), '#4ecdc4');
       playSound('levelup');
       screenShake(3); // Review Fix #5: 达标脉冲
     }
@@ -1271,7 +1271,7 @@ function completeWord(): void {
       _accelAtTarget = getTimeAcceleration(_elapsedSeconds, _isBoss);
       _elapsedAtTarget = _elapsedSeconds;
       getElements().container.classList.add('glow-target-reached');
-      showFeedback(getMirrorPhase() === 'done' ? t('battle.mirror_survived') : t('battle.target_reached'), '#4ecdc4');
+      showFeedback(getMirrorPhase() === 'done' && isModifierActive('boss_mirror') ? t('battle.mirror_survived') : t('battle.target_reached'), '#4ecdc4');
       playSound('levelup');
       screenShake(3); // Review Fix #5: 达标绿色脉冲
     }
