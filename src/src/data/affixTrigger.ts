@@ -2076,7 +2076,7 @@ export function resolvePhase6(
       }
     }
 
-    // 中转词条：叠层式 — 匹配技能触发时+1层，每叠 N 层中转触发 1 个匹配技能
+    // 中转词条：叠层式 — 匹配技能触发时+1层，每叠 N 层触发 1 个匹配技能
     if (!ctx.chainAffixesDisabled) {
       for (const affix of neighborSkill.affixes) {
         if (affix.type !== AffixType.Relay || affix.posRel == null) continue

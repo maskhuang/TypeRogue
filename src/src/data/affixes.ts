@@ -324,7 +324,7 @@ export interface AffixInstance {
   resource?: ResourceType          // Amplify: 关联资源
   splashCount?: number             // Splash: 触发指定关系的N个匹配技能
   resonanceCount?: number          // Resonance: 共享技能触发时自触发N次
-  relayCount?: number              // Relay: 中转触发指定关系的N个匹配技能
+  relayCount?: number              // Relay: 触发指定关系的N个匹配技能
   valuePerStack?: number           // Amplify: 已废弃（现每层 = 基础产出绝对值），保留供旧存档兼容
   cascadeMult?: number             // Cascade: 级联乘数
   bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: 暴击率加成
@@ -711,7 +711,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Splash]: '自身不产出；触发叠层，每叠N层触发1个匹配技能（升级降低N）',
   [AffixType.Amplify]: '自身不产出；触发叠层，指定关系的匹配技能产出+自身基础值',
   [AffixType.Conduit]: '自身不产出，指定关系的匹配技能触发时额外触发一次',
-  [AffixType.Relay]: '自身不产出；指定关系的匹配技能触发时叠层，每叠N层中转触发1个匹配技能（升级降低N，不含其他中转）',
+  [AffixType.Relay]: '自身不产出；指定关系的匹配技能触发时叠层，每叠N层触发1个匹配技能（升级降低N，不含其他中转）',
   [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
   [AffixType.Gravity]: '调整含本键字母的单词出现概率',
   [AffixType.Ligature]: '字母在当前单词中重复出现时，按出现次数倍增产出',
@@ -899,7 +899,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestSacrifice, name: '献祭', targetAffix: AffixType.Taboo, event: 'equip_count', targetStacks: 0, effectDesc: '质变：惩罚转为随机资源', transformDesc: '完成后惩罚触发时产出转为随机其他资源' },
   { type: EnchantmentType.QuestTwin, name: '镜像', targetAffix: AffixType.Twin, event: 'equip_count', targetStacks: 0, effectDesc: '质变：词条效果加倍', transformDesc: '完成后所有非 Twin 词条效果翻倍' },
   { type: EnchantmentType.QuestConduit, name: '导引', targetAffix: AffixType.Conduit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：导能 +2', transformDesc: '完成后为邻居提供 2 次额外触发' },
-  { type: EnchantmentType.QuestRelay, name: '中继', targetAffix: AffixType.Relay, event: 'equip_count', targetStacks: 0, effectDesc: '质变：中转全匹配', transformDesc: '完成后每次中转触发指定关系的所有匹配技能' },
+  { type: EnchantmentType.QuestRelay, name: '中继', targetAffix: AffixType.Relay, event: 'equip_count', targetStacks: 0, effectDesc: '质变：触发全匹配', transformDesc: '完成后每次触发指定关系的所有匹配技能' },
   { type: EnchantmentType.QuestMultiplyOp, name: '乘算化', targetAffix: AffixType.Multiply, event: 'equip_count', targetStacks: 0, effectDesc: '质变：乘算化', transformDesc: '完成后产出变为乘算模式（资源×N 而非资源+N）' },
   // Epic 52: 34 新质变
   { type: EnchantmentType.QuestResonance, name: '共振', targetAffix: AffixType.Resonance, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向共振', transformDesc: '自触发时也给触发源邻居+1叠层' },
@@ -930,7 +930,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestBurst, name: '弹幕', targetAffix: AffixType.Burst, event: 'equip_count', targetStacks: 0, effectDesc: '质变：暴击溅射', transformDesc: '3连击时每次暴击额外触发一个邻居' },
   { type: EnchantmentType.QuestZeroIn, name: '蓄能', targetAffix: AffixType.ZeroIn, event: 'equip_count', targetStacks: 0, effectDesc: '质变：叠层转化', transformDesc: '暴击时missStreak转化为等量stacks' },
   { type: EnchantmentType.QuestSharpshooter, name: '狙击', targetAffix: AffixType.Sharpshooter, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双维输出', transformDesc: '暴击时同时加产出和暴击倍率' },
-  { type: EnchantmentType.QuestBridge, name: '枢纽', targetAffix: AffixType.Bridge, event: 'equip_count', targetStacks: 0, effectDesc: '质变：中转触发', transformDesc: '是桥时触发断裂两侧各一个邻居' },
+  { type: EnchantmentType.QuestBridge, name: '枢纽', targetAffix: AffixType.Bridge, event: 'equip_count', targetStacks: 0, effectDesc: '质变：触发邻居', transformDesc: '是桥时触发断裂两侧各一个邻居' },
   { type: EnchantmentType.QuestClique, name: '方阵', targetAffix: AffixType.Clique, event: 'equip_count', targetStacks: 0, effectDesc: '质变：团内共享', transformDesc: '团内成员触发时也获得等额bonus' },
   { type: EnchantmentType.QuestComponent, name: '网络', targetAffix: AffixType.Component, event: 'equip_count', targetStacks: 0, effectDesc: '质变：活跃累积', transformDesc: '连通分量内每次触发+1%bonus（本关累积）' },
   { type: EnchantmentType.QuestDecorator, name: '编译', targetAffix: AffixType.Decorator, event: 'equip_count', targetStacks: 0, effectDesc: '质变：词条数驱动', transformDesc: '放大率随同技能词条数递增' },
