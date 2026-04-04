@@ -61,6 +61,13 @@ function isStackingAffixType(type: AffixType): boolean {
   return AFFIX_CATEGORY_MAP[type] === 'stack'
 }
 
+/** 判断技能是否为叠层类（含 Pulse 质变转化） */
+export function isStackingSkill(skill: AffixSkillInstance, skillStates: Map<string, SkillRuntimeState>): boolean {
+  if (skill.affixes.some(a => isStackingAffixType(a.type))) return true
+  const rt = skillStates.get(skill.id)
+  return rt?.convertedToStacking ?? false
+}
+
 // ===== 触发上下文 =====
 
 /** 战斗中触发计算所需的只读上下文快照 */
@@ -1484,7 +1491,7 @@ export function resolvePhase3(
             if (!nId || nId === skill.id || seen.has(nId)) continue
             seen.add(nId)
             const nSkill = ctx.allSkills.get(nId)
-            if (nSkill?.affixes.some(na => isStackingAffixType(na.type))) {
+            if (nSkill && isStackingSkill(nSkill, ctx.skillStates)) {
               candidates.push({ key: nk, id: nId })
             }
           }
@@ -1849,7 +1856,7 @@ export function resolvePhase5(
           seen.add(nSkillId)
           const nSkill = ctx.allSkills.get(nSkillId)
           if (!nSkill) continue
-          if (nSkill.affixes.some(a => isStackingAffixType(a.type))) {
+          if (isStackingSkill(nSkill, ctx.skillStates)) {
             targets.push(nk)
           }
         }
@@ -1886,21 +1893,31 @@ export function resolvePhase5(
     }
   }
 
-  // ── Pulse 质变：爆发时触发所有叠层类技能（无范围限制） ──
+  // ── Pulse 质变：爆发时将范围内 1 个非叠层类技能转化为叠层类（每关重置） ──
   if (triggerFlags.isPulse && isTransformedForAffix(AffixType.Pulse, runtimeState, skill, ctx) && !ctx.chainAffixesDisabled) {
-    const pulseTargets: string[] = []
-    const pulseCounted = new Set<string>()
-    for (const [nk, nSkillId] of ctx.bindings) {
-      if (pulseCounted.has(nSkillId)) continue
-      pulseCounted.add(nSkillId)
-      if (nSkillId === skill.id) continue
-      const nSkill = ctx.allSkills.get(nSkillId)
-      if (!nSkill) continue
-      if (!nSkill.affixes.some(a => isStackingAffixType(a.type))) continue
-      pulseTargets.push(nk)
-    }
-    if (pulseTargets.length > 0) {
-      result.pulseBurstTargets = pulseTargets
+    const pulseAffix = skill.affixes.find(a => a.type === AffixType.Pulse)
+    const convertPosRel = pulseAffix?.posRel
+    if (convertPosRel != null) {
+      const convertNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, convertPosRel)
+        .filter(k => ctx.bindings.has(k))
+      const candidates: { key: string, id: string }[] = []
+      const seen = new Set<string>()
+      for (const nk of convertNeighborKeys) {
+        const nId = ctx.bindings.get(nk)
+        if (!nId || nId === skill.id || seen.has(nId)) continue
+        seen.add(nId)
+        const nSkill = ctx.allSkills.get(nId)
+        if (!nSkill) continue
+        // 只选非叠层类技能
+        if (!isStackingSkill(nSkill, ctx.skillStates)) {
+          candidates.push({ key: nk, id: nId })
+        }
+      }
+      if (candidates.length > 0) {
+        const pick = candidates[Math.floor(ctx.randomFn() * candidates.length)]
+        const pickState = ctx.skillStates.get(pick.id)
+        if (pickState) pickState.convertedToStacking = true
+      }
     }
   }
 
@@ -2752,6 +2769,7 @@ export function resetStageState(
     state.parityAccum = 0
     state.parityCritAccum = 0
     state.primeAccum = 0
+    state.convertedToStacking = false
 
     // MonkeyPatch：每关随机设定 patchTargetIndex 和 patchMultiplier
     state.patchTargetIndex = -1

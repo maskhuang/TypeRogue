@@ -9,6 +9,7 @@ import { AffixType, EnchantmentType, BASE_VALUES } from '../data/affixes'
 import { hasRelation, PositionRelation, getKeysWithRelation } from '../data/keyboardTopology'
 import { getOutputDrainMultiplier } from '../data/bossModifiers'
 import { onStackEffectTriggered, checkStackDividend, isStackingAffix, SURGE_BONUS_PER_STACK } from './relics/StackingRelicBehaviors'
+import { isStackingSkill } from '../data/affixTrigger'
 import {
   triggerAffixSkill,
   MAX_RECURSE_DEPTH,
@@ -502,7 +503,7 @@ export function orchestrateAffixTrigger(
             .some(([k]) => hasRelation(k, nk, 0)) // PositionRelation.Adjacent = 0
           if (!isAdj) continue
           const nSkill = ctx.allSkills.get(nSid)
-          if (!nSkill?.affixes.some(a => isStackingAffix(a.type))) continue
+          if (!nSkill || !isStackingSkill(nSkill, ctx.skillStates)) continue
           const nState = ctx.skillStates.get(nSid)
           if (nState) nState.stacks += 1
         }
@@ -516,7 +517,7 @@ export function orchestrateAffixTrigger(
             .some(([k]) => hasRelation(k, nk, 0))
           if (!isAdj) continue
           const nSkill = ctx.allSkills.get(nSid)
-          if (!nSkill?.affixes.some(a => isStackingAffix(a.type))) continue
+          if (!nSkill || !isStackingSkill(nSkill, ctx.skillStates)) continue
           queue.push({
             skillId: nSid,
             triggerKey: nk,
