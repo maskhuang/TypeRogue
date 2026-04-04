@@ -165,7 +165,7 @@ export function getConditionMeta(condition: PackCondition): ConditionMeta {
 
   switch (condition.type) {
     case 'starts_with':
-      return { name: t('pack.starts_with', { letter }), desc: t('pack.starts_with.desc', { letter }), icon: '⚡' };
+      return { name: t('pack.starts_with', { letter }), desc: t('pack.starts_with.desc', { letter }), icon: '🔤' };
     case 'ends_with':
       return { name: t('pack.ends_with', { letter }), desc: t('pack.ends_with.desc', { letter }), icon: '🔠' };
     case 'contains':
