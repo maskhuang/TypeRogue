@@ -279,7 +279,7 @@ export function rollAffixParams(
       return { type }
 
     case AffixType.Recurse:
-      return { type, recurseChance: roundTo(0.15 + random() * 0.15, 2) }
+      return { type, recurseChance: roundTo(0.08 + random() * 0.12, 2) }
 
     case AffixType.Taboo:
       return { type, bonusPercent: 0.60 }
