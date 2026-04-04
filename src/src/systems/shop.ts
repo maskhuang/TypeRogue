@@ -7,7 +7,7 @@ import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION } from '../core/constants';
 import { getKeysWithRelation, hasRelation, PositionRelation } from '../data/keyboardTopology';
-import { getExtendedNeighbors } from '../data/affixTrigger';
+
 
 // === 位置关系标签（通过 t('rel.' + posRel) 获取） ===
 import { calculateDeckStats } from '../data/words';
