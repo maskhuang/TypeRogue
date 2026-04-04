@@ -828,6 +828,37 @@ body {
     100% { opacity: 0; transform: scale(0.8); }
 }
 
+.craft-queue-item {
+    position: relative;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid #555;
+}
+.craft-queue-item.craft-queue-active {
+    border-left-color: #9b59b6;
+    background: rgba(155, 89, 182, 0.08);
+}
+.craft-queue-item .craft-cancel-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: none;
+    border: 1px solid rgba(255,100,100,0.3);
+    color: #ff6b6b;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 18px;
+}
+.craft-queue-item .craft-cancel-btn:hover {
+    background: rgba(255,100,100,0.15);
+}
+
 .pack-expand-panel {
     margin: 4px 0 8px;
     padding: 8px 12px;

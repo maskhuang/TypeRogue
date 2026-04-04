@@ -48,73 +48,84 @@ function renderPipelineStatus(container: HTMLElement): void {
 
   const header = document.createElement('div');
   header.className = 'craft-section-header';
-  header.textContent = '⚡ 组装流水线';
+  header.textContent = `⚡ 组装流水线 (${state.assemblyQueue.length}/${MAX_QUEUE_SIZE})`;
   section.appendChild(header);
 
-  const pipeline = state.assemblyQueue[0] ?? null;
-  if (!pipeline) {
+  if (state.assemblyQueue.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'craft-pipeline-empty';
     empty.textContent = '无组装中的词语 — 在下方选择碎片开始组装';
     section.appendChild(empty);
   } else {
-    // 词名
-    const wordLabel = document.createElement('div');
-    wordLabel.className = 'craft-pipeline-word';
-    const completedCount = pipeline.slots.filter(s => s.completed).length;
-    wordLabel.textContent = `"${pipeline.targetWord}" — ${completedCount}/${pipeline.slots.length}`;
-    section.appendChild(wordLabel);
+    state.assemblyQueue.forEach((pipeline, qIdx) => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'craft-queue-item';
+      if (qIdx === 0) itemDiv.classList.add('craft-queue-active');
 
-    // 槽位序列
-    const slotsRow = document.createElement('div');
-    slotsRow.className = 'craft-pipeline-slots';
-
-    let foundActive = false;
-    for (const slot of pipeline.slots) {
-      const el = document.createElement('div');
-      el.className = 'craft-pipeline-slot';
-      if (slot.completed) {
-        el.classList.add('craft-pipeline-slot-done');
-        el.textContent = `${slot.letter.toUpperCase()} ✓`;
-      } else if (!foundActive) {
-        el.classList.add('craft-pipeline-slot-active');
-        el.textContent = slot.letter.toUpperCase();
-        foundActive = true;
+      // 词名 + 进度
+      const wordLabel = document.createElement('div');
+      wordLabel.className = 'craft-pipeline-word';
+      const completedCount = pipeline.slots.filter(s => s.completed).length;
+      if (qIdx === 0) {
+        wordLabel.textContent = `🔨 "${pipeline.targetWord}" — ${completedCount}/${pipeline.slots.length}`;
       } else {
-        el.classList.add('craft-pipeline-slot-pending');
-        el.textContent = slot.letter.toUpperCase();
+        wordLabel.textContent = `📋 ${qIdx + 1}. "${pipeline.targetWord}"`;
       }
+      itemDiv.appendChild(wordLabel);
 
-      // 进度条
-      const bar = document.createElement('div');
-      bar.className = 'craft-pipeline-bar';
-      const fill = document.createElement('div');
-      fill.className = 'craft-pipeline-fill';
-      fill.style.width = `${Math.round(slot.progress * 100)}%`;
-      bar.appendChild(fill);
-      el.appendChild(bar);
+      // 当前生产中：显示槽位进度条
+      if (qIdx === 0) {
+        const slotsRow = document.createElement('div');
+        slotsRow.className = 'craft-pipeline-slots';
 
-      slotsRow.appendChild(el);
-    }
+        let foundActive = false;
+        for (const slot of pipeline.slots) {
+          const el = document.createElement('div');
+          el.className = 'craft-pipeline-slot';
+          if (slot.completed) {
+            el.classList.add('craft-pipeline-slot-done');
+            el.textContent = `${slot.letter.toUpperCase()} ✓`;
+          } else if (!foundActive) {
+            el.classList.add('craft-pipeline-slot-active');
+            el.textContent = slot.letter.toUpperCase();
+            foundActive = true;
+          } else {
+            el.classList.add('craft-pipeline-slot-pending');
+            el.textContent = slot.letter.toUpperCase();
+          }
 
-    section.appendChild(slotsRow);
-
-    // 取消组装按钮（返还碎片）
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'craft-confirm-btn craft-cancel-btn';
-    cancelBtn.textContent = '取消组装（返还碎片）';
-    cancelBtn.onclick = () => {
-      // 返还碎片
-      for (const slot of pipeline.slots) {
-        if (/[a-z]/.test(slot.letter)) {
-          state.fragmentInventory[slot.letter] = (state.fragmentInventory[slot.letter] || 0) + 1;
+          const bar = document.createElement('div');
+          bar.className = 'craft-pipeline-bar';
+          const fill = document.createElement('div');
+          fill.className = 'craft-pipeline-fill';
+          fill.style.width = `${Math.round(slot.progress * 100)}%`;
+          bar.appendChild(fill);
+          el.appendChild(bar);
+          slotsRow.appendChild(el);
         }
+        itemDiv.appendChild(slotsRow);
       }
-      state.assemblyQueue.shift();
-      showFeedback('组装已取消，碎片已返还', '#88ccff');
-      rerender();
-    };
-    section.appendChild(cancelBtn);
+
+      // 取消按钮
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'craft-cancel-btn';
+      cancelBtn.textContent = '✕';
+      cancelBtn.title = '取消（返还碎片）';
+      cancelBtn.onclick = (e) => {
+        e.stopPropagation();
+        for (const slot of pipeline.slots) {
+          if (/[a-z]/.test(slot.letter)) {
+            state.fragmentInventory[slot.letter] = (state.fragmentInventory[slot.letter] || 0) + 1;
+          }
+        }
+        state.assemblyQueue.splice(qIdx, 1);
+        showFeedback('组装已取消，碎片已返还', '#88ccff');
+        rerender();
+      };
+      itemDiv.appendChild(cancelBtn);
+
+      section.appendChild(itemDiv);
+    });
   }
 
   container.appendChild(section);
@@ -226,7 +237,7 @@ function renderWordBuilder(container: HTMLElement): void {
     const btn = document.createElement('button');
     btn.className = 'craft-confirm-btn';
     if (!canStart) btn.classList.add('craft-confirm-disabled');
-    btn.textContent = '开始组装';
+    btn.textContent = state.assemblyQueue.length > 0 ? '排队组装' : '开始组装';
     btn.disabled = !canStart;
 
     btn.onclick = () => {
@@ -257,6 +268,12 @@ function renderWordBuilder(container: HTMLElement): void {
       const hint = document.createElement('span');
       hint.className = 'craft-confirm-hint';
       hint.textContent = `最多 ${MAX_PIPELINE_LENGTH} 个字母`;
+      section.appendChild(hint);
+    }
+    if (queueFull) {
+      const hint = document.createElement('span');
+      hint.className = 'craft-confirm-hint';
+      hint.textContent = `队列已满 (${MAX_QUEUE_SIZE}/${MAX_QUEUE_SIZE})`;
       section.appendChild(hint);
     }
   }
