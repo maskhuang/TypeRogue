@@ -230,6 +230,9 @@ export function rollAffixParams(
     case AffixType.Sharpshooter:
       return { type, sharpK: roundTo(1.00 + random() * 1.00, 2), critChance: 0.05 }
 
+    case AffixType.Overflow:
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), overflowStacks: 3, critChance: 0.10 }
+
     case AffixType.Bridge:
       // Bridge 固定 Adjacent（其他关系下人人互连，永远不是桥）
       return { type, posRel: PositionRelation.Adjacent, bridgeK: roundTo(0.25 + random() * 0.20, 2) }

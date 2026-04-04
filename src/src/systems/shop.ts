@@ -567,6 +567,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'burst': return `+${Math.round((a.burstK ?? 0) * 100)}%/${t('param.burst_per')}`
     case 'zero_in': return `+${Math.round((a.zeroInK ?? 0) * 100)}%/${t('param.zeroin_per')}`
     case 'sharpshooter': return `+${Math.round((a.sharpK ?? 0) * 100)}%`
+    case 'overflow': return `+${a.overflowStacks ?? 3}${t('param.overflow_unit')}`
     // ── 数值类（变化值） ──
     case 'convert': return `k=${a.k?.toFixed(3) ?? '?'}`
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
@@ -1101,7 +1102,8 @@ export function computeSkillCritChance(skill: AffixSkillInstance): number {
       case 'recurse': crit += affix.recurseChance ?? 0; break
       case 'burst':
       case 'zeroIn':
-      case 'sharpshooter': crit += affix.critChance ?? 0; break
+      case 'sharpshooter':
+      case 'overflow': crit += affix.critChance ?? 0; break
       // Charge/Decay/Fallacy 是动态的，不计入静态暴击率
     }
   }

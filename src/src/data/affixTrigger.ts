@@ -1333,7 +1333,8 @@ export function resolvePhase3(
 
       case AffixType.Burst:
       case AffixType.ZeroIn:
-      case AffixType.Sharpshooter: {
+      case AffixType.Sharpshooter:
+      case AffixType.Overflow: {
         // 基础暴击率：使这些词条独立可用（主效果在暴击后触发）
         totalCritChance += affix.critChance ?? 0
         break
@@ -1471,8 +1472,36 @@ export function resolvePhase3(
           multipliers.push(sharpMult)
         }
       }
-      // 暴击溢层：暴击时额外叠层
+      // 暴击溢层（遗物）：暴击时自身额外叠层
       runtimeState.stacks += (ctx.critOverflowStacks ?? 0)
+      // Overflow 词条：暴击时范围内 1 个叠层类邻居 +N 层
+      for (const a of skill.affixes) {
+        if (a.type === AffixType.Overflow && a.posRel != null && (a.overflowStacks ?? 0) > 0) {
+          const overflowNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, a.posRel)
+            .filter(k => ctx.bindings.has(k))
+          // 找叠层类邻居
+          const candidates: string[] = []
+          const seen = new Set<string>()
+          for (const nk of overflowNeighborKeys) {
+            const nId = ctx.bindings.get(nk)
+            if (!nId || nId === skill.id || seen.has(nId)) continue
+            seen.add(nId)
+            const nSkill = ctx.allSkills.get(nId)
+            if (nSkill?.affixes.some(na => isStackingAffixType(na.type))) {
+              candidates.push(nk)
+            }
+          }
+          if (candidates.length > 0) {
+            // 随机选 1 个
+            const targetKey = candidates[Math.floor(ctx.randomFn() * candidates.length)]
+            const targetId = ctx.bindings.get(targetKey)
+            if (targetId) {
+              const targetState = ctx.skillStates.get(targetId)
+              if (targetState) targetState.stacks += a.overflowStacks!
+            }
+          }
+        }
+      }
     } else if (hasTaboo) {
       // 禁忌：未暴击时产出负值
       if (isAffixGloballyTransformed(AffixType.Taboo, ctx.allSkills, ctx.skillStates)) {

@@ -632,7 +632,7 @@ const ZH: Record<string, string> = {
   'affix.parity': '奇偶', 'affix.prime': '素数', 'affix.match': '配对',
   'affix.entropy': '熵', 'affix.cipher': '密文', 'affix.pattern': '模式',
   'affix.leverage': '杠杆', 'affix.option': '期权', 'affix.hedge': '对冲',
-  'affix.burst': '连射', 'affix.zero_in': '校准', 'affix.sharpshooter': '神射',
+  'affix.burst': '连射', 'affix.zero_in': '校准', 'affix.sharpshooter': '神射', 'affix.overflow': '溢层',
   'affix.bridge': '桥', 'affix.clique': '团', 'affix.component': '连通',
   'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁',
 
@@ -685,6 +685,7 @@ const ZH: Record<string, string> = {
   'affix_desc.burst': '连续暴击次数越多，暴击倍率越高；未暴击时连击归零',
   'affix_desc.zero_in': '连续未暴击次数越多，下次暴击的倍率越高',
   'affix_desc.sharpshooter': '暴击率越低，暴击时的倍率加成越高',
+  'affix_desc.overflow': '暴击时指定关系的1个叠层类技能额外+叠层',
   'affix_desc.bridge': '当移除本键后，两侧相邻的技能无法连通时，大额加成',
   'affix_desc.clique': '指定关系的邻居中，彼此也是指定关系的越多，产出越高',
   'affix_desc.component': '沿相邻关系连成一片的技能数量越多，产出越高',
@@ -804,6 +805,7 @@ const ZH: Record<string, string> = {
   'param.option_per': '次',
   'param.parity_odd': '奇',
   'param.innate_unit': '次',
+  'param.overflow_unit': '层',
 
   // --- smart estimate labels ---
   'est.base_mult': '基础值 ×{val}',
@@ -1562,7 +1564,7 @@ const EN: Record<string, string> = {
   'affix.parity': 'Parity', 'affix.prime': 'Prime', 'affix.match': 'Match',
   'affix.entropy': 'Entropy', 'affix.cipher': 'Cipher', 'affix.pattern': 'Pattern',
   'affix.leverage': 'Leverage', 'affix.option': 'Option', 'affix.hedge': 'Hedge',
-  'affix.burst': 'Burst', 'affix.zero_in': 'Zero-In', 'affix.sharpshooter': 'Sharpshooter',
+  'affix.burst': 'Burst', 'affix.zero_in': 'Zero-In', 'affix.sharpshooter': 'Sharpshooter', 'affix.overflow': 'Overflow',
   'affix.bridge': 'Bridge', 'affix.clique': 'Clique', 'affix.component': 'Component',
   'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch',
 
@@ -1615,6 +1617,7 @@ const EN: Record<string, string> = {
   'affix_desc.burst': 'More consecutive crits = higher crit multiplier; resets on miss',
   'affix_desc.zero_in': 'More consecutive misses = higher crit multiplier on next crit',
   'affix_desc.sharpshooter': 'Lower crit chance = higher crit multiplier when you do crit',
+  'affix_desc.overflow': 'On crit, 1 stacking skill in range gains extra stacks',
   'affix_desc.bridge': 'Big bonus when removing this key would disconnect adjacent neighbors on either side',
   'affix_desc.clique': 'Among neighbors in range, the more that also satisfy the relation with each other, the more output',
   'affix_desc.component': 'More skills connected in a chain via adjacency = more output',
@@ -1736,6 +1739,7 @@ const EN: Record<string, string> = {
   'param.option_per': 'trigger',
   'param.parity_odd': 'odd',
   'param.innate_unit': '×',
+  'param.overflow_unit': ' stacks',
 
   // --- smart estimate labels ---
   'est.base_mult': 'Base ×{val}',

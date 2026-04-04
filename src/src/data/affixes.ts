@@ -31,6 +31,7 @@ export enum AffixType {
   Burst = 'burst',
   ZeroIn = 'zero_in',
   Sharpshooter = 'sharpshooter',
+  Overflow = 'overflow',
   // ── 叠层型 stack ──
   Pulse = 'pulse',
   Resonance = 'resonance',
@@ -98,6 +99,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory> = {
   [AffixType.Burst]: 'crit',
   [AffixType.ZeroIn]: 'crit',
   [AffixType.Sharpshooter]: 'crit',
+  [AffixType.Overflow]: 'crit',
   // ── 叠层型 ──
   [AffixType.Pulse]: 'stack',
   [AffixType.Resonance]: 'stack',
@@ -351,7 +353,8 @@ export interface AffixInstance {
   burstK?: number                  // Burst: 每连击层的 critMult 加成
   zeroInK?: number                 // ZeroIn: 每 miss 层的 critMult 补偿
   sharpK?: number                  // Sharpshooter: (1-critChance) × K 的 critMult 加成
-  critChance?: number              // Burst/ZeroIn/Sharpshooter: 基础暴击率
+  critChance?: number              // Burst/ZeroIn/Sharpshooter/Overflow: 基础暴击率
+  overflowStacks?: number          // Overflow: 暴击时给邻居叠层技能+N层
   bridgeK?: number                 // Bridge: 是桥时的 bonusPercent 加成
   cliqueK?: number                 // Clique: 每团成员的 bonusPercent
   componentK?: number              // Component: 每连通成员的 bonusPercent
@@ -606,6 +609,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Decorator]: 'low',
   [AffixType.Reflect]: 'high',
   [AffixType.MonkeyPatch]: 'low',
+  [AffixType.Overflow]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -717,6 +721,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Burst]: '连射',
   [AffixType.ZeroIn]: '校准',
   [AffixType.Sharpshooter]: '神射',
+  [AffixType.Overflow]: '溢层',
   [AffixType.Bridge]: '桥',
   [AffixType.Clique]: '团',
   [AffixType.Component]: '连通',
@@ -775,6 +780,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Burst]: '连续暴击次数越多，暴击倍率越高；未暴击时连击归零',
   [AffixType.ZeroIn]: '连续未暴击次数越多，下次暴击的倍率越高',
   [AffixType.Sharpshooter]: '暴击率越低，暴击时的倍率加成越高',
+  [AffixType.Overflow]: '暴击时指定关系的1个叠层类技能额外+N叠层',
   [AffixType.Bridge]: '指定关系的邻居之间的唯一连接点时，大额加成',
   [AffixType.Clique]: '自身与指定关系的邻居中两两相连的最大组越大，产出越高',
   [AffixType.Component]: '沿相邻关系连成一片的技能数量越多，产出越高',
@@ -1035,6 +1041,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Burst]:    { param: 'burstK',         delta: 0.05,  mode: 'add' },
   [AffixType.ZeroIn]:   { param: 'zeroInK',        delta: 0.05,  mode: 'add' },
   [AffixType.Sharpshooter]: { param: 'sharpK',     delta: 0.3,   mode: 'add' },
+  [AffixType.Overflow]:    { param: 'overflowStacks', delta: 1,  mode: 'add' },
   // ── 数值类 ──
   [AffixType.Convert]:  { param: 'k',              delta: 1.1,   mode: 'mult' },
   [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
