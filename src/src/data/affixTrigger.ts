@@ -1027,8 +1027,8 @@ export function resolvePhase2(
         const clusterVal = isTransformedForAffix(AffixType.Cluster, runtimeState, skill, ctx)
           ? Math.max(0, sumClusters - 1)
           : Math.max(0, maxCluster - 1)
-        // 辅音丛 → 额外叠层（而非 bonusPercent）
-        const clusterStacks = Math.floor((affix.clusterK ?? 0) * clusterVal * 10) // K×val×10 转为整数层
+        // 辅音丛 → 额外叠层：val=1→+1层, val=2→+2层, val=3→+4层（递增奖励长辅音���）
+        const clusterStacks = clusterVal > 0 ? Math.max(1, Math.round(clusterVal * (1 + (affix.clusterK ?? 0) * clusterVal))) : 0
         if (clusterStacks > 0) {
           runtimeState.stacks += clusterStacks
           flags.stackEffectFired = true
@@ -1077,10 +1077,11 @@ export function resolvePhase2(
         break
 
       case AffixType.Pattern: {
-        // 模式：单词的模式签名稀有度 → 额外叠层
+        // 模式 → 额外叠层：rarity<0.5→+0, rarity≥0.5→+1起（奖励罕见模式）
         const patternWord = ctx.currentWord ?? ''
         if (patternWord.length > 0) {
-          const patternStacks = Math.floor((affix.patternK ?? 0) * getPatternRarity(patternWord) * 10)
+          const rarity = getPatternRarity(patternWord)
+          const patternStacks = rarity >= 0.5 ? Math.max(1, Math.round(rarity * (1 + (affix.patternK ?? 0) * 10))) : 0
           if (patternStacks > 0) {
             runtimeState.stacks += patternStacks
             flags.stackEffectFired = true

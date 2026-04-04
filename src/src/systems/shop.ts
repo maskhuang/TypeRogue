@@ -896,9 +896,10 @@ export function computeSmartEstimate(
         break
       }
       case 'cluster': {
-        // 辅音丛 → 额外叠层
+        // ��音丛 → 额外叠层
         const avg = getWordSenseAvgForKeys(boundKeys)
-        const stacks = Math.floor((affix.clusterK ?? 0) * avg.avgCluster * 10)
+        const val = avg.avgCluster
+        const stacks = val > 0 ? Math.max(1, Math.round(val * (1 + (affix.clusterK ?? 0) * val))) : 0
         if (stacks > 0) {
           breakdown.push({ typeKey: 'cluster', label: t('est.cluster', { n: stacks }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
@@ -946,7 +947,8 @@ export function computeSmartEstimate(
       case 'pattern': {
         // 模式 → 额外叠层
         const avg = getWordSenseAvgForKeys(boundKeys)
-        const stacks = Math.floor((affix.patternK ?? 0) * avg.avgPatternRarity * 10)
+        const r = avg.avgPatternRarity
+        const stacks = r >= 0.5 ? Math.max(1, Math.round(r * (1 + (affix.patternK ?? 0) * 10))) : 0
         if (stacks > 0) {
           breakdown.push({ typeKey: 'pattern', label: t('est.pattern', { n: stacks }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
