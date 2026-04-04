@@ -200,23 +200,23 @@ export function orchestrateAffixTrigger(
       effectiveOutput *= (1 + result.phase5.transmuteSameResourceBoost)
     }
     results.push(result)
-    totalOutput += effectiveOutput
-    triggerCount++
 
-    // Story 45.9: Counter — 负产出拦截
+    // Story 45.9: Counter — 负产出拦截（必须在累加 totalOutput 之前）
     if (effectiveOutput < 0) {
       const skill = ctx.allSkills.get(item.skillId)
       const rt = ctx.skillStates.get(item.skillId)
       if (skill && rt && skill.affixes.some(a => a.type === AffixType.Counter) && (rt as any).counterCharges > 0) {
         (rt as any).counterCharges--
         // 质变·反噬：负值转为下次 bonus（存入 counterAbsorbed）
-        const counterAffix = skill.affixes.find(a => a.type === AffixType.Counter)
-        if (counterAffix && rt.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestCounter)) {
+        if (rt.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestCounter)) {
           (rt as any).counterAbsorbed = Math.abs(effectiveOutput)
         }
         effectiveOutput = 0
       }
     }
+
+    totalOutput += effectiveOutput
+    triggerCount++
 
     // Story 45.9: Exhaust — 触发计数 + 词条移除
     {
