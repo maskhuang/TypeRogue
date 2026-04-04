@@ -1273,7 +1273,6 @@ export function resolvePhase3(
 
   // 暴击子系统：累计暴击率（affix loop 内只累加，loop 后统一判定）
   let totalCritChance = 0
-  let critTransformed = false
   let hasTaboo = false
   let recurseCritContribution = 0 // 递归暴击率贡献（暴击重触发时减半）
 
@@ -1281,9 +1280,6 @@ export function resolvePhase3(
     switch (affix.type) {
       case AffixType.Crit: {
         totalCritChance += affix.chance ?? 0
-        if (isTransformedForAffix(AffixType.Crit, runtimeState, skill, ctx)) {
-          critTransformed = true
-        }
         break
       }
 
@@ -1434,17 +1430,21 @@ export function resolvePhase3(
     // 命运硬币：超出 50% 的暴击率转化为暴击倍数加成
     let effectiveCritChance = rawCritChance
     let critMult = CRIT_MULTIPLIER
+    // Crit 质变：暴击倍率翻倍
+    const hasCritTransform = skill.affixes.some(a => a.type === AffixType.Crit)
+      && isTransformedForAffix(AffixType.Crit, runtimeState, skill, ctx)
+    if (hasCritTransform) critMult *= 2
     if (ctx.fateCoinActive && rawCritChance > FATE_COIN_CRIT_CAP) {
       const excess = rawCritChance - FATE_COIN_CRIT_CAP
       effectiveCritChance = FATE_COIN_CRIT_CAP
-      critMult = CRIT_MULTIPLIER + excess * FATE_COIN_CONVERSION
+      critMult = critMult + excess * FATE_COIN_CONVERSION
     }
 
-    if (critTransformed || (effectiveCritChance > 0 && ctx.randomFn() < effectiveCritChance)) {
+    if (effectiveCritChance > 0 && ctx.randomFn() < effectiveCritChance) {
       output *= critMult
       multipliers.push(critMult)
       flags.isCrit = true
-      flags.critTransformed = critTransformed
+      flags.critTransformed = hasCritTransform
       // Burst / Zero-In: 暴击时读 critStreak/missStreak 追加倍率
       for (const a of skill.affixes) {
         if (a.type === AffixType.Burst && (a.burstK ?? 0) > 0) {

@@ -919,16 +919,16 @@ describe('Quest enhancement formulas', () => {
     expect(result.bonusPercent).toBeCloseTo(0.5)
   })
 
-  it('Crit: guaranteed crit when questTransformed', () => {
+  it('Crit: doubled crit multiplier when questTransformed', () => {
     const skill = makeSkill({
-      affixes: [{ type: AffixType.Crit, chance: 0.0, critMult: 2.0 }],
+      affixes: [{ type: AffixType.Crit, chance: 1.0 }],
       enchantmentIds: [EnchantmentType.QuestOverload],
     })
     const state = makeRuntimeState({ questTransformed: true })
-    // roll 0.99 > chance 0.0, but questTransformed overrides → guaranteed crit
-    const ctx = makeContext({ randomFn: () => 0.99 })
+    const ctx = makeContext({ randomFn: () => 0.01 }) // guaranteed crit with chance=1.0
     const result = resolvePhase3(skill, state, ctx, 10)
-    expect(result.output).toBeCloseTo(20) // 10 * 2.0 (base critMult, no stacking)
+    // critMult = 2 * 2 = 4 (doubled by transform)
+    expect(result.output).toBeCloseTo(40)
     expect(result.flags.isCrit).toBe(true)
   })
 
