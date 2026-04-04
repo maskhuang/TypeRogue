@@ -3308,7 +3308,12 @@ function renderWordInventory(): void {
   }
   el.ownedWords.parentElement!.insertBefore(freqContainer, el.ownedWords);
 
-  const boundKeys = new Set(state.player.bindings.keys());
+  // 已解锁字母集合（频率 >= 阈值）
+  const unlockedLetters = new Set<string>()
+  for (let i = 0; i < 26; i++) {
+    const letter = String.fromCharCode(97 + i)
+    if ((freqs.get(letter) ?? 0) >= FREQ_UNLOCK_THRESHOLD) unlockedLetters.add(letter)
+  }
 
   state.player.wordDeck.forEach((word, index) => {
     const item = document.createElement('div');
@@ -3321,7 +3326,7 @@ function renderWordInventory(): void {
     const wordSpan = document.createElement('span');
     wordSpan.className = 'word-text';
     wordSpan.innerHTML = word.split('').map(c =>
-      boundKeys.has(c.toLowerCase()) ? `<span class="bound-letter">${c}</span>` : c
+      unlockedLetters.has(c.toLowerCase()) ? `<span class="bound-letter">${c}</span>` : c
     ).join('');
 
     item.appendChild(wordSpan);
