@@ -1624,6 +1624,18 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
         <span class="lock-toggle ${item.locked ? 'locked' : ''}">${item.locked ? '🔒' : '🔓'}</span>
       `;
     }
+    // 词包卡片悬停时高亮键盘上对应字母键位
+    const packWords = pack.words
+    card.addEventListener('mouseenter', () => {
+      const letters = new Set<string>()
+      for (const w of packWords) for (const c of w.toLowerCase()) if (c >= 'a' && c <= 'z') letters.add(c)
+      for (const letter of letters) {
+        document.querySelector(`.key-slot[data-key="${letter}"]`)?.classList.add('word-hover-highlight')
+      }
+    })
+    card.addEventListener('mouseleave', () => {
+      document.querySelectorAll('.key-slot.word-hover-highlight').forEach(el => el.classList.remove('word-hover-highlight'))
+    })
   } else if (item.type === 'relic' && item.relicId) {
     // Relic item
     const relic = RELICS[item.relicId];
@@ -1971,11 +1983,16 @@ function getPackIcon(condType: PackConditionType): string {
   return meta.icon;
 }
 
-function highlightWord(word: string, boundKeySet: Set<string>): string {
-  return word.split('').map(c =>
-    boundKeySet.has(c.toLowerCase())
-      ? `<span class="bound-letter">${c}</span>` : c
-  ).join('');
+function highlightWord(word: string, _boundKeySet: Set<string>): string {
+  // 高亮已解锁字母（频率 >= 阈值），而非仅绑定技能的键位
+  const freqs = calculateLetterFrequency(state.player.wordDeck);
+  return word.split('').map(c => {
+    const lower = c.toLowerCase()
+    if (lower >= 'a' && lower <= 'z' && (freqs.get(lower) ?? 0) >= FREQ_UNLOCK_THRESHOLD) {
+      return `<span class="bound-letter">${c}</span>`
+    }
+    return c
+  }).join('');
 }
 
 function getFreqHints(word: string): string {
