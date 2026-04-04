@@ -3748,9 +3748,22 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     const affixSkill = item.affixSkill;
     if (affixSkill) {
       const shapeId = affixSkill.shapeId ?? 'monomino';
-      const rotation = affixSkill.rotation ?? 0;
+      let rotation = affixSkill.rotation ?? 0;
       if (shapeId !== 'monomino') {
-        const fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, rotation);
+        let fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, rotation);
+        // 当前旋转不 fit → 自动尝试其他旋转态
+        if (!fitKeys) {
+          const rotCount = getShapeRotationCount(shapeId);
+          for (let attempt = 1; attempt < rotCount; attempt++) {
+            const candidate = (rotation + attempt) % rotCount;
+            fitKeys = mapShapeToKeys(targetKey.toLowerCase(), shapeId, candidate);
+            if (fitKeys) {
+              rotation = candidate;
+              affixSkill.rotation = rotation;
+              break;
+            }
+          }
+        }
         if (!fitKeys) {
           showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
           return;
