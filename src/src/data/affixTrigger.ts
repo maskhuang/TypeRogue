@@ -702,6 +702,10 @@ export function resolvePhase2(
           bonusPercent += (affix.kLiquid ?? 0) * psVal * psNorm
         } else {
           bonusPercent += (affix.kGas ?? 0) * psVal * psNorm
+          // 质变·超临界：气态时叠加液态和固态 K
+          if (isTransformedForAffix(AffixType.PhaseShift, runtimeState, skill, ctx)) {
+            bonusPercent += ((affix.kLiquid ?? 0) + (affix.kSolid ?? 0)) * psVal * psNorm
+          }
           if ((affix.sustainCost ?? 0) > 0) {
             consumeRequests.push({ resource: affix.phaseSource, amount: affix.sustainCost! })
           }
@@ -756,7 +760,11 @@ export function resolvePhase2(
         const levVal = getAffixSourceValue(affix.source, ctx)
         const levLvl = Math.max(0, Math.min(skill.level - 1, 2))
         const levNorm = (BASE_VALUES[skill.resource]?.[levLvl] ?? 1) / (BASE_VALUES[affix.source]?.[levLvl] ?? 1)
-        const excess = levVal - (affix.marginThreshold ?? 0)
+        let excess = levVal - (affix.marginThreshold ?? 0)
+        // 质变·保险：负 excess 保底 0
+        if (excess < 0 && isTransformedForAffix(AffixType.Leverage, runtimeState, skill, ctx)) {
+          excess = 0
+        }
         bonusPercent += (affix.leverageK ?? 0) * excess * levNorm
         break
       }
@@ -769,7 +777,11 @@ export function resolvePhase2(
         const optNorm = (BASE_VALUES[skill.resource]?.[optLvl] ?? 1) / (BASE_VALUES[affix.source]?.[optLvl] ?? 1)
         const strike = affix.strikePrice ?? 0
         if (optVal >= strike) {
-          bonusPercent += (affix.optionK ?? 0) * (optVal - strike) * optNorm
+          // 质变·加杠：行权后 K 翻倍
+          const effOptionK = isTransformedForAffix(AffixType.Option, runtimeState, skill, ctx)
+            ? (affix.optionK ?? 0) * 2
+            : (affix.optionK ?? 0)
+          bonusPercent += effOptionK * (optVal - strike) * optNorm
         } else {
           bonusPercent -= affix.premium ?? 0
         }
@@ -777,16 +789,31 @@ export function resolvePhase2(
       }
 
       case AffixType.Hedge: {
-        // 对冲：双资源累积产出越接近，bonus 越高
-        if (affix.hedgeSourceA == null || affix.hedgeSourceB == null) break
         const hedgeLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        const hValA = getStageProducedValue(affix.hedgeSourceA, ctx) / (BASE_VALUES[affix.hedgeSourceA]?.[hedgeLvl] ?? 1)
-        const hValB = getStageProducedValue(affix.hedgeSourceB, ctx) / (BASE_VALUES[affix.hedgeSourceB]?.[hedgeLvl] ?? 1)
-        const hMax = Math.max(hValA, hValB)
-        if (hMax > 0) {
-          const ratio = Math.min(hValA, hValB) / hMax
-          bonusPercent += (affix.hedgeK ?? 0) * ratio
+        let hedgeRatio = 0
+        if (isTransformedForAffix(AffixType.Hedge, runtimeState, skill, ctx)) {
+          // 质变·全衡：从所有可读资源中自动选最均衡的一对
+          const hedgeResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
+          const hedgeVals = hedgeResources.map(r => getStageProducedValue(r, ctx) / (BASE_VALUES[r]?.[hedgeLvl] ?? 1))
+          let bestRatio = 0
+          for (let i = 0; i < hedgeVals.length; i++) {
+            for (let j = i + 1; j < hedgeVals.length; j++) {
+              const mx = Math.max(hedgeVals[i], hedgeVals[j])
+              if (mx > 0) {
+                const r = Math.min(hedgeVals[i], hedgeVals[j]) / mx
+                if (r > bestRatio) bestRatio = r
+              }
+            }
+          }
+          hedgeRatio = bestRatio
+        } else {
+          if (affix.hedgeSourceA == null || affix.hedgeSourceB == null) break
+          const hValA = getStageProducedValue(affix.hedgeSourceA, ctx) / (BASE_VALUES[affix.hedgeSourceA]?.[hedgeLvl] ?? 1)
+          const hValB = getStageProducedValue(affix.hedgeSourceB, ctx) / (BASE_VALUES[affix.hedgeSourceB]?.[hedgeLvl] ?? 1)
+          const hMax = Math.max(hValA, hValB)
+          if (hMax > 0) hedgeRatio = Math.min(hValA, hValB) / hMax
         }
+        bonusPercent += (affix.hedgeK ?? 0) * hedgeRatio
         break
       }
 
@@ -807,9 +834,13 @@ export function resolvePhase2(
           const nLvlIdx = Math.max(0, Math.min(ns.level - 1, 3))
           const nBase = BASE_VALUES[ns.resource]?.[nLvlIdx] ?? 1
           const delta = nBase - selfBase
-          if (delta > 0) {
-            const norm = selfBase / nBase  // 归一化到 0~1 范围
-            bonusPercent += (affix.flowK ?? 0) * delta * norm
+          // 质变·瀑布：双向取绝对差值
+          const flowTransformed = isTransformedForAffix(AffixType.Flow, runtimeState, skill, ctx)
+          if (delta > 0 || flowTransformed) {
+            const absDelta = Math.abs(delta)
+            const maxBase = Math.max(selfBase, nBase)
+            const norm = Math.min(selfBase, nBase) / maxBase
+            bonusPercent += (affix.flowK ?? 0) * absDelta * norm
           }
         }
         break
@@ -911,54 +942,75 @@ export function resolvePhase2(
         break
 
       case AffixType.Cluster: {
-        // 辅音丛：单词中最长连续辅音段长度，每单位(减1)加 bonusPercent
         const w = ctx.currentWord?.toLowerCase() ?? ''
-        let maxCluster = 0, curCluster = 0
+        let maxCluster = 0, curCluster = 0, sumClusters = 0
         for (const ch of w) {
           if (isConsonant(ch)) { curCluster++; if (curCluster > maxCluster) maxCluster = curCluster }
-          else curCluster = 0
+          else { if (curCluster >= 2) sumClusters += curCluster; curCluster = 0 }
         }
-        bonusPercent += (affix.clusterK ?? 0) * Math.max(0, maxCluster - 1)
+        if (curCluster >= 2) sumClusters += curCluster
+        // 质变·塞音：所有辅音丛长度之和
+        const clusterVal = isTransformedForAffix(AffixType.Cluster, runtimeState, skill, ctx)
+          ? Math.max(0, sumClusters - 1)
+          : Math.max(0, maxCluster - 1)
+        bonusPercent += (affix.clusterK ?? 0) * clusterVal
         break
       }
 
       case AffixType.Bigram: {
-        // 双字组：相邻字母对的平均罕见度加 bonusPercent
         const w2 = ctx.currentWord?.toLowerCase() ?? ''
         if (w2.length >= 2) {
-          let totalRarity = 0
-          let pairCount = 0
+          const rarities: number[] = []
           for (let i = 0; i < w2.length - 1; i++) {
             const a = w2[i], b = w2[i + 1]
             if (a >= 'a' && a <= 'z' && b >= 'a' && b <= 'z') {
-              const freq = BIGRAM_FREQ_TABLE[a + b] ?? 0
-              totalRarity += (1 - freq)
-              pairCount++
+              rarities.push(1 - (BIGRAM_FREQ_TABLE[a + b] ?? 0))
             }
           }
-          if (pairCount > 0) {
-            bonusPercent += (affix.bigramK ?? 0) * (totalRarity / pairCount)
+          if (rarities.length > 0) {
+            let avgRarity: number
+            // 质变·密码：只取罕见度前 50%
+            if (isTransformedForAffix(AffixType.Bigram, runtimeState, skill, ctx) && rarities.length >= 2) {
+              rarities.sort((a, b) => b - a) // 降序
+              const topHalf = rarities.slice(0, Math.ceil(rarities.length / 2))
+              avgRarity = topHalf.reduce((a, b) => a + b, 0) / topHalf.length
+            } else {
+              avgRarity = rarities.reduce((a, b) => a + b, 0) / rarities.length
+            }
+            bonusPercent += (affix.bigramK ?? 0) * avgRarity
           }
         }
         break
       }
 
       case AffixType.Coverage: {
-        // 覆盖度：单词中不同字母种类数（仅 a-z），每种加 bonusPercent
         const w3 = ctx.currentWord?.toLowerCase() ?? ''
         const letterSet = new Set<string>()
         for (const ch of w3) {
           if (ch >= 'a' && ch <= 'z') letterSet.add(ch)
         }
-        bonusPercent += (affix.coverageK ?? 0) * letterSet.size
+        let coverageCount = letterSet.size
+        // 质变·全谱：Q/X/Z/J 额外×2
+        if (isTransformedForAffix(AffixType.Coverage, runtimeState, skill, ctx)) {
+          for (const rare of ['q', 'x', 'z', 'j']) {
+            if (letterSet.has(rare)) coverageCount += 1
+          }
+        }
+        bonusPercent += (affix.coverageK ?? 0) * coverageCount
         break
       }
 
       case AffixType.Entropy: {
-        // 熵：单词字母分布的 Shannon 熵越高，bonusPercent 越大
         const entropyWord = ctx.currentWord ?? ''
         if (entropyWord.length > 0) {
-          bonusPercent += (affix.entropyK ?? 0) * shannonEntropy(entropyWord)
+          const curH = shannonEntropy(entropyWord)
+          let entropyBonus = (affix.entropyK ?? 0) * curH
+          // 质变·熵增：当前熵 > 上一个单词时翻倍
+          if (isTransformedForAffix(AffixType.Entropy, runtimeState, skill, ctx) && curH > (runtimeState.prevEntropy ?? 0)) {
+            entropyBonus *= 2
+          }
+          runtimeState.prevEntropy = curH
+          bonusPercent += entropyBonus
         }
         break
       }
@@ -1000,10 +1052,12 @@ export function resolvePhase2(
       }
 
       case AffixType.Prime: {
-        // 素数：叠层为素数时 bonusPercent += primeK × stacks
         const primeStacks = runtimeState.stacks
         if (primeStacks >= 2 && isPrime(primeStacks)) {
           bonusPercent += (affix.primeK ?? 0) * primeStacks
+        } else if (primeStacks >= 2 && isTransformedForAffix(AffixType.Prime, runtimeState, skill, ctx)) {
+          // 质变·近似：非素数也有固定小额加成
+          bonusPercent += affix.primeK ?? 0
         }
         break
       }
@@ -1013,6 +1067,10 @@ export function resolvePhase2(
         if (affix.posRel == null) break
         const matchNeighbors = getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)
         const stackValues: number[] = []
+        // 质变·入局：自身 stacks 也参与配对
+        if (isTransformedForAffix(AffixType.Match, runtimeState, skill, ctx) && runtimeState.stacks > 0) {
+          stackValues.push(runtimeState.stacks)
+        }
         for (const ns of matchNeighbors) {
           const nState = ctx.skillStates.get(ns.id)
           const s = nState?.stacks ?? 0
@@ -1033,9 +1091,9 @@ export function resolvePhase2(
       }
 
       case AffixType.Reflect: {
-        // 反射：读自身技能 affixCount × level → bonus
         const reflectScore = skill.affixes.length * skill.level
         bonusPercent += (affix.reflectK ?? 0) * reflectScore
+        // 质变·内省标记：在 Decorator 之后应用（存到 mutations）
         break
       }
 
@@ -1044,8 +1102,9 @@ export function resolvePhase2(
       default:
         break
     }
-    // MonkeyPatch: 如果当前词条是被 patch 的目标，修改其 bonusPercent 贡献
-    if (_affixIdx === (runtimeState.patchTargetIndex ?? -1) && runtimeState.patchMultiplier !== 1.0) {
+    // MonkeyPatch: 修改目标词条的 bonusPercent 贡献（-2 = 全部词条）
+    const patchIdx = runtimeState.patchTargetIndex ?? -1
+    if ((patchIdx === -2 || _affixIdx === patchIdx) && runtimeState.patchMultiplier !== 1.0 && affix.type !== AffixType.MonkeyPatch) {
       const delta = bonusPercent - _prePatchBonus
       bonusPercent = _prePatchBonus + delta * runtimeState.patchMultiplier
     }
@@ -1054,7 +1113,19 @@ export function resolvePhase2(
   // Decorator：Phase 2 末尾放大 bonusPercent
   for (const affix of skill.affixes) {
     if (affix.type === AffixType.Decorator && (affix.decoratorK ?? 0) > 0) {
-      bonusPercent += bonusPercent * (affix.decoratorK ?? 0)
+      // 质变·编译：放大率 = decoratorK × 词条数（而非固定 decoratorK）
+      const decK = isTransformedForAffix(AffixType.Decorator, runtimeState, skill, ctx)
+        ? (affix.decoratorK ?? 0) * skill.affixes.length
+        : (affix.decoratorK ?? 0)
+      bonusPercent += bonusPercent * decK
+    }
+  }
+
+  // 质变·内省：reflectScore 额外放大 bonusPercent
+  for (const affix of skill.affixes) {
+    if (affix.type === AffixType.Reflect && isTransformedForAffix(AffixType.Reflect, runtimeState, skill, ctx)) {
+      const reflectScore = skill.affixes.length * skill.level
+      bonusPercent += bonusPercent * (affix.reflectK ?? 0) * reflectScore
     }
   }
 
@@ -2405,9 +2476,10 @@ export function resetStageState(
 
     // Mirror 词条复制已移至关卡结束时（battle.ts），此处不再刷新
 
-    // critStreak / missStreak 每关重置
+    // critStreak / missStreak / prevEntropy 每关重置
     state.critStreak = 0
     state.missStreak = 0
+    state.prevEntropy = 0
 
     // MonkeyPatch：每关随机设定 patchTargetIndex 和 patchMultiplier
     state.patchTargetIndex = -1
@@ -2419,11 +2491,18 @@ export function resetStageState(
             .map((a, i) => ({ a, i }))
             .filter(({ a }) => a.type !== AffixType.MonkeyPatch)
           if (candidates.length > 0) {
-            const pick = candidates[Math.floor(randomFn() * candidates.length)]
-            state.patchTargetIndex = pick.i
-            const low = affix.patchLow ?? 0.5
-            const high = affix.patchHigh ?? 2.0
-            state.patchMultiplier = low + randomFn() * (high - low)
+            // 质变·热更新：patch 所有词条（-2），倍率缩为 0.8~1.5
+            const isTransformed = state.questTransformed && skill.enchantmentIds.includes(EnchantmentType.QuestMonkeyPatch)
+            if (isTransformed) {
+              state.patchTargetIndex = -2 // -2 = patch all
+              state.patchMultiplier = 0.8 + randomFn() * 0.7
+            } else {
+              const pick = candidates[Math.floor(randomFn() * candidates.length)]
+              state.patchTargetIndex = pick.i
+              const low = affix.patchLow ?? 0.5
+              const high = affix.patchHigh ?? 2.0
+              state.patchMultiplier = low + randomFn() * (high - low)
+            }
           }
         }
       }

@@ -454,6 +454,7 @@ export interface SkillRuntimeState {
   critStreak: number               // 连续暴击次数（miss 归零，每关重置）
   missStreak: number               // 连续 miss 次数（暴击归零，每关重置）
   // ── MonkeyPatch 运行时 ──
+  prevEntropy: number              // Entropy 质变：上一个单词的熵值（每关重置）
   patchTargetIndex: number         // 被补丁的词条索引（-1=无效，每关重置）
   patchMultiplier: number          // 随机系数（每关重置，默认 1.0）
 }
@@ -959,6 +960,7 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     etherealTriggered: false,
     critStreak: 0,
     missStreak: 0,
+    prevEntropy: 0,
     patchTargetIndex: -1,
     patchMultiplier: 1.0,
   }

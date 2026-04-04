@@ -523,7 +523,7 @@ development_status:
   # ===== Epic 52: 质变扩展 — 34 个新质变效果 =====
   epic-52: in-progress
   52-1-quest-data-infrastructure: done        # 34 个 EnchantmentType + QUEST_DEFS + QUEST_MAP
-  52-2-quest-simple-phase2: backlog           # Phase 2 简单质变（14 个）
+  52-2-quest-simple-phase2: done              # Phase 2 简单质变（14 个）
   52-3-quest-crit-system: backlog             # 暴击系统质变（Burst/Sharpshooter/Fallacy）
   52-4-quest-trigger-chain: backlog           # 触发链质变（7 个，最复杂）
   52-5-quest-cross-system: backlog            # 跨系统桥接（Zero-In/Cipher/Pattern/Hedge）
