@@ -526,7 +526,7 @@ development_status:
   52-2-quest-simple-phase2: done              # Phase 2 简单质变（14 个）
   52-3-quest-crit-system: done                # 暴击系统质变（Burst/Sharpshooter/Fallacy）
   52-4-quest-trigger-chain: done              # 触发链质变（7 个，最复杂）
-  52-5-quest-cross-system: backlog            # 跨系统桥接（Zero-In/Cipher/Pattern/Hedge）
+  52-5-quest-cross-system: done               # 跨系统桥接（Zero-In/Cipher/Pattern; Hedge 已完成）
   52-6-quest-meta-lifecycle: backlog          # 生命周期质变（Innate/Counter/Exhaust/Ethereal + 3）
   52-7-generation-i18n: backlog               # 集成 + i18n
   52-8-balance-playtest: backlog              # 数值平衡与 playtest

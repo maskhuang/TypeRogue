@@ -18,7 +18,7 @@ import {
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 import { BIGRAM_FREQ_TABLE } from './bigramFrequency'
-import { getPatternRarity } from './patternFrequency'
+import { getPatternRarity, toPattern } from './patternFrequency'
 
 // ===== Conduit 模式共享匹配 =====
 
@@ -1283,6 +1283,22 @@ export function resolvePhase3(
         break
       }
 
+      case AffixType.Cipher: {
+        // 质变·破译：最大字母距离额外转为暴击率
+        if (isTransformedForAffix(AffixType.Cipher, runtimeState, skill, ctx)) {
+          const cw = (ctx.currentWord ?? '').toLowerCase()
+          let maxDist = 0
+          for (let i = 0; i < cw.length - 1; i++) {
+            if (cw[i] >= 'a' && cw[i] <= 'z' && cw[i + 1] >= 'a' && cw[i + 1] <= 'z') {
+              const d = Math.abs(cw.charCodeAt(i + 1) - cw.charCodeAt(i))
+              if (d > maxDist) maxDist = d
+            }
+          }
+          totalCritChance += maxDist * 0.01 // 每点距离 +1% 暴击率
+        }
+        break
+      }
+
       case AffixType.Pulse: {
         const pulseInterval = getEffectiveInterval(affix.interval ?? 1, skill.id, ctx)
         if (runtimeState.stacks > 0 && runtimeState.stacks % pulseInterval === 0) {
@@ -1424,6 +1440,16 @@ export function resolvePhase3(
         } else {
           affix.fallacyStacks = (affix.fallacyStacks ?? 0) + 1
         }
+      }
+    }
+  }
+
+  // 质变·蓄能：暴击时 missStreak 转为 stacks（在清零前读取）
+  if (flags.isCrit && (runtimeState.missStreak ?? 0) > 0) {
+    for (const a of skill.affixes) {
+      if (a.type === AffixType.ZeroIn && isTransformedForAffix(AffixType.ZeroIn, runtimeState, skill, ctx)) {
+        runtimeState.stacks += runtimeState.missStreak ?? 0
+        break
       }
     }
   }
@@ -1596,6 +1622,21 @@ export function resolvePhase4(
   runtimeState: SkillRuntimeState,
   ctx: TriggerContext,
 ): Phase4Result {
+  // 质变·编码：模式签名决定产出资源
+  const hasPattern = skill.affixes.some(a => a.type === AffixType.Pattern)
+  if (hasPattern && isTransformedForAffix(AffixType.Pattern, runtimeState, skill, ctx) && ctx.currentWord) {
+    const pattern = toPattern(ctx.currentWord)
+    if (pattern.length > 0) {
+      const PATTERN_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
+      const resIdx = (pattern.charCodeAt(0) - 65) % PATTERN_RESOURCES.length
+      const targetResource = PATTERN_RESOURCES[resIdx]
+      const skillBase = BASE_VALUES[skill.resource]?.[skill.level - 1] ?? 1
+      const targetBase = BASE_VALUES[targetResource]?.[skill.level - 1] ?? 1
+      const scaledOutput = skillBase > 0 ? output * (targetBase / skillBase) : output
+      return { targetResource, output: scaledOutput }
+    }
+  }
+
   const hasRainbow = skill.affixes.some(a => a.type === AffixType.Rainbow)
 
   if (!hasRainbow) {
