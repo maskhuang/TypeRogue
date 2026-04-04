@@ -1144,14 +1144,6 @@ export function resolvePhase2(
     }
   }
 
-  // 质变·内省：reflectScore 额外放大 bonusPercent
-  for (const affix of skill.affixes) {
-    if (affix.type === AffixType.Reflect && isTransformedForAffix(AffixType.Reflect, runtimeState, skill, ctx)) {
-      const reflectScore = skill.affixes.length * skill.level
-      bonusPercent += bonusPercent * (affix.reflectK ?? 0) * reflectScore
-    }
-  }
-
   // ── 浪涌加成 ──
   if (ctx.surgeBonus && ctx.surgeBonus > 0 && effectiveBase > 0) {
     bonusPercent += ctx.surgeBonus
@@ -2108,6 +2100,14 @@ export function triggerAffixSkill(
   const hasTwin = effectiveSkill.affixes.some(a => a.type === AffixType.Twin)
   if (hasTwin && isTransformedForAffix(AffixType.Twin, runtimeState, skill, ctx)) {
     p3.output *= 2
+  }
+
+  // 质变·内省：reflectScore 作为全词条效果乘数（影响所有 Phase 产出）
+  for (const affix of effectiveSkill.affixes) {
+    if (affix.type === AffixType.Reflect && isTransformedForAffix(AffixType.Reflect, runtimeState, skill, ctx)) {
+      const reflectScore = effectiveSkill.affixes.length * effectiveSkill.level
+      p3.output *= 1 + (affix.reflectK ?? 0) * reflectScore
+    }
   }
 
   // Phase 4: 资源选择
