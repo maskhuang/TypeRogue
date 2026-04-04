@@ -225,6 +225,7 @@ export interface TriggerFlags {
   recurseCritContribution: number
   /** 叠层效果是否触发（供遗物钩子使用） */
   stackEffectFired: boolean
+  burstSplash: boolean  // 质变·弹幕：3连击时溅射邻居
 }
 
 // ===== Phase 4-6 返回类型 =====
@@ -1191,6 +1192,7 @@ export function resolvePhase3(
     critTransformed: false,
     recurseCritContribution: 0,
     stackEffectFired: false,
+    burstSplash: false,
   }
 
   // 暴击子系统：累计暴击率（affix loop 内只累加，loop 后统一判定）
@@ -1354,6 +1356,10 @@ export function resolvePhase3(
             output *= burstMult
             multipliers.push(burstMult)
           }
+          // 质变·弹幕：3连击时标记需要溅射邻居（由调度器处理）
+          if (streak >= 2 && isTransformedForAffix(AffixType.Burst, runtimeState, skill, ctx)) {
+            flags.burstSplash = true
+          }
         }
         if (a.type === AffixType.ZeroIn && (a.zeroInK ?? 0) > 0) {
           const misses = runtimeState.missStreak ?? 0
@@ -1364,7 +1370,11 @@ export function resolvePhase3(
           }
         }
         if (a.type === AffixType.Sharpshooter && (a.sharpK ?? 0) > 0) {
-          const sharpMult = 1 + (a.sharpK ?? 0) * Math.max(0, 1 - effectiveCritChance)
+          const sharpBonus = (a.sharpK ?? 0) * Math.max(0, 1 - effectiveCritChance)
+          // 质变·狙击：加成同时作为 critMult 和 bonusPercent（等效翻倍）
+          const sharpMult = isTransformedForAffix(AffixType.Sharpshooter, runtimeState, skill, ctx)
+            ? 1 + sharpBonus * 2
+            : 1 + sharpBonus
           output *= sharpMult
           multipliers.push(sharpMult)
         }
@@ -1389,11 +1399,15 @@ export function resolvePhase3(
       flags.isTabooPenalty = true
     }
 
-    // 赌徒谬误：暴击后归零，未暴击后 stacks+1
+    // 赌徒谬误：暴击后归零（质变·豪赌：减半），未暴击后 stacks+1
     for (const affix of skill.affixes) {
       if (affix.type === AffixType.Fallacy) {
         if (flags.isCrit) {
-          affix.fallacyStacks = 0
+          if (isTransformedForAffix(AffixType.Fallacy, runtimeState, skill, ctx)) {
+            affix.fallacyStacks = Math.floor((affix.fallacyStacks ?? 0) / 2)
+          } else {
+            affix.fallacyStacks = 0
+          }
         } else {
           affix.fallacyStacks = (affix.fallacyStacks ?? 0) + 1
         }
