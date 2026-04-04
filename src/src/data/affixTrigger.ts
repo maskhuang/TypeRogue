@@ -1135,29 +1135,37 @@ export function resolvePhase2(
       }
 
       case AffixType.Match: {
-        // 配对叠层：检查范围内邻居是否有叠层数与自身相同的，有则额外叠层
+        // 配对叠层：范围内任意两个邻居叠层相同时，自身额外+1叠层
         if (affix.posRel == null) break
         const matchNeighbors = getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)
-        const selfStacks = runtimeState.stacks
-        let matchFound = false
+        // 收集邻居叠层值（不含自身）
+        const neighborStacks: number[] = []
         for (const ns of matchNeighbors) {
           const nState = ctx.skillStates.get(ns.id)
-          if (nState && nState.stacks > 0 && nState.stacks === selfStacks) {
-            matchFound = true
-            break
+          const s = nState?.stacks ?? 0
+          if (s > 0) neighborStacks.push(s)
+        }
+        // 质变·入局：自身 stacks 也参与配对检查
+        if (isTransformedForAffix(AffixType.Match, runtimeState, skill, ctx) && runtimeState.stacks > 0) {
+          neighborStacks.push(runtimeState.stacks)
+        }
+        // 检查是否存在至少一对相同叠层
+        let matchFound = false
+        if (neighborStacks.length >= 2) {
+          const seen = new Set<number>()
+          for (const s of neighborStacks) {
+            if (seen.has(s)) { matchFound = true; break }
+            seen.add(s)
           }
         }
         if (matchFound) {
           runtimeState.stacks += 1 // 额外叠层
+          bonusPercent += affix.matchK ?? 0
           const matchInterval = getEffectiveInterval(affix.matchInterval ?? 3, skill.id, ctx)
           if (runtimeState.stacks > 0 && runtimeState.stacks % matchInterval === 0) {
             flags.isPulse = true
             flags.stackEffectFired = true
           }
-        }
-        // 累积的配对加成（每次配对成功+matchK）
-        if (matchFound) {
-          bonusPercent += affix.matchK ?? 0
         }
         break
       }
