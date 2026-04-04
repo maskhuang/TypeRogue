@@ -456,6 +456,8 @@ export interface SkillRuntimeState {
   // ── MonkeyPatch 运行时 ──
   prevEntropy: number              // Entropy 质变：上一个单词的熵值���每关重置）
   cliqueBonusAccum: number         // Clique 质变：从团内成员接收的 bonus 累积（触发后清零）
+  leverageLoss: number             // Leverage 质变·对赌：本次触发的亏损值（Phase 6 分摊给邻居）
+  optionAccum: number              // Option 质变·期货：累积的权利金（行权时释放）
   patchTargetIndex: number         // 被补丁的词条索引（-1=无效，每关重置）
   patchMultiplier: number          // 随机系数（每关重置，默认 1.0）
 }
@@ -963,6 +965,8 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     missStreak: 0,
     prevEntropy: 0,
     cliqueBonusAccum: 0,
+    leverageLoss: 0,
+    optionAccum: 0,
     patchTargetIndex: -1,
     patchMultiplier: 1.0,
   }

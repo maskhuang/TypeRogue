@@ -761,12 +761,13 @@ export function resolvePhase2(
         const levVal = getAffixSourceValue(affix.source, ctx)
         const levLvl = Math.max(0, Math.min(skill.level - 1, 2))
         const levNorm = (BASE_VALUES[skill.resource]?.[levLvl] ?? 1) / (BASE_VALUES[affix.source]?.[levLvl] ?? 1)
-        let excess = levVal - (affix.marginThreshold ?? 0)
-        // 质变·保险：负 excess 保底 0
+        const excess = levVal - (affix.marginThreshold ?? 0)
         if (excess < 0 && isTransformedForAffix(AffixType.Leverage, runtimeState, skill, ctx)) {
-          excess = 0
+          // 质变·对赌：亏损不扣自身，转嫁给邻居（Phase 6 处理）
+          runtimeState.leverageLoss = Math.abs((affix.leverageK ?? 0) * excess * levNorm)
+        } else {
+          bonusPercent += (affix.leverageK ?? 0) * excess * levNorm
         }
-        bonusPercent += (affix.leverageK ?? 0) * excess * levNorm
         break
       }
 
@@ -777,12 +778,17 @@ export function resolvePhase2(
         const optLvl = Math.max(0, Math.min(skill.level - 1, 2))
         const optNorm = (BASE_VALUES[skill.resource]?.[optLvl] ?? 1) / (BASE_VALUES[affix.source]?.[optLvl] ?? 1)
         const strike = affix.strikePrice ?? 0
+        const optionTransformed = isTransformedForAffix(AffixType.Option, runtimeState, skill, ctx)
         if (optVal >= strike) {
-          // 质变·加杠：行权后 K 翻倍
-          const effOptionK = isTransformedForAffix(AffixType.Option, runtimeState, skill, ctx)
-            ? (affix.optionK ?? 0) * 2
-            : (affix.optionK ?? 0)
-          bonusPercent += effOptionK * (optVal - strike) * optNorm
+          bonusPercent += (affix.optionK ?? 0) * (optVal - strike) * optNorm
+          // 质变·期货：行权时释放累积的权利金
+          if (optionTransformed && (runtimeState.optionAccum ?? 0) > 0) {
+            bonusPercent += runtimeState.optionAccum
+            runtimeState.optionAccum = 0
+          }
+        } else if (optionTransformed) {
+          // 质变·期货：权利金不扣产出，累积为期权价值
+          runtimeState.optionAccum = (runtimeState.optionAccum ?? 0) + (affix.premium ?? 0)
         } else {
           bonusPercent -= affix.premium ?? 0
         }
@@ -790,31 +796,21 @@ export function resolvePhase2(
       }
 
       case AffixType.Hedge: {
+        if (affix.hedgeSourceA == null || affix.hedgeSourceB == null) break
         const hedgeLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        let hedgeRatio = 0
-        if (isTransformedForAffix(AffixType.Hedge, runtimeState, skill, ctx)) {
-          // 质变·全衡：从所有可读资源中自动选最均衡的一对
-          const hedgeResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
-          const hedgeVals = hedgeResources.map(r => getStageProducedValue(r, ctx) / (BASE_VALUES[r]?.[hedgeLvl] ?? 1))
-          let bestRatio = 0
-          for (let i = 0; i < hedgeVals.length; i++) {
-            for (let j = i + 1; j < hedgeVals.length; j++) {
-              const mx = Math.max(hedgeVals[i], hedgeVals[j])
-              if (mx > 0) {
-                const r = Math.min(hedgeVals[i], hedgeVals[j]) / mx
-                if (r > bestRatio) bestRatio = r
-              }
-            }
+        const hValA = getStageProducedValue(affix.hedgeSourceA, ctx) / (BASE_VALUES[affix.hedgeSourceA]?.[hedgeLvl] ?? 1)
+        const hValB = getStageProducedValue(affix.hedgeSourceB, ctx) / (BASE_VALUES[affix.hedgeSourceB]?.[hedgeLvl] ?? 1)
+        const hMax = Math.max(hValA, hValB)
+        if (hMax > 0) {
+          const hedgeRatio = Math.min(hValA, hValB) / hMax
+          bonusPercent += (affix.hedgeK ?? 0) * hedgeRatio
+          // 质变·调控：额外产出到较少的那种资源
+          if (isTransformedForAffix(AffixType.Hedge, runtimeState, skill, ctx) && hedgeRatio > 0.5) {
+            const lesserRes = hValA <= hValB ? affix.hedgeSourceA : affix.hedgeSourceB
+            const hedgeExtra = (affix.hedgeK ?? 0) * hedgeRatio * effectiveBase * 0.1
+            if (hedgeExtra > 0) convertReverseOutputs.push({ resource: lesserRes, amount: hedgeExtra })
           }
-          hedgeRatio = bestRatio
-        } else {
-          if (affix.hedgeSourceA == null || affix.hedgeSourceB == null) break
-          const hValA = getStageProducedValue(affix.hedgeSourceA, ctx) / (BASE_VALUES[affix.hedgeSourceA]?.[hedgeLvl] ?? 1)
-          const hValB = getStageProducedValue(affix.hedgeSourceB, ctx) / (BASE_VALUES[affix.hedgeSourceB]?.[hedgeLvl] ?? 1)
-          const hMax = Math.max(hValA, hValB)
-          if (hMax > 0) hedgeRatio = Math.min(hValA, hValB) / hMax
         }
-        bonusPercent += (affix.hedgeK ?? 0) * hedgeRatio
         break
       }
 
@@ -855,11 +851,14 @@ export function resolvePhase2(
           resTypes.add(ns.resource)
         }
         if (resTypes.size > 0) {
-          // 质变·洪流：每种独特资源额外加成 → K 按资源种类数乘
-          const effConfK = isTransformedForAffix(AffixType.Confluence, runtimeState, skill, ctx)
-            ? (affix.confluenceK ?? 0) * resTypes.size
-            : (affix.confluenceK ?? 0)
-          bonusPercent += effConfK * (1 - 1 / (resTypes.size + 1))
+          bonusPercent += (affix.confluenceK ?? 0) * (1 - 1 / (resTypes.size + 1))
+          // 质变·洪流：每种独特资源额外产出到该资源
+          if (isTransformedForAffix(AffixType.Confluence, runtimeState, skill, ctx)) {
+            const confExtra = effectiveBase * 0.01 * resTypes.size
+            for (const r of resTypes) {
+              if (r !== skill.resource) convertReverseOutputs.push({ resource: r as ResourceType, amount: confExtra })
+            }
+          }
         }
         break
       }
@@ -1945,6 +1944,11 @@ export function resolvePhase6(
       }
     }
 
+    // 质变·对赌：亏损分摊给邻居
+    if ((runtimeState.leverageLoss ?? 0) > 0 && neighborState) {
+      neighborState.cliqueBonusAccum = (neighborState.cliqueBonusAccum ?? 0) - (runtimeState.leverageLoss / Math.max(1, neighborSkillKeys.size))
+    }
+
     // 质变·方阵：分享 bonusPercent 给团内 Clique 邻居
     if (triggerBonusPercent && triggerBonusPercent > 0 && neighborState) {
       for (const nAffix of neighborSkill.affixes) {
@@ -2120,6 +2124,16 @@ export function triggerAffixSkill(
 
   // Phase 5: 后触发
   const p5 = resolvePhase5(effectiveSkill, runtimeState, ctx, p3.flags, p3.output, recurseDepth, p4.targetResource)
+
+  // 质变·弹幕：3连击时溅射一个 Adjacent 邻居
+  if (p3.flags.burstSplash && !ctx.chainAffixesDisabled) {
+    const burstNeighbors = getExtendedNeighbors(ctx.occupiedKeys, PositionRelation.Adjacent)
+      .filter(k => ctx.bindings.has(k))
+    if (burstNeighbors.length > 0) {
+      const target = pickRandomKeys(burstNeighbors, 1, ctx.randomFn)
+      p5.splashTargets = [...(p5.splashTargets ?? []), ...target]
+    }
+  }
 
   // Phase 6: 邻居通知（感应词条检查触发技能词条类型）
   const p6 = resolvePhase6(ctx.triggerKey, effectiveSkill, runtimeState, ctx, p4.targetResource, p3.flags.isCrit, p2.bonusPercent)
