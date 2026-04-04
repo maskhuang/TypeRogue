@@ -588,7 +588,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'bridge': return `+${Math.round((a.bridgeK ?? 0) * 100)}%`
     case 'clique': return `+${Math.round((a.cliqueK ?? 0) * 100)}%/${t('param.clique_per')}`
     case 'component': return `+${Math.round((a.componentK ?? 0) * 100)}%/${t('param.component_per')}`
-    case 'match': return `+${Math.round((a.matchK ?? 0) * 100)}%/${t('param.match_per')}`
+    case 'match': return `${t('param.interval_label')} ${a.matchInterval ?? 3}`
     case 'flow': return `+${Math.round((a.flowK ?? 0) * 100)}%`
     case 'confluence': return `+${Math.round((a.confluenceK ?? 0) * 100)}%`
     case 'turbulence': return `+${Math.round((a.turbulenceK ?? 0) * 100)}%`

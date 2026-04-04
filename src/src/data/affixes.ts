@@ -336,6 +336,7 @@ export interface AffixInstance {
   evenK?: number                   // Parity: 偶数叠层时 critChance 加成
   primeK?: number                  // Prime: 素数叠层时 bonusPercent 系数（× stacks）
   matchK?: number                  // Match: 每配对的 bonusPercent 加成
+  matchInterval?: number           // Match: 叠层满层间隔（每当邻居叠层相同时+1层）
   entropyK?: number                // Entropy: Shannon 熵 × K 的 bonusPercent
   cipherK?: number                 // Cipher: 相邻字母表距离均值 × K 的 bonusPercent
   patternK?: number                // Pattern: 模式签名稀有度 × K 的 bonusPercent
@@ -466,6 +467,10 @@ export interface SkillRuntimeState {
   componentAccum: number           // Component 质变·网络：本关活跃度累积%
   patchTargetIndex: number         // 被补丁的词条索引（-1=无效，每关重置）
   patchMultiplier: number          // 随机系数（每关重置，默认 1.0）
+  // ── Parity/Prime 累计效果（每关重置） ──
+  parityAccum: number              // Parity: 累计加算加成%
+  parityCritAccum: number          // Parity: 累计暴击率加成
+  primeAccum: number               // Prime: 累计加算加成%
 }
 
 // ===== 存档数据 =====
@@ -1001,6 +1006,9 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     componentAccum: 0,
     patchTargetIndex: -1,
     patchMultiplier: 1.0,
+    parityAccum: 0,
+    parityCritAccum: 0,
+    primeAccum: 0,
   }
 }
 
@@ -1048,7 +1056,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Bridge]:   { param: 'bridgeK',        delta: 0.08,  mode: 'add' },
   [AffixType.Clique]:   { param: 'cliqueK',        delta: 0.03,  mode: 'add' },
   [AffixType.Component]:{ param: 'componentK',     delta: 0.01,  mode: 'add' },
-  [AffixType.Match]:    { param: 'matchK',         delta: 0.03,  mode: 'add' },
+  [AffixType.Match]:    { param: 'matchInterval',   delta: -1,    mode: 'add' },
   [AffixType.Flow]:     { param: 'flowK',          delta: 0.02,  mode: 'add' },
   [AffixType.Confluence]:{ param: 'confluenceK',   delta: 0.05,  mode: 'add' },
   [AffixType.Turbulence]:{ param: 'turbulenceK',   delta: 0.02,  mode: 'add' },

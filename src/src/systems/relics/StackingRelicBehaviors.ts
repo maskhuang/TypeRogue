@@ -167,6 +167,7 @@ export function isStackingAffix(type: AffixType): boolean {
     || type === AffixType.Pulse
     || type === AffixType.Amplify
     || type === AffixType.WarDrum
+    || type === AffixType.Match
 }
 
 // === 生命周期 ===

@@ -260,7 +260,7 @@ export function rollAffixParams(
 
     case AffixType.Match: {
       const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, matchK: roundTo(0.08 + random() * 0.07, 2) }
+      return { type, posRel, matchK: roundTo(0.08 + random() * 0.07, 2), matchInterval: 3 }
     }
 
     case AffixType.Outcast:

@@ -60,6 +60,7 @@ export function getExtendedNeighbors(
 function isStackingAffixType(type: AffixType): boolean {
   return type === AffixType.Pulse || type === AffixType.Splash || type === AffixType.Resonance
     || type === AffixType.Relay || type === AffixType.Amplify || type === AffixType.WarDrum
+    || type === AffixType.Match
 }
 
 // ===== 触发上下文 =====
@@ -1110,50 +1111,53 @@ export function resolvePhase2(
       }
 
       case AffixType.Parity: {
-        // 奇偶：奇数叠层时加产出（Phase 2 加算）
+        // 奇偶累计：奇数叠层时累积产出加成，偶数时累积暴击率
         const parityStacks = runtimeState.stacks
         if (parityStacks > 0 && parityStacks % 2 === 1) {
-          bonusPercent += affix.oddK ?? 0
+          runtimeState.parityAccum += affix.oddK ?? 0
+        } else if (parityStacks > 0 && parityStacks % 2 === 0) {
+          runtimeState.parityCritAccum += affix.evenK ?? 0
         }
-        // 偶数叠层时加暴击率 → 在 Phase 3 处理（暴击子系统）
+        bonusPercent += runtimeState.parityAccum
         break
       }
 
       case AffixType.Prime: {
+        // 素数累计：叠层为素数时累积大额加成，质变后非素数也有小额累积
         const primeStacks = runtimeState.stacks
         if (primeStacks >= 2 && isPrime(primeStacks)) {
-          bonusPercent += (affix.primeK ?? 0) * primeStacks
+          runtimeState.primeAccum += (affix.primeK ?? 0) * primeStacks
         } else if (primeStacks >= 2 && isTransformedForAffix(AffixType.Prime, runtimeState, skill, ctx)) {
-          // 质变·近似：非素数也有固定小额加成
-          bonusPercent += affix.primeK ?? 0
+          runtimeState.primeAccum += affix.primeK ?? 0
         }
+        bonusPercent += runtimeState.primeAccum
         break
       }
 
       case AffixType.Match: {
-        // 配对：邻居叠层相等的配对数 → bonusPercent
+        // 配对叠层：检查范围内邻居是否有叠层数与自身相同的，有则额外叠层
         if (affix.posRel == null) break
         const matchNeighbors = getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)
-        const stackValues: number[] = []
-        // 质变·入局：自身 stacks 也参与配对
-        if (isTransformedForAffix(AffixType.Match, runtimeState, skill, ctx) && runtimeState.stacks > 0) {
-          stackValues.push(runtimeState.stacks)
-        }
+        const selfStacks = runtimeState.stacks
+        let matchFound = false
         for (const ns of matchNeighbors) {
           const nState = ctx.skillStates.get(ns.id)
-          const s = nState?.stacks ?? 0
-          if (s > 0) stackValues.push(s)
+          if (nState && nState.stacks > 0 && nState.stacks === selfStacks) {
+            matchFound = true
+            break
+          }
         }
-        if (stackValues.length >= 2) {
-          const freq = new Map<number, number>()
-          for (const s of stackValues) {
-            freq.set(s, (freq.get(s) ?? 0) + 1)
+        if (matchFound) {
+          runtimeState.stacks += 1 // 额外叠层
+          const matchInterval = getEffectiveInterval(affix.matchInterval ?? 3, skill.id, ctx)
+          if (runtimeState.stacks > 0 && runtimeState.stacks % matchInterval === 0) {
+            flags.isPulse = true
+            flags.stackEffectFired = true
           }
-          let pairs = 0
-          for (const count of freq.values()) {
-            if (count >= 2) pairs += count * (count - 1) / 2
-          }
-          bonusPercent += (affix.matchK ?? 0) * pairs
+        }
+        // 累积的配对加成（每次配对成功+matchK）
+        if (matchFound) {
+          bonusPercent += affix.matchK ?? 0
         }
         break
       }
@@ -1328,12 +1332,8 @@ export function resolvePhase3(
       }
 
       case AffixType.Parity: {
-        // 奇偶：偶数叠层时加暴击率（Phase 3 暴击子系统）
-        const parityStacks = runtimeState.stacks
-        if (parityStacks > 0 && parityStacks % 2 === 0) {
-          totalCritChance += affix.evenK ?? 0
-        }
-        // 奇数叠层时加产出 → 已在 Phase 2 处理
+        // 奇偶累计：读取 Phase 2 中累积的暴击率
+        totalCritChance += runtimeState.parityCritAccum
         break
       }
 
@@ -2714,6 +2714,9 @@ export function resetStageState(
     state.prevEntropy = 0
     state.componentAccum = 0
     state.exoCount = 0
+    state.parityAccum = 0
+    state.parityCritAccum = 0
+    state.primeAccum = 0
 
     // MonkeyPatch：每关随机设定 patchTargetIndex 和 patchMultiplier
     state.patchTargetIndex = -1
