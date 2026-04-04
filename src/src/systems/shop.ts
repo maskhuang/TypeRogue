@@ -45,7 +45,8 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
-import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests } from '../data/affixTrigger';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests, shannonEntropy, findMaxClique, bfsComponentSize, areConnectedWithout, getExtendedNeighbors } from '../data/affixTrigger';
+import { getPatternRarity } from '../data/patternFrequency';
 import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
 import { BIGRAM_FREQ_TABLE } from '../data/bigramFrequency';
 import type { EnchantmentType } from '../data/affixes';
@@ -589,10 +590,10 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
 
 // ===== 词感型词条预估缓存（按绑定字母过滤词库） =====
 
-type WordSenseStats = { avgCluster: number, avgCoverage: number, avgBigramRarity: number, wordCount: number }
+type WordSenseStats = { avgCluster: number, avgCoverage: number, avgBigramRarity: number, avgEntropy: number, avgCipherDist: number, avgPatternRarity: number, wordCount: number }
 let _wordSenseCacheMap: Map<string, WordSenseStats> | null = null
 let _wordSenseCacheDeck: string[] | null = null
-const WORD_SENSE_FALLBACK: WordSenseStats = { avgCluster: 1.2, avgCoverage: 4.5, avgBigramRarity: 0.75, wordCount: 0 }
+const WORD_SENSE_FALLBACK: WordSenseStats = { avgCluster: 1.2, avgCoverage: 4.5, avgBigramRarity: 0.75, avgEntropy: 2.0, avgCipherDist: 8.0, avgPatternRarity: 3.0, wordCount: 0 }
 
 /** 计算指定字母在词库中出现的单词的平均词感特征 */
 function computeWordSenseForLetter(letter: string, deck: string[]): WordSenseStats {
@@ -600,6 +601,7 @@ function computeWordSenseForLetter(letter: string, deck: string[]): WordSenseSta
   const filtered = deck.filter(w => w.toLowerCase().includes(target))
   if (filtered.length === 0) return WORD_SENSE_FALLBACK
   let totalCluster = 0, totalCoverage = 0, totalBigramRarity = 0, totalPairs = 0
+  let totalEntropy = 0, totalCipherDist = 0, totalCipherWords = 0, totalPatternRarity = 0
   for (const word of filtered) {
     const w = word.toLowerCase()
     let maxC = 0, curC = 0
@@ -617,12 +619,28 @@ function computeWordSenseForLetter(letter: string, deck: string[]): WordSenseSta
         totalPairs++
       }
     }
+    // Entropy
+    totalEntropy += shannonEntropy(w)
+    // Cipher distance
+    const cLetters: number[] = []
+    for (const ch of w) if (ch >= 'a' && ch <= 'z') cLetters.push(ch.charCodeAt(0))
+    if (cLetters.length >= 2) {
+      let dist = 0
+      for (let i = 0; i < cLetters.length - 1; i++) dist += Math.abs(cLetters[i + 1] - cLetters[i])
+      totalCipherDist += dist / (cLetters.length - 1)
+      totalCipherWords++
+    }
+    // Pattern rarity
+    totalPatternRarity += getPatternRarity(w)
   }
   const n = filtered.length
   return {
     avgCluster: totalCluster / n,
     avgCoverage: totalCoverage / n,
     avgBigramRarity: totalPairs > 0 ? totalBigramRarity / totalPairs : 0.75,
+    avgEntropy: totalEntropy / n,
+    avgCipherDist: totalCipherWords > 0 ? totalCipherDist / totalCipherWords : 8.0,
+    avgPatternRarity: totalPatternRarity / n,
     wordCount: n,
   }
 }
@@ -641,16 +659,19 @@ function getWordSenseAvgForKeys(boundKeys?: string | string[]): WordSenseStats {
   // 多键技能：取所有键的加权平均（各键触发频率不同，简化为均值）
   const cacheKey = keys.sort().join(',')
   if (_wordSenseCacheMap!.has(cacheKey)) return _wordSenseCacheMap!.get(cacheKey)!
-  let totalC = 0, totalCov = 0, totalBR = 0, totalW = 0
+  let totalC = 0, totalCov = 0, totalBR = 0, totalEnt = 0, totalCip = 0, totalPat = 0, totalW = 0
   for (const k of keys) {
     const s = computeWordSenseForLetter(k, deck)
     totalC += s.avgCluster * s.wordCount
     totalCov += s.avgCoverage * s.wordCount
     totalBR += s.avgBigramRarity * s.wordCount
+    totalEnt += s.avgEntropy * s.wordCount
+    totalCip += s.avgCipherDist * s.wordCount
+    totalPat += s.avgPatternRarity * s.wordCount
     totalW += s.wordCount
   }
   const result: WordSenseStats = totalW > 0
-    ? { avgCluster: totalC / totalW, avgCoverage: totalCov / totalW, avgBigramRarity: totalBR / totalW, wordCount: totalW }
+    ? { avgCluster: totalC / totalW, avgCoverage: totalCov / totalW, avgBigramRarity: totalBR / totalW, avgEntropy: totalEnt / totalW, avgCipherDist: totalCip / totalW, avgPatternRarity: totalPat / totalW, wordCount: totalW }
     : WORD_SENSE_FALLBACK
   _wordSenseCacheMap!.set(cacheKey, result)
   return result
@@ -880,6 +901,82 @@ export function computeSmartEstimate(
         if (bonus > 0) {
           addPercent += bonus
           breakdown.push({ typeKey: 'bigram', label: `双字组 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
+        }
+        break
+      }
+      case 'entropy': {
+        const avg = getWordSenseAvgForKeys(boundKeys)
+        const bonus = (affix.entropyK ?? 0) * avg.avgEntropy
+        if (bonus > 0) {
+          addPercent += bonus
+          breakdown.push({ typeKey: 'entropy', label: `熵 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
+        }
+        break
+      }
+      case 'cipher': {
+        const avg = getWordSenseAvgForKeys(boundKeys)
+        const bonus = (affix.cipherK ?? 0) * avg.avgCipherDist
+        if (bonus > 0) {
+          addPercent += bonus
+          breakdown.push({ typeKey: 'cipher', label: `密文 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
+        }
+        break
+      }
+      case 'pattern': {
+        const avg = getWordSenseAvgForKeys(boundKeys)
+        const bonus = (affix.patternK ?? 0) * avg.avgPatternRarity
+        if (bonus > 0) {
+          addPercent += bonus
+          breakdown.push({ typeKey: 'pattern', label: `模式 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
+        }
+        break
+      }
+      case 'bridge': {
+        if (affix.posRel == null) break
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        if (keys.length === 0) break
+        const neighborKeys = getExtendedNeighbors(keys, affix.posRel).filter(k => state.player.bindings.has(k))
+        let isBridge = false
+        if (neighborKeys.length >= 2) {
+          isBridge = !areConnectedWithout(neighborKeys, keys, affix.posRel, state.player.bindings)
+        }
+        const bonus = isBridge ? (affix.bridgeK ?? 0) : 0
+        addPercent += bonus
+        breakdown.push({ typeKey: 'bridge', label: `桥 ${isBridge ? `+${Math.round(bonus * 100)}%` : '(非桥)'}`, detail: '' })
+        break
+      }
+      case 'clique': {
+        if (affix.posRel == null) break
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        if (keys.length === 0) break
+        const trigKey = keys[0]
+        const cNeighborKeys = getExtendedNeighbors(keys, affix.posRel).filter(k => state.player.bindings.has(k))
+        const candidates = [trigKey, ...cNeighborKeys]
+        const maxClq = findMaxClique(candidates, affix.posRel)
+        if (maxClq > 1) {
+          const bonus = (affix.cliqueK ?? 0) * (maxClq - 1)
+          addPercent += bonus
+          breakdown.push({ typeKey: 'clique', label: `团 +${Math.round(bonus * 100)}%`, detail: `(${maxClq}-团)` })
+        }
+        break
+      }
+      case 'component': {
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        if (keys.length === 0) break
+        const compSize = bfsComponentSize(keys[0], PositionRelation.Adjacent, state.player.bindings)
+        if (compSize > 1) {
+          const bonus = (affix.componentK ?? 0) * (compSize - 1)
+          addPercent += bonus
+          breakdown.push({ typeKey: 'component', label: `连通 +${Math.round(bonus * 100)}%`, detail: `(${compSize}连通)` })
+        }
+        break
+      }
+      case 'reflect': {
+        const reflectScore = skill.affixes.length * skill.level
+        const bonus = (affix.reflectK ?? 0) * reflectScore
+        if (bonus > 0) {
+          addPercent += bonus
+          breakdown.push({ typeKey: 'reflect', label: `反射 +${Math.round(bonus * 100)}%`, detail: `(${skill.affixes.length}词条×Lv${skill.level})` })
         }
         break
       }
