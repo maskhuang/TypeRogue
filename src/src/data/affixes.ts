@@ -483,7 +483,7 @@ export interface AffixSkillSaveData {
 
 /** 技能最大等级（白装4级，蓝+3级） */
 export function getSkillMaxLevel(rarity: number): number {
-  return rarity === 0 ? 4 : 3
+  return 3
 }
 
 /** 附魔触发等级门槛（4 - 稀有度） */
