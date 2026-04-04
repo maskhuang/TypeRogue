@@ -668,6 +668,8 @@ export function resolvePhase2(
     bonusPercent += runtimeState.counterAbsorbed
     runtimeState.counterAbsorbed = 0
   }
+  // 每次触发清零 leverageLoss（防止上次残留）
+  runtimeState.leverageLoss = 0
   let flatBonus = 0 // 增幅词条：绝对值加成
   let chargeAutoComplete = false
   const mutations: StateMutation[] = []
