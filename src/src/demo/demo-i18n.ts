@@ -287,6 +287,8 @@ const ZH: Record<string, string> = {
   'battle.underdog_bonus': '🎓 {rating} 及格万岁 +{value}g',
   'battle.black_hole_settle': '🌀 结算 +{value}',
   'practice.gold_earned': '💰 初始金币 +{gold}g',
+  'practice.gold_label': '💰 练习关奖励',
+  'battle.gold_base_label': '💰 基础金币',
 
   // --- Ascension 选择器 (Story 54.3) ---
   'ascension.title': '⚔️ 选择进阶难度 ⚔️',
@@ -1247,6 +1249,8 @@ const EN: Record<string, string> = {
   'battle.underdog_bonus': '🎓 {rating} Underdog Bonus +{value}g',
   'battle.black_hole_settle': '🌀 Settled +{value}',
   'practice.gold_earned': '💰 Starting Gold +{gold}g',
+  'practice.gold_label': '💰 Practice Reward',
+  'battle.gold_base_label': '💰 Base Gold',
 
   // --- Ascension selector (Story 54.3) ---
   'ascension.title': '⚔️ Select Ascension ⚔️',

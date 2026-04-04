@@ -1396,35 +1396,49 @@ function showGoldReward(onComplete: () => void): void {
     return;
   }
 
-  // ��算奖励：���础100 + 溢出增��（上限100%）（结算时发放��� + 技能产出 + 遗物加成
-  let baseGold = 100;
-  const skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
-  const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
-  let relicGold = Math.floor(goldRelicResult.effects.gold) + _battleRelicGold;
+  // Story 54.2: 校准关 → 练习关金币映射（替代标准战斗金币）
+  let baseGold: number;
+  let skillGold: number;
+  let relicGold: number;
+  let trophyGold = 0;
+  let underdogGold = 0;
+  let bountyEndGold = 0;
 
-  // Story 36.8: 万物熔炉 — 覆盖默认金币计算
-  // Story 42.2: 传入达标时的剩余时间（战斗打到时间耗尽后 state.time=0）
-  const furnaceResult = checkUniversalFurnace(_targetReachedTime);
-  if (furnaceResult) {
-    baseGold = 0;
-    relicGold = furnaceResult.bonusGold;
-  }
+  if (_isCalibrationLevel) {
+    // 校准关：金币由得分映射决定，无技能/遗物/奖杯加成
+    baseGold = computePracticeGold(_calibrationEffectiveScore, state.ascensionLevel);
+    skillGold = 0;
+    relicGold = 0;
+  } else {
+    // 标准关：基础100 + 技能产出 + 遗物加成
+    baseGold = 100;
+    skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
+    const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
+    relicGold = Math.floor(goldRelicResult.effects.gold) + _battleRelicGold;
 
-  // 猎物悬赏：zero_errors 在关卡结束时检查
-  const bountyEndGold = checkBountyOnStageEnd();
-  if (bountyEndGold > 0) {
-    showFeedback(t('battle.bounty_complete', { value: String(bountyEndGold) }), '#ffaa00');
-    pulseRelicIcon('elite_hunter', '#ffaa00');
-  }
-  // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
-  const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
-  if (trophyGold > 0) {
-    showFeedback(t('battle.s_rank_trophy', { value: String(trophyGold), rating: state.battleStats?.rating || 'S' }), '#ffdd00', undefined, undefined, { relicId: 's_rank_trophy', resource: 'gold', amount: trophyGold });
-  }
-  // 及格万岁 — 低评级额外金币（独立加算）
-  const underdogGold = getUnderdogBonusGold(state.battleStats?.rating || 'B');
-  if (underdogGold > 0) {
-    showFeedback(t('battle.underdog_bonus', { value: String(underdogGold), rating: state.battleStats?.rating || 'B' }), '#4ecdc4', undefined, undefined, { relicId: 'underdog_bonus', resource: 'gold', amount: underdogGold });
+    // Story 36.8: 万物熔炉 — 覆盖默认金币计算
+    const furnaceResult = checkUniversalFurnace(_targetReachedTime);
+    if (furnaceResult) {
+      baseGold = 0;
+      relicGold = furnaceResult.bonusGold;
+    }
+
+    // 猎物悬赏
+    bountyEndGold = checkBountyOnStageEnd();
+    if (bountyEndGold > 0) {
+      showFeedback(t('battle.bounty_complete', { value: String(bountyEndGold) }), '#ffaa00');
+      pulseRelicIcon('elite_hunter', '#ffaa00');
+    }
+    // S 级奖杯
+    trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
+    if (trophyGold > 0) {
+      showFeedback(t('battle.s_rank_trophy', { value: String(trophyGold), rating: state.battleStats?.rating || 'S' }), '#ffdd00', undefined, undefined, { relicId: 's_rank_trophy', resource: 'gold', amount: trophyGold });
+    }
+    // 及格万岁
+    underdogGold = getUnderdogBonusGold(state.battleStats?.rating || 'B');
+    if (underdogGold > 0) {
+      showFeedback(t('battle.underdog_bonus', { value: String(underdogGold), rating: state.battleStats?.rating || 'B' }), '#4ecdc4', undefined, undefined, { relicId: 'underdog_bonus', resource: 'gold', amount: underdogGold });
+    }
   }
   const totalGold = Math.floor(baseGold + skillGold + relicGold) + trophyGold + underdogGold + bountyEndGold;
 
@@ -1433,13 +1447,13 @@ function showGoldReward(onComplete: () => void): void {
   const goldTreasureEl = document.getElementById('gold-treasure');
   const goldTotalEl = document.getElementById('gold-total');
 
-  // 基础金币行：固定100
+  // 基础金币行
   const baseRow = document.getElementById('gold-base-row');
   if (baseRow) {
     const baseValEl = baseRow.querySelector('.gold-reward-value');
-    if (baseValEl) {
-      baseValEl.textContent = '100';
-    }
+    if (baseValEl) baseValEl.textContent = String(baseGold);
+    const baseLabelEl = baseRow.querySelector('.gold-reward-label');
+    if (baseLabelEl) baseLabelEl.textContent = _isCalibrationLevel ? t('practice.gold_label') : t('battle.gold_base_label');
   }
 
   if (goldSkillEl) goldSkillEl.textContent = `+${skillGold}`;
@@ -1787,16 +1801,7 @@ function endLevel(): void {
         return;
       }
 
-      // Story 54.2: 校准关 → 练习关金币映射（替代标准战斗金币）
-      if (_isCalibrationLevel) {
-        const practiceGold = computePracticeGold(_calibrationEffectiveScore, state.ascensionLevel);
-        state.gold += practiceGold;
-        showFeedback(t('practice.gold_earned', { gold: practiceGold }), '#ffe66d');
-        continueAfterDeadlyGift(() => openShop(true));
-        return;
-      }
-
-      // 普通关胜利 → 金币奖励 → 致命礼物 → 商店
+      // 普通关/校准关胜利 → 金币奖励 → 致命礼物 → 商店
       showGoldReward(() => continueAfterDeadlyGift(() => openShop(true)));
     }, playRatingSound);
   } else {
