@@ -1974,6 +1974,7 @@ export function resolvePhase6(
   for (const [neighborSkillId, neighborKeys] of neighborSkillKeys) {
     const neighborSkill = ctx.allSkills.get(neighborSkillId)
     if (!neighborSkill) continue
+    const neighborState = ctx.skillStates.get(neighborSkillId)
 
     // 共鸣词条：范围内共享资源或词条的技能触发时，本技能自动触发N次
     for (const affix of neighborSkill.affixes) {
@@ -1985,7 +1986,6 @@ export function resolvePhase6(
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk != null) {
           // 叠层式：匹配技能触发时+1层，每叠 N 层自触发一次
-          const neighborState = ctx.skillStates.get(neighborSkillId)
           if (neighborState) {
             neighborState.stacks += 1
             const resInterval = getEffectiveInterval(affix.resonanceCount ?? DEFAULT_STACK_INTERVAL, neighborSkillId, ctx)
