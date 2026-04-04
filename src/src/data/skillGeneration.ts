@@ -220,13 +220,13 @@ export function rollAffixParams(
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), critPerStack: 0.02 }
 
     case AffixType.Burst:
-      return { type, burstK: roundTo(0.20 + random() * 0.20, 2) }
+      return { type, burstK: roundTo(0.20 + random() * 0.20, 2), critChance: 0.08 }
 
     case AffixType.ZeroIn:
-      return { type, zeroInK: roundTo(0.15 + random() * 0.15, 2) }
+      return { type, zeroInK: roundTo(0.15 + random() * 0.15, 2), critChance: 0.08 }
 
     case AffixType.Sharpshooter:
-      return { type, sharpK: roundTo(1.00 + random() * 1.00, 2) }
+      return { type, sharpK: roundTo(1.00 + random() * 1.00, 2), critChance: 0.05 }
 
     case AffixType.Bridge:
       // Bridge 固定 Adjacent（其他关系下人人互连，永远不是桥）

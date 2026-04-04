@@ -1311,6 +1311,14 @@ export function resolvePhase3(
         break
       }
 
+      case AffixType.Burst:
+      case AffixType.ZeroIn:
+      case AffixType.Sharpshooter: {
+        // 基础暴击率：使这些词条独立可用（主效果在暴击后触发）
+        totalCritChance += affix.critChance ?? 0
+        break
+      }
+
       case AffixType.Parity: {
         // 奇偶：偶数叠层时加暴击率（Phase 3 暴击子系统）
         const parityStacks = runtimeState.stacks

@@ -350,6 +350,7 @@ export interface AffixInstance {
   burstK?: number                  // Burst: 每连击层的 critMult 加成
   zeroInK?: number                 // ZeroIn: 每 miss 层的 critMult 补偿
   sharpK?: number                  // Sharpshooter: (1-critChance) × K 的 critMult 加成
+  critChance?: number              // Burst/ZeroIn/Sharpshooter: 基础暴击率
   bridgeK?: number                 // Bridge: 是桥时的 bonusPercent 加成
   cliqueK?: number                 // Clique: 每团成员的 bonusPercent
   componentK?: number              // Component: 每连通成员的 bonusPercent
