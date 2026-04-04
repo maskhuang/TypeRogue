@@ -1406,9 +1406,9 @@ function showGoldReward(onComplete: () => void): void {
   let bountyEndGold = 0;
 
   if (_isCalibrationLevel) {
-    // 校准关：金币由得分映射决定，无技能/遗物/奖杯加成
+    // 校准关：基础金币由得分映射，技能金币产出正常保留
     baseGold = computePracticeGold(_calibrationEffectiveScore, state.ascensionLevel);
-    skillGold = 0;
+    skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
     relicGold = 0;
   } else {
     // 标准关：基础100 + 技能产出 + 遗物加成
