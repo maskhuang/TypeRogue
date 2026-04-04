@@ -446,7 +446,7 @@ function triggerAffixSkillWithFeedback(
         // 组装完成反馈（AssemblyPipeline 纯数据层不含 UI 依赖）
         let completedWord: string | null
         while ((completedWord = consumeCompletedWord()) !== null) {
-          showFeedback(`✨ 词语组装完成: ${completedWord}`, '#4ecdc4');
+          showFeedback(t('craft.completed', { word: completedWord }), '#4ecdc4');
           playSound('buy');
         }
         updatePipelineHUD();

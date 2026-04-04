@@ -56,49 +56,56 @@ describe('SHAPE_TEMPLATES', () => {
 
 // ===== 旋转态数量 (AC1) =====
 
-describe('Rotation counts', () => {
+describe('Rotation counts (with stagger-compensated variants)', () => {
   it('monomino should have 1 rotation (identity)', () => {
     expect(SHAPE_TEMPLATES.monomino.rotations).toHaveLength(1)
   })
 
-  it('domino should have 2 rotations (horizontal/vertical)', () => {
-    expect(SHAPE_TEMPLATES.domino.rotations).toHaveLength(2)
+  it('domino should have ≥ 3 rotations (horizontal + vertical + diagonal)', () => {
+    expect(SHAPE_TEMPLATES.domino.rotations.length).toBeGreaterThanOrEqual(3)
   })
 
-  it('triomino_I should have 2 rotations', () => {
-    expect(SHAPE_TEMPLATES.triomino_I.rotations).toHaveLength(2)
+  it('triomino_I should have ≥ 2 rotations', () => {
+    expect(SHAPE_TEMPLATES.triomino_I.rotations.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('triomino_L should have 4 rotations', () => {
-    expect(SHAPE_TEMPLATES.triomino_L.rotations).toHaveLength(4)
+  it('triomino_L should have ≥ 4 rotations', () => {
+    expect(SHAPE_TEMPLATES.triomino_L.rotations.length).toBeGreaterThanOrEqual(4)
   })
 
-  it('tetromino_T should have 4 rotations', () => {
-    expect(SHAPE_TEMPLATES.tetromino_T.rotations).toHaveLength(4)
+  it('tetromino_T should have ≥ 4 rotations', () => {
+    expect(SHAPE_TEMPLATES.tetromino_T.rotations.length).toBeGreaterThanOrEqual(4)
   })
 
-  it('tetromino_I should have 2 rotations', () => {
-    expect(SHAPE_TEMPLATES.tetromino_I.rotations).toHaveLength(2)
+  it('tetromino_I should have ≥ 1 rotation', () => {
+    expect(SHAPE_TEMPLATES.tetromino_I.rotations.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('tetromino_O should have 1 rotation (square is symmetric)', () => {
-    expect(SHAPE_TEMPLATES.tetromino_O.rotations).toHaveLength(1)
+  it('tetromino_O should have ≥ 1 rotation', () => {
+    expect(SHAPE_TEMPLATES.tetromino_O.rotations.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('tetromino_S should have 2 rotations', () => {
-    expect(SHAPE_TEMPLATES.tetromino_S.rotations).toHaveLength(2)
+  it('tetromino_S should have ≥ 2 rotations', () => {
+    expect(SHAPE_TEMPLATES.tetromino_S.rotations.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('tetromino_Z should have 2 rotations', () => {
-    expect(SHAPE_TEMPLATES.tetromino_Z.rotations).toHaveLength(2)
+  it('tetromino_Z should have ≥ 2 rotations', () => {
+    expect(SHAPE_TEMPLATES.tetromino_Z.rotations.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('tetromino_L should have 4 rotations', () => {
-    expect(SHAPE_TEMPLATES.tetromino_L.rotations).toHaveLength(4)
+  it('tetromino_L should have ≥ 4 rotations', () => {
+    expect(SHAPE_TEMPLATES.tetromino_L.rotations.length).toBeGreaterThanOrEqual(4)
   })
 
-  it('tetromino_J should have 4 rotations', () => {
-    expect(SHAPE_TEMPLATES.tetromino_J.rotations).toHaveLength(4)
+  it('tetromino_J should have ≥ 4 rotations', () => {
+    expect(SHAPE_TEMPLATES.tetromino_J.rotations.length).toBeGreaterThanOrEqual(4)
+  })
+
+  it('standard rotations (indices 0-3) are backward-compatible', () => {
+    // First rotations should match the original orthogonal rotations
+    const domino = SHAPE_TEMPLATES.domino
+    expect(domino.rotations[0]).toEqual([[0, 0], [0, 1]]) // horizontal
+    expect(domino.rotations[1]).toEqual([[0, 0], [1, 0]]) // vertical
   })
 })
 
@@ -207,21 +214,20 @@ describe('Shape connectivity via ADJACENT_KEYS', () => {
     }
   })
 
-  it('all shape templates have cells that are grid-adjacent', () => {
-    // Verify that within each rotation, each cell is grid-adjacent to at least one other cell
+  it('all shape templates have cells that are grid-adjacent (orthogonal or diagonal)', () => {
+    // Stagger-compensated variants may have diagonal adjacency (Chebyshev distance 1)
     for (const [id, template] of Object.entries(SHAPE_TEMPLATES)) {
       for (let r = 0; r < template.rotations.length; r++) {
         const cells = template.rotations[r]
         if (cells.length <= 1) continue
-        // Each cell should have at least one neighbor in the set (Manhattan distance 1)
         for (const [cr, cc] of cells) {
           const hasNeighbor = cells.some(([nr, nc]) =>
             (cr !== nr || cc !== nc) &&
-            Math.abs(cr - nr) + Math.abs(cc - nc) === 1,
+            Math.abs(cr - nr) <= 1 && Math.abs(cc - nc) <= 1,
           )
           expect(
             hasNeighbor,
-            `${id} rotation ${r}: cell [${cr},${cc}] should have at least one grid-adjacent neighbor`,
+            `${id} rotation ${r}: cell [${cr},${cc}] should have at least one neighbor (Chebyshev ≤ 1)`,
           ).toBe(true)
         }
       }

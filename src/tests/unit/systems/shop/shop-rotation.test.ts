@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { bindShapeToKeys, unbindSkill, getSkillAnchorKey } from '../../../../src/systems/bindingManager'
-import { mapShapeToKeys } from '../../../../src/data/skillShapes'
+import { mapShapeToKeys, SHAPE_TEMPLATES } from '../../../../src/data/skillShapes'
 
 // === 旋转核心逻辑测试（纯绑定层，无 DOM） ===
 
@@ -135,14 +135,16 @@ describe('Rotation core logic', () => {
     }
   })
 
-  it('full rotation cycle: 0→1→2→3→0', () => {
+  it('full rotation cycle through all fitting rotations', () => {
+    // Use 'p' where all domino rotations fit (including stagger diagonals)
     const bs = makeBindingState({ 'skill-F': { shapeId: 'domino', rotation: 0 } })
-    bindShapeToKeys(bs, 'skill-F', 'f')
+    bindShapeToKeys(bs, 'skill-F', 'p')
 
-    for (let nextRot = 1; nextRot <= 4; nextRot++) {
-      const rot = nextRot % 4
+    const rotCount = SHAPE_TEMPLATES.domino.rotations.length
+    for (let nextRot = 1; nextRot <= rotCount; nextRot++) {
+      const rot = nextRot % rotCount
       const anchorKey = getSkillAnchorKey(bs, 'skill-F')!
-      expect(anchorKey).toBe('f')
+      expect(anchorKey).toBe('p')
 
       unbindSkill(bs, 'skill-F')
       bs.affixSkills.get('skill-F')!.rotation = rot

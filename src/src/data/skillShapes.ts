@@ -59,17 +59,48 @@ function cellsEqual(a: [number, number][], b: [number, number][]): boolean {
   return a.every((cell, i) => cell[0] === b[i][0] && cell[1] === b[i][1])
 }
 
-/** 计算一个形状的所有去重旋转态 */
+/**
+ * 计算一个形状的所有去重旋转态（含 stagger 补偿变体）。
+ *
+ * QWERTY 键盘行间有 stagger 偏移，纯正交旋转无法覆盖
+ * 所有实际相邻方向（如 P+L 需要左下对角）。
+ * 对每个跨行旋转态生成 skew 变体（col -= row），
+ * 再旋转该变体，以产生对角方向的朝向。
+ */
 function computeUniqueRotations(baseCells: [number, number][]): [number, number][][] {
+  const maxRows = KEYBOARD_ROWS.length // 键盘行数（3）
   const rotations: [number, number][][] = []
+  const addVariant = (cells: [number, number][]) => {
+    const norm = normalizeCells(cells)
+    // 跳过跨行数超过键盘行数的变体（放不下）
+    const rowSpan = Math.max(...norm.map(c => c[0])) - Math.min(...norm.map(c => c[0])) + 1
+    if (rowSpan > maxRows) return
+    if (!rotations.some(existing => cellsEqual(existing, norm))) {
+      rotations.push(norm)
+    }
+  }
+
+  // Phase 1: 标准 4 旋转
   let current = normalizeCells(baseCells)
   for (let r = 0; r < 4; r++) {
-    const isDuplicate = rotations.some(existing => cellsEqual(existing, current))
-    if (!isDuplicate) {
-      rotations.push(current)
-    }
+    addVariant(current)
     current = rotateShape90(current)
   }
+
+  // Phase 2: 跨行旋转态的 stagger 补偿 + 再旋转
+  const standardCount = rotations.length
+  for (let i = 0; i < standardCount; i++) {
+    const cells = rotations[i]
+    const rows = new Set(cells.map(c => c[0]))
+    if (rows.size <= 1) continue // 单行形态无需补偿
+    const skewed = cells.map(([row, col]) => [row, col - row] as [number, number])
+    let cur = normalizeCells(skewed)
+    for (let r = 0; r < 4; r++) {
+      addVariant(cur)
+      cur = rotateShape90(cur)
+    }
+  }
+
   return rotations
 }
 
@@ -227,10 +258,9 @@ export function mapShapeToKeys(
   if (!anchorCoord) return null
 
   // 获取旋转后的 cells
-  const rotIdx = ((rotation % 4) + 4) % 4
-  const cells = rotIdx < template.rotations.length
-    ? template.rotations[rotIdx]
-    : rotateShape(template.cells, rotIdx)
+  const rotCount = template.rotations.length
+  const rotIdx = ((rotation % rotCount) + rotCount) % rotCount
+  const cells = template.rotations[rotIdx]
 
   const keys: string[] = []
   const keySet = new Set<string>()
@@ -259,15 +289,19 @@ export function mapShapeToKeys(
   return keys
 }
 
+/** 获取形状的有效旋转态数量 */
+export function getShapeRotationCount(shapeId: string): number {
+  return SHAPE_TEMPLATES[shapeId]?.rotations.length ?? 1
+}
+
 /**
  * 获取形状在指定旋转态下的 cells（返回浅拷贝，安全可变）
  */
 export function getShapeCells(shapeId: string, rotation: number): [number, number][] | null {
   const template = SHAPE_TEMPLATES[shapeId]
   if (!template) return null
-  const rotIdx = ((rotation % 4) + 4) % 4
-  const cells = rotIdx < template.rotations.length
-    ? template.rotations[rotIdx]
-    : rotateShape(template.cells, rotIdx)
+  const rotCount = template.rotations.length
+  const rotIdx = ((rotation % rotCount) + rotCount) % rotCount
+  const cells = template.rotations[rotIdx]
   return cells.map(c => [...c] as [number, number])
 }

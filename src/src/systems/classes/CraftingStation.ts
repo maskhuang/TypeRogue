@@ -6,6 +6,7 @@
 import { state } from '../../core/state';
 import { playSound } from '../../effects/sound';
 import { showFeedback } from '../battle';
+import { t } from '../../demo/demo-i18n';
 import { createPipeline, MAX_PIPELINE_LENGTH, MAX_QUEUE_SIZE } from './AssemblyPipeline';
 import { getAllWords } from '../../data/wordPacks';
 import { applyApprenticeEvent } from '../../data/affixTrigger';
@@ -24,7 +25,7 @@ export function renderCraftPanel(container: HTMLElement, onGoldUpdate: () => voi
 
   const title = document.createElement('div');
   title.className = 'craft-title';
-  title.textContent = '⚡ 造词台';
+  title.textContent = t('craft.title');
   container.appendChild(title);
 
   // --- 流水线状态 ---
@@ -48,13 +49,13 @@ function renderPipelineStatus(container: HTMLElement): void {
 
   const header = document.createElement('div');
   header.className = 'craft-section-header';
-  header.textContent = `⚡ 组装流水线 (${state.assemblyQueue.length}/${MAX_QUEUE_SIZE})`;
+  header.textContent = `${t('craft.pipeline')} (${state.assemblyQueue.length}/${MAX_QUEUE_SIZE})`;
   section.appendChild(header);
 
   if (state.assemblyQueue.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'craft-pipeline-empty';
-    empty.textContent = '无组装中的词语 — 在下方选择碎片开始组装';
+    empty.textContent = t('craft.pipeline_empty');
     section.appendChild(empty);
   } else {
     state.assemblyQueue.forEach((pipeline, qIdx) => {
@@ -67,9 +68,9 @@ function renderPipelineStatus(container: HTMLElement): void {
       wordLabel.className = 'craft-pipeline-word';
       const completedCount = pipeline.slots.filter(s => s.completed).length;
       if (qIdx === 0) {
-        wordLabel.textContent = `🔨 "${pipeline.targetWord}" — ${completedCount}/${pipeline.slots.length}`;
+        wordLabel.textContent = t('craft.producing', { word: pipeline.targetWord, done: completedCount, total: pipeline.slots.length });
       } else {
-        wordLabel.textContent = `📋 ${qIdx + 1}. "${pipeline.targetWord}"`;
+        wordLabel.textContent = t('craft.queued', { idx: qIdx + 1, word: pipeline.targetWord });
       }
       itemDiv.appendChild(wordLabel);
 
@@ -110,7 +111,7 @@ function renderPipelineStatus(container: HTMLElement): void {
       const cancelBtn = document.createElement('button');
       cancelBtn.className = 'craft-cancel-btn';
       cancelBtn.textContent = '✕';
-      cancelBtn.title = '取消（返还碎片）';
+      cancelBtn.title = t('craft.cancel_tip');
       cancelBtn.onclick = (e) => {
         e.stopPropagation();
         for (const slot of pipeline.slots) {
@@ -119,7 +120,7 @@ function renderPipelineStatus(container: HTMLElement): void {
           }
         }
         state.assemblyQueue.splice(qIdx, 1);
-        showFeedback('组装已取消，碎片已返还', '#88ccff');
+        showFeedback(t('craft.cancelled'), '#88ccff');
         rerender();
       };
       itemDiv.appendChild(cancelBtn);
@@ -138,7 +139,7 @@ function renderFragmentInventory(container: HTMLElement): void {
 
   const header = document.createElement('div');
   header.className = 'craft-section-header';
-  header.textContent = '碎片库存';
+  header.textContent = t('craft.inventory');
   section.appendChild(header);
 
   const grid = document.createElement('div');
@@ -202,7 +203,7 @@ function renderWordBuilder(container: HTMLElement): void {
 
   const header = document.createElement('div');
   header.className = 'craft-section-header';
-  header.textContent = '📝 组装新词';
+  header.textContent = t('craft.build');
   section.appendChild(header);
 
   // 当前拼词
@@ -212,14 +213,14 @@ function renderWordBuilder(container: HTMLElement): void {
   if (currentWordLetters.length === 0) {
     const placeholder = document.createElement('span');
     placeholder.className = 'craft-word-placeholder';
-    placeholder.textContent = '点击碎片添加字母，或从下方可拼词选择';
+    placeholder.textContent = t('craft.placeholder');
     wordRow.appendChild(placeholder);
   } else {
     for (let i = 0; i < currentWordLetters.length; i++) {
       const chip = document.createElement('span');
       chip.className = 'craft-word-chip';
       chip.textContent = currentWordLetters[i].toUpperCase();
-      chip.title = '点击移除';
+      chip.title = t('craft.click_remove');
       chip.onclick = () => removeLetterFromWord(i);
       wordRow.appendChild(chip);
     }
@@ -237,7 +238,7 @@ function renderWordBuilder(container: HTMLElement): void {
     const btn = document.createElement('button');
     btn.className = 'craft-confirm-btn';
     if (!canStart) btn.classList.add('craft-confirm-disabled');
-    btn.textContent = state.assemblyQueue.length > 0 ? '排队组装' : '开始组装';
+    btn.textContent = state.assemblyQueue.length > 0 ? t('craft.enqueue') : t('craft.start');
     btn.disabled = !canStart;
 
     btn.onclick = () => {
@@ -256,10 +257,10 @@ function renderWordBuilder(container: HTMLElement): void {
         }
 
         playSound('buy');
-        showFeedback(`⚡ 开始组装: ${word}`, '#9b59b6');
+        showFeedback(t('craft.started', { word }), '#9b59b6');
         rerender();
       } else {
-        showFeedback('碎片不足或词太长!', '#ff6b6b');
+        showFeedback(t('craft.no_fragments'), '#ff6b6b');
       }
     };
     section.appendChild(btn);
@@ -267,13 +268,13 @@ function renderWordBuilder(container: HTMLElement): void {
     if (tooLong) {
       const hint = document.createElement('span');
       hint.className = 'craft-confirm-hint';
-      hint.textContent = `最多 ${MAX_PIPELINE_LENGTH} 个字母`;
+      hint.textContent = t('craft.max_letters', { n: MAX_PIPELINE_LENGTH });
       section.appendChild(hint);
     }
     if (queueFull) {
       const hint = document.createElement('span');
       hint.className = 'craft-confirm-hint';
-      hint.textContent = `队列已满 (${MAX_QUEUE_SIZE}/${MAX_QUEUE_SIZE})`;
+      hint.textContent = t('craft.queue_full', { cur: MAX_QUEUE_SIZE, max: MAX_QUEUE_SIZE });
       section.appendChild(hint);
     }
   }
@@ -291,7 +292,7 @@ function renderSuggestedWords(container: HTMLElement): void {
 
   const header = document.createElement('div');
   header.className = 'craft-section-header';
-  header.textContent = `💡 可拼词 (${suggestions.length})`;
+  header.textContent = t('craft.suggestions', { n: suggestions.length });
   section.appendChild(header);
 
   const list = document.createElement('div');
@@ -301,13 +302,13 @@ function renderSuggestedWords(container: HTMLElement): void {
     const tag = document.createElement('span');
     tag.className = 'craft-suggest-tag';
     tag.textContent = word;
-    tag.title = '点击选择';
+    tag.title = t('craft.click_select');
     tag.onclick = () => {
       // 验证碎片仍然足够（可能在选择前被消耗）
       if (canBuildWord(word, state.fragmentInventory)) {
         currentWordLetters = word.split('');
       } else {
-        showFeedback('碎片已不足!', '#ff6b6b');
+        showFeedback(t('craft.fragments_gone'), '#ff6b6b');
       }
       rerender();
     };
@@ -359,7 +360,7 @@ export function deconstructWord(word: string, onGoldUpdate: () => void): boolean
   const deckIdx = state.player.wordDeck.indexOf(word);
   if (deckIdx !== -1) state.player.wordDeck.splice(deckIdx, 1);
 
-  showFeedback(`✂ 拆解「${word}」，碎片已返还!`, '#88ccff');
+  showFeedback(t('craft.deconstructed', { word }), '#88ccff');
   playSound('buy');
   onGoldUpdate();
   return true;
@@ -374,7 +375,7 @@ function renderCraftedWordList(container: HTMLElement): void {
 
   const header = document.createElement('div');
   header.className = 'craft-section-header';
-  header.textContent = `已造词 (${state.craftedWords.length})`;
+  header.textContent = t('craft.crafted_list', { n: state.craftedWords.length });
   section.appendChild(header);
 
   const list = document.createElement('div');
@@ -391,7 +392,7 @@ function renderCraftedWordList(container: HTMLElement): void {
       const btn = document.createElement('button');
       btn.className = 'craft-deconstruct-btn';
       btn.textContent = '✂';
-      btn.title = '拆解（返还所有碎片）';
+      btn.title = t('craft.deconstruct_tip');
       btn.onclick = (e) => {
         e.stopPropagation();
         if (cachedGoldUpdate) {

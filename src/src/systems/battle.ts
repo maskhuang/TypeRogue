@@ -2384,6 +2384,7 @@ function victory(): void {
     activeModifiers: [...state.activeModifiers],
     seed: state.dailySeed,
     classId: state.classId,
+    ascensionLevel: state.ascensionLevel,
   });
 }
 

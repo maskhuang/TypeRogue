@@ -109,6 +109,7 @@ export interface GameEvents {
     enchantments?: { skillId: string; enchantmentId: string }[]   // Story 25.5
     activeModifiers?: string[]                                    // Story 25.5
     classId?: string                                              // 职业 ID
+    ascensionLevel?: number                                       // Story 54.1: Ascension 级别
   }
 
   // 场景导航事件 (Story 5.5)

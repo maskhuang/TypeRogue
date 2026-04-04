@@ -59,7 +59,7 @@ import { hasGlassCannon } from './relics/TypingRelicBehaviors';
 import { getAscendBaseScale } from '../data/affixTrigger';
 import { getEnchantmentChoiceCount, getEnchantAnchorSlotBonus, getEnchantAnchorPriceMultiplier, getMinEnchantmentLevel, getQuestEquipReduction, isEnchantGuaranteed } from './relics/EnchantmentRelicBehaviors';
 import { bindShapeToKeys, unbindSkill, unbindKey, autoBindSkill, getBindingState, getSkillAnchorKey } from './bindingManager';
-import { getShapeCells, mapShapeToKeys } from '../data/skillShapes';
+import { getShapeCells, mapShapeToKeys, getShapeRotationCount } from '../data/skillShapes';
 
 // === 零频键位缓存（供自动绑定使用） ===
 let cachedLetterFreqs: Map<string, number> | null = null;
@@ -546,40 +546,40 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'splash': return t('param.splash', { rel, n: a.splashCount ?? 1 })
     case 'relay': return t('param.relay', { rel, n: a.relayCount ?? 1 })
     case 'war_drum': return t('param.war_drum', { rel, pct: Math.round((a.critPerStack ?? 0) * 100) })
-    case 'parity': return `奇+${Math.round((a.oddK ?? 0) * 100)}%产出 / 偶+${Math.round((a.evenK ?? 0) * 100)}%暴击`
-    case 'prime': return `素数时+${Math.round((a.primeK ?? 0) * 100)}%×叠层数`
-    case 'match': return `${rel} +${Math.round((a.matchK ?? 0) * 100)}%/配对`
-    case 'entropy': return `+${Math.round((a.entropyK ?? 0) * 100)}%×信息熵`
-    case 'cipher': return `+${Math.round((a.cipherK ?? 0) * 100)}%×字母跳跃`
-    case 'pattern': return `+${Math.round((a.patternK ?? 0) * 100)}%×模式稀有度`
-    case 'leverage': return `读${RESOURCE_ICONS[a.source!] || ''}:阈值${a.marginThreshold ?? '?'} +${Math.round((a.leverageK ?? 0) * 100)}%×超出量`
-    case 'option': return `读${RESOURCE_ICONS[a.source!] || ''}:阈值${a.strikePrice ?? '?'} 未达-${Math.round((a.premium ?? 0) * 100)}%/次`
-    case 'hedge': return `读${RESOURCE_ICONS[a.hedgeSourceA!] || ''}+${RESOURCE_ICONS[a.hedgeSourceB!] || ''}:接近+${Math.round((a.hedgeK ?? 0) * 100)}%`
-    case 'burst': return `连击+${Math.round((a.burstK ?? 0) * 100)}%暴击倍率/层`
-    case 'zero_in': return `miss补偿+${Math.round((a.zeroInK ?? 0) * 100)}%暴击倍率/层`
-    case 'sharpshooter': return `低暴击率+${Math.round((a.sharpK ?? 0) * 100)}%暴击倍率`
-    case 'bridge': return `相邻 桥+${Math.round((a.bridgeK ?? 0) * 100)}%`
-    case 'clique': return `${rel} 团+${Math.round((a.cliqueK ?? 0) * 100)}%/成员`
-    case 'component': return `连通+${Math.round((a.componentK ?? 0) * 100)}%/成员`
-    case 'decorator': return `放大+${Math.round((a.decoratorK ?? 0) * 100)}%`
-    case 'reflect': return `+${Math.round((a.reflectK ?? 0) * 100)}%×(词条数×等级)`
-    case 'monkey_patch': return `随机×${a.patchLow ?? 0.5}~${a.patchHigh ?? 2.0}`
+    case 'parity': return t('param.parity', { odd: Math.round((a.oddK ?? 0) * 100), even: Math.round((a.evenK ?? 0) * 100) })
+    case 'prime': return t('param.prime', { k: Math.round((a.primeK ?? 0) * 100) })
+    case 'match': return t('param.match', { rel, k: Math.round((a.matchK ?? 0) * 100) })
+    case 'entropy': return t('param.entropy', { k: Math.round((a.entropyK ?? 0) * 100) })
+    case 'cipher': return t('param.cipher', { k: Math.round((a.cipherK ?? 0) * 100) })
+    case 'pattern': return t('param.pattern', { k: Math.round((a.patternK ?? 0) * 100) })
+    case 'leverage': return t('param.leverage', { icon: RESOURCE_ICONS[a.source!] || '', threshold: a.marginThreshold ?? '?', k: Math.round((a.leverageK ?? 0) * 100) })
+    case 'option': return t('param.option', { icon: RESOURCE_ICONS[a.source!] || '', threshold: a.strikePrice ?? '?', k: Math.round((a.premium ?? 0) * 100) })
+    case 'hedge': return t('param.hedge', { iconA: RESOURCE_ICONS[a.hedgeSourceA!] || '', iconB: RESOURCE_ICONS[a.hedgeSourceB!] || '', k: Math.round((a.hedgeK ?? 0) * 100) })
+    case 'burst': return t('param.burst', { k: Math.round((a.burstK ?? 0) * 100) })
+    case 'zero_in': return t('param.zero_in', { k: Math.round((a.zeroInK ?? 0) * 100) })
+    case 'sharpshooter': return t('param.sharpshooter', { k: Math.round((a.sharpK ?? 0) * 100) })
+    case 'bridge': return t('param.bridge', { k: Math.round((a.bridgeK ?? 0) * 100) })
+    case 'clique': return t('param.clique', { rel, k: Math.round((a.cliqueK ?? 0) * 100) })
+    case 'component': return t('param.component', { k: Math.round((a.componentK ?? 0) * 100) })
+    case 'decorator': return t('param.decorator', { k: Math.round((a.decoratorK ?? 0) * 100) })
+    case 'reflect': return t('param.reflect', { k: Math.round((a.reflectK ?? 0) * 100) })
+    case 'monkey_patch': return t('param.monkey_patch', { low: a.patchLow ?? 0.5, high: a.patchHigh ?? 2.0 })
     case 'ligature': return t('param.ligature')
     case 'twin': return t('param.twin')
-    case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
-    case 'cluster': return `+${Math.round((a.clusterK ?? 0) * 100)}%/辅音段`
-    case 'coverage': return `+${Math.round((a.coverageK ?? 0) * 100)}%/字母种类`
-    case 'bigram': return `+${Math.round((a.bigramK ?? 0) * 100)}%×罕见度`
-    case 'flow': return `${rel} +${Math.round((a.flowK ?? 0) * 100)}%/落差`
-    case 'confluence': return `${rel} +${Math.round((a.confluenceK ?? 0) * 100)}%×多样性`
-    case 'turbulence': return `${rel} +${Math.round((a.turbulenceK ?? 0) * 100)}%×极差`
-    case 'phase_shift': return `读${RESOURCE_ICONS[a.phaseSource!] || ''}:T1=${a.phaseT1},T2=${a.phaseT2}`
-    case 'endo_exo': return `读${RESOURCE_ICONS[a.endoSource!] || ''}:阈值${a.endoThreshold}`
-    case 'fusion': return `${RESOURCE_ICONS[a.fusionSourceA!] || ''}+${RESOURCE_ICONS[a.fusionSourceB!] || ''}点火`
-    case 'innate': return '开局自动触发'
-    case 'counter': return `${rel} 充能${a.maxCharges ?? 0}次`
-    case 'exhaust': return `×${a.exhaustMult?.toFixed(1) ?? '?'} 共${a.maxTriggers ?? '?'}次`
-    case 'ethereal': return '词条+1级 限1关'
+    case 'multiply': return t('param.multiply', { val: a.multiplyValue?.toFixed(1) ?? '?' })
+    case 'cluster': return t('param.cluster', { k: Math.round((a.clusterK ?? 0) * 100) })
+    case 'coverage': return t('param.coverage', { k: Math.round((a.coverageK ?? 0) * 100) })
+    case 'bigram': return t('param.bigram', { k: Math.round((a.bigramK ?? 0) * 100) })
+    case 'flow': return t('param.flow', { rel, k: Math.round((a.flowK ?? 0) * 100) })
+    case 'confluence': return t('param.confluence', { rel, k: Math.round((a.confluenceK ?? 0) * 100) })
+    case 'turbulence': return t('param.turbulence', { rel, k: Math.round((a.turbulenceK ?? 0) * 100) })
+    case 'phase_shift': return t('param.phase_shift', { icon: RESOURCE_ICONS[a.phaseSource!] || '', t1: a.phaseT1 ?? '?', t2: a.phaseT2 ?? '?' })
+    case 'endo_exo': return t('param.endo_exo', { icon: RESOURCE_ICONS[a.endoSource!] || '', threshold: a.endoThreshold ?? '?' })
+    case 'fusion': return t('param.fusion', { iconA: RESOURCE_ICONS[a.fusionSourceA!] || '', iconB: RESOURCE_ICONS[a.fusionSourceB!] || '' })
+    case 'innate': return t('param.innate')
+    case 'counter': return t('param.counter', { rel, n: a.maxCharges ?? 0 })
+    case 'exhaust': return t('param.exhaust', { mult: a.exhaustMult?.toFixed(1) ?? '?', n: a.maxTriggers ?? '?' })
+    case 'ethereal': return t('param.ethereal')
     default: return ''
   }
 }
@@ -833,7 +833,7 @@ export function computeSmartEstimate(
         }
         if (flowBonus > 0) {
           addPercent += flowBonus
-          breakdown.push({ typeKey: 'flow', label: `落差 +${Math.round(flowBonus * 100)}%`, detail: `(${neighbors.length}邻居)` })
+          breakdown.push({ typeKey: 'flow', label: t('est.flow', { pct: Math.round(flowBonus * 100) }), detail: t('est.flow_detail', { n: neighbors.length }) })
         }
         break
       }
@@ -848,7 +848,7 @@ export function computeSmartEstimate(
         if (resTypes.size > 0) {
           const bonus = (affix.confluenceK ?? 0) * (1 - 1 / (resTypes.size + 1))
           addPercent += bonus
-          breakdown.push({ typeKey: 'confluence', label: `汇流 +${Math.round(bonus * 100)}%`, detail: `(${resTypes.size}种资源)` })
+          breakdown.push({ typeKey: 'confluence', label: t('est.confluence', { pct: Math.round(bonus * 100) }), detail: t('est.confluence_detail', { n: resTypes.size }) })
         }
         break
       }
@@ -870,7 +870,7 @@ export function computeSmartEstimate(
             const spread = (maxB - minB) / maxB
             const bonus = (affix.turbulenceK ?? 0) * spread * neighbors.length
             addPercent += bonus
-            breakdown.push({ typeKey: 'turbulence', label: `湍流 +${Math.round(bonus * 100)}%`, detail: `(极差${Math.round(spread * 100)}%)` })
+            breakdown.push({ typeKey: 'turbulence', label: t('est.turbulence', { pct: Math.round(bonus * 100) }), detail: t('est.turbulence_detail', { pct: Math.round(spread * 100) }) })
           }
         }
         break
@@ -881,7 +881,7 @@ export function computeSmartEstimate(
         const bonus = (affix.clusterK ?? 0) * avg.avgCluster
         if (bonus > 0) {
           addPercent += bonus
-          breakdown.push({ typeKey: 'cluster', label: `辅音丛 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
+          breakdown.push({ typeKey: 'cluster', label: t('est.cluster', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }
@@ -891,7 +891,7 @@ export function computeSmartEstimate(
         const bonus = (affix.coverageK ?? 0) * avg.avgCoverage
         if (bonus > 0) {
           addPercent += bonus
-          breakdown.push({ typeKey: 'coverage', label: `覆盖度 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
+          breakdown.push({ typeKey: 'coverage', label: t('est.coverage', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }
@@ -901,7 +901,7 @@ export function computeSmartEstimate(
         const bonus = (affix.bigramK ?? 0) * avg.avgBigramRarity
         if (bonus > 0) {
           addPercent += bonus
-          breakdown.push({ typeKey: 'bigram', label: `双字组 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
+          breakdown.push({ typeKey: 'bigram', label: t('est.bigram', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }
@@ -910,7 +910,7 @@ export function computeSmartEstimate(
         const bonus = (affix.entropyK ?? 0) * avg.avgEntropy
         if (bonus > 0) {
           addPercent += bonus
-          breakdown.push({ typeKey: 'entropy', label: `熵 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
+          breakdown.push({ typeKey: 'entropy', label: t('est.entropy_est', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }
@@ -919,7 +919,7 @@ export function computeSmartEstimate(
         const bonus = (affix.cipherK ?? 0) * avg.avgCipherDist
         if (bonus > 0) {
           addPercent += bonus
-          breakdown.push({ typeKey: 'cipher', label: `密文 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
+          breakdown.push({ typeKey: 'cipher', label: t('est.cipher', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }
@@ -928,7 +928,7 @@ export function computeSmartEstimate(
         const bonus = (affix.patternK ?? 0) * avg.avgPatternRarity
         if (bonus > 0) {
           addPercent += bonus
-          breakdown.push({ typeKey: 'pattern', label: `模式 +${Math.round(bonus * 100)}%`, detail: `(${avg.wordCount}词平均)` })
+          breakdown.push({ typeKey: 'pattern', label: t('est.pattern', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }
@@ -943,7 +943,7 @@ export function computeSmartEstimate(
         }
         const bonus = isBridge ? (affix.bridgeK ?? 0) : 0
         addPercent += bonus
-        breakdown.push({ typeKey: 'bridge', label: `桥 ${isBridge ? `+${Math.round(bonus * 100)}%` : '(非桥)'}`, detail: '' })
+        breakdown.push({ typeKey: 'bridge', label: isBridge ? t('est.bridge', { pct: Math.round(bonus * 100) }) : t('est.bridge_no'), detail: '' })
         break
       }
       case 'clique': {
@@ -957,7 +957,7 @@ export function computeSmartEstimate(
         if (maxClq > 1) {
           const bonus = (affix.cliqueK ?? 0) * (maxClq - 1)
           addPercent += bonus
-          breakdown.push({ typeKey: 'clique', label: `团 +${Math.round(bonus * 100)}%`, detail: `(${maxClq}-团)` })
+          breakdown.push({ typeKey: 'clique', label: t('est.clique', { pct: Math.round(bonus * 100) }), detail: t('est.clique_detail', { n: maxClq }) })
         }
         break
       }
@@ -968,7 +968,7 @@ export function computeSmartEstimate(
         if (compSize > 1) {
           const bonus = (affix.componentK ?? 0) * (compSize - 1)
           addPercent += bonus
-          breakdown.push({ typeKey: 'component', label: `连通 +${Math.round(bonus * 100)}%`, detail: `(${compSize}连通)` })
+          breakdown.push({ typeKey: 'component', label: t('est.component', { pct: Math.round(bonus * 100) }), detail: t('est.component_detail', { n: compSize }) })
         }
         break
       }
@@ -977,7 +977,7 @@ export function computeSmartEstimate(
         const bonus = (affix.reflectK ?? 0) * reflectScore
         if (bonus > 0) {
           addPercent += bonus
-          breakdown.push({ typeKey: 'reflect', label: `反射 +${Math.round(bonus * 100)}%`, detail: `(${skill.affixes.length}词条×Lv${skill.level})` })
+          breakdown.push({ typeKey: 'reflect', label: t('est.reflect', { pct: Math.round(bonus * 100) }), detail: t('est.reflect_detail', { affixes: skill.affixes.length, level: skill.level }) })
         }
         break
       }
@@ -986,13 +986,13 @@ export function computeSmartEstimate(
         const m = affix.exhaustMult ?? 1
         if (m > 1) {
           multProduct *= m
-          breakdown.push({ typeKey: 'exhaust', label: `消耗 ×${m.toFixed(1)}`, detail: `(剩${affix.maxTriggers ?? '?'}次)` })
+          breakdown.push({ typeKey: 'exhaust', label: t('est.exhaust', { val: m.toFixed(1) }), detail: t('est.exhaust_detail', { n: affix.maxTriggers ?? '?' }) })
         }
         break
       }
       case 'ethereal': {
         // 虚无：其他词条+1级（不直接改 base，无法量化预估）
-        breakdown.push({ typeKey: 'ethereal', label: '虚无：词条+1级', detail: '(限1关)' })
+        breakdown.push({ typeKey: 'ethereal', label: t('est.ethereal_label'), detail: t('est.ethereal_detail') })
         break
       }
       // 其余词条不预估
@@ -1836,7 +1836,9 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
     let previewRotation = item.affixSkill.rotation ?? 0;
     card.addEventListener('contextmenu', (e: MouseEvent) => {
       e.preventDefault();
-      previewRotation = (previewRotation + 1) % 4;
+      const maxRot = getShapeRotationCount(item.affixSkill!.shapeId ?? 'monomino');
+      const step = e.shiftKey ? maxRot - 1 : 1;
+      previewRotation = (previewRotation + step) % maxRot;
       // 更新卡片内的形状预览
       const iconDiv = card.querySelector('.reward-icon');
       if (iconDiv) {
@@ -1899,7 +1901,7 @@ function showAffixComparisonPanel(shopSkill: AffixSkillInstance, cardEl: HTMLEle
   comparisonPanel.style.cssText = 'position:absolute;z-index:1000;background:#1a1a2e;border:1px solid #333;border-radius:8px;padding:10px;font-size:11px;color:#ccc;pointer-events:none;min-width:280px;';
 
   // 左列：当前技能  右列：商店技能
-  const leftCol = buildComparisonColumn(existingSkill, `当前 [${existingKey?.toUpperCase()}]`, shopSkill);
+  const leftCol = buildComparisonColumn(existingSkill, t('est.current_label', { key: existingKey?.toUpperCase() ?? '?' }), shopSkill);
   const rightCol = buildComparisonColumn(shopSkill, '商店候选', existingSkill);
 
   const row = document.createElement('div');
@@ -2120,6 +2122,7 @@ function expandPackCard(card: HTMLElement, item: ShopItem, index: number): void 
       state.shop.items.splice(index, 1)
       renderUnifiedShop()
       renderBuildManager()
+      refreshCraftPanelIfVisible()
     }
     panel.appendChild(row)
   })
@@ -2167,6 +2170,7 @@ function purchasePackItem(index: number): void {
     state.shop.items.splice(index, 1);
     renderUnifiedShop();
     renderBuildManager();
+    refreshCraftPanelIfVisible();
   };
 
   // 先扣金币
@@ -2232,7 +2236,7 @@ function showAutoEnchantmentPanel(
   panel.style.cssText = 'background:#1a1a2e;border:2px solid #ffd700;border-radius:12px;padding:24px;max-width:500px;text-align:center;';
 
   const title = document.createElement('h3');
-  title.textContent = '✨ 附魔成功！选择一个附魔';
+  title.textContent = t('ritual.pick_enchant');
   title.style.cssText = 'color:#ffd700;margin:0 0 16px;';
   panel.appendChild(title);
 
@@ -2426,7 +2430,7 @@ function purchaseShopRelicItem(index: number): void {
     // 集训手册 — 购买时所有技能等级+1（上限 Lv.3）
     if (relicId === 'training_manual') {
       const upgradedIds = applyTrainingManual();
-      if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}${t('shop.training_manual_feedback') || '个技能升级!'}`, '#00ff88');
+      if (upgradedIds.length > 0) showFeedback(t('shop.training_manual_feedback', { n: upgradedIds.length }), '#00ff88');
       // 达到附魔等级门槛时触发附魔检查
       for (const uid of upgradedIds) {
         const uData = state.player.skills.get(uid);
@@ -2439,7 +2443,7 @@ function purchaseShopRelicItem(index: number): void {
     // D100 — 购买时立即替换所有技能词条
     if (relicId === 'd_100') {
       const count = rerollAllAffixes();
-      if (count > 0) showFeedback(`🎲 ${count}${t('shop.d100_feedback') || '个技能词条已重置!'}`, '#ff6b00');
+      if (count > 0) showFeedback(t('shop.d100_feedback', { n: count }), '#ff6b00');
     }
     // (row_medal deleted)
     state.shop.items.splice(index, 1);
@@ -2461,7 +2465,7 @@ function purchaseShopRelicItem(index: number): void {
         // 集训手册 — 替换购买时也触发等级+1
         if (relicId === 'training_manual') {
           const upgradedIds = applyTrainingManual();
-          if (upgradedIds.length > 0) showFeedback(`📖 ${upgradedIds.length}${t('shop.training_manual_feedback') || '个技能升级!'}`, '#00ff88');
+          if (upgradedIds.length > 0) showFeedback(t('shop.training_manual_feedback', { n: upgradedIds.length }), '#00ff88');
           for (const uid of upgradedIds) {
             const uData = state.player.skills.get(uid);
             const uAffix = state.affixSkills.get(uid);
@@ -3259,7 +3263,7 @@ export function renderBuildManager(): void {
       if (skillId && affixSkillForRotation && affixSkillForRotation.shapeId && affixSkillForRotation.shapeId !== 'monomino') {
         slot.addEventListener('contextmenu', (e: MouseEvent) => {
           e.preventDefault();
-          handleKeySlotRotation(k);
+          handleKeySlotRotation(k, e.shiftKey);
         });
       }
 
@@ -3626,7 +3630,9 @@ export function clearShapePlacement(): void {
 }
 
 // === Story 40.6: 右键旋转已装备技能 ===
-function handleKeySlotRotation(key: string): void {
+// 右键 = 顺时针，Shift+右键 = 逆时针
+// 若目标旋转态放不下，自动尝试下一个有效旋转态
+function handleKeySlotRotation(key: string, reverse = false): void {
   const bs = getBindingState(state);
   const skillId = state.player.bindings.get(key);
   if (!skillId) return;
@@ -3641,11 +3647,23 @@ function handleKeySlotRotation(key: string): void {
   if (!anchorKey) return;
 
   const currentRotation = affixSkill.rotation ?? 0;
-  const nextRotation = (currentRotation + 1) % 4;
-  const targetKeys = mapShapeToKeys(anchorKey, shapeId, nextRotation);
+  const maxRot = getShapeRotationCount(shapeId);
+  const step = reverse ? maxRot - 1 : 1; // +(maxRot-1) mod maxRot = -1
 
-  if (!targetKeys) {
-    // 旋转失败：音效 + 抖动动画
+  // 尝试所有其他旋转态，找到第一个能放下的
+  let nextRotation = -1;
+  let targetKeys: string[] | null = null;
+  for (let attempt = 1; attempt < maxRot; attempt++) {
+    const candidate = (currentRotation + step * attempt) % maxRot;
+    targetKeys = mapShapeToKeys(anchorKey, shapeId, candidate);
+    if (targetKeys) {
+      nextRotation = candidate;
+      break;
+    }
+  }
+
+  if (nextRotation === -1 || !targetKeys) {
+    // 所有旋转态都放不下
     playSound('wrong');
     showFeedback(t('shop.rotate_fail'), '#ff6b6b');
     const skillKeys = [...state.player.bindings.entries()].filter(([, id]) => id === skillId).map(([k]) => k);
@@ -4008,6 +4026,14 @@ function hideRelicTooltip(): void {
 }
 
 // === 统计面板 Tab 切换 ===
+/** 购买词包后刷新造词台碎片库存（仅当造词台 tab 可见时） */
+function refreshCraftPanelIfVisible(): void {
+  const craftPanel = document.getElementById('craft-panel');
+  if (craftPanel && craftPanel.style.display !== 'none') {
+    renderCraftPanel(craftPanel, updateGoldDisplay);
+  }
+}
+
 function initStatsTabs(): void {
   const buildTab = document.getElementById('build-tab');
   const statsTab = document.getElementById('stats-tab');

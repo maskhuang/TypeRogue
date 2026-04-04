@@ -87,12 +87,17 @@ export interface RunResultData {
   seed?: number | null
   /** 职业 ID（用于追踪哪个职业通关） */
   classId?: string
+  /** Story 54.1: 本局 Ascension 级别 */
+  ascensionLevel?: number
 }
 
 /**
  * 默认解锁的技能（基础技能池）
  * 参考 gdd.md: 新手期解锁基础技能池
  */
+/** Ascension 最大级别 (Story 54.1) */
+export const MAX_ASCENSION_LEVEL = 10
+
 const DEFAULT_UNLOCKED_SKILLS = [
   'score_boost',      // 分数加成
   'time_extend',      // 时间延长
@@ -136,6 +141,7 @@ export class MetaState {
   private leaderboard: LeaderboardEntry[]  // Story 25.5
   private dailyLeaderboard: LeaderboardEntry[]  // Story 25.6
   private tutorialProgress: Set<string> = new Set()  // Story 39.3: 引导进度
+  private ascension: Record<string, number>  // Story 54.1: 各职业 Ascension 级别
   private eventUnsubscriber: (() => void) | null = null
   private unlockSystem: UnlockSystem | null = null  // Story 6.3: 解锁系统实例
 
@@ -150,6 +156,7 @@ export class MetaState {
     this.stats = this.createDefaultStats()
     this.leaderboard = []
     this.dailyLeaderboard = []
+    this.ascension = { none: 0, wordsmith: 0, metamorph: 0 }
 
     // 监听 meta:check_unlocks 事件 (AC: #12)
     this.setupEventListeners()
@@ -313,6 +320,23 @@ export class MetaState {
     return true
   }
 
+  // ===========================================
+  // Ascension（进阶）系统 — Story 54.1
+  // ===========================================
+
+  /** 获取指定职业的已解锁 Ascension 级别 */
+  getAscension(classId: string): number {
+    return this.ascension[classId] ?? 0
+  }
+
+  /** 通关时尝试递增 Ascension（仅当 ascensionLevel === 当前最高级时才升级，上限 MAX_ASCENSION_LEVEL） */
+  advanceAscension(classId: string, ascensionLevel: number): boolean {
+    const current = this.ascension[classId] ?? 0
+    if (ascensionLevel !== current || current >= MAX_ASCENSION_LEVEL) return false
+    this.ascension[classId] = current + 1
+    return true
+  }
+
   /**
    * 检查进度驱动的解锁条件（职业 + 模式）
    * - victories >= 1 → 解锁造词师
@@ -428,9 +452,12 @@ export class MetaState {
     // 1. 更新统计数据
     this.updateStats(data)
 
-    // 2. 记录职业通关 + 检查进度解锁
+    // 2. 记录职业通关 + 检查进度解锁 + Ascension 升级
     if (data.runResult === 'victory' && data.classId) {
       this.addClassVictory(data.classId)
+      if (data.ascensionLevel != null) {
+        this.advanceAscension(data.classId, data.ascensionLevel)
+      }
     }
     this.checkProgressionUnlocks()
 
@@ -564,7 +591,7 @@ export class MetaState {
    */
   serialize(): string {
     const data = {
-      version: 6,  // v6: 新增 tutorialProgress
+      version: 7,  // v7: 新增 ascension (Story 54.1)
       unlockedSkills: Array.from(this.unlockedSkills),
       unlockedRelics: Array.from(this.unlockedRelics),
       unlockedClasses: Array.from(this.unlockedClasses),
@@ -575,6 +602,7 @@ export class MetaState {
       leaderboard: this.leaderboard,
       dailyLeaderboard: this.dailyLeaderboard,
       tutorialProgress: Array.from(this.tutorialProgress),
+      ascension: { ...this.ascension },
     }
     return JSON.stringify(data)
   }
@@ -586,8 +614,8 @@ export class MetaState {
     try {
       const data = JSON.parse(json)
 
-      // 版本检查（v1-v6 均可加载）
-      if (data.version !== undefined && ![1, 2, 3, 4, 5, 6].includes(data.version)) {
+      // 版本检查（v1-v7 均可加载）
+      if (data.version !== undefined && ![1, 2, 3, 4, 5, 6, 7].includes(data.version)) {
         console.warn(`MetaState: Unknown save version ${data.version}, attempting to load anyway`)
       }
 
@@ -601,6 +629,7 @@ export class MetaState {
       this.leaderboard = data.leaderboard || []
       this.dailyLeaderboard = data.dailyLeaderboard || []
       this.tutorialProgress = new Set(data.tutorialProgress || [])
+      this.ascension = { none: 0, wordsmith: 0, metamorph: 0, ...(data.ascension || {}) }
     } catch (error) {
       console.error('MetaState: Failed to deserialize save data', error)
       // 保持当前状态不变
@@ -620,6 +649,7 @@ export class MetaState {
     this.stats = this.createDefaultStats()
     this.leaderboard = []
     this.dailyLeaderboard = []
+    this.ascension = { none: 0, wordsmith: 0, metamorph: 0 }
   }
 
   // ===========================================

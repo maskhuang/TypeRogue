@@ -22,6 +22,8 @@ export interface VictoryData {
   skillLevels?: { id: string; level: number }[]                 // Story 25.5
   enchantments?: { skillId: string; enchantmentId: string }[]   // Story 25.5
   activeModifiers?: string[]                                    // Story 25.5
+  classId?: string                                              // Story 54.1
+  ascensionLevel?: number                                       // Story 54.1
 }
 
 /**
@@ -98,6 +100,8 @@ export class VictoryScene extends BaseScene {
       skillLevels: this.data.skillLevels,
       enchantments: this.data.enchantments,
       activeModifiers: this.data.activeModifiers,
+      classId: this.data.classId,
+      ascensionLevel: this.data.ascensionLevel,
     })
   }
 

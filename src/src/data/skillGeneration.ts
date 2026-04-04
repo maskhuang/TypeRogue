@@ -9,7 +9,7 @@ import { RESOURCE_ICONS } from '../core/constants'
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 import type { AffixInstance, AffixSkillInstance, SkillRarity } from './affixes'
-import { RARITY_TO_SHAPE_POOL, SHAPE_TEMPLATES, mapShapeToKeys } from './skillShapes'
+import { RARITY_TO_SHAPE_POOL, SHAPE_TEMPLATES, mapShapeToKeys, getShapeRotationCount } from './skillShapes'
 import { KEYS } from '../core/constants'
 import {
   AffixType,
@@ -398,9 +398,10 @@ export function findPlaceableRotation(shapeId: string, preferredRotation: number
   if (KEYS.some(k => mapShapeToKeys(k, shapeId, preferredRotation) !== null)) {
     return preferredRotation
   }
-  // 尝试其余 3 个旋转态
-  for (let d = 1; d <= 3; d++) {
-    const rot = (preferredRotation + d) % 4
+  // 尝试其余旋转态
+  const rotCount = getShapeRotationCount(shapeId)
+  for (let d = 1; d < rotCount; d++) {
+    const rot = (preferredRotation + d) % rotCount
     if (KEYS.some(k => mapShapeToKeys(k, shapeId, rot) !== null)) {
       return rot
     }
@@ -454,9 +455,10 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
   const shapeId = options?.shapeId != null && SHAPE_TEMPLATES[options.shapeId]
     ? options.shapeId
     : pickRandom(RARITY_TO_SHAPE_POOL[rarity])
+  const rotCount = getShapeRotationCount(shapeId)
   let rotation = options?.rotation != null
-    ? ((options.rotation % 4) + 4) % 4
-    : Math.floor(random() * 4)
+    ? ((options.rotation % rotCount) + rotCount) % rotCount
+    : Math.floor(random() * rotCount)
   // 商店刷新时确保初始姿态能在键盘上放置
   if (options?.rotation == null) {
     rotation = findPlaceableRotation(shapeId, rotation)

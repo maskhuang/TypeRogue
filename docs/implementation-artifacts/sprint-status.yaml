@@ -395,3 +395,19 @@ development_status:
   42-9-acceleration-sensory-feedback: backlog     # 时间加速感官反馈
   42-10-balance-integration: backlog              # 平衡调整与集成测试
   epic-42-retrospective: optional
+
+  # ===== Epic 54: Ascension（进阶）难度递进系统 =====
+  # Source: docs/stories/epic-54-ascension-system.md
+  # Design: docs/planning-artifacts/ascension-system-design.md
+  epic-54: in-progress
+  54-1-ascension-state-persistence: done               # Ascension 状态持久化
+  54-2-practice-stage-gold-mapping: backlog           # 练习关金币映射
+  54-3-ascension-level-selector-ui: backlog           # Ascension 级别选择器 UI
+  54-4-a1-a2-economy-modifiers: backlog               # A1-A2 经济修正器
+  54-5-a3-a4-combat-pressure: backlog                 # A3-A4 战斗压力
+  54-6-a5-a6-rule-changes: backlog                    # A5-A6 规则变更
+  54-7-a7-a8-resource-scarcity: backlog               # A7-A8 资源稀缺
+  54-8-a9-a10-ultimate-trial: backlog                 # A9-A10 终极试炼
+  54-9-hud-unlock-feedback: backlog                   # HUD 显示 + 解锁反馈
+  54-10-balance-integration-test: backlog             # 平衡调整与集成测试
+  epic-54-retrospective: optional

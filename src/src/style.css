@@ -4150,6 +4150,12 @@ body {
 
 #craft-panel { flex: 1; display: flex; flex-direction: column; overflow-y: auto; min-height: 0; }
 
+/* 造词台：统一字体继承 */
+#craft-panel { font-family: inherit; }
+#craft-panel button,
+#craft-panel input,
+#craft-panel select { font-family: inherit; }
+
 .craft-title {
     font-size: 1.1em;
     font-weight: bold;
@@ -4360,6 +4366,79 @@ body {
     border-radius: 12px;
     font-size: 0.8em;
     color: #ffe66d;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.craft-deconstruct-btn {
+    background: none;
+    border: none;
+    color: #ff6b6b;
+    cursor: pointer;
+    font-size: 0.9em;
+    padding: 0 2px;
+    font-family: inherit;
+}
+.craft-deconstruct-btn:hover {
+    color: #ff4444;
+}
+
+/* 可拼词建议 */
+.craft-suggest-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.craft-suggest-tag {
+    padding: 2px 8px;
+    background: rgba(78,205,196,0.1);
+    border: 1px solid rgba(78,205,196,0.25);
+    border-radius: 12px;
+    font-size: 0.8em;
+    color: #4ecdc4;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.craft-suggest-tag:hover {
+    background: rgba(78,205,196,0.25);
+}
+
+/* 流水线槽位 */
+.craft-pipeline-word {
+    font-size: 0.85em;
+    color: #ddd;
+    margin-bottom: 4px;
+}
+.craft-pipeline-slots {
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+}
+.craft-pipeline-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 28px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: #888;
+}
+.craft-pipeline-slot-done { color: #4ecdc4; }
+.craft-pipeline-slot-active { color: #ffe66d; }
+.craft-pipeline-slot-pending { color: #555; }
+.craft-pipeline-bar {
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    margin-top: 2px;
+}
+.craft-pipeline-fill {
+    height: 100%;
+    background: #9b59b6;
+    border-radius: 2px;
+    transition: width 0.3s;
 }
 
 /* 字母选择器弹窗 */

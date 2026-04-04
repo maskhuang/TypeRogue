@@ -153,6 +153,9 @@ export interface RunStateData {
 
   /** 精英战选中的修饰器（保证出现在 Boss 选取中） */
   eliteModifier: string | null
+
+  /** Story 54.1: 本局选择的 Ascension 级别（0-10） */
+  ascensionLevel: number
 }
 
 /**
@@ -214,6 +217,7 @@ export class RunState {
       overflowScore: 0,
       calibratedTargetBase: 0,
       eliteModifier: null,
+      ascensionLevel: 0,
     }
   }
 
@@ -547,6 +551,7 @@ export class RunState {
       overflowScore: this.data.overflowScore,
       calibratedTargetBase: this.data.calibratedTargetBase,
       eliteModifier: this.data.eliteModifier,
+      ascensionLevel: this.data.ascensionLevel,
     }
   }
 
@@ -656,6 +661,7 @@ export class RunState {
     runState.data.overflowScore = (parsed as any).overflowScore || 0
     runState.data.calibratedTargetBase = (parsed as any).calibratedTargetBase || 0
     runState.data.eliteModifier = (parsed as any).eliteModifier || null
+    runState.data.ascensionLevel = (parsed as any).ascensionLevel || 0
 
     return runState
   }
