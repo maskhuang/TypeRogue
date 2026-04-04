@@ -528,7 +528,6 @@ export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
   [AffixType.Gravity]: 'wordsmith',   // 操控出词概率 → 词库控制
   [AffixType.Ligature]: 'wordsmith',  // 重复字母 → 词感敏锐
   [AffixType.Cascade]: 'wordsmith',   // 上一键关系 → 击键顺序规划
-  [AffixType.Charge]: 'wordsmith',    // 蓄力释放 → 精确时机控制
   // 蜕变师专属：随机性/词条操控/附魔相关
   [AffixType.Rainbow]: 'metamorph',
   [AffixType.Twin]: 'metamorph',
