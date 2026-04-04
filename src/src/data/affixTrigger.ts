@@ -285,6 +285,8 @@ export interface Phase5Result {
   componentFarTarget?: string
   /** Turbulence 满层：触发最弱邻居技能 */
   turbulenceWeakTarget?: string
+  /** Turbulence 质变满层：触发所有邻居技能 */
+  turbulenceAllTargets?: string[]
   /** 脉冲质变：爆发时触发的匹配技能键位（进入伪循环） */
   pulseBurstTargets?: string[]
   /** 脉冲：爆发时触发范围内叠层类邻居技能 */
@@ -939,21 +941,14 @@ export function resolvePhase2(
             flags.stackEffectFired = true
             const turbInterval = getEffectiveInterval(affix.turbulenceInterval ?? 6, skill.id, ctx)
             if (runtimeState.stacks > 0 && runtimeState.stacks % turbInterval === 0) {
-              mutations.push({ type: 'turbulenceWeak' as any, value: weakestId })
-            }
-          }
-          // 质变·风暴：额外读邻居 stacks 极差加叠层
-          if (isTransformedForAffix(AffixType.Turbulence, runtimeState, skill, ctx)) {
-            let minStacks = Infinity, maxStacks = -Infinity
-            for (const ns of turbNeighbors) {
-              const nState = ctx.skillStates.get(ns.id)
-              const s = nState?.stacks ?? 0
-              if (s < minStacks) minStacks = s
-              if (s > maxStacks) maxStacks = s
-            }
-            if (maxStacks > 0) {
-              const stackSpread = (maxStacks - minStacks) / maxStacks
-              runtimeState.stacks += Math.max(1, Math.round(stackSpread * turbNeighbors.length))
+              // 质变·风暴：满层触发所有邻居；普通：只触发最弱
+              if (isTransformedForAffix(AffixType.Turbulence, runtimeState, skill, ctx)) {
+                for (const ns of turbNeighbors) {
+                  mutations.push({ type: 'turbulenceAll' as any, value: ns.id })
+                }
+              } else {
+                mutations.push({ type: 'turbulenceWeak' as any, value: weakestId })
+              }
             }
           }
         }
@@ -2398,10 +2393,19 @@ export function triggerAffixSkill(
       }
     }
     if ((m as any).type === 'turbulenceWeak') {
-      // 找最弱邻居的一个键
       const weakId = (m as any).value as string
       for (const [k, sid] of ctx.bindings) {
         if (sid === weakId) { p5.turbulenceWeakTarget = k; break }
+      }
+    }
+    if ((m as any).type === 'turbulenceAll') {
+      const targetId = (m as any).value as string
+      for (const [k, sid] of ctx.bindings) {
+        if (sid === targetId) {
+          if (!p5.turbulenceAllTargets) p5.turbulenceAllTargets = []
+          p5.turbulenceAllTargets.push(k)
+          break
+        }
       }
     }
   }

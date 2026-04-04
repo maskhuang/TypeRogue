@@ -960,7 +960,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestBigram, name: '密码', targetAffix: AffixType.Bigram, event: 'equip_count', targetStacks: 0, effectDesc: '质变：去短板', transformDesc: '只取罕见度前50%的字母对计算' },
   { type: EnchantmentType.QuestFlow, name: '瀑布', targetAffix: AffixType.Flow, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向落差', transformDesc: '邻居比自己低时也加bonus' },
   { type: EnchantmentType.QuestConfluence, name: '洪流', targetAffix: AffixType.Confluence, event: 'equip_count', targetStacks: 0, effectDesc: '质变：分流产出', transformDesc: '每种独特资源额外产出到该资源' },
-  { type: EnchantmentType.QuestTurbulence, name: '风暴', targetAffix: AffixType.Turbulence, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双源极差', transformDesc: '额外读取邻居叠层差异加叠层' },
+  { type: EnchantmentType.QuestTurbulence, name: '风暴', targetAffix: AffixType.Turbulence, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全面爆发', transformDesc: '满层时触发所有邻居（而非仅最弱的1个）' },
   { type: EnchantmentType.QuestParity, name: '相变', targetAffix: AffixType.Parity, event: 'equip_count', targetStacks: 0, effectDesc: '质变：切换触发', transformDesc: '奇偶切换时额外自触发一次' },
   { type: EnchantmentType.QuestPrime, name: '近似', targetAffix: AffixType.Prime, event: 'equip_count', targetStacks: 0, effectDesc: '质变：非素数加成', transformDesc: '非素数也有固定小额加成' },
   { type: EnchantmentType.QuestMatch, name: '入局', targetAffix: AffixType.Match, event: 'equip_count', targetStacks: 0, effectDesc: '质变：自身参与', transformDesc: '自身叠层也参与配对计算' },

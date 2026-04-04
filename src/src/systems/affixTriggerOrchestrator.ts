@@ -438,8 +438,21 @@ export function orchestrateAffixTrigger(
       }
     }
 
-    // Turbulence 满层：触发最弱邻居技能
-    if (result.phase5?.turbulenceWeakTarget) {
+    // Turbulence 满层：触发最弱邻居 / 质变：触发所有邻居
+    if (result.phase5?.turbulenceAllTargets) {
+      for (const targetKey of result.phase5.turbulenceAllTargets) {
+        const turbSkillId = ctx.bindings.get(targetKey)
+        if (turbSkillId) {
+          queue.push({
+            skillId: turbSkillId,
+            triggerKey: targetKey,
+            type: 'pulse_burst' as TriggerWorkType,
+            depth: item.depth + 1,
+            chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
+          })
+        }
+      }
+    } else if (result.phase5?.turbulenceWeakTarget) {
       const turbSkillId = ctx.bindings.get(result.phase5.turbulenceWeakTarget)
       if (turbSkillId) {
         queue.push({
