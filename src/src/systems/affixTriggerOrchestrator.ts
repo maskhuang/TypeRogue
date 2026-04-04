@@ -6,7 +6,7 @@
 
 import type { ResourceType } from '../core/types'
 import { AffixType, EnchantmentType, BASE_VALUES } from '../data/affixes'
-import { hasRelation } from '../data/keyboardTopology'
+import { hasRelation, PositionRelation, getKeysWithRelation } from '../data/keyboardTopology'
 import { onStackEffectTriggered, checkStackDividend, isStackingAffix, SURGE_BONUS_PER_STACK } from './relics/StackingRelicBehaviors'
 import {
   triggerAffixSkill,
@@ -201,17 +201,28 @@ export function orchestrateAffixTrigger(
     }
     results.push(result)
 
-    // Story 45.9: Counter — 负产出拦截（必须在累加 totalOutput 之前）
+    // Counter — 负产出拦截：扫描自身 + Adjacent 邻居寻找 Counter 充能
     if (effectiveOutput < 0) {
-      const skill = ctx.allSkills.get(item.skillId)
-      const rt = ctx.skillStates.get(item.skillId)
-      if (skill && rt && skill.affixes.some(a => a.type === AffixType.Counter) && (rt as any).counterCharges > 0) {
-        (rt as any).counterCharges--
-        // 质变·反噬：负值转为下次 bonus（存入 counterAbsorbed）
-        if (rt.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestCounter)) {
-          (rt as any).counterAbsorbed = Math.abs(effectiveOutput)
+      // 收集候选 Counter 技能（自身 + 相邻键位上的技能）
+      const counterCandidateKeys = [item.triggerKey, ...getKeysWithRelation(item.triggerKey, PositionRelation.Adjacent)]
+      const checked = new Set<string>()
+      for (const ck of counterCandidateKeys) {
+        const cSkillId = ctx.bindings.get(ck)
+        if (!cSkillId || checked.has(cSkillId)) continue
+        checked.add(cSkillId)
+        const cSkill = ctx.allSkills.get(cSkillId)
+        const cRt = ctx.skillStates.get(cSkillId)
+        if (!cSkill || !cRt) continue
+        if (!cSkill.affixes.some(a => a.type === AffixType.Counter)) continue
+        if ((cRt as any).counterCharges <= 0) continue
+        // 找到有充能的 Counter
+        (cRt as any).counterCharges--
+        // 质变·反噬：负值转为 Counter 技能的下次 bonus
+        if (cRt.questTransformed && cSkill.enchantmentIds?.includes(EnchantmentType.QuestCounter)) {
+          (cRt as any).counterAbsorbed = Math.abs(effectiveOutput)
         }
         effectiveOutput = 0
+        break
       }
     }
 
