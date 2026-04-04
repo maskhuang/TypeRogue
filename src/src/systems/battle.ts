@@ -30,7 +30,7 @@ import { showActTransition, showBossIntro, updateStageInfo } from './actTransiti
 import { random, setNormalMode } from '../core/seededRandom';
 import { getMaxQueueLength } from './classes/FragmentQueue';
 import { routeEnergyToPipeline, ENERGY_PER_SLOT } from './classes/AssemblyPipeline';
-import { canAutocomplete, isRepeatWord, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors, checkSpeedRelics, recordKeypressForTaiko, checkTaikoHit, startTaikoSpawner, stopTaikoSpawner } from './relics/TypingRelicBehaviors';
+import { canAutocomplete, isRepeatWord, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors, checkSpeedRelics, recordKeypressForTaiko, checkTaikoHit, startTaikoSpawner, stopTaikoSpawner, updateTaikoJudge } from './relics/TypingRelicBehaviors';
 import { checkEchoThimble, calculateComboBuffer, checkComboDetonator, onComboBreakDetonator, hasImmortalCombo, saveLastBattleCombo, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus, onNewWordForCancel, checkCancelOnFirstLetter, getCancelChainBonus, getCancelChainCount, onCancelledWordComplete, onCancelledWordError, isWordCancelled } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing, checkD100OnBattleStart } from './relics/SkillRelicBehaviors';
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestEquipReduction, getGreedyInscriptionTargetMult } from './relics/EnchantmentRelicBehaviors';
@@ -363,6 +363,7 @@ function setWord(): void {
   wordStartTime = state.time; // 记录词语开始时的剩余时间
   onNewWordForCancel(); // 取消连锁：记录新词出现时间
   wordStartScore = state.score; // 玻璃大炮：记录词开始时总分
+  setTimeout(() => updateTaikoJudge(), 0); // 新词渲染后更新判定点
   resetWordResourceTypes(); // 重置词级资源追踪
   leftHandTriggered = false; // 重置左右手追踪
   rightHandTriggered = false;
@@ -682,6 +683,7 @@ function playerCorrect(k: string): void {
   // 太鼓节拍：记录击键 + 检查命中（结果存储在模块级变量，由 skills.ts 读取）
   if (state.player.relics.has('rhythm_adapt')) {
     recordKeypressForTaiko();
+    updateTaikoJudge();
     const taikoMult = checkTaikoHit();
     if (taikoMult > 1) {
       pulseRelicIcon('rhythm_adapt', '#ffe66d');

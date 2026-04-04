@@ -289,12 +289,12 @@ body {
 }
 
 /* 太鼓节拍条 */
-#taiko-bar { position: relative; height: 12px; width: 100%; max-width: 400px; margin-bottom: 4px; display: none; overflow: hidden; border-radius: 6px; background: rgba(255,255,255,0.05); }
+#taiko-bar { position: relative; height: 12px; width: 100%; max-width: 400px; margin-top: 2px; display: none; overflow: hidden; border-radius: 6px; background: rgba(255,255,255,0.05); }
 #taiko-bar.active { display: block; }
-.taiko-judge { position: absolute; left: 0; width: 4px; height: 100%; background: #4ecdc4; border-radius: 2px; z-index: 2; transition: background 0.15s; }
+.taiko-judge { position: absolute; left: 0; width: 4px; height: 100%; background: #4ecdc4; border-radius: 2px; z-index: 2; transition: left 0.1s ease-out, background 0.15s; }
 .taiko-judge.flash { background: #fff; box-shadow: 0 0 8px #4ecdc4; }
-.taiko-ball { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #ffe66d; top: 2px; animation: taikoBallMove var(--duration) linear forwards; }
-@keyframes taikoBallMove { from { left: 100%; } to { left: 0; } }
+.taiko-ball { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #ffe66d; top: 2px; right: 0; animation: taikoBallMove var(--duration) linear forwards; }
+@keyframes taikoBallMove { from { left: var(--start-left, 100%); } to { left: var(--target-left, 0px); } }
 .taiko-ball.hit { background: #4ecdc4; animation: taikoHit 0.2s ease-out forwards; }
 @keyframes taikoHit { to { transform: scale(2); opacity: 0; } }
 
