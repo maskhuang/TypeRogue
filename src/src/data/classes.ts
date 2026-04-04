@@ -43,8 +43,8 @@ export const CLASS_DEFINITIONS: Record<ClassId, ClassDefinition> = {
     description: '操控输入层，通过字母碎片和采集队列手动构建词库。高确定性，精密工程师风格。',
     icon: '✍️',
     uniqueResource: 'energy',
-    loseFeature: 'pack-system',
-    loseDescription: '不再能获取单词',
+    loseFeature: null,
+    loseDescription: '购买单词时获得等量字母碎片',
     starterRelic: 'apprentice_notes',
   },
   metamorph: {

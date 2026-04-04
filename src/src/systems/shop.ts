@@ -4044,8 +4044,8 @@ function initStatsTabs(): void {
     }
   }
 
-  // 职业门控：造词师失去牌包系统 → 显示造词台 tab，但保留词库 tab（只读）
-  if (!isFeatureEnabled('pack-system')) {
+  // 造词师：显示造词台 tab（牌包系统保留，购买获得碎片）
+  if (state.classId === 'wordsmith') {
     // 显示造词台 tab
     if (craftTab) {
       craftTab.style.display = '';
@@ -4067,7 +4067,7 @@ function initStatsTabs(): void {
   buildTab.onclick = () => switchTab('build');
   statsTab.onclick = () => switchTab('stats');
   wordsTab.onclick = () => switchTab('words');
-  if (craftTab) craftTab.onclick = () => { if (!isFeatureEnabled('pack-system')) switchTab('craft'); };
+  if (craftTab) craftTab.onclick = () => { if (state.classId === 'wordsmith') switchTab('craft'); };
   if (metamorphTab) metamorphTab.onclick = () => { if (state.classId === 'metamorph') switchTab('metamorph'); };
 }
 
