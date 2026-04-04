@@ -25,6 +25,8 @@ export interface EstimateBreakdownLine {
 export interface SmartEstimate {
   estimatedOutput: number
   breakdown: EstimateBreakdownLine[]
+  /** 所有暴击词条合计暴击率 */
+  critChance: number
 }
 
 /** 每种词条的独特颜色 */
@@ -110,6 +112,8 @@ export interface KeyTooltipData {
     enchantments?: Array<{ icon: string; name: string; desc: string; color: string }>
     questProgress?: string
     apprenticeGrowth?: string
+    /** 暴击率（所有暴击词条合计，>0 时显示） */
+    critChance?: number
     // 智能产出预估
     smartEstimate?: SmartEstimate
     // 商店扩展
@@ -225,6 +229,9 @@ function buildHeaderSection(skill: NonNullable<KeyTooltipData['skill']>): string
     html += `<span class="tooltip-skill-school ${esc(skill.schoolCssClass)}">${esc(skill.school)}</span>`
   }
   html += `<div class="tooltip-skill-desc">${esc(skill.description)}</div>`
+  if (skill.critChance != null && skill.critChance > 0) {
+    html += `<div class="tooltip-crit-chance" style="color:#f1c40f;">⚡ ${esc(t('tooltip.crit_chance', { pct: Math.round(skill.critChance * 100) }))}</div>`
+  }
   if (skill.baseValuesText) {
     html += `<div class="tooltip-base-values">${esc(skill.baseValuesText)}</div>`
   }

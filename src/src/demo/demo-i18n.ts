@@ -404,6 +404,7 @@ const ZH: Record<string, string> = {
   'tooltip.frequency': '字频: {count} 次',
   'tooltip.frequency_low': '字频: {count} 次 (底分不足)',
   'tooltip.stacks': '叠层: ×{count}',
+  'tooltip.crit_chance': '暴击率 {pct}%',
   'tooltip.amp_range': '增幅范围: {skills}',
 
   // --- resource labels (full) ---
@@ -1370,6 +1371,7 @@ const EN: Record<string, string> = {
   'tooltip.frequency': 'Freq: {count} hits',
   'tooltip.frequency_low': 'Freq: {count} hits (no base score)',
   'tooltip.stacks': 'Stacks: ×{count}',
+  'tooltip.crit_chance': 'Crit {pct}%',
   'tooltip.amp_range': 'Amp range: {skills}',
 
   // --- resource labels (full) ---

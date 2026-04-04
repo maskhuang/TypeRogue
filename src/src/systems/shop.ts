@@ -729,13 +729,8 @@ export function computeSmartEstimate(
         break
       }
       case 'taboo': {
-        // 禁忌并入暴击系统：+critRate 暴击率，未暴击则负产出
-        // 期望 = critRate × CRIT_MULTIPLIER + (1 - critRate) × (-1)
-        // 此处只显示 Taboo 自身贡献的暴击率，最终暴击在 crit 行合并
-        const tabooCrit = affix.bonusPercent ?? 0
-        critChanceAccum += tabooCrit
+        critChanceAccum += affix.bonusPercent ?? 0
         hasTabooFlag = true
-        breakdown.push({ typeKey: 'taboo', label: t('est.taboo', { pct: Math.round(tabooCrit * 100) }), detail: t('est.taboo_penalty') })
         break
       }
       case 'multiply': {
@@ -746,17 +741,12 @@ export function computeSmartEstimate(
         break
       }
       case 'decay': {
-        // 衰减并入暴击系统：首次触发暴击率最高，逐次衰减至下限
-        // 计算期望暴击率加成（取决于每词平均触发次数）
         const init = affix.initialMult ?? 0.40
         const floorVal = affix.floor ?? 0.05
         const decayPer = affix.decayPerTrigger ?? 0.05
         const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
         const avgTriggers = keys.length > 0 ? computeAvgTriggersPerWord(keys) : 1
-        const avgCritBonus = computeDecayAvgMult(init, decayPer, floorVal, avgTriggers)
-        critChanceAccum += avgCritBonus
-        const detail = `(${t('est.decay_triggers', { n: avgTriggers.toFixed(1) })})`
-        breakdown.push({ typeKey: 'decay', label: t('est.decay', { pct: Math.round(avgCritBonus * 100) }), detail })
+        critChanceAccum += computeDecayAvgMult(init, decayPer, floorVal, avgTriggers)
         break
       }
       case 'outcast': {
@@ -771,27 +761,18 @@ export function computeSmartEstimate(
         break
       }
       case 'charge': {
-        // 蓄力并入暴击系统：暴击率随蓄力量增长（预估取 maxBonus 的一半作为平均值）
         const maxCrit = affix.maxBonus ?? 0
-        const avgChargeCrit = maxCrit * 0.5
-        critChanceAccum += avgChargeCrit
-        breakdown.push({ typeKey: 'charge', label: t('est.charge', { pct: Math.round(avgChargeCrit * 100) }), detail: t('est.charge_max', { pct: Math.round(maxCrit * 100) }) })
+        critChanceAccum += maxCrit * 0.5
         break
       }
       case 'crit': {
-        const chance = affix.chance ?? 0
-        critChanceAccum += chance
-        breakdown.push({ typeKey: 'crit', label: t('est.crit', { pct: Math.round(chance * 100) }), detail: `(\u00d7${CRIT_MULTIPLIER})` })
+        critChanceAccum += affix.chance ?? 0
         break
       }
       case 'fallacy': {
-        // 赌徒谬误：期望平均 stacks ≈ (1-p)/(2p)，p = 当前累积暴击率
         const k = affix.fallacyK ?? 0
         const baseCrit = Math.max(critChanceAccum, 0.1)
-        const avgStacks = (1 - baseCrit) / (2 * baseCrit)
-        const avgBonus = k * avgStacks
-        critChanceAccum += avgBonus
-        breakdown.push({ typeKey: 'fallacy', label: t('est.fallacy', { pct: Math.round(avgBonus * 100) }), detail: `(+${Math.round(k * 100)}%/${t('est.fallacy_per')})` })
+        critChanceAccum += k * (1 - baseCrit) / (2 * baseCrit)
         break
       }
       case 'cascade': {
@@ -982,24 +963,18 @@ export function computeSmartEstimate(
         break
       }
       case 'burst': {
-        // 连暴：基础暴击率 + 连暴加成（无法预估连暴层数，只显示暴击率）
-        const burstCrit = affix.critChance ?? 0
-        if (burstCrit > 0) critChanceAccum += burstCrit
-        breakdown.push({ typeKey: 'burst', label: t('est.burst', { pct: Math.round((affix.burstK ?? 0) * 100) }), detail: `(${t('est.crit_base')} ${Math.round(burstCrit * 100)}%)` })
+        critChanceAccum += affix.critChance ?? 0
+        breakdown.push({ typeKey: 'burst', label: t('est.burst', { pct: Math.round((affix.burstK ?? 0) * 100) }), detail: '' })
         break
       }
       case 'zeroIn': {
-        // 归零：基础暴击率 + 失误补偿（无法预估失误层数，只显示暴击率）
-        const zeroCrit = affix.critChance ?? 0
-        if (zeroCrit > 0) critChanceAccum += zeroCrit
-        breakdown.push({ typeKey: 'zeroIn', label: t('est.zeroin', { pct: Math.round((affix.zeroInK ?? 0) * 100) }), detail: `(${t('est.crit_base')} ${Math.round(zeroCrit * 100)}%)` })
+        critChanceAccum += affix.critChance ?? 0
+        breakdown.push({ typeKey: 'zeroIn', label: t('est.zeroin', { pct: Math.round((affix.zeroInK ?? 0) * 100) }), detail: '' })
         break
       }
       case 'sharpshooter': {
-        // 狙击：基础暴击率 + 反比加成（取决于总暴击率，此处只加基础值）
-        const sharpCrit = affix.critChance ?? 0
-        if (sharpCrit > 0) critChanceAccum += sharpCrit
-        breakdown.push({ typeKey: 'sharpshooter', label: t('est.sharpshooter', { pct: Math.round((affix.sharpK ?? 0) * 100) }), detail: `(${t('est.crit_base')} ${Math.round(sharpCrit * 100)}%)` })
+        critChanceAccum += affix.critChance ?? 0
+        breakdown.push({ typeKey: 'sharpshooter', label: t('est.sharpshooter', { pct: Math.round((affix.sharpK ?? 0) * 100) }), detail: '' })
         break
       }
       case 'exhaust': {
@@ -1075,7 +1050,24 @@ export function computeSmartEstimate(
     breakdown.push({ typeKey: 'base', label: t('est.result_add', { val: formatEstimate(estimatedOutput) }), detail: t('est.result_add_detail') })
   }
 
-  return { estimatedOutput, breakdown }
+  return { estimatedOutput, breakdown, critChance: critChanceAccum }
+}
+
+/** 计算技能的总静态暴击率（所有暴击词条贡献之和） */
+export function computeSkillCritChance(skill: AffixSkillInstance): number {
+  let crit = 0
+  for (const affix of skill.affixes) {
+    switch (affix.type) {
+      case 'crit': crit += affix.chance ?? 0; break
+      case 'taboo': crit += affix.bonusPercent ?? 0; break
+      case 'recurse': crit += affix.recurseChance ?? 0; break
+      case 'burst':
+      case 'zeroIn':
+      case 'sharpshooter': crit += affix.critChance ?? 0; break
+      // Charge/Decay/Fallacy 是动态的，不计入静态暴击率
+    }
+  }
+  return crit
 }
 
 /** 统计流放词条命中率：词库中首/尾字母命中 boundKeys 的比例 */
@@ -1835,6 +1827,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
           }
           tooltipData.skill!.smartEstimate = newEstimate;
         }
+        tooltipData.skill!.critChance = computeSkillCritChance(skill);
         const estimatedTypes = newEstimate ? new Set(newEstimate.breakdown.map(b => b.typeKey).filter(k => k !== 'base' && k !== 'crit_combined')) : undefined;
         const fields = buildAffixTooltipFields(skill, rt, estimatedTypes);
         tooltipData.skill!.affixInfo = fields.affixInfo;
@@ -1853,6 +1846,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
         const fields = buildAffixTooltipFields(skill);
         tooltipData.skill!.affixInfo = fields.affixInfo;
         tooltipData.skill!.enchantments = fields.enchantments;
+        tooltipData.skill!.critChance = computeSkillCritChance(skill);
       }
       // Story 40.4: 形状描述
       const shapeDesc = getShapeDescription(skill.shapeId ?? 'monomino', getShapeCells(skill.shapeId ?? 'monomino', skill.rotation ?? 0)?.length ?? 1);
@@ -3261,6 +3255,7 @@ export function renderBuildManager(): void {
           tooltipData.skill.questProgress = fields.questProgress;
           tooltipData.skill.apprenticeGrowth = estimate ? undefined : fields.apprenticeGrowth;
           tooltipData.skill.smartEstimate = estimate ?? undefined;
+          tooltipData.skill.critChance = computeSkillCritChance(affixSkill);
         }
         highlightSkillRange(k);
         // Void 词条空位高亮（Story 40.11 CR: 复用 skillAllKeys 避免重复遍历）
@@ -3396,6 +3391,7 @@ export function renderBuildManager(): void {
         tooltipData.skill!.questProgress = fields.questProgress;
         tooltipData.skill!.apprenticeGrowth = estimate ? undefined : fields.apprenticeGrowth;
         tooltipData.skill!.smartEstimate = estimate ?? undefined;
+        tooltipData.skill!.critChance = computeSkillCritChance(affixSkill);
         if (boundKey) {
           tooltipData.letter = boundKey.toUpperCase();
           highlightSkillRange(boundKey);
