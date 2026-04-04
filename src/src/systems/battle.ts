@@ -47,7 +47,7 @@ import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyAppren
 import { AffixType, applyAffixLevelScaling } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
-import { BALANCE } from '../core/constants';
+import { BALANCE, RESOURCE_COLORS } from '../core/constants';
 import { IS_DEMO, DEMO_FIRST_STAGE_WORDS, DEMO_TARGET_SCORES } from '../demo/demo-config';
 import { initDemoTutorial } from '../demo/demo-tutorial';
 import { showDemoEndScreen } from '../demo/demo-end-screen';
