@@ -572,7 +572,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'convert': return `k=${a.k?.toFixed(3) ?? '?'}`
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
     case 'cascade': return `×${a.cascadeMult?.toFixed(1) ?? '?'}`
-    case 'outcast': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
+    case 'outcast': return `${t('param.interval_label')} ${a.outcastInterval ?? 4}`
     case 'void': return `+${Math.round((a.bonusPerSlot ?? 0) * 100)}%/${t('param.void_per')}`
     case 'gravity': return `×${a.probMult?.toFixed(1) ?? '?'}`
     case 'exhaust': return `×${a.exhaustMult?.toFixed(1) ?? '?'}`
@@ -594,7 +594,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'confluence': return `+${Math.round((a.confluenceK ?? 0) * 100)}%`
     case 'turbulence': return `+${Math.round((a.turbulenceK ?? 0) * 100)}%`
     // ── 词感类（变化值） ──
-    case 'cluster': return `+${Math.round((a.clusterK ?? 0) * 100)}%`
+    case 'cluster': return `${t('param.interval_label')} ${a.clusterInterval ?? 8}`
     case 'coverage': return `+${Math.round((a.coverageK ?? 0) * 100)}%`
     case 'bigram': return `+${Math.round((a.bigramK ?? 0) * 100)}%`
     case 'entropy': return `+${Math.round((a.entropyK ?? 0) * 100)}%`
@@ -789,14 +789,9 @@ export function computeSmartEstimate(
         break
       }
       case 'outcast': {
-        // Phase 2: 首尾字母命中时 +bonusPercent
-        const bonus = affix.bonusPercent ?? 0
-        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
-        const hitRate = keys.length > 0 ? computeOutcastHitRate(keys) : 0
-        const expectedBonus = bonus * hitRate
-        addPercent += expectedBonus
-        const detail = `(${Math.round(hitRate * 100)}%${t('est.outcast_hit')}×${Math.round(bonus * 100)}%)`
-        breakdown.push({ typeKey: 'outcast', label: t('est.outcast', { pct: Math.round(expectedBonus * 100) }), detail })
+        // 首尾叠层 → 触发另一端（预估显示间隔）
+        const interval = affix.outcastInterval ?? 4
+        breakdown.push({ typeKey: 'outcast', label: t('est.outcast', { n: interval }), detail: '' })
         break
       }
       case 'charge': {
@@ -945,12 +940,12 @@ export function computeSmartEstimate(
         break
       }
       case 'pattern': {
-        // 模式 → 额外叠层
+        // 模式 → bonusPercent
         const avg = getWordSenseAvgForKeys(boundKeys)
-        const r = avg.avgPatternRarity
-        const stacks = r >= 0.5 ? Math.max(1, Math.round(r * (1 + (affix.patternK ?? 0) * 10))) : 0
-        if (stacks > 0) {
-          breakdown.push({ typeKey: 'pattern', label: t('est.pattern', { n: stacks }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
+        const bonus = (affix.patternK ?? 0) * avg.avgPatternRarity
+        if (bonus > 0) {
+          addPercent += bonus
+          breakdown.push({ typeKey: 'pattern', label: t('est.pattern', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
         }
         break
       }

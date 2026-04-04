@@ -267,7 +267,7 @@ export function rollAffixParams(
     }
 
     case AffixType.Outcast:
-      return { type, bonusPercent: roundTo(0.4 + random() * 0.4, 2) }
+      return { type, outcastInterval: 4 }
 
     case AffixType.Gravity:
       return { type, probMult: roundTo(random() * 2.0, 2) }

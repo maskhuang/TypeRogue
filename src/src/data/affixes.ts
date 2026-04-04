@@ -341,8 +341,8 @@ export interface AffixInstance {
   primeK?: number                  // Prime: 素数叠层时 bonusPercent 系数（× stacks）
   matchK?: number                  // Match: 每配对的 bonusPercent 加成
   matchInterval?: number           // Match: 叠层满层间隔（每当邻居叠层相同时+1层）
-  clusterInterval?: number         // Cluster: 叠层满层间隔（满层+时间）
-  patternInterval?: number         // Pattern: 叠层满层间隔（满层重复词）
+  clusterInterval?: number         // Cluster: 叠层满层间隔（满层触发元音键）
+  outcastInterval?: number         // Outcast: 叠层满层间隔（满层触发词另一端）
   entropyK?: number                // Entropy: Shannon 熵 × K 的 bonusPercent
   cipherK?: number                 // Cipher: 相邻字母表距离均值 × K 的 bonusPercent
   patternK?: number                // Pattern: 模式签名稀有度 × K 的 bonusPercent
@@ -1053,7 +1053,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Convert]:  { param: 'k',              delta: 1.1,   mode: 'mult' },
   [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
   [AffixType.Cascade]:  { param: 'cascadeMult',    delta: 0.2,   mode: 'add' },
-  [AffixType.Outcast]:  { param: 'bonusPercent',   delta: 0.15,  mode: 'add' },
+  [AffixType.Outcast]:  { param: 'outcastInterval', delta: -1,    mode: 'add' },
   [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
   [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
   [AffixType.Exhaust]:  { param: 'exhaustMult',    delta: 0.3,   mode: 'add' },
@@ -1080,7 +1080,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Bigram]:   { param: 'bigramK',        delta: 0.10,  mode: 'add' },
   [AffixType.Entropy]:  { param: 'entropyK',       delta: 0.02,  mode: 'add' },
   [AffixType.Cipher]:   { param: 'cipherK',        delta: 0.005, mode: 'add' },
-  [AffixType.Pattern]:  { param: 'patternInterval', delta: -1,    mode: 'add' },
+  [AffixType.Pattern]:  { param: 'patternK',         delta: 0.01,  mode: 'add' },
   // ── 奇偶/素数 ──
   [AffixType.Parity]:   { param: 'oddK',           delta: 0.04,  mode: 'add' },
   [AffixType.Prime]:    { param: 'primeK',         delta: 0.01,  mode: 'add' },

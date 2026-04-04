@@ -278,8 +278,8 @@ export interface Phase5Result {
   pulseSelfTrigger?: boolean
   /** Cluster 满层：触发元音键位技能 */
   clusterVowelTarget?: string
-  /** Pattern 满层：重复当前词 */
-  patternRepeatWord?: boolean
+  /** Outcast 满层：触发词另一端字母键技能 */
+  outcastTarget?: string
   /** 脉冲质变：爆发时触发的匹配技能键位（进入伪循环） */
   pulseBurstTargets?: string[]
   /** 脉冲：爆发时触发范围内叠层类邻居技能 */
@@ -1005,8 +1005,20 @@ export function resolvePhase2(
       }
 
       case AffixType.Outcast: {
+        // 首尾字母命中时叠层，满层触发词另一端字母键上的技能
         if (isFirstOrLastLetter(ctx.triggerKey, ctx.currentWord)) {
-          bonusPercent += affix.bonusPercent ?? 0
+          runtimeState.stacks += 1
+          flags.stackEffectFired = true
+          const outcastInterval = getEffectiveInterval(affix.outcastInterval ?? 4, skill.id, ctx)
+          if (runtimeState.stacks > 0 && runtimeState.stacks % outcastInterval === 0) {
+            // 找另一端字母的键
+            const word = (ctx.currentWord ?? '').toLowerCase()
+            const first = word[0], last = word[word.length - 1]
+            const otherEnd = ctx.triggerKey === first ? last : first
+            if (otherEnd && ctx.bindings.has(otherEnd) && ctx.bindings.get(otherEnd) !== skill.id) {
+              mutations.push({ type: 'outcastTarget' as any, value: otherEnd })
+            }
+          }
         }
         break
       }
@@ -1087,19 +1099,10 @@ export function resolvePhase2(
         break
 
       case AffixType.Pattern: {
-        // 模式 → 额外叠层：rarity<0.5→+0, rarity≥0.5→+1起（奖励罕见模式）
+        // 模式：单词模式签名稀有度 → bonusPercent
         const patternWord = ctx.currentWord ?? ''
         if (patternWord.length > 0) {
-          const rarity = getPatternRarity(patternWord)
-          const patternStacks = rarity >= 0.5 ? Math.max(1, Math.round(rarity * (1 + (affix.patternK ?? 0) * 10))) : 0
-          if (patternStacks > 0) {
-            runtimeState.stacks += patternStacks
-            flags.stackEffectFired = true
-            const ptInterval = getEffectiveInterval(affix.patternInterval ?? 6, skill.id, ctx)
-            if (runtimeState.stacks > 0 && runtimeState.stacks % ptInterval === 0) {
-              mutations.push({ type: 'patternRepeat' as any, value: 1 })
-            }
-          }
+          bonusPercent += (affix.patternK ?? 0) * getPatternRarity(patternWord)
         }
         break
       }
@@ -2340,7 +2343,7 @@ export function triggerAffixSkill(
         p5.clusterVowelTarget = vowelCandidates[Math.floor(ctx.randomFn() * vowelCandidates.length)]
       }
     }
-    if ((m as any).type === 'patternRepeat') p5.patternRepeatWord = true
+    if ((m as any).type === 'outcastTarget') p5.outcastTarget = (m as any).value
   }
 
   return {

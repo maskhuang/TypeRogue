@@ -88,8 +88,6 @@ export interface OrchestratorCallbacks {
   devourTarget?: (targetKey: string) => void
   /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
   chargeAutoComplete?: () => void
-  /** Pattern 满层：重复当前词 */
-  onPatternRepeat?: () => void
 }
 
 // ===== 迭代调度器 =====
@@ -426,9 +424,18 @@ export function orchestrateAffixTrigger(
         })
       }
     }
-    // Pattern 满层：通知 battle 重复当前词
-    if (result.phase5?.patternRepeatWord) {
-      callbacks.onPatternRepeat?.()
+    // Outcast 满层：触发词另一端字母键技能
+    if (result.phase5?.outcastTarget) {
+      const outcastSkillId = ctx.bindings.get(result.phase5.outcastTarget)
+      if (outcastSkillId) {
+        queue.push({
+          skillId: outcastSkillId,
+          triggerKey: result.phase5.outcastTarget,
+          type: 'pulse_burst' as TriggerWorkType,
+          depth: item.depth + 1,
+          chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
+        })
+      }
     }
 
     // Pulse self: 脉冲爆发 — 立刻自触发一次
