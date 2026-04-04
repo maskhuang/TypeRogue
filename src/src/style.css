@@ -813,10 +813,14 @@ body {
     background: rgba(78, 205, 196, 0.2);
     box-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
 }
+.reward-card.pack-expanded {
+    flex-wrap: wrap;
+}
 .pack-expand-panel {
+    width: 100%;
     margin-top: 6px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 6px;
 }
 .pack-word-row {
     display: flex;
@@ -834,6 +838,7 @@ body {
     font-size: 15px;
     letter-spacing: 1px;
     flex: 1;
+    color: #eee;
 }
 .pack-word-row .pack-word-len {
     font-size: 10px;
