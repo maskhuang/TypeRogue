@@ -1,8 +1,9 @@
-// 英语 bigram 频率表（归一化到 0~1，TH=1.0）
-// 数据来源: Peter Norvig / Mayzner Google Corpus 2.8万亿词
-// 676 条 (26×26)，7 条零频: JQ,QG,QK,QY,QZ,WQ,WZ
+// 英语 bigram 频率表
+// 默认：通用英语语料（Peter Norvig / Mayzner），归一化到 0~1（TH=1.0）
+// 运行时：由玩家词库动态计算，调用 rebuildBigramFreq(deck) 更新
 
-export const BIGRAM_FREQ_TABLE: Record<string, number> = {
+/** 静态 fallback（通用英语语料） */
+const STATIC_BIGRAM_FREQ: Record<string, number> = {
   aa:0.007, ab:0.062, ac:0.115, ad:0.042, ae:0.01, af:0.002, ag:0.025, ah:0.005, ai:0.11, aj:0.001, ak:0.014, al:0.306, am:0.039, an:0.559, ao:0.006, ap:0.002, aq:0.001, ar:0.301, as:0.244, at:0.419, au:0.002, av:0.014, aw:0.008, ax:0.003, ay:0.011, az:0.001,
   ba:0.001, bb:0.003, bc:0.001, bd:0.001, be:0.163, bf:0.001, bg:0.001, bh:0.001, bi:0.001, bj:0.001, bk:0.001, bl:0.02, bm:0.001, bn:0.001, bo:0.001, bp:0.001, bq:0.001, br:0.001, bs:0.001, bt:0.001, bu:0.001, bv:0.001, bw:0.001, bx:0.001, by:0.006, bz:0.001,
   ca:0.098, cb:0.001, cc:0.006, cd:0.001, ce:0.183, cf:0.001, cg:0.001, ch:0.169, ci:0.002, cj:0.001, ck:0.017, cl:0.001, cm:0.001, cn:0.002, co:0.222, cp:0.001, cq:0.001, cr:0.002, cs:0.002, ct:0.138, cu:0.001, cv:0.001, cw:0.001, cx:0.001, cy:0.001, cz:0.001,
@@ -29,4 +30,62 @@ export const BIGRAM_FREQ_TABLE: Record<string, number> = {
   xa:0.001, xb:0.001, xc:0.001, xd:0.001, xe:0.001, xf:0.001, xg:0.001, xh:0.001, xi:0.001, xj:0.001, xk:0.001, xl:0.001, xm:0.001, xn:0.001, xo:0.001, xp:0.001, xq:0.001, xr:0.001, xs:0.001, xt:0.001, xu:0.001, xv:0.001, xw:0.001, xx:0.001, xy:0.001, xz:0.001,
   ya:0.002, yb:0.001, yc:0.001, yd:0.001, ye:0.002, yf:0.001, yg:0.001, yh:0.001, yi:0.001, yj:0.001, yk:0.001, yl:0.001, ym:0.001, yn:0.001, yo:0.001, yp:0.001, yq:0.001, yr:0.001, ys:0.001, yt:0.002, yu:0.001, yv:0.001, yw:0.001, yx:0.001, yy:0.001, yz:0.001,
   za:0.003, zb:0.001, zc:0.001, zd:0.001, ze:0.006, zf:0.001, zg:0.001, zh:0.001, zi:0.003, zj:0.001, zk:0.001, zl:0.001, zm:0.001, zn:0.001, zo:0.003, zp:0.001, zq:0.001, zr:0.001, zs:0.001, zt:0.001, zu:0.001, zv:0.001, zw:0.001, zx:0.001, zy:0.001, zz:0.001,
+}
+
+/** 当前生效的频率表（默认静态，rebuildBigramFreq 后切换为词库版） */
+export let BIGRAM_FREQ_TABLE: Record<string, number> = STATIC_BIGRAM_FREQ
+
+/** 从玩家词库重新计算 bigram 频率 */
+function computeBigramFreqFromDeck(deck: string[]): Record<string, number> {
+  const counts: Record<string, number> = {}
+  let total = 0
+  for (const word of deck) {
+    const w = word.toLowerCase()
+    for (let i = 0; i < w.length - 1; i++) {
+      const a = w[i], b = w[i + 1]
+      if (a >= 'a' && a <= 'z' && b >= 'a' && b <= 'z') {
+        counts[a + b] = (counts[a + b] ?? 0) + 1
+        total++
+      }
+    }
+  }
+  if (total === 0) return STATIC_BIGRAM_FREQ
+  // 归一化：最高频 bigram = 1.0（与静态表保持同一量级）
+  let maxCount = 0
+  for (const c of Object.values(counts)) {
+    if (c > maxCount) maxCount = c
+  }
+  const freq: Record<string, number> = {}
+  for (const [key, count] of Object.entries(counts)) {
+    freq[key] = count / maxCount
+  }
+  return freq
+}
+
+let _cachedDeckFreq: Record<string, number> | null = null
+
+/** 标记词库已变化，下次读取时重新计算 */
+export function invalidateBigramCache(): void {
+  _cachedDeckFreq = null
+}
+
+/** 从词库重建频率表（传入当前词库） */
+export function rebuildBigramFreq(deck: string[]): void {
+  _cachedDeckFreq = computeBigramFreqFromDeck(deck)
+  BIGRAM_FREQ_TABLE = _cachedDeckFreq
+}
+
+/** 懒加载：需要时从词库计算（需要外部传入 deck getter） */
+let _deckGetter: (() => string[]) | null = null
+
+/** 注册词库获取函数（game init 时调用一次） */
+export function registerDeckGetter(getter: () => string[]): void {
+  _deckGetter = getter
+}
+
+/** 确保频率表是最新的（触发时调用） */
+export function ensureBigramFreq(): void {
+  if (!_cachedDeckFreq && _deckGetter) {
+    rebuildBigramFreq(_deckGetter())
+  }
 }

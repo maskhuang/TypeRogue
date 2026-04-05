@@ -17,7 +17,7 @@ import {
   isOldSystemSkill, applyAffixLevelScaling, getQuestEquipTarget, AFFIX_CATEGORY_MAP,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
-import { BIGRAM_FREQ_TABLE } from './bigramFrequency'
+import { BIGRAM_FREQ_TABLE, ensureBigramFreq } from './bigramFrequency'
 import { getPatternRarity, toPattern } from './patternFrequency'
 
 // ===== Conduit 模式共享匹配 =====
@@ -1380,6 +1380,7 @@ export function resolvePhase3(
 
       case AffixType.Bigram: {
         // 双字组：罕见字母对 → 暴击率
+        ensureBigramFreq()
         const bw = ctx.currentWord?.toLowerCase() ?? ''
         if (bw.length >= 2) {
           const rarities: number[] = []

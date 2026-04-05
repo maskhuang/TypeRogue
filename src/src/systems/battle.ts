@@ -3,6 +3,7 @@
 // ============================================
 
 import { state, synergy, calculateTargetScore, resetResources, createBattleStats, getMaxRelicSlots } from '../core/state';
+import { rebuildBigramFreq } from '../data/bigramFrequency';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
@@ -1861,6 +1862,8 @@ function hideSettlement(): void {
 
 export async function startLevel(): Promise<void> {
   keyTooltip.hide();
+  // Bigram 频率表：从玩家词库重建
+  rebuildBigramFreq(state.player.wordDeck);
 
   // === 仪式节点（精英关后）：打开休息关 ===
   if (isRitualNode(state.level)) {

@@ -48,7 +48,7 @@ import type { SkillRarity } from '../data/affixes';
 import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests, shannonEntropy, findMaxClique, bfsComponentSize, areConnectedWithout, getExtendedNeighbors } from '../data/affixTrigger';
 import { getPatternRarity } from '../data/patternFrequency';
 import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
-import { BIGRAM_FREQ_TABLE } from '../data/bigramFrequency';
+import { BIGRAM_FREQ_TABLE, invalidateBigramCache } from '../data/bigramFrequency';
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
@@ -2164,6 +2164,7 @@ function expandPackCard(card: HTMLElement, item: ShopItem, index: number): void 
         showFeedback(t('shop.disassemble_word', { word, detail }), '#9b59b6')
       } else {
         state.player.wordDeck.push(word)
+        invalidateBigramCache()
         showFeedback(t('shop.add_word', { word }), '#4ecdc4')
       }
       if (pack.wordEffect && state.classId !== 'wordsmith') {
@@ -2211,6 +2212,7 @@ function purchasePackItem(index: number): void {
     } else {
       // 非造词师：直接加入词库
       state.player.wordDeck.push(word);
+      invalidateBigramCache();
       showFeedback(t('shop.add_word', { word }), '#4ecdc4');
     }
     // 词语效果：非造词师绑定到词（造词师拆解了词，效果无法绑定）
@@ -2727,6 +2729,7 @@ export function sellWord(index: number): void {
   const word = state.player.wordDeck[index];
   state.gold += 3;
   state.player.wordDeck.splice(index, 1);
+  invalidateBigramCache();
   // 移除词语效果
   state.wordEffects.delete(word);
   updateGoldDisplay();
@@ -3520,6 +3523,7 @@ function removeWord(index: number): void {
   const word = state.player.wordDeck[index];
   state.gold += 3;
   state.player.wordDeck.splice(index, 1);
+  invalidateBigramCache();
   // 移除词语效果
   state.wordEffects.delete(word);
   updateGoldDisplay();
