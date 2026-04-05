@@ -1,6 +1,7 @@
 # 词条设计流程
 
-本文档总结 Epic 45（13 新词条）的设计方法论，供未来词条扩展复用。
+本文档总结词条设计方法论，供未来词条扩展复用。
+_最后更新: 2026-04-04_
 
 ---
 
@@ -9,6 +10,7 @@
 ```
 1. 分类盘点 → 2. 领域选择 → 3. 核心映射 → 4. 概念迁移 → 5. 共享机制检查
 → 6. 参数校准 → 7. 实现 → 8. 描述对齐 → 9. 预估产出 → 10. 交互验证
+→ 11. 质变设计
 ```
 
 ---
@@ -37,14 +39,16 @@
 
 **各类别推荐领域矩阵：**
 
-| 类别 | 范式 | 变量类型 | 已验证领域 | 备选领域 |
-|------|------|---------|-----------|---------|
-| 数值 | `read(resource) → f(value) → bonusPercent [+ consume]` | 连续 | 热力学 | 核物理、金融、流体力学 |
-| 拓扑 | `scan(posRel, neighbors) → 统计运算 → bonusPercent` | 离散(邻居数) | 流体力学 | 电路学、细胞自动机、生态学 |
-| 词感 | `analyze(word) → f(feature) → bonusPercent` | 离散(字符数) | 语言学 | 密码学、音乐理论 |
-| 元规则 | `在生命周期节点插入修改` | 事件 | 卡牌游戏 | 元编程、博弈论 |
-| 暴击 | `modify(critChance) → onCrit/onMiss` | 连续(概率) | 赌博(Fallacy) | 量子力学、精密射击 |
-| 叠层 | `accumulate → threshold → release` | **离散(整数计数器)** | — | 组合数学、数论、细胞自动机、遗传学、库存管理 |
+| 类别 | 范式 | 变量类型 | 已验证领域 | 覆盖率 |
+|------|------|---------|-----------|:---:|
+| 数值 | `f(value) → bonusPercent / 乘算` | 连续 | 热力学、金融工程 | 42% |
+| 拓扑 | `scan(posRel, neighbors) → 效果` | 离散(邻居) | 流体力学、图论 | **45%** |
+| 暴击 | `modify(critChance) → onCrit` | 概率 | 精密射击 | 29% |
+| 叠层 | `accumulate → threshold → trigger` | 整数 | 组合数学 | 24% |
+| 词感 | `analyze(word) → 效果` | 字符 | 语言学、密码学 | 16% |
+| 元规则 | `在生命周期节点插入修改` | 事件 | 卡牌、元编程 | 16% |
+
+**注意：** 类别现在支持双/三分类。新词条应考虑是否涉及多个类别（如有 posRel → 加 topology，影响 bonusPercent → 加 numeric）。
 
 **方法：**
 1. 列出候选领域（每类别 5~10 个）
@@ -110,14 +114,16 @@
 
 | 机制 | 读 | 写 | 使用者 |
 |------|---|---|--------|
-| bonusPercent | — | Phase 2 加算 | 所有产出型词条 |
-| stacks | 叠层计数 | 叠层+1 | 所有叠层型 |
-| 暴击系统 | critChance | 修改暴击率 | 所有暴击型 |
-| posRel | 位置关系 | — | 所有拓扑型 |
-| getAffixSourceValue | 资源池值 | — | Convert 等 |
-| getStageProducedValue | 本关累积产出 | — | PhaseShift/EndoExo/Fusion |
-| consumeRequests | — | 延迟消耗 | 消耗型词条 |
-| currentWord | 当前单词 | — | 所有词感型 |
+| bonusPercent | — | Phase 2 加算 | 所有 numeric 副分类词条 |
+| stacks | 叠层计数 | 叠层+1 | 所有 stack 副分类词条 |
+| totalCritChance | 暴击率池 | 暴击率累加 | 所有 crit 副分类词条 |
+| posRel | 位置关系 | — | 所有 topology 副分类词条 |
+| getAffixSourceValue | 资源池值 | — | Convert/PhaseShift/EndoExo 等 |
+| getStageProducedValue | 本关累积产出 | — | PhaseShift/EndoExo/Fusion/Leverage/Option/Hedge |
+| consumeRequests | — | 延迟消耗 | PhaseShift/EndoExo/Fusion |
+| currentWord | 当前单词 | — | 所有 word_sense 词条 |
+| VOWELS | 元音字母集 | — | Cluster（触发元音键） |
+| isFirstOrLastLetter | 首尾判定 | — | Outcast |
 | HAND_MAP | 左右手 | — | 手交替相关 |
 | BASE_VALUES | 基底值 | — | 归一化用 |
 | BIGRAM_FREQ_TABLE | bigram 频率 | — | Bigram |
@@ -125,8 +131,19 @@
 | applyAffixLevelScaling | 词条参数 | +/-级缩放 | Ethereal |
 | critStreak | 连续暴击数 | 暴击+1/miss归零 | Burst |
 | missStreak | 连续miss数 | miss+1/暴击归零 | ZeroIn |
-| effectiveCritChance | 当前暴击率 | — | Sharpshooter |
+| effectiveCritChance | 当前暴击率 | — | Sharpshooter/Cipher质变 |
+| guaranteedCrit | 必暴击标记 | Clique质变写入 | Phase 3 消耗 |
+| convertedToStacking | 叠层化标记 | Pulse质变写入 | isStackingSkill 读取 |
 | getPatternRarity | 模式稀有度 | — | Pattern |
+| bfsComponentSize | 连通分量大小 | — | Component |
+| findMaxClique | 最大团大小 | — | Clique |
+| areConnectedWithout | 桥判定 | — | Bridge |
+
+**双分类检查项（新增）：**
+- [ ] 新词条有 posRel → 加 `topology`
+- [ ] 新词条写 bonusPercent / 乘算 → 加 `numeric`
+- [ ] 新词条写 totalCritChance → 加 `crit`
+- [ ] 新词条写 stacks → 加 `stack`
 
 **检查项：**
 - [ ] 新词条读哪个共享机制？
@@ -339,116 +356,128 @@ const estimatedTypes = new Set(estimate.breakdown.map(b => b.typeKey).filter(k =
 - [ ] 质变逻辑可在现有 Phase 代码中实现（无需新基础设施）
 - [ ] 质变后的极端场景不爆炸（late game 验证）
 
-### 11.4 已设计质变（Epic 46-49）
+### 11.4 全部质变一览
 
-| 词条 | 质变名 | 模式 | 效果 | 体感变化 |
-|------|--------|------|------|---------|
-| Parity | 合一 | 条件移除 | 奇偶同时生效（+产出 AND +暴击率） | 交替节奏 → 双重加成 |
-| Prime | 近似 | 条件放宽 | 非素数也有 primeK×1 固定小额加成 | 有无 → 大小 |
-| Match | 入局 | 范围扩大 | 自身叠层也参与配对计算 | 旁观邻居 → 加入配对 |
-| Entropy | 铭记 | 时间窗口扩大 | 使用本关遇到的最高熵值（只涨不跌） | 逐词计算 → 锁定最佳 |
-| Cipher | 跃迁 | 条件放宽 | 字母距离超过 13 的对额外翻倍 | 线性均值 → 大跳跃有奖 |
-| Pattern | 破格 | 条件放宽 | 未知模式（不在词库）bonus 翻倍 | 常见vs罕见 → 越离谱越强 |
-| Leverage | 保险 | 惩罚移除 | 负 excess 保底为 0（不再亏损） | 高风险高回报 → 只有回报 |
-| Option | 加杠 | 数值提升 | 行权后 optionK 翻倍（权利金不变） | 以小博大 → 以小博超大 |
-| Hedge | 全衡 | 范围扩大 | 自动从所有可读资源中选最均衡的一对 | 绑定两种 → 自动最优 |
-| Burst | 弹幕 | 触发新增 | 3连击时每次暴击额外触发一个邻居 | 自身倍率 → 暴击溅射 |
-| Zero-In | 蓄能 | 机制转换 | 暴击释放时missStreak转化为等量stacks | crit补偿 → stack转化 |
-| Sharpshooter | 狙击 | 范围扩大 | (1-critChance)×sharpK 同时作为bonusPercent和critMult | 单维 → 双维输出 |
+**暴击型：**
 
-**Epic 50 拓扑型：**
+| 词条 | 质变名 | 模式 | 效果 |
+|------|--------|------|------|
+| Crit | 过载 | 数值提升 | 暴击倍率翻倍（×2→×4） |
+| Charge | 蓄势 | 触发新增 | 满蓄力释放自动完成当前单词 |
+| Decay | 净化 | 极性反转 | 衰减逆转为递增（无上限） |
+| Recurse | 迭代 | 条件放宽 | 暴击率不减半 |
+| Taboo | 献祭 | 极性反转 | 未暴击惩罚转化为随机资源产出 |
+| Fallacy | 豪赌 | 条件放宽 | 暴击时不归零改为减半 |
+| Burst | 弹幕 | 触发新增 | 3连击时溅射邻居 |
+| ZeroIn | 蓄能 | 机制转换 | 暴击时missStreak转化为stacks |
+| Sharpshooter | 狙击 | 范围扩大 | 加成同时作为bonusPercent和critMult |
+| Overflow | 洪流 | 范围扩大 | 暴击时范围内全部叠层技能+N层（而非1个） |
 
-| 词条 | 质变名 | 模式 | 效果 | 体感变化 |
-|------|--------|------|------|---------|
-| Bridge | 枢纽 | 触发新增 | 是桥时每次触发额外触发断裂两侧各一个邻居 | 被动bonus → 中转触发站 |
-| Clique | 方阵 | 触发新增 | 团内任何成员触发时本技能也获得等额bonusPercent | 读结构 → 团内联动共享 |
-| Component | 网络 | 时间窗口扩大 | 连通分量内每次技能触发+1%bonus（本关累积） | 静态大小 → 动态网络活跃度 |
+**叠层型：**
 
-**Epic 51 元规则型：**
+| 词条 | 质变名 | 模式 | 效果 |
+|------|--------|------|------|
+| Pulse | 叠层同化 | 机制转换 | 爆发时将范围内1个非叠层技能转化为叠层类（每关重置） |
+| Resonance | 共振 | 方向扩展 | 自触发时也给触发源邻居+1叠层 |
+| Splash | 涌潮 | 范围扩大 | 触发所有匹配技能（而非1个） |
+| Amplify | 层叠 | 触发新增 | 层数增加时触发匹配技能 |
+| Relay | 中继 | 范围扩大 | 触发所有匹配技能（而非1个） |
+| WarDrum | 战号 | 触发新增 | 邻居暴击时+2叠层 |
+| Parity | 相变 | 条件移除 | 奇数叠层时额外自触发一次 |
+| Prime | 近似 | 条件放宽 | 非素数也有 primeK×1 固定小额累积 |
+| Match | 入局 | 范围扩大 | 自身stacks也参与配对判定 |
 
-| 词条 | 质变名 | 模式 | 效果 | 体感变化 |
-|------|--------|------|------|---------|
-| Decorator | 编译 | 条件放宽 | 放大率从固定变为动态：每多一个同技能词条+decoratorK | 固定放大 → 词条数驱动 |
-| Reflect | 内省 | 范围扩大 | reflectScore额外作为同技能所有词条的效果加成% | 自身bonus → 全词条增幅器 |
-| MonkeyPatch | 热更新 | 范围扩大 | 同时patch所有同技能词条（倍率缩为×0.8~1.5） | 随机单点 → 全体温和修改 |
+**拓扑型：**
 
-### 11.5 已设计质变（旧词条 + Epic 45）
+| 词条 | 质变名 | 模式 | 效果 |
+|------|--------|------|------|
+| Void | 吞噬 | 触发新增 | 每次触发寻找最弱邻居吞噬（解绑→增加空位） |
+| Mirror | 映射 | 范围扩大 | 复制所有邻居词条（而非1个） |
+| Cascade | 连锁 | 条件放宽 | 双向都算连锁（正向OR反向） |
+| Flow | 瀑布 | 条件移除 | 邻居比自己低时也加bonus |
+| Confluence | 洪流 | 触发新增 | 每种独特资源额外产出到该资源 |
+| Turbulence | 风暴 | 范围扩大 | 满层时触发所有邻居（而非仅最弱） |
+| Bridge | 枢纽 | 触发新增 | 是桥时触发断裂两侧各一个邻居 |
+| Clique | 传染 | 触发新增 | 暴击时团内所有成员下次必暴击 |
+| Component | 脉冲链 | 范围扩大 | 满层时触发链上所有技能（而非仅最远端） |
 
-**旧词条：**
+**词感型：**
 
-| 词条 | 质变名 | 模式 | 效果 | 体感变化 |
-|------|--------|------|------|---------|
-| Resonance | 共振 | 方向扩展 | 自触发时也给触发源邻居+1叠层 | 单向接收 → 双向回馈 |
-| WarDrum | 战号 | 触发新增 | 邻居暴击时WarDrum获得额外+2叠层 | 单向支援 → 正反馈循环 |
-| Fallacy | 豪赌 | 条件放宽 | 暴击时不归零改为减半（向下取整） | 大起大落 → 持续中高暴击 |
+| 词条 | 质变名 | 模式 | 效果 |
+|------|--------|------|------|
+| Outcast | 即时呼应 | 条件移除 | 每次首尾命中直接触发另一端（无需满层） |
+| Gravity | 极化 | 条件移除 | 概率修改从×N变为确定（>1=必出, <1=不出） |
+| Ligature | 重叠 | 时间窗口 | 使用关卡累计按键次数（而非当前单词） |
+| Cluster | 塞音 | 范围扩大 | 统计所有辅音丛之和（而非只看最长） |
+| Coverage | 全谱 | 条件放宽 | Q/X/Z/J稀有字母额外×2覆盖度 |
+| Bigram | 密码 | 条件放宽 | 只取罕见度前50%字母对 |
+| Entropy | 熵增 | 时间窗口 | 当前熵高于上一个单词时bonus翻倍 |
+| Cipher | 破译 | 跨维度 | 暴击时最大字母跳跃距离加到暴击倍率 |
+| Pattern | 编码 | 资源路由 | 模式签名决定产出资源类型 |
 
-**Epic 45 数值型：**
+**数值型：**
 
-| 词条 | 质变名 | 模式 | 效果 | 体感变化 |
-|------|--------|------|------|---------|
-| PhaseShift | 超临界 | 条件移除 | 气态时额外叠加液态和固态K值（三态叠加） | 阶梯替代 → 三层全开 |
-| EndoExo | 永动 | 触发新增 | 连续3次放热后进入超导态：下次翻倍且不消耗 | 被动振荡 → 节奏爆发 |
-| Fusion | 恒星 | 条件放宽 | 成功聚变后阈值永久降10%（可叠加，最低50%） | 独立判定 → 越聚越容易 |
+| 词条 | 质变名 | 模式 | 效果 |
+|------|--------|------|------|
+| Convert | 精炼 | 方向扩展 | 双向转化（同时反向产出到源资源） |
+| Multiply | 乘算化 | 机制转换 | 基础值替换为乘数基底 |
+| PhaseShift | 超临界 | 条件移除 | 气态时三态K值叠加 |
+| EndoExo | 永动 | 触发新增 | 连续3次放热→超导态（翻倍且不消耗） |
+| Fusion | 恒星 | 条件放宽 | 成功聚变后阈值永久降10% |
+| Leverage | 保险 | 惩罚移除 | 负excess保底为0 |
+| Option | 加杠 | 数值提升 | 行权后optionK翻倍 |
+| Hedge | 全衡 | 范围扩大 | 自动选最均衡的一对资源 |
 
-**Epic 45 元规则型：**
+**元规则型：**
 
-| 词条 | 质变名 | 模式 | 效果 | 体感变化 |
-|------|--------|------|------|---------|
-| Innate | 觉醒 | 范围扩大 | 关卡开始自动触发从 1 次变为 3 次 | 单次开场 → 三连触发 |
-| Counter | 反噬 | 极性反转 | 反制时将负值绝对值作为bonus加到下次触发 | 防御归零 → 攻击转化 |
-| Exhaust | 燃尽 | 触发新增 | 最后一次触发时bonus额外×3 | 线性消耗 → 终结技 |
-| Ethereal | 永恒 | 条件放宽 | 消失时50%概率保留到下一关（每关重判） | 确定消失 → 概率续命 |
-
-**Epic 45 词感型：**
-
-| 词条 | 质变名 | 模式 | 效果 | 体感变化 |
-|------|--------|------|------|---------|
-| Cluster | 塞音 | 范围扩大 | 统计所有辅音丛长度之和（非只看最长） | 最大值 → 总和 |
-| Coverage | 全谱 | 条件放宽 | Q/X/Z/J等稀有字母额外×2覆盖度计数 | 平等计数 → 稀有加权 |
-| Bigram | 密码 | 条件放宽 | 只取罕见度前50%的字母对计算平均 | 全局平均 → 去掉短板 |
-
-**Epic 45 拓扑型：**
-
-| 词条 | 质变名 | 模式 | 效果 | 体感变化 |
-|------|--------|------|------|---------|
-| Flow | 瀑布 | 条件移除 | 双向计算——邻居比自己低时也加bonus | 单向高→低 → 双向差值 |
-| Confluence | 洪流 | 触发新增 | 每种独特资源额外产出到该资源+1% | 测量多样性 → 分流产出 |
-| Turbulence | 风暴 | 范围扩大 | 额外读取邻居stacks差异（base极差+stacks极差） | 静态 → 动态+静态双源 |
+| 词条 | 质变名 | 模式 | 效果 |
+|------|--------|------|------|
+| Conduit | 导引 | 数值提升 | 额外触发次数+1 |
+| Twin | 镜像 | 数值提升 | — |
+| Innate | 觉醒 | 数值提升 | 自动触发次数×3 |
+| Counter | 反噬 | 极性反转 | 反制吸收的负值作为下次bonus |
+| Exhaust | 燃尽 | 触发新增 | 最后一次触发×3 |
+| Ethereal | 永恒 | 条件放宽 | 50%概率保留到下一关 |
+| Decorator | 编译 | 条件放宽 | 每多一个同技能词条+decoratorK |
+| Reflect | 内省 | 范围扩大 | reflectScore作为全词条增幅 |
+| MonkeyPatch | 热更新 | 范围扩大 | patch所有词条（倍率缩为×0.8~1.5） |
 
 ---
 
 ## 附录：已验证领域→词条映射
 
-| 领域 | 概念 | 词条 | f() 形状 |
+| 领域 | 概念 | 词条 | 效果维度 |
 |------|------|------|---------|
-| 热力学·相变 | 温度阈值突变 | PhaseShift | 阶梯 |
-| 热力学·吸放热 | 吸收/释放振荡 | EndoExo | 方波 |
-| 热力学·聚变 | 双条件点火 | Fusion | 与门 |
-| 流体力学·落差 | 高处流向低处 | Flow | 差值 |
-| 流体力学·汇流 | 多源汇聚 | Confluence | 计数 |
-| 流体力学·湍流 | 雷诺数/混沌 | Turbulence | 离散度 |
-| 语言学·辅音丛 | 连续辅音段 | Cluster | 最大值 |
-| 语言学·覆盖度 | 字母多样性 | Coverage | 去重计数 |
-| 语言学·双字组 | bigram 频率 | Bigram | 平均罕见度 |
+| 精密射击·溢层 | 暴击→叠层桥梁 | Overflow | **邻居+N叠层** |
+| 热力学·相变 | 温度阈值突变 | PhaseShift | bonusPercent(阶梯) |
+| 热力学·吸放热 | 吸收/释放振荡 | EndoExo | bonusPercent(方波) |
+| 热力学·聚变 | 双条件点火 | Fusion | bonusPercent(与门) |
+| 流体力学·落差 | 高处流向低处 | Flow | bonusPercent |
+| 流体力学·汇流 | 多源汇聚 | Confluence | bonusPercent |
+| 流体力学·湍流 | 雷诺数/混沌 | Turbulence | **叠层→触发最弱邻居** |
+| 语言学·辅音丛 | 连续辅音段 | Cluster | **叠层→触发元音键** |
+| 语言学·覆盖度 | 字母多样性 | Coverage | bonusPercent |
+| 语言学·双字组 | bigram 频率 | Bigram | **暴击率** |
+| 语言学·流放 | 首/尾字母 | Outcast | **叠层→触发词另一端** |
 | 卡牌·先天 | Innate/Battlecry | Innate | 生命周期·开始 |
 | 卡牌·反制 | Counter | Counter | 生命周期·负值 |
 | 卡牌·消耗 | Exhaust | Exhaust | 生命周期·N 次 |
 | 卡牌·虚无 | Ethereal | Ethereal | 生命周期·1 关 |
-| 组合数学·奇偶 | n%2 交替效果 | Parity | 交替方波 |
-| 组合数学·素数 | isPrime(n) 窗口触发 | Prime | 不规则脉冲 |
-| 组合数学·配对 | 邻居叠层相等配对数 | Match | 离散阶梯 |
-| 密码学·熵 | Shannon 熵 H(word) | Entropy | 连续平滑 |
-| 密码学·距离 | 相邻字母表距离均值 | Cipher | 连续平滑 |
-| 密码学·模式 | 模式签名稀有度 -log₂(freq) | Pattern | 对数曲线 |
+| 组合数学·奇偶 | n%2 交替效果 | Parity | **累积bonusPercent+暴击率** |
+| 组合数学·素数 | isPrime(n) 窗口触发 | Prime | **累积bonusPercent** |
+| 组合数学·配对 | 邻居叠层相等 | Match | **叠层+bonusPercent** |
+| 密码学·熵 | Shannon 熵 | Entropy | bonusPercent |
+| 密码学·距离 | 字母表距离 | Cipher | **暴击率** |
+| 密码学·模式 | 模式签名稀有度 | Pattern | bonusPercent |
 | 金融工程·杠杆 | excess × k（保证金线） | Leverage | 线性过零点 |
 | 金融工程·期权 | hockey stick（行权价+权利金） | Option | 折线 |
 | ��融工程·对冲 | 双资��� min/max 比值 | Hedge | 倒 V 型 |
 | 精密射击·连射 | critStreak × k → critMult | Burst | 线性+断裂 |
 | 精密射击·校准 | missStreak × k → critMult(释放) | Zero-In | 阶梯+释放 |
 | 精密射击·神射 | (1-critChance) × k → critMult | Sharpshooter | 反比例 |
-| 图论·桥 | 移除后邻居断裂 → bonus | Bridge | 二值 |
-| 图论·团 | 最大全连接子集大小 → bonus | Clique | 离散阶梯 |
-| 图论·连通 | BFS 连通分量大小 → bonus | Component | 线性 |
+| 图论·桥 | 移除后邻居断裂 | Bridge | **暴击率** |
+| 图论·团 | 最大全连接子集 | Clique | **暴击率** |
+| 图论·连通 | BFS 连通分量 | Component | **叠层→触发链远端** |
 | 元编程·装饰器 | bonusPercent × (1+k) Phase 2 末尾 | Decorator | 乘法放大 |
 | 元编程·反射 | affixCount × level × k → bonus | Reflect | 离散阶梯 |
 | 元编程·猴子补丁 | target.bonus × randomMult 每关随机 | MonkeyPatch | 随机修改 |
