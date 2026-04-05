@@ -665,6 +665,9 @@ export interface Phase2Result {
   chargeAutoComplete: boolean
   /** Story 45.5: 延迟消耗请求，Phase 4 后统一执行 */
   consumeRequests: { resource: ResourceType, amount: number }[]
+  /** MonkeyPatch: 被 patch 的词条索引和倍率（供 Phase 3 暴击调整用） */
+  patchTarget: number
+  patchMultiplier: number
 }
 
 /**
@@ -714,8 +717,9 @@ export function resolvePhase2(
   // ── 词条加算 ──
   for (let _affixIdx = 0; _affixIdx < skill.affixes.length; _affixIdx++) {
     const affix = skill.affixes[_affixIdx]
-    // MonkeyPatch: 记录 patch 前的 bonusPercent，用于计算 delta
+    // MonkeyPatch: 记录 patch 前的值，用于计算 delta
     const _prePatchBonus = bonusPercent
+    const _prePatchStacks = runtimeState.stacks
     switch (affix.type) {
       case AffixType.Convert: {
         if (affix.source == null) break
@@ -1175,11 +1179,17 @@ export function resolvePhase2(
       default:
         break
     }
-    // MonkeyPatch: 修改目标词条的 bonusPercent 贡献（-2 = 全部词条）
+    // MonkeyPatch: 修改目标词条的产出贡献（bonusPercent + stacks）
     const patchIdx = runtimeState.patchTargetIndex ?? -1
     if ((patchIdx === -2 || _affixIdx === patchIdx) && runtimeState.patchMultiplier !== 1.0 && affix.type !== AffixType.MonkeyPatch) {
-      const delta = bonusPercent - _prePatchBonus
-      bonusPercent = _prePatchBonus + delta * runtimeState.patchMultiplier
+      // bonusPercent delta
+      const bpDelta = bonusPercent - _prePatchBonus
+      bonusPercent = _prePatchBonus + bpDelta * runtimeState.patchMultiplier
+      // stacks delta（叠层类词条）
+      const stackDelta = runtimeState.stacks - _prePatchStacks
+      if (stackDelta > 0) {
+        runtimeState.stacks = _prePatchStacks + Math.max(0, Math.round(stackDelta * runtimeState.patchMultiplier))
+      }
     }
   }
 
@@ -1220,6 +1230,8 @@ export function resolvePhase2(
     convertReverseOutputs,
     chargeAutoComplete,
     consumeRequests,
+    patchTarget: runtimeState.patchTargetIndex ?? -1,
+    patchMultiplier: runtimeState.patchMultiplier ?? 1.0,
   }
 }
 
@@ -1264,8 +1276,13 @@ export function resolvePhase3(
   let totalCritChance = 0
   let hasTaboo = false
   let recurseCritContribution = 0 // 递归暴击率贡献（暴击重触发时减半）
+  // MonkeyPatch: 读取 patch 目标（Phase 2 已存入 runtimeState）
+  const _critPatchIdx = runtimeState.patchTargetIndex ?? -1
+  const _critPatchMult = runtimeState.patchMultiplier ?? 1.0
 
-  for (const affix of skill.affixes) {
+  for (let _critAffixIdx = 0; _critAffixIdx < skill.affixes.length; _critAffixIdx++) {
+    const affix = skill.affixes[_critAffixIdx]
+    const _preCritChance = totalCritChance
     switch (affix.type) {
       case AffixType.Crit: {
         totalCritChance += affix.chance ?? 0
@@ -1462,6 +1479,13 @@ export function resolvePhase3(
       // 其余词条类型在 Phase 3 无乘算效果
       default:
         break
+    }
+    // MonkeyPatch: 修改目标词条的暴击率贡献
+    if ((_critPatchIdx === -2 || _critAffixIdx === _critPatchIdx) && _critPatchMult !== 1.0 && affix.type !== AffixType.MonkeyPatch) {
+      const critDelta = totalCritChance - _preCritChance
+      if (critDelta !== 0) {
+        totalCritChance = _preCritChance + critDelta * _critPatchMult
+      }
     }
   }
 
