@@ -144,6 +144,7 @@ _最后更新: 2026-04-04_
 - [ ] 新词条写 bonusPercent / 乘算 → 加 `numeric`
 - [ ] 新词条写 totalCritChance → 加 `crit`
 - [ ] 新词条写 stacks → 加 `stack`
+- [ ] 新词条修改词条本身（复制/删除/替换/缩放词条参数）→ 加 `meta_rule`
 
 **检查项：**
 - [ ] 新词条读哪个共享机制？
