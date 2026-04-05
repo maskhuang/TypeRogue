@@ -533,17 +533,24 @@ export const BASE_VALUES: Record<ResourceType, number[]> = {
 
 /** 词条职业限制：仅指定职业可使用（未列出=全职业通用） */
 export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
-  // 造词师专属：高复杂度词感+精密控制
-  [AffixType.Cluster]: 'wordsmith',   // 辅音丛→叠层→元音键（复杂链式）
-  [AffixType.Outcast]: 'wordsmith',   // 首尾字母→叠层→触发另一端
-  [AffixType.Gravity]: 'wordsmith',   // 操控出词概率
-  [AffixType.Entropy]: 'wordsmith',   // 字母均匀度（概念门槛）
-  [AffixType.Pattern]: 'wordsmith',   // 罕见模式（概念门槛）
-  // 蜕变师专属：词条操控/附魔交互
-  [AffixType.Twin]: 'metamorph',      // 双附魔
-  [AffixType.Mirror]: 'metamorph',    // 复制邻居词条
+  // 造词师专属（9个）：词感分析 + 精密控制 → 与合词站/碎片系统协同
+  [AffixType.Cluster]: 'wordsmith',     // 辅音丛→叠层→元音键
+  [AffixType.Outcast]: 'wordsmith',     // 首尾字母→叠层→触发另一端
+  [AffixType.Gravity]: 'wordsmith',     // 操控出词概率
+  [AffixType.Entropy]: 'wordsmith',     // 字母均匀度
+  [AffixType.Pattern]: 'wordsmith',     // 罕见模式
+  [AffixType.Ligature]: 'wordsmith',    // 重复字母×N → 合词规划
+  [AffixType.Bigram]: 'wordsmith',      // 罕见字母对→暴击 → 合词策略
+  [AffixType.Cipher]: 'wordsmith',      // 字母跳跃→暴击 → 合词规划
+  [AffixType.Cascade]: 'wordsmith',     // 击键顺序→乘算 → 精密控制
+  // 蜕变师专属（7个）：词条操控 + 随机/不稳定 → 与变异站/变异素协同
+  [AffixType.Twin]: 'metamorph',        // 双附魔
+  [AffixType.Mirror]: 'metamorph',      // 复制邻居词条
   [AffixType.MonkeyPatch]: 'metamorph', // 随机修改词条
-  [AffixType.Ethereal]: 'metamorph',  // +1级限1关
+  [AffixType.Ethereal]: 'metamorph',    // +1级限1关（不稳定增强）
+  [AffixType.Rainbow]: 'metamorph',     // 随机资源（不稳定产出）
+  [AffixType.Exhaust]: 'metamorph',     // 限次高倍后消失（不稳定爆发）
+  [AffixType.Decorator]: 'metamorph',   // 放大其他词条 → 变异后放大
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
