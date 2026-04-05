@@ -553,6 +553,7 @@ export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
   // 蜕变师专属
   [AffixType.Twin]: 'metamorph',        // 双附魔 → 变异后获得更多附魔
   [AffixType.Excavate]: 'metamorph',    // 挖掘 → 被蜕变时获得遗物
+  [AffixType.Treasure]: 'metamorph',    // 寻宝 → 被蜕变时下次商店出高稀有度
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
@@ -620,7 +621,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.MonkeyPatch]: 'low',
   [AffixType.Overflow]: 'high',
   [AffixType.Excavate]: 'low',
-  [AffixType.Treasure]: 'low',
+  [AffixType.Treasure]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
