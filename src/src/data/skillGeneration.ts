@@ -376,10 +376,15 @@ export function rollAffixParams(
       return { type }  // 效果固定：其他词条+1级，无需参数
 
     case AffixType.Excavate:
-      return { type }  // 战斗时无效果，被蜕变时按等级获得遗物
-
+      return { type }  // 被蜕变时按等级获得遗物
     case AffixType.Treasure:
-      return { type }  // 战斗时无效果，下次商店刷新按等级出现高稀有度商品
+      return { type }  // 被蜕变时下次商店出高稀有度
+    case AffixType.Refine:
+      return { type }  // 被蜕变时退还变异素
+    case AffixType.Evolve:
+      return { type }  // 被蜕变时技能稀有度+1
+    case AffixType.Harvest:
+      return { type }  // 被蜕变时获得金币
 
     default: {
       const _exhaustive: never = type

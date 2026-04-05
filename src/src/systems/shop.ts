@@ -618,6 +618,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     // ── 无缩放参数 ──
     case 'rainbow': case 'twin': case 'mirror': case 'amplify':
     case 'conduit': case 'ethereal': case 'excavate': case 'treasure':
+    case 'refine': case 'evolve': case 'harvest':
       return ''
     default: return ''
   }

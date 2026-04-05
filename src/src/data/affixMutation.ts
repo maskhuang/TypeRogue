@@ -30,8 +30,16 @@ export interface MutationResult {
   removedAffix?: AffixInstance
   mutagenCost: number
   mutagenRefund: number
-  /** Excavate 词条触发：获得指定稀有度的遗物 */
+  /** Excavate：获得指定稀有度的遗物 */
   excavateRelicReward?: { rarity: number }
+  /** Treasure：下次商店保底稀有度 */
+  treasureShopRarity?: number
+  /** Refine：额外退还的变异素 */
+  refineRefund?: number
+  /** Evolve：稀有度提升结果 */
+  evolveResult?: { rarityUp: boolean, extraAffix: boolean }
+  /** Harvest：获得金币 */
+  harvestGold?: number
 }
 
 // ===== 消耗查询 =====
@@ -248,6 +256,54 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
     excavateRelicReward = { rarity: relicRarity }
   }
 
+  // Treasure（寻宝）：被蜕变时下次商店出高稀有度
+  let treasureShopRarity: number | undefined
+  const treasureAffix = skill.affixes.find(a => a.type === AffixType.Treasure && !a.spent)
+  if (treasureAffix) {
+    const rt = state.affixSkillStates?.get(skillId)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestTreasure as string)
+    treasureShopRarity = isTransformed ? 3 : Math.min(skill.level - 1, 2)
+  }
+
+  // Refine（提纯）：被蜕变时退还变异素
+  let refineRefund: number | undefined
+  const refineAffix = skill.affixes.find(a => a.type === AffixType.Refine && !a.spent)
+  if (refineAffix) {
+    const rt = state.affixSkillStates?.get(skillId)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestRefine as string)
+    // Lv1=50%, Lv2=100%, Lv3=150%, 质变=200%
+    const ratio = isTransformed ? 2.0 : 0.5 * skill.level
+    refineRefund = Math.floor(cost * ratio)
+    state.mutagenInventory += refineRefund
+  }
+
+  // Evolve（进化）：被蜕变时技能稀有度+1
+  let evolveResult: { rarityUp: boolean, extraAffix: boolean } | undefined
+  const evolveAffix = skill.affixes.find(a => a.type === AffixType.Evolve && !a.spent)
+  if (evolveAffix) {
+    const rt = state.affixSkillStates?.get(skillId)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestEvolve as string)
+    // Lv1=50%, Lv2=75%, Lv3=100%, 质变=100%+额外词条
+    const chance = isTransformed ? 1.0 : 0.25 + 0.25 * skill.level
+    const rarityUp = Math.random() < chance && skill.rarity < 3
+    const extraAffix = isTransformed && rarityUp
+    if (rarityUp) {
+      (skill as any).rarity = skill.rarity + 1
+    }
+    evolveResult = { rarityUp, extraAffix }
+  }
+
+  // Harvest（收割）：被蜕变时获得金币
+  let harvestGold: number | undefined
+  const harvestAffix = skill.affixes.find(a => a.type === AffixType.Harvest && !a.spent)
+  if (harvestAffix) {
+    const rt = state.affixSkillStates?.get(skillId)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestHarvest as string)
+    // Lv1=50g, Lv2=100g, Lv3=150g, 质变=250g
+    harvestGold = isTransformed ? 250 : 50 * skill.level
+    state.gold = (state.gold ?? 0) + harvestGold
+  }
+
   // 保存旧词条，用于任务附魔失效检查
   const oldAffixes = skill.affixes.map(a => ({ ...a }))
 
@@ -264,6 +320,15 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
       return { success: false, error: '无可用词条类型', mutagenCost: 0, mutagenRefund: 0 }
     }
     newAffixes.push(rollAffixParams(sample.type, skill.resource, sample.convertVariant))
+  }
+
+  // Evolve 质变：额外+1词条
+  if (evolveResult?.extraAffix) {
+    const extraExclude = newAffixes.map(a => a.type)
+    const extraSample = sampleOneExcluding(extraExclude, allowedCategory)
+    if (extraSample) {
+      newAffixes.push(rollAffixParams(extraSample.type, skill.resource, extraSample.convertVariant))
+    }
   }
 
   skill.affixes = newAffixes
@@ -283,7 +348,11 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
   return {
     success: true,
     mutagenCost: cost,
-    mutagenRefund: 0,
+    mutagenRefund: refineRefund ?? 0,
     excavateRelicReward: excavateRelicReward ?? undefined,
+    treasureShopRarity,
+    refineRefund,
+    evolveResult,
+    harvestGold,
   }
 }

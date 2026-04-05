@@ -635,7 +635,7 @@ const ZH: Record<string, string> = {
   'affix.leverage': '杠杆', 'affix.option': '期权', 'affix.hedge': '对冲',
   'affix.burst': '连射', 'affix.zero_in': '校准', 'affix.sharpshooter': '神射', 'affix.overflow': '溢层',
   'affix.bridge': '桥', 'affix.clique': '团', 'affix.component': '连通',
-  'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝',
+  'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝', 'affix.refine': '提纯', 'affix.evolve': '进化', 'affix.harvest': '收割',
 
   // --- affix descriptions (53) ---
   'affix_desc.convert': '读取{source}的产出，按系数加成',
@@ -695,6 +695,9 @@ const ZH: Record<string, string> = {
   'affix_desc.monkey_patch': '每关随机修改同技能一个词条的效果(×{low}起)，升级提高上限',
   'affix_desc.excavate': '战斗中无效果；被蜕变时获得遗物（Lv1普通/Lv2稀有/Lv3史诗，质变：传说）',
   'affix_desc.treasure': '战斗中无效果；被蜕变时下次商店刷新出现指定稀有度商品（Lv1普通/Lv2稀有/Lv3史诗，质变：传说）',
+  'affix_desc.refine': '战斗中无效果；被蜕变时退还变异素（Lv1=50%/Lv2=100%/Lv3=150%，质变：200%）',
+  'affix_desc.evolve': '战斗中无效果；被蜕变时技能稀有度+1（Lv1=50%/Lv2=75%/Lv3=100%，质变：+1词条）',
+  'affix_desc.harvest': '战斗中无效果；被蜕变时获得金币（Lv1=50g/Lv2=100g/Lv3=150g，质变：250g）',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -1570,7 +1573,7 @@ const EN: Record<string, string> = {
   'affix.leverage': 'Leverage', 'affix.option': 'Option', 'affix.hedge': 'Hedge',
   'affix.burst': 'Burst', 'affix.zero_in': 'Zero-In', 'affix.sharpshooter': 'Sharpshooter', 'affix.overflow': 'Overflow',
   'affix.bridge': 'Bridge', 'affix.clique': 'Clique', 'affix.component': 'Component',
-  'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure',
+  'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure', 'affix.refine': 'Refine', 'affix.evolve': 'Evolve', 'affix.harvest': 'Harvest',
 
   // --- affix descriptions (53) ---
   'affix_desc.convert': 'Reads {source} output, adds scaled bonus',
@@ -1630,6 +1633,9 @@ const EN: Record<string, string> = {
   'affix_desc.monkey_patch': 'Each stage, randomly modifies one affix (from ×{low}); upgrade raises ceiling',
   'affix_desc.excavate': 'No combat effect; when mutated: gain a relic (Lv1=common/Lv2=rare/Lv3=epic, transform=legendary)',
   'affix_desc.treasure': 'No combat effect; when mutated: next shop refresh includes guaranteed rarity item (Lv1=common/Lv2=rare/Lv3=epic, transform=legendary)',
+  'affix_desc.refine': 'No combat effect; when mutated: refund mutagen (Lv1=50%/Lv2=100%/Lv3=150%, transform=200%)',
+  'affix_desc.evolve': 'No combat effect; when mutated: skill rarity +1 (Lv1=50%/Lv2=75%/Lv3=100%, transform=+1 extra affix)',
+  'affix_desc.harvest': 'No combat effect; when mutated: gain gold (Lv1=50g/Lv2=100g/Lv3=150g, transform=250g)',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',

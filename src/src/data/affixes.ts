@@ -74,6 +74,9 @@ export enum AffixType {
   MonkeyPatch = 'monkey_patch',
   Excavate = 'excavate',
   Treasure = 'treasure',
+  Refine = 'refine',
+  Evolve = 'evolve',
+  Harvest = 'harvest',
 }
 
 // ===== 词条类别 =====
@@ -144,6 +147,9 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.MonkeyPatch]: ['meta_rule'],
   [AffixType.Excavate]: ['meta_rule'],
   [AffixType.Treasure]: ['meta_rule'],
+  [AffixType.Refine]: ['meta_rule'],
+  [AffixType.Evolve]: ['meta_rule'],
+  [AffixType.Harvest]: ['meta_rule'],
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -217,6 +223,9 @@ export enum EnchantmentType {
   QuestMonkeyPatch = 'quest_monkey_patch',
   QuestExcavate = 'quest_excavate',
   QuestTreasure = 'quest_treasure',
+  QuestRefine = 'quest_refine',
+  QuestEvolve = 'quest_evolve',
+  QuestHarvest = 'quest_harvest',
   // ── 运算符（保留类型，现通过质变获取） ──
   MultiplyOperator = 'multiply_operator',
 }
@@ -282,6 +291,9 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestMonkeyPatch]: AffixType.MonkeyPatch,
   [EnchantmentType.QuestExcavate]: AffixType.Excavate,
   [EnchantmentType.QuestTreasure]: AffixType.Treasure,
+  [EnchantmentType.QuestRefine]: AffixType.Refine,
+  [EnchantmentType.QuestEvolve]: AffixType.Evolve,
+  [EnchantmentType.QuestHarvest]: AffixType.Harvest,
 }
 
 // ===== 附魔元数据（非任务类附魔的显示信息） =====
@@ -556,6 +568,9 @@ export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
   [AffixType.Twin]: 'metamorph',        // 双附魔 → 变异后获得更多附魔
   [AffixType.Excavate]: 'metamorph',    // 挖掘 → 被蜕变时获得遗物
   [AffixType.Treasure]: 'metamorph',    // 寻宝 → 被蜕变时下次商店出高稀有度
+  [AffixType.Refine]: 'metamorph',      // 提纯 → 被蜕变时退还变异素
+  [AffixType.Evolve]: 'metamorph',      // 进化 → 被蜕变时技能稀有度+1
+  [AffixType.Harvest]: 'metamorph',     // 收割 → 被蜕变时获得金币
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
@@ -624,6 +639,9 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Overflow]: 'high',
   [AffixType.Excavate]: 'low',
   [AffixType.Treasure]: 'high',
+  [AffixType.Refine]: 'high',
+  [AffixType.Evolve]: 'low',
+  [AffixType.Harvest]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -744,6 +762,9 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.MonkeyPatch]: '猴子补丁',
   [AffixType.Excavate]: '挖掘',
   [AffixType.Treasure]: '寻宝',
+  [AffixType.Refine]: '提纯',
+  [AffixType.Evolve]: '进化',
+  [AffixType.Harvest]: '收割',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -805,6 +826,9 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.MonkeyPatch]: '每关随机修改同技能一个词条的效果倍率',
   [AffixType.Excavate]: '被蜕变时获得一个遗物（等级决定稀有度）',
   [AffixType.Treasure]: '被蜕变时下次商店出现指定稀有度商品（等级决定稀有度）',
+  [AffixType.Refine]: '被蜕变时退还变异素（等级决定退还比例）',
+  [AffixType.Evolve]: '被蜕变时技能稀有度提升（等级决定概率）',
+  [AffixType.Harvest]: '被蜕变时获得金币（等级决定数量）',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -993,6 +1017,9 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestMonkeyPatch, name: '热更新', targetAffix: AffixType.MonkeyPatch, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全体patch', transformDesc: '同时修改所有同技能词条（倍率缩为×0.8~1.5）' },
   { type: EnchantmentType.QuestExcavate, name: '深渊', targetAffix: AffixType.Excavate, event: 'equip_count', targetStacks: 0, effectDesc: '质变：传说挖掘', transformDesc: '被蜕变时获得传说遗物（无视等级）' },
   { type: EnchantmentType.QuestTreasure, name: '宝库', targetAffix: AffixType.Treasure, event: 'equip_count', targetStacks: 0, effectDesc: '质变：传说寻宝', transformDesc: '被蜕变时下次商店出现传说商品（无视等级）' },
+  { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Refine, event: 'equip_count', targetStacks: 0, effectDesc: '质变：超额退还', transformDesc: '被蜕变时退还200%变异素' },
+  { type: EnchantmentType.QuestEvolve, name: '突变', targetAffix: AffixType.Evolve, event: 'equip_count', targetStacks: 0, effectDesc: '质变：必定进化', transformDesc: '100%稀有度+1且额外+1词条' },
+  { type: EnchantmentType.QuestHarvest, name: '丰收', targetAffix: AffixType.Harvest, event: 'equip_count', targetStacks: 0, effectDesc: '质变：黄金收割', transformDesc: '被蜕变时获得250金币' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====
