@@ -544,14 +544,6 @@ export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
   [AffixType.Bigram]: 'wordsmith',      // 罕见字母对→暴击 → 合词策略
   [AffixType.Cipher]: 'wordsmith',      // 字母跳跃→暴击 → 合词规划
   [AffixType.Cascade]: 'wordsmith',     // 击键顺序→乘算 → 精密控制
-  // 蜕变师专属（7个）：词条操控 + 随机/不稳定 → 与变异站/变异素协同
-  [AffixType.Twin]: 'metamorph',        // 双附魔
-  [AffixType.Mirror]: 'metamorph',      // 复制邻居词条
-  [AffixType.MonkeyPatch]: 'metamorph', // 随机修改词条
-  [AffixType.Ethereal]: 'metamorph',    // +1级限1关（不稳定增强）
-  [AffixType.Rainbow]: 'metamorph',     // 随机资源（不稳定产出）
-  [AffixType.Exhaust]: 'metamorph',     // 限次高倍后消失（不稳定爆发）
-  [AffixType.Decorator]: 'metamorph',   // 放大其他词条 → 变异后放大
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
