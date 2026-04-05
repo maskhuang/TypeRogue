@@ -498,7 +498,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       return {
         typeName: t('affix.' + a.type),
         typeKey: a.type,
-        paramSummary: buildAffixParamSummary(a),
+        paramSummary: buildAffixParamSummary(a, skill.level),
         description: desc,
       };
     })
@@ -555,7 +555,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
 }
 
 /** 构建单个词条的参数摘要（仅显示会随升级变化的数值） */
-function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): string {
+function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skillLevel?: number): string {
   switch (a.type) {
     // ── 暴击类（变化值） ──
     case 'crit': return `+${Math.round((a.chance ?? 0) * 100)}%`
@@ -617,9 +617,16 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'monkey_patch': return `~×${(a.patchHigh ?? 2.0).toFixed(1)}`
     // ── 无缩放参数 ──
     case 'rainbow': case 'twin': case 'mirror': case 'amplify':
-    case 'conduit': case 'ethereal': case 'excavate': case 'treasure':
-    case 'refine': case 'evolve': case 'harvest':
+    case 'conduit': case 'ethereal':
       return ''
+    // 蜕变系：按技能等级显示
+    case 'excavate': case 'treasure': {
+      const rKeys = ['common', 'rare', 'epic', 'legendary']
+      return t('shop.rarity.' + rKeys[Math.min((skillLevel ?? 1) - 1, 2)])
+    }
+    case 'refine': return `${Math.round(50 * (skillLevel ?? 1))}%`
+    case 'evolve': return `${Math.round(25 + 25 * (skillLevel ?? 1))}%`
+    case 'harvest': return `${50 * (skillLevel ?? 1)}g`
     default: return ''
   }
 }

@@ -824,11 +824,11 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Decorator]: '放大同技能其他词条的产出加成',
   [AffixType.Reflect]: '技能词条越多、等级越高，产出越高',
   [AffixType.MonkeyPatch]: '每关随机修改同技能一个词条的效果倍率',
-  [AffixType.Excavate]: '被蜕变时获得一个遗物（等级决定稀有度）',
-  [AffixType.Treasure]: '被蜕变时下次商店出现指定稀有度商品（等级决定稀有度）',
-  [AffixType.Refine]: '被蜕变时退还变异素（等级决定退还比例）',
-  [AffixType.Evolve]: '被蜕变时技能稀有度提升（等级决定概率）',
-  [AffixType.Harvest]: '被蜕变时获得金币（等级决定数量）',
+  [AffixType.Excavate]: '被蜕变时获得遗物',
+  [AffixType.Treasure]: '被蜕变时下次商店保底出现指定稀有度商品',
+  [AffixType.Refine]: '被蜕变时退还变异素',
+  [AffixType.Evolve]: '被蜕变时有概率提升技能稀有度',
+  [AffixType.Harvest]: '被蜕变时获得金币',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
