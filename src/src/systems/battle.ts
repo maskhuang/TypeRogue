@@ -1660,13 +1660,14 @@ function endLevel(): void {
         && skill.enchantmentIds?.includes(EnchantmentTypeEnum.QuestEthereal)
         && Math.random() < 0.5;
       if (!etherealSurvives) {
-        // 还原 +1 级增幅（排除 Ethereal 自身——它即将被移除）
+        // 还原 +1 级增幅
         const otherAffixes = skill.affixes.filter(a => a.type !== AffixType.Ethereal);
         if (otherAffixes.length > 0) {
           applyAffixLevelScaling(otherAffixes, -1);
         }
-        removeAffixAtRuntime(skill, AffixType.Ethereal);
-        // etherealTriggered 保持 true 作为永久消耗标记（商店排除用）
+        // 无效化但保留（可被蜕变重置）
+        const etherealAffix = skill.affixes.find(a => a.type === AffixType.Ethereal);
+        if (etherealAffix) etherealAffix.spent = true;
       }
       // 续命时保留词条但重置触发标记（下关重新判定）
       if (etherealSurvives) rt.etherealTriggered = false;

@@ -361,6 +361,7 @@ export interface AffixInstance {
   sharpK?: number                  // Sharpshooter: (1-critChance) × K 的 critMult 加成
   critChance?: number              // Burst/ZeroIn/Sharpshooter/Overflow: 基础暴击率
   overflowStacks?: number          // Overflow: 暴击时给邻居叠层技能+N层
+  spent?: boolean                  // Exhaust/Ethereal: 耗尽后无效化（保留可被蜕变）
   bridgeK?: number                 // Bridge: 是桥时的 bonusPercent 加成
   cliqueK?: number                 // Clique: 每团成员的 bonusPercent
   componentK?: number              // Component: 每连通成员的 bonusPercent

@@ -255,10 +255,10 @@ export function orchestrateAffixTrigger(
       const rt = ctx.skillStates.get(item.skillId)
       if (skill && rt) {
         const exhaustAffix = skill.affixes.find(a => a.type === AffixType.Exhaust)
-        if (exhaustAffix) {
+        if (exhaustAffix && !exhaustAffix.spent) {
           (rt as any).exhaustCount = ((rt as any).exhaustCount ?? 0) + 1
           if ((rt as any).exhaustCount >= (exhaustAffix.maxTriggers ?? Infinity)) {
-            removeAffixAtRuntime(skill, AffixType.Exhaust)
+            exhaustAffix.spent = true // 无效化但保留（可被蜕变重置）
           }
         }
         // Ethereal: 标记已触发

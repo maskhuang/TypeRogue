@@ -717,6 +717,7 @@ export function resolvePhase2(
   // ── 词条加算 ──
   for (let _affixIdx = 0; _affixIdx < skill.affixes.length; _affixIdx++) {
     const affix = skill.affixes[_affixIdx]
+    if (affix.spent) continue // 耗尽的词条跳过
     // MonkeyPatch: 记录 patch 前的值，用于计算 delta
     const _prePatchBonus = bonusPercent
     const _prePatchStacks = runtimeState.stacks
@@ -1282,6 +1283,7 @@ export function resolvePhase3(
 
   for (let _critAffixIdx = 0; _critAffixIdx < skill.affixes.length; _critAffixIdx++) {
     const affix = skill.affixes[_critAffixIdx]
+    if (affix.spent) continue // 耗尽的词条跳过
     const _preCritChance = totalCritChance
     switch (affix.type) {
       case AffixType.Crit: {
