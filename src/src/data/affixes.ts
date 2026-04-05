@@ -106,8 +106,8 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Splash]: ['stack', 'topology'],
   [AffixType.Amplify]: ['stack', 'topology'],
   [AffixType.Relay]: ['stack', 'topology'],
-  [AffixType.WarDrum]: ['stack', 'topology'],
-  [AffixType.Parity]: ['stack'],
+  [AffixType.WarDrum]: ['stack', 'topology', 'crit'],
+  [AffixType.Parity]: ['stack', 'crit'],
   [AffixType.Prime]: ['stack'],
   [AffixType.Match]: ['stack', 'topology'],
   // ── 拓扑型 ──
