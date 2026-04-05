@@ -533,25 +533,17 @@ export const BASE_VALUES: Record<ResourceType, number[]> = {
 
 /** 词条职业限制：仅指定职业可使用（未列出=全职业通用） */
 export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
-  // 造词师专属：词感类（单词结构分析）+ 精密控制类（释放顺序/时机）
-  [AffixType.Cluster]: 'wordsmith',
-  [AffixType.Coverage]: 'wordsmith',
-  [AffixType.Bigram]: 'wordsmith',
-  [AffixType.Entropy]: 'wordsmith',
-  [AffixType.Cipher]: 'wordsmith',
-  [AffixType.Pattern]: 'wordsmith',
-  [AffixType.Outcast]: 'wordsmith',   // 首尾字母 → 选词规划
-  [AffixType.Gravity]: 'wordsmith',   // 操控出词概率 → 词库控制
-  [AffixType.Ligature]: 'wordsmith',  // 重复字母 → 词感敏锐
-  [AffixType.Cascade]: 'wordsmith',   // 上一键关系 → 击键顺序规划
-  // 蜕变师专属：随机性/词条操控/附魔相关
-  [AffixType.Rainbow]: 'metamorph',
-  [AffixType.Twin]: 'metamorph',
-  [AffixType.Mirror]: 'metamorph',
-  [AffixType.Decorator]: 'metamorph',
-  [AffixType.Reflect]: 'metamorph',
-  [AffixType.MonkeyPatch]: 'metamorph',
-  [AffixType.Ethereal]: 'metamorph',
+  // 造词师专属：高复杂度词感+精密控制
+  [AffixType.Cluster]: 'wordsmith',   // 辅音丛→叠层→元音键（复杂链式）
+  [AffixType.Outcast]: 'wordsmith',   // 首尾字母→叠层→触发另一端
+  [AffixType.Gravity]: 'wordsmith',   // 操控出词概率
+  [AffixType.Entropy]: 'wordsmith',   // 字母均匀度（概念门槛）
+  [AffixType.Pattern]: 'wordsmith',   // 罕见模式（概念门槛）
+  // 蜕变师专属：词条操控/附魔交互
+  [AffixType.Twin]: 'metamorph',      // 双附魔
+  [AffixType.Mirror]: 'metamorph',    // 复制邻居词条
+  [AffixType.MonkeyPatch]: 'metamorph', // 随机修改词条
+  [AffixType.Ethereal]: 'metamorph',  // +1级限1关
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
