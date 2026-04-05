@@ -72,6 +72,7 @@ export enum AffixType {
   Decorator = 'decorator',
   Reflect = 'reflect',
   MonkeyPatch = 'monkey_patch',
+  Excavate = 'excavate',
 }
 
 // ===== 词条类别 =====
@@ -140,6 +141,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Decorator]: ['meta_rule', 'numeric'],
   [AffixType.Reflect]: ['meta_rule', 'numeric'],
   [AffixType.MonkeyPatch]: ['meta_rule'],
+  [AffixType.Excavate]: ['meta_rule'],
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -211,6 +213,7 @@ export enum EnchantmentType {
   QuestDecorator = 'quest_decorator',
   QuestReflect = 'quest_reflect',
   QuestMonkeyPatch = 'quest_monkey_patch',
+  QuestExcavate = 'quest_excavate',
   // ── 运算符（保留类型，现通过质变获取） ──
   MultiplyOperator = 'multiply_operator',
 }
@@ -274,6 +277,7 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestDecorator]: AffixType.Decorator,
   [EnchantmentType.QuestReflect]: AffixType.Reflect,
   [EnchantmentType.QuestMonkeyPatch]: AffixType.MonkeyPatch,
+  [EnchantmentType.QuestExcavate]: AffixType.Excavate,
 }
 
 // ===== 附魔元数据（非任务类附魔的显示信息） =====
@@ -546,6 +550,7 @@ export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
   [AffixType.Cascade]: 'wordsmith',     // 击键顺序→乘算 → 精密控制
   // 蜕变师专属
   [AffixType.Twin]: 'metamorph',        // 双附魔 → 变异后获得更多附魔
+  [AffixType.Excavate]: 'metamorph',    // 挖掘 → 被蜕变时获得遗物
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
@@ -612,6 +617,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Reflect]: 'high',
   [AffixType.MonkeyPatch]: 'low',
   [AffixType.Overflow]: 'high',
+  [AffixType.Excavate]: 'low',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -730,6 +736,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Decorator]: '装饰器',
   [AffixType.Reflect]: '反射',
   [AffixType.MonkeyPatch]: '猴子补丁',
+  [AffixType.Excavate]: '挖掘',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -789,6 +796,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Decorator]: '放大同技能其他词条的产出加成',
   [AffixType.Reflect]: '技能词条越多、等级越高，产出越高',
   [AffixType.MonkeyPatch]: '每关随机修改同技能一个词条的效果倍率',
+  [AffixType.Excavate]: '被蜕变时获得一个遗物（等级决定稀有度）',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -975,6 +983,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestDecorator, name: '编译', targetAffix: AffixType.Decorator, event: 'equip_count', targetStacks: 0, effectDesc: '质变：词条数驱动', transformDesc: '放大率随同技能词条数递增' },
   { type: EnchantmentType.QuestReflect, name: '内省', targetAffix: AffixType.Reflect, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全词条增幅', transformDesc: 'reflectScore额外作为所有词条效果加成' },
   { type: EnchantmentType.QuestMonkeyPatch, name: '热更新', targetAffix: AffixType.MonkeyPatch, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全体patch', transformDesc: '同时修改所有同技能词条（倍率缩为×0.8~1.5）' },
+  { type: EnchantmentType.QuestExcavate, name: '深渊', targetAffix: AffixType.Excavate, event: 'equip_count', targetStacks: 0, effectDesc: '质变：传说挖掘', transformDesc: '被蜕变时获得传说遗物（无视等级）' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====

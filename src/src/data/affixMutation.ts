@@ -30,6 +30,8 @@ export interface MutationResult {
   removedAffix?: AffixInstance
   mutagenCost: number
   mutagenRefund: number
+  /** Excavate 词条触发：获得指定稀有度的遗物 */
+  excavateRelicReward?: { rarity: number }
 }
 
 // ===== 消耗查询 =====
@@ -228,11 +230,23 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
     return { success: false, error: '变异素不足', mutagenCost: 0, mutagenRefund: 0 }
   }
 
+  let excavateRelicReward: { rarity: number } | null = null
+
   // 扣费
   state.mutagenInventory -= cost
 
   // 累计计数
   state.mutationACounts.set(skillId, (state.mutationACounts.get(skillId) ?? 0) + 1)
+
+  // Excavate（挖掘）：被蜕变时获得遗物
+  const excavateAffix = skill.affixes.find(a => a.type === AffixType.Excavate && !a.spent)
+  if (excavateAffix) {
+    const rt = state.affixSkillStates?.get(skillId)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestExcavate as string)
+    // 质变：传说遗物（无视等级）；普通：Lv1=0(普通), Lv2=1(稀有), Lv3=2(史诗)
+    const relicRarity = isTransformed ? 3 : Math.min(skill.level - 1, 2)
+    excavateRelicReward = { rarity: relicRarity }
+  }
 
   // 保存旧词条，用于任务附魔失效检查
   const oldAffixes = skill.affixes.map(a => ({ ...a }))
@@ -270,5 +284,6 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
     success: true,
     mutagenCost: cost,
     mutagenRefund: 0,
+    excavateRelicReward: excavateRelicReward ?? undefined,
   }
 }

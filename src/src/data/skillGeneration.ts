@@ -375,6 +375,9 @@ export function rollAffixParams(
     case AffixType.Ethereal:
       return { type }  // 效果固定：其他词条+1级，无需参数
 
+    case AffixType.Excavate:
+      return { type }  // 战斗时无效果，被蜕变时按等级获得遗物
+
     default: {
       const _exhaustive: never = type
       throw new Error(`Unknown AffixType: ${type}`)
