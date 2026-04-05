@@ -91,6 +91,11 @@ export const AFFIX_COLORS: Record<string, string> = {
   monkey_patch:'#cf6a87', // 玫瑰 — 猴子补丁
   excavate:    '#d4a017', // 暗金 — 挖掘
   treasure:    '#f0c040', // 金黄 — 寻宝
+  refine:      '#2ecc71', // 绿 — 提纯
+  evolve:      '#9b59b6', // 紫 — 进化
+  harvest:     '#ffd700', // 金 — 收割
+  chain:       '#e74c3c', // 红 — 连锁
+  volatile:    '#ff6b6b', // 亮红 — 不稳定
 }
 
 export interface KeyTooltipData {

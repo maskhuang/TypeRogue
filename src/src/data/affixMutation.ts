@@ -40,6 +40,10 @@ export interface MutationResult {
   evolveResult?: { rarityUp: boolean, extraAffix: boolean }
   /** Harvest：获得金币 */
   harvestGold?: number
+  /** Chain：需要连锁蜕变的技能 ID 列表 */
+  chainMutateSkillIds?: string[]
+  /** Volatile：短期效果倍率和持续关数 */
+  volatileBoost?: { multiplier: number, stages: number }
 }
 
 // ===== 消耗查询 =====
@@ -304,6 +308,46 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
     state.gold = (state.gold ?? 0) + harvestGold
   }
 
+  // Chain（连锁）：被蜕变时范围内技能也蜕变
+  let chainMutateSkillIds: string[] | undefined
+  const chainAffix = skill.affixes.find(a => a.type === AffixType.Chain && !a.spent)
+  if (chainAffix && chainAffix.posRel != null) {
+    const rt = state.affixSkillStates?.get(skillId)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestChain as string)
+    // 找范围内的技能
+    const { getExtendedNeighbors } = require('./affixTrigger')
+    const skillKeys = [...state.player.bindings].filter(([, sid]) => sid === skillId).map(([k]) => k)
+    const neighborKeys: string[] = getExtendedNeighbors(skillKeys, chainAffix.posRel).filter((k: string) => state.player.bindings.has(k))
+    const candidateIds = new Set<string>()
+    for (const nk of neighborKeys) {
+      const nid = state.player.bindings.get(nk)
+      if (nid && nid !== skillId) candidateIds.add(nid)
+    }
+    const allCandidates = [...candidateIds]
+    if (isTransformed) {
+      // 质变：全键盘
+      const allIds = new Set<string>()
+      for (const [, sid] of state.player.bindings) { if (sid !== skillId) allIds.add(sid) }
+      chainMutateSkillIds = [...allIds]
+    } else {
+      // Lv1=1个, Lv2=2个, Lv3=全范围
+      const count = skill.level >= 3 ? allCandidates.length : skill.level
+      chainMutateSkillIds = allCandidates.slice(0, count)
+    }
+  }
+
+  // Volatile（不稳定）：被蜕变后短期效果翻倍
+  let volatileBoost: { multiplier: number, stages: number } | undefined
+  const volatileAffix = skill.affixes.find(a => a.type === AffixType.Volatile && !a.spent)
+  if (volatileAffix) {
+    const rt = state.affixSkillStates?.get(skillId)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestVolatile as string)
+    // Lv1=1关×1.5, Lv2=1关×2.0, Lv3=2关×2.0, 质变=3关×2.0
+    const stages = isTransformed ? 3 : (skill.level >= 3 ? 2 : 1)
+    const multiplier = isTransformed ? 2.0 : (skill.level >= 2 ? 2.0 : 1.5)
+    volatileBoost = { multiplier, stages }
+  }
+
   // 保存旧词条，用于任务附魔失效检查
   const oldAffixes = skill.affixes.map(a => ({ ...a }))
 
@@ -354,5 +398,7 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
     refineRefund,
     evolveResult,
     harvestGold,
+    chainMutateSkillIds,
+    volatileBoost,
   }
 }

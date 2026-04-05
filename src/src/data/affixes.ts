@@ -77,6 +77,8 @@ export enum AffixType {
   Refine = 'refine',
   Evolve = 'evolve',
   Harvest = 'harvest',
+  Chain = 'chain',
+  Volatile = 'volatile',
 }
 
 // ===== 词条类别 =====
@@ -150,6 +152,8 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Refine]: ['meta_rule'],
   [AffixType.Evolve]: ['meta_rule'],
   [AffixType.Harvest]: ['meta_rule'],
+  [AffixType.Chain]: ['meta_rule', 'topology'],
+  [AffixType.Volatile]: ['meta_rule', 'numeric'],
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -226,6 +230,8 @@ export enum EnchantmentType {
   QuestRefine = 'quest_refine',
   QuestEvolve = 'quest_evolve',
   QuestHarvest = 'quest_harvest',
+  QuestChain = 'quest_chain',
+  QuestVolatile = 'quest_volatile',
   // ── 运算符（保留类型，现通过质变获取） ──
   MultiplyOperator = 'multiply_operator',
 }
@@ -294,6 +300,8 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestRefine]: AffixType.Refine,
   [EnchantmentType.QuestEvolve]: AffixType.Evolve,
   [EnchantmentType.QuestHarvest]: AffixType.Harvest,
+  [EnchantmentType.QuestChain]: AffixType.Chain,
+  [EnchantmentType.QuestVolatile]: AffixType.Volatile,
 }
 
 // ===== 附魔元数据（非任务类附魔的显示信息） =====
@@ -571,6 +579,8 @@ export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
   [AffixType.Refine]: 'metamorph',      // 提纯 → 被蜕变时退还变异素
   [AffixType.Evolve]: 'metamorph',      // 进化 → 被蜕变时技能稀有度+1
   [AffixType.Harvest]: 'metamorph',     // 收割 → 被蜕变时获得金币
+  [AffixType.Chain]: 'metamorph',       // 连锁 → 被蜕变时范围内技能也蜕变
+  [AffixType.Volatile]: 'metamorph',    // 不稳定 → 被蜕变后短期效果翻倍
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
@@ -642,6 +652,8 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Refine]: 'high',
   [AffixType.Evolve]: 'low',
   [AffixType.Harvest]: 'high',
+  [AffixType.Chain]: 'low',
+  [AffixType.Volatile]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -765,6 +777,8 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Refine]: '提纯',
   [AffixType.Evolve]: '进化',
   [AffixType.Harvest]: '收割',
+  [AffixType.Chain]: '连锁',
+  [AffixType.Volatile]: '不稳定',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -829,6 +843,8 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Refine]: '被蜕变时退还变异素',
   [AffixType.Evolve]: '被蜕变时有概率提升技能稀有度',
   [AffixType.Harvest]: '被蜕变时获得金币',
+  [AffixType.Chain]: '被蜕变时指定关系的技能也一起蜕变',
+  [AffixType.Volatile]: '被蜕变后本技能短期内效果翻倍',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -1020,6 +1036,8 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Refine, event: 'equip_count', targetStacks: 0, effectDesc: '质变：超额退还', transformDesc: '被蜕变时退还200%变异素' },
   { type: EnchantmentType.QuestEvolve, name: '突变', targetAffix: AffixType.Evolve, event: 'equip_count', targetStacks: 0, effectDesc: '质变：必定进化', transformDesc: '100%稀有度+1且额外+1词条' },
   { type: EnchantmentType.QuestHarvest, name: '丰收', targetAffix: AffixType.Harvest, event: 'equip_count', targetStacks: 0, effectDesc: '质变：黄金收割', transformDesc: '被蜕变时获得250金币' },
+  { type: EnchantmentType.QuestChain, name: '瘟疫', targetAffix: AffixType.Chain, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全域连锁', transformDesc: '被蜕变时全键盘技能一起蜕变' },
+  { type: EnchantmentType.QuestVolatile, name: '临界', targetAffix: AffixType.Volatile, event: 'equip_count', targetStacks: 0, effectDesc: '质变：持久不稳定', transformDesc: '被蜕变后下3关效果×2.0' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====

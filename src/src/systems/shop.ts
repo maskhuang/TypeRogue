@@ -627,6 +627,8 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'refine': return `${Math.round(50 * (skillLevel ?? 1))}%`
     case 'evolve': return `${Math.round(25 + 25 * (skillLevel ?? 1))}%`
     case 'harvest': return `${50 * (skillLevel ?? 1)}g`
+    case 'chain': { const n = skillLevel ?? 1; return n >= 3 ? t('param.chain_all') : `${n}${t('param.chain_unit')}` }
+    case 'volatile': { const lv = skillLevel ?? 1; return lv >= 3 ? `2${t('param.volatile_stage')} ×2.0` : `1${t('param.volatile_stage')} ×${(1 + 0.5 * lv).toFixed(1)}` }
     default: return ''
   }
 }
