@@ -239,7 +239,7 @@ export function generateAffixShopItem(
   if (lockedCategory && skill.rarity > 0) {
     for (let attempt = 0; attempt < 20; attempt++) {
       const hasMatch = skill.affixes.some(
-        a => AFFIX_CATEGORY_MAP[a.type as keyof typeof AFFIX_CATEGORY_MAP] === lockedCategory,
+        a => AFFIX_CATEGORY_MAP[a.type as keyof typeof AFFIX_CATEGORY_MAP]?.includes(lockedCategory),
       );
       if (hasMatch) break;
       skill = generateSkill({ resource, rarity: skill.rarity as SkillRarity, availableResources: resourcePool, playerClass });

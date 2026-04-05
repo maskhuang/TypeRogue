@@ -161,11 +161,7 @@ export function getWordResonanceStacks(wordLength: number): number {
 
 /** 判断词条类型是否为叠层式 */
 export function isStackingAffix(type: AffixType): boolean {
-  return AFFIX_CATEGORY_MAP[type] === 'stack'
-    || type === AffixType.Cluster
-    || type === AffixType.Outcast
-    || type === AffixType.Component
-    || type === AffixType.Turbulence
+  return AFFIX_CATEGORY_MAP[type].includes('stack')
 }
 
 // === 生命周期 ===

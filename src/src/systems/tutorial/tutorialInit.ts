@@ -71,7 +71,7 @@ export function initFullTutorial(): void {
       if (skill) {
         lastPurchaseSkillRarity = skill.rarity
         lastPurchaseHasTopologyAffix = skill.affixes.some(
-          a => AFFIX_CATEGORY_MAP[a.type] === 'topology'
+          a => AFFIX_CATEGORY_MAP[a.type]?.includes('topology')
         )
         lastPurchaseIsMultiCell = skill.shapeId != null && skill.shapeId !== 'monomino'
       } else {

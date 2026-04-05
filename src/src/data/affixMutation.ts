@@ -116,11 +116,11 @@ function sampleOneExcluding(
     if (key === 'convert_cross' || key === 'convert_self') {
       if (excludeSet.has(AffixType.Convert)) continue
       // mono_affix 类别过滤
-      if (allowedCategory && AFFIX_CATEGORY_MAP[AffixType.Convert] !== allowedCategory) continue
+      if (allowedCategory && !AFFIX_CATEGORY_MAP[AffixType.Convert]?.includes(allowedCategory)) continue
     } else {
       if (excludeSet.has(key)) continue
       // mono_affix 类别过滤
-      if (allowedCategory && AFFIX_CATEGORY_MAP[key as AffixType] !== allowedCategory) continue
+      if (allowedCategory && !AFFIX_CATEGORY_MAP[key as AffixType]?.includes(allowedCategory)) continue
     }
     entries.push({ key, weight })
     totalWeight += weight

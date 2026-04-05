@@ -162,7 +162,7 @@ export function setMonoAffixCategory(category: string): void {
   const toRemove: string[] = []
   for (const [skillId, skill] of state.affixSkills) {
     const hasMatchingAffix = skill.affixes.some(
-      (a: { type: string }) => AFFIX_CATEGORY_MAP[a.type as keyof typeof AFFIX_CATEGORY_MAP] === category,
+      (a: { type: string }) => AFFIX_CATEGORY_MAP[a.type as keyof typeof AFFIX_CATEGORY_MAP]?.includes(category),
     )
     if (!hasMatchingAffix) toRemove.push(skillId)
   }
