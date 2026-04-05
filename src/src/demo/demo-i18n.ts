@@ -797,6 +797,16 @@ const ZH: Record<string, string> = {
   'quest.quest_decorator': '编译', 'quest.quest_decorator.effect': '放大率随同技能词条数递增', 'quest.quest_decorator.task': '装备N个',
   'quest.quest_reflect': '内省', 'quest.quest_reflect.effect': '词条分×等级额外乘算所有产出', 'quest.quest_reflect.task': '装备N个',
   'quest.quest_monkey_patch': '热更新', 'quest.quest_monkey_patch.effect': '同时修改所有同技能词条（倍率缩为×0.8~1.5）', 'quest.quest_monkey_patch.task': '装备N个',
+  // 蜕变师专属质变
+  'quest.quest_excavate': '深渊', 'quest.quest_excavate.effect': '被蜕变时获得传说遗物（无视等级）', 'quest.quest_excavate.task': '装备N个',
+  'quest.quest_treasure': '宝库', 'quest.quest_treasure.effect': '被蜕变时下次商店出现传说商品（无视等级）', 'quest.quest_treasure.task': '装备N个',
+  'quest.quest_muta_refine': '精炼', 'quest.quest_muta_refine.effect': '被蜕变时退还200%变异素', 'quest.quest_muta_refine.task': '装备N个',
+  'quest.quest_evolve': '突变', 'quest.quest_evolve.effect': '100%稀有度+1且额外+1词条', 'quest.quest_evolve.task': '装备N个',
+  'quest.quest_harvest': '丰收', 'quest.quest_harvest.effect': '被蜕变时获得250金币', 'quest.quest_harvest.task': '装备N个',
+  'quest.quest_muta_chain': '瘟疫', 'quest.quest_muta_chain.effect': '被蜕变时全键盘技能一起蜕变', 'quest.quest_muta_chain.task': '装备N个',
+  'quest.quest_volatile': '临界', 'quest.quest_volatile.effect': '被蜕变后下3关效果×2.0', 'quest.quest_volatile.task': '装备N个',
+  'quest.quest_mutacrit': '变异基因', 'quest.quest_mutacrit.effect': '被蜕变时所有已装备技能+暴击率', 'quest.quest_mutacrit.task': '装备N个',
+  'quest.quest_ascend': '超越', 'quest.quest_ascend.effect': '被蜕变时所有已装备技能升1级', 'quest.quest_ascend.task': '装备N个',
 
   // --- param summary labels (仅升级可变值) ---
   'param.charge_label': '上限',
@@ -1599,7 +1609,7 @@ const EN: Record<string, string> = {
   'affix_desc.amplify': 'Produces no output; matched skills in range gain base value × stacks bonus',
   'affix_desc.conduit': 'Produces no output; matched skills in range get +1 trigger',
   'affix_desc.relay': 'Produces no output; also +1 stack when matched skills trigger, triggers 1 matched skill when full',
-  'affix_desc.outcast': 'Stacks on first/last letter trigger; when full: triggers skill on the word\\'s other end letter key',
+  'affix_desc.outcast': 'Stacks on first/last letter trigger; when full: triggers skill on the word\'s other end letter key',
   'affix_desc.gravity': 'Adjusts probability of words containing this key\'s letter',
   'affix_desc.ligature': 'When letter repeats in current word, output scales with repeat count',
   'affix_desc.twin': 'Gains two enchantments at once instead of choosing one',
@@ -1743,6 +1753,16 @@ const EN: Record<string, string> = {
   'quest.quest_decorator': 'Compile', 'quest.quest_decorator.effect': 'Amplify rate scales with affix count', 'quest.quest_decorator.task': 'Equip N',
   'quest.quest_reflect': 'Introspect', 'quest.quest_reflect.effect': 'Reflect score multiplies total output', 'quest.quest_reflect.task': 'Equip N',
   'quest.quest_monkey_patch': 'Hot Fix', 'quest.quest_monkey_patch.effect': 'Patches all affixes (×0.8~1.5)', 'quest.quest_monkey_patch.task': 'Equip N',
+  // Mutator exclusive quests
+  'quest.quest_excavate': 'Abyss', 'quest.quest_excavate.effect': 'Mutation grants legendary relic (ignores level)', 'quest.quest_excavate.task': 'Equip N',
+  'quest.quest_treasure': 'Vault', 'quest.quest_treasure.effect': 'Mutation makes next shop offer legendary item (ignores level)', 'quest.quest_treasure.task': 'Equip N',
+  'quest.quest_muta_refine': 'Smelt', 'quest.quest_muta_refine.effect': 'Mutation refunds 200% mutagen', 'quest.quest_muta_refine.task': 'Equip N',
+  'quest.quest_evolve': 'Mutate', 'quest.quest_evolve.effect': '100% rarity +1 and extra +1 affix', 'quest.quest_evolve.task': 'Equip N',
+  'quest.quest_harvest': 'Bounty', 'quest.quest_harvest.effect': 'Mutation grants 250 gold', 'quest.quest_harvest.task': 'Equip N',
+  'quest.quest_muta_chain': 'Plague', 'quest.quest_muta_chain.effect': 'Mutation spreads to all keyboard skills', 'quest.quest_muta_chain.task': 'Equip N',
+  'quest.quest_volatile': 'Critical Mass', 'quest.quest_volatile.effect': 'Post-mutation effect ×2.0 for 3 stages', 'quest.quest_volatile.task': 'Equip N',
+  'quest.quest_mutacrit': 'Mutagen', 'quest.quest_mutacrit.effect': 'Mutation gives all equipped skills +crit rate', 'quest.quest_mutacrit.task': 'Equip N',
+  'quest.quest_ascend': 'Transcend', 'quest.quest_ascend.effect': 'Mutation levels up all equipped skills by 1', 'quest.quest_ascend.task': 'Equip N',
 
   // --- param summary / estimate / tooltip labels ---
   'param.convert_to_self': '{icon}{name}→self k={k}',

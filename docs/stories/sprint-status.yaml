@@ -536,7 +536,7 @@ development_status:
   epic-53: in-progress
   53-1-assembly-queue-data: done             # 组装队列数据层
   53-2-queue-ui: done                        # 队列 UI
-  53-3-crafting-i18n: backlog                # 造词台 i18n
+  53-3-crafting-i18n: in-progress            # 造词台 i18n
   53-4-balance-polish: backlog               # 平衡打磨
   epic-53-retrospective: optional
 

@@ -278,7 +278,7 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
   const refineAffix = skill.affixes.find(a => a.type === AffixType.Refine && !a.spent)
   if (refineAffix) {
     const rt = state.affixSkillStates?.get(skillId)
-    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestRefine as string)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestMutaRefine as string)
     // Lv1=50%, Lv2=100%, Lv3=150%, 质变=200%
     const ratio = isTransformed ? 2.0 : 0.5 * skill.level
     refineRefund = Math.floor(cost * ratio)
@@ -317,7 +317,7 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
   const chainAffix = skill.affixes.find(a => a.type === AffixType.Chain && !a.spent)
   if (chainAffix && chainAffix.posRel != null) {
     const rt = state.affixSkillStates?.get(skillId)
-    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestChain as string)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestMutaChain as string)
     // 找范围内的技能
     const { getExtendedNeighbors } = require('./affixTrigger')
     const skillKeys = [...state.player.bindings].filter(([, sid]) => sid === skillId).map(([k]) => k)
