@@ -90,6 +90,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   reflect:     '#1e90ff', // 道奇蓝 — 反射
   monkey_patch:'#cf6a87', // 玫瑰 — 猴子补丁
   excavate:    '#d4a017', // 暗金 — 挖掘
+  treasure:    '#f0c040', // 金黄 — 寻宝
 }
 
 export interface KeyTooltipData {

@@ -378,6 +378,9 @@ export function rollAffixParams(
     case AffixType.Excavate:
       return { type }  // 战斗时无效果，被蜕变时按等级获得遗物
 
+    case AffixType.Treasure:
+      return { type }  // 战斗时无效果，下次商店刷新按等级出现高稀有度商品
+
     default: {
       const _exhaustive: never = type
       throw new Error(`Unknown AffixType: ${type}`)

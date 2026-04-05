@@ -617,7 +617,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance): str
     case 'monkey_patch': return `~×${(a.patchHigh ?? 2.0).toFixed(1)}`
     // ── 无缩放参数 ──
     case 'rainbow': case 'twin': case 'mirror': case 'amplify':
-    case 'conduit': case 'ethereal': case 'excavate':
+    case 'conduit': case 'ethereal': case 'excavate': case 'treasure':
       return ''
     default: return ''
   }

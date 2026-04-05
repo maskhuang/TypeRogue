@@ -73,6 +73,7 @@ export enum AffixType {
   Reflect = 'reflect',
   MonkeyPatch = 'monkey_patch',
   Excavate = 'excavate',
+  Treasure = 'treasure',
 }
 
 // ===== 词条类别 =====
@@ -142,6 +143,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Reflect]: ['meta_rule', 'numeric'],
   [AffixType.MonkeyPatch]: ['meta_rule'],
   [AffixType.Excavate]: ['meta_rule'],
+  [AffixType.Treasure]: ['meta_rule'],
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -618,6 +620,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.MonkeyPatch]: 'low',
   [AffixType.Overflow]: 'high',
   [AffixType.Excavate]: 'low',
+  [AffixType.Treasure]: 'low',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -737,6 +740,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Reflect]: '反射',
   [AffixType.MonkeyPatch]: '猴子补丁',
   [AffixType.Excavate]: '挖掘',
+  [AffixType.Treasure]: '寻宝',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -797,6 +801,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Reflect]: '技能词条越多、等级越高，产出越高',
   [AffixType.MonkeyPatch]: '每关随机修改同技能一个词条的效果倍率',
   [AffixType.Excavate]: '被蜕变时获得一个遗物（等级决定稀有度）',
+  [AffixType.Treasure]: '下次商店刷新出现指定稀有度商品（等级决定稀有度）',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {

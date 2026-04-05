@@ -635,7 +635,7 @@ const ZH: Record<string, string> = {
   'affix.leverage': '杠杆', 'affix.option': '期权', 'affix.hedge': '对冲',
   'affix.burst': '连射', 'affix.zero_in': '校准', 'affix.sharpshooter': '神射', 'affix.overflow': '溢层',
   'affix.bridge': '桥', 'affix.clique': '团', 'affix.component': '连通',
-  'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘',
+  'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝',
 
   // --- affix descriptions (53) ---
   'affix_desc.convert': '读取{source}的产出，按系数加成',
@@ -694,6 +694,7 @@ const ZH: Record<string, string> = {
   'affix_desc.reflect': '技能词条越多、等级越高，产出越高',
   'affix_desc.monkey_patch': '每关随机修改同技能一个词条的效果(×{low}起)，升级提高上限',
   'affix_desc.excavate': '战斗中无效果；被蜕变时获得遗物（Lv1普通/Lv2稀有/Lv3史诗，质变：传说）',
+  'affix_desc.treasure': '战斗中无效果；下次商店刷新时出现指定稀有度商品（Lv1稀有/Lv2史诗/Lv3传说）',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -1569,7 +1570,7 @@ const EN: Record<string, string> = {
   'affix.leverage': 'Leverage', 'affix.option': 'Option', 'affix.hedge': 'Hedge',
   'affix.burst': 'Burst', 'affix.zero_in': 'Zero-In', 'affix.sharpshooter': 'Sharpshooter', 'affix.overflow': 'Overflow',
   'affix.bridge': 'Bridge', 'affix.clique': 'Clique', 'affix.component': 'Component',
-  'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate',
+  'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure',
 
   // --- affix descriptions (53) ---
   'affix_desc.convert': 'Reads {source} output, adds scaled bonus',
@@ -1628,6 +1629,7 @@ const EN: Record<string, string> = {
   'affix_desc.reflect': 'More affixes and higher level on this skill = more output',
   'affix_desc.monkey_patch': 'Each stage, randomly modifies one affix (from ×{low}); upgrade raises ceiling',
   'affix_desc.excavate': 'No combat effect; when mutated: gain a relic (Lv1=common/Lv2=rare/Lv3=epic, transform=legendary)',
+  'affix_desc.treasure': 'No combat effect; next shop refresh includes an item of guaranteed rarity (Lv1=rare/Lv2=epic/Lv3=legendary)',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',
