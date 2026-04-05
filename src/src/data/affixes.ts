@@ -216,6 +216,7 @@ export enum EnchantmentType {
   QuestReflect = 'quest_reflect',
   QuestMonkeyPatch = 'quest_monkey_patch',
   QuestExcavate = 'quest_excavate',
+  QuestTreasure = 'quest_treasure',
   // ── 运算符（保留类型，现通过质变获取） ──
   MultiplyOperator = 'multiply_operator',
 }
@@ -280,6 +281,7 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestReflect]: AffixType.Reflect,
   [EnchantmentType.QuestMonkeyPatch]: AffixType.MonkeyPatch,
   [EnchantmentType.QuestExcavate]: AffixType.Excavate,
+  [EnchantmentType.QuestTreasure]: AffixType.Treasure,
 }
 
 // ===== 附魔元数据（非任务类附魔的显示信息） =====
@@ -802,7 +804,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Reflect]: '技能词条越多、等级越高，产出越高',
   [AffixType.MonkeyPatch]: '每关随机修改同技能一个词条的效果倍率',
   [AffixType.Excavate]: '被蜕变时获得一个遗物（等级决定稀有度）',
-  [AffixType.Treasure]: '下次商店刷新出现指定稀有度商品（等级决定稀有度）',
+  [AffixType.Treasure]: '被蜕变时下次商店出现指定稀有度商品（等级决定稀有度）',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -990,6 +992,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestReflect, name: '内省', targetAffix: AffixType.Reflect, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全词条增幅', transformDesc: 'reflectScore额外作为所有词条效果加成' },
   { type: EnchantmentType.QuestMonkeyPatch, name: '热更新', targetAffix: AffixType.MonkeyPatch, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全体patch', transformDesc: '同时修改所有同技能词条（倍率缩为×0.8~1.5）' },
   { type: EnchantmentType.QuestExcavate, name: '深渊', targetAffix: AffixType.Excavate, event: 'equip_count', targetStacks: 0, effectDesc: '质变：传说挖掘', transformDesc: '被蜕变时获得传说遗物（无视等级）' },
+  { type: EnchantmentType.QuestTreasure, name: '宝库', targetAffix: AffixType.Treasure, event: 'equip_count', targetStacks: 0, effectDesc: '质变：传说寻宝', transformDesc: '被蜕变时下次商店出现传说商品（无视等级）' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====
