@@ -76,19 +76,19 @@ export enum AffixType {
 
 // ===== 词条类别 =====
 
-export type AffixCategory = 'numeric' | 'crit' | 'stack' | 'topology' | 'word_sense' | 'meta_rule'
+export type AffixCategory = 'numeric' | 'crit' | 'stack' | 'topology' | 'word_sense' | 'meta_rule' | 'production'
 
 export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   // ── 数值型 ──
-  [AffixType.Convert]: ['numeric'],
+  [AffixType.Convert]: ['numeric', 'production'],
   [AffixType.Rainbow]: ['numeric'],
   [AffixType.Multiply]: ['numeric'],
-  [AffixType.PhaseShift]: ['numeric'],
-  [AffixType.EndoExo]: ['numeric'],
-  [AffixType.Fusion]: ['numeric'],
-  [AffixType.Leverage]: ['numeric'],
-  [AffixType.Option]: ['numeric'],
-  [AffixType.Hedge]: ['numeric'],
+  [AffixType.PhaseShift]: ['numeric', 'production'],
+  [AffixType.EndoExo]: ['numeric', 'production'],
+  [AffixType.Fusion]: ['numeric', 'production'],
+  [AffixType.Leverage]: ['numeric', 'production'],
+  [AffixType.Option]: ['numeric', 'production'],
+  [AffixType.Hedge]: ['numeric', 'production'],
   // ── 暴击型 ──
   [AffixType.Crit]: ['crit'],
   [AffixType.Charge]: ['crit'],
@@ -114,7 +114,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Void]: ['topology', 'numeric'],
   [AffixType.Mirror]: ['topology', 'meta_rule'],
   [AffixType.Cascade]: ['topology', 'numeric'],
-  [AffixType.Flow]: ['topology', 'numeric'],
+  [AffixType.Flow]: ['topology', 'numeric', 'production'],
   [AffixType.Confluence]: ['topology', 'numeric'],
   [AffixType.Turbulence]: ['topology', 'stack'],
   [AffixType.Bridge]: ['topology', 'crit'],
