@@ -56,9 +56,13 @@ export function getExtendedNeighbors(
   return Array.from(neighbors)
 }
 
-/** 判断词条类型是否属于叠层类（基于 AFFIX_CATEGORY_MAP） */
+/** 判断词条类型是否属于叠层类（stack 类别 + 有叠层功能的跨类别词条） */
 function isStackingAffixType(type: AffixType): boolean {
   return AFFIX_CATEGORY_MAP[type] === 'stack'
+    || type === AffixType.Cluster      // word_sense，辅音丛→叠层
+    || type === AffixType.Outcast      // word_sense，首尾→叠层
+    || type === AffixType.Component    // topology，连通链→叠层
+    || type === AffixType.Turbulence   // topology，差异→叠层
 }
 
 /** 判断技能是否为叠层类（含 Pulse 质变转化） */
