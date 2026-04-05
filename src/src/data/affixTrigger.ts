@@ -283,6 +283,8 @@ export interface Phase5Result {
   outcastTarget?: string
   /** Component 满层：触发链最远端技能 */
   componentFarTarget?: string
+  /** Component 质变满层：触发链上所有技能 */
+  componentAllTargets?: string[]
   /** Turbulence 满层：触发最弱邻居技能 */
   turbulenceWeakTarget?: string
   /** Turbulence 质变满层：触发所有邻居技能 */
@@ -961,7 +963,7 @@ export function resolvePhase2(
 
       case AffixType.Clique:
         // 团 → 移至 Phase 3 暴击子系统
-        // 质变·方阵：消费从团内成员接收的 bonus
+        // cliqueBonusAccum: Leverage 质变分摊亏损用
         if ((runtimeState.cliqueBonusAccum ?? 0) > 0) {
           bonusPercent += runtimeState.cliqueBonusAccum
           runtimeState.cliqueBonusAccum = 0
@@ -976,14 +978,13 @@ export function resolvePhase2(
           flags.stackEffectFired = true
           const compInterval = getEffectiveInterval(affix.componentInterval ?? 6, skill.id, ctx)
           if (runtimeState.stacks > 0 && runtimeState.stacks % compInterval === 0) {
-            // 找链最远端（BFS 最后访问的节点）
-            mutations.push({ type: 'componentFar' as any, value: ctx.triggerKey })
+            // 质变·脉冲链：触发链上所有技能；普通：仅最远端
+            if (isTransformedForAffix(AffixType.Component, runtimeState, skill, ctx)) {
+              mutations.push({ type: 'componentAll' as any, value: ctx.triggerKey })
+            } else {
+              mutations.push({ type: 'componentFar' as any, value: ctx.triggerKey })
+            }
           }
-        }
-        // 质变·网络：本关每次触发累积 +1% bonus
-        if (isTransformedForAffix(AffixType.Component, runtimeState, skill, ctx)) {
-          bonusPercent += runtimeState.componentAccum ?? 0
-          runtimeState.componentAccum = (runtimeState.componentAccum ?? 0) + 0.01
         }
         break
       }
@@ -1489,7 +1490,11 @@ export function resolvePhase3(
       critMult = critMult + excess * FATE_COIN_CONVERSION
     }
 
-    if (effectiveCritChance > 0 && ctx.randomFn() < effectiveCritChance) {
+    // Clique 质变·传染：消耗 guaranteedCrit 标记
+    const isGuaranteedCrit = runtimeState.guaranteedCrit
+    if (isGuaranteedCrit) runtimeState.guaranteedCrit = false
+
+    if (isGuaranteedCrit || (effectiveCritChance > 0 && ctx.randomFn() < effectiveCritChance)) {
       output *= critMult
       multipliers.push(critMult)
       flags.isCrit = true
@@ -2168,19 +2173,18 @@ export function resolvePhase6(
       neighborState.cliqueBonusAccum = (neighborState.cliqueBonusAccum ?? 0) - (runtimeState.leverageLoss / Math.max(1, neighborSkillKeys.size))
     }
 
-    // 质变·方阵：分享 bonusPercent 给团内 Clique 邻居
-    if (triggerBonusPercent && triggerBonusPercent > 0 && neighborState) {
+    // 质变·传染：暴击时团内 Clique 邻居下次必暴击
+    if (isCrit && neighborState) {
       for (const nAffix of neighborSkill.affixes) {
         if (nAffix.type !== AffixType.Clique || nAffix.posRel == null) continue
         if (!isTransformedForAffix(AffixType.Clique, neighborState, neighborSkill, ctx)) continue
-        // 检查触发技能和邻居是否在同一个团中
         const nCliqueKeys = getExtendedNeighbors(
           [...ctx.bindings].filter(([, sid]) => sid === neighborSkillId).map(([k]) => k),
           nAffix.posRel,
         ).filter(k => ctx.bindings.has(k))
         const inClique = occupiedKeys.some(ok => nCliqueKeys.includes(ok) || [...ctx.bindings].filter(([, sid]) => sid === neighborSkillId).some(([nk]) => hasRelation(ok, nk, nAffix.posRel!)))
         if (inClique) {
-          neighborState.cliqueBonusAccum = (neighborState.cliqueBonusAccum ?? 0) + triggerBonusPercent * 0.5
+          neighborState.guaranteedCrit = true
         }
         break
       }
@@ -2373,9 +2377,10 @@ export function triggerAffixSkill(
       }
     }
     if ((m as any).type === 'outcastTarget') p5.outcastTarget = (m as any).value
-    if ((m as any).type === 'componentFar') {
-      // BFS 从触发键出发，找连通分量中最远的键
+    if ((m as any).type === 'componentFar' || (m as any).type === 'componentAll') {
+      // BFS 从触发键出发，遍历连通分量
       const startKey = (m as any).value as string
+      const isAll = (m as any).type === 'componentAll'
       const boundKeys = new Set(ctx.bindings.keys())
       const visited = new Set<string>()
       const queue = [startKey]
@@ -2388,8 +2393,17 @@ export function triggerAffixSkill(
           if (!visited.has(n) && boundKeys.has(n)) { visited.add(n); queue.push(n) }
         }
       }
-      if (farthest !== startKey && ctx.bindings.get(farthest) !== skill.id) {
-        p5.componentFarTarget = farthest
+      if (isAll) {
+        // 质变：触发链上所有技能（排除自身）
+        const allTargets: string[] = []
+        for (const k of visited) {
+          if (ctx.bindings.get(k) !== skill.id) allTargets.push(k)
+        }
+        if (allTargets.length > 0) p5.componentAllTargets = allTargets
+      } else {
+        if (farthest !== startKey && ctx.bindings.get(farthest) !== skill.id) {
+          p5.componentFarTarget = farthest
+        }
       }
     }
     if ((m as any).type === 'turbulenceWeak') {

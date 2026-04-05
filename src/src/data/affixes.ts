@@ -481,6 +481,7 @@ export interface SkillRuntimeState {
   parityCritAccum: number          // Parity: 累计暴击率加成
   primeAccum: number               // Prime: 累计加算加成%
   convertedToStacking: boolean     // Pulse 质变：本关被转化为叠层类（每关重置）
+  guaranteedCrit: boolean          // Clique 质变·传染：下次触发必定暴击（消耗后重置）
 }
 
 // ===== 存档数据 =====
@@ -975,8 +976,8 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestSharpshooter, name: '狙击', targetAffix: AffixType.Sharpshooter, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双维输出', transformDesc: '暴击时同时加产出和暴击倍率' },
   { type: EnchantmentType.QuestOverflow, name: '洪流', targetAffix: AffixType.Overflow, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全域溢层', transformDesc: '暴击时范围内所有叠层类技能+N层' },
   { type: EnchantmentType.QuestBridge, name: '枢纽', targetAffix: AffixType.Bridge, event: 'equip_count', targetStacks: 0, effectDesc: '质变：触发邻居', transformDesc: '是桥时触发断裂两侧各一个邻居' },
-  { type: EnchantmentType.QuestClique, name: '方阵', targetAffix: AffixType.Clique, event: 'equip_count', targetStacks: 0, effectDesc: '质变：团内共享', transformDesc: '团内成员触发时额外获得产出加成（暴击率之外的副收益）' },
-  { type: EnchantmentType.QuestComponent, name: '网络', targetAffix: AffixType.Component, event: 'equip_count', targetStacks: 0, effectDesc: '质变：活跃累积', transformDesc: '每次触发额外+1%产出加成（本关累积，叠层之外的副收益）' },
+  { type: EnchantmentType.QuestClique, name: '传染', targetAffix: AffixType.Clique, event: 'equip_count', targetStacks: 0, effectDesc: '质变：暴击传染', transformDesc: '暴击时团内所有成员下次触发必定暴击' },
+  { type: EnchantmentType.QuestComponent, name: '脉冲链', targetAffix: AffixType.Component, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全链触发', transformDesc: '满层时触发链上所有技能（而非仅最远端）' },
   { type: EnchantmentType.QuestDecorator, name: '编译', targetAffix: AffixType.Decorator, event: 'equip_count', targetStacks: 0, effectDesc: '质变：词条数驱动', transformDesc: '放大率随同技能词条数递增' },
   { type: EnchantmentType.QuestReflect, name: '内省', targetAffix: AffixType.Reflect, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全词条增幅', transformDesc: 'reflectScore额外作为所有词条效果加成' },
   { type: EnchantmentType.QuestMonkeyPatch, name: '热更新', targetAffix: AffixType.MonkeyPatch, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全体patch', transformDesc: '同时修改所有同技能词条（倍率缩为×0.8~1.5）' },
@@ -1024,6 +1025,7 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     parityCritAccum: 0,
     primeAccum: 0,
     convertedToStacking: false,
+    guaranteedCrit: false,
   }
 }
 

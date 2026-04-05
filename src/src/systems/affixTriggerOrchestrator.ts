@@ -424,8 +424,21 @@ export function orchestrateAffixTrigger(
         })
       }
     }
-    // Component 满层：触发链最远端技能
-    if (result.phase5?.componentFarTarget) {
+    // Component 满层：质变→链上所有技能 / 普通→链最远端
+    if (result.phase5?.componentAllTargets) {
+      for (const targetKey of result.phase5.componentAllTargets) {
+        const compSkillId = ctx.bindings.get(targetKey)
+        if (compSkillId) {
+          queue.push({
+            skillId: compSkillId,
+            triggerKey: targetKey,
+            type: 'pulse_burst' as TriggerWorkType,
+            depth: item.depth + 1,
+            chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
+          })
+        }
+      }
+    } else if (result.phase5?.componentFarTarget) {
       const compSkillId = ctx.bindings.get(result.phase5.componentFarTarget)
       if (compSkillId) {
         queue.push({
