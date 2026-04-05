@@ -544,6 +544,8 @@ export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
   [AffixType.Bigram]: 'wordsmith',      // 罕见字母对→暴击 → 合词策略
   [AffixType.Cipher]: 'wordsmith',      // 字母跳跃→暴击 → 合词规划
   [AffixType.Cascade]: 'wordsmith',     // 击键顺序→乘算 → 精密控制
+  // 蜕变师专属
+  [AffixType.Twin]: 'metamorph',        // 双附魔 → 变异后获得更多附魔
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
