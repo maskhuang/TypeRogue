@@ -112,7 +112,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Match]: ['stack', 'topology', 'numeric'],
   // ── 拓扑型 ──
   [AffixType.Void]: ['topology', 'numeric'],
-  [AffixType.Mirror]: ['topology'],
+  [AffixType.Mirror]: ['topology', 'meta_rule'],
   [AffixType.Cascade]: ['topology', 'numeric'],
   [AffixType.Flow]: ['topology', 'numeric'],
   [AffixType.Confluence]: ['topology', 'numeric'],
