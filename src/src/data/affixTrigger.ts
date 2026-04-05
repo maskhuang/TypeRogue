@@ -1500,7 +1500,9 @@ export function resolvePhase3(
     const echoCrit = ctx.echoThimbleCritRate ?? 0
     recurseCritContribution += echoCrit
     flags.recurseCritContribution = recurseCritContribution
-    const rawCritChance = (ctx.baseCritRate ?? 0) + totalCritChance + echoCrit
+    // Mutacrit 永久暴击率累积
+    const mutacritAccum = runtimeState.mutacritAccum ?? 0
+    const rawCritChance = (ctx.baseCritRate ?? 0) + totalCritChance + echoCrit + mutacritAccum
 
     // 命运硬币：超出 50% 的暴击率转化为暴击倍数加成
     let effectiveCritChance = rawCritChance

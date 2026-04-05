@@ -389,6 +389,10 @@ export function rollAffixParams(
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }  // 被蜕变时连锁范围内技能
     case AffixType.Volatile:
       return { type }  // 被蜕变后短期效果翻倍
+    case AffixType.Mutacrit:
+      return { type }  // 被蜕变时永久+暴击率
+    case AffixType.Ascend:
+      return { type }  // 被蜕变时技能升级
 
     default: {
       const _exhaustive: never = type

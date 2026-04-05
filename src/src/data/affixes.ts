@@ -79,6 +79,8 @@ export enum AffixType {
   Harvest = 'harvest',
   Chain = 'chain',
   Volatile = 'volatile',
+  Mutacrit = 'mutacrit',
+  Ascend = 'ascend',
 }
 
 // ===== 词条类别 =====
@@ -154,6 +156,8 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Harvest]: ['meta_rule'],
   [AffixType.Chain]: ['meta_rule', 'topology'],
   [AffixType.Volatile]: ['meta_rule', 'numeric'],
+  [AffixType.Mutacrit]: ['meta_rule', 'crit'],
+  [AffixType.Ascend]: ['meta_rule'],
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -232,6 +236,8 @@ export enum EnchantmentType {
   QuestHarvest = 'quest_harvest',
   QuestChain = 'quest_chain',
   QuestVolatile = 'quest_volatile',
+  QuestMutacrit = 'quest_mutacrit',
+  QuestAscend = 'quest_ascend',
   // ── 运算符（保留类型，现通过质变获取） ──
   MultiplyOperator = 'multiply_operator',
 }
@@ -302,6 +308,8 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestHarvest]: AffixType.Harvest,
   [EnchantmentType.QuestChain]: AffixType.Chain,
   [EnchantmentType.QuestVolatile]: AffixType.Volatile,
+  [EnchantmentType.QuestMutacrit]: AffixType.Mutacrit,
+  [EnchantmentType.QuestAscend]: AffixType.Ascend,
 }
 
 // ===== 附魔元数据（非任务类附魔的显示信息） =====
@@ -511,6 +519,7 @@ export interface SkillRuntimeState {
   primeAccum: number               // Prime: 累计加算加成%
   convertedToStacking: boolean     // Pulse 质变：本关被转化为叠层类（每关重置）
   guaranteedCrit: boolean          // Clique 质变·传染：下次触发必定暴击（消耗后重置）
+  mutacritAccum: number            // Mutacrit：蜕变永久累积暴击率
 }
 
 // ===== 存档数据 =====
@@ -581,6 +590,8 @@ export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
   [AffixType.Harvest]: 'metamorph',     // 收割 → 被蜕变时获得金币
   [AffixType.Chain]: 'metamorph',       // 连锁 → 被蜕变时范围内技能也蜕变
   [AffixType.Volatile]: 'metamorph',    // 不稳定 → 被蜕变后短期效果翻倍
+  [AffixType.Mutacrit]: 'metamorph',   // 蜕变暴击 → 被蜕变时永久+暴击率
+  [AffixType.Ascend]: 'metamorph',     // 升华 → 被蜕变时技能升级
 }
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
@@ -654,6 +665,8 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Harvest]: 'high',
   [AffixType.Chain]: 'low',
   [AffixType.Volatile]: 'high',
+  [AffixType.Mutacrit]: 'high',
+  [AffixType.Ascend]: 'low',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -779,6 +792,8 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Harvest]: '收割',
   [AffixType.Chain]: '连锁',
   [AffixType.Volatile]: '不稳定',
+  [AffixType.Mutacrit]: '蜕变暴击',
+  [AffixType.Ascend]: '升华',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -845,6 +860,8 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Harvest]: '被蜕变时获得金币',
   [AffixType.Chain]: '被蜕变时指定关系的技能也一起蜕变',
   [AffixType.Volatile]: '被蜕变后本技能短期内效果翻倍',
+  [AffixType.Mutacrit]: '被蜕变时本技能永久获得暴击率',
+  [AffixType.Ascend]: '被蜕变时本技能升级',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -1038,6 +1055,8 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestHarvest, name: '丰收', targetAffix: AffixType.Harvest, event: 'equip_count', targetStacks: 0, effectDesc: '质变：黄金收割', transformDesc: '被蜕变时获得250金币' },
   { type: EnchantmentType.QuestChain, name: '瘟疫', targetAffix: AffixType.Chain, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全域连锁', transformDesc: '被蜕变时全键盘技能一起蜕变' },
   { type: EnchantmentType.QuestVolatile, name: '临界', targetAffix: AffixType.Volatile, event: 'equip_count', targetStacks: 0, effectDesc: '质变：持久不稳定', transformDesc: '被蜕变后下3关效果×2.0' },
+  { type: EnchantmentType.QuestMutacrit, name: '变异基因', targetAffix: AffixType.Mutacrit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全技能暴击', transformDesc: '被蜕变时所有已装备技能+暴击率' },
+  { type: EnchantmentType.QuestAscend, name: '超越', targetAffix: AffixType.Ascend, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全技能升级', transformDesc: '被蜕变时所有已装备技能升1级' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====
@@ -1083,6 +1102,7 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     primeAccum: 0,
     convertedToStacking: false,
     guaranteedCrit: false,
+    mutacritAccum: 0,
   }
 }
 

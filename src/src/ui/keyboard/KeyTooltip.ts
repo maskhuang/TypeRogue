@@ -96,6 +96,8 @@ export const AFFIX_COLORS: Record<string, string> = {
   harvest:     '#ffd700', // 金 — 收割
   chain:       '#e74c3c', // 红 — 连锁
   volatile:    '#ff6b6b', // 亮红 — 不稳定
+  mutacrit:    '#f39c12', // 橙 — 蜕变暴击
+  ascend:      '#00b894', // 青绿 — 升华
 }
 
 export interface KeyTooltipData {

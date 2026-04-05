@@ -635,7 +635,7 @@ const ZH: Record<string, string> = {
   'affix.leverage': '杠杆', 'affix.option': '期权', 'affix.hedge': '对冲',
   'affix.burst': '连射', 'affix.zero_in': '校准', 'affix.sharpshooter': '神射', 'affix.overflow': '溢层',
   'affix.bridge': '桥', 'affix.clique': '团', 'affix.component': '连通',
-  'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝', 'affix.refine': '提纯', 'affix.evolve': '进化', 'affix.harvest': '收割', 'affix.chain': '连锁', 'affix.volatile': '不稳定',
+  'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝', 'affix.refine': '提纯', 'affix.evolve': '进化', 'affix.harvest': '收割', 'affix.chain': '连锁', 'affix.volatile': '不稳定', 'affix.mutacrit': '蜕变暴击', 'affix.ascend': '升华',
 
   // --- affix descriptions (53) ---
   'affix_desc.convert': '读取{source}的产出，按系数加成',
@@ -700,6 +700,8 @@ const ZH: Record<string, string> = {
   'affix_desc.harvest': '被蜕变时获得金币，等级越高金币越多',
   'affix_desc.chain': '被蜕变时指定关系的技能也一起免费蜕变',
   'affix_desc.volatile': '被蜕变后本技能短期内效果翻倍',
+  'affix_desc.mutacrit': '被蜕变时本技能永久获得暴击率加成',
+  'affix_desc.ascend': '被蜕变时本技能有概率升级',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -817,6 +819,7 @@ const ZH: Record<string, string> = {
   'param.chain_unit': '个技能',
   'param.chain_all': '全部范围内',
   'param.volatile_stage': '关',
+  'param.ascend_guaranteed': '必定',
 
   // --- smart estimate labels ---
   'est.base_mult': '基础值 ×{val}',
@@ -1578,7 +1581,7 @@ const EN: Record<string, string> = {
   'affix.leverage': 'Leverage', 'affix.option': 'Option', 'affix.hedge': 'Hedge',
   'affix.burst': 'Burst', 'affix.zero_in': 'Zero-In', 'affix.sharpshooter': 'Sharpshooter', 'affix.overflow': 'Overflow',
   'affix.bridge': 'Bridge', 'affix.clique': 'Clique', 'affix.component': 'Component',
-  'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure', 'affix.refine': 'Refine', 'affix.evolve': 'Evolve', 'affix.harvest': 'Harvest', 'affix.chain': 'Chain', 'affix.volatile': 'Volatile',
+  'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure', 'affix.refine': 'Refine', 'affix.evolve': 'Evolve', 'affix.harvest': 'Harvest', 'affix.chain': 'Chain', 'affix.volatile': 'Volatile', 'affix.mutacrit': 'Mutacrit', 'affix.ascend': 'Ascend',
 
   // --- affix descriptions (53) ---
   'affix_desc.convert': 'Reads {source} output, adds scaled bonus',
@@ -1643,6 +1646,8 @@ const EN: Record<string, string> = {
   'affix_desc.harvest': 'When mutated: gain gold; higher level = more gold',
   'affix_desc.chain': 'When mutated: skills in range also mutate for free',
   'affix_desc.volatile': 'After mutation: skill effects boosted for a few stages',
+  'affix_desc.mutacrit': 'When mutated: this skill permanently gains crit rate',
+  'affix_desc.ascend': 'When mutated: chance to level up this skill',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',
@@ -1762,6 +1767,7 @@ const EN: Record<string, string> = {
   'param.chain_unit': ' skills',
   'param.chain_all': 'all in range',
   'param.volatile_stage': ' stages',
+  'param.ascend_guaranteed': 'guaranteed',
 
   // --- smart estimate labels ---
   'est.base_mult': 'Base ×{val}',

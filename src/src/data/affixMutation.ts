@@ -44,6 +44,10 @@ export interface MutationResult {
   chainMutateSkillIds?: string[]
   /** Volatile：短期效果倍率和持续关数 */
   volatileBoost?: { multiplier: number, stages: number }
+  /** Mutacrit：永久暴击率加成 */
+  mutacritBonus?: number
+  /** Ascend：技能升级结果 */
+  ascendResult?: { levelUp: boolean, allSkills: boolean }
 }
 
 // ===== 消耗查询 =====
@@ -348,6 +352,50 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
     volatileBoost = { multiplier, stages }
   }
 
+  // Mutacrit（蜕变暴击）：被蜕变时本技能永久+暴击率
+  let mutacritBonus: number | undefined
+  const mutacritAffix = skill.affixes.find(a => a.type === AffixType.Mutacrit && !a.spent)
+  if (mutacritAffix) {
+    const rt = state.affixSkillStates?.get(skillId)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestMutacrit as string)
+    // Lv1=+5%, Lv2=+10%, Lv3=+15%, 质变=所有已装备技能+5%
+    const bonus = 0.05 * skill.level
+    if (isTransformed) {
+      // 质变：所有已装备技能+暴击率
+      for (const [, sid] of state.player.bindings) {
+        const srt = state.affixSkillStates?.get(sid)
+        if (srt) (srt as any).mutacritAccum = ((srt as any).mutacritAccum ?? 0) + 0.05
+      }
+    }
+    const srt = state.affixSkillStates?.get(skillId)
+    if (srt) (srt as any).mutacritAccum = ((srt as any).mutacritAccum ?? 0) + bonus
+    mutacritBonus = isTransformed ? 0.05 : bonus
+  }
+
+  // Ascend（升华）：被蜕变时本技能升级
+  let ascendResult: { levelUp: boolean, allSkills: boolean } | undefined
+  const ascendAffix = skill.affixes.find(a => a.type === AffixType.Ascend && !a.spent)
+  if (ascendAffix) {
+    const rt = state.affixSkillStates?.get(skillId)
+    const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestAscend as string)
+    // Lv1=50%, Lv2=75%, Lv3=100%必定, 质变=所有技能+1级
+    const chance = skill.level >= 3 ? 1.0 : 0.25 + 0.25 * skill.level
+    const levelUp = Math.random() < chance
+    if (isTransformed) {
+      // 质变：所有已装备技能升1级
+      for (const [, sid] of state.player.bindings) {
+        const s = state.affixSkills.get(sid)
+        if (s && s.level < 4) (s as any).level++
+      }
+      ascendResult = { levelUp: true, allSkills: true }
+    } else if (levelUp && skill.level < 4) {
+      (skill as any).level++
+      ascendResult = { levelUp: true, allSkills: false }
+    } else {
+      ascendResult = { levelUp: false, allSkills: false }
+    }
+  }
+
   // 保存旧词条，用于任务附魔失效检查
   const oldAffixes = skill.affixes.map(a => ({ ...a }))
 
@@ -400,5 +448,7 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
     harvestGold,
     chainMutateSkillIds,
     volatileBoost,
+    mutacritBonus,
+    ascendResult,
   }
 }
