@@ -15,7 +15,7 @@ import { generateWordPacks, getConditionMeta } from '../data/wordPacks';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
-import { showScreen, startLevel, renderRelicDisplay, showFeedback } from './battle';
+import { showScreen, startLevel, renderRelicDisplay, showFeedback, randomizeScreenBackground } from './battle';
 import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
 import { getNextBattleNode, isSecondHalf, getPositionInCycle } from './stage/stageFlow';
 import { calculateLetterFrequency, FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem';
@@ -1287,6 +1287,9 @@ export function openShop(_won: boolean): void {
     clearFreqDropWarning();
     clearShapePlacement();
   };
+  // Story 55-2: 商店背景像素化 — 随机双色渐变
+  randomizeScreenBackground(el.shopScreen);
+
   showScreen('shop');
 
   // 补偿：检查商店外升到Lv.3但未附魔的技能（如休息关升级）
@@ -1663,7 +1666,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       card.innerHTML = `
         <div class="reward-icon">${getPackIcon(pack.condition.type)}</div>
         <div class="reward-info">
-          <div class="reward-name" style="font-size:16px;letter-spacing:1px;">${wordHtml}</div>
+          <div class="reward-name" style="letter-spacing:1px;">${wordHtml}</div>
           <div class="reward-desc pack-preview">${pack.desc}</div>
           ${effectHtml}
         </div>
@@ -1960,7 +1963,7 @@ function showAffixComparisonPanel(shopSkill: AffixSkillInstance, cardEl: HTMLEle
   hideAffixComparisonPanel();
   comparisonPanel = document.createElement('div');
   comparisonPanel.className = 'affix-comparison-panel';
-  comparisonPanel.style.cssText = 'position:absolute;z-index:1000;background:#1a1a2e;border:1px solid #333;border-radius:8px;padding:10px;font-size:11px;color:#ccc;pointer-events:none;min-width:280px;';
+  comparisonPanel.style.cssText = 'position:absolute;z-index:1000;background:#1a1a2e;border:2px solid #333;border-radius:0;padding:10px;font-size:9px;color:#ccc;pointer-events:none;min-width:280px;';
 
   // 左列：当前技能  右列：商店技能
   const leftCol = buildComparisonColumn(existingSkill, t('est.current_label', { key: existingKey?.toUpperCase() ?? '?' }), shopSkill);
@@ -2161,7 +2164,7 @@ function expandPackCard(card: HTMLElement, item: ShopItem, index: number): void 
       // 选中该词，直接购买
       const smuggleFree = index === getSmuggleFreeIndex()
       const cost = smuggleFree ? 0 : item.cost
-      if (state.gold < cost) { showFeedback(t('shop.no_gold'), '#ff6b6b'); return }
+      if (state.gold < cost) { return }
       if (smuggleFree) consumeSmuggleFree()
       state.gold -= cost
       updateGoldDisplay()
@@ -2173,11 +2176,11 @@ function expandPackCard(card: HTMLElement, item: ShopItem, index: number): void 
         const counts: Record<string, number> = {}
         for (const ch of letters) counts[ch] = (counts[ch] ?? 0) + 1
         const detail = Object.entries(counts).map(([l, n]) => `+${n}${l}`).join(' ')
-        showFeedback(t('shop.disassemble_word', { word, detail }), '#9b59b6')
+        // showFeedback(t('shop.disassemble_word', { word, detail }), '#9b59b6')
       } else {
         state.player.wordDeck.push(word)
         invalidateBigramCache()
-        showFeedback(t('shop.add_word', { word }), '#4ecdc4')
+        // showFeedback(t('shop.add_word', { word }), '#4ecdc4')
       }
       if (pack.wordEffect && state.classId !== 'wordsmith') {
         state.wordEffects.set(word, pack.wordEffect)
@@ -2203,7 +2206,7 @@ function purchasePackItem(index: number): void {
   const cost = smuggleFree ? 0 : item.cost;
 
   if (state.gold < cost) {
-    showFeedback(t('shop.no_gold'), '#ff6b6b');
+    // showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
 
@@ -2220,12 +2223,12 @@ function purchasePackItem(index: number): void {
       const counts: Record<string, number> = {};
       for (const ch of letters) counts[ch] = (counts[ch] ?? 0) + 1;
       const detail = Object.entries(counts).map(([l, n]) => `+${n}${l}`).join(' ');
-      showFeedback(t('shop.disassemble_word', { word, detail }), '#9b59b6');
+      // showFeedback(t('shop.disassemble_word', { word, detail }), '#9b59b6');
     } else {
       // 非造词师：直接加入词库
       state.player.wordDeck.push(word);
       invalidateBigramCache();
-      showFeedback(t('shop.add_word', { word }), '#4ecdc4');
+      // showFeedback(t('shop.add_word', { word }), '#4ecdc4');
     }
     // 词语效果：非造词师绑定到词（造词师拆解了词，效果无法绑定）
     if (pack.wordEffect && state.classId !== 'wordsmith') {
@@ -2276,7 +2279,7 @@ function checkAutoEnchantment(skillId: string): void {
     : totalEnch === 0 ? 1.0
     : Math.max(0.1, 0.8 - 0.15 * (totalEnch - 1));
   if (random() >= prob) {
-    showFeedback('附魔失败', '#ff6b6b');
+    // showFeedback('附魔失败', '#ff6b6b');
     return;
   }
   // 成功：展示 2 选 1 附魔面板
@@ -2297,7 +2300,7 @@ function showAutoEnchantmentPanel(
   overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;';
 
   const panel = document.createElement('div');
-  panel.style.cssText = 'background:#1a1a2e;border:2px solid #ffd700;border-radius:12px;padding:24px;max-width:500px;text-align:center;';
+  panel.style.cssText = 'background:#1a1a2e;border:2px solid #ffd700;border-radius:0;padding:24px;max-width:500px;text-align:center;';
 
   const title = document.createElement('h3');
   title.textContent = t('ritual.pick_enchant');
@@ -2343,7 +2346,7 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
   const cost = smuggleFree ? 0 : item.cost;
 
   if (state.gold < cost) {
-    showFeedback(t('shop.no_gold'), '#ff6b6b');
+    // showFeedback(t('shop.no_gold'), '#ff6b6b');
     return null;
   }
 
@@ -2353,19 +2356,19 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
   if (!item.isUpgrade) {
     const maxSkillCount = queryRelicFlag('max_skill_count') as number;
     if (maxSkillCount !== Infinity && state.player.skills.size >= maxSkillCount) {
-      showFeedback(t('shop.skill_count_full'), '#ff6b6b');
+      // showFeedback(t('shop.skill_count_full'), '#ff6b6b');
       return null;
     }
     // 备战席容量检查
     if (isInventoryFull(1)) {
-      showFeedback(t('shop.inventory_full'), '#ff6b6b');
+      // showFeedback(t('shop.inventory_full'), '#ff6b6b');
       return null;
     }
   } else {
     const maxSkillLevel = Infinity;
     const currentLevel = state.player.skills.get(skillId)?.level ?? 0;
     if (maxSkillLevel !== Infinity && currentLevel >= maxSkillLevel) {
-      showFeedback(t('shop.level_capped'), '#ff6b6b');
+      // showFeedback(t('shop.level_capped'), '#ff6b6b');
       return null;
     }
   }
@@ -2404,14 +2407,14 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
       if (data?.level === getMinEnchantmentLevel()) {
         checkAutoEnchantment(skillId);
       }
-      showFeedback(t('shop.skill_upgrade', { name: affixSkill.name }), '#ffe66d');
+      // showFeedback(t('shop.skill_upgrade', { name: affixSkill.name }), '#ffe66d');
     } else {
       // 新词条制技能
       affixSkill.purchasePrice = item.cost;
       state.player.skills.set(skillId, { level: 1, purchasePrice: item.cost });
       state.affixSkills.set(skillId, affixSkill);
       state.affixSkillStates.set(skillId, createSkillRuntimeState(skillId));
-      showFeedback(t('shop.got_skill', { name: affixSkill.name }), '#4ecdc4');
+      // showFeedback(t('shop.got_skill', { name: affixSkill.name }), '#4ecdc4');
       // 购买时等级=1，统一门槛 Lv.3，不会触发
       if (1 === getMinEnchantmentLevel()) {
         checkAutoEnchantment(skillId);
@@ -2448,7 +2451,7 @@ function purchaseShopItem(index: number): void {
       data.level = minMaxLevel;
       const affixSkill = state.affixSkills.get(result.skillId);
       if (affixSkill) applyAffixLevelScaling(affixSkill.affixes, minMaxLevel - 1);
-      showFeedback(t('shop.auto_level', { level: minMaxLevel }), '#ffe66d');
+      // showFeedback(t('shop.auto_level', { level: minMaxLevel }), '#ffe66d');
     }
   }
 
@@ -2475,12 +2478,12 @@ function purchaseShopRelicItem(index: number): void {
   const cost = smuggleFree ? 0 : item.cost;
 
   if (state.gold < cost) {
-    showFeedback(t('shop.no_gold'), '#ff6b6b');
+    // showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
 
   if (state.player.relics.has(relicId)) {
-    showFeedback(t('shop.already_owned'), '#ff6b6b');
+    // showFeedback(t('shop.already_owned'), '#ff6b6b');
     return;
   }
 
@@ -2489,12 +2492,12 @@ function purchaseShopRelicItem(index: number): void {
     state.gold -= cost;
     addRelicWithCapacity(relicId);
     updateGoldDisplay();
-    showFeedback(t('shop.got_relic', { icon: relic.icon, name: localizeItemName(relicId, relic.name) }), '#ffe66d');
+    // showFeedback(t('shop.got_relic', { icon: relic.icon, name: localizeItemName(relicId, relic.name) }), '#ffe66d');
     playSound('buy');
     // 集训手册 — 购买时所有技能等级+1（上限 Lv.3）
     if (relicId === 'training_manual') {
       const upgradedIds = applyTrainingManual();
-      if (upgradedIds.length > 0) showFeedback(t('shop.training_manual_feedback', { n: upgradedIds.length }), '#00ff88');
+      // showFeedback removed for upgradedIds
       // 达到附魔等级门槛时触发附魔检查
       for (const uid of upgradedIds) {
         const uData = state.player.skills.get(uid);
@@ -2507,7 +2510,7 @@ function purchaseShopRelicItem(index: number): void {
     // D100 — 购买时立即替换所有技能词条
     if (relicId === 'd_100') {
       const count = rerollAllAffixes();
-      if (count > 0) showFeedback(t('shop.d100_feedback', { n: count }), '#ff6b00');
+      // showFeedback removed for d100
     }
     // (row_medal deleted)
     state.shop.items.splice(index, 1);
@@ -2529,7 +2532,7 @@ function purchaseShopRelicItem(index: number): void {
         // 集训手册 — 替换购买时也触发等级+1
         if (relicId === 'training_manual') {
           const upgradedIds = applyTrainingManual();
-          if (upgradedIds.length > 0) showFeedback(t('shop.training_manual_feedback', { n: upgradedIds.length }), '#00ff88');
+          // showFeedback removed for upgradedIds
           for (const uid of upgradedIds) {
             const uData = state.player.skills.get(uid);
             const uAffix = state.affixSkills.get(uid);
@@ -2560,7 +2563,7 @@ function purchaseShopEnchantmentItem(index: number): void {
   const cost = smuggleFree ? 0 : item.cost;
 
   if (state.gold < cost) {
-    showFeedback(t('shop.no_gold'), '#ff6b6b');
+    // showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
 
@@ -2575,7 +2578,7 @@ function purchaseShopEnchantmentItem(index: number): void {
   }
 
   if (eligibleSkills.length === 0) {
-    showFeedback(t('shop.no_enchant_target'), '#ff6b6b');
+    // showFeedback(t('shop.no_enchant_target'), '#ff6b6b');
     return;
   }
 
@@ -2648,7 +2651,7 @@ function showEnchantmentTargetSelect(
       const feedbackText = enchInfo
         ? t('ritual.applied', { icon: enchInfo.icon, name: enchInfo.name, skill: affixSkill.name })
         : t('ritual.applied_generic');
-      showFeedback(feedbackText, '#4ecdc4');
+      // showFeedback(feedbackText, '#4ecdc4');
 
       renderUnifiedShop();
       renderBuildManager();
@@ -2672,21 +2675,21 @@ function refreshShop(): void {
   // Story 36.7: 词语经销商 — 消费免费刷新 flag
   if (cost > 0 && consumeWordDealerFreeRefresh()) {
     cost = 0;
-    showFeedback('🤑 免费刷新！', '#ffe66d');
+    // showFeedback('🤑 免费刷新！', '#ffe66d');
   }
   // Story 36.10: 幕间准备 — 消费免费刷新
   if (cost > 0 && hasIntermissionFreeRefresh()) {
     consumeIntermissionFreeRefresh();
     cost = 0;
-    showFeedback(t('shop.intermission_refresh'), '#88ddff');
+    // showFeedback(t('shop.intermission_refresh'), '#88ddff');
   }
   // 致命礼物 — 消费免费刷新
   if (cost > 0 && consumeDeadlyGiftFreeRefresh()) {
     cost = 0;
-    showFeedback(t('shop.deadly_gift_refresh'), '#ffdd00');
+    // showFeedback(t('shop.deadly_gift_refresh'), '#ffdd00');
   }
   if (cost > 0 && state.gold < cost) {
-    showFeedback(t('shop.no_gold'), '#ff6b6b');
+    // showFeedback(t('shop.no_gold'), '#ff6b6b');
     return;
   }
   state.gold -= cost;
@@ -2724,7 +2727,7 @@ export function sellSkill(skillId: string): void {
   state.player.skills.delete(skillId);
 
   updateGoldDisplay();
-  showFeedback(t('shop.sell', { price: sellPrice }), '#ffe66d');
+  // showFeedback(t('shop.sell', { price: sellPrice }), '#ffe66d');
   playSound('buy');
   evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   renderUnifiedShop();
@@ -2735,7 +2738,7 @@ export function sellSkill(skillId: string): void {
 export function sellWord(index: number): void {
   if (index < 0 || index >= state.player.wordDeck.length) return;
   if (state.player.wordDeck.length <= MIN_WORD_COUNT) {
-    showFeedback(t('shop.min_words', { count: MIN_WORD_COUNT }), '#ff6b6b');
+    // showFeedback(t('shop.min_words', { count: MIN_WORD_COUNT }), '#ff6b6b');
     return;
   }
   const word = state.player.wordDeck[index];
@@ -2745,10 +2748,10 @@ export function sellWord(index: number): void {
   // 移除词语效果
   state.wordEffects.delete(word);
   updateGoldDisplay();
-  showFeedback(t('shop.sell_word', { word }), '#ffe66d');
+  // showFeedback(t('shop.sell_word', { word }), '#ffe66d');
   // Story 36.7: 词语经销商 — 卖词后下次刷新免费
   if (setWordDealerFlag()) {
-    showFeedback('🤑 下次刷新免费', '#88ddff');
+    // showFeedback('🤑 下次刷新免费', '#88ddff');
   }
   playSound('buy');
   renderUnifiedShop();
@@ -2882,7 +2885,7 @@ function applyAffixRandomEnchantment(
   }
   const info = getEnchantmentDisplayInfo(chosen, affixSkill.transmuteResource, affixSkill.neighborPosRel);
   if (info) {
-    showFeedback(t('shop.random_enchant', { icon: info.icon, name: info.name }), '#f9ca24');
+    // showFeedback(t('shop.random_enchant', { icon: info.icon, name: info.name }), '#f9ca24');
   }
   resolveRelicEffectsWithBehaviors('on_enchantment_acquire', {
     enchantedSkillId: skillId,
@@ -2996,7 +2999,7 @@ function renderAffixEnchantmentModal(
       if (state.player.relics.has('star_chart')) {
         state.player.relicStates['star_chart'] = (state.player.relicStates['star_chart'] ?? 0) + 1;
       }
-      showFeedback(t('shop.enchanted', { icon: info.icon, name: info.name }), '#f9ca24');
+      // showFeedback(t('shop.enchanted', { icon: info.icon, name: info.name }), '#f9ca24');
       playSound('buy');
       closeEnchantmentModal();
       renderUnifiedShop();
@@ -3146,7 +3149,7 @@ export function renderBuildManager(): void {
       unboundSkillIds.add(skillId);
       unbindSkill(getBindingState(state), skillId);
       const affixSk = state.affixSkills.get(skillId);
-      if (affixSk) showFeedback(t('shop.unbound', { name: affixSk.name, key: key.toUpperCase() }), '#ff6b6b');
+      // showFeedback removed for unbound
     }
   }
   if (unboundSkillIds.size > 0) {
@@ -3529,7 +3532,7 @@ const MIN_WORD_COUNT = 3;
 function removeWord(index: number): void {
   if (index < 0 || index >= state.player.wordDeck.length) return;
   if (state.player.wordDeck.length <= MIN_WORD_COUNT) {
-    showFeedback(t('shop.min_words', { count: MIN_WORD_COUNT }), '#ff6b6b');
+    // showFeedback(t('shop.min_words', { count: MIN_WORD_COUNT }), '#ff6b6b');
     return;
   }
   const word = state.player.wordDeck[index];
@@ -3539,10 +3542,10 @@ function removeWord(index: number): void {
   // 移除词语效果
   state.wordEffects.delete(word);
   updateGoldDisplay();
-  showFeedback(t('shop.sell_word_feedback', { word }), '#ffe66d');
+  // showFeedback(t('shop.sell_word_feedback', { word }), '#ffe66d');
   // Story 36.7: 词语经销商 — 卖词后下次刷新免费
   if (setWordDealerFlag()) {
-    showFeedback('🤑 下次刷新免费', '#88ddff');
+    // showFeedback('🤑 下次刷新免费', '#88ddff');
   }
   playSound('buy');
   renderUnifiedShop();
@@ -3735,7 +3738,7 @@ function handleKeySlotRotation(key: string, reverse = false): void {
   if (nextRotation === -1 || !targetKeys) {
     // 所有旋转态都放不下
     playSound('wrong');
-    showFeedback(t('shop.rotate_fail'), '#ff6b6b');
+    // showFeedback(t('shop.rotate_fail'), '#ff6b6b');
     const skillKeys = [...state.player.bindings.entries()].filter(([, id]) => id === skillId).map(([k]) => k);
     for (const sk of skillKeys) {
       if (!KEYS.includes(sk)) continue;
@@ -3758,12 +3761,12 @@ function handleKeySlotRotation(key: string, reverse = false): void {
     affixSkill.rotation = currentRotation;
     bindShapeToKeys(bs, skillId, anchorKey, allowPunctRot);
     playSound('wrong');
-    showFeedback(t('shop.rotate_fail'), '#ff6b6b');
+    // showFeedback(t('shop.rotate_fail'), '#ff6b6b');
     return;
   }
 
   if (result.displacedSkillIds.length > 0) {
-    showFeedback(t('shop.rotate_displaced'), '#ffaa00');
+    // showFeedback(t('shop.rotate_displaced'), '#ffaa00');
   }
 
   evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
@@ -3785,7 +3788,7 @@ function handleKeySlotRotation(key: string, reverse = false): void {
 function handleDropOnKey(targetKey: string, payload: DragPayload): void {
   // 回归基本功：禁止装备技能
   if (hasGlassCannon()) {
-    showFeedback(t('shop.no_equip_basic'), '#ff6b6b');
+    // showFeedback(t('shop.no_equip_basic'), '#ff6b6b');
     return;
   }
 
@@ -3821,7 +3824,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
           }
         }
         if (!fitKeys) {
-          showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
+          // showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
           return;
         }
       }
@@ -3879,7 +3882,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
         // 放不下：恢复双方原始绑定
         if (sourceAnchorKey) bindShapeToKeys(bs, skillId, sourceAnchorKey, allowPunct);
         if (existingAnchorKey) bindShapeToKeys(bs, existingSkill, existingAnchorKey, allowPunct);
-        showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
+        // showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
       } else {
         // 记录 r1 可能覆盖的第三方技能及其锚点（用于回退恢复）
         const displacedAnchors = new Map<string, string>();
@@ -3899,7 +3902,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
           for (const [dId, dAnchor] of displacedAnchors) {
             bindShapeToKeys(bs, dId, dAnchor, allowPunct);
           }
-          showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
+          // showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
         }
       }
     } else {
@@ -3924,7 +3927,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
         }
       }
       if (!r.success) {
-        showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
+        // showFeedback(t('shop.shape_no_fit'), '#ff6b6b');
       }
     }
 
@@ -4114,10 +4117,10 @@ function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicDa
   const rarityColor = RELIC_RARITY_COLORS[relic.rarity] || '#aaa';
   let descText = localizeItemDesc(relic.id, relic.description);
   tip.innerHTML =
-    `<div style="font-size:14px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${localizeItemName(relic.id, relic.name)}</div>` +
-    `<div style="font-size:9px;padding:1px 4px;border-radius:3px;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${getRarityLabel(relic.rarity)}</div>` +
-    `<div style="color:#aaa;font-size:10px;white-space:normal;">${descText}</div>` +
-    (relic.flavor && getLocale() === 'zh' ? `<div style="color:#666;font-size:9px;font-style:italic;margin-top:4px;">${relic.flavor}</div>` : '');
+    `<div style="font-size:10px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${localizeItemName(relic.id, relic.name)}</div>` +
+    `<div style="font-size:8px;padding:1px 4px;border-radius:0;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${getRarityLabel(relic.rarity)}</div>` +
+    `<div style="color:#aaa;font-size:8px;white-space:normal;">${descText}</div>` +
+    (relic.flavor && getLocale() === 'zh' ? `<div style="color:#666;font-size:8px;font-style:italic;margin-top:4px;">${relic.flavor}</div>` : '');
   tip.style.left = e.clientX + 12 + 'px';
   tip.style.top = e.clientY + 12 + 'px';
   document.body.appendChild(tip);

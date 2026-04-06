@@ -12,6 +12,7 @@ import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension, emitResourceSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
+import { initFloatTextCanvas, spawnFloatText, spawnFlightText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput, isChargeSkill, resetStageProduced } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop } from './shop';
@@ -914,7 +915,7 @@ function playerWrong(): void {
     showFeedback(t('battle.cancel_error', { value: cancelPenalty }), '#ff4444');
   }
 
-  if (state.combo > 5) showFeedback(t('battle.combo_break', { combo: state.combo }), '#ff6b6b');
+  if (state.combo > 5) showFeedback('COMBO BREAK', '#ff6b6b');
 
   // 遗物 on_combo_break 管道解析（完美主义者断连击失去遗物）
   resolveRelicEffectsWithBehaviors('on_combo_break', {}, {
@@ -1347,8 +1348,11 @@ function updateSettlementLive(): void {
   }
 
   // 确保面板可见
+  const wasHidden = settlement.classList.contains('settlement-hidden');
   settlement.classList.remove('settlement-hidden');
   settlement.classList.add('settlement-live');
+  // 面板首次显示后刷新飞行目标位置缓存
+  if (wasHidden) refreshFloatPositionCache();
 }
 
 /** 词语完成时播放结算动画 */
@@ -1859,6 +1863,36 @@ function hideSettlement(): void {
   settlementTimeouts = [];
 }
 
+/** 每关随机生成双色渐变背景 — 8 色 HSL 调色板 + 径向高光 */
+export const SCREEN_BG_PALETTE = [
+  { h: 210, s: 25 }, // 灰蓝
+  { h: 230, s: 20 }, // 深靛蓝
+  { h: 160, s: 20 }, // 灰绿
+  { h: 280, s: 18 }, // 暗紫
+  { h: 15,  s: 22 }, // 暖棕
+  { h: 340, s: 18 }, // 暗玫红
+  { h: 190, s: 22 }, // 青灰
+  { h: 45,  s: 18 }, // 暗金
+] as const;
+
+/** 对指定元素应用随机双色渐变背景 */
+export function randomizeScreenBackground(el: HTMLElement): void {
+  const p = SCREEN_BG_PALETTE[Math.floor(Math.random() * SCREEN_BG_PALETTE.length)];
+  const angle = Math.floor(Math.random() * 360);
+  const cx = 30 + Math.floor(Math.random() * 40);
+  const cy = 20 + Math.floor(Math.random() * 60);
+  el.style.background = [
+    `radial-gradient(ellipse at ${cx}% ${cy}%, hsl(${p.h}, ${p.s + 5}%, 28%) 0%, transparent 60%)`,
+    `linear-gradient(${angle}deg, hsl(${p.h}, ${p.s}%, 18%), hsl(${(p.h + 20) % 360}, ${p.s}%, 22%))`,
+  ].join(', ');
+}
+
+function randomizeBattleBackground(): void {
+  const container = document.getElementById('game-container');
+  if (!container) return;
+  randomizeScreenBackground(container);
+}
+
 /** 先知之眼模态框：显示三个修饰器类别，玩家选择禁用一个 */
 
 export async function startLevel(): Promise<void> {
@@ -1874,6 +1908,7 @@ export async function startLevel(): Promise<void> {
 
   // === Cycle 过渡演出（在切换到战斗画面前显示） ===
   showScreen('battle');
+  randomizeBattleBackground();
   const currentStageType = getStageType(state.level);
   const currentCycle = state.cycle;
   if (currentCycle !== lastCycle) {
@@ -2252,7 +2287,14 @@ export async function startLevel(): Promise<void> {
     await showBossIntro(state.bossModifierPool);
   }
 
-  initFloatPool();
+  initFloatTextCanvas(getElements().container);
+  refreshFloatPositionCache();
+  // 预热常见浮字文本（避免首次出现时 fillText 卡顿）
+  preheatFloatTexts([
+    { text: 'Tab ✓', color: '#00ff88' },
+    { text: '⚡ Auto ✓', color: '#00ff88' },
+    { text: '附魔失败', color: '#ff6b6b' },
+  ]);
   getElements().word.innerHTML = ''; // 清空上一关残留单词
 
   // 发送战斗开始事件（引导系统等监听）
@@ -2613,43 +2655,14 @@ function renderActiveLibrary(): void {
   el.activeLibrary.textContent = t('battle.deck_label', { count: deckSize });
 }
 
-// === 浮字系统 ===
-const FLOAT_POOL_SIZE = 20;
+// === 浮字系统（Canvas2D 渲染） ===
 const FLOAT_INTERVAL = 150; // 链式浮字间隔 ms
-let floatPool: HTMLDivElement[] = [];
 let floatQueue: Array<{ text: string; color: string; scale?: number; skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number }; relicAnchor?: { relicId: string; resource: string; amount?: number } }> = [];
 
 /** 飞行中待确认的资源加成 */
 let _pendingTimeBonus = 0;
 let _pendingGoldBonus = 0;
 let queueTimer: ReturnType<typeof setTimeout> | null = null;
-
-/** 初始化浮字对象池 */
-function initFloatPool(): void {
-  if (floatPool.length > 0) return;
-  const container = getElements().container;
-  for (let i = 0; i < FLOAT_POOL_SIZE; i++) {
-    const el = document.createElement('div');
-    el.className = 'float-text';
-    el.style.display = 'none';
-    container.appendChild(el);
-    floatPool.push(el);
-  }
-}
-
-/** 从池中获取空闲浮字元素 */
-function acquireFloat(): HTMLDivElement | null {
-  return floatPool.find(el => el.style.display === 'none') || null;
-}
-
-/** 回收浮字元素 */
-function releaseFloat(el: HTMLDivElement): void {
-  el.style.display = 'none';
-  el.classList.remove('float-text-active', 'float-text-anchored');
-  el.style.top = '';
-  el.style.opacity = '';
-  el.style.transform = '';
-}
 
 /** 资源类型 → HUD 元素 ID 映射 */
 const RESOURCE_TARGET_IDS: Record<string, string> = {
@@ -2669,22 +2682,34 @@ const RESOURCE_BUMP_FNS: Record<string, () => void> = {
   gold: () => bumpGold(),
 };
 
-/** 二次贝塞尔曲线插值 */
-function quadBezier(p0: number, p1: number, p2: number, t: number): number {
-  const u = 1 - t;
-  return u * u * p0 + 2 * u * t * p1 + t * t * p2;
+// === 浮字坐标缓存（避免每次 spawn 调用 getBoundingClientRect） ===
+let _cachedContainerRect: DOMRect | null = null;
+let _cachedContainerW = 900;
+let _cachedContainerH = 600;
+let _cachedTargetPositions: Record<string, { x: number; y: number }> = {};
+
+/** 刷新浮字坐标缓存（关卡开始/窗口 resize 时调用） */
+export function refreshFloatPositionCache(): void {
+  const container = getElements().container;
+  _cachedContainerRect = container.getBoundingClientRect();
+  _cachedContainerW = container.offsetWidth || 900;
+  _cachedContainerH = container.offsetHeight || 600;
+  // 缓存所有资源目标位置
+  _cachedTargetPositions = {};
+  for (const [res, targetId] of Object.entries(RESOURCE_TARGET_IDS)) {
+    const el = document.getElementById(targetId);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      _cachedTargetPositions[res] = {
+        x: r.left + r.width / 2 - _cachedContainerRect.left,
+        y: r.top + r.height / 2 - _cachedContainerRect.top,
+      };
+    }
+  }
 }
 
-/** 创建一个浮字 */
+/** 创建一个浮字（Canvas2D 渲染） */
 function createFloatText(text: string, color: string, scale = 1, skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
-  const el = acquireFloat();
-  if (!el) return; // 池满，跳过
-
-  el.textContent = text;
-  el.style.color = color;
-  el.style.setProperty('--float-scale', String(scale));
-
-  // 确定飞行起点和资源类型（skillAnchor 从字母出发，relicAnchor 从遗物图标出发）
   let startEl: HTMLElement | undefined;
   let flightResource: string | undefined;
   let flightAmount = 0;
@@ -2704,115 +2729,48 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
       startEl = getElements().playerRelics.children[idx] as HTMLElement | undefined;
       flightResource = relicAnchor.resource;
       flightAmount = relicAnchor.amount ?? 0;
-      // 遗物产出资源音效（较低音量，避免喧宾夺主）
       if (flightResource && flightAmount > 0) {
         emitResourceSound(flightResource, Math.min(scale, 1) * 0.5, 0);
       }
     }
   }
 
-  if (startEl && flightResource) {
-    const targetId = RESOURCE_TARGET_IDS[flightResource];
-    const targetEl = targetId ? document.getElementById(targetId) : null;
-
-    const container = getElements().container;
-    const containerRect = container.getBoundingClientRect();
+  if (startEl && flightResource && _cachedContainerRect) {
+    // === 飞行浮字 — 用缓存坐标，只对 startEl 做一次 getBoundingClientRect ===
+    const cr = _cachedContainerRect;
     const startRect = startEl.getBoundingClientRect();
-    const startX = startRect.left + startRect.width / 2 - containerRect.left;
+    const startX = startRect.left + startRect.width / 2 - cr.left;
     const startY = relicAnchor
-      ? startRect.bottom - containerRect.top + 10
-      : startRect.top - containerRect.top - 30;
+      ? startRect.bottom - cr.top + 10
+      : startRect.top - cr.top - 30;
 
-    let endX = startX;
-    let endY = startY - 60;
-    if (targetEl) {
-      const targetRect = targetEl.getBoundingClientRect();
-      endX = targetRect.left + targetRect.width / 2 - containerRect.left;
-      endY = targetRect.top + targetRect.height / 2 - containerRect.top;
-    }
+    const target = _cachedTargetPositions[flightResource];
+    const endX = target?.x ?? startX;
+    const endY = target?.y ?? (startY - 60);
 
-    // 控制点：水平方向偏移制造弧线
     const midX = (startX + endX) / 2;
     const cpX = midX + (startX - endX) * 0.4;
-    // 遗物飞行向下抛物线（图标在顶部，向上会超出边界）；技能飞行向上抛物线
     const cpY = relicAnchor
       ? Math.max(startY, endY) + 40
       : Math.min(startY, endY) - 40;
 
-    // JS 驱动贝塞尔曲线动画
-    el.style.position = 'absolute';
-    el.style.left = startX + 'px';
-    el.style.top = startY + 'px';
-    el.classList.add('float-text-anchored');
-    el.style.display = '';
-
-    const floatEl = el;
     const dist = Math.hypot(endX - startX, endY - startY);
-    const FLIGHT_SPEED = 0.35; // px/ms
-    const DWELL_TIME = 250; // 起点停顿时间（ms），让玩家看清数字
-    const duration = Math.max(250, Math.min(800, dist / FLIGHT_SPEED));
-    const startTime = performance.now();
-    const baseScale = scale;
+    const duration = Math.max(250, Math.min(800, dist / 0.35));
     const res = flightResource;
 
-    // 飞行开始时加入待确认量（滚轮延迟显示）
     let pendingTime = 0, pendingGold = 0;
     if (flightAmount > 0 && res === 'time') { pendingTime = flightAmount; _pendingTimeBonus += flightAmount; }
     if (flightAmount > 0 && res === 'gold') { pendingGold = flightAmount; _pendingGoldBonus += flightAmount; }
 
-    function animateCurve(now: number) {
-      const elapsed = now - startTime;
-      const flightElapsed = Math.max(0, elapsed - DWELL_TIME);
-      const tLinear = Math.min(flightElapsed / duration, 1);
-      // easeInOutCubic：停顿后平滑起步 → 中段加速 → 到达前减速
-      const t = tLinear < 0.5
-        ? 4 * tLinear * tLinear * tLinear
-        : 1 - Math.pow(-2 * tLinear + 2, 3) / 2;
-
-      const x = quadBezier(startX, cpX, endX, t);
-      const y = quadBezier(startY, cpY, endY, t);
-      // 停顿期间从小到大弹出，飞行中逐渐缩小
-      const dwellProgress = Math.min(elapsed / DWELL_TIME, 1);
-      // easeOutBack: 从 0 弹到 1，略微过冲
-      const growT = 1 - Math.pow(1 - dwellProgress, 3);
-      const overshoot = elapsed < DWELL_TIME
-        ? growT * (1 + 0.2 * Math.sin(dwellProgress * Math.PI))
-        : 1;
-      const s = baseScale * overshoot * (1.1 - 0.4 * t);
-      // 淡入 → 停顿可见 → 飞行末段淡出
-      const alpha = elapsed < DWELL_TIME ? Math.min(1, elapsed / 80)
-        : t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1;
-
-      floatEl.style.left = x + 'px';
-      floatEl.style.top = y + 'px';
-      floatEl.style.opacity = String(alpha);
-      floatEl.style.transform = `translateX(-50%) scale(${s})`;
-
-      if (t < 1) {
-        requestAnimationFrame(animateCurve);
-      } else {
-        releaseFloat(floatEl);
-        // 到达时确认待确认量 → 滚轮目标立即更新
-        if (pendingTime > 0) _pendingTimeBonus = Math.max(0, _pendingTimeBonus - pendingTime);
-        if (pendingGold > 0) _pendingGoldBonus = Math.max(0, _pendingGoldBonus - pendingGold);
-        // 飞行到达时触发对应 UI 弹跳
-        RESOURCE_BUMP_FNS[res]?.();
-      }
-    }
-    requestAnimationFrame(animateCurve);
-    return; // 跳过 CSS 动画路径
+    spawnFlightText(text, color, scale, startX, startY, cpX, cpY, endX, endY, duration, 250, () => {
+      if (pendingTime > 0) _pendingTimeBonus = Math.max(0, _pendingTimeBonus - pendingTime);
+      if (pendingGold > 0) _pendingGoldBonus = Math.max(0, _pendingGoldBonus - pendingGold);
+      RESOURCE_BUMP_FNS[res]?.();
+    });
   } else {
-    el.style.left = (35 + Math.random() * 30) + '%';
-    el.style.top = '';
+    // === 非飞行浮字 — 用缓存尺寸 ===
+    spawnFloatText(text, color, scale, _cachedContainerW, _cachedContainerH);
   }
-
-  el.style.display = '';
-  // 强制重排触发动画
-  void el.offsetWidth;
-  el.classList.add('float-text-active');
-
-  // 动画结束后回收（监听 animationend 而非硬编码延时）
-  el.onanimationend = () => releaseFloat(el);
 }
 
 /** 排队浮字（支持链式触发间隔弹出） */
@@ -2917,14 +2875,20 @@ function clearFloatQueue(): void {
     queueTimer = null;
   }
   // 回收所有活跃浮字
-  for (const el of floatPool) {
-    releaseFloat(el);
-  }
+  clearFloatTexts();
   clearFlashLines();
 }
 
 /** 浮字反馈（scale 控制字体缩放，默认 1；skillAnchor 指定时从字母或指定元素飞向资源 UI；relicAnchor 指定时从遗物图标飞向资源 UI） */
+/** 调试开关：设为 true 禁用所有浮字，用于定位性能瓶颈 */
+const _DEBUG_DISABLE_FLOAT = false;
+
 export function showFeedback(txt: string, color: string, scale?: number, skillAnchor?: { letterIndex?: number; fromElementId?: string; resource: string; amount?: number }, relicAnchor?: { relicId: string; resource: string; amount?: number }): void {
+  if (_DEBUG_DISABLE_FLOAT) return;
+  // === 诊断：逐步启用，找出卡顿根源 ===
+  // Level 1: 只 push 到队列，不 drain（测试对象分配）
+  // Level 2: push + drain（测试 createFloatText 路径）
+  // Level 3: 全部启用
   floatQueue.push({ text: txt, color, scale, skillAnchor, relicAnchor });
   if (!queueTimer) drainQueue();
 }
