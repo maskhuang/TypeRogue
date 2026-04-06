@@ -5,13 +5,19 @@
 import { getElements } from '../ui/elements';
 import { spawnParticles } from './particles';
 
+/** 重启 CSS 动画：移除 class → 下一帧添加，避免强制同步重排 */
+function restartAnimation(el: HTMLElement, ...classNames: string[]): void {
+  for (const c of classNames) el.classList.remove(c);
+  requestAnimationFrame(() => {
+    for (const c of classNames) el.classList.add(c);
+  });
+}
+
 // === 基础弹跳动画 ===
 export function juiceUp(element: HTMLElement | null, scale = 0.3, rotation = 3): void {
   if (!element) return;
   element.style.setProperty('--juice-rot', `${rotation}deg`);
-  element.classList.remove('juice-up', 'juice-up-strong');
-  void element.offsetWidth; // 强制重排
-  element.classList.add(scale > 0.3 ? 'juice-up-strong' : 'juice-up');
+  restartAnimation(element, scale > 0.3 ? 'juice-up-strong' : 'juice-up');
 }
 
 export function juiceUpStrong(element: HTMLElement | null): void {
@@ -43,43 +49,31 @@ export function getFloatScaleMul(resource: string, excess: number): number {
 // === UI 元素弹跳 ===
 export function bumpCombo(): void {
   const el = getElements();
-  el.combo.classList.remove('combo-bump');
-  void el.combo.offsetWidth;
-  el.combo.classList.add('combo-bump');
+  restartAnimation(el.combo, 'combo-bump');
 }
 
 export function bumpScore(wordScore = 0): void {
   const el = getElements();
   const scale = getScoreBumpScale(wordScore);
   el.score.style.setProperty('--bump-scale', String(scale));
-  el.score.classList.remove('score-bump');
-  void el.score.offsetWidth;
-  el.score.classList.add('score-bump');
+  restartAnimation(el.score, 'score-bump');
 }
 
 export function bumpMultiplier(): void {
   const el = getElements();
-  el.multiplier.classList.remove('mult-bump');
-  void el.multiplier.offsetWidth;
-  el.multiplier.classList.add('mult-bump');
+  restartAnimation(el.multiplier, 'mult-bump');
 }
 
 export function bumpTimer(): void {
   const el = getElements();
-  el.timerDisplay.classList.remove('timer-bump');
-  void el.timerDisplay.offsetWidth;
-  el.timerDisplay.classList.add('timer-bump');
-  el.timerBar.classList.remove('timer-bar-bump');
-  void el.timerBar.offsetWidth;
-  el.timerBar.classList.add('timer-bar-bump');
+  restartAnimation(el.timerDisplay, 'timer-bump');
+  restartAnimation(el.timerBar, 'timer-bar-bump');
 }
 
 export function bumpGold(): void {
   const el = document.getElementById('battle-gold-display');
   if (!el) return;
-  el.classList.remove('gold-bump');
-  void el.offsetWidth;
-  el.classList.add('gold-bump');
+  restartAnimation(el, 'gold-bump');
 }
 
 // === 屏幕震动 5 档查表系统 ===
@@ -112,9 +106,7 @@ export function screenShake(intensity = 1): void {
   el.container.style.setProperty('--shake-x', `${tier.x * signX}px`);
   el.container.style.setProperty('--shake-y', `${tier.y * signY}px`);
   el.container.style.setProperty('--shake-duration', `${tier.duration}ms`);
-  el.container.classList.remove('shake-dynamic');
-  void el.container.offsetWidth;
-  el.container.classList.add('shake-dynamic');
+  restartAnimation(el.container, 'shake-dynamic');
 
   currentShakeIntensity = intensity;
   if (shakeTimer) clearTimeout(shakeTimer);

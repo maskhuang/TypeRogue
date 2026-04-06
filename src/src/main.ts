@@ -7,6 +7,7 @@ import { initElements } from './ui/elements';
 import { state } from './core/state';
 import { getStarterWords } from './data/words';
 import { startLevel, initInput, resetCycleTracking } from './systems/battle';
+import { initFloatTextCanvas } from './ui/effects/FloatTextPool';
 import { initShopEvents } from './systems/shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
 import { MetaState } from './core/state/MetaState';
@@ -38,6 +39,9 @@ async function init(): Promise<void> {
 
   // 初始化 UI 元素引用
   initElements();
+
+  // 初始化 Canvas2D 浮字系统
+  initFloatTextCanvas(document.getElementById('game-container')!);
 
   // Demo: 移除完整版多余 DOM 节点
   cleanDemoDom();
