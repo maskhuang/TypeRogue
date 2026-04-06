@@ -2422,11 +2422,10 @@ body {
 }
 
 .enchantment-title {
-    font-size: 20px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #ffe66d;
     margin-bottom: 24px;
-    text-shadow: 0 0 20px rgba(255, 230, 109, 0.5);
 }
 
 .enchantment-branches {
@@ -2436,20 +2435,19 @@ body {
 }
 
 .enchantment-branch {
-    background: linear-gradient(180deg, #1a1a2e, #16213e);
+    background: var(--bg-panel);
     border: 2px solid #333;
     border-radius: 0;
     padding: 20px;
     width: 220px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.15s steps(3), background 0.15s steps(3);
     text-align: center;
 }
 
 .enchantment-branch:hover {
     border-color: #ffe66d;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(255, 230, 109, 0.2);
+    background: var(--bg-panel-hover);
 }
 
 .enchantment-branch.cannot-afford {
@@ -2459,31 +2457,30 @@ body {
 
 .enchantment-branch.cannot-afford:hover {
     border-color: #333;
-    transform: none;
-    box-shadow: none;
+    background: var(--bg-panel);
 }
 
 .enchantment-category-tag {
-    font-size: 10px;
+    font-size: var(--text-caption-size);
     font-weight: bold;
     margin-bottom: 4px;
     letter-spacing: 0.5px;
 }
 
 .enchantment-branch-icon {
-    font-size: 36px;
+    font-size: var(--text-title-size);
     margin-bottom: 8px;
 }
 
 .enchantment-branch-name {
-    font-size: 16px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #fff;
     margin-bottom: 8px;
 }
 
 .enchantment-branch-desc {
-    font-size: 12px;
+    font-size: var(--text-body-size);
     color: #aaa;
     margin-bottom: 12px;
     line-height: 1.4;
@@ -2491,14 +2488,14 @@ body {
 }
 
 .enchantment-branch-flavor {
-    font-size: 11px;
+    font-size: var(--text-caption-size);
     color: #666;
     font-style: italic;
     margin-bottom: 12px;
 }
 
 .enchantment-branch-cost {
-    font-size: 14px;
+    font-size: var(--text-body-size);
     color: #ffe66d;
     font-weight: bold;
 }
@@ -2506,14 +2503,14 @@ body {
 .enchantment-cancel {
     margin-top: 20px;
     padding: 8px 24px;
-    background: transparent;
+    background: var(--bg-panel);
     border: 1px solid #555;
     color: #888;
     border-radius: 0;
     cursor: pointer;
     font-family: inherit;
-    font-size: 13px;
-    transition: all 0.2s ease;
+    font-size: var(--text-body-size);
+    transition: border-color 0.15s steps(3), color 0.15s steps(3);
 }
 
 .enchantment-cancel:hover {
@@ -2523,18 +2520,18 @@ body {
 
 .enchantment-card {
     border-color: #ffe66d !important;
-    background: linear-gradient(180deg, rgba(255, 230, 109, 0.08), transparent) !important;
+    background: rgba(255, 230, 109, 0.08) !important;
 }
 
 .enchantment-card .reward-type {
-    background: linear-gradient(135deg, #ffe66d, #f1c40f) !important;
+    background: #ffe66d !important;
     color: #000 !important;
     font-weight: bold;
 }
 
 .inv-evolved {
     color: #ffe66d;
-    font-size: 10px;
+    font-size: var(--text-caption-size);
     margin-left: 2px;
 }
 
@@ -3027,11 +3024,10 @@ body {
 }
 
 .word-picker-title {
-    font-size: 22px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #4ecdc4;
     margin-bottom: 24px;
-    text-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
     letter-spacing: 2px;
 }
 
@@ -3043,25 +3039,24 @@ body {
 }
 
 .word-picker-card {
-    background: linear-gradient(180deg, #1a1a2e, #16213e);
+    background: var(--bg-panel);
     border: 2px solid #4ecdc4;
     border-radius: 0;
     padding: 20px 24px;
     min-width: 160px;
     max-width: 220px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.15s steps(3), background 0.15s steps(3);
     text-align: center;
 }
 
 .word-picker-card:hover {
-    transform: translateY(-6px);
     border-color: #7ee8e0;
-    box-shadow: 0 8px 24px rgba(78, 205, 196, 0.3);
+    background: var(--bg-panel-hover);
 }
 
 .word-picker-word {
-    font-size: 20px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #fff;
     margin-bottom: 8px;
@@ -3073,13 +3068,13 @@ body {
 }
 
 .word-picker-len {
-    font-size: 11px;
+    font-size: var(--text-caption-size);
     color: #888;
     margin-bottom: 4px;
 }
 
 .word-picker-freq {
-    font-size: 11px;
+    font-size: var(--text-caption-size);
     color: #aaa;
 }
 
@@ -3118,11 +3113,10 @@ body {
 }
 
 .relic-picker-title {
-    font-size: 22px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #ffe66d;
     margin-bottom: 24px;
-    text-shadow: 0 0 20px rgba(255, 230, 109, 0.5);
     letter-spacing: 2px;
 }
 
@@ -3134,102 +3128,46 @@ body {
 }
 
 .relic-picker-card {
-    background: linear-gradient(180deg, #1a1a2e, #16213e);
+    background: var(--bg-panel);
     border: 2px solid #333;
     border-radius: 0;
     padding: 20px;
     width: 200px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.15s steps(3), background 0.15s steps(3);
     text-align: center;
 }
 
 .relic-picker-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    background: var(--bg-panel-hover);
 }
 
-.relic-picker-card.relic-rarity-common {
-    border-color: #aaa;
-}
+.relic-picker-card.relic-rarity-common { border-color: #aaa; }
+.relic-picker-card.relic-rarity-common:hover { border-color: #ddd; }
+.relic-picker-card.relic-rarity-rare { border-color: #3498db; }
+.relic-picker-card.relic-rarity-rare:hover { border-color: #5dade2; }
+.relic-picker-card.relic-rarity-epic { border-color: #9b59b6; }
+.relic-picker-card.relic-rarity-epic:hover { border-color: #bb77dd; }
+.relic-picker-card.relic-rarity-legendary { border-color: #ffd700; }
+.relic-picker-card.relic-rarity-legendary:hover { border-color: #ffe66d; }
 
-.relic-picker-card.relic-rarity-common:hover {
-    border-color: #ddd;
-    box-shadow: 0 8px 24px rgba(150, 150, 150, 0.2);
-}
-
-.relic-picker-card.relic-rarity-rare {
-    border-color: #3498db;
-}
-
-.relic-picker-card.relic-rarity-rare:hover {
-    border-color: #5dade2;
-    box-shadow: 0 8px 24px rgba(52, 152, 219, 0.3);
-}
-
-.relic-picker-card.relic-rarity-epic {
-    border-color: #9b59b6;
-}
-
-.relic-picker-card.relic-rarity-epic:hover {
-    border-color: #bb77dd;
-    box-shadow: 0 8px 24px rgba(155, 89, 182, 0.3);
-}
-
-.relic-picker-card.relic-rarity-legendary {
-    border-color: #ffd700;
-}
-
-.relic-picker-card.relic-rarity-legendary:hover {
-    border-color: #ffe66d;
-    box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
-}
-
-.relic-picker-icon {
-    font-size: 42px;
-    margin-bottom: 10px;
-}
-
-.relic-picker-name {
-    font-size: 15px;
-    font-weight: bold;
-    color: #fff;
-    margin-bottom: 8px;
-}
-
-.relic-picker-desc {
-    font-size: 12px;
-    color: #aaa;
-    margin-bottom: 8px;
-    line-height: 1.4;
-    min-height: 36px;
-}
-
-.relic-picker-rarity {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #666;
-    margin-bottom: 6px;
-}
-
-.relic-picker-flavor {
-    font-size: 10px;
-    color: #555;
-    font-style: italic;
-}
+.relic-picker-icon { font-size: var(--text-title-size); margin-bottom: 10px; }
+.relic-picker-name { font-size: var(--text-subtitle-size); font-weight: bold; color: #fff; margin-bottom: 8px; }
+.relic-picker-desc { font-size: var(--text-body-size); color: #aaa; margin-bottom: 8px; line-height: 1.4; min-height: 36px; }
+.relic-picker-rarity { font-size: var(--text-caption-size); text-transform: uppercase; letter-spacing: 1px; color: #666; margin-bottom: 6px; }
+.relic-picker-flavor { font-size: var(--text-caption-size); color: #555; font-style: italic; }
 
 .relic-picker-skip {
     margin-top: 20px;
     padding: 8px 24px;
-    background: transparent;
+    background: var(--bg-panel);
     border: 1px solid #555;
     color: #888;
     border-radius: 0;
     cursor: pointer;
     font-family: inherit;
-    font-size: 13px;
-    transition: all 0.2s ease;
+    font-size: var(--text-body-size);
+    transition: border-color 0.15s steps(3), color 0.15s steps(3);
 }
 
 .relic-picker-skip:hover {
@@ -3240,7 +3178,7 @@ body {
 /* Replace mode */
 .relic-replace-header {
     width: 100%;
-    font-size: 16px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #ffe66d;
     margin-bottom: 5px;
@@ -3248,7 +3186,7 @@ body {
 }
 
 .relic-picker-sell {
-    font-size: 11px;
+    font-size: var(--text-caption-size);
     color: #ffe66d;
     margin-top: 6px;
 }
@@ -3297,94 +3235,52 @@ body {
 }
 
 .modifier-picker-title {
-    font-size: 22px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #ff6b6b;
     margin-bottom: 16px;
-    text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
     letter-spacing: 2px;
 }
 
-.modifier-picker-active {
-    margin-bottom: 20px;
-}
+.modifier-picker-active { margin-bottom: 20px; }
+.modifier-picker-active-label { font-size: var(--text-caption-size); color: #888; margin-bottom: 8px; }
+.modifier-picker-active-list { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.modifier-picker-active-tag { padding: 4px 10px; background: rgba(255,107,107,0.15); border: 1px solid rgba(255,107,107,0.3); border-radius: 0; font-size: var(--text-caption-size); color: #ff6b6b; }
 
-.modifier-picker-active-label {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 8px;
-}
-
-.modifier-picker-active-list {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.modifier-picker-active-tag {
-    padding: 4px 10px;
-    background: rgba(255, 107, 107, 0.15);
-    border: 1px solid rgba(255, 107, 107, 0.3);
-    border-radius: 0;
-    font-size: 11px;
-    color: #ff6b6b;
-}
-
-.modifier-picker-cards {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-}
+.modifier-picker-cards { display: flex; gap: 20px; justify-content: center; }
 
 .modifier-picker-card {
-    background: linear-gradient(180deg, #2a1a1a, #1a1016);
+    background: rgba(42,26,26,0.8);
     border: 2px solid #ff6b6b44;
     border-radius: 0;
     padding: 20px;
     width: 200px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.15s steps(3), background 0.15s steps(3);
     text-align: center;
 }
 
 .modifier-picker-card:hover {
-    transform: translateY(-6px);
     border-color: #ff6b6b;
-    box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
+    background: rgba(42,26,26,1);
 }
 
-.modifier-picker-icon {
-    font-size: 42px;
-    margin-bottom: 10px;
-}
-
-.modifier-picker-name {
-    font-size: 15px;
-    font-weight: bold;
-    color: #ff6b6b;
-    margin-bottom: 8px;
-}
-
-.modifier-picker-desc {
-    font-size: 12px;
-    color: #aaa;
-    line-height: 1.4;
-    min-height: 36px;
-}
+.modifier-picker-icon { font-size: var(--text-title-size); margin-bottom: 10px; }
+.modifier-picker-name { font-size: var(--text-subtitle-size); font-weight: bold; color: #ff6b6b; margin-bottom: 8px; }
+.modifier-picker-desc { font-size: var(--text-body-size); color: #aaa; line-height: 1.4; min-height: 36px; }
 
 .modifier-picker-skip-btn {
     display: block;
     margin: 16px auto 0;
     padding: 8px 24px;
-    font-size: 13px;
+    font-size: var(--text-body-size);
     font-family: inherit;
-    background: transparent;
-    border: 1px solid rgba(255, 107, 107, 0.4);
+    background: var(--bg-panel);
+    border: 1px solid rgba(255,107,107,0.4);
     border-radius: 0;
     color: #ff6b6b;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.15s steps(3), border-color 0.15s steps(3);
 }
 .modifier-picker-skip-btn:hover {
     background: rgba(255, 107, 107, 0.1);
@@ -4099,42 +3995,34 @@ body {
 }
 
 .class-select-title {
-    font-size: 24px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #ffe66d;
     margin-bottom: 28px;
-    text-shadow: 0 0 20px rgba(255, 230, 109, 0.5);
     letter-spacing: 2px;
 }
 
-.class-select-cards {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
+.class-select-cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
 
 .class-select-card {
-    background: linear-gradient(180deg, #1a1a2e, #16213e);
+    background: var(--bg-panel);
     border: 2px solid #444;
     border-radius: 0;
     padding: 24px 20px;
     width: 220px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.15s steps(3), background 0.15s steps(3);
     text-align: center;
 }
 
 .class-select-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     border-color: #ffe66d;
+    background: var(--bg-panel-hover);
 }
 
 .class-select-card.class-card-selected {
     border-color: #ffe66d;
-    box-shadow: 0 0 20px rgba(255, 230, 109, 0.3);
-    transform: translateY(-4px);
+    background: rgba(255,230,109,0.1);
 }
 
 .class-select-card.class-card-locked {
@@ -4144,35 +4032,14 @@ body {
 }
 
 .class-select-card.class-card-locked:hover {
-    transform: none;
-    box-shadow: none;
     border-color: #444;
+    background: var(--bg-panel);
 }
 
-.class-card-icon {
-    font-size: 40px;
-    margin-bottom: 10px;
-}
-
-.class-card-name {
-    font-size: 18px;
-    font-weight: bold;
-    color: #eaeaea;
-    margin-bottom: 8px;
-}
-
-.class-card-desc {
-    font-size: 12px;
-    color: #aaa;
-    line-height: 1.4;
-    margin-bottom: 12px;
-}
-
-.class-card-info {
-    font-size: 11px;
-    color: #888;
-    line-height: 1.5;
-}
+.class-card-icon { font-size: var(--text-title-size); margin-bottom: 10px; }
+.class-card-name { font-size: var(--text-subtitle-size); font-weight: bold; color: #eaeaea; margin-bottom: 8px; }
+.class-card-desc { font-size: var(--text-body-size); color: #aaa; line-height: 1.4; margin-bottom: 12px; }
+.class-card-info { font-size: var(--text-caption-size); color: #888; line-height: 1.5; }
 
 .class-card-info .info-resource {
     color: #4ecdc4;
@@ -4187,7 +4054,7 @@ body {
 }
 
 .class-card-lock-text {
-    font-size: 11px;
+    font-size: var(--text-caption-size);
     color: #666;
     margin-top: 8px;
     font-style: italic;
@@ -4196,19 +4063,18 @@ body {
 .class-select-confirm {
     margin-top: 24px;
     padding: 10px 40px;
-    font-size: 16px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
-    background: linear-gradient(180deg, #ffe66d, #f0c040);
+    background: #ffe66d;
     color: #1a1a2e;
-    border: none;
+    border: 2px solid #ffe66d;
     border-radius: 0;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.15s steps(3);
 }
 
 .class-select-confirm:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 16px rgba(255, 230, 109, 0.4);
+    background: #fff080;
 }
 
 .class-select-confirm.class-select-confirm-hidden {
@@ -4245,11 +4111,10 @@ body {
     width: 90vw;
 }
 .ascension-select-title {
-    font-size: 22px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #ffe66d;
     margin-bottom: 20px;
-    text-shadow: 0 0 16px rgba(255, 230, 109, 0.4);
 }
 .ascension-select-list {
     display: flex;
@@ -4267,7 +4132,7 @@ body {
     border-radius: 0;
     cursor: pointer;
     border: 1px solid transparent;
-    transition: background 0.15s, border-color 0.15s;
+    transition: background 0.15s steps(3), border-color 0.15s steps(3);
 }
 .ascension-row:hover { background: rgba(255, 255, 255, 0.05); }
 .ascension-row.ascension-selected {
@@ -4278,37 +4143,22 @@ body {
     opacity: 0.35;
     cursor: default;
 }
-.ascension-level {
-    font-size: 14px;
-    font-weight: bold;
-    color: #ffe66d;
-    min-width: 28px;
-}
-.ascension-name {
-    font-size: 13px;
-    color: #ddd;
-    min-width: 80px;
-    text-align: left;
-}
-.ascension-desc {
-    font-size: 12px;
-    color: #888;
-    text-align: left;
-    flex: 1;
-}
+.ascension-level { font-size: var(--text-body-size); font-weight: bold; color: #ffe66d; min-width: 28px; }
+.ascension-name { font-size: var(--text-body-size); color: #ddd; min-width: 80px; text-align: left; }
+.ascension-desc { font-size: var(--text-caption-size); color: #888; text-align: left; flex: 1; }
 .ascension-select-confirm {
     padding: 10px 32px;
-    border: none;
+    border: 2px solid #ffe66d;
     border-radius: 0;
-    background: linear-gradient(135deg, #ffe66d, #f0c040);
+    background: #ffe66d;
     color: #1a1a2e;
     font-weight: bold;
-    font-size: 15px;
+    font-size: var(--text-subtitle-size);
     cursor: pointer;
     font-family: inherit;
-    transition: transform 0.1s;
+    transition: background 0.15s steps(3);
 }
-.ascension-select-confirm:hover { transform: scale(1.03); }
+.ascension-select-confirm:hover { background: #fff080; }
 
 /* ============================================
    造词台 UI (Story 32.6)

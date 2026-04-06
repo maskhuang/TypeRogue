@@ -33,7 +33,7 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
 
   // 技能信息
   const info = document.createElement('div');
-  info.style.cssText = 'color:#ccc;font-size:12px;margin:8px 0;padding:8px;background:rgba(255,255,255,0.05);border-radius:4px;';
+  info.style.cssText = 'color:#ccc;font-size:9px;margin:8px 0;padding:8px;background:rgba(255,255,255,0.05);border-radius:0;';
   const rarityColor = RARITY_COLORS[skill.rarity] || '#fff';
   const RARITY_KEYS = ['common', 'rare', 'epic', 'legendary'] as const;
   const rarityName = t('shop.rarity.' + (RARITY_KEYS[skill.rarity] ?? 'common')) || RARITY_NAMES[skill.rarity] || '?';
@@ -80,7 +80,7 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
   {
     const btn = document.createElement('button');
     btn.className = 'morph-action-btn';
-    btn.style.cssText = `padding:8px 12px;border:1px solid ${enabled ? '#e67e22' : '#555'};background:${enabled ? 'rgba(230,126,34,0.15)' : 'rgba(50,50,50,0.3)'};color:${enabled ? '#e67e22' : '#666'};border-radius:4px;cursor:${enabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
+    btn.style.cssText = `padding:8px 12px;border:1px solid ${enabled ? '#e67e22' : '#555'};background:${enabled ? 'rgba(230,126,34,0.15)' : 'rgba(50,50,50,0.3)'};color:${enabled ? '#e67e22' : '#666'};border-radius:0;cursor:${enabled ? 'pointer' : 'not-allowed'};font-size:9px;text-align:left;`;
     btn.textContent = skill.affixes.length === 0
       ? t('metamorph.mutate_no_affix')
       : t('metamorph.mutate_all', { cost });
@@ -107,7 +107,7 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
       const affix = skill.affixes[i];
       const btn = document.createElement('button');
       btn.className = 'morph-action-btn';
-      btn.style.cssText = `padding:8px 12px;border:1px solid ${enabled ? '#9b59b6' : '#555'};background:${enabled ? 'rgba(155,89,182,0.15)' : 'rgba(50,50,50,0.3)'};color:${enabled ? '#9b59b6' : '#666'};border-radius:4px;cursor:${enabled ? 'pointer' : 'not-allowed'};font-size:12px;text-align:left;`;
+      btn.style.cssText = `padding:8px 12px;border:1px solid ${enabled ? '#9b59b6' : '#555'};background:${enabled ? 'rgba(155,89,182,0.15)' : 'rgba(50,50,50,0.3)'};color:${enabled ? '#9b59b6' : '#666'};border-radius:0;cursor:${enabled ? 'pointer' : 'not-allowed'};font-size:9px;text-align:left;`;
       btn.textContent = t('metamorph.mutate_single', { idx: i, affix: t('affix.' + affix.type), cost });
       if (enabled) {
         const idx = i;
@@ -132,7 +132,7 @@ function renderAffixMutationPanel(skillId: string, boundKey: string, container: 
 
   // 返回按钮
   const backBtn = document.createElement('button');
-  backBtn.style.cssText = 'padding:6px 12px;border:1px solid #555;background:rgba(255,255,255,0.05);color:#aaa;border-radius:4px;cursor:pointer;font-size:11px;margin-top:8px;';
+  backBtn.style.cssText = 'padding:6px 12px;border:1px solid #555;background:rgba(255,255,255,0.05);color:#aaa;border-radius:0;cursor:pointer;font-size:8px;margin-top:8px;';
   backBtn.textContent = t('metamorph.back');
   backBtn.onclick = () => renderMetamorphPanel(container);
   container.appendChild(backBtn);

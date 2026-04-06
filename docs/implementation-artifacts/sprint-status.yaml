@@ -418,7 +418,7 @@ development_status:
   55-1-design-tokens-pixel-foundation: review          # 设计 token 统一 + 全局字体切换
   55-2-shop-screen-pixel-overhaul: done            # 商店界面像素风改造
   55-3-gameover-screen-pixel-overhaul: done         # 游戏结束界面像素风改造
-  55-4-modal-dialogs-pixel-overhaul: backlog           # 弹窗系统像素风改造
+  55-4-modal-dialogs-pixel-overhaul: done           # 弹窗系统像素风改造
   55-5-ritual-rest-screens-pixel-overhaul: backlog     # 仪式/休息界面像素风改造
   55-6-global-ui-pixel-overhaul: backlog               # 全局 UI 元素像素风改造
   55-7-pixijs-scene-color-sync: backlog                # PixiJS 场景颜色同步

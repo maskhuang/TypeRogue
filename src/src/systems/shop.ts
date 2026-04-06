@@ -3091,7 +3091,7 @@ function highlightSkillRange(key: string): void {
     el.classList.add('range-highlight');
     el.style.borderColor = color;
     el.style.background = hexToRgba(color, 0.15);
-    el.style.boxShadow = `0 0 8px ${hexToRgba(color, 0.3)}`;
+    // box-shadow removed per pixel spec (55-4)
   });
 }
 
