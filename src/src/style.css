@@ -82,9 +82,9 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 0;
     padding: 1px 6px;
-    font-size: 11px;
+    font-size: var(--text-caption-size);
     cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color 0.15s steps(3), border-color 0.15s steps(3);
 }
 
 .lang-btn:hover { color: #aaa; }
@@ -745,8 +745,7 @@ body {
 
 /* Story 37.5: 遗物图标脉冲 — 非资源遗物触发时的视觉反馈 */
 .relic-icon.relic-pulse {
-    animation: relicPulse 0.5s ease-out forwards;
-    box-shadow: 0 0 8px var(--pulse-color, #ffffff);
+    animation: relicPulse 0.5s steps(4) forwards;
 }
 
 @keyframes relicPulse {
@@ -759,11 +758,11 @@ body {
 .relic-flash-line {
     position: absolute;
     height: 2px;
-    background: linear-gradient(90deg, transparent, currentColor 30%, currentColor 70%, transparent);
+    background: currentColor;
     transform-origin: left center;
     pointer-events: none;
     z-index: 150;
-    animation: relicFlash 0.3s ease-out forwards;
+    animation: relicFlash 0.3s steps(3) forwards;
 }
 
 @keyframes relicFlash {
@@ -1543,44 +1542,40 @@ body {
 
 /* 伪无限模式视觉 (Story 19.7) */
 #game-container.pseudo-infinite {
-    box-shadow: inset 0 0 40px rgba(255, 230, 109, 0.4), inset 0 0 80px rgba(255, 200, 50, 0.15);
-    animation: pseudoInfinitePulse 1.2s ease-in-out infinite;
+    border: 3px solid #ffe66d;
+    animation: pseudoInfinitePulse 1.2s steps(4) infinite;
 }
-
 @keyframes pseudoInfinitePulse {
-    0%, 100% { box-shadow: inset 0 0 40px rgba(255, 230, 109, 0.4), inset 0 0 80px rgba(255, 200, 50, 0.15); }
-    50% { box-shadow: inset 0 0 60px rgba(255, 230, 109, 0.6), inset 0 0 100px rgba(255, 200, 50, 0.25); }
+    0%, 100% { border-color: #ffe66d; }
+    50% { border-color: #fff080; }
 }
 
 #game-container.pseudo-infinite #score-count {
-    animation: infiniteScoreScroll 0.3s ease-in-out infinite alternate;
+    animation: infiniteScoreScroll 0.3s steps(2) infinite alternate;
 }
-
 @keyframes infiniteScoreScroll {
     0% { transform: translateY(-1px); }
     100% { transform: translateY(1px); }
 }
 
-/* 危险时间警告光晕 — time <= 10s */
+/* 危险时间警告 — time <= 10s */
 #game-container.glow-danger {
-    box-shadow: inset 0 0 40px rgba(220, 20, 60, 0.35), inset 0 0 80px rgba(255, 50, 50, 0.15);
-    animation: glowDangerPulse 0.8s ease-in-out infinite;
+    border: 3px solid #dc143c;
+    animation: glowDangerPulse 0.8s steps(4) infinite;
 }
-
 @keyframes glowDangerPulse {
-    0%, 100% { box-shadow: inset 0 0 40px rgba(220, 20, 60, 0.35), inset 0 0 80px rgba(255, 50, 50, 0.15); }
-    50% { box-shadow: inset 0 0 60px rgba(220, 20, 60, 0.55), inset 0 0 100px rgba(255, 50, 50, 0.25); }
+    0%, 100% { border-color: #dc143c; }
+    50% { border-color: #ff3333; }
 }
 
-/* 达标光晕 — target reached (overrides danger via source order) */
+/* 达标 — target reached */
 #game-container.glow-target-reached {
-    box-shadow: inset 0 0 40px rgba(78, 205, 196, 0.4), inset 0 0 80px rgba(255, 215, 0, 0.15);
-    animation: glowTargetPulse 1.5s ease-in-out infinite;
+    border: 3px solid #4ecdc4;
+    animation: glowTargetPulse 1.5s steps(4) infinite;
 }
-
 @keyframes glowTargetPulse {
-    0%, 100% { box-shadow: inset 0 0 40px rgba(78, 205, 196, 0.4), inset 0 0 80px rgba(255, 215, 0, 0.15); }
-    50% { box-shadow: inset 0 0 60px rgba(78, 205, 196, 0.6), inset 0 0 100px rgba(255, 215, 0, 0.25); }
+    0%, 100% { border-color: #4ecdc4; }
+    50% { border-color: #7ee8e0; }
 }
 
 .level-announce {
@@ -1588,18 +1583,17 @@ body {
     top: 55%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 42px;
+    font-size: calc(var(--text-title-size) * 2);
     font-weight: bold;
     color: #ffe66d;
-    text-shadow: 0 0 30px rgba(255,230,109,0.6);
     text-align: center;
-    animation: levelAnnounce 1.5s forwards;
+    animation: levelAnnounce 1.5s steps(8) forwards;
     z-index: 150;
 }
 
 .level-announce .target-hint {
     display: block;
-    font-size: 18px;
+    font-size: var(--text-body-size);
     color: #888;
     margin-top: 10px;
 }
@@ -1616,12 +1610,11 @@ body {
     position: absolute;
     top: -8px;
     right: -10px;
-    font-size: 22px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #4ecdc4;
-    text-shadow: 0 0 12px rgba(78, 205, 196, 0.6);
     pointer-events: none;
-    animation: overflowFloat 1.2s ease-out forwards;
+    animation: overflowFloat 1.2s steps(6) forwards;
     z-index: 10;
 }
 
@@ -1633,13 +1626,13 @@ body {
 }
 
 #target-score.overflow-deduct-done {
-    animation: overflowDonePulse 0.6s ease-out;
+    animation: overflowDonePulse 0.6s steps(4);
 }
 
 @keyframes overflowDonePulse {
     0%   { transform: scale(1); }
-    30%  { transform: scale(1.15); text-shadow: 0 0 16px rgba(78, 205, 196, 0.8); }
-    100% { transform: scale(1); text-shadow: none; }
+    30%  { transform: scale(1.15); }
+    100% { transform: scale(1); }
 }
 
 /* ============================================ */
@@ -1648,19 +1641,18 @@ body {
 
 #battle-screen.elite-stage {
     border: 2px solid #ffd700;
-    box-shadow: inset 0 0 40px rgba(255, 215, 0, 0.08);
 }
 
 .elite-hint {
     color: #ffd700;
     font-weight: bold;
-    font-size: 20px;
+    font-size: var(--text-subtitle-size);
 }
 
 .boss-hint {
     color: #ff4444;
     font-weight: bold;
-    font-size: 20px;
+    font-size: var(--text-subtitle-size);
 }
 
 #modifier-info {
@@ -2087,7 +2079,7 @@ body {
 }
 
 .settlement-label {
-    font-size: 9px;
+    font-size: var(--text-caption-size);
     font-weight: normal;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -2095,52 +2087,32 @@ body {
     font-family: var(--font-pixel);
 }
 
-.settlement-chips .settlement-label {
-    color: #4ea8db;
-}
-
-.settlement-mult-box .settlement-label {
-    color: #e85555;
-}
+.settlement-chips .settlement-label { color: #4ea8db; }
+.settlement-mult-box .settlement-label { color: #e85555; }
 
 .settlement-value {
-    font-size: 22px;
+    font-size: var(--text-subtitle-size);
     font-weight: normal;
     font-family: var(--font-pixel);
 }
 
-.settlement-chips .settlement-value {
-    color: #4ea8db;
-    text-shadow: none;
-}
+.settlement-chips .settlement-value { color: #4ea8db; text-shadow: none; }
+.settlement-mult-box .settlement-value { color: #e85555; text-shadow: none; }
 
-.settlement-mult-box .settlement-value {
-    color: #e85555;
-    text-shadow: none;
-}
-
-.settlement-mult {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+.settlement-mult { display: flex; align-items: center; gap: 10px; }
 
 .settlement-symbol {
-    font-size: 14px;
+    font-size: var(--text-body-size);
     font-weight: normal;
     color: #fff;
     opacity: 0.3;
     font-family: var(--font-pixel);
 }
 
-.settlement-result {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
+.settlement-result { display: flex; align-items: center; gap: 15px; }
 
 .settlement-final {
-    font-size: 28px;
+    font-size: var(--text-subtitle-size);
     font-weight: normal;
     color: #ffe66d;
     text-shadow: none;
@@ -2198,30 +2170,23 @@ body {
 
 .score-silver {
     color: #e0e0e0 !important;
-    text-shadow: 0 0 8px rgba(224, 224, 224, 0.5) !important;
     will-change: transform, filter;
 }
 
 .score-gold {
     color: #ffd700 !important;
-    text-shadow: 0 0 12px rgba(255, 215, 0, 0.6) !important;
     will-change: transform, filter;
 }
 
 .score-rainbow {
-    background: linear-gradient(90deg, #ff6b6b, #ffd700, #4ecdc4, #a855f7);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    color: transparent !important;
+    color: #a855f7 !important;
     filter: brightness(1.3);
     will-change: transform, filter;
 }
 
 .score-legendary {
     color: #fff !important;
-    text-shadow: 0 0 20px #ffd700, 0 0 40px #ff6b6b !important;
-    animation: legendaryPulse 0.5s ease-in-out forwards;
+    animation: legendaryPulse 0.5s steps(4) forwards;
     will-change: transform, filter;
 }
 
@@ -3198,17 +3163,14 @@ body {
 .key-slot.shape-preview-valid {
     border-color: #4ecdc4 !important;
     background: rgba(78, 205, 196, 0.25) !important;
-    box-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
-    transform: scale(1.05);
 }
 .key-slot.shape-preview-invalid {
     border-color: #ff6b6b !important;
     background: rgba(255, 107, 107, 0.25) !important;
-    box-shadow: 0 0 8px rgba(255, 107, 107, 0.4);
 }
 .key-slot.shape-preview-displaced {
     border-color: #ffe66d !important;
-    animation: displaced-blink 0.5s ease infinite;
+    animation: displaced-blink 0.5s steps(4) infinite;
 }
 @keyframes displaced-blink {
     0%, 100% { background: rgba(255, 230, 109, 0.1); }
@@ -3224,7 +3186,7 @@ body {
 
 /* Story 40.6: 右键旋转动画 */
 .key-slot.shape-rotating {
-    animation: shape-rotate-pop 0.2s ease-out;
+    animation: shape-rotate-pop 0.2s steps(3);
 }
 @keyframes shape-rotate-pop {
     0% { transform: scale(0.8); opacity: 0.6; }
@@ -3232,7 +3194,7 @@ body {
     100% { transform: scale(1); opacity: 1; }
 }
 .key-slot.shape-shake {
-    animation: shape-shake 0.3s ease-out;
+    animation: shape-shake 0.3s steps(6);
 }
 @keyframes shape-shake {
     0%, 100% { transform: translateX(0); }
@@ -3258,7 +3220,7 @@ body {
     justify-content: center;
     z-index: 9999;
     opacity: 0;
-    transition: opacity 300ms ease;
+    transition: opacity 300ms steps(4);
     pointer-events: none;
 }
 
@@ -3281,25 +3243,23 @@ body {
 }
 
 .act-title {
-    font-size: 56px;
+    font-size: calc(var(--text-title-size) * 3);
     font-weight: bold;
     color: #ffe66d;
     letter-spacing: 12px;
-    text-shadow: 0 0 40px rgba(255, 230, 109, 0.6);
     transform: scale(0.8);
     opacity: 0;
-    transition: all 300ms ease;
+    transition: all 300ms steps(4);
 }
 
 .act-subtitle {
-    font-size: 24px;
+    font-size: calc(var(--text-title-size) * 1.5);
     color: #87ceeb;
     letter-spacing: 8px;
     margin-top: 12px;
-    text-shadow: 0 0 20px rgba(135, 206, 235, 0.4);
     transform: translateY(10px);
     opacity: 0;
-    transition: all 300ms ease 100ms;
+    transition: all 300ms steps(4) 100ms;
 }
 
 /* ============================================ */
@@ -3311,18 +3271,17 @@ body {
     top: 80px;
     left: 50%;
     transform: translateX(-50%) translateY(-30px);
-    background: linear-gradient(135deg, rgba(224, 86, 253, 0.2), rgba(255, 107, 107, 0.15));
+    background: rgba(224, 86, 253, 0.15);
     border: 1px solid rgba(224, 86, 253, 0.5);
     border-radius: 0;
     padding: 12px 32px;
-    font-size: 18px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #e056fd;
     letter-spacing: 2px;
-    text-shadow: 0 0 12px rgba(224, 86, 253, 0.5);
     z-index: 9998;
     opacity: 0;
-    transition: all 300ms ease;
+    transition: all 300ms steps(4);
     white-space: nowrap;
 }
 
@@ -3334,7 +3293,7 @@ body {
 #elite-announcement.elite-announce-exit {
     opacity: 0;
     transform: translateX(-50%) translateY(-10px);
-    transition: all 200ms ease;
+    transition: all 200ms steps(3);
 }
 
 /* ============================================ */
@@ -3352,7 +3311,7 @@ body {
     justify-content: center;
     z-index: 9999;
     opacity: 0;
-    transition: opacity 300ms ease;
+    transition: opacity 300ms steps(4);
     pointer-events: none;
 }
 
@@ -3365,12 +3324,11 @@ body {
 }
 
 .boss-intro-title {
-    font-size: 64px;
+    font-size: calc(var(--text-title-size) * 3);
     font-weight: bold;
     color: #ff4444;
     letter-spacing: 16px;
-    text-shadow: 0 0 60px rgba(255, 68, 68, 0.8), 0 0 120px rgba(255, 68, 68, 0.3);
-    animation: bossIntroTitlePulse 0.6s ease forwards;
+    animation: bossIntroTitlePulse 0.6s steps(6) forwards;
 }
 
 @keyframes bossIntroTitlePulse {
@@ -3388,12 +3346,12 @@ body {
 }
 
 .boss-intro-mod-item {
-    font-size: 18px;
+    font-size: var(--text-subtitle-size);
     color: #ff6b6b;
     letter-spacing: 3px;
     opacity: 0;
     transform: translateX(-20px);
-    animation: bossModItemIn 0.3s ease forwards;
+    animation: bossModItemIn 0.3s steps(4) forwards;
 }
 
 @keyframes bossModItemIn {
@@ -3427,7 +3385,7 @@ body {
 }
 
 .hud-stage-info.stage-info-pulse {
-    animation: stageInfoPulse 0.4s ease;
+    animation: stageInfoPulse 0.4s steps(4);
 }
 
 @keyframes stageInfoPulse {
@@ -3485,29 +3443,18 @@ body {
 }
 
 .rating-badge {
-  font-size: 28px;
-  font-weight: bold;
-  min-width: 50px;
-  text-align: center;
-  padding: 4px 8px;
-  border-radius: 0;
-  background: rgba(255,255,255,0.08);
-  color: #aaa;
+  font-size: var(--text-subtitle-size); font-weight: bold; min-width: 50px;
+  text-align: center; padding: 4px 8px; border-radius: 0;
+  background: rgba(255,255,255,0.08); color: #aaa;
 }
 .rating-badge.rating-c { color: #888888; }
 .rating-badge.rating-b { color: #4a90d9; background: rgba(74,144,217,0.1); }
-.rating-badge.rating-a { color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,0.5); background: rgba(255,215,0,0.1); }
-.rating-badge.rating-s { color: #a855f7; text-shadow: 0 0 10px rgba(168,85,247,0.5); background: rgba(168,85,247,0.1); }
-.rating-badge.rating-ss { color: #ffd700; text-shadow: 0 0 12px rgba(255,215,0,0.6); background: rgba(255,215,0,0.12); }
-.rating-badge.rating-sss { color: #ff6b6b; text-shadow: 0 0 12px rgba(255,107,107,0.6); background: rgba(255,107,107,0.12); }
+.rating-badge.rating-a { color: #ffd700; background: rgba(255,215,0,0.1); }
+.rating-badge.rating-s { color: #a855f7; background: rgba(168,85,247,0.1); }
+.rating-badge.rating-ss { color: #ffd700; background: rgba(255,215,0,0.12); }
+.rating-badge.rating-sss { color: #ff6b6b; background: rgba(255,107,107,0.12); }
 
-.stats-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 11px;
-  color: #888;
-}
+.stats-summary { display: flex; flex-wrap: wrap; gap: 8px; font-size: var(--text-caption-size); color: #888; }
 
 /* === 热力图维度选择器 === */
 .heatmap-dims {
@@ -3546,47 +3493,25 @@ body {
   gap: 3px;
 }
 .heatmap-key {
-  width: 34px;
-  height: 34px;
-  border-radius: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  position: relative;
-  cursor: pointer;
+  width: 34px; height: 34px; border-radius: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: var(--text-caption-size); position: relative; cursor: pointer;
   border: 1px solid rgba(255,255,255,0.1);
-  transition: transform 0.15s;
+  transition: border-color 0.15s steps(3);
 }
-.heatmap-key:hover { transform: scale(1.15); z-index: 2; }
+.heatmap-key:hover { border-color: #4ecdc4; z-index: 2; }
 .heatmap-key-empty { opacity: 0.35; }
-.hm-letter {
-  font-size: 11px;
-  font-weight: bold;
-  color: rgba(255,255,255,0.9);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-.hm-count {
-  font-size: 8px;
-  color: rgba(255,255,255,0.7);
-}
+.hm-letter { font-size: var(--text-caption-size); font-weight: bold; color: rgba(255,255,255,0.9); }
+.hm-count { font-size: var(--text-min-size); color: rgba(255,255,255,0.7); }
 
 /* 热力图 tooltip */
 .heatmap-tooltip {
-  position: fixed;
-  z-index: 9999;
-  background: rgba(0,0,0,0.85);
-  border: 2px solid #4a4a6a;
-  border-radius: 0;
-  font-family: var(--font-pixel);
-  padding: 8px 12px;
-  font-size: 11px;
-  pointer-events: none;
-  min-width: 120px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  position: fixed; z-index: 9999;
+  background: rgba(0,0,0,0.85); border: 2px solid #4a4a6a; border-radius: 0;
+  font-family: var(--font-pixel); padding: 8px 12px;
+  font-size: var(--text-caption-size); pointer-events: none; min-width: 120px;
 }
-.ht-key { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+.ht-key { font-size: var(--text-subtitle-size); font-weight: bold; margin-bottom: 4px; }
 .ht-count { color: #aaa; margin-bottom: 6px; }
 .ht-resource { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
 
@@ -3630,12 +3555,12 @@ body {
 }
 
 .rating-grade {
-    font-size: 96px;
+    font-size: calc(var(--text-title-size) * 4);
     font-weight: bold;
-    transition: color 0.15s, text-shadow 0.15s;
+    transition: color 0.15s steps(3);
 }
 .rating-grade.rating-final {
-    animation: ratingFinalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: ratingFinalPop 0.4s steps(5);
 }
 @keyframes ratingFinalPop {
     0% { transform: scale(1); }
@@ -3645,19 +3570,10 @@ body {
 
 .rating-grade.rating-c { color: #888888; }
 .rating-grade.rating-b { color: #4a90d9; }
-.rating-grade.rating-a { color: #ffd700; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
-.rating-grade.rating-s { color: #a855f7; text-shadow: 0 0 30px rgba(168,85,247,0.6), 0 0 60px rgba(168,85,247,0.3); }
-.rating-grade.rating-ss {
-    color: #ffd700;
-    text-shadow: 0 0 30px rgba(255,215,0,0.7), 0 0 60px rgba(255,215,0,0.4);
-}
-.rating-grade.rating-sss {
-    background: linear-gradient(90deg, #ff6b6b, #ffd700, #4ecdc4, #a855f7);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 20px rgba(255,107,107,0.6)) drop-shadow(0 0 40px rgba(255,215,0,0.4));
-}
+.rating-grade.rating-a { color: #ffd700; }
+.rating-grade.rating-s { color: #a855f7; }
+.rating-grade.rating-ss { color: #ffd700; }
+.rating-grade.rating-sss { color: #ff6b6b; }
 
 /* ==================== 职业选择模态框 (Story 32.1) ==================== */
 
@@ -4328,13 +4244,13 @@ body {
 }
 
 @keyframes morph-pulse {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46,204,113,0.4); }
-    50% { transform: scale(1.08); box-shadow: 0 0 12px 4px rgba(46,204,113,0.3); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46,204,113,0); }
+    0% { transform: scale(1); border-color: #2ecc71; }
+    50% { transform: scale(1.08); border-color: #5dde9e; }
+    100% { transform: scale(1); border-color: inherit; }
 }
 
 .morph-transforming {
-    animation: morph-pulse 0.3s ease-out;
+    animation: morph-pulse 0.3s steps(4);
     pointer-events: none;
 }
 
