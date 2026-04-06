@@ -2449,7 +2449,7 @@ function victory(): void {
   const el = getElements();
   const endlessHint = state.endlessUnlocked
     ? ''
-    : `<br><span style="color:#ffe66d;font-size:0.85em">${t('battle.unlock_endless')}</span>`;
+    : `<br><span style="color:#ffe66d">${t('battle.unlock_endless')}</span>`;
   const ascBadge = state.ascensionLevel > 0 ? `<br><span style="color:#ffe66d">A${state.ascensionLevel}</span>` : '';
   el.gameoverStats.innerHTML = `
     ${t('battle.victory')}${ascBadge}<br>

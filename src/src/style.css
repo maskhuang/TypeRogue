@@ -1129,19 +1129,36 @@ body {
 /* ============================================ */
 /* GAME OVER SCREEN                             */
 /* ============================================ */
-#gameover-screen { align-items: center; justify-content: center; background: rgba(0,0,0,0.95); }
+/* Story 55-3: 暗红色调背景 — 区别于战斗/商店的随机色 */
+#gameover-screen {
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(ellipse at 50% 40%, hsl(350, 20%, 18%) 0%, transparent 60%),
+        linear-gradient(180deg, hsl(340, 18%, 12%), hsl(355, 20%, 16%));
+}
 #gameover-content { text-align: center; }
-#gameover-title { font-size: 48px; font-weight: bold; color: #ff6b6b; text-shadow: 0 0 30px rgba(255,107,107,0.5); margin-bottom: 20px; }
-#gameover-stats { color: #888; font-size: 14px; line-height: 2; margin-bottom: 30px; }
-.restart-btn { padding: 12px 30px; font-size: 14px; font-family: inherit; background: transparent; border: 2px solid #4ecdc4; border-radius: 0; color: #4ecdc4; cursor: pointer; transition: all 0.2s; }
+#gameover-title {
+    font-size: calc(var(--text-title-size) * 2);
+    font-weight: bold;
+    color: #ff6b6b;
+    margin-bottom: 20px;
+    animation: gameoverTitleIn 0.6s steps(6) both;
+}
+@keyframes gameoverTitleIn {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+#gameover-stats { color: #888; font-size: var(--text-body-size); line-height: 2; margin-bottom: 30px; }
+.restart-btn { padding: 12px 30px; font-size: var(--text-subtitle-size); font-family: inherit; background: var(--bg-panel); border: 2px solid #4ecdc4; border-radius: 0; color: #4ecdc4; cursor: pointer; transition: background 0.15s steps(3), color 0.15s steps(3); }
 .restart-btn:hover { background: #4ecdc4; color: #0a0a0f; }
 .daily-btn { border-color: #ffe66d; color: #ffe66d; margin-left: 8px; }
 .daily-btn:hover { background: #ffe66d; color: #0a0a0f; }
 
 /* LEADERBOARD (Story 25.5) */
 .gameover-leaderboard { margin: 16px 0; max-height: 280px; overflow-y: auto; }
-.lb-title { font-size: 16px; color: #4ecdc4; margin-bottom: 8px; font-weight: bold; }
-.lb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.lb-title { font-size: var(--text-subtitle-size); color: #4ecdc4; margin-bottom: 8px; font-weight: bold; }
+.lb-table { width: 100%; border-collapse: collapse; font-size: var(--text-body-size); }
 .lb-table th { color: #666; font-weight: normal; padding: 4px 8px; text-align: left; border-bottom: 1px solid #333; }
 .lb-table td { padding: 4px 8px; color: #aaa; }
 .lb-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
@@ -1149,7 +1166,7 @@ body {
 .lb-defeat td:nth-child(4) { color: #ff6b6b; }
 .lb-latest { background: rgba(78,205,196,0.1) !important; }
 .lb-latest td { color: #eee; }
-.lb-detail td { padding: 2px 8px; font-size: 11px; color: #666; }
+.lb-detail td { padding: 2px 8px; font-size: var(--text-caption-size); color: #666; }
 .lb-detail-label { color: #4ecdc4; }
 .lb-daily-title { color: #ffe66d; margin-top: 12px; }
 
