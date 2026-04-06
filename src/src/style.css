@@ -2253,17 +2253,15 @@ body {
     align-items: center;
     gap: 16px;
     padding: 30px 50px;
-    background: linear-gradient(145deg, #1a1a2e, #0d0d15);
+    background: #1a1a2e;
     border: 3px solid #ffe66d;
     border-radius: 0;
-    box-shadow: 0 0 60px rgba(255,230,109,0.4), 0 10px 40px rgba(0,0,0,0.8);
 }
 
 .gold-reward-title {
-    font-size: 28px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #4ecdc4;
-    text-shadow: 0 0 20px rgba(78,205,196,0.6);
     letter-spacing: 4px;
 }
 
@@ -2276,21 +2274,9 @@ body {
     transform: translateX(-20px);
 }
 
-.gold-reward-label {
-    font-size: 18px;
-    color: #888;
-}
-
-.gold-reward-value {
-    font-size: 20px;
-    font-weight: bold;
-    color: #ffe66d;
-}
-
-.gold-treasure {
-    color: #ffe66d;
-    text-shadow: 0 0 10px rgba(255,230,109,0.5);
-}
+.gold-reward-label { font-size: var(--text-body-size); color: #888; }
+.gold-reward-value { font-size: var(--text-subtitle-size); font-weight: bold; color: #ffe66d; }
+.gold-treasure { color: #ffe66d; }
 
 .gold-reward-total {
     display: flex;
@@ -2303,92 +2289,38 @@ body {
     transform: scale(0.5);
 }
 
-.gold-icon {
-    font-size: 36px;
-}
-
-.gold-total-value {
-    font-size: 42px;
-    font-weight: bold;
-    color: #ffe66d;
-    text-shadow: 0 0 30px rgba(255,230,109,0.7);
-}
+.gold-icon { font-size: var(--text-title-size); }
+.gold-total-value { font-size: calc(var(--text-title-size) * 2); font-weight: bold; color: #ffe66d; }
 
 /* Gold reward animations */
 @keyframes goldRowIn {
-    0% {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    0% { opacity: 0; transform: translateX(-20px); }
+    100% { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes goldTotalIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-    50% {
-        transform: scale(1.2);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
+    0% { opacity: 0; transform: scale(0.5); }
+    50% { transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
 @keyframes goldPanelIn {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.8);
-    }
-    100% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 @keyframes goldPanelOut {
-    0% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.9) translateY(-30px);
-    }
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9) translateY(-30px); }
 }
 
-#gold-reward.gold-reward-show {
-    animation: goldPanelIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-#gold-reward.gold-reward-show .gold-reward-row:nth-child(2) {
-    animation: goldRowIn 0.3s ease-out 0.2s forwards;
-}
-
-#gold-reward.gold-reward-show .gold-reward-row:nth-child(3) {
-    animation: goldRowIn 0.3s ease-out 0.4s forwards;
-}
-
-#gold-reward.gold-reward-show .gold-reward-row:nth-child(4) {
-    animation: goldRowIn 0.3s ease-out 0.6s forwards;
-}
-
-#gold-reward.gold-reward-show .gold-reward-row:nth-child(5) {
-    animation: goldRowIn 0.3s ease-out 0.8s forwards;
-}
-
-#gold-reward.gold-reward-show .gold-reward-total {
-    animation: goldTotalIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 1.0s forwards;
-}
-
-#gold-reward.gold-reward-hide {
-    animation: goldPanelOut 0.3s ease-out forwards;
-}
+#gold-reward.gold-reward-show { animation: goldPanelIn 0.4s steps(5) forwards; }
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(2) { animation: goldRowIn 0.3s steps(4) 0.2s forwards; }
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(3) { animation: goldRowIn 0.3s steps(4) 0.4s forwards; }
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(4) { animation: goldRowIn 0.3s steps(4) 0.6s forwards; }
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(5) { animation: goldRowIn 0.3s steps(4) 0.8s forwards; }
+#gold-reward.gold-reward-show .gold-reward-total { animation: goldTotalIn 0.5s steps(5) 1.0s forwards; }
+#gold-reward.gold-reward-hide { animation: goldPanelOut 0.3s steps(3) forwards; }
 
 /* ============================================ */
 /* ENCHANTMENT MODAL                              */
@@ -2569,249 +2501,96 @@ body {
         radial-gradient(3px 3px at 80% 70%, rgba(255, 230, 109, 0.1), transparent),
         radial-gradient(2px 2px at 35% 85%, rgba(255, 230, 109, 0.06), transparent);
     pointer-events: none;
-    animation: ritualParticleFloat 6s ease-in-out infinite alternate;
+    animation: ritualParticleFloat 6s steps(4) infinite alternate;
 }
 
-#ritual-screen > * {
-    position: relative;
-    z-index: 1;
-}
+#ritual-screen > * { position: relative; z-index: 1; }
 
 @keyframes ritualParticleFloat {
     from { transform: translateY(0); }
     to { transform: translateY(-6px); }
 }
 
-.ritual-header {
-    text-align: center;
-    animation: ritualFadeIn 400ms ease both;
-}
+.ritual-header { text-align: center; animation: ritualFadeIn 400ms steps(6) both; }
 
 .ritual-title {
-    font-size: 26px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #ffe66d;
     margin: 0 0 8px 0;
-    text-shadow: 0 0 24px rgba(255, 230, 109, 0.5);
     letter-spacing: 4px;
 }
 
-.ritual-subtitle {
-    font-size: 14px;
-    color: #999;
-    margin: 0;
-}
+.ritual-subtitle { font-size: var(--text-body-size); color: #999; margin: 0; }
 
-.ritual-choices {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    flex-wrap: wrap;
-    animation: ritualFadeIn 400ms ease 100ms both;
-}
+.ritual-choices { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; animation: ritualFadeIn 400ms steps(6) 100ms both; }
 
 .ritual-choice-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(180deg, #1a1a2e, #16213e);
-    border: 2px solid #444;
-    border-radius: 0;
-    padding: 20px 24px;
-    min-width: 140px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: inherit;
-    color: #fff;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    background: var(--bg-panel); border: 2px solid #444; border-radius: 0;
+    padding: 20px 24px; min-width: 140px; cursor: pointer;
+    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    font-family: inherit; color: #fff;
 }
 
-.ritual-choice-btn:hover {
-    border-color: #ffe66d;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(255, 230, 109, 0.2);
-}
+.ritual-choice-btn:hover { border-color: #ffe66d; background: var(--bg-panel-hover); }
+.ritual-choice-btn.selected { border-color: #ffe66d; background: rgba(255, 230, 109, 0.12); }
 
-.ritual-choice-btn.selected {
-    border-color: #ffe66d;
-    background: linear-gradient(180deg, rgba(255, 230, 109, 0.12), #16213e);
-    box-shadow: 0 0 16px rgba(255, 230, 109, 0.25);
-}
+.ritual-choice-icon { font-size: var(--text-title-size); }
+.ritual-choice-name { font-size: var(--text-body-size); font-weight: bold; color: #fff; }
 
-.ritual-choice-icon {
-    font-size: 36px;
-}
-
-.ritual-choice-name {
-    font-size: 14px;
-    font-weight: bold;
-    color: #fff;
-}
-
-.ritual-skill-select {
-    border-top: 1px solid #333;
-    padding-top: 20px;
-    animation: ritualFadeIn 300ms ease both;
-}
-
-.ritual-skill-prompt {
-    font-size: 14px;
-    color: #ccc;
-    margin: 0 0 14px 0;
-}
-
-.ritual-skill-list {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
+.ritual-skill-select { border-top: 1px solid #333; padding-top: 20px; animation: ritualFadeIn 300ms steps(6) both; }
+.ritual-skill-prompt { font-size: var(--text-body-size); color: #ccc; margin: 0 0 14px 0; }
+.ritual-skill-list { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
 .ritual-skill-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    background: linear-gradient(180deg, #16213e, #0f3460);
-    border: 2px solid #3498db;
-    border-radius: 0;
-    padding: 14px 18px;
-    min-width: 160px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: inherit;
-    color: #fff;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+    background: var(--bg-panel); border: 2px solid #3498db; border-radius: 0;
+    padding: 14px 18px; min-width: 160px; cursor: pointer;
+    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    font-family: inherit; color: #fff;
 }
 
-.ritual-skill-btn:hover {
-    border-color: #5dade2;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 18px rgba(52, 152, 219, 0.3);
-}
+.ritual-skill-btn:hover { border-color: #5dade2; background: var(--bg-panel-hover); }
 
-.ritual-skill-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-}
+.ritual-skill-header { display: flex; align-items: center; gap: 6px; width: 100%; }
+.ritual-skill-icon { font-size: var(--text-title-size); }
+.ritual-skill-name { font-size: var(--text-body-size); font-weight: bold; }
+.ritual-skill-res { font-size: var(--text-body-size); margin-left: auto; }
+.ritual-skill-affixes { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.ritual-skill-affix { font-size: var(--text-caption-size); color: #e67e22; }
+.ritual-skill-enchants { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.ritual-skill-ench { font-size: var(--text-caption-size); }
+.ritual-skill-slots { font-size: var(--text-caption-size); color: #2ecc71; margin-top: 2px; }
+.ritual-choice-category { font-size: var(--text-caption-size); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+.ritual-choice-desc { font-size: var(--text-caption-size); color: #aaa; text-align: center; line-height: 1.4; }
 
-.ritual-skill-icon {
-    font-size: 24px;
-}
-
-.ritual-skill-name {
-    font-size: 13px;
-    font-weight: bold;
-}
-
-.ritual-skill-res {
-    font-size: 14px;
-    margin-left: auto;
-}
-
-.ritual-skill-affixes {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    width: 100%;
-}
-
-.ritual-skill-affix {
-    font-size: 10px;
-    color: #e67e22;
-}
-
-.ritual-skill-enchants {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    width: 100%;
-}
-
-.ritual-skill-ench {
-    font-size: 10px;
-}
-
-.ritual-skill-slots {
-    font-size: 10px;
-    color: #2ecc71;
-    margin-top: 2px;
-}
-
-.ritual-choice-category {
-    font-size: 10px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.ritual-choice-desc {
-    font-size: 11px;
-    color: #aaa;
-    text-align: center;
-    line-height: 1.4;
-}
-
-.ritual-feedback-area {
-    text-align: center;
-    animation: ritualFadeIn 400ms ease both;
-}
-
-.ritual-feedback {
-    font-size: 18px;
-    color: #2ecc71;
-    margin: 0 0 28px 0;
-    line-height: 1.5;
-}
+.ritual-feedback-area { text-align: center; animation: ritualFadeIn 400ms steps(6) both; }
+.ritual-feedback { font-size: var(--text-subtitle-size); color: #2ecc71; margin: 0 0 28px 0; line-height: 1.5; }
 
 .ritual-continue-btn {
-    padding: 12px 40px;
-    background: linear-gradient(180deg, #ffe66d, #f1c40f);
-    border: none;
-    border-radius: 0;
-    color: #000;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    padding: 12px 40px; background: #ffe66d; border: 2px solid #ffe66d; border-radius: 0;
+    color: #000; font-family: inherit; font-size: var(--text-subtitle-size); font-weight: bold;
+    cursor: pointer; transition: background 0.15s steps(3);
 }
-
-.ritual-continue-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(255, 230, 109, 0.4);
-}
+.ritual-continue-btn:hover { background: #fff080; }
 
 @keyframes ritualFadeIn {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Ritual-style modal overlay (used by enchantment trial + shop enchantment target) */
+/* Ritual-style modal overlay */
 .ritual-enchantment-overlay {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 1000; display: flex; align-items: center; justify-content: center;
     background: rgba(0, 0, 0, 0.85);
 }
 
 .ritual-enchantment-panel {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-    padding: 36px 40px;
-    max-width: 600px;
-    max-height: 85vh;
-    overflow-y: auto;
-    background: linear-gradient(180deg, #1a1a2e, #0f0f23);
-    border: 2px solid #ffe66d;
-    border-radius: 0;
-    box-shadow: 0 0 40px rgba(255, 230, 109, 0.15), 0 16px 48px rgba(0, 0, 0, 0.6);
+    position: relative; z-index: 1; text-align: center;
+    padding: 36px 40px; max-width: 600px; max-height: 85vh; overflow-y: auto;
+    background: #1a1a2e; border: 2px solid #ffe66d; border-radius: 0;
 }
 
 /* ============================================ */
@@ -2841,13 +2620,10 @@ body {
         radial-gradient(3px 3px at 78% 65%, rgba(126, 200, 227, 0.10), transparent),
         radial-gradient(2px 2px at 30% 80%, rgba(126, 200, 227, 0.06), transparent);
     pointer-events: none;
-    animation: restParticleFloat 8s ease-in-out infinite alternate;
+    animation: restParticleFloat 8s steps(4) infinite alternate;
 }
 
-#rest-screen > * {
-    position: relative;
-    z-index: 1;
-}
+#rest-screen > * { position: relative; z-index: 1; }
 
 @keyframes restParticleFloat {
     from { transform: translateY(0); }
@@ -2859,135 +2635,55 @@ body {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-.rest-header {
-    text-align: center;
-    animation: restFadeIn 400ms ease both;
-}
+.rest-header { text-align: center; animation: restFadeIn 400ms steps(6) both; }
 
 .rest-title {
-    font-size: 26px;
+    font-size: var(--text-subtitle-size);
     font-weight: bold;
     color: #7ec8e3;
     margin: 0 0 8px 0;
-    text-shadow: 0 0 24px rgba(126, 200, 227, 0.5);
     letter-spacing: 4px;
 }
 
-.rest-act-label {
-    font-size: 13px;
-    color: #888;
-    margin: 0;
-}
+.rest-act-label { font-size: var(--text-body-size); color: #888; margin: 0; }
 
 .rest-event {
     background: rgba(126, 200, 227, 0.06);
     border: 1px solid rgba(126, 200, 227, 0.15);
-    border-radius: 0;
-    padding: 24px;
-    text-align: center;
-    animation: restFadeIn 400ms ease 100ms both;
+    border-radius: 0; padding: 24px; text-align: center;
+    animation: restFadeIn 400ms steps(6) 100ms both;
 }
 
-.event-icon {
-    font-size: 48px;
-    margin-bottom: 8px;
-}
+.event-icon { font-size: var(--text-title-size); margin-bottom: 8px; }
+.event-name { font-size: var(--text-subtitle-size); font-weight: bold; color: #7ec8e3; margin-bottom: 6px; }
+.event-description { font-size: var(--text-body-size); color: #aaa; line-height: 1.5; }
 
-.event-name {
-    font-size: 18px;
-    font-weight: bold;
-    color: #7ec8e3;
-    margin-bottom: 6px;
-}
-
-.event-description {
-    font-size: 13px;
-    color: #aaa;
-    line-height: 1.5;
-}
-
-.rest-options {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-    animation: restFadeIn 400ms ease 200ms both;
-}
+.rest-options { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: restFadeIn 400ms steps(6) 200ms both; }
 
 .rest-option-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(180deg, #12202e, #0e1a28);
-    border: 2px solid #445;
-    border-radius: 0;
-    padding: 20px 24px;
-    min-width: 200px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: inherit;
-    color: #fff;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    background: var(--bg-panel); border: 2px solid #445; border-radius: 0;
+    padding: 20px 24px; min-width: 200px; cursor: pointer;
+    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    font-family: inherit; color: #fff;
 }
 
-.rest-option-btn:hover {
-    border-color: #7ec8e3;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(126, 200, 227, 0.2);
-}
+.rest-option-btn:hover { border-color: #7ec8e3; background: var(--bg-panel-hover); }
+.rest-option-btn:disabled { cursor: default; }
 
-.rest-option-btn:disabled {
-    cursor: default;
-    transform: none;
-    box-shadow: none;
-}
+.option-label { font-size: var(--text-subtitle-size); font-weight: bold; color: #fff; }
+.option-desc { font-size: var(--text-body-size); color: #999; text-align: center; line-height: 1.4; }
 
-.option-label {
-    font-size: 15px;
-    font-weight: bold;
-    color: #fff;
-}
-
-.option-desc {
-    font-size: 12px;
-    color: #999;
-    text-align: center;
-    line-height: 1.4;
-}
-
-.rest-result {
-    text-align: center;
-    animation: restFadeIn 400ms ease both;
-}
-
-.rest-result-hidden {
-    display: none;
-}
-
-.result-text {
-    font-size: 16px;
-    color: #2ecc71;
-    margin: 0 0 20px 0;
-    line-height: 1.5;
-}
+.rest-result { text-align: center; animation: restFadeIn 400ms steps(6) both; }
+.rest-result-hidden { display: none; }
+.result-text { font-size: var(--text-subtitle-size); color: #2ecc71; margin: 0 0 20px 0; line-height: 1.5; }
 
 .rest-continue-btn {
-    padding: 12px 40px;
-    background: linear-gradient(180deg, #ffe66d, #f1c40f);
-    border: none;
-    border-radius: 0;
-    color: #000;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    padding: 12px 40px; background: #ffe66d; border: 2px solid #ffe66d; border-radius: 0;
+    color: #000; font-family: inherit; font-size: var(--text-subtitle-size); font-weight: bold;
+    cursor: pointer; transition: background 0.15s steps(3);
 }
-
-.rest-continue-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(255, 230, 109, 0.4);
-}
+.rest-continue-btn:hover { background: #fff080; }
 
 /* ============================================ */
 /* WORD PICKER MODAL (三选一)                    */
