@@ -2578,8 +2578,10 @@ export function updateHUD(): void {
     scoreRoller.setTarget(Math.floor(state.score)); // Story 31.4: 平滑滚动
     el.score.textContent = String(scoreRoller.getValue()); // Review M1: rAF 未启动时 fallback
   }
-  // Story 42.2: 达标后目标分数显示 ✓ + 绿色
-  if (_isCalibrationLevel) {
+  // 教程模式 targetScore=0 时隐藏目标
+  if (state.isTutorial && state.targetScore === 0) {
+    el.targetScore.textContent = '';
+  } else if (_isCalibrationLevel) {
     el.targetScore.textContent = t('battle.calibration') || '—';
     el.targetScore.style.color = '#aaaaaa';
   } else if (_targetReached) {

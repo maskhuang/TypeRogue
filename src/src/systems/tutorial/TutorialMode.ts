@@ -96,7 +96,7 @@ async function runTutorialPhases(): Promise<void> {
   // --- 阶段 1: 打字基础 ---
   currentPhase = 1
   resetBattleForPhase()
-  state.time = 9999; state.timeMax = 9999; state.targetScore = 99999
+  state.time = 9999; state.timeMax = 9999; state.targetScore = 0
   setTutorialHUD(1)
   showScreen('battle')
   initAudio()
