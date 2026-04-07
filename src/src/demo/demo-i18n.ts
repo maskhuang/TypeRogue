@@ -79,6 +79,11 @@ const ZH: Record<string, string> = {
   'gameover.daily': '📅 每日挑战',
   'class_select.title': '⚔️ 选择职业 ⚔️',
   'class_select.confirm': '确认选择',
+  'class_select.resource': '资源',
+  'class_select.starter_relic': '初始遗物',
+  'class_select.lock_wordsmith': '🔒 通关一次解锁',
+  'class_select.lock_metamorph': '🔒 解锁所有技能后解锁',
+  'class_select.lock_none': '🔒 未解锁',
   'relic_picker.title': '🏺 选择一件遗物 🏺',
   'relic_picker.skip': '跳过',
   'modifier_picker.title': '⚔️ 选择 Boss 修饰器 ⚔️',
@@ -981,6 +986,30 @@ const ZH: Record<string, string> = {
   'wordeffect.time': '续命+{value}s',
   'wordeffect.gold': '淘金+{value}',
   'wordeffect.desc': '含有字母击键时额外产出',
+
+  // --- 排行榜 ---
+  'lb.title': '排行榜',
+  'lb.daily_title': '每日挑战榜',
+  'lb.cycle': '周目',
+  'lb.score': '分数',
+  'lb.result': '结果',
+  'lb.date': '日期',
+  'lb.victory': '胜',
+  'lb.defeat': '败',
+  'lb.skills': '技能',
+  'lb.relics': '遗物',
+  'lb.mods': '修饰',
+  'lb.none': '无',
+
+  // --- 职业 ---
+  'class.none.name': '无职业',
+  'class.none.desc': '标准模式，无特殊机制。',
+  'class.wordsmith.name': '造词师',
+  'class.wordsmith.desc': '操控输入层，通过字母碎片和采集队列手动构建词库。',
+  'class.wordsmith.lose': '购买单词时获得等量字母碎片',
+  'class.metamorph.name': '蜕变师',
+  'class.metamorph.desc': '操控处理层，通过变异素和蜕变盲盒改造技能组合。',
+  'class.metamorph.lose': '失去附魔选择权（Lv3 随机附魔）',
 }
 
 // === EN 字典 ===
@@ -1033,6 +1062,11 @@ const EN: Record<string, string> = {
   'gameover.daily': '📅 Daily Challenge',
   'class_select.title': '⚔️ Choose Class ⚔️',
   'class_select.confirm': 'Confirm',
+  'class_select.resource': 'Resource',
+  'class_select.starter_relic': 'Starter Relic',
+  'class_select.lock_wordsmith': '🔒 Clear once to unlock',
+  'class_select.lock_metamorph': '🔒 Unlock all skills to unlock',
+  'class_select.lock_none': '🔒 Locked',
   'relic_picker.title': '🏺 Pick a Relic 🏺',
   'relic_picker.skip': 'Skip',
   'modifier_picker.title': '⚔️ Pick Boss Modifiers ⚔️',
@@ -1939,6 +1973,30 @@ const EN: Record<string, string> = {
   'wordeffect.time': 'Time+{value}s',
   'wordeffect.gold': 'Gold+{value}',
   'wordeffect.desc': 'Keystroke bonus for contained letters',
+
+  // --- Leaderboard ---
+  'lb.title': 'Leaderboard',
+  'lb.daily_title': 'Daily Challenge',
+  'lb.cycle': 'Cycle',
+  'lb.score': 'Score',
+  'lb.result': 'Result',
+  'lb.date': 'Date',
+  'lb.victory': 'Win',
+  'lb.defeat': 'Loss',
+  'lb.skills': 'Skills',
+  'lb.relics': 'Relics',
+  'lb.mods': 'Mods',
+  'lb.none': 'None',
+
+  // --- Class ---
+  'class.none.name': 'No Class',
+  'class.none.desc': 'Standard mode, no special mechanics.',
+  'class.wordsmith.name': 'Wordsmith',
+  'class.wordsmith.desc': 'Control the input layer. Build your word deck with letter fragments.',
+  'class.wordsmith.lose': 'Gain letter fragments when buying words',
+  'class.metamorph.name': 'Metamorph',
+  'class.metamorph.desc': 'Control the processing layer. Mutate skill affixes with mutagen.',
+  'class.metamorph.lose': 'Lose enchantment choice (Lv3 auto-enchant)',
 }
 
 // === Demo 物品名翻译（仅 Demo 池 ~48 个） ===

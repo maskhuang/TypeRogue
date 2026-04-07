@@ -40,7 +40,7 @@ export interface AchievementProgress {
  * Story 25.5: AC1
  */
 export interface BuildSummary {
-  skills: { id: string; level: number }[]
+  skills: { id: string; level: number; name?: string }[]
   enchantments: { skillId: string; enchantmentId: string }[]
   relics: string[]
   activeModifiers: string[]

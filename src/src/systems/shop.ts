@@ -4117,10 +4117,10 @@ function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicDa
   const rarityColor = RELIC_RARITY_COLORS[relic.rarity] || '#aaa';
   let descText = localizeItemDesc(relic.id, relic.description);
   tip.innerHTML =
-    `<div style="font-size:10px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${localizeItemName(relic.id, relic.name)}</div>` +
-    `<div style="font-size:8px;padding:1px 4px;border-radius:0;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${getRarityLabel(relic.rarity)}</div>` +
-    `<div style="color:#aaa;font-size:8px;white-space:normal;">${descText}</div>` +
-    (relic.flavor && getLocale() === 'zh' ? `<div style="color:#666;font-size:8px;font-style:italic;margin-top:4px;">${relic.flavor}</div>` : '');
+    `<div style="font-size:12px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${localizeItemName(relic.id, relic.name)}</div>` +
+    `<div style="font-size:10px;padding:1px 4px;border-radius:0;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${getRarityLabel(relic.rarity)}</div>` +
+    `<div style="color:#aaa;font-size:11px;white-space:normal;">${descText}</div>` +
+    (relic.flavor && getLocale() === 'zh' ? `<div style="color:#666;font-size:10px;font-style:italic;margin-top:4px;">${relic.flavor}</div>` : '');
   tip.style.left = e.clientX + 12 + 'px';
   tip.style.top = e.clientY + 12 + 'px';
   document.body.appendChild(tip);

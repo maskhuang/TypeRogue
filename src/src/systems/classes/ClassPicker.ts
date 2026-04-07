@@ -9,6 +9,7 @@ import { CLASS_DEFINITIONS, getSelectableClassIds } from '../../data/classes';
 import { classManager } from './ClassManager';
 import type { MetaState } from '../../core/state/MetaState';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../../core/constants';
+import { t } from '../../demo/demo-i18n';
 
 /**
  * 显示职业选择界面
@@ -104,12 +105,12 @@ function createClassCard(def: ClassDefinition, isUnlocked: boolean): HTMLDivElem
 
   const nameEl = document.createElement('div');
   nameEl.className = 'class-card-name';
-  nameEl.textContent = def.name;
+  nameEl.textContent = t(`class.${def.id}.name`) !== `class.${def.id}.name` ? t(`class.${def.id}.name`) : def.name;
   card.appendChild(nameEl);
 
   const descEl = document.createElement('div');
   descEl.className = 'class-card-desc';
-  descEl.textContent = def.description;
+  descEl.textContent = t(`class.${def.id}.desc`) !== `class.${def.id}.desc` ? t(`class.${def.id}.desc`) : def.description;
   card.appendChild(descEl);
 
   if (def.id !== 'none') {
@@ -122,7 +123,7 @@ function createClassCard(def: ClassDefinition, isUnlocked: boolean): HTMLDivElem
       span.className = 'info-resource';
       const resIcon = RESOURCE_ICONS[def.uniqueResource] || '';
       const resLabel = RESOURCE_LABELS[def.uniqueResource] || def.uniqueResource;
-      span.textContent = `资源: ${resIcon} ${resLabel}`;
+      span.textContent = `${t('class_select.resource') !== 'class_select.resource' ? t('class_select.resource') : '资源'}: ${resIcon} ${resLabel}`;
       infoEl.appendChild(span);
       hasInfo = true;
     }
@@ -130,7 +131,8 @@ function createClassCard(def: ClassDefinition, isUnlocked: boolean): HTMLDivElem
       if (hasInfo) infoEl.appendChild(document.createElement('br'));
       const span = document.createElement('span');
       span.className = 'info-lose';
-      span.textContent = `⚠ ${def.loseDescription}`;
+      const loseText = t(`class.${def.id}.lose`) !== `class.${def.id}.lose` ? t(`class.${def.id}.lose`) : def.loseDescription;
+      span.textContent = `⚠ ${loseText}`;
       infoEl.appendChild(span);
       hasInfo = true;
     }
@@ -138,7 +140,7 @@ function createClassCard(def: ClassDefinition, isUnlocked: boolean): HTMLDivElem
       if (hasInfo) infoEl.appendChild(document.createElement('br'));
       const span = document.createElement('span');
       span.className = 'info-relic';
-      span.textContent = '🏺 初始遗物';
+      span.textContent = t('class_select.starter_relic') !== 'class_select.starter_relic' ? `🏺 ${t('class_select.starter_relic')}` : '🏺 初始遗物';
       infoEl.appendChild(span);
       hasInfo = true;
     }
@@ -149,13 +151,9 @@ function createClassCard(def: ClassDefinition, isUnlocked: boolean): HTMLDivElem
   if (!isUnlocked) {
     const lockEl = document.createElement('div');
     lockEl.className = 'class-card-lock-text';
-    if (def.id === 'wordsmith') {
-      lockEl.textContent = '🔒 通关一次解锁';
-    } else if (def.id === 'metamorph') {
-      lockEl.textContent = '🔒 解锁所有技能后解锁';
-    } else {
-      lockEl.textContent = '🔒 未解锁';
-    }
+    const lockKey = `class_select.lock_${def.id}`;
+    const lockText = t(lockKey) !== lockKey ? t(lockKey) : (def.id === 'wordsmith' ? '🔒 通关一次解锁' : def.id === 'metamorph' ? '🔒 解锁所有技能后解锁' : '🔒 未解锁');
+    lockEl.textContent = lockText;
     card.appendChild(lockEl);
   }
 
