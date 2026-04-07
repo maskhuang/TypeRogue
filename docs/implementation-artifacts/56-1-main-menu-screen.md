@@ -1,6 +1,6 @@
 # Story 56.1: 主菜单界面
 
-Status: review
+Status: done
 
 ## Story
 

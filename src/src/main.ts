@@ -4,7 +4,7 @@
 
 import './style.css';
 import { initElements, getElements } from './ui/elements';
-import { state } from './core/state';
+import { state, resetState } from './core/state';
 import { getStarterWords } from './data/words';
 import { startLevel, initInput, resetCycleTracking, showScreen } from './systems/battle';
 import { initFloatTextCanvas, clearFloatTexts } from './ui/effects/FloatTextPool';
@@ -151,6 +151,7 @@ async function init(): Promise<void> {
     restartBtn.onclick = () => {
       stopBGM();
       clearFloatTexts();
+      resetState();
       showScreen('menu');
       updateMenuInfo();
     };
