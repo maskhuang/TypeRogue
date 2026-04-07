@@ -6,7 +6,7 @@
 
 import { t } from '../../demo/demo-i18n'
 import { state, resetState } from '../../core/state'
-import { showScreen, startLevel, setWordQueue } from '../battle'
+import { showScreen, startLevel, setWordQueue, stopBattleTimer } from '../battle'
 import { stopBGM, initAudio } from '../../effects/sound'
 import { clearFloatTexts } from '../../ui/effects/FloatTextPool'
 import { eventBus } from '../../core/events/EventBus'
@@ -150,6 +150,7 @@ async function runTutorialPhases(): Promise<void> {
   // 等待达标或时间到
   const p3result = await waitForTargetOrTimeUp()
   if (aborted) return
+  stopBattleTimer()
 
   if (p3result === 'reached') {
     await showPrompt('tutorial.phase3.reached')
@@ -184,6 +185,7 @@ async function runTutorialPhases(): Promise<void> {
 
   await waitForSkillTriggers(3)
   if (aborted) return
+  stopBattleTimer()
 
   await showPrompt('tutorial.phase4.done')
   if (aborted) return

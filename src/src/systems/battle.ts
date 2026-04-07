@@ -1528,6 +1528,11 @@ function getTimeAcceleration(elapsedSeconds: number, isBoss: boolean): number {
   return 1.0 + rate * elapsedSeconds * elapsedSeconds;
 }
 
+/** 停止战斗计时器（教程用） */
+export function stopBattleTimer(): void {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
 function startTimer(): void {
   state.time = state.timeMax + state.player.timeBonus;
   state.resources.time = state.time; // 同步资源
