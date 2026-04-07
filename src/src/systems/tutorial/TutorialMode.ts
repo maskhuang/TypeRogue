@@ -176,9 +176,14 @@ async function runTutorialPhases(): Promise<void> {
   advanceTutorialPhase()
   state.gold = 200
 
-  // 生成教程固定商品（匹配 ShopItem 接口）
-  const tutorialShopItems: import('../../core/types').ShopItem[] = (['base', 'multiplier', 'time'] as const).map((res, i) => {
-    const sk = generateSkill({ resource: res, rarity: 0, level: 1 })
+  // 生成教程固定商品：1格 + 2格 + 3格（展示多格技能）
+  const tutorialSkillConfigs: Array<{ resource: 'base' | 'multiplier' | 'time'; rarity: 0 | 1 | 2 }> = [
+    { resource: 'base', rarity: 0 },        // 1格 monomino
+    { resource: 'multiplier', rarity: 1 },   // 2格 domino
+    { resource: 'time', rarity: 2 },         // 3格 triomino
+  ]
+  const tutorialShopItems: import('../../core/types').ShopItem[] = tutorialSkillConfigs.map((cfg, i) => {
+    const sk = generateSkill({ resource: cfg.resource, rarity: cfg.rarity, level: 1 })
     return {
       id: `tutorial-skill-${i}`,
       type: 'skill' as const,
@@ -204,6 +209,9 @@ async function runTutorialPhases(): Promise<void> {
   if (aborted) return
 
   await showPrompt('tutorial.phase5.bind')
+  if (aborted) return
+
+  await showPrompt('tutorial.phase5.rotate')
   if (aborted) return
 
   await showPrompt('tutorial.phase5.done')
