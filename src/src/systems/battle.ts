@@ -2480,6 +2480,7 @@ function victory(): void {
     seed: state.dailySeed,
     classId: state.classId,
     ascensionLevel: state.ascensionLevel,
+    isTutorial: state.isTutorial,
   });
 }
 
@@ -2535,6 +2536,7 @@ function gameOver(): void {
     activeModifiers: [...state.activeModifiers],
     seed: state.dailySeed,
     classId: state.classId,
+    isTutorial: state.isTutorial,
   });
 }
 

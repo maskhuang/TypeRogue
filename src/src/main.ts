@@ -9,6 +9,7 @@ import { getStarterWords } from './data/words';
 import { startLevel, initInput, resetCycleTracking, showScreen } from './systems/battle';
 import { initFloatTextCanvas, clearFloatTexts } from './ui/effects/FloatTextPool';
 import { stopBGM } from './effects/sound';
+import { startTutorialMode } from './systems/tutorial/TutorialMode';
 import { initShopEvents } from './systems/shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
 import { MetaState } from './core/state/MetaState';
@@ -97,6 +98,8 @@ async function init(): Promise<void> {
         void startLevel();
       };
     }
+    const tutorialBtn = document.getElementById('menu-tutorial-btn');
+    if (tutorialBtn) tutorialBtn.onclick = () => startTutorialMode();
     return;
   }
 
@@ -256,6 +259,10 @@ async function init(): Promise<void> {
       });
     };
   }
+
+  // 主菜单「教程」按钮
+  const tutorialBtn = document.getElementById('menu-tutorial-btn');
+  if (tutorialBtn) tutorialBtn.onclick = () => startTutorialMode();
 }
 
 /** 更新主菜单底部信息 */

@@ -220,6 +220,7 @@ export interface GameState {
   affixSkillStates: Map<string, SkillRuntimeState>;  // 词条制技能运行时状态（skillId → 8字段状态），35.9
   ligatureStageCounts: Map<string, number>;           // Story 41-3: 质变 Ligature 关卡累计按键计数
   mutationACounts: Map<string, number>;              // 蜕变A累计次数（skillId → 次数），35.10
+  isTutorial: boolean;                     // 教程模式
   endlessUnlocked: boolean;                // 无尽模式是否解锁
   gameMode: 'normal' | 'daily';           // 游戏模式
   dailySeed: number | null;                // 每日挑战种子（daily 模式时非 null）

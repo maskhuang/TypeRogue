@@ -431,7 +431,7 @@ development_status:
   epic-56: backlog
   56-1-main-menu-screen: done                          # 主菜单界面
   56-2-tutorial-stage-design: done                     # 教程关设计
-  56-3a-tutorial-infrastructure: backlog                 # 教程基础设施（状态机+flag+入口）
+  56-3a-tutorial-infrastructure: done                     # 教程基础设施（状态机+flag+入口）
   56-3b-tutorial-overlay-ui: backlog                    # 提示 UI 系统（提示框+箭头+遮罩）
   56-3c-tutorial-battle-phases: backlog                 # 教程阶段 1-4（打字→连击→时间→技能）
   56-3d-tutorial-shop-complete: backlog                 # 教程阶段 5 + 完成画面 + Meta

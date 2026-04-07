@@ -89,6 +89,8 @@ export interface RunResultData {
   classId?: string
   /** Story 54.1: 本局 Ascension 级别 */
   ascensionLevel?: number
+  /** Story 56-3a: 教程模式标记（跳过进度记录） */
+  isTutorial?: boolean
 }
 
 /**
@@ -449,6 +451,9 @@ export class MetaState {
    * 此方法在 Run 结束时调用，检查是否满足解锁条件
    */
   checkUnlocks(data: RunResultData): void {
+    // 教程模式不记录任何进度
+    if (data.isTutorial) return
+
     // 1. 更新统计数据
     this.updateStats(data)
 
