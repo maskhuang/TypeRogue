@@ -176,10 +176,18 @@ async function runTutorialPhases(): Promise<void> {
   advanceTutorialPhase()
   state.gold = 200
 
-  // 生成教程固定商品
-  const tutorialShopItems: import('../../core/types').ShopItem[] = (['base', 'multiplier', 'time'] as const).map(res => {
+  // 生成教程固定商品（匹配 ShopItem 接口）
+  const tutorialShopItems: import('../../core/types').ShopItem[] = (['base', 'multiplier', 'time'] as const).map((res, i) => {
     const sk = generateSkill({ resource: res, rarity: 0, level: 1 })
-    return { type: 'skill' as const, skill: sk, price: 50, locked: false }
+    return {
+      id: `tutorial-skill-${i}`,
+      type: 'skill' as const,
+      skillId: sk.id,
+      affixSkill: sk,
+      cost: 50,
+      isUpgrade: false,
+      locked: false,
+    }
   })
   state.shop.items = tutorialShopItems
   state.shop.refreshCount = 0

@@ -1210,28 +1210,31 @@ export function openShop(_won: boolean): void {
   eventBus.emit('shop:opened');
   const el = getElements();
 
-  // 遗物效果：通过管道解析 on_battle_end 金币加成
-  const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
-  let relicGold = Math.floor(goldRelicResult.effects.gold);
+  // 教程模式：跳过金币计算（金币已预设）
+  if (!state.isTutorial) {
+    // 遗物效果：通过管道解析 on_battle_end 金币加成
+    const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
+    let relicGold = Math.floor(goldRelicResult.effects.gold);
 
-  // 基础100 + 溢出增幅（上限100%） + 技能产出 + 遗物加成（金币跨关累计）
-  const overflowBonus = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
-  let baseGold = Math.floor(100 * (1 + overflowBonus));
-  const skillGold = Math.floor(state.resources.gold);
+    // 基础100 + 溢出增幅（上限100%） + 技能产出 + 遗物加成（金币跨关累计）
+    const overflowBonus = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
+    let baseGold = Math.floor(100 * (1 + overflowBonus));
+    const skillGold = Math.floor(state.resources.gold);
 
-  // Story 36.8: 万物熔炉 — 覆盖默认金币计算
-  const furnaceResult = checkUniversalFurnace();
-  if (furnaceResult) {
-    baseGold = 0;
-    relicGold = furnaceResult.bonusGold;
+    // Story 36.8: 万物熔炉 — 覆盖默认金币计算
+    const furnaceResult = checkUniversalFurnace();
+    if (furnaceResult) {
+      baseGold = 0;
+      relicGold = furnaceResult.bonusGold;
+    }
+
+    // 猎物悬赏：zero_errors 在关卡结束时检查
+    const bountyEndGold = checkBountyOnStageEnd();
+    // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
+    const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
+    const battleGold = Math.floor(baseGold + skillGold + relicGold) + trophyGold + bountyEndGold;
+    state.gold += battleGold;
   }
-
-  // 猎物悬赏：zero_errors 在关卡结束时检查
-  const bountyEndGold = checkBountyOnStageEnd();
-  // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
-  const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
-  const battleGold = Math.floor(baseGold + skillGold + relicGold) + trophyGold + bountyEndGold;
-  state.gold += battleGold;
 
   el.shopLevelNum.textContent = String(state.level);
   // 周目≥2时在商店标题显示周目数
