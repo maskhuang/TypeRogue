@@ -250,8 +250,9 @@ function stopScoreRoller(): void {
 }
 
 // === 屏幕管理 ===
-export function showScreen(name: 'battle' | 'shop' | 'gameover' | 'ritual' | 'rest'): void {
+export function showScreen(name: 'menu' | 'battle' | 'shop' | 'gameover' | 'ritual' | 'rest'): void {
   const el = getElements();
+  el.mainMenuScreen.style.display = name === 'menu' ? 'flex' : 'none';
   el.battleScreen.style.display = name === 'battle' ? 'flex' : 'none';
   el.shopScreen.style.display = name === 'shop' ? 'flex' : 'none';
   el.ritualScreen.style.display = name === 'ritual' ? 'flex' : 'none';

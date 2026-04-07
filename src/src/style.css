@@ -66,7 +66,86 @@ body {
     justify-content: center;
 }
 
+/* 全局按钮/输入继承像素字体 */
+button, input, select, textarea { font-family: inherit; }
+
 /* Language Toggle */
+/* ============================================ */
+/* MAIN MENU                                    */
+/* ============================================ */
+#main-menu-screen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(ellipse at 50% 35%, hsl(230, 25%, 16%) 0%, transparent 60%),
+        linear-gradient(180deg, hsl(230, 20%, 10%), hsl(240, 18%, 14%));
+    gap: 32px;
+}
+
+.menu-content { text-align: center; z-index: 1; }
+
+.menu-title {
+    font-size: calc(var(--text-title-size) * 3);
+    font-weight: bold;
+    color: #ffe66d;
+    letter-spacing: 6px;
+    margin-bottom: 4px;
+}
+
+.menu-subtitle {
+    font-size: var(--text-caption-size);
+    color: #666;
+    letter-spacing: 4px;
+    margin-bottom: 40px;
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.menu-btn {
+    min-width: 220px;
+    padding: 14px 32px;
+    font-size: var(--text-subtitle-size);
+    font-family: inherit;
+    font-weight: bold;
+    border: 2px solid #4ecdc4;
+    border-radius: 0;
+    cursor: pointer;
+    transition: background 0.15s steps(1), color 0.15s steps(1);
+}
+
+.menu-btn-start {
+    background: #4ecdc4;
+    color: #0a0a0f;
+}
+.menu-btn-start:hover { background: #5fd8d0; }
+
+.menu-btn-tutorial,
+.menu-btn-settings {
+    background: var(--bg-panel);
+    color: #4ecdc4;
+}
+.menu-btn-tutorial:hover:not(:disabled),
+.menu-btn-settings:hover:not(:disabled) { background: var(--bg-panel-hover); }
+
+.menu-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #555;
+    color: #555;
+}
+
+.menu-info {
+    margin-top: 40px;
+    font-size: var(--text-caption-size);
+    color: #555;
+}
+
 .lang-toggle {
     position: absolute;
     top: 4px;
@@ -3664,6 +3743,7 @@ body {
     margin-top: 24px;
     padding: 10px 40px;
     font-size: var(--text-subtitle-size);
+    font-family: inherit;
     font-weight: bold;
     background: #ffe66d;
     color: #1a1a2e;

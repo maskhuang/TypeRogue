@@ -3,11 +3,12 @@
 // ============================================
 
 import './style.css';
-import { initElements } from './ui/elements';
+import { initElements, getElements } from './ui/elements';
 import { state } from './core/state';
 import { getStarterWords } from './data/words';
-import { startLevel, initInput, resetCycleTracking } from './systems/battle';
-import { initFloatTextCanvas } from './ui/effects/FloatTextPool';
+import { startLevel, initInput, resetCycleTracking, showScreen } from './systems/battle';
+import { initFloatTextCanvas, clearFloatTexts } from './ui/effects/FloatTextPool';
+import { stopBGM } from './effects/sound';
 import { initShopEvents } from './systems/shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
 import { MetaState } from './core/state/MetaState';
@@ -27,7 +28,7 @@ import { createSkillRuntimeState, rollAffixWeights } from './data/affixes';
 import { bindShapeToKeys, getBindingState } from './systems/bindingManager';
 import { cleanDemoDom, installDemoErrorBoundary, checkWebGLSupport, showWebGLError } from './demo/demo-dom-cleanup';
 import { trackEvent } from './demo/demo-analytics';
-import { initLocale, setLocale, getLocale, applyHtmlI18n } from './demo/demo-i18n';
+import { initLocale, setLocale, getLocale, applyHtmlI18n, t } from './demo/demo-i18n';
 import type { Locale } from './demo/demo-i18n';
 import { tutorialManager } from './systems/tutorial/TutorialManager';
 import { initFullTutorial } from './systems/tutorial/tutorialInit';
@@ -85,10 +86,17 @@ async function init(): Promise<void> {
     // 初始词库
     state.player.wordDeck = getStarterWords();
 
-    // 直接开始
-    resetCycleTracking();
-    state.level = 1;
-    void startLevel();
+    // Story 56-1: 显示主菜单
+    showScreen('menu');
+    const menuStartBtn = document.getElementById('menu-start-btn');
+    if (menuStartBtn) {
+      menuStartBtn.onclick = () => {
+        getElements().mainMenuScreen.style.display = 'none';
+        resetCycleTracking();
+        state.level = 1;
+        void startLevel();
+      };
+    }
     return;
   }
 
@@ -137,19 +145,23 @@ async function init(): Promise<void> {
     state.endlessUnlocked = metaState.isModeUnlocked('endless');
   });
 
-  // 初始化重开按钮
+  // 初始化重开按钮 — 回主菜单而非 reload
   const restartBtn = document.getElementById('restart-btn');
   if (restartBtn) {
-    restartBtn.onclick = () => window.location.reload();
+    restartBtn.onclick = () => {
+      stopBGM();
+      clearFloatTexts();
+      showScreen('menu');
+      updateMenuInfo();
+    };
   }
 
   // Story 25.6: 每日挑战按钮
   const dailyBtn = document.getElementById('daily-btn');
   if (dailyBtn) {
     const seedStr = getDailySeedString();
-    dailyBtn.textContent = `📅 每日挑战 (${seedStr})`;
+    dailyBtn.textContent = `📅 ${t('gameover.daily')} (${seedStr})`;
     dailyBtn.onclick = () => {
-      // 存储 daily 标记到 sessionStorage，reload 时读取
       sessionStorage.setItem('dailyMode', '1');
       window.location.reload();
     };
@@ -229,10 +241,29 @@ async function init(): Promise<void> {
     }
   };
 
-  // Story 32.1 → 54.3: 职业选择 → Ascension 选择 → 开始
-  showClassPicker(metaState, () => {
-    showAscensionPicker(metaState, state.classId, startAfterClassSelect);
-  });
+  // Story 56-1: 显示主菜单（而非直接进入职业选择）
+  showScreen('menu');
+  updateMenuInfo();
+
+  // 主菜单「开始游戏」按钮
+  const menuStartBtn = document.getElementById('menu-start-btn');
+  if (menuStartBtn) {
+    menuStartBtn.onclick = () => {
+      getElements().mainMenuScreen.style.display = 'none';
+      showClassPicker(metaState, () => {
+        showAscensionPicker(metaState, state.classId, startAfterClassSelect);
+      });
+    };
+  }
+}
+
+/** 更新主菜单底部信息 */
+function updateMenuInfo(): void {
+  const infoEl = document.getElementById('menu-info');
+  if (!infoEl) return;
+  const parts: string[] = ['v0.2'];
+  if (state.ascensionLevel > 0) parts.push(`A${state.ascensionLevel}`);
+  infoEl.textContent = parts.join(' · ');
 }
 
 // === 启动 ===
@@ -258,24 +289,10 @@ if (IS_DEMO) {
     });
   });
 
-  // Demo: 安装错误边界，等待用户手势启动
+  // Demo: 安装错误边界，移除旧 overlay，直接初始化到主菜单
   installDemoErrorBoundary();
-  const overlay = document.getElementById('demo-start-overlay');
-  if (overlay) {
-    const startBtn = overlay.querySelector('.demo-start-btn');
-    (startBtn || overlay).addEventListener('click', () => {
-      if (!checkWebGLSupport()) {
-        overlay.remove();
-        showWebGLError();
-        return;
-      }
-      overlay.remove();
-      trackEvent('demo_start');
-      void init();
-    }, { once: true });
-  } else {
-    void init();
-  }
+  document.getElementById('demo-start-overlay')?.remove();
+  void init();
 } else {
   // 完整版：移除 demo overlay，初始化 i18n
   document.getElementById('demo-start-overlay')?.remove();

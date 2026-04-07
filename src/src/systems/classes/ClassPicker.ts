@@ -66,9 +66,10 @@ export function showClassPicker(metaState: MetaState, onComplete: () => void): v
 
         // 显示确认按钮
         confirmBtn.classList.remove('class-select-confirm-hidden');
+        const className = t(`class.${classId}.name`) !== `class.${classId}.name` ? t(`class.${classId}.name`) : def.name;
         confirmBtn.textContent = classId === 'none'
-          ? '开始（无职业）'
-          : `确认选择 ${def.name}`;
+          ? t('class_select.start_no_class') !== 'class_select.start_no_class' ? t('class_select.start_no_class') : `开始（${className}）`
+          : `${t('class_select.confirm')} ${className}`;
       };
     }
 

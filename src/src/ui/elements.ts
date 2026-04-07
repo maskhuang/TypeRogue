@@ -9,6 +9,8 @@ let elements: UIElements | null = null;
 // === 初始化 UI 元素引用 ===
 export function initElements(): UIElements {
   elements = {
+    // Menu
+    mainMenuScreen: document.getElementById('main-menu-screen')!,
     // Battle
     battleScreen: document.getElementById('battle-screen')!,
     word: document.getElementById('word-display')!,

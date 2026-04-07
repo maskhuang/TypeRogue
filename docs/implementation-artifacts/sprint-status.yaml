@@ -429,7 +429,7 @@ development_status:
   # ===== Epic 56: 主菜单系统 =====
   # Source: docs/stories/epic-56-main-menu.md
   epic-56: backlog
-  56-1-main-menu-screen: backlog                      # 主菜单界面
+  56-1-main-menu-screen: review                        # 主菜单界面
   56-2-tutorial-stage-design: backlog                  # 教程关设计
   56-3-tutorial-stage-implementation: backlog           # 教程关实现
   56-4-settings-panel: backlog                         # 设置面板

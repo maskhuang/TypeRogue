@@ -346,6 +346,8 @@ export interface AdjacentSkill {
 
 // === UI 元素引用 ===
 export interface UIElements {
+  // Menu
+  mainMenuScreen: HTMLElement;
   // Battle
   battleScreen: HTMLElement;
   word: HTMLElement;
