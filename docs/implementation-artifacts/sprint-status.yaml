@@ -415,7 +415,7 @@ development_status:
   # ===== Epic 55: 像素风视觉统一改造 =====
   # Source: docs/stories/epic-55-pixel-visual-overhaul.md
   epic-55: in-progress
-  55-1-design-tokens-pixel-foundation: review          # 设计 token 统一 + 全局字体切换
+  55-1-design-tokens-pixel-foundation: done            # 设计 token 统一 + 全局字体切换
   55-2-shop-screen-pixel-overhaul: done            # 商店界面像素风改造
   55-3-gameover-screen-pixel-overhaul: done         # 游戏结束界面像素风改造
   55-4-modal-dialogs-pixel-overhaul: done           # 弹窗系统像素风改造
