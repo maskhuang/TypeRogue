@@ -4621,6 +4621,46 @@ button, input, select, textarea { font-family: inherit; }
     50% { opacity: 0.3; }
 }
 
+/* Tutorial Complete Overlay */
+.tutorial-complete-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9000;
+}
+.tutorial-complete-panel {
+    text-align: center;
+    padding: 40px;
+    max-width: 400px;
+}
+.tutorial-complete-title {
+    font-size: calc(var(--text-title-size) * 2);
+    color: #ffe66d;
+    margin-bottom: 16px;
+}
+.tutorial-complete-body {
+    font-size: var(--text-body-size);
+    color: #aaa;
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+.tutorial-complete-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 32px;
+    font-size: var(--text-body-size);
+    color: #4ecdc4;
+    text-align: left;
+    display: inline-block;
+}
+.tutorial-complete-list li {
+    margin-bottom: 6px;
+}
+.tutorial-complete-btn {
+    min-width: 200px;
+}
+
 /* Demo End Screen */
 .demo-end-overlay {
     position: fixed;

@@ -1246,11 +1246,13 @@ export function openShop(_won: boolean): void {
 
   // Story 36.9: 走私通道 — 每关重置; 黑市门票 — +1 商品位
   resetShopRelicState();
-  const shopSlots = 5 + getBlackMarketExtraSlots();
-  // 保留锁定商品，补充新商品
-  const locked = state.shop.items.filter(item => item.locked);
-  const newItems = generateShopItems(shopSlots - locked.length, getBlackMarketExtraSlots() > 0);
-  state.shop.items = [...locked, ...newItems];
+  if (!state.isTutorial) {
+    const shopSlots = 5 + getBlackMarketExtraSlots();
+    const locked = state.shop.items.filter(item => item.locked);
+    const newItems = generateShopItems(shopSlots - locked.length, getBlackMarketExtraSlots() > 0);
+    state.shop.items = [...locked, ...newItems];
+  }
+  // 教程模式：state.shop.items 已由 TutorialMode 预设
   state.shop.refreshCount = 0;
 
   // Story 36.9: 限时拍卖 — 倒计时（必须在 renderUnifiedShop 之前启动，确保首次渲染能显示）

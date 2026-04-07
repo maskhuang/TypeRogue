@@ -434,7 +434,7 @@ development_status:
   56-3a-tutorial-infrastructure: done                     # 教程基础设施（状态机+flag+入口）
   56-3b-tutorial-overlay-ui: done                       # 提示 UI 系统（提示框+箭头+遮罩）
   56-3c-tutorial-battle-phases: done                     # 教程阶段 1-4（打字→连击→时间→技能）
-  56-3d-tutorial-shop-complete: backlog                 # 教程阶段 5 + 完成画面 + Meta
+  56-3d-tutorial-shop-complete: done                     # 教程阶段 5 + 完成画面 + Meta
   56-4-settings-panel: backlog                         # 设置面板
   56-5-metamorph-unlock-change: done                     # 蜕变师解锁条件变更
   56-6-flow-integration: backlog                       # 启动流程整合

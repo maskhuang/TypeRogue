@@ -4,6 +4,7 @@
 // Story 56-3a: 基础设施
 // Story 56-3c: 阶段 1-4 战斗教程
 
+import { t } from '../../demo/demo-i18n'
 import { state, resetState } from '../../core/state'
 import { showScreen, startLevel } from '../battle'
 import { stopBGM, initAudio } from '../../effects/sound'
@@ -171,10 +172,37 @@ async function runTutorialPhases(): Promise<void> {
   await showPrompt('tutorial.phase4.done')
   if (aborted) return
 
-  // 阶段 5 留给 56-3d
+  // --- 阶段 5: 商店 ---
   advanceTutorialPhase()
-  // 暂时直接完成
-  exitTutorialMode()
+  state.gold = 200
+
+  // 生成教程固定商品
+  const tutorialShopItems: import('../../core/types').ShopItem[] = (['base', 'multiplier', 'time'] as const).map(res => {
+    const sk = generateSkill({ resource: res, rarity: 0, level: 1 })
+    return { type: 'skill' as const, skill: sk, price: 50, locked: false }
+  })
+  state.shop.items = tutorialShopItems
+  state.shop.refreshCount = 0
+
+  // openShop 会检测 isTutorial 保留预设商品
+  const { openShop } = await import('../shop')
+  openShop(true)
+
+  await showPrompt('tutorial.phase5.intro')
+  if (aborted) return
+
+  // 等待购买
+  await waitForShopPurchase()
+  if (aborted) return
+
+  await showPrompt('tutorial.phase5.bind')
+  if (aborted) return
+
+  await showPrompt('tutorial.phase5.done')
+  if (aborted) return
+
+  // --- 完成画面 ---
+  showTutorialComplete()
 }
 
 // ==========================================
@@ -265,4 +293,56 @@ function setTutorialHUD(phase: number): void {
   if (targetEl) targetEl.style.display = phase >= 3 ? '' : 'none'
   if (triggerZone) triggerZone.style.display = phase >= 4 ? '' : 'none'
   if (relicBar) relicBar.style.display = 'none' // 教程中始终隐藏遗物
+}
+
+// ==========================================
+// Helper: 等待商店购买
+// ==========================================
+function waitForShopPurchase(): Promise<void> {
+  return new Promise(resolve => {
+    const unsub = eventBus.on('shop:purchase', () => {
+      unsub(); resolve()
+    })
+    const check = setInterval(() => {
+      if (aborted) { unsub(); clearInterval(check); resolve() }
+    }, 200)
+  })
+}
+
+// ==========================================
+// 完成画面
+// ==========================================
+function showTutorialComplete(): void {
+  const container = document.getElementById('game-container')
+  if (!container) { exitTutorialMode(); return }
+
+  const overlay = document.createElement('div')
+  overlay.className = 'tutorial-complete-overlay'
+  overlay.innerHTML = `
+    <div class="tutorial-complete-panel">
+      <div class="tutorial-complete-title">${esc(t('tutorial.complete.title'))}</div>
+      <div class="tutorial-complete-body">${esc(t('tutorial.complete.body'))}</div>
+      <ul class="tutorial-complete-list">
+        <li>✓ ${esc(t('tutorial.complete.s1'))}</li>
+        <li>✓ ${esc(t('tutorial.complete.s2'))}</li>
+        <li>✓ ${esc(t('tutorial.complete.s3'))}</li>
+        <li>✓ ${esc(t('tutorial.complete.s4'))}</li>
+        <li>✓ ${esc(t('tutorial.complete.s5'))}</li>
+      </ul>
+      <button class="menu-btn menu-btn-start tutorial-complete-btn">${esc(t('tutorial.complete.btn'))}</button>
+    </div>
+  `
+  container.appendChild(overlay)
+
+  const btn = overlay.querySelector('.tutorial-complete-btn')
+  if (btn) {
+    btn.addEventListener('click', () => {
+      overlay.remove()
+      exitTutorialMode()
+    }, { once: true })
+  }
+}
+
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
