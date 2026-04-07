@@ -6,7 +6,7 @@
 
 import { t } from '../../demo/demo-i18n'
 import { state, resetState } from '../../core/state'
-import { showScreen, startLevel } from '../battle'
+import { showScreen, startLevel, setWordQueue } from '../battle'
 import { stopBGM, initAudio } from '../../effects/sound'
 import { clearFloatTexts } from '../../ui/effects/FloatTextPool'
 import { eventBus } from '../../core/events/EventBus'
@@ -25,8 +25,17 @@ export const TUTORIAL_WORDS = [
   'wolf', 'hero', 'rock', 'wind',
 ]
 
-/** 含 F 的词（阶段 4 优先选用） */
-const F_WORDS = ['fire', 'flame', 'frost', 'frog']
+/** P1 固定词序：简单短词 */
+const P1_WORDS = ['fire', 'ice', 'bolt']
+
+/** P2 固定词序：5 词练连击 */
+const P2_WORDS = ['spark', 'storm', 'wolf', 'hero', 'rock']
+
+/** P3 固定词序：充裕供应 */
+const P3_WORDS = ['fire', 'bolt', 'ice', 'wolf', 'spark', 'storm', 'hero', 'rock', 'wind', 'flame']
+
+/** P4 固定词序：确保前 3 词含 F，让玩家明确感受技能触发 */
+const P4_WORDS = ['fire', 'frost', 'flame', 'frog', 'wolf', 'bolt', 'spark', 'ice']
 
 let currentPhase: TutorialPhase = 1
 let escHandler: ((e: KeyboardEvent) => void) | null = null
@@ -95,7 +104,8 @@ async function runTutorialPhases(): Promise<void> {
   await showPrompt('tutorial.phase1.intro')
   if (aborted) return
 
-  // 启动关卡（无时限模式）
+  // 启动关卡（无时限模式）— 固定词序
+  setWordQueue(P1_WORDS)
   resetCycleTracking()
   void startLevel()
   await waitForWords(3)
@@ -111,6 +121,7 @@ async function runTutorialPhases(): Promise<void> {
   await showPrompt('tutorial.phase2.intro')
   if (aborted) return
 
+  setWordQueue(P2_WORDS)
   await waitForWords(5)
   if (aborted) return
 
@@ -127,6 +138,7 @@ async function runTutorialPhases(): Promise<void> {
   await showPrompt('tutorial.phase3.intro')
   if (aborted) return
 
+  setWordQueue(P3_WORDS)
   resetCycleTracking()
   void startLevel()
 
@@ -146,8 +158,6 @@ async function runTutorialPhases(): Promise<void> {
   resetBattleForPhase()
   state.time = 45; state.timeMax = 45; state.targetScore = 200
   state.score = 0
-  // 优先选含 F 的词
-  state.player.wordDeck = [...F_WORDS, ...TUTORIAL_WORDS.filter(w => !F_WORDS.includes(w))]
   setTutorialHUD(4)
 
   // 赠送预设技能绑定 F 键
@@ -163,6 +173,7 @@ async function runTutorialPhases(): Promise<void> {
   await showPrompt('tutorial.phase4.hint')
   if (aborted) return
 
+  setWordQueue(P4_WORDS)
   resetCycleTracking()
   void startLevel()
 

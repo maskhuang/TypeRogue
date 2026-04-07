@@ -57,8 +57,13 @@ import { trackEvent } from '../demo/demo-analytics';
 import { t, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 import { bindShapeToKeys, restoreSealedSkill, getBindingState, getSkillKeys, getSkillAnchorKey } from './bindingManager';
 
-// === Demo 固定词序队列 ===
+// === 固定词序队列（Demo/教程用） ===
 let demoWordQueue: string[] = [];
+
+/** 设置固定出词序列（教程/Demo 用） */
+export function setWordQueue(words: string[]): void {
+  demoWordQueue = [...words];
+}
 
 // === 混沌种子临时附魔追踪 ===
 // Map<skillId, enchantmentId> — 记录本关由混沌种子添加的临时附魔
