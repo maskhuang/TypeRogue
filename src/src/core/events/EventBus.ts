@@ -210,6 +210,7 @@ export interface GameEvents {
   // 引导事件 (Story 39.3)
   'tutorial:step_shown': { stepId: string }
   'tutorial:step_completed': { stepId: string }
+  'tutorial:time_up': Record<string, never>
 
   // 仪式附魔事件 (Story 41.1)
   'ritual:enchantment_applied': { skillId: string; enchantmentType: string; icon: string; name: string }

@@ -74,17 +74,16 @@ export function showPrompt(textKey: string, options?: PromptOptions): Promise<vo
         clearInterval(typeTimer!)
         typeTimer = null
         continueEl.style.display = ''
-        // 延迟绑定继续操作
-        setTimeout(() => {
+        // 下一帧绑定（避免与最后一个打字 keydown 冲突）
+        requestAnimationFrame(() => {
+          if (!promptContainer) return // 已被 dismiss
           const handler = (e: Event) => {
             e.preventDefault()
-            document.removeEventListener('keydown', handler)
-            promptContainer?.removeEventListener('click', handler)
             cleanup()
           }
           document.addEventListener('keydown', handler, { once: true })
           promptContainer?.addEventListener('click', handler, { once: true })
-        }, 200)
+        })
       }
     }, speed)
   })

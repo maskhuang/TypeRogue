@@ -211,14 +211,13 @@ async function runTutorialPhases(): Promise<void> {
 function waitForWords(count: number): Promise<void> {
   return new Promise(resolve => {
     let n = 0
-    const unsub = eventBus.on('word:complete', () => {
-      n++
-      if (n >= count) { unsub(); resolve() }
-    })
-    // 超时保护
     const check = setInterval(() => {
       if (aborted) { unsub(); clearInterval(check); resolve() }
     }, 200)
+    const unsub = eventBus.on('word:complete', () => {
+      n++
+      if (n >= count) { unsub(); clearInterval(check); resolve() }
+    })
   })
 }
 
@@ -228,20 +227,17 @@ function waitForWords(count: number): Promise<void> {
 function waitForTargetOrTimeUp(): Promise<'reached' | 'time_up'> {
   return new Promise(resolve => {
     let resolved = false
+    const check = setInterval(() => {
+      if (aborted) { done('time_up') }
+    }, 200)
     const done = (r: 'reached' | 'time_up') => {
       if (resolved) return
-      resolved = true; unsub1(); unsub2(); resolve(r)
+      resolved = true; unsub1(); unsub2(); clearInterval(check); resolve(r)
     }
-    // 达标检测：分数 >= 目标
     const unsub1 = eventBus.on('word:complete', () => {
       if (state.score >= state.targetScore) done('reached')
     })
-    // 时间到
     const unsub2 = eventBus.on('tutorial:time_up', () => done('time_up'))
-    // 超时保护
-    const check = setInterval(() => {
-      if (aborted) { done('time_up'); clearInterval(check) }
-    }, 200)
   })
 }
 
@@ -251,13 +247,13 @@ function waitForTargetOrTimeUp(): Promise<'reached' | 'time_up'> {
 function waitForSkillTriggers(count: number): Promise<void> {
   return new Promise(resolve => {
     let n = 0
-    const unsub = eventBus.on('skill:triggered', () => {
-      n++
-      if (n >= count) { unsub(); resolve() }
-    })
     const check = setInterval(() => {
       if (aborted) { unsub(); clearInterval(check); resolve() }
     }, 200)
+    const unsub = eventBus.on('skill:triggered', () => {
+      n++
+      if (n >= count) { unsub(); clearInterval(check); resolve() }
+    })
   })
 }
 
