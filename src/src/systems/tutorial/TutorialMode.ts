@@ -101,13 +101,13 @@ async function runTutorialPhases(): Promise<void> {
   showScreen('battle')
   initAudio()
 
-  await showPrompt('tutorial.phase1.intro', { arrow: { target: 'word-display', position: 'top' } })
-  if (aborted) return
-
-  // 启动关卡（无时限模式）— 固定词序
+  // 先启动关卡（词语显示后再给提示）
   setWordQueue(P1_WORDS)
   resetCycleTracking()
   void startLevel()
+
+  await showPrompt('tutorial.phase1.intro', { arrow: { target: 'word-display', position: 'top' } })
+  if (aborted) return
   await waitForWords(3)
   if (aborted) return
 
