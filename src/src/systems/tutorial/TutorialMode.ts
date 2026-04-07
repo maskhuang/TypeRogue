@@ -140,12 +140,12 @@ async function runTutorialPhases(): Promise<void> {
   state.score = 0
   setTutorialHUD(3)
 
-  await showPrompt('tutorial.phase3.intro', { arrow: { target: 'timer-section', position: 'bottom' } })
-  if (aborted) return
-
   setWordQueue(P3_WORDS)
   resetCycleTracking()
   void startLevel()
+
+  await showPrompt('tutorial.phase3.intro', { arrow: { target: 'timer-section', position: 'bottom' } })
+  if (aborted) return
 
   // 等待达标或时间到
   const p3result = await waitForTargetOrTimeUp()
@@ -175,12 +175,12 @@ async function runTutorialPhases(): Promise<void> {
   await showPrompt('tutorial.phase4.intro', { arrow: { target: 'skill-trigger-zone', position: 'top' } })
   if (aborted) return
 
-  await showPrompt('tutorial.phase4.hint', { arrow: { target: 'word-display', position: 'top' } })
-  if (aborted) return
-
   setWordQueue(P4_WORDS)
   resetCycleTracking()
   void startLevel()
+
+  await showPrompt('tutorial.phase4.hint', { arrow: { target: 'word-display', position: 'top' } })
+  if (aborted) return
 
   await waitForSkillTriggers(3)
   if (aborted) return
