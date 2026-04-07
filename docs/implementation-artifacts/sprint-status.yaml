@@ -422,6 +422,6 @@ development_status:
   55-5-ritual-rest-screens-pixel-overhaul: done     # 仪式/休息界面像素风改造
   55-6-global-ui-pixel-overhaul: done               # 全局 UI 元素像素风改造
   55-7-pixijs-scene-color-sync: done                # PixiJS 场景颜色同步
-  55-8-visual-qa-consistency-pass: backlog             # 视觉 QA 一致性检查
+  55-8-visual-qa-consistency-pass: done             # 视觉 QA 一致性检查
   55-9-pixijs-bitmap-float-text: in-progress           # 浮字系统迁移至 PixiJS BitmapText
   epic-55-retrospective: optional

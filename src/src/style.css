@@ -248,7 +248,7 @@ body {
 }
 
 .accel-pulse {
-    animation: accel-pulse 0.3s ease-out;
+    animation: accel-pulse 0.3s steps(3);
 }
 
 @keyframes accel-pulse {
@@ -463,8 +463,7 @@ body {
     bottom: -4px;
     left: 0;
     height: 3px;
-    background: linear-gradient(90deg, #3498db, #5dade2);
-    box-shadow: 0 0 8px rgba(52,152,219,0.8);
+    background: #3498db;
     border-radius: 0;
     animation: chargeBar var(--charge-duration, 1.5s) linear forwards;
 }
@@ -496,7 +495,7 @@ body {
     color: rgba(78,205,196,0.6);
     white-space: nowrap;
     pointer-events: none;
-    animation: tabHintPulse 2s ease-in-out infinite;
+    animation: tabHintPulse 2s steps(4) infinite;
 }
 
 @keyframes tabHintPulse {
@@ -884,7 +883,7 @@ body {
     top: -8px;
     right: -20px;
     font-size: 18px;
-    animation: cancelHintPulse 0.4s ease-out forwards;
+    animation: cancelHintPulse 0.4s steps(3) forwards;
     pointer-events: none;
     z-index: 10;
 }
@@ -1686,7 +1685,7 @@ body {
 
 /* Boss 修饰器切换闪烁 (Story 18.4) */
 .modifier-switch {
-    animation: modifierFlash 0.5s ease;
+    animation: modifierFlash 0.5s steps(4);
 }
 
 @keyframes modifierFlash {
@@ -2127,7 +2126,7 @@ body {
 }
 
 #score-settlement.settlement-live .settlement-panel {
-    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+    transition: transform 0.1s steps(3);
 }
 
 /* Settlement Complete Animation - 词语完成时的动画 */
@@ -3540,10 +3539,10 @@ body {
     background: rgba(0, 0, 0, 0.7);
     z-index: 400;
     pointer-events: none;
-    animation: ratingRevealIn 0.2s ease-out;
+    animation: ratingRevealIn 0.2s steps(3);
 }
 .rating-reveal-fade {
-    animation: ratingRevealOut 0.3s ease-in forwards;
+    animation: ratingRevealOut 0.3s steps(3) forwards;
 }
 @keyframes ratingRevealIn {
     from { opacity: 0; }
@@ -3952,18 +3951,18 @@ body {
 .craft-confirm-btn {
     width: 100%;
     padding: 8px;
-    border: none;
+    border: 2px solid #4ecdc4;
     border-radius: 0;
-    background: linear-gradient(135deg, #4ecdc4, #44a08d);
-    color: #fff;
+    background: #4ecdc4;
+    color: #0a0a0f;
     font-weight: bold;
-    font-size: 0.9em;
+    font-size: var(--text-body-size);
     cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
+    transition: background 0.15s steps(3);
 }
 
 .craft-confirm-btn:hover {
-    transform: scale(1.02);
+    background: #5fd8d0;
 }
 
 .craft-confirm-btn.craft-confirm-disabled {
@@ -4273,12 +4272,9 @@ body {
 }
 
 .demo-start-content h1 {
-    font-size: 3rem;
+    font-size: calc(var(--text-title-size) * 2);
     margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #ff6b6b, #ffe66d, #4ecdc4);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #ffe66d;
 }
 
 .demo-start-content h2 {
@@ -4293,20 +4289,19 @@ body {
 }
 
 .demo-start-btn {
-    background: linear-gradient(135deg, #4ecdc4, #44b4ab);
-    color: #fff;
-    border: none;
+    background: #4ecdc4;
+    color: #0a0a0f;
+    border: 2px solid #4ecdc4;
     padding: 1rem 3rem;
-    font-size: 1.2rem;
-    font-family: 'Courier New', monospace;
+    font-size: var(--text-subtitle-size);
+    font-family: inherit;
     border-radius: 0;
     cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
+    transition: background 0.15s steps(3);
 }
 
 .demo-start-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(78, 205, 196, 0.4);
+    background: #5fd8d0;
 }
 
 /* Demo Language Toggle */
@@ -4322,8 +4317,8 @@ body {
     color: #888;
     border: 1px solid rgba(255, 255, 255, 0.15);
     padding: 4px 14px;
-    font-size: 13px;
-    font-family: 'Courier New', monospace;
+    font-size: var(--text-body-size);
+    font-family: inherit;
     border-radius: 0;
     cursor: pointer;
     transition: all 0.15s;
@@ -4351,7 +4346,7 @@ body {
     font-family: 'Courier New', monospace;
     font-weight: bold;
     z-index: 9000;
-    animation: demo-tip-in 0.3s ease-out;
+    animation: demo-tip-in 0.3s steps(3);
     pointer-events: none;
     max-width: 320px;
     text-align: center;
@@ -4373,7 +4368,7 @@ body {
     padding: var(--spacing-md) var(--spacing-lg);
     max-width: 340px;
     z-index: 9000;
-    animation: tutorial-fade-in 0.3s ease-out;
+    animation: tutorial-fade-in 0.3s steps(3);
     pointer-events: auto;
 }
 .tutorial-overlay-title {
@@ -4423,7 +4418,7 @@ body {
     font-size: var(--text-caption-size);
     color: rgba(255,255,255,0.45);
     margin-top: var(--spacing-sm);
-    animation: tutorial-hint-pulse 1.5s ease-in-out infinite;
+    animation: tutorial-hint-pulse 1.5s steps(4) infinite;
 }
 @keyframes tutorial-hint-pulse {
     0%, 100% { opacity: 0.45; }
@@ -4550,13 +4545,13 @@ body {
 }
 
 .demo-steam-btn {
-    background: linear-gradient(135deg, #1b2838, #2a475e);
+    background: #1b2838;
     color: #66c0f4;
     border: 1px solid #66c0f4 !important;
 }
 
 .demo-steam-btn:hover {
-    background: linear-gradient(135deg, #2a475e, #3d6b8e);
+    background: #2a475e;
 }
 
 .demo-replay-btn {
