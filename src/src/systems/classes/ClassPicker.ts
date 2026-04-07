@@ -58,7 +58,7 @@ export function showClassPicker(metaState: MetaState, onComplete: () => void): v
 
     if (isUnlocked) {
       card.onclick = () => {
-        playSound('type');
+        playSound('click');
         // 取消之前的选中
         cardsEl.querySelectorAll('.class-select-card').forEach(c =>
           c.classList.remove('class-card-selected')
@@ -81,7 +81,7 @@ export function showClassPicker(metaState: MetaState, onComplete: () => void): v
   // 确认按钮
   confirmBtn.onclick = () => {
     if (selectedClassId !== null) {
-      playSound('levelup');
+      playSound('confirm');
       finish();
     }
   };

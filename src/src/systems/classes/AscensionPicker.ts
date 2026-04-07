@@ -68,7 +68,7 @@ export function showAscensionPicker(metaState: MetaState, classId: string, onCom
 
     if (unlocked) {
       row.onclick = () => {
-        playSound('type');
+        playSound('click');
         selectedLevel = level;
         listEl.querySelectorAll('.ascension-row').forEach(r => r.classList.remove('ascension-selected'));
         row.classList.add('ascension-selected');
@@ -80,7 +80,7 @@ export function showAscensionPicker(metaState: MetaState, classId: string, onCom
   }
 
   confirmBtn.onclick = () => {
-    playSound('levelup');
+    playSound('confirm');
     state.ascensionLevel = selectedLevel;
     modal.classList.add('ascension-select-hidden');
     onComplete();

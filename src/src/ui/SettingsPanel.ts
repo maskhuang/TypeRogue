@@ -6,7 +6,7 @@
 import { t, setLocale, getLocale, applyHtmlI18n } from '../demo/demo-i18n'
 import type { Locale } from '../demo/demo-i18n'
 import { getSettings, updateSettings } from '../core/UserSettings'
-import { setMasterVolume } from '../effects/sound'
+import { setMasterVolume, playSound } from '../effects/sound'
 
 let overlay: HTMLElement | null = null
 let escHandler: ((e: KeyboardEvent) => void) | null = null
@@ -66,6 +66,7 @@ export function openSettingsPanel(): void {
   // Language buttons
   overlay.querySelectorAll('.settings-lang-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      playSound('click')
       const lang = (btn as HTMLElement).dataset.lang as Locale
       setLocale(lang)
       updateSettings({ locale: lang })
@@ -79,6 +80,7 @@ export function openSettingsPanel(): void {
   // CRT toggle
   const crtBtn = overlay.querySelector('#settings-crt') as HTMLElement
   crtBtn?.addEventListener('click', () => {
+    playSound('toggle')
     const enabled = !getSettings().crtEnabled
     updateSettings({ crtEnabled: enabled })
     applyCRT(enabled)
@@ -89,6 +91,7 @@ export function openSettingsPanel(): void {
   // Reset
   const resetBtn = overlay.querySelector('#settings-reset') as HTMLElement
   resetBtn?.addEventListener('click', () => {
+    playSound('warning')
     if (confirm(t('settings.reset_confirm'))) {
       localStorage.clear()
       window.location.reload()
@@ -97,7 +100,7 @@ export function openSettingsPanel(): void {
 
   // Close
   const closeBtn = overlay.querySelector('#settings-close') as HTMLElement
-  closeBtn?.addEventListener('click', () => closeSettingsPanel())
+  closeBtn?.addEventListener('click', () => { playSound('cancel'); closeSettingsPanel() })
 
   // Esc close
   escHandler = (e: KeyboardEvent) => {

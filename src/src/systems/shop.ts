@@ -4062,7 +4062,7 @@ function renderHeatmapTab(container: HTMLElement, bs: import('../core/types').Ba
   // 维度切换事件
   container.querySelectorAll('.heatmap-dim').forEach(el => {
     el.addEventListener('click', () => {
-      playSound('type');
+      playSound('tab');
       currentHeatmapDimension = (el as HTMLElement).dataset.dim as HeatmapDimension;
       renderHeatmapTab(container, bs);
     });
@@ -4179,7 +4179,7 @@ function initStatsTabs(): void {
   type TabId = 'build' | 'stats' | 'words' | 'craft' | 'metamorph';
 
   function switchTab(active: TabId) {
-    playSound('type');
+    playSound('tab');
     buildTab!.classList.toggle('active', active === 'build');
     statsTab!.classList.toggle('active', active === 'stats');
     wordsTab!.classList.toggle('active', active === 'words');

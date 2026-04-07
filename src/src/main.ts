@@ -101,7 +101,7 @@ async function init(): Promise<void> {
     if (menuStartBtn) {
       menuStartBtn.onclick = () => {
         initAudio();
-        playSound('levelup');
+        playSound('confirm');
         getElements().mainMenuScreen.style.display = 'none';
         resetCycleTracking();
         state.level = 1;
@@ -109,9 +109,9 @@ async function init(): Promise<void> {
       };
     }
     const tutorialBtn = document.getElementById('menu-tutorial-btn');
-    if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playSound('type'); startTutorialMode(); };
+    if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playSound('click'); startTutorialMode(); };
     const settingsBtn = document.getElementById('menu-settings-btn');
-    if (settingsBtn) settingsBtn.onclick = () => { initAudio(); playSound('type'); openSettingsPanel(); };
+    if (settingsBtn) settingsBtn.onclick = () => { initAudio(); playSound('click'); openSettingsPanel(); };
     return;
   }
 
@@ -267,7 +267,7 @@ async function init(): Promise<void> {
     menuStartBtn.onclick = () => {
       // 用户手势 → 初始化音频（浏览器要求）
       initAudio();
-      playSound('levelup');
+      playSound('confirm');
       // 每局重置 state + 恢复词库
       resetState();
       state.player.wordDeck = getStarterWords();
@@ -284,11 +284,11 @@ async function init(): Promise<void> {
 
   // 主菜单「教程」按钮
   const tutorialBtn = document.getElementById('menu-tutorial-btn');
-  if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playSound('type'); startTutorialMode(); };
+  if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playSound('click'); startTutorialMode(); };
 
   // 主菜单「设置」按钮
   const settingsBtn = document.getElementById('menu-settings-btn');
-  if (settingsBtn) settingsBtn.onclick = () => { initAudio(); playSound('type'); openSettingsPanel(); };
+  if (settingsBtn) settingsBtn.onclick = () => { initAudio(); playSound('click'); openSettingsPanel(); };
 }
 
 /** 更新主菜单底部信息 */
