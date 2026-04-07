@@ -8,7 +8,7 @@ import { state, resetState } from './core/state';
 import { getStarterWords } from './data/words';
 import { startLevel, initInput, resetCycleTracking, showScreen } from './systems/battle';
 import { initFloatTextCanvas, clearFloatTexts } from './ui/effects/FloatTextPool';
-import { stopBGM } from './effects/sound';
+import { stopBGM, initAudio } from './effects/sound';
 import { startTutorialMode } from './systems/tutorial/TutorialMode';
 import { openSettingsPanel, applyAllSettings } from './ui/SettingsPanel';
 import { loadSettings } from './core/UserSettings';
@@ -100,6 +100,7 @@ async function init(): Promise<void> {
     const menuStartBtn = document.getElementById('menu-start-btn');
     if (menuStartBtn) {
       menuStartBtn.onclick = () => {
+        initAudio();
         getElements().mainMenuScreen.style.display = 'none';
         resetCycleTracking();
         state.level = 1;
@@ -263,6 +264,8 @@ async function init(): Promise<void> {
   const menuStartBtn = document.getElementById('menu-start-btn');
   if (menuStartBtn) {
     menuStartBtn.onclick = () => {
+      // 用户手势 → 初始化音频（浏览器要求）
+      initAudio();
       // 每局重置 state + 恢复词库
       resetState();
       state.player.wordDeck = getStarterWords();
