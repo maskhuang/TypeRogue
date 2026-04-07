@@ -83,7 +83,7 @@ function tick(): void {
       if (a > 0) {
         ctx.globalAlpha = a;
         ctx.fillStyle = f.color;
-        const fontSize = Math.round(14 * (f.size / 6));
+        const fontSize = Math.round(20 * (f.size / 6));
         ctx.font = `bold ${fontSize}px "Courier New", monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';

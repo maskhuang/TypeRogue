@@ -2824,36 +2824,33 @@ function pulseRelicIcon(relicId: string, color?: string): void {
   });
 }
 
-/** 遗物图标到目标的瞬间闪光连线（target 可为元素 ID 字符串或直接 HTMLElement） */
+/** 遗物图标到目标的瞬间闪光连线（target 可为元素 ID 字符串或直接 HTMLElement）
+ *  优化：复用缓存容器坐标，一次 rAF 批量操作 DOM */
 function flashRelicLine(relicIndex: number, target: string | HTMLElement, color: string): void {
   const el = getElements();
   const iconEl = el.playerRelics.children[relicIndex] as HTMLElement | undefined;
   const targetEl = typeof target === 'string' ? document.getElementById(target) : target;
-  if (!iconEl || !targetEl) return;
+  if (!iconEl || !targetEl || !_cachedContainerRect) return;
 
-  const container = el.container;
-  const containerRect = container.getBoundingClientRect();
+  // 用缓存的容器坐标避免额外 getBoundingClientRect
+  const cr = _cachedContainerRect;
   const iconRect = iconEl.getBoundingClientRect();
   const targetRect = targetEl.getBoundingClientRect();
 
-  const x1 = iconRect.left + iconRect.width / 2 - containerRect.left;
-  const y1 = iconRect.top + iconRect.height / 2 - containerRect.top;
-  const x2 = targetRect.left + targetRect.width / 2 - containerRect.left;
-  const y2 = targetRect.top + targetRect.height / 2 - containerRect.top;
+  const x1 = iconRect.left + iconRect.width / 2 - cr.left;
+  const y1 = iconRect.top + iconRect.height / 2 - cr.top;
+  const x2 = targetRect.left + targetRect.width / 2 - cr.left;
+  const y2 = targetRect.top + targetRect.height / 2 - cr.top;
 
   const dist = Math.hypot(x2 - x1, y2 - y1);
   const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
 
   const line = document.createElement('div');
   line.className = 'relic-flash-line';
-  line.style.width = dist + 'px';
-  line.style.left = x1 + 'px';
-  line.style.top = (y1 - 1) + 'px';
-  line.style.color = color;
-  line.style.transform = `rotate(${angle}deg)`;
+  line.style.cssText = `width:${dist}px;left:${x1}px;top:${y1 - 1}px;color:${color};transform:rotate(${angle}deg)`;
   line.onanimationend = () => line.remove();
 
-  container.appendChild(line);
+  el.container.appendChild(line);
 }
 
 /** 清除所有残留闪光连线（关卡结束时调用） */

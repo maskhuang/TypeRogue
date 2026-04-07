@@ -2,15 +2,15 @@
 
 :root {
   /* 像素字体 */
-  --font-pixel: 'Press Start 2P', 'Courier New', monospace;
+  --font-pixel: 'Press Start 2P', 'Courier New', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', monospace;
 
   /* Design Token — 文字层级 (Press Start 2P 适配，原值 ×0.65) */
-  --text-title-size: 12px;
-  --text-subtitle-size: 10px;
-  --text-body-size: 9px;
-  --text-caption-size: 8px;
-  --text-badge-size: 8px;
-  --text-min-size: 8px;
+  --text-title-size: 14px;
+  --text-subtitle-size: 12px;
+  --text-body-size: 11px;
+  --text-caption-size: 10px;
+  --text-badge-size: 10px;
+  --text-min-size: 9px;
 
   --text-primary: #ffffff;
   --text-secondary: #e0e0e0;
@@ -740,11 +740,12 @@ body {
 .relic-icon {
     font-size: 14px;
     cursor: help;
+    will-change: transform;
 }
 
 /* Story 37.5: 遗物图标脉冲 — 非资源遗物触发时的视觉反馈 */
 .relic-icon.relic-pulse {
-    animation: relicPulse 0.5s steps(4) forwards;
+    animation: relicPulse 0.5s ease-out forwards;
 }
 
 @keyframes relicPulse {
@@ -761,7 +762,8 @@ body {
     transform-origin: left center;
     pointer-events: none;
     z-index: 150;
-    animation: relicFlash 0.3s steps(1) forwards;
+    will-change: clip-path, opacity;
+    animation: relicFlash 0.3s ease-out forwards;
 }
 
 @keyframes relicFlash {
@@ -2090,7 +2092,7 @@ body {
 .settlement-mult-box .settlement-label { color: #e85555; }
 
 .settlement-value {
-    font-size: var(--text-subtitle-size);
+    font-size: calc(var(--text-title-size) * 1.5);
     font-weight: normal;
     font-family: var(--font-pixel);
 }
@@ -2101,7 +2103,7 @@ body {
 .settlement-mult { display: flex; align-items: center; gap: 10px; }
 
 .settlement-symbol {
-    font-size: var(--text-body-size);
+    font-size: var(--text-subtitle-size);
     font-weight: normal;
     color: #fff;
     opacity: 0.3;
@@ -2111,7 +2113,7 @@ body {
 .settlement-result { display: flex; align-items: center; gap: 15px; }
 
 .settlement-final {
-    font-size: var(--text-subtitle-size);
+    font-size: calc(var(--text-title-size) * 2);
     font-weight: normal;
     color: #ffe66d;
     text-shadow: none;
