@@ -4618,13 +4618,18 @@ button, input, select, textarea { font-family: inherit; }
     color: #eee;
     line-height: 1.8;
     min-height: 1.5em;
+    display: inline;
 }
 
 .tutorial-prompt-text::after {
     content: '▌';
     animation: tutorial-cursor-blink 0.6s steps(2) infinite;
     color: #4ecdc4;
-    margin-left: 2px;
+}
+
+/* 打字完成后隐藏光标 */
+.tutorial-prompt-text.typing-done::after {
+    display: none;
 }
 
 @keyframes tutorial-cursor-blink {

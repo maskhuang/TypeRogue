@@ -73,6 +73,7 @@ export function showPrompt(textKey: string, options?: PromptOptions): Promise<vo
       } else {
         clearInterval(typeTimer!)
         typeTimer = null
+        textEl.classList.add('typing-done')
         continueEl.style.display = ''
         // 下一帧绑定（避免与最后一个打字 keydown 冲突）
         requestAnimationFrame(() => {
