@@ -222,6 +222,13 @@ const ZH: Record<string, string> = {
   'settings.tutorial_reset': '重置所有引导',
   'settings.tutorial_reset_confirm': '确定重置所有引导进度？',
   'settings.confirm': '确定',
+  'settings.title': '⚙️ 设置',
+  'settings.volume': '音量',
+  'settings.language': '语言',
+  'settings.crt': 'CRT 效果',
+  'settings.reset': '⚠ 重置所有进度',
+  'settings.reset_confirm': '确定要重置所有进度吗？此操作不可撤销。',
+  'settings.close': '关闭',
   'settings.cancel': '取消',
   'settings.stats_placeholder': '更多统计数据即将推出',
 
@@ -1238,6 +1245,13 @@ const EN: Record<string, string> = {
   'settings.tutorial_reset_confirm': 'Reset all tutorial progress?',
   'settings.confirm': 'Confirm',
   'settings.cancel': 'Cancel',
+  'settings.title': '⚙️ Settings',
+  'settings.volume': 'Volume',
+  'settings.language': 'Language',
+  'settings.crt': 'CRT Effect',
+  'settings.reset': '⚠ Reset All Progress',
+  'settings.reset_confirm': 'Are you sure you want to reset all progress? This cannot be undone.',
+  'settings.close': 'Close',
   'settings.stats_placeholder': 'More stats coming soon',
 
   // --- demo-end-screen.ts ---

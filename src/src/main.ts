@@ -10,6 +10,8 @@ import { startLevel, initInput, resetCycleTracking, showScreen } from './systems
 import { initFloatTextCanvas, clearFloatTexts } from './ui/effects/FloatTextPool';
 import { stopBGM } from './effects/sound';
 import { startTutorialMode } from './systems/tutorial/TutorialMode';
+import { openSettingsPanel, applyAllSettings } from './ui/SettingsPanel';
+import { loadSettings } from './core/UserSettings';
 import { initShopEvents } from './systems/shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
 import { MetaState } from './core/state/MetaState';
@@ -39,8 +41,14 @@ import { A8_WORD_COMPRESS_RATIO } from './core/constants';
 async function init(): Promise<void> {
   console.log('🎮 打字肉鸽 - 初始化中...');
 
+  // 加载用户设置
+  loadSettings()
+
   // 初始化 UI 元素引用
   initElements();
+
+  // 应用设置（CRT 等，音量在 initAudio 后生效）
+  applyAllSettings();
 
   // 初始化 Canvas2D 浮字系统
   initFloatTextCanvas(document.getElementById('game-container')!);
@@ -100,6 +108,8 @@ async function init(): Promise<void> {
     }
     const tutorialBtn = document.getElementById('menu-tutorial-btn');
     if (tutorialBtn) tutorialBtn.onclick = () => startTutorialMode();
+    const settingsBtn = document.getElementById('menu-settings-btn');
+    if (settingsBtn) settingsBtn.onclick = () => openSettingsPanel();
     return;
   }
 
@@ -263,6 +273,10 @@ async function init(): Promise<void> {
   // 主菜单「教程」按钮
   const tutorialBtn = document.getElementById('menu-tutorial-btn');
   if (tutorialBtn) tutorialBtn.onclick = () => startTutorialMode();
+
+  // 主菜单「设置」按钮
+  const settingsBtn = document.getElementById('menu-settings-btn');
+  if (settingsBtn) settingsBtn.onclick = () => openSettingsPanel();
 }
 
 /** 更新主菜单底部信息 */

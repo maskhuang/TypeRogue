@@ -7,6 +7,7 @@ import { state } from '../core/state';
 import { getScoreSoundTier } from './juice';
 
 let audioContext: AudioContext | null = null;
+let masterGain: GainNode | null = null;
 
 // === 打字三层音效：click（触底冲击）+ thock（壳体共鸣）+ tone（combo 积累感） ===
 function playTypeSound(): void {
@@ -167,49 +168,58 @@ let reverbSend: GainNode | null = null;
 let dryNode: GainNode | null = null;
 
 function initReverb(ctx: AudioContext): void {
+  const dest = masterGain || ctx.destination;
   // dry 通路
   dryNode = ctx.createGain();
   dryNode.gain.value = 1.0;
-  dryNode.connect(ctx.destination);
+  dryNode.connect(dest);
 
   // wet 通路：delay → feedback → output
   reverbSend = ctx.createGain();
-  reverbSend.gain.value = 0.25; // wet 量
+  reverbSend.gain.value = 0.25;
 
   const delay1 = ctx.createDelay();
-  delay1.delayTime.value = 0.03; // 30ms 早期反射
+  delay1.delayTime.value = 0.03;
   const delay2 = ctx.createDelay();
-  delay2.delayTime.value = 0.06; // 60ms 二次反射
+  delay2.delayTime.value = 0.06;
 
   const fb = ctx.createGain();
-  fb.gain.value = 0.3; // 反馈衰减
+  fb.gain.value = 0.3;
 
   const lpf = ctx.createBiquadFilter();
   lpf.type = 'lowpass';
-  lpf.frequency.value = 2500; // 高频吸收，混响更温暖
+  lpf.frequency.value = 2500;
 
   reverbSend.connect(delay1);
   delay1.connect(lpf);
   lpf.connect(delay2);
   delay2.connect(fb);
-  fb.connect(delay1); // 反馈环
-  delay2.connect(ctx.destination);
+  fb.connect(delay1);
+  delay2.connect(dest);
 }
 
 /** 连接音源到输出（dry + wet 混响） */
 function connectToOutput(node: AudioNode): void {
+  const dest = masterGain || audioContext!.destination;
   if (dryNode) node.connect(dryNode);
   if (reverbSend) node.connect(reverbSend);
-  if (!dryNode && !reverbSend) node.connect(audioContext!.destination);
+  if (!dryNode && !reverbSend) node.connect(dest);
 }
 
 // === 初始化音频上下文 ===
 export function initAudio(): void {
   if (!audioContext) {
     audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    masterGain = audioContext.createGain();
+    masterGain.connect(audioContext.destination);
     initReverb(audioContext);
     loadAllBGM().catch(() => {}); // fire-and-forget 预加载
   }
+}
+
+/** 设置主音量 (0-1) */
+export function setMasterVolume(v: number): void {
+  if (masterGain) masterGain.gain.value = Math.max(0, Math.min(1, v));
 }
 
 // === 播放音效 ===
