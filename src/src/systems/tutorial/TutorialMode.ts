@@ -136,7 +136,7 @@ async function runTutorialPhases(): Promise<void> {
   // --- 阶段 3: 时间与目标 ---
   advanceTutorialPhase()
   resetBattleForPhase()
-  state.time = 30; state.timeMax = 30; state.targetScore = 300
+  state.time = 30; state.timeMax = 30; state.targetScore = 100
   state.score = 0
   setTutorialHUD(3)
 

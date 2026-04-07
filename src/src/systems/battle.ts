@@ -1647,6 +1647,11 @@ function updateTimerDisplay(): void {
 // === 关卡评级 ===
 // === 关卡系统 ===
 function endLevel(): void {
+  // 教程模式不进入商店/下一关流转 — 由教程状态机控制
+  if (state.isTutorial) {
+    if (timerInterval) clearInterval(timerInterval);
+    return;
+  }
   if (timerInterval) clearInterval(timerInterval);
   _pendingChargeTriggers.clear();
   _chargeHolding = false;
