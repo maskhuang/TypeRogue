@@ -425,3 +425,14 @@ development_status:
   55-8-visual-qa-consistency-pass: done             # 视觉 QA 一致性检查
   55-9-pixijs-bitmap-float-text: in-progress           # 浮字系统迁移至 PixiJS BitmapText
   epic-55-retrospective: optional
+
+  # ===== Epic 56: 主菜单系统 =====
+  # Source: docs/stories/epic-56-main-menu.md
+  epic-56: backlog
+  56-1-main-menu-screen: backlog                      # 主菜单界面
+  56-2-tutorial-stage-design: backlog                  # 教程关设计
+  56-3-tutorial-stage-implementation: backlog           # 教程关实现
+  56-4-settings-panel: backlog                         # 设置面板
+  56-5-metamorph-unlock-change: backlog                # 蜕变师解锁条件变更
+  56-6-flow-integration: backlog                       # 启动流程整合
+  epic-56-retrospective: optional
