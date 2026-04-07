@@ -263,6 +263,13 @@ async function init(): Promise<void> {
   const menuStartBtn = document.getElementById('menu-start-btn');
   if (menuStartBtn) {
     menuStartBtn.onclick = () => {
+      // 每局重置 state + 恢复词库
+      resetState();
+      state.player.wordDeck = getStarterWords();
+      rollAffixWeights(random);
+      resetWordRelicRunState();
+      state.endlessUnlocked = metaState.isModeUnlocked('endless');
+
       getElements().mainMenuScreen.style.display = 'none';
       showClassPicker(metaState, () => {
         showAscensionPicker(metaState, state.classId, startAfterClassSelect);
