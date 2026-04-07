@@ -1927,7 +1927,7 @@ export async function startLevel(): Promise<void> {
   randomizeBattleBackground();
   const currentStageType = getStageType(state.level);
   const currentCycle = state.cycle;
-  if (currentCycle !== lastCycle) {
+  if (!state.isTutorial && currentCycle !== lastCycle) {
     if (lastCycle > 0) {
       resolveRelicEffectsWithBehaviors('on_act_end', { endedAct: lastCycle });
     }
@@ -2322,7 +2322,7 @@ export async function startLevel(): Promise<void> {
   // 发送战斗开始事件（引导系统等监听）
   eventBus.emit('battle:start', { stageId: state.level });
 
-  announceLevel();
+  if (!state.isTutorial) announceLevel();
 
   // 溢出扣减动画：在 HUD 目标分数上播放扣减过程
   if (_overflowDeduction > 0) {
