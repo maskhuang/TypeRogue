@@ -4062,6 +4062,7 @@ function renderHeatmapTab(container: HTMLElement, bs: import('../core/types').Ba
   // 维度切换事件
   container.querySelectorAll('.heatmap-dim').forEach(el => {
     el.addEventListener('click', () => {
+      playSound('type');
       currentHeatmapDimension = (el as HTMLElement).dataset.dim as HeatmapDimension;
       renderHeatmapTab(container, bs);
     });
