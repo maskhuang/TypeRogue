@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../theme'
 // ============================================
 // 打字肉鸽 - EffectQueueDisplay
 // ============================================
@@ -225,7 +226,7 @@ export class EffectQueueDisplay {
     const text = new PIXI.Text({
       text: effect.name,
       style: {
-        fontFamily: 'monospace',
+        fontFamily: FONT_PIXEL,
         fontSize: 12,
         fill: '#ffffff'
       }

@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../../ui/theme'
 // ============================================
 // 打字肉鸽 - 图鉴场景
 // ============================================
@@ -203,7 +204,7 @@ export class CollectionScene extends BaseScene {
     this.titleText = new Text({
       text: '图鉴',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 36,
         fill: 0xffffff,
         fontWeight: 'bold'
@@ -248,14 +249,14 @@ export class CollectionScene extends BaseScene {
 
       // 绘制标签背景（PixiJS v8 新 API）
       const tabGraphic = new Graphics()
-      tabGraphic.roundRect(0, 0, tabWidth, 40, 8)
+      tabGraphic.roundRect(0, 0, tabWidth, 40, 0)
       tabGraphic.fill(isActive ? 0x4ecdc4 : 0x333333)
       tabContainer.addChild(tabGraphic)
 
       const tabText = new Text({
         text: tab.label,
         style: {
-          fontFamily: 'Arial',
+          fontFamily: FONT_PIXEL,
           fontSize: 18,
           fill: isActive ? 0x000000 : 0xcccccc
         }
@@ -289,7 +290,7 @@ export class CollectionScene extends BaseScene {
     const placeholderText = new Text({
       text: `${currentTab.label}内容区域`,
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 24,
         fill: 0x888888
       }
@@ -308,7 +309,7 @@ export class CollectionScene extends BaseScene {
     // 标题
     const sectionTitle = new Text({
       text: t('settings.tutorial_section'),
-      style: { fontFamily: 'Arial', fontSize: 20, fill: 0xffffff, fontWeight: 'bold' }
+      style: { fontFamily: FONT_PIXEL, fontSize: 20, fill: 0xffffff, fontWeight: 'bold' }
     })
     sectionTitle.x = 400
     sectionTitle.anchor.set(0.5, 0)
@@ -318,7 +319,7 @@ export class CollectionScene extends BaseScene {
     const toggleY = 50
     const toggleLabel = new Text({
       text: t('settings.tutorial_toggle'),
-      style: { fontFamily: 'Arial', fontSize: 16, fill: 0xcccccc }
+      style: { fontFamily: FONT_PIXEL, fontSize: 16, fill: 0xcccccc }
     })
     toggleLabel.x = 200
     toggleLabel.y = toggleY
@@ -326,7 +327,7 @@ export class CollectionScene extends BaseScene {
 
     const isEnabled = tutorialManager.isEnabled()
     const toggleBg = new Graphics()
-    toggleBg.roundRect(0, 0, 50, 26, 13)
+    toggleBg.roundRect(0, 0, 50, 26, 0)
     toggleBg.fill(isEnabled ? 0x4ecdc4 : 0x555555)
 
     const toggleKnob = new Graphics()
@@ -350,12 +351,12 @@ export class CollectionScene extends BaseScene {
     // --- 重置按钮 ---
     const resetY = 100
     const resetBg = new Graphics()
-    resetBg.roundRect(0, 0, 180, 36, 8)
+    resetBg.roundRect(0, 0, 180, 36, 0)
     resetBg.fill(0x663333)
 
     const resetText = new Text({
       text: t('settings.tutorial_reset'),
-      style: { fontFamily: 'Arial', fontSize: 14, fill: 0xffaaaa }
+      style: { fontFamily: FONT_PIXEL, fontSize: 14, fill: 0xffaaaa }
     })
     resetText.anchor.set(0.5)
     resetText.x = 90
@@ -375,7 +376,7 @@ export class CollectionScene extends BaseScene {
     // 占位：其他统计数据将来扩展
     const statsPlaceholder = new Text({
       text: `（${t('settings.stats_placeholder')}）`,
-      style: { fontFamily: 'Arial', fontSize: 16, fill: 0x666666 }
+      style: { fontFamily: FONT_PIXEL, fontSize: 16, fill: 0x666666 }
     })
     statsPlaceholder.x = 400
     statsPlaceholder.y = 180
@@ -397,7 +398,7 @@ export class CollectionScene extends BaseScene {
     overlay.addChild(bg)
 
     const box = new Graphics()
-    box.roundRect(0, 0, 320, 160, 12)
+    box.roundRect(0, 0, 320, 160, 0)
     box.fill(0x1a1a2e)
     box.stroke({ color: 0x444444, width: 1 })
     box.x = 240
@@ -406,7 +407,7 @@ export class CollectionScene extends BaseScene {
 
     const msg = new Text({
       text: t('settings.tutorial_reset_confirm'),
-      style: { fontFamily: 'Arial', fontSize: 16, fill: 0xdddddd, wordWrap: true, wordWrapWidth: 280 }
+      style: { fontFamily: FONT_PIXEL, fontSize: 16, fill: 0xdddddd, wordWrap: true, wordWrapWidth: 280 }
     })
     msg.x = 400
     msg.y = 230
@@ -415,11 +416,11 @@ export class CollectionScene extends BaseScene {
 
     // 确认按钮
     const confirmBg = new Graphics()
-    confirmBg.roundRect(0, 0, 100, 32, 6)
+    confirmBg.roundRect(0, 0, 100, 32, 0)
     confirmBg.fill(0xcc4444)
     const confirmText = new Text({
       text: t('settings.confirm'),
-      style: { fontFamily: 'Arial', fontSize: 14, fill: 0xffffff }
+      style: { fontFamily: FONT_PIXEL, fontSize: 14, fill: 0xffffff }
     })
     confirmText.anchor.set(0.5)
     confirmText.x = 50
@@ -439,11 +440,11 @@ export class CollectionScene extends BaseScene {
 
     // 取消按钮
     const cancelBg = new Graphics()
-    cancelBg.roundRect(0, 0, 100, 32, 6)
+    cancelBg.roundRect(0, 0, 100, 32, 0)
     cancelBg.fill(0x444444)
     const cancelText = new Text({
       text: t('settings.cancel'),
-      style: { fontFamily: 'Arial', fontSize: 14, fill: 0xcccccc }
+      style: { fontFamily: FONT_PIXEL, fontSize: 14, fill: 0xcccccc }
     })
     cancelText.anchor.set(0.5)
     cancelText.x = 50

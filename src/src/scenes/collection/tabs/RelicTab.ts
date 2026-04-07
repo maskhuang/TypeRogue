@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../../../ui/theme'
 // ============================================
 // 打字肉鸽 - RelicTab 组件
 // ============================================
@@ -71,7 +72,7 @@ export class RelicTab extends Container {
     this.headerText = new Text({
       text: `遗物图鉴 (${unlockedCount}/${totalCount})`,
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 24,
         fill: 0xffffff
       }

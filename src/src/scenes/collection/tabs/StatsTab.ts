@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../../../ui/theme'
 // ============================================
 // 打字肉鸽 - StatsTab 组件
 // ============================================
@@ -82,7 +83,7 @@ export class StatsTab extends Container {
     this.headerText = new Text({
       text: '游戏统计',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 24,
         fill: 0xffffff
       }
@@ -107,7 +108,7 @@ export class StatsTab extends Container {
 
       // 背景卡片
       const bg = new Graphics()
-      bg.roundRect(-cardWidth / 2, 0, cardWidth, itemHeight - 8, 8)
+      bg.roundRect(-cardWidth / 2, 0, cardWidth, itemHeight - 8, 0)
       bg.fill(index % 2 === 0 ? 0x2a2a3e : 0x252538)
       bg.y = y
       this.statsContainer!.addChild(bg)
@@ -116,7 +117,7 @@ export class StatsTab extends Container {
       const labelText = new Text({
         text: item.label,
         style: {
-          fontFamily: 'Arial',
+          fontFamily: FONT_PIXEL,
           fontSize: 16,
           fill: 0xaaaaaa
         }
@@ -130,7 +131,7 @@ export class StatsTab extends Container {
       const valueText = new Text({
         text: item.getValue(stats),
         style: {
-          fontFamily: 'Arial',
+          fontFamily: FONT_PIXEL,
           fontSize: 18,
           fill: 0x4ecdc4,
           fontWeight: 'bold'

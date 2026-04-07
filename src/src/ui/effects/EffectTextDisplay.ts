@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../theme'
 // ============================================
 // 打字肉鸽 - EffectTextDisplay
 // ============================================
@@ -60,7 +61,7 @@ export class EffectTextDisplay {
     const textObj = this.pool.pop() || new PIXI.Text({ text: '', style: {} })
     textObj.text = text
     textObj.style = {
-      fontFamily: 'monospace',
+      fontFamily: FONT_PIXEL,
       fontSize,
       fontWeight: 'bold',
       fill: color,

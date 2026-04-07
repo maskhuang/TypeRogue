@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../theme'
 // ============================================
 // 打字肉鸽 - ScorePopup 分数飘字组件
 // ============================================
@@ -161,7 +162,7 @@ export class ScorePopup {
     return new PIXI.Text({
       text: '',
       style: {
-        fontFamily: 'monospace',
+        fontFamily: FONT_PIXEL,
         fontSize: 24,
         fontWeight: 'bold',
         fill: '#ffffff',

@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../../../ui/theme'
 // ============================================
 // 打字肉鸽 - LeaderboardTab 组件
 // ============================================
@@ -67,7 +68,7 @@ export class LeaderboardTab extends Container {
     if (this.entries.length === 0) {
       const emptyText = new Text({
         text: '暂无记录',
-        style: { fontFamily: 'Arial', fontSize: 20, fill: COLORS.textDim },
+        style: { fontFamily: FONT_PIXEL, fontSize: 20, fill: COLORS.textDim },
       })
       emptyText.anchor.set(0.5, 0)
       emptyText.y = 40
@@ -78,7 +79,7 @@ export class LeaderboardTab extends Container {
     // Header
     const header = new Text({
       text: '排行榜',
-      style: { fontFamily: 'Arial', fontSize: 24, fill: COLORS.text },
+      style: { fontFamily: FONT_PIXEL, fontSize: 24, fill: COLORS.text },
     })
     header.anchor.set(0.5, 0)
     this.listContainer.addChild(header)
@@ -106,7 +107,7 @@ export class LeaderboardTab extends Container {
 
   private createColumnHeaders(): Container {
     const c = new Container()
-    const style = { fontFamily: 'Arial', fontSize: 13, fill: COLORS.textDim }
+    const style = { fontFamily: FONT_PIXEL, fontSize: 13, fill: COLORS.textDim }
     const cols = [
       { text: '#', x: -CARD_WIDTH / 2 + 16 },
       { text: '周目', x: -CARD_WIDTH / 2 + 60 },
@@ -128,7 +129,7 @@ export class LeaderboardTab extends Container {
 
     // Background
     const bg = new Graphics()
-    bg.roundRect(-CARD_WIDTH / 2, 0, CARD_WIDTH, ROW_HEIGHT - 4, 6)
+    bg.roundRect(-CARD_WIDTH / 2, 0, CARD_WIDTH, ROW_HEIGHT - 4, 0)
     bg.fill(selected ? COLORS.highlight : (index % 2 === 0 ? COLORS.bg1 : COLORS.bg2))
     if (selected) {
       bg.stroke({ width: 1, color: COLORS.cyan })
@@ -140,7 +141,7 @@ export class LeaderboardTab extends Container {
     // Rank
     const rankText = new Text({
       text: `${index + 1}`,
-      style: { fontFamily: 'Arial', fontSize: 16, fill: index < 3 ? COLORS.gold : COLORS.text, fontWeight: 'bold' },
+      style: { fontFamily: FONT_PIXEL, fontSize: 16, fill: index < 3 ? COLORS.gold : COLORS.text, fontWeight: 'bold' },
     })
     rankText.x = -CARD_WIDTH / 2 + 16
     rankText.anchor.set(0, 0.5)
@@ -150,7 +151,7 @@ export class LeaderboardTab extends Container {
     // Cycle
     const cycleText = new Text({
       text: `${entry.cycle}`,
-      style: { fontFamily: 'Arial', fontSize: 16, fill: COLORS.cyan, fontWeight: 'bold' },
+      style: { fontFamily: FONT_PIXEL, fontSize: 16, fill: COLORS.cyan, fontWeight: 'bold' },
     })
     cycleText.x = -CARD_WIDTH / 2 + 60
     cycleText.anchor.set(0, 0.5)
@@ -160,7 +161,7 @@ export class LeaderboardTab extends Container {
     // Score
     const scoreText = new Text({
       text: entry.score.toLocaleString(),
-      style: { fontFamily: 'Arial', fontSize: 16, fill: COLORS.text },
+      style: { fontFamily: FONT_PIXEL, fontSize: 16, fill: COLORS.text },
     })
     scoreText.x = -CARD_WIDTH / 2 + 140
     scoreText.anchor.set(0, 0.5)
@@ -171,7 +172,7 @@ export class LeaderboardTab extends Container {
     const isVictory = entry.result === 'victory'
     const resultText = new Text({
       text: isVictory ? '胜' : '败',
-      style: { fontFamily: 'Arial', fontSize: 16, fill: isVictory ? COLORS.gold : COLORS.red, fontWeight: 'bold' },
+      style: { fontFamily: FONT_PIXEL, fontSize: 16, fill: isVictory ? COLORS.gold : COLORS.red, fontWeight: 'bold' },
     })
     resultText.x = -CARD_WIDTH / 2 + 280
     resultText.anchor.set(0, 0.5)
@@ -182,7 +183,7 @@ export class LeaderboardTab extends Container {
     const dateStr = entry.date.slice(0, 10) // YYYY-MM-DD
     const dateText = new Text({
       text: dateStr,
-      style: { fontFamily: 'Arial', fontSize: 14, fill: COLORS.textDim },
+      style: { fontFamily: FONT_PIXEL, fontSize: 14, fill: COLORS.textDim },
     })
     dateText.x = -CARD_WIDTH / 2 + 360
     dateText.anchor.set(0, 0.5)
@@ -198,13 +199,13 @@ export class LeaderboardTab extends Container {
 
     // Background
     const bg = new Graphics()
-    bg.roundRect(-CARD_WIDTH / 2, 0, CARD_WIDTH, DETAIL_HEIGHT, 8)
+    bg.roundRect(-CARD_WIDTH / 2, 0, CARD_WIDTH, DETAIL_HEIGHT, 0)
     bg.fill(0x1e1e30)
     bg.stroke({ width: 1, color: COLORS.cyan, alpha: 0.5 })
     c.addChild(bg)
 
-    const headerStyle = { fontFamily: 'Arial', fontSize: 14, fill: COLORS.cyan }
-    const bodyStyle = { fontFamily: 'Arial', fontSize: 13, fill: COLORS.text }
+    const headerStyle = { fontFamily: FONT_PIXEL, fontSize: 14, fill: COLORS.cyan }
+    const bodyStyle = { fontFamily: FONT_PIXEL, fontSize: 13, fill: COLORS.text }
 
     // Skills
     const skillNames = bs.skills.map(s => `${s.id}(Lv${s.level})`).join(', ') || '无'

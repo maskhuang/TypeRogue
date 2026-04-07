@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../../../ui/theme'
 // ============================================
 // 打字肉鸽 - TabBar 组件
 // ============================================
@@ -91,7 +92,7 @@ export class TabBar extends Container {
 
       // 绘制背景
       const bg = new Graphics()
-      bg.roundRect(0, 0, tabWidth, tabHeight, 8)
+      bg.roundRect(0, 0, tabWidth, tabHeight, 0)
       bg.fill(isActive ? 0x4ecdc4 : 0x333333)
       tabContainer.addChild(bg)
 
@@ -99,7 +100,7 @@ export class TabBar extends Container {
       const text = new Text({
         text: tabLabel,
         style: {
-          fontFamily: 'Arial',
+          fontFamily: FONT_PIXEL,
           fontSize: 18,
           fill: isActive ? 0x000000 : 0xcccccc
         }

@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../theme'
 // ============================================
 // 打字肉鸽 - WordDisplay 词语显示组件
 // ============================================
@@ -26,7 +27,7 @@ export class WordDisplay extends Container {
   private errorTimeout: ReturnType<typeof setTimeout> | null = null
 
   // 使用等宽字体确保字符宽度一致
-  private static readonly FONT_FAMILY = 'Courier New, monospace'
+  private static readonly FONT_FAMILY = FONT_PIXEL
 
   private static readonly ERROR_STYLE = new TextStyle({
     fontFamily: WordDisplay.FONT_FAMILY,

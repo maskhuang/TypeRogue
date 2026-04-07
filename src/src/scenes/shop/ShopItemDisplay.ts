@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../../ui/theme'
 // ============================================
 // 打字肉鸽 - ShopItemDisplay 商品显示组件
 // ============================================
@@ -34,7 +35,7 @@ export class ShopItemDisplay extends Container {
 
     // 名称文本
     const nameStyle = new TextStyle({
-      fontFamily: 'monospace',
+      fontFamily: FONT_PIXEL,
       fontSize: 16,
       fill: '#ffffff',
       fontWeight: 'bold'
@@ -46,7 +47,7 @@ export class ShopItemDisplay extends Container {
 
     // 价格文本
     const priceStyle = new TextStyle({
-      fontFamily: 'monospace',
+      fontFamily: FONT_PIXEL,
       fontSize: 14,
       fill: '#ffe66d'
     })
@@ -57,7 +58,7 @@ export class ShopItemDisplay extends Container {
 
     // 描述文本
     const descStyle = new TextStyle({
-      fontFamily: 'monospace',
+      fontFamily: FONT_PIXEL,
       fontSize: 12,
       fill: '#aaaaaa',
       wordWrap: true,

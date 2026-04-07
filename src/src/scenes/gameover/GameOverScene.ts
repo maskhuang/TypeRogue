@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../../ui/theme'
 // ============================================
 // 打字肉鸽 - GameOverScene 游戏结束场景
 // ============================================
@@ -104,7 +105,7 @@ export class GameOverScene extends BaseScene {
 
   private createTitle(): void {
     const titleStyle = new TextStyle({
-      fontFamily: 'Arial',
+      fontFamily: FONT_PIXEL,
       fontSize: 64,
       fill: COLORS.titleFail,
       fontWeight: 'bold'
@@ -133,7 +134,7 @@ export class GameOverScene extends BaseScene {
     ]
 
     const statsStyle = new TextStyle({
-      fontFamily: 'Arial',
+      fontFamily: FONT_PIXEL,
       fontSize: 28,
       fill: COLORS.textPrimary,
       lineHeight: 42
@@ -165,7 +166,7 @@ export class GameOverScene extends BaseScene {
 
       // 按钮背景
       const button = new Graphics()
-      button.roundRect(0, 0, buttonWidth, buttonHeight, 8)
+      button.roundRect(0, 0, buttonWidth, buttonHeight, 0)
       button.fill(COLORS.buttonUnselected)
       button.position.set(x, y)
       this.container.addChild(button)
@@ -173,7 +174,7 @@ export class GameOverScene extends BaseScene {
 
       // 按钮文本
       const textStyle = new TextStyle({
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 22,
         fill: COLORS.textPrimary,
         fontWeight: 'bold'
@@ -191,7 +192,7 @@ export class GameOverScene extends BaseScene {
 
     // 操作说明
     const instructionStyle = new TextStyle({
-      fontFamily: 'Arial',
+      fontFamily: FONT_PIXEL,
       fontSize: 14,
       fill: COLORS.textSecondary
     })
@@ -212,7 +213,7 @@ export class GameOverScene extends BaseScene {
 
       // 重绘按钮
       button.clear()
-      button.roundRect(0, 0, 240, 50, 8)
+      button.roundRect(0, 0, 240, 50, 0)
       button.fill(isSelected ? COLORS.buttonSelected : COLORS.buttonUnselected)
 
       if (isSelected) {

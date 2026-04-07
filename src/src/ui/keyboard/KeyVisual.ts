@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../theme'
 // ============================================
 // 打字肉鸽 - KeyVisual 单键可视化组件
 // ============================================
@@ -84,7 +85,7 @@ export class KeyVisual extends Container {
   // 尺寸常量
   static readonly KEY_SIZE = 48
   static readonly KEY_GAP = 4
-  static readonly BORDER_RADIUS = 6
+  static readonly BORDER_RADIUS = 0
   static readonly BORDER_WIDTH = 2
 
   // 颜色常量
@@ -99,7 +100,7 @@ export class KeyVisual extends Container {
   private static readonly COLOR_BORDER_SCORE_HIGH = 0xffd700  // 金色 (6+)
 
   private static readonly LABEL_STYLE = new TextStyle({
-    fontFamily: 'Arial',
+    fontFamily: FONT_PIXEL,
     fontSize: 12,
     fontWeight: 'bold',
     fill: 0xffffff
@@ -376,7 +377,7 @@ export class KeyVisual extends Container {
         this.stackLabel = new Text({
           text: '',
           style: new TextStyle({
-            fontFamily: 'Arial',
+            fontFamily: FONT_PIXEL,
             fontSize: 9,
             fontWeight: 'bold',
             fill: 0xa29bfe,
@@ -403,7 +404,7 @@ export class KeyVisual extends Container {
         this.growthLabel = new Text({
           text: '',
           style: new TextStyle({
-            fontFamily: 'Arial',
+            fontFamily: FONT_PIXEL,
             fontSize: 8,
             fontWeight: 'bold',
             fill: 0xffe66d,
@@ -448,7 +449,7 @@ export class KeyVisual extends Container {
       this.scoreLabel = new Text({
         text: String(this.letterScore),
         style: new TextStyle({
-          fontFamily: 'Arial',
+          fontFamily: FONT_PIXEL,
           fontSize: 9,
           fontWeight: 'bold',
           fill,
@@ -475,7 +476,7 @@ export class KeyVisual extends Container {
     this.schoolOverlay.roundRect(
       2, 2,
       KeyVisual.KEY_SIZE - 4, KeyVisual.KEY_SIZE - 4,
-      KeyVisual.BORDER_RADIUS - 1
+      0
     )
     this.schoolOverlay.fill({ color: this.schoolColor, alpha: 0.15 })
   }
@@ -692,7 +693,7 @@ export class KeyVisual extends Container {
     this.flashGraphics.roundRect(
       1, 1,
       KeyVisual.KEY_SIZE - 2, KeyVisual.KEY_SIZE - 2,
-      KeyVisual.BORDER_RADIUS - 1
+      0
     )
     this.flashGraphics.fill({ color: this.flashColor, alpha: this.flashAlpha })
   }

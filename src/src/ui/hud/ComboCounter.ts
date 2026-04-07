@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../theme'
 // ============================================
 // 打字肉鸽 - ComboCounter 连击计数器组件
 // ============================================
@@ -27,7 +28,7 @@ export class ComboCounter extends Container {
   private static readonly COLOR_HIGH = 0xff6600 // 橙红色 (11+)
 
   private static readonly STYLE = new TextStyle({
-    fontFamily: 'Arial',
+    fontFamily: FONT_PIXEL,
     fontSize: 32,
     fontWeight: 'bold',
     fill: 0xffffff

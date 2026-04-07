@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../theme'
 // ============================================
 // 打字肉鸽 - TimerBar 倒计时进度条组件
 // ============================================
@@ -35,7 +36,7 @@ export class TimerBar extends Container {
   private static readonly COLOR_WARNING = 0xff5252 // 红色
 
   private static readonly TEXT_STYLE = new TextStyle({
-    fontFamily: 'Arial',
+    fontFamily: FONT_PIXEL,
     fontSize: 16,
     fontWeight: 'bold',
     fill: 0xffffff
@@ -71,7 +72,7 @@ export class TimerBar extends Container {
    */
   private drawBackground(): void {
     this.barBackground.clear()
-    this.barBackground.roundRect(0, 0, this.barWidth, this.barHeight, 10)
+    this.barBackground.roundRect(0, 0, this.barWidth, this.barHeight, 0)
     this.barBackground.fill({ color: TimerBar.COLOR_BACKGROUND })
   }
 
@@ -84,7 +85,7 @@ export class TimerBar extends Container {
     const fillWidth = Math.max(0, this.barWidth * progress)
     if (fillWidth > 0) {
       const color = this.isWarning() ? TimerBar.COLOR_WARNING : TimerBar.COLOR_NORMAL
-      this.barFill.roundRect(0, 0, fillWidth, this.barHeight, 10)
+      this.barFill.roundRect(0, 0, fillWidth, this.barHeight, 0)
       this.barFill.fill({ color })
     }
   }

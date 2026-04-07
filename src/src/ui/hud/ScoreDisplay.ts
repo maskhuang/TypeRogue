@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../theme'
 // ============================================
 // 打字肉鸽 - ScoreDisplay 分数显示组件
 // ============================================
@@ -23,14 +24,14 @@ export class ScoreDisplay extends Container {
 
   // 样式常量
   private static readonly SCORE_STYLE = new TextStyle({
-    fontFamily: 'Arial',
+    fontFamily: FONT_PIXEL,
     fontSize: 28,
     fontWeight: 'bold',
     fill: 0xffffff
   })
 
   private static readonly MULTIPLIER_STYLE = new TextStyle({
-    fontFamily: 'Arial',
+    fontFamily: FONT_PIXEL,
     fontSize: 20,
     fontStyle: 'italic',
     fill: 0xffd700 // 金色

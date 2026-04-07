@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../../../ui/theme'
 // ============================================
 // 打字肉鸽 - CollectionItem 组件
 // ============================================
@@ -98,7 +99,7 @@ export class CollectionItem extends Container {
 
     // 背景
     this.background = new Graphics()
-    this.background.roundRect(0, 0, width, height, 8)
+    this.background.roundRect(0, 0, width, height, 0)
     this.background.fill(isUnlocked ? 0x2a2a3e : 0x1a1a1a)
     this.background.stroke({ width: 2, color: isUnlocked ? 0x4ecdc4 : 0x333333 })
     this.addChild(this.background)
@@ -107,7 +108,7 @@ export class CollectionItem extends Container {
     this.iconText = new Text({
       text: isUnlocked ? this.data.icon : '❓',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 32,
         fill: isUnlocked ? 0xffffff : 0x555555
       }
@@ -121,7 +122,7 @@ export class CollectionItem extends Container {
     this.nameText = new Text({
       text: isUnlocked ? this.data.name : '???',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 14,
         fill: isUnlocked ? 0xffffff : 0x666666,
         fontWeight: 'bold'
@@ -141,7 +142,7 @@ export class CollectionItem extends Container {
       this.descText = new Text({
         text: descContent,
         style: {
-          fontFamily: 'Arial',
+          fontFamily: FONT_PIXEL,
           fontSize: TEXT_LEVEL.body.size,
           fill: isUnlocked ? 0xaaaaaa : 0x555555,
           wordWrap: true,

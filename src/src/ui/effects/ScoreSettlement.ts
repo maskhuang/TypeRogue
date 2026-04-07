@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../theme'
 // ============================================
 // 打字肉鸽 - 分数结算展示 (Balatro 风格)
 // ============================================
@@ -77,7 +78,7 @@ export class ScoreSettlement extends Container {
 
   private createPanel(): void {
     this.panel = new Graphics()
-    this.panel.roundRect(-200, -60, 400, 120, 12)
+    this.panel.roundRect(-200, -60, 400, 120, 0)
     this.panel.fill({ color: 0x1a1a2e, alpha: 0.95 })
     this.panel.stroke({ color: 0x4a4a6a, width: 2 })
     this.addChild(this.panel)
@@ -93,7 +94,7 @@ export class ScoreSettlement extends Container {
     this.chipsLabel = new Text({
       text: '基数',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 14,
         fill: 0x6699cc,
         fontWeight: 'bold'
@@ -107,7 +108,7 @@ export class ScoreSettlement extends Container {
     this.chipsValue = new Text({
       text: '0',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 36,
         fill: 0x66ccff,
         fontWeight: 'bold'
@@ -130,7 +131,7 @@ export class ScoreSettlement extends Container {
     this.multSymbol = new Text({
       text: '×',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 32,
         fill: 0xffffff
       }
@@ -144,7 +145,7 @@ export class ScoreSettlement extends Container {
     this.multLabel = new Text({
       text: '倍率',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 14,
         fill: 0xff6666,
         fontWeight: 'bold'
@@ -159,7 +160,7 @@ export class ScoreSettlement extends Container {
     this.multValue = new Text({
       text: '×1.0',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 36,
         fill: 0xff6666,
         fontWeight: 'bold'
@@ -183,7 +184,7 @@ export class ScoreSettlement extends Container {
     this.equalsSymbol = new Text({
       text: '=',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 32,
         fill: 0xffffff
       }
@@ -197,7 +198,7 @@ export class ScoreSettlement extends Container {
     this.resultValue = new Text({
       text: '0',
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 42,
         fill: 0xffe66d,
         fontWeight: 'bold'

@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../theme'
 // ============================================
 // 打字肉鸽 - CloudSyncIndicator 云同步状态指示器
 // ============================================
@@ -42,7 +43,7 @@ export class CloudSyncIndicator extends Container {
   }
 
   private static readonly TEXT_STYLE = new TextStyle({
-    fontFamily: 'Arial',
+    fontFamily: FONT_PIXEL,
     fontSize: 12,
     fill: 0xffffff
   })

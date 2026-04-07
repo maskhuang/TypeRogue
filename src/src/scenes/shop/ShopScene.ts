@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../../ui/theme'
 // ============================================
 // 打字肉鸽 - ShopScene 商店场景
 // ============================================
@@ -242,7 +243,7 @@ export class ShopScene extends BaseScene {
 
     // 标题
     const titleStyle = new TextStyle({
-      fontFamily: 'monospace',
+      fontFamily: FONT_PIXEL,
       fontSize: 32,
       fill: '#ffffff',
       fontWeight: 'bold'
@@ -254,7 +255,7 @@ export class ShopScene extends BaseScene {
 
     // 金币显示
     const goldStyle = new TextStyle({
-      fontFamily: 'monospace',
+      fontFamily: FONT_PIXEL,
       fontSize: 20,
       fill: '#ffe66d'
     })
@@ -298,7 +299,7 @@ export class ShopScene extends BaseScene {
 
     // 操作说明（使用局部变量）
     const instructionStyle = new TextStyle({
-      fontFamily: 'monospace',
+      fontFamily: FONT_PIXEL,
       fontSize: 14,
       fill: '#888888'
     })

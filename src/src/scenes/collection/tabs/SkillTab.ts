@@ -1,3 +1,4 @@
+import { FONT_PIXEL } from '../../../ui/theme'
 // ============================================
 // 打字肉鸽 - SkillTab 组件
 // ============================================
@@ -69,7 +70,7 @@ export class SkillTab extends Container {
     this.headerText = new Text({
       text: `技能图鉴 (${unlockedCount}/${totalCount})`,
       style: {
-        fontFamily: 'Arial',
+        fontFamily: FONT_PIXEL,
         fontSize: 24,
         fill: 0xffffff
       }
