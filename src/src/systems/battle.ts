@@ -1848,6 +1848,11 @@ function endLevel(): void {
       playSound('levelup');
       return;
     }
+    // 教程模式不触发 gameover — 由教程状态机处理
+    if (state.isTutorial) {
+      eventBus.emit('tutorial:time_up', {});
+      return;
+    }
     trackEvent('demo_stage_fail', { stage: state.level, score: state.score });
     gameOver();
   }
