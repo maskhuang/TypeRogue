@@ -20,9 +20,9 @@ export const SPACING = {
 } as const
 
 export const TOOLTIP = {
-  maxWidth: 340,
-  paddingY: 10,
-  paddingX: 14,
-  lineHeight: 1.6,
+  maxWidth: 400,
+  paddingY: 14,
+  paddingX: 18,
+  lineHeight: 1.8,
   borderRadius: 0,
 } as const

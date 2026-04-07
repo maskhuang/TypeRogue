@@ -18,9 +18,9 @@
   --text-caption-color: #aaaaaa;
 
   /* Design Token — Tooltip */
-  --tooltip-max-width: 340px;
-  --tooltip-padding: 10px 14px;
-  --tooltip-line-height: 1.6;
+  --tooltip-max-width: 400px;
+  --tooltip-padding: 14px 18px;
+  --tooltip-line-height: 1.8;
   --tooltip-radius: 0;
 
   /* Design Token — 间距 */
@@ -84,7 +84,7 @@ body {
     padding: 1px 6px;
     font-size: var(--text-caption-size);
     cursor: pointer;
-    transition: color 0.15s steps(3), border-color 0.15s steps(3);
+    transition: color 0.15s steps(1), border-color 0.15s steps(1);
 }
 
 .lang-btn:hover { color: #aaa; }
@@ -248,7 +248,7 @@ body {
 }
 
 .accel-pulse {
-    animation: accel-pulse 0.3s steps(3);
+    animation: accel-pulse 0.3s steps(1);
 }
 
 @keyframes accel-pulse {
@@ -394,7 +394,7 @@ body {
     color: #4ecdc4;
     text-shadow: none;
     opacity: 0.7;
-    animation: pixelStamp 0.15s steps(3) forwards;
+    animation: pixelStamp 0.15s steps(1) forwards;
 }
 
 @keyframes pixelStamp {
@@ -476,7 +476,7 @@ body {
 .letter.skill-triggered {
     color: #ffe66d !important;
     text-shadow: none;
-    animation: pixelFlash 0.3s steps(3) forwards;
+    animation: pixelFlash 0.3s steps(1) forwards;
 }
 
 @keyframes pixelFlash {
@@ -495,7 +495,7 @@ body {
     color: rgba(78,205,196,0.6);
     white-space: nowrap;
     pointer-events: none;
-    animation: tabHintPulse 2s steps(4) infinite;
+    animation: tabHintPulse 2s steps(2) infinite;
 }
 
 @keyframes tabHintPulse {
@@ -621,7 +621,7 @@ body {
     border-radius: 0;
     color: #888;
     cursor: pointer;
-    transition: border-color 0.15s steps(3), color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), color 0.15s steps(1), background 0.15s steps(1);
 }
 
 .shop-tab:hover { border-color: #4ecdc4; color: #fff; }
@@ -657,7 +657,7 @@ body {
     border: 2px solid #333;
     border-radius: 0;
     cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
 }
 
 .reward-card:hover {
@@ -761,7 +761,7 @@ body {
     transform-origin: left center;
     pointer-events: none;
     z-index: 150;
-    animation: relicFlash 0.3s steps(3) forwards;
+    animation: relicFlash 0.3s steps(1) forwards;
 }
 
 @keyframes relicFlash {
@@ -834,7 +834,7 @@ body {
     border: 1px solid #444;
     border-radius: 0;
     cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
     user-select: none;
 }
 
@@ -850,7 +850,7 @@ body {
 .key-slot.selected {
     border-color: #ffe66d;
     background: rgba(255,230,109,0.15);
-    animation: selectedPulse 1.5s steps(4) infinite;
+    animation: selectedPulse 1.5s steps(2) infinite;
 }
 
 @keyframes selectedPulse {
@@ -861,7 +861,7 @@ body {
 .key-slot.has-skill {
     border-color: #4ecdc4;
     background: #152520;
-    animation: skillSlotFloat 3s steps(4) infinite;
+    animation: skillSlotFloat 3s steps(2) infinite;
 }
 
 @keyframes skillSlotFloat {
@@ -883,7 +883,7 @@ body {
     top: -8px;
     right: -20px;
     font-size: 18px;
-    animation: cancelHintPulse 0.4s steps(3) forwards;
+    animation: cancelHintPulse 0.4s steps(1) forwards;
     pointer-events: none;
     z-index: 10;
 }
@@ -938,7 +938,7 @@ body {
     padding: 4px 6px;
     border-radius: 0;
     cursor: pointer;
-    transition: background 0.15s steps(3);
+    transition: background 0.15s steps(1);
 }
 .pack-word-row:hover {
     background: rgba(78, 205, 196, 0.15);
@@ -982,7 +982,7 @@ body {
 .key-slot.void-range-empty {
     border-color: #9b59b6 !important;
     background: rgba(155,89,182,0.15) !important;
-    animation: voidPulse 0.8s steps(4) infinite alternate;
+    animation: voidPulse 0.8s steps(2) infinite alternate;
 }
 @keyframes voidPulse {
     from { opacity: 0.7; }
@@ -1003,7 +1003,7 @@ body {
     border: 2px solid #333;
     border-radius: 0;
     cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
 }
 
 .inventory-skill:hover { border-color: #ffe66d; }
@@ -1048,7 +1048,7 @@ body {
     border-radius: 0;
     font-size: var(--text-caption-size);
     cursor: grab;
-    transition: border-color 0.15s steps(3);
+    transition: border-color 0.15s steps(1);
 }
 .word-item:hover { border-color: #ffe66d; }
 .word-item.dragging { opacity: 0.4; }
@@ -1091,7 +1091,7 @@ body {
 .freq-letter.freq-drop-warn {
     background: rgba(255, 107, 107, 0.3) !important;
     color: #ff6b6b !important;
-    animation: freqDropPulse 0.6s steps(4) infinite;
+    animation: freqDropPulse 0.6s steps(2) infinite;
 }
 
 @keyframes freqDropPulse {
@@ -1119,7 +1119,7 @@ body {
     color: #0a0a0f;
     font-weight: bold;
     cursor: pointer;
-    transition: background 0.15s steps(3);
+    transition: background 0.15s steps(1);
 }
 
 #start-battle-btn:hover { background: #5fd8d0; }
@@ -1141,14 +1141,14 @@ body {
     font-weight: bold;
     color: #ff6b6b;
     margin-bottom: 20px;
-    animation: gameoverTitleIn 0.6s steps(6) both;
+    animation: gameoverTitleIn 0.6s ease-out both;
 }
 @keyframes gameoverTitleIn {
     0% { opacity: 0; transform: translateY(-20px); }
     100% { opacity: 1; transform: translateY(0); }
 }
 #gameover-stats { color: #888; font-size: var(--text-body-size); line-height: 2; margin-bottom: 30px; }
-.restart-btn { padding: 12px 30px; font-size: var(--text-subtitle-size); font-family: inherit; background: var(--bg-panel); border: 2px solid #4ecdc4; border-radius: 0; color: #4ecdc4; cursor: pointer; transition: background 0.15s steps(3), color 0.15s steps(3); }
+.restart-btn { padding: 12px 30px; font-size: var(--text-subtitle-size); font-family: inherit; background: var(--bg-panel); border: 2px solid #4ecdc4; border-radius: 0; color: #4ecdc4; cursor: pointer; transition: background 0.15s steps(1), color 0.15s steps(1); }
 .restart-btn:hover { background: #4ecdc4; color: #0a0a0f; }
 .daily-btn { border-color: #ffe66d; color: #ffe66d; margin-left: 8px; }
 .daily-btn:hover { background: #ffe66d; color: #0a0a0f; }
@@ -1201,7 +1201,7 @@ body {
 
 /* 卡牌 idle 浮动动画 */
 .card-float {
-    animation: cardFloat 3s steps(6) infinite;
+    animation: cardFloat 3s steps(2) infinite;
 }
 
 @keyframes cardFloat {
@@ -1213,7 +1213,7 @@ body {
 
 /* 3D 卡牌透视容器 — 像素化 */
 .card-3d {
-    transition: border-color 0.15s steps(3);
+    transition: border-color 0.15s steps(1);
 }
 
 .card-3d:hover {
@@ -1221,12 +1221,12 @@ body {
 }
 
 .card-3d-inner {
-    transition: border-color 0.1s steps(3);
+    transition: border-color 0.1s steps(1);
 }
 
 /* 弹性缩放 — 像素化 */
 .elastic-scale {
-    transition: background 0.15s steps(3);
+    transition: background 0.15s steps(1);
 }
 
 .elastic-scale:hover {
@@ -1542,7 +1542,7 @@ body {
 /* 伪无限模式视觉 (Story 19.7) */
 #game-container.pseudo-infinite {
     border: 3px solid #ffe66d;
-    animation: pseudoInfinitePulse 1.2s steps(4) infinite;
+    animation: pseudoInfinitePulse 1.2s steps(2) infinite;
 }
 @keyframes pseudoInfinitePulse {
     0%, 100% { border-color: #ffe66d; }
@@ -1560,7 +1560,7 @@ body {
 /* 危险时间警告 — time <= 10s */
 #game-container.glow-danger {
     border: 3px solid #dc143c;
-    animation: glowDangerPulse 0.8s steps(4) infinite;
+    animation: glowDangerPulse 0.8s steps(2) infinite;
 }
 @keyframes glowDangerPulse {
     0%, 100% { border-color: #dc143c; }
@@ -1570,7 +1570,7 @@ body {
 /* 达标 — target reached */
 #game-container.glow-target-reached {
     border: 3px solid #4ecdc4;
-    animation: glowTargetPulse 1.5s steps(4) infinite;
+    animation: glowTargetPulse 1.5s steps(2) infinite;
 }
 @keyframes glowTargetPulse {
     0%, 100% { border-color: #4ecdc4; }
@@ -1586,7 +1586,7 @@ body {
     font-weight: bold;
     color: #ffe66d;
     text-align: center;
-    animation: levelAnnounce 1.5s steps(8) forwards;
+    animation: levelAnnounce 1.5s ease-out forwards;
     z-index: 150;
 }
 
@@ -1613,7 +1613,7 @@ body {
     font-weight: bold;
     color: #4ecdc4;
     pointer-events: none;
-    animation: overflowFloat 1.2s steps(6) forwards;
+    animation: overflowFloat 1.2s ease-out forwards;
     z-index: 10;
 }
 
@@ -1625,7 +1625,7 @@ body {
 }
 
 #target-score.overflow-deduct-done {
-    animation: overflowDonePulse 0.6s steps(4);
+    animation: overflowDonePulse 0.6s ease-out;
 }
 
 @keyframes overflowDonePulse {
@@ -1767,7 +1767,7 @@ body {
     border: 1px solid #333;
     border-radius: 0;
     cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
     font-size: var(--text-caption-size);
 }
 
@@ -1856,7 +1856,7 @@ body {
 /* 附魔光晕（稀有度颜色通过 --enchant-color 注入） */
 .key-slot.enchanted-glow {
     border-color: var(--enchant-color, #fff);
-    animation: enchantPulse 2.5s steps(4) infinite;
+    animation: enchantPulse 2.5s steps(2) infinite;
 }
 @keyframes enchantPulse {
     0%, 100% { opacity: 1; }
@@ -1881,7 +1881,7 @@ body {
     border-radius: 0;
     box-shadow: none;
     pointer-events: none;
-    font-size: var(--text-caption-size);
+    font-size: var(--text-body-size);
     font-family: var(--font-pixel);
     color: var(--text-body-color);
     max-width: var(--tooltip-max-width);
@@ -2126,7 +2126,7 @@ body {
 }
 
 #score-settlement.settlement-live .settlement-panel {
-    transition: transform 0.1s steps(3);
+    transition: transform 0.1s steps(1);
 }
 
 /* Settlement Complete Animation - 词语完成时的动画 */
@@ -2278,13 +2278,13 @@ body {
     100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9) translateY(-30px); }
 }
 
-#gold-reward.gold-reward-show { animation: goldPanelIn 0.4s steps(5) forwards; }
-#gold-reward.gold-reward-show .gold-reward-row:nth-child(2) { animation: goldRowIn 0.3s steps(4) 0.2s forwards; }
-#gold-reward.gold-reward-show .gold-reward-row:nth-child(3) { animation: goldRowIn 0.3s steps(4) 0.4s forwards; }
-#gold-reward.gold-reward-show .gold-reward-row:nth-child(4) { animation: goldRowIn 0.3s steps(4) 0.6s forwards; }
-#gold-reward.gold-reward-show .gold-reward-row:nth-child(5) { animation: goldRowIn 0.3s steps(4) 0.8s forwards; }
-#gold-reward.gold-reward-show .gold-reward-total { animation: goldTotalIn 0.5s steps(5) 1.0s forwards; }
-#gold-reward.gold-reward-hide { animation: goldPanelOut 0.3s steps(3) forwards; }
+#gold-reward.gold-reward-show { animation: goldPanelIn 0.4s ease-out forwards; }
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(2) { animation: goldRowIn 0.3s ease-out 0.2s forwards; }
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(3) { animation: goldRowIn 0.3s ease-out 0.4s forwards; }
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(4) { animation: goldRowIn 0.3s ease-out 0.6s forwards; }
+#gold-reward.gold-reward-show .gold-reward-row:nth-child(5) { animation: goldRowIn 0.3s ease-out 0.8s forwards; }
+#gold-reward.gold-reward-show .gold-reward-total { animation: goldTotalIn 0.5s ease-out 1.0s forwards; }
+#gold-reward.gold-reward-hide { animation: goldPanelOut 0.3s ease-out forwards; }
 
 /* ============================================ */
 /* ENCHANTMENT MODAL                              */
@@ -2337,7 +2337,7 @@ body {
     padding: 20px;
     width: 220px;
     cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
     text-align: center;
 }
 
@@ -2406,7 +2406,7 @@ body {
     cursor: pointer;
     font-family: inherit;
     font-size: var(--text-body-size);
-    transition: border-color 0.15s steps(3), color 0.15s steps(3);
+    transition: border-color 0.15s steps(1), color 0.15s steps(1);
 }
 
 .enchantment-cancel:hover {
@@ -2465,7 +2465,7 @@ body {
         radial-gradient(3px 3px at 80% 70%, rgba(255, 230, 109, 0.1), transparent),
         radial-gradient(2px 2px at 35% 85%, rgba(255, 230, 109, 0.06), transparent);
     pointer-events: none;
-    animation: ritualParticleFloat 6s steps(4) infinite alternate;
+    animation: ritualParticleFloat 6s steps(2) infinite alternate;
 }
 
 #ritual-screen > * { position: relative; z-index: 1; }
@@ -2493,7 +2493,7 @@ body {
     display: flex; flex-direction: column; align-items: center; gap: 8px;
     background: var(--bg-panel); border: 2px solid #444; border-radius: 0;
     padding: 20px 24px; min-width: 140px; cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
     font-family: inherit; color: #fff;
 }
 
@@ -2511,7 +2511,7 @@ body {
     display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
     background: var(--bg-panel); border: 2px solid #3498db; border-radius: 0;
     padding: 14px 18px; min-width: 160px; cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
     font-family: inherit; color: #fff;
 }
 
@@ -2535,7 +2535,7 @@ body {
 .ritual-continue-btn {
     padding: 12px 40px; background: #ffe66d; border: 2px solid #ffe66d; border-radius: 0;
     color: #000; font-family: inherit; font-size: var(--text-subtitle-size); font-weight: bold;
-    cursor: pointer; transition: background 0.15s steps(3);
+    cursor: pointer; transition: background 0.15s steps(1);
 }
 .ritual-continue-btn:hover { background: #fff080; }
 
@@ -2584,7 +2584,7 @@ body {
         radial-gradient(3px 3px at 78% 65%, rgba(126, 200, 227, 0.10), transparent),
         radial-gradient(2px 2px at 30% 80%, rgba(126, 200, 227, 0.06), transparent);
     pointer-events: none;
-    animation: restParticleFloat 8s steps(4) infinite alternate;
+    animation: restParticleFloat 8s steps(2) infinite alternate;
 }
 
 #rest-screen > * { position: relative; z-index: 1; }
@@ -2628,7 +2628,7 @@ body {
     display: flex; flex-direction: column; align-items: center; gap: 8px;
     background: var(--bg-panel); border: 2px solid #445; border-radius: 0;
     padding: 20px 24px; min-width: 200px; cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
     font-family: inherit; color: #fff;
 }
 
@@ -2645,7 +2645,7 @@ body {
 .rest-continue-btn {
     padding: 12px 40px; background: #ffe66d; border: 2px solid #ffe66d; border-radius: 0;
     color: #000; font-family: inherit; font-size: var(--text-subtitle-size); font-weight: bold;
-    cursor: pointer; transition: background 0.15s steps(3);
+    cursor: pointer; transition: background 0.15s steps(1);
 }
 .rest-continue-btn:hover { background: #fff080; }
 
@@ -2706,7 +2706,7 @@ body {
     min-width: 160px;
     max-width: 220px;
     cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
     text-align: center;
 }
 
@@ -2794,7 +2794,7 @@ body {
     padding: 20px;
     width: 200px;
     cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
     text-align: center;
 }
 
@@ -2827,7 +2827,7 @@ body {
     cursor: pointer;
     font-family: inherit;
     font-size: var(--text-body-size);
-    transition: border-color 0.15s steps(3), color 0.15s steps(3);
+    transition: border-color 0.15s steps(1), color 0.15s steps(1);
 }
 
 .relic-picker-skip:hover {
@@ -2916,7 +2916,7 @@ body {
     padding: 20px;
     width: 200px;
     cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
     text-align: center;
 }
 
@@ -2940,7 +2940,7 @@ body {
     border-radius: 0;
     color: #ff6b6b;
     cursor: pointer;
-    transition: background 0.15s steps(3), border-color 0.15s steps(3);
+    transition: background 0.15s steps(1), border-color 0.15s steps(1);
 }
 .modifier-picker-skip-btn:hover {
     background: rgba(255, 107, 107, 0.1);
@@ -2960,7 +2960,7 @@ body {
     border-radius: 0;
     color: #4ecdc4;
     cursor: pointer;
-    transition: background 0.15s steps(3);
+    transition: background 0.15s steps(1);
 }
 
 .shop-refresh-btn:hover {
@@ -2979,7 +2979,7 @@ body {
     cursor: pointer;
     padding: 2px 4px;
     border-radius: 0;
-    transition: opacity 0.15s steps(3);
+    transition: opacity 0.15s steps(1);
     opacity: 0.4;
 }
 
@@ -3018,7 +3018,7 @@ body {
     flex-direction: column;
     gap: 6px;
     overflow: hidden;
-    animation: pack-slide-in 0.2s steps(3);
+    animation: pack-slide-in 0.2s steps(1);
 }
 
 @keyframes pack-slide-in {
@@ -3067,7 +3067,7 @@ body {
     font-size: var(--text-body-size);
     font-weight: bold;
     cursor: pointer;
-    transition: background 0.15s steps(3);
+    transition: background 0.15s steps(1);
 }
 
 .pack-buy-btn:hover:not(:disabled) {
@@ -3169,7 +3169,7 @@ body {
 }
 .key-slot.shape-preview-displaced {
     border-color: #ffe66d !important;
-    animation: displaced-blink 0.5s steps(4) infinite;
+    animation: displaced-blink 0.5s steps(2) infinite;
 }
 @keyframes displaced-blink {
     0%, 100% { background: rgba(255, 230, 109, 0.1); }
@@ -3185,7 +3185,7 @@ body {
 
 /* Story 40.6: 右键旋转动画 */
 .key-slot.shape-rotating {
-    animation: shape-rotate-pop 0.2s steps(3);
+    animation: shape-rotate-pop 0.2s steps(1);
 }
 @keyframes shape-rotate-pop {
     0% { transform: scale(0.8); opacity: 0.6; }
@@ -3219,27 +3219,14 @@ body {
     justify-content: center;
     z-index: 9999;
     opacity: 0;
-    transition: opacity 300ms steps(4);
+    transition: opacity 300ms ease;
     pointer-events: none;
 }
 
-#act-transition-overlay.act-enter {
-    opacity: 1;
-}
-
-#act-transition-overlay.act-visible .act-title {
-    transform: scale(1);
-    opacity: 1;
-}
-
-#act-transition-overlay.act-visible .act-subtitle {
-    transform: translateY(0);
-    opacity: 1;
-}
-
-#act-transition-overlay.act-exit {
-    opacity: 0;
-}
+#act-transition-overlay.act-enter { opacity: 1; }
+#act-transition-overlay.act-visible .act-title { transform: scale(1); opacity: 1; }
+#act-transition-overlay.act-visible .act-subtitle { transform: translateY(0); opacity: 1; }
+#act-transition-overlay.act-exit { opacity: 0; }
 
 .act-title {
     font-size: calc(var(--text-title-size) * 3);
@@ -3248,7 +3235,7 @@ body {
     letter-spacing: 12px;
     transform: scale(0.8);
     opacity: 0;
-    transition: all 300ms steps(4);
+    transition: all 300ms ease;
 }
 
 .act-subtitle {
@@ -3258,7 +3245,7 @@ body {
     margin-top: 12px;
     transform: translateY(10px);
     opacity: 0;
-    transition: all 300ms steps(4) 100ms;
+    transition: all 300ms ease 100ms;
 }
 
 /* ============================================ */
@@ -3280,7 +3267,7 @@ body {
     letter-spacing: 2px;
     z-index: 9998;
     opacity: 0;
-    transition: all 300ms steps(4);
+    transition: all 300ms ease;
     white-space: nowrap;
 }
 
@@ -3292,7 +3279,7 @@ body {
 #elite-announcement.elite-announce-exit {
     opacity: 0;
     transform: translateX(-50%) translateY(-10px);
-    transition: all 200ms steps(3);
+    transition: all 200ms ease;
 }
 
 /* ============================================ */
@@ -3310,7 +3297,7 @@ body {
     justify-content: center;
     z-index: 9999;
     opacity: 0;
-    transition: opacity 300ms steps(4);
+    transition: opacity 300ms ease;
     pointer-events: none;
 }
 
@@ -3327,7 +3314,7 @@ body {
     font-weight: bold;
     color: #ff4444;
     letter-spacing: 16px;
-    animation: bossIntroTitlePulse 0.6s steps(6) forwards;
+    animation: bossIntroTitlePulse 0.6s ease-out forwards;
 }
 
 @keyframes bossIntroTitlePulse {
@@ -3350,7 +3337,7 @@ body {
     letter-spacing: 3px;
     opacity: 0;
     transform: translateX(-20px);
-    animation: bossModItemIn 0.3s steps(4) forwards;
+    animation: bossModItemIn 0.3s ease-out forwards;
 }
 
 @keyframes bossModItemIn {
@@ -3470,7 +3457,7 @@ body {
   font-size: var(--text-caption-size);
   color: rgba(255,255,255,0.5);
   cursor: pointer;
-  transition: border-color 0.15s steps(3), color 0.15s steps(3);
+  transition: border-color 0.15s steps(1), color 0.15s steps(1);
 }
 .heatmap-dim.active {
   font-weight: bold;
@@ -3496,7 +3483,7 @@ body {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   font-size: var(--text-caption-size); position: relative; cursor: pointer;
   border: 1px solid rgba(255,255,255,0.1);
-  transition: border-color 0.15s steps(3);
+  transition: border-color 0.15s steps(1);
 }
 .heatmap-key:hover { border-color: #4ecdc4; z-index: 2; }
 .heatmap-key-empty { opacity: 0.35; }
@@ -3539,10 +3526,10 @@ body {
     background: rgba(0, 0, 0, 0.7);
     z-index: 400;
     pointer-events: none;
-    animation: ratingRevealIn 0.2s steps(3);
+    animation: ratingRevealIn 0.2s steps(1);
 }
 .rating-reveal-fade {
-    animation: ratingRevealOut 0.3s steps(3) forwards;
+    animation: ratingRevealOut 0.3s steps(1) forwards;
 }
 @keyframes ratingRevealIn {
     from { opacity: 0; }
@@ -3556,10 +3543,10 @@ body {
 .rating-grade {
     font-size: calc(var(--text-title-size) * 4);
     font-weight: bold;
-    transition: color 0.15s steps(3);
+    transition: color 0.15s steps(1);
 }
 .rating-grade.rating-final {
-    animation: ratingFinalPop 0.4s steps(5);
+    animation: ratingFinalPop 0.4s ease-out;
 }
 @keyframes ratingFinalPop {
     0% { transform: scale(1); }
@@ -3622,7 +3609,7 @@ body {
     padding: 24px 20px;
     width: 220px;
     cursor: pointer;
-    transition: border-color 0.15s steps(3), background 0.15s steps(3);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1);
     text-align: center;
 }
 
@@ -3681,7 +3668,7 @@ body {
     border: 2px solid #ffe66d;
     border-radius: 0;
     cursor: pointer;
-    transition: background 0.15s steps(3);
+    transition: background 0.15s steps(1);
 }
 
 .class-select-confirm:hover {
@@ -3743,7 +3730,7 @@ body {
     border-radius: 0;
     cursor: pointer;
     border: 1px solid transparent;
-    transition: background 0.15s steps(3), border-color 0.15s steps(3);
+    transition: background 0.15s steps(1), border-color 0.15s steps(1);
 }
 .ascension-row:hover { background: rgba(255, 255, 255, 0.05); }
 .ascension-row.ascension-selected {
@@ -3767,7 +3754,7 @@ body {
     font-size: var(--text-subtitle-size);
     cursor: pointer;
     font-family: inherit;
-    transition: background 0.15s steps(3);
+    transition: background 0.15s steps(1);
 }
 .ascension-select-confirm:hover { background: #fff080; }
 
@@ -3958,7 +3945,7 @@ body {
     font-weight: bold;
     font-size: var(--text-body-size);
     cursor: pointer;
-    transition: background 0.15s steps(3);
+    transition: background 0.15s steps(1);
 }
 
 .craft-confirm-btn:hover {
@@ -4297,7 +4284,7 @@ body {
     font-family: inherit;
     border-radius: 0;
     cursor: pointer;
-    transition: background 0.15s steps(3);
+    transition: background 0.15s steps(1);
 }
 
 .demo-start-btn:hover {
@@ -4346,7 +4333,7 @@ body {
     font-family: 'Courier New', monospace;
     font-weight: bold;
     z-index: 9000;
-    animation: demo-tip-in 0.3s steps(3);
+    animation: demo-tip-in 0.3s steps(1);
     pointer-events: none;
     max-width: 320px;
     text-align: center;
@@ -4368,7 +4355,7 @@ body {
     padding: var(--spacing-md) var(--spacing-lg);
     max-width: 340px;
     z-index: 9000;
-    animation: tutorial-fade-in 0.3s steps(3);
+    animation: tutorial-fade-in 0.3s steps(1);
     pointer-events: auto;
 }
 .tutorial-overlay-title {
@@ -4418,7 +4405,7 @@ body {
     font-size: var(--text-caption-size);
     color: rgba(255,255,255,0.45);
     margin-top: var(--spacing-sm);
-    animation: tutorial-hint-pulse 1.5s steps(4) infinite;
+    animation: tutorial-hint-pulse 1.5s steps(2) infinite;
 }
 @keyframes tutorial-hint-pulse {
     0%, 100% { opacity: 0.45; }
