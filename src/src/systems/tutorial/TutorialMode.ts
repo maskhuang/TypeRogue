@@ -101,7 +101,7 @@ async function runTutorialPhases(): Promise<void> {
   showScreen('battle')
   initAudio()
 
-  await showPrompt('tutorial.phase1.intro')
+  await showPrompt('tutorial.phase1.intro', { arrow: { target: 'word-display', position: 'top' } })
   if (aborted) return
 
   // 启动关卡（无时限模式）— 固定词序
@@ -118,14 +118,19 @@ async function runTutorialPhases(): Promise<void> {
   advanceTutorialPhase()
   setTutorialHUD(2)
 
-  await showPrompt('tutorial.phase2.intro')
+  await showPrompt('tutorial.phase2.intro', { arrow: { target: 'combo-count', position: 'bottom' } })
   if (aborted) return
 
   setWordQueue(P2_WORDS)
-  await waitForWords(5)
+  await waitForWords(2)
   if (aborted) return
 
-  await showPrompt('tutorial.phase2.mult')
+  // 打了 2 词后指向倍率
+  await showPrompt('tutorial.phase2.mult', { arrow: { target: 'multiplier-display', position: 'bottom' } })
+  if (aborted) return
+
+  await waitForWords(3)
+  if (aborted) return
   if (aborted) return
 
   // --- 阶段 3: 时间与目标 ---
@@ -135,7 +140,7 @@ async function runTutorialPhases(): Promise<void> {
   state.score = 0
   setTutorialHUD(3)
 
-  await showPrompt('tutorial.phase3.intro')
+  await showPrompt('tutorial.phase3.intro', { arrow: { target: 'timer-section', position: 'bottom' } })
   if (aborted) return
 
   setWordQueue(P3_WORDS)
@@ -167,10 +172,10 @@ async function runTutorialPhases(): Promise<void> {
   state.player.skills.set(skill.id, { level: 1, name: skill.name })
   bindShapeToKeys(getBindingState(state), skill.id, 'f')
 
-  await showPrompt('tutorial.phase4.intro')
+  await showPrompt('tutorial.phase4.intro', { arrow: { target: 'skill-trigger-zone', position: 'top' } })
   if (aborted) return
 
-  await showPrompt('tutorial.phase4.hint')
+  await showPrompt('tutorial.phase4.hint', { arrow: { target: 'word-display', position: 'top' } })
   if (aborted) return
 
   setWordQueue(P4_WORDS)
