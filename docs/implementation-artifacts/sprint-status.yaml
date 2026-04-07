@@ -433,6 +433,6 @@ development_status:
   56-2-tutorial-stage-design: backlog                  # 教程关设计
   56-3-tutorial-stage-implementation: backlog           # 教程关实现
   56-4-settings-panel: backlog                         # 设置面板
-  56-5-metamorph-unlock-change: backlog                # 蜕变师解锁条件变更
+  56-5-metamorph-unlock-change: done                     # 蜕变师解锁条件变更
   56-6-flow-integration: backlog                       # 启动流程整合
   epic-56-retrospective: optional

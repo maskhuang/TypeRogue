@@ -341,7 +341,7 @@ export class MetaState {
   /**
    * 检查进度驱动的解锁条件（职业 + 模式）
    * - victories >= 1 → 解锁造词师
-   * - 所有技能已解锁 → 解锁蜕变师
+   * - 造词师通关 → 解锁蜕变师
    * - 三职业均通关 → 解锁无尽模式
    */
   checkProgressionUnlocks(): void {
@@ -350,9 +350,8 @@ export class MetaState {
       this.unlockClass('wordsmith')
     }
 
-    // 蜕变师：解锁所有技能
-    const totalSkillCount = this.getTotalSkillCount()
-    if (totalSkillCount > 0 && this.unlockedSkills.size >= totalSkillCount) {
+    // 蜕变师：用造词师通关一次
+    if (this.victoriedClasses.has('wordsmith')) {
       this.unlockClass('metamorph')
     }
 

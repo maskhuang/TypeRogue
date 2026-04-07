@@ -153,7 +153,7 @@ function createClassCard(def: ClassDefinition, isUnlocked: boolean): HTMLDivElem
     const lockEl = document.createElement('div');
     lockEl.className = 'class-card-lock-text';
     const lockKey = `class_select.lock_${def.id}`;
-    const lockText = t(lockKey) !== lockKey ? t(lockKey) : (def.id === 'wordsmith' ? '🔒 通关一次解锁' : def.id === 'metamorph' ? '🔒 解锁所有技能后解锁' : '🔒 未解锁');
+    const lockText = t(lockKey) !== lockKey ? t(lockKey) : (def.id === 'wordsmith' ? '🔒 通关一次解锁' : def.id === 'metamorph' ? '🔒 用造词师通关一次解锁' : '🔒 未解锁');
     lockEl.textContent = lockText;
     card.appendChild(lockEl);
   }
