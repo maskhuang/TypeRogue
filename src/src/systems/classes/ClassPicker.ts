@@ -10,6 +10,7 @@ import { classManager } from './ClassManager';
 import type { MetaState } from '../../core/state/MetaState';
 import { RESOURCE_LABELS, RESOURCE_ICONS } from '../../core/constants';
 import { t } from '../../demo/demo-i18n';
+import { playSound } from '../../effects/sound';
 
 /**
  * 显示职业选择界面
@@ -57,6 +58,7 @@ export function showClassPicker(metaState: MetaState, onComplete: () => void): v
 
     if (isUnlocked) {
       card.onclick = () => {
+        playSound('type');
         // 取消之前的选中
         cardsEl.querySelectorAll('.class-select-card').forEach(c =>
           c.classList.remove('class-card-selected')
@@ -79,6 +81,7 @@ export function showClassPicker(metaState: MetaState, onComplete: () => void): v
   // 确认按钮
   confirmBtn.onclick = () => {
     if (selectedClassId !== null) {
+      playSound('levelup');
       finish();
     }
   };

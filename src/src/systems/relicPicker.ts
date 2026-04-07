@@ -199,7 +199,7 @@ export function showRelicPicker(onComplete: () => void, weights?: RelicWeights):
     cardsEl.appendChild(card);
   });
 
-  skipBtn.onclick = () => finish();
+  skipBtn.onclick = () => { playSound('type'); finish(); };
 
   const overlay = modal.querySelector('.relic-picker-overlay') as HTMLElement;
   if (overlay) {

@@ -7,6 +7,7 @@ import { state } from '../../core/state';
 import { MAX_ASCENSION_LEVEL } from '../../core/state/MetaState';
 import type { MetaState } from '../../core/state/MetaState';
 import { t } from '../../demo/demo-i18n';
+import { playSound } from '../../effects/sound';
 
 /**
  * 显示 Ascension 级别选择器
@@ -67,6 +68,7 @@ export function showAscensionPicker(metaState: MetaState, classId: string, onCom
 
     if (unlocked) {
       row.onclick = () => {
+        playSound('type');
         selectedLevel = level;
         listEl.querySelectorAll('.ascension-row').forEach(r => r.classList.remove('ascension-selected'));
         row.classList.add('ascension-selected');
@@ -78,6 +80,7 @@ export function showAscensionPicker(metaState: MetaState, classId: string, onCom
   }
 
   confirmBtn.onclick = () => {
+    playSound('levelup');
     state.ascensionLevel = selectedLevel;
     modal.classList.add('ascension-select-hidden');
     onComplete();
