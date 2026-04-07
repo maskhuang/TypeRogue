@@ -1971,27 +1971,33 @@ export async function startLevel(): Promise<void> {
 
   // 使用 stageType-based 固定时间和目标分数
   const battleNum = getBattleNumber(state.level);
-  state.timeMax = getCycleTimeLimit(state.level, state.cycle);
-  // 不断之链：初始时间 = 当前 combo 数（而非固定时间）
-  if (hasImmortalCombo()) {
-    state.timeMax = Math.max(1, state.combo);
-  }
-  state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
-  _isCalibrationLevel = state.targetScore === 0 && state.calibratedTargetBase === 0;
+  if (state.isTutorial) {
+    // 教程模式：targetScore/time/timeMax 已由 TutorialMode 预设，跳过所有计算
+    _isCalibrationLevel = false;
+    _overflowDeduction = 0;
+    _preDeductionTarget = 0;
+  } else {
+    state.timeMax = getCycleTimeLimit(state.level, state.cycle);
+    // 不断之链：初始时间 = 当前 combo 数（而非固定时间）
+    if (hasImmortalCombo()) {
+      state.timeMax = Math.max(1, state.combo);
+    }
+    state.targetScore = calculateTargetScore(battleNum > 0 ? battleNum : state.level, currentStageType);
+    _isCalibrationLevel = state.targetScore === 0 && state.calibratedTargetBase === 0;
 
-  // 溢出分扣减目标分数（最低 0），然后清零；Boss 战不受溢出扣减
-  _overflowDeduction = 0;
-  _preDeductionTarget = 0;
-  if (state.overflowScore > 0 && currentStageType !== 'boss') {
-    _preDeductionTarget = state.targetScore;
-    _overflowDeduction = Math.min(state.overflowScore, state.targetScore); // 实际扣除量
-    state.targetScore = Math.max(0, Math.round(state.targetScore - state.overflowScore));
-    state.overflowScore = 0;
-  }
+    // 溢出分扣减目标分数（最低 0），然后清零；Boss 战不受溢出扣减
+    _overflowDeduction = 0;
+    _preDeductionTarget = 0;
+    if (state.overflowScore > 0 && currentStageType !== 'boss') {
+      _preDeductionTarget = state.targetScore;
+      _overflowDeduction = Math.min(state.overflowScore, state.targetScore);
+      state.targetScore = Math.max(0, Math.round(state.targetScore - state.overflowScore));
+      state.overflowScore = 0;
+    }
 
-  // Demo: 使用降低难度的固定目标分数
-  if (IS_DEMO && DEMO_TARGET_SCORES[state.level] !== undefined) {
-    state.targetScore = DEMO_TARGET_SCORES[state.level];
+    if (IS_DEMO && DEMO_TARGET_SCORES[state.level] !== undefined) {
+      state.targetScore = DEMO_TARGET_SCORES[state.level];
+    }
   }
 
   // Story 36.12: 宽容评审 — 目标分数降低 10%（tempBuff 之前）
