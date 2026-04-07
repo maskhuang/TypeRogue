@@ -122,7 +122,8 @@ function createClassCard(def: ClassDefinition, isUnlocked: boolean): HTMLDivElem
       const span = document.createElement('span');
       span.className = 'info-resource';
       const resIcon = RESOURCE_ICONS[def.uniqueResource] || '';
-      const resLabel = RESOURCE_LABELS[def.uniqueResource] || def.uniqueResource;
+      const resKey = `resource.${def.uniqueResource}`;
+      const resLabel = t(resKey) !== resKey ? t(resKey) : (RESOURCE_LABELS[def.uniqueResource] || def.uniqueResource);
       span.textContent = `${t('class_select.resource') !== 'class_select.resource' ? t('class_select.resource') : '资源'}: ${resIcon} ${resLabel}`;
       infoEl.appendChild(span);
       hasInfo = true;
