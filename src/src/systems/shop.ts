@@ -4178,6 +4178,7 @@ function initStatsTabs(): void {
   type TabId = 'build' | 'stats' | 'words' | 'craft' | 'metamorph';
 
   function switchTab(active: TabId) {
+    playSound('type');
     buildTab!.classList.toggle('active', active === 'build');
     statsTab!.classList.toggle('active', active === 'stats');
     wordsTab!.classList.toggle('active', active === 'words');
