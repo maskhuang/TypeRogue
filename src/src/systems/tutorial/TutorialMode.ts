@@ -229,9 +229,6 @@ async function runTutorialPhases(): Promise<void> {
   await showPrompt('tutorial.phase5.bind')
   if (aborted) return
 
-  await showPrompt('tutorial.phase5.rotate')
-  if (aborted) return
-
   await showPrompt('tutorial.phase5.done')
   if (aborted) return
 
