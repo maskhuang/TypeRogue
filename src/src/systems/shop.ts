@@ -1295,6 +1295,9 @@ export function openShop(_won: boolean): void {
   // Story 55-2: 商店背景像素化 — 随机双色渐变
   randomizeScreenBackground(el.shopScreen);
 
+  // 教程模式隐藏"开始下一关"按钮
+  el.startBattleBtn.style.display = state.isTutorial ? 'none' : '';
+
   showScreen('shop');
 
   // 补偿：检查商店外升到Lv.3但未附魔的技能（如休息关升级）
