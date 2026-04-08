@@ -2462,16 +2462,6 @@ function victory(): void {
   cleanupModifier();
   setRelicGarbleActive(false);
 
-  if (IS_DEMO) {
-    stopBGM();
-    showDemoEndScreen({
-      totalScore: state.score,
-      maxCombo: state.maxCombo,
-      skillCount: state.battleStats ? [...state.battleStats.skillStats.values()].reduce((sum, s) => sum + s.triggerCount, 0) : 0,
-      stagesCleared: state.level,
-    });
-    return;
-  }
 
   const el = getElements();
   const endlessHint = state.endlessUnlocked
@@ -2520,17 +2510,6 @@ function gameOver(): void {
   clearFloatQueue();
   cleanupModifier();
   setRelicGarbleActive(false);
-
-  if (IS_DEMO) {
-    stopBGM();
-    showDemoEndScreen({
-      totalScore: state.score,
-      maxCombo: state.maxCombo,
-      skillCount: state.battleStats ? [...state.battleStats.skillStats.values()].reduce((sum, s) => sum + s.triggerCount, 0) : 0,
-      stagesCleared: state.level - 1,
-    });
-    return;
-  }
 
   startBGM('chill');
   const el = getElements();

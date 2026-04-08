@@ -112,6 +112,7 @@ const ZH: Record<string, string> = {
   // --- demo start screen ---
   'demo.subtitle': '用你的键盘构建得分引擎',
   'demo.start': '开始试玩',
+  'demo.full_version': '正式版推出',
 
   // --- demo-dom-cleanup.ts ---
   'demo.error.title': '抱歉，出了点问题',
@@ -1131,6 +1132,7 @@ const EN: Record<string, string> = {
 
   // --- demo start screen ---
   'demo.subtitle': 'Build a scoring engine with your keyboard',
+  'demo.full_version': 'Coming in full version',
   'demo.start': 'Play Demo',
 
   // --- demo-dom-cleanup.ts ---

@@ -9,17 +9,20 @@ import { t } from './demo-i18n'
 export function cleanDemoDom(): void {
   if (!IS_DEMO) return
 
-  const removeIds = [
-    'class-select-modal',     // 职业选择
-    'craft-panel',            // 造词站
-    'metamorph-panel',        // 蜕变站
-    'boss-modifier-picker',   // Boss 修饰器
-    'daily-btn',              // 每日挑战按钮
-    'endless-btn',            // 无尽模式按钮
-    'collection-btn',         // 图鉴按钮
+  // Demo 禁用项：不删除，改为 disabled + 标注"正式版推出"
+  const disableWithLabel: Array<{ id: string; label: string }> = [
+    { id: 'daily-btn', label: t('demo.full_version') },
+    { id: 'endless-btn', label: t('demo.full_version') },
+    { id: 'collection-btn', label: t('demo.full_version') },
   ]
-  for (const id of removeIds) {
-    document.getElementById(id)?.remove()
+  for (const { id, label } of disableWithLabel) {
+    const el = document.getElementById(id) as HTMLButtonElement | null
+    if (el) {
+      el.disabled = true
+      el.title = label
+      el.style.opacity = '0.4'
+      el.style.cursor = 'not-allowed'
+    }
   }
 }
 
