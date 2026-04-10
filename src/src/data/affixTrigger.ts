@@ -14,9 +14,12 @@ import {
   AffixType,
   EnchantmentType, APPRENTICE_NEIGHBOR_GROWTH, QUEST_ENCHANTMENT_DEFS, QUEST_AFFIX_MAP,
   TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, CRIT_MULTIPLIER, FATE_COIN_CRIT_CAP, FATE_COIN_CONVERSION,
-  isOldSystemSkill, applyAffixLevelScaling, getQuestEquipTarget, AFFIX_CATEGORY_MAP,
+  isOldSystemSkill, applyAffixLevelScaling, getQuestEquipTarget, AFFIX_CATEGORY_MAP, AFFIX_LEVEL_SCALING, AFFIX_CLASS_RESTRICTION, AFFIX_WEIGHTS,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
+import { rollAffixParams } from './skillGeneration'
+
+function roundTo(n: number, d: number): number { const f = 10 ** d; return Math.round(n * f) / f }
 
 // ===== Conduit 模式共享匹配 =====
 
@@ -44,6 +47,7 @@ export function getExtendedNeighbors(
   occupiedKeys: string[],
   posRel: PositionRelation,
 ): string[] {
+  if (!posRel) return []
   const occupied = new Set(occupiedKeys)
   const neighbors = new Set<string>()
   for (const key of occupiedKeys) {
@@ -330,6 +334,8 @@ export interface TriggerResult {
   chargeAutoComplete?: boolean
   /** 叠层效果是否触发（遗物钩子用） */
   stackEffectFired?: boolean
+  /** 当前叠层数（叠层类技能浮字反馈用） */
+  currentStacks?: number
   /** Story 45.5: 延迟消耗请求列表 */
   consumeRequests?: { resource: ResourceType, amount: number }[]
 }
@@ -660,7 +666,18 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.Union: {
+        // 联合：范围内匹配技能越多，加成越高
+        if (affix.posRel == null) break
+        let matchCount = 0
+        for (const ns of getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)) {
+          if (hasSharedMatch(skill, ns, AffixType.Union)) matchCount++
+        }
+        if (matchCount > 0) {
+          bonusPercent += (affix.unionK ?? 0) * matchCount
+        }
         break
+      }
 
       case AffixType.Charge: {
         // 蓄力并入暴击系统：暴击率贡献在 Phase 3 处理
@@ -711,18 +728,7 @@ export function resolvePhase2(
       default:
         break
     }
-    // MonkeyPatch: 修改目标词条的产出贡献（bonusPercent + stacks）
-    const patchIdx = runtimeState.patchTargetIndex ?? -1
-    if ((patchIdx === -2 || _affixIdx === patchIdx) && runtimeState.patchMultiplier !== 1.0 && affix.type !== AffixType.MonkeyPatch) {
-      // bonusPercent delta
-      const bpDelta = bonusPercent - _prePatchBonus
-      bonusPercent = _prePatchBonus + bpDelta * runtimeState.patchMultiplier
-      // stacks delta（叠层类词条）
-      const stackDelta = runtimeState.stacks - _prePatchStacks
-      if (stackDelta > 0) {
-        runtimeState.stacks = _prePatchStacks + Math.max(0, Math.round(stackDelta * runtimeState.patchMultiplier))
-      }
-    }
+    // MonkeyPatch: 参数已在 resetStageState 中直接修改，无需运行时乘法
   }
 
   // Decorator：Phase 2 末尾放大 bonusPercent
@@ -897,13 +903,7 @@ export function resolvePhase3(
       default:
         break
     }
-    // MonkeyPatch: 修改目标词条的暴击率贡献
-    if ((_critPatchIdx === -2 || _critAffixIdx === _critPatchIdx) && _critPatchMult !== 1.0 && affix.type !== AffixType.MonkeyPatch) {
-      const critDelta = totalCritChance - _preCritChance
-      if (critDelta !== 0) {
-        totalCritChance = _preCritChance + critDelta * _critPatchMult
-      }
-    }
+    // MonkeyPatch: 参数已在 resetStageState 中直接修改，无需运行时乘法
   }
 
   // ── 暴击子系统：affix 循环后统一判定 ──
@@ -1444,22 +1444,7 @@ export function resolvePhase6(
       }
     }
 
-    // 质变·对赌：亏损分摊给邻居
-
-
-    // 质变·传染：暴击时团内 Clique 邻居下次必暴击
-    if (isCrit && neighborState) {
-      for (const nAffix of neighborSkill.affixes) {
-        const nCliqueKeys = getExtendedNeighbors(
-          [...ctx.bindings].filter(([, sid]) => sid === neighborSkillId).map(([k]) => k),
-          nAffix.posRel,
-        ).filter(k => ctx.bindings.has(k))
-        const inClique = occupiedKeys.some(ok => nCliqueKeys.includes(ok) || [...ctx.bindings].filter(([, sid]) => sid === neighborSkillId).some(([nk]) => hasRelation(ok, nk, nAffix.posRel!)))
-        if (inClique) {
-        }
-        break
-      }
-    }
+    // （已删除：Clique/Leverage 质变逻辑）
 
     // 学徒·观摩附魔：邻居触发 → 自身永久成长（双侧 any-match，取实际匹配键）
     if (neighborSkill.enchantmentIds.includes(EnchantmentType.ApprenticeNeighbor) && neighborSkill.neighborPosRel) {
@@ -1692,7 +1677,8 @@ export function triggerAffixSkill(
     phase6: p6,
     triggerKey: ctx.triggerKey,
     chargeAutoComplete: p2.chargeAutoComplete || undefined,
-    stackEffectFired: p3.flags.stackEffectFired || undefined,
+    stackEffectFired: hasSelfZero || undefined,
+    currentStacks: hasSelfZero ? runtimeState.stacks : undefined,
     consumeRequests: p2.consumeRequests.length > 0 ? p2.consumeRequests : undefined,
   }
 }
@@ -2128,28 +2114,52 @@ export function resetStageState(
     state.critStreak = 0
     state.missStreak = 0
 
-    // MonkeyPatch：每关随机设定 patchTargetIndex 和 patchMultiplier
+    // MonkeyPatch：每关随机修改同技能一个词条的参数
     state.patchTargetIndex = -1
     state.patchMultiplier = 1.0
     if (skill) {
       for (const affix of skill.affixes) {
         if (affix.type === AffixType.MonkeyPatch) {
+          // 过滤有可修改参数的词条
           const candidates = skill.affixes
-            .map((a, i) => ({ a, i }))
-            .filter(({ a }) => a.type !== AffixType.MonkeyPatch)
-          if (candidates.length > 0) {
-            // 质变·热更新：patch 所有词条（-2），倍率缩为 0.8~1.5
-            const isTransformed = state.questTransformed && skill.enchantmentIds.includes(EnchantmentType.QuestMonkeyPatch)
-            if (isTransformed) {
-              state.patchTargetIndex = -2 // -2 = patch all
-              state.patchMultiplier = 0.8 + randomFn() * 0.7
-            } else {
-              const pick = candidates[Math.floor(randomFn() * candidates.length)]
-              state.patchTargetIndex = pick.i
-              const low = affix.patchLow ?? 0.5
-              const high = affix.patchHigh ?? 2.0
-              state.patchMultiplier = low + randomFn() * (high - low)
+            .map((a, i) => ({ a, i, scaling: AFFIX_LEVEL_SCALING[a.type] }))
+            .filter(({ a, scaling }) => a.type !== AffixType.MonkeyPatch && scaling && (a as any)[scaling.param] != null)
+          if (candidates.length === 0) {
+            // 彩蛋：无可修改词条时，猴子补丁把自己替换成随机词条
+            const mpIdx = skill.affixes.findIndex(a => a.type === AffixType.MonkeyPatch)
+            if (mpIdx >= 0) {
+              const excludeSet = new Set<string>()
+              for (const [at, cls] of Object.entries(AFFIX_CLASS_RESTRICTION)) {
+                // 无法确定职业时排除所有职业限定
+                excludeSet.add(at)
+              }
+              excludeSet.add(AffixType.MonkeyPatch)
+              const pool = Object.values(AffixType)
+                .filter(t => !excludeSet.has(t))
+                .map(t => ({ type: t, w: AFFIX_WEIGHTS[t as Exclude<AffixType, AffixType.Convert>] ?? 0 }))
+                .filter(e => e.w > 0)
+              if (pool.length > 0) {
+                const totalW = pool.reduce((s, e) => s + e.w, 0)
+                let r = randomFn() * totalW
+                let picked = pool[pool.length - 1].type
+                for (const e of pool) { r -= e.w; if (r <= 0) { picked = e.type; break } }
+                skill.affixes[mpIdx] = rollAffixParams(picked, skill.resource)
+              }
             }
+            break
+          }
+          const low = affix.patchLow ?? 0.5
+          const high = affix.patchHigh ?? 2.0
+          const mult = low + randomFn() * (high - low)
+          // 质变·热更新：修改所有词条
+          const isTransformed = state.questTransformed && skill.enchantmentIds.includes(EnchantmentType.QuestMonkeyPatch)
+          const targets = isTransformed ? candidates : [candidates[Math.floor(randomFn() * candidates.length)]]
+          const tmult = isTransformed ? 0.8 + randomFn() * 0.7 : mult
+          state.patchTargetIndex = targets.length === 1 ? targets[0].i : -2
+          state.patchMultiplier = tmult
+          for (const { a, scaling } of targets) {
+            const cur = (a as any)[scaling!.param] as number
+            ;(a as any)[scaling!.param] = roundTo(cur * tmult, 4)
           }
         }
       }

@@ -5,7 +5,7 @@
 
 import { state, isRelicSlotsFull, addRelicWithCapacity } from '../core/state';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
-import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION, A2_PRICE_MULT, A5_REFRESH_COST_MULT } from '../core/constants';
+import { KEYS, KEYBOARD_ROWS, RESOURCE_LABELS, RESOURCE_ICONS, RESOURCE_COLORS, PUNCTUATION_KEYS, PUNCTUATION_KEYBOARD_EXTENSION, A2_PRICE_MULT, A5_REFRESH_COST_MULT, computePracticeGold } from '../core/constants';
 import { getKeysWithRelation, hasRelation, PositionRelation } from '../data/keyboardTopology';
 
 
@@ -15,7 +15,7 @@ import { generateWordPacks, getConditionMeta } from '../data/wordPacks';
 import { getElements } from '../ui/elements';
 import { playSound } from '../effects/sound';
 import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
-import { showScreen, startLevel, renderRelicDisplay, showFeedback, randomizeScreenBackground } from './battle';
+import { showScreen, startLevel, renderRelicDisplay, showFeedback, randomizeScreenBackground, getCalibrationInfo } from './battle';
 import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
 import { getNextBattleNode, isSecondHalf, getPositionInCycle } from './stage/stageFlow';
 import { calculateLetterFrequency, FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem';
@@ -436,15 +436,14 @@ function getEffectiveBaseValue(baseValues: number[], level: number): number {
 }
 
 /** 构建词条制技能的 tooltip 扩展字段 */
-export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRuntimeState, excludeTypes?: Set<string>): {
+export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRuntimeState): {
   affixInfo: AffixTooltipInfo[]
   enchantments: Array<{ icon: string; name: string; desc: string; color: string }>
   questProgress?: string
   apprenticeGrowth?: string
 } {
   const affixInfo: AffixTooltipInfo[] = skill.affixes
-    .filter(a => !excludeTypes || !excludeTypes.has(a.type))
-    .map(a => {
+    .flatMap((a, _affixIdx) => {
       let desc = t('affix_desc.' + a.type);
       // 将「指定关系」/「in range」替换为具体位置关系名（如「同行」「相邻」/「adjacent」）
       if (a.posRel != null) {
@@ -460,27 +459,64 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
         const name = t('resource.' + a.source) || a.source;
         desc = desc.replace('{source}', `${icon}${name}`);
       }
+      // 共鸣：替换资源占位符
+      if (a.type === 'resonance' && a.resource) {
+        const icon = RESOURCE_ICONS[a.resource] || '';
+        const name = t('resource.' + a.resource) || a.resource;
+        desc = desc.replace('{resource}', `${icon}${name}`);
+      }
+      // 回响：替换词条类型占位符
+      if (a.type === 'echo') {
+        desc = desc.replace('{affixA}', t('affix.' + (a.echoAffixA ?? '?')));
+        desc = desc.replace('{affixB}', t('affix.' + (a.echoAffixB ?? '?')));
+      }
       // 静态数值占位符（从参数移出的固定信息）
       if (a.initialMult != null) desc = desc.replace('{init}', `${Math.round(a.initialMult * 100)}%`);
       if (a.decayPerTrigger != null) desc = desc.replace('{decayRate}', `${Math.round(a.decayPerTrigger * 100)}%`);
       if (a.gainPerSec != null) desc = desc.replace('{gain}', `${a.gainPerSec}s`);
       if (a.maxTriggers != null) desc = desc.replace('{maxTriggers}', String(a.maxTriggers));
       if (a.patchLow != null) desc = desc.replace('{low}', String(a.patchLow));
-      // Mirror: tooltip 显示当前复制的词条
+      // Mirror: 复制后显示复制词条的完整描述，参数标注「倒影」
       if (a.type === 'mirror' && rt) {
-        // Story 41-5: 质变模式显示所有复制词条
-        if (rt.mirrorCopiedAffixes && rt.mirrorCopiedAffixes.length > 0) {
-          const summaries = rt.mirrorCopiedAffixes.map(c => `${t('affix.' + c.type)}: ${buildAffixParamSummary(c)}`);
-          desc += ` [${summaries.join(' | ')}]`;
-        } else if (rt.mirrorCopiedAffix) {
-          const copied = rt.mirrorCopiedAffix;
-          desc += ` [${t('affix.' + copied.type)}: ${buildAffixParamSummary(copied)}]`;
+        const copied = (rt.mirrorCopiedAffixes && rt.mirrorCopiedAffixes.length > 0)
+          ? rt.mirrorCopiedAffixes
+          : rt.mirrorCopiedAffix ? [rt.mirrorCopiedAffix] : null;
+        if (copied && copied.length > 0) {
+          // 替换为复制词条的信息，每个单独一条
+          return copied.map(c => {
+            let cDesc = t('affix_desc.' + c.type);
+            if (c.posRel != null) {
+              const relName = t('rel.' + c.posRel);
+              cDesc = cDesc.replace('指定关系的', relName + '的');
+              cDesc = cDesc.replace('指定关系', relName);
+              cDesc = cDesc.replace(/\bin range\b/g, relName);
+              cDesc = cDesc.replace('position relation', relName);
+            }
+            if (c.source) cDesc = cDesc.replace('{source}', `${RESOURCE_ICONS[c.source] || ''}${t('resource.' + c.source) || c.source}`);
+            if (c.type === 'resonance' && c.resource) cDesc = cDesc.replace('{resource}', `${RESOURCE_ICONS[c.resource] || ''}${t('resource.' + c.resource) || c.resource}`);
+            if (c.type === 'echo') { cDesc = cDesc.replace('{affixA}', t('affix.' + (c.echoAffixA ?? '?'))); cDesc = cDesc.replace('{affixB}', t('affix.' + (c.echoAffixB ?? '?'))); }
+            return {
+              typeName: `${t('affix.' + c.type)} (${t('affix.mirror')})`,
+              typeKey: c.type,
+              paramSummary: buildAffixParamSummary(c, skill.level, rt),
+              description: cDesc,
+            };
+          });
+        }
+      }
+      let paramSummary = buildAffixParamSummary(a, skill.level, rt);
+      // MonkeyPatch: 标注被修改的词条
+      if (rt && a.type !== 'monkey_patch') {
+        const pIdx = rt.patchTargetIndex ?? -1;
+        const pMult = rt.patchMultiplier ?? 1.0;
+        if (pMult !== 1.0 && (pIdx === -2 || pIdx === _affixIdx)) {
+          paramSummary += ` 🐒×${pMult.toFixed(2)}`;
         }
       }
       return {
         typeName: t('affix.' + a.type),
         typeKey: a.type,
-        paramSummary: buildAffixParamSummary(a, skill.level),
+        paramSummary,
         description: desc,
       };
     })
@@ -537,7 +573,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
 }
 
 /** 构建单个词条的参数摘要（仅显示会随升级变化的数值） */
-function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skillLevel?: number): string {
+function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skillLevel?: number, rt?: import('../data/affixes').SkillRuntimeState): string {
   switch (a.type) {
     // ── 暴击类（变化值） ──
     case 'crit': return `+${Math.round((a.chance ?? 0) * 100)}%`
@@ -553,7 +589,12 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'outcast': return `${t('param.interval_label')} ${a.outcastInterval ?? 4}`
     case 'void': return `+${Math.round((a.bonusPerSlot ?? 0) * 100)}%/${t('param.void_per')}`
     case 'gravity': return `×${a.probMult?.toFixed(1) ?? '?'}`
-    case 'exhaust': return `×${a.exhaustMult?.toFixed(1) ?? '?'}`
+    case 'exhaust': {
+      const max = a.maxTriggers ?? '?';
+      const used = rt?.exhaustCount ?? 0;
+      const remaining = typeof max === 'number' ? max - used : max;
+      return `×${a.exhaustMult?.toFixed(1) ?? '?'} (${remaining}/${max})`
+    }
     case 'decorator': return `+${Math.round((a.decoratorK ?? 0) * 100)}%`
     case 'reflect': return `+${Math.round((a.reflectK ?? 0) * 100)}%`
     // ── 叠层类（变化值） ──
@@ -565,6 +606,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     // ── 拓扑类（变化值） ──
     case 'flow': return `+${Math.round((a.flowK ?? 0) * 100)}%`
     case 'confluence': return `+${Math.round((a.confluenceK ?? 0) * 100)}%`
+    case 'union': return `+${Math.round((a.unionK ?? 0) * 100)}%/${t('param.void_per')}`
     // ── 其他（变化值） ──
     case 'ligature': return `×${Math.round((a.ligatureBonus ?? 1.0) * 100)}%`
     case 'innate': return `${a.innateCount ?? 1}${t('param.innate_unit')}`
@@ -605,6 +647,10 @@ export function computeSmartEstimate(
   rt?: SkillRuntimeState,
   boundKeys?: string | string[],
 ): SmartEstimate | null {
+  // 包含自身不产出的词条时，不显示产出预估
+  const SELF_ZERO_TYPES: string[] = ['conduit', 'amplify', 'splash', 'relay', 'war_drum']
+  if (skill.affixes.some(a => SELF_ZERO_TYPES.includes(a.type))) return null
+
   const breakdown: EstimateBreakdownLine[] = []
 
   // Phase 1: 基础值
@@ -658,36 +704,13 @@ export function computeSmartEstimate(
         breakdown.push({ typeKey: 'multiply', label: t('est.multiply', { val: m.toFixed(1) }), detail: '' })
         break
       }
-      case 'decay': {
-        const init = affix.initialMult ?? 0.40
-        const floorVal = affix.floor ?? 0.05
-        const decayPer = affix.decayPerTrigger ?? 0.05
-        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
-        const avgTriggers = keys.length > 0 ? computeAvgTriggersPerWord(keys) : 1
-        critChanceAccum += computeDecayAvgMult(init, decayPer, floorVal, avgTriggers)
-        break
-      }
       case 'outcast': {
         // 首尾叠层 → 触发另一端（预估显示间隔）
         const interval = affix.outcastInterval ?? 4
         breakdown.push({ typeKey: 'outcast', label: t('est.outcast', { n: interval }), detail: '' })
         break
       }
-      case 'charge': {
-        const maxCrit = affix.maxBonus ?? 0
-        critChanceAccum += maxCrit * 0.5
-        break
-      }
-      case 'crit': {
-        critChanceAccum += affix.chance ?? 0
-        break
-      }
-      case 'fallacy': {
-        const k = affix.fallacyK ?? 0
-        const baseCrit = Math.max(critChanceAccum, 0.1)
-        critChanceAccum += k * (1 - baseCrit) / (2 * baseCrit)
-        break
-      }
+      // crit / charge / decay / fallacy: 纯暴击率，不预估产出
       case 'cascade': {
         if (affix.posRel == null) break
         const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
@@ -746,6 +769,23 @@ export function computeSmartEstimate(
         }
         break
       }
+      case 'union': {
+        // 联合：范围内匹配技能越多，加成越高
+        if (affix.posRel == null) break
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        if (keys.length === 0) break
+        const neighbors = getNeighborSkills(keys, affix.posRel, { bindings: state.player.bindings, allSkills: state.affixSkills })
+        let matchCount = 0
+        for (const ns of neighbors) {
+          if (ns.resource === skill.resource || ns.affixes.some(a => a.type !== affix.type && skill.affixes.some(sa => sa.type === a.type))) matchCount++
+        }
+        if (matchCount > 0) {
+          const bonus = (affix.unionK ?? 0) * matchCount
+          addPercent += bonus
+          breakdown.push({ typeKey: 'union', label: t('est.union', { pct: Math.round(bonus * 100) }), detail: t('est.union_detail', { n: matchCount }) })
+        }
+        break
+      }
       case 'reflect': {
         const reflectScore = skill.affixes.length * skill.level
         const bonus = (affix.reflectK ?? 0) * reflectScore
@@ -756,7 +796,7 @@ export function computeSmartEstimate(
         break
       }
       case 'exhaust': {
-        // 消耗：base 倍率（固定已知）
+        if (affix.spent) break // 已耗尽，不再计入预估
         const m = affix.exhaustMult ?? 1
         if (m > 1) {
           multProduct *= m
@@ -960,9 +1000,12 @@ export function openShop(_won: boolean): void {
     const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
     let relicGold = Math.floor(goldRelicResult.effects.gold);
 
-    // 基础100 + 溢出增幅（上限100%） + 技能产出 + 遗物加成（金币跨关累计）
+    // 校准关（练习关）：金币由得分映射，不使用标准 100 基础
+    const calibInfo = getCalibrationInfo();
     const overflowBonus = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
-    let baseGold = Math.floor(100 * (1 + overflowBonus));
+    let baseGold = calibInfo.isCalibration
+      ? computePracticeGold(calibInfo.effectiveScore, state.ascensionLevel)
+      : Math.floor(100 * (1 + overflowBonus));
     const skillGold = Math.floor(state.resources.gold);
 
     // Story 36.8: 万物熔炉 — 覆盖默认金币计算
@@ -1615,8 +1658,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
           tooltipData.skill!.smartEstimate = newEstimate;
         }
         tooltipData.skill!.critChance = computeSkillCritChance(skill);
-        const estimatedTypes = newEstimate ? new Set(newEstimate.breakdown.map(b => b.typeKey).filter(k => k !== 'base' && k !== 'crit_combined')) : undefined;
-        const fields = buildAffixTooltipFields(skill, rt, estimatedTypes);
+        const fields = buildAffixTooltipFields(skill, rt);
         tooltipData.skill!.affixInfo = fields.affixInfo;
         // 词条参数升级预览
         for (let i = 0; i < skill.affixes.length; i++) {
@@ -1628,7 +1670,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
         }
         tooltipData.skill!.enchantments = fields.enchantments;
         tooltipData.skill!.questProgress = fields.questProgress;
-        tooltipData.skill!.apprenticeGrowth = newEstimate ? undefined : fields.apprenticeGrowth;
+        tooltipData.skill!.apprenticeGrowth = fields.apprenticeGrowth;
       } else {
         const fields = buildAffixTooltipFields(skill);
         tooltipData.skill!.affixInfo = fields.affixInfo;
@@ -1640,6 +1682,8 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       if (shapeDesc) {
         tooltipData.skill!.mechanicInfo = shapeDesc;
       }
+      // 商品 hover: 高亮键盘上匹配的技能
+      highlightShopSkillMatches(skill);
       keyTooltip.show(e.clientX, e.clientY, tooltipData);
     });
     card.addEventListener('mouseleave', () => {
@@ -2799,6 +2843,37 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`
 }
 
+/** 商品 hover 时高亮键盘上匹配的已装备技能（共鸣/回响等全局匹配） */
+function highlightShopSkillMatches(shopSkill: AffixSkillInstance): void {
+  clearRangeHighlight();
+  const defaultColor = '#ffe66d';
+  const keyColorMap = new Map<string, string>();
+  for (const affix of shopSkill.affixes) {
+    const color = AFFIX_COLORS[affix.type] || defaultColor;
+    // 共鸣：高亮同资源技能
+    if (affix.type === AffixTypeEnum.Resonance && affix.resource) {
+      for (const [k, sid] of state.player.bindings) {
+        const s = state.affixSkills.get(sid);
+        if (s && s.resource === affix.resource) keyColorMap.set(k, color);
+      }
+    }
+    // 回响：高亮拥有指定词条的技能
+    if (affix.type === AffixTypeEnum.Echo && affix.echoAffixA && affix.echoAffixB) {
+      for (const [k, sid] of state.player.bindings) {
+        const s = state.affixSkills.get(sid);
+        if (s && s.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) keyColorMap.set(k, color);
+      }
+    }
+  }
+  keyColorMap.forEach((color, k) => {
+    const el = document.querySelector(`.key-slot[data-key="${k}"]`) as HTMLElement | null;
+    if (!el) return;
+    el.classList.add('range-highlight');
+    el.style.borderColor = color;
+    el.style.background = hexToRgba(color, 0.15);
+  });
+}
+
 function highlightSkillRange(key: string): void {
   clearRangeHighlight();
   const skillId = state.player.bindings.get(key);
@@ -2821,7 +2896,7 @@ function highlightSkillRange(key: string): void {
     }
   }
 
-  if (highlights.length === 0) return;
+  if (highlights.length === 0 && !affixSkill) return;
 
   // Story 40.11: 多格技能使用所有占据键计算邻居高亮范围
   const allKeys: string[] = [];
@@ -2830,13 +2905,58 @@ function highlightSkillRange(key: string): void {
   }
   if (allKeys.length === 0) return;
 
-  // 收集每个键位的颜色（后覆盖前）
+  // 收集每个键位的颜色
   const keyColorMap = new Map<string, string>();
+
+  // 1. 范围高亮（posRel 邻居）
   for (const { rel, color } of highlights) {
     for (const k of getExtendedNeighbors(allKeys, rel)) {
       keyColorMap.set(k, color);
     }
   }
+
+  // 2. 匹配技能高亮：posRel 范围内只高亮匹配的技能 + 共鸣/回响全局匹配
+  if (affixSkill) {
+    const MATCH_AFFIX_TYPES = [AffixTypeEnum.Amplify, AffixTypeEnum.Splash, AffixTypeEnum.WarDrum, AffixTypeEnum.Union, AffixTypeEnum.Relay, AffixTypeEnum.Conduit] as string[];
+    for (const affix of affixSkill.affixes) {
+      const color = AFFIX_COLORS[affix.type] || defaultColor;
+      // posRel 范围内匹配技能
+      if (MATCH_AFFIX_TYPES.includes(affix.type) && affix.posRel) {
+        const rangeKeys = getExtendedNeighbors(allKeys, affix.posRel);
+        const seen = new Set<string>();
+        for (const rk of rangeKeys) {
+          const sid = state.player.bindings.get(rk);
+          if (!sid || sid === skillId || seen.has(sid)) continue;
+          seen.add(sid);
+          const ns = state.affixSkills.get(sid);
+          if (!ns) continue;
+          if (ns.resource === affixSkill.resource || ns.affixes.some(a => a.type !== affix.type && affixSkill.affixes.some(sa => sa.type === a.type))) {
+            for (const [mk, msid] of state.player.bindings) {
+              if (msid === sid) keyColorMap.set(mk, color);
+            }
+          }
+        }
+      }
+      // 共鸣：全局匹配同资源技能
+      if (affix.type === AffixTypeEnum.Resonance && affix.resource) {
+        for (const [k, sid] of state.player.bindings) {
+          if (sid === skillId) continue;
+          const s = state.affixSkills.get(sid);
+          if (s && s.resource === affix.resource) keyColorMap.set(k, color);
+        }
+      }
+      // 回响：全局匹配拥有指定词条的技能
+      if (affix.type === AffixTypeEnum.Echo && affix.echoAffixA && affix.echoAffixB) {
+        for (const [k, sid] of state.player.bindings) {
+          if (sid === skillId) continue;
+          const s = state.affixSkills.get(sid);
+          if (s && s.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) keyColorMap.set(k, color);
+        }
+      }
+    }
+  }
+
+  if (keyColorMap.size === 0) return;
   keyColorMap.forEach((color, k) => {
     const el = document.querySelector(`.key-slot[data-key="${k}"]`) as HTMLElement | null;
     if (!el) return;
@@ -3038,12 +3158,11 @@ export function renderBuildManager(): void {
             schoolCssClass: `rarity-${affixSkill.rarity}`,
           };
           const estimate = computeSmartEstimate(affixSkill, rt, skillAllKeys.length > 0 ? skillAllKeys : undefined);
-          const estimatedTypes = estimate ? new Set(estimate.breakdown.map(b => b.typeKey).filter(k => k !== 'base' && k !== 'crit_combined')) : undefined;
-          const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
+          const fields = buildAffixTooltipFields(affixSkill, rt);
           tooltipData.skill.affixInfo = fields.affixInfo;
           tooltipData.skill.enchantments = fields.enchantments;
           tooltipData.skill.questProgress = fields.questProgress;
-          tooltipData.skill.apprenticeGrowth = estimate ? undefined : fields.apprenticeGrowth;
+          tooltipData.skill.apprenticeGrowth = fields.apprenticeGrowth;
           tooltipData.skill.smartEstimate = estimate ?? undefined;
           tooltipData.skill.critChance = computeSkillCritChance(affixSkill);
         }
@@ -3174,12 +3293,11 @@ export function renderBuildManager(): void {
         }
         // 备战席未绑定时不做预估，显示完整词条详情
         const estimate = invAllKeys.length > 0 ? computeSmartEstimate(affixSkill, rt, invAllKeys) : null;
-        const estimatedTypes = estimate ? new Set(estimate.breakdown.map(b => b.typeKey).filter(k => k !== 'base' && k !== 'crit_combined')) : undefined;
-        const fields = buildAffixTooltipFields(affixSkill, rt, estimatedTypes);
+        const fields = buildAffixTooltipFields(affixSkill, rt);
         tooltipData.skill!.affixInfo = fields.affixInfo;
         tooltipData.skill!.enchantments = fields.enchantments;
         tooltipData.skill!.questProgress = fields.questProgress;
-        tooltipData.skill!.apprenticeGrowth = estimate ? undefined : fields.apprenticeGrowth;
+        tooltipData.skill!.apprenticeGrowth = fields.apprenticeGrowth;
         tooltipData.skill!.smartEstimate = estimate ?? undefined;
         tooltipData.skill!.critChance = computeSkillCritChance(affixSkill);
         if (boundKey) {

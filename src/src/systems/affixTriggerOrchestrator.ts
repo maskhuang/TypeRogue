@@ -170,10 +170,12 @@ export function orchestrateAffixTrigger(
     const chainedOccupiedKeys = [...ctx.bindings]
       .filter(([_, sid]) => sid === item.skillId)
       .map(([k]) => k)
+    // triggerKey 为 null 时（Innate 等），用技能实际绑定键替代（仅内部计算用）
+    const effectiveTriggerKey = item.triggerKey ?? chainedOccupiedKeys[0] ?? ''
     const triggerCtx: TriggerContext = {
       ...ctx,
-      triggerKey: item.triggerKey,
-      occupiedKeys: chainedOccupiedKeys.length > 0 ? chainedOccupiedKeys : [item.triggerKey],
+      triggerKey: effectiveTriggerKey,
+      occupiedKeys: chainedOccupiedKeys.length > 0 ? chainedOccupiedKeys : (effectiveTriggerKey ? [effectiveTriggerKey] : []),
       transmuteResource: skill.transmuteResource,
       // splash 触发禁用链式词条，防止 Splash→Splash 级联
       ...(item.type === 'splash' ? { chainAffixesDisabled: true } : {}),

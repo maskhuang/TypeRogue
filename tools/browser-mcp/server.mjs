@@ -24,7 +24,10 @@ let page = null;
 
 async function ensureBrowser() {
   if (!browser || !browser.isConnected()) {
-    browser = await chromium.launch({ headless: false, args: ['--window-size=960,680'] });
+    browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox'],
+    });
     const ctx = await browser.newContext({ viewport: { width: 900, height: 600 } });
     page = await ctx.newPage();
   }

@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（32 类，6 类别） ====
+// ===== 词条类型枚举（33 类，6 类别） ====
 
 export enum AffixType {
   // ── 数值型 numeric ──
@@ -35,6 +35,7 @@ export enum AffixType {
   Cascade = 'cascade',
   Flow = 'flow',
   Confluence = 'confluence',
+  Union = 'union',
   // ── 词感型 word_sense ──
   Outcast = 'outcast',
   Gravity = 'gravity',
@@ -90,6 +91,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Cascade]: ['topology', 'numeric'],
   [AffixType.Flow]: ['topology', 'numeric', 'production'],
   [AffixType.Confluence]: ['topology', 'numeric'],
+  [AffixType.Union]: ['topology', 'numeric'],
   // ── 词感型 ──
   [AffixType.Outcast]: ['word_sense', 'stack'],
   [AffixType.Gravity]: ['word_sense'],
@@ -280,6 +282,7 @@ export interface AffixInstance {
   echoAffixB?: AffixType           // Echo: 监听的词条类型B
   tideRate?: number                // Tide: 每秒叠层速率
   flowK?: number                   // Flow: 每单位归一化落差的 bonusPercent
+  unionK?: number                  // Union: 每个匹配技能的 bonusPercent
   confluenceK?: number             // Confluence: 资源多样性加成系数
   maxTriggers?: number             // Exhaust: 最大触发次数
   exhaustMult?: number             // Exhaust: 每次触发 base 倍率
@@ -448,6 +451,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Ligature]: 'high',
   [AffixType.Flow]: 'high',
   [AffixType.Confluence]: 'high',
+  [AffixType.Union]: 'high',
   [AffixType.WarDrum]: 'high',
   [AffixType.Twin]: 'low',
   [AffixType.Innate]: 'low',
@@ -557,6 +561,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Taboo]: '禁忌',
   [AffixType.Flow]: '落差',
   [AffixType.Confluence]: '汇流',
+  [AffixType.Union]: '联合',
   [AffixType.Innate]: '先天',
   [AffixType.Exhaust]: '消耗',
   [AffixType.Ethereal]: '虚无',
@@ -588,8 +593,8 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Mirror]: '每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效',
   [AffixType.Amplify]: '自身不产出；触发叠层，指定关系的匹配技能产出+自身基础值',
   [AffixType.Splash]: '自身不产出；触发时触发叠层数个指定关系的匹配技能',
-  [AffixType.Resonance]: '任意技能产出指定资源时叠层，满层触发自身',
-  [AffixType.Echo]: '拥有指定两种词条的技能触发时叠层，满层触发自身',
+  [AffixType.Resonance]: '任意技能产出{resource}时叠层，满层触发自身',
+  [AffixType.Echo]: '拥有{affixA}或{affixB}的技能触发时叠层，满层触发自身',
   [AffixType.Fury]: '任意技能暴击时叠层，满层触发自身',
   [AffixType.Tide]: '每秒自动叠层，满层触发自身',
   [AffixType.Relay]: '自身不产出；指定关系的匹配技能触发时，直接触发1个匹配技能（不含其他中转）',
@@ -603,6 +608,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Taboo]: '大幅增加暴击率，若未暴击则产出负值',
   [AffixType.Flow]: '同资源邻居实际产出比自己高时，按差值加成',
   [AffixType.Confluence]: '指定关系的邻居资源类型越多样，产出加成越高',
+  [AffixType.Union]: '指定关系的匹配技能越多，产出加成越高',
   [AffixType.Innate]: '每关开始时自动触发一次（不需按键）',
   [AffixType.Exhaust]: '每次触发产出倍增，但触发次数有限，用完词条消失',
   [AffixType.Ethereal]: '本关内其他词条效果提升一级；关卡结束后词条消失',
@@ -861,6 +867,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.WarDrum]:  { param: 'critPerStack',   delta: 0.005, mode: 'add' },
   // ── 拓扑类 ──
   [AffixType.Flow]:     { param: 'flowK',          delta: 0.02,  mode: 'add' },
+  [AffixType.Union]:     { param: 'unionK',        delta: 0.03,  mode: 'add' },
   [AffixType.Confluence]:{ param: 'confluenceK',   delta: 0.05,  mode: 'add' },
   // ── 其他 ──
   [AffixType.Ligature]:  { param: 'ligatureBonus',  delta: 0.25,  mode: 'add' },

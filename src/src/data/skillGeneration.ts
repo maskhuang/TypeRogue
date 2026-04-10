@@ -145,6 +145,7 @@ export function rollAffixParams(
   convertVariant?: 'cross' | 'self',
   availableResources?: ResourceType[],
   sharedPosRel?: PositionRelation,
+  excludeAffixTypes?: Set<string>,
 ): AffixInstance {
   const pool = availableResources ?? GENERIC_RESOURCES
   switch (type) {
@@ -200,9 +201,10 @@ export function rollAffixParams(
       return { type, resource: pickRandom(GENERIC_RESOURCES), interval: 4 }
 
     case AffixType.Echo: {
-      // 按本局词条权重加权抽取两个不同的词条类型
+      // 按本局词条权重加权抽取两个不同的词条类型（排除职业不可用词条）
       const weightEntries = Object.values(AffixType)
         .filter(t => t !== AffixType.Echo && t !== AffixType.Resonance)
+        .filter(t => !excludeAffixTypes || !excludeAffixTypes.has(t))
         .map(t => ({ type: t, w: AFFIX_WEIGHTS[t as Exclude<AffixType, AffixType.Convert>] ?? 0 }))
         .filter(e => e.w > 0)
       const totalW = weightEntries.reduce((s, e) => s + e.w, 0)
@@ -223,6 +225,9 @@ export function rollAffixParams(
 
     case AffixType.Tide:
       return { type, interval: 6, tideRate: 1 }  // 每秒+1叠层
+
+    case AffixType.Union:
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), unionK: roundTo(0.08 + random() * 0.07, 3) }
 
     case AffixType.Conduit:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
@@ -378,14 +383,15 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
     excludeTypes = new Set(Object.keys(AFFIX_CLASS_RESTRICTION))
   }
 
-  // 加权不重复抽取 rarity 个词条
-  const samples = weightedSampleWithout(rarity, excludeTypes.size > 0 ? excludeTypes : undefined)
+  // 加权不重复抽取词条：普通1个、稀有2个、史诗3个、传说4个
+  const affixCount = rarity + 1
+  const samples = weightedSampleWithout(affixCount, excludeTypes.size > 0 ? excludeTypes : undefined)
 
   // 同一技能共享同一个 posRel
   const sharedPosRel = pickRandom(ALL_POS_RELATIONS)
 
   // 每个词条掷参数
-  const affixes = samples.map(s => rollAffixParams(s.type, resource, s.convertVariant, pool, sharedPosRel))
+  const affixes = samples.map(s => rollAffixParams(s.type, resource, s.convertVariant, pool, sharedPosRel, excludeTypes))
 
   // 自动命名
   const name = generateName(resource, affixes)

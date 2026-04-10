@@ -477,14 +477,28 @@ function triggerAffixSkillWithFeedback(
         ? { fromElementId: pos.fromElementId, resource, amount }
         : { letterIndex: pos.letterIndex, resource, amount };
     }
-    const letterIdx = overrideAnchor?.letterIndex ?? state.player.index;
-    return overrideAnchor?.fromElementId
-      ? { fromElementId: overrideAnchor.fromElementId, resource, amount }
-      : { letterIndex: letterIdx, resource, amount };
+    if (overrideAnchor?.fromElementId) {
+      return { fromElementId: overrideAnchor.fromElementId, resource, amount };
+    }
+    // 检查 triggerKey 是否在当前单词中；不在时从词库UI出发
+    const word = state.player.word.toLowerCase();
+    const key = trKey.toLowerCase();
+    if (overrideAnchor?.letterIndex != null) {
+      return { letterIndex: overrideAnchor.letterIndex, resource, amount };
+    }
+    if (word.includes(key)) {
+      return { letterIndex: state.player.index, resource, amount };
+    }
+    return { fromElementId: 'active-library', resource, amount };
   }
 
   // 浮字反馈：基于每次触发的结果
   for (const tr of result.triggerResults) {
+    // 叠层类技能：显示叠层数（自身不产出的技能不走下方产出浮字）
+    if (tr.currentStacks != null) {
+      const stackAnchor = buildAnchor(tr.triggerKey, 'base', 0);
+      showFeedback(`×${tr.currentStacks}`, '#aaaaaa', 1.0, stackAnchor);
+    }
     if (!tr.phase4) continue;
     const resource = tr.phase4.targetResource;
     // 遗物缩放：同步缩放反馈值（升华缩放 + 加算遗物 + 资源潮汐，仅正产出）

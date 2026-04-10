@@ -273,6 +273,11 @@ async function init(): Promise<void> {
       state.player.wordDeck = getStarterWords();
       rollAffixWeights(random);
       resetWordRelicRunState();
+      // 重新生成初始技能（resetState 会清空技能列表）
+      const sk = generateSkill({ rarity: 0, level: 1 });
+      state.player.skills.set(sk.id, { level: 1 });
+      state.affixSkills.set(sk.id, sk);
+      state.affixSkillStates.set(sk.id, createSkillRuntimeState(sk.id));
       state.endlessUnlocked = metaState.isModeUnlocked('endless');
 
       getElements().mainMenuScreen.style.display = 'none';

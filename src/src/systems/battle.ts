@@ -177,6 +177,7 @@ let _lastAccelText = ''; // Story 42.4: 上次显示的加速倍率文本（脉�
 let _isBoss = false; // Story 42.4: 当前关是否 Boss（startTimer 缓存，避免每 tick 调用 getStageType）
 let _isCalibrationLevel = false; // 第一关校准关：无目标，时间结束后校准基数
 let _calibrationEffectiveScore = 0; // Story 54.2: 校准关 effectiveScore（供 showGoldReward 读取）
+export function getCalibrationInfo() { return { isCalibration: _isCalibrationLevel, effectiveScore: _calibrationEffectiveScore } }
 let _overflowDeduction = 0; // 溢出扣减量（用于 announceLevel 动画）
 let _preDeductionTarget = 0; // 扣减前的目标分数
 
