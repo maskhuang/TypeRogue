@@ -21,11 +21,7 @@ import { t } from '../demo/demo-i18n'
 // ===== 常量 =====
 
 const GENERIC_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
-/** 可作为「读取源」的资源（新词条读产出量而非池量，所有资源均可） */
-const READABLE_SOURCE_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
 const ALL_POS_RELATIONS: PositionRelation[] = Object.values(PositionRelation)
-/** Clique 过滤掉 Symmetric（最多 2-clique，无意义） */
-const CLIQUE_POS_RELATIONS = ALL_POS_RELATIONS.filter(r => r !== PositionRelation.Symmetric)
 
 /** 获取词条的有效权重（Convert 仅使用 cross 变体权重） */
 function getAffixWeight(type: AffixType): number {
@@ -178,9 +174,6 @@ export function rollAffixParams(
     case AffixType.Decay:
       return { type, initialMult: 0.40, decayPerTrigger: 0.05, floor: 0.05 }
 
-    case AffixType.Pulse:
-      return { type, interval: 4, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
-
     case AffixType.Crit:
       return { type, chance: roundTo(0.15 + random() * 0.25, 2) }
 
@@ -194,77 +187,23 @@ export function rollAffixParams(
       return { type, posRel, bonusPerSlot: VOID_BONUS_TABLE[posRel] }
     }
 
-    case AffixType.Resonance: {
-      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, resonanceCount: 4 } // 叠层间隔
-    }
-
     case AffixType.Mirror:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
-
-    case AffixType.Splash: {
-      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, splashCount: 4 } // 叠层间隔（每 N 层触发 1 个匹配技能）
-    }
 
     case AffixType.Amplify:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), resource }
 
+    case AffixType.Splash:
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
+
     case AffixType.Conduit:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
-    case AffixType.Relay: {
-      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, relayCount: 4 } // 叠层间隔
-    }
+    case AffixType.Relay:
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
     case AffixType.WarDrum:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), critPerStack: 0.02 }
-
-    case AffixType.Burst:
-      return { type, burstK: roundTo(0.20 + random() * 0.20, 2), critChance: 0.08 }
-
-    case AffixType.ZeroIn:
-      return { type, zeroInK: roundTo(0.15 + random() * 0.15, 2), critChance: 0.08 }
-
-    case AffixType.Sharpshooter:
-      return { type, sharpK: roundTo(1.00 + random() * 1.00, 2), critChance: 0.05 }
-
-    case AffixType.Overflow:
-      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), overflowStacks: 3, critChance: 0.10 }
-
-    case AffixType.Bridge:
-      // Bridge 固定 Adjacent（其他关系下人人互连，永远不是桥）
-      return { type, posRel: PositionRelation.Adjacent, bridgeK: roundTo(0.25 + random() * 0.20, 2) }
-
-    case AffixType.Clique: {
-      // Clique 过滤 Symmetric（最多 2-clique，无意义）
-      const posRel = sharedPosRel ?? pickRandom(CLIQUE_POS_RELATIONS)
-      return { type, posRel, cliqueK: roundTo(0.10 + random() * 0.10, 2) }
-    }
-
-    case AffixType.Component:
-      return { type, componentK: roundTo(0.03 + random() * 0.03, 2), componentInterval: 6 }
-
-    case AffixType.Entropy:
-      return { type, entropyK: roundTo(0.06 + random() * 0.06, 2) }
-
-    case AffixType.Cipher:
-      return { type, cipherK: roundTo(0.01 + random() * 0.02, 2) }
-
-    case AffixType.Pattern:
-      return { type, patternK: roundTo(0.03 + random() * 0.03, 2), patternInterval: 6 }  // 每6叠层重复词
-
-    case AffixType.Parity:
-      return { type, oddK: roundTo(0.15 + random() * 0.10, 2), evenK: roundTo(0.08 + random() * 0.07, 2) }
-
-    case AffixType.Prime:
-      return { type, primeK: roundTo(0.04 + random() * 0.04, 2) }
-
-    case AffixType.Match: {
-      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, matchK: roundTo(0.08 + random() * 0.07, 2), matchInterval: 3 }
-    }
 
     case AffixType.Outcast:
       return { type, outcastInterval: 4 }
@@ -290,67 +229,11 @@ export function rollAffixParams(
     case AffixType.Multiply:
       return { type, multiplyValue: roundTo(1.5 + random() * 0.5, 2) }  // ×1.5~2.0
 
-    case AffixType.Cluster:
-      return { type, clusterK: roundTo(0.08 + random() * 0.07, 3), clusterInterval: 8 }  // 每8叠层+时间
-
-    case AffixType.Coverage:
-      return { type, coverageK: roundTo(0.03 + random() * 0.03, 3) }  // 0.03~0.06 per unique letter
-
-    case AffixType.Bigram:
-      return { type, bigramK: roundTo(0.30 + random() * 0.30, 3) }  // 0.30~0.60 per avg rarity
-
     case AffixType.Flow:
       return { type, posRel: pickRandom(ALL_POS_RELATIONS), flowK: roundTo(0.03 + random() * 0.05, 3) }  // 0.03~0.08
 
     case AffixType.Confluence:
       return { type, posRel: pickRandom(ALL_POS_RELATIONS), confluenceK: roundTo(0.15 + random() * 0.15, 3) }  // 0.15~0.30
-
-    case AffixType.Turbulence:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), turbulenceK: roundTo(0.05 + random() * 0.07, 3), turbulenceInterval: 6 }  // 0.05~0.12
-
-    case AffixType.PhaseShift: {
-      const src = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))
-      const srcBase = BASE_VALUES[src]?.[0] ?? 1
-      // 阈值 = N次标准触发的产出量（T1≈15~30次, T2≈40~70次）
-      return { type, phaseSource: src, phaseT1: roundTo((15 + random() * 15) * srcBase, 1), phaseT2: roundTo((40 + random() * 30) * srcBase, 1), kSolid: roundTo(0.005 + random() * 0.005, 4), kLiquid: roundTo(0.015 + random() * 0.015, 4), kGas: roundTo(0.03 + random() * 0.02, 4), sustainCost: roundTo((0.5 + random() * 1.5) * srcBase, 2) }
-    }
-
-    case AffixType.EndoExo: {
-      const src = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))
-      const srcBase = BASE_VALUES[src]?.[0] ?? 1
-      // 阈值 = N次标准触发的产出量（≈15~35次）
-      return { type, endoSource: src, endoThreshold: roundTo((15 + random() * 20) * srcBase, 1), kExo: roundTo(0.02 + random() * 0.02, 4), kEndo: roundTo(-0.005 + random() * 0.008, 4), endoConsumeRate: roundTo((0.5 + random() * 2) * srcBase, 2) }
-    }
-
-    case AffixType.Fusion: {
-      const pool = READABLE_SOURCE_RESOURCES.filter(r => r !== resource)
-      const srcA = pickRandom(pool)
-      const srcB = pickRandom(pool.filter(r => r !== srcA))
-      const baseA = BASE_VALUES[srcA]?.[0] ?? 1
-      const baseB = BASE_VALUES[srcB]?.[0] ?? 1
-      // 阈值 = N次标准触发的产出量（≈15~35次）
-      return { type, fusionSourceA: srcA, fusionSourceB: srcB, ignitionA: roundTo((15 + random() * 20) * baseA, 1), ignitionB: roundTo((15 + random() * 20) * baseB, 1), fusionK: roundTo(0.02 + random() * 0.02, 4), fusionConsumeA: roundTo((1 + random() * 3) * baseA, 2), fusionConsumeB: roundTo((1 + random() * 3) * baseB, 2), fusionPenalty: roundTo(0.05 + random() * 0.10, 3) }
-    }
-
-    case AffixType.Leverage: {
-      const levSrc = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))
-      const levBase = BASE_VALUES[levSrc]?.[0] ?? 1
-      return { type, source: levSrc, leverageK: roundTo(0.06 + random() * 0.06, 2), marginThreshold: roundTo((2 + random() * 2) * levBase, 1) }
-    }
-
-    case AffixType.Option: {
-      const optSrc = pickRandom(READABLE_SOURCE_RESOURCES.filter(r => r !== resource))
-      const optBase = BASE_VALUES[optSrc]?.[0] ?? 1
-      const strike = roundTo((3 + random() * 3) * optBase, 1)
-      return { type, source: optSrc, optionK: roundTo(0.04 + random() * 0.04, 2), strikePrice: strike, premium: roundTo(0.05 + random() * 0.05, 2) }
-    }
-
-    case AffixType.Hedge: {
-      const hedgePool = READABLE_SOURCE_RESOURCES.filter(r => r !== resource)
-      const hSrcA = pickRandom(hedgePool)
-      const hSrcB = pickRandom(hedgePool.filter(r => r !== hSrcA))
-      return { type, hedgeSourceA: hSrcA, hedgeSourceB: hSrcB, hedgeK: roundTo(0.20 + random() * 0.20, 2) }
-    }
 
     case AffixType.Decorator:
       return { type, decoratorK: roundTo(0.20 + random() * 0.20, 2) }
@@ -363,11 +246,6 @@ export function rollAffixParams(
 
     case AffixType.Innate:
       return { type, innateCount: 1 }
-
-    case AffixType.Counter: {
-      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, maxCharges: Math.floor(2 + random() * 3) }  // 2~4 charges
-    }
 
     case AffixType.Exhaust:
       return { type, exhaustMult: roundTo(2.5 + random() * 1.0, 1), maxTriggers: Math.floor(5 + random() * 6) }  // ×2.5~3.5, 5~10 uses

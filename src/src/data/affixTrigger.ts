@@ -17,8 +17,6 @@ import {
   isOldSystemSkill, applyAffixLevelScaling, getQuestEquipTarget, AFFIX_CATEGORY_MAP,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
-import { BIGRAM_FREQ_TABLE, ensureBigramFreq } from './bigramFrequency'
-import { getPatternRarity, toPattern } from './patternFrequency'
 
 // ===== Conduit 模式共享匹配 =====
 
@@ -63,9 +61,7 @@ function isStackingAffixType(type: AffixType): boolean {
 
 /** 判断技能是否为叠层类（含 Pulse 质变转化） */
 export function isStackingSkill(skill: AffixSkillInstance, skillStates: Map<string, SkillRuntimeState>): boolean {
-  if (skill.affixes.some(a => isStackingAffixType(a.type))) return true
-  const rt = skillStates.get(skill.id)
-  return rt?.convertedToStacking ?? false
+  return skill.affixes.some(a => isStackingAffixType(a.type))
 }
 
 // ===== 触发上下文 =====
@@ -239,8 +235,6 @@ export interface TriggerFlags {
   recurseCritContribution: number
   /** 叠层效果是否触发（供遗物钩子使用） */
   stackEffectFired: boolean
-  burstSplash: boolean  // 质变·弹幕：3连击时溅射邻居
-  cipherCritMultBonus: number  // 质变·破译：字母跳跃加到暴击倍率
 }
 
 // ===== Phase 4-6 返回类型 =====
@@ -264,9 +258,7 @@ export interface Phase5Result {
   /** 衍生附魔同资源增强比率（同资源时，系统层应用 output × (1 + boost)）— 由 35-9 shop-integration 消费 */
   transmuteSameResourceBoost: number
   /** 溅射词条需触发的邻居键位 */
-  splashTargets: string[]
   /** 质变后溅射：被溅射目标也向自己的邻居溅射一次 */
-  chainSplash?: boolean
   /** 吞噬目标键位（QuestDevour 满层时） */
   devourTarget: string | null
   /** 是否完成一次任务循环 */
@@ -276,25 +268,19 @@ export interface Phase5Result {
   /** 暴击质变回响：暴击时触发随机无Crit技能的键位 */
   critEchoTarget?: string
   /** 脉冲：爆发时立刻自触发一次 */
-  pulseSelfTrigger?: boolean
   /** Cluster 满层：触发元音键位技能 */
-  clusterVowelTarget?: string
   /** Outcast 满层：触发词另一端字母键技能 */
   outcastTarget?: string
   /** Component 满层：触发链最远端技能 */
-  componentFarTarget?: string
   /** Component 质变满层：触发链上所有技能 */
-  componentAllTargets?: string[]
   /** Turbulence 满层：触发最弱邻居技能 */
-  turbulenceWeakTarget?: string
   /** Turbulence 质变满层：触发所有邻居技能 */
-  turbulenceAllTargets?: string[]
   /** 脉冲质变：爆发时触发的匹配技能键位（进入伪循环） */
-  pulseBurstTargets?: string[]
   /** 脉冲：爆发时触发范围内叠层类邻居技能 */
-  pulseNeighborTargets?: string[]
   /** 增幅质变：层数增加时触发的匹配技能键位 */
   amplifyTriggerTargets?: string[]
+  /** 溅射：触发叠层数个匹配技能键位 */
+  splashTargets?: string[]
 }
 
 export type Phase6Action =
@@ -415,108 +401,6 @@ export function isConsonant(ch: string): boolean {
   return lower >= 'a' && lower <= 'z' && !VOWELS.has(lower)
 }
 
-/** 素数判定（纯函数） */
-export function isPrime(n: number): boolean {
-  if (n < 2) return false
-  if (n < 4) return true
-  if (n % 2 === 0 || n % 3 === 0) return false
-  for (let i = 5; i * i <= n; i += 6) {
-    if (n % i === 0 || n % (i + 2) === 0) return false
-  }
-  return true
-}
-
-/** Shannon 熵：字母分布越均匀越高（纯函数） */
-export function shannonEntropy(word: string): number {
-  if (!word || word.length === 0) return 0
-  const freq = new Map<string, number>()
-  const lower = word.toLowerCase()
-  for (const ch of lower) {
-    if (ch >= 'a' && ch <= 'z') freq.set(ch, (freq.get(ch) ?? 0) + 1)
-  }
-  const total = Array.from(freq.values()).reduce((a, b) => a + b, 0)
-  if (total === 0) return 0
-  let h = 0
-  for (const count of freq.values()) {
-    const p = count / total
-    h -= p * Math.log2(p)
-  }
-  return h
-}
-
-/** 检查移除 excludeKeys 后 nodes 是否仍然连通（BFS） */
-export function areConnectedWithout(
-  nodes: string[],
-  excludeKeys: string[],
-  posRel: PositionRelation,
-  bindings: Map<string, string>,
-): boolean {
-  if (nodes.length < 2) return true
-  const excludeSet = new Set(excludeKeys)
-  const boundKeys = new Set([...bindings.keys()].filter(k => !excludeSet.has(k)))
-  const visited = new Set<string>()
-  const queue = [nodes[0]]
-  visited.add(nodes[0])
-  while (queue.length > 0) {
-    const current = queue.shift()!
-    for (const neighbor of getKeysWithRelation(current, posRel)) {
-      if (!visited.has(neighbor) && boundKeys.has(neighbor)) {
-        visited.add(neighbor)
-        queue.push(neighbor)
-      }
-    }
-  }
-  return nodes.every(n => visited.has(n))
-}
-
-/** 最大全连接子集大小（暴力枚举，规模 ≤ 7） */
-export function findMaxClique(
-  nodes: string[],
-  posRel: PositionRelation,
-): number {
-  if (nodes.length <= 1) return nodes.length
-  let maxSize = 1
-  const n = nodes.length
-  for (let mask = 3; mask < (1 << n); mask++) {
-    const subset: string[] = []
-    for (let i = 0; i < n; i++) {
-      if (mask & (1 << i)) subset.push(nodes[i])
-    }
-    if (subset.length <= maxSize) continue
-    let allConnected = true
-    for (let i = 0; i < subset.length && allConnected; i++) {
-      for (let j = i + 1; j < subset.length && allConnected; j++) {
-        if (!hasRelation(subset[i], subset[j], posRel)) allConnected = false
-      }
-    }
-    if (allConnected && subset.length > maxSize) maxSize = subset.length
-  }
-  return maxSize
-}
-
-/** BFS 连通分量大小（沿 posRel 关系，只走已绑定键位） */
-export function bfsComponentSize(
-  startKey: string,
-  posRel: PositionRelation,
-  bindings: Map<string, string>,
-): number {
-  const boundKeys = new Set(bindings.keys())
-  if (!boundKeys.has(startKey)) return 0
-  const visited = new Set<string>()
-  const queue = [startKey]
-  visited.add(startKey)
-  while (queue.length > 0) {
-    const current = queue.shift()!
-    for (const neighbor of getKeysWithRelation(current, posRel)) {
-      if (!visited.has(neighbor) && boundKeys.has(neighbor)) {
-        visited.add(neighbor)
-        queue.push(neighbor)
-      }
-    }
-  }
-  return visited.size
-}
-
 export function isFirstOrLastLetter(key: string, word: string): boolean {
   if (!key || !word || word.length === 0) return false
   const k = key.toLowerCase()
@@ -634,7 +518,7 @@ export function getAffixSourceValue(source: ResourceType, ctx: TriggerContext): 
     return ctx.classResourceProduced[source] ?? 0
   }
   if (source === 'base') {
-    // base 读本词实时累积（synergy.skillBaseScore），与 getStageProducedValue 一致
+    // base 读本词实时累积（synergy.skillBaseScore），同步于本词实时累积
     return ctx.wordBaseScore ?? 0
   }
   if (source === 'score') {
@@ -643,15 +527,7 @@ export function getAffixSourceValue(source: ResourceType, ctx: TriggerContext): 
   return ctx.resources[source]
 }
 
-/**
- * 读取产出量（PhaseShift/EndoExo/Fusion/Option/Hedge 用）。
- * base: 读本词累积（synergy.skillBaseScore，每词重置）—— 温度每词重新积累。
- * 其他: 读本关累积（stageProduced）—— 长周期积累。
- */
-export function getStageProducedValue(source: ResourceType, ctx: TriggerContext): number {
-  if (source === 'base') return ctx.wordBaseScore ?? 0
-  return ctx.stageProduced?.[source] ?? 0
-}
+
 
 // ===== Phase 2: 加算层 =====
 
@@ -702,12 +578,6 @@ export function resolvePhase2(
 
   let bonusPercent = 0
   // 质变·反噬：消费上次 Counter 吸收的负值
-  if ((runtimeState.counterAbsorbed ?? 0) > 0) {
-    bonusPercent += runtimeState.counterAbsorbed
-    runtimeState.counterAbsorbed = 0
-  }
-  // 每次触发清零 leverageLoss（防止上次残留）
-  runtimeState.leverageLoss = 0
   let flatBonus = 0 // 增幅词条：绝对值加成
   let chargeAutoComplete = false
   const mutations: StateMutation[] = []
@@ -738,144 +608,6 @@ export function resolvePhase2(
               resource: affix.source,
               amount: reverseBonus * effectiveBase * (cvtSourceBase / cvtSkillBase),
             })
-          }
-        }
-        break
-      }
-
-      case AffixType.PhaseShift: {
-        // 相变：读资源当温度，阶梯式 bonusPercent + 气态 consume
-        if (affix.phaseSource == null) break
-        const psLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        const psVal = getStageProducedValue(affix.phaseSource, ctx)
-        const psNorm = (BASE_VALUES[skill.resource]?.[psLvl] ?? 1) / (BASE_VALUES[affix.phaseSource]?.[psLvl] ?? 1)
-        if (psVal < (affix.phaseT1 ?? Infinity)) {
-          bonusPercent += (affix.kSolid ?? 0) * psVal * psNorm
-        } else if (psVal < (affix.phaseT2 ?? Infinity)) {
-          bonusPercent += (affix.kLiquid ?? 0) * psVal * psNorm
-        } else {
-          bonusPercent += (affix.kGas ?? 0) * psVal * psNorm
-          // 质变·超临界：气态时叠加液态和固态 K
-          if (isTransformedForAffix(AffixType.PhaseShift, runtimeState, skill, ctx)) {
-            bonusPercent += ((affix.kLiquid ?? 0) + (affix.kSolid ?? 0)) * psVal * psNorm
-          }
-          if ((affix.sustainCost ?? 0) > 0) {
-            consumeRequests.push({ resource: affix.phaseSource, amount: affix.sustainCost! })
-          }
-        }
-        break
-      }
-
-      case AffixType.EndoExo: {
-        // 吸热/放热：方波振荡 — 高于阈值 Exo（高+消耗），低于阈值 Endo（低/负）
-        if (affix.endoSource == null) break
-        const eeLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        const eeVal = getStageProducedValue(affix.endoSource, ctx)
-        const eeNorm = (BASE_VALUES[skill.resource]?.[eeLvl] ?? 1) / (BASE_VALUES[affix.endoSource]?.[eeLvl] ?? 1)
-        if (eeVal >= (affix.endoThreshold ?? Infinity)) {
-          // 质变·永动：连续 3 次放热后超导（翻倍且不消耗）
-          const eeTransformed = isTransformedForAffix(AffixType.EndoExo, runtimeState, skill, ctx)
-          const isSuperconduct = eeTransformed && (runtimeState.exoCount ?? 0) >= 2
-          if (isSuperconduct) {
-            bonusPercent += (affix.kExo ?? 0) * eeVal * eeNorm * 2
-            runtimeState.exoCount = 0 // 超导后重置
-          } else {
-            bonusPercent += (affix.kExo ?? 0) * eeVal * eeNorm
-            if ((affix.endoConsumeRate ?? 0) > 0) {
-              consumeRequests.push({ resource: affix.endoSource, amount: affix.endoConsumeRate! })
-            }
-            if (eeTransformed) runtimeState.exoCount = (runtimeState.exoCount ?? 0) + 1
-          }
-        } else {
-          bonusPercent += (affix.kEndo ?? 0) * eeVal * eeNorm
-          runtimeState.exoCount = 0 // 吸热时重置放热计数
-        }
-        break
-      }
-
-      case AffixType.Fusion: {
-        // 聚变：双资源与门 — 同时达阈值时高倍+双消耗，否则惩罚
-        // 归一化：各源值除以自身 BASE_VALUES（标准化为「几个基础单位」），然后求和
-        if (affix.fusionSourceA == null || affix.fusionSourceB == null) break
-        const fuLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        const valA = getStageProducedValue(affix.fusionSourceA, ctx)
-        const valB = getStageProducedValue(affix.fusionSourceB, ctx)
-        const baseA = BASE_VALUES[affix.fusionSourceA]?.[fuLvl] ?? 1
-        const baseB = BASE_VALUES[affix.fusionSourceB]?.[fuLvl] ?? 1
-        if (valA >= (affix.ignitionA ?? Infinity) && valB >= (affix.ignitionB ?? Infinity)) {
-          // 各源归一化为标准单位后求和：valA/baseA = "几倍基础值"
-          bonusPercent += (affix.fusionK ?? 0) * (valA / baseA + valB / baseB)
-          if ((affix.fusionConsumeA ?? 0) > 0) {
-            consumeRequests.push({ resource: affix.fusionSourceA, amount: affix.fusionConsumeA! })
-          }
-          if ((affix.fusionConsumeB ?? 0) > 0) {
-            consumeRequests.push({ resource: affix.fusionSourceB, amount: affix.fusionConsumeB! })
-          }
-          // 质变·恒星：成功后阈值永久降 10%（最低 50%）
-          if (isTransformedForAffix(AffixType.Fusion, runtimeState, skill, ctx)) {
-            affix.ignitionA = Math.max((affix.ignitionA ?? 0) * 0.5, (affix.ignitionA ?? 0) * 0.9)
-            affix.ignitionB = Math.max((affix.ignitionB ?? 0) * 0.5, (affix.ignitionB ?? 0) * 0.9)
-          }
-        } else {
-          bonusPercent -= (affix.fusionPenalty ?? 0)
-        }
-        break
-      }
-
-      case AffixType.Leverage: {
-        // 杠杆：excess = 本词产出 - 阈值，可为负（前几次按键亏损，后面盈利）
-        if (affix.source == null) break
-        const levVal = getAffixSourceValue(affix.source, ctx)
-        const levLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        const levNorm = (BASE_VALUES[skill.resource]?.[levLvl] ?? 1) / (BASE_VALUES[affix.source]?.[levLvl] ?? 1)
-        const excess = levVal - (affix.marginThreshold ?? 0)
-        if (excess < 0 && isTransformedForAffix(AffixType.Leverage, runtimeState, skill, ctx)) {
-          // 质变·对赌：亏损不扣自身，转嫁给邻居（Phase 6 处理）
-          runtimeState.leverageLoss = Math.abs((affix.leverageK ?? 0) * excess * levNorm)
-        } else {
-          bonusPercent += (affix.leverageK ?? 0) * excess * levNorm
-        }
-        break
-      }
-
-      case AffixType.Option: {
-        // 期权：超行权价线性收益，未达时扣除权利金
-        if (affix.source == null) break
-        const optVal = getStageProducedValue(affix.source, ctx)
-        const optLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        const optNorm = (BASE_VALUES[skill.resource]?.[optLvl] ?? 1) / (BASE_VALUES[affix.source]?.[optLvl] ?? 1)
-        const strike = affix.strikePrice ?? 0
-        const optionTransformed = isTransformedForAffix(AffixType.Option, runtimeState, skill, ctx)
-        if (optVal >= strike) {
-          bonusPercent += (affix.optionK ?? 0) * (optVal - strike) * optNorm
-          // 质变·期货：行权时释放累积的权利金
-          if (optionTransformed && (runtimeState.optionAccum ?? 0) > 0) {
-            bonusPercent += runtimeState.optionAccum
-            runtimeState.optionAccum = 0
-          }
-        } else if (optionTransformed) {
-          // 质变·期货：权利金不扣产出，累积为期权价值
-          runtimeState.optionAccum = (runtimeState.optionAccum ?? 0) + (affix.premium ?? 0)
-        } else {
-          bonusPercent -= affix.premium ?? 0
-        }
-        break
-      }
-
-      case AffixType.Hedge: {
-        if (affix.hedgeSourceA == null || affix.hedgeSourceB == null) break
-        const hedgeLvl = Math.max(0, Math.min(skill.level - 1, 2))
-        const hValA = getStageProducedValue(affix.hedgeSourceA, ctx) / (BASE_VALUES[affix.hedgeSourceA]?.[hedgeLvl] ?? 1)
-        const hValB = getStageProducedValue(affix.hedgeSourceB, ctx) / (BASE_VALUES[affix.hedgeSourceB]?.[hedgeLvl] ?? 1)
-        const hMax = Math.max(hValA, hValB)
-        if (hMax > 0) {
-          const hedgeRatio = Math.min(hValA, hValB) / hMax
-          bonusPercent += (affix.hedgeK ?? 0) * hedgeRatio
-          // 质变·调控：额外产出到较少的那种资源
-          if (isTransformedForAffix(AffixType.Hedge, runtimeState, skill, ctx) && hedgeRatio > 0.5) {
-            const lesserRes = hValA <= hValB ? affix.hedgeSourceA : affix.hedgeSourceB
-            const hedgeExtra = (affix.hedgeK ?? 0) * hedgeRatio * effectiveBase * 0.1
-            if (hedgeExtra > 0) convertReverseOutputs.push({ resource: lesserRes, amount: hedgeExtra })
           }
         }
         break
@@ -928,71 +660,7 @@ export function resolvePhase2(
         break
       }
 
-      case AffixType.Turbulence: {
-        // 湍流 → 额外叠层：邻居强弱差异越大叠越多，满层触发最弱邻居
-        if (affix.posRel == null) break
-        const turbNeighbors = getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)
-        if (turbNeighbors.length >= 2) {
-          let minBase = Infinity, maxBase = -Infinity
-          let weakestId = ''
-          for (const ns of turbNeighbors) {
-            const nLvlIdx = Math.max(0, Math.min(ns.level - 1, 3))
-            const nBase = BASE_VALUES[ns.resource]?.[nLvlIdx] ?? 1
-            if (nBase < minBase) { minBase = nBase; weakestId = ns.id }
-            if (nBase > maxBase) maxBase = nBase
-          }
-          if (maxBase > 0) {
-            const spread = (maxBase - minBase) / maxBase
-            const turbStacks = Math.max(1, Math.round(spread * turbNeighbors.length * (1 + (affix.turbulenceK ?? 0) * 10)))
-            runtimeState.stacks += turbStacks
-            flags.stackEffectFired = true
-            const turbInterval = getEffectiveInterval(affix.turbulenceInterval ?? 6, skill.id, ctx)
-            if (runtimeState.stacks > 0 && runtimeState.stacks % turbInterval === 0) {
-              // 质变·风暴：满层触发所有邻居；普通：只触发最弱
-              if (isTransformedForAffix(AffixType.Turbulence, runtimeState, skill, ctx)) {
-                for (const ns of turbNeighbors) {
-                  mutations.push({ type: 'turbulenceAll' as any, value: ns.id })
-                }
-              } else {
-                mutations.push({ type: 'turbulenceWeak' as any, value: weakestId })
-              }
-            }
-          }
-        }
         break
-      }
-
-      case AffixType.Bridge:
-        // 桥 → 移至 Phase 3 暴击子系统
-        break
-
-      case AffixType.Clique:
-        // 团 → 移至 Phase 3 暴击子系统
-        // cliqueBonusAccum: Leverage 质变分摊亏损用
-        if ((runtimeState.cliqueBonusAccum ?? 0) > 0) {
-          bonusPercent += runtimeState.cliqueBonusAccum
-          runtimeState.cliqueBonusAccum = 0
-        }
-        break
-
-      case AffixType.Component: {
-        // 连通 → 额外叠层：连通分量越大叠越多，满层触发链最远端
-        const compSize = bfsComponentSize(ctx.triggerKey, PositionRelation.Adjacent, ctx.bindings)
-        if (compSize > 1) {
-          runtimeState.stacks += compSize - 1
-          flags.stackEffectFired = true
-          const compInterval = getEffectiveInterval(affix.componentInterval ?? 6, skill.id, ctx)
-          if (runtimeState.stacks > 0 && runtimeState.stacks % compInterval === 0) {
-            // 质变·脉冲链：触发链上所有技能；普通：仅最远端
-            if (isTransformedForAffix(AffixType.Component, runtimeState, skill, ctx)) {
-              mutations.push({ type: 'componentAll' as any, value: ctx.triggerKey })
-            } else {
-              mutations.push({ type: 'componentFar' as any, value: ctx.triggerKey })
-            }
-          }
-        }
-        break
-      }
 
       case AffixType.Charge: {
         // 蓄力并入暴击系统：暴击率贡献在 Phase 3 处理
@@ -1009,7 +677,6 @@ export function resolvePhase2(
         // 首尾字母命中时叠层，满层触发词另一端字母键上的技能
         if (isFirstOrLastLetter(ctx.triggerKey, ctx.currentWord)) {
           runtimeState.stacks += 1
-          flags.stackEffectFired = true
           const outcastInterval = getEffectiveInterval(affix.outcastInterval ?? 4, skill.id, ctx)
           if (runtimeState.stacks > 0 && runtimeState.stacks % outcastInterval === 0) {
             // 找另一端字母的键
@@ -1031,142 +698,6 @@ export function resolvePhase2(
       case AffixType.Taboo:
         // 禁忌并入暴击系统：暴击率贡献在 Phase 3 处理
         break
-
-      case AffixType.Cluster: {
-        const w = ctx.currentWord?.toLowerCase() ?? ''
-        let maxCluster = 0, curCluster = 0, sumClusters = 0
-        for (const ch of w) {
-          if (isConsonant(ch)) { curCluster++; if (curCluster > maxCluster) maxCluster = curCluster }
-          else { if (curCluster >= 2) sumClusters += curCluster; curCluster = 0 }
-        }
-        if (curCluster >= 2) sumClusters += curCluster
-        // 质变·塞音：所有辅音丛长度之和
-        const clusterVal = isTransformedForAffix(AffixType.Cluster, runtimeState, skill, ctx)
-          ? Math.max(0, sumClusters - 1)
-          : Math.max(0, maxCluster - 1)
-        // 辅音丛 → 额外叠层：val=1→+1层, val=2→+2层, val=3→+4层（递增奖励长辅音���）
-        const clusterStacks = clusterVal > 0 ? Math.max(1, Math.round(clusterVal * (1 + (affix.clusterK ?? 0) * clusterVal))) : 0
-        if (clusterStacks > 0) {
-          runtimeState.stacks += clusterStacks
-          flags.stackEffectFired = true
-          const clInterval = getEffectiveInterval(affix.clusterInterval ?? 8, skill.id, ctx)
-          if (runtimeState.stacks > 0 && runtimeState.stacks % clInterval === 0) {
-            flags.stackEffectFired = true
-            // 标记需要触发元音键技能（Phase 5 处理）
-            mutations.push({ type: 'clusterVowel' as any, value: 1 })
-          }
-        }
-        break
-      }
-
-      case AffixType.Bigram:
-        // 双字组：移至 Phase 3 暴击子系统
-        break
-
-      case AffixType.Coverage: {
-        const w3 = ctx.currentWord?.toLowerCase() ?? ''
-        const letterSet = new Set<string>()
-        for (const ch of w3) {
-          if (ch >= 'a' && ch <= 'z') letterSet.add(ch)
-        }
-        let coverageCount = letterSet.size
-        // 质变·全谱：Q/X/Z/J 额外×2
-        if (isTransformedForAffix(AffixType.Coverage, runtimeState, skill, ctx)) {
-          for (const rare of ['q', 'x', 'z', 'j']) {
-            if (letterSet.has(rare)) coverageCount += 1
-          }
-        }
-        bonusPercent += (affix.coverageK ?? 0) * coverageCount
-        break
-      }
-
-      case AffixType.Entropy: {
-        const entropyWord = ctx.currentWord ?? ''
-        if (entropyWord.length > 0) {
-          const curH = shannonEntropy(entropyWord)
-          let entropyBonus = (affix.entropyK ?? 0) * curH
-          // 质变·熵增：当前熵 > 上一个单词时翻倍
-          if (isTransformedForAffix(AffixType.Entropy, runtimeState, skill, ctx) && curH > (runtimeState.prevEntropy ?? 0)) {
-            entropyBonus *= 2
-          }
-          runtimeState.prevEntropy = curH
-          bonusPercent += entropyBonus
-        }
-        break
-      }
-
-      case AffixType.Cipher:
-        // 密文：移至 Phase 3 暴击子系统
-        break
-
-      case AffixType.Pattern: {
-        // 模式：单词模式签名稀有度 → bonusPercent
-        const patternWord = ctx.currentWord ?? ''
-        if (patternWord.length > 0) {
-          bonusPercent += (affix.patternK ?? 0) * getPatternRarity(patternWord)
-        }
-        break
-      }
-
-      case AffixType.Parity: {
-        // 奇偶累计：奇数叠层时累积产出加成，偶数时累积暴击率
-        const parityStacks = runtimeState.stacks
-        if (parityStacks > 0 && parityStacks % 2 === 1) {
-          runtimeState.parityAccum += affix.oddK ?? 0
-        } else if (parityStacks > 0 && parityStacks % 2 === 0) {
-          runtimeState.parityCritAccum += affix.evenK ?? 0
-        }
-        bonusPercent += runtimeState.parityAccum
-        break
-      }
-
-      case AffixType.Prime: {
-        // 素数累计：叠层为素数时累积大额加成，质变后非素数也有小额累积
-        const primeStacks = runtimeState.stacks
-        if (primeStacks >= 2 && isPrime(primeStacks)) {
-          runtimeState.primeAccum += (affix.primeK ?? 0) * primeStacks
-        } else if (primeStacks >= 2 && isTransformedForAffix(AffixType.Prime, runtimeState, skill, ctx)) {
-          runtimeState.primeAccum += affix.primeK ?? 0
-        }
-        bonusPercent += runtimeState.primeAccum
-        break
-      }
-
-      case AffixType.Match: {
-        // 配对叠层：范围内任意两个邻居叠层相同时，自身额外+1叠层
-        if (affix.posRel == null) break
-        const matchNeighbors = getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)
-        // 收集邻居叠层值（不含自身）
-        const neighborStacks: number[] = []
-        for (const ns of matchNeighbors) {
-          const nState = ctx.skillStates.get(ns.id)
-          const s = nState?.stacks ?? 0
-          if (s > 0) neighborStacks.push(s)
-        }
-        // 质变·入局：自身 stacks 也参与配对检查
-        if (isTransformedForAffix(AffixType.Match, runtimeState, skill, ctx) && runtimeState.stacks > 0) {
-          neighborStacks.push(runtimeState.stacks)
-        }
-        // 检查是否存在至少一对相同叠层
-        let matchFound = false
-        if (neighborStacks.length >= 2) {
-          const seen = new Set<number>()
-          for (const s of neighborStacks) {
-            if (seen.has(s)) { matchFound = true; break }
-            seen.add(s)
-          }
-        }
-        if (matchFound) {
-          runtimeState.stacks += 1 // 额外叠层
-          bonusPercent += affix.matchK ?? 0
-          const matchInterval = getEffectiveInterval(affix.matchInterval ?? 3, skill.id, ctx)
-          if (runtimeState.stacks > 0 && runtimeState.stacks % matchInterval === 0) {
-            flags.isPulse = true
-            flags.stackEffectFired = true
-          }
-        }
-        break
-      }
 
       case AffixType.Reflect: {
         const reflectScore = skill.affixes.length * skill.level
@@ -1269,8 +800,6 @@ export function resolvePhase3(
     critTransformed: false,
     recurseCritContribution: 0,
     stackEffectFired: false,
-    burstSplash: false,
-    cipherCritMultBonus: 0,
   }
 
   // 暴击子系统：累计暴击率（affix loop 内只累加，loop 后统一判定）
@@ -1340,121 +869,6 @@ export function resolvePhase3(
         break
       }
 
-      case AffixType.Burst:
-      case AffixType.ZeroIn:
-      case AffixType.Sharpshooter:
-      case AffixType.Overflow: {
-        // 基础暴击率：使这些词条独立可用（主效果在暴击后触发）
-        totalCritChance += affix.critChance ?? 0
-        break
-      }
-
-      case AffixType.Parity: {
-        // 奇偶累计：读取 Phase 2 中累积的暴击率
-        totalCritChance += runtimeState.parityCritAccum
-        break
-      }
-
-      case AffixType.Cipher: {
-        // 密文：字母跳跃 → 暴击率（质变：���跃同时加暴击倍率）
-        const cw = (ctx.currentWord ?? '').toLowerCase()
-        const cipherCodes: number[] = []
-        for (const ch of cw) {
-          if (ch >= 'a' && ch <= 'z') cipherCodes.push(ch.charCodeAt(0))
-        }
-        if (cipherCodes.length >= 2) {
-          let totalDist = 0
-          let maxDist = 0
-          for (let i = 0; i < cipherCodes.length - 1; i++) {
-            const d = Math.abs(cipherCodes[i + 1] - cipherCodes[i])
-            totalDist += d
-            if (d > maxDist) maxDist = d
-          }
-          const avgDist = totalDist / (cipherCodes.length - 1)
-          totalCritChance += (affix.cipherK ?? 0) * avgDist
-          // 质变·破译：最大跳跃距离额外加到暴击倍率
-          if (isTransformedForAffix(AffixType.Cipher, runtimeState, skill, ctx)) {
-            flags.cipherCritMultBonus = maxDist * 0.02 // 每点距离 +2% 暴击倍率
-          }
-        }
-        break
-      }
-
-      case AffixType.Bigram: {
-        // 双字组：罕见字母对 → 暴击率
-        ensureBigramFreq()
-        const bw = ctx.currentWord?.toLowerCase() ?? ''
-        if (bw.length >= 2) {
-          const rarities: number[] = []
-          for (let i = 0; i < bw.length - 1; i++) {
-            const a = bw[i], b = bw[i + 1]
-            if (a >= 'a' && a <= 'z' && b >= 'a' && b <= 'z') {
-              rarities.push(1 - (BIGRAM_FREQ_TABLE[a + b] ?? 0))
-            }
-          }
-          if (rarities.length > 0) {
-            let avgRarity: number
-            if (isTransformedForAffix(AffixType.Bigram, runtimeState, skill, ctx) && rarities.length >= 2) {
-              rarities.sort((a, b) => b - a)
-              const topHalf = rarities.slice(0, Math.ceil(rarities.length / 2))
-              avgRarity = topHalf.reduce((a, b) => a + b, 0) / topHalf.length
-            } else {
-              avgRarity = rarities.reduce((a, b) => a + b, 0) / rarities.length
-            }
-            totalCritChance += (affix.bigramK ?? 0) * avgRarity
-          }
-        }
-        break
-      }
-
-      case AffixType.Bridge: {
-        // 桥 → 暴击率：是桥时加暴击率
-        if (affix.posRel != null) {
-          const bridgeNKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel).filter(k => ctx.bindings.has(k))
-          if (bridgeNKeys.length >= 2 && !areConnectedWithout(bridgeNKeys, ctx.occupiedKeys, affix.posRel, ctx.bindings)) {
-            totalCritChance += affix.bridgeK ?? 0
-          }
-        }
-        break
-      }
-
-      case AffixType.Clique: {
-        // 团 → 暴击率：互连组越大暴击率越高
-        if (affix.posRel != null) {
-          const cliqueNKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel).filter(k => ctx.bindings.has(k))
-          const cliqueCands = [ctx.triggerKey, ...cliqueNKeys]
-          const maxClq = findMaxClique(cliqueCands, affix.posRel)
-          if (maxClq > 1) {
-            totalCritChance += (affix.cliqueK ?? 0) * (maxClq - 1)
-          }
-        }
-        break
-      }
-
-      case AffixType.Pulse: {
-        const pulseInterval = getEffectiveInterval(affix.interval ?? 1, skill.id, ctx)
-        if (runtimeState.stacks > 0 && runtimeState.stacks % pulseInterval === 0) {
-          flags.isPulse = true
-          flags.stackEffectFired = true
-        }
-        break
-      }
-
-      case AffixType.Cascade: {
-        if (ctx.prevKey && affix.posRel != null) {
-          // 质变：双向连锁 — 正向 OR 反向都算连锁
-          const forward = hasRelation(ctx.prevKey, ctx.triggerKey, affix.posRel)
-          const reverse = isTransformedForAffix(AffixType.Cascade, runtimeState, skill, ctx) && hasRelation(ctx.triggerKey, ctx.prevKey, affix.posRel)
-          if (forward || reverse) {
-            const m = affix.cascadeMult ?? 1
-            output *= m
-            multipliers.push(m)
-            flags.isCascade = true
-          }
-        }
-        break
-      }
-
       case AffixType.Ligature: {
         let nEff: number
         if (isTransformedForAffix(AffixType.Ligature, runtimeState, skill, ctx) && ctx.ligatureStageCounts) {
@@ -1511,84 +925,22 @@ export function resolvePhase3(
     const hasCritTransform = skill.affixes.some(a => a.type === AffixType.Crit)
       && isTransformedForAffix(AffixType.Crit, runtimeState, skill, ctx)
     if (hasCritTransform) critMult *= 2
-    // Cipher 质变·破译：字母跳跃加到暴击倍率
-    if (flags.cipherCritMultBonus > 0) critMult += flags.cipherCritMultBonus
     if (ctx.fateCoinActive && rawCritChance > FATE_COIN_CRIT_CAP) {
       const excess = rawCritChance - FATE_COIN_CRIT_CAP
       effectiveCritChance = FATE_COIN_CRIT_CAP
       critMult = critMult + excess * FATE_COIN_CONVERSION
     }
 
-    // Clique 质变·传染：消耗 guaranteedCrit 标记
-    const isGuaranteedCrit = runtimeState.guaranteedCrit
-    if (isGuaranteedCrit) runtimeState.guaranteedCrit = false
 
-    if (isGuaranteedCrit || (effectiveCritChance > 0 && ctx.randomFn() < effectiveCritChance)) {
+    if (effectiveCritChance > 0 && ctx.randomFn() < effectiveCritChance) {
       output *= critMult
       multipliers.push(critMult)
       flags.isCrit = true
       flags.critTransformed = hasCritTransform
-      // Burst / Zero-In: 暴击时读 critStreak/missStreak 追加倍率
-      for (const a of skill.affixes) {
-        if (a.type === AffixType.Burst && (a.burstK ?? 0) > 0) {
-          const streak = runtimeState.critStreak ?? 0
-          if (streak > 0) {
-            const burstMult = 1 + (a.burstK ?? 0) * streak
-            output *= burstMult
-            multipliers.push(burstMult)
-          }
-          // 质变·弹幕：3连击时标记需要溅射邻居（由调度器处理）
-          if (streak >= 2 && isTransformedForAffix(AffixType.Burst, runtimeState, skill, ctx)) {
-            flags.burstSplash = true
-          }
-        }
-        if (a.type === AffixType.ZeroIn && (a.zeroInK ?? 0) > 0) {
-          const misses = runtimeState.missStreak ?? 0
-          if (misses > 0) {
-            const zeroMult = 1 + (a.zeroInK ?? 0) * misses
-            output *= zeroMult
-            multipliers.push(zeroMult)
-          }
-        }
-        if (a.type === AffixType.Sharpshooter && (a.sharpK ?? 0) > 0) {
-          const sharpBonus = (a.sharpK ?? 0) * Math.max(0, 1 - effectiveCritChance)
-          // 质变·狙击：加成同时作为 critMult 和 bonusPercent（等效翻倍）
-          const sharpMult = isTransformedForAffix(AffixType.Sharpshooter, runtimeState, skill, ctx)
-            ? 1 + sharpBonus * 2
-            : 1 + sharpBonus
-          output *= sharpMult
-          multipliers.push(sharpMult)
-        }
-      }
       // 暴击溢层（遗物）：暴击时自身额外叠层
       runtimeState.stacks += (ctx.critOverflowStacks ?? 0)
       // Overflow 词条：暴击时范围内叠层类邻居 +N 层（质变后全部，否则随机1个）
       for (const a of skill.affixes) {
-        if (a.type === AffixType.Overflow && a.posRel != null && (a.overflowStacks ?? 0) > 0) {
-          const overflowNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, a.posRel)
-            .filter(k => ctx.bindings.has(k))
-          const candidates: { key: string, id: string }[] = []
-          const seen = new Set<string>()
-          for (const nk of overflowNeighborKeys) {
-            const nId = ctx.bindings.get(nk)
-            if (!nId || nId === skill.id || seen.has(nId)) continue
-            seen.add(nId)
-            const nSkill = ctx.allSkills.get(nId)
-            if (nSkill && isStackingSkill(nSkill, ctx.skillStates)) {
-              candidates.push({ key: nk, id: nId })
-            }
-          }
-          if (candidates.length > 0) {
-            const isTransformed = isTransformedForAffix(AffixType.Overflow, runtimeState, skill, ctx)
-            const targets = isTransformed
-              ? candidates  // 质变：全部
-              : [candidates[Math.floor(ctx.randomFn() * candidates.length)]]  // 普通：随机1个
-            for (const t of targets) {
-              const targetState = ctx.skillStates.get(t.id)
-              if (targetState) targetState.stacks += a.overflowStacks!
-            }
-          }
-        }
       }
     } else if (hasTaboo) {
       // 禁忌：未暴击时产出负值
@@ -1627,10 +979,6 @@ export function resolvePhase3(
   // 质变·蓄能：暴击时 missStreak 转为 stacks（在清零前读取）
   if (flags.isCrit && (runtimeState.missStreak ?? 0) > 0) {
     for (const a of skill.affixes) {
-      if (a.type === AffixType.ZeroIn && isTransformedForAffix(AffixType.ZeroIn, runtimeState, skill, ctx)) {
-        runtimeState.stacks += runtimeState.missStreak ?? 0
-        break
-      }
     }
   }
 
@@ -1773,7 +1121,7 @@ function checkQuestEventCondition(
     case 'affixProc:pulse': return triggerFlags.isPulse
     case 'affixProc:cascade': return triggerFlags.isCascade
     case 'affixProc:recurse': return recurseProc
-    case 'affixProc:splash': return triggerFlags.splashTargets.length > 0
+    case 'affixProc:splash': return false
     case 'affixProc:taboo_penalty': return triggerFlags.isTabooPenalty
     case 'decayFloor': return triggerFlags.isDecayFloor
     case 'rangeFull': {
@@ -1803,20 +1151,6 @@ export function resolvePhase4(
   ctx: TriggerContext,
 ): Phase4Result {
   // 质变·编码：模式签名决定产出资源
-  const hasPattern = skill.affixes.some(a => a.type === AffixType.Pattern)
-  if (hasPattern && isTransformedForAffix(AffixType.Pattern, runtimeState, skill, ctx) && ctx.currentWord) {
-    const pattern = toPattern(ctx.currentWord)
-    if (pattern.length > 0) {
-      const PATTERN_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
-      const resIdx = (pattern.charCodeAt(0) - 65) % PATTERN_RESOURCES.length
-      const targetResource = PATTERN_RESOURCES[resIdx]
-      const skillBase = BASE_VALUES[skill.resource]?.[skill.level - 1] ?? 1
-      const targetBase = BASE_VALUES[targetResource]?.[skill.level - 1] ?? 1
-      const scaledOutput = skillBase > 0 ? output * (targetBase / skillBase) : output
-      return { targetResource, output: scaledOutput }
-    }
-  }
-
   const hasRainbow = skill.affixes.some(a => a.type === AffixType.Rainbow)
 
   if (!hasRainbow) {
@@ -1857,8 +1191,7 @@ export function resolvePhase5(
     recurse: { shouldRecurse: false, newChance: 0 },
     transmuteOutput: null,
     transmuteSameResourceBoost: 0,
-    splashTargets: [],
-    devourTarget: null,
+      devourTarget: null,
     questCompleted: false,
     outcastEchoTarget: null,
   }
@@ -1868,29 +1201,6 @@ export function resolvePhase5(
   // ── 词条后触发 ──
   for (const affix of skill.affixes) {
     switch (affix.type) {
-      case AffixType.Splash: {
-        if (ctx.chainAffixesDisabled) break
-        if (affix.posRel == null) break
-        // 叠层式：每叠 N 层触发 1 个匹配技能
-        const splashInterval = getEffectiveInterval(affix.splashCount ?? DEFAULT_STACK_INTERVAL, skill.id, ctx)
-        if (runtimeState.stacks > 0 && runtimeState.stacks % splashInterval === 0) {
-          const allKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
-            .filter(k => ctx.bindings.has(k))
-          const filtered = allKeys.filter(k => {
-            const sid = ctx.bindings.get(k)!
-            const target = ctx.allSkills.get(sid)
-            if (!target) return false
-            return hasSharedMatch(skill, target, AffixType.Splash)
-          })
-          result.splashTargets = pickRandomKeys(filtered, 1, ctx.randomFn)
-          triggerFlags.stackEffectFired = true
-          if (isTransformedForAffix(AffixType.Splash, runtimeState, skill, ctx)) {
-            result.chainSplash = true
-          }
-        }
-        break
-      }
-
       case AffixType.Amplify: {
         // 自身叠层（不再给范围内技能叠层）
         runtimeState.stacks += 1
@@ -1913,6 +1223,32 @@ export function resolvePhase5(
         break
       }
 
+      case AffixType.Splash: {
+        // 溅射：叠层，然后触发叠层数个匹配技能
+        runtimeState.stacks += 1
+        if (affix.posRel != null && !ctx.chainAffixesDisabled) {
+          const splashNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
+            .filter(k => ctx.bindings.has(k))
+          const validTargets: string[] = []
+          const seenIds = new Set<string>()
+          for (const k of splashNeighborKeys) {
+            const sid = ctx.bindings.get(k)!
+            if (sid === skill.id || seenIds.has(sid)) continue
+            seenIds.add(sid)
+            const target = ctx.allSkills.get(sid)
+            if (!target) continue
+            if (!hasSharedMatch(skill, target, AffixType.Splash)) continue
+            validTargets.push(k)
+          }
+          if (validTargets.length > 0) {
+            const count = Math.min(runtimeState.stacks, validTargets.length)
+            const targets = pickRandomKeys(validTargets, count, ctx.randomFn)
+            result.splashTargets = targets
+          }
+        }
+        break
+      }
+
       case AffixType.Recurse:
         // 递归重触发已移至暴击子系统（Phase 3 贡献暴击率，下方统一处理暴击重触发）
         break
@@ -1922,88 +1258,20 @@ export function resolvePhase5(
     }
   }
 
-  // ── Pulse 爆发：触发范围内所有叠层类技能一次（含自身） ──
-  if (triggerFlags.isPulse) {
-    result.pulseSelfTrigger = true
-    // 查找范围内的叠层类邻居技能
-    if (!ctx.chainAffixesDisabled) {
-      const pulseAffix = skill.affixes.find(a => a.type === AffixType.Pulse)
-      if (pulseAffix?.posRel != null) {
-        const pulseNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, pulseAffix.posRel)
-          .filter(k => ctx.bindings.has(k))
-        const targets: string[] = []
-        const seen = new Set<string>()
-        for (const nk of pulseNeighborKeys) {
-          const nSkillId = ctx.bindings.get(nk)
-          if (!nSkillId || nSkillId === skill.id || seen.has(nSkillId)) continue
-          seen.add(nSkillId)
-          const nSkill = ctx.allSkills.get(nSkillId)
-          if (!nSkill) continue
-          if (isStackingSkill(nSkill, ctx.skillStates)) {
-            targets.push(nk)
-          }
-        }
-        if (targets.length > 0) {
-          result.pulseNeighborTargets = targets
-        }
-      }
-    }
-  }
 
   // ── Parity 质变·相变：奇数叠层时额外自触发 ──
   if (!ctx.chainAffixesDisabled && runtimeState.stacks % 2 === 1) {
     for (const a of skill.affixes) {
-      if (a.type === AffixType.Parity && isTransformedForAffix(AffixType.Parity, runtimeState, skill, ctx)) {
-        result.pulseSelfTrigger = true
-        break
-      }
     }
   }
 
   // ── Bridge 质变·枢纽：是桥时触发两侧各一个邻居 ──
   if (!ctx.chainAffixesDisabled) {
     for (const a of skill.affixes) {
-      if (a.type === AffixType.Bridge && a.posRel != null && isTransformedForAffix(AffixType.Bridge, runtimeState, skill, ctx)) {
-        const bridgeNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, a.posRel)
-          .filter(k => ctx.bindings.has(k))
-        if (bridgeNeighborKeys.length >= 2 && !areConnectedWithout(bridgeNeighborKeys, ctx.occupiedKeys, a.posRel, ctx.bindings)) {
-          // 是桥：选最多 2 个邻居触发
-          const targets = pickRandomKeys(bridgeNeighborKeys, Math.min(2, bridgeNeighborKeys.length), ctx.randomFn)
-          result.splashTargets = [...(result.splashTargets ?? []), ...targets]
-        }
-        break
-      }
     }
   }
 
   // ── Pulse 质变：爆发时将范围内 1 个非叠层类技能转化为叠层类（每关重置） ──
-  if (triggerFlags.isPulse && isTransformedForAffix(AffixType.Pulse, runtimeState, skill, ctx) && !ctx.chainAffixesDisabled) {
-    const pulseAffix = skill.affixes.find(a => a.type === AffixType.Pulse)
-    const convertPosRel = pulseAffix?.posRel
-    if (convertPosRel != null) {
-      const convertNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, convertPosRel)
-        .filter(k => ctx.bindings.has(k))
-      const candidates: { key: string, id: string }[] = []
-      const seen = new Set<string>()
-      for (const nk of convertNeighborKeys) {
-        const nId = ctx.bindings.get(nk)
-        if (!nId || nId === skill.id || seen.has(nId)) continue
-        seen.add(nId)
-        const nSkill = ctx.allSkills.get(nId)
-        if (!nSkill) continue
-        // 只选非叠层类技能
-        if (!isStackingSkill(nSkill, ctx.skillStates)) {
-          candidates.push({ key: nk, id: nId })
-        }
-      }
-      if (candidates.length > 0) {
-        const pick = candidates[Math.floor(ctx.randomFn() * candidates.length)]
-        const pickState = ctx.skillStates.get(pick.id)
-        if (pickState) pickState.convertedToStacking = true
-      }
-    }
-  }
-
   // ── 暴击重触发：递归词条/回声指套 — 暴击时自触发一次，暴击率减半 ──
   if (triggerFlags.isCrit && triggerFlags.recurseCritContribution > 0 && recurseDepth < MAX_RECURSE_DEPTH) {
     const rcc = triggerFlags.recurseCritContribution
@@ -2160,27 +1428,6 @@ export function resolvePhase6(
 
     // 共鸣词条：范围内共享资源或词条的技能触发时，本技能自动触发N次
     for (const affix of neighborSkill.affixes) {
-      if (affix.type === AffixType.Resonance && ctx.chainAffixesDisabled) continue // chain_ban: 跳过共鸣
-
-      if (affix.type === AffixType.Resonance && affix.posRel != null) {
-        // Conduit 模式匹配：同资源 OR 共享词条类型（排除 Resonance 自身）
-        if (!hasSharedMatch(skill, neighborSkill, AffixType.Resonance)) continue
-        const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
-        if (matchedNk != null) {
-          // 叠层式：匹配技能触发时+1层，每叠 N 层自触发一次
-          if (neighborState) {
-            neighborState.stacks += 1
-            const resInterval = getEffectiveInterval(affix.resonanceCount ?? DEFAULT_STACK_INTERVAL, neighborSkillId, ctx)
-            if (neighborState.stacks > 0 && neighborState.stacks % resInterval === 0) {
-              actions.push({ type: 'resonance', neighborKey: matchedNk, triggerCount: 1 })
-              // 质变·共振：自触发时也给触发源+1叠层
-              if (isTransformedForAffix(AffixType.Resonance, neighborState, neighborSkill, ctx)) {
-                runtimeState.stacks += 1
-              }
-            }
-          }
-        }
-      }
     }
 
     // 质变·战号：触发技能暴击时，WarDrum 邻居+2叠层
@@ -2198,22 +1445,17 @@ export function resolvePhase6(
     }
 
     // 质变·对赌：亏损分摊给邻居
-    if ((runtimeState.leverageLoss ?? 0) > 0 && neighborState) {
-      neighborState.cliqueBonusAccum = (neighborState.cliqueBonusAccum ?? 0) - (runtimeState.leverageLoss / Math.max(1, neighborSkillKeys.size))
-    }
+
 
     // 质变·传染：暴击时团内 Clique 邻居下次必暴击
     if (isCrit && neighborState) {
       for (const nAffix of neighborSkill.affixes) {
-        if (nAffix.type !== AffixType.Clique || nAffix.posRel == null) continue
-        if (!isTransformedForAffix(AffixType.Clique, neighborState, neighborSkill, ctx)) continue
         const nCliqueKeys = getExtendedNeighbors(
           [...ctx.bindings].filter(([, sid]) => sid === neighborSkillId).map(([k]) => k),
           nAffix.posRel,
         ).filter(k => ctx.bindings.has(k))
         const inClique = occupiedKeys.some(ok => nCliqueKeys.includes(ok) || [...ctx.bindings].filter(([, sid]) => sid === neighborSkillId).some(([nk]) => hasRelation(ok, nk, nAffix.posRel!)))
         if (inClique) {
-          neighborState.guaranteedCrit = true
         }
         break
       }
@@ -2241,19 +1483,13 @@ export function resolvePhase6(
       }
     }
 
-    // 中转词条：叠层式 — 匹配技能触发时+1层，每叠 N 层触发 1 个匹配技能
+    // 中转词条：直接触发 — 匹配技能触发时直接触发 1 个匹配技能
     if (!ctx.chainAffixesDisabled) {
       for (const affix of neighborSkill.affixes) {
         if (affix.type !== AffixType.Relay || affix.posRel == null) continue
         const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
         if (matchedNk == null) continue
         if (!hasSharedMatch(skill, neighborSkill, AffixType.Relay)) continue
-
-        const neighborState = ctx.skillStates.get(neighborSkillId)
-        if (!neighborState) continue
-        neighborState.stacks += 1
-        const relayInterval = getEffectiveInterval(affix.relayCount ?? DEFAULT_STACK_INTERVAL, neighborSkillId, ctx)
-        if (!(neighborState.stacks > 0 && neighborState.stacks % relayInterval === 0)) continue
 
         // 从 Relay 技能的邻居中找匹配目标
         const relayNeighborKeys = getExtendedNeighbors(neighborKeys, affix.posRel)
@@ -2378,14 +1614,6 @@ export function triggerAffixSkill(
   const p5 = resolvePhase5(effectiveSkill, runtimeState, ctx, p3.flags, p3.output, recurseDepth, p4.targetResource)
 
   // 质变·弹幕：3连击时溅射一个 Adjacent 邻居
-  if (p3.flags.burstSplash && !ctx.chainAffixesDisabled) {
-    const burstNeighbors = getExtendedNeighbors(ctx.occupiedKeys, PositionRelation.Adjacent)
-      .filter(k => ctx.bindings.has(k))
-    if (burstNeighbors.length > 0) {
-      const target = pickRandomKeys(burstNeighbors, 1, ctx.randomFn)
-      p5.splashTargets = [...(p5.splashTargets ?? []), ...target]
-    }
-  }
 
   // Phase 6: 邻居通知（感应词条检查触发技能词条类型）
   const p6 = resolvePhase6(ctx.triggerKey, effectiveSkill, runtimeState, ctx, p4.targetResource, p3.flags.isCrit, p2.bonusPercent)
@@ -2402,7 +1630,6 @@ export function triggerAffixSkill(
         if (VOWELS.has(k) && sid !== skill.id) vowelCandidates.push(k)
       }
       if (vowelCandidates.length > 0) {
-        p5.clusterVowelTarget = vowelCandidates[Math.floor(ctx.randomFn() * vowelCandidates.length)]
       }
     }
     if ((m as any).type === 'outcastTarget') p5.outcastTarget = (m as any).value
@@ -2428,25 +1655,20 @@ export function triggerAffixSkill(
         for (const k of visited) {
           if (ctx.bindings.get(k) !== skill.id) allTargets.push(k)
         }
-        if (allTargets.length > 0) p5.componentAllTargets = allTargets
       } else {
         if (farthest !== startKey && ctx.bindings.get(farthest) !== skill.id) {
-          p5.componentFarTarget = farthest
         }
       }
     }
     if ((m as any).type === 'turbulenceWeak') {
       const weakId = (m as any).value as string
       for (const [k, sid] of ctx.bindings) {
-        if (sid === weakId) { p5.turbulenceWeakTarget = k; break }
       }
     }
     if ((m as any).type === 'turbulenceAll') {
       const targetId = (m as any).value as string
       for (const [k, sid] of ctx.bindings) {
         if (sid === targetId) {
-          if (!p5.turbulenceAllTargets) p5.turbulenceAllTargets = []
-          p5.turbulenceAllTargets.push(k)
           break
         }
       }
@@ -2902,16 +2124,9 @@ export function resetStageState(
 
     // Mirror 词条复制已移至关卡结束时（battle.ts），此处不再刷新
 
-    // critStreak / missStreak / prevEntropy 每关重置
+    // critStreak / missStreak 每关重置
     state.critStreak = 0
     state.missStreak = 0
-    state.prevEntropy = 0
-    state.componentAccum = 0
-    state.exoCount = 0
-    state.parityAccum = 0
-    state.parityCritAccum = 0
-    state.primeAccum = 0
-    state.convertedToStacking = false
 
     // MonkeyPatch：每关随机设定 patchTargetIndex 和 patchMultiplier
     state.patchTargetIndex = -1
@@ -3017,9 +2232,13 @@ export function deserializeSkill(
     questStacks: data.runtime.questStacks ?? 0,
     questCompletions: data.runtime.questCompletions ?? 0,
     questTransformed: data.runtime.questTransformed ?? ((data.runtime.questCompletions ?? 0) > 0),
-    counterCharges: (data.runtime as any).counterCharges ?? 0,
     exhaustCount: (data.runtime as any).exhaustCount ?? 0,
     etherealTriggered: (data.runtime as any).etherealTriggered ?? false,
+    critStreak: (data.runtime as any).critStreak ?? 0,
+    missStreak: (data.runtime as any).missStreak ?? 0,
+    patchTargetIndex: (data.runtime as any).patchTargetIndex ?? -1,
+    patchMultiplier: (data.runtime as any).patchMultiplier ?? 1.0,
+    mutacritAccum: (data.runtime as any).mutacritAccum ?? 0,
   }
   return { skill, runtimeState }
 }

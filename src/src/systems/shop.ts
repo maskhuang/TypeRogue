@@ -45,10 +45,9 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
-import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests, shannonEntropy, findMaxClique, bfsComponentSize, areConnectedWithout, getExtendedNeighbors } from '../data/affixTrigger';
-import { getPatternRarity } from '../data/patternFrequency';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests, getExtendedNeighbors } from '../data/affixTrigger';
 import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
-import { BIGRAM_FREQ_TABLE, invalidateBigramCache } from '../data/bigramFrequency';
+import { invalidateBigramCache } from '../data/bigramFrequency';
 import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
@@ -183,16 +182,14 @@ export function isInventoryFull(newSkillSlots: number = 1): boolean {
   return getInventoryUsed() + newSkillSlots > getInventoryCapacity();
 }
 
-/** 收集玩家已装备技能拥有的所有词条类型（去重，排除 link/splash 自身） */
-function collectPlayerAffixTypes(): AffixType[] {
-  const types = new Set<AffixType>();
+/** 收集玩家已装备技能拥有的所有词条类型（去重） */
+function collectPlayerAffixTypes(): AffixTypeEnum[] {
+  const types = new Set<AffixTypeEnum>();
   for (const [, skillId] of state.player.bindings) {
     const affix = state.affixSkills.get(skillId);
     if (!affix) continue;
     for (const a of affix.affixes) {
-      if (a.type !== 'splash') {
-        types.add(a.type as AffixType);
-      }
+      types.add(a.type as AffixTypeEnum);
     }
   }
   return [...types];
@@ -457,33 +454,18 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
         desc = desc.replace(/\bin range\b/g, relName);
         desc = desc.replace('position relation', relName);
       }
-      // 将资源占位符替换为具体资源（Convert/PhaseShift/EndoExo/Fusion/Leverage/Option/Hedge）
+      // 将资源占位符替换为具体资源（Convert）
       if (a.source) {
         const icon = RESOURCE_ICONS[a.source] || '';
         const name = t('resource.' + a.source) || a.source;
         desc = desc.replace('{source}', `${icon}${name}`);
       }
-      if (a.phaseSource) desc = desc.replace('{source}', `${RESOURCE_ICONS[a.phaseSource] || ''}${t('resource.' + a.phaseSource) || a.phaseSource}`);
-      if (a.endoSource) desc = desc.replace('{source}', `${RESOURCE_ICONS[a.endoSource] || ''}${t('resource.' + a.endoSource) || a.endoSource}`);
-      if (a.fusionSourceA && a.fusionSourceB) {
-        desc = desc.replace('{sourceA}', `${RESOURCE_ICONS[a.fusionSourceA] || ''}${t('resource.' + a.fusionSourceA) || a.fusionSourceA}`);
-        desc = desc.replace('{sourceB}', `${RESOURCE_ICONS[a.fusionSourceB] || ''}${t('resource.' + a.fusionSourceB) || a.fusionSourceB}`);
-      }
-      if (a.hedgeSourceA && a.hedgeSourceB) {
-        desc = desc.replace('{sourceA}', `${RESOURCE_ICONS[a.hedgeSourceA] || ''}${t('resource.' + a.hedgeSourceA) || a.hedgeSourceA}`);
-        desc = desc.replace('{sourceB}', `${RESOURCE_ICONS[a.hedgeSourceB] || ''}${t('resource.' + a.hedgeSourceB) || a.hedgeSourceB}`);
-      }
       // 静态数值占位符（从参数移出的固定信息）
       if (a.initialMult != null) desc = desc.replace('{init}', `${Math.round(a.initialMult * 100)}%`);
       if (a.decayPerTrigger != null) desc = desc.replace('{decayRate}', `${Math.round(a.decayPerTrigger * 100)}%`);
       if (a.gainPerSec != null) desc = desc.replace('{gain}', `${a.gainPerSec}s`);
-      if (a.marginThreshold != null) desc = desc.replace('{threshold}', String(a.marginThreshold));
-      if (a.strikePrice != null) desc = desc.replace('{threshold}', String(a.strikePrice));
-      if (a.endoThreshold != null) desc = desc.replace('{threshold}', String(a.endoThreshold));
-      if (a.phaseT1 != null && a.phaseT2 != null) { desc = desc.replace('{t1}', String(a.phaseT1)); desc = desc.replace('{t2}', String(a.phaseT2)); }
       if (a.maxTriggers != null) desc = desc.replace('{maxTriggers}', String(a.maxTriggers));
       if (a.patchLow != null) desc = desc.replace('{low}', String(a.patchLow));
-      if (a.evenK != null) desc = desc.replace('{evenK}', `${Math.round(a.evenK * 100)}%`);
       // Mirror: tooltip 显示当前复制的词条
       if (a.type === 'mirror' && rt) {
         // Story 41-5: 质变模式显示所有复制词条
@@ -564,10 +546,6 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'recurse': return `+${Math.round((a.recurseChance ?? 0) * 100)}%`
     case 'taboo': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
     case 'fallacy': return `+${Math.round((a.fallacyK ?? 0) * 100)}%/${t('param.fallacy_per')}`
-    case 'burst': return `+${Math.round((a.burstK ?? 0) * 100)}%/${t('param.burst_per')}`
-    case 'zero_in': return `+${Math.round((a.zeroInK ?? 0) * 100)}%/${t('param.zeroin_per')}`
-    case 'sharpshooter': return `+${Math.round((a.sharpK ?? 0) * 100)}%`
-    case 'overflow': return `+${a.overflowStacks ?? 3}${t('param.overflow_unit')}`
     // ── 数值类（变化值） ──
     case 'convert': return `k=${a.k?.toFixed(3) ?? '?'}`
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
@@ -579,45 +557,17 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'decorator': return `+${Math.round((a.decoratorK ?? 0) * 100)}%`
     case 'reflect': return `+${Math.round((a.reflectK ?? 0) * 100)}%`
     // ── 叠层类（变化值） ──
-    case 'pulse': return `${t('param.pulse_label')} ${a.interval ?? '?'}`
-    case 'splash': return `${t('param.interval_label')} ${a.splashCount ?? '?'}`
-    case 'resonance': return `${t('param.interval_label')} ${a.resonanceCount ?? '?'}`
-    case 'relay': return `${t('param.interval_label')} ${a.relayCount ?? '?'}`
     case 'war_drum': return `+${Math.round((a.critPerStack ?? 0) * 100)}%/${t('param.wardrum_per')}`
-    case 'counter': return `${t('param.counter_label')} ${a.maxCharges ?? 0}`
     // ── 拓扑类（变化值） ──
-    case 'bridge': return `+${Math.round((a.bridgeK ?? 0) * 100)}%`
-    case 'clique': return `+${Math.round((a.cliqueK ?? 0) * 100)}%/${t('param.clique_per')}`
-    case 'component': return `${t('param.interval_label')} ${a.componentInterval ?? 6}`
-    case 'match': return `${t('param.interval_label')} ${a.matchInterval ?? 3}`
     case 'flow': return `+${Math.round((a.flowK ?? 0) * 100)}%`
     case 'confluence': return `+${Math.round((a.confluenceK ?? 0) * 100)}%`
-    case 'turbulence': return `${t('param.interval_label')} ${a.turbulenceInterval ?? 6}`
-    // ── 词感类（变化值） ──
-    case 'cluster': return `${t('param.interval_label')} ${a.clusterInterval ?? 8}`
-    case 'coverage': return `+${Math.round((a.coverageK ?? 0) * 100)}%`
-    case 'bigram': return `+${Math.round((a.bigramK ?? 0) * 100)}%`
-    case 'entropy': return `+${Math.round((a.entropyK ?? 0) * 100)}%`
-    case 'cipher': return `+${Math.round((a.cipherK ?? 0) * 100)}%`
-    case 'pattern': return `+${Math.round((a.patternK ?? 0) * 100)}%`
-    // ── 金融类（变化值） ──
-    case 'leverage': return `+${Math.round((a.leverageK ?? 0) * 100)}%`
-    case 'option': return `-${Math.round((a.premium ?? 0) * 100)}%/${t('param.option_per')}`
-    case 'hedge': return `+${Math.round((a.hedgeK ?? 0) * 100)}%`
-    // ── 温度类（变化值） ──
-    case 'phase_shift': return `k=${(a.kGas ?? 0).toFixed(3)}`
-    case 'endo_exo': return `k=${(a.kExo ?? 0).toFixed(3)}`
-    case 'fusion': return `k=${(a.fusionK ?? 0).toFixed(3)}`
-    // ── 奇偶/素数 ──
-    case 'parity': return `${t('param.parity_odd')}+${Math.round((a.oddK ?? 0) * 100)}%`
-    case 'prime': return `+${Math.round((a.primeK ?? 0) * 100)}%`
     // ── 其他（变化值） ──
     case 'ligature': return `×${Math.round((a.ligatureBonus ?? 1.0) * 100)}%`
     case 'innate': return `${a.innateCount ?? 1}${t('param.innate_unit')}`
     case 'monkey_patch': return `~×${(a.patchHigh ?? 2.0).toFixed(1)}`
     // ── 无缩放参数 ──
     case 'rainbow': case 'twin': case 'mirror': case 'amplify':
-    case 'conduit': case 'ethereal':
+    case 'conduit': case 'relay': case 'splash': case 'ethereal':
       return ''
     // 蜕变系：按技能等级显示
     case 'excavate': case 'treasure': {
@@ -639,94 +589,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
 
 // APPRENTICE_ENCHANTMENT_IDS 已被 isApprenticeEnchantment() 取代
 
-// ===== 词感型词条预估缓存（按绑定字母过滤词库） =====
 
-type WordSenseStats = { avgCluster: number, avgCoverage: number, avgBigramRarity: number, avgEntropy: number, avgCipherDist: number, avgPatternRarity: number, wordCount: number }
-let _wordSenseCacheMap: Map<string, WordSenseStats> | null = null
-let _wordSenseCacheDeck: string[] | null = null
-const WORD_SENSE_FALLBACK: WordSenseStats = { avgCluster: 1.2, avgCoverage: 4.5, avgBigramRarity: 0.75, avgEntropy: 2.0, avgCipherDist: 8.0, avgPatternRarity: 3.0, wordCount: 0 }
-
-/** 计算指定字母在词库中出现的单词的平均词感特征 */
-function computeWordSenseForLetter(letter: string, deck: string[]): WordSenseStats {
-  const target = letter.toLowerCase()
-  const filtered = deck.filter(w => w.toLowerCase().includes(target))
-  if (filtered.length === 0) return WORD_SENSE_FALLBACK
-  let totalCluster = 0, totalCoverage = 0, totalBigramRarity = 0, totalPairs = 0
-  let totalEntropy = 0, totalCipherDist = 0, totalCipherWords = 0, totalPatternRarity = 0
-  for (const word of filtered) {
-    const w = word.toLowerCase()
-    let maxC = 0, curC = 0
-    for (const ch of w) {
-      if (isConsonant(ch)) { curC++; if (curC > maxC) maxC = curC } else curC = 0
-    }
-    totalCluster += Math.max(0, maxC - 1)
-    const letters = new Set<string>()
-    for (const ch of w) if (ch >= 'a' && ch <= 'z') letters.add(ch)
-    totalCoverage += letters.size
-    for (let i = 0; i < w.length - 1; i++) {
-      const a = w[i], b = w[i + 1]
-      if (a >= 'a' && a <= 'z' && b >= 'a' && b <= 'z') {
-        totalBigramRarity += (1 - (BIGRAM_FREQ_TABLE[a + b] ?? 0))
-        totalPairs++
-      }
-    }
-    // Entropy
-    totalEntropy += shannonEntropy(w)
-    // Cipher distance
-    const cLetters: number[] = []
-    for (const ch of w) if (ch >= 'a' && ch <= 'z') cLetters.push(ch.charCodeAt(0))
-    if (cLetters.length >= 2) {
-      let dist = 0
-      for (let i = 0; i < cLetters.length - 1; i++) dist += Math.abs(cLetters[i + 1] - cLetters[i])
-      totalCipherDist += dist / (cLetters.length - 1)
-      totalCipherWords++
-    }
-    // Pattern rarity
-    totalPatternRarity += getPatternRarity(w)
-  }
-  const n = filtered.length
-  return {
-    avgCluster: totalCluster / n,
-    avgCoverage: totalCoverage / n,
-    avgBigramRarity: totalPairs > 0 ? totalBigramRarity / totalPairs : 0.75,
-    avgEntropy: totalEntropy / n,
-    avgCipherDist: totalCipherWords > 0 ? totalCipherDist / totalCipherWords : 8.0,
-    avgPatternRarity: totalPatternRarity / n,
-    wordCount: n,
-  }
-}
-
-/** 获取绑定键位的词感预估（按字母过滤词库，缓存） */
-function getWordSenseAvgForKeys(boundKeys?: string | string[]): WordSenseStats {
-  const deck = state.player?.wordDeck
-  if (!deck || deck.length === 0) return WORD_SENSE_FALLBACK
-  // 缓存失效检查
-  if (_wordSenseCacheDeck !== deck) {
-    _wordSenseCacheMap = new Map()
-    _wordSenseCacheDeck = deck
-  }
-  const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
-  if (keys.length === 0) return WORD_SENSE_FALLBACK
-  // 多键技能：取所有键的加权平均（各键触发频率不同，简化为均值）
-  const cacheKey = keys.sort().join(',')
-  if (_wordSenseCacheMap!.has(cacheKey)) return _wordSenseCacheMap!.get(cacheKey)!
-  let totalC = 0, totalCov = 0, totalBR = 0, totalEnt = 0, totalCip = 0, totalPat = 0, totalW = 0
-  for (const k of keys) {
-    const s = computeWordSenseForLetter(k, deck)
-    totalC += s.avgCluster * s.wordCount
-    totalCov += s.avgCoverage * s.wordCount
-    totalBR += s.avgBigramRarity * s.wordCount
-    totalEnt += s.avgEntropy * s.wordCount
-    totalCip += s.avgCipherDist * s.wordCount
-    totalPat += s.avgPatternRarity * s.wordCount
-    totalW += s.wordCount
-  }
-  const result: WordSenseStats = totalW > 0
-    ? { avgCluster: totalC / totalW, avgCoverage: totalCov / totalW, avgBigramRarity: totalBR / totalW, avgEntropy: totalEnt / totalW, avgCipherDist: totalCip / totalW, avgPatternRarity: totalPat / totalW, wordCount: totalW }
-    : WORD_SENSE_FALLBACK
-  _wordSenseCacheMap!.set(cacheKey, result)
-  return result
-}
 
 /**
  * 计算战斗外可预估的产出：Void / Taboo 词条 + 学徒附魔。
@@ -879,111 +742,6 @@ export function computeSmartEstimate(
         }
         break
       }
-      case 'turbulence': {
-        // 湍流 → 额外叠层（显示间隔）
-        const interval = affix.turbulenceInterval ?? 6
-        breakdown.push({ typeKey: 'turbulence', label: t('est.turbulence', { n: interval }), detail: '' })
-        break
-      }
-      case 'cluster': {
-        // ��音丛 → 额外叠层
-        const avg = getWordSenseAvgForKeys(boundKeys)
-        const val = avg.avgCluster
-        const stacks = val > 0 ? Math.max(1, Math.round(val * (1 + (affix.clusterK ?? 0) * val))) : 0
-        if (stacks > 0) {
-          breakdown.push({ typeKey: 'cluster', label: t('est.cluster', { n: stacks }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
-        }
-        break
-      }
-      case 'coverage': {
-        // 覆盖度：按绑定字母过滤词库的平均不同字母数
-        const avg = getWordSenseAvgForKeys(boundKeys)
-        const bonus = (affix.coverageK ?? 0) * avg.avgCoverage
-        if (bonus > 0) {
-          addPercent += bonus
-          breakdown.push({ typeKey: 'coverage', label: t('est.coverage', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
-        }
-        break
-      }
-      case 'bigram': {
-        // 双字组 → 暴击率
-        const avg = getWordSenseAvgForKeys(boundKeys)
-        const critBonus = (affix.bigramK ?? 0) * avg.avgBigramRarity
-        if (critBonus > 0) {
-          critChanceAccum += critBonus
-          breakdown.push({ typeKey: 'bigram', label: t('est.bigram', { pct: Math.round(critBonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
-        }
-        break
-      }
-      case 'entropy': {
-        const avg = getWordSenseAvgForKeys(boundKeys)
-        const bonus = (affix.entropyK ?? 0) * avg.avgEntropy
-        if (bonus > 0) {
-          addPercent += bonus
-          breakdown.push({ typeKey: 'entropy', label: t('est.entropy_est', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
-        }
-        break
-      }
-      case 'cipher': {
-        // 密文 → 暴击率
-        const avg = getWordSenseAvgForKeys(boundKeys)
-        const critBonus = (affix.cipherK ?? 0) * avg.avgCipherDist
-        if (critBonus > 0) {
-          critChanceAccum += critBonus
-          breakdown.push({ typeKey: 'cipher', label: t('est.cipher', { pct: Math.round(critBonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
-        }
-        break
-      }
-      case 'pattern': {
-        // 模式 → bonusPercent
-        const avg = getWordSenseAvgForKeys(boundKeys)
-        const bonus = (affix.patternK ?? 0) * avg.avgPatternRarity
-        if (bonus > 0) {
-          addPercent += bonus
-          breakdown.push({ typeKey: 'pattern', label: t('est.pattern', { pct: Math.round(bonus * 100) }), detail: t('est.word_avg_detail', { n: avg.wordCount }) })
-        }
-        break
-      }
-      case 'bridge': {
-        // 桥 → 暴击率
-        if (affix.posRel == null) break
-        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
-        if (keys.length === 0) break
-        const neighborKeys = getExtendedNeighbors(keys, affix.posRel).filter(k => state.player.bindings.has(k))
-        let isBridge = false
-        if (neighborKeys.length >= 2) {
-          isBridge = !areConnectedWithout(neighborKeys, keys, affix.posRel, state.player.bindings)
-        }
-        const bridgeCrit = isBridge ? (affix.bridgeK ?? 0) : 0
-        critChanceAccum += bridgeCrit
-        breakdown.push({ typeKey: 'bridge', label: isBridge ? t('est.bridge', { pct: Math.round(bridgeCrit * 100) }) : t('est.bridge_no'), detail: '' })
-        break
-      }
-      case 'clique': {
-        // 团 → 暴击率
-        if (affix.posRel == null) break
-        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
-        if (keys.length === 0) break
-        const trigKey = keys[0]
-        const cNeighborKeys = getExtendedNeighbors(keys, affix.posRel).filter(k => state.player.bindings.has(k))
-        const candidates = [trigKey, ...cNeighborKeys]
-        const maxClq = findMaxClique(candidates, affix.posRel)
-        if (maxClq > 1) {
-          const cliqueCrit = (affix.cliqueK ?? 0) * (maxClq - 1)
-          critChanceAccum += cliqueCrit
-          breakdown.push({ typeKey: 'clique', label: t('est.clique', { pct: Math.round(cliqueCrit * 100) }), detail: t('est.clique_detail', { n: maxClq }) })
-        }
-        break
-      }
-      case 'component': {
-        // 连通 → 额外叠层（显示间隔+链长）
-        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
-        if (keys.length === 0) break
-        const compSize = bfsComponentSize(keys[0], PositionRelation.Adjacent, state.player.bindings)
-        const interval = affix.componentInterval ?? 6
-        breakdown.push({ typeKey: 'component', label: t('est.component', { n: interval }), detail: t('est.component_detail', { n: compSize }) })
-        break
-      }
       case 'reflect': {
         const reflectScore = skill.affixes.length * skill.level
         const bonus = (affix.reflectK ?? 0) * reflectScore
@@ -991,21 +749,6 @@ export function computeSmartEstimate(
           addPercent += bonus
           breakdown.push({ typeKey: 'reflect', label: t('est.reflect', { pct: Math.round(bonus * 100) }), detail: t('est.reflect_detail', { affixes: skill.affixes.length, level: skill.level }) })
         }
-        break
-      }
-      case 'burst': {
-        critChanceAccum += affix.critChance ?? 0
-        breakdown.push({ typeKey: 'burst', label: t('est.burst', { pct: Math.round((affix.burstK ?? 0) * 100) }), detail: '' })
-        break
-      }
-      case 'zeroIn': {
-        critChanceAccum += affix.critChance ?? 0
-        breakdown.push({ typeKey: 'zeroIn', label: t('est.zeroin', { pct: Math.round((affix.zeroInK ?? 0) * 100) }), detail: '' })
-        break
-      }
-      case 'sharpshooter': {
-        critChanceAccum += affix.critChance ?? 0
-        breakdown.push({ typeKey: 'sharpshooter', label: t('est.sharpshooter', { pct: Math.round((affix.sharpK ?? 0) * 100) }), detail: '' })
         break
       }
       case 'exhaust': {
@@ -1092,10 +835,7 @@ export function computeSkillCritChance(skill: AffixSkillInstance): number {
       case 'crit': crit += affix.chance ?? 0; break
       case 'taboo': crit += affix.bonusPercent ?? 0; break
       case 'recurse': crit += affix.recurseChance ?? 0; break
-      case 'burst':
-      case 'zeroIn':
-      case 'sharpshooter':
-      case 'overflow': crit += affix.critChance ?? 0; break
+
       // Charge/Decay/Fallacy 是动态的，不计入静态暴击率
     }
   }

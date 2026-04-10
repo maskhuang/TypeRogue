@@ -174,8 +174,8 @@ export function orchestrateAffixTrigger(
       triggerKey: item.triggerKey,
       occupiedKeys: chainedOccupiedKeys.length > 0 ? chainedOccupiedKeys : [item.triggerKey],
       transmuteResource: skill.transmuteResource,
-      // Story 41-3: splash 项默认禁用链式词条，chainSplash 允许一跳
-      ...(item.type === 'splash' && !item.chainSplash ? { chainAffixesDisabled: true } : {}),
+      // splash 触发禁用链式词条，防止 Splash→Splash 级联
+      ...(item.type === 'splash' ? { chainAffixesDisabled: true } : {}),
       // 41-4: outcast_echo / crit_echo 禁用链式词条防止循环
       ...(item.type === 'outcast_echo' || item.type === 'crit_echo' ? { chainAffixesDisabled: true } : {}),
       // conduit 额外触发禁用链式词条，防止 Conduit→Conduit 无限级联
@@ -206,45 +206,6 @@ export function orchestrateAffixTrigger(
     effectiveOutput *= getOutputDrainMultiplier(drainResource)
 
     results.push(result)
-
-    // Counter — 负面效果拦截：产出为负 OR bonusPercent < 0（词条整体减产）
-    const needsCounter = effectiveOutput < 0 || (result.bonusPercent != null && result.bonusPercent < 0)
-    if (needsCounter) {
-      const checked = new Set<string>()
-      for (const [cSkillId, cSkill] of ctx.allSkills) {
-        if (checked.has(cSkillId)) continue
-        checked.add(cSkillId)
-        const counterAffix = cSkill.affixes.find(a => a.type === AffixType.Counter)
-        if (!counterAffix) continue
-        const cRt = ctx.skillStates.get(cSkillId)
-        if (!cRt || (cRt as any).counterCharges <= 0) continue
-        // 检查范围：自身或 posRel 匹配
-        if (cSkillId !== item.skillId) {
-          if (counterAffix.posRel == null) continue
-          const cKeys = [...ctx.bindings].filter(([, sid]) => sid === cSkillId).map(([k]) => k)
-          const inRange = cKeys.some(ck => hasRelation(ck, item.triggerKey, counterAffix.posRel!))
-          if (!inRange) continue
-        }
-        (cRt as any).counterCharges--
-        if (effectiveOutput < 0) {
-          // 产出为负：归零 + 质变·反噬
-          if (cRt.questTransformed && cSkill.enchantmentIds?.includes(EnchantmentType.QuestCounter)) {
-            (cRt as any).counterAbsorbed = Math.abs(effectiveOutput)
-          }
-          effectiveOutput = 0
-        } else {
-          // bonusPercent < 0 但产出仍为正：取消负面加成，回到基础值
-          const baseOutput = result.phase4?.output != null
-            ? effectiveOutput / Math.max(0.01, 1 + result.bonusPercent)
-            : effectiveOutput
-          if (cRt.questTransformed && cSkill.enchantmentIds?.includes(EnchantmentType.QuestCounter)) {
-            (cRt as any).counterAbsorbed = baseOutput - effectiveOutput
-          }
-          effectiveOutput = baseOutput
-        }
-        break
-      }
-    }
 
     totalOutput += effectiveOutput
     triggerCount++
@@ -316,26 +277,6 @@ export function orchestrateAffixTrigger(
     // 注意：ctx.resources 是触发开始时的快照，consume 基于触发前的资源值限制消耗量
     if (result.consumeRequests) {
       for (const req of result.consumeRequests) {
-        // Counter 保护消耗：扫描范围内 Counter 取消本次消耗
-        let consumeBlocked = false
-        const checkedC = new Set<string>()
-        for (const [cSkillId, cSkill] of ctx.allSkills) {
-          if (checkedC.has(cSkillId)) continue
-          checkedC.add(cSkillId)
-          const counterAffix = cSkill.affixes.find(a => a.type === AffixType.Counter)
-          if (!counterAffix) continue
-          const cRt = ctx.skillStates.get(cSkillId)
-          if (!cRt || (cRt as any).counterCharges <= 0) continue
-          if (cSkillId !== item.skillId) {
-            if (counterAffix.posRel == null) continue
-            const cKeys = [...ctx.bindings].filter(([, sid]) => sid === cSkillId).map(([k]) => k)
-            if (!cKeys.some(ck => hasRelation(ck, item.triggerKey, counterAffix.posRel!))) continue
-          }
-          (cRt as any).counterCharges--
-          consumeBlocked = true
-          break
-        }
-        if (consumeBlocked) continue
         const current = ctx.resources[req.resource] ?? 0
         const consumeAmount = Math.min(req.amount, Math.max(0, current))
         if (consumeAmount > 0) {
@@ -358,27 +299,6 @@ export function orchestrateAffixTrigger(
         chainHistory: item.chainHistory,
         recurseCritOverride: result.phase5.recurse.newChance,
       })
-    }
-
-    // Splash: 溅射邻居
-    if (result.phase5?.splashTargets) {
-      // Story 41-3: 质变溅射 — 首跳传播 chainSplash，后续强制 false（仅一跳）
-      const propagateChainSplash = item.type !== 'splash'
-        ? (result.phase5.chainSplash ?? false)
-        : false
-      for (const targetKey of result.phase5.splashTargets) {
-        const targetSkillId = ctx.bindings.get(targetKey)
-        if (!targetSkillId) continue
-
-        queue.push({
-          skillId: targetSkillId,
-          triggerKey: targetKey,
-          type: 'splash',
-          depth: item.depth + 1,
-          chainHistory: childHistory,
-          chainSplash: propagateChainSplash,
-        })
-      }
     }
 
     // Outcast echo: 首尾呼应 — 对端技能触发（chainAffixesDisabled 防循环）
@@ -411,73 +331,6 @@ export function orchestrateAffixTrigger(
       }
     }
 
-    // Cluster 满层：触发元音键上的技能
-    if (result.phase5?.clusterVowelTarget) {
-      const vowelSkillId = ctx.bindings.get(result.phase5.clusterVowelTarget)
-      if (vowelSkillId) {
-        queue.push({
-          skillId: vowelSkillId,
-          triggerKey: result.phase5.clusterVowelTarget,
-          type: 'pulse_burst' as TriggerWorkType,
-          depth: item.depth + 1,
-          chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
-        })
-      }
-    }
-    // Component 满层：质变→链上所有技能 / 普通→链最远端
-    if (result.phase5?.componentAllTargets) {
-      for (const targetKey of result.phase5.componentAllTargets) {
-        const compSkillId = ctx.bindings.get(targetKey)
-        if (compSkillId) {
-          queue.push({
-            skillId: compSkillId,
-            triggerKey: targetKey,
-            type: 'pulse_burst' as TriggerWorkType,
-            depth: item.depth + 1,
-            chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
-          })
-        }
-      }
-    } else if (result.phase5?.componentFarTarget) {
-      const compSkillId = ctx.bindings.get(result.phase5.componentFarTarget)
-      if (compSkillId) {
-        queue.push({
-          skillId: compSkillId,
-          triggerKey: result.phase5.componentFarTarget,
-          type: 'pulse_burst' as TriggerWorkType,
-          depth: item.depth + 1,
-          chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
-        })
-      }
-    }
-
-    // Turbulence 满层：触发最弱邻居 / 质变：触发所有邻居
-    if (result.phase5?.turbulenceAllTargets) {
-      for (const targetKey of result.phase5.turbulenceAllTargets) {
-        const turbSkillId = ctx.bindings.get(targetKey)
-        if (turbSkillId) {
-          queue.push({
-            skillId: turbSkillId,
-            triggerKey: targetKey,
-            type: 'pulse_burst' as TriggerWorkType,
-            depth: item.depth + 1,
-            chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
-          })
-        }
-      }
-    } else if (result.phase5?.turbulenceWeakTarget) {
-      const turbSkillId = ctx.bindings.get(result.phase5.turbulenceWeakTarget)
-      if (turbSkillId) {
-        queue.push({
-          skillId: turbSkillId,
-          triggerKey: result.phase5.turbulenceWeakTarget,
-          type: 'pulse_burst' as TriggerWorkType,
-          depth: item.depth + 1,
-          chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
-        })
-      }
-    }
-
     // Outcast 满层：触发词另一端字母键技能
     if (result.phase5?.outcastTarget) {
       const outcastSkillId = ctx.bindings.get(result.phase5.outcastTarget)
@@ -492,47 +345,6 @@ export function orchestrateAffixTrigger(
       }
     }
 
-    // Pulse self: 脉冲爆发 — 立刻自触发一次
-    if (result.phase5?.pulseSelfTrigger) {
-      queue.push({
-        skillId: item.skillId,
-        triggerKey: item.triggerKey,
-        type: 'pulse_self',
-        depth: (item.type === 'pulse_self' ? item.depth : 0) + 1,
-        chainHistory: item.chainHistory,
-      })
-    }
-
-    // Pulse neighbors: 脉冲爆发 — 触发范围内叠层类邻居技能
-    if (result.phase5?.pulseNeighborTargets) {
-      for (const targetKey of result.phase5.pulseNeighborTargets) {
-        const targetSkillId = ctx.bindings.get(targetKey)
-        if (!targetSkillId) continue
-        queue.push({
-          skillId: targetSkillId,
-          triggerKey: targetKey,
-          type: 'pulse_burst',
-          depth: item.depth + 1,
-          chainHistory: childHistory,
-        })
-      }
-    }
-
-    // Pulse burst: 脉冲质变 — 爆发时触发匹配技能（可进入伪循环）
-    if (result.phase5?.pulseBurstTargets) {
-      for (const targetKey of result.phase5.pulseBurstTargets) {
-        const targetSkillId = ctx.bindings.get(targetKey)
-        if (!targetSkillId) continue
-        queue.push({
-          skillId: targetSkillId,
-          triggerKey: targetKey,
-          type: 'pulse_burst',
-          depth: item.depth + 1,
-          chainHistory: childHistory,
-        })
-      }
-    }
-
     // Amplify trigger: 增幅质变 — 层数增加时触发匹配技能
     if (result.phase5?.amplifyTriggerTargets) {
       for (const targetKey of result.phase5.amplifyTriggerTargets) {
@@ -542,6 +354,21 @@ export function orchestrateAffixTrigger(
           skillId: targetSkillId,
           triggerKey: targetKey,
           type: 'amplify_trigger',
+          depth: item.depth + 1,
+          chainHistory: childHistory,
+        })
+      }
+    }
+
+    // Splash: 溅射 — 触发叠层数个匹配技能
+    if (result.phase5?.splashTargets) {
+      for (const targetKey of result.phase5.splashTargets) {
+        const targetSkillId = ctx.bindings.get(targetKey)
+        if (!targetSkillId) continue
+        queue.push({
+          skillId: targetSkillId,
+          triggerKey: targetKey,
+          type: 'splash',
           depth: item.depth + 1,
           chainHistory: childHistory,
         })

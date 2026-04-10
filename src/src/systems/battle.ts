@@ -2354,15 +2354,10 @@ export async function startLevel(): Promise<void> {
   // Story 45: 重置本关累积产出追踪
   resetStageProduced();
 
-  // Story 45.12: Counter 每关充能恢复 + Innate 自动触发
+  // Story 45.12: Innate 自动触发
   for (const [skillId, skill] of state.affixSkills) {
     const rt = state.affixSkillStates.get(skillId);
     if (!rt) continue;
-    // Counter: 恢复充能
-    const counterAffix = skill.affixes.find(a => a.type === AffixType.Counter);
-    if (counterAffix) {
-      rt.counterCharges = counterAffix.maxCharges ?? 0;
-    }
     // Ethereal: 仅词条仍存在时重置触发标记 + 对其他词条 +1 级增幅
     if (skill.affixes.some(a => a.type === AffixType.Ethereal)) {
       rt.etherealTriggered = false;
