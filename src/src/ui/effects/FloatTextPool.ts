@@ -3,7 +3,7 @@
 // ============================================
 
 const POOL_SIZE = 48;
-const TEXT_FONT = 'bold 16px "Courier New", monospace';
+const PIXEL_FONT = '"Press Start 2P", "Courier New", monospace';
 
 interface FloatInstance {
   active: boolean;
@@ -81,13 +81,22 @@ function tick(): void {
       const y = f.y - ts * 30;
       const a = ts < 0.125 ? 1 : Math.max(0, 1 - (ts - 0.125) / 0.875);
       if (a > 0) {
-        ctx.globalAlpha = a;
-        ctx.fillStyle = f.color;
-        const fontSize = Math.round(20 * (f.size / 6));
-        ctx.font = `bold ${fontSize}px "Courier New", monospace`;
+        const fontSize = Math.max(12, Math.round(22 * (f.size / 6)));
+        const px = Math.round(f.x);
+        const py = Math.round(y);
+        ctx.font = `${fontSize}px ${PIXEL_FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(f.text, f.x, y);
+        ctx.imageSmoothingEnabled = false;
+        // 阴影（随字号缩放）
+        const shadowOff = Math.max(1, Math.round(fontSize / 10));
+        ctx.globalAlpha = a * 0.5;
+        ctx.fillStyle = '#000';
+        ctx.fillText(f.text, px + shadowOff, py + shadowOff);
+        // 主体
+        ctx.globalAlpha = a;
+        ctx.fillStyle = f.color;
+        ctx.fillText(f.text, px, py);
       }
       if (t >= 1) f.active = false;
     }
@@ -144,13 +153,13 @@ export function spawnFlightText(
   duration: number, dwellTime: number,
   onArrive?: () => void,
 ): void {
-  const s = Math.max(0.5, Math.min(scale, 3));
+  const s = Math.max(0.5, scale);
   // 就地文字——size 按 scale 放大
   const f1 = acquire();
   if (f1) {
     f1.active = true; f1.text = text; f1.color = color;
     f1.x = startX; f1.y = startY - 15;
-    f1.life = 0; f1.maxLife = 400; f1.size = Math.round(6 * s); f1.flight = false;
+    f1.life = 0; f1.maxLife = Math.min(1500, Math.round(400 * Math.pow(s, 0.5))); f1.size = Math.round(6 * s); f1.flight = false;
     f1.onArrive = undefined;
   }
   // 飞行小球——size 按 scale 放大

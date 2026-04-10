@@ -33,7 +33,7 @@ import { random, setNormalMode } from '../core/seededRandom';
 import { getMaxQueueLength } from './classes/FragmentQueue';
 import { routeEnergyToPipeline, ENERGY_PER_SLOT } from './classes/AssemblyPipeline';
 import { canAutocomplete, isRepeatWord, hasGlassCannon, resetTypingRelicState, trackWord, initTypingRelicBehaviors, checkSpeedRelics, recordKeypressForTaiko, checkTaikoHit, startTaikoSpawner, stopTaikoSpawner, updateTaikoJudge } from './relics/TypingRelicBehaviors';
-import { checkEchoThimble, calculateComboBuffer, checkComboDetonator, onComboBreakDetonator, hasImmortalCombo, saveLastBattleCombo, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus, onNewWordForCancel, checkCancelOnFirstLetter, getCancelChainBonus, getCancelChainCount, onCancelledWordComplete, onCancelledWordError, isWordCancelled } from './relics/ComboRelicBehaviors';
+import { calculateComboBuffer, checkComboDetonator, onComboBreakDetonator, hasImmortalCombo, saveLastBattleCombo, resetComboRelicState, initComboRelicBehaviors, getMultiplierPrismBonus, onNewWordForCancel, checkCancelOnFirstLetter, getCancelChainBonus, getCancelChainCount, onCancelledWordComplete, onCancelledWordError, isWordCancelled } from './relics/ComboRelicBehaviors';
 import { checkJazzBonus, resetSkillRelicState, initSkillRelicBehaviors, hasUncrownedKing, checkD100OnBattleStart } from './relics/SkillRelicBehaviors';
 import { resetEnchantmentRelicState, initEnchantmentRelicBehaviors, getApprenticeGrowthMultiplier, getQuestEquipReduction, getGreedyInscriptionTargetMult } from './relics/EnchantmentRelicBehaviors';
 import { checkDualConcerto, resetDualConcertoHand, checkKeyStorm, hasKeyStorm, KEY_STORM_SCORE_PENALTY, checkRowSwitch, checkLineClear, LINE_CLEAR_OUTPUT_RATIO, resetTopologyRelicState, initTopologyRelicBehaviors } from './relics/TopologyRelicBehaviors';
@@ -45,7 +45,7 @@ import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, sho
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, getUnderdogBonusGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
 import { resetCritRelicBattleState, resetCritRelicWordState, getCritStormBonus, initCritRelicBehaviors } from './relics/CritRelicBehaviors';
 import { checkDrumPass, getWordResonanceStacks, resetStackingRelicBattleState, initStackingRelicBehaviors, isPerpetualEngineActive, isStackingAffix } from './relics/StackingRelicBehaviors';
-import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests, removeAffixAtRuntime } from '../data/affixTrigger';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests, removeAffixAtRuntime, resetStageState } from '../data/affixTrigger';
 import { AffixType, applyAffixLevelScaling } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
@@ -697,7 +697,6 @@ function playerCorrect(k: string): void {
   // 太鼓节拍：记录击键 + 检查命中（结果存储在模块级变量，由 skills.ts 读取）
   if (state.player.relics.has('rhythm_adapt')) {
     recordKeypressForTaiko();
-    updateTaikoJudge();
     const taikoMult = checkTaikoHit();
     if (taikoMult > 1) {
       pulseRelicIcon('rhythm_adapt', '#ffe66d');
@@ -761,28 +760,6 @@ function playerCorrect(k: string): void {
     }
   }
 
-  // Story 36.2: 回声指套 — 8% 概率双重击键（combo+1 + 倍率更新 + 技能二次触发）
-  if (checkEchoThimble(random())) {
-    state.combo++;
-    state.maxCombo = Math.max(state.maxCombo, state.combo);
-    eventBus.emit('combo:update', { combo: state.combo });
-    // 重新计算 multiplier 以反映新 combo
-    mult = state.player.baseMultiplier + state.combo * state.player.comboBonus;
-    mult += synergy.skillMultBonus;
-    state.multiplier = mult;
-    if (skillId) {
-      // Story 37.4: 闪光连线 + 覆盖锚点（从遗物图标到刚输入的字母）
-      const echoIdx = getRelicIndex('echo_thimble');
-      const echoLetterIdx = state.player.index - 1;
-      if (echoIdx >= 0) {
-        const wordEl = getElements().word;
-        const letterEl = wordEl.children[echoLetterIdx] as HTMLElement | undefined;
-        if (letterEl) flashRelicLine(echoIdx, letterEl, '#4ecdc4');
-      }
-      triggerSkill(skillId, k, { letterIndex: echoLetterIdx });
-    }
-  }
-
   // Story 36.3: 连击引爆 — combo 达 15 时随机触发 3 个装备技能
   const detonateCount = checkComboDetonator(state.combo);
   if (detonateCount > 0) {
@@ -839,6 +816,7 @@ function playerCorrect(k: string): void {
   // Charge 按住蓄力：字母推进延迟到释放（releaseCharge）
   if (!_chargeHolding) {
     state.player.index++;
+    updateTaikoJudge(); // 太鼓判定点跟随当前字母
 
     // 小助手：首字母完成后显示 Tab 提示
     if (state.player.index === 1 && state.player.relics.has('little_helper') && isRepeatWord(state.player.word)) {
@@ -922,7 +900,7 @@ function playerWrong(): void {
     showFeedback(t('battle.cancel_error', { value: cancelPenalty }), '#ff4444');
   }
 
-  if (state.combo > 5) showFeedback('COMBO BREAK', '#ff6b6b');
+  if (state.combo > 5) showFeedback('BREAK', '#ff6b6b', 1, { fromElementId: 'combo-display', resource: 'base', amount: 0 });
 
   // 遗物 on_combo_break 管道解析（完美主义者断连击失去遗物）
   resolveRelicEffectsWithBehaviors('on_combo_break', {}, {
@@ -2372,12 +2350,16 @@ export async function startLevel(): Promise<void> {
   // Story 45: 重置本关累积产出追踪
   resetStageProduced();
 
+  // 重置每关词条状态（叠层归零、MonkeyPatch 随机等）
+  resetStageState(state.affixSkills, state.affixSkillStates, state.player.bindings, random);
+
   // Story 45.12: Innate 自动触发
   for (const [skillId, skill] of state.affixSkills) {
     const rt = state.affixSkillStates.get(skillId);
     if (!rt) continue;
-    // Ethereal: 仅词条仍存在时重置触发标记 + 对其他词条 +1 级增幅
-    if (skill.affixes.some(a => a.type === AffixType.Ethereal)) {
+    // Ethereal: 仅词条未消耗时重置触发标记 + 对其他词条 +1 级增幅
+    const etherealAffix = skill.affixes.find(a => a.type === AffixType.Ethereal && !a.spent);
+    if (etherealAffix) {
       rt.etherealTriggered = false;
       // 增幅其他词条（排除 Ethereal 自身）
       const otherAffixes = skill.affixes.filter(a => a.type !== AffixType.Ethereal);
@@ -2582,7 +2564,7 @@ export function updateHUD(): void {
     el.targetScore.textContent = t('battle.calibration') || '—';
     el.targetScore.style.color = '#aaaaaa';
   } else if (_targetReached) {
-    el.targetScore.textContent = `✓ ${state.targetScore}`;
+    el.targetScore.textContent = `OK ${state.targetScore}`;
     el.targetScore.style.color = '#4ecdc4';
   } else {
     el.targetScore.textContent = String(state.targetScore);
@@ -2744,6 +2726,7 @@ function createFloatText(text: string, color: string, scale = 1, skillAnchor?: {
     } else if (skillAnchor.fromElementId) {
       startEl = document.getElementById(skillAnchor.fromElementId) ?? undefined;
     }
+    if (!startEl) startEl = document.getElementById('active-library') ?? undefined;
     flightResource = skillAnchor.resource;
     flightAmount = skillAnchor.amount ?? 0;
   } else if (relicAnchor) {

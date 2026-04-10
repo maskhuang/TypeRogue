@@ -363,6 +363,7 @@ button, input, select, textarea { font-family: inherit; }
     font-size: 20px;
     font-weight: normal;
     color: #4ecdc4;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
     min-width: 50px;
     text-align: right;
     font-family: var(--font-pixel);
@@ -408,10 +409,10 @@ button, input, select, textarea { font-family: inherit; }
     font-weight: normal;
     letter-spacing: 2px;
     font-family: var(--font-pixel);
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
 }
 
-#score-count {
-    display: inline-block;
+NOT_FOUND    display: inline-block;
     color: #fff;
     text-shadow: none;
     transition: color 0.05s steps(1);
@@ -441,6 +442,7 @@ button, input, select, textarea { font-family: inherit; }
     font-size: 24px;
     font-weight: bold;
     color: #ffe66d;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
 }
 
 .mult-x {
@@ -483,6 +485,7 @@ button, input, select, textarea { font-family: inherit; }
     position: relative;
     font-family: var(--font-pixel);
     image-rendering: pixelated;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
 }
 
 .letter {
@@ -500,7 +503,7 @@ button, input, select, textarea { font-family: inherit; }
 }
 .letter.current {
     color: #fff;
-    text-shadow: none;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
     animation: pixelCursor 1s steps(1) infinite;
     background: rgba(78,205,196,0.25);
     outline: 2px solid #4ecdc4;
@@ -680,7 +683,7 @@ button, input, select, textarea { font-family: inherit; }
     font-size: 14px;
     font-weight: normal;
     color: #ffd700;
-    text-shadow: none;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
     font-family: var(--font-pixel);
 }
 
@@ -703,7 +706,7 @@ button, input, select, textarea { font-family: inherit; }
     font-size: 26px;
     font-weight: normal;
     color: #ff6b6b;
-    text-shadow: none;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
     font-family: var(--font-pixel);
 }
 
@@ -1688,8 +1691,7 @@ button, input, select, textarea { font-family: inherit; }
     50% { border-color: #fff080; }
 }
 
-#game-container.pseudo-infinite #score-count {
-    animation: infiniteScoreScroll 0.3s steps(2) infinite alternate;
+#game-container.pseudo-infinite NOT_FOUND    animation: infiniteScoreScroll 0.3s steps(2) infinite alternate;
 }
 @keyframes infiniteScoreScroll {
     0% { transform: translateY(-1px); }
@@ -2234,8 +2236,8 @@ button, input, select, textarea { font-family: inherit; }
     font-family: var(--font-pixel);
 }
 
-.settlement-chips .settlement-value { color: #4ea8db; text-shadow: none; }
-.settlement-mult-box .settlement-value { color: #e85555; text-shadow: none; }
+.settlement-chips .settlement-value { color: #4ea8db; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
+.settlement-mult-box .settlement-value { color: #e85555; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 
 .settlement-mult { display: flex; align-items: center; gap: 10px; }
 
@@ -2253,7 +2255,7 @@ button, input, select, textarea { font-family: inherit; }
     font-size: calc(var(--text-title-size) * 2);
     font-weight: normal;
     color: #ffe66d;
-    text-shadow: none;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.9);
     font-family: var(--font-pixel);
 }
 

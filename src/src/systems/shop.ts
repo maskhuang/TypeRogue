@@ -443,6 +443,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
   apprenticeGrowth?: string
 } {
   const affixInfo: AffixTooltipInfo[] = skill.affixes
+    .filter(a => !a.spent)
     .flatMap((a, _affixIdx) => {
       let desc = t('affix_desc.' + a.type);
       // 将「指定关系」/「in range」替换为具体位置关系名（如「同行」「相邻」/「adjacent」）
@@ -577,7 +578,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
   switch (a.type) {
     // ── 暴击类（变化值） ──
     case 'crit': return `+${Math.round((a.chance ?? 0) * 100)}%`
-    case 'charge': return `${t('param.charge_label')} ${Math.round((a.maxBonus ?? 0) * 100)}%`
+    case 'charge': return `×${(a.maxBonus ?? 2.5).toFixed(1)}`
     case 'decay': return `${t('param.decay_label')} ${Math.round((a.floor ?? 0) * 100)}%`
     case 'recurse': return `+${Math.round((a.recurseChance ?? 0) * 100)}%`
     case 'taboo': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`

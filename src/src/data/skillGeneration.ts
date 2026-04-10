@@ -150,16 +150,16 @@ export function rollAffixParams(
   const pool = availableResources ?? GENERIC_RESOURCES
   switch (type) {
     case AffixType.Convert: {
+      // time 作为源是稀有变体：仅 20% 概率入池
+      const convertPool = pool.filter(r => r !== 'time' || random() < 0.2)
       let source: ResourceType
       if (convertVariant === 'self') {
         source = resource
       } else if (convertVariant === 'cross') {
-        // 异源：排除本资源
-        const others = pool.filter(r => r !== resource)
-        source = pickRandom(others)
+        const others = convertPool.filter(r => r !== resource)
+        source = others.length > 0 ? pickRandom(others) : pickRandom(pool.filter(r => r !== resource))
       } else {
-        // 无指定：随机
-        source = pickRandom(pool)
+        source = pickRandom(convertPool)
       }
       const [kMin, kMax] = CONVERT_K_TABLE[source]
       const k = roundTo(kMin + random() * (kMax - kMin), 4)
@@ -170,7 +170,7 @@ export function rollAffixParams(
       return { type }
 
     case AffixType.Charge:
-      return { type, gainPerSec: 0.50, maxBonus: 0.50 }
+      return { type, gainPerSec: 4.0, maxBonus: roundTo(2.3 + random() * 0.4, 2) }  // 每秒+4.0倍率, 上限×2.3~2.7
 
     case AffixType.Decay:
       return { type, initialMult: 0.40, decayPerTrigger: 0.05, floor: 0.05 }
@@ -260,7 +260,7 @@ export function rollAffixParams(
       return { type, fallacyK: roundTo(0.05 + random() * 0.07, 3), fallacyStacks: 0 }  // 0.05~0.12 per non-crit
 
     case AffixType.Multiply:
-      return { type, multiplyValue: roundTo(1.5 + random() * 0.5, 2) }  // ×1.5~2.0
+      return { type, multiplyValue: roundTo(1.0 + random() * 1.0, 2) }  // ×1.0~2.0
 
     case AffixType.Flow:
       return { type, posRel: pickRandom(ALL_POS_RELATIONS), flowK: roundTo(0.03 + random() * 0.05, 3) }  // 0.03~0.08
@@ -281,7 +281,7 @@ export function rollAffixParams(
       return { type, innateCount: 1 }
 
     case AffixType.Exhaust:
-      return { type, exhaustMult: roundTo(2.5 + random() * 1.0, 1), maxTriggers: Math.floor(5 + random() * 6) }  // ×2.5~3.5, 5~10 uses
+      return { type, exhaustMult: roundTo(2.0 + random() * 1.0, 1), maxTriggers: Math.floor(5 + random() * 6) }  // ×2.0~3.0, 5~10 uses
 
     case AffixType.Ethereal:
       return { type }  // 效果固定：其他词条+1级，无需参数

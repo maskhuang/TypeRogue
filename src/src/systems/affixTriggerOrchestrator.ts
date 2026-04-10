@@ -220,9 +220,11 @@ export function orchestrateAffixTrigger(
       if (skill && rt) {
         const exhaustAffix = skill.affixes.find(a => a.type === AffixType.Exhaust)
         if (exhaustAffix && !exhaustAffix.spent) {
-          (rt as any).exhaustCount = ((rt as any).exhaustCount ?? 0) + 1
-          if ((rt as any).exhaustCount >= (exhaustAffix.maxTriggers ?? Infinity)) {
-            exhaustAffix.spent = true // 无效化但保留（可被蜕变重置）
+          rt.exhaustCount = (rt.exhaustCount ?? 0) + 1
+          if (rt.exhaustCount >= (exhaustAffix.maxTriggers ?? Infinity)) {
+            // 战斗中消耗完：从词条列表中移除
+            const idx = skill.affixes.indexOf(exhaustAffix)
+            if (idx >= 0) skill.affixes.splice(idx, 1)
           }
         }
         // Ethereal: 标记已触发

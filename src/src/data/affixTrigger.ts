@@ -131,8 +131,6 @@ export interface TriggerContext {
   fateCoinActive?: boolean
   /** 递归暴击率覆盖（由调度器传入，每次暴击重触发减半） */
   recurseCritOverride?: number
-  /** 回声指套暴击率（遗物注入，暴击时额外触发） */
-  echoThimbleCritRate?: number
   // ── Story 45: 累积产出追踪 ──
   /** 本关各资源累积产出量（备用） */
   stageProduced?: Partial<Record<ResourceType, number>>
@@ -516,21 +514,10 @@ export function resolvePhase1(skill: AffixSkillInstance): number {
 // ===== getAffixSourceValue =====
 
 /**
- * 读取转化词条的源资源当前值。
- * 对齐设计文档 §五 和现有 converters.ts:getSourceValue。
+ * 读取转化词条的源资源当前值（读池子存量，非产出量）。
  */
 export function getAffixSourceValue(source: ResourceType, ctx: TriggerContext): number {
-  if (source === 'energy' || source === 'mutagen') {
-    return ctx.classResourceProduced[source] ?? 0
-  }
-  if (source === 'base') {
-    // base 读本词实时累积（synergy.skillBaseScore），同步于本词实时累积
-    return ctx.wordBaseScore ?? 0
-  }
-  if (source === 'score') {
-    return ctx.resources.score + (ctx.wordBaseScore ?? 0) * ctx.resources.multiplier
-  }
-  return ctx.resources[source]
+  return ctx.resources[source] ?? 0
 }
 
 
@@ -680,13 +667,19 @@ export function resolvePhase2(
       }
 
       case AffixType.Charge: {
-        // 蓄力并入暴击系统：暴击率贡献在 Phase 3 处理
-        const maxBonus = affix.maxBonus ?? 0
-        // Story 41-5: 质变 — 满蓄力释放自动完成当前单词
-        if (isTransformedForAffix(AffixType.Charge, runtimeState, skill, ctx) && runtimeState.chargeAccumulated >= maxBonus && maxBonus > 0) {
+        // 蓄力→产出倍率：accumulated 从 0 增长到 maxBonus，触发时乘以 1.0 + accumulated/maxBonus * (maxBonus - 1.0)
+        const maxMult = affix.maxBonus ?? 2.5
+        const ratio = maxMult > 0 ? Math.min(runtimeState.chargeAccumulated / maxMult, 1) : 0
+        const chargeMult = 1.0 + ratio * (maxMult - 1.0)
+        if (chargeMult > 1) {
+          bonusPercent += chargeMult - 1  // 作为加算百分比
+        }
+        // 质变 — 满蓄力释放自动完成当前单词
+        if (isTransformedForAffix(AffixType.Charge, runtimeState, skill, ctx) && ratio >= 1) {
           chargeAutoComplete = true
         }
-        // 蓄力清零移至 Phase 3（读取暴击率后再清零）
+        // 蓄力释放清零
+        runtimeState.chargeAccumulated = 0
         break
       }
 
@@ -826,13 +819,7 @@ export function resolvePhase3(
         break
       }
 
-      case AffixType.Charge: {
-        // 蓄力并入暴击：暴击率随蓄力量增长
-        totalCritChance += Math.min(runtimeState.chargeAccumulated, affix.maxBonus ?? 0)
-        // 蓄力释放清零
-        runtimeState.chargeAccumulated = 0
-        break
-      }
+      // Charge: 已移至 Phase 2（产出倍率）
 
       case AffixType.Decay: {
         // 衰减并入暴击：首次触发暴击率最高，逐次衰减至下限
@@ -910,8 +897,7 @@ export function resolvePhase3(
   {
     // 战鼓暴击率贡献（范围内战鼓技能 stacks × critPerStack）
     totalCritChance += sumNeighborWarDrumCrit(skill, ctx.occupiedKeys, ctx)
-    // 回声指套暴击率贡献（暴击重触发时与递归一同减半）
-    const echoCrit = ctx.echoThimbleCritRate ?? 0
+    const echoCrit = 0
     recurseCritContribution += echoCrit
     flags.recurseCritContribution = recurseCritContribution
     // Mutacrit 永久暴击率累积
@@ -1026,6 +1012,8 @@ export const APPRENTICE_GROWTH_DEFAULTS: Partial<Record<EnchantmentType, number>
 
 /** 资源专精 EXP = (output / baseLv1Value) × rate × growthMultiplier */
 export const APPRENTICE_RES_EXP_RATE = 0.01
+/** 学徒·暴击：每次暴击的成长量 */
+export const APPRENTICE_CRIT_GROWTH = 0.03
 
 /** 资源专精附魔→目标资源映射 */
 export const APPRENTICE_RESOURCE_MAP: Partial<Record<EnchantmentType, ResourceType>> = {
@@ -1993,6 +1981,7 @@ export function categorizeEnchantmentCandidates(skill: AffixSkillInstance, _equi
     EnchantmentType.ApprenticeResBase, EnchantmentType.ApprenticeResScore,
     EnchantmentType.ApprenticeResMultiplier, EnchantmentType.ApprenticeResTime,
     EnchantmentType.ApprenticeResGold,
+    EnchantmentType.ApprenticeCrit,
   ]
   const apprentice = apprenticeTypes.filter(t => !existingEnchs.has(t) && t !== sameResEnch)
 
@@ -2295,6 +2284,7 @@ export function isApprenticeEnchantment(ench: EnchantmentType): boolean {
     || ench === EnchantmentType.ApprenticeResMultiplier
     || ench === EnchantmentType.ApprenticeResTime
     || ench === EnchantmentType.ApprenticeResGold
+    || ench === EnchantmentType.ApprenticeCrit
 }
 
 // ===== 升华系统 (Apprentice Ascension) =====

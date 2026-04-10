@@ -516,18 +516,6 @@ export const RELICS: Record<string, RelicData> = {
 
   // ==================== 通用遗物：连击/倍率系统 (Story 36.3) ====================
 
-  echo_thimble: {
-    id: 'echo_thimble',
-    name: '回声指套',
-    icon: '🧤',
-    description: '所有技能 +8% 暴击率，暴击时额外触发一次（每次暴击率减半）。',
-    rarity: 'common',
-    basePrice: 50,
-    effects: [],
-    subsystem: 'combo',
-    behaviorType: 'double_keystroke',
-    flavor: '指尖的余韵，化为第二次敲击。',
-  },
 
   combo_buffer: {
     id: 'combo_buffer',

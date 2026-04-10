@@ -72,7 +72,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Multiply]: ['numeric'],
   // ── 暴击型 ──
   [AffixType.Crit]: ['crit'],
-  [AffixType.Charge]: ['crit'],
+  [AffixType.Charge]: ['numeric'],
   [AffixType.Decay]: ['crit'],
   [AffixType.Recurse]: ['crit'],
   [AffixType.Taboo]: ['crit'],
@@ -129,6 +129,7 @@ export enum EnchantmentType {
   ApprenticeResMultiplier = 'apprentice_res_multiplier',
   ApprenticeResTime = 'apprentice_res_time',
   ApprenticeResGold = 'apprentice_res_gold',
+  ApprenticeCrit = 'apprentice_crit',
   // ── 任务型（需技能拥有对应词条） ──
   QuestDevour = 'quest_devour',
   QuestOverload = 'quest_overload',
@@ -234,6 +235,7 @@ export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
   [EnchantmentType.ApprenticeResMultiplier]: { type: EnchantmentType.ApprenticeResMultiplier, name: '专精·倍率', icon: '📈', category: 'apprentice', desc: '产出倍率资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeResTime]:       { type: EnchantmentType.ApprenticeResTime,       name: '专精·时间', icon: '⏳', category: 'apprentice', desc: '产出时间资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeResGold]:       { type: EnchantmentType.ApprenticeResGold,       name: '专精·金币', icon: '💰', category: 'apprentice', desc: '产出金币资源时永久成长 +2%' },
+  [EnchantmentType.ApprenticeCrit]:           { type: EnchantmentType.ApprenticeCrit,           name: '学徒·暴击', icon: '💥', category: 'apprentice', desc: '暴击时永久成长' },
   // ── 运算符（通过质变获取） ──
   [EnchantmentType.MultiplyOperator]: { type: EnchantmentType.MultiplyOperator, name: '乘算化', icon: '✖️', category: 'operator', desc: '将加算层各项加成转为独立乘数' },
 }
@@ -582,10 +584,10 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
 
 /** 词条功能说明（玩家可读） */
 export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
-  [AffixType.Convert]: '读取一种资源的产出，按系数加成',
+  [AffixType.Convert]: '读取一种资源的当前存量，按系数加成',
   [AffixType.Rainbow]: '每次触发时随机选择一种资源类型产出',
   [AffixType.Multiply]: '产出直接乘以固定倍数',
-  [AffixType.Charge]: '按住1秒蓄满，触发时释放暴击率加成；蓄满自动释放或松开提前释放',
+  [AffixType.Charge]: '按住蓄力，触发时释放产出倍率（×1.0~上限）；蓄满自动释放',
   [AffixType.Decay]: '首次触发暴击率最高，逐次衰减至下限，每关重置',
   [AffixType.Crit]: '触发时有概率暴击',
   [AffixType.Cascade]: '上一个按键与当前键满足指定位置关系时，产出倍增',
@@ -844,7 +846,7 @@ interface AffixScalingEntry {
 export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> = {
   // ── 暴击类 ──
   [AffixType.Crit]:     { param: 'chance',          delta: 0.05,  mode: 'add' },
-  [AffixType.Charge]:   { param: 'maxBonus',       delta: 0.10,  mode: 'add' },
+  [AffixType.Charge]:   { param: 'maxBonus',       delta: 0.25,  mode: 'add' },
   [AffixType.Decay]:    { param: 'floor',           delta: 0.02,  mode: 'add' },
   [AffixType.Recurse]:  { param: 'recurseChance',  delta: 0.03,  mode: 'add' },
   [AffixType.Taboo]:    { param: 'bonusPercent',   delta: 0.08,  mode: 'add' },

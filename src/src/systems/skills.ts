@@ -15,8 +15,8 @@ import { getFloatScale } from '../effects/juice';
 import { eventBus } from '../core/events/EventBus';
 import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
-import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE } from '../data/affixTrigger';
-import { getMultiplierPrismBonus, getCancelChainBonus, getEchoThimbleCritRate } from './relics/ComboRelicBehaviors';
+import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE, APPRENTICE_CRIT_GROWTH } from '../data/affixTrigger';
+import { getMultiplierPrismBonus, getCancelChainBonus } from './relics/ComboRelicBehaviors';
 import { getStackDividendBonus, checkStackDividend, getPerpetualEngineIntervalMult, getCritOverflowStacks, getInscriptionFlowGrowth, isOverloadCircuitActive, isSurgeActive, isNeighborWatchActive, onStackEffectTriggered } from './relics/StackingRelicBehaviors';
 import { getTaikoBonus } from './relics/TypingRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
@@ -30,7 +30,7 @@ import { getLuckyStrikeCritRate, getCritBonusGold, isCritChargeReady, consumeCri
 import { getFuryBeatCritRate } from './relics/ComboRelicBehaviors';
 import { getRuneSpikeCritRate } from './relics/EnchantmentRelicBehaviors';
 import { getPrecisionStrikeCritRate } from './relics/TopologyRelicBehaviors';
-import { AffixType, BASE_VALUES } from '../data/affixes';
+import { AffixType, EnchantmentType as EnchantmentTypeEnum, BASE_VALUES } from '../data/affixes';
 import { inputHandler } from './typing/InputHandler';
 
 
@@ -154,12 +154,13 @@ export function updateChargeProducers(dt: number): string[] {
     const chargeAffix = skill.affixes.find(a => a.type === AffixType.Charge)
     if (!chargeAffix) continue
 
-    const maxBonus = chargeAffix.maxBonus ?? 0
+    const maxBonus = chargeAffix.maxBonus ?? 2.5
     if (rt.chargeAccumulated >= maxBonus) continue
 
-    // 始终 1 秒蓄满：速率 = maxBonus / 1s（忽略 gainPerSec）
+    // 每秒累积 gainPerSec 倍率，上限 maxBonus
+    const rate = chargeAffix.gainPerSec ?? 4.0
     rt.chargeAccumulated = Math.min(
-      rt.chargeAccumulated + maxBonus * dt,
+      rt.chargeAccumulated + rate * dt,
       maxBonus,
     )
     if (rt.chargeAccumulated >= maxBonus) {
@@ -293,7 +294,6 @@ function triggerAffixSkillWithFeedback(
       + getDesperateCritRate()
       + getChargeAutoCritBonus(),  // 蓄力质变：自动补全期间所有技能获得等量暴击率
     fateCoinActive,
-    echoThimbleCritRate: getEchoThimbleCritRate(),
     // 叠层子系统遗物
     perpetualIntervalMult: getPerpetualEngineIntervalMult(),
     critOverflowStacks: getCritOverflowStacks(),
@@ -511,7 +511,6 @@ function triggerAffixSkillWithFeedback(
     if (amount === 0) continue;
 
     const color = RESOURCE_COLORS[resource] || '#ffffff';
-    const label = getResourceLabel(resource);
     const displayValue = parseFloat(Math.abs(amount).toPrecision(4));
     const scale = getFloatScale(resource, amount);
 
@@ -519,11 +518,11 @@ function triggerAffixSkillWithFeedback(
     if (tr.isCrit) prefix = '💥';
     const anchor = buildAnchor(tr.triggerKey, resource, amount);
     if (tr.isMultiplyOp) {
-      showFeedback(`${prefix}×${displayValue}${label}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1), anchor);
+      showFeedback(`${prefix}×${displayValue}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1), anchor);
     } else if (tr.isTabooPenalty) {
-      showFeedback(`-${displayValue}${label}`, '#ff4444', scale, anchor);
+      showFeedback(`-${displayValue}`, '#ff4444', scale, anchor);
     } else {
-      showFeedback(`${prefix}+${displayValue}${label}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1), anchor);
+      showFeedback(`${prefix}+${displayValue}`, color, Math.max(scale, tr.isCrit ? 2.0 : 1), anchor);
     }
     emitResourceSound(resource, scale, 0);
 
@@ -539,6 +538,12 @@ function triggerAffixSkillWithFeedback(
         showFeedback(t('battle.crit_bonus', { value: critGold }), RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'crit_bonus', resource: 'gold', amount: critGold });
       }
       recordWordCrit();
+      // 学徒·暴击：暴击时全场拥有该附魔的技能永久成长
+      for (const [sid, sk] of state.affixSkills) {
+        if (!sk.enchantmentIds.includes(EnchantmentTypeEnum.ApprenticeCrit as string)) continue;
+        const srt = state.affixSkillStates.get(sid);
+        if (srt) srt.apprenticeAccumulated += APPRENTICE_CRIT_GROWTH * (ctx.apprenticeGrowthMultiplier ?? 1);
+      }
     }
     advanceCritCharge(tr.isCrit);
   }
