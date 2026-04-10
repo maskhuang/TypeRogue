@@ -37,6 +37,7 @@ export type TriggerWorkType =
   | 'pulse_self'
   | 'pulse_burst'
   | 'amplify_trigger'
+  | 'stack_self'
   | 'overload'
 
 export interface TriggerWorkItem {
@@ -372,6 +373,42 @@ export function orchestrateAffixTrigger(
           depth: item.depth + 1,
           chainHistory: childHistory,
         })
+      }
+    }
+
+    // ── 共鸣/回响：全局监听，叠层满时自触发 ──
+    if (item.type !== 'stack_self') {
+      const triggeredSkill = ctx.allSkills.get(item.skillId)
+      for (const [monSkillId, monSkill] of ctx.allSkills) {
+        if (monSkillId === item.skillId) continue
+        const monRt = ctx.skillStates.get(monSkillId)
+        if (!monRt) continue
+        for (const ma of monSkill.affixes) {
+          let matched = false
+          if (ma.type === AffixType.Resonance && ma.resource && triggeredSkill) {
+            matched = triggeredSkill.resource === ma.resource
+          } else if (ma.type === AffixType.Echo && ma.echoAffixA && ma.echoAffixB && triggeredSkill) {
+            matched = triggeredSkill.affixes.some(a => a.type === ma.echoAffixA || a.type === ma.echoAffixB)
+          } else if (ma.type === AffixType.Fury && result.isCrit) {
+            matched = true
+          }
+          if (matched) {
+            monRt.stacks += 1
+            const interval = ma.interval ?? 4
+            if (monRt.stacks > 0 && monRt.stacks % interval === 0) {
+              const monKeys = [...ctx.bindings].filter(([, sid]) => sid === monSkillId).map(([k]) => k)
+              if (monKeys.length > 0) {
+                queue.push({
+                  skillId: monSkillId,
+                  triggerKey: monKeys[0],
+                  type: 'stack_self',
+                  depth: item.depth + 1,
+                  chainHistory: childHistory,
+                })
+              }
+            }
+          }
+        }
       }
     }
 

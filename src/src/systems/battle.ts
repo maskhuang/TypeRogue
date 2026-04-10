@@ -1562,6 +1562,23 @@ function startTimer(): void {
       releaseCharge(fullKey);
     }
 
+    // Tide 潮汐：每秒自动叠层，满层触发自身（跟随时间流速）
+    const tideDt = 0.1 * timeSpeed * getTimeScale() * timeAccel;
+    for (const [tideSkillId, tideSkill] of state.affixSkills) {
+      const tideAffix = tideSkill.affixes.find(a => a.type === AffixType.Tide);
+      if (!tideAffix) continue;
+      const tideRt = state.affixSkillStates.get(tideSkillId);
+      if (!tideRt) continue;
+      const rate = tideAffix.tideRate ?? 1;
+      tideRt.stacks = (tideRt.stacks ?? 0) + rate * tideDt;
+      const interval = tideAffix.interval ?? 6;
+      if (tideRt.stacks >= interval) {
+        tideRt.stacks -= interval;
+        const tideKey = [...state.player.bindings].find(([, sid]) => sid === tideSkillId)?.[0];
+        if (tideKey) triggerSkill(tideSkillId, tideKey);
+      }
+    }
+
     // Boss 修饰器：每帧更新（decay 等），dt 随时间加速缩放
     tickModifier(0.1 * timeSpeed);
 

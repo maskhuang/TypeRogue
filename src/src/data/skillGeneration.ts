@@ -196,6 +196,34 @@ export function rollAffixParams(
     case AffixType.Splash:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
+    case AffixType.Resonance:
+      return { type, resource: pickRandom(GENERIC_RESOURCES), interval: 4 }
+
+    case AffixType.Echo: {
+      // 按本局词条权重加权抽取两个不同的词条类型
+      const weightEntries = Object.values(AffixType)
+        .filter(t => t !== AffixType.Echo && t !== AffixType.Resonance)
+        .map(t => ({ type: t, w: AFFIX_WEIGHTS[t as Exclude<AffixType, AffixType.Convert>] ?? 0 }))
+        .filter(e => e.w > 0)
+      const totalW = weightEntries.reduce((s, e) => s + e.w, 0)
+      const pickWeighted = (): AffixType => {
+        let r = random() * totalW
+        for (const e of weightEntries) { r -= e.w; if (r <= 0) return e.type }
+        return weightEntries[weightEntries.length - 1].type
+      }
+      const a = pickWeighted()
+      let b = pickWeighted()
+      let attempts = 0
+      while (b === a && attempts++ < 20) b = pickWeighted()
+      return { type, echoAffixA: a, echoAffixB: b, interval: 4 }
+    }
+
+    case AffixType.Fury:
+      return { type, interval: 4 }
+
+    case AffixType.Tide:
+      return { type, interval: 6, tideRate: 1 }  // 每秒+1叠层
+
     case AffixType.Conduit:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 

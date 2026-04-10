@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（28 类，6 类别） ====
+// ===== 词条类型枚举（32 类，6 类别） ====
 
 export enum AffixType {
   // ── 数值型 numeric ──
@@ -24,6 +24,10 @@ export enum AffixType {
   // ── 叠层型 stack ──
   Amplify = 'amplify',
   Splash = 'splash',
+  Resonance = 'resonance',
+  Echo = 'echo',
+  Fury = 'fury',
+  Tide = 'tide',
   WarDrum = 'war_drum',
   // ── 拓扑型 topology ──
   Void = 'void',
@@ -75,6 +79,10 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   // ── 叠层型 ──
   [AffixType.Amplify]: ['stack', 'topology'],
   [AffixType.Splash]: ['stack', 'topology'],
+  [AffixType.Resonance]: ['stack'],
+  [AffixType.Echo]: ['stack'],
+  [AffixType.Fury]: ['stack', 'crit'],
+  [AffixType.Tide]: ['stack'],
   [AffixType.WarDrum]: ['stack', 'topology', 'crit'],
   // ── 拓扑型 ──
   [AffixType.Void]: ['topology', 'numeric'],
@@ -267,6 +275,10 @@ export interface AffixInstance {
   fallacyK?: number                // Fallacy: 每次未暴击增加的暴击率
   fallacyStacks?: number           // Fallacy: 连续未暴击计数（运行时）
   multiplyValue?: number           // Multiply: 产出乘数 ×N
+  interval?: number                // Resonance/Echo: 叠层满层间隔
+  echoAffixA?: AffixType           // Echo: 监听的词条类型A
+  echoAffixB?: AffixType           // Echo: 监听的词条类型B
+  tideRate?: number                // Tide: 每秒叠层速率
   flowK?: number                   // Flow: 每单位归一化落差的 bonusPercent
   confluenceK?: number             // Confluence: 资源多样性加成系数
   maxTriggers?: number             // Exhaust: 最大触发次数
@@ -425,6 +437,10 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Mirror]: 'high',
   [AffixType.Amplify]: 'high',
   [AffixType.Splash]: 'high',
+  [AffixType.Resonance]: 'high',
+  [AffixType.Echo]: 'high',
+  [AffixType.Fury]: 'high',
+  [AffixType.Tide]: 'high',
   [AffixType.Relay]: 'low',
   [AffixType.Conduit]: 'low',
   [AffixType.Outcast]: 'high',
@@ -526,6 +542,10 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Mirror]: '倒影',
   [AffixType.Amplify]: '增幅',
   [AffixType.Splash]: '溅射',
+  [AffixType.Resonance]: '共鸣',
+  [AffixType.Echo]: '回响',
+  [AffixType.Fury]: '怒气',
+  [AffixType.Tide]: '潮汐',
   [AffixType.Relay]: '中转',
   [AffixType.Conduit]: '导能',
   [AffixType.Outcast]: '流放',
@@ -568,6 +588,10 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Mirror]: '每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效',
   [AffixType.Amplify]: '自身不产出；触发叠层，指定关系的匹配技能产出+自身基础值',
   [AffixType.Splash]: '自身不产出；触发时触发叠层数个指定关系的匹配技能',
+  [AffixType.Resonance]: '任意技能产出指定资源时叠层，满层触发自身',
+  [AffixType.Echo]: '拥有指定两种词条的技能触发时叠层，满层触发自身',
+  [AffixType.Fury]: '任意技能暴击时叠层，满层触发自身',
+  [AffixType.Tide]: '每秒自动叠层，满层触发自身',
   [AffixType.Relay]: '自身不产出；指定关系的匹配技能触发时，直接触发1个匹配技能（不含其他中转）',
   [AffixType.Conduit]: '自身不产出，指定关系的匹配技能触发时额外触发一次',
   [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
@@ -830,6 +854,10 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Decorator]:{ param: 'decoratorK',     delta: 0.05,  mode: 'add' },
   [AffixType.Reflect]:  { param: 'reflectK',       delta: 0.01,  mode: 'add' },
   // ── 叠层类 ──
+  [AffixType.Resonance]:{ param: 'interval',       delta: -1,    mode: 'add' },
+  [AffixType.Echo]:     { param: 'interval',       delta: -1,    mode: 'add' },
+  [AffixType.Fury]:     { param: 'interval',       delta: -1,    mode: 'add' },
+  [AffixType.Tide]:     { param: 'interval',       delta: -1,    mode: 'add' },
   [AffixType.WarDrum]:  { param: 'critPerStack',   delta: 0.005, mode: 'add' },
   // ── 拓扑类 ──
   [AffixType.Flow]:     { param: 'flowK',          delta: 0.02,  mode: 'add' },

@@ -557,6 +557,10 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'decorator': return `+${Math.round((a.decoratorK ?? 0) * 100)}%`
     case 'reflect': return `+${Math.round((a.reflectK ?? 0) * 100)}%`
     // ── 叠层类（变化值） ──
+    case 'resonance': return `${t('resource.' + (a.resource ?? 'base'))} ${a.interval ?? 4}`
+    case 'echo': return `${t('affix.' + (a.echoAffixA ?? '?'))}+${t('affix.' + (a.echoAffixB ?? '?'))} ${a.interval ?? 4}`
+    case 'fury': return `${a.interval ?? 4}`
+    case 'tide': return `${a.interval ?? 6}s`
     case 'war_drum': return `+${Math.round((a.critPerStack ?? 0) * 100)}%/${t('param.wardrum_per')}`
     // ── 拓扑类（变化值） ──
     case 'flow': return `+${Math.round((a.flowK ?? 0) * 100)}%`
