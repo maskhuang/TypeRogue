@@ -90,6 +90,8 @@ export interface OrchestratorCallbacks {
   enterPseudoInfinite?: (participantKeys: string[]) => void
   /** 吞噬目标（键位 + 邻居等级，用于移除邻居 + 经验累积） */
   devourTarget?: (targetKey: string, neighborLevel: number) => void
+  /** 质变·繁殖：向邻居传播虫群词条 */
+  swarmPropagate?: (targetSkillId: string, posRel: number) => void
   /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
   chargeAutoComplete?: () => void
 }
@@ -269,6 +271,11 @@ export function orchestrateAffixTrigger(
     // 吞噬：质变Void每次触发都吞噬最弱邻居（移除 + 经验）
     if (result.phase5?.devourTarget) {
       callbacks?.devourTarget?.(result.phase5.devourTarget.key, result.phase5.devourTarget.level)
+    }
+
+    // 繁殖：质变Swarm向邻居传播虫群词条
+    if (result.phase5?.swarmPropagateTarget) {
+      callbacks?.swarmPropagate?.(result.phase5.swarmPropagateTarget.skillId, result.phase5.swarmPropagateTarget.posRel)
     }
 
     // Story 41-5: Charge 质变 — 满蓄力自动完成当前单词（仅初始触发，不对链式传播）

@@ -30,7 +30,9 @@ import { getLuckyStrikeCritRate, getCritBonusGold, isCritChargeReady, consumeCri
 import { getFuryBeatCritRate } from './relics/ComboRelicBehaviors';
 import { getRuneSpikeCritRate } from './relics/EnchantmentRelicBehaviors';
 import { getPrecisionStrikeCritRate } from './relics/TopologyRelicBehaviors';
-import { AffixType, EnchantmentType as EnchantmentTypeEnum, BASE_VALUES, applyAffixLevelScaling } from '../data/affixes';
+import { AffixType, EnchantmentType as EnchantmentTypeEnum, BASE_VALUES, applyAffixLevelScaling, SWARM_BONUS_TABLE } from '../data/affixes';
+import type { PositionRelation } from '../data/keyboardTopology';
+import { rollAffixParams } from '../data/skillGeneration';
 import { inputHandler } from './typing/InputHandler';
 
 
@@ -487,6 +489,15 @@ function triggerAffixSkillWithFeedback(
         }
         showFeedback(`🦷 吞噬!`, '#ff4444');
       }
+    },
+    // 质变·繁殖：向邻居传播虫群词条
+    swarmPropagate: (targetSkillId: string, posRel: number) => {
+      const targetSkill = state.affixSkills.get(targetSkillId);
+      if (!targetSkill) return;
+      if (targetSkill.affixes.some(a => a.type === AffixType.Swarm)) return;
+      const newAffix = rollAffixParams(AffixType.Swarm, targetSkill.resource, undefined, undefined, posRel as PositionRelation);
+      targetSkill.affixes.push(newAffix);
+      showFeedback(`🐛 繁殖!`, '#8B8000');
     },
     // Story 41-5: Charge 质变 — 满蓄力自动完成当前单词
     chargeAutoComplete: () => performAutocomplete('charge'),

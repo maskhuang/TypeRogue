@@ -14,7 +14,7 @@ import { KEYS } from '../core/constants'
 import {
   AffixType,
   AFFIX_WEIGHTS, BASE_VALUES, RARITY_PROBABILITIES,
-  VOID_BONUS_TABLE, CONVERT_K_TABLE, AFFIX_CLASS_RESTRICTION,
+  VOID_BONUS_TABLE, SWARM_BONUS_TABLE, CONVERT_K_TABLE, AFFIX_CLASS_RESTRICTION,
 } from './affixes'
 import { t } from '../demo/demo-i18n'
 
@@ -184,6 +184,11 @@ export function rollAffixParams(
     case AffixType.Void: {
       const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
       return { type, posRel, bonusPerSlot: VOID_BONUS_TABLE[posRel] }
+    }
+
+    case AffixType.Swarm: {
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
+      return { type, posRel, swarmK: SWARM_BONUS_TABLE[posRel] }
     }
 
     case AffixType.Mirror:

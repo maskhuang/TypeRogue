@@ -283,6 +283,8 @@ export interface Phase5Result {
   amplifyTriggerTargets?: string[]
   /** 溅射：触发叠层数个匹配技能键位 */
   splashTargets?: string[]
+  /** 质变·繁殖：向邻居传播虫群词条（目标技能ID + posRel） */
+  swarmPropagateTarget?: { skillId: string, posRel: PositionRelation }
 }
 
 export type Phase6Action =
@@ -610,6 +612,17 @@ export function resolvePhase2(
         const slotEff = affix.bonusPerSlot ?? 0
         const empty = countEmptySlots(ctx.occupiedKeys, affix.posRel, ctx.bindings)
         bonusPercent += empty * slotEff
+        break
+      }
+
+      case AffixType.Swarm: {
+        // 虫群：范围内拥有 Swarm 词条的技能数 × swarmK
+        if (affix.posRel == null) break
+        let swarmCount = 0
+        for (const ns of getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)) {
+          if (ns.affixes.some(a => a.type === AffixType.Swarm)) swarmCount++
+        }
+        bonusPercent += swarmCount * (affix.swarmK ?? 0)
         break
       }
 
@@ -1354,6 +1367,24 @@ export function resolvePhase5(
     const voidAffix = skill.affixes.find(a => a.type === AffixType.Void)
     if (voidAffix?.posRel != null) {
       result.devourTarget = findWeakestNeighbor(ctx.occupiedKeys, voidAffix.posRel, ctx)
+    }
+  }
+
+  // Swarm 质变·繁殖：每次触发 25% 概率向范围内无虫群词条的邻居传播
+  if (isTransformedForAffix(AffixType.Swarm, runtimeState, skill, ctx)) {
+    const swarmAffix = skill.affixes.find(a => a.type === AffixType.Swarm)
+    if (swarmAffix?.posRel != null && ctx.randomFn() < 0.25) {
+      // 找范围内没有 Swarm 词条的邻居
+      const candidates: string[] = []
+      for (const ns of getNeighborSkills(ctx.occupiedKeys, swarmAffix.posRel, ctx)) {
+        if (!ns.affixes.some(a => a.type === AffixType.Swarm)) {
+          candidates.push(ns.id)
+        }
+      }
+      if (candidates.length > 0) {
+        const targetId = candidates[Math.floor(ctx.randomFn() * candidates.length)]
+        result.swarmPropagateTarget = { skillId: targetId, posRel: swarmAffix.posRel }
+      }
     }
   }
 
