@@ -302,8 +302,8 @@ export interface Phase5Result {
   critEchoTarget?: string
   /** 脉冲：爆发时立刻自触发一次 */
   /** Cluster 满层：触发元音键位技能 */
-  /** Outcast 满层：触发词另一端字母键技能 */
-  outcastTarget?: string
+  /** Outcast/Fiber 满层：触发目标键（支持多个） */
+  outcastTargets?: string[]
   /** Component 满层：触发链最远端技能 */
   /** Component 质变满层：触发链上所有技能 */
   /** Turbulence 满层：触发最弱邻居技能 */
@@ -823,17 +823,34 @@ export function resolvePhase2(
       }
 
       case AffixType.Outcast: {
-        // 首尾字母命中时叠层，满层触发词另一端字母键上的技能
-        if (isFirstOrLastLetter(ctx.triggerKey, ctx.currentWord)) {
+        // 退场：仅尾字母触发时暴击率在 Phase 3 处理，此处无需操作
+        break
+      }
+
+      case AffixType.Fiber: {
+        // 光纤：首字母触发时叠层，满层触发尾字母技能
+        const fiberWord = (ctx.currentWord ?? '').toLowerCase()
+        if (fiberWord.length > 0 && ctx.triggerKey === fiberWord[0]) {
           runtimeState.stacks += 1
-          const outcastInterval = getEffectiveInterval(affix.outcastInterval ?? 4, skill.id, ctx)
-          if (runtimeState.stacks > 0 && runtimeState.stacks % outcastInterval === 0) {
-            // 找另一端字母的键
-            const word = (ctx.currentWord ?? '').toLowerCase()
-            const first = word[0], last = word[word.length - 1]
-            const otherEnd = ctx.triggerKey === first ? last : first
-            if (otherEnd && ctx.bindings.has(otherEnd) && ctx.bindings.get(otherEnd) !== skill.id) {
-              mutations.push({ type: 'outcastTarget' as any, value: otherEnd })
+          const interval = getEffectiveInterval(affix.fiberInterval ?? 4, skill.id, ctx)
+          if (runtimeState.stacks > 0 && runtimeState.stacks % interval === 0) {
+            // 质变·贯穿：触发单词中所有字母键的技能（排除首字母）
+            if (isTransformedForAffix(AffixType.Fiber, runtimeState, skill, ctx)) {
+              const firstKey = fiberWord[0]
+              const seen = new Set<string>()
+              for (const ch of fiberWord) {
+                if (ch === firstKey) continue
+                if (seen.has(ch)) continue
+                seen.add(ch)
+                if (ctx.bindings.has(ch) && ctx.bindings.get(ch) !== skill.id) {
+                  mutations.push({ type: 'outcastTarget' as any, value: ch })
+                }
+              }
+            } else {
+              const lastKey = fiberWord[fiberWord.length - 1]
+              if (lastKey && ctx.bindings.has(lastKey) && ctx.bindings.get(lastKey) !== skill.id) {
+                mutations.push({ type: 'outcastTarget' as any, value: lastKey })
+              }
             }
           }
         }
@@ -998,6 +1015,15 @@ export function resolvePhase3(
         // 赌徒谬误：连续未暴击次数 × K → 暴击率加成
         if (affix.fallacyK == null) break
         totalCritChance += (affix.fallacyStacks ?? 0) * affix.fallacyK
+        break
+      }
+
+      case AffixType.Outcast: {
+        // 退场：尾字母触发时获得额外暴击率
+        const word = (ctx.currentWord ?? '').toLowerCase()
+        if (word.length > 0 && ctx.triggerKey === word[word.length - 1]) {
+          totalCritChance += affix.bonusPercent ?? 0
+        }
         break
       }
 
@@ -1334,7 +1360,13 @@ export function resolvePhase5(
   for (const affix of skill.affixes) {
     switch (affix.type) {
       case AffixType.Amplify:
-        // 叠层和质变均由编排器监听处理
+        // 自身触发时+1层（基础叠层行为），被动叠层由编排器监听
+        runtimeState.stacks += 1
+        break
+
+      case AffixType.WarDrum:
+        // 自身触发时+1层（基础叠层行为），被动叠层由编排器监听
+        runtimeState.stacks += 1
         break
 
       case AffixType.Splash: {
@@ -1398,16 +1430,13 @@ export function resolvePhase5(
     recurseProc = true
   }
 
-  // ── Outcast 质变：首尾呼应 — 找到对端技能并触发 ──
-  if (isTransformedForAffix(AffixType.Outcast, runtimeState, skill, ctx) && !ctx.chainAffixesDisabled) {
-    const outcastAffix = skill.affixes.find(a => a.type === AffixType.Outcast)
-    if (outcastAffix && isFirstOrLastLetter(ctx.triggerKey, ctx.currentWord)) {
-      const word = ctx.currentWord.toLowerCase()
+  // ── Outcast 质变：暴击时触发词首字母键上的技能 ──
+  if (triggerFlags.isCrit && isTransformedForAffix(AffixType.Outcast, runtimeState, skill, ctx) && !ctx.chainAffixesDisabled) {
+    const word = ctx.currentWord.toLowerCase()
+    if (word.length > 0) {
       const firstKey = word[0]
-      const lastKey = word[word.length - 1]
-      const oppositeKey = ctx.triggerKey === firstKey ? lastKey : firstKey
-      if (oppositeKey !== ctx.triggerKey && ctx.bindings.has(oppositeKey)) {
-        result.outcastEchoTarget = oppositeKey
+      if (ctx.bindings.has(firstKey) && ctx.bindings.get(firstKey) !== skill.id) {
+        result.outcastEchoTarget = firstKey
       }
     }
   }
@@ -1711,7 +1740,10 @@ export function triggerAffixSkill(
   const effectiveSkill = buildEffectiveSkill(skill, runtimeState)
 
   // Phase 1: 基础值（Conduit/Amplify/Splash 技能自身不产出，基础值为 0）
-  const hasSelfZero = effectiveSkill.affixes.some(a => a.type === AffixType.Conduit || a.type === AffixType.Amplify || a.type === AffixType.Splash || a.type === AffixType.Relay || a.type === AffixType.WarDrum || a.type === AffixType.AuraFury || a.type === AffixType.AuraMorale)
+  const SELF_ZERO_TYPES_SET = new Set([AffixType.Conduit, AffixType.Amplify, AffixType.Splash, AffixType.Relay, AffixType.WarDrum, AffixType.AuraFury, AffixType.AuraMorale])
+  const AURA_RELAY_TYPES = new Set([AffixType.AuraFury, AffixType.AuraMorale, AffixType.Conduit])
+  const hasSelfZero = effectiveSkill.affixes.some(a => SELF_ZERO_TYPES_SET.has(a.type))
+  const isAuraOnly = effectiveSkill.affixes.some(a => AURA_RELAY_TYPES.has(a.type)) && !effectiveSkill.affixes.some(a => !AURA_RELAY_TYPES.has(a.type) && SELF_ZERO_TYPES_SET.has(a.type))
   const base = hasSelfZero ? 0 : resolvePhase1(effectiveSkill)
 
   // Phase 2: 加算层
@@ -1756,7 +1788,10 @@ export function triggerAffixSkill(
       if (vowelCandidates.length > 0) {
       }
     }
-    if ((m as any).type === 'outcastTarget') p5.outcastTarget = (m as any).value
+    if ((m as any).type === 'outcastTarget') {
+      if (!p5.outcastTargets) p5.outcastTargets = []
+      p5.outcastTargets.push((m as any).value)
+    }
     if ((m as any).type === 'componentFar' || (m as any).type === 'componentAll') {
       // BFS 从触发键出发，遍历连通分量
       const startKey = (m as any).value as string
@@ -1816,8 +1851,8 @@ export function triggerAffixSkill(
     phase6: p6,
     triggerKey: ctx.triggerKey,
     chargeAutoComplete: p2.chargeAutoComplete || undefined,
-    stackEffectFired: hasSelfZero || undefined,
-    currentStacks: hasSelfZero ? runtimeState.stacks : undefined,
+    stackEffectFired: (hasSelfZero && !isAuraOnly) || undefined,
+    currentStacks: (hasSelfZero && !isAuraOnly) ? runtimeState.stacks : undefined,
     consumeRequests: p2.consumeRequests.length > 0 ? p2.consumeRequests : undefined,
     targetScoreIncrease: p2.targetScoreIncrease > 0 ? p2.targetScoreIncrease : undefined,
   }

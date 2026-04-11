@@ -585,6 +585,20 @@ NOT_FOUND    display: inline-block;
     animation: pixelChargeBlink 0.8s steps(1) infinite;
 }
 
+.letter.is-reecho::after {
+    background: #00CED1;
+    box-shadow: none;
+    width: 4px;
+    height: 4px;
+    border-radius: 0;
+    animation: pixelReechoBlink 1.2s steps(1) infinite;
+}
+
+@keyframes pixelReechoBlink {
+    0%, 60% { opacity: 1; }
+    61%, 100% { opacity: 0.3; }
+}
+
 @keyframes pixelChargeBlink {
     0%, 50% { opacity: 1; }
     51%, 100% { opacity: 0.2; }

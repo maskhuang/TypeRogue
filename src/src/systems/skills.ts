@@ -183,6 +183,11 @@ export function isChargeSkill(skillId: string): boolean {
   return !!skill && skill.affixes.some(a => a.type === AffixType.Charge)
 }
 
+export function isReechoSkill(skillId: string): boolean {
+  const skill = state.affixSkills.get(skillId)
+  return !!skill && skill.affixes.some(a => a.type === AffixType.Reecho)
+}
+
 // === 技能键命中率计算 ===
 export function computeSkillDensity(word: string): number {
   if (!word || word.length === 0) return 0
@@ -556,9 +561,34 @@ function triggerAffixSkillWithFeedback(
       showFeedback(`×${tr.currentStacks}`, '#aaaaaa', 1.0, stackAnchor);
     }
     if (!tr.phase4) continue;
+
+    // 质变Rainbow·光谱：多资源浮字
+    if (tr.phase4.allResources && tr.phase4.rainbowSkillBase && tr.phase4.rainbowSkillLevel) {
+      const pool: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+      const skillBase = tr.phase4.rainbowSkillBase;
+      const lvIdx = tr.phase4.rainbowSkillLevel - 1;
+      for (const r of pool) {
+        const targetBase = BASE_VALUES[r]?.[lvIdx] ?? 1;
+        let share = skillBase > 0 ? tr.output * (targetBase / skillBase) : tr.output / pool.length;
+        if (ascendScale > 1) share *= ascendScale;
+        const tide = getResourceTideBonus(r);
+        if (relicBonus + tide > 0 && share > 0) share *= (1 + relicBonus + tide);
+        if (share === 0) continue;
+        const c = RESOURCE_COLORS[r] || '#ffffff';
+        const dv = parseFloat(Math.abs(share).toPrecision(4));
+        const sc = getFloatScale(r, share);
+        const pfx = tr.isCrit ? '💥' : '';
+        const anc = buildAnchor(tr.triggerKey, r, share);
+        showFeedback(`${pfx}+${dv}`, c, Math.max(sc, tr.isCrit ? 2.0 : 1), anc);
+        emitResourceSound(r, sc, 0);
+        recordSkillTrigger(skillId, triggerKey, r, share, false);
+      }
+      continue;
+    }
+
     const resource = tr.phase4.targetResource;
     // 遗物缩放：同步缩放反馈值（升华缩放 + 加算遗物 + 资源潮汐，仅正产出）
-    let amount = tr.output;
+    let amount = tr.phase4.output;
     if (ascendScale > 1) amount = amount * ascendScale;
     let feedbackBonus = relicBonus;
     const feedbackTide = getResourceTideBonus(resource);

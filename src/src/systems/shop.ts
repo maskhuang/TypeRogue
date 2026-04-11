@@ -553,6 +553,8 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       // 短视：替换加成/代价占位符
       if (a.myopiaBonus != null) desc = desc.replace('{myopiaBonus}', `${Math.round(a.myopiaBonus * 100)}`);
       if (a.myopiaCost != null) desc = desc.replace('{myopiaCost}', String(a.myopiaCost));
+      // 流放/禁忌：替换暴击率占位符
+      if (a.bonusPercent != null) desc = desc.replace('{bonusPercent}', `${Math.round(a.bonusPercent * 100)}`);
       // 增幅：替换加成占位符
       if (a.amplifyK != null) desc = desc.replace('{amplifyK}', `${Math.round(a.amplifyK * 100)}`);
       // 战鼓：替换暴击率占位符
@@ -598,11 +600,17 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
         }
       }
       const SELF_ZERO_MATCH_TYPES = ['amplify', 'splash', 'war_drum', 'relay', 'conduit', 'aura_fury', 'aura_morale'];
+      const PRODUCING_STACK_TYPES_LIST = ['resonance', 'echo', 'fury', 'tide'];
+      // 有自零词条时，屏蔽非自零、非产出型叠层词条的参数和描述（仅保留名称）
+      const skillHasSelfZero = skill.affixes.some(sa => SELF_ZERO_MATCH_TYPES.includes(sa.type));
+      const shouldHideDetail = skillHasSelfZero
+        && !SELF_ZERO_MATCH_TYPES.includes(a.type)
+        && !PRODUCING_STACK_TYPES_LIST.includes(a.type);
       return {
         typeName: t('affix.' + a.type),
         typeKey: a.type,
-        paramSummary,
-        description: desc,
+        paramSummary: shouldHideDetail ? '' : paramSummary,
+        description: shouldHideDetail ? undefined : desc,
         isMatchAffix: SELF_ZERO_MATCH_TYPES.includes(a.type),
       };
     })
@@ -672,7 +680,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'convert': return `${t('resource.' + (a.source ?? '?'))}`
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
     case 'cascade': return `×${a.cascadeMult?.toFixed(1) ?? '?'}`
-    case 'outcast': return `${t('param.interval_label')} ${a.outcastInterval ?? 4}`
+    case 'outcast': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%${t('param.aura_crit')}`
     case 'void': return `+${Math.round((a.bonusPerSlot ?? 0) * 100)}%/${t('param.void_per')}`
     case 'swarm': return `+${Math.round((a.swarmK ?? 0) * 100)}%/${t('param.void_per')}`
     case 'mercenary': return `${a.hireCost ?? '?'}g +${Math.round((a.hireBonus ?? 0) * 100)}%`
@@ -680,6 +688,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'myopia': return `+${Math.round((a.myopiaBonus ?? 0) * 100)}% (+${a.myopiaCost ?? '?'}${t('param.myopia_cost')})`
     case 'aura_fury': return `+${Math.round((a.auraCrit ?? 0) * 100)}%${t('param.aura_crit')}`
     case 'aura_morale': return `+${Math.round((a.auraMorale ?? 0) * 100)}%`
+    case 'fiber': return `${t('param.interval_label')} ${a.fiberInterval ?? 4}`
     case 'gravity': return `×${a.probMult?.toFixed(1) ?? '?'}`
     case 'exhaust': {
       const max = a.maxTriggers ?? '?';
@@ -738,7 +747,7 @@ export function computeSmartEstimate(
   rt?: SkillRuntimeState,
   boundKeys?: string | string[],
 ): SmartEstimate | null {
-  // 包含自身不产出的词条时，不显示产出预估
+  // 包含自身不产出的词条时，屏蔽产出预估（词条列表仍正常显示）
   const SELF_ZERO_TYPES: string[] = ['conduit', 'amplify', 'splash', 'relay', 'war_drum', 'aura_fury', 'aura_morale']
   if (skill.affixes.some(a => SELF_ZERO_TYPES.includes(a.type))) return null
 
@@ -796,9 +805,11 @@ export function computeSmartEstimate(
         break
       }
       case 'outcast': {
-        // 首尾叠层 → 触发另一端（预估显示间隔）
-        const interval = affix.outcastInterval ?? 4
-        breakdown.push({ typeKey: 'outcast', label: t('est.outcast', { n: interval }), detail: '' })
+        // 流放：首/尾字母触发时+暴击率（条件性，不计入总暴击）
+        const outcastCrit = affix.bonusPercent ?? 0
+        if (outcastCrit > 0) {
+          breakdown.push({ typeKey: 'outcast', label: t('est.outcast', { pct: Math.round(outcastCrit * 100) }), detail: '' })
+        }
         break
       }
       // crit / charge / decay / fallacy: 纯暴击率，不预估产出
@@ -1762,14 +1773,6 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
         ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? baseVal)
         : null;
 
-      let baseValuesText: string;
-      const maxLv = getSkillMaxLevel(skill.rarity);
-      if (skillHasMultOp) {
-        const mv = MULTIPLY_OPERATOR_BASE_VALUES[skill.resource];
-        baseValuesText = Array.from({ length: maxLv }, (_, i) => `Lv.${i + 1}=×${mv?.[i] ?? '?'}`).join(' / ');
-      } else {
-        baseValuesText = Array.from({ length: maxLv }, (_, i) => `Lv.${i + 1}=${baseVals[i] ?? '?'}`).join(' / ');
-      }
       const tooltipData: KeyTooltipData = {
         skill: {
           name: skill.name,
@@ -1778,7 +1781,6 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
           level: skill.level,
           school: rarityLabel(skill.rarity),
           schoolCssClass: `rarity-${skill.rarity}`,
-          baseValuesText,
         },
       };
       if (item.isUpgrade && item.skillId) {

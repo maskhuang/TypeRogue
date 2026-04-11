@@ -243,7 +243,7 @@ export function rollAffixParams(
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), critPerStack: 0.02 }
 
     case AffixType.Outcast:
-      return { type, outcastInterval: 4 }
+      return { type, bonusPercent: 0.30 }  // 首尾字母+30%暴击率
 
     case AffixType.Gravity:
       return { type, probMult: roundTo(random() * 2.0, 2) }
@@ -314,6 +314,9 @@ export function rollAffixParams(
 
     case AffixType.AuraMorale:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), auraMorale: roundTo(0.15 + random() * 0.15, 2) }  // +15%~30% bonus
+
+    case AffixType.Fiber:
+      return { type, fiberInterval: 4 }  // 每4层触发尾字母技能
 
     default: {
       const _exhaustive: never = type

@@ -110,6 +110,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   myopia:      '#e67e22', // 橙 — 短视
   aura_fury:   '#e74c3c', // 红 — 愤怒光环
   aura_morale: '#2ecc71', // 绿 — 士气光环
+  fiber:       '#00bfff', // 天蓝 — 光纤
 }
 
 export interface KeyTooltipData {
@@ -266,11 +267,10 @@ function buildAffixSection(skill: NonNullable<KeyTooltipData['skill']>): string 
 
   // 词条列表
   if (skill.affixInfo && skill.affixInfo.length > 0) {
-    const hasMatch = skill.affixInfo.some(a => a.isMatchAffix)
     for (const affix of skill.affixInfo) {
       const color = AFFIX_COLORS[affix.typeKey || ''] || '#e67e22'
-      if (hasMatch && !affix.isMatchAffix) {
-        // 有匹配词条时，非匹配词条只显示名称
+      if (!affix.paramSummary && !affix.description) {
+        // 无参数和描述时仅显示名称
         parts.push(`<div class="tooltip-affix-name" style="color:${color};">&lt;${esc(affix.typeName)}&gt;</div>`)
       } else {
         parts.push(`<div class="tooltip-affix-name" style="color:${color};">&lt;${esc(affix.typeName)}&gt; ${esc(affix.paramSummary)}</div>`)

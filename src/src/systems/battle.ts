@@ -13,7 +13,7 @@ import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, get
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension, emitResourceSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { initFloatTextCanvas, spawnFloatText, spawnFlightText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
-import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput, isChargeSkill, resetStageProduced } from './skills';
+import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput, isChargeSkill, isReechoSkill, resetStageProduced } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop } from './shop';
 import { shouldShowRitual, openRitualEnchantment } from './ritualEnchantment';
@@ -411,6 +411,7 @@ function renderWord(): void {
     if (boundSkillId) {
       span.classList.add('has-skill');
       if (isChargeSkill(boundSkillId)) span.classList.add('is-charge');
+      if (isReechoSkill(boundSkillId)) span.classList.add('is-reecho');
     }
     el.word.appendChild(span);
   }

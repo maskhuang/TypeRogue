@@ -341,17 +341,19 @@ export function orchestrateAffixTrigger(
       }
     }
 
-    // Outcast 满层：触发词另一端字母键技能
-    if (result.phase5?.outcastTarget) {
-      const outcastSkillId = ctx.bindings.get(result.phase5.outcastTarget)
-      if (outcastSkillId) {
-        queue.push({
-          skillId: outcastSkillId,
-          triggerKey: result.phase5.outcastTarget,
-          type: 'pulse_burst' as TriggerWorkType,
-          depth: item.depth + 1,
-          chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
-        })
+    // Outcast/Fiber 满层：触发目标键技能
+    if (result.phase5?.outcastTargets) {
+      for (const targetKey of result.phase5.outcastTargets) {
+        const targetSkillId = ctx.bindings.get(targetKey)
+        if (targetSkillId) {
+          queue.push({
+            skillId: targetSkillId,
+            triggerKey: targetKey,
+            type: 'pulse_burst' as TriggerWorkType,
+            depth: item.depth + 1,
+            chainHistory: [...item.chainHistory, `${item.skillId}@${item.triggerKey}`],
+          })
+        }
       }
     }
 

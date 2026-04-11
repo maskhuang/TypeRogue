@@ -63,6 +63,7 @@ export enum AffixType {
   Myopia = 'myopia',
   AuraFury = 'aura_fury',
   AuraMorale = 'aura_morale',
+  Fiber = 'fiber',
 }
 
 // ===== 词条类别 =====
@@ -94,12 +95,12 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Swarm]: ['topology', 'numeric'],
   [AffixType.Mercenary]: ['production', 'numeric'],
   [AffixType.Mirror]: ['topology', 'meta_rule'],
-  [AffixType.Cascade]: ['topology', 'numeric'],
+  [AffixType.Cascade]: ['word_sense', 'numeric'],
   [AffixType.Flow]: ['topology', 'numeric', 'production'],
   [AffixType.Confluence]: ['topology', 'numeric'],
   [AffixType.Union]: ['topology', 'numeric'],
   // ── 词感型 ──
-  [AffixType.Outcast]: ['word_sense', 'stack'],
+  [AffixType.Outcast]: ['word_sense', 'crit'],
   [AffixType.Gravity]: ['word_sense'],
   [AffixType.Ligature]: ['word_sense', 'numeric'],
   // ── 元规则型 ──
@@ -123,6 +124,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Myopia]: ['production', 'numeric'],
   [AffixType.AuraFury]: ['topology', 'crit'],
   [AffixType.AuraMorale]: ['topology', 'numeric'],
+  [AffixType.Fiber]: ['word_sense', 'stack'],
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -185,6 +187,7 @@ export enum EnchantmentType {
   QuestMercenaryWarlord = 'quest_mercenary_warlord',
   QuestAuraGlobal = 'quest_aura_global',
   QuestAuraUniversal = 'quest_aura_universal',
+  QuestFiberPierce = 'quest_fiber_pierce',
   QuestAmplifyPulse = 'quest_amplify_pulse',
   QuestReechoRumble = 'quest_reecho_rumble',
   QuestMyopiaForesight = 'quest_myopia_foresight',
@@ -243,6 +246,7 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestMercenaryWarlord]: AffixType.Mercenary,
   [EnchantmentType.QuestAuraGlobal]: AffixType.AuraFury,
   [EnchantmentType.QuestAuraUniversal]: AffixType.AuraMorale,
+  [EnchantmentType.QuestFiberPierce]: AffixType.Fiber,
   [EnchantmentType.QuestAmplifyPulse]: AffixType.Amplify,
   [EnchantmentType.QuestReechoRumble]: AffixType.Reecho,
   [EnchantmentType.QuestMyopiaForesight]: AffixType.Myopia,
@@ -334,6 +338,7 @@ export interface AffixInstance {
   amplifyK?: number                // Amplify: 给匹配技能的bonusPercent加成
   auraCrit?: number                // AuraFury: 给匹配技能的暴击率加成
   auraMorale?: number              // AuraMorale: 给匹配技能的bonusPercent加成
+  fiberInterval?: number           // Fiber: 叠层满层间隔
 }
 
 // ===== 稀有度 =====
@@ -519,6 +524,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Myopia]: 'high',
   [AffixType.AuraFury]: 'high',
   [AffixType.AuraMorale]: 'high',
+  [AffixType.Fiber]: 'low',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -611,7 +617,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Tide]: '潮汐',
   [AffixType.Relay]: '中转',
   [AffixType.Conduit]: '共振光环',
-  [AffixType.Outcast]: '流放',
+  [AffixType.Outcast]: '退场',
   [AffixType.Gravity]: '引力',
   [AffixType.Ligature]: '连字',
   [AffixType.WarDrum]: '战鼓',
@@ -639,6 +645,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Myopia]: '短视',
   [AffixType.AuraFury]: '愤怒光环',
   [AffixType.AuraMorale]: '士气光环',
+  [AffixType.Fiber]: '光纤',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -662,7 +669,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Tide]: '每秒自动叠层，满层触发自身',
   [AffixType.Relay]: '自身不产出；指定关系的匹配技能触发时，直接触发1个匹配技能（不含其他中转）',
   [AffixType.Conduit]: '自身不产出，指定关系的匹配技能触发时额外触发一次',
-  [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
+  [AffixType.Outcast]: '单词尾字母触发时暴击率+{bonusPercent}%',
   [AffixType.Gravity]: '调整含本键字母的单词出现概率',
   [AffixType.Ligature]: '字母在当前单词中重复出现时，按出现次数倍增产出',
   [AffixType.WarDrum]: '自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能暴击率+叠层×{critPerStack}%',
@@ -690,6 +697,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Myopia]: '产出+{myopiaBonus}%，但每次触发目标分数增加{myopiaCost}',
   [AffixType.AuraFury]: '自身不产出；指定关系内匹配技能暴击率+{auraCrit}%',
   [AffixType.AuraMorale]: '自身不产出；指定关系内匹配技能产出+{auraMorale}%',
+  [AffixType.Fiber]: '首字母触发时额外叠层，满层触发尾字母键上的技能',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -825,7 +833,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestOverload, name: '过载', targetAffix: AffixType.Crit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：暴击强化', transformDesc: '暴击倍率翻倍（×2→×4）' },
   { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向连锁', transformDesc: '完成后级联双向判定，反向键也触发' },
   { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'equip_count', targetStacks: 0, effectDesc: '质变：衰减反转为增长', transformDesc: '完成后衰减方向反转，越触发越强' },
-  { type: EnchantmentType.QuestCharge, name: '蓄势', targetAffix: AffixType.Outcast, event: 'equip_count', targetStacks: 0, effectDesc: '质变：即时呼应', transformDesc: '每次首尾命中都直接触发另一端（无需等满层）' },
+  { type: EnchantmentType.QuestCharge, name: '谢幕', targetAffix: AffixType.Outcast, event: 'equip_count', targetStacks: 0, effectDesc: '质变：谢幕', transformDesc: '暴击时触发词首字母键上的技能' },
   { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向转化', transformDesc: '完成后转化同时反向产出到源资源' },
   { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'equip_count', targetStacks: 0, effectDesc: '质变：满蓄力自动完成', transformDesc: '满蓄力释放时自动打完当前单词，所有被触发技能获得等量产出倍率' },
   { type: EnchantmentType.QuestStack, name: '层叠', targetAffix: AffixType.Amplify, event: 'equip_count', targetStacks: 0, effectDesc: '质变：叠层触发', transformDesc: '完成后增幅叠层时触发指定关系的匹配技能一次' },
@@ -867,6 +875,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestMercenaryWarlord, name: '佣兵王', targetAffix: AffixType.Mercenary, event: 'equip_count', targetStacks: 0, effectDesc: '质变：囤金暴力', transformDesc: '加成额外乘以(1+金币÷消耗×10)，金币越多越强' },
   { type: EnchantmentType.QuestAuraGlobal, name: '全域光环', targetAffix: AffixType.AuraFury, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全域', transformDesc: '光环作用范围变为全场' },
   { type: EnchantmentType.QuestAuraUniversal, name: '普照光环', targetAffix: AffixType.AuraMorale, event: 'equip_count', targetStacks: 0, effectDesc: '质变：普照', transformDesc: '光环不再限制匹配技能，作用于范围内所有技能' },
+  { type: EnchantmentType.QuestFiberPierce, name: '贯穿', targetAffix: AffixType.Fiber, event: 'equip_count', targetStacks: 0, effectDesc: '质变：贯穿', transformDesc: '满层时触发单词中所有字母键的技能（排除首字母）' },
   { type: EnchantmentType.QuestAmplifyPulse, name: '脉冲', targetAffix: AffixType.Amplify, event: 'equip_count', targetStacks: 0, effectDesc: '质变：脉冲', transformDesc: '叠层时触发范围内1个非匹配技能' },
   { type: EnchantmentType.QuestReechoRumble, name: '轰鸣', targetAffix: AffixType.Reecho, event: 'equip_count', targetStacks: 0, effectDesc: '质变：轰鸣', transformDesc: '打错时随机触发一个含回音词条的技能' },
   { type: EnchantmentType.QuestMyopiaForesight, name: '远见', targetAffix: AffixType.Myopia, event: 'equip_count', targetStacks: 0, effectDesc: '质变：远见', transformDesc: '目标分数每1000点额外+100%产出加成' },
@@ -930,7 +939,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   // Convert: 无参数缩放（固定100%标准化转化率）
   [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
   [AffixType.Cascade]:  { param: 'cascadeMult',    delta: 0.2,   mode: 'add' },
-  [AffixType.Outcast]:  { param: 'outcastInterval', delta: -1,    mode: 'add' },
+  [AffixType.Outcast]:  { param: 'bonusPercent',     delta: 0.10,  mode: 'add' },
   [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
   [AffixType.Swarm]:    { param: 'swarmK',         delta: 0.04,  mode: 'add' },
   [AffixType.Mercenary]:{ param: 'hireBonus',      delta: 0.20,  mode: 'add' },
@@ -955,6 +964,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Myopia]:   { param: 'myopiaBonus',    delta: 0.20,  mode: 'add' },
   [AffixType.AuraFury]: { param: 'auraCrit',       delta: 0.03,  mode: 'add' },
   [AffixType.AuraMorale]:{ param: 'auraMorale',    delta: 0.05,  mode: 'add' },
+  [AffixType.Fiber]:    { param: 'fiberInterval',  delta: -1,    mode: 'add' },
   [AffixType.Amplify]: { param: 'amplifyK',       delta: 0.01,  mode: 'add' },
   // Rainbow / Twin / Mirror / Conduit: 无可缩放数值参数
 }
