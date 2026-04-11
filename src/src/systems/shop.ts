@@ -45,7 +45,7 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
-import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests, getExtendedNeighbors } from '../data/affixTrigger';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests, getExtendedNeighbors, hasSharedMatch, isAuraQuestActive } from '../data/affixTrigger';
 import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
 import { invalidateBigramCache } from '../data/bigramFrequency';
 import type { EnchantmentType } from '../data/affixes';
@@ -553,6 +553,13 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       // 短视：替换加成/代价占位符
       if (a.myopiaBonus != null) desc = desc.replace('{myopiaBonus}', `${Math.round(a.myopiaBonus * 100)}`);
       if (a.myopiaCost != null) desc = desc.replace('{myopiaCost}', String(a.myopiaCost));
+      // 增幅：替换加成占位符
+      if (a.amplifyK != null) desc = desc.replace('{amplifyK}', `${Math.round(a.amplifyK * 100)}`);
+      // 战鼓：替换暴击率占位符
+      if (a.critPerStack != null) desc = desc.replace('{critPerStack}', `${Math.round(a.critPerStack * 100)}`);
+      // 光环：替换数值占位符
+      if (a.auraCrit != null) desc = desc.replace('{auraCrit}', `${Math.round(a.auraCrit * 100)}`);
+      if (a.auraMorale != null) desc = desc.replace('{auraMorale}', `${Math.round(a.auraMorale * 100)}`);
       // Mirror: 复制后显示复制词条的完整描述，参数标注「倒影」
       if (a.type === 'mirror' && rt) {
         const copied = (rt.mirrorCopiedAffixes && rt.mirrorCopiedAffixes.length > 0)
@@ -590,7 +597,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
           paramSummary += ` 🐒×${pMult.toFixed(2)}`;
         }
       }
-      const SELF_ZERO_MATCH_TYPES = ['amplify', 'splash', 'war_drum', 'relay', 'conduit'];
+      const SELF_ZERO_MATCH_TYPES = ['amplify', 'splash', 'war_drum', 'relay', 'conduit', 'aura_fury', 'aura_morale'];
       return {
         typeName: t('affix.' + a.type),
         typeKey: a.type,
@@ -671,6 +678,8 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'mercenary': return `${a.hireCost ?? '?'}g +${Math.round((a.hireBonus ?? 0) * 100)}%`
     case 'reecho': return `-${Math.round((a.reechoPenalty ?? 0) * 100)}%/${t('param.reecho_per')}`
     case 'myopia': return `+${Math.round((a.myopiaBonus ?? 0) * 100)}% (+${a.myopiaCost ?? '?'}${t('param.myopia_cost')})`
+    case 'aura_fury': return `+${Math.round((a.auraCrit ?? 0) * 100)}%${t('param.aura_crit')}`
+    case 'aura_morale': return `+${Math.round((a.auraMorale ?? 0) * 100)}%`
     case 'gravity': return `×${a.probMult?.toFixed(1) ?? '?'}`
     case 'exhaust': {
       const max = a.maxTriggers ?? '?';
@@ -694,7 +703,8 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'innate': return `${a.innateCount ?? 1}${t('param.innate_unit')}`
     case 'monkey_patch': return `~×${(a.patchHigh ?? 2.0).toFixed(1)}`
     // ── 无缩放参数 ──
-    case 'rainbow': case 'twin': case 'mirror': case 'amplify':
+    case 'amplify': return `+${Math.round((a.amplifyK ?? 0) * 100)}%/${t('param.void_per')}`
+    case 'rainbow': case 'twin': case 'mirror':
     case 'conduit': case 'relay': case 'splash':      return ''
     // 蜕变系：按技能等级显示
     case 'excavate': case 'treasure': {
@@ -729,7 +739,7 @@ export function computeSmartEstimate(
   boundKeys?: string | string[],
 ): SmartEstimate | null {
   // 包含自身不产出的词条时，不显示产出预估
-  const SELF_ZERO_TYPES: string[] = ['conduit', 'amplify', 'splash', 'relay', 'war_drum']
+  const SELF_ZERO_TYPES: string[] = ['conduit', 'amplify', 'splash', 'relay', 'war_drum', 'aura_fury', 'aura_morale']
   if (skill.affixes.some(a => SELF_ZERO_TYPES.includes(a.type))) return null
 
   const breakdown: EstimateBreakdownLine[] = []
@@ -921,6 +931,40 @@ export function computeSmartEstimate(
       // 其余词条不预估
       default:
         break
+    }
+  }
+
+  // 光环预估：扫描邻居光环技能对本技能的加成
+  if (boundKeys) {
+    const bKeys = Array.isArray(boundKeys) ? boundKeys : [boundKeys]
+    const auraGlobal = isAuraQuestActive(EnchantmentTypeEnum.QuestAuraGlobal as unknown as import('../data/affixes').EnchantmentType, state.affixSkills, state.affixSkillStates)
+    const auraUniversal = isAuraQuestActive(EnchantmentTypeEnum.QuestAuraUniversal as unknown as import('../data/affixes').EnchantmentType, state.affixSkills, state.affixSkillStates)
+    const counted = new Set<string>()
+    for (const [nk, nSid] of state.player.bindings) {
+      if (bKeys.includes(nk)) continue
+      if (counted.has(nSid)) continue
+      counted.add(nSid)
+      const nSkill = state.affixSkills.get(nSid)
+      if (!nSkill) continue
+      for (const na of nSkill.affixes) {
+        if ((na.type !== 'aura_fury' && na.type !== 'aura_morale') || na.posRel == null) continue
+        // 范围检查
+        if (!auraGlobal) {
+          const auraKeys = [...state.player.bindings].filter(([, sid]) => sid === nSid).map(([k]) => k)
+          const inRange = bKeys.some(bk => auraKeys.some(ak => hasRelation(ak, bk, na.posRel!)))
+          if (!inRange) continue
+        }
+        // 匹配检查
+        if (!auraUniversal && !hasSharedMatch(skill, nSkill, na.type as AffixTypeEnum)) continue
+        if (na.type === 'aura_fury' && (na.auraCrit ?? 0) > 0) {
+          critChanceAccum += na.auraCrit!
+          breakdown.push({ typeKey: 'aura_fury', label: t('est.aura_fury', { pct: Math.round(na.auraCrit! * 100) }), detail: '' })
+        } else if (na.type === 'aura_morale' && (na.auraMorale ?? 0) > 0) {
+          addPercent += na.auraMorale!
+          breakdown.push({ typeKey: 'aura_morale', label: t('est.aura_morale', { pct: Math.round(na.auraMorale! * 100) }), detail: '' })
+        }
+        break
+      }
     }
   }
 
@@ -3062,7 +3106,7 @@ function highlightSkillRange(key: string): void {
 
   // 2. 匹配技能高亮：posRel 范围内只高亮匹配的技能 + 共鸣/回响全局匹配
   if (affixSkill) {
-    const MATCH_AFFIX_TYPES = [AffixTypeEnum.Amplify, AffixTypeEnum.Splash, AffixTypeEnum.WarDrum, AffixTypeEnum.Union, AffixTypeEnum.Relay, AffixTypeEnum.Conduit] as string[];
+    const MATCH_AFFIX_TYPES = [AffixTypeEnum.Amplify, AffixTypeEnum.Splash, AffixTypeEnum.WarDrum, AffixTypeEnum.Union, AffixTypeEnum.Relay, AffixTypeEnum.Conduit, AffixTypeEnum.AuraFury, AffixTypeEnum.AuraMorale] as string[];
     for (const affix of affixSkill.affixes) {
       const color = AFFIX_COLORS[affix.type] || defaultColor;
       if (MATCH_AFFIX_TYPES.includes(affix.type) && affix.posRel) {

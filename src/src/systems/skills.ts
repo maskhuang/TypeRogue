@@ -116,6 +116,11 @@ export function getWordResourceOutput(resource: string): number {
   return _currentWordOutput[resource] ?? 0;
 }
 
+/** 获取本词累积产出快照（注入 TriggerContext） */
+export function getWordProduced(): Partial<Record<ResourceType, number>> {
+  return { ..._currentWordOutput } as Partial<Record<ResourceType, number>>;
+}
+
 /** 获取本词已产出的资源种类数 */
 export function getWordResourceTypeCount(): number {
   return _wordResourceTypes.size;
@@ -305,8 +310,10 @@ function triggerAffixSkillWithFeedback(
     surgeActive: isSurgeActive(),
     overloadCircuitActive: isOverloadCircuitActive(),
     neighborWatchActive: isNeighborWatchActive(),
+    stackCritActive: state.player.relics.has('stack_crit'),
     inscriptionFlowGrowth: getInscriptionFlowGrowth(),
     stageProduced: getStageProduced(),
+    wordProduced: getWordProduced(),
     wordBaseScore: synergy.skillBaseScore,
   };
 

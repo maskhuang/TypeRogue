@@ -196,7 +196,7 @@ export function rollAffixParams(
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
     case AffixType.Amplify:
-      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), resource }
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), resource, amplifyK: roundTo(0.03 + random() * 0.03, 2) }  // +3%~6% per stack
 
     case AffixType.Splash:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
@@ -308,6 +308,12 @@ export function rollAffixParams(
 
     case AffixType.Myopia:
       return { type, myopiaBonus: roundTo(1.00 + random() * 1.00, 2), myopiaCost: Math.floor(11 + random() * 16) }  // +100%~200%, cost 11~26 target score (≈gold 3~7 × score/gold ratio)
+
+    case AffixType.AuraFury:
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), auraCrit: roundTo(0.05 + random() * 0.10, 2) }  // +5%~15% crit
+
+    case AffixType.AuraMorale:
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), auraMorale: roundTo(0.15 + random() * 0.15, 2) }  // +15%~30% bonus
 
     default: {
       const _exhaustive: never = type

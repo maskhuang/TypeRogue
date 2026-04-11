@@ -61,6 +61,8 @@ export enum AffixType {
   Ascend = 'ascend',
   Reecho = 'reecho',
   Myopia = 'myopia',
+  AuraFury = 'aura_fury',
+  AuraMorale = 'aura_morale',
 }
 
 // ===== 词条类别 =====
@@ -119,6 +121,8 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Ascend]: ['meta_rule'],
   [AffixType.Reecho]: ['meta_rule', 'production'],
   [AffixType.Myopia]: ['production', 'numeric'],
+  [AffixType.AuraFury]: ['topology', 'crit'],
+  [AffixType.AuraMorale]: ['topology', 'numeric'],
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -135,6 +139,7 @@ export enum EnchantmentType {
   ApprenticeResGold = 'apprentice_res_gold',
   ApprenticeCrit = 'apprentice_crit',
   // ── 任务型（需技能拥有对应词条） ──
+  QuestConvertAccum = 'quest_convert_accum',
   QuestDevour = 'quest_devour',
   QuestOverload = 'quest_overload',
   QuestChain = 'quest_chain',
@@ -178,6 +183,9 @@ export enum EnchantmentType {
   QuestAscend = 'quest_ascend',
   QuestSwarmPropagate = 'quest_swarm_propagate',
   QuestMercenaryWarlord = 'quest_mercenary_warlord',
+  QuestAuraGlobal = 'quest_aura_global',
+  QuestAuraUniversal = 'quest_aura_universal',
+  QuestAmplifyPulse = 'quest_amplify_pulse',
   QuestReechoRumble = 'quest_reecho_rumble',
   QuestMyopiaForesight = 'quest_myopia_foresight',
   // ── 附加产出（触发时额外产出指定资源） ──
@@ -203,6 +211,7 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestOverlap]: AffixType.Ligature,
   [EnchantmentType.QuestIterate]: AffixType.Recurse,
   [EnchantmentType.QuestSacrifice]: AffixType.Taboo,
+  [EnchantmentType.QuestConvertAccum]: AffixType.Convert,
   [EnchantmentType.QuestTwin]: AffixType.Twin,
   [EnchantmentType.QuestRelay]: AffixType.Relay,
   [EnchantmentType.QuestSplash]: AffixType.Splash,
@@ -232,6 +241,9 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestAscend]: AffixType.Ascend,
   [EnchantmentType.QuestSwarmPropagate]: AffixType.Swarm,
   [EnchantmentType.QuestMercenaryWarlord]: AffixType.Mercenary,
+  [EnchantmentType.QuestAuraGlobal]: AffixType.AuraFury,
+  [EnchantmentType.QuestAuraUniversal]: AffixType.AuraMorale,
+  [EnchantmentType.QuestAmplifyPulse]: AffixType.Amplify,
   [EnchantmentType.QuestReechoRumble]: AffixType.Reecho,
   [EnchantmentType.QuestMyopiaForesight]: AffixType.Myopia,
 }
@@ -319,6 +331,9 @@ export interface AffixInstance {
   reechoPenalty?: number           // Reecho: 每次打错累积的产出惩罚%
   myopiaBonus?: number             // Myopia: 产出加成%
   myopiaCost?: number              // Myopia: 每次触发增加的目标分数
+  amplifyK?: number                // Amplify: 给匹配技能的bonusPercent加成
+  auraCrit?: number                // AuraFury: 给匹配技能的暴击率加成
+  auraMorale?: number              // AuraMorale: 给匹配技能的bonusPercent加成
 }
 
 // ===== 稀有度 =====
@@ -435,11 +450,6 @@ export const BASE_VALUES: Record<ResourceType, number[]> = {
 
 /** 词条职业限制：仅指定职业可使用（未列出=全职业通用） */
 export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
-  // 造词师专属：词感分析 + 精密控制 → 与合词站/碎片系统协同
-  [AffixType.Outcast]: 'wordsmith',     // 首尾字母→叠层→触发另一端
-  [AffixType.Gravity]: 'wordsmith',     // 操控出词概率
-  [AffixType.Ligature]: 'wordsmith',    // 重复字母×N → 合词规划
-  [AffixType.Cascade]: 'wordsmith',     // 击键顺序→乘算 → 精密控制
   // 蜕变师专属
   [AffixType.Twin]: 'metamorph',        // 双附魔 → 变异后获得更多附魔
   [AffixType.Excavate]: 'metamorph',    // 挖掘 → 被蜕变时获得遗物
@@ -507,6 +517,8 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Ascend]: 'low',
   [AffixType.Reecho]: 'low',
   [AffixType.Myopia]: 'high',
+  [AffixType.AuraFury]: 'high',
+  [AffixType.AuraMorale]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -598,7 +610,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Fury]: '怒气',
   [AffixType.Tide]: '潮汐',
   [AffixType.Relay]: '中转',
-  [AffixType.Conduit]: '导能',
+  [AffixType.Conduit]: '共振光环',
   [AffixType.Outcast]: '流放',
   [AffixType.Gravity]: '引力',
   [AffixType.Ligature]: '连字',
@@ -625,11 +637,13 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Ascend]: '升华',
   [AffixType.Reecho]: '回音',
   [AffixType.Myopia]: '短视',
+  [AffixType.AuraFury]: '愤怒光环',
+  [AffixType.AuraMorale]: '士气光环',
 }
 
 /** 词条功能说明（玩家可读） */
 export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
-  [AffixType.Convert]: '读取一种资源的当前存量，按系数加成',
+  [AffixType.Convert]: '读取{source}的技能产出量加成（base逐词重置，其他逐关重置）',
   [AffixType.Rainbow]: '每次触发时随机选择一种资源类型产出',
   [AffixType.Multiply]: '产出直接乘以固定倍数',
   [AffixType.Charge]: '按住蓄力，触发时释放产出倍率（×1.0~上限）；蓄满自动释放',
@@ -640,7 +654,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Swarm]: '指定关系内拥有虫群词条的技能越多，产出越高',
   [AffixType.Mercenary]: '金币≥N时触发加成产出，每次触发消耗N金币',
   [AffixType.Mirror]: '每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效',
-  [AffixType.Amplify]: '自身不产出；触发叠层，指定关系的匹配技能产出+自身基础值',
+  [AffixType.Amplify]: '自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能产出+叠层×{amplifyK}%',
   [AffixType.Splash]: '自身不产出；触发时触发叠层数个指定关系的匹配技能',
   [AffixType.Resonance]: '任意技能产出{resource}时叠层，满层触发自身',
   [AffixType.Echo]: '拥有{affixA}或{affixB}的技能触发时叠层，满层触发自身',
@@ -651,7 +665,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Outcast]: '单词首尾字母触发时获得额外加成',
   [AffixType.Gravity]: '调整含本键字母的单词出现概率',
   [AffixType.Ligature]: '字母在当前单词中重复出现时，按出现次数倍增产出',
-  [AffixType.WarDrum]: '自身不产出；触发叠层，指定关系的匹配技能+暴击率（取决于层数）',
+  [AffixType.WarDrum]: '自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能暴击率+叠层×{critPerStack}%',
   [AffixType.Twin]: '获得附魔时同时获得两个（而非二选一）',
   [AffixType.Recurse]: '增加暴击率，暴击时额外触发一次（每次暴击率减半）',
   [AffixType.Taboo]: '大幅增加暴击率，若未暴击则产出负值',
@@ -674,6 +688,8 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Ascend]: '被蜕变时本技能升级',
   [AffixType.Reecho]: '打错时也能触发技能产出，但每次打错累积-{reechoPenalty}%产出惩罚，逐词重置',
   [AffixType.Myopia]: '产出+{myopiaBonus}%，但每次触发目标分数增加{myopiaCost}',
+  [AffixType.AuraFury]: '自身不产出；指定关系内匹配技能暴击率+{auraCrit}%',
+  [AffixType.AuraMorale]: '自身不产出；指定关系内匹配技能产出+{auraMorale}%',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -814,6 +830,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'equip_count', targetStacks: 0, effectDesc: '质变：满蓄力自动完成', transformDesc: '满蓄力释放时自动打完当前单词，所有被触发技能获得等量产出倍率' },
   { type: EnchantmentType.QuestStack, name: '层叠', targetAffix: AffixType.Amplify, event: 'equip_count', targetStacks: 0, effectDesc: '质变：叠层触发', transformDesc: '完成后增幅叠层时触发指定关系的匹配技能一次' },
   { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向锁定', transformDesc: '完成后吸引字母必含，排斥字母必不含' },
+  { type: EnchantmentType.QuestConvertAccum, name: '汲取', targetAffix: AffixType.Convert, event: 'equip_count', targetStacks: 0, effectDesc: '质变：读取存量', transformDesc: '改为读取源资源的累积存量而非技能产出量' },
   { type: EnchantmentType.QuestSpectrum, name: '光谱', targetAffix: AffixType.Rainbow, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全资源产出', transformDesc: '完成后产出等比分摊到所有资源' },
   { type: EnchantmentType.QuestMirror, name: '映射', targetAffix: AffixType.Mirror, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全词条复制', transformDesc: '完成后复制指定关系的所有邻居的不同类型词条' },
   { type: EnchantmentType.QuestOverlap, name: '重叠', targetAffix: AffixType.Ligature, event: 'equip_count', targetStacks: 0, effectDesc: '质变：关卡累计计数', transformDesc: '完成后连字按关卡累计按键计数' },
@@ -848,6 +865,9 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestAscend, name: '超越', targetAffix: AffixType.Ascend, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全技能升级', transformDesc: '被蜕变时所有已装备技能升1级' },
   { type: EnchantmentType.QuestSwarmPropagate, name: '繁殖', targetAffix: AffixType.Swarm, event: 'equip_count', targetStacks: 0, effectDesc: '质变：虫群繁殖', transformDesc: '每次触发25%概率向范围内无虫群的邻居传播虫群词条' },
   { type: EnchantmentType.QuestMercenaryWarlord, name: '佣兵王', targetAffix: AffixType.Mercenary, event: 'equip_count', targetStacks: 0, effectDesc: '质变：囤金暴力', transformDesc: '加成额外乘以(1+金币÷消耗×10)，金币越多越强' },
+  { type: EnchantmentType.QuestAuraGlobal, name: '全域光环', targetAffix: AffixType.AuraFury, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全域', transformDesc: '光环作用范围变为全场' },
+  { type: EnchantmentType.QuestAuraUniversal, name: '普照光环', targetAffix: AffixType.AuraMorale, event: 'equip_count', targetStacks: 0, effectDesc: '质变：普照', transformDesc: '光环不再限制匹配技能，作用于范围内所有技能' },
+  { type: EnchantmentType.QuestAmplifyPulse, name: '脉冲', targetAffix: AffixType.Amplify, event: 'equip_count', targetStacks: 0, effectDesc: '质变：脉冲', transformDesc: '叠层时触发范围内1个非匹配技能' },
   { type: EnchantmentType.QuestReechoRumble, name: '轰鸣', targetAffix: AffixType.Reecho, event: 'equip_count', targetStacks: 0, effectDesc: '质变：轰鸣', transformDesc: '打错时随机触发一个含回音词条的技能' },
   { type: EnchantmentType.QuestMyopiaForesight, name: '远见', targetAffix: AffixType.Myopia, event: 'equip_count', targetStacks: 0, effectDesc: '质变：远见', transformDesc: '目标分数每1000点额外+100%产出加成' },
 ]
@@ -933,7 +953,9 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.MonkeyPatch]:{ param: 'patchHigh',     delta: 0.3,   mode: 'add' },
   [AffixType.Reecho]:   { param: 'reechoPenalty',  delta: -0.03, mode: 'add' },
   [AffixType.Myopia]:   { param: 'myopiaBonus',    delta: 0.20,  mode: 'add' },
-  // Amplify: 每层加成=基础产出，升级通过 baseValues 自然增长
+  [AffixType.AuraFury]: { param: 'auraCrit',       delta: 0.03,  mode: 'add' },
+  [AffixType.AuraMorale]:{ param: 'auraMorale',    delta: 0.05,  mode: 'add' },
+  [AffixType.Amplify]: { param: 'amplifyK',       delta: 0.01,  mode: 'add' },
   // Rainbow / Twin / Mirror / Conduit: 无可缩放数值参数
 }
 

@@ -142,6 +142,8 @@ export interface TriggerContext {
   // ── Story 45: 累积产出追踪 ──
   /** 本关各资源累积产出量（备用） */
   stageProduced?: Partial<Record<ResourceType, number>>
+  /** 本词各资源累积产出量（每词重置） */
+  wordProduced?: Partial<Record<ResourceType, number>>
   /** 本词 base 累积产出（synergy.skillBaseScore，每词重置） */
   wordBaseScore?: number
   // ── 叠层子系统遗物 ──
@@ -161,6 +163,27 @@ export interface TriggerContext {
   neighborWatchActive?: boolean
   /** 铭文涌流成长加成 */
   inscriptionFlowGrowth?: number
+  /** 叠层暴击激活 */
+  stackCritActive?: boolean
+}
+
+// ===== 光环质变检查 =====
+
+const AURA_AFFIX_TYPES: AffixType[] = [AffixType.AuraFury, AffixType.AuraMorale, AffixType.Conduit]
+
+/** 检查光环共享质变是否激活（任意光环技能完成指定质变即全场生效） */
+export function isAuraQuestActive(
+  questType: EnchantmentType,
+  allSkills: Map<string, AffixSkillInstance>,
+  skillStates: Map<string, SkillRuntimeState>,
+): boolean {
+  for (const [skillId, skill] of allSkills) {
+    if (!skill.affixes.some(a => AURA_AFFIX_TYPES.includes(a.type))) continue
+    if (!skill.enchantmentIds.includes(questType as string)) continue
+    const rt = skillStates.get(skillId)
+    if (rt?.questTransformed) return true
+  }
+  return false
 }
 
 // ===== 全场质变检查 =====
@@ -457,22 +480,18 @@ export function sumNeighborAmplifyBaseBonus(
     const nSkill = ctx.allSkills.get(nSkillId)
     if (!nSkill) continue
 
-    // 邻居必须有 Amplify 词条
+    const nState = ctx.skillStates.get(nSkillId)
+    if (!nState || nState.stacks <= 0) continue
+
     for (const affix of nSkill.affixes) {
       if (affix.type !== AffixType.Amplify || affix.posRel == null) continue
-      // 范围检查：增幅技能的 posRel 覆盖被触发技能任意键位
       const ampKeys = [...ctx.bindings].filter(([, sid]) => sid === nSkillId).map(([k]) => k)
       const inRange = occupiedKeys.some(ok =>
         ampKeys.some(ak => hasRelation(ak, ok, affix.posRel!))
       )
       if (!inRange) continue
-      // 匹配条件：同资源 OR 共享任意词条类型（排除 Amplify 自身）
-      if (hasSharedMatch(triggeredSkill, nSkill, AffixType.Amplify)) {
-        // 加成 = 增幅技能的 baseValues[level-1]
-        const lvIdx = Math.max(0, Math.min(nSkill.level - 1, nSkill.baseValues.length - 1))
-        bonus += nSkill.baseValues[lvIdx]
-      }
-      break // 同一技能只计一次
+      bonus += nState.stacks * (affix.amplifyK ?? 0)
+      break
     }
   }
   return bonus
@@ -506,13 +525,75 @@ export function sumNeighborWarDrumCrit(
         ampKeys.some(ak => hasRelation(ak, ok, affix.posRel!))
       )
       if (!inRange) continue
-      if (hasSharedMatch(triggeredSkill, nSkill, AffixType.WarDrum)) {
-        critBonus += nState.stacks * (affix.critPerStack ?? 0)
-      }
+      critBonus += nState.stacks * (affix.critPerStack ?? 0)
       break
     }
   }
   return critBonus
+}
+
+/** 愤怒光环：统计范围内光环给自身的暴击率加成 */
+export function sumNeighborAuraCrit(
+  triggeredSkill: AffixSkillInstance,
+  occupiedKeys: string[],
+  ctx: TriggerContext,
+): number {
+  const isGlobal = isAuraQuestActive(EnchantmentType.QuestAuraGlobal, ctx.allSkills, ctx.skillStates)
+  const isUniversal = isAuraQuestActive(EnchantmentType.QuestAuraUniversal, ctx.allSkills, ctx.skillStates)
+  const occupiedSet = new Set(occupiedKeys)
+  let critBonus = 0
+  const counted = new Set<string>()
+  for (const [nk, nSkillId] of ctx.bindings) {
+    if (occupiedSet.has(nk)) continue
+    if (counted.has(nSkillId)) continue
+    counted.add(nSkillId)
+    const nSkill = ctx.allSkills.get(nSkillId)
+    if (!nSkill) continue
+    for (const affix of nSkill.affixes) {
+      if (affix.type !== AffixType.AuraFury || affix.posRel == null) continue
+      if (!isGlobal) {
+        const auraKeys = [...ctx.bindings].filter(([, sid]) => sid === nSkillId).map(([k]) => k)
+        const inRange = occupiedKeys.some(ok => auraKeys.some(ak => hasRelation(ak, ok, affix.posRel!)))
+        if (!inRange) continue
+      }
+      if (!isUniversal && !hasSharedMatch(triggeredSkill, nSkill, AffixType.AuraFury)) continue
+      critBonus += affix.auraCrit ?? 0
+      break
+    }
+  }
+  return critBonus
+}
+
+/** 士气光环：统计范围内光环给自身的bonusPercent加成 */
+export function sumNeighborAuraMorale(
+  triggeredSkill: AffixSkillInstance,
+  occupiedKeys: string[],
+  ctx: TriggerContext,
+): number {
+  const isGlobal = isAuraQuestActive(EnchantmentType.QuestAuraGlobal, ctx.allSkills, ctx.skillStates)
+  const isUniversal = isAuraQuestActive(EnchantmentType.QuestAuraUniversal, ctx.allSkills, ctx.skillStates)
+  const occupiedSet = new Set(occupiedKeys)
+  let bonus = 0
+  const counted = new Set<string>()
+  for (const [nk, nSkillId] of ctx.bindings) {
+    if (occupiedSet.has(nk)) continue
+    if (counted.has(nSkillId)) continue
+    counted.add(nSkillId)
+    const nSkill = ctx.allSkills.get(nSkillId)
+    if (!nSkill) continue
+    for (const affix of nSkill.affixes) {
+      if (affix.type !== AffixType.AuraMorale || affix.posRel == null) continue
+      if (!isGlobal) {
+        const auraKeys = [...ctx.bindings].filter(([, sid]) => sid === nSkillId).map(([k]) => k)
+        const inRange = occupiedKeys.some(ok => auraKeys.some(ak => hasRelation(ak, ok, affix.posRel!)))
+        if (!inRange) continue
+      }
+      if (!isUniversal && !hasSharedMatch(triggeredSkill, nSkill, AffixType.AuraMorale)) continue
+      bonus += affix.auraMorale ?? 0
+      break
+    }
+  }
+  return bonus
 }
 
 // ===== Phase 1: 基础值 =====
@@ -601,21 +682,20 @@ export function resolvePhase2(
     switch (affix.type) {
       case AffixType.Convert: {
         if (affix.source == null) break
-        // 标准化100%：读取源资源已有量，按 BASE_VALUES 归一化后作为加成
         const cvtLvIdx = Math.max(0, Math.min(skill.level - 1, 2))
         const cvtSkillBase = BASE_VALUES[skill.resource]?.[cvtLvIdx] ?? 1
         const cvtSourceBase = BASE_VALUES[affix.source]?.[cvtLvIdx] ?? 1
-        bonusPercent += getAffixSourceValue(affix.source, ctx) * (cvtSkillBase / cvtSourceBase)
-        // 质变：双向转化 — 反向产出按同样比例缩放到源资源
+        // 质变：读取源资源累积存量（原始行为）
+        // 普通：读取技能产出量（base逐词重置，其他逐关重置）
+        let sourceValue: number
         if (isTransformedForAffix(AffixType.Convert, runtimeState, skill, ctx)) {
-          const reverseValue = getAffixSourceValue(skill.resource, ctx)
-          if (reverseValue > 0) {
-            convertReverseOutputs.push({
-              resource: affix.source,
-              amount: reverseValue * effectiveBase * (cvtSourceBase / cvtSkillBase),
-            })
-          }
+          sourceValue = getAffixSourceValue(affix.source, ctx)
+        } else {
+          sourceValue = affix.source === 'base'
+            ? (ctx.wordProduced?.base ?? 0)
+            : (ctx.stageProduced?.[affix.source] ?? 0)
         }
+        bonusPercent += sourceValue * (cvtSkillBase / cvtSourceBase)
         break
       }
 
@@ -640,6 +720,7 @@ export function resolvePhase2(
 
       case AffixType.Mercenary: {
         // 雇佣：玩家金币 >= hireCost 时加成产出，消耗 hireCost 金币
+        if (effectiveBase <= 0) break // 自不产出技能跳过代价
         const hireCost = affix.hireCost ?? 0
         const currentGold = ctx.playerGold ?? 0
         if (hireCost > 0 && currentGold >= hireCost) {
@@ -656,6 +737,7 @@ export function resolvePhase2(
 
       case AffixType.Myopia: {
         // 短视：产出+N%，每次触发目标分数增加
+        if (effectiveBase <= 0) break // 自不产出技能跳过代价
         let myopiaBonus = affix.myopiaBonus ?? 0
         const myopiaCost = affix.myopiaCost ?? 0
         // 质变·远见：根据目标分数获得额外产出加成（每1000目标分+100%）
@@ -793,10 +875,11 @@ export function resolvePhase2(
   // 附魔循环（预留）
   // 41-4: QuestDevour 额外数值加成已移除，质变行为在 Phase 5 实现
 
-  // ── 被增幅：扫描范围内增幅技能，获得其基础产出值作为加成 ──
-  if (effectiveBase > 0) {
-    flatBonus += sumNeighborAmplifyBaseBonus(skill, ctx.occupiedKeys, ctx)
-  }
+  // ── 被增幅：扫描范围内增幅技能，获得产出百分比加成 ──
+  bonusPercent += sumNeighborAmplifyBaseBonus(skill, ctx.occupiedKeys, ctx)
+
+  // ── 光环加成 ──
+  bonusPercent += sumNeighborAuraMorale(skill, ctx.occupiedKeys, ctx)
 
   // 回音：累积惩罚应用
   for (const affix of skill.affixes) {
@@ -953,6 +1036,8 @@ export function resolvePhase3(
   {
     // 战鼓暴击率贡献（范围内战鼓技能 stacks × critPerStack）
     totalCritChance += sumNeighborWarDrumCrit(skill, ctx.occupiedKeys, ctx)
+    // 愤怒光环暴击率贡献
+    totalCritChance += sumNeighborAuraCrit(skill, ctx.occupiedKeys, ctx)
     const echoCrit = 0
     recurseCritContribution += echoCrit
     flags.recurseCritContribution = recurseCritContribution
@@ -1248,27 +1333,9 @@ export function resolvePhase5(
   // ── 词条后触发 ──
   for (const affix of skill.affixes) {
     switch (affix.type) {
-      case AffixType.Amplify: {
-        // 自身叠层（不再给范围内技能叠层）
-        runtimeState.stacks += 1
-        // 质变：层数增加时触发范围内匹配技能
-        if (affix.posRel != null && isTransformedForAffix(AffixType.Amplify, runtimeState, skill, ctx)) {
-          const ampNeighborKeys = getExtendedNeighbors(ctx.occupiedKeys, affix.posRel)
-          const ampCounted = new Set<string>()
-          for (const nk of ampNeighborKeys) {
-            const nSkillId = ctx.bindings.get(nk)
-            if (!nSkillId || ampCounted.has(nSkillId)) continue
-            if (nSkillId === skill.id) continue
-            ampCounted.add(nSkillId)
-            const nSkill = ctx.allSkills.get(nSkillId)
-            if (!nSkill) continue
-            if (!hasSharedMatch(nSkill, skill, AffixType.Amplify)) continue
-            if (!result.amplifyTriggerTargets) result.amplifyTriggerTargets = []
-            result.amplifyTriggerTargets.push(nk)
-          }
-        }
+      case AffixType.Amplify:
+        // 叠层和质变均由编排器监听处理
         break
-      }
 
       case AffixType.Splash: {
         // 溅射：叠层，然后触发叠层数个匹配技能
@@ -1534,13 +1601,17 @@ export function resolvePhase6(
       }
     }
 
-    // 导能词条：匹配技能触发时额外触发一次（质变：+2 次）
+    // 共振光环：匹配技能触发时额外触发一次（质变：+2 次）
     if (!ctx.chainAffixesDisabled) {
+      const conduitGlobal = isAuraQuestActive(EnchantmentType.QuestAuraGlobal, ctx.allSkills, ctx.skillStates)
+      const conduitUniversal = isAuraQuestActive(EnchantmentType.QuestAuraUniversal, ctx.allSkills, ctx.skillStates)
       for (const affix of neighborSkill.affixes) {
         if (affix.type !== AffixType.Conduit || affix.posRel == null) continue
-        const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
-        if (matchedNk == null) continue
-        if (hasSharedMatch(skill, neighborSkill, AffixType.Conduit)) {
+        if (!conduitGlobal) {
+          const matchedNk = neighborKeys.find(nk => occupiedKeys.some(ok => hasRelation(ok, nk, affix.posRel!)))
+          if (matchedNk == null) continue
+        }
+        if (conduitUniversal || hasSharedMatch(skill, neighborSkill, AffixType.Conduit)) {
           const conduitCount = isAffixGloballyTransformed(AffixType.Conduit, ctx.allSkills, ctx.skillStates) ? 2 : 1
           actions.push({ type: 'conduit', targetKey: triggerKey, conduitCount })
         }
@@ -1640,7 +1711,7 @@ export function triggerAffixSkill(
   const effectiveSkill = buildEffectiveSkill(skill, runtimeState)
 
   // Phase 1: 基础值（Conduit/Amplify/Splash 技能自身不产出，基础值为 0）
-  const hasSelfZero = effectiveSkill.affixes.some(a => a.type === AffixType.Conduit || a.type === AffixType.Amplify || a.type === AffixType.Splash || a.type === AffixType.Relay || a.type === AffixType.WarDrum)
+  const hasSelfZero = effectiveSkill.affixes.some(a => a.type === AffixType.Conduit || a.type === AffixType.Amplify || a.type === AffixType.Splash || a.type === AffixType.Relay || a.type === AffixType.WarDrum || a.type === AffixType.AuraFury || a.type === AffixType.AuraMorale)
   const base = hasSelfZero ? 0 : resolvePhase1(effectiveSkill)
 
   // Phase 2: 加算层

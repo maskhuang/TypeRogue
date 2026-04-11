@@ -665,7 +665,7 @@ const ZH: Record<string, string> = {
   'affix.charge': '蓄力', 'affix.decay': '衰减', 'affix.pulse': '脉冲',
   'affix.crit': '暴击', 'affix.cascade': '级联',
   'affix.void': '虚无', 'affix.swarm': '虫群', 'affix.mercenary': '雇佣', 'affix.mirror': '倒影',
-  'affix.resonance': '共鸣', 'affix.echo': '感应', 'affix.fury': '怒气', 'affix.tide': '潮汐', 'affix.splash': '溅射', 'affix.amplify': '增幅', 'affix.conduit': '导能', 'affix.relay': '中转',
+  'affix.resonance': '共鸣', 'affix.echo': '感应', 'affix.fury': '怒气', 'affix.tide': '潮汐', 'affix.splash': '溅射', 'affix.amplify': '增幅', 'affix.conduit': '共振光环', 'affix.relay': '中转',
   'affix.outcast': '流放', 'affix.gravity': '引力', 'affix.ligature': '连字',
   'affix.war_drum': '战鼓',
   'affix.twin': '双生', 'affix.recurse': '递归', 'affix.taboo': '禁忌', 'affix.fallacy': '赌徒',
@@ -679,9 +679,10 @@ const ZH: Record<string, string> = {
   'affix.burst': '连射', 'affix.zero_in': '校准', 'affix.sharpshooter': '神射', 'affix.overflow': '溢层',
   'affix.bridge': '桥', 'affix.clique': '团', 'affix.component': '连通',
   'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝', 'affix.refine': '提纯', 'affix.evolve': '进化', 'affix.harvest': '收割', 'affix.chain': '连锁', 'affix.volatile': '不稳定', 'affix.mutacrit': '蜕变暴击', 'affix.ascend': '升华', 'affix.reecho': '回音', 'affix.myopia': '短视',
+  'affix.aura_fury': '愤怒光环', 'affix.aura_morale': '士气光环',
 
   // --- affix descriptions (53) ---
-  'affix_desc.convert': '读取{source}的已有量，标准化后加成产出',
+  'affix_desc.convert': '读取{source}的技能产出量加成（base逐词重置，其他逐关重置）',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
   'affix_desc.multiply': '产出直接乘以固定倍数',
   'affix_desc.charge': '按住蓄力，触发时释放产出倍率（×1.0~上限）；蓄满自动释放',
@@ -699,7 +700,7 @@ const ZH: Record<string, string> = {
   'affix_desc.mirror': '每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效',
   'affix_desc.union': '指定关系的匹配技能越多，产出加成越高',
   'affix_desc.splash': '自身不产出；触发时触发叠层数个指定关系的匹配技能',
-  'affix_desc.amplify': '自身不产出；指定关系的匹配技能产出+自身基础值×叠层数',
+  'affix_desc.amplify': '自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能产出+叠层×{amplifyK}%',
   'affix_desc.conduit': '自身不产出，指定关系的匹配技能触发时额外触发一次',
   'affix_desc.relay': '自身不产出；指定关系的匹配技能触发时，直接触发1个匹配技能',
   'affix_desc.outcast': '单词首尾字母触发时叠层，叠满时触发词另一端字母键上的技能',
@@ -709,7 +710,7 @@ const ZH: Record<string, string> = {
   'affix_desc.recurse': '暴击时额外触发一次（每次暴击率减半）',
   'affix_desc.taboo': '未暴击时产出负值',
   'affix_desc.fallacy': '连续未暴击时暴击率逐次递增，暴击后重置',
-  'affix_desc.war_drum': '自身不产出；指定关系的匹配技能暴击率+叠层相关加成',
+  'affix_desc.war_drum': '自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能暴击率+叠层×{critPerStack}%',
   'affix_desc.phase_shift': '追踪{source}的累积产出(阈值{t1}/{t2})，累积越多产出越高；超过上限时消耗该资源',
   'affix_desc.endo_exo': '追踪{source}的累积产出，超过{threshold}时爆发高产出并消耗该资源，未达时低产出',
   'affix_desc.fusion': '同时追踪{sourceA}和{sourceB}的累积产出，两者都达标时高倍爆发并双消耗，否则减产',
@@ -753,6 +754,8 @@ const ZH: Record<string, string> = {
   'affix_desc.ascend': '被蜕变时本技能有概率升级',
   'affix_desc.reecho': '打错时也触发本技能，但每次打错累积-{reechoPenalty}%产出，打对时重置',
   'affix_desc.myopia': '产出+{myopiaBonus}%，但每次触发目标分数+{myopiaCost}',
+  'affix_desc.aura_fury': '自身不产出；指定关系内匹配技能暴击率+{auraCrit}%',
+  'affix_desc.aura_morale': '自身不产出；指定关系内匹配技能产出+{auraMorale}%',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -797,6 +800,7 @@ const ZH: Record<string, string> = {
   'help.ascend.desc': '拥有学徒附魔的 Lv.3+ 技能，积累足够经验后在战斗中自动升华，突破等级上限。',
 
   // --- quest enchantments (19 name + 19 effect + 19 task) ---
+  'quest.quest_convert_accum': '汲取', 'quest.quest_convert_accum.effect': '改为读取源资源累积存量', 'quest.quest_convert_accum.task': '装备N个',
   'quest.quest_devour': '吞噬', 'quest.quest_devour.effect': '吞噬最弱邻居获得经验，升级提升空位加成', 'quest.quest_devour.task': '装备N个',
   'quest.quest_overload': '过载', 'quest.quest_overload.effect': '暴击必定触发', 'quest.quest_overload.task': '装备N个',
   'quest.quest_echo': '回响', 'quest.quest_echo.effect': '爆发时触发所有匹配技能', 'quest.quest_echo.task': '装备N个',
@@ -870,6 +874,9 @@ const ZH: Record<string, string> = {
   'quest.quest_ascend': '超越', 'quest.quest_ascend.effect': '被蜕变时所有已装备技能升1级', 'quest.quest_ascend.task': '装备N个',
   'quest.quest_swarm_propagate': '繁殖', 'quest.quest_swarm_propagate.effect': '触发时25%概率向邻居传播虫群词条', 'quest.quest_swarm_propagate.task': '装备N个',
   'quest.quest_mercenary_warlord': '佣兵王', 'quest.quest_mercenary_warlord.effect': '加成按金币存量缩放', 'quest.quest_mercenary_warlord.task': '装备N个',
+  'quest.quest_aura_global': '全域', 'quest.quest_aura_global.effect': '光环作用范围变为全场', 'quest.quest_aura_global.task': '装备N个',
+  'quest.quest_aura_universal': '普照', 'quest.quest_aura_universal.effect': '光环不限匹配，作用于范围内所有技能', 'quest.quest_aura_universal.task': '装备N个',
+  'quest.quest_amplify_pulse': '脉冲', 'quest.quest_amplify_pulse.effect': '叠层时触发范围内1个非匹配技能', 'quest.quest_amplify_pulse.task': '装备N个',
   'quest.quest_reecho_rumble': '轰鸣', 'quest.quest_reecho_rumble.effect': '打错时随机触发一个含回音的技能', 'quest.quest_reecho_rumble.task': '装备N个',
   'quest.quest_myopia_foresight': '远见', 'quest.quest_myopia_foresight.effect': '目标分数每1000点额外+100%产出', 'quest.quest_myopia_foresight.task': '装备N个',
 
@@ -885,6 +892,7 @@ const ZH: Record<string, string> = {
   'param.hire_bonus': '加成',
   'param.reecho_per': '次打错',
   'param.myopia_cost': '目标分',
+  'param.aura_crit': '暴击',
   'param.fallacy_per': '未暴击',
   'param.burst_per': '连暴',
   'param.zeroin_per': '未暴击',
@@ -963,6 +971,8 @@ const ZH: Record<string, string> = {
   'est.clique_detail': '({n}-团)',
   'est.component': '连通 每{n}叠层触发链远端',
   'est.component_detail': '({n}连通)',
+  'est.aura_fury': '愤怒光环 +{pct}%暴击',
+  'est.aura_morale': '士气光环 +{pct}%',
   'est.reflect': '反射 +{pct}%',
   'est.reflect_detail': '({affixes}词条×Lv{level})',
   'est.exhaust': '消耗 ×{val}',
@@ -1735,9 +1745,10 @@ const EN: Record<string, string> = {
   'affix.burst': 'Burst', 'affix.zero_in': 'Zero-In', 'affix.sharpshooter': 'Sharpshooter', 'affix.overflow': 'Overflow',
   'affix.bridge': 'Bridge', 'affix.clique': 'Clique', 'affix.component': 'Component',
   'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure', 'affix.refine': 'Refine', 'affix.evolve': 'Evolve', 'affix.harvest': 'Harvest', 'affix.chain': 'Chain', 'affix.volatile': 'Volatile', 'affix.mutacrit': 'Mutacrit', 'affix.ascend': 'Ascend', 'affix.reecho': 'Re-echo', 'affix.myopia': 'Myopia',
+  'affix.aura_fury': 'Fury Aura', 'affix.aura_morale': 'Morale Aura',
 
   // --- affix descriptions (53) ---
-  'affix_desc.convert': 'Reads {source} accumulated value, adds normalized bonus to output',
+  'affix_desc.convert': 'Reads {source} skill output as bonus (base resets per word, others per stage)',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
   'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
   'affix_desc.charge': 'Hold to charge, releases output multiplier (x1.0~max); auto-releases when full',
@@ -1755,7 +1766,7 @@ const EN: Record<string, string> = {
   'affix_desc.mirror': 'Copies a random affix from a skill in range at stage end; replaces itself next stage',
   'affix_desc.union': 'More matched skills in range = higher bonus',
   'affix_desc.splash': 'Produces no output; triggers matched skills in range equal to stack count',
-  'affix_desc.amplify': 'Produces no output; matched skills in range gain base value × stacks bonus',
+  'affix_desc.amplify': 'No output; stacks when matching skills in position relation trigger, all skills in position relation gain +stacks×{amplifyK}% output',
   'affix_desc.conduit': 'Produces no output; matched skills in range get +1 trigger',
   'affix_desc.relay': 'Produces no output; when a matched skill in range triggers, directly triggers 1 matched skill',
   'affix_desc.outcast': 'Stacks on first/last letter trigger; when full: triggers skill on the word\'s other end letter key',
@@ -1765,7 +1776,7 @@ const EN: Record<string, string> = {
   'affix_desc.recurse': 'Crits trigger again (halves each time)',
   'affix_desc.taboo': 'Negative output on non-crit',
   'affix_desc.fallacy': 'Crit chance rises with each non-crit; resets when you crit',
-  'affix_desc.war_drum': 'Produces no output; matched skills in range gain crit rate based on stacks',
+  'affix_desc.war_drum': 'No output; stacks when matching skills in position relation trigger, all skills in position relation gain +stacks×{critPerStack}% crit rate',
   'affix_desc.phase_shift': 'Tracks {source} accumulated output (thresholds {t1}/{t2}); higher accumulation = more output; above cap consumes the resource',
   'affix_desc.endo_exo': 'Tracks {source} accumulated output; above {threshold} = burst output + consume; below = low output',
   'affix_desc.fusion': 'Tracks {sourceA} and {sourceB}; both above threshold = high burst + dual consume; else penalty',
@@ -1809,6 +1820,8 @@ const EN: Record<string, string> = {
   'affix_desc.ascend': 'When mutated: chance to level up this skill',
   'affix_desc.reecho': 'Wrong keys also trigger this skill, but each miss stacks -{reechoPenalty}% output; resets on correct key',
   'affix_desc.myopia': 'Output +{myopiaBonus}%, but each trigger increases target score by {myopiaCost}',
+  'affix_desc.aura_fury': 'No output; matching skills in range gain +{auraCrit}% crit rate',
+  'affix_desc.aura_morale': 'No output; matching skills in range gain +{auraMorale}% output bonus',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',
@@ -1853,6 +1866,7 @@ const EN: Record<string, string> = {
   'help.ascend.desc': 'Lv.3+ skills with apprentice enchantments auto-ascend during battle after accumulating enough EXP.',
 
   // --- quest enchantments (19 name + 19 effect + 19 task) ---
+  'quest.quest_convert_accum': 'Absorb', 'quest.quest_convert_accum.effect': 'Reads accumulated resource stock instead of skill output', 'quest.quest_convert_accum.task': 'Equip N',
   'quest.quest_devour': 'Devour', 'quest.quest_devour.effect': 'Devour weakest neighbor for XP; level up boosts slot bonus', 'quest.quest_devour.task': 'Equip N',
   'quest.quest_overload': 'Overload', 'quest.quest_overload.effect': 'Crit always triggers', 'quest.quest_overload.task': 'Equip N',
   'quest.quest_echo': 'Echo', 'quest.quest_echo.effect': 'Pulse burst triggers all matched skills', 'quest.quest_echo.task': 'Equip N',
@@ -1926,6 +1940,9 @@ const EN: Record<string, string> = {
   'quest.quest_ascend': 'Transcend', 'quest.quest_ascend.effect': 'Mutation levels up all equipped skills by 1', 'quest.quest_ascend.task': 'Equip N',
   'quest.quest_swarm_propagate': 'Propagate', 'quest.quest_swarm_propagate.effect': '25% chance to spread Swarm to a neighbor on trigger', 'quest.quest_swarm_propagate.task': 'Equip N',
   'quest.quest_mercenary_warlord': 'Warlord', 'quest.quest_mercenary_warlord.effect': 'Bonus scales with gold reserves', 'quest.quest_mercenary_warlord.task': 'Equip N',
+  'quest.quest_aura_global': 'Global Aura', 'quest.quest_aura_global.effect': 'Aura range becomes global', 'quest.quest_aura_global.task': 'Equip N',
+  'quest.quest_aura_universal': 'Universal Aura', 'quest.quest_aura_universal.effect': 'Aura affects all skills in range, no match needed', 'quest.quest_aura_universal.task': 'Equip N',
+  'quest.quest_amplify_pulse': 'Pulse', 'quest.quest_amplify_pulse.effect': 'On stack gain, trigger 1 non-matching skill in range', 'quest.quest_amplify_pulse.task': 'Equip N',
   'quest.quest_reecho_rumble': 'Rumble', 'quest.quest_reecho_rumble.effect': 'Wrong key triggers a random Re-echo skill', 'quest.quest_reecho_rumble.task': 'Equip N',
   'quest.quest_myopia_foresight': 'Foresight', 'quest.quest_myopia_foresight.effect': '+100% output per 1000 target score', 'quest.quest_myopia_foresight.task': 'Equip N',
 
@@ -1943,6 +1960,7 @@ const EN: Record<string, string> = {
   'param.hire_bonus': 'bonus',
   'param.reecho_per': 'miss',
   'param.myopia_cost': 'target',
+  'param.aura_crit': ' crit',
   'param.fallacy_per': 'non-crit',
   'param.burst_per': 'streak',
   'param.zeroin_per': 'non-crit',
@@ -2021,6 +2039,8 @@ const EN: Record<string, string> = {
   'est.clique_detail': '({n}-clique)',
   'est.component': 'Chain: trigger far end every {n}',
   'est.component_detail': '({n} connected)',
+  'est.aura_fury': 'Fury Aura +{pct}% crit',
+  'est.aura_morale': 'Morale Aura +{pct}%',
   'est.reflect': 'Reflect +{pct}%',
   'est.reflect_detail': '({affixes} affixes × Lv{level})',
   'est.exhaust': 'Exhaust ×{val}',
@@ -2230,7 +2250,7 @@ const ITEM_NAMES_EN: Record<string, string> = {
   stack_momentum: 'Stack Momentum', stack_dividend: 'Stack Dividend', overload_circuit: 'Overload Circuit',
   surge: 'Surge', perpetual_engine: 'Perpetual Engine',
   drum_pass: 'Drum Pass', word_resonance: 'Word Resonance', crit_overflow: 'Crit Overflow',
-  inscription_flow: 'Inscription Flow', neighbor_watch: 'Neighbor Watch',
+  inscription_flow: 'Inscription Flow', neighbor_watch: 'Neighbor Watch', stack_crit: 'Stack Crit',
   // Boss modifier subsystem relics
   modifier_shield: 'Modifier Shield', bounty_hunter: 'Hardship Dividend',
   modifier_barrier: 'Modifier Barrier', modifier_pardon: 'Pardon Decree',
@@ -2419,6 +2439,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   crit_overflow: 'On crit, the triggered skill gains +3 stacks.',
   inscription_flow: 'When an enchanted skill triggers a stack effect, enchantment growth +2%.',
   neighbor_watch: 'When a skill triggers a stack effect, adjacent stacking skills gain +1 stack.',
+  stack_crit: 'Stacking can crit; on crit, gain 1 extra stack.',
   // Boss modifier subsystem relics
   modifier_shield: 'All modifier negative effects reduced by 25%',
   bounty_hunter: 'Each permanent modifier: -5% shop prices (max 30%)',

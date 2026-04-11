@@ -562,11 +562,11 @@ function handleKeyPress(data: { key: string; timestamp: number }): void {
       eventBus.emit('word:correct', { key: k, index: state.player.index - 1 });
     } else {
       // 其他字母：算打错，但也算识破
-      playerWrong(k);
+      playerWrong(k, expect);
       eventBus.emit('word:error', { key: k, expected: expect || '' });
     }
   } else {
-    playerWrong(k);
+    playerWrong(k, expect);
     eventBus.emit('word:error', { key: k, expected: expect || '' });
   }
 }
@@ -850,7 +850,7 @@ function playerCorrect(k: string): void {
   // 技能产出的资源弹跳由飞行动画到达时触发（见 createFloatText）
 }
 
-function playerWrong(pressedKey?: string): void {
+function playerWrong(pressedKey?: string, expectedKey?: string): void {
   const el = getElements();
   const letter = el.word.children[state.player.index] as HTMLElement;
 
@@ -932,9 +932,9 @@ function playerWrong(pressedKey?: string): void {
     showFeedback(t('battle.frostbite_freeze', { value: frostDuration }), '#00ccff');
   }
 
-  // 回音：打错时触发含回音词条的技能（无底分/combo）
-  if (pressedKey) {
-    // 质变·轰鸣：随机触发一个含回音的技能；否则仅触发当前键绑定的
+  // 回音：打错时触发期望键上含回音词条的技能（无底分/combo）
+  if (expectedKey) {
+    // 质变·轰鸣：随机触发一个含回音的技能；否则仅触发期望键绑定的
     const isRumble = isAffixGloballyTransformed(AffixType.Reecho, state.affixSkills, state.affixSkillStates)
     if (isRumble) {
       // 收集所有含回音的技能
@@ -950,13 +950,13 @@ function playerWrong(pressedKey?: string): void {
         triggerSkill(pick.id, pick.key)
       }
     } else {
-      const reechoSkillId = state.player.bindings.get(pressedKey)
+      const reechoSkillId = state.player.bindings.get(expectedKey)
       if (reechoSkillId) {
         const reechoSkill = state.affixSkills.get(reechoSkillId)
         if (reechoSkill?.affixes.some(a => a.type === AffixType.Reecho)) {
           const rt = state.affixSkillStates.get(reechoSkillId)
           if (rt) rt.reechoStacks++
-          triggerSkill(reechoSkillId, pressedKey)
+          triggerSkill(reechoSkillId, expectedKey)
         }
       }
     }

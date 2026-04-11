@@ -153,6 +153,7 @@ export type RelicBehaviorType =
   | 'crit_overflow'        // 暴击溢层：暴击→叠层+3
   | 'inscription_flow'     // 铭文涌流：附魔叠层→成长+2%
   | 'neighbor_watch'       // 邻里守望：叠层→相邻叠层+1
+  | 'stack_crit'           // 叠层暴击：叠层时可暴击，额外+1层
 
 export interface RelicData {
   id: string
@@ -1357,6 +1358,20 @@ export const RELICS: Record<string, RelicData> = {
     subsystem: 'topology',
     behaviorType: 'neighbor_watch',
     flavor: '守望相助，层层相传。',
+  },
+
+  stack_crit: {
+    id: 'stack_crit',
+    name: '叠层暴击',
+    icon: '💥',
+    description: '技能叠层时也可暴击，暴击时额外叠加 1 层。',
+    rarity: 'rare',
+    basePrice: 80,
+    effects: [],
+    subsystem: 'stacking',
+    behaviorType: 'stack_crit',
+    requiresSubsystem: 'crit',
+    flavor: '连节拍都能踩出火花。',
   },
 
 }

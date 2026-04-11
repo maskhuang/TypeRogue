@@ -108,6 +108,8 @@ export const AFFIX_COLORS: Record<string, string> = {
   ascend:      '#00b894', // 青绿 — 升华
   reecho:      '#00CED1', // 深青 — 回音
   myopia:      '#e67e22', // 橙 — 短视
+  aura_fury:   '#e74c3c', // 红 — 愤怒光环
+  aura_morale: '#2ecc71', // 绿 — 士气光环
 }
 
 export interface KeyTooltipData {

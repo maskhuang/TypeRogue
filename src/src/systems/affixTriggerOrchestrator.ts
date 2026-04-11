@@ -9,7 +9,7 @@ import { AffixType, EnchantmentType, BASE_VALUES } from '../data/affixes'
 import { hasRelation, PositionRelation, getKeysWithRelation } from '../data/keyboardTopology'
 import { getOutputDrainMultiplier } from '../data/bossModifiers'
 import { onStackEffectTriggered, checkStackDividend, isStackingAffix, SURGE_BONUS_PER_STACK } from './relics/StackingRelicBehaviors'
-import { isStackingSkill } from '../data/affixTrigger'
+import { isStackingSkill, isAuraQuestActive } from '../data/affixTrigger'
 import {
   triggerAffixSkill,
   MAX_RECURSE_DEPTH,
@@ -434,9 +434,48 @@ export function orchestrateAffixTrigger(
             matched = triggeredSkill.affixes.some(a => a.type === ma.echoAffixA || a.type === ma.echoAffixB)
           } else if (ma.type === AffixType.Fury && result.isCrit) {
             matched = true
+          } else if ((ma.type === AffixType.WarDrum || ma.type === AffixType.Amplify) && ma.posRel != null && triggeredSkill) {
+            // 战鼓/增幅：范围内匹配技能触发时叠层
+            const auraKeys = [...ctx.bindings].filter(([, sid]) => sid === monSkillId).map(([k]) => k)
+            const trigKeys = [...ctx.bindings].filter(([, sid]) => sid === item.skillId).map(([k]) => k)
+            const inRange = trigKeys.some(tk => auraKeys.some(ak => hasRelation(ak, tk, ma.posRel!)))
+            if (inRange && hasSharedMatch(triggeredSkill, monSkill, ma.type)) {
+              matched = true
+            }
           }
           if (matched) {
             monRt.stacks += 1
+            // 叠层暴击：叠层时按暴击率判定，暴击则额外+1层
+            if (ctx.stackCritActive && ctx.randomFn() < (ctx.baseCritRate ?? 0)) {
+              monRt.stacks += 1
+            }
+            // 质变·脉冲：增幅叠层时触发范围内1个非匹配技能
+            if (ma.type === AffixType.Amplify && ma.posRel != null
+              && isAffixGloballyTransformed(AffixType.Amplify, ctx.allSkills, ctx.skillStates)) {
+              const aKeys = [...ctx.bindings].filter(([, sid]) => sid === monSkillId).map(([k]) => k)
+              const candidates: { skillId: string; key: string }[] = []
+              const seen = new Set<string>()
+              for (const [nk, nSid] of ctx.bindings) {
+                if (nSid === monSkillId || seen.has(nSid)) continue
+                seen.add(nSid)
+                const nSkill = ctx.allSkills.get(nSid)
+                if (!nSkill) continue
+                const nInRange = aKeys.some(ak => hasRelation(ak, nk, ma.posRel!))
+                if (!nInRange) continue
+                if (hasSharedMatch(nSkill, monSkill, AffixType.Amplify)) continue // 非匹配
+                candidates.push({ skillId: nSid, key: nk })
+              }
+              if (candidates.length > 0) {
+                const pick = candidates[Math.floor(ctx.randomFn() * candidates.length)]
+                queue.push({
+                  skillId: pick.skillId,
+                  triggerKey: pick.key,
+                  type: 'amplify_trigger' as TriggerWorkType,
+                  depth: item.depth + 1,
+                  chainHistory: childHistory,
+                })
+              }
+            }
             const interval = ma.interval ?? 4
             if (monRt.stacks > 0 && monRt.stacks % interval === 0) {
               const monKeys = [...ctx.bindings].filter(([, sid]) => sid === monSkillId).map(([k]) => k)
