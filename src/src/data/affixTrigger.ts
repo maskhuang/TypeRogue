@@ -626,6 +626,22 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.Mercenary: {
+        // 雇佣：金币 >= hireCost 时加成产出，消耗 hireCost 金币
+        const hireCost = affix.hireCost ?? 0
+        const currentGold = ctx.resources.gold ?? 0
+        if (hireCost > 0 && currentGold >= hireCost) {
+          let bonus = affix.hireBonus ?? 0
+          // 质变·佣兵王：加成 × (1 + gold / (hireCost × 10))
+          if (isTransformedForAffix(AffixType.Mercenary, runtimeState, skill, ctx)) {
+            bonus *= 1 + currentGold / (hireCost * 10)
+          }
+          bonusPercent += bonus
+          consumeRequests.push({ resource: 'gold', amount: hireCost })
+        }
+        break
+      }
+
       case AffixType.Flow: {
         // 落差：每个同资源且产出更高的邻居，加成 flowK
         if (affix.posRel == null) break

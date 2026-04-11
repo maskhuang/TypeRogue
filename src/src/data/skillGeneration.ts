@@ -191,6 +191,9 @@ export function rollAffixParams(
       return { type, posRel, swarmK: SWARM_BONUS_TABLE[posRel] }
     }
 
+    case AffixType.Mercenary:
+      return { type, hireCost: Math.floor(3 + random() * 5), hireBonus: roundTo(0.50 + random() * 0.30, 2) }  // cost 3~7g, bonus 50%~80%
+
     case AffixType.Mirror:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 

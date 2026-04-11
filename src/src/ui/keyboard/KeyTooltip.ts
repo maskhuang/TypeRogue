@@ -45,6 +45,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   cascade:   '#1abc9c', // 青 — 级联
   void:      '#9b59b6', // 紫 — 虚无
   swarm:     '#8B8000', // 暗黄 — 虫群
+  mercenary: '#DAA520', // 金黄 — 雇佣
   resonance: '#2ecc71', // 绿 — 共鸣
   mirror:    '#a29bfe', // 淡紫 — 倒影
   link:      '#00cec9', // 湖蓝 — 连接

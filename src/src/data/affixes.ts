@@ -32,6 +32,7 @@ export enum AffixType {
   // ── 拓扑型 topology ──
   Void = 'void',
   Swarm = 'swarm',
+  Mercenary = 'mercenary',
   Mirror = 'mirror',
   Cascade = 'cascade',
   Flow = 'flow',
@@ -87,6 +88,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   // ── 拓扑型 ──
   [AffixType.Void]: ['topology', 'numeric'],
   [AffixType.Swarm]: ['topology', 'numeric'],
+  [AffixType.Mercenary]: ['production', 'numeric'],
   [AffixType.Mirror]: ['topology', 'meta_rule'],
   [AffixType.Cascade]: ['topology', 'numeric'],
   [AffixType.Flow]: ['topology', 'numeric', 'production'],
@@ -171,6 +173,7 @@ export enum EnchantmentType {
   QuestMutacrit = 'quest_mutacrit',
   QuestAscend = 'quest_ascend',
   QuestSwarmPropagate = 'quest_swarm_propagate',
+  QuestMercenaryWarlord = 'quest_mercenary_warlord',
   // ── 运算符（保留类型，现通过质变获取） ──
   MultiplyOperator = 'multiply_operator',
 }
@@ -220,6 +223,7 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestMutacrit]: AffixType.Mutacrit,
   [EnchantmentType.QuestAscend]: AffixType.Ascend,
   [EnchantmentType.QuestSwarmPropagate]: AffixType.Swarm,
+  [EnchantmentType.QuestMercenaryWarlord]: AffixType.Mercenary,
 }
 
 // ===== 附魔元数据（非任务类附魔的显示信息） =====
@@ -271,6 +275,8 @@ export interface AffixInstance {
   posRel?: PositionRelation        // Void/Mirror/Amplify/Cascade
   bonusPerSlot?: number            // Void: 每空位加成%
   swarmK?: number                  // Swarm: 每个虫群邻居加成%
+  hireCost?: number                // Mercenary: 每次触发消耗金币
+  hireBonus?: number               // Mercenary: 金币足够时产出加成%
   resource?: ResourceType          // Amplify: 关联资源
   cascadeMult?: number             // Cascade: 级联乘数
   bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: 暴击率加成
@@ -448,6 +454,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Cascade]: 'high',
   [AffixType.Void]: 'high',
   [AffixType.Swarm]: 'high',
+  [AffixType.Mercenary]: 'high',
   [AffixType.Mirror]: 'high',
   [AffixType.Amplify]: 'high',
   [AffixType.Splash]: 'high',
@@ -563,6 +570,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Cascade]: '级联',
   [AffixType.Void]: '虚无',
   [AffixType.Swarm]: '虫群',
+  [AffixType.Mercenary]: '雇佣',
   [AffixType.Mirror]: '倒影',
   [AffixType.Amplify]: '增幅',
   [AffixType.Splash]: '溅射',
@@ -609,6 +617,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Cascade]: '上一个按键与当前键满足指定位置关系时，产出倍增',
   [AffixType.Void]: '指定关系的空位越多加成越高',
   [AffixType.Swarm]: '指定关系内拥有虫群词条的技能越多，产出越高',
+  [AffixType.Mercenary]: '金币≥N时触发加成产出，每次触发消耗N金币',
   [AffixType.Mirror]: '每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效',
   [AffixType.Amplify]: '自身不产出；触发叠层，指定关系的匹配技能产出+自身基础值',
   [AffixType.Splash]: '自身不产出；触发时触发叠层数个指定关系的匹配技能',
@@ -815,6 +824,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestMutacrit, name: '变异基因', targetAffix: AffixType.Mutacrit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全技能暴击', transformDesc: '被蜕变时所有已装备技能+暴击率' },
   { type: EnchantmentType.QuestAscend, name: '超越', targetAffix: AffixType.Ascend, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全技能升级', transformDesc: '被蜕变时所有已装备技能升1级' },
   { type: EnchantmentType.QuestSwarmPropagate, name: '繁殖', targetAffix: AffixType.Swarm, event: 'equip_count', targetStacks: 0, effectDesc: '质变：虫群繁殖', transformDesc: '每次触发25%概率向范围内无虫群的邻居传播虫群词条' },
+  { type: EnchantmentType.QuestMercenaryWarlord, name: '佣兵王', targetAffix: AffixType.Mercenary, event: 'equip_count', targetStacks: 0, effectDesc: '质变：囤金暴力', transformDesc: '加成额外乘以(1+金币÷消耗×10)，金币越多越强' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====
@@ -877,6 +887,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Outcast]:  { param: 'outcastInterval', delta: -1,    mode: 'add' },
   [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
   [AffixType.Swarm]:    { param: 'swarmK',         delta: 0.04,  mode: 'add' },
+  [AffixType.Mercenary]:{ param: 'hireBonus',      delta: 0.20,  mode: 'add' },
   [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
   [AffixType.Exhaust]:  { param: 'exhaustMult',    delta: 0.3,   mode: 'add' },
   [AffixType.Reflect]:  { param: 'reflectK',       delta: 0.01,  mode: 'add' },
