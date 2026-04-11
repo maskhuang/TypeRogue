@@ -261,10 +261,10 @@ export function rollAffixParams(
       return { type, multiplyValue: roundTo(1.0 + random() * 1.0, 2) }  // ×1.0~2.0
 
     case AffixType.Flow:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), flowK: roundTo(0.03 + random() * 0.05, 3) }  // 0.03~0.08
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), flowK: roundTo(0.03 + random() * 0.05, 3) }  // 0.03~0.08
 
     case AffixType.Confluence:
-      return { type, posRel: pickRandom(ALL_POS_RELATIONS), confluenceK: roundTo(0.15 + random() * 0.15, 3) }  // 0.15~0.30
+      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), confluenceK: roundTo(0.15 + random() * 0.15, 3) }  // 0.15~0.30
 
     case AffixType.Reflect:
       return { type, reflectK: roundTo(0.04 + random() * 0.04, 2) }

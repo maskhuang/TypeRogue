@@ -13,6 +13,8 @@ export interface AffixTooltipInfo {
   description?: string
   /** 升级预览：旧效果 → 新效果（仅升级 tooltip） */
   upgradeEffect?: string
+  /** 是否为"匹配技能"类词条 */
+  isMatchAffix?: boolean
 }
 
 export interface EstimateBreakdownLine {
@@ -60,6 +62,10 @@ export const AFFIX_COLORS: Record<string, string> = {
   phase_shift: '#e84393', // 洋红 — 相变
   endo_exo:    '#00cec9', // 湖蓝 — 吸放热
   fusion:      '#ff7675', // 珊瑚 — 聚变
+  union:       '#e056a0', // 玫红 — 联合
+  echo:        '#a29bfe', // 淡紫 — 回响
+  fury:        '#ff4757', // 亮红 — 怒气
+  tide:        '#0abde3', // 天蓝 — 潮汐
   flow:        '#0984e3', // 深蓝 — 落差
   confluence:  '#00b894', // 薄荷 — 汇流
   turbulence:  '#636e72', // 灰蓝 — 湍流
@@ -254,14 +260,20 @@ function buildAffixSection(skill: NonNullable<KeyTooltipData['skill']>): string 
 
   // 词条列表
   if (skill.affixInfo && skill.affixInfo.length > 0) {
+    const hasMatch = skill.affixInfo.some(a => a.isMatchAffix)
     for (const affix of skill.affixInfo) {
       const color = AFFIX_COLORS[affix.typeKey || ''] || '#e67e22'
-      parts.push(`<div class="tooltip-affix-name" style="color:${color};">&lt;${esc(affix.typeName)}&gt; ${esc(affix.paramSummary)}</div>`)
-      if (affix.upgradeEffect) {
-        parts.push(`<div class="tooltip-affix-upgrade">${esc(affix.upgradeEffect)}</div>`)
-      }
-      if (affix.description) {
-        parts.push(`<div class="tooltip-affix-desc">${highlightKeywords(esc(affix.description))}</div>`)
+      if (hasMatch && !affix.isMatchAffix) {
+        // 有匹配词条时，非匹配词条只显示名称
+        parts.push(`<div class="tooltip-affix-name" style="color:${color};">&lt;${esc(affix.typeName)}&gt;</div>`)
+      } else {
+        parts.push(`<div class="tooltip-affix-name" style="color:${color};">&lt;${esc(affix.typeName)}&gt; ${esc(affix.paramSummary)}</div>`)
+        if (affix.upgradeEffect) {
+          parts.push(`<div class="tooltip-affix-upgrade">${esc(affix.upgradeEffect)}</div>`)
+        }
+        if (affix.description) {
+          parts.push(`<div class="tooltip-affix-desc">${highlightKeywords(esc(affix.description))}</div>`)
+        }
       }
     }
   }

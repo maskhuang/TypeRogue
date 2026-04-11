@@ -537,6 +537,8 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
         desc = desc.replace('{affixA}', t('affix.' + (a.echoAffixA ?? '?')));
         desc = desc.replace('{affixB}', t('affix.' + (a.echoAffixB ?? '?')));
       }
+      // 落差：替换 flowK 占位符
+      if (a.flowK != null) desc = desc.replace('{flowK}', `${Math.round(a.flowK * 100)}`);
       // 静态数值占位符（从参数移出的固定信息）
       if (a.initialMult != null) desc = desc.replace('{init}', `${Math.round(a.initialMult * 100)}%`);
       if (a.decayPerTrigger != null) desc = desc.replace('{decayRate}', `${Math.round(a.decayPerTrigger * 100)}%`);
@@ -580,11 +582,13 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
           paramSummary += ` 🐒×${pMult.toFixed(2)}`;
         }
       }
+      const SELF_ZERO_MATCH_TYPES = ['amplify', 'splash', 'war_drum', 'relay', 'conduit'];
       return {
         typeName: t('affix.' + a.type),
         typeKey: a.type,
         paramSummary,
         description: desc,
+        isMatchAffix: SELF_ZERO_MATCH_TYPES.includes(a.type),
       };
     })
 
@@ -798,24 +802,24 @@ export function computeSmartEstimate(
         break
       }
       case 'flow': {
-        // 落差：同资源邻居基础产出比自己高时加成（预估用 baseValues 比较）
+        // 落差：每个同资源且等级更高的邻居 +flowK%
         if (affix.posRel == null) break
         const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
         if (keys.length === 0) break
         const selfLvl = Math.max(0, Math.min(skill.level - 1, 2))
         const selfBase = skill.baseValues[selfLvl] ?? BASE_VALUES[skill.resource]?.[selfLvl] ?? 1
         const neighbors = getNeighborSkills(keys, affix.posRel, { bindings: state.player.bindings, allSkills: state.affixSkills })
-        let flowBonus = 0
+        let flowCount = 0
         for (const ns of neighbors) {
-          if (ns.resource !== skill.resource) continue // 仅同资源
+          if (ns.resource !== skill.resource) continue
           const nLvl = Math.max(0, Math.min(ns.level - 1, 2))
           const nBase = ns.baseValues[nLvl] ?? BASE_VALUES[ns.resource]?.[nLvl] ?? 1
-          const delta = nBase - selfBase
-          if (delta > 0) flowBonus += (affix.flowK ?? 0) * delta / selfBase
+          if (nBase > selfBase) flowCount++
         }
-        if (flowBonus > 0) {
+        if (flowCount > 0) {
+          const flowBonus = (affix.flowK ?? 0) * flowCount
           addPercent += flowBonus
-          breakdown.push({ typeKey: 'flow', label: t('est.flow', { pct: Math.round(flowBonus * 100) }), detail: t('est.flow_detail', { n: neighbors.length }) })
+          breakdown.push({ typeKey: 'flow', label: t('est.flow', { pct: Math.round(flowBonus * 100) }), detail: t('est.flow_detail', { n: flowCount }) })
         }
         break
       }
@@ -2979,13 +2983,17 @@ function highlightSkillRange(key: string): void {
   }
   if (allKeys.length === 0) return;
 
-  // 收集每个键位的颜色
-  const keyColorMap = new Map<string, string>();
+  // 收集每个键位的颜色（支持多色叠加）
+  const keyColors = new Map<string, Set<string>>();
+  const addColor = (k: string, color: string) => {
+    if (!keyColors.has(k)) keyColors.set(k, new Set());
+    keyColors.get(k)!.add(color);
+  };
 
   // 1. 范围高亮（posRel 邻居）
   for (const { rel, color } of highlights) {
     for (const k of getExtendedNeighbors(allKeys, rel)) {
-      keyColorMap.set(k, color);
+      addColor(k, color);
     }
   }
 
@@ -2994,7 +3002,6 @@ function highlightSkillRange(key: string): void {
     const MATCH_AFFIX_TYPES = [AffixTypeEnum.Amplify, AffixTypeEnum.Splash, AffixTypeEnum.WarDrum, AffixTypeEnum.Union, AffixTypeEnum.Relay, AffixTypeEnum.Conduit] as string[];
     for (const affix of affixSkill.affixes) {
       const color = AFFIX_COLORS[affix.type] || defaultColor;
-      // posRel 范围内匹配技能
       if (MATCH_AFFIX_TYPES.includes(affix.type) && affix.posRel) {
         const rangeKeys = getExtendedNeighbors(allKeys, affix.posRel);
         const seen = new Set<string>();
@@ -3006,38 +3013,43 @@ function highlightSkillRange(key: string): void {
           if (!ns) continue;
           if (ns.resource === affixSkill.resource || ns.affixes.some(a => a.type !== affix.type && affixSkill.affixes.some(sa => sa.type === a.type))) {
             for (const [mk, msid] of state.player.bindings) {
-              if (msid === sid) keyColorMap.set(mk, color);
+              if (msid === sid) addColor(mk, color);
             }
           }
         }
       }
-      // 共鸣：全局匹配同资源技能
       if (affix.type === AffixTypeEnum.Resonance && affix.resource) {
         for (const [k, sid] of state.player.bindings) {
           if (sid === skillId) continue;
           const s = state.affixSkills.get(sid);
-          if (s && s.resource === affix.resource) keyColorMap.set(k, color);
+          if (s && s.resource === affix.resource) addColor(k, color);
         }
       }
-      // 回响：全局匹配拥有指定词条的技能
       if (affix.type === AffixTypeEnum.Echo && affix.echoAffixA && affix.echoAffixB) {
         for (const [k, sid] of state.player.bindings) {
           if (sid === skillId) continue;
           const s = state.affixSkills.get(sid);
-          if (s && s.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) keyColorMap.set(k, color);
+          if (s && s.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) addColor(k, color);
         }
       }
     }
   }
 
-  if (keyColorMap.size === 0) return;
-  keyColorMap.forEach((color, k) => {
+  if (keyColors.size === 0) return;
+  keyColors.forEach((colors, k) => {
     const el = document.querySelector(`.key-slot[data-key="${k}"]`) as HTMLElement | null;
     if (!el) return;
     el.classList.add('range-highlight');
-    el.style.borderColor = color;
-    el.style.background = hexToRgba(color, 0.15);
-    // box-shadow removed per pixel spec (55-4)
+    const colorArr = [...colors];
+    if (colorArr.length === 1) {
+      el.style.borderColor = colorArr[0];
+      el.style.background = hexToRgba(colorArr[0], 0.15);
+    } else {
+      // 多色：渐变边框 + 混合背景
+      el.style.borderImage = `linear-gradient(135deg, ${colorArr.join(', ')}) 1`;
+      el.style.background = colorArr.map(c => hexToRgba(c, 0.1)).join(', ').replace(/.+/,
+        `linear-gradient(135deg, ${colorArr.map(c => hexToRgba(c, 0.12)).join(', ')})`);
+    }
   });
 }
 

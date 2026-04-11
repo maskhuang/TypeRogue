@@ -605,7 +605,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Twin]: '获得附魔时同时获得两个（而非二选一）',
   [AffixType.Recurse]: '增加暴击率，暴击时额外触发一次（每次暴击率减半）',
   [AffixType.Taboo]: '大幅增加暴击率，若未暴击则产出负值',
-  [AffixType.Flow]: '同资源邻居实际产出比自己高时，按差值加成',
+  [AffixType.Flow]: '指定关系内每个同资源且等级更高的邻居+{flowK}%',
   [AffixType.Confluence]: '指定关系的邻居资源类型越多样，产出加成越高',
   [AffixType.Union]: '指定关系的匹配技能越多，产出加成越高',
   [AffixType.Innate]: '每关开始时自动触发一次（不需按键）',
