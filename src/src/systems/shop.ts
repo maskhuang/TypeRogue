@@ -548,6 +548,11 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       // 雇佣：替换金币/加成占位符
       if (a.hireCost != null) desc = desc.replace(/\{hireCost\}/g, String(a.hireCost));
       if (a.hireBonus != null) desc = desc.replace('{hireBonus}', `${Math.round(a.hireBonus * 100)}`);
+      // 回音：替换惩罚占位符
+      if (a.reechoPenalty != null) desc = desc.replace('{reechoPenalty}', `${Math.round(a.reechoPenalty * 100)}`);
+      // 短视：替换加成/代价占位符
+      if (a.myopiaBonus != null) desc = desc.replace('{myopiaBonus}', `${Math.round(a.myopiaBonus * 100)}`);
+      if (a.myopiaCost != null) desc = desc.replace('{myopiaCost}', String(a.myopiaCost));
       // Mirror: 复制后显示复制词条的完整描述，参数标注「倒影」
       if (a.type === 'mirror' && rt) {
         const copied = (rt.mirrorCopiedAffixes && rt.mirrorCopiedAffixes.length > 0)
