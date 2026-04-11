@@ -92,8 +92,6 @@ export function weightedSampleWithout(count: number, excludeTypes?: Set<string>)
   for (const [key, weight] of Object.entries(AFFIX_WEIGHTS)) {
     // 职业限制：排除非本职业的词条
     if (excludeTypes && excludeTypes.has(key)) continue
-    // Ethereal 只在多词条技能(rarity≥2)上出现——需要其他词条来增幅
-    if (key === AffixType.Ethereal && count < 2) continue
     // MonkeyPatch/Decorator 只在多词条技能(rarity≥2)上出现——需要其他词条来 patch/放大
     if ((key === AffixType.MonkeyPatch) && count < 2) continue
     // Conduit 可在单词条技能上出现（通过相同资源也能导能）
@@ -279,9 +277,6 @@ export function rollAffixParams(
 
     case AffixType.Exhaust:
       return { type, exhaustMult: roundTo(2.0 + random() * 1.0, 1), maxTriggers: Math.floor(5 + random() * 6) }  // ×2.0~3.0, 5~10 uses
-
-    case AffixType.Ethereal:
-      return { type }  // 效果固定：其他词条+1级，无需参数
 
     case AffixType.Excavate:
       return { type }  // 被蜕变时按等级获得遗物

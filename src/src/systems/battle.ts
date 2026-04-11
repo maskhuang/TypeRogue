@@ -1675,28 +1675,7 @@ function endLevel(): void {
   setRelicGarbleActive(false);
   hideSettlement();
 
-  // Story 45.12: Ethereal 关卡结束移除
-  for (const [skillId, skill] of state.affixSkills) {
-    const rt = state.affixSkillStates.get(skillId);
-    if (rt?.etherealTriggered) {
-      // 质变·永恒：50% 概率续命
-      const etherealSurvives = rt.questTransformed
-        && skill.enchantmentIds?.includes(EnchantmentTypeEnum.QuestEthereal)
-        && Math.random() < 0.5;
-      if (!etherealSurvives) {
-        // 还原 +1 级增幅
-        const otherAffixes = skill.affixes.filter(a => a.type !== AffixType.Ethereal);
-        if (otherAffixes.length > 0) {
-          applyAffixLevelScaling(otherAffixes, -1);
-        }
-        // 无效化但保留（可被蜕变重置）
-        const etherealAffix = skill.affixes.find(a => a.type === AffixType.Ethereal);
-        if (etherealAffix) etherealAffix.spent = true;
-      }
-      // 续命时保留词条但重置触发标记（下关重新判定）
-      if (etherealSurvives) rt.etherealTriggered = false;
-    }
-  }
+
 
   // 计算关卡评级
   if (state.battleStats) {
@@ -2365,16 +2344,7 @@ export async function startLevel(): Promise<void> {
   for (const [skillId, skill] of state.affixSkills) {
     const rt = state.affixSkillStates.get(skillId);
     if (!rt) continue;
-    // Ethereal: 仅词条未消耗时重置触发标记 + 对其他词条 +1 级增幅
-    const etherealAffix = skill.affixes.find(a => a.type === AffixType.Ethereal && !a.spent);
-    if (etherealAffix) {
-      rt.etherealTriggered = false;
-      // 增幅其他词条（排除 Ethereal 自身）
-      const otherAffixes = skill.affixes.filter(a => a.type !== AffixType.Ethereal);
-      if (otherAffixes.length > 0) {
-        applyAffixLevelScaling(otherAffixes, 1);
-      }
-    }
+
     // Innate: 自动触发（基础次数由参数决定，质变·觉醒：×3）
     const innateAffix = skill.affixes.find(a => a.type === AffixType.Innate);
     if (innateAffix) {

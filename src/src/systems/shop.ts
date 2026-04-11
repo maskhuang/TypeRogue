@@ -679,8 +679,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'monkey_patch': return `~×${(a.patchHigh ?? 2.0).toFixed(1)}`
     // ── 无缩放参数 ──
     case 'rainbow': case 'twin': case 'mirror': case 'amplify':
-    case 'conduit': case 'relay': case 'splash': case 'ethereal':
-      return ''
+    case 'conduit': case 'relay': case 'splash':      return ''
     // 蜕变系：按技能等级显示
     case 'excavate': case 'treasure': {
       const rKeys = ['common', 'rare', 'epic', 'legendary']
@@ -868,11 +867,6 @@ export function computeSmartEstimate(
           multProduct *= m
           breakdown.push({ typeKey: 'exhaust', label: t('est.exhaust', { val: m.toFixed(1) }), detail: t('est.exhaust_detail', { n: affix.maxTriggers ?? '?' }) })
         }
-        break
-      }
-      case 'ethereal': {
-        // 虚无：其他词条+1级（不直接改 base，无法量化预估）
-        breakdown.push({ typeKey: 'ethereal', label: t('est.ethereal_label'), detail: t('est.ethereal_detail') })
         break
       }
       // 其余词条不预估
@@ -1245,8 +1239,7 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
           // Story 45: Exhaust/Ethereal 已消耗完的技能不再出现升级
           const rtOwned = state.affixSkillStates.get(ownedSkillId);
           const exhaustConsumed = ownedAffix && !ownedAffix.affixes.some(a => a.type === 'exhaust') && (rtOwned?.exhaustCount ?? 0) > 0;
-          const etherealConsumed = ownedAffix && !ownedAffix.affixes.some(a => a.type === 'ethereal') && rtOwned?.etherealTriggered;
-          if (ownedData && ownedAffix && ownedData.level < getLevelCap(ownedAffix.rarity) && !exhaustConsumed && !etherealConsumed) {
+          if (ownedData && ownedAffix && ownedData.level < getLevelCap(ownedAffix.rarity) && !exhaustConsumed) {
             // 转为升级
             const nextLevel = ownedData.level + 1;
             affixItems[i] = {
@@ -1283,7 +1276,6 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
           // Story 45: Exhaust/Ethereal 已消耗完的技能不参与保底升级
           const rt = state.affixSkillStates.get(skillId);
           if (rt && (rt.exhaustCount ?? 0) > 0 && !affix.affixes.some(a => a.type === 'exhaust')) continue;
-          if (rt?.etherealTriggered && !affix.affixes.some(a => a.type === 'ethereal')) continue;
           candidates.push({ skillId, affix });
         }
         if (candidates.length > 0) {

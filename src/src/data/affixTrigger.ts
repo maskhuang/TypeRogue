@@ -557,7 +557,6 @@ export function resolvePhase2(
     : baseOutput
 
   // Story 45.9: Exhaust base 倍率（Phase 1 后立即应用）
-  // Ethereal 不再修改 base——改为在 startLevel 时对其他词条 +1 级缩放
   for (const affix of skill.affixes) {
     if (affix.type === AffixType.Exhaust && (affix.exhaustMult ?? 0) > 1) {
       effectiveBase *= affix.exhaustMult!
@@ -2217,7 +2216,6 @@ export function deserializeSkill(
     questCompletions: data.runtime.questCompletions ?? 0,
     questTransformed: data.runtime.questTransformed ?? ((data.runtime.questCompletions ?? 0) > 0),
     exhaustCount: (data.runtime as any).exhaustCount ?? 0,
-    etherealTriggered: (data.runtime as any).etherealTriggered ?? false,
     critStreak: (data.runtime as any).critStreak ?? 0,
     missStreak: (data.runtime as any).missStreak ?? 0,
     patchTargetIndex: (data.runtime as any).patchTargetIndex ?? -1,

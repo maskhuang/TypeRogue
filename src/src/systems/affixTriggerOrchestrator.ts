@@ -230,10 +230,6 @@ export function orchestrateAffixTrigger(
             if (idx >= 0) skill.affixes.splice(idx, 1)
           }
         }
-        // Ethereal: 标记已触发
-        if (skill.affixes.some(a => a.type === AffixType.Ethereal)) {
-          (rt as any).etherealTriggered = true
-        }
       }
     }
 

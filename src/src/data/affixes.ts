@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（32 类，6 类别） ====
+// ===== 词条类型枚举（31 类，6 类别） ====
 
 export enum AffixType {
   // ── 数值型 numeric ──
@@ -46,7 +46,6 @@ export enum AffixType {
   Twin = 'twin',
   Innate = 'innate',
   Exhaust = 'exhaust',
-  Ethereal = 'ethereal',
   Reflect = 'reflect',
   MonkeyPatch = 'monkey_patch',
   Excavate = 'excavate',
@@ -101,7 +100,6 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Twin]: ['meta_rule'],
   [AffixType.Innate]: ['meta_rule'],
   [AffixType.Exhaust]: ['meta_rule'],
-  [AffixType.Ethereal]: ['meta_rule'],
   [AffixType.Reflect]: ['meta_rule', 'numeric'],
   [AffixType.MonkeyPatch]: ['meta_rule'],
   [AffixType.Excavate]: ['meta_rule'],
@@ -157,7 +155,6 @@ export enum EnchantmentType {
   QuestFallacy = 'quest_fallacy',
   QuestInnate = 'quest_innate',
   QuestExhaust = 'quest_exhaust',
-  QuestEthereal = 'quest_ethereal',
   QuestFlow = 'quest_flow',
   QuestConfluence = 'quest_confluence',
   QuestReflect = 'quest_reflect',
@@ -206,7 +203,6 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestFallacy]: AffixType.Fallacy,
   [EnchantmentType.QuestInnate]: AffixType.Innate,
   [EnchantmentType.QuestExhaust]: AffixType.Exhaust,
-  [EnchantmentType.QuestEthereal]: AffixType.Ethereal,
   [EnchantmentType.QuestFlow]: AffixType.Flow,
   [EnchantmentType.QuestConfluence]: AffixType.Confluence,
   [EnchantmentType.QuestReflect]: AffixType.Reflect,
@@ -277,7 +273,7 @@ export interface AffixInstance {
   recurseChance?: number           // Recurse: 重触发概率 15%~30%
   critPerStack?: number            // WarDrum: 每层暴击率
   outcastInterval?: number         // Outcast: 叠层满层间隔（满层触发词另一端）
-  spent?: boolean                  // Exhaust/Ethereal: 耗尽后无效化（保留可被蜕变）
+  spent?: boolean                  // Exhaust: 耗尽后无效化
   reflectK?: number                // Reflect: affixCount × level × K
   patchLow?: number                // MonkeyPatch: 随机系数下界
   patchHigh?: number               // MonkeyPatch: 随机系数上界
@@ -295,7 +291,6 @@ export interface AffixInstance {
   confluenceK?: number             // Confluence: 资源多样性加成系数
   maxTriggers?: number             // Exhaust: 最大触发次数
   exhaustMult?: number             // Exhaust: 每次触发 base 倍率
-  etherealMult?: number            // Ethereal: base 倍率（一关有效）
 }
 
 // ===== 稀有度 =====
@@ -352,7 +347,6 @@ export interface SkillRuntimeState {
   questTransformed: boolean        // 任务: 已质变（首次完成后永久 true）
   // ── 元规则型运行时 ──
   exhaustCount: number             // Exhaust: 累计触发次数（跨关）
-  etherealTriggered: boolean       // Ethereal: 本关是否已触发
   // ── 暴击连击追踪 ──
   critStreak: number               // 连续暴击次数（miss 归零，每关重置）
   missStreak: number               // 连续 miss 次数（暴击归零，每关重置）
@@ -465,7 +459,6 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Twin]: 'low',
   [AffixType.Innate]: 'low',
   [AffixType.Exhaust]: 'low',
-  [AffixType.Ethereal]: 'low',
   [AffixType.Recurse]: 'high',
   [AffixType.Taboo]: 'high',
   [AffixType.Fallacy]: 'high',
@@ -572,7 +565,6 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Union]: '联合',
   [AffixType.Innate]: '先天',
   [AffixType.Exhaust]: '消耗',
-  [AffixType.Ethereal]: '虚无',
   [AffixType.Fallacy]: '赌徒',
   [AffixType.Reflect]: '反射',
   [AffixType.MonkeyPatch]: '猴子补丁',
@@ -618,7 +610,6 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Union]: '指定关系的匹配技能越多，产出加成越高',
   [AffixType.Innate]: '每关开始时自动触发一次（不需按键）',
   [AffixType.Exhaust]: '每次触发产出倍增，但触发次数有限，用完词条消失',
-  [AffixType.Ethereal]: '本关内其他词条效果提升一级；关卡结束后词条消失',
   [AffixType.Fallacy]: '连续未暴击时暴击率逐次递增，暴击后归零重新累积',
   [AffixType.Reflect]: '技能词条越多、等级越高，产出越高',
   [AffixType.MonkeyPatch]: '每关随机修改同技能一个词条的效果倍率',
@@ -790,7 +781,6 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestFallacy, name: '豪赌', targetAffix: AffixType.Fallacy, event: 'equip_count', targetStacks: 0, effectDesc: '质变：减半不归零', transformDesc: '暴击时连续未暴击计数减半而非归零' },
   { type: EnchantmentType.QuestInnate, name: '觉醒', targetAffix: AffixType.Innate, event: 'equip_count', targetStacks: 0, effectDesc: '质变：三连触发', transformDesc: '关卡开始自动触发从1次变为3次' },
   { type: EnchantmentType.QuestExhaust, name: '燃尽', targetAffix: AffixType.Exhaust, event: 'equip_count', targetStacks: 0, effectDesc: '质变：终结技', transformDesc: '最后一次触发时bonus额外×3' },
-  { type: EnchantmentType.QuestEthereal, name: '永恒', targetAffix: AffixType.Ethereal, event: 'equip_count', targetStacks: 0, effectDesc: '质变：概率续命', transformDesc: '关卡结束时50%概率保留到下一关' },
   { type: EnchantmentType.QuestFlow, name: '瀑布', targetAffix: AffixType.Flow, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向落差', transformDesc: '邻居比自己低时也加bonus' },
   { type: EnchantmentType.QuestConfluence, name: '洪流', targetAffix: AffixType.Confluence, event: 'equip_count', targetStacks: 0, effectDesc: '质变：分流产出', transformDesc: '每种独特资源额外产出到该资源' },
   { type: EnchantmentType.QuestReflect, name: '内省', targetAffix: AffixType.Reflect, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全词条增幅', transformDesc: 'reflectScore额外作为所有词条效果加成' },
@@ -831,7 +821,6 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     questCompletions: 0,
     questTransformed: false,
     exhaustCount: 0,
-    etherealTriggered: false,
     critStreak: 0,
     missStreak: 0,
     patchTargetIndex: -1,
@@ -884,7 +873,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Innate]:    { param: 'innateCount',    delta: 1,     mode: 'add' },
   [AffixType.MonkeyPatch]:{ param: 'patchHigh',     delta: 0.3,   mode: 'add' },
   // Amplify: 每层加成=基础产出，升级通过 baseValues 自然增长
-  // Rainbow / Twin / Mirror / Conduit / Ethereal: 无可缩放数值参数
+  // Rainbow / Twin / Mirror / Conduit: 无可缩放数值参数
 }
 
 /** 四舍五入到指定小数位 */
