@@ -575,10 +575,10 @@ function handleKeyPress(data: { key: string; timestamp: number }): void {
  * Story 36.2: 小助手自动补全 — 按顺序执行剩余字母的 playerCorrect 逻辑
  * Story 41-5: 导出供 Charge 质变满蓄力自动完成使用
  */
-/** 蓄力质变自动补全期间的额外暴击率（所有被触发技能共享） */
-let _chargeAutoCritBonus = 0;
-/** 获取蓄力质变自动补全期间的额外暴击率 */
-export function getChargeAutoCritBonus(): number { return _chargeAutoCritBonus; }
+/** 蓄力质变自动补全期间的额外产出倍率（所有被触发技能共享） */
+let _chargeAutoMultBonus = 0;
+/** 获取蓄力质变自动补全期间的额外产出倍率 */
+export function getChargeAutoMultBonus(): number { return _chargeAutoMultBonus; }
 
 /** 自动补全剩余字母（小助手 Tab / Charge 质变） */
 export function performAutocomplete(source: 'tab' | 'charge' = 'tab'): void {
@@ -589,7 +589,7 @@ export function performAutocomplete(source: 'tab' | 'charge' = 'tab'): void {
   let chargeSnapshots: Map<string, number> | null = null;
   if (source === 'charge') {
     chargeSnapshots = new Map();
-    let maxCritBonus = 0;
+    let maxMultBonus = 0;
     for (const [skillId, rt] of state.affixSkillStates) {
       if (rt.chargeAccumulated > 0) {
         chargeSnapshots.set(skillId, rt.chargeAccumulated);
@@ -598,13 +598,13 @@ export function performAutocomplete(source: 'tab' | 'charge' = 'tab'): void {
         if (skill) {
           const chargeAffix = skill.affixes.find(a => a.type === AffixType.Charge);
           if (chargeAffix) {
-            maxCritBonus = Math.max(maxCritBonus, Math.min(rt.chargeAccumulated, chargeAffix.maxBonus ?? 0));
+            const maxMult = chargeAffix.maxBonus ?? 2.5; const ratio = maxMult > 0 ? Math.min(rt.chargeAccumulated / maxMult, 1) : 0; maxMultBonus = Math.max(maxMultBonus, ratio * (maxMult - 1.0));
           }
         }
       }
     }
     // 质变加成：所有被触发技能获得等量暴击率
-    _chargeAutoCritBonus = maxCritBonus;
+    _chargeAutoMultBonus = maxMultBonus;
   }
 
   while (state.player.index < word.length) {
@@ -621,7 +621,7 @@ export function performAutocomplete(source: 'tab' | 'charge' = 'tab'): void {
   }
 
   // 自动补全结束后清零蓄力 + 重置暴击率加成
-  _chargeAutoCritBonus = 0;
+  _chargeAutoMultBonus = 0;
   if (chargeSnapshots) {
     for (const [skillId] of chargeSnapshots) {
       const rt = state.affixSkillStates.get(skillId);
@@ -898,7 +898,7 @@ function playerWrong(): void {
     showFeedback(t('battle.cancel_error', { value: cancelPenalty }), '#ff4444');
   }
 
-  if (state.combo > 5) showFeedback('BREAK', '#ff6b6b', 1, { fromElementId: 'combo-display', resource: 'base', amount: 0 });
+  if (state.combo > 5) showFeedback('BREAK', '#ff6b6b', 1, { fromElementId: 'combo-display', resource: '', amount: 0 });
 
   // 遗物 on_combo_break 管道解析（完美主义者断连击失去遗物）
   resolveRelicEffectsWithBehaviors('on_combo_break', {}, {
@@ -1552,7 +1552,11 @@ function startTimer(): void {
       if (!tideAffix) continue;
       const tideRt = state.affixSkillStates.get(tideSkillId);
       if (!tideRt) continue;
-      const rate = tideAffix.tideRate ?? 1;
+      let rate = tideAffix.tideRate ?? 1;
+      // 质变·涨潮：叠层速率随连击数递增（×combo/10）
+      if (isAffixGloballyTransformed(AffixType.Tide, state.affixSkills, state.affixSkillStates)) {
+        rate *= Math.max(1, state.combo / 10);
+      }
       tideRt.stacks = (tideRt.stacks ?? 0) + rate * tideDt;
       const interval = tideAffix.interval ?? 6;
       if (tideRt.stacks >= interval) {

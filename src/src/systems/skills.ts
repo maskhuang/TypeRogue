@@ -9,7 +9,7 @@ import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { t } from '../demo/demo-i18n';
 import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
-import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete, getChargeAutoCritBonus } from './battle';
+import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete, getChargeAutoMultBonus } from './battle';
 import { routeEnergyToPipeline, consumeCompletedWord, updatePipelineHUD } from './classes/AssemblyPipeline';
 import { getFloatScale } from '../effects/juice';
 import { eventBus } from '../core/events/EventBus';
@@ -157,8 +157,8 @@ export function updateChargeProducers(dt: number): string[] {
     const maxBonus = chargeAffix.maxBonus ?? 2.5
     if (rt.chargeAccumulated >= maxBonus) continue
 
-    // 每秒累积 gainPerSec 倍率，上限 maxBonus
-    const rate = chargeAffix.gainPerSec ?? 4.0
+    // 固定 0.5s 蓄满：速率 = maxBonus / 0.5
+    const rate = maxBonus / 0.5
     rt.chargeAccumulated = Math.min(
       rt.chargeAccumulated + rate * dt,
       maxBonus,
@@ -291,8 +291,7 @@ function triggerAffixSkillWithFeedback(
       + getRuneSpikeCritRate()
       + getPrecisionStrikeCritRate(triggerKey)
       + getLongWordCritBonus(state.player.word.length)
-      + getDesperateCritRate()
-      + getChargeAutoCritBonus(),  // 蓄力质变：自动补全期间所有技能获得等量暴击率
+      + getDesperateCritRate(),
     fateCoinActive,
     // 叠层子系统遗物
     perpetualIntervalMult: getPerpetualEngineIntervalMult(),
@@ -352,6 +351,10 @@ function triggerAffixSkillWithFeedback(
   const dividendBonus = getStackDividendBonus(skillId);
   if (dividendBonus > 0) relicBonus += dividendBonus;
   // 浪涌：通过 ctx.surgeBonus 在 Phase 2 内应用（编排器设置）
+
+  // 蓄力质变：自动补全期间所有技能获得等量产出倍率
+  const chargeMultBonus = getChargeAutoMultBonus();
+  if (chargeMultBonus > 0) relicBonus += chargeMultBonus;
 
   // 升华缩放：Lv4+ 按 1.6^(level-3) 缩放基础值
   const ascendScale = getAscendBaseScale(skill.level);

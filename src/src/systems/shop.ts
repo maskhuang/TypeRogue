@@ -296,8 +296,74 @@ export function generateAffixShopItems(count: number): ShopItem[] {
   excludeNames.add(guaranteed!.affixSkill!.name);
   items.push(guaranteed!);
 
+  // 质变·谐振：Resonance 质变后保底一个同资源技能
+  if (isAffixGloballyTransformed(AffixTypeEnum.Resonance, state.affixSkills, state.affixSkillStates) && count > items.length) {
+    const resSet = new Set<ResourceType>();
+    for (const [, sk] of state.affixSkills) {
+      for (const a of sk.affixes) {
+        if (a.type === AffixTypeEnum.Resonance && a.resource) resSet.add(a.resource);
+      }
+    }
+    if (resSet.size > 0) {
+      const res = [...resSet][Math.floor(random() * resSet.size)];
+      const item = generateAffixShopItem(nextId++, { resource: res, maxRarity: actMaxRarity, excludeNames });
+      excludeNames.add(item.affixSkill!.name);
+      items.push(item);
+    }
+  }
+
+  // 质变·共鸣腔：Echo 质变后保底一个含监听词条的技能
+  if (isAffixGloballyTransformed(AffixTypeEnum.Echo, state.affixSkills, state.affixSkillStates) && count > items.length) {
+    const echoTypes = new Set<string>();
+    for (const [, sk] of state.affixSkills) {
+      for (const a of sk.affixes) {
+        if (a.type === AffixTypeEnum.Echo) {
+          if (a.echoAffixA) echoTypes.add(a.echoAffixA);
+          if (a.echoAffixB) echoTypes.add(a.echoAffixB);
+        }
+      }
+    }
+    if (echoTypes.size > 0) {
+      let matchItem: ShopItem | null = null;
+      for (let attempt = 0; attempt < 15; attempt++) {
+        const candidate = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity, excludeNames });
+        if (candidate.affixSkill!.affixes.some(a => echoTypes.has(a.type))) {
+          matchItem = candidate; break;
+        }
+      }
+      if (matchItem) {
+        excludeNames.add(matchItem.affixSkill!.name);
+        items.push(matchItem);
+      }
+    }
+  }
+
+  // 质变·集结：Union 质变后保底一个匹配技能（同资源或共享词条类型）
+  let unionGuaranteed = false;
+  if (isAffixGloballyTransformed(AffixTypeEnum.Union, state.affixSkills, state.affixSkillStates)) {
+    const unionSkills = [...state.affixSkills.values()].filter(sk => sk.affixes.some(a => a.type === AffixTypeEnum.Union));
+    if (unionSkills.length > 0 && count > 1) {
+      const ref = unionSkills[Math.floor(random() * unionSkills.length)];
+      let matchItem: ShopItem | null = null;
+      for (let attempt = 0; attempt < 15; attempt++) {
+        const candidate = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity, excludeNames });
+        const sk = candidate.affixSkill!;
+        // 匹配：同资源 OR 共享词条类型（排除 Union 自身）
+        const isMatch = sk.resource === ref.resource
+          || sk.affixes.some(a => a.type !== AffixTypeEnum.Union && ref.affixes.some(ra => ra.type === a.type));
+        if (isMatch) { matchItem = candidate; break; }
+      }
+      if (matchItem) {
+        excludeNames.add(matchItem.affixSkill!.name);
+        items.push(matchItem);
+        unionGuaranteed = true;
+      }
+    }
+  }
+
   // 剩余随机
-  for (let i = 1; i < count; i++) {
+  const remaining = count - items.length;
+  for (let i = 0; i < remaining; i++) {
     const item = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity, excludeNames });
     excludeNames.add(item.affixSkill!.name);
     items.push(item);

@@ -16,6 +16,9 @@ import {
   MAX_CHAIN_DEPTH,
   getClassResources,
   removeAffixAtRuntime,
+  getExtendedNeighbors,
+  hasSharedMatch,
+  isAffixGloballyTransformed,
 } from '../data/affixTrigger'
 import type {
   TriggerContext,
@@ -177,7 +180,7 @@ export function orchestrateAffixTrigger(
       triggerKey: effectiveTriggerKey,
       occupiedKeys: chainedOccupiedKeys.length > 0 ? chainedOccupiedKeys : (effectiveTriggerKey ? [effectiveTriggerKey] : []),
       transmuteResource: skill.transmuteResource,
-      // splash 触发禁用链式词条，防止 Splash→Splash 级联
+      // splash 触发禁用链式词条
       ...(item.type === 'splash' ? { chainAffixesDisabled: true } : {}),
       // 41-4: outcast_echo / crit_echo 禁用链式词条防止循环
       ...(item.type === 'outcast_echo' || item.type === 'crit_echo' ? { chainAffixesDisabled: true } : {}),
@@ -367,6 +370,9 @@ export function orchestrateAffixTrigger(
 
     // Splash: 溅射 — 触发叠层数个匹配技能
     if (result.phase5?.splashTargets) {
+      // 质变·连锁溅射：被溅射目标还会触发1个匹配技能（仅首跳，防无限）
+      const splashTransformed = item.type !== 'splash'
+        && isAffixGloballyTransformed(AffixType.Splash, ctx.allSkills, ctx.skillStates)
       for (const targetKey of result.phase5.splashTargets) {
         const targetSkillId = ctx.bindings.get(targetKey)
         if (!targetSkillId) continue
@@ -376,11 +382,42 @@ export function orchestrateAffixTrigger(
           type: 'splash',
           depth: item.depth + 1,
           chainHistory: childHistory,
+          chainSplash: splashTransformed,
         })
       }
     }
 
-    // ── 共鸣/回响：全局监听，叠层满时自触发 ──
+    // 质变·连锁��射：被溅射技能触发后，从原始溅射技能范围内再触发1个匹配技能
+    if (item.type === 'splash' && item.chainSplash) {
+      // 找原始溅射技能（chainHistory 中最后一个非 splash 的触发源）
+      for (const [splashSkillId, splashSkill] of ctx.allSkills) {
+        const splashAffix = splashSkill.affixes.find(a => a.type === AffixType.Splash && a.posRel != null)
+        if (!splashAffix) continue
+        const splashKeys = [...ctx.bindings].filter(([, sid]) => sid === splashSkillId).map(([k]) => k)
+        if (splashKeys.length === 0) continue
+        const rangeKeys = getExtendedNeighbors(splashKeys, splashAffix.posRel!).filter(k => ctx.bindings.has(k))
+        const seen = new Set<string>()
+        const valid: string[] = []
+        for (const k of rangeKeys) {
+          const sid = ctx.bindings.get(k)!
+          if (sid === splashSkillId || sid === item.skillId || seen.has(sid)) continue
+          seen.add(sid)
+          const ns = ctx.allSkills.get(sid)
+          if (!ns || !hasSharedMatch(splashSkill, ns, AffixType.Splash)) continue
+          valid.push(k)
+        }
+        if (valid.length > 0) {
+          const pick = valid[Math.floor(ctx.randomFn() * valid.length)]
+          const pickSid = ctx.bindings.get(pick)
+          if (pickSid) {
+            queue.push({ skillId: pickSid, triggerKey: pick, type: 'splash', depth: item.depth + 1, chainHistory: childHistory })
+          }
+        }
+        break
+      }
+    }
+
+    // ── 共鸣/回响：全局��听，叠层满��自触发 ──
     if (item.type !== 'stack_self') {
       const triggeredSkill = ctx.allSkills.get(item.skillId)
       for (const [monSkillId, monSkill] of ctx.allSkills) {
@@ -402,6 +439,10 @@ export function orchestrateAffixTrigger(
             if (monRt.stacks > 0 && monRt.stacks % interval === 0) {
               const monKeys = [...ctx.bindings].filter(([, sid]) => sid === monSkillId).map(([k]) => k)
               if (monKeys.length > 0) {
+                // 质变·狂暴：Fury 自触发时全场暴击率 +20%
+                if (ma.type === AffixType.Fury && isAffixGloballyTransformed(AffixType.Fury, ctx.allSkills, ctx.skillStates)) {
+                  ctx.baseCritRate = (ctx.baseCritRate ?? 0) + 0.20
+                }
                 queue.push({
                   skillId: monSkillId,
                   triggerKey: monKeys[0],
