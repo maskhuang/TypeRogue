@@ -177,6 +177,8 @@ export enum EnchantmentType {
   QuestSwarmPropagate = 'quest_swarm_propagate',
   QuestMercenaryWarlord = 'quest_mercenary_warlord',
   QuestDrainOverdrain = 'quest_drain_overdrain',
+  // ── 附加产出（触发时额外产出指定资源） ──
+  BonusOutput = 'bonus_output',
   // ── 运算符（保留类型，现通过质变获取） ──
   MultiplyOperator = 'multiply_operator',
 }
@@ -252,6 +254,8 @@ export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
   [EnchantmentType.ApprenticeResTime]:       { type: EnchantmentType.ApprenticeResTime,       name: '专精·时间', icon: '⏳', category: 'apprentice', desc: '产出时间资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeResGold]:       { type: EnchantmentType.ApprenticeResGold,       name: '专精·金币', icon: '💰', category: 'apprentice', desc: '产出金币资源时永久成长 +2%' },
   [EnchantmentType.ApprenticeCrit]:           { type: EnchantmentType.ApprenticeCrit,           name: '学徒·暴击', icon: '💥', category: 'apprentice', desc: '暴击时永久成长' },
+  // ── 附加产出 ──
+  [EnchantmentType.BonusOutput]: { type: EnchantmentType.BonusOutput, name: '附加产出', icon: '🔀', category: 'passive', desc: '触发时额外产出指定资源' },
   // ── 运算符（通过质变获取） ──
   [EnchantmentType.MultiplyOperator]: { type: EnchantmentType.MultiplyOperator, name: '乘算化', icon: '✖️', category: 'operator', desc: '将加算层各项加成转为独立乘数' },
 }
@@ -342,6 +346,7 @@ export interface AffixSkillInstance {
   affixes: AffixInstance[]               // 0~3 个词条
   enchantmentIds: string[]               // 附魔列表（通常 0~1；双生词条时最多 2）
   transmuteResource?: ResourceType       // 衍生附魔目标资源
+  bonusOutputResource?: ResourceType     // 附加产出附魔目标资源
   neighborPosRel?: PositionRelation      // 学徒·观摩：随机分配的位置关系
   purchasePrice?: number                 // 购买价格（用于转卖计算）
   shapeId?: string                       // Polyomino 形状 ID（默认 'monomino'）
@@ -449,7 +454,7 @@ export type AffixWeightTier = 'high' | 'low' | 'none'
 
 /** 词条基准分档表（每局开始时据此随机生成实际权重） */
 export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
-  convert_cross: 'high',
+  convert_cross: 'low',
   convert_self: 'none', // 自源转化已禁用
   [AffixType.Rainbow]: 'low',
   [AffixType.Multiply]: 'low',
@@ -890,7 +895,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Taboo]:    { param: 'bonusPercent',   delta: 0.08,  mode: 'add' },
   [AffixType.Fallacy]:  { param: 'fallacyK',       delta: 0.02,  mode: 'add' },
   // ── 数值类 ──
-  [AffixType.Convert]:  { param: 'k',              delta: 1.1,   mode: 'mult' },
+  // Convert: 无参数缩放（固定100%标准化转化率）
   [AffixType.Multiply]: { param: 'multiplyValue', delta: 0.2,   mode: 'add' },
   [AffixType.Cascade]:  { param: 'cascadeMult',    delta: 0.2,   mode: 'add' },
   [AffixType.Outcast]:  { param: 'outcastInterval', delta: -1,    mode: 'add' },

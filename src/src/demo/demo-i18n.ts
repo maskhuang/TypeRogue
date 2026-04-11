@@ -681,7 +681,7 @@ const ZH: Record<string, string> = {
   'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝', 'affix.refine': '提纯', 'affix.evolve': '进化', 'affix.harvest': '收割', 'affix.chain': '连锁', 'affix.volatile': '不稳定', 'affix.mutacrit': '蜕变暴击', 'affix.ascend': '升华',
 
   // --- affix descriptions (53) ---
-  'affix_desc.convert': '读取{source}的产出，按系数加成',
+  'affix_desc.convert': '读取{source}的已有量，标准化后加成产出',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
   'affix_desc.multiply': '产出直接乘以固定倍数',
   'affix_desc.charge': '按住蓄力，触发时释放产出倍率（×1.0~上限）；蓄满自动释放',
@@ -788,6 +788,8 @@ const ZH: Record<string, string> = {
   'ench_meta.apprentice_res_gold.desc': '全场产出金币时按产量永久成长',
   'ench_meta.apprentice_crit': '学徒·暴击',
   'ench_meta.apprentice_crit.desc': '任意技能暴击时永久成长',
+  'ench_meta.bonus_output': '附加·{resource}',
+  'ench_meta.bonus_output.desc': '触发时额外产出{resource}',
   'ench_meta.multiply_operator': '乘算化',
   'ench_meta.multiply_operator.desc': '将加算层各项加成转为独立乘数',
   'help.ascend': '升华',
@@ -1733,7 +1735,7 @@ const EN: Record<string, string> = {
   'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure', 'affix.refine': 'Refine', 'affix.evolve': 'Evolve', 'affix.harvest': 'Harvest', 'affix.chain': 'Chain', 'affix.volatile': 'Volatile', 'affix.mutacrit': 'Mutacrit', 'affix.ascend': 'Ascend',
 
   // --- affix descriptions (53) ---
-  'affix_desc.convert': 'Reads {source} output, adds scaled bonus',
+  'affix_desc.convert': 'Reads {source} accumulated value, adds normalized bonus to output',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
   'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
   'affix_desc.charge': 'Hold to charge, releases output multiplier (x1.0~max); auto-releases when full',
@@ -1840,6 +1842,8 @@ const EN: Record<string, string> = {
   'ench_meta.apprentice_res_gold.desc': 'Grows from all gold production globally',
   'ench_meta.apprentice_crit': 'Apprentice·Crit',
   'ench_meta.apprentice_crit.desc': 'Permanently grows when any skill crits',
+  'ench_meta.bonus_output': 'Bonus·{resource}',
+  'ench_meta.bonus_output.desc': 'Additionally produces {resource} on trigger',
   'ench_meta.multiply_operator': 'Multiply Operator',
   'ench_meta.multiply_operator.desc': 'Converts additive bonuses into independent multipliers',
   'help.ascend': 'Ascension',

@@ -594,19 +594,18 @@ export function resolvePhase2(
     switch (affix.type) {
       case AffixType.Convert: {
         if (affix.source == null) break
-        const kEff = affix.k ?? 0
-        // 按 BASE_VALUES 比例归一化源资源值（与 Rainbow 同理）
+        // 标准化100%：读取源资源已有量，按 BASE_VALUES 归一化后作为加成
         const cvtLvIdx = Math.max(0, Math.min(skill.level - 1, 2))
         const cvtSkillBase = BASE_VALUES[skill.resource]?.[cvtLvIdx] ?? 1
         const cvtSourceBase = BASE_VALUES[affix.source]?.[cvtLvIdx] ?? 1
-        bonusPercent += kEff * getAffixSourceValue(affix.source, ctx) * (cvtSkillBase / cvtSourceBase)
-        // 质变：双向转化 — 反向产出按比例缩放到源资源
+        bonusPercent += getAffixSourceValue(affix.source, ctx) * (cvtSkillBase / cvtSourceBase)
+        // 质变：双向转化 — 反向产出按同样比例缩放到源资源
         if (isTransformedForAffix(AffixType.Convert, runtimeState, skill, ctx)) {
-          const reverseBonus = kEff * getAffixSourceValue(skill.resource, ctx)
-          if (reverseBonus > 0) {
+          const reverseValue = getAffixSourceValue(skill.resource, ctx)
+          if (reverseValue > 0) {
             convertReverseOutputs.push({
               resource: affix.source,
-              amount: reverseBonus * effectiveBase * (cvtSourceBase / cvtSkillBase),
+              amount: reverseValue * effectiveBase * (cvtSourceBase / cvtSkillBase),
             })
           }
         }
@@ -1453,6 +1452,20 @@ export function resolvePhase5(
     }
   }
 
+  // 附加产出：标准化后 100% 比例额外产出指定资源
+  if (skill.enchantmentIds.includes(EnchantmentType.BonusOutput) && skill.bonusOutputResource && output > 0) {
+    const bonusRes = skill.bonusOutputResource
+    const lvIdx = Math.max(0, Math.min(skill.level - 1, 2))
+    const selfBase = BASE_VALUES[skill.resource]?.[lvIdx] ?? 1
+    const targetBase = BASE_VALUES[bonusRes]?.[lvIdx] ?? 1
+    const bonusAmount = (output / selfBase) * targetBase  // 标准化后 100%
+    if (bonusRes === skill.resource) {
+      result.transmuteSameResourceBoost += bonusAmount / output
+    } else {
+      result.transmuteOutput = { resource: bonusRes, amount: bonusAmount }
+    }
+  }
+
   return result
 }
 
@@ -2030,6 +2043,7 @@ export interface CategorizedEnchantments {
   quest: EnchantmentType[]
   transmute: EnchantmentType[]
   operator: EnchantmentType[]
+  passive: EnchantmentType[]
 }
 
 /**
@@ -2059,7 +2073,12 @@ export function categorizeEnchantmentCandidates(skill: AffixSkillInstance, _equi
   // 运算符（不再独立提供，通过 Multiply 词条的质变附魔获取）
   const operator: EnchantmentType[] = []
 
-  return { apprentice, quest, transmute, operator }
+  // 被动附魔 — 附加产出（排除已装备）
+  const passive: EnchantmentType[] = existingEnchs.has(EnchantmentType.BonusOutput)
+    ? []
+    : [EnchantmentType.BonusOutput]
+
+  return { apprentice, quest, transmute, operator, passive }
 }
 
 /**
@@ -2070,7 +2089,7 @@ export function weightedPickEnchantment(
   categorized: CategorizedEnchantments,
   randomFn: () => number = Math.random,
 ): EnchantmentType | null {
-  const categories = [categorized.apprentice, categorized.quest, categorized.transmute, categorized.operator]
+  const categories = [categorized.apprentice, categorized.quest, categorized.transmute, categorized.operator, categorized.passive]
     .filter(c => c.length > 0)
   if (categories.length === 0) return null
   const chosen = categories[Math.floor(randomFn() * categories.length)]

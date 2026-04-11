@@ -159,9 +159,7 @@ export function rollAffixParams(
       } else {
         source = pickRandom(convertPool)
       }
-      const [kMin, kMax] = CONVERT_K_TABLE[source]
-      const k = roundTo(kMin + random() * (kMax - kMin), 4)
-      return { type, source, k }
+      return { type, source }
     }
 
     case AffixType.Rainbow:
@@ -192,7 +190,7 @@ export function rollAffixParams(
     }
 
     case AffixType.Mercenary:
-      return { type, hireCost: Math.floor(3 + random() * 5), hireBonus: roundTo(0.50 + random() * 0.30, 2) }  // cost 3~7g, bonus 50%~80%
+      return { type, hireCost: Math.floor(3 + random() * 5), hireBonus: roundTo(1.00 + random() * 1.00, 2) }  // cost 3~7g, bonus 100%~200% (×2.0~3.0)
 
     case AffixType.Drain:
       return { type, drainK: roundTo(0.03 + random() * 0.04, 3) }  // 3%~7% 产出转时间

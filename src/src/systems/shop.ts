@@ -545,6 +545,9 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       if (a.gainPerSec != null) desc = desc.replace('{gain}', `${a.gainPerSec}s`);
       if (a.maxTriggers != null) desc = desc.replace('{maxTriggers}', String(a.maxTriggers));
       if (a.patchLow != null) desc = desc.replace('{low}', String(a.patchLow));
+      // 雇佣：替换金币/加成占位符
+      if (a.hireCost != null) desc = desc.replace(/\{hireCost\}/g, String(a.hireCost));
+      if (a.hireBonus != null) desc = desc.replace('{hireBonus}', `${Math.round(a.hireBonus * 100)}`);
       // Mirror: 复制后显示复制词条的完整描述，参数标注「倒影」
       if (a.type === 'mirror' && rt) {
         const copied = (rt.mirrorCopiedAffixes && rt.mirrorCopiedAffixes.length > 0)
@@ -595,7 +598,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
   // 附魔列表
   const enchantments: Array<{ icon: string; name: string; desc: string; color: string }> = [];
   for (const enchId of skill.enchantmentIds) {
-    const info = getEnchantmentDisplayInfo(enchId as EnchantmentType, skill.transmuteResource, skill.neighborPosRel);
+    const info = getEnchantmentDisplayInfo(enchId as EnchantmentType, skill.transmuteResource, skill.neighborPosRel, skill.bonusOutputResource);
     if (info) {
       enchantments.push({
         icon: info.icon,
@@ -654,11 +657,14 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'taboo': return `+${Math.round((a.bonusPercent ?? 0) * 100)}%`
     case 'fallacy': return `+${Math.round((a.fallacyK ?? 0) * 100)}%/${t('param.fallacy_per')}`
     // ── 数值类（变化值） ──
-    case 'convert': return `k=${a.k?.toFixed(3) ?? '?'}`
+    case 'convert': return `${t('resource.' + (a.source ?? '?'))}`
     case 'multiply': return `×${a.multiplyValue?.toFixed(1) ?? '?'}`
     case 'cascade': return `×${a.cascadeMult?.toFixed(1) ?? '?'}`
     case 'outcast': return `${t('param.interval_label')} ${a.outcastInterval ?? 4}`
     case 'void': return `+${Math.round((a.bonusPerSlot ?? 0) * 100)}%/${t('param.void_per')}`
+    case 'swarm': return `+${Math.round((a.swarmK ?? 0) * 100)}%/${t('param.void_per')}`
+    case 'mercenary': return `${a.hireCost ?? '?'}g +${Math.round((a.hireBonus ?? 0) * 100)}%`
+    case 'drain': return `${Math.round((a.drainK ?? 0) * 100)}%`
     case 'gravity': return `×${a.probMult?.toFixed(1) ?? '?'}`
     case 'exhaust': {
       const max = a.maxTriggers ?? '?';
@@ -1890,7 +1896,7 @@ function buildComparisonColumn(skill: AffixSkillInstance, label: string, otherSk
 
   // 附魔（使用统一信息查找）
   for (const enchId of skill.enchantmentIds) {
-    const info = getEnchantmentDisplayInfo(enchId as EnchantmentType, skill.transmuteResource, skill.neighborPosRel);
+    const info = getEnchantmentDisplayInfo(enchId as EnchantmentType, skill.transmuteResource, skill.neighborPosRel, skill.bonusOutputResource);
     const enchName = info ? info.name : enchId.replace(/_/g, ' ');
     const enchColor = info ? info.categoryColor : '#9b59b6';
     const enchIcon = info ? info.icon : '✦';
@@ -2665,9 +2671,21 @@ const ENCHANTMENT_CATEGORY_COLORS: Record<string, string> = {
 // 附魔类别名 — 通过 t('ench_cat.' + category) 获取
 
 /** 统一附魔信息查找 */
-export function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: import('../core/types').ResourceType, neighborRel?: PositionRelation): {
+export function getEnchantmentDisplayInfo(type: EnchantmentType, transmuteRes?: import('../core/types').ResourceType, neighborRel?: PositionRelation, bonusOutputRes?: import('../core/types').ResourceType): {
   name: string; desc: string; icon: string; category: string; categoryColor: string;
 } | null {
+  // BonusOutput 特殊处理：显示附加产出的资源
+  if (type === EnchantmentTypeEnum.BonusOutput && bonusOutputRes) {
+    const resName = t('resource.' + bonusOutputRes)
+    const resIcon = RESOURCE_ICONS[bonusOutputRes] || ''
+    return {
+      name: t('ench_meta.bonus_output', { resource: resName }),
+      desc: t('ench_meta.bonus_output.desc', { resource: `${resIcon}${resName}` }),
+      icon: '🔀',
+      category: t('ench_cat.passive'),
+      categoryColor: ENCHANTMENT_CATEGORY_COLORS.passive,
+    }
+  }
   // Quest 类型
   const questDef = getQuestEnchantmentDef(type);
   if (questDef) {
@@ -2752,12 +2770,18 @@ function applyAffixRandomEnchantment(
       affixSkill.transmuteResource = eligible[Math.floor(random() * eligible.length)];
     }
   }
+  // BonusOutput：随机分配一个与技能产出不同的资源
+  if (chosen === EnchantmentTypeEnum.BonusOutput) {
+    const allRes: import('../data/affixes').ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+    const eligible = allRes.filter(r => r !== affixSkill.resource);
+    affixSkill.bonusOutputResource = eligible[Math.floor(random() * eligible.length)];
+  }
   // ApprenticeNeighbor：复用技能已有词条的 posRel，否则随机
   if (chosen === EnchantmentTypeEnum.ApprenticeNeighbor) {
     const allRels = Object.values(PositionRelation);
     affixSkill.neighborPosRel = getSkillPosRel(affixSkill) ?? allRels[Math.floor(random() * allRels.length)];
   }
-  const info = getEnchantmentDisplayInfo(chosen, affixSkill.transmuteResource, affixSkill.neighborPosRel);
+  const info = getEnchantmentDisplayInfo(chosen, affixSkill.transmuteResource, affixSkill.neighborPosRel, affixSkill.bonusOutputResource);
   if (info) {
     // showFeedback(t('shop.random_enchant', { icon: info.icon, name: info.name }), '#f9ca24');
   }
