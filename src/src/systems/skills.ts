@@ -24,7 +24,7 @@ import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostB
 import { getAdjacentPowerBonus, getCornerPowerBonus, recordLineClearHit } from './relics/TopologyRelicBehaviors';
 import { getSkillKeys, getBindingState } from './bindingManager';
 import { getShortSprintBonus, getLongWordCritBonus } from './relics/WordRelicBehaviors';
-import { getResourceTideBonus, getResourceFocusBonus, getResourceDiversityBonus, rollProductionDividend, getTimeTrickle } from './relics/ResourceRelicBehaviors';
+import { getResourceTideBonus, getResourceFocusBonus, getResourceDiversityBonus, rollProductionDividend, getTimeTrickle, applyFurnaceConversion } from './relics/ResourceRelicBehaviors';
 import { getWarmUpBonus, getDesperateCritRate } from './relics/StageRelicBehaviors';
 import { getLuckyStrikeCritRate, getCritBonusGold, isCritChargeReady, consumeCritCharge, advanceCritCharge, recordWordCrit, isFateCoinActive } from './relics/CritRelicBehaviors';
 import { getFuryBeatCritRate } from './relics/ComboRelicBehaviors';
@@ -367,7 +367,9 @@ function triggerAffixSkillWithFeedback(
   const growthBefore = runtimeState?.apprenticeAccumulated ?? 0;
 
   const result = orchestrateAffixTrigger(skillId, triggerKey, ctx, {
-    applyResource: (resource: ResourceType, amount: number, isMultiplyOp?: boolean) => {
+    applyResource: (resource_: ResourceType, amount: number, isMultiplyOp?: boolean) => {
+      // 资源熔炉：源资源转化为目标资源
+      const resource = applyFurnaceConversion(resource_);
       // 消行满贯等额外触发的产出缩放
       if (outputScale !== undefined && outputScale !== 1) amount = amount * outputScale;
       // 升华缩放：Lv4+ 基础值缩放

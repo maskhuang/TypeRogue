@@ -95,20 +95,35 @@ export function getResourceTideBonus(resource: string): number {
     ? RESOURCE_TIDE_RATE : 0
 }
 
-// === 万物熔炉 (universal_furnace) ===
+// === 贤者之石 (universal_furnace) ===
 
-/** 有遗物 → 返回转化金币和覆盖标记，否则 null
- * @param targetReachedTime Story 42.2: 达标时的剩余时间（战斗打到时间耗尽后 state.time=0）
- */
-export function checkUniversalFurnace(targetReachedTime?: number): { bonusGold: number; overrideBase: boolean } | null {
-  if (!state.player.relics.has('universal_furnace')) return null
-  const overkill = Math.max(0, state.score - state.targetScore)
-  // Story 42.2: 战斗总是打到时间耗尽，用达标时的剩余时间代替当前时间
-  const remainingTime = Math.max(0, Math.floor(targetReachedTime ?? state.time))
-  return {
-    bonusGold: overkill + remainingTime,
-    overrideBase: true,
-  }
+/** 熔炉源/目标资源（获取遗物时随机赋值） */
+let _furnaceFrom: import('../../core/types').ResourceType | null = null
+let _furnaceTo: import('../../core/types').ResourceType | null = null
+
+/** 获取熔炉配置 */
+export function getFurnaceConfig(): { from: string; to: string } | null {
+  if (!state.player.relics.has('universal_furnace') || !_furnaceFrom || !_furnaceTo) return null
+  return { from: _furnaceFrom, to: _furnaceTo }
+}
+
+/** 初始化熔炉资源（获取遗物时调用） */
+export function initFurnace(randomFn: () => number = Math.random): void {
+  const pool: import('../../core/types').ResourceType[] = ['base', 'score', 'multiplier', 'time']
+  _furnaceFrom = pool[Math.floor(randomFn() * pool.length)]
+  _furnaceTo = 'gold'
+}
+
+/** 资源转化：如果是熔炉源资源，转为目标资源 */
+export function applyFurnaceConversion(resource: import('../../core/types').ResourceType): import('../../core/types').ResourceType {
+  if (!state.player.relics.has('universal_furnace')) return resource
+  if (resource === _furnaceFrom && _furnaceTo) return _furnaceTo
+  return resource
+}
+
+/** @deprecated 旧版万物熔炉金币覆盖，已重设计 */
+export function checkUniversalFurnace(_targetReachedTime?: number): null {
+  return null
 }
 
 // === 生命周期 ===

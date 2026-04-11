@@ -2330,7 +2330,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   resource_focus: 'The most common resource type among equipped skills gets +25% output',
   resource_diversity: 'When equipped skills cover 3+ resource types, all skill output +20%',
   resource_tide: '4-word tide cycle: base → mult → time → gold, each +80%',
-  universal_furnace: 'On stage clear: overkill score + remaining time → gold, but no base clear gold',
+  universal_furnace: 'All skill output of one resource is converted to gold',
   // Shop subsystem relics
   discount_card: 'All shop prices -15%',
   recycle_expert: 'Skill sell price +50% (50% → 75%)',

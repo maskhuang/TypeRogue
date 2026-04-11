@@ -829,14 +829,14 @@ export const RELICS: Record<string, RelicData> = {
 
   universal_furnace: {
     id: 'universal_furnace',
-    name: '万物熔炉',
+    name: '贤者之石',
     icon: '⚗️',
-    description: '战斗结束时，超标分数+剩余时间→金币，但不获得基础通关金币。',
+    description: '技能产出的{from}全部转化为金币。',
     rarity: 'legendary',
     basePrice: 0,
     effects: [],
     subsystem: 'resource',
-    flavor: '万物皆可熔炼为金。',
+    flavor: '点石成金。',
   },
 
   // ─── 商店系统遗物 (Story 36.9) ───

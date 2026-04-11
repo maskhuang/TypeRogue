@@ -1399,7 +1399,7 @@ function showGoldReward(onComplete: () => void): void {
     skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
     relicGold = 0;
   } else {
-    // 标准关：基础100 + 溢出分段递减奖励
+    // 标准关：100 基础 + 溢出分转化为额外金币
     const target = Math.max(1, state.targetScore);
     const overflow = Math.max(0, state.overkill);
     const pct = overflow / target;
@@ -1416,12 +1416,7 @@ function showGoldReward(onComplete: () => void): void {
     const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
     relicGold = Math.floor(goldRelicResult.effects.gold) + _battleRelicGold;
 
-    // Story 36.8: 万物熔炉 — 覆盖默认金币计算
-    const furnaceResult = checkUniversalFurnace(_targetReachedTime);
-    if (furnaceResult) {
-      baseGold = 0;
-      relicGold = furnaceResult.bonusGold;
-    }
+
 
     // 猎物悬赏
     bountyEndGold = checkBountyOnStageEnd();
@@ -1721,8 +1716,8 @@ function endLevel(): void {
   }
 
   if (_isCalibrationLevel || state.score >= state.targetScore) {
-    // Story 42.3: 仅保留本关溢出分到下一关（不跨关累积）
-    state.overflowScore = _isCalibrationLevel ? 0 : state.overkill;
+    // 溢出分数不再带到下一关
+    state.overflowScore = 0;
 
     // 动态增长系数：记录溢出比例供下关目标分数计算
     state.lastOverflowRatio = state.targetScore > 0 ? state.overkill / state.targetScore : 0;

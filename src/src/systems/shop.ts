@@ -24,7 +24,7 @@ import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
 // row_medal deleted — autoSelectRowMedal/getRowMedalRowName removed
 import { setWordDealerFlag, consumeWordDealerFreeRefresh, getThickDeckPackDiscount } from './relics/WordRelicBehaviors';
-import { checkUniversalFurnace } from './relics/ResourceRelicBehaviors';
+import { checkUniversalFurnace, initFurnace, getFurnaceConfig } from './relics/ResourceRelicBehaviors';
 import { checkBountyOnStageEnd } from './relics/StageRelicBehaviors';
 import { getBountyHunterDiscount } from './relics/BossModifierRelicBehaviors';
 import { getSRankTrophyGold, consumeDeadlyGiftFreeRefresh } from './relics/ScoringRelicBehaviors';
@@ -1000,7 +1000,7 @@ export function openShop(_won: boolean): void {
     const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
     let relicGold = Math.floor(goldRelicResult.effects.gold);
 
-    // 基础100 + 溢出分段递减奖励（以目标分数为基准）
+    // 基础金币：100 + 溢出分转化
     const calibInfo = getCalibrationInfo();
     let baseGold: number;
     if (calibInfo.isCalibration) {
@@ -1008,26 +1008,20 @@ export function openShop(_won: boolean): void {
     } else {
       const target = Math.max(1, state.targetScore);
       const overflow = Math.max(0, state.overkill);
-      // 溢出比例分段：0~50% → 0.2g/%, 50~100% → 0.12g/%, 100%+ → 0.04g/%
       const pct = overflow / target;
-      let bonus = 0;
+      let ovBonus = 0;
       if (pct <= 0.5) {
-        bonus = pct * 100 * 0.2;
+        ovBonus = pct * 100 * 0.2;
       } else if (pct <= 1.0) {
-        bonus = 0.5 * 100 * 0.2 + (pct - 0.5) * 100 * 0.12;
+        ovBonus = 0.5 * 100 * 0.2 + (pct - 0.5) * 100 * 0.12;
       } else {
-        bonus = 0.5 * 100 * 0.2 + 0.5 * 100 * 0.12 + (pct - 1.0) * 100 * 0.04;
+        ovBonus = 0.5 * 100 * 0.2 + 0.5 * 100 * 0.12 + (pct - 1.0) * 100 * 0.04;
       }
-      baseGold = Math.floor(100 + bonus);
+      baseGold = Math.floor(100 + ovBonus);
     }
     const skillGold = Math.floor(state.resources.gold);
 
-    // Story 36.8: 万物熔炉 — 覆盖默认金币计算
-    const furnaceResult = checkUniversalFurnace();
-    if (furnaceResult) {
-      baseGold = 0;
-      relicGold = furnaceResult.bonusGold;
-    }
+
 
     // 猎物悬赏：zero_errors 在关卡结束时检查
     const bountyEndGold = checkBountyOnStageEnd();
@@ -2318,6 +2312,12 @@ function purchaseShopRelicItem(index: number): void {
           checkAutoEnchantment(uid);
         }
       }
+    }
+    // 资源熔炉 — 购买时随机赋值源/目标资源
+    if (relicId === 'universal_furnace') {
+      initFurnace(random);
+      const cfg = getFurnaceConfig();
+      if (cfg) showFeedback(`⚗️ ${t('resource.' + cfg.from)} → ${t('resource.' + cfg.to)}`, '#f39c12');
     }
     // D100 — 购买时立即替换所有技能词条
     if (relicId === 'd_100') {
