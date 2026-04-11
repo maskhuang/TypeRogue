@@ -643,7 +643,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
 
 /** 词条功能说明（玩家可读） */
 export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
-  [AffixType.Convert]: '读取{source}的技能产出量加成（base逐词重置，其他逐关重置）',
+  [AffixType.Convert]: '读取{source}的技能产出量加成',
   [AffixType.Rainbow]: '每次触发时随机选择一种资源类型产出',
   [AffixType.Multiply]: '产出直接乘以固定倍数',
   [AffixType.Charge]: '按住蓄力，触发时释放产出倍率（×1.0~上限）；蓄满自动释放',

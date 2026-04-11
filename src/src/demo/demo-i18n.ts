@@ -682,7 +682,7 @@ const ZH: Record<string, string> = {
   'affix.aura_fury': '愤怒光环', 'affix.aura_morale': '士气光环',
 
   // --- affix descriptions (53) ---
-  'affix_desc.convert': '读取{source}的技能产出量加成（base逐词重置，其他逐关重置）',
+  'affix_desc.convert': '读取{source}的技能产出量加成',
   'affix_desc.rainbow': '每次触发时随机选择一种资源类型产出',
   'affix_desc.multiply': '产出直接乘以固定倍数',
   'affix_desc.charge': '按住蓄力，触发时释放产出倍率（×1.0~上限）；蓄满自动释放',
@@ -1748,7 +1748,7 @@ const EN: Record<string, string> = {
   'affix.aura_fury': 'Fury Aura', 'affix.aura_morale': 'Morale Aura',
 
   // --- affix descriptions (53) ---
-  'affix_desc.convert': 'Reads {source} skill output as bonus (base resets per word, others per stage)',
+  'affix_desc.convert': 'Reads {source} skill output as bonus',
   'affix_desc.rainbow': 'Randomly picks a resource type on each trigger',
   'affix_desc.multiply': 'Output is directly multiplied by a fixed factor',
   'affix_desc.charge': 'Hold to charge, releases output multiplier (x1.0~max); auto-releases when full',
