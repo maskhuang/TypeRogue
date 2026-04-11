@@ -82,6 +82,8 @@ export interface TriggerContext {
   resources: ResourceState
   /** 玩家金币总持有量（state.gold） */
   playerGold: number
+  /** 当前目标分数（state.targetScore） */
+  targetScore: number
   /** 当前剩余时间 */
   currentTime: number
   /** 关卡初始时间（timeMax） */
@@ -344,6 +346,8 @@ export interface TriggerResult {
   currentStacks?: number
   /** Story 45.5: 延迟消耗请求列表 */
   consumeRequests?: { resource: ResourceType, amount: number }[]
+  /** 短视：目标分数增加量 */
+  targetScoreIncrease?: number
 }
 
 // ===== 辅助函数 =====
@@ -542,6 +546,8 @@ export interface Phase2Result {
   chargeAutoComplete: boolean
   /** Story 45.5: 延迟消耗请求，Phase 4 后统一执行 */
   consumeRequests: { resource: ResourceType, amount: number }[]
+  /** 短视：目标分数增加量 */
+  targetScoreIncrease: number
   /** MonkeyPatch: 被 patch 的词条索引和倍率（供 Phase 3 暴击调整用） */
   patchTarget: number
   patchMultiplier: number
@@ -577,6 +583,7 @@ export function resolvePhase2(
   }
 
   let bonusPercent = 0
+  let targetScoreIncrease = 0 // 短视：目标分数增加量
   // 质变·反噬：消费上次 Counter 吸收的负值
   let flatBonus = 0 // 增幅词条：绝对值加成
   let chargeAutoComplete = false
@@ -644,6 +651,19 @@ export function resolvePhase2(
           bonusPercent += bonus
           consumeRequests.push({ resource: 'gold', amount: hireCost })
         }
+        break
+      }
+
+      case AffixType.Myopia: {
+        // 短视：产出+N%，每次触发目标分数增加
+        let myopiaBonus = affix.myopiaBonus ?? 0
+        const myopiaCost = affix.myopiaCost ?? 0
+        // 质变·远见：根据目标分数获得额外产出加成（每1000目标分+100%）
+        if (isTransformedForAffix(AffixType.Myopia, runtimeState, skill, ctx)) {
+          myopiaBonus += (ctx.targetScore ?? 0) / 1000
+        }
+        bonusPercent += myopiaBonus
+        if (myopiaCost > 0) targetScoreIncrease += myopiaCost
         break
       }
 
@@ -778,34 +798,15 @@ export function resolvePhase2(
     flatBonus += sumNeighborAmplifyBaseBonus(skill, ctx.occupiedKeys, ctx)
   }
 
-  // 汲取：根据最终产出量回复时间（标准化后转为 time 资源）
-  // 质变·过量汲取：时间 > 初始时间时，溢出部分转化为分数
-  const finalOutput = effectiveBase * (1 + bonusPercent) + flatBonus
+  // 回音：累积惩罚应用
   for (const affix of skill.affixes) {
-    if (affix.type === AffixType.Drain && (affix.drainK ?? 0) > 0 && finalOutput > 0) {
-      const drainLvIdx = Math.max(0, Math.min(skill.level - 1, 2))
-      const selfBase = BASE_VALUES[skill.resource]?.[drainLvIdx] ?? 1
-      const timeBase = BASE_VALUES.time[drainLvIdx] ?? 0.2
-      const timeGain = (finalOutput / selfBase) * (affix.drainK ?? 0) * timeBase
-
-      const isOverdrain = isTransformedForAffix(AffixType.Drain, runtimeState, skill, ctx)
-      if (isOverdrain && ctx.currentTime >= ctx.initialTime) {
-        // 全部溢出 → 转分数（标准化：time → score）
-        const scoreBase = BASE_VALUES.score[drainLvIdx] ?? 11
-        convertReverseOutputs.push({ resource: 'score' as ResourceType, amount: timeGain * (scoreBase / timeBase) })
-      } else if (isOverdrain && ctx.currentTime + timeGain > ctx.initialTime) {
-        // 部分回时间，溢出部分转分数
-        const timeToFill = ctx.initialTime - ctx.currentTime
-        const overflow = timeGain - timeToFill
-        const scoreBase = BASE_VALUES.score[drainLvIdx] ?? 11
-        convertReverseOutputs.push({ resource: 'time' as ResourceType, amount: timeToFill })
-        convertReverseOutputs.push({ resource: 'score' as ResourceType, amount: overflow * (scoreBase / timeBase) })
-      } else {
-        // 正常回时间
-        convertReverseOutputs.push({ resource: 'time' as ResourceType, amount: timeGain })
-      }
+    if (affix.type === AffixType.Reecho && runtimeState.reechoStacks > 0) {
+      const penalty = (affix.reechoPenalty ?? 0) * runtimeState.reechoStacks
+      bonusPercent -= penalty
     }
   }
+
+  const finalOutput = effectiveBase * (1 + bonusPercent) + flatBonus
 
   // 乘算化模式与普通模式统一：bonusPercent 加算后应用到 output + 增幅绝对值
   return {
@@ -815,6 +816,7 @@ export function resolvePhase2(
     convertReverseOutputs,
     chargeAutoComplete,
     consumeRequests,
+    targetScoreIncrease,
     patchTarget: runtimeState.patchTargetIndex ?? -1,
     patchMultiplier: runtimeState.patchMultiplier ?? 1.0,
   }
@@ -1746,6 +1748,7 @@ export function triggerAffixSkill(
     stackEffectFired: hasSelfZero || undefined,
     currentStacks: hasSelfZero ? runtimeState.stacks : undefined,
     consumeRequests: p2.consumeRequests.length > 0 ? p2.consumeRequests : undefined,
+    targetScoreIncrease: p2.targetScoreIncrease > 0 ? p2.targetScoreIncrease : undefined,
   }
 }
 
@@ -2321,6 +2324,7 @@ export function deserializeSkill(
     patchTargetIndex: (data.runtime as any).patchTargetIndex ?? -1,
     patchMultiplier: (data.runtime as any).patchMultiplier ?? 1.0,
     mutacritAccum: (data.runtime as any).mutacritAccum ?? 0,
+    reechoStacks: (data.runtime as any).reechoStacks ?? 0,
   }
   return { skill, runtimeState }
 }

@@ -85,20 +85,10 @@ export function checkSpeedRelics(wordElapsed: number): { timeBonus: number; gold
 // === 太鼓节拍系统（rhythm_adapt 重做） ===
 
 /**
- * 计算判定点的 left 坐标（对齐当前字母正下方）
+ * 判定点固定在最左端
  */
 function getTaikoJudgeLeft(): number {
-  if (typeof document === 'undefined') return 0
-  const wordDisplay = document.getElementById('word-display')
-  const bar = document.getElementById('taiko-bar')
-  if (!wordDisplay || !bar) return 0
-  const letterSpans = wordDisplay.querySelectorAll('.letter')
-  const idx = state.player?.index ?? 0
-  const targetSpan = letterSpans[idx] as HTMLElement | undefined
-  if (!targetSpan) return 0
-  const barRect = bar.getBoundingClientRect()
-  const spanRect = targetSpan.getBoundingClientRect()
-  return Math.max(0, spanRect.left + spanRect.width / 2 - barRect.left - 2)
+  return 0
 }
 
 /**
@@ -205,10 +195,10 @@ export function startTaikoSpawner(): void {
     if (typeof document !== 'undefined') {
       const bar = document.getElementById('taiko-bar')
       if (bar) {
-        // 计算球的起始位置（单词尾字母右侧一段）和目标位置（当前字母正下方）
-        const targetLeft = getTaikoJudgeLeft()
+        // 球从右端出发，移动到左端判定点
+        const targetLeft = 0
         const barWidth = bar.offsetWidth
-        const startLeft = Math.min(barWidth - 10, targetLeft + barWidth * 0.6)
+        const startLeft = barWidth - 10
         const el = document.createElement('div')
         el.className = 'taiko-ball'
         el.id = `taiko-ball-${id}`

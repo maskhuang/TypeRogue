@@ -664,7 +664,8 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'void': return `+${Math.round((a.bonusPerSlot ?? 0) * 100)}%/${t('param.void_per')}`
     case 'swarm': return `+${Math.round((a.swarmK ?? 0) * 100)}%/${t('param.void_per')}`
     case 'mercenary': return `${a.hireCost ?? '?'}g +${Math.round((a.hireBonus ?? 0) * 100)}%`
-    case 'drain': return `${Math.round((a.drainK ?? 0) * 100)}%`
+    case 'reecho': return `-${Math.round((a.reechoPenalty ?? 0) * 100)}%/${t('param.reecho_per')}`
+    case 'myopia': return `+${Math.round((a.myopiaBonus ?? 0) * 100)}% (+${a.myopiaCost ?? '?'}${t('param.myopia_cost')})`
     case 'gravity': return `×${a.probMult?.toFixed(1) ?? '?'}`
     case 'exhaust': {
       const max = a.maxTriggers ?? '?';
@@ -876,6 +877,39 @@ export function computeSmartEstimate(
         if (m > 1) {
           multProduct *= m
           breakdown.push({ typeKey: 'exhaust', label: t('est.exhaust', { val: m.toFixed(1) }), detail: t('est.exhaust_detail', { n: affix.maxTriggers ?? '?' }) })
+        }
+        break
+      }
+      case 'swarm': {
+        if (affix.posRel == null) break
+        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
+        if (keys.length === 0) break
+        const neighbors = getNeighborSkills(keys, affix.posRel, { bindings: state.player.bindings, allSkills: state.affixSkills })
+        let swarmCount = 0
+        for (const ns of neighbors) {
+          if (ns.affixes.some(a => a.type === 'swarm')) swarmCount++
+        }
+        if (swarmCount > 0) {
+          const bonus = (affix.swarmK ?? 0) * swarmCount
+          addPercent += bonus
+          breakdown.push({ typeKey: 'swarm', label: t('est.swarm', { pct: Math.round(bonus * 100) }), detail: t('est.swarm_count', { count: swarmCount }) })
+        }
+        break
+      }
+      case 'mercenary': {
+        const hireCost = affix.hireCost ?? 0
+        const bonus = affix.hireBonus ?? 0
+        if (hireCost <= 0) break
+        if (state.gold >= hireCost) {
+          let effectiveBonus = bonus
+          // 质变·佣兵王：加成 × (1 + gold / (hireCost × 10))
+          if (isAffixGloballyTransformed(AffixTypeEnum.Mercenary, state.affixSkills, state.affixSkillStates)) {
+            effectiveBonus *= 1 + state.gold / (hireCost * 10)
+          }
+          addPercent += effectiveBonus
+          breakdown.push({ typeKey: 'mercenary', label: t('est.mercenary', { pct: Math.round(effectiveBonus * 100), cost: hireCost }), detail: '' })
+        } else {
+          breakdown.push({ typeKey: 'mercenary', label: t('est.mercenary_poor'), detail: '' })
         }
         break
       }

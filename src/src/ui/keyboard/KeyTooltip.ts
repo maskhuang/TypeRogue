@@ -46,7 +46,6 @@ export const AFFIX_COLORS: Record<string, string> = {
   void:      '#9b59b6', // 紫 — 虚无
   swarm:     '#8B8000', // 暗黄 — 虫群
   mercenary: '#DAA520', // 金黄 — 雇佣
-  drain:     '#00CED1', // 深青 — 汲取
   resonance: '#2ecc71', // 绿 — 共鸣
   mirror:    '#a29bfe', // 淡紫 — 倒影
   link:      '#00cec9', // 湖蓝 — 连接
@@ -107,6 +106,8 @@ export const AFFIX_COLORS: Record<string, string> = {
   volatile:    '#ff6b6b', // 亮红 — 不稳定
   mutacrit:    '#f39c12', // 橙 — 蜕变暴击
   ascend:      '#00b894', // 青绿 — 升华
+  reecho:      '#00CED1', // 深青 — 回音
+  myopia:      '#e67e22', // 橙 — 短视
 }
 
 export interface KeyTooltipData {

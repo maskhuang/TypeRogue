@@ -192,9 +192,6 @@ export function rollAffixParams(
     case AffixType.Mercenary:
       return { type, hireCost: Math.floor(3 + random() * 5), hireBonus: roundTo(1.00 + random() * 1.00, 2) }  // cost 3~7g, bonus 100%~200% (×2.0~3.0)
 
-    case AffixType.Drain:
-      return { type, drainK: roundTo(0.03 + random() * 0.04, 3) }  // 3%~7% 产出转时间
-
     case AffixType.Mirror:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
@@ -305,6 +302,12 @@ export function rollAffixParams(
       return { type }  // 被蜕变时永久+暴击率
     case AffixType.Ascend:
       return { type }  // 被蜕变时技能升级
+
+    case AffixType.Reecho:
+      return { type, reechoPenalty: roundTo(0.10 + random() * 0.10, 2) }  // 10%~20% 每次打错累积惩罚
+
+    case AffixType.Myopia:
+      return { type, myopiaBonus: roundTo(1.00 + random() * 1.00, 2), myopiaCost: Math.floor(11 + random() * 16) }  // +100%~200%, cost 11~26 target score (≈gold 3~7 × score/gold ratio)
 
     default: {
       const _exhaustive: never = type

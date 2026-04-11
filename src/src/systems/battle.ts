@@ -562,11 +562,11 @@ function handleKeyPress(data: { key: string; timestamp: number }): void {
       eventBus.emit('word:correct', { key: k, index: state.player.index - 1 });
     } else {
       // 其他字母：算打错，但也算识破
-      playerWrong();
+      playerWrong(k);
       eventBus.emit('word:error', { key: k, expected: expect || '' });
     }
   } else {
-    playerWrong();
+    playerWrong(k);
     eventBus.emit('word:error', { key: k, expected: expect || '' });
   }
 }
@@ -647,6 +647,11 @@ function playerCorrect(k: string): void {
   state.maxCombo = Math.max(state.maxCombo, state.combo);
   eventBus.emit('combo:update', { combo: state.combo });
   bumpCombo();
+
+  // 回音：正确按键重置打错累积惩罚
+  for (const [, rt] of state.affixSkillStates) {
+    if (rt.reechoStacks > 0) rt.reechoStacks = 0
+  }
 
   // 击鼓传花：combo+5 → 随机叠层技能+3层
   const drumResult = checkDrumPass(state.combo);
@@ -845,7 +850,7 @@ function playerCorrect(k: string): void {
   // 技能产出的资源弹跳由飞行动画到达时触发（见 createFloatText）
 }
 
-function playerWrong(): void {
+function playerWrong(pressedKey?: string): void {
   const el = getElements();
   const letter = el.word.children[state.player.index] as HTMLElement;
 
@@ -925,6 +930,36 @@ function playerWrong(): void {
   const frostDuration = triggerFrostFreeze();
   if (frostDuration > 0) {
     showFeedback(t('battle.frostbite_freeze', { value: frostDuration }), '#00ccff');
+  }
+
+  // 回音：打错时触发含回音词条的技能（无底分/combo）
+  if (pressedKey) {
+    // 质变·轰鸣：随机触发一个含回音的技能；否则仅触发当前键绑定的
+    const isRumble = isAffixGloballyTransformed(AffixType.Reecho, state.affixSkills, state.affixSkillStates)
+    if (isRumble) {
+      // 收集所有含回音的技能
+      const reechoSkills: { id: string; key: string }[] = []
+      for (const [key, sid] of state.player.bindings) {
+        const sk = state.affixSkills.get(sid)
+        if (sk?.affixes.some(a => a.type === AffixType.Reecho)) reechoSkills.push({ id: sid, key })
+      }
+      if (reechoSkills.length > 0) {
+        const pick = reechoSkills[Math.floor(Math.random() * reechoSkills.length)]
+        const rt = state.affixSkillStates.get(pick.id)
+        if (rt) rt.reechoStacks++
+        triggerSkill(pick.id, pick.key)
+      }
+    } else {
+      const reechoSkillId = state.player.bindings.get(pressedKey)
+      if (reechoSkillId) {
+        const reechoSkill = state.affixSkills.get(reechoSkillId)
+        if (reechoSkill?.affixes.some(a => a.type === AffixType.Reecho)) {
+          const rt = state.affixSkillStates.get(reechoSkillId)
+          if (rt) rt.reechoStacks++
+          triggerSkill(reechoSkillId, pressedKey)
+        }
+      }
+    }
   }
 
   updateHUD();
@@ -1739,6 +1774,10 @@ function endLevel(): void {
         occupiedKeys: allKeys,
         currentWord: '',
         resources: { base: 0, score: 0, multiplier: 1, time: 0, gold: 0, energy: 0, mutagen: 0 },
+        playerGold: state.gold ?? 0,
+        targetScore: state.targetScore ?? 0,
+        currentTime: state.time ?? 0,
+        initialTime: state.timeMax ?? 30,
         classResourceProduced: {},
         bindings: state.player.bindings,
         skillStates: state.affixSkillStates,

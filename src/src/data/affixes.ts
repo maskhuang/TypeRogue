@@ -33,7 +33,6 @@ export enum AffixType {
   Void = 'void',
   Swarm = 'swarm',
   Mercenary = 'mercenary',
-  Drain = 'drain',
   Mirror = 'mirror',
   Cascade = 'cascade',
   Flow = 'flow',
@@ -60,6 +59,8 @@ export enum AffixType {
   Volatile = 'volatile',
   Mutacrit = 'mutacrit',
   Ascend = 'ascend',
+  Reecho = 'reecho',
+  Myopia = 'myopia',
 }
 
 // ===== 词条类别 =====
@@ -90,7 +91,6 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Void]: ['topology', 'numeric'],
   [AffixType.Swarm]: ['topology', 'numeric'],
   [AffixType.Mercenary]: ['production', 'numeric'],
-  [AffixType.Drain]: ['production', 'numeric'],
   [AffixType.Mirror]: ['topology', 'meta_rule'],
   [AffixType.Cascade]: ['topology', 'numeric'],
   [AffixType.Flow]: ['topology', 'numeric', 'production'],
@@ -117,6 +117,8 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Volatile]: ['meta_rule', 'numeric'],
   [AffixType.Mutacrit]: ['meta_rule', 'crit'],
   [AffixType.Ascend]: ['meta_rule'],
+  [AffixType.Reecho]: ['meta_rule', 'production'],
+  [AffixType.Myopia]: ['production', 'numeric'],
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -176,7 +178,8 @@ export enum EnchantmentType {
   QuestAscend = 'quest_ascend',
   QuestSwarmPropagate = 'quest_swarm_propagate',
   QuestMercenaryWarlord = 'quest_mercenary_warlord',
-  QuestDrainOverdrain = 'quest_drain_overdrain',
+  QuestReechoRumble = 'quest_reecho_rumble',
+  QuestMyopiaForesight = 'quest_myopia_foresight',
   // ── 附加产出（触发时额外产出指定资源） ──
   BonusOutput = 'bonus_output',
   // ── 运算符（保留类型，现通过质变获取） ──
@@ -229,7 +232,8 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestAscend]: AffixType.Ascend,
   [EnchantmentType.QuestSwarmPropagate]: AffixType.Swarm,
   [EnchantmentType.QuestMercenaryWarlord]: AffixType.Mercenary,
-  [EnchantmentType.QuestDrainOverdrain]: AffixType.Drain,
+  [EnchantmentType.QuestReechoRumble]: AffixType.Reecho,
+  [EnchantmentType.QuestMyopiaForesight]: AffixType.Myopia,
 }
 
 // ===== 附魔元数据（非任务类附魔的显示信息） =====
@@ -285,7 +289,6 @@ export interface AffixInstance {
   swarmK?: number                  // Swarm: 每个虫群邻居加成%
   hireCost?: number                // Mercenary: 每次触发消耗金币
   hireBonus?: number               // Mercenary: 金币足够时产出加成%
-  drainK?: number                  // Drain: 产出→时间转化率
   resource?: ResourceType          // Amplify: 关联资源
   cascadeMult?: number             // Cascade: 级联乘数
   bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: 暴击率加成
@@ -313,6 +316,9 @@ export interface AffixInstance {
   exhaustMult?: number             // Exhaust: 每次触发 base 倍率
   devourXp?: number                // Void: 吞噬累积经验（运行时）
   devourLevel?: number             // Void: 吞噬等级（运行时）
+  reechoPenalty?: number           // Reecho: 每次打错累积的产出惩罚%
+  myopiaBonus?: number             // Myopia: 产出加成%
+  myopiaCost?: number              // Myopia: 每次触发增加的目标分数
 }
 
 // ===== 稀有度 =====
@@ -377,6 +383,7 @@ export interface SkillRuntimeState {
   patchTargetIndex: number         // 被补丁的词条索引（-1=无效，每关重置）
   patchMultiplier: number          // 随机系数（每关重置，默认 1.0）
   mutacritAccum: number            // Mutacrit：蜕变永久累积暴击率
+  reechoStacks: number             // Reecho：当前词内打错累积次数（逐词重置）
 }
 
 // ===== 存档数据 =====
@@ -465,7 +472,6 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Void]: 'high',
   [AffixType.Swarm]: 'high',
   [AffixType.Mercenary]: 'high',
-  [AffixType.Drain]: 'high',
   [AffixType.Mirror]: 'high',
   [AffixType.Amplify]: 'high',
   [AffixType.Splash]: 'high',
@@ -499,6 +505,8 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Volatile]: 'high',
   [AffixType.Mutacrit]: 'high',
   [AffixType.Ascend]: 'low',
+  [AffixType.Reecho]: 'low',
+  [AffixType.Myopia]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -582,12 +590,11 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Void]: '虚无',
   [AffixType.Swarm]: '虫群',
   [AffixType.Mercenary]: '雇佣',
-  [AffixType.Drain]: '汲取',
   [AffixType.Mirror]: '倒影',
   [AffixType.Amplify]: '增幅',
   [AffixType.Splash]: '溅射',
   [AffixType.Resonance]: '共鸣',
-  [AffixType.Echo]: '回响',
+  [AffixType.Echo]: '感应',
   [AffixType.Fury]: '怒气',
   [AffixType.Tide]: '潮汐',
   [AffixType.Relay]: '中转',
@@ -616,6 +623,8 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Volatile]: '不稳定',
   [AffixType.Mutacrit]: '蜕变暴击',
   [AffixType.Ascend]: '升华',
+  [AffixType.Reecho]: '回音',
+  [AffixType.Myopia]: '短视',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -630,7 +639,6 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Void]: '指定关系的空位越多加成越高',
   [AffixType.Swarm]: '指定关系内拥有虫群词条的技能越多，产出越高',
   [AffixType.Mercenary]: '金币≥N时触发加成产出，每次触发消耗N金币',
-  [AffixType.Drain]: '根据产出量回复时间',
   [AffixType.Mirror]: '每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效',
   [AffixType.Amplify]: '自身不产出；触发叠层，指定关系的匹配技能产出+自身基础值',
   [AffixType.Splash]: '自身不产出；触发时触发叠层数个指定关系的匹配技能',
@@ -664,6 +672,8 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Volatile]: '被蜕变后本技能短期内效果翻倍',
   [AffixType.Mutacrit]: '被蜕变时本技能永久获得暴击率',
   [AffixType.Ascend]: '被蜕变时本技能升级',
+  [AffixType.Reecho]: '打错时也能触发技能产出，但每次打错累积-{reechoPenalty}%产出惩罚，逐词重置',
+  [AffixType.Myopia]: '产出+{myopiaBonus}%，但每次触发目标分数增加{myopiaCost}',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -838,7 +848,8 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestAscend, name: '超越', targetAffix: AffixType.Ascend, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全技能升级', transformDesc: '被蜕变时所有已装备技能升1级' },
   { type: EnchantmentType.QuestSwarmPropagate, name: '繁殖', targetAffix: AffixType.Swarm, event: 'equip_count', targetStacks: 0, effectDesc: '质变：虫群繁殖', transformDesc: '每次触发25%概率向范围内无虫群的邻居传播虫群词条' },
   { type: EnchantmentType.QuestMercenaryWarlord, name: '佣兵王', targetAffix: AffixType.Mercenary, event: 'equip_count', targetStacks: 0, effectDesc: '质变：囤金暴力', transformDesc: '加成额外乘以(1+金币÷消耗×10)，金币越多越强' },
-  { type: EnchantmentType.QuestDrainOverdrain, name: '过量汲取', targetAffix: AffixType.Drain, event: 'equip_count', targetStacks: 0, effectDesc: '质变：过量汲取', transformDesc: '时间超过初始时间时，溢出的时间回复转化为分数' },
+  { type: EnchantmentType.QuestReechoRumble, name: '轰鸣', targetAffix: AffixType.Reecho, event: 'equip_count', targetStacks: 0, effectDesc: '质变：轰鸣', transformDesc: '打错时随机触发一个含回音词条的技能' },
+  { type: EnchantmentType.QuestMyopiaForesight, name: '远见', targetAffix: AffixType.Myopia, event: 'equip_count', targetStacks: 0, effectDesc: '质变：远见', transformDesc: '目标分数每1000点额外+100%产出加成' },
 ]
 
 // ===== 旧系统技能识别（存档迁移用）=====
@@ -871,6 +882,7 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     patchTargetIndex: -1,
     patchMultiplier: 1.0,
     mutacritAccum: 0,
+    reechoStacks: 0,
   }
 }
 
@@ -902,7 +914,6 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
   [AffixType.Swarm]:    { param: 'swarmK',         delta: 0.04,  mode: 'add' },
   [AffixType.Mercenary]:{ param: 'hireBonus',      delta: 0.20,  mode: 'add' },
-  [AffixType.Drain]:    { param: 'drainK',         delta: 0.02,  mode: 'add' },
   [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
   [AffixType.Exhaust]:  { param: 'exhaustMult',    delta: 0.3,   mode: 'add' },
   [AffixType.Reflect]:  { param: 'reflectK',       delta: 0.01,  mode: 'add' },
@@ -920,6 +931,8 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Ligature]:  { param: 'ligatureBonus',  delta: 0.25,  mode: 'add' },
   [AffixType.Innate]:    { param: 'innateCount',    delta: 1,     mode: 'add' },
   [AffixType.MonkeyPatch]:{ param: 'patchHigh',     delta: 0.3,   mode: 'add' },
+  [AffixType.Reecho]:   { param: 'reechoPenalty',  delta: -0.03, mode: 'add' },
+  [AffixType.Myopia]:   { param: 'myopiaBonus',    delta: 0.20,  mode: 'add' },
   // Amplify: 每层加成=基础产出，升级通过 baseValues 自然增长
   // Rainbow / Twin / Mirror / Conduit: 无可缩放数值参数
 }

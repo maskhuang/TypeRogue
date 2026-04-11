@@ -664,8 +664,8 @@ const ZH: Record<string, string> = {
   'affix.convert': '转化', 'affix.rainbow': '彩虹', 'affix.multiply': '乘算',
   'affix.charge': '蓄力', 'affix.decay': '衰减', 'affix.pulse': '脉冲',
   'affix.crit': '暴击', 'affix.cascade': '级联',
-  'affix.void': '虚无', 'affix.swarm': '虫群', 'affix.mercenary': '雇佣', 'affix.drain': '汲取', 'affix.mirror': '倒影',
-  'affix.resonance': '共鸣', 'affix.echo': '回响', 'affix.fury': '怒气', 'affix.tide': '潮汐', 'affix.splash': '溅射', 'affix.amplify': '增幅', 'affix.conduit': '导能', 'affix.relay': '中转',
+  'affix.void': '虚无', 'affix.swarm': '虫群', 'affix.mercenary': '雇佣', 'affix.mirror': '倒影',
+  'affix.resonance': '共鸣', 'affix.echo': '感应', 'affix.fury': '怒气', 'affix.tide': '潮汐', 'affix.splash': '溅射', 'affix.amplify': '增幅', 'affix.conduit': '导能', 'affix.relay': '中转',
   'affix.outcast': '流放', 'affix.gravity': '引力', 'affix.ligature': '连字',
   'affix.war_drum': '战鼓',
   'affix.twin': '双生', 'affix.recurse': '递归', 'affix.taboo': '禁忌', 'affix.fallacy': '赌徒',
@@ -678,7 +678,7 @@ const ZH: Record<string, string> = {
   'affix.leverage': '杠杆', 'affix.option': '期权', 'affix.hedge': '对冲',
   'affix.burst': '连射', 'affix.zero_in': '校准', 'affix.sharpshooter': '神射', 'affix.overflow': '溢层',
   'affix.bridge': '桥', 'affix.clique': '团', 'affix.component': '连通',
-  'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝', 'affix.refine': '提纯', 'affix.evolve': '进化', 'affix.harvest': '收割', 'affix.chain': '连锁', 'affix.volatile': '不稳定', 'affix.mutacrit': '蜕变暴击', 'affix.ascend': '升华',
+  'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝', 'affix.refine': '提纯', 'affix.evolve': '进化', 'affix.harvest': '收割', 'affix.chain': '连锁', 'affix.volatile': '不稳定', 'affix.mutacrit': '蜕变暴击', 'affix.ascend': '升华', 'affix.reecho': '回音', 'affix.myopia': '短视',
 
   // --- affix descriptions (53) ---
   'affix_desc.convert': '读取{source}的已有量，标准化后加成产出',
@@ -692,7 +692,6 @@ const ZH: Record<string, string> = {
   'affix_desc.void': '指定关系的空位越多加成越高',
   'affix_desc.swarm': '指定关系内拥有虫群词条的技能越多，产出越高',
   'affix_desc.mercenary': '金币≥{hireCost}时产出+{hireBonus}%，每次触发消耗{hireCost}金币',
-  'affix_desc.drain': '触发时根据产出量回复时间',
   'affix_desc.resonance': '任意技能产出{resource}时叠层，满层触发自身',
   'affix_desc.echo': '拥有{affixA}或{affixB}的技能触发时叠层，满层触发自身',
   'affix_desc.fury': '任意技能暴击时叠层，满层触发自身',
@@ -752,6 +751,8 @@ const ZH: Record<string, string> = {
   'affix_desc.volatile': '被蜕变后本技能短期内效果翻倍',
   'affix_desc.mutacrit': '被蜕变时本技能永久获得暴击率加成',
   'affix_desc.ascend': '被蜕变时本技能有概率升级',
+  'affix_desc.reecho': '打错时也触发本技能，但每次打错累积-{reechoPenalty}%产出，打对时重置',
+  'affix_desc.myopia': '产出+{myopiaBonus}%，但每次触发目标分数+{myopiaCost}',
 
   // --- position relations (6) ---
   'rel.adjacent': '相邻', 'rel.sameRow': '同行', 'rel.sameColumn': '同列',
@@ -869,7 +870,8 @@ const ZH: Record<string, string> = {
   'quest.quest_ascend': '超越', 'quest.quest_ascend.effect': '被蜕变时所有已装备技能升1级', 'quest.quest_ascend.task': '装备N个',
   'quest.quest_swarm_propagate': '繁殖', 'quest.quest_swarm_propagate.effect': '触发时25%概率向邻居传播虫群词条', 'quest.quest_swarm_propagate.task': '装备N个',
   'quest.quest_mercenary_warlord': '佣兵王', 'quest.quest_mercenary_warlord.effect': '加成按金币存量缩放', 'quest.quest_mercenary_warlord.task': '装备N个',
-  'quest.quest_drain_overdrain': '过量汲取', 'quest.quest_drain_overdrain.effect': '时间超过初始值时溢出转为分数', 'quest.quest_drain_overdrain.task': '装备N个',
+  'quest.quest_reecho_rumble': '轰鸣', 'quest.quest_reecho_rumble.effect': '打错时随机触发一个含回音的技能', 'quest.quest_reecho_rumble.task': '装备N个',
+  'quest.quest_myopia_foresight': '远见', 'quest.quest_myopia_foresight.effect': '目标分数每1000点额外+100%产出', 'quest.quest_myopia_foresight.task': '装备N个',
 
   // --- param summary labels (仅升级可变值) ---
   'param.charge_label': '上限',
@@ -881,7 +883,8 @@ const ZH: Record<string, string> = {
   'param.swarm_per': '虫群',
   'param.hire_cost': '金币',
   'param.hire_bonus': '加成',
-  'param.drain_rate': '转化率',
+  'param.reecho_per': '次打错',
+  'param.myopia_cost': '目标分',
   'param.fallacy_per': '未暴击',
   'param.burst_per': '连暴',
   'param.zeroin_per': '未暴击',
@@ -909,7 +912,6 @@ const ZH: Record<string, string> = {
   'est.swarm_count': '{count}个虫群邻居',
   'est.mercenary': '雇佣 +{pct}% (-{cost}g)',
   'est.mercenary_poor': '雇佣 (金币不足)',
-  'est.drain': '汲取 +{time}s',
   'est.taboo': '禁忌 +{pct}%暴击率',
   'est.taboo_penalty': '(未暴击负产出)',
   'est.taboo_quest': '(未暴击→随机资源)',
@@ -1718,7 +1720,7 @@ const EN: Record<string, string> = {
   'affix.convert': 'Convert', 'affix.rainbow': 'Rainbow', 'affix.multiply': 'Multiply',
   'affix.charge': 'Charge', 'affix.decay': 'Decay', 'affix.pulse': 'Pulse',
   'affix.crit': 'Crit', 'affix.cascade': 'Cascade',
-  'affix.void': 'Void', 'affix.swarm': 'Swarm', 'affix.mercenary': 'Mercenary', 'affix.drain': 'Drain', 'affix.mirror': 'Mirror',
+  'affix.void': 'Void', 'affix.swarm': 'Swarm', 'affix.mercenary': 'Mercenary', 'affix.mirror': 'Mirror',
   'affix.resonance': 'Resonance', 'affix.echo': 'Echo', 'affix.fury': 'Fury', 'affix.tide': 'Tide', 'affix.splash': 'Splash', 'affix.amplify': 'Amplify', 'affix.conduit': 'Conduit', 'affix.relay': 'Relay',
   'affix.outcast': 'Outcast', 'affix.gravity': 'Gravity', 'affix.ligature': 'Ligature',
   'affix.war_drum': 'War Drum',
@@ -1732,7 +1734,7 @@ const EN: Record<string, string> = {
   'affix.leverage': 'Leverage', 'affix.option': 'Option', 'affix.hedge': 'Hedge',
   'affix.burst': 'Burst', 'affix.zero_in': 'Zero-In', 'affix.sharpshooter': 'Sharpshooter', 'affix.overflow': 'Overflow',
   'affix.bridge': 'Bridge', 'affix.clique': 'Clique', 'affix.component': 'Component',
-  'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure', 'affix.refine': 'Refine', 'affix.evolve': 'Evolve', 'affix.harvest': 'Harvest', 'affix.chain': 'Chain', 'affix.volatile': 'Volatile', 'affix.mutacrit': 'Mutacrit', 'affix.ascend': 'Ascend',
+  'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure', 'affix.refine': 'Refine', 'affix.evolve': 'Evolve', 'affix.harvest': 'Harvest', 'affix.chain': 'Chain', 'affix.volatile': 'Volatile', 'affix.mutacrit': 'Mutacrit', 'affix.ascend': 'Ascend', 'affix.reecho': 'Re-echo', 'affix.myopia': 'Myopia',
 
   // --- affix descriptions (53) ---
   'affix_desc.convert': 'Reads {source} accumulated value, adds normalized bonus to output',
@@ -1746,7 +1748,6 @@ const EN: Record<string, string> = {
   'affix_desc.void': 'More empty slots in range = higher bonus',
   'affix_desc.swarm': 'More neighbors with Swarm in range = higher bonus',
   'affix_desc.mercenary': 'When gold ≥ {hireCost}: output +{hireBonus}%, costs {hireCost}g per trigger',
-  'affix_desc.drain': 'Recover time based on output',
   'affix_desc.resonance': 'Stacks when any skill produces {resource}; self-triggers when full',
   'affix_desc.echo': 'Stacks when skills with {affixA} or {affixB} trigger; self-triggers when full',
   'affix_desc.fury': 'Stacks when any skill crits; self-triggers when full',
@@ -1806,6 +1807,8 @@ const EN: Record<string, string> = {
   'affix_desc.volatile': 'After mutation: skill effects boosted for a few stages',
   'affix_desc.mutacrit': 'When mutated: this skill permanently gains crit rate',
   'affix_desc.ascend': 'When mutated: chance to level up this skill',
+  'affix_desc.reecho': 'Wrong keys also trigger this skill, but each miss stacks -{reechoPenalty}% output; resets on correct key',
+  'affix_desc.myopia': 'Output +{myopiaBonus}%, but each trigger increases target score by {myopiaCost}',
 
   // --- position relations (6) ---
   'rel.adjacent': 'Adj', 'rel.sameRow': 'Row', 'rel.sameColumn': 'Col',
@@ -1923,7 +1926,8 @@ const EN: Record<string, string> = {
   'quest.quest_ascend': 'Transcend', 'quest.quest_ascend.effect': 'Mutation levels up all equipped skills by 1', 'quest.quest_ascend.task': 'Equip N',
   'quest.quest_swarm_propagate': 'Propagate', 'quest.quest_swarm_propagate.effect': '25% chance to spread Swarm to a neighbor on trigger', 'quest.quest_swarm_propagate.task': 'Equip N',
   'quest.quest_mercenary_warlord': 'Warlord', 'quest.quest_mercenary_warlord.effect': 'Bonus scales with gold reserves', 'quest.quest_mercenary_warlord.task': 'Equip N',
-  'quest.quest_drain_overdrain': 'Overdrain', 'quest.quest_drain_overdrain.effect': 'Time above initial converts to score', 'quest.quest_drain_overdrain.task': 'Equip N',
+  'quest.quest_reecho_rumble': 'Rumble', 'quest.quest_reecho_rumble.effect': 'Wrong key triggers a random Re-echo skill', 'quest.quest_reecho_rumble.task': 'Equip N',
+  'quest.quest_myopia_foresight': 'Foresight', 'quest.quest_myopia_foresight.effect': '+100% output per 1000 target score', 'quest.quest_myopia_foresight.task': 'Equip N',
 
   // --- param summary / estimate / tooltip labels ---
   'param.convert_to_self': '{icon}{name}→self k={k}',
@@ -1937,7 +1941,8 @@ const EN: Record<string, string> = {
   'param.swarm_per': 'swarm',
   'param.hire_cost': 'gold',
   'param.hire_bonus': 'bonus',
-  'param.drain_rate': 'rate',
+  'param.reecho_per': 'miss',
+  'param.myopia_cost': 'target',
   'param.fallacy_per': 'non-crit',
   'param.burst_per': 'streak',
   'param.zeroin_per': 'non-crit',
@@ -1965,7 +1970,6 @@ const EN: Record<string, string> = {
   'est.swarm_count': '{count} swarm neighbors',
   'est.mercenary': 'Mercenary +{pct}% (-{cost}g)',
   'est.mercenary_poor': 'Mercenary (not enough gold)',
-  'est.drain': 'Drain +{time}s',
   'est.taboo': 'Taboo +{pct}% crit',
   'est.taboo_penalty': '(negative on no crit)',
   'est.taboo_quest': '(no crit → random resource)',

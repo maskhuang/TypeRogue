@@ -276,6 +276,7 @@ function triggerAffixSkillWithFeedback(
     currentWord: state.player.word,
     resources: { ...state.resources, gold: state.gold ?? 0 },
     playerGold: state.gold ?? 0,
+    targetScore: state.targetScore ?? 0,
     currentTime: state.time ?? 0,
     initialTime: state.timeMax ?? 30,
     classResourceProduced: { ...state.classResourceProduced },
@@ -594,6 +595,13 @@ function triggerAffixSkillWithFeedback(
       }
     }
     advanceCritCharge(tr.isCrit);
+  }
+
+  // 短视：增加目标分数
+  for (const tr of result.triggerResults) {
+    if (tr.targetScoreIncrease && tr.targetScoreIncrease > 0) {
+      state.targetScore += tr.targetScoreIncrease
+    }
   }
 
   // 消耗反馈（PhaseShift 气态 / EndoExo 放热 / Fusion 双消耗）

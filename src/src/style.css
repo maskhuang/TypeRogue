@@ -485,7 +485,7 @@ NOT_FOUND    display: inline-block;
     position: relative;
     font-family: var(--font-pixel);
     image-rendering: pixelated;
-    text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.5);
 }
 
 .letter {
