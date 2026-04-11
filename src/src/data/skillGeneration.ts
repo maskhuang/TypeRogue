@@ -95,7 +95,7 @@ export function weightedSampleWithout(count: number, excludeTypes?: Set<string>)
     // Ethereal 只在多词条技能(rarity≥2)上出现——需要其他词条来增幅
     if (key === AffixType.Ethereal && count < 2) continue
     // MonkeyPatch/Decorator 只在多词条技能(rarity≥2)上出现——需要其他词条来 patch/放大
-    if ((key === AffixType.MonkeyPatch || key === AffixType.Decorator) && count < 2) continue
+    if ((key === AffixType.MonkeyPatch) && count < 2) continue
     // Conduit 可在单词条技能上出现（通过相同资源也能导能）
     pool.set(key, weight)
   }
@@ -267,9 +267,6 @@ export function rollAffixParams(
 
     case AffixType.Confluence:
       return { type, posRel: pickRandom(ALL_POS_RELATIONS), confluenceK: roundTo(0.15 + random() * 0.15, 3) }  // 0.15~0.30
-
-    case AffixType.Decorator:
-      return { type, decoratorK: roundTo(0.20 + random() * 0.20, 2) }
 
     case AffixType.Reflect:
       return { type, reflectK: roundTo(0.04 + random() * 0.04, 2) }

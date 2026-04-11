@@ -80,8 +80,6 @@ export function applyChaosSeedEnchantments(): void {
   }
   for (const [skillId, skill] of state.affixSkills) {
     if (skill.enchantmentIds.length > 0) continue;
-    // Story 36.4: 无冕之王 — 不给无附魔技能添加临时附魔
-    if (hasUncrownedKing()) continue;
     const categorized = filterCategorizedByClass(categorizeEnchantmentCandidates(skill, equippedAffixTypes), playerClass);
     const chosen = weightedPickEnchantment(categorized, random);
     if (!chosen) continue;
@@ -1401,8 +1399,19 @@ function showGoldReward(onComplete: () => void): void {
     skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
     relicGold = 0;
   } else {
-    // 标准关：基础100 + 技能产出 + 遗物加成
-    baseGold = 100;
+    // 标准关：基础100 + 溢出分段递减奖励
+    const target = Math.max(1, state.targetScore);
+    const overflow = Math.max(0, state.overkill);
+    const pct = overflow / target;
+    let ovBonus = 0;
+    if (pct <= 0.5) {
+      ovBonus = pct * 100 * 0.2;
+    } else if (pct <= 1.0) {
+      ovBonus = 0.5 * 100 * 0.2 + (pct - 0.5) * 100 * 0.12;
+    } else {
+      ovBonus = 0.5 * 100 * 0.2 + 0.5 * 100 * 0.12 + (pct - 1.0) * 100 * 0.04;
+    }
+    baseGold = Math.floor(100 + ovBonus);
     skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
     const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill, remainingTime: state.time });
     relicGold = Math.floor(goldRelicResult.effects.gold) + _battleRelicGold;

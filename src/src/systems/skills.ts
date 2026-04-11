@@ -357,7 +357,7 @@ function triggerAffixSkillWithFeedback(
   const ascendScale = getAscendBaseScale(skill.level);
 
   // 无冕之王���无词缀技能产出 +30%
-  if (skill.affixes.length === 0) {
+  if (skill.rarity === 0) {
     const ukBonus = getUncrownedKingAffixlessBonus();
     if (ukBonus > 0) relicBonus += ukBonus;
   }

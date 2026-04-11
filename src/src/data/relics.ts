@@ -649,7 +649,7 @@ export const RELICS: Record<string, RelicData> = {
     id: 'uncrowned_king',
     name: '无冕之王',
     icon: '👑',
-    description: '无词缀的技能产出+30%。',
+    description: '普通稀有度技能产出+30%。',
     rarity: 'rare',
     basePrice: 50,
     effects: [],

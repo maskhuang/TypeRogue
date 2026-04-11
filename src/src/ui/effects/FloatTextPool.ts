@@ -64,9 +64,21 @@ function tick(): void {
       const s = ts > 0.8 ? f.size * (1 - (ts - 0.8) / 0.2) : f.size;
       if (vis && s > 0) {
         const h = Math.max(1, s / 2 | 0);
+        // 投影：沿起点→终点直线（地面路径），进度与飞行同步
+        const groundX = f.startX + (f.endX - f.startX) * ts;
+        const groundY = f.startY + (f.endY - f.startY) * ts;
+        const height = Math.max(0, groundY - y); // 球离地面的高度
+        const shadowScale = Math.max(0.3, 1 - height * 0.008);
+        const shadowW = Math.max(3, (h * 1.5 * shadowScale) | 0);
+        const shadowH = Math.max(1, (h * 0.5 * shadowScale) | 0);
+        ctx.globalAlpha = 0.35 * shadowScale;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(groundX - shadowW, groundY + h, shadowW * 2, shadowH * 2);
+        // 小球主体
         ctx.globalAlpha = 1;
         ctx.fillStyle = f.color;
         ctx.fillRect(x - h, y - h, h * 2, h * 2);
+        // 残影
         if (ts > 0) {
           const pt = Math.max(0, ts - 1 / 12);
           ctx.globalAlpha = 0.3;
@@ -88,7 +100,7 @@ function tick(): void {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.imageSmoothingEnabled = false;
-        // 阴影（随字号缩放）
+        // 文字阴影（随字号缩放）
         const shadowOff = Math.max(1, Math.round(fontSize / 10));
         ctx.globalAlpha = a * 0.5;
         ctx.fillStyle = '#000';

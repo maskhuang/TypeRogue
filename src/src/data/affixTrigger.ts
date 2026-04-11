@@ -712,11 +712,9 @@ export function resolvePhase2(
       case AffixType.Reflect: {
         const reflectScore = skill.affixes.length * skill.level
         bonusPercent += (affix.reflectK ?? 0) * reflectScore
-        // 质变·内省标记：在 Decorator 之后应用（存到 mutations）
         break
       }
 
-      // Decorator 在循环外处理
       // 其余词条类型在 Phase 2 无加算效果
       default:
         break
@@ -724,16 +722,6 @@ export function resolvePhase2(
     // MonkeyPatch: 参数已在 resetStageState 中直接修改，无需运行时乘法
   }
 
-  // Decorator：Phase 2 末尾放大 bonusPercent
-  for (const affix of skill.affixes) {
-    if (affix.type === AffixType.Decorator && (affix.decoratorK ?? 0) > 0) {
-      // 质变·编译：放大率 = decoratorK × 词条数（而非固定 decoratorK）
-      const decK = isTransformedForAffix(AffixType.Decorator, runtimeState, skill, ctx)
-        ? (affix.decoratorK ?? 0) * skill.affixes.length
-        : (affix.decoratorK ?? 0)
-      bonusPercent += bonusPercent * decK
-    }
-  }
 
   // ── 浪涌加成 ──
   if (ctx.surgeBonus && ctx.surgeBonus > 0 && effectiveBase > 0) {
@@ -1554,9 +1542,6 @@ export function triggerAffixSkill(
 
   // Phase 2: 加算层
   const p2 = resolvePhase2(effectiveSkill, runtimeState, ctx, base)
-
-  // 递增触发计数（Pulse 在 Phase 3 读取该值判断爆发）
-  runtimeState.stacks += 1
 
   // Phase 3: 乘算层
   const p3 = resolvePhase3(effectiveSkill, runtimeState, ctx, p2.output)

@@ -7,7 +7,7 @@
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
 
-// ===== 词条类型枚举（33 类，6 类别） ====
+// ===== 词条类型枚举（32 类，6 类别） ====
 
 export enum AffixType {
   // ── 数值型 numeric ──
@@ -47,7 +47,6 @@ export enum AffixType {
   Innate = 'innate',
   Exhaust = 'exhaust',
   Ethereal = 'ethereal',
-  Decorator = 'decorator',
   Reflect = 'reflect',
   MonkeyPatch = 'monkey_patch',
   Excavate = 'excavate',
@@ -103,7 +102,6 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.Innate]: ['meta_rule'],
   [AffixType.Exhaust]: ['meta_rule'],
   [AffixType.Ethereal]: ['meta_rule'],
-  [AffixType.Decorator]: ['meta_rule', 'numeric'],
   [AffixType.Reflect]: ['meta_rule', 'numeric'],
   [AffixType.MonkeyPatch]: ['meta_rule'],
   [AffixType.Excavate]: ['meta_rule'],
@@ -156,7 +154,6 @@ export enum EnchantmentType {
   QuestEthereal = 'quest_ethereal',
   QuestFlow = 'quest_flow',
   QuestConfluence = 'quest_confluence',
-  QuestDecorator = 'quest_decorator',
   QuestReflect = 'quest_reflect',
   QuestMonkeyPatch = 'quest_monkey_patch',
   QuestExcavate = 'quest_excavate',
@@ -200,7 +197,6 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestEthereal]: AffixType.Ethereal,
   [EnchantmentType.QuestFlow]: AffixType.Flow,
   [EnchantmentType.QuestConfluence]: AffixType.Confluence,
-  [EnchantmentType.QuestDecorator]: AffixType.Decorator,
   [EnchantmentType.QuestReflect]: AffixType.Reflect,
   [EnchantmentType.QuestMonkeyPatch]: AffixType.MonkeyPatch,
   [EnchantmentType.QuestExcavate]: AffixType.Excavate,
@@ -270,7 +266,6 @@ export interface AffixInstance {
   critPerStack?: number            // WarDrum: 每层暴击率
   outcastInterval?: number         // Outcast: 叠层满层间隔（满层触发词另一端）
   spent?: boolean                  // Exhaust/Ethereal: 耗尽后无效化（保留可被蜕变）
-  decoratorK?: number              // Decorator: 放大比例
   reflectK?: number                // Reflect: affixCount × level × K
   patchLow?: number                // MonkeyPatch: 随机系数下界
   patchHigh?: number               // MonkeyPatch: 随机系数上界
@@ -462,7 +457,6 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.Recurse]: 'high',
   [AffixType.Taboo]: 'high',
   [AffixType.Fallacy]: 'high',
-  [AffixType.Decorator]: 'low',
   [AffixType.Reflect]: 'high',
   [AffixType.MonkeyPatch]: 'low',
   [AffixType.Excavate]: 'low',
@@ -568,7 +562,6 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.Exhaust]: '消耗',
   [AffixType.Ethereal]: '虚无',
   [AffixType.Fallacy]: '赌徒',
-  [AffixType.Decorator]: '装饰器',
   [AffixType.Reflect]: '反射',
   [AffixType.MonkeyPatch]: '猴子补丁',
   [AffixType.Excavate]: '挖掘',
@@ -615,7 +608,6 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Exhaust]: '每次触发产出倍增，但触发次数有限，用完词条消失',
   [AffixType.Ethereal]: '本关内其他词条效果提升一级；关卡结束后词条消失',
   [AffixType.Fallacy]: '连续未暴击时暴击率逐次递增，暴击后归零重新累积',
-  [AffixType.Decorator]: '放大同技能其他词条的产出加成',
   [AffixType.Reflect]: '技能词条越多、等级越高，产出越高',
   [AffixType.MonkeyPatch]: '每关随机修改同技能一个词条的效果倍率',
   [AffixType.Excavate]: '被蜕变时获得遗物',
@@ -783,7 +775,6 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestEthereal, name: '永恒', targetAffix: AffixType.Ethereal, event: 'equip_count', targetStacks: 0, effectDesc: '质变：概率续命', transformDesc: '关卡结束时50%概率保留到下一关' },
   { type: EnchantmentType.QuestFlow, name: '瀑布', targetAffix: AffixType.Flow, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向落差', transformDesc: '邻居比自己低时也加bonus' },
   { type: EnchantmentType.QuestConfluence, name: '洪流', targetAffix: AffixType.Confluence, event: 'equip_count', targetStacks: 0, effectDesc: '质变：分流产出', transformDesc: '每种独特资源额外产出到该资源' },
-  { type: EnchantmentType.QuestDecorator, name: '编译', targetAffix: AffixType.Decorator, event: 'equip_count', targetStacks: 0, effectDesc: '质变：词条数驱动', transformDesc: '放大率随同技能词条数递增' },
   { type: EnchantmentType.QuestReflect, name: '内省', targetAffix: AffixType.Reflect, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全词条增幅', transformDesc: 'reflectScore额外作为所有词条效果加成' },
   { type: EnchantmentType.QuestMonkeyPatch, name: '热更新', targetAffix: AffixType.MonkeyPatch, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全体patch', transformDesc: '同时修改所有同技能词条（倍率缩为×0.8~1.5）' },
   { type: EnchantmentType.QuestExcavate, name: '深渊', targetAffix: AffixType.Excavate, event: 'equip_count', targetStacks: 0, effectDesc: '质变：传说挖掘', transformDesc: '被蜕变时获得传说遗物（无视等级）' },
@@ -859,7 +850,6 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
   [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
   [AffixType.Exhaust]:  { param: 'exhaustMult',    delta: 0.3,   mode: 'add' },
-  [AffixType.Decorator]:{ param: 'decoratorK',     delta: 0.05,  mode: 'add' },
   [AffixType.Reflect]:  { param: 'reflectK',       delta: 0.01,  mode: 'add' },
   // ── 叠层类 ──
   [AffixType.Resonance]:{ param: 'interval',       delta: -1,    mode: 'add' },

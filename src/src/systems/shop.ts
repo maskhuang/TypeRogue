@@ -596,7 +596,6 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
       const remaining = typeof max === 'number' ? max - used : max;
       return `×${a.exhaustMult?.toFixed(1) ?? '?'} (${remaining}/${max})`
     }
-    case 'decorator': return `+${Math.round((a.decoratorK ?? 0) * 100)}%`
     case 'reflect': return `+${Math.round((a.reflectK ?? 0) * 100)}%`
     // ── 叠层类（变化值） ──
     case 'resonance': return `${t('resource.' + (a.resource ?? 'base'))} ${a.interval ?? 4}`
@@ -1001,12 +1000,26 @@ export function openShop(_won: boolean): void {
     const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
     let relicGold = Math.floor(goldRelicResult.effects.gold);
 
-    // 校准关（练习关）：金币由得分映射，不使用标准 100 基础
+    // 基础100 + 溢出分段递减奖励（以目标分数为基准）
     const calibInfo = getCalibrationInfo();
-    const overflowBonus = state.targetScore > 0 ? state.overkill / state.targetScore : 0;
-    let baseGold = calibInfo.isCalibration
-      ? computePracticeGold(calibInfo.effectiveScore, state.ascensionLevel)
-      : Math.floor(100 * (1 + overflowBonus));
+    let baseGold: number;
+    if (calibInfo.isCalibration) {
+      baseGold = computePracticeGold(calibInfo.effectiveScore, state.ascensionLevel);
+    } else {
+      const target = Math.max(1, state.targetScore);
+      const overflow = Math.max(0, state.overkill);
+      // 溢出比例分段：0~50% → 0.2g/%, 50~100% → 0.12g/%, 100%+ → 0.04g/%
+      const pct = overflow / target;
+      let bonus = 0;
+      if (pct <= 0.5) {
+        bonus = pct * 100 * 0.2;
+      } else if (pct <= 1.0) {
+        bonus = 0.5 * 100 * 0.2 + (pct - 0.5) * 100 * 0.12;
+      } else {
+        bonus = 0.5 * 100 * 0.2 + 0.5 * 100 * 0.12 + (pct - 1.0) * 100 * 0.04;
+      }
+      baseGold = Math.floor(100 + bonus);
+    }
     const skillGold = Math.floor(state.resources.gold);
 
     // Story 36.8: 万物熔炉 — 覆盖默认金币计算
@@ -2294,7 +2307,9 @@ function purchaseShopRelicItem(index: number): void {
     // 集训手册 — 购买时所有技能等级+1（上限 Lv.3）
     if (relicId === 'training_manual') {
       const upgradedIds = applyTrainingManual();
-      // showFeedback removed for upgradedIds
+      if (upgradedIds.length > 0) {
+        showFeedback(t('shop.training_manual_feedback', { n: upgradedIds.length }), '#4ecdc4');
+      }
       // 达到附魔等级门槛时触发附魔检查
       for (const uid of upgradedIds) {
         const uData = state.player.skills.get(uid);
@@ -2329,7 +2344,7 @@ function purchaseShopRelicItem(index: number): void {
         // 集训手册 — 替换购买时也触发等级+1
         if (relicId === 'training_manual') {
           const upgradedIds = applyTrainingManual();
-          // showFeedback removed for upgradedIds
+          if (upgradedIds.length > 0) showFeedback(t('shop.training_manual_feedback', { n: upgradedIds.length }), '#4ecdc4');
           for (const uid of upgradedIds) {
             const uData = state.player.skills.get(uid);
             const uAffix = state.affixSkills.get(uid);

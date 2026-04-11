@@ -113,8 +113,8 @@ export function hasUncrownedKing(): boolean {
 }
 
 /**
- * 获取无冕之王无词缀加成
- * 持有无冕之王时，无词缀的技能产出 +30%
+ * 获取无冕之王加成
+ * 持有无冕之王时，普通稀有度技能产出 +30%
  */
 export function getUncrownedKingAffixlessBonus(): number {
   return hasUncrownedKing() ? 0.3 : 0
