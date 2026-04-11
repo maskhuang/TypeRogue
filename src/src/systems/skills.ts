@@ -22,7 +22,7 @@ import { getTaikoBonus } from './relics/TypingRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostBonus } from './relics/EnchantmentRelicBehaviors';
 import { getAdjacentPowerBonus, getCornerPowerBonus, recordLineClearHit } from './relics/TopologyRelicBehaviors';
-import { getSkillKeys, getBindingState } from './bindingManager';
+import { getSkillKeys, getBindingState, unbindSkill } from './bindingManager';
 import { getShortSprintBonus, getLongWordCritBonus } from './relics/WordRelicBehaviors';
 import { getResourceTideBonus, getResourceFocusBonus, getResourceDiversityBonus, rollProductionDividend, getTimeTrickle, applyFurnaceConversion } from './relics/ResourceRelicBehaviors';
 import { getWarmUpBonus, getDesperateCritRate } from './relics/StageRelicBehaviors';
@@ -30,7 +30,7 @@ import { getLuckyStrikeCritRate, getCritBonusGold, isCritChargeReady, consumeCri
 import { getFuryBeatCritRate } from './relics/ComboRelicBehaviors';
 import { getRuneSpikeCritRate } from './relics/EnchantmentRelicBehaviors';
 import { getPrecisionStrikeCritRate } from './relics/TopologyRelicBehaviors';
-import { AffixType, EnchantmentType as EnchantmentTypeEnum, BASE_VALUES } from '../data/affixes';
+import { AffixType, EnchantmentType as EnchantmentTypeEnum, BASE_VALUES, applyAffixLevelScaling } from '../data/affixes';
 import { inputHandler } from './typing/InputHandler';
 
 
@@ -463,6 +463,31 @@ function triggerAffixSkillWithFeedback(
     showFeedback: (text: string, color: string) => showFeedback(text, color),
     playSound: (type: string) => playSound(type),
     enterPseudoInfinite: (_keys: string[]) => setPseudoInfiniteVisual(true),
+    // 质变·吞噬：移除最弱邻居 + 经验累积 → bonusPerSlot 升级
+    devourTarget: (targetKey: string, neighborLevel: number) => {
+      const targetSkillId = state.player.bindings.get(targetKey);
+      if (!targetSkillId) return;
+      // 移除被吞噬的技能
+      unbindSkill(getBindingState(state), targetSkillId);
+      state.affixSkills.delete(targetSkillId);
+      state.affixSkillStates.delete(targetSkillId);
+      // 经验累积：XP += 邻居等级，升级时走 AFFIX_LEVEL_SCALING
+      const voidAffix = skill.affixes.find(a => a.type === AffixType.Void);
+      if (voidAffix) {
+        const xp = (voidAffix.devourXp ?? 0) + neighborLevel;
+        const lvl = voidAffix.devourLevel ?? 0;
+        const threshold = 3 * (lvl + 1);
+        if (xp >= threshold) {
+          voidAffix.devourLevel = lvl + 1;
+          voidAffix.devourXp = xp - threshold;
+          applyAffixLevelScaling([voidAffix], 1);
+          showFeedback(`🦷 Lv${lvl + 1}!`, '#a855f7');
+        } else {
+          voidAffix.devourXp = xp;
+        }
+        showFeedback(`🦷 吞噬!`, '#ff4444');
+      }
+    },
     // Story 41-5: Charge 质变 — 满蓄力自动完成当前单词
     chargeAutoComplete: () => performAutocomplete('charge'),
   });

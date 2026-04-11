@@ -88,8 +88,8 @@ export interface OrchestratorCallbacks {
   playSound?: (type: string) => void
   /** 进入伪无限模式 */
   enterPseudoInfinite?: (participantKeys: string[]) => void
-  /** 吞噬目标 */
-  devourTarget?: (targetKey: string) => void
+  /** 吞噬目标（键位 + 邻居等级，用于移除邻居 + 经验累积） */
+  devourTarget?: (targetKey: string, neighborLevel: number) => void
   /** Story 41-5: Charge 质变 — 满蓄力释放自动完成当前单词 */
   chargeAutoComplete?: () => void
 }
@@ -120,7 +120,7 @@ export function orchestrateAffixTrigger(
   let maxDepth = 0
   let enteredPseudoInfinite = false
   let pseudoInfiniteKeys: string[] | undefined
-  let devourConsumed = false  // 41-4: 质变Void吞噬每调度周期限一次
+  // devourConsumed 已移除：质变Void每次触发都可吞噬
 
   // 入队初始触发（chainHistory 为空：初始键尚未处理过）
   queue.push({
@@ -266,10 +266,9 @@ export function orchestrateAffixTrigger(
       )
     }
 
-    // 吞噬（41-4: 质变Void每次触发都产出devourTarget，调度层限一次）
-    if (result.phase5?.devourTarget && !devourConsumed) {
-      callbacks?.devourTarget?.(result.phase5.devourTarget)
-      devourConsumed = true
+    // 吞噬：质变Void每次触发都吞噬最弱邻居（移除 + 经验）
+    if (result.phase5?.devourTarget) {
+      callbacks?.devourTarget?.(result.phase5.devourTarget.key, result.phase5.devourTarget.level)
     }
 
     // Story 41-5: Charge 质变 — 满蓄力自动完成当前单词（仅初始触发，不对链式传播）

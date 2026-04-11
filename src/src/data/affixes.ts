@@ -291,6 +291,8 @@ export interface AffixInstance {
   confluenceK?: number             // Confluence: 资源多样性加成系数
   maxTriggers?: number             // Exhaust: 最大触发次数
   exhaustMult?: number             // Exhaust: 每次触发 base 倍率
+  devourXp?: number                // Void: 吞噬累积经验（运行时）
+  devourLevel?: number             // Void: 吞噬等级（运行时）
 }
 
 // ===== 稀有度 =====
@@ -753,7 +755,7 @@ export interface QuestEnchantmentDef {
 }
 
 export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
-  { type: EnchantmentType.QuestDevour, name: '吞噬', targetAffix: AffixType.Void, event: 'equip_count', targetStacks: 0, effectDesc: '质变：每次吞噬', transformDesc: '完成后每次触发都寻找最弱邻居吞噬' },
+  { type: EnchantmentType.QuestDevour, name: '吞噬', targetAffix: AffixType.Void, event: 'equip_count', targetStacks: 0, effectDesc: '质变：吞噬成长', transformDesc: '每次触发吞噬最弱邻居，获得经验并升级（bonusPerSlot+5%/级）' },
   { type: EnchantmentType.QuestOverload, name: '过载', targetAffix: AffixType.Crit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：暴击强化', transformDesc: '暴击倍率翻倍（×2→×4）' },
   { type: EnchantmentType.QuestChain, name: '连锁', targetAffix: AffixType.Cascade, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向连锁', transformDesc: '完成后级联双向判定，反向键也触发' },
   { type: EnchantmentType.QuestPurify, name: '净化', targetAffix: AffixType.Decay, event: 'equip_count', targetStacks: 0, effectDesc: '质变：衰减反转为增长', transformDesc: '完成后衰减方向反转，越触发越强' },
@@ -778,12 +780,12 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestConduit, name: '导引', targetAffix: AffixType.Conduit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：导能 +2', transformDesc: '完成后为邻居提供 2 次额外触发' },
   { type: EnchantmentType.QuestMultiplyOp, name: '乘算化', targetAffix: AffixType.Multiply, event: 'equip_count', targetStacks: 0, effectDesc: '质变：乘算化', transformDesc: '完成后产出变为乘算模式（资源×N 而非资源+N）' },
   { type: EnchantmentType.QuestWarDrum, name: '战号', targetAffix: AffixType.WarDrum, event: 'equip_count', targetStacks: 0, effectDesc: '质变：暴击回馈', transformDesc: '邻居暴击时获得额外+2叠层' },
-  { type: EnchantmentType.QuestFallacy, name: '豪赌', targetAffix: AffixType.Fallacy, event: 'equip_count', targetStacks: 0, effectDesc: '质变：减半不归零', transformDesc: '暴击时连续未暴击计数减半而非归零' },
-  { type: EnchantmentType.QuestInnate, name: '觉醒', targetAffix: AffixType.Innate, event: 'equip_count', targetStacks: 0, effectDesc: '质变：三连触发', transformDesc: '关卡开始自动触发从1次变为3次' },
+  { type: EnchantmentType.QuestFallacy, name: '豪赌', targetAffix: AffixType.Fallacy, event: 'equip_count', targetStacks: 0, effectDesc: '质变：豪赌暴击', transformDesc: '暴击时暴击倍率按累计未暴击层数提升（+层数×K）' },
+  { type: EnchantmentType.QuestInnate, name: '觉醒', targetAffix: AffixType.Innate, event: 'equip_count', targetStacks: 0, effectDesc: '质变：词语觉醒', transformDesc: '完成词语时也自动触发（次数同关卡开始）' },
   { type: EnchantmentType.QuestExhaust, name: '燃尽', targetAffix: AffixType.Exhaust, event: 'equip_count', targetStacks: 0, effectDesc: '质变：终结技', transformDesc: '最后一次触发时bonus额外×3' },
   { type: EnchantmentType.QuestFlow, name: '瀑布', targetAffix: AffixType.Flow, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向落差', transformDesc: '邻居比自己低时也加bonus' },
   { type: EnchantmentType.QuestConfluence, name: '洪流', targetAffix: AffixType.Confluence, event: 'equip_count', targetStacks: 0, effectDesc: '质变：分流产出', transformDesc: '每种独特资源额外产出到该资源' },
-  { type: EnchantmentType.QuestReflect, name: '内省', targetAffix: AffixType.Reflect, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全词条增幅', transformDesc: 'reflectScore额外作为所有词条效果加成' },
+  { type: EnchantmentType.QuestReflect, name: '内省', targetAffix: AffixType.Reflect, event: 'equip_count', targetStacks: 0, effectDesc: '质变：无限成长', transformDesc: '去除等级上限，每次升级获得一个随机词条' },
   { type: EnchantmentType.QuestMonkeyPatch, name: '热更新', targetAffix: AffixType.MonkeyPatch, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全体patch', transformDesc: '同时修改所有同技能词条（倍率缩为×0.8~1.5）' },
   { type: EnchantmentType.QuestExcavate, name: '深渊', targetAffix: AffixType.Excavate, event: 'equip_count', targetStacks: 0, effectDesc: '质变：传说挖掘', transformDesc: '被蜕变时获得传说遗物（无视等级）' },
   { type: EnchantmentType.QuestTreasure, name: '宝库', targetAffix: AffixType.Treasure, event: 'equip_count', targetStacks: 0, effectDesc: '质变：传说寻宝', transformDesc: '被蜕变时下次商店出现传说商品（无视等级）' },

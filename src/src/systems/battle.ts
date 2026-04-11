@@ -1138,6 +1138,18 @@ function completeWord(): void {
     }
   }
 
+  // 质变·觉醒：完成词语时 Innate 技能自动触发
+  for (const [skillId, skill] of state.affixSkills) {
+    const rt = state.affixSkillStates.get(skillId);
+    if (!rt) continue;
+    if (!rt.questTransformed || !skill.enchantmentIds?.includes(EnchantmentTypeEnum.QuestInnate)) continue;
+    const innateAffix = skill.affixes.find(a => a.type === AffixType.Innate);
+    if (innateAffix) {
+      const count = innateAffix.innateCount ?? 1;
+      for (let i = 0; i < count; i++) triggerSkill(skillId, null as any);
+    }
+  }
+
   // 消行满贯 — 一词命中一行所有已装备技能时额外触发(50%产出)
   const lineClearTargets = checkLineClear();
   if (lineClearTargets.length > 0) {
@@ -2345,12 +2357,11 @@ export async function startLevel(): Promise<void> {
     const rt = state.affixSkillStates.get(skillId);
     if (!rt) continue;
 
-    // Innate: 自动触发（基础次数由参数决定，质变·觉醒：×3）
+    // Innate: 关卡开始自动触发（基础次数由参数决定）
     const innateAffix = skill.affixes.find(a => a.type === AffixType.Innate);
     if (innateAffix) {
       const baseCount = innateAffix.innateCount ?? 1;
-      const innateCount = (rt.questTransformed && skill.enchantmentIds?.includes(EnchantmentTypeEnum.QuestInnate)) ? baseCount * 3 : baseCount;
-      for (let i = 0; i < innateCount; i++) triggerSkill(skillId, null as any);
+      for (let i = 0; i < baseCount; i++) triggerSkill(skillId, null as any);
     }
   }
 

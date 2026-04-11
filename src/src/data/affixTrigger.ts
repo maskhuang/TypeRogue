@@ -17,7 +17,7 @@ import {
   isOldSystemSkill, applyAffixLevelScaling, getQuestEquipTarget, AFFIX_CATEGORY_MAP, AFFIX_LEVEL_SCALING, AFFIX_CLASS_RESTRICTION, AFFIX_WEIGHTS,
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
-import { rollAffixParams } from './skillGeneration'
+import { rollAffixParams, weightedSampleWithout } from './skillGeneration'
 
 function roundTo(n: number, d: number): number { const f = 10 ** d; return Math.round(n * f) / f }
 
@@ -261,8 +261,8 @@ export interface Phase5Result {
   transmuteSameResourceBoost: number
   /** 溅射词条需触发的邻居键位 */
   /** 质变后溅射：被溅射目标也向自己的邻居溅射一次 */
-  /** 吞噬目标键位（QuestDevour 满层时） */
-  devourTarget: string | null
+  /** 吞噬目标键位和邻居等级（质变Void） */
+  devourTarget: { key: string, level: number } | null
   /** 是否完成一次任务循环 */
   questCompleted: boolean
   /** 质变Outcast首尾呼应：对端技能触发键位 */
@@ -640,11 +640,16 @@ export function resolvePhase2(
         }
         if (resTypes.size > 0) {
           bonusPercent += (affix.confluenceK ?? 0) * (1 - 1 / (resTypes.size + 1))
-          // 质变·洪流：每种独特资源额外产出到该资源
+          // 质变·洪流：每种独特资源额外产出到该��源（按 BASE_VALUES 归一化）
           if (isTransformedForAffix(AffixType.Confluence, runtimeState, skill, ctx)) {
+            const confLvIdx = Math.max(0, Math.min(skill.level - 1, 2))
+            const confSelfBase = BASE_VALUES[skill.resource]?.[confLvIdx] ?? 1
             const confExtra = effectiveBase * 0.01 * resTypes.size
             for (const r of resTypes) {
-              if (r !== skill.resource) convertReverseOutputs.push({ resource: r as ResourceType, amount: confExtra })
+              if (r !== skill.resource) {
+                const confTargetBase = BASE_VALUES[r as ResourceType]?.[confLvIdx] ?? 1
+                convertReverseOutputs.push({ resource: r as ResourceType, amount: confExtra * (confTargetBase / confSelfBase) })
+              }
             }
           }
         }
@@ -897,6 +902,13 @@ export function resolvePhase3(
     const hasCritTransform = skill.affixes.some(a => a.type === AffixType.Crit)
       && isTransformedForAffix(AffixType.Crit, runtimeState, skill, ctx)
     if (hasCritTransform) critMult *= 2
+    // Fallacy 质变·豪赌：暴击倍率 += fallacyStacks × fallacyK
+    for (const affix of skill.affixes) {
+      if (affix.type === AffixType.Fallacy && affix.fallacyK != null
+        && isTransformedForAffix(AffixType.Fallacy, runtimeState, skill, ctx)) {
+        critMult += (affix.fallacyStacks ?? 0) * affix.fallacyK
+      }
+    }
     if (ctx.fateCoinActive && rawCritChance > FATE_COIN_CRIT_CAP) {
       const excess = rawCritChance - FATE_COIN_CRIT_CAP
       effectiveCritChance = FATE_COIN_CRIT_CAP
@@ -932,15 +944,11 @@ export function resolvePhase3(
       flags.isTabooPenalty = true
     }
 
-    // 赌徒谬误：暴击后归零（质变·豪赌：减半），未暴击后 stacks+1
+    // 赌徒谬误：暴击后归零（质变·豪赌：归零+暴击倍率加成），未暴击后 stacks+1
     for (const affix of skill.affixes) {
       if (affix.type === AffixType.Fallacy) {
         if (flags.isCrit) {
-          if (isTransformedForAffix(AffixType.Fallacy, runtimeState, skill, ctx)) {
-            affix.fallacyStacks = Math.floor((affix.fallacyStacks ?? 0) / 2)
-          } else {
-            affix.fallacyStacks = 0
-          }
+          affix.fallacyStacks = 0
         } else {
           affix.fallacyStacks = (affix.fallacyStacks ?? 0) + 1
         }
@@ -1043,7 +1051,7 @@ export function findWeakestNeighbor(
   occupiedKeys: string[],
   posRel: PositionRelation,
   ctx: TriggerContext,
-): string | null {
+): { key: string, level: number } | null {
   const neighbors = getExtendedNeighbors(occupiedKeys, posRel)
   let weakestKey: string | null = null
   let weakestLevel = Infinity
@@ -1062,7 +1070,7 @@ export function findWeakestNeighbor(
     }
   }
 
-  return weakestKey
+  return weakestKey ? { key: weakestKey, level: weakestLevel } : null
 }
 
 /** 从候选中不重复随机选取 N 个键位 */
@@ -1341,7 +1349,7 @@ export function resolvePhase5(
     }
   }
 
-  // Void 质变：每次触发都产出 devourTarget（系统层限制每关一次）
+  // Void 质变：每次触发都寻找最弱邻居吞噬
   if (isTransformedForAffix(AffixType.Void, runtimeState, skill, ctx) && !result.devourTarget) {
     const voidAffix = skill.affixes.find(a => a.type === AffixType.Void)
     if (voidAffix?.posRel != null) {
@@ -1548,14 +1556,6 @@ export function triggerAffixSkill(
   const hasTwin = effectiveSkill.affixes.some(a => a.type === AffixType.Twin)
   if (hasTwin && isTransformedForAffix(AffixType.Twin, runtimeState, skill, ctx)) {
     p3.output *= 2
-  }
-
-  // 质变·内省：reflectScore 作为全词条效果乘数（影响所有 Phase 产出）
-  for (const affix of effectiveSkill.affixes) {
-    if (affix.type === AffixType.Reflect && isTransformedForAffix(AffixType.Reflect, runtimeState, skill, ctx)) {
-      const reflectScore = effectiveSkill.affixes.length * effectiveSkill.level
-      p3.output *= 1 + (affix.reflectK ?? 0) * reflectScore
-    }
   }
 
   // Phase 4: 资源选择
@@ -2281,10 +2281,18 @@ export function getAscendThreshold(level: number): number {
   return ASCEND_BASE_THRESHOLD * Math.pow(2, level - 3)
 }
 
+/** 检查技能是否为质变·内省（Reflect 质变：无等级上限 + 升级获词条） */
+export function hasReflectTransform(skill: AffixSkillInstance, runtimeState: SkillRuntimeState): boolean {
+  return skill.affixes.some(a => a.type === AffixType.Reflect)
+    && runtimeState.questTransformed
+    && skill.enchantmentIds.includes(EnchantmentType.QuestReflect)
+}
+
 /** 检查技能是否可以升华 */
 export function canAscend(skill: AffixSkillInstance, runtimeState: SkillRuntimeState): boolean {
-  // 必须有学徒附魔
-  if (!skill.enchantmentIds.some(id => isApprenticeEnchantment(id as EnchantmentType))) return false
+  // 质变·内省：Reflect 质变的技能也可升华（无需学徒附魔）
+  const hasApprentice = skill.enchantmentIds.some(id => isApprenticeEnchantment(id as EnchantmentType))
+  if (!hasApprentice && !hasReflectTransform(skill, runtimeState)) return false
   // 必须 Lv.3+
   if (skill.level < 3) return false
   // EXP 必须达到阈值
@@ -2292,12 +2300,22 @@ export function canAscend(skill: AffixSkillInstance, runtimeState: SkillRuntimeS
   return runtimeState.apprenticeAccumulated >= threshold
 }
 
-/** 执行升华：level++, 扣减 EXP, 词缀参数缩放 */
+/** 执行升华：level++, 扣减 EXP, 词缀参数缩放。质变·内省：额外获得随机词条。 */
 export function executeAscend(skill: AffixSkillInstance, runtimeState: SkillRuntimeState): void {
   const threshold = getAscendThreshold(skill.level)
   runtimeState.apprenticeAccumulated -= threshold
   skill.level++
   applyAffixLevelScaling(skill.affixes, 1)
+
+  // 质变·内省：升级时获得一个随机词条
+  if (hasReflectTransform(skill, runtimeState)) {
+    const excludeTypes = new Set(skill.affixes.map(a => a.type as string))
+    const samples = weightedSampleWithout(1, excludeTypes)
+    if (samples.length > 0) {
+      const s = samples[0]
+      skill.affixes.push(rollAffixParams(s.type, skill.resource, s.convertVariant))
+    }
+  }
 }
 
 /** 升华后基础值缩放: level <= 3 ? 1 : 1.6^(level-3) */

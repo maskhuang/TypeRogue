@@ -791,7 +791,7 @@ const ZH: Record<string, string> = {
   'help.ascend.desc': '拥有学徒附魔的 Lv.3+ 技能，积累足够经验后在战斗中自动升华，突破等级上限。',
 
   // --- quest enchantments (19 name + 19 effect + 19 task) ---
-  'quest.quest_devour': '吞噬', 'quest.quest_devour.effect': '每次触发寻找最弱邻居吞噬', 'quest.quest_devour.task': '装备N个',
+  'quest.quest_devour': '吞噬', 'quest.quest_devour.effect': '吞噬最弱邻居获得经验，升级提升空位加成', 'quest.quest_devour.task': '装备N个',
   'quest.quest_overload': '过载', 'quest.quest_overload.effect': '暴击必定触发', 'quest.quest_overload.task': '装备N个',
   'quest.quest_echo': '回响', 'quest.quest_echo.effect': '爆发时触发所有匹配技能', 'quest.quest_echo.task': '装备N个',
   'quest.quest_chain': '连锁', 'quest.quest_chain.effect': '级联双向判定，反向键也触发', 'quest.quest_chain.task': '装备N个',
@@ -824,7 +824,7 @@ const ZH: Record<string, string> = {
   'quest.quest_phase_shift': '超临界', 'quest.quest_phase_shift.effect': '气态时固液气K值全部生效', 'quest.quest_phase_shift.task': '装备N个',
   'quest.quest_endo_exo': '永动', 'quest.quest_endo_exo.effect': '连续3次放热后翻倍且不消耗', 'quest.quest_endo_exo.task': '装备N个',
   'quest.quest_fusion': '恒星', 'quest.quest_fusion.effect': '聚变成功后点火阈值永久-10%', 'quest.quest_fusion.task': '装备N个',
-  'quest.quest_innate': '觉醒', 'quest.quest_innate.effect': '关卡开始自动触发3次', 'quest.quest_innate.task': '装备N个',
+  'quest.quest_innate': '觉醒', 'quest.quest_innate.effect': '完成词语时也自动触发', 'quest.quest_innate.task': '装备N个',
   'quest.quest_counter': '反噬', 'quest.quest_counter.effect': '反制吸收的负值变为下次产出加成', 'quest.quest_counter.task': '装备N个',
   'quest.quest_exhaust': '燃尽', 'quest.quest_exhaust.effect': '最后一次触发产出额外×3', 'quest.quest_exhaust.task': '装备N个',
   'quest.quest_ethereal': '永恒', 'quest.quest_ethereal.effect': '关卡结束时50%概率不消失', 'quest.quest_ethereal.task': '装备N个',
@@ -850,7 +850,7 @@ const ZH: Record<string, string> = {
   'quest.quest_clique': '方阵', 'quest.quest_clique.effect': '团内成员触发时分享一半产出加成', 'quest.quest_clique.task': '装备N个',
   'quest.quest_component': '网络', 'quest.quest_component.effect': '连通区域内每次触发+1%产出（本关累积）', 'quest.quest_component.task': '装备N个',
   'quest.quest_decorator': '编译', 'quest.quest_decorator.effect': '放大率随同技能词条数递增', 'quest.quest_decorator.task': '装备N个',
-  'quest.quest_reflect': '内省', 'quest.quest_reflect.effect': '词条分×等级额外乘算所有产出', 'quest.quest_reflect.task': '装备N个',
+  'quest.quest_reflect': '内省', 'quest.quest_reflect.effect': '去除等级上限，升级时获得随机词条', 'quest.quest_reflect.task': '装备N个',
   'quest.quest_monkey_patch': '热更新', 'quest.quest_monkey_patch.effect': '同时修改所有同技能词条（倍率缩为×0.8~1.5）', 'quest.quest_monkey_patch.task': '装备N个',
   // 蜕变师专属质变
   'quest.quest_excavate': '深渊', 'quest.quest_excavate.effect': '被蜕变时获得传说遗物（无视等级）', 'quest.quest_excavate.task': '装备N个',
@@ -1828,7 +1828,7 @@ const EN: Record<string, string> = {
   'help.ascend.desc': 'Lv.3+ skills with apprentice enchantments auto-ascend during battle after accumulating enough EXP.',
 
   // --- quest enchantments (19 name + 19 effect + 19 task) ---
-  'quest.quest_devour': 'Devour', 'quest.quest_devour.effect': 'Each trigger finds weakest neighbor to devour', 'quest.quest_devour.task': 'Equip N',
+  'quest.quest_devour': 'Devour', 'quest.quest_devour.effect': 'Devour weakest neighbor for XP; level up boosts slot bonus', 'quest.quest_devour.task': 'Equip N',
   'quest.quest_overload': 'Overload', 'quest.quest_overload.effect': 'Crit always triggers', 'quest.quest_overload.task': 'Equip N',
   'quest.quest_echo': 'Echo', 'quest.quest_echo.effect': 'Pulse burst triggers all matched skills', 'quest.quest_echo.task': 'Equip N',
   'quest.quest_chain': 'Chain', 'quest.quest_chain.effect': 'Cascade checks both directions', 'quest.quest_chain.task': 'Equip N',
@@ -1861,7 +1861,7 @@ const EN: Record<string, string> = {
   'quest.quest_phase_shift': 'Supercritical', 'quest.quest_phase_shift.effect': 'Gas phase also applies solid+liquid K', 'quest.quest_phase_shift.task': 'Equip N',
   'quest.quest_endo_exo': 'Perpetual', 'quest.quest_endo_exo.effect': '3 exo in a row: next doubles with no cost', 'quest.quest_endo_exo.task': 'Equip N',
   'quest.quest_fusion': 'Stellar', 'quest.quest_fusion.effect': 'Ignition threshold -10% per success', 'quest.quest_fusion.task': 'Equip N',
-  'quest.quest_innate': 'Awakening', 'quest.quest_innate.effect': 'Auto-trigger 3 times at stage start', 'quest.quest_innate.task': 'Equip N',
+  'quest.quest_innate': 'Awakening', 'quest.quest_innate.effect': 'Also auto-triggers on word complete', 'quest.quest_innate.task': 'Equip N',
   'quest.quest_counter': 'Backlash', 'quest.quest_counter.effect': 'Absorbed negative becomes next trigger bonus', 'quest.quest_counter.task': 'Equip N',
   'quest.quest_exhaust': 'Burnout', 'quest.quest_exhaust.effect': 'Final trigger output ×3', 'quest.quest_exhaust.task': 'Equip N',
   'quest.quest_ethereal': 'Eternal', 'quest.quest_ethereal.effect': '50% chance to survive at stage end', 'quest.quest_ethereal.task': 'Equip N',
@@ -1887,7 +1887,7 @@ const EN: Record<string, string> = {
   'quest.quest_clique': 'Formation', 'quest.quest_clique.effect': 'Clique members share half their output bonus', 'quest.quest_clique.task': 'Equip N',
   'quest.quest_component': 'Network', 'quest.quest_component.effect': '+1% output per trigger in component (stage cumulative)', 'quest.quest_component.task': 'Equip N',
   'quest.quest_decorator': 'Compile', 'quest.quest_decorator.effect': 'Amplify rate scales with affix count', 'quest.quest_decorator.task': 'Equip N',
-  'quest.quest_reflect': 'Introspect', 'quest.quest_reflect.effect': 'Reflect score multiplies total output', 'quest.quest_reflect.task': 'Equip N',
+  'quest.quest_reflect': 'Introspect', 'quest.quest_reflect.effect': 'No level cap; gain random affix on each level up', 'quest.quest_reflect.task': 'Equip N',
   'quest.quest_monkey_patch': 'Hot Fix', 'quest.quest_monkey_patch.effect': 'Patches all affixes (×0.8~1.5)', 'quest.quest_monkey_patch.task': 'Equip N',
   // Mutator exclusive quests
   'quest.quest_excavate': 'Abyss', 'quest.quest_excavate.effect': 'Mutation grants legendary relic (ignores level)', 'quest.quest_excavate.task': 'Equip N',
