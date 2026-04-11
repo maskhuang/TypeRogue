@@ -80,6 +80,12 @@ export interface TriggerContext {
   currentWord: string
   /** 当前资源状态快照 */
   resources: ResourceState
+  /** 玩家金币总持有量（state.gold） */
+  playerGold: number
+  /** 当前剩余时间 */
+  currentTime: number
+  /** 关卡初始时间（timeMax） */
+  initialTime: number
   /** 本关职业资源累积产出（fragment/mutagen） */
   classResourceProduced: Record<string, number>
   /** 键位→技能ID绑定 */
@@ -627,9 +633,9 @@ export function resolvePhase2(
       }
 
       case AffixType.Mercenary: {
-        // 雇佣：金币 >= hireCost 时加成产出，消耗 hireCost 金币
+        // 雇佣：玩家金币 >= hireCost 时加成产出，消耗 hireCost 金币
         const hireCost = affix.hireCost ?? 0
-        const currentGold = ctx.resources.gold ?? 0
+        const currentGold = ctx.playerGold ?? 0
         if (hireCost > 0 && currentGold >= hireCost) {
           let bonus = affix.hireBonus ?? 0
           // 质变·佣兵王：加成 × (1 + gold / (hireCost × 10))
@@ -773,9 +779,38 @@ export function resolvePhase2(
     flatBonus += sumNeighborAmplifyBaseBonus(skill, ctx.occupiedKeys, ctx)
   }
 
+  // 汲取：根据最终产出量回复时间（标准化后转为 time 资源）
+  // 质变·过量汲取：时间 > 初始时间时，溢出部分转化为分数
+  const finalOutput = effectiveBase * (1 + bonusPercent) + flatBonus
+  for (const affix of skill.affixes) {
+    if (affix.type === AffixType.Drain && (affix.drainK ?? 0) > 0 && finalOutput > 0) {
+      const drainLvIdx = Math.max(0, Math.min(skill.level - 1, 2))
+      const selfBase = BASE_VALUES[skill.resource]?.[drainLvIdx] ?? 1
+      const timeBase = BASE_VALUES.time[drainLvIdx] ?? 0.2
+      const timeGain = (finalOutput / selfBase) * (affix.drainK ?? 0) * timeBase
+
+      const isOverdrain = isTransformedForAffix(AffixType.Drain, runtimeState, skill, ctx)
+      if (isOverdrain && ctx.currentTime >= ctx.initialTime) {
+        // 全部溢出 → 转分数（标准化：time → score）
+        const scoreBase = BASE_VALUES.score[drainLvIdx] ?? 11
+        convertReverseOutputs.push({ resource: 'score' as ResourceType, amount: timeGain * (scoreBase / timeBase) })
+      } else if (isOverdrain && ctx.currentTime + timeGain > ctx.initialTime) {
+        // 部分回时间，溢出部分转分数
+        const timeToFill = ctx.initialTime - ctx.currentTime
+        const overflow = timeGain - timeToFill
+        const scoreBase = BASE_VALUES.score[drainLvIdx] ?? 11
+        convertReverseOutputs.push({ resource: 'time' as ResourceType, amount: timeToFill })
+        convertReverseOutputs.push({ resource: 'score' as ResourceType, amount: overflow * (scoreBase / timeBase) })
+      } else {
+        // 正常回时间
+        convertReverseOutputs.push({ resource: 'time' as ResourceType, amount: timeGain })
+      }
+    }
+  }
+
   // 乘算化模式与普通模式统一：bonusPercent 加算后应用到 output + 增幅绝对值
   return {
-    output: effectiveBase * (1 + bonusPercent) + flatBonus,
+    output: finalOutput,
     bonusPercent,
     mutations,
     convertReverseOutputs,

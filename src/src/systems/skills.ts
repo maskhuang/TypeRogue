@@ -274,7 +274,10 @@ function triggerAffixSkillWithFeedback(
     triggerKey,
     occupiedKeys,
     currentWord: state.player.word,
-    resources: { ...state.resources },
+    resources: { ...state.resources, gold: state.gold ?? 0 },
+    playerGold: state.gold ?? 0,
+    currentTime: state.time ?? 0,
+    initialTime: state.timeMax ?? 30,
     classResourceProduced: { ...state.classResourceProduced },
     bindings: state.player.bindings,
     skillStates: state.affixSkillStates,
@@ -433,6 +436,10 @@ function triggerAffixSkillWithFeedback(
           state.score += amount;
         } else {
           state.resources[resource] += amount;
+          // 金币同步：消耗时也扣 state.gold（雇佣词条等）
+          if (resource === 'gold' && amount < 0) {
+            state.gold = Math.max(0, (state.gold ?? 0) + amount);
+          }
         }
       }
       // 产出分红 + 续命涓流：正产出后触发（非乘算）

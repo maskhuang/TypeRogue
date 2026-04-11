@@ -194,6 +194,9 @@ export function rollAffixParams(
     case AffixType.Mercenary:
       return { type, hireCost: Math.floor(3 + random() * 5), hireBonus: roundTo(0.50 + random() * 0.30, 2) }  // cost 3~7g, bonus 50%~80%
 
+    case AffixType.Drain:
+      return { type, drainK: roundTo(0.03 + random() * 0.04, 3) }  // 3%~7% 产出转时间
+
     case AffixType.Mirror:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
 
