@@ -703,7 +703,7 @@ export class KeyVisual extends Container {
    */
   private onPointerOver(e: FederatedPointerEvent): void {
     if (this.tooltipData) {
-      keyTooltip.show(e.clientX, e.clientY, this.tooltipData)
+      keyTooltip.show(e.clientX, e.clientY, this.tooltipData, undefined, false)
     }
   }
 

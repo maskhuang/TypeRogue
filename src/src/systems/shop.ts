@@ -3143,52 +3143,69 @@ function highlightSkillRange(key: string): void {
     keyColors.get(k)!.add(color);
   };
 
-  // 1. 范围高亮（posRel 邻居）
+  // 1. 范围高亮（posRel 邻居）— 背景+边框
   for (const { rel, color } of highlights) {
     for (const k of getExtendedNeighbors(allKeys, rel)) {
       addColor(k, color);
     }
   }
 
-  // 2. 匹配技能高亮：posRel 范围内只高亮匹配的技能 + 共鸣/回响全局匹配
+  // 2. 匹配技能高亮：全局高亮所有匹配技能（商店/备战席/键盘），黄色边框
   if (affixSkill) {
     const MATCH_AFFIX_TYPES = [AffixTypeEnum.Amplify, AffixTypeEnum.Splash, AffixTypeEnum.WarDrum, AffixTypeEnum.Union, AffixTypeEnum.Relay, AffixTypeEnum.Conduit, AffixTypeEnum.AuraFury, AffixTypeEnum.AuraMorale] as string[];
-    for (const affix of affixSkill.affixes) {
-      const color = AFFIX_COLORS[affix.type] || defaultColor;
-      if (MATCH_AFFIX_TYPES.includes(affix.type) && affix.posRel) {
-        const rangeKeys = getExtendedNeighbors(allKeys, affix.posRel);
-        const seen = new Set<string>();
-        for (const rk of rangeKeys) {
-          const sid = state.player.bindings.get(rk);
-          if (!sid || sid === skillId || seen.has(sid)) continue;
-          seen.add(sid);
-          const ns = state.affixSkills.get(sid);
-          if (!ns) continue;
-          if (ns.resource === affixSkill.resource || ns.affixes.some(a => a.type !== affix.type && affixSkill.affixes.some(sa => sa.type === a.type))) {
-            for (const [mk, msid] of state.player.bindings) {
-              if (msid === sid) addColor(mk, color);
-            }
-          }
-        }
+    const matchedSkillIds = new Set<string>();
+    const hasMatchAffix = affixSkill.affixes.some(a => MATCH_AFFIX_TYPES.includes(a.type));
+    if (hasMatchAffix) {
+      // 全场所有技能中找匹配（同资源 或 共享非匹配词条）
+      for (const [sid, ns] of state.affixSkills) {
+        if (sid === skillId) continue;
+        const sameRes = ns.resource === affixSkill.resource;
+        const shareAffix = ns.affixes.some(a => !MATCH_AFFIX_TYPES.includes(a.type) && affixSkill.affixes.some(sa => sa.type === a.type));
+        if (sameRes || shareAffix) matchedSkillIds.add(sid);
       }
+    }
+    // 共鸣：全局同资源
+    for (const affix of affixSkill.affixes) {
       if (affix.type === AffixTypeEnum.Resonance && affix.resource) {
-        for (const [k, sid] of state.player.bindings) {
-          if (sid === skillId) continue;
-          const s = state.affixSkills.get(sid);
-          if (s && s.resource === affix.resource) addColor(k, color);
+        for (const [sid, ns] of state.affixSkills) {
+          if (sid !== skillId && ns.resource === affix.resource) matchedSkillIds.add(sid);
         }
       }
       if (affix.type === AffixTypeEnum.Echo && affix.echoAffixA && affix.echoAffixB) {
-        for (const [k, sid] of state.player.bindings) {
-          if (sid === skillId) continue;
-          const s = state.affixSkills.get(sid);
-          if (s && s.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) addColor(k, color);
+        for (const [sid, ns] of state.affixSkills) {
+          if (sid !== skillId && ns.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) matchedSkillIds.add(sid);
         }
       }
     }
+    // 应用到键盘 slot + 备战席
+    matchedSkillIds.forEach(sid => {
+      document.querySelectorAll(`.key-slot[data-bound-skill="${sid}"]`).forEach(el => el.classList.add('match-highlight'));
+      document.querySelector(`.inventory-skill[data-skill-id="${sid}"]`)?.classList.add('match-highlight');
+    });
+    // 应用到商店商品：直接对比 shop item 的词条
+    if (hasMatchAffix || affixSkill.affixes.some(a => a.type === AffixTypeEnum.Resonance || a.type === AffixTypeEnum.Echo)) {
+      state.shop.items.forEach((shopItem, idx) => {
+        if (shopItem.type !== 'skill' || !shopItem.affixSkill) return;
+        const sk = shopItem.affixSkill;
+        const sameRes = sk.resource === affixSkill.resource;
+        const shareAffix = sk.affixes.some(a => !MATCH_AFFIX_TYPES.includes(a.type) && affixSkill.affixes.some(sa => sa.type === a.type));
+        // 共鸣：同资源
+        let resonanceMatch = false;
+        let echoMatch = false;
+        for (const affix of affixSkill.affixes) {
+          if (affix.type === AffixTypeEnum.Resonance && affix.resource && sk.resource === affix.resource) resonanceMatch = true;
+          if (affix.type === AffixTypeEnum.Echo && affix.echoAffixA && affix.echoAffixB
+            && sk.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) echoMatch = true;
+        }
+        if ((hasMatchAffix && (sameRes || shareAffix)) || resonanceMatch || echoMatch) {
+          const card = document.querySelector(`[data-shop-index="${idx}"]`);
+          card?.classList.add('match-highlight');
+        }
+      });
+    }
   }
 
-  if (keyColors.size === 0) return;
+  // 范围高亮：背景+边框
   keyColors.forEach((colors, k) => {
     const el = document.querySelector(`.key-slot[data-key="${k}"]`) as HTMLElement | null;
     if (!el) return;
@@ -3198,12 +3215,12 @@ function highlightSkillRange(key: string): void {
       el.style.borderColor = colorArr[0];
       el.style.background = hexToRgba(colorArr[0], 0.15);
     } else {
-      // 多色：渐变边框 + 混合背景
       el.style.borderImage = `linear-gradient(135deg, ${colorArr.join(', ')}) 1`;
       el.style.background = colorArr.map(c => hexToRgba(c, 0.1)).join(', ').replace(/.+/,
         `linear-gradient(135deg, ${colorArr.map(c => hexToRgba(c, 0.12)).join(', ')})`);
     }
   });
+
 }
 
 function clearRangeHighlight(): void {
@@ -3224,6 +3241,8 @@ function clearRangeHighlight(): void {
       }
     }
   });
+  // 清除跨区匹配高亮
+  document.querySelectorAll('.match-highlight').forEach(el => el.classList.remove('match-highlight'));
 }
 
 /** 应用技能词条色描边（render-time 与 clearRangeHighlight 复用） */
@@ -3453,7 +3472,7 @@ export function renderBuildManager(): void {
           }
         }
         const avoidRect = getRangeHighlightRect(slot);
-        keyTooltip.show(e.clientX, e.clientY, tooltipData, avoidRect ?? undefined);
+        keyTooltip.show(e.clientX, e.clientY, tooltipData, avoidRect ?? undefined, false);
         // 交叉高亮：键盘→备战席
         if (skillId) {
           document.querySelector(`.inventory-skill[data-skill-id="${skillId}"]`)?.classList.add('cross-highlight');
@@ -3987,6 +4006,12 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
     // 拖拽已有技能到键位 → 绑定/交换
     const skillId = payload.skillId;
     if (!skillId) return;
+
+    // 拾取旋转：将 payload.rotation 应用到技能
+    if (payload.rotation != null) {
+      const sk = state.affixSkills.get(skillId);
+      if (sk) sk.rotation = payload.rotation;
+    }
 
     const existingSkill = state.player.bindings.get(targetKey);
     const sourceAnchorKey = payload.sourceKey

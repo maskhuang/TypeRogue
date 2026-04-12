@@ -395,7 +395,7 @@ class KeyTooltipManager {
    * @param data tooltip 数据
    * @param avoidRect 需要避开的区域（范围高亮的包围盒）
    */
-  show(x: number, y: number, data: KeyTooltipData, avoidRect?: { top: number; left: number; right: number; bottom: number }): void {
+  show(x: number, y: number, data: KeyTooltipData, avoidRect?: { top: number; left: number; right: number; bottom: number }, enableGlossary = true): void {
     const el = this.ensureElement()
     this.clearGlossaryTimer()
 
@@ -412,8 +412,8 @@ class KeyTooltipManager {
       html += buildSummarySection(data.skill)
     }
 
-    // 术语详情区（初始隐藏，延迟淡入）
-    const glossaryHtml = buildGlossarySection(_matchedKeywordIds)
+    // 术语详情区（键盘 tooltip 不渲染）
+    const glossaryHtml = enableGlossary ? buildGlossarySection(_matchedKeywordIds) : ''
     html += glossaryHtml
 
     el.innerHTML = html

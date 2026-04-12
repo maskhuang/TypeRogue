@@ -1167,6 +1167,7 @@ NOT_FOUND    display: inline-block;
 .inventory-skill.bound { border-color: #4ecdc4; }
 .inventory-skill.cross-highlight { border-color: #ffe66d; background: rgba(255,230,109,0.08); }
 .key-slot.cross-highlight { border-color: #ffe66d !important; background: rgba(255,230,109,0.08); }
+.match-highlight { outline: 3px solid #ffe66d !important; outline-offset: -1px; }
 .inventory-skill.synergy { border-color: #9b59b6; }
 .inventory-skill .inv-icon { font-size: var(--text-subtitle-size); }
 .inventory-skill .inv-name { font-size: var(--text-caption-size); color: #ccc; }
