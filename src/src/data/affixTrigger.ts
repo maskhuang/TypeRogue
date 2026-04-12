@@ -708,11 +708,14 @@ export function resolvePhase2(
       }
 
       case AffixType.Swarm: {
-        // 虫群：范围内拥有 Swarm 词条的技能数 × swarmK
+        // 虫群：范围内拥有 Swarm 词条的技能数 × swarmK（含倒影复制的虫群）
         if (affix.posRel == null) break
         let swarmCount = 0
         for (const ns of getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)) {
-          if (ns.affixes.some(a => a.type === AffixType.Swarm)) swarmCount++
+          const nsRt = ctx.skillStates.get(ns.id)
+          const nsMirror = nsRt?.mirrorCopiedAffixes ?? (nsRt?.mirrorCopiedAffix ? [nsRt.mirrorCopiedAffix] : [])
+          const allAffixes = [...ns.affixes, ...nsMirror]
+          if (allAffixes.some(a => a.type === AffixType.Swarm)) swarmCount++
         }
         bonusPercent += swarmCount * (affix.swarmK ?? 0)
         break
@@ -1687,6 +1690,29 @@ export function resolvePhase6(
 }
 
 // ===== Mirror 有效词条替换 =====
+
+/** 获取技能的有效词条列表（含倒影复制词条） */
+export function getEffectiveAffixes(
+  skill: AffixSkillInstance,
+  skillStates: Map<string, SkillRuntimeState>,
+): AffixInstance[] {
+  const rt = skillStates.get(skill.id)
+  if (!rt) return skill.affixes
+  const hasMirror = skill.affixes.some(a => a.type === AffixType.Mirror)
+  if (!hasMirror) return skill.affixes
+  if (rt.mirrorCopiedAffixes && rt.mirrorCopiedAffixes.length > 0) {
+    const expanded: AffixInstance[] = []
+    for (const a of skill.affixes) {
+      if (a.type === AffixType.Mirror) expanded.push(...rt.mirrorCopiedAffixes)
+      else expanded.push(a)
+    }
+    return expanded
+  }
+  if (rt.mirrorCopiedAffix) {
+    return skill.affixes.map(a => a.type === AffixType.Mirror ? rt.mirrorCopiedAffix! : a)
+  }
+  return skill.affixes
+}
 
 /**
  * 构建有效技能：将 Mirror 词条替换为运行时复制的词条。

@@ -9,7 +9,7 @@ import { AffixType, EnchantmentType, BASE_VALUES } from '../data/affixes'
 import { hasRelation, PositionRelation, getKeysWithRelation } from '../data/keyboardTopology'
 import { getOutputDrainMultiplier } from '../data/bossModifiers'
 import { onStackEffectTriggered, checkStackDividend, isStackingAffix, SURGE_BONUS_PER_STACK } from './relics/StackingRelicBehaviors'
-import { isStackingSkill, isAuraQuestActive } from '../data/affixTrigger'
+import { isStackingSkill, isAuraQuestActive, getEffectiveAffixes } from '../data/affixTrigger'
 import {
   triggerAffixSkill,
   MAX_RECURSE_DEPTH,
@@ -421,19 +421,21 @@ export function orchestrateAffixTrigger(
       }
     }
 
-    // ── 共鸣/回响：全局��听，叠层满��自触发 ──
+    // ── 共鸣/感应：全局监听，叠层满时自触发 ──
     if (item.type !== 'stack_self') {
       const triggeredSkill = ctx.allSkills.get(item.skillId)
+      const triggeredAffixes = triggeredSkill ? getEffectiveAffixes(triggeredSkill, ctx.skillStates) : []
       for (const [monSkillId, monSkill] of ctx.allSkills) {
         if (monSkillId === item.skillId) continue
         const monRt = ctx.skillStates.get(monSkillId)
         if (!monRt) continue
-        for (const ma of monSkill.affixes) {
+        const monAffixes = getEffectiveAffixes(monSkill, ctx.skillStates)
+        for (const ma of monAffixes) {
           let matched = false
           if (ma.type === AffixType.Resonance && ma.resource && triggeredSkill) {
             matched = triggeredSkill.resource === ma.resource
           } else if (ma.type === AffixType.Echo && ma.echoAffixA && ma.echoAffixB && triggeredSkill) {
-            matched = triggeredSkill.affixes.some(a => a.type === ma.echoAffixA || a.type === ma.echoAffixB)
+            matched = triggeredAffixes.some(a => a.type === ma.echoAffixA || a.type === ma.echoAffixB)
           } else if (ma.type === AffixType.Fury && result.isCrit) {
             matched = true
           } else if ((ma.type === AffixType.WarDrum || ma.type === AffixType.Amplify) && ma.posRel != null && triggeredSkill) {
@@ -441,7 +443,9 @@ export function orchestrateAffixTrigger(
             const auraKeys = [...ctx.bindings].filter(([, sid]) => sid === monSkillId).map(([k]) => k)
             const trigKeys = [...ctx.bindings].filter(([, sid]) => sid === item.skillId).map(([k]) => k)
             const inRange = trigKeys.some(tk => auraKeys.some(ak => hasRelation(ak, tk, ma.posRel!)))
-            if (inRange && hasSharedMatch(triggeredSkill, monSkill, ma.type)) {
+            const effectiveTriggered = triggeredSkill ? { ...triggeredSkill, affixes: triggeredAffixes } : triggeredSkill
+            const effectiveMon = { ...monSkill, affixes: monAffixes }
+            if (inRange && effectiveTriggered && hasSharedMatch(effectiveTriggered, effectiveMon, ma.type)) {
               matched = true
             }
           }

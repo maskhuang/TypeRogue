@@ -8,6 +8,7 @@ import { buildRestOptions } from '../data/restEvents';
 import type { RestOption } from '../data/restEvents';
 import { RELICS } from '../data/relics';
 import { showScreen, startLevel, renderRelicDisplay } from './battle';
+import { openShop } from './shop';
 import { getNextBattleNode } from './stage/stageFlow';
 import { queryRelicFlag } from './relics/RelicPipeline';
 import { playSound } from '../effects/sound';
@@ -15,6 +16,14 @@ import { t, localizeItemName } from '../demo/demo-i18n';
 import { grantIntermissionFreeRefreshes } from './relics/StageRelicBehaviors';
 import { applyAffixLevelScaling } from '../data/affixes';
 import { BALANCE } from '../core/constants';
+
+// 休息关升级后需要补偿附魔的技能ID
+const _pendingEnchantSkillIds: string[] = [];
+
+/** 消费并返回待附魔的技能ID列表 */
+export function consumePendingEnchantSkillIds(): string[] {
+  return _pendingEnchantSkillIds.splice(0);
+}
 
 // === 打开休息关 ===
 export function openRestStage(): void {
@@ -81,6 +90,20 @@ function handleOptionSelect(
     (btn as HTMLElement).style.pointerEvents = 'none';
   });
 
+  // 升级事件：弹出三选一 UI
+  if (option.effectId === 'rest_upgrade_skill') {
+    showUpgradeChoice((chosen) => {
+      const resultText = document.getElementById('rest-result-text');
+      if (resultText) resultText.textContent = chosen
+        ? t('rest.upgrade.r', { name: localizeItemName(chosen.id, chosen.name), level: chosen.newLevel })
+        : t('rest.upgrade.no_skill');
+      resultEl.classList.remove('rest-result-hidden');
+      continueBtn.onclick = () => completeRestStage();
+      playSound('skill');
+    });
+    return;
+  }
+
   const resultMessage = executeEffect(option.effectId);
 
   const resultText = document.getElementById('rest-result-text');
@@ -91,11 +114,55 @@ function handleOptionSelect(
   playSound('skill');
 }
 
+/** 显示升级三选一面板 */
+function showUpgradeChoice(onPick: (chosen: { id: string; name: string; newLevel: number } | null) => void): void {
+  const TARGET_LEVEL = 3;
+  const candidates = [...state.player.skills.entries()]
+    .filter(([, data]) => data.level < TARGET_LEVEL)
+    .map(([skillId, data]) => ({ skillId, data, affix: state.affixSkills.get(skillId)! }))
+    .filter(c => c.affix);
+
+  if (candidates.length === 0) { onPick(null); return; }
+
+  // 随机选 3 个候选（不足 3 时全部显示）
+  const shuffled = [...candidates].sort(() => Math.random() - 0.5).slice(0, 3);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'ritual-enchantment-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;';
+
+  const panel = document.createElement('div');
+  panel.className = 'ritual-enchantment-panel';
+  panel.style.cssText = 'background:#1a1a2e;border:2px solid #ffd700;padding:24px;max-width:500px;text-align:center;';
+  panel.innerHTML = `<h3 style="color:#ffd700;margin:0 0 16px;">${t('rest.upgrade_pick_title')}</h3>`;
+
+  const list = document.createElement('div');
+  list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
+  for (const c of shuffled) {
+    const btn = document.createElement('button');
+    btn.className = 'ritual-skill-btn';
+    btn.innerHTML = `<span class="ritual-skill-icon">${c.affix.icon}</span><span class="ritual-skill-name">${c.affix.name} Lv.${c.data.level} → Lv.${TARGET_LEVEL}</span>`;
+    btn.onclick = () => {
+      const levelsToGain = TARGET_LEVEL - c.data.level;
+      c.data.level = TARGET_LEVEL;
+      applyAffixLevelScaling(c.affix.affixes, levelsToGain);
+      _pendingEnchantSkillIds.push(c.skillId);
+      overlay.remove();
+      onPick({ id: c.skillId, name: c.affix.name, newLevel: TARGET_LEVEL });
+    };
+    list.appendChild(btn);
+  }
+  panel.appendChild(list);
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+}
+
 // === 完成休息关 ===
 function completeRestStage(): void {
   const nextBattle = getNextBattleNode(state.level);
   state.level = nextBattle;
-  void startLevel();
+  openShop();
 }
 
 // === 执行事件效果 ===
@@ -107,6 +174,8 @@ export function executeEffect(effectId: string): string {
     case 'rest_upgrade_skill': {
       const upgraded = upgradeRandomSkill();
       if (!upgraded) return t('rest.upgrade.no_skill');
+      // 标记需要在下次商店时补偿附魔
+      _pendingEnchantSkillIds.push(upgraded.id);
       return t('rest.upgrade.r', { name: localizeItemName(upgraded.id, upgraded.name), level: upgraded.newLevel });
     }
 
@@ -141,14 +210,14 @@ export function executeEffect(effectId: string): string {
 // === 辅助函数 ===
 
 function upgradeRandomSkill(): { id: string; name: string; newLevel: number } | null {
-  const maxSkillLevel = queryRelicFlag('max_skill_level') as number;
-  const levelCap = maxSkillLevel === Infinity ? 3 : maxSkillLevel;
+  const TARGET_LEVEL = 3;
   const upgradable = [...state.player.skills.entries()]
-    .filter(([, data]) => data.level < levelCap);
+    .filter(([, data]) => data.level < TARGET_LEVEL);
   if (upgradable.length === 0) return null;
   const [skillId, data] = upgradable[Math.floor(Math.random() * upgradable.length)];
-  data.level++;
+  const levelsToGain = TARGET_LEVEL - data.level;
+  data.level = TARGET_LEVEL;
   const affixSkill = state.affixSkills.get(skillId);
-  if (affixSkill) applyAffixLevelScaling(affixSkill.affixes, 1);
-  return affixSkill ? { id: skillId, name: affixSkill.name, newLevel: data.level } : null;
+  if (affixSkill) applyAffixLevelScaling(affixSkill.affixes, levelsToGain);
+  return affixSkill ? { id: skillId, name: affixSkill.name, newLevel: TARGET_LEVEL } : null;
 }

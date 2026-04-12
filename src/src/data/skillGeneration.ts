@@ -166,7 +166,7 @@ export function rollAffixParams(
       return { type }
 
     case AffixType.Charge:
-      return { type, gainPerSec: 4.0, maxBonus: roundTo(2.3 + random() * 0.4, 2) }  // 每秒+4.0倍率, 上限×2.3~2.7
+      return { type, maxBonus: roundTo(2.0 + random() * 1.0, 2) }  // 上限×2.0~3.0
 
     case AffixType.Decay:
       return { type, initialMult: 0.40, decayPerTrigger: 0.05, floor: 0.05 }
@@ -190,7 +190,7 @@ export function rollAffixParams(
     }
 
     case AffixType.Mercenary:
-      return { type, hireCost: Math.floor(3 + random() * 5), hireBonus: roundTo(1.00 + random() * 1.00, 2) }  // cost 3~7g, bonus 100%~200% (×2.0~3.0)
+      return { type, hireCost: Math.floor(3 + random() * 5), hireBonus: roundTo(0.50 + random() * 1.00, 2) }  // cost 3~7g, bonus 50%~150%
 
     case AffixType.Mirror:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
@@ -258,7 +258,7 @@ export function rollAffixParams(
       return { type, recurseChance: roundTo(0.08 + random() * 0.12, 2) }
 
     case AffixType.Taboo:
-      return { type, bonusPercent: 0.60 }
+      return { type, bonusPercent: roundTo(0.60 + random() * 0.20, 2) }  // 60%~80%
 
     case AffixType.Fallacy:
       return { type, fallacyK: roundTo(0.05 + random() * 0.07, 3), fallacyStacks: 0 }  // 0.05~0.12 per non-crit
@@ -307,7 +307,7 @@ export function rollAffixParams(
       return { type, reechoPenalty: roundTo(0.10 + random() * 0.10, 2) }  // 10%~20% 每次打错累积惩罚
 
     case AffixType.Myopia:
-      return { type, myopiaBonus: roundTo(1.00 + random() * 1.00, 2), myopiaCost: Math.floor(11 + random() * 16) }  // +100%~200%, cost 11~26 target score (≈gold 3~7 × score/gold ratio)
+      return { type, myopiaBonus: roundTo(0.50 + random() * 1.00, 2), myopiaCost: Math.floor(11 + random() * 16) }  // +50%~150%, cost 11~26 target score
 
     case AffixType.AuraFury:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), auraCrit: roundTo(0.05 + random() * 0.10, 2) }  // +5%~15% crit

@@ -164,8 +164,8 @@ export function updateChargeProducers(dt: number): string[] {
     const maxBonus = chargeAffix.maxBonus ?? 2.5
     if (rt.chargeAccumulated >= maxBonus) continue
 
-    // 固定 0.5s 蓄满：速率 = maxBonus / 0.5
-    const rate = maxBonus / 0.5
+    // 固定速率：每 0.2s 蓄 1.0 倍率
+    const rate = 1.0 / 0.2
     rt.chargeAccumulated = Math.min(
       rt.chargeAccumulated + rate * dt,
       maxBonus,
@@ -557,8 +557,8 @@ function triggerAffixSkillWithFeedback(
   for (const tr of result.triggerResults) {
     // 叠层类技能：显示叠层数（自身不产出的技能不走下方产出浮字）
     if (tr.currentStacks != null) {
-      const stackAnchor = buildAnchor(tr.triggerKey, 'base', 0);
-      showFeedback(`×${tr.currentStacks}`, '#aaaaaa', 1.0, stackAnchor);
+      const stackAnchor = buildAnchor(tr.triggerKey, skill.resource, 0);
+      showFeedback(`×${Math.floor(tr.currentStacks)}`, '#aaaaaa', 1.0, stackAnchor);
     }
     if (!tr.phase4) continue;
 

@@ -649,9 +649,10 @@ function playerCorrect(k: string): void {
   eventBus.emit('combo:update', { combo: state.combo });
   bumpCombo();
 
-  // 回音：正确按键重置打错累积惩罚
+  // 逐字重置：回音惩罚 + 蓄力累积
   for (const [, rt] of state.affixSkillStates) {
     if (rt.reechoStacks > 0) rt.reechoStacks = 0
+    if (rt.chargeAccumulated > 0) rt.chargeAccumulated = 0
   }
 
   // 击鼓传花：combo+5 → 随机叠层技能+3层

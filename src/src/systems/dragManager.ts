@@ -165,6 +165,8 @@ class DragManager {
       this.isDragging = true;
       this.createGhost(this.payload);
       if (this.sourceElement) this.sourceElement.classList.add('dragging');
+      // 通知拖拽开始：清理 tooltip 和高亮
+      document.dispatchEvent(new CustomEvent('drag:start'));
 
       // 拖拽启动后抑制随之而来的 click 事件，防止拖拽结束时误触 onclick
       this.suppressNextClick();

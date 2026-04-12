@@ -52,6 +52,7 @@ import type { EnchantmentType } from '../data/affixes';
 import type { CategorizedEnchantments } from '../data/affixTrigger';
 import { getMonoAffixCategory } from './relics/RelicPipeline';
 import { applyRitualEnchantment, generateRitualCandidates, pickRitualChoices, getEligibleSkills as getRitualEligibleSkills } from './ritualEnchantment';
+import { consumePendingEnchantSkillIds } from './restStage';
 import type { RitualCandidate } from './ritualEnchantment';
 import { applyTrainingManual, rerollAllAffixes } from './relics/SkillRelicBehaviors';
 import { hasGlassCannon } from './relics/TypingRelicBehaviors';
@@ -277,24 +278,10 @@ export function generateAffixShopItems(count: number): ShopItem[] {
     return items;
   }
 
-  // 保底第 1 件：rarity≥1（蓝装以上），但不超过 Act 上限
-  const guaranteedRarity = Math.min(1, actMaxRarity) as SkillRarity;
-  let guaranteed: ShopItem;
-  if (guaranteedRarity >= 1) {
-    for (let attempt = 0; attempt < 10; attempt++) {
-      guaranteed = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity, excludeNames });
-      if (guaranteed.affixSkill!.rarity >= 1) break;
-    }
-    // 如果 10 次都没 ≥1，强制 rarity=1
-    if (!guaranteed! || guaranteed!.affixSkill!.rarity < 1) {
-      guaranteed = generateAffixShopItem(nextId++, { rarity: 1 as SkillRarity, maxRarity: actMaxRarity, excludeNames });
-    }
-  } else {
-    // Act1 允许的最大 rarity=0 时，无法保底蓝装
-    guaranteed = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity, excludeNames });
-  }
-  excludeNames.add(guaranteed!.affixSkill!.name);
-  items.push(guaranteed!);
+  // 第 1 件：正常掷骰（不保底蓝装）
+  const firstItem = generateAffixShopItem(nextId++, { maxRarity: actMaxRarity, excludeNames });
+  excludeNames.add(firstItem.affixSkill!.name);
+  items.push(firstItem);
 
   // 质变·谐振：Resonance 质变后保底一个同资源技能
   if (isAffixGloballyTransformed(AffixTypeEnum.Resonance, state.affixSkills, state.affixSkillStates) && count > items.length) {
@@ -812,7 +799,22 @@ export function computeSmartEstimate(
         }
         break
       }
-      // crit / charge / decay / fallacy: 纯暴击率，不预估产出
+      case 'crit': {
+        critChanceAccum += affix.chance ?? 0
+        break
+      }
+      case 'decay': {
+        critChanceAccum += affix.initialMult ?? 0
+        break
+      }
+      case 'recurse': {
+        critChanceAccum += affix.recurseChance ?? 0
+        break
+      }
+      case 'fallacy': {
+        // 赌徒期望暴击率取决于运行时 stacks，预估用初始值 0
+        break
+      }
       case 'cascade': {
         if (affix.posRel == null) break
         const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
@@ -937,6 +939,12 @@ export function computeSmartEstimate(
         } else {
           breakdown.push({ typeKey: 'mercenary', label: t('est.mercenary_poor'), detail: '' })
         }
+        break
+      }
+      case 'myopia': {
+        const myopiaBonus = affix.myopiaBonus ?? 0
+        addPercent += myopiaBonus
+        breakdown.push({ typeKey: 'myopia', label: t('est.myopia', { pct: Math.round(myopiaBonus * 100), cost: affix.myopiaCost ?? 0 }), detail: '' })
         break
       }
       // 其余词条不预估
@@ -1155,6 +1163,7 @@ function formatScaledValue(v: number): string {
 // === 打开商店 ===
 export function openShop(_won: boolean): void {
   state.phase = 'shop';
+  ensureDragStartCleanup();
   eventBus.emit('shop:opened');
   const el = getElements();
 
@@ -1367,14 +1376,14 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
         upgradeChance *= pos / 5;
       }
 
-      // 仅当正常碰撞没产生蓝+升级时触发
-      const hasBlueUpgrade = affixItems.some(i => i.isUpgrade && i.affixSkill && i.affixSkill.rarity >= 1);
-      if (!hasBlueUpgrade && random() < upgradeChance) {
-        // 收集可升级的蓝+技能
+      // 仅当正常碰撞没产生升级时触发
+      const hasUpgrade = affixItems.some(i => i.isUpgrade);
+      if (!hasUpgrade && random() < upgradeChance) {
+        // 收集可升级的任意技能
         const candidates: Array<{ skillId: string; affix: AffixSkillInstance }> = [];
         for (const [skillId, skillData] of state.player.skills) {
           const affix = state.affixSkills.get(skillId);
-          if (!affix || affix.rarity < 1) continue;
+          if (!affix) continue;
           if (convertedSkillIds.has(skillId)) continue;
           if (skillData.level >= getLevelCap(affix.rarity)) continue;
           // Story 45: Exhaust/Ethereal 已消耗完的技能不参与保底升级
@@ -1885,6 +1894,19 @@ function hideAllTooltips(): void {
   document.getElementById('relic-tooltip')?.remove();
 }
 
+// 拖拽开始时清理所有 tooltip 和范围高亮（防止拖走技能时高亮残留）
+let _dragStartListenerInstalled = false;
+function ensureDragStartCleanup(): void {
+  if (_dragStartListenerInstalled) return;
+  _dragStartListenerInstalled = true;
+  document.addEventListener('drag:start', () => {
+    hideAllTooltips();
+    clearRangeHighlight();
+    document.querySelectorAll('.key-slot.void-range-empty').forEach(el => el.classList.remove('void-range-empty'));
+    document.querySelectorAll('.inventory-skill.cross-highlight').forEach(el => el.classList.remove('cross-highlight'));
+  });
+}
+
 // === 词条制技能对比面板 ===
 let comparisonPanel: HTMLElement | null = null;
 
@@ -2283,6 +2305,8 @@ function showAutoEnchantmentPanel(
       applyRitualEnchantment(skillId, affixSkill, candidate);
       overlay.remove();
       renderUnifiedShop();
+      // 继续检查其他需要附魔的技能
+      checkPendingEnchantments();
     };
     choicesDiv.appendChild(btn);
   }
@@ -2626,8 +2650,27 @@ function showEnchantmentTargetSelect(
 }
 
 // === 补偿检查（旧系统已移除，保留空实现） ===
+let _shopPendingEnchantIds: string[] = [];
+
 function checkPendingEnchantments(): void {
-  // no-op: 旧附魔补偿已移除
+  // 首次调用时从 restStage 消费待附魔ID
+  const consumed = consumePendingEnchantSkillIds();
+  if (consumed.length > 0) _shopPendingEnchantIds.push(...consumed);
+  if (_shopPendingEnchantIds.length === 0) return;
+  const anchorBonus = getEnchantAnchorSlotBonus();
+  while (_shopPendingEnchantIds.length > 0) {
+    const skillId = _shopPendingEnchantIds.shift()!;
+    const affixSkill = state.affixSkills.get(skillId);
+    if (!affixSkill) continue;
+    const slotCount = getEnchantmentSlotCount(affixSkill, anchorBonus);
+    if (affixSkill.enchantmentIds.length >= slotCount) continue;
+    const candidates = generateRitualCandidates(affixSkill);
+    if (candidates.length > 0) {
+      const choices = pickRitualChoices(candidates, 3);
+      showAutoEnchantmentPanel(skillId, affixSkill, choices);
+      return; // 一次弹一个，回调会再次调用 checkPendingEnchantments
+    }
+  }
 }
 
 // === 刷新商店 ===
@@ -3308,6 +3351,20 @@ export function renderBuildManager(): void {
           if (preview) slot.dataset.shapePreview = preview;
         }
         slot.style.borderColor = rarityColor;
+        // 词条颜色描边：复用范围显示的多色混合逻辑，便于区分相邻同资源技能
+        // 词条色变色（复用范围高亮样式：边框+背景）
+        const affixColors: string[] = [];
+        for (const a of affixSkill.affixes) {
+          const c = AFFIX_COLORS[a.type];
+          if (c && !affixColors.includes(c)) affixColors.push(c);
+        }
+        if (affixColors.length === 1) {
+          slot.style.borderColor = affixColors[0];
+          slot.style.background = hexToRgba(affixColors[0], 0.15);
+        } else if (affixColors.length > 1) {
+          slot.style.borderImage = `linear-gradient(135deg, ${affixColors.join(', ')}) 1`;
+          slot.style.background = `linear-gradient(135deg, ${affixColors.map(c => hexToRgba(c, 0.12)).join(', ')})`;
+        }
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${affixSkill.icon}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}${freq > 0 ? `<span class="key-freq">${freq}</span>` : ''}`;
       } else {
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}${freq > 0 ? `<span class="key-freq">${freq}</span>` : ''}`;
@@ -3562,7 +3619,7 @@ function renderWordInventory(): void {
     const wordSpan = document.createElement('span');
     wordSpan.className = 'word-text';
     wordSpan.innerHTML = word.split('').map(c =>
-      unlockedLetters.has(c.toLowerCase()) ? `<span class="bound-letter">${c}</span>` : c
+      state.player.bindings.has(c.toLowerCase()) ? `<span class="bound-letter">${c}</span>` : c
     ).join('');
 
     item.appendChild(wordSpan);
