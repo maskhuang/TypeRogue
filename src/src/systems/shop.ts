@@ -3245,7 +3245,7 @@ function clearRangeHighlight(): void {
   document.querySelectorAll('.match-highlight').forEach(el => el.classList.remove('match-highlight'));
 }
 
-/** 应用技能词条色描边（render-time 与 clearRangeHighlight 复用） */
+/** 应用技能词条色描边（render-time 与 clearRangeHighlight 复用）— 像素风：主色填充 + 角标 */
 function applySkillBorderColor(slot: HTMLElement, affixSkill: AffixSkillInstance): void {
   const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#ffffff';
   slot.style.borderColor = rarityColor;
@@ -3254,13 +3254,28 @@ function applySkillBorderColor(slot: HTMLElement, affixSkill: AffixSkillInstance
     const c = AFFIX_COLORS[a.type];
     if (c && !affixColors.includes(c)) affixColors.push(c);
   }
-  if (affixColors.length === 1) {
-    slot.style.borderColor = affixColors[0];
-    slot.style.background = hexToRgba(affixColors[0], 0.15);
-  } else if (affixColors.length > 1) {
-    slot.style.borderImage = `linear-gradient(135deg, ${affixColors.join(', ')}) 1`;
-    slot.style.background = `linear-gradient(135deg, ${affixColors.map(c => hexToRgba(c, 0.12)).join(', ')})`;
+  if (affixColors.length === 0) return;
+
+  // 主色：边框 + 淡填充
+  const primary = affixColors[0];
+  slot.style.borderColor = primary;
+
+  // 额外词条：4 个像素方块角标（top-left, top-right, bottom-left, bottom-right）
+  const CORNER_SIZE = 6; // px
+  const corners: Array<[string, string]> = [
+    ['top left', 'top left'],
+    ['top right', 'top right'],
+    ['bottom right', 'bottom right'],
+    ['bottom left', 'bottom left'],
+  ];
+  const bgLayers: string[] = [];
+  for (let i = 1; i < affixColors.length && i <= corners.length; i++) {
+    const [, pos] = corners[i - 1];
+    bgLayers.push(`linear-gradient(${affixColors[i]}, ${affixColors[i]}) no-repeat ${pos} / ${CORNER_SIZE}px ${CORNER_SIZE}px`);
   }
+  // 底层：主色淡填充
+  bgLayers.push(`linear-gradient(${hexToRgba(primary, 0.18)}, ${hexToRgba(primary, 0.18)})`);
+  slot.style.background = bgLayers.join(', ');
 }
 
 /** 计算范围高亮键位+源键位的包围盒（用于tooltip避让） */
