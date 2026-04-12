@@ -18,6 +18,7 @@ export interface DragPayload {
   shapeId?: string;       // Story 40.5: 多格技能形状 ID
   rotation?: number;      // Story 40.5: 形状旋转态
   shapePreviewHtml?: string; // Story 40.5: 预渲染的形状预览 HTML
+  rarity?: number;        // 供拖拽期间旋转重渲染预览用
 }
 
 export interface DropZone {
@@ -31,6 +32,13 @@ export interface DropZone {
 }
 
 import { t } from '../demo/demo-i18n';
+import { getShapeRotationCount } from '../data/skillShapes';
+
+// 形状预览渲染器（由 shop.ts 注入，避免循环依赖）
+let _shapePreviewRenderer: ((shapeId: string, rotation: number, rarity: number) => string) | null = null;
+export function registerShapePreviewRenderer(fn: (shapeId: string, rotation: number, rarity: number) => string): void {
+  _shapePreviewRenderer = fn;
+}
 
 // === 常量 ===
 const DRAG_THRESHOLD = 5; // 最小移动距离才启动拖拽
@@ -41,6 +49,7 @@ const SCROLL_SPEED = 8;   // 每帧滚动像素
 class DragManager {
   private dropZones: DropZone[] = [];
   private isDragging = false;
+  private pickedUp = false; // 点击拾取模式：无需按住，鼠标跟随
   private startX = 0;
   private startY = 0;
   private payload: DragPayload | null = null;
@@ -66,8 +75,19 @@ class DragManager {
     if (this.active) return;
     this.active = true;
 
-    this.boundMouseDown = (e: MouseEvent) => this.onPointerDown(e.clientX, e.clientY, e.target as HTMLElement, e);
-    this.boundMouseMove = (e: MouseEvent) => this.onPointerMove(e.clientX, e.clientY);
+    this.boundMouseDown = (e: MouseEvent) => {
+      // 右键在 pickedUp 模式下用于旋转，跳过放置逻辑
+      if (e.button !== 0) return;
+      this.onPointerDown(e.clientX, e.clientY, e.target as HTMLElement, e);
+    };
+    this.boundMouseMove = (e: MouseEvent) => {
+      // pickedUp 模式：总是跟随鼠标移动（无需按住）
+      if (this.pickedUp) {
+        this.updateGhostPosition(e.clientX, e.clientY);
+        return;
+      }
+      this.onPointerMove(e.clientX, e.clientY);
+    };
     this.boundMouseUp = () => this.onPointerUp();
     this.boundTouchStart = (e: TouchEvent) => {
       const t = e.touches[0];
@@ -83,6 +103,12 @@ class DragManager {
     document.addEventListener('mousedown', this.boundMouseDown);
     document.addEventListener('mousemove', this.boundMouseMove);
     document.addEventListener('mouseup', this.boundMouseUp);
+    document.addEventListener('contextmenu', (e: MouseEvent) => {
+      if (this.pickedUp && this.payload?.shapeId && this.payload.shapeId !== 'monomino') {
+        e.preventDefault();
+        this.rotatePickupShape(e.shiftKey);
+      }
+    });
     document.addEventListener('touchstart', this.boundTouchStart, { passive: false });
     document.addEventListener('touchmove', this.boundTouchMove, { passive: false });
     document.addEventListener('touchend', this.boundTouchEnd);
@@ -121,9 +147,9 @@ class DragManager {
     this.dropZones = [];
   }
 
-  /** 检查当前是否在拖拽中 */
+  /** 检查当前是否在拖拽中（含点击拾取模式） */
   get dragging(): boolean {
-    return this.isDragging;
+    return this.isDragging || this.pickedUp;
   }
 
   /** 注册拖拽开始/结束全局回调 */
@@ -133,12 +159,26 @@ class DragManager {
   // === 内部方法 ===
 
   private onPointerDown(x: number, y: number, target: HTMLElement, _event: MouseEvent | TouchEvent): void {
+    // 不拦截锁定按钮的点击
+    if (target.closest('.lock-toggle')) return;
+
+    // pickedUp 模式下：这次 mousedown 是"放置"操作
+    if (this.pickedUp && this.payload) {
+      this.updateDropTarget(x, y);
+      if (this.currentDropTarget) {
+        this.currentDropTarget.onDrop(this.payload);
+      } else {
+        // 无有效目标 → 返回备战席
+        this.returnToBench();
+      }
+      this.cancel();
+      this.suppressNextClick();
+      return;
+    }
+
     // 查找最近的可拖拽元素
     const draggable = target.closest('[data-drag-type]') as HTMLElement;
     if (!draggable) return;
-
-    // 不拦截锁定按钮的点击
-    if (target.closest('.lock-toggle')) return;
 
     const dragType = draggable.dataset.dragType as DragPayload['type'];
     if (!dragType) return;
@@ -192,13 +232,73 @@ class DragManager {
   }
 
   private onPointerUp(): void {
-    if (this.isDragging && this.currentDropTarget && this.payload) {
-      // 执行放置
-      this.currentDropTarget.onDrop(this.payload);
+    if (this.isDragging) {
+      // hold-drag 释放：在当前目标放置
+      if (this.currentDropTarget && this.payload) {
+        this.currentDropTarget.onDrop(this.payload);
+      }
+      this.cancel();
+      return;
     }
-    // 非拖拽点击：不手动触发 .click()，让浏览器原生 click 事件正常触发
+    // 未达阈值：进入 pickedUp 模式（点击拾取）— 商店商品跳过，保留原生点击购买
+    if (this.payload && !this.pickedUp && this.payload.type !== 'shop-item') {
+      this.pickedUp = true;
+      this.createGhost(this.payload);
+      this.updateGhostPosition(this.startX, this.startY);
+      if (this.sourceElement) this.sourceElement.classList.add('dragging');
+      document.dispatchEvent(new CustomEvent('drag:start'));
+      const sellZone = document.getElementById('sell-zone');
+      if (sellZone) sellZone.classList.add('active');
+      if (this._onDragStart) this._onDragStart(this.payload);
+      this.suppressNextClick();
+      return;
+    }
+    // 既不是 drag 也不是 pickup：清理
+    if (!this.pickedUp) this.cancel();
+  }
 
-    this.cancel();
+  private updateGhostPosition(x: number, y: number): void {
+    if (this.ghost) {
+      this.ghost.style.left = `${x}px`;
+      this.ghost.style.top = `${y}px`;
+    }
+    this.updateDropTarget(x, y);
+    this.updateAutoScroll(y);
+  }
+
+  /** 拾取模式下旋转多格技能形状 */
+  private rotatePickupShape(shiftKey: boolean): void {
+    if (!this.payload?.shapeId || !_shapePreviewRenderer) return;
+    const maxRot = getShapeRotationCount(this.payload.shapeId);
+    if (maxRot <= 1) return;
+    const cur = this.payload.rotation ?? 0;
+    const step = shiftKey ? maxRot - 1 : 1;
+    const next = (cur + step) % maxRot;
+    this.payload.rotation = next;
+    const rarity = this.payload.rarity ?? 0;
+    const newHtml = _shapePreviewRenderer(this.payload.shapeId, next, rarity);
+    this.payload.shapePreviewHtml = newHtml;
+    // 更新幽灵内的形状预览
+    if (this.ghost) {
+      const shapeDiv = this.ghost.querySelector('.drag-ghost-shape');
+      if (shapeDiv) {
+        shapeDiv.innerHTML = newHtml;
+      } else if (newHtml) {
+        const newShapeDiv = document.createElement('div');
+        newShapeDiv.className = 'drag-ghost-shape';
+        newShapeDiv.innerHTML = newHtml;
+        this.ghost.appendChild(newShapeDiv);
+      }
+    }
+  }
+
+  /** 将当前 payload 返回到备战席 */
+  private returnToBench(): void {
+    if (!this.payload) return;
+    const bench = this.dropZones.find(z => z.type === 'skill-inventory');
+    if (bench && bench.accepts(this.payload)) {
+      bench.onDrop(this.payload);
+    }
   }
 
   private cancel(): void {
@@ -238,6 +338,7 @@ class DragManager {
     }
 
     this.isDragging = false;
+    this.pickedUp = false;
     this.payload = null;
     this.currentDropTarget = null;
   }
@@ -265,7 +366,8 @@ class DragManager {
         const shapeId = el.dataset.shapeId || undefined;
         const rotation = el.dataset.rotation != null ? parseInt(el.dataset.rotation, 10) : undefined;
         const shapePreviewHtml = el.dataset.shapePreview || undefined;
-        return { type, skillId, label, icon, sellPrice, shapeId, rotation, shapePreviewHtml };
+        const rarity = el.dataset.rarity != null ? parseInt(el.dataset.rarity, 10) : undefined;
+        return { type, skillId, label, icon, sellPrice, shapeId, rotation, shapePreviewHtml, rarity };
       }
       case 'skill-key': {
         const key = el.dataset.key || '';
@@ -276,7 +378,8 @@ class DragManager {
         const shapeId = el.dataset.shapeId || undefined;
         const rotation = el.dataset.rotation != null ? parseInt(el.dataset.rotation, 10) : undefined;
         const shapePreviewHtml = el.dataset.shapePreview || undefined;
-        return { type, sourceKey: key, skillId, label: `[${key.toUpperCase()}]`, icon, sellPrice, shapeId, rotation, shapePreviewHtml };
+        const rarity = el.dataset.rarity != null ? parseInt(el.dataset.rarity, 10) : undefined;
+        return { type, sourceKey: key, skillId, label: `[${key.toUpperCase()}]`, icon, sellPrice, shapeId, rotation, shapePreviewHtml, rarity };
       }
       case 'word': {
         const word = el.dataset.word || '';

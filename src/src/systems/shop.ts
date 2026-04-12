@@ -33,7 +33,7 @@ import { hasIntermissionFreeRefresh, consumeIntermissionFreeRefresh } from './re
 import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
-import { dragManager } from './dragManager';
+import { dragManager, registerShapePreviewRenderer } from './dragManager';
 import { CLASS_DEFINITIONS } from '../data/classes';
 import { isFeatureEnabled, getFeatureLostReason } from './classes/ClassFeatureGate';
 import { renderCraftPanel, resetCraftInput } from './classes/CraftingStation';
@@ -1164,6 +1164,7 @@ function formatScaledValue(v: number): string {
 export function openShop(_won: boolean): void {
   state.phase = 'shop';
   ensureDragStartCleanup();
+  registerShapePreviewRenderer(renderShapePreview);
   eventBus.emit('shop:opened');
   const el = getElements();
 
@@ -3370,6 +3371,7 @@ export function renderBuildManager(): void {
         }
         slot.dataset.dragType = 'skill-key';
         slot.dataset.boundSkill = skillId;
+        slot.dataset.rarity = String(affixSkill.rarity);
         const skData = state.player.skills.get(skillId);
         slot.dataset.sellPrice = String(Math.floor((skData?.purchasePrice || 15) / 2));
         // Story 40.5: 形状数据供拖拽系统读取
@@ -3509,6 +3511,7 @@ export function renderBuildManager(): void {
     item.dataset.dragType = 'skill-inventory';
     item.dataset.skillId = skillId;
     item.dataset.sellPrice = String(Math.floor((data.purchasePrice || 15) / 2));
+    item.dataset.rarity = String(affixSkill.rarity);
     // Story 40.5: 形状数据供拖拽系统读取
     if (affixSkill.shapeId && affixSkill.shapeId !== 'monomino') {
       item.dataset.shapeId = affixSkill.shapeId;
