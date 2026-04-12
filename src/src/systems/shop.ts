@@ -2476,21 +2476,7 @@ function purchaseShopRelicItem(index: number): void {
     updateGoldDisplay();
     // showFeedback(t('shop.got_relic', { icon: relic.icon, name: localizeItemName(relicId, relic.name) }), '#ffe66d');
     playSound('buy');
-    // 集训手册 — 购买时所有技能等级+1（上限 Lv.3）
-    if (relicId === 'training_manual') {
-      const upgradedIds = applyTrainingManual();
-      if (upgradedIds.length > 0) {
-        showFeedback(t('shop.training_manual_feedback', { n: upgradedIds.length }), '#4ecdc4');
-      }
-      // 达到附魔等级门槛时触发附魔检查
-      for (const uid of upgradedIds) {
-        const uData = state.player.skills.get(uid);
-        const uAffix = state.affixSkills.get(uid);
-        if (uData && uAffix && uData.level === getMinEnchantmentLevel()) {
-          checkAutoEnchantment(uid);
-        }
-      }
-    }
+    // 集训手册效果由 relic:acquired 事件监听处理
     // 资源熔炉 — 购买时随机赋值源/目标资源
     if (relicId === 'universal_furnace') {
       initFurnace(random);
@@ -2519,20 +2505,7 @@ function purchaseShopRelicItem(index: number): void {
         state.gold -= cost;
         updateGoldDisplay();
         state.shop.items.splice(index, 1);
-        // 集训手册 — 替换购买时也触发等级+1
-        if (relicId === 'training_manual') {
-          const upgradedIds = applyTrainingManual();
-          if (upgradedIds.length > 0) showFeedback(t('shop.training_manual_feedback', { n: upgradedIds.length }), '#4ecdc4');
-          for (const uid of upgradedIds) {
-            const uData = state.player.skills.get(uid);
-            const uAffix = state.affixSkills.get(uid);
-            if (uData && uAffix && uData.level === getMinEnchantmentLevel()) {
-              checkAutoEnchantment(uid);
-            }
-          }
-        }
-        // Story 36.6: 行会勋章 — 替换购买时也随机选行
-        // (row_medal deleted)
+        // 集训手册效果由 relic:acquired 事件监听处理
       }
       const m = document.getElementById('relic-picker-modal');
       if (m) m.classList.add('relic-picker-hidden');
@@ -3077,31 +3050,42 @@ function hexToRgba(hex: string, alpha: number): string {
 /** 商品 hover 时高亮键盘上匹配的已装备技能（共鸣/回响等全局匹配） */
 function highlightShopSkillMatches(shopSkill: AffixSkillInstance): void {
   clearRangeHighlight();
-  const defaultColor = '#ffe66d';
-  const keyColorMap = new Map<string, string>();
-  for (const affix of shopSkill.affixes) {
-    const color = AFFIX_COLORS[affix.type] || defaultColor;
-    // 共鸣：高亮同资源技能
-    if (affix.type === AffixTypeEnum.Resonance && affix.resource) {
-      for (const [k, sid] of state.player.bindings) {
-        const s = state.affixSkills.get(sid);
-        if (s && s.resource === affix.resource) keyColorMap.set(k, color);
-      }
+  applyMatchHighlight(shopSkill, null);
+}
+
+/** 全局匹配技能高亮（黄框）：商店、备战席、构筑键盘 */
+function applyMatchHighlight(affixSkill: AffixSkillInstance, sourceSkillId: string | null): void {
+  const MATCH_AFFIX_TYPES = [AffixTypeEnum.Amplify, AffixTypeEnum.Splash, AffixTypeEnum.WarDrum, AffixTypeEnum.Union, AffixTypeEnum.Relay, AffixTypeEnum.Conduit, AffixTypeEnum.AuraFury, AffixTypeEnum.AuraMorale] as string[];
+  const hasMatchAffix = affixSkill.affixes.some(a => MATCH_AFFIX_TYPES.includes(a.type));
+
+  // 匹配条件检查器
+  const isMatch = (target: AffixSkillInstance): boolean => {
+    if (hasMatchAffix) {
+      if (target.resource === affixSkill.resource) return true;
+      if (target.affixes.some(a => !MATCH_AFFIX_TYPES.includes(a.type) && affixSkill.affixes.some(sa => sa.type === a.type))) return true;
     }
-    // 回响：高亮拥有指定词条的技能
-    if (affix.type === AffixTypeEnum.Echo && affix.echoAffixA && affix.echoAffixB) {
-      for (const [k, sid] of state.player.bindings) {
-        const s = state.affixSkills.get(sid);
-        if (s && s.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) keyColorMap.set(k, color);
-      }
+    for (const affix of affixSkill.affixes) {
+      if (affix.type === AffixTypeEnum.Resonance && affix.resource && target.resource === affix.resource) return true;
+      if (affix.type === AffixTypeEnum.Echo && affix.echoAffixA && affix.echoAffixB
+        && target.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) return true;
     }
+    return false;
+  };
+
+  // 1. 已装备技能（键盘 + 备战席）
+  for (const [sid, ns] of state.affixSkills) {
+    if (sid === sourceSkillId) continue;
+    if (!isMatch(ns)) continue;
+    document.querySelectorAll(`.key-slot[data-bound-skill="${sid}"]`).forEach(el => el.classList.add('match-highlight'));
+    document.querySelector(`.inventory-skill[data-skill-id="${sid}"]`)?.classList.add('match-highlight');
   }
-  keyColorMap.forEach((color, k) => {
-    const el = document.querySelector(`.key-slot[data-key="${k}"]`) as HTMLElement | null;
-    if (!el) return;
-    el.classList.add('range-highlight');
-    el.style.borderColor = color;
-    el.style.background = hexToRgba(color, 0.15);
+  // 2. 商店商品
+  state.shop.items.forEach((shopItem, idx) => {
+    if (shopItem.type !== 'skill' || !shopItem.affixSkill) return;
+    if (shopItem.affixSkill.id === sourceSkillId) return;
+    if (!isMatch(shopItem.affixSkill)) return;
+    const card = document.querySelector(`[data-shop-index="${idx}"]`);
+    card?.classList.add('match-highlight');
   });
 }
 
@@ -3150,59 +3134,9 @@ function highlightSkillRange(key: string): void {
     }
   }
 
-  // 2. 匹配技能高亮：全局高亮所有匹配技能（商店/备战席/键盘），黄色边框
+  // 2. 匹配技能高亮：全局黄框（商店/备战席/键盘）
   if (affixSkill) {
-    const MATCH_AFFIX_TYPES = [AffixTypeEnum.Amplify, AffixTypeEnum.Splash, AffixTypeEnum.WarDrum, AffixTypeEnum.Union, AffixTypeEnum.Relay, AffixTypeEnum.Conduit, AffixTypeEnum.AuraFury, AffixTypeEnum.AuraMorale] as string[];
-    const matchedSkillIds = new Set<string>();
-    const hasMatchAffix = affixSkill.affixes.some(a => MATCH_AFFIX_TYPES.includes(a.type));
-    if (hasMatchAffix) {
-      // 全场所有技能中找匹配（同资源 或 共享非匹配词条）
-      for (const [sid, ns] of state.affixSkills) {
-        if (sid === skillId) continue;
-        const sameRes = ns.resource === affixSkill.resource;
-        const shareAffix = ns.affixes.some(a => !MATCH_AFFIX_TYPES.includes(a.type) && affixSkill.affixes.some(sa => sa.type === a.type));
-        if (sameRes || shareAffix) matchedSkillIds.add(sid);
-      }
-    }
-    // 共鸣：全局同资源
-    for (const affix of affixSkill.affixes) {
-      if (affix.type === AffixTypeEnum.Resonance && affix.resource) {
-        for (const [sid, ns] of state.affixSkills) {
-          if (sid !== skillId && ns.resource === affix.resource) matchedSkillIds.add(sid);
-        }
-      }
-      if (affix.type === AffixTypeEnum.Echo && affix.echoAffixA && affix.echoAffixB) {
-        for (const [sid, ns] of state.affixSkills) {
-          if (sid !== skillId && ns.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) matchedSkillIds.add(sid);
-        }
-      }
-    }
-    // 应用到键盘 slot + 备战席
-    matchedSkillIds.forEach(sid => {
-      document.querySelectorAll(`.key-slot[data-bound-skill="${sid}"]`).forEach(el => el.classList.add('match-highlight'));
-      document.querySelector(`.inventory-skill[data-skill-id="${sid}"]`)?.classList.add('match-highlight');
-    });
-    // 应用到商店商品：直接对比 shop item 的词条
-    if (hasMatchAffix || affixSkill.affixes.some(a => a.type === AffixTypeEnum.Resonance || a.type === AffixTypeEnum.Echo)) {
-      state.shop.items.forEach((shopItem, idx) => {
-        if (shopItem.type !== 'skill' || !shopItem.affixSkill) return;
-        const sk = shopItem.affixSkill;
-        const sameRes = sk.resource === affixSkill.resource;
-        const shareAffix = sk.affixes.some(a => !MATCH_AFFIX_TYPES.includes(a.type) && affixSkill.affixes.some(sa => sa.type === a.type));
-        // 共鸣：同资源
-        let resonanceMatch = false;
-        let echoMatch = false;
-        for (const affix of affixSkill.affixes) {
-          if (affix.type === AffixTypeEnum.Resonance && affix.resource && sk.resource === affix.resource) resonanceMatch = true;
-          if (affix.type === AffixTypeEnum.Echo && affix.echoAffixA && affix.echoAffixB
-            && sk.affixes.some(a => a.type === affix.echoAffixA || a.type === affix.echoAffixB)) echoMatch = true;
-        }
-        if ((hasMatchAffix && (sameRes || shareAffix)) || resonanceMatch || echoMatch) {
-          const card = document.querySelector(`[data-shop-index="${idx}"]`);
-          card?.classList.add('match-highlight');
-        }
-      });
-    }
+    applyMatchHighlight(affixSkill, skillId);
   }
 
   // 范围高亮：背景+边框

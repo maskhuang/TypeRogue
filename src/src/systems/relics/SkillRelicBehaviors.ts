@@ -8,6 +8,7 @@ import type { AffixType } from '../../data/affixes'
 import { applyAffixLevelScaling, getSkillMaxLevel } from '../../data/affixes'
 import { weightedSampleWithout, rollAffixParams, generateName, pickRandom } from '../../data/skillGeneration'
 import { PositionRelation } from '../../data/keyboardTopology'
+import { eventBus } from '../../core/events/EventBus'
 
 
 // === 首发强化 (first_strike) ===
@@ -57,6 +58,7 @@ export function applyTrainingManual(): string[] {
         applyAffixLevelScaling(affixSkill.affixes, 1)
       }
       upgradedIds.push(skillId)
+      eventBus.emit('skill:upgraded', { skillId, newLevel: data.level })
     }
   }
   return upgradedIds
@@ -178,7 +180,13 @@ export function resetSkillRelicState(): void {
  */
 export function initSkillRelicBehaviors(): void {
   registerRelicBehavior('training_manual', (_relicId, _context) => {
-    // 实际逻辑在 applyTrainingManual() 中，由 shop.ts 购买时调用
+    // 实际逻辑在 applyTrainingManual() 中
+  })
+  // 任何方式获取 training_manual 都触发升级（商店/仪式/奖励/休息关等）
+  eventBus.on('relic:acquired', ({ relicId }) => {
+    if (relicId === 'training_manual') {
+      applyTrainingManual()
+    }
   })
 
   registerRelicBehavior('jazz_diversity', (_relicId, _context) => {
