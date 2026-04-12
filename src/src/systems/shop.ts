@@ -540,6 +540,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       // 短视：替换加成/代价占位符
       if (a.myopiaBonus != null) desc = desc.replace('{myopiaBonus}', `${Math.round(a.myopiaBonus * 100)}`);
       if (a.myopiaCost != null) desc = desc.replace('{myopiaCost}', String(a.myopiaCost));
+      if (a.silkwormBonus != null) desc = desc.replace('{silkwormBonus}', `${Math.round(a.silkwormBonus * 100)}`);
       // 流放/禁忌：替换暴击率占位符
       if (a.bonusPercent != null) desc = desc.replace('{bonusPercent}', `${Math.round(a.bonusPercent * 100)}`);
       // 增幅：替换加成占位符
@@ -673,6 +674,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'mercenary': return `${a.hireCost ?? '?'}g +${Math.round((a.hireBonus ?? 0) * 100)}%`
     case 'reecho': return `-${Math.round((a.reechoPenalty ?? 0) * 100)}%/${t('param.reecho_per')}`
     case 'myopia': return `+${Math.round((a.myopiaBonus ?? 0) * 100)}% (+${a.myopiaCost ?? '?'}${t('param.myopia_cost')})`
+    case 'silkworm': return `+${Math.round((a.silkwormBonus ?? 0) * 100)}%`
     case 'aura_fury': return `+${Math.round((a.auraCrit ?? 0) * 100)}%${t('param.aura_crit')}`
     case 'aura_morale': return `+${Math.round((a.auraMorale ?? 0) * 100)}%`
     case 'fiber': return `${t('param.interval_label')} ${a.fiberInterval ?? 4}`
@@ -945,6 +947,12 @@ export function computeSmartEstimate(
         const myopiaBonus = affix.myopiaBonus ?? 0
         addPercent += myopiaBonus
         breakdown.push({ typeKey: 'myopia', label: t('est.myopia', { pct: Math.round(myopiaBonus * 100), cost: affix.myopiaCost ?? 0 }), detail: '' })
+        break
+      }
+      case 'silkworm': {
+        const silkwormBonus = affix.silkwormBonus ?? 0
+        addPercent += silkwormBonus
+        breakdown.push({ typeKey: 'silkworm', label: t('est.silkworm', { pct: Math.round(silkwormBonus * 100) }), detail: '' })
         break
       }
       // 其余词条不预估
@@ -1450,12 +1458,18 @@ function generateShopItems(count: number, guaranteeRare: boolean = false): ShopI
   }
 
   // 遗物商品（最多 1 个，占总 5 槽之一，40%概率刷新）
+  // 未刷出遗物时，该位置改为第 3 个技能（保底 3 技能）
   const RELIC_SPAWN_CHANCE = 0.4;
+  let relicSpawned = false;
   if (random() < RELIC_SPAWN_CHANCE) {
     const relicItem = generateShopRelicItem(act, nextId++);
     if (relicItem && items.length < count) {
       items.push(relicItem);
+      relicSpawned = true;
     }
+  }
+  if (!relicSpawned && skillPool.length > 0 && items.length < count) {
+    items.push(skillPool.splice(0, 1)[0]);
   }
 
   // Story 41.1: 附魔台商品（Act 3 起，25% 概率，最多 1 个，fate_fork 时最多 2 个）
@@ -2030,6 +2044,7 @@ import type { WordEffect } from '../core/types';
 
 const WORD_EFFECT_ICONS: Record<string, string> = {
   base_score: '⬆',
+  base_multiplier: '⭐',
   multiplier: '✖',
   time: '⏳',
   gold: '🪙',
@@ -2037,7 +2052,8 @@ const WORD_EFFECT_ICONS: Record<string, string> = {
 
 function formatWordEffectLabel(effect: WordEffect): string {
   const icon = WORD_EFFECT_ICONS[effect.type] || '';
-  return `${icon} ${t('wordeffect.' + effect.type, { value: effect.value })}`;
+  const letterHint = effect.targetLetter ? ` [${effect.targetLetter.toUpperCase()}]` : '';
+  return `${icon} ${t('wordeffect.' + effect.type, { value: effect.value })}${letterHint}`;
 }
 
 function getPackIcon(condType: PackConditionType): string {
@@ -3050,7 +3066,7 @@ function hexToRgba(hex: string, alpha: number): string {
 /** 商品 hover 时高亮键盘上匹配的已装备技能（共鸣/回响等全局匹配） */
 function highlightShopSkillMatches(shopSkill: AffixSkillInstance): void {
   clearRangeHighlight();
-  applyMatchHighlight(shopSkill, null);
+  applyMatchHighlight(shopSkill, shopSkill.id);
 }
 
 /** 全局匹配技能高亮（黄框）：商店、备战席、构筑键盘 */
@@ -3190,26 +3206,24 @@ function applySkillBorderColor(slot: HTMLElement, affixSkill: AffixSkillInstance
   }
   if (affixColors.length === 0) return;
 
-  // 主色：边框 + 淡填充
-  const primary = affixColors[0];
-  slot.style.borderColor = primary;
+  // 主色：边框
+  slot.style.borderColor = affixColors[0];
 
-  // 额外词条：4 个像素方块角标（top-left, top-right, bottom-left, bottom-right）
-  const CORNER_SIZE = 6; // px
-  const corners: Array<[string, string]> = [
-    ['top left', 'top left'],
-    ['top right', 'top right'],
-    ['bottom right', 'bottom right'],
-    ['bottom left', 'bottom left'],
-  ];
-  const bgLayers: string[] = [];
-  for (let i = 1; i < affixColors.length && i <= corners.length; i++) {
-    const [, pos] = corners[i - 1];
-    bgLayers.push(`linear-gradient(${affixColors[i]}, ${affixColors[i]}) no-repeat ${pos} / ${CORNER_SIZE}px ${CORNER_SIZE}px`);
+  // 像素风阶梯渐变：硬边多段，每段一个词条色（淡填充）
+  const alpha = 0.22;
+  const rgbaColors = affixColors.map(c => hexToRgba(c, alpha));
+  if (rgbaColors.length === 1) {
+    slot.style.background = rgbaColors[0];
+  } else {
+    const n = rgbaColors.length;
+    const stops: string[] = [];
+    for (let i = 0; i < n; i++) {
+      const start = (i / n * 100).toFixed(2);
+      const end = ((i + 1) / n * 100).toFixed(2);
+      stops.push(`${rgbaColors[i]} ${start}% ${end}%`);
+    }
+    slot.style.background = `linear-gradient(135deg, ${stops.join(', ')})`;
   }
-  // 底层：主色淡填充
-  bgLayers.push(`linear-gradient(${hexToRgba(primary, 0.18)}, ${hexToRgba(primary, 0.18)})`);
-  slot.style.background = bgLayers.join(', ');
 }
 
 /** 计算范围高亮键位+源键位的包围盒（用于tooltip避让） */
@@ -3314,12 +3328,21 @@ export function renderBuildManager(): void {
       const freq = letterFreqs.get(k) ?? 0;
       // 词语效果加成：统计该字母的总底分效果
       let score = 0;
+      let baseMult = 1;
       for (const [word, effect] of state.wordEffects) {
         if (effect.type === 'base_score') {
-          const unique = new Set(word.toLowerCase());
-          if (unique.has(k)) score += effect.value;
+          if (effect.targetLetter) {
+            if (effect.targetLetter.toLowerCase() === k) score += effect.value;
+          } else {
+            const unique = new Set(word.toLowerCase());
+            if (unique.has(k)) score += effect.value;
+          }
+        } else if (effect.type === 'base_multiplier' && effect.targetLetter?.toLowerCase() === k) {
+          baseMult *= effect.value;
         }
       }
+      // 显示：基础1 + 加成 后应用倍率，减去原始 1（只显示额外部分）
+      score = Math.round((1 + score) * baseMult - 1);
       const skillId = state.player.bindings.get(k);
 
       // 低频键位锁定（频率<5 → 底分为0）— 标点键绕过

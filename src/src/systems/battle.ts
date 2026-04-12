@@ -674,19 +674,27 @@ function playerCorrect(k: string): void {
   }
 
   // 字母基础分（每个正确击键基础 1 分）
-  const letterBase = 1;
-  const letterScore = letterBase * state.multiplier;
-  wordBaseScore += letterBase; // 累计基础分（用于结算展示）
-  state.resources.base += letterBase; // 写入资源
-  state.wordScore += letterScore;
-
+  // 蚕食：绑定的技能含 Silkworm 词条时，当前字母不产生底分
+  let letterBase = 1;
+  if (skillId) {
+    const sk = state.affixSkills.get(skillId);
+    if (sk?.affixes.some(a => a.type === AffixType.Silkworm)) letterBase = 0;
+  }
+  // 传说词包 base_multiplier：该字母总底分×N（含 letterBase 和其他词包的加成）
+  let letterBaseMult = 1;
+  for (const [, eff] of state.wordEffects) {
+    if (eff.type === 'base_multiplier' && eff.targetLetter?.toLowerCase() === k) {
+      letterBaseMult *= eff.value;
+    }
+  }
   // 词语效果加成：通过缓存的注册表解析 on_correct_keystroke
+  let letterBonusScore = 0;
   if (letterRegistry) {
     const letterResult = EffectPipeline.resolve(letterRegistry, 'on_correct_keystroke', {
       currentKeystrokeKey: k,
     });
     if (letterResult.effects.score > 0) {
-      synergy.letterBaseScore += letterResult.effects.score;
+      letterBonusScore = letterResult.effects.score;
     }
     if (letterResult.effects.multiply > 0) {
       state.multiplier += letterResult.effects.multiply;
@@ -698,6 +706,13 @@ function playerCorrect(k: string): void {
       state.resources.gold += letterResult.effects.gold;
     }
   }
+
+  // 应用底分倍率（传说词包翻倍）
+  const finalLetterBase = letterBase * letterBaseMult;
+  wordBaseScore += finalLetterBase;
+  state.resources.base += finalLetterBase;
+  state.wordScore += finalLetterBase * state.multiplier;
+  synergy.letterBaseScore += letterBonusScore * letterBaseMult;
 
   // 太鼓节拍：记录击键 + 检查命中（结果存储在模块级变量，由 skills.ts 读取）
   if (state.player.relics.has('rhythm_adapt')) {
@@ -813,9 +828,10 @@ function playerCorrect(k: string): void {
   spawnParticles(letter, shouldTrigger ? 10 : 5, '#4ecdc4');
   playSound('type');
 
-  // Boss 修饰器：击键代价 — 每次正确击键 -1s
-  if (getActiveParams()?.keystrokeTaxActive) {
-    state.time -= getShieldedValue(1, true);
+  // Boss 修饰器：击键代价 — 每次正确击键扣时间
+  {
+    const taxAmt = getActiveParams()?.keystrokeTaxActive ?? 0;
+    if (taxAmt > 0) state.time -= getShieldedValue(taxAmt, true);
   }
 
   // Charge 按住蓄力：字母推进延迟到释放（releaseCharge）
@@ -1271,12 +1287,15 @@ function completeWord(): void {
     showFeedback(t('battle.chaos_roulette'), '#ff44ff');
   }
 
-  // Boss 修饰器：击键代价 — 产出资源时也 -1s（每种资源各扣一次）
-  if (getActiveParams()?.keystrokeTaxActive) {
-    const resCount = getWordResourceTypeCount();
-    if (resCount > 0) {
-      const penalty = getShieldedValue(1, true) * resCount;
-      state.time -= penalty;
+  // Boss 修饰器：击键代价 — 产出资源时也扣时间（每种资源各扣一次）
+  {
+    const taxAmt = getActiveParams()?.keystrokeTaxActive ?? 0;
+    if (taxAmt > 0) {
+      const resCount = getWordResourceTypeCount();
+      if (resCount > 0) {
+        const penalty = getShieldedValue(taxAmt, true) * resCount;
+        state.time -= penalty;
+      }
     }
   }
 

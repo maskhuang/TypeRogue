@@ -111,6 +111,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   aura_fury:   '#e74c3c', // 红 — 愤怒光环
   aura_morale: '#2ecc71', // 绿 — 士气光环
   fiber:       '#00bfff', // 天蓝 — 光纤
+  silkworm:    '#9acd32', // 黄绿 — 蚕食
 }
 
 export interface KeyTooltipData {

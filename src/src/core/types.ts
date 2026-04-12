@@ -290,8 +290,8 @@ export interface SkillInstance {
 }
 
 // === 词语效果系统 ===
-export type WordEffectType = 'base_score' | 'multiplier' | 'time' | 'gold';
-export interface WordEffect { type: WordEffectType; value: number; }
+export type WordEffectType = 'base_score' | 'base_multiplier' | 'multiplier' | 'time' | 'gold';
+export interface WordEffect { type: WordEffectType; value: number; targetLetter?: string; }
 
 // === 词库系统 ===
 export interface WordPool {

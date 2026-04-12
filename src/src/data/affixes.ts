@@ -64,6 +64,7 @@ export enum AffixType {
   AuraFury = 'aura_fury',
   AuraMorale = 'aura_morale',
   Fiber = 'fiber',
+  Silkworm = 'silkworm',
 }
 
 // ===== 词条类别 =====
@@ -125,6 +126,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.AuraFury]: ['topology', 'crit'],
   [AffixType.AuraMorale]: ['topology', 'numeric'],
   [AffixType.Fiber]: ['word_sense', 'stack'],
+  [AffixType.Silkworm]: ['production', 'numeric'],
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -339,6 +341,7 @@ export interface AffixInstance {
   auraCrit?: number                // AuraFury: 给匹配技能的暴击率加成
   auraMorale?: number              // AuraMorale: 给匹配技能的bonusPercent加成
   fiberInterval?: number           // Fiber: 叠层满层间隔
+  silkwormBonus?: number           // Silkworm: 产出加成%，触发时当前字母不产生底分
 }
 
 // ===== 稀有度 =====
@@ -525,6 +528,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.AuraFury]: 'high',
   [AffixType.AuraMorale]: 'high',
   [AffixType.Fiber]: 'low',
+  [AffixType.Silkworm]: 'high',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -574,14 +578,44 @@ export const VOID_BONUS_TABLE: Record<PositionRelation, number> = {
   [PositionRelation.Symmetric]: 0.50,
 }
 
-/** 虫群词条 swarmK 按 PositionRelation */
+/** 虫群词条 swarmK 按 PositionRelation（与虚无统一） */
 export const SWARM_BONUS_TABLE: Record<PositionRelation, number> = {
-  [PositionRelation.Adjacent]: 0.20,
-  [PositionRelation.SameRow]: 0.08,
-  [PositionRelation.SameColumn]: 0.25,
-  [PositionRelation.SameHand]: 0.04,
-  [PositionRelation.SameFinger]: 0.20,
-  [PositionRelation.Symmetric]: 0.40,
+  [PositionRelation.Adjacent]: 0.25,
+  [PositionRelation.SameRow]: 0.10,
+  [PositionRelation.SameColumn]: 0.30,
+  [PositionRelation.SameHand]: 0.05,
+  [PositionRelation.SameFinger]: 0.25,
+  [PositionRelation.Symmetric]: 0.50,
+}
+
+/** 落差词条 flowK 按 PositionRelation（与虚无统一） */
+export const FLOW_BONUS_TABLE: Record<PositionRelation, number> = {
+  [PositionRelation.Adjacent]: 0.25,
+  [PositionRelation.SameRow]: 0.10,
+  [PositionRelation.SameColumn]: 0.30,
+  [PositionRelation.SameHand]: 0.05,
+  [PositionRelation.SameFinger]: 0.25,
+  [PositionRelation.Symmetric]: 0.50,
+}
+
+/** 汇流词条 confluenceK 按 PositionRelation（与虚无统一） */
+export const CONFLUENCE_BONUS_TABLE: Record<PositionRelation, number> = {
+  [PositionRelation.Adjacent]: 0.25,
+  [PositionRelation.SameRow]: 0.10,
+  [PositionRelation.SameColumn]: 0.30,
+  [PositionRelation.SameHand]: 0.05,
+  [PositionRelation.SameFinger]: 0.25,
+  [PositionRelation.Symmetric]: 0.50,
+}
+
+/** 联合词条 unionK 按 PositionRelation（与虚无统一） */
+export const UNION_BONUS_TABLE: Record<PositionRelation, number> = {
+  [PositionRelation.Adjacent]: 0.25,
+  [PositionRelation.SameRow]: 0.10,
+  [PositionRelation.SameColumn]: 0.30,
+  [PositionRelation.SameHand]: 0.05,
+  [PositionRelation.SameFinger]: 0.25,
+  [PositionRelation.Symmetric]: 0.50,
 }
 
 /** 转化词条 k 值校准表：[k_min, k_max]（触发层已按 BASE_VALUES 归一化，统一区间） */
@@ -646,6 +680,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.AuraFury]: '愤怒光环',
   [AffixType.AuraMorale]: '士气光环',
   [AffixType.Fiber]: '光纤',
+  [AffixType.Silkworm]: '蚕食',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -698,6 +733,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.AuraFury]: '自身不产出；指定关系内匹配技能暴击率+{auraCrit}%',
   [AffixType.AuraMorale]: '自身不产出；指定关系内匹配技能产出+{auraMorale}%',
   [AffixType.Fiber]: '首字母触发时额外叠层，满层触发尾字母键上的技能',
+  [AffixType.Silkworm]: '产出+{silkwormBonus}%，但触发时当前字母不产生底分',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -965,6 +1001,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.AuraFury]: { param: 'auraCrit',       delta: 0.03,  mode: 'add' },
   [AffixType.AuraMorale]:{ param: 'auraMorale',    delta: 0.05,  mode: 'add' },
   [AffixType.Fiber]:    { param: 'fiberInterval',  delta: -1,    mode: 'add' },
+  [AffixType.Silkworm]: { param: 'silkwormBonus',  delta: 0.20,  mode: 'add' },
   [AffixType.Amplify]: { param: 'amplifyK',       delta: 0.01,  mode: 'add' },
   // Rainbow / Twin / Mirror / Conduit: 无可缩放数值参数
 }

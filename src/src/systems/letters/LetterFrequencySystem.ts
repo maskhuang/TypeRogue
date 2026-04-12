@@ -48,11 +48,16 @@ export function getWordEffectModifiers(wordEffects: Map<string, WordEffect>): Mo
     const effectType = EFFECT_TYPE_MAP[effect.type]
     if (!effectType) continue
 
-    // 提取独特字母
-    const uniqueLetters = new Set<string>()
-    for (const char of word.toLowerCase()) {
-      if (char >= 'a' && char <= 'z') {
-        uniqueLetters.add(char)
+    // 传说词包：锁定单字母
+    let uniqueLetters: Set<string>
+    if (effect.targetLetter) {
+      uniqueLetters = new Set([effect.targetLetter.toLowerCase()])
+    } else {
+      uniqueLetters = new Set<string>()
+      for (const char of word.toLowerCase()) {
+        if (char >= 'a' && char <= 'z') {
+          uniqueLetters.add(char)
+        }
       }
     }
 

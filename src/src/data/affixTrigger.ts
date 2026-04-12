@@ -738,6 +738,13 @@ export function resolvePhase2(
         break
       }
 
+      case AffixType.Silkworm: {
+        // 蚕食：产出+N%，触发时当前字母不产生底分（在 battle.ts playerCorrect 中处理）
+        if (effectiveBase <= 0) break
+        bonusPercent += affix.silkwormBonus ?? 0
+        break
+      }
+
       case AffixType.Myopia: {
         // 短视：产出+N%，每次触发目标分数增加
         if (effectiveBase <= 0) break // 自不产出技能跳过代价

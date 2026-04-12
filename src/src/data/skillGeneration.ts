@@ -14,7 +14,7 @@ import { KEYS } from '../core/constants'
 import {
   AffixType,
   AFFIX_WEIGHTS, BASE_VALUES, RARITY_PROBABILITIES,
-  VOID_BONUS_TABLE, SWARM_BONUS_TABLE, CONVERT_K_TABLE, AFFIX_CLASS_RESTRICTION,
+  VOID_BONUS_TABLE, SWARM_BONUS_TABLE, FLOW_BONUS_TABLE, CONFLUENCE_BONUS_TABLE, UNION_BONUS_TABLE, CONVERT_K_TABLE, AFFIX_CLASS_RESTRICTION,
 } from './affixes'
 import { t } from '../demo/demo-i18n'
 
@@ -230,8 +230,10 @@ export function rollAffixParams(
     case AffixType.Tide:
       return { type, interval: 6, tideRate: 1 }  // 每秒+1叠层
 
-    case AffixType.Union:
-      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), unionK: roundTo(0.08 + random() * 0.07, 3) }
+    case AffixType.Union: {
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
+      return { type, posRel, unionK: UNION_BONUS_TABLE[posRel] }
+    }
 
     case AffixType.Conduit:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
@@ -266,11 +268,15 @@ export function rollAffixParams(
     case AffixType.Multiply:
       return { type, multiplyValue: roundTo(1.0 + random() * 1.0, 2) }  // ×1.0~2.0
 
-    case AffixType.Flow:
-      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), flowK: roundTo(0.03 + random() * 0.05, 3) }  // 0.03~0.08
+    case AffixType.Flow: {
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
+      return { type, posRel, flowK: FLOW_BONUS_TABLE[posRel] }
+    }
 
-    case AffixType.Confluence:
-      return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS), confluenceK: roundTo(0.15 + random() * 0.15, 3) }  // 0.15~0.30
+    case AffixType.Confluence: {
+      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
+      return { type, posRel, confluenceK: CONFLUENCE_BONUS_TABLE[posRel] }
+    }
 
     case AffixType.Reflect:
       return { type, reflectK: roundTo(0.04 + random() * 0.04, 2) }
@@ -317,6 +323,9 @@ export function rollAffixParams(
 
     case AffixType.Fiber:
       return { type, fiberInterval: 4 }  // 每4层触发尾字母技能
+
+    case AffixType.Silkworm:
+      return { type, silkwormBonus: roundTo(0.50 + random() * 1.00, 2) }  // +50%~150%
 
     default: {
       const _exhaustive: never = type
@@ -395,6 +404,13 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
     // 无职业时排除所有职业专属词条
     excludeTypes = new Set(Object.keys(AFFIX_CLASS_RESTRICTION))
   }
+
+  // 资源互斥：避免代价/加成与自身资源冲突
+  if (resource === 'gold') excludeTypes.add(AffixType.Mercenary)
+  if (resource === 'score') excludeTypes.add(AffixType.Myopia)
+  if (resource === 'time') excludeTypes.add(AffixType.Charge)
+  if (resource === 'multiplier') excludeTypes.add(AffixType.Reecho)
+  if (resource === 'base') excludeTypes.add(AffixType.Silkworm)
 
   // 加权不重复抽取词条：普通1个、稀有2个、史诗3个、传说4个
   const affixCount = rarity + 1

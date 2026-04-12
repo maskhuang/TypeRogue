@@ -67,8 +67,8 @@ export const BOSS_MODIFIER_META: Record<BossModifierId, BossModifierMeta> = {
     id: 'boss_keystroke_tax',
     name: '击键代价',
     icon: '⌨️',
-    description: '击键或产出资源时 -1 秒',
-    eliteHint: '击键或产出资源时 -1 秒',
+    description: '击键或产出资源时 -0.2 秒',
+    eliteHint: '击键或产出资源时 -0.1 秒',
     category: 'offense',
   },
   boss_escalation: {
@@ -681,10 +681,10 @@ export function transformWordForModifier(word: string): string {
 
 // === 6 个新修饰器实现 ===
 
-// === boss_keystroke_tax: 击键/资源产出时 -1s（标志位，逻辑在 battle.ts）===
+// === boss_keystroke_tax: 击键/资源产出时 -0.2s（精英 -0.1s）===
 const bossKeystrokeTax: BossModifier = {
   id: 'boss_keystroke_tax',
-  getParams: () => ({ keystrokeTaxActive: 1 }),
+  getParams: (isElite) => ({ keystrokeTaxActive: isElite ? 0.1 : 0.2 }),
   apply: () => {},
   cleanup: () => {},
 }
@@ -820,14 +820,36 @@ const DRAIN_TOTAL_PENALTY_ELITE = 0.15 // elite: 15%
 const DRAINABLE_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
 let _drainResources: Set<ResourceType> = new Set()
 let _drainMult = 1
+// 预生成资源（picker 显示用），在 getParams 时消费
+let _pendingDrainPreview: { resources: ResourceType[]; mult: number } | null = null
+
+/** 预生成产出削弱资源（picker 显示前调用） */
+export function pregenDrainPreview(isElite: boolean): ResourceType[] {
+  const n = isElite ? 3 : 2
+  const totalPenalty = isElite ? DRAIN_TOTAL_PENALTY_ELITE : DRAIN_TOTAL_PENALTY
+  const perResource = totalPenalty / n
+  const shuffled = [...DRAINABLE_RESOURCES].sort(() => Math.random() - 0.5)
+  const resources = shuffled.slice(0, n)
+  _pendingDrainPreview = { resources, mult: 1 - perResource }
+  return resources
+}
+
+/** 清除预生成缓存（picker 取消/关闭时调用） */
+export function clearDrainPreview(): void {
+  _pendingDrainPreview = null
+}
 
 const bossOutputDrain: BossModifier = {
   id: 'boss_output_drain',
   getParams: (isElite) => {
+    if (_pendingDrainPreview) {
+      const result = { outputDrainMult: _pendingDrainPreview.mult, outputDrainResources: _pendingDrainPreview.resources }
+      _pendingDrainPreview = null
+      return result
+    }
     const n = isElite ? 3 : 2
     const totalPenalty = isElite ? DRAIN_TOTAL_PENALTY_ELITE : DRAIN_TOTAL_PENALTY
     const perResource = totalPenalty / n
-    // 随机选 N 种资源
     const shuffled = [...DRAINABLE_RESOURCES].sort(() => Math.random() - 0.5)
     const resources = shuffled.slice(0, n)
     return { outputDrainMult: 1 - perResource, outputDrainResources: resources }

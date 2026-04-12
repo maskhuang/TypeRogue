@@ -286,12 +286,20 @@ const WORD_EFFECT_POOL: { type: WordEffectType; epicVal: number; legendVal: numb
   { type: 'gold',       epicVal: 1, legendVal: 2 },
 ];
 
-function rollWordEffect(rarity: 2 | 3): WordEffect {
-  const entry = WORD_EFFECT_POOL[Math.floor(random() * WORD_EFFECT_POOL.length)];
-  return {
-    type: entry.type,
-    value: rarity === 3 ? entry.legendVal : entry.epicVal,
-  };
+function rollWordEffect(rarity: 0 | 1 | 2 | 3, word?: string): WordEffect {
+  // 普通/稀有/史诗：固定 base_score，作用于所有独特字母
+  if (rarity < 3) {
+    const values: Record<0 | 1 | 2, number> = { 0: 1, 1: 1, 2: 2 };
+    return { type: 'base_score', value: values[rarity as 0 | 1 | 2] };
+  }
+  // 传说：随机 1 个字母，效果是该字母底分 ×2（也作用于其他词包的底分加成）
+  const uniqueLetters = word
+    ? [...new Set(word.toLowerCase().split('').filter(c => c >= 'a' && c <= 'z'))]
+    : [];
+  const targetLetter = uniqueLetters.length > 0
+    ? uniqueLetters[Math.floor(random() * uniqueLetters.length)]
+    : undefined;
+  return { type: 'base_multiplier', value: 2, targetLetter };
 }
 
 // === Fisher-Yates shuffle ===
@@ -425,10 +433,8 @@ export function generateWordPacks(
       cost: PACK_RARITY_BASE_PRICE[rarity] + Math.floor(avgWordLen),
       rarity,
     };
-    // 史诗/传说牌包附带词语效果
-    if (rarity >= 2) {
-      pack.wordEffect = rollWordEffect(rarity as 2 | 3);
-    }
+    // 所有牌包附带词语效果；传说锁定单字母翻倍
+    pack.wordEffect = rollWordEffect(rarity as 0 | 1 | 2 | 3, words[0]);
     packs.push(pack);
   }
 

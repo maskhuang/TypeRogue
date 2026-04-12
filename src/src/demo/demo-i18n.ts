@@ -560,8 +560,8 @@ const ZH: Record<string, string> = {
   'modifier.boss_garble.desc': '词语中插入随机标点符号',
   'modifier.boss_garble.elite': '插入较少标点符号',
   'modifier.boss_keystroke_tax': '击键代价',
-  'modifier.boss_keystroke_tax.desc': '击键或产出资源时 -1 秒',
-  'modifier.boss_keystroke_tax.elite': '击键或产出资源时 -1 秒',
+  'modifier.boss_keystroke_tax.desc': '击键或产出资源时 -0.2 秒',
+  'modifier.boss_keystroke_tax.elite': '击键或产出资源时 -0.1 秒',
   'modifier.boss_escalation': '渐进失控',
   'modifier.boss_escalation.desc': '每 15 秒时间流速永久 +20%',
   'modifier.boss_escalation.elite': '每 20 秒 +10%',
@@ -681,7 +681,7 @@ const ZH: Record<string, string> = {
   'affix.leverage': '杠杆', 'affix.option': '期权', 'affix.hedge': '对冲',
   'affix.burst': '连射', 'affix.zero_in': '校准', 'affix.sharpshooter': '神射', 'affix.overflow': '溢层',
   'affix.bridge': '桥', 'affix.clique': '团', 'affix.component': '连通',
-  'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝', 'affix.refine': '提纯', 'affix.evolve': '进化', 'affix.harvest': '收割', 'affix.chain': '连锁', 'affix.volatile': '不稳定', 'affix.mutacrit': '蜕变暴击', 'affix.ascend': '升华', 'affix.reecho': '回音', 'affix.myopia': '短视',
+  'affix.decorator': '装饰器', 'affix.reflect': '反射', 'affix.monkey_patch': '猴子补丁', 'affix.excavate': '挖掘', 'affix.treasure': '寻宝', 'affix.refine': '提纯', 'affix.evolve': '进化', 'affix.harvest': '收割', 'affix.chain': '连锁', 'affix.volatile': '不稳定', 'affix.mutacrit': '蜕变暴击', 'affix.ascend': '升华', 'affix.reecho': '回音', 'affix.myopia': '短视', 'affix.silkworm': '蚕食',
   'affix.aura_fury': '愤怒光环', 'affix.aura_morale': '士气光环', 'affix.fiber': '光纤',
 
   // --- affix descriptions (53) ---
@@ -757,6 +757,7 @@ const ZH: Record<string, string> = {
   'affix_desc.ascend': '被蜕变时本技能有概率升级',
   'affix_desc.reecho': '打错时也触发本技能，但每次打错累积-{reechoPenalty}%产出，打对时重置',
   'affix_desc.myopia': '产出+{myopiaBonus}%，但每次触发目标分数+{myopiaCost}',
+  'affix_desc.silkworm': '产出+{silkwormBonus}%，但触发时当前字母不产生底分',
   'affix_desc.aura_fury': '自身不产出；指定关系内匹配技能暴击率+{auraCrit}%',
   'affix_desc.aura_morale': '自身不产出；指定关系内匹配技能产出+{auraMorale}%',
   'affix_desc.fiber': '首字母触发时叠层，满层触发尾字母键上的技能',
@@ -926,6 +927,7 @@ const ZH: Record<string, string> = {
   'est.mercenary': '雇佣 +{pct}% (-{cost}g)',
   'est.mercenary_poor': '雇佣 (金币不足)',
   'est.myopia': '短视 +{pct}% (+{cost}目标分/次)',
+  'est.silkworm': '蚕食 +{pct}%',
   'est.taboo': '禁忌 +{pct}%暴击率',
   'est.taboo_penalty': '(未暴击负产出)',
   'est.taboo_quest': '(未暴击→随机资源)',
@@ -1068,6 +1070,7 @@ const ZH: Record<string, string> = {
 
   // --- 词语效果系统 ---
   'wordeffect.base_score': '底分+{value}',
+  'wordeffect.base_multiplier': '底分×{value}',
   'wordeffect.multiplier': '倍率+{value}',
   'wordeffect.time': '续命+{value}s',
   'wordeffect.gold': '淘金+{value}',
@@ -1631,8 +1634,8 @@ const EN: Record<string, string> = {
   'modifier.boss_garble.desc': 'Random punctuation inserted into words',
   'modifier.boss_garble.elite': 'Less punctuation inserted',
   'modifier.boss_keystroke_tax': 'Keystroke Tax',
-  'modifier.boss_keystroke_tax.desc': 'Keystroke or resource output: -1s',
-  'modifier.boss_keystroke_tax.elite': 'Keystroke or resource output: -1s',
+  'modifier.boss_keystroke_tax.desc': 'Keystroke or resource output: -0.2s',
+  'modifier.boss_keystroke_tax.elite': 'Keystroke or resource output: -0.1s',
   'modifier.boss_escalation': 'Escalation',
   'modifier.boss_escalation.desc': 'Time speed +20% every 15s (permanent)',
   'modifier.boss_escalation.elite': '+10% every 20s',
@@ -1752,7 +1755,7 @@ const EN: Record<string, string> = {
   'affix.leverage': 'Leverage', 'affix.option': 'Option', 'affix.hedge': 'Hedge',
   'affix.burst': 'Burst', 'affix.zero_in': 'Zero-In', 'affix.sharpshooter': 'Sharpshooter', 'affix.overflow': 'Overflow',
   'affix.bridge': 'Bridge', 'affix.clique': 'Clique', 'affix.component': 'Component',
-  'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure', 'affix.refine': 'Refine', 'affix.evolve': 'Evolve', 'affix.harvest': 'Harvest', 'affix.chain': 'Chain', 'affix.volatile': 'Volatile', 'affix.mutacrit': 'Mutacrit', 'affix.ascend': 'Ascend', 'affix.reecho': 'Re-echo', 'affix.myopia': 'Myopia',
+  'affix.decorator': 'Decorator', 'affix.reflect': 'Reflect', 'affix.monkey_patch': 'Monkey Patch', 'affix.excavate': 'Excavate', 'affix.treasure': 'Treasure', 'affix.refine': 'Refine', 'affix.evolve': 'Evolve', 'affix.harvest': 'Harvest', 'affix.chain': 'Chain', 'affix.volatile': 'Volatile', 'affix.mutacrit': 'Mutacrit', 'affix.ascend': 'Ascend', 'affix.reecho': 'Re-echo', 'affix.myopia': 'Myopia', 'affix.silkworm': 'Silkworm',
   'affix.aura_fury': 'Fury Aura', 'affix.aura_morale': 'Morale Aura', 'affix.fiber': 'Fiber',
 
   // --- affix descriptions (53) ---
@@ -1828,6 +1831,7 @@ const EN: Record<string, string> = {
   'affix_desc.ascend': 'When mutated: chance to level up this skill',
   'affix_desc.reecho': 'Wrong keys also trigger this skill, but each miss stacks -{reechoPenalty}% output; resets on correct key',
   'affix_desc.myopia': 'Output +{myopiaBonus}%, but each trigger increases target score by {myopiaCost}',
+  'affix_desc.silkworm': 'Output +{silkwormBonus}%, but the triggering letter produces no base score',
   'affix_desc.aura_fury': 'No output; matching skills in range gain +{auraCrit}% crit rate',
   'affix_desc.aura_morale': 'No output; matching skills in range gain +{auraMorale}% output bonus',
   'affix_desc.fiber': 'Stacks on first letter trigger; when full, triggers skill on last letter key',
@@ -1999,6 +2003,7 @@ const EN: Record<string, string> = {
   'est.mercenary': 'Mercenary +{pct}% (-{cost}g)',
   'est.mercenary_poor': 'Mercenary (not enough gold)',
   'est.myopia': 'Myopia +{pct}% (+{cost} target/trigger)',
+  'est.silkworm': 'Silkworm +{pct}%',
   'est.taboo': 'Taboo +{pct}% crit',
   'est.taboo_penalty': '(negative on no crit)',
   'est.taboo_quest': '(no crit → random resource)',
@@ -2141,6 +2146,7 @@ const EN: Record<string, string> = {
 
   // --- Word Effect System ---
   'wordeffect.base_score': 'Base+{value}',
+  'wordeffect.base_multiplier': 'Base×{value}',
   'wordeffect.multiplier': 'Mult+{value}',
   'wordeffect.time': 'Time+{value}s',
   'wordeffect.gold': 'Gold+{value}',

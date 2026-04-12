@@ -4,7 +4,7 @@
 // Story 25.3: 每周目 Boss 胜利后从 offense/defense/disruption 各选 1 个
 
 import { state } from '../core/state'
-import { generateBossModifierCandidatesByCategory, getBossModifierMeta } from '../data/bossModifiers'
+import { generateBossModifierCandidatesByCategory, getBossModifierMeta, pregenDrainPreview } from '../data/bossModifiers'
 import type { BossModifierId, ModifierCategory } from '../data/bossModifiers'
 import { playSound } from '../effects/sound'
 import { t } from '../demo/demo-i18n'
@@ -125,7 +125,13 @@ export function showEliteModifierPicker(onComplete: (modId: BossModifierId) => v
     card.className = 'modifier-picker-card'
     // 显示 eliteHint 而非完整描述
     const modName = t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name
-    const eliteDesc = t(`modifier.${meta.id}.elite`) !== `modifier.${meta.id}.elite` ? t(`modifier.${meta.id}.elite`) : meta.eliteHint
+    let eliteDesc = t(`modifier.${meta.id}.elite`) !== `modifier.${meta.id}.elite` ? t(`modifier.${meta.id}.elite`) : meta.eliteHint
+    // 产出削弱：预生成资源并显示在描述中
+    if (modId === 'boss_output_drain') {
+      const resources = pregenDrainPreview(true)
+      const resLabels = resources.map(r => t('resource.' + r) || r).join(' / ')
+      eliteDesc = `${eliteDesc}（${resLabels}）`
+    }
     card.innerHTML = `
       <div class="modifier-picker-icon">${meta.icon}</div>
       <div class="modifier-picker-name">${modName}</div>
@@ -199,10 +205,16 @@ function renderPickerRound(
 
     const card = document.createElement('div')
     card.className = 'modifier-picker-card'
+    let modDesc = t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description
+    if (modId === 'boss_output_drain') {
+      const resources = pregenDrainPreview(false)
+      const resLabels = resources.map(r => t('resource.' + r) || r).join(' / ')
+      modDesc = `${modDesc}（${resLabels}）`
+    }
     card.innerHTML = `
       <div class="modifier-picker-icon">${meta.icon}</div>
       <div class="modifier-picker-name">${t(`modifier.${meta.id}`) !== `modifier.${meta.id}` ? t(`modifier.${meta.id}`) : meta.name}</div>
-      <div class="modifier-picker-desc">${t(`modifier.${meta.id}.desc`) !== `modifier.${meta.id}.desc` ? t(`modifier.${meta.id}.desc`) : meta.description}</div>
+      <div class="modifier-picker-desc">${modDesc}</div>
     `
 
     card.onclick = () => {
