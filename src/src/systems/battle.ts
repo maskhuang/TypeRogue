@@ -326,7 +326,7 @@ function pickWord(): string {
   return words[Math.floor(random() * words.length)].toUpperCase();
 }
 
-/** 收集所有 Gravity 词条的有效 probMult，按字母聚合（同字母取乘积） */
+/** 收集所有 Gravity / Repulsion 词条的有效 probMult，按字母聚合（同字母取乘积） */
 function collectGravityWeights(): Map<string, number> {
   const result = new Map<string, number>();
   for (const [key, skillId] of state.player.bindings) {
@@ -335,9 +335,9 @@ function collectGravityWeights(): Map<string, number> {
     const runtimeState = state.affixSkillStates.get(skillId);
     if (!runtimeState) continue;
     for (const affix of skill.affixes) {
-      if (affix.type !== AffixType.Gravity) continue;
+      if (affix.type !== AffixType.Gravity && affix.type !== AffixType.Repulsion) continue;
       const probMult = getEffectiveProbMult(affix, runtimeState, skill, state.affixSkills, state.affixSkillStates);
-      if (probMult === 1) continue; // 中性，不影响
+      if (probMult === 1) continue;
       const letter = key.toUpperCase();
       const existing = result.get(letter) ?? 1;
       result.set(letter, existing * probMult);
@@ -377,6 +377,14 @@ function setWord(): void {
   wordStartScore = state.score; // 玻璃大炮：记录词开始时总分
   setTimeout(() => updateTaikoJudge(), 0); // 新词渲染后更新判定点
   resetWordResourceTypes(); // 重置词级资源追踪
+  // 逐词重置：蚕食累积损失（质变·化茧：达到阈值后不重置，逐关重置）
+  const silkwormCocoonActive = isAffixGloballyTransformed(AffixType.Silkworm, state.affixSkills, state.affixSkillStates);
+  for (const [, rt] of state.affixSkillStates) {
+    if (rt.silkwormStacks > 0) {
+      if (silkwormCocoonActive && rt.silkwormStacks >= 8) continue;
+      rt.silkwormStacks = 0;
+    }
+  }
   leftHandTriggered = false; // 重置左右手追踪
   rightHandTriggered = false;
   synergy.wordSkillCount = 0;
@@ -675,10 +683,17 @@ function playerCorrect(k: string): void {
 
   // 字母基础分（每个正确击键基础 1 分）
   // 蚕食：绑定的技能含 Silkworm 词条时，当前字母不产生底分
+  // 质变·化茧：累积达 8 层后，本关剩余字母不再消耗底分
+  const SILKWORM_COCOON_THRESHOLD = 8;
   let letterBase = 1;
   if (skillId) {
     const sk = state.affixSkills.get(skillId);
-    if (sk?.affixes.some(a => a.type === AffixType.Silkworm)) letterBase = 0;
+    if (sk?.affixes.some(a => a.type === AffixType.Silkworm)) {
+      const rt = state.affixSkillStates.get(skillId);
+      const cocoonActive = isAffixGloballyTransformed(AffixType.Silkworm, state.affixSkills, state.affixSkillStates)
+        && (rt?.silkwormStacks ?? 0) >= SILKWORM_COCOON_THRESHOLD;
+      if (!cocoonActive) letterBase = 0;
+    }
   }
   // 传说词包 base_multiplier：该字母总底分×N（含 letterBase 和其他词包的加成）
   let letterBaseMult = 1;

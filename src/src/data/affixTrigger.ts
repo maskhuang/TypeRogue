@@ -708,11 +708,10 @@ export function resolvePhase2(
       }
 
       case AffixType.Swarm: {
-        // 虫群：范围内拥有 Swarm 词条的技能数 × swarmK（含倒影复制的虫群）
-        if (affix.posRel == null) break
+        // 虫群：全场拥有 Swarm 词条的技能数 × swarmK（含倒影复制的虫群，含自身）
         let swarmCount = 0
-        for (const ns of getNeighborSkills(ctx.occupiedKeys, affix.posRel, ctx)) {
-          const nsRt = ctx.skillStates.get(ns.id)
+        for (const [nsId, ns] of ctx.allSkills) {
+          const nsRt = ctx.skillStates.get(nsId)
           const nsMirror = nsRt?.mirrorCopiedAffixes ?? (nsRt?.mirrorCopiedAffix ? [nsRt.mirrorCopiedAffix] : [])
           const allAffixes = [...ns.affixes, ...nsMirror]
           if (allAffixes.some(a => a.type === AffixType.Swarm)) swarmCount++
@@ -739,9 +738,10 @@ export function resolvePhase2(
       }
 
       case AffixType.Silkworm: {
-        // 蚕食：产出+N%，触发时当前字母不产生底分（在 battle.ts playerCorrect 中处理）
+        // 蚕食：根据本词累积损失底分给予产出加成（含本次）；底分消耗在 battle.ts playerCorrect 中处理
         if (effectiveBase <= 0) break
-        bonusPercent += affix.silkwormBonus ?? 0
+        runtimeState.silkwormStacks = (runtimeState.silkwormStacks ?? 0) + 1
+        bonusPercent += runtimeState.silkwormStacks * (affix.silkwormK ?? 0)
         break
       }
 
@@ -1528,20 +1528,19 @@ export function resolvePhase5(
     }
   }
 
-  // Swarm 质变·繁殖：每次触发 25% 概率向范围内无虫群词条的邻居传播
+  // Swarm 质变·繁殖：每次触发 25% 概率向全场随机无虫群技能传播
   if (isTransformedForAffix(AffixType.Swarm, runtimeState, skill, ctx)) {
-    const swarmAffix = skill.affixes.find(a => a.type === AffixType.Swarm)
-    if (swarmAffix?.posRel != null && ctx.randomFn() < 0.25) {
-      // 找范围内没有 Swarm 词条的邻居
+    if (ctx.randomFn() < 0.25) {
       const candidates: string[] = []
-      for (const ns of getNeighborSkills(ctx.occupiedKeys, swarmAffix.posRel, ctx)) {
+      for (const [nsId, ns] of ctx.allSkills) {
+        if (nsId === skill.id) continue
         if (!ns.affixes.some(a => a.type === AffixType.Swarm)) {
-          candidates.push(ns.id)
+          candidates.push(nsId)
         }
       }
       if (candidates.length > 0) {
         const targetId = candidates[Math.floor(ctx.randomFn() * candidates.length)]
-        result.swarmPropagateTarget = { skillId: targetId, posRel: swarmAffix.posRel }
+        result.swarmPropagateTarget = { skillId: targetId, posRel: PositionRelation.Adjacent }
       }
     }
   }
@@ -2021,10 +2020,9 @@ export function evaluateEquipQuests(
     // 更新 questStacks 为当前装备数量（用于 UI 进度显示）
     rt.questStacks = equipped
 
-    // 达标 → 质变；未达标 → 取消质变（equip_count 可逆）
-    const wasTransformed = rt.questTransformed
-    rt.questTransformed = equipped >= target
-    if (rt.questTransformed && !wasTransformed) {
+    // 达标 → 永久质变（完成后不可逆）
+    if (!rt.questTransformed && equipped >= target) {
+      rt.questTransformed = true
       rt.questCompletions++
     }
   }
@@ -2039,19 +2037,26 @@ export function evaluateEquipQuests(
 export function getEffectiveProbMult(
   affix: AffixInstance,
   runtimeState: SkillRuntimeState,
-  skill: AffixSkillInstance,
+  _skill: AffixSkillInstance,
   allSkills?: Map<string, AffixSkillInstance>,
   skillStates?: Map<string, SkillRuntimeState>,
 ): number {
   const baseProbMult = affix.probMult ?? 1
-  const transformed = allSkills && skillStates
-    ? isAffixGloballyTransformed(AffixType.Gravity, allSkills, skillStates)
-    : runtimeState.questTransformed
-  if (!transformed) return baseProbMult
-  // 质变：双向锁定 — 吸引→必含(Infinity)，排斥→必不含(0)，中性→不变(1)
-  if (baseProbMult > 1) return Infinity
-  if (baseProbMult < 1) return 0
-  return 1
+  if (affix.type === AffixType.Gravity) {
+    const transformed = allSkills && skillStates
+      ? isAffixGloballyTransformed(AffixType.Gravity, allSkills, skillStates)
+      : runtimeState.questTransformed
+    if (transformed) return Infinity
+    return baseProbMult
+  }
+  if (affix.type === AffixType.Repulsion) {
+    const transformed = allSkills && skillStates
+      ? isAffixGloballyTransformed(AffixType.Repulsion, allSkills, skillStates)
+      : runtimeState.questTransformed
+    if (transformed) return 0
+    return baseProbMult
+  }
+  return baseProbMult
 }
 
 /**
@@ -2312,6 +2317,7 @@ export function resetStageState(
   for (const [skillId, state] of skillStates) {
     if (!perpetualEngine) state.stacks = 0
     state.chargeAccumulated = 0
+    state.silkwormStacks = 0
 
     // Decay: 每关重置 currentDecayMult（Story 41.2 AC7 — 跨单词不重置，仅跨关重置）
     const skill = skills.get(skillId)
@@ -2464,6 +2470,7 @@ export function deserializeSkill(
     patchMultiplier: (data.runtime as any).patchMultiplier ?? 1.0,
     mutacritAccum: (data.runtime as any).mutacritAccum ?? 0,
     reechoStacks: (data.runtime as any).reechoStacks ?? 0,
+    silkwormStacks: (data.runtime as any).silkwormStacks ?? 0,
   }
   return { skill, runtimeState }
 }

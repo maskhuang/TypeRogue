@@ -204,6 +204,31 @@ export function generateAffixShopItem(
 ): ShopItem {
   const resourcePool = getAvailableResources(state.classId);
   const resource = options?.resource ?? resourcePool[Math.floor(random() * resourcePool.length)];
+  // 引力/斥力词条刷新偏向：收集所有 Gravity / Repulsion 技能
+  const gravitySkills: AffixSkillInstance[] = [];
+  const repulsionSkills: AffixSkillInstance[] = [];
+  for (const [, sk] of state.affixSkills) {
+    if (sk.affixes.some(a => a.type === AffixTypeEnum.Gravity)) gravitySkills.push(sk);
+    if (sk.affixes.some(a => a.type === AffixTypeEnum.Repulsion)) repulsionSkills.push(sk);
+  }
+  const gravityBias = Math.min(0.25 * gravitySkills.length, 0.75);
+  const repulsionBias = Math.min(0.25 * repulsionSkills.length, 0.75);
+  const shouldBiasGravity = !options?.resource && gravitySkills.length > 0 && random() < gravityBias;
+  const shouldBiasRepulsion = !options?.resource && repulsionSkills.length > 0 && random() < repulsionBias;
+  const matchesGravity = (sk: AffixSkillInstance): boolean => {
+    for (const gs of gravitySkills) {
+      if (sk.resource === gs.resource) return true;
+      if (sk.affixes.some(a => a.type !== AffixTypeEnum.Gravity && gs.affixes.some(ga => ga.type === a.type))) return true;
+    }
+    return false;
+  };
+  const matchesRepulsion = (sk: AffixSkillInstance): boolean => {
+    for (const rs of repulsionSkills) {
+      if (sk.resource === rs.resource) return true;
+      if (sk.affixes.some(a => a.type !== AffixTypeEnum.Repulsion && rs.affixes.some(ra => ra.type === a.type))) return true;
+    }
+    return false;
+  };
   const whiteOnly = false;
   // Act 稀有度上限（仅影响随机掷骰，不影响外部指定的 rarity）
   const actMaxRarity = options?.maxRarity ?? getActMaxRarity();
@@ -241,6 +266,29 @@ export function generateAffixShopItem(
       );
       if (hasMatch) break;
       skill = generateSkill({ resource, rarity: skill.rarity as SkillRarity, availableResources: resourcePool, playerClass });
+    }
+  }
+  // 引力偏向：重试直到匹配现有引力技能（同资源或共享非引力词条）
+  if (shouldBiasGravity && !matchesGravity(skill)) {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const retryRes = gravitySkills[Math.floor(random() * gravitySkills.length)].resource;
+      const retrySkill = generateSkill({ resource: retryRes, rarity: skill.rarity as SkillRarity, availableResources: resourcePool, playerClass });
+      if (excludeNames?.has(retrySkill.name)) continue;
+      skill = retrySkill;
+      if (matchesGravity(skill)) break;
+    }
+  }
+  // 斥力偏向：重试直到不匹配任何斥力技能
+  if (shouldBiasRepulsion && matchesRepulsion(skill)) {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const otherRes = resourcePool.filter(r => !repulsionSkills.some(rs => rs.resource === r));
+      const retryRes = otherRes.length > 0
+        ? otherRes[Math.floor(random() * otherRes.length)]
+        : resourcePool[Math.floor(random() * resourcePool.length)];
+      const retrySkill = generateSkill({ resource: retryRes, rarity: skill.rarity as SkillRarity, availableResources: resourcePool, playerClass });
+      if (excludeNames?.has(retrySkill.name)) continue;
+      skill = retrySkill;
+      if (!matchesRepulsion(skill)) break;
     }
   }
   const cost = getAdjustedPrice(calculateAffixSkillPrice(skill.rarity, skill.level, rollPriceFluctuation()));
@@ -540,7 +588,9 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       // 短视：替换加成/代价占位符
       if (a.myopiaBonus != null) desc = desc.replace('{myopiaBonus}', `${Math.round(a.myopiaBonus * 100)}`);
       if (a.myopiaCost != null) desc = desc.replace('{myopiaCost}', String(a.myopiaCost));
-      if (a.silkwormBonus != null) desc = desc.replace('{silkwormBonus}', `${Math.round(a.silkwormBonus * 100)}`);
+      if (a.silkwormK != null) desc = desc.replace('{silkwormK}', `${Math.round(a.silkwormK * 100)}`);
+      // 引力：替换概率占位符
+      if (a.probMult != null) desc = desc.replace('{probMult}', a.probMult.toFixed(1));
       // 流放/禁忌：替换暴击率占位符
       if (a.bonusPercent != null) desc = desc.replace('{bonusPercent}', `${Math.round(a.bonusPercent * 100)}`);
       // 增幅：替换加成占位符
@@ -674,11 +724,12 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'mercenary': return `${a.hireCost ?? '?'}g +${Math.round((a.hireBonus ?? 0) * 100)}%`
     case 'reecho': return `-${Math.round((a.reechoPenalty ?? 0) * 100)}%/${t('param.reecho_per')}`
     case 'myopia': return `+${Math.round((a.myopiaBonus ?? 0) * 100)}% (+${a.myopiaCost ?? '?'}${t('param.myopia_cost')})`
-    case 'silkworm': return `+${Math.round((a.silkwormBonus ?? 0) * 100)}%`
+    case 'silkworm': return `+${Math.round((a.silkwormK ?? 0) * 100)}%/${t('param.void_per')}`
     case 'aura_fury': return `+${Math.round((a.auraCrit ?? 0) * 100)}%${t('param.aura_crit')}`
     case 'aura_morale': return `+${Math.round((a.auraMorale ?? 0) * 100)}%`
     case 'fiber': return `${t('param.interval_label')} ${a.fiberInterval ?? 4}`
-    case 'gravity': return `×${a.probMult?.toFixed(1) ?? '?'}`
+    case 'gravity': return `+${a.probMult?.toFixed(1) ?? '?'}x`
+    case 'repulsion': return `×${a.probMult?.toFixed(2) ?? '?'}`
     case 'exhaust': {
       const max = a.maxTriggers ?? '?';
       const used = rt?.exhaustCount ?? 0;
@@ -911,12 +962,9 @@ export function computeSmartEstimate(
         break
       }
       case 'swarm': {
-        if (affix.posRel == null) break
-        const keys = Array.isArray(boundKeys) ? boundKeys : boundKeys ? [boundKeys] : []
-        if (keys.length === 0) break
-        const neighbors = getNeighborSkills(keys, affix.posRel, { bindings: state.player.bindings, allSkills: state.affixSkills })
+        // 全场虫群计数（含自身）
         let swarmCount = 0
-        for (const ns of neighbors) {
+        for (const [, ns] of state.affixSkills) {
           if (ns.affixes.some(a => a.type === 'swarm')) swarmCount++
         }
         if (swarmCount > 0) {
@@ -950,9 +998,9 @@ export function computeSmartEstimate(
         break
       }
       case 'silkworm': {
-        const silkwormBonus = affix.silkwormBonus ?? 0
-        addPercent += silkwormBonus
-        breakdown.push({ typeKey: 'silkworm', label: t('est.silkworm', { pct: Math.round(silkwormBonus * 100) }), detail: '' })
+        // 预估：按本词平均触发次数（无法精确预测，仅显示每点加成）
+        const silkwormK = affix.silkwormK ?? 0
+        breakdown.push({ typeKey: 'silkworm', label: t('est.silkworm', { pct: Math.round(silkwormK * 100) }), detail: '' })
         break
       }
       // 其余词条不预估

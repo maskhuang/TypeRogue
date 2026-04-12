@@ -184,10 +184,8 @@ export function rollAffixParams(
       return { type, posRel, bonusPerSlot: VOID_BONUS_TABLE[posRel] }
     }
 
-    case AffixType.Swarm: {
-      const posRel = sharedPosRel ?? pickRandom(ALL_POS_RELATIONS)
-      return { type, posRel, swarmK: SWARM_BONUS_TABLE[posRel] }
-    }
+    case AffixType.Swarm:
+      return { type, swarmK: roundTo(0.10 + random() * 0.10, 2) }  // 每虫群 +10%~20%
 
     case AffixType.Mercenary:
       return { type, hireCost: Math.floor(3 + random() * 5), hireBonus: roundTo(0.50 + random() * 1.00, 2) }  // cost 3~7g, bonus 50%~150%
@@ -248,7 +246,10 @@ export function rollAffixParams(
       return { type, bonusPercent: 0.30 }  // 首尾字母+30%暴击率
 
     case AffixType.Gravity:
-      return { type, probMult: roundTo(random() * 2.0, 2) }
+      return { type, probMult: roundTo(1.5 + random() * 0.5, 2) }  // 固定增加出现概率 1.5~2.0x
+
+    case AffixType.Repulsion:
+      return { type, probMult: roundTo(0.2 + random() * 0.3, 2) }  // 减少出现概率 0.2~0.5x
 
     case AffixType.Ligature:
       return { type, ligatureBonus: 1.0 }
@@ -325,7 +326,7 @@ export function rollAffixParams(
       return { type, fiberInterval: 4 }  // 每4层触发尾字母技能
 
     case AffixType.Silkworm:
-      return { type, silkwormBonus: roundTo(0.50 + random() * 1.00, 2) }  // +50%~150%
+      return { type, silkwormK: roundTo(0.30 + random() * 0.40, 2) }  // 每点损失底分+30%~70%产出
 
     default: {
       const _exhaustive: never = type

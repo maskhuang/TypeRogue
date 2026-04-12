@@ -65,6 +65,7 @@ export enum AffixType {
   AuraMorale = 'aura_morale',
   Fiber = 'fiber',
   Silkworm = 'silkworm',
+  Repulsion = 'repulsion',
 }
 
 // ===== 词条类别 =====
@@ -127,6 +128,7 @@ export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
   [AffixType.AuraMorale]: ['topology', 'numeric'],
   [AffixType.Fiber]: ['word_sense', 'stack'],
   [AffixType.Silkworm]: ['production', 'numeric'],
+  [AffixType.Repulsion]: ['word_sense'],
 }
 
 // ===== 附魔类型枚举（26 个枚举值） =====
@@ -187,6 +189,8 @@ export enum EnchantmentType {
   QuestAscend = 'quest_ascend',
   QuestSwarmPropagate = 'quest_swarm_propagate',
   QuestMercenaryWarlord = 'quest_mercenary_warlord',
+  QuestRepulsionVacuum = 'quest_repulsion_vacuum',
+  QuestSilkwormCocoon = 'quest_silkworm_cocoon',
   QuestAuraGlobal = 'quest_aura_global',
   QuestAuraUniversal = 'quest_aura_universal',
   QuestFiberPierce = 'quest_fiber_pierce',
@@ -246,6 +250,8 @@ export const QUEST_AFFIX_MAP: Partial<Record<EnchantmentType, AffixType | AffixT
   [EnchantmentType.QuestAscend]: AffixType.Ascend,
   [EnchantmentType.QuestSwarmPropagate]: AffixType.Swarm,
   [EnchantmentType.QuestMercenaryWarlord]: AffixType.Mercenary,
+  [EnchantmentType.QuestRepulsionVacuum]: AffixType.Repulsion,
+  [EnchantmentType.QuestSilkwormCocoon]: AffixType.Silkworm,
   [EnchantmentType.QuestAuraGlobal]: [AffixType.AuraFury, AffixType.AuraMorale, AffixType.Conduit],
   [EnchantmentType.QuestAuraUniversal]: [AffixType.AuraFury, AffixType.AuraMorale, AffixType.Conduit],
   [EnchantmentType.QuestFiberPierce]: AffixType.Fiber,
@@ -341,7 +347,7 @@ export interface AffixInstance {
   auraCrit?: number                // AuraFury: 给匹配技能的暴击率加成
   auraMorale?: number              // AuraMorale: 给匹配技能的bonusPercent加成
   fiberInterval?: number           // Fiber: 叠层满层间隔
-  silkwormBonus?: number           // Silkworm: 产出加成%，触发时当前字母不产生底分
+  silkwormK?: number               // Silkworm: 每点累积损失底分的产出加成%
 }
 
 // ===== 稀有度 =====
@@ -407,6 +413,7 @@ export interface SkillRuntimeState {
   patchMultiplier: number          // 随机系数（每关重置，默认 1.0）
   mutacritAccum: number            // Mutacrit：蜕变永久累积暴击率
   reechoStacks: number             // Reecho：当前词内打错累积次数（逐词重置）
+  silkwormStacks: number           // Silkworm：当前词内累积损失底分数（逐词重置）
 }
 
 // ===== 存档数据 =====
@@ -529,6 +536,7 @@ export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
   [AffixType.AuraMorale]: 'high',
   [AffixType.Fiber]: 'low',
   [AffixType.Silkworm]: 'high',
+  [AffixType.Repulsion]: 'low',
 }
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
@@ -681,6 +689,7 @@ export const AFFIX_NAMES: Record<AffixType, string> = {
   [AffixType.AuraMorale]: '士气光环',
   [AffixType.Fiber]: '光纤',
   [AffixType.Silkworm]: '蚕食',
+  [AffixType.Repulsion]: '斥力',
 }
 
 /** 词条功能说明（玩家可读） */
@@ -693,7 +702,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Crit]: '触发时有概率暴击',
   [AffixType.Cascade]: '上一个按键与当前键满足指定位置关系时，产出倍增',
   [AffixType.Void]: '指定关系的空位越多加成越高',
-  [AffixType.Swarm]: '指定关系内拥有虫群词条的技能越多，产出越高',
+  [AffixType.Swarm]: '全场拥有虫群词条的技能越多，产出越高',
   [AffixType.Mercenary]: '金币≥N时触发加成产出，每次触发消耗N金币',
   [AffixType.Mirror]: '每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效',
   [AffixType.Amplify]: '自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能产出+叠层×{amplifyK}%',
@@ -705,7 +714,7 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.Relay]: '自身不产出；指定关系的匹配技能触发时，直接触发1个匹配技能（不含其他中转）',
   [AffixType.Conduit]: '自身不产出，指定关系的匹配技能触发时额外触发一次',
   [AffixType.Outcast]: '单词尾字母触发时暴击率+{bonusPercent}%',
-  [AffixType.Gravity]: '调整含本键字母的单词出现概率',
+  [AffixType.Gravity]: '含本键字母的单词出现概率+{probMult}x；商店中匹配技能刷新概率提升',
   [AffixType.Ligature]: '字母在当前单词中重复出现时，按出现次数倍增产出',
   [AffixType.WarDrum]: '自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能暴击率+叠层×{critPerStack}%',
   [AffixType.Twin]: '获得附魔时同时获得两个（而非二选一）',
@@ -733,7 +742,8 @@ export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
   [AffixType.AuraFury]: '自身不产出；指定关系内匹配技能暴击率+{auraCrit}%',
   [AffixType.AuraMorale]: '自身不产出；指定关系内匹配技能产出+{auraMorale}%',
   [AffixType.Fiber]: '首字母触发时额外叠层，满层触发尾字母键上的技能',
-  [AffixType.Silkworm]: '产出+{silkwormBonus}%，但触发时当前字母不产生底分',
+  [AffixType.Silkworm]: '触发时当前字母不产生底分；产出+(累积损失底分 × {silkwormK}%)',
+  [AffixType.Repulsion]: '含本键字母的单词出现概率 ×{probMult}；商店中匹配技能刷新概率降低',
 }
 
 export const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -873,7 +883,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestRefine, name: '精炼', targetAffix: AffixType.Convert, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向转化', transformDesc: '完成后转化同时反向产出到源资源' },
   { type: EnchantmentType.QuestEnergize, name: '充能', targetAffix: AffixType.Charge, event: 'equip_count', targetStacks: 0, effectDesc: '质变：满蓄力自动完成', transformDesc: '满蓄力释放时自动打完当前单词，所有被触发技能获得等量产出倍率' },
   { type: EnchantmentType.QuestStack, name: '层叠', targetAffix: AffixType.Amplify, event: 'equip_count', targetStacks: 0, effectDesc: '质变：叠层触发', transformDesc: '完成后增幅叠层时触发指定关系的匹配技能一次' },
-  { type: EnchantmentType.QuestPolarize, name: '极化', targetAffix: AffixType.Gravity, event: 'equip_count', targetStacks: 0, effectDesc: '质变：双向锁定', transformDesc: '完成后吸引字母必含，排斥字母必不含' },
+  { type: EnchantmentType.QuestPolarize, name: '潮汐锁定', targetAffix: AffixType.Gravity, event: 'equip_count', targetStacks: 0, effectDesc: '质变：潮汐锁定', transformDesc: '含本键字母的单词必定出现' },
   { type: EnchantmentType.QuestConvertAccum, name: '汲取', targetAffix: AffixType.Convert, event: 'equip_count', targetStacks: 0, effectDesc: '质变：读取存量', transformDesc: '改为读取源资源的累积存量而非技能产出量' },
   { type: EnchantmentType.QuestSpectrum, name: '光谱', targetAffix: AffixType.Rainbow, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全资源产出', transformDesc: '完成后产出等比分摊到所有资源' },
   { type: EnchantmentType.QuestMirror, name: '映射', targetAffix: AffixType.Mirror, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全词条复制', transformDesc: '完成后复制指定关系的所有邻居的不同类型词条' },
@@ -907,8 +917,10 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestVolatile, name: '临界', targetAffix: AffixType.Volatile, event: 'equip_count', targetStacks: 0, effectDesc: '质变：持久不稳定', transformDesc: '被蜕变后下3关效果×2.0' },
   { type: EnchantmentType.QuestMutacrit, name: '变异基因', targetAffix: AffixType.Mutacrit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全技能暴击', transformDesc: '被蜕变时所有已装备技能+暴击率' },
   { type: EnchantmentType.QuestAscend, name: '超越', targetAffix: AffixType.Ascend, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全技能升级', transformDesc: '被蜕变时所有已装备技能升1级' },
-  { type: EnchantmentType.QuestSwarmPropagate, name: '繁殖', targetAffix: AffixType.Swarm, event: 'equip_count', targetStacks: 0, effectDesc: '质变：虫群繁殖', transformDesc: '每次触发25%概率向范围内无虫群的邻居传播虫群词条' },
+  { type: EnchantmentType.QuestSwarmPropagate, name: '繁殖', targetAffix: AffixType.Swarm, event: 'equip_count', targetStacks: 0, effectDesc: '质变：虫群繁殖', transformDesc: '触发时25%概率向全场随机无虫群技能传播虫群词条' },
   { type: EnchantmentType.QuestMercenaryWarlord, name: '佣兵王', targetAffix: AffixType.Mercenary, event: 'equip_count', targetStacks: 0, effectDesc: '质变：囤金暴力', transformDesc: '加成额外乘以(1+金币÷消耗×10)，金币越多越强' },
+  { type: EnchantmentType.QuestRepulsionVacuum, name: '真空', targetAffix: AffixType.Repulsion, event: 'equip_count', targetStacks: 0, effectDesc: '质变：真空', transformDesc: '含本键字母的单词必不出现' },
+  { type: EnchantmentType.QuestSilkwormCocoon, name: '化茧', targetAffix: AffixType.Silkworm, event: 'equip_count', targetStacks: 0, effectDesc: '质变：化茧', transformDesc: '累积 8 层后本关不再消耗底分且加成保留（逐关重置）' },
   { type: EnchantmentType.QuestAuraGlobal, name: '全域光环', targetAffix: [AffixType.AuraFury, AffixType.AuraMorale, AffixType.Conduit], event: 'equip_count', targetStacks: 0, effectDesc: '质变：全域', transformDesc: '光环作用范围变为全场' },
   { type: EnchantmentType.QuestAuraUniversal, name: '普照光环', targetAffix: [AffixType.AuraFury, AffixType.AuraMorale, AffixType.Conduit], event: 'equip_count', targetStacks: 0, effectDesc: '质变：普照', transformDesc: '光环不再限制匹配技能，作用于范围内所有技能' },
   { type: EnchantmentType.QuestFiberPierce, name: '贯穿', targetAffix: AffixType.Fiber, event: 'equip_count', targetStacks: 0, effectDesc: '质变：贯穿', transformDesc: '满层时触发单词中所有字母键的技能（排除首字母）' },
@@ -948,6 +960,7 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     patchMultiplier: 1.0,
     mutacritAccum: 0,
     reechoStacks: 0,
+    silkwormStacks: 0,
   }
 }
 
@@ -979,7 +992,7 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.Void]:     { param: 'bonusPerSlot',   delta: 0.05,  mode: 'add' },
   [AffixType.Swarm]:    { param: 'swarmK',         delta: 0.04,  mode: 'add' },
   [AffixType.Mercenary]:{ param: 'hireBonus',      delta: 0.20,  mode: 'add' },
-  [AffixType.Gravity]:  { param: 'probMult',       delta: 0.15,  mode: 'add-dir' },
+  [AffixType.Gravity]:  { param: 'probMult',       delta: 0.25,  mode: 'add' },
   [AffixType.Exhaust]:  { param: 'exhaustMult',    delta: 0.3,   mode: 'add' },
   [AffixType.Reflect]:  { param: 'reflectK',       delta: 0.01,  mode: 'add' },
   // ── 叠层类 ──
@@ -1001,7 +1014,8 @@ export const AFFIX_LEVEL_SCALING: Partial<Record<AffixType, AffixScalingEntry>> 
   [AffixType.AuraFury]: { param: 'auraCrit',       delta: 0.03,  mode: 'add' },
   [AffixType.AuraMorale]:{ param: 'auraMorale',    delta: 0.05,  mode: 'add' },
   [AffixType.Fiber]:    { param: 'fiberInterval',  delta: -1,    mode: 'add' },
-  [AffixType.Silkworm]: { param: 'silkwormBonus',  delta: 0.20,  mode: 'add' },
+  [AffixType.Silkworm]: { param: 'silkwormK',      delta: 0.10,  mode: 'add' },
+  [AffixType.Repulsion]:{ param: 'probMult',       delta: -0.10, mode: 'add' },
   [AffixType.Amplify]: { param: 'amplifyK',       delta: 0.01,  mode: 'add' },
   // Rainbow / Twin / Mirror / Conduit: 无可缩放数值参数
 }

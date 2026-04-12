@@ -53,6 +53,7 @@ export const AFFIX_COLORS: Record<string, string> = {
   amplify:   '#fd79a8', // 浅粉 — 增幅
   outcast:   '#d35400', // 棕 — 流放
   gravity:   '#8e44ad', // 深紫 — 引力
+  repulsion: '#c0392b', // 深红 — 斥力
   ligature:  '#27ae60', // 深绿 — 连字
   twin:      '#fdcb6e', // 淡金 — 双生
   recurse:   '#00b894', // 薄荷 — 递归
