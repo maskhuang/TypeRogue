@@ -3207,11 +3207,40 @@ function highlightSkillRange(key: string): void {
 
 function clearRangeHighlight(): void {
   document.querySelectorAll('.key-slot.range-highlight').forEach(el => {
-    el.classList.remove('range-highlight');
-    (el as HTMLElement).style.borderColor = '';
-    (el as HTMLElement).style.background = '';
-    (el as HTMLElement).style.boxShadow = '';
+    const slot = el as HTMLElement;
+    slot.classList.remove('range-highlight');
+    slot.style.borderColor = '';
+    slot.style.background = '';
+    slot.style.boxShadow = '';
+    slot.style.borderImage = '';
+    // 若该 slot 是技能键位，重新应用其 render-time 词条色
+    const k = slot.dataset.key;
+    if (k) {
+      const skillId = state.player.bindings.get(k);
+      if (skillId) {
+        const affixSkill = state.affixSkills.get(skillId);
+        if (affixSkill) applySkillBorderColor(slot, affixSkill);
+      }
+    }
   });
+}
+
+/** 应用技能词条色描边（render-time 与 clearRangeHighlight 复用） */
+function applySkillBorderColor(slot: HTMLElement, affixSkill: AffixSkillInstance): void {
+  const rarityColor = RARITY_COLORS[affixSkill.rarity] || '#ffffff';
+  slot.style.borderColor = rarityColor;
+  const affixColors: string[] = [];
+  for (const a of affixSkill.affixes) {
+    const c = AFFIX_COLORS[a.type];
+    if (c && !affixColors.includes(c)) affixColors.push(c);
+  }
+  if (affixColors.length === 1) {
+    slot.style.borderColor = affixColors[0];
+    slot.style.background = hexToRgba(affixColors[0], 0.15);
+  } else if (affixColors.length > 1) {
+    slot.style.borderImage = `linear-gradient(135deg, ${affixColors.join(', ')}) 1`;
+    slot.style.background = `linear-gradient(135deg, ${affixColors.map(c => hexToRgba(c, 0.12)).join(', ')})`;
+  }
 }
 
 /** 计算范围高亮键位+源键位的包围盒（用于tooltip避让） */
@@ -3350,21 +3379,7 @@ export function renderBuildManager(): void {
           const preview = renderShapePreview(affixSkill.shapeId, affixSkill.rotation ?? 0, affixSkill.rarity);
           if (preview) slot.dataset.shapePreview = preview;
         }
-        slot.style.borderColor = rarityColor;
-        // 词条颜色描边：复用范围显示的多色混合逻辑，便于区分相邻同资源技能
-        // 词条色变色（复用范围高亮样式：边框+背景）
-        const affixColors: string[] = [];
-        for (const a of affixSkill.affixes) {
-          const c = AFFIX_COLORS[a.type];
-          if (c && !affixColors.includes(c)) affixColors.push(c);
-        }
-        if (affixColors.length === 1) {
-          slot.style.borderColor = affixColors[0];
-          slot.style.background = hexToRgba(affixColors[0], 0.15);
-        } else if (affixColors.length > 1) {
-          slot.style.borderImage = `linear-gradient(135deg, ${affixColors.join(', ')}) 1`;
-          slot.style.background = `linear-gradient(135deg, ${affixColors.map(c => hexToRgba(c, 0.12)).join(', ')})`;
-        }
+        applySkillBorderColor(slot, affixSkill);
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span><span class="key-skill">${affixSkill.icon}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}${freq > 0 ? `<span class="key-freq">${freq}</span>` : ''}`;
       } else {
         slot.innerHTML = `<span class="key-letter">${k.toUpperCase()}</span>${score > 0 ? `<span class="key-score">${score}</span>` : ''}${freq > 0 ? `<span class="key-freq">${freq}</span>` : ''}`;
