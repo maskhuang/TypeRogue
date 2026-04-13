@@ -25,6 +25,7 @@
     "clean": "rm -rf dist dist-electron release",
     "clean:release": "rm -rf release",
     "verify": "node scripts/verify-build.js",
+    "data:extract": "vite-node scripts/data-extract/extract.ts",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -41,9 +42,12 @@
     "electron-builder": "^26.0.0",
     "electron-vite": "^3.0.0",
     "popular-english-words": "^1.0.2",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "vite": "^7.3.1",
-    "vitest": "^3.0.0"
+    "vite-node": "^6.0.0",
+    "vitest": "^3.0.0",
+    "zod": "^4.3.6"
   },
   "dependencies": {
     "howler": "^2.2.4",

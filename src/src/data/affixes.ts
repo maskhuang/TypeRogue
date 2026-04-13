@@ -6,6 +6,8 @@
 
 import type { ResourceType } from '../core/types'
 import { PositionRelation } from './keyboardTopology'
+// Story 57.1: 大部分静态表迁至 data-json/affixes.json
+import { AFFIXES_DATA } from './schemas/affixes.schema'
 
 // ===== 词条类型枚举（31 类，6 类别） ====
 
@@ -66,70 +68,17 @@ export enum AffixType {
   Fiber = 'fiber',
   Silkworm = 'silkworm',
   Repulsion = 'repulsion',
+  // ── 造词师专属：词内时序型 ──
+  Handoff = 'handoff',   // 接力：本技能触发时，让同词之后第一个待触发的技能额外触发 N 次
+  Rewind = 'rewind',     // 回溯：本技能触发时，依次让同词已触发的最近 N 个技能各额外触发 1 次
+  Endow = 'endow',       // 遗产：本次产出不结算，按标准化转为底分送给同词之后 N 个技能
 }
 
 // ===== 词条类别 =====
 
 export type AffixCategory = 'numeric' | 'crit' | 'stack' | 'topology' | 'word_sense' | 'meta_rule' | 'production'
 
-export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = {
-  // ── 数值型 ──
-  [AffixType.Convert]: ['numeric', 'production'],
-  [AffixType.Rainbow]: ['numeric'],
-  [AffixType.Multiply]: ['numeric'],
-  // ── 暴击型 ──
-  [AffixType.Crit]: ['crit'],
-  [AffixType.Charge]: ['numeric'],
-  [AffixType.Decay]: ['crit'],
-  [AffixType.Recurse]: ['crit'],
-  [AffixType.Taboo]: ['crit'],
-  [AffixType.Fallacy]: ['crit'],
-  // ── 叠层型 ──
-  [AffixType.Amplify]: ['stack', 'topology'],
-  [AffixType.Splash]: ['stack', 'topology'],
-  [AffixType.Resonance]: ['stack'],
-  [AffixType.Echo]: ['stack'],
-  [AffixType.Fury]: ['stack', 'crit'],
-  [AffixType.Tide]: ['stack'],
-  [AffixType.WarDrum]: ['stack', 'topology', 'crit'],
-  // ── 拓扑型 ──
-  [AffixType.Void]: ['topology', 'numeric'],
-  [AffixType.Swarm]: ['topology', 'numeric'],
-  [AffixType.Mercenary]: ['production', 'numeric'],
-  [AffixType.Mirror]: ['topology', 'meta_rule'],
-  [AffixType.Cascade]: ['word_sense', 'numeric'],
-  [AffixType.Flow]: ['topology', 'numeric', 'production'],
-  [AffixType.Confluence]: ['topology', 'numeric'],
-  [AffixType.Union]: ['topology', 'numeric'],
-  // ── 词感型 ──
-  [AffixType.Outcast]: ['word_sense', 'crit'],
-  [AffixType.Gravity]: ['word_sense'],
-  [AffixType.Ligature]: ['word_sense', 'numeric'],
-  // ── 元规则型 ──
-  [AffixType.Relay]: ['meta_rule', 'topology'],
-  [AffixType.Conduit]: ['meta_rule', 'topology'],
-  [AffixType.Twin]: ['meta_rule'],
-  [AffixType.Innate]: ['meta_rule'],
-  [AffixType.Exhaust]: ['meta_rule'],
-  [AffixType.Reflect]: ['meta_rule', 'numeric'],
-  [AffixType.MonkeyPatch]: ['meta_rule'],
-  [AffixType.Excavate]: ['meta_rule'],
-  [AffixType.Treasure]: ['meta_rule'],
-  [AffixType.Refine]: ['meta_rule'],
-  [AffixType.Evolve]: ['meta_rule'],
-  [AffixType.Harvest]: ['meta_rule'],
-  [AffixType.Chain]: ['meta_rule', 'topology'],
-  [AffixType.Volatile]: ['meta_rule', 'numeric'],
-  [AffixType.Mutacrit]: ['meta_rule', 'crit'],
-  [AffixType.Ascend]: ['meta_rule'],
-  [AffixType.Reecho]: ['meta_rule', 'production'],
-  [AffixType.Myopia]: ['production', 'numeric'],
-  [AffixType.AuraFury]: ['topology', 'crit'],
-  [AffixType.AuraMorale]: ['topology', 'numeric'],
-  [AffixType.Fiber]: ['word_sense', 'stack'],
-  [AffixType.Silkworm]: ['production', 'numeric'],
-  [AffixType.Repulsion]: ['word_sense'],
-}
+export const AFFIX_CATEGORY_MAP: Record<AffixType, AffixCategory[]> = AFFIXES_DATA.affixCategoryMap as Record<AffixType, AffixCategory[]>
 
 // ===== 附魔类型枚举（26 个枚举值） =====
 // 2 通用学徒 + 5 资源专精 + 18 任务型 + 1 运算符 = 26
@@ -272,27 +221,10 @@ export interface EnchantmentMeta {
   transmuteResource?: ResourceType
 }
 
-export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = {
-  // ── 学徒型（6） ──  ApprenticeSelf 已删除（观摩可覆盖自身）
-  [EnchantmentType.ApprenticeNeighbor]: { type: EnchantmentType.ApprenticeNeighbor, name: '学徒·观摩', icon: '👀', category: 'apprentice', desc: '自身或指定关系的技能触发时永久成长' },
-  // ── 资源专精型（5） ──
-  [EnchantmentType.ApprenticeResBase]:       { type: EnchantmentType.ApprenticeResBase,       name: '专精·基数', icon: '🔢', category: 'apprentice', desc: '产出基数资源时永久成长 +2%' },
-  [EnchantmentType.ApprenticeResScore]:      { type: EnchantmentType.ApprenticeResScore,      name: '专精·分数', icon: '🏅', category: 'apprentice', desc: '产出分数资源时永久成长 +2%' },
-  [EnchantmentType.ApprenticeResMultiplier]: { type: EnchantmentType.ApprenticeResMultiplier, name: '专精·倍率', icon: '📈', category: 'apprentice', desc: '产出倍率资源时永久成长 +2%' },
-  [EnchantmentType.ApprenticeResTime]:       { type: EnchantmentType.ApprenticeResTime,       name: '专精·时间', icon: '⏳', category: 'apprentice', desc: '产出时间资源时永久成长 +2%' },
-  [EnchantmentType.ApprenticeResGold]:       { type: EnchantmentType.ApprenticeResGold,       name: '专精·金币', icon: '💰', category: 'apprentice', desc: '产出金币资源时永久成长 +2%' },
-  [EnchantmentType.ApprenticeCrit]:           { type: EnchantmentType.ApprenticeCrit,           name: '学徒·暴击', icon: '💥', category: 'apprentice', desc: '暴击时永久成长' },
-  // ── 附加产出 ──
-  [EnchantmentType.BonusOutput]: { type: EnchantmentType.BonusOutput, name: '附加产出', icon: '🔀', category: 'passive', desc: '触发时额外产出指定资源' },
-  // ── 运算符（通过质变获取） ──
-  [EnchantmentType.MultiplyOperator]: { type: EnchantmentType.MultiplyOperator, name: '乘算化', icon: '✖️', category: 'operator', desc: '将加算层各项加成转为独立乘数' },
-}
+export const ENCHANTMENT_META: Record<string, EnchantmentMeta> = AFFIXES_DATA.enchantmentMeta as Record<string, EnchantmentMeta>
 
 /** @deprecated 嬗变系已删除（Story 41.2），保留供旧存档兼容 */
-export const TRANSMUTE_NAMES: Record<ResourceType, string> = {
-  base: '衍生·基数', score: '衍生·分数', multiplier: '衍生·倍率',
-  time: '衍生·时间', gold: '衍生·金币', energy: '衍生·能量', mutagen: '衍生·变异素',
-}
+export const TRANSMUTE_NAMES: Record<ResourceType, string> = AFFIXES_DATA.transmuteNames as Record<ResourceType, string>
 
 // ===== 词条实例（运行时生成，已掷骰） =====
 
@@ -348,25 +280,18 @@ export interface AffixInstance {
   auraMorale?: number              // AuraMorale: 给匹配技能的bonusPercent加成
   fiberInterval?: number           // Fiber: 叠层满层间隔
   silkwormK?: number               // Silkworm: 每点累积损失底分的产出加成%
+  handoffCount?: number            // Handoff: 让同词下 1 个技能额外触发 N 次
+  rewindCount?: number             // Rewind: 依次触发同词上 N 个已触发技能
+  endowCount?: number              // Endow: 向同词下 N 个技能捐赠标准化基础产出
 }
 
 // ===== 稀有度 =====
 
 export type SkillRarity = 0 | 1 | 2 | 3
 
-export const RARITY_NAMES: Record<SkillRarity, string> = {
-  0: '普通',
-  1: '稀有',
-  2: '史诗',
-  3: '传说',
-}
+export const RARITY_NAMES: Record<SkillRarity, string> = AFFIXES_DATA.rarityNames as unknown as Record<SkillRarity, string>
 
-export const RARITY_COLORS: Record<SkillRarity, string> = {
-  0: '#ffffff',  // 白
-  1: '#4488ff',  // 蓝
-  2: '#a855f7',  // 紫
-  3: '#ff8800',  // 橙
-}
+export const RARITY_COLORS: Record<SkillRarity, string> = AFFIXES_DATA.rarityColors as unknown as Record<SkillRarity, string>
 
 // ===== 技能实例（词条制） =====
 
@@ -414,6 +339,7 @@ export interface SkillRuntimeState {
   mutacritAccum: number            // Mutacrit：蜕变永久累积暴击率
   reechoStacks: number             // Reecho：当前词内打错累积次数（逐词重置）
   silkwormStacks: number           // Silkworm：当前词内累积损失底分数（逐词重置）
+  wordBaseBonus: number            // Endow：本词基础产出加成（逐词重置）
 }
 
 // ===== 存档数据 =====
@@ -453,30 +379,10 @@ export const FATE_COIN_CRIT_CAP = 0.5
 export const FATE_COIN_CONVERSION = 2
 
 /** 基底值：7 种资源 × 4 等级（白装可达 Lv4） */
-export const BASE_VALUES: Record<ResourceType, number[]> = {
-  base:       [4, 7, 10, 14],
-  score:      [11, 18, 27, 38],
-  multiplier: [0.35, 0.56, 0.84, 1.17],
-  time:       [0.2, 0.32, 0.48, 0.67],
-  gold:       [3, 5, 8, 11],
-  energy:   [1, 1.6, 2.4, 3.4],
-  mutagen:    [1, 1.6, 2.4, 3.4],
-}
+export const BASE_VALUES: Record<ResourceType, number[]> = AFFIXES_DATA.baseValues as Record<ResourceType, number[]>
 
 /** 词条职业限制：仅指定职业可使用（未列出=全职业通用） */
-export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = {
-  // 蜕变师专属
-  [AffixType.Twin]: 'metamorph',        // 双附魔 → 变异后获得更多附魔
-  [AffixType.Excavate]: 'metamorph',    // 挖掘 → 被蜕变时获得遗物
-  [AffixType.Treasure]: 'metamorph',    // 寻宝 → 被蜕变时下次商店出高稀有度
-  [AffixType.Refine]: 'metamorph',      // 提纯 → 被蜕变时退还变异素
-  [AffixType.Evolve]: 'metamorph',      // 进化 → 被蜕变时技能稀有度+1
-  [AffixType.Harvest]: 'metamorph',     // 收割 → 被蜕变时获得金币
-  [AffixType.Chain]: 'metamorph',       // 连锁 → 被蜕变时范围内技能也蜕变
-  [AffixType.Volatile]: 'metamorph',    // 不稳定 → 被蜕变后短期效果翻倍
-  [AffixType.Mutacrit]: 'metamorph',   // 蜕变暴击 → 被蜕变时永久+暴击率
-  [AffixType.Ascend]: 'metamorph',     // 升华 → 被蜕变时技能升级
-}
+export const AFFIX_CLASS_RESTRICTION: Partial<Record<AffixType, string>> = AFFIXES_DATA.affixClassRestriction as Partial<Record<AffixType, string>>
 
 /** 词条权重键：所有 AffixType（除 Convert 拆为 cross/self） */
 export type AffixWeightKey = Exclude<AffixType, AffixType.Convert> | 'convert_cross' | 'convert_self'
@@ -485,59 +391,7 @@ export type AffixWeightKey = Exclude<AffixType, AffixType.Convert> | 'convert_cr
 export type AffixWeightTier = 'high' | 'low' | 'none'
 
 /** 词条基准分档表（每局开始时据此随机生成实际权重） */
-export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = {
-  convert_cross: 'low',
-  convert_self: 'none', // 自源转化已禁用
-  [AffixType.Rainbow]: 'low',
-  [AffixType.Multiply]: 'low',
-  [AffixType.Charge]: 'high',
-  [AffixType.Decay]: 'high',
-  [AffixType.Crit]: 'high',
-  [AffixType.Cascade]: 'high',
-  [AffixType.Void]: 'high',
-  [AffixType.Swarm]: 'high',
-  [AffixType.Mercenary]: 'high',
-  [AffixType.Mirror]: 'high',
-  [AffixType.Amplify]: 'high',
-  [AffixType.Splash]: 'low',
-  [AffixType.Resonance]: 'high',
-  [AffixType.Echo]: 'high',
-  [AffixType.Fury]: 'high',
-  [AffixType.Tide]: 'high',
-  [AffixType.Relay]: 'low',
-  [AffixType.Conduit]: 'low',
-  [AffixType.Outcast]: 'high',
-  [AffixType.Gravity]: 'low',
-  [AffixType.Ligature]: 'high',
-  [AffixType.Flow]: 'high',
-  [AffixType.Confluence]: 'high',
-  [AffixType.Union]: 'high',
-  [AffixType.WarDrum]: 'high',
-  [AffixType.Twin]: 'low',
-  [AffixType.Innate]: 'low',
-  [AffixType.Exhaust]: 'low',
-  [AffixType.Recurse]: 'high',
-  [AffixType.Taboo]: 'high',
-  [AffixType.Fallacy]: 'high',
-  [AffixType.Reflect]: 'high',
-  [AffixType.MonkeyPatch]: 'low',
-  [AffixType.Excavate]: 'low',
-  [AffixType.Treasure]: 'high',
-  [AffixType.Refine]: 'high',
-  [AffixType.Evolve]: 'low',
-  [AffixType.Harvest]: 'high',
-  [AffixType.Chain]: 'low',
-  [AffixType.Volatile]: 'high',
-  [AffixType.Mutacrit]: 'high',
-  [AffixType.Ascend]: 'low',
-  [AffixType.Reecho]: 'low',
-  [AffixType.Myopia]: 'high',
-  [AffixType.AuraFury]: 'high',
-  [AffixType.AuraMorale]: 'high',
-  [AffixType.Fiber]: 'low',
-  [AffixType.Silkworm]: 'high',
-  [AffixType.Repulsion]: 'low',
-}
+export const AFFIX_WEIGHT_TIERS: Record<AffixWeightKey, AffixWeightTier> = AFFIXES_DATA.affixWeightTiers as Record<AffixWeightKey, AffixWeightTier>
 
 /** 每局动态权重（由 rollAffixWeights 生成，默认取分档中间值） */
 export let AFFIX_WEIGHTS: Record<AffixWeightKey, number> = Object.fromEntries(
@@ -577,184 +431,31 @@ export function rollAffixWeights(rng: () => number): void {
 }
 
 /** 虚无词条 bonusPerSlot 按 PositionRelation */
-export const VOID_BONUS_TABLE: Record<PositionRelation, number> = {
-  [PositionRelation.Adjacent]: 0.25,
-  [PositionRelation.SameRow]: 0.10,
-  [PositionRelation.SameColumn]: 0.30,
-  [PositionRelation.SameHand]: 0.05,
-  [PositionRelation.SameFinger]: 0.25,
-  [PositionRelation.Symmetric]: 0.50,
-}
+export const VOID_BONUS_TABLE: Record<PositionRelation, number> = AFFIXES_DATA.voidBonusTable as Record<PositionRelation, number>
 
 /** 虫群词条 swarmK 按 PositionRelation（与虚无统一） */
-export const SWARM_BONUS_TABLE: Record<PositionRelation, number> = {
-  [PositionRelation.Adjacent]: 0.25,
-  [PositionRelation.SameRow]: 0.10,
-  [PositionRelation.SameColumn]: 0.30,
-  [PositionRelation.SameHand]: 0.05,
-  [PositionRelation.SameFinger]: 0.25,
-  [PositionRelation.Symmetric]: 0.50,
-}
+export const SWARM_BONUS_TABLE: Record<PositionRelation, number> = AFFIXES_DATA.swarmBonusTable as Record<PositionRelation, number>
 
 /** 落差词条 flowK 按 PositionRelation（与虚无统一） */
-export const FLOW_BONUS_TABLE: Record<PositionRelation, number> = {
-  [PositionRelation.Adjacent]: 0.25,
-  [PositionRelation.SameRow]: 0.10,
-  [PositionRelation.SameColumn]: 0.30,
-  [PositionRelation.SameHand]: 0.05,
-  [PositionRelation.SameFinger]: 0.25,
-  [PositionRelation.Symmetric]: 0.50,
-}
+export const FLOW_BONUS_TABLE: Record<PositionRelation, number> = AFFIXES_DATA.flowBonusTable as Record<PositionRelation, number>
 
 /** 汇流词条 confluenceK 按 PositionRelation（与虚无统一） */
-export const CONFLUENCE_BONUS_TABLE: Record<PositionRelation, number> = {
-  [PositionRelation.Adjacent]: 0.25,
-  [PositionRelation.SameRow]: 0.10,
-  [PositionRelation.SameColumn]: 0.30,
-  [PositionRelation.SameHand]: 0.05,
-  [PositionRelation.SameFinger]: 0.25,
-  [PositionRelation.Symmetric]: 0.50,
-}
+export const CONFLUENCE_BONUS_TABLE: Record<PositionRelation, number> = AFFIXES_DATA.confluenceBonusTable as Record<PositionRelation, number>
 
 /** 联合词条 unionK 按 PositionRelation（与虚无统一） */
-export const UNION_BONUS_TABLE: Record<PositionRelation, number> = {
-  [PositionRelation.Adjacent]: 0.25,
-  [PositionRelation.SameRow]: 0.10,
-  [PositionRelation.SameColumn]: 0.30,
-  [PositionRelation.SameHand]: 0.05,
-  [PositionRelation.SameFinger]: 0.25,
-  [PositionRelation.Symmetric]: 0.50,
-}
+export const UNION_BONUS_TABLE: Record<PositionRelation, number> = AFFIXES_DATA.unionBonusTable as Record<PositionRelation, number>
 
 /** 转化词条 k 值校准表：[k_min, k_max]（触发层已按 BASE_VALUES 归一化，统一区间） */
-export const CONVERT_K_TABLE: Record<ResourceType, [number, number]> = {
-  base:       [0.02, 0.05],
-  score:      [0.02, 0.05],
-  multiplier: [0.02, 0.05],
-  time:       [0.02, 0.05],
-  gold:       [0.02, 0.05],
-  energy:   [0.02, 0.05],
-  mutagen:    [0.02, 0.05],
-}
+export const CONVERT_K_TABLE: Record<ResourceType, [number, number]> = AFFIXES_DATA.convertKTable as Record<ResourceType, [number, number]>
 
 // ===== 自动命名 =====
 
-export const AFFIX_NAMES: Record<AffixType, string> = {
-  [AffixType.Convert]: '转化',
-  [AffixType.Rainbow]: '彩虹',
-  [AffixType.Multiply]: '乘算',
-  [AffixType.Charge]: '蓄力',
-  [AffixType.Decay]: '衰减',
-  [AffixType.Crit]: '暴击',
-  [AffixType.Cascade]: '级联',
-  [AffixType.Void]: '虚无',
-  [AffixType.Swarm]: '虫群',
-  [AffixType.Mercenary]: '雇佣',
-  [AffixType.Mirror]: '倒影',
-  [AffixType.Amplify]: '增幅',
-  [AffixType.Splash]: '溅射',
-  [AffixType.Resonance]: '共鸣',
-  [AffixType.Echo]: '感应',
-  [AffixType.Fury]: '怒气',
-  [AffixType.Tide]: '潮汐',
-  [AffixType.Relay]: '中转',
-  [AffixType.Conduit]: '共振光环',
-  [AffixType.Outcast]: '退场',
-  [AffixType.Gravity]: '引力',
-  [AffixType.Ligature]: '连字',
-  [AffixType.WarDrum]: '战鼓',
-  [AffixType.Twin]: '双生',
-  [AffixType.Recurse]: '递归',
-  [AffixType.Taboo]: '禁忌',
-  [AffixType.Flow]: '落差',
-  [AffixType.Confluence]: '汇流',
-  [AffixType.Union]: '联合',
-  [AffixType.Innate]: '先天',
-  [AffixType.Exhaust]: '消耗',
-  [AffixType.Fallacy]: '赌徒',
-  [AffixType.Reflect]: '反射',
-  [AffixType.MonkeyPatch]: '猴子补丁',
-  [AffixType.Excavate]: '挖掘',
-  [AffixType.Treasure]: '寻宝',
-  [AffixType.Refine]: '提纯',
-  [AffixType.Evolve]: '进化',
-  [AffixType.Harvest]: '收割',
-  [AffixType.Chain]: '连锁',
-  [AffixType.Volatile]: '不稳定',
-  [AffixType.Mutacrit]: '蜕变暴击',
-  [AffixType.Ascend]: '升华',
-  [AffixType.Reecho]: '回音',
-  [AffixType.Myopia]: '短视',
-  [AffixType.AuraFury]: '愤怒光环',
-  [AffixType.AuraMorale]: '士气光环',
-  [AffixType.Fiber]: '光纤',
-  [AffixType.Silkworm]: '蚕食',
-  [AffixType.Repulsion]: '斥力',
-}
+export const AFFIX_NAMES: Record<AffixType, string> = AFFIXES_DATA.affixNames as Record<AffixType, string>
 
 /** 词条功能说明（玩家可读） */
-export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = {
-  [AffixType.Convert]: '读取{source}的技能产出量加成',
-  [AffixType.Rainbow]: '每次触发时随机选择一种资源类型产出',
-  [AffixType.Multiply]: '产出直接乘以固定倍数',
-  [AffixType.Charge]: '按住蓄力，触发时释放产出倍率（×1.0~上限）；蓄满自动释放',
-  [AffixType.Decay]: '首次触发暴击率最高，逐次衰减至下限，每关重置',
-  [AffixType.Crit]: '触发时有概率暴击',
-  [AffixType.Cascade]: '上一个按键与当前键满足指定位置关系时，产出倍增',
-  [AffixType.Void]: '指定关系的空位越多加成越高',
-  [AffixType.Swarm]: '全场拥有虫群词条的技能越多，产出越高',
-  [AffixType.Mercenary]: '金币≥N时触发加成产出，每次触发消耗N金币',
-  [AffixType.Mirror]: '每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效',
-  [AffixType.Amplify]: '自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能产出+叠层×{amplifyK}%',
-  [AffixType.Splash]: '自身不产出；触发时触发叠层数个指定关系的匹配技能',
-  [AffixType.Resonance]: '任意技能产出{resource}时叠层，满层触发自身',
-  [AffixType.Echo]: '拥有{affixA}或{affixB}的技能触发时叠层，满层触发自身',
-  [AffixType.Fury]: '任意技能暴击时叠层，满层触发自身',
-  [AffixType.Tide]: '每秒自动叠层，满层触发自身',
-  [AffixType.Relay]: '自身不产出；指定关系的匹配技能触发时，直接触发1个匹配技能（不含其他中转）',
-  [AffixType.Conduit]: '自身不产出，指定关系的匹配技能触发时额外触发一次',
-  [AffixType.Outcast]: '单词尾字母触发时暴击率+{bonusPercent}%',
-  [AffixType.Gravity]: '含本键字母的单词出现概率+{probMult}x；商店中匹配技能刷新概率提升',
-  [AffixType.Ligature]: '字母在当前单词中重复出现时，按出现次数倍增产出',
-  [AffixType.WarDrum]: '自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能暴击率+叠层×{critPerStack}%',
-  [AffixType.Twin]: '获得附魔时同时获得两个（而非二选一）',
-  [AffixType.Recurse]: '增加暴击率，暴击时额外触发一次（每次暴击率减半）',
-  [AffixType.Taboo]: '大幅增加暴击率，若未暴击则产出负值',
-  [AffixType.Flow]: '指定关系内每个同资源且等级更高的邻居+{flowK}%',
-  [AffixType.Confluence]: '指定关系的邻居资源类型越多样，产出加成越高',
-  [AffixType.Union]: '指定关系的匹配技能越多，产出加成越高',
-  [AffixType.Innate]: '每关开始时自动触发一次（不需按键）',
-  [AffixType.Exhaust]: '每次触发产出倍增，但触发次数有限，用完词条消失',
-  [AffixType.Fallacy]: '连续未暴击时暴击率逐次递增，暴击后归零重新累积',
-  [AffixType.Reflect]: '技能词条越多、等级越高，产出越高',
-  [AffixType.MonkeyPatch]: '每关随机修改同技能一个词条的效果倍率',
-  [AffixType.Excavate]: '被蜕变时获得遗物',
-  [AffixType.Treasure]: '被蜕变时下次商店保底出现指定稀有度商品',
-  [AffixType.Refine]: '被蜕变时退还变异素',
-  [AffixType.Evolve]: '被蜕变时有概率提升技能稀有度',
-  [AffixType.Harvest]: '被蜕变时获得金币',
-  [AffixType.Chain]: '被蜕变时指定关系的技能也一起蜕变',
-  [AffixType.Volatile]: '被蜕变后本技能短期内效果翻倍',
-  [AffixType.Mutacrit]: '被蜕变时本技能永久获得暴击率',
-  [AffixType.Ascend]: '被蜕变时本技能升级',
-  [AffixType.Reecho]: '打错时也能触发技能产出，但每次打错累积-{reechoPenalty}%产出惩罚，逐词重置',
-  [AffixType.Myopia]: '产出+{myopiaBonus}%，但每次触发目标分数增加{myopiaCost}',
-  [AffixType.AuraFury]: '自身不产出；指定关系内匹配技能暴击率+{auraCrit}%',
-  [AffixType.AuraMorale]: '自身不产出；指定关系内匹配技能产出+{auraMorale}%',
-  [AffixType.Fiber]: '首字母触发时额外叠层，满层触发尾字母键上的技能',
-  [AffixType.Silkworm]: '触发时当前字母不产生底分；产出+(累积损失底分 × {silkwormK}%)',
-  [AffixType.Repulsion]: '含本键字母的单词出现概率 ×{probMult}；商店中匹配技能刷新概率降低',
-}
+export const AFFIX_DESCRIPTIONS: Record<AffixType, string> = AFFIXES_DATA.affixDescriptions as Record<AffixType, string>
 
-export const RESOURCE_NAMES: Record<ResourceType, string> = {
-  base: '基数',
-  score: '分数',
-  multiplier: '倍率',
-  time: '时间',
-  gold: '金币',
-  energy: '能量',
-  mutagen: '变异素',
-}
+export const RESOURCE_NAMES: Record<ResourceType, string> = AFFIXES_DATA.resourceNames as Record<ResourceType, string>
 
 /** 稀有度掷骰概率 */
 export const RARITY_PROBABILITIES: [number, number, number, number] = [0.40, 0.30, 0.20, 0.10]
@@ -762,56 +463,23 @@ export const RARITY_PROBABILITIES: [number, number, number, number] = [0.40, 0.3
 // ===== 衍生附魔比率表（per-resource） =====
 
 /** @deprecated 嬗变系已删除（Story 41.2），保留供旧存档兼容 */
-export const TRANSMUTE_RATIO_TABLE: Record<ResourceType, number> = {
-  base:       0.30,
-  score:      0.30,
-  multiplier: 0.10,
-  time:       0.20,
-  gold:       0.20,
-  energy:   0.15,
-  mutagen:    0.15,
-}
+export const TRANSMUTE_RATIO_TABLE: Record<ResourceType, number> = AFFIXES_DATA.transmuteRatioTable as Record<ResourceType, number>
 
 // ===== 乘算化运算符校准表（per-resource） =====
 
 /** 乘算化附魔：将加算层各项 bonus 转为独立乘数时的校准系数（初始全 1.0，后续平衡调优） */
-export const MULTIPLY_OPERATOR_CALIBRATION: Record<ResourceType, number> = {
-  base:       1.0,
-  score:      1.0,
-  multiplier: 1.0,
-  time:       1.0,
-  gold:       1.0,
-  energy:   1.0,
-  mutagen:    1.0,
-}
+export const MULTIPLY_OPERATOR_CALIBRATION: Record<ResourceType, number> = AFFIXES_DATA.multiplyOperatorCalibration as Record<ResourceType, number>
 
 /** 乘算化附魔：基础值替换表（加算基底 → 乘数基底，来源 Story 34.2 旧乘算产出者） */
-export const MULTIPLY_OPERATOR_BASE_VALUES: Record<ResourceType, number[]> = {
-  base:       [2.0, 2.3, 2.6, 2.9],
-  score:      [1.1, 1.15, 1.2, 1.25],
-  multiplier: [1.15, 1.2, 1.25, 1.3],
-  time:       [1.2, 1.25, 1.3, 1.35],
-  gold:       [1.3, 1.5, 1.7, 1.9],
-  energy:   [1.8, 2.1, 2.4, 2.7],
-  mutagen:    [1.8, 2.1, 2.4, 2.7],
-}
+export const MULTIPLY_OPERATOR_BASE_VALUES: Record<ResourceType, number[]> = AFFIXES_DATA.multiplyOperatorBaseValues as Record<ResourceType, number[]>
 
 // ===== 学徒·观摩 growthPerProc 按 PositionRelation =====
 
-export const APPRENTICE_NEIGHBOR_GROWTH: Record<PositionRelation, number> = {
-  [PositionRelation.Adjacent]: 0.06,
-  [PositionRelation.SameRow]: 0.04,
-  [PositionRelation.SameColumn]: 0.08,
-  [PositionRelation.SameHand]: 0.02,
-  [PositionRelation.SameFinger]: 0.10,
-  [PositionRelation.Symmetric]: 0.12,
-}
+export const APPRENTICE_NEIGHBOR_GROWTH: Record<PositionRelation, number> = AFFIXES_DATA.apprenticeNeighborGrowth as Record<PositionRelation, number>
 
 // ===== 职业限定附魔 =====
 
-export const CLASS_RESTRICTED_ENCHANTMENTS: Record<string, EnchantmentType[]> = {
-  // 职业限定附魔已精简；保留结构以便后续扩展
-}
+export const CLASS_RESTRICTED_ENCHANTMENTS: Record<string, EnchantmentType[]> = AFFIXES_DATA.classRestrictedEnchantments as Record<string, EnchantmentType[]>
 
 /** 所有职业限定附魔的集合（用于快速查找） */
 const ALL_CLASS_RESTRICTED = new Set<EnchantmentType>(
@@ -932,7 +600,7 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
 // ===== 旧系统技能识别（存档迁移用）=====
 
 /** 旧系统技能 ID 前缀（Epic 19/34: Producer/Converter/Connector/Amplifier） */
-export const OLD_SKILL_PREFIXES = ['prod_', 'conv_', 'conn_', 'amp_']
+export const OLD_SKILL_PREFIXES = AFFIXES_DATA.oldSkillPrefixes
 
 /** 检查是否为 Epic 19/34 旧系统技能（按前缀匹配） */
 export function isOldSystemSkill(id: string): boolean {
@@ -961,6 +629,7 @@ export function createSkillRuntimeState(skillId: string): SkillRuntimeState {
     mutacritAccum: 0,
     reechoStacks: 0,
     silkwormStacks: 0,
+    wordBaseBonus: 0,
   }
 }
 

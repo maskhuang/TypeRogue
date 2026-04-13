@@ -439,3 +439,16 @@ development_status:
   56-5-metamorph-unlock-change: done                     # 蜕变师解锁条件变更
   56-6-flow-integration: done                          # 启动流程整合
   epic-56-retrospective: optional
+
+  # ===== Epic 57: Godot 迁移与美术重做 =====
+  # Source: docs/stories/epic-57-godot-migration.md
+  epic-57: in-progress
+  57-1-data-json-extraction: done                      # data/ 层 JSON 化与 zod schema
+  57-2-battle-flow-documentation: backlog              # 战斗事件流与状态机文档化
+  57-3-art-style-guide-p0-assets: backlog              # 美术风格指南与 P0 资产
+  57-4-godot-project-skeleton: backlog                 # Godot 项目骨架与数据接入
+  57-5-keyboard-typing-loop: backlog                   # 键盘可视化与打字输入闭环
+  57-6-battle-minimum-loop: backlog                    # 战斗最小闭环（里程碑）
+  57-7-systems-migration: backlog                      # 系统逐项迁移
+  57-8-meta-systems-and-shipping: backlog              # 元系统与桌面发行
+  epic-57-retrospective: optional

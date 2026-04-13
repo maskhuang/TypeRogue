@@ -1,0 +1,150 @@
+{
+  "modifierIds": [
+    "boss_fast_time",
+    "boss_keystroke_tax",
+    "boss_escalation",
+    "boss_frostbite",
+    "boss_mirror",
+    "boss_decay",
+    "boss_cap",
+    "boss_double_target",
+    "boss_diminish",
+    "boss_score_tax",
+    "boss_output_drain",
+    "boss_fade",
+    "boss_scramble",
+    "boss_reverse",
+    "boss_garble",
+    "boss_decoy"
+  ],
+  "meta": {
+    "boss_fast_time": {
+      "id": "boss_fast_time",
+      "name": "时间加速",
+      "icon": "⏩",
+      "description": "开局即进入达标后加速阶段",
+      "eliteHint": "开局即进入达标后加速阶段",
+      "category": "offense"
+    },
+    "boss_keystroke_tax": {
+      "id": "boss_keystroke_tax",
+      "name": "击键代价",
+      "icon": "⌨️",
+      "description": "击键或产出资源时 -0.2 秒",
+      "eliteHint": "击键或产出资源时 -0.1 秒",
+      "category": "offense"
+    },
+    "boss_escalation": {
+      "id": "boss_escalation",
+      "name": "渐进失控",
+      "icon": "📈",
+      "description": "每 15 秒时间流速永久 +20%",
+      "eliteHint": "每 20 秒 +10%",
+      "category": "offense"
+    },
+    "boss_frostbite": {
+      "id": "boss_frostbite",
+      "name": "寒霜侵蚀",
+      "icon": "🥶",
+      "description": "打错冻结 1+N 秒（N=打错次数），冻结期间打字无效",
+      "eliteHint": "打错冻结 1+N 秒（N=打错次数），冻结期间打字无效",
+      "category": "offense"
+    },
+    "boss_mirror": {
+      "id": "boss_mirror",
+      "name": "镜像试炼",
+      "icon": "🫧",
+      "description": "首次通关后重来，通关时间为倒计时，超时扣全部时间",
+      "eliteHint": "首次通关后重来，通关时间为倒计时，超时扣全部时间",
+      "category": "offense"
+    },
+    "boss_decay": {
+      "id": "boss_decay",
+      "name": "分数衰减",
+      "icon": "📉",
+      "description": "每秒扣 5% 当前总分",
+      "eliteHint": "每秒扣 2.5% 总分",
+      "category": "defense"
+    },
+    "boss_cap": {
+      "id": "boss_cap",
+      "name": "单词限额",
+      "icon": "📦",
+      "description": "单词得分上限为目标分数的 10%",
+      "eliteHint": "单词得分上限为目标分数的 15%",
+      "category": "defense"
+    },
+    "boss_double_target": {
+      "id": "boss_double_target",
+      "name": "双倍目标",
+      "icon": "⏫",
+      "description": "目标分数 ×2",
+      "eliteHint": "目标分数 ×1.5",
+      "category": "defense"
+    },
+    "boss_diminish": {
+      "id": "boss_diminish",
+      "name": "递减收益",
+      "icon": "⬇️",
+      "description": "每完成一词下个词分数 -10%",
+      "eliteHint": "每词 -5%",
+      "category": "defense"
+    },
+    "boss_score_tax": {
+      "id": "boss_score_tax",
+      "name": "得分税",
+      "icon": "🧾",
+      "description": "每词最终得分减少目标分数的 3%",
+      "eliteHint": "每词减少目标分数的 2%",
+      "category": "defense"
+    },
+    "boss_output_drain": {
+      "id": "boss_output_drain",
+      "name": "产出削弱",
+      "icon": "🩸",
+      "description": "随机2种资源的技能产出被削弱（覆盖越多削弱越轻）",
+      "eliteHint": "随机3种资源，每种削弱更轻",
+      "category": "defense"
+    },
+    "boss_fade": {
+      "id": "boss_fade",
+      "name": "渐隐之词",
+      "icon": "👻",
+      "description": "字母逐个淡出消失",
+      "eliteHint": "字母缓慢淡出（速度减半）",
+      "category": "disruption"
+    },
+    "boss_scramble": {
+      "id": "boss_scramble",
+      "name": "乱序打字",
+      "icon": "🔀",
+      "description": "字母打乱显示，照乱序打",
+      "eliteHint": "仅打乱中间字母，首尾保留",
+      "category": "disruption"
+    },
+    "boss_reverse": {
+      "id": "boss_reverse",
+      "name": "倒序输入",
+      "icon": "⏪",
+      "description": "从最后一个字母往前打",
+      "eliteHint": "从最后一个字母往前打",
+      "category": "disruption"
+    },
+    "boss_garble": {
+      "id": "boss_garble",
+      "name": "乱码",
+      "icon": "🔣",
+      "description": "词语中插入随机标点符号",
+      "eliteHint": "插入较少标点符号",
+      "category": "disruption"
+    },
+    "boss_decoy": {
+      "id": "boss_decoy",
+      "name": "伪词干扰",
+      "icon": "🎭",
+      "description": "30% 概率出现伪词，无失误完成反扣等量分数",
+      "eliteHint": "20% 概率出现伪词",
+      "category": "disruption"
+    }
+  }
+}

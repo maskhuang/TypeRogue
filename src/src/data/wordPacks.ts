@@ -10,31 +10,37 @@ import { rollRarity } from './skillGeneration';
 import type { SkillRarity } from './affixes';
 import { FREQ_UNLOCK_THRESHOLD } from '../systems/letters/LetterFrequencySystem';
 
-// === 牌包稀有度常量 ===
+// === 牌包稀有度常量（Story 57.1: 迁至 data-json/wordPacks.json）===
+// export 以便 extract.ts 可通过 module import 访问；运行时代码仍在本文件内使用
+
+import { WORD_PACKS_DATA } from './schemas/wordPacks.schema';
 
 /** 稀有度 → 候选词数 [普通1, 稀有3, 史诗3, 传说3] */
-const PACK_RARITY_CANDIDATE_COUNT: [number, number, number, number] = [1, 3, 3, 3];
+export const PACK_RARITY_CANDIDATE_COUNT: [number, number, number, number] =
+  WORD_PACKS_DATA.candidateCount as [number, number, number, number];
 
 /** 稀有度 → 玩家选几个（全部=1） */
-const PACK_RARITY_PICK_COUNT: [number, number, number, number] = [1, 1, 1, 1];
+export const PACK_RARITY_PICK_COUNT: [number, number, number, number] =
+  WORD_PACKS_DATA.pickCount as [number, number, number, number];
 
 /** 稀有度 → 定价基础 */
-const PACK_RARITY_BASE_PRICE: [number, number, number, number] = [5, 12, 18, 25];
+export const PACK_RARITY_BASE_PRICE: [number, number, number, number] =
+  WORD_PACKS_DATA.basePrice as [number, number, number, number];
 
 /** 稀有度 → 允许的条件类型集合（null = 全部允许） */
-const PACK_RARITY_ALLOWED_CONDITIONS: Record<SkillRarity, Set<PackConditionType> | null> = {
-  0: null, // 普通：全部
-  1: null, // 稀有：全部（但排除 contains_unowned，见过滤逻辑）
-  2: new Set(['contains_owned', 'high_freq', 'long', 'contains']),
-  3: new Set(['contains_owned', 'high_freq']),
+export const PACK_RARITY_ALLOWED_CONDITIONS: Record<SkillRarity, Set<PackConditionType> | null> = {
+  0: WORD_PACKS_DATA.allowedConditions['0'] === null ? null : new Set(WORD_PACKS_DATA.allowedConditions['0'] as PackConditionType[]),
+  1: WORD_PACKS_DATA.allowedConditions['1'] === null ? null : new Set(WORD_PACKS_DATA.allowedConditions['1'] as PackConditionType[]),
+  2: WORD_PACKS_DATA.allowedConditions['2'] === null ? null : new Set(WORD_PACKS_DATA.allowedConditions['2'] as PackConditionType[]),
+  3: WORD_PACKS_DATA.allowedConditions['3'] === null ? null : new Set(WORD_PACKS_DATA.allowedConditions['3'] as PackConditionType[]),
 };
 
 /** 稀有度 → 排除的条件类型 */
-const PACK_RARITY_EXCLUDED_CONDITIONS: Record<SkillRarity, Set<PackConditionType> | null> = {
-  0: null,
-  1: new Set(['contains_unowned']),
-  2: null,
-  3: null,
+export const PACK_RARITY_EXCLUDED_CONDITIONS: Record<SkillRarity, Set<PackConditionType> | null> = {
+  0: WORD_PACKS_DATA.excludedConditions['0'] === null ? null : new Set(WORD_PACKS_DATA.excludedConditions['0'] as PackConditionType[]),
+  1: WORD_PACKS_DATA.excludedConditions['1'] === null ? null : new Set(WORD_PACKS_DATA.excludedConditions['1'] as PackConditionType[]),
+  2: WORD_PACKS_DATA.excludedConditions['2'] === null ? null : new Set(WORD_PACKS_DATA.excludedConditions['2'] as PackConditionType[]),
+  3: WORD_PACKS_DATA.excludedConditions['3'] === null ? null : new Set(WORD_PACKS_DATA.excludedConditions['3'] as PackConditionType[]),
 };
 
 // === 全量词汇缓存（惰性初始化） ===

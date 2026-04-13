@@ -1,9 +1,14 @@
 // ============================================
 // 键盘拓扑与位置关系
 // 6 种位置关系查询：相邻/同行/同列/同手/同指/对称位
+//
+// 静态数据（COLUMN/ROW/HAND/FINGER/SYMMETRIC 表）从 data-json/keyboardTopology.json 加载
+// 通过 schemas/keyboardTopology.schema.ts 校验，实现引擎无关的事实来源（Story 57.1）
+// 运行时函数（hasRelation 等）保留在本文件，PositionRelation enum 保留为运行时类型
 // ============================================
 
-import { ADJACENT_KEYS, KEYBOARD_ROWS, KEYS, PUNCTUATION_KEYS } from '../core/constants';
+import { ADJACENT_KEYS, KEYS, PUNCTUATION_KEYS } from '../core/constants';
+import { KEYBOARD_TOPOLOGY_DATA } from './schemas/keyboardTopology.schema';
 
 // === 位置关系枚举 ===
 export enum PositionRelation {
@@ -15,68 +20,12 @@ export enum PositionRelation {
   Symmetric = 'symmetric',
 }
 
-// === 逻辑列号（键在其行内的索引） ===
-const _COLUMN_MAP: Record<string, number> = {};
-KEYBOARD_ROWS.forEach(row => row.forEach((key, col) => { _COLUMN_MAP[key] = col; }));
-// 标点键列号（标点解放遗物）— ; 在 home row L 右侧, ,./在 bottom row M 右侧
-_COLUMN_MAP[';'] = 9; _COLUMN_MAP[','] = 7; _COLUMN_MAP['.'] = 8; _COLUMN_MAP['/'] = 9;
-_COLUMN_MAP['['] = 10; _COLUMN_MAP[']'] = 11;
-export const COLUMN_MAP: Readonly<Record<string, number>> = Object.freeze(_COLUMN_MAP);
-
-// === 行号 ===
-const _ROW_MAP: Record<string, number> = {};
-KEYBOARD_ROWS.forEach((row, rowIdx) => row.forEach(key => { _ROW_MAP[key] = rowIdx; }));
-// 标点键行号（标点解放遗物）— ; 在 home row (1), ,./ 在 bottom row (2)
-_ROW_MAP[';'] = 1; _ROW_MAP[','] = 2; _ROW_MAP['.'] = 2; _ROW_MAP['/'] = 2;
-_ROW_MAP['['] = 0; _ROW_MAP[']'] = 0;
-export const ROW_MAP: Readonly<Record<string, number>> = Object.freeze(_ROW_MAP);
-
-// === 手分配 ===
-export const HAND_MAP: Record<string, 'left' | 'right'> = {
-  q: 'left', w: 'left', e: 'left', r: 'left', t: 'left',
-  a: 'left', s: 'left', d: 'left', f: 'left', g: 'left',
-  z: 'left', x: 'left', c: 'left', v: 'left', b: 'left',
-  y: 'right', u: 'right', i: 'right', o: 'right', p: 'right',
-  h: 'right', j: 'right', k: 'right', l: 'right',
-  n: 'right', m: 'right',
-  // 标点键（标点解放遗物）
-  ';': 'right', ',': 'right', '.': 'right', '/': 'right',
-  '[': 'right', ']': 'right',
-};
-
-// === 手指分配（0-7，标准十指指法） ===
-// 0=左小指, 1=左无名指, 2=左中指, 3=左食指
-// 4=右食指, 5=右中指, 6=右无名指, 7=右小指
-export const FINGER_MAP: Record<string, number> = {
-  q: 0, a: 0, z: 0,
-  w: 1, s: 1, x: 1,
-  e: 2, d: 2, c: 2,
-  r: 3, t: 3, f: 3, g: 3, v: 3, b: 3,
-  y: 4, u: 4, h: 4, j: 4, n: 4, m: 4,
-  i: 5, k: 5, ',': 5,
-  o: 6, l: 6, '.': 6,
-  p: 7, ';': 7, '/': 7, '[': 7, ']': 7,
-};
-
-// === 对称位映射（双向，26 字母键中 11 对） ===
-export const SYMMETRIC_PAIRS: Record<string, string> = {
-  q: 'p', p: 'q',
-  w: 'o', o: 'w',
-  e: 'i', i: 'e',
-  r: 'u', u: 'r',
-  t: 'y', y: 't',
-  s: 'l', l: 's',
-  d: 'k', k: 'd',
-  f: 'j', j: 'f',
-  g: 'h', h: 'g',
-  v: 'm', m: 'v',
-  b: 'n', n: 'b',
-  // 标点键对称位（标点解放遗物）
-  a: ';', ';': 'a',
-  z: '/', '/': 'z',
-  x: '.', '.': 'x',
-  c: ',', ',': 'c',
-};
+// === 静态拓扑表（来自 JSON，schema 校验后冻结） ===
+export const COLUMN_MAP: Readonly<Record<string, number>> = KEYBOARD_TOPOLOGY_DATA.columnMap;
+export const ROW_MAP: Readonly<Record<string, number>> = KEYBOARD_TOPOLOGY_DATA.rowMap;
+export const HAND_MAP: Readonly<Record<string, 'left' | 'right'>> = KEYBOARD_TOPOLOGY_DATA.handMap;
+export const FINGER_MAP: Readonly<Record<string, number>> = KEYBOARD_TOPOLOGY_DATA.fingerMap;
+export const SYMMETRIC_PAIRS: Readonly<Record<string, string>> = KEYBOARD_TOPOLOGY_DATA.symmetricPairs;
 
 // === 关系判定函数 ===
 

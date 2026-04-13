@@ -4,6 +4,7 @@
 // Story 32.1 Task 1: 职业定义框架
 
 import type { ClassId, FeatureId, ResourceType } from '../core/types';
+import { CLASSES_DATA } from './schemas/classes.schema';
 
 /**
  * 职业定义接口
@@ -25,39 +26,11 @@ export interface ClassDefinition {
 
 /**
  * 所有职业定义
+ *
+ * 数据来源：data-json/classes.json，由 schemas/classes.schema.ts 校验加载（Story 57.1）
  */
-export const CLASS_DEFINITIONS: Record<ClassId, ClassDefinition> = {
-  none: {
-    id: 'none',
-    name: '无职业',
-    description: '标准模式，无特殊机制。',
-    icon: '⚔️',
-    uniqueResource: null,
-    loseFeature: null,
-    loseDescription: null,
-    starterRelic: null,
-  },
-  wordsmith: {
-    id: 'wordsmith',
-    name: '造词师',
-    description: '操控输入层，通过字母碎片和采集队列手动构建词库。高确定性，精密工程师风格。',
-    icon: '✍️',
-    uniqueResource: 'energy',
-    loseFeature: null,
-    loseDescription: '购买单词时获得等量字母碎片',
-    starterRelic: 'apprentice_notes',
-  },
-  metamorph: {
-    id: 'metamorph',
-    name: '蜕变师',
-    description: '操控处理层，通过变异素和蜕变盲盒改造技能组合。低确定性，进化赌徒风格。',
-    icon: '🧬',
-    uniqueResource: 'mutagen',
-    loseFeature: 'enchant-choice',
-    loseDescription: '失去附魔选择权（Lv3 随机附魔）',
-    starterRelic: 'primal_mutant',
-  },
-};
+export const CLASS_DEFINITIONS: Record<ClassId, ClassDefinition> =
+  CLASSES_DATA.definitions as Record<ClassId, ClassDefinition>;
 
 /**
  * 获取职业定义

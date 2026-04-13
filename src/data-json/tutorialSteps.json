@@ -1,0 +1,350 @@
+{
+  "L0": [
+    {
+      "id": "L0_welcome",
+      "level": 0,
+      "trigger": {
+        "event": "battle:start",
+        "delay": 1000
+      },
+      "content": {
+        "titleKey": "tutorial.L0_welcome_title",
+        "bodyKey": "tutorial.L0_welcome_body",
+        "anchorElement": "word-display",
+        "anchorPosition": "bottom"
+      },
+      "dismissAfter": 3000,
+      "pauseGame": true
+    },
+    {
+      "id": "L0_word_complete",
+      "level": 0,
+      "trigger": {
+        "event": "word:complete"
+      },
+      "content": {
+        "titleKey": "tutorial.L0_word_complete_title",
+        "bodyKey": "tutorial.L0_word_complete_body",
+        "anchorElement": "score-count",
+        "anchorPosition": "bottom"
+      },
+      "dismissAfter": 3000,
+      "prerequisite": "L0_welcome",
+      "pauseGame": true
+    },
+    {
+      "id": "L0_skill_triggered",
+      "level": 0,
+      "trigger": {
+        "event": "skill:triggered"
+      },
+      "content": {
+        "titleKey": "tutorial.L0_skill_triggered_title",
+        "bodyKey": "tutorial.L0_skill_triggered_body"
+      },
+      "dismissAfter": 3000,
+      "prerequisite": "L0_word_complete",
+      "pauseGame": true
+    },
+    {
+      "id": "L0_combo",
+      "level": 0,
+      "trigger": {
+        "event": "word:complete"
+      },
+      "content": {
+        "titleKey": "tutorial.L0_combo_title",
+        "bodyKey": "tutorial.L0_combo_body",
+        "anchorElement": "combo-display",
+        "anchorPosition": "top"
+      },
+      "dismissAfter": 3000,
+      "prerequisite": "L0_skill_triggered",
+      "pauseGame": true
+    }
+  ],
+  "L1": [
+    {
+      "id": "L1_shop_intro",
+      "level": 1,
+      "trigger": {
+        "event": "shop:opened",
+        "delay": 500
+      },
+      "content": {
+        "titleKey": "tutorial.L1_shop_intro_title",
+        "bodyKey": "tutorial.L1_shop_intro_body"
+      },
+      "dismissAfter": 6000,
+      "prerequisite": "L0_welcome",
+      "pauseGame": true
+    },
+    {
+      "id": "L1_relic",
+      "level": 1,
+      "trigger": {
+        "event": "tutorial:step_completed"
+      },
+      "content": {
+        "titleKey": "tutorial.L1_relic_title",
+        "bodyKey": "tutorial.L1_relic_body"
+      },
+      "dismissAfter": 6000,
+      "prerequisite": "L1_shop_intro",
+      "pauseGame": true
+    },
+    {
+      "id": "L1_skill_bind",
+      "level": 1,
+      "trigger": {
+        "event": "shop:purchase"
+      },
+      "content": {
+        "titleKey": "tutorial.L1_skill_bind_title",
+        "bodyKey": "tutorial.L1_skill_bind_body"
+      },
+      "dismissAfter": 6000,
+      "prerequisite": "L0_welcome"
+    },
+    {
+      "id": "L1_shape_hint",
+      "level": 1,
+      "trigger": {
+        "event": "shop:purchase"
+      },
+      "content": {
+        "titleKey": "tutorial.L1_shape_hint_title",
+        "bodyKey": "tutorial.L1_shape_hint_body"
+      },
+      "dismissAfter": 8000,
+      "prerequisite": "L1_skill_bind"
+    },
+    {
+      "id": "L1_upgrade",
+      "level": 1,
+      "trigger": {
+        "event": "skill:upgraded"
+      },
+      "content": {
+        "titleKey": "tutorial.L1_upgrade_title",
+        "bodyKey": "tutorial.L1_upgrade_body",
+        "anchorElement": "reward-cards",
+        "anchorPosition": "top"
+      },
+      "dismissAfter": 6000,
+      "prerequisite": "L0_welcome"
+    }
+  ],
+  "L2": [
+    {
+      "id": "L2_affix_intro",
+      "level": 2,
+      "trigger": {
+        "event": "shop:purchase"
+      },
+      "content": {
+        "titleKey": "tutorial.L2_affix_intro_title",
+        "bodyKey": "tutorial.L2_affix_intro_body",
+        "anchorElement": "reward-cards",
+        "anchorPosition": "top"
+      },
+      "dismissAfter": 8000
+    },
+    {
+      "id": "L2_affix_positional",
+      "level": 2,
+      "trigger": {
+        "event": "shop:purchase"
+      },
+      "content": {
+        "titleKey": "tutorial.L2_affix_positional_title",
+        "bodyKey": "tutorial.L2_affix_positional_body"
+      },
+      "dismissAfter": 8000
+    },
+    {
+      "id": "L2_affix_variety",
+      "level": 2,
+      "trigger": {
+        "event": "shop:purchase"
+      },
+      "content": {
+        "titleKey": "tutorial.L2_affix_variety_title",
+        "bodyKey": "tutorial.L2_affix_variety_body",
+        "anchorElement": "reward-cards",
+        "anchorPosition": "top"
+      },
+      "dismissAfter": 8000
+    },
+    {
+      "id": "L2_rarity_explain",
+      "level": 2,
+      "trigger": {
+        "event": "shop:purchase"
+      },
+      "content": {
+        "titleKey": "tutorial.L2_rarity_explain_title",
+        "bodyKey": "tutorial.L2_rarity_explain_body",
+        "anchorElement": "reward-cards",
+        "anchorPosition": "top"
+      },
+      "dismissAfter": 8000
+    }
+  ],
+  "L3": [
+    {
+      "id": "L3_enchant_unlock",
+      "level": 3,
+      "trigger": {
+        "event": "skill:upgraded"
+      },
+      "content": {
+        "titleKey": "tutorial.L3_enchant_unlock_title",
+        "bodyKey": "tutorial.L3_enchant_unlock_body",
+        "anchorElement": "enchantment-modal",
+        "anchorPosition": "bottom"
+      },
+      "dismissAfter": 10000
+    },
+    {
+      "id": "L3_enchant_growth",
+      "level": 3,
+      "trigger": {
+        "event": "skill:triggered"
+      },
+      "content": {
+        "titleKey": "tutorial.L3_enchant_growth_title",
+        "bodyKey": "tutorial.L3_enchant_growth_body"
+      },
+      "dismissAfter": 8000,
+      "prerequisite": "L3_enchant_unlock"
+    }
+  ],
+  "L4": [
+    {
+      "id": "L4_elite_intro",
+      "level": 4,
+      "trigger": {
+        "event": "battle:start",
+        "delay": 1500
+      },
+      "content": {
+        "titleKey": "tutorial.L4_elite_intro_title",
+        "bodyKey": "tutorial.L4_elite_intro_body",
+        "anchorElement": "modifier-info",
+        "anchorPosition": "bottom"
+      },
+      "dismissAfter": 8000
+    },
+    {
+      "id": "L4_boss_intro",
+      "level": 4,
+      "trigger": {
+        "event": "battle:start",
+        "delay": 1500
+      },
+      "content": {
+        "titleKey": "tutorial.L4_boss_intro_title",
+        "bodyKey": "tutorial.L4_boss_intro_body",
+        "anchorElement": "modifier-info",
+        "anchorPosition": "bottom"
+      },
+      "dismissAfter": 8000,
+      "prerequisite": "L4_elite_intro"
+    },
+    {
+      "id": "L4_modifier_explain",
+      "level": 4,
+      "trigger": {
+        "event": "battle:start",
+        "delay": 1500
+      },
+      "content": {
+        "titleKey": "tutorial.L4_modifier_explain_title",
+        "bodyKey": "tutorial.L4_modifier_explain_body",
+        "anchorElement": "modifier-info",
+        "anchorPosition": "bottom"
+      },
+      "dismissAfter": 10000,
+      "prerequisite": "L4_elite_intro"
+    }
+  ],
+  "L5": [
+    {
+      "id": "L5_class_unlock",
+      "level": 5,
+      "trigger": {
+        "event": "meta:class_unlocked"
+      },
+      "content": {
+        "titleKey": "tutorial.L5_class_unlock_title",
+        "bodyKey": "tutorial.L5_class_unlock_body",
+        "anchorElement": "game-container",
+        "anchorPosition": "top"
+      },
+      "dismissAfter": 10000
+    },
+    {
+      "id": "L5_class_resource",
+      "level": 5,
+      "trigger": {
+        "event": "skill:triggered"
+      },
+      "content": {
+        "titleKey": "tutorial.L5_class_resource_title",
+        "bodyKey": "tutorial.L5_class_resource_body"
+      },
+      "dismissAfter": 8000,
+      "prerequisite": "L5_class_unlock"
+    }
+  ],
+  "demo": [
+    {
+      "id": "demo_step1_type",
+      "level": 0,
+      "trigger": {
+        "event": "battle:start",
+        "delay": 1000
+      },
+      "content": {
+        "titleKey": "tutorial.demo_title",
+        "bodyKey": "tutorial.step1",
+        "anchorElement": "word-display",
+        "anchorPosition": "bottom"
+      },
+      "dismissAfter": 4000
+    },
+    {
+      "id": "demo_step2_skill",
+      "level": 0,
+      "trigger": {
+        "event": "word:complete",
+        "delay": 500
+      },
+      "content": {
+        "titleKey": "tutorial.demo_title",
+        "bodyKey": "tutorial.step2",
+        "anchorElement": "word-display",
+        "anchorPosition": "bottom"
+      },
+      "dismissAfter": 4000,
+      "prerequisite": "demo_step1_type"
+    },
+    {
+      "id": "demo_step3_shop",
+      "level": 0,
+      "trigger": {
+        "event": "shop:opened",
+        "delay": 500
+      },
+      "content": {
+        "titleKey": "tutorial.demo_title",
+        "bodyKey": "tutorial.step3",
+        "anchorElement": "shop-tabs",
+        "anchorPosition": "bottom"
+      },
+      "dismissAfter": 4000,
+      "prerequisite": "demo_step2_skill"
+    }
+  ]
+}

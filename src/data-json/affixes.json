@@ -1,0 +1,654 @@
+{
+  "affixCategoryMap": {
+    "convert": [
+      "numeric",
+      "production"
+    ],
+    "rainbow": [
+      "numeric"
+    ],
+    "multiply": [
+      "numeric"
+    ],
+    "crit": [
+      "crit"
+    ],
+    "charge": [
+      "numeric"
+    ],
+    "decay": [
+      "crit"
+    ],
+    "recurse": [
+      "crit"
+    ],
+    "taboo": [
+      "crit"
+    ],
+    "fallacy": [
+      "crit"
+    ],
+    "amplify": [
+      "stack",
+      "topology"
+    ],
+    "splash": [
+      "stack",
+      "topology"
+    ],
+    "resonance": [
+      "stack"
+    ],
+    "echo": [
+      "stack"
+    ],
+    "fury": [
+      "stack",
+      "crit"
+    ],
+    "tide": [
+      "stack"
+    ],
+    "war_drum": [
+      "stack",
+      "topology",
+      "crit"
+    ],
+    "void": [
+      "topology",
+      "numeric"
+    ],
+    "swarm": [
+      "topology",
+      "numeric"
+    ],
+    "mercenary": [
+      "production",
+      "numeric"
+    ],
+    "mirror": [
+      "topology",
+      "meta_rule"
+    ],
+    "cascade": [
+      "word_sense",
+      "numeric"
+    ],
+    "flow": [
+      "topology",
+      "numeric",
+      "production"
+    ],
+    "confluence": [
+      "topology",
+      "numeric"
+    ],
+    "union": [
+      "topology",
+      "numeric"
+    ],
+    "outcast": [
+      "word_sense",
+      "crit"
+    ],
+    "gravity": [
+      "word_sense"
+    ],
+    "ligature": [
+      "word_sense",
+      "numeric"
+    ],
+    "relay": [
+      "meta_rule",
+      "topology"
+    ],
+    "conduit": [
+      "meta_rule",
+      "topology"
+    ],
+    "twin": [
+      "meta_rule"
+    ],
+    "innate": [
+      "meta_rule"
+    ],
+    "exhaust": [
+      "meta_rule"
+    ],
+    "reflect": [
+      "meta_rule",
+      "numeric"
+    ],
+    "monkey_patch": [
+      "meta_rule"
+    ],
+    "excavate": [
+      "meta_rule"
+    ],
+    "treasure": [
+      "meta_rule"
+    ],
+    "refine": [
+      "meta_rule"
+    ],
+    "evolve": [
+      "meta_rule"
+    ],
+    "harvest": [
+      "meta_rule"
+    ],
+    "chain": [
+      "meta_rule",
+      "topology"
+    ],
+    "volatile": [
+      "meta_rule",
+      "numeric"
+    ],
+    "mutacrit": [
+      "meta_rule",
+      "crit"
+    ],
+    "ascend": [
+      "meta_rule"
+    ],
+    "reecho": [
+      "meta_rule",
+      "production"
+    ],
+    "myopia": [
+      "production",
+      "numeric"
+    ],
+    "aura_fury": [
+      "topology",
+      "crit"
+    ],
+    "aura_morale": [
+      "topology",
+      "numeric"
+    ],
+    "fiber": [
+      "word_sense",
+      "stack"
+    ],
+    "silkworm": [
+      "production",
+      "numeric"
+    ],
+    "repulsion": [
+      "word_sense"
+    ],
+    "handoff": [
+      "word_sense",
+      "meta_rule"
+    ],
+    "rewind": [
+      "word_sense",
+      "meta_rule"
+    ],
+    "endow": [
+      "word_sense",
+      "production"
+    ]
+  },
+  "affixWeightTiers": {
+    "convert_cross": "low",
+    "convert_self": "none",
+    "rainbow": "low",
+    "multiply": "low",
+    "charge": "high",
+    "decay": "high",
+    "crit": "high",
+    "cascade": "high",
+    "void": "high",
+    "swarm": "high",
+    "mercenary": "high",
+    "mirror": "high",
+    "amplify": "high",
+    "splash": "low",
+    "resonance": "high",
+    "echo": "high",
+    "fury": "high",
+    "tide": "high",
+    "relay": "low",
+    "conduit": "low",
+    "outcast": "high",
+    "gravity": "low",
+    "ligature": "high",
+    "flow": "high",
+    "confluence": "high",
+    "union": "high",
+    "war_drum": "high",
+    "twin": "low",
+    "innate": "low",
+    "exhaust": "low",
+    "recurse": "high",
+    "taboo": "high",
+    "fallacy": "high",
+    "reflect": "high",
+    "monkey_patch": "low",
+    "excavate": "low",
+    "treasure": "high",
+    "refine": "high",
+    "evolve": "low",
+    "harvest": "high",
+    "chain": "low",
+    "volatile": "high",
+    "mutacrit": "high",
+    "ascend": "low",
+    "reecho": "low",
+    "myopia": "high",
+    "aura_fury": "high",
+    "aura_morale": "high",
+    "fiber": "low",
+    "silkworm": "high",
+    "repulsion": "low",
+    "handoff": "low",
+    "rewind": "low",
+    "endow": "low"
+  },
+  "affixClassRestriction": {
+    "twin": "metamorph",
+    "excavate": "metamorph",
+    "treasure": "metamorph",
+    "refine": "metamorph",
+    "evolve": "metamorph",
+    "harvest": "metamorph",
+    "chain": "metamorph",
+    "volatile": "metamorph",
+    "mutacrit": "metamorph",
+    "ascend": "metamorph",
+    "fiber": "wordsmith",
+    "handoff": "wordsmith",
+    "rewind": "wordsmith",
+    "endow": "wordsmith"
+  },
+  "affixNames": {
+    "convert": "转化",
+    "rainbow": "彩虹",
+    "multiply": "乘算",
+    "charge": "蓄力",
+    "decay": "衰减",
+    "crit": "暴击",
+    "cascade": "级联",
+    "void": "虚无",
+    "swarm": "虫群",
+    "mercenary": "雇佣",
+    "mirror": "倒影",
+    "amplify": "增幅",
+    "splash": "溅射",
+    "resonance": "共鸣",
+    "echo": "感应",
+    "fury": "怒气",
+    "tide": "潮汐",
+    "relay": "中转",
+    "conduit": "共振光环",
+    "outcast": "退场",
+    "gravity": "引力",
+    "ligature": "连字",
+    "war_drum": "战鼓",
+    "twin": "双生",
+    "recurse": "递归",
+    "taboo": "禁忌",
+    "flow": "落差",
+    "confluence": "汇流",
+    "union": "联合",
+    "innate": "先天",
+    "exhaust": "消耗",
+    "fallacy": "赌徒",
+    "reflect": "反射",
+    "monkey_patch": "猴子补丁",
+    "excavate": "挖掘",
+    "treasure": "寻宝",
+    "refine": "提纯",
+    "evolve": "进化",
+    "harvest": "收割",
+    "chain": "连锁",
+    "volatile": "不稳定",
+    "mutacrit": "蜕变暴击",
+    "ascend": "升华",
+    "reecho": "回音",
+    "myopia": "短视",
+    "aura_fury": "愤怒光环",
+    "aura_morale": "士气光环",
+    "fiber": "光纤",
+    "silkworm": "蚕食",
+    "repulsion": "斥力",
+    "handoff": "接力",
+    "rewind": "回溯",
+    "endow": "遗产"
+  },
+  "affixDescriptions": {
+    "convert": "读取{source}的技能产出量加成",
+    "rainbow": "每次触发时随机选择一种资源类型产出",
+    "multiply": "产出直接乘以固定倍数",
+    "charge": "按住蓄力，触发时释放产出倍率（×1.0~上限）；蓄满自动释放",
+    "decay": "首次触发暴击率最高，逐次衰减至下限，每关重置",
+    "crit": "触发时有概率暴击",
+    "cascade": "上一个按键与当前键满足指定位置关系时，产出倍增",
+    "void": "指定关系的空位越多加成越高",
+    "swarm": "全场拥有虫群词条的技能越多，产出越高",
+    "mercenary": "金币≥N时触发加成产出，每次触发消耗N金币",
+    "mirror": "每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效",
+    "amplify": "自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能产出+叠层×{amplifyK}%",
+    "splash": "自身不产出；触发时触发叠层数个指定关系的匹配技能",
+    "resonance": "任意技能产出{resource}时叠层，满层触发自身",
+    "echo": "拥有{affixA}或{affixB}的技能触发时叠层，满层触发自身",
+    "fury": "任意技能暴击时叠层，满层触发自身",
+    "tide": "每秒自动叠层，满层触发自身",
+    "relay": "自身不产出；指定关系的匹配技能触发时，直接触发1个匹配技能（不含其他中转）",
+    "conduit": "自身不产出，指定关系的匹配技能触发时额外触发一次",
+    "outcast": "单词尾字母触发时暴击率+{bonusPercent}%",
+    "gravity": "含本键字母的单词出现概率+{probMult}x；商店中匹配技能刷新概率提升",
+    "ligature": "字母在当前单词中重复出现时，按出现次数倍增产出",
+    "war_drum": "自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能暴击率+叠层×{critPerStack}%",
+    "twin": "获得附魔时同时获得两个（而非二选一）",
+    "recurse": "增加暴击率，暴击时额外触发一次（每次暴击率减半）",
+    "taboo": "大幅增加暴击率，若未暴击则产出负值",
+    "flow": "指定关系内每个同资源且等级更高的邻居+{flowK}%",
+    "confluence": "指定关系的邻居资源类型越多样，产出加成越高",
+    "union": "指定关系的匹配技能越多，产出加成越高",
+    "innate": "每关开始时自动触发一次（不需按键）",
+    "exhaust": "每次触发产出倍增，但触发次数有限，用完词条消失",
+    "fallacy": "连续未暴击时暴击率逐次递增，暴击后归零重新累积",
+    "reflect": "技能词条越多、等级越高，产出越高",
+    "monkey_patch": "每关随机修改同技能一个词条的效果倍率",
+    "excavate": "被蜕变时获得遗物",
+    "treasure": "被蜕变时下次商店保底出现指定稀有度商品",
+    "refine": "被蜕变时退还变异素",
+    "evolve": "被蜕变时有概率提升技能稀有度",
+    "harvest": "被蜕变时获得金币",
+    "chain": "被蜕变时指定关系的技能也一起蜕变",
+    "volatile": "被蜕变后本技能短期内效果翻倍",
+    "mutacrit": "被蜕变时本技能永久获得暴击率",
+    "ascend": "被蜕变时本技能升级",
+    "reecho": "打错时也能触发技能产出，但每次打错累积-{reechoPenalty}%产出惩罚，逐词重置",
+    "myopia": "产出+{myopiaBonus}%，但每次触发目标分数增加{myopiaCost}",
+    "aura_fury": "自身不产出；指定关系内匹配技能暴击率+{auraCrit}%",
+    "aura_morale": "自身不产出；指定关系内匹配技能产出+{auraMorale}%",
+    "fiber": "首字母触发时额外叠层，满层触发尾字母键上的技能",
+    "silkworm": "触发时当前字母不产生底分；产出+(累积损失底分 × {silkwormK}%)",
+    "repulsion": "含本键字母的单词出现概率 ×{probMult}；商店中匹配技能刷新概率降低",
+    "handoff": "本词之后第一个将触发的技能额外触发{handoffCount}次",
+    "rewind": "依次让本词之前已触发的最近{rewindCount}个技能各额外触发1次",
+    "endow": "本次不产出；将本应产出量（标准化后）加到本词之后{endowCount}个技能的基础产出"
+  },
+  "resourceNames": {
+    "base": "基数",
+    "score": "分数",
+    "multiplier": "倍率",
+    "time": "时间",
+    "gold": "金币",
+    "energy": "能量",
+    "mutagen": "变异素"
+  },
+  "rarityNames": {
+    "0": "普通",
+    "1": "稀有",
+    "2": "史诗",
+    "3": "传说"
+  },
+  "rarityColors": {
+    "0": "#ffffff",
+    "1": "#4488ff",
+    "2": "#a855f7",
+    "3": "#ff8800"
+  },
+  "transmuteNames": {
+    "base": "衍生·基数",
+    "score": "衍生·分数",
+    "multiplier": "衍生·倍率",
+    "time": "衍生·时间",
+    "gold": "衍生·金币",
+    "energy": "衍生·能量",
+    "mutagen": "衍生·变异素"
+  },
+  "baseValues": {
+    "base": [
+      4,
+      7,
+      10,
+      14
+    ],
+    "score": [
+      11,
+      18,
+      27,
+      38
+    ],
+    "multiplier": [
+      0.35,
+      0.56,
+      0.84,
+      1.17
+    ],
+    "time": [
+      0.2,
+      0.32,
+      0.48,
+      0.67
+    ],
+    "gold": [
+      3,
+      5,
+      8,
+      11
+    ],
+    "energy": [
+      1,
+      1.6,
+      2.4,
+      3.4
+    ],
+    "mutagen": [
+      1,
+      1.6,
+      2.4,
+      3.4
+    ]
+  },
+  "rarityProbabilities": [
+    0.4,
+    0.3,
+    0.2,
+    0.1
+  ],
+  "critMultiplier": 2,
+  "fateCoinCritCap": 0.5,
+  "fateCoinConversion": 2,
+  "voidBonusTable": {
+    "adjacent": 0.25,
+    "sameRow": 0.1,
+    "sameColumn": 0.3,
+    "sameHand": 0.05,
+    "sameFinger": 0.25,
+    "symmetric": 0.5
+  },
+  "swarmBonusTable": {
+    "adjacent": 0.25,
+    "sameRow": 0.1,
+    "sameColumn": 0.3,
+    "sameHand": 0.05,
+    "sameFinger": 0.25,
+    "symmetric": 0.5
+  },
+  "flowBonusTable": {
+    "adjacent": 0.25,
+    "sameRow": 0.1,
+    "sameColumn": 0.3,
+    "sameHand": 0.05,
+    "sameFinger": 0.25,
+    "symmetric": 0.5
+  },
+  "confluenceBonusTable": {
+    "adjacent": 0.25,
+    "sameRow": 0.1,
+    "sameColumn": 0.3,
+    "sameHand": 0.05,
+    "sameFinger": 0.25,
+    "symmetric": 0.5
+  },
+  "unionBonusTable": {
+    "adjacent": 0.25,
+    "sameRow": 0.1,
+    "sameColumn": 0.3,
+    "sameHand": 0.05,
+    "sameFinger": 0.25,
+    "symmetric": 0.5
+  },
+  "convertKTable": {
+    "base": [
+      0.02,
+      0.05
+    ],
+    "score": [
+      0.02,
+      0.05
+    ],
+    "multiplier": [
+      0.02,
+      0.05
+    ],
+    "time": [
+      0.02,
+      0.05
+    ],
+    "gold": [
+      0.02,
+      0.05
+    ],
+    "energy": [
+      0.02,
+      0.05
+    ],
+    "mutagen": [
+      0.02,
+      0.05
+    ]
+  },
+  "transmuteRatioTable": {
+    "base": 0.3,
+    "score": 0.3,
+    "multiplier": 0.1,
+    "time": 0.2,
+    "gold": 0.2,
+    "energy": 0.15,
+    "mutagen": 0.15
+  },
+  "multiplyOperatorCalibration": {
+    "base": 1,
+    "score": 1,
+    "multiplier": 1,
+    "time": 1,
+    "gold": 1,
+    "energy": 1,
+    "mutagen": 1
+  },
+  "multiplyOperatorBaseValues": {
+    "base": [
+      2,
+      2.3,
+      2.6,
+      2.9
+    ],
+    "score": [
+      1.1,
+      1.15,
+      1.2,
+      1.25
+    ],
+    "multiplier": [
+      1.15,
+      1.2,
+      1.25,
+      1.3
+    ],
+    "time": [
+      1.2,
+      1.25,
+      1.3,
+      1.35
+    ],
+    "gold": [
+      1.3,
+      1.5,
+      1.7,
+      1.9
+    ],
+    "energy": [
+      1.8,
+      2.1,
+      2.4,
+      2.7
+    ],
+    "mutagen": [
+      1.8,
+      2.1,
+      2.4,
+      2.7
+    ]
+  },
+  "apprenticeNeighborGrowth": {
+    "adjacent": 0.06,
+    "sameRow": 0.04,
+    "sameColumn": 0.08,
+    "sameHand": 0.02,
+    "sameFinger": 0.1,
+    "symmetric": 0.12
+  },
+  "enchantmentMeta": {
+    "apprentice_neighbor": {
+      "icon": "👀",
+      "name": "学徒·观摩",
+      "desc": "自身或指定关系的技能触发时永久成长"
+    },
+    "apprentice_res_base": {
+      "icon": "🔢",
+      "name": "专精·基数",
+      "desc": "产出基数资源时永久成长 +2%"
+    },
+    "apprentice_res_score": {
+      "icon": "🏅",
+      "name": "专精·分数",
+      "desc": "产出分数资源时永久成长 +2%"
+    },
+    "apprentice_res_multiplier": {
+      "icon": "📈",
+      "name": "专精·倍率",
+      "desc": "产出倍率资源时永久成长 +2%"
+    },
+    "apprentice_res_time": {
+      "icon": "⏳",
+      "name": "专精·时间",
+      "desc": "产出时间资源时永久成长 +2%"
+    },
+    "apprentice_res_gold": {
+      "icon": "💰",
+      "name": "专精·金币",
+      "desc": "产出金币资源时永久成长 +2%"
+    },
+    "apprentice_crit": {
+      "icon": "💥",
+      "name": "学徒·暴击",
+      "desc": "暴击时永久成长"
+    },
+    "bonus_output": {
+      "icon": "🔀",
+      "name": "附加产出",
+      "desc": "触发时额外产出指定资源"
+    },
+    "multiply_operator": {
+      "icon": "✖️",
+      "name": "乘算化",
+      "desc": "将加算层各项加成转为独立乘数"
+    }
+  },
+  "classRestrictedEnchantments": {},
+  "oldSkillPrefixes": [
+    "prod_",
+    "conv_",
+    "conn_",
+    "amp_"
+  ]
+}

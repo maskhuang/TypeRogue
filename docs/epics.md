@@ -1707,6 +1707,196 @@ Epic 15: 技能进化系统
 
 ---
 
+## Epic 57: Godot 迁移与美术重做
+
+**目标:** 将打字肉鸽从 TS + DOM/CSS 迁移到 Godot 4（C#），同时完成全新像素美术资产的从零制作。目标平台为桌面（Windows / macOS / Linux），最终可发布到 Steam。
+
+**依赖:** 全部已完成的内容 Epic（1-26）。本 Epic 是技术栈迁移，不阻塞当前 TS 版本继续迭代；建议在内容 Epic 之间插空推进。
+
+**架构参考:** 现 `src/src/` 全量；目标 `godot/` 新仓库或子目录。
+
+**设计动机:**
+- 当前栈是 TS + DOM/CSS（`style.css` 4839 行、`battle.ts` 2997 行），没有用游戏引擎，特效/动画/输入延迟天花板已经摸到。
+- 桌面发行（Steam）需要原生窗口、签名、成就、云存档，DOM 方案要套 Electron，反而比直接 Godot 麻烦。
+- `battle.ts` 的 50+ import 表明它是**胶水编排器**而非独立逻辑，迁移策略应"先周边后中心"，battle 最后重写。
+- 美术方向已经在向像素风靠拢（见键位配色 commit），借迁移机会一次定死风格锚点比逐步打补丁更省力。
+
+**关键决策（已确认）:**
+- 目标平台：**桌面**（不出 Web）
+- 美术：**全新重做**，不沿用现有 CSS 配色
+- 引擎语言：**C#**（强类型 + IDE 重构能力，匹配现有 TS 心智）
+- 逻辑分辨率：**640×360**，整数缩放至 1280×720 / 1920×1080 / 2560×1440
+- 字体：**Fusion Pixel 12px**（开源含 CJK，单字体打天下）
+
+### Story 57.1: data/ 层 JSON 化与 schema
+
+**描述:** 将 `src/src/data/` 下所有声明式常量抽出为引擎无关的 JSON + zod schema，TS 端改为 import JSON，行为零差异。这是 Godot 端可以直接复用的事实来源。
+
+**验收标准:**
+- [ ] `tools/data-extract.ts` 脚本：import 每个 data 模块后 `JSON.stringify` 输出到 `src/data-json/`
+- [ ] 覆盖文件：affixes / relics / skills / wordPacks / words / restEvents / bossModifiers / classes / tutorialSteps / keyboardTopology
+- [ ] 每个 JSON 配套 zod schema，TS 类型从 schema 推导（替换原 enum/interface 中的纯数据部分）
+- [ ] 混合文件拆分原则：`xxx.data.json` + `xxx.ts`（仅留类型 / helper / 运行时函数）
+- [ ] 运行时函数（affixMutation / affixTrigger / skillGeneration / bigramFrequency / patternFrequency）**不**进 data，留在 systems
+- [ ] Snapshot 测试：固定种子跑 3 关，state 哈希与迁移前一致
+- [ ] TS 版本继续可发布，零行为差异
+
+**技术说明:**
+- 新增: `tools/data-extract.ts`, `src/data-json/*.json`, `src/src/data/schemas/*.ts`
+- 修改: `src/src/data/*.ts`（瘦身）
+- 这一步独立可发布，**不依赖 Godot 任何工作**
+
+### Story 57.2: 战斗事件流与状态机文档化
+
+**描述:** 在动 Godot 之前先为 `battle.ts` 画出 4 张图，作为 Godot 端重写的需求文档，避免边写边发现 case 导致返工。
+
+**验收标准:**
+- [ ] 图 1 — 战斗生命周期状态机：`startBattle → spawnWord → typing → wordComplete/wordError → checkVictory → endBattle` 各状态、转移条件、副作用
+- [ ] 图 2 — EventBus 事件清单：grep 全量 `eventBus.emit/on`，列出 event name + payload schema + 发送方 + 订阅方（直接对应 Godot signals 设计稿）
+- [ ] 图 3 — 每词结算管线顺序图：relics → affixes → modifiers → skills → scoring 的实际调用顺序与可插入点（参考 `EffectPipeline`）
+- [ ] 图 4 — 存档字段表：`state.ts` 持久化字段清单 + 类型 + 默认值，作为 Godot Resource 类的字段表
+- [ ] 文档放 `docs/godot-migration/`，markdown + mermaid
+
+**技术说明:**
+- 新增: `docs/godot-migration/01-battle-state-machine.md`, `02-event-bus.md`, `03-resolution-pipeline.md`, `04-save-schema.md`
+- 纯文档，无代码改动
+
+### Story 57.3: 美术风格指南与 P0 资产
+
+**描述:** 一次性确定全部美术锚点并出 P0 最小资产包，第一周不画最终资产，先做 mood board + 锚点决策。
+
+**验收标准:**
+- [ ] `docs/art-style-guide.md`：6 项锚点定死（分辨率 640×360 / 键帽 32×32 / 32 色调色板 / Fusion Pixel 12px / 全黑 1px 描边 / 12fps 动画）
+- [ ] Mood board：3 款风格参考（如 Loop Hero / Cobalt Core / StS 像素 mod），明确"我们更像哪个"
+- [ ] 调色板：从 Resurrect-64 选 32 色子集，覆盖 6 种稀有度
+- [ ] P0 资产清单全部交付（Aseprite 源 + 导出 png + json）：
+  - [ ] 26 键键帽 4 态（idle / pressed / matched / highlighted）
+  - [ ] 玩家 HUD 框（血 / 计分 / 计时 / 技能槽）
+  - [ ] 1 个敌人（idle 4 帧 / hit 2 帧 / death 6 帧）
+  - [ ] 命中特效 3 种 spritesheet（普通 / 暴击 / 技能）
+  - [ ] 1 张战斗背景
+  - [ ] Fusion Pixel 12px 字体文件
+- [ ] 所有资产遵循统一像素网格，整数缩放无糊边
+
+**技术说明:**
+- 新增: `godot/assets/sprites/`, `godot/assets/fonts/`, `docs/art-style-guide.md`
+- 不依赖 Godot 项目骨架，可与 57.4 并行
+
+### Story 57.4: Godot 项目骨架与数据接入
+
+**描述:** 创建 Godot 4 项目（C#），搭建 autoload、目录结构、资源加载，把 57.1 的 JSON 接进来并能在 Godot 端访问。
+
+**验收标准:**
+- [ ] Godot 4.x 项目，C# 启用，目录结构按建议（`scripts/core` `scripts/systems` `scripts/ui` `scenes` `assets` `themes` `data`）
+- [ ] Autoload：`GameState`、`EventBus`、`SaveSystem`、`AudioBus`
+- [ ] `EventBus` 用 signals，事件名与 57.2 图 2 一一对应
+- [ ] `DataLoader`：启动时加载 `data/*.json` 进强类型 C# 类（用 System.Text.Json 或 Newtonsoft）
+- [ ] 单元测试（GUT 或 .NET test runner）：每个数据 JSON 加载零错误，条目数与 TS 端一致
+- [ ] Theme 资源接入 Fusion Pixel 字体
+- [ ] 窗口配置：1280×720，逻辑 viewport 640×360，整数缩放
+
+**技术说明:**
+- 新增: `godot/project.godot`, `godot/scripts/core/*.cs`, `godot/data/*.json`（从 57.1 复制）
+
+### Story 57.5: 键盘可视化与打字输入闭环
+
+**描述:** 在 Godot 端复刻键盘可视化和打字输入，验证手感和延迟，使用 P0 美术资产。
+
+**验收标准:**
+- [ ] `KeyButton` 节点：Sprite2D + Label + 4 状态切换（idle / pressed / matched / highlighted）
+- [ ] `KeyboardVisualizer`：手动定位 26 键（Q/A/Z 行偏移，**不**用 GridContainer）
+- [ ] 输入接 `_unhandled_input` + `InputEventKey.unicode`（不走 InputMap）
+- [ ] 输入延迟 <16ms（Godot 端测量）
+- [ ] 屏幕显示一个目标词，键入正确字符高亮，错误字符 flash，词完成发出 `word:complete` signal
+- [ ] FloatText 对象池：`Label` + `Tween`，词完成时弹分数
+- [ ] IME / 中文输入下行为正确（桌面三平台都测）
+
+**技术说明:**
+- 新增: `godot/scripts/ui/KeyButton.cs`, `KeyboardVisualizer.cs`, `FloatTextPool.cs`, `scenes/keyboard.tscn`
+- 依赖: 57.3（资产）、57.4（项目骨架）
+
+### Story 57.6: 战斗最小闭环
+
+**描述:** 实现"一个敌人 + 一种技能 + 一个词条"的最小可玩战斗，验证 57.2 的事件管线设计，**不**追求功能完整。
+
+**验收标准:**
+- [ ] BattleScene：敌人 sprite + HUD + 键盘 + 词语显示
+- [ ] 战斗状态机按 57.2 图 1 实现
+- [ ] 词完成 → 计分管线：base × multiplier → 敌人扣血
+- [ ] 1 种技能（如最简单的"暴击"）触发并播放命中特效
+- [ ] 1 种词条挂载到技能上，按 57.2 图 3 顺序结算
+- [ ] 敌人血量归零 → 胜利结算 → 返回主菜单
+- [ ] 战斗中 EventBus signal 发送日志可见
+
+**技术说明:**
+- 新增: `godot/scripts/systems/Battle.cs`, `Scoring.cs`, `Skills.cs`(stub), `Affixes.cs`(stub), `scenes/battle.tscn`
+- 依赖: 57.5
+- **里程碑**：完成此 Story 即可宣布"Godot 端可玩"，后续都是规模扩展
+
+### Story 57.7: 系统逐项迁移
+
+**描述:** 把 TS 端的 systems/ 各模块按依赖顺序迁到 Godot，每迁完一个就跑等价性测试。
+
+**验收标准:**
+- [ ] Scoring（多种倍率、tier、连击）
+- [ ] Skills 完整池（参照 Epic 11/12/19 的 ModifierRegistry / EffectPipeline 模型，C# 重写）
+- [ ] Affixes 完整池 + AffixTrigger
+- [ ] Relics 完整池（注意 `relics/*` 子目录有 10+ 个 Behavior 文件，按行为分类迁移）
+- [ ] BossModifiers + BossModifierEngine
+- [ ] Stage flow（普通 / 精英 / boss / rest / shop 节点）
+- [ ] 每个子系统迁完跑 snapshot：固定种子打 3 关，C# 端 state 哈希与 TS 端一致
+- [ ] 删除 TS 端对应模块（或保留双跑直到全部迁完）
+
+**技术说明:**
+- 这是本 Epic 的主要工作量，建议按子 Story 拆分（57.7.1 scoring / 57.7.2 skills / ...）
+- 依赖: 57.6
+
+### Story 57.8: 元系统与发行
+
+**描述:** 商店、休息、教程、i18n、存档、设置、桌面打包。
+
+**验收标准:**
+- [ ] Shop / RestStage / RitualEnchantment 场景与流程
+- [ ] 教程系统（参考 `tutorial/`）
+- [ ] i18n：Godot Translation + `tr()`，从 `demo-i18n.ts` 导出 .csv，覆盖 zh / en
+- [ ] 存档：自定义 `Resource` 类 + `ResourceSaver.save("user://save.tres")`，字段对齐 57.2 图 4
+- [ ] Settings 面板（音量 / 全屏 / 语言 / 键位）
+- [ ] Steam 集成：GodotSteam 第三方模块，成就 + 云存档
+- [ ] 桌面打包：Windows .exe / macOS .app（签名 + notarize）/ Linux AppImage
+- [ ] 三平台冒烟测试通过
+
+**技术说明:**
+- 新增: `godot/scripts/systems/Shop.cs`, `RestStage.cs`, `Tutorial.cs`, `scenes/shop.tscn` 等
+- macOS 签名需开发者证书，提前准备
+- 依赖: 57.7
+
+## Files Modified Summary (Epic 57)
+
+| File | Stories |
+|------|---------|
+| `tools/data-extract.ts` (new) | 57.1 |
+| `src/data-json/*.json` (new) | 57.1 |
+| `src/src/data/schemas/*.ts` (new) | 57.1 |
+| `src/src/data/*.ts` (slim down) | 57.1 |
+| `docs/godot-migration/*.md` (new) | 57.2 |
+| `docs/art-style-guide.md` (new) | 57.3 |
+| `godot/assets/**` (new) | 57.3 |
+| `godot/project.godot` (new) | 57.4 |
+| `godot/scripts/core/**` (new) | 57.4 |
+| `godot/scripts/ui/**` (new) | 57.5 |
+| `godot/scripts/systems/**` (new) | 57.6, 57.7, 57.8 |
+| `godot/scenes/**` (new) | 57.5, 57.6, 57.8 |
+
+**风险登记:**
+- **R1**：`battle.ts` 实际复杂度可能超估 — 缓解：Story 57.2 文档化阶段如发现状态机过深，拆出 57.2.x 子 Story 先做局部重构（TS 端）。
+- **R2**：C# vs GDScript 反复 — 已决策 C#，本 Epic 不再讨论。
+- **R3**：Fusion Pixel 字体在小字号下中文可读性 — 57.3 落地前先在 1080p / 1440p 显示器实测，不行降级为方正像素 12 / Zfull-GB。
+- **R4**：Snapshot 等价性测试在浮点 / Map 迭代顺序上可能跨语言不一致 — 57.7 测试改为关键状态字段比较而非全 hash。
+- **R5**：macOS 签名与 notarize 卡发布 — 57.8 前先单独验证签名链路。
+- **R6**：迁移期间 TS 版本继续迭代会持续欠债 — 缓解：57.1 完成后所有新内容 Epic 必须先动 JSON，TS / C# 两端共享。
+
+---
+
 ## Epic 依赖图
 
 | File | Stories |
@@ -1750,6 +1940,16 @@ Epic 24: 成长附魔 ─────────┤
 Epic 25: 无尽模式 ←── Epic 18 (done) + Epic 23 + Epic 24
 
 Epic 26: 图标注册表 ←── Epic 19 + Epic 23 + Epic 24（数据文件依赖）
+
+Epic 57: Godot 迁移 + 美术重做 ←── 全部已完成内容 Epic
+  ├─ 57.1 data JSON 化（独立可发布，TS 双端共享）
+  ├─ 57.2 战斗事件流文档（纯文档）
+  ├─ 57.3 美术风格指南 + P0 资产（可与 57.4 并行）
+  ├─ 57.4 Godot 项目骨架
+  ├─ 57.5 键盘 + 输入闭环
+  ├─ 57.6 战斗最小闭环 ◆ 里程碑：Godot 端可玩
+  ├─ 57.7 系统逐项迁移（主要工作量）
+  └─ 57.8 元系统 + 桌面发行
 ```
 
 **实施阶段:**
@@ -1785,7 +1985,8 @@ Epic 26: 图标注册表 ←── Epic 19 + Epic 23 + Epic 24（数据文件依
 | P1 | Epic 23 | 增幅者技能类型（成长线基础） |
 | P1 | Epic 24 | 成长附魔（无尽模式基础） |
 | P1 | Epic 25 | 无尽模式（终极内容） |
+| P2 | Epic 57 | Godot 迁移 + 美术重做（技术栈升级，桌面 Steam 发行准备） |
 
 ---
 
-_Updated: 2026-03-05_
+_Updated: 2026-04-12_

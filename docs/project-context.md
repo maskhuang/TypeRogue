@@ -409,6 +409,17 @@ data  No PixiJS  core    systems + ui
 - Import from `systems/` in `core/`
 - Create circular dependencies
 
+### Data vs Runtime（Story 57.1 建立）
+
+`data/` 下的静态常量已抽至 `src/data-json/*.json`，通过 `src/src/data/schemas/*.schema.ts` 加载校验。新增数据必须：
+
+1. 先改 `.ts` 字面量或直接改 schema 字段
+2. 跑 `npm run data:extract`（vite-node）重新生成 JSON
+3. schema 模块在 dev 模式启动时做一次 `parse()` 校验
+4. 详细规则见 `docs/godot-migration/data-sync.md`
+
+**不抽**：函数、enum、interface、mutable 状态（如 `AFFIX_WEIGHTS`）、含函数引用的结构（如 `BOSS_MODIFIER_REGISTRY`）。
+
 ### File Placement
 
 | Type | Location | Example |
