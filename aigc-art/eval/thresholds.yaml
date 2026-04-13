@@ -1,0 +1,35 @@
+# aigc-art/eval/thresholds.yaml
+# 五项评测闸门的默认阈值。可被 asset 级 prompt YAML 的 eval: 段覆盖。
+# 修改此文件视为 "eval baseline bump"，应 commit 说明理由。
+
+version: "thresholds.v1"
+last_updated: "2026-04-14"
+
+defaults:
+  # 调色板合规：严格模式（任一像素超限即失败）
+  palette_strict: true
+  palette_outlier_max: 0
+
+  # 尺寸必须精确相等
+  dimensions_exact: true
+
+  # 透明通道零容忍半透明（0 < alpha < 255）
+  alpha_halo_max: 0
+
+  # Sobel 边缘响应均值下限（像素风应 > 0.30）
+  silhouette_sharpness_min: 0.30
+
+  # CLIP cosine similarity 下限（Q4 紧阈值）
+  clip_similarity_min: 0.80
+
+# Per-asset 可覆盖（可选，大多数资产用 defaults 即可）
+overrides:
+  hud-texture:
+    # 纹理板没有剪影，跳过
+    silhouette_sharpness_min: 0
+    clip_similarity_min: 0
+    alpha_halo_max: 99999
+  background:
+    # 全屏背景 CLIP 阈值适当放宽（大场景风格多样）
+    clip_similarity_min: 0.72
+    alpha_halo_max: 99999

@@ -1,0 +1,25 @@
+# AIGC 原始输出与后处理（可再生，不入库）
+runs/*/raw/
+runs/*/postprocessed/
+runs/*/selected.png
+
+# 金标：商业游戏截图（合规 — 不得入库）
+references/golden/
+references/mood-board/
+
+# 模型权重 / LoRA（大文件 + License 管理）
+*.safetensors
+*.ckpt
+*.pt
+*.bin
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+.replicate_cache/
+
+# 评测临时产物
+eval/reports/*.html
+*.log

@@ -1,0 +1,22 @@
+# aigc-art Python 依赖
+# 安装：pip install -r aigc-art/requirements.txt
+
+# 核心
+Pillow>=10.0.0          # 图像处理（load/save/resize/alpha/palette）
+PyYAML>=6.0             # prompt 模板解析
+replicate>=0.25.0       # Replicate API 客户端
+requests>=2.31.0        # 下载生成结果
+
+# 评测
+numpy>=1.24.0           # Sobel 卷积 / 统计
+scipy>=1.11.0           # signal.convolve2d
+
+# CLIP 风格相似度（可选但推荐）
+# 下面二选一：
+#   open_clip_torch 更轻量、兼容 M 系列 Mac CPU
+#   clip-by-openai 是原版但 PyTorch 依赖更重
+open_clip_torch>=2.24.0
+torch>=2.1.0            # open_clip 依赖
+
+# 交互式挑选（可选，若不装则退化为纯 stdout）
+rich>=13.0.0

@@ -1,0 +1,78 @@
+# aigc-art/prompts/_base.yaml
+# 所有 asset prompt 共享的基线。各 asset 文件通过 extends: _base.yaml 继承。
+# 修改此文件会影响所有资产生成，**必须 bump 全局 prompt 版本**并在 commit 说明。
+
+version: "base.v1"
+last_updated: "2026-04-14"
+
+# ============================================================
+# 模型与推理配置
+# ============================================================
+model:
+  provider: replicate
+  id: "black-forest-labs/flux-dev"
+  # retro-pixel-flux LoRA（HuggingFace 上有多个变体，起步用最稳的那个）
+  lora:
+    - name: "retro-pixel-flux"
+      weight: 0.85
+      source: "https://huggingface.co/..."  # 实施时填具体链接
+
+sampler: "dpm++ 2m karras"
+steps: 30
+cfg: 6.5
+batch_size: 8           # Q4 紧阈值相应提到 8；若连续不过再考虑提到 12
+retry_until_pass: 3     # 最多重跑 3 次直到 ≥1 张过闸门
+auto_seed: true         # 每个 variation 随机 seed，失败重跑换 seed
+
+# ============================================================
+# 共享 Prompt 片段
+# ============================================================
+shared_positive: |
+  pixel art, 16-bit retro game sprite,
+  clean silhouette, 1px black outline,
+  limited palette 32 colors from resurrect-64 subset,
+  centered composition, transparent background,
+  crisp pixels, no anti-aliasing, no gradient shading,
+  side view, flat shading with 1 highlight tone
+
+shared_negative: |
+  anti-aliased, blurry, soft edges, gradient shading, bloom, glow,
+  3d render, realistic, photographic, photo, modern ui,
+  high resolution texture, jpeg artifacts, compression artifacts,
+  cute mascot face, anime face, kawaii, chibi, big eyes,
+  watermark, signature, text, logo, border, frame
+
+# ============================================================
+# 后处理默认配置
+# ============================================================
+postprocess:
+  palette_file: "references/palette/resurrect-32.png"
+  bg_removal: "corner-floodfill"   # 从 4 角 flood-fill 判透明
+  alpha_threshold: 0.05            # < 5% 不透明像素视为背景
+  outline_enforce: false           # 默认 off，需要的资产单独 on
+  downscale_method: "nearest"      # **禁止** bilinear / lanczos
+
+# ============================================================
+# 评测闸门默认阈值（可被 asset 级覆盖）
+# ============================================================
+eval:
+  palette_strict: true             # 必须 ⊂ resurrect-32
+  alpha_halo_max: 0                # 0 = 零容忍半透明残留
+  silhouette_sharpness_min: 0.30   # Sobel edge 响应下限
+  clip_similarity_min: 0.80        # Q4 紧阈值
+  dimensions_exact: true           # shape 必须严格等于 target_size
+
+# ============================================================
+# Metadata 记录（每次 run 自动写入 runs/**/metadata.json）
+# ============================================================
+metadata:
+  record:
+    - prompt_version
+    - prompt_hash
+    - model
+    - lora
+    - seeds
+    - cost_usd
+    - wall_time_sec
+    - eval_pass_count
+    - human_pick

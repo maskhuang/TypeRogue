@@ -1,0 +1,91 @@
+# aigc-art/prompts/hud-texture.v1.yaml
+# HUD 纹理灵感生成（Story 57.3 Task 4）
+#
+# ⚠️ 本 prompt 是 Q5 决策下的"半自动"流程：
+#    AI 只生成纹理板（木纹/铁钉/铆钉质感灵感），
+#    9-slice 几何结构 100% 人工在 Aseprite 中拼。
+#
+# 因此本 prompt 的 pipeline **不跑 human pick / polish / export 全流程**，
+# 只跑到 runs/**/raw/ 阶段就停。
+
+version: "hud-texture.v1"
+extends: _base.yaml
+last_updated: "2026-04-14"
+
+asset_id: hud-texture
+target_size: [256, 256]       # 纹理板不做 downscale，保留大图供裁切
+gen_size: [256, 256]
+pipeline_mode: "draft-only"   # 特殊模式：仅跑到 ① Draft Gen，跳过 ②-⑥
+
+# ============================================================
+# 每种 HUD 组件生成一批纹理灵感
+# ============================================================
+variations:
+  - suffix: hp_bar
+    positive: |
+      seamless pixel art texture of ancient wooden plank with iron rivets,
+      dark oak grain, brass nail heads, worn edges, fantasy rpg ui panel,
+      top-down flat view, {shared_positive}
+    negative: |
+      {shared_negative},
+      bar indicator, progress fill, liquid, blood,
+      text, number, icon
+  - suffix: score_panel
+    positive: |
+      pixel art parchment texture with leather binding edges,
+      aged paper, coffee stains, {shared_positive}
+    negative: |
+      {shared_negative},
+      writing, letters, numbers, ink marks
+  - suffix: timer
+    positive: |
+      pixel art brass gear frame border texture,
+      clockwork engraving, warm metal tones, {shared_positive}
+    negative: |
+      {shared_negative},
+      clock hand, digital display, numbers
+  - suffix: skill_slot
+    positive: |
+      pixel art dark obsidian inlay square frame,
+      runic border, cool blue glow inside, empty slot,
+      {shared_positive}
+    negative: |
+      {shared_negative},
+      item inside, weapon, rune text
+
+# ============================================================
+# 后处理：极简
+# ============================================================
+postprocess:
+  palette_file: "references/palette/resurrect-32.png"
+  outline_enforce: false        # 纹理板不加描边
+  bg_removal: "none"            # 保留背景（纹理本来就要全覆盖）
+  center_crop: false
+
+# ============================================================
+# 评测：仅跑调色板检查（其他闸门对纹理板无意义）
+# ============================================================
+eval:
+  palette_strict: true
+  alpha_halo_max: 999           # 纹理板可以全不透明或半透
+  silhouette_sharpness_min: 0   # 纹理无剪影概念
+  clip_similarity_min: 0        # 纹理风格可多样，不做 CLIP 限制
+
+# ============================================================
+# 手工 polish 指引（Aseprite 内完成，极其重要）
+# ============================================================
+manual_9slice_steps:
+  - "打开 runs/**/raw/ 中选中的纹理板"
+  - "在 Aseprite 中创建新文件：32×16（hp_bar）/ 64×32（score_panel）等目标尺寸"
+  - "用 Color Picker 从纹理板取色，手绘 9-slice 的 9 个小块"
+  - "角 4 块单独画（含边线交界）"
+  - "边 4 块画 repeating pattern 片段（左右/上下各 1 个）"
+  - "中 1 块画 tileable 中心填充"
+  - "保存 art-source/57-3/hud/{component}.aseprite"
+  - "同名 .json 写 9-slice 边距：{top, right, bottom, left}"
+  - "Godot sandbox 内拉伸到 2x/4x/8x 尺寸验证无畸形"
+
+output:
+  runs_dir: "runs/{date}_{asset_id}/"
+  # 注意：这里**不**写 aseprite_target_dir / godot_target_dir —— pipeline 不自动导出
+  manual_target_dir: "../art-source/57-3/hud/"

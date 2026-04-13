@@ -1,0 +1,41 @@
+# aigc-art/eval/golden-manifest.yaml
+# 金标样本清单（**不含图本身**，由使用者本地准备）
+#
+# 合规：商业游戏截图仅用于本地 CLIP embedding 比对，禁止入库、禁止喂 LoRA。
+# 他人克隆本仓库后按下表自行截图准备。
+
+version: "golden-manifest.v1"
+last_updated: "2026-04-14"
+
+local_dir: "references/golden/"
+
+samples:
+  # Dummy 敌人参考（Story 57.3 Task 5）
+  - file: "enemy_loop_hero_skeleton.png"
+    source: "Loop Hero"
+    usage: "enemy-dummy 风格基准：简单剪影 + 硬描边 + 低细节"
+    approx_size: "32×48 等价"
+  - file: "enemy_cobalt_core_drone.png"
+    source: "Cobalt Core"
+    usage: "enemy-dummy 风格基准：饱和色块 + 平涂阴影"
+  - file: "enemy_sts_cultist.png"
+    source: "Slay the Spire 像素 mod"
+    usage: "enemy-dummy 风格基准：低帧数 idle 节奏参考"
+
+  # 键帽参考（Story 57.3 Task 3）
+  - file: "ui_key_loop_hero.png"
+    source: "Loop Hero / generic pixel UI"
+    usage: "keyboard-key 风格基准：方块 + 1px 凸起高光"
+
+  # 命中特效参考（Story 57.3 Task 6）
+  - file: "fx_hit_cobalt_core.png"
+    source: "Cobalt Core"
+    usage: "fx-hit 风格基准：限色放射线 + 短尾粒子"
+  - file: "fx_crit_loop_hero.png"
+    source: "Loop Hero"
+    usage: "fx-hit-crit 风格基准：大爆炸帧"
+
+  # 战斗背景参考（Story 57.3 Task 7）
+  - file: "bg_loop_hero_forest.png"
+    source: "Loop Hero"
+    usage: "battle-bg 风格基准：分层剪影 + 低饱和"
