@@ -2,6 +2,8 @@
 
 Story 57.1 建立的规范。Godot 迁移期间两端共享事实来源。
 
+> 📖 本文档是 [godot-migration README](README.md) 的一部分，配套的动态行为文档见同目录 `01-battle-state-machine.md` / `02-event-bus.md` / `03-resolution-pipeline.md` / `04-save-schema.md`（Story 57.2 产出）。
+
 ## 目录分工
 
 | 目录 | 角色 | 谁可以改 |
