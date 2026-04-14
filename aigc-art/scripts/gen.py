@@ -345,12 +345,16 @@ def main() -> int:
         all_stats.append(var_stats)
 
     # 写 metadata.json
+    try:
+        prompt_rel = str(args.prompt.resolve().relative_to(repo_root.resolve()))
+    except ValueError:
+        prompt_rel = str(args.prompt)
     metadata = {
         "run_id": run_dir.name,
         "asset_id": asset_id,
         "prompt_version": spec.get("version"),
         "prompt_hash": prompt_hash(spec),
-        "prompt_file": str(args.prompt.relative_to(repo_root)),
+        "prompt_file": prompt_rel,
         "model": spec["model"]["id"],
         "lora": spec["model"].get("lora", []),
         "variations": all_stats,
