@@ -106,11 +106,22 @@ Input: art-style-guide.md + resurrect-32.png + prompts/*.yaml
 
 ---
 
+## 装完依赖后一键冒烟
+
+```bash
+# 从 aigc-art/ 内
+.venv/bin/python tests/smoke_pipeline.py
+```
+
+此脚本用 CC0 goldens 模拟"假 SD 输出"，不调 Replicate API 走完整
+pipeline，验证 palette_lock / checks / gen 三件都正常。详见
+[`tests/README.md`](tests/README.md)。
+
 ## Quickstart
 
 ```bash
 # 0. 装依赖
-pip install pillow pyyaml replicate clip-retrieval numpy scipy
+pip install -r requirements.txt
 
 # 1. 配 Replicate token
 export REPLICATE_API_TOKEN=r8_xxx
