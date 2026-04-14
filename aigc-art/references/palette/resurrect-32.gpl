@@ -1,0 +1,39 @@
+GIMP Palette
+Name: Resurrect-32 (typing roguelike subset)
+Columns: 8
+# Derived from Resurrect-64 by Kerrie Lake (Lospec)
+# 32-color subset selected for typing-roguelike Godot port
+# Story 57.3 — 2026-04-14
+#
+155 171 178 common-main
+ 49  54  56 common-shade
+ 30 188 115 uncommon-main
+ 35 144  99 uncommon-shade
+ 77 155 230 rare-main
+ 77 101 180 rare-shade
+144  94 169 epic-main
+107  62 117 epic-shade
+249 194  43 legendary-main
+247 150  23 legendary-shade
+232  59  59 mythic-main
+179  56  49 mythic-shade
+255 255 255 grey-white
+171 148 122 grey-beige
+ 98  85 101 grey-mid
+ 46  34  47 grey-black
+251 107  29 accent-warm-main
+230 144  78 accent-warm-low
+ 48 225 185 accent-cool-main
+ 14 175 155 accent-cool-low
+240  79 120 accent-warn-main
+131  28  93 accent-warn-low
+251 255 134 fx-perfect
+205 223 108 fx-success
+143 211 255 env-sky
+174  35  52 env-blood
+199 220 208 env-panel
+ 76  62  36 env-dirt
+178 186 144 env-leaf
+168 132 243 fx-skill
+253 203 176 fx-crit
+ 62  53  70 fx-void
