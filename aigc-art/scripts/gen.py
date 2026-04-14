@@ -273,14 +273,21 @@ def generate_variation(
 def build_eval_spec(spec: Dict[str, Any], palette_path: Path) -> Dict[str, Any]:
     eval_cfg = spec.get("eval", {})
     palette = checks_mod.load_palette(str(palette_path))
+    # 合并多 glob：新式 style_golden_globs (list) + 旧式 style_golden_glob (str) + 旧 fallback
+    globs: list = []
+    if eval_cfg.get("style_golden_globs"):
+        globs.extend(eval_cfg["style_golden_globs"])
+    if eval_cfg.get("style_golden_glob"):
+        globs.append(eval_cfg["style_golden_glob"])
+    if eval_cfg.get("fallback_golden_glob"):
+        globs.append(eval_cfg["fallback_golden_glob"])
     return {
         "palette": palette,
         "target_size": spec["target_size"],
         "alpha_halo_max": eval_cfg.get("alpha_halo_max", 0),
         "silhouette_sharpness_min": eval_cfg.get("silhouette_sharpness_min", 0.30),
         "clip_similarity_min": eval_cfg.get("clip_similarity_min", 0.80),
-        "golden_glob": eval_cfg.get("style_golden_glob", ""),
-        "fallback_glob": eval_cfg.get("fallback_golden_glob", ""),
+        "golden_globs": globs,
     }
 
 

@@ -1,41 +1,68 @@
 # aigc-art/eval/golden-manifest.yaml
-# 金标样本清单（**不含图本身**，由使用者本地准备）
+# 金标样本清单。分两源：
+#   1. references/golden-cc0/  — CC0 公共素材（入库，全员可用，见 ATTRIBUTION.md）
+#   2. references/golden/      — 本地可选商业截图补充（不入库，合规仅本地评测）
 #
-# 合规：商业游戏截图仅用于本地 CLIP embedding 比对，禁止入库、禁止喂 LoRA。
-# 他人克隆本仓库后按下表自行截图准备。
+# CLIP style similarity 评测会合并两源一起计算均值 embedding。
 
-version: "golden-manifest.v1"
+version: "golden-manifest.v2"
 last_updated: "2026-04-14"
 
+cc0_dir: "references/golden-cc0/"
 local_dir: "references/golden/"
 
-samples:
-  # Dummy 敌人参考（Story 57.3 Task 5）
+# ============================================================
+# CC0 金标（已下载，入库）
+# ============================================================
+cc0_samples:
+  - file: "enemy_andhegames_creatures.png"
+    source: "OpenGameArt — Assorted 32x32 creatures"
+    author: "AndHeGames"
+    url: "https://opengameart.org/content/assorted-32x32-creatures"
+    license: "CC0"
+    size: "288×288"
+    usage: "enemy-* CLIP style golden（通用 32×32 生物风格参考）"
+  - file: "enemy_andhegames_more_creatures.png"
+    source: "OpenGameArt — More assorted 32x32 creatures"
+    author: "AndHeGames"
+    url: "https://opengameart.org/content/more-assorted-32x32-creatures"
+    license: "CC0"
+    size: "320×192"
+    usage: "enemy-* CLIP style golden（配套扩展）"
+  - file: "enemy_reemax_zombie_skeleton.png"
+    source: "OpenGameArt — Zombie and Skeleton 32x48"
+    author: "Reemax (scale/animate) + artisticdude (原图)"
+    url: "https://opengameart.org/content/zombie-and-skeleton-32x48"
+    license: "CC0"
+    size: "288×256"
+    usage: "enemy-dummy CLIP style golden — **尺寸 32×48 完全匹配**"
+
+# ============================================================
+# 本地补充金标（可选，commercial screenshots，不入库）
+#
+# 若使用者本地有合适的商业截图，按下表命名放入 references/golden/
+# 即可被 CLIP gate 作为补充 reference 读取（与 cc0_samples 合并算均值）。
+# ============================================================
+local_samples_suggested:
+  # Dummy 敌人补充（可选）
   - file: "enemy_loop_hero_skeleton.png"
-    source: "Loop Hero"
-    usage: "enemy-dummy 风格基准：简单剪影 + 硬描边 + 低细节"
-    approx_size: "32×48 等价"
+    source_game: "Loop Hero"
+    usage: "enemy-dummy 补充：简单剪影 + 硬描边 + 低细节"
   - file: "enemy_cobalt_core_drone.png"
-    source: "Cobalt Core"
-    usage: "enemy-dummy 风格基准：饱和色块 + 平涂阴影"
-  - file: "enemy_sts_cultist.png"
-    source: "Slay the Spire 像素 mod"
-    usage: "enemy-dummy 风格基准：低帧数 idle 节奏参考"
+    source_game: "Cobalt Core"
+    usage: "enemy-dummy 补充：饱和色块 + 平涂阴影"
 
-  # 键帽参考（Story 57.3 Task 3）
+  # 键帽补充（Task 3）
   - file: "ui_key_loop_hero.png"
-    source: "Loop Hero / generic pixel UI"
-    usage: "keyboard-key 风格基准：方块 + 1px 凸起高光"
+    source_game: "Loop Hero / generic pixel UI"
+    usage: "keyboard-key 补充：方块 + 1px 凸起高光"
 
-  # 命中特效参考（Story 57.3 Task 6）
+  # 命中特效（Task 6）
   - file: "fx_hit_cobalt_core.png"
-    source: "Cobalt Core"
-    usage: "fx-hit 风格基准：限色放射线 + 短尾粒子"
-  - file: "fx_crit_loop_hero.png"
-    source: "Loop Hero"
-    usage: "fx-hit-crit 风格基准：大爆炸帧"
+    source_game: "Cobalt Core"
+    usage: "fx-hit 补充：限色放射线 + 短尾粒子"
 
-  # 战斗背景参考（Story 57.3 Task 7）
+  # 战斗背景（Task 7）
   - file: "bg_loop_hero_forest.png"
-    source: "Loop Hero"
-    usage: "battle-bg 风格基准：分层剪影 + 低饱和"
+    source_game: "Loop Hero"
+    usage: "battle-bg 补充：分层剪影 + 低饱和"

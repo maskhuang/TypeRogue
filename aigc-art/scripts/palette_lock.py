@@ -164,10 +164,16 @@ def quantize_to_palette(img: Image.Image, palette: List[RGB]) -> Image.Image:
 # 4. 1px 黑描边补强（可选）
 # ============================================================
 
-def enforce_outline(img: Image.Image, outline_color: RGB = (0, 0, 0)) -> Image.Image:
+def enforce_outline(
+    img: Image.Image, outline_color: RGB = (46, 34, 47)
+) -> Image.Image:
     """
     对每个不透明像素检查 4 邻居，若邻居是透明则把邻居涂成描边色。
     实现为简单 morphological dilation。
+
+    默认 outline_color = (46, 34, 47) = `#2e222f` = Resurrect-32 的 grey-black。
+    **不用 (0,0,0) 纯黑**，因为纯黑不在 Resurrect-32 调色板内，会被 palette
+    check 识别为 outlier。需要自定义时通过参数传入。
     """
     img = img.convert("RGBA")
     w, h = img.size
@@ -199,6 +205,7 @@ def postprocess(
     palette_path: Path,
     target_size: Tuple[int, int],
     outline: bool = False,
+    outline_color: RGB = (46, 34, 47),
     bg_removal: str = "corner-floodfill",
 ) -> None:
     img = Image.open(input_path).convert("RGBA")
@@ -216,7 +223,7 @@ def postprocess(
     img = quantize_to_palette(img, palette)
 
     if outline:
-        img = enforce_outline(img)
+        img = enforce_outline(img, outline_color=outline_color)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(output_path)

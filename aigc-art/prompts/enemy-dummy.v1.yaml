@@ -54,10 +54,11 @@ postprocess:
 # 评测覆盖
 # ============================================================
 eval:
-  # 金标：本地 references/golden/ 下符合 enemy_*.png glob 的图
-  style_golden_glob: "references/golden/enemy_*.png"
-  # 若金标数量 < 2，fallback 用 mood-board 下的 enemy 截图
-  fallback_golden_glob: "references/mood-board/enemy_*.png"
+  # 金标多源合并：CC0 committed (首选) + local 商业截图 (可选补充)
+  # 两个 glob 的所有匹配一起喂 CLIP 算均值 embedding
+  style_golden_globs:
+    - "references/golden-cc0/enemy_*.png"   # CC0 sprite sheets, 入库
+    - "references/golden/enemy_*.png"       # 可选本地商业截图补充, 不入库
   clip_similarity_min: 0.80     # 继承 base；显式写出以便本 asset 独立调
 
 # ============================================================

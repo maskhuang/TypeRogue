@@ -218,21 +218,37 @@ def _get_clip():
 
 def check_style_similarity(
     img: Image.Image,
-    golden_glob: str,
-    fallback_glob: str = "",
+    golden_globs: List[str] | str,
     min_similarity: float = 0.80,
 ) -> CheckResult:
-    """计算 img 与金标图像均值 embedding 的 cosine similarity。"""
-    golden_paths = sorted(glob.glob(golden_glob))
-    if not golden_paths and fallback_glob:
-        golden_paths = sorted(glob.glob(fallback_glob))
+    """
+    计算 img 与金标图像均值 embedding 的 cosine similarity。
+
+    golden_globs 可以是单 glob 字符串或多 glob 列表。多 glob 模式下
+    所有匹配的图像一起计算均值 embedding（CC0 committed + local 混用）。
+    """
+    if isinstance(golden_globs, str):
+        golden_globs = [golden_globs]
+
+    golden_paths: list[str] = []
+    for g in golden_globs:
+        if g:
+            golden_paths.extend(sorted(glob.glob(g)))
+    # 去重（保持顺序）
+    seen: set[str] = set()
+    unique: list[str] = []
+    for p in golden_paths:
+        if p not in seen:
+            seen.add(p)
+            unique.append(p)
+    golden_paths = unique
 
     if not golden_paths:
         return CheckResult(
             name="style_similarity",
             passed=False,
-            metric={"golden_count": 0},
-            reason=f"no golden images found at {golden_glob}",
+            metric={"golden_count": 0, "globs": golden_globs},
+            reason=f"no golden images found at {golden_globs}",
         )
 
     try:
@@ -310,15 +326,17 @@ def eval_candidate(img: Image.Image, spec: Dict[str, Any]) -> EvalReport:
             )
         )
 
-    if spec.get("clip_similarity_min", 0) > 0 and spec.get("golden_glob"):
-        checks.append(
-            check_style_similarity(
-                img,
-                golden_glob=spec["golden_glob"],
-                fallback_glob=spec.get("fallback_glob", ""),
-                min_similarity=spec["clip_similarity_min"],
+    if spec.get("clip_similarity_min", 0) > 0:
+        # 支持 "golden_globs": [..] (list) 或 "golden_glob": str (legacy)
+        globs = spec.get("golden_globs") or spec.get("golden_glob")
+        if globs:
+            checks.append(
+                check_style_similarity(
+                    img,
+                    golden_globs=globs,
+                    min_similarity=spec["clip_similarity_min"],
+                )
             )
-        )
 
     passed = all(c.passed for c in checks)
     return EvalReport(passed=passed, checks=checks)
@@ -336,7 +354,7 @@ def main() -> int:
     parser.add_argument("image", type=Path, help="候选 PNG 路径")
     parser.add_argument("--palette", required=True, type=Path)
     parser.add_argument("--target-size", nargs=2, type=int, default=None)
-    parser.add_argument("--golden-glob", default="")
+    parser.add_argument("--golden-glob", action="append", default=[], help="可重复指定多个 glob")
     parser.add_argument("--clip-min", type=float, default=0.80)
     args = parser.parse_args()
 
@@ -350,7 +368,7 @@ def main() -> int:
     if args.target_size:
         spec["target_size"] = args.target_size
     if args.golden_glob:
-        spec["golden_glob"] = args.golden_glob
+        spec["golden_globs"] = args.golden_glob
         spec["clip_similarity_min"] = args.clip_min
 
     report = eval_candidate(img, spec)
