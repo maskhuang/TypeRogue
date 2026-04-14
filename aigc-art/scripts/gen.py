@@ -36,6 +36,30 @@ import checks as checks_mod  # noqa: E402
 import palette_lock  # noqa: E402
 
 
+def _load_dotenv(path: Path) -> None:
+    """
+    极简 .env 加载器（不依赖 python-dotenv）。
+    只支持 `KEY=VALUE` 行，# 开头的行视为注释。
+    """
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        k = k.strip()
+        v = v.strip().strip('"').strip("'")
+        if k and v and k not in os.environ:
+            os.environ[k] = v
+
+
+# 启动即加载 aigc-art/.env（若存在）
+_load_dotenv(Path(__file__).parent.parent / ".env")
+
+
 # ============================================================
 # Prompt YAML 加载（含 extends）
 # ============================================================
