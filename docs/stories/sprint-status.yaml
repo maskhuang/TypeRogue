@@ -540,10 +540,25 @@ development_status:
   53-4-balance-polish: backlog               # 平衡打磨
   epic-53-retrospective: optional
 
+  # ===== Epic 59: 架构 v1.1 强制落地 =====
+  # Source: docs/game-architecture.md v1.1 (2026-04-15)
+  # Purpose: 把 v1.1 新增的硬约束（M-1/M-2/N-1/N-2/W-1/W-2/A-1/A-2/C-1/C-4）落地为自动化规则 + 最小骨架
+  # Execution order: 59-7 (P0 blocker) → 59-1/59-2 → 59-3/59-4/59-5 → 59-6
+  epic-59: backlog
+  59-7-architecture-v11-audit: ready-for-dev          # P0 前置：已有代码合规扫描与历史债清理
+  59-1-eslint-core-systems-pixi-isolation: backlog    # M-1 ESLint：core/systems 禁 PixiJS
+  59-2-eslint-aigc-runtime-isolation: backlog         # C-4 ESLint：src/ 禁引用 aigc-art/
+  59-3-narrative-registry-skeleton: backlog           # N-1/N-2 NarrativeRegistry + 7 bundle 骨架（解锁 Epic 58）
+  59-4-modifiers-layer-skeleton: backlog              # A-1/A-2 ModifierEngine 横向层骨架
+  59-5-wordpack-system-skeleton: backlog              # W-1/W-2 Wordpack 系统骨架（W-2 强制 ≠ relic）
+  59-6-aigc-precommit-hook: backlog                   # C-1 git pre-commit：拦截 aigc-art/runs/ 入库
+  epic-59-retrospective: optional
+
 # Summary:
-# - Total Epics: 51
-# - Total Stories: 286
+# - Total Epics: 51 (pre-existing count, stale — excludes recent Epics 52/53/56/57/58/59)
+# - Total Stories: 286 (pre-existing count, stale)
 # - Epics Completed: 43
 # - Epics In-Progress: 1 (45)
-# - Epics Backlog: 7 (38, 46, 47, 48, 49, 50, 51)
+# - Epics Backlog: 8 (38, 46, 47, 48, 49, 50, 51, 59)
 # - New affix expansion (Epics 46-51): 18 new affixes, 125 story points total
+# - Epic 59 (2026-04-15): Architecture v1.1 enforcement — 7 stories, blocks Epic 58 via 59.3

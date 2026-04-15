@@ -1,18 +1,25 @@
 ---
 title: 'Game Architecture'
 project: '打字肉鸽'
-date: '2026-02-16'
+date: '2026-04-15'
 author: 'Yuchenghuang'
-version: '1.0'
+version: '1.1'
 stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9]
 status: 'complete'
-engine: 'PixiJS v8.16.0 + Electron'
+engine: 'PixiJS v8.16.0 + Electron (prototype)'
+migration_target: 'Godot (future official release)'
 platform: 'PC (Windows + macOS) / Steam'
 
 # Source Documents
 gdd: 'docs/gdd.md'
-epics: null
+epics: 'docs/epics.md'
+narrative: 'docs/narrative-design.md'
 brief: null
+
+# Changelog
+# v1.1 (2026-04-15): +Migration target (Godot), +Narrative content layer,
+#                    +Wordpack system, +Affix/Modifier layer, +AIGC pipeline
+# v1.0 (2026-02-16): Initial architecture
 ---
 
 # 打字肉鸽 - 游戏架构
@@ -165,6 +172,69 @@ npm install steamworks.js --save
 
 ---
 
+## Migration Target: Godot
+
+### 定位
+
+**当前栈（PixiJS + Electron）** 是原型 / 验证栈，用于快速迭代玩法与内容管线。
+**正式版目标** 为 **Godot**（GDScript 或 C#，待正式版启动时确认）。
+
+### 核心原则：零双栈维护，以架构边界为移植屏障
+
+我们 **不** 构建"引擎抽象层"，**不** 提前引入 Godot 兼容代码。相反：**v1.0 的依赖方向规则本身就是移植屏障**。
+
+```
+data ← core ← systems ← scenes / ui
+ 纯数据    纯逻辑    游戏机制     PixiJS 层
+ ─────────────────────────    ──────────
+      可直接移植 ✅              需重写 ⚠️
+```
+
+### 移植预期
+
+| 层 | Godot 迁移策略 | 代价 |
+|---|---|---|
+| `data/` | 直接复用 JSON/YAML，或导出为 Godot Resource | 低 |
+| `core/` | 逻辑直译为 GDScript/C#（三层状态、事件总线、常量）| 低-中 |
+| `systems/` | 逻辑直译（打字、技能、分数、音频接口）| 中 |
+| `scenes/` | 重写为 Godot Scene (`.tscn`) + 节点树 | 高（预期）|
+| `ui/` | 重写为 Godot Control 节点 | 高（预期）|
+| `main/` (Electron) | 替换为 Godot 原生平台 API / GodotSteam | 中 |
+
+### 硬约束（新增）
+
+**规则 M-1:** `renderer/core/` 和 `renderer/systems/` 中的任何代码 **禁止** import `pixi.js` 或任何 PixiJS 子模块（`@pixi/*`）。
+
+**强制方式:** ESLint 规则（新增）
+
+```js
+// .eslintrc - 待在 57-x 任务中添加
+{
+  "overrides": [{
+    "files": ["src/renderer/core/**/*.ts", "src/renderer/systems/**/*.ts"],
+    "rules": {
+      "no-restricted-imports": ["error", {
+        "patterns": [
+          { "group": ["pixi.js", "@pixi/*"], "message": "core/ 和 systems/ 不得依赖 PixiJS — 为 Godot 移植保留隔离（架构规则 M-1）" }
+        ]
+      }]
+    }
+  }]
+}
+```
+
+**规则 M-2:** 渲染与交互逻辑只能存在于 `scenes/` 与 `ui/` 下。若某 `systems/` 模块需要视觉反馈，必须通过 `eventBus.emit()` 通知上层，由 scenes/ui 消费事件后渲染。
+
+**规则 M-3:** 不提前抽象。不写"EngineAdapter / RendererPort / PixiBackend vs GodotBackend"这类接口 — 直到正式启动 Godot 移植前，这些抽象只是负担。
+
+### 不做
+
+- ❌ 不引入跨引擎运行时（如 Defold、Babylon、Three.js 作为"中间层"）
+- ❌ 不预先编写 Godot 版本的任何代码
+- ❌ 不让原型代码妥协可读性去"讨好"未来的 Godot（例如把 TS class 硬写成静态函数）
+
+---
+
 ## Architectural Decisions
 
 ### Decision Summary
@@ -257,6 +327,45 @@ class ActiveSkillSystem {
 ```
 
 **触发顺序:** 被动先计算加成 → 主动效果出队应用
+
+### Affix / Modifier Layer (v1.1)
+
+**方案:** 独立的 modifier 层，**正交于** passive/active 双系统，可挂载到 skill、relic、wordpack。
+
+**位置:** `renderer/systems/modifiers/`（独立于 `skills/`，是横向层）
+
+```typescript
+// 可挂载到任何载体的修饰器
+interface Modifier {
+  id: string
+  source: 'skill' | 'relic' | 'wordpack' | 'affix'
+  kind: 'additive' | 'multiplicative' | 'conditional' | 'transform'
+  scope: ModifierScope        // 影响范围：score / timer / word / skill-cd / ...
+  apply(ctx: ModifierContext): ModifierResult
+}
+
+// 宿主：任何可被 modifier 修饰的对象
+interface ModifierHost {
+  getModifiers(): Modifier[]
+}
+
+// Skill / Relic / Wordpack 都实现 ModifierHost
+class ModifierEngine {
+  collectActive(context: 'battle' | 'word' | 'skill'): Modifier[]
+  resolve(baseValue: number, modifiers: Modifier[]): number  // 明确的求值顺序
+}
+```
+
+**求值顺序（固定）:** `additive → multiplicative → conditional → transform`
+
+**设计工具链 (离线):**
+- `scripts/affix-designer/` 是 **构建期设计工具**，输出 affix schema → `src/renderer/data/affixes.json`
+- 运行时 **不** 依赖 affix-designer，只消费其输出
+
+**一致性规则（写入 Consistency Rules 表）:**
+- 所有 modifier 实现必须遵循 `scripts/affix-designer/` 输出的 schema
+- 新增 affix 必须走 affix-designer 流程，**禁止**在代码中硬编码 modifier 数值
+- `wordsmith` 等子类 affix 是 **命名空间**，不是独立层
 
 ### Audio System
 
@@ -597,6 +706,166 @@ export const devTools = new DevTools()
 ```
 
 **激活方式:** `Ctrl+Shift+D`（仅开发环境或特殊构建）
+
+---
+
+## Content Architecture (v1.1)
+
+本章节描述 **内容层** 架构 — 文本、词包、美术资产的组织方式与生产管线。这些是 **数据 / 构建期工具**，不引入新的运行时系统。
+
+### Narrative as Content Layer
+
+**定位:** 叙事层是 **纯文本替换**，不是运行时系统。
+
+> 项目叙事基调：**Ironpress Cathedral（40K + SCP 融合）**，所有 flavor text 参照 `docs/narrative-design.md` 的 7 套模板。
+
+**不做:**
+- ❌ 不新增 narrative state machine / chapter runner / dialogue system
+- ❌ 不新增"叙事进度"之类的 Meta 字段
+- ❌ 不构建剧情分支树
+
+**做:**
+- ✅ 盘点现有 UI 文本插槽，让它们从统一的 `NarrativeRegistry` 取文本
+- ✅ 对齐 7 套模板将文本分文件存放
+
+**文本插槽盘点:**
+
+| 插槽 | 位置 | 数据源 |
+|---|---|---|
+| 技能描述 | skill card / tooltip | `data/narrative/skills.ts` |
+| 遗物描述 + flavor | relic card | `data/narrative/relics.ts` |
+| 词包主题名 + 简介 | shop / wordpack select | `data/narrative/wordpacks.ts` |
+| 战斗开/胜/负 flavor | BattleScene 过场 | `data/narrative/battle.ts` |
+| 关卡 / 幕次名 | HUD / 过场 | `data/narrative/stages.ts` |
+| UI 常驻文案 | menu / settings | `data/narrative/ui.ts` |
+| 成就描述 | collection / achievement | `data/narrative/achievements.ts` |
+
+**NarrativeRegistry (运行时接口):**
+
+```typescript
+// renderer/core/narrative/NarrativeRegistry.ts
+// 注意：位于 core/，零 PixiJS 依赖（遵守 M-1）
+class NarrativeRegistry {
+  private bundles: Map<string, Record<string, string>> = new Map()
+
+  load(bundle: string, data: Record<string, string>): void
+  get(key: string, fallback?: string): string
+  // 支持插值：get('skill.fireblast.desc', { damage: 100 })
+  format(key: string, vars: Record<string, string | number>): string
+}
+
+export const narrative = new NarrativeRegistry()
+```
+
+**一致性规则（写入 Consistency Rules 表）:**
+- 所有面向玩家的文本 **必须** 通过 `narrative.get(key)` 获取
+- **禁止** 在 `scenes/`、`ui/`、`systems/` 中硬编码玩家可见字符串
+- flavor text 修改必须遵循 `docs/narrative-design.md` 的 7 套模板，不得随手编写
+- 例外：调试文本、日志、错误信息不走 NarrativeRegistry
+
+### Wordpack System
+
+**定位:** 词包 = 一组词 + 元数据（主题、难度、语言、解锁条件、叙事绑定）。**词包是词包系统，不是遗物**（v1.0 遗漏的澄清）。
+
+**位置:** `renderer/systems/typing/wordpack/`（属于 systems/，遵守 M-1 不依赖 PixiJS）
+
+**数据结构:**
+
+```typescript
+interface Wordpack {
+  id: string
+  themeKey: string          // → narrative.get(themeKey) 取主题名
+  descKey: string           // → narrative.get(descKey) 取描述
+  language: 'en' | 'zh-py' | 'zh-romaji' | ...
+  difficulty: 1 | 2 | 3 | 4 | 5
+  words: string[]           // 核心词列表
+  modifiers?: Modifier[]    // 可选：词包自带的 affix（作为 ModifierHost）
+  unlockCondition?: UnlockRule
+  narrativeTag?: string     // 对齐叙事模板
+}
+
+class WordpackRegistry {
+  private loaded: Map<string, Wordpack> = new Map()
+
+  async load(id: string): Promise<Wordpack>       // lazy load from assets
+  get(id: string): Wordpack | null
+  listUnlocked(meta: MetaState): Wordpack[]
+}
+
+class WordpackBinding {
+  // 单 run 绑定：run 开始时选中，run 结束时释放
+  private active: Wordpack | null = null
+  bind(pack: Wordpack): void
+  current(): Wordpack | null
+  unbind(): void
+}
+```
+
+**生命周期:**
+
+```
+Meta 层   : 持有已解锁 wordpack ID 列表
+Run 开始  : 玩家选择 wordpack → WordpackBinding.bind()
+Battle 内 : 只读访问，供 WordMatcher 抽词
+Run 结束  : WordpackBinding.unbind()
+```
+
+**数据位置:** `assets/data/words/<pack-id>.json`（lazy load，不在启动时全量加载）
+
+**一致性规则:**
+- 词包加载必须通过 `WordpackRegistry.load()`，禁止直接 fetch
+- 词包 ≠ 遗物：**禁止** 将 wordpack 添加到 `RunState.relics` 或走 relic 槽位
+- 词包的 modifier 通过 Affix/Modifier 层挂载，而非技能系统
+
+### AIGC Content Pipeline
+
+**定位:** **构建期工具链**，不是运行时系统。运行时代码零依赖 `aigc-art/`。
+
+**位置:** `aigc-art/`（已存在，仓库根目录）
+
+```
+aigc-art/
+├── prompts/              # 风格指南 + 模板化 prompt
+│   ├── battle-bg.v1.yaml
+│   ├── hit-fx.v1.yaml
+│   └── key-cap.v1.yaml
+├── runs/                 # 生成产物（临时，按日期/seed 归档）
+├── smoke_pipeline.py     # 端到端冒烟测试
+├── .env                  # API key、LoRA 路径、节流配置（dotenv）
+└── ...
+```
+
+**管线:**
+
+```
+docs/art-style-guide.md (风格源)
+       │
+       ▼
+aigc-art/prompts/*.yaml (模板化 prompt)
+       │
+       ▼
+LoRA + 生成 API (节流适配)
+       │
+       ▼
+aigc-art/runs/<timestamp>/ (原始输出)
+       │
+       ▼ ⚠️ 人工 curation (必须)
+       │
+       ▼
+assets/sprites/ (纳入游戏)
+```
+
+**硬约束:**
+
+- **规则 C-1:** AIGC 原始输出 **禁止** 直接提交到 `assets/`。必须经过人工筛选、后处理、命名规范化后才能入库。
+- **规则 C-2:** `aigc-art/.env` 不入库（已在 `.gitignore`），所有密钥走 dotenv。
+- **规则 C-3:** `prompts/*.yaml` 必须显式引用 `docs/art-style-guide.md` 的相应章节，保证风格一致性。
+- **规则 C-4:** 运行时代码（`src/`）**禁止** import 或引用 `aigc-art/` 下的任何路径。
+
+**对齐最近工作:**
+- LoRA 链路修复 + 节流适配低余额账户 (commit `0642744`)
+- `.env` 配置 + 极简 dotenv 加载器 (commit `b0031d6`)
+- 端到端冒烟测试 `smoke_pipeline.py` (commit `f326252`)
 
 ---
 
@@ -1077,43 +1346,73 @@ export const dataManager = new DataManager()
 | 资源加载 | 通过 DataManager | 禁止直接 fetch |
 | 状态修改 | 通过 StateCoordinator | 禁止跨层直接修改 |
 | UI 更新 | 事件驱动 | 禁止轮询检查 |
+| **核心隔离 (M-1)** | `core/` + `systems/` 禁止 import `pixi.js`/`@pixi/*` | **ESLint `no-restricted-imports`** |
+| **视觉反馈 (M-2)** | systems 通过 eventBus 通知，scenes/ui 消费渲染 | Code review |
+| **玩家文本 (N-1)** | 所有玩家可见文本走 `narrative.get()` | Lint 规则 + review |
+| **叙事模板 (N-2)** | flavor text 遵循 `docs/narrative-design.md` 7 套模板 | Review |
+| **词包加载 (W-1)** | 走 `WordpackRegistry.load()`，禁止直接 fetch | Review |
+| **词包隔离 (W-2)** | wordpack ≠ relic，禁止走 relic 槽位 | 类型系统 |
+| **Modifier schema (A-1)** | 所有 modifier 遵循 affix-designer 输出 schema | JSON schema 校验 |
+| **Modifier 编码 (A-2)** | 禁止硬编码 modifier 数值，必须走 affix-designer | Review |
+| **AIGC curation (C-1)** | `aigc-art/runs/` 原始产物禁止直接进 `assets/` | Git pre-commit hook |
+| **AIGC 运行时隔离 (C-4)** | `src/` 禁止 import `aigc-art/` 路径 | ESLint path 规则 |
 
 ---
 
 ## Architecture Validation
 
-### Validation Summary
+### Validation Summary (v1.1)
 
 | 检查项 | 结果 | 备注 |
 |--------|------|------|
 | 决策兼容性 | ✅ PASS | PixiJS + Electron + TypeScript 无冲突 |
-| GDD 覆盖 | ✅ PASS | 7/7 系统，5/5 技术要求 |
+| GDD 覆盖 | ✅ PASS | 7/7 核心系统 + 内容层覆盖 |
 | 模式完整性 | ✅ PASS | 9 模式（3 新颖 + 6 标准） |
-| 功能映射 | ✅ PASS | 8/8 功能已映射 |
+| 功能映射 | ✅ PASS | 核心系统 + 内容层 + 构建管线均已映射 |
 | 文档完整性 | ✅ PASS | 无占位符 |
+| 迁移准备 (Godot) | ✅ PASS | M-1~M-3 规则就位，依赖方向无违反 |
+| 叙事层对齐 | ✅ PASS | NarrativeRegistry 插槽盘点覆盖 7 模板 |
+| 内容管线隔离 | ✅ PASS | AIGC 规则 C-1~C-4 就位 |
 
 ### Coverage Report
 
-- **系统覆盖:** 7/7 (100%)
+- **核心系统覆盖:** 7/7 (100%)
+- **内容层:** 3/3（Narrative, Wordpack, AIGC）
+- **横向层:** 1（Affix/Modifier）
 - **模式定义:** 9 个
-- **决策记录:** 6 类
-- **文件结构:** 完整目录树 + 命名规范
+- **决策记录:** 7 类（v1.0 的 6 类 + Affix/Modifier）
+- **一致性规则:** 16 条（v1.0 的 5 条 + v1.1 的 11 条）
 
 ### Systems Covered
 
-| 系统 | 架构位置 | 关键模式 |
-|------|----------|----------|
-| 打字输入 | `systems/typing/` | 直接键盘监听 |
-| 被动技能 | `systems/skills/passive/` | AdjacencyMap |
-| 主动技能 | `systems/skills/active/` | EffectQueue |
-| 分数计算 | `systems/scoring/` | StateCoordinator |
-| 音频 | `systems/audio/` | Howler.js 池化 |
-| 场景管理 | `scenes/` | Scene Stack |
-| 存档/Steam | `main/` | 原子写入 + IPC |
+| 系统 / 层 | 架构位置 | 关键模式 | 版本 |
+|---|---|---|---|
+| 打字输入 | `systems/typing/` | 直接键盘监听 | v1.0 |
+| 被动技能 | `systems/skills/passive/` | AdjacencyMap | v1.0 |
+| 主动技能 | `systems/skills/active/` | EffectQueue | v1.0 |
+| **Affix/Modifier (横向)** | `systems/modifiers/` | ModifierEngine + ModifierHost | **v1.1** |
+| 分数计算 | `systems/scoring/` | StateCoordinator | v1.0 |
+| 音频 | `systems/audio/` | Howler.js 池化 | v1.0 |
+| 场景管理 | `scenes/` | Scene Stack | v1.0 |
+| 存档/Steam | `main/` | 原子写入 + IPC | v1.0 |
+| **Wordpack** | `systems/typing/wordpack/` | WordpackRegistry + Binding | **v1.1** |
+| **Narrative (内容)** | `core/narrative/` + `data/narrative/` | NarrativeRegistry | **v1.1** |
+| **AIGC Pipeline (构建期)** | `aigc-art/` | Prompt → LoRA → 人工 curation | **v1.1** |
+
+### Migration Readiness (Godot)
+
+| 层 | 隔离状态 | 移植代价预估 |
+|---|---|---|
+| `data/` | ✅ 零引擎依赖 | 低 |
+| `core/` | ✅ M-1 强制隔离 | 低-中 |
+| `systems/` | ✅ M-1 强制隔离 | 中 |
+| `scenes/` + `ui/` | ⚠️ 预期重写 | 高（已规划）|
+| `main/` (Electron) | ⚠️ 替换为 Godot 原生 | 中 |
 
 ### Validation Date
 
-2026-02-16
+2026-04-15 (v1.1)
+2026-02-16 (v1.0)
 
 ---
 
