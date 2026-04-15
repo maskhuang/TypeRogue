@@ -328,6 +328,24 @@ export function rollAffixParams(
     case AffixType.Silkworm:
       return { type, silkwormK: roundTo(0.30 + random() * 0.40, 2) }  // 每点损失底分+30%~70%产出
 
+    case AffixType.Proofread:
+      return { type, proofreadInterval: 4 }  // 未触发叠 1 层，满 4 层词末自触发
+
+    case AffixType.Spelling:
+      return { type, spellingInterval: 5 }  // 元音 +2 / 辅音 +1，满 5 层本次 +100%
+
+    case AffixType.FirstEdition:
+      return { type, firstEditionMult: roundTo(1.80 + random() * 0.40, 2) }  // ×1.80~2.20
+
+    case AffixType.Reprint:
+      return { type, reprintK: roundTo(0.25 + random() * 0.15, 2) }  // 每次重复 +25%~40%
+
+    case AffixType.Matrix:
+      return { type, matrixK: roundTo(0.08 + random() * 0.07, 2) }  // 每个交集字母 +8%~15%
+
+    case AffixType.Typeset:
+      return { type, typesetK: roundTo(0.06 + random() * 0.04, 2) }  // 每个字母 +6%~10%
+
     default: {
       const _exhaustive: never = type
       throw new Error(`Unknown AffixType: ${type}`)

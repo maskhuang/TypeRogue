@@ -132,6 +132,10 @@ export interface TriggerContext {
   // ── Story 41.3: Ligature 质变关卡累计按键计数 ──
   /** 关卡内每个键被按下的累计次数（质变 Ligature 使用） */
   ligatureStageCounts?: Map<string, number>
+  /** 关卡内每个单词已经出现的次数（FirstEdition/Reprint 使用，在 completeWord 递增，触发时读取当前值） */
+  stageWordCounts?: Map<string, number>
+  /** 造词师字母碎片队列快照（Matrix 词条使用；占位符 '_' 表示空槽） */
+  fragmentQueue?: string[]
   // ── 暴击子系统 ──
   /** 基础暴击率（默认 0，遗物可注入） */
   baseCritRate?: number
@@ -401,6 +405,41 @@ export function countEmptySlots(
   return related.filter(k => !bindings.has(k)).length
 }
 
+/**
+ * 虫群：全体虫群技能的共享计数 —
+ * 对每个持有 Swarm 词条的技能 s，取 s 自身(+1) 加上 s 的 posRel 范围内持有 Swarm 词条的邻居数，
+ * 所有 s 的贡献合计成一个共享总数，所有虫群技能都使用该总数 × 自身 swarmK。
+ */
+export function computeTotalSwarmCount(
+  allSkills: Map<string, AffixSkillInstance>,
+  skillStates: Map<string, SkillRuntimeState> | undefined,
+  bindings: Map<string, string>,
+): number {
+  const getAllAffixes = (ns: AffixSkillInstance): AffixInstance[] => {
+    const rt = skillStates?.get(ns.id)
+    const mirror = rt?.mirrorCopiedAffixes ?? (rt?.mirrorCopiedAffix ? [rt.mirrorCopiedAffix] : [])
+    return [...ns.affixes, ...mirror]
+  }
+  // 预计算每个技能的占用键
+  const keysBySkill = new Map<string, string[]>()
+  for (const [k, sid] of bindings) {
+    const arr = keysBySkill.get(sid)
+    if (arr) arr.push(k); else keysBySkill.set(sid, [k])
+  }
+  let total = 0
+  for (const [sid, ns] of allSkills) {
+    const swarmAff = getAllAffixes(ns).find(a => a.type === AffixType.Swarm)
+    if (!swarmAff || swarmAff.posRel == null) continue
+    const nsKeys = keysBySkill.get(sid)
+    if (!nsKeys || nsKeys.length === 0) continue
+    const neighbors = getNeighborSkills(nsKeys, swarmAff.posRel, { bindings, allSkills })
+    for (const nb of neighbors) {
+      if (getAllAffixes(nb).some(a => a.type === AffixType.Swarm)) total++
+    }
+  }
+  return total
+}
+
 /** 获取 posRel 范围内的邻居技能实例（去重，排除自身） */
 export function getNeighborSkills(
   occupiedKeys: string[],
@@ -420,6 +459,35 @@ export function getNeighborSkills(
     if (nSkill) result.push(nSkill)
   }
   return result
+}
+
+/**
+ * 造词师·校勘：词末结算钩子。
+ * 对每个持 Proofread 词条且本词未触发过的技能，`stacks += 1`；
+ * 当 `stacks >= proofreadInterval` 时减去阈值并记录为待自触发。
+ * 纯函数接口：mutates skillStates；返回待触发技能 ID 列表，由调用方（battle.completeWord）
+ * 按绑定键调用 triggerSkill。
+ */
+export function resolveProofreadWordEnd(
+  allSkills: Map<string, AffixSkillInstance>,
+  skillStates: Map<string, SkillRuntimeState>,
+  triggeredThisWord: Set<string>,
+): string[] {
+  const toFire: string[] = []
+  for (const [sid, sk] of allSkills) {
+    const proofAff = sk.affixes.find(a => a.type === AffixType.Proofread)
+    if (!proofAff) continue
+    if (triggeredThisWord.has(sid)) continue
+    const rt = skillStates.get(sid)
+    if (!rt) continue
+    rt.stacks += 1
+    const interval = proofAff.proofreadInterval ?? 4
+    if (rt.stacks >= interval) {
+      rt.stacks -= interval
+      toFire.push(sid)
+    }
+  }
+  return toFire
 }
 
 /** Story 45.9: 运行时移除技能的指定类型词条 */
@@ -708,15 +776,9 @@ export function resolvePhase2(
       }
 
       case AffixType.Swarm: {
-        // 虫群：全场拥有 Swarm 词条的技能数 × swarmK（含倒影复制的虫群，含自身）
-        let swarmCount = 0
-        for (const [nsId, ns] of ctx.allSkills) {
-          const nsRt = ctx.skillStates.get(nsId)
-          const nsMirror = nsRt?.mirrorCopiedAffixes ?? (nsRt?.mirrorCopiedAffix ? [nsRt.mirrorCopiedAffix] : [])
-          const allAffixes = [...ns.affixes, ...nsMirror]
-          if (allAffixes.some(a => a.type === AffixType.Swarm)) swarmCount++
-        }
-        bonusPercent += swarmCount * (affix.swarmK ?? 0)
+        // 虫群：所有虫群技能共享的"范围内虫群计数"总和 × 自身 swarmK
+        const totalSwarmCount = computeTotalSwarmCount(ctx.allSkills, ctx.skillStates, ctx.bindings)
+        bonusPercent += totalSwarmCount * (affix.swarmK ?? 0)
         break
       }
 
@@ -862,6 +924,70 @@ export function resolvePhase2(
                 mutations.push({ type: 'outcastTarget' as any, value: lastKey })
               }
             }
+          }
+        }
+        break
+      }
+
+      case AffixType.FirstEdition: {
+        // 初版：本词在本关尚未出现过（count 为 0 / undefined），产出 ×firstEditionMult
+        const word = (ctx.currentWord ?? '').toLowerCase()
+        const seen = ctx.stageWordCounts?.get(word) ?? 0
+        if (seen === 0) {
+          const mult = affix.firstEditionMult ?? 2.0
+          bonusPercent += mult - 1  // 乘数 2.0 = 基础值再加 100%
+        }
+        break
+      }
+
+      case AffixType.Reprint: {
+        // 再版：本词在本关已出现 N 次，产出 +reprintK × N%
+        const word = (ctx.currentWord ?? '').toLowerCase()
+        const seen = ctx.stageWordCounts?.get(word) ?? 0
+        if (seen > 0) {
+          bonusPercent += seen * (affix.reprintK ?? 0)
+        }
+        break
+      }
+
+      case AffixType.Matrix: {
+        // 字模：本词字母 ∩ fragmentQueue 非占位字母 的不同字母数 × matrixK
+        const word = (ctx.currentWord ?? '').toLowerCase()
+        const queue = ctx.fragmentQueue ?? []
+        if (word.length > 0 && queue.length > 0) {
+          const queueSet = new Set<string>()
+          for (const ch of queue) {
+            const low = (ch ?? '').toLowerCase()
+            if (low && low !== '_' && low >= 'a' && low <= 'z') queueSet.add(low)
+          }
+          if (queueSet.size > 0) {
+            const wordSet = new Set(word)
+            let matrixCount = 0
+            for (const ch of wordSet) if (queueSet.has(ch)) matrixCount++
+            if (matrixCount > 0) bonusPercent += matrixCount * (affix.matrixK ?? 0)
+          }
+        }
+        break
+      }
+
+      case AffixType.Typeset: {
+        // 排版：本词长度 × typesetK
+        const len = (ctx.currentWord ?? '').length
+        if (len > 0) bonusPercent += len * (affix.typesetK ?? 0)
+        break
+      }
+
+      case AffixType.Spelling: {
+        // 拼写：元音触发 +2 层、辅音 +1 层；满 spellingInterval 层时自触发一次（orchestrator 调度）
+        const triggerChar = (ctx.triggerKey ?? '').toLowerCase()
+        if (triggerChar.length === 1 && triggerChar >= 'a' && triggerChar <= 'z') {
+          runtimeState.stacks += isConsonant(triggerChar) ? 1 : 2
+          const interval = affix.spellingInterval ?? 5
+          if (runtimeState.stacks >= interval) {
+            runtimeState.stacks -= interval
+            // 复用 outcastTarget 通道让 orchestrator 把本键再触发一次
+            // （child pulse_burst 再跑 Phase 2 时 stacks 已减 interval，+1 或 +2 无法二次满层，不会无限递归）
+            mutations.push({ type: 'outcastTarget' as any, value: ctx.triggerKey })
           }
         }
         break

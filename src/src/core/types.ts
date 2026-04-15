@@ -219,6 +219,7 @@ export interface GameState {
   affixSkills: Map<string, AffixSkillInstance>;      // 词条制技能定义（skillId → 完整技能数据），35.9
   affixSkillStates: Map<string, SkillRuntimeState>;  // 词条制技能运行时状态（skillId → 8字段状态），35.9
   ligatureStageCounts: Map<string, number>;           // Story 41-3: 质变 Ligature 关卡累计按键计数
+  stageWordCounts: Map<string, number>;               // 造词师 FirstEdition/Reprint: 本关每个单词出现次数
   mutationACounts: Map<string, number>;              // 蜕变A累计次数（skillId → 次数），35.10
   isTutorial: boolean;                     // 教程模式
   endlessUnlocked: boolean;                // 无尽模式是否解锁
@@ -338,6 +339,7 @@ export interface SynergyState {
   skillBaseScore: number; // 技能贡献的基础分（每词重置，结算面板使用）
   skillMultBonus: number; // 技能累积的倍率加成（断连击时重置）
   letterBaseScore: number; // 字母升级贡献的基础分（每词重置）
+  triggeredSkillIds: Set<string>; // 本词内已触发过的技能 ID（每词重置，Proofread 校勘用）
 }
 
 export interface AdjacentSkill {

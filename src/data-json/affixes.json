@@ -190,6 +190,30 @@
     "endow": [
       "word_sense",
       "production"
+    ],
+    "proofread": [
+      "word_sense",
+      "meta_rule"
+    ],
+    "spelling": [
+      "word_sense",
+      "stack"
+    ],
+    "first_edition": [
+      "word_sense",
+      "production"
+    ],
+    "reprint": [
+      "word_sense",
+      "production"
+    ],
+    "matrix": [
+      "word_sense",
+      "production"
+    ],
+    "typeset": [
+      "word_sense",
+      "production"
     ]
   },
   "affixWeightTiers": {
@@ -246,7 +270,13 @@
     "repulsion": "low",
     "handoff": "low",
     "rewind": "low",
-    "endow": "low"
+    "endow": "low",
+    "proofread": "low",
+    "spelling": "low",
+    "first_edition": "low",
+    "reprint": "low",
+    "matrix": "low",
+    "typeset": "low"
   },
   "affixClassRestriction": {
     "twin": "metamorph",
@@ -262,7 +292,13 @@
     "fiber": "wordsmith",
     "handoff": "wordsmith",
     "rewind": "wordsmith",
-    "endow": "wordsmith"
+    "endow": "wordsmith",
+    "proofread": "wordsmith",
+    "spelling": "wordsmith",
+    "first_edition": "wordsmith",
+    "reprint": "wordsmith",
+    "matrix": "wordsmith",
+    "typeset": "wordsmith"
   },
   "affixNames": {
     "convert": "转化",
@@ -317,7 +353,13 @@
     "repulsion": "斥力",
     "handoff": "接力",
     "rewind": "回溯",
-    "endow": "遗产"
+    "endow": "遗产",
+    "proofread": "校勘",
+    "spelling": "拼写",
+    "first_edition": "初版",
+    "reprint": "再版",
+    "matrix": "字模",
+    "typeset": "排版"
   },
   "affixDescriptions": {
     "convert": "读取{source}的技能产出量加成",
@@ -328,7 +370,7 @@
     "crit": "触发时有概率暴击",
     "cascade": "上一个按键与当前键满足指定位置关系时，产出倍增",
     "void": "指定关系的空位越多加成越高",
-    "swarm": "全场拥有虫群词条的技能越多，产出越高",
+    "swarm": "范围内每有1个虫群词条技能，所有虫群词条技能产出+加成",
     "mercenary": "金币≥N时触发加成产出，每次触发消耗N金币",
     "mirror": "每关结束时从指定关系的邻居中随机复制一个词条，下关替代自身生效",
     "amplify": "自身不产出；指定关系的匹配技能触发时叠层，指定关系的所有技能产出+叠层×{amplifyK}%",
@@ -372,7 +414,13 @@
     "repulsion": "含本键字母的单词出现概率 ×{probMult}；商店中匹配技能刷新概率降低",
     "handoff": "本词之后第一个将触发的技能额外触发{handoffCount}次",
     "rewind": "依次让本词之前已触发的最近{rewindCount}个技能各额外触发1次",
-    "endow": "本次不产出；将本应产出量（标准化后）加到本词之后{endowCount}个技能的基础产出"
+    "endow": "本次不产出；将本应产出量（标准化后）加到本词之后{endowCount}个技能的基础产出",
+    "proofread": "本词未被触发则+1层，满{proofreadInterval}层时词末自动触发1次",
+    "spelling": "触发时元音+2层、辅音+1层，满{spellingInterval}层时额外自触发1次",
+    "first_edition": "本词是本关首次出现时，产出×{firstEditionMult}",
+    "reprint": "本词在本关已出现N次时，产出+{reprintK}×N%",
+    "matrix": "本词每含1个字母碎片队列中的字母，产出+{matrixK}%",
+    "typeset": "本词每有1个字母，产出+{typesetK}%"
   },
   "resourceNames": {
     "base": "基数",

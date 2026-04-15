@@ -72,6 +72,12 @@ export enum AffixType {
   Handoff = 'handoff',   // 接力：本技能触发时，让同词之后第一个待触发的技能额外触发 N 次
   Rewind = 'rewind',     // 回溯：本技能触发时，依次让同词已触发的最近 N 个技能各额外触发 1 次
   Endow = 'endow',       // 遗产：本次产出不结算，按标准化转为底分送给同词之后 N 个技能
+  Proofread = 'proofread', // 校勘：本词未被触发则叠 1 层，满 proofreadInterval 层时词末自动触发 1 次（清零）
+  Spelling = 'spelling',   // 拼写：元音触发 +2 层 / 辅音 +1 层，满 spellingInterval 层时本次额外+100%（自触发一次）
+  FirstEdition = 'first_edition', // 初版：本词为本关首次出现时，产出 × firstEditionMult
+  Reprint = 'reprint',     // 再版：本词在本关已出现 N 次时，产出 +reprintK × N%
+  Matrix = 'matrix',       // 字模：本词字母与造词师 fragmentQueue 交集字母数 × matrixK
+  Typeset = 'typeset',     // 排版：本词长度 × typesetK 作为 bonusPercent 加成
 }
 
 // ===== 词条类别 =====
@@ -283,6 +289,12 @@ export interface AffixInstance {
   handoffCount?: number            // Handoff: 让同词下 1 个技能额外触发 N 次
   rewindCount?: number             // Rewind: 依次触发同词上 N 个已触发技能
   endowCount?: number              // Endow: 向同词下 N 个技能捐赠标准化基础产出
+  proofreadInterval?: number       // Proofread: 未触发叠层阈值（满层词末自触发一次）
+  spellingInterval?: number        // Spelling: 元/辅音加权叠层阈值（满层本次 +100%）
+  firstEditionMult?: number        // FirstEdition: 本关首次出现该词时的产出乘数
+  reprintK?: number                // Reprint: 本关每次重复出现的 bonusPercent 增量
+  matrixK?: number                 // Matrix: 每个 fragmentQueue 交集字母的 bonusPercent 增量
+  typesetK?: number                // Typeset: 每个本词字母的 bonusPercent 增量
 }
 
 // ===== 稀有度 =====

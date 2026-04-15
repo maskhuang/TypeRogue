@@ -45,7 +45,7 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
-import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests, getExtendedNeighbors, hasSharedMatch, isAuraQuestActive } from '../data/affixTrigger';
+import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests, getExtendedNeighbors, hasSharedMatch, isAuraQuestActive, computeTotalSwarmCount } from '../data/affixTrigger';
 import { AffixType as AffixTypeEnum, filterEnchantmentsByClass, filterCategorizedByClass, QUEST_ENCHANTMENT_DEFS, ENCHANTMENT_META, TRANSMUTE_RATIO_TABLE, MULTIPLY_OPERATOR_BASE_VALUES, BASE_VALUES, EnchantmentType as EnchantmentTypeEnum, APPRENTICE_NEIGHBOR_GROWTH, applyAffixLevelScaling, previewAffixScaledValue, getSkillMaxLevel, getQuestEquipTarget, AFFIX_NAMES, CRIT_MULTIPLIER } from '../data/affixes';
 import { invalidateBigramCache } from '../data/bigramFrequency';
 import type { EnchantmentType } from '../data/affixes';
@@ -728,6 +728,12 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'aura_fury': return `+${Math.round((a.auraCrit ?? 0) * 100)}%${t('param.aura_crit')}`
     case 'aura_morale': return `+${Math.round((a.auraMorale ?? 0) * 100)}%`
     case 'fiber': return `${t('param.interval_label')} ${a.fiberInterval ?? 4}`
+    case 'spelling': return `${t('param.interval_label')} ${a.spellingInterval ?? 5}`
+    case 'proofread': return `${t('param.interval_label')} ${a.proofreadInterval ?? 4}`
+    case 'first_edition': return `×${(a.firstEditionMult ?? 2).toFixed(1)}`
+    case 'reprint': return `+${Math.round((a.reprintK ?? 0) * 100)}%/${t('param.per_repeat')}`
+    case 'matrix': return `+${Math.round((a.matrixK ?? 0) * 100)}%/${t('param.per_letter')}`
+    case 'typeset': return `+${Math.round((a.typesetK ?? 0) * 100)}%/${t('param.per_letter')}`
     case 'gravity': return `+${a.probMult?.toFixed(1) ?? '?'}x`
     case 'repulsion': return `×${a.probMult?.toFixed(2) ?? '?'}`
     case 'exhaust': {
@@ -962,16 +968,11 @@ export function computeSmartEstimate(
         break
       }
       case 'swarm': {
-        // 全场虫群计数（含自身）
-        let swarmCount = 0
-        for (const [, ns] of state.affixSkills) {
-          if (ns.affixes.some(a => a.type === 'swarm')) swarmCount++
-        }
-        if (swarmCount > 0) {
-          const bonus = (affix.swarmK ?? 0) * swarmCount
-          addPercent += bonus
-          breakdown.push({ typeKey: 'swarm', label: t('est.swarm', { pct: Math.round(bonus * 100) }), detail: t('est.swarm_count', { count: swarmCount }) })
-        }
+        // 所有虫群技能共享的"范围内虫群计数"总和
+        const swarmCount = computeTotalSwarmCount(state.affixSkills, state.affixSkillStates, state.player.bindings)
+        const bonus = (affix.swarmK ?? 0) * swarmCount
+        addPercent += bonus
+        breakdown.push({ typeKey: 'swarm', label: t('est.swarm', { pct: Math.round(bonus * 100) }), detail: t('est.swarm_count', { count: swarmCount }) })
         break
       }
       case 'mercenary': {
@@ -1001,6 +1002,48 @@ export function computeSmartEstimate(
         // 预估：按本词平均触发次数（无法精确预测，仅显示每点加成）
         const silkwormK = affix.silkwormK ?? 0
         breakdown.push({ typeKey: 'silkworm', label: t('est.silkworm', { pct: Math.round(silkwormK * 100) }), detail: '' })
+        break
+      }
+      case 'first_edition': {
+        // 预估：展示最大加成（本词首次出现时的 ×mult）；标签标注"首次"
+        const mult = affix.firstEditionMult ?? 2.0
+        const bonus = Math.max(0, mult - 1)
+        if (bonus > 0) {
+          addPercent += bonus
+          breakdown.push({ typeKey: 'first_edition', label: t('est.first_edition', { pct: Math.round(bonus * 100) }), detail: t('est.first_edition_detail') })
+        }
+        break
+      }
+      case 'reprint': {
+        // 预估：显示每次重复 +K%，具体加成取决于本关出现次数，无法静态预测
+        const k = affix.reprintK ?? 0
+        breakdown.push({ typeKey: 'reprint', label: t('est.reprint', { pct: Math.round(k * 100) }), detail: '' })
+        break
+      }
+      case 'matrix': {
+        // 预估：按当前 fragmentQueue 快照算静态交集（单词未知，无法精确，仅展示速率）
+        const k = affix.matrixK ?? 0
+        const queueSet = new Set<string>()
+        for (const ch of state.fragmentQueue ?? []) {
+          const low = (ch ?? '').toLowerCase()
+          if (low && low !== '_' && low >= 'a' && low <= 'z') queueSet.add(low)
+        }
+        breakdown.push({ typeKey: 'matrix', label: t('est.matrix', { pct: Math.round(k * 100) }), detail: t('est.matrix_detail', { count: queueSet.size }) })
+        break
+      }
+      case 'typeset': {
+        // 预估：按玩家当前词库的真实平均词长计算参考加成（无词库时回退 5）
+        const k = affix.typesetK ?? 0
+        const deck = state.player.wordDeck ?? []
+        const avgLen = deck.length > 0
+          ? deck.reduce((s, w) => s + w.length, 0) / deck.length
+          : 5
+        addPercent += k * avgLen
+        breakdown.push({
+          typeKey: 'typeset',
+          label: t('est.typeset', { pct: Math.round(k * avgLen * 100) }),
+          detail: t('est.typeset_detail', { pct: Math.round(k * 100), len: avgLen.toFixed(1) }),
+        })
         break
       }
       // 其余词条不预估

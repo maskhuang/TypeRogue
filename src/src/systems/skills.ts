@@ -269,6 +269,7 @@ function triggerAffixSkillWithFeedback(
   const skill = state.affixSkills.get(skillId)!;
 
   synergy.wordSkillCount++;
+  synergy.triggeredSkillIds.add(skillId);
   _wordHasProducerTriggered = true;
 
   // Story 40.8: 获取多格技能占据的所有键位
@@ -300,6 +301,8 @@ function triggerAffixSkillWithFeedback(
     apprenticeGrowthMultiplier: getApprenticeGrowthMultiplier(),
     // Story 41-3: 质变 Ligature 关卡累计按键计数
     ligatureStageCounts: state.ligatureStageCounts,
+    stageWordCounts: state.stageWordCounts,
+    fragmentQueue: state.fragmentQueue,
     // §12 暴击遗物注入
     baseCritRate: getLuckyStrikeCritRate()
       + (critChargeReady ? 1.0 : 0)

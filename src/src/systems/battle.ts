@@ -45,7 +45,7 @@ import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, sho
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, getUnderdogBonusGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
 import { resetCritRelicBattleState, resetCritRelicWordState, getCritStormBonus, initCritRelicBehaviors } from './relics/CritRelicBehaviors';
 import { checkDrumPass, getWordResonanceStacks, resetStackingRelicBattleState, initStackingRelicBehaviors, isPerpetualEngineActive, isStackingAffix } from './relics/StackingRelicBehaviors';
-import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests, removeAffixAtRuntime, resetStageState } from '../data/affixTrigger';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests, removeAffixAtRuntime, resetStageState, resolveProofreadWordEnd } from '../data/affixTrigger';
 import { AffixType, applyAffixLevelScaling } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
@@ -391,6 +391,7 @@ function setWord(): void {
   synergy.skillBaseScore = 0;
   synergy.letterBaseScore = 0;
   synergy.lastTriggeredSkillId = null;
+  synergy.triggeredSkillIds.clear();
   // Story 36.6: 双手协奏手追踪重置
   resetDualConcertoHand();
   renderWord();
@@ -1001,6 +1002,17 @@ function playerWrong(pressedKey?: string, expectedKey?: string): void {
 function completeWord(): void {
   const el = getElements();
 
+  // 造词师·校勘：本词未被触发的 Proofread 技能 +1 层；满 proofreadInterval 层时词末自触发一次
+  // （必须在 baseChips 计算前运行，让自触发的 base 产出计入本词结算）
+  const proofFire = resolveProofreadWordEnd(state.affixSkills, state.affixSkillStates, synergy.triggeredSkillIds);
+  if (proofFire.length > 0) {
+    const bs = getBindingState(state);
+    for (const sid of proofFire) {
+      const keys = getSkillKeys(bs, sid);
+      if (keys.length > 0) triggerSkill(sid, keys[0]);
+    }
+  }
+
   // 计算基础分（字母击键 + 技能基础分 + 词语效果底分 + 字母底分加成）
   const baseChips = Math.floor(wordBaseScore + synergy.skillBaseScore + synergy.letterBaseScore + state.player.wordBonus);
   state.resources.base = baseChips;
@@ -1363,6 +1375,10 @@ function completeWord(): void {
     state.time += wordRelicResult.effects.time;
     showFeedback(`+${wordRelicResult.effects.time.toFixed(1)}s`, '#00ff88', getFloatScale('time', wordRelicResult.effects.time));
   }
+
+  // 造词师 FirstEdition/Reprint: 本词计数 +1（所有 Phase 2 读取都已完成，含 Proofread 词末补发）
+  const completedWordKey = state.player.word.toLowerCase();
+  state.stageWordCounts.set(completedWordKey, (state.stageWordCounts.get(completedWordKey) ?? 0) + 1);
 
   setTimeout(() => {
     if (state.phase === 'battle') setWord();
@@ -2153,6 +2169,8 @@ export async function startLevel(): Promise<void> {
   resetStackingRelicBattleState();
   // Story 41-3: 清空质变 Ligature 关卡累计按键计数
   state.ligatureStageCounts.clear();
+  // 造词师 FirstEdition/Reprint: 清空本关单词出现计数
+  state.stageWordCounts.clear();
 
   // 标点解放遗物：设置遗物乱码激活状态
   setRelicGarbleActive(state.player.relics.has('punctuation_liberation'));

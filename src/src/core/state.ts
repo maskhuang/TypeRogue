@@ -45,6 +45,7 @@ export function createInitialState(): GameState {
     affixSkills: new Map(),
     affixSkillStates: new Map(),
     ligatureStageCounts: new Map(),
+    stageWordCounts: new Map(),
     mutationACounts: new Map(),
     wordEffects: new Map(),
     isTutorial: false,
@@ -131,6 +132,7 @@ export function createSynergyState(): SynergyState {
     skillBaseScore: 0,
     skillMultBonus: 0,
     letterBaseScore: 0,
+    triggeredSkillIds: new Set<string>(),
   };
 }
 
