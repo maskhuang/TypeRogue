@@ -1,6 +1,6 @@
 # Story 57.3: 美术风格指南与 P0 资产
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -37,11 +37,11 @@ so that Story 57.5（键盘输入闭环）和 57.6（战斗最小闭环 ◆ 里�
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: 风格指南文档骨架 (AC: #1, #2, #8)**
-  - [ ] 新建 `docs/art-style-guide.md`，顶部固化 6 项锚点（表格形式，每项一行决策理由）
-  - [ ] 写 Mood board 段落：收集 3 款参考游戏截图或 Lospec 链接，每款 2~3 句"学什么 / 不学什么"
-  - [ ] 指定"主方向"（例如"最接近 Cobalt Core 的高对比色块 + Loop Hero 的简约剪影"）
-  - [ ] 末尾预留 "P0 资产清单" 表格（Task 2-7 完成后回填）
+- [x] **Task 1: 风格指南文档骨架 (AC: #1, #2, #8)**
+  - [x] 新建 `docs/art-style-guide.md`，顶部固化 6 项锚点（表格形式，每项一行决策理由）
+  - [x] 写 Mood board 段落：收集 3 款参考游戏截图或 Lospec 链接，每款 2~3 句"学什么 / 不学什么"
+  - [x] 指定"主方向"（Cobalt Core 高对比色块 + 信息密度平衡为主方向；Loop Hero / StS 为辅助参考）
+  - [x] 末尾预留 "P0 资产清单" 表格（14 行骨架已就位，Task 2-7 完成后逐行回填状态）
 
 - [ ] **Task 2: 调色板与字体落地 (AC: #1, #6, #7)**
   - [ ] 从 Resurrect-64 (Kerrie Lake) 选 32 色子集：写明每色的 hex + 用途（"common 底 / rare 蓝 / ..."）
@@ -220,10 +220,30 @@ textures/canvas_textures/default_texture_filter = 0  # nearest
 
 ### Agent Model Used
 
-_(to be filled by dev agent)_
+claude-opus-4-6[1m] (dev-story workflow, 2026-04-15)
 
 ### Debug Log References
 
+- AIGC 工作流现状盘点（`aigc-art/runs/2026-04-13_enemy-dummy/`）：仅 enemy-dummy idle 跑过 1 次真实 Replicate 调用（3 attempts → 1 image → 0 通过评测闸门），hit / death 未跑，key-cap / fx / bg prompts 未写。Task 3-7 需先补 prompts + 诊断失败原因再启动。
+
 ### Completion Notes List
 
+**Task 1 完成（2026-04-15）**：
+- 产出 `docs/art-style-guide.md` v1.0（10 大节 + P0 资产清单表）
+- 锚点全部锁死：640×360 逻辑分辨率、32×32 键帽、Resurrect-32 调色板、Fusion Pixel 12px 字体、1px 角色描边、12 fps 动画
+- Mood board 三款参考全就位；**主方向定为 Cobalt Core**（理由：信息密度高 + 视觉不吵的平衡最接近打字肉鸽 HUD + 浮字的诉求）
+- P0 资产清单表 14 行骨架已建，每行含路径/尺寸/帧数/用途/对应 Task/对应 Story/状态列，Task 2-7 落地后回填状态与实际产出
+- 字体实测结论段（AC6）已预留占位，待 Task 2 字体下载 + 1080p/1440p 实测后回填
+- 与 Epic 55 的隔离关系单列一节，明确不得复用 CSS token / Press Start 2P 字体
+
+**后续 Task 的已知阻塞**：
+- Task 2：字体下载可在线进行，但 1080p/1440p 字体实测需用户本机操作
+- Task 3-7：需补齐 `aigc-art/prompts/` 下 key-cap / hit-fx / battle-bg 三个缺失 prompt；diagnose enemy-dummy idle 首跑失败原因后再决定是否 bump 到 v2
+- Task 8：Godot sandbox 缩放验证需用户本机 Godot 编辑器操作
+- AC4（Aseprite 源归档）/ AC5（Godot 实测）/ AC6（字体实测）本质上都需要人工环节，dev-story agent 无法一次性闭环
+
 ### File List
+
+- `docs/art-style-guide.md`（新增，Task 1 产出）
+- `docs/implementation-artifacts/sprint-status.yaml`（修改：57-3 ready-for-dev → in-progress）
+- `docs/implementation-artifacts/57-3-art-style-guide-p0-assets.md`（修改：Task 1 勾选 + Dev Agent Record 回填）
