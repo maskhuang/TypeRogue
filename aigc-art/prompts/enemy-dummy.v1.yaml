@@ -9,7 +9,9 @@ last_updated: "2026-04-14"
 
 asset_id: enemy-dummy
 target_size: [32, 48]         # 宽 32 × 高 48，Story 57.3 基准敌人规格
-gen_size: [256, 384]          # 8× 目标，给 nearest downscale 留足空间
+# lucataco/flux-dev-lora 不接受 width/height，只认 aspect_ratio；32:48 = 2:3
+aspect_ratio: "2:3"
+gen_size: [512, 768]          # 本字段在 Flux-dev-lora 路径下仅用于 metadata 记录，不进入 API 调用
 
 # ============================================================
 # Positive / Negative 覆盖
@@ -59,7 +61,7 @@ eval:
   style_golden_globs:
     - "references/golden-cc0/enemy_*.png"   # CC0 sprite sheets, 入库
     - "references/golden/enemy_*.png"       # 可选本地商业截图补充, 不入库
-  clip_similarity_min: 0.80     # 继承 base；显式写出以便本 asset 独立调
+  clip_similarity_min: 0.70     # 临时下调：CC0 golden 是生物类 (zombie/skeleton)，与稻草人主体语义差距大；LoRA 修好后 0.70 足以过滤明显跑偏样本，严格阈值留给 key-cap/fx 等主题匹配资产
 
 # ============================================================
 # 输出路径

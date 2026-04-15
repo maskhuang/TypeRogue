@@ -2,32 +2,40 @@
 # 所有 asset prompt 共享的基线。各 asset 文件通过 extends: _base.yaml 继承。
 # 修改此文件会影响所有资产生成，**必须 bump 全局 prompt 版本**并在 commit 说明。
 
-version: "base.v1"
-last_updated: "2026-04-14"
+version: "base.v2"
+last_updated: "2026-04-15"
 
 # ============================================================
 # 模型与推理配置
 # ============================================================
+# 切换说明（base.v1 → v2, 2026-04-15）：
+#   v1 用 black-forest-labs/flux-dev（原版，不支持 LoRA 输入字段，
+#   hf_lora 被静默忽略）→ 从未真正跑出像素风。
+#   v2 切到 lucataco/flux-dev-lora 封装，传入 HF LoRA 路径
+#   prithivMLmods/Retro-Pixel-Flux-LoRA（触发词 "Retro Pixel"）。
 model:
   provider: replicate
-  id: "black-forest-labs/flux-dev"
-  # retro-pixel-flux LoRA（HuggingFace 上有多个变体，起步用最稳的那个）
+  # 锁版本防漂移（2026-04-15 取的 latest_version.id）
+  id: "lucataco/flux-dev-lora:091495765fa5ef2725a175a57b276ec30dc9d39c22d30410f2ede68a3eab66b3"
   lora:
     - name: "retro-pixel-flux"
-      weight: 0.85
-      source: "https://huggingface.co/..."  # 实施时填具体链接
+      weight: 0.95
+      source: "prithivMLmods/Retro-Pixel-Flux-LoRA"
+      trigger_word: "Retro Pixel"
 
 sampler: "dpm++ 2m karras"
-steps: 30
-cfg: 6.5
-batch_size: 8           # Q4 紧阈值相应提到 8；若连续不过再考虑提到 12
+steps: 28
+cfg: 3.5                # Flux-dev 推荐 3-4；原 6.5 偏高
+batch_size: 6           # Flux-dev-lora 单次生成更慢，batch 适度压缩
 retry_until_pass: 3     # 最多重跑 3 次直到 ≥1 张过闸门
 auto_seed: true         # 每个 variation 随机 seed，失败重跑换 seed
 
 # ============================================================
 # 共享 Prompt 片段
 # ============================================================
+# 触发词前置保证 LoRA 生效；其余风格锚定跟 v1 保持一致。
 shared_positive: |
+  Retro Pixel,
   pixel art, 16-bit retro game sprite,
   clean silhouette, 1px black outline,
   limited palette 32 colors from resurrect-64 subset,

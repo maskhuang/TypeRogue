@@ -98,6 +98,23 @@ def prompt_hash(spec: Dict[str, Any]) -> str:
 # Replicate API 调用
 # ============================================================
 
+# 全局节流：Replicate 对 < $5 credit 账户（及某些促销 credit）强制
+# 6 rpm / burst=1。这里用 11s 保守间隔 + 内部 429 退避重试，让低额度
+# 账户也能把 pipeline 跑完而不至于整批 fail。
+_MIN_INTERVAL_SEC = float(os.environ.get("REPLICATE_MIN_INTERVAL_SEC", "11"))
+_last_call_at: float = 0.0
+
+
+def _throttle() -> None:
+    global _last_call_at
+    now = time.time()
+    wait = _MIN_INTERVAL_SEC - (now - _last_call_at)
+    if wait > 0:
+        print(f"  [throttle] sleeping {wait:.1f}s to respect {60 / _MIN_INTERVAL_SEC:.1f} rpm...")
+        time.sleep(wait)
+    _last_call_at = time.time()
+
+
 def call_replicate(
     spec: Dict[str, Any],
     positive: str,
@@ -123,32 +140,71 @@ def call_replicate(
         raise RuntimeError("REPLICATE_API_TOKEN not set")
 
     model_id = spec["model"]["id"]
-
-    model_input: Dict[str, Any] = {
-        "prompt": positive,
-        "negative_prompt": negative,
-        "width": spec["gen_size"][0],
-        "height": spec["gen_size"][1],
-        "num_inference_steps": spec.get("steps", 30),
-        "guidance": spec.get("cfg", 6.5),
-        "seed": seed,
-        "num_outputs": 1,
-    }
-
-    # LoRA（如果支持）
     loras = spec.get("model", {}).get("lora", [])
-    if loras:
-        # 不同 Flux 封装的 LoRA 参数名不一（hf_lora / lora_weights / ...）
-        # 这里写两个常见字段名，实际首次跑时按报错调整
-        first = loras[0]
-        model_input["hf_lora"] = first.get("source", first.get("name"))
-        model_input["lora_scale"] = first.get("weight", 0.85)
+
+    # lucataco/flux-dev-lora 封装的 input schema：
+    #   prompt, hf_lora, lora_scale, aspect_ratio ("custom" 时用 width/height),
+    #   num_inference_steps, guidance_scale, seed, num_outputs,
+    #   output_format, output_quality
+    # 不接受 negative_prompt（Flux 本身不支持）
+    if "flux-dev-lora" in model_id or "flux" in model_id.lower():
+        # lucataco/flux-dev-lora schema 只接受 aspect_ratio（无 width/height）
+        model_input: Dict[str, Any] = {
+            "prompt": positive,
+            "aspect_ratio": spec.get("aspect_ratio", "1:1"),
+            "num_inference_steps": spec.get("steps", 28),
+            "guidance_scale": spec.get("cfg", 3.5),
+            "seed": seed,
+            "num_outputs": 1,
+            "output_format": "png",
+            "output_quality": 100,
+        }
+        if loras:
+            first = loras[0]
+            model_input["hf_lora"] = first.get("source", first.get("name"))
+            model_input["lora_scale"] = first.get("weight", 0.85)
+        if negative and negative.strip():
+            print(f"  [replicate] note: negative_prompt dropped (Flux 不支持)")
+    else:
+        # 旧路径（其他 SD 封装）保留兼容
+        model_input = {
+            "prompt": positive,
+            "negative_prompt": negative,
+            "width": spec["gen_size"][0],
+            "height": spec["gen_size"][1],
+            "num_inference_steps": spec.get("steps", 30),
+            "guidance": spec.get("cfg", 6.5),
+            "seed": seed,
+            "num_outputs": 1,
+        }
+        if loras:
+            first = loras[0]
+            model_input["hf_lora"] = first.get("source", first.get("name"))
+            model_input["lora_scale"] = first.get("weight", 0.85)
 
     print(f"  [replicate] calling {model_id} (seed={seed})...")
-    t0 = time.time()
-    output = replicate.run(model_id, input=model_input)
-    dt_s = time.time() - t0
-    print(f"  [replicate] got response in {dt_s:.1f}s")
+
+    # 节流 + 429 退避：最多 5 次内部重试，每次 429 睡 15s
+    output = None
+    last_err: Optional[Exception] = None
+    for inner_attempt in range(5):
+        _throttle()
+        t0 = time.time()
+        try:
+            output = replicate.run(model_id, input=model_input)
+            dt_s = time.time() - t0
+            print(f"  [replicate] got response in {dt_s:.1f}s")
+            break
+        except Exception as e:
+            last_err = e
+            msg = str(e)
+            if "429" in msg or "throttl" in msg.lower() or "rate limit" in msg.lower():
+                print(f"  [replicate] 429 rate-limited (inner retry {inner_attempt + 1}/5), sleeping 15s...")
+                time.sleep(15)
+                continue
+            raise
+    if output is None:
+        raise last_err if last_err else RuntimeError("replicate.run returned None with no error")
 
     # Replicate 的输出通常是 URL 列表或单 URL
     import requests
