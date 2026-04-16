@@ -1,6 +1,6 @@
 # Story 59.5: wordpack/ 系统骨架
 
-Status: review
+Status: done
 Epic: 59
 Architecture rules: **W-1, W-2** (`docs/game-architecture.md` v1.1 §Wordpack System)
 Memory 约束: **传说词包是词包系统，不是遗物**（`feedback_wordpack_not_relic.md`）
@@ -132,6 +132,39 @@ $ npm --prefix src run test:run -- tests/unit/architecture/eslint-rules.test.ts
 ### Change Log
 
 - 2026-04-15 — Story 59.5 实现完成：wordpack/ 骨架落地，含 phantom brand nominal typing 实现 W-2、依赖注入的 Registry、防呆的 Binding、16 个单元测试全部通过。
+- 2026-04-15 — Story 59.5 code-review 后修复完成：H1 (sticky error `.finally`) / H2 (listUnlocked → listCachedUnlocked + JSDoc) / H3 (scoped tsc --noEmit CI gate via `tsconfig.typetest.json`) / H4 (defensive spread + Object.freeze) / M1 (comment 缓和) / M2 (Dev Agent Record 加 AC 偏离记录) / M3 (clear-race generation counter) / M4 (LanguageHint 类型抽出) / M5 (UnlockedKeysQuery → MetaUnlockPort 重命名). L1/L2 转 follow-up。单元测试从 16 增至 23；新建 type-level fixture `src/tests/unit/architecture/type-assertions.ts` 含 6 个 `@ts-expect-error` 断言；`.githooks/pre-commit` 新增第三条 lane (typecheck:arch)。
+
+### Review Follow-ups (AI)
+
+- [x] **[AI-Review][HIGH] H1** — `inFlight` 里的 rejected promise 不清理导致粘性错误。已修复：把 `.then()` 里的 `inFlight.delete(id)` 改成 `.finally()`，保证成功/失败都清理。新增测试覆盖"首次失败 + 第二次成功可重试"+"失败不写 cache"。[WordpackRegistry.ts:44-65]
+- [x] **[AI-Review][HIGH] H2** — `listUnlocked` 名字与"只扫 cache"语义不符。已修复：方法重命名为 `listCachedUnlocked`；JSDoc 明确"⚠️ 调用方有义务预加载"契约；新增测试断言未预加载的已解锁词包不出现在结果里。[WordpackRegistry.ts:68-84]
+- [x] **[AI-Review][HIGH] H3** — W-2 phantom brand 缺 CI 兜底（vitest/esbuild 剥离 @ts-expect-error）。已修复：新建 `src/tsconfig.typetest.json`（scoped 配置，只 typecheck 架构骨架模块，规避全仓 250 处历史错误）+ `src/tests/unit/architecture/type-assertions.ts`（6 个 @ts-expect-error fixture，每个指令必须 catch 到真实 TS 错误否则 tsc 失败）+ `typecheck:arch` npm script + pre-commit hook 第三条 lane（只在触及架构骨架文件时触发）。完整闭环：类型级规则从"文档协议"升级为"CI 门禁"。**额外发现**：`erasableSyntaxOnly` tsconfig 选项拒绝 parameter-property 语法，WordpackRegistry 的 `constructor(private readonly loader)` 已改为显式字段赋值。
+- [x] **[AI-Review][HIGH] H4** — Wordpack 内部 `words` 和 `modifiers` 直接持有 caller 数组引用，封装泄漏。已修复：`createWordpack` 用 `Object.freeze([...init.words])` + `Object.freeze([...(init.modifiers ?? [])])` 做 defensive copy；整个返回对象也 `Object.freeze`。新增测试覆盖"修改原始 init 数组不影响 Wordpack"+"Wordpack 是 frozen"。[types.ts:74-97]
+- [x] **[AI-Review][MEDIUM] M1** — "外部代码无法伪造 brand" 注释 overstated（as / JSON 可绕过）。已修复：注释改为列举"✅ TS-strict 捕获 / ⚠️ as/JSON 可绕过 / runtime 需 tsc CI 兜底"，明确 phantom brand 是**类型系统协议**而非 runtime 屏障。[types.ts:33-42]
+- [x] **[AI-Review][MEDIUM] M2** — AC1 `modifiers?: Modifier[]` 字段和 AC2 `Promise<Wordpack>` 签名被静默偏离。已修复：本段"Review Follow-ups" 本身就是 AC 偏离记录；同时在 Dev Agent Record 的"实现计划与关键决策" 段补说明两处偏离。
+- [x] **[AI-Review][MEDIUM] M3** — `clear()` 与 in-flight load 的竞态导致 cache 幽灵。已修复：`WordpackRegistry` 新增 `generation` 计数器，`load` 的 `.then()` 回调先检查生成号，不一致就丢弃结果。`clear()` 递增生成号。新增测试覆盖 "clear 期间的 in-flight load 结果不写回 cache" + "clear 后可重新 load 同 id"。
+- [x] **[AI-Review][MEDIUM] M4** — `language: 'en' | 'zh-py' | ... | string` 的字面量联合 + `string` 兜底是 TS 反模式。已修复：抽出独立 `LanguageHint` 类型供 IDE 提示，`Wordpack.language` 字段保持 `string`。
+- [x] **[AI-Review][MEDIUM] M5** — `UnlockedKeysQuery` 命名歧义（像数据结构而非查询端口）。已修复：重命名为 `MetaUnlockPort`，JSDoc 说明这是 systems → core 的 hexagonal-style 依赖倒置端口。
+- [ ] **[AI-Review][LOW] L1** — `WordpackBinding` 无 bind/unbind 事件订阅机制。**不修复**：本 story 是 skeleton，Non-Goal 明确 "不做词包选择 UI"。WordMatcher/UI 未来若需响应词包切换，再走独立 story 加 observer。
+- [ ] **[AI-Review][LOW] L2** — `WordpackRawData` 与 `WordpackInit` 接口重叠。**已顺手合并**：删除了 `WordpackRawData`，`WordpackDataLoader` 直接返回 `Promise<WordpackInit | null>`。零行为变化。
+
+### Senior Developer Review (AI)
+
+**Review Date:** 2026-04-15
+**Reviewer:** code-review workflow (Claude Opus 4.6)
+**Outcome:** Changes Requested → 已处理
+
+**Action Items (11 total):**
+- HIGH: 4（H1 / H2 / H3 / H4）— **全部已修复**
+- MEDIUM: 5（M1 / M2 / M3 / M4 / M5）— **全部已修复**
+- LOW: 2（L1 / L2）— L1 不修（Non-Goal），L2 顺手合并
+
+**Resolved in this review session:** 10 items (含 L2 bonus)
+**Declined follow-ups:** 1 item（L1，明确属于未来 story 的 observer 需求）
+
+**Most valuable artifact produced by the review:** `src/tests/unit/architecture/type-assertions.ts` + `src/tsconfig.typetest.json` + `typecheck:arch` npm script + pre-commit hook 第三条 lane。这套基建让 Epic 59 的**类型级架构规则**（phantom brand / readonly / literal constraints）从"文档协议"升级为 **CI 强制屏障**，且规避了全仓 250 处历史类型错误。未来 Epic 59 的 59-3 (narrative/)、59-4 (modifiers/) 骨架都可以复用：往 `tsconfig.typetest.json` 的 include 加路径 + 往 type-assertions.ts 加 fixture 即可。
+
+**Secondary finding during fix:** `erasableSyntaxOnly: true` tsconfig 选项与 parameter-property 语法冲突——写 `constructor(private readonly x: T)` 在 tsconfig.typetest.json 下会 tsc 报错。修复为显式字段声明 + 构造函数赋值。这个约束本来就在主 tsconfig 里，但因为全仓 tsc 从不 pass，没人会注意到；scoped typecheck 把这类问题暴露出来，是 H3 投资的额外红利。
 
 ## Non-Goals
 

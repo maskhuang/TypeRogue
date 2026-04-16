@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "_comment": "Story 59.5 H3 — scoped typecheck for architectural skeleton files. 本 tsconfig 只 typecheck Epic 59 的骨架模块（wordpack/ 等）+ architectural type assertions。目的是让 @ts-expect-error fixture 真正由 tsc 在 CI 环节兜底，而不需要等待全仓 250+ 处历史类型错误被清理。未来 Epic 59 的 59-3/59-4 骨架应追加到 include 列表。",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/systems/typing/wordpack/**/*.ts",
+    "tests/unit/architecture/type-assertions.ts"
+  ]
+}

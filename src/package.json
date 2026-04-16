@@ -30,6 +30,7 @@
     "lint": "eslint .",
     "lint:arch": "eslint src/core src/systems main shared tests",
     "lint:staged": "lint-staged --relative",
+    "typecheck:arch": "tsc --noEmit -p tsconfig.typetest.json",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",

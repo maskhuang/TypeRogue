@@ -52,4 +52,24 @@ if ! npm --prefix src run lint:staged --silent; then
   exit 1
 fi
 
+# ==== W-2 等类型级架构规则：scoped tsc --noEmit ====
+# 只在触及架构骨架目录（目前是 wordpack/）或 architecture type-assertions 时跑，
+# 避免普通代码 commit 付出 tsc 启动的 ~2s 代价。
+STAGED_ARCH_TYPES=$(git diff --cached --name-only --no-renames --diff-filter=AM | grep -E '^src/src/systems/typing/wordpack/|^src/tests/unit/architecture/type-assertions\.ts$' || true)
+
+if [ -n "$STAGED_ARCH_TYPES" ]; then
+  echo "🔍 检测到架构骨架代码变更，运行 typecheck:arch (W-2 / phantom brand 回归)…"
+  if ! npm --prefix src run typecheck:arch --silent; then
+    echo ""
+    echo "❌ 阻止 commit: 架构类型级规则（W-2 phantom brand / @ts-expect-error fixture）失败。"
+    echo ""
+    echo "💡 本地复现:"
+    echo "     cd src && npm run typecheck:arch"
+    echo ""
+    echo "   修复 tsc 报告的错误，或使用 \`git commit --no-verify\` 紧急绕过（需在 PR 中说明）。"
+    exit 1
+  fi
+  echo "✅ typecheck:arch 通过"
+fi
+
 exit 0

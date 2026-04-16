@@ -3,11 +3,13 @@
 // 覆盖：
 //   - lazy load：首次调用才走 loader，之后命中 cache
 //   - 并发合并：同 id 并发 load 只触发一次 loader
+//   - 粘性错误修复 (H1)：loader 抛错不残留在 inFlight，下次可重试成功
 //   - get() 未 load 时返回 null
-//   - listUnlocked 按 UnlockRule 过滤
-//   - WordpackBinding 生命周期 (bind / current / unbind / isBound / double-bind 报错)
-//   - W-2 类型隔离：Wordpack 不能赋值给 RelicData
-//   - W-2 伪造防御：外部代码不能跳过 createWordpack 构造带 brand 的对象
+//   - listCachedUnlocked 按 UnlockRule 过滤
+//   - clear-race 保护 (M3)：clear() 期间的 in-flight 结果不污染后续 cache
+//   - WordpackBinding 生命周期 (bind / current / unbind / isBound / double-bind 抛错)
+//   - W-2 runtime 行为（shape / phantom brand 不在 runtime）
+//   - H4 defensive copy：init 数组后续修改不影响 Wordpack 内部状态
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RelicData } from '../../../src/data/relics'
@@ -15,14 +17,15 @@ import {
   createWordpack,
   WordpackBinding,
   WordpackRegistry,
-  type UnlockedKeysQuery,
+  type MetaUnlockPort,
+  type ModifierPlaceholder,
   type Wordpack,
   type WordpackDataLoader,
-  type WordpackRawData,
+  type WordpackInit,
 } from '../../../src/systems/typing/wordpack'
 
 // ---- Fixtures ----
-const raw = (id: string, overrides: Partial<WordpackRawData> = {}): WordpackRawData => ({
+const raw = (id: string, overrides: Partial<WordpackInit> = {}): WordpackInit => ({
   id,
   themeKey: `pack.${id}.theme`,
   descKey: `pack.${id}.desc`,
@@ -32,7 +35,7 @@ const raw = (id: string, overrides: Partial<WordpackRawData> = {}): WordpackRawD
   ...overrides,
 })
 
-const emptyMeta = (): UnlockedKeysQuery => ({
+const emptyMeta = (): MetaUnlockPort => ({
   hasAchievement: () => false,
   hasMetaProgress: () => false,
   hasChallenge: () => false,
@@ -65,7 +68,7 @@ describe('WordpackRegistry', () => {
     })
 
     it('同 id 并发 load 只触发一次 loader', async () => {
-      let resolve: ((v: WordpackRawData | null) => void) | undefined
+      let resolve: ((v: WordpackInit | null) => void) | undefined
       const loader = vi.fn<WordpackDataLoader>().mockImplementation(
         () =>
           new Promise((r) => {
@@ -86,6 +89,33 @@ describe('WordpackRegistry', () => {
     })
   })
 
+  describe('H1 sticky error regression', () => {
+    it('loader 首次抛错不残留在 inFlight，第二次 load 同 id 可重试成功', async () => {
+      let attempt = 0
+      const loader: WordpackDataLoader = async (id) => {
+        attempt++
+        if (attempt === 1) throw new Error('transient network failure')
+        return raw(id)
+      }
+      const reg = new WordpackRegistry(loader)
+
+      await expect(reg.load('flaky')).rejects.toThrow('transient network failure')
+      // 第二次调用应该能 retry，拿到成功结果
+      const second = await reg.load('flaky')
+      expect(second?.id).toBe('flaky')
+      expect(attempt).toBe(2)
+    })
+
+    it('loader rejected 之后 get() 仍然返回 null（不 cache 失败结果）', async () => {
+      const loader: WordpackDataLoader = async () => {
+        throw new Error('boom')
+      }
+      const reg = new WordpackRegistry(loader)
+      await expect(reg.load('x')).rejects.toThrow()
+      expect(reg.get('x')).toBeNull()
+    })
+  })
+
   describe('get', () => {
     it('未 load 时返回 null，不触发加载', () => {
       const loader = vi.fn<WordpackDataLoader>()
@@ -102,7 +132,7 @@ describe('WordpackRegistry', () => {
     })
   })
 
-  describe('listUnlocked', () => {
+  describe('listCachedUnlocked', () => {
     const setup = async (): Promise<WordpackRegistry> => {
       const loader: WordpackDataLoader = async (id) => {
         switch (id) {
@@ -133,18 +163,24 @@ describe('WordpackRegistry', () => {
 
     it('default / 无条件的词包总是解锁', async () => {
       const reg = await setup()
-      const ids = reg.listUnlocked(emptyMeta()).map((p) => p.id).sort()
+      const ids = reg
+        .listCachedUnlocked(emptyMeta())
+        .map((p) => p.id)
+        .sort()
       expect(ids).toEqual(['default', 'none'])
     })
 
     it('按 achievement / meta-progress / challenge key 解锁', async () => {
       const reg = await setup()
-      const meta: UnlockedKeysQuery = {
+      const meta: MetaUnlockPort = {
         hasAchievement: (k) => k === 'first_win',
         hasMetaProgress: (k) => k === 'level_10',
         hasChallenge: (k) => k === 'ascension_5',
       }
-      const ids = reg.listUnlocked(meta).map((p) => p.id).sort()
+      const ids = reg
+        .listCachedUnlocked(meta)
+        .map((p) => p.id)
+        .sort()
       expect(ids).toEqual(['ach', 'challenge', 'default', 'none', 'prog'])
     })
 
@@ -153,7 +189,16 @@ describe('WordpackRegistry', () => {
         raw(id, { unlockCondition: { kind: 'achievement' } })
       const reg = new WordpackRegistry(loader)
       await reg.load('broken')
-      expect(reg.listUnlocked(emptyMeta())).toHaveLength(0)
+      expect(reg.listCachedUnlocked(emptyMeta())).toHaveLength(0)
+    })
+
+    it('未预加载的词包即使解锁也不出现在结果里（契约 per JSDoc）', async () => {
+      const loader: WordpackDataLoader = async (id) => raw(id)
+      const reg = new WordpackRegistry(loader)
+      await reg.load('loaded') // 只加载一个
+      // 没有预加载 'other'，即使它默认解锁
+      const ids = reg.listCachedUnlocked(emptyMeta()).map((p) => p.id)
+      expect(ids).toEqual(['loaded'])
     })
   })
 
@@ -165,6 +210,33 @@ describe('WordpackRegistry', () => {
       expect(reg.get('a')).not.toBeNull()
       reg.clear()
       expect(reg.get('a')).toBeNull()
+    })
+
+    it('M3 regression: clear() 期间的 in-flight load 结果不写回 cache', async () => {
+      let resolve: ((v: WordpackInit | null) => void) | undefined
+      const loader: WordpackDataLoader = () =>
+        new Promise((r) => {
+          resolve = r
+        })
+      const reg = new WordpackRegistry(loader)
+
+      const promise = reg.load('ghost')
+      reg.clear() // 在 in-flight 期间清空
+      resolve!(raw('ghost'))
+      const result = await promise
+
+      // 生成号保护：load 返回 null（因为结果被丢弃），cache 保持空
+      expect(result).toBeNull()
+      expect(reg.get('ghost')).toBeNull()
+    })
+
+    it('clear() 后可以重新 load 同 id', async () => {
+      const loader: WordpackDataLoader = async (id) => raw(id)
+      const reg = new WordpackRegistry(loader)
+      await reg.load('a')
+      reg.clear()
+      const second = await reg.load('a')
+      expect(second?.id).toBe('a')
     })
   })
 })
@@ -207,39 +279,18 @@ describe('WordpackBinding', () => {
   })
 })
 
-// ---- W-2 类型隔离测试 ----
-// 注意：@ts-expect-error 指令由 tsc / eslint 在编译期校验；vitest 默认用 esbuild
-// 编译 TS，会剥离这些指令。本测试的运行时部分只做 no-op（验证 createWordpack 返回
-// 正确的 shape），真正的 W-2 合规校验由 `tsc --noEmit` 在 CI 环节兜底。
-// 此处保留 @ts-expect-error 作为**未来 tsc 门禁的 fixture 断言**。
-describe('W-2 type isolation', () => {
+// ---- W-2 运行时行为 ----
+describe('W-2 type isolation (runtime shape)', () => {
   it('Wordpack 不能赋值给 RelicData（phantom brand 在编译期阻止）', () => {
     const pack: Wordpack = createWordpack(raw('nominal-test'))
-    // @ts-expect-error — W-2: Wordpack 的 WordpackBrand phantom 让结构类型系统拒绝此赋值
+    // @ts-expect-error — W-2: Wordpack 的 phantom brand 让结构类型系统拒绝此赋值
     const _asRelic: RelicData = pack
     void _asRelic
     expect(pack.id).toBe('nominal-test')
   })
 
-  it('外部字面量无法构造 Wordpack（缺少 unique symbol brand）', () => {
-    // @ts-expect-error — 外部代码无法拼出带 WordpackBrand phantom 的对象
-    const fake: Wordpack = {
-      id: 'fake',
-      themeKey: 'x',
-      descKey: 'y',
-      language: 'en',
-      difficulty: 1,
-      words: [],
-      getModifiers: () => [],
-    }
-    // 运行时：phantom brand 不是实际属性，所以 fake 和 createWordpack 产物在 shape 上
-    // 看起来一致。真正的守护在编译期（上面的 @ts-expect-error）。
-    expect(fake.id).toBe('fake')
-  })
-
-  it('createWordpack 返回的对象 shape 正确且不包含真实 brand 符号（phantom）', () => {
+  it('createWordpack 返回的对象必备字段存在且无运行时 symbol 属性', () => {
     const pack = createWordpack(raw('shape'))
-    // 关键断言 1：必备字段存在
     expect(pack).toMatchObject({
       id: 'shape',
       themeKey: 'pack.shape.theme',
@@ -249,7 +300,40 @@ describe('W-2 type isolation', () => {
     })
     expect(typeof pack.getModifiers).toBe('function')
     expect(pack.getModifiers()).toEqual([])
-    // 关键断言 2：phantom brand 是类型-only，运行时没有任何 symbol 属性
+    // phantom brand 是类型-only，运行时没有任何 symbol 属性
     expect(Object.getOwnPropertySymbols(pack)).toHaveLength(0)
+  })
+})
+
+// ---- H4 defensive copy ----
+describe('H4 defensive copy (encapsulation)', () => {
+  it('init.modifiers 后续修改不影响 Wordpack 内部 modifiers', () => {
+    const modifiers: ModifierPlaceholder[] = [{ id: 'm1', kind: 'base' }]
+    const init: WordpackInit = { ...raw('copy-test'), modifiers }
+    const pack = createWordpack(init)
+
+    // 修改原始 init 数组
+    modifiers.push({ id: 'm2', kind: 'injected' })
+
+    // Wordpack 内部应该只有最初的 1 个 modifier
+    expect(pack.getModifiers()).toHaveLength(1)
+    expect(pack.getModifiers()[0]?.id).toBe('m1')
+  })
+
+  it('init.words 后续修改不影响 Wordpack 内部 words', () => {
+    const words = ['a', 'b']
+    const pack = createWordpack({ ...raw('w'), words })
+
+    // 修改原始 words 数组
+    words.push('c')
+
+    // Wordpack 内部应该只有最初的 2 个词
+    expect(pack.words).toHaveLength(2)
+    expect([...pack.words]).toEqual(['a', 'b'])
+  })
+
+  it('Wordpack 对象本身被 Object.freeze（runtime 不可变）', () => {
+    const pack = createWordpack(raw('frozen'))
+    expect(Object.isFrozen(pack)).toBe(true)
   })
 })
