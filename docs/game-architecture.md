@@ -767,7 +767,7 @@ export const narrative = new NarrativeRegistry()
 
 **定位:** 词包 = 一组词 + 元数据（主题、难度、语言、解锁条件、叙事绑定）。**词包是词包系统，不是遗物**（v1.0 遗漏的澄清）。
 
-**位置:** `renderer/systems/typing/wordpack/`（属于 systems/，遵守 M-1 不依赖 PixiJS）
+**位置:** `renderer/systems/typing/wordpack/`（属于 systems/，遵守 M-1 不依赖 PixiJS）— **✅ 骨架已于 Story 59.5 落地**：`types.ts` + `WordpackRegistry.ts` + `WordpackBinding.ts` + `index.ts`，类型通过 `unique symbol` phantom brand 强制 W-2 隔离（Wordpack 编译期不可赋值给 RelicData）。16 个单元测试覆盖 lazy load / 并发合并 / unlockCondition 过滤 / binding 生命周期 / W-2 shape 验证。
 
 **数据结构:**
 
