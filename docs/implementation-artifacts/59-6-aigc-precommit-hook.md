@@ -1,6 +1,6 @@
 # Story 59.6: AIGC 原始产物 pre-commit hook
 
-Status: review
+Status: done
 Epic: 59
 Architecture rule: **C-1** (`docs/game-architecture.md` v1.1 §AIGC Content Pipeline)
 
