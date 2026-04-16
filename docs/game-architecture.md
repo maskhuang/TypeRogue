@@ -334,6 +334,8 @@ class ActiveSkillSystem {
 
 **位置:** `renderer/systems/modifiers/`（独立于 `skills/`，是横向层）
 
+> **✅ 骨架已于 Story 59.4 落地在 `systems/modifiers/engine/` 子目录。** 与 Epic 11 legacy（`../ModifierTypes.ts` 等 trigger-driven pipeline）**并存**，通过命名前缀 `Engine*`（`EngineModifier` / `EngineModifierHost` / `ModifierEngine` 等）物理隔离。未来 Epic 11 → engine 层的迁移走独立 story。详见 `src/systems/modifiers/engine/README.md` 与 Story 59.4 文档。
+
 ```typescript
 // 可挂载到任何载体的修饰器
 interface Modifier {
@@ -1352,8 +1354,8 @@ export const dataManager = new DataManager()
 | **叙事模板 (N-2)** | flavor text 遵循 `docs/narrative-design.md` 7 套模板 | Review |
 | **词包加载 (W-1)** | 走 `WordpackRegistry.load()`，禁止直接 fetch | Review |
 | **词包隔离 (W-2)** | wordpack ≠ relic，禁止走 relic 槽位 | 类型系统 |
-| **Modifier schema (A-1)** | 所有 modifier 遵循 affix-designer 输出 schema | JSON schema 校验 |
-| **Modifier 编码 (A-2)** | 禁止硬编码 modifier 数值，必须走 affix-designer | Review |
+| **Modifier schema (A-1)** | 所有 modifier 遵循 affix-designer 输出 schema | JSON schema 校验 ✅ 骨架已于 Story 59.4 落地（engine/ 子目录） |
+| **Modifier 编码 (A-2)** | 禁止硬编码 modifier 数值，必须走 affix-designer | Review + README 约定（engine/README.md）|
 | **AIGC curation (C-1)** | `aigc-art/runs/` 原始产物禁止直接进 `assets/`（双重守护：hook 主动拦 + gitignore 被动屏蔽） | **`.githooks/pre-commit`** ✅ 已于 Story 59.6 落地 |
 | **AIGC 运行时隔离 (C-4)** | `src/` + `main/` + `shared/` + tests 禁止 import `aigc-art/` 路径（含 static / dynamic / require 三路） | **ESLint `no-restricted-imports` + `no-restricted-syntax`** ✅ 已于 Story 59.2 落地 |
 

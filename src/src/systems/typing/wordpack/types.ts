@@ -10,9 +10,13 @@
 // 刻意保留以区分领域，未来 story 会讨论是否合并/迁移。
 
 // ===== ModifierHost 占位 =====
-// 59.4（modifiers/ 横向层骨架）尚未落地，本处提供最小 interface 占位。
-// 59.4 完成后应删除这段占位并从 `../../modifiers/types` import Modifier + ModifierHost。
-// TODO(59.4): 删除占位，import 真实类型
+// 本处提供最小 interface 占位用于 59.5 落地时的类型契约。
+// TODO(迁移): Story 59.4 已落地 `src/systems/modifiers/engine/` 目录，提供
+//   `EngineModifier` / `EngineModifierHost` / `EngineModifierKind` 等真实类型。
+//   下次任何 touch 本文件的 story 应把 `ModifierPlaceholder` 替换为 `EngineModifier`，
+//   把 `ModifierHost` 替换为 `EngineModifierHost`，并调整 `Wordpack.getModifiers()` 为
+//   `getEngineModifiers(scope?)`。此替换会波及 WordpackRegistry / tests / type-assertions，
+//   因此刻意不在 59.4 范围内一并改，避免 commit 耦合。
 export interface ModifierPlaceholder {
   readonly id: string
   readonly kind: string

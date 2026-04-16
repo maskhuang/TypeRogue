@@ -9,6 +9,7 @@
   },
   "include": [
     "src/systems/typing/wordpack/**/*.ts",
+    "src/systems/modifiers/engine/**/*.ts",
     "tests/unit/architecture/type-assertions.ts"
   ]
 }

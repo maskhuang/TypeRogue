@@ -21,6 +21,13 @@ import {
   type Wordpack,
   type WordpackInit,
 } from '../../../src/systems/typing/wordpack'
+import {
+  ModifierEngine,
+  type EngineModifier,
+  type EngineModifierContext,
+  type EngineModifierHost,
+  type EngineModifierResult,
+} from '../../../src/systems/modifiers/engine'
 
 // ===== Stub RelicData =====
 // 我们不从真实 src/data/relics.ts import RelicData，因为那会触发 tsc 跟踪
@@ -148,4 +155,72 @@ interface RelicDataStub {
   })
   // @ts-expect-error — id 是 readonly，不可赋值
   pack.id = 'mutated'
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//   Story 59.4 — EngineModifier 类型断言
+// ═══════════════════════════════════════════════════════════════════
+
+// ===== AC9.1: EngineModifierKind 字面量约束 =====
+{
+  const ok: EngineModifier = {
+    id: 'ok',
+    source: 'skill',
+    kind: 'additive',
+    scope: 'score',
+    apply(ctx: EngineModifierContext): EngineModifierResult {
+      return { value: ctx.baseValue, applied: true }
+    },
+  }
+  void ok
+
+  const _bad: EngineModifier = {
+    id: 'bad',
+    source: 'skill',
+    // @ts-expect-error — kind 必须是 EngineModifierKind 字面量之一，'amazing' 不在列表
+    kind: 'amazing',
+    scope: 'score',
+    apply: (ctx) => ({ value: ctx.baseValue, applied: true }),
+  }
+  void _bad
+}
+
+// ===== AC9.2: EngineModifier.apply 必须返回 EngineModifierResult（不能返回 number） =====
+{
+  const _bad: EngineModifier = {
+    id: 'bad-return',
+    source: 'relic',
+    kind: 'multiplicative',
+    scope: 'score',
+    // @ts-expect-error — apply 返回类型必须是 EngineModifierResult 对象，不是裸 number
+    apply: (ctx) => ctx.baseValue * 2,
+  }
+  void _bad
+}
+
+// ===== AC9.3: EngineModifierHost 方法名是 getEngineModifiers（不是 getModifiers） =====
+{
+  const host: EngineModifierHost = {
+    getEngineModifiers: () => [],
+  }
+  void host
+
+  const _wrongMethodName: EngineModifierHost = {
+    // @ts-expect-error — 必须是 getEngineModifiers 而非 getModifiers（避免与 Epic 11 / 59.5 占位冲突）
+    getModifiers: () => [],
+  }
+  void _wrongMethodName
+}
+
+// ===== AC9.4: ModifierEngine.resolve 的类型契约 =====
+{
+  const engine = new ModifierEngine()
+  const result: number = engine.resolve(10, [], 'score')
+  void result
+
+  // @ts-expect-error — baseValue 必须是 number，不能传 string
+  engine.resolve('10', [], 'score')
+
+  // @ts-expect-error — modifiers 必须是 EngineModifier[]，不能传 any[]
+  engine.resolve(10, [{ arbitrary: 'object' }], 'score')
 }
