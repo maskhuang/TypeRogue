@@ -205,21 +205,21 @@ data ← core ← systems ← scenes / ui
 
 **规则 M-1:** `renderer/core/` 和 `renderer/systems/` 中的任何代码 **禁止** import `pixi.js` 或任何 PixiJS 子模块（`@pixi/*`）。
 
-**强制方式:** ESLint 规则（新增）
+**强制方式:** ESLint 规则（✅ 已于 Story 59.1 落地，见 `src/eslint.config.js`）
 
 ```js
-// .eslintrc - 待在 57-x 任务中添加
+// src/eslint.config.js（flat config，落地实现）
+// 仓库实际路径为 src/core/**、src/systems/**（对应架构图中的 renderer/core、renderer/systems）
 {
-  "overrides": [{
-    "files": ["src/renderer/core/**/*.ts", "src/renderer/systems/**/*.ts"],
-    "rules": {
-      "no-restricted-imports": ["error", {
-        "patterns": [
-          { "group": ["pixi.js", "@pixi/*"], "message": "core/ 和 systems/ 不得依赖 PixiJS — 为 Godot 移植保留隔离（架构规则 M-1）" }
-        ]
-      }]
-    }
-  }]
+  files: ['src/core/**/*.ts', 'src/systems/**/*.ts'],
+  rules: {
+    'no-restricted-imports': ['error', {
+      patterns: [{
+        group: ['pixi.js', '@pixi/*'],
+        message: '架构规则 M-1: core/ 和 systems/ 不得依赖 PixiJS — 为 Godot 移植保留隔离（见 docs/game-architecture.md §Migration Target）',
+      }],
+    }],
+  },
 }
 ```
 
@@ -860,7 +860,7 @@ assets/sprites/ (纳入游戏)
 - **规则 C-1:** AIGC 原始输出 **禁止** 直接提交到 `assets/`。必须经过人工筛选、后处理、命名规范化后才能入库。
 - **规则 C-2:** `aigc-art/.env` 不入库（已在 `.gitignore`），所有密钥走 dotenv。
 - **规则 C-3:** `prompts/*.yaml` 必须显式引用 `docs/art-style-guide.md` 的相应章节，保证风格一致性。
-- **规则 C-4:** 运行时代码（`src/`）**禁止** import 或引用 `aigc-art/` 下的任何路径。
+- **规则 C-4:** 运行时代码（`src/`、`main/`、`shared/` 及其测试）**禁止** import 或引用 `aigc-art/` 下的任何路径（static / dynamic / require 三路全拦）。**✅ 已于 Story 59.2 落地**，实现见 `src/eslint.config.js` 的 `no-restricted-imports` + `no-restricted-syntax` 组合规则。
 
 **对齐最近工作:**
 - LoRA 链路修复 + 节流适配低余额账户 (commit `0642744`)
@@ -1346,7 +1346,7 @@ export const dataManager = new DataManager()
 | 资源加载 | 通过 DataManager | 禁止直接 fetch |
 | 状态修改 | 通过 StateCoordinator | 禁止跨层直接修改 |
 | UI 更新 | 事件驱动 | 禁止轮询检查 |
-| **核心隔离 (M-1)** | `core/` + `systems/` 禁止 import `pixi.js`/`@pixi/*` | **ESLint `no-restricted-imports`** |
+| **核心隔离 (M-1)** | `core/` + `systems/` 禁止 import `pixi.js`/`@pixi/*`（含 static / dynamic / require 三路，覆盖生产 + 测试代码） | **ESLint `no-restricted-imports` + `no-restricted-syntax`** ✅ 已于 Story 59.1 落地 |
 | **视觉反馈 (M-2)** | systems 通过 eventBus 通知，scenes/ui 消费渲染 | Code review |
 | **玩家文本 (N-1)** | 所有玩家可见文本走 `narrative.get()` | Lint 规则 + review |
 | **叙事模板 (N-2)** | flavor text 遵循 `docs/narrative-design.md` 7 套模板 | Review |
@@ -1355,7 +1355,7 @@ export const dataManager = new DataManager()
 | **Modifier schema (A-1)** | 所有 modifier 遵循 affix-designer 输出 schema | JSON schema 校验 |
 | **Modifier 编码 (A-2)** | 禁止硬编码 modifier 数值，必须走 affix-designer | Review |
 | **AIGC curation (C-1)** | `aigc-art/runs/` 原始产物禁止直接进 `assets/` | Git pre-commit hook |
-| **AIGC 运行时隔离 (C-4)** | `src/` 禁止 import `aigc-art/` 路径 | ESLint path 规则 |
+| **AIGC 运行时隔离 (C-4)** | `src/` + `main/` + `shared/` + tests 禁止 import `aigc-art/` 路径（含 static / dynamic / require 三路） | **ESLint `no-restricted-imports` + `no-restricted-syntax`** ✅ 已于 Story 59.2 落地 |
 
 ---
 
