@@ -1,0 +1,55 @@
+#!/usr/bin/env sh
+# Pre-commit hook — Epic 59 architecture enforcement
+#
+# 承载的规则:
+#   C-1: aigc-art/runs/ 原始产物禁止 commit（见 docs/game-architecture.md §AIGC Content Pipeline）
+#   M-1: core/ + systems/ 禁 PixiJS（见 §Migration Target，规则落地于 src/eslint.config.js）
+#   C-4: runtime 禁 aigc-art/（见 §AIGC Content Pipeline，规则落地于 src/eslint.config.js）
+#
+# 由 Story 59.6 落地；Story 59.1 / 59.2 的 H2 follow-up（M-1/C-4 自动化屏障）在此闭环。
+#
+# 关键设计:
+#   - M-1/C-4 lint 走 lint-staged，保证 lint 读到的是**索引内容**而不是工作树，
+#     消除"staged 违反 + 工作树干净 → hook 误通过"这个经典 pre-commit 陷阱。
+#   - C-1 拦截是简单的 staged-path grep，不需要 stash。
+#   - 用 --no-renames 保证 rename 被还原为 D+A 对，避免 R filter 漏检。
+
+set -e
+
+# ==== C-1: 拦截 aigc-art/runs/ staged 文件 ====
+BLOCKED_C1=$(git diff --cached --name-only --no-renames --diff-filter=AM | grep -E '^aigc-art/runs/' | grep -v '^aigc-art/runs/\.gitkeep$' || true)
+if [ -n "$BLOCKED_C1" ]; then
+  echo "❌ 阻止 commit: 以下文件位于 aigc-art/runs/ 原始产物目录（架构规则 C-1）："
+  echo "$BLOCKED_C1" | sed 's/^/   - /'
+  echo ""
+  echo "处理方式："
+  echo "  1. 若是 AIGC 原始输出 → 不要入库，经过人工筛选后放到 assets/"
+  echo "  2. 若确实需要归档 → 见 docs/game-architecture.md §AIGC Content Pipeline 的 curation 流程"
+  echo "  3. 紧急绕过 → git commit --no-verify（不推荐，必须在 PR 中说明）"
+  exit 1
+fi
+
+# ==== M-1 / C-4: lint-staged 冒烟（只处理索引内容） ====
+# lint-staged 内部用 git stash 隔离工作树，确保 ESLint 读到的是 staged 版本。
+# 自身会只对匹配 glob 的 staged 文件调用 eslint，doc-only commit 直接跳过 eslint 调用。
+
+# 前置 sanity check: 如果 src/node_modules 还没装，软警告不阻塞，给用户明确指引
+if [ ! -x "src/node_modules/.bin/lint-staged" ]; then
+  echo "⚠️  src/node_modules/.bin/lint-staged 不存在，跳过 M-1/C-4 lint 冒烟。"
+  echo "    请在 src/ 下运行 \`npm install\` 以激活架构 lint 屏障（见 Story 59.6）。"
+  exit 0
+fi
+
+if ! npm --prefix src run lint:staged --silent; then
+  echo ""
+  echo "❌ 阻止 commit: ESLint 架构规则（M-1 或 C-4）失败。"
+  echo ""
+  echo "💡 本地复现:"
+  echo "     cd src && npm run lint:arch   # 全目录冒烟"
+  echo "     cd src && npm run lint        # 全量 lint"
+  echo ""
+  echo "   修复上方报告的错误，或使用 \`git commit --no-verify\` 紧急绕过（需在 PR 中说明）。"
+  exit 1
+fi
+
+exit 0

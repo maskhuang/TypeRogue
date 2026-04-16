@@ -38,3 +38,9 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# AIGC raw outputs — 架构规则 C-1：原始产物禁止入库
+# pre-commit hook (.githooks/pre-commit) 是主动拦截，此处是被动屏蔽兜底
+# 保留目录结构需通过 .gitkeep（被下面的 ! 取反放行）
+aigc-art/runs/*
+!aigc-art/runs/.gitkeep

@@ -1,0 +1,2 @@
+# 保留 aigc-art/runs/ 目录结构。
+# 架构规则 C-1：此目录下的原始产物禁止 commit，由 .githooks/pre-commit + .gitignore 双重守护。

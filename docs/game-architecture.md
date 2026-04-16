@@ -857,7 +857,7 @@ assets/sprites/ (纳入游戏)
 
 **硬约束:**
 
-- **规则 C-1:** AIGC 原始输出 **禁止** 直接提交到 `assets/`。必须经过人工筛选、后处理、命名规范化后才能入库。
+- **规则 C-1:** AIGC 原始输出 **禁止** 直接提交到 `assets/`。必须经过人工筛选、后处理、命名规范化后才能入库。**✅ 已于 Story 59.6 落地**，通过 `.githooks/pre-commit` 主动拦截 `aigc-art/runs/**` 的 staged 文件 + `.gitignore` 被动屏蔽双重守护；同时该 hook 还承载 M-1 / C-4 的 `lint-staged` 冒烟（闭环 59.1 H2 follow-up）。
 - **规则 C-2:** `aigc-art/.env` 不入库（已在 `.gitignore`），所有密钥走 dotenv。
 - **规则 C-3:** `prompts/*.yaml` 必须显式引用 `docs/art-style-guide.md` 的相应章节，保证风格一致性。
 - **规则 C-4:** 运行时代码（`src/`、`main/`、`shared/` 及其测试）**禁止** import 或引用 `aigc-art/` 下的任何路径（static / dynamic / require 三路全拦）。**✅ 已于 Story 59.2 落地**，实现见 `src/eslint.config.js` 的 `no-restricted-imports` + `no-restricted-syntax` 组合规则。
@@ -1354,7 +1354,7 @@ export const dataManager = new DataManager()
 | **词包隔离 (W-2)** | wordpack ≠ relic，禁止走 relic 槽位 | 类型系统 |
 | **Modifier schema (A-1)** | 所有 modifier 遵循 affix-designer 输出 schema | JSON schema 校验 |
 | **Modifier 编码 (A-2)** | 禁止硬编码 modifier 数值，必须走 affix-designer | Review |
-| **AIGC curation (C-1)** | `aigc-art/runs/` 原始产物禁止直接进 `assets/` | Git pre-commit hook |
+| **AIGC curation (C-1)** | `aigc-art/runs/` 原始产物禁止直接进 `assets/`（双重守护：hook 主动拦 + gitignore 被动屏蔽） | **`.githooks/pre-commit`** ✅ 已于 Story 59.6 落地 |
 | **AIGC 运行时隔离 (C-4)** | `src/` + `main/` + `shared/` + tests 禁止 import `aigc-art/` 路径（含 static / dynamic / require 三路） | **ESLint `no-restricted-imports` + `no-restricted-syntax`** ✅ 已于 Story 59.2 落地 |
 
 ---

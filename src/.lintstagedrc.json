@@ -1,0 +1,3 @@
+{
+  "{src,main,shared,tests}/**/*.{ts,tsx,mts,cts}": "eslint --no-warn-ignored"
+}
