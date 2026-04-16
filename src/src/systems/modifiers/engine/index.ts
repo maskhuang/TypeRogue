@@ -4,7 +4,7 @@
 // **刻意不从 parent ../index.ts 重导出**，避免 Epic 11 legacy 和 v1.1 engine 的 API 在
 // 同一 import 路径下混淆。详见 ./README.md。
 
-export { ModifierEngine } from './ModifierEngine'
+export { ModifierEngine, EVALUATION_ORDER } from './ModifierEngine'
 export type {
   EngineModifier,
   EngineModifierContext,
@@ -12,5 +12,6 @@ export type {
   EngineModifierKind,
   EngineModifierResult,
   EngineModifierScope,
+  EngineModifierScopeHint,
   EngineModifierSource,
 } from './types'

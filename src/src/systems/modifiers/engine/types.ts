@@ -23,16 +23,16 @@ export type EngineModifierKind = 'additive' | 'multiplicative' | 'conditional' |
 export type EngineModifierSource = 'skill' | 'relic' | 'wordpack' | 'affix'
 
 // ===== 作用域 =====
-// Extensible string union：常见值是字面量提示，实际类型是 string（避免 TS 反模式）。
-// 未来 Epic 34/35/45 可以随意新增 scope 而不用改类型。
-export type EngineModifierScope =
-  | 'score'
-  | 'timer'
-  | 'word'
-  | 'skill-cd'
-  | 'damage'
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-  | (string & {})
+// 与 Story 59.5 的 `Wordpack.language: string` 决策对齐：字段类型直接用 string，
+// 不玩 `'a' | 'b' | (string & {})` 这类"保留字面量自动补全"的 TS 编译器巧技——
+// 那种写法需要未来读者理解 literal union 塌缩机制才能 debug。
+//
+// 常见值抽成独立的 `EngineModifierScopeHint` 类型：IDE 能看到提示，但实际字段类型
+// 保持 `string`，新增 scope 不用改类型。
+export type EngineModifierScope = string
+
+/** IDE 提示用的常见 scope 字面量。新增 scope 先加到这里再在数据文件中使用。 */
+export type EngineModifierScopeHint = 'score' | 'timer' | 'word' | 'skill-cd' | 'damage'
 
 // ===== 求值上下文 =====
 // 本 story 只包含最小字段 { scope, baseValue }；未来 Epic 34/35/45 扩展时
@@ -44,17 +44,23 @@ export interface EngineModifierContext {
 
 // ===== 求值结果 =====
 // applied=false 时 value 被丢弃（conditional modifier 跳过语义）。
-// debug 字段只在开发模式填充，用于审计求值链路。
+// **value 必须是 finite number**：engine 会在运行时拒绝 NaN / ±Infinity / 非 number
+// 类型，dev 模式下抛错，prod 模式下 warn + 保留上一步 value（见 ModifierEngine.resolve）。
 export interface EngineModifierResult {
   readonly value: number
   readonly applied: boolean
-  readonly debug?: string
 }
 
 // ===== Modifier =====
 // Phantom brand 不是必须的（EngineModifier 不是与其它系统高度混淆的类型，且
 // Epic 11 的 Modifier 与其形状差异已经足够大）。若未来需要 nominal 严格分离，
 // 可以仿照 Wordpack 的 WordpackBrand 模式追加。
+//
+// **apply() 契约：必须是纯函数**
+//   - 对相同的 EngineModifierContext，必须返回相同的 EngineModifierResult
+//   - 禁止 closure state mutation / 全局状态读写 / 随机数 / 时间相关计算
+//   - 违反者会让 ModifierEngine 的求值不可预测，给重放调试和存档带来灾难
+//   - 运行时无法强制检测此契约，靠 code review + 测试兜底
 export interface EngineModifier {
   readonly id: string
   readonly source: EngineModifierSource

@@ -1,6 +1,6 @@
 # Story 59.4: modifiers/engine/ 横向层骨架（共存 Epic 11 legacy）
 
-Status: review
+Status: done
 Epic: 59
 Architecture rules: **A-1, A-2** (`docs/game-architecture.md` v1.1 §Affix / Modifier Layer)
 
@@ -202,6 +202,41 @@ tests/unit/architecture/eslint-rules.test.ts                  → 15 / 15  ✅ (
 ### Change Log
 
 - 2026-04-15 — Story 59.4 重写后实现完成：engine/ 子目录骨架 + 18 个单元测试 + 4 条新 type-level fixture + tsconfig.typetest.json 覆盖扩展 + 与 Epic 11 legacy 物理隔离（命名前缀）。59-5 占位的迁移 TODO 补注"已就绪"。
+- 2026-04-15 — Story 59.4 code-review 后修复完成（9 / 11 条处理，2 条转 follow-up）：F1 (NaN/Infinity/非 number finite guard + dev throw / prod warn) + F2 (id dedup 只在同 scope 内生效契约文档化 + 测试) + F3 (priority 测试改为 order-capturing fixture，原测试对 additive commutativity 无回归保护) + F4 (EngineModifierScope 改为 string + 独立 EngineModifierScopeHint 类型，与 59.5 对齐) + M1 (随 F1 一并修复：`result.value` 运行时类型校验) + M2 (纯性契约文档 + 回归 fixture) + M3 (删除 `debug?: string` 字段，YAGNI) + M4 (README 诚实修辞：明确当前靠 review 兜底无 CI 强制) + M5 (tie-break 稳定排序契约文档 + 测试) + L1 (EVALUATION_ORDER export + 直接断言)。测试从 18 增至 28 个。L2 (apply memoization) 转 follow-up。
+
+### Review Follow-ups (AI)
+
+- [x] **[AI-Review][HIGH] F1 + M1** — `resolve` 对 NaN / Infinity / 非 number 毫无防御。已修复：`resolve` 入口检查 baseValue 是否 finite；每步 applied 结果过 `Number.isFinite + typeof === 'number'` guard，dev 模式 throw，prod 模式 `console.warn` + 保留上一步 value。新测试 6 条覆盖 NaN modifier / Infinity modifier / 0×Infinity 中间态 / TS cast 绕过的非 number / applied=false 的非 finite 不触发 warn / baseValue 非 finite 直接 throw。[ModifierEngine.ts:82-135]
+- [x] **[AI-Review][HIGH] F2** — `collectActive` 的 id 去重"override"语义对 **跨 scope** 同 id 不生效。已修复：**文档化当前行为**（scope 过滤先于 dedup），在 ModifierEngine 顶部契约注释 "id 去重" 段加⚠️ 说明；新测试 "Meta host 用错误 scope 声明时 override 失效" 把静默行为钉死。[ModifierEngine.ts:49-54]
+- [x] **[AI-Review][HIGH] F3** — 原 priority 测试用 additive fixture，加法可交换导致测试 green 但零回归保护。已修复：改用 **order-capturing probe fixture**（modifier 把自身 id push 到数组），直接断言执行顺序。两条新测试覆盖"priority 升序"+"undefined priority 默认 100"。
+- [x] **[AI-Review][HIGH] F4** — `EngineModifierScope` 用 `(string & {})` 巧技保留字面量自动补全，与 Story 59.5 code-review 对 `language: string` 的决策不一致，且带一条引用不存在规则的 `eslint-disable` 垃圾注释。已修复：`EngineModifierScope = string` + 独立 `EngineModifierScopeHint = 'score' | 'timer' | ...` 类型供 IDE 提示，删除 eslint-disable。与 59.5 的 `Wordpack.language` + `LanguageHint` 完全对齐。
+- [x] **[AI-Review][MEDIUM] M2** — `apply()` 纯函数契约缺乏强度。已修复：ModifierEngine 顶部注释新增"纯性契约"段（禁止 closure state / 随机数 / 时间 / 全局状态）；EngineModifier interface 上方 JSDoc 同步；新测试 "同一 modifier 对相同 ctx 多次调用返回相同结果" 作为 fixture signal。运行时无法强制检测这一点，靠 code review 兜底。
+- [x] **[AI-Review][MEDIUM] M3** — `EngineModifierResult.debug?: string` 字段无消费者（engine 完全忽略）。已修复：**删除字段**，YAGNI。未来需要求值 trace 时开一个 `resolveWithTrace` 变体，而不是污染所有 modifier 的返回类型。
+- [x] **[AI-Review][MEDIUM] M4** — README A-2 宣称"禁止硬编码数值"但无 CI 兜底。已修复：README 改为"当前靠 code review + README 约定兜底，**暂时没有** ESLint/CI 强制；未来 follow-up 可加 AST-based 规则识别 EngineModifier 字面量内的 hardcoded number"。
+- [x] **[AI-Review][MEDIUM] M5** — 稳定排序（相等 priority 按输入顺序）未写进契约。已修复：顶部契约 "priority 语义" 段新增 "tie-breaking: 相等 priority 按输入顺序（Array.sort 自 ES2019 起是 stable sort）"；新测试 "M5: 相等 priority 按输入顺序 tie-break"。
+- [x] **[AI-Review][LOW] L1** — `EVALUATION_ORDER` 常量不 export，测试只能观察行为推断。已修复：`export const EVALUATION_ORDER` + 从 `engine/index.ts` 二次导出；新测试 "EVALUATION_ORDER 被直接 export 且值固定" 作为直接断言，"EVALUATION_ORDER 的 runtime 执行顺序与导出常量一致" 做行为×常量双重保护。
+- [ ] **[AI-Review][LOW] L2** — 无 `.apply()` 结果 memoization。**不修复**：骨架阶段不需要优化；具体 affix 实现（Epic 34/35）才需要考虑单帧内的重复求值性能。
+- [x] **附加发现** — 修复 F1 时遇到一个 scoped tsc 误报："@ts-expect-error" on `import.meta.env?.DEV` 被 `tsc --noEmit -p tsconfig.typetest.json` 标为 unused，因为主 tsconfig 的 `"types": ["vite/client"]` 实际上已经为 import.meta.env 提供了类型定义。删除 @ts-expect-error 即可。这是 H3 CI 基建的一个正面副作用——scoped typecheck 把"没必要的 @ts-expect-error"也纳入检查。
+
+### Senior Developer Review (AI)
+
+**Review Date:** 2026-04-15
+**Reviewer:** code-review workflow (Claude Opus 4.6)
+**Outcome:** Changes Requested → 已处理
+
+**Action Items (11 total):**
+- HIGH: 4（F1 / F2 / F3 / F4）— **全部已修复**
+- MEDIUM: 5（M1 / M2 / M3 / M4 / M5）— **全部已修复**
+- LOW: 2（L1 / L2）— L1 已修复；L2 转 future Epic 34/35 follow-up
+
+**Resolved in this review session:** 10 items
+**Declined follow-ups:** 1 item（L2，明确属于性能优化而非骨架范围）
+
+**Most critical fix:** F1 finite guard。单个坏 modifier 返回 NaN 会污染整条求值链并最终写入存档——对打字肉鸽这类"分数是核心 meta 进度"的游戏是灾难级 bug。dev throw + prod warn 的分裂策略既让开发时 bug 尖叫式暴露，又让玩家在 ship 版本下不会因为单个 affix 的 bug 看到 NaN 分数。6 条新测试覆盖 NaN / Infinity / 非 number cast / 0×Infinity / applied=false 不触发 warn / baseValue 入口校验。
+
+**Secondary valuable fix:** F3 揭示了测试质量问题——可交换 fixture 给测试"green 等于对"的假象。这个教训对未来所有 fixture 写作有用：**对 order-sensitive 性质用 order-capturing probe，不要用数值结果推断顺序**。
+
+**Cross-story consistency win:** F4 把 `EngineModifierScope` 改为 string + 独立 Hint 类型，与 Story 59.5 的 `Wordpack.language` + `LanguageHint` 完全一致。Epic 59 的类型风格现在统一了。
 
 ## Non-Goals
 

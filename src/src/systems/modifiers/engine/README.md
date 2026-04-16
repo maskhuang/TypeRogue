@@ -54,7 +54,7 @@ additive → multiplicative → conditional → transform
 ## 数值来源约定（规则 A-2）
 
 本目录是骨架，**不包含任何具体 `EngineModifier` 实现**。
-未来所有 `EngineModifier` 具体值的来源必须是 `scripts/affix-designer/` 工具的输出：
+未来所有 `EngineModifier` 具体值的来源**应该**是 `scripts/affix-designer/` 工具的输出：
 
 ```
 scripts/affix-designer/output/<timestamp>-design.json
@@ -62,7 +62,11 @@ scripts/affix-designer/output/<timestamp>-design.json
     → runtime 加载为 EngineModifier 列表
 ```
 
-**禁止在代码里硬编码 modifier 数值（A-2）。** 新增 affix 必须走 affix-designer 流程并由 code review 兜底。
+**当前兜底:** 纯 code review + 本 README 的约定。**暂时没有** ESLint 或 CI 规则机器强制这件事——识别"EngineModifier 字面量里的 hardcoded number"需要类型感知，超出当前 lint 基建的能力范围。
+
+**未来增强（follow-up）:** 写一个 AST-based 规则扫描 `EngineModifier` 对象字面量内的 `number` literal，禁止非引用常量。留给 Epic 34/35 的 affix 实现 story 顺手补上。
+
+新增 affix 在当前阶段仍然必须走 affix-designer 流程——这是软约定，review 时必查。
 
 ## Non-Goals（显式）
 

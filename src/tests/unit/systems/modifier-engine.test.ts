@@ -1,9 +1,10 @@
 // Story 59.4 — ModifierEngine 单元测试
 //
-// 覆盖 AC4 的全部六类用例 + 额外的契约断言。
+// 覆盖原始 AC4 + code-review F1/F2/F3/M2/L1 的修复保护。
 
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  EVALUATION_ORDER,
   ModifierEngine,
   type EngineModifier,
   type EngineModifierContext,
@@ -76,6 +77,7 @@ const transform = (
   },
 })
 
+/** Host 工厂，支持指定 scope 覆盖（用于跨 scope 测试）。 */
 const host = (mods: EngineModifier[]): EngineModifierHost => ({
   getEngineModifiers: () => mods,
 })
@@ -120,30 +122,12 @@ describe('ModifierEngine.resolve', () => {
   })
 
   it('conditional 返回 applied=true 时值生效', () => {
-    // conditional 在第 3 步执行，此时 value = (10+5)*2 = 30
-    // conditional 加 bonus=100，applied=true → 130
     const mods = [
       additive('a', 5),
       multiplicative('m', 2),
       conditional('yes', (ctx) => ctx.baseValue === 30, 100),
     ]
     expect(engine.resolve(10, mods, 'score')).toBe(130)
-  })
-
-  it('同 kind 多 modifier 按 priority 升序应用', () => {
-    // 两个 additive，priority=1 先，priority=2 后
-    // base=0, +10 (p=1), +5 (p=2) → 15
-    const mods = [additive('a2', 5, 2), additive('a1', 10, 1)] // 乱序传入
-    expect(engine.resolve(0, mods, 'score')).toBe(15)
-  })
-
-  it('undefined priority 默认 100 且稳定排序', () => {
-    // 两个 additive，一个 priority=50，一个 undefined（默认 100）
-    // priority=50 应该先执行
-    const mods = [additive('no-prio', 3), additive('p50', 7, 50)]
-    const result = engine.resolve(0, mods, 'score')
-    // 两个都 applied，结果是 0+7+3 = 10（顺序无关，因为 additive 之间可交换）
-    expect(result).toBe(10)
   })
 
   it('每个 modifier 的 ctx.baseValue 是前面步骤的结果，不是原始 baseValue', () => {
@@ -179,6 +163,149 @@ describe('ModifierEngine.resolve', () => {
   })
 })
 
+// ---- F3 regression: priority 测试必须用 order-capturing fixture，不能用可交换的 additive ----
+describe('priority ordering (F3 regression)', () => {
+  const engine = new ModifierEngine()
+
+  it('同 kind 多 modifier 按 priority 升序应用（order-capturing fixture）', () => {
+    const order: string[] = []
+    const probe = (id: string, priority: number): EngineModifier => ({
+      id,
+      source: 'skill',
+      kind: 'additive',
+      scope: 'score',
+      priority,
+      apply(ctx) {
+        order.push(id)
+        return { value: ctx.baseValue, applied: true }
+      },
+    })
+    // 乱序传入：priority=5 的先执行，priority=10 的次之
+    engine.resolve(0, [probe('p10', 10), probe('p5', 5)], 'score')
+    expect(order).toEqual(['p5', 'p10'])
+  })
+
+  it('undefined priority 默认 100，显式 priority=50 先于它', () => {
+    const order: string[] = []
+    const probe = (id: string, priority?: number): EngineModifier => ({
+      id,
+      source: 'skill',
+      kind: 'additive',
+      scope: 'score',
+      priority,
+      apply(ctx) {
+        order.push(id)
+        return { value: ctx.baseValue, applied: true }
+      },
+    })
+    engine.resolve(0, [probe('no-prio'), probe('p50', 50)], 'score')
+    expect(order).toEqual(['p50', 'no-prio'])
+  })
+
+  it('M5: 相等 priority 按输入顺序 (stable sort) tie-break', () => {
+    const order: string[] = []
+    const probe = (id: string): EngineModifier => ({
+      id,
+      source: 'skill',
+      kind: 'additive',
+      scope: 'score',
+      priority: 100,
+      apply(ctx) {
+        order.push(id)
+        return { value: ctx.baseValue, applied: true }
+      },
+    })
+    engine.resolve(0, [probe('first'), probe('second'), probe('third')], 'score')
+    expect(order).toEqual(['first', 'second', 'third'])
+  })
+})
+
+// ---- F1 regression: NaN / Infinity / 非 number 守卫 ----
+describe('F1 regression: finite guard', () => {
+  const engine = new ModifierEngine()
+  let warnSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    // prod 模式下我们期望 warn+continue；vi.stubEnv 控制 import.meta.env.DEV
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.stubEnv('DEV', '')
+  })
+  afterEach(() => {
+    warnSpy.mockRestore()
+    vi.unstubAllEnvs()
+  })
+
+  it('baseValue 非 finite 直接 throw', () => {
+    expect(() => engine.resolve(NaN, [], 'score')).toThrow(/must be finite/)
+    expect(() => engine.resolve(Infinity, [], 'score')).toThrow(/must be finite/)
+    expect(() => engine.resolve(-Infinity, [], 'score')).toThrow(/must be finite/)
+  })
+
+  it('modifier 返回 NaN 时 prod 模式 warn + 保留上一步 value', () => {
+    const nanMod: EngineModifier = {
+      id: 'nan-mod',
+      source: 'skill',
+      kind: 'additive',
+      scope: 'score',
+      apply: () => ({ value: NaN, applied: true }),
+    }
+    const mods = [additive('good', 5), nanMod, additive('after', 10)]
+    // base=10, +5 → 15, NaN skipped → 15, +10 → 25
+    expect(engine.resolve(10, mods, 'score')).toBe(25)
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('nan-mod'))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('non-finite'))
+  })
+
+  it('modifier 返回 Infinity 时被丢弃', () => {
+    const infMod: EngineModifier = {
+      id: 'inf-mod',
+      source: 'relic',
+      kind: 'multiplicative',
+      scope: 'score',
+      apply: () => ({ value: Infinity, applied: true }),
+    }
+    // base=10, +5 → 15, Infinity skipped → 15
+    expect(engine.resolve(10, [additive('a', 5), infMod], 'score')).toBe(15)
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('modifier 返回 0 × Infinity = NaN 的中间态被丢弃', () => {
+    const badMul: EngineModifier = {
+      id: 'bad-mul',
+      source: 'affix',
+      kind: 'multiplicative',
+      scope: 'score',
+      apply: (ctx) => ({ value: ctx.baseValue * Infinity, applied: true }),
+    }
+    // base=0, *Inf = NaN → skipped → 0
+    expect(engine.resolve(0, [badMul], 'score')).toBe(0)
+  })
+
+  it('modifier 返回非 number（TS cast 绕过）时被丢弃', () => {
+    const weirdMod: EngineModifier = {
+      id: 'weird',
+      source: 'skill',
+      kind: 'additive',
+      scope: 'score',
+      apply: () => ({ value: 'broken' as unknown as number, applied: true }),
+    }
+    expect(engine.resolve(10, [weirdMod], 'score')).toBe(10) // 保留 baseValue
+    expect(warnSpy).toHaveBeenCalled()
+  })
+
+  it('applied=false 的非 finite value 不触发 warn（被 applied 分支吞掉）', () => {
+    const skippedMod: EngineModifier = {
+      id: 'skipped-nan',
+      source: 'wordpack',
+      kind: 'conditional',
+      scope: 'score',
+      apply: () => ({ value: NaN, applied: false }),
+    }
+    expect(engine.resolve(10, [skippedMod], 'score')).toBe(10)
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+})
+
 describe('ModifierEngine.collectActive', () => {
   const engine = new ModifierEngine()
 
@@ -197,7 +324,6 @@ describe('ModifierEngine.collectActive', () => {
   })
 
   it('host 返回未过滤的 modifier 时 engine 兜底过滤 scope', () => {
-    // host 无视 scope 参数，返回全部自身 modifier
     const lazyHost: EngineModifierHost = {
       getEngineModifiers: () => [
         additive('score-mod', 1),
@@ -213,17 +339,35 @@ describe('ModifierEngine.collectActive', () => {
     const runHost = host([additive('shared', 1)])
     const mods = engine.collectActive([metaHost, runHost], 'score')
     expect(mods).toHaveLength(1)
-    // 应该拿到 metaHost 版本（delta=100）
     const result = engine.resolve(0, mods, 'score')
     expect(result).toBe(100)
+  })
+
+  // ---- F2 regression: dedup 只在同 scope 内生效 ----
+  it('F2: Meta host 用错误 scope 声明时 override 失效（文档化行为）', () => {
+    // metaHost 以为能 override，但用了 scope='timer'，被 scope 过滤丢弃
+    const metaHost = host([
+      { ...additive('shared', 999), scope: 'timer' }, // wrong scope
+    ])
+    const runHost = host([additive('shared', 1)]) // scope='score'
+    const mods = engine.collectActive([metaHost, runHost], 'score')
+    expect(mods).toHaveLength(1)
+    // Meta 的 scope='timer' 被 scope 过滤丢弃，run 的 shared 未被 dedup
+    // 结果是 run 的 shared（delta=1），override 静默失效
+    const result = engine.resolve(0, mods, 'score')
+    expect(result).toBe(1)
   })
 })
 
 describe('契约断言', () => {
   const engine = new ModifierEngine()
 
-  it('EVALUATION_ORDER 固定为 additive → multiplicative → conditional → transform', () => {
-    // 通过一个"每 kind 记录执行次序"的 fixture 断言
+  it('L1: EVALUATION_ORDER 被直接 export 且值固定', () => {
+    // 直接对导出常量断言，比观察行为更强
+    expect(EVALUATION_ORDER).toEqual(['additive', 'multiplicative', 'conditional', 'transform'])
+  })
+
+  it('EVALUATION_ORDER 的 runtime 执行顺序与导出常量一致', () => {
     const order: EngineModifierKind[] = []
     const mk = (kind: EngineModifierKind): EngineModifier => ({
       id: `${kind}-mod`,
@@ -235,20 +379,18 @@ describe('契约断言', () => {
         return { value: ctx.baseValue, applied: true }
       },
     })
-    // 传入刻意乱序
     engine.resolve(
       0,
       [mk('transform'), mk('conditional'), mk('multiplicative'), mk('additive')],
       'score',
     )
-    expect(order).toEqual(['additive', 'multiplicative', 'conditional', 'transform'])
+    expect(order).toEqual([...EVALUATION_ORDER])
   })
 
   it('resolve 对输入 modifiers 是纯函数（不修改原数组）', () => {
     const mods: EngineModifier[] = [multiplicative('m', 2), additive('a', 5)]
     const snapshot = mods.map((m) => m.id)
     engine.resolve(10, mods, 'score')
-    // 原数组顺序未被改动
     expect(mods.map((m) => m.id)).toEqual(snapshot)
   })
 
@@ -266,5 +408,16 @@ describe('契约断言', () => {
     }
     engine.resolve(0, [probe], 'timer')
     expect(observedScope).toBe('timer')
+  })
+
+  // ---- M2: 纯性契约的 fixture（非强制，只是发现违反时给 signal） ----
+  it('M2: 同一 modifier 对相同 ctx 多次调用应返回相同结果', () => {
+    // 纯 modifier：可以安全地多次调用
+    const pure = additive('pure', 7)
+    const ctx: EngineModifierContext = { scope: 'score', baseValue: 10 }
+    const r1 = pure.apply(ctx)
+    const r2 = pure.apply(ctx)
+    expect(r1).toEqual(r2)
+    expect(r1.value).toBe(17)
   })
 })
