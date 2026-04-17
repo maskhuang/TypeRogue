@@ -1,0 +1,168 @@
+# aigc-art/prompts/hit-fx.v1.yaml
+# 命中特效（Story 57.3 Task 6）
+#
+# ⚠️ 本 prompt 使用 "draft-only" 半自动模式：
+#    AI 生成每种特效的 1 张"峰值帧风格板"（48×48 最终尺寸的大图参考），
+#    由美术在 Aseprite 中手绘各自的完整动画（6/8/10 帧）。
+#
+# 为什么不全自动：
+#   1. Flux 无法生成时序一致的多帧动画（单次生成 = 单帧）
+#   2. 命中特效是"爆发 → 散开 → 消散"的节奏，需要美术控制每帧的能量曲线
+#   3. AI 生成峰值帧作为视觉目标足矣，前后帧按动画原理人工补
+#
+# AIGC 角色：提供"视觉峰值帧"风格锚（粒子分布 / 能量色 / 形态）
+# 人工角色：Aseprite 按动画原理补前后帧（ramp-in / peak / ramp-out）
+
+version: "hit-fx.v1"
+extends: _base.yaml
+last_updated: "2026-04-15"
+
+asset_id: hit-fx
+target_size: [48, 48]           # 单帧尺寸（也是最终 sprite 帧尺寸）
+aspect_ratio: "1:1"
+gen_size: [512, 512]
+pipeline_mode: "draft-only"     # 仅跑到 raw 阶段
+
+# ============================================================
+# Positive / Negative
+# ============================================================
+positive_override: |
+  a single frame of impact hit effect vfx,
+  centered burst shape on transparent background,
+  radial energy dispersion, particle splash,
+  {pose_hint},
+  no character, no weapon, no background scenery,
+  {shared_positive}
+
+negative_override: |
+  {shared_negative},
+  character, enemy, weapon, sword, arrow,
+  background, scenery, landscape, ground,
+  multiple effects, sequential frames, timeline,
+  smooth glow, bloom, lens flare, volumetric light,
+  photo realistic explosion, smoke cloud
+
+# ============================================================
+# 变体：3 种标准命中强度 + 3 种异文污染变体
+# 异文变体用于 Boss 层（残余异文激活时），视觉上传达"不对劲"感
+# ============================================================
+variations:
+  # --- 标准命中特效 ---
+  - suffix: hit_normal
+    frames: 6                   # 最终 spritesheet 的目标帧数（人工补）
+    pose_hint: |
+      small compact burst, warm white and pale yellow core, 6-8 short radial spikes,
+      subtle dust particles around edges, peak intensity frame
+  - suffix: hit_crit
+    frames: 8
+    pose_hint: |
+      large explosive burst, fiery orange and red core with white center,
+      12+ long radial spikes, violent particle scatter, impact cracks radiating outward,
+      peak intensity frame
+  - suffix: hit_skill
+    frames: 10
+    pose_hint: |
+      mystical skill aura burst, cyan and pale blue energy ring,
+      swirling magic particles, aetherial glow edges, elegant circular pattern,
+      peak intensity frame
+
+  # --- 异文污染变体（Boss / Anomaly encounters）---
+  # 视觉原则：标准特效的"被污染"版本，传达异常侵蚀感
+  - suffix: hit_corrupted
+    frames: 8
+    pose_hint: |
+      distorted impact burst with asymmetric irregular shape,
+      sickly green-amber core with dark edges,
+      particles dispersing in wrong directions against expected motion,
+      jagged broken pixel edges, glitch-like artifacts in burst pattern,
+      unsettling and unnatural energy dispersion, peak intensity frame
+  - suffix: hit_frozen
+    frames: 6
+    pose_hint: |
+      crystalline frost burst, pale blue-white core,
+      sharp angular ice shard fragments radiating outward,
+      frozen particle trails that stop mid-air,
+      cold breath vapor wisps, metallic frost on edges,
+      static and rigid compared to normal fluid burst, peak intensity frame
+  - suffix: hit_void
+    frames: 10
+    pose_hint: |
+      imploding dark burst, deep purple-black core absorbing light,
+      particles being pulled inward instead of exploding outward,
+      negative space where energy should be, hollow ring shape,
+      ink-like dark tendrils at edges, absence rather than presence,
+      deeply wrong and unsettling visual, peak intensity frame
+
+# ============================================================
+# 后处理
+# ============================================================
+postprocess:
+  palette_file: "references/palette/resurrect-32.png"
+  outline_enforce: false        # 特效禁止描边（Story 57.3 §5，描边会产生脏边）
+  bg_removal: "corner-floodfill"
+  alpha_threshold: 0.05
+  center_crop: true
+  downscale_method: "nearest"
+
+# ============================================================
+# 评测
+# ============================================================
+eval:
+  palette_strict: true
+  alpha_halo_max: 3             # 特效边缘允许少量 halo（draft 阶段；最终帧人工清理）
+  silhouette_sharpness_min: 0.20  # 特效剪影较散，阈值放宽
+  clip_similarity_min: 0        # 无金标参考（未来可补 CC0 fx 金标）
+  dimensions_exact: false
+
+# ============================================================
+# 手工动画工作流（Aseprite 内，基于 AI 峰值帧补完）
+# ============================================================
+manual_animation_steps:
+  - '挑选每种特效的最佳 draft 作为「峰值帧」参考，存入 art-source/57-3/fx/_references/'
+  - "创建 Aseprite 文件（例如 48×48，6/8/10 帧）："
+  - "  • hit_normal:    48×48 × 6 帧  → spritesheet 288×48"
+  - "  • hit_crit:      48×48 × 8 帧  → spritesheet 384×48"
+  - "  • hit_skill:     48×48 × 10 帧 → spritesheet 480×48"
+  - "  • hit_corrupted: 48×48 × 8 帧  → spritesheet 384×48"
+  - "  • hit_frozen:    48×48 × 6 帧  → spritesheet 288×48"
+  - "  • hit_void:      48×48 × 10 帧 → spritesheet 480×48"
+  - "动画曲线（人工补）："
+  - "  • 帧 1-2：能量起手（小光点聚拢，30-50% 最大半径）"
+  - "  • 峰值帧（crit=帧4, normal=帧3, skill=帧5-6）：复刻 AI draft 的整体分布"
+  - "  • 尾部：半径扩大 + 透明度递减 + 粒子外溅"
+  - "所有特效严格 12 fps（每帧 83ms，Tag > Frame Duration = 83）"
+  - "颜色限定："
+  - "  • hit_normal: 白 #ffffff + 完美击键 #fbff86 + 暖 shade #e6904e"
+  - "  • hit_crit:   暖 main #fb6b1d + 暖 shade #e6904e + 伤血 #ae2334 + 白 #ffffff"
+  - "  • hit_skill:     冷 main #30e1b9 + 冷 shade #0eaf9b + 天空 #8fd3ff + 白 #ffffff"
+  - "  • hit_corrupted: 病绿 #1ebc73 + 暗棕 #4c3e24 + 警告橙 #e6904e + 暗 #3a4466"
+  - "  • hit_frozen:    冰蓝 #8fd3ff + 白 #ffffff + 冷灰 #b0a7b8 + 深蓝 #3a4466"
+  - "  • hit_void:      深紫 #68386c + 墨黑 #1a1a2e + 暗红 #ae2334 + 微光 #905ea9"
+  - "透明背景（非黑非白），导出 PNG-8 indexed"
+  - "命令行导出："
+  - "  aseprite -b hit_normal.aseprite --sheet ../../godot/assets/sprites/fx/hit_normal.png \\"
+  - "    --sheet-type horizontal --data ../../godot/assets/sprites/fx/hit_normal.json"
+
+# ============================================================
+# 输出路径
+# ============================================================
+output:
+  runs_dir: "runs/{date}_{asset_id}/"
+  manual_target_dir: "../art-source/57-3/fx/"
+  godot_final_dir: "../godot/assets/sprites/fx/"
+
+# ============================================================
+# Polish checklist
+# ============================================================
+polish_checklist:
+  - "6 种特效视觉区分度明确:"
+  - "  标准: normal=小白黄 / crit=大暖红 / skill=冷青蓝"
+  - "  异文: corrupted=病绿不对称 / frozen=冰蓝锐角 / void=深紫内吸"
+  - "  异文变体必须让玩家'一眼看出不对劲'——形态扭曲优先于颜色差异"
+  - "每种特效动画节奏'起-峰-落'清晰，无中断帧"
+  - "峰值帧与 AI draft 主构图对齐（尺度 / 粒子分布一致）"
+  - "12 fps 时序：Aseprite 内预览确认每帧均为 83ms"
+  - "所有颜色来自 resurrect-32（Aseprite Palette > Presets 校验）"
+  - "无描边（透明混合区域严格非描边）"
+  - "Spritesheet 尺寸严格：normal 288×48 / crit 384×48 / skill 480×48"
+  - "透明背景，无黑底 / 白底残留"

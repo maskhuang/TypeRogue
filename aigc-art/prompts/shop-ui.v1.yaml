@@ -1,0 +1,192 @@
+# aigc-art/prompts/shop-ui.v1.yaml
+# 圣物市集 UI 资产（Shop Interface）
+#
+# 世界观：圣物市集 (Reliquary Bazaar) 是教堂内部的物资征用站。
+# 空椅时代无人管理，半官方半私人。木质货架、铅字标签、黄铜价牌、油灯。
+# 前任经营者留下了手写便条（✏️ 声部 4 的物理载体）。
+#
+# 现状：纯色块 UI (#2a2a3e bg, #4a4a5e border)，无物理质感。
+# 目标：让商店看起来像一个真实存在的收容设备征用柜台。
+#
+# 模式：draft-only（AI 生成纹理/风格板，人工裁切为 9-slice/sprite）
+
+version: "shop-ui.v1"
+extends: _base.yaml
+last_updated: "2026-04-16"
+
+asset_id: shop-ui
+target_size: [256, 256]
+gen_size: [512, 512]
+pipeline_mode: "draft-only"
+
+# ============================================================
+# Positive / Negative
+# ============================================================
+positive_override: |
+  pixel art game ui element, top-down flat view,
+  gothic industrial aesthetic, aged materials,
+  {pose_hint},
+  no character, no text, no numbers,
+  {shared_positive}
+
+negative_override: |
+  {shared_negative},
+  character, person, enemy,
+  modern, sci-fi, neon, plastic,
+  3d perspective, angled view,
+  bright cheerful colors
+
+# ============================================================
+# 变体
+# ============================================================
+variations:
+  # --- 商店背景：木质货架墙 ---
+  # 整个商店场景的背��，替代纯色 #2a2a3e
+  - suffix: shop_bg
+    pose_hint: |
+      interior view of a dimly lit storage room with wooden shelving,
+      heavy oak shelves on brick wall, brass bracket supports,
+      oil lamp warm glow from upper left corner,
+      dusty atmosphere, parchment scraps pinned to shelves,
+      dark ambient with warm pool of light, top-down flat view,
+      reliquary storage aesthetic, old and institutional
+
+  # --- 物品卡片背板：征用单据 ---
+  # 替代纯色矩形 item card，每张卡片看起来像一份征用表单
+  - suffix: item_card
+    pose_hint: |
+      single piece of aged parchment paper with leather corner tabs,
+      slightly curled edges, faint ruled lines,
+      small brass clip or pin at top edge,
+      coffee stain ring in one corner, subtle foxing marks,
+      institutional form document aesthetic, flat top-down view
+
+  # --- 物品卡片背板（已售出/灰态）---
+  - suffix: item_card_sold
+    pose_hint: |
+      same aged parchment as item card but with large red wax stamp mark,
+      stamp impression reading like an official seal,
+      parchment slightly more worn and faded,
+      institutional "processed" document aesthetic, flat top-down view
+
+  # --- 价格标签：黄铜价牌 ---
+  # 小型标签显示价格，替代纯文本价格
+  - suffix: price_tag
+    pose_hint: |
+      small brass price tag plate with embossed border,
+      hanging from short chain or wire hook,
+      warm golden metal tone, slightly tarnished,
+      rectangular with rounded corners, flat top-down view
+
+  # --- 换架按钮：木质旋钮 ---
+  # 刷新商品的按钮，世界观里是"转动货架"
+  - suffix: restock_lever
+    pose_hint: |
+      brass lever handle or rotary dial mechanism,
+      mounted on dark wood panel backing,
+      industrial switch aesthetic, worn from use,
+      small engraved arrow or rotation mark,
+      flat front view, mechanical device
+
+  # --- 批注便条底板 ---
+  # ✏️ 声部 4 的物理载体：商店角落的手写便条
+  - suffix: note_paper
+    pose_hint: |
+      small torn piece of rough paper or parchment scrap,
+      slightly crumpled, one corner folded,
+      faint pencil or charcoal smudge marks,
+      pinned with small iron tack or wax blob,
+      casual handwritten note aesthetic, informal and personal
+
+  # --- 圣器陈列格：单个物品展示框 ---
+  # 高级遗物的特殊展示方式
+  - suffix: relic_display_slot
+    pose_hint: |
+      recessed display niche in dark wood with brass frame border,
+      velvet or felt interior padding in deep burgundy,
+      small brass label plate at bottom,
+      single oil lamp reflection on glass cover,
+      museum display case aesthetic, reverential presentation
+
+  # --- 征用表��戳章 ---
+  # 购买确认的视觉反馈：盖章动效的关键帧
+  - suffix: requisition_stamp
+    pose_hint: |
+      circular official rubber stamp impression in red ink,
+      bureaucratic seal with gear and quill motif,
+      slightly smudged edges from imperfect pressing,
+      institutional approval mark, top-down view
+
+# ============================================================
+# 后处理
+# ============================================================
+postprocess:
+  palette_file: "references/palette/resurrect-32.png"
+  outline_enforce: false
+  bg_removal: "corner-floodfill"
+  alpha_threshold: 0.05
+  center_crop: true
+  downscale_method: "nearest"
+
+eval:
+  palette_strict: true
+  alpha_halo_max: 3
+  silhouette_sharpness_min: 0
+  clip_similarity_min: 0
+  dimensions_exact: false
+
+output:
+  runs_dir: "runs/{date}_{asset_id}/"
+  manual_target_dir: "../art-source/shop-ui/"
+
+# ============================================================
+# 组装指引（Aseprite + Code）
+# ============================================================
+assembly_guide:
+  - "=== 商店画面布局 ==="
+  - ""
+  - "  ┌──────────────────────────────────���───────────┐"
+  - "  │  shop_bg (640×360 全屏背景：木质货架墙)       │"
+  - "  │                                              │"
+  - "  │  ┌─征用站─┐          ┌─ 金币 ─┐             │"
+  - "  │  │ 圣物市集 │          │ ⚙ 382  │             │"
+  - "  │  └────────┘          └────────┘             │"
+  - "  │                                              │"
+  - "  │  ┌item_card──┐ ┌item_card──┐ ┌item_card──┐  │"
+  - "  │  │ [icon]     │ │ [icon]     │ │ [icon]     │  │"
+  - "  │  │ 圣器名     │ │ 铭文组名   │ │ 圣器名     │  │"
+  - "  │  │ desc...    │ │ desc...    │ │ desc...    │  │"
+  - "  │  │ ┌price_tag┐│ │ ┌price_tag┐│ │ ┌price_tag┐│  │"
+  - "  │  │ │ 28 ⚙    ││ │ │ 15 ⚙    ││ │ │ 42 ⚙    ││  │"
+  - "  │  │ └─────────┘│ │ └─────────┘│ │ └─────────┘│  │"
+  - "  │  └────────────┘ └────────────┘ └────────────┘  │"
+  - "  │                                              │"
+  - "  │  ┌relic_display_slot─────────────────────┐   │"
+  - "  │  │  [relic icon]  圣器名  desc...  price  │   │"
+  - "  │  └───────────────────────────────────────┘   │"
+  - "  │                                              │"
+  - "  │  [restock_lever]               ┌note_paper─┐│"
+  - "  │   换架 (Space)                  │ ✏️ 批注    ││"
+  - "  │                                └──────────┘│"
+  - "  │  ← → 选择  Enter 征用  Esc 离开             │"
+  - "  └──────────────────────────────────────────────┘"
+  - ""
+  - "=== 交互反馈 ==="
+  - "征用(购买)确认：requisition_stamp 从上方落下盖在 item_card 上"
+  - "已售出：item_card_sold 替换 item_card（红章覆盖）"
+  - "换架(刷新)：restock_lever 旋转动画 → 卡片滑出/滑入"
+  - ""
+  - "=== 叙事元素 ==="
+  - "note_paper 右下角固定位置，每次进商店随机显示一条 ✏️ shopnote"
+  - "偶尔���件物品的 desc 里出现'已被 D-XXXX 退回'（叙事细节）"
+  - "圣器(relic)用 relic_display_slot 单独展示，铭文组(skill)用普通 item_card"
+
+polish_checklist:
+  - "shop_bg 油灯暖光区域对应商品展示区，暗角对应边缘"
+  - "item_card 可横向/纵向 9-slice 拉伸，适应不同描述长度"
+  - "price_tag 小巧不抢焦点，金色调与金币图标统一"
+  - "note_paper 手写感强，与其他正式元素形成反差（✏️ 声部的视觉锚）"
+  - "requisition_stamp 红章在 parchment 上视觉冲击力强"
+  - "relic_display_slot 比普通 item_card 更庄重，暗示稀有度"
+  - "所有颜色严格来自 resurrect-32"
+  - "整体氛围：昏暗、温暖、��度感 + 人情味的角落"

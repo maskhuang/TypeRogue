@@ -33,12 +33,17 @@ auto_seed: true         # 每个 variation 随机 seed，失败重跑换 seed
 # ============================================================
 # 共享 Prompt 片段
 # ============================================================
-# 触发词前置保证 LoRA 生效；其余风格锚定跟 v1 保持一致。
+# ============================================================
+# 共享 Prompt 片段（按资产类型分）
+# 参见 STYLE_GUIDE.md 获取完整设计理由
+# ============================================================
+
+# 默认 shared（向后兼容，= sprite 类型）
 shared_positive: |
   Retro Pixel,
   pixel art, 16-bit retro game sprite,
   clean silhouette, 1px black outline,
-  limited palette 32 colors from resurrect-64 subset,
+  limited palette 32 colors from resurrect-32,
   centered composition, transparent background,
   crisp pixels, no anti-aliasing, no gradient shading,
   side view, flat shading with 1 highlight tone
@@ -49,6 +54,65 @@ shared_negative: |
   high resolution texture, jpeg artifacts, compression artifacts,
   cute mascot face, anime face, kawaii, chibi, big eyes,
   watermark, signature, text, logo, border, frame
+
+# --- 场景/背景专用 ---
+shared_positive_scene: |
+  Retro Pixel, pixel art, 16-bit,
+  FULLY ENCLOSED INTERIOR underground cathedral,
+  NO sky NO outdoor NO windows showing outside,
+  gothic industrial architecture fusion:
+  pointed iron arches, brass pipe organs, riveted iron columns,
+  vaulted ceiling with copper pipes along ribs,
+  limited palette 32 colors from resurrect-32,
+  crisp pixels, no anti-aliasing, flat shading,
+  wide aspect ratio 16:9, frontal symmetric composition,
+  strong color accent against dark background
+
+shared_negative_scene: |
+  sky, clouds, sun, moon, stars, sunset, sunrise, outdoor,
+  trees, forest, mountain, hills, plains, grass, nature, landscape,
+  window showing outside, open air, horizon line,
+  bright saturated colors, rainbow, neon,
+  anti-aliased, blurry, gradient, bloom, glow,
+  3d render, realistic, photographic, photo,
+  character, person, enemy, creature,
+  cute, kawaii, chibi, anime,
+  text, logo, watermark
+
+# --- 纹理/UI面板专用 ---
+shared_positive_texture: |
+  Retro Pixel, pixel art,
+  seamless tileable texture, game ui panel material,
+  top-down flat view, surface pattern,
+  limited palette 32 colors from resurrect-32,
+  crisp pixels, no anti-aliasing, flat shading
+
+shared_negative_texture: |
+  character, person, creature, animal, monster, face, eyes, body,
+  sprite, silhouette, side view, portrait,
+  anti-aliased, blurry, gradient, bloom, glow,
+  3d render, realistic, photographic, photo,
+  cute, anime, kawaii, chibi,
+  sky, outdoor, landscape,
+  text, writing, letters, numbers, logo
+
+# --- 道具/物件专用 ---
+shared_positive_prop: |
+  Retro Pixel, pixel art, single game prop object,
+  gothic industrial aesthetic,
+  lead and brass materials, aged and well-used,
+  oil stains, wax drips, wear marks,
+  centered on transparent background,
+  limited palette 32 colors from resurrect-32,
+  crisp pixels, no anti-aliasing, flat shading
+
+shared_negative_prop: |
+  character, person, enemy, creature, landscape,
+  modern, sci-fi, neon, plastic, glass,
+  bright cheerful colors, cute, kawaii,
+  anti-aliased, blurry, gradient, bloom, glow,
+  3d render, realistic, photographic,
+  text, logo, watermark
 
 # ============================================================
 # 后处理默认配置

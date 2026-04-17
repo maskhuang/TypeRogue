@@ -1,0 +1,132 @@
+# aigc-art/prompts/sacred-props.v1.yaml
+# 神圣/仪式资产族（活字大教堂世界观）
+#
+# 覆盖叙事中的仪式维度：圣坛、祭台、蜡封、收容柜、仪式圈
+# 这些资产在 v1 prompt 中完全缺失，是世界观→视觉的关键缺口
+#
+# 模式：draft-only（AI 生成风格板，人工在 Aseprite 中精修）
+# 设计依据：docs/narrative-design.md 意象池 + 四声模型视觉编码
+
+version: "sacred-props.v1"
+extends: _base.yaml
+last_updated: "2026-04-16"
+
+asset_id: sacred-props
+target_size: [64, 64]
+aspect_ratio: "1:1"
+gen_size: [512, 512]
+pipeline_mode: "draft-only"
+
+# ============================================================
+# Positive / Negative
+# ============================================================
+positive_override: |
+  a single pixel art game prop object,
+  gothic industrial religious aesthetic,
+  lead and brass materials, wax seals, parchment, oil stains,
+  {pose_hint},
+  no character, no enemy, no background scenery,
+  centered on transparent background,
+  {shared_positive}
+
+negative_override: |
+  {shared_negative},
+  character, person, enemy, monster,
+  modern, sci-fi, neon, plastic, glass,
+  bright colors, cheerful, cute,
+  background, landscape, room
+
+# ============================================================
+# 变体：按叙事功能分类
+# ============================================================
+variations:
+  # --- 铅字圣坛 / Claviculum Sanctum（🔧 altar 声部的视觉锚点）---
+  # 形态：活字印刷排字盘 + 打字机的混合体，不是祭坛/供桌
+  # 性格：害羞、像小动物、不确定自己是不是活的
+  # 历史：在键徒之间传递了几十任，层叠的使用痕迹
+  - suffix: lead_altar
+    pose_hint: |
+      a sacred typewriter-like device made of lead type slugs in brass frame,
+      mechanical keyboard merged with letterpress type tray,
+      individual lead character slugs as keys on iron stems,
+      brass rails and iron rivets holding the frame together,
+      heavy patina from many hands, oil stains, wax drips, old ink marks,
+      small humble object with quiet presence, slightly warm glow from within,
+      well-worn but carefully maintained, industrial-sacred hybrid
+
+  # --- 蜡封印章（收容/解锁的视觉符号）---
+  - suffix: wax_seal
+    pose_hint: |
+      ornate wax seal stamp and impression,
+      deep red wax with brass seal matrix,
+      embossed symbol of interlocking gears and quill,
+      broken seal fragments nearby, ribbon and parchment edge
+
+  # --- 收容柜（残余异文的物理容器）---
+  - suffix: containment_cabinet
+    pose_hint: |
+      tall sealed lead cabinet with brass locks and wax seals,
+      warning symbols etched into surface, heavy iron hinges,
+      faint cold glow seeping from cracks,
+      industrial gothic storage unit, ominous and secure
+
+  # --- 仪式圈（Ritual 场景的地面元素）---
+  - suffix: ritual_circle
+    pose_hint: |
+      circular ritual pattern etched into stone floor,
+      concentric rings of lead type characters arranged in spiral,
+      melted wax at cardinal points, brass pins marking intersections,
+      faint warm glow from embedded channels, top-down view
+
+  # --- 祝圣祭台（enchantment/consecration 的操作台）---
+  - suffix: consecration_lectern
+    pose_hint: |
+      heavy brass and iron lectern with angled reading surface,
+      lead type tray built into top, oil channels along edges,
+      candle holders at corners with melted wax buildup,
+      mechanical lever mechanism on side, gothic industrial workstation
+
+  # --- 圣器展示架（relic 的物理陈列）---
+  - suffix: relic_display
+    pose_hint: |
+      glass and brass display case on iron pedestal,
+      velvet cushion inside for single small object,
+      brass placard with etched text below,
+      dim oil lamp illumination, museum-like reverence
+
+# ============================================================
+# 四声视觉编码参考（供人工 polish 时参考配色）
+# ============================================================
+# 🔔 bell (sacred): 金色调(#f9c22b, #e6904e), 蜡封红(#ae2334), 暖光
+# 📄 doc (archive): 冷灰蓝(#4d9be6, #6b8caa), 黑遮蔽条, 公章红
+# 🔧 altar (whisper): 暗绿棕(#4c3e24, #757161), 微弱烛光, 铅灰
+# ✏️ note (shop): 纸白(#dbd1b4), 墨迹, 随意涂鸦感
+
+# ============================================================
+# 后处理
+# ============================================================
+postprocess:
+  palette_file: "references/palette/resurrect-32.png"
+  outline_enforce: false
+  bg_removal: "corner-floodfill"
+  alpha_threshold: 0.05
+  center_crop: true
+  downscale_method: "nearest"
+
+eval:
+  palette_strict: true
+  alpha_halo_max: 3
+  silhouette_sharpness_min: 0.20
+  clip_similarity_min: 0
+  dimensions_exact: false
+
+output:
+  runs_dir: "runs/{date}_{asset_id}/"
+  manual_target_dir: "../art-source/sacred-props/"
+
+polish_checklist:
+  - "每个 prop 剪影在 64×64 内清晰可辨"
+  - "材质层次：铅(暗灰) / 黄铜(暖金) / 蜡(深红) / 羊皮纸(米黄) 区分明确"
+  - "无现代材质（塑料、玻璃、霓虹）"
+  - "与 battle-bg 各层级变体叠加时视觉协调"
+  - "所有颜色严格来自 resurrect-32"

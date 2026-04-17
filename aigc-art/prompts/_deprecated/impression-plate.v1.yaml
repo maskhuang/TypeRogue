@@ -1,0 +1,96 @@
+# aigc-art/prompts/impression-plate.v1.yaml
+# 纸面前景层（战斗近景 · 铭刻输出面）
+#
+# 战斗时占屏幕下 ~40%。羊皮纸从印刷机滚筒下方送出。
+# 已打字符 = 墨迹凹痕（代码层叠加，非 AI 生成）
+# 纸面材质随层级微变（纸的老化/质感/边缘）
+#
+# 模式：draft-only
+# 最终用途：BattleScene 近景前景层纹理（横向平铺）
+
+version: "impression-plate.v1"
+extends: _base.yaml
+last_updated: "2026-04-17"
+
+asset_id: paper-foreground
+target_size: [640, 144]         # 占 640×360 画面的下方 40%
+gen_size: [1280, 288]
+pipeline_mode: "draft-only"
+
+# ============================================================
+# Positive / Negative — 纸面专用（不用 shared_positive 的角色指令）
+# ============================================================
+positive_override: |
+  Retro Pixel, pixel art,
+  seamless horizontal parchment paper surface texture,
+  top-down flat view of aged paper being fed through a printing press,
+  roller marks at top edge where paper emerges from machine,
+  wide horizontal composition, tileable left-right,
+  subtle paper grain and fiber texture,
+  {pose_hint},
+  limited palette 32 colors, crisp pixels, no anti-aliasing
+
+negative_override: |
+  character, person, creature, sprite, side view, portrait,
+  text, writing, letters, words, printed content,
+  anti-aliased, blurry, gradient, bloom, glow,
+  3d render, realistic, photographic,
+  vertical composition, square aspect ratio,
+  sky, outdoor, landscape
+
+# ============================================================
+# 变体：3 种层级纸面
+# ============================================================
+variations:
+  # --- 铸字坊/抄写室 (L1-6): 粗羊皮纸 ---
+  - suffix: paper_foundry
+    pose_hint: |
+      rough thick parchment paper with visible animal skin grain,
+      slightly yellowed and aged, faint oil stains and soot marks,
+      one edge slightly singed, coffee ring stain in corner,
+      heavy tactile texture, hand-made paper quality
+
+  # --- 机械层 (L7-10): 机器送纸 ---
+  - suffix: paper_mechanical
+    pose_hint: |
+      cleaner machine-fed paper with precise roller impressions at top,
+      regular fiber pattern from mechanical paper making,
+      faint gear oil marks along edges from feed mechanism,
+      slightly smoother than handmade, industrial paper quality
+
+  # --- 引擎核心 (L11-12): 极薄半透明纸 ---
+  - suffix: paper_core
+    pose_hint: |
+      extremely thin translucent vellum paper,
+      faint ghostly impressions visible from the other side,
+      paper seems to glow faintly from below,
+      almost ethereal quality, ancient and sacred,
+      minimal texture, smooth and fragile appearance
+
+# ============================================================
+# 后处理
+# ============================================================
+postprocess:
+  palette_file: "references/palette/resurrect-32.png"
+  outline_enforce: false
+  bg_removal: "none"
+  center_crop: false
+  downscale_method: "nearest"
+
+eval:
+  palette_strict: true
+  alpha_halo_max: 999
+  silhouette_sharpness_min: 0
+  clip_similarity_min: 0
+  dimensions_exact: false
+
+output:
+  runs_dir: "runs/{date}_{asset_id}/"
+  manual_target_dir: "../art-source/paper-foreground/"
+
+polish_checklist:
+  - "纸面纹理横向平铺无接缝"
+  - "顶部有滚筒辊痕——暗示纸从机器里出来"
+  - "3 种层级纹理有区分但都是'纸'——不是金属/石头"
+  - "纸面不抢词的视觉焦点——是衬底"
+  - "所有颜色严格来自 resurrect-32"

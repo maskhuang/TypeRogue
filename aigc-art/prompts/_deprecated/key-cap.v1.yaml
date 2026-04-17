@@ -1,0 +1,119 @@
+# aigc-art/prompts/key-cap.v1.yaml
+# 键帽资产（Story 57.3 Task 3）
+#
+# ⚠️ 本 prompt 使用 "draft-only" 半自动模式，与 hud-texture 同思路：
+#    AI 生成 1-3 张"键帽风格模板"候选（64×64，含 idle 态风格），
+#    由美术在 Aseprite 中按模板手绘 26 键 × 4 态 = 104 sprite。
+#
+# 为什么不全自动：
+#   1. Flux 在 32×32 输出尺寸下不可能生成可读字母
+#   2. 即使大尺寸生成后 downscale，单个字母的几何精度不够（e/o/c 糊成一团）
+#   3. 26 键一致性（厚度/高光角度/底色）AI 无法稳定保证
+#   4. 4 态（idle/pressed/matched/highlighted）本质是颜色/位移覆盖，手绘一次样板后批量复制更快
+#
+# AIGC 角色：只定"键帽视觉语言"（厚度感 / 描边 / 高光角 / 色调）
+# 人工角色：用 Aseprite 按模板画 26×4 = 104 sprite + 导出 spritesheet
+
+version: "key-cap.v1"
+extends: _base.yaml
+last_updated: "2026-04-15"
+
+asset_id: key-cap
+target_size: [64, 64]           # 模板参考尺寸，不是最终 32×32 键帽尺寸
+aspect_ratio: "1:1"
+gen_size: [512, 512]
+pipeline_mode: "draft-only"     # 仅跑到 raw 阶段，不自动 downscale/导出
+
+# ============================================================
+# Positive / Negative
+# ============================================================
+positive_override: |
+  a single mechanical keycap viewed from 3/4 angle,
+  square plastic cap with slight chamfered edges,
+  thick dark base rim, subtle top highlight line,
+  no letter on top surface, empty clean top,
+  fantasy rpg item icon style, centered on transparent background,
+  1 px black outline, chunky pixel shading,
+  {pose_hint},
+  {shared_positive}
+
+negative_override: |
+  {shared_negative},
+  letter, character, text, alphabet, symbol, rune,
+  keyboard, multiple keys, row of keys,
+  finger, hand, person,
+  photo, 3d render, smooth shading, soft shadow,
+  realistic plastic, glossy reflection
+
+# ============================================================
+# 变体：3 种键帽风格候选（用于人工挑选主方向）
+# ============================================================
+variations:
+  - suffix: style_a_thick_rim
+    frames: 1
+    pose_hint: "chunky dark grey rim with warm grey top, strong top highlight, cobalt-core inspired"
+  - suffix: style_b_flat_wide
+    frames: 1
+    pose_hint: "flat wide top surface with minimal bevel, loop-hero inspired muted palette"
+  - suffix: style_c_glow_edge
+    frames: 1
+    pose_hint: "subtle cyan rim glow inspired by scifi terminal keyboard, dark body"
+
+# ============================================================
+# 后处理：极简（draft-only 模式不走完整 pipeline）
+# ============================================================
+postprocess:
+  palette_file: "references/palette/resurrect-32.png"
+  outline_enforce: false        # 键帽可无描边 / 2px 均可（Story 57.3 §5）
+  bg_removal: "corner-floodfill"
+  center_crop: false
+  downscale_method: "nearest"   # 若 draft-only 未来改全自动，保持 nearest
+
+# ============================================================
+# 评测：仅校验调色板 + 尺寸，不跑 CLIP
+# ============================================================
+eval:
+  palette_strict: true
+  alpha_halo_max: 2             # 键帽允许极小 halo（draft 阶段放宽）
+  silhouette_sharpness_min: 0   # 样板无严格剪影要求
+  clip_similarity_min: 0        # 无金标参考
+  dimensions_exact: false       # 模板尺寸容差
+
+# ============================================================
+# 手工工作流（Aseprite 内）
+# ============================================================
+manual_production_steps:
+  - "挑选一个最对味的 style_* 作为主方向（写入 art-source/57-3/keyboard/STYLE_DECISION.md）"
+  - "在 Aseprite 中创建 32×32 画布，用 palette resurrect-32 load palette"
+  - "按挑中的 draft 复刻键帽底板（idle 态）：底色 + 1-2px 深色描边 + 1px 高光角"
+  - "复制 4 份为 4 态层："
+  - "  • idle：基础态"
+  - "  • pressed：底色降 1 档亮度 + 高光偏移 2px"
+  - "  • matched：底色切 accent 冷色（#30e1b9 或 #4d9be6 系）"
+  - "  • highlighted：底色切 legendary 金（#f9c22b 系）+ 1px 外发光"
+  - "把 4 态横向拼成 128×32 spritesheet，命名 key_q.aseprite（样板）"
+  - "复刻样板 × 26 次，每次只替换字母：A-Z 小写（Fusion Pixel 12px monospaced 字模）"
+  - "字母取色：idle=#c7dcd0，pressed=#2e222f，matched=#2e222f，highlighted=#2e222f"
+  - "批量 aseprite -b 命令行导出 godot/assets/sprites/keyboard/key_{a-z}.png"
+  - "命名规则：全小写 key_a.png ~ key_z.png"
+
+# ============================================================
+# 输出路径
+# ============================================================
+output:
+  runs_dir: "runs/{date}_{asset_id}/"
+  # draft-only 不自动导出；最终产出路径由人工 Aseprite 工作流写入：
+  manual_target_dir: "../art-source/57-3/keyboard/"
+  godot_final_dir: "../godot/assets/sprites/keyboard/"
+
+# ============================================================
+# Polish checklist（完成 26 键后人工验收）
+# ============================================================
+polish_checklist:
+  - "26 键底板厚度 / 描边 / 高光角完全一致（叠层比对）"
+  - "字母统一使用 Fusion Pixel 12px monospaced 字模（不手写）"
+  - "4 态颜色语义一致（全库 26 键的 matched 都是同一个冷色）"
+  - "所有颜色来自 resurrect-32（Aseprite Palette > Presets 校验）"
+  - "Spritesheet 尺寸严格 128×32（4 × 32×32）"
+  - "导出文件名全小写 key_a.png 到 key_z.png"
+  - "Godot sandbox 中 ×2/×3/×4 缩放无糊边（AC5）"

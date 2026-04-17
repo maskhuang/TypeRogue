@@ -1,0 +1,97 @@
+# aigc-art/prompts/lectern-topdown.v1.yaml
+# 圣坛俯视图（商店界面 · 铭文组绑定面板）
+#
+# 商店里玩家"站起来俯视自己的圣坛"。
+# 显示完整的键盘布局 + 铭文组绑定槽位。
+# 这是玩家唯一能看到圣坛全貌的时刻。
+#
+# 形态：活字排字盘 + 打字机混合体，俯视角度
+# 铅字符做键帽，黄铜框架，铁杆连接
+# 几十任键徒的使用痕迹（油渍、蜡滴、旧墨迹）
+#
+# 模式：draft-only
+# 最终用途：ShopScene 的圣坛面板背景纹理
+
+version: "lectern-topdown.v1"
+extends: _base.yaml
+last_updated: "2026-04-17"
+
+asset_id: lectern-topdown
+target_size: [320, 180]         # 占商店画面下半部分
+gen_size: [640, 360]
+pipeline_mode: "draft-only"
+
+# ============================================================
+# Positive / Negative
+# ============================================================
+positive_override: |
+  Retro Pixel, pixel art,
+  top-down bird eye view of a sacred typewriter device on a wooden desk,
+  mechanical keyboard merged with letterpress type tray seen from above,
+  individual lead type slugs as keys arranged in rows,
+  brass frame rails and iron rivets holding the structure,
+  heavy patina from many hands, oil stains, old ink marks, wax drips,
+  some key positions empty (slots for binding),
+  warm oil lamp light from upper left casting soft shadows,
+  well-worn but carefully maintained industrial-sacred device,
+  {pose_hint},
+  limited palette 32 colors, crisp pixels, no anti-aliasing
+
+negative_override: |
+  side view, front view, perspective view, 3d angle,
+  character, person, hands, fingers,
+  anti-aliased, blurry, gradient, bloom, glow,
+  3d render, realistic, photographic,
+  modern keyboard, plastic, RGB lighting,
+  text, letters on keys, readable characters,
+  sky, outdoor, landscape
+
+# ============================================================
+# 变体：只需一种（圣坛外观不随层级变，使用痕迹是累积的）
+# ============================================================
+variations:
+  - suffix: lectern_main
+    pose_hint: |
+      the device sits on a dark wooden desk surface,
+      26 key positions visible in standard layout from above,
+      some keys show more wear than others (frequently used letters),
+      brass mechanical linkages visible between key rows,
+      small oil flask and ink pot at the corner of the desk,
+      a folded parchment tucked under one edge
+
+  - suffix: lectern_worn
+    pose_hint: |
+      same device but more heavily worn, decades of use,
+      several key positions have replacement slugs (slightly different metal color),
+      deep groove marks on the brass frame from repeated use,
+      wax seal residue on the right side, old binding marks,
+      the desk surface shows ring stains from countless oil flasks
+
+# ============================================================
+# 后处理
+# ============================================================
+postprocess:
+  palette_file: "references/palette/resurrect-32.png"
+  outline_enforce: false
+  bg_removal: "none"
+  center_crop: false
+  downscale_method: "nearest"
+
+eval:
+  palette_strict: true
+  alpha_halo_max: 999
+  silhouette_sharpness_min: 0
+  clip_similarity_min: 0
+  dimensions_exact: false
+
+output:
+  runs_dir: "runs/{date}_{asset_id}/"
+  manual_target_dir: "../art-source/lectern/"
+
+polish_checklist:
+  - "俯视角度清晰——能看到所有键位的排列"
+  - "键位之间有足够空间放置铭文组图标（代码层叠加）"
+  - "使用痕迹自然——不同键位不同程度磨损"
+  - "材质感：铅（键帽）、黄铜（框架）、铁（连杆）、木（桌面）"
+  - "与 shop_bg 的暖色调/油灯光源方向一致"
+  - "所有颜色严格来自 resurrect-32"

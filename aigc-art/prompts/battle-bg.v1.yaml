@@ -1,0 +1,259 @@
+# aigc-art/prompts/battle-bg.v1.yaml
+# 战斗背景（Story 57.3 Task 7）
+#
+# 本 prompt 是三个新增 prompt 中**最适合全自动 pipeline** 的：
+#   • 单帧静态图（无时序）
+#   • 尺寸大（640×360），downscale 后细节容错高
+#   • 无精细几何约束（不像键帽需要字母精度）
+#
+# 模式：full pipeline（不是 draft-only）
+# 产出：多张 640×360 候选，人工挑选 1 张作为 battle_01.png
+
+version: "battle-bg.v1"
+extends: _base.yaml
+last_updated: "2026-04-15"
+
+asset_id: battle-bg
+target_size: [640, 360]         # 逻辑分辨率的完整背景
+aspect_ratio: "16:9"
+gen_size: [1280, 720]           # 2× 过采样后 nearest 降到 640×360
+pipeline_mode: "full"
+
+# ============================================================
+# 降低 batch 与 retry（背景单次成本高，一次 6 张太贵）
+# ============================================================
+batch_size: 3
+retry_until_pass: 2
+
+# ============================================================
+# Positive / Negative
+# ============================================================
+positive_override: |
+  pixel art scene INSIDE a giant cathedral-scale engine inspired by Gutenberg press,
+  the entire building IS the engine — walls ceiling floor are all machine parts,
+  you are standing inside one section of this colossal machine,
+  Romanesque architecture fused with Victorian industrial engine structure,
+  thick walls, round arches, barrel vaults, heavy and fortress-like,
+  every architectural element serves BOTH Romanesque AND mechanical purpose,
+  columns are cast iron with Romanesque arcading with gothic tracery detail that are also structural supports,
+  arches are riveted iron shaped as Romanesque round arches,
+  FULLY ENCLOSED INTERIOR, NO sky, NO fire unless specified,
+  wide aspect ratio 16:9, frontal symmetric composition,
+  {pose_hint},
+  Retro Pixel, pixel art, 16-bit, limited palette 32 colors,
+  crisp pixels, no anti-aliasing, flat shading
+
+negative_override: |
+  {shared_negative},
+  sky, clouds, sun, moon, stars, sunset, sunrise, outdoor,
+  trees, forest, mountain, hills, plains, grass, nature, landscape,
+  window showing outside, open air, horizon line,
+  bright saturated colors, vivid pink, vivid orange, rainbow,
+  bonfire, campfire, fireplace, torch on wall, fire pit, brazier,
+  lava, magma, hellfire,
+  separate architectural and industrial elements side by side,
+  stone cathedral with machines placed inside it,
+  character, hero, enemy, monster, knight, warrior,
+  weapon, sword, shield, armor,
+  ui, hud, health bar, menu, text, number,
+  cluttered foreground, busy detail, many objects,
+  close-up, portrait, first-person view,
+  vertical composition
+
+# ============================================================
+# 变体：活字大教堂 12 层结构，按层级区间划分视觉主题
+# 设计依据：docs/narrative-design.md 层级设定
+# ============================================================
+variations:
+  # --- 铸字坊 (Layer 1-4): 引擎外壳 / 进料区 ---
+  # 你在引擎的最外层——原料在这里被铸造送入
+  # 唯一允许火焰（熔铅炉）
+  - suffix: layer_foundry
+    frames: 1
+    pose_hint: |
+      you are inside the OUTER SHELL of a giant Gutenberg-inspired engine,
+      this is the raw material intake area — where lead is smelted and cast into type,
+      the walls ARE the engine's outer casing — rough cast iron plates with riveted seams,
+      brick-lined furnace chambers are built INTO the walls like alcoves,
+      crucibles of molten lead glow orange in wall-mounted smelting bays,
+      iron molds and cooling racks for freshly cast type slugs along the walls,
+      the ceiling is low iron plating with ventilation pipes,
+      FIRE ALLOWED: furnace glow from wall-mounted smelting bays,
+      LIGHT: only the orange glow of molten lead, no other light source,
+      COLOR: molten orange-red vs soot-blackened dark iron
+
+  # --- 抄写室 (Layer 5): 分拣机构 ---
+  # 你在引擎的分拣层——铅字在这里被归类排列
+  # 无火焰
+  - suffix: layer_scriptorium
+    frames: 1
+    pose_hint: |
+      you are inside the TYPE SORTING MECHANISM of the giant engine,
+      the walls are covered floor-to-ceiling with type case compartments —
+      hundreds of small iron cubby holes each holding sorted lead type slugs,
+      the compartment grid IS the wall structure, built into cast iron frames,
+      brass rails and mechanical sorting arms extend from the walls,
+      wooden composing desks are workstations built into the machinery,
+      NO FIRE NO FURNACE NO TORCHES,
+      LIGHT: only brass oil lamps on iron brackets, warm amber pools,
+      COLOR: warm amber vs dark iron and wood, organized and precise
+
+  # --- 收容廊 (Layer 6): 锁版机构 ---
+  # 你在引擎的封锁层——铅字在这里被锁入版框密封
+  # 无火焰
+  - suffix: layer_containment
+    frames: 1
+    pose_hint: |
+      you are inside the LOCKING MECHANISM of the giant engine,
+      the walls are rows of sealed iron chase frames locked with heavy padlocks,
+      each chase holds arranged type locked in place with iron quoins and furniture,
+      red wax seals on every lock and joint as tamper indicators,
+      the ceiling is a massive iron vault with heavy Romanesque vault with iron lock bolts,
+      the floor is iron grating — you can see machinery moving below,
+      NO FIRE NO FURNACE NO TORCHES,
+      LIGHT: only small candles between the locked chases, reflected in iron,
+      COLOR: cold dark iron with vivid red wax seal accents
+
+  # --- 机械层 (Layer 7-10): 驱动机构 ---
+  # 你在引擎的动力层——齿轮和活塞驱动整台引擎
+  # 无火焰
+  - suffix: layer_mechanical
+    frames: 1
+    pose_hint: |
+      you are inside the DRIVE MECHANISM of the giant engine,
+      inspired by Crossness Pumping Station main hall,
+      enormous interlocking brass gears fill the walls from floor to ceiling,
+      the gears ARE the walls — there is no wall behind them only more gears,
+      steam pistons pump vertically through the floor and ceiling,
+      copper pipes carry steam between gear assemblies,
+      ornate cast iron columns with Romanesque arcading with gothic tracery detail support the gear shafts,
+      everything is in motion — this level is alive,
+      NO FIRE NO FURNACE NO TORCHES,
+      LIGHT: warm glow from heated brass gears and cool blue-white steam,
+      COLOR: polished brass-gold vs cool steel-blue steam
+
+  # --- 引擎核心 (Layer 11-12): 螺杆+压版 ---
+  # 你在引擎的心脏——巨大的螺杆从上方压下
+  # 无火焰
+  - suffix: layer_engine_core
+    frames: 1
+    pose_hint: |
+      you are at the HEART of the giant engine — the screw and platen,
+      inspired by Abbey Mills Pumping Station domed chamber,
+      a single massive screw mechanism descends from the domed ceiling above,
+      the screw is impossibly large — as wide as a cathedral column,
+      the platen below glows with faint warm amber light,
+      the domed ceiling is the inside of the engine's top — iron ribs converging,
+      iron columns around the perimeter fade into total darkness,
+      this is where the pressing happens — where the engine does its work,
+      NO FIRE NO CANDLES NO TORCHES,
+      LIGHT: ONLY the faint warm glow from the platen at dead center,
+      COLOR: monochrome black with single amber point at center
+
+  # ==========================================================
+  # 层间过渡帧（layer transition screens）
+  # 战斗结束 → 淡入过渡帧(1-2s) → 淡入新层背景
+  # 构图要求：纵向下行感，单点透视走廊/楼梯/通道
+  # ==========================================================
+
+  # --- 过渡: 铸字坊走廊 (L1-4 → L5) ---
+  - suffix: transition_foundry
+    frames: 1
+    pose_hint: |
+      long narrow underground brick corridor receding to vanishing point,
+      solid brick ceiling with iron supports, no sky visible,
+      iron pipes and steam vents along both solid walls,
+      warm red glow from furnaces behind, fading to dim amber ahead,
+      wet stone floor with lead shavings, single oil lamp in distance,
+      completely enclosed tunnel, descending deeper underground
+
+  # --- 过渡: 石阶下行 (L5-6 → L7) ---
+  - suffix: transition_stairs
+    frames: 1
+    pose_hint: |
+      narrow stone staircase descending into darkness underground,
+      solid stone walls and ceiling, no windows, no outside light,
+      wax-sealed iron door frame at bottom barely visible,
+      oil lamp mounted on wall casting isolated warm yellow pool,
+      worn stone steps with brass handrail, dripping wax,
+      claustrophobic enclosed descent, Romanesque stone vault above
+
+  # --- 过渡: 机械通道 (L7-10 → L11) ---
+  - suffix: transition_mechanical
+    frames: 1
+    pose_hint: |
+      long enclosed mechanical corridor deep underground,
+      brass gears turning on both solid metal walls,
+      copper pipes across low metal ceiling, steam leaking at joints,
+      rhythmic pulse of warm light from far end,
+      iron grate walkway with riveted edges,
+      no windows, no outside, corridor narrows toward single glow,
+      entirely metal and machine, no organic elements
+
+  # --- 过渡: 沉降入核心 (L11 → L12) ---
+  - suffix: transition_core
+    frames: 1
+    pose_hint: |
+      almost entirely dark vertical shaft descending underground,
+      obsidian walls barely visible in darkness,
+      single chain hanging in center of shaft,
+      faint warm glow from deep below like a heartbeat pulse,
+      no sky, no light from above, only darkness above and warmth below,
+      overwhelming sense of depth and pressure underground,
+      minimal detail, mostly darkness and one warm light source far below
+
+# ============================================================
+# 后处理
+# ============================================================
+postprocess:
+  palette_file: "references/palette/resurrect-32.png"
+  outline_enforce: false        # 背景不描边（Story 57.3 §5）
+  bg_removal: "none"            # 背景本身就是全覆盖，不移除
+  center_crop: false
+  downscale_method: "nearest"   # 严格 nearest；禁止 bilinear
+
+# ============================================================
+# 评测
+# ============================================================
+eval:
+  palette_strict: true          # 必须严格 ⊂ resurrect-32（经 palette_lock 强制量化）
+  alpha_halo_max: 999           # 背景全不透明，不检 halo
+  silhouette_sharpness_min: 0   # 背景无剪影概念
+  clip_similarity_min: 0        # 暂无背景类金标
+  dimensions_exact: true        # 必须严格 640×360
+
+# ============================================================
+# 输出路径
+# ============================================================
+output:
+  runs_dir: "runs/{date}_{asset_id}/"
+  aseprite_target_dir: "../art-source/57-3/backgrounds/"
+  godot_target_dir: "../godot/assets/sprites/backgrounds/"
+  # 注意：最终 battle_01.png 由人工从候选中挑选后重命名落地
+
+# ============================================================
+# 人工挑选 + 最终化步骤（full pipeline 跑完后）
+# ============================================================
+post_run_steps:
+  - "浏览 runs/{date}_battle-bg/{scene_*}/postprocessed/ 下的候选"
+  - "选 1 张最符合'不抢焦点 + 层次清晰'的背景"
+  - "在 Aseprite 中打开选中图 → art-source/57-3/backgrounds/battle_01.aseprite"
+  - "手工 polish（可选）："
+  - "  • 降饱和度（如果 AI 输出太鲜艳）"
+  - "  • 中心 100 × 60 区域补'暗色平地'（保证敌人 sprite 放上去后轮廓清晰）"
+  - "  • 检查 horizon line 位于画面高度 60-75% 处（敌人站立空间足够）"
+  - "导出 godot/assets/sprites/backgrounds/battle_01.png"
+  - "Godot sandbox 中用 Sprite2D 放置 key_q 和 dummy idle 在背景上，确认视觉层次"
+
+# ============================================================
+# Polish checklist
+# ============================================================
+polish_checklist:
+  - "天空 / 远景 / 中景 / 地面 4 层清晰可辨"
+  - "中心区域（X=270~370, Y=200~300）无装饰物，预留给敌人站位"
+  - "horizon line 在 60-75% 高度区间"
+  - "整体饱和度适中（不高过 75% max saturation）"
+  - "所有颜色严格来自 resurrect-32（palette_lock 后的输出再人工复检）"
+  - "尺寸严格 640×360"
+  - "与 enemy-dummy idle 叠加时剪影清晰不糊"
+  - "与 HUD（hp bar / score panel / timer）叠加时背景不过亮"

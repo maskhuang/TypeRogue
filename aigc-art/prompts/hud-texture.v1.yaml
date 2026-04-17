@@ -18,40 +18,94 @@ gen_size: [256, 256]
 pipeline_mode: "draft-only"   # 特殊模式：仅跑到 ① Draft Gen，跳过 ②-⑥
 
 # ============================================================
-# 每种 HUD 组件生成一批纹理灵感
+# 纹理专用 shared prompt（覆盖 _base.yaml 的角色 sprite 指令）
 # ============================================================
+positive_override: |
+  Retro Pixel,
+  pixel art seamless texture, game ui panel material,
+  top-down flat view, tileable surface pattern,
+  limited palette 32 colors, crisp pixels,
+  no anti-aliasing, no gradient shading, flat shading,
+  {pose_hint}
+
+negative_override: |
+  character, person, creature, animal, monster, face, eyes, body,
+  sprite, silhouette, side view, portrait,
+  anti-aliased, blurry, soft edges, gradient shading, bloom, glow,
+  3d render, realistic, photographic, photo,
+  cute, anime, kawaii, chibi,
+  text, writing, letters, numbers, logo
+
+# ============================================================
+# HUD 组件纹理 × 层级主题矩阵
+# 4 种组件 × 3 种层级主题 = 12 变体
+# 层级主题随玩家爬塔递进，HUD 材质跟着变化
+# ============================================================
+#
+# 层级主题设计依据（docs/narrative-design.md）：
+#   foundry (L1-6):  木/铁/羊皮纸 — 手工质感，温暖但陈旧
+#   mechanical (L7-10): 黄铜/铜管/蒸汽 — 精密机械，冷暖交替
+#   core (L11-12): 黑曜石/铅/微光 — 沉压神圣，极简深邃
+#
 variations:
-  - suffix: hp_bar
-    positive: |
-      seamless pixel art texture of ancient wooden plank with iron rivets,
-      dark oak grain, brass nail heads, worn edges, fantasy rpg ui panel,
-      top-down flat view, {shared_positive}
-    negative: |
-      {shared_negative},
-      bar indicator, progress fill, liquid, blood,
-      text, number, icon
-  - suffix: score_panel
-    positive: |
-      pixel art parchment texture with leather binding edges,
-      aged paper, coffee stains, {shared_positive}
-    negative: |
-      {shared_negative},
-      writing, letters, numbers, ink marks
-  - suffix: timer
-    positive: |
-      pixel art brass gear frame border texture,
-      clockwork engraving, warm metal tones, {shared_positive}
-    negative: |
-      {shared_negative},
-      clock hand, digital display, numbers
-  - suffix: skill_slot
-    positive: |
-      pixel art dark obsidian inlay square frame,
-      runic border, cool blue glow inside, empty slot,
-      {shared_positive}
-    negative: |
-      {shared_negative},
-      item inside, weapon, rune text
+  # === 铸字坊/抄写室主题 (Layer 1-6) ===
+  - suffix: hp_bar_foundry
+    pose_hint: |
+      ancient wooden plank with iron rivets,
+      dark oak grain, brass nail heads, worn edges
+  - suffix: score_panel_foundry
+    pose_hint: |
+      parchment texture with leather binding edges,
+      aged paper, coffee stains, ink splatter marks
+  - suffix: timer_foundry
+    pose_hint: |
+      brass gear frame border texture,
+      clockwork engraving, warm metal tones, oil stains
+  - suffix: skill_slot_foundry
+    pose_hint: |
+      dark iron inlay square frame with lead border,
+      hammered metal texture, rivet corners, warm shadow inside
+
+  # === 机械层主题 (Layer 7-10) ===
+  - suffix: hp_bar_mechanical
+    pose_hint: |
+      polished copper pipe cross-section,
+      steam-cleaned metal, precise riveted seams, industrial gauge panel
+  - suffix: score_panel_mechanical
+    pose_hint: |
+      brushed brass plate texture with engraved border,
+      precision machined surface, fine gear-tooth edge pattern
+  - suffix: timer_mechanical
+    pose_hint: |
+      flat surface texture of interlocking steel gears seen from above,
+      top-down view of gear teeth pattern, chrome and brass metal layers,
+      circular valve wheel shape embossed into metal surface
+  - suffix: skill_slot_mechanical
+    pose_hint: |
+      flat square metal panel texture with copper rim border,
+      recessed dark center area, riveted copper edge trim,
+      brushed steel surface with subtle blue-grey tint,
+      simple geometric frame, no depth, flat top-down view
+
+  # === 引擎核心主题 (Layer 11-12) ===
+  - suffix: hp_bar_core
+    pose_hint: |
+      black obsidian slab with lead inlay veins,
+      deep shadow, faint warm glow from within cracks, ancient and sacred
+  - suffix: score_panel_core
+    pose_hint: |
+      dark stone tablet texture with lead type impressions,
+      embossed marks, single warm light source from edge, solemn and monumental
+  - suffix: timer_core
+    pose_hint: |
+      massive flywheel cross-section texture,
+      concentric dark iron rings, single faint golden light at center,
+      oppressive weight and scale
+  - suffix: skill_slot_core
+    pose_hint: |
+      deep void frame with obsidian border and lead trim,
+      faint warm glow seeping from edges, bottomless dark interior,
+      reverent and ominous
 
 # ============================================================
 # 后处理：极简
