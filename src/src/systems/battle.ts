@@ -264,6 +264,8 @@ export function showScreen(name: 'menu' | 'battle' | 'shop' | 'gameover' | 'ritu
   const restScreen = document.getElementById('rest-screen');
   if (restScreen) restScreen.style.display = name === 'rest' ? 'flex' : 'none';
 
+  if (name === 'menu') randomizeScreenBackground(el.mainMenuScreen);
+
   // 离开战斗屏幕时确保结算面板隐藏
   if (name !== 'battle') {
     const settlement = document.getElementById('score-settlement');
