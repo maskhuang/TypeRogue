@@ -412,7 +412,8 @@ button, input, select, textarea { font-family: inherit; }
     text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
 }
 
-NOT_FOUND    display: inline-block;
+#score-count {
+    display: inline-block;
     color: #fff;
     text-shadow: none;
     transition: color 0.05s steps(1);
@@ -1706,7 +1707,8 @@ NOT_FOUND    display: inline-block;
     50% { border-color: #fff080; }
 }
 
-#game-container.pseudo-infinite NOT_FOUND    animation: infiniteScoreScroll 0.3s steps(2) infinite alternate;
+#game-container.pseudo-infinite #score-count {
+    animation: infiniteScoreScroll 0.3s steps(2) infinite alternate;
 }
 @keyframes infiniteScoreScroll {
     0% { transform: translateY(-1px); }
