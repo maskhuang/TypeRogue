@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>Pixel Emoji Coverage — TypeRogue</title>
+<style>
+  @font-face {
+    font-display: block;
+    font-family: "SerenityOS Emoji";
+    font-style: normal;
+    src: url("SerenityOS-Emoji.ttf") format("truetype");
+  }
+  :root {
+    --bg: #15161a;
+    --panel: #1d1f26;
+    --border: #2a2d36;
+    --text: #e6e7ea;
+    --muted: #8a8f9b;
+    --ok: #4ade80;
+    --bad: #f87171;
+    --warn: #fbbf24;
+    --pixel-fonts: "SerenityOS Emoji", monospace;
+    --system-fonts: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    background: var(--bg); color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+  }
+  h1 { margin: 0 0 4px; font-size: 18px; }
+  .sub { color: var(--muted); margin-bottom: 16px; }
+  .summary { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat {
+    background: var(--panel); border: 1px solid var(--border);
+    padding: 10px 14px; border-radius: 8px;
+    display: flex; gap: 8px; align-items: baseline;
+  }
+  .stat .n { font-size: 22px; font-weight: 600; }
+  .stat.ok .n { color: var(--ok); }
+  .stat.bad .n { color: var(--bad); }
+  .stat .l { color: var(--muted); font-size: 12px; }
+  .filters { display: flex; gap: 6px; margin: 18px 0 12px; }
+  .filters button {
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); padding: 6px 12px;
+    border-radius: 6px; cursor: pointer; font: inherit;
+  }
+  .filters button.active { background: #2c5fd1; border-color: #2c5fd1; }
+  table {
+    width: 100%; border-collapse: collapse;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { background: #232631; color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  tr:last-child td { border-bottom: none; }
+  td.glyph { width: 80px; text-align: center; font-size: 32px; line-height: 1; }
+  td.glyph.pixel  { font-family: var(--pixel-fonts); image-rendering: pixelated; }
+  td.glyph.system { font-family: var(--system-fonts); }
+  td.cp { font-family: ui-monospace, monospace; color: var(--muted); font-size: 12px; }
+  td.count { color: var(--muted); }
+  td.status .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge.ok  { background: rgba(74,222,128,0.15); color: var(--ok); }
+  .badge.bad { background: rgba(248,113,113,0.15); color: var(--bad); }
+  td.sources { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted); max-width: 380px; }
+  td.sources details > summary { cursor: pointer; }
+  tr.missing { background: rgba(248,113,113,0.04); }
+  .ingame { background: #0c0d10; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-top: 18px; }
+  .ingame h2 { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+  .ingame .row { display: flex; gap: 24px; }
+  .ingame .row > div { flex: 1; }
+  .ingame .label { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+  .ingame .demo {
+    background: #15161a; border: 1px solid var(--border);
+    padding: 12px; border-radius: 6px;
+    font-family: 'Press Start 2P', 'Courier New', 'PingFang SC', monospace;
+    font-size: 14px; line-height: 1.8;
+  }
+  .ingame .demo.pixel  { font-family: 'Press Start 2P', var(--pixel-fonts), 'PingFang SC', monospace; }
+  .ingame .demo.system { font-family: 'Press Start 2P', 'Courier New', 'PingFang SC', monospace; }
+</style>
+</head>
+<body>
+<h1>Pixel Emoji Coverage — TypeRogue</h1>
+<div class="sub">Renders every game emoji with <strong>SerenityOS Emoji</strong>（像素，左）和 <strong>系统 fallback</strong>（彩色，右）。 通过 Canvas 位图比对自动判定哪些码位未被像素字体覆盖。</div>
+
+<div id="summary" class="summary"></div>
+
+<div class="ingame">
+  <h2>In-game preview (Press Start 2P + emoji)</h2>
+  <div class="row">
+    <div>
+      <div class="label">Pixel emoji font</div>
+      <div class="demo pixel">
+        ⚔️ 12  🪙 480  🔥 ×3  ⏳ 22.4s  💰 200<br/>
+        🧬 蜕变台 · 🎯 命中 · 🎁 战利品<br/>
+        📓 古抄本 · 🪞 反射镜 · ⚛️ 原典核心
+      </div>
+    </div>
+    <div>
+      <div class="label">System emoji (current)</div>
+      <div class="demo system">
+        ⚔️ 12  🪙 480  🔥 ×3  ⏳ 22.4s  💰 200<br/>
+        🧬 蜕变台 · 🎯 命中 · 🎁 战利品<br/>
+        📓 古抄本 · 🪞 反射镜 · ⚛️ 原典核心
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="filters">
+  <button data-filter="all" class="active">全部</button>
+  <button data-filter="missing">未覆盖</button>
+  <button data-filter="covered">已覆盖</button>
+  <button id="export">导出未覆盖列表 (JSON)</button>
+</div>
+
+<table id="grid">
+  <thead>
+    <tr>
+      <th>像素</th>
+      <th>系统</th>
+      <th>码位</th>
+      <th>状态</th>
+      <th>用量</th>
+      <th>位置</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script src="emoji-manifest.js"></script>
+<script>
+async function main() {
+  try { await document.fonts.load('40px "SerenityOS Emoji"'); } catch {}
+  await document.fonts.ready;
+
+  const manifest = window.__emojiManifest
+    || await (await fetch('emoji-manifest.json')).json();
+
+  // Bitmap-based coverage detection.
+  //   render A: SerenityOS Emoji, fallback monospace
+  //   render B: monospace only
+  // If A === B, the pixel font produced no glyph for this codepoint and
+  // we fell through to monospace -> not covered.
+  const SIZE = 64;
+  function renderTo(canvas, emoji, fontStack) {
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.clearRect(0, 0, SIZE, SIZE);
+    ctx.fillStyle = '#fff';
+    ctx.font = `40px ${fontStack}`;
+    ctx.textBaseline = 'top';
+    ctx.fillText(emoji, 0, 8);
+    return ctx.getImageData(0, 0, SIZE, SIZE).data;
+  }
+  function bitmapsEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i += 4) {
+      if (a[i + 3] !== b[i + 3]) return false;
+    }
+    return true;
+  }
+
+  const cvA = document.createElement('canvas');
+  const cvB = document.createElement('canvas');
+  cvA.width = cvB.width = cvA.height = cvB.height = SIZE;
+
+  const PIXEL_STACK   = '"SerenityOS Emoji", monospace';
+  const FALLBACK_ONLY = 'monospace';
+
+  let covered = 0, missing = 0;
+  const tbody = document.querySelector('#grid tbody');
+  manifest.forEach(item => {
+    const aData = renderTo(cvA, item.emoji, PIXEL_STACK);
+    const bData = renderTo(cvB, item.emoji, FALLBACK_ONLY);
+    const isCovered = !bitmapsEqual(aData, bData);
+    item._covered = isCovered;
+    if (isCovered) covered++; else missing++;
+
+    const tr = document.createElement('tr');
+    tr.className = isCovered ? 'covered' : 'missing';
+    tr.innerHTML = `
+      <td class="glyph pixel">${item.emoji}</td>
+      <td class="glyph system">${item.emoji}</td>
+      <td class="cp">${item.codepoints}</td>
+      <td class="status"><span class="badge ${isCovered ? 'ok' : 'bad'}">${isCovered ? '✓ 覆盖' : '✗ 未覆盖'}</span></td>
+      <td class="count">×${item.count}</td>
+      <td class="sources"><details><summary>${item.sources.length} 处</summary>${item.sources.map(s => `<div>${s}</div>`).join('')}</details></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('summary').innerHTML = `
+    <div class="stat"><span class="n">${manifest.length}</span><span class="l">总 emoji</span></div>
+    <div class="stat ok"><span class="n">${covered}</span><span class="l">像素覆盖</span></div>
+    <div class="stat bad"><span class="n">${missing}</span><span class="l">未覆盖</span></div>
+    <div class="stat"><span class="n">${(covered / manifest.length * 100).toFixed(0)}%</span><span class="l">覆盖率</span></div>
+  `;
+
+  document.querySelectorAll('.filters button[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filters button[data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const f = btn.dataset.filter;
+      tbody.querySelectorAll('tr').forEach(tr => {
+        if (f === 'all') tr.style.display = '';
+        else if (f === 'missing') tr.style.display = tr.classList.contains('missing') ? '' : 'none';
+        else if (f === 'covered') tr.style.display = tr.classList.contains('covered') ? '' : 'none';
+      });
+    });
+  });
+
+  const report = {
+    total: manifest.length, covered, missing,
+    missingList: manifest.filter(m => !m._covered).map(m => ({
+      emoji: m.emoji, codepoints: m.codepoints, count: m.count, sources: m.sources,
+    })),
+  };
+  window.__emojiCoverage = report;
+
+  document.getElementById('export').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'coverage-report.json'; a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+main().catch(err => { document.body.innerHTML += `<pre style="color:#f87171">${err.stack}</pre>`; });
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "total": 138,
+  "covered": 137,
+  "missing": 1,
+  "coveragePct": 99.3,
+  "supportedSetSize": 1979,
+  "missingList": [
+    {
+      "emoji": "🧪🧬",
+      "codepoints": "U+1F9EA U+1F9EC",
+      "count": 2,
+      "sources": [
+        "src/src/demo/demo-i18n.ts:1596",
+        "src/src/demo/demo-i18n.ts:504"
+      ]
+    }
+  ]
+}
