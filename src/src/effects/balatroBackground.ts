@@ -282,6 +282,11 @@ let currentStyle: StyleName = 'cells';
 let rafId: number | null = null;
 const t0 = performance.now();
 
+// 用户在设置里选的模式：'off' = 关闭背景，'random' = 主菜单时随机抽，
+// 其它 = 强制锁定到指定 style。setRandomStyle() 会尊重这个选择。
+type UserMode = 'off' | 'random' | StyleName;
+let userMode: UserMode = 'random';
+
 const state = {
   speed: STYLES.cells.defaultSpeed,
   spin: 0,
@@ -378,6 +383,7 @@ function frame() {
 }
 
 export function ensureMounted(): boolean {
+  if (userMode === 'off') return false;
   if (canvas) return true;
   const container = document.getElementById('game-container');
   if (!container) return false;
@@ -429,10 +435,45 @@ export function ensureMounted(): boolean {
   return true;
 }
 
-/** 从 STYLES 里随机抽一个切换。 */
+/**
+ * 主菜单进入时由 battle.ts 调用，原意是"每局随机抽一次 style"。
+ * 现在尊重用户设置：off 跳过；指定 style 则锁定；random 才真随机。
+ */
 export function setRandomStyle(): void {
+  if (userMode === 'off') return;
+  if (userMode !== 'random') {
+    setStyle(userMode);
+    return;
+  }
   const names = Object.keys(STYLES);
   setStyle(names[Math.floor(Math.random() * names.length)]);
+}
+
+/**
+ * 应用用户在设置面板里选的背景模式。
+ *   'off'    → 取消 RAF + 隐藏 canvas
+ *   'random' → 解除锁定，下次进主菜单照常随机
+ *   其它     → 立刻切到指定 style 并锁定
+ */
+export function setBackgroundMode(mode: UserMode): void {
+  userMode = mode;
+  if (mode === 'off') {
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    if (canvas) canvas.style.display = 'none';
+    return;
+  }
+  if (canvas) canvas.style.display = '';
+  if (mode !== 'random') {
+    setStyle(mode); // ensureMounted + 重编译
+  } else if (!canvas) {
+    ensureMounted();
+  }
+  if (compiled && rafId === null) {
+    rafId = requestAnimationFrame(frame);
+  }
 }
 
 /** 切换 style，重新编译 shader。 */

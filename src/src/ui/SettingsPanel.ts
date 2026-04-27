@@ -6,7 +6,11 @@
 import { t, setLocale, getLocale, applyHtmlI18n } from '../demo/demo-i18n'
 import type { Locale } from '../demo/demo-i18n'
 import { getSettings, updateSettings } from '../core/UserSettings'
+import type { BackgroundMode } from '../core/UserSettings'
 import { setMasterVolume, playSound } from '../effects/sound'
+import { setBackgroundMode } from '../effects/balatroBackground'
+
+const BG_MODES: BackgroundMode[] = ['off', 'random', 'liquid', 'marble', 'cells', 'aurora', 'ink']
 
 let overlay: HTMLElement | null = null
 let escHandler: ((e: KeyboardEvent) => void) | null = null
@@ -44,6 +48,17 @@ export function openSettingsPanel(): void {
         </button>
       </div>
 
+      <div class="settings-row settings-bg-row">
+        <label class="settings-label">${esc(t('settings.background'))}</label>
+        <div class="settings-bg-btns">
+          ${BG_MODES.map(m => `
+            <button class="settings-lang-btn ${settings.backgroundMode === m ? 'active' : ''}" data-bg="${m}">
+              ${esc(t('settings.bg.' + m))}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
       <div class="settings-divider"></div>
 
       <button class="settings-reset-btn" id="settings-reset">${esc(t('settings.reset'))}</button>
@@ -64,7 +79,7 @@ export function openSettingsPanel(): void {
   })
 
   // Language buttons
-  overlay.querySelectorAll('.settings-lang-btn').forEach(btn => {
+  overlay.querySelectorAll('.settings-lang-btns .settings-lang-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       playSound('click')
       const lang = (btn as HTMLElement).dataset.lang as Locale
@@ -86,6 +101,19 @@ export function openSettingsPanel(): void {
     applyCRT(enabled)
     crtBtn.textContent = enabled ? 'ON' : 'OFF'
     crtBtn.classList.toggle('active', enabled)
+  })
+
+  // Background style picker
+  overlay.querySelectorAll('.settings-bg-btns [data-bg]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playSound('click')
+      const mode = (btn as HTMLElement).dataset.bg as BackgroundMode
+      updateSettings({ backgroundMode: mode })
+      setBackgroundMode(mode)
+      overlay?.querySelectorAll('.settings-bg-btns [data-bg]').forEach(b => {
+        b.classList.toggle('active', (b as HTMLElement).dataset.bg === mode)
+      })
+    })
   })
 
   // Reset
@@ -125,6 +153,7 @@ export function applyAllSettings(): void {
   const s = getSettings()
   setMasterVolume(s.masterVolume)
   applyCRT(s.crtEnabled)
+  setBackgroundMode(s.backgroundMode)
 }
 
 function esc(s: string): string {

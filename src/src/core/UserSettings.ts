@@ -5,16 +5,20 @@
 
 const STORAGE_KEY = 'typing_roguelike_settings'
 
+export type BackgroundMode = 'off' | 'random' | 'liquid' | 'marble' | 'cells' | 'aurora' | 'ink'
+
 export interface UserSettingsData {
   masterVolume: number   // 0-1
   crtEnabled: boolean
   locale: string         // 'zh' | 'en'
+  backgroundMode: BackgroundMode
 }
 
 const DEFAULTS: UserSettingsData = {
   masterVolume: 0.7,
   crtEnabled: true,
   locale: 'zh',
+  backgroundMode: 'random',
 }
 
 let current: UserSettingsData = { ...DEFAULTS }

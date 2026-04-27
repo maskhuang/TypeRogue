@@ -225,7 +225,7 @@ button, input, select, textarea { font-family: inherit; }
 /* ============================================ */
 .settings-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.45);
     display: flex; align-items: center; justify-content: center;
     z-index: 9500;
 }
@@ -263,6 +263,8 @@ button, input, select, textarea { font-family: inherit; }
     cursor: pointer;
 }
 .settings-toggle.active { border-color: #4ecdc4; color: #4ecdc4; }
+.settings-bg-row { flex-direction: column; align-items: stretch; gap: 8px; }
+.settings-bg-btns { display: flex; flex-wrap: wrap; gap: 6px; }
 .settings-divider { border-top: 1px solid #333; margin: 4px 0; }
 .settings-reset-btn {
     padding: 8px; font-size: var(--text-caption-size);
