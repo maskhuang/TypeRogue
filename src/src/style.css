@@ -85,9 +85,7 @@ button, input, select, textarea { font-family: inherit; }
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background:
-        radial-gradient(ellipse at 50% 35%, hsl(230, 25%, 16%) 0%, transparent 60%),
-        linear-gradient(180deg, hsl(230, 20%, 10%), hsl(240, 18%, 14%));
+    background: transparent;
     gap: 32px;
 }
 
@@ -176,6 +174,22 @@ button, input, select, textarea { font-family: inherit; }
 
 .lang-btn:hover { color: #aaa; }
 .lang-btn.active { color: #4ecdc4; border-color: #4ecdc4; }
+
+/* ============================================ */
+/* DYNAMIC SCENE BACKGROUND — Balatro 液态 shader  */
+/* canvas 由 effects/balatroBackground.ts 注入到    */
+/* #game-container 顶层；所有 screen 透明显露下层    */
+/* ============================================ */
+#balatro-bg-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    image-rendering: pixelated;
+}
+.screen { position: relative; z-index: 1; }
 
 #game-container {
     position: relative;
@@ -744,7 +758,7 @@ button, input, select, textarea { font-family: inherit; }
 /* ============================================ */
 /* SHOP SCREEN                                  */
 /* ============================================ */
-#shop-screen { flex-direction: column; background: #1a1a2e; overflow: hidden; }
+#shop-screen { flex-direction: column; background: transparent; overflow: hidden; }
 
 #shop-header {
     text-align: center;

@@ -12,6 +12,7 @@ import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension, emitResourceSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
+import { setPaletteHsl as setBgPalette, setLightnessBias as setBgLBias, setRandomStyle as setBgRandomStyle } from '../effects/balatroBackground';
 import { initFloatTextCanvas, spawnFloatText, spawnFlightText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput, isChargeSkill, isReechoSkill, resetStageProduced } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
@@ -264,7 +265,11 @@ export function showScreen(name: 'menu' | 'battle' | 'shop' | 'gameover' | 'ritu
   const restScreen = document.getElementById('rest-screen');
   if (restScreen) restScreen.style.display = name === 'rest' ? 'flex' : 'none';
 
-  if (name === 'menu') randomizeScreenBackground(el.mainMenuScreen);
+  if (name === 'menu') {
+    // 回主菜单时重抽 shader style（整局稳定），再走常规 palette 随机
+    setBgRandomStyle();
+    randomizeScreenBackground(el.mainMenuScreen);
+  }
 
   // 离开战斗屏幕时确保结算面板隐藏
   if (name !== 'battle') {
@@ -659,6 +664,7 @@ function playerCorrect(k: string): void {
   state.maxCombo = Math.max(state.maxCombo, state.combo);
   eventBus.emit('combo:update', { combo: state.combo });
   bumpCombo();
+  updateBgComboIntensity(state.combo);
 
   // 逐字重置：回音惩罚 + 蓄力累积
   for (const [, rt] of state.affixSkillStates) {
@@ -952,6 +958,7 @@ function playerWrong(pressedKey?: string, expectedKey?: string): void {
   // Story 36.3: 连击缓冲 — 保留 50% combo
   const buffered = calculateComboBuffer(state.combo);
   state.combo = buffered;
+  updateBgComboIntensity(state.combo);
   state.lastMilestone = 0;
   synergy.skillMultBonus = 0;
   if (buffered > 0) {
@@ -1984,16 +1991,29 @@ export const SCREEN_BG_PALETTE = [
   { h: 45,  s: 18 }, // 暗金
 ] as const;
 
-/** 对指定元素应用随机双色渐变背景 */
+/**
+ * 切换场景背景：随机选 palette；三屏共用一个 canvas。
+ * style 不在这里抽——它由 showScreen('menu') 在每次回主菜单时抽一次，整局保持稳定。
+ * el 参数保留是为了兼容历史调用点；实际渲染由 #balatro-bg-canvas（在 #game-container 内）负责。
+ */
 export function randomizeScreenBackground(el: HTMLElement): void {
+  void el;
   const p = SCREEN_BG_PALETTE[Math.floor(Math.random() * SCREEN_BG_PALETTE.length)];
-  const angle = Math.floor(Math.random() * 360);
-  const cx = 30 + Math.floor(Math.random() * 40);
-  const cy = 20 + Math.floor(Math.random() * 60);
-  el.style.background = [
-    `radial-gradient(ellipse at ${cx}% ${cy}%, hsl(${p.h}, ${p.s + 5}%, 28%) 0%, transparent 60%)`,
-    `linear-gradient(${angle}deg, hsl(${p.h}, ${p.s}%, 18%), hsl(${(p.h + 20) % 360}, ${p.s}%, 22%))`,
-  ].join(', ');
+  setBgPalette(p.h, p.s);
+}
+
+/**
+ * 战斗 bg 整屏 RGB 偏置跟 combo 数线性挂钩——"越打越亮"。
+ * combo=0 → 0；combo>=COMBO_BG_SATURATE → COMBO_BG_BIAS_MAX。
+ */
+const COMBO_BG_SATURATE = 100;
+const COMBO_BG_BIAS_MAX = 0.20;
+let _lastBgCombo = -1;
+export function updateBgComboIntensity(combo: number): void {
+  if (combo === _lastBgCombo) return;
+  _lastBgCombo = combo;
+  const ratio = Math.min(1, Math.max(0, combo / COMBO_BG_SATURATE));
+  setBgLBias(COMBO_BG_BIAS_MAX * ratio);
 }
 
 function randomizeBattleBackground(): void {
@@ -2047,6 +2067,7 @@ export async function startLevel(): Promise<void> {
     state.maxCombo = 0;
     state.multiplier = state.player.baseMultiplier;
   }
+  updateBgComboIntensity(state.combo);
   state.wordScore = 0;
   state.overkill = 0;
   _targetReached = false; // Story 42.2: 每关重置达标标志

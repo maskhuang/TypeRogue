@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>Balatro 背景 sandbox — TypeRogue</title>
+<style>
+  body {
+    margin: 0; padding: 24px;
+    background: #0a0a0f; color: #ddd;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    display: flex; gap: 24px; align-items: flex-start;
+  }
+  .stage {
+    width: 900px; height: 600px;
+    border: 2px solid #4a5568; border-radius: 0;
+    position: relative; overflow: hidden;
+    image-rendering: pixelated;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+  /* Optional: 模拟游戏内 vignette 给液态加一个画框 */
+  .stage.vignette::after {
+    content: '';
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at 50% 50%, transparent 55%, rgba(0,0,0,0.7) 100%);
+  }
+  /* 模拟前景文字 — 看流动会不会偷走注意力 */
+  .stage .fg-test {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 8px;
+    font-family: 'Press Start 2P', monospace;
+    color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,0.7);
+    pointer-events: none;
+    opacity: 0;
+  }
+  .stage.show-fg .fg-test { opacity: 1; }
+  .stage .fg-word { font-size: 36px; letter-spacing: 4px; }
+  .stage .fg-mult { font-size: 14px; color: #ffe66d; }
+  .stage .fg-combo { font-size: 12px; color: #4ecdc4; position: absolute; bottom: 16px; left: 16px; }
+
+  .panel {
+    width: 320px;
+    display: flex; flex-direction: column; gap: 14px;
+    font-size: 13px;
+  }
+  .panel h2 { margin: 0 0 4px; font-size: 14px; color: #aaa; }
+  .row { display: flex; flex-direction: column; gap: 4px; }
+  .row label { display: flex; justify-content: space-between; color: #aaa; }
+  .row label span:last-child { color: #fff; font-family: ui-monospace, monospace; }
+  input[type=range] { width: 100%; }
+  .toggles { display: flex; flex-wrap: wrap; gap: 8px; }
+  .toggles button {
+    background: #1d1f26; color: #ddd;
+    border: 1px solid #2a2d36; padding: 6px 10px;
+    border-radius: 6px; cursor: pointer; font: inherit;
+  }
+  .toggles button.active { background: #2c5fd1; border-color: #2c5fd1; }
+  .colors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .colors label { font-size: 11px; color: #aaa; display: flex; flex-direction: column; gap: 2px; }
+  .colors input[type=color] { height: 28px; width: 100%; padding: 0; border: 1px solid #2a2d36; background: transparent; cursor: pointer; }
+  .palette-row { display: flex; flex-wrap: wrap; gap: 4px; }
+  .palette-row button { width: 24px; height: 24px; padding: 0; border: 1px solid #2a2d36; cursor: pointer; }
+  .note { color: #6a7080; font-size: 11px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <canvas id="cv"></canvas>
+  <div class="fg-test">
+    <div class="fg-word">FRAGMENT</div>
+    <div class="fg-mult">BASE 8 × MULT 1.5 = 12</div>
+    <div class="fg-combo">COMBO 17</div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>液态参数</h2>
+  <div class="row">
+    <label>speed <span id="v-speed">0.10</span></label>
+    <input type="range" id="speed" min="0" max="0.5" step="0.005" value="0.10" />
+  </div>
+  <div class="row">
+    <label>spin_amount <span id="v-spin">0.25</span></label>
+    <input type="range" id="spin" min="0" max="1" step="0.01" value="0.25" />
+  </div>
+  <div class="row">
+    <label>contrast <span id="v-contrast">3.5</span></label>
+    <input type="range" id="contrast" min="0.5" max="6" step="0.1" value="3.5" />
+  </div>
+  <div class="row">
+    <label>pixel scale <span id="v-pixel">1</span></label>
+    <input type="range" id="pixel" min="1" max="8" step="1" value="1" />
+  </div>
+
+  <h2 style="margin-top:8px">三色 blob</h2>
+  <div class="colors">
+    <label>color1<input type="color" id="c1" value="#0c1d3d" /></label>
+    <label>color2<input type="color" id="c2" value="#5b3680" /></label>
+    <label>color3<input type="color" id="c3" value="#1f4848" /></label>
+  </div>
+  <div>
+    <div class="note" style="margin-bottom:4px">游戏内 8 色 palette 一键应用：</div>
+    <div class="palette-row" id="palette"></div>
+  </div>
+
+  <h2 style="margin-top:8px">叠加层</h2>
+  <div class="toggles">
+    <button data-toggle="vignette" class="active">Vignette</button>
+    <button data-toggle="fg">前景文字</button>
+  </div>
+
+  <div class="note">
+    可调旋钮全部对应 GLSL uniform。<br/>
+    speed 越大旋转越快；spin_amount=0 完全不旋转；<br/>
+    contrast 越大 blob 边界越锐利。<br/>
+    试试 speed 0.05 + vignette + fg 看会不会抢眼。
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Balatro-style background — minimal WebGL implementation
+// ============================================================
+
+const VERTEX_SRC = `#version 100
+attribute vec2 a_pos;
+void main() {
+  gl_Position = vec4(a_pos, 0.0, 1.0);
+}`;
+
+// Adapted from godotshaders.com/shader/balatro-background-shader/
+// (originally MunchyBtye's Balatro-style swirl)
+const FRAGMENT_SRC = `#version 100
+precision highp float;
+
+uniform vec2  u_resolution;
+uniform float u_time;
+uniform float u_speed;
+uniform float u_spin_amount;
+uniform float u_contrast;
+uniform float u_pixel_scale;
+uniform vec3  u_color1;
+uniform vec3  u_color2;
+uniform vec3  u_color3;
+
+#define SPIN_EASE 0.5
+
+void main() {
+  // Pixelation grid (像素感)
+  vec2 frag = gl_FragCoord.xy;
+  if (u_pixel_scale > 1.0) {
+    frag = floor(frag / u_pixel_scale) * u_pixel_scale;
+  }
+
+  // Centered, aspect-corrected UV in [-1, 1]-ish
+  float minSide = min(u_resolution.x, u_resolution.y);
+  vec2 uv = (frag - 0.5 * u_resolution) / minSide;
+
+  float speed   = u_time * u_speed;
+  float uv_len  = length(uv);
+
+  // 极坐标漩涡：离中心越远转得越快
+  float new_pixel_angle =
+      atan(uv.y, uv.x)
+      + speed
+      - SPIN_EASE * 20.0 * (u_spin_amount * uv_len + (1.0 - u_spin_amount));
+  vec2 mid = vec2(0.0);
+  uv = (vec2(uv_len * cos(new_pixel_angle), uv_len * sin(new_pixel_angle)) - mid);
+
+  uv *= 30.0;
+  speed = u_time * 2.0;
+  vec2 uv2 = vec2(uv.x + uv.y);
+
+  // 五次迭代 — 流体扭曲灵魂
+  for (int i = 0; i < 5; i++) {
+    uv2 += sin(max(uv.x, uv.y)) + uv;
+    uv  += 0.5 * vec2(
+      cos(5.1123314 + 0.353 * uv2.y + speed * 0.131121),
+      sin(uv2.x - 0.113 * speed)
+    );
+    uv  -= 1.0 * cos(uv.x + uv.y) - 1.0 * sin(uv.x * 0.711 - uv.y);
+  }
+
+  // 三色 blob 距离权重混合
+  float contrast_mod = (0.25 * u_contrast + 0.5 * u_spin_amount + 1.2);
+  float paint_res = min(2.0, max(0.0, length(uv) * 0.035 * contrast_mod));
+  float c1p = max(0.0, 1.0 - contrast_mod * abs(1.0 - paint_res));
+  float c2p = max(0.0, 1.0 - contrast_mod * abs(paint_res));
+  float c3p = 1.0 - min(1.0, c1p + c2p);
+
+  vec3 col = (0.3 / u_contrast) * u_color1
+           + (1.0 - 0.3 / u_contrast) * (u_color1 * c1p + u_color2 * c2p + u_color3 * c3p);
+
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+const cv = document.getElementById('cv');
+const gl = cv.getContext('webgl', { antialias: false, alpha: false });
+if (!gl) {
+  document.body.innerHTML = '<pre style="color:#f87171">WebGL 不可用</pre>';
+  throw new Error('no webgl');
+}
+
+function compileShader(type, src) {
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, src);
+  gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+    throw new Error(gl.getShaderInfoLog(sh));
+  }
+  return sh;
+}
+
+const vs = compileShader(gl.VERTEX_SHADER,   VERTEX_SRC);
+const fs = compileShader(gl.FRAGMENT_SHADER, FRAGMENT_SRC);
+const prog = gl.createProgram();
+gl.attachShader(prog, vs);
+gl.attachShader(prog, fs);
+gl.linkProgram(prog);
+if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+  throw new Error(gl.getProgramInfoLog(prog));
+}
+gl.useProgram(prog);
+
+// Fullscreen quad
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+  -1, -1,  1, -1,  -1, 1,
+  -1,  1,  1, -1,   1, 1,
+]), gl.STATIC_DRAW);
+const aPos = gl.getAttribLocation(prog, 'a_pos');
+gl.enableVertexAttribArray(aPos);
+gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+const u = {
+  resolution:  gl.getUniformLocation(prog, 'u_resolution'),
+  time:        gl.getUniformLocation(prog, 'u_time'),
+  speed:       gl.getUniformLocation(prog, 'u_speed'),
+  spin_amount: gl.getUniformLocation(prog, 'u_spin_amount'),
+  contrast:    gl.getUniformLocation(prog, 'u_contrast'),
+  pixel_scale: gl.getUniformLocation(prog, 'u_pixel_scale'),
+  color1:      gl.getUniformLocation(prog, 'u_color1'),
+  color2:      gl.getUniformLocation(prog, 'u_color2'),
+  color3:      gl.getUniformLocation(prog, 'u_color3'),
+};
+
+// Resize canvas to its CSS size with DPR
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.round(cv.clientWidth  * dpr);
+  const h = Math.round(cv.clientHeight * dpr);
+  if (cv.width !== w || cv.height !== h) {
+    cv.width = w; cv.height = h;
+    gl.viewport(0, 0, w, h);
+  }
+}
+
+// State
+let speed       = 0.10;
+let spinAmount  = 0.25;
+let contrast    = 3.5;
+let pixelScale  = 1;
+let color1 = [0.047, 0.114, 0.239];   // #0c1d3d
+let color2 = [0.357, 0.212, 0.502];   // #5b3680
+let color3 = [0.122, 0.282, 0.282];   // #1f4848
+
+function hexToRgb(hex) {
+  const v = parseInt(hex.slice(1), 16);
+  return [((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255];
+}
+
+function bind(id, valId, setter, fmt = (x) => x) {
+  const inp = document.getElementById(id);
+  const lab = document.getElementById(valId);
+  inp.addEventListener('input', () => {
+    const v = parseFloat(inp.value);
+    setter(v);
+    if (lab) lab.textContent = fmt(v);
+  });
+}
+bind('speed',    'v-speed',    v => speed = v,        v => v.toFixed(2));
+bind('spin',     'v-spin',     v => spinAmount = v,   v => v.toFixed(2));
+bind('contrast', 'v-contrast', v => contrast = v,     v => v.toFixed(1));
+bind('pixel',    'v-pixel',    v => pixelScale = v,   v => String(v|0));
+
+['c1', 'c2', 'c3'].forEach((id, i) => {
+  document.getElementById(id).addEventListener('input', e => {
+    const rgb = hexToRgb(e.target.value);
+    if (i === 0) color1 = rgb;
+    if (i === 1) color2 = rgb;
+    if (i === 2) color3 = rgb;
+  });
+});
+
+// Game palette presets — same SCREEN_BG_PALETTE entries, picked as 3-color sets
+const GAME_PALETTE = [
+  { h: 210, s: 25 }, { h: 230, s: 20 }, { h: 160, s: 20 }, { h: 280, s: 18 },
+  { h: 15,  s: 22 }, { h: 340, s: 18 }, { h: 190, s: 22 }, { h: 45,  s: 18 },
+];
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h/30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const toHex = x => Math.round(x * 255).toString(16).padStart(2, '0');
+  return '#' + toHex(f(0)) + toHex(f(8)) + toHex(f(4));
+}
+const palette = document.getElementById('palette');
+GAME_PALETTE.forEach(p => {
+  const btn = document.createElement('button');
+  btn.style.background = hslToHex(p.h, p.s, 25);
+  btn.title = `H${p.h}/S${p.s}`;
+  btn.addEventListener('click', () => {
+    // 3 stops along the lightness axis for the same hue, slight hue spread for blob mixing
+    const c1 = hslToHex(p.h - 10,           p.s + 5,  10);
+    const c2 = hslToHex(p.h,                p.s + 8,  22);
+    const c3 = hslToHex((p.h + 25) % 360,   p.s,      14);
+    document.getElementById('c1').value = c1; color1 = hexToRgb(c1);
+    document.getElementById('c2').value = c2; color2 = hexToRgb(c2);
+    document.getElementById('c3').value = c3; color3 = hexToRgb(c3);
+  });
+  palette.appendChild(btn);
+});
+
+const stage = document.getElementById('stage');
+document.querySelectorAll('.toggles button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.classList.toggle('active');
+    const t = btn.dataset.toggle;
+    if (t === 'vignette') stage.classList.toggle('vignette', btn.classList.contains('active'));
+    if (t === 'fg')       stage.classList.toggle('show-fg',  btn.classList.contains('active'));
+  });
+});
+
+const t0 = performance.now();
+function frame() {
+  resize();
+  const t = (performance.now() - t0) / 1000;
+  gl.uniform2f(u.resolution, cv.width, cv.height);
+  gl.uniform1f(u.time, t);
+  gl.uniform1f(u.speed, speed);
+  gl.uniform1f(u.spin_amount, spinAmount);
+  gl.uniform1f(u.contrast, contrast);
+  gl.uniform1f(u.pixel_scale, pixelScale);
+  gl.uniform3fv(u.color1, color1);
+  gl.uniform3fv(u.color2, color2);
+  gl.uniform3fv(u.color3, color3);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>
