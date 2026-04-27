@@ -102,6 +102,18 @@ button, input, select, textarea { font-family: inherit; }
 
 .menu-content { text-align: center; z-index: 1; }
 
+.menu-seal {
+    display: block;
+    width: 220px;
+    height: 220px;
+    margin: 0 auto 28px;
+    image-rendering: -webkit-optimize-contrast;
+    opacity: 0.92;
+    filter: drop-shadow(0 0 14px rgba(255,255,255,0.06));
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
 .menu-title {
     font-size: calc(var(--text-title-size) * 3);
     font-weight: bold;
