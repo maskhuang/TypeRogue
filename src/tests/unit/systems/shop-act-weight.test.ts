@@ -171,9 +171,9 @@ describe('seenSkillTypes 状态 (AC5)', () => {
   })
 })
 
-// === 21.4: 第一关金币保底 ===
-describe('第一关金币保底 (21.4 AC5)', () => {
-  it('shop.ts 包含 level 1 金币保底逻辑', async () => {
+// === 21.4: 第一关香蕉保底 ===
+describe('第一关香蕉保底 (21.4 AC5)', () => {
+  it('shop.ts 包含 level 1 香蕉保底逻辑', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
@@ -184,7 +184,7 @@ describe('第一关金币保底 (21.4 AC5)', () => {
     expect(content).toContain('prod_treasury')
   })
 
-  it('金币保底检查 gold source 和 target', async () => {
+  it('香蕉保底检查 gold source 和 target', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
@@ -193,7 +193,7 @@ describe('第一关金币保底 (21.4 AC5)', () => {
     expect(content).toContain("target === 'gold'")
   })
 
-  it('金币保底替换逻辑存在', async () => {
+  it('香蕉保底替换逻辑存在', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const shopPath = path.resolve(__dirname, '../../../src/systems/shop.ts')
@@ -248,8 +248,8 @@ describe('热力图维度选择器 (21.5 AC4)', () => {
   })
 })
 
-// === 21.5: 统计面板金币总计 ===
-describe('统计面板金币总计 (21.5 AC5)', () => {
+// === 21.5: 统计面板香蕉总计 ===
+describe('统计面板香蕉总计 (21.5 AC5)', () => {
   it('renderStatsPanel 计算 totalGold', async () => {
     const fs = await import('fs')
     const path = await import('path')
@@ -257,7 +257,7 @@ describe('统计面板金币总计 (21.5 AC5)', () => {
     const content = fs.readFileSync(shopPath, 'utf-8')
     expect(content).toContain('totalGold')
     expect(content).toContain('ks.resources.gold')
-    expect(content).toContain('💰')
+    expect(content).toContain('🍌')
   })
 })
 

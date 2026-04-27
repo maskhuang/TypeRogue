@@ -67,7 +67,7 @@ export const DEADLY_GIFT_REWARDS: { maxOverkill: number; gold: number; tier: str
   { maxOverkill: 0.15, gold: 45,  tier: 'great',      action: 'random_relic' },       // 5-15%：随机获得1个遗物
   { maxOverkill: 0.30, gold: 25,  tier: 'good',       action: 'free_refreshes' },     // 15-30%：5次免费刷新
   { maxOverkill: 0.50, gold: 12,  tier: 'fair',       action: 'time_buff' },          // 30-50%：下关+8s时间
-  { maxOverkill: Infinity, gold: 5, tier: 'minimal',  action: 'none' },               // >50%：仅金币
+  { maxOverkill: Infinity, gold: 5, tier: 'minimal',  action: 'none' },               // >50%：仅香蕉
 ]
 
 export function getDeadlyGiftReward(score: number, target: number): DeadlyGiftResult {

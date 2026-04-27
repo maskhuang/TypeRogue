@@ -12,7 +12,7 @@ import type { ShopItem } from './ShopConfig'
  *
  * 职责:
  * - 显示商品信息（名称、价格、描述）
- * - 显示购买状态（可购买/金币不足/已购买）
+ * - 显示购买状态（可购买/香蕉不足/已购买）
  * - 处理选中状态
  */
 export class ShopItemDisplay extends Container {
@@ -79,7 +79,7 @@ export class ShopItemDisplay extends Container {
     this._item = item
     if (item) {
       this.nameText.text = name
-      this.priceText.text = `${actualPrice} 金币`
+      this.priceText.text = `${actualPrice} 香蕉`
       this.descText.text = description
     } else {
       this.nameText.text = ''

@@ -1,6 +1,6 @@
 // Tutorial (《初誓键徒须知》) — Delta Green-style three-layer tutorial
 // Hand-written per narrative-design.md, not AI-generated
-// Last updated: 2026-04-17
+// Last updated: 2026-04-21 — synced with v2.2 (语言碎片假说, 气动征用管, 感知深度)
 //
 // Three-layer structure per module:
 //   body:    Institutional voice (📄) — clear, actionable rules with numbering
@@ -32,104 +32,103 @@ export interface TutorialModule {
 
 export const TUTORIAL_MODULES: TutorialModule[] = [
   // ──────────────────────────────────────────────
-  // Module 1: Inscription & Containment Threshold
+  // Module 1: Containment Procedure
+  // Institution tells you the MINIMUM to execute.
+  // Previous keybound fills in what actually helps.
   // ──────────────────────────────────────────────
   {
-    id: "inscription_basics",
-    title_zh: "第一章 · 铭刻与收容基准",
-    title_en: "Chapter I · Inscription & Containment Threshold",
+    id: "containment_procedure",
+    title_zh: "第一章 · 收容程序",
+    title_en: "Chapter I · Containment Procedure",
     trigger: "first_battle",
     lines: [
       {
-        body_zh: "一、铸印版上将显现收容词语。逐字按下圣坛上对应键位。铅字亮绿即为正确。亮红即为收容震颤——立即按正确键位修正。",
-        body_en: "I. Containment words appear on the impression plate. Press corresponding keys on thy lectern, letter by letter. Green confirms. Red is a containment tremor — press the correct key immediately.",
-        margin_zh: "看中间那块铁板",
-        margin_en: "Look at that iron plate in the middle",
+        body_zh: "一、词语显现时，按圣坛上对应键位逐字铭刻。绿灯正确。红灯错误，立即修正。",
+        body_en: "I. When words manifest, inscribe letter by letter on thy lectern. Green: correct. Red: error — correct immediately.",
       },
       {
-        body_zh: "二、沙漏上方之数值为收容基准。铭分（沙漏下方）须达到此数。达到即收容成功，进入下一层。",
-        body_en: "II. The number above the hourglass is the containment threshold. Thy score (below the hourglass) must reach it. Success grants passage to the next layer.",
-        margin_zh: "就是说上面的数要比下面大",
-        margin_en: "Top number needs to beat bottom number",
+        body_zh: "二、铭分达到收容基准即完成。沙漏为时限。",
+        body_en: "II. Reach the containment threshold to complete. The hourglass is thy limit.",
+        margin_zh: "盯着那两个数",
+        margin_en: "Watch the two numbers",
       },
       {
-        body_zh: "三、沙漏为时限。沙尽即停。不可暂停。不可续加。不可申诉。",
-        body_en: "III. The hourglass is thy time limit. When sand runs out, it ends. No pausing. No extensions. No appeals.",
-        margin_zh: "真的",
-        margin_en: "Seriously",
+        body_zh: "三、失败即站点污染。不可暂停。不可申诉。",
+        body_en: "III. Failure constitutes site contamination. No pausing. No appeals.",
+      },
+      {
+        body_zh: "四、收容完成后如感知发生变化，请勿离开工位。此为正常现象。",
+        body_en: "IV. Should perception shift upon completion, remain at thy station. This is normal.",
+        margin_zh: "别慌 坐着别动",
+        margin_en: "Don't panic. Stay seated",
       },
     ],
-    footer_zh: "备注：如对上述内容有疑问，请提交 F-009 咨询表。平均回复周期为 ██ 个工作日。",
-    footer_en: "Note: For questions, submit Form F-009. Average response time: ██ working days.",
+    footer_zh: "如有疑问，提交 F-009。回复周期 ██ 个工作日。",
+    footer_en: "Questions: submit F-009. Response time: ██ working days.",
   },
 
   // ──────────────────────────────────────────────
-  // Module 2: Inscriptions & Holy Flow
+  // Module 2: Issued Equipment
+  // Institution doesn't explain HOW tools work.
+  // "Tools have been issued. Use per procedure."
+  // The previous keybound explains the rest.
   // ──────────────────────────────────────────────
   {
-    id: "skills_and_flow",
-    title_zh: "第二章 · 铭文组与圣流",
-    title_en: "Chapter II · Inscriptions & Holy Flow",
+    id: "issued_equipment",
+    title_zh: "第二章 · 配发器材",
+    title_en: "Chapter II · Issued Equipment",
     trigger: "first_skill",
     lines: [
       {
-        body_zh: "一、铭文组为汝之收容工具。获得铭文组后须绑定至圣坛键位，方可在铭刻时激活。",
-        body_en: "I. Inscriptions are thy containment tools. After acquisition, bind them to lectern keys to activate during inscription.",
-        margin_zh: "底下那排亮着的键",
-        margin_en: "The lit keys at the bottom",
+        body_zh: "一、铭文组已配发。绑定至圣坛键位后方可使用。未绑定之铭文组不产生效力。",
+        body_en: "I. Inscriptions have been issued. Bind to lectern keys before use. Unbound inscriptions have no effect.",
+        margin_zh: "底下那排亮的",
+        margin_en: "The lit row below",
       },
       {
-        body_zh: "二、铭刻词语时，已绑定的铭文组自动积蓄圣流（键位旁之色条）。色条蓄满时铭文组释放效力。不同铭文组产出不同颜色之圣流。",
-        body_en: "II. While inscribing, bound inscriptions automatically accumulate holy flow (the color bar beside each key). When full, the inscription releases its power. Different inscriptions yield different flow colors.",
-        margin_zh: "注意看键旁边的小彩条",
-        margin_en: "Watch the little color bars next to each key",
+        body_zh: "二、铭刻时，已绑定之铭文组按规程运作。效果因器材而异。详情不在本须知范围内。",
+        body_en: "II. During inscription, bound equipment operates per procedure. Effects vary. Details are outside the scope of this document.",
+        margin_zh: "看键旁边那个彩条",
+        margin_en: "Watch the color bar by each key",
       },
       {
-        body_zh: "三、多个铭文组可同时绑定。不同铭文组之间可能产生配合效应。教堂不鼓励、不禁止、亦不解释此类现象。",
-        body_en: "III. Multiple inscriptions may be bound simultaneously. Combinations may produce synergies. The Cathedral neither encourages, prohibits, nor explains such phenomena.",
-        margin_zh: "试试颜色不一样的",
-        margin_en: "Try mixing different colors",
+        body_zh: "三、可同时绑定多组。教堂不对器材间之相互作用承担说明义务。",
+        body_en: "III. Multiple inscriptions may be bound. The Cathedral assumes no obligation to explain inter-equipment interactions.",
       },
     ],
-    footer_zh: "备注：前任键徒在本页夹了一张纸条：'先看颜色再选铭文。别像我一样全绑同色的然后死在第三层。'纸条已按规定归档。内容未经审核。",
-    footer_en: "Note: A previous keybound left a slip of paper in this page: 'Pick by color first. Don't do what I did and bind all the same color and die on layer three.' The note has been filed per regulation. Contents unverified.",
+    footer_zh: "本章所述器材之原理属 ██ 级限制信息。键徒无需理解原理即可执行收容。",
+    footer_en: "Operating principles of said equipment are ██-level restricted. Keybound need not understand principles to execute containment.",
   },
 
   // ──────────────────────────────────────────────
-  // Module 3: Reliquary Bazaar & Inscription Mgmt
+  // Module 3: Requisition & Maintenance
+  // Institution tells you: there's a tube, spend coins, bind stuff.
+  // Previous keybound tells you: how to actually navigate the shop.
   // ──────────────────────────────────────────────
   {
-    id: "shop_and_management",
-    title_zh: "第三章 · 圣物市集与铭文管理",
-    title_en: "Chapter III · Reliquary Bazaar & Inscription Management",
+    id: "requisition",
+    title_zh: "第三章 · 征用与维护",
+    title_en: "Chapter III · Requisition & Maintenance",
     trigger: "first_shop",
     lines: [
       {
-        body_zh: "一、层间休整时可进入圣物市集。陈列之铭文组与圣器可消耗铅币征用。铅币来源为铭刻产出。量入为出。",
-        body_en: "I. Between layers, the Reliquary Bazaar is available. Displayed inscriptions and artifacts may be requisitioned for lead coins. Coins come from inscription output. Budget accordingly.",
-        margin_zh: "就是商店界面",
-        margin_en: "It's the shop screen",
+        body_zh: "一、收容间歇可通过气动征用管申领器材。消耗铅币。铅币由铭刻产出。超支不予补贴。",
+        body_en: "I. Between containment assignments, equipment may be requisitioned via the Pneumatic Tube. Costs lead coins. Coins from inscription output. Overspending is not subsidized.",
       },
       {
-        body_zh: "二、征用后须将铭文组嵌入圣坛键位方可生效。键位有限。如需更换，将铭文组拖离键位即可。——教堂声明铭文组不因此损坏。大概。",
-        body_en: "II. After requisition, bind the inscription to a lectern key to activate it. Keys are limited. To swap, drag the inscription off the key. The Cathedral states inscriptions are not damaged by this. Probably.",
-        margin_zh: "拖过去就行 能换 不会坏",
-        margin_en: "Just drag it over. You can swap. Won't break",
+        body_zh: "二、征用后绑定至键位。如需更换，自行调整。键位有限。教堂不提供额外键位。",
+        body_en: "II. Bind requisitioned items to keys. Swap as needed. Keys are limited. The Cathedral does not provide additional keys.",
+        margin_zh: "拖过去就行\n不会坏",
+        margin_en: "Just drag it\nWon't break",
       },
       {
-        body_zh: "三、可消耗铅币换架（更新市集陈列）。新陈列随机。换架次数不限。铅币有限。自行斟酌。",
-        body_en: "III. Spend lead coins to restock (refresh the display). New stock is random. Restocks are unlimited. Coins are not. Use judgment.",
-        margin_zh: "不满意就刷",
-        margin_en: "Don't like it? Reroll",
-      },
-      {
-        body_zh: "四、铭文组可晋铸（升级）。晋铸时自动获得祝圣（附魔）。祝圣种类随机。教堂不接受祝圣相关之退换申请。",
-        body_en: "IV. Inscriptions may be elevated (upgraded). Elevation automatically grants a consecration (enchantment). Consecration type is random. The Cathedral does not accept consecration-related return requests.",
-        margin_zh: "升一级还送个随机效果",
-        margin_en: "Level up and get a random bonus",
+        body_zh: "三、可申请换架。可申请晋铸。相关费用自理。",
+        body_en: "III. Restock requests available. Elevation requests available. All costs borne by keybound.",
+        margin_zh: "换架就是刷新\n晋铸就是升级",
+        margin_en: "Restock = new stuff\nElevate = upgrade",
       },
     ],
-    footer_zh: "备注：市集角落偶有手写便条。此为前任经营者个人物品，非教堂公文。教堂不为其准确性、时效性或情绪稳定性负责。",
-    footer_en: "Note: Handwritten notes occasionally appear in bazaar corners. These are personal effects of the previous operator, not Cathedral documents. The Cathedral accepts no responsibility for their accuracy, timeliness, or emotional stability.",
+    footer_zh: "征用管附近偶见手写便条。非教堂公文。教堂不为其内容负责。亦不为阅读后产生之任何期望负责。",
+    footer_en: "Notes found near the tube are not Cathedral documents. The Cathedral is not responsible for their contents, nor for any expectations formed upon reading them.",
   },
 ] as const

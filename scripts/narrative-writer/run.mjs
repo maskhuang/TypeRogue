@@ -34,7 +34,7 @@ function parseArgs() {
     all: false,
     noReview: false,
     noAiReview: false,
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     batchSize: 5,
     dryRun: false,
   }
@@ -73,7 +73,7 @@ function parseArgs() {
     process.exit(1)
   }
 
-  if (opts.type && !opts.all && !opts.id && !['altar', 'shopnote', 'ritual', 'scriptorNotes'].includes(opts.type)) {
+  if (opts.type && !opts.all && !opts.id && !['shopnote', 'ritual', 'scriptorNotes'].includes(opts.type)) {
     console.error(`类型 ${opts.type} 需要 --id <id> 或 --all`)
     process.exit(1)
   }
@@ -92,11 +92,11 @@ function printHelp() {
 
 类型:
   relic, affix, enchantment, bossModifier, class,
-  ritual, tutorial, achievement, altar, shopnote
+  ritual, tutorial, achievement, scriptorNotes, shopnote
 
 选项:
-  --voice <bell|doc|altar|note>   指定单个声音（否则生成全部适用声音）
-  --model <model-id>              Claude 模型（默认 claude-sonnet-4-20250514）
+  --voice <bell|doc|note>         指定单个声音（v3：altar 已废弃）
+  --model <model-id>              Claude 模型（默认 claude-sonnet-4-6）
   --batch-size <n>                批量生成每批数量（默认 5）
   --no-review                     跳过人工审核
   --no-ai-review                  跳过 AI 自审
@@ -116,6 +116,167 @@ function createClient() {
   return new Anthropic({ apiKey })
 }
 
+// Structured output schemas per voice
+const VOICE_SCHEMAS = {
+  // Single item schemas
+  bell: {
+    type: 'object',
+    properties: {
+      name_zh: { type: 'string' },
+      name_en: { type: 'string' },
+      text_zh: { type: 'string' },
+      text_en: { type: 'string' },
+      // Optional affix fields
+      sigil_name_zh: { type: 'string' },
+      sigil_name_en: { type: 'string' },
+    },
+    required: ['text_zh', 'text_en'],
+    additionalProperties: false,
+  },
+  doc: {
+    type: 'object',
+    properties: {
+      text_zh: { type: 'string' },
+      text_en: { type: 'string' },
+    },
+    required: ['text_zh', 'text_en'],
+    additionalProperties: false,
+  },
+  // EN-only schema for doc voice first pass (avoids zh truncation)
+  doc_en: {
+    type: 'object',
+    properties: {
+      text_en: { type: 'string' },
+    },
+    required: ['text_en'],
+    additionalProperties: false,
+  },
+  // ZH-only schema for doc voice translation pass
+  doc_zh: {
+    type: 'object',
+    properties: {
+      text_zh: { type: 'string' },
+    },
+    required: ['text_zh'],
+    additionalProperties: false,
+  },
+  altar: {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        source: { type: 'string' },
+        text_zh: { type: 'string' },
+        text_en: { type: 'string' },
+      },
+      required: ['source', 'text_zh', 'text_en'],
+      additionalProperties: false,
+    },
+  },
+  note: {
+    type: 'object',
+    properties: {
+      text_zh: { type: 'string' },
+      text_en: { type: 'string' },
+    },
+    required: ['text_zh', 'text_en'],
+    additionalProperties: false,
+  },
+}
+
+// ─── Doc Voice: EN-first + ZH translation ───
+
+const TRANSLATE_ZH_PROMPT = `你是 X 集团 · 灵长类辅助文书部的政策协调员。将以下英文档案 / 政策 / 工种文书创作为同等质量的中文版本。
+
+## 要求
+- 这不是翻译——是用中文重新创作同一份文书，质量和信息密度对等
+- 保持相同的文书格式（4 段式 MIB 装备文书 / 政策颁布文 / 工种简介 / HR 入职文件）
+- 编号 / 分类码（B-7 类、C-2 类、Section 9、Section 11、政策 #082、F-XXX、RX-617）保持原样
+- ██ 遮蔽保持原样
+- 工号 (#485,902 / #485,901) 保持原样
+- 体制用词用中文对应：HR → HR / 人力资源处；Section → Section（保留英文）；Floor 7 → 7 楼；the upstream → 上游；Maintenance Group → 维修组
+- 保留 v3 员工腔：公文 / 被动语态 / 无情绪 / 行政口吻
+- B1.a 严守：力量是"被分发"，禁用 钻研 / 突破 / 领悟 / 觉醒 / 发明 / 共鸣 / 心法 / 灵感 / 激活（自身）
+- 严禁 v2.3 残留：圣印 / 守卷人 / 大教堂 / 圣坛 / 铅币 / 异文 / 誓门 / D-XXXX 编号 / Litany / Scriptor / Sigil
+- 严禁游戏术语和机制透明词
+- 中文版应完整，不要截断
+
+## 英文原文
+`
+
+// Build batch schema (array of items with id)
+function getBatchSchema(voice, count) {
+  const itemSchema = VOICE_SCHEMAS[voice]
+  if (!itemSchema) return null
+  // For array types (altar), return as-is
+  if (itemSchema.type === 'array') return itemSchema
+  // For single-item schemas, wrap in array with id
+  return {
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        ...itemSchema.properties,
+      },
+      required: ['id', ...(itemSchema.required || [])],
+      additionalProperties: false,
+    },
+  }
+}
+
+function _logCompletion(elapsed, usage, stopReason) {
+  const cacheInfo = usage.cache_read_input_tokens
+    ? ` 缓存命中 ${usage.cache_read_input_tokens}`
+    : usage.cache_creation_input_tokens
+      ? ` 缓存创建 ${usage.cache_creation_input_tokens}`
+      : ''
+  const truncated = stopReason === 'max_tokens'
+  console.log(`✅ 完成 (${elapsed}s, 输入 ${usage.input_tokens} / 输出 ${usage.output_tokens} tokens${cacheInfo})${truncated ? ' ⚠️ 输出被截断' : ''}`)
+  return truncated
+}
+
+// Structured output call — guaranteed valid JSON, no parsing needed
+async function callClaudeStructured(client, { system, user }, label, model, schema) {
+  console.log(`\n${'='.repeat(50)}`)
+  console.log(`🔄 ${label}...`)
+  console.log(`${'='.repeat(50)}`)
+
+  const startTime = Date.now()
+
+  const systemParam = [
+    { type: 'text', text: system.cached, cache_control: { type: 'ephemeral' } },
+    ...(system.extra ? [{ type: 'text', text: system.extra }] : []),
+  ]
+
+  const response = await client.messages.create({
+    model,
+    max_tokens: 16384,
+    system: systemParam,
+    messages: [{ role: 'user', content: user }],
+    output_config: {
+      format: {
+        type: 'json_schema',
+        schema,
+      },
+    },
+  })
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+  const truncated = _logCompletion(elapsed, response.usage, response.stop_reason)
+
+  // With structured outputs, content[0].text is guaranteed valid JSON
+  try {
+    const parsed = JSON.parse(response.content[0].text)
+    return { data: parsed, truncated }
+  } catch (e) {
+    // Should never happen with structured outputs, but handle gracefully
+    console.error(`   ⚠️ Structured output parse error (unexpected): ${e.message}`)
+    return { data: null, truncated: true }
+  }
+}
+
+// Legacy text call — for AI review, self-edit, and other freeform outputs
 async function callClaude(client, { system, user }, label, model) {
   console.log(`\n${'='.repeat(50)}`)
   console.log(`🔄 ${label}...`)
@@ -136,17 +297,9 @@ async function callClaude(client, { system, user }, label, model) {
   })
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
-  const text = response.content[0].text
-  const usage = response.usage
+  const truncated = _logCompletion(elapsed, response.usage, response.stop_reason)
 
-  const cacheInfo = usage.cache_read_input_tokens
-    ? ` 缓存命中 ${usage.cache_read_input_tokens}`
-    : usage.cache_creation_input_tokens
-      ? ` 缓存创建 ${usage.cache_creation_input_tokens}`
-      : ''
-  console.log(`✅ 完成 (${elapsed}s, 输入 ${usage.input_tokens} / 输出 ${usage.output_tokens} tokens${cacheInfo})`)
-
-  return text
+  return { text: response.content[0].text, truncated }
 }
 
 function fixJsonNewlines(text) {
@@ -288,6 +441,21 @@ export const ${constName} = ${JSON.stringify(merged, null, 2)} as const
 
 // ─── Generation Pipeline ───
 
+async function translateDocToZh(client, enText, obj, type, template, opts) {
+  const label = `translate-zh ${type}/${obj.id || obj.name}`
+  const { data: parsed } = await callClaudeStructured(
+    client,
+    {
+      system: { cached: SYSTEM_CONTEXT, extra: TRANSLATE_ZH_PROMPT + enText },
+      user: `请为以上英文档案创作中文版本。输出完整中文档案条目。`,
+    },
+    label,
+    opts.model,
+    VOICE_SCHEMAS.doc_zh,
+  )
+  return parsed?.text_zh || null
+}
+
 async function generateForObject(client, obj, type, voices, opts) {
   const results = []
   const voiceConfig = VOICE_MAP[type] || {}
@@ -306,17 +474,39 @@ async function generateForObject(client, obj, type, voices, opts) {
       continue
     }
 
-    const raw = await callClaude(
+    // Doc voice: EN-first, then translate to ZH
+    if (voice === 'doc') {
+      const enPrompt = userPrompt + '\n\n⚠️ Output English only. Write the complete English document.'
+      const { data: enParsed } = await callClaudeStructured(
+        client,
+        {
+          system: { cached: SYSTEM_CONTEXT, extra: 'You are a policy coordinator at X Group · Primate Auxiliary Documentation Department (v3). Generate the English document in the v3 voice.' },
+          user: enPrompt,
+        },
+        `${type}/${obj.id || obj.name}/doc-en`,
+        opts.model,
+        VOICE_SCHEMAS.doc_en,
+      )
+      if (!enParsed) continue
+
+      const zhText = await translateDocToZh(client, enParsed.text_en, obj, type, cfg.template, opts)
+      const frag = { text_en: enParsed.text_en, text_zh: zhText || '', _objectId: obj.id || obj.name, _voice: 'doc' }
+      results.push(frag)
+      continue
+    }
+
+    const schema = VOICE_SCHEMAS[voice]
+    const { data: parsed } = await callClaudeStructured(
       client,
       {
-        system: { cached: SYSTEM_CONTEXT, extra: `你是活字大教堂的首席抄写员。为游戏对象生成 flavor text。` },
+        system: { cached: SYSTEM_CONTEXT, extra: `你是 X 集团 · 灵长类辅助文书部 · 政策协调员（v3）。为游戏对象生成 v3 体制语言 flavor text。` },
         user: userPrompt,
       },
       `${type}/${obj.id || obj.name}/${voice}`,
       opts.model,
+      schema,
     )
 
-    const parsed = parseJSON(raw, `${type}/${voice}`)
     if (!parsed) continue
 
     // Normalize: single object or array
@@ -335,36 +525,99 @@ async function generateForObject(client, obj, type, voices, opts) {
 async function generateBatch(client, objects, type, voice, template, opts) {
   const results = []
 
-  // Split into batches
-  for (let i = 0; i < objects.length; i += opts.batchSize) {
-    const batch = objects.slice(i, i + opts.batchSize)
-    console.log(`\n  批次 ${Math.floor(i / opts.batchSize) + 1}/${Math.ceil(objects.length / opts.batchSize)} (${batch.length} 对象)`)
+  // Doc voice: EN-first pipeline, one at a time
+  if (voice === 'doc') {
+    for (let i = 0; i < objects.length; i++) {
+      const obj = objects[i]
+      const objId = obj.id || obj.name
+      console.log(`\n  [${i + 1}/${objects.length}] ${objId}`)
 
-    const userPrompt = buildBatchPrompt(batch, type, voice, template)
+      if (opts.dryRun) {
+        console.log('  [DRY RUN] Prompt built, skipping API call')
+        continue
+      }
+
+      // Step 1: Generate EN
+      const userPrompt = buildUserPrompt(obj, type, voice, template)
+        + '\n\n⚠️ Output English only. Write the complete English document.'
+      const { data: enParsed, truncated } = await callClaudeStructured(
+        client,
+        {
+          system: { cached: SYSTEM_CONTEXT, extra: 'You are a policy coordinator at X Group · Primate Auxiliary Documentation Department (v3). Generate the English document in the v3 voice.' },
+          user: userPrompt,
+        },
+        `${type}/${objId}/doc-en`,
+        opts.model,
+        VOICE_SCHEMAS.doc_en,
+      )
+
+      if (!enParsed) {
+        if (truncated) console.error(`   ⚠️ EN 截断，跳过`)
+        continue
+      }
+
+      // Step 2: Translate EN → ZH
+      const zhText = await translateDocToZh(client, enParsed.text_en, obj, type, template, opts)
+
+      const frag = {
+        text_en: enParsed.text_en,
+        text_zh: zhText || '',
+        _voice: 'doc',
+        _objectId: objId,
+      }
+      results.push(frag)
+    }
+    return results
+  }
+
+  // Non-doc voices: batch as before
+  const effectiveBatchSize = opts.batchSize
+  for (let i = 0; i < objects.length; i += effectiveBatchSize) {
+    const batch = objects.slice(i, i + effectiveBatchSize)
+    console.log(`\n  批次 ${Math.floor(i / effectiveBatchSize) + 1}/${Math.ceil(objects.length / effectiveBatchSize)} (${batch.length} 对象)`)
 
     if (opts.dryRun) {
       console.log('  [DRY RUN] Prompt built, skipping API call')
       continue
     }
 
-    const raw = await callClaude(
+    let batchItems = batch
+
+    const schema = batchItems.length === 1
+      ? VOICE_SCHEMAS[voice]
+      : getBatchSchema(voice, batchItems.length)
+
+    if (!schema) {
+      console.error(`   ⚠️ No schema for voice: ${voice}, falling back to text mode`)
+      break
+    }
+
+    const userPrompt = batchItems.length === 1
+      ? buildUserPrompt(batchItems[0], type, voice, template)
+      : buildBatchPrompt(batchItems, type, voice, template)
+
+    const { data: parsed, truncated } = await callClaudeStructured(
       client,
       {
-        system: { cached: SYSTEM_CONTEXT, extra: `你是活字大教堂的首席抄写员。为游戏对象批量生成 flavor text。` },
+        system: { cached: SYSTEM_CONTEXT, extra: `你是 X 集团 · 灵长类辅助文书部 · 政策协调员（v3）。${batchItems.length === 1 ? '为游戏对象生成 v3 体制语言 flavor text。' : '为游戏对象批量生成 v3 体制语言 flavor text。'}` },
         user: userPrompt,
       },
-      `batch ${type}/${voice} [${i + 1}-${i + batch.length}]`,
+      batchItems.length === 1
+        ? `${type}/${batchItems[0].id || batchItems[0].name}/${voice}`
+        : `batch ${type}/${voice} [${i + 1}-${i + batchItems.length}]`,
       opts.model,
+      schema,
     )
 
-    const parsed = parseJSON(raw, `batch ${type}/${voice}`)
-    if (!parsed) continue
-
-    const fragments = Array.isArray(parsed) ? parsed : [parsed]
-    for (const frag of fragments) {
-      frag._voice = voice
-      if (!frag._objectId) frag._objectId = frag.id
-      results.push(frag)
+    if (parsed) {
+      const fragments = Array.isArray(parsed) ? parsed : [parsed]
+      for (const frag of fragments) {
+        frag._voice = voice
+        if (!frag._objectId) frag._objectId = frag.id || (batchItems.length === 1 ? (batchItems[0].id || batchItems[0].name) : undefined)
+        results.push(frag)
+      }
+    } else if (truncated) {
+      console.error(`   ⚠️ 结构化输出截断，跳过`)
     }
   }
 
@@ -383,17 +636,18 @@ async function generateStandalone(client, type, opts) {
     return []
   }
 
-  const raw = await callClaude(
+  const schema = VOICE_SCHEMAS[voice] || getBatchSchema(voice, 10)
+  const { data: parsed } = await callClaudeStructured(
     client,
     {
-      system: { cached: SYSTEM_CONTEXT, extra: `你是活字大教堂的首席抄写员。` },
+      system: { cached: SYSTEM_CONTEXT, extra: `你是 X 集团 · 灵长类辅助文书部 · 政策协调员（v3）。` },
       user: userPrompt,
     },
     `standalone ${type}`,
     opts.model,
+    schema,
   )
 
-  const parsed = parseJSON(raw, type)
   if (!parsed) return []
 
   const fragments = Array.isArray(parsed) ? parsed : [parsed]
@@ -430,7 +684,8 @@ ${JSON.stringify(fragment, null, 2)}
 async function selfEditFragment(client, fragment, voice, errors, opts) {
   const prompt = buildSelfEditPrompt(fragment, voice, errors)
 
-  const raw = await callClaude(
+  const editSchema = VOICE_SCHEMAS[voice]
+  const { data: parsed } = await callClaudeStructured(
     client,
     {
       system: { cached: SYSTEM_CONTEXT, extra: '你是叙事编辑员。仅修复指定的校验问题，不改动其他内容。' },
@@ -438,9 +693,8 @@ async function selfEditFragment(client, fragment, voice, errors, opts) {
     },
     `self-edit ${voice}/${fragment._objectId || '?'}`,
     opts.model,
+    editSchema,
   )
-
-  const parsed = parseJSON(raw, `self-edit ${voice}`)
   if (!parsed) return null
 
   // Preserve internal fields
@@ -487,7 +741,7 @@ async function selfEditBatch(client, fragments, validations, voice, opts) {
 
 // ─── Validation + Review ───
 
-async function validateAndReview(client, fragments, voice, opts) {
+async function validateAndReview(client, fragments, voice, opts, { objects, type, template } = {}) {
   // Phase 2: Validate
   console.log(`\n🔍 校验 ${fragments.length} 条 ${voice} 碎片...`)
   let validations = fragments.map(frag => validateFragment(frag, voice))
@@ -515,12 +769,62 @@ async function validateAndReview(client, fragments, voice, opts) {
     }
   }
 
+  // Phase 2c: Regenerate stubborn failures (1 attempt, no self-edit)
+  if (!opts.dryRun && client && objects && type && template) {
+    const stubbornFails = validations
+      .map((v, i) => ({ v, i }))
+      .filter(({ v }) => !v.passed)
+    if (stubbornFails.length > 0) {
+      console.log(`\n🔁 重新生成 ${stubbornFails.length} 条顽固失败...`)
+      for (const { v, i } of stubbornFails) {
+        const frag = currentFragments[i]
+        const objId = frag._objectId || frag.id
+        const obj = objects.find(o => (o.id || o.name) === objId)
+        if (!obj) continue
+
+        const failReasons = v.errors.join('; ')
+        const userPrompt = buildUserPrompt(obj, type, voice, template)
+          + `\n\n⚠��� 上次生成因以下原因被拒，请避免：${failReasons}`
+
+        const regenSchema = VOICE_SCHEMAS[voice]
+        const { data: regenParsed } = await callClaudeStructured(
+          client,
+          {
+            system: { cached: SYSTEM_CONTEXT, extra: `你是 X 集团 · 灵长类辅助文书部 · 政策协调员（v3）。重新生成一条被拒绝的 v3 flavor text。` },
+            user: userPrompt,
+          },
+          `regen ${voice}/${objId}`,
+          opts.model,
+          regenSchema,
+        )
+
+        if (!regenParsed) continue
+
+        const newFrag = Array.isArray(regenParsed) ? regenParsed[0] : regenParsed
+        newFrag._voice = voice
+        newFrag._objectId = objId
+        newFrag._regenerated = true
+
+        const reVal = validateFragment(newFrag, voice)
+        if (reVal.passed) {
+          currentFragments[i] = newFrag
+          validations[i] = reVal
+          console.log(`   ✓ ${objId} 重新生成成功`)
+        } else {
+          console.log(`   ✗ ${objId} 重新生成仍失败: ${reVal.errors.join('; ')}`)
+        }
+      }
+      passCount = validations.filter(v => v.passed).length
+      console.log(`   ✓ ${passCount}/${currentFragments.length} 通过`)
+    }
+  }
+
   // Phase 3: AI self-review
   let aiReviews = null
   if (!opts.noAiReview && !opts.dryRun) {
     console.log('🤖 AI 自审...')
     const reviewPrompt = buildReviewPrompt(currentFragments, voice)
-    const reviewRaw = await callClaude(
+    const { text: reviewRaw } = await callClaude(
       client,
       {
         system: { cached: SYSTEM_CONTEXT, extra: '你是叙事质量审核员。评审 flavor text 碎片。' },
@@ -541,8 +845,18 @@ async function validateAndReview(client, fragments, voice, opts) {
     return result.approved
   }
 
-  // No review: return all that passed validation
-  return currentFragments.filter((_, i) => validations[i].passed)
+  // No review: return all that passed validation, attach AI review scores for reference
+  return currentFragments.filter((_, i) => validations[i].passed).map(frag => {
+    if (aiReviews) {
+      const review = aiReviews.find(r => r.id === (frag._objectId || frag.id))
+      if (review) {
+        frag._aiScore = review.score
+        if (review.issues?.length) frag._aiIssues = review.issues
+        if (review.suggestion) frag._aiSuggestion = review.suggestion
+      }
+    }
+    return frag
+  })
 }
 
 // ─── Main ───
@@ -561,7 +875,7 @@ async function main() {
   // Determine what to generate
   // --all without --type = all types; --type X --all = all objects of type X
   const typesToProcess = (opts.all && !opts.type)
-    ? ['relic', 'affix', 'enchantment', 'bossModifier', 'class', 'scriptorNotes', 'altar', 'shopnote']
+    ? ['relic', 'affix', 'enchantment', 'bossModifier', 'class', 'scriptorNotes', 'shopnote']
     : [opts.type]
 
   for (const type of typesToProcess) {
@@ -578,7 +892,7 @@ async function main() {
     let fragments = []
 
     // Standalone types (altar, shopnote, ritual)
-    if (['altar', 'shopnote', 'ritual'].includes(type) && type !== 'scriptorNotes') {
+    if (['shopnote', 'ritual'].includes(type) && type !== 'scriptorNotes') {
       fragments = await generateStandalone(client, type, opts)
     }
     // Single object
@@ -630,9 +944,15 @@ async function main() {
     }
 
     // Validate + review each voice group
+    // Resolve objects list for regeneration support
+    const regenObjects = (!['altar', 'shopnote', 'ritual'].includes(type))
+      ? (opts.id ? [getObject(type, opts.id)] : getAllObjects(type))
+      : null
     const approved = []
     for (const [voice, voiceFragments] of Object.entries(byVoice)) {
-      const result = await validateAndReview(client, voiceFragments, voice, opts)
+      const cfg = voiceConfig[voice]
+      const result = await validateAndReview(client, voiceFragments, voice, opts,
+        regenObjects ? { objects: regenObjects, type, template: cfg?.template } : {})
       approved.push(...result)
     }
 

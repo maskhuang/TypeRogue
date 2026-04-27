@@ -38,7 +38,7 @@ export interface MutationResult {
   refineRefund?: number
   /** Evolve：稀有度提升结果 */
   evolveResult?: { rarityUp: boolean, extraAffix: boolean }
-  /** Harvest：获得金币 */
+  /** Harvest：获得香蕉 */
   harvestGold?: number
   /** Chain：需要连锁蜕变的技能 ID 列表 */
   chainMutateSkillIds?: string[]
@@ -301,13 +301,13 @@ export function mutate(skillId: string, allowedCategory?: AffixCategory): Mutati
     evolveResult = { rarityUp, extraAffix }
   }
 
-  // Harvest（收割）：被蜕变时获得金币
+  // Harvest（收割）：被蜕变时获得香蕉
   let harvestGold: number | undefined
   const harvestAffix = skill.affixes.find(a => a.type === AffixType.Harvest && !a.spent)
   if (harvestAffix) {
     const rt = state.affixSkillStates?.get(skillId)
     const isTransformed = rt?.questTransformed && skill.enchantmentIds?.includes(EnchantmentType.QuestHarvest as string)
-    // Lv1=50g, Lv2=100g, Lv3=150g, 质变=250g
+    // Lv1=50, Lv2=100, Lv3=150, 质变=250
     harvestGold = isTransformed ? 250 : 50 * skill.level
     state.gold = (state.gold ?? 0) + harvestGold
   }

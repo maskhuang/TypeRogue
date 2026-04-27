@@ -106,22 +106,22 @@ export const A10_TARGET_GROWTH = 1.55;
 /** A10: 错误扣时间秒数 (Story 54.8) */
 export const A10_ERROR_TIME_PENALTY = 2;
 
-// === Ascension: 练习关金币映射 (Story 54.2) ===
+// === Ascension: 练习关香蕉映射 (Story 54.2) ===
 export const PRACTICE_GOLD = {
   BASE: 100,           // 底金（effectiveScore=0 也拿这么多）
   TIER1_CAP: 200,      // 第一段上限分数
-  TIER1_RATE: 0.1,     // 0-200 分：0.1g/分
+  TIER1_RATE: 0.1,     // 0-200 分：0.1/分
   TIER2_CAP: 500,      // 第二段上限分数
-  TIER2_RATE: 0.06,    // 200-500 分：0.06g/分
-  TIER3_RATE: 0.02,    // 500+ 分：0.02g/分
-  HARD_CAP: 160,       // 金币硬上限
+  TIER2_RATE: 0.06,    // 200-500 分：0.06/分
+  TIER3_RATE: 0.02,    // 500+ 分：0.02/分
+  HARD_CAP: 160,       // 香蕉硬上限
   A1_MULT: 0.75,       // A1+ 效率系数
   FLOOR_PER_LEVEL: 50, // 地板分 = ascensionLevel × 此值
 };
 
 /**
- * 练习关得分 → 初始金币映射（纯函数）
- * 100g 底 + 分段递减奖励，A1+ 效率 ×0.75，上限 160g
+ * 练习关得分 → 初始香蕉映射（纯函数）
+ * 100 底 + 分段递减奖励，A1+ 效率 ×0.75，上限 160
  */
 export function computePracticeGold(effectiveScore: number, ascensionLevel: number): number {
   const { BASE, TIER1_CAP, TIER1_RATE, TIER2_CAP, TIER2_RATE, TIER3_RATE, HARD_CAP, A1_MULT } = PRACTICE_GOLD;
@@ -141,13 +141,13 @@ export function computePracticeGold(effectiveScore: number, ascensionLevel: numb
 
 // === 资源标签 ===
 export const RESOURCE_LABELS: Record<string, string> = {
-  base: '基数', score: '分数', multiplier: '倍率', time: '时间', gold: '金币',
+  base: '基数', score: '分数', multiplier: '倍率', time: '时间', gold: '香蕉',
   energy: '能量', mutagen: '变异素',
 };
 
 // === 资源图标 ===
 export const RESOURCE_ICONS: Record<string, string> = {
-  base: '⚔️', score: '🪙', multiplier: '🔥', time: '⏳', gold: '💰',
+  base: '🖊️', score: '🧾', multiplier: '🌟', time: '⏳', gold: '🍌',
   energy: '⚡', mutagen: '🧬',
 };
 
@@ -192,7 +192,7 @@ export const SOUND_PROFILES: Record<string, [number, number, number]> = {
   tab: [600, 750, 0.04],             // ↑轻微上行，标签切换
   toggle: [800, 600, 0.06],          // ↓中高频下行，开关切换
   equip: [350, 700, 0.10],           // ↑大跨度上行，装备/绑定
-  coins: [1200, 800, 0.05],          // ↓高频下行，金币/货币
+  coins: [1200, 800, 0.05],          // ↓高频下行，香蕉/货币
   unlock: [300, 900, 0.14],          // ↑大跨度上行，解锁
   warning: [250, 150, 0.08],         // ↓低频下行，警告
 };

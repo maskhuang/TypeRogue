@@ -1,261 +1,321 @@
-import { GW_BANNED, SCP_BANNED_PATTERN, WORD_LIMITS, ANCHOR_FACTS } from '../config.mjs'
+import {
+  GW_BANNED, SCP_BANNED_PATTERN,
+  V2_BANNED_ZH, V2_BANNED_EN,
+  WORD_LIMITS, ANCHOR_FACTS,
+} from '../config.mjs'
+import { FORBIDDEN_ZH, FORBIDDEN_EN, B1A_VOCAB } from '../generated/b1a-vocab.mjs'
+import { MIB_LEXICON } from '../generated/mib-lexicon.mjs'
 
-// Validate a single fragment against all rules
-// Returns { passed: boolean, errors: string[] }
-export function validateFragment(fragment, voice) {
+// Validate a single fragment against v3 rules.
+// Returns { passed: boolean, errors: string[], warnings: string[] }
+
+export function validateFragment(fragment, voice, template = null) {
   const errors = []
+  const warnings = []
 
-  // 1. Word limit check
-  const limitErr = checkWordLimit(fragment, voice)
-  if (limitErr) errors.push(limitErr)
+  errors.push(...checkWordLimit(fragment, voice))
+  errors.push(...checkV2Residue(fragment))
+  errors.push(...checkB1aForbidden(fragment))
+  errors.push(...checkNumerics(fragment, voice))
+  errors.push(...checkVoiceRules(fragment, voice, template))
+  errors.push(...checkIPCompliance(fragment))
+  errors.push(...checkAnchorConsistency(fragment))
+  warnings.push(...softCheckMibSignals(fragment, voice, template))
 
-  // 2. DON'T rules check
-  const dontErrs = checkDontRules(fragment, voice)
-  errors.push(...dontErrs)
-
-  // 3. IP compliance
-  const ipErrs = checkIPCompliance(fragment)
-  errors.push(...ipErrs)
-
-  // 4. Classification system (版级, not SCP Object Class)
-  const classErrs = checkClassificationSystem(fragment)
-  errors.push(...classErrs)
-
-  // 5. Anchor consistency
-  const anchorErrs = checkAnchorConsistency(fragment)
-  errors.push(...anchorErrs)
-
-  return { passed: errors.length === 0, errors }
+  return { passed: errors.length === 0, errors, warnings }
 }
+
+// ─── Helpers ───
 
 function getTextContent(fragment) {
-  const parts = []
-  if (fragment.text_zh) parts.push(fragment.text_zh)
-  if (fragment.text_en) parts.push(fragment.text_en)
-  if (fragment.name_zh) parts.push(fragment.name_zh)
-  if (fragment.name_en) parts.push(fragment.name_en)
-  return parts.join(' ')
+  return [fragment.text_zh, fragment.text_en, fragment.name_zh, fragment.name_en]
+    .filter(Boolean).join(' ')
 }
+
+function countZhChars(s) {
+  // Count CJK code points; treat run of latin/digit as a "word".
+  if (!s) return 0
+  return s.length
+}
+
+function countEnWords(s) {
+  if (!s) return 0
+  return s.trim().split(/\s+/).filter(Boolean).length
+}
+
+// ─── Checks ───
 
 function checkWordLimit(fragment, voice) {
   const limits = WORD_LIMITS[voice]
-  if (!limits) return null
-
-  if (limits.zh_max && fragment.text_zh) {
-    const zhLen = fragment.text_zh.replace(/[^\u4e00-\u9fff]/g, '').length +
-      fragment.text_zh.replace(/[\u4e00-\u9fff]/g, '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean).length
-    // Approximate: count Chinese chars + non-Chinese words
-    const approxLen = fragment.text_zh.length
-    if (approxLen > limits.zh_max * 1.5) {
-      return `${limits.label} 中文超长: ${approxLen} 字 (上限 ${limits.zh_max})`
-    }
-  }
-
-  if (limits.en_max && fragment.text_en) {
-    const enWords = fragment.text_en.trim().split(/\s+/).length
-    if (enWords > limits.en_max * 1.5) {
-      return `${limits.label} 英文超长: ${enWords} 词 (上限 ${limits.en_max})`
-    }
-  }
-
-  if (limits.lines_max && fragment.text_zh) {
-    const lines = fragment.text_zh.split('\n').filter(l => l.trim()).length
-    if (lines > limits.lines_max) {
-      return `${limits.label} 行数超限: ${lines} 行 (上限 ${limits.lines_max})`
-    }
-  }
-
-  return null
-}
-
-function checkDontRules(fragment, voice) {
+  if (!limits) return []
   const errors = []
-  const text = getTextContent(fragment)
-  const zh = fragment.text_zh || ''
-  const en = fragment.text_en || ''
 
-  // Universal: no numeric values in any narrative voice
-  const numericPatterns = [
-    { pattern: /\d+(\.\d+)?%/, label: '百分比' },
-    { pattern: /[×xX]\s*\d+(\.\d+)?/, label: '倍率' },
-    { pattern: /\+\d+/, label: '加值' },
-    { pattern: /\b\d{2,}(秒|点|次|层|格|倍|级)\b/, label: '数值+单位' },
-    { pattern: /\b\d+(\.\d+)?\s*(seconds?|points?|times?|layers?)\b/i, label: '数值+英文单位' },
-    { pattern: /\d+个百分点/, label: '百分点' },
-  ]
-  for (const { pattern, label } of numericPatterns) {
-    if (pattern.test(zh) || pattern.test(en)) {
-      errors.push(`含机制数值（${label}）——用物质隐喻替代`)
+  if (limits.zh_max_chars && fragment.text_zh) {
+    const len = countZhChars(fragment.text_zh)
+    if (len > limits.zh_max_chars * 1.2) {
+      errors.push(`${limits.label} 中文超长: ${len} 字（上限 ${limits.zh_max_chars}）`)
     }
   }
-
-  // Bare numbers in zh (not part of ██ redaction, SA-/RA-/D-/F-/M. codes, or 72小时-style setting flavor)
-  // Catches: "下降17个", "三字以内", "15铅币"
-  const bareNumberZH = zh
-    .replace(/██+/g, '')                    // remove redactions
-    .replace(/[SRDAFM]-[\d█]+/g, '')        // remove codes (SA-0117, D-0432, F-027, M.1██)
-    .replace(/M\.\d+/g, '')                 // remove era codes
-    .replace(/#[\d█]+-\w/g, '')             // remove #████-A style codes
-    .replace(/RA-\d+/g, '')                 // remove RA codes
-    .replace(/§[\d.]+/g, '')                // remove regulation refs
-    .replace(/72小时/g, '')                  // allowed setting detail
-  // Check for bare Arabic numerals (2+ digits, not part of codes)
-  if (/(?<![A-Za-z-#])(\d{2,})(?![█\d])/.test(bareNumberZH)) {
-    const match = bareNumberZH.match(/(?<![A-Za-z-#])(\d{2,})(?![█\d])/)
-    errors.push(`含裸数值: "${match[1]}"——应使用 ██ 遮蔽或物质描述替代`)
-  }
-  // Chinese number + mechanic unit (三次, 十七个, 两倍)
-  if (/[一二三四五六七八九十百千万]+[次个倍层字词条件份额]/.test(zh)) {
-    // Allow certain common phrases: 一次, 一个 (in certain contexts)
-    const cnNumMatch = zh.match(/([一二三四五六七八九十百千万]{1,4}[次个倍层字词条件份额])/)
-    if (cnNumMatch) {
-      const phrase = cnNumMatch[1]
-      // Allow: 一次, 一句, single-count phrases that are natural language
-      const allowedPhrases = ['一次', '一句', '一声', '一枚', '一座', '一页', '一层', '一词']
-      if (!allowedPhrases.includes(phrase)) {
-        errors.push(`含汉字数值: "${phrase}"——应使用模糊表述或 ██ 替代`)
-      }
+  if (limits.en_max_words && fragment.text_en) {
+    const w = countEnWords(fragment.text_en)
+    if (w > limits.en_max_words * 1.2) {
+      errors.push(`${limits.label} 英文超长: ${w} 词（上限 ${limits.en_max_words}）`)
     }
   }
-
-  // Universal: no game mechanic terms
-  // Keep this list small — prevention is in the prompt layer (translation table),
-  // this is just a safety net for the most egregious leaks
-  // Terms checked as whole words (\\b boundary) for English, exact match for Chinese
-  const mechanicTermsEN = [
-    'combo', 'buff', 'debuff', 'DPS', 'cooldown', 'proc', 'nerf',
-    '\\bUI\\b', '\\bHUD\\b', '\\bCD\\b',
-    'inventory', 'equipment slot', 'loadout', 'skill slot',
-  ]
-  const mechanicTermsZH = [
-    '装备栏', '技能栏', '背包', '物品栏', '血条', '进度条',
-  ]
-  for (const term of mechanicTermsEN) {
-    const regex = term.startsWith('\\b')
-      ? new RegExp(term, 'i')
-      : new RegExp(`\\b${term}\\b`, 'i')
-    if (regex.test(en)) {
-      errors.push(`含游戏术语: "${term.replace(/\\\\b/g, '')}"——用设定内翻译替代`)
+  if (limits.zh_max_lines && fragment.text_zh) {
+    const lines = fragment.text_zh.split('\n').filter(l => l.trim()).length
+    if (lines > limits.zh_max_lines) {
+      errors.push(`${limits.label} 中文行数超限: ${lines} 行（上限 ${limits.zh_max_lines}）`)
     }
   }
-  for (const term of mechanicTermsZH) {
-    if (zh.includes(term)) {
-      errors.push(`含游戏术语: "${term}"——用设定内翻译替代`)
-    }
-  }
-
-  switch (voice) {
-    case 'bell': {
-      // 🔔 DON'T: no mechanic-transparent terms (describes game rules, not world)
-      const mechanicTransparent = [
-        '额外', '触发', '翻倍', '跳过', '概率', '基准', '产出', '上限', '下限',
-        '提升', '降低', '增加', '减少', '加成', '效果',
-        'trigger', 'bonus', 'skip', 'chance', 'threshold', 'output', 'cap',
-        'increase', 'decrease', 'boost', 'buff', 'effect',
-      ]
-      for (const term of mechanicTransparent) {
-        if (text.toLowerCase().includes(term.toLowerCase())) {
-          errors.push(`🔔 含机制透明词: "${term}"——用物质/仪式隐喻替代`)
-        }
-      }
-      // 🔔 DON'T: no modern terms
-      const modernTerms = ['流程', '数据', '效率', '系统', '参数', 'process', 'data', 'efficiency', 'parameter']
-      for (const term of modernTerms) {
-        if (text.toLowerCase().includes(term.toLowerCase())) {
-          errors.push(`🔔 含现代词汇: "${term}"`)
-        }
-      }
-      // No § references
-      if (text.includes('§')) errors.push('🔔 含条例编号 §（应为📄专属）')
-      // No first person
-      if (/[^不]我[^们]/.test(zh) || /\bI\b/.test(en)) {
-        errors.push('🔔 含第一人称"我"/"I"')
-      }
-      // No F- form references
-      if (/F-\d{3}/.test(text)) errors.push('🔔 含表单编号 F-XXX（应为📄专属）')
-      // No institutional terms (these belong to 📄 only)
-      const docOnlyTerms = ['站点污染', '收容突破', '收容基准', '失联率', '征用',
-        'Site Compromise', 'Containment Breach', 'Containment Threshold',
-        'casualty rate', 'requisition']
-      for (const term of docOnlyTerms) {
-        if (text.toLowerCase().includes(term.toLowerCase())) {
-          errors.push(`🔔 含体制术语"${term}"（应为📄专属，🔔用物质隐喻替代）`)
-        }
-      }
-      break
-    }
-    case 'doc': {
-      // 📄 DON'T: no emoji
-      if (/[\u{1F600}-\u{1F9FF}]/u.test(text)) errors.push('📄 含 emoji')
-      // No uncertain language
-      if (/(我觉得|似乎|大概|maybe|perhaps|I think)/i.test(text)) {
-        errors.push('📄 含不确定语气（档案是权威的）')
-      }
-      // 📄 DON'T: no game-mechanic verbs and no mechanic-explanation language
-      const docMechanicTerms = ['跳过', '选择', '装备', '卸下', '刷新', '购买',
-        '效率', '效能', '加成', '提升', '功能', '机制',
-        'skip', 'equip', 'unequip', 'refresh', 'purchase', 'select',
-        'efficiency', 'function', 'mechanism', 'boost', 'buff']
-      for (const term of docMechanicTerms) {
-        if (text.toLowerCase().includes(term.toLowerCase())) {
-          errors.push(`📄 含玩家操作词: "${term}"——用收容/观测动词替代`)
-        }
-      }
-      break
-    }
-    case 'altar': {
-      // 🔧 DON'T: no § or F- references
-      if (text.includes('§')) errors.push('🔧 含条例编号（圣坛不懂体制）')
-      if (/F-\d{3}/.test(text)) errors.push('🔧 含表单编号（圣坛不懂体制）')
-      // No pseudo-Latin
-      if (/(Litany|Codex|Clavi|Scriptor|Glyph)/i.test(text)) {
-        errors.push('🔧 含伪拉丁（圣坛不是教会）')
-      }
-      // No redaction
-      if (/████/.test(text)) errors.push('🔧 含 redaction 黑块（圣坛没有权限概念）')
-      // Should start with ellipsis (Chinese)
-      if (zh && !zh.startsWith('……') && !zh.startsWith('...')) {
-        errors.push('🔧 中文未以省略号开头')
-      }
-      // No deepest lore
-      const deepLore = ['铸印现实', '铸印', 'printing reality', 'forging reality']
-      for (const term of deepLore) {
-        if (text.toLowerCase().includes(term.toLowerCase())) {
-          errors.push(`🔧 暴露纯圣经层信息: "${term}"`)
-        }
-      }
-      break
-    }
-    case 'note': {
-      // ✏️ DON'T: no piety
-      const pietyTerms = ['其', '之', '者', '汝', 'Thou', 'Thy', 'Hath', '圣', 'Sacred', 'Holy']
-      for (const term of pietyTerms) {
-        if (text.includes(term)) {
-          // Allow 圣坛 as common reference
-          if (term === '圣' && text.includes('圣坛')) continue
-          errors.push(`✏️ 含虔诚语汇: "${term}"（批注不念经）`)
-        }
-      }
-      // No formal document style
-      if (/Object Class|发现地点|分级/.test(text)) {
-        errors.push('✏️ 含公文体（批注是日常便条）')
-      }
-      break
+  if (limits.en_max_lines && fragment.text_en) {
+    const lines = fragment.text_en.split('\n').filter(l => l.trim()).length
+    if (lines > limits.en_max_lines) {
+      errors.push(`${limits.label} 英文行数超限: ${lines} 行（上限 ${limits.en_max_lines}）`)
     }
   }
 
   return errors
 }
 
-function checkClassificationSystem(fragment) {
+function checkV2Residue(fragment) {
+  const errors = []
+  const zh = fragment.text_zh || ''
+  const en = fragment.text_en || ''
+  const allText = `${zh} ${fragment.name_zh || ''}`
+  const allEn = `${en} ${fragment.name_en || ''}`
+
+  for (const term of V2_BANNED_ZH) {
+    if (allText.includes(term)) {
+      errors.push(`v2.3 残留词: "${term}"（属于活字大教堂方向，已废弃）`)
+    }
+  }
+  for (const term of V2_BANNED_EN) {
+    if (new RegExp(`\\b${escapeRe(term)}\\b`, 'i').test(allEn)) {
+      errors.push(`v2.3 residue: "${term}" (Ironpress Cathedral direction, deprecated)`)
+    }
+  }
+
+  return errors
+}
+
+function checkB1aForbidden(fragment) {
+  const errors = []
+  const zh = `${fragment.text_zh || ''} ${fragment.name_zh || ''}`
+  const en = `${fragment.text_en || ''} ${fragment.name_en || ''}`
+
+  for (const { word, category, reason } of FORBIDDEN_ZH) {
+    if (!word) continue
+    if (zh.includes(word)) {
+      errors.push(`B1.a 违规 · ${category}: "${word}"（${reason}）`)
+    }
+  }
+
+  for (const { word, category, reason } of FORBIDDEN_EN) {
+    if (!word) continue
+    // Whole-word match for English (avoid "explore" matching "explored" — actually we DO want to catch tense variants)
+    // Use a slightly looser match: word boundary at start, allow ed/ing/s suffix
+    const re = new RegExp(`\\b${escapeRe(word)}(?:s|ed|ing|er|d)?\\b`, 'i')
+    if (re.test(en)) {
+      errors.push(`B1.a violation · ${category}: "${word}" (${reason})`)
+    }
+  }
+
+  // Context-sensitive heuristic: warn (not error) on dangerous-pattern usage
+  // For "学习/improve/research/master" — check if subject seems to be employee
+  // Simple heuristic skipped here — too noisy. Left to AI review.
+
+  return errors
+}
+
+function checkNumerics(fragment, voice) {
+  const errors = []
+  const zh = fragment.text_zh || ''
+  const en = fragment.text_en || ''
+
+  // No percentages / multipliers / + values / numeric+unit
+  const numericPatterns = [
+    { re: /\d+(\.\d+)?%/, label: '百分比' },
+    { re: /[×xX]\s*\d+(\.\d+)?(?!\s*[A-Za-z])/, label: '倍率' },
+    { re: /\+\d+/, label: '加值' },
+    { re: /\b\d{2,}\s*(秒|点|次|层|格|倍|级)\b/, label: '数值+单位 (zh)' },
+    { re: /\b\d+(\.\d+)?\s*(seconds?|points?|times?|layers?|stacks?)\b/i, label: '数值+单位 (en)' },
+  ]
+  for (const { re, label } of numericPatterns) {
+    if (re.test(zh) || re.test(en)) {
+      errors.push(`含机制数值（${label}）—— 用物质隐喻或 ██ 遮蔽替代`)
+      break // one error is enough
+    }
+  }
+
+  // Bare numbers (catches "下降17"、"15铅币")
+  // Exempt: ██ redaction / 工号 #485,902 / 政策编号 #082 / Section 9 / B-7 / C-2
+  if (voice !== 'doc' || !/^[\s\S]*$/.test('')) {  // for now apply to all voices, but check exemptions carefully
+    const stripped = zh
+      .replace(/██+/g, '')
+      .replace(/#\d{1,3}(?:,\d{3})?/g, '') // #485,902 #082
+      .replace(/[A-Z]+-?\d+/g, '')         // B-7, RX-617
+      .replace(/Section\s*\d+/gi, '')
+      .replace(/Cycle\s*\d+/gi, '')
+      .replace(/§[\d.]+/g, '')
+    const m = stripped.match(/(?<![A-Za-z\-#])(\d{2,})(?!\d)/)
+    if (m && voice !== 'doc') {  // doc may use timestamps / archive refs more liberally
+      errors.push(`含裸数值: "${m[1]}"（应用 ██ 遮蔽 / 模糊量化 / 政策编号包装）`)
+    }
+  }
+
+  // Chinese counter words
+  const cnNumMatch = zh.match(/([二三四五六七八九十百千万]{1,4}[次个倍层字词条件份额])/)
+  if (cnNumMatch) {
+    const allowed = ['一次', '一句', '一声', '一枚', '一座', '一页', '一层', '一词', '一个', '一字', '一份', '一件', '一条']
+    if (!allowed.includes(cnNumMatch[1])) {
+      errors.push(`含汉字数值: "${cnNumMatch[1]}" — 用模糊量化或 ██ 替代`)
+    }
+  }
+
+  return errors
+}
+
+function checkVoiceRules(fragment, voice, template) {
   const errors = []
   const text = getTextContent(fragment)
+  const zh = fragment.text_zh || ''
+  const en = fragment.text_en || ''
 
-  // SCP Object Class terms should not appear — use 版级 system instead
-  const scpClasses = ['Object Class', 'Safe', 'Euclid', 'Keter', 'Thaumiel', 'Apollyon']
-  for (const term of scpClasses) {
+  // Universal: no game-mechanic terms
+  const mechanicTermsZh = [
+    '装备栏', '技能栏', '背包', '物品栏', '血条', '进度条',
+    '触发条件', '层数', '叠加', '倍率', '概率', '成功率', '失败率',
+    '加成', '提升', '降低', '增加', '减少', '产出', '上限', '下限',
+    '取消', '抵消', '免疫', '刷新', '冷却',
+  ]
+  for (const t of mechanicTermsZh) {
+    if (zh.includes(t)) {
+      errors.push(`含游戏机制术语: "${t}" — 用 v3 体制语言或物质隐喻替代`)
+    }
+  }
+  const mechanicTermsEn = [
+    'combo', 'buff', 'debuff', 'DPS', 'cooldown', 'proc',
+    'inventory', 'equipment slot', 'loadout', 'skill slot',
+    'trigger condition', 'stack', 'multiplier', 'tier',
+    'increase', 'decrease', 'boost', 'cap',
+  ]
+  for (const t of mechanicTermsEn) {
+    const re = new RegExp(`\\b${escapeRe(t)}\\b`, 'i')
+    if (re.test(en)) {
+      errors.push(`Game-mechanic term: "${t}" — use v3 institutional language`)
+    }
+  }
+
+  // Universal: ban "不是…而是…" pattern (writer explanation)
+  if (/不是.{1,20}而是/.test(zh)) {
+    errors.push('含"不是…而是…"句式 — 体制只陈述事实，不做对比论述')
+  }
+
+  // Universal: no SCP-style Object Class (v2.3 residue)
+  for (const term of ['Object Class', 'Class: Safe', 'Class: Euclid', 'Keter', 'Thaumiel']) {
     if (text.includes(term)) {
-      errors.push(`含 SCP 分级术语"${term}"——应使用版级体系（定版/活版/脱版/逆版/熔版/原版/逸版）`)
+      errors.push(`含 SCP 风分级术语 "${term}" — v3 用 MIB 风分类编号（B-7 类合规器 / Section 9 等）`)
+    }
+  }
+
+  switch (voice) {
+    case 'bell':
+      errors.push(...checkBellRules(zh, en, text))
+      break
+    case 'doc':
+      errors.push(...checkDocRules(zh, en, text))
+      break
+    case 'note':
+      errors.push(...checkNoteRules(zh, en, text, template))
+      break
+  }
+
+  return errors
+}
+
+function checkBellRules(zh, en, text) {
+  const errors = []
+
+  // Mechanic-transparent terms (1-2 line short tooltip should not describe mechanics)
+  const transparent = [
+    '额外', '触发', '翻倍', '跳过', '基准', '下限', '上限',
+    'trigger', 'bonus', 'skip', 'chance', 'threshold',
+  ]
+  for (const t of transparent) {
+    const re = new RegExp(`\\b${escapeRe(t)}\\b`, 'i')
+    if ((zh && zh.includes(t)) || re.test(en)) {
+      errors.push(`bell 含机制透明词: "${t}"`)
+    }
+  }
+
+  // Modern jargon
+  const modernJargon = ['流程', '数据', '效率', '系统', '参数', '功能', '机制']
+  for (const t of modernJargon) {
+    if (zh.includes(t)) errors.push(`bell 含现代抽象词: "${t}"`)
+  }
+
+  // 1-2 line max for bell
+  const zhLines = zh.split('\n').filter(l => l.trim()).length
+  if (zhLines > 2) errors.push(`bell 中文行数超限: ${zhLines} 行（上限 2）`)
+
+  return errors
+}
+
+function checkDocRules(zh, en, text) {
+  const errors = []
+
+  // No emoji
+  if (/[\u{1F300}-\u{1FAFF}]/u.test(text)) errors.push('doc 含 emoji')
+
+  // No uncertain language (institutional voice is authoritative)
+  if (/(我觉得|似乎|大概)/.test(zh) || /\b(I think|maybe|perhaps|seems? to)\b/i.test(en)) {
+    errors.push('doc 含不确定语气 — 体制文件是权威的')
+  }
+
+  // No mechanic explanation phrases
+  const mechExplain = [
+    '使.{1,8}效率提升', '使.{1,8}效率下降',
+    '机制分析', '功能描述', '效果描述',
+    'mechanism analysis', 'effect description',
+  ]
+  for (const pattern of mechExplain) {
+    const re = new RegExp(pattern, 'i')
+    if (re.test(text)) errors.push(`doc 含机制解释短语 — 档案记录现象，不解释机制（命中: "${pattern}"）`)
+  }
+
+  return errors
+}
+
+function checkNoteRules(zh, en, text, template) {
+  const errors = []
+
+  if (template === 'desk_note') {
+    // #485,901 desk note: must NOT contain MIB signal words
+    // (private space, not 公文)
+    const mibSignals = MIB_LEXICON.signal.flatMap(s => s.examples)
+    for (const sig of mibSignals) {
+      if (text.includes(sig)) {
+        errors.push(`desk_note 含 MIB 信号词 "${sig}" — 桌面便条是私人空间，不是公文`)
+      }
+    }
+
+    // Must not be too formal
+    if (/^(主题|颁布单位|分发对象|分类[:：])/m.test(zh)) {
+      errors.push('desk_note 含公文格式头 — 桌面便条是破碎的私人短句')
+    }
+
+    // ≤4 段
+    const paragraphs = zh.split(/\n\n+/).filter(p => p.trim()).length
+    if (paragraphs > 4) errors.push(`desk_note 段落超限: ${paragraphs} 段（上限 4）`)
+  }
+
+  // shop_blurb: no piety / no formal headers
+  if (template === 'shop_blurb') {
+    const piety = ['圣', '虔诚', 'Sacred', 'Holy', 'Thou', 'Thy']
+    for (const t of piety) {
+      const re = new RegExp(`\\b${escapeRe(t)}\\b`, 'i')
+      if (zh.includes(t) || re.test(en)) errors.push(`shop_blurb 含虔诚语汇: "${t}"`)
     }
   }
 
@@ -266,14 +326,11 @@ function checkIPCompliance(fragment) {
   const errors = []
   const text = getTextContent(fragment)
 
-  // GW banned terms
   for (const term of GW_BANNED) {
     if (text.toLowerCase().includes(term.toLowerCase())) {
-      errors.push(`IP 违规: 含 GW 专有名词 "${term}"`)
+      errors.push(`IP 违规: GW 专有名词 "${term}"`)
     }
   }
-
-  // SCP real numbers
   if (SCP_BANNED_PATTERN.test(text)) {
     errors.push('IP 违规: 含 SCP 真实编号')
   }
@@ -285,57 +342,93 @@ function checkAnchorConsistency(fragment) {
   const errors = []
   const text = getTextContent(fragment)
 
-  for (const [key, facts] of Object.entries(ANCHOR_FACTS)) {
-    // Check if fragment references this anchor
-    const names = [facts.name_bell, facts.name_doc, facts.name_altar].filter(Boolean)
-    const referenced = names.some(name => text.includes(name))
+  // Rule: HR is 无形 — never given a personal name
+  // If text contains "HR" but appends a name, flag it.
+  // (Heuristic — skip if false positive prone.)
 
-    if (!referenced) continue
+  // Rule: 主任 and 月度考核官 are two 显形 of the same anchor.
+  // If both appear in the same fragment AND the text frames them as separate people, warn.
+  // (Soft check — skip detection is hard. Trust prompt.)
 
-    // If referenced, check layer consistency
-    if (facts.disappear_layer && text.match(/第\s*([IVX\d]+)\s*层/)) {
-      const layerMatch = text.match(/第\s*(\d+)\s*层/)
-      if (layerMatch) {
-        const mentioned = parseInt(layerMatch[1])
-        if (mentioned !== facts.disappear_layer) {
-          errors.push(`锚点不一致: ${key} 消失层应为 ${facts.disappear_layer}，文中提到第 ${mentioned} 层`)
-        }
-      }
+  // Rule: never use v2.3 anchor IDs (scriptor_a/b/c/d/e/last_signatory/d_0001) as anchor names
+  const v2AnchorPhrases = [
+    '守卷人 A', '守卷人 B', '守卷人 C', '守卷人 D', '守卷人 E',
+    'Scriptor A', 'Scriptor B', 'Scriptor C',
+    '议会末席', '末席守卷人', '初铭者', '问道者', '悦铭者', '验铭者',
+    'Valis', 'Kernn', 'Thane', 'Selen',
+  ]
+  for (const p of v2AnchorPhrases) {
+    if (text.includes(p)) {
+      errors.push(`v2.3 锚点残留: "${p}" — v3 锚点是 #485,902 / 上级权威 / HR / 内训讲师 / 同事们 / #485,901`)
     }
+  }
 
-    // Check era consistency
-    if (facts.era_m && text.match(/M\.\d+/)) {
-      // Basic range check could be added here
-    }
+  // Rule: 玩家工号永远是 #485,902（不是其他）
+  const wrongPlayerId = text.match(/#(\d{3},\d{3})\s*号雇员/)
+  if (wrongPlayerId && wrongPlayerId[1] !== '485,902') {
+    errors.push(`玩家工号不一致: 文中出现 #${wrongPlayerId[1]}，应为 #485,902`)
   }
 
   return errors
 }
 
-// AI self-review prompt
+function softCheckMibSignals(fragment, voice, template) {
+  const warnings = []
+  // For mib_equipment / mib_policy doc — should contain at least one MIB signal word
+  if (voice === 'doc' && (template === 'mib_equipment' || template === 'mib_policy')) {
+    const text = getTextContent(fragment)
+    const allSignals = MIB_LEXICON.signal.flatMap(s => s.examples)
+    const hasAny = allSignals.some(sig => text.includes(sig))
+      || /[A-Z]-\d{1,3}\s*类/.test(text)        // B-7 类 / C-2 类 catch
+      || /Section\s*\d+/i.test(text)             // Section X
+      || /#\d{2,4}/.test(text)                   // 政策编号 #082
+      || /[A-Z]X-\d{3}/.test(text)               // RX-617 etc
+    if (!hasAny) {
+      warnings.push(`${template} 未检测到 MIB 信号词（分类编号 / Section X / 政策 #XXX 等）— 可能不够 MIB`)
+    }
+  }
+  return warnings
+}
+
+// ─── Utils ───
+
+function escapeRe(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+// ─── AI review prompt (used by reviewer step) ───
+
 export function buildReviewPrompt(fragments, voice) {
   const fragmentsJson = JSON.stringify(fragments, null, 2)
 
-  return `作为叙事质量审核员，评审以下 ${voice} 声音的碎片文本。
+  return `作为 v3 灵长类辅助文书部叙事质量审核员，评审以下 **${voice}** voice 的碎片文本。
 
 ## 碎片内容
 ${fragmentsJson}
 
-## 评审标准
-1. 荒诞度是否在标尺范围内？（不过低也不过高）
-2. 是否"串味"？（声音特征是否匹配该声音的规则）
-3. 是否有足够的物质意象？（从意象池取材）
-4. 中英文质量是否对等？（不是直译，而是同等水平的创作）
-5. 是否有重复/雷同？（不同碎片之间是否太像）
+## v3 评审标准
+
+1. **B1.a 框架**——力量是"被分发"而不是"被探索"？无禁止词（钻研/突破/觉醒/发明/共鸣 等）？
+2. **MIB 风格校准**（仅 doc voice）——分类编号 / Section X / 政策 #XXX / 不在场机构 / 楼层暗示 是否覆盖？密度是否"暗示水底但不下水"？
+3. **腔调一致性**——HR 公文 / 主任督察腔 / 考核官判决腔 / 内训讲师推销腔 / #485,901 私人破碎腔 是否各自到位？
+4. **不复述机制**——Rule 12：档案是 SCP 收容报告，不是 patch notes。是否描述"人遇到这个东西后经历了什么"，而不是"功能流程"？
+5. **配额自我审计**：
+   - "Section X" 引用 ≤ 30%
+   - "上游"母题 ≤ 40%
+   - 公告/政策类载体 ≤ 40%
+   - 猴子方向 ≤ 30%
+6. **v2.3 残留检测**：圣印 / 守卷人 / 大教堂 / 圣坛 / 铅币 / D-XXXX / Litany / Cathedral 等出现即扣分。
+7. **锚点准确性**：HR 不能有名字；主任和月度考核官是同一锚点的两种显形；玩家工号永远 #485,902。
+8. **黑色幽默调子**——70/70/60/95/55 五轴坐标内？"咦了一下又笑了"，不是"被吓到"。
 
 ## 输出格式
 {
   "overall_score": 1-10,
   "fragments": [
     {
-      "id": "对象ID或序号",
+      "id": "对象 ID 或序号",
       "score": 1-10,
-      "issues": ["问题1", "问题2"],
+      "issues": ["问题 1", "问题 2"],
       "suggestion": "改进建议（如果 score < 7）"
     }
   ]

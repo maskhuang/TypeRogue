@@ -10,7 +10,7 @@ import { registerRelicBehavior } from './RelicPipeline'
 export const DIVIDEND_CHANCE = 0.05
 export const DIVIDEND_GOLD = 2
 
-/** 产出分红：5%概率+2金币。在 applyResource 正产出时调用 */
+/** 产出分红：5%概率+2香蕉。在 applyResource 正产出时调用 */
 export function rollProductionDividend(): number {
   if (!state.player.relics.has('production_dividend')) return 0
   return Math.random() < DIVIDEND_CHANCE ? DIVIDEND_GOLD : 0
@@ -78,7 +78,7 @@ export function incrementWordParity(): void {
   _wordParity++
 }
 
-/** 获取当前潮汐相位（0=底分, 1=倍率, 2=时间, 3=金币） */
+/** 获取当前潮汐相位（0=底分, 1=倍率, 2=时间, 3=香蕉） */
 export function getCurrentTidePhase(): number {
   return _wordParity % 4
 }
@@ -121,7 +121,7 @@ export function applyFurnaceConversion(resource: import('../../core/types').Reso
   return resource
 }
 
-/** @deprecated 旧版万物熔炉金币覆盖，已重设计 */
+/** @deprecated 旧版万物熔炉香蕉覆盖，已重设计 */
 export function checkUniversalFurnace(_targetReachedTime?: number): null {
   return null
 }

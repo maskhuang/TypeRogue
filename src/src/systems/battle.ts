@@ -164,7 +164,7 @@ let _pendingDeadlyGiftRelicPick = false; // 致命礼物：丰厚层级待弹遗
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
 let leftHandTriggered = false; // T5遗物：本词左手技能是否触发过
 let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
-let _battleRelicGold = 0; // 战斗中遗物产出的金币（用于结算面板）
+let _battleRelicGold = 0; // 战斗中遗物产出的香蕉（用于结算面板）
 let wordStartScore = 0; // 玻璃大炮：记录词开始时总分（用于整词得分翻倍）
 let _targetReached = false; // Story 42.2: 达标标志（达标后继续战斗直到时间耗尽）
 let _accelAtTarget = 1.0;  // 达标时刻的加速倍率（指数基底）
@@ -769,12 +769,12 @@ function playerCorrect(k: string): void {
       state.time += concertoBonus;
       showFeedback(t('battle.dual_concerto', { value: concertoBonus }), '#00ff88', undefined, undefined, { relicId: 'dual_concerto', resource: 'time', amount: concertoBonus });
     }
-    // 换行奖励 — 跨行按键+1金币
+    // 换行奖励 — 跨行按键+1香蕉
     const rowSwitchGold = checkRowSwitch(k);
     if (rowSwitchGold > 0) {
       state.player.gold += rowSwitchGold;
       state.resources.gold += rowSwitchGold;
-      showFeedback(`↕️ +${rowSwitchGold}g`, RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'row_switch', resource: 'gold', amount: rowSwitchGold });
+      showFeedback(`↕️ +${rowSwitchGold}`, RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'row_switch', resource: 'gold', amount: rowSwitchGold });
     }
     // Charge: 按住蓄力，暂停字母推进
     if (isChargeSkill(skillId)) {
@@ -1272,13 +1272,13 @@ function completeWord(): void {
   }
   incrementWordParity();
 
-  // Story 36.7: 词汇收藏 — 首次完成的单词+3金币
+  // Story 36.7: 词汇收藏 — 首次完成的单词+3香蕉
   const collectionGold = checkWordCollection(state.player.word);
   if (collectionGold > 0) {
     state.gold += collectionGold;
     state.resources.gold += collectionGold;
     _battleRelicGold += collectionGold;
-    showFeedback(`📚 +${collectionGold}💰`, '#ffe66d', undefined, undefined, { relicId: 'word_collection', resource: 'gold', amount: collectionGold });
+    showFeedback(`📚 +${collectionGold}🍌`, '#ffe66d', undefined, undefined, { relicId: 'word_collection', resource: 'gold', amount: collectionGold });
   }
 
   // Story 36.7: 长词达人 — 6+字母单词完成时+1s
@@ -1485,7 +1485,7 @@ function showSettlementComplete(chips: number, mult: number, total: number): voi
   }, 400));
 }
 
-/** 显示金币奖励动画 */
+/** 显示香蕉奖励动画 */
 function showGoldReward(onComplete: () => void): void {
   const goldReward = document.getElementById('gold-reward');
   if (!goldReward) {
@@ -1493,7 +1493,7 @@ function showGoldReward(onComplete: () => void): void {
     return;
   }
 
-  // Story 54.2: 校准关 → 练习关金币映射（替代标准战斗金币）
+  // Story 54.2: 校准关 → 练习关香蕉映射（替代标准战斗香蕉）
   let baseGold: number;
   let skillGold: number;
   let relicGold: number;
@@ -1502,12 +1502,12 @@ function showGoldReward(onComplete: () => void): void {
   let bountyEndGold = 0;
 
   if (_isCalibrationLevel) {
-    // 校准关：基础金币由得分映射，技能金币产出正常保留
+    // 校准关：基础香蕉由得分映射，技能香蕉产出正常保留
     baseGold = computePracticeGold(_calibrationEffectiveScore, state.ascensionLevel);
     skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
     relicGold = 0;
   } else {
-    // 标准关：100 基础 + 溢出分转化为额外金币
+    // 标准关：100 基础 + 溢出分转化为额外香蕉
     const target = Math.max(1, state.targetScore);
     const overflow = Math.max(0, state.overkill);
     const pct = overflow / target;
@@ -1550,7 +1550,7 @@ function showGoldReward(onComplete: () => void): void {
   const goldTreasureEl = document.getElementById('gold-treasure');
   const goldTotalEl = document.getElementById('gold-total');
 
-  // 基础金币行
+  // 基础香蕉行
   const baseRow = document.getElementById('gold-base-row');
   if (baseRow) {
     const baseValEl = baseRow.querySelector('.gold-reward-value');
@@ -1562,11 +1562,11 @@ function showGoldReward(onComplete: () => void): void {
   if (goldSkillEl) goldSkillEl.textContent = `+${skillGold}`;
   if (goldTotalEl) goldTotalEl.textContent = String(totalGold);
 
-  // 技能产出行：有技能金币时才显示
+  // 技能产出行：有技能香蕉时才显示
   const skillRow = document.getElementById('gold-skill-row') as HTMLElement;
   if (skillRow) skillRow.style.display = skillGold > 0 ? '' : 'none';
 
-  // 遗物金币行：有遗物加成时才显示
+  // 遗物香蕉行：有遗物加成时才显示
   const treasureRow = document.querySelector('.gold-treasure-row') as HTMLElement;
   if (treasureRow) treasureRow.style.display = relicGold > 0 ? '' : 'none';
   if (goldTreasureEl) goldTreasureEl.textContent = `+${relicGold}`;
@@ -1574,7 +1574,7 @@ function showGoldReward(onComplete: () => void): void {
   // 隐藏结算面板
   hideSettlement();
 
-  // 显示金币奖励
+  // 显示香蕉奖励
   goldReward.classList.remove('gold-reward-hidden', 'gold-reward-hide');
   goldReward.classList.add('gold-reward-show');
 
@@ -1906,7 +1906,7 @@ function endLevel(): void {
         return;
       }
 
-      // 精英战胜利 → 金币奖励 → 致命礼物 → 史诗遗物 → 商店
+      // 精英战胜利 → 香蕉奖励 → 致命礼物 → 史诗遗物 → 商店
       if (currentType === 'elite') {
         const epicWeights = { common: 0, rare: 0, epic: 100, legendary: 0 };
         showGoldReward(() => continueAfterDeadlyGift(() => {
@@ -1919,7 +1919,7 @@ function endLevel(): void {
         return;
       }
 
-      // 普通关/校准关胜利 → 金币奖励 → 致命礼物 → 商店
+      // 普通关/校准关胜利 → 香蕉奖励 → 致命礼物 → 商店
       showGoldReward(() => continueAfterDeadlyGift(() => openShop(true)));
     }, playRatingSound);
   } else {
@@ -2154,10 +2154,10 @@ export async function startLevel(): Promise<void> {
   state.resources.gold = 0;
   _battleRelicGold = 0;
 
-  // 金库利息：每关开始时获得金币10%利息
+  // 金库利息：每关开始时获得香蕉10%利息
   const interestGold = applyGoldInterest();
   if (interestGold > 0) {
-    showFeedback(`🏦 +${interestGold}💰`, '#ffe66d');
+    showFeedback(`🏦 +${interestGold}🍌`, '#ffe66d');
   }
 
   // Story 36.2: 重置打字遗物关级别状态（已见单词等）
@@ -2238,7 +2238,7 @@ export async function startLevel(): Promise<void> {
   if (startRelicResult.effects.multiply > 0) {
     state.multiplier += startRelicResult.effects.multiply;
   }
-  // cornucopia 等：战斗开始时金币加成
+  // cornucopia 等：战斗开始时香蕉加成
   if (startRelicResult.effects.gold > 0) {
     state.gold += startRelicResult.effects.gold;
     state.resources.gold += startRelicResult.effects.gold;

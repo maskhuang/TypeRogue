@@ -249,8 +249,8 @@ export interface AffixInstance {
   posRel?: PositionRelation        // Void/Mirror/Amplify/Cascade
   bonusPerSlot?: number            // Void: 每空位加成%
   swarmK?: number                  // Swarm: 每个虫群邻居加成%
-  hireCost?: number                // Mercenary: 每次触发消耗金币
-  hireBonus?: number               // Mercenary: 金币足够时产出加成%
+  hireCost?: number                // Mercenary: 每次触发消耗香蕉
+  hireBonus?: number               // Mercenary: 香蕉足够时产出加成%
   resource?: ResourceType          // Amplify: 关联资源
   cascadeMult?: number             // Cascade: 级联乘数
   bonusPercent?: number            // Outcast: 首尾字母加成% / Taboo: 暴击率加成
@@ -592,13 +592,13 @@ export const QUEST_ENCHANTMENT_DEFS: QuestEnchantmentDef[] = [
   { type: EnchantmentType.QuestTreasure, name: '宝库', targetAffix: AffixType.Treasure, event: 'equip_count', targetStacks: 0, effectDesc: '质变：传说寻宝', transformDesc: '被蜕变时下次商店出现传说商品（无视等级）' },
   { type: EnchantmentType.QuestMutaRefine, name: '精炼', targetAffix: AffixType.Refine, event: 'equip_count', targetStacks: 0, effectDesc: '质变：超额退还', transformDesc: '被蜕变时退还200%变异素' },
   { type: EnchantmentType.QuestEvolve, name: '突变', targetAffix: AffixType.Evolve, event: 'equip_count', targetStacks: 0, effectDesc: '质变：必定进化', transformDesc: '100%稀有度+1且额外+1词条' },
-  { type: EnchantmentType.QuestHarvest, name: '丰收', targetAffix: AffixType.Harvest, event: 'equip_count', targetStacks: 0, effectDesc: '质变：黄金收割', transformDesc: '被蜕变时获得250金币' },
+  { type: EnchantmentType.QuestHarvest, name: '丰收', targetAffix: AffixType.Harvest, event: 'equip_count', targetStacks: 0, effectDesc: '质变：香蕉收割', transformDesc: '被蜕变时获得250香蕉' },
   { type: EnchantmentType.QuestMutaChain, name: '瘟疫', targetAffix: AffixType.Chain, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全域连锁', transformDesc: '被蜕变时全键盘技能一起蜕变' },
   { type: EnchantmentType.QuestVolatile, name: '临界', targetAffix: AffixType.Volatile, event: 'equip_count', targetStacks: 0, effectDesc: '质变：持久不稳定', transformDesc: '被蜕变后下3关效果×2.0' },
   { type: EnchantmentType.QuestMutacrit, name: '变异基因', targetAffix: AffixType.Mutacrit, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全技能暴击', transformDesc: '被蜕变时所有已装备技能+暴击率' },
   { type: EnchantmentType.QuestAscend, name: '超越', targetAffix: AffixType.Ascend, event: 'equip_count', targetStacks: 0, effectDesc: '质变：全技能升级', transformDesc: '被蜕变时所有已装备技能升1级' },
   { type: EnchantmentType.QuestSwarmPropagate, name: '繁殖', targetAffix: AffixType.Swarm, event: 'equip_count', targetStacks: 0, effectDesc: '质变：虫群繁殖', transformDesc: '触发时25%概率向全场随机无虫群技能传播虫群词条' },
-  { type: EnchantmentType.QuestMercenaryWarlord, name: '佣兵王', targetAffix: AffixType.Mercenary, event: 'equip_count', targetStacks: 0, effectDesc: '质变：囤金暴力', transformDesc: '加成额外乘以(1+金币÷消耗×10)，金币越多越强' },
+  { type: EnchantmentType.QuestMercenaryWarlord, name: '佣兵王', targetAffix: AffixType.Mercenary, event: 'equip_count', targetStacks: 0, effectDesc: '质变：囤金暴力', transformDesc: '加成额外乘以(1+香蕉÷消耗×10)，香蕉越多越强' },
   { type: EnchantmentType.QuestRepulsionVacuum, name: '真空', targetAffix: AffixType.Repulsion, event: 'equip_count', targetStacks: 0, effectDesc: '质变：真空', transformDesc: '含本键字母的单词必不出现' },
   { type: EnchantmentType.QuestSilkwormCocoon, name: '化茧', targetAffix: AffixType.Silkworm, event: 'equip_count', targetStacks: 0, effectDesc: '质变：化茧', transformDesc: '累积 8 层后本关不再消耗底分且加成保留（逐关重置）' },
   { type: EnchantmentType.QuestAuraGlobal, name: '全域光环', targetAffix: [AffixType.AuraFury, AffixType.AuraMorale, AffixType.Conduit], event: 'equip_count', targetStacks: 0, effectDesc: '质变：全域', transformDesc: '光环作用范围变为全场' },

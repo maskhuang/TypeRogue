@@ -65,13 +65,24 @@
 }
 
 body {
-    background: #0a0a0f;
+    background: #0c0e14;
     color: #fff;
     font-family: var(--font-pixel);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* === Narrative v3.0: 1990s federal-seal serif stack（仅菜单标题局部覆盖） === */
+:root {
+    --font-seal: 'Times New Roman', 'Garamond', 'Songti SC', 'STSong', serif;
+    --color-seal-gold: #c9a45e;
+    --color-seal-gold-dim: #8a7140;
+    --color-parchment: #a89674;
+    --color-institutional-teal: #3a6e7a;
+    --color-institutional-teal-hi: #4a8590;
+    --color-institutional-border: #5a8a8e;
 }
 
 /* 全局按钮/输入继承像素字体 */
@@ -94,14 +105,17 @@ button, input, select, textarea { font-family: inherit; }
 .menu-title {
     font-size: calc(var(--text-title-size) * 3);
     font-weight: bold;
-    color: #ffe66d;
-    letter-spacing: 6px;
-    margin-bottom: 4px;
+    color: var(--color-seal-gold);
+    letter-spacing: 8px;
+    margin-bottom: 8px;
+    text-shadow:
+        0 1px 0 rgba(0,0,0,0.6),
+        0 -1px 0 rgba(255,220,160,0.12);
 }
 
 .menu-subtitle {
-    font-size: var(--text-caption-size);
-    color: #666;
+    font-size: calc(var(--text-caption-size) * 1.1);
+    color: var(--color-parchment);
     letter-spacing: 4px;
     margin-bottom: 40px;
 }
@@ -119,22 +133,27 @@ button, input, select, textarea { font-family: inherit; }
     font-size: var(--text-subtitle-size);
     font-family: inherit;
     font-weight: bold;
-    border: 2px solid #4ecdc4;
+    border: 2px solid var(--color-institutional-border);
     border-radius: 0;
+    outline: 1px solid #000;
+    outline-offset: 0;
     cursor: pointer;
     transition: background 0.15s steps(1), color 0.15s steps(1);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        inset 0 -2px 0 rgba(0,0,0,0.35);
 }
 
 .menu-btn-start {
-    background: #4ecdc4;
-    color: #0a0a0f;
+    background: var(--color-institutional-teal);
+    color: #e8eef0;
 }
-.menu-btn-start:hover { background: #5fd8d0; }
+.menu-btn-start:hover { background: var(--color-institutional-teal-hi); }
 
 .menu-btn-tutorial,
 .menu-btn-settings {
     background: var(--bg-panel);
-    color: #4ecdc4;
+    color: var(--color-institutional-border);
 }
 .menu-btn-tutorial:hover:not(:disabled),
 .menu-btn-settings:hover:not(:disabled) { background: var(--bg-panel-hover); }

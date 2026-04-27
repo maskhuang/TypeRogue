@@ -360,12 +360,12 @@ function triggerAffixSkillWithFeedback(
   const hasEnchantment = skill.enchantmentIds.length > 0;
   const enchantBoost = getEnchantBoostBonus(hasEnchantment);
   if (enchantBoost > 0) relicBonus += enchantBoost;
-  // 附魔红利：已附魔技能触发时+2金币
+  // 附魔红利：已附魔技能触发时+2香蕉
   const enchantGold = getEnchantDividendGold(hasEnchantment);
   if (enchantGold > 0) {
     state.player.gold += enchantGold;
     state.resources.gold += enchantGold;
-    showFeedback(`💰 +${enchantGold}g`, RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'enchant_dividend', resource: 'gold', amount: enchantGold });
+    showFeedback(`🍌 +${enchantGold}`, RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'enchant_dividend', resource: 'gold', amount: enchantGold });
   }
 
   // 积少成多：每10层+5%产出
@@ -452,7 +452,7 @@ function triggerAffixSkillWithFeedback(
           state.score += amount;
         } else {
           state.resources[resource] += amount;
-          // 金币同步：消耗时也扣 state.gold（雇佣词条等）
+          // 香蕉同步：消耗时也扣 state.gold（雇佣词条等）
           if (resource === 'gold' && amount < 0) {
             state.gold = Math.max(0, (state.gold ?? 0) + amount);
           }

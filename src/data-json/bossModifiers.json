@@ -93,7 +93,7 @@
     "boss_score_tax": {
       "id": "boss_score_tax",
       "name": "得分税",
-      "icon": "🧾",
+      "icon": "📑",
       "description": "每词最终得分减少目标分数的 3%",
       "eliteHint": "每词减少目标分数的 2%",
       "category": "defense"

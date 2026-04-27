@@ -133,7 +133,7 @@ describe('ShopScene', () => {
 
     it('should create UI components', () => {
       scene.onEnter()
-      // 检查容器有子元素（背景、标题、金币等）
+      // 检查容器有子元素（背景、标题、香蕉等）
       expect(scene.container.children.length).toBeGreaterThan(0)
     })
 
@@ -314,7 +314,7 @@ describe('ShopScene', () => {
     })
 
     it('should fail purchase when gold is insufficient', () => {
-      runState = createMockRunState(1) // 只有 1 金币
+      runState = createMockRunState(1) // 只有 1 香蕉
       scene = new ShopScene(runState, 1, FIXED_SHOP_CONFIG)
       scene.onEnter()
 
@@ -535,7 +535,7 @@ describe('ShopScene', () => {
       const goldBefore = runState.getGold()
       scene.handleKeyInput('Enter')
 
-      // 金币应该减少了
+      // 香蕉应该减少了
       expect(runState.getGold()).toBeLessThan(goldBefore)
     })
 

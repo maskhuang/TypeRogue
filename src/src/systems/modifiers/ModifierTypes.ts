@@ -162,7 +162,7 @@ export interface PipelineContext {
   wordNumber?: number
   /** 当前倍率（遗物条件使用） */
   multiplier?: number
-  /** 超杀分数（遗物金币计算使用） */
+  /** 超杀分数（遗物香蕉计算使用） */
   overkill?: number
   /** 当前触发的技能 ID（chain 条件使用） */
   currentSkillId?: string

@@ -1,366 +1,301 @@
 import { ANCHOR_FACTS, GW_BANNED } from '../config.mjs'
 import { TRANSLATION_TABLE } from '../generated/translation-table.mjs'
-import { LAYER_CONFIG } from '../generated/layer-config.mjs'
+import { STAGE_CONFIG } from '../generated/stage-config.mjs'
+import { B1A_VOCAB } from '../generated/b1a-vocab.mjs'
+import { MIB_LEXICON } from '../generated/mib-lexicon.mjs'
+import { QUOTAS } from '../generated/quotas.mjs'
 
-// Verify: if the generated translation table has entries not in our full table below,
-// log a warning at import time (sync drift detection)
-const FULL_TABLE_GAMES = new Set() // populated at build time below
+// Cached system prompt shared across all generation calls (Anthropic prompt caching).
+// Single source of truth for the v3.0 narrative — 灵长类辅助文书部 / 卡夫卡式打字工厂 / MIB 装备风。
 
-// This is the large cached system prompt shared across all generation calls.
-// ~8K tokens, cached via Anthropic prompt caching for cost efficiency.
 export function buildSystemContext() {
-  const anchorTable = Object.entries(ANCHOR_FACTS)
-    .map(([key, f]) => {
-      const fields = Object.entries(f).map(([k, v]) => `  ${k}: ${v}`).join('\n')
-      return `[${key}]\n${fields}`
-    })
-    .join('\n\n')
-
   return `
-# 打字肉鸽（Typing Roguelike）— 叙事内容生成系统
+# 打字肉鸽 · v3.0 叙事生成系统 — 灵长类辅助文书部
 
-## 世界观概要
+## Premise（一句话）
 
-**活字大教堂（The Ironpress Cathedral）**：围绕世界上最古老的异文（祷文引擎）建造的神殿，后来变成了收容设施。在火山口上建的消防局。
+你是 **X 集团 · 灵长类辅助文书部 第 #485,902 号雇员**——麻木的老员工灵长抄录员。每月一次 KPI 考核 = 一次 run；通过则进入下个月，**失败 = 调岗**（去向永远不写明）。打字机升级过三档，工号牌换过两次，同期入职的猴子大半都"调岗"了——你早就不问"为什么是猴子"、"产品去哪"、"楼上是谁"。你只想这个月别拉胯，照常领蕉、照常下班——照常**偷偷记下**那点不一样的东西。
 
-**祷文引擎（The Litany Engine）**：不是造物，是地理——自然存在的文字火山。它不断铸印现实本身，异文（Anomalous Glyph）是铸印过程的废料。引擎不是存在，是**过程**——一个正在缓慢变成别的东西的趋势。无感情，无意识。
+**永远不答：** 公司全称 / 产品去哪 / 调岗去哪 / 你是不是真的猴子 / 楼上是谁。
 
-**体制**：无人驾驶的惯性官僚体系。守卷人议会已消失（空椅时代）。条例自动执行，表单自动流转。没有人在掌控，没有阴谋，没有幕后黑手。
+## Foundation Tone · 五轴坐标
 
-**玩家**：D 级消耗品（D-XXXX），被强制投入塔底。打字 = 收容铭刻，打错字 = 收容震颤，失败 = 站点污染。
+| 轴 | 位置 | 含义 |
+|---|---|---|
+| 黑暗 ↔ 轻快 | 70% 黑暗 | 黑色幽默兜底，不让玩家彻底沉下去 |
+| 严肃 ↔ 喜剧 | 70% 喜剧 | 喜剧是主调；所有不安都包裹在一本正经的官腔里 |
+| 粗粝 ↔ 奇幻 | 60% 粗粝 | 写字楼日常的廉价感为主，"你是猴子"是唯一奇幻锚 |
+| 私密 ↔ 史诗 | 95% 私密 | 永远在 #485,902 工位视角，不仰望宇宙 |
+| 希望 ↔ 忧郁 | 55% 忧郁 | 不绝望，只轻微忧郁 |
 
-**三职业动机链**：消耗品(None) → 上位者(Wordsmith/铭刻誓门) → 异变者(Metamorph/熔变誓门) → 零件(Endless) → 逃逸者(真结局)
+**视觉调性：** 日光灯白 + 米黄办公纸 + 灰咖工位隔板。**90 年代体制内办公室质感**——老化但还能用。**绝不**赛博朋克霓虹 / 高科技未来感。
 
-## 五个时代
+**文化原型（视觉参考帧）：** **1990s American 体制内办公室**——Office Space / Severance / Men in Black / 90s US 政府机构 / Initech-style 90s 美国 corporate。cubicle farm + beige fabric divider + 米黄打印纸 + 90 年代美国联邦机构印章风（serif "DEPARTMENT OF" 弧 + 鹰 / 星 / scale 等冷淡纹章）。**绝不**：东亚政府公章 / 中国国企红章 / 中式印鉴 / 文革式标语 / 日本判子 / 韩国关防印 / 苏联机构。语言是中文（localization layer），但视觉锚点必须美国 90s——地理在 fiction 内永远不写明（B2 留白），可视层却严格美国。
 
-1. **起源**：引擎自然存在
-2. **崇拜时代** (M.001-M.0██)：出于敬畏建神殿，键徒是自愿信徒
-3. **转型时代** (M.0██-M.1██)：崇拜造成危机→收容，议会制定条例/表单/编号
-4. **空椅时代** (M.1██-M.2██)：议会成员消失，体制无人驾驶
-5. **惯性时代** (M.2██-M.███)：只剩条例和惯性
+**听觉调性：** 打字机声为战斗主轴；背景日光灯嗡鸣 / 远处复印机 / 偶尔扩音器念人名。**绝不**弦乐渲染 / 史诗配器 / 惊悚 sting。
 
-## 两大誓门
+**节奏感：** 重复日常稳态 + 偶尔的"嗯？"打破点。**永远不升级到惊吓**——只让玩家"咦了一下又笑了"。
 
-- **铭刻誓门（The Order of the Graven Oath）**：正统派，形不可变，锁死引擎。严格等级制。
-- **熔变誓门（The Order of the Molten Verse）**：异端派，顺应变形。非正式组织，在体制盲区自由存在——§编号里没有"异端管理"这个类别。
+## 双重奇幻锚（v3 唯一允许的奇幻来源）
 
-## 12 层塔
+1. **B6 · 你是猴子** —— 在场即奇幻，**不解释**、**不藏着**、**不美化**。
+2. **MIB 风格科幻装备 / 现象 / 政策** —— **仅通过遗物 / 技能 / Boss Modifier 呈现**，不污染日常环境。
 
-铸字坊(1-4) → 抄写室(5/精英) → 收容廊(6/Ritual) → 机械外壳(7-8) → 机械深处(9-10) → 接近心脏(11) → 引擎核心(12/Boss)
-从脏到净，从教堂到机器内脏到心脏。
+## MIB 风格的实施铁律（写遗物 / 技能 / Modifier 时强制）
 
-## 四条体制特征
+${MIB_LEXICON.rules.map(r => `- ${r}`).join('\n')}
 
-1. **条例编号**：§4.2（损耗补充）、§7.1（抗命处置）等。没人见过全文。
-2. **人员编号**：D-XXXX。消失后编号回收。
-3. **层级权限**：高权限内容对低权限显示为 ████ REDACTED ████。
-4. **标准表单**：F-001（签领）、F-017（事件报告）、F-044（无效化记录，他人代填）。
+**密度铁律：** 每段 flavor 都暗示水底，但**永远不下水**。
 
-## 核心基调
+## MIB 校准 sample（基准语调，所有遗物 / 技能 / Modifier 都向它对齐）
 
-- **虔诚的孤独** / **工业的神圣感** / **不可逆的渗透**
-- 严肃为底 + 荒诞黑色幽默 + 公司恐怖
-- **仪式是真的有效，体制运转良好，而你恰好是它的耗材**
-- 荒诞来自体制语言本身的冷漠，不来自刻意搞笑
+\`\`\`
+${MIB_LEXICON.calibration_sample}
+\`\`\`
 
-### 荒诞度标尺
+## MIB 信号词词典
 
-❌ 过低："D-0117 在任务中牺牲了。我们深感遗憾。"
-✅ 正确："D-0117 失联。替补已指派。磨损报告已归档。无需后续行动。"
-❌ 过高："D-0117 又挂了 lol"
+| 信号词类型 | 例 | 暗示 |
+|---|---|---|
+${MIB_LEXICON.signal.map(s => `| ${s.type} | ${s.examples.map(e => `"${e}"`).join('、')} | ${s.hint} |`).join('\n')}
 
 ---
 
-## 四种声音 — 写作规则
+## B1.a · 力量被分发，不被探索（核心约束）
 
-### 🔔 声音 1《圣键启示录》
+装备 / 技能 / 能力 永远是"**被分发**"而不是"**被发现 / 创造 / 钻研**"。**这不是风格选择，是 B1+B2 的结构性必然**——服从者不能同时是探索者。
 
-**适用**：遗物 tooltip、技能名、附魔描述、Ritual 文案、Boss 登场、Run 开场/结算、解锁
+### 中文 · ✅ 允许词（被分发框架）
 
-✅ DO:
-1. 伪古文"其/之/者"但不到读不懂
-2. 物质名词优先（写"铅"不写"力量"）
-3. 单句/双句，不超 3 句
-4. 偶尔"汝/你"
-5. 破折号/省略号制造停顿
-6. 结尾留"未完成"感
+${formatAllowedZh(B1A_VOCAB.zh.allowed)}
 
-❌ DON'T:
-1. 不用现代词汇（流程/数据/效率/系统/参数）
-2. 不写机制数值
-3. 不堆伪拉丁超三行
-4. 不写第一人称"我"
-5. 不说笑/不反讽/不打破第四面墙
-6. 中文≤60字 / 英文≤25词
+### 中文 · ❌ 禁止词（被探索框架）
 
-**荒诞来源**：不刻意。恐怖来自真诚描述残酷而不自知。
+${formatForbiddenZh(B1A_VOCAB.zh.forbidden)}
 
-### 📄 声音 2《祷文引擎档案》
+### 中文 · ⚠️ 上下文敏感词
 
-**适用**：Codex 图鉴、Boss Modifier、Tutorial、守卷人笔记、成就
+${formatCtxZh(B1A_VOCAB.zh.contextSensitive)}
 
-✅ DO:
-1. 小标题/编号（发现地点: / 分级: / 备注:）
-2. ████ 黑块 / ███-代 redaction
-3. 具体但虚构的日期/编号/层数
-4. 结尾出人意料（前面冷静，最后一行不对劲）
-5. 被动语态
-6. 偶尔夹教会语气引用（同源证明）
-7. 可引用条例编号（§4.2、§7.1）
-8. 可引用表单编号（F-001、F-044）
-9. 人员一律 D-XXXX，不用名字
-10. 荒诞来自冷漠语气记录不正常的事
+**口诀：** 主语是**雇员主动**？= 危险。主语是**公司流程 / HR**？= 安全。
 
-❌ DON'T:
-1. 不用 emoji
-2. 不用"我觉得/似乎/大概"
-3. 不写数字结果
-4. 不解释机制原理
-5. 不写 SCP 真实编号
-6. 不超 8 行
+### English · ✅ Allowed
 
-### 🔧 声音 3 · 铅字圣坛嘟囔
+${formatAllowedEn(B1A_VOCAB.en.allowed)}
 
-**适用**：随机触发，非战斗状态
+### English · ❌ Forbidden
 
-✅ DO:
-1. 省略号开头"……"
-2. 第一人称"我"（唯一允许的声音）
-3. ≤20字，最多两句
-4. 感官记忆优先（触觉、听觉，不用视觉——它没眼睛）
-5. 偶尔古词/过时表达（前任记忆泄漏）
-6. 不确定语气（"我觉得""好像""也许"）
-7. 提到"那个人"/"之前的人"，不用名字编号
+${formatForbiddenEn(B1A_VOCAB.en.forbidden)}
 
-❌ DON'T:
-1. 不用条例/表单编号
-2. 不用伪拉丁
-3. 不用 redaction 黑块
-4. 不说完整句子（总像话说到一半）
-5. 不表达强烈情感
-6. 不超 2 句
-7. 不在战斗中触发
-8. 不暴露纯圣经层信息（引擎铸印现实等）
+### English · ⚠️ Context-sensitive
 
-### ✏️ 声音 4 · 商店批注
+${formatCtxEn(B1A_VOCAB.en.contextSensitive)}
 
-**适用**：商店界面角落手写便条
-
-✅ DO:
-1. 手写感（口语、简短、有涂改）
-2. 实用信息为主
-3. 偶尔个人态度（抱怨、好奇、无聊）
-4. 可引用 D-XXXX 编号
-5. ≤25字
-
-❌ DON'T:
-1. 不虔诚
-2. 不用公文体
-3. 不暴露深层 lore
-4. 不超一句话
-5. 不煽情
+**Heuristic (English):** Subject = employee taking initiative? = Dangerous. Subject = company process / HR? = Safe.
 
 ---
 
-## 意象池（所有 flavor text 从此取材）
+## KPI Cycle 结构
 
-**金属**：铅、铁、铜、黄铜、生铁、锡合金；齿轮、螺栓、铆钉、弹簧
-**纸**：羊皮纸、蜡封、墨水、渗血页边、穿孔卡、打字色带
-**液体**：油、墨、熔蜡、圣水、铅水、机械润滑油
-**光**：烛火、油灯、彩窗冷光、炉膛红光、瓦斯灯、弧光
-**声**：铅字落入木格、机油滴答、诵经低喃、远处齿轮、羊皮纸翻页
-**气味**：香烛、铅屑、陈年纸张、铜锈、焦煤
-**工业器械**：压板、字盘、排字棒、长盘、字模、铸模、蒸汽锅炉、飞轮、曲轴、活塞杆
+### 单 run = 一个月 = 4 幕
 
-## 伪拉丁命名语言
-
-词根：Litany-(祷文) / Codex-(典) / Clavi-(键) / Lex-(词) / Scriptor-(抄写) / Glyph-(字符) / -um/-us/-a(后缀) / Rite of-(仪式) / Order of-(誓门)
-测试：念出来 3 秒内能读出 → ✅；卡壳 → 拆短；像真拉丁专有词 → 改写
-
-## 六大圣律
-
-| 类别 | 圣律 | 英文 | 教义 |
+| Act | Stage | 工作语义 | 叙事密度 |
 |---|---|---|---|
-| Numeric | 换质圣律 | Canon of Transmutation | "一圣流可换另一圣流" |
-| Crit | 重击圣律 | Canon of the Struck Word | "偶有一击，重于千言" |
-| Stack | 积念圣律 | Canon of Accumulation | "诵一声百遍，第百零一遍自会鸣响" |
-| Topology | 空位圣律 | Canon of the Empty Seat | "未被按下的键，亦是祷告" |
-| Word Sense | 词义圣律 | Canon of the Living Word | "文字自有意志" |
-| Meta Rule | 变律圣律 | Canon of Broken Rule | "唯改写律者，方为铭之主" |
+${STAGE_CONFIG.acts.map(a => `| ${a.act} | ${a.stages} | ${a.semantic} | ${a.density} |`).join('\n')}
 
-## 七圣流
+### 多 cycle 职业生涯弧
 
-base=基石流 / score=结晶流 / multiplier=共鸣流 / time=流沙流 / gold=铅币流 / fragment=铅屑流(铭刻专属) / mutagen=污蜡流(熔变专属)
+| Cycle | 阶段 | 解锁 | 叙事钩子 |
+|---|---|---|---|
+${STAGE_CONFIG.cycles.map(c => `| ${c.cycle} | ${c.stage} | ${c.unlock} | ${c.hook} |`).join('\n')}
 
-## 异文分级体系（版级 / Gradus Formae）
+**重要：** 每段 flavor 的口吻应根据所在 cycle 调整——
+- **Cycle 1（试用期）：** 干净 / 标准 / "你还在适应"
+- **Cycle 2-3（转正过渡）：** 政策开始堆 / 部门更严
+- **Cycle 4-5（中坚）：** 战略调整 / 人手紧张
+- **Cycle 6+（终身）：** 衰朽 / 你也不记得了 / α 苦涩派
 
-异文的一切衍生物（词/词包/圣印/遗物/残余异文）共用同一套分级，以铅字排版状态命名——反映异文的危险程度/稳定性：
+---
 
-| 稀有度 | 版级（中） | 版级（伪拉丁） | 含义 | 在不同对象上的解读 |
-|---|---|---|---|---|
-| common | **定版** | *Fixum* | 已固定，不会动 | 词包：轻松收容 / 遗物：安全使用 / 圣印：容易驾驭 |
-| uncommon | **活版** | *Mobilum* | 能移动但在框内 | 需标准程序处理 |
-| rare | **脱版** | *Solum* | 脱离版面，需重新排 | 需经验丰富的键徒 |
-| epic | **逆版** | *Inversum* | 自行反转重组 | 危险但可利用，需特殊授权 |
-| legendary | **熔版** | *Fusum* | 在熔化，无法维持形态 | 理论上不可永久收容/驾驭 |
-| mythic | **原版** | *Primum* | 先于排版而存在 | 超出分级体系，不应存在 |
-| cursed | **逸版** | *Liberum* | 已逃逸，带走一部分版面 | 持有时带永久副作用 |
+## 5 锚点 + 1 子锚（人物事实表）
 
-**档案中使用方式**：
-- 不要写 "Object Class: Safe"，写 "版级: 定版 / Fixum"
-- 不要写 "Object Class: Keter"，写 "版级: 脱版 / Solum"
-- 可简写为 "Fixum" / "Solum" 等
+${formatAnchors(ANCHOR_FACTS)}
 
-## 锚点人物事实表
+**锚点腔调速查：**
+- **HR**：员工腔 / 公文 / 标准格式头 / 无人称
+- **上级权威 · 显形 A（主任）**：督察腔 / 警察腔 / 命令式（"请配合"）
+- **上级权威 · 显形 B（月度考核官）**：仪式化判决腔（"本月统计已提交"）
+- **内训讲师**：推销腔 + 鸡汤腔混合（体制内 PUA 培训师质感）
+- **同事们 · 集体**：留白载体（工位空缺 / 请假贴纸 / 沉默）
+- **#485,901 · 子锚**：私人破碎腔（不署名 / 不完整句 / 第一人称隐含）
 
-${anchorTable}
+---
 
-## 完整设定翻译表（机制→设定 · 必须严格遵守）
+## Voice × Carrier 矩阵
 
-**写 flavor text 时遇到任何游戏概念，必须查此表使用设定内术语。不在表中的概念用物质隐喻描写，绝不自造游戏术语。**
-
-### 对象名称
-
-| 机制层 | 设定层（中） | 设定层（英） |
+| 载体 | 主声源 | 备注 |
 |---|---|---|
-| Affix 词缀 | **圣印** | **Sigil** |
-| AffixSkill 技能 | **铭文组** | **Inscription** |
-| Enchantment 附魔 | **祝圣/加持** | **Consecration** |
-| Enchantment · Apprentice | **见习祝圣** | **Novice Consecration** |
-| Enchantment · Quest | **苦修任务** | **Penitence Quest** |
-| Enchantment · Operator | **算符祝圣** | **Operator Rite** |
-| Relic 遗物 | **圣徒遗物/圣器** | **Sacred Artifact** |
-| Boss Modifier | **残余异文** | **Residual Anomaly** |
-| WordPack 词包 | **禁书/经典残章** | **Codex Fragment** |
-| 22 种词缀分类 | **六大圣律** | **The Six Canons** |
-| 7 种资源 | **七圣流** | **The Seven Humours** |
+| HR 公告 / 邮件 / 备忘录 / 月度小报 / 工卡 | HR | 公文标准格式 |
+| 走廊广播 / 电梯播报 / 食堂菜单 | HR · 延伸 channel | 半句话 / 含混 |
+| 政策协调员办公室文书 | HR · 政策协调员 | 抄送上级权威 |
+| 主任突袭 cameo（Stage 5 Elite） | 上级权威 · 显形 A | HR 公告同步 |
+| 月度考核公告 / cameo（Stage 12） | 上级权威 · 显形 B | HR 抄送 |
+| 月度结算 / 调岗通知 | 上级权威 · 显形 B | HR 抄送 |
+| 内训 PPT / 工会海报 / 团建邀请 | 内训讲师 | 推销腔 + 鸡汤腔 |
+| 工位空缺 / "请假"贴纸 | （形式上）HR | 同事们集体被指代 |
+| 桌面便条 / 抽屉里的纸 | #485,901 子锚 | **唯一非公文 voice** |
+| 玩家系统反馈（评级 / combo / 时间 / 月度统计） | HR · 第三方观察腔 | "雇员 #485,902 当前评级：B+" |
+| 教程 / 入职流程 | HR · 入职培训腔 + 内训讲师 cameo | 80% HR + 20% 内训 |
 
-### 动作/行为
+---
 
-| 机制层 | 设定层（中） | 设定层（英） |
-|---|---|---|
-| 打字/按键 | 铭刻/祷击 | Inscription / Litany-Strike |
-| 打错字 | 收容震颤 | Containment Tremor |
-| 触发技能 | 圣印铭刻 | Sigil activates |
-| 暴击 | 裂铅（铅字碎裂） | Fracture |
-| 装备/绑定技能 | 将铭文组嵌入圣坛 | Set inscription into lectern |
-| 卸下/移除技能 | 铭文组从圣坛剥落 | Inscription detaches from lectern |
-| 升级 | 晋铸 | Elevation |
-| 购买 | 领取/征用 | Requisition |
-| 出售 | 归还/移交 | Relinquish |
-| 解锁 | 授权晋升 | Clearance Promotion |
-| 附魔（动作） | 受祝圣 / 降福于 | Receive consecration |
-| 已附魔的技能 | 受祝圣之铭文组 | Consecrated inscription |
-| 附魔选择界面 | 祝圣仪式 | Consecration rite |
-| 蜕变/变异 | 熔铸重塑 | Molten reforging |
-| 回车/Enter/确认 | 落版 | Impression / Pull the press |
-| 刷新（商店换货） | 换架 | Restock / Shelf rotation |
-| 重置（数值归零） | 复归 | Revert / Restoration |
-| 电池/续航 | 油壶 | Oil flask |
+## Creator Discipline · 13 条铁律（强制力）
 
-### 空间/界面
+### 语调与世界观契约（5 条）
 
-| 机制层 | 设定层（中） | 设定层（英） |
-|---|---|---|
-| 装备栏/技能栏 | 圣坛键位 | Lectern positions |
-| 商店 | 气动征用管 | Pneumatic Requisition Tube |
-| 背包/仓库 | 不存在此概念 | — |
-| 关卡/层 | 收容层 / 第X层 | Layer X |
-| Run（一局） | 一次登塔 | Ascent |
-| 失败 | 站点污染 | Site Compromise |
-| 胜利 | 登顶启示 | Revelation |
-| Boss 战 | 意志显现 | Will Manifestation |
-| Ritual | 铭封祈礼 | Rite of Sealing |
+1. **永远用员工腔说话** —— HR 公告 / 绩效说明 / 入职须知 / 内训通知 / 茶水间贴纸
+2. **从不解释体制本身** —— 只描述它的表面规则
+3. **不安通过对比制造** —— 不靠形容词，靠"日常 + 一行不该出现的细节"
+4. **猴子身份永远直球** —— 不藏着，蕉、攀爬条款、灵长类抄录员都直说
+5. **从不让玩家觉得"被吓到了"** —— 只让玩家"咦了一下又笑了"
 
-### 角色/身份
+### Ethical 4 条（向上挥拳 / 共谋读者守护）
 
-| 机制层 | 设定层（中） | 设定层（英） |
-|---|---|---|
-| 玩家 | 铭誓键徒 / 初誓键徒 | Clavigerant Novitiate / The Keybound |
-| 敌人 | 异文 / 逸文 | Anomalous Glyph |
-| 键盘 | 铅字圣坛 / 祈念键座 | Lectern of Keys / Claviculum Sanctum |
-| 单个字母键 | 铅字符 / 圣字钉 | Leaden Glyph / Sacred Slug |
+6. **永远不让主角因麻木而显得愚蠢** —— 麻木是**生存智慧**，不是**缺陷**
+7. **公司永远不有趣** —— 它是平的、灰的、令人讨厌的；不要给它 logo / 口号 / 萌物
+8. **调岗的同事不是笑点** —— 他们的消失是**留白的重量**
+9. **猴子身份的喜感可以反复使用，但目标必须是公司、不是工人**
+   - 写法：让公司**一本正经地把猴子行为当 HR 议题处理**
+   - 比例：猴子方向 ≤ ${QUOTAS.monkey_motif_max_pct}%，其他方向 ≥ ${100 - QUOTAS.monkey_motif_max_pct}%
+   - **"蕉"必须以财务严肃语调处理**（参见下文 Rule 9 注脚）
 
-### 关卡/进度结构
+### Self-Consistency 4 条（一致性 / 产能保护）
 
-| 机制层 | 设定层（中） | 设定层（英） |
-|---|---|---|
-| 12-stage cycle | 大教堂的 12 层 | The 12 Vaults |
-| Stage 5 精英 | 执事试炼 | Deacon's Trial |
-| Stage 6 Ritual | 铭封祈礼 | Rite of Sealing |
-| Stage 12 Boss | 祷文引擎的一重意志 | Will of the Litany Engine |
-| 时间到/失败 | 收容突破 / 站点污染 | Containment Breach / Site Compromise |
-| Tutorial | 入门圣礼 | Primer Rite |
-| Daily Challenge | 日收容志 | Daily Containment Log |
-| Leaderboard | 圣典登记簿 | Canonical Register |
-| MetaState 永久进度 | 常驻授权 | Standing Orders |
-| 传说词包 | 镜书 / 先天经 | Mirror Codex / Primal Tome |
+10. **Flavor 载体多样化** —— 公告 / 政策类 ≤ ${QUOTAS.announcement_carrier_max_pct}%，其余载体 ≥ ${100 - QUOTAS.announcement_carrier_max_pct}%
+11. **"不解释"的多手法清单** —— 同一手法连续用 3 次会失效（括号留白 / 流程重定向 / 模糊量化 / 时间错位 / ...）
+12. **不复述机制** —— flavor 不解释机制流程；档案是 SCP 收容报告，不是 patch notes
+13. **物品分层** —— 短描述（必读 1-2 行）+ 完整 Codex（可选 4-8 行），不要混
 
-### 资源/数值
+### Rule 9 注脚 ·「蕉」的使用
 
-| 机制层 | 设定层（中） | 设定层（英） |
-|---|---|---|
-| base 基数 | 基石流 | Foundation Humour |
-| score 分数 | 铭分/结晶流 | Crystalline Humour |
-| multiplier 倍率 | 共鸣流 | Resonant Humour |
-| time 时间 | 流沙流 | Hourglass Humour |
-| gold 金币 | 铅币 | Lead Coin / Plumbum Token |
-| fragment 碎片 | 铅屑 | Lead Shavings |
-| mutagen 变异素 | 熔蜡 / 污蜡 | Molten Unguent / Corrupted Ichor |
-| 目标分数 | 收容基准 | Containment Threshold |
+| ✅ 正确（财务严肃） | ❌ 错误（段子化） |
+|---|---|
+| "本月奖金核算单位：蕉券 × 24" | "猴子最爱的蕉蕉来啦！" |
+| "蕉券兑换率按上季度公允汇率执行" | "今天领蕉真开心~" |
+| "未使用蕉券须在调岗前归还" | "蕉券奖励归还率 ≥ 95% 的同事" |
 
-### 圣印命名规则（词缀/Affix 专用）
+---
 
-**品类名**：圣印（Sigil）— 出现在 tooltip 标题里
-**个体名**：2 字 — 出现在 UI 标签里
-**Tooltip 格式**：圣印 · [个体名] / Sigil of [English Name]
+## 内容多样性配额（写时按 batch 自我审计）
 
-**2 字名构词约束**：
-- 从意象池取材（金属/纸/液体/光/声/工业器械）
-- 优先物质名词而非抽象动词
-- 必须念出来 3 秒内能读出
-- 不用现代术语（不叫"暴击"叫"裂铅"）
-- 不用游戏术语（不叫"增幅"叫"传力"）
-- 同圣律内的名字应有家族感但不强制同后缀
+- **"Section X" 引用 ≤ ${QUOTAS.section_ref_max_pct}%** —— 其余用替代留白机构：
+  ${QUOTAS.section_alternatives.map(a => '· ' + a).join(' / ')}
+- **"上游"母题 ≤ ${QUOTAS.upstream_motif_max_pct}%** —— 其余用替代留白方向：
+  ${QUOTAS.upstream_alternatives.map(a => '· ' + a).join(' / ')}
 
-**六大圣律的命名意象方向**：
-| 圣律 | 意象方向 | 示例 |
-|---|---|---|
-| 换质（Numeric） | 熔炉、铸造、炼金 | 换质、散流、倍铸 |
-| 重击（Crit） | 锻打、碎裂、雷鸣 | 裂铅、蓄压、逆誓 |
-| 积念（Stack） | 钟声、诵经、累积 | 叠念、自鸣、蓄怒 |
-| 空位（Topology） | 席位、阵列、空缺 | 空席、群聚、镜铅 |
-| 词义（Word Sense） | 经卷、字义、读诵 | 末字、引词、叠字 |
-| 变律（Meta Rule） | 契约、封蜡、改写 | 双封、自铭、乱墨 |
+---
 
-**UI 标签预览**：
-  [换质][裂铅][叠念] — UI 标签只显示 2 字名
-  圣印 · 换质 — tooltip 标题
-  Sigil of Transmutation — 英文 tooltip
+## 玩家系统反馈语调（Q3 决议）
 
-## IP 合规
+**a · 第三方观察腔（主用）：** 把玩家当**流水线对象**，不是叙事主角。
+- ✅ "雇员 #485,902 当前评级：B+"
+- ✅ "本日产能：标准范围内"
+- ✅ "剩余打字时间：22 分钟"
 
-GW 专有名词禁用：${GW_BANNED.join(', ')}
-SCP 真实编号禁用（不可写 SCP-173, SCP-096 等）
-Credits: "Narrative aesthetic inspired by the SCP Foundation community (CC-BY-SA 3.0) and the broader Grimdark tradition. No Games Workshop IP is used."
+**b · 第二人称指令腔（偶用，强调约束时）：**
+- ✅ "请保持每分钟 X 字以上的产出。"
+- ✅ "请勿在工作时间访问非工作页面。"
+
+**c · 玩家内心独白：** ❌ **绝对禁止**。麻木的服从者**不会内心独白**——任何内心独白都是写手把自己投射给玩家。
+
+---
+
+## 留白地点（被引用，永远不到达）
+
+楼上 / 上游 · 调岗目的地 · HR 办公室 · 主营业务部 · 入职大厅 · 客户处 · 茶水间储物柜内部 · 监控控制室 · 维修组 / 检查组工作区
+
+**留白原则：** 不是"秘密"（B2 禁止"秘密"），是**永远的边界**。玩家**永远不会**进入这些地方——**这本身就是答案**。
+
+---
+
+## 翻译表（机制 → 叙事）
+
+写 flavor 时遇到游戏机制概念，必须查此表：
+
+| 机制层 | 叙事层 |
+|---|---|
+${TRANSLATION_TABLE.map(e => `| ${e.game} | ${e.zh} |`).join('\n')}
+
+**不在表中的概念**：用 v3 体制语言重写，绝不照搬游戏 UI 术语（"字母碎片分拣"→ 不写；"采集队列"→ 不写；"暴击"→ "你超额完成了 KPI"等）。
+
+---
+
+## IP 合规（仍然适用）
+
+- **GW 专有名词禁用**：${GW_BANNED.join(', ')}
+- **SCP 真实编号禁用**（不可写 SCP-173 / SCP-096 等）
+- **赛博朋克 / 史诗奇幻 / 古拉丁腔禁用**（v2.3 残留：圣印 / 铅币 / 大教堂 / 誓门 / Litany / Ironpress 等**全部禁用**）
+
+---
 
 ## 输出规则
 
-1. 必须输出严格 JSON，不要 markdown 代码块
-2. 中英双语，每条碎片同时输出 zh 和 en
-3. 从意象池取素材
-4. 遵守对应声音的 DO/DON'T 规则
-5. 引用锚点人物时必须对照事实表
+1. 严格 JSON 输出，不要 markdown 代码块包裹
+2. 中英双语：每条同时输出 \`text_zh\` 和 \`text_en\`（除非任务明示只产中文）
+3. 中文遵守 B1.a 中文词汇表；英文遵守 B1.a English vocabulary
+4. **不复述机制流程**；用 v3 体制语言描写**人遇到这个东西后经历了什么**
+5. 必须对照锚点事实表（不要把主任和考核官写成两个不同的人；不要给 HR 起名字）
+6. **绝不**出现 v2.3 残留词汇：圣印 / 圣徒 / 铅币 / 异文 / 守卷人 / 誓门 / 大教堂 / 圣坛 / 收容 / D-XXXX 编号
 `.trim()
 }
 
-export const SYSTEM_CONTEXT = buildSystemContext()
+// ─── Formatters ───
 
-// ─── Sync drift detection ───
-// Check if generated translation table has terms that differ from the full table in SYSTEM_CONTEXT
-for (const entry of TRANSLATION_TABLE) {
-  // Check if the zh term appears in SYSTEM_CONTEXT
-  if (!SYSTEM_CONTEXT.includes(entry.zh)) {
-    console.warn(`⚠️ 同步漂移: 文档翻译表有 "${entry.game} → ${entry.zh}" 但 system-context 中未找到`)
-  }
+function formatAnchors(anchors) {
+  return Object.entries(anchors).map(([id, facts]) => {
+    const label = facts._label || id
+    const lines = Object.entries(facts)
+      .filter(([k]) => k !== '_label')
+      .map(([k, v]) => `  - ${k}: ${String(v).replace(/\n/g, '\n    ')}`)
+      .join('\n')
+    return `[${id}] ${label}\n${lines}`
+  }).join('\n\n')
 }
+
+function formatAllowedZh(allowed) {
+  return Object.entries(allowed)
+    .map(([cat, words]) => `- **${cat}**: ${words.join('、')}`)
+    .join('\n')
+}
+
+function formatForbiddenZh(forbidden) {
+  return Object.entries(forbidden)
+    .map(([cat, info]) => `- **${cat}**（${info.reason}）: ${info.words.join('、')}`)
+    .join('\n')
+}
+
+function formatCtxZh(ctx) {
+  return ctx.map(c =>
+    `- **${c.word}** — 安全：${c.safe}；危险：${c.dangerous}`
+  ).join('\n')
+}
+
+function formatAllowedEn(allowed) {
+  return Object.entries(allowed)
+    .map(([cat, words]) => `- **${cat}**: ${words.join(', ')}`)
+    .join('\n')
+}
+
+function formatForbiddenEn(forbidden) {
+  return Object.entries(forbidden)
+    .map(([cat, info]) => `- **${cat}** (${info.reason}): ${info.words.join(', ')}`)
+    .join('\n')
+}
+
+function formatCtxEn(ctx) {
+  return ctx.map(c =>
+    `- **${c.word}** — Safe: ${c.safe}; Dangerous: ${c.dangerous}`
+  ).join('\n')
+}
+
+export const SYSTEM_CONTEXT = buildSystemContext()

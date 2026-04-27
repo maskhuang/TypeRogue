@@ -10,98 +10,63 @@ export const DATA_JSON = join(SRC_ROOT, 'data-json')
 export const NARRATIVE_OUT = join(SRC_ROOT, 'src', 'data', 'narrative')
 export const OUTPUT_DIR = join(__dirname, 'output')
 
-// Object type → voice mapping: which voices each object type needs
+// ─── Object type → voice / template mapping (v3.0) ───
+//
+// 3 voices in v3:
+//   doc   = long-form MIB document (4-段式 B-7 类合规器 / 月度新政策 / 工种文档 / HR 文件)
+//   bell  = short tooltip / HUD phrase (1-2 行)
+//   note  = private desk note (Beat 7 #485,901 + shop blurb)
+//
+// (v2.3 had a 4th voice `altar` for 圣坛嘟囔 — REMOVED in v3 since the altar concept doesn't exist.)
+//
+// Templates differentiate flavor sub-types within a voice.
+
 export const VOICE_MAP = {
   relic: {
-    bell: { template: 'T1', desc: 'Relic tooltip (🔔 教会)' },
-    doc: { template: 'T5', desc: 'Codex 详情页 (🔔+📄 双声)' },
-    note: { template: 'note_specific', desc: '特定商店批注 (✏️ 可选)', optional: true },
+    doc:  { template: 'mib_equipment',  desc: 'Relic Codex · MIB 装备文书 (B-7 类合规器格式)' },
+    bell: { template: 'mib_short',      desc: 'Relic tooltip · 1-2 行短描述' },
   },
   affix: {
-    bell: { template: 'T2', desc: 'Affix tooltip (🔔 教会)' },
+    bell: { template: 'mib_short',      desc: 'Affix tooltip · 短描述' },
   },
   enchantment: {
-    bell: { template: 'T2', desc: 'Enchantment tooltip (🔔 教会)' },
+    bell: { template: 'mib_short',      desc: 'Enchantment tooltip · 短描述' },
   },
   bossModifier: {
-    bell: { template: 'T3a', desc: 'HUD 角标短格言 (🔔 教会)' },
-    doc: { template: 'T3b', desc: 'Codex 详情页 (📄 档案)' },
+    doc:  { template: 'mib_policy',     desc: 'Boss Modifier · 月度新政策 #XXX 政策文档' },
+    bell: { template: 'mib_short',      desc: 'Boss Modifier · HUD 短格言' },
   },
   class: {
-    bell: { template: 'T5_bell', desc: '职业 tooltip (🔔 教会)' },
-    doc: { template: 'T5_doc', desc: '职业 Codex (📄 档案)' },
+    doc:  { template: 'job_desc',       desc: '职业 Codex · 工种简介' },
+    bell: { template: 'mib_short',      desc: '职业 tooltip · 短描述' },
   },
   ritual: {
-    bell: { template: 'T4', desc: '仪式短句 (🔔 教会)' },
+    bell: { template: 'instructor_pitch', desc: '仪式关 · 内训讲师推销腔（Stage 6）' },
   },
   tutorial: {
-    doc: { template: 'T6', desc: 'Tutorial 片段 (📄 档案)' },
+    doc:  { template: 'hr_doc',         desc: 'Tutorial · HR 入职培训文件' },
   },
   achievement: {
-    doc: { template: 'T7', desc: '成就描述 (📄 档案)' },
+    doc:  { template: 'hr_doc',         desc: '成就 · HR 评估通报' },
   },
   scriptorNotes: {
-    doc: { template: 'T_scriptor', desc: '守卷人笔记 (📄 档案)' },
-  },
-  altar: {
-    altar: { template: 'altar', desc: '圣坛嘟囔 (🔧)' },
+    note: { template: 'desk_note',      desc: '桌面便条 · #485,901 私人破碎腔（Beat 7）' },
   },
   shopnote: {
-    note: { template: 'note_generic', desc: '商店通用批注 (✏️)' },
+    note: { template: 'shop_blurb',     desc: '物资管理中心 · 配发短批注' },
   },
 }
 
-// Anchor person fact table
-// Base facts auto-generated from docs/narrative-design.md (run: node scripts/sync-narrative.mjs)
-// Pipeline-specific fields (name_bell, name_doc, era_m, traits) maintained here
-import { ANCHOR_FACTS as _BASE_FACTS } from './generated/anchor-facts.mjs'
+// ─── Anchor facts ───
+// All facts come straight from generated/anchor-facts.mjs (synced from docs/narrative-design.md).
+// v3 has no pipeline-only fields (v2.3 had name_bell/name_doc/name_altar/era_m/disappear_layer/faction —
+// all removed since the underlying concepts don't exist in v3).
 
-const PIPELINE_FIELDS = {
-  scriptor_a: {
-    name_bell: '初铭者 Valis',
-    name_doc: 'Scriptor V-████',
-    name_altar: '那个人',
-    era_m: 'M.1██',
-    disappear_layer: 6,
-    traits: '工整、恭敬、从不质疑',
-  },
-  scriptor_b: {
-    name_bell: '问道者 Kernn',
-    name_doc: 'Scriptor K-████',
-    name_altar: '按 R 犹豫的那个',
-    era_m: 'M.1██',
-    disappear_layer: 9,
-    traits: '犹豫、紧张、追查 §7.1 全文和引擎档案',
-  },
-  scriptor_c: {
-    name_bell: '悦铭者 Thane',
-    name_doc: 'Scriptor T-████',
-    name_altar: '喜欢画画的',
-    era_m: 'M.2██',
-    disappear_layer: 12,
-    traits: '轻快、好奇、画小插图、对异文充满喜爱',
-  },
-  last_signatory: {
-    name_bell: '末席守卷人',
-    name_doc: '条例签名栏最后有签名的那几份',
-    era_m: 'M.2██',
-  },
-  d_0001: {
-    name_doc: 'D-0001',
-    era_m: 'M.0██',
-    record_trait: '三页冗长征募档案，最后一份被当成"人"写的记录',
-  },
-}
+export { ANCHOR_FACTS } from './generated/anchor-facts.mjs'
 
-// Merge: base facts from doc + pipeline-specific fields
-export const ANCHOR_FACTS = Object.fromEntries(
-  Object.keys({ ..._BASE_FACTS, ...PIPELINE_FIELDS }).map(id => [
-    id,
-    { ...(_BASE_FACTS[id] || {}), ...(PIPELINE_FIELDS[id] || {}) }
-  ])
-)
+// ─── IP & v2.3 residue · banned terms ───
 
-// GW banned terms
+// External IP (still applicable in v3)
 export const GW_BANNED = [
   'Adeptus', 'Mechanicus', 'Omnissiah', 'Imperium', 'Emperor',
   'Astartes', 'Space Marine', 'Ecclesiarchy', 'Primarch',
@@ -109,21 +74,42 @@ export const GW_BANNED = [
   'Administratum', 'Inquisition', 'Commissar',
 ]
 
-// SCP banned real numbers
 export const SCP_BANNED_PATTERN = /SCP-\d{3,4}/
 
-// Word limits per voice
-export const WORD_LIMITS = {
-  bell: { zh_max: 60, en_max: 25, label: '🔔 教会' },
-  doc: { lines_max: 8, label: '📄 档案' },
-  altar: { zh_max: 20, label: '🔧 圣坛' },
-  note: { zh_max: 25, label: '✏️ 批注' },
-}
+// v2.3 Ironpress Cathedral residue — these MUST NOT appear in v3 output.
+// Generated text containing any of these signals a regression to the old setting.
+export const V2_BANNED_ZH = [
+  // 派系 / 体制
+  '大教堂', '活字大教堂', '守卷人', '誓门', '铭刻誓门', '熔变誓门', '键徒', '初誓键徒', '铭誓键徒',
+  // 引擎 / 异文
+  '祷文引擎', '异文', '逸文', '残余异文', '空椅时代', '崇拜时代', '转型时代', '惯性时代',
+  // 圣 系列
+  '圣印', '圣徒遗物', '圣器', '圣坛', '圣坛键位', '圣键', '圣典', '圣经', '圣字钉', '圣律', '圣流',
+  // 仪式 / 动作
+  '收容铭刻', '收容震颤', '收容突破', '站点污染', '祷击', '裂铅', '落版', '复归', '换架',
+  // 资源 / 物
+  '铅币', '铅屑', '铅水', '铅字符', '铭文组', '祝圣', '受祝圣', '残余异文', '禁书', '经典残章',
+  // 地点 / 结构
+  '一次登塔', '意志显现', '气动征用管', '收容廊', '机械外壳', '引擎核心', '抄写室', '铸字坊', '铭封祈礼',
+  // 编号体系
+  'D-XXXX',
+  // 版级
+  '定版', '活版', '脱版', '逆版', '熔版', '原版', '逸版',
+]
 
-// M-era ranges for validation
-export const ERA_RANGES = {
-  worship: { min: 1, max: 99, label: '崇拜时代' },
-  transition: { min: 100, max: 199, label: '转型时代' },
-  empty_chair: { min: 200, max: 299, label: '空椅时代' },
-  inertia: { min: 300, max: 999, label: '惯性时代' },
+export const V2_BANNED_EN = [
+  'Cathedral', 'Ironpress', 'Litany Engine', 'Litany-Strike', 'Scriptor', 'Clavigerant', 'Keybound',
+  'Sigil', 'Sacred Artifact', 'Residual Anomaly', 'Codex Fragment', 'Lead Coin', 'Plumbum',
+  'Containment Tremor', 'Containment Breach', 'Site Compromise', 'Pneumatic Requisition',
+  'Lectern of Keys', 'Claviculum', 'Anomalous Glyph', 'Order of the Graven', 'Order of the Molten',
+  'Gradus Formae', 'Fixum', 'Mobilum', 'Solum', 'Inversum', 'Fusum', 'Primum', 'Liberum',
+  'Will Manifestation', 'Rite of Sealing', 'The Six Canons', 'The Seven Humours',
+]
+
+// ─── Word / line limits per voice (v3) ───
+
+export const WORD_LIMITS = {
+  bell: { zh_max_chars: 30, en_max_words: 15, label: 'bell · 短 tooltip / HUD' },
+  doc:  { zh_max_lines: 12, en_max_lines: 12, label: 'doc · MIB 长文书' },
+  note: { zh_max_chars: 80, en_max_words: 40, label: 'note · 桌面便条 / 商店批注' },
 }

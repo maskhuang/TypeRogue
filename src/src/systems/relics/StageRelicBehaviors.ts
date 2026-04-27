@@ -37,7 +37,7 @@ export function getWarmUpBonus(): number {
 
 // === 幕间准备 (intermission) ===
 
-/** 有遗物 → 返回金币 + 免费刷新次数，否则 null */
+/** 有遗物 → 返回香蕉 + 免费刷新次数，否则 null */
 export function checkIntermission(): { gold: number; freeRefreshes: number } | null {
   if (!state.player.relics.has('intermission')) return null
   return { gold: INTERMISSION_GOLD, freeRefreshes: INTERMISSION_FREE_REFRESH }
@@ -112,7 +112,7 @@ export function onBountyError(): void {
   _consecutivePerfect = 0
 }
 
-/** 完成单词时检查悬赏（返回奖励金币，0 = 未完成/不触发） */
+/** 完成单词时检查悬赏（返回奖励香蕉，0 = 未完成/不触发） */
 export function checkBountyOnWordComplete(ctx: {
   combo: number;
   wordsCompleted: number;
@@ -141,7 +141,7 @@ export function checkBountyOnWordComplete(ctx: {
   return 0
 }
 
-/** 关卡结束时检查 zero_errors（返回奖励金币） */
+/** 关卡结束时检查 zero_errors（返回奖励香蕉） */
 export function checkBountyOnStageEnd(): number {
   if (!_activeBounty || _bountyCompleted) return 0
   if (_activeBounty === 'zero_errors' && !_bountyHasError) {

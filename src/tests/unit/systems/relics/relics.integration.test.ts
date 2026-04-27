@@ -225,7 +225,7 @@ describe('遗物联动矩阵 (Story 36.13 AC1)', () => {
       state.player.relics.add('lenient_judge');
     });
 
-    it('宽容评审降低 target → 更多 overkill → 更多金币', () => {
+    it('宽容评审降低 target → 更多 overkill → 更多香蕉', () => {
       const originalTarget = 1000;
 
       // 宽容评审降低 target
@@ -246,7 +246,7 @@ describe('遗物联动矩阵 (Story 36.13 AC1)', () => {
       const furnaceReduced = checkUniversalFurnace()!;
       expect(furnaceReduced.bonusGold).toBe(300 + 5); // overkill + time
 
-      // 宽容评审导致更多金币
+      // 宽容评审导致更多香蕉
       expect(furnaceReduced.bonusGold).toBeGreaterThan(furnaceOriginal.bonusGold);
     });
   });

@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.typingroguelike.app",
-  "productName": "打字肉鸽",
+  "productName": "灵长类辅助文书部",
   "copyright": "Copyright © 2026 Yuchenghuang",
   "directories": {
     "output": "release/${version}",

@@ -100,7 +100,7 @@ export function clearAuctionTimer(): void {
 
 // === 金库利息 (gold_interest) ===
 
-/** 每关开始时，获得当前金币10%的利息（上限20金币），返回实际获得利息 */
+/** 每关开始时，获得当前香蕉10%的利息（上限20香蕉），返回实际获得利息 */
 export function applyGoldInterest(): number {
   if (!state.player.relics.has('gold_interest')) return 0
   const interest = Math.min(Math.floor(state.player.gold * INTEREST_RATE), INTEREST_CAP)

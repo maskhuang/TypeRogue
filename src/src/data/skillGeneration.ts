@@ -188,7 +188,7 @@ export function rollAffixParams(
       return { type, swarmK: roundTo(0.10 + random() * 0.10, 2) }  // 每虫群 +10%~20%
 
     case AffixType.Mercenary:
-      return { type, hireCost: Math.floor(3 + random() * 5), hireBonus: roundTo(0.50 + random() * 1.00, 2) }  // cost 3~7g, bonus 50%~150%
+      return { type, hireCost: Math.floor(3 + random() * 5), hireBonus: roundTo(0.50 + random() * 1.00, 2) }  // cost 3~7, bonus 50%~150%
 
     case AffixType.Mirror:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }
@@ -300,7 +300,7 @@ export function rollAffixParams(
     case AffixType.Evolve:
       return { type }  // 被蜕变时技能稀有度+1
     case AffixType.Harvest:
-      return { type }  // 被蜕变时获得金币
+      return { type }  // 被蜕变时获得香蕉
     case AffixType.Chain:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }  // 被蜕变时连锁范围内技能
     case AffixType.Volatile:

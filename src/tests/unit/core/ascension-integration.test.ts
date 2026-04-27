@@ -63,7 +63,7 @@ describe('Ascension System Integration', () => {
     })
   })
 
-  // === AC2: 金币映射边界值 ===
+  // === AC2: 香蕉映射边界值 ===
 
   describe('practice gold edge cases', () => {
     it('score=0, A0 → 100g base', () => {

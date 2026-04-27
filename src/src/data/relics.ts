@@ -32,10 +32,10 @@ export type RelicEffectType =
 export type RelicModifierType =
   | 'time_bonus'           // 时间加成（秒）
   | 'score_multiplier'     // 分数倍率加成
-  | 'gold_multiplier'      // 金币倍率加成
+  | 'gold_multiplier'      // 香蕉倍率加成
   | 'combo_protection'     // 连击保护概率
   | 'price_discount'       // 商店折扣
-  | 'gold_flat'            // 金币固定加成
+  | 'gold_flat'            // 香蕉固定加成
   | 'instant_fail'         // 打错即失败
   | 'time_steal'           // 时间窃取
   | 'time_halve'           // 时间减半
@@ -56,7 +56,7 @@ export type RelicModifierType =
   | 'sell_price_bonus'     // 出售价格加成百分比（0-1）
   | 'word_score_min'       // 单词最低结算得分
   | 'modifier_debuff_reduce' // Boss修饰器负面效果降低百分比（0-1）
-  | 'gold_per_modifier'    // 每个激活修饰器额外通关金币百分比
+  | 'gold_per_modifier'    // 每个激活修饰器额外通关香蕉百分比
 
 export type RelicConditionType =
   | 'combo_threshold'       // 连击达到阈值
@@ -104,7 +104,7 @@ export type RelicSubsystem =
 export type RelicBehaviorType =
   // 打字/输入系统
   | 'decelerate_reward'    // 减速津贴：当前词比上个词慢时+时间
-  | 'accelerate_reward'    // 加速奖金：当前词比上个词快时+金币
+  | 'accelerate_reward'    // 加速奖金：当前词比上个词快时+香蕉
   | 'autocomplete'         // 小助手：Tab 自动补全重复单词
   | 'rhythm_adapt'         // 节奏适应：太鼓节拍系统
   | 'glass_cannon'         // 玻璃大炮：得分×2，打错即死

@@ -95,7 +95,7 @@ describe('打字/输入系统遗物行为 (Story 36.2)', () => {
       expect(result.goldBonus).toBe(0)
     })
 
-    it('当前词比上个词快时 +2 金币', () => {
+    it('当前词比上个词快时 +2 香蕉', () => {
       checkSpeedRelics(3.0)
       const result = checkSpeedRelics(2.0)
       expect(result.goldBonus).toBe(2)

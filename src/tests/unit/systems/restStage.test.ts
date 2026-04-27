@@ -76,13 +76,13 @@ describe('restStage - executeEffect', () => {
   })
 
   describe('relic_intermission', () => {
-    it('给 25 金币', () => {
+    it('给 25 香蕉', () => {
       const goldBefore = state.gold
       executeEffect('relic_intermission')
       expect(state.gold).toBe(goldBefore + 25)
     })
 
-    it('结果消息包含金币和刷新', () => {
+    it('结果消息包含香蕉和刷新', () => {
       const result = executeEffect('relic_intermission')
       expect(result).toContain('25')
       expect(result).toContain('免费刷新')
@@ -90,14 +90,14 @@ describe('restStage - executeEffect', () => {
   })
 
   describe('relic_gamble', () => {
-    it('金币不足时不扣金币', () => {
+    it('香蕉不足时不扣香蕉', () => {
       state.gold = 50
       const result = executeEffect('relic_gamble')
       expect(result).toContain('不足')
       expect(state.gold).toBe(50)
     })
 
-    it('赌博扣 100 金币，赢或输', () => {
+    it('赌博扣 100 香蕉，赢或输', () => {
       const goldBefore = state.gold
       executeEffect('relic_gamble')
       const goldDiff = state.gold - goldBefore

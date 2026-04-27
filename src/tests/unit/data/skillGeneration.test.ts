@@ -448,7 +448,7 @@ describe('generateName', () => {
   it('should use correct AFFIX_NAMES and RESOURCE_NAMES', () => {
     for (const at of Object.values(AffixType)) {
       const name = generateName('gold', [{ type: at }])
-      expect(name).toBe(`${AFFIX_NAMES[at]}·金币`)
+      expect(name).toBe(`${AFFIX_NAMES[at]}·香蕉`)
     }
     for (const res of ALL_RESOURCES) {
       expect(generateName(res, [])).toBe(RESOURCE_NAMES[res])

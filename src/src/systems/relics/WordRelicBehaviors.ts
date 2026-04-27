@@ -5,13 +5,13 @@
 import { state } from '../../core/state'
 import { registerRelicBehavior } from './RelicPipeline'
 
-/** 词汇收藏：首次打出单词的金币奖励 */
+/** 词汇收藏：首次打出单词的香蕉奖励 */
 export const WORD_COLLECTION_GOLD = 3
 
 /** 短词冲刺：≤4字母单词的技能产出加成 */
 export const SHORT_SPRINT_RATE = 0.20
 
-/** 厚积薄发：每N词减1金币 */
+/** 厚积薄发：每N词减1香蕉 */
 export const THICK_DECK_WORDS_PER_DISCOUNT = 5
 
 /** 长词达人：≥6字母单词完成时的时间奖励（秒） */

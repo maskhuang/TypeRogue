@@ -68,7 +68,7 @@ export interface RunStateData {
   /** 遗物列表 */
   relics: string[]
 
-  /** 金币数量 */
+  /** 香蕉数量 */
   gold: number
 
   /** 当前关卡编号（Cycle 内，1-CYCLE_LENGTH） */
@@ -167,7 +167,7 @@ export interface RunStateData {
  * 职责:
  * - 管理单局游戏的所有持久数据
  * - 提供技能绑定和查询方法
- * - 处理金币增减
+ * - 处理香蕉增减
  * - 跟踪关卡进度
  * - 应用战斗结果
  */
@@ -343,17 +343,17 @@ export class RunState {
     return this.getKeyForSkill(skillId) !== undefined
   }
 
-  // ==================== 金币管理 (AC2) ====================
+  // ==================== 香蕉管理 (AC2) ====================
 
   /**
-   * 获取当前金币
+   * 获取当前香蕉
    */
   getGold(): number {
     return this.data.gold
   }
 
   /**
-   * 添加金币
+   * 添加香蕉
    * @param amount 添加数量（可为负数）
    */
   addGold(amount: number): void {
@@ -361,7 +361,7 @@ export class RunState {
   }
 
   /**
-   * 消费金币
+   * 消费香蕉
    * @param amount 消费数量（必须为正数）
    * @returns 是否消费成功
    */
@@ -493,7 +493,7 @@ export class RunState {
       this.data.stats.battlesWon++
       // Story 42.3: overflowScore 由 battle.ts endLevel() 更新 state.overflowScore（运行时 source of truth）
       // 此处不累积，避免与 endLevel() 双倍计数
-      // 战斗胜利奖励金币（基于分数，每 100 分 1 金币）
+      // 战斗胜利奖励香蕉（基于分数，每 100 分 1 香蕉）
       const goldReward = Math.floor(result.score / 100)
       this.addGold(goldReward)
     }

@@ -171,7 +171,7 @@ describe('管道集成: 词语效果修饰器 + EffectPipeline', () => {
     expect(result.effects.time).toBeCloseTo(0.5)
   })
 
-  it('金币效果正确产出', () => {
+  it('香蕉效果正确产出', () => {
     const effects = new Map<string, WordEffect>()
     effects.set('gold', { type: 'gold', value: 2 })
     const registry = new ModifierRegistry()

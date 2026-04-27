@@ -21,7 +21,7 @@ describe('electron-builder.json (Story 8.5)', () => {
     })
 
     it('应该有正确的 productName', () => {
-      expect(config.productName).toBe('打字肉鸽')
+      expect(config.productName).toBe('灵长类辅助文书部')
     })
 
     it('应该有版权声明', () => {

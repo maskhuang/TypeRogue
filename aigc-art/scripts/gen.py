@@ -302,7 +302,17 @@ def generate_variation(
             stats["total_generated"] += 1
             stats["seeds"].append(seed)
 
-            # 后处理
+            # 后处理：palette_path is None → 非像素资产（logo / 印章 / 营销素材），
+            # 跳过 palette quantization + nearest downscale + palette eval。
+            # 仅做轻处理：直接复制原图到 pp 目录（人工裁切/缩放）。
+            if palette_path is None:
+                pp_path.write_bytes(img_bytes)
+                print(f"  ✓ {cand_name} (raw, palette-free pipeline)")
+                passing.append(pp_path)
+                stats["passing_candidates"].append(str(pp_path.relative_to(run_dir)))
+                stats["eval_pass_count"] += 1
+                continue
+
             try:
                 palette_lock.postprocess(
                     input_path=raw_path,
@@ -398,9 +408,12 @@ def main() -> int:
     run_dir = repo_root / "runs" / f"{date_str}_{asset_id}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    palette_path = repo_root / spec.get(
-        "postprocess", {}
-    ).get("palette_file", "references/palette/resurrect-32.png")
+    # palette_file 可显式设为 null（非像素资产，如 logo / 印章）→ palette_path = None，
+    # 触发 generate_variation 的 palette-free 分支。
+    palette_file = spec.get("postprocess", {}).get(
+        "palette_file", "references/palette/resurrect-32.png"
+    )
+    palette_path = (repo_root / palette_file) if palette_file else None
 
     variations = spec.get("variations", [])
     if args.only:
