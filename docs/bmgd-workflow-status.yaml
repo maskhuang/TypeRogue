@@ -33,7 +33,7 @@ workflow_status:
 
   # Phase 1 - Design
   gdd: "docs/gdd.md"
-  narrative: conditional
+  narrative: "docs/narrative-design.md"
 
   # Phase 2 - Technical
   game-architecture: "docs/game-architecture.md"
