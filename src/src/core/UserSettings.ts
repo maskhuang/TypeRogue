@@ -8,9 +8,7 @@ const STORAGE_KEY = 'typing_roguelike_settings'
 export type BackgroundMode = 'off' | 'random' | 'liquid' | 'marble' | 'cells' | 'aurora' | 'ink'
 
 export interface UserSettingsData {
-  masterVolume: number   // 0-1，主音量（同时缩放 SFX 与 BGM）
-  bgmVolume: number      // 0-1，BGM 单独音量，再乘以 masterVolume
-  bgmPreset: string      // 'random' = 每关随机；其它 = 锁定该 preset id
+  masterVolume: number   // 0-1
   crtEnabled: boolean
   locale: string         // 'zh' | 'en'
   backgroundMode: BackgroundMode
@@ -18,8 +16,6 @@ export interface UserSettingsData {
 
 const DEFAULTS: UserSettingsData = {
   masterVolume: 0.7,
-  bgmVolume: 0.35,
-  bgmPreset: 'random',
   crtEnabled: true,
   locale: 'zh',
   backgroundMode: 'random',
