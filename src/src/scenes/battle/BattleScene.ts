@@ -13,6 +13,7 @@ import { eventBus, GameEvents } from '../../core/events/EventBus'
 import { BattleHUD } from '../../ui/hud'
 import { KeyboardVisualizer } from '../../ui/keyboard'
 import { BattleFlowController, StageConfig } from './BattleFlowController'
+import { getBgmController } from '../../systems/audio/BgmController'
 
 /**
  * 战斗场景
@@ -133,6 +134,11 @@ export class BattleScene extends BaseScene {
       // 发送战斗开始事件
       eventBus.emit('battle:start', { stageId: this.stageId })
 
+      // 启动程序化 BGM（单例；首次会触发 Tone.start，后续 no-op）
+      getBgmController().start().catch((err) => {
+        console.warn('BattleScene: BGM start failed:', err)
+      })
+
       // 开始战斗
       this.battleState.start()
     } catch (error) {
@@ -167,6 +173,9 @@ export class BattleScene extends BaseScene {
       this.keyboardVisualizer.unbindEvents()
       this.keyboardVisualizer.destroy()
     }
+
+    // BGM 切到 ambient 模式（不销毁，保持跨场景连贯）
+    getBgmController().setAmbient()
 
     super.onExit()
   }
@@ -214,6 +223,17 @@ export class BattleScene extends BaseScene {
     // 更新键盘可视化
     if (this.keyboardVisualizer && !this.keyboardVisualizer.destroyed) {
       this.keyboardVisualizer.update(dtSeconds)
+    }
+
+    // 更新 BGM（喂入战斗状态以驱动 tension/BPM）
+    {
+      const s = this.battleState.getState()
+      getBgmController().drive({
+        combo: s.combo,
+        timeRemaining: s.timeRemaining,
+        totalTime: s.totalTime,
+        paused: s.phase === 'paused',
+      })
     }
 
     // 检查游戏结束（仅触发一次）
@@ -432,5 +452,8 @@ export class BattleScene extends BaseScene {
       this.keyboardVisualizer.unbindEvents()
       this.keyboardVisualizer.destroy()
     }
+
+    // BGM 切到 ambient（单例不销毁）
+    getBgmController().setAmbient()
   }
 }

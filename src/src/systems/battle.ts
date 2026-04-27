@@ -11,6 +11,9 @@ import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension, emitResourceSound } from '../effects/sound';
+import { getBgmController } from './audio/BgmController';
+import { pickRandomPreset, BGM_PRESETS } from './audio/BgmPresets';
+import { getSettings } from '../core/UserSettings';
 import { spawnParticles } from '../effects/particles';
 import { setPaletteHsl as setBgPalette, setLightnessBias as setBgLBias, setRandomStyle as setBgRandomStyle } from '../effects/balatroBackground';
 import { initFloatTextCanvas, spawnFloatText, spawnFlightText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
@@ -275,6 +278,8 @@ export function showScreen(name: 'menu' | 'battle' | 'shop' | 'gameover' | 'ritu
   if (name !== 'battle') {
     const settlement = document.getElementById('score-settlement');
     if (settlement) settlement.classList.add('settlement-hidden');
+    // 程序化 BGM 切到 ambient（drone-only + 缓 BPM），保持音乐连贯
+    getBgmController().setAmbient();
   }
 }
 
@@ -1689,6 +1694,14 @@ function startTimer(): void {
     else if (ratio >= 0.3) tension = Math.max(tension, 1);
     updateBGMTension(tension);
 
+    // 程序化 BGM 驱动（Tone.js 单例）
+    getBgmController().drive({
+      combo: state.combo,
+      timeRemaining: state.time,
+      totalTime: state.timeMax + state.player.timeBonus,
+      paused: battlePaused,
+    });
+
     if (state.time <= 0) {
       state.time = 0;
       if (timerInterval) clearInterval(timerInterval);
@@ -2051,6 +2064,17 @@ export async function startLevel(): Promise<void> {
   state.phase = 'battle';
   initAudio();
   startBGM('battle');
+
+  // 程序化 BGM 预设：用户锁定时用锁定值；否则每关随机（不连续重复）
+  {
+    const bgm = getBgmController();
+    const setting = getSettings().bgmPreset;
+    if (setting && setting !== 'random' && BGM_PRESETS[setting]) {
+      bgm.setPreset(setting);
+    } else {
+      bgm.setPreset(pickRandomPreset(bgm.getPresetId()).id);
+    }
+  }
   // 溢出分扣减目标分数，初始分数始终为 0
   state.score = 0;
   scoreRoller.reset(0);

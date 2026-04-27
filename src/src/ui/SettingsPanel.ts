@@ -9,6 +9,10 @@ import { getSettings, updateSettings } from '../core/UserSettings'
 import type { BackgroundMode } from '../core/UserSettings'
 import { setMasterVolume, playSound } from '../effects/sound'
 import { setBackgroundMode } from '../effects/balatroBackground'
+import { getBgmController } from '../systems/audio/BgmController'
+import { BGM_PRESETS } from '../systems/audio/BgmPresets'
+
+const BGM_PRESET_OPTIONS = ['random', ...Object.keys(BGM_PRESETS)] as const
 
 const BG_MODES: BackgroundMode[] = ['off', 'random', 'liquid', 'marble', 'cells', 'aurora', 'ink']
 
@@ -31,6 +35,23 @@ export function openSettingsPanel(): void {
         <label class="settings-label">${esc(t('settings.volume'))}</label>
         <input type="range" class="settings-slider" id="settings-volume" min="0" max="100" value="${Math.round(settings.masterVolume * 100)}">
         <span class="settings-value" id="settings-volume-val">${Math.round(settings.masterVolume * 100)}%</span>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-label">${esc(t('settings.bgm'))}</label>
+        <input type="range" class="settings-slider" id="settings-bgm" min="0" max="100" value="${Math.round(settings.bgmVolume * 100)}">
+        <span class="settings-value" id="settings-bgm-val">${Math.round(settings.bgmVolume * 100)}%</span>
+      </div>
+
+      <div class="settings-row settings-bg-row">
+        <label class="settings-label">${esc(t('settings.bgm_preset'))}</label>
+        <div class="settings-bg-btns">
+          ${BGM_PRESET_OPTIONS.map(p => `
+            <button class="settings-lang-btn ${settings.bgmPreset === p ? 'active' : ''}" data-bgm-preset="${p}">
+              ${esc(t('settings.bgm_preset.' + p))}
+            </button>
+          `).join('')}
+        </div>
       </div>
 
       <div class="settings-row">
@@ -68,7 +89,7 @@ export function openSettingsPanel(): void {
   `
   container.appendChild(overlay)
 
-  // Volume slider
+  // Master volume slider（影响 SFX 和 BGM）
   const slider = overlay.querySelector('#settings-volume') as HTMLInputElement
   const valDisplay = overlay.querySelector('#settings-volume-val') as HTMLElement
   slider?.addEventListener('input', () => {
@@ -76,6 +97,17 @@ export function openSettingsPanel(): void {
     valDisplay.textContent = `${slider.value}%`
     setMasterVolume(v)
     updateSettings({ masterVolume: v })
+    getBgmController().syncVolume()
+  })
+
+  // BGM volume slider
+  const bgmSlider = overlay.querySelector('#settings-bgm') as HTMLInputElement
+  const bgmVal = overlay.querySelector('#settings-bgm-val') as HTMLElement
+  bgmSlider?.addEventListener('input', () => {
+    const v = parseInt(bgmSlider.value) / 100
+    bgmVal.textContent = `${bgmSlider.value}%`
+    updateSettings({ bgmVolume: v })
+    getBgmController().syncVolume()
   })
 
   // Language buttons
@@ -101,6 +133,22 @@ export function openSettingsPanel(): void {
     applyCRT(enabled)
     crtBtn.textContent = enabled ? 'ON' : 'OFF'
     crtBtn.classList.toggle('active', enabled)
+  })
+
+  // BGM preset picker
+  overlay.querySelectorAll('.settings-bg-btns [data-bgm-preset]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playSound('click')
+      const preset = (btn as HTMLElement).dataset.bgmPreset!
+      updateSettings({ bgmPreset: preset })
+      // 立即生效：选中具体预设直接切换；'random' 则等下次 startLevel 重选
+      if (preset !== 'random' && BGM_PRESETS[preset]) {
+        getBgmController().setPreset(preset)
+      }
+      overlay?.querySelectorAll('.settings-bg-btns [data-bgm-preset]').forEach(b => {
+        b.classList.toggle('active', (b as HTMLElement).dataset.bgmPreset === preset)
+      })
+    })
   })
 
   // Background style picker
@@ -154,6 +202,8 @@ export function applyAllSettings(): void {
   setMasterVolume(s.masterVolume)
   applyCRT(s.crtEnabled)
   setBackgroundMode(s.backgroundMode)
+  // BGM 单例可能此时还没 start()，syncVolume 内有 master 节点存在性检查，安全
+  getBgmController().syncVolume()
 }
 
 function esc(s: string): string {

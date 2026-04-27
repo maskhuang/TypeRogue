@@ -9,6 +9,7 @@ import { getStarterWords } from './data/words';
 import { startLevel, initInput, resetCycleTracking, showScreen } from './systems/battle';
 import { initFloatTextCanvas, clearFloatTexts } from './ui/effects/FloatTextPool';
 import { stopBGM, initAudio, playSound } from './effects/sound';
+import { getBgmController } from './systems/audio/BgmController';
 import { startTutorialMode } from './systems/tutorial/TutorialMode';
 import { openSettingsPanel, applyAllSettings } from './ui/SettingsPanel';
 import { loadSettings } from './core/UserSettings';
@@ -62,6 +63,9 @@ async function init(): Promise<void> {
   // 初始化商店事件
   initShopEvents();
 
+  // 程序化 BGM：首次任何用户交互就启动（菜单点击/键盘），之后持续不断
+  getBgmController().armAutoStart();
+
   if (IS_DEMO) {
     // === Demo 模式：精简初始化 ===
 
@@ -101,6 +105,8 @@ async function init(): Promise<void> {
     if (menuStartBtn) {
       menuStartBtn.onclick = () => {
         initAudio();
+        // 用户手势上下文中启动 Tone — 跨过 await 后浏览器就不认了
+        void getBgmController().start();
         playSound('confirm');
         getElements().mainMenuScreen.style.display = 'none';
         resetCycleTracking();
@@ -267,6 +273,7 @@ async function init(): Promise<void> {
     menuStartBtn.onclick = () => {
       // 用户手势 → 初始化音频（浏览器要求）
       initAudio();
+      void getBgmController().start();
       playSound('confirm');
       // 每局重置 state + 恢复词库
       resetState();

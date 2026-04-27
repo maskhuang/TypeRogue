@@ -10,3 +10,5 @@ export { SoundPool } from './SoundPool'
 
 export { KeystrokeSoundController } from './KeystrokeSoundController'
 export type { KeystrokeSoundConfig } from './KeystrokeSoundController'
+
+export { BgmController, getBgmController } from './BgmController'
