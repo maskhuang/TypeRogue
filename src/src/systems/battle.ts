@@ -271,11 +271,12 @@ export function showScreen(name: 'menu' | 'battle' | 'shop' | 'gameover' | 'ritu
     randomizeScreenBackground(el.mainMenuScreen);
   }
 
-  // 离开战斗屏幕时确保结算面板隐藏，并复位背景动效速度倍率
+  // 离开战斗屏幕时确保结算面板隐藏，并复位背景动效速度倍率与字母凸起深度
   if (name !== 'battle') {
     const settlement = document.getElementById('score-settlement');
     if (settlement) settlement.classList.add('settlement-hidden');
     setBgSpeedMul(1.0);
+    el.word.style.removeProperty('--raise-d');
   }
 }
 
@@ -1742,6 +1743,8 @@ function updateTimerDisplay(): void {
   const accel = getTimeAcceleration(_elapsedSeconds, _isBoss);
   // 背景动效速度跟随时间加速倍率
   setBgSpeedMul(accel);
+  // 字母凸起深度也跟随时间加速倍率（accel=1 → 7px, accel=2 → 10px, accel=4 → 16px）
+  el.word.style.setProperty('--raise-d', `${(4 + accel * 3).toFixed(1)}px`);
   const accelText = '×' + accel.toFixed(1);
   // Review Fix #1: 检查显示文本而非数值 — toFixed(1) 的 "×1.0" 应隐藏
   if (accelText === '×1.0') {
