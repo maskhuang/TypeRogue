@@ -579,6 +579,9 @@ function injectFKey(verb: keyof typeof VERB_FULL): void {
 
 function onKey(e: KeyboardEvent): void {
   if (!active) return;
+  // Preview owns the keyboard while active — block battle's typing handler
+  // (which would otherwise treat terminal input as miss-keys and shake the screen).
+  e.stopImmediatePropagation();
   // Tab: complete verb if buffer non-empty (terminal only); else switch screens
   if (e.key === 'Tab' && !e.shiftKey) {
     e.preventDefault();
