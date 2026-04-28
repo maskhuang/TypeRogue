@@ -2583,6 +2583,7 @@ export function t(key: string, params?: Record<string, string | number>): string
 
 // === DOM 扫描替换 ===
 export function applyHtmlI18n(): void {
+  document.documentElement.lang = currentLocale === 'zh' ? 'zh-CN' : 'en'
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = (el as HTMLElement).dataset.i18n!
     el.textContent = t(key)
