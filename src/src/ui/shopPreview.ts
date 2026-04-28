@@ -563,8 +563,93 @@ function cmdStats(): void {
 
 function cmdWords(): void {
   appendLine('OPENING WORD LIBRARY DRAWER...', 'echo');
-  appendLine('  · STUB · P1.6 builds the overlay drawer', 'dim');
   appendBlank();
+  // ensure on workbench so drawer is visible
+  if (currentScreen !== 'workbench') showOnly('workbench');
+  openDrawer('words');
+}
+
+// === Drawer overlay ===
+type DrawerKind = 'words' | 'craft' | 'metamorph';
+let drawerOpen: DrawerKind | null = null;
+
+function openDrawer(kind: DrawerKind): void {
+  const el = document.getElementById('wb-drawer');
+  const title = document.getElementById('wb-drawer-title');
+  const body = document.getElementById('wb-drawer-body');
+  if (!el || !title || !body) return;
+  drawerOpen = kind;
+  if (kind === 'words') {
+    title.textContent = `WORD LIBRARY · ${state.player.wordDeck.length} WORDS`;
+    body.innerHTML = renderWordsDrawerHtml();
+  } else if (kind === 'craft') {
+    title.textContent = 'WORDSMITH STATION · ASSEMBLY LINE';
+    body.innerHTML = renderStubDrawerHtml('CRAFT', 'Letter-fragment assembly. Combine carbons to forge new words.', 'STATION OFFLINE · WIRING DEFERRED TO PHASE 2');
+  } else if (kind === 'metamorph') {
+    title.textContent = 'METAMORPH STATION · MUTATION CHAMBER';
+    body.innerHTML = renderStubDrawerHtml('METAMORPH', 'Mutate skill affixes by spending mutagen.', 'STATION OFFLINE · WIRING DEFERRED TO PHASE 2');
+  }
+  el.style.display = 'flex';
+  // small enter animation hook
+  requestAnimationFrame(() => el.classList.add('drawer-open'));
+}
+
+function closeDrawer(): void {
+  const el = document.getElementById('wb-drawer');
+  if (!el) return;
+  drawerOpen = null;
+  el.classList.remove('drawer-open');
+  el.style.display = 'none';
+}
+
+function renderWordsDrawerHtml(): string {
+  const words = state.player.wordDeck;
+  if (words.length === 0) {
+    return '<div class="wb-drawer-empty">— NO WORDS FILED —</div>';
+  }
+  // Group into 3 columns for compact view
+  const rows = words.map((w, i) => {
+    const eff = state.wordEffects.get(w);
+    const effLabel = eff ? `[${eff.type.toUpperCase()}${eff.value ? ' ' + eff.value : ''}]` : '';
+    return `<li class="wb-word-row"><span class="ww-idx">${String(i + 1).padStart(3, '0')}</span><span class="ww-name">${w.toUpperCase()}</span><span class="ww-meta">LEN ${w.length}</span><span class="ww-eff">${effLabel}</span></li>`;
+  });
+  return `<ul class="wb-word-list">${rows.join('')}</ul>`;
+}
+
+function renderStubDrawerHtml(name: string, desc: string, status: string): string {
+  return `
+    <div class="wb-drawer-stub">
+      <div class="ws-name">${name}</div>
+      <div class="ws-desc">${desc}</div>
+      <div class="ws-status">${status}</div>
+    </div>
+  `;
+}
+
+// Hook click handlers on drawer triggers (called once per setupDragZones cycle)
+function setupDrawerHandlers(): void {
+  const wb = document.getElementById('workbench-screen-preview');
+  if (!wb) return;
+  wb.querySelectorAll<HTMLElement>('[data-drawer]').forEach(el => {
+    el.onclick = () => openDrawer(el.dataset.drawer as DrawerKind);
+  });
+  const closeBtn = document.getElementById('wb-drawer-close');
+  if (closeBtn) closeBtn.onclick = closeDrawer;
+  const overlay = document.querySelector('#wb-drawer .wb-drawer-overlay') as HTMLElement | null;
+  if (overlay) overlay.onclick = closeDrawer;
+  // Show class-specific buttons
+  const craftBtn = document.getElementById('wb-craft-btn');
+  const metaBtn = document.getElementById('wb-meta-btn');
+  if (craftBtn) craftBtn.style.display = state.classId === 'wordsmith' ? '' : 'none';
+  if (metaBtn) metaBtn.style.display = state.classId === 'metamorph' ? '' : 'none';
+  // Update WORDS folder count
+  const countEl = document.getElementById('words-folder-count');
+  if (countEl) countEl.textContent = String(state.player.wordDeck.length).padStart(3, '0');
+  const previewEl = document.getElementById('words-folder-preview');
+  if (previewEl) {
+    const top3 = state.player.wordDeck.slice(0, 3).map(w => w.toUpperCase()).join(' · ');
+    previewEl.textContent = top3 || '—';
+  }
 }
 
 // === Confirmation handler ===
@@ -675,6 +760,7 @@ function onKey(e: KeyboardEvent): void {
   }
   if (e.key === 'Escape') {
     e.preventDefault();
+    if (drawerOpen) { closeDrawer(); return; }
     restoreFromPreview();
     return;
   }
@@ -1184,7 +1270,30 @@ function buildWorkbenchScreen(): string {
                   <div class="folder-row"><span class="fr-icon">☕</span><span class="fr-name">COLD COFFEE RING</span></div>
                 </div>
               </div>
+              <div class="folder folder-clickable" data-drawer="words">
+                <div class="folder-tab">WORDS · <span class="folder-count" id="words-folder-count">0</span></div>
+                <div class="folder-body">
+                  <div class="folder-row folder-cta">
+                    <span class="fr-icon">📚</span>
+                    <span class="fr-name">OPEN LIBRARY DRAWER</span>
+                    <span class="fr-lv">→</span>
+                  </div>
+                  <div class="folder-row" id="words-folder-preview">—</div>
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Drawer overlay (hidden by default) -->
+        <div id="wb-drawer" class="wb-drawer" style="display:none">
+          <div class="wb-drawer-overlay"></div>
+          <div class="wb-drawer-panel">
+            <div class="wb-drawer-header">
+              <span class="wb-drawer-title" id="wb-drawer-title">DRAWER</span>
+              <button class="wb-drawer-close" id="wb-drawer-close">✕ CLOSE [ESC]</button>
+            </div>
+            <div class="wb-drawer-body" id="wb-drawer-body"></div>
           </div>
         </div>
 
@@ -1194,6 +1303,8 @@ function buildWorkbenchScreen(): string {
             <span class="note-text">"它在叫我名字。如果你听见——立即更换键盘。" — 前任使用者 #4471（已失踪）</span>
           </div>
           <div class="wb-actions">
+            <button class="wb-station-btn" id="wb-craft-btn" data-drawer="craft" style="display:none">🔤 CRAFT</button>
+            <button class="wb-station-btn" id="wb-meta-btn" data-drawer="metamorph" style="display:none">🧬 METAMORPH</button>
             <button class="wb-submit-btn">提交配置 · SUBMIT FORM ➜</button>
           </div>
           <div class="wb-hint">
@@ -1240,6 +1351,7 @@ function enterPreview(): void {
   syncWorkbenchKeys();
   dragManager.init();
   setupDragZones();
+  setupDrawerHandlers();
   setTimeout(() => {
     (document.activeElement as HTMLElement | null)?.blur?.();
     if (vp) vp.scrollTop = vp.scrollHeight;
