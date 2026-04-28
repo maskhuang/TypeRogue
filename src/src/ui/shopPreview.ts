@@ -5,9 +5,9 @@
 // 数据：state.shop.items (auto-seed if empty) → ItemDescriptor → 渲染。
 // ============================================
 
-import { state } from '../core/state';
+import { state, addRelicWithCapacity, removeRelic, isRelicSlotsFull } from '../core/state';
 import { INBOX_MAX } from '../core/constants';
-import { generateAffixShopItems, buildAffixTooltipFields } from '../systems/shop';
+import { generateAffixShopItems, generateShopRelicItem, buildAffixTooltipFields } from '../systems/shop';
 import { describeAllShopItems, type ItemDescriptor } from './itemDescriptors';
 
 const PREVIEW_HASH = '#shop-preview';
@@ -27,7 +27,11 @@ let currentScreen: 'terminal' | 'workbench' = 'terminal';
 let typedBuffer = '';
 let cmdHistory: string[] = [];
 let historyIdx = -1; // -1 = no nav
-let undoStack: { sku: string; price: number; skillId: string; itemIdx: number }[] = [];
+type UndoEntry =
+  | { kind: 'skill'; sku: string; price: number; skillId: string; itemIdx: number }
+  | { kind: 'pack'; sku: string; price: number; words: string[] }
+  | { kind: 'relic'; sku: string; price: number; relicId: string };
+let undoStack: UndoEntry[] = [];
 let pendingConfirm: { sku: string; price: number } | null = null;
 let workbenchEntered = false;
 // snapshot of descriptors for current shop session — re-derived each LIST or after mutation
@@ -80,7 +84,10 @@ function getSynergyCount(d: ItemDescriptor): number {
 function ensureSeed(): void {
   if (state.shop.items.length === 0) {
     try {
-      state.shop.items = generateAffixShopItems(5);
+      const items = generateAffixShopItems(4);
+      const relic = generateShopRelicItem(1);
+      if (relic) items.push(relic);
+      state.shop.items = items;
     } catch {
       // Generator may throw if affix data not initialized; preview still functional via empty catalog
     }
@@ -330,20 +337,22 @@ function cmdInfo(arg?: string): void {
 }
 
 function executeBuy(d: ItemDescriptor): void {
-  if (d.kind !== 'skill') {
-    appendLine(`ERR · ${d.kind.toUpperCase()} PURCHASE NOT YET WIRED IN P1.4`, 'redacted');
-    appendLine('  · SKILL ITEMS ONLY THIS PHASE', 'dim');
-    appendBlank();
-    return;
-  }
-  if (state.player.inbox.length >= INBOX_MAX) {
-    appendLine(`ERR · IN-TRAY FULL (${INBOX_MAX}/${INBOX_MAX}) · DISPATCH TO WORKBENCH BEFORE NEW PURCHASE`, 'redacted');
-    appendBlank();
-    return;
-  }
   if (state.gold < d.price) {
     appendLine(`ERR · INSUFFICIENT FUNDS · BAL 🍌 ${state.gold} · NEED 🍌 ${d.price}`, 'redacted');
     appendLine('  · SEE FORM 22-B FOR APPEAL PROCEDURES', 'dim');
+    appendBlank();
+    return;
+  }
+  if (d.kind === 'skill') return executeBuySkill(d);
+  if (d.kind === 'pack') return executeBuyPack(d);
+  if (d.kind === 'relic') return executeBuyRelic(d);
+  appendLine(`ERR · ${d.kind.toUpperCase()} PURCHASE NOT YET WIRED`, 'redacted');
+  appendBlank();
+}
+
+function executeBuySkill(d: ItemDescriptor): void {
+  if (state.player.inbox.length >= INBOX_MAX) {
+    appendLine(`ERR · IN-TRAY FULL (${INBOX_MAX}/${INBOX_MAX}) · DISPATCH TO WORKBENCH BEFORE NEW PURCHASE`, 'redacted');
     appendBlank();
     return;
   }
@@ -356,17 +365,71 @@ function executeBuy(d: ItemDescriptor): void {
   const skillId = d.originalItem.skillId ?? skill.id;
   const itemIdx = state.shop.items.indexOf(d.originalItem);
   state.gold -= d.price;
-  // Register skill metadata + ownership so workbench can render it
   state.affixSkills.set(skillId, skill);
   state.player.skills.set(skillId, { level: skill.level });
   state.player.inbox.push(skillId);
-  undoStack.push({ sku: d.sku, price: d.price, skillId, itemIdx });
+  undoStack.push({ kind: 'skill', sku: d.sku, price: d.price, skillId, itemIdx });
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
   appendLine(`  · DISPATCHED TO IN-TRAY SLOT ${state.player.inbox.length}/${INBOX_MAX} · BAL 🍌 ${state.gold}`, 'dim');
   appendLine(`  · UNDO STACK: ${undoStack.length} (FINALIZES ON WORKBENCH ENTRY)`, 'dim');
   appendBlank();
   updateBalDisplay();
   syncWorkbenchInbox();
+}
+
+function executeBuyPack(d: ItemDescriptor): void {
+  const pack = d.originalItem.pack;
+  if (!pack || pack.words.length === 0) {
+    appendLine(`ERR · PACK HAS NO WORDS · CANNOT PURCHASE`, 'redacted');
+    appendBlank();
+    return;
+  }
+  // P1: take first word; multi-word picker overlay deferred to P1.6
+  const word = pack.words[0];
+  state.gold -= d.price;
+  state.player.wordDeck.push(word);
+  undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [word] });
+  appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
+  appendLine(`  · WORD "${word.toUpperCase()}" FILED TO WORD LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
+  if (pack.words.length > 1) {
+    appendLine(`  · NOTE: pack had ${pack.words.length} words; picker overlay deferred (P1.6)`, 'dim');
+  }
+  appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
+  appendBlank();
+  updateBalDisplay();
+}
+
+function executeBuyRelic(d: ItemDescriptor): void {
+  const relicId = d.originalItem.relicId;
+  if (!relicId) {
+    appendLine(`ERR · RELIC HAS NO ID · CANNOT PURCHASE`, 'redacted');
+    appendBlank();
+    return;
+  }
+  if (state.player.relics.has(relicId)) {
+    appendLine(`ERR · RELIC ALREADY OWNED · ${relicId.toUpperCase()}`, 'redacted');
+    appendBlank();
+    return;
+  }
+  if (isRelicSlotsFull()) {
+    appendLine(`ERR · NUMBER-ROW SLOTS FULL · DISCARD A RELIC FIRST`, 'redacted');
+    appendBlank();
+    return;
+  }
+  state.gold -= d.price;
+  const ok = addRelicWithCapacity(relicId);
+  if (!ok) {
+    state.gold += d.price;
+    appendLine(`ERR · RELIC ADD FAILED · CONTACT ARCHIVES`, 'redacted');
+    appendBlank();
+    return;
+  }
+  undoStack.push({ kind: 'relic', sku: d.sku, price: d.price, relicId });
+  appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
+  appendLine(`  · RELIC SHELVED · BAL 🍌 ${state.gold}`, 'dim');
+  appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
+  appendBlank();
+  updateBalDisplay();
 }
 
 function cmdBuy(arg?: string): void {
@@ -405,8 +468,12 @@ function cmdSell(arg?: string): void {
     return;
   }
   const entry = undoStack[undoIdx];
+  if (entry.kind !== 'skill') {
+    appendLine(`ERR · ONLY IN-TRAY (SKILL) ITEMS CAN BE SOLD VIA TERMINAL`, 'redacted');
+    appendBlank();
+    return;
+  }
   const refund = Math.floor(entry.price * 0.5);
-  // Remove from inbox (last matching skillId) + ownership
   const inboxIdx = state.player.inbox.lastIndexOf(entry.skillId);
   if (inboxIdx >= 0) state.player.inbox.splice(inboxIdx, 1);
   state.player.skills.delete(entry.skillId);
@@ -456,16 +523,25 @@ function cmdUndo(): void {
     appendBlank();
     return;
   }
-  // remove last matching skillId from inbox + ownership
-  const idx = state.player.inbox.lastIndexOf(last.skillId);
-  if (idx >= 0) state.player.inbox.splice(idx, 1);
-  state.player.skills.delete(last.skillId);
-  state.affixSkills.delete(last.skillId);
+  if (last.kind === 'skill') {
+    const idx = state.player.inbox.lastIndexOf(last.skillId);
+    if (idx >= 0) state.player.inbox.splice(idx, 1);
+    state.player.skills.delete(last.skillId);
+    state.affixSkills.delete(last.skillId);
+    syncWorkbenchInbox();
+  } else if (last.kind === 'pack') {
+    // Remove from end (matching insertion order)
+    for (const w of last.words) {
+      const i = state.player.wordDeck.lastIndexOf(w);
+      if (i >= 0) state.player.wordDeck.splice(i, 1);
+    }
+  } else if (last.kind === 'relic') {
+    removeRelic(last.relicId);
+  }
   state.gold += last.price;
   appendLine(`UNDO · ${last.sku} REVERSED · 🍌 ${last.price} REFUNDED · BAL 🍌 ${state.gold}`, 'echo');
   appendBlank();
   updateBalDisplay();
-  syncWorkbenchInbox();
 }
 
 function cmdStats(): void {
@@ -654,7 +730,7 @@ function syncWorkbenchInbox(): void {
     slots.push(renderInboxCardHtml({
       iconEmoji: sk.icon || '◇',
       name: sk.name.toUpperCase(),
-      sku: undoStack.find(u => u.skillId === skillId)?.sku ?? '???-???',
+      sku: undoStack.find(u => u.kind === 'skill' && u.skillId === skillId)?.sku ?? '???-???',
       clearance: sk.rarity >= 2 ? '4-A' : '4-B',
     }));
   }

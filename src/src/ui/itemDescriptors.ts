@@ -5,7 +5,12 @@
 
 import type { ShopItem } from '../core/types';
 import type { GameState } from '../core/types';
+import { RELICS } from '../data/relics';
 import { abbreviateSkillName } from './affixAbbrev';
+
+function RELICS_LOOKUP(): typeof RELICS {
+  return RELICS;
+}
 
 export type ItemKind = 'skill' | 'pack' | 'relic' | 'enchantment';
 export type ShapeColor = 'mono' | 'rare' | 'epic' | 'legendary' | 'special';
@@ -153,27 +158,31 @@ function describePack(item: ShopItem, idx: number): ItemDescriptor {
 }
 
 function describeRelic(item: ShopItem, idx: number): ItemDescriptor {
-  // relicId-only ShopItem; full data lookup deferred until P1.4 (needs RELICS map import)
   const relicId = item.relicId ?? '';
   const { tag, color } = nonSkillTag('relic');
+  // Lazy import to avoid circular deps at module load
+  // RELICS comes from src/data/relics.ts
+  const data = relicId ? RELICS_LOOKUP()[relicId] : null;
+  const rarityMap: Record<string, 0 | 1 | 2 | 3> = { common: 0, rare: 1, epic: 2, legendary: 3 };
+  const rarity = rarityMap[data?.rarity ?? 'rare'] ?? 1;
   return {
     sku: makeSku('relic', idx),
     kind: 'relic',
-    name: relicId.toUpperCase().replace(/_/g, ' '),
-    nameAbbrev: relicId.toUpperCase().slice(0, 12),
-    iconEmoji: '🏺',
-    rarity: 1,           // P1.4 will read from RELICS[relicId].rarity
-    rarityLabel: 'RARE',
+    name: (data?.name ?? relicId).toUpperCase(),
+    nameAbbrev: (data?.name ?? relicId).toUpperCase().slice(0, 12),
+    iconEmoji: data?.icon || '🏺',
+    rarity,
+    rarityLabel: RARITY_LABELS[rarity],
     shapeTag: tag,
     shapeColor: color,
-    triggerHint: 'PASSIVE',
-    desc: 'PERMANENT EFFECT · OCCUPIES NUMBER-ROW SLOT',
-    effect: '— (P1.4 wires real description)',
+    triggerHint: 'PASSIVE · NUMBER-ROW',
+    desc: data?.description ?? 'PERMANENT EFFECT · OCCUPIES NUMBER-ROW SLOT',
+    effect: data?.flavor ? `"${data.flavor}"` : '—',
     affixLine: '—',
     price: item.cost,
     stockNow: 1,
     stockMax: 1,
-    clearance: '4-A',
+    clearance: RARITY_TO_CLEARANCE[rarity],
     redacted: false,
     upgrade: false,
     synergyCount: 0,
