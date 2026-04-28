@@ -5682,6 +5682,20 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     box-shadow: 0 0 4px rgba(108, 255, 138, 0.7), inset 0 -2px 0 rgba(0,0,0,0.3);
 }
 .terminal-hint .hint-strong kbd { background: #ffe66d; }
+/* F-key hint cells become clickable buttons (esp. for Mac users where F1-F12 are OS-intercepted) */
+.terminal-hint .hint-clickable {
+    cursor: pointer;
+    transition: filter 80ms ease, transform 80ms ease;
+    user-select: none;
+}
+.terminal-hint .hint-clickable:hover {
+    filter: brightness(1.4);
+    transform: translateY(-1px);
+}
+.terminal-hint .hint-clickable:active {
+    transform: translateY(0);
+    filter: brightness(0.9);
+}
 
 /* === WORKBENCH SCREEN — paper desk + foam case === */
 

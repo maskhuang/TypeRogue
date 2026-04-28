@@ -626,8 +626,19 @@ function renderStubDrawerHtml(name: string, desc: string, status: string): strin
   `;
 }
 
-// Hook click handlers on drawer triggers (called once per setupDragZones cycle)
+// Hook click handlers on drawer triggers + terminal hint-bar F-key buttons
 function setupDrawerHandlers(): void {
+  // Terminal hint-bar F-key buttons (Mac F1-F12 are usually intercepted by OS,
+  // so the on-screen labels need to be clickable)
+  const term = document.getElementById('terminal-shop-screen');
+  if (term) {
+    term.querySelectorAll<HTMLElement>('.hint-clickable[data-fkey]').forEach(el => {
+      el.onclick = () => {
+        const verb = el.dataset.fkey as keyof typeof VERB_FULL;
+        if (verb) injectFKey(verb);
+      };
+    });
+  }
   const wb = document.getElementById('workbench-screen-preview');
   if (!wb) return;
   wb.querySelectorAll<HTMLElement>('[data-drawer]').forEach(el => {
@@ -732,10 +743,21 @@ function tabComplete(): void {
 }
 
 function navHistory(dir: 1 | -1): void {
-  if (cmdHistory.length === 0) return;
+  if (cmdHistory.length === 0) {
+    // Visible cue so the keystroke isn't silently ignored on first try
+    flashPrompt();
+    return;
+  }
   if (historyIdx === -1) historyIdx = cmdHistory.length;
   historyIdx = Math.max(0, Math.min(cmdHistory.length, historyIdx + dir));
   setPrompt(cmdHistory[historyIdx] ?? '');
+}
+
+function flashPrompt(): void {
+  const cursor = document.querySelector('#terminal-shop-screen .pp-cursor') as HTMLElement | null;
+  if (!cursor) return;
+  cursor.style.color = '#ff6b6b';
+  setTimeout(() => { cursor.style.color = ''; }, 120);
 }
 
 function injectFKey(verb: keyof typeof VERB_FULL): void {
@@ -776,8 +798,12 @@ function onKey(e: KeyboardEvent): void {
     return;
   }
 
-  if (e.key === 'ArrowUp')   { e.preventDefault(); navHistory(-1); return; }
-  if (e.key === 'ArrowDown') { e.preventDefault(); navHistory(+1); return; }
+  if (e.key === 'ArrowUp' || (e.ctrlKey && e.key.toLowerCase() === 'p')) {
+    e.preventDefault(); navHistory(-1); return;
+  }
+  if (e.key === 'ArrowDown' || (e.ctrlKey && e.key.toLowerCase() === 'n')) {
+    e.preventDefault(); navHistory(+1); return;
+  }
 
   if (e.key === 'Backspace') {
     e.preventDefault();
@@ -1183,12 +1209,12 @@ function buildTerminalScreen(): string {
             </div>
 
             <div class="terminal-hint">
-              <span><kbd>F1</kbd>LIST</span>
-              <span><kbd>F2</kbd>BUY</span>
-              <span><kbd>F3</kbd>INFO</span>
-              <span><kbd>F4</kbd>SELL</span>
-              <span><kbd>F5</kbd>RESHUFFLE</span>
-              <span><kbd>F10</kbd>PROCEED →</span>
+              <span class="hint-clickable" data-fkey="LIS"><kbd>F1</kbd>LIST</span>
+              <span class="hint-clickable" data-fkey="BUY"><kbd>F2</kbd>BUY</span>
+              <span class="hint-clickable" data-fkey="INF"><kbd>F3</kbd>INFO</span>
+              <span class="hint-clickable" data-fkey="SEL"><kbd>F4</kbd>SELL</span>
+              <span class="hint-clickable" data-fkey="RES"><kbd>F5</kbd>RESHUFFLE</span>
+              <span class="hint-clickable" data-fkey="PRO"><kbd>F10</kbd>PROCEED →</span>
               <span class="hint-spacer"></span>
               <span class="hint-strong"><kbd>TAB</kbd>工作台 ⇄</span>
               <span><kbd>ESC</kbd>EXIT</span>
