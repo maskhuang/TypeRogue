@@ -45,21 +45,33 @@ function findDescriptorBySku(sku: string): ItemDescriptor | null {
   return descriptorCache.find(d => d.sku === up) ?? null;
 }
 
-// === Synergy: matching skills (same-resource OR same-affix) ===
-// Counts each owned skill at most once when it shares the candidate's
-// resource OR has any overlapping affix type. Excludes the candidate itself.
+// === Synergy: matching skills (same-resource OR wanted-affix) ===
+// Per-affix wanted set: most affixes contribute self.type; Echo is special and
+// contributes its echoAffixA / echoAffixB targets (not echo itself).
+// Counts each owned skill at most once. Excludes the candidate itself.
 function getSynergyCount(d: ItemDescriptor): number {
   if (d.kind !== 'skill') return 0;
   const sk = d.originalItem.affixSkill;
   if (!sk) return 0;
+
+  const wantedAffixTypes = new Set<string>();
+  for (const af of sk.affixes) {
+    if (af.type === 'echo') {
+      // 感应：仅匹配它声明的 A/B 词条目标，不计 echo 自身
+      if (af.echoAffixA) wantedAffixTypes.add(af.echoAffixA);
+      if (af.echoAffixB) wantedAffixTypes.add(af.echoAffixB);
+    } else {
+      wantedAffixTypes.add(af.type);
+    }
+  }
+
   const targetRes = sk.resource;
-  const targetAffixTypes = new Set(sk.affixes.map(a => a.type));
   let count = 0;
   for (const [id, owned] of state.affixSkills) {
-    if (id === sk.id) continue;  // exclude candidate itself
+    if (id === sk.id) continue;
     const sameRes = !!targetRes && owned.resource === targetRes;
-    const sameAffix = owned.affixes.some(a => targetAffixTypes.has(a.type));
-    if (sameRes || sameAffix) count++;
+    const matchAffix = owned.affixes.some(a => wantedAffixTypes.has(a.type));
+    if (sameRes || matchAffix) count++;
   }
   return count;
 }
