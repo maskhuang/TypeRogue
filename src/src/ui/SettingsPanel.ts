@@ -179,9 +179,15 @@ export function applyCRT(enabled: boolean): void {
 /** 应用主菜单风格到 DOM */
 export function applyMenuStyle(style: MenuStyle): void {
   const menu = document.getElementById('main-menu-screen')
-  if (!menu) return
-  menu.classList.remove('menu-style-dossier', 'menu-style-terminal')
-  menu.classList.add(`menu-style-${style}`)
+  if (menu) {
+    menu.classList.remove('menu-style-dossier', 'menu-style-terminal')
+    menu.classList.add(`menu-style-${style}`)
+  }
+  const battle = document.getElementById('battle-screen')
+  if (battle) {
+    battle.classList.remove('battle-style-dossier', 'battle-style-terminal')
+    battle.classList.add(`battle-style-${style}`)
+  }
 }
 
 /** 启动时应用所有设置 */
