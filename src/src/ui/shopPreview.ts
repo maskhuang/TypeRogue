@@ -1,42 +1,19 @@
 // ============================================
-// Shop Redesign Preview (Phase 1)
+// Shop Redesign Preview (Phase 1.4)
 // 通过 URL hash `#shop-preview` 触发；不影响任何现有流程。
-// 终端命令解析器（stub 数据） + 双屏切换 + 工作台静态视觉。
+// 终端命令解析器 + 双屏切换 + 工作台视觉。
+// 数据：state.shop.items (auto-seed if empty) → ItemDescriptor → 渲染。
 // ============================================
+
+import { state } from '../core/state';
+import { INBOX_MAX } from '../core/constants';
+import { generateAffixShopItems, buildAffixTooltipFields } from '../systems/shop';
+import { describeAllShopItems, type ItemDescriptor } from './itemDescriptors';
 
 const PREVIEW_HASH = '#shop-preview';
 const HIGH_PRICE_THRESHOLD = 100;
+const PREVIEW_SEED_GOLD = 248;
 
-type Shape = 'mono' | 'row' | 'cross' | 'block';
-type Rarity = 0 | 1 | 2 | 3;
-
-interface CatalogItem {
-  sku: string;        // e.g. 'LOZ-204'
-  name: string;       // 'HALCYON LOZENGE'
-  price: number;
-  stock: number | null; // null = ∞
-  clr: string;        // '4-B'
-  rarity: Rarity;
-  shape: Shape;
-  triggers: string;   // letters this skill triggers on (display only)
-  desc: string;
-  effect: string;
-  approvedBy: string;
-  redacted?: boolean;
-  syn?: number;       // stub synergy count (P1.4 will compute from state)
-}
-
-const STUB_CATALOG: CatalogItem[] = [
-  { sku: 'LOZ-204', name: 'HALCYON LOZENGE',     price:  45, stock:  7, clr: '4-B', rarity: 0, shape: 'mono',  triggers: 'L O Z', desc: 'A small calming agent. Issued to clerks during quarterly audits.', effect: '+5% accuracy buff for 30s after consumption.', approvedBy: 'ACCOUNTING DEPT. (STAMP 4471)', syn: 0 },
-  { sku: 'STM-019', name: 'STAMP, RED OXIDE',    price:  12, stock: null, clr: '4-B', rarity: 0, shape: 'mono',  triggers: 'S T M', desc: 'Standard-issue rubber stamp. Mandatory for all outgoing forms.', effect: 'Marks one form per typing as APPROVED.', approvedBy: 'SUPPLIES DEPT.', syn: 1 },
-  { sku: 'FRM-883', name: 'FORM 22-B (TRIPLICATE)', price:  8, stock: null, clr: '4-B', rarity: 0, shape: 'row', triggers: 'F R M', desc: 'Three-copy carbon form. White, yellow, pink. Required for restitution claims.', effect: 'Triggers adjacent row of bound keys.', approvedBy: 'PROCESSING DEPT.', syn: 0 },
-  { sku: 'PEN-771', name: 'PEN, REGULATION (BLACK)', price: 120, stock: 3, clr: '4-A', rarity: 1, shape: 'mono', triggers: 'P E N', desc: 'Black ink only. Blue or red constitutes a procedural violation under §47.', effect: '+30% damage to all CHIPS-school skills.', approvedBy: 'BLACK-INK COMMISSION', syn: 4 },
-  { sku: 'CLP-009', name: 'PAPERCLIP, AUTHORIZED', price: 240, stock: 1, clr: '4-A', rarity: 3, shape: 'cross', triggers: 'C L P', desc: 'Tempered steel. Retains shape under interrogation. Not for personal use.', effect: 'Cross-shaped trigger zone (5 keys: self + N/E/S/W).', approvedBy: 'INTERNAL AFFAIRS', syn: 2 },
-  { sku: 'TYP-099', name: 'TYPEWRITER OIL',      price:  75, stock: 4, clr: '4-B', rarity: 1, shape: 'mono', triggers: 'T Y P', desc: 'Reduces friction in carriage return. One bottle per quarter, no exceptions.', effect: '+10% combo retention per bottle filed.', approvedBy: 'MAINTENANCE DEPT.', syn: 1 },
-  { sku: 'XXX-???', name: '████████████████████████', price: 9999, stock: null, clr: 'III', rarity: 3, shape: 'block', triggers: '? ? ?', desc: '████████████████████████████████████████████████████.', effect: '████████████████████████.', approvedBy: '████████', redacted: true, syn: 0 },
-];
-
-const SHAPE_TAG: Record<Shape, string> = { mono: '[·]', row: '[━]', cross: '[+]', block: '[█]' };
 const VERBS = ['LIS', 'BUY', 'INF', 'SEL', 'RES', 'PRO', 'HEL', 'UND', 'STA', 'WOR'] as const;
 const VERB_FULL: Record<string, string> = {
   LIS: 'LIST', BUY: 'BUY', INF: 'INFO', SEL: 'SELL',
@@ -50,11 +27,47 @@ let currentScreen: 'terminal' | 'workbench' = 'terminal';
 let typedBuffer = '';
 let cmdHistory: string[] = [];
 let historyIdx = -1; // -1 = no nav
-let stubGold = 248;
-let stubInbox: string[] = []; // SKUs purchased this session
-let undoStack: { sku: string; price: number }[] = [];
+let undoStack: { sku: string; price: number; skillId: string; itemIdx: number }[] = [];
 let pendingConfirm: { sku: string; price: number } | null = null;
 let workbenchEntered = false;
+// snapshot of descriptors for current shop session — re-derived each LIST or after mutation
+let descriptorCache: ItemDescriptor[] = [];
+
+function rebuildDescriptors(): void {
+  descriptorCache = describeAllShopItems(state.shop.items, state).map(d => ({
+    ...d,
+    synergyCount: getSynergyCount(d),
+  }));
+}
+
+function findDescriptorBySku(sku: string): ItemDescriptor | null {
+  const up = sku.toUpperCase();
+  return descriptorCache.find(d => d.sku === up) ?? null;
+}
+
+// === Synergy: skills with same resource as candidate ===
+function getSynergyCount(d: ItemDescriptor): number {
+  if (d.kind !== 'skill') return 0;
+  const target = d.originalItem.affixSkill?.resource;
+  if (!target) return 0;
+  let count = 0;
+  for (const [, sk] of state.affixSkills) {
+    if (sk.resource === target) count++;
+  }
+  return count;
+}
+
+// === Auto-seed shop if empty (so #shop-preview works standalone) ===
+function ensureSeed(): void {
+  if (state.shop.items.length === 0) {
+    try {
+      state.shop.items = generateAffixShopItems(5);
+    } catch {
+      // Generator may throw if affix data not initialized; preview still functional via empty catalog
+    }
+  }
+  if (state.gold < 1) state.gold = PREVIEW_SEED_GOLD;
+}
 
 // === Helpers ===
 
@@ -93,25 +106,20 @@ function expandVerb(input: string): string | null {
   return null;
 }
 
-function findItemBySKU(sku: string): CatalogItem | null {
-  const up = sku.toUpperCase();
-  return STUB_CATALOG.find(it => it.sku === up) ?? null;
-}
-
-function suggestSKU(input: string): string | null {
+function suggestSku(input: string): string | null {
   const up = input.toUpperCase();
   let best: { sku: string; dist: number } | null = null;
-  for (const it of STUB_CATALOG) {
-    if (it.redacted) continue;
-    const d = levenshtein(up, it.sku);
-    if (!best || d < best.dist) best = { sku: it.sku, dist: d };
+  for (const d of descriptorCache) {
+    if (d.redacted) continue;
+    const dist = levenshtein(up, d.sku);
+    if (!best || dist < best.dist) best = { sku: d.sku, dist };
   }
   return best && best.dist <= 2 ? best.sku : null;
 }
 
 // === Render: line padding & alignment ===
 
-const COL = { sku: 9, name: 35, price: 7, stock: 8, clr: 6, tag: 5 };
+const COL = { sku: 9, name: 32, price: 7, stock: 8, clr: 6 };
 
 function pad(s: string, n: number, right = true): string {
   if (s.length >= n) return s.slice(0, n);
@@ -119,41 +127,103 @@ function pad(s: string, n: number, right = true): string {
 }
 
 function priceColForLine(p: number): string {
-  // emoji wraps in span at render-time, here just return raw "🍌 ##" placeholder
   if (p >= 9999) return ' ███';
   return pad(String(p), 4, false);
 }
 
-function renderListRow(it: CatalogItem): string {
-  const nameWithStars = (it.rarity === 0 ? '' : it.rarity === 1 ? '*' : it.rarity === 2 ? '**' : '***') + it.name;
-  const skuCol = pad(it.sku, COL.sku);
-  const nameCol = pad(nameWithStars, COL.name);
-  const priceCol = priceColForLine(it.price);
-  const stockCol = pad(it.stock === null ? '∞' : String(it.stock).padStart(2, '0') + (it.stock < 10 ? '/10' : '/' + it.stock), 7);
-  const clrCol = pad(it.clr, COL.clr);
-  // shape & syn use sentinel tokens replaced after html-escape
-  const shapeTag = `§S${it.shape.toUpperCase()}§`;
-  const syn = it.syn ?? 0;
-  const synTag = `§Y${syn}§`;
-  const trailing = it.redacted ? '[REDACTED]' : '';
-  return `${skuCol}${nameCol} 🍌${priceCol}  ${stockCol}  ${clrCol}  ${shapeTag} ${synTag} ${trailing}`.trimEnd();
+function renderListRow(d: ItemDescriptor): string {
+  const stars = d.rarity === 0 ? '' : '*'.repeat(d.rarity);
+  const upgPrefix = d.upgrade ? '↑' : '';
+  const nameWithMarkers = upgPrefix + stars + d.name;
+  const skuCol = pad(d.sku, COL.sku);
+  const nameCol = pad(nameWithMarkers, COL.name);
+  const priceCol = priceColForLine(d.price);
+  const stockStr = d.stockNow === null
+    ? '∞'
+    : `${String(d.stockNow).padStart(2, '0')}/${String(d.stockMax ?? d.stockNow).padStart(2, '0')}`;
+  const stockCol = pad(stockStr, 7);
+  const clrCol = pad(d.clearance, COL.clr);
+  const shapeTok = `§T${d.shapeColor.toUpperCase()}|${d.shapeTag}§`;
+  const synTok = `§Y${d.synergyCount}§`;
+  const trailing = d.redacted ? '[REDACTED]' : '';
+  return `${skuCol}${nameCol} 🍌 ${priceCol}  ${stockCol}  ${clrCol}  ${shapeTok} ${synTok} ${trailing}`.trimEnd();
 }
 
-function renderInfoBlock(it: CatalogItem): string[] {
-  const W = 70;
-  const top = '┌─ ' + it.name + ' · ' + it.sku + ' ' + '─'.repeat(Math.max(0, W - it.name.length - it.sku.length - 6)) + '┐';
-  const mid = (s: string) => '│ ' + pad(s, W - 4) + ' │';
-  const bot = '└' + '─'.repeat(W - 2) + '┘';
-  return [
-    top,
-    mid('CLR ' + it.clr + ' · ' + ['COMMON', 'RARE', 'EPIC', 'LEGENDARY'][it.rarity] + ' · SHAPE ' + SHAPE_TAG[it.shape]),
-    mid('TRIGGERS: ' + it.triggers),
-    mid(''),
-    mid(it.desc),
-    mid('EFFECT: ' + it.effect),
-    mid('APPROVED BY: ' + it.approvedBy),
-    bot,
-  ];
+function wrapAt(text: string, w: number): string[] {
+  if (text.length <= w) return [text];
+  const out: string[] = [];
+  const words = text.split(/(\s+)/);
+  let cur = '';
+  for (const tok of words) {
+    if ((cur + tok).length <= w) cur += tok;
+    else {
+      if (cur.trim()) out.push(cur.trimEnd());
+      cur = tok.trimStart();
+    }
+  }
+  if (cur.trim()) out.push(cur.trimEnd());
+  return out;
+}
+
+function renderInfoBlock(d: ItemDescriptor): string[] {
+  const W = 80;
+  const lines: string[] = [];
+  const headLine = `═══ ${d.name} · ${d.sku} ` + '═'.repeat(Math.max(3, W - d.name.length - d.sku.length - 7));
+  lines.push(headLine);
+  lines.push(`KIND ${d.kind.toUpperCase()} · CLR ${d.clearance} · ${d.rarityLabel} · §T${d.shapeColor.toUpperCase()}|${d.shapeTag}§`);
+  lines.push(`PRICE 🍌 ${d.price} · TRIGGER ${d.triggerHint}${d.level ? ` · Lv.${d.level}` : ''}`);
+
+  // Skill items: rich affix + enchant breakdown via buildAffixTooltipFields
+  const sk = d.originalItem.affixSkill;
+  if (d.kind === 'skill' && sk) {
+    if (sk.baseValues && sk.baseValues.length > 0) {
+      lines.push('');
+      lines.push('BASE VALUES');
+      const bvStr = sk.baseValues.map((v, i) => `Lv${i + 1}:${v}`).join(' · ');
+      for (const w of wrapAt(bvStr, W - 4)) lines.push('  ' + w);
+    }
+    let fields: ReturnType<typeof buildAffixTooltipFields> | null = null;
+    try { fields = buildAffixTooltipFields(sk); } catch { fields = null; }
+    if (fields && fields.affixInfo.length > 0) {
+      lines.push('');
+      lines.push('AFFIXES');
+      for (const af of fields.affixInfo) {
+        const hdr = `‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
+        for (const w of wrapAt(hdr, W - 4)) lines.push('  ' + w);
+        if (af.description) {
+          for (const w of wrapAt(af.description, W - 6)) lines.push('    ' + w);
+        }
+      }
+    }
+    if (fields && fields.enchantments.length > 0) {
+      lines.push('');
+      lines.push('ENCHANTMENTS');
+      for (const e of fields.enchantments) {
+        const hdr = `‹${(e.name || '?').toUpperCase()}›`;
+        for (const w of wrapAt(hdr, W - 4)) lines.push('  ' + w);
+        if (e.desc) {
+          for (const w of wrapAt(e.desc, W - 6)) lines.push('    ' + w);
+        }
+      }
+    }
+    if (fields && fields.questProgress) {
+      lines.push('  QUEST: ' + fields.questProgress);
+    }
+    if (fields && fields.apprenticeGrowth) {
+      lines.push('  APPRENTICE: ' + fields.apprenticeGrowth);
+    }
+  } else {
+    // Pack / relic / enchantment fallback
+    lines.push('');
+    lines.push(d.desc);
+    lines.push(d.effect);
+    if (d.affixLine !== '—') lines.push(`AFFIX: ${d.affixLine}`);
+  }
+
+  lines.push('');
+  lines.push(`SYN ${d.synergyCount} OWNED${d.kind === 'skill' ? ' (SAME-RESOURCE)' : ''}`);
+  lines.push('═'.repeat(W));
+  return lines;
 }
 
 // === Output to viewport ===
@@ -166,10 +236,9 @@ function appendLine(text: string, cls = ''): void {
   let html = escapeHtml(text);
   // 价格 emoji 自动 wrap：把"🍌"包成 .bna
   html = html.replace(/🍌/g, '<span class="bna">🍌</span>');
-  // shape sentinel: §SMONO§ → [·] 等
-  html = html.replace(/§S(MONO|ROW|CROSS|BLOCK)§/g, (_m, k) => {
-    const sym = ({ MONO: '[·]', ROW: '[━]', CROSS: '[+]', BLOCK: '[█]' } as Record<string, string>)[k] ?? '[?]';
-    return `<span class="t-shape t-shape-${k.toLowerCase()}">${sym}</span>`;
+  // shape sentinel: §T<COLOR>|<TAG>§  →  <span class="t-shape t-shape-COLOR">TAG</span>
+  html = html.replace(/§T([A-Z]+)\|(\[[^\]]+\])§/g, (_m, color, tag) => {
+    return `<span class="t-shape t-shape-${(color as string).toLowerCase()}">${tag}</span>`;
   });
   // syn sentinel: §Y4§ → [SYN:4]
   html = html.replace(/§Y(\d+)§/g, (_m, n) => {
@@ -190,11 +259,10 @@ function appendBlank(n = 1): void {
   for (let i = 0; i < n; i++) appendLine('');
 }
 
-function classForRow(it: CatalogItem): string {
-  if (it.redacted) return 'redacted';
-  if (it.rarity === 3) return 'legendary';
-  if (it.rarity === 2) return 'rare';
-  if (it.rarity === 1) return 'rare'; // share style for now; epic is also bright
+function classForRow(d: ItemDescriptor): string {
+  if (d.redacted) return 'redacted';
+  if (d.rarity === 3) return 'legendary';
+  if (d.rarity >= 1) return 'rare';
   return '';
 }
 
@@ -205,52 +273,75 @@ function cmdHelp(): void {
   appendLine('  LIS · BUY <SKU> · INF <SKU> · SEL <SKU> · RES');
   appendLine('  PRO (proceed to workbench) · STA · WOR · UND · HEL');
   appendLine('USE 3-LETTER ABBREVIATIONS. ↑↓ FOR HISTORY. TAB COMPLETES VERB ONLY.', 'dim');
-  appendLine(`PRICES IN BANANA STANDARD 🍌. PURCHASES ≥🍌${HIGH_PRICE_THRESHOLD} REQUIRE [Y/N].`, 'dim');
+  appendLine(`PRICES IN BANANA STANDARD 🍌  · PURCHASES ≥ 🍌 ${HIGH_PRICE_THRESHOLD} REQUIRE [Y/N].`, 'dim');
   appendBlank();
 }
 
 function cmdList(): void {
+  rebuildDescriptors();
+  if (descriptorCache.length === 0) {
+    appendLine('CATALOG EMPTY · NO ITEMS POSTED', 'dim');
+    appendBlank();
+    return;
+  }
   appendLine('CATALOG · 2026-Q2 · ALL PRICES IN BANANA STANDARD 🍌', 'head');
   appendLine('─────────────────────────────────────────────────────────────────────────────────────');
   appendLine(`${pad('SKU', COL.sku)}${pad('ITEM', COL.name)} ${pad('PRICE', 6)}  ${pad('STOCK', 7)}  ${pad('CLR', COL.clr)}  TAG`, 'head');
   appendLine('─────────────────────────────────────────────────────────────────────────────────────');
-  for (const it of STUB_CATALOG) appendLine(renderListRow(it), classForRow(it));
+  for (const d of descriptorCache) appendLine(renderListRow(d), classForRow(d));
   appendLine('─────────────────────────────────────────────────────────────────────────────────────');
-  appendLine(`${STUB_CATALOG.length} ITEMS LISTED · TYPE  INFO <SKU>  FOR DETAILS`, 'dim');
+  appendLine(`${descriptorCache.length} ITEMS LISTED · TYPE  INFO <SKU>  FOR DETAILS`, 'dim');
   appendBlank();
 }
 
 function cmdInfo(arg?: string): void {
   if (!arg) { appendLine('USAGE: INFO <SKU>', 'dim'); return; }
-  const it = findItemBySKU(arg);
-  if (!it) {
-    const guess = suggestSKU(arg);
+  const d = findDescriptorBySku(arg);
+  if (!d) {
+    const guess = suggestSku(arg);
     appendLine(`ERR · SKU NOT IN CATALOG: ${arg.toUpperCase()}`, 'redacted');
     if (guess) appendLine(`  · DID YOU MEAN ${guess}?`, 'dim');
     appendBlank();
     return;
   }
-  for (const line of renderInfoBlock(it)) appendLine(line, classForRow(it));
+  for (const line of renderInfoBlock(d)) appendLine(line, classForRow(d));
   appendBlank();
 }
 
-function executeBuy(it: CatalogItem): void {
-  if (stubInbox.length >= 5) {
-    appendLine('ERR · IN-TRAY FULL · DISPATCH TO WORKBENCH BEFORE NEW PURCHASE', 'redacted');
+function executeBuy(d: ItemDescriptor): void {
+  if (d.kind !== 'skill') {
+    appendLine(`ERR · ${d.kind.toUpperCase()} PURCHASE NOT YET WIRED IN P1.4`, 'redacted');
+    appendLine('  · SKILL ITEMS ONLY THIS PHASE', 'dim');
     appendBlank();
     return;
   }
-  if (stubGold < it.price) {
-    appendLine(`ERR · INSUFFICIENT FUNDS · BAL 🍌${stubGold} · NEED 🍌${it.price}`, 'redacted');
+  if (state.player.inbox.length >= INBOX_MAX) {
+    appendLine(`ERR · IN-TRAY FULL (${INBOX_MAX}/${INBOX_MAX}) · DISPATCH TO WORKBENCH BEFORE NEW PURCHASE`, 'redacted');
+    appendBlank();
+    return;
+  }
+  if (state.gold < d.price) {
+    appendLine(`ERR · INSUFFICIENT FUNDS · BAL 🍌 ${state.gold} · NEED 🍌 ${d.price}`, 'redacted');
     appendLine('  · SEE FORM 22-B FOR APPEAL PROCEDURES', 'dim');
     appendBlank();
     return;
   }
-  stubGold -= it.price;
-  stubInbox.push(it.sku);
-  undoStack.push({ sku: it.sku, price: it.price });
-  appendLine(`CONFIRMED · ${it.name} · 🍌${it.price} DEDUCTED`, 'echo');
-  appendLine(`  · DISPATCHED TO IN-TRAY SLOT ${stubInbox.length}/5 · BAL 🍌${stubGold}`, 'dim');
+  const skill = d.originalItem.affixSkill;
+  if (!skill) {
+    appendLine(`ERR · ITEM HAS NO SKILL DATA · CANNOT PURCHASE`, 'redacted');
+    appendBlank();
+    return;
+  }
+  const skillId = d.originalItem.skillId ?? skill.id;
+  const itemIdx = state.shop.items.indexOf(d.originalItem);
+  state.gold -= d.price;
+  // Register skill metadata + ownership so workbench can render it
+  state.affixSkills.set(skillId, skill);
+  state.player.skills.set(skillId, { level: skill.level });
+  state.player.inbox.push(skillId);
+  undoStack.push({ sku: d.sku, price: d.price, skillId, itemIdx });
+  appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
+  appendLine(`  · DISPATCHED TO IN-TRAY SLOT ${state.player.inbox.length}/${INBOX_MAX} · BAL 🍌 ${state.gold}`, 'dim');
   appendLine(`  · UNDO STACK: ${undoStack.length} (FINALIZES ON WORKBENCH ENTRY)`, 'dim');
   appendBlank();
   updateBalDisplay();
@@ -259,42 +350,49 @@ function executeBuy(it: CatalogItem): void {
 
 function cmdBuy(arg?: string): void {
   if (!arg) { appendLine('USAGE: BUY <SKU>', 'dim'); return; }
-  const it = findItemBySKU(arg);
-  if (!it) {
-    const guess = suggestSKU(arg);
+  const d = findDescriptorBySku(arg);
+  if (!d) {
+    const guess = suggestSku(arg);
     appendLine(`ERR · SKU NOT IN CATALOG: ${arg.toUpperCase()}`, 'redacted');
     if (guess) appendLine(`  · DID YOU MEAN ${guess}?`, 'dim');
     appendBlank();
     return;
   }
-  if (it.redacted) {
-    appendLine(`ERR · CLEARANCE ${it.clr} REQUIRED · CONTACT SUPERVISOR`, 'redacted');
+  if (d.redacted) {
+    appendLine(`ERR · CLEARANCE ${d.clearance} REQUIRED · CONTACT SUPERVISOR`, 'redacted');
     appendBlank();
     return;
   }
-  if (it.price >= HIGH_PRICE_THRESHOLD) {
-    pendingConfirm = { sku: it.sku, price: it.price };
-    appendLine(`CONFIRM PURCHASE · ${it.name} · 🍌${it.price}`, 'head');
-    appendLine(`BAL AFTER: 🍌${stubGold - it.price} · TYPE [Y]ES OR [N]O`, 'dim');
+  if (d.price >= HIGH_PRICE_THRESHOLD) {
+    pendingConfirm = { sku: d.sku, price: d.price };
+    appendLine(`CONFIRM PURCHASE · ${d.name} · 🍌 ${d.price}`, 'head');
+    appendLine(`BAL AFTER: 🍌 ${state.gold - d.price} · TYPE [Y]ES OR [N]O`, 'dim');
     return;
   }
-  executeBuy(it);
+  executeBuy(d);
 }
 
 function cmdSell(arg?: string): void {
   if (!arg) { appendLine('USAGE: SELL <SKU>', 'dim'); return; }
-  const idx = stubInbox.findIndex(s => s === arg.toUpperCase());
-  if (idx < 0) {
-    appendLine(`ERR · ${arg.toUpperCase()} NOT IN IN-TRAY`, 'redacted');
+  const target = arg.toUpperCase();
+  // SEL operates on inbox items by SKU
+  const undoIdx = undoStack.findIndex(u => u.sku === target);
+  if (undoIdx < 0) {
+    appendLine(`ERR · ${target} NOT IN IN-TRAY`, 'redacted');
     appendLine('  · SELL ONLY APPLIES TO IN-TRAY ITEMS · USE WORKBENCH FOR EQUIPPED', 'dim');
     appendBlank();
     return;
   }
-  const it = findItemBySKU(arg);
-  const refund = it ? Math.floor(it.price * 0.5) : 0;
-  stubInbox.splice(idx, 1);
-  stubGold += refund;
-  appendLine(`SOLD · ${arg.toUpperCase()} · 🍌${refund} REFUNDED (50%)`, 'echo');
+  const entry = undoStack[undoIdx];
+  const refund = Math.floor(entry.price * 0.5);
+  // Remove from inbox (last matching skillId) + ownership
+  const inboxIdx = state.player.inbox.lastIndexOf(entry.skillId);
+  if (inboxIdx >= 0) state.player.inbox.splice(inboxIdx, 1);
+  state.player.skills.delete(entry.skillId);
+  state.affixSkills.delete(entry.skillId);
+  undoStack.splice(undoIdx, 1);
+  state.gold += refund;
+  appendLine(`SOLD · ${target} · 🍌 ${refund} REFUNDED (50%)`, 'echo');
   appendBlank();
   updateBalDisplay();
   syncWorkbenchInbox();
@@ -302,14 +400,19 @@ function cmdSell(arg?: string): void {
 
 function cmdReshuffle(): void {
   const cost = 18;
-  if (stubGold < cost) {
-    appendLine(`ERR · INSUFFICIENT FUNDS · NEED 🍌${cost}`, 'redacted');
+  if (state.gold < cost) {
+    appendLine(`ERR · INSUFFICIENT FUNDS · NEED 🍌 ${cost}`, 'redacted');
     appendBlank();
     return;
   }
-  stubGold -= cost;
-  appendLine(`CATALOG RESHUFFLED · 🍌${cost} DEDUCTED`, 'echo');
-  appendLine('  · NEW INVENTORY POSTED. (STUB: catalog unchanged in P1)', 'dim');
+  state.gold -= cost;
+  try {
+    state.shop.items = generateAffixShopItems(5);
+    rebuildDescriptors();
+    appendLine(`CATALOG RESHUFFLED · 🍌 ${cost} DEDUCTED · NEW INVENTORY POSTED`, 'echo');
+  } catch {
+    appendLine(`CATALOG RESHUFFLED · 🍌 ${cost} DEDUCTED · GENERATOR UNAVAILABLE`, 'echo');
+  }
   appendBlank();
   updateBalDisplay();
 }
@@ -332,11 +435,13 @@ function cmdUndo(): void {
     appendBlank();
     return;
   }
-  // remove last matching SKU from inbox
-  const idx = stubInbox.lastIndexOf(last.sku);
-  if (idx >= 0) stubInbox.splice(idx, 1);
-  stubGold += last.price;
-  appendLine(`UNDO · ${last.sku} REVERSED · 🍌${last.price} REFUNDED · BAL 🍌${stubGold}`, 'echo');
+  // remove last matching skillId from inbox + ownership
+  const idx = state.player.inbox.lastIndexOf(last.skillId);
+  if (idx >= 0) state.player.inbox.splice(idx, 1);
+  state.player.skills.delete(last.skillId);
+  state.affixSkills.delete(last.skillId);
+  state.gold += last.price;
+  appendLine(`UNDO · ${last.sku} REVERSED · 🍌 ${last.price} REFUNDED · BAL 🍌 ${state.gold}`, 'echo');
   appendBlank();
   updateBalDisplay();
   syncWorkbenchInbox();
@@ -367,9 +472,9 @@ function handleConfirmation(input: string): boolean {
   if (!pendingConfirm) return false;
   const up = input.trim().toUpperCase();
   if (up === 'Y' || up === 'YES') {
-    const it = findItemBySKU(pendingConfirm.sku);
+    const d = findDescriptorBySku(pendingConfirm.sku);
     pendingConfirm = null;
-    if (it) executeBuy(it);
+    if (d) executeBuy(d);
     return true;
   }
   if (up === 'N' || up === 'NO') {
@@ -393,7 +498,7 @@ function execute(line: string): void {
   const verbInput = parts[0].toUpperCase();
   const arg = parts[1];
   // implicit BUY: if first token matches a SKU and no verb, treat as BUY
-  if (findItemBySKU(verbInput)) {
+  if (findDescriptorBySku(verbInput)) {
     cmdBuy(verbInput);
     return;
   }
@@ -511,54 +616,56 @@ function onKey(e: KeyboardEvent): void {
 
 function updateBalDisplay(): void {
   const el = document.querySelector('#terminal-shop-screen .ts-cell .bal');
-  if (el) el.innerHTML = `<span class="bna">🍌</span> ${stubGold}`;
+  if (el) el.innerHTML = `<span class="bna">🍌</span> ${state.gold}`;
 }
 
 function syncWorkbenchInbox(): void {
-  // Refresh the IN-tray foam slots based on stubInbox
   const root = document.querySelector('#workbench-screen-preview .wb-foam-case');
   if (!root) return;
+  // Find descriptor for each inbox skillId by scanning historical undoStack and current cache
   const slots: string[] = [];
-  for (const sku of stubInbox) {
-    const it = findItemBySKU(sku);
-    if (!it) continue;
-    slots.push(renderInboxCardHtml(it));
+  for (const skillId of state.player.inbox) {
+    const sk = state.affixSkills.get(skillId);
+    if (!sk) continue;
+    slots.push(renderInboxCardHtml({
+      iconEmoji: sk.icon || '◇',
+      name: sk.name.toUpperCase(),
+      sku: undoStack.find(u => u.skillId === skillId)?.sku ?? '???-???',
+      clearance: sk.rarity >= 2 ? '4-A' : '4-B',
+    }));
   }
-  // pad empty
-  while (slots.length < 5) slots.push('<div class="foam-cutout empty"><span class="cutout-empty-label">— 空槽 —</span></div>');
+  while (slots.length < INBOX_MAX) slots.push('<div class="foam-cutout empty"><span class="cutout-empty-label">— 空槽 —</span></div>');
   root.innerHTML = slots.join('');
-  // update IN-TRAY count label
   const sub = document.querySelector('#workbench-screen-preview .wb-intray .wb-tab-sub');
-  if (sub) sub.textContent = `待装配 · ${String(stubInbox.length).padStart(2, '0')}`;
+  if (sub) sub.textContent = `待装配 · ${String(state.player.inbox.length).padStart(2, '0')}`;
 }
 
-function renderInboxCardHtml(it: CatalogItem): string {
-  const stamp = it.clr === '4-A'
+interface InboxCardData {
+  iconEmoji: string;
+  name: string;
+  sku: string;
+  clearance: string;
+}
+
+function renderInboxCardHtml(c: InboxCardData): string {
+  const stamp = c.clearance === '4-A'
     ? '<div class="wc-stamp wc-stamp-gold">CLEARANCE 4-A</div>'
     : '<div class="wc-stamp">REGULATION</div>';
   return `
     <div class="foam-cutout">
       <div class="weapon-card">
         <div class="wc-row">
-          <span class="wc-icon">${getEmojiForSku(it.sku)}</span>
-          <span class="wc-name">${it.name}</span>
+          <span class="wc-icon">${c.iconEmoji}</span>
+          <span class="wc-name">${c.name}</span>
         </div>
         <div class="wc-meta">
-          <span class="wc-sn">SN · ${it.sku}-7842</span>
+          <span class="wc-sn">SN · ${c.sku}-7842</span>
           <span class="wc-barcode">▌▎▌▌▎▍▌▎▌▌▎▍</span>
         </div>
         ${stamp}
       </div>
     </div>
   `;
-}
-
-function getEmojiForSku(sku: string): string {
-  const m: Record<string, string> = {
-    'LOZ-204': '⚡', 'STM-019': '🔥', 'FRM-883': '📋',
-    'PEN-771': '🖊', 'CLP-009': '📎', 'TYP-099': '🛢',
-  };
-  return m[sku] || '◇';
 }
 
 function switchToWorkbench(): void {
@@ -607,11 +714,12 @@ function resetSession(): void {
   typedBuffer = '';
   cmdHistory = [];
   historyIdx = -1;
-  stubGold = 248;
-  stubInbox = [];
   undoStack = [];
   pendingConfirm = null;
   workbenchEntered = false;
+  state.player.inbox = [];
+  ensureSeed();
+  rebuildDescriptors();
 }
 
 // === HTML builders ===

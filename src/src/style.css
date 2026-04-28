@@ -5548,14 +5548,18 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     line-height: 1.45;
     text-shadow: 0 0 4px rgba(108, 255, 138, 0.55), 0 0 1px rgba(108, 255, 138, 0.9);
 }
-/* CRT 单色香蕉：SerenityOS Emoji 是单色 bitmap，靠 color 上 amber 让它在绿磷上发光 */
+/* CRT 单色香蕉：用固定 px 宽 + center align，让 glyph 完全在 box 内（emoji 自身比 ch 宽，
+   width:1ch 会让 glyph 溢出叠到下一字符；此处给 box 留足 emoji 空间 + 等宽） */
 .terminal-content .bna {
     display: inline-block;
+    width: 1.4ch;          /* 比 1ch 多 0.4ch 给 emoji 余地 */
     color: #ffe66d;
     text-shadow: 0 0 6px rgba(255, 230, 109, 0.85), 0 0 2px rgba(255, 230, 109, 1);
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1;
     vertical-align: -1px;
+    text-align: center;
+    overflow: hidden;       /* 强制 clip，glyph 不会溢出影响排版 */
 }
 
 .terminal-banner {
