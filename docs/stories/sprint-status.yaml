@@ -1,4 +1,4 @@
-# generated: 2026-03-26
+# generated: 2026-04-28 (refreshed from 2026-03-26 baseline)
 # project: 打字肉鸽
 # project_key: typing-roguelike
 # tracking_system: file-system
@@ -22,7 +22,7 @@
 #   - optional: Can be completed but not required
 #   - done: Retrospective has been completed
 
-generated: "2026-03-26"
+generated: "2026-04-28"
 project: "打字肉鸽"
 project_key: "typing-roguelike"
 tracking_system: "file-system"
@@ -576,11 +576,17 @@ development_status:
   60-14-module-split-i18n: backlog             # P2.4 拆 shopPreview.ts + 字符串走 i18n + 死代码清理
   epic-60-retrospective: optional
 
-# Summary:
-# - Total Epics: 51 (pre-existing count, stale — excludes recent Epics 52/53/56/57/58/59)
-# - Total Stories: 286 (pre-existing count, stale)
-# - Epics Completed: 43
-# - Epics In-Progress: 1 (45)
-# - Epics Backlog: 8 (38, 46, 47, 48, 49, 50, 51, 59)
-# - New affix expansion (Epics 46-51): 18 new affixes, 125 story points total
+# Summary (refreshed 2026-04-28):
+# - Tracked Epics: 55 (epics 1-53 + 59 + 60; 54/55/56/57/58 currently missing entries — to add)
+# - Tracked Stories: 315 (excluding retrospectives)
+# - Epics Done: 50 · In-Progress: 2 (45, 53) · Backlog: 3 (38, 59, 60)
+# - Stories Done: 284 · In-Progress: 1 (53-3-crafting-i18n) · Ready-for-Dev: 1 (59-7-architecture-v11-audit) · Backlog: 29 · Review: 0
+# - Retrospectives: 1 done · 54 optional
+# - Active threads:
+#     · Epic 45 (in-progress) — affix 平衡打磨
+#     · Epic 53 (in-progress) — 造词台 i18n
+#     · Epic 59 (backlog, P0 prerequisite) — 59-7-architecture-v11-audit ready-for-dev
+#     · Epic 60 (backlog, just landed 2026-04-28) — Phase 2 商店改造，14 stories across 4 sprints
+# - Known gaps: epics 54/55/56/57/58 have epic files but no sprint-status entries
 # - Epic 59 (2026-04-15): Architecture v1.1 enforcement — 7 stories, blocks Epic 58 via 59.3
+# - Epic 60 (2026-04-28): Shop redesign Phase 2 — 14 stories, follows Phase 1 commits 69b0077..3325a67
