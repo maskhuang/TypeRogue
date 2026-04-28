@@ -1743,8 +1743,8 @@ function updateTimerDisplay(): void {
   const accel = getTimeAcceleration(_elapsedSeconds, _isBoss);
   // 背景动效速度跟随时间加速倍率
   setBgSpeedMul(accel);
-  // 字母凸起深度跟随时间加速倍率（accel=1 → 7px, accel=2 → 13px, accel=3 → 19px, accel=4 → 25px）
-  el.word.style.setProperty('--raise-d', `${(1 + accel * 6).toFixed(1)}px`);
+  // 字母凸起深度跟随时间加速倍率（accel=1 → 7, accel=2 → 19, accel=3 → 31, accel=4 → 40 cap）
+  el.word.style.setProperty('--raise-d', `${Math.min(40, 7 + (accel - 1) * 12).toFixed(1)}px`);
   const accelText = '×' + accel.toFixed(1);
   // Review Fix #1: 检查显示文本而非数值 — toFixed(1) 的 "×1.0" 应隐藏
   if (accelText === '×1.0') {
