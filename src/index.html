@@ -45,67 +45,85 @@
 
         <!-- === BATTLE SCREEN === -->
         <div id="battle-screen" class="screen battle-style-dossier">
-            <!-- 顶部信息栏 -->
-            <div id="top-bar">
-                <div id="timer-section">
-                    <div id="timer-bar"><div id="timer-bar-fill"></div><div id="timer-bar-ghost"></div></div>
-                    <span id="timer-display">30</span>
-                    <span id="time-accel" class="time-accel"></span>
+            <div class="battle-typewriter">
+                <div class="typewriter-platen">
+                    <span class="platen-knob platen-knob-l"></span>
+                    <span class="platen-roller">
+                        <span class="platen-tab platen-tab-bell">⌘</span>
+                        <span class="platen-tab platen-tab-margin">┃</span>
+                        <span class="platen-tab platen-tab-margin">┃</span>
+                    </span>
+                    <span class="platen-knob platen-knob-r"></span>
                 </div>
-                <div id="player-relics"></div>
-                <div id="modifier-info">
-                    <span class="modifier-icon"></span>
-                    <span class="modifier-name"></span>
-                    <span class="modifier-hint"></span>
-                </div>
-                <div id="fragment-hud" class="class-resource-hud" style="display:none;">
-                    <span class="class-resource-icon">⚡</span>
-                    <span id="fragment-produced" class="class-resource-produced-value">0</span>
-                </div>
-                <div id="mutagen-hud" class="class-resource-hud" style="display:none;">
-                    <span class="class-resource-icon">🧬</span>
-                    <span id="mutagen-count">0</span>
-                    <span class="class-resource-separator">·</span>
-                    <span class="class-resource-produced-label" data-i18n="hud.produced">本关产出</span>
-                    <span id="mutagen-produced" class="class-resource-produced-value">0</span>
-                </div>
-                <div id="battle-gold-display">🍌 <span id="battle-gold-count">0</span></div>
-            </div>
+                <div class="typewriter-paper">
+                    <!-- 顶部信息栏 -->
+                    <div id="top-bar">
+                        <div id="timer-section">
+                            <div id="timer-bar"><div id="timer-bar-fill"></div><div id="timer-bar-ghost"></div></div>
+                            <span id="timer-display">30</span>
+                            <span id="time-accel" class="time-accel"></span>
+                        </div>
+                        <div id="player-relics"></div>
+                        <div id="modifier-info">
+                            <span class="modifier-icon"></span>
+                            <span class="modifier-name"></span>
+                            <span class="modifier-hint"></span>
+                        </div>
+                        <div id="fragment-hud" class="class-resource-hud" style="display:none;">
+                            <span class="class-resource-icon">⚡</span>
+                            <span id="fragment-produced" class="class-resource-produced-value">0</span>
+                        </div>
+                        <div id="mutagen-hud" class="class-resource-hud" style="display:none;">
+                            <span class="class-resource-icon">🧬</span>
+                            <span id="mutagen-count">0</span>
+                            <span class="class-resource-separator">·</span>
+                            <span class="class-resource-produced-label" data-i18n="hud.produced">本关产出</span>
+                            <span id="mutagen-produced" class="class-resource-produced-value">0</span>
+                        </div>
+                        <div id="battle-gold-display">🍌 <span id="battle-gold-count">0</span></div>
+                    </div>
 
-            <!-- 分数区域 -->
-            <div id="score-zone">
-                <div id="score-display">
-                    <span id="score-count">0</span>
-                    <span class="score-separator">/</span>
-                    <span id="target-score">100</span>
-                </div>
-                <div id="multiplier-section">
-                    <span class="mult-label" data-i18n="hud.multiplier">倍率</span>
-                    <span id="multiplier-display">1.0</span>
-                    <span class="mult-x">×</span>
-                </div>
-            </div>
+                    <!-- 分数区域 -->
+                    <div id="score-zone">
+                        <div id="score-display">
+                            <span id="score-count">0</span>
+                            <span class="score-separator">/</span>
+                            <span id="target-score">100</span>
+                        </div>
+                        <div id="multiplier-section">
+                            <span class="mult-label" data-i18n="hud.multiplier">倍率</span>
+                            <span id="multiplier-display">1.0</span>
+                            <span class="mult-x">×</span>
+                        </div>
+                    </div>
 
-            <!-- 打字区域 -->
-            <div id="typing-zone">
-                <div id="word-zone">
-                    <div id="word-display"></div>
-                    <div id="taiko-bar"><div class="taiko-judge"></div></div>
-                </div>
-                <div id="skill-trigger-zone"></div>
-            </div>
+                    <!-- 打字区域 -->
+                    <div id="typing-zone">
+                        <div id="word-zone">
+                            <div id="word-display"></div>
+                            <div id="taiko-bar"><div class="taiko-judge"></div></div>
+                        </div>
+                        <div id="skill-trigger-zone"></div>
+                    </div>
 
-            <!-- 底部HUD -->
-            <div id="bottom-hud">
-                <div id="combo-display">
-                    <span id="combo-count">0</span>
-                    <span class="combo-label">COMBO</span>
+                    <!-- 底部HUD -->
+                    <div id="bottom-hud">
+                        <div id="combo-display">
+                            <span id="combo-count">0</span>
+                            <span class="combo-label">COMBO</span>
+                        </div>
+                        <div id="battle-level-info">
+                            <span id="level-label">LEVEL 1</span>
+                            <div id="hud-stage-info" class="hud-stage-info"></div>
+                        </div>
+                        <div id="active-library"></div>
+                    </div>
                 </div>
-                <div id="battle-level-info">
-                    <span id="level-label">LEVEL 1</span>
-                    <div id="hud-stage-info" class="hud-stage-info"></div>
+                <div class="typewriter-base">
+                    <span class="base-spool"><span class="spool-hole"></span></span>
+                    <span class="base-plate">UNDERWOOD STANDARD · DPCA · DEPT 2-B</span>
+                    <span class="base-spool"><span class="spool-hole"></span></span>
                 </div>
-                <div id="active-library"></div>
             </div>
         </div>
 

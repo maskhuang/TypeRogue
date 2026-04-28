@@ -2657,7 +2657,7 @@ export function updateHUD(): void {
   const blackHoleHidden = isBlackHoleActive() && !hasBlackHoleSettled();
   if (blackHoleHidden) {
     el.score.textContent = '???';
-    el.score.style.color = '#aa66ff';
+    el.score.style.color = '#4a1f6a'; // 异常：深紫墨
   } else {
     scoreRoller.setTarget(Math.floor(state.score)); // Story 31.4: 平滑滚动
     el.score.textContent = String(scoreRoller.getValue()); // Review M1: rAF 未启动时 fallback
@@ -2667,10 +2667,10 @@ export function updateHUD(): void {
     el.targetScore.textContent = '';
   } else if (_isCalibrationLevel) {
     el.targetScore.textContent = t('battle.calibration') || '—';
-    el.targetScore.style.color = '#aaaaaa';
+    el.targetScore.style.color = '#6a5a40';
   } else if (_targetReached) {
     el.targetScore.textContent = `OK ${state.targetScore}`;
-    el.targetScore.style.color = '#4ecdc4';
+    el.targetScore.style.color = '#2a5a3a'; // 达标：深绿"APPROVED"印
   } else {
     el.targetScore.textContent = String(state.targetScore);
     el.targetScore.style.color = '';
@@ -2679,15 +2679,15 @@ export function updateHUD(): void {
   // 分数进度颜色（基础）— 黑洞隐藏时跳过
   if (!blackHoleHidden) {
     if (_targetReached) {
-      el.score.style.color = '#ffd700'; // Story 42.2: 溢出=金色
+      el.score.style.color = '#8a6418'; // Story 42.2: 溢出=深金墨
     } else if (_initialOverflow > 0 && state.score <= _initialOverflow) {
-      el.score.style.color = '#88d8c0'; // Story 42.3: 淡青（仍在初始溢出范围）
+      el.score.style.color = '#1a4a4a'; // Story 42.3: 深青墨（仍在初始溢出范围）
     } else {
       const progress = state.score / state.targetScore;
       if (progress >= 0.7) {
-        el.score.style.color = '#ffe66d';
+        el.score.style.color = '#6a4818'; // 接近达标：暖琥珀
       } else {
-        el.score.style.color = '#fff';
+        el.score.style.color = '#1a0e08'; // 默认：深墨色
       }
     }
   }
