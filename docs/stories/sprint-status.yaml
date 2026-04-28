@@ -554,6 +554,28 @@ development_status:
   59-6-aigc-precommit-hook: backlog                   # C-1 git pre-commit：拦截 aigc-art/runs/ 入库
   epic-59-retrospective: optional
 
+  # ===== Epic 60: 商店改造 · Phase 2 =====
+  # Source: docs/stories/epic-60-shop-redesign-phase2.md
+  # Purpose: 把 Phase 1 (#shop-preview commits 69b0077..3325a67) 的 DPCA 终端 + 物理工作台
+  #          原型从 hash-route 预览态升级为正式商店，补全多格形状/事件总线/存档/教程/动画/音效/工序
+  # Execution order: S1 质量门 (60-1..60-4) → S2 接入 (60-5..60-8) → S3 浪漫化 (60-9..60-13) → S4 清理 (60-14)
+  epic-60: backlog
+  60-1-multi-cell-shape-binding: backlog       # P2.1 多格 polyomino 绑定 + 范围预览（含 sub 60-1a/60-1b）
+  60-2-pack-multi-word-picker: backlog         # P2.1 稀有/史诗 pack 三选一抽屉
+  60-3-status-bar-real-state: backlog          # P2.1 banner + 状态栏接 state.level/cycle/ascensionLevel
+  60-4-submit-form-startlevel: backlog         # P2.1 SUBMIT FORM → startLevel + 盖章动画
+  60-5-openshop-replacement-flag: backlog      # P2.2 settings.shopUI feature flag + openShop 分发
+  60-6-save-serialization-inbox: backlog       # P2.2 RunStateData.inbox 字段 + 兼容老存档
+  60-7-event-bus-binding-manager: backlog      # P2.2 BUY/绑定走 purchaseShopItem + bindShapeToKeys
+  60-8-tutorial-overhaul: backlog              # P2.2 重写 tutorial 教终端命令 + 工作台拖拽
+  60-9-workbench-hover-tooltips: backlog       # P2.3 工作台 hover 复用 KeyTooltip
+  60-10-info-owned-skills: backlog             # P2.3 INF F / INF MORALE / INF /list-owned
+  60-11-transition-animations: backlog         # P2.3 气动管投递 + 红章 + CRT Tab 转场
+  60-12-sound-effects: backlog                 # P2.3 终端键击 / 拨号忙音 / 工作台木质 click / 红章重击
+  60-13-craft-metamorph-stations: backlog      # P2.3 双职业工序抽屉填实
+  60-14-module-split-i18n: backlog             # P2.4 拆 shopPreview.ts + 字符串走 i18n + 死代码清理
+  epic-60-retrospective: optional
+
 # Summary:
 # - Total Epics: 51 (pre-existing count, stale — excludes recent Epics 52/53/56/57/58/59)
 # - Total Stories: 286 (pre-existing count, stale)
