@@ -5775,11 +5775,11 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     z-index: 2;
     flex: 1;
     display: grid;
-    grid-template-columns: minmax(210px, 0.9fr) minmax(420px, 1.4fr) minmax(210px, 0.9fr);
-    gap: 16px;
+    grid-template-columns: minmax(180px, 0.7fr) minmax(560px, 2fr) minmax(180px, 0.7fr);
+    gap: 14px;
     padding: 18px 22px;
     min-height: 0;
-    max-width: 1280px;
+    max-width: 1380px;
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
@@ -5895,10 +5895,10 @@ html[lang^="en"] .menu-style-dossier .menu-title {
 }
 .wc-stamp-gold { color: #7a5a10; border-color: #7a5a10; }
 
-/* Keyboard prop */
+/* Keyboard prop — full ANSI-104 layout, 4-tier visual weight */
 .wb-keyboard-base {
     flex: 1;
-    padding: 22px 18px 18px;
+    padding: 16px 14px 14px;
     background:
         linear-gradient(180deg, #2c2418 0%, #1a140a 100%);
     border: 2px solid #000;
@@ -5908,47 +5908,138 @@ html[lang^="en"] .menu-style-dossier .menu-title {
         inset 0 -3px 0 rgba(0,0,0,0.6),
         0 8px 16px rgba(0,0,0,0.55);
     display: flex;
-    flex-direction: column;
-    gap: 6px;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
-.kb-row { display: flex; gap: 5px; }
-.kb-row-q { padding-left: 14px; }
-.kb-row-a { padding-left: 24px; }
-.kb-row-z { padding-left: 38px; }
+.kb-deck {
+    --kbu: 28px;          /* 1u key width unit */
+    --kgap: 4px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--kgap);
+    position: relative;
+}
+.kb-row {
+    display: flex;
+    gap: var(--kgap);
+    justify-content: flex-start;
+}
+
+/* Universal key */
 .kb-key {
     position: relative;
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(180deg, #f0eadb 0%, #c4b896 65%, #a89a78 100%);
-    border: 1px solid #2a1f10;
+    width: calc(var(--kbu) * var(--kw, 1) + (var(--kw, 1) - 1) * var(--kgap));
+    height: var(--kbu);
     border-radius: 4px;
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.7),
-        inset 0 -2px 0 rgba(0,0,0,0.25),
-        0 2px 0 #5a4828,
-        0 4px 6px rgba(0,0,0,0.4);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #2a1f10;
     font-family: 'Special Elite', 'Courier Prime', monospace;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: bold;
     transition: transform 80ms ease, box-shadow 80ms ease;
     cursor: pointer;
+    box-sizing: border-box;
 }
 .kb-key:hover {
     transform: translateY(1px);
+}
+.kb-key .kb-letter { line-height: 1; }
+.kb-key .kb-cap {
+    font-size: 7px;
+    line-height: 1;
+    margin-top: 2px;
+    letter-spacing: 1px;
+    opacity: 0.75;
+}
+
+/* TIER 1: action keys (A-Z + punctuation) — bright cream paper */
+.kb-key.kb-tier-1 {
+    background: linear-gradient(180deg, #f0eadb 0%, #c4b896 65%, #a89a78 100%);
+    border: 1px solid #2a1f10;
+    color: #2a1f10;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.7),
+        inset 0 -2px 0 rgba(0,0,0,0.25),
+        0 2px 0 #5a4828,
+        0 3px 5px rgba(0,0,0,0.4);
+}
+.kb-key.kb-tier-1:hover {
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.7),
         inset 0 -2px 0 rgba(0,0,0,0.25),
         0 1px 0 #5a4828,
-        0 2px 4px rgba(0,0,0,0.4);
+        0 2px 3px rgba(0,0,0,0.4);
 }
-.kb-key.empty .kb-letter { opacity: 0.4; }
+
+/* TIER 2: relic keys (1-0) — same paper but with relic icon overlay */
+.kb-key.kb-tier-2 {
+    background: linear-gradient(180deg, #f0eadb 0%, #c4b896 65%, #a89a78 100%);
+    border: 1px solid #2a1f10;
+    color: #2a1f10;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.7),
+        inset 0 -2px 0 rgba(0,0,0,0.25),
+        0 2px 0 #5a4828,
+        0 3px 5px rgba(0,0,0,0.4);
+}
+.kb-key.kb-tier-2.has-relic {
+    background: linear-gradient(180deg, #f5e6c0 0%, #e0c787 60%, #c4a560 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.85),
+        inset 0 -2px 0 rgba(0,0,0,0.3),
+        0 2px 0 #5a4828,
+        0 3px 6px rgba(180, 120, 40, 0.4);
+}
+.kb-key.kb-tier-2 .kb-relic {
+    position: absolute;
+    top: 1px;
+    right: 2px;
+    font-size: 11px;
+    line-height: 1;
+}
+
+/* TIER 3: terminal command keys (Esc/F1-F5/F10/Tab/Enter/Backspace/Arrows) — pale, with caption */
+.kb-key.kb-tier-3 {
+    background: linear-gradient(180deg, #d8d2c0 0%, #aaa490 65%, #8a8470 100%);
+    border: 1px solid #2a1f10;
+    color: #2a1f10;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.5),
+        inset 0 -2px 0 rgba(0,0,0,0.2),
+        0 2px 0 #4a3818,
+        0 3px 5px rgba(0,0,0,0.4);
+    font-size: 10px;
+}
+.kb-key.kb-tier-3 .kb-letter { font-size: 11px; }
+.kb-key.kb-tier-3 .kb-cap { color: #6e1010; opacity: 0.85; }
+
+/* TIER 4: decorative (Shift/Caps/Ctrl/Alt/Win/Space/Menu/F6-9/F11-12/`-=\) — muted */
+.kb-key.kb-tier-4 {
+    background: linear-gradient(180deg, #5a5040 0%, #3a3424 100%);
+    border: 1px solid #1a1408;
+    color: rgba(240, 234, 219, 0.4);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        inset 0 -1px 0 rgba(0,0,0,0.3),
+        0 2px 0 #1a1408,
+        0 3px 4px rgba(0,0,0,0.4);
+    font-size: 9px;
+}
+.kb-key.kb-tier-4 .kb-letter { font-size: 10px; opacity: 0.55; }
+
+/* Spacer (invisible width-holder) */
+.kb-key.kb-spacer {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    pointer-events: none;
+    cursor: default;
+}
+
+/* Has-skill state (overrides tier-1/2 backgrounds) */
 .kb-key.has-skill {
     background: linear-gradient(180deg, #fff5cc 0%, #e3c97a 60%, #b9a05a 100%);
     box-shadow:
@@ -5956,13 +6047,13 @@ html[lang^="en"] .menu-style-dossier .menu-title {
         inset 0 -2px 0 rgba(0,0,0,0.3),
         0 2px 0 #5a4828,
         0 4px 8px rgba(255, 220, 130, 0.45),
-        0 0 14px rgba(255, 220, 130, 0.4);
+        0 0 12px rgba(255, 220, 130, 0.4);
 }
-.kb-key.has-skill .kb-letter { font-size: 11px; opacity: 0.65; }
-.kb-key.has-skill .kb-icon { font-size: 16px; line-height: 1; }
+.kb-key.has-skill .kb-letter { font-size: 9px; opacity: 0.6; }
+.kb-key.has-skill .kb-icon { font-size: 14px; line-height: 1; }
 .kb-key.has-skill .kb-tag {
     position: absolute;
-    bottom: -16px;
+    bottom: -14px;
     left: 50%;
     transform: translateX(-50%) rotate(-1.5deg);
     font-size: 7px;
@@ -5973,13 +6064,31 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     padding: 0 3px;
     white-space: nowrap;
     box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    z-index: 2;
 }
+
+/* Locked state */
 .kb-key.locked {
     background: linear-gradient(180deg, #6a5a40 0%, #4a3e28 100%);
     color: #2a1f10;
 }
 .kb-key.locked .kb-letter { opacity: 0.4; }
 .kb-key.locked .kb-lock   { font-size: 14px; opacity: 0.6; }
+
+/* Arrow cluster — positioned bottom-right of deck */
+.kb-arrows {
+    display: grid;
+    grid-template-areas: ". up ." "left down right";
+    grid-template-columns: var(--kbu) var(--kbu) var(--kbu);
+    grid-template-rows: var(--kbu) var(--kbu);
+    gap: var(--kgap);
+    margin-top: var(--kgap);
+    justify-self: end;
+}
+.kb-arrow-up { grid-area: up; }
+.kb-arrow-left { grid-area: left; }
+.kb-arrow-down { grid-area: down; }
+.kb-arrow-right { grid-area: right; }
 
 .wb-keyboard-caption {
     display: flex;

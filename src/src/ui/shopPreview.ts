@@ -9,6 +9,7 @@ import { state, addRelicWithCapacity, removeRelic, isRelicSlotsFull } from '../c
 import { INBOX_MAX } from '../core/constants';
 import { generateAffixShopItems, generateShopRelicItem, buildAffixTooltipFields } from '../systems/shop';
 import { describeAllShopItems, type ItemDescriptor } from './itemDescriptors';
+import { RELICS } from '../data/relics';
 
 const PREVIEW_HASH = '#shop-preview';
 const HIGH_PRICE_THRESHOLD = 100;
@@ -430,6 +431,7 @@ function executeBuyRelic(d: ItemDescriptor): void {
   appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
   appendBlank();
   updateBalDisplay();
+  syncWorkbenchRelics();
 }
 
 function cmdBuy(arg?: string): void {
@@ -537,6 +539,7 @@ function cmdUndo(): void {
     }
   } else if (last.kind === 'relic') {
     removeRelic(last.relicId);
+    syncWorkbenchRelics();
   }
   state.gold += last.price;
   appendLine(`UNDO · ${last.sku} REVERSED · 🍌 ${last.price} REFUNDED · BAL 🍌 ${state.gold}`, 'echo');
@@ -719,6 +722,31 @@ function updateBalDisplay(): void {
   if (el) el.innerHTML = `<span class="bna">🍌</span> ${state.gold}`;
 }
 
+// Number-row: render relic icons on keys 1..0 in insertion order
+function syncWorkbenchRelics(): void {
+  const root = document.querySelector('#workbench-screen-preview .wb-keyboard-base');
+  if (!root) return;
+  const RELIC_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+  const relicIds = Array.from(state.player.relics);
+  for (let i = 0; i < RELIC_KEYS.length; i++) {
+    const keyEl = root.querySelector(`.kb-key.kb-tier-2[data-key="${RELIC_KEYS[i]}"]`) as HTMLElement | null;
+    if (!keyEl) continue;
+    // remove old relic overlay
+    const old = keyEl.querySelector('.kb-relic');
+    if (old) old.remove();
+    keyEl.classList.remove('has-relic');
+    const relicId = relicIds[i];
+    if (!relicId) continue;
+    const icon = RELICS[relicId]?.icon || '🏺';
+    const span = document.createElement('span');
+    span.className = 'kb-relic';
+    span.textContent = icon;
+    keyEl.appendChild(span);
+    keyEl.classList.add('has-relic');
+    keyEl.dataset.relicId = relicId;
+  }
+}
+
 function syncWorkbenchInbox(): void {
   const root = document.querySelector('#workbench-screen-preview .wb-foam-case');
   if (!root) return;
@@ -822,6 +850,110 @@ function resetSession(): void {
   rebuildDescriptors();
 }
 
+// === Keyboard prop builder ===
+// 4-tier visual:
+//   tier-1: action keys (A-Z + standard punctuation) — full color, skill-bindable
+//   tier-2: relic keys (1-0 number row) — full color with relic icon
+//   tier-3: terminal command keys (Esc/Tab/Backspace/Enter/F1-F5/F10/Arrows) — paper, with caption
+//   tier-4: decorative (Shift/Caps/Ctrl/Alt/Win/Space/Menu/F6-F9/F11/F12/`-=\) — muted
+
+interface KeyDef {
+  label: string;
+  tier: 1 | 2 | 3 | 4;
+  width?: number;     // u-units; 1 = standard
+  data?: string;      // for binding lookup later
+  caption?: string;   // tier-3 small caption like "LIS"
+}
+
+function k(label: string, tier: 1 | 2 | 3 | 4, opts?: { width?: number; data?: string; caption?: string }): KeyDef {
+  return { label, tier, width: opts?.width, data: opts?.data, caption: opts?.caption };
+}
+
+function buildFullKeyboardHtml(): string {
+  const fRow: KeyDef[] = [
+    k('Esc', 3, { caption: 'EXIT' }),
+    k('', 4, { width: 1.0 }),  // gap spacer (invisible)
+    k('F1', 3, { caption: 'LIS' }),
+    k('F2', 3, { caption: 'BUY' }),
+    k('F3', 3, { caption: 'INF' }),
+    k('F4', 3, { caption: 'SEL' }),
+    k('F5', 3, { caption: 'RES' }),
+    k('F6', 4), k('F7', 4), k('F8', 4), k('F9', 4),
+    k('F10', 3, { caption: 'PRO' }),
+    k('F11', 4), k('F12', 4),
+  ];
+  const numRow: KeyDef[] = [
+    k('`', 4),
+    k('1', 2, { data: '1' }), k('2', 2, { data: '2' }), k('3', 2, { data: '3' }),
+    k('4', 2, { data: '4' }), k('5', 2, { data: '5' }), k('6', 2, { data: '6' }),
+    k('7', 2, { data: '7' }), k('8', 2, { data: '8' }), k('9', 2, { data: '9' }),
+    k('0', 2, { data: '0' }),
+    k('-', 4), k('=', 4),
+    k('⌫', 3, { width: 2, caption: 'BACK' }),
+  ];
+  const qRow: KeyDef[] = [
+    k('Tab', 3, { width: 1.5, caption: 'SCRN' }),
+    ...'QWERTYUIOP'.split('').map(c => k(c, 1, { data: c.toLowerCase() })),
+    k('[', 1, { data: '[' }), k(']', 1, { data: ']' }), k('\\', 4, { width: 1.5 }),
+  ];
+  const aRow: KeyDef[] = [
+    k('Caps', 4, { width: 1.75 }),
+    ...'ASDFGHJKL'.split('').map(c => k(c, 1, { data: c.toLowerCase() })),
+    k(';', 1, { data: ';' }), k("'", 4),
+    k('↵', 3, { width: 2.25, caption: 'EXEC' }),
+  ];
+  const zRow: KeyDef[] = [
+    k('⇧', 4, { width: 2.25 }),
+    ...'ZXCVBNM'.split('').map(c => k(c, 1, { data: c.toLowerCase() })),
+    k(',', 1, { data: ',' }), k('.', 1, { data: '.' }), k('/', 1, { data: '/' }),
+    k('⇧', 4, { width: 2.75 }),
+  ];
+  const modRow: KeyDef[] = [
+    k('Ctrl', 4, { width: 1.25 }), k('Win', 4, { width: 1.25 }), k('Alt', 4, { width: 1.25 }),
+    k('', 4, { width: 6.25 }),  // spacebar (no label)
+    k('Alt', 4, { width: 1.25 }), k('Win', 4, { width: 1.25 }), k('Menu', 4, { width: 1.25 }),
+    k('Ctrl', 4, { width: 1.25 }),
+  ];
+
+  const renderKey = (def: KeyDef): string => {
+    const widthStyle = def.width && def.width !== 1 ? ` style="--kw:${def.width}"` : '';
+    const dataAttr = def.data ? ` data-key="${def.data}"` : '';
+    const captionHtml = def.caption ? `<span class="kb-cap">${def.caption}</span>` : '';
+    // tier-4 spacer (no label) keeps width but no border
+    const isSpacer = def.tier === 4 && !def.label;
+    if (isSpacer) {
+      return `<div class="kb-key kb-tier-4 kb-spacer"${widthStyle}></div>`;
+    }
+    return `<div class="kb-key kb-tier-${def.tier}"${widthStyle}${dataAttr}>
+      <span class="kb-letter">${def.label}</span>${captionHtml}
+    </div>`;
+  };
+
+  const renderRow = (defs: KeyDef[]): string =>
+    `<div class="kb-row">${defs.map(renderKey).join('')}</div>`;
+
+  // Arrow cluster (separate; positioned bottom-right)
+  const arrowCluster = `
+    <div class="kb-arrows">
+      <div class="kb-key kb-tier-3 kb-arrow-up" data-key="ArrowUp"><span class="kb-letter">↑</span><span class="kb-cap">PREV</span></div>
+      <div class="kb-key kb-tier-3 kb-arrow-left" data-key="ArrowLeft"><span class="kb-letter">←</span></div>
+      <div class="kb-key kb-tier-3 kb-arrow-down" data-key="ArrowDown"><span class="kb-letter">↓</span><span class="kb-cap">NEXT</span></div>
+      <div class="kb-key kb-tier-3 kb-arrow-right" data-key="ArrowRight"><span class="kb-letter">→</span></div>
+    </div>`;
+
+  return `
+    <div class="kb-deck">
+      ${renderRow(fRow)}
+      ${renderRow(numRow)}
+      ${renderRow(qRow)}
+      ${renderRow(aRow)}
+      ${renderRow(zRow)}
+      ${renderRow(modRow)}
+      ${arrowCluster}
+    </div>
+  `;
+}
+
 // === HTML builders ===
 
 function buildTerminalScreen(): string {
@@ -917,18 +1049,7 @@ function buildWorkbenchScreen(): string {
               <span class="wb-tab-sub">物理键位 · DPCA-KB-7842</span>
             </div>
             <div class="wb-keyboard-base">
-              <div class="kb-row">
-                ${'1234567890'.split('').map(k => `<div class="kb-key empty"><span class="kb-letter">${k}</span></div>`).join('')}
-              </div>
-              <div class="kb-row kb-row-q">
-                ${'QWERTYUIOP'.split('').map(k => `<div class="kb-key empty"><span class="kb-letter">${k}</span></div>`).join('')}
-              </div>
-              <div class="kb-row kb-row-a">
-                ${'ASDFGHJKL'.split('').map(k => `<div class="kb-key empty"><span class="kb-letter">${k}</span></div>`).join('')}
-              </div>
-              <div class="kb-row kb-row-z">
-                ${'ZXCVBNM'.split('').map(k => `<div class="kb-key empty"><span class="kb-letter">${k}</span></div>`).join('')}
-              </div>
+              ${buildFullKeyboardHtml()}
             </div>
             <div class="wb-keyboard-caption">
               <span>DPCA-KB-7842 · PROPERTY OF DEPT 2-B</span>
@@ -1009,6 +1130,7 @@ function enterPreview(): void {
   renderWelcome();
   setPrompt('');
   syncWorkbenchInbox();
+  syncWorkbenchRelics();
   setTimeout(() => {
     (document.activeElement as HTMLElement | null)?.blur?.();
     if (vp) vp.scrollTop = vp.scrollHeight;
