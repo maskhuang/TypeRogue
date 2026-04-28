@@ -6,11 +6,12 @@
 import { t, setLocale, getLocale, applyHtmlI18n } from '../demo/demo-i18n'
 import type { Locale } from '../demo/demo-i18n'
 import { getSettings, updateSettings } from '../core/UserSettings'
-import type { BackgroundMode } from '../core/UserSettings'
+import type { BackgroundMode, MenuStyle } from '../core/UserSettings'
 import { setMasterVolume, playSound } from '../effects/sound'
 import { setBackgroundMode } from '../effects/balatroBackground'
 
 const BG_MODES: BackgroundMode[] = ['off', 'random', 'liquid', 'marble', 'cells', 'aurora', 'ink']
+const MENU_STYLES: MenuStyle[] = ['dossier', 'terminal']
 
 let overlay: HTMLElement | null = null
 let escHandler: ((e: KeyboardEvent) => void) | null = null
@@ -22,7 +23,7 @@ export function openSettingsPanel(): void {
   if (!container) return
 
   overlay = document.createElement('div')
-  overlay.className = 'settings-overlay'
+  overlay.className = `settings-overlay settings-style-${settings.menuStyle}`
   overlay.innerHTML = `
     <div class="settings-panel">
       <div class="settings-title">${esc(t('settings.title'))}</div>
@@ -54,6 +55,17 @@ export function openSettingsPanel(): void {
           ${BG_MODES.map(m => `
             <button class="settings-lang-btn ${settings.backgroundMode === m ? 'active' : ''}" data-bg="${m}">
               ${esc(t('settings.bg.' + m))}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-label">${esc(t('settings.menu_style'))}</label>
+        <div class="settings-lang-btns">
+          ${MENU_STYLES.map(m => `
+            <button class="settings-lang-btn ${settings.menuStyle === m ? 'active' : ''}" data-menu-style="${m}">
+              ${esc(t('settings.menu_style.' + m))}
             </button>
           `).join('')}
         </div>
@@ -116,6 +128,22 @@ export function openSettingsPanel(): void {
     })
   })
 
+  // Menu style picker
+  overlay.querySelectorAll('[data-menu-style]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playSound('click')
+      const style = (btn as HTMLElement).dataset.menuStyle as MenuStyle
+      updateSettings({ menuStyle: style })
+      applyMenuStyle(style)
+      // also restyle the open settings overlay so it matches
+      overlay?.classList.remove('settings-style-dossier', 'settings-style-terminal')
+      overlay?.classList.add(`settings-style-${style}`)
+      overlay?.querySelectorAll('[data-menu-style]').forEach(b => {
+        b.classList.toggle('active', (b as HTMLElement).dataset.menuStyle === style)
+      })
+    })
+  })
+
   // Reset
   const resetBtn = overlay.querySelector('#settings-reset') as HTMLElement
   resetBtn?.addEventListener('click', () => {
@@ -148,12 +176,21 @@ export function applyCRT(enabled: boolean): void {
   document.getElementById('game-container')?.classList.toggle('crt-disabled', !enabled)
 }
 
+/** 应用主菜单风格到 DOM */
+export function applyMenuStyle(style: MenuStyle): void {
+  const menu = document.getElementById('main-menu-screen')
+  if (!menu) return
+  menu.classList.remove('menu-style-dossier', 'menu-style-terminal')
+  menu.classList.add(`menu-style-${style}`)
+}
+
 /** 启动时应用所有设置 */
 export function applyAllSettings(): void {
   const s = getSettings()
   setMasterVolume(s.masterVolume)
   applyCRT(s.crtEnabled)
   setBackgroundMode(s.backgroundMode)
+  applyMenuStyle(s.menuStyle)
 }
 
 function esc(s: string): string {
