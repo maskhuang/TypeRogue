@@ -134,7 +134,7 @@ function priceColForLine(p: number): string {
 function renderListRow(d: ItemDescriptor): string {
   const stars = d.rarity === 0 ? '' : '*'.repeat(d.rarity);
   const upgPrefix = d.upgrade ? '↑' : '';
-  const nameWithMarkers = upgPrefix + stars + d.name;
+  const nameWithMarkers = upgPrefix + stars + d.nameAbbrev;
   const skuCol = pad(d.sku, COL.sku);
   const nameCol = pad(nameWithMarkers, COL.name);
   const priceCol = priceColForLine(d.price);

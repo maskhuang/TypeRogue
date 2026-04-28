@@ -5,6 +5,7 @@
 
 import type { ShopItem } from '../core/types';
 import type { GameState } from '../core/types';
+import { abbreviateSkillName } from './affixAbbrev';
 
 export type ItemKind = 'skill' | 'pack' | 'relic' | 'enchantment';
 export type ShapeColor = 'mono' | 'rare' | 'epic' | 'legendary' | 'special';
@@ -12,7 +13,8 @@ export type ShapeColor = 'mono' | 'rare' | 'epic' | 'legendary' | 'special';
 export interface ItemDescriptor {
   sku: string;             // player-typeable identifier, e.g. 'SKL-001'
   kind: ItemKind;
-  name: string;            // display name (uppercase ready)
+  name: string;            // full display name (used in INFO + workbench)
+  nameAbbrev: string;      // 3-letter-per-token abbreviation (used in LIST)
   iconEmoji: string;       // workbench card front icon
   rarity: 0 | 1 | 2 | 3;
   rarityLabel: string;     // 'COMMON' / 'RARE' / 'EPIC' / 'LEGENDARY'
@@ -92,10 +94,12 @@ function describeSkill(item: ShopItem, idx: number): ItemDescriptor {
   const { tag, color } = shapeTagFromSkillShape(skill.shapeId);
   const affixNames = skill.affixes.map(a => a.type.toUpperCase()).join(' · ') || '—';
   const enchTag = skill.enchantmentIds.length > 0 ? ' [ENCH]' : '';
+  const nameAbbrev = abbreviateSkillName(skill.affixes.map(a => a.type), skill.resource);
   return {
     sku,
     kind: 'skill',
     name: skill.name.toUpperCase(),
+    nameAbbrev,
     iconEmoji: skill.icon || emojiForResource(skill.resource),
     rarity,
     rarityLabel: RARITY_LABELS[rarity],
@@ -127,6 +131,7 @@ function describePack(item: ShopItem, idx: number): ItemDescriptor {
     sku: makeSku('pack', idx),
     kind: 'pack',
     name: pack.name.toUpperCase(),
+    nameAbbrev: pack.name.toUpperCase().slice(0, 12),  // packs aren't affix-stacked; truncate
     iconEmoji: '📜',
     rarity,
     rarityLabel: RARITY_LABELS[rarity],
@@ -155,6 +160,7 @@ function describeRelic(item: ShopItem, idx: number): ItemDescriptor {
     sku: makeSku('relic', idx),
     kind: 'relic',
     name: relicId.toUpperCase().replace(/_/g, ' '),
+    nameAbbrev: relicId.toUpperCase().slice(0, 12),
     iconEmoji: '🏺',
     rarity: 1,           // P1.4 will read from RELICS[relicId].rarity
     rarityLabel: 'RARE',
@@ -181,6 +187,7 @@ function describeEnchantment(item: ShopItem, idx: number): ItemDescriptor {
     sku: makeSku('enchantment', idx),
     kind: 'enchantment',
     name: (item.enchantmentType ?? 'ENCHANTMENT').toUpperCase(),
+    nameAbbrev: (item.enchantmentType ?? 'ENC').toUpperCase().slice(0, 12),
     iconEmoji: '✦',
     rarity: 2,
     rarityLabel: 'EPIC',
@@ -215,6 +222,7 @@ export function describeShopItem(item: ShopItem, idx: number, _state?: GameState
         sku: makeSku('skill', idx),
         kind: 'skill',
         name: 'UNKNOWN ITEM',
+        nameAbbrev: 'UNK',
         iconEmoji: '◇',
         rarity: 0,
         rarityLabel: 'COMMON',
