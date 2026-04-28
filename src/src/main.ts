@@ -36,6 +36,7 @@ import type { Locale } from './demo/demo-i18n';
 import { tutorialManager } from './systems/tutorial/TutorialManager';
 import { initFullTutorial } from './systems/tutorial/tutorialInit';
 import { A8_WORD_COMPRESS_RATIO } from './core/constants';
+import { initShopPreview } from './ui/shopPreview';
 
 // === 游戏初始化 ===
 async function init(): Promise<void> {
@@ -61,6 +62,9 @@ async function init(): Promise<void> {
 
   // 初始化商店事件
   initShopEvents();
+
+  // MVP 预览：通过 URL hash `#shop-preview` 触发，不影响主流程
+  initShopPreview();
 
   if (IS_DEMO) {
     // === Demo 模式：精简初始化 ===

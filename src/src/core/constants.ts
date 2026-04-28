@@ -19,6 +19,9 @@ export const PUNCTUATION_KEYBOARD_EXTENSION: Record<number, string[]> = {
   2: [',', '.', '/'], // bottom row 追加 , . /
 };
 export const RELIC_GARBLE_CHARS = ',.;/[]';
+
+/** Shop redesign: 终端→工作台之间的 IN-tray 容量上限 */
+export const INBOX_MAX = 5;
 export const RELIC_GARBLE_RATE = 0.15;
 
 // === 键盘相邻关系 ===

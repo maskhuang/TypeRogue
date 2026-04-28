@@ -86,6 +86,7 @@ export function createInitialState(): GameState {
       timeBonus: 0,
       evolvedSkills: new Map(),
       collectedWords: new Set(),
+      inbox: [],
     },
     shop: {
       items: [],

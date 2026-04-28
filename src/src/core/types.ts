@@ -260,6 +260,7 @@ export interface PlayerState {
   timeBonus: number;
   evolvedSkills: Map<string, string>;  // skillId → branchId (legacy, kept for save compat)
   collectedWords: Set<string>;  // 词汇收藏：本 Run 已完成单词（36.7）
+  inbox: string[];  // IN-tray: 终端购入待装配的 skillId 列表（上限 INBOX_MAX）
 }
 
 export interface ShopItem {
