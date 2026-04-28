@@ -45,14 +45,21 @@ function findDescriptorBySku(sku: string): ItemDescriptor | null {
   return descriptorCache.find(d => d.sku === up) ?? null;
 }
 
-// === Synergy: skills with same resource as candidate ===
+// === Synergy: matching skills (same-resource OR same-affix) ===
+// Counts each owned skill at most once when it shares the candidate's
+// resource OR has any overlapping affix type. Excludes the candidate itself.
 function getSynergyCount(d: ItemDescriptor): number {
   if (d.kind !== 'skill') return 0;
-  const target = d.originalItem.affixSkill?.resource;
-  if (!target) return 0;
+  const sk = d.originalItem.affixSkill;
+  if (!sk) return 0;
+  const targetRes = sk.resource;
+  const targetAffixTypes = new Set(sk.affixes.map(a => a.type));
   let count = 0;
-  for (const [, sk] of state.affixSkills) {
-    if (sk.resource === target) count++;
+  for (const [id, owned] of state.affixSkills) {
+    if (id === sk.id) continue;  // exclude candidate itself
+    const sameRes = !!targetRes && owned.resource === targetRes;
+    const sameAffix = owned.affixes.some(a => targetAffixTypes.has(a.type));
+    if (sameRes || sameAffix) count++;
   }
   return count;
 }
@@ -221,7 +228,9 @@ function renderInfoBlock(d: ItemDescriptor): string[] {
   }
 
   lines.push('');
-  lines.push(`SYN ${d.synergyCount} OWNED${d.kind === 'skill' ? ' (SAME-RESOURCE)' : ''}`);
+  lines.push(d.kind === 'skill'
+    ? `SYN ${d.synergyCount} MATCHING SKILLS (same-resource & same-affix)`
+    : `SYN ${d.synergyCount}`);
   lines.push('═'.repeat(W));
   return lines;
 }
