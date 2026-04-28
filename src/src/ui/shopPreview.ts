@@ -10,6 +10,7 @@ import { INBOX_MAX } from '../core/constants';
 import { generateAffixShopItems, generateShopRelicItem, buildAffixTooltipFields } from '../systems/shop';
 import { describeAllShopItems, type ItemDescriptor } from './itemDescriptors';
 import { RELICS } from '../data/relics';
+import { dragManager, type DragPayload } from '../systems/dragManager';
 
 const PREVIEW_HASH = '#shop-preview';
 const HIGH_PRICE_THRESHOLD = 100;
@@ -722,6 +723,106 @@ function updateBalDisplay(): void {
   if (el) el.innerHTML = `<span class="bna">🍌</span> ${state.gold}`;
 }
 
+// Bind a skill to a key + sync state.player.bindings + sync visuals
+function bindSkillToKey(skillId: string, key: string): void {
+  // Unbind any existing skill on this key first
+  const prev = state.player.bindings.get(key);
+  if (prev) {
+    state.player.bindings.delete(key);
+    if (state.player.inbox.indexOf(prev) < 0) state.player.inbox.push(prev);
+  }
+  // Remove the new skill from inbox if present (we're consuming it)
+  const inboxIdx = state.player.inbox.indexOf(skillId);
+  if (inboxIdx >= 0) state.player.inbox.splice(inboxIdx, 1);
+  // Set the new binding
+  state.player.bindings.set(key, skillId);
+  syncWorkbenchInbox();
+  syncWorkbenchKeys();
+}
+
+// Unbind a skill from a key (drop back to IN-tray)
+function unbindSkillFromKey(key: string): void {
+  const skillId = state.player.bindings.get(key);
+  if (!skillId) return;
+  state.player.bindings.delete(key);
+  if (state.player.inbox.length < INBOX_MAX) {
+    state.player.inbox.push(skillId);
+  }
+  syncWorkbenchInbox();
+  syncWorkbenchKeys();
+}
+
+// Render skill icons on tier-1 keys based on bindings
+function syncWorkbenchKeys(): void {
+  const root = document.querySelector('#workbench-screen-preview .wb-keyboard-base');
+  if (!root) return;
+  const tier1Keys = root.querySelectorAll<HTMLElement>('.kb-key.kb-tier-1[data-key]');
+  tier1Keys.forEach(keyEl => {
+    const key = keyEl.dataset.key!;
+    const skillId = state.player.bindings.get(key);
+    // Clear stale state
+    keyEl.classList.remove('has-skill');
+    keyEl.removeAttribute('data-bound-skill');
+    keyEl.removeAttribute('data-drag-type');
+    const oldIcon = keyEl.querySelector('.kb-icon');
+    if (oldIcon) oldIcon.remove();
+    const oldTag = keyEl.querySelector('.kb-tag');
+    if (oldTag) oldTag.remove();
+    if (!skillId) return;
+    const sk = state.affixSkills.get(skillId);
+    if (!sk) return;
+    keyEl.classList.add('has-skill');
+    keyEl.dataset.boundSkill = skillId;
+    keyEl.dataset.dragType = 'skill-key';
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'kb-icon';
+    iconSpan.textContent = sk.icon || '⚡';
+    keyEl.appendChild(iconSpan);
+    const tagSpan = document.createElement('span');
+    tagSpan.className = 'kb-tag';
+    tagSpan.textContent = sk.name.split('·')[0].slice(0, 8).toUpperCase();
+    keyEl.appendChild(tagSpan);
+  });
+}
+
+// Register all tier-1 letter keys + IN-tray as drop zones
+function setupDragZones(): void {
+  dragManager.clearDropZones();
+  const wbRoot = document.getElementById('workbench-screen-preview');
+  if (!wbRoot) return;
+  // Each tier-1 key is a drop zone for skill-inventory + skill-key
+  wbRoot.querySelectorAll<HTMLElement>('.kb-key.kb-tier-1[data-key]').forEach(keyEl => {
+    const key = keyEl.dataset.key!;
+    dragManager.registerDropZone({
+      element: keyEl,
+      type: 'key-slot',
+      key,
+      accepts: (p: DragPayload) => p.type === 'skill-inventory' || p.type === 'skill-key',
+      onDrop: (p: DragPayload) => {
+        const skillId = p.skillId;
+        if (!skillId) return;
+        // If from another key, unbind source first
+        if (p.type === 'skill-key' && p.sourceKey && p.sourceKey !== key) {
+          state.player.bindings.delete(p.sourceKey);
+        }
+        bindSkillToKey(skillId, key);
+      },
+    });
+  });
+  // IN-tray foam case: drop zone for skill-key (drag bound key back to inbox = unbind)
+  const intray = wbRoot.querySelector('.wb-foam-case') as HTMLElement | null;
+  if (intray) {
+    dragManager.registerDropZone({
+      element: intray,
+      type: 'skill-inventory',
+      accepts: (p: DragPayload) => p.type === 'skill-key',
+      onDrop: (p: DragPayload) => {
+        if (p.sourceKey) unbindSkillFromKey(p.sourceKey);
+      },
+    });
+  }
+}
+
 // Number-row: render relic icons on keys 1..0 in insertion order
 function syncWorkbenchRelics(): void {
   const root = document.querySelector('#workbench-screen-preview .wb-keyboard-base');
@@ -760,10 +861,13 @@ function syncWorkbenchInbox(): void {
       name: sk.name.toUpperCase(),
       sku: undoStack.find(u => u.kind === 'skill' && u.skillId === skillId)?.sku ?? '???-???',
       clearance: sk.rarity >= 2 ? '4-A' : '4-B',
+      skillId,
     }));
   }
   while (slots.length < INBOX_MAX) slots.push('<div class="foam-cutout empty"><span class="cutout-empty-label">— 空槽 —</span></div>');
   root.innerHTML = slots.join('');
+  // Re-register drop zones since IN-tray DOM was rebuilt
+  if (active) setupDragZones();
   const sub = document.querySelector('#workbench-screen-preview .wb-intray .wb-tab-sub');
   if (sub) sub.textContent = `待装配 · ${String(state.player.inbox.length).padStart(2, '0')}`;
 }
@@ -773,18 +877,19 @@ interface InboxCardData {
   name: string;
   sku: string;
   clearance: string;
+  skillId: string;
 }
 
-function renderInboxCardHtml(c: InboxCardData): string {
+function renderInboxCardHtml(c: InboxCardData & { skillId: string }): string {
   const stamp = c.clearance === '4-A'
     ? '<div class="wc-stamp wc-stamp-gold">CLEARANCE 4-A</div>'
     : '<div class="wc-stamp">REGULATION</div>';
   return `
     <div class="foam-cutout">
-      <div class="weapon-card">
+      <div class="weapon-card" data-drag-type="skill-inventory" data-skill-id="${c.skillId}">
         <div class="wc-row">
-          <span class="wc-icon">${c.iconEmoji}</span>
-          <span class="wc-name">${c.name}</span>
+          <span class="wc-icon inv-icon">${c.iconEmoji}</span>
+          <span class="wc-name inv-name">${c.name}</span>
         </div>
         <div class="wc-meta">
           <span class="wc-sn">SN · ${c.sku}-7842</span>
@@ -829,6 +934,7 @@ function hideAllRealScreens(): void {
 
 function restoreFromPreview(): void {
   active = false;
+  dragManager.destroy();
   const t = document.getElementById('terminal-shop-screen') as HTMLElement | null;
   const w = document.getElementById('workbench-screen-preview') as HTMLElement | null;
   if (t) t.style.display = 'none';
@@ -1131,6 +1237,9 @@ function enterPreview(): void {
   setPrompt('');
   syncWorkbenchInbox();
   syncWorkbenchRelics();
+  syncWorkbenchKeys();
+  dragManager.init();
+  setupDragZones();
   setTimeout(() => {
     (document.activeElement as HTMLElement | null)?.blur?.();
     if (vp) vp.scrollTop = vp.scrollHeight;
