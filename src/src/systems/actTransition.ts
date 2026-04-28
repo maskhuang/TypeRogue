@@ -78,14 +78,14 @@ export function updateStageInfo(cycleNum: number, stageType: string): void {
   if (!el) return
 
   const icons: Record<string, string> = {
-    standard: '⚔️',
-    boss: '💀',
-    ritual: '🔮',
-    elite: '⚔️',
+    standard: '📋', // routine paperwork
+    boss: '🚩',     // priority case
+    ritual: '🕯️',  // ritual stays
+    elite: '📑',    // special category
   }
-  const icon = icons[stageType] || '⚔️'
+  const icon = icons[stageType] || '📋'
   const badge = state.ascensionLevel > 0 ? ` A${state.ascensionLevel}` : ''
-  el.textContent = `Cycle ${cycleNum} ${icon}${badge}`
+  el.textContent = `BATCH ${cycleNum} ${icon}${badge}`
   el.className = `hud-stage-info stage-${stageType}`
 
   // 脉冲动画

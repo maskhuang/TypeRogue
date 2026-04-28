@@ -1730,8 +1730,8 @@ function updateTimerDisplay(): void {
     el.timerDisplay.style.color = '#ffe66d';
     el.timerBar.style.background = '#ffe66d';
   } else {
-    el.timerDisplay.style.color = '#4ecdc4';
-    el.timerBar.style.background = '#4ecdc4';
+    el.timerDisplay.style.color = '#c9a45e';
+    el.timerBar.style.background = '#c9a45e';
   }
 
   // 危险光晕：time <= 10s 时显示（达标光晕通过 CSS 顺序覆盖）
@@ -2266,7 +2266,7 @@ export async function startLevel(): Promise<void> {
   const displayLevel = getBattleNumber(state.level) || state.level;
   const stageLabel = currentStageType === 'boss' ? ' [BOSS]' : currentStageType === 'elite' ? ' [ELITE]' : '';
   const cyclePrefix = state.cycle >= 2 ? t('battle.cycle_prefix', { cycle: state.cycle }) : '';
-  el.levelLabel.textContent = `${cyclePrefix}LEVEL ${displayLevel}${stageLabel}`;
+  el.levelLabel.textContent = `${cyclePrefix}FILE ${displayLevel}${stageLabel}`;
 
   // HUD: 显示当前 Cycle / StageType
   updateStageInfo(currentCycle, currentStageType);
@@ -2657,7 +2657,7 @@ export function updateHUD(): void {
   const blackHoleHidden = isBlackHoleActive() && !hasBlackHoleSettled();
   if (blackHoleHidden) {
     el.score.textContent = '???';
-    el.score.style.color = '#4a1f6a'; // 异常：深紫墨
+    el.score.style.color = '#aa66ff';
   } else {
     scoreRoller.setTarget(Math.floor(state.score)); // Story 31.4: 平滑滚动
     el.score.textContent = String(scoreRoller.getValue()); // Review M1: rAF 未启动时 fallback
@@ -2667,10 +2667,10 @@ export function updateHUD(): void {
     el.targetScore.textContent = '';
   } else if (_isCalibrationLevel) {
     el.targetScore.textContent = t('battle.calibration') || '—';
-    el.targetScore.style.color = '#6a5a40';
+    el.targetScore.style.color = '#aaaaaa';
   } else if (_targetReached) {
-    el.targetScore.textContent = `OK ${state.targetScore}`;
-    el.targetScore.style.color = '#2a5a3a'; // 达标：深绿"APPROVED"印
+    el.targetScore.textContent = `APPROVED ${state.targetScore}`;
+    el.targetScore.style.color = '#f4d590'; // phosphor highlight amber
   } else {
     el.targetScore.textContent = String(state.targetScore);
     el.targetScore.style.color = '';
@@ -2679,15 +2679,15 @@ export function updateHUD(): void {
   // 分数进度颜色（基础）— 黑洞隐藏时跳过
   if (!blackHoleHidden) {
     if (_targetReached) {
-      el.score.style.color = '#8a6418'; // Story 42.2: 溢出=深金墨
+      el.score.style.color = '#ffd700'; // Story 42.2: 溢出=金色
     } else if (_initialOverflow > 0 && state.score <= _initialOverflow) {
-      el.score.style.color = '#1a4a4a'; // Story 42.3: 深青墨（仍在初始溢出范围）
+      el.score.style.color = '#88d8c0'; // Story 42.3: 淡青（仍在初始溢出范围）
     } else {
       const progress = state.score / state.targetScore;
       if (progress >= 0.7) {
-        el.score.style.color = '#6a4818'; // 接近达标：暖琥珀
+        el.score.style.color = '#ffe66d';
       } else {
-        el.score.style.color = '#1a0e08'; // 默认：深墨色
+        el.score.style.color = '#fff';
       }
     }
   }

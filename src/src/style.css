@@ -525,230 +525,196 @@ html[lang^="en"] .menu-style-dossier .menu-title {
 }
 
 /* ============================================ */
-/* BATTLE SCREEN - TYPEWRITER (UNDERWOOD STD)   */
+/* BATTLE SCREEN - CRT MONITOR (DPCA-VT220)     */
 /* ============================================ */
 .battle-style-dossier {
     flex-direction: column !important;
     align-items: center;
     justify-content: center;
-    padding: 18px;
-    background:
-        radial-gradient(ellipse at 50% 80%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 60%),
-        linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 100%);
+    padding: 14px;
+    background: transparent;
 }
-.battle-typewriter {
+.battle-bezel {
     width: 100%;
     height: 100%;
     max-width: 1100px;
-    display: flex;
-    flex-direction: column;
-    background: linear-gradient(180deg, #2f3a32 0%, #243029 50%, #1c2620 100%);
-    border-radius: 14px;
-    padding: 10px 20px 14px;
-    gap: 6px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 14px 1fr 14px;
+    background: transparent;
+    border-radius: 10px;
     position: relative;
-    box-shadow:
-        inset 0 2px 0 rgba(255,255,255,0.06),
-        inset 0 -3px 0 rgba(0,0,0,0.5),
-        inset 6px 0 0 rgba(0,0,0,0.18),
-        inset -6px 0 0 rgba(0,0,0,0.18),
-        0 8px 0 #0d1612,
-        0 22px 40px rgba(0,0,0,0.7);
 }
-.battle-typewriter::before {
-    /* highlight chip on top edge */
+/* left + right cream side rails — same row as the screen, no overlap with strips */
+.battle-bezel::before,
+.battle-bezel::after {
     content: '';
-    position: absolute;
-    top: 6px; left: 14px; right: 14px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12) 30%, rgba(255,255,255,0.16) 70%, transparent);
+    grid-row: 2;
+    background: linear-gradient(90deg, #c9b894 0%, #b8a37a 50%, #a48f64 100%);
+    box-shadow:
+        inset 1px 0 0 rgba(255,255,255,0.35),
+        inset -1px 0 0 rgba(0,0,0,0.18);
     pointer-events: none;
 }
-
-/* === Platen / carriage assembly (top) === */
-.typewriter-platen {
-    height: 30px;
+.battle-bezel::before { grid-column: 1; }
+.battle-bezel::after  { grid-column: 3; transform: scaleX(-1); }
+.battle-bezel-top,
+.battle-bezel-bottom {
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-    padding: 0 4px;
-}
-.platen-knob {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #5a4a30 0%, #3a2c18 60%, #1f150a 100%);
-    box-shadow:
-        inset 0 -2px 0 rgba(0,0,0,0.55),
-        inset 0 2px 0 rgba(255,255,255,0.18),
-        0 1px 2px rgba(0,0,0,0.6);
-    flex-shrink: 0;
+    gap: 12px;
+    color: #2a1f10;
+    font-family: var(--font-pixel);
+    font-size: 8px;
+    letter-spacing: 2px;
+    grid-column: 1 / -1;
     position: relative;
+    z-index: 2;
 }
-.platen-knob::after {
-    /* rubber ridges */
-    content: '';
-    position: absolute;
-    inset: 4px;
-    border-radius: 50%;
-    background: repeating-conic-gradient(from 0deg,
-        rgba(0,0,0,0.35) 0deg, rgba(0,0,0,0.35) 6deg,
-        transparent 6deg, transparent 12deg);
-    opacity: 0.55;
+.battle-bezel-top {
+    grid-row: 1;
+    padding: 6px 18px 8px;
+    background: linear-gradient(180deg, #d4c29c 0%, #c0aa7a 100%);
+    border-radius: 10px 10px 0 0;
+    box-shadow:
+        inset 0 2px 0 rgba(255,255,255,0.45),
+        inset 0 -1px 0 rgba(0,0,0,0.2);
 }
-.platen-roller {
-    flex: 1;
-    height: 22px;
-    background: linear-gradient(180deg,
-        #1a1208 0%, #2a1f10 18%, #3a2a18 50%, #2a1f10 82%, #1a1208 100%);
-    border-radius: 11px;
+.battle-bezel-bottom {
+    grid-row: 3;
+    padding: 6px 18px 6px;
+    background: linear-gradient(180deg, #b8a37a 0%, #9a8458 100%);
+    border-radius: 0 0 10px 10px;
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.18),
-        inset 0 -2px 0 rgba(0,0,0,0.55),
-        0 1px 4px rgba(0,0,0,0.6);
-    position: relative;
-    display: flex;
-    align-items: center;
-    padding: 0 22px;
-    gap: 30%;
+        inset 0 -2px 0 rgba(0,0,0,0.32),
+        0 6px 0 #4a3820,
+        0 14px 22px rgba(0,0,0,0.55);
+    opacity: 0.92;
 }
-.platen-tab {
-    color: #c9a45e;
-    font-size: 9px;
-    text-shadow: 0 0 4px rgba(201,164,94,0.4);
-    opacity: 0.85;
-    user-select: none;
-}
-.platen-tab-bell { letter-spacing: 1px; opacity: 0.6; }
-.platen-tab-margin { color: #8a7140; opacity: 0.7; }
-
-/* === Paper sheet (middle, where gameplay lives) === */
-.typewriter-paper {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    background:
-        radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0) 35%),
-        linear-gradient(180deg, #ede0bd 0%, #e8d8b0 50%, #d8c89a 100%);
-    color: #2a1f10;
-    box-shadow:
-        inset 0 0 0 1px rgba(0,0,0,0.12),
-        inset 0 6px 8px rgba(0,0,0,0.18),
-        inset 0 -2px 4px rgba(0,0,0,0.1);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-}
-.typewriter-paper::before {
-    /* feed crease line at top */
-    content: '';
-    position: absolute;
-    top: 4px; left: 32px; right: 32px;
-    height: 1px;
-    background: rgba(0,0,0,0.18);
-    box-shadow: 0 1px 0 rgba(255,255,255,0.4);
-    pointer-events: none;
-}
-.typewriter-paper::after {
-    /* faint ruled line near top */
-    content: '';
-    position: absolute;
-    top: 38px; left: 24px; right: 24px;
-    border-top: 1px dashed rgba(0,0,0,0.18);
-    pointer-events: none;
-}
-/* keep gameplay above paper grain */
-.typewriter-paper > * { position: relative; z-index: 1; }
-
-/* === Base (bottom strip with ribbon spools and brand plate) === */
-.typewriter-base {
-    height: 40px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-shrink: 0;
-    padding: 4px 4px 0;
-}
-.base-spool {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #5a4030 0%, #2a1810 50%, #1a0e08 100%);
-    box-shadow:
-        inset 0 -2px 0 rgba(0,0,0,0.5),
-        inset 0 2px 0 rgba(255,255,255,0.1),
-        0 2px 3px rgba(0,0,0,0.6);
-    flex-shrink: 0;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.spool-hole {
+.bezel-led {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #0a0604;
+    background: radial-gradient(circle at 30% 30%, #b6f3c0, #4ade80 60%, #1f7a3a 100%);
     box-shadow:
-        inset 0 1px 1px rgba(0,0,0,0.9),
-        0 0 0 1px rgba(255,255,255,0.05);
+        0 0 6px rgba(74,222,128,0.85),
+        inset 0 -1px 0 rgba(0,0,0,0.3),
+        0 0 0 2px rgba(0,0,0,0.4);
+    flex-shrink: 0;
 }
-.base-plate {
+.bezel-brand {
+    font-weight: bold;
+    letter-spacing: 4px;
+    font-size: 9px;
+}
+.bezel-spec {
     flex: 1;
     text-align: center;
-    font-family: var(--font-pixel);
-    font-size: 8px;
-    letter-spacing: 4px;
-    color: #c9a45e;
-    opacity: 0.7;
-    border: 1px solid rgba(201,164,94,0.35);
-    padding: 6px 10px;
-    background: rgba(0,0,0,0.28);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.05),
-        inset 0 -1px 0 rgba(0,0,0,0.4);
+    opacity: 0.72;
+    font-size: 7px;
+    letter-spacing: 3px;
 }
+.bezel-vent {
+    color: rgba(0,0,0,0.45);
+    letter-spacing: -2px;
+    font-size: 8px;
+    line-height: 1;
+}
+.bezel-sticker {
+    flex: 1;
+    border: 1px solid rgba(0,0,0,0.45);
+    padding: 1px 6px;
+    text-align: center;
+    background: rgba(255,255,255,0.18);
+    font-size: 7px;
+    letter-spacing: 3px;
+}
+.bezel-serial {
+    border: 1px solid rgba(0,0,0,0.4);
+    padding: 1px 6px;
+    background: rgba(0,0,0,0.18);
+    color: rgba(0,0,0,0.85);
+    font-size: 7px;
+    letter-spacing: 2px;
+}
+.battle-bezel-screen {
+    grid-row: 2;
+    grid-column: 2;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: 4px;
+    background: rgba(10, 6, 2, 0.05);
+    backdrop-filter: brightness(1.6) contrast(1.1) saturate(1.1);
+    -webkit-backdrop-filter: brightness(1.6) contrast(1.1) saturate(1.1);
+    box-shadow:
+        inset 0 0 24px rgba(0,0,0,0.35),
+        inset 0 0 80px rgba(0,0,0,0.18),
+        inset 0 0 0 2px #1a1208;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+.battle-bezel-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 2px,
+            rgba(0,0,0,0.18) 2px,
+            rgba(0,0,0,0.18) 3px
+        ),
+        radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%);
+}
+/* keep gameplay above scanlines */
+.battle-bezel-screen > * { position: relative; z-index: 1; }
 
-/* === Inside the paper: dark ink on cream === */
+/* === Inside the screen: amber phosphor display === */
 .battle-style-dossier #top-bar {
     background: transparent;
-    border-bottom: 1px dashed rgba(0,0,0,0.45);
-    padding: 8px 22px;
-    color: #2a1f10;
+    border-bottom: 1px dashed rgba(201,164,94,0.35);
+    padding: 8px 18px;
+    color: var(--color-seal-gold);
 }
 .battle-style-dossier #timer-bar {
-    border: 1px solid rgba(0,0,0,0.55);
-    background: rgba(0,0,0,0.08);
+    border: 1px solid rgba(201,164,94,0.55);
+    background: rgba(0,0,0,0.55);
     height: 8px;
-    box-shadow: inset 0 0 3px rgba(0,0,0,0.25);
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.7);
 }
 .battle-style-dossier #timer-bar-fill {
-    background: #2a1f10;
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4);
+    background: var(--color-seal-gold);
+    box-shadow: 0 0 4px rgba(201,164,94,0.6);
 }
 .battle-style-dossier #timer-display {
-    color: #2a1f10;
+    color: var(--color-seal-gold);
+    text-shadow: 0 0 4px rgba(201,164,94,0.5);
     font-family: var(--font-pixel);
     letter-spacing: 1px;
 }
 .battle-style-dossier #timer-display::before {
     content: 'T-';
     font-size: 0.7em;
-    opacity: 0.55;
+    opacity: 0.6;
     margin-right: 2px;
 }
 .battle-style-dossier #level-label {
-    color: #4a3520;
+    color: var(--color-seal-gold);
+    text-shadow: 0 0 4px rgba(201,164,94,0.4);
 }
 .battle-style-dossier #battle-gold-display {
-    color: #2a1f10;
-    border: 1px solid rgba(0,0,0,0.4);
+    color: var(--color-seal-gold);
+    border: 1px solid rgba(201,164,94,0.45);
     padding: 3px 10px;
-    background: rgba(255,255,255,0.18);
+    background: rgba(0,0,0,0.4);
 }
 .battle-style-dossier #score-zone {
-    padding: 18px 20px 10px;
+    padding: 16px 20px 10px;
     position: relative;
 }
 .battle-style-dossier #score-zone::before {
@@ -760,133 +726,86 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     font-family: var(--font-pixel);
     font-size: 9px;
     letter-spacing: 4px;
-    color: #2a1f10;
+    color: var(--color-parchment);
     opacity: 0.55;
 }
 .battle-style-dossier #score-display {
-    color: #2a1f10;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.18);
+    color: var(--color-seal-gold);
+    text-shadow: 0 0 6px rgba(201,164,94,0.5);
 }
 .battle-style-dossier #score-count {
-    color: #1a0e08;
+    text-shadow: 0 0 8px rgba(201,164,94,0.7);
 }
 .battle-style-dossier #target-score {
-    color: #4a3520;
-    opacity: 0.78;
+    opacity: 0.7;
 }
 .battle-style-dossier .score-separator {
-    color: #4a3520;
+    color: var(--color-parchment);
     opacity: 0.55;
 }
 .battle-style-dossier #bottom-hud {
     background: transparent;
-    border-top: 1px dashed rgba(0,0,0,0.45);
-    padding: 10px 22px;
+    border-top: 1px dashed rgba(201,164,94,0.35);
+    padding: 10px 18px;
 }
 .battle-style-dossier #combo-count {
-    color: #1a0e08;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.18);
+    text-shadow: 0 0 6px rgba(255,107,107,0.4);
 }
 .battle-style-dossier .combo-label {
-    color: #4a3520;
-    opacity: 0.8;
+    color: var(--color-parchment);
+    opacity: 0.7;
 }
-.battle-style-dossier .combo-label::before { content: 'STREAK · '; opacity: 0.55; font-size: 0.85em; }
 .battle-style-dossier #active-library {
-    border: 1px solid rgba(0,0,0,0.4);
-    background: rgba(255,255,255,0.18);
-    color: #2a1f10;
+    border: 1px solid rgba(201,164,94,0.45);
+    background: rgba(0,0,0,0.4);
+    color: var(--color-parchment);
 }
 .battle-style-dossier .class-resource-hud {
-    border: 1px solid rgba(0,0,0,0.4);
-    background: rgba(255,255,255,0.2);
-    color: #2a1f10;
+    border: 1px solid rgba(201,164,94,0.45);
+    background: rgba(0,0,0,0.45);
+    color: var(--color-parchment);
 }
 .battle-style-dossier #modifier-info.visible {
-    border: 1px dashed rgba(0,0,0,0.55);
-    background: rgba(255,255,255,0.18);
+    border: 1px dashed rgba(201,164,94,0.55);
+    background: rgba(0,0,0,0.5);
     padding: 4px 10px;
-    color: #1a0e08;
+    color: var(--color-seal-gold);
 }
 .battle-style-dossier .modifier-name {
-    color: #1a0e08;
+    color: var(--color-seal-gold);
     letter-spacing: 1px;
 }
-
-/* word-display ink on paper: invert raised-letter contrast */
-.battle-style-dossier #word-display {
-    color: #1a0e08;
-    text-shadow:
-        1px 1px 0 rgba(0,0,0,0.55),
-        2px 2px 0 rgba(0,0,0,0.45),
-        3px 3px 0 rgba(0,0,0,0.35),
-        4px 4px 0 rgba(0,0,0,0.25),
-        5px 5px 0 rgba(0,0,0,0.18),
-        6px 6px 0 rgba(0,0,0,0.12),
-        7px 7px 0 rgba(0,0,0,0.08);
+.battle-style-dossier .modifier-name::before {
+    content: 'DIRECTIVE · ';
+    opacity: 0.7;
+    font-size: 0.85em;
+    letter-spacing: 2px;
 }
-.battle-style-dossier .letter.pending { color: #6a5a40; opacity: 0.65; }
-.battle-style-dossier .letter.current {
-    color: #1a0e08;
-    background: rgba(0,0,0,0.12);
-    outline: 2px solid #2a1f10;
-    text-shadow:
-        1px 1px 0 rgba(0,0,0,0.7),
-        2px 2px 0 rgba(0,0,0,0.55),
-        3px 3px 0 rgba(0,0,0,0.4),
-        4px 4px 0 rgba(0,0,0,0.28),
-        5px 5px 0 rgba(0,0,0,0.18);
+.battle-style-dossier .hud-stage-info {
+    color: var(--color-parchment);
+    opacity: 0.85;
 }
-.battle-style-dossier .letter.correct { color: #2a1f10; opacity: 0.5; }
 
-/* === Score settlement formula → re-tone for ink-on-paper === */
-/* (#score-settlement is a sibling of #battle-screen, can't scope via .battle-style-dossier) */
+/* === Score settlement formula → muted phosphor on dark CRT === */
+/* (#score-settlement is a sibling of #battle-screen, override Balatro chips) */
 #score-settlement .settlement-chips .settlement-label,
 #score-settlement .settlement-chips .settlement-value {
-    color: #2a4a6a;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.18);
+    color: #6a8a9a;
+    text-shadow: 0 0 4px rgba(106,138,154,0.4);
 }
 #score-settlement .settlement-mult-box .settlement-label,
 #score-settlement .settlement-mult-box .settlement-value {
-    color: #6a1a1a;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.18);
+    color: #c47474;
+    text-shadow: 0 0 4px rgba(196,116,116,0.35);
 }
 #score-settlement .settlement-symbol {
-    color: #2a1f10;
+    color: var(--color-parchment);
     opacity: 0.55;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.15);
 }
 #score-settlement .settlement-final {
-    color: #6a4818;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+    color: var(--color-seal-gold);
+    text-shadow: 0 0 6px rgba(201,164,94,0.5);
 }
-@keyframes settlementPaperBurst {
-    0% { transform: scale(1); color: #6a4818; }
-    33% { transform: scale(1.18); color: #1a0e08; }
-    100% { transform: scale(1); color: #6a4818; }
-}
-#score-settlement.settlement-complete .settlement-final {
-    animation-name: settlementPaperBurst;
-}
-
-/* === Stage / cycle / library badges → paper notes === */
-.battle-style-dossier .hud-stage-info {
-    color: #4a3520;
-    opacity: 0.85;
-}
-.battle-style-dossier #battle-gold-count {
-    color: #4a3018;
-}
-.battle-style-dossier #active-library {
-    padding: 2px 8px;
-    font-size: 8px;
-    letter-spacing: 1px;
-}
-
-/* === Multiplier 'overflow' state colors → ink shades === */
-.battle-style-dossier #multiplier-display { color: #6a4818; text-shadow: 1px 1px 0 rgba(0,0,0,0.18); }
-.battle-style-dossier .mult-x { color: #6a4818; }
-.battle-style-dossier .mult-label { color: #4a3520; }
 
 .screen {
     position: absolute;
@@ -1156,15 +1075,15 @@ html[lang^="en"] .menu-style-dossier .menu-title {
         7px 7px 0 rgba(0,0,0,0.5),
         9px 9px 12px rgba(0,0,0,0.45);
     animation: pixelCursor 1s steps(1) infinite;
-    background: rgba(78,205,196,0.25);
-    outline: 2px solid #4ecdc4;
+    background: rgba(201,164,94,0.22);
+    outline: 2px solid var(--color-seal-gold);
     outline-offset: 0px;
 }
 
 @keyframes pixelCursor {
     0%, 55% {
-        outline-color: #4ecdc4;
-        background: rgba(78,205,196,0.25);
+        outline-color: var(--color-seal-gold);
+        background: rgba(201,164,94,0.22);
     }
     56%, 100% {
         outline-color: transparent;
@@ -1182,7 +1101,7 @@ html[lang^="en"] .menu-style-dossier .menu-title {
 }
 
 .letter.correct {
-    color: #4ecdc4;
+    color: #8a7140;
     text-shadow: none;
     opacity: 0.7;
     transform: translate(0, 0);
@@ -1192,7 +1111,7 @@ html[lang^="en"] .menu-style-dossier .menu-title {
 @keyframes pixelStamp {
     0% { transform: translate(-7px, -7px) scale(1.3); color: #fff; }
     33% { transform: translate(0, 0) scale(0.9); }
-    100% { transform: translate(0, 0) scale(1); color: #4ecdc4; }
+    100% { transform: translate(0, 0) scale(1); color: #8a7140; }
 }
 
 .letter.wrong {
@@ -1216,9 +1135,9 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     transform: translateX(-50%);
     width: 4px;
     height: 4px;
-    background: #6a1a1a; /* cinnabar ink dot — visible on cream paper */
+    background: #ffe66d;
     border-radius: 0;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.25);
+    box-shadow: none;
     animation: pixelDotBlink 1.5s steps(1) infinite;
 }
 

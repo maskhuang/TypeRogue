@@ -269,7 +269,7 @@ const ZH: Record<string, string> = {
   'battle.elite_hint': '精英挑战',
   'battle.boss_hint': 'BOSS 战',
   'battle.target_hint': '目标: {value}分',
-  'battle.cycle_prefix': '周目{cycle} · ',
+  'battle.cycle_prefix': '批次{cycle} · ',
 
   // --- typing relic feedback ---
   'battle.glass_double': '📖 ×10 (+{extra})',
@@ -309,7 +309,7 @@ const ZH: Record<string, string> = {
   // --- stage relic feedback ---
   'battle.phoenix_revive': '🐦‍🔥 不死鸟复活！',
   'battle.target_reached': '🎯 TARGET!',
-  'battle.calibration': '练习',
+  'battle.calibration': '试用',
 
   // --- boss modifier relic feedback ---
   'battle.chaos_roulette': '🎰 混沌轮盘！',
@@ -552,7 +552,7 @@ const ZH: Record<string, string> = {
   'battle.unlock_endless': '用全部三个职业各通关一次即可解锁无尽模式',
   'battle.reached_level': '到达 Level {level}',
   'battle.final_score_target': '最终得分: {score} / {target}',
-  'battle.deck_label': '📚 {count}词',
+  'battle.deck_label': '📋 待办{count}件',
   'battle.empty_slot': '[{key}] 空槽位',
 
   // --- relic picker ---
@@ -1368,7 +1368,7 @@ const EN: Record<string, string> = {
   'battle.elite_hint': 'Elite Challenge',
   'battle.boss_hint': 'BOSS Fight',
   'battle.target_hint': 'Target: {value}',
-  'battle.cycle_prefix': 'Cycle {cycle} · ',
+  'battle.cycle_prefix': 'BATCH {cycle} · ',
 
   // --- typing relic feedback ---
   'battle.glass_double': '📖 ×10 (+{extra})',
@@ -1408,7 +1408,7 @@ const EN: Record<string, string> = {
   // --- stage relic feedback ---
   'battle.phoenix_revive': '🐦‍🔥 Phoenix Revive!',
   'battle.target_reached': '🎯 TARGET!',
-  'battle.calibration': 'Practice',
+  'battle.calibration': 'PROBATION',
 
   // --- boss modifier relic feedback ---
   'battle.chaos_roulette': '🎰 Chaos Roulette!',
@@ -1651,7 +1651,7 @@ const EN: Record<string, string> = {
   'battle.unlock_endless': 'Clear with all 3 classes to unlock Endless Mode',
   'battle.reached_level': 'Reached Level {level}',
   'battle.final_score_target': 'Final Score: {score} / {target}',
-  'battle.deck_label': '📚 {count} words',
+  'battle.deck_label': '📋 DOCKET {count}',
   'battle.empty_slot': '[{key}] Empty',
 
   // --- relic picker ---
