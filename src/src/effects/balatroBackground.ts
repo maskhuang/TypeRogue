@@ -289,6 +289,7 @@ let userMode: UserMode = 'random';
 
 const state = {
   speed: STYLES.cells.defaultSpeed,
+  speedMul: 1.0,
   spin: 0,
   contrast: 3.5,
   color1: [0.05, 0.10, 0.18] as [number, number, number],
@@ -371,7 +372,7 @@ function frame() {
   const u = compiled.uniforms;
   if (u.resolution) gl.uniform2f(u.resolution, canvas.width, canvas.height);
   if (u.time)       gl.uniform1f(u.time, t);
-  if (u.speed)      gl.uniform1f(u.speed, state.speed);
+  if (u.speed)      gl.uniform1f(u.speed, state.speed * state.speedMul);
   if (u.spin)       gl.uniform1f(u.spin, state.spin);
   if (u.contrast)   gl.uniform1f(u.contrast, state.contrast);
   if (u.lBias)      gl.uniform1f(u.lBias, state.lBias);
@@ -507,4 +508,9 @@ export function setPaletteHsl(h: number, s: number): void {
 /** combo→亮度偏置（0..0.2 RGB additive）。0 = baseline，0.2 = 满 combo。 */
 export function setLightnessBias(v: number): void {
   state.lBias = Math.max(0, Math.min(0.2, v));
+}
+
+/** 时间加速→背景动效速度倍率（夹在 0.5..4.0）。1.0 = 默认。 */
+export function setSpeedMultiplier(v: number): void {
+  state.speedMul = Math.max(0.5, Math.min(4.0, v));
 }

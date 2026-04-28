@@ -12,7 +12,7 @@ import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension, emitResourceSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
-import { setPaletteHsl as setBgPalette, setLightnessBias as setBgLBias, setRandomStyle as setBgRandomStyle } from '../effects/balatroBackground';
+import { setPaletteHsl as setBgPalette, setLightnessBias as setBgLBias, setRandomStyle as setBgRandomStyle, setSpeedMultiplier as setBgSpeedMul } from '../effects/balatroBackground';
 import { initFloatTextCanvas, spawnFloatText, spawnFlightText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput, isChargeSkill, isReechoSkill, resetStageProduced } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
@@ -271,10 +271,11 @@ export function showScreen(name: 'menu' | 'battle' | 'shop' | 'gameover' | 'ritu
     randomizeScreenBackground(el.mainMenuScreen);
   }
 
-  // 离开战斗屏幕时确保结算面板隐藏
+  // 离开战斗屏幕时确保结算面板隐藏，并复位背景动效速度倍率
   if (name !== 'battle') {
     const settlement = document.getElementById('score-settlement');
     if (settlement) settlement.classList.add('settlement-hidden');
+    setBgSpeedMul(1.0);
   }
 }
 
@@ -1739,6 +1740,8 @@ function updateTimerDisplay(): void {
 
   // Story 42.4: 倍率 HUD 更新
   const accel = getTimeAcceleration(_elapsedSeconds, _isBoss);
+  // 背景动效速度跟随时间加速倍率
+  setBgSpeedMul(accel);
   const accelText = '×' + accel.toFixed(1);
   // Review Fix #1: 检查显示文本而非数值 — toFixed(1) 的 "×1.0" 应隐藏
   if (accelText === '×1.0') {
