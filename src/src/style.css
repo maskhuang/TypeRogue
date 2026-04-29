@@ -3917,6 +3917,22 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     transform: scale(1.1);
 }
 
+/* Story 60.1 follow-up: 工作台 IN-tray drop zone 高亮换 paper-craft 绿章
+ * 默认 .drop-zone-highlight 是 #4ecdc4 cyan + cyan bg，被 .wb-foam-case
+ * 继承时与 DPCA 暗保险箱底冲突。覆盖回原暗底 + 绿章 outline + 绿色外发光。 */
+body.shop-preview-active .wb-foam-case.drop-zone-highlight {
+    outline: 2px solid #3e7c41 !important;
+    outline-offset: -2px;
+    background:
+        radial-gradient(ellipse at center, #1a1612 0%, #0a0907 100%) !important;
+    box-shadow:
+        inset 0 0 0 1px rgba(62, 124, 65, 0.55),
+        inset 0 4px 8px rgba(0,0,0,0.95),
+        inset 0 -2px 4px rgba(255,255,255,0.04),
+        0 6px 14px rgba(0,0,0,0.5),
+        0 0 14px rgba(62, 124, 65, 0.45);
+}
+
 /* Story 40.5: 形状放置高亮（classic shop — 荧光霓虹调色板，与战斗 HUD 对齐） */
 .key-slot.shape-preview-valid {
     border-color: #4ecdc4 !important;
