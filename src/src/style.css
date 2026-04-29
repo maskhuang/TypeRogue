@@ -3905,19 +3905,26 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     50% { background: rgba(255, 230, 109, 0.35); }
 }
 
-/* Story 60.1: 新工作台形状高亮 — DPCA paper-craft 油墨调色板（绿章/红章/金章） */
+/* Story 60.1: 新工作台形状高亮 — DPCA paper-craft 油墨调色板（绿章/红章/金章）
+ * outline 必须显式声明覆盖 .drop-zone-highlight 的 #4ecdc4 荧光蓝 outline（同 !important） */
 .kb-key.kb-tier-1.shape-preview-valid {
     border-color: #3e7c41 !important;            /* 批准绿章 */
     background: rgba(62, 124, 65, 0.22) !important;
+    outline: 2px solid #3e7c41 !important;
+    outline-offset: -2px;
     box-shadow: inset 0 0 0 1px rgba(62, 124, 65, 0.5);
 }
 .kb-key.kb-tier-1.shape-preview-invalid {
     border-color: #8a1a1a !important;            /* 驳回红章 */
     background: rgba(138, 26, 26, 0.22) !important;
+    outline: 2px solid #8a1a1a !important;
+    outline-offset: -2px;
     box-shadow: inset 0 0 0 1px rgba(138, 26, 26, 0.5);
 }
 .kb-key.kb-tier-1.shape-preview-displaced {
     border-color: #7a5a10 !important;            /* 调岗金章 */
+    outline: 2px solid #7a5a10 !important;
+    outline-offset: -2px;
     animation: workbench-displaced-blink 0.5s steps(2) infinite;
 }
 @keyframes workbench-displaced-blink {
