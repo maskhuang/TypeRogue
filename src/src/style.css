@@ -3887,16 +3887,19 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     transform: scale(1.1);
 }
 
-/* Story 40.5: 形状放置高亮 */
-.key-slot.shape-preview-valid {
+/* Story 40.5: 形状放置高亮（classic shop + Story 60.1 新工作台共用） */
+.key-slot.shape-preview-valid,
+.kb-key.kb-tier-1.shape-preview-valid {
     border-color: #4ecdc4 !important;
     background: rgba(78, 205, 196, 0.25) !important;
 }
-.key-slot.shape-preview-invalid {
+.key-slot.shape-preview-invalid,
+.kb-key.kb-tier-1.shape-preview-invalid {
     border-color: #ff6b6b !important;
     background: rgba(255, 107, 107, 0.25) !important;
 }
-.key-slot.shape-preview-displaced {
+.key-slot.shape-preview-displaced,
+.kb-key.kb-tier-1.shape-preview-displaced {
     border-color: #ffe66d !important;
     animation: displaced-blink 0.5s steps(2) infinite;
 }
@@ -3912,8 +3915,9 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     justify-content: center;
 }
 
-/* Story 40.6: 右键旋转动画 */
-.key-slot.shape-rotating {
+/* Story 40.6 / 60.1: 右键旋转动画（classic shop + 新工作台共用） */
+.key-slot.shape-rotating,
+.kb-key.kb-tier-1.shape-rotating {
     animation: shape-rotate-pop 0.2s steps(1);
 }
 @keyframes shape-rotate-pop {
@@ -3921,7 +3925,8 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     60% { transform: scale(1.08); }
     100% { transform: scale(1); opacity: 1; }
 }
-.key-slot.shape-shake {
+.key-slot.shape-shake,
+.kb-key.kb-tier-1.shape-shake {
     animation: shape-shake 0.3s steps(6);
 }
 @keyframes shape-shake {
@@ -5908,6 +5913,17 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     background: rgba(255, 245, 220, 0.18);
 }
 .wc-stamp-gold { color: #7a5a10; border-color: #7a5a10; }
+/* Story 60.1: IN-tray 卡片形状缩略图 */
+.wc-shape {
+    margin-top: 4px;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+.wc-shape .shape-preview {
+    transform: scale(1.1);
+    transform-origin: center center;
+}
 
 /* Keyboard prop — full ANSI-104 layout, 4-tier visual weight */
 .wb-keyboard-base {

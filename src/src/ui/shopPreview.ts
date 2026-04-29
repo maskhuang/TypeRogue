@@ -7,10 +7,22 @@
 
 import { state, addRelicWithCapacity, removeRelic, isRelicSlotsFull } from '../core/state';
 import { INBOX_MAX } from '../core/constants';
-import { generateAffixShopItems, generateShopRelicItem, buildAffixTooltipFields } from '../systems/shop';
+import {
+  generateAffixShopItems,
+  generateShopRelicItem,
+  buildAffixTooltipFields,
+  renderShapePreview,
+} from '../systems/shop';
 import { describeAllShopItems, type ItemDescriptor } from './itemDescriptors';
 import { RELICS } from '../data/relics';
 import { dragManager, type DragPayload } from '../systems/dragManager';
+import {
+  highlightShapePlacementOnWorkbench,
+  clearShapePlacementOnWorkbench,
+  handleWorkbenchKeyRotation,
+  applyBindFromInbox,
+  applyUnbindKeyToInbox,
+} from './shapePreview';
 
 const PREVIEW_HASH = '#shop-preview';
 const HIGH_PRICE_THRESHOLD = 100;
@@ -835,33 +847,20 @@ function updateBalDisplay(): void {
   if (el) el.innerHTML = `<span class="bna">🍌</span> ${state.gold}`;
 }
 
-// Bind a skill to a key + sync state.player.bindings + sync visuals
+// Story 60.1: 拖拽 IN-tray / 跨键 → key 落子
+// 状态变更全部走 applyBindFromInbox（在 shapePreview.ts），本函数只负责调用 + DOM 同步
 function bindSkillToKey(skillId: string, key: string): void {
-  // Unbind any existing skill on this key first
-  const prev = state.player.bindings.get(key);
-  if (prev) {
-    state.player.bindings.delete(key);
-    if (state.player.inbox.indexOf(prev) < 0) state.player.inbox.push(prev);
-  }
-  // Remove the new skill from inbox if present (we're consuming it)
-  const inboxIdx = state.player.inbox.indexOf(skillId);
-  if (inboxIdx >= 0) state.player.inbox.splice(inboxIdx, 1);
-  // Set the new binding
-  state.player.bindings.set(key, skillId);
+  applyBindFromInbox(skillId, key);
   syncWorkbenchInbox();
   syncWorkbenchKeys();
 }
 
-// Unbind a skill from a key (drop back to IN-tray)
+// Story 60.1: 从键拖回 IN-tray = 整体卸下多格技能
 function unbindSkillFromKey(key: string): void {
-  const skillId = state.player.bindings.get(key);
-  if (!skillId) return;
-  state.player.bindings.delete(key);
-  if (state.player.inbox.length < INBOX_MAX) {
-    state.player.inbox.push(skillId);
+  if (applyUnbindKeyToInbox(key) !== undefined) {
+    syncWorkbenchInbox();
+    syncWorkbenchKeys();
   }
-  syncWorkbenchInbox();
-  syncWorkbenchKeys();
 }
 
 // Render skill icons on tier-1 keys based on bindings
@@ -876,6 +875,10 @@ function syncWorkbenchKeys(): void {
     keyEl.classList.remove('has-skill');
     keyEl.removeAttribute('data-bound-skill');
     keyEl.removeAttribute('data-drag-type');
+    keyEl.removeAttribute('data-shape-id');
+    keyEl.removeAttribute('data-rotation');
+    keyEl.removeAttribute('data-rarity');
+    keyEl.removeAttribute('data-shape-preview');
     const oldIcon = keyEl.querySelector('.kb-icon');
     if (oldIcon) oldIcon.remove();
     const oldTag = keyEl.querySelector('.kb-tag');
@@ -886,6 +889,17 @@ function syncWorkbenchKeys(): void {
     keyEl.classList.add('has-skill');
     keyEl.dataset.boundSkill = skillId;
     keyEl.dataset.dragType = 'skill-key';
+    // Story 60.1: 已绑定键也带形状属性，拖回 IN-tray / 跨键时 dragManager 能读到
+    const shapeId = sk.shapeId ?? 'monomino';
+    const rotation = sk.rotation ?? 0;
+    const rarity = sk.rarity ?? 0;
+    if (shapeId !== 'monomino') {
+      keyEl.dataset.shapeId = shapeId;
+      keyEl.dataset.rotation = String(rotation);
+      keyEl.dataset.rarity = String(rarity);
+      const preview = renderShapePreview(shapeId, rotation, rarity);
+      if (preview) keyEl.dataset.shapePreview = preview;
+    }
     const iconSpan = document.createElement('span');
     iconSpan.className = 'kb-icon';
     iconSpan.textContent = sk.icon || '⚡';
@@ -913,13 +927,30 @@ function setupDragZones(): void {
       onDrop: (p: DragPayload) => {
         const skillId = p.skillId;
         if (!skillId) return;
-        // If from another key, unbind source first
-        if (p.type === 'skill-key' && p.sourceKey && p.sourceKey !== key) {
-          state.player.bindings.delete(p.sourceKey);
-        }
+        // 跨键拖拽 / IN-tray 拖入 — applyBindFromInbox 内部 bindShapeToKeys
+        // 已自带 unbindSkill(self) 步骤，无需在此手动卸源键
+        clearShapePlacementOnWorkbench();
         bindSkillToKey(skillId, key);
       },
+      // Story 60.1: hover 多格形状预览
+      onDragEnter: (p: DragPayload) => {
+        highlightShapePlacementOnWorkbench(key, p);
+      },
+      onDragLeave: () => {
+        clearShapePlacementOnWorkbench();
+      },
     });
+
+    // Story 60.1: 右键旋转已绑定多格技能（避免 syncWorkbenchInbox 重新调用时重复挂）
+    if (keyEl.dataset.rotHandlerBound !== '1') {
+      keyEl.dataset.rotHandlerBound = '1';
+      keyEl.addEventListener('contextmenu', (e: MouseEvent) => {
+        if (!keyEl.classList.contains('has-skill')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        handleWorkbenchKeyRotation(key, e.shiftKey, syncWorkbenchKeys, syncWorkbenchInbox);
+      });
+    }
   });
   // IN-tray foam case: drop zone for skill-key (drag bound key back to inbox = unbind)
   const intray = wbRoot.querySelector('.wb-foam-case') as HTMLElement | null;
@@ -968,12 +999,19 @@ function syncWorkbenchInbox(): void {
   for (const skillId of state.player.inbox) {
     const sk = state.affixSkills.get(skillId);
     if (!sk) continue;
+    const shapeId = sk.shapeId ?? 'monomino';
+    const rotation = sk.rotation ?? 0;
+    const rarity = sk.rarity ?? 0;
     slots.push(renderInboxCardHtml({
       iconEmoji: sk.icon || '◇',
       name: sk.name.toUpperCase(),
       sku: undoStack.find(u => u.kind === 'skill' && u.skillId === skillId)?.sku ?? '???-???',
       clearance: sk.rarity >= 2 ? '4-A' : '4-B',
       skillId,
+      shapeId,
+      rotation,
+      rarity,
+      shapePreviewHtml: renderShapePreview(shapeId, rotation, rarity),
     }));
   }
   while (slots.length < INBOX_MAX) slots.push('<div class="foam-cutout empty"><span class="cutout-empty-label">— 空槽 —</span></div>');
@@ -990,15 +1028,31 @@ interface InboxCardData {
   sku: string;
   clearance: string;
   skillId: string;
+  shapeId: string;
+  rotation: number;
+  rarity: number;
+  shapePreviewHtml: string;
 }
 
-function renderInboxCardHtml(c: InboxCardData & { skillId: string }): string {
+function escapeAttr(s: string): string {
+  // & 必须先转义，否则后续转义产生的实体字符（如 &quot;）会被二次解释
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
+function renderInboxCardHtml(c: InboxCardData): string {
   const stamp = c.clearance === '4-A'
     ? '<div class="wc-stamp wc-stamp-gold">CLEARANCE 4-A</div>'
     : '<div class="wc-stamp">REGULATION</div>';
+  // Story 60.1: 多格形状属性（dragManager.buildPayload 会读 data-shape-* 进 payload）
+  const shapeAttrs = c.shapePreviewHtml
+    ? ` data-shape-id="${c.shapeId}" data-rotation="${c.rotation}" data-rarity="${c.rarity}" data-shape-preview="${escapeAttr(c.shapePreviewHtml)}"`
+    : '';
+  const shapeBlock = c.shapePreviewHtml
+    ? `<div class="wc-shape">${c.shapePreviewHtml}</div>`
+    : '';
   return `
     <div class="foam-cutout">
-      <div class="weapon-card" data-drag-type="skill-inventory" data-skill-id="${c.skillId}">
+      <div class="weapon-card" data-drag-type="skill-inventory" data-skill-id="${c.skillId}"${shapeAttrs}>
         <div class="wc-row">
           <span class="wc-icon inv-icon">${c.iconEmoji}</span>
           <span class="wc-name inv-name">${c.name}</span>
@@ -1007,6 +1061,7 @@ function renderInboxCardHtml(c: InboxCardData & { skillId: string }): string {
           <span class="wc-sn">SN · ${c.sku}-7842</span>
           <span class="wc-barcode">▌▎▌▌▎▍▌▎▌▌▎▍</span>
         </div>
+        ${shapeBlock}
         ${stamp}
       </div>
     </div>
@@ -1046,6 +1101,7 @@ function hideAllRealScreens(): void {
 
 function restoreFromPreview(): void {
   active = false;
+  clearShapePlacementOnWorkbench();
   dragManager.destroy();
   const t = document.getElementById('terminal-shop-screen') as HTMLElement | null;
   const w = document.getElementById('workbench-screen-preview') as HTMLElement | null;
@@ -1376,6 +1432,8 @@ function enterPreview(): void {
   syncWorkbenchRelics();
   syncWorkbenchKeys();
   dragManager.init();
+  // 全局 dragend 兜底清理形状高亮（一次性设置，避免每次 setupDragZones 重复赋值）
+  dragManager.onDragEnd = () => clearShapePlacementOnWorkbench();
   setupDragZones();
   setupDrawerHandlers();
   setTimeout(() => {
