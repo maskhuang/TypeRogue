@@ -3887,25 +3887,42 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     transform: scale(1.1);
 }
 
-/* Story 40.5: 形状放置高亮（classic shop + Story 60.1 新工作台共用） */
-.key-slot.shape-preview-valid,
-.kb-key.kb-tier-1.shape-preview-valid {
+/* Story 40.5: 形状放置高亮（classic shop — 荧光霓虹调色板，与战斗 HUD 对齐） */
+.key-slot.shape-preview-valid {
     border-color: #4ecdc4 !important;
     background: rgba(78, 205, 196, 0.25) !important;
 }
-.key-slot.shape-preview-invalid,
-.kb-key.kb-tier-1.shape-preview-invalid {
+.key-slot.shape-preview-invalid {
     border-color: #ff6b6b !important;
     background: rgba(255, 107, 107, 0.25) !important;
 }
-.key-slot.shape-preview-displaced,
-.kb-key.kb-tier-1.shape-preview-displaced {
+.key-slot.shape-preview-displaced {
     border-color: #ffe66d !important;
     animation: displaced-blink 0.5s steps(2) infinite;
 }
 @keyframes displaced-blink {
     0%, 100% { background: rgba(255, 230, 109, 0.1); }
     50% { background: rgba(255, 230, 109, 0.35); }
+}
+
+/* Story 60.1: 新工作台形状高亮 — DPCA paper-craft 油墨调色板（绿章/红章/金章） */
+.kb-key.kb-tier-1.shape-preview-valid {
+    border-color: #3e7c41 !important;            /* 批准绿章 */
+    background: rgba(62, 124, 65, 0.22) !important;
+    box-shadow: inset 0 0 0 1px rgba(62, 124, 65, 0.5);
+}
+.kb-key.kb-tier-1.shape-preview-invalid {
+    border-color: #8a1a1a !important;            /* 驳回红章 */
+    background: rgba(138, 26, 26, 0.22) !important;
+    box-shadow: inset 0 0 0 1px rgba(138, 26, 26, 0.5);
+}
+.kb-key.kb-tier-1.shape-preview-displaced {
+    border-color: #7a5a10 !important;            /* 调岗金章 */
+    animation: workbench-displaced-blink 0.5s steps(2) infinite;
+}
+@keyframes workbench-displaced-blink {
+    0%, 100% { background: rgba(122, 90, 16, 0.12); }
+    50% { background: rgba(122, 90, 16, 0.32); }
 }
 
 /* Story 40.5: 拖拽幽灵形状缩略图 */
