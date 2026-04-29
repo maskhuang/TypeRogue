@@ -5784,13 +5784,17 @@ body.shop-preview-active .drag-ghost {
 #workbench-screen-preview {
     background: #1c150c;
     padding: 0;
-    overflow: hidden;
+    /* 窄屏 fallback: 允许横向滚动避免右侧 FILED 面板被裁掉 */
+    overflow: auto;
 }
 
 .workbench-desk {
     position: relative;
     width: 100%;
     height: 100%;
+    /* 宽屏居中 + 限定最大宽度，与 terminal-bezel max-width: 1200px 对齐 */
+    max-width: 1280px;
+    margin: 0 auto;
     background:
         /* 桌面木纹（水平条纹） */
         repeating-linear-gradient(
@@ -5871,7 +5875,9 @@ body.shop-preview-active .drag-ghost {
     z-index: 2;
     flex: 1;
     display: grid;
-    grid-template-columns: minmax(180px, 0.7fr) minmax(560px, 2fr) minmax(180px, 0.7fr);
+    /* 窄屏收紧：min IN-tray 160 + keyboard 500 + FILED 160 + gap/padding ≈ 870px
+     * 宽屏走 fr 自适应；超过 max-width 1280 后由 .workbench-desk 居中限制 */
+    grid-template-columns: minmax(160px, 0.7fr) minmax(500px, 2fr) minmax(160px, 0.7fr);
     gap: 14px;
     padding: 18px 22px;
     min-height: 0;
