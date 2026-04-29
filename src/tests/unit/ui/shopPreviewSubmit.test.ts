@@ -41,6 +41,11 @@ const STUB_DOC = {
     style: {},
     textContent: '',
   }),
+  body: {
+    classList: { add: vi.fn(), remove: vi.fn() },
+    appendChild: vi.fn(),
+    contains: vi.fn(() => false),
+  },
 }
 
 beforeEach(() => {

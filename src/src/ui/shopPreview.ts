@@ -706,6 +706,7 @@ function executeSubmitTransition(overlay: HTMLElement | null): void {
   pendingConfirm = null; // L2 fix: 防 stale BUY confirm 残留
   submitting = false;
   active = false;
+  document.body.classList.remove('shop-preview-active');
   // 隐藏 preview 屏
   const tEl = document.getElementById('terminal-shop-screen');
   const wEl = document.getElementById('workbench-screen-preview');
@@ -1546,6 +1547,7 @@ function hideAllRealScreens(): void {
 
 function restoreFromPreview(): void {
   active = false;
+  document.body.classList.remove('shop-preview-active');
   clearShapePlacementOnWorkbench();
   dragManager.destroy();
   const t = document.getElementById('terminal-shop-screen') as HTMLElement | null;
@@ -1876,6 +1878,9 @@ function enterPreview(): void {
   syncWorkbenchKeys();
   // Story 60.3: 首次进入时把 banner / 状态条接 state 实数（替代 Phase 1 静态 placeholder）
   updateTerminalChrome();
+  // body class 标记：让 paper-craft 缩略图样式能 scope 到拖拽幽灵（dragGhost
+  // 创建在 <body> 上，不在 #workbench-screen-preview 内，所以靠 body class 区分）
+  document.body.classList.add('shop-preview-active');
   dragManager.init();
   // Story 60.1 follow-up: 注册形状预览渲染器，让 dragManager pickup 模式右键旋转
   // 时能更新幽灵的 shape thumbnail（与 classic shop 共用同一渲染器）
