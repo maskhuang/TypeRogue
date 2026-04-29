@@ -318,22 +318,48 @@ function priceColForLine(p: number): string {
   return pad(String(p), 4, false);
 }
 
+/**
+ * 渲染 LIST 行的 HTML 列结构。每列是固定 width 的 inline-block，让浏览器布局而不是
+ * 字符宽度做对齐 —— 中文 / emoji 在等宽字体 fallback 下宽度不严格 1ch，靠 spaces
+ * padding 永远对不齐。
+ */
 function renderListRow(d: ItemDescriptor): string {
   const stars = d.rarity === 0 ? '' : '*'.repeat(d.rarity);
   const upgPrefix = d.upgrade ? '↑' : '';
   const nameWithMarkers = upgPrefix + stars + d.nameAbbrev;
-  const skuCol = pad(d.sku, COL.sku);
-  const nameCol = pad(nameWithMarkers, COL.name);
-  const priceCol = priceColForLine(d.price);
   const stockStr = d.stockNow === null
     ? '∞'
     : `${String(d.stockNow).padStart(2, '0')}/${String(d.stockMax ?? d.stockNow).padStart(2, '0')}`;
-  const stockCol = pad(stockStr, 7);
-  const clrCol = pad(d.clearance, COL.clr);
-  const shapeTok = `§T${d.shapeColor.toUpperCase()}|${d.shapeTag}§`;
-  const synTok = `§Y${d.synergyCount}§`;
-  const trailing = d.redacted ? '[REDACTED]' : '';
-  return `${skuCol}${nameCol} 🍌 ${priceCol}  ${stockCol}  ${clrCol}  ${shapeTok} ${synTok} ${trailing}`.trimEnd();
+  const priceStr = d.price >= 9999 ? '███' : String(d.price);
+  const shapeTokHtml = `<span class="t-shape t-shape-${d.shapeColor.toLowerCase()}">${escapeHtml(d.shapeTag)}</span>`;
+  const synV = d.synergyCount;
+  const synCls = synV > 0 ? 't-syn t-syn-hit' : 't-syn t-syn-zero';
+  const synTokHtml = `<span class="${synCls}">[SYN:${synV}]</span>`;
+  const trailing = d.redacted
+    ? `<span class="lst-cell lst-redacted">[REDACTED]</span>`
+    : '';
+  return [
+    `<span class="lst-cell lst-sku">${escapeHtml(d.sku)}</span>`,
+    `<span class="lst-cell lst-name">${escapeHtml(nameWithMarkers)}</span>`,
+    `<span class="lst-cell lst-price"><span class="bna">🍌</span> ${escapeHtml(priceStr)}</span>`,
+    `<span class="lst-cell lst-stock">${escapeHtml(stockStr)}</span>`,
+    `<span class="lst-cell lst-clr">${escapeHtml(d.clearance)}</span>`,
+    `<span class="lst-cell lst-tag">${shapeTokHtml}</span>`,
+    `<span class="lst-cell lst-syn">${synTokHtml}</span>`,
+    trailing,
+  ].join('');
+}
+
+/** Header 行同结构，让 SKU/ITEM/PRICE/STOCK/CLR/TAG 标题与数据列严格对齐 */
+function renderListHeaderRow(): string {
+  return [
+    `<span class="lst-cell lst-sku">SKU</span>`,
+    `<span class="lst-cell lst-name">ITEM</span>`,
+    `<span class="lst-cell lst-price">PRICE</span>`,
+    `<span class="lst-cell lst-stock">STOCK</span>`,
+    `<span class="lst-cell lst-clr">CLR</span>`,
+    `<span class="lst-cell lst-tag">TAG</span>`,
+  ].join('');
 }
 
 function wrapAt(text: string, w: number): string[] {
@@ -417,25 +443,30 @@ function renderInfoBlock(d: ItemDescriptor): string[] {
 
 // === Output to viewport ===
 
-function appendLine(text: string, cls = ''): void {
+function appendLine(text: string, cls = '', raw = false): void {
   const vp = document.getElementById('terminal-viewport');
   if (!vp) return;
   const div = document.createElement('div');
   div.className = `t-line ${cls}`.trim();
-  let html = escapeHtml(text);
-  // 价格 emoji 自动 wrap：把"🍌"包成 .bna
-  html = html.replace(/🍌/g, '<span class="bna">🍌</span>');
-  // shape sentinel: §T<COLOR>|<TAG>§  →  <span class="t-shape t-shape-COLOR">TAG</span>
-  html = html.replace(/§T([A-Z]+)\|(\[[^\]]+\])§/g, (_m, color, tag) => {
-    return `<span class="t-shape t-shape-${(color as string).toLowerCase()}">${tag}</span>`;
-  });
-  // syn sentinel: §Y4§ → [SYN:4]
-  html = html.replace(/§Y(\d+)§/g, (_m, n) => {
-    const v = Number(n);
-    const cls2 = v > 0 ? 't-syn t-syn-hit' : 't-syn t-syn-zero';
-    return `<span class="${cls2}">[SYN:${v}]</span>`;
-  });
-  div.innerHTML = html;
+  if (raw) {
+    // List row HTML 已 escape + 已 sentinel 替换，直接 innerHTML 注入
+    div.innerHTML = text;
+  } else {
+    let html = escapeHtml(text);
+    // 价格 emoji 自动 wrap：把"🍌"包成 .bna
+    html = html.replace(/🍌/g, '<span class="bna">🍌</span>');
+    // shape sentinel: §T<COLOR>|<TAG>§  →  <span class="t-shape t-shape-COLOR">TAG</span>
+    html = html.replace(/§T([A-Z]+)\|(\[[^\]]+\])§/g, (_m, color, tag) => {
+      return `<span class="t-shape t-shape-${(color as string).toLowerCase()}">${tag}</span>`;
+    });
+    // syn sentinel: §Y4§ → [SYN:4]
+    html = html.replace(/§Y(\d+)§/g, (_m, n) => {
+      const v = Number(n);
+      const cls2 = v > 0 ? 't-syn t-syn-hit' : 't-syn t-syn-zero';
+      return `<span class="${cls2}">[SYN:${v}]</span>`;
+    });
+    div.innerHTML = html;
+  }
   vp.appendChild(div);
   vp.scrollTop = vp.scrollHeight;
 }
@@ -475,9 +506,9 @@ function cmdList(): void {
   }
   appendLine('CATALOG · 2026-Q2 · ALL PRICES IN BANANA STANDARD 🍌', 'head');
   appendLine('─────────────────────────────────────────────────────────────────────────────────────');
-  appendLine(`${pad('SKU', COL.sku)}${pad('ITEM', COL.name)} ${pad('PRICE', 6)}  ${pad('STOCK', 7)}  ${pad('CLR', COL.clr)}  TAG`, 'head');
+  appendLine(renderListHeaderRow(), 'head list-row', true);
   appendLine('─────────────────────────────────────────────────────────────────────────────────────');
-  for (const d of descriptorCache) appendLine(renderListRow(d), classForRow(d));
+  for (const d of descriptorCache) appendLine(renderListRow(d), `${classForRow(d)} list-row`.trim(), true);
   appendLine('─────────────────────────────────────────────────────────────────────────────────────');
   appendLine(`${descriptorCache.length} ITEMS LISTED · TYPE  INFO <SKU>  FOR DETAILS`, 'dim');
   appendBlank();

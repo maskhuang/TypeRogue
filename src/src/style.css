@@ -5678,6 +5678,29 @@ body.shop-preview-active .drag-ghost {
 }
 .t-line.redacted { color: rgba(255, 90, 90, 0.85); text-shadow: 0 0 4px rgba(255, 90, 90, 0.6); }
 
+/* Story 60.x follow-up: LIST 行用 flex 列布局而不是字符宽度对齐 —— 等宽字体
+ * fallback 下中文 / emoji 不严格 1ch 宽，padding-with-spaces 永远会错位。 */
+.t-line.list-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0;
+    white-space: pre;
+}
+.lst-cell {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.lst-sku   { width: 9ch; }
+.lst-name  { width: 30ch; }
+.lst-price { width: 9ch; text-align: right; padding-right: 1ch; }
+.lst-stock { width: 8ch; padding-left: 1ch; }
+.lst-clr   { width: 7ch; padding-left: 1ch; }
+.lst-tag   { width: 8ch; padding-left: 1ch; }
+.lst-syn   { flex: 0 0 auto; padding-left: 1ch; }
+.lst-redacted { flex: 0 0 auto; padding-left: 1ch; opacity: 0.8; }
+
 /* Shape tags — 不同形状轻微色阶差异，便于扫读 */
 .t-shape           { color: rgba(140, 255, 170, 0.7); }
 .t-shape-mono      { color: rgba(140, 255, 170, 0.55); }
