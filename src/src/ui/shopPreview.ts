@@ -7,6 +7,7 @@
 
 import { state, addRelicWithCapacity, removeRelic, isRelicSlotsFull } from '../core/state';
 import { INBOX_MAX } from '../core/constants';
+import { BALANCE } from '../core/constants';
 import {
   generateAffixShopItems,
   generateShopRelicItem,
@@ -17,7 +18,11 @@ import {
 } from '../systems/shop';
 import { generateWordPacks } from '../data/wordPacks';
 import { calculateLetterFrequency } from '../systems/letters/LetterFrequencySystem';
+import { getBattleNumber, getPositionInCycle, getStageType } from '../systems/stage/stageFlow';
+import { STAGE_ICONS } from '../systems/actTransition';
+import { t } from '../demo/demo-i18n';
 import type { ShopItem, WordPack } from '../core/types';
+import type { StageType } from '../systems/stage/StageConfig';
 import { describeAllShopItems, type ItemDescriptor } from './itemDescriptors';
 import { RELICS } from '../data/relics';
 import { dragManager, type DragPayload } from '../systems/dragManager';
@@ -136,6 +141,72 @@ function generateShopPackItems(count: number): ShopItem[] {
   } catch {
     return [];
   }
+}
+
+// === Story 60.3: 终端 banner / 状态栏 label 生成（纯函数，独立可测） ===
+
+/** banner ASCII 框内每行内容宽度（不含两边 │） */
+const BANNER_INNER_WIDTH = 73;
+
+const CLR_BY_STAGE_TYPE: Record<StageType, string> = {
+  standard: '4-B',
+  elite: '4-A',
+  boss: 'III',     // 罗马数字 = 高密级，与 ritual 同档（boss = 年度审计仪式级）
+  ritual: 'III',
+};
+
+/**
+ * 构造 banner 第二行（不含 │ 边框），宽度恰好 BANNER_INNER_WIDTH 字符。
+ * 复用 battle.ts:2275 的 cycle_prefix i18n 词典避免分裂。
+ *
+ * 注意：cycle_prefix 当前 i18n 值 = `BATCH {cycle} · `（en）/ `批次{cycle} · `（zh），
+ * 与 banner 内的 `BATCH NN/12` 同名但不同义；视觉冗余但词典统一，60-14 统一处理时再 rename i18n key。
+ */
+export function buildBannerLine(level: number, cycle: number, ascensionLevel: number): string {
+  const safeLevel = level > 0 ? level : 1;
+  const cyclePrefix = cycle >= 2 ? t('battle.cycle_prefix', { cycle }) : '';
+  // safeLevel ≥ 1 时 getBattleNumber 总返回 ≥ 1（fallback 死代码已移除）
+  const fileNum = getBattleNumber(safeLevel);
+  const batchPos = getPositionInCycle(safeLevel);
+  const cycleLength = BALANCE.CYCLE_LENGTH;
+  const ascension = ascensionLevel ?? 0;
+  const content = `  CLERK ID: 7842    ${cyclePrefix}FILE ${fileNum}    BATCH ${String(batchPos).padStart(2, '0')}/${cycleLength}    A${ascension}`;
+  // 截断或填充到固定宽度（防止超长 cycle prefix + 双位数 ascension 撑破框）
+  if (content.length >= BANNER_INNER_WIDTH) return content.slice(0, BANNER_INNER_WIDTH);
+  return content.padEnd(BANNER_INNER_WIDTH, ' ');
+}
+
+/**
+ * 构造完整 banner（4 行 ASCII 框纯文本，不含 HTML 标签）。
+ * 调用方应当通过 textContent 写入 `<pre>` 元素，monospace 字体保留 \n 分行。
+ */
+export function buildBannerText(level: number, cycle: number, ascensionLevel: number): string {
+  const top = `┌${'─'.repeat(BANNER_INNER_WIDTH)}┐`;
+  const line1Body = '  DEPT. OF PRIMATE CLERICAL AFFAIRS · §117 PNEUMATIC REQUISITION TUBE  '.padEnd(BANNER_INNER_WIDTH, ' ');
+  const line1 = `│${line1Body.slice(0, BANNER_INNER_WIDTH)}│`;
+  const line2 = `│${buildBannerLine(level, cycle, ascensionLevel)}│`;
+  const bottom = `└${'─'.repeat(BANNER_INNER_WIDTH)}┘`;
+  return `${top}\n${line1}\n${line2}\n${bottom}`;
+}
+
+/** FORM 字段：`F-${level}` 动态跟着 state.level 变 */
+export function getFormLabel(level: number): string {
+  const safeLevel = level > 0 ? level : 1;
+  return `F-${safeLevel}`;
+}
+
+/** CLR 字段：按 stageType 显示密级（standard 4-B / elite 4-A / boss/ritual III） */
+export function getClrLabel(level: number): string {
+  const safeLevel = level > 0 ? level : 1;
+  // CLR_BY_STAGE_TYPE 是 Record<StageType, string> total map，TS 保证全覆盖；无需 fallback
+  return CLR_BY_STAGE_TYPE[getStageType(safeLevel)];
+}
+
+/** STAGE 字段：从 actTransition.STAGE_ICONS 单一真相源读 emoji */
+export function getStageIcon(level: number): string {
+  const safeLevel = level > 0 ? level : 1;
+  // STAGE_ICONS 4 键覆盖 4 种 stageType；getStageType 返回 StageType 保证 lookup 命中
+  return STAGE_ICONS[getStageType(safeLevel)];
 }
 
 // === Helpers ===
@@ -416,7 +487,7 @@ function executeBuySkill(d: ItemDescriptor): void {
   appendLine(`  · DISPATCHED TO IN-TRAY SLOT ${state.player.inbox.length}/${INBOX_MAX} · BAL 🍌 ${state.gold}`, 'dim');
   appendLine(`  · UNDO STACK: ${undoStack.length} (FINALIZES ON WORKBENCH ENTRY)`, 'dim');
   appendBlank();
-  updateBalDisplay();
+  updateTerminalChrome();
   syncWorkbenchInbox();
 }
 
@@ -447,7 +518,7 @@ function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
   appendLine(`  · WORD "${word.toUpperCase()}" FILED TO LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
   appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
   appendBlank();
-  updateBalDisplay();
+  updateTerminalChrome();
 }
 
 function executeBuyPackPicker(d: ItemDescriptor, pack: WordPack): void {
@@ -480,7 +551,7 @@ export function finalizePackPick(pickedWord: string): void {
   appendLine(`  · WORD "${pickedWord.toUpperCase()}" FILED TO LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
   appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
   appendBlank();
-  updateBalDisplay();
+  updateTerminalChrome();
   // M1 fix: 切回终端，让 CONFIRMED / WORD FILED 消息可见
   showOnly('terminal');
 }
@@ -526,7 +597,7 @@ function executeBuyRelic(d: ItemDescriptor): void {
   appendLine(`  · RELIC SHELVED · BAL 🍌 ${state.gold}`, 'dim');
   appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
   appendBlank();
-  updateBalDisplay();
+  updateTerminalChrome();
   syncWorkbenchRelics();
 }
 
@@ -580,7 +651,7 @@ function cmdSell(arg?: string): void {
   state.gold += refund;
   appendLine(`SOLD · ${target} · 🍌 ${refund} REFUNDED (50%)`, 'echo');
   appendBlank();
-  updateBalDisplay();
+  updateTerminalChrome();
   syncWorkbenchInbox();
 }
 
@@ -606,7 +677,7 @@ function cmdReshuffle(): void {
     appendLine(`CATALOG RESHUFFLED · 🍌 ${cost} DEDUCTED · GENERATOR UNAVAILABLE`, 'echo');
   }
   appendBlank();
-  updateBalDisplay();
+  updateTerminalChrome();
 }
 
 function cmdProceed(): void {
@@ -646,7 +717,7 @@ function cmdUndo(): void {
   state.gold += last.price;
   appendLine(`UNDO · ${last.sku} REVERSED · 🍌 ${last.price} REFUNDED · BAL 🍌 ${state.gold}`, 'echo');
   appendBlank();
-  updateBalDisplay();
+  updateTerminalChrome();
 }
 
 function cmdStats(): void {
@@ -1022,6 +1093,39 @@ function onKey(e: KeyboardEvent): void {
 function updateBalDisplay(): void {
   const el = document.querySelector('#terminal-shop-screen .ts-cell .bal');
   if (el) el.innerHTML = `<span class="bna">🍌</span> ${state.gold}`;
+}
+
+/**
+ * Story 60.3: 集中渲染终端 banner + 5 个 ts-cell（BAL/FORM/CLR/CONN/STAGE）。
+ * 所有 BUY/SELL/UND/RES 路径调用本函数，确保 banner 与 BAL 同步刷新。
+ * idempotent: 反复调用安全，root 不存在时整体 no-op。
+ */
+export function updateTerminalChrome(): void {
+  const root = document.getElementById('terminal-shop-screen');
+  if (!root) return;
+
+  // Banner
+  const bannerEl = root.querySelector<HTMLElement>('#terminal-banner-pre');
+  if (bannerEl) {
+    bannerEl.textContent = buildBannerText(state.level, state.cycle, state.ascensionLevel ?? 0);
+  }
+
+  // BAL（沿用 innerHTML 因为含 <span class="bna">🍌</span>）
+  updateBalDisplay();
+
+  // FORM
+  const formEm = root.querySelector('[data-field="form"] em');
+  if (formEm) formEm.textContent = getFormLabel(state.level);
+
+  // CLR
+  const clrEm = root.querySelector('[data-field="clr"] em');
+  if (clrEm) clrEm.textContent = getClrLabel(state.level);
+
+  // STAGE
+  const stageEm = root.querySelector('[data-field="stage"] em');
+  if (stageEm) stageEm.textContent = getStageIcon(state.level);
+
+  // CONN 是固定文本（DPCA 复古调制解调器梗），不动
 }
 
 // Story 60.1: 拖拽 IN-tray / 跨键 → key 落子
@@ -1422,17 +1526,14 @@ function buildTerminalScreen(): string {
           <div class="crt-vignette"></div>
           <div class="crt-scanlines"></div>
           <div class="terminal-content">
-            <pre class="terminal-banner">┌─────────────────────────────────────────────────────────────────────────┐
-│  DEPT. OF PRIMATE CLERICAL AFFAIRS · §117 PNEUMATIC REQUISITION TUBE   │
-│  CLERK ID: 7842    FILE 5    BATCH 03/12    A2                         │
-└─────────────────────────────────────────────────────────────────────────┘</pre>
+            <pre class="terminal-banner" id="terminal-banner-pre"></pre>
 
             <div class="terminal-status">
-              <span class="ts-cell">BAL <em class="bal"><span class="bna">🍌</span> 248</em></span>
-              <span class="ts-cell">FORM <em>F-3942-A</em></span>
-              <span class="ts-cell">CLR <em class="clr">4-B</em></span>
-              <span class="ts-cell">CONN <em class="conn">56k6 OK</em></span>
-              <span class="ts-cell">STAGE <em>📋</em></span>
+              <span class="ts-cell" data-field="bal">BAL <em class="bal"><span class="bna">🍌</span> 0</em></span>
+              <span class="ts-cell" data-field="form">FORM <em>F-1</em></span>
+              <span class="ts-cell" data-field="clr">CLR <em class="clr">4-B</em></span>
+              <span class="ts-cell" data-field="conn">CONN <em class="conn">56k6 OK</em></span>
+              <span class="ts-cell" data-field="stage">STAGE <em>📋</em></span>
             </div>
 
             <div class="terminal-viewport" id="terminal-viewport"></div>
@@ -1609,6 +1710,8 @@ function enterPreview(): void {
   syncWorkbenchInbox();
   syncWorkbenchRelics();
   syncWorkbenchKeys();
+  // Story 60.3: 首次进入时把 banner / 状态条接 state 实数（替代 Phase 1 静态 placeholder）
+  updateTerminalChrome();
   dragManager.init();
   // 全局 dragend 兜底清理形状高亮（一次性设置，避免每次 setupDragZones 重复赋值）
   dragManager.onDragEnd = () => clearShapePlacementOnWorkbench();

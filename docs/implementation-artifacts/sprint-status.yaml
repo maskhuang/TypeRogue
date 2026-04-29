@@ -471,7 +471,7 @@ development_status:
   epic-60: in-progress
   60-1-multi-cell-shape-binding: done                   # 多格技能形状绑定 + 范围预览（P2.1 质量门）
   60-2-pack-multi-word-picker: done                     # Pack 多词拣选弹窗（P2.1 质量门）
-  60-3-status-bar-real-state: backlog                   # 状态条 + Banner 接真实 state（P2.1 质量门）
+  60-3-status-bar-real-state: done                      # 状态条 + Banner 接真实 state（P2.1 质量门）
   60-4-submit-form-startlevel: backlog                  # SUBMIT FORM → startLevel 接入（P2.1 质量门）
   60-5-openshop-replacement-flag: backlog               # openShop() 替换 + feature flag（P2.2 接主流程）
   60-6-save-serialization-inbox: backlog                # inbox + bindings 存档序列化（P2.2 接主流程）

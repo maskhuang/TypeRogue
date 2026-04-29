@@ -72,18 +72,20 @@ export function showBossIntro(pool: string[]): Promise<void> {
   })
 }
 
+/** Stage type → emoji icon（HUD + 终端商店共享单一真相源） */
+export const STAGE_ICONS: Record<string, string> = {
+  standard: '📋', // routine paperwork
+  boss: '🚩',     // priority case
+  ritual: '🕯️',  // ritual stays
+  elite: '📑',    // special category
+}
+
 /** 更新 HUD 中的 Cycle / StageType 信息 */
 export function updateStageInfo(cycleNum: number, stageType: string): void {
   const el = document.getElementById('hud-stage-info')
   if (!el) return
 
-  const icons: Record<string, string> = {
-    standard: '📋', // routine paperwork
-    boss: '🚩',     // priority case
-    ritual: '🕯️',  // ritual stays
-    elite: '📑',    // special category
-  }
-  const icon = icons[stageType] || '📋'
+  const icon = STAGE_ICONS[stageType] || '📋'
   const badge = state.ascensionLevel > 0 ? ` A${state.ascensionLevel}` : ''
   el.textContent = `BATCH ${cycleNum} ${icon}${badge}`
   el.className = `hud-stage-info stage-${stageType}`
