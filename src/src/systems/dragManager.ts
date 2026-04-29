@@ -290,6 +290,11 @@ class DragManager {
         this.ghost.appendChild(newShapeDiv);
       }
     }
+    // 触发当前 drop target 的 onDragEnter，让范围预览按新 rotation 立即重算 —
+    // 否则玩家空中右键旋转后必须挪鼠标才会刷新键盘 outline
+    if (this.currentDropTarget?.onDragEnter && this.payload) {
+      this.currentDropTarget.onDragEnter(this.payload);
+    }
   }
 
   /** 将当前 payload 返回到备战席 */
