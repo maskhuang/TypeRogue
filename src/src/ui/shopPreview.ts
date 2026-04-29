@@ -26,7 +26,7 @@ import type { ShopItem, WordPack } from '../core/types';
 import type { StageType } from '../systems/stage/StageConfig';
 import { describeAllShopItems, type ItemDescriptor } from './itemDescriptors';
 import { RELICS } from '../data/relics';
-import { dragManager, type DragPayload } from '../systems/dragManager';
+import { dragManager, registerShapePreviewRenderer, type DragPayload } from '../systems/dragManager';
 import {
   highlightShapePlacementOnWorkbench,
   clearShapePlacementOnWorkbench,
@@ -1366,6 +1366,12 @@ function setupDragZones(): void {
       onDrop: (p: DragPayload) => {
         const skillId = p.skillId;
         if (!skillId) return;
+        // Story 60.1 follow-up: 拾取右键旋转后的 payload.rotation 写回 affixSkill，
+        // 让 bindShapeToKeys 用最新旋转态（与 classic shop:4074 同模式）
+        if (p.rotation != null) {
+          const sk = state.affixSkills.get(skillId);
+          if (sk) sk.rotation = p.rotation;
+        }
         // 跨键拖拽 / IN-tray 拖入 — applyBindFromInbox 内部 bindShapeToKeys
         // 已自带 unbindSkill(self) 步骤，无需在此手动卸源键
         clearShapePlacementOnWorkbench();
@@ -1871,6 +1877,9 @@ function enterPreview(): void {
   // Story 60.3: 首次进入时把 banner / 状态条接 state 实数（替代 Phase 1 静态 placeholder）
   updateTerminalChrome();
   dragManager.init();
+  // Story 60.1 follow-up: 注册形状预览渲染器，让 dragManager pickup 模式右键旋转
+  // 时能更新幽灵的 shape thumbnail（与 classic shop 共用同一渲染器）
+  registerShapePreviewRenderer(renderShapePreview);
   // 全局 dragend 兜底清理形状高亮（一次性设置，避免每次 setupDragZones 重复赋值）
   dragManager.onDragEnd = () => clearShapePlacementOnWorkbench();
   setupDragZones();
