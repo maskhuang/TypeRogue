@@ -2141,7 +2141,7 @@ const WORD_EFFECT_ICONS: Record<string, string> = {
   gold: '🪙',
 };
 
-function formatWordEffectLabel(effect: WordEffect): string {
+export function formatWordEffectLabel(effect: WordEffect): string {
   const icon = WORD_EFFECT_ICONS[effect.type] || '';
   const letterHint = effect.targetLetter ? ` [${effect.targetLetter.toUpperCase()}]` : '';
   return `${icon} ${t('wordeffect.' + effect.type, { value: effect.value })}${letterHint}`;
@@ -2164,7 +2164,7 @@ function highlightWord(word: string, _boundKeySet: Set<string>): string {
   }).join('');
 }
 
-function getFreqHints(word: string): string {
+export function getFreqHints(word: string): string {
   const boundKeys = new Set([...state.player.bindings.keys()]);
   const counts = new Map<string, number>();
   for (const c of word.toLowerCase()) {

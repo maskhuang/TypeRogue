@@ -6415,6 +6415,86 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     letter-spacing: 3px;
     background: rgba(255, 245, 220, 0.2);
 }
+
+/* Story 60.2: Pack 多词拣选 drawer — paper-craft 候选卡片 */
+.pack-pick-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 24px 20px 12px;
+    font-family: 'Special Elite', 'Courier Prime', monospace;
+}
+.pack-pick-card {
+    position: relative;
+    border: 2px solid #2a1f10;
+    background: linear-gradient(180deg, #f4e4c1, #ead7af);
+    color: #2a1f10;
+    padding: 22px 14px 14px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    box-shadow: 2px 2px 0 rgba(40, 20, 0, 0.25);
+    font-family: inherit;
+    /* 顶端"装订夹"边框装饰 */
+    box-sizing: border-box;
+}
+.pack-pick-card::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(40, 20, 0, 0.35);
+    pointer-events: none;
+}
+.pack-pick-card:hover,
+.pack-pick-card:focus {
+    outline: none;
+    transform: translateY(-2px);
+    box-shadow: 4px 5px 0 rgba(40, 20, 0, 0.3);
+    background: linear-gradient(180deg, #faecc9, #f0dcb2);
+}
+.pack-pick-card:focus {
+    border-color: #6e1010;
+}
+.pack-pick-card .pp-clip {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35));
+}
+.pack-pick-card .pp-word {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+}
+.pack-pick-card .pp-meta {
+    font-size: 10px;
+    opacity: 0.7;
+    letter-spacing: 1px;
+}
+.pack-pick-card .pp-effect {
+    margin-top: 8px;
+    padding: 2px 6px;
+    border: 1px solid #e67e22;
+    color: #e67e22;
+    font-size: 10px;
+    display: inline-block;
+    background: rgba(255, 245, 220, 0.4);
+}
+.pack-pick-footer {
+    text-align: center;
+    padding: 14px 0 8px;
+    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-size: 11px;
+    color: rgba(40, 20, 0, 0.55);
+    letter-spacing: 2px;
+}
 .wb-hint .hint-strong { color: #6e1010; font-weight: bold; }
 .wb-hint kbd {
     display: inline-block;

@@ -12,7 +12,12 @@ import {
   generateShopRelicItem,
   buildAffixTooltipFields,
   renderShapePreview,
+  getFreqHints,
+  formatWordEffectLabel,
 } from '../systems/shop';
+import { generateWordPacks } from '../data/wordPacks';
+import { calculateLetterFrequency } from '../systems/letters/LetterFrequencySystem';
+import type { ShopItem, WordPack } from '../core/types';
 import { describeAllShopItems, type ItemDescriptor } from './itemDescriptors';
 import { RELICS } from '../data/relics';
 import { dragManager, type DragPayload } from '../systems/dragManager';
@@ -47,6 +52,8 @@ type UndoEntry =
   | { kind: 'relic'; sku: string; price: number; relicId: string };
 let undoStack: UndoEntry[] = [];
 let pendingConfirm: { sku: string; price: number } | null = null;
+// Story 60.2: 多词 pack 选词流程未完成时的暂存状态（drawer 打开期间存活）
+let pendingPackPick: { d: ItemDescriptor; pack: WordPack } | null = null;
 let workbenchEntered = false;
 // snapshot of descriptors for current shop session — re-derived each LIST or after mutation
 let descriptorCache: ItemDescriptor[] = [];
@@ -98,7 +105,9 @@ function getSynergyCount(d: ItemDescriptor): number {
 function ensureSeed(): void {
   if (state.shop.items.length === 0) {
     try {
-      const items = generateAffixShopItems(4);
+      const items = generateAffixShopItems(3);
+      const packs = generateShopPackItems(2);
+      items.push(...packs);
       const relic = generateShopRelicItem(1);
       if (relic) items.push(relic);
       state.shop.items = items;
@@ -107,6 +116,26 @@ function ensureSeed(): void {
     }
   }
   if (state.gold < 1) state.gold = PREVIEW_SEED_GOLD;
+}
+
+// Story 60.2 fix: 把 generateWordPacks 输出包成 ShopItem，让 catalog 出现 pack 商品
+function generateShopPackItems(count: number): ShopItem[] {
+  try {
+    const ownedWords = state.player.wordDeck;
+    const playerFreqs = calculateLetterFrequency(ownedWords);
+    const boundKeys = [...state.player.bindings.keys()];
+    const packs = generateWordPacks(ownedWords, playerFreqs, boundKeys, count);
+    return packs.map((pack, i): ShopItem => ({
+      id: `si-pack-${i}-${Date.now()}`,
+      type: 'pack',
+      pack,
+      cost: pack.cost,
+      isUpgrade: false,
+      locked: false,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 // === Helpers ===
@@ -398,19 +427,73 @@ function executeBuyPack(d: ItemDescriptor): void {
     appendBlank();
     return;
   }
-  // P1: take first word; multi-word picker overlay deferred to P1.6
+  // Story 60.2: words.length > pickCount → 弹三选一抽屉；否则直接入库
+  if (pack.words.length > pack.pickCount) {
+    executeBuyPackPicker(d, pack);
+  } else {
+    executeBuyPackDirect(d, pack);
+  }
+}
+
+function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
   const word = pack.words[0];
   state.gold -= d.price;
   state.player.wordDeck.push(word);
+  if (pack.wordEffect && state.classId !== 'wordsmith') {
+    state.wordEffects.set(word, pack.wordEffect);
+  }
   undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [word] });
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
-  appendLine(`  · WORD "${word.toUpperCase()}" FILED TO WORD LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
-  if (pack.words.length > 1) {
-    appendLine(`  · NOTE: pack had ${pack.words.length} words; picker overlay deferred (P1.6)`, 'dim');
-  }
+  appendLine(`  · WORD "${word.toUpperCase()}" FILED TO LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
   appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
   appendBlank();
   updateBalDisplay();
+}
+
+function executeBuyPackPicker(d: ItemDescriptor, pack: WordPack): void {
+  // M3 fix: 多 drawer 互斥 — 拒绝在其他 drawer 打开时弹 pack-pick
+  if (drawerOpen && drawerOpen !== 'pack-pick') {
+    appendLine(`ERR · DRAWER ${drawerOpen.toUpperCase()} OPEN · CLOSE FIRST [ESC]`, 'redacted');
+    appendBlank();
+    return;
+  }
+  pendingPackPick = { d, pack };
+  appendLine(`PACK ${d.sku} · ${pack.words.length} CANDIDATES POSTED · CHOOSE ONE FOR FILING`, 'echo');
+  appendBlank();
+  if (currentScreen !== 'workbench') showOnly('workbench');
+  openDrawer('pack-pick');
+}
+
+// Story 60.2: pack 选词成功 → 扣钱、入库、入栈、打印、关 drawer
+export function finalizePackPick(pickedWord: string): void {
+  if (!pendingPackPick) return;
+  const { d, pack } = pendingPackPick;
+  state.gold -= d.price;
+  state.player.wordDeck.push(pickedWord);
+  if (pack.wordEffect && state.classId !== 'wordsmith') {
+    state.wordEffects.set(pickedWord, pack.wordEffect);
+  }
+  undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [pickedWord] });
+  pendingPackPick = null;
+  closeDrawer();
+  appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
+  appendLine(`  · WORD "${pickedWord.toUpperCase()}" FILED TO LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
+  appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
+  appendBlank();
+  updateBalDisplay();
+  // M1 fix: 切回终端，让 CONFIRMED / WORD FILED 消息可见
+  showOnly('terminal');
+}
+
+// Story 60.2: 取消（ESC / overlay 点击 / drawer 关闭）— 不动 state
+export function cancelPackPick(): void {
+  if (!pendingPackPick) return;
+  const sku = pendingPackPick.d.sku;
+  pendingPackPick = null;
+  appendLine(`ABORTED · ${sku} NOT PURCHASED`, 'dim');
+  appendBlank();
+  // M1 fix: 切回终端，让 ABORTED 消息可见
+  showOnly('terminal');
 }
 
 function executeBuyRelic(d: ItemDescriptor): void {
@@ -510,7 +593,13 @@ function cmdReshuffle(): void {
   }
   state.gold -= cost;
   try {
-    state.shop.items = generateAffixShopItems(5);
+    const items: ShopItem[] = [
+      ...generateAffixShopItems(3),
+      ...generateShopPackItems(2),
+    ];
+    const relic = generateShopRelicItem(1);
+    if (relic) items.push(relic);
+    state.shop.items = items;
     rebuildDescriptors();
     appendLine(`CATALOG RESHUFFLED · 🍌 ${cost} DEDUCTED · NEW INVENTORY POSTED`, 'echo');
   } catch {
@@ -582,7 +671,7 @@ function cmdWords(): void {
 }
 
 // === Drawer overlay ===
-type DrawerKind = 'words' | 'craft' | 'metamorph';
+type DrawerKind = 'words' | 'craft' | 'metamorph' | 'pack-pick';
 let drawerOpen: DrawerKind | null = null;
 
 function openDrawer(kind: DrawerKind): void {
@@ -600,18 +689,37 @@ function openDrawer(kind: DrawerKind): void {
   } else if (kind === 'metamorph') {
     title.textContent = 'METAMORPH STATION · MUTATION CHAMBER';
     body.innerHTML = renderStubDrawerHtml('METAMORPH', 'Mutate skill affixes by spending mutagen.', 'STATION OFFLINE · WIRING DEFERRED TO PHASE 2');
+  } else if (kind === 'pack-pick') {
+    if (!pendingPackPick) return;
+    const { d, pack } = pendingPackPick;
+    title.textContent = `PACK ${d.sku} · CANDIDATE FILING`;
+    body.innerHTML = renderPackPickDrawerHtml(pack);
+    setupPackPickHandlers();
   }
   el.style.display = 'flex';
   // small enter animation hook
-  requestAnimationFrame(() => el.classList.add('drawer-open'));
+  requestAnimationFrame(() => {
+    el.classList.add('drawer-open');
+    // Story 60.2: pack-pick 抽屉打开后聚焦第一张卡片以便键盘选词
+    if (kind === 'pack-pick') {
+      const firstCard = body.querySelector<HTMLElement>('.pack-pick-card');
+      firstCard?.focus();
+    }
+  });
 }
 
 function closeDrawer(): void {
   const el = document.getElementById('wb-drawer');
   if (!el) return;
+  // Story 60.2: pack-pick drawer 关闭时如果还在 pending → 触发 cancel 路径（不扣钱）
+  if (drawerOpen === 'pack-pick' && pendingPackPick !== null) {
+    cancelPackPick();
+  }
   drawerOpen = null;
   el.classList.remove('drawer-open');
   el.style.display = 'none';
+  // 焦点回 prompt：让 onKey 全局监听器接管
+  (document.activeElement as HTMLElement | null)?.blur?.();
 }
 
 function renderWordsDrawerHtml(): string {
@@ -636,6 +744,40 @@ function renderStubDrawerHtml(name: string, desc: string, status: string): strin
       <div class="ws-status">${status}</div>
     </div>
   `;
+}
+
+// Story 60.2: pack-pick drawer 渲染
+function renderPackPickDrawerHtml(pack: WordPack): string {
+  const cards = pack.words.map((w, i) => {
+    const freqHint = getFreqHints(w);
+    const effLabel = pack.wordEffect ? formatWordEffectLabel(pack.wordEffect) : '';
+    const upper = escapeHtml(w.toUpperCase());
+    return `
+      <button class="pack-pick-card" type="button" data-pick-idx="${i}">
+        <span class="pp-clip" aria-hidden="true">📎</span>
+        <div class="pp-word">${upper}</div>
+        <div class="pp-meta">LEN ${w.length}${freqHint ? ' · ' + escapeHtml(freqHint) : ''}</div>
+        ${effLabel ? `<div class="pp-effect">${escapeHtml(effLabel)}</div>` : ''}
+      </button>
+    `;
+  }).join('');
+  return `
+    <div class="pack-pick-grid">${cards}</div>
+    <div class="pack-pick-footer">CHOOSE ONE FOR FILING · [TAB] NAVIGATE · [ENTER] FILE · [ESC] CANCEL</div>
+  `;
+}
+
+function setupPackPickHandlers(): void {
+  const body = document.getElementById('wb-drawer-body');
+  if (!body) return;
+  body.querySelectorAll<HTMLElement>('.pack-pick-card[data-pick-idx]').forEach(card => {
+    card.onclick = () => {
+      if (!pendingPackPick) return;
+      const idx = parseInt(card.dataset.pickIdx ?? '-1', 10);
+      const word = pendingPackPick.pack.words[idx];
+      if (typeof word === 'string') finalizePackPick(word);
+    };
+  });
 }
 
 // Hook click handlers on drawer triggers + terminal hint-bar F-key buttons
@@ -781,6 +923,41 @@ function onKey(e: KeyboardEvent): void {
   // Preview owns the keyboard while active — block battle's typing handler
   // (which would otherwise treat terminal input as miss-keys and shake the screen).
   e.stopImmediatePropagation();
+  // Story 60.2: pack-pick drawer 打开时拦截 ESC/Tab/Enter；其他键不消费
+  // - ESC 关闭 = cancel
+  // - Tab 走 focus trap（在卡片之间循环，不跳出抽屉）
+  // - Enter 触发 focused 卡片 click（capture-phase stopImmediatePropagation
+  //   会阻止事件到达 button 元素，浏览器原生 Enter→click 失效，必须手动触发）
+  if (drawerOpen === 'pack-pick') {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeDrawer();
+      return;
+    }
+    if (e.key === 'Tab') {
+      // M2 fix: focus trap — Tab 在卡片之间循环
+      const cards = Array.from(
+        document.querySelectorAll<HTMLElement>('#wb-drawer-body .pack-pick-card'),
+      );
+      if (cards.length === 0) return;
+      const cur = document.activeElement as HTMLElement | null;
+      const idx = cur ? cards.indexOf(cur) : -1;
+      const dir = e.shiftKey ? -1 : 1;
+      const next = idx === -1 ? 0 : (idx + dir + cards.length) % cards.length;
+      e.preventDefault();
+      cards[next]?.focus();
+      return;
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      const cur = document.activeElement as HTMLElement | null;
+      if (cur?.classList.contains('pack-pick-card')) {
+        e.preventDefault();
+        cur.click();
+      }
+      return;
+    }
+    return;
+  }
   // Tab: complete verb if buffer non-empty (terminal only); else switch screens
   if (e.key === 'Tab' && !e.shiftKey) {
     e.preventDefault();
@@ -1118,6 +1295,7 @@ function resetSession(): void {
   historyIdx = -1;
   undoStack = [];
   pendingConfirm = null;
+  pendingPackPick = null; // L2 fix: 防止跨 session 残留 stale pack reference
   workbenchEntered = false;
   state.player.inbox = [];
   ensureSeed();
@@ -1452,3 +1630,14 @@ export function initShopPreview(): void {
   if (document.readyState === 'complete') checkHash();
   else window.addEventListener('load', checkHash, { once: true });
 }
+
+// === Story 60.2: 测试专用内部 API（不要在生产代码里使用）===
+export const __test = {
+  executeBuyPack: (d: ItemDescriptor) => executeBuyPack(d),
+  getPendingPackPick: () => pendingPackPick,
+  setPendingPackPick: (v: { d: ItemDescriptor; pack: WordPack } | null): void => {
+    pendingPackPick = v;
+  },
+  getUndoStack: () => undoStack,
+  resetUndoStack: (): void => { undoStack = []; },
+};
