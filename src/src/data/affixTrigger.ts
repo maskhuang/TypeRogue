@@ -18,6 +18,7 @@ import {
 } from './affixes'
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 import { rollAffixParams, weightedSampleWithout } from './skillGeneration'
+import { normalizeRotation } from './skillShapes'
 
 function roundTo(n: number, d: number): number { const f = 10 ** d; return Math.round(n * f) / f }
 
@@ -2576,7 +2577,9 @@ export function deserializeSkill(
     transmuteResource: data.transmuteResource,
     neighborPosRel: data.neighborPosRel,
     shapeId: data.shapeId ?? 'monomino',
-    rotation: data.rotation ?? 0,
+    // 老存档可能存有被 placeability filter 移除的 rotation index（如 domino rot 3 主斜，
+    // tetromino_T rot 11 等）；normalizeRotation 把超界值 wrap 到当前有效范围。
+    rotation: normalizeRotation(data.shapeId ?? 'monomino', data.rotation ?? 0),
   }
   const runtimeState: SkillRuntimeState = {
     skillId: data.id,
