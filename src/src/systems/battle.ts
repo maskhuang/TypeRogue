@@ -1741,8 +1741,8 @@ function updateTimerDisplay(): void {
 
   // Story 42.4: 倍率 HUD 更新
   const accel = getTimeAcceleration(_elapsedSeconds, _isBoss);
-  // 背景动效速度跟随时间加速倍率
-  setBgSpeedMul(accel);
+  // 背景动效速度跟随时间加速倍率；达标后立即回到基准 1.0（视觉"松一口气"反馈）
+  setBgSpeedMul(_targetReached ? 1.0 : accel);
   // 字母凸起深度跟随时间加速倍率（accel=1 → 7, accel=2 → 19, accel=3 → 31, accel=4 → 40 cap）
   el.word.style.setProperty('--raise-d', `${Math.min(40, 7 + (accel - 1) * 12).toFixed(1)}px`);
   const accelText = '×' + accel.toFixed(1);
