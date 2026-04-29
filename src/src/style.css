@@ -1412,17 +1412,20 @@ html[lang^="en"] .menu-style-dossier .menu-title {
 
 /* Story 60.1 follow-up: 工作台 + 拖拽幽灵 scope 内的 shape-preview 走 DPCA paper-craft
  * 油墨调色板，覆盖默认霓虹蓝/紫/橙。body.shop-preview-active 让幽灵（在 <body>）
- * 也能命中 scope。三档 ink stamp escalation：绿章 → 金章 → 红章。 */
+ * 也能命中 scope。三档 ink stamp escalation：绿章 → 金章 → 红章。
+ * border / bg 只挂 .filled，避免空 cell 露出网格让形状看起来像方框。 */
 #workbench-screen-preview .shape-preview .shape-cell,
 body.shop-preview-active .drag-ghost .shape-preview .shape-cell {
-    border: 1px solid rgba(40, 20, 0, 0.3);
     width: 7px;
     height: 7px;
+    background: transparent;
+    border: none;
 }
 #workbench-screen-preview .shape-preview .shape-cell.filled,
 body.shop-preview-active .drag-ghost .shape-preview .shape-cell.filled {
     opacity: 1;
-    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(40, 20, 0, 0.45);
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.3);
 }
 #workbench-screen-preview .shape-preview-r1 .shape-cell.filled,
 body.shop-preview-active .drag-ghost .shape-preview-r1 .shape-cell.filled {
