@@ -1601,11 +1601,8 @@ function showGoldReward(onComplete: () => void): void {
 // boss_fast_time: 开局即进入达标后加速阶段（指数增长从 t=0 开始）
 function getTimeAcceleration(elapsedSeconds: number, isBoss: boolean): number {
   const baseRate = isBoss ? BALANCE.ACCEL_RATE_BOSS : BALANCE.ACCEL_RATE_STANDARD;
-  // Stage 渐进加速：每关线性递增，封顶 ACCEL_LEVEL_SCALE_MAX
-  const stageScale = Math.min(
-    BALANCE.ACCEL_LEVEL_SCALE_MAX,
-    1 + Math.max(0, state.level - 1) * BALANCE.ACCEL_LEVEL_SCALE,
-  );
+  // Stage 渐进加速：每关线性递增，无上限（无限循环模式后期会很疯狂）
+  const stageScale = 1 + Math.max(0, state.level - 1) * BALANCE.ACCEL_LEVEL_SCALE;
   const rate = baseRate * stageScale;
   const fastTime = !!getActiveParams()?.timeSpeed;
   if (_targetReached) {
