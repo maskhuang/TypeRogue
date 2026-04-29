@@ -6,7 +6,7 @@
 import { t, setLocale, getLocale, applyHtmlI18n } from '../demo/demo-i18n'
 import type { Locale } from '../demo/demo-i18n'
 import { getSettings, updateSettings } from '../core/UserSettings'
-import type { BackgroundMode } from '../core/UserSettings'
+import type { BackgroundMode, ShopUiMode } from '../core/UserSettings'
 import { setMasterVolume, playSound } from '../effects/sound'
 import { setBackgroundMode } from '../effects/balatroBackground'
 
@@ -56,6 +56,14 @@ export function openSettingsPanel(): void {
               ${esc(t('settings.bg.' + m))}
             </button>
           `).join('')}
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-label">${esc(t('settings.shopUI'))}</label>
+        <div class="settings-lang-btns">
+          <button class="settings-lang-btn ${settings.shopUI === 'classic' ? 'active' : ''}" data-shop-ui="classic">${esc(t('settings.shopUI.classic'))}</button>
+          <button class="settings-lang-btn ${settings.shopUI === 'terminal' ? 'active' : ''}" data-shop-ui="terminal">${esc(t('settings.shopUI.terminal'))}</button>
         </div>
       </div>
 
@@ -112,6 +120,18 @@ export function openSettingsPanel(): void {
       setBackgroundMode(mode)
       overlay?.querySelectorAll('.settings-bg-btns [data-bg]').forEach(b => {
         b.classList.toggle('active', (b as HTMLElement).dataset.bg === mode)
+      })
+    })
+  })
+
+  // Story 60.5: Shop UI 切换（classic / terminal）
+  overlay.querySelectorAll('[data-shop-ui]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playSound('click')
+      const mode = (btn as HTMLElement).dataset.shopUi as ShopUiMode
+      updateSettings({ shopUI: mode })
+      overlay?.querySelectorAll('[data-shop-ui]').forEach(b => {
+        b.classList.toggle('active', (b as HTMLElement).dataset.shopUi === mode)
       })
     })
   })

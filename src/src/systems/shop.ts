@@ -42,6 +42,9 @@ import { eventBus } from '../core/events/EventBus';
 import type { DragPayload } from './dragManager';
 import { IS_DEMO } from '../demo/demo-config';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
+// Story 60.5: feature flag dispatcher 用 — 按 UserSettings.shopUI 决定 classic / terminal
+import { getSettings } from '../core/UserSettings';
+import { enterTerminalShop } from '../ui/shopPreview';
 import { generateSkill } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
@@ -1370,6 +1373,33 @@ export function openShop(_won: boolean): void {
 
   // 补偿：检查商店外升到Lv.3但未附魔的技能（如休息关升级）
   checkPendingEnchantments();
+
+  // Story 60.5: feature flag 派发到 terminal 商店 UI（教程模式 force classic 防新手迷路）
+  dispatchShopMode(_won, state.isTutorial);
+}
+
+/**
+ * Story 60.5: shopUI dispatcher — 末尾 hook 调度
+ * - terminal 分支：隐藏 #shop-screen + 调 enterTerminalShop
+ * - classic 分支：防御性隐藏残留 terminal DOM（用户从 terminal 切回 classic 时）
+ *
+ * 提取为独立函数以便单元测试（M1）。
+ */
+export function dispatchShopMode(won: boolean, isTutorial: boolean): 'classic' | 'terminal' {
+  const shopUI = getSettings().shopUI ?? 'classic';
+  const goTerminal = shopUI === 'terminal' && !isTutorial;
+  if (goTerminal) {
+    const shopEl = document.getElementById('shop-screen');
+    if (shopEl) shopEl.style.display = 'none';
+    enterTerminalShop(won);
+    return 'terminal';
+  }
+  // L1: 防御性隐藏残留 terminal DOM（解决 AC6 — 切换不需 reload）
+  for (const id of ['terminal-shop-screen', 'workbench-screen-preview']) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+  return 'classic';
 }
 
 // === 香蕉显示 ===

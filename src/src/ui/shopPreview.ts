@@ -1933,7 +1933,13 @@ function renderWelcome(): void {
   cmdHelp();
 }
 
-function enterPreview(): void {
+/**
+ * Story 60.5: 进入终端商店（取代 Phase 1 的 enterPreview hash 入口）。
+ * `won` 参数预留接口与 classic openShop 同源，当前函数体不消费。
+ * `#shop-preview` hash 仍走本函数（dev 调试入口）；正式入口由 systems/shop.ts:openShop
+ * 按 UserSettings.shopUI 调度。
+ */
+export function enterTerminalShop(_won?: boolean): void {
   if (active) return;
   injectScreens();
   hideAllRealScreens();
@@ -1968,7 +1974,7 @@ function enterPreview(): void {
 }
 
 function checkHash(): void {
-  if (location.hash === PREVIEW_HASH) enterPreview();
+  if (location.hash === PREVIEW_HASH) enterTerminalShop();
 }
 
 export function initShopPreview(): void {

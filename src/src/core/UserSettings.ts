@@ -6,12 +6,15 @@
 const STORAGE_KEY = 'typing_roguelike_settings'
 
 export type BackgroundMode = 'off' | 'random' | 'liquid' | 'marble' | 'cells' | 'aurora' | 'ink'
+export type ShopUiMode = 'classic' | 'terminal'
 
 export interface UserSettingsData {
   masterVolume: number   // 0-1
   crtEnabled: boolean
   locale: string         // 'zh' | 'en'
   backgroundMode: BackgroundMode
+  // Story 60.5: 商店界面切换 — 默认 classic（保守发布），玩家主动切到 terminal 后立即生效
+  shopUI: ShopUiMode
 }
 
 const DEFAULTS: UserSettingsData = {
@@ -19,6 +22,7 @@ const DEFAULTS: UserSettingsData = {
   crtEnabled: true,
   locale: 'zh',
   backgroundMode: 'random',
+  shopUI: 'classic',
 }
 
 let current: UserSettingsData = { ...DEFAULTS }
