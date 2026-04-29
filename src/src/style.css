@@ -6278,6 +6278,46 @@ html[lang^="en"] .menu-style-dossier .menu-title {
         0 1px 0 #200,
         0 3px 6px rgba(0,0,0,0.5);
 }
+/* Story 60.4: SUBMIT 按钮提交中状态 — 防重复点击 */
+.wb-submit-btn[disabled],
+.wb-submit-btn.submitting {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Story 60.4: SUBMIT 盖红章动画 — 600ms 红章砸下 */
+.submit-stamp-overlay {
+    position: absolute;
+    left: 50%;
+    bottom: 80px;
+    transform: translateX(-50%);
+    z-index: 50;
+    padding: 14px 36px;
+    color: #8a1a1a;
+    border: 4px solid #8a1a1a;
+    background: rgba(255, 245, 220, 0.85);
+    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 0 rgba(138, 26, 26, 0.3);
+    box-shadow: 0 6px 20px rgba(40, 20, 0, 0.4);
+    pointer-events: none;
+    animation: submit-stamp-bang 600ms cubic-bezier(0.18, 0.89, 0.32, 1.18) forwards;
+}
+@keyframes submit-stamp-bang {
+    0%   { transform: translateX(-50%) scale(0) rotate(-15deg); opacity: 0; filter: blur(4px); }
+    40%  { transform: translateX(-50%) scale(1.3) rotate(-3deg); opacity: 1; filter: blur(0); }
+    65%  { transform: translateX(-50%) scale(0.95) rotate(0deg); }
+    100% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: 0.9; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .submit-stamp-overlay {
+        animation-duration: 100ms; /* 不能为 0：animationend 必须触发 transition */
+    }
+}
 
 .wb-hint {
     display: flex;

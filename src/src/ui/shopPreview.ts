@@ -18,9 +18,10 @@ import {
 } from '../systems/shop';
 import { generateWordPacks } from '../data/wordPacks';
 import { calculateLetterFrequency } from '../systems/letters/LetterFrequencySystem';
-import { getBattleNumber, getPositionInCycle, getStageType } from '../systems/stage/stageFlow';
+import { getBattleNumber, getPositionInCycle, getStageType, getNextBattleNode } from '../systems/stage/stageFlow';
 import { STAGE_ICONS } from '../systems/actTransition';
 import { t } from '../demo/demo-i18n';
+import { startLevel } from '../systems/battle';
 import type { ShopItem, WordPack } from '../core/types';
 import type { StageType } from '../systems/stage/StageConfig';
 import { describeAllShopItems, type ItemDescriptor } from './itemDescriptors';
@@ -59,6 +60,11 @@ let undoStack: UndoEntry[] = [];
 let pendingConfirm: { sku: string; price: number } | null = null;
 // Story 60.2: 多词 pack 选词流程未完成时的暂存状态（drawer 打开期间存活）
 let pendingPackPick: { d: ItemDescriptor; pack: WordPack } | null = null;
+// Story 60.4: SUBMIT 警告流程暂存状态
+type SubmitStage = 'warn-bindings' | 'warn-inbox';
+let pendingSubmit: { stage: SubmitStage; nextStage: SubmitStage | 'proceed' } | null = null;
+// Story 60.4: stamp 动画进行中防重复点击
+let submitting = false;
 let workbenchEntered = false;
 // snapshot of descriptors for current shop session — re-derived each LIST or after mutation
 let descriptorCache: ItemDescriptor[] = [];
@@ -567,6 +573,153 @@ export function cancelPackPick(): void {
   showOnly('terminal');
 }
 
+// === Story 60.4: SUBMIT FORM → startLevel transition ===
+
+// stamp 动画 600ms（CSS 控制） + 200ms safety = 800ms fallback timer
+const SUBMIT_STAMP_FALLBACK_MS = 800;
+
+/** SUBMIT 入口 — 检查警告 → 弹提示或直通 proceed */
+export function triggerSubmit(): void {
+  if (pendingSubmit !== null || submitting) return; // 防抖
+  // M1 fix: 不允许在 BUY high-price confirm 未结时启动 SUBMIT 流程（防双 pending 共存）
+  if (pendingConfirm) {
+    showOnly('terminal');
+    appendLine('ERR · PENDING PURCHASE CONFIRMATION · RESPOND [Y]/[N] FIRST', 'redacted');
+    appendBlank();
+    return;
+  }
+  const noBindings = state.player.bindings.size === 0;
+  const inboxLeft = state.player.inbox.length;
+  if (noBindings) {
+    promptBindingsWarning(inboxLeft > 0 ? 'warn-inbox' : 'proceed');
+    return;
+  }
+  if (inboxLeft > 0) {
+    promptInboxWarning();
+    return;
+  }
+  proceedSubmit();
+}
+
+/** L5 fix: 警告 prompt 期间 button visually disabled，提示玩家"等待 Y/N 中" */
+function setSubmitButtonAwaiting(awaiting: boolean): void {
+  const btn = document.getElementById('wb-submit-btn');
+  if (!btn) return;
+  if (awaiting) {
+    btn.classList.add('submitting');
+  } else {
+    btn.classList.remove('submitting');
+    btn.removeAttribute('disabled');
+  }
+}
+
+function promptBindingsWarning(nextStage: 'warn-inbox' | 'proceed'): void {
+  pendingSubmit = { stage: 'warn-bindings', nextStage };
+  showOnly('terminal');
+  setSubmitButtonAwaiting(true);
+  appendLine('WARNING · NO BINDINGS · KEYBOARD UNARMED', 'redacted');
+  appendLine('  · CONFIRM ENTRY? [Y]ES OR [N]O', 'dim');
+}
+
+function promptInboxWarning(): void {
+  const n = state.player.inbox.length;
+  pendingSubmit = { stage: 'warn-inbox', nextStage: 'proceed' };
+  showOnly('terminal');
+  setSubmitButtonAwaiting(true);
+  appendLine(`WARNING · ${n} ITEM${n > 1 ? 'S' : ''} IN IN-TRAY · LEAVE PENDING ITEMS?`, 'redacted');
+  appendLine('  · [Y]ES TO CARRY INTO NEXT BATCH · [N]O TO STAY AND EDIT', 'dim');
+}
+
+/**
+ * 处理 SUBMIT 警告流程的 Y/N 输入。返回 true 表示已消费输入（在 confirm 模式下）。
+ * 由 execute() 在 handleConfirmation 之前优先调用。
+ */
+export function handleSubmitConfirmation(input: string): boolean {
+  if (!pendingSubmit) return false;
+  const up = input.trim().toUpperCase();
+  if (up === 'Y' || up === 'YES') {
+    const nextStage = pendingSubmit.nextStage;
+    pendingSubmit = null;
+    if (nextStage === 'warn-inbox') {
+      promptInboxWarning();
+    } else {
+      proceedSubmit();
+    }
+    return true;
+  }
+  if (up === 'N' || up === 'NO') {
+    pendingSubmit = null;
+    appendLine('ABORTED · ENTRY HALTED · RETURN TO WORKBENCH', 'dim');
+    appendBlank();
+    setSubmitButtonAwaiting(false);
+    return true;
+  }
+  appendLine(`ERR · EXPECTED [Y]ES OR [N]O · GOT "${input}" · TRY AGAIN`, 'redacted');
+  return true; // still in confirm mode
+}
+
+/** 警告全过 → 启 stamp 动画 + transition */
+function proceedSubmit(): void {
+  if (submitting) return;
+  submitting = true;
+  appendLine('SUBMITTING FORM · STAMPED · ENTRY APPROVED', 'echo');
+  appendBlank();
+  const btn = document.getElementById('wb-submit-btn');
+  if (btn) {
+    btn.setAttribute('disabled', 'true');
+    btn.classList.add('submitting');
+  }
+  showOnly('workbench');
+  const overlay = createSubmitStampOverlay();
+  let transitioned = false;
+  const transition = (): void => {
+    if (transitioned) return;
+    transitioned = true;
+    executeSubmitTransition(overlay);
+  };
+  if (overlay) {
+    overlay.addEventListener('animationend', transition, { once: true });
+    // animationend fallback（tab 离开 / reduced-motion / 浏览器 throttle）
+    setTimeout(transition, SUBMIT_STAMP_FALLBACK_MS);
+  } else {
+    // overlay 创建失败（DOM 不在）— 直接 transition
+    setTimeout(transition, 0);
+  }
+}
+
+function createSubmitStampOverlay(): HTMLElement | null {
+  const footer = document.querySelector<HTMLElement>('#workbench-screen-preview .workbench-footer');
+  if (!footer) return null;
+  const overlay = document.createElement('div');
+  overlay.className = 'submit-stamp-overlay';
+  overlay.textContent = 'PROCEED · APPROVED ✓';
+  footer.parentElement?.insertBefore(overlay, footer);
+  return overlay;
+}
+
+function executeSubmitTransition(overlay: HTMLElement | null): void {
+  // 清理 preview 状态
+  dragManager.destroy();
+  clearShapePlacementOnWorkbench();
+  pendingPackPick = null;
+  pendingSubmit = null;
+  pendingConfirm = null; // L2 fix: 防 stale BUY confirm 残留
+  submitting = false;
+  active = false;
+  // 隐藏 preview 屏
+  const tEl = document.getElementById('terminal-shop-screen');
+  const wEl = document.getElementById('workbench-screen-preview');
+  if (tEl) tEl.style.display = 'none';
+  if (wEl) wEl.style.display = 'none';
+  // 移除 stamp overlay
+  if (overlay && overlay.parentElement) overlay.parentElement.removeChild(overlay);
+  // 解除 hash（与 restoreFromPreview 一致，保证下次 #shop-preview 能再触发）
+  if (location.hash === PREVIEW_HASH) history.replaceState(null, '', location.pathname + location.search);
+  // 启动下一关 — 沿用 classic shop:4456 模板
+  state.level = getNextBattleNode(state.level);
+  void startLevel();
+}
+
 function executeBuyRelic(d: ItemDescriptor): void {
   const relicId = d.originalItem.relicId;
   if (!relicId) {
@@ -878,6 +1031,9 @@ function setupDrawerHandlers(): void {
   const metaBtn = document.getElementById('wb-meta-btn');
   if (craftBtn) craftBtn.style.display = state.classId === 'wordsmith' ? '' : 'none';
   if (metaBtn) metaBtn.style.display = state.classId === 'metamorph' ? '' : 'none';
+  // Story 60.4: SUBMIT FORM → startLevel
+  const submitBtn = document.getElementById('wb-submit-btn');
+  if (submitBtn) submitBtn.onclick = triggerSubmit;
   // Update WORDS folder count
   const countEl = document.getElementById('words-folder-count');
   if (countEl) countEl.textContent = String(state.player.wordDeck.length).padStart(3, '0');
@@ -913,6 +1069,8 @@ function handleConfirmation(input: string): boolean {
 
 function execute(line: string): void {
   appendLine(`§> ${line}`, 'dim');
+  // Story 60.4: SUBMIT 警告 prompt 优先级 > BUY high-price confirm
+  if (handleSubmitConfirmation(line)) return;
   if (handleConfirmation(line)) return;
   const trimmed = line.trim();
   if (!trimmed) return;
@@ -1666,7 +1824,7 @@ function buildWorkbenchScreen(): string {
           <div class="wb-actions">
             <button class="wb-station-btn" id="wb-craft-btn" data-drawer="craft" style="display:none">🔤 CRAFT</button>
             <button class="wb-station-btn" id="wb-meta-btn" data-drawer="metamorph" style="display:none">🧬 METAMORPH</button>
-            <button class="wb-submit-btn">提交配置 · SUBMIT FORM ➜</button>
+            <button class="wb-submit-btn" id="wb-submit-btn" type="button">提交配置 · SUBMIT FORM ➜</button>
           </div>
           <div class="wb-hint">
             <span class="hint-strong"><kbd>TAB</kbd>终端 ⇄</span>
@@ -1734,7 +1892,7 @@ export function initShopPreview(): void {
   else window.addEventListener('load', checkHash, { once: true });
 }
 
-// === Story 60.2: 测试专用内部 API（不要在生产代码里使用）===
+// === Story 60.2 / 60.4: 测试专用内部 API（不要在生产代码里使用）===
 export const __test = {
   executeBuyPack: (d: ItemDescriptor) => executeBuyPack(d),
   getPendingPackPick: () => pendingPackPick,
@@ -1743,4 +1901,16 @@ export const __test = {
   },
   getUndoStack: () => undoStack,
   resetUndoStack: (): void => { undoStack = []; },
+  // Story 60.4
+  getPendingSubmit: () => pendingSubmit,
+  setPendingSubmit: (v: { stage: SubmitStage; nextStage: SubmitStage | 'proceed' } | null): void => {
+    pendingSubmit = v;
+  },
+  isSubmitting: (): boolean => submitting,
+  resetSubmitting: (): void => { submitting = false; },
+  // Story 60.4 review M1: pendingConfirm 互斥测试
+  setPendingConfirm: (v: { sku: string; price: number } | null): void => {
+    pendingConfirm = v;
+  },
+  getPendingConfirm: () => pendingConfirm,
 };
