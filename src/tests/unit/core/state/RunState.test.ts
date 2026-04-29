@@ -627,6 +627,7 @@ describe('RunState', () => {
       expect(restored.getRelics()).toHaveLength(0)
       expect(restored.getCurrentStage()).toBe(1)
       expect(restored.isActive()).toBe(false)
+      expect(restored.getState().inbox).toEqual([]) // Story 60.6
     })
 
     it('relicStates 序列化/反序列化往返', () => {
@@ -708,6 +709,170 @@ describe('RunState', () => {
       }
       const restored = RunState.deserialize(fakeData)
       expect(restored.data.collectedWords.size).toBe(0)
+    })
+
+    // ==================== Story 60.6: inbox 序列化测试 ====================
+
+    it('Story 60.6 · serialize() 应包含 inbox 字段（默认空数组）', () => {
+      const serialized = runState.serialize() as { inbox: string[] }
+      expect(Array.isArray(serialized.inbox)).toBe(true)
+      expect(serialized.inbox).toEqual([])
+    })
+
+    it('Story 60.6 · serialize() 应保留 inbox 中的 skillId 顺序', () => {
+      ;(runState as any).data.inbox = ['skill_a', 'skill_b', 'skill_c']
+      const serialized = runState.serialize() as { inbox: string[] }
+      expect(serialized.inbox).toEqual(['skill_a', 'skill_b', 'skill_c'])
+      // 验证是新数组（防引用泄漏）
+      expect(serialized.inbox).not.toBe((runState as any).data.inbox)
+    })
+
+    it('Story 60.6 · deserialize() 老存档（无 inbox 字段）→ 回落空数组', () => {
+      const fakeData = {
+        skills: [],
+        bindings: {},
+        relics: [],
+        gold: 0,
+        currentStage: 1,
+        isActive: false,
+        stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, battlesWon: 0, startTime: 0 },
+        // 故意不写 inbox
+      }
+      const restored = RunState.deserialize(fakeData as any)
+      expect(restored.getState().inbox).toEqual([])
+      expect(Array.isArray(restored.getState().inbox)).toBe(true)
+    })
+
+    it('Story 60.6 · deserialize() 完整存档 inbox 正确还原', () => {
+      ;(runState as any).data.inbox = ['skill_x', 'skill_y']
+      const serialized = runState.serialize()
+      const jsonString = JSON.stringify(serialized)
+      const parsed = JSON.parse(jsonString)
+      const restored = RunState.deserialize(parsed)
+      expect(restored.getState().inbox).toEqual(['skill_x', 'skill_y'])
+    })
+
+    it('Story 60.6 · deserialize() inbox 中已删除技能 ID 被静默过滤', () => {
+      // 'burst' 是 DELETED_SKILL_IDS 中的真实条目（data-json/skills.json）
+      // 'burst_inferno' 是 DELETED_EVOLUTION_IDS 中的真实条目
+      const fakeData = {
+        skills: [],
+        bindings: {},
+        relics: [],
+        gold: 0,
+        currentStage: 1,
+        isActive: false,
+        stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, battlesWon: 0, startTime: 0 },
+        inbox: ['skill_alive_1', 'burst', 'skill_alive_2', 'burst_inferno', 'skill_alive_3'],
+      }
+      const restored = RunState.deserialize(fakeData as any)
+      const inbox = restored.getState().inbox
+      expect(inbox).toEqual(['skill_alive_1', 'skill_alive_2', 'skill_alive_3'])
+      expect(inbox).not.toContain('burst')
+      expect(inbox).not.toContain('burst_inferno')
+    })
+
+    it('Story 60.6 · inbox 序列化/反序列化往返一致', () => {
+      ;(runState as any).data.inbox = ['s1', 's2', 's3', 's4']
+      const serialized = runState.serialize()
+      const jsonString = JSON.stringify(serialized)
+      const parsed = JSON.parse(jsonString)
+      const restored = RunState.deserialize(parsed)
+      expect(restored.getState().inbox).toEqual(['s1', 's2', 's3', 's4'])
+    })
+
+    it('Story 60.6 · inbox 字段类型与 state.player.inbox 一致（string[]）', () => {
+      ;(runState as any).data.inbox = ['a', 'b']
+      const inbox = runState.getState().inbox
+      expect(Array.isArray(inbox)).toBe(true)
+      inbox.forEach(id => expect(typeof id).toBe('string'))
+    })
+
+    it('Story 60.6 · 新存档可被老代码读（剥掉 inbox 字段后仍能 deserialize）', () => {
+      ;(runState as any).data.inbox = ['s1', 's2']
+      const serialized = runState.serialize()
+      const stripped: any = JSON.parse(JSON.stringify(serialized))
+      delete stripped.inbox
+      const restored = RunState.deserialize(stripped)
+      // 不抛错 + inbox 回落空数组
+      expect(restored.getState().inbox).toEqual([])
+    })
+
+    // M2: 损坏存档防御 — AC3 "绝不抛错"
+
+    it('Story 60.6 · M1 损坏存档：inbox 是字符串 → 不抛错，回落空数组', () => {
+      const corrupt = {
+        skills: [],
+        bindings: {},
+        relics: [],
+        gold: 0,
+        currentStage: 1,
+        isActive: false,
+        stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, battlesWon: 0, startTime: 0 },
+        inbox: 'not-an-array',
+      }
+      expect(() => RunState.deserialize(corrupt as any)).not.toThrow()
+      expect(RunState.deserialize(corrupt as any).getState().inbox).toEqual([])
+    })
+
+    it('Story 60.6 · M1 损坏存档：inbox 是数字 → 不抛错', () => {
+      const corrupt = {
+        skills: [],
+        bindings: {},
+        relics: [],
+        gold: 0,
+        currentStage: 1,
+        isActive: false,
+        stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, battlesWon: 0, startTime: 0 },
+        inbox: 42,
+      }
+      expect(() => RunState.deserialize(corrupt as any)).not.toThrow()
+      expect(RunState.deserialize(corrupt as any).getState().inbox).toEqual([])
+    })
+
+    it('Story 60.6 · M1 损坏存档：inbox 是数组样的对象 → 不抛错', () => {
+      const corrupt = {
+        skills: [],
+        bindings: {},
+        relics: [],
+        gold: 0,
+        currentStage: 1,
+        isActive: false,
+        stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, battlesWon: 0, startTime: 0 },
+        inbox: { 0: 'skill_a', length: 1 },
+      }
+      expect(() => RunState.deserialize(corrupt as any)).not.toThrow()
+      expect(RunState.deserialize(corrupt as any).getState().inbox).toEqual([])
+    })
+
+    it('Story 60.6 · M1 损坏存档：inbox 数组中混入非字符串 → 过滤掉', () => {
+      const corrupt = {
+        skills: [],
+        bindings: {},
+        relics: [],
+        gold: 0,
+        currentStage: 1,
+        isActive: false,
+        stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, battlesWon: 0, startTime: 0 },
+        inbox: ['skill_a', 42, 'skill_b', null, { id: 'skill_c' }, undefined, 'skill_d'],
+      }
+      const restored = RunState.deserialize(corrupt as any)
+      expect(restored.getState().inbox).toEqual(['skill_a', 'skill_b', 'skill_d'])
+    })
+
+    it('Story 60.6 · M1 损坏存档：inbox 是 null → 回落空数组', () => {
+      const corrupt = {
+        skills: [],
+        bindings: {},
+        relics: [],
+        gold: 0,
+        currentStage: 1,
+        isActive: false,
+        stats: { totalScore: 0, maxCombo: 0, wordsCompleted: 0, battlesWon: 0, startTime: 0 },
+        inbox: null,
+      }
+      expect(() => RunState.deserialize(corrupt as any)).not.toThrow()
+      expect(RunState.deserialize(corrupt as any).getState().inbox).toEqual([])
     })
   })
 })

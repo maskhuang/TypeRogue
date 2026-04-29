@@ -130,6 +130,13 @@ export interface RunStateData {
   /** 词库（含造词师造出的词） */
   wordDeck: string[]
 
+  /**
+   * Story 60.6: IN-tray 待装配的 skillId 列表
+   * 与 state.player.inbox 镜像；上限 INBOX_MAX = 9（运行时一侧校验）
+   * 持久化层只镜像；不在本 story 引入 state ↔ runState 主动 sync hook
+   */
+  inbox: string[]
+
   /** 词条制技能定义（35.9） */
   affixSkills: Map<string, AffixSkillInstance>
 
@@ -212,6 +219,7 @@ export class RunState {
       evolvedSkills: new Map(),
       seenSkillTypes: new Set(),
       wordDeck: [],
+      inbox: [],
       affixSkills: new Map(),
       affixSkillStates: new Map(),
       mutationACounts: new Map(),
@@ -545,6 +553,7 @@ export class RunState {
       evolvedSkills: Object.fromEntries(this.data.evolvedSkills),
       seenSkillTypes: Array.from(this.data.seenSkillTypes),
       wordDeck: [...this.data.wordDeck],
+      inbox: [...this.data.inbox],
       affixSkillData: [...this.data.affixSkills.entries()].map(([id, skill]) => {
         const rt = this.data.affixSkillStates.get(id) || createSkillRuntimeState(id)
         return serializeSkill(skill, rt)
@@ -625,6 +634,16 @@ export class RunState {
     runState.data.assemblyQueue = (parsed as any).assemblyQueue || (oldPipeline ? [oldPipeline] : [])
     runState.data.mutagenInventory = (parsed as any).mutagenInventory || 0
     runState.data.wordDeck = (parsed as any).wordDeck || []
+
+    // Story 60.6: inbox 还原 + 过滤已删除技能（与 skills/bindings 反序列化一致）
+    // M1: 防御损坏存档（inbox 非数组 / 数组中含非字符串）— AC3 "绝不抛错"
+    const rawInbox: unknown = (parsed as any).inbox
+    const safeInbox: string[] = Array.isArray(rawInbox)
+      ? rawInbox.filter((x): x is string => typeof x === 'string')
+      : []
+    runState.data.inbox = safeInbox.filter(id =>
+      !DELETED_SKILL_IDS.includes(id) && !DELETED_EVOLUTION_IDS.includes(id),
+    )
 
     const evolvedEntries = (parsed as any).evolvedSkills || {}
     Object.entries(evolvedEntries).forEach(([skillId, evolvedId]) => {

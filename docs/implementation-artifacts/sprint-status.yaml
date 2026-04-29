@@ -474,7 +474,7 @@ development_status:
   60-3-status-bar-real-state: done                      # 状态条 + Banner 接真实 state（P2.1 质量门）
   60-4-submit-form-startlevel: done                     # SUBMIT FORM → startLevel 接入（P2.1 质量门）
   60-5-openshop-replacement-flag: done                  # openShop() 替换 + feature flag（P2.2 接主流程）— code-review M1+L1 修完
-  60-6-save-serialization-inbox: backlog                # inbox + bindings 存档序列化（P2.2 接主流程）
+  60-6-save-serialization-inbox: done                   # inbox + bindings 存档序列化（P2.2 接主流程）— M1+M2 修完
   60-7-event-bus-binding-manager: backlog               # 事件总线 + bindingManager 接口闭合（P2.2 接主流程）
   60-8-tutorial-overhaul: backlog                       # 教程改写（P2.2 接主流程）
   60-9-workbench-hover-tooltips: backlog                # 工作台 hover tooltip（P2.3 浪漫化）
