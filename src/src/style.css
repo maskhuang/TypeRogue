@@ -3969,35 +3969,11 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     justify-content: center;
 }
 
-/* Story 60.1 follow-up: 拾取幽灵在 #shop-preview 模式下走 paper-craft —
- * 牛皮纸底 + 黑墨边 + 红章字，Special Elite 字体与工作台一致 */
+/* Story 60.1 follow-up: 拾取幽灵在 #shop-preview 模式下完全隐藏 —
+ * 范围预览 hover 已在键盘上显示形状轮廓 + 源元素淡到 0.4 opacity 提示选中态，
+ * 跟随光标的信息栏冗余且与 paper-craft 调子冲突。 */
 body.shop-preview-active .drag-ghost {
-    background: linear-gradient(180deg, #f4e4c1, #ead7af);
-    border: 2px solid #2a1f10;
-    color: #2a1f10;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
-    font-size: 12px;
-    letter-spacing: 1px;
-    padding: 8px 14px;
-    box-shadow:
-        2px 2px 0 rgba(40, 20, 0, 0.3),
-        0 6px 16px rgba(0, 0, 0, 0.35);
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    text-transform: uppercase;
-}
-body.shop-preview-active .drag-ghost .drag-ghost-icon {
-    font-size: 20px;
-    line-height: 1;
-}
-body.shop-preview-active .drag-ghost .drag-ghost-label {
-    max-width: 160px;
-    color: #6e1010;
-    font-weight: 700;
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
+    display: none !important;
 }
 
 /* Story 40.6 / 60.1: 右键旋转动画（classic shop + 新工作台共用） */
