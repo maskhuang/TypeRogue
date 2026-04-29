@@ -341,21 +341,7 @@ if (IS_DEMO) {
   document.getElementById('demo-start-overlay')?.remove();
   initLocale();
   applyHtmlI18n();
-
-  // 语言切换按钮
-  const langBtns = document.querySelectorAll('#lang-toggle .lang-btn');
-  langBtns.forEach(btn => {
-    const lang = (btn as HTMLElement).dataset.lang;
-    btn.classList.toggle('active', lang === getLocale());
-  });
-  langBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const lang = (btn as HTMLElement).dataset.lang as Locale;
-      setLocale(lang);
-      langBtns.forEach(b => b.classList.toggle('active', (b as HTMLElement).dataset.lang === lang));
-      applyHtmlI18n();
-    });
-  });
+  // 语言切换走 SettingsPanel（不再需要悬浮 #lang-toggle 按钮，去除冗余）
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => void init());

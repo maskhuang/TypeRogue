@@ -313,29 +313,6 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     margin-top: 4px;
 }
 
-.lang-toggle {
-    position: absolute;
-    top: 4px;
-    right: 8px;
-    z-index: 1000;
-    display: flex;
-    gap: 2px;
-}
-
-.lang-btn {
-    background: rgba(255, 255, 255, 0.08);
-    color: #666;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 0;
-    padding: 1px 6px;
-    font-size: var(--text-caption-size);
-    cursor: pointer;
-    transition: color 0.15s steps(1), border-color 0.15s steps(1);
-}
-
-.lang-btn:hover { color: #aaa; }
-.lang-btn.active { color: #4ecdc4; border-color: #4ecdc4; }
-
 /* ============================================ */
 /* DYNAMIC SCENE BACKGROUND — Balatro 液态 shader  */
 /* canvas 由 effects/balatroBackground.ts 注入到    */
