@@ -86,8 +86,12 @@ export const BALANCE = {
   CYCLE_TIME_DECAY: 0.9,    // 时间衰减系数（每周目 ×0.9）
 
   // Story 42.4: 关内时间加速（二次方：1 + rate × t²）
-  ACCEL_RATE_STANDARD: 0.001,   // 标准关加速率
+  ACCEL_RATE_STANDARD: 0.001,   // 标准关加速率（level 1 基准）
   ACCEL_RATE_BOSS: 0.0015,      // Boss 关加速率（更高压力）
+  // Stage 渐进加速：rate × (1 + (level-1) × ACCEL_LEVEL_SCALE)
+  // level 1 → 1.0×；level 12 → 1.55×；level 24 → 2.15×；level 48 → 3.35×
+  ACCEL_LEVEL_SCALE: 0.05,
+  ACCEL_LEVEL_SCALE_MAX: 4.0,   // 上限：rate 永不超过 4× 基准
 
   // 达标后加速：先三次方，超过窗口后转指数
   POST_TARGET_CUBIC_WINDOW: 30, // 三次方阶段持续秒数
