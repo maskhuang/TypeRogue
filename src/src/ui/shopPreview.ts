@@ -267,9 +267,50 @@ function suggestSku(input: string): string | null {
 
 const COL = { sku: 9, name: 32, price: 7, stock: 8, clr: 6 };
 
+/**
+ * 按等宽字体的 cell 宽度计算字符串视觉宽度。
+ * CJK 表意字 / 全角符号 / 假名 / Hangul / emoji 算 2 cell；其他 1 cell。
+ * Pack / relic name 含中文时 String.length（code unit 数）远小于 visual cell 数，
+ * 必须按 visual width 算 padding，否则 LIST 列错位（后面所有列右移）。
+ */
+function visualWidth(s: string): number {
+  let w = 0;
+  for (const ch of s) {
+    const code = ch.codePointAt(0) ?? 0;
+    const isWide =
+      (code >= 0x1100 && code <= 0x115f) ||  // Hangul Jamo
+      (code >= 0x2e80 && code <= 0x303e) ||  // CJK Radicals/symbols
+      (code >= 0x3041 && code <= 0x33ff) ||  // 假名 + CJK 标点
+      (code >= 0x3400 && code <= 0x4dbf) ||  // CJK Ext A
+      (code >= 0x4e00 && code <= 0x9fff) ||  // CJK Unified
+      (code >= 0xa000 && code <= 0xa4cf) ||  // Yi
+      (code >= 0xac00 && code <= 0xd7a3) ||  // Hangul Syllables
+      (code >= 0xf900 && code <= 0xfaff) ||  // CJK Compat
+      (code >= 0xfe30 && code <= 0xfe4f) ||  // CJK Compat Forms
+      (code >= 0xff00 && code <= 0xff60) ||  // Fullwidth
+      (code >= 0xffe0 && code <= 0xffe6) ||  // Fullwidth signs
+      (code >= 0x1f300 && code <= 0x1faff);  // Emoji
+    w += isWide ? 2 : 1;
+  }
+  return w;
+}
+
 function pad(s: string, n: number, right = true): string {
-  if (s.length >= n) return s.slice(0, n);
-  return right ? s + ' '.repeat(n - s.length) : ' '.repeat(n - s.length) + s;
+  const w = visualWidth(s);
+  if (w >= n) {
+    // 按 visual width 截断（避免砍在多字节字符中间）
+    let acc = 0;
+    let out = '';
+    for (const ch of s) {
+      const cw = visualWidth(ch);
+      if (acc + cw > n) break;
+      out += ch;
+      acc += cw;
+    }
+    // 截断后可能 acc < n（cell 不整齐时），补尾随空格让总宽 = n
+    return right ? out + ' '.repeat(n - acc) : ' '.repeat(n - acc) + out;
+  }
+  return right ? s + ' '.repeat(n - w) : ' '.repeat(n - w) + s;
 }
 
 function priceColForLine(p: number): string {
