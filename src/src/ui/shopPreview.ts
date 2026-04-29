@@ -15,7 +15,15 @@ import {
   renderShapePreview,
   getFreqHints,
   formatWordEffectLabel,
+  applyMaxSkillLevelOnPurchase,
 } from '../systems/shop';
+// Story 60.7: 副作用 hook（事件总线 + quest 重算 + 遗物购入瞬时效果）
+import { eventBus } from '../core/events/EventBus';
+import { evaluateEquipQuests } from '../data/affixTrigger';
+import { getQuestEquipReduction } from '../systems/relics/EnchantmentRelicBehaviors';
+import { rerollAllAffixes } from '../systems/relics/SkillRelicBehaviors';
+import { initFurnace } from '../systems/relics/ResourceRelicBehaviors';
+import { random } from '../core/seededRandom';
 import { generateWordPacks } from '../data/wordPacks';
 import { calculateLetterFrequency } from '../systems/letters/LetterFrequencySystem';
 import { getBattleNumber, getPositionInCycle, getStageType, getNextBattleNode } from '../systems/stage/stageFlow';
@@ -557,10 +565,17 @@ function executeBuySkill(d: ItemDescriptor): void {
   const skillId = d.originalItem.skillId ?? skill.id;
   const itemIdx = state.shop.items.indexOf(d.originalItem);
   state.gold -= d.price;
-  state.affixSkills.set(skillId, skill);
-  state.player.skills.set(skillId, { level: skill.level });
+  // Story 60.7 review M1: deep-clone affixSkill 隔离 catalog 引用，
+  // 防 BUY → UND → BUY 双重 affix 缩放（applyMaxSkillLevelOnPurchase 在 affixes 上 in-place mutate）
+  const skillCopy = structuredClone(skill);
+  state.affixSkills.set(skillId, skillCopy);
+  state.player.skills.set(skillId, { level: skillCopy.level });
   state.player.inbox.push(skillId);
   undoStack.push({ kind: 'skill', sku: d.sku, price: d.price, skillId, itemIdx });
+  // Story 60.7: 副作用闭合 — T4 max_skill_level 自动满级 + 装备 quest 重算 + 教程监听事件
+  applyMaxSkillLevelOnPurchase(skillId);
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
+  eventBus.emit('shop:purchase', { type: 'skill', itemId: skillId, price: d.price });
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
   appendLine(`  · DISPATCHED TO IN-TRAY SLOT ${state.player.inbox.length}/${INBOX_MAX} · BAL 🍌 ${state.gold}`, 'dim');
   appendLine(`  · UNDO STACK: ${undoStack.length} (FINALIZES ON WORKBENCH ENTRY)`, 'dim');
@@ -818,6 +833,10 @@ function executeBuyRelic(d: ItemDescriptor): void {
     appendBlank();
     return;
   }
+  // Story 60.7: 遗物购入瞬时副作用（与 classic shop.ts:2618-2627 对齐）
+  if (relicId === 'd_100') rerollAllAffixes();
+  if (relicId === 'universal_furnace') initFurnace(random);
+  eventBus.emit('shop:purchase', { type: 'relic', itemId: relicId, price: d.price });
   undoStack.push({ kind: 'relic', sku: d.sku, price: d.price, relicId });
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
   appendLine(`  · RELIC SHELVED · BAL 🍌 ${state.gold}`, 'dim');
@@ -875,6 +894,8 @@ function cmdSell(arg?: string): void {
   state.affixSkills.delete(entry.skillId);
   undoStack.splice(undoIdx, 1);
   state.gold += refund;
+  // Story 60.7: 卖出后 quest 重算（装备型 quest 跟上 inbox 变化）
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   appendLine(`SOLD · ${target} · 🍌 ${refund} REFUNDED (50%)`, 'echo');
   appendBlank();
   updateTerminalChrome();
@@ -930,6 +951,8 @@ function cmdUndo(): void {
     state.player.skills.delete(last.skillId);
     state.affixSkills.delete(last.skillId);
     syncWorkbenchInbox();
+    // Story 60.7: UND 撤销技能购买后 quest 重算
+    evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   } else if (last.kind === 'pack') {
     // Remove from end (matching insertion order)
     for (const w of last.words) {
@@ -2005,4 +2028,9 @@ export const __test = {
     pendingConfirm = v;
   },
   getPendingConfirm: () => pendingConfirm,
+  // Story 60.7: BUY/SELL/UND 副作用测试入口
+  executeBuySkill: (d: ItemDescriptor) => executeBuySkill(d),
+  executeBuyRelic: (d: ItemDescriptor) => executeBuyRelic(d),
+  cmdSell: (arg: string): void => cmdSell(arg),
+  cmdUndo: (): void => cmdUndo(),
 };

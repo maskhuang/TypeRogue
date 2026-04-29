@@ -2552,6 +2552,20 @@ function executePurchase(index: number): { skillId: string; isNew: boolean } | n
   return { skillId, isNew };
 }
 
+/**
+ * Story 60.7: T4 极简主义 — 新购买技能自动升至 max_skill_level
+ * 从 purchaseShopItem 抽出，让 classic 主流程 + terminal executeBuySkill 共享
+ */
+export function applyMaxSkillLevelOnPurchase(skillId: string): void {
+  const minMaxLevel = queryRelicFlag('max_skill_level') as number;
+  if (minMaxLevel === Infinity || minMaxLevel <= 1) return;
+  const data = state.player.skills.get(skillId);
+  if (!data || data.level >= minMaxLevel) return;
+  data.level = minMaxLevel;
+  const affixSkill = state.affixSkills.get(skillId);
+  if (affixSkill) applyAffixLevelScaling(affixSkill.affixes, minMaxLevel - 1);
+}
+
 // === 点击购买商品 ===
 function purchaseShopItem(index: number): void {
   const result = executePurchase(index);
@@ -2563,16 +2577,7 @@ function purchaseShopItem(index: number): void {
   }
 
   // T4 极简主义：新购买的技能自动升至 max_skill_level
-  const minMaxLevel = queryRelicFlag('max_skill_level') as number;
-  if (result.isNew && minMaxLevel !== Infinity && minMaxLevel > 1) {
-    const data = state.player.skills.get(result.skillId);
-    if (data && data.level < minMaxLevel) {
-      data.level = minMaxLevel;
-      const affixSkill = state.affixSkills.get(result.skillId);
-      if (affixSkill) applyAffixLevelScaling(affixSkill.affixes, minMaxLevel - 1);
-      // showFeedback(t('shop.auto_level', { level: minMaxLevel }), '#ffe66d');
-    }
-  }
+  if (result.isNew) applyMaxSkillLevelOnPurchase(result.skillId);
 
   // Story 41.1: 附魔不再由购买自动触发，改为仪式/商店/试炼三渠道获取
   evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
