@@ -252,7 +252,7 @@ void main() {
 const STYLES: Record<string, { fragment: string; defaultSpeed: number }> = {
   liquid: { fragment: FRAGMENT_LIQUID, defaultSpeed: 0.0075 },
   marble: { fragment: FRAGMENT_MARBLE, defaultSpeed: 0.04   },
-  cells:  { fragment: FRAGMENT_CELLS,  defaultSpeed: 0.05   },
+  cells:  { fragment: FRAGMENT_CELLS,  defaultSpeed: 0.025  },
   aurora: { fragment: FRAGMENT_AURORA, defaultSpeed: 0.05   },
   ink:    { fragment: FRAGMENT_INK,    defaultSpeed: 0.025  },
 };
