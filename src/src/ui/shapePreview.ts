@@ -78,21 +78,37 @@ function workbenchKey(key: string): HTMLElement | null {
 
 /**
  * 拖拽悬停时高亮形状覆盖的全部键位。
- * monomino / 无 shapeId → 仅依赖 dragManager 的 .drop-zone-highlight，本函数早返回。
+ * - monomino: 仅高亮 anchor 单键（绿章 valid，被覆盖时叠加 displaced）
+ * - 多格 shape: 走 mapShapeToKeys 计算覆盖范围，全键位高亮
+ *
+ * 不再依赖 dragManager 的 .drop-zone-highlight 荧光蓝 — 工作台所有 hover 状态都用 paper-craft 油墨色。
  */
 export function highlightShapePlacementOnWorkbench(
   anchorKey: string,
   payload: DragPayload,
 ): void {
-  const shapeId = payload.shapeId ?? 'monomino';
-  const rotation = payload.rotation ?? 0;
-  if (!shapeId || shapeId === 'monomino') return;
-
   clearShapePlacementOnWorkbench();
 
   const normalizedKey = anchorKey.toLowerCase();
   if (!KEYS.includes(normalizedKey)) return;
 
+  const shapeId = payload.shapeId ?? 'monomino';
+  const rotation = payload.rotation ?? 0;
+  const dragSkillId = payload.skillId;
+
+  // Monomino: 单键直接高亮
+  if (!shapeId || shapeId === 'monomino') {
+    const slot = workbenchKey(normalizedKey);
+    if (!slot) return;
+    slot.classList.add(HL_VALID);
+    const existing = state.player.bindings.get(normalizedKey);
+    if (existing && existing !== dragSkillId) {
+      slot.classList.add(HL_DISPLACED);
+    }
+    return;
+  }
+
+  // 多格 shape: 用 mapShapeToKeys 计算
   const allowPunct = state.player.relics.has('punctuation_liberation');
   const targetKeys = mapShapeToKeys(normalizedKey, shapeId, rotation, allowPunct);
 
@@ -102,7 +118,6 @@ export function highlightShapePlacementOnWorkbench(
     return;
   }
 
-  const dragSkillId = payload.skillId;
   for (const key of targetKeys) {
     const slot = workbenchKey(key);
     if (!slot) continue;
