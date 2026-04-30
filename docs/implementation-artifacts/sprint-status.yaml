@@ -491,7 +491,7 @@ development_status:
   # ===== Epic 60-Followup: 商店改造收尾 · Phase 1 遗留 stub 实功能化 =====
   # Source: docs/stories/epic-60-followup-deferred-features.md
   # Created: 2026-04-29 — Story 60.16 done 后 dogfood 暴露 4 个 Phase 1 遗留 stub
-  epic-60-followup: in-progress
+  epic-60-followup: done
   60-17-drag-hover-preview: done                        # 拖拽 hover 目标键预估产出 tooltip（P1 最高频痛点）— code-review approved + 4 轮 dogfood 修订完成 2026-04-30
   60-18-effect-range-highlight: done                    # 范围词条键盘高亮（splash/aura/relay 等 · code-review approved 2026-04-30 · 6/8 findings 修完）
   60-19-stats-real-data: done                           # STAT 命令接已有 letterFreqs/wordEffects（P2 · code-review approved 2026-04-30 · 8 findings 全修）
