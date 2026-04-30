@@ -1693,7 +1693,7 @@ function renderInboxCardHtml(c: InboxCardData): string {
           <span class="wc-name inv-name">${c.name}</span>
         </div>
         ${shapeBlock}
-        <div class="wc-stamp wc-stamp-opened">OPENED · 已开封</div>
+        <div class="wc-stamp wc-stamp-opened">OPENED</div>
       </div>
     </div>
   `;
