@@ -309,7 +309,7 @@ function renderListRow(d: ItemDescriptor): string {
   const synCls = synV > 0 ? 't-syn t-syn-hit' : 't-syn t-syn-zero';
   const synTokHtml = `<span class="${synCls}">[SYN:${synV}]</span>`;
   const trailing = d.redacted
-    ? `<span class="lst-cell lst-redacted">[REDACTED]</span>`
+    ? `<span class="lst-cell lst-redacted">${t('shop.terminal.list.redacted')}</span>`
     : '';
   return [
     `<span class="lst-cell lst-sku">${escapeHtml(d.sku)}</span>`,
@@ -326,12 +326,12 @@ function renderListRow(d: ItemDescriptor): string {
 /** Header 行同结构，让 SKU/ITEM/PRICE/STOCK/CLR/TAG 标题与数据列严格对齐 */
 function renderListHeaderRow(): string {
   return [
-    `<span class="lst-cell lst-sku">SKU</span>`,
-    `<span class="lst-cell lst-name">ITEM</span>`,
-    `<span class="lst-cell lst-price">PRICE</span>`,
-    `<span class="lst-cell lst-stock">STOCK</span>`,
-    `<span class="lst-cell lst-clr">CLR</span>`,
-    `<span class="lst-cell lst-tag">TAG</span>`,
+    `<span class="lst-cell lst-sku">${t('shop.terminal.list.col.sku')}</span>`,
+    `<span class="lst-cell lst-name">${t('shop.terminal.list.col.item')}</span>`,
+    `<span class="lst-cell lst-price">${t('shop.terminal.list.col.price')}</span>`,
+    `<span class="lst-cell lst-stock">${t('shop.terminal.list.col.stock')}</span>`,
+    `<span class="lst-cell lst-clr">${t('shop.terminal.list.col.clr')}</span>`,
+    `<span class="lst-cell lst-tag">${t('shop.terminal.list.col.tag')}</span>`,
   ].join('');
 }
 
@@ -356,15 +356,25 @@ function renderInfoBlock(d: ItemDescriptor): string[] {
   const lines: string[] = [];
   const headLine = `═══ ${d.name} · ${d.sku} ` + '═'.repeat(Math.max(3, W - d.name.length - d.sku.length - 7));
   lines.push(headLine);
-  lines.push(`KIND ${d.kind.toUpperCase()} · CLR ${d.clearance} · ${d.rarityLabel} · §T${d.shapeColor.toUpperCase()}|${d.shapeTag}§`);
-  lines.push(`PRICE 🍌 ${d.price} · TRIGGER ${d.triggerHint}${d.level ? ` · Lv.${d.level}` : ''}`);
+  lines.push(t('shop.terminal.info.catalog.kind_line', {
+    kind: d.kind.toUpperCase(),
+    clearance: d.clearance,
+    rarity: d.rarityLabel,
+    shape: `§T${d.shapeColor.toUpperCase()}|${d.shapeTag}§`,
+  }));
+  const levelSuffix = d.level ? t('shop.terminal.info.catalog.level_suffix', { level: d.level }) : '';
+  lines.push(t('shop.terminal.info.catalog.price_line', {
+    price: d.price,
+    trigger: d.triggerHint,
+    level_suffix: levelSuffix,
+  }));
 
   // Skill items: rich affix + enchant breakdown via buildAffixTooltipFields
   const sk = d.originalItem.affixSkill;
   if (d.kind === 'skill' && sk) {
     if (sk.baseValues && sk.baseValues.length > 0) {
       lines.push('');
-      lines.push('BASE VALUES');
+      lines.push(t('shop.terminal.info.catalog.base_values_header'));
       const bvStr = sk.baseValues.map((v, i) => `Lv${i + 1}:${v}`).join(' · ');
       for (const w of wrapAt(bvStr, W - 4)) lines.push('  ' + w);
     }
@@ -372,7 +382,7 @@ function renderInfoBlock(d: ItemDescriptor): string[] {
     try { fields = buildAffixTooltipFields(sk); } catch { fields = null; }
     if (fields && fields.affixInfo.length > 0) {
       lines.push('');
-      lines.push('AFFIXES');
+      lines.push(t('shop.terminal.info.catalog.affixes_header'));
       for (const af of fields.affixInfo) {
         const hdr = `‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
         for (const w of wrapAt(hdr, W - 4)) lines.push('  ' + w);
@@ -383,7 +393,7 @@ function renderInfoBlock(d: ItemDescriptor): string[] {
     }
     if (fields && fields.enchantments.length > 0) {
       lines.push('');
-      lines.push('ENCHANTMENTS');
+      lines.push(t('shop.terminal.info.catalog.enchantments_header'));
       for (const e of fields.enchantments) {
         const hdr = `‹${(e.name || '?').toUpperCase()}›`;
         for (const w of wrapAt(hdr, W - 4)) lines.push('  ' + w);
@@ -393,23 +403,23 @@ function renderInfoBlock(d: ItemDescriptor): string[] {
       }
     }
     if (fields && fields.questProgress) {
-      lines.push('  QUEST: ' + fields.questProgress);
+      lines.push(t('shop.terminal.info.skill.quest_label', { progress: fields.questProgress }));
     }
     if (fields && fields.apprenticeGrowth) {
-      lines.push('  APPRENTICE: ' + fields.apprenticeGrowth);
+      lines.push(t('shop.terminal.info.skill.apprentice_label', { growth: fields.apprenticeGrowth }));
     }
   } else {
     // Pack / relic / enchantment fallback
     lines.push('');
     lines.push(d.desc);
     lines.push(d.effect);
-    if (d.affixLine !== '—') lines.push(`AFFIX: ${d.affixLine}`);
+    if (d.affixLine !== '—') lines.push(t('shop.terminal.info.catalog.affix_line', { affix: d.affixLine }));
   }
 
   lines.push('');
   lines.push(d.kind === 'skill'
-    ? `SYN ${d.synergyCount} MATCHING SKILLS (same-resource & same-affix)`
-    : `SYN ${d.synergyCount}`);
+    ? t('shop.terminal.info.catalog.syn_skill', { n: d.synergyCount })
+    : t('shop.terminal.info.catalog.syn_other', { n: d.synergyCount }));
   lines.push('═'.repeat(W));
   return lines;
 }
@@ -649,7 +659,8 @@ function cmdInfoOwnedSkill(skillId: string): void {
         ? t('shop.terminal.info.skill.location_inbox', { idx: inboxIdx + 1, max: INBOX_MAX })
         : t('shop.terminal.info.skill.location_unassigned'));
 
-  const headLine = `═══ OWNED · ${sk.name} · ${location} ` + '═'.repeat(Math.max(3, W - sk.name.length - location.length - 16));
+  const headPrefix = t('shop.terminal.info.skill.owned_headline', { name: sk.name, location });
+  const headLine = headPrefix + '═'.repeat(Math.max(3, W - sk.name.length - location.length - 16));
   appendLine(headLine, 'echo');
   const shapeId = sk.shapeId ?? 'monomino';
   appendLine(t('shop.terminal.info.skill.headline', { level: sk.level, shape: shapeId.toUpperCase() }), 'dim');
@@ -696,7 +707,8 @@ function cmdInfoOwnedRelic(relicId: string): void {
   // 数字键位定位
   const idx = Array.from(state.player.relics).indexOf(relicId);
   const numKey = idx < 0 ? '?' : (idx === 9 ? '0' : String(idx + 1));
-  const headLine = `═══ OWNED · RELIC · ${data.icon} ${data.name} · KEY ${numKey} ` + '═'.repeat(Math.max(3, W - data.name.length - 28));
+  const headPrefix = t('shop.terminal.info.relic.owned_headline', { icon: data.icon, name: data.name, key: numKey });
+  const headLine = headPrefix + '═'.repeat(Math.max(3, W - data.name.length - 28));
   appendLine(headLine, 'echo');
   appendLine(t('shop.terminal.info.relic.rarity_label', { rarity: data.rarity.toUpperCase(), rid: relicId }), 'dim');
   appendLine('');

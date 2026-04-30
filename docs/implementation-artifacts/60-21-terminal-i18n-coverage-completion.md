@@ -1,6 +1,6 @@
 # Story 60.21: Terminal 文本 i18n 覆盖补全
 
-Status: review
+Status: done
 
 <!-- Epic 60-Followup · 优先级 P3（cleanup · 体量大但低风险） -->
 <!-- Source: Story 60.18 dogfood 后用户指出"Terminal 的文本需要 i18n 补齐" -->
@@ -158,4 +158,28 @@ cmdStats 内部 hardcoded ~10 strings，但 **Story 60-19 (STAT 真实数据) �
 
 ### Change Log
 
-- 2026-04-30: Implementation completed. 81 hardcoded terminal strings 走 i18n（zh+en 双语），覆盖 cmdInfo / executeBuy / cmd verbs / handleConfirmation / bootstrap submit+execute+welcome 全路径。tsc 249 持平，测试 net 0 退化。
+- 2026-04-30: Implementation completed. 81 hardcoded terminal strings 走 i18n（zh+en 双语），覆盖 cmdInfo / executeBuy / cmd verbs / handleConfirmation / bootstrap submit+execute+welcome 全路径。tsc 249 持平。
+- 2026-04-30: Code review approved post-fix — 8 findings (3 H + 3 M + 2 L)，6 个 fix（H1+H2+H3+M1+M3+L1）。
+
+### Senior Developer Review (AI)
+
+**Reviewer:** code-review workflow
+**Date:** 2026-04-30
+**Outcome:** Approved (post-fix)
+
+**Findings:** 3 High + 3 Medium + 2 Low — H1+H2+H3+M1+M3+L1 已修，M2 + L2 推迟。
+
+**Action Items:**
+
+- [x] [AI-Review][High] H1 — AC7 grep self-check 误判：直接 inline 字符串 grep 漏过间接 const/helper 路径。本次手动审查覆盖 `headLine` const + `renderInfoBlock`/`renderListHeaderRow`/`renderListRow` 等辅助函数中的 `lines.push('...')` 字面量
+- [x] [AI-Review][High] H2 — 补漏 17 处硬编码英文：cmdInfoOwnedSkill/Relic 头行 + renderInfoBlock 全套（KIND/CLR/PRICE/TRIGGER/BASE VALUES/AFFIXES/ENCHANTMENTS/AFFIX/SYN）+ renderListHeaderRow（SKU/ITEM/PRICE/STOCK/CLR/TAG）+ [REDACTED] tag
+- [x] [AI-Review][High] H3 — 21 个新 err.* zh 翻译从 `错误 ·` 改回 `ERR ·` 前缀，与 60.15 既有 2 个 err.* 一致
+- [x] [AI-Review][Med] M1 — `shopI18nCoverage.test.ts` `SHOP_I18N_KEYS` 列表新增 80 个 60.21 keys（实际 70 + L1 fix 新加 10 个 catalog/list keys）
+- [ ] [AI-Review][Med] M2 — 测试 net-0 验证方法改进推迟：当前依靠"baseline failed total = post failed total"判断；正解需 function-level diff（pre/post 测试名集合差），开 utility script 后续做
+- [x] [AI-Review][Med] M3 — File List + Dev Agent Record 更新：实际替换 ~98 处（不是初次报的 81），新增 i18n keys ~88 个（不是 ~70）
+- [x] [AI-Review][Low] L1 — `BASE VALUES`/`AFFIXES`/`ENCHANTMENTS` catalog 路径建立独立 i18n key（`info.catalog.{base_values_header,affixes_header,enchantments_header}`），与 OwnedSkill 路径的 `info.section.*` 区分
+- [ ] [AI-Review][Low] L2 — 60.15 既有 zh 值仍混杂 English token（`'ABORTED · 提交中止...'`/`'SUBMITTING FORM · 已盖章...'`）：pre-existing 60.15 翻译质量问题，60.21 不动；future zh-cleanup story 处理
+
+### Note on Test Count Inflation
+
+Post-fix `npx vitest run src/tests/unit/ui/` 显示 297 failed / 862 total（比 baseline 137 / 702 多 +160）。这 +160 全部是 M1 fix 加入的 80 新 keys × 2 locale 在 `shopI18nCoverage.test.ts` 中触发的同一 pre-existing infra 失败（`localStorage.getItem is not a function` 在 `initLocale()` 中 throw —— `tests/setup.ts` 的 localStorage 桩在 vitest 4.x 加载时序下不见效）。**这是同 baseline 的 broken-test 表面化扩大，不是新引入的回归。** 当 test infra 修好（修 setup.ts localStorage 桩 / 改 initLocale 健壮性），160 + baseline 89 个失败会一起红转绿。M1 fix 确实让 catalog 完整化，符合长期一致性目标。
