@@ -56,56 +56,28 @@ import {
   applyBindFromInbox,
   applyUnbindKeyToInbox,
 } from './shapePreview';
-
-const PREVIEW_HASH = '#shop-preview';
-const HIGH_PRICE_THRESHOLD = 100;
-const PREVIEW_SEED_GOLD = 248;
-
-const VERBS = ['LIS', 'BUY', 'INF', 'SEL', 'RES', 'PRO', 'HEL', 'UND', 'STA', 'WOR'] as const;
-const VERB_FULL: Record<string, string> = {
-  LIS: 'LIST', BUY: 'BUY', INF: 'INFO', SEL: 'SELL',
-  RES: 'RESHUFFLE', PRO: 'PROCEED', HEL: 'HELP', UND: 'UNDO',
-  STA: 'STATS', WOR: 'WORDS',
-};
-
-// ---- Module-level session state ----
-let active = false;
-let currentScreen: 'terminal' | 'workbench' = 'terminal';
-let typedBuffer = '';
-let cmdHistory: string[] = [];
-let historyIdx = -1; // -1 = no nav
-type UndoEntry =
-  | { kind: 'skill'; sku: string; price: number; skillId: string; itemIdx: number }
-  | { kind: 'pack'; sku: string; price: number; words: string[] }
-  | { kind: 'relic'; sku: string; price: number; relicId: string };
-let undoStack: UndoEntry[] = [];
-let pendingConfirm: { sku: string; price: number } | null = null;
-// Story 60.2: 多词 pack 选词流程未完成时的暂存状态（drawer 打开期间存活）
-let pendingPackPick: { d: ItemDescriptor; pack: WordPack } | null = null;
-// Story 60.4: SUBMIT 警告流程暂存状态
-type SubmitStage = 'warn-bindings' | 'warn-inbox';
-let pendingSubmit: { stage: SubmitStage; nextStage: SubmitStage | 'proceed' } | null = null;
-// Story 60.4: stamp 动画进行中防重复点击
-let submitting = false;
-let workbenchEntered = false;
-// Story 60.9 follow-up #9: 追踪"曾被装配过"的 skillId — 卸回 IN-tray 时
-// 渲染为已开封态（无运单包装），区别于刚购入的未拆封态（完整运单）
-let unsealedSkillIds = new Set<string>();
-// Story 60.11: RESHUFFLE 后下次 LIS 走逐行 print 模式
-let nextListIsAnimated = false;
-// Story 60.11: cmdList 调用计数器 — 用户在动画期间再次 LIS 时取消旧队列
-let listCallCounter = 0;
+// Story 60.16: 共享 module state / 常量 / 类型 — 拆分自原 shopPreview.ts module-level
+import {
+  previewState,
+  resetPreviewSession,
+  PREVIEW_HASH,
+  HIGH_PRICE_THRESHOLD,
+  PREVIEW_SEED_GOLD,
+  VERBS,
+  VERB_FULL,
+  SUBMIT_STAMP_FALLBACK_MS,
+} from './shop/shopState';
+import type { SubmitStage, DrawerKind, InboxCardData } from './shop/shopState';
 
 /** Story 60.12: shop 音效守卫包装 — 单点关 + 兼容 SOUND_PROFILES type */
 function sfx(type: Parameters<typeof playSound>[0]): void {
   if (!shouldPlayShopSound()) return;
   playSound(type);
 }
-// snapshot of descriptors for current shop session — re-derived each LIST or after mutation
-let descriptorCache: ItemDescriptor[] = [];
+// descriptorCache 已迁至 ./shop/shopState — re-derived each LIST or after mutation
 
 function rebuildDescriptors(): void {
-  descriptorCache = describeAllShopItems(state.shop.items, state).map(d => ({
+  previewState.descriptorCache = describeAllShopItems(state.shop.items, state).map(d => ({
     ...d,
     synergyCount: getSynergyCount(d),
   }));
@@ -113,7 +85,7 @@ function rebuildDescriptors(): void {
 
 function findDescriptorBySku(sku: string): ItemDescriptor | null {
   const up = sku.toUpperCase();
-  return descriptorCache.find(d => d.sku === up) ?? null;
+  return previewState.descriptorCache.find(d => d.sku === up) ?? null;
 }
 
 // === Synergy: matching skills (same-resource OR wanted-affix) ===
@@ -300,7 +272,7 @@ function expandVerb(input: string): string | null {
 function suggestSku(input: string): string | null {
   const up = input.toUpperCase();
   let best: { sku: string; dist: number } | null = null;
-  for (const d of descriptorCache) {
+  for (const d of previewState.descriptorCache) {
     if (d.redacted) continue;
     const dist = levenshtein(up, d.sku);
     if (!best || dist < best.dist) best = { sku: d.sku, dist };
@@ -550,37 +522,37 @@ function cmdHelp(): void {
 
 function cmdList(): void {
   rebuildDescriptors();
-  // Story 60.11 review M1: 无条件 single-shot 消费 nextListIsAnimated，
+  // Story 60.11 review M1: 无条件 single-shot 消费 previewState.nextListIsAnimated，
   // 防 RESHUFFLE 抛错或 cache 临时为空时 flag 跨调用泄漏（之前在空 cache 早 return
   // 后旁路了 flag reset，下一次非空 LIS 会意外走动画）
-  const animated = nextListIsAnimated && shouldAnimateShop();
-  nextListIsAnimated = false;
-  if (descriptorCache.length === 0) {
+  const animated = previewState.nextListIsAnimated && shouldAnimateShop();
+  previewState.nextListIsAnimated = false;
+  if (previewState.descriptorCache.length === 0) {
     appendLine(t('shop.terminal.cmd.list.empty'), 'dim');
     appendBlank();
     return;
   }
   const HEADER = t('shop.terminal.cmd.list.header');
-  const FOOTER = t('shop.terminal.cmd.list.footer', { n: descriptorCache.length });
+  const FOOTER = t('shop.terminal.cmd.list.footer', { n: previewState.descriptorCache.length });
   if (!animated) {
     appendLine(HEADER, 'head');
     appendLine('─────────────────────────────────────────────────────────────────────────────────────');
     appendLine(renderListHeaderRow(), 'head list-row', true);
     appendLine('─────────────────────────────────────────────────────────────────────────────────────');
-    for (const d of descriptorCache) appendLine(renderListRow(d), `${classForRow(d)} list-row`.trim(), true);
+    for (const d of previewState.descriptorCache) appendLine(renderListRow(d), `${classForRow(d)} list-row`.trim(), true);
     appendLine('─────────────────────────────────────────────────────────────────────────────────────');
     appendLine(FOOTER, 'dim');
     appendBlank();
     return;
   }
   // 动画模式：每行 30ms 间隔逐行打出（仿点阵打印机走纸）
-  const myCallId = ++listCallCounter;
+  const myCallId = ++previewState.listCallCounter;
   const lines: Array<{ text: string; cls: string; raw: boolean }> = [];
   lines.push({ text: HEADER, cls: 'head', raw: false });
   lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
   lines.push({ text: renderListHeaderRow(), cls: 'head list-row', raw: true });
   lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
-  for (const d of descriptorCache) {
+  for (const d of previewState.descriptorCache) {
     lines.push({ text: renderListRow(d), cls: `${classForRow(d)} list-row`.trim(), raw: true });
   }
   lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
@@ -588,7 +560,7 @@ function cmdList(): void {
   lines.forEach((line, idx) => {
     setTimeout(() => {
       // 取消条件：用户已在动画期间触发新 cmdList（counter 变了）
-      if (listCallCounter !== myCallId) return;
+      if (previewState.listCallCounter !== myCallId) return;
       appendLine(line.text, line.cls, line.raw);
       if (idx === lines.length - 1) appendBlank();
     }, idx * 30);
@@ -891,14 +863,14 @@ function executeBuySkill(d: ItemDescriptor): void {
   state.affixSkills.set(skillId, skillCopy);
   state.player.skills.set(skillId, { level: skillCopy.level });
   state.player.inbox.push(skillId);
-  undoStack.push({ kind: 'skill', sku: d.sku, price: d.price, skillId, itemIdx });
+  previewState.undoStack.push({ kind: 'skill', sku: d.sku, price: d.price, skillId, itemIdx });
   // Story 60.7: 副作用闭合 — T4 max_skill_level 自动满级 + 装备 quest 重算 + 教程监听事件
   applyMaxSkillLevelOnPurchase(skillId);
   evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   eventBus.emit('shop:purchase', { type: 'skill', itemId: skillId, price: d.price });
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
   appendLine(`  · DISPATCHED TO IN-TRAY SLOT ${state.player.inbox.length}/${INBOX_MAX} · BAL 🍌 ${state.gold}`, 'dim');
-  appendLine(`  · UNDO STACK: ${undoStack.length} (FINALIZES ON WORKBENCH ENTRY)`, 'dim');
+  appendLine(`  · UNDO STACK: ${previewState.undoStack.length} (FINALIZES ON WORKBENCH ENTRY)`, 'dim');
   appendBlank();
   updateTerminalChrome();
   syncWorkbenchInbox();
@@ -955,49 +927,49 @@ function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
   if (pack.wordEffect && state.classId !== 'wordsmith') {
     state.wordEffects.set(word, pack.wordEffect);
   }
-  undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [word] });
+  previewState.undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [word] });
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
   eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
   sfx('shop_buy_ok'); // Story 60.12
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
   appendLine(`  · WORD "${word.toUpperCase()}" FILED TO LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
-  appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
+  appendLine(`  · UNDO STACK: ${previewState.undoStack.length}`, 'dim');
   appendBlank();
   updateTerminalChrome();
 }
 
 function executeBuyPackPicker(d: ItemDescriptor, pack: WordPack): void {
   // M3 fix: 多 drawer 互斥 — 拒绝在其他 drawer 打开时弹 pack-pick
-  if (drawerOpen && drawerOpen !== 'pack-pick') {
-    appendLine(`ERR · DRAWER ${drawerOpen.toUpperCase()} OPEN · CLOSE FIRST [ESC]`, 'redacted');
+  if (previewState.drawerOpen && previewState.drawerOpen !== 'pack-pick') {
+    appendLine(`ERR · DRAWER ${previewState.drawerOpen.toUpperCase()} OPEN · CLOSE FIRST [ESC]`, 'redacted');
     appendBlank();
     return;
   }
-  pendingPackPick = { d, pack };
+  previewState.pendingPackPick = { d, pack };
   appendLine(`PACK ${d.sku} · ${pack.words.length} CANDIDATES POSTED · CHOOSE ONE FOR FILING`, 'echo');
   appendBlank();
-  if (currentScreen !== 'workbench') showOnly('workbench');
+  if (previewState.currentScreen !== 'workbench') showOnly('workbench');
   openDrawer('pack-pick');
 }
 
 // Story 60.2: pack 选词成功 → 扣钱、入库、入栈、打印、关 drawer
 export function finalizePackPick(pickedWord: string): void {
-  if (!pendingPackPick) return;
-  const { d, pack } = pendingPackPick;
+  if (!previewState.pendingPackPick) return;
+  const { d, pack } = previewState.pendingPackPick;
   state.gold -= d.price;
   state.player.wordDeck.push(pickedWord);
   if (pack.wordEffect && state.classId !== 'wordsmith') {
     state.wordEffects.set(pickedWord, pack.wordEffect);
   }
-  undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [pickedWord] });
+  previewState.undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [pickedWord] });
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
   eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
   sfx('shop_buy_ok'); // Story 60.12
-  pendingPackPick = null;
+  previewState.pendingPackPick = null;
   closeDrawer();
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
   appendLine(`  · WORD "${pickedWord.toUpperCase()}" FILED TO LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
-  appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
+  appendLine(`  · UNDO STACK: ${previewState.undoStack.length}`, 'dim');
   appendBlank();
   updateTerminalChrome();
   // M1 fix: 切回终端，让 CONFIRMED / WORD FILED 消息可见
@@ -1006,9 +978,9 @@ export function finalizePackPick(pickedWord: string): void {
 
 // Story 60.2: 取消（ESC / overlay 点击 / drawer 关闭）— 不动 state
 export function cancelPackPick(): void {
-  if (!pendingPackPick) return;
-  const sku = pendingPackPick.d.sku;
-  pendingPackPick = null;
+  if (!previewState.pendingPackPick) return;
+  const sku = previewState.pendingPackPick.d.sku;
+  previewState.pendingPackPick = null;
   appendLine(`ABORTED · ${sku} NOT PURCHASED`, 'dim');
   appendBlank();
   // M1 fix: 切回终端，让 ABORTED 消息可见
@@ -1016,15 +988,13 @@ export function cancelPackPick(): void {
 }
 
 // === Story 60.4: SUBMIT FORM → startLevel transition ===
-
-// stamp 动画 600ms（CSS 控制） + 200ms safety = 800ms fallback timer
-const SUBMIT_STAMP_FALLBACK_MS = 800;
+// SUBMIT_STAMP_FALLBACK_MS 已迁至 ./shop/shopState
 
 /** SUBMIT 入口 — 检查警告 → 弹提示或直通 proceed */
 export function triggerSubmit(): void {
-  if (pendingSubmit !== null || submitting) return; // 防抖
+  if (previewState.pendingSubmit !== null || previewState.submitting) return; // 防抖
   // M1 fix: 不允许在 BUY high-price confirm 未结时启动 SUBMIT 流程（防双 pending 共存）
-  if (pendingConfirm) {
+  if (previewState.pendingConfirm) {
     showOnly('terminal');
     appendLine(t('shop.terminal.err.pending_confirm'), 'redacted');
     appendBlank();
@@ -1056,7 +1026,7 @@ function setSubmitButtonAwaiting(awaiting: boolean): void {
 }
 
 function promptBindingsWarning(nextStage: 'warn-inbox' | 'proceed'): void {
-  pendingSubmit = { stage: 'warn-bindings', nextStage };
+  previewState.pendingSubmit = { stage: 'warn-bindings', nextStage };
   showOnly('terminal');
   setSubmitButtonAwaiting(true);
   appendLine(t('shop.terminal.submit.warn_no_bindings'), 'redacted');
@@ -1065,7 +1035,7 @@ function promptBindingsWarning(nextStage: 'warn-inbox' | 'proceed'): void {
 
 function promptInboxWarning(): void {
   const n = state.player.inbox.length;
-  pendingSubmit = { stage: 'warn-inbox', nextStage: 'proceed' };
+  previewState.pendingSubmit = { stage: 'warn-inbox', nextStage: 'proceed' };
   showOnly('terminal');
   setSubmitButtonAwaiting(true);
   appendLine(`WARNING · ${n} ITEM${n > 1 ? 'S' : ''} IN IN-TRAY · LEAVE PENDING ITEMS?`, 'redacted');
@@ -1077,11 +1047,11 @@ function promptInboxWarning(): void {
  * 由 execute() 在 handleConfirmation 之前优先调用。
  */
 export function handleSubmitConfirmation(input: string): boolean {
-  if (!pendingSubmit) return false;
+  if (!previewState.pendingSubmit) return false;
   const up = input.trim().toUpperCase();
   if (up === 'Y' || up === 'YES') {
-    const nextStage = pendingSubmit.nextStage;
-    pendingSubmit = null;
+    const nextStage = previewState.pendingSubmit.nextStage;
+    previewState.pendingSubmit = null;
     if (nextStage === 'warn-inbox') {
       promptInboxWarning();
     } else {
@@ -1090,7 +1060,7 @@ export function handleSubmitConfirmation(input: string): boolean {
     return true;
   }
   if (up === 'N' || up === 'NO') {
-    pendingSubmit = null;
+    previewState.pendingSubmit = null;
     appendLine(t('shop.terminal.submit.aborted'), 'dim');
     appendBlank();
     setSubmitButtonAwaiting(false);
@@ -1102,8 +1072,8 @@ export function handleSubmitConfirmation(input: string): boolean {
 
 /** 警告全过 → 启 stamp 动画 + transition */
 function proceedSubmit(): void {
-  if (submitting) return;
-  submitting = true;
+  if (previewState.submitting) return;
+  previewState.submitting = true;
   sfx('submit_stamp'); // Story 60.12: 重击下行 — 红章盖章音
   appendLine(t('shop.terminal.submit.stamped'), 'echo');
   appendBlank();
@@ -1148,11 +1118,11 @@ function executeSubmitTransition(overlay: HTMLElement | null): void {
   dragManager.onDragStart = null;
   dragManager.destroy();
   clearShapePlacementOnWorkbench();
-  pendingPackPick = null;
-  pendingSubmit = null;
-  pendingConfirm = null; // L2 fix: 防 stale BUY confirm 残留
-  submitting = false;
-  active = false;
+  previewState.pendingPackPick = null;
+  previewState.pendingSubmit = null;
+  previewState.pendingConfirm = null; // L2 fix: 防 stale BUY confirm 残留
+  previewState.submitting = false;
+  previewState.active = false;
   document.body.classList.remove('shop-preview-active');
   // 隐藏 preview 屏
   const tEl = document.getElementById('terminal-shop-screen');
@@ -1202,10 +1172,10 @@ function executeBuyRelic(d: ItemDescriptor): void {
   if (relicId === 'universal_furnace') initFurnace(random);
   eventBus.emit('shop:purchase', { type: 'relic', itemId: relicId, price: d.price });
   sfx('shop_buy_ok'); // Story 60.12
-  undoStack.push({ kind: 'relic', sku: d.sku, price: d.price, relicId });
+  previewState.undoStack.push({ kind: 'relic', sku: d.sku, price: d.price, relicId });
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
   appendLine(`  · RELIC SHELVED · BAL 🍌 ${state.gold}`, 'dim');
-  appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
+  appendLine(`  · UNDO STACK: ${previewState.undoStack.length}`, 'dim');
   appendBlank();
   updateTerminalChrome();
   syncWorkbenchRelics();
@@ -1229,7 +1199,7 @@ function cmdBuy(arg?: string): void {
     return;
   }
   if (d.price >= HIGH_PRICE_THRESHOLD) {
-    pendingConfirm = { sku: d.sku, price: d.price };
+    previewState.pendingConfirm = { sku: d.sku, price: d.price };
     appendLine(`CONFIRM PURCHASE · ${d.name} · 🍌 ${d.price}`, 'head');
     appendLine(`BAL AFTER: 🍌 ${state.gold - d.price} · TYPE [Y]ES OR [N]O`, 'dim');
     return;
@@ -1241,14 +1211,14 @@ function cmdSell(arg?: string): void {
   if (!arg) { appendLine(t('shop.terminal.cmd.usage.sell'), 'dim'); return; }
   const target = arg.toUpperCase();
   // SEL operates on inbox items by SKU
-  const undoIdx = undoStack.findIndex(u => u.sku === target);
+  const undoIdx = previewState.undoStack.findIndex(u => u.sku === target);
   if (undoIdx < 0) {
     appendLine(`ERR · ${target} NOT IN IN-TRAY`, 'redacted');
     appendLine('  · SELL ONLY APPLIES TO IN-TRAY ITEMS · USE WORKBENCH FOR EQUIPPED', 'dim');
     appendBlank();
     return;
   }
-  const entry = undoStack[undoIdx];
+  const entry = previewState.undoStack[undoIdx];
   if (entry.kind !== 'skill') {
     appendLine(`ERR · ONLY IN-TRAY (SKILL) ITEMS CAN BE SOLD VIA TERMINAL`, 'redacted');
     appendBlank();
@@ -1259,7 +1229,7 @@ function cmdSell(arg?: string): void {
   if (inboxIdx >= 0) state.player.inbox.splice(inboxIdx, 1);
   state.player.skills.delete(entry.skillId);
   state.affixSkills.delete(entry.skillId);
-  undoStack.splice(undoIdx, 1);
+  previewState.undoStack.splice(undoIdx, 1);
   state.gold += refund;
   // Story 60.7: 卖出后 quest 重算（装备型 quest 跟上 inbox 变化）
   evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
@@ -1293,22 +1263,22 @@ function cmdReshuffle(): void {
   appendBlank();
   updateTerminalChrome();
   // Story 60.11: 标记下次 LIS 走逐行 print 动画
-  nextListIsAnimated = true;
+  previewState.nextListIsAnimated = true;
 }
 
 function cmdProceed(): void {
-  appendLine(`PROCEEDING TO WORKBENCH · ${undoStack.length} PURCHASES FINALIZED`, 'echo');
+  appendLine(`PROCEEDING TO WORKBENCH · ${previewState.undoStack.length} PURCHASES FINALIZED`, 'echo');
   appendBlank();
   switchToWorkbench();
 }
 
 function cmdUndo(): void {
-  if (workbenchEntered) {
+  if (previewState.workbenchEntered) {
     appendLine(t('shop.terminal.err.undo_locked'), 'redacted');
     appendBlank();
     return;
   }
-  const last = undoStack.pop();
+  const last = previewState.undoStack.pop();
   if (!last) {
     appendLine('UNDO STACK EMPTY · NOTHING TO REVERSE', 'dim');
     appendBlank();
@@ -1355,20 +1325,19 @@ function cmdWords(): void {
   appendLine(t('shop.terminal.cmd.opening_words'), 'echo');
   appendBlank();
   // ensure on workbench so drawer is visible
-  if (currentScreen !== 'workbench') showOnly('workbench');
+  if (previewState.currentScreen !== 'workbench') showOnly('workbench');
   openDrawer('words');
 }
 
 // === Drawer overlay ===
-type DrawerKind = 'words' | 'craft' | 'metamorph' | 'pack-pick';
-let drawerOpen: DrawerKind | null = null;
+// DrawerKind / drawerOpen 已迁至 ./shop/shopState
 
 function openDrawer(kind: DrawerKind): void {
   const el = document.getElementById('wb-drawer');
   const title = document.getElementById('wb-drawer-title');
   const body = document.getElementById('wb-drawer-body');
   if (!el || !title || !body) return;
-  drawerOpen = kind;
+  previewState.drawerOpen = kind;
   sfx('shop_drawer_open'); // Story 60.12: 抽拉哗啦
   if (kind === 'words') {
     title.textContent = t('shop.workbench.drawer.words_title', { n: state.player.wordDeck.length });
@@ -1384,8 +1353,8 @@ function openDrawer(kind: DrawerKind): void {
     // Story 60.13: 接入真 metamorph panel
     renderMetamorphPanel(body as HTMLElement);
   } else if (kind === 'pack-pick') {
-    if (!pendingPackPick) return;
-    const { d, pack } = pendingPackPick;
+    if (!previewState.pendingPackPick) return;
+    const { d, pack } = previewState.pendingPackPick;
     title.textContent = `PACK ${d.sku} · CANDIDATE FILING`;
     body.innerHTML = renderPackPickDrawerHtml(pack);
     setupPackPickHandlers();
@@ -1406,10 +1375,10 @@ function closeDrawer(): void {
   const el = document.getElementById('wb-drawer');
   if (!el) return;
   // Story 60.2: pack-pick drawer 关闭时如果还在 pending → 触发 cancel 路径（不扣钱）
-  if (drawerOpen === 'pack-pick' && pendingPackPick !== null) {
+  if (previewState.drawerOpen === 'pack-pick' && previewState.pendingPackPick !== null) {
     cancelPackPick();
   }
-  drawerOpen = null;
+  previewState.drawerOpen = null;
   el.classList.remove('drawer-open');
   el.style.display = 'none';
   // 焦点回 prompt：让 onKey 全局监听器接管
@@ -1458,9 +1427,9 @@ function setupPackPickHandlers(): void {
   if (!body) return;
   body.querySelectorAll<HTMLElement>('.pack-pick-card[data-pick-idx]').forEach(card => {
     card.onclick = () => {
-      if (!pendingPackPick) return;
+      if (!previewState.pendingPackPick) return;
       const idx = parseInt(card.dataset.pickIdx ?? '-1', 10);
-      const word = pendingPackPick.pack.words[idx];
+      const word = previewState.pendingPackPick.pack.words[idx];
       if (typeof word === 'string') finalizePackPick(word);
     };
   });
@@ -1509,18 +1478,18 @@ function setupDrawerHandlers(): void {
 // === Confirmation handler ===
 
 function handleConfirmation(input: string): boolean {
-  if (!pendingConfirm) return false;
+  if (!previewState.pendingConfirm) return false;
   const up = input.trim().toUpperCase();
   if (up === 'Y' || up === 'YES') {
-    const d = findDescriptorBySku(pendingConfirm.sku);
-    pendingConfirm = null;
+    const d = findDescriptorBySku(previewState.pendingConfirm.sku);
+    previewState.pendingConfirm = null;
     if (d) executeBuy(d);
     return true;
   }
   if (up === 'N' || up === 'NO') {
-    appendLine(`ABORTED · ${pendingConfirm.sku} NOT PURCHASED`, 'dim');
+    appendLine(`ABORTED · ${previewState.pendingConfirm.sku} NOT PURCHASED`, 'dim');
     appendBlank();
-    pendingConfirm = null;
+    previewState.pendingConfirm = null;
     return true;
   }
   appendLine(`ERR · EXPECTED [Y]ES OR [N]O · GOT "${input}" · TRY AGAIN`, 'redacted');
@@ -1570,11 +1539,11 @@ function execute(line: string): void {
 function setPrompt(text: string): void {
   const el = document.getElementById('terminal-prompt-text');
   if (el) el.textContent = text;
-  typedBuffer = text;
+  previewState.typedBuffer = text;
 }
 
 function tabComplete(): void {
-  const up = typedBuffer.trim().toUpperCase();
+  const up = previewState.typedBuffer.trim().toUpperCase();
   if (!up) return;
   // complete only the verb (first word)
   const parts = up.split(/\s+/);
@@ -1582,20 +1551,20 @@ function tabComplete(): void {
   const matches = VERBS.filter(v => VERB_FULL[v].startsWith(parts[0]));
   if (matches.length === 1) setPrompt(VERB_FULL[matches[0]] + ' ');
   else if (matches.length > 1) {
-    appendLine(`§> ${typedBuffer}`, 'dim');
+    appendLine(`§> ${previewState.typedBuffer}`, 'dim');
     appendLine('  · ' + matches.map(m => VERB_FULL[m]).join(' · '), 'dim');
   }
 }
 
 function navHistory(dir: 1 | -1): void {
-  if (cmdHistory.length === 0) {
+  if (previewState.cmdHistory.length === 0) {
     // Visible cue so the keystroke isn't silently ignored on first try
     flashPrompt();
     return;
   }
-  if (historyIdx === -1) historyIdx = cmdHistory.length;
-  historyIdx = Math.max(0, Math.min(cmdHistory.length, historyIdx + dir));
-  setPrompt(cmdHistory[historyIdx] ?? '');
+  if (previewState.historyIdx === -1) previewState.historyIdx = previewState.cmdHistory.length;
+  previewState.historyIdx = Math.max(0, Math.min(previewState.cmdHistory.length, previewState.historyIdx + dir));
+  setPrompt(previewState.cmdHistory[previewState.historyIdx] ?? '');
 }
 
 function flashPrompt(): void {
@@ -1610,8 +1579,8 @@ function injectFKey(verb: keyof typeof VERB_FULL): void {
 }
 
 function onKey(e: KeyboardEvent): void {
-  if (!active) return;
-  // Preview owns the keyboard while active — block battle's typing handler
+  if (!previewState.active) return;
+  // Preview owns the keyboard while previewState.active — block battle's typing handler
   // (which would otherwise treat terminal input as miss-keys and shake the screen).
   e.stopImmediatePropagation();
   // Story 60.2: pack-pick drawer 打开时拦截 ESC/Tab/Enter；其他键不消费
@@ -1619,7 +1588,7 @@ function onKey(e: KeyboardEvent): void {
   // - Tab 走 focus trap（在卡片之间循环，不跳出抽屉）
   // - Enter 触发 focused 卡片 click（capture-phase stopImmediatePropagation
   //   会阻止事件到达 button 元素，浏览器原生 Enter→click 失效，必须手动触发）
-  if (drawerOpen === 'pack-pick') {
+  if (previewState.drawerOpen === 'pack-pick') {
     if (e.key === 'Escape') {
       e.preventDefault();
       closeDrawer();
@@ -1652,21 +1621,21 @@ function onKey(e: KeyboardEvent): void {
   // Tab: complete verb if buffer non-empty (terminal only); else switch screens
   if (e.key === 'Tab' && !e.shiftKey) {
     e.preventDefault();
-    if (currentScreen === 'terminal' && typedBuffer.trim().length > 0) {
+    if (previewState.currentScreen === 'terminal' && previewState.typedBuffer.trim().length > 0) {
       tabComplete();
     } else {
-      if (currentScreen === 'terminal') switchToWorkbench();
+      if (previewState.currentScreen === 'terminal') switchToWorkbench();
       else showOnly('terminal');
     }
     return;
   }
   if (e.key === 'Escape') {
     e.preventDefault();
-    if (drawerOpen) { closeDrawer(); return; }
+    if (previewState.drawerOpen) { closeDrawer(); return; }
     restoreFromPreview();
     return;
   }
-  if (currentScreen !== 'terminal') return;
+  if (previewState.currentScreen !== 'terminal') return;
 
   // F-keys: inject command (do NOT execute)
   const fmap: Record<string, keyof typeof VERB_FULL> = {
@@ -1687,17 +1656,17 @@ function onKey(e: KeyboardEvent): void {
 
   if (e.key === 'Backspace') {
     e.preventDefault();
-    typedBuffer = typedBuffer.slice(0, -1);
-    setPrompt(typedBuffer);
+    previewState.typedBuffer = previewState.typedBuffer.slice(0, -1);
+    setPrompt(previewState.typedBuffer);
     return;
   }
   if (e.key === 'Enter') {
     e.preventDefault();
     sfx('shop_kbd_enter'); // Story 60.12: 继电器 thunk
-    const line = typedBuffer;
+    const line = previewState.typedBuffer;
     if (line.trim()) {
-      cmdHistory.push(line);
-      historyIdx = -1;
+      previewState.cmdHistory.push(line);
+      previewState.historyIdx = -1;
     }
     setPrompt('');
     execute(line);
@@ -1705,8 +1674,8 @@ function onKey(e: KeyboardEvent): void {
   }
   if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
     sfx('shop_kbd_click'); // Story 60.12: 机械轴 thock
-    typedBuffer += e.key.toUpperCase();
-    setPrompt(typedBuffer);
+    previewState.typedBuffer += e.key.toUpperCase();
+    setPrompt(previewState.typedBuffer);
   }
 }
 
@@ -1756,7 +1725,7 @@ function bindSkillToKey(skillId: string, key: string): void {
   applyBindFromInbox(skillId, key);
   // Story 60.9 follow-up #9: 标记此 skill 已被装配过 — 后续卸回 IN-tray
   // 时按"已开封"态渲染（去掉运单包装）
-  unsealedSkillIds.add(skillId);
+  previewState.unsealedSkillIds.add(skillId);
   syncWorkbenchInbox();
   syncWorkbenchKeys();
   sfx('shop_drag_drop'); // Story 60.12: 木质 click — 落到键
@@ -1976,7 +1945,7 @@ function syncWorkbenchRelics(): void {
 function syncWorkbenchInbox(): void {
   const root = document.querySelector('#workbench-screen-preview .wb-foam-case');
   if (!root) return;
-  // Find descriptor for each inbox skillId by scanning historical undoStack and current cache
+  // Find descriptor for each inbox skillId by scanning historical previewState.undoStack and current cache
   const slots: string[] = [];
   for (const skillId of state.player.inbox) {
     const sk = state.affixSkills.get(skillId);
@@ -1987,38 +1956,26 @@ function syncWorkbenchInbox(): void {
     slots.push(renderInboxCardHtml({
       iconEmoji: sk.icon || '◇',
       name: sk.name.toUpperCase(),
-      sku: undoStack.find(u => u.kind === 'skill' && u.skillId === skillId)?.sku ?? '???-???',
+      sku: previewState.undoStack.find(u => u.kind === 'skill' && u.skillId === skillId)?.sku ?? '???-???',
       clearance: sk.rarity >= 2 ? '4-A' : '4-B',
       skillId,
       shapeId,
       rotation,
       rarity,
       shapePreviewHtml: renderShapePreview(shapeId, rotation, rarity),
-      opened: unsealedSkillIds.has(skillId),
+      opened: previewState.unsealedSkillIds.has(skillId),
     }));
   }
   while (slots.length < INBOX_MAX) slots.push('<div class="foam-cutout empty"><span class="cutout-empty-label">— 空槽 —</span></div>');
   root.innerHTML = slots.join('');
   // Re-register drop zones since IN-tray DOM was rebuilt
-  if (active) setupDragZones();
+  if (previewState.active) setupDragZones();
   const sub = document.querySelector('#workbench-screen-preview .wb-intray .wb-tab-sub');
   if (sub) sub.textContent = `待装配 · ${String(state.player.inbox.length).padStart(2, '0')}`;
   attachWorkbenchTooltips();
 }
 
-interface InboxCardData {
-  iconEmoji: string;
-  name: string;
-  sku: string;
-  clearance: string;
-  skillId: string;
-  shapeId: string;
-  rotation: number;
-  rarity: number;
-  shapePreviewHtml: string;
-  /** Story 60.9 follow-up #9: 是否已开封（曾装配过）— 卸回 IN-tray 时为 true */
-  opened: boolean;
-}
+// InboxCardData 已迁至 ./shop/shopState
 
 function escapeAttr(s: string): string {
   // & 必须先转义，否则后续转义产生的实体字符（如 &quot;）会被二次解释
@@ -2076,17 +2033,16 @@ function renderInboxCardHtml(c: InboxCardData): string {
 }
 
 function switchToWorkbench(): void {
-  workbenchEntered = true;
-  if (undoStack.length > 0) {
-    appendLine(`  · ${undoStack.length} PURCHASES FINALIZED.`, 'dim');
-    undoStack = [];
+  previewState.workbenchEntered = true;
+  if (previewState.undoStack.length > 0) {
+    appendLine(`  · ${previewState.undoStack.length} PURCHASES FINALIZED.`, 'dim');
+    previewState.undoStack = [];
   }
   showOnly('workbench');
 }
 
 // === Screen lifecycle ===
-
-let menuPrevDisplay: string | null = null;
+// menuPrevDisplay 已迁至 ./shop/shopState
 
 function showOnly(which: 'terminal' | 'workbench'): void {
   const t = document.getElementById('terminal-shop-screen') as HTMLElement | null;
@@ -2094,11 +2050,11 @@ function showOnly(which: 'terminal' | 'workbench'): void {
   if (t) t.style.display = which === 'terminal' ? 'flex' : 'none';
   if (w) w.style.display = which === 'workbench' ? 'flex' : 'none';
   // Story 60.11: 切屏 CRT flicker 转场（仅当用户开启动画且不在切回相同屏幕时）
-  if (which !== currentScreen && shouldAnimateShop()) {
+  if (which !== previewState.currentScreen && shouldAnimateShop()) {
     const target = which === 'terminal' ? t : w;
     triggerCrtFlicker(target);
   }
-  currentScreen = which;
+  previewState.currentScreen = which;
 }
 
 /**
@@ -2121,13 +2077,13 @@ function hideAllRealScreens(): void {
   for (const id of ids) {
     const el = document.getElementById(id);
     if (!el) continue;
-    if (id === 'main-menu-screen' && menuPrevDisplay === null) menuPrevDisplay = el.style.display || '';
+    if (id === 'main-menu-screen' && previewState.menuPrevDisplay === null) previewState.menuPrevDisplay = el.style.display || '';
     el.style.display = 'none';
   }
 }
 
 function restoreFromPreview(): void {
-  active = false;
+  previewState.active = false;
   document.body.classList.remove('shop-preview-active');
   clearShapePlacementOnWorkbench();
   // Story 60.9: 退出 terminal 商店时关掉残留 tooltip + 清掉 dragStart 回调防泄漏
@@ -2145,14 +2101,7 @@ function restoreFromPreview(): void {
 }
 
 function resetSession(): void {
-  typedBuffer = '';
-  cmdHistory = [];
-  historyIdx = -1;
-  undoStack = [];
-  pendingConfirm = null;
-  pendingPackPick = null; // L2 fix: 防止跨 session 残留 stale pack reference
-  workbenchEntered = false;
-  unsealedSkillIds = new Set<string>(); // Story 60.9 follow-up #9: 重置开封记录
+  resetPreviewSession();
   state.player.inbox = [];
   ensureSeed();
   rebuildDescriptors();
@@ -2454,11 +2403,11 @@ function renderWelcome(): void {
  * 按 UserSettings.shopUI 调度。
  */
 export function enterTerminalShop(_won?: boolean): void {
-  if (active) return;
+  if (previewState.active) return;
   injectScreens();
   hideAllRealScreens();
   resetSession();
-  active = true;
+  previewState.active = true;
   showOnly('terminal');
   // Clear viewport then render welcome
   const vp = document.getElementById('terminal-viewport');
@@ -2508,24 +2457,24 @@ export function initShopPreview(): void {
 // === Story 60.2 / 60.4: 测试专用内部 API（不要在生产代码里使用）===
 export const __test = {
   executeBuyPack: (d: ItemDescriptor) => executeBuyPack(d),
-  getPendingPackPick: () => pendingPackPick,
+  getPendingPackPick: () => previewState.pendingPackPick,
   setPendingPackPick: (v: { d: ItemDescriptor; pack: WordPack } | null): void => {
-    pendingPackPick = v;
+    previewState.pendingPackPick = v;
   },
-  getUndoStack: () => undoStack,
-  resetUndoStack: (): void => { undoStack = []; },
+  getUndoStack: () => previewState.undoStack,
+  resetUndoStack: (): void => { previewState.undoStack = []; },
   // Story 60.4
-  getPendingSubmit: () => pendingSubmit,
+  getPendingSubmit: () => previewState.pendingSubmit,
   setPendingSubmit: (v: { stage: SubmitStage; nextStage: SubmitStage | 'proceed' } | null): void => {
-    pendingSubmit = v;
+    previewState.pendingSubmit = v;
   },
-  isSubmitting: (): boolean => submitting,
-  resetSubmitting: (): void => { submitting = false; },
-  // Story 60.4 review M1: pendingConfirm 互斥测试
+  isSubmitting: (): boolean => previewState.submitting,
+  resetSubmitting: (): void => { previewState.submitting = false; },
+  // Story 60.4 review M1: previewState.pendingConfirm 互斥测试
   setPendingConfirm: (v: { sku: string; price: number } | null): void => {
-    pendingConfirm = v;
+    previewState.pendingConfirm = v;
   },
-  getPendingConfirm: () => pendingConfirm,
+  getPendingConfirm: () => previewState.pendingConfirm,
   // Story 60.7: BUY/SELL/UND 副作用测试入口
   executeBuySkill: (d: ItemDescriptor) => executeBuySkill(d),
   executeBuyRelic: (d: ItemDescriptor) => executeBuyRelic(d),
@@ -2533,14 +2482,14 @@ export const __test = {
   cmdUndo: (): void => cmdUndo(),
   // Story 60.10: INF 命令测试入口
   cmdInfo: (arg: string): void => cmdInfo(arg),
-  /** Story 60.10 review M2: 注入 descriptorCache 方便测 catalog 命中路径 */
-  setDescriptorCache: (items: ItemDescriptor[]): void => { descriptorCache = items; },
+  /** Story 60.10 review M2: 注入 previewState.descriptorCache 方便测 catalog 命中路径 */
+  setDescriptorCache: (items: ItemDescriptor[]): void => { previewState.descriptorCache = items; },
   // Story 60.11: 动画测试入口
   cmdList: (): void => cmdList(),
   cmdReshuffle: (): void => cmdReshuffle(),
   triggerInboxWhoosh: (slotIdx: number): void => triggerInboxWhoosh(slotIdx),
   showOnly: (which: 'terminal' | 'workbench'): void => showOnly(which),
-  setNextListAnimated: (v: boolean): void => { nextListIsAnimated = v; },
+  setNextListAnimated: (v: boolean): void => { previewState.nextListIsAnimated = v; },
   // Story 60.12: 音效测试入口
   bindSkillToKey: (skillId: string, key: string): void => bindSkillToKey(skillId, key),
   unbindSkillFromKey: (key: string): void => unbindSkillFromKey(key),

@@ -1,6 +1,6 @@
 # Story 60.16: shopPreview 模块拆分
 
-Status: backlog
+Status: in-progress
 
 <!-- Epic 60 Phase 2 · 优先级 P2.4（清理）· P2.4 第 3 项 · Epic 60 收官 -->
 <!-- Note: 拆自原 60-14 三主题中"模块拆分"部分 — 风险最高，独立 PR -->

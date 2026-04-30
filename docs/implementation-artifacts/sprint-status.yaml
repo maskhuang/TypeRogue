@@ -485,5 +485,5 @@ development_status:
   # P2.4 清理档（原 60-14 一项三主题拆为 60-14/60-15/60-16 三 story 各自独立 PR）
   60-14-dead-code-cleanup: done                        # 死代码清理 RELICS_LOOKUP + TODO（P2.4 清理 · 风险低）
   60-15-i18n-coverage: done                             # terminal/工作台 i18n 全覆盖（P2.4 清理 · 风险中）— M1+L2 修完
-  60-16-module-split: backlog                           # shopPreview.ts 2548 行 → 4 模块拆分（P2.4 清理 · 风险高 · Epic 60 收官）
+  60-16-module-split: in-progress                       # shopPreview.ts 2548 行 → 4 模块拆分（P2.4 清理 · 风险高 · Epic 60 收官）
   epic-60-retrospective: optional
