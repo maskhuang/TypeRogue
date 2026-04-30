@@ -6163,19 +6163,48 @@ body.shop-preview-active #relic-tooltip > div:last-child {
     min-width: 0;
 }
 .wc-icon { font-size: 16px; }
-.wc-meta {
-    display: flex;
-    justify-content: space-between;
+
+/* Story 60.9 follow-up: 物流面单风排版 — SN 独占一行，条形码独占底部满宽 */
+.wc-sn-line {
     font-size: 9px;
-    opacity: 0.75;
-    letter-spacing: 1px;
+    color: rgba(26, 20, 16, 0.7);
+    letter-spacing: 1.5px;
+    font-family: 'Courier New', 'Courier Prime', monospace;
+    border-bottom: 1px dashed rgba(26, 20, 16, 0.25);
+    padding-bottom: 3px;
+    margin-bottom: 1px;
+}
+
+/* 条形码 strip：满宽 + 油墨黑 + 等宽解码数字
+ * 视觉模仿 Code-128 / EAN 物流面单底部 */
+.wc-barcode-strip {
+    margin-top: auto;                       /* 推到卡片底部 */
+    padding-top: 4px;
+    border-top: 1px solid rgba(26, 20, 16, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1px;
 }
 .wc-barcode {
     font-family: 'Courier New', monospace;
-    letter-spacing: -1px;
-    /* Story 60.9 follow-up: 条形码是装饰性图形 token，永远单行 */
+    font-size: 11px;
+    letter-spacing: -1.5px;
+    line-height: 1;
+    color: #1a1410;                         /* 满黑墨打印 */
     white-space: nowrap;
-    flex-shrink: 0;
+    overflow: hidden;
+    text-align: center;
+    /* 用容器宽度约束 — 超长按尾部裁切（条形码尾部冗余字符正常） */
+    text-overflow: clip;
+}
+.wc-barcode-num {
+    font-family: 'Courier New', monospace;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: rgba(26, 20, 16, 0.85);
+    text-align: center;
+    line-height: 1;
 }
 .wc-stamp {
     align-self: flex-start;

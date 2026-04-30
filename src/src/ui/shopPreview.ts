@@ -1675,6 +1675,10 @@ function renderInboxCardHtml(c: InboxCardData): string {
   const shapeBlock = c.shapePreviewHtml
     ? `<div class="wc-shape">${c.shapePreviewHtml}</div>`
     : '';
+  // Story 60.9 follow-up: 物流面单风排版 — 条形码独占底部满宽 + 下方等宽解码数字
+  // 条形码模式比之前更长更密，按真实 Code-128 视觉特征用 ▌▍▎▏ 四种宽度交错
+  const barcodePattern = '▌▎▍▎▌▌▏▎▌▍▎▌▎▌▍▎▌▌▎▍▌▎▏▌▍▎▌▌▎▍▌▎▌▎▍▌';
+  const barcodeNum = `${c.sku}-7842`;
   return `
     <div class="foam-cutout">
       <div class="weapon-card" data-drag-type="skill-inventory" data-skill-id="${c.skillId}"${shapeAttrs}>
@@ -1682,12 +1686,13 @@ function renderInboxCardHtml(c: InboxCardData): string {
           <span class="wc-icon inv-icon">${c.iconEmoji}</span>
           <span class="wc-name inv-name">${c.name}</span>
         </div>
-        <div class="wc-meta">
-          <span class="wc-sn">SN · ${c.sku}-7842</span>
-          <span class="wc-barcode">▌▎▌▌▎▍▌▎▌▌▎▍</span>
-        </div>
+        <div class="wc-sn-line">SN · ${c.sku}-7842</div>
         ${shapeBlock}
         ${stamp}
+        <div class="wc-barcode-strip">
+          <div class="wc-barcode">${barcodePattern}</div>
+          <div class="wc-barcode-num">${barcodeNum}</div>
+        </div>
       </div>
     </div>
   `;
