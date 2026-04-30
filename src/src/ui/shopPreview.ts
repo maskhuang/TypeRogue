@@ -119,13 +119,20 @@ function getSynergyCount(d: ItemDescriptor): number {
     }
   }
 
+  // Bug fix #2: 仅算"真正在场"的技能 — 已绑键 ∪ 待装配 inbox。
+  // 排除孤儿（在 state.player.skills 但既未绑键又不在 inbox，例如 main.ts:126
+  // 给非 demo 玩家加的 starter，未绑键时仍残留在 player.skills），避免 SYN
+  // 算上看不见的技能。
+  const activeIds = new Set<string>();
+  for (const sid of state.player.bindings.values()) activeIds.add(sid);
+  for (const sid of state.player.inbox) activeIds.add(sid);
+
   const targetRes = sk.resource;
   let count = 0;
-  for (const [id, owned] of state.affixSkills) {
+  for (const id of activeIds) {
     if (id === sk.id) continue;
-    // Bug fix: state.affixSkills 是定义查找表，可能含 D100 reroll / tutorial insert /
-    // sell 后残留等幽灵条目；用 state.player.skills 守卫真正所有权
-    if (!state.player.skills.has(id)) continue;
+    const owned = state.affixSkills.get(id);
+    if (!owned) continue;
     const sameRes = !!targetRes && owned.resource === targetRes;
     const matchAffix = owned.affixes.some(a => wantedAffixTypes.has(a.type));
     if (sameRes || matchAffix) count++;
