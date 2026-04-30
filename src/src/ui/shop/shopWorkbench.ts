@@ -52,15 +52,12 @@ import type { DrawerKind, InboxCardData } from './shopState';
 let dragHoverRafId: number | null = null
 let dragHoverLastKey: string | null = null
 
-/**
- * Story 60.17 review M2: 拖拽结束 / 出店时由 bootstrap 调，cancel pending RAF
- * 并清 lastKey，防止跨 session 状态污染或 drop 后 tooltip stale flash。
- */
-export // === Story 60.18: 范围词条 effect radius 高亮 ===
+// === Story 60.18: 范围词条 effect radius 高亮 ===
 //
-// 拖拽 monomino 含范围词条（splash / echo / aura / relay / war_drum / conduit /
-// amplify 等带 posRel 的词条）时，hover 候选键 K → K 的 posRel 关系键加 outline。
-// 多格 tetromino 优先 shape placement 高亮（AC3），不显示 effect radius。
+// 拖拽 skill 含范围词条（splash / aura / relay / war_drum / conduit / amplify
+// 等带 posRel 的词条）时，hover 候选键 K → K 的 posRel 关系键加 outline。
+// 多格 tetromino 走 mapShapeToKeys 解析 occupied cells，对每个 cell 的 posRel
+// 关系键 union（与 affixTrigger.getExtendedNeighbors 同语义）。
 // 用 getKeysWithRelation（与 affixTrigger 触发逻辑共用同算法 → 0 漂移误导）。
 const RADIUS_PREVIEW_CLASS = 'effect-radius-preview'
 
@@ -93,8 +90,8 @@ function getEffectRadiusKeys(skillId: string, hoverKey: string, payloadShapeId?:
   return Array.from(radiusKeys)
 }
 
-/** 给候选范围键加 outline 高亮 class */
-function highlightEffectRadius(hoverKey: string, skillId: string, shapeId?: string, rotation?: number): void {
+/** 给候选范围键加 outline 高亮 class — exported for unit testing (60.18 review M1 fix) */
+export function highlightEffectRadius(hoverKey: string, skillId: string, shapeId?: string, rotation?: number): void {
   const root = document.getElementById('workbench-screen-preview')
   if (!root) return
   const keys = getEffectRadiusKeys(skillId, hoverKey, shapeId, rotation)

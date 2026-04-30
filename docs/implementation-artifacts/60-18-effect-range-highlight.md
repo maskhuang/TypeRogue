@@ -1,6 +1,6 @@
 # Story 60.18: 范围技能影响半径键盘高亮
 
-Status: review
+Status: done
 
 <!-- Epic 60-Followup · 优先级 P3（视觉重要但非阻塞） -->
 <!-- Source: Story 60.16 code-review 完成后用户 dogfood 反馈 -->
@@ -32,11 +32,11 @@ Phase 1/2 实现了多格 tetromino 的 *shape placement* 高亮（`highlightSha
 
 2. **AC2：echo / aura / relay / conduit / war_drum / amplify** —— 同 AC1 范围算法（默认 8 邻接），适用所有 SELF_ZERO_TYPES 词条类型
 
-3. **AC3：多格技能优先 shape placement** —— 多格 tetromino 拖拽时**只显示 shape**，不显示 effect radius（避免视觉重叠）
+3. **AC3：多格技能 shape + radius 同时显示**（dogfood 修订自原 spec "只显示 shape"）—— domino/tetromino 含范围词条（如 war_drum/union: symmetric on 2-cell）很常见，玩家需同时看 shape 占位 + radius 影响范围。多格走 `mapShapeToKeys` 解析 occupied cells，对每个 cell 的 posRel 关系键 union（与 affixTrigger.getExtendedNeighbors 同语义）。视觉风格区分清晰（shape outline solid 绿/金章 vs radius outline 橙 + bg + pulse）
 
-4. **AC4：dragLeave / drop 后清除** —— `clearShapePlacementOnWorkbench` 同时清 `.effect-radius-preview` class（提取统一 cleanup 函数）
+4. **AC4：dragLeave / drop 后统一清除** —— `clearShapePlacementOnWorkbench` 内部统一清 `.shape-preview-*` + `.effect-radius-preview` 4 种 class（review M3 修订完成 — 单函数处理所有 drag preview cleanup，避免漏清）
 
-5. **AC5：CSS 区分** —— `.shape-preview-ghost` (灰影) vs `.effect-radius-preview` (淡黄描边) 视觉风格不同，组合显示时不混淆
+5. **AC5：CSS 视觉区分** —— `.shape-preview-*` (实绿/红/金章 outline solid) vs `.effect-radius-preview` (3px solid 橙 outline + 半透明橙 bg + 1.2s pulse animation + 外发光 box-shadow) 视觉风格不同，组合显示时不混淆。注：原 spec 写 "2px dashed 淡黄"，commit `3dd4dbe` dogfood 强化为更醒目（玩家反馈淡黄 dashed 在橙黑键面上不够显眼）
 
 6. **AC6：性能 ≤1ms 每次 hover** —— 邻接计算应是 lookup table，不重复算
 
@@ -136,6 +136,25 @@ claude-opus-4-7[1m]
 - **bootstrap wireShopBus IIFE → queueMicrotask 修复**：发现 systems/shop → ui/shopPreview → shopBootstrap → workbench 循环依赖，IIFE 在 workbench 仍在初始化时调 registerWorkbenchBindings → ReferenceError。改 queueMicrotask 延迟到下一 tick，模块全部 resolved 后 wire
 - **未做：完整 hover→class 断言**：mock 完整 DOM querySelector + classList add 路径复杂度过高，仅写 4 sanity tests + state 准备验证；完整集成断言留浏览器 dogfood
 - AC10 浏览器手动验证留 code-review 阶段
+
+### Senior Developer Review (AI)
+
+**Reviewer:** code-review workflow
+**Date:** 2026-04-30
+**Outcome:** Approved (post-fix)
+
+**Findings:** 1 High + 4 Medium + 3 Low — H1 + M1 + M2 + M3 + M4 + L3 已修；L1 / L2 推迟。
+
+**Action Items:**
+
+- [x] [AI-Review][High] H1 — `shopWorkbench.ts:59` 孤儿 `export` 误把 `RADIUS_PREVIEW_CLASS` 公开（60.17 doc 与 60.18 section 之间被误插），重组代码块：60.17 RAF 状态 + cancelDragHoverPending 集中一处，60.18 effect radius 集中另一处
+- [x] [AI-Review][Med] M1 — `highlightEffectRadius` 改为 export，单元测试加 2 个真实集成测试（splash + Adjacent → hover G 邻接键加 class · 无 posRel skill → 不加 class · 未注册 skillId → 静默 no-op）
+- [x] [AI-Review][Med] M2 — AC3 spec 措辞更新匹配实现（多格 shape + radius 同时显示，非"只显示 shape"），与 Dev Agent Record 的 dogfood 修订一致
+- [x] [AI-Review][Med] M3 — `clearShapePlacementOnWorkbench` 内部统一清 4 种 class（shape-preview-valid/invalid/displaced + effect-radius-preview），符合原 AC4 「提取统一 cleanup 函数」spec
+- [x] [AI-Review][Med] M4 — AC5 spec 措辞更新匹配实现（3px solid 橙 + 半透明 bg + pulse），并注明 dogfood `3dd4dbe` 强化原因
+- [x] [AI-Review][Low] L3 — 60.17 RAF 状态 + cancelDragHoverPending 与 60.18 effect radius 代码块分离，不再交叉穿插
+- [ ] [AI-Review][Low] L1 — AC6 「性能 ≤1ms 每次 hover」无 benchmark 测试，推迟（dragover 高频但 lookup 是 O(1)，dogfood 未观察到卡顿）
+- [ ] [AI-Review][Low] L2 — `echo` 在 spec 描述里被列入"范围词条"但实际没 posRel（实现自然跳过 ✓），推迟（spec 描述瑕疵不影响行为）
 
 ### File List
 

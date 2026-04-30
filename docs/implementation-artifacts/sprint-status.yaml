@@ -493,7 +493,7 @@ development_status:
   # Created: 2026-04-29 — Story 60.16 done 后 dogfood 暴露 4 个 Phase 1 遗留 stub
   epic-60-followup: in-progress
   60-17-drag-hover-preview: done                        # 拖拽 hover 目标键预估产出 tooltip（P1 最高频痛点）— code-review approved + 4 轮 dogfood 修订完成 2026-04-30
-  60-18-effect-range-highlight: review                  # 范围词条键盘高亮（splash/echo/aura/relay 等 · P3）
+  60-18-effect-range-highlight: done                    # 范围词条键盘高亮（splash/aura/relay 等 · code-review approved 2026-04-30 · 6/8 findings 修完）
   60-19-stats-real-data: done                           # STAT 命令接已有 letterFreqs/wordEffects（P2 · code-review approved 2026-04-30 · 8 findings 全修）
   60-20-filed-real-data: done                           # 工作台 FILED folder 接真实 owned skills/relics（P4 · code-review approved 2026-04-30 · 5/7 findings 修完）
   60-21-terminal-i18n-coverage-completion: done         # Terminal hardcoded ~98 strings i18n 补全（P3 · code-review approved 2026-04-30 · 6/8 findings 修完，~176 个 i18n key 入库）

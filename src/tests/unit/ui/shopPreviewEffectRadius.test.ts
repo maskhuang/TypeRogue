@@ -37,7 +37,8 @@ vi.mock('../../../src/systems/dragManager', async () => {
 vi.mock('../../../src/effects/sound', () => ({ playSound: vi.fn() }))
 vi.mock('../../../src/systems/battle', () => ({ startLevel: vi.fn() }))
 
-import { clearEffectRadiusHighlight } from '../../../src/ui/shop/shopWorkbench'
+import { clearEffectRadiusHighlight, highlightEffectRadius } from '../../../src/ui/shop/shopWorkbench'
+import { getKeysWithRelation } from '../../../src/data/keyboardTopology'
 
 // ===== Fake DOM 基础设施 =====
 interface FakeKeyEl {
@@ -71,6 +72,10 @@ beforeEach(() => {
   resetState()
   dragState.dragging = false
   dragState.payload = null
+  // Node test env 没有 CSS.escape — stub 一个穿透即可（测试用单字母 key 无特殊字符）
+  ;(globalThis as unknown as { CSS: { escape: (s: string) => string } }).CSS = {
+    escape: (s: string) => s,
+  }
 })
 
 afterEach(() => {
@@ -114,7 +119,7 @@ describe('Story 60.18 · effect radius 高亮', () => {
     expect(typeof PositionRelation.Adjacent).toBe('string')
   })
 
-  it('范围词条触发：mock skill with splash + posRel=Adjacent → hover 邻接 keys 应被高亮', () => {
+  it('范围词条触发：splash + posRel=Adjacent → hover G 邻接 keys 加 .effect-radius-preview class', () => {
     // 准备 state + mock skill 含 splash 词条 + posRel=Adjacent
     state.affixSkills.set('sk_splash', {
       id: 'sk_splash',
@@ -130,13 +135,83 @@ describe('Story 60.18 · effect radius 高亮', () => {
       affixes: [{ type: 'splash', posRel: PositionRelation.Adjacent }],
     } as unknown as never)
 
-    // setupDragZones 注册的 onDragEnter 内部调 highlightEffectRadius —
-    // 但 highlightEffectRadius 是 module-private。无法直接测。
-    // 通过 setupDragZones 间接验证（需要完整 DOM mock 太复杂）。
-    // 本测试只验证 export 的 clearEffectRadiusHighlight 工作 + state 准备成功。
-    const skill = state.affixSkills.get('sk_splash')
-    expect(skill).toBeDefined()
-    expect(skill?.affixes[0]?.type).toBe('splash')
-    expect(skill?.affixes[0]?.posRel).toBe(PositionRelation.Adjacent)
+    // 计算预期：hover 'g' 时 Adjacent 关系下应被高亮的键集合（与实现同源算法）
+    const expectedKeys = new Set(getKeysWithRelation('g', PositionRelation.Adjacent))
+    expect(expectedKeys.size).toBeGreaterThan(0) // sanity: Adjacent 应至少有 1 邻
+
+    // 构造 fake DOM：每个 keys 对应一个 FakeKeyEl
+    const allKeys = ['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m']
+    const elMap = new Map<string, FakeKeyEl>()
+    for (const k of allKeys) elMap.set(k, makeFakeKey(k))
+
+    const fakeRoot = {
+      querySelector: (sel: string) => {
+        // 抓 [data-key="X"] 的 X
+        const m = sel.match(/data-key="([^"]+)"/)
+        return m ? (elMap.get(m[1]) ?? null) : null
+      },
+      querySelectorAll: () => [],
+    }
+    vi.stubGlobal('document', {
+      getElementById: (id: string) => (id === 'workbench-screen-preview' ? fakeRoot : null),
+    })
+
+    highlightEffectRadius('g', 'sk_splash')
+
+    // 邻接键应被加 class
+    for (const k of expectedKeys) {
+      const el = elMap.get(k)
+      if (!el) continue
+      expect(el.classList.contains(RADIUS_CLASS)).toBe(true)
+    }
+    // 非邻接键不应被加 class（取一个明显远的 'q'）
+    if (!expectedKeys.has('q')) {
+      expect(elMap.get('q')!.classList.contains(RADIUS_CLASS)).toBe(false)
+    }
+    // anchor 'g' 自身不在 radius（实现 occupiedSet 排除）
+    expect(elMap.get('g')!.classList.contains(RADIUS_CLASS)).toBe(false)
+  })
+
+  it('无 posRel 词条（如 base / convert）→ 不加 class', () => {
+    state.affixSkills.set('sk_plain', {
+      id: 'sk_plain',
+      name: 'MOCK PLAIN',
+      icon: 'X',
+      level: 1,
+      rarity: 0,
+      resource: 'base',
+      baseValues: [10],
+      shapeId: 'monomino',
+      rotation: 0,
+      enchantmentIds: [],
+      affixes: [{ type: 'convert' }], // no posRel
+    } as unknown as never)
+
+    const allKeys = ['a','b','c','d','e','f','g','h','i','j']
+    const elMap = new Map<string, FakeKeyEl>()
+    for (const k of allKeys) elMap.set(k, makeFakeKey(k))
+    const fakeRoot = {
+      querySelector: (sel: string) => {
+        const m = sel.match(/data-key="([^"]+)"/)
+        return m ? (elMap.get(m[1]) ?? null) : null
+      },
+      querySelectorAll: () => [],
+    }
+    vi.stubGlobal('document', {
+      getElementById: (id: string) => (id === 'workbench-screen-preview' ? fakeRoot : null),
+    })
+
+    highlightEffectRadius('g', 'sk_plain')
+
+    for (const el of elMap.values()) {
+      expect(el.classList.contains(RADIUS_CLASS)).toBe(false)
+    }
+  })
+
+  it('未注册 skillId → 静默 no-op，不抛异常', () => {
+    vi.stubGlobal('document', {
+      getElementById: () => ({ querySelector: () => null, querySelectorAll: () => [] }),
+    })
+    expect(() => highlightEffectRadius('g', 'NONEXISTENT_SID')).not.toThrow()
   })
 })

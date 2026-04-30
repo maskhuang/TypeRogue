@@ -132,8 +132,10 @@ export function highlightShapePlacementOnWorkbench(
 export function clearShapePlacementOnWorkbench(): void {
   const wb = document.getElementById('workbench-screen-preview');
   if (!wb) return;
-  wb.querySelectorAll(`.${HL_VALID}, .${HL_INVALID}, .${HL_DISPLACED}`)
-    .forEach(el => el.classList.remove(HL_VALID, HL_INVALID, HL_DISPLACED));
+  // Story 60.18 review M3 fix: 统一 cleanup —— 同时清 effect-radius-preview class，
+  // 让所有 cleanup 点（onDragLeave/onDrop/onDragEnd）调本函数即可，避免漏清半态。
+  wb.querySelectorAll(`.${HL_VALID}, .${HL_INVALID}, .${HL_DISPLACED}, .effect-radius-preview`)
+    .forEach(el => el.classList.remove(HL_VALID, HL_INVALID, HL_DISPLACED, 'effect-radius-preview'));
 }
 
 /**
