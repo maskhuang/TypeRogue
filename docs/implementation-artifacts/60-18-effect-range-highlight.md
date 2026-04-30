@@ -128,6 +128,8 @@ claude-opus-4-7[1m]
 - 实施于 2026-04-30，单 session 完成 Task 1-5
 - **关键发现**：affix 系统已有完整 posRel 机制（`PositionRelation` enum + `getKeysWithRelation`），所有范围词条（splash/aura/relay/war_drum/conduit/amplify/mirror/cascade/chain 等）skillGeneration 时都填了 `posRel`。复用即可，**0 行新邻接代码**
 - **dogfood 修订（AC3 spec deviation）**：spec AC3 说"多格 tetromino 拖拽时只显示 shape，不显示 effect radius（避免视觉重叠）"。但 dogfood 显示 domino skill (2-cell) 含 war_drum/union 范围词条很常见，玩家**需要同时看 shape + radius**。改为：所有 skill（含多格）都触发 effect radius；多格用 `mapShapeToKeys` 解析 occupied cells，对每个 cell 的 posRel 关系键 union（与 affixTrigger.getExtendedNeighbors 同语义）。视觉风格区分明显（shape outline solid 绿/金章 vs radius outline + bg + pulse 橙），组合显示不混淆
+- **dogfood 修订（60.17 一致性）**：60.17 拖拽预估 tooltip 之前给 `buildSkillKeyTooltipData` 传单 `[hoverKey]` 作 boundKeys，多格技能因此被当单格算（`computeSmartEstimate` 用错的占据集合，预估失真）。修复：与 60.18 effect radius 使用同一 `mapShapeToKeys` 解析的 occupied 集合 — 三者（实际触发 / radius 高亮 / 产出预估）共用一个 occupied keys 真相源
+- **已知 SELF_ZERO_TYPES 限制**：`computeSmartEstimate` 在 systems/shop.ts:842-845 对含 splash/aura/relay/war_drum/conduit/amplify/aura_fury/aura_morale 任一词条的 skill 直接 `return null`（产出预估对范围词条放弃，因依赖周围 skill 状态）。结果：**含范围词条 skill 拖拽时仅看到 60.18 范围高亮，无 60.17 产出 tooltip**（因 smartEstimate=null）。此为现有设计，不在本 story 范围；如未来需补 fallback 显示（如 base value + radius count），单独立 follow-up story
 - **架构合规**：
   - shopWorkbench 调 `getKeysWithRelation` (data/keyboardTopology) — 与 affixTrigger 同算法（同一 source of truth），杜绝高亮误导玩家的风险
   - 多格 tetromino 优先 shape placement（AC3）— 单格才显示 effect radius

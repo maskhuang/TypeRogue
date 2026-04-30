@@ -375,12 +375,17 @@ export function attachWorkbenchTooltips(): void {
           // Story 60.17 review M3: drop / cancel 后 RAF 仍可能跑 — guard 不在拖拽就 bail，
           // 防止 stale tooltip 在用户已落键的键上闪现误导
           if (!dragManager.dragging) return;
-          // 多格技能：只在 hover key 能作为合法 anchor 时显示
+          // Story 60.18 一致性修订：boundKeys 应为 skill 真实 occupied keys（多格用
+          // mapShapeToKeys 解析所有 cells）而非单点 hoverKey — 与 60.18 effect radius
+          // 高亮、affixTrigger 实际触发逻辑共用同一 occupied 集合，computeSmartEstimate
+          // 算的产出才与玩家落键后真实表现一致。
+          let boundKeys: string[] = [hoverKey];
           if (shapeId && shapeId !== 'monomino') {
             const fit = mapShapeToKeys(hoverKey, shapeId, rotation);
-            if (!fit) return;
+            if (!fit) return;  // 放不下 → 不显示
+            boundKeys = fit;
           }
-          const data = buildSkillKeyTooltipData(skillId, [hoverKey]);
+          const data = buildSkillKeyTooltipData(skillId, boundKeys);
           if (!data) return;
           if (!data.skill?.smartEstimate) return;
           keyTooltip.show(cx, cy, data, undefined, false, true);
