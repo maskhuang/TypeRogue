@@ -1024,6 +1024,7 @@ export function cmdReshuffle(): void {
     return;
   }
   state.gold -= cost;
+  let success = false;
   try {
     const items: ShopItem[] = [
       ...generateAffixShopItems(3),
@@ -1031,16 +1032,30 @@ export function cmdReshuffle(): void {
     ];
     const relic = generateShopRelicItem(1);
     if (relic) items.push(relic);
+    if (items.length === 0) {
+      throw new Error('generator returned empty list');
+    }
     state.shop.items = items;
     rebuildDescriptors();
+    success = true;
     appendLine(`CATALOG RESHUFFLED · 🍌 ${cost} DEDUCTED · NEW INVENTORY POSTED`, 'echo');
-  } catch {
-    appendLine(`CATALOG RESHUFFLED · 🍌 ${cost} DEDUCTED · GENERATOR UNAVAILABLE`, 'echo');
+  } catch (err) {
+    // Story 60.18 dogfood: generator 抛错 → 退还 gold（避免"扣钱不刷新"）+ console 留诊断
+    state.gold += cost;
+    if (typeof console !== 'undefined') {
+      // eslint-disable-next-line no-console
+      console.error('[cmdReshuffle] generator failed, refunded:', err);
+    }
+    appendLine(`ERR · GENERATOR UNAVAILABLE · 🍌 ${cost} REFUNDED · TRY AGAIN`, 'redacted');
   }
   appendBlank();
   updateTerminalChrome();
   // Story 60.11: 标记下次 LIS 走逐行 print 动画
   previewState.nextListIsAnimated = true;
+  // Story 60.18 dogfood: RES 成功后立即 cmdList 让玩家看到新 inventory（不再依赖
+  // 玩家手动 LIS 才知道是否真刷新；之前"扣钱不刷新"的 root cause 部分是玩家
+  // 没意识到要再 LIS）
+  if (success) cmdList();
 }
 
 export function cmdProceed(): void {

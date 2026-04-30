@@ -385,7 +385,21 @@ export function attachWorkbenchTooltips(): void {
             if (!fit) return;  // 放不下 → 不显示
             boundKeys = fit;
           }
-          const data = buildSkillKeyTooltipData(skillId, boundKeys);
+          // Story 60.18 dogfood: 虚拟卸下被拖技能的旧绑定，让 computeSmartEstimate 看到
+          // "如果绑这里、其他位置没我"的状态 — 否则 skill 残留在键盘上的 cells 会被
+          // void / aura / amplify / war_drum 等 affix 误算入邻居（产出预估虚高/虚低）。
+          // sync mutate state.player.bindings → buildSkillKeyTooltipData → restore，原子操作。
+          const oldBindings: Array<[string, string]> = [];
+          for (const [k, sid] of state.player.bindings) {
+            if (sid === skillId) oldBindings.push([k, sid]);
+          }
+          for (const [k] of oldBindings) state.player.bindings.delete(k);
+          let data;
+          try {
+            data = buildSkillKeyTooltipData(skillId, boundKeys);
+          } finally {
+            for (const [k, sid] of oldBindings) state.player.bindings.set(k, sid);
+          }
           if (!data) return;
           if (!data.skill?.smartEstimate) return;
           // Story 60.17 dogfood: tooltip 智能避让键盘 — 取 .wb-keyboard-base 包围盒做
