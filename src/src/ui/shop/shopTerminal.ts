@@ -36,6 +36,7 @@ import {
   previewState,
   shopBus,
   sfx,
+  escapeHtml,
   HIGH_PRICE_THRESHOLD,
   PREVIEW_SEED_GOLD,
   VERBS,
@@ -446,9 +447,8 @@ export function appendLine(text: string, cls = '', raw = false): void {
   vp.scrollTop = vp.scrollHeight;
 }
 
-export function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+// escapeHtml 已移至 ./shopState（workbench inbox card 也要用）— 通过 shopState 重新 export
+export { escapeHtml } from './shopState';
 
 export function appendBlank(n = 1): void {
   for (let i = 0; i < n; i++) appendLine('');

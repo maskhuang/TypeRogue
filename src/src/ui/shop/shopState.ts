@@ -108,6 +108,11 @@ export function sfx(type: Parameters<typeof playSound>[0]): void {
   playSound(type);
 }
 
+/** Pure utility — text → HTML-safe string. Shared by terminal output and workbench card render. */
+export function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 // === Cross-module callback registry (Story 60.16 AC4) ===
 // terminal / workbench 之间不直接 import；少量协调点（切屏/submit/post-buy 刷新）
 // 由各模块自行注册到 shopBus，调用方通过 shopBus.X() 拨号。
