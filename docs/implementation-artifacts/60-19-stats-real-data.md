@@ -1,86 +1,140 @@
-# Story 60.19: STAT 命令接真实统计数据
+# Story 60.19: STAT 命令接已有键位统计 · 艺术改造 + 功能迁移
 
-Status: backlog
+Status: ready-for-dev
 
-<!-- Epic 60-Followup · 优先级 P2（数据源待勘察） -->
+<!-- Epic 60-Followup · 优先级 P2（已有数据，纯迁移工作） -->
 <!-- Source: Story 60.16 code-review 完成后用户 dogfood 反馈 -->
+<!-- Scope clarified 2026-04-29: 不新增 collector，仅迁移 classic shop 已渲染的 per-key freq / score 数据到 terminal STAT ASCII 视图 -->
 
 ## Story
 
 As a **打字商店玩家**,
-I want **终端 `STA` (`STAT` / `STATS`) 命令显示当前 run 真实的 key usage / DPS / accuracy 而不是 hardcoded 假数据**,
-so that **能在购买决策前看到上一关到现在的真实表现**.
+I want **终端 `STA` (`STAT` / `STATS`) 命令显示当前 run 真实的 per-key freq / score / 锁定状态，而不是 hardcoded 假数据**,
+so that **能在购买决策前看到与 classic shop keyboard slot 上一致的真实键位状态**.
 
 ## 背景
 
-`shopTerminal.ts:cmdStats` 自 Phase 1 起就是 stub，函数体注释自挂：
+`shopTerminal.ts:cmdStats` 自 Phase 1 起就是 stub — 函数体注释挂 `STUB · P1.4 wires real data`，hardcoded：
 
-```ts
-appendLine('═══ END OF AUDIT ═══ (STUB · P1.4 wires real data)', 'dim');
-```
-
-Hardcoded 数据：
 ```
 KEY USAGE       FREQ    DPS     ACC
 A  ████████      9     142     94%
 E  ███████       8     128     91%
-L  ██████        7     121     88%
 TOP CONTRIBUTOR: LOZ-204 (38% of total)
 WEAKEST KEY:     J (FREQ-LOCKED)
 ```
 
-**Phase 1.4 → Phase 2 → Story 60.16 全程都没接真实数据**。本 story 把 hardcoded 替换为 battle session metrics。
+而 **classic shop 路径** (`systems/shop.ts:3427-3548`) 已在每个 keyboard slot 上渲染了：
+- **freq** = `calculateLetterFrequency(state.player.wordDeck).get(k)` — 该字母在词库中累计出现次数
+- **score** = aggregated `state.wordEffects` (Story 14.x letter upgrade) — 字母升级带来的额外底分
+- **freq-locked** = `freq < FREQ_UNLOCK_THRESHOLD` (Story 20.2 zero-freq lock 标点键豁免)
+
+**60-19 仅做艺术改造 + 功能迁移** — 把这些 per-key 数字以 DPCA 终端 ASCII bar chart 风格渲染。**不需要新建 collector / 不需要 DPS / accuracy 计算**（这些 metric 不存在数据源，不在本 story 范围）。
 
 ## Acceptance Criteria
 
-1. **AC1：数据源勘察 + 决定方案** —— Task 1 prospect `state.battleStats` / `keyTracker` / `runMetrics` 等存在的 stat collector：
-   - **a. 存在 + 完整**：直接接（最理想）
-   - **b. 存在但缺字段**：扩 collector + 接
-   - **c. 不存在**：拆 sub-story 60-19a (battle session collector) + 60-19b (display)
+1. **AC1：FREQ 列接真实 letterFreqs** —— 显示 top-N 高频键，每行 `key | bar chart | freq number`，bar 长度按 max freq 缩放（≤ 20 字符）
 
-2. **AC2：KEY USAGE 真实** —— 显示当前 run 累计的 per-key 击键次数 top 5（≤5 行 + bar chart）
+2. **AC2：SCORE 列接真实 wordEffects 加成** —— 复用 `systems/shop.ts:3499-3515` 的 score 计算逻辑（base_score + base_multiplier 聚合），抽到共享 helper（避免双份实现漂移）
 
-3. **AC3：DPS 真实** —— 每个 top-5 key 的平均产出 (resource units / second over active battle time)
+3. **AC3：LOCKED 状态高亮** —— 显示 `freq < FREQ_UNLOCK_THRESHOLD` 的键，用 `redacted` CSS class 渲染（已有的暗红终端字符）；punctuation 键豁免与 classic 一致
 
-4. **AC4：ACC 真实** —— 每个 top-5 key 的命中率（hits / (hits + misses)），无 miss 显示 `100%`
+4. **AC4：TOP CONTRIBUTOR / WEAKEST KEY 计算** ——
+   - TOP CONTRIBUTOR = top-1 by freq × (1 + score)（综合贡献），显示 `KEY · pct%`（占总和百分比）
+   - WEAKEST KEY = freq 最低的非标点键，状态标 `(FREQ-LOCKED)` 当 freq < threshold
 
-5. **AC5：TOP CONTRIBUTOR / WEAKEST KEY 真实** —— 算 top-1 by total resource generated；weakest 按 freq lock state（已有 Story 20.2 zero-freq lock 机制）
+5. **AC5：UI 风格保留** —— ASCII bar chart + monospace + DPCA 官僚风文案；只换数字/字段；不重做布局；删除 hardcoded `DPS / ACC` 列（无数据源不渲染）
 
-6. **AC6：UI 风格保留** —— 仍是终端 ASCII bar chart + monospace + DPCA 官僚风文案，仅替换数字/字段；不重做 UI 布局
+6. **AC6：单元测试** —— mock `state.player.wordDeck` + `state.wordEffects`，断言 cmdStats 输出 contains 真实数字 + LOCKED 状态正确
 
-7. **AC7：单元测试** —— mock state.battleStats / 等价数据源，验证 cmdStats 输出 contains 真实数字
+7. **AC7：i18n 覆盖** —— 复用 `shop.terminal.cmd.stats.*` namespace（与 60-15 i18n coverage 风格一致），新增 keys: `stats.title / stats.col_key / stats.col_freq / stats.col_score / stats.top_contributor / stats.weakest / stats.locked`
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: 数据源 prospecting（AC: 1）**
-  - [ ] 1.1 grep `keyTracker / battleStats / runStats / keyUsage` in src/src
-  - [ ] 1.2 检查 `state.run.X` / `state.battleSession.X` 字段
-  - [ ] 1.3 决定 path A/B/C → 写在 Dev Agent Record
+- [ ] **Task 1: 抽 per-key score 计算到共享 helper（AC: 2）**
+  - [ ] 1.1 `src/src/systems/letters/LetterScoreAggregator.ts` 新建（或加到现有 LetterFrequencySystem.ts）
+  - [ ] 1.2 export `calculateLetterScores(wordEffects: Map<string, WordEffect>): Map<string, number>` — 输入复用 classic shop 算法（base_score 聚合 → ×base_multiplier → -1）
+  - [ ] 1.3 classic shop `systems/shop.ts:3499-3515` 改用新 helper（避免漂移）
+  - [ ] 1.4 验证 classic 渲染 0 行为变化
 
-- [ ] **Task 2: 真实数据接入（AC: 2-5）**
-  - [ ] 2.1 改 `cmdStats` 函数体为 driven-by-state 渲染
-  - [ ] 2.2 top-5 key 排序 + bar chart 缩放
-  - [ ] 2.3 DPS / ACC 计算
+- [ ] **Task 2: 重写 cmdStats 接真实数据（AC: 1-5）**
+  - [ ] 2.1 `src/src/ui/shop/shopTerminal.ts:cmdStats` 删除 hardcoded `appendLine('  A  ████████ ...')` 行
+  - [ ] 2.2 调 `calculateLetterFrequency(state.player.wordDeck)` + `calculateLetterScores(state.wordEffects)`
+  - [ ] 2.3 排序 + 渲染 top-10 键的 `key | bar | freq | score`
+  - [ ] 2.4 LOCKED 状态：`freq < FREQ_UNLOCK_THRESHOLD && !isPunctKey` → `redacted` class
+  - [ ] 2.5 计算 TOP CONTRIBUTOR + WEAKEST KEY，按 AC4 规则渲染
 
-- [ ] **Task 3: 测试（AC: 7）**
-  - [ ] 3.1 `tests/unit/ui/shopPreviewStats.test.ts` ~60 行
-  - [ ] 3.2 inject mock stats → 断言输出
+- [ ] **Task 3: i18n keys（AC: 7）**
+  - [ ] 3.1 `src/src/demo/demo-i18n.ts` 加 zh + en 字符串
+  - [ ] 3.2 cmdStats 全部走 `t('shop.terminal.cmd.stats.*')`
 
-- [ ] **Task 4: 浏览器手动验证 + commit**
+- [ ] **Task 4: 单元测试（AC: 6）**
+  - [ ] 4.1 `src/tests/unit/ui/shopPreviewStats.test.ts` 新建 ~80 行
+  - [ ] 4.2 mock state.player.wordDeck = ['cat', 'cat', 'cab'] → 断言 freq A=3, B=1, C=3, T=2
+  - [ ] 4.3 mock state.wordEffects with base_score 'a' +5 → 断言 SCORE A 列含 5
+  - [ ] 4.4 freq 1 字母（< threshold 5）→ 断言渲染含 `LOCKED` 标记
+
+- [ ] **Task 5: 浏览器手动验证 + commit**
+  - [ ] 5.1 跑 1-2 关让 wordDeck 累积，#shop-preview → STA → 验证数字与 classic shop slot 上一致
+  - [ ] 5.2 freq lock 状态视觉对齐
 
 ## Dev Notes
 
-### 风险
+### 数据源详细 (路径)
 
-- **数据源可能完全缺失** — 如果 path C，本 story 可能拆出 collector 子任务（先做 60-19a，60-19b 等下个 sprint）
-- **DPS 时间窗口定义** — 是当前 stage 还是整 run？建议从 stage 开始算，每关 reset，与 banner BATCH 计数对齐
+| 字段 | 来源 | 计算 |
+|------|------|------|
+| `freq` | `state.player.wordDeck` | `calculateLetterFrequency(wordDeck).get(k)` (`systems/letters/LetterFrequencySystem.ts:18`) |
+| `score` | `state.wordEffects` | base_score sum × base_multiplier - 1 (`systems/shop.ts:3499-3515`) |
+| `locked` | `freq < FREQ_UNLOCK_THRESHOLD` | `systems/shop.ts:3520` 已有逻辑，常量复用 |
+| `punctuation` | `PUNCTUATION_KEYS.includes(k)` | `systems/shop.ts:3519` 标点键豁免锁定 |
+
+### 共享 helper 抽取（关键）
+
+**Why 抽**: classic shop 的 score 算法（line 3499-3515）是 inline。如果 60-19 在 cmdStats 复制粘贴 → 双份代码漂移风险。**抽到 letters/LetterScoreAggregator.ts**：
+- classic shop 改用 helper（0 行为变化）
+- terminal cmdStats 同时受益
+- 未来 STAT 列扩展只改一处
+
+### Risks
+
+- **Helper 抽取破坏 classic shop 的 score 显示** — Mitigation: classic shop ecosystem 测试覆盖 score 渲染，抽取后跑全套确认 0 退化
+- **Bar chart 缩放 max freq 为 0 时除零** — Mitigation: `if (maxFreq === 0) return appendLine('NO ACTIVITY YET', 'dim')` 兜底
+- **wordDeck 为空（首关入店）** — Mitigation: 显示 "NO TYPING ACTIVITY · BUY WORDS TO SEED FREQUENCY" 替代 stub
 
 ### References
 
-- [Source: src/src/ui/shop/shopTerminal.ts:cmdStats] — 当前 stub
-- [Source: src/src/core/state/RunState.ts] — 可能数据源
-- [Source: Epic 31 (number juice)] — score milestone 已收集 stage 内一些数据，可参考
+- [Source: src/src/ui/shop/shopTerminal.ts:cmdStats] — 当前 stub 实现
+- [Source: src/src/systems/shop.ts:3427-3548] — classic shop 已渲染的 per-key freq/score 算法
+- [Source: src/src/systems/letters/LetterFrequencySystem.ts:18 calculateLetterFrequency] — freq 计算
+- [Source: src/src/core/constants.ts: FREQ_UNLOCK_THRESHOLD] — 锁定阈值（Story 20.2）
+
+## Previous Story Intelligence (60.16)
+
+**Architecture lessons from 60.16 module split**:
+- shopTerminal/shopWorkbench/shopBootstrap 互不直接 import，cross-module 调用走 `shopBus`（state 模块的 callback registry）
+- ✅ **本 story 不破坏此约束** — cmdStats 在 shopTerminal 内部，调用 `state.X` + 复用 letters 系统 helper（systems/letters/）即可，无需 cross-module
+- shopBus 在 module-load IIFE 自动 wire（review fix），测试场景中所有 callback live
+
+**Patterns to reuse**:
+- 使用 `appendLine(text, cls)` + `appendBlank()` 走终端输出（`shopTerminal.ts:appendLine`）
+- 使用 `t('shop.terminal.cmd.stats.*')` i18n 走 `demo-i18n.ts`
+- 60.16 已经 export `escapeHtml` 到 shopState 复用 — 本 story 字符串不含 HTML 特殊字符可不用
+
+**File List (60.16 final 4 模块)**:
+- shopState 145 行 / shopTerminal 1133 / shopWorkbench 498 / shopBootstrap 836 / facade 36
+- AC1 行数上限已放宽到 1200/500/900/200，本 story 加 ~60-100 行进 shopTerminal 仍在限内
+
+## Architecture Compliance
+
+- **核心架构**: `docs/game-architecture.md` (本项目主架构文档)
+- **数据流**: state.player.wordDeck → calculateLetterFrequency() → cmdStats 渲染（无新 state field）
+- **共享 helper 边界**: 复用 systems/letters/* 内的现有 / 新增 helper；不在 ui/shop/* 内重新实现 freq 算法
 
 ## Dev Agent Record
 
 (to be filled by implementing dev)
+
+### File List
+
+(待实施时填)

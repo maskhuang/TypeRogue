@@ -1,6 +1,6 @@
 # Story 60.18: 范围技能影响半径键盘高亮
 
-Status: backlog
+Status: ready-for-dev
 
 <!-- Epic 60-Followup · 优先级 P3（视觉重要但非阻塞） -->
 <!-- Source: Story 60.16 code-review 完成后用户 dogfood 反馈 -->
@@ -88,10 +88,37 @@ Phase 1/2 实现了多格 tetromino 的 *shape placement* 高亮（`highlightSha
 
 ### References
 
-- [Source: src/src/systems/shop.ts:843 SELF_ZERO_TYPES] — 范围词条清单
-- [Source: src/src/data/keyboardAdjacencyMap.ts] — 邻接 lookup table
-- [Source: src/src/ui/shapePreview.ts highlightShapePlacementOnWorkbench] — 形状高亮参考实现
+- [Source: src/src/systems/shop.ts:843 SELF_ZERO_TYPES] — 范围词条清单 `['conduit', 'amplify', 'splash', 'relay', 'war_drum', 'aura_fury', 'aura_morale']`
+- [Source: src/src/systems/skills/passive/AdjacencyMap.ts:39 getAdjacent] — 邻接 lookup（已有，复用！）
+- [Source: src/src/ui/shapePreview.ts highlightShapePlacementOnWorkbench / clearShapePlacementOnWorkbench] — 形状高亮参考实现
+- [Source: src/src/systems/shop.ts:3551-3700 classic shop tooltip 范围预览] — 已实现的"hover 已绑键时高亮范围"参考逻辑（拖拽态没有，本 story 补）
+- [Source: src/src/data/affixes.ts] — affix 类型定义 + 实际触发邻接算法
+
+## Previous Story Intelligence (60.16 + Story 2.1 + Story 35.x)
+
+**Story 2.1 (Epic 2 keyboard adjacency)**: 已建好 `AdjacencyMap` 单例，提供 `getAdjacent(key) → string[]`、`areAdjacent(k1, k2) → boolean` API。**直接复用，不要重新建**。
+
+**Story 35.11 classic shop hover-on-bound-key 范围预览**: 已经存在 — hover 已绑键时高亮邻接显示溅射范围（`systems/shop.ts:3551+` 区域内）。本 story 补的是**拖拽态（未落键时）**的同种预览，逻辑可镜像 classic 实现。
+
+**60.16 模块约束**：
+- shopWorkbench.setupDragZones 已注册 `onDragEnter / onDragLeave` 调用 `highlightShapePlacementOnWorkbench` — 在同位置追加 effect-radius 调用即可
+- 不动 shopBus（DOM 高亮纯 workbench 内部副作用）
+
+**60.16 模块化经验**:
+- shapePreview.ts 是 ui/ 公共模块（不在 ui/shop/ 内），可以从 workbench 自由 import
+- CSS 文件加新 class 需在 `src/src/styles/shopPreview.css` 或类似位置（待 grep 确认）
+
+## Architecture Compliance
+
+- **依赖方向**: shopWorkbench → shapePreview / AdjacencyMap（OK，shapePreview 已有该方向；AdjacencyMap 来自 systems/skills/）
+- **半径算法不二份实现** (AC2 + AC6 关键依赖): 邻接计算只走 `AdjacencyMap.getAdjacent()`，不在 ui/ 写新邻接逻辑
+- **触发逻辑一致性**: 高亮算法应**镜像 affixTrigger.ts 实际触发**邻接 — 不一致则误导玩家。Task 1 第 1 步是 grep `splash` `aura_fury` 等在 affixTrigger.ts 内的实际邻接半径
+- **核心架构**: `docs/game-architecture.md`
 
 ## Dev Agent Record
 
 (to be filled by implementing dev)
+
+### File List
+
+(待实施时填)

@@ -1,6 +1,6 @@
 # Story 60.20: 工作台右侧 FILED folder 接真实 owned skills + relics
 
-Status: backlog
+Status: ready-for-dev
 
 <!-- Epic 60-Followup · 优先级 P4（最简单收尾，~30 行） -->
 <!-- Source: Story 60.16 code-review 完成后用户 dogfood 反馈 -->
@@ -94,7 +94,34 @@ for (const id of state.player.relics) {
 
 - [Source: src/src/ui/shop/shopBootstrap.ts:680-758 buildWorkbenchScreen] — folder HTML 位置
 - [Source: src/src/ui/shop/shopTerminal.ts:cmdInfoListOwned] — /OWNED 命令复用渲染逻辑
+- [Source: src/src/data/relics.ts: RELICS] — relic id → { icon, name, description }
+
+## Previous Story Intelligence (60.16)
+
+**Architecture lessons from 60.16 module split**:
+- 4 模块单向依赖 (state ← terminal/workbench ← bootstrap)；workbench 不直接 import terminal
+- ✅ **本 story 完全在 shopWorkbench 内** — bindings/inbox/relics 渲染都是 workbench 职能；buildWorkbenchScreen 模板里 inline 的 folder HTML 抽到 shopWorkbench 同模块函数即可
+- shopBus 已 wire `syncWorkbenchInbox/Relics/Keys` — 加 `syncFiledFolders` 跟随同模式
+
+**Patterns to reuse**:
+- DOM 渲染走 `document.getElementById(...).innerHTML = renderXxxHtml()` 模式（参考 syncWorkbenchInbox）
+- 通过 `shopBus.X` 让 terminal cmd 路径触发 sync（cmdSell / cmdUndo / executeBuySkill / executeBuyRelic 已经调 syncWorkbenchInbox/Relics）
+- 60.16 review M2 fix 把 __test 移进 bootstrap，本 story 不需要新 __test 入口（folder render 是确定性的，单测直接 import sync 函数）
+
+**Code reference**:
+- `cmdInfoListOwned` (`shopTerminal.ts`) 已有 owned skills (bindings + inbox 合并 + 多格 sid 去重) 算法 → 抽 `getOwnedSkillEntries()` helper 双方共用
+- `cmdInfoListOwned` 的 owned relics 也是 `Array.from(state.player.relics)` + RELICS lookup → 抽 `getOwnedRelicEntries()` helper
+
+## Architecture Compliance
+
+- **依赖方向**: shopWorkbench → shopState（OK）；不引入 ui/shop/ → systems/* 新依赖
+- **i18n 覆盖**: 60-15 已为 SKILL/RELIC folder 标题立了 i18n key（`shop.workbench.folder.skill_title` / `shop.workbench.folder.relic_title`），本 story 渲染保留它们
+- **核心架构**: `docs/game-architecture.md`
 
 ## Dev Agent Record
 
 (to be filled by implementing dev)
+
+### File List
+
+(待实施时填)

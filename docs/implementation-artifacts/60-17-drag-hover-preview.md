@@ -1,6 +1,6 @@
 # Story 60.17: 拖拽中目标键 hover 预估产出 tooltip
 
-Status: backlog
+Status: ready-for-dev
 
 <!-- Epic 60-Followup · 优先级 P1（最高频 dogfood 痛点） -->
 <!-- Source: Story 60.16 code-review 完成后用户 dogfood 反馈 -->
@@ -87,10 +87,38 @@ mouseenter on .kb-key.kb-tier-1
 
 ### References
 
-- [Source: src/src/ui/shop/shopWorkbench.ts:253 attachWorkbenchTooltips] — dragging 守卫位置
-- [Source: src/src/systems/shop.ts:715 buildSkillKeyTooltipData] — tooltip 数据构造
+- [Source: src/src/ui/shop/shopWorkbench.ts:253 attachWorkbenchTooltips] — dragging 守卫位置 (`if (dragManager.dragging) return;` 三处)
+- [Source: src/src/systems/shop.ts:715 buildSkillKeyTooltipData] — tooltip 数据构造（接受 boundKeys 参数）
 - [Source: src/src/ui/shapePreview.ts highlightShapePlacementOnWorkbench] — shape 高亮参考
+- [Source: src/src/data/skillShapes.ts mapShapeToKeys] — 多格 anchor 计算
+- [Source: src/src/core/UserSettings.ts:11 UserSettingsData] — 设置 schema 模板（参考 shopAnimations / shopSound 加 shopDragPreviewTooltip）
+- [Source: src/src/ui/SettingsPanel.ts] — 设置面板 UI 仿照现有 toggle
+
+## Previous Story Intelligence (60.16 + 60.9)
+
+**60.9 原始决策（必须知）**：
+- 60.9 引入了 `if (dragManager.dragging) return;` 守卫**3 处** (tier-1 已绑键 / IN-tray 卡片 / tier-2 遗物键)
+- 理由："拖拽起势时全局隐藏所有 tooltip 不挡视线"（dragManager.onDragStart 也调 keyTooltip.hide）
+- 本 story 是**有意覆盖** 60.9 的决策 — AC5 user setting 留逃生通道，default `true`（启用预览）
+
+**60.16 模块约束**：
+- shopWorkbench.attachWorkbenchTooltips 是 export 函数（被 shopState 的 shopBus 注册）
+- 改动局限在 shopWorkbench.ts + UserSettings.ts + SettingsPanel.ts，不动 terminal / bootstrap
+
+**Edge cases from 60.16 dogfood**:
+- 拖拽 mouseenter 频率高，不可同步重复算 buildSkillKeyTooltipData（M3 风险） → 加 50-100ms throttle
+- pack-pick drawer 打开时 dragManager.dragging 应该是 false（drawer 拦 drag），但仍 defensive 加 `previewState.drawerOpen === null` guard
+
+## Architecture Compliance
+
+- **依赖方向**: shopWorkbench → shopState (sfx, escapeHtml, previewState)；新增对 systems/shop (buildSkillKeyTooltipData) 的依赖已存在
+- **核心架构**: `docs/game-architecture.md`
+- **设置 schema 演进**: 加新 boolean field 必须加 deserialization fallback `?? true` 防老存档崩
 
 ## Dev Agent Record
 
 (to be filled by implementing dev)
+
+### File List
+
+(待实施时填)
