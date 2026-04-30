@@ -494,7 +494,7 @@ development_status:
   epic-60-followup: in-progress
   60-17-drag-hover-preview: done                        # 拖拽 hover 目标键预估产出 tooltip（P1 最高频痛点）— code-review approved + 4 轮 dogfood 修订完成 2026-04-30
   60-18-effect-range-highlight: review                  # 范围词条键盘高亮（splash/echo/aura/relay 等 · P3）
-  60-19-stats-real-data: review                         # STAT 命令接已有 letterFreqs/wordEffects（P2 · 艺术改造 + 迁移，无新 collector）
+  60-19-stats-real-data: done                           # STAT 命令接已有 letterFreqs/wordEffects（P2 · code-review approved 2026-04-30 · 8 findings 全修）
   60-20-filed-real-data: ready-for-dev                  # 工作台 FILED folder 接真实 owned skills/relics（P4 · ~30 行）
   60-21-terminal-i18n-coverage-completion: backlog      # Terminal hardcoded 97 strings i18n 补全（P3 · 接 60-15 · ~150-200 LOC）
   epic-60-followup-retrospective: optional

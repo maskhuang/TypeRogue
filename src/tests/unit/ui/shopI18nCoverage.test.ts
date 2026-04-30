@@ -56,6 +56,14 @@ const SHOP_I18N_KEYS = [
   'shop.terminal.info.section.skills',
   'shop.terminal.info.section.relics',
   'shop.terminal.cmd.opening_words',
+  // Story 60.19: STAT 真实数据
+  'shop.terminal.cmd.stats.title',
+  'shop.terminal.cmd.stats.col_header',
+  'shop.terminal.cmd.stats.no_activity',
+  'shop.terminal.cmd.stats.locked',
+  'shop.terminal.cmd.stats.top_contributor',
+  'shop.terminal.cmd.stats.weakest_key',
+  'shop.terminal.cmd.stats.footer',
 ] as const
 
 beforeEach(() => {

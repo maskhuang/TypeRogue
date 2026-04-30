@@ -6,6 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { state, resetState } from '../../../src/core/state'
+import type { WordEffect } from '../../../src/core/types'
 
 vi.mock('../../../src/effects/sound', () => ({ playSound: vi.fn() }))
 vi.mock('../../../src/systems/battle', () => ({ startLevel: vi.fn() }))
@@ -63,6 +64,16 @@ function findLine(needle: string): FakeViewportLine | undefined {
   return capturedLines.find(l => l.text.includes(needle))
 }
 
+/** 严格匹配 bar chart 行（行首 2 空格 + 字母 + 空格），避开 TOP CONTRIBUTOR / 标题等多字纯文本行。
+ *  注意：freq=0 的行 bar 为空（20 个空格），不能要求 █ 存在。
+ */
+function findBarRow(letter: string): FakeViewportLine | undefined {
+  const upper = letter.toUpperCase()
+  // 转义 regex 元字符（标点键 ; , . / [ ] 中 . / [ ] 是 regex 特殊）
+  const escaped = upper.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return capturedLines.find(l => new RegExp(`^\\s{2}${escaped}\\s`).test(l.text))
+}
+
 describe('Story 60.19 · cmdStats 真实数据', () => {
   it('AC1: 词库为空 → 显示 NO TYPING ACTIVITY 兜底', () => {
     state.player.wordDeck = []
@@ -76,11 +87,10 @@ describe('Story 60.19 · cmdStats 真实数据', () => {
     state.player.wordDeck = ['cat', 'cat', 'cab']
     // 期望 freq: a=3, b=1, c=3, t=2
     cmdStats()
-    // 渲染顺序按 freq 降序，所以 A 或 C 排前
-    const aLine = findLine(' A ')
-    const cLine = findLine(' C ')
-    const bLine = findLine(' B ')
-    const tLine = findLine(' T ')
+    const aLine = findBarRow('a')
+    const cLine = findBarRow('c')
+    const bLine = findBarRow('b')
+    const tLine = findBarRow('t')
     expect(aLine?.text).toMatch(/\b3\b/)
     expect(cLine?.text).toMatch(/\b3\b/)
     expect(bLine?.text).toMatch(/\b1\b/)
@@ -89,22 +99,23 @@ describe('Story 60.19 · cmdStats 真实数据', () => {
 
   it('AC2: SCORE 列接 calculateLetterScores（base_score）', () => {
     state.player.wordDeck = ['ace']
-    state.wordEffects.set('boost-a', { type: 'base_score', value: 5, targetLetter: 'a' } as any)
+    const effect: WordEffect = { type: 'base_score', value: 5, targetLetter: 'a' }
+    state.wordEffects.set('boost-a', effect)
     cmdStats()
-    // 'a' 应有 +5 score 显示
-    const aLine = findLine(' A ')
+    const aLine = findBarRow('a')
     expect(aLine?.text).toContain('+5')
   })
 
   it('AC3: freq < FREQ_UNLOCK_THRESHOLD 非标点键 → LOCKED 标记', () => {
     // FREQ_UNLOCK_THRESHOLD = 1（systems/letters/LetterFrequencySystem.ts:11）
-    // wordDeck 仅有 1 个非锁字母，确保某些字母 freq=0 (locked)
+    // wordDeck 仅有 a/c/e，确保 'z' freq=0 → locked
     state.player.wordDeck = ['ace']
     // 强制注入一个 score-only 键（'z' freq=0），验证 locked 路径
-    state.wordEffects.set('boost-z', { type: 'base_score', value: 3, targetLetter: 'z' } as any)
+    const effect: WordEffect = { type: 'base_score', value: 3, targetLetter: 'z' }
+    state.wordEffects.set('boost-z', effect)
     cmdStats()
     // z 行应有 [FREQ-LOCKED] 标记 + redacted class
-    const zLine = findLine(' Z ')
+    const zLine = findBarRow('z')
     expect(zLine).toBeDefined()
     expect(zLine!.text).toContain('[FREQ-LOCKED]')
     expect(zLine!.className).toContain('redacted')
@@ -113,25 +124,24 @@ describe('Story 60.19 · cmdStats 真实数据', () => {
   it('AC3: 标点键 freq=0 时不标 LOCKED（PUNCTUATION_KEYS 豁免）', () => {
     // 通过 wordEffects targetLetter=';' 触发渲染该键（虽然 freq=0）
     state.player.wordDeck = ['ace']
-    state.wordEffects.set('punct-boost', {
-      type: 'base_score', value: 2, targetLetter: ';',
-    } as any)
+    const effect: WordEffect = { type: 'base_score', value: 2, targetLetter: ';' }
+    state.wordEffects.set('punct-boost', effect)
     cmdStats()
-    const semiLine = capturedLines.find(l => l.text.match(/\s;\s|\s;\s\b/))
-    // 标点键不应触发 LOCKED 标记
-    if (semiLine) {
-      expect(semiLine.text).not.toContain('[FREQ-LOCKED]')
-    }
+    const semiLine = findBarRow(';')
+    // 必须真的渲染了 ';' 行（否则下面的断言变 vacuous）
+    expect(semiLine).toBeDefined()
+    expect(semiLine!.text).not.toContain('[FREQ-LOCKED]')
+    expect(semiLine!.className).not.toContain('redacted')
   })
 
   it('AC4: TOP CONTRIBUTOR 显示综合占比（freq × (1+score)）', () => {
-    state.player.wordDeck = ['cat', 'cat', 'cat'] // a=3, c=3, t=3
+    state.player.wordDeck = ['cat', 'cat', 'cat'] // a=3, c=3, t=3 → 三键平分
     cmdStats()
-    expect(lineContains('TOP CONTRIBUTOR')).toBe(true)
-    // 应该显示某个 KEY + 百分比
     const topLine = findLine('TOP CONTRIBUTOR')
-    expect(topLine?.text).toMatch(/[A-Z]/)
-    expect(topLine?.text).toMatch(/\d+%/)
+    expect(topLine).toBeDefined()
+    // 三键综合贡献相等（freq × 1+0 = 3 each），总和 9，top1 占 33%
+    expect(topLine!.text).toContain('33%')
+    expect(topLine!.text).toMatch(/\b[ACT]\b/) // top1 必为 A/C/T 之一
   })
 
   it('AC4: WEAKEST KEY 显示 freq 最低非标点键', () => {
@@ -155,7 +165,7 @@ describe('Story 60.19 · cmdStats 真实数据', () => {
     // 单字母 'a' 出现 1 次 → maxFreq = 1, barLen = 20（满）
     state.player.wordDeck = ['a']
     cmdStats()
-    const aLine = findLine(' A ')
+    const aLine = findBarRow('a')
     expect(aLine?.text).toContain('█'.repeat(20))
   })
 

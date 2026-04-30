@@ -1137,8 +1137,8 @@ export function cmdStats(): void {
     rows.push({ key: k, freq, score, locked });
   }
 
-  // freq 降序，相同 freq 按 score 降序，再按字母 a→z
-  rows.sort((a, b) => b.freq - a.freq || b.score - a.score || a.key.localeCompare(b.key));
+  // freq 降序，相同 freq 按字母 a→z（避免 score 顺序导致视觉抖动）
+  rows.sort((a, b) => b.freq - a.freq || a.key.localeCompare(b.key));
 
   // 列头：KEY | BAR | FREQ | SCORE
   appendLine(t('shop.terminal.cmd.stats.col_header'));
