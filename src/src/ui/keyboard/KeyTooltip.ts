@@ -435,6 +435,9 @@ class KeyTooltipManager {
 
     el.innerHTML = html
     el.style.display = 'block'
+    // Story 60.17 dogfood: 复位上次 positionAvoidingRect 留下的 hidden（防 RAF 被
+    // 替换时残留的不可见状态）— 后续 positionAvoidingRect 会再 hide 自己
+    el.style.visibility = ''
 
     // 延迟展开术语详情
     if (glossaryHtml) {
@@ -550,6 +553,8 @@ class KeyTooltipManager {
   private positionAvoidingRect(el: HTMLElement, cursorX: number, avoid: { top: number; left: number; right: number; bottom: number }): void {
     const gap = 8
 
+    // Story 60.17 dogfood: 用 visibility 隐藏到位置算定，避免 (0,0) 左上角闪一帧
+    el.style.visibility = 'hidden'
     el.style.left = `0px`
     el.style.top = `0px`
 
@@ -560,6 +565,7 @@ class KeyTooltipManager {
 
     const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (cb: () => void) => setTimeout(cb, 0) as unknown as number
     this.positionRafId = raf(() => {
+      try {
       if (typeof el.getBoundingClientRect !== 'function') return
       const rect = el.getBoundingClientRect()
       const vw = window.innerWidth
@@ -606,6 +612,10 @@ class KeyTooltipManager {
       // fallback: 上方，允许超出
       el.style.left = `${Math.max(gap, cursorX - rect.width / 2)}px`
       el.style.top = `${avoid.top - rect.height - gap}px`
+      } finally {
+        // 位置算定后再 visible（无论走哪个 branch / 是否提前 return），避免 0,0 闪现
+        el.style.visibility = ''
+      }
     })
   }
 
