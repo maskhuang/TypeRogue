@@ -4138,6 +4138,41 @@ body.shop-preview-active #relic-tooltip > div:last-child {
     font-style: italic;
 }
 
+/* Story 60.9 follow-up #8: KeyTooltip 用大量 inline `style="color:#..."`
+ * 注入 CRT 霓虹色（AFFIX_COLORS 60+ 色 + KW_STYLE 白色 + crit 黄）
+ * 它们直接打在 element 上，class CSS 不能 cascade 干扰；用 attribute
+ * selector + !important 让外部 CSS 反向压过 inline 样式。
+ *
+ * 策略：
+ *   - 所有 inline color 默认重定向到金章 #7a5a10（中等对比 / 不刺眼）
+ *   - 特定语义（暴击 / 关键词高亮）单独走红章 #8a1a1a
+ *   - 关键词下划线颜色同步到红墨
+ *   - glossary section 顶边线由白透明改褐墨
+ */
+body.shop-preview-active .key-tooltip [style*="color:"],
+body.shop-preview-active .key-tooltip [style*="color :"],
+body.shop-preview-active #relic-tooltip [style*="color:"] {
+    color: #7a5a10 !important;                 /* 默认：金章 */
+}
+body.shop-preview-active .key-tooltip .tooltip-crit-chance,
+body.shop-preview-active .key-tooltip [style*="color:#f1c40f"] {
+    color: #8a1a1a !important;                 /* 暴击：红章（强调） */
+}
+/* KW_STYLE 关键词高亮 — 白字下划线，在牛皮纸上必须改红章 + 红墨下划线 */
+body.shop-preview-active .key-tooltip [style*="color:#fff"],
+body.shop-preview-active .key-tooltip [style*="color: #fff"],
+body.shop-preview-active .key-tooltip [style*="color:#FFF"] {
+    color: #8a1a1a !important;
+    text-decoration-color: rgba(138, 26, 26, 0.55) !important;
+    text-decoration-thickness: 1px;
+}
+body.shop-preview-active .key-tooltip .tooltip-glossary {
+    border-top-color: rgba(122, 90, 16, 0.4) !important;
+}
+body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
+    color: #5a4828 !important;
+}
+
 /* Story 40.6 / 60.1: 右键旋转动画（classic shop + 新工作台共用） */
 .key-slot.shape-rotating,
 .kb-key.kb-tier-1.shape-rotating {
