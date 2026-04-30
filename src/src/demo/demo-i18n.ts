@@ -248,6 +248,10 @@ const ZH: Record<string, string> = {
   'settings.shopUI': '商店界面',
   'settings.shopUI.classic': '经典',
   'settings.shopUI.terminal': '终端',
+  // Story 60.11: 转场动画开关
+  'settings.shopAnimations': '商店动画',
+  'settings.shopAnimations.on': '开',
+  'settings.shopAnimations.off': '关',
   'settings.reset': '⚠ 重置所有进度',
   'settings.reset_confirm': '确定要重置所有进度吗？此操作不可撤销。',
   'settings.close': '关闭',
@@ -1361,6 +1365,10 @@ const EN: Record<string, string> = {
   'settings.shopUI': 'Shop UI',
   'settings.shopUI.classic': 'Classic',
   'settings.shopUI.terminal': 'Terminal',
+  // Story 60.11: shop transition animations toggle
+  'settings.shopAnimations': 'Shop Animations',
+  'settings.shopAnimations.on': 'On',
+  'settings.shopAnimations.off': 'Off',
   'settings.reset': '⚠ Reset All Progress',
   'settings.reset_confirm': 'Are you sure you want to reset all progress? This cannot be undone.',
   'settings.close': 'Close',

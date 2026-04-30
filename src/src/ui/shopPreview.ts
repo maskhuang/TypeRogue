@@ -24,6 +24,8 @@ import {
 } from '../systems/shop';
 // Story 60.9: keyTooltip 单例（与 classic 商品卡共用）
 import { keyTooltip } from './keyboard/KeyTooltip';
+// Story 60.11: 转场动画守卫
+import { shouldAnimateShop } from '../core/UserSettings';
 // Story 60.7: 副作用 hook（事件总线 + quest 重算 + 遗物购入瞬时效果）
 import { eventBus } from '../core/events/EventBus';
 import { evaluateEquipQuests } from '../data/affixTrigger';
@@ -84,6 +86,10 @@ let workbenchEntered = false;
 // Story 60.9 follow-up #9: 追踪"曾被装配过"的 skillId — 卸回 IN-tray 时
 // 渲染为已开封态（无运单包装），区别于刚购入的未拆封态（完整运单）
 let unsealedSkillIds = new Set<string>();
+// Story 60.11: RESHUFFLE 后下次 LIS 走逐行 print 模式
+let nextListIsAnimated = false;
+// Story 60.11: cmdList 调用计数器 — 用户在动画期间再次 LIS 时取消旧队列
+let listCallCounter = 0;
 // snapshot of descriptors for current shop session — re-derived each LIST or after mutation
 let descriptorCache: ItemDescriptor[] = [];
 
@@ -533,19 +539,47 @@ function cmdHelp(): void {
 
 function cmdList(): void {
   rebuildDescriptors();
+  // Story 60.11 review M1: 无条件 single-shot 消费 nextListIsAnimated，
+  // 防 RESHUFFLE 抛错或 cache 临时为空时 flag 跨调用泄漏（之前在空 cache 早 return
+  // 后旁路了 flag reset，下一次非空 LIS 会意外走动画）
+  const animated = nextListIsAnimated && shouldAnimateShop();
+  nextListIsAnimated = false;
   if (descriptorCache.length === 0) {
     appendLine('CATALOG EMPTY · NO ITEMS POSTED', 'dim');
     appendBlank();
     return;
   }
-  appendLine('CATALOG · 2026-Q2 · ALL PRICES IN BANANA STANDARD 🍌', 'head');
-  appendLine('─────────────────────────────────────────────────────────────────────────────────────');
-  appendLine(renderListHeaderRow(), 'head list-row', true);
-  appendLine('─────────────────────────────────────────────────────────────────────────────────────');
-  for (const d of descriptorCache) appendLine(renderListRow(d), `${classForRow(d)} list-row`.trim(), true);
-  appendLine('─────────────────────────────────────────────────────────────────────────────────────');
-  appendLine(`${descriptorCache.length} ITEMS LISTED · TYPE  INFO <SKU>  FOR DETAILS`, 'dim');
-  appendBlank();
+  if (!animated) {
+    appendLine('CATALOG · 2026-Q2 · ALL PRICES IN BANANA STANDARD 🍌', 'head');
+    appendLine('─────────────────────────────────────────────────────────────────────────────────────');
+    appendLine(renderListHeaderRow(), 'head list-row', true);
+    appendLine('─────────────────────────────────────────────────────────────────────────────────────');
+    for (const d of descriptorCache) appendLine(renderListRow(d), `${classForRow(d)} list-row`.trim(), true);
+    appendLine('─────────────────────────────────────────────────────────────────────────────────────');
+    appendLine(`${descriptorCache.length} ITEMS LISTED · TYPE  INFO <SKU>  FOR DETAILS`, 'dim');
+    appendBlank();
+    return;
+  }
+  // 动画模式：每行 30ms 间隔逐行打出（仿点阵打印机走纸）
+  const myCallId = ++listCallCounter;
+  const lines: Array<{ text: string; cls: string; raw: boolean }> = [];
+  lines.push({ text: 'CATALOG · 2026-Q2 · ALL PRICES IN BANANA STANDARD 🍌', cls: 'head', raw: false });
+  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
+  lines.push({ text: renderListHeaderRow(), cls: 'head list-row', raw: true });
+  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
+  for (const d of descriptorCache) {
+    lines.push({ text: renderListRow(d), cls: `${classForRow(d)} list-row`.trim(), raw: true });
+  }
+  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
+  lines.push({ text: `${descriptorCache.length} ITEMS LISTED · TYPE  INFO <SKU>  FOR DETAILS`, cls: 'dim', raw: false });
+  lines.forEach((line, idx) => {
+    setTimeout(() => {
+      // 取消条件：用户已在动画期间触发新 cmdList（counter 变了）
+      if (listCallCounter !== myCallId) return;
+      appendLine(line.text, line.cls, line.raw);
+      if (idx === lines.length - 1) appendBlank();
+    }, idx * 30);
+  });
 }
 
 /**
@@ -851,6 +885,34 @@ function executeBuySkill(d: ItemDescriptor): void {
   appendBlank();
   updateTerminalChrome();
   syncWorkbenchInbox();
+  // Story 60.11: BUY 成功 → IN-tray 对应槽 whoosh 滑入 + 闪光（仅成功路径）
+  triggerInboxWhoosh(state.player.inbox.length - 1);
+}
+
+/**
+ * Story 60.11: 触发 IN-tray 槽 whoosh 滑入动画
+ * @param slotIdx state.player.inbox 中刚 push 的下标（新卡所在 cutout）
+ */
+function triggerInboxWhoosh(slotIdx: number): void {
+  if (!shouldAnimateShop()) return;
+  // 防御：测试环境 / SSR 可能无 requestAnimationFrame
+  if (typeof requestAnimationFrame === 'undefined') return;
+  // requestAnimationFrame 等 syncWorkbenchInbox 重渲完成 + DOM 落地
+  requestAnimationFrame(() => {
+    const root = document.querySelector('#workbench-screen-preview .wb-foam-case');
+    if (!root) return;
+    const cutouts = root.querySelectorAll<HTMLElement>('.foam-cutout');
+    const target = cutouts[slotIdx];
+    if (!target) return;
+    const card = target.querySelector<HTMLElement>('.weapon-card');
+    if (!card) return;
+    card.classList.remove('wb-inbox-whoosh');
+    void card.offsetWidth;
+    card.classList.add('wb-inbox-whoosh');
+    card.addEventListener('animationend', () => {
+      card.classList.remove('wb-inbox-whoosh');
+    }, { once: true });
+  });
 }
 
 function executeBuyPack(d: ItemDescriptor): void {
@@ -1202,6 +1264,8 @@ function cmdReshuffle(): void {
   }
   appendBlank();
   updateTerminalChrome();
+  // Story 60.11: 标记下次 LIS 走逐行 print 动画
+  nextListIsAnimated = true;
 }
 
 function cmdProceed(): void {
@@ -2000,7 +2064,27 @@ function showOnly(which: 'terminal' | 'workbench'): void {
   const w = document.getElementById('workbench-screen-preview') as HTMLElement | null;
   if (t) t.style.display = which === 'terminal' ? 'flex' : 'none';
   if (w) w.style.display = which === 'workbench' ? 'flex' : 'none';
+  // Story 60.11: 切屏 CRT flicker 转场（仅当用户开启动画且不在切回相同屏幕时）
+  if (which !== currentScreen && shouldAnimateShop()) {
+    const target = which === 'terminal' ? t : w;
+    triggerCrtFlicker(target);
+  }
   currentScreen = which;
+}
+
+/**
+ * Story 60.11: 触发 CRT flicker 切屏动画
+ * 加 class .screen-crt-transition，animationend 后自动清除（once 监听防泄漏）
+ */
+function triggerCrtFlicker(el: HTMLElement | null): void {
+  if (!el) return;
+  el.classList.remove('screen-crt-transition');
+  // 强制 reflow 让重新加 class 触发动画（一帧内重复加同 class 不会重启）
+  void el.offsetWidth;
+  el.classList.add('screen-crt-transition');
+  el.addEventListener('animationend', () => {
+    el.classList.remove('screen-crt-transition');
+  }, { once: true });
 }
 
 function hideAllRealScreens(): void {
@@ -2420,4 +2504,10 @@ export const __test = {
   cmdInfo: (arg: string): void => cmdInfo(arg),
   /** Story 60.10 review M2: 注入 descriptorCache 方便测 catalog 命中路径 */
   setDescriptorCache: (items: ItemDescriptor[]): void => { descriptorCache = items; },
+  // Story 60.11: 动画测试入口
+  cmdList: (): void => cmdList(),
+  cmdReshuffle: (): void => cmdReshuffle(),
+  triggerInboxWhoosh: (slotIdx: number): void => triggerInboxWhoosh(slotIdx),
+  showOnly: (which: 'terminal' | 'workbench'): void => showOnly(which),
+  setNextListAnimated: (v: boolean): void => { nextListIsAnimated = v; },
 };

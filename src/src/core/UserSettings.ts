@@ -15,6 +15,9 @@ export interface UserSettingsData {
   backgroundMode: BackgroundMode
   // Story 60.5: 商店界面切换 — 默认 classic（保守发布），玩家主动切到 terminal 后立即生效
   shopUI: ShopUiMode
+  // Story 60.11: terminal 商店转场动画开关（whoosh / CRT flicker / reshuffle 逐行 print）
+  // 默认 true。`prefers-reduced-motion: reduce` 媒体查询会强制覆盖 false（见 shouldAnimateShop）
+  shopAnimations: boolean
 }
 
 const DEFAULTS: UserSettingsData = {
@@ -23,6 +26,7 @@ const DEFAULTS: UserSettingsData = {
   locale: 'zh',
   backgroundMode: 'random',
   shopUI: 'classic',
+  shopAnimations: true,
 }
 
 let current: UserSettingsData = { ...DEFAULTS }
@@ -51,4 +55,18 @@ export function getSettings(): UserSettingsData {
 export function updateSettings(partial: Partial<UserSettingsData>): void {
   Object.assign(current, partial)
   saveSettings()
+}
+
+/**
+ * Story 60.11: 是否应播放 terminal 商店转场动画
+ * 同时尊重玩家设置 + 系统级 prefers-reduced-motion 偏好
+ */
+export function shouldAnimateShop(): boolean {
+  if (!current.shopAnimations) return false
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return true
+  try {
+    return !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  } catch {
+    return true
+  }
 }

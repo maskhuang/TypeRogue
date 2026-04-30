@@ -67,6 +67,14 @@ export function openSettingsPanel(): void {
         </div>
       </div>
 
+      <div class="settings-row">
+        <label class="settings-label">${esc(t('settings.shopAnimations'))}</label>
+        <div class="settings-lang-btns">
+          <button class="settings-lang-btn ${settings.shopAnimations ? 'active' : ''}" data-shop-anim="on">${esc(t('settings.shopAnimations.on'))}</button>
+          <button class="settings-lang-btn ${!settings.shopAnimations ? 'active' : ''}" data-shop-anim="off">${esc(t('settings.shopAnimations.off'))}</button>
+        </div>
+      </div>
+
       <div class="settings-divider"></div>
 
       <button class="settings-reset-btn" id="settings-reset">${esc(t('settings.reset'))}</button>
@@ -132,6 +140,20 @@ export function openSettingsPanel(): void {
       updateSettings({ shopUI: mode })
       overlay?.querySelectorAll('[data-shop-ui]').forEach(b => {
         b.classList.toggle('active', (b as HTMLElement).dataset.shopUi === mode)
+      })
+    })
+  })
+
+  // Story 60.11: Shop Animations 切换（on / off）
+  overlay.querySelectorAll('[data-shop-anim]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playSound('click')
+      const mode = (btn as HTMLElement).dataset.shopAnim
+      const enabled = mode === 'on'
+      updateSettings({ shopAnimations: enabled })
+      overlay?.querySelectorAll('[data-shop-anim]').forEach(b => {
+        const isOn = (b as HTMLElement).dataset.shopAnim === 'on'
+        b.classList.toggle('active', isOn === enabled)
       })
     })
   })
