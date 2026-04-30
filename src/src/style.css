@@ -6138,10 +6138,11 @@ body.shop-preview-active #relic-tooltip > div:last-child {
     gap: 4px;
     cursor: grab;
     transition: transform 120ms ease, box-shadow 120ms ease;
-    /* Story 60.9 follow-up: 卡片严格按 IN-tray 容器宽度收缩，不被长技能名顶破 */
+    /* Story 60.9 follow-up: 卡片严格按 IN-tray 容器宽度收缩，不被长技能名顶破
+     * 注：不在这里加 overflow-wrap — 否则会级联到 .wc-barcode 让条形码也换行；
+     * 改在 .wc-name 单独加 break，.wc-barcode 单独 nowrap */
     box-sizing: border-box;
     min-width: 0;
-    overflow-wrap: anywhere;
 }
 .weapon-card:hover {
     transform: translateY(-2px) rotate(-0.5deg);
@@ -6169,7 +6170,13 @@ body.shop-preview-active #relic-tooltip > div:last-child {
     opacity: 0.75;
     letter-spacing: 1px;
 }
-.wc-barcode { font-family: 'Courier New', monospace; letter-spacing: -1px; }
+.wc-barcode {
+    font-family: 'Courier New', monospace;
+    letter-spacing: -1px;
+    /* Story 60.9 follow-up: 条形码是装饰性图形 token，永远单行 */
+    white-space: nowrap;
+    flex-shrink: 0;
+}
 .wc-stamp {
     align-self: flex-start;
     margin-top: 2px;
