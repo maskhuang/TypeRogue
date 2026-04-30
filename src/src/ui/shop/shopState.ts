@@ -11,6 +11,8 @@
 
 import type { ItemDescriptor } from '../itemDescriptors';
 import type { WordPack } from '../../core/types';
+import { shouldPlayShopSound } from '../../core/UserSettings';
+import { playSound } from '../../effects/sound';
 
 // === Constants ===
 
@@ -99,3 +101,40 @@ export function resetPreviewSession(): void {
   previewState.workbenchEntered = false;
   previewState.unsealedSkillIds = new Set<string>(); // Story 60.9 follow-up #9: 重置开封记录
 }
+
+// === Story 60.12: shop 音效守卫包装 — 单点关 + 兼容 SOUND_PROFILES type ===
+export function sfx(type: Parameters<typeof playSound>[0]): void {
+  if (!shouldPlayShopSound()) return;
+  playSound(type);
+}
+
+// === Cross-module callback registry (Story 60.16 AC4) ===
+// terminal / workbench 之间不直接 import；少量协调点（切屏/submit/post-buy 刷新）
+// 由各模块自行注册到 shopBus，调用方通过 shopBus.X() 拨号。
+//
+// 维度：
+//   - bootstrap-provided: showOnly / switchToWorkbench / updateTerminalChrome（terminal/workbench cmd 调）
+//   - workbench-provided: syncWorkbenchInbox / syncWorkbenchRelics / syncWorkbenchKeys / openDrawer / closeDrawer / triggerInboxWhoosh
+//   - terminal-provided: finalizePackPick / cancelPackPick（workbench drawer 调）
+const noop = (): void => {};
+export const shopBus = {
+  // bootstrap-provided
+  showOnly: noop as (which: 'terminal' | 'workbench') => void,
+  switchToWorkbench: noop as () => void,
+  updateTerminalChrome: noop as () => void,
+
+  // workbench-provided
+  syncWorkbenchInbox: noop as () => void,
+  syncWorkbenchRelics: noop as () => void,
+  syncWorkbenchKeys: noop as () => void,
+  attachWorkbenchTooltips: noop as () => void,
+  setupDragZones: noop as () => void,
+  openDrawer: noop as (kind: DrawerKind) => void,
+  closeDrawer: noop as () => void,
+  triggerInboxWhoosh: noop as (slotIdx: number) => void,
+
+  // terminal-provided
+  finalizePackPick: noop as (word: string) => void,
+  cancelPackPick: noop as () => void,
+  appendLine: noop as (text: string, cls?: string, raw?: boolean) => void,
+};
