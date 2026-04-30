@@ -16,7 +16,14 @@ import {
   getFreqHints,
   formatWordEffectLabel,
   applyMaxSkillLevelOnPurchase,
+  // Story 60.9: 工作台 hover tooltip 复用 classic 路径
+  buildSkillKeyTooltipData,
+  showRelicTooltip,
+  hideRelicTooltip,
+  moveRelicTooltip,
 } from '../systems/shop';
+// Story 60.9: keyTooltip 单例（与 classic 商品卡共用）
+import { keyTooltip } from './keyboard/KeyTooltip';
 // Story 60.7: 副作用 hook（事件总线 + quest 重算 + 遗物购入瞬时效果）
 import { eventBus } from '../core/events/EventBus';
 import { evaluateEquipQuests } from '../data/affixTrigger';
@@ -790,6 +797,10 @@ function createSubmitStampOverlay(): HTMLElement | null {
 
 function executeSubmitTransition(overlay: HTMLElement | null): void {
   // 清理 preview 状态
+  // Story 60.9: 关 tooltip + 清 dragStart 回调
+  keyTooltip.hide();
+  hideRelicTooltip();
+  dragManager.onDragStart = null;
   dragManager.destroy();
   clearShapePlacementOnWorkbench();
   pendingPackPick = null;
@@ -1448,6 +1459,73 @@ function syncWorkbenchKeys(): void {
     tagSpan.textContent = sk.name.split('·')[0].slice(0, 8).toUpperCase();
     keyEl.appendChild(tagSpan);
   });
+  attachWorkbenchTooltips();
+}
+
+/**
+ * Story 60.9: 给工作台 3 类元素挂 hover tooltip
+ *   - tier-1 已绑键（.has-skill）→ keyTooltip with skill data
+ *   - IN-tray 卡片（.weapon-card[data-drag-type="skill-inventory"]）→ keyTooltip
+ *   - 数字键已挂遗物（.has-relic）→ relic tooltip
+ * 用 dataset.tooltipBound 防重复挂 listener（参考 60-1 的 rotHandlerBound）
+ * 拖拽中跳过：dragManager.dragging 守卫
+ */
+export function attachWorkbenchTooltips(): void {
+  const root = document.getElementById('workbench-screen-preview');
+  if (!root) return;
+
+  // 1) tier-1 已绑键
+  root.querySelectorAll<HTMLElement>('.kb-key.kb-tier-1.has-skill[data-key]').forEach(keyEl => {
+    if (keyEl.dataset.tooltipBound === '1') return;
+    keyEl.dataset.tooltipBound = '1';
+    keyEl.addEventListener('mouseenter', (e: MouseEvent) => {
+      if (dragManager.dragging) return;
+      const skillId = keyEl.dataset.boundSkill;
+      if (!skillId) return;
+      const boundKeys: string[] = [];
+      for (const [bk, sid] of state.player.bindings) {
+        if (sid === skillId) boundKeys.push(bk);
+      }
+      const data = buildSkillKeyTooltipData(skillId, boundKeys);
+      if (!data) return;
+      keyTooltip.show(e.clientX, e.clientY, data);
+    });
+    keyEl.addEventListener('mouseleave', () => keyTooltip.hide());
+  });
+
+  // 2) IN-tray 卡片
+  root.querySelectorAll<HTMLElement>('.weapon-card[data-drag-type="skill-inventory"]').forEach(cardEl => {
+    if (cardEl.dataset.tooltipBound === '1') return;
+    cardEl.dataset.tooltipBound = '1';
+    cardEl.addEventListener('mouseenter', (e: MouseEvent) => {
+      if (dragManager.dragging) return;
+      const skillId = cardEl.dataset.skillId;
+      if (!skillId) return;
+      const data = buildSkillKeyTooltipData(skillId);
+      if (!data) return;
+      keyTooltip.show(e.clientX, e.clientY, data);
+    });
+    cardEl.addEventListener('mouseleave', () => keyTooltip.hide());
+  });
+
+  // 3) 数字键已挂遗物
+  root.querySelectorAll<HTMLElement>('.kb-key.kb-tier-2.has-relic[data-key]').forEach(keyEl => {
+    if (keyEl.dataset.tooltipBound === '1') return;
+    keyEl.dataset.tooltipBound = '1';
+    keyEl.addEventListener('mouseenter', (e: MouseEvent) => {
+      if (dragManager.dragging) return;
+      const relicId = keyEl.dataset.relicId;
+      if (!relicId) return;
+      const relic = RELICS[relicId];
+      if (!relic) return;
+      showRelicTooltip(e, relic);
+    });
+    keyEl.addEventListener('mousemove', (e: MouseEvent) => {
+      if (dragManager.dragging) return;
+      moveRelicTooltip(e);
+    });
+    keyEl.addEventListener('mouseleave', () => hideRelicTooltip());
+  });
 }
 
 // Register all tier-1 letter keys + IN-tray as drop zones
@@ -1534,6 +1612,7 @@ function syncWorkbenchRelics(): void {
     keyEl.classList.add('has-relic');
     keyEl.dataset.relicId = relicId;
   }
+  attachWorkbenchTooltips();
 }
 
 function syncWorkbenchInbox(): void {
@@ -1565,6 +1644,7 @@ function syncWorkbenchInbox(): void {
   if (active) setupDragZones();
   const sub = document.querySelector('#workbench-screen-preview .wb-intray .wb-tab-sub');
   if (sub) sub.textContent = `待装配 · ${String(state.player.inbox.length).padStart(2, '0')}`;
+  attachWorkbenchTooltips();
 }
 
 interface InboxCardData {
@@ -1648,6 +1728,10 @@ function restoreFromPreview(): void {
   active = false;
   document.body.classList.remove('shop-preview-active');
   clearShapePlacementOnWorkbench();
+  // Story 60.9: 退出 terminal 商店时关掉残留 tooltip + 清掉 dragStart 回调防泄漏
+  keyTooltip.hide();
+  hideRelicTooltip();
+  dragManager.onDragStart = null;
   dragManager.destroy();
   const t = document.getElementById('terminal-shop-screen') as HTMLElement | null;
   const w = document.getElementById('workbench-screen-preview') as HTMLElement | null;
@@ -1992,6 +2076,11 @@ export function enterTerminalShop(_won?: boolean): void {
   registerShapePreviewRenderer(renderShapePreview);
   // 全局 dragend 兜底清理形状高亮（一次性设置，避免每次 setupDragZones 重复赋值）
   dragManager.onDragEnd = () => clearShapePlacementOnWorkbench();
+  // Story 60.9: 拖拽起势时全局隐藏所有 tooltip（不挡视线）
+  dragManager.onDragStart = () => {
+    keyTooltip.hide();
+    hideRelicTooltip();
+  };
   setupDragZones();
   setupDrawerHandlers();
   setTimeout(() => {

@@ -707,6 +707,50 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
   return { affixInfo, enchantments, questProgress, apprenticeGrowth }
 }
 
+/**
+ * Story 60.9: 工作台 hover tooltip 数据构建
+ * 与 classic shop.ts:1908-1990 / 3528-3554 路径行为对齐（去掉升级路径分支 — workbench 无升级语义）
+ * 需要 skillId 已经在 state.affixSkills 内（IN-tray + 已绑键 都满足）
+ */
+export function buildSkillKeyTooltipData(skillId: string, boundKeys?: string[]): KeyTooltipData | null {
+  const skill = state.affixSkills.get(skillId)
+  if (!skill) return null
+  const rt = state.affixSkillStates.get(skillId)
+  const baseVal = getEffectiveBaseValue(skill.baseValues, skill.level)
+  const resIcon = RESOURCE_ICONS[skill.resource] || ''
+  const resName = t('resource.' + skill.resource) || RESOURCE_NAMES[skill.resource] || skill.resource
+  // M1 review fix: 与 classic shop.ts:1956-1958 同步守卫 — 仅当全局乘法变换激活时才显示 ×N
+  const hasMultOp = (skill.enchantmentIds.includes(EnchantmentTypeEnum.MultiplyOperator as string)
+    || skill.enchantmentIds.includes(EnchantmentTypeEnum.QuestMultiplyOp as string))
+    && isAffixGloballyTransformed(AffixTypeEnum.Multiply, state.affixSkills, state.affixSkillStates)
+  const multOpBase = hasMultOp
+    ? (MULTIPLY_OPERATOR_BASE_VALUES[skill.resource]?.[skill.level - 1] ?? baseVal)
+    : null
+
+  const data: KeyTooltipData = {
+    skill: {
+      name: skill.name,
+      icon: skill.icon,
+      description: hasMultOp ? `${resIcon}${resName}×${multOpBase}` : `${resIcon}${resName}+${baseVal}`,
+      level: skill.level,
+      school: rarityLabel(skill.rarity),
+      schoolCssClass: `rarity-${skill.rarity}`,
+    },
+  }
+  const fields = buildAffixTooltipFields(skill, rt)
+  data.skill!.affixInfo = fields.affixInfo
+  data.skill!.enchantments = fields.enchantments
+  data.skill!.questProgress = fields.questProgress
+  data.skill!.apprenticeGrowth = fields.apprenticeGrowth
+  data.skill!.critChance = computeSkillCritChance(skill)
+  const estimate = computeSmartEstimate(skill, rt, boundKeys && boundKeys.length > 0 ? boundKeys : undefined)
+  if (estimate) data.skill!.smartEstimate = estimate
+  // 形状描述
+  const shapeDesc = getShapeDescription(skill.shapeId ?? 'monomino', getShapeCells(skill.shapeId ?? 'monomino', skill.rotation ?? 0)?.length ?? 1)
+  if (shapeDesc) data.skill!.mechanicInfo = shapeDesc
+  return data
+}
+
 /** 构建单个词条的参数摘要（仅显示会随升级变化的数值） */
 function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skillLevel?: number, rt?: import('../data/affixes').SkillRuntimeState): string {
   switch (a.type) {
@@ -4373,7 +4417,8 @@ function getRarityLabel(rarity: string): string {
   return t(`shop.rarity.${rarity}`);
 }
 
-function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicData): void {
+// Story 60.9: export 给 workbench tooltip 复用（仅 export 关键字改动，0 行为变化）
+export function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicData): void {
   hideAllTooltips();
   const tip = document.createElement('div');
   tip.id = 'relic-tooltip';
@@ -4396,7 +4441,7 @@ function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').RelicDa
   });
 }
 
-function moveRelicTooltip(e: MouseEvent): void {
+export function moveRelicTooltip(e: MouseEvent): void {
   const tip = document.getElementById('relic-tooltip');
   if (!tip) return;
   tip.style.left = e.clientX + 12 + 'px';
@@ -4408,7 +4453,7 @@ function moveRelicTooltip(e: MouseEvent): void {
   });
 }
 
-function hideRelicTooltip(): void {
+export function hideRelicTooltip(): void {
   document.getElementById('relic-tooltip')?.remove();
 }
 
