@@ -3955,6 +3955,15 @@ body.shop-preview-active .wb-foam-case.drop-zone-highlight {
     50% { background: rgba(122, 90, 16, 0.32); }
 }
 
+/* Story 60.18: 范围词条（splash/aura/relay/war_drum/conduit/amplify 等）影响半径预览 —
+   与 shape-preview-* 视觉风格区分（淡黄虚线 outline，不动 background 防与灰影/绿章等冲突）。
+   outline 不影响 layout（不改 hit-box），与 shape-preview 同时显示也不重叠。 */
+.kb-key.kb-tier-1.effect-radius-preview {
+    outline: 2px dashed rgba(212, 169, 64, 0.85);   /* 淡黄虚线 — 区分 shape 实线绿/红/金章 */
+    outline-offset: -3px;                           /* 略内缩，shape outline 在 -2px，不重叠 */
+    box-shadow: inset 0 0 8px rgba(212, 169, 64, 0.25);
+}
+
 /* Story 40.5: 拖拽幽灵形状缩略图 */
 .drag-ghost-shape {
     margin-top: 2px;

@@ -766,11 +766,12 @@ function renderWelcome(): void {
 /**
  * Story 60.16 Task 4 + Review H2 fix: 注册 cross-module callbacks 到 shopBus。
  *
- * Module-load 时立即执行（不再等 enterTerminalShop）— 让测试 import facade
- * 后无需调 enter 流程也能拿到 wired bus，避免 cross-module 回调静默 noop。
- * Idempotent 且 cheap（仅赋值）。
+ * Story 60.18 hotfix: 改用 queueMicrotask 延迟到下一 tick — 避免循环依赖
+ * (systems/shop → shopPreview facade → shopBootstrap → IIFE → workbench 仍未
+ * 初始化完) 的 ReferenceError。下一 tick 时所有模块已 fully resolved。
+ * 测试需同步 wire 的可显式 import + 调 wireShopBus()。
  */
-(function wireShopBus(): void {
+export function wireShopBus(): void {
   // bootstrap-provided（lifecycle / 切屏 / 转场）
   shopBus.showOnly = showOnly;
   shopBus.switchToWorkbench = switchToWorkbench;
@@ -779,7 +780,13 @@ function renderWelcome(): void {
   workbench.registerWorkbenchBindings();
   // terminal-provided（drawer / pack-pick 反向调 terminal 输出）
   terminal.registerTerminalBindings();
-})();
+}
+// 延迟到 microtask 队列 — 模块 init 完成后立即 wire，测试 import 后无需手动调
+if (typeof queueMicrotask === 'function') {
+  queueMicrotask(wireShopBus);
+} else {
+  Promise.resolve().then(wireShopBus);
+}
 
 /**
  * Story 60.5: 进入终端商店（取代 Phase 1 的 enterPreview hash 入口）。
@@ -811,9 +818,10 @@ export function enterTerminalShop(_won?: boolean): void {
   // Story 60.1 follow-up: 注册形状预览渲染器，让 dragManager pickup 模式右键旋转
   // 时能更新幽灵的 shape thumbnail（与 classic shop 共用同一渲染器）
   registerShapePreviewRenderer(renderShapePreview);
-  // 全局 dragend 兜底清理形状高亮 + cancel drag-hover RAF（review M2 fix）
+  // 全局 dragend 兜底清理形状高亮 + effect radius 高亮 + cancel drag-hover RAF
   dragManager.onDragEnd = () => {
     clearShapePlacementOnWorkbench();
+    workbench.clearEffectRadiusHighlight();
     workbench.cancelDragHoverPending();
   };
   // Story 60.9: 拖拽起势时全局隐藏所有 tooltip（不挡视线）

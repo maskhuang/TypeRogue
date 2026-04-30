@@ -31,6 +31,8 @@ import {
   applyBindFromInbox,
   applyUnbindKeyToInbox,
 } from '../shapePreview';
+// Story 60.18: 范围词条（splash/echo/aura/relay/war_drum/conduit/amplify 等）键盘高亮
+import { getKeysWithRelation } from '../../data/keyboardTopology';
 import { t } from '../../demo/demo-i18n';
 import type { WordPack } from '../../core/types';
 import {
@@ -47,6 +49,55 @@ import type { DrawerKind, InboxCardData } from './shopState';
 // 同步累计 jank。RAF 节流 + same-key dedup 把成本压到一帧一次 build。
 let dragHoverRafId: number | null = null
 let dragHoverLastKey: string | null = null
+
+/**
+ * Story 60.17 review M2: 拖拽结束 / 出店时由 bootstrap 调，cancel pending RAF
+ * 并清 lastKey，防止跨 session 状态污染或 drop 后 tooltip stale flash。
+ */
+export // === Story 60.18: 范围词条 effect radius 高亮 ===
+//
+// 拖拽 monomino 含范围词条（splash / echo / aura / relay / war_drum / conduit /
+// amplify 等带 posRel 的词条）时，hover 候选键 K → K 的 posRel 关系键加 outline。
+// 多格 tetromino 优先 shape placement 高亮（AC3），不显示 effect radius。
+// 用 getKeysWithRelation（与 affixTrigger 触发逻辑共用同算法 → 0 漂移误导）。
+const RADIUS_PREVIEW_CLASS = 'effect-radius-preview'
+
+/**
+ * 算 skill 的所有范围词条 posRel 关系下从 hoverKey 出发的影响键集合（去重，排除自身）。
+ * 多个范围词条 union 显示（如同时有 splash + aura → 显示并集）。
+ */
+function getEffectRadiusKeys(skillId: string, hoverKey: string): string[] {
+  const skill = state.affixSkills.get(skillId)
+  if (!skill) return []
+  const radiusKeys = new Set<string>()
+  for (const affix of skill.affixes) {
+    if (!affix.posRel) continue
+    for (const k of getKeysWithRelation(hoverKey, affix.posRel)) {
+      radiusKeys.add(k)
+    }
+  }
+  return Array.from(radiusKeys)
+}
+
+/** 给候选范围键加 outline 高亮 class */
+function highlightEffectRadius(hoverKey: string, skillId: string): void {
+  const root = document.getElementById('workbench-screen-preview')
+  if (!root) return
+  const keys = getEffectRadiusKeys(skillId, hoverKey)
+  for (const k of keys) {
+    const keyEl = root.querySelector<HTMLElement>(`.kb-key.kb-tier-1[data-key="${CSS.escape(k)}"]`)
+    if (keyEl) keyEl.classList.add(RADIUS_PREVIEW_CLASS)
+  }
+}
+
+/** 清除所有 effect-radius-preview 高亮 class — exported for bootstrap onDragEnd cleanup */
+export function clearEffectRadiusHighlight(): void {
+  const root = document.getElementById('workbench-screen-preview')
+  if (!root) return
+  root.querySelectorAll<HTMLElement>(`.kb-key.${RADIUS_PREVIEW_CLASS}`).forEach(el => {
+    el.classList.remove(RADIUS_PREVIEW_CLASS)
+  })
+}
 
 /**
  * Story 60.17 review M2: 拖拽结束 / 出店时由 bootstrap 调，cancel pending RAF
@@ -404,14 +455,21 @@ export function setupDragZones(): void {
         // 跨键拖拽 / IN-tray 拖入 — applyBindFromInbox 内部 bindShapeToKeys
         // 已自带 unbindSkill(self) 步骤，无需在此手动卸源键
         clearShapePlacementOnWorkbench();
+        clearEffectRadiusHighlight();
         bindSkillToKey(skillId, key);
       },
       // Story 60.1: hover 多格形状预览
+      // Story 60.18: 单格 + 范围词条时显示 effect radius 高亮（多格优先 shape，AC3）
       onDragEnter: (p: DragPayload) => {
         highlightShapePlacementOnWorkbench(key, p);
+        const isMultiCell = p.shapeId && p.shapeId !== 'monomino';
+        if (!isMultiCell && p.skillId) {
+          highlightEffectRadius(key, p.skillId);
+        }
       },
       onDragLeave: () => {
         clearShapePlacementOnWorkbench();
+        clearEffectRadiusHighlight();
       },
     });
 
