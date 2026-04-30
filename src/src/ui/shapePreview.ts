@@ -6,9 +6,8 @@
 // 版本平行存在；旧 classic shop 仍由 systems/shop.ts 负责。
 
 import { state } from '../core/state';
-import { KEYS, INBOX_MAX, PUNCTUATION_KEYS } from '../core/constants';
+import { KEYS, INBOX_MAX } from '../core/constants';
 import { mapShapeToKeys, getShapeRotationCount } from '../data/skillShapes';
-import { calculateLetterFrequency, FREQ_UNLOCK_THRESHOLD } from '../systems/letters/LetterFrequencySystem';
 import {
   bindShapeToKeys,
   unbindSkill,
@@ -84,16 +83,6 @@ function workbenchKey(key: string): HTMLElement | null {
  *
  * 不再依赖 dragManager 的 .drop-zone-highlight 荧光蓝 — 工作台所有 hover 状态都用 paper-craft 油墨色。
  */
-// Story 60.20 dogfood: 共享 freq-lock 判定（与 shopWorkbench.isKeyFreqLocked 同算法）—
-// shapePreview 在更深层级，避免循环依赖故内联实现，同算法即可。
-function isKeyFreqLocked(key: string, letterFreqs: Map<string, number>): boolean {
-  const k = key.toLowerCase();
-  if (PUNCTUATION_KEYS.includes(k)) {
-    return !state.player.relics.has('punctuation_liberation');
-  }
-  return (letterFreqs.get(k) ?? 0) < FREQ_UNLOCK_THRESHOLD;
-}
-
 export function highlightShapePlacementOnWorkbench(
   anchorKey: string,
   payload: DragPayload,
@@ -106,16 +95,11 @@ export function highlightShapePlacementOnWorkbench(
   const shapeId = payload.shapeId ?? 'monomino';
   const rotation = payload.rotation ?? 0;
   const dragSkillId = payload.skillId;
-  const letterFreqs = calculateLetterFrequency(state.player.wordDeck);
 
   // Monomino: 单键直接高亮
   if (!shapeId || shapeId === 'monomino') {
     const slot = workbenchKey(normalizedKey);
     if (!slot) return;
-    if (isKeyFreqLocked(normalizedKey, letterFreqs)) {
-      slot.classList.add(HL_INVALID);
-      return;
-    }
     slot.classList.add(HL_VALID);
     const existing = state.player.bindings.get(normalizedKey);
     if (existing && existing !== dragSkillId) {
@@ -131,16 +115,6 @@ export function highlightShapePlacementOnWorkbench(
   if (!targetKeys) {
     const slot = workbenchKey(normalizedKey);
     if (slot) slot.classList.add(HL_INVALID);
-    return;
-  }
-
-  // 多格任一格锁定 → 整组都标 invalid（统一拒收语义）
-  const anyLocked = targetKeys.some(k => isKeyFreqLocked(k, letterFreqs));
-  if (anyLocked) {
-    for (const key of targetKeys) {
-      const slot = workbenchKey(key);
-      if (slot) slot.classList.add(HL_INVALID);
-    }
     return;
   }
 
