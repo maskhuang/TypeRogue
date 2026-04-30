@@ -2277,7 +2277,7 @@ export async function startLevel(): Promise<void> {
   const displayLevel = getBattleNumber(state.level) || state.level;
   const stageLabel = currentStageType === 'boss' ? ' [BOSS]' : currentStageType === 'elite' ? ' [ELITE]' : '';
   const cyclePrefix = state.cycle >= 2 ? t('battle.cycle_prefix', { cycle: state.cycle }) : '';
-  el.levelLabel.textContent = `${cyclePrefix}FILE ${displayLevel}${stageLabel}`;
+  el.levelLabel.textContent = `${cyclePrefix}DAY ${displayLevel}${stageLabel}`;
 
   // HUD: 显示当前 Cycle / StageType
   updateStageInfo(currentCycle, currentStageType);

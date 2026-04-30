@@ -99,7 +99,7 @@ describe('shopPreview facade exports (Story 60.16 backward-compat lock)', () => 
     // buildBannerLine 是纯函数，不动 DOM/state
     const line = buildBannerLine(1, 1, 0)
     expect(line).toContain('CLERK ID: 7842')
-    expect(line).toContain('FILE')
+    expect(line).toContain('DAY')
     expect(line).toContain('A0')
     // getFormLabel 同样纯
     expect(getFormLabel(3)).toBe('F-3')

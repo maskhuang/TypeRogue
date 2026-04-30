@@ -68,7 +68,7 @@ export function buildBannerLine(level: number, cycle: number, ascensionLevel: nu
   const batchPos = getPositionInCycle(safeLevel);
   const cycleLength = BALANCE.CYCLE_LENGTH;
   const ascension = ascensionLevel ?? 0;
-  const content = `  CLERK ID: 7842    ${cyclePrefix}FILE ${fileNum}    BATCH ${String(batchPos).padStart(2, '0')}/${cycleLength}    A${ascension}`;
+  const content = `  CLERK ID: 7842    ${cyclePrefix}DAY ${fileNum}    BATCH ${String(batchPos).padStart(2, '0')}/${cycleLength}    A${ascension}`;
   // 截断或填充到固定宽度（防止超长 cycle prefix + 双位数 ascension 撑破框）
   if (content.length >= BANNER_INNER_WIDTH) return content.slice(0, BANNER_INNER_WIDTH);
   return content.padEnd(BANNER_INNER_WIDTH, ' ');
