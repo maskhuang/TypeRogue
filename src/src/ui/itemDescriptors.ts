@@ -8,10 +8,6 @@ import type { GameState } from '../core/types';
 import { RELICS } from '../data/relics';
 import { abbreviateSkillName } from './affixAbbrev';
 
-function RELICS_LOOKUP(): typeof RELICS {
-  return RELICS;
-}
-
 export type ItemKind = 'skill' | 'pack' | 'relic' | 'enchantment';
 export type ShapeColor = 'mono' | 'rare' | 'epic' | 'legendary' | 'special';
 
@@ -160,9 +156,8 @@ function describePack(item: ShopItem, idx: number): ItemDescriptor {
 function describeRelic(item: ShopItem, idx: number): ItemDescriptor {
   const relicId = item.relicId ?? '';
   const { tag, color } = nonSkillTag('relic');
-  // Lazy import to avoid circular deps at module load
-  // RELICS comes from src/data/relics.ts
-  const data = relicId ? RELICS_LOOKUP()[relicId] : null;
+  // RELICS from src/data/relics.ts
+  const data = relicId ? RELICS[relicId] : null;
   const rarityMap: Record<string, 0 | 1 | 2 | 3> = { common: 0, rare: 1, epic: 2, legendary: 3 };
   const rarity = rarityMap[data?.rarity ?? 'rare'] ?? 1;
   return {

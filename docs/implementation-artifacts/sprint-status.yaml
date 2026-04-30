@@ -482,5 +482,8 @@ development_status:
   60-11-transition-animations: done                     # 转场动画（P2.3 浪漫化）— M1 修完
   60-12-sound-effects: done                             # 音效（P2.3 浪漫化）— M1 修完
   60-13-craft-metamorph-stations: done                  # Craft + Metamorph 工序（P2.3 浪漫化）— M1+L1 修完
-  60-14-module-split-i18n: backlog                      # 模块拆分 + i18n + 死代码清理（P2.4 清理）
+  # P2.4 清理档（原 60-14 一项三主题拆为 60-14/60-15/60-16 三 story 各自独立 PR）
+  60-14-dead-code-cleanup: done                        # 死代码清理 RELICS_LOOKUP + TODO（P2.4 清理 · 风险低）
+  60-15-i18n-coverage: backlog                          # terminal/工作台 i18n 全覆盖（P2.4 清理 · 风险中）
+  60-16-module-split: backlog                           # shopPreview.ts 2548 行 → 4 模块拆分（P2.4 清理 · 风险高 · Epic 60 收官）
   epic-60-retrospective: optional
