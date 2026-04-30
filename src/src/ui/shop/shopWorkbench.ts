@@ -63,27 +63,39 @@ export // === Story 60.18: 范围词条 effect radius 高亮 ===
 const RADIUS_PREVIEW_CLASS = 'effect-radius-preview'
 
 /**
- * 算 skill 的所有范围词条 posRel 关系下从 hoverKey 出发的影响键集合（去重，排除自身）。
- * 多个范围词条 union 显示（如同时有 splash + aura → 显示并集）。
+ * 算 skill 在 hoverKey anchor 处的真实 effect radius keys —
+ * 多格技能：用 mapShapeToKeys 解析所有 occupied cells，对每个 cell 取 posRel 关系键 union（与 affixTrigger.getExtendedNeighbors 同语义），排除 occupied 自身。
+ * 单格：直接用 hoverKey。
+ * 多个范围词条 posRel union 显示（如同时有 splash + aura → 多 posRel 并集）。
  */
-function getEffectRadiusKeys(skillId: string, hoverKey: string): string[] {
+function getEffectRadiusKeys(skillId: string, hoverKey: string, payloadShapeId?: string, payloadRotation?: number): string[] {
   const skill = state.affixSkills.get(skillId)
   if (!skill) return []
+  // 算 skill 实际 occupied keys（多格用 payload 的 shape，单格直接 [hoverKey]）
+  let occupiedKeys: string[] = [hoverKey]
+  if (payloadShapeId && payloadShapeId !== 'monomino') {
+    const fit = mapShapeToKeys(hoverKey, payloadShapeId, payloadRotation ?? 0)
+    if (fit) occupiedKeys = fit
+    // mapShapeToKeys 返 null 表示放不下 — fallback 仅 hoverKey
+  }
+  const occupiedSet = new Set(occupiedKeys)
   const radiusKeys = new Set<string>()
   for (const affix of skill.affixes) {
     if (!affix.posRel) continue
-    for (const k of getKeysWithRelation(hoverKey, affix.posRel)) {
-      radiusKeys.add(k)
+    for (const ok of occupiedKeys) {
+      for (const k of getKeysWithRelation(ok, affix.posRel)) {
+        if (!occupiedSet.has(k)) radiusKeys.add(k)
+      }
     }
   }
   return Array.from(radiusKeys)
 }
 
 /** 给候选范围键加 outline 高亮 class */
-function highlightEffectRadius(hoverKey: string, skillId: string): void {
+function highlightEffectRadius(hoverKey: string, skillId: string, shapeId?: string, rotation?: number): void {
   const root = document.getElementById('workbench-screen-preview')
   if (!root) return
-  const keys = getEffectRadiusKeys(skillId, hoverKey)
+  const keys = getEffectRadiusKeys(skillId, hoverKey, shapeId, rotation)
   for (const k of keys) {
     const keyEl = root.querySelector<HTMLElement>(`.kb-key.kb-tier-1[data-key="${CSS.escape(k)}"]`)
     if (keyEl) keyEl.classList.add(RADIUS_PREVIEW_CLASS)
@@ -459,27 +471,16 @@ export function setupDragZones(): void {
         bindSkillToKey(skillId, key);
       },
       // Story 60.1: hover 多格形状预览
-      // Story 60.18: 单格 + 范围词条时显示 effect radius 高亮（多格优先 shape，AC3）
+      // Story 60.18 (修订): 所有 skill（含多格）都显示 effect radius 高亮 —
+      // 多格 + 范围词条是常见组合（如 war_drum/union: symmetric on domino），
+      // shape preview (绿/金章 outline solid) 与 effect radius (橙 outline + bg + pulse)
+      // 视觉风格区分明显，组合显示不冲突。
+      // 多格情况：用 mapShapeToKeys 解析所有 occupied cells，对每个取 posRel union
+      // （与 affixTrigger.getExtendedNeighbors 同语义，杜绝高亮误导玩家）。
       onDragEnter: (p: DragPayload) => {
         highlightShapePlacementOnWorkbench(key, p);
-        const isMultiCell = p.shapeId && p.shapeId !== 'monomino';
-        // Story 60.18 debug — temporary console trace for dogfood diagnosis
-        if (typeof console !== 'undefined') {
-          const skill = p.skillId ? state.affixSkills.get(p.skillId) : null;
-          const posRels = skill?.affixes.filter(a => !!a.posRel).map(a => `${a.type}:${a.posRel}`) ?? [];
-          // eslint-disable-next-line no-console
-          console.log('[60.18 onDragEnter]', {
-            hoverKey: key,
-            payloadType: p.type,
-            skillId: p.skillId,
-            shapeId: p.shapeId,
-            isMultiCell,
-            posRelAffixes: posRels,
-            radiusKeys: p.skillId ? getEffectRadiusKeys(p.skillId, key) : [],
-          });
-        }
-        if (!isMultiCell && p.skillId) {
-          highlightEffectRadius(key, p.skillId);
+        if (p.skillId) {
+          highlightEffectRadius(key, p.skillId, p.shapeId, p.rotation);
         }
       },
       onDragLeave: () => {
