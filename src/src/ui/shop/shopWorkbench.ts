@@ -48,12 +48,17 @@ import type { DrawerKind, InboxCardData } from './shopState';
 let dragHoverRafId: number | null = null
 let dragHoverLastKey: string | null = null
 
-function cancelDragHoverPending(): void {
+/**
+ * Story 60.17 review M2: 拖拽结束 / 出店时由 bootstrap 调，cancel pending RAF
+ * 并清 lastKey，防止跨 session 状态污染或 drop 后 tooltip stale flash。
+ */
+export function cancelDragHoverPending(): void {
   if (dragHoverRafId != null) {
     const caf = (globalThis as unknown as { cancelAnimationFrame?: (id: number) => void }).cancelAnimationFrame
     if (typeof caf === 'function') caf(dragHoverRafId)
     dragHoverRafId = null
   }
+  dragHoverLastKey = null
 }
 
 // === Story 60.11: IN-tray 槽 whoosh 滑入动画 ===
@@ -304,6 +309,9 @@ export function attachWorkbenchTooltips(): void {
           : ((cb: () => void) => setTimeout(cb, 0) as unknown as number);
         dragHoverRafId = raf(() => {
           dragHoverRafId = null;
+          // Story 60.17 review M3: drop / cancel 后 RAF 仍可能跑 — guard 不在拖拽就 bail，
+          // 防止 stale tooltip 在用户已落键的键上闪现误导
+          if (!dragManager.dragging) return;
           // 多格技能：只在 hover key 能作为合法 anchor 时显示
           if (shapeId && shapeId !== 'monomino') {
             const fit = mapShapeToKeys(hoverKey, shapeId, rotation);

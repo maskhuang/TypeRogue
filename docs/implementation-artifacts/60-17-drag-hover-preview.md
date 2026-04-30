@@ -139,7 +139,16 @@ claude-opus-4-7[1m]
   - productionOnly 模式仅渲染 `buildSummarySection`（smartEstimate 一行产出）— 不渲染 letter/header/affix/enchant/glossary
   - workbench 拖拽预估路径：`if (!data.skill?.smartEstimate) return;` 提前 gate（passive/buff 类无产出 → 不显示打扰）
   - keyTooltip 内层加 defensive `productionOnly && !smartEstimate → hide` 双重保险
-- **dogfood 修订 #3（同 session · root cause 找到）**：用户复现"边缘位置 hover 抖动循环"
+- **dogfood 修订 #4（同 session · 最终方案：hover 完全静止）**：用户复现"鼠标 hover/leave 切换循环卡死"+ "现在的下沉不是之前的下沉效果" + "Hover触发，键位底部上移"
+  - root cause #2: `transition: transform 80ms ease` 让 transform 在 hover/leave 间 80ms 过渡 — 边缘鼠标 + :hover 触发 → 80ms 渐变期间 hit-box 持续变化 → mouseleave → 反向渐变 → mouseenter → 自激振荡
+  - root cause #3: tier-1 :hover 改 box-shadow（底部 3D 暗边 2px→1px）让用户看到"键位底部上移"误导
+  - **最终方案**：hover 完全静止（删 hover 所有 transform / box-shadow 变化），全部反馈移到 `:active`：
+    - `.kb-key:active { transform: translateY(1px) }` — 按下瞬间整个键下沉
+    - `.kb-key.kb-tier-1:active { box-shadow: 底部 3D 暗边减薄 }` — 配合 transform 的"按下"完整反馈
+  - 物理键盘真实类比：按下才下沉，松开归位；光悬停不动
+  - 鼠标按下时 pointer focus 锁定，不会 mouseleave → 无抖动可能
+
+- **dogfood 修订 #3（同 session · 第一次定位 hit-box 但 incomplete）**：用户复现"边缘位置 hover 抖动循环"
   - 根因：`.kb-key:hover { transform: translateY(1px) }` (style.css:6343) 改变 hit-box —
     边缘键 mouse hover → CSS :hover 触发 transform → key 视觉下沉 1px → 鼠标相对 key 顶部
     "移出" → mouseleave → tooltip hide + key transform 复位 → mouse 又"在 key 内" → mouseenter

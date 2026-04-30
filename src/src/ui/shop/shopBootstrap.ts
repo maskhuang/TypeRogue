@@ -811,8 +811,11 @@ export function enterTerminalShop(_won?: boolean): void {
   // Story 60.1 follow-up: 注册形状预览渲染器，让 dragManager pickup 模式右键旋转
   // 时能更新幽灵的 shape thumbnail（与 classic shop 共用同一渲染器）
   registerShapePreviewRenderer(renderShapePreview);
-  // 全局 dragend 兜底清理形状高亮（一次性设置，避免每次 workbench.setupDragZones 重复赋值）
-  dragManager.onDragEnd = () => clearShapePlacementOnWorkbench();
+  // 全局 dragend 兜底清理形状高亮 + cancel drag-hover RAF（review M2 fix）
+  dragManager.onDragEnd = () => {
+    clearShapePlacementOnWorkbench();
+    workbench.cancelDragHoverPending();
+  };
   // Story 60.9: 拖拽起势时全局隐藏所有 tooltip（不挡视线）
   // Story 60.12: 同时播放 pickup 音效（抓握刺啦）
   dragManager.onDragStart = () => {

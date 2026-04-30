@@ -6340,11 +6340,12 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     cursor: pointer;
     box-sizing: border-box;
 }
-/* Story 60.17 hotfix: 删 translateY — CSS transform 改变 hit-box，
-   边缘键 hover + tooltip 显示触发 mouseleave/enter 循环抖动。
-   tier-1 :hover box-shadow 减少（line 6366）已经表达"按下"视觉反馈。 */
-.kb-key:hover {
-    /* transform: translateY(1px); — removed, see above */
+/* Story 60.17 hotfix: 下沉视觉反馈（同原"hover 下沉"效果）从 :hover 改到 :active —
+   触发时机仅鼠标按下瞬间，不在 hover 触发。
+   :hover 改 hit-box 在边缘鼠标 + transition 80ms 下自激振荡卡死；
+   :active 时鼠标按下锁定 pointer focus，不会 mouseleave，无抖动。 */
+.kb-key:active {
+    transform: translateY(1px);
 }
 .kb-key .kb-letter { line-height: 1; }
 .kb-key .kb-cap {
@@ -6366,7 +6367,10 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
         0 2px 0 #5a4828,
         0 3px 5px rgba(0,0,0,0.4);
 }
-.kb-key.kb-tier-1:hover {
+/* Story 60.17 hotfix: hover box-shadow 变化也移到 :active —
+   hover 时键位完全静止（无任何视觉位移 / 阴影变化），按下瞬间才触发完整下沉反馈
+   （transform + 底部 3D 暗边减薄）。物理键盘真实类比 + 杜绝 hover/leave 抖动来源。 */
+.kb-key.kb-tier-1:active {
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.7),
         inset 0 -2px 0 rgba(0,0,0,0.25),
