@@ -279,6 +279,32 @@ export function unbindSkillFromKey(key: string): void {
   }
 }
 
+// Story 60.20 dogfood: 单点 freq-lock 判定（与 syncWorkbenchKeys / setupDragZones 共用）
+//   字母键：freq < FREQ_UNLOCK_THRESHOLD → locked
+//   标点键：未持有 punctuation_liberation 遗物 → locked
+export function isKeyFreqLocked(key: string): boolean {
+  const k = key.toLowerCase();
+  if (PUNCTUATION_KEYS.includes(k)) {
+    return !state.player.relics.has('punctuation_liberation');
+  }
+  const letterFreqs = calculateLetterFrequency(state.player.wordDeck);
+  return (letterFreqs.get(k) ?? 0) < FREQ_UNLOCK_THRESHOLD;
+}
+
+/** drop 目标涉及的所有键中任一锁定 → 拒绝绑定。多格走 mapShapeToKeys，单格直接 anchor。 */
+function dropTargetHasLockedKey(anchorKey: string, payload: DragPayload): boolean {
+  const shapeId = payload.shapeId ?? 'monomino';
+  const rotation = payload.rotation ?? 0;
+  if (shapeId === 'monomino') return isKeyFreqLocked(anchorKey);
+  const allowPunct = state.player.relics.has('punctuation_liberation');
+  const targetKeys = mapShapeToKeys(anchorKey.toLowerCase(), shapeId, rotation, allowPunct);
+  if (!targetKeys) return true; // 形状无法摆放本身就是无效
+  for (const k of targetKeys) {
+    if (isKeyFreqLocked(k)) return true;
+  }
+  return false;
+}
+
 // Render skill icons on tier-1 keys based on bindings
 export function syncWorkbenchKeys(): void {
   const root = document.querySelector('#workbench-screen-preview .wb-keyboard-base');
@@ -516,10 +542,23 @@ export function setupDragZones(): void {
       element: keyEl,
       type: 'key-slot',
       key,
-      accepts: (p: DragPayload) => p.type === 'skill-inventory' || p.type === 'skill-key',
+      // Story 60.20 dogfood: 锁定键拒收（字母 freq<阈值 / 无 punctuation_liberation 遗物的标点）。
+      // 多格 shape 任一格锁定也整体拒收 — dropTargetHasLockedKey 内查全部目标格。
+      accepts: (p: DragPayload) => {
+        if (p.type !== 'skill-inventory' && p.type !== 'skill-key') return false;
+        if (dropTargetHasLockedKey(key, p)) return false;
+        return true;
+      },
       onDrop: (p: DragPayload) => {
         const skillId = p.skillId;
         if (!skillId) return;
+        // 防御兜底：accepts 已过滤，但绕路调用（如热更新边角态）也应安全 no-op
+        if (dropTargetHasLockedKey(key, p)) {
+          sfx('shop_buy_err');
+          clearShapePlacementOnWorkbench();
+          clearEffectRadiusHighlight();
+          return;
+        }
         // Story 60.1 follow-up: 拾取右键旋转后的 payload.rotation 写回 affixSkill，
         // 让 bindShapeToKeys 用最新旋转态（与 classic shop:4074 同模式）
         if (p.rotation != null) {
