@@ -6340,8 +6340,11 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     cursor: pointer;
     box-sizing: border-box;
 }
+/* Story 60.17 hotfix: 删 translateY — CSS transform 改变 hit-box，
+   边缘键 hover + tooltip 显示触发 mouseleave/enter 循环抖动。
+   tier-1 :hover box-shadow 减少（line 6366）已经表达"按下"视觉反馈。 */
 .kb-key:hover {
-    transform: translateY(1px);
+    /* transform: translateY(1px); — removed, see above */
 }
 .kb-key .kb-letter { line-height: 1; }
 .kb-key .kb-cap {

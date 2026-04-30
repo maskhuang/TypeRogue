@@ -139,6 +139,17 @@ claude-opus-4-7[1m]
   - productionOnly 模式仅渲染 `buildSummarySection`（smartEstimate 一行产出）— 不渲染 letter/header/affix/enchant/glossary
   - workbench 拖拽预估路径：`if (!data.skill?.smartEstimate) return;` 提前 gate（passive/buff 类无产出 → 不显示打扰）
   - keyTooltip 内层加 defensive `productionOnly && !smartEstimate → hide` 双重保险
+- **dogfood 修订 #3（同 session · root cause 找到）**：用户复现"边缘位置 hover 抖动循环"
+  - 根因：`.kb-key:hover { transform: translateY(1px) }` (style.css:6343) 改变 hit-box —
+    边缘键 mouse hover → CSS :hover 触发 transform → key 视觉下沉 1px → 鼠标相对 key 顶部
+    "移出" → mouseleave → tooltip hide + key transform 复位 → mouse 又"在 key 内" → mouseenter
+    → 死循环（即原 dogfood 报告的"卡几秒"实际是抖动循环消耗 CPU + 频繁 layout/render）
+  - 修复：删除 `.kb-key:hover` 的 `translateY` — `kb-key.kb-tier-1:hover` 减少 box-shadow
+    已表达"按下"视觉反馈（line 6366-6372），不需要 transform 移动 hit-box
+  - 60.17 之前 60.9 listener 仅 bind `.has-skill`，边缘键无 tooltip 也就没人注意抖动；60.17 全键
+    bind 后 + tooltip 频闪暴露问题
+  - 这同时解决 RAF 节流 hotfix 没解决的部分：节流减少 build 频率但抖动循环本身仍消耗主线程
+
 - **dogfood 修订 #2（同 session）**：用户报告"拖动时卡几秒自己解除"
   - 分析：buildSkillKeyTooltipData 内部 `buildAffixTooltipFields + computeSmartEstimate + getShapeDescription` 同步重算 ~10ms+/次；快速扫 30 键累计几秒主线程阻塞
   - 加 RAF 节流（`requestAnimationFrame`）：mouseenter 调度 RAF 跑 build；下一次 mouseenter 在 RAF 跑完前到达 → cancel 旧 RAF 调度新（最后一次 hover key 才算）
@@ -159,5 +170,6 @@ claude-opus-4-7[1m]
 - `src/src/ui/keyboard/KeyTooltip.ts` — `show` 加 `productionOnly: boolean` 第 6 参数 + production-only 渲染分支（dogfood 修订）
 - `src/src/ui/shop/shopWorkbench.ts` — `attachWorkbenchTooltips` 重写 tier-1 listener 路径（drag-preview productionOnly + 静态分支）
 - `src/tests/unit/ui/shopPreviewTooltip.test.ts` — `SEL_TIER1` 选择器同步更新
+- `src/src/style.css` — 删除 `.kb-key:hover` 的 `translateY(1px)` 防 hit-box 抖动循环（dogfood #3）
 - `docs/implementation-artifacts/60-17-drag-hover-preview.md` — Tasks/Subtasks 全部 [x] + Dev Agent Record
 - `docs/implementation-artifacts/sprint-status.yaml` — 60-17 ready-for-dev → in-progress → review
