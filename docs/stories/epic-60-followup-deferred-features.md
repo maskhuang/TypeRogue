@@ -14,6 +14,7 @@ stories:
   - "60-18-effect-range-highlight"
   - "60-19-stats-real-data"
   - "60-20-filed-real-data"
+  - "60-21-terminal-i18n-coverage-completion"
 ---
 
 # Epic 60-Followup: 商店改造收尾 · Phase 1 遗留 stub 实功能化
