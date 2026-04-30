@@ -81,6 +81,9 @@ let pendingSubmit: { stage: SubmitStage; nextStage: SubmitStage | 'proceed' } | 
 // Story 60.4: stamp 动画进行中防重复点击
 let submitting = false;
 let workbenchEntered = false;
+// Story 60.9 follow-up #9: 追踪"曾被装配过"的 skillId — 卸回 IN-tray 时
+// 渲染为已开封态（无运单包装），区别于刚购入的未拆封态（完整运单）
+let unsealedSkillIds = new Set<string>();
 // snapshot of descriptors for current shop session — re-derived each LIST or after mutation
 let descriptorCache: ItemDescriptor[] = [];
 
@@ -1401,6 +1404,9 @@ export function updateTerminalChrome(): void {
 // 状态变更全部走 applyBindFromInbox（在 shapePreview.ts），本函数只负责调用 + DOM 同步
 function bindSkillToKey(skillId: string, key: string): void {
   applyBindFromInbox(skillId, key);
+  // Story 60.9 follow-up #9: 标记此 skill 已被装配过 — 后续卸回 IN-tray
+  // 时按"已开封"态渲染（去掉运单包装）
+  unsealedSkillIds.add(skillId);
   syncWorkbenchInbox();
   syncWorkbenchKeys();
 }
@@ -1636,6 +1642,7 @@ function syncWorkbenchInbox(): void {
       rotation,
       rarity,
       shapePreviewHtml: renderShapePreview(shapeId, rotation, rarity),
+      opened: unsealedSkillIds.has(skillId),
     }));
   }
   while (slots.length < INBOX_MAX) slots.push('<div class="foam-cutout empty"><span class="cutout-empty-label">— 空槽 —</span></div>');
@@ -1657,6 +1664,8 @@ interface InboxCardData {
   rotation: number;
   rarity: number;
   shapePreviewHtml: string;
+  /** Story 60.9 follow-up #9: 是否已开封（曾装配过）— 卸回 IN-tray 时为 true */
+  opened: boolean;
 }
 
 function escapeAttr(s: string): string {
@@ -1665,9 +1674,6 @@ function escapeAttr(s: string): string {
 }
 
 function renderInboxCardHtml(c: InboxCardData): string {
-  const stamp = c.clearance === '4-A'
-    ? '<div class="wc-stamp wc-stamp-gold">CLEARANCE 4-A</div>'
-    : '<div class="wc-stamp">REGULATION</div>';
   // Story 60.1: 多格形状属性（dragManager.buildPayload 会读 data-shape-* 进 payload）
   const shapeAttrs = c.shapePreviewHtml
     ? ` data-shape-id="${c.shapeId}" data-rotation="${c.rotation}" data-rarity="${c.rarity}" data-shape-preview="${escapeAttr(c.shapePreviewHtml)}"`
@@ -1675,8 +1681,27 @@ function renderInboxCardHtml(c: InboxCardData): string {
   const shapeBlock = c.shapePreviewHtml
     ? `<div class="wc-shape">${c.shapePreviewHtml}</div>`
     : '';
-  // Story 60.9 follow-up: 物流面单风排版 — 条形码独占底部满宽 + 下方等宽解码数字
-  // 条形码模式比之前更长更密，按真实 Code-128 视觉特征用 ▌▍▎▏ 四种宽度交错
+  // Story 60.9 follow-up #9: 双视觉态
+  //   - 未拆封（fresh 购入）：完整运单（章戳 + SN + 满宽条形码 + 解码数字）
+  //   - 已开封（曾装配过又卸回）：去掉运单包装，加 OPENED 红章
+  if (c.opened) {
+    return `
+    <div class="foam-cutout">
+      <div class="weapon-card opened" data-drag-type="skill-inventory" data-skill-id="${c.skillId}"${shapeAttrs}>
+        <div class="wc-row">
+          <span class="wc-icon inv-icon">${c.iconEmoji}</span>
+          <span class="wc-name inv-name">${c.name}</span>
+        </div>
+        ${shapeBlock}
+        <div class="wc-stamp wc-stamp-opened">OPENED · 已开封</div>
+      </div>
+    </div>
+  `;
+  }
+  // Fresh 购入 — 完整运单包装
+  const stamp = c.clearance === '4-A'
+    ? '<div class="wc-stamp wc-stamp-gold">CLEARANCE 4-A</div>'
+    : '<div class="wc-stamp">REGULATION</div>';
   const barcodePattern = '▌▎▍▎▌▌▏▎▌▍▎▌▎▌▍▎▌▌▎▍▌▎▏▌▍▎▌▌▎▍▌▎▌▎▍▌';
   const barcodeNum = `${c.sku}-7842`;
   return `
@@ -1755,6 +1780,7 @@ function resetSession(): void {
   pendingConfirm = null;
   pendingPackPick = null; // L2 fix: 防止跨 session 残留 stale pack reference
   workbenchEntered = false;
+  unsealedSkillIds = new Set<string>(); // Story 60.9 follow-up #9: 重置开封记录
   state.player.inbox = [];
   ensureSeed();
   rebuildDescriptors();

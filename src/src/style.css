@@ -6253,6 +6253,33 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     background: rgba(255, 245, 220, 0.18);
 }
 .wc-stamp-gold { color: #7a5a10; border-color: #7a5a10; }
+
+/* Story 60.9 follow-up #9: 已开封态 — 卸回 IN-tray 的技能卡 */
+.weapon-card.opened {
+    /* 比 fresh 暗一点的牛皮纸，模拟"被翻动过的"质感 */
+    background: linear-gradient(155deg, #d4ccc0 0%, #a59c8e 35%, #807868 60%, #b0a896 100%);
+    /* 微微倾斜，像随手扔回托盘 */
+    transform: rotate(-0.5deg);
+    /* 保留 hover lift（覆盖默认 .weapon-card:hover 的 -0.5deg → 不抖动） */
+}
+.weapon-card.opened:hover {
+    transform: translateY(-2px) rotate(-0.5deg);
+}
+.wc-stamp-opened {
+    align-self: flex-start;
+    margin-top: 2px;
+    padding: 1px 6px;
+    font-size: 9px;
+    color: #8a1a1a;
+    border: 1px solid #8a1a1a;
+    letter-spacing: 2px;
+    transform: rotate(-3deg);
+    background: rgba(255, 245, 220, 0.18);
+    font-family: 'Special Elite', 'Courier Prime', 'Courier New', monospace;
+    text-transform: uppercase;
+    /* 已开封章 — 双线边框模拟二次盖章 */
+    box-shadow: 0 0 0 1px rgba(255, 245, 220, 0.18), 0 0 0 2px #8a1a1a;
+}
 /* Story 60.1: IN-tray 卡片形状缩略图 */
 .wc-shape {
     margin-top: 4px;
