@@ -681,23 +681,16 @@ function buildWorkbenchScreen(): string {
           <div class="wb-panel wb-cabinet">
             <div class="wb-section-title">
               <span class="wb-tab-label">FILED</span>
-              <span class="wb-tab-sub">在编档案 · 05</span>
+              <span class="wb-tab-sub">在编档案 · 00</span>
             </div>
             <div class="wb-folders">
-              <div class="folder">
-                <div class="folder-tab">SKILL · 003</div>
-                <div class="folder-body">
-                  <div class="folder-row"><span class="fr-icon">💧</span><span class="fr-name">DRIP CASCADE</span><span class="fr-lv">Lv.2</span></div>
-                  <div class="folder-row"><span class="fr-icon">📎</span><span class="fr-name">PAPERCLIP CHAIN</span><span class="fr-lv">Lv.1</span></div>
-                  <div class="folder-row"><span class="fr-icon">✉️</span><span class="fr-name">CARBON COPY</span><span class="fr-lv">Lv.1</span></div>
-                </div>
+              <div class="folder" id="filed-skill-folder">
+                <div class="folder-tab">SKILL · 000</div>
+                <div class="folder-body"></div>
               </div>
-              <div class="folder">
-                <div class="folder-tab">RELIC · 002</div>
-                <div class="folder-body">
-                  <div class="folder-row"><span class="fr-icon">🏺</span><span class="fr-name">FOSSILIZED MEMO</span></div>
-                  <div class="folder-row"><span class="fr-icon">☕</span><span class="fr-name">COLD COFFEE RING</span></div>
-                </div>
+              <div class="folder" id="filed-relic-folder">
+                <div class="folder-tab">RELIC · 000</div>
+                <div class="folder-body"></div>
               </div>
               <div class="folder folder-clickable" data-drawer="words">
                 <div class="folder-tab">WORDS · <span class="folder-count" id="words-folder-count">0</span></div>

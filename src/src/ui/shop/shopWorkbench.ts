@@ -335,6 +335,7 @@ export function syncWorkbenchKeys(): void {
     keyEl.appendChild(tagSpan);
   });
   attachWorkbenchTooltips();
+  syncFiledFolders();
 }
 
 /**
@@ -580,6 +581,7 @@ export function syncWorkbenchRelics(): void {
     keyEl.dataset.relicId = relicId;
   }
   attachWorkbenchTooltips();
+  syncFiledFolders();
 }
 
 export function syncWorkbenchInbox(): void {
@@ -613,6 +615,87 @@ export function syncWorkbenchInbox(): void {
   const sub = document.querySelector('#workbench-screen-preview .wb-intray .wb-tab-sub');
   if (sub) sub.textContent = `待装配 · ${String(state.player.inbox.length).padStart(2, '0')}`;
   attachWorkbenchTooltips();
+  syncFiledFolders();
+}
+
+// === Story 60.20: FILED folder real data (skills + relics) ===
+
+interface FiledSkillEntry { sid: string; key: string; }
+
+/** owned skills 合并 bindings (按 sid 去重多格) + inbox（保 inbox 顺序），与 cmdInfoListOwned 同源 */
+function getOwnedSkillEntries(): FiledSkillEntry[] {
+  const sidToKeys = new Map<string, string[]>();
+  for (const [k, sid] of state.player.bindings) {
+    const arr = sidToKeys.get(sid) ?? [];
+    arr.push(k.toUpperCase());
+    sidToKeys.set(sid, arr);
+  }
+  const entries: FiledSkillEntry[] = [];
+  for (const [sid, keys] of sidToKeys) {
+    keys.sort();
+    entries.push({ sid, key: keys.join('+') });
+  }
+  entries.sort((a, b) => a.key.charCodeAt(0) - b.key.charCodeAt(0));
+  for (let i = 0; i < state.player.inbox.length; i++) {
+    entries.push({ sid: state.player.inbox[i], key: `IN${i + 1}` });
+  }
+  return entries;
+}
+
+/** 单行截断：folder 列宽限制（含 lv 标签时给 fr-name 留 ~22 字符） */
+function truncateName(s: string, max = 22): string {
+  return s.length <= max ? s : s.slice(0, max - 1) + '…';
+}
+
+export function renderSkillFolderHtml(): { count: number; rowsHtml: string } {
+  const entries = getOwnedSkillEntries();
+  if (entries.length === 0) {
+    return { count: 0, rowsHtml: '<div class="folder-row folder-empty">— NONE —</div>' };
+  }
+  const rows: string[] = [];
+  for (const { sid } of entries) {
+    const sk = state.affixSkills.get(sid);
+    if (!sk) continue;
+    const icon = escapeHtml(sk.icon || '◇');
+    const name = escapeHtml(truncateName(sk.name.toUpperCase()));
+    const lv = `Lv.${sk.level}`;
+    rows.push(`<div class="folder-row"><span class="fr-icon">${icon}</span><span class="fr-name">${name}</span><span class="fr-lv">${lv}</span></div>`);
+  }
+  return { count: rows.length, rowsHtml: rows.join('') };
+}
+
+export function renderRelicFolderHtml(): { count: number; rowsHtml: string } {
+  const ids = Array.from(state.player.relics);
+  if (ids.length === 0) {
+    return { count: 0, rowsHtml: '<div class="folder-row folder-empty">— NONE —</div>' };
+  }
+  const rows: string[] = [];
+  for (const id of ids) {
+    const data = RELICS[id];
+    if (!data) continue;
+    const icon = escapeHtml(data.icon || '🏺');
+    const name = escapeHtml(truncateName(data.name.toUpperCase()));
+    rows.push(`<div class="folder-row"><span class="fr-icon">${icon}</span><span class="fr-name">${name}</span></div>`);
+  }
+  return { count: rows.length, rowsHtml: rows.join('') };
+}
+
+export function syncFiledFolders(): void {
+  const root = document.getElementById('workbench-screen-preview');
+  if (!root) return;
+  const skill = renderSkillFolderHtml();
+  const relic = renderRelicFolderHtml();
+  const skillBody = root.querySelector('#filed-skill-folder .folder-body');
+  const skillTab = root.querySelector('#filed-skill-folder .folder-tab');
+  if (skillBody) skillBody.innerHTML = skill.rowsHtml;
+  if (skillTab) skillTab.textContent = `SKILL · ${String(skill.count).padStart(3, '0')}`;
+  const relicBody = root.querySelector('#filed-relic-folder .folder-body');
+  const relicTab = root.querySelector('#filed-relic-folder .folder-tab');
+  if (relicBody) relicBody.innerHTML = relic.rowsHtml;
+  if (relicTab) relicTab.textContent = `RELIC · ${String(relic.count).padStart(3, '0')}`;
+  // FILED 区段的 sub-label "在编档案 · NN" 跟随 skill+relic 总数
+  const sub = root.querySelector('.wb-cabinet .wb-tab-sub');
+  if (sub) sub.textContent = `在编档案 · ${String(skill.count + relic.count).padStart(2, '0')}`;
 }
 
 function escapeAttr(s: string): string {
@@ -677,6 +760,7 @@ export function registerWorkbenchBindings(): void {
   shopBus.syncWorkbenchInbox = syncWorkbenchInbox;
   shopBus.syncWorkbenchRelics = syncWorkbenchRelics;
   shopBus.syncWorkbenchKeys = syncWorkbenchKeys;
+  shopBus.syncFiledFolders = syncFiledFolders;
   shopBus.attachWorkbenchTooltips = attachWorkbenchTooltips;
   shopBus.setupDragZones = setupDragZones;
   shopBus.openDrawer = openDrawer;

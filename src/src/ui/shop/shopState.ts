@@ -132,6 +132,7 @@ export const shopBus = {
   syncWorkbenchInbox: noop as () => void,
   syncWorkbenchRelics: noop as () => void,
   syncWorkbenchKeys: noop as () => void,
+  syncFiledFolders: noop as () => void,
   attachWorkbenchTooltips: noop as () => void,
   setupDragZones: noop as () => void,
   openDrawer: noop as (kind: DrawerKind) => void,
