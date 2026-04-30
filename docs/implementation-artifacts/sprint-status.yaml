@@ -487,3 +487,13 @@ development_status:
   60-15-i18n-coverage: done                             # terminal/工作台 i18n 全覆盖（P2.4 清理 · 风险中）— M1+L2 修完
   60-16-module-split: done                              # shopPreview.ts 2548 行 → 4 模块拆分（P2.4 清理 · 风险高 · Epic 60 收官 · code-review approved 2026-04-29）
   epic-60-retrospective: optional
+
+  # ===== Epic 60-Followup: 商店改造收尾 · Phase 1 遗留 stub 实功能化 =====
+  # Source: docs/stories/epic-60-followup-deferred-features.md
+  # Created: 2026-04-29 — Story 60.16 done 后 dogfood 暴露 4 个 Phase 1 遗留 stub
+  epic-60-followup: backlog
+  60-17-drag-hover-preview: backlog                     # 拖拽 hover 目标键预估产出 tooltip（P1 最高频痛点）
+  60-18-effect-range-highlight: backlog                 # 范围词条键盘高亮（splash/echo/aura/relay 等 · P3）
+  60-19-stats-real-data: backlog                        # STAT 命令接真实数据（P2 · 数据源待勘察）
+  60-20-filed-real-data: backlog                        # 工作台 FILED folder 接真实 owned skills/relics（P4 · ~30 行）
+  epic-60-followup-retrospective: optional
