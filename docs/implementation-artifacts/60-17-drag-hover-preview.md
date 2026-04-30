@@ -139,7 +139,12 @@ claude-opus-4-7[1m]
   - productionOnly 模式仅渲染 `buildSummarySection`（smartEstimate 一行产出）— 不渲染 letter/header/affix/enchant/glossary
   - workbench 拖拽预估路径：`if (!data.skill?.smartEstimate) return;` 提前 gate（passive/buff 类无产出 → 不显示打扰）
   - keyTooltip 内层加 defensive `productionOnly && !smartEstimate → hide` 双重保险
-- **未做：throttle**（dev notes Risks 提到的 50-100ms throttle）— mouseenter 单次触发频率不高，dogfood 后再决定是否需要
+- **dogfood 修订 #2（同 session）**：用户报告"拖动时卡几秒自己解除"
+  - 分析：buildSkillKeyTooltipData 内部 `buildAffixTooltipFields + computeSmartEstimate + getShapeDescription` 同步重算 ~10ms+/次；快速扫 30 键累计几秒主线程阻塞
+  - 加 RAF 节流（`requestAnimationFrame`）：mouseenter 调度 RAF 跑 build；下一次 mouseenter 在 RAF 跑完前到达 → cancel 旧 RAF 调度新（最后一次 hover key 才算）
+  - 加 same-key dedup：RAF pending 时同 key 重复 mouseenter → 直接 return（防御重复事件）
+  - mouseleave 时 cancel pending RAF + 清 lastKey（确保拖出键盘外不残留 build）
+  - 跨帧 dedup 在 test env 难精确控制，留浏览器 dogfood 验证
 
 ### File List
 

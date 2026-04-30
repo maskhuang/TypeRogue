@@ -41,6 +41,21 @@ import {
 } from './shopState';
 import type { DrawerKind, InboxCardData } from './shopState';
 
+// === Story 60.17 follow-up: 拖拽 hover 节流（防扫键 jank）===
+// 用户 dogfood 反馈拖拽中扫键卡几秒 — buildSkillKeyTooltipData 含 buildAffixTooltipFields
+// + computeSmartEstimate + getShapeDescription 同步重算，~10ms+/次。快速扫 30 键
+// 同步累计 jank。RAF 节流 + same-key dedup 把成本压到一帧一次 build。
+let dragHoverRafId: number | null = null
+let dragHoverLastKey: string | null = null
+
+function cancelDragHoverPending(): void {
+  if (dragHoverRafId != null) {
+    const caf = (globalThis as unknown as { cancelAnimationFrame?: (id: number) => void }).cancelAnimationFrame
+    if (typeof caf === 'function') caf(dragHoverRafId)
+    dragHoverRafId = null
+  }
+}
+
 // === Story 60.11: IN-tray 槽 whoosh 滑入动画 ===
 
 /**
@@ -263,26 +278,42 @@ export function attachWorkbenchTooltips(): void {
     if (keyEl.dataset.tooltipBound === '1') return;
     keyEl.dataset.tooltipBound = '1';
     keyEl.addEventListener('mouseenter', (e: MouseEvent) => {
-      // === 拖拽预估路径（Story 60.17）===
+      // === 拖拽预估路径（Story 60.17 + follow-up RAF 节流）===
       if (dragManager.dragging) {
         if (!shouldShowDragPreviewTooltip()) return;
         const payload = dragManager.currentPayload;
-        // 仅 skill 类型 payload 有产出可预估
         if (!payload?.skillId) return;
         if (payload.type !== 'skill-inventory' && payload.type !== 'skill-key') return;
         const hoverKey = keyEl.dataset.key;
         if (!hoverKey) return;
-        // 多格技能：只在 hover key 能作为合法 anchor 时显示（mapShapeToKeys 返回 null 表示放不下）
-        if (payload.shapeId && payload.shapeId !== 'monomino') {
-          const fit = mapShapeToKeys(hoverKey, payload.shapeId, payload.rotation ?? 0);
-          if (!fit) return;
-        }
-        const data = buildSkillKeyTooltipData(payload.skillId, [hoverKey]);
-        if (!data) return;
-        // Story 60.17 修订：仅显示期望产出（smartEstimate）一行；
-        // 无产出（passive / buff 类无 smartEstimate）→ 直接 return 不打扰
-        if (!data.skill?.smartEstimate) return;
-        keyTooltip.show(e.clientX, e.clientY, data, undefined, false, true);
+        // Same-key dedup: 同一 key 在一帧内重复触发不重算（防御重复 mouseenter）
+        if (dragHoverLastKey === hoverKey && dragHoverRafId != null) return;
+        // RAF 节流：取消上一帧未跑完的 build（鼠标快速跨多个键时只算最后一个）
+        cancelDragHoverPending();
+        dragHoverLastKey = hoverKey;
+        const cx = e.clientX;
+        const cy = e.clientY;
+        const skillId = payload.skillId;
+        const shapeId = payload.shapeId;
+        const rotation = payload.rotation ?? 0;
+        const rafFn = (globalThis as unknown as {
+          requestAnimationFrame?: (cb: () => void) => number
+        }).requestAnimationFrame;
+        const raf = typeof rafFn === 'function'
+          ? rafFn
+          : ((cb: () => void) => setTimeout(cb, 0) as unknown as number);
+        dragHoverRafId = raf(() => {
+          dragHoverRafId = null;
+          // 多格技能：只在 hover key 能作为合法 anchor 时显示
+          if (shapeId && shapeId !== 'monomino') {
+            const fit = mapShapeToKeys(hoverKey, shapeId, rotation);
+            if (!fit) return;
+          }
+          const data = buildSkillKeyTooltipData(skillId, [hoverKey]);
+          if (!data) return;
+          if (!data.skill?.smartEstimate) return;
+          keyTooltip.show(cx, cy, data, undefined, false, true);
+        });
         return;
       }
       // === 静态已绑键路径（Story 60.9 原路径）===
@@ -297,7 +328,12 @@ export function attachWorkbenchTooltips(): void {
       if (!data) return;
       keyTooltip.show(e.clientX, e.clientY, data);
     });
-    keyEl.addEventListener('mouseleave', () => keyTooltip.hide());
+    keyEl.addEventListener('mouseleave', () => {
+      // 取消可能 pending 的 drag-preview build；hide 当前 tooltip
+      cancelDragHoverPending();
+      dragHoverLastKey = null;
+      keyTooltip.hide();
+    });
   });
 
   // 2) IN-tray 卡片

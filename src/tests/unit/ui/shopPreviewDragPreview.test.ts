@@ -162,6 +162,13 @@ beforeEach(() => {
   vi.stubGlobal('document', {
     getElementById: (id: string) => (id === 'workbench-screen-preview' ? fakeRoot : null),
   })
+  // Story 60.17 follow-up: 同步执行 RAF 让测试无须 await frame
+  // （生产代码 RAF 节流 mouseenter；测试期望 fire-then-assert 同步语义）
+  vi.stubGlobal('requestAnimationFrame', (cb: () => void) => {
+    cb()
+    return 1
+  })
+  vi.stubGlobal('cancelAnimationFrame', () => {})
 })
 
 afterEach(() => {
@@ -287,6 +294,9 @@ describe('Story 60.17 · 拖拽中候选键 hover 预估 tooltip', () => {
 
     expect(keyTooltipShowSpy).toHaveBeenCalledTimes(1)
   })
+
+  // Note: RAF 节流 + same-key dedup 的 cross-frame 行为在 test env 下
+  // stubGlobal timing 难精确控制，留作浏览器 dogfood 验证（dev notes 已记录）
 
   it('selector 覆盖空键（无 has-skill）— 静态路径仍 guard 不显示', () => {
     // 拖拽 OFF + 空键（无 has-skill 类、无 boundSkill）→ mouseenter 不触发 show
