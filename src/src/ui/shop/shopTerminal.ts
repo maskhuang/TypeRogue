@@ -11,8 +11,6 @@ import {
   generateAffixShopItems,
   generateShopRelicItem,
   buildAffixTooltipFields,
-  getFreqHints,
-  formatWordEffectLabel,
   applyMaxSkillLevelOnPurchase,
 } from '../../systems/shop';
 import { shouldAnimateShop } from '../../core/UserSettings';
@@ -288,11 +286,9 @@ export function suggestSku(input: string): string | null {
   return best && best.dist <= 2 ? best.sku : null;
 }
 
-// === Render: line padding & alignment ===
-
-// visualWidth / pad / priceColForLine / COL 都是原 shopPreview 的 dead code（list 列改走
-// HTML inline-block 后 char-padding 不再用）— Task 6 集中清理。
-
+// === Render: list rows ===
+// visualWidth / pad / priceColForLine / COL — 原 char-padding 实现的死代码，
+// list 列改走 HTML inline-block 后 char-padding 永远 0 调用，Story 60.16 Task 6 一并删除。
 
 /**
  * 渲染 LIST 行的 HTML 列结构。每列是固定 width 的 inline-block，让浏览器布局而不是
@@ -1130,28 +1126,6 @@ export function handleConfirmation(input: string): boolean {
   appendLine(`ERR · EXPECTED [Y]ES OR [N]O · GOT "${input}" · TRY AGAIN`, 'redacted');
   return true; // still in confirm mode
 }
-
-// === Cmd dispatch (used by execute() in bootstrap) ===
-// 把 cmd 名 → handler 做成 export，让 bootstrap 的 execute() 直接用 switch 派发。
-export const TERMINAL_CMD_HANDLERS = {
-  cmdHelp,
-  cmdList,
-  cmdInfo,
-  cmdBuy,
-  cmdSell,
-  cmdReshuffle,
-  cmdProceed,
-  cmdUndo,
-  cmdStats,
-  cmdWords,
-};
-
-// Render block 中的 helpers 给 packPicker drawer 用（Story 60.13 + workbench module 拆分） ===
-export const TERMINAL_RENDER_HELPERS = {
-  escapeHtml,
-  getFreqHints,
-  formatWordEffectLabel,
-};
 
 /**
  * Bootstrap 调用：注册 terminal-provided 函数到 shopBus，让 workbench drawer 能拨号。
