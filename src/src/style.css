@@ -6507,9 +6507,12 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
 }
 .kb-key.has-skill .kb-letter { font-size: 9px; opacity: 0.6; }
 .kb-key.has-skill .kb-icon { font-size: 14px; line-height: 1; }
-/* Story 60.20 dogfood: kb-tag 从文字标签改为词条颜色色带 — 多词条等分多段。
-   每个 .kb-tag-seg 的 background 由 JS 注入（取 AFFIX_COLORS[affix.type]）。
-   尺寸放大目的：玩家扫一眼就能凭颜色区分相邻同图标技能是否同一个。 */
+/* Story 60.20 dogfood: kb-tag 词条颜色色带 — 多词条等分多段。
+   材质风格：油墨章戳印在 DPCA 牛皮纸上 — 不是数字饱和 RGB 色块。
+   - 父容器 background = 与键面同源的牛皮纸渐变 + 横向纸纹噪点
+   - 每段 background 由 JS 注入纯 affix 色，但用 mix-blend-mode: multiply
+     与底层纸纹融合，并叠加 inset 暗边 + 顶部高光 → "墨水渗入纸面"质感
+   - 段间分隔线用半透明深棕（不是纯黑），与"手盖三色章"印感统一 */
 .kb-key.has-skill .kb-tag {
     position: absolute;
     bottom: -9px;
@@ -6518,15 +6521,34 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     width: 82%;
     height: 7px;
     border: 1px solid #2a1f10;
-    border-radius: 2px;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.35), 0 0 4px rgba(0,0,0,0.2);
+    border-radius: 1px;
+    box-shadow:
+        0 1px 0 rgba(0,0,0,0.35),
+        inset 0 1px 0 rgba(255, 248, 230, 0.45),
+        inset 0 -1px 1px rgba(80, 50, 20, 0.3);
     z-index: 2;
     display: flex;
     overflow: hidden;
+    background:
+        repeating-linear-gradient(
+            90deg,
+            rgba(80, 50, 20, 0) 0,
+            rgba(80, 50, 20, 0) 1px,
+            rgba(80, 50, 20, 0.06) 1px,
+            rgba(80, 50, 20, 0.06) 2px
+        ),
+        linear-gradient(180deg, #f0eadb 0%, #d8c89e 100%);
 }
 .kb-key.has-skill .kb-tag-seg {
     flex: 1 1 0;
     height: 100%;
+    mix-blend-mode: multiply;
+    filter: saturate(0.85) brightness(0.95);
+    box-shadow: inset 0 0 1px rgba(80, 50, 20, 0.5);
+}
+/* 段间深棕分隔线（仿手盖章戳的纸面留白） */
+.kb-key.has-skill .kb-tag-seg + .kb-tag-seg {
+    border-left: 1px solid rgba(80, 50, 20, 0.45);
 }
 
 /* Locked state */
