@@ -6099,7 +6099,17 @@ body.shop-preview-active #relic-tooltip > div:last-child {
         inset 0 -1px 1px rgba(255,255,255,0.03),
         inset 0 0 0 1px #000;
 }
-.weapon-card .wc-name { white-space: normal; line-height: 1.15; }
+.weapon-card .wc-name {
+    /* Story 60.9 follow-up: 长技能名（多词条 generated）必须换行而非截断
+     * flex row 内 min-width: 0 + flex: 1 让 span 可以按容器宽度收缩；
+     * overflow-wrap + word-break 处理英文长 token / 全角中文混排 */
+    white-space: normal;
+    line-height: 1.15;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
 .foam-cutout.empty {
     display: flex;
     align-items: center;
@@ -6128,6 +6138,10 @@ body.shop-preview-active #relic-tooltip > div:last-child {
     gap: 4px;
     cursor: grab;
     transition: transform 120ms ease, box-shadow 120ms ease;
+    /* Story 60.9 follow-up: 卡片严格按 IN-tray 容器宽度收缩，不被长技能名顶破 */
+    box-sizing: border-box;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 .weapon-card:hover {
     transform: translateY(-2px) rotate(-0.5deg);
@@ -6143,6 +6157,9 @@ body.shop-preview-active #relic-tooltip > div:last-child {
     font-size: 12px;
     font-weight: bold;
     letter-spacing: 1.5px;
+    /* Story 60.9 follow-up: flex row 内 children 默认 min-width: auto 不会
+     * 收缩到内容以下；显式声明让 .wc-name 能换行而不是顶破容器 */
+    min-width: 0;
 }
 .wc-icon { font-size: 16px; }
 .wc-meta {
