@@ -3969,6 +3969,58 @@ body.shop-preview-active .drag-ghost {
     display: none !important;
 }
 
+/* Story 60.9 follow-up: 工作台所有滚动容器走 paper-craft 滚动条
+ * 默认浏览器滚动条银灰金属感与牛皮纸+油墨章风格冲突。
+ *   - IN-tray (.wb-foam-case)：去掉横向滚动 + 自定义纵向滚动条
+ *   - workbench 主容器：纵+横自定义
+ *   - drawer-body / wb-folders：自定义纵向
+ * Webkit + Firefox 双覆盖。 */
+body.shop-preview-active .wb-foam-case,
+body.shop-preview-active #workbench-screen-preview,
+body.shop-preview-active .wb-drawer-body,
+body.shop-preview-active .wb-folders {
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #7a5a10 #ead7af;          /* thumb=金章 / track=浅牛皮 */
+}
+body.shop-preview-active .wb-foam-case {
+    overflow-x: hidden !important;             /* IN-tray 不应有横向滚动 */
+}
+/* Webkit / Blink */
+body.shop-preview-active .wb-foam-case::-webkit-scrollbar,
+body.shop-preview-active #workbench-screen-preview::-webkit-scrollbar,
+body.shop-preview-active .wb-drawer-body::-webkit-scrollbar,
+body.shop-preview-active .wb-folders::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+body.shop-preview-active .wb-foam-case::-webkit-scrollbar-track,
+body.shop-preview-active #workbench-screen-preview::-webkit-scrollbar-track,
+body.shop-preview-active .wb-drawer-body::-webkit-scrollbar-track,
+body.shop-preview-active .wb-folders::-webkit-scrollbar-track {
+    background: #ead7af;                       /* 浅牛皮 */
+    border: 1px solid #7a5a10;
+    border-radius: 0;
+}
+body.shop-preview-active .wb-foam-case::-webkit-scrollbar-thumb,
+body.shop-preview-active #workbench-screen-preview::-webkit-scrollbar-thumb,
+body.shop-preview-active .wb-drawer-body::-webkit-scrollbar-thumb,
+body.shop-preview-active .wb-folders::-webkit-scrollbar-thumb {
+    background: #7a5a10;                       /* 金章把手 */
+    border: 1px solid #2a1f10;                 /* 黑墨边 */
+    border-radius: 0;                          /* 公文体不圆角 */
+}
+body.shop-preview-active .wb-foam-case::-webkit-scrollbar-thumb:hover,
+body.shop-preview-active #workbench-screen-preview::-webkit-scrollbar-thumb:hover,
+body.shop-preview-active .wb-drawer-body::-webkit-scrollbar-thumb:hover,
+body.shop-preview-active .wb-folders::-webkit-scrollbar-thumb:hover {
+    background: #8a1a1a;                       /* hover 红章 */
+}
+body.shop-preview-active .wb-foam-case::-webkit-scrollbar-corner,
+body.shop-preview-active #workbench-screen-preview::-webkit-scrollbar-corner {
+    background: #ead7af;
+}
+
 /* Story 60.9 review: 工作台 hover tooltip 走 DPCA paper-craft 油墨调色板
  * 默认 .key-tooltip / #relic-tooltip 是 CRT 黑底霓虹蓝 + 像素字体，与
  * 工作台牛皮纸 + 油墨章 + Courier 体冲突。在 shop-preview-active scope
