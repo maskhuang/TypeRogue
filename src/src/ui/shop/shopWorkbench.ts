@@ -7,7 +7,8 @@
 // ============================================
 
 import { state } from '../../core/state';
-import { INBOX_MAX } from '../../core/constants';
+import { INBOX_MAX, PUNCTUATION_KEYS } from '../../core/constants';
+import { calculateLetterFrequency, FREQ_UNLOCK_THRESHOLD } from '../../systems/letters/LetterFrequencySystem';
 import {
   renderShapePreview,
   getFreqHints,
@@ -281,10 +282,16 @@ export function unbindSkillFromKey(key: string): void {
 export function syncWorkbenchKeys(): void {
   const root = document.querySelector('#workbench-screen-preview .wb-keyboard-base');
   if (!root) return;
+  // freq-lock 检测（与 classic shop renderBuildManager 同源）
+  const letterFreqs = calculateLetterFrequency(state.player.wordDeck);
   const tier1Keys = root.querySelectorAll<HTMLElement>('.kb-key.kb-tier-1[data-key]');
   tier1Keys.forEach(keyEl => {
     const key = keyEl.dataset.key!;
     const skillId = state.player.bindings.get(key);
+    // freq-lock：标点键豁免，其他键 freq < threshold → locked
+    const isPunctKey = PUNCTUATION_KEYS.includes(key);
+    const isFreqLocked = !isPunctKey && (letterFreqs.get(key) ?? 0) < FREQ_UNLOCK_THRESHOLD;
+    keyEl.classList.toggle('freq-locked', isFreqLocked);
     // Clear stale state
     keyEl.classList.remove('has-skill');
     keyEl.removeAttribute('data-bound-skill');

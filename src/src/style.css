@@ -6403,6 +6403,33 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
         0 1px 2px rgba(0,0,0,0.4);
 }
 
+/* Story 60.19 dogfood: freq-locked 键位（freq < FREQ_UNLOCK_THRESHOLD 且非标点）—
+   DPCA "封存" 视觉：纸面褪色 + 红色对角"封存印戳"条纹 + 字母划线。
+   不影响 :active 反馈（玩家仍能尝试拖到锁定键，只是看着像档案柜里被打 X 的旧文件）。 */
+.kb-key.kb-tier-1.freq-locked {
+    opacity: 0.5;
+    filter: grayscale(0.7);
+    background-image:
+        linear-gradient(180deg, #f0eadb 0%, #c4b896 65%, #a89a78 100%),
+        repeating-linear-gradient(
+            135deg,
+            transparent 0,
+            transparent 5px,
+            rgba(180, 50, 40, 0.35) 5px,
+            rgba(180, 50, 40, 0.35) 7px
+        );
+    background-blend-mode: multiply;
+}
+.kb-key.kb-tier-1.freq-locked .kb-letter {
+    color: rgba(80, 30, 25, 0.7);
+    text-decoration: line-through;
+    text-decoration-color: rgba(180, 50, 40, 0.7);
+    text-decoration-thickness: 1px;
+}
+.kb-key.kb-tier-1.freq-locked .kb-cap {
+    color: rgba(80, 30, 25, 0.5);
+}
+
 /* TIER 2: relic keys (1-0) — same paper but with relic icon overlay */
 .kb-key.kb-tier-2 {
     background: linear-gradient(180deg, #f0eadb 0%, #c4b896 65%, #a89a78 100%);
