@@ -24,7 +24,9 @@ import {
   VERB_FULL,
   SUBMIT_STAMP_FALLBACK_MS,
 } from './shopState';
-import type { DrawerKind } from './shopState';
+import type { DrawerKind, SubmitStage } from './shopState';
+import type { WordPack } from '../../core/types';
+import type { ItemDescriptor } from '../itemDescriptors';
 import * as terminal from './shopTerminal';
 import * as workbench from './shopWorkbench';
 
@@ -762,10 +764,13 @@ function renderWelcome(): void {
 }
 
 /**
- * Story 60.16 Task 4: 注册 cross-module callbacks 到 shopBus。
- * 在 enterTerminalShop 第一次进入前调用一次即可（idempotent）。
+ * Story 60.16 Task 4 + Review H2 fix: 注册 cross-module callbacks 到 shopBus。
+ *
+ * Module-load 时立即执行（不再等 enterTerminalShop）— 让测试 import facade
+ * 后无需调 enter 流程也能拿到 wired bus，避免 cross-module 回调静默 noop。
+ * Idempotent 且 cheap（仅赋值）。
  */
-function wireShopBus(): void {
+(function wireShopBus(): void {
   // bootstrap-provided（lifecycle / 切屏 / 转场）
   shopBus.showOnly = showOnly;
   shopBus.switchToWorkbench = switchToWorkbench;
@@ -774,7 +779,7 @@ function wireShopBus(): void {
   workbench.registerWorkbenchBindings();
   // terminal-provided（drawer / pack-pick 反向调 terminal 输出）
   terminal.registerTerminalBindings();
-}
+})();
 
 /**
  * Story 60.5: 进入终端商店（取代 Phase 1 的 enterPreview hash 入口）。
@@ -784,7 +789,6 @@ function wireShopBus(): void {
  */
 export function enterTerminalShop(_won?: boolean): void {
   if (previewState.active) return;
-  wireShopBus();
   injectScreens();
   hideAllRealScreens();
   resetSession();
@@ -834,3 +838,48 @@ export function initShopPreview(): void {
   if (document.readyState === 'complete') checkHash();
   else window.addEventListener('load', checkHash, { once: true });
 }
+
+// === Story 60.2 / 60.4: 测试专用内部 API（不要在生产代码里使用）===
+// Story 60.16 Review M2: 从 facade 内联移到此处，让 facade 缩到 ~30 行 re-export-only。
+export const __test = {
+  executeBuyPack: (d: ItemDescriptor) => terminal.executeBuyPack(d),
+  getPendingPackPick: () => previewState.pendingPackPick,
+  setPendingPackPick: (v: { d: ItemDescriptor; pack: WordPack } | null): void => {
+    previewState.pendingPackPick = v;
+  },
+  getUndoStack: () => previewState.undoStack,
+  resetUndoStack: (): void => { previewState.undoStack = []; },
+  // Story 60.4
+  getPendingSubmit: () => previewState.pendingSubmit,
+  setPendingSubmit: (v: { stage: SubmitStage; nextStage: SubmitStage | 'proceed' } | null): void => {
+    previewState.pendingSubmit = v;
+  },
+  isSubmitting: (): boolean => previewState.submitting,
+  resetSubmitting: (): void => { previewState.submitting = false; },
+  // Story 60.4 review M1: pendingConfirm 互斥测试
+  setPendingConfirm: (v: { sku: string; price: number } | null): void => {
+    previewState.pendingConfirm = v;
+  },
+  getPendingConfirm: () => previewState.pendingConfirm,
+  // Story 60.7: BUY/SELL/UND 副作用测试入口
+  executeBuySkill: (d: ItemDescriptor) => terminal.executeBuySkill(d),
+  executeBuyRelic: (d: ItemDescriptor) => terminal.executeBuyRelic(d),
+  cmdSell: (arg: string): void => terminal.cmdSell(arg),
+  cmdUndo: (): void => terminal.cmdUndo(),
+  // Story 60.10: INF 命令测试入口
+  cmdInfo: (arg: string): void => terminal.cmdInfo(arg),
+  /** Story 60.10 review M2: 注入 descriptorCache 方便测 catalog 命中路径 */
+  setDescriptorCache: (items: ItemDescriptor[]): void => { previewState.descriptorCache = items; },
+  // Story 60.11: 动画测试入口
+  cmdList: (): void => terminal.cmdList(),
+  cmdReshuffle: (): void => terminal.cmdReshuffle(),
+  triggerInboxWhoosh: (slotIdx: number): void => workbench.triggerInboxWhoosh(slotIdx),
+  showOnly,
+  setNextListAnimated: (v: boolean): void => { previewState.nextListIsAnimated = v; },
+  // Story 60.12: 音效测试入口
+  bindSkillToKey: (skillId: string, key: string): void => workbench.bindSkillToKey(skillId, key),
+  unbindSkillFromKey: (key: string): void => workbench.unbindSkillFromKey(key),
+  cmdBuy: (arg: string): void => terminal.cmdBuy(arg),
+  openDrawer: (kind: 'words' | 'craft' | 'metamorph' | 'pack-pick'): void => workbench.openDrawer(kind),
+  proceedSubmit,
+};
