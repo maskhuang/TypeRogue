@@ -329,9 +329,11 @@ export function syncWorkbenchKeys(): void {
     iconSpan.className = 'kb-icon';
     iconSpan.textContent = sk.icon || '⚡';
     keyEl.appendChild(iconSpan);
+    // Story 60.20 dogfood: kb-tag 改为纯色标签（颜色 = 稀有度），
+    // 不再写文字（避免键面拥挤；rarity 信号靠颜色已足够）
     const tagSpan = document.createElement('span');
     tagSpan.className = 'kb-tag';
-    tagSpan.textContent = sk.name.split('·')[0].slice(0, 8).toUpperCase();
+    tagSpan.dataset.rarity = String(rarity);
     keyEl.appendChild(tagSpan);
   });
   attachWorkbenchTooltips();

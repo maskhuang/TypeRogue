@@ -6507,21 +6507,25 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
 }
 .kb-key.has-skill .kb-letter { font-size: 9px; opacity: 0.6; }
 .kb-key.has-skill .kb-icon { font-size: 14px; line-height: 1; }
+/* Story 60.20 dogfood: kb-tag 从文字标签改为纯色稀有度色带（无文字） —
+   贴在键位下方的"标签纸"色块；颜色按 data-rarity 取 RARITY_COLORS。 */
 .kb-key.has-skill .kb-tag {
     position: absolute;
-    bottom: -14px;
+    bottom: -6px;
     left: 50%;
     transform: translateX(-50%) rotate(-1.5deg);
-    font-size: 7px;
-    letter-spacing: 1px;
-    color: #2a1f10;
-    background: #f6ecd6;
+    width: 60%;
+    height: 4px;
+    background: #ffffff; /* fallback rarity 0 (common) */
     border: 1px solid #2a1f10;
-    padding: 0 3px;
-    white-space: nowrap;
+    border-radius: 1px;
     box-shadow: 0 1px 0 rgba(0,0,0,0.3);
     z-index: 2;
 }
+.kb-key.has-skill .kb-tag[data-rarity="0"] { background: #ffffff; }
+.kb-key.has-skill .kb-tag[data-rarity="1"] { background: #4488ff; }
+.kb-key.has-skill .kb-tag[data-rarity="2"] { background: #a855f7; }
+.kb-key.has-skill .kb-tag[data-rarity="3"] { background: #ff8800; }
 
 /* Locked state */
 .kb-key.locked {
