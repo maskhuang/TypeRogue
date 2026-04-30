@@ -1672,26 +1672,34 @@ function renderInboxCardHtml(c: InboxCardData): string {
   const shapeAttrs = c.shapePreviewHtml
     ? ` data-shape-id="${c.shapeId}" data-rotation="${c.rotation}" data-rarity="${c.rarity}" data-shape-preview="${escapeAttr(c.shapePreviewHtml)}"`
     : '';
-  const shapeBlock = c.shapePreviewHtml
-    ? `<div class="wc-shape">${c.shapePreviewHtml}</div>`
-    : '';
-  // Story 60.9 follow-up: 物流面单风排版 — 条形码独占底部满宽 + 下方等宽解码数字
-  // 条形码模式比之前更长更密，按真实 Code-128 视觉特征用 ▌▍▎▏ 四种宽度交错
+  // Story 60.9 follow-up B: 档案卡风排版（左侧打孔 + 分栏字段 + 斜印水印 + 表头）
   const barcodePattern = '▌▎▍▎▌▌▏▎▌▍▎▌▎▌▍▎▌▌▎▍▌▎▏▌▍▎▌▌▎▍▌▎▌▎▍▌';
   const barcodeNum = `${c.sku}-7842`;
+  const shapeFieldHtml = c.shapePreviewHtml
+    ? `<div class="wc-field wc-field-shape"><span class="wc-label">SHAPE</span><span class="wc-colon">:</span><span class="wc-value">${c.shapePreviewHtml}</span></div>`
+    : '';
   return `
     <div class="foam-cutout">
-      <div class="weapon-card" data-drag-type="skill-inventory" data-skill-id="${c.skillId}"${shapeAttrs}>
-        <div class="wc-row">
-          <span class="wc-icon inv-icon">${c.iconEmoji}</span>
-          <span class="wc-name inv-name">${c.name}</span>
+      <div class="weapon-card archival" data-drag-type="skill-inventory" data-skill-id="${c.skillId}"${shapeAttrs}>
+        <div class="wc-punch-rail" aria-hidden="true">
+          <span>⊙</span><span>⊙</span><span>⊙</span>
         </div>
-        <div class="wc-sn-line">SN · ${c.sku}-7842</div>
-        ${shapeBlock}
-        ${stamp}
-        <div class="wc-barcode-strip">
-          <div class="wc-barcode">${barcodePattern}</div>
-          <div class="wc-barcode-num">${barcodeNum}</div>
+        <div class="wc-main">
+          <div class="wc-form-id">FORM-A1 · IN-PROCESS</div>
+          <div class="wc-row">
+            <span class="wc-icon inv-icon">${c.iconEmoji}</span>
+            <span class="wc-name inv-name">${c.name}</span>
+          </div>
+          <div class="wc-fields">
+            <div class="wc-field"><span class="wc-label">NO.</span><span class="wc-colon">:</span><span class="wc-value">${c.sku}-7842</span></div>
+            <div class="wc-field"><span class="wc-label">CLAS.</span><span class="wc-colon">:</span><span class="wc-value">${c.clearance}</span></div>
+            ${shapeFieldHtml}
+          </div>
+          ${stamp}
+          <div class="wc-barcode-strip">
+            <div class="wc-barcode">${barcodePattern}</div>
+            <div class="wc-barcode-num">${barcodeNum}</div>
+          </div>
         </div>
       </div>
     </div>

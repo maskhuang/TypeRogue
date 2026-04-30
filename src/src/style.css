@@ -6164,15 +6164,95 @@ body.shop-preview-active #relic-tooltip > div:last-child {
 }
 .wc-icon { font-size: 16px; }
 
-/* Story 60.9 follow-up: 物流面单风排版 — SN 独占一行，条形码独占底部满宽 */
-.wc-sn-line {
+/* Story 60.9 follow-up B: 档案卡风排版 — 左侧 3 个打孔 + 分栏字段 + 斜印水印
+ * 视觉参考：图书馆借阅卡 / 卡夫卡《城堡》公文 / 旧档案室活页索引
+ * 颜色仍走 paper-craft 油墨调色板（黑墨 / 文书褐 / 红章 / 金章） */
+.weapon-card.archival {
+    /* 覆盖父 .weapon-card 的 flex column → grid: 打孔列 | 主内容列 */
+    display: grid !important;
+    grid-template-columns: 16px 1fr;
+    gap: 0 8px;
+    position: relative;
+    overflow: hidden;
+}
+.weapon-card.archival .wc-punch-rail {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
     font-size: 9px;
-    color: rgba(26, 20, 16, 0.7);
-    letter-spacing: 1.5px;
-    font-family: 'Courier New', 'Courier Prime', monospace;
+    line-height: 1;
+    color: rgba(26, 20, 16, 0.45);
+    border-right: 1px dashed rgba(26, 20, 16, 0.22);
+    padding: 4px 0;
+    align-self: stretch;
+}
+.weapon-card.archival .wc-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    /* 让水印 ::after 落在主内容下方但不挡 hover */
+    z-index: 1;
+}
+/* 表头：FORM-A1 · IN-PROCESS（小字 letter-spacing 拉宽，仿表格编号） */
+.weapon-card.archival .wc-form-id {
+    font-size: 8px;
+    letter-spacing: 2.5px;
+    color: rgba(26, 20, 16, 0.55);
+    text-transform: uppercase;
     border-bottom: 1px dashed rgba(26, 20, 16, 0.25);
-    padding-bottom: 3px;
-    margin-bottom: 1px;
+    padding-bottom: 2px;
+    font-family: 'Courier New', 'Courier Prime', monospace;
+}
+/* 分栏字段表 — 三列网格让冒号严格对齐 */
+.weapon-card.archival .wc-fields {
+    display: grid;
+    grid-template-columns: max-content max-content 1fr;
+    column-gap: 6px;
+    row-gap: 2px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    font-family: 'Courier New', 'Courier Prime', monospace;
+}
+.weapon-card.archival .wc-field { display: contents; }
+.weapon-card.archival .wc-label {
+    color: rgba(26, 20, 16, 0.6);
+    text-align: right;
+    font-weight: normal;
+}
+.weapon-card.archival .wc-colon {
+    color: rgba(26, 20, 16, 0.45);
+}
+.weapon-card.archival .wc-value {
+    color: #1a1410;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    min-width: 0;
+}
+.weapon-card.archival .wc-field-shape .wc-value {
+    /* shape 缩略图独占视觉，居中显示 */
+    display: flex;
+    justify-content: flex-start;
+    padding-top: 1px;
+}
+/* 斜印水印 — DEPT USE ONLY 半透明红章，落在主内容下面 */
+.weapon-card.archival::after {
+    content: "DEPT USE ONLY";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-22deg);
+    font-size: 14px;
+    font-family: 'Courier New', 'Courier Prime', monospace;
+    font-weight: bold;
+    color: rgba(138, 26, 26, 0.10);
+    letter-spacing: 4px;
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
+    text-transform: uppercase;
 }
 
 /* 条形码 strip：满宽 + 油墨黑 + 等宽解码数字
