@@ -6731,6 +6731,112 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     }
 }
 
+/* Story 60.13: craft + metamorph panel 在 paper-craft 工作台抽屉里走油墨调色板
+ * Classic shop（无 shop-preview-active scope）保持原 CRT 黑底霓虹不变
+ * 调色板沿用 60-9 tooltip 既定：黑墨/文书褐/红章/金章/绿章 */
+
+/* 容器层：透明背景让 wb-drawer-body 牛皮纸透出 */
+body.shop-preview-active .craft-title,
+body.shop-preview-active .morph-title {
+    color: #8a1a1a !important;             /* 红章标题 */
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px dashed #7a5a10;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+}
+body.shop-preview-active .craft-section,
+body.shop-preview-active .craft-section-header {
+    background: transparent !important;
+    color: #2a1f10 !important;
+    border-color: rgba(122, 90, 16, 0.45) !important;
+}
+
+/* 流水线 cell + 碎片 chip + 队列项 */
+body.shop-preview-active .craft-pipeline-slot,
+body.shop-preview-active .craft-queue-item,
+body.shop-preview-active .craft-fragment-cell {
+    background: rgba(234, 215, 175, 0.55) !important;   /* 浅牛皮 */
+    border-color: #7a5a10 !important;
+    color: #2a1f10 !important;
+}
+body.shop-preview-active .craft-pipeline-slot-active {
+    background: rgba(62, 124, 65, 0.18) !important;     /* 绿章激活 */
+    border-color: #3e7c41 !important;
+}
+body.shop-preview-active .craft-pipeline-slot-done {
+    background: rgba(122, 90, 16, 0.18) !important;
+    border-color: #7a5a10 !important;
+}
+body.shop-preview-active .craft-pipeline-slot-pending {
+    background: rgba(168, 144, 112, 0.18) !important;
+    border-style: dashed;
+}
+body.shop-preview-active .craft-queue-active {
+    background: rgba(138, 26, 26, 0.10) !important;     /* 红章 active */
+    border-color: #8a1a1a !important;
+}
+body.shop-preview-active .craft-pipeline-word,
+body.shop-preview-active .craft-pipeline-empty {
+    color: #5a4828 !important;
+}
+
+/* 按钮 — craft / metamorph 共用 */
+body.shop-preview-active .morph-action-btn,
+body.shop-preview-active .craft-section button,
+body.shop-preview-active .craft-section .craft-btn {
+    background: #ead7af !important;
+    color: #2a1f10 !important;
+    border: 1px solid #7a5a10 !important;
+    box-shadow: 1px 1px 0 #2a1f10;
+    font-family: 'Courier New', 'Courier Prime', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+body.shop-preview-active .morph-action-btn:hover,
+body.shop-preview-active .craft-section button:hover {
+    background: #f4e4c1 !important;
+    color: #8a1a1a !important;
+    border-color: #8a1a1a !important;
+}
+
+/* metamorph skill 卡片网格 */
+body.shop-preview-active .morph-skill-card {
+    background: rgba(234, 215, 175, 0.55) !important;
+    border: 1px solid #7a5a10 !important;
+    color: #2a1f10 !important;
+}
+body.shop-preview-active .morph-skill-name {
+    color: #8a1a1a !important;             /* 红章 */
+    font-weight: bold;
+}
+body.shop-preview-active .morph-skill-key {
+    color: #7a5a10 !important;             /* 金章 */
+}
+body.shop-preview-active .morph-skill-type,
+body.shop-preview-active .morph-info,
+body.shop-preview-active .morph-hint {
+    color: #5a4828 !important;             /* 文书褐 */
+}
+
+/* 兜底：panel 内任何 inline style="color:#..." 全部挪到金章
+ * 与 60-9 tooltip 同模式（CRT 霓虹色对牛皮纸底对比度差） */
+body.shop-preview-active .craft-section [style*="color:"],
+body.shop-preview-active .craft-section [style*="color :"],
+body.shop-preview-active .morph-skill-card [style*="color:"],
+body.shop-preview-active .morph-info [style*="color:"] {
+    color: #7a5a10 !important;
+}
+
+/* M1 review fix: 流水线进度条 — 默认是紫霓虹填充 + 白透明底槽，
+ * 落牛皮纸底色看不清也违和。覆盖为浅褐底 + 绿章填充（已生产语义） */
+body.shop-preview-active .craft-pipeline-bar {
+    background: rgba(122, 90, 16, 0.18) !important;     /* 浅褐底槽 */
+}
+body.shop-preview-active .craft-pipeline-fill {
+    background: #3e7c41 !important;                      /* 绿章填充 */
+}
+
 .wb-hint {
     display: flex;
     flex-direction: column;

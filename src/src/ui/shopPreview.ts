@@ -28,6 +28,9 @@ import { keyTooltip } from './keyboard/KeyTooltip';
 // Story 60.12: 音效守卫
 import { shouldAnimateShop, shouldPlayShopSound } from '../core/UserSettings';
 import { playSound } from '../effects/sound';
+// Story 60.13: 双职业工序面板（复用 classic 渲染器）
+import { renderCraftPanel } from '../systems/classes/CraftingStation';
+import { renderMetamorphPanel } from '../systems/classes/MetamorphStation';
 // Story 60.7: 副作用 hook（事件总线 + quest 重算 + 遗物购入瞬时效果）
 import { eventBus } from '../core/events/EventBus';
 import { evaluateEquipQuests } from '../data/affixTrigger';
@@ -1370,10 +1373,14 @@ function openDrawer(kind: DrawerKind): void {
     body.innerHTML = renderWordsDrawerHtml();
   } else if (kind === 'craft') {
     title.textContent = 'WORDSMITH STATION · ASSEMBLY LINE';
-    body.innerHTML = renderStubDrawerHtml('CRAFT', 'Letter-fragment assembly. Combine carbons to forge new words.', 'STATION OFFLINE · WIRING DEFERRED TO PHASE 2');
+    body.innerHTML = ''; // 清旧内容；renderCraftPanel 内部也会再 innerHTML=''
+    // Story 60.13: 接入真 craft panel — onGoldUpdate 回调让 terminal banner 同步
+    renderCraftPanel(body as HTMLElement, () => updateTerminalChrome());
   } else if (kind === 'metamorph') {
     title.textContent = 'METAMORPH STATION · MUTATION CHAMBER';
-    body.innerHTML = renderStubDrawerHtml('METAMORPH', 'Mutate skill affixes by spending mutagen.', 'STATION OFFLINE · WIRING DEFERRED TO PHASE 2');
+    body.innerHTML = '';
+    // Story 60.13: 接入真 metamorph panel
+    renderMetamorphPanel(body as HTMLElement);
   } else if (kind === 'pack-pick') {
     if (!pendingPackPick) return;
     const { d, pack } = pendingPackPick;
@@ -1421,15 +1428,7 @@ function renderWordsDrawerHtml(): string {
   return `<ul class="wb-word-list">${rows.join('')}</ul>`;
 }
 
-function renderStubDrawerHtml(name: string, desc: string, status: string): string {
-  return `
-    <div class="wb-drawer-stub">
-      <div class="ws-name">${name}</div>
-      <div class="ws-desc">${desc}</div>
-      <div class="ws-status">${status}</div>
-    </div>
-  `;
-}
+// Story 60.13: renderStubDrawerHtml 已移除 — craft / metamorph 抽屉走真 panel
 
 // Story 60.2: pack-pick drawer 渲染
 function renderPackPickDrawerHtml(pack: WordPack): string {

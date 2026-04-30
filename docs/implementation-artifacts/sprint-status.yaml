@@ -481,6 +481,6 @@ development_status:
   60-10-info-owned-skills: done                          # 终端 INFO 支持 owned 技能/遗物（P2.3 浪漫化）— M1+M2 修完
   60-11-transition-animations: done                     # 转场动画（P2.3 浪漫化）— M1 修完
   60-12-sound-effects: done                             # 音效（P2.3 浪漫化）— M1 修完
-  60-13-craft-metamorph-stations: backlog               # Craft + Metamorph 工序（P2.3 浪漫化）
+  60-13-craft-metamorph-stations: done                  # Craft + Metamorph 工序（P2.3 浪漫化）— M1+L1 修完
   60-14-module-split-i18n: backlog                      # 模块拆分 + i18n + 死代码清理（P2.4 清理）
   epic-60-retrospective: optional
