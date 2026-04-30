@@ -256,6 +256,10 @@ const ZH: Record<string, string> = {
   'settings.shopSound': '商店音效',
   'settings.shopSound.on': '开',
   'settings.shopSound.off': '关',
+  // Story 60.17: 拖拽中候选键预估 tooltip 开关
+  'settings.shopDragPreview': '拖拽预估提示',
+  'settings.shopDragPreview.on': '开',
+  'settings.shopDragPreview.off': '关',
 
   // Story 60.15: terminal / 工作台 i18n 全覆盖
   // 终端命令 USAGE / 帮助
@@ -1422,6 +1426,10 @@ const EN: Record<string, string> = {
   'settings.shopSound': 'Shop Sound',
   'settings.shopSound.on': 'On',
   'settings.shopSound.off': 'Off',
+  // Story 60.17: drag preview tooltip on candidate keys
+  'settings.shopDragPreview': 'Drag Preview Tooltip',
+  'settings.shopDragPreview.on': 'On',
+  'settings.shopDragPreview.off': 'Off',
 
   // Story 60.15: terminal / workbench i18n coverage
   'shop.terminal.cmd.help.header': 'AVAILABLE COMMANDS:',

@@ -22,6 +22,10 @@ export interface UserSettingsData {
   // 默认 true。与 masterVolume 独立 — masterVolume=0 时全静音（含 classic），
   // shopSound=false 仅静默 terminal/workbench 新加音效，不影响 classic shop / 战斗音效
   shopSound: boolean
+  // Story 60.17: 拖拽技能时 hover 候选键显示"假设绑这里"的预估产出 tooltip
+  // 默认 true（覆盖 Story 60.9 拖拽屏蔽 tooltip 的决策，dogfood 反馈寻位需要预估）
+  // 设 false 时回退 60.9 行为：拖拽中所有 tooltip 隐藏不挡视线
+  shopDragPreviewTooltip: boolean
 }
 
 const DEFAULTS: UserSettingsData = {
@@ -32,6 +36,7 @@ const DEFAULTS: UserSettingsData = {
   shopUI: 'classic',
   shopAnimations: true,
   shopSound: true,
+  shopDragPreviewTooltip: true,
 }
 
 let current: UserSettingsData = { ...DEFAULTS }
@@ -68,6 +73,14 @@ export function updateSettings(partial: Partial<UserSettingsData>): void {
  */
 export function shouldPlayShopSound(): boolean {
   return current.shopSound
+}
+
+/**
+ * Story 60.17: 拖拽技能时是否应显示 hover 目标键的预估 tooltip
+ * 单点关 — 关闭则回退 Story 60.9 的 "拖拽中所有 tooltip 隐藏" 行为
+ */
+export function shouldShowDragPreviewTooltip(): boolean {
+  return current.shopDragPreviewTooltip
 }
 
 /**

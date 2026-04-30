@@ -152,6 +152,11 @@ class DragManager {
     return this.isDragging || this.pickedUp;
   }
 
+  /** Story 60.17: 返回当前拖拽中 payload（null = 无拖拽）— 拖拽 hover 预览 tooltip 用 */
+  get currentPayload(): DragPayload | null {
+    return this.payload;
+  }
+
   /** 注册拖拽开始/结束全局回调 */
   set onDragStart(cb: ((payload: DragPayload) => void) | null) { this._onDragStart = cb; }
   set onDragEnd(cb: ((payload: DragPayload) => void) | null) { this._onDragEnd = cb; }

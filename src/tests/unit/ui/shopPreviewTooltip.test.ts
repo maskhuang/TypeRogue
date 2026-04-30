@@ -154,7 +154,9 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const SEL_TIER1 = '.kb-key.kb-tier-1.has-skill[data-key]'
+// Story 60.17 修订：tier-1 listener 现绑定到所有 tier-1 letter key（不再仅 has-skill），
+// 用于支持拖拽中候选键预估 tooltip。静态已绑键路径仍用 has-skill 类内部 guard。
+const SEL_TIER1 = '.kb-key.kb-tier-1[data-key]'
 const SEL_INTRAY = '.weapon-card[data-drag-type="skill-inventory"]'
 const SEL_RELIC = '.kb-key.kb-tier-2.has-relic[data-key]'
 

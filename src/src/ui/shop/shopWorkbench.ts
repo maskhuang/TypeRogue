@@ -18,11 +18,12 @@ import {
   moveRelicTooltip,
 } from '../../systems/shop';
 import { keyTooltip } from '../keyboard/KeyTooltip';
-import { shouldAnimateShop } from '../../core/UserSettings';
+import { shouldAnimateShop, shouldShowDragPreviewTooltip } from '../../core/UserSettings';
 import { renderCraftPanel } from '../../systems/classes/CraftingStation';
 import { renderMetamorphPanel } from '../../systems/classes/MetamorphStation';
 import { RELICS } from '../../data/relics';
 import { dragManager, type DragPayload } from '../../systems/dragManager';
+import { mapShapeToKeys } from '../../data/skillShapes';
 import {
   highlightShapePlacementOnWorkbench,
   clearShapePlacementOnWorkbench,
@@ -254,12 +255,35 @@ export function attachWorkbenchTooltips(): void {
   const root = document.getElementById('workbench-screen-preview');
   if (!root) return;
 
-  // 1) tier-1 已绑键
-  root.querySelectorAll<HTMLElement>('.kb-key.kb-tier-1.has-skill[data-key]').forEach(keyEl => {
+  // 1) tier-1 已绑键 + Story 60.17: 拖拽中的预估 tooltip
+  // Story 60.17 修订：之前 60.9 显式屏蔽 dragging 时 tooltip（"挡视线"），
+  // 改为：拖拽中 hover 候选键 → 显示"假设绑这里"的预估产出，方便比对落键位。
+  // user setting `shopDragPreviewTooltip` 关时回退 60.9 行为。
+  root.querySelectorAll<HTMLElement>('.kb-key.kb-tier-1[data-key]').forEach(keyEl => {
     if (keyEl.dataset.tooltipBound === '1') return;
     keyEl.dataset.tooltipBound = '1';
     keyEl.addEventListener('mouseenter', (e: MouseEvent) => {
-      if (dragManager.dragging) return;
+      // === 拖拽预估路径（Story 60.17）===
+      if (dragManager.dragging) {
+        if (!shouldShowDragPreviewTooltip()) return;
+        const payload = dragManager.currentPayload;
+        // 仅 skill 类型 payload 有产出可预估
+        if (!payload?.skillId) return;
+        if (payload.type !== 'skill-inventory' && payload.type !== 'skill-key') return;
+        const hoverKey = keyEl.dataset.key;
+        if (!hoverKey) return;
+        // 多格技能：只在 hover key 能作为合法 anchor 时显示（mapShapeToKeys 返回 null 表示放不下）
+        if (payload.shapeId && payload.shapeId !== 'monomino') {
+          const fit = mapShapeToKeys(hoverKey, payload.shapeId, payload.rotation ?? 0);
+          if (!fit) return;
+        }
+        const data = buildSkillKeyTooltipData(payload.skillId, [hoverKey]);
+        if (!data) return;
+        keyTooltip.show(e.clientX, e.clientY, data);
+        return;
+      }
+      // === 静态已绑键路径（Story 60.9 原路径）===
+      if (!keyEl.classList.contains('has-skill')) return;
       const skillId = keyEl.dataset.boundSkill;
       if (!skillId) return;
       const boundKeys: string[] = [];

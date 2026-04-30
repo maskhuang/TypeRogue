@@ -83,6 +83,14 @@ export function openSettingsPanel(): void {
         </div>
       </div>
 
+      <div class="settings-row">
+        <label class="settings-label">${esc(t('settings.shopDragPreview'))}</label>
+        <div class="settings-lang-btns">
+          <button class="settings-lang-btn ${settings.shopDragPreviewTooltip ? 'active' : ''}" data-shop-drag-preview="on">${esc(t('settings.shopDragPreview.on'))}</button>
+          <button class="settings-lang-btn ${!settings.shopDragPreviewTooltip ? 'active' : ''}" data-shop-drag-preview="off">${esc(t('settings.shopDragPreview.off'))}</button>
+        </div>
+      </div>
+
       <div class="settings-divider"></div>
 
       <button class="settings-reset-btn" id="settings-reset">${esc(t('settings.reset'))}</button>
@@ -175,6 +183,20 @@ export function openSettingsPanel(): void {
       updateSettings({ shopSound: enabled })
       overlay?.querySelectorAll('[data-shop-sound]').forEach(b => {
         const isOn = (b as HTMLElement).dataset.shopSound === 'on'
+        b.classList.toggle('active', isOn === enabled)
+      })
+    })
+  })
+
+  // Story 60.17: Shop Drag Preview Tooltip 切换（on / off）
+  overlay.querySelectorAll('[data-shop-drag-preview]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playSound('click')
+      const mode = (btn as HTMLElement).dataset.shopDragPreview
+      const enabled = mode === 'on'
+      updateSettings({ shopDragPreviewTooltip: enabled })
+      overlay?.querySelectorAll('[data-shop-drag-preview]').forEach(b => {
+        const isOn = (b as HTMLElement).dataset.shopDragPreview === 'on'
         b.classList.toggle('active', isOn === enabled)
       })
     })
