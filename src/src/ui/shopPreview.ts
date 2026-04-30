@@ -518,9 +518,15 @@ function classForRow(d: ItemDescriptor): string {
 
 function cmdHelp(): void {
   appendLine('AVAILABLE COMMANDS:', 'head');
-  appendLine('  LIS · BUY <SKU> · INF <SKU> · SEL <SKU> · RES');
+  appendLine('  LIS · BUY <SKU> · INF <SKU|KEY|NAME|/owned> · SEL <SKU> · RES');
   appendLine('  PRO (proceed to workbench) · STA · WOR · UND · HEL');
   appendLine('USE 3-LETTER ABBREVIATIONS. ↑↓ FOR HISTORY. TAB COMPLETES VERB ONLY.', 'dim');
+  // Story 60.10: INF 扩展用法说明
+  appendLine('INF FORMS:', 'head');
+  appendLine('  INF SKL-001    catalog SKU 详情');
+  appendLine('  INF F          已绑键位（a-z）的技能 / 数字键 1-0 的遗物');
+  appendLine('  INF MORAL      模糊匹配 owned skill 名（部分匹配多个时列候选）');
+  appendLine('  INF /OWNED     列出全部 owned skills + relics');
   appendLine(`PRICES IN BANANA STANDARD 🍌  · PURCHASES ≥ 🍌 ${HIGH_PRICE_THRESHOLD} REQUIRE [Y/N].`, 'dim');
   appendBlank();
 }
@@ -542,17 +548,260 @@ function cmdList(): void {
   appendBlank();
 }
 
+/**
+ * Story 60.10: INF 命令 dispatcher
+ * 匹配优先级：catalog SKU → /OWNED 列表 → 单键位 → owned skill 模糊名 → owned relic id/name → suggestSku fallback
+ */
 function cmdInfo(arg?: string): void {
-  if (!arg) { appendLine('USAGE: INFO <SKU>', 'dim'); return; }
+  if (!arg) { appendLine('USAGE: INF <SKU|KEY|NAME|/owned>', 'dim'); return; }
+  const upper = arg.toUpperCase();
+
+  // 1) /OWNED 子命令 — owned 资产列表
+  if (upper === '/OWNED' || upper === '/LIST-OWNED') {
+    cmdInfoListOwned();
+    return;
+  }
+
+  // 2) catalog SKU 优先（保留现有路径，0 行为变化）
   const d = findDescriptorBySku(arg);
-  if (!d) {
-    const guess = suggestSku(arg);
-    appendLine(`ERR · SKU NOT IN CATALOG: ${arg.toUpperCase()}`, 'redacted');
-    if (guess) appendLine(`  · DID YOU MEAN ${guess}?`, 'dim');
+  if (d) {
+    for (const line of renderInfoBlock(d)) appendLine(line, classForRow(d));
     appendBlank();
     return;
   }
-  for (const line of renderInfoBlock(d)) appendLine(line, classForRow(d));
+
+  // 3) 单键位（a-z 或 1-0）
+  if (/^[a-z0-9]$/i.test(arg)) {
+    cmdInfoKey(arg);
+    return;
+  }
+
+  // 4) owned skill 模糊名匹配
+  const skillHits = findOwnedSkillsByFragment(arg);
+  if (skillHits.length === 1) {
+    cmdInfoOwnedSkill(skillHits[0]);
+    return;
+  }
+  if (skillHits.length > 1) {
+    cmdInfoMultiSkillHit(skillHits, arg);
+    return;
+  }
+
+  // 5) owned relic id/name 匹配
+  const relicHit = findOwnedRelicByQuery(arg);
+  if (relicHit) {
+    cmdInfoOwnedRelic(relicHit);
+    return;
+  }
+
+  // 6) 全部 miss → 原 suggestSku fallback
+  const guess = suggestSku(arg);
+  appendLine(`ERR · NOT FOUND: ${upper}`, 'redacted');
+  if (guess) appendLine(`  · DID YOU MEAN ${guess}?`, 'dim');
+  appendLine(`  · TRY  INF /OWNED  TO LIST OWNED ASSETS`, 'dim');
+  appendBlank();
+}
+
+/** Story 60.10: 单键位查询 — a-z 查 binding，1-0 查 relic shelf */
+function cmdInfoKey(rawKey: string): void {
+  const key = rawKey.toLowerCase();
+  if (/^[a-z]$/.test(key)) {
+    const skillId = state.player.bindings.get(key);
+    if (!skillId) {
+      appendLine(`KEY ${key.toUpperCase()} · UNBOUND · BAL 🍌 ${state.gold}`, 'dim');
+      appendBlank();
+      return;
+    }
+    cmdInfoOwnedSkill(skillId);
+    return;
+  }
+  // 数字键 1-0：1=index 0, 0=index 9（与 syncWorkbenchRelics 对齐）
+  const num = Number(key);
+  const idx = num === 0 ? 9 : num - 1;
+  const relicIds = Array.from(state.player.relics);
+  const relicId = relicIds[idx];
+  if (!relicId) {
+    appendLine(`KEY ${key} · NO RELIC · BAL 🍌 ${state.gold}`, 'dim');
+    appendBlank();
+    return;
+  }
+  cmdInfoOwnedRelic(relicId);
+}
+
+/** Story 60.10: owned skill 模糊名匹配（在 bindings + inbox 集合内） */
+function findOwnedSkillsByFragment(query: string): string[] {
+  const q = query.toUpperCase();
+  const ids = new Set<string>();
+  for (const sid of state.player.bindings.values()) ids.add(sid);
+  for (const sid of state.player.inbox) ids.add(sid);
+  const hits: string[] = [];
+  for (const id of ids) {
+    const sk = state.affixSkills.get(id);
+    if (!sk) continue;
+    const name = (sk.name || '').toUpperCase();
+    if (name.includes(q)) hits.push(id);
+  }
+  return hits;
+}
+
+/** Story 60.10: owned relic id/name 模糊匹配 */
+function findOwnedRelicByQuery(query: string): string | null {
+  const q = query.toUpperCase();
+  for (const id of state.player.relics) {
+    if (id.toUpperCase().includes(q)) return id;
+    const data = RELICS[id];
+    if (data && (data.name || '').toUpperCase().includes(q)) return id;
+  }
+  return null;
+}
+
+/** Story 60.10: owned skill 详情渲染 */
+function cmdInfoOwnedSkill(skillId: string): void {
+  const sk = state.affixSkills.get(skillId);
+  if (!sk) {
+    appendLine(`ERR · SKILL DEFINITION MISSING · ${skillId}`, 'redacted');
+    appendBlank();
+    return;
+  }
+  const W = 80;
+  const rt = state.affixSkillStates.get(skillId);
+  // 定位：哪个键 / 在 inbox slot N
+  const boundKeys: string[] = [];
+  for (const [k, sid] of state.player.bindings) if (sid === skillId) boundKeys.push(k.toUpperCase());
+  const inboxIdx = state.player.inbox.indexOf(skillId);
+  const location = boundKeys.length > 0
+    ? `KEY ${boundKeys.join('+')}`
+    : (inboxIdx >= 0 ? `IN-TRAY SLOT ${inboxIdx + 1}/${INBOX_MAX}` : 'UNASSIGNED');
+
+  const headLine = `═══ OWNED · ${sk.name} · ${location} ` + '═'.repeat(Math.max(3, W - sk.name.length - location.length - 16));
+  appendLine(headLine, 'echo');
+  const shapeId = sk.shapeId ?? 'monomino';
+  appendLine(`KIND SKILL · LV ${sk.level} · SHAPE ${shapeId.toUpperCase()}`, 'dim');
+
+  let fields: ReturnType<typeof buildAffixTooltipFields> | null = null;
+  try { fields = buildAffixTooltipFields(sk, rt); } catch { fields = null; }
+  if (fields && fields.affixInfo.length > 0) {
+    appendLine('');
+    appendLine('AFFIXES', 'head');
+    for (const af of fields.affixInfo) {
+      const hdr = `‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
+      for (const w of wrapAt(hdr, W - 4)) appendLine('  ' + w);
+      if (af.description) {
+        for (const w of wrapAt(af.description, W - 6)) appendLine('    ' + w, 'dim');
+      }
+    }
+  }
+  if (fields && fields.enchantments.length > 0) {
+    appendLine('');
+    appendLine('ENCHANTMENTS', 'head');
+    for (const e of fields.enchantments) {
+      const hdr = `‹${(e.name || '?').toUpperCase()}›`;
+      for (const w of wrapAt(hdr, W - 4)) appendLine('  ' + w);
+      if (e.desc) {
+        for (const w of wrapAt(e.desc, W - 6)) appendLine('    ' + w, 'dim');
+      }
+    }
+  }
+  if (fields && fields.questProgress) appendLine('  QUEST: ' + fields.questProgress, 'dim');
+  if (fields && fields.apprenticeGrowth) appendLine('  APPRENTICE: ' + fields.apprenticeGrowth, 'dim');
+  appendLine('═'.repeat(W));
+  appendBlank();
+}
+
+/** Story 60.10: owned relic 详情渲染 */
+function cmdInfoOwnedRelic(relicId: string): void {
+  const data = RELICS[relicId];
+  if (!data) {
+    appendLine(`ERR · RELIC DEFINITION MISSING · ${relicId}`, 'redacted');
+    appendBlank();
+    return;
+  }
+  const W = 80;
+  // 数字键位定位
+  const idx = Array.from(state.player.relics).indexOf(relicId);
+  const numKey = idx < 0 ? '?' : (idx === 9 ? '0' : String(idx + 1));
+  const headLine = `═══ OWNED · RELIC · ${data.icon} ${data.name} · KEY ${numKey} ` + '═'.repeat(Math.max(3, W - data.name.length - 28));
+  appendLine(headLine, 'echo');
+  appendLine(`RARITY ${data.rarity.toUpperCase()} · ID ${relicId}`, 'dim');
+  appendLine('');
+  for (const w of wrapAt(data.description, W - 4)) appendLine('  ' + w);
+  if (data.flavor) {
+    appendLine('');
+    for (const w of wrapAt(data.flavor, W - 4)) appendLine('  ' + w, 'dim');
+  }
+  appendLine('═'.repeat(W));
+  appendBlank();
+}
+
+/** Story 60.10: 模糊名多命中候选列表 */
+function cmdInfoMultiSkillHit(skillIds: string[], query: string): void {
+  appendLine(`MULTIPLE MATCHES FOR "${query.toUpperCase()}" · ${skillIds.length} HITS`, 'head');
+  for (const sid of skillIds) {
+    const sk = state.affixSkills.get(sid);
+    if (!sk) continue;
+    let loc = '—';
+    for (const [k, s] of state.player.bindings) {
+      if (s === sid) { loc = `KEY ${k.toUpperCase()}`; break; }
+    }
+    if (loc === '—' && state.player.inbox.includes(sid)) loc = 'IN-TRAY';
+    appendLine(`  · ${sk.name}  ·  ${loc}  ·  Lv.${sk.level}`);
+  }
+  appendLine(`· REFINE QUERY OR USE  INF <KEY>`, 'dim');
+  appendBlank();
+}
+
+/** Story 60.10: /OWNED 列表 — 全部 owned skills + relics */
+function cmdInfoListOwned(): void {
+  const W = 80;
+  appendLine('═'.repeat(W) + '  OWNED ASSETS', 'head');
+
+  // M1 review fix: 多格技能在 bindings Map 里有 N 条 entry（每键一条），
+  // 必须按 sid 分组合并 keys，否则一个 tetromino 在 /OWNED 出现 4 次。
+  const sidToKeys = new Map<string, string[]>();
+  for (const [k, sid] of state.player.bindings) {
+    const arr = sidToKeys.get(sid) ?? [];
+    arr.push(k.toUpperCase());
+    sidToKeys.set(sid, arr);
+  }
+  const skillEntries: Array<{ key: string; sid: string; sortKey: string }> = [];
+  for (const [sid, keys] of sidToKeys) {
+    keys.sort();
+    skillEntries.push({ key: keys.join('+'), sid, sortKey: keys[0] });
+  }
+  // bound 按首字母键排序
+  skillEntries.sort((a, b) => a.sortKey.charCodeAt(0) - b.sortKey.charCodeAt(0));
+  // inbox 按数组顺序追加（与 IN-tray 显示顺序一致）
+  for (let i = 0; i < state.player.inbox.length; i++) {
+    skillEntries.push({ key: `IN${i + 1}`, sid: state.player.inbox[i], sortKey: `Z${i}` });
+  }
+  appendLine('SKILLS', 'head');
+  if (skillEntries.length === 0) {
+    appendLine('  · EMPTY', 'dim');
+  } else {
+    for (const { key, sid } of skillEntries) {
+      const sk = state.affixSkills.get(sid);
+      if (!sk) continue;
+      const shape = (sk.shapeId ?? 'monomino').toUpperCase();
+      appendLine(`  ${key.padEnd(8)}  ${sk.name.padEnd(28)}  Lv.${sk.level}  ${shape}`);
+    }
+  }
+
+  // RELICS
+  appendLine('');
+  appendLine('RELICS', 'head');
+  const relicIds = Array.from(state.player.relics);
+  if (relicIds.length === 0) {
+    appendLine('  · EMPTY', 'dim');
+  } else {
+    for (let i = 0; i < relicIds.length; i++) {
+      const id = relicIds[i];
+      const data = RELICS[id];
+      if (!data) continue;
+      const numKey = i === 9 ? '0' : String(i + 1);
+      appendLine(`  ${numKey}  ${data.icon} ${data.name}`);
+    }
+  }
+  appendLine('═'.repeat(W));
   appendBlank();
 }
 
@@ -2167,4 +2416,8 @@ export const __test = {
   executeBuyRelic: (d: ItemDescriptor) => executeBuyRelic(d),
   cmdSell: (arg: string): void => cmdSell(arg),
   cmdUndo: (): void => cmdUndo(),
+  // Story 60.10: INF 命令测试入口
+  cmdInfo: (arg: string): void => cmdInfo(arg),
+  /** Story 60.10 review M2: 注入 descriptorCache 方便测 catalog 命中路径 */
+  setDescriptorCache: (items: ItemDescriptor[]): void => { descriptorCache = items; },
 };

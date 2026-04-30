@@ -478,7 +478,7 @@ development_status:
   60-7-event-bus-binding-manager: done                  # 事件总线 + bindingManager 接口闭合（P2.2 接主流程）— M1+M2 修完
   60-8-tutorial-overhaul: done                           # 教程改写（P2.2 接主流程）— P2.2 4/4 done · M1 修完
   60-9-workbench-hover-tooltips: done                   # 工作台 hover tooltip（P2.3 浪漫化）— M1 修完
-  60-10-info-owned-skills: backlog                      # 终端 INFO 支持 owned 技能/遗物（P2.3 浪漫化）
+  60-10-info-owned-skills: done                          # 终端 INFO 支持 owned 技能/遗物（P2.3 浪漫化）— M1+M2 修完
   60-11-transition-animations: backlog                  # 转场动画（P2.3 浪漫化）
   60-12-sound-effects: backlog                          # 音效（P2.3 浪漫化）
   60-13-craft-metamorph-stations: backlog               # Craft + Metamorph 工序（P2.3 浪漫化）
