@@ -38,6 +38,8 @@ vi.mock('../../../src/systems/shop', async () => {
     showRelicTooltip: vi.fn(),
     hideRelicTooltip: vi.fn(),
     moveRelicTooltip: vi.fn(),
+    // Story 60.17 修订：默认 mock 包含 smartEstimate（产出型 skill）；
+    // 无产出场景测试用 skillId === 'sk_no_production' 关掉。
     buildSkillKeyTooltipData: (skillId: string, boundKeys?: string[]) => ({
       skill: {
         name: `MOCK ${skillId}`,
@@ -46,6 +48,11 @@ vi.mock('../../../src/systems/shop', async () => {
         level: 1,
         school: 'COMMON',
         schoolCssClass: 'rarity-0',
+        smartEstimate: skillId === 'sk_no_production' ? undefined : {
+          estimatedOutput: 5,
+          breakdown: [],
+          critChance: 0,
+        },
       },
     }),
   }
@@ -162,7 +169,7 @@ afterEach(() => {
 })
 
 describe('Story 60.17 · 拖拽中候选键 hover 预估 tooltip', () => {
-  it('AC1: dragging + payload.skillId + setting=true → show 调用，hover key 作 boundKeys', () => {
+  it('AC1: dragging + payload.skillId + setting=true → show 调用，hover key 作 boundKeys + productionOnly=true', () => {
     const keyEl = makeFakeKeyEl({ classNames: ['kb-key', 'kb-tier-1'], dataKey: 's' })
     fakeRoot = makeRoot({ [SEL_TIER1]: [keyEl], [SEL_INTRAY]: [], [SEL_RELIC]: [] })
 
@@ -172,9 +179,25 @@ describe('Story 60.17 · 拖拽中候选键 hover 预估 tooltip', () => {
     keyEl.fire('mouseenter', fakeMouseEvent())
 
     expect(keyTooltipShowSpy).toHaveBeenCalledTimes(1)
-    const data = keyTooltipShowSpy.mock.calls[0][2]
-    expect(data?.skill?.name).toBe('MOCK sk_drag')
-    expect(data?.skill?.description).toBe('bound:s') // hoverKey 作 boundKeys 假设上下文
+    const call = keyTooltipShowSpy.mock.calls[0]
+    expect(call[2]?.skill?.name).toBe('MOCK sk_drag')
+    expect(call[2]?.skill?.description).toBe('bound:s') // hoverKey 作 boundKeys 假设上下文
+    expect(call[2]?.skill?.smartEstimate?.estimatedOutput).toBe(5) // 产出存在
+    // 第 6 个参数 = productionOnly = true（拖拽预估模式仅显示一行产出）
+    expect(call[5]).toBe(true)
+  })
+
+  it('AC1 修订：skill 无 smartEstimate（passive / buff）→ 跳过 show', () => {
+    const keyEl = makeFakeKeyEl({ classNames: ['kb-key', 'kb-tier-1'], dataKey: 's' })
+    fakeRoot = makeRoot({ [SEL_TIER1]: [keyEl], [SEL_INTRAY]: [], [SEL_RELIC]: [] })
+
+    attachWorkbenchTooltips()
+    dragState.dragging = true
+    // 用 sk_no_production triggers mock 返回 smartEstimate=undefined
+    dragState.payload = { type: 'skill-inventory', skillId: 'sk_no_production' }
+    keyEl.fire('mouseenter', fakeMouseEvent())
+
+    expect(keyTooltipShowSpy).not.toHaveBeenCalled()
   })
 
   it('AC2: mouseleave 始终 hide（拖拽中也 hide）', () => {

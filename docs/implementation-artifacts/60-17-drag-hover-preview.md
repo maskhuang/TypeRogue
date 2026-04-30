@@ -129,11 +129,16 @@ claude-opus-4-7[1m]
 ### Completion Notes List
 
 - 实施于 2026-04-29，单 session 6 task 全部完成；状态 → review
-- **AC1-AC6 全覆盖**：测试 8 个 (新) + 11 个 (60.9 既有) 全过
+- **AC1-AC6 全覆盖**：测试 9 个 (新) + 12 个 (60.9 既有) 全过 = 21/21
 - **关键设计决定**：
   - 在 `dragManager` 加 `currentPayload` getter (read-only) 暴露 private payload 给 ui/shop/ — 比通过 onDragStart 缓存到 shopState 更内聚
   - tier-1 listener 选择器从 `.kb-key.kb-tier-1.has-skill[data-key]` 放宽到 `.kb-key.kb-tier-1[data-key]`，所有空键也接 listener。静态路径用 `keyEl.classList.contains('has-skill')` 内部 guard
   - 多格 anchor 验证：`mapShapeToKeys(hoverKey, shapeId, rotation)` 返回 null（放不下）→ 跳过 show，避免在无效位置显示 tooltip 误导玩家
+- **dogfood 修订（同 session 内）**：用户反馈"改为仅显示期望产出"
+  - `KeyTooltip.show` 加 `productionOnly: boolean` 第 6 参数（默认 false 不破现有路径）
+  - productionOnly 模式仅渲染 `buildSummarySection`（smartEstimate 一行产出）— 不渲染 letter/header/affix/enchant/glossary
+  - workbench 拖拽预估路径：`if (!data.skill?.smartEstimate) return;` 提前 gate（passive/buff 类无产出 → 不显示打扰）
+  - keyTooltip 内层加 defensive `productionOnly && !smartEstimate → hide` 双重保险
 - **未做：throttle**（dev notes Risks 提到的 50-100ms throttle）— mouseenter 单次触发频率不高，dogfood 后再决定是否需要
 
 ### File List
@@ -146,7 +151,8 @@ claude-opus-4-7[1m]
 - `src/src/core/UserSettings.ts` — 加 `shopDragPreviewTooltip` field + DEFAULTS + `shouldShowDragPreviewTooltip` helper
 - `src/src/ui/SettingsPanel.ts` — 加 toggle UI 行 + 事件 handler
 - `src/src/demo/demo-i18n.ts` — 加 zh + en `settings.shopDragPreview.*` keys
-- `src/src/ui/shop/shopWorkbench.ts` — `attachWorkbenchTooltips` 重写 tier-1 listener 路径（drag-preview + 静态分支）
+- `src/src/ui/keyboard/KeyTooltip.ts` — `show` 加 `productionOnly: boolean` 第 6 参数 + production-only 渲染分支（dogfood 修订）
+- `src/src/ui/shop/shopWorkbench.ts` — `attachWorkbenchTooltips` 重写 tier-1 listener 路径（drag-preview productionOnly + 静态分支）
 - `src/tests/unit/ui/shopPreviewTooltip.test.ts` — `SEL_TIER1` 选择器同步更新
 - `docs/implementation-artifacts/60-17-drag-hover-preview.md` — Tasks/Subtasks 全部 [x] + Dev Agent Record
 - `docs/implementation-artifacts/sprint-status.yaml` — 60-17 ready-for-dev → in-progress → review

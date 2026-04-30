@@ -279,7 +279,10 @@ export function attachWorkbenchTooltips(): void {
         }
         const data = buildSkillKeyTooltipData(payload.skillId, [hoverKey]);
         if (!data) return;
-        keyTooltip.show(e.clientX, e.clientY, data);
+        // Story 60.17 修订：仅显示期望产出（smartEstimate）一行；
+        // 无产出（passive / buff 类无 smartEstimate）→ 直接 return 不打扰
+        if (!data.skill?.smartEstimate) return;
+        keyTooltip.show(e.clientX, e.clientY, data, undefined, false, true);
         return;
       }
       // === 静态已绑键路径（Story 60.9 原路径）===

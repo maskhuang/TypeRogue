@@ -396,8 +396,17 @@ class KeyTooltipManager {
    * @param y 鼠标 clientY
    * @param data tooltip 数据
    * @param avoidRect 需要避开的区域（范围高亮的包围盒）
+   * @param enableGlossary 是否在底部展开机制术语解释（拖拽预估模式默认 false）
+   * @param productionOnly Story 60.17: 拖拽预估模式 — 仅渲染 smartEstimate（期望产出）
+   *   一行；没有产出（smartEstimate 不存在）→ hide。
    */
-  show(x: number, y: number, data: KeyTooltipData, avoidRect?: { top: number; left: number; right: number; bottom: number }, enableGlossary = true): void {
+  show(x: number, y: number, data: KeyTooltipData, avoidRect?: { top: number; left: number; right: number; bottom: number }, enableGlossary = true, productionOnly = false): void {
+    // Story 60.17: production-only 模式 + 无产出 → 不显示
+    if (productionOnly && !data.skill?.smartEstimate) {
+      this.hide()
+      return
+    }
+
     const el = this.ensureElement()
     this.clearGlossaryTimer()
 
@@ -405,13 +414,19 @@ class KeyTooltipManager {
     _matchedKeywordIds = new Set()
 
     // 组合各区块（空区块不渲染）
-    let html = buildLetterSection(data)
+    let html = ''
 
-    if (data.skill) {
-      html += buildHeaderSection(data.skill)
-      html += buildAffixSection(data.skill)
-      html += buildEnchantSection(data.skill)
-      html += buildSummarySection(data.skill)
+    if (productionOnly && data.skill) {
+      // Story 60.17: 仅期望产出一行（拖拽寻位用，不挡视线）
+      html = buildSummarySection(data.skill)
+    } else {
+      html = buildLetterSection(data)
+      if (data.skill) {
+        html += buildHeaderSection(data.skill)
+        html += buildAffixSection(data.skill)
+        html += buildEnchantSection(data.skill)
+        html += buildSummarySection(data.skill)
+      }
     }
 
     // 术语详情区（键盘 tooltip 不渲染）
