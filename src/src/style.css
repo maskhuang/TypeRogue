@@ -6508,17 +6508,18 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
 .kb-key.has-skill .kb-letter { font-size: 9px; opacity: 0.6; }
 .kb-key.has-skill .kb-icon { font-size: 14px; line-height: 1; }
 /* Story 60.20 dogfood: kb-tag 从文字标签改为词条颜色色带 — 多词条等分多段。
-   每个 .kb-tag-seg 的 background 由 JS 注入（取 AFFIX_COLORS[affix.type]）。 */
+   每个 .kb-tag-seg 的 background 由 JS 注入（取 AFFIX_COLORS[affix.type]）。
+   尺寸放大目的：玩家扫一眼就能凭颜色区分相邻同图标技能是否同一个。 */
 .kb-key.has-skill .kb-tag {
     position: absolute;
-    bottom: -6px;
+    bottom: -9px;
     left: 50%;
     transform: translateX(-50%) rotate(-1.5deg);
-    width: 60%;
-    height: 4px;
+    width: 82%;
+    height: 7px;
     border: 1px solid #2a1f10;
-    border-radius: 1px;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    border-radius: 2px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.35), 0 0 4px rgba(0,0,0,0.2);
     z-index: 2;
     display: flex;
     overflow: hidden;
