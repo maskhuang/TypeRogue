@@ -3969,6 +3969,61 @@ body.shop-preview-active .drag-ghost {
     display: none !important;
 }
 
+/* Story 60.9 review: 工作台 hover tooltip 走 DPCA paper-craft 油墨调色板
+ * 默认 .key-tooltip / #relic-tooltip 是 CRT 黑底霓虹蓝 + 像素字体，与
+ * 工作台牛皮纸 + 油墨章 + Courier 体冲突。在 shop-preview-active scope
+ * 下覆盖背景/边框/字体/章戳风格。 */
+body.shop-preview-active .key-tooltip,
+body.shop-preview-active #relic-tooltip {
+    background: #f4e4c1;                          /* 牛皮纸 */
+    border: 1.5px solid #2a1f10;                  /* 黑墨边 */
+    color: #2a1f10;                               /* 黑墨字 */
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.45;
+    box-shadow:
+        2px 2px 0 #2a1f10,                        /* 油墨投影 */
+        4px 4px 8px rgba(0,0,0,0.25);
+    border-radius: 0;                             /* 公文体不圆角 */
+}
+body.shop-preview-active .key-tooltip .tooltip-letter,
+body.shop-preview-active #relic-tooltip > div:first-child {
+    color: #8a1a1a;                               /* 红章标题 */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px dashed #7a5a10;
+    padding-bottom: 3px;
+    margin-bottom: 5px;
+}
+body.shop-preview-active .key-tooltip .tooltip-skill-school,
+body.shop-preview-active #relic-tooltip > div:nth-child(2) {
+    background: #ead7af !important;               /* 浅牛皮章戳 */
+    color: #7a5a10 !important;                    /* 金章字 */
+    border: 1px solid #7a5a10;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 1px 6px !important;
+}
+body.shop-preview-active .key-tooltip .tooltip-skill-desc,
+body.shop-preview-active .key-tooltip .tooltip-affix-desc,
+body.shop-preview-active .key-tooltip .tooltip-section,
+body.shop-preview-active #relic-tooltip > div:nth-child(3) {
+    color: #2a1f10 !important;
+}
+body.shop-preview-active .key-tooltip .tooltip-affix-name {
+    color: #7a5a10 !important;                    /* 金章副标 */
+    font-weight: bold;
+}
+body.shop-preview-active .key-tooltip .tooltip-skill-quest,
+body.shop-preview-active .key-tooltip .tooltip-skill-growth {
+    color: #3e7c41 !important;                    /* 批准绿章 = 已激活/进度 */
+}
+body.shop-preview-active #relic-tooltip > div:last-child {
+    color: #5a4828 !important;                    /* 文书褐 — flavor 行 */
+    font-style: italic;
+}
+
 /* Story 40.6 / 60.1: 右键旋转动画（classic shop + 新工作台共用） */
 .key-slot.shape-rotating,
 .kb-key.kb-tier-1.shape-rotating {
