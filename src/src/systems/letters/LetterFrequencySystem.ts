@@ -27,6 +27,45 @@ export function calculateLetterFrequency(words: string[]): Map<string, number> {
   return freq
 }
 
+/**
+ * 计算每个字母的"额外底分"显示值（与商店键盘 slot 同款公式）
+ * base_score 在词内按独特字母分摊，base_multiplier 仅锁定 targetLetter；
+ * 显示值 = round((1 + sum) * mult - 1)，0 不进 Map。
+ */
+export function calculateLetterScores(wordEffects: Map<string, WordEffect>): Map<string, number> {
+  const scoreSums = new Map<string, number>()
+  const multProducts = new Map<string, number>()
+
+  for (const [word, effect] of wordEffects) {
+    if (effect.type === 'base_score') {
+      if (effect.targetLetter) {
+        const k = effect.targetLetter.toLowerCase()
+        scoreSums.set(k, (scoreSums.get(k) ?? 0) + effect.value)
+      } else {
+        const unique = new Set(word.toLowerCase())
+        for (const k of unique) {
+          scoreSums.set(k, (scoreSums.get(k) ?? 0) + effect.value)
+        }
+      }
+    } else if (effect.type === 'base_multiplier' && effect.targetLetter) {
+      const k = effect.targetLetter.toLowerCase()
+      multProducts.set(k, (multProducts.get(k) ?? 1) * effect.value)
+    }
+  }
+
+  const result = new Map<string, number>()
+  const allKeys = new Set<string>()
+  for (const k of scoreSums.keys()) allKeys.add(k)
+  for (const k of multProducts.keys()) allKeys.add(k)
+  for (const k of allKeys) {
+    const sum = scoreSums.get(k) ?? 0
+    const mult = multProducts.get(k) ?? 1
+    const score = Math.round((1 + sum) * mult - 1)
+    if (score !== 0) result.set(k, score)
+  }
+  return result
+}
+
 /** WordEffectType → ModifierEffectType 映射 */
 const EFFECT_TYPE_MAP: Record<string, ModifierEffectType> = {
   base_score: 'score',

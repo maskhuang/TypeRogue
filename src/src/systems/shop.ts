@@ -18,7 +18,7 @@ import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback, randomizeScreenBackground, getCalibrationInfo } from './battle';
 import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
 import { getNextBattleNode, isSecondHalf, getPositionInCycle } from './stage/stageFlow';
-import { calculateLetterFrequency, FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem';
+import { calculateLetterFrequency, calculateLetterScores, FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
 import type { RelicWeights } from './relicPicker';
 import { generateRelicCandidates, showRelicReplaceUI } from './relicPicker';
@@ -3426,6 +3426,7 @@ export function renderBuildManager(): void {
   // 计算字频（一次遍历）
   const letterFreqs = calculateLetterFrequency(state.player.wordDeck);
   cachedLetterFreqs = letterFreqs;
+  const letterScores = calculateLetterScores(state.wordEffects);
 
   // 低频键位自动解绑（频率<阈值 → 底分为0 → 锁定）— 标点键绕过
   const hasPunctuationRelic = state.player.relics.has('punctuation_liberation');
@@ -3496,23 +3497,7 @@ export function renderBuildManager(): void {
       slot.dataset.key = k;
 
       const freq = letterFreqs.get(k) ?? 0;
-      // 词语效果加成：统计该字母的总底分效果
-      let score = 0;
-      let baseMult = 1;
-      for (const [word, effect] of state.wordEffects) {
-        if (effect.type === 'base_score') {
-          if (effect.targetLetter) {
-            if (effect.targetLetter.toLowerCase() === k) score += effect.value;
-          } else {
-            const unique = new Set(word.toLowerCase());
-            if (unique.has(k)) score += effect.value;
-          }
-        } else if (effect.type === 'base_multiplier' && effect.targetLetter?.toLowerCase() === k) {
-          baseMult *= effect.value;
-        }
-      }
-      // 显示：基础1 + 加成 后应用倍率，减去原始 1（只显示额外部分）
-      score = Math.round((1 + score) * baseMult - 1);
+      const score = letterScores.get(k) ?? 0;
       const skillId = state.player.bindings.get(k);
 
       // 低频键位锁定（频率<5 → 底分为0）— 标点键绕过

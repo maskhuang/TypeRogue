@@ -6,7 +6,7 @@
 // ============================================
 
 import { state, addRelicWithCapacity, removeRelic, isRelicSlotsFull } from '../../core/state';
-import { INBOX_MAX, BALANCE } from '../../core/constants';
+import { INBOX_MAX, BALANCE, PUNCTUATION_KEYS } from '../../core/constants';
 import {
   generateAffixShopItems,
   generateShopRelicItem,
@@ -22,7 +22,7 @@ import { rerollAllAffixes } from '../../systems/relics/SkillRelicBehaviors';
 import { initFurnace } from '../../systems/relics/ResourceRelicBehaviors';
 import { random } from '../../core/seededRandom';
 import { generateWordPacks } from '../../data/wordPacks';
-import { calculateLetterFrequency } from '../../systems/letters/LetterFrequencySystem';
+import { calculateLetterFrequency, calculateLetterScores, FREQ_UNLOCK_THRESHOLD } from '../../systems/letters/LetterFrequencySystem';
 import { getBattleNumber, getPositionInCycle, getStageType } from '../../systems/stage/stageFlow';
 import { STAGE_ICONS } from '../../systems/actTransition';
 import { t } from '../../demo/demo-i18n';
@@ -1100,16 +1100,86 @@ export function cmdUndo(): void {
   updateTerminalChrome();
 }
 
+// === Story 60.19: STAT 命令真实数据接入（letterFreqs / wordEffects） ===
+const STATS_TOP_N = 10;
+const STATS_BAR_WIDTH = 20;
+
 export function cmdStats(): void {
-  appendLine('═══ PERFORMANCE AUDIT · CLERK-7842 · BATCH 03/12 ═══', 'head');
-  appendLine('  KEY USAGE       FREQ    DPS     ACC');
-  appendLine('  A  ████████      9     142     94%');
-  appendLine('  E  ███████       8     128     91%');
-  appendLine('  L  ██████        7     121     88%');
-  appendLine('  ...');
-  appendLine('  TOP CONTRIBUTOR: LOZ-204 (38% of total)', 'echo');
-  appendLine('  WEAKEST KEY:     J (FREQ-LOCKED)', 'redacted');
-  appendLine('═══ END OF AUDIT ═══ (STUB · P1.4 wires real data)', 'dim');
+  const batchPos = getPositionInCycle(state.level || 1);
+  const batchLabel = `${String(batchPos).padStart(2, '0')}/${BALANCE.CYCLE_LENGTH}`;
+  appendLine(t('shop.terminal.cmd.stats.title', { batch: batchLabel }), 'head');
+
+  const letterFreqs = calculateLetterFrequency(state.player.wordDeck);
+  const letterScores = calculateLetterScores(state.wordEffects);
+
+  // 兜底：词库为空（首关入店）
+  if (letterFreqs.size === 0) {
+    appendLine(t('shop.terminal.cmd.stats.no_activity'), 'dim');
+    appendLine(t('shop.terminal.cmd.stats.footer'), 'dim');
+    appendBlank();
+    return;
+  }
+
+  // 收集所有"上榜键"：进 freq 表的键 ∪ 有 score 的键
+  const allKeys = new Set<string>();
+  for (const k of letterFreqs.keys()) allKeys.add(k);
+  for (const k of letterScores.keys()) allKeys.add(k);
+
+  type Row = { key: string; freq: number; score: number; locked: boolean };
+  const rows: Row[] = [];
+  let maxFreq = 0;
+  for (const k of allKeys) {
+    const freq = letterFreqs.get(k) ?? 0;
+    const score = letterScores.get(k) ?? 0;
+    const isPunctKey = PUNCTUATION_KEYS.includes(k);
+    const locked = freq < FREQ_UNLOCK_THRESHOLD && !isPunctKey;
+    if (freq > maxFreq) maxFreq = freq;
+    rows.push({ key: k, freq, score, locked });
+  }
+
+  // freq 降序，相同 freq 按 score 降序，再按字母 a→z
+  rows.sort((a, b) => b.freq - a.freq || b.score - a.score || a.key.localeCompare(b.key));
+
+  // 列头：KEY | BAR | FREQ | SCORE
+  appendLine(t('shop.terminal.cmd.stats.col_header'));
+  const top = rows.slice(0, STATS_TOP_N);
+  for (const row of top) {
+    const barLen = maxFreq > 0 ? Math.round((row.freq / maxFreq) * STATS_BAR_WIDTH) : 0;
+    const bar = '█'.repeat(barLen).padEnd(STATS_BAR_WIDTH, ' ');
+    const keyDisplay = row.key.toUpperCase().padEnd(2, ' ');
+    const freqStr = String(row.freq).padStart(4, ' ');
+    const scoreStr = (row.score > 0 ? `+${row.score}` : String(row.score)).padStart(5, ' ');
+    const lockTag = row.locked ? `  ${t('shop.terminal.cmd.stats.locked')}` : '';
+    const line = `  ${keyDisplay} ${bar} ${freqStr} ${scoreStr}${lockTag}`;
+    appendLine(line, row.locked ? 'redacted' : '');
+  }
+
+  appendBlank();
+
+  // TOP CONTRIBUTOR：综合贡献 freq × (1 + max(0, score))，占总和 pct
+  const contribOf = (r: Row) => r.freq * (1 + Math.max(0, r.score));
+  const totalContrib = rows.reduce((s, r) => s + contribOf(r), 0);
+  if (totalContrib > 0) {
+    const top1 = rows.slice().sort((a, b) => contribOf(b) - contribOf(a))[0];
+    const pct = Math.round((contribOf(top1) / totalContrib) * 100);
+    appendLine(
+      t('shop.terminal.cmd.stats.top_contributor', { key: top1.key.toUpperCase(), pct }),
+      'echo',
+    );
+  }
+
+  // WEAKEST KEY：freq 最低的非标点键（且 freq>0），若全部锁定则取最低 freq
+  const nonPunct = rows.filter(r => !PUNCTUATION_KEYS.includes(r.key));
+  if (nonPunct.length > 0) {
+    const weakest = nonPunct.slice().sort((a, b) => a.freq - b.freq || a.key.localeCompare(b.key))[0];
+    const lockTag = weakest.locked ? ` ${t('shop.terminal.cmd.stats.locked')}` : '';
+    appendLine(
+      t('shop.terminal.cmd.stats.weakest_key', { key: weakest.key.toUpperCase() }) + lockTag,
+      weakest.locked ? 'redacted' : '',
+    );
+  }
+
+  appendLine(t('shop.terminal.cmd.stats.footer'), 'dim');
   appendBlank();
 }
 

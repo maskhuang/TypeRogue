@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   calculateLetterFrequency,
+  calculateLetterScores,
   getWordEffectModifiers,
 } from '../../../../src/systems/letters/LetterFrequencySystem'
 import { ModifierRegistry } from '../../../../src/systems/modifiers/ModifierRegistry'
@@ -120,6 +121,64 @@ describe('getWordEffectModifiers', () => {
     expect(mods[0].condition).toEqual({ type: 'key_is', key: 'e' })
     expect(mods[0].effect).toEqual({ type: 'gold', value: 2, stacking: 'additive' })
     expect(mods[0].priority).toBe(50)
+  })
+})
+
+// ========================================
+// calculateLetterScores (Story 60.19 helper)
+// ========================================
+describe('calculateLetterScores', () => {
+  it('空 wordEffects 返回空 Map', () => {
+    expect(calculateLetterScores(new Map()).size).toBe(0)
+  })
+
+  it('单字母 base_score 直接累加（targetLetter 路径）', () => {
+    const effects = new Map<string, WordEffect>()
+    effects.set('a', { type: 'base_score', value: 5, targetLetter: 'a' })
+    const scores = calculateLetterScores(effects)
+    // round((1 + 5) * 1 - 1) = 5
+    expect(scores.get('a')).toBe(5)
+  })
+
+  it('词内 base_score 按独特字母分摊（不锁 targetLetter）', () => {
+    const effects = new Map<string, WordEffect>()
+    effects.set('see', { type: 'base_score', value: 2 })
+    const scores = calculateLetterScores(effects)
+    // 独特字母 s, e；each round((1+2)*1-1) = 2
+    expect(scores.get('s')).toBe(2)
+    expect(scores.get('e')).toBe(2)
+  })
+
+  it('base_multiplier 按 targetLetter 应用，0 加成时也产显示值', () => {
+    const effects = new Map<string, WordEffect>()
+    effects.set('m1', { type: 'base_multiplier', value: 3, targetLetter: 'q' })
+    const scores = calculateLetterScores(effects)
+    // round((1+0)*3 - 1) = 2
+    expect(scores.get('q')).toBe(2)
+  })
+
+  it('base_score 与 base_multiplier 联用：先加再乘再 -1', () => {
+    const effects = new Map<string, WordEffect>()
+    effects.set('s1', { type: 'base_score', value: 4, targetLetter: 'a' })
+    effects.set('m1', { type: 'base_multiplier', value: 2, targetLetter: 'a' })
+    const scores = calculateLetterScores(effects)
+    // round((1+4)*2 - 1) = 9
+    expect(scores.get('a')).toBe(9)
+  })
+
+  it('score 为 0 的键不进 Map', () => {
+    const effects = new Map<string, WordEffect>()
+    // base_multiplier 1 + 0 score → round((1+0)*1-1)=0 → 不进
+    effects.set('m1', { type: 'base_multiplier', value: 1, targetLetter: 'z' })
+    const scores = calculateLetterScores(effects)
+    expect(scores.has('z')).toBe(false)
+  })
+
+  it('multiplier 不带 targetLetter 时被忽略（与 classic shop 一致）', () => {
+    const effects = new Map<string, WordEffect>()
+    effects.set('mult', { type: 'base_multiplier', value: 2 })
+    const scores = calculateLetterScores(effects)
+    expect(scores.size).toBe(0)
   })
 })
 
