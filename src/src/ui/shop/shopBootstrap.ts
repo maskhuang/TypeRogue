@@ -80,7 +80,7 @@ function promptInboxWarning(): void {
   previewState.pendingSubmit = { stage: 'warn-inbox', nextStage: 'proceed' };
   showOnly('terminal');
   setSubmitButtonAwaiting(true);
-  terminal.appendLine(`WARNING · ${n} ITEM${n > 1 ? 'S' : ''} IN IN-TRAY · LEAVE PENDING ITEMS?`, 'redacted');
+  terminal.appendLine(t('shop.terminal.submit.warn_intray_pending', { n, s: n > 1 ? 'S' : '' }), 'redacted');
   terminal.appendLine(t('shop.terminal.submit.warn_inbox_left'), 'dim');
 }
 
@@ -108,7 +108,7 @@ export function handleSubmitConfirmation(input: string): boolean {
     setSubmitButtonAwaiting(false);
     return true;
   }
-  terminal.appendLine(`ERR · EXPECTED [Y]ES OR [N]O · GOT "${input}" · TRY AGAIN`, 'redacted');
+  terminal.appendLine(t('shop.terminal.err.confirm_yn', { input }), 'redacted');
   return true; // still in confirm mode
 }
 
@@ -224,7 +224,7 @@ function setupDrawerHandlers(): void {
 // === Main parser ===
 
 function execute(line: string): void {
-  terminal.appendLine(`§> ${line}`, 'dim');
+  terminal.appendLine(t('shop.terminal.execute.prompt', { line }), 'dim');
   // Story 60.4: SUBMIT 警告 prompt 优先级 > BUY high-price confirm
   if (handleSubmitConfirmation(line)) return;
   if (terminal.handleConfirmation(line)) return;
@@ -240,8 +240,8 @@ function execute(line: string): void {
   }
   const verb = terminal.expandVerb(verbInput);
   if (!verb) {
-    terminal.appendLine(`ERR · UNKNOWN VERB: ${verbInput}`, 'redacted');
-    terminal.appendLine('  · TYPE  HEL  FOR COMMAND LIST', 'dim');
+    terminal.appendLine(t('shop.terminal.err.unknown_verb', { verb: verbInput }), 'redacted');
+    terminal.appendLine(t('shop.terminal.execute.try_help'), 'dim');
     terminal.appendBlank();
     return;
   }
@@ -276,8 +276,8 @@ function tabComplete(): void {
   const matches = VERBS.filter(v => VERB_FULL[v].startsWith(parts[0]));
   if (matches.length === 1) setPrompt(VERB_FULL[matches[0]] + ' ');
   else if (matches.length > 1) {
-    terminal.appendLine(`§> ${previewState.typedBuffer}`, 'dim');
-    terminal.appendLine('  · ' + matches.map(m => VERB_FULL[m]).join(' · '), 'dim');
+    terminal.appendLine(t('shop.terminal.execute.prompt', { line: previewState.typedBuffer }), 'dim');
+    terminal.appendLine(t('shop.terminal.execute.completion_row', { list: matches.map(m => VERB_FULL[m]).join(' · ') }), 'dim');
   }
 }
 
@@ -403,7 +403,7 @@ function onKey(e: KeyboardEvent): void {
 export function switchToWorkbench(): void {
   previewState.workbenchEntered = true;
   if (previewState.undoStack.length > 0) {
-    terminal.appendLine(`  · ${previewState.undoStack.length} PURCHASES FINALIZED.`, 'dim');
+    terminal.appendLine(t('shop.terminal.switch_workbench.purchases_finalized', { n: previewState.undoStack.length }), 'dim');
     previewState.undoStack = [];
   }
   showOnly('workbench');
@@ -749,8 +749,8 @@ function injectScreens(): void {
 }
 
 function renderWelcome(): void {
-  terminal.appendLine('CONNECTED · DPCA-VT220 · §117 PNEUMATIC REQUISITION TUBE', 'head');
-  terminal.appendLine('  · TYPE  HEL  FOR COMMAND LIST', 'dim');
+  terminal.appendLine(t('shop.terminal.welcome.connected'), 'head');
+  terminal.appendLine(t('shop.terminal.welcome.try_help'), 'dim');
   terminal.appendBlank();
   terminal.cmdList();
   terminal.cmdHelp();

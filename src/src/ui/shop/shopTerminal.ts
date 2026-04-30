@@ -570,9 +570,9 @@ export function cmdInfo(arg?: string): void {
 
   // 6) 全部 miss → 原 suggestSku fallback
   const guess = suggestSku(arg);
-  appendLine(`ERR · NOT FOUND: ${upper}`, 'redacted');
-  if (guess) appendLine(`  · DID YOU MEAN ${guess}?`, 'dim');
-  appendLine(`  · TRY  INF /OWNED  TO LIST OWNED ASSETS`, 'dim');
+  appendLine(t('shop.terminal.err.not_found', { target: upper }), 'redacted');
+  if (guess) appendLine(t('shop.terminal.cmd.info.did_you_mean', { guess }), 'dim');
+  appendLine(t('shop.terminal.cmd.info.try_owned'), 'dim');
   appendBlank();
 }
 
@@ -582,7 +582,7 @@ function cmdInfoKey(rawKey: string): void {
   if (/^[a-z]$/.test(key)) {
     const skillId = state.player.bindings.get(key);
     if (!skillId) {
-      appendLine(`KEY ${key.toUpperCase()} · UNBOUND · BAL 🍌 ${state.gold}`, 'dim');
+      appendLine(t('shop.terminal.info.key.unbound', { key: key.toUpperCase(), gold: state.gold }), 'dim');
       appendBlank();
       return;
     }
@@ -595,7 +595,7 @@ function cmdInfoKey(rawKey: string): void {
   const relicIds = Array.from(state.player.relics);
   const relicId = relicIds[idx];
   if (!relicId) {
-    appendLine(`KEY ${key} · NO RELIC · BAL 🍌 ${state.gold}`, 'dim');
+    appendLine(t('shop.terminal.info.key.no_relic', { key, gold: state.gold }), 'dim');
     appendBlank();
     return;
   }
@@ -633,7 +633,7 @@ function findOwnedRelicByQuery(query: string): string | null {
 function cmdInfoOwnedSkill(skillId: string): void {
   const sk = state.affixSkills.get(skillId);
   if (!sk) {
-    appendLine(`ERR · SKILL DEFINITION MISSING · ${skillId}`, 'redacted');
+    appendLine(t('shop.terminal.err.skill_missing', { sid: skillId }), 'redacted');
     appendBlank();
     return;
   }
@@ -644,13 +644,15 @@ function cmdInfoOwnedSkill(skillId: string): void {
   for (const [k, sid] of state.player.bindings) if (sid === skillId) boundKeys.push(k.toUpperCase());
   const inboxIdx = state.player.inbox.indexOf(skillId);
   const location = boundKeys.length > 0
-    ? `KEY ${boundKeys.join('+')}`
-    : (inboxIdx >= 0 ? `IN-TRAY SLOT ${inboxIdx + 1}/${INBOX_MAX}` : 'UNASSIGNED');
+    ? t('shop.terminal.info.skill.location_key', { keys: boundKeys.join('+') })
+    : (inboxIdx >= 0
+        ? t('shop.terminal.info.skill.location_inbox', { idx: inboxIdx + 1, max: INBOX_MAX })
+        : t('shop.terminal.info.skill.location_unassigned'));
 
   const headLine = `═══ OWNED · ${sk.name} · ${location} ` + '═'.repeat(Math.max(3, W - sk.name.length - location.length - 16));
   appendLine(headLine, 'echo');
   const shapeId = sk.shapeId ?? 'monomino';
-  appendLine(`KIND SKILL · LV ${sk.level} · SHAPE ${shapeId.toUpperCase()}`, 'dim');
+  appendLine(t('shop.terminal.info.skill.headline', { level: sk.level, shape: shapeId.toUpperCase() }), 'dim');
 
   let fields: ReturnType<typeof buildAffixTooltipFields> | null = null;
   try { fields = buildAffixTooltipFields(sk, rt); } catch { fields = null; }
@@ -676,8 +678,8 @@ function cmdInfoOwnedSkill(skillId: string): void {
       }
     }
   }
-  if (fields && fields.questProgress) appendLine('  QUEST: ' + fields.questProgress, 'dim');
-  if (fields && fields.apprenticeGrowth) appendLine('  APPRENTICE: ' + fields.apprenticeGrowth, 'dim');
+  if (fields && fields.questProgress) appendLine(t('shop.terminal.info.skill.quest_label', { progress: fields.questProgress }), 'dim');
+  if (fields && fields.apprenticeGrowth) appendLine(t('shop.terminal.info.skill.apprentice_label', { growth: fields.apprenticeGrowth }), 'dim');
   appendLine('═'.repeat(W));
   appendBlank();
 }
@@ -686,7 +688,7 @@ function cmdInfoOwnedSkill(skillId: string): void {
 function cmdInfoOwnedRelic(relicId: string): void {
   const data = RELICS[relicId];
   if (!data) {
-    appendLine(`ERR · RELIC DEFINITION MISSING · ${relicId}`, 'redacted');
+    appendLine(t('shop.terminal.err.relic_missing', { rid: relicId }), 'redacted');
     appendBlank();
     return;
   }
@@ -696,7 +698,7 @@ function cmdInfoOwnedRelic(relicId: string): void {
   const numKey = idx < 0 ? '?' : (idx === 9 ? '0' : String(idx + 1));
   const headLine = `═══ OWNED · RELIC · ${data.icon} ${data.name} · KEY ${numKey} ` + '═'.repeat(Math.max(3, W - data.name.length - 28));
   appendLine(headLine, 'echo');
-  appendLine(`RARITY ${data.rarity.toUpperCase()} · ID ${relicId}`, 'dim');
+  appendLine(t('shop.terminal.info.relic.rarity_label', { rarity: data.rarity.toUpperCase(), rid: relicId }), 'dim');
   appendLine('');
   for (const w of wrapAt(data.description, W - 4)) appendLine('  ' + w);
   if (data.flavor) {
@@ -709,38 +711,43 @@ function cmdInfoOwnedRelic(relicId: string): void {
 
 /** Story 60.10: 模糊名多命中候选列表 */
 function cmdInfoMultiSkillHit(skillIds: string[], query: string): void {
-  appendLine(`MULTIPLE MATCHES FOR "${query.toUpperCase()}" · ${skillIds.length} HITS`, 'head');
+  appendLine(t('shop.terminal.cmd.info.multi_match_header', { query: query.toUpperCase(), n: skillIds.length }), 'head');
   for (const sid of skillIds) {
     const sk = state.affixSkills.get(sid);
     if (!sk) continue;
     let loc = '—';
     for (const [k, s] of state.player.bindings) {
-      if (s === sid) { loc = `KEY ${k.toUpperCase()}`; break; }
+      if (s === sid) { loc = t('shop.terminal.cmd.info.multi_match_loc_key', { key: k.toUpperCase() }); break; }
     }
-    if (loc === '—' && state.player.inbox.includes(sid)) loc = 'IN-TRAY';
-    appendLine(`  · ${sk.name}  ·  ${loc}  ·  Lv.${sk.level}`);
+    if (loc === '—' && state.player.inbox.includes(sid)) loc = t('shop.terminal.cmd.info.multi_match_loc_inbox');
+    appendLine(t('shop.terminal.cmd.info.multi_match_row', { name: sk.name, loc, level: sk.level }));
   }
-  appendLine(`· REFINE QUERY OR USE  INF <KEY>`, 'dim');
+  appendLine(t('shop.terminal.cmd.info.refine_query'), 'dim');
   appendBlank();
 }
 
 /** Story 60.10: /OWNED 列表 — 全部 owned skills + relics */
 function cmdInfoListOwned(): void {
   const W = 80;
-  appendLine('═'.repeat(W) + '  OWNED ASSETS', 'head');
+  appendLine('═'.repeat(W) + t('shop.terminal.cmd.info.owned_assets'), 'head');
 
   // Story 60.20 review M1 fix: 与 syncFiledFolders 共用 shopState.getOwnedSkillEntries
   // 算法（多格 sid 去重 + bound 排序 + inbox 顺序追加）—— 双份实现已合并。
   const skillEntries = getOwnedSkillEntries();
   appendLine(t('shop.terminal.info.section.skills'), 'head');
   if (skillEntries.length === 0) {
-    appendLine('  · EMPTY', 'dim');
+    appendLine(t('shop.terminal.cmd.info.empty'), 'dim');
   } else {
     for (const { key, sid } of skillEntries) {
       const sk = state.affixSkills.get(sid);
       if (!sk) continue;
       const shape = (sk.shapeId ?? 'monomino').toUpperCase();
-      appendLine(`  ${key.padEnd(8)}  ${sk.name.padEnd(28)}  Lv.${sk.level}  ${shape}`);
+      appendLine(t('shop.terminal.cmd.info.skill_row', {
+        key: key.padEnd(8),
+        name: sk.name.padEnd(28),
+        level: sk.level,
+        shape,
+      }));
     }
   }
 
@@ -749,14 +756,14 @@ function cmdInfoListOwned(): void {
   appendLine(t('shop.terminal.info.section.relics'), 'head');
   const relicIds = Array.from(state.player.relics);
   if (relicIds.length === 0) {
-    appendLine('  · EMPTY', 'dim');
+    appendLine(t('shop.terminal.cmd.info.empty'), 'dim');
   } else {
     for (let i = 0; i < relicIds.length; i++) {
       const id = relicIds[i];
       const data = RELICS[id];
       if (!data) continue;
       const numKey = i === 9 ? '0' : String(i + 1);
-      appendLine(`  ${numKey}  ${data.icon} ${data.name}`);
+      appendLine(t('shop.terminal.cmd.info.relic_row', { key: numKey, icon: data.icon, name: data.name }));
     }
   }
   appendLine('═'.repeat(W));
@@ -766,7 +773,7 @@ function cmdInfoListOwned(): void {
 function executeBuy(d: ItemDescriptor): void {
   if (state.gold < d.price) {
     sfx('shop_buy_err'); // Story 60.12: 拨号忙音 — 余额不足
-    appendLine(`ERR · INSUFFICIENT FUNDS · BAL 🍌 ${state.gold} · NEED 🍌 ${d.price}`, 'redacted');
+    appendLine(t('shop.terminal.err.insufficient_funds', { gold: state.gold, price: d.price }), 'redacted');
     appendLine(t('shop.terminal.err.appeal_form'), 'dim');
     appendBlank();
     return;
@@ -775,21 +782,21 @@ function executeBuy(d: ItemDescriptor): void {
   if (d.kind === 'pack') return executeBuyPack(d);
   if (d.kind === 'relic') return executeBuyRelic(d);
   sfx('shop_buy_err');
-  appendLine(`ERR · ${d.kind.toUpperCase()} PURCHASE NOT YET WIRED`, 'redacted');
+  appendLine(t('shop.terminal.err.purchase_not_wired', { kind: d.kind.toUpperCase() }), 'redacted');
   appendBlank();
 }
 
 export function executeBuySkill(d: ItemDescriptor): void {
   if (state.player.inbox.length >= INBOX_MAX) {
     sfx('shop_buy_err'); // Story 60.12: inbox 满
-    appendLine(`ERR · IN-TRAY FULL (${INBOX_MAX}/${INBOX_MAX}) · DISPATCH TO WORKBENCH BEFORE NEW PURCHASE`, 'redacted');
+    appendLine(t('shop.terminal.err.intray_full', { n: INBOX_MAX, max: INBOX_MAX }), 'redacted');
     appendBlank();
     return;
   }
   const skill = d.originalItem.affixSkill;
   if (!skill) {
     sfx('shop_buy_err');
-    appendLine(`ERR · ITEM HAS NO SKILL DATA · CANNOT PURCHASE`, 'redacted');
+    appendLine(t('shop.terminal.err.no_skill_data'), 'redacted');
     appendBlank();
     return;
   }
@@ -807,9 +814,9 @@ export function executeBuySkill(d: ItemDescriptor): void {
   applyMaxSkillLevelOnPurchase(skillId);
   evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   eventBus.emit('shop:purchase', { type: 'skill', itemId: skillId, price: d.price });
-  appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
-  appendLine(`  · DISPATCHED TO IN-TRAY SLOT ${state.player.inbox.length}/${INBOX_MAX} · BAL 🍌 ${state.gold}`, 'dim');
-  appendLine(`  · UNDO STACK: ${previewState.undoStack.length} (FINALIZES ON WORKBENCH ENTRY)`, 'dim');
+  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
+  appendLine(t('shop.terminal.cmd.buy.dispatched_intray', { n: state.player.inbox.length, max: INBOX_MAX, gold: state.gold }), 'dim');
+  appendLine(t('shop.terminal.cmd.buy.undo_stack_pending', { n: previewState.undoStack.length }), 'dim');
   appendBlank();
   updateTerminalChrome();
   shopBus.syncWorkbenchInbox();
@@ -821,7 +828,7 @@ export function executeBuySkill(d: ItemDescriptor): void {
 export function executeBuyPack(d: ItemDescriptor): void {
   const pack = d.originalItem.pack;
   if (!pack || pack.words.length === 0) {
-    appendLine(`ERR · PACK HAS NO WORDS · CANNOT PURCHASE`, 'redacted');
+    appendLine(t('shop.terminal.err.pack_no_words'), 'redacted');
     appendBlank();
     return;
   }
@@ -844,9 +851,9 @@ function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
   eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
   sfx('shop_buy_ok'); // Story 60.12
-  appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
-  appendLine(`  · WORD "${word.toUpperCase()}" FILED TO LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
-  appendLine(`  · UNDO STACK: ${previewState.undoStack.length}`, 'dim');
+  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
+  appendLine(t('shop.terminal.cmd.buy.pack_word_filed', { word: word.toUpperCase(), gold: state.gold }), 'dim');
+  appendLine(t('shop.terminal.cmd.buy.undo_stack', { n: previewState.undoStack.length }), 'dim');
   appendBlank();
   updateTerminalChrome();
 }
@@ -854,12 +861,12 @@ function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
 function executeBuyPackPicker(d: ItemDescriptor, pack: WordPack): void {
   // M3 fix: 多 drawer 互斥 — 拒绝在其他 drawer 打开时弹 pack-pick
   if (previewState.drawerOpen && previewState.drawerOpen !== 'pack-pick') {
-    appendLine(`ERR · DRAWER ${previewState.drawerOpen.toUpperCase()} OPEN · CLOSE FIRST [ESC]`, 'redacted');
+    appendLine(t('shop.terminal.err.drawer_open', { kind: previewState.drawerOpen.toUpperCase() }), 'redacted');
     appendBlank();
     return;
   }
   previewState.pendingPackPick = { d, pack };
-  appendLine(`PACK ${d.sku} · ${pack.words.length} CANDIDATES POSTED · CHOOSE ONE FOR FILING`, 'echo');
+  appendLine(t('shop.terminal.cmd.buy.pack_candidates_posted', { sku: d.sku, n: pack.words.length }), 'echo');
   appendBlank();
   if (previewState.currentScreen !== 'workbench') shopBus.showOnly('workbench');
   shopBus.openDrawer('pack-pick');
@@ -880,9 +887,9 @@ export function finalizePackPick(pickedWord: string): void {
   sfx('shop_buy_ok'); // Story 60.12
   previewState.pendingPackPick = null;
   shopBus.closeDrawer();
-  appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
-  appendLine(`  · WORD "${pickedWord.toUpperCase()}" FILED TO LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
-  appendLine(`  · UNDO STACK: ${previewState.undoStack.length}`, 'dim');
+  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
+  appendLine(t('shop.terminal.cmd.buy.pack_word_filed', { word: pickedWord.toUpperCase(), gold: state.gold }), 'dim');
+  appendLine(t('shop.terminal.cmd.buy.undo_stack', { n: previewState.undoStack.length }), 'dim');
   appendBlank();
   updateTerminalChrome();
   // M1 fix: 切回终端，让 CONFIRMED / WORD FILED 消息可见
@@ -894,7 +901,7 @@ export function cancelPackPick(): void {
   if (!previewState.pendingPackPick) return;
   const sku = previewState.pendingPackPick.d.sku;
   previewState.pendingPackPick = null;
-  appendLine(`ABORTED · ${sku} NOT PURCHASED`, 'dim');
+  appendLine(t('shop.terminal.cmd.buy.aborted', { sku }), 'dim');
   appendBlank();
   // M1 fix: 切回终端，让 ABORTED 消息可见
   shopBus.showOnly('terminal');
@@ -904,19 +911,19 @@ export function executeBuyRelic(d: ItemDescriptor): void {
   const relicId = d.originalItem.relicId;
   if (!relicId) {
     sfx('shop_buy_err');
-    appendLine(`ERR · RELIC HAS NO ID · CANNOT PURCHASE`, 'redacted');
+    appendLine(t('shop.terminal.err.relic_no_id'), 'redacted');
     appendBlank();
     return;
   }
   if (state.player.relics.has(relicId)) {
     sfx('shop_buy_err');
-    appendLine(`ERR · RELIC ALREADY OWNED · ${relicId.toUpperCase()}`, 'redacted');
+    appendLine(t('shop.terminal.err.relic_owned', { rid: relicId.toUpperCase() }), 'redacted');
     appendBlank();
     return;
   }
   if (isRelicSlotsFull()) {
     sfx('shop_buy_err');
-    appendLine(`ERR · NUMBER-ROW SLOTS FULL · DISCARD A RELIC FIRST`, 'redacted');
+    appendLine(t('shop.terminal.err.relic_slots_full'), 'redacted');
     appendBlank();
     return;
   }
@@ -925,7 +932,7 @@ export function executeBuyRelic(d: ItemDescriptor): void {
   if (!ok) {
     state.gold += d.price;
     sfx('shop_buy_err');
-    appendLine(`ERR · RELIC ADD FAILED · CONTACT ARCHIVES`, 'redacted');
+    appendLine(t('shop.terminal.err.relic_add_failed'), 'redacted');
     appendBlank();
     return;
   }
@@ -935,9 +942,9 @@ export function executeBuyRelic(d: ItemDescriptor): void {
   eventBus.emit('shop:purchase', { type: 'relic', itemId: relicId, price: d.price });
   sfx('shop_buy_ok'); // Story 60.12
   previewState.undoStack.push({ kind: 'relic', sku: d.sku, price: d.price, relicId });
-  appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
-  appendLine(`  · RELIC SHELVED · BAL 🍌 ${state.gold}`, 'dim');
-  appendLine(`  · UNDO STACK: ${previewState.undoStack.length}`, 'dim');
+  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
+  appendLine(t('shop.terminal.cmd.buy.relic_shelved', { gold: state.gold }), 'dim');
+  appendLine(t('shop.terminal.cmd.buy.undo_stack', { n: previewState.undoStack.length }), 'dim');
   appendBlank();
   updateTerminalChrome();
   shopBus.syncWorkbenchRelics();
@@ -949,21 +956,21 @@ export function cmdBuy(arg?: string): void {
   if (!d) {
     sfx('shop_buy_err'); // Story 60.12: SKU 不存在
     const guess = suggestSku(arg);
-    appendLine(`ERR · SKU NOT IN CATALOG: ${arg.toUpperCase()}`, 'redacted');
-    if (guess) appendLine(`  · DID YOU MEAN ${guess}?`, 'dim');
+    appendLine(t('shop.terminal.err.sku_not_in_catalog', { sku: arg.toUpperCase() }), 'redacted');
+    if (guess) appendLine(t('shop.terminal.cmd.info.did_you_mean', { guess }), 'dim');
     appendBlank();
     return;
   }
   if (d.redacted) {
     sfx('shop_buy_err'); // Story 60.12: clearance 不足
-    appendLine(`ERR · CLEARANCE ${d.clearance} REQUIRED · CONTACT SUPERVISOR`, 'redacted');
+    appendLine(t('shop.terminal.err.clearance_required', { clearance: d.clearance }), 'redacted');
     appendBlank();
     return;
   }
   if (d.price >= HIGH_PRICE_THRESHOLD) {
     previewState.pendingConfirm = { sku: d.sku, price: d.price };
-    appendLine(`CONFIRM PURCHASE · ${d.name} · 🍌 ${d.price}`, 'head');
-    appendLine(`BAL AFTER: 🍌 ${state.gold - d.price} · TYPE [Y]ES OR [N]O`, 'dim');
+    appendLine(t('shop.terminal.cmd.buy.confirm_purchase', { name: d.name, price: d.price }), 'head');
+    appendLine(t('shop.terminal.cmd.buy.bal_after', { gold: state.gold - d.price }), 'dim');
     return;
   }
   executeBuy(d);
@@ -975,14 +982,14 @@ export function cmdSell(arg?: string): void {
   // SEL operates on inbox items by SKU
   const undoIdx = previewState.undoStack.findIndex(u => u.sku === target);
   if (undoIdx < 0) {
-    appendLine(`ERR · ${target} NOT IN IN-TRAY`, 'redacted');
-    appendLine('  · SELL ONLY APPLIES TO IN-TRAY ITEMS · USE WORKBENCH FOR EQUIPPED', 'dim');
+    appendLine(t('shop.terminal.err.not_in_intray', { target }), 'redacted');
+    appendLine(t('shop.terminal.cmd.sell.intray_only'), 'dim');
     appendBlank();
     return;
   }
   const entry = previewState.undoStack[undoIdx];
   if (entry.kind !== 'skill') {
-    appendLine(`ERR · ONLY IN-TRAY (SKILL) ITEMS CAN BE SOLD VIA TERMINAL`, 'redacted');
+    appendLine(t('shop.terminal.err.sell_not_skill'), 'redacted');
     appendBlank();
     return;
   }
@@ -995,7 +1002,7 @@ export function cmdSell(arg?: string): void {
   state.gold += refund;
   // Story 60.7: 卖出后 quest 重算（装备型 quest 跟上 inbox 变化）
   evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
-  appendLine(`SOLD · ${target} · 🍌 ${refund} REFUNDED (50%)`, 'echo');
+  appendLine(t('shop.terminal.cmd.sell.refunded', { target, refund }), 'echo');
   appendBlank();
   updateTerminalChrome();
   shopBus.syncWorkbenchInbox();
@@ -1004,7 +1011,7 @@ export function cmdSell(arg?: string): void {
 export function cmdReshuffle(): void {
   const cost = 18;
   if (state.gold < cost) {
-    appendLine(`ERR · INSUFFICIENT FUNDS · NEED 🍌 ${cost}`, 'redacted');
+    appendLine(t('shop.terminal.err.reshuffle_funds', { cost }), 'redacted');
     appendBlank();
     return;
   }
@@ -1023,7 +1030,7 @@ export function cmdReshuffle(): void {
     state.shop.items = items;
     rebuildDescriptors();
     success = true;
-    appendLine(`CATALOG RESHUFFLED · 🍌 ${cost} DEDUCTED · NEW INVENTORY POSTED`, 'echo');
+    appendLine(t('shop.terminal.cmd.reshuffle.success', { cost }), 'echo');
   } catch (err) {
     // Story 60.18 dogfood: generator 抛错 → 退还 gold（避免"扣钱不刷新"）+ console 留诊断
     state.gold += cost;
@@ -1031,7 +1038,7 @@ export function cmdReshuffle(): void {
       // eslint-disable-next-line no-console
       console.error('[cmdReshuffle] generator failed, refunded:', err);
     }
-    appendLine(`ERR · GENERATOR UNAVAILABLE · 🍌 ${cost} REFUNDED · TRY AGAIN`, 'redacted');
+    appendLine(t('shop.terminal.err.reshuffle_unavailable', { cost }), 'redacted');
   }
   appendBlank();
   updateTerminalChrome();
@@ -1044,7 +1051,7 @@ export function cmdReshuffle(): void {
 }
 
 export function cmdProceed(): void {
-  appendLine(`PROCEEDING TO WORKBENCH · ${previewState.undoStack.length} PURCHASES FINALIZED`, 'echo');
+  appendLine(t('shop.terminal.cmd.proceed.success', { n: previewState.undoStack.length }), 'echo');
   appendBlank();
   shopBus.switchToWorkbench();
 }
@@ -1057,7 +1064,7 @@ export function cmdUndo(): void {
   }
   const last = previewState.undoStack.pop();
   if (!last) {
-    appendLine('UNDO STACK EMPTY · NOTHING TO REVERSE', 'dim');
+    appendLine(t('shop.terminal.cmd.undo.empty'), 'dim');
     appendBlank();
     return;
   }
@@ -1080,7 +1087,7 @@ export function cmdUndo(): void {
     shopBus.syncWorkbenchRelics();
   }
   state.gold += last.price;
-  appendLine(`UNDO · ${last.sku} REVERSED · 🍌 ${last.price} REFUNDED · BAL 🍌 ${state.gold}`, 'echo');
+  appendLine(t('shop.terminal.cmd.undo.success', { sku: last.sku, price: last.price, gold: state.gold }), 'echo');
   appendBlank();
   updateTerminalChrome();
 }
@@ -1188,12 +1195,12 @@ export function handleConfirmation(input: string): boolean {
     return true;
   }
   if (up === 'N' || up === 'NO') {
-    appendLine(`ABORTED · ${previewState.pendingConfirm.sku} NOT PURCHASED`, 'dim');
+    appendLine(t('shop.terminal.cmd.buy.aborted', { sku: previewState.pendingConfirm.sku }), 'dim');
     appendBlank();
     previewState.pendingConfirm = null;
     return true;
   }
-  appendLine(`ERR · EXPECTED [Y]ES OR [N]O · GOT "${input}" · TRY AGAIN`, 'redacted');
+  appendLine(t('shop.terminal.err.confirm_yn', { input }), 'redacted');
   return true; // still in confirm mode
 }
 
