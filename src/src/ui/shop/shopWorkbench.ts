@@ -463,6 +463,21 @@ export function setupDragZones(): void {
       onDragEnter: (p: DragPayload) => {
         highlightShapePlacementOnWorkbench(key, p);
         const isMultiCell = p.shapeId && p.shapeId !== 'monomino';
+        // Story 60.18 debug — temporary console trace for dogfood diagnosis
+        if (typeof console !== 'undefined') {
+          const skill = p.skillId ? state.affixSkills.get(p.skillId) : null;
+          const posRels = skill?.affixes.filter(a => !!a.posRel).map(a => `${a.type}:${a.posRel}`) ?? [];
+          // eslint-disable-next-line no-console
+          console.log('[60.18 onDragEnter]', {
+            hoverKey: key,
+            payloadType: p.type,
+            skillId: p.skillId,
+            shapeId: p.shapeId,
+            isMultiCell,
+            posRelAffixes: posRels,
+            radiusKeys: p.skillId ? getEffectRadiusKeys(p.skillId, key) : [],
+          });
+        }
         if (!isMultiCell && p.skillId) {
           highlightEffectRadius(key, p.skillId);
         }
