@@ -388,7 +388,19 @@ export function attachWorkbenchTooltips(): void {
           const data = buildSkillKeyTooltipData(skillId, boundKeys);
           if (!data) return;
           if (!data.skill?.smartEstimate) return;
-          keyTooltip.show(cx, cy, data, undefined, false, true);
+          // Story 60.17 dogfood: tooltip 智能避让键盘 — 取 .wb-keyboard-base 包围盒做
+          // avoidRect，KeyTooltip.show 优先放在键盘上方/下方/左右（不挡视线、不需玩家
+          // 移开鼠标才能看到键盘）。
+          let avoidRect: { top: number; left: number; right: number; bottom: number } | undefined;
+          const wbRoot = document.getElementById('workbench-screen-preview');
+          if (wbRoot && typeof wbRoot.querySelector === 'function') {
+            const kbEl = wbRoot.querySelector<HTMLElement>('.wb-keyboard-base');
+            if (kbEl && typeof kbEl.getBoundingClientRect === 'function') {
+              const r = kbEl.getBoundingClientRect();
+              avoidRect = { top: r.top, left: r.left, right: r.right, bottom: r.bottom };
+            }
+          }
+          keyTooltip.show(cx, cy, data, avoidRect, false, true);
         });
         return;
       }
