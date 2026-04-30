@@ -18,7 +18,7 @@ import {
   hideRelicTooltip,
   moveRelicTooltip,
 } from '../../systems/shop';
-import { keyTooltip } from '../keyboard/KeyTooltip';
+import { keyTooltip, AFFIX_COLORS } from '../keyboard/KeyTooltip';
 import { shouldAnimateShop, shouldShowDragPreviewTooltip } from '../../core/UserSettings';
 import { renderCraftPanel } from '../../systems/classes/CraftingStation';
 import { renderMetamorphPanel } from '../../systems/classes/MetamorphStation';
@@ -329,11 +329,24 @@ export function syncWorkbenchKeys(): void {
     iconSpan.className = 'kb-icon';
     iconSpan.textContent = sk.icon || '⚡';
     keyEl.appendChild(iconSpan);
-    // Story 60.20 dogfood: kb-tag 改为纯色标签（颜色 = 稀有度），
-    // 不再写文字（避免键面拥挤；rarity 信号靠颜色已足够）
+    // Story 60.20 dogfood: kb-tag 用词条颜色色带 — 多词条则按词条数等分。
+    // 0 词条 → 单段 base 灰；1-3 词条 → 1-3 段 AFFIX_COLORS[affix.type]。
     const tagSpan = document.createElement('span');
     tagSpan.className = 'kb-tag';
-    tagSpan.dataset.rarity = String(rarity);
+    const affixes = sk.affixes ?? [];
+    if (affixes.length === 0) {
+      const seg = document.createElement('span');
+      seg.className = 'kb-tag-seg';
+      seg.style.background = AFFIX_COLORS.base || '#cccccc';
+      tagSpan.appendChild(seg);
+    } else {
+      for (const affix of affixes) {
+        const seg = document.createElement('span');
+        seg.className = 'kb-tag-seg';
+        seg.style.background = AFFIX_COLORS[affix.type] || '#cccccc';
+        tagSpan.appendChild(seg);
+      }
+    }
     keyEl.appendChild(tagSpan);
   });
   attachWorkbenchTooltips();
