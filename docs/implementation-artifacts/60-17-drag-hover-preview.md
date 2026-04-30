@@ -1,6 +1,6 @@
 # Story 60.17: 拖拽中目标键 hover 预估产出 tooltip
 
-Status: review
+Status: done
 
 <!-- Epic 60-Followup · 优先级 P1（最高频 dogfood 痛点） -->
 <!-- Source: Story 60.16 code-review 完成后用户 dogfood 反馈 -->
