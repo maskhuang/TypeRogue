@@ -3972,55 +3972,117 @@ body.shop-preview-active .drag-ghost {
 /* Story 60.9 review: 工作台 hover tooltip 走 DPCA paper-craft 油墨调色板
  * 默认 .key-tooltip / #relic-tooltip 是 CRT 黑底霓虹蓝 + 像素字体，与
  * 工作台牛皮纸 + 油墨章 + Courier 体冲突。在 shop-preview-active scope
- * 下覆盖背景/边框/字体/章戳风格。 */
+ * 下全套覆盖：背景/边框/字体/字色/章戳风格。
+ * 调色板：
+ *   #2a1f10  黑墨字（主文本，最高对比度）
+ *   #5a4828  文书褐（次级文本 / caption / desc）
+ *   #8a1a1a  驳回红章（标题 / 强调 / mechanic）
+ *   #7a5a10  调岗金章（school / 数值 / affix-name）
+ *   #3e7c41  批准绿章（升级/quest/apprentice/positive delta）
+ *   #ead7af  浅牛皮（章戳底）
+ *   #f4e4c1  牛皮纸（容器底）
+ */
 body.shop-preview-active .key-tooltip,
 body.shop-preview-active #relic-tooltip {
-    background: #f4e4c1;                          /* 牛皮纸 */
-    border: 1.5px solid #2a1f10;                  /* 黑墨边 */
-    color: #2a1f10;                               /* 黑墨字 */
-    font-family: 'Courier New', 'Consolas', monospace;
+    background: #f4e4c1 !important;
+    border: 1.5px solid #2a1f10 !important;
+    color: #2a1f10 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
     font-size: 12px;
     line-height: 1.45;
     box-shadow:
-        2px 2px 0 #2a1f10,                        /* 油墨投影 */
-        4px 4px 8px rgba(0,0,0,0.25);
-    border-radius: 0;                             /* 公文体不圆角 */
+        2px 2px 0 #2a1f10,
+        4px 4px 8px rgba(0,0,0,0.25) !important;
+    border-radius: 0 !important;
 }
+
+/* 标题（letter / relic name） */
 body.shop-preview-active .key-tooltip .tooltip-letter,
+body.shop-preview-active .key-tooltip .tooltip-header .tooltip-title,
 body.shop-preview-active #relic-tooltip > div:first-child {
-    color: #8a1a1a;                               /* 红章标题 */
+    color: #8a1a1a !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 1px dashed #7a5a10;
     padding-bottom: 3px;
     margin-bottom: 5px;
+    font-weight: bold;
 }
+
+/* school 章戳 + relic rarity 标签 */
 body.shop-preview-active .key-tooltip .tooltip-skill-school,
 body.shop-preview-active #relic-tooltip > div:nth-child(2) {
-    background: #ead7af !important;               /* 浅牛皮章戳 */
-    color: #7a5a10 !important;                    /* 金章字 */
+    background: #ead7af !important;
+    color: #7a5a10 !important;
     border: 1px solid #7a5a10;
-    font-family: 'Courier New', monospace;
+    font-family: 'Courier New', monospace !important;
     text-transform: uppercase;
     letter-spacing: 1px;
     padding: 1px 6px !important;
 }
+
+/* section 分隔线 — 黑墨虚线 */
+body.shop-preview-active .key-tooltip .tooltip-section {
+    border-top: 1px dashed #7a5a10 !important;
+}
+
+/* 主体文本 / score / freq / desc / section */
 body.shop-preview-active .key-tooltip .tooltip-skill-desc,
-body.shop-preview-active .key-tooltip .tooltip-affix-desc,
-body.shop-preview-active .key-tooltip .tooltip-section,
+body.shop-preview-active .key-tooltip .tooltip-score,
 body.shop-preview-active #relic-tooltip > div:nth-child(3) {
     color: #2a1f10 !important;
 }
-body.shop-preview-active .key-tooltip .tooltip-affix-name {
-    color: #7a5a10 !important;                    /* 金章副标 */
+body.shop-preview-active .key-tooltip .tooltip-freq,
+body.shop-preview-active .key-tooltip .tooltip-header .tooltip-base-values,
+body.shop-preview-active .key-tooltip .tooltip-affix-desc,
+body.shop-preview-active .key-tooltip .tooltip-amp-affects,
+body.shop-preview-active .key-tooltip .tooltip-ench-desc,
+body.shop-preview-active .key-tooltip .tooltip-est-details,
+body.shop-preview-active .key-tooltip .tooltip-est-item {
+    color: #5a4828 !important;                    /* 文书褐 — 次级文本 */
+}
+
+/* affix / enchant 标题 */
+body.shop-preview-active .key-tooltip .tooltip-affix-name,
+body.shop-preview-active .key-tooltip .tooltip-ench-name {
+    color: #7a5a10 !important;
     font-weight: bold;
 }
-body.shop-preview-active .key-tooltip .tooltip-skill-quest,
-body.shop-preview-active .key-tooltip .tooltip-skill-growth {
-    color: #3e7c41 !important;                    /* 批准绿章 = 已激活/进度 */
+
+/* 升级/quest/apprentice/绿色正向 — 批准绿章 */
+body.shop-preview-active .key-tooltip .tooltip-header .tooltip-upgrade-info,
+body.shop-preview-active .key-tooltip .tooltip-affix-upgrade,
+body.shop-preview-active .key-tooltip .tooltip-apprentice {
+    color: #3e7c41 !important;
+    font-weight: bold;
 }
+
+/* quest progress / upgrade estimate / est-value — 金章数值 */
+body.shop-preview-active .key-tooltip .tooltip-header .tooltip-upgrade-estimate,
+body.shop-preview-active .key-tooltip .tooltip-quest,
+body.shop-preview-active .key-tooltip .tooltip-summary .tooltip-est-value {
+    color: #7a5a10 !important;
+    font-weight: bold;
+}
+
+/* 红章强调 — mechanic / amp-stacks / enchantment-info */
+body.shop-preview-active .key-tooltip .tooltip-mechanic,
+body.shop-preview-active .key-tooltip .tooltip-amp-stacks,
+body.shop-preview-active .key-tooltip .tooltip-enchantment-info {
+    color: #8a1a1a !important;
+}
+
+/* sep / 旧值删除线 — 浅褐 */
+body.shop-preview-active .key-tooltip .tooltip-est-sep {
+    color: #a89070 !important;
+}
+body.shop-preview-active .key-tooltip .tooltip-est-old {
+    color: #8a7a5a !important;
+}
+
+/* relic flavor 行 — 文书褐 italic */
 body.shop-preview-active #relic-tooltip > div:last-child {
-    color: #5a4828 !important;                    /* 文书褐 — flavor 行 */
+    color: #5a4828 !important;
     font-style: italic;
 }
 
