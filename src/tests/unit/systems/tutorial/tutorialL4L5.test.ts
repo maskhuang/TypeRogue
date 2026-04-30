@@ -410,8 +410,8 @@ describe('L4-L5 i18n 完整性', () => {
     }
   })
 
-  it('FULL_TUTORIAL_STEPS 总数为 20', () => {
-    expect(FULL_TUTORIAL_STEPS.length).toBe(20)
+  it('FULL_TUTORIAL_STEPS 总数为 24（Story 60.8: +4 terminal steps）', () => {
+    expect(FULL_TUTORIAL_STEPS.length).toBe(24)
   })
 
   it('settings i18n keys 在 zh locale 中存在', async () => {

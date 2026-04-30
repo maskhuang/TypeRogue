@@ -172,6 +172,16 @@ const ZH: Record<string, string> = {
   'tutorial.L1_relic_title': '遗物',
   'tutorial.L1_relic_body': '遗物提供被动效果，持续整个 Run！注意稀有度不同效果差异巨大',
 
+  // Story 60.8: terminal 商店教程（HR 入职培训腔）
+  'tutorial.L1_terminal_intro_title': '终端使用须知 §1.1',
+  'tutorial.L1_terminal_intro_body': '本批次商店采用 DPCA 终端流程。LIS 列出全部商品 · BUY <SKU>（如 SKL-001）购入 · INF <SKU> 查看说明书 · Tab 转到工作台。请按规章操作。',
+  'tutorial.L1_workbench_drag_title': '工作台装配 §1.2',
+  'tutorial.L1_workbench_drag_body': '已购入物件已转入待装配区（IN-tray）。请按 Tab 转到工作台，将卡片拖至 tier-1 键盘对应键位完成装配。',
+  'tutorial.L1_relic_number_row_title': '遗物编制 §1.3',
+  'tutorial.L1_relic_number_row_body': '本期采购的遗物归档于工作台上方数字键 1-0 槽位。装配后整局生效，无需手动拖拽。',
+  'tutorial.L1_drawer_words_title': '词库归档 §1.4',
+  'tutorial.L1_drawer_words_body': '新词条已归入词库。点击工作台 WORDS 文件夹，或在终端输入 WRD 命令查阅当前批次词单。',
+
   // Story 39.5: L2-L3 引导
   'tutorial.L2_affix_intro_title': '词条技能',
   'tutorial.L2_affix_intro_body': '这个技能带有词条！词条赋予技能额外能力，颜色越亮词条越多——蓝色1个、紫色2个、橙色3个',
@@ -1271,6 +1281,16 @@ const EN: Record<string, string> = {
   'tutorial.L1_upgrade_body': 'When you see a skill you already own, you can upgrade it (Lv.1→2→3) for higher output',
   'tutorial.L1_relic_title': 'Relic',
   'tutorial.L1_relic_body': 'Relics give passive effects for the entire run! Rarity matters — higher rarity means stronger effects',
+
+  // Story 60.8: terminal shop tutorial (HR onboarding tone)
+  'tutorial.L1_terminal_intro_title': 'Terminal Operations Manual §1.1',
+  'tutorial.L1_terminal_intro_body': 'This batch of shop uses the DPCA terminal protocol. LIS to list catalog · BUY <SKU> (e.g. SKL-001) to purchase · INF <SKU> for spec sheet · Tab to switch to Workbench. Please proceed per regulations.',
+  'tutorial.L1_workbench_drag_title': 'Workbench Assembly §1.2',
+  'tutorial.L1_workbench_drag_body': 'Purchased items have been routed to the IN-tray (pending assembly). Press Tab to switch to the Workbench, then drag the card onto the corresponding tier-1 key to complete assembly.',
+  'tutorial.L1_relic_number_row_title': 'Relic Filing §1.3',
+  'tutorial.L1_relic_number_row_body': 'Relics acquired this period are filed to the number-row keys 1-0 above the workbench keyboard. Effects apply for the run automatically — no drag needed.',
+  'tutorial.L1_drawer_words_title': 'Vocabulary Archive §1.4',
+  'tutorial.L1_drawer_words_body': 'New entries have been filed to the vocabulary archive. Click the WORDS folder on the workbench, or type WRD in the terminal to review the current word list.',
 
   // L2 词条系统引导
   'tutorial.L2_affix_intro_title': 'Affix Skills',

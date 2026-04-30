@@ -607,6 +607,8 @@ function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
     state.wordEffects.set(word, pack.wordEffect);
   }
   undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [word] });
+  // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
+  eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
   appendLine(`  · WORD "${word.toUpperCase()}" FILED TO LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
   appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
@@ -638,6 +640,8 @@ export function finalizePackPick(pickedWord: string): void {
     state.wordEffects.set(pickedWord, pack.wordEffect);
   }
   undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [pickedWord] });
+  // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
+  eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
   pendingPackPick = null;
   closeDrawer();
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');

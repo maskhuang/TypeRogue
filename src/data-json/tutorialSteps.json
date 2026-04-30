@@ -133,6 +133,68 @@
       },
       "dismissAfter": 6000,
       "prerequisite": "L0_welcome"
+    },
+    {
+      "id": "L1_terminal_intro",
+      "level": 1,
+      "trigger": {
+        "event": "shop:opened",
+        "delay": 800
+      },
+      "content": {
+        "titleKey": "tutorial.L1_terminal_intro_title",
+        "bodyKey": "tutorial.L1_terminal_intro_body",
+        "anchorElement": "terminal-prompt-text",
+        "anchorPosition": "top"
+      },
+      "dismissAfter": 8000,
+      "prerequisite": "L0_welcome",
+      "pauseGame": true
+    },
+    {
+      "id": "L1_workbench_drag",
+      "level": 1,
+      "trigger": {
+        "event": "shop:purchase"
+      },
+      "content": {
+        "titleKey": "tutorial.L1_workbench_drag_title",
+        "bodyKey": "tutorial.L1_workbench_drag_body",
+        "anchorElement": "workbench-screen-preview",
+        "anchorPosition": "top"
+      },
+      "dismissAfter": 8000,
+      "prerequisite": "L1_terminal_intro"
+    },
+    {
+      "id": "L1_relic_number_row",
+      "level": 1,
+      "trigger": {
+        "event": "shop:purchase"
+      },
+      "content": {
+        "titleKey": "tutorial.L1_relic_number_row_title",
+        "bodyKey": "tutorial.L1_relic_number_row_body",
+        "anchorElement": "workbench-screen-preview",
+        "anchorPosition": "top"
+      },
+      "dismissAfter": 8000,
+      "prerequisite": "L1_terminal_intro"
+    },
+    {
+      "id": "L1_drawer_words",
+      "level": 1,
+      "trigger": {
+        "event": "shop:purchase"
+      },
+      "content": {
+        "titleKey": "tutorial.L1_drawer_words_title",
+        "bodyKey": "tutorial.L1_drawer_words_body",
+        "anchorElement": "wb-drawer",
+        "anchorPosition": "top"
+      },
+      "dismissAfter": 8000,
+      "prerequisite": "L1_terminal_intro"
     }
   ],
   "L2": [

@@ -44,7 +44,7 @@ export interface GameEvents {
 
   // 商店事件
   'shop:opened': Record<string, never>
-  'shop:purchase': { itemId: string; type: 'skill' | 'relic'; price: number }
+  'shop:purchase': { itemId: string; type: 'skill' | 'relic' | 'pack'; price: number }
   'shop:skip': Record<string, never>
 
   // 遗物事件

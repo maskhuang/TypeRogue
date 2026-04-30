@@ -15,6 +15,7 @@ import { getStageType } from '../stage/stageFlow'
 import { getBossModifierMeta } from '../../data/bossModifiers'
 import { t } from '../../demo/demo-i18n'
 import { initHelpButtons } from '../../ui/HelpPanel'
+import { getSettings } from '../../core/UserSettings' // Story 60.8: shopUI gating
 
 /**
  * 初始化完整版引导系统（L0-L3）
@@ -62,9 +63,14 @@ export function initFullTutorial(): void {
   let lastPurchaseSkillRarity = -1
   let lastPurchaseHasTopologyAffix = false
   let lastPurchaseIsMultiCell = false
+  // Story 60.8: pack/relic 类别 last-purchase 跟踪（用于 terminal 教程触发）
+  let lastPurchaseWasRelic = false
+  let lastPurchaseWasPack = false
 
   eventBus.on('shop:purchase', (data) => {
     lastPurchaseWasSkill = data.type === 'skill'
+    lastPurchaseWasRelic = data.type === 'relic'
+    lastPurchaseWasPack = data.type === 'pack'
     lastPurchaseIsMultiCell = false
     if (data.type === 'skill') {
       const skill = state.affixSkills.get(data.itemId)
@@ -84,19 +90,51 @@ export function initFullTutorial(): void {
     }
   })
 
-  // L1_skill_bind: 最近一次购买为技能
+  // Story 60.8: classic gating — 老 L1 商店步骤仅在 shopUI=classic 时触发
+  const shopIntroStep = L1_STEPS.find(s => s.id === 'L1_shop_intro')
+  if (shopIntroStep) {
+    shopIntroStep.trigger.condition = () => getSettings().shopUI === 'classic'
+  }
+
+  // L1_skill_bind: 最近一次购买为技能（+ classic gate）
   const skillBindStep = L1_STEPS.find(s => s.id === 'L1_skill_bind')
   if (skillBindStep) {
-    skillBindStep.trigger.condition = () => lastPurchaseWasSkill
+    skillBindStep.trigger.condition = () =>
+      lastPurchaseWasSkill && getSettings().shopUI === 'classic'
   }
 
-  // L1_shape_hint: 最近一次购买为多格技能（Story 40.11）
+  // L1_shape_hint: 最近一次购买为多格技能（Story 40.11）+ classic gate
   const shapeHintStep = L1_STEPS.find(s => s.id === 'L1_shape_hint')
   if (shapeHintStep) {
-    shapeHintStep.trigger.condition = () => lastPurchaseIsMultiCell
+    shapeHintStep.trigger.condition = () =>
+      lastPurchaseIsMultiCell && getSettings().shopUI === 'classic'
   }
 
-  // L1_upgrade / L1_relic: 无特殊 condition（事件本身即足够）
+  // L1_upgrade / L1_relic: 无特殊 condition（事件本身即足够；两种 UI 下都适用）
+
+  // Story 60.8: terminal-only 商店教程（仅 shopUI=terminal 触发）
+  const terminalIntroStep = L1_STEPS.find(s => s.id === 'L1_terminal_intro')
+  if (terminalIntroStep) {
+    terminalIntroStep.trigger.condition = () => getSettings().shopUI === 'terminal'
+  }
+
+  const workbenchDragStep = L1_STEPS.find(s => s.id === 'L1_workbench_drag')
+  if (workbenchDragStep) {
+    workbenchDragStep.trigger.condition = () =>
+      lastPurchaseWasSkill && getSettings().shopUI === 'terminal'
+  }
+
+  const relicNumberRowStep = L1_STEPS.find(s => s.id === 'L1_relic_number_row')
+  if (relicNumberRowStep) {
+    relicNumberRowStep.trigger.condition = () =>
+      lastPurchaseWasRelic && getSettings().shopUI === 'terminal'
+  }
+
+  const drawerWordsStep = L1_STEPS.find(s => s.id === 'L1_drawer_words')
+  if (drawerWordsStep) {
+    drawerWordsStep.trigger.condition = () =>
+      lastPurchaseWasPack && getSettings().shopUI === 'terminal'
+  }
 
   // --- L2 condition 注入 ---
 

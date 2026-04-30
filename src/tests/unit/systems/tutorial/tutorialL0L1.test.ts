@@ -81,8 +81,8 @@ describe('L0_STEPS 数据结构', () => {
 // 6.2: L1 步骤数据测试
 // ===========================================
 describe('L1_STEPS 数据结构', () => {
-  it('应有 5 个步骤', () => {
-    expect(L1_STEPS).toHaveLength(5)
+  it('应有 9 个步骤（Story 60.8: 5 经典 + 4 terminal）', () => {
+    expect(L1_STEPS).toHaveLength(9)
   })
 
   it('所有步骤 ID 唯一', () => {
@@ -132,8 +132,8 @@ describe('L1_STEPS 数据结构', () => {
 // FULL_TUTORIAL_STEPS
 // ===========================================
 describe('FULL_TUTORIAL_STEPS', () => {
-  it('应有 20 个步骤（L0×4 + L1×5 + L2×4 + L3×2 + L4×3 + L5×2）', () => {
-    expect(FULL_TUTORIAL_STEPS).toHaveLength(20)
+  it('应有 24 个步骤（L0×4 + L1×9 + L2×4 + L3×2 + L4×3 + L5×2，Story 60.8 新增 4 terminal）', () => {
+    expect(FULL_TUTORIAL_STEPS).toHaveLength(24)
   })
 
   it('所有 ID 全局唯一', () => {
