@@ -41,6 +41,7 @@ import {
   shopBus,
   sfx,
   escapeHtml,
+  getOwnedSkillEntries,
 } from './shopState';
 import type { DrawerKind, InboxCardData } from './shopState';
 
@@ -350,7 +351,10 @@ export function syncWorkbenchKeys(): void {
     keyEl.appendChild(tagSpan);
   });
   attachWorkbenchTooltips();
-  syncFiledFolders();
+  // M2 review fix: syncWorkbenchKeys 不再 chain syncFiledFolders —
+  // 键面绑定移动确实可能改 FILED sort 顺序（取首键字母），但属于二阶视觉细节；
+  // 通过 cmd 路径上别处的 syncWorkbenchInbox 已覆盖；这里不再隐式触发，避免
+  // "更新键 visual 的函数还偷偷动 FILED" 的反向耦合。
 }
 
 /**
@@ -596,6 +600,7 @@ export function syncWorkbenchRelics(): void {
     keyEl.dataset.relicId = relicId;
   }
   attachWorkbenchTooltips();
+  // FILED.RELIC 行随 owned relics 变化；BUY/UND relic 路径调本函数后必须刷 FILED 行。
   syncFiledFolders();
 }
 
@@ -630,32 +635,12 @@ export function syncWorkbenchInbox(): void {
   const sub = document.querySelector('#workbench-screen-preview .wb-intray .wb-tab-sub');
   if (sub) sub.textContent = `待装配 · ${String(state.player.inbox.length).padStart(2, '0')}`;
   attachWorkbenchTooltips();
+  // FILED.SKILL 行随 inbox + bindings 变化；BUY/SELL/UND/拖装填 路径都调本函数后刷 FILED。
+  // 进店 enterTerminalShop 调一次本函数，已附带 syncFiledFolders 调用 → 不再需要进店点显式触发。
   syncFiledFolders();
 }
 
 // === Story 60.20: FILED folder real data (skills + relics) ===
-
-interface FiledSkillEntry { sid: string; key: string; }
-
-/** owned skills 合并 bindings (按 sid 去重多格) + inbox（保 inbox 顺序），与 cmdInfoListOwned 同源 */
-function getOwnedSkillEntries(): FiledSkillEntry[] {
-  const sidToKeys = new Map<string, string[]>();
-  for (const [k, sid] of state.player.bindings) {
-    const arr = sidToKeys.get(sid) ?? [];
-    arr.push(k.toUpperCase());
-    sidToKeys.set(sid, arr);
-  }
-  const entries: FiledSkillEntry[] = [];
-  for (const [sid, keys] of sidToKeys) {
-    keys.sort();
-    entries.push({ sid, key: keys.join('+') });
-  }
-  entries.sort((a, b) => a.key.charCodeAt(0) - b.key.charCodeAt(0));
-  for (let i = 0; i < state.player.inbox.length; i++) {
-    entries.push({ sid: state.player.inbox[i], key: `IN${i + 1}` });
-  }
-  return entries;
-}
 
 /** 单行截断：folder 列宽限制（含 lv 标签时给 fr-name 留 ~22 字符） */
 function truncateName(s: string, max = 22): string {

@@ -1,6 +1,6 @@
 # Story 60.20: 工作台右侧 FILED folder 接真实 owned skills + relics
 
-Status: review
+Status: done
 
 <!-- Epic 60-Followup · 优先级 P4（最简单收尾，~30 行） -->
 <!-- Source: Story 60.16 code-review 完成后用户 dogfood 反馈 -->
@@ -139,13 +139,44 @@ for (const id of state.player.relics) {
 
 ### File List
 
-- `src/src/ui/shop/shopWorkbench.ts`（+~80 行：renderSkillFolderHtml / renderRelicFolderHtml / syncFiledFolders / getOwnedSkillEntries / truncateName + 3 处末尾 sync 触发）
+**初次实现 (commit 7562f5d)**：
+- `src/src/ui/shop/shopWorkbench.ts`（+~80 行：renderSkillFolderHtml / renderRelicFolderHtml / syncFiledFolders / getOwnedSkillEntries(后移到 shopState) / truncateName + 3 处末尾 sync 触发）
 - `src/src/ui/shop/shopBootstrap.ts`（buildWorkbenchScreen 模板：6 行 placeholder HTML → 4 行空容器）
 - `src/src/ui/shop/shopState.ts`（shopBus 加 `syncFiledFolders` 入口）
-- `src/tests/unit/ui/shopPreviewFiledFolders.test.ts`（新建，~150 行，11 个测试）
-- `docs/implementation-artifacts/sprint-status.yaml`（status: ready-for-dev → review）
-- `docs/implementation-artifacts/60-20-filed-real-data.md`（status + Dev Agent Record）
+- `src/tests/unit/ui/shopPreviewFiledFolders.test.ts`（新建）
+
+**Dogfood iteration (commits f249980 / 4b52a15 / 9c474fa / b350a30)**：
+- `src/src/ui/shop/shopWorkbench.ts`（kb-tag 改色带 — 加 AFFIX_COLORS import，渲染 segments）
+- `src/src/style.css`（4 轮 kb-tag CSS 改：单色稀有度 → 词条多段 → 放大尺寸 → DPCA 牛皮纸质感）
+
+**Code-review fix (本次 review)**：
+- `src/src/ui/shop/shopState.ts`（M1 fix：抽 `getOwnedSkillEntries` 共享 helper + `OwnedSkillEntry` 类型；新增 state import）
+- `src/src/ui/shop/shopWorkbench.ts`（M1+M2+M3 fix：改用 shopState helper；`syncWorkbenchKeys` 末尾 `syncFiledFolders` 调用解耦；改善 chain 注释）
+- `src/src/ui/shop/shopTerminal.ts`（M1 fix：`cmdInfoListOwned` 改用 shopState helper，删 inline 算法）
+- `src/tests/unit/ui/shopPreviewFiledFolders.test.ts`（H1 fix：新增 3 个 AC4 sync chain 防回归测试）
+- `docs/implementation-artifacts/sprint-status.yaml`（status review → done）
+- `docs/implementation-artifacts/60-20-filed-real-data.md`（M4 fix：File List 补全 + Senior Developer Review section）
+
+### Senior Developer Review (AI)
+
+**Reviewer:** code-review workflow
+**Date:** 2026-04-30
+**Outcome:** Approved (post-fix)
+
+**Findings:** 0 Critical, 1 High, 4 Medium, 2 Low — H1 + M1-M4 已修。
+
+**Action Items:**
+
+- [x] [AI-Review][High] H1 — AC4 sync chain 加 3 个防回归测试（覆盖 syncFiledFolders 直调 + syncWorkbenchInbox/Relics chain）
+- [x] [AI-Review][Med] M1 — `getOwnedSkillEntries` 抽到 shopState 作为 cmdInfoListOwned + syncFiledFolders 共享 helper，删除 inline 算法
+- [x] [AI-Review][Med] M2 — `syncWorkbenchKeys` 末尾不再 chain `syncFiledFolders`（键 visual 函数不再触发 FILED 副作用，加注释说明）
+- [x] [AI-Review][Med] M3 — 进店 chain 从 3x 减为 2x（syncWorkbenchInbox+Relics 各一次），剩余 chain 加注释解释 inbox/relics 为何需要触发
+- [x] [AI-Review][Med] M4 — File List 补全 4 次 dogfood commits 的文件改动 + Senior Developer Review section
+- [ ] [AI-Review][Low] L1 — kb-tag + freq-locked 视觉叠加边角态（推迟 — workbench 没有 auto-unbind 钩子，但目前 60-series 流程中不会触发该叠加；future epic 加 auto-unbind 时一并处理）
+- [ ] [AI-Review][Low] L2 — `dataset.rarity` 残留属性已确认不存在（line 320 的 `rarity` 变量给 multi-cell shape data 用，非 kb-tag）
 
 ### Change Log
 
-- 2026-04-30: Implementation completed. SKILL / RELIC FILED folders 接真实 owned data；hardcoded placeholders 全部移除；3 个 sync 触发点自动刷新。
+- 2026-04-30: Implementation completed. SKILL / RELIC FILED folders 接真实 owned data；hardcoded placeholders 全部移除。
+- 2026-04-30: Dogfood iteration ×4 — kb-tag 从文字改为词条颜色色带，多段着色区分相邻同图标技能；DPCA 牛皮纸质感对齐画风。
+- 2026-04-30: Code review approved post-fix — 5/7 findings resolved (H1 + 4 M)；2 L 推迟（边角态 + 已验证）。

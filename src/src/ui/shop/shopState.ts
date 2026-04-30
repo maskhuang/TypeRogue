@@ -13,6 +13,7 @@ import type { ItemDescriptor } from '../itemDescriptors';
 import type { WordPack } from '../../core/types';
 import { shouldPlayShopSound } from '../../core/UserSettings';
 import { playSound } from '../../effects/sound';
+import { state } from '../../core/state';
 
 // === Constants ===
 
@@ -111,6 +112,43 @@ export function sfx(type: Parameters<typeof playSound>[0]): void {
 /** Pure utility — text → HTML-safe string. Shared by terminal output and workbench card render. */
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** Owned skill entry — 一行 = 一个独特技能 sid，含合并后的占位 key 描述。 */
+export interface OwnedSkillEntry {
+  /** 技能 ID（唯一），用于查 state.affixSkills.get(sid) */
+  sid: string;
+  /** 占位 key 描述：bound 多键 → 'A+B' / 单键 → 'A' / inbox 槽 → 'IN1' */
+  key: string;
+  /** 排序首键（bound 取最小键字母，inbox 用 'Z{idx}' 排末尾） */
+  sortKey: string;
+}
+
+/**
+ * owned skills 列表：bindings 按 sid 去重合并多格 + inbox（保数组顺序）。
+ * Story 60.20 review M1 fix: cmdInfoListOwned (terminal /OWNED) 与 syncFiledFolders
+ * (workbench FILED.SKILL) 共用同一算法，避免双份漂移。
+ */
+export function getOwnedSkillEntries(): OwnedSkillEntry[] {
+  // 多格 tetromino 在 bindings Map 里有 N 条 entry（每键一条），按 sid 分组合并 keys
+  const sidToKeys = new Map<string, string[]>();
+  for (const [k, sid] of state.player.bindings) {
+    const arr = sidToKeys.get(sid) ?? [];
+    arr.push(k.toUpperCase());
+    sidToKeys.set(sid, arr);
+  }
+  const entries: OwnedSkillEntry[] = [];
+  for (const [sid, keys] of sidToKeys) {
+    keys.sort();
+    entries.push({ sid, key: keys.join('+'), sortKey: keys[0] });
+  }
+  // bound 按首键字母排序
+  entries.sort((a, b) => a.sortKey.charCodeAt(0) - b.sortKey.charCodeAt(0));
+  // inbox 按数组顺序追加（与 IN-tray 显示一致）
+  for (let i = 0; i < state.player.inbox.length; i++) {
+    entries.push({ sid: state.player.inbox[i], key: `IN${i + 1}`, sortKey: `Z${i}` });
+  }
+  return entries;
 }
 
 // === Cross-module callback registry (Story 60.16 AC4) ===

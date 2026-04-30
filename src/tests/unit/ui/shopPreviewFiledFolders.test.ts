@@ -4,7 +4,7 @@
 // 验证 renderSkillFolderHtml / renderRelicFolderHtml / syncFiledFolders 渲染
 // owned skills + relics 真实数据（替代 Phase 1 hardcoded DRIP CASCADE 等占位）。
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { state, resetState } from '../../../src/core/state'
 import type { AffixSkillInstance } from '../../../src/data/affixes'
 
@@ -13,6 +13,9 @@ vi.mock('../../../src/effects/sound', () => ({ playSound: vi.fn() }))
 import {
   renderSkillFolderHtml,
   renderRelicFolderHtml,
+  syncFiledFolders,
+  syncWorkbenchInbox,
+  syncWorkbenchRelics,
 } from '../../../src/ui/shop/shopWorkbench'
 
 function makeSkill(id: string, name: string, level = 1, icon = '◇'): AffixSkillInstance {
@@ -146,5 +149,111 @@ describe('Story 60.20 · renderRelicFolderHtml', () => {
     const { count } = renderRelicFolderHtml()
     // 已知的 1 个进，未知的跳过
     expect(count).toBe(1)
+  })
+})
+
+// === Story 60.20 review H1 fix: AC4 sync chain regression coverage ===
+// 防止 syncWorkbenchInbox/syncWorkbenchRelics 末尾 chain 调用 syncFiledFolders 被
+// 误删（之前完全无测试，删掉一行也不会红 → 静默 AC4 失效）。
+
+describe('Story 60.20 · AC4 sync chain coverage', () => {
+  interface FakeNode { textContent: string; innerHTML: string }
+  let skillBody: FakeNode
+  let skillTab: FakeNode
+  let relicBody: FakeNode
+  let relicTab: FakeNode
+  let foamCase: FakeNode
+  let keyboardBase: FakeNode
+  let intraySub: FakeNode
+  let cabinetSub: FakeNode
+
+  beforeEach(() => {
+    resetState()
+    skillBody = { textContent: '', innerHTML: '' }
+    skillTab = { textContent: '', innerHTML: '' }
+    relicBody = { textContent: '', innerHTML: '' }
+    relicTab = { textContent: '', innerHTML: '' }
+    foamCase = { textContent: '', innerHTML: '' }
+    keyboardBase = { textContent: '', innerHTML: '' }
+    intraySub = { textContent: '', innerHTML: '' }
+    cabinetSub = { textContent: '', innerHTML: '' }
+    // syncWorkbenchRelics 还在 keyboardBase 上调 querySelector — null 跳过即可
+    ;(keyboardBase as unknown as { querySelector: () => null }).querySelector = () => null
+
+    // 极简 DOM stub：只覆盖 sync 函数实际查的 selector
+    const fakeRoot = {
+      querySelector(sel: string): FakeNode | null {
+        if (sel === '#filed-skill-folder .folder-body') return skillBody
+        if (sel === '#filed-skill-folder .folder-tab') return skillTab
+        if (sel === '#filed-relic-folder .folder-body') return relicBody
+        if (sel === '#filed-relic-folder .folder-tab') return relicTab
+        if (sel === '.wb-cabinet .wb-tab-sub') return cabinetSub
+        return null
+      },
+      querySelectorAll: () => [] as unknown[],
+    }
+    const fakeDocument = {
+      getElementById: (id: string) => {
+        if (id === 'workbench-screen-preview') return fakeRoot
+        return null
+      },
+      querySelector: (sel: string) => {
+        if (sel === '#workbench-screen-preview .wb-foam-case') return foamCase
+        if (sel === '#workbench-screen-preview .wb-keyboard-base') return keyboardBase
+        if (sel === '#workbench-screen-preview .wb-intray .wb-tab-sub') return intraySub
+        return null
+      },
+      querySelectorAll: (_sel: string) => [] as unknown[],
+    }
+    vi.stubGlobal('document', fakeDocument)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('syncFiledFolders 直接调用 — 写 SKILL/RELIC tab text + body', () => {
+    state.affixSkills.set('s1', {
+      id: 's1', name: 'TEST', icon: '⚡', resource: 'base', baseValues: [10],
+      level: 1, rarity: 0, affixes: [], enchantmentIds: [], shapeId: 'monomino', rotation: 0,
+    } as AffixSkillInstance)
+    state.player.inbox.push('s1')
+    state.player.relics.add('punctuation_liberation')
+
+    syncFiledFolders()
+
+    expect(skillTab.textContent).toBe('SKILL · 001')
+    expect(skillBody.innerHTML).toContain('TEST')
+    expect(relicTab.textContent).toBe('RELIC · 001')
+    expect(cabinetSub.textContent).toBe('在编档案 · 02')
+  })
+
+  it('AC4 chain: syncWorkbenchInbox 末尾必须刷 FILED.SKILL', () => {
+    // 起始：FILED 空
+    syncFiledFolders()
+    expect(skillTab.textContent).toBe('SKILL · 000')
+
+    // 注入 inbox 技能 → 调 syncWorkbenchInbox
+    state.affixSkills.set('s2', {
+      id: 's2', name: 'CHAINED', icon: '🔥', resource: 'base', baseValues: [10],
+      level: 1, rarity: 0, affixes: [], enchantmentIds: [], shapeId: 'monomino', rotation: 0,
+    } as AffixSkillInstance)
+    state.player.inbox.push('s2')
+    syncWorkbenchInbox()
+
+    // FILED 必须自动刷新 — 否则说明 chain 链断了
+    expect(skillTab.textContent).toBe('SKILL · 001')
+    expect(skillBody.innerHTML).toContain('CHAINED')
+  })
+
+  it('AC4 chain: syncWorkbenchRelics 末尾必须刷 FILED.RELIC', () => {
+    syncFiledFolders()
+    expect(relicTab.textContent).toBe('RELIC · 000')
+
+    state.player.relics.add('punctuation_liberation')
+    syncWorkbenchRelics()
+
+    // FILED.RELIC 必须自动刷新
+    expect(relicTab.textContent).toBe('RELIC · 001')
   })
 })

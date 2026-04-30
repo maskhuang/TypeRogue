@@ -35,6 +35,7 @@ import {
   shopBus,
   sfx,
   escapeHtml,
+  getOwnedSkillEntries,
   HIGH_PRICE_THRESHOLD,
   PREVIEW_SEED_GOLD,
   VERBS,
@@ -728,25 +729,9 @@ function cmdInfoListOwned(): void {
   const W = 80;
   appendLine('═'.repeat(W) + '  OWNED ASSETS', 'head');
 
-  // M1 review fix: 多格技能在 bindings Map 里有 N 条 entry（每键一条），
-  // 必须按 sid 分组合并 keys，否则一个 tetromino 在 /OWNED 出现 4 次。
-  const sidToKeys = new Map<string, string[]>();
-  for (const [k, sid] of state.player.bindings) {
-    const arr = sidToKeys.get(sid) ?? [];
-    arr.push(k.toUpperCase());
-    sidToKeys.set(sid, arr);
-  }
-  const skillEntries: Array<{ key: string; sid: string; sortKey: string }> = [];
-  for (const [sid, keys] of sidToKeys) {
-    keys.sort();
-    skillEntries.push({ key: keys.join('+'), sid, sortKey: keys[0] });
-  }
-  // bound 按首字母键排序
-  skillEntries.sort((a, b) => a.sortKey.charCodeAt(0) - b.sortKey.charCodeAt(0));
-  // inbox 按数组顺序追加（与 IN-tray 显示顺序一致）
-  for (let i = 0; i < state.player.inbox.length; i++) {
-    skillEntries.push({ key: `IN${i + 1}`, sid: state.player.inbox[i], sortKey: `Z${i}` });
-  }
+  // Story 60.20 review M1 fix: 与 syncFiledFolders 共用 shopState.getOwnedSkillEntries
+  // 算法（多格 sid 去重 + bound 排序 + inbox 顺序追加）—— 双份实现已合并。
+  const skillEntries = getOwnedSkillEntries();
   appendLine(t('shop.terminal.info.section.skills'), 'head');
   if (skillEntries.length === 0) {
     appendLine('  · EMPTY', 'dim');
