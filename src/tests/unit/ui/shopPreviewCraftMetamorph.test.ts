@@ -91,9 +91,12 @@ describe('Story 60.13 · craft drawer 接入', () => {
     expect(typeof onGoldUpdate).toBe('function')
   })
 
-  it('AC1 抽屉标题改为 WORDSMITH STATION', () => {
+  it('AC1 抽屉标题改为 WORDSMITH STATION（en locale）', async () => {
+    const { setLocale } = await import('../../../src/demo/demo-i18n')
+    setLocale('en')
     __test.openDrawer('craft')
     expect(drawerTitle.textContent).toContain('WORDSMITH STATION')
+    setLocale('zh') // 复原默认（与 setup.ts 一致）
   })
 
   it('AC1 抽屉打开 → drawer.style.display=flex', () => {
@@ -116,9 +119,12 @@ describe('Story 60.13 · metamorph drawer 接入', () => {
     expect(renderMetamorphPanelSpy.mock.calls[0][0]).toBe(drawerBody)
   })
 
-  it('AC2 抽屉标题改为 METAMORPH STATION', () => {
+  it('AC2 抽屉标题改为 METAMORPH STATION（en locale）', async () => {
+    const { setLocale } = await import('../../../src/demo/demo-i18n')
+    setLocale('en')
     __test.openDrawer('metamorph')
     expect(drawerTitle.textContent).toContain('METAMORPH STATION')
+    setLocale('zh')
   })
 
   it('Task 2 stub 已移除', () => {
@@ -137,11 +143,14 @@ describe('Story 60.13 · onGoldUpdate 回调', () => {
 })
 
 describe('Story 60.13 · words drawer 路径不受影响（回归）', () => {
-  it('AC4 openDrawer("words") 仍走原 renderWordsDrawerHtml 路径，不调 craft/metamorph', () => {
+  it('AC4 openDrawer("words") 仍走原 renderWordsDrawerHtml 路径，不调 craft/metamorph', async () => {
+    const { setLocale } = await import('../../../src/demo/demo-i18n')
+    setLocale('en')
     __test.openDrawer('words')
     expect(renderCraftPanelSpy).not.toHaveBeenCalled()
     expect(renderMetamorphPanelSpy).not.toHaveBeenCalled()
     expect(drawerTitle.textContent).toContain('WORD LIBRARY')
+    setLocale('zh')
   })
 })
 

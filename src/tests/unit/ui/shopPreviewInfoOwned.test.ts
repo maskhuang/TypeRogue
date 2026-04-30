@@ -208,7 +208,10 @@ describe('Story 60.10 · INF dispatcher 路径', () => {
     expect(lineContains('TRY')).toBe(true) // 提示 INF /OWNED
   })
 
-  it('AC6 /OWNED 列表 — 空时打印 EMPTY', () => {
+  it('AC6 /OWNED 列表 — 空时打印 EMPTY', async () => {
+    // Story 60.15: 切 en locale 验证英文 UI 字符串（默认 zh 已 i18n 化）
+    const { setLocale } = await import('../../../src/demo/demo-i18n')
+    setLocale('en')
     __test.cmdInfo('/OWNED')
     expect(lineContains('OWNED ASSETS')).toBe(true)
     expect(lineContains('SKILLS')).toBe(true)
@@ -220,6 +223,7 @@ describe('Story 60.10 · INF dispatcher 路径', () => {
     expect(capturedLines.slice(skillsHeaderIdx, relicsHeaderIdx).some(l => l.text.includes('EMPTY'))).toBe(true)
     // RELICS 段下也应 EMPTY
     expect(capturedLines.slice(relicsHeaderIdx).some(l => l.text.includes('EMPTY'))).toBe(true)
+    setLocale('zh')
   })
 
   it('AC6 /OWNED 列表 — 含 bound skills + inbox + relics', () => {
@@ -252,12 +256,16 @@ describe('Story 60.10 · INF dispatcher 路径', () => {
     expect(lineContains('A+D+F+S')).toBe(true)
   })
 
-  it('AC9 HEL 输出 INF 扩展用法说明（间接通过未知 INF arg 验证 dispatcher）', () => {
+  it('AC9 HEL 输出 INF 扩展用法说明（间接通过未知 INF arg 验证 dispatcher）', async () => {
+    // Story 60.15: 切 en locale 验证英文 USAGE 字符串（默认 zh 已 i18n 化为中文）
+    const { setLocale } = await import('../../../src/demo/demo-i18n')
+    setLocale('en')
     __test.cmdInfo('') // empty arg
     expect(lineContains('USAGE')).toBe(true)
     expect(lineContains('SKU')).toBe(true)
     expect(lineContains('KEY')).toBe(true)
     expect(lineContains('NAME')).toBe(true)
     expect(lineContains('/owned')).toBe(true)
+    setLocale('zh')
   })
 })

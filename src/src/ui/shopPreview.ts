@@ -534,17 +534,17 @@ function classForRow(d: ItemDescriptor): string {
 // === Commands ===
 
 function cmdHelp(): void {
-  appendLine('AVAILABLE COMMANDS:', 'head');
-  appendLine('  LIS · BUY <SKU> · INF <SKU|KEY|NAME|/owned> · SEL <SKU> · RES');
-  appendLine('  PRO (proceed to workbench) · STA · WOR · UND · HEL');
-  appendLine('USE 3-LETTER ABBREVIATIONS. ↑↓ FOR HISTORY. TAB COMPLETES VERB ONLY.', 'dim');
+  appendLine(t('shop.terminal.cmd.help.header'), 'head');
+  appendLine(t('shop.terminal.cmd.help.row1'));
+  appendLine(t('shop.terminal.cmd.help.row2'));
+  appendLine(t('shop.terminal.cmd.help.row3'), 'dim');
   // Story 60.10: INF 扩展用法说明
-  appendLine('INF FORMS:', 'head');
-  appendLine('  INF SKL-001    catalog SKU 详情');
-  appendLine('  INF F          已绑键位（a-z）的技能 / 数字键 1-0 的遗物');
-  appendLine('  INF MORAL      模糊匹配 owned skill 名（部分匹配多个时列候选）');
-  appendLine('  INF /OWNED     列出全部 owned skills + relics');
-  appendLine(`PRICES IN BANANA STANDARD 🍌  · PURCHASES ≥ 🍌 ${HIGH_PRICE_THRESHOLD} REQUIRE [Y/N].`, 'dim');
+  appendLine(t('shop.terminal.cmd.help.inf_header'), 'head');
+  appendLine(t('shop.terminal.cmd.help.inf_sku'));
+  appendLine(t('shop.terminal.cmd.help.inf_key'));
+  appendLine(t('shop.terminal.cmd.help.inf_name'));
+  appendLine(t('shop.terminal.cmd.help.inf_owned'));
+  appendLine(t('shop.terminal.cmd.help.price_note', { threshold: HIGH_PRICE_THRESHOLD }), 'dim');
   appendBlank();
 }
 
@@ -556,25 +556,27 @@ function cmdList(): void {
   const animated = nextListIsAnimated && shouldAnimateShop();
   nextListIsAnimated = false;
   if (descriptorCache.length === 0) {
-    appendLine('CATALOG EMPTY · NO ITEMS POSTED', 'dim');
+    appendLine(t('shop.terminal.cmd.list.empty'), 'dim');
     appendBlank();
     return;
   }
+  const HEADER = t('shop.terminal.cmd.list.header');
+  const FOOTER = t('shop.terminal.cmd.list.footer', { n: descriptorCache.length });
   if (!animated) {
-    appendLine('CATALOG · 2026-Q2 · ALL PRICES IN BANANA STANDARD 🍌', 'head');
+    appendLine(HEADER, 'head');
     appendLine('─────────────────────────────────────────────────────────────────────────────────────');
     appendLine(renderListHeaderRow(), 'head list-row', true);
     appendLine('─────────────────────────────────────────────────────────────────────────────────────');
     for (const d of descriptorCache) appendLine(renderListRow(d), `${classForRow(d)} list-row`.trim(), true);
     appendLine('─────────────────────────────────────────────────────────────────────────────────────');
-    appendLine(`${descriptorCache.length} ITEMS LISTED · TYPE  INFO <SKU>  FOR DETAILS`, 'dim');
+    appendLine(FOOTER, 'dim');
     appendBlank();
     return;
   }
   // 动画模式：每行 30ms 间隔逐行打出（仿点阵打印机走纸）
   const myCallId = ++listCallCounter;
   const lines: Array<{ text: string; cls: string; raw: boolean }> = [];
-  lines.push({ text: 'CATALOG · 2026-Q2 · ALL PRICES IN BANANA STANDARD 🍌', cls: 'head', raw: false });
+  lines.push({ text: HEADER, cls: 'head', raw: false });
   lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
   lines.push({ text: renderListHeaderRow(), cls: 'head list-row', raw: true });
   lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
@@ -582,7 +584,7 @@ function cmdList(): void {
     lines.push({ text: renderListRow(d), cls: `${classForRow(d)} list-row`.trim(), raw: true });
   }
   lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
-  lines.push({ text: `${descriptorCache.length} ITEMS LISTED · TYPE  INFO <SKU>  FOR DETAILS`, cls: 'dim', raw: false });
+  lines.push({ text: FOOTER, cls: 'dim', raw: false });
   lines.forEach((line, idx) => {
     setTimeout(() => {
       // 取消条件：用户已在动画期间触发新 cmdList（counter 变了）
@@ -598,7 +600,7 @@ function cmdList(): void {
  * 匹配优先级：catalog SKU → /OWNED 列表 → 单键位 → owned skill 模糊名 → owned relic id/name → suggestSku fallback
  */
 function cmdInfo(arg?: string): void {
-  if (!arg) { appendLine('USAGE: INF <SKU|KEY|NAME|/owned>', 'dim'); return; }
+  if (!arg) { appendLine(t('shop.terminal.cmd.usage.inf'), 'dim'); return; }
   const upper = arg.toUpperCase();
 
   // 1) /OWNED 子命令 — owned 资产列表
@@ -727,7 +729,7 @@ function cmdInfoOwnedSkill(skillId: string): void {
   try { fields = buildAffixTooltipFields(sk, rt); } catch { fields = null; }
   if (fields && fields.affixInfo.length > 0) {
     appendLine('');
-    appendLine('AFFIXES', 'head');
+    appendLine(t('shop.terminal.info.section.affixes'), 'head');
     for (const af of fields.affixInfo) {
       const hdr = `‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
       for (const w of wrapAt(hdr, W - 4)) appendLine('  ' + w);
@@ -738,7 +740,7 @@ function cmdInfoOwnedSkill(skillId: string): void {
   }
   if (fields && fields.enchantments.length > 0) {
     appendLine('');
-    appendLine('ENCHANTMENTS', 'head');
+    appendLine(t('shop.terminal.info.section.enchantments'), 'head');
     for (const e of fields.enchantments) {
       const hdr = `‹${(e.name || '?').toUpperCase()}›`;
       for (const w of wrapAt(hdr, W - 4)) appendLine('  ' + w);
@@ -819,7 +821,7 @@ function cmdInfoListOwned(): void {
   for (let i = 0; i < state.player.inbox.length; i++) {
     skillEntries.push({ key: `IN${i + 1}`, sid: state.player.inbox[i], sortKey: `Z${i}` });
   }
-  appendLine('SKILLS', 'head');
+  appendLine(t('shop.terminal.info.section.skills'), 'head');
   if (skillEntries.length === 0) {
     appendLine('  · EMPTY', 'dim');
   } else {
@@ -833,7 +835,7 @@ function cmdInfoListOwned(): void {
 
   // RELICS
   appendLine('');
-  appendLine('RELICS', 'head');
+  appendLine(t('shop.terminal.info.section.relics'), 'head');
   const relicIds = Array.from(state.player.relics);
   if (relicIds.length === 0) {
     appendLine('  · EMPTY', 'dim');
@@ -854,7 +856,7 @@ function executeBuy(d: ItemDescriptor): void {
   if (state.gold < d.price) {
     sfx('shop_buy_err'); // Story 60.12: 拨号忙音 — 余额不足
     appendLine(`ERR · INSUFFICIENT FUNDS · BAL 🍌 ${state.gold} · NEED 🍌 ${d.price}`, 'redacted');
-    appendLine('  · SEE FORM 22-B FOR APPEAL PROCEDURES', 'dim');
+    appendLine(t('shop.terminal.err.appeal_form'), 'dim');
     appendBlank();
     return;
   }
@@ -1024,7 +1026,7 @@ export function triggerSubmit(): void {
   // M1 fix: 不允许在 BUY high-price confirm 未结时启动 SUBMIT 流程（防双 pending 共存）
   if (pendingConfirm) {
     showOnly('terminal');
-    appendLine('ERR · PENDING PURCHASE CONFIRMATION · RESPOND [Y]/[N] FIRST', 'redacted');
+    appendLine(t('shop.terminal.err.pending_confirm'), 'redacted');
     appendBlank();
     return;
   }
@@ -1057,8 +1059,8 @@ function promptBindingsWarning(nextStage: 'warn-inbox' | 'proceed'): void {
   pendingSubmit = { stage: 'warn-bindings', nextStage };
   showOnly('terminal');
   setSubmitButtonAwaiting(true);
-  appendLine('WARNING · NO BINDINGS · KEYBOARD UNARMED', 'redacted');
-  appendLine('  · CONFIRM ENTRY? [Y]ES OR [N]O', 'dim');
+  appendLine(t('shop.terminal.submit.warn_no_bindings'), 'redacted');
+  appendLine(t('shop.terminal.submit.warn_no_bindings_confirm'), 'dim');
 }
 
 function promptInboxWarning(): void {
@@ -1067,7 +1069,7 @@ function promptInboxWarning(): void {
   showOnly('terminal');
   setSubmitButtonAwaiting(true);
   appendLine(`WARNING · ${n} ITEM${n > 1 ? 'S' : ''} IN IN-TRAY · LEAVE PENDING ITEMS?`, 'redacted');
-  appendLine('  · [Y]ES TO CARRY INTO NEXT BATCH · [N]O TO STAY AND EDIT', 'dim');
+  appendLine(t('shop.terminal.submit.warn_inbox_left'), 'dim');
 }
 
 /**
@@ -1089,7 +1091,7 @@ export function handleSubmitConfirmation(input: string): boolean {
   }
   if (up === 'N' || up === 'NO') {
     pendingSubmit = null;
-    appendLine('ABORTED · ENTRY HALTED · RETURN TO WORKBENCH', 'dim');
+    appendLine(t('shop.terminal.submit.aborted'), 'dim');
     appendBlank();
     setSubmitButtonAwaiting(false);
     return true;
@@ -1103,7 +1105,7 @@ function proceedSubmit(): void {
   if (submitting) return;
   submitting = true;
   sfx('submit_stamp'); // Story 60.12: 重击下行 — 红章盖章音
-  appendLine('SUBMITTING FORM · STAMPED · ENTRY APPROVED', 'echo');
+  appendLine(t('shop.terminal.submit.stamped'), 'echo');
   appendBlank();
   const btn = document.getElementById('wb-submit-btn');
   if (btn) {
@@ -1210,7 +1212,7 @@ function executeBuyRelic(d: ItemDescriptor): void {
 }
 
 function cmdBuy(arg?: string): void {
-  if (!arg) { appendLine('USAGE: BUY <SKU>', 'dim'); return; }
+  if (!arg) { appendLine(t('shop.terminal.cmd.usage.buy'), 'dim'); return; }
   const d = findDescriptorBySku(arg);
   if (!d) {
     sfx('shop_buy_err'); // Story 60.12: SKU 不存在
@@ -1236,7 +1238,7 @@ function cmdBuy(arg?: string): void {
 }
 
 function cmdSell(arg?: string): void {
-  if (!arg) { appendLine('USAGE: SELL <SKU>', 'dim'); return; }
+  if (!arg) { appendLine(t('shop.terminal.cmd.usage.sell'), 'dim'); return; }
   const target = arg.toUpperCase();
   // SEL operates on inbox items by SKU
   const undoIdx = undoStack.findIndex(u => u.sku === target);
@@ -1302,7 +1304,7 @@ function cmdProceed(): void {
 
 function cmdUndo(): void {
   if (workbenchEntered) {
-    appendLine('ERR · UNDO LOCKED · WORKBENCH ALREADY ENTERED THIS SESSION', 'redacted');
+    appendLine(t('shop.terminal.err.undo_locked'), 'redacted');
     appendBlank();
     return;
   }
@@ -1350,7 +1352,7 @@ function cmdStats(): void {
 }
 
 function cmdWords(): void {
-  appendLine('OPENING WORD LIBRARY DRAWER...', 'echo');
+  appendLine(t('shop.terminal.cmd.opening_words'), 'echo');
   appendBlank();
   // ensure on workbench so drawer is visible
   if (currentScreen !== 'workbench') showOnly('workbench');
@@ -1369,15 +1371,15 @@ function openDrawer(kind: DrawerKind): void {
   drawerOpen = kind;
   sfx('shop_drawer_open'); // Story 60.12: 抽拉哗啦
   if (kind === 'words') {
-    title.textContent = `WORD LIBRARY · ${state.player.wordDeck.length} WORDS`;
+    title.textContent = t('shop.workbench.drawer.words_title', { n: state.player.wordDeck.length });
     body.innerHTML = renderWordsDrawerHtml();
   } else if (kind === 'craft') {
-    title.textContent = 'WORDSMITH STATION · ASSEMBLY LINE';
+    title.textContent = t('shop.workbench.drawer.craft_title');
     body.innerHTML = ''; // 清旧内容；renderCraftPanel 内部也会再 innerHTML=''
     // Story 60.13: 接入真 craft panel — onGoldUpdate 回调让 terminal banner 同步
     renderCraftPanel(body as HTMLElement, () => updateTerminalChrome());
   } else if (kind === 'metamorph') {
-    title.textContent = 'METAMORPH STATION · MUTATION CHAMBER';
+    title.textContent = t('shop.workbench.drawer.metamorph_title');
     body.innerHTML = '';
     // Story 60.13: 接入真 metamorph panel
     renderMetamorphPanel(body as HTMLElement);
@@ -2043,15 +2045,15 @@ function renderInboxCardHtml(c: InboxCardData): string {
           <span class="wc-name inv-name">${c.name}</span>
         </div>
         ${shapeBlock}
-        <div class="wc-stamp wc-stamp-opened">OPENED</div>
+        <div class="wc-stamp wc-stamp-opened">${escapeHtml(t('shop.workbench.stamp.opened'))}</div>
       </div>
     </div>
   `;
   }
   // Fresh 购入 — 完整运单包装
   const stamp = c.clearance === '4-A'
-    ? '<div class="wc-stamp wc-stamp-gold">CLEARANCE 4-A</div>'
-    : '<div class="wc-stamp">REGULATION</div>';
+    ? `<div class="wc-stamp wc-stamp-gold">${escapeHtml(t('shop.workbench.stamp.clearance_a'))}</div>`
+    : `<div class="wc-stamp">${escapeHtml(t('shop.workbench.stamp.regulation'))}</div>`;
   const barcodePattern = '▌▎▍▎▌▌▏▎▌▍▎▌▎▌▍▎▌▌▎▍▌▎▏▌▍▎▌▌▎▍▌▎▌▎▍▌';
   const barcodeNum = `${c.sku}-7842`;
   return `

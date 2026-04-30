@@ -5,6 +5,8 @@
 // ============================================
 
 import type { ResourceType } from '../core/types';
+// Story 60.15: locale-aware abbreviation
+import { getLocale, t } from '../demo/demo-i18n';
 
 /** 词条 type → 3 字母缩写 */
 const AFFIX_ABBR: Record<string, string> = {
@@ -57,12 +59,28 @@ function fallbackAbbr(type: string): string {
   return cleaned.slice(0, 3).toUpperCase().padEnd(3, '·');
 }
 
+/**
+ * Story 60.15: locale-aware abbreviation
+ * - zh locale → 优先用 t('affix.X') 全名（中文 2-3 字符）
+ * - en locale → 沿用既有 3 字母缩写
+ * - i18n key 缺失时 fallback 到 en abbrev
+ */
 export function abbreviateAffix(type: string): string {
+  if (getLocale() === 'zh') {
+    const i18nKey = 'affix.' + type;
+    const fullName = t(i18nKey);
+    if (fullName !== i18nKey) return fullName; // hit i18n
+  }
   return AFFIX_ABBR[type] ?? fallbackAbbr(type);
 }
 
 export function abbreviateResource(type: ResourceType | string | undefined): string {
   if (!type) return '???';
+  if (getLocale() === 'zh') {
+    const i18nKey = 'resource.' + type;
+    const fullName = t(i18nKey);
+    if (fullName !== i18nKey) return fullName;
+  }
   return RESOURCE_ABBR[type as ResourceType] ?? fallbackAbbr(type);
 }
 
