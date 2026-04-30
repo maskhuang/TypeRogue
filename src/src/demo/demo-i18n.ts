@@ -252,6 +252,10 @@ const ZH: Record<string, string> = {
   'settings.shopAnimations': '商店动画',
   'settings.shopAnimations.on': '开',
   'settings.shopAnimations.off': '关',
+  // Story 60.12: 商店音效开关
+  'settings.shopSound': '商店音效',
+  'settings.shopSound.on': '开',
+  'settings.shopSound.off': '关',
   'settings.reset': '⚠ 重置所有进度',
   'settings.reset_confirm': '确定要重置所有进度吗？此操作不可撤销。',
   'settings.close': '关闭',
@@ -1369,6 +1373,10 @@ const EN: Record<string, string> = {
   'settings.shopAnimations': 'Shop Animations',
   'settings.shopAnimations.on': 'On',
   'settings.shopAnimations.off': 'Off',
+  // Story 60.12: shop sound effects toggle
+  'settings.shopSound': 'Shop Sound',
+  'settings.shopSound.on': 'On',
+  'settings.shopSound.off': 'Off',
   'settings.reset': '⚠ Reset All Progress',
   'settings.reset_confirm': 'Are you sure you want to reset all progress? This cannot be undone.',
   'settings.close': 'Close',

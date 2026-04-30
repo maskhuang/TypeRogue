@@ -201,4 +201,14 @@ export const SOUND_PROFILES: Record<string, [number, number, number]> = {
   coins: [1200, 800, 0.05],          // ↓高频下行，香蕉/货币
   unlock: [300, 900, 0.14],          // ↑大跨度上行，解锁
   warning: [250, 150, 0.08],         // ↓低频下行，警告
+  // Story 60.12: terminal / 工作台音效层（DPCA 复古机械感）
+  shop_kbd_click:    [600, 580, 0.04],   // 机械轴 thock — 字母键击（低 volume 防连击爆音）
+  shop_kbd_enter:    [300, 200, 0.10],   // 继电器 thunk — 命令执行
+  shop_buy_ok:       [800, 1500, 0.10],  // 点阵打印机 zip — BUY 确认上行
+  shop_buy_err:      [250, 150, 0.10],   // 拨号忙音 — BUY 拒绝下行
+  shop_drag_pickup:  [1200, 900, 0.05],  // 抓握刺啦 — 拖起短促
+  shop_drag_drop:    [400, 200, 0.08],   // 木质 click — 落到键
+  shop_drag_unbind:  [250, 150, 0.06],   // 闷响 — 卸回 IN-tray
+  shop_drawer_open:  [400, 700, 0.07],   // 抽拉哗啦 — 抽屉打开
+  submit_stamp:      [400, 100, 0.18],   // 重击下行 — SUBMIT 红章（替换 60-4 confirm）
 };

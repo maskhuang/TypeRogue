@@ -4,7 +4,7 @@
 // 验证 shopUI 默认值 + 持久化 + 老存档（无字段）回落
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { getSettings, updateSettings, loadSettings, shouldAnimateShop } from '../../../src/core/UserSettings'
+import { getSettings, updateSettings, loadSettings, shouldAnimateShop, shouldPlayShopSound } from '../../../src/core/UserSettings'
 
 beforeEach(() => {
   localStorage.clear()
@@ -140,5 +140,53 @@ describe('Story 60.11 · shouldAnimateShop helper', () => {
       matchMedia: () => { throw new Error('not supported') },
     })
     expect(shouldAnimateShop()).toBe(true)
+  })
+})
+
+describe('Story 60.12 · UserSettings.shopSound', () => {
+  it('默认值为 true', () => {
+    expect(getSettings().shopSound).toBe(true)
+  })
+
+  it('updateSettings 写入 shopSound=false 立即生效 + 持久化', () => {
+    updateSettings({ shopSound: false })
+    expect(getSettings().shopSound).toBe(false)
+    const parsed = JSON.parse(localStorage.getItem('typing_roguelike_settings')!)
+    expect(parsed.shopSound).toBe(false)
+  })
+
+  it('loadSettings 老存档（无 shopSound 字段）回落 true', () => {
+    localStorage.setItem(
+      'typing_roguelike_settings',
+      JSON.stringify({ masterVolume: 0.5, crtEnabled: true, locale: 'zh', backgroundMode: 'random', shopUI: 'classic', shopAnimations: true }),
+    )
+    loadSettings()
+    expect(getSettings().shopSound).toBe(true)
+  })
+
+  it('反复切换不丢失', () => {
+    updateSettings({ shopSound: false })
+    expect(getSettings().shopSound).toBe(false)
+    updateSettings({ shopSound: true })
+    expect(getSettings().shopSound).toBe(true)
+    updateSettings({ shopSound: false })
+    expect(getSettings().shopSound).toBe(false)
+  })
+})
+
+describe('Story 60.12 · shouldPlayShopSound helper', () => {
+  it('shopSound=true → 返回 true', () => {
+    updateSettings({ shopSound: true })
+    expect(shouldPlayShopSound()).toBe(true)
+  })
+
+  it('shopSound=false → 返回 false', () => {
+    updateSettings({ shopSound: false })
+    expect(shouldPlayShopSound()).toBe(false)
+  })
+
+  it('与 shouldAnimateShop 独立 — 关动画不关音效', () => {
+    updateSettings({ shopAnimations: false, shopSound: true })
+    expect(shouldPlayShopSound()).toBe(true)
   })
 })

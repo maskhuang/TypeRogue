@@ -18,6 +18,10 @@ export interface UserSettingsData {
   // Story 60.11: terminal 商店转场动画开关（whoosh / CRT flicker / reshuffle 逐行 print）
   // 默认 true。`prefers-reduced-motion: reduce` 媒体查询会强制覆盖 false（见 shouldAnimateShop）
   shopAnimations: boolean
+  // Story 60.12: terminal / 工作台音效层开关（kbd / BUY / drag / drawer / submit）
+  // 默认 true。与 masterVolume 独立 — masterVolume=0 时全静音（含 classic），
+  // shopSound=false 仅静默 terminal/workbench 新加音效，不影响 classic shop / 战斗音效
+  shopSound: boolean
 }
 
 const DEFAULTS: UserSettingsData = {
@@ -27,6 +31,7 @@ const DEFAULTS: UserSettingsData = {
   backgroundMode: 'random',
   shopUI: 'classic',
   shopAnimations: true,
+  shopSound: true,
 }
 
 let current: UserSettingsData = { ...DEFAULTS }
@@ -55,6 +60,14 @@ export function getSettings(): UserSettingsData {
 export function updateSettings(partial: Partial<UserSettingsData>): void {
   Object.assign(current, partial)
   saveSettings()
+}
+
+/**
+ * Story 60.12: 是否应播放 terminal / 工作台新音效
+ * 仅守卫 settings.shopSound — masterVolume 由 effects/sound 主链路控制
+ */
+export function shouldPlayShopSound(): boolean {
+  return current.shopSound
 }
 
 /**

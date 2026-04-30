@@ -75,6 +75,14 @@ export function openSettingsPanel(): void {
         </div>
       </div>
 
+      <div class="settings-row">
+        <label class="settings-label">${esc(t('settings.shopSound'))}</label>
+        <div class="settings-lang-btns">
+          <button class="settings-lang-btn ${settings.shopSound ? 'active' : ''}" data-shop-sound="on">${esc(t('settings.shopSound.on'))}</button>
+          <button class="settings-lang-btn ${!settings.shopSound ? 'active' : ''}" data-shop-sound="off">${esc(t('settings.shopSound.off'))}</button>
+        </div>
+      </div>
+
       <div class="settings-divider"></div>
 
       <button class="settings-reset-btn" id="settings-reset">${esc(t('settings.reset'))}</button>
@@ -153,6 +161,20 @@ export function openSettingsPanel(): void {
       updateSettings({ shopAnimations: enabled })
       overlay?.querySelectorAll('[data-shop-anim]').forEach(b => {
         const isOn = (b as HTMLElement).dataset.shopAnim === 'on'
+        b.classList.toggle('active', isOn === enabled)
+      })
+    })
+  })
+
+  // Story 60.12: Shop Sound 切换（on / off）
+  overlay.querySelectorAll('[data-shop-sound]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playSound('click')
+      const mode = (btn as HTMLElement).dataset.shopSound
+      const enabled = mode === 'on'
+      updateSettings({ shopSound: enabled })
+      overlay?.querySelectorAll('[data-shop-sound]').forEach(b => {
+        const isOn = (b as HTMLElement).dataset.shopSound === 'on'
         b.classList.toggle('active', isOn === enabled)
       })
     })

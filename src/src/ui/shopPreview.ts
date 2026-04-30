@@ -25,7 +25,9 @@ import {
 // Story 60.9: keyTooltip 单例（与 classic 商品卡共用）
 import { keyTooltip } from './keyboard/KeyTooltip';
 // Story 60.11: 转场动画守卫
-import { shouldAnimateShop } from '../core/UserSettings';
+// Story 60.12: 音效守卫
+import { shouldAnimateShop, shouldPlayShopSound } from '../core/UserSettings';
+import { playSound } from '../effects/sound';
 // Story 60.7: 副作用 hook（事件总线 + quest 重算 + 遗物购入瞬时效果）
 import { eventBus } from '../core/events/EventBus';
 import { evaluateEquipQuests } from '../data/affixTrigger';
@@ -90,6 +92,12 @@ let unsealedSkillIds = new Set<string>();
 let nextListIsAnimated = false;
 // Story 60.11: cmdList 调用计数器 — 用户在动画期间再次 LIS 时取消旧队列
 let listCallCounter = 0;
+
+/** Story 60.12: shop 音效守卫包装 — 单点关 + 兼容 SOUND_PROFILES type */
+function sfx(type: Parameters<typeof playSound>[0]): void {
+  if (!shouldPlayShopSound()) return;
+  playSound(type);
+}
 // snapshot of descriptors for current shop session — re-derived each LIST or after mutation
 let descriptorCache: ItemDescriptor[] = [];
 
@@ -841,6 +849,7 @@ function cmdInfoListOwned(): void {
 
 function executeBuy(d: ItemDescriptor): void {
   if (state.gold < d.price) {
+    sfx('shop_buy_err'); // Story 60.12: 拨号忙音 — 余额不足
     appendLine(`ERR · INSUFFICIENT FUNDS · BAL 🍌 ${state.gold} · NEED 🍌 ${d.price}`, 'redacted');
     appendLine('  · SEE FORM 22-B FOR APPEAL PROCEDURES', 'dim');
     appendBlank();
@@ -849,18 +858,21 @@ function executeBuy(d: ItemDescriptor): void {
   if (d.kind === 'skill') return executeBuySkill(d);
   if (d.kind === 'pack') return executeBuyPack(d);
   if (d.kind === 'relic') return executeBuyRelic(d);
+  sfx('shop_buy_err');
   appendLine(`ERR · ${d.kind.toUpperCase()} PURCHASE NOT YET WIRED`, 'redacted');
   appendBlank();
 }
 
 function executeBuySkill(d: ItemDescriptor): void {
   if (state.player.inbox.length >= INBOX_MAX) {
+    sfx('shop_buy_err'); // Story 60.12: inbox 满
     appendLine(`ERR · IN-TRAY FULL (${INBOX_MAX}/${INBOX_MAX}) · DISPATCH TO WORKBENCH BEFORE NEW PURCHASE`, 'redacted');
     appendBlank();
     return;
   }
   const skill = d.originalItem.affixSkill;
   if (!skill) {
+    sfx('shop_buy_err');
     appendLine(`ERR · ITEM HAS NO SKILL DATA · CANNOT PURCHASE`, 'redacted');
     appendBlank();
     return;
@@ -885,6 +897,7 @@ function executeBuySkill(d: ItemDescriptor): void {
   appendBlank();
   updateTerminalChrome();
   syncWorkbenchInbox();
+  sfx('shop_buy_ok'); // Story 60.12: 点阵打印机 zip — BUY skill 成功
   // Story 60.11: BUY 成功 → IN-tray 对应槽 whoosh 滑入 + 闪光（仅成功路径）
   triggerInboxWhoosh(state.player.inbox.length - 1);
 }
@@ -940,6 +953,7 @@ function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
   undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [word] });
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
   eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
+  sfx('shop_buy_ok'); // Story 60.12
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
   appendLine(`  · WORD "${word.toUpperCase()}" FILED TO LIBRARY · BAL 🍌 ${state.gold}`, 'dim');
   appendLine(`  · UNDO STACK: ${undoStack.length}`, 'dim');
@@ -973,6 +987,7 @@ export function finalizePackPick(pickedWord: string): void {
   undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [pickedWord] });
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
   eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
+  sfx('shop_buy_ok'); // Story 60.12
   pendingPackPick = null;
   closeDrawer();
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
@@ -1084,6 +1099,7 @@ export function handleSubmitConfirmation(input: string): boolean {
 function proceedSubmit(): void {
   if (submitting) return;
   submitting = true;
+  sfx('submit_stamp'); // Story 60.12: 重击下行 — 红章盖章音
   appendLine('SUBMITTING FORM · STAMPED · ENTRY APPROVED', 'echo');
   appendBlank();
   const btn = document.getElementById('wb-submit-btn');
@@ -1150,16 +1166,19 @@ function executeSubmitTransition(overlay: HTMLElement | null): void {
 function executeBuyRelic(d: ItemDescriptor): void {
   const relicId = d.originalItem.relicId;
   if (!relicId) {
+    sfx('shop_buy_err');
     appendLine(`ERR · RELIC HAS NO ID · CANNOT PURCHASE`, 'redacted');
     appendBlank();
     return;
   }
   if (state.player.relics.has(relicId)) {
+    sfx('shop_buy_err');
     appendLine(`ERR · RELIC ALREADY OWNED · ${relicId.toUpperCase()}`, 'redacted');
     appendBlank();
     return;
   }
   if (isRelicSlotsFull()) {
+    sfx('shop_buy_err');
     appendLine(`ERR · NUMBER-ROW SLOTS FULL · DISCARD A RELIC FIRST`, 'redacted');
     appendBlank();
     return;
@@ -1168,6 +1187,7 @@ function executeBuyRelic(d: ItemDescriptor): void {
   const ok = addRelicWithCapacity(relicId);
   if (!ok) {
     state.gold += d.price;
+    sfx('shop_buy_err');
     appendLine(`ERR · RELIC ADD FAILED · CONTACT ARCHIVES`, 'redacted');
     appendBlank();
     return;
@@ -1176,6 +1196,7 @@ function executeBuyRelic(d: ItemDescriptor): void {
   if (relicId === 'd_100') rerollAllAffixes();
   if (relicId === 'universal_furnace') initFurnace(random);
   eventBus.emit('shop:purchase', { type: 'relic', itemId: relicId, price: d.price });
+  sfx('shop_buy_ok'); // Story 60.12
   undoStack.push({ kind: 'relic', sku: d.sku, price: d.price, relicId });
   appendLine(`CONFIRMED · ${d.name} · 🍌 ${d.price} DEDUCTED`, 'echo');
   appendLine(`  · RELIC SHELVED · BAL 🍌 ${state.gold}`, 'dim');
@@ -1189,6 +1210,7 @@ function cmdBuy(arg?: string): void {
   if (!arg) { appendLine('USAGE: BUY <SKU>', 'dim'); return; }
   const d = findDescriptorBySku(arg);
   if (!d) {
+    sfx('shop_buy_err'); // Story 60.12: SKU 不存在
     const guess = suggestSku(arg);
     appendLine(`ERR · SKU NOT IN CATALOG: ${arg.toUpperCase()}`, 'redacted');
     if (guess) appendLine(`  · DID YOU MEAN ${guess}?`, 'dim');
@@ -1196,6 +1218,7 @@ function cmdBuy(arg?: string): void {
     return;
   }
   if (d.redacted) {
+    sfx('shop_buy_err'); // Story 60.12: clearance 不足
     appendLine(`ERR · CLEARANCE ${d.clearance} REQUIRED · CONTACT SUPERVISOR`, 'redacted');
     appendBlank();
     return;
@@ -1341,6 +1364,7 @@ function openDrawer(kind: DrawerKind): void {
   const body = document.getElementById('wb-drawer-body');
   if (!el || !title || !body) return;
   drawerOpen = kind;
+  sfx('shop_drawer_open'); // Story 60.12: 抽拉哗啦
   if (kind === 'words') {
     title.textContent = `WORD LIBRARY · ${state.player.wordDeck.length} WORDS`;
     body.innerHTML = renderWordsDrawerHtml();
@@ -1668,6 +1692,7 @@ function onKey(e: KeyboardEvent): void {
   }
   if (e.key === 'Enter') {
     e.preventDefault();
+    sfx('shop_kbd_enter'); // Story 60.12: 继电器 thunk
     const line = typedBuffer;
     if (line.trim()) {
       cmdHistory.push(line);
@@ -1678,6 +1703,7 @@ function onKey(e: KeyboardEvent): void {
     return;
   }
   if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    sfx('shop_kbd_click'); // Story 60.12: 机械轴 thock
     typedBuffer += e.key.toUpperCase();
     setPrompt(typedBuffer);
   }
@@ -1732,6 +1758,7 @@ function bindSkillToKey(skillId: string, key: string): void {
   unsealedSkillIds.add(skillId);
   syncWorkbenchInbox();
   syncWorkbenchKeys();
+  sfx('shop_drag_drop'); // Story 60.12: 木质 click — 落到键
 }
 
 // Story 60.1: 从键拖回 IN-tray = 整体卸下多格技能
@@ -1739,6 +1766,7 @@ function unbindSkillFromKey(key: string): void {
   if (applyUnbindKeyToInbox(key) !== undefined) {
     syncWorkbenchInbox();
     syncWorkbenchKeys();
+    sfx('shop_drag_unbind'); // Story 60.12: 闷响 — 卸回 IN-tray
   }
 }
 
@@ -2451,9 +2479,11 @@ export function enterTerminalShop(_won?: boolean): void {
   // 全局 dragend 兜底清理形状高亮（一次性设置，避免每次 setupDragZones 重复赋值）
   dragManager.onDragEnd = () => clearShapePlacementOnWorkbench();
   // Story 60.9: 拖拽起势时全局隐藏所有 tooltip（不挡视线）
+  // Story 60.12: 同时播放 pickup 音效（抓握刺啦）
   dragManager.onDragStart = () => {
     keyTooltip.hide();
     hideRelicTooltip();
+    sfx('shop_drag_pickup');
   };
   setupDragZones();
   setupDrawerHandlers();
@@ -2510,4 +2540,10 @@ export const __test = {
   triggerInboxWhoosh: (slotIdx: number): void => triggerInboxWhoosh(slotIdx),
   showOnly: (which: 'terminal' | 'workbench'): void => showOnly(which),
   setNextListAnimated: (v: boolean): void => { nextListIsAnimated = v; },
+  // Story 60.12: 音效测试入口
+  bindSkillToKey: (skillId: string, key: string): void => bindSkillToKey(skillId, key),
+  unbindSkillFromKey: (key: string): void => unbindSkillFromKey(key),
+  cmdBuy: (arg: string): void => cmdBuy(arg),
+  openDrawer: (kind: 'words' | 'craft' | 'metamorph' | 'pack-pick'): void => openDrawer(kind),
+  proceedSubmit: (): void => proceedSubmit(),
 };
