@@ -1489,11 +1489,8 @@ function setupDrawerHandlers(): void {
   // Show class-specific buttons
   const craftBtn = document.getElementById('wb-craft-btn');
   const metaBtn = document.getElementById('wb-meta-btn');
-  // TEMP preview (Story 60.13 follow-up): 暂时无视职业守卫显示两按钮，方便观察 panel 效果
-  // TODO 恢复：craftBtn.style.display = state.classId === 'wordsmith' ? '' : 'none'
-  //          metaBtn.style.display = state.classId === 'metamorph' ? '' : 'none'
-  if (craftBtn) craftBtn.style.display = '';
-  if (metaBtn) metaBtn.style.display = '';
+  if (craftBtn) craftBtn.style.display = state.classId === 'wordsmith' ? '' : 'none';
+  if (metaBtn) metaBtn.style.display = state.classId === 'metamorph' ? '' : 'none';
   // Story 60.4: SUBMIT FORM → startLevel
   const submitBtn = document.getElementById('wb-submit-btn');
   if (submitBtn) submitBtn.onclick = triggerSubmit;
