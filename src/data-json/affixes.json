@@ -648,47 +648,47 @@
   "enchantmentMeta": {
     "apprentice_neighbor": {
       "icon": "👀",
-      "name": "学徒·观摩",
+      "name": "异己理毛",
       "desc": "自身或指定关系的技能触发时永久成长"
     },
     "apprentice_res_base": {
       "icon": "🔢",
-      "name": "专精·基数",
+      "name": "觅食",
       "desc": "产出基数资源时永久成长 +2%"
     },
     "apprentice_res_score": {
       "icon": "🏅",
-      "name": "专精·分数",
+      "name": "受饲",
       "desc": "产出分数资源时永久成长 +2%"
     },
     "apprentice_res_multiplier": {
       "icon": "📈",
-      "name": "专精·倍率",
+      "name": "互惠",
       "desc": "产出倍率资源时永久成长 +2%"
     },
     "apprentice_res_time": {
       "icon": "⏳",
-      "name": "专精·时间",
+      "name": "警戒守望",
       "desc": "产出时间资源时永久成长 +2%"
     },
     "apprentice_res_gold": {
       "icon": "🍌",
-      "name": "专精·香蕉",
+      "name": "囤积",
       "desc": "产出香蕉资源时永久成长 +2%"
     },
     "apprentice_crit": {
       "icon": "💥",
-      "name": "学徒·暴击",
+      "name": "仪态展示",
       "desc": "暴击时永久成长"
     },
     "bonus_output": {
       "icon": "🔀",
-      "name": "附加产出",
+      "name": "配给溢余·{resource}",
       "desc": "触发时额外产出指定资源"
     },
     "multiply_operator": {
       "icon": "✖️",
-      "name": "乘算化",
+      "name": "支配等级",
       "desc": "将加算层各项加成转为独立乘数"
     }
   },
