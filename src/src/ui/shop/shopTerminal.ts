@@ -905,6 +905,7 @@ function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
   appendLine(t('shop.terminal.cmd.buy.undo_stack', { n: previewState.undoStack.length }), 'dim');
   appendBlank();
   updateTerminalChrome();
+  shopBus.syncWorkbenchKeys(); // wordDeck 变化 → 字母键 freq-lock 重算
 }
 
 function executeBuyPackPicker(d: ItemDescriptor, pack: WordPack): void {
@@ -943,6 +944,7 @@ export function finalizePackPick(pickedWord: string): void {
   appendLine(t('shop.terminal.cmd.buy.undo_stack', { n: previewState.undoStack.length }), 'dim');
   appendBlank();
   updateTerminalChrome();
+  shopBus.syncWorkbenchKeys(); // wordDeck 变化 → 字母键 freq-lock 重算
   // M1 fix: 切回终端，让 CONFIRMED / WORD FILED 消息可见
   shopBus.showOnly('terminal');
 }
@@ -1001,6 +1003,7 @@ export function executeBuyRelic(d: ItemDescriptor): void {
   appendBlank();
   updateTerminalChrome();
   shopBus.syncWorkbenchRelics();
+  shopBus.syncWorkbenchKeys(); // punctuation_liberation 等遗物影响 freq-lock
 }
 
 export function cmdBuy(arg?: string): void {
@@ -1141,9 +1144,11 @@ export function cmdUndo(): void {
       const i = state.player.wordDeck.lastIndexOf(w);
       if (i >= 0) state.player.wordDeck.splice(i, 1);
     }
+    shopBus.syncWorkbenchKeys(); // wordDeck 缩了 → freq-lock 重算
   } else if (last.kind === 'relic') {
     removeRelic(last.relicId);
     shopBus.syncWorkbenchRelics();
+    shopBus.syncWorkbenchKeys(); // 撤销 punctuation_liberation 等会改 freq-lock
   }
   state.gold += last.price;
   previewState.purchasedSkus.delete(last.sku);
