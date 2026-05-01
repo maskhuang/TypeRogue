@@ -1549,53 +1549,122 @@ function showGoldReward(onComplete: () => void): void {
   }
   const totalGold = Math.floor(baseGold + skillGold + relicGold) + trophyGold + underdogGold + bountyEndGold;
 
-  // 设置数值
-  const goldSkillEl = document.getElementById('gold-skill');
-  const goldTreasureEl = document.getElementById('gold-treasure');
-  const goldTotalEl = document.getElementById('gold-total');
-
-  // 基础香蕉行
-  const baseRow = document.getElementById('gold-base-row');
-  if (baseRow) {
-    const baseValEl = baseRow.querySelector('.gold-reward-value');
-    if (baseValEl) baseValEl.textContent = String(baseGold);
-    const baseLabelEl = baseRow.querySelector('.gold-reward-label');
-    if (baseLabelEl) baseLabelEl.textContent = _isCalibrationLevel ? t('practice.gold_label') : t('battle.gold_base_label');
+  // === Teletype settlement (DPCA-VT220 phosphor) ===
+  // 头：工号 + 时间
+  const workerId = (() => {
+    try { return localStorage.getItem('dpca-worker-id') || 'OP. PRIMATE-7842'; }
+    catch { return 'OP. PRIMATE-7842'; }
+  })();
+  const headerEl = document.getElementById('ct-header');
+  if (headerEl) {
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    headerEl.textContent = `DPCA-VT220 · DEPT 2-B · ${workerId} · 1962·11·23 ${hh}:${mm}`;
   }
 
-  if (goldSkillEl) goldSkillEl.textContent = `+${skillGold}`;
-  if (goldTotalEl) goldTotalEl.textContent = String(totalGold);
-
-  // 技能产出行：有技能香蕉时才显示
-  const skillRow = document.getElementById('gold-skill-row') as HTMLElement;
-  if (skillRow) skillRow.style.display = skillGold > 0 ? '' : 'none';
-
-  // 遗物香蕉行：有遗物加成时才显示
-  const treasureRow = document.querySelector('.gold-treasure-row') as HTMLElement;
-  if (treasureRow) treasureRow.style.display = relicGold > 0 ? '' : 'none';
-  if (goldTreasureEl) goldTreasureEl.textContent = `+${relicGold}`;
+  // 构造 line script（单 sources of truth：base/skill/relic + 可选 bonuses）
+  const dlevel = getBattleNumber(state.level) || state.level;
+  const stType = getStageType(state.level);
+  const stageBracket = stType === 'boss' ? ' [BOSS]'
+                     : stType === 'elite' ? ' [ELITE]'
+                     : '';
+  const baseLabel = _isCalibrationLevel ? t('practice.gold_label') : t('battle.gold_base_label');
+  const dotsLine = (lbl: string, val: number, dotsLen = 38): string => {
+    const left = `>   ${lbl} `;
+    const right = ` +${val}`;
+    const dots = '.'.repeat(Math.max(3, dotsLen - left.length - right.length));
+    return `${left}${dots}${right}`;
+  };
+  type Line = { text: string; cls?: string; charSpeed: number; holdAfter?: number };
+  const script: Line[] = [];
+  script.push({ text: `> FILE ${dlevel}${stageBracket} · PROCESSED.`, charSpeed: 16, holdAfter: 200 });
+  script.push({ text: `> BATCH ${state.cycle} · 1962·11·23`,         charSpeed: 12, holdAfter: 350 });
+  script.push({ text: '',                                              charSpeed: 0,  holdAfter: 180 });
+  script.push({ text: '> ──── BREAKDOWN / 分项 ──────────',             cls: 'divider', charSpeed: 5,  holdAfter: 250 });
+  script.push({ text: dotsLine(baseLabel, baseGold),                   charSpeed: 8,  holdAfter: 150 });
+  if (skillGold > 0)     script.push({ text: dotsLine(t('battle.gold_skill_label') !== 'battle.gold_skill_label' ? t('battle.gold_skill_label') : 'skill',     skillGold),     cls: 'bonus', charSpeed: 8, holdAfter: 150 });
+  if (relicGold > 0)     script.push({ text: dotsLine(t('battle.gold_relic_label') !== 'battle.gold_relic_label' ? t('battle.gold_relic_label') : 'relic',     relicGold),     cls: 'bonus', charSpeed: 8, holdAfter: 150 });
+  if (trophyGold > 0)    script.push({ text: dotsLine('trophy',    trophyGold),    cls: 'bonus', charSpeed: 8, holdAfter: 150 });
+  if (underdogGold > 0)  script.push({ text: dotsLine('underdog',  underdogGold),  cls: 'bonus', charSpeed: 8, holdAfter: 150 });
+  if (bountyEndGold > 0) script.push({ text: dotsLine('bounty',    bountyEndGold), cls: 'bonus', charSpeed: 8, holdAfter: 150 });
+  script.push({ text: '> ──────────────────────────────────────',      cls: 'divider', charSpeed: 5,  holdAfter: 200 });
+  script.push({ text: '> SETTLEMENT POSTED.',                          charSpeed: 14, holdAfter: 300 });
+  script.push({ text: `> 🍌 ALLOCATION ............ +${totalGold}`,    cls: 'total', charSpeed: 20, holdAfter: 550 });
+  script.push({ text: '',                                              charSpeed: 0,  holdAfter: 80  });
+  script.push({ text: '> [READY FOR NEXT FILE]',                       cls: 'ready', charSpeed: 12, holdAfter: 0   });
 
   // 隐藏结算面板
   hideSettlement();
 
-  // 显示香蕉奖励
+  // 显示终端
   goldReward.classList.remove('gold-reward-hidden', 'gold-reward-hide');
   goldReward.classList.add('gold-reward-show');
-
-  // 播放音效
   playSound('levelup');
 
-  // 动画完成后淡出并回调
-  setTimeout(() => {
-    goldReward.classList.remove('gold-reward-show');
-    goldReward.classList.add('gold-reward-hide');
-
+  const linesContainer = document.getElementById('ct-lines');
+  if (!linesContainer) {
     setTimeout(() => {
       goldReward.classList.add('gold-reward-hidden');
-      goldReward.classList.remove('gold-reward-hide');
+      goldReward.classList.remove('gold-reward-show');
       onComplete();
-    }, 300);
-  }, 2000);
+    }, 100);
+    return;
+  }
+  linesContainer.innerHTML = '';
+
+  void runTeletype(linesContainer, script).then(() => {
+    // 末行追加常驻闪烁光标
+    const finalCursor = document.createElement('span');
+    finalCursor.className = 'ct-final-cursor';
+    if (linesContainer.lastElementChild) linesContainer.lastElementChild.appendChild(finalCursor);
+
+    // 全部打完 → 1500ms 阅读时间 → 淡出
+    setTimeout(() => {
+      goldReward.classList.remove('gold-reward-show');
+      goldReward.classList.add('gold-reward-hide');
+      setTimeout(() => {
+        goldReward.classList.add('gold-reward-hidden');
+        goldReward.classList.remove('gold-reward-hide');
+        onComplete();
+      }, 300);
+    }, 1500);
+  });
+}
+
+type SettlementLine = { text: string; cls?: string; charSpeed: number; holdAfter?: number };
+async function runTeletype(container: HTMLElement, script: SettlementLine[]): Promise<void> {
+  for (const item of script) {
+    const line = document.createElement('div');
+    line.className = `ct-line ${item.cls || ''}`.trim();
+    line.innerHTML = '<span class="typed"></span><span class="cursor"></span>';
+    container.appendChild(line);
+    line.classList.add('shown');
+    await typeTeletypeLine(line, item.text, item.charSpeed);
+    if (item.holdAfter) await new Promise(r => setTimeout(r, item.holdAfter));
+  }
+}
+function typeTeletypeLine(lineEl: HTMLElement, text: string, charSpeed: number): Promise<void> {
+  return new Promise(resolve => {
+    const typed = lineEl.querySelector('.typed') as HTMLElement | null;
+    if (!text || charSpeed === 0) {
+      if (typed) typed.textContent = text;
+      lineEl.classList.add('done');
+      resolve();
+      return;
+    }
+    let i = 0;
+    const tick = () => {
+      if (typed) typed.textContent = text.slice(0, ++i);
+      if (i >= text.length) {
+        lineEl.classList.add('done');
+        resolve();
+      } else {
+        setTimeout(tick, charSpeed);
+      }
+    };
+    tick();
+  });
 }
 
 // === 计时器 ===
@@ -2279,7 +2348,7 @@ export async function startLevel(): Promise<void> {
   const displayLevel = getBattleNumber(state.level) || state.level;
   const stageLabel = currentStageType === 'boss' ? ' [BOSS]' : currentStageType === 'elite' ? ' [ELITE]' : '';
   const cyclePrefix = state.cycle >= 2 ? t('battle.cycle_prefix', { cycle: state.cycle }) : '';
-  el.levelLabel.textContent = `${cyclePrefix}DAY ${displayLevel}${stageLabel}`;
+  el.levelLabel.textContent = `${cyclePrefix}FILE ${displayLevel}${stageLabel}`;
 
   // HUD: 显示当前 Cycle / StageType
   updateStageInfo(currentCycle, currentStageType);
@@ -2516,7 +2585,7 @@ function announceLevel(): void {
   }
 
   const cyclePfx = state.cycle >= 2 ? t('battle.cycle_prefix', { cycle: state.cycle }) : '';
-  ann.innerHTML = `${cyclePfx}LEVEL ${displayLevel}${typeLabel}<br><span class="target-hint">${t('battle.target_hint', { value: state.targetScore })}</span>`;
+  ann.innerHTML = `${cyclePfx}FILE ${displayLevel}${typeLabel}<br><span class="target-hint">${t('battle.target_hint', { value: state.targetScore })}</span>`;
   el.container.appendChild(ann);
   playSound('levelup');
   setTimeout(() => ann.remove(), 1500);

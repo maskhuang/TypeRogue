@@ -15,7 +15,7 @@ export function showActTransition(actNum: number): Promise<void> {
     const overlay = document.createElement('div')
     overlay.id = 'act-transition-overlay'
     overlay.innerHTML = `
-      <div class="act-title">Cycle ${actNum}</div>
+      <div class="act-title">BATCH ${actNum}</div>
       <div class="act-subtitle">${subtitle}</div>
     `
     document.body.appendChild(overlay)

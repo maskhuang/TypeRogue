@@ -8,7 +8,11 @@
       "uniqueResource": null,
       "loseFeature": null,
       "loseDescription": null,
-      "starterRelic": null
+      "starterRelic": null,
+      "zoneCode": "VAC-4B",
+      "sectionZh": "无役区",
+      "sectionEn": "VACANCY SECTION",
+      "clearance": "CLR 4-B"
     },
     "wordsmith": {
       "id": "wordsmith",
@@ -18,7 +22,11 @@
       "uniqueResource": "energy",
       "loseFeature": null,
       "loseDescription": "购买单词时获得等量字母碎片",
-      "starterRelic": "apprentice_notes"
+      "starterRelic": "apprentice_notes",
+      "zoneCode": "DOC-4B",
+      "sectionZh": "文牍区",
+      "sectionEn": "DOCUMENTATION SECTION",
+      "clearance": "CLR 4-B"
     },
     "metamorph": {
       "id": "metamorph",
@@ -28,7 +36,11 @@
       "uniqueResource": "mutagen",
       "loseFeature": "enchant-choice",
       "loseDescription": "失去附魔选择权（Lv3 随机附魔）",
-      "starterRelic": "primal_mutant"
+      "starterRelic": "primal_mutant",
+      "zoneCode": "MUT-3A",
+      "sectionZh": "蜕变区",
+      "sectionEn": "MUTAGEN SECTION",
+      "clearance": "CLR 3-A"
     }
   }
 }

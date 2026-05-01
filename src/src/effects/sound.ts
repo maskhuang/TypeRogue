@@ -299,6 +299,168 @@ function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// === Stage 5+ (2026-05) · 桌面化 menu 专用重 UI 音效 ===
+// 单振荡器 sine 太轻薄；这里用 noise burst + 低频 body 分层合成，匹配 desk + paper 视觉重量。
+// 4 种类型：
+//   stamp      — 橡皮章 thwack（绿章 / CLOCKED IN / ASSIGNED 用）
+//   stamp_red  — 红章 thwack（DENIED · 略 sharper, 锯齿底音）
+//   paper      — 纸张 rustle（覆盖层开 / 行 hover / 翻页）
+//   pen        — 钢笔划过（签字逐字音）
+//   punch      — 打孔（卡片打孔的 short snap）
+
+function makeNoiseBuffer(ctx: AudioContext, durationS: number): AudioBufferSourceNode {
+  const sampleCount = Math.max(1, Math.ceil(ctx.sampleRate * durationS));
+  const buffer = ctx.createBuffer(1, sampleCount, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < sampleCount; i++) data[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  return src;
+}
+
+export function playDeskSound(type: 'stamp' | 'stamp_red' | 'paper' | 'pen' | 'punch' | 'whoosh'): void {
+  if (!audioContext) return;
+  const ctx = audioContext;
+  const t = ctx.currentTime;
+
+  if (type === 'stamp' || type === 'stamp_red') {
+    const isRed = type === 'stamp_red';
+    // 1 · noise impact (the "thwack")
+    const noise = makeNoiseBuffer(ctx, 0.06);
+    const nFilter = ctx.createBiquadFilter();
+    nFilter.type = 'lowpass';
+    nFilter.frequency.value = isRed ? 1200 : 800;
+    const nGain = ctx.createGain();
+    noise.connect(nFilter);
+    nFilter.connect(nGain);
+    connectToOutput(nGain);
+    nGain.gain.setValueAtTime(isRed ? 0.22 : 0.20, t);
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.10);
+    noise.start(t);
+    noise.stop(t + 0.10);
+
+    // 2 · low body resonance (the "thud")
+    const osc = ctx.createOscillator();
+    const oGain = ctx.createGain();
+    osc.type = isRed ? 'sawtooth' : 'sine';
+    osc.frequency.setValueAtTime(isRed ? 180 : 120, t);
+    osc.frequency.exponentialRampToValueAtTime(isRed ? 60 : 40, t + 0.20);
+    osc.connect(oGain);
+    connectToOutput(oGain);
+    oGain.gain.setValueAtTime(0.001, t);
+    oGain.gain.linearRampToValueAtTime(isRed ? 0.16 : 0.18, t + 0.005);
+    oGain.gain.exponentialRampToValueAtTime(0.001, t + (isRed ? 0.30 : 0.42));
+    osc.start(t);
+    osc.stop(t + (isRed ? 0.32 : 0.44));
+    return;
+  }
+
+  if (type === 'paper') {
+    // 高频 noise rustle，短促
+    const noise = makeNoiseBuffer(ctx, 0.20);
+    const nFilter = ctx.createBiquadFilter();
+    nFilter.type = 'highpass';
+    nFilter.frequency.value = 2200;
+    const nGain = ctx.createGain();
+    noise.connect(nFilter);
+    nFilter.connect(nGain);
+    connectToOutput(nGain);
+    nGain.gain.setValueAtTime(0.001, t);
+    nGain.gain.linearRampToValueAtTime(0.06, t + 0.025);
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    noise.start(t);
+    noise.stop(t + 0.20);
+    return;
+  }
+
+  if (type === 'pen') {
+    // 钢笔划过：band-pass noise，带轻微抖动
+    const noise = makeNoiseBuffer(ctx, 0.10);
+    const nFilter = ctx.createBiquadFilter();
+    nFilter.type = 'bandpass';
+    nFilter.frequency.value = 1400;
+    nFilter.Q.value = 2.5;
+    const nGain = ctx.createGain();
+    noise.connect(nFilter);
+    nFilter.connect(nGain);
+    connectToOutput(nGain);
+    nGain.gain.setValueAtTime(0.001, t);
+    nGain.gain.linearRampToValueAtTime(0.07, t + 0.008);
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.10);
+    noise.start(t);
+    noise.stop(t + 0.10);
+    return;
+  }
+
+  if (type === 'whoosh') {
+    // 场景切换：气动管道 whoosh + 末端落地 thud
+    // Layer 1 · 350ms 带通噪声扫频（900Hz → 180Hz），模拟管道传输
+    const noise = makeNoiseBuffer(ctx, 0.36);
+    const nFilter = ctx.createBiquadFilter();
+    nFilter.type = 'bandpass';
+    nFilter.Q.value = 1.5;
+    nFilter.frequency.setValueAtTime(900, t);
+    nFilter.frequency.exponentialRampToValueAtTime(180, t + 0.30);
+    const nGain = ctx.createGain();
+    noise.connect(nFilter);
+    nFilter.connect(nGain);
+    connectToOutput(nGain);
+    nGain.gain.setValueAtTime(0.001, t);
+    nGain.gain.linearRampToValueAtTime(0.14, t + 0.04);
+    nGain.gain.linearRampToValueAtTime(0.16, t + 0.20);
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.34);
+    noise.start(t);
+    noise.stop(t + 0.36);
+
+    // Layer 2 · 280ms 处低频落地 thud
+    const thudT = t + 0.28;
+    const osc = ctx.createOscillator();
+    const oGain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(120, thudT);
+    osc.frequency.exponentialRampToValueAtTime(40, thudT + 0.14);
+    osc.connect(oGain);
+    connectToOutput(oGain);
+    oGain.gain.setValueAtTime(0.001, thudT);
+    oGain.gain.linearRampToValueAtTime(0.16, thudT + 0.005);
+    oGain.gain.exponentialRampToValueAtTime(0.001, thudT + 0.18);
+    osc.start(thudT);
+    osc.stop(thudT + 0.20);
+    return;
+  }
+
+  if (type === 'punch') {
+    // 打孔：尖锐 click + 极短 thud
+    const noise = makeNoiseBuffer(ctx, 0.025);
+    const nFilter = ctx.createBiquadFilter();
+    nFilter.type = 'bandpass';
+    nFilter.frequency.value = 2400;
+    nFilter.Q.value = 1.5;
+    const nGain = ctx.createGain();
+    noise.connect(nFilter);
+    nFilter.connect(nGain);
+    connectToOutput(nGain);
+    nGain.gain.setValueAtTime(0.18, t);
+    nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+    noise.start(t);
+    noise.stop(t + 0.04);
+
+    const osc = ctx.createOscillator();
+    const oGain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(280, t);
+    osc.frequency.exponentialRampToValueAtTime(120, t + 0.06);
+    osc.connect(oGain);
+    connectToOutput(oGain);
+    oGain.gain.setValueAtTime(0.001, t);
+    oGain.gain.linearRampToValueAtTime(0.10, t + 0.003);
+    oGain.gain.exponentialRampToValueAtTime(0.001, t + 0.10);
+    osc.start(t);
+    osc.stop(t + 0.10);
+    return;
+  }
+}
+
 // 侧链回避：playScoreSound 激活期间资源音效降 6dB
 // ⚠️ 时序依赖：battle.ts 中 emitResourceSound 先于 playScoreSound 调用，
 // 使得 flush microtask 执行时 flag 已设置。若调用顺序反转，ducking 将失效。

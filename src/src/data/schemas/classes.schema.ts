@@ -19,6 +19,11 @@ const classDefinitionSchema = z.object({
   loseFeature: z.string().nullable(),
   loseDescription: z.string().nullable(),
   starterRelic: z.string().nullable(),
+  // Stage 3 · 工作区域代号字段（duty roster 渲染用）
+  zoneCode: z.string(),
+  sectionZh: z.string(),
+  sectionEn: z.string(),
+  clearance: z.string(),
 });
 
 export const classesSchema = z.object({

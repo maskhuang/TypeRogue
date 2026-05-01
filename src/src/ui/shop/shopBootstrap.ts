@@ -18,7 +18,7 @@ import {
   previewState,
   resetPreviewSession,
   shopBus,
-  sfx,
+  deskSfx,
   PREVIEW_HASH,
   VERBS,
   VERB_FULL,
@@ -116,7 +116,7 @@ export function handleSubmitConfirmation(input: string): boolean {
 export function proceedSubmit(): void {
   if (previewState.submitting) return;
   previewState.submitting = true;
-  sfx('submit_stamp'); // Story 60.12: 重击下行 — 红章盖章音
+  // terminal stamp sound removed (was sfx('submit_stamp'))
   terminal.appendLine(t('shop.terminal.submit.stamped'), 'echo');
   terminal.appendBlank();
   const btn = document.getElementById('wb-submit-btn');
@@ -383,7 +383,7 @@ function onKey(e: KeyboardEvent): void {
   }
   if (e.key === 'Enter') {
     e.preventDefault();
-    sfx('shop_kbd_enter'); // Story 60.12: 继电器 thunk
+    // terminal keyboard sound removed (was sfx('shop_kbd_enter'))
     const line = previewState.typedBuffer;
     if (line.trim()) {
       previewState.cmdHistory.push(line);
@@ -394,7 +394,7 @@ function onKey(e: KeyboardEvent): void {
     return;
   }
   if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-    sfx('shop_kbd_click'); // Story 60.12: 机械轴 thock
+    // terminal keyboard sound removed (was sfx('shop_kbd_click'))
     previewState.typedBuffer += e.key.toUpperCase();
     setPrompt(previewState.typedBuffer);
   }
@@ -416,6 +416,9 @@ export function showOnly(which: 'terminal' | 'workbench'): void {
   const wEl = document.getElementById('workbench-screen-preview') as HTMLElement | null;
   if (tEl) tEl.style.display = which === 'terminal' ? 'flex' : 'none';
   if (wEl) wEl.style.display = which === 'workbench' ? 'flex' : 'none';
+  // 工作台是物理工位（非 CRT 屏幕） → 抬出 CRT 扫描线层（CSS: #shop-screen.shop-mode-workbench）
+  const shopScreen = document.getElementById('shop-screen');
+  if (shopScreen) shopScreen.classList.toggle('shop-mode-workbench', which === 'workbench');
   // CFG 图标可见性跟随
   import('../SettingsPanel').then(m => m.updateSettingsToggleIcon());
   // Story 60.11: 切屏 CRT flicker 转场（仅当用户开启动画且不在切回相同屏幕时）
@@ -825,7 +828,7 @@ export function enterTerminalShop(_won?: boolean): void {
   dragManager.onDragStart = () => {
     keyTooltip.hide();
     hideRelicTooltip();
-    sfx('shop_drag_pickup');
+    deskSfx('paper'); // workbench drag pickup → paper rustle
   };
   workbench.setupDragZones();
   setupDrawerHandlers();

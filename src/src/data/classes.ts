@@ -22,6 +22,14 @@ export interface ClassDefinition {
   loseDescription: string | null;
   /** 初始遗物 ID */
   starterRelic: string | null;
+  /** Stage 3 · 工作区域代号 (例: DOC-4B) */
+  zoneCode: string;
+  /** Stage 3 · 区域中文名 (例: 文牍区) */
+  sectionZh: string;
+  /** Stage 3 · 区域英文名 (例: DOCUMENTATION SECTION) */
+  sectionEn: string;
+  /** Stage 3 · 密级 (例: CLR 4-B) */
+  clearance: string;
 }
 
 /**

@@ -12,7 +12,7 @@
 import type { ItemDescriptor } from '../itemDescriptors';
 import type { WordPack } from '../../core/types';
 import { shouldPlayShopSound } from '../../core/UserSettings';
-import { playSound } from '../../effects/sound';
+import { playSound, playDeskSound } from '../../effects/sound';
 import { state } from '../../core/state';
 
 // === Constants ===
@@ -111,6 +111,12 @@ export function resetPreviewSession(): void {
 export function sfx(type: Parameters<typeof playSound>[0]): void {
   if (!shouldPlayShopSound()) return;
   playSound(type);
+}
+
+// === 桌面化重 UI 音（stamp / paper / punch / whoosh / pen） — 工作台用 ===
+export function deskSfx(type: Parameters<typeof playDeskSound>[0]): void {
+  if (!shouldPlayShopSound()) return;
+  playDeskSound(type);
 }
 
 /** Pure utility — text → HTML-safe string. Shared by terminal output and workbench card render. */

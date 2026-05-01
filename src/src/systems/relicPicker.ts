@@ -5,12 +5,13 @@
 // Q2: 加权遗物候选生成 + 多渠道获取
 
 import { state, isRelicSlotsFull, addRelicWithCapacity, replaceRelic } from '../core/state';
-import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
+import { RELICS } from '../data/relics';
 import type { RelicRarity } from '../data/relics';
 import { renderRelicDisplay, showFeedback } from './battle';
-import { playSound } from '../effects/sound';
+import { playSound, playDeskSound } from '../effects/sound';
 import { random } from '../core/seededRandom';
 import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
+import { CLASS_DEFINITIONS } from '../data/classes';
 
 // === 加权遗物类型 ===
 export interface RelicWeights {
@@ -139,6 +140,10 @@ export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRE
 export interface RelicPickerOptions {
   /** i18n key 用于覆盖标题（如 starter 流程使用 'relic_picker.starter_title'） */
   titleKey?: string;
+  /** Stage 4 · 启用桌面化纸张 UI（开局流程使用 true；shop/boss/event 走 legacy） */
+  deskMode?: boolean;
+  /** Stage 4 · 跳过候选生成，直接用指定列表（用于 wordsmith/metamorph 的 starter 签发：单专属遗物） */
+  overrideCandidates?: string[];
 }
 
 // === 显示遗物三选一模态框 ===
@@ -147,7 +152,10 @@ export function showRelicPicker(
   weights?: RelicWeights,
   options?: RelicPickerOptions,
 ): void {
-  const candidates = generateRelicCandidates(weights);
+  // Stage 4 · 优先使用 override（class starter 签发）；否则按 weights 加权生成
+  const candidates = options?.overrideCandidates && options.overrideCandidates.length > 0
+    ? options.overrideCandidates
+    : generateRelicCandidates(weights);
   if (candidates.length === 0) {
     onComplete();
     return;
@@ -159,6 +167,20 @@ export function showRelicPicker(
     return;
   }
 
+  if (options?.deskMode) {
+    showDeskRelicPicker(modal, candidates, weights, onComplete);
+    return;
+  }
+
+  showLegacyRelicPicker(modal, candidates, onComplete, options);
+}
+
+function showLegacyRelicPicker(
+  modal: HTMLElement,
+  candidates: string[],
+  onComplete: () => void,
+  options?: RelicPickerOptions,
+): void {
   const cardsEl = document.getElementById('relic-picker-cards');
   const skipBtn = document.getElementById('relic-picker-skip');
   const titleEl = modal.querySelector('.relic-picker-title') as HTMLElement | null;
@@ -223,6 +245,187 @@ export function showRelicPicker(
   }
 
   modal.classList.remove('relic-picker-hidden');
+}
+
+/** Stage 4 · 桌面化「申领单」UI — gameStart 专用（DENIED 重抽机制已移除） */
+function showDeskRelicPicker(
+  modal: HTMLElement,
+  initialCandidates: string[],
+  _weights: RelicWeights | undefined,
+  onComplete: () => void,
+): void {
+  const paperEl = document.getElementById('relic-desk-paper');
+  const listEl = document.getElementById('relic-desk-list');
+  const inputEl = document.getElementById('relic-desk-input') as HTMLInputElement | null;
+  const stampEl = document.getElementById('relic-desk-stamp');
+  const skipBtn = document.getElementById('relic-desk-skip') as HTMLButtonElement | null;
+  const applicantEl = document.getElementById('relic-desk-applicant');
+  const sectionEl = document.getElementById('relic-desk-section');
+
+  if (!paperEl || !listEl || !inputEl || !stampEl || !skipBtn) {
+    // DOM 缺失 → fallback 到 legacy
+    showLegacyRelicPicker(modal, initialCandidates, onComplete);
+    return;
+  }
+
+  let completed = false;
+  let currentCandidates = initialCandidates;
+
+  // 申领人 + 区域信息
+  const workerId = (() => {
+    try { return localStorage.getItem('dpca-worker-id') || 'OP. PRIMATE-7842'; }
+    catch { return 'OP. PRIMATE-7842'; }
+  })();
+  if (applicantEl) applicantEl.textContent = workerId;
+  const classDef = CLASS_DEFINITIONS[state.classId];
+  if (sectionEl) {
+    const sectionName = classDef ? (getLocale() === 'zh' ? classDef.sectionZh : classDef.sectionEn) : '';
+    sectionEl.textContent = classDef ? `${classDef.zoneCode} · ${sectionName}` : '—';
+  }
+
+  const finish = () => {
+    if (completed) return;
+    completed = true;
+    modal.classList.remove('desk-mode');
+    closeRelicPicker();
+    onComplete();
+  };
+
+  const renderRows = () => {
+    listEl.innerHTML = '';
+    const letters = ['A', 'B', 'C'];
+    currentCandidates.forEach((relicId, idx) => {
+      const relic = RELICS[relicId];
+      if (!relic) return;
+      const letter = letters[idx];
+      const rarityClass = relic.rarity || 'common';
+
+      const row = document.createElement('div');
+      row.className = `req-row rarity-${rarityClass}`;
+      row.dataset.key = letter;
+      row.dataset.relicId = relicId;
+
+      const checkbox = document.createElement('div');
+      checkbox.className = 'checkbox';
+      row.appendChild(checkbox);
+
+      const keyLetter = document.createElement('div');
+      keyLetter.className = 'key-letter';
+      keyLetter.textContent = letter;
+      row.appendChild(keyLetter);
+
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+      icon.textContent = relic.icon;
+      row.appendChild(icon);
+
+      const body = document.createElement('div');
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = localizeItemName(relicId, relic.name);
+      body.appendChild(name);
+      const code = document.createElement('div');
+      code.className = 'code';
+      code.textContent = `RELIC-${rarityClass.slice(0, 3).toUpperCase()}-${String(idx + 1).padStart(3, '0')}`;
+      body.appendChild(code);
+      const desc = document.createElement('div');
+      desc.className = 'desc';
+      desc.textContent = localizeItemDesc(relicId, relic.description);
+      body.appendChild(desc);
+      row.appendChild(body);
+
+      const clr = document.createElement('div');
+      clr.className = 'clr';
+      const rarityLabel = t(`shop.rarity.${rarityClass}`);
+      clr.textContent = `ITEM · ${rarityLabel}`;
+      row.appendChild(clr);
+
+      row.addEventListener('click', () => {
+        if (inputEl.disabled) return;
+        playDeskSound('paper');
+        inputEl.value = letter;
+        inputEl.dispatchEvent(new Event('input'));
+        // 点击直接提交（鼠标用户单步完成；键盘用户仍走 type+Enter 两步）
+        setTimeout(() => {
+          if (!inputEl.disabled) submit();
+        }, 220);
+      });
+
+      listEl.appendChild(row);
+    });
+  };
+
+  const highlightFromInput = () => {
+    const v = inputEl.value.toUpperCase();
+    listEl.querySelectorAll<HTMLElement>('.req-row').forEach(r => r.classList.remove('active'));
+    if (v && ['A', 'B', 'C'].includes(v)) {
+      const row = listEl.querySelector<HTMLElement>(`.req-row[data-key="${v}"]`);
+      row?.classList.add('active');
+    }
+  };
+
+  const submit = () => {
+    const v = inputEl.value.toUpperCase();
+    if (!['A', 'B', 'C'].includes(v)) return;
+    const row = listEl.querySelector<HTMLElement>(`.req-row[data-key="${v}"]`);
+    const relicId = row?.dataset.relicId;
+    if (!relicId) return;
+    const relic = RELICS[relicId];
+    if (!relic) return;
+
+    inputEl.disabled = true;
+
+    // APPROVED → 加入遗物 + 绿章
+    stampEl.setAttribute('data-tint', 'green');
+    const labelEl = stampEl.querySelector<HTMLElement>('.label');
+    if (labelEl) labelEl.innerHTML = t('requisition.stamp_approved');
+    stampEl.classList.add('show');
+    playDeskSound('stamp');
+
+    if (!isRelicSlotsFull()) {
+      addRelicWithCapacity(relicId);
+      // 桌面模式不再用 'skill' upsweep + 浮字反馈 — stamp 已表达"已收讫"
+      renderRelicDisplay();
+      setTimeout(() => {
+        stampEl.classList.remove('show');
+        // 场景切换：气动管道 whoosh
+        playDeskSound('whoosh');
+        finish();
+      }, 1000);
+    } else {
+      // 槽位已满（gameStart 几乎不会触发）→ 关闭桌面 UI 切到 legacy 替换 UI
+      setTimeout(() => {
+        stampEl.classList.remove('show');
+        modal.classList.remove('desk-mode');
+        showRelicReplaceUI(relicId, finish);
+      }, 1000);
+    }
+  };
+
+  // 绑定（用 onproperty 防止重复 listener）
+  inputEl.oninput = highlightFromInput;
+  inputEl.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!inputEl.disabled) submit();
+    }
+  };
+  skipBtn.onclick = () => {
+    if (inputEl.disabled) return;
+    playDeskSound('paper');
+    playDeskSound('whoosh');
+    finish();
+  };
+
+  // 重置状态 + 渲染 + 显示
+  inputEl.disabled = false;
+  inputEl.value = '';
+  stampEl.classList.remove('show');
+  paperEl.classList.remove('reroll-flash');
+  renderRows();
+  modal.classList.add('desk-mode');
+  modal.classList.remove('relic-picker-hidden');
+  setTimeout(() => inputEl.focus(), 100);
 }
 
 function closeRelicPicker(): void {

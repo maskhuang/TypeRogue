@@ -44,9 +44,9 @@ class ClassManagerImpl {
   /**
    * 选择职业
    * - 写入 state.classId
-   * - 如有 starterRelic，自动加入背包
+   * - 如有 starterRelic，自动加入背包（除非 opts.skipStarter，让它通过申领单签发）
    */
-  selectClass(classId: ClassId): void {
+  selectClass(classId: ClassId, opts?: { skipStarter?: boolean }): void {
     const def = this.registry.get(classId);
     if (!def) {
       console.warn(`ClassManager: Unknown classId "${classId}"`);
@@ -55,8 +55,8 @@ class ClassManagerImpl {
 
     state.classId = classId;
 
-    // 添加初始遗物
-    if (def.starterRelic) {
+    // 添加初始遗物（Stage 4 (2026-05): 桌面化签发流程会跳过此处，由 relicPicker 走 overrideCandidates）
+    if (def.starterRelic && !opts?.skipStarter) {
       addRelicWithCapacity(def.starterRelic);
     }
   }

@@ -88,6 +88,11 @@ class InputHandler {
     // Story 41-5: 过滤浏览器 key repeat（自动重复事件）
     if (e.repeat) return
 
+    // Stage 2/3 (2026-05): 当焦点在表单输入元素（如主菜单打卡输入、值班表岗位输入）时，
+    // 跳过战斗输入处理 — 否则用户在主菜单 / 职业选输入时会触发"打字错误"反馈
+    const target = e.target as HTMLElement | null
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
+
     const start = performance.now()
 
     // 只处理单个字母键 (A-Z) + garble 标点
@@ -121,6 +126,9 @@ class InputHandler {
    * Story 41-5: 键盘 keyup 事件处理器
    */
   private handleKeyUp = (e: KeyboardEvent): void => {
+    // 同 handleKeyDown：表单输入聚焦时跳过
+    const target = e.target as HTMLElement | null
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
     if (e.key.length !== 1) return
     const isLetter = /[a-zA-Z]/.test(e.key)
     const isGarbleChar = isGarbleActive() && getActiveGarbleChars().includes(e.key)

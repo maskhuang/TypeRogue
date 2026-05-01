@@ -39,7 +39,7 @@ import type { WordPack } from '../../core/types';
 import {
   previewState,
   shopBus,
-  sfx,
+  deskSfx,
   escapeHtml,
   getOwnedSkillEntries,
 } from './shopState';
@@ -159,7 +159,7 @@ export function openDrawer(kind: DrawerKind): void {
   const body = document.getElementById('wb-drawer-body');
   if (!el || !title || !body) return;
   previewState.drawerOpen = kind;
-  sfx('shop_drawer_open'); // Story 60.12: 抽拉哗啦
+  deskSfx('whoosh'); // 抽屉滑出（替代 shop_drawer_open）
   if (kind === 'words') {
     title.textContent = t('shop.workbench.drawer.words_title', { n: state.player.wordDeck.length });
     body.innerHTML = renderWordsDrawerHtml();
@@ -264,7 +264,7 @@ export function bindSkillToKey(skillId: string, key: string): void {
   previewState.unsealedSkillIds.add(skillId);
   syncWorkbenchInbox();
   syncWorkbenchKeys();
-  sfx('shop_drag_drop'); // Story 60.12: 木质 click — 落到键
+  deskSfx('punch'); // 落键 mechanical thud（替代 shop_drag_drop）
 }
 
 // Story 60.1: 从键拖回 IN-tray = 整体卸下多格技能
@@ -272,7 +272,7 @@ export function unbindSkillFromKey(key: string): void {
   if (applyUnbindKeyToInbox(key) !== undefined) {
     syncWorkbenchInbox();
     syncWorkbenchKeys();
-    sfx('shop_drag_unbind'); // Story 60.12: 闷响 — 卸回 IN-tray
+    deskSfx('paper'); // 卸回 IN-tray 软返（替代 shop_drag_unbind）
   }
 }
 

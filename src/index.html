@@ -10,34 +10,233 @@
     <script defer src="https://cloud.umami.is/script.js" data-website-id="6f08e4cb-8e09-4e18-b0c5-616450decc42"></script>
 </head>
 <body>
+    <!-- SVG filter defs · tint white-on-transparent assets to chosen color while preserving alpha
+         Used by .desk-* kit (style.css) to colorize seal-mark.png for stamps and seals. -->
+    <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true">
+      <defs>
+        <filter id="tint-red" color-interpolation-filters="sRGB">
+          <feColorMatrix type="matrix" values="0 0 0 0 0.659  0 0 0 0 0.196  0 0 0 0 0.157  0 0 0 1 0"/>
+        </filter>
+        <filter id="tint-green" color-interpolation-filters="sRGB">
+          <feColorMatrix type="matrix" values="0 0 0 0 0.227  0 0 0 0 0.431  0 0 0 0 0.227  0 0 0 1 0"/>
+        </filter>
+        <filter id="tint-blue" color-interpolation-filters="sRGB">
+          <feColorMatrix type="matrix" values="0 0 0 0 0.165  0 0 0 0 0.290  0 0 0 0 0.471  0 0 0 1 0"/>
+        </filter>
+        <filter id="tint-ink" color-interpolation-filters="sRGB">
+          <feColorMatrix type="matrix" values="0 0 0 0 0.102  0 0 0 0 0.078  0 0 0 0 0.063  0 0 0 1 0"/>
+        </filter>
+      </defs>
+    </svg>
+
     <div id="game-container">
-        <!-- === MAIN MENU (cover style — shader background透出) === -->
-        <div id="main-menu-screen" class="screen menu-style-cover" style="display:none">
-            <div class="menu-cover-meta menu-cover-meta-tl" aria-hidden="true">DPCA · DEPT 2-B</div>
-            <div class="menu-cover-meta menu-cover-meta-tr" aria-hidden="true">PAGE 1 / 3</div>
+        <!-- === MAIN MENU (desk stage · translucent over shader · Stage 2 · 2026-05) === -->
+        <div id="main-menu-screen" class="screen menu-style-cover desk-stage translucent" style="display:none">
+            <!-- Bottom-left: legacy menu-info (version + grade), kept for compatibility -->
             <div class="menu-cover-meta menu-cover-meta-bl" id="menu-info"></div>
-            <div class="menu-cover-meta menu-cover-meta-br" aria-hidden="true">DPCA-3942-A · ██7-2█-K</div>
-            <img class="menu-cover-watermark" src="/assets/ui/seal-mark.png?v=3" alt="" aria-hidden="true">
-            <div class="menu-content">
-                <h1 class="menu-title" data-i18n="menu.title">灵长类辅助文书部</h1>
-                <div class="menu-cover-rule" aria-hidden="true"></div>
-                <div class="menu-cover-applicant">
-                    <span class="applicant-id">OP. PRIMATE-7842</span>
-                    <span class="applicant-sep">·</span>
-                    <span data-i18n="menu.applicant_in_post">IN POST</span>
-                    <span class="applicant-num" id="menu-applicant-days">--</span>
-                    <span data-i18n="menu.applicant_days">DAYS</span>
-                    <span class="applicant-sep">·</span>
-                    <span data-i18n="menu.applicant_archived">ARCHIVED</span>
-                    <span class="applicant-num" id="menu-applicant-archived">--</span>
-                    <span class="applicant-sep">·</span>
-                    <span data-i18n="menu.applicant_pending">PENDING</span>
-                    <span class="applicant-num" id="menu-applicant-pending">--</span>
+
+            <!-- Top-light vignette -->
+            <div class="desk-vignette"></div>
+
+            <!-- Top-center: department sign (game title, bilingual) -->
+            <div class="desk-game-title">
+                <div class="title-zh" data-i18n="menu.title">灵长类辅助文书部</div>
+                <div class="title-en" data-i18n="menu.subtitle">DEPARTMENT OF PRIMATE CLERICAL AFFAIRS</div>
+            </div>
+
+            <!-- Top-right: clock -->
+            <div class="desk-clock">
+                <div class="label" data-i18n="menu.clock_label">PUNCH CLOCK · 打卡终端</div>
+                <div id="menu-clock-display">08:00</div>
+            </div>
+
+            <!-- Top-left: handbook (tutorial entry) -->
+            <div class="desk-obj desk-handbook" id="menu-handbook" tabindex="0" role="button" aria-label="新员工守则">
+                <div class="h-title" data-i18n="menu.hb_obj_title" data-i18n-html>新员工守则<br>HANDBOOK</div>
+                <ul>
+                    <li data-i18n="menu.hb_obj_rule_1">仅限本部职员</li>
+                    <li data-i18n="menu.hb_obj_rule_2">逾期者罚没</li>
+                    <li data-i18n="menu.hb_obj_rule_3" data-i18n-html>区域代号<br>不得外谈</li>
+                    <li data-i18n="menu.hb_obj_rule_4" data-i18n-html>未盖章文件<br>不得离桌</li>
+                    <li data-i18n="menu.hb_obj_rule_5">一律记录在案</li>
+                </ul>
+                <div class="h-stamp">DPCA<br>NEW</div>
+                <div class="h-hint" data-i18n="menu.hb_obj_click">▸ 点击翻阅</div>
+            </div>
+
+            <!-- Bottom-left: workstation request pad (settings entry) -->
+            <div class="desk-obj desk-request-pad" id="menu-request-pad" tabindex="0" role="button" aria-label="工位调整申请">
+                <div class="stack">
+                    <div class="top-form">
+                        <div class="form-no">FORM-WS-12</div>
+                        <div class="form-name" data-i18n="menu.req_obj_name" data-i18n-html>工位调整<br>申请单</div>
+                        <div class="form-name-en" data-i18n="menu.req_obj_name_en">WORKSTATION REQUEST</div>
+                        <div class="form-fields">
+                            <div data-i18n="menu.req_obj_field_vol">音量</div>
+                            <div data-i18n="menu.req_obj_field_scr">显示亮度</div>
+                            <div data-i18n="menu.req_obj_field_fnt">字号</div>
+                            <div data-i18n="menu.req_obj_field_lang">语言</div>
+                        </div>
+                        <div class="form-hint" data-i18n="menu.req_obj_click">▸ 点击撕一张</div>
+                    </div>
                 </div>
-                <div class="menu-buttons">
-                    <button class="menu-btn menu-btn-start" id="menu-start-btn" data-i18n="menu.start">开始游戏</button>
-                    <button class="menu-btn menu-btn-tutorial" id="menu-tutorial-btn" data-i18n="menu.tutorial">教程</button>
-                    <button class="menu-btn menu-btn-settings" id="menu-settings-btn" data-i18n="menu.settings">设置</button>
+            </div>
+
+            <!-- Center: punch card (entry point — type ID + Enter to start shift) -->
+            <div class="desk-paper-stage">
+                <div class="desk-paper punch-card active" id="menu-punch-card">
+                    <div class="desk-paper-header">
+                        <div class="seal" aria-label="DPCA seal"><img src="/assets/ui/seal-mark.png" alt=""></div>
+                        <div class="h-text">
+                            <div class="org" data-i18n="menu.org_dept">DPCA · 文牍科 2-B</div>
+                            <div class="title" data-i18n="menu.punch_title">PUNCH CARD · 上工卡</div>
+                        </div>
+                        <div class="form-id">FORM-T0<br id="menu-punch-date">1992·11·23</div>
+                    </div>
+
+                    <div class="desk-paper-field">
+                        <div class="label" data-i18n="menu.punch_id_label">工号 ID</div>
+                        <div class="value printed" id="punch-applicant-id">OP. PRIMATE-7842</div>
+                    </div>
+                    <div class="desk-paper-field">
+                        <div class="label" data-i18n="menu.punch_post_label">在岗</div>
+                        <div class="value printed">
+                            <span class="applicant-num" id="menu-applicant-days">--</span>
+                            <span data-i18n="menu.applicant_days">DAYS</span>
+                            ·
+                            <span data-i18n="menu.applicant_archived">ARCHIVED</span>
+                            <span class="applicant-num" id="menu-applicant-archived">--</span>
+                            ·
+                            <span data-i18n="menu.applicant_pending">PENDING</span>
+                            <span class="applicant-num" id="menu-applicant-pending">--</span>
+                        </div>
+                    </div>
+
+                    <div class="punch-perforation"></div>
+
+                    <div class="desk-input-line">
+                        <div class="label" data-i18n="menu.punch_clock_label">▸ 打卡</div>
+                        <span class="punch-prefix">OP. PRIMATE-</span>
+                        <input id="menu-punch-input" class="punch-suffix-input" type="text" placeholder="XXXX" maxlength="4" autocomplete="off">
+                        <div class="desk-enter-hint"><span class="key">↵</span><span data-i18n="menu.punch_enter_hint">回车 · ENTER</span></div>
+                    </div>
+                    <div class="desk-stamp-mark" id="menu-punch-stamp" data-tint="blue">
+                        <div class="ring"></div>
+                        <div class="ring inner"></div>
+                        <div class="seal-img"><img src="/assets/ui/seal-mark.png" alt=""></div>
+                        <div class="label" data-i18n="menu.punch_stamp" data-i18n-html>CLOCKED<br>IN</div>
+                        <div class="date" data-i18n="roster.stamp_date">DPCA · 2-B</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden legacy buttons — kept so existing handler code in main.ts still binds.
+                 Rewired via .click() from new desk UI in main.ts Stage 2 wiring. -->
+            <div style="display:none">
+                <button id="menu-start-btn" data-i18n="menu.start">开始游戏</button>
+                <button id="menu-tutorial-btn" data-i18n="menu.tutorial">教程</button>
+                <button id="menu-settings-btn" data-i18n="menu.settings">设置</button>
+            </div>
+
+            <!-- Overlay: handbook (Tutorial entry) -->
+            <div class="desk-overlay-shroud" id="menu-ov-shroud"></div>
+            <div class="desk-overlay-paper" id="menu-ov-handbook">
+                <div class="ov-header">
+                    <div class="seal"><img src="/assets/ui/seal-mark.png" alt=""></div>
+                    <div class="h-text">
+                        <div class="org" data-i18n="menu.org_dept">DPCA · 文牍科 2-B</div>
+                        <div class="title" data-i18n="hb.title">新员工守则 · HANDBOOK</div>
+                    </div>
+                    <div class="form-id" data-i18n="hb.form_id" data-i18n-html>DPCA-NEW<br>第 1 / 1 页</div>
+                </div>
+                <p style="font-size:12px; color:var(--desk-ink-dim); letter-spacing:0.1em" data-i18n="hb.preamble">
+                    本守则适用于初次到岗之文牍部职员。请于上工前细读。
+                </p>
+                <div class="ov-section" data-i18n="hb.section_1">一 · 上 工 / CLOCK-IN</div>
+                <ul>
+                    <li data-i18n="hb.section_1_li_1">每轮班开始前于上工卡打孔。</li>
+                    <li data-i18n="hb.section_1_li_2">逾时未卡视为旷工。罚没工时记入案。</li>
+                </ul>
+                <div class="ov-section" data-i18n="hb.section_2">二 · 文 件 / DOCUMENTS</div>
+                <ul>
+                    <li data-i18n="hb.section_2_li_1">文件按编号顺序处理，不得跳号。</li>
+                    <li data-i18n="hb.section_2_li_2">未盖章之文件不得离桌。</li>
+                    <li data-i18n="hb.section_2_li_3">区域代号属保密信息，不得在部外谈及。</li>
+                </ul>
+                <div class="ov-section" data-i18n="hb.section_3">三 · 申 领 / REQUISITION</div>
+                <ul>
+                    <li data-i18n="hb.section_3_li_1">每日仅可申领工件一件。</li>
+                    <li data-i18n="hb.section_3_li_2">已配发之工件视同分内职责，不得退还。</li>
+                </ul>
+                <div class="ov-section" data-i18n="hb.section_4">四 · 归 档 / FILING</div>
+                <ul>
+                    <li data-i18n="hb.section_4_li_1">已处理文件须于轮班结束前送档案室。</li>
+                    <li data-i18n="hb.section_4_li_2">未归档者计入失职。</li>
+                </ul>
+                <p class="ov-warn" data-i18n="hb.warn">▌ 已读视同同意。 / ACKNOWLEDGMENT IS BINDING.</p>
+                <p class="ov-route-note" data-i18n="hb.route_note" data-i18n-html>
+                    阅毕签收 → 径赴 NEW-Δ-1 入职培训科报到<br>
+                    ON ACK · PROCEED TO ONBOARDING TRAINING (NEW-Δ-1)
+                </p>
+                <div class="ov-footer">
+                    <div data-i18n="hb.footer">DPCA-NEW · 1992 修订</div>
+                    <button class="ov-close" id="menu-ov-handbook-ack" data-i18n="hb.ack_btn">已 阅 · ACK</button>
+                </div>
+            </div>
+
+            <!-- Overlay: workstation request (Settings entry) -->
+            <div class="desk-overlay-paper" id="menu-ov-request">
+                <div class="ov-header">
+                    <div class="seal"><img src="/assets/ui/seal-mark.png" alt=""></div>
+                    <div class="h-text">
+                        <div class="org" data-i18n="req.org">DPCA · 后勤科 / FACILITIES</div>
+                        <div class="title" data-i18n="req.title">工位调整申请 · WORKSTATION REQUEST</div>
+                    </div>
+                    <div class="form-id" data-i18n="req.form_id" data-i18n-html>FORM-WS-12<br>SEC 4-B</div>
+                </div>
+                <p style="font-size:12px; color:var(--desk-ink-dim); letter-spacing:0.1em" data-i18n="req.preamble">
+                    勾选所需调整项 · 提交后由后勤科审批 · 审批周期不少于 7 工作日
+                </p>
+                <div class="ov-section" data-i18n="req.section_fields">需 求 项 / FIELDS</div>
+                <div class="desk-ov-row">
+                    <div class="ov-label" data-i18n="req.label_vol">音量 / VOL</div>
+                    <div class="ov-options">
+                        <input type="range" id="ws-vol" class="ws-slider" min="0" max="100" value="70">
+                        <span class="ws-slider-val" id="ws-vol-val">70%</span>
+                    </div>
+                </div>
+                <div class="desk-ov-row">
+                    <div class="ov-label" data-i18n="req.label_lang">语言 / LANG</div>
+                    <div class="ov-options">
+                        <label><input type="radio" name="ws-lang" value="zh"> <span data-i18n="req.lang_zh">中文</span></label>
+                        <label><input type="radio" name="ws-lang" value="en"> <span data-i18n="req.lang_en">EN</span></label>
+                    </div>
+                </div>
+                <div class="desk-ov-row">
+                    <div class="ov-label" data-i18n="req.label_crt">CRT</div>
+                    <div class="ov-options">
+                        <label><input type="radio" name="ws-crt" value="0"> <span data-i18n="req.crt_off">关</span></label>
+                        <label><input type="radio" name="ws-crt" value="1"> <span data-i18n="req.crt_on">开</span></label>
+                    </div>
+                </div>
+                <div class="desk-ov-row desk-ov-row-bg">
+                    <div class="ov-label" data-i18n="req.label_bg">背景 / BG</div>
+                    <div class="ov-options ov-options-wrap">
+                        <label><input type="radio" name="ws-bg" value="off"> <span data-i18n="settings.bg.off">关闭</span></label>
+                        <label><input type="radio" name="ws-bg" value="random"> <span data-i18n="settings.bg.random">随机</span></label>
+                        <label><input type="radio" name="ws-bg" value="cells"> <span data-i18n="settings.bg.cells">蜂窝</span></label>
+                        <label><input type="radio" name="ws-bg" value="liquid"> <span data-i18n="settings.bg.liquid">液态</span></label>
+                        <label><input type="radio" name="ws-bg" value="marble"> <span data-i18n="settings.bg.marble">大理石</span></label>
+                        <label><input type="radio" name="ws-bg" value="aurora"> <span data-i18n="settings.bg.aurora">极光</span></label>
+                        <label><input type="radio" name="ws-bg" value="ink"> <span data-i18n="settings.bg.ink">墨晕</span></label>
+                    </div>
+                </div>
+                <p style="font-size:10px; margin-top:14px; padding:6px 10px; background:rgba(176,32,24,0.08); color:var(--desk-stamp-red); letter-spacing:0.06em; line-height:1.4" data-i18n="req.warn">
+                    ▌ 调整即时生效 · 提交存档 · 审批周期不少于 7 工作日
+                </p>
+                <div class="ov-footer">
+                    <button class="ov-close ov-close-warn" id="menu-ov-request-reset" data-i18n="settings.reset">⚠ 重置所有进度</button>
+                    <button class="ov-close" id="menu-ov-request-submit" data-i18n="req.submit_btn">提 交 · SUBMIT</button>
                 </div>
             </div>
         </div>
@@ -109,7 +308,7 @@
                             <span class="combo-label">COMBO</span>
                         </div>
                         <div id="battle-level-info">
-                            <span id="level-label">LEVEL 1</span>
+                            <span id="level-label">FILE 1</span>
                             <div id="hud-stage-info" class="hud-stage-info"></div>
                         </div>
                         <div id="active-library"></div>
@@ -224,22 +423,40 @@
             </div>
         </div>
 
-        <!-- Class Select Modal — PAGE 2/3 dossier (人事档案分配) -->
-        <div id="class-select-modal" class="class-select-hidden class-style-dossier">
-            <div class="class-select-overlay"></div>
-            <div class="class-select-content">
-                <div class="class-page-meta class-page-meta-tl" aria-hidden="true">DPCA · DEPT 2-B</div>
-                <div class="class-page-meta class-page-meta-tr" aria-hidden="true">PAGE 2 / 3</div>
-                <div class="class-page-meta class-page-meta-bl" aria-hidden="true">FORM-A8B · WORKER ASSIGNMENT</div>
-                <div class="class-page-meta class-page-meta-br" aria-hidden="true">REV ██ · CLASSIFIED</div>
-                <div class="class-select-headline">
-                    <div class="class-select-title" data-i18n="class_select.title">登陆账号 · 当值身份</div>
-                    <div class="class-select-rule" aria-hidden="true"></div>
-                    <div class="class-select-subline" aria-hidden="true">SELECT ASSIGNMENT · ACKNOWLEDGE BELOW · SIGNATURE REQUIRED</div>
+        <!-- Class Select Modal — desk duty roster (Stage 3 · 2026-05) -->
+        <div id="class-select-modal" class="class-select-hidden desk-stage">
+            <div class="desk-vignette"></div>
+            <div class="desk-paper-stage">
+                <div class="desk-paper duty-roster active" id="duty-roster-paper">
+                    <div class="desk-paper-header">
+                        <div class="seal" aria-label="DPCA seal"><img src="/assets/ui/seal-mark.png" alt=""></div>
+                        <div class="h-text">
+                            <div class="org" data-i18n="roster.org">DPCA · 文牍科 2-B</div>
+                            <div class="title" data-i18n="roster.title">DUTY ROSTER · 任命</div>
+                        </div>
+                        <div class="form-id">FORM-A8B<br>SEC 4</div>
+                    </div>
+                    <div class="roster-subtitle" data-i18n="roster.subtitle" data-i18n-html>
+                        下列工作区域待签 · 签字者即受派任<br>
+                        SECTIONS PENDING SIGNATURE · SIGNATORY IS POSTED
+                    </div>
+                    <div class="roster-list" id="class-select-cards"></div>
+                    <div class="desk-input-line">
+                        <div class="label" data-i18n="roster.input_label">▸ 岗位</div>
+                        <input id="class-roster-input" type="text" placeholder="W / M / N · 键入字母选择" data-i18n-placeholder="roster.placeholder" maxlength="1" autocomplete="off" style="text-transform:uppercase">
+                        <div class="desk-enter-hint"><span class="key">↵</span><span data-i18n="menu.punch_enter_hint">回车 · ENTER</span></div>
+                    </div>
+                    <div class="desk-stamp-mark" id="class-stamp-mark" data-tint="green">
+                        <div class="ring"></div>
+                        <div class="ring inner"></div>
+                        <div class="seal-img"><img src="/assets/ui/seal-mark.png" alt=""></div>
+                        <div class="label" data-i18n="roster.stamp_assigned" data-i18n-html>ASSIGNED<br>许可</div>
+                        <div class="date" data-i18n="roster.stamp_date">DPCA · 2-B</div>
+                    </div>
                 </div>
-                <div class="class-select-cards" id="class-select-cards"></div>
-                <button class="class-select-confirm class-select-confirm-hidden" id="class-select-confirm" data-i18n="class_select.confirm">确认登陆</button>
             </div>
+            <!-- Hidden legacy confirm button — preserved for handler compatibility -->
+            <button class="class-select-confirm class-select-confirm-hidden" id="class-select-confirm" style="display:none" data-i18n="class_select.confirm">确认登陆</button>
         </div>
 
         <!-- Ascension Selector Modal (Story 54.3) -->
@@ -252,8 +469,9 @@
             </div>
         </div>
 
-        <!-- Relic Picker Modal — PAGE 3/3 dossier (配发清单审批) -->
+        <!-- Relic Picker Modal — legacy (shop/boss/event) + desk (gameStart, Stage 4) -->
         <div id="relic-picker-modal" class="relic-picker-hidden relic-style-dossier">
+            <!-- Legacy variant (shop/boss/event) -->
             <div class="relic-picker-overlay"></div>
             <div class="relic-picker-content">
                 <div class="relic-page-meta relic-page-meta-tl" aria-hidden="true">DPCA · DEPT 2-B</div>
@@ -267,6 +485,50 @@
                 </div>
                 <div class="relic-picker-cards" id="relic-picker-cards"></div>
                 <button class="relic-picker-skip" id="relic-picker-skip" data-i18n="relic_picker.skip">跳过</button>
+            </div>
+
+            <!-- Desk variant (gameStart only, gated by #relic-picker-modal.desk-mode) -->
+            <div id="relic-picker-desk-content" class="desk-stage">
+                <div class="desk-vignette"></div>
+                <div class="desk-paper-stage">
+                    <div class="desk-paper requisition active" id="relic-desk-paper">
+                        <div class="desk-paper-header">
+                            <div class="seal" aria-label="DPCA seal"><img src="/assets/ui/seal-mark.png" alt=""></div>
+                            <div class="h-text">
+                                <div class="org" data-i18n="requisition.org">DPCA · 后勤科 / FACILITIES</div>
+                                <div class="title" data-i18n="requisition.title">REQUISITION · 工件签发</div>
+                            </div>
+                            <div class="form-id">FORM-IM7<br>SEC 4</div>
+                        </div>
+                        <div class="req-form-fields">
+                            <div class="desk-paper-field">
+                                <div class="label" data-i18n="requisition.field_applicant">申领人</div>
+                                <div class="value printed" id="relic-desk-applicant">OP. PRIMATE-7842</div>
+                            </div>
+                            <div class="desk-paper-field">
+                                <div class="label" data-i18n="requisition.field_section">区域</div>
+                                <div class="value printed" id="relic-desk-section">DOC-4B · 文牍区</div>
+                            </div>
+                        </div>
+                        <div class="req-instruction" data-i18n="requisition.instruction">勾选申领项 · CHECK ONE ITEM ONLY · 备注栏键入字母提交</div>
+                        <div class="req-list" id="relic-desk-list"></div>
+                        <div class="desk-input-line">
+                            <div class="label" data-i18n="requisition.input_label">▸ 备注栏</div>
+                            <input id="relic-desk-input" type="text" placeholder="A / B / C" data-i18n-placeholder="requisition.placeholder" maxlength="1" autocomplete="off" style="text-transform:uppercase">
+                            <div class="desk-enter-hint"><span class="key">↵</span><span data-i18n="requisition.submit_hint">提交</span></div>
+                        </div>
+                        <div class="req-skip-row">
+                            <button class="req-skip" id="relic-desk-skip" data-i18n="requisition.skip_btn">□ 弃用本次申领 · DECLINE</button>
+                        </div>
+                        <div class="desk-stamp-mark" id="relic-desk-stamp" data-tint="green">
+                            <div class="ring"></div>
+                            <div class="ring inner"></div>
+                            <div class="seal-img"><img src="/assets/ui/seal-mark.png" alt=""></div>
+                            <div class="label" data-i18n="requisition.stamp_approved" data-i18n-html>APPROVED<br>许可</div>
+                            <div class="date" data-i18n="requisition.stamp_date">DPCA · 后勤科</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -326,25 +588,24 @@
             </div>
         </div>
 
-        <!-- Gold Reward Animation -->
+        <!-- Gold Reward · Settlement teletype (DPCA-VT220 phosphor terminal) -->
         <div id="gold-reward" class="gold-reward-hidden">
-            <div class="gold-reward-panel">
-                <div class="gold-reward-title">LEVEL CLEAR!</div>
-                <div class="gold-reward-row" id="gold-base-row">
-                    <span class="gold-reward-label" data-i18n="gold_reward.base">基础</span>
-                    <span class="gold-reward-value">100</span>
+            <div class="gold-bezel">
+                <div class="gold-bezel-top">
+                    <span class="bezel-led"></span>
+                    <span class="bezel-brand">DPCA-VT220</span>
+                    <span class="bezel-spec">SETTLEMENT TERMINAL · DEPT 2-B</span>
+                    <span class="bezel-vent" aria-hidden="true">▦▦▦▦▦▦</span>
                 </div>
-                <div class="gold-reward-row" id="gold-skill-row" style="display:none">
-                    <span class="gold-reward-label" data-i18n="gold_reward.skill">技能产出</span>
-                    <span class="gold-reward-value" id="gold-skill">+0</span>
+                <div class="gold-screen">
+                    <div class="gold-screen-content">
+                        <div class="ct-header" id="ct-header">DPCA-VT220 · DEPT 2-B</div>
+                        <div id="ct-lines"></div>
+                    </div>
                 </div>
-                <div class="gold-reward-row gold-treasure-row" style="display:none">
-                    <span class="gold-reward-label" data-i18n="gold_reward.relic">遗物加成</span>
-                    <span class="gold-reward-value gold-treasure" id="gold-treasure">+15</span>
-                </div>
-                <div class="gold-reward-total">
-                    <span class="gold-icon">🍌</span>
-                    <span class="gold-total-value" id="gold-total">100</span>
+                <div class="gold-bezel-bottom">
+                    <span class="bezel-sticker">PROPERTY OF DPCA · UNAUTHORIZED USE PROHIBITED</span>
+                    <span class="bezel-serial">SN-3942-A</span>
                 </div>
             </div>
         </div>

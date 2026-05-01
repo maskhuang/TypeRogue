@@ -34,7 +34,6 @@ import { RELICS } from '../../data/relics';
 import {
   previewState,
   shopBus,
-  sfx,
   escapeHtml,
   getOwnedSkillEntries,
   HIGH_PRICE_THRESHOLD,
@@ -70,7 +69,7 @@ export function buildBannerLine(level: number, cycle: number, ascensionLevel: nu
   const batchPos = getPositionInCycle(safeLevel);
   const cycleLength = BALANCE.CYCLE_LENGTH;
   const ascension = ascensionLevel ?? 0;
-  const content = `  CLERK ID: 7842    ${cyclePrefix}DAY ${fileNum}    BATCH ${String(batchPos).padStart(2, '0')}/${cycleLength}    A${ascension}`;
+  const content = `  CLERK ID: 7842    ${cyclePrefix}FILE ${fileNum}    BATCH ${String(batchPos).padStart(2, '0')}/${cycleLength}    A${ascension}`;
   // 截断或填充到固定宽度（防止超长 cycle prefix + 双位数 ascension 撑破框）
   if (content.length >= BANNER_INNER_WIDTH) return content.slice(0, BANNER_INNER_WIDTH);
   return content.padEnd(BANNER_INNER_WIDTH, ' ');
@@ -817,7 +816,7 @@ function cmdInfoListOwned(): void {
 
 function executeBuy(d: ItemDescriptor): void {
   if (state.gold < d.price) {
-    sfx('shop_buy_err'); // Story 60.12: 拨号忙音 — 余额不足
+    // terminal sound removed (was sfx('shop_buy_err')) // Story 60.12: 拨号忙音 — 余额不足
     appendLine(t('shop.terminal.err.insufficient_funds', { gold: state.gold, price: d.price }), 'redacted');
     appendLine(t('shop.terminal.err.appeal_form'), 'dim');
     appendBlank();
@@ -826,21 +825,21 @@ function executeBuy(d: ItemDescriptor): void {
   if (d.kind === 'skill') return executeBuySkill(d);
   if (d.kind === 'pack') return executeBuyPack(d);
   if (d.kind === 'relic') return executeBuyRelic(d);
-  sfx('shop_buy_err');
+  // terminal sound removed (was sfx('shop_buy_err'))
   appendLine(t('shop.terminal.err.purchase_not_wired', { kind: d.kind.toUpperCase() }), 'redacted');
   appendBlank();
 }
 
 export function executeBuySkill(d: ItemDescriptor): void {
   if (state.player.inbox.length >= INBOX_MAX) {
-    sfx('shop_buy_err'); // Story 60.12: inbox 满
+    // terminal sound removed (was sfx('shop_buy_err')) // Story 60.12: inbox 满
     appendLine(t('shop.terminal.err.intray_full', { n: INBOX_MAX, max: INBOX_MAX }), 'redacted');
     appendBlank();
     return;
   }
   const skill = d.originalItem.affixSkill;
   if (!skill) {
-    sfx('shop_buy_err');
+    // terminal sound removed (was sfx('shop_buy_err'))
     appendLine(t('shop.terminal.err.no_skill_data'), 'redacted');
     appendBlank();
     return;
@@ -867,7 +866,7 @@ export function executeBuySkill(d: ItemDescriptor): void {
   appendBlank();
   updateTerminalChrome();
   shopBus.syncWorkbenchInbox();
-  sfx('shop_buy_ok'); // Story 60.12: 点阵打印机 zip — BUY skill 成功
+  // terminal sound removed (was sfx('shop_buy_ok')) // Story 60.12: 点阵打印机 zip — BUY skill 成功
   // Story 60.11: BUY 成功 → IN-tray 对应槽 whoosh 滑入 + 闪光（仅成功路径）
   shopBus.triggerInboxWhoosh(state.player.inbox.length - 1);
 }
@@ -899,7 +898,7 @@ function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
   previewState.undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [word] });
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
   eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
-  sfx('shop_buy_ok'); // Story 60.12
+  // terminal sound removed (was sfx('shop_buy_ok')) // Story 60.12
   appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
   appendLine(t('shop.terminal.cmd.buy.pack_word_filed', { word: word.toUpperCase(), gold: state.gold }), 'dim');
   appendLine(t('shop.terminal.cmd.buy.undo_stack', { n: previewState.undoStack.length }), 'dim');
@@ -936,7 +935,7 @@ export function finalizePackPick(pickedWord: string): void {
   previewState.undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [pickedWord] });
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
   eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
-  sfx('shop_buy_ok'); // Story 60.12
+  // terminal sound removed (was sfx('shop_buy_ok')) // Story 60.12
   previewState.pendingPackPick = null;
   shopBus.closeDrawer();
   appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
@@ -963,19 +962,19 @@ export function cancelPackPick(): void {
 export function executeBuyRelic(d: ItemDescriptor): void {
   const relicId = d.originalItem.relicId;
   if (!relicId) {
-    sfx('shop_buy_err');
+    // terminal sound removed (was sfx('shop_buy_err'))
     appendLine(t('shop.terminal.err.relic_no_id'), 'redacted');
     appendBlank();
     return;
   }
   if (state.player.relics.has(relicId)) {
-    sfx('shop_buy_err');
+    // terminal sound removed (was sfx('shop_buy_err'))
     appendLine(t('shop.terminal.err.relic_owned', { rid: relicId.toUpperCase() }), 'redacted');
     appendBlank();
     return;
   }
   if (isRelicSlotsFull()) {
-    sfx('shop_buy_err');
+    // terminal sound removed (was sfx('shop_buy_err'))
     appendLine(t('shop.terminal.err.relic_slots_full'), 'redacted');
     appendBlank();
     return;
@@ -984,7 +983,7 @@ export function executeBuyRelic(d: ItemDescriptor): void {
   const ok = addRelicWithCapacity(relicId);
   if (!ok) {
     state.gold += d.price;
-    sfx('shop_buy_err');
+    // terminal sound removed (was sfx('shop_buy_err'))
     appendLine(t('shop.terminal.err.relic_add_failed'), 'redacted');
     appendBlank();
     return;
@@ -993,7 +992,7 @@ export function executeBuyRelic(d: ItemDescriptor): void {
   if (relicId === 'd_100') rerollAllAffixes();
   if (relicId === 'universal_furnace') initFurnace(random);
   eventBus.emit('shop:purchase', { type: 'relic', itemId: relicId, price: d.price });
-  sfx('shop_buy_ok'); // Story 60.12
+  // terminal sound removed (was sfx('shop_buy_ok')) // Story 60.12
   d.purchased = true;
   previewState.purchasedSkus.add(d.sku);
   previewState.undoStack.push({ kind: 'relic', sku: d.sku, price: d.price, relicId });
@@ -1010,7 +1009,7 @@ export function cmdBuy(arg?: string): void {
   if (!arg) { appendLine(t('shop.terminal.cmd.usage.buy'), 'dim'); return; }
   const d = findDescriptorBySku(arg);
   if (!d) {
-    sfx('shop_buy_err'); // Story 60.12: SKU 不存在
+    // terminal sound removed (was sfx('shop_buy_err')) // Story 60.12: SKU 不存在
     const guess = suggestSku(arg);
     appendLine(t('shop.terminal.err.sku_not_in_catalog', { sku: arg.toUpperCase() }), 'redacted');
     if (guess) appendLine(t('shop.terminal.cmd.info.did_you_mean', { guess }), 'dim');
@@ -1018,13 +1017,13 @@ export function cmdBuy(arg?: string): void {
     return;
   }
   if (d.purchased) {
-    sfx('shop_buy_err');
+    // terminal sound removed (was sfx('shop_buy_err'))
     appendLine(t('shop.terminal.err.already_sold', { sku: d.sku }), 'redacted');
     appendBlank();
     return;
   }
   if (d.redacted) {
-    sfx('shop_buy_err'); // Story 60.12: clearance 不足
+    // terminal sound removed (was sfx('shop_buy_err')) // Story 60.12: clearance 不足
     appendLine(t('shop.terminal.err.clearance_required', { clearance: d.clearance }), 'redacted');
     appendBlank();
     return;

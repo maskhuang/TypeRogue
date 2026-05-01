@@ -25,7 +25,7 @@ describe('Story 60.3 · buildBannerLine', () => {
     expect(line).not.toContain('CYCLE')
     expect(line).not.toContain('批次')
     expect(line).not.toMatch(/BATCH \d+ ·/)
-    expect(line).toContain('DAY')
+    expect(line).toContain('FILE')
     expect(line).toContain('A0')
   })
 
@@ -34,14 +34,14 @@ describe('Story 60.3 · buildBannerLine', () => {
     // cycle_prefix i18n value = 'BATCH {cycle} · ' (en) / '批次{cycle} · ' (zh)
     // 不论 locale 都应包含 cycle 数字 2
     expect(line).toMatch(/2[\s·]/)
-    expect(line).toContain('DAY')
+    expect(line).toContain('FILE')
     expect(line).toContain('A1')
   })
 
-  it('DAY 编号用 getBattleNumber（仪式节点跳过）', () => {
+  it('FILE 编号用 getBattleNumber（仪式节点跳过）', () => {
     // level 6 是 cycle 1 的仪式节点 → getBattleNumber(6) = 5
     const line = buildBannerLine(6, 1, 0)
-    expect(line).toContain('DAY 5')
+    expect(line).toContain('FILE 5')
   })
 
   it('BATCH 显示位置 / cycleLength（零填充 2 位）', () => {
@@ -67,7 +67,7 @@ describe('Story 60.3 · buildBannerLine', () => {
 
   it('level <= 0 兜底为 1（dev 测试时未初始化）', () => {
     const line = buildBannerLine(0, 1, 0)
-    expect(line).toContain('DAY 1')
+    expect(line).toContain('FILE 1')
     expect(line).toContain('BATCH 01/')
   })
 
@@ -189,7 +189,7 @@ describe('Story 60.3 · updateTerminalChrome (集成 smoke test, M2 fix)', () =>
 
     updateTerminalChrome()
 
-    expect(bannerEl.textContent).toContain('DAY')
+    expect(bannerEl.textContent).toContain('FILE')
     expect(bannerEl.textContent).toContain('A0')
     expect(formEm.textContent).toBe('F-5')
     expect(clrEm.textContent).toBe('4-A') // level 5 = elite
@@ -203,7 +203,7 @@ describe('Story 60.3 · updateTerminalChrome (集成 smoke test, M2 fix)', () =>
 
     updateTerminalChrome()
 
-    expect(bannerEl.textContent).toContain('DAY 22')
+    expect(bannerEl.textContent).toContain('FILE 22')
     expect(bannerEl.textContent).toContain(`BATCH 12/${BALANCE.CYCLE_LENGTH}`)
     expect(bannerEl.textContent).toContain('A1')
     expect(formEm.textContent).toBe('F-24')
@@ -222,7 +222,7 @@ describe('Story 60.3 · AC8 端到端 cycle 2 boss 关回归用例', () => {
     const line = buildBannerLine(24, 2, 1)
     // getBattleNumber(24) = 22（cycle 1 全 11 战 + cycle 2 boss 是第 11 场战斗 = 22）
     // 仪式节点（位置 6）不计入战斗，每周期 11 战
-    expect(line).toContain('DAY 22')
+    expect(line).toContain('FILE 22')
     expect(line).toContain(`BATCH 12/${CYCLE_LENGTH}`)
     expect(line).toContain('A1')
     expect(line).toMatch(/2[\s·]/) // cycle 数字

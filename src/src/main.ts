@@ -8,10 +8,12 @@ import { state, resetState } from './core/state';
 import { getStarterWords } from './data/words';
 import { startLevel, initInput, resetCycleTracking, showScreen } from './systems/battle';
 import { initFloatTextCanvas, clearFloatTexts } from './ui/effects/FloatTextPool';
-import { stopBGM, initAudio, playSound } from './effects/sound';
+import { stopBGM, initAudio, playSound, setMasterVolume, playDeskSound } from './effects/sound';
 import { startTutorialMode } from './systems/tutorial/TutorialMode';
-import { openSettingsPanel, applyAllSettings, wireSettingsToggleIcon } from './ui/SettingsPanel';
-import { loadSettings } from './core/UserSettings';
+import { openSettingsPanel, applyAllSettings, wireSettingsToggleIcon, applyCRT } from './ui/SettingsPanel';
+import { loadSettings, getSettings, updateSettings } from './core/UserSettings';
+import type { BackgroundMode } from './core/UserSettings';
+import { setBackgroundMode } from './effects/balatroBackground';
 import { initShopEvents } from './systems/shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
 import { MetaState } from './core/state/MetaState';
@@ -21,6 +23,7 @@ import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode, random 
 import { resetWordRelicRunState } from './systems/relics/WordRelicBehaviors';
 import { showClassPicker } from './systems/classes/ClassPicker';
 import { showAscensionPicker } from './systems/classes/AscensionPicker';
+import { CLASS_DEFINITIONS } from './data/classes';
 import { saveManager } from './core/save/SaveManager';
 import {
   IS_DEMO,
@@ -109,7 +112,7 @@ async function init(): Promise<void> {
     if (menuStartBtn) {
       menuStartBtn.onclick = () => {
         initAudio();
-        playSound('confirm');
+        // 过场音由桌面 UI 接管
         getElements().mainMenuScreen.style.display = 'none';
         resetCycleTracking();
         state.level = 1;
@@ -117,9 +120,9 @@ async function init(): Promise<void> {
       };
     }
     const tutorialBtn = document.getElementById('menu-tutorial-btn');
-    if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playSound('click'); startTutorialMode(); };
+    if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playDeskSound('paper'); startTutorialMode(); };
     const settingsBtn = document.getElementById('menu-settings-btn');
-    if (settingsBtn) settingsBtn.onclick = () => { initAudio(); playSound('click'); openSettingsPanel(); };
+    if (settingsBtn) settingsBtn.onclick = () => { initAudio(); playDeskSound('paper'); openSettingsPanel(); };
     return;
   }
 
@@ -258,10 +261,21 @@ async function init(): Promise<void> {
       void startLevel();
       return;
     }
-    // 有初始遗物的职业跳过开局三选一
-    if (state.classId === 'none' && hasUnownedRelics()) {
+    // Stage 4 (2026-05): 所有职业都走开局申领单
+    //   - wordsmith/metamorph: 申领单上仅一项专属 starter（不可拒，无 DENIED 重抽）
+    //   - none: 三选一从 common 池抽
+    const classDef = CLASS_DEFINITIONS[state.classId];
+    const starterId = classDef?.starterRelic;
+    if (starterId) {
       showRelicPicker(() => void startLevel(), RELIC_WEIGHT_PRESETS.gameStart, {
         titleKey: 'relic_picker.starter_title',
+        deskMode: true,
+        overrideCandidates: [starterId],
+      });
+    } else if (hasUnownedRelics()) {
+      showRelicPicker(() => void startLevel(), RELIC_WEIGHT_PRESETS.gameStart, {
+        titleKey: 'relic_picker.starter_title',
+        deskMode: true,
       });
     } else {
       void startLevel();
@@ -278,7 +292,7 @@ async function init(): Promise<void> {
     menuStartBtn.onclick = () => {
       // 用户手势 → 初始化音频（浏览器要求）
       initAudio();
-      playSound('confirm');
+      // 过场音由桌面 UI 接管：punch + stamp + whoosh（在 setupDeskMenu 中触发）
       // 每局重置 state + 恢复词库
       resetState();
       state.player.wordDeck = getStarterWords();
@@ -300,11 +314,247 @@ async function init(): Promise<void> {
 
   // 主菜单「教程」按钮
   const tutorialBtn = document.getElementById('menu-tutorial-btn');
-  if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playSound('click'); startTutorialMode(); };
+  if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playDeskSound('paper'); startTutorialMode(); };
 
   // 主菜单「设置」按钮
   const settingsBtn = document.getElementById('menu-settings-btn');
-  if (settingsBtn) settingsBtn.onclick = () => { initAudio(); playSound('click'); openSettingsPanel(); };
+  if (settingsBtn) settingsBtn.onclick = () => { initAudio(); playDeskSound('paper'); openSettingsPanel(); };
+
+  // === Stage 2: 桌面化主菜单交互 ===
+  setupDeskMenu();
+}
+
+/**
+ * Stage 2 · 桌面菜单交互：
+ *   - 中央打卡卡输入工号 + Enter → CLOCKED IN 章动画 → 触发隐藏的 menuStartBtn（复用既有启动链）
+ *   - 工号通过 localStorage 存储，ClassPicker 读取作为签字
+ *   - 守则点击 → 打开守则覆盖层；ACK 按钮 → 触发 menuTutorialBtn
+ *   - 申请表点击 → 打开申请表覆盖层；SUBMIT → 触发 menuSettingsBtn
+ *   - 时钟显示真实时间（秒级 tick）
+ */
+const WORKER_ID_STORAGE_KEY = 'dpca-worker-id';
+const WORKER_ID_PREFIX = 'OP. PRIMATE-';
+const DEFAULT_SUFFIX = '7842';
+
+/** 从输入框后缀 + 固定前缀 拼出完整工号；空后缀 → 沿用 storedSuffix。 */
+function buildWorkerId(suffix: string, storedSuffix: string): string {
+  const v = suffix.trim().toUpperCase();
+  return WORKER_ID_PREFIX + (v || storedSuffix);
+}
+
+/** 从存储的完整工号中拆出后缀；不匹配前缀模式时回退默认。 */
+function extractSuffix(storedFullId: string | null): string {
+  if (!storedFullId) return DEFAULT_SUFFIX;
+  const m = storedFullId.match(/^OP\.\s*PRIMATE-(.+)$/);
+  return m ? m[1] : DEFAULT_SUFFIX;
+}
+
+function setupDeskMenu(): void {
+  // 时钟（真实时间，每秒更新；不像 mock 那样加速）
+  const clockEl = document.getElementById('menu-clock-display');
+  if (clockEl) {
+    const fmt = (n: number) => String(n).padStart(2, '0');
+    const tick = () => {
+      const d = new Date();
+      clockEl.textContent = `${fmt(d.getHours())}:${fmt(d.getMinutes())}`;
+    };
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  // 工号显示初始化（从 localStorage 读取上次的工号 → 拆出后缀填入输入框）
+  const applicantIdEl = document.getElementById('punch-applicant-id');
+  const storedFull = localStorage.getItem(WORKER_ID_STORAGE_KEY);
+  const storedSuffix = extractSuffix(storedFull);
+  const storedFullId = WORKER_ID_PREFIX + storedSuffix;
+  if (applicantIdEl) applicantIdEl.textContent = storedFullId;
+
+  // 打卡输入：实时预览 + Enter 提交（盖章后再切屏）
+  const punchInput = document.getElementById('menu-punch-input') as HTMLInputElement | null;
+  const punchStamp = document.getElementById('menu-punch-stamp');
+  const startBtn = document.getElementById('menu-start-btn') as HTMLButtonElement | null;
+  if (punchInput && startBtn) {
+    // 实时预览：用户输入后缀时上方工号字段实时更新
+    punchInput.addEventListener('input', () => {
+      if (applicantIdEl) {
+        applicantIdEl.textContent = buildWorkerId(punchInput.value, storedSuffix);
+      }
+    });
+
+    punchInput.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (punchInput.disabled) return;
+      // 首个用户手势 → 初始化音频（必须在播音前完成，否则 punch/stamp 因
+      // audioContext===null 静默 return）
+      initAudio();
+
+      // 写入工号（空后缀 → 沿用 storedSuffix）
+      const finalId = buildWorkerId(punchInput.value, storedSuffix);
+      localStorage.setItem(WORKER_ID_STORAGE_KEY, finalId);
+      if (applicantIdEl) applicantIdEl.textContent = finalId;
+
+      // 盖章 → 等动画 → 切屏
+      punchInput.disabled = true;
+      if (punchStamp) {
+        punchStamp.classList.add('show');
+        playDeskSound('punch');
+        setTimeout(() => playDeskSound('stamp'), 80);
+        setTimeout(() => {
+          punchStamp.classList.remove('show');
+          punchInput.disabled = false;
+          punchInput.value = '';
+          // 场景切换：气动管道 whoosh
+          playDeskSound('whoosh');
+          startBtn.click();
+        }, 950);
+      } else {
+        startBtn.click();
+      }
+    });
+    // 主菜单显示时自动聚焦输入框（让 Enter 立即可用）
+    setTimeout(() => punchInput.focus(), 100);
+  }
+
+  // 守则 / 申请表覆盖层
+  const shroud = document.getElementById('menu-ov-shroud');
+  const ovHandbook = document.getElementById('menu-ov-handbook');
+  const ovRequest = document.getElementById('menu-ov-request');
+  const handbookObj = document.getElementById('menu-handbook');
+  const requestObj = document.getElementById('menu-request-pad');
+  const tutorialBtn2 = document.getElementById('menu-tutorial-btn') as HTMLButtonElement | null;
+  const settingsBtn2 = document.getElementById('menu-settings-btn') as HTMLButtonElement | null;
+
+  // Stage 5 · 申请表 = 原 SettingsPanel 视觉改造，调整即时生效
+  const populateRequestForm = (): void => {
+    const s = getSettings();
+    // 音量滑条
+    const slider = document.getElementById('ws-vol') as HTMLInputElement | null;
+    const sliderVal = document.getElementById('ws-vol-val');
+    if (slider) {
+      slider.value = String(Math.round(s.masterVolume * 100));
+      if (sliderVal) sliderVal.textContent = `${slider.value}%`;
+    }
+    setRadio('ws-lang', s.locale);
+    setRadio('ws-crt', s.crtEnabled ? '1' : '0');
+    setRadio('ws-bg', s.backgroundMode);
+  };
+
+  // 滑条 + radio 实时绑定（首次 setupDeskMenu 时绑定一次即可）
+  const volSlider = document.getElementById('ws-vol') as HTMLInputElement | null;
+  const volSliderVal = document.getElementById('ws-vol-val');
+  if (volSlider) {
+    volSlider.addEventListener('input', () => {
+      const v = parseInt(volSlider.value, 10) / 100;
+      if (volSliderVal) volSliderVal.textContent = `${volSlider.value}%`;
+      setMasterVolume(v);
+      updateSettings({ masterVolume: v });
+    });
+  }
+  document.querySelectorAll<HTMLInputElement>('input[name="ws-lang"]').forEach(r => {
+    r.addEventListener('change', () => {
+      if (!r.checked) return;
+      const lang = r.value;
+      if (lang !== 'zh' && lang !== 'en') return;
+      playDeskSound('paper');
+      setLocale(lang as Locale);
+      updateSettings({ locale: lang });
+      applyHtmlI18n();
+    });
+  });
+  document.querySelectorAll<HTMLInputElement>('input[name="ws-crt"]').forEach(r => {
+    r.addEventListener('change', () => {
+      if (!r.checked) return;
+      playDeskSound('punch');
+      const enabled = r.value === '1';
+      applyCRT(enabled);
+      updateSettings({ crtEnabled: enabled });
+    });
+  });
+  document.querySelectorAll<HTMLInputElement>('input[name="ws-bg"]').forEach(r => {
+    r.addEventListener('change', () => {
+      if (!r.checked) return;
+      playDeskSound('paper');
+      const m = r.value as BackgroundMode;
+      setBackgroundMode(m);
+      updateSettings({ backgroundMode: m });
+    });
+  });
+
+  const openOverlay = (which: 'handbook' | 'request') => {
+    initAudio();
+    playDeskSound('paper');
+    shroud?.classList.add('show');
+    if (which === 'handbook') ovHandbook?.classList.add('show');
+    else {
+      populateRequestForm();
+      ovRequest?.classList.add('show');
+    }
+  };
+  const closeOverlay = () => {
+    shroud?.classList.remove('show');
+    ovHandbook?.classList.remove('show');
+    ovRequest?.classList.remove('show');
+    // 关闭后焦点回到打卡输入
+    punchInput?.focus();
+  };
+
+  handbookObj?.addEventListener('click', () => openOverlay('handbook'));
+  requestObj?.addEventListener('click', () => openOverlay('request'));
+  shroud?.addEventListener('click', closeOverlay);
+
+  // ESC 关闭覆盖层
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && (ovHandbook?.classList.contains('show') || ovRequest?.classList.contains('show'))) {
+      closeOverlay();
+    }
+  });
+
+  // 守则 ACK → 章音 → 按钮文字变"调档中" → overlay 收回 + whoosh → 教程
+  // 静态注释告诉玩家"会去培训科"，转场动画兑现这个承诺
+  document.getElementById('menu-ov-handbook-ack')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const ackBtn = e.currentTarget as HTMLButtonElement;
+    if (ackBtn.disabled) return;
+    ackBtn.disabled = true;
+    const originalText = ackBtn.textContent;
+    ackBtn.textContent = t('hb.routing_text');
+    playDeskSound('stamp');
+
+    setTimeout(() => {
+      closeOverlay();              // 触发 overlay scale-down + fade-out (0.4s)
+      playDeskSound('whoosh');
+      setTimeout(() => {
+        ackBtn.disabled = false;
+        ackBtn.textContent = originalText;
+        tutorialBtn2?.click();
+      }, 420);
+    }, 380);
+  });
+
+  // 申请表 SUBMIT → 仅关闭（更改在交互时即时生效）
+  document.getElementById('menu-ov-request-submit')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    playDeskSound('stamp');
+    closeOverlay();
+  });
+
+  // 申请表 RESET → 复用 SettingsPanel 的 reset 行为：confirm + clear localStorage + reload
+  document.getElementById('menu-ov-request-reset')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    playSound('warning');
+    if (confirm(t('settings.reset_confirm'))) {
+      localStorage.clear();
+      window.location.reload();
+    }
+  });
+  // settingsBtn2 不再被使用（申请表已是真实 settings 入口）；保留隐藏 DOM 兼容性
+  void settingsBtn2;
+}
+
+function setRadio(name: string, value: string): void {
+  const el = document.querySelector<HTMLInputElement>(`input[name="${name}"][value="${value}"]`);
+  if (el) el.checked = true;
 }
 
 /** 更新主菜单底部信息 */
