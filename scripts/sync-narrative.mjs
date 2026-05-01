@@ -29,6 +29,7 @@ import { readFileSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { HANDBOOKS_SKELETON } from './narrative-writer/data/handbooks-skeleton.mjs'
+import { TIER3_INVERSION_SKELETON } from './narrative-writer/data/tier3-inversion-skeleton.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DOC_PATH = join(__dirname, '..', 'docs', 'narrative-design.md')
@@ -600,6 +601,50 @@ function validateHandbooks(hb) {
   return { errors }
 }
 
+// ─── 11. Tier 3 Inversion Validator (v3.1 NEW) ───
+// 验证：id 唯一 / low/high 都有 zh+en / 类目合法 / production_status 合法
+
+function validateTier3Inversion(t3) {
+  const errors = []
+  const ids = new Set()
+  const validCategories = new Set(['location', 'entity', 'role', 'document', 'mechanic', 'metric', 'economic', 'policy'])
+  const validStatuses = new Set(['production', 'draft', 'pending'])
+
+  for (const entry of t3.entries) {
+    if (!entry.id) {
+      errors.push(`存在无 id 的 entry`)
+      continue
+    }
+    if (ids.has(entry.id)) {
+      errors.push(`重复的 entry id: ${entry.id}`)
+    }
+    ids.add(entry.id)
+    if (!entry.low?.zh || !entry.low?.en) {
+      errors.push(`entry ${entry.id} 缺少 low.zh 或 low.en`)
+    }
+    if (!entry.high?.zh || !entry.high?.en) {
+      errors.push(`entry ${entry.id} 缺少 high.zh 或 high.en`)
+    }
+    if (!entry.semantic_inversion?.zh) {
+      errors.push(`entry ${entry.id} 缺少 semantic_inversion.zh`)
+    }
+    if (!validCategories.has(entry.category)) {
+      errors.push(`entry ${entry.id} 类目非法: ${entry.category}（合法: ${[...validCategories].join(', ')}）`)
+    }
+    if (!validStatuses.has(entry.production_status)) {
+      errors.push(`entry ${entry.id} status 非法: ${entry.production_status}`)
+    }
+  }
+
+  // 配额检查
+  const productionCount = t3.entries.filter(e => e.production_status === 'production').length
+  if (productionCount < t3.meta.quotas.production_min) {
+    errors.push(`production 数 ${productionCount} 低于 quota.production_min=${t3.meta.quotas.production_min}`)
+  }
+
+  return { errors }
+}
+
 // ─── 9. Relic Departments (v3.1 NEW) — 11 subsystems → 11 issuing departments ───
 
 function extractRelicDepartments() {
@@ -858,6 +903,50 @@ export function getActiveRulesAtTier(targetTier) {
 }
 `)
 
+  // 11. Tier 3 Inversion Map (v3.1 NEW · Hand-curated source)
+  const tier3 = TIER3_INVERSION_SKELETON
+  const tier3Validation = validateTier3Inversion(tier3)
+  if (tier3Validation.errors.length > 0) {
+    console.log(`\n  ⚠️  Tier3 Inversion 验证错误:`)
+    for (const err of tier3Validation.errors) console.log(`     - ${err}`)
+  }
+  const productionCount = tier3.entries.filter(e => e.production_status === 'production').length
+  const draftCount = tier3.entries.filter(e => e.production_status === 'draft').length
+  const byCategory = tier3.entries.reduce((acc, e) => { acc[e.category] = (acc[e.category] || 0) + 1; return acc }, {})
+  console.log(`  Tier3 Inversion (v3.1 · 手写): total=${tier3.entries.length} (${productionCount} production + ${draftCount} draft) | categories=${Object.keys(byCategory).length}`)
+  writeFileSync(join(OUT_DIR, 'tier3-inversion-map.mjs'), HEADER + `
+// v3.1 NEW · Tier 3 (PEP) 视角反转映射表（Step 4.7 三轨映射 · 元层视角反转）
+// 数据源（手写）: scripts/narrative-writer/data/tier3-inversion-skeleton.mjs
+// 机关：PEP 持有者看到 high；其他 tier 玩家永远看到 low
+export const TIER3_INVERSION = ${JSON.stringify(tier3, null, 2)}
+
+// Quick lookup: id → entry
+export const INVERSION_BY_ID = Object.fromEntries(
+  TIER3_INVERSION.entries.map(e => [e.id, e])
+)
+
+// Quick lookup: category → entries[]
+export const INVERSION_BY_CATEGORY = TIER3_INVERSION.entries.reduce((acc, e) => {
+  if (!acc[e.category]) acc[e.category] = []
+  acc[e.category].push(e)
+  return acc
+}, {})
+
+/**
+ * Get UI text for current tier.
+ * @param {string} id - inversion entry id
+ * @param {number} tier - current player tier (0-3)
+ * @param {string} lang - 'zh' or 'en'
+ * @returns {string} appropriate text for tier
+ */
+export function getInvertedText(id, tier, lang = 'zh') {
+  const entry = INVERSION_BY_ID[id]
+  if (!entry) return null
+  const variant = tier >= 3 ? 'high' : 'low'
+  return entry[variant][lang] || entry[variant].zh
+}
+`)
+
   // 9. Relic Departments (v3.1 NEW)
   const relicDepartments = extractRelicDepartments()
   console.log(`  Relic Departments (v3.1): ${relicDepartments.subsystems.length} 子系统 → ${new Set(relicDepartments.subsystems.map(s => s.department)).size} 部门  /  ${relicDepartments.department_voice.length} voice 锚`)
@@ -889,6 +978,7 @@ export const DEPARTMENT_VOICE = Object.fromEntries(
   console.log('     enchant-protocols.mjs ← v3.1 NEW')
   console.log('     relic-departments.mjs ← v3.1 NEW')
   console.log('     handbooks.mjs         ← v3.1 NEW (from data/handbooks-skeleton.mjs)')
+  console.log('     tier3-inversion-map.mjs ← v3.1 NEW (from data/tier3-inversion-skeleton.mjs)')
   console.log(`\n⚠️  v2.3 残留：aigc-art/generated/layer-visual.yaml 不再生成（v3 无 12 层塔）。`)
   console.log(`    旧文件保留为遗留产物；如美术流水线需要 v3 visual 数据，需另立 schema。`)
 }
