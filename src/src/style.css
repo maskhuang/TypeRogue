@@ -5919,7 +5919,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     flex-shrink: 0;
 }
 .lst-sku   { width: 9ch; }
-.lst-name  { width: 30ch; }
+.lst-name  { width: 50ch; }
 .lst-price { width: 9ch; text-align: right; padding-right: 1ch; }
 .lst-stock { width: 8ch; padding-left: 1ch; }
 .lst-clr   { width: 7ch; padding-left: 1ch; }

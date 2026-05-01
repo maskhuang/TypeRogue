@@ -1,0 +1,72 @@
+// AUTO-GENERATED from scripts/narrative-writer/generated/affix-taxa.mjs
+// Source-of-truth: docs/narrative-design.md (v3.1 NCBI 词缀编码体系)
+// Re-run: node scripts/sync-narrative.mjs
+
+export interface AffixTaxonEntry {
+  code: string;       // NCBI 4-letter code, e.g. Mmul
+  latin: string;      // Latin scientific name, e.g. Macaca mulatta
+  common_zh: string;  // Chinese common name
+}
+
+export const AFFIX_TAXA: Record<string, AffixTaxonEntry> = {
+  convert: { code: 'Sbol', latin: 'Saimiri boliviensis', common_zh: '黑帽松鼠猴' },
+  rainbow: { code: 'Ssci', latin: 'Saimiri sciureus', common_zh: '圭亚那松鼠猴' },
+  multiply: { code: 'Soer', latin: 'Saimiri oerstedii', common_zh: '中美松鼠猴' },
+  charge: { code: 'Sust', latin: 'Saimiri ustus', common_zh: '裸耳松鼠猴' },
+  crit: { code: 'Mmul', latin: 'Macaca mulatta', common_zh: '普通猕猴（恒河猴）' },
+  decay: { code: 'Mfas', latin: 'Macaca fascicularis', common_zh: '食蟹猴' },
+  recurse: { code: 'Mfus', latin: 'Macaca fuscata', common_zh: '日本猕猴' },
+  taboo: { code: 'Marc', latin: 'Macaca arctoides', common_zh: '短尾猕猴' },
+  fallacy: { code: 'Mnem', latin: 'Macaca nemestrina', common_zh: '南方猪尾猕猴' },
+  amplify: { code: 'Panu', latin: 'Papio anubis', common_zh: '阿努比斯狒狒' },
+  splash: { code: 'Pcyn', latin: 'Papio cynocephalus', common_zh: '草原狒狒' },
+  resonance: { code: 'Pham', latin: 'Papio hamadryas', common_zh: '阿拉伯狒狒' },
+  echo: { code: 'Pkin', latin: 'Papio kindae', common_zh: '黄狒狒' },
+  fury: { code: 'Purs', latin: 'Papio ursinus', common_zh: '沙巴狒狒' },
+  tide: { code: 'Ppap', latin: 'Papio papio', common_zh: '几内亚狒狒' },
+  war_drum: { code: 'Tgel', latin: 'Theropithecus gelada', common_zh: '狮尾狒' },
+  void: { code: 'Hsap', latin: 'Homo sapiens', common_zh: '智人' },
+  swarm: { code: 'Ggor', latin: 'Gorilla gorilla', common_zh: '西部大猩猩' },
+  mirror: { code: 'Gber', latin: 'Gorilla beringei', common_zh: '东部大猩猩' },
+  flow: { code: 'Ptro', latin: 'Pan troglodytes', common_zh: '黑猩猩' },
+  confluence: { code: 'Ppan', latin: 'Pan paniscus', common_zh: '倭黑猩猩' },
+  union: { code: 'Pabe', latin: 'Pongo abelii', common_zh: '苏门答腊红毛猩猩' },
+  aura_fury: { code: 'Ppyg', latin: 'Pongo pygmaeus', common_zh: '婆罗洲红毛猩猩' },
+  aura_morale: { code: 'Ptap', latin: 'Pongo tapanuliensis', common_zh: '塔潘奴利红毛猩猩' },
+  cascade: { code: 'Cmit', latin: 'Cercopithecus mitis', common_zh: '青腹长尾猴' },
+  outcast: { code: 'Casc', latin: 'Cercopithecus ascanius', common_zh: '红尾长尾猴' },
+  gravity: { code: 'Cdia', latin: 'Cercopithecus diana', common_zh: '戴安娜长尾猴' },
+  ligature: { code: 'Cneg', latin: 'Cercopithecus neglectus', common_zh: '德布拉柴长尾猴' },
+  fiber: { code: 'Caet', latin: 'Chlorocebus aethiops', common_zh: '绿猴' },
+  repulsion: { code: 'Cpyg', latin: 'Chlorocebus pygerythrus', common_zh: '长尾绿猴' },
+  handoff: { code: 'Tgee', latin: 'Trachypithecus geei', common_zh: '金叶猴' },
+  rewind: { code: 'Tobs', latin: 'Trachypithecus obscurus', common_zh: '暗叶猴' },
+  endow: { code: 'Tcri', latin: 'Trachypithecus cristatus', common_zh: '银叶猴' },
+  proofread: { code: 'Sent', latin: 'Semnopithecus entellus', common_zh: '北方长尾叶猴' },
+  spelling: { code: 'Sjoh', latin: 'Semnopithecus johnii', common_zh: '尼尔吉里黑叶猴' },
+  first_edition: { code: 'Rrox', latin: 'Rhinopithecus roxellana', common_zh: '川金丝猴' },
+  reprint: { code: 'Rbie', latin: 'Rhinopithecus bieti', common_zh: '滇金丝猴' },
+  matrix: { code: 'Cgue', latin: 'Colobus guereza', common_zh: '东非黑白疣猴' },
+  typeset: { code: 'Pnem', latin: 'Pygathrix nemaeus', common_zh: '红腿白臀叶猴' },
+  relay: { code: 'Hlar', latin: 'Hylobates lar', common_zh: '白掌长臂猿' },
+  conduit: { code: 'Hagi', latin: 'Hylobates agilis', common_zh: '敏捷长臂猿' },
+  twin: { code: 'Hmol', latin: 'Hylobates moloch', common_zh: '银长臂猿' },
+  innate: { code: 'Hpil', latin: 'Hylobates pileatus', common_zh: '戴帽长臂猿' },
+  exhaust: { code: 'Halb', latin: 'Hylobates albibarbis', common_zh: '婆罗白胡子长臂猿' },
+  reflect: { code: 'Hmue', latin: 'Hylobates muelleri', common_zh: '缪氏长臂猿' },
+  monkey_patch: { code: 'Hleu', latin: 'Hoolock leuconedys', common_zh: '东白眉长臂猿' },
+  excavate: { code: 'Hhoo', latin: 'Hoolock hoolock', common_zh: '西白眉长臂猿' },
+  treasure: { code: 'Htia', latin: 'Hoolock tianxing', common_zh: '高黎贡白眉长臂猿' },
+  refine: { code: 'Ssyn', latin: 'Symphalangus syndactylus', common_zh: '合趾猴' },
+  evolve: { code: 'Ncon', latin: 'Nomascus concolor', common_zh: '黑冠长臂猿' },
+  harvest: { code: 'Ngab', latin: 'Nomascus gabriellae', common_zh: '黄颊长臂猿' },
+  chain: { code: 'Nleu', latin: 'Nomascus leucogenys', common_zh: '北白颊长臂猿' },
+  volatile: { code: 'Nhai', latin: 'Nomascus hainanus', common_zh: '海南长臂猿' },
+  mutacrit: { code: 'Nann', latin: 'Nomascus annamensis', common_zh: '北部黄颊长臂猿' },
+  ascend: { code: 'Nnas', latin: 'Nomascus nasutus', common_zh: '东部黑冠长臂猿' },
+  reecho: { code: 'Nsik', latin: 'Nomascus siki', common_zh: '南部白颊长臂猿' },
+  mercenary: { code: 'Cjac', latin: 'Callithrix jacchus', common_zh: '普通狨' },
+  myopia: { code: 'Cgeo', latin: 'Callithrix geoffroyi', common_zh: '白头狨' },
+  silkworm: { code: 'Cpen', latin: 'Callithrix penicillata', common_zh: '黑簇狨' },
+};
+

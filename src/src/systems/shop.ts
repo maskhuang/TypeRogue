@@ -45,7 +45,7 @@ import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i
 // Story 60.5: feature flag dispatcher 用 — 按 UserSettings.shopUI 决定 classic / terminal
 import { getSettings } from '../core/UserSettings';
 import { enterTerminalShop } from '../ui/shopPreview';
-import { generateSkill } from '../data/skillGeneration';
+import { generateSkill, generateName } from '../data/skillGeneration';
 import { createSkillRuntimeState, RARITY_COLORS, RARITY_NAMES, AFFIX_CATEGORY_MAP, RESOURCE_NAMES } from '../data/affixes';
 import type { SkillRarity } from '../data/affixes';
 import { getEnchantmentSlotCount, filterEnchantmentCandidates, getTransmuteEligibleResources, isApprenticeEnchantment, resolvePhase1, countEmptySlots, getNeighborSkills, isConsonant, categorizeEnchantmentCandidates, weightedPickEnchantment, getAscendThreshold, isAffixGloballyTransformed, evaluateEquipQuests, getExtendedNeighbors, hasSharedMatch, isAuraQuestActive, computeTotalSwarmCount } from '../data/affixTrigger';
@@ -729,7 +729,7 @@ export function buildSkillKeyTooltipData(skillId: string, boundKeys?: string[]):
 
   const data: KeyTooltipData = {
     skill: {
-      name: skill.name,
+      name: generateName(skill.resource, skill.affixes),
       icon: skill.icon,
       description: hasMultOp ? `${resIcon}${resName}×${multOpBase}` : `${resIcon}${resName}+${baseVal}`,
       level: skill.level,
@@ -1964,7 +1964,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
 
       const tooltipData: KeyTooltipData = {
         skill: {
-          name: skill.name,
+          name: generateName(skill.resource, skill.affixes),
           icon: skill.icon,
           description: skillHasMultOp ? `${resIcon}${resName}×${multOpBase}` : `${resIcon}${resName}+${baseVal}`,
           level: skill.level,

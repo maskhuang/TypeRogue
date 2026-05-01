@@ -26,6 +26,7 @@ import { calculateLetterFrequency, calculateLetterScores, FREQ_UNLOCK_THRESHOLD 
 import { getBattleNumber, getPositionInCycle, getStageType } from '../../systems/stage/stageFlow';
 import { STAGE_ICONS } from '../../systems/actTransition';
 import { t } from '../../demo/demo-i18n';
+import { AFFIX_TAXA } from '../../data/affixTaxa';
 import type { ShopItem, WordPack } from '../../core/types';
 import type { StageType } from '../../systems/stage/StageConfig';
 import { describeAllShopItems, type ItemDescriptor } from '../itemDescriptors';
@@ -386,6 +387,8 @@ function renderInfoBlock(d: ItemDescriptor): string[] {
       for (const af of fields.affixInfo) {
         const hdr = `‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
         for (const w of wrapAt(hdr, W - 4)) lines.push('  ' + w);
+        const taxon = af.typeKey ? AFFIX_TAXA[af.typeKey] : null;
+        if (taxon) lines.push(`    ${taxon.latin} · ${taxon.code}`);
         if (af.description) {
           for (const w of wrapAt(af.description, W - 6)) lines.push('    ' + w);
         }
@@ -501,11 +504,11 @@ export function cmdList(): void {
   const FOOTER = t('shop.terminal.cmd.list.footer', { n: previewState.descriptorCache.length });
   if (!animated) {
     appendLine(HEADER, 'head');
-    appendLine('─────────────────────────────────────────────────────────────────────────────────────');
+    appendLine('─────────────────────────────────────────────────────────────────────────────────────────────────────────');
     appendLine(renderListHeaderRow(), 'head list-row', true);
-    appendLine('─────────────────────────────────────────────────────────────────────────────────────');
+    appendLine('─────────────────────────────────────────────────────────────────────────────────────────────────────────');
     for (const d of previewState.descriptorCache) appendLine(renderListRow(d), `${classForRow(d)} list-row`.trim(), true);
-    appendLine('─────────────────────────────────────────────────────────────────────────────────────');
+    appendLine('─────────────────────────────────────────────────────────────────────────────────────────────────────────');
     appendLine(FOOTER, 'dim');
     appendBlank();
     return;
@@ -514,13 +517,13 @@ export function cmdList(): void {
   const myCallId = ++previewState.listCallCounter;
   const lines: Array<{ text: string; cls: string; raw: boolean }> = [];
   lines.push({ text: HEADER, cls: 'head', raw: false });
-  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
+  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
   lines.push({ text: renderListHeaderRow(), cls: 'head list-row', raw: true });
-  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
+  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
   for (const d of previewState.descriptorCache) {
     lines.push({ text: renderListRow(d), cls: `${classForRow(d)} list-row`.trim(), raw: true });
   }
-  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
+  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
   lines.push({ text: FOOTER, cls: 'dim', raw: false });
   lines.forEach((line, idx) => {
     setTimeout(() => {
@@ -673,6 +676,8 @@ function cmdInfoOwnedSkill(skillId: string): void {
     for (const af of fields.affixInfo) {
       const hdr = `‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
       for (const w of wrapAt(hdr, W - 4)) appendLine('  ' + w);
+      const taxon = af.typeKey ? AFFIX_TAXA[af.typeKey] : null;
+      if (taxon) appendLine(`    ${taxon.latin} · ${taxon.code}`, 'dim');
       if (af.description) {
         for (const w of wrapAt(af.description, W - 6)) appendLine('    ' + w, 'dim');
       }
