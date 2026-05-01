@@ -362,6 +362,16 @@ export function syncWorkbenchKeys(): void {
  * 用 dataset.tooltipBound 防重复挂 listener（参考 60-1 的 rotHandlerBound）
  * 拖拽中跳过：dragManager.dragging 守卫
  */
+/** 工作台键盘 bounding rect — 给 keyTooltip 智能避让用 */
+function getWorkbenchKeyboardAvoidRect(): { top: number; left: number; right: number; bottom: number } | undefined {
+  const wbRoot = document.getElementById('workbench-screen-preview');
+  if (!wbRoot) return undefined;
+  const kbEl = wbRoot.querySelector<HTMLElement>('.wb-keyboard-base');
+  if (!kbEl || typeof kbEl.getBoundingClientRect !== 'function') return undefined;
+  const r = kbEl.getBoundingClientRect();
+  return { top: r.top, left: r.left, right: r.right, bottom: r.bottom };
+}
+
 export function attachWorkbenchTooltips(): void {
   const root = document.getElementById('workbench-screen-preview');
   if (!root) return;
@@ -456,7 +466,8 @@ export function attachWorkbenchTooltips(): void {
       }
       const data = buildSkillKeyTooltipData(skillId, boundKeys);
       if (!data) return;
-      keyTooltip.show(e.clientX, e.clientY, data);
+      // 智能避让：tooltip 优先放在键盘上方/下方/左右，不挡其他字母键
+      keyTooltip.show(e.clientX, e.clientY, data, getWorkbenchKeyboardAvoidRect());
     });
     keyEl.addEventListener('mouseleave', () => {
       // 取消可能 pending 的 drag-preview build；hide 当前 tooltip
@@ -476,7 +487,8 @@ export function attachWorkbenchTooltips(): void {
       if (!skillId) return;
       const data = buildSkillKeyTooltipData(skillId);
       if (!data) return;
-      keyTooltip.show(e.clientX, e.clientY, data);
+      // IN-tray hover 也避开键盘
+      keyTooltip.show(e.clientX, e.clientY, data, getWorkbenchKeyboardAvoidRect());
     });
     cardEl.addEventListener('mouseleave', () => keyTooltip.hide());
   });
