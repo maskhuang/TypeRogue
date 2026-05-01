@@ -382,7 +382,7 @@ const ZH: Record<string, string> = {
   'shop.terminal.execute.prompt': '§> {line}',
   'shop.terminal.execute.completion_row': '  · {list}',
   'shop.terminal.switch_workbench.purchases_finalized': '  · 已定稿 {n} 项采购。',
-  'shop.terminal.welcome.connected': '已接通 · DPCA-VT220 · §117 气动申请管道',
+  'shop.terminal.welcome.connected': '已接通 · DPCA-VT220 · §117 ACQUISITIONS · {form}',
   'shop.terminal.welcome.try_help': '  · 输入  HEL  查看命令列表',
   // Story 60.21 review H2 fix: cmdInfo catalog + LIS 表头 + OWNED headlines
   'shop.terminal.info.skill.owned_headline': '═══ OWNED · {name} · {location} ',
@@ -1649,7 +1649,7 @@ const EN: Record<string, string> = {
   'shop.terminal.execute.prompt': '§> {line}',
   'shop.terminal.execute.completion_row': '  · {list}',
   'shop.terminal.switch_workbench.purchases_finalized': '  · {n} PURCHASES FINALIZED.',
-  'shop.terminal.welcome.connected': 'CONNECTED · DPCA-VT220 · §117 PNEUMATIC REQUISITION TUBE',
+  'shop.terminal.welcome.connected': 'CONNECTED · DPCA-VT220 · §117 ACQUISITIONS · {form}',
   'shop.terminal.welcome.try_help': '  · TYPE  HEL  FOR COMMAND LIST',
   // Story 60.21 review H2 fix: cmdInfo catalog + LIS 表头 + OWNED headlines
   'shop.terminal.info.skill.owned_headline': '═══ OWNED · {name} · {location} ',

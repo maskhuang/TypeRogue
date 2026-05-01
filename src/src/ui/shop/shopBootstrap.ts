@@ -587,7 +587,7 @@ function buildTerminalScreen(): string {
         <div class="terminal-bezel-top">
           <span class="bezel-led"></span>
           <span class="bezel-brand">DPCA-VT220</span>
-          <span class="bezel-spec">REQUISITION TERMINAL · TUBE-A4 · CLERK-7842</span>
+          <span class="bezel-spec">REQUISITION TERMINAL · TTY-A4 · CLERK-7842</span>
           <span class="bezel-vent" aria-hidden="true">▦▦▦▦▦▦</span>
         </div>
         <div class="terminal-bezel-screen">
@@ -749,7 +749,7 @@ function injectScreens(): void {
 }
 
 function renderWelcome(): void {
-  terminal.appendLine(t('shop.terminal.welcome.connected'), 'head');
+  terminal.appendLine(t('shop.terminal.welcome.connected', { form: terminal.getAcquisitionFormCode(state.runSeed) }), 'head');
   terminal.appendLine(t('shop.terminal.welcome.try_help'), 'dim');
   terminal.appendBlank();
   terminal.cmdList();

@@ -199,6 +199,7 @@ export interface GameState {
   ascensionLevel: number;        // Story 54.1: 本局 Ascension 级别（0-10）
   ascensionInitialModifier: string | null;  // Story 54.6: A6 初始弱化 modifier ID
   cycle: number;                        // 当前周目数（默认 1，通关 Boss 后 +1）
+  runSeed: number;                      // Per-run 稳定种子（runStart 时设 Date.now()），用于装饰性轮换（如 banner 申领表单号）
   activeModifiers: BossModifierId[];    // 跨周目累积的 Boss 修饰器列表
   bossModifierPool: BossModifierId[];  // Boss 战前选择的临时修饰器（0-3 个）
   usedBossModifiers: BossModifierId[];  // Story 42.6: 本 Run 已用修饰器列表（不重复抽取用）

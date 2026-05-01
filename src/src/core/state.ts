@@ -60,6 +60,7 @@ export function createInitialState(): GameState {
       mutagen: 0,
     },
     cycle: 1,
+    runSeed: Date.now(),
     activeModifiers: [],
     bossModifierPool: [],
     usedBossModifiers: [],  // Story 42.6: 本 Run 已用修饰器

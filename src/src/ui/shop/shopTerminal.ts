@@ -77,12 +77,37 @@ export function buildBannerLine(level: number, cycle: number, ascensionLevel: nu
 }
 
 /**
+ * §117 ACQUISITIONS 申领类表单池（per-run 轮换）
+ * narrative 已在 relic / boss / scriptor 文本散落引用过 F-001/F-017/F-039/F-044——
+ * 这里把它们 + 同类申领/拨发/补领号纳入池，每个 run 通过 runSeed % 池长 锁定一份。
+ * 玩家进商店看到 banner § ACQUISITIONS · F-039 = "今天生效拨发协议"。
+ */
+const ACQ_FORM_POOL: ReadonlyArray<string> = [
+  'F-001', // 申领总章
+  'F-017', // 复核 / 跟进
+  'F-039', // 拨发申请
+  'F-044', // 存档归档
+  'F-061', // 调拨
+  'F-088', // 增补
+  'F-117', // 补领
+  'F-156', // 外协
+  'F-211', // 特批
+  'F-273', // 追加
+];
+
+export function getAcquisitionFormCode(runSeed: number): string {
+  const idx = ((runSeed % ACQ_FORM_POOL.length) + ACQ_FORM_POOL.length) % ACQ_FORM_POOL.length;
+  return ACQ_FORM_POOL[idx];
+}
+
+/**
  * 构造完整 banner（4 行 ASCII 框纯文本，不含 HTML 标签）。
  * 调用方应当通过 textContent 写入 `<pre>` 元素，monospace 字体保留 \n 分行。
  */
-export function buildBannerText(level: number, cycle: number, ascensionLevel: number): string {
+export function buildBannerText(level: number, cycle: number, ascensionLevel: number, runSeed: number): string {
   const top = `┌${'─'.repeat(BANNER_INNER_WIDTH)}┐`;
-  const line1Body = '  DEPT. OF PRIMATE CLERICAL AFFAIRS · §117 PNEUMATIC REQUISITION TUBE  '.padEnd(BANNER_INNER_WIDTH, ' ');
+  const formCode = getAcquisitionFormCode(runSeed);
+  const line1Body = `  DEPT. OF PRIMATE CLERICAL AFFAIRS · §117 ACQUISITIONS · ${formCode}  `.padEnd(BANNER_INNER_WIDTH, ' ');
   const line1 = `│${line1Body.slice(0, BANNER_INNER_WIDTH)}│`;
   const line2 = `│${buildBannerLine(level, cycle, ascensionLevel)}│`;
   const bottom = `└${'─'.repeat(BANNER_INNER_WIDTH)}┘`;
@@ -126,7 +151,7 @@ export function updateTerminalChrome(): void {
   // Banner
   const bannerEl = root.querySelector<HTMLElement>('#terminal-banner-pre');
   if (bannerEl) {
-    bannerEl.textContent = buildBannerText(state.level, state.cycle, state.ascensionLevel ?? 0);
+    bannerEl.textContent = buildBannerText(state.level, state.cycle, state.ascensionLevel ?? 0, state.runSeed);
   }
 
   // BAL（沿用 innerHTML 因为含 <span class="bna">🍌</span>）
