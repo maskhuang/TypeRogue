@@ -3169,32 +3169,52 @@ Step 10 决定**怎么把 v3.0 设计真正写出来**。Step 5 立 Content Volu
 
 ---
 
-## Writing Scope · 细化估算
+## Writing Scope · 🔴 v3.1 重写（v3.0 估算严重低估）
 
-按 Step 5 + 7 内容清单分类计算（中文字符）：
+**v3.0 doc 立的 ~9,700 中文字符基于陈旧 scope（22 affix / 53 relic）。真实数据：**
 
-| 类目 | 数量 | 平均字符 | 小计 |
-|---|---|---|---|
-| 词缀类型 (Affix) | 22 | ~40 | ~880 |
-| 遗物 (Relic) | 53 | ~65 | ~3,445 |
-| Boss Modifier 政策 | 15 | ~100 | ~1,500 |
-| 职业 (Class + Endless) | 4 | ~40 | ~160 |
-| 阶段类型 flavor（进入 + 退出 × 4 类） | 8 | ~25 | ~200 |
-| Cycle 过渡 (4 段) | 4 | ~50 | ~200 |
-| 词单批次主题（12 类） | 12 | ~12 | ~144 |
-| Found Documents（30 段） | 30 | ~75 | ~2,250 |
-| Progression 字幕（cycle 1→2 / 3 / 5 / 6+） | 4 | ~30 | ~120 |
-| Tutorial 消息 | ~10 | ~50 | ~500 |
-| UI 文案（HR 观察腔 + 第二人称指令） | ~20 | ~15 | ~300 |
-| **合计** | **~180 单位** | — | **~9,700 中文字符** |
+| 对象 | v3.0 估计 | **v3.1 真实** |
+|---|---|---|
+| 词缀类型 (Affix) | 22 | **59 base + 26 附魔** |
+| 遗物 (Relic) | 53 | **94**（common 35 / rare 26 / epic 17 / legendary 16）|
+| Boss Modifier | 15 | 15 ⚪ |
+| Found Documents | 30 | 30 ⚪ |
 
-### 范围归档
+**v3.1 真实写作量级（中文字符 + 双层 skin + 双语）：**
 
-- **中文：** ~9,700 字符
-- **English 等价：** ~14,500 词（中英比 ≈ 1.5x）
-- **Buffer：** +5-10%（修订 / 补充内容）= **~10,200 字符 / ~15,200 英文词**
+| 对象 | 单位 | bell 层 | doc 层 | × 中英 | 小计 |
+|---|---|---|---|---|---|
+| 59 base 词缀 | 59 | ~25 | ~250 | × 2 | ~32,000 |
+| 26 附魔 | 26 | ~25 | ~150 | × 2 | ~9,000 |
+| 94 遗物 | 94 | ~25 | ~280 | × 2 | ~57,000 |
+| 15 Boss Modifier | 15 | ~30 | ~300 | × 2 | ~10,000 |
+| 30 Found Documents | 30 | — | ~120 | × 2 | ~7,000 |
+| 4 套守则（V-1/V-2/V-3/PEP）| 4 | — | ~250 | × 2 | ~2,000 |
+| 反转映射（Tier 3）| ~30 | — | ~30 | × 2 | ~1,800 |
+| 阶段 / Cycle / Tutorial / UI 等其他 | — | — | — | — | ~10,000 |
 
-**这是标准模板"Light narrative"范围**（5K-15K 词）—— 兑现 v3.0 Lean Mode 承诺。
+**v3.1 真实总量：~129,000 字符（中英合计）/ ~64,000 中文字符**
+
+⚠️ **这是 Heavy Narrative 量级**——v3.0 的 "Light Narrative" 自我标定与真实 scope 不符。
+
+### 范围归档（v3.1 修正）
+
+- **中文：** ~64,000 字符
+- **English 等价：** ~96,000 词（中英比 ≈ 1.5x）
+- **Buffer：** +5-10%（修订 / 补充内容）
+
+### 解法
+
+保留 Lean Mode 的**结构哲学**（5+1 锚 / 0 派系 / 4 template / 30 Found Documents），但**显式承认**：
+
+> **Lean = 结构紧，不是字数少。** 字数大是机制 scope（59 affix / 94 relic / 26 附魔 + 4 套守则 + 反转映射）决定的——narrative 不能砍机制对象，所以必须依赖 **AI 流水线 + 人工 review** 作为唯一可行的 production 模式。
+
+### Production 强制路径
+
+- 100% 走 `scripts/narrative-writer/` 流水线（pipeline 配置已 v3.0 sync，等 v3.1 sync 后即可）
+- 人工 review 抽样率 ≥ 20% per batch
+- 自动监控器：Section ≤ 30%、上游 ≤ 30-40%、Rule 14 句式 ≤ 25%、猴梗 ≤ 30%、部门均匀 ≤ 25% 全部强制
+- v2.3 Ironpress 残留（58/95 relic + ~85% skills）必须在 v3.1 流水线产出后**整体覆盖**——不允许局部混合
 
 ---
 
@@ -3273,17 +3293,22 @@ Step 10 决定**怎么把 v3.0 设计真正写出来**。Step 5 立 Content Volu
 
 **复用 `scripts/narrative-writer/` 流水线**（待 v3 重建，参见 Foundation Infrastructure Debt）。
 
-### Prompt 约束清单（强制）
+### Prompt 约束清单（强制 · v3.1 扩展）
 
 | 约束 | 来源 |
 |---|---|
-| 13 条 Creator Discipline 铁律 | Foundation |
+| **14 条** Creator Discipline 铁律（v3.1 新增 Rule 14）| Foundation |
 | B1.a 词汇表（中 + 英） | Foundation Step 6 |
-| MIB 信号词典（分类编号 / 异常词汇 / 不在场机构 / 楼层暗示） | Step 5 |
+| 收容信号词典 5 类（分类编号 / 异常词汇 / 不在场机构 / 楼层暗示 + 🟢 SOP 句式 v3.1）| Step 5 |
 | 留白机构 ≤ 30% 配额（Section 限制） | Step 5 |
 | 上游母题 ≤ 30-40% 配额 | Step 5 |
-| Voice × Carrier 矩阵（5 锚点 × 14 载体） | Step 6 |
+| Voice × Carrier 矩阵（**6 锚点** × 16 载体）| Step 6（v3.1 更新）|
 | 30/70 比例守则（猴子梗占比） | Foundation Ethical Stance |
+| 🟢 **Rule 14 规则句式恐怖密度配额（≤ 25%）**（v3.1 新增）| Foundation Rule 14 |
+| 🟢 **Anchor 6 人类记忆残片限频**（每 run ≤ 1 处显性出现）（v3.1 新增）| Step 4 Anchor 6 |
+| 🟢 **11 部门均匀使用配额（每部门 ≤ 25%）**（v3.1 新增）| Step 5.5 |
+| 🟢 **猴类学名编码合规检查**（59 base 词缀 4 字母代码 + 8 Apprentice 行为学术语）（v3.1 新增）| Step 4.5 / 4.6 |
+| 🟢 **Tier 反转监控规则**（PEP 持有时 12 项核心反转必须生效）（v3.1 新增）| Step 4.7 |
 
 ### 人工 Review 重点
 
@@ -3516,6 +3541,16 @@ Step 11 标准模板做：Relationship Map / Story Timeline / References / 最�
 |---|---|
 | 无限猴子定理 | 核心种子（v3.0 起点） |
 | MIB（Men in Black） | 装备 / 政策科幻包装（Step 5 立死） |
+| 🟢 SCP Foundation 题材（v3.1 新增）| 收容主义官僚底色（**不命名**）—— Step 5 不命名条款；4 套守则 + 视角反转灵感源 |
+
+### 🟢 网络写作 genre（v3.1 新增）
+
+| 类型 | 用途 |
+|---|---|
+| **规则类怪谈**（中文互联网） | 规则句式 + SOP 化恐怖（Rule 14 嫁接源 + Step 4.7 三轨守则系统的灵感源） |
+| **灰色兼职帖子**（"我应聘了一份月薪 X 万的工作"系列） | 第一人称参与者笔法 + 报酬诱饵 + 退出代价模糊 |
+
+**学其句式 / 节奏 / 平静语调，不学其情绪 / 段子 / 反转套路。**
 
 ### 现实参考（中文受众语境）
 
@@ -3530,71 +3565,105 @@ Step 11 标准模板做：Relationship Map / Story Timeline / References / 最�
 
 ---
 
-## Final Completion Summary
+## Final Completion Summary（v3.1 升级）
 
-### v3.0 Lean Moderate · 全 11 步达成
+### v3.1 Lean Moderate（结构紧 / 字符 Heavy）· 全 11 步达成 + 5 个 NEW 章节
 
-| Step | 章节 | 关键产出 |
+| Step | 章节 | v3.0 关键产出 | v3.1 增量 |
+|---|---|---|---|
+| 1 | Initialize | v3.0 设定方向重置 | v3.1 SCP 底色显形 |
+| 2 | Foundation | 3 主题 / 语调五轴 / Truth B1-B6 / 13 铁律 | + 主题 E + 第六轴 + B7/B8/B9 + T4 + Rule 14 |
+| 3 | Story Beats | 10 节拍触发清单 + 双峰 pacing | ⚪ 不变 |
+| 4 | Characters | 5 锚点 + 1 子锚 | + Anchor 6 人类记忆残片（破 lean cap）+ 内训讲师权重升 |
+| 4.5 | 🟢 词缀编码体系 | — | NEW · 59 base 词缀 NCBI 学名映射 |
+| 4.6 | 🟢 附魔编码体系 | — | NEW · Apprentice 行为学动词 + Quest FOC-XX |
+| 4.7 | 🟢 三轨映射核心机关 | — | NEW · 守则 V-1/V-2/V-3/PEP × 知觉 L0-L3 × 协议 SCP/FRP/ARP/PEP |
+| 5 | World & Lore | MIB 信号词典 + 5 Whys | + 收容主义官僚定性 + 不命名条款 + 信号词典第 5 类 SOP 句式 |
+| 5.5 | 🟢 遗物分发部门体系 | — | NEW · 11 子系统 → 11 部门 + v2.3 残留清理优先级 |
+| 6 | Dialogue Framework | Voice × Carrier 矩阵 + B1.a 词汇表 | + Anchor 6 行 + Beat 7 升级到 6 条规则 |
+| 7 | Environmental | 战斗极简 / Cycle 演进三档 / Found Documents 30 段 | + 认知污染视觉系统 V0-V6 + 听觉 A1-A2 |
+| 8 | Delivery | Cutscene NONE + Open Loop + Skip 规则 | ⚪ 不变 |
+| 9 | Integration | T1 双轨 + Mutagen B1.a + 6 新 Scene 类 | + Mutagen 文案再压实（协议姿态绑定） |
+| 10 | Production | ~9.7K Light narrative | 🔴 修正为 ~64K 中 / ~96K 英 Heavy；强制流水线路径 |
+| 11 | Complete | Relationship Map + Timeline + References | + SCP / 规则类怪谈 / 灰色兼职 三项灵感源 |
+
+### v3.1 vs v3.0 关键差异
+
+| 维度 | v3.0 | v3.1 |
 |---|---|---|
-| 1 | Initialize | v3.0 设定方向重置（v2.3 backup 保留） |
-| 2 | Foundation | Premise / 3 主题 / 语调坐标卡 / 4 幕结构 / Truth Hierarchy / Ethical Stance / 13 条铁律 |
-| 3 | Story Beats | 10 节拍触发清单 + 双峰 pacing + 飞字反馈 (Beat 1/2/3/7/8 重定位 in Step 7) |
-| 4 | Characters | 5 锚点 + 1 子锚（路径乙合并 = 上级权威 A/B 显形） |
-| 5 | World & Lore | World Frame + MIB 信号词典 + Section / 上游配额 + 5 Whys → B1.a |
-| 6 | Dialogue Framework | Voice × Carrier 矩阵 + B1.a 词汇表（中 + 英） + 10 Beat Voice Spec |
-| 7 | Environmental | 战斗极简 / 非战斗丰富 + Cycle 演进三档 + Found Documents 30 段 |
-| 8 | Delivery | Cutscene NONE + Open Loop + Skip 行为规则 |
-| 9 | Integration | T1 双轨 + Mutagen B1.a + 6 新 Scene 类 + v1.0 / v1.1+ 分期（R1-R5 应用） |
-| 10 | Production | ~9.7K 中文字符 + 中英双语 + AI + Review + 12 周 timeline |
-| 11 | Complete | Relationship Map + Timeline + References |
+| 设定核 | 卡夫卡式打字工厂 + MIB 隐含科幻 | + **SCP 收容主义底色（不命名）** |
+| 玩家身份 | 你**就是**麻木的灵长抄录员 | 你**被要求 perform** 灵长心智 = **协议**，不是身份 |
+| 威胁主体 | 公司（向上挥拳） | 公司**和你**都在被吃 = **共谋宇宙恐怖** |
+| 认知污染 | 不存在概念 | **机制可见的默认湿度**（V0-V6 + A1-A2 + 三轨 L0-L3）|
+| 调岗 | 模糊处分 | **污染过临界 → 退化为人 → 不可用** |
+| 黑色幽默 | 70% 喜剧 | 60% 喜剧（**苦笑撑着**） |
+| 角色锚点 | 5 | **6**（破 lean cap 换 Anchor 6）|
+| Truth Hierarchy | B1-B6 | + B7/B8（B9 顺位）+ T4 |
+| Creator Discipline | 13 条 | **14 条**（Rule 14 新增 + Rule 6 重写）|
+| 写作量级 | ~9.7K Light | **~64K 中 / ~96K 英 Heavy**（机制 scope 决定）|
+| 核心机关 | — | **三轨映射**（守则 × 知觉 × 协议）|
+| 词缀命名 | 行为名（Crit/Pulse/etc.）| + **NCBI 4 字母学名**（Mmul/Sbol/etc.）|
+| 附魔命名 | 行为名 | + **Logic E 混合**（Apprentice 行为学 / Quest FOC-XX / Operator Dominance）|
+| 遗物 voice | 自由 | **11 子系统 → 11 部门**统一发放方 |
 
-### v3.0 vs v2.3 关键差异
+### v3.0 → v3.1 vs v2.3 关键差异（保留）
 
-| 维度 | v2.3（已废弃） | v3.0（本版） |
+| 维度 | v2.3（已废弃） | v3.0 | v3.1 |
+|---|---|---|---|
+| 设定 | Ironpress Cathedral / 40K+SCP | 灵长类辅助文书部 / MIB | + SCP 收容主义底色显形 |
+| 派系数 | 多派系 | 0 | ⚪ 0 |
+| 角色锚点 | 多（含守卷人 D / E）| 5 | **6**（破例换 Anchor 6）|
+| flavor template | 7 套 | 4 套 | ⚪ 4 |
+| 文档篇幅 | ~120 KB | 较紧 | 比 v3.0 增 ~70% 但结构仍紧 |
+| 调子 | 黑暗压抑 | 黑色幽默 | 共谋宇宙恐怖（更暗）|
+
+### Hard Constraints（v3.1 更新 · Lean = 结构紧）
+
+| Hard Constraint | v3.0 | v3.1 |
 |---|---|---|
-| 设定 | Ironpress Cathedral / 40K+SCP | 灵长类辅助文书部 / 卡夫卡式打字工厂 / MIB |
-| 主题数 | 多主题交织 | 3 个核心主题（A + B + D） |
-| 派系数 | 多派系 | 0 派系（"留白即答案"） |
-| 角色锚点 | 多（含守卷人 D / E 对照者） | 5 锚点 + 1 子锚 |
-| flavor template | 7 套 | 4 套 |
-| 文档篇幅 | ~120 KB | 待确认（更紧） |
-| 调子 | 黑暗压抑 | 黑色幽默（共谋读者） |
-| 篇幅密度 | 百科级 | Light narrative（~10K 字） |
+| 派系数量 ≤ 2 | 0 | ⚪ 0 |
+| **角色锚点 ≤ 5** | 5 | 🟡 **6**（破例 1 锚换核心叙事完整性，已记录） |
+| flavor template ≤ 4 | 4 | ⚪ 4 |
+| Found Documents ≤ 40 | 30 | ⚪ 30 |
+| 写作量级 | ~9.7K Light | 🔴 **~64K Heavy**（结构紧 / 字符 scope 由机制决定）|
+| Voice Acting NONE | $0 | ⚪ $0 |
+| v1.0 仅中英 | 2 | ⚪ 2 |
+| **Lean 定义** | （含蓄）| 🟢 **Lean = 结构紧（5+1 锚 / 0 派系 / 4 template）；字数大是机制 scope 决定的** |
 
-### 已立的 Hard Constraints（Lean Mode 兑现）
+### Infrastructure Debt（v3.1 更新）
 
-- ✅ 派系数量 ≤ 2（实际 0）
-- ✅ 角色锚点 ≤ 5（实际 5）
-- ✅ flavor template ≤ 4（实际 4）
-- ✅ Found Documents ≤ 40（实际 30）
-- ✅ 写作量级 ~10K 字符（Light narrative）
-- ✅ Voice Acting NONE（$0 预算）
-- ✅ v1.0 仅中英（不四语并发）
+- ✅ `scripts/narrative-writer/generated/anchor-facts.mjs` v3.0 已 sync（v3.1 patch 后再 sync）
+- ✅ `scripts/narrative-writer/generated/translation-table.mjs` v3.0 已 sync
+- ✅ `scripts/narrative-writer/generated/mib-lexicon.mjs` v3.0 已 sync（v3.1 升级为 containment-lexicon）
+- ✅ `scripts/narrative-writer/generated/b1a-vocab.mjs` 已 sync
+- ✅ `scripts/narrative-writer/generated/quotas.mjs` 已 sync
+- ✅ `scripts/narrative-writer/generated/stage-config.mjs` 已 sync
+- ⚠️ **新增（v3.1）：** `scripts/narrative-writer/generated/affix-taxa.mjs` —— 59 base 词缀 NCBI 学名表
+- ⚠️ **新增（v3.1）：** `scripts/narrative-writer/generated/enchant-protocols.mjs` —— Apprentice 8 + Operator + BonusOutput 协议表
+- ⚠️ **新增（v3.1）：** `scripts/narrative-writer/generated/relic-departments.mjs` —— 11 子系统 → 11 部门映射
+- ⚠️ **新增（v3.1）：** `scripts/narrative-writer/generated/handbooks.mjs` —— 4 套守则文本 V-1/V-2/V-3/PEP
+- ⚠️ **新增（v3.1）：** `scripts/narrative-writer/generated/tier3-inversion-map.mjs` —— Tier 3 视角反转映射 ~30 项
+- ⚠️ **数据文件重写：** 58/95 relic narrative + ~85% skills.ts narrative（v2.3 残留）必须批量产出 v3.1
+- ⚠️ Memory 同步（patch 阶段处理）：v3.1 叙事方向 + UI 词典 cycle 演进升级
 
-### Infrastructure Debt（明确清单 → Step 10 P0/P1 待办）
+### v1.0 ship 时间表
 
-- ⚠️ `scripts/narrative-writer/generated/anchor-facts.mjs` v3 重建
-- ⚠️ `scripts/narrative-writer/generated/translation-table.mjs` v3 重建
-- ⚠️ `scripts/narrative-writer/generated/layer-config.mjs` v3 重建
-- ⚠️ `src/data/narrative/{battle,relics,scriptorNotes,skills,tutorial,ui}.ts` 内容重写
-- ⚠️ Memory 锚点替换（user memory: Ironpress Cathedral → 灵长类辅助文书部）
-
-### v1.0 ship 时间表（3 个月内）
-
-按 Step 9 + 10 立的 12 周 timeline。Buffer 0 周。**Indie 评估刚好够。**
+按 v3.0 立的 12 周 timeline。Buffer 0 周。**v3.1 不延长 timeline**——所有新增内容（编码体系 + 三轨映射 + 视觉污染）都通过 narrative-writer 流水线在已有 timeline 内完成。
 
 ---
 
-## Handoff · 推荐下一步
+## Handoff · 推荐下一步（v3.1）
 
 | # | 选项 | 理由 |
 |---|---|---|
-| 1 | **Architecture / Tech Spec workflow** | 根据本文档立技术架构 / 实施细节（6 个新 Scene 类 / T1 race 防御 / PixiJS filter chain 等） |
-| 2 | **narrative-writer v3 流水线重建** | 先动 Infrastructure Debt（Foundation 立的优先项）+ Step 10 立的 14 天预算 |
-| 3 | **替换现有 6 个 narrative 数据文件** | 按 v3.0 Foundation 的 5 锚点腔调 + B1.a 词汇表 + MIB 信号词典 重写 |
+| 1 | **narrative-writer v3.1 流水线 sync** | `node scripts/sync-narrative.mjs` 把 v3.1 narrative-design.md sync 到 generated/ 配置 |
+| 2 | **新增 5 个 generated 静态表** | affix-taxa / enchant-protocols / relic-departments / handbooks / tier3-inversion-map |
+| 3 | **批次重生成 v2.3 残留 narrative** | 58/95 relic + ~85% skills 通过流水线批量产出 v3.1 内容 |
+| 4 | **Architecture / Tech Spec workflow** | 根据本文档立技术架构（6 新 Scene 类 / T1 race 防御 / V0-V6 + A1-A2 视觉污染滤镜实施 / 三轨映射状态机） |
+| 5 | **打磨 v3.1 待决议项** | Q2 词料语义反转 / Q3 蕉券暗示层 / Q4 守则矛盾密度 / Q5 守则文本归属 |
 
-**推荐顺序：2 → 3 → 1。** narrative-writer 先重建（生产工具）→ 然后批量重写 6 个数据文件（拿生产工具产出）→ 然后做技术架构（实施 6 个新 Scene 类等）。
+**推荐顺序：1 → 2 → 5 → 3 → 4。** sync 跑通 → 静态表落地 → 待决议项打磨 → 然后批量产出 → 最后做技术架构。
 
 ---
 
-_Narrative Design v3.0 完成。Lean Moderate 全部 8 个 Hard Constraints 兑现。**Yuchenghuang，你这次干得漂亮。**_
+_Narrative Design v3.1 完成。Lean Moderate（结构紧 / 字符 Heavy）兑现。三轨映射核心机关 locked，4 个 Q 决议待打磨。**v3.1 是 v3.0 的真正自成体系完成态**。_
