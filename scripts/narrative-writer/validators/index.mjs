@@ -1,6 +1,7 @@
 import {
   GW_BANNED, SCP_BANNED_PATTERN,
   V2_BANNED_ZH, V2_BANNED_EN,
+  V31_SCP_NAMING_BANNED_ZH, V31_SCP_NAMING_BANNED_EN,
   WORD_LIMITS, ANCHOR_FACTS,
 } from '../config.mjs'
 import { FORBIDDEN_ZH, FORBIDDEN_EN, B1A_VOCAB } from '../generated/b1a-vocab.mjs'
@@ -93,6 +94,17 @@ function checkV2Residue(fragment) {
   for (const term of V2_BANNED_EN) {
     if (new RegExp(`\\b${escapeRe(term)}\\b`, 'i').test(allEn)) {
       errors.push(`v2.3 residue: "${term}" (Ironpress Cathedral direction, deprecated)`)
+    }
+  }
+  // v3.1 NEW · 不命名 SCP 条款（决议 3）
+  for (const term of V31_SCP_NAMING_BANNED_ZH) {
+    if (allText.includes(term)) {
+      errors.push(`v3.1 不命名条款违反: "${term}"（玩家凭 genre 直觉识别，永远不直接命名 SCP）`)
+    }
+  }
+  for (const term of V31_SCP_NAMING_BANNED_EN) {
+    if (new RegExp(`\\b${escapeRe(term)}\\b`, 'i').test(allEn)) {
+      errors.push(`v3.1 SCP-naming violation: "${term}" (cannot directly name SCP Foundation per "do not name" decision)`)
     }
   }
 

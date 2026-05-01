@@ -76,6 +76,22 @@ export const GW_BANNED = [
 
 export const SCP_BANNED_PATTERN = /SCP-\d{3,4}/
 
+// v3.1 NEW · 不命名条款 — 禁止任何直接命名 SCP Foundation 的术语
+// 玩家凭 genre 直觉识别；这些精确短语出现 = AI 越界
+export const V31_SCP_NAMING_BANNED_ZH = [
+  '基金会', 'SCP 基金会',
+  // 注意：单独"收容"作动词（"收容工作"）允许；"收容物"作专有名词独立出现禁止
+]
+
+export const V31_SCP_NAMING_BANNED_EN = [
+  'Object Class', 'object-class',
+  'Safe-class', 'Euclid-class', 'Keter-class', 'Thaumiel-class',
+  'Anomalous Object', 'Anomalous Entity', 'anomalous object', 'anomalous entity',
+  'SCP Foundation', 'the Foundation',
+  'Secure, Contain, Protect',
+  'Containment Breach', // 已在 V2_BANNED_EN，重复防护
+]
+
 // v2.3 Ironpress Cathedral residue — these MUST NOT appear in v3 output.
 // Generated text containing any of these signals a regression to the old setting.
 export const V2_BANNED_ZH = [
