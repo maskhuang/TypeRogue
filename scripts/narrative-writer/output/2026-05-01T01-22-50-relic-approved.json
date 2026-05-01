@@ -1,0 +1,18 @@
+[
+  {
+    "text_zh": "回归基础 · C-9 类能力缩减配给物\n\n分发对象：累计技能授权经核查存在结构性冗余情形、已纳入复审程序的雇员。\n\n本配给物随能力缩减处理程序一并配发，用于将持有人的职能档案整合至未附加授权的基准作业状态。配发完成后，持有人此前获批的全部技能许可将提交 HR 并入统一处理流程。持有人在持有本配给物的在岗期内，不予批准任何附加技能授权申请。\n\n操作说明：\n—— 持有人反映，未附加授权状态下的作业水平平均高于配发前的预估数据。产能评估部门尚未就此情况发布说明。\n—— 共有██名雇员在配发后提出提前归还申请。上述申请均已依照标准缩减程序处理完毕。未登记任何例外情形。\n—— 本配给物不具备跨部门转移许可。在周期中途接到调岗安排的雇员，须在前往接收部门报到前将本配给物移交 HR。\n—— 持有本配给物期间，请勿尝试提交附加技能许可申请。违反本程序提交的申请将直接归档，不予审阅。\n—— 雇员在离岗、调岗或职级重新核定时，须将本配给物连同随附的能力豁免文书一并归还政策协调员办公室。",
+    "text_en": "Back to Basics · C-9 Class Competency Reduction Asset\n\nDistribution Target: Employees whose cumulative skill authorizations have been flagged for structural redundancy review.\n\nThis asset is issued in conjunction with the Competency Reduction Procedure and serves to consolidate the holder's operational profile to unaugmented baseline output. Upon issuance, all previously authorized skill permits are submitted to HR for concurrent processing. No supplemental skill authorizations will be approved for the holder's active tenure on this asset.\n\nOperational Notes:\n—— Holders report that unaugmented output is, on average, higher than pre-issuance estimates. The Productivity Assessment Unit has not issued an explanation.\n—— ██ employees requested early return of this asset following issuance. All requests were processed under standard reduction protocol. No exceptions were recorded.\n—— This asset is not cleared for cross-departmental transfer. Employees reassigned mid-cycle must surrender the asset to HR before reporting to the receiving department.\n—— Do not attempt to file supplemental skill permit applications while holding this asset. Applications submitted in violation of this procedure will be archived without review.\n—— Upon separation, transfer, or reclassification, return this asset to the Policy Coordination Office along with any accompanying competency waiver documentation.",
+    "_objectId": "glass_cannon_v2",
+    "_voice": "doc",
+    "_aiScore": 6,
+    "_aiIssues": [
+      "【Rule 12 · 不复述机制 · 核心问题】全文几乎纯粹描述'功能流程'——配发程序、归还程序、申请处理程序——而未描述'人遇到这个东西后经历了什么'。档案里没有任何人类反应的质感：没有持有者的异常行为、没有工位层面的可观测变化、没有任何一句让玩家感受到'这个东西发生在某个具体员工身上'的叙事锚点。",
+      "【MIB 密度不足 · 水底暗示缺失】唯一接近'暗示水底'的句子是'持有人反映，未附加授权状态下的作业水平平均高于配发前的预估数据。产能评估部门尚未就此情况发布说明。'——这是全文最好的一句，但仅此一处。其余内容是纯 SOP 条款罗列，没有分类编号（仅有'C-9 类'，可接受）、没有楼层暗示、没有不在场机构引用（缺维修组/检查组/复审委员会等），MIB 信号词密度过低。",
+      "【Rule 14 · 规则句式密度偏高】'操作说明'四条中有两条是直接禁止句（'请勿尝试……'/'违反本程序……将直接归档'），加上归还义务条款，规则句式占比约 40%，超出 25% 配额上限。整体读感偏向'怪谈帖子式规则列表'而非'企业 SOP 文书'。",
+      "【黑色幽默五轴失衡 · 喜剧轴几乎归零】全文没有任何'咦了一下又笑了'的钩点。██名雇员申请归还这一数据有潜力，但处理太过平铺（'均已依照标准缩减程序处理完毕。未登记任何例外情形。'），喜剧张力被行政语言完全压平。黑暗轴偏高（80%+），喜剧轴低于目标 60%，五轴坐标失衡。",
+      "【'能力豁免文书'概念悬空】归还时须附'能力豁免文书'，但此文书从未在其他地方建立，单独出现在末条显得像机制 patch note 补丁，而非叙事有机体的一部分。",
+      "【英文版 B1.a 轻微风险】英文中'serve to consolidate the holder's operational profile'中'consolidate'语义安全，但'supplemental skill permit applications'反复出现中'skill permit'结构有轻微'主动求知'语感——建议替换为'authorization allocation'或'competency allocation request'以强化'被分发'框架语感。"
+    ],
+    "_aiSuggestion": "核心修改方向：**将流程文书转化为有人气的档案**。建议保留 C-9 编号和'产能评估部门尚未发布说明'这一最强钩点，并以此为支点扩写。具体操作：\n\n1. **加入可观测的人类反应层**：在'操作说明'中插入 1-2 条持有者行为记录，例如：持有者在配发后第 3 个工作日平均键盘敲击速度较基准线高出 12%，但同期错误率降至 0。复审委员会对此保持关注，目前处于观察期，暂未启动干预程序。\n\n2. **降低规则句式密度**：将'请勿尝试提交……'改写为陈述句，例如：'配发期间提交的附加技能许可申请将由系统自动归档，不进入人工审阅队列。'\n\n3. **插入一个留白机构引用**：在归还条款之后可加一行：'如持有人在归还前出现产能异常波动，请通知复审委员会，而非直接联系主任办公室。'\n\n4. **利用██数据做一个轻微喜剧落点**：例如在该条末尾加'——其中 1 名雇员在申请归还时仍持有配给物，本配给物的当前状态：已归还。'制造一个轻微的行政逻辑错位感，保持'咦了一下'而不是'被吓到'。"
+  }
+]

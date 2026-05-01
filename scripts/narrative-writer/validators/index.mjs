@@ -208,7 +208,7 @@ function checkVoiceRules(fragment, voice, template) {
   }
   const mechanicTermsEn = [
     'combo', 'buff', 'debuff', 'DPS', 'cooldown', 'proc',
-    'inventory', 'equipment slot', 'loadout', 'skill slot',
+    'equipment slot', 'loadout', 'skill slot',
     'trigger condition', 'stack', 'multiplier', 'tier',
     'increase', 'decrease', 'boost', 'cap',
   ]
@@ -217,6 +217,11 @@ function checkVoiceRules(fragment, voice, template) {
     if (re.test(en)) {
       errors.push(`Game-mechanic term: "${t}" — use v3 institutional language`)
     }
+  }
+  // "inventory" 在游戏 UI 上下文禁，但库存 / 物资清单等官僚用法 OK — 仅游戏组合词触发
+  const inventoryGameContext = /\binventory\s+(slot|cap|space|management\s+system|UI)\b/i
+  if (inventoryGameContext.test(en)) {
+    errors.push(`Game-mechanic term: "inventory" in game UI context — use v3 institutional language (e.g., "stock list", "requisition records")`)
   }
 
   // Universal: ban "不是…而是…" pattern (writer explanation)

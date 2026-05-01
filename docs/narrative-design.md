@@ -2051,7 +2051,7 @@ Tier 3 (PEP)：
 | Research | research (verb, solo), study (alone), explore, investigate, develop (alone) | Implies active inquiry |
 | Breakthrough | breakthrough, awaken, transcend, master (verb) | Implies self-overcoming |
 | Creation | invent, create, design (alone), forge, conceive | Implies subjectivity |
-| Spiritual | resonate, attune, channel, awaken, intuit | Wuxia / mystical voice |
+| Spiritual | resonate, attune, awaken, intuit | Wuxia / mystical voice |
 | Liberation | unleash, unlock (self), release (self potential), free oneself | Implies free will |
 
 #### ⚠️ Context-sensitive
@@ -2062,6 +2062,7 @@ Tier 3 (PEP)：
 | improve | "improve your rating" | ❌ "improve yourself" |
 | research | "Review Research Department" (proper noun) | ❌ "research new techniques" |
 | master | (avoid generally) | ❌ "master the technique" |
+| channel | "requisition channels" / "communication channels" / "delivery channel" | ❌ "channel internal energy" / "channel the resonance" |
 
 **Heuristic (English):** Subject = employee taking initiative? = Dangerous. Subject = company process / HR? = Safe.
 

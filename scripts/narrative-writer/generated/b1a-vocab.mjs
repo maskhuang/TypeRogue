@@ -182,7 +182,6 @@ export const B1A_VOCAB = {
         "words": [
           "resonate",
           "attune",
-          "channel",
           "awaken",
           "intuit"
         ],
@@ -218,6 +217,11 @@ export const B1A_VOCAB = {
         "word": "master",
         "safe": "(avoid generally)",
         "dangerous": "❌ \"master the technique\""
+      },
+      {
+        "word": "channel",
+        "safe": "\"requisition channels\" / \"communication channels\" / \"delivery channel\"",
+        "dangerous": "❌ \"channel internal energy\" / \"channel the resonance\""
       }
     ]
   }
