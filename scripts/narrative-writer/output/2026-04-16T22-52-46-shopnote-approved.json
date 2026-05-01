@@ -1,0 +1,62 @@
+[
+  {
+    "text_zh": "铅屑够了就别买了，攒着",
+    "text_en": "Stop buying if u have enough shavings",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "定版的比活版的耐用",
+    "text_en": "Fixum lasts longer than Mobilum",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "左下角那个，我试过，很好用",
+    "text_en": "Bottom left one works great, tried it",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "又涨价了？上周才15铅币",
+    "text_en": "Price up again? Was 15 coins last week",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "谁把我的笔拿走了！！",
+    "text_en": "WHO TOOK MY PEN!!",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "这破地方连个椅子都没有",
+    "text_en": "No chairs in this damn place",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0891说别碰脱版的",
+    "text_en": "D-0891 says avoid Solum grade",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-1247推荐右边第三个",
+    "text_en": "D-1247 recommends 3rd from right",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "我明天就要上去了，紧张",
+    "text_en": "Going up tomorrow, nervous",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "那个守卫一直在看我们",
+    "text_en": "That guard keeps watching us",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  }
+]

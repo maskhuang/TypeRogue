@@ -1,0 +1,50 @@
+[
+  {
+    "id": "none",
+    "name_zh": "初誓键徒",
+    "name_en": "The Keybound Novitiate",
+    "text_zh": "「汝之手即为祷告，汝之击键即为铭刻。无他术，无他道——唯有虔诚。」",
+    "text_en": "\"Thy hands are prayer, thy keystrokes inscription. No art, no path—only devotion.\"",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铭刻誓门",
+    "name_en": "The Order of the Graven Oath",
+    "text_zh": "「铅屑甄别，圣字钉造册，收容经卷逐行铸就——形不可变，序不可乱。」",
+    "text_en": "\"Shavings sorted, glyphs catalogued, scrolls forged line by line—form immutable, order absolute.\"",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔变誓门",
+    "name_en": "The Order of the Molten Verse",
+    "text_zh": "「熔蜡流淌，铭文重塑——汝当拥抱变化，因变化即为引擎之本性。」",
+    "text_en": "\"Wax flows, inscriptions reshape—embrace change, for change is the Engine's nature.\"",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  },
+  {
+    "id": "none",
+    "text_zh": "ORDER-001 · 消耗品编制\n\n入会条件: 无。按§4.2自动指派\n征用配给: 标准圣坛一座，铅币若干\n任务区域: 第I-XII层全域\n失联率: ██.█%\n\n备注: D级人员标准编制。无特殊授权，无派别归属。\n按表单F-001征用配给后立即投入收容作业。\n预期服务期: 不定。替补储备充足。",
+    "text_en": "ORDER-001 · Expendable Classification\n\nEntry Requirements: None. Auto-assigned per §4.2\nStandard Allocation: One lectern, assorted lead tokens\nOperational Area: Layers I-XII (full clearance)\nLoss Rate: ██.█%\n\nNotes: Standard D-class deployment. No special authorization.\nNo factional affiliation recorded.\nExpected service duration: Indefinite. Replacement stock adequate.",
+    "_voice": "doc",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "text_zh": "ORDER-117 · 铭刻誓门学徒\n\n入会条件: 铅屑甄别测试合格，圣字钉造册实习期满\n神学立场: \"形不可变，秩序永恒\"\n专精领域: 废铅分拣，收容经卷编制\n\n持有者报告能\"听到铅字私语\"。经长期观察，确有收容\n成功率异常增益。附带现象: 工作区域内偶现规整几何\n图案，成因不明。失联后铅屑堆积异常整齐。\n\n与ORDER-044存在理论分歧。",
+    "text_en": "ORDER-117 · Inscriptionist Novitiate\n\nEntry: Lead-shard sorting certified, glyph cataloguing apprenticed\nDoctrine: \"Form immutable, order eternal\"\nSpecialization: Waste lead reclamation, containment codex compilation\n\nSubjects report \"hearing lead whispers\" during work shifts.\nObserved containment efficiency anomalously elevated. Collateral\nphenomena: Geometric patterns manifest in work areas, cause unknown.\nPost-disappearance: Lead shavings found in unnaturally ordered piles.\n\nDoctrinal tensions with ORDER-044 documented.",
+    "_voice": "doc",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "text_zh": "ORDER-044 · 熔变誓门门徒\n\n入会条件: 自愿接受熔蜡浸润，铸型重塑耐受测试\n神学立场: \"顺流而化，拥抱无常\"\n作业方式: 盲视铸型，随机重塑铭文组合\n\n使用者报告\"能感知未来形态\"。铸型观测表现出非随机\n倾向，成功率高于理论预期。附带现象: 体温略升，\n汗液含铅量异常。长期使用者指纹会缓慢变化。\n\n注: 该编制在正式条例中无对应章节。按惯例处理。",
+    "text_en": "ORDER-044 · Molten Covenant Acolyte\n\nEntry: Voluntary ichor infusion, reforging tolerance assessment\nDoctrine: \"Flow with change, embrace impermanence\"\nMethod: Blind mold observation, randomized inscription recombination\n\nOperators report \"sensing future configurations\". Mold observations\nexhibit non-random patterns, success rate exceeds theoretical\nbaseline. Collateral effects: Elevated body temperature, lead-\ntainted perspiration. Prolonged users show gradual fingerprint drift.\n\nNote: No formal regulation chapter addresses this classification.\nProceeding under established precedent.",
+    "_voice": "doc",
+    "_objectId": "metamorph"
+  }
+]

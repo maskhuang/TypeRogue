@@ -1,0 +1,10 @@
+[
+  {
+    "name_zh": "余音护盾",
+    "name_en": "Scutum Resonantia",
+    "text_zh": "连祷既断，其音犹存半数。铜铃虽寂，回响不灭。",
+    "text_en": "When litany breaks, half its echo remains. Though the bronze bell falls silent, resonance endures.",
+    "_objectId": "combo_buffer",
+    "_voice": "bell"
+  }
+]

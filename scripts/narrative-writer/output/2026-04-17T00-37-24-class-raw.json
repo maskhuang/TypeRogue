@@ -1,0 +1,50 @@
+[
+  {
+    "id": "none",
+    "name_zh": "无誓初心",
+    "name_en": "The Unbound Novice",
+    "text_zh": "「汝尚未择其道——既非铭刻之严，亦非熔变之诺。引擎静候，铅字默然。」",
+    "text_en": "\"Thou hast chosen neither path—neither the graven stern nor the molten vow. The Engine waits; the type lies silent.\"",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铭刻誓门",
+    "name_en": "The Order of the Graven",
+    "text_zh": "「以铅屑甄别为始，以收容经卷为终——汝之手将废字归其位，令异文伏于版中。」",
+    "text_en": "\"From lead-shard sorting to containment scrolls complete—thy hands shall order wayward letters, bind anomalies to the page.\"",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔变誓门",
+    "name_en": "The Order of the Molten",
+    "text_zh": "「熔蜡润其骨，重铸破其形——汝将伴异文共舞，任铭文组于坩埚中新生。」",
+    "text_en": "\"Molten unguent flows through bone, reforging breaks all form—thou shalt dance with anomalies, let inscriptions be reborn in the crucible.\"",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  },
+  {
+    "id": "none",
+    "text_zh": "ORDER-NULL · 消耗品\n分级: 标准征用 / Standard Conscription\n\n入会条件: 无。按§4.2自动补充。\n执勤描述: 标准收容铭刻。无特殊授权。\n失联率: 基准水平。\n备注: D-████编号人员默认分类。条例要求维持最低编制███名。补充来源████████。表单F-001按需签领基础圣器。",
+    "text_en": "ORDER-NULL · Expendable\nClassification: Standard Conscription\n\nEntry Requirements: None. Auto-replenished per §4.2.\nDuty Description: Standard containment inscription. No special clearance.\nLoss Rate: Baseline.\nNotes: Default classification for D-████ personnel. Standing orders require minimum complement of ███. Replacement sources ████████. Basic artifacts requisitioned via Form F-001 as needed.",
+    "_voice": "doc",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "text_zh": "ORDER-CLAVI · 铭刻誓门见习\n分级: 受限征用 / Restricted Conscription\n\n入会条件: 铅屑甄别测试合格。展现废铅分拣天赋。\n执勤描述: 手工造册圣字钉。构筑收容经卷。精密铭刻作业。\n神学立场: 形不可变。引擎律条为绝对。\n对引擎态度: 敬畏并锁死其变化。经卷一旦完成，永不更改。\n失联率: 低于基准。工艺精神降低意外率。",
+    "text_en": "ORDER-CLAVI · Novice Scribe of the Graven\nClassification: Restricted Conscription\n\nEntry Requirements: Passed lead-shaving sorting examination. Demonstrated scrap-sorting aptitude.\nDuty Description: Manual cataloguing of sacred slugs. Construction of containment codices. Precision inscription work.\nTheological Position: Form immutable. Engine statutes absolute.\nEngine Doctrine: Reverent constraint of its permutations. Once codex complete, never altered.\nLoss Rate: Below baseline. Craftsman discipline reduces incident frequency.",
+    "_voice": "doc",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "text_zh": "ORDER-FUSUM · 熔变誓门潜修\n分级: 监管征用 / Supervised Conscription\n\n入会条件: 耐受熔蜡接触。通过变形适应性评估。\n执勤描述: 铭文组熔铸重塑。处理不定形收容物。适应性铭刻。\n神学立场: 顺应引擎自然变化。拒绝强制锁定。\n对引擎态度: 视其为活体过程，非死物。每次重铸皆为新生。\n失联率: 波动。熔铸期间偶有预期外结果。持有者报告'感知铅的呼吸'。",
+    "text_en": "ORDER-FUSUM · Acolyte of the Molten Verse\nClassification: Supervised Conscription\n\nEntry Requirements: Molten unguent tolerance verified. Passed metamorphic adaptation assessment.\nDuty Description: Inscription reforging operations. Handling of protean containment subjects. Adaptive inscription work.\nTheological Position: Accommodate Engine's natural flux. Reject forced stabilization.\nEngine Doctrine: Regard as living process, not artifact. Each reforging constitutes rebirth.\nLoss Rate: Variable. Occasional unexpected outcomes during molten phases. Subjects report 'sensing lead's breath'.",
+    "_voice": "doc",
+    "_objectId": "metamorph"
+  }
+]

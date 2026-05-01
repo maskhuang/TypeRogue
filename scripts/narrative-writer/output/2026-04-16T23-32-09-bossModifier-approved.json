@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "枷锁",
+    "name_en": "Fetters",
+    "text_zh": "「铅字有数，超者必坠」",
+    "text_en": "\"The leaden word knows count—excess shall fall\"",
+    "_objectId": "boss_cap",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "残余异文：RA-047 · 限额印章\n归属意志：第 XII 层 · 祷文引擎本体\n异常概述：收容前状态下，异文令任一铸字坊的日产能锁定为其设计产能的 ██%。受影响设施内铅字在达到特定铸印次数后失去铭刻响应，键徒动作正常但无法产生有效祷击。D-████ 级人员在尝试超额铸印时出现 [数据删除] 症状。\n收容残余：引擎压制下，异文效应衰减为对单次登塔任务的铭分产出施加上限约束。\n附注：第 ██ 铸字坊天花板发现未授权的蜡封印记，内容为早期崇拜时代的配额祷文。印记无法移除。\n——「节制乃铸者之德，贪溢致炉火反噬」",
+    "text_en": "Residual Anomaly: RA-047 · Quota Seal\nManifesting Will: Layer XII · The Litany Engine Primary\nAnomaly Summary: In uncontained state, the anomaly enforced daily production caps at ██% of design capacity across affected foundries. Lead type lost inscriptive responsiveness after reaching specific impression counts, with keybound personnel exhibiting normal motor function but producing no effective litany-strikes. D-████ class subjects attempting quota violation developed [DATA EXPUNGED] symptoms.\nContainment Residue: Under Engine suppression, anomalous effects reduced to inscription score limitations during individual ascent attempts.\nAddendum: Unauthorized wax sigil discovered on Foundry ██ ceiling, bearing quota liturgy from early Worship Era. Sigil proves non-removable.\n——「Temperance marks the founder's virtue; excess invites the furnace's wrath」",
+    "_objectId": "boss_cap",
+    "_voice": "doc"
+  }
+]

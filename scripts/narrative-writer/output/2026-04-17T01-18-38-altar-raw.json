@@ -1,0 +1,72 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我觉得，我在想什么？",
+    "text_en": "...do I think? Am I thinking?",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……有人按了我，好像很久了",
+    "text_en": "...someone pressed me, long ago maybe",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……油滴在我身上，还是泪水",
+    "text_en": "...oil drips on me, or tears perhaps",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……铅屑卡在缝里，痒痒的",
+    "text_en": "...lead shavings stuck between keys, itchy",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……那个人写字很工整，从不急躁",
+    "text_en": "...that person wrote neatly, never rushed",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……条例必须遵守，他总这样说",
+    "text_en": "...regulations must be followed, always said",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……按R的时候，那个人总是犹豫",
+    "text_en": "...when pressing R, hesitation always",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……好像在找什么，第九层的门",
+    "text_en": "...searching for something, ninth layer door",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……喜欢画画的那个，手指很轻",
+    "text_en": "...the one who drew, fingers so gentle",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……说引擎在等，很期待的样子",
+    "text_en": "...said engine was waiting, seemed excited",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  }
+]

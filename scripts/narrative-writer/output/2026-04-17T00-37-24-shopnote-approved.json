@@ -1,0 +1,62 @@
+[
+  {
+    "text_zh": "左上那个别买，用了几次就坏了 —D-0298",
+    "text_en": "Top left breaks after a few uses —D-0298",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "铅屑多存点，第9层会用到",
+    "text_en": "Save shavings, need them on Layer 9",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "印选共鸣流的，信我",
+    "text_en": "Pick resonant sigils, trust me",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "又涨价了...上周才██铅币",
+    "text_en": "Price up again... was ██ coins last week",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "谁把我的铅笔拿走了？？",
+    "text_en": "WHO TOOK MY PENCIL??",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "这破地方连个橡皮都不给",
+    "text_en": "Not even an eraser in this place",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0144说第6层有隐藏房间",
+    "text_en": "D-0144 says Layer 6 has hidden room",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0077留：熔蜡印记慎用",
+    "text_en": "D-0077 note: careful with molten sigils",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "昨天的人留下了三支笔",
+    "text_en": "Yesterday's guy left three pens",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "记住按R键，虽然不知道为什么",
+    "text_en": "Remember to press R, dunno why though",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  }
+]

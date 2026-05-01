@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "涅槃圣器",
+    "name_en": "Reliquary Phoenicum",
+    "text_zh": "自熔蜡中重铸，其形不灭——纵炉火吞噬，铅字仍自坠落中复起。唯献此器于引擎，方得更深试炼。",
+    "text_en": "Recast from molten wax, its form endures—though fire consumes, the leaden word rises from its fall. Only in offering does deeper trial await.",
+    "_objectId": "phoenix",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "汝若倾覆，烬中必得重铸。\n────\n圣徒遗物 · 不死鸟\nObject Class: Apollyon\n出土地点: 第XI层 炉膛深处\n描述: 金属鸟形器物，翼展███cm。于收容震颤导致站点污染时自燃，随即重构收容时序。消耗品D-████报告\"时间倒转\"感知，经核实为正常效应。\n附加效应: 第V层执事试炼与第XII层引擎核心期间，残余异文生成频率显著提升。\n备注: 每次激活后遗物自毁。已记录激活███次，每次后发现同规格替代品。来源不明。",
+    "text_en": "Should thy work collapse, from ashes shall it rise anew.\n────\nSacred Artifact · Phoenix\nObject Class: Apollyon\nRecovery Site: Layer XI, Deep Furnace Chamber\nDescription: Metallic avian construct, wingspan ███cm. Self-immolates upon containment breach scenarios, subsequently reconstituting temporal sequence. Subject D-████ reported \"time reversal\" sensation, verified as standard effect.\nSecondary Effects: During Layer V Deacon's Trial and Layer XII Engine Core phases, residual anomaly manifestation rate increases substantially.\nNote: Artifact self-destructs upon each activation. ███ activations logged, identical replacement found after each occurrence. Origin unknown.",
+    "_objectId": "phoenix",
+    "_voice": "doc"
+  }
+]

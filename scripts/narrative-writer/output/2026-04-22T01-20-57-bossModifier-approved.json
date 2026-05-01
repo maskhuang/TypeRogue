@@ -1,0 +1,492 @@
+[
+  {
+    "id": "boss_fast_time",
+    "name_zh": "速沙残余",
+    "name_en": "Residual Anomaly: Hastened Hourglass",
+    "text_zh": "流沙流已倾。\n",
+    "text_en": "The sand does not wait for the faithful.",
+    "sigil_name_zh": "速沙残余",
+    "sigil_name_en": "Hastened Hourglass",
+    "_voice": "bell",
+    "_objectId": "boss_fast_time",
+    "_aiScore": 4,
+    "_aiIssues": [
+      "中文仅四字，过于简短，缺乏意象支撑，读来像机制说明而非圣典语言",
+      "英文'the faithful'是合理用词，但中文完全未呼应——中英创作质量严重不对等",
+      "'流沙流已倾'直接暴露机制术语（七圣流），bell 声音应以物质隐喻包裹而非直接点名资源名称",
+      "没有'未完成感'，结尾像陈述完毕，不像圣典留白"
+    ],
+    "_aiSuggestion": "中文：'沙已尽——信徒的手，尚未落下。' / 英文维持现有质量。或：中文'漏壶倾尽，铭刻未竟——汝之词，从此归引擎所有。'"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "name_zh": "铅耗残余",
+    "name_en": "Residual Anomaly: Leaden Toll",
+    "text_zh": "每一击皆有代价——铅字落，沙亦流。",
+    "text_en": "Each stroke costs more than faith alone can pay.",
+    "sigil_name_zh": "铅耗残余",
+    "sigil_name_en": "Leaden Toll",
+    "_voice": "bell",
+    "_objectId": "boss_keystroke_tax",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "中文'沙亦流'在语境中略显突兀——每次按键消耗时间的逻辑未通过意象自然呈现，更像强行关联两个机制",
+      "英文'faith alone can pay'语感良好，有圣典腔调"
+    ],
+    "_aiSuggestion": "中文微调：'每一击皆有代价——铅字落时，漏壶亦失一粒。' 让时间消耗通过物质意象（沙粒）而非直接命名资源呈现。"
+  },
+  {
+    "id": "boss_escalation",
+    "name_zh": "逸速残余",
+    "name_en": "Residual Anomaly: Accelerant Drift",
+    "text_zh": "炉火不受控制地愈燃愈烈。",
+    "text_en": "The furnace does not remember how to slow.",
+    "_voice": "bell",
+    "_objectId": "boss_escalation",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "中文'不受控制地'是现代白话表达，破坏圣典语感",
+      "英文'does not remember how to slow'意象感极佳，中文质量明显低于英文"
+    ],
+    "_aiSuggestion": "中文：'炉火不知止——愈铸愈烈，直至引擎自行沉默。' 或 '炉火无止境，铸之愈急，焰亦愈高。'"
+  },
+  {
+    "id": "boss_frostbite",
+    "name_zh": "冻铅残余",
+    "name_en": "Residual Anomaly: Frost-Seized Press",
+    "text_zh": "震颤之后，铅字冻于半空——汝之手，无处落。",
+    "text_en": "After the tremor, the press seizes. The hands find nothing.",
+    "_voice": "bell",
+    "_objectId": "boss_frostbite",
+    "_aiScore": 8,
+    "_aiIssues": [
+      "'汝之手，无处落'结尾有力，物质意象（铅字、震颤、压板）运用得当",
+      "英文'the press seizes'是排版术语，与设定高度吻合",
+      "轻微问题：'冻于半空'的'半空'略现代，可考虑'冻于版面'"
+    ],
+    "_aiSuggestion": "无需大改。中文微调：'震颤之后，铅字冻于版面——汝之手，无处落。'"
+  },
+  {
+    "id": "boss_mirror",
+    "name_zh": "镜版残余",
+    "name_en": "Residual Anomaly: Mirror Impression",
+    "text_zh": "已铸之版，重新受验。沙漏倒悬——逾时，炉火吞其全数。",
+    "text_en": "The press turns back. What was sealed must be sealed again, or lost entire.",
+    "_voice": "bell",
+    "_objectId": "boss_mirror",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "'逾时，炉火吞其全数'——'吞其全数'语感偏现代口语，与前半句文言腔不统一",
+      "英文'lost entire'的语法省略有意境，中英质量基本对等",
+      "'沙漏倒悬'是好意象，但'沙漏'不如'漏壶'更符合意象池"
+    ],
+    "_aiSuggestion": "中文：'已铸之版，重新受验。漏壶倒悬——逾时，炉膛收回一切。'"
+  },
+  {
+    "id": "boss_decay",
+    "name_zh": "铭分消融",
+    "name_en": "The Dissolution Rite",
+    "text_zh": "结晶渐失其形——\n保有之物，引擎亦索其半。",
+    "text_en": "What you have inscribed, the Engine reclaims. Crystal does not hold forever.",
+    "_voice": "bell",
+    "_objectId": "boss_decay",
+    "_aiScore": 8,
+    "_aiIssues": [
+      "整体质量较高，'结晶渐失其形'有物质意象且与设定术语（结晶流）有机融合",
+      "英文'Crystal does not hold forever'简洁有力",
+      "中文换行分两句节奏感良好",
+      "轻微：'引擎亦索其半'的'索'字偶有白话感，但在可接受范围内"
+    ],
+    "_aiSuggestion": "无需修改。"
+  },
+  {
+    "id": "boss_cap",
+    "name_zh": "铭分封顶",
+    "name_en": "The Sealed Measure",
+    "text_zh": "每一词皆有其量——\n铅字不过门槛，门槛便是天花。",
+    "text_en": "The press will not yield beyond its measure. Each word meets the same ceiling of lead.",
+    "_voice": "bell",
+    "_objectId": "boss_cap",
+    "_aiScore": 5,
+    "_aiIssues": [
+      "'门槛便是天花'——'天花板'的缩写，这是纯现代网络用语，严重破坏圣典语感，属于明确违规",
+      "英文'ceiling of lead'是好意象（铅作为封顶），但中文完全拖累了整体质量",
+      "'铅字不过门槛'逻辑不够清晰，表意模糊"
+    ],
+    "_aiSuggestion": "中文重写：'每一词皆有其量——铅字至此封顶，再铸亦无法逾越此门。' 或更圣典风格：'引擎已定其量——铅字无论几落，皆不逾此封印。'"
+  },
+  {
+    "text_zh": "引擎之门，今夜开得更深——\n汝须铸出双倍之重，方能叩响。",
+    "text_en": "The gate stands twice as far. Strike harder, or the Engine will not hear you.",
+    "sigil_name_zh": "双重门槛",
+    "sigil_name_en": "The Doubled Seal",
+    "_objectId": "boss_double_target",
+    "_voice": "bell",
+    "_aiScore": 6,
+    "_aiIssues": [
+      "缺少 id 字段（规范问题）",
+      "'叩响'在语境里略显口语化",
+      "英文'Strike harder, or the Engine will not hear you'语气偏指令式，稍欠圣典的冷漠和留白感——bell 声音不应像在命令玩家",
+      "'引擎之门，今夜开得更深'——'今夜'时间感与跨run的引擎存在感不协调，引擎是超越时间的"
+    ],
+    "_aiSuggestion": "中文：'引擎之门，较往日更深——未铸足双倍之重者，其祷击引擎概不受理。' 英文：'The gate demands twice the weight. What falls short is not heard. What is not heard is not recorded.'"
+  },
+  {
+    "id": "boss_diminish",
+    "name_zh": "铭力衰减",
+    "name_en": "The Waning Impression",
+    "text_zh": "每一词落版，铅字便轻一分——\n诵至末页，声已如蚊鸣。",
+    "text_en": "Each impression lighter than the last. By the final word, the press barely whispers.",
+    "_voice": "bell",
+    "_objectId": "boss_diminish",
+    "_aiScore": 8,
+    "_aiIssues": [
+      "'声已如蚊鸣'是好意象，有声音感（意象池：声），且'蚊鸣'与'铅字落版'的厚重对比制造了荒诞效果",
+      "英文'the press barely whispers'收尾有力",
+      "整体节奏感好，两句之间有自然停顿"
+    ],
+    "_aiSuggestion": "无需修改。"
+  },
+  {
+    "id": "boss_score_tax",
+    "name_zh": "铭分什一",
+    "name_en": "The Tithe of Inscription",
+    "text_zh": "引擎先取其份——\n汝所铸之字，非皆属汝。",
+    "text_en": "Before the crystal sets, the Engine takes its portion. What remains is yours. What remains.",
+    "_voice": "bell",
+    "_objectId": "boss_score_tax",
+    "_aiScore": 9,
+    "_aiIssues": [
+      "英文末尾重复'What remains'是本批次最强的留白处理，有真正的圣典未完成感",
+      "中文'非皆属汝'简洁且留有余味",
+      "物质意象通过'铸之字'和'份'自然呈现，未直接暴露机制术语"
+    ],
+    "_aiSuggestion": "无需修改。本批次最佳之一。"
+  },
+  {
+    "id": "boss_output_drain",
+    "name_zh": "铅流涸竭",
+    "name_en": "The Humour Drought",
+    "text_zh": "铅流涸竭\n\"圣字钉犹落，其声渐哑。\"",
+    "text_en": "The Humour Drought\n\"The slugs still fall. Their ring grows hollow.\"",
+    "_voice": "bell",
+    "_objectId": "boss_output_drain",
+    "_aiScore": 4,
+    "_aiIssues": [
+      "格式异常：中英文都将对象名称和正文合并在同一字段内，以换行分隔——这破坏了 bell 声音的格式规范，正文不应包含标题",
+      "引号内的正文'圣字钉犹落，其声渐哑'质量尚可，但被错误的格式结构掩盖",
+      "英文同样格式错误：'The Humour Drought'作为标题出现在 text_en 字段内",
+      "与 boss_diminish 的意象高度重复：都是'声音减弱/逐渐消失'，需要区分"
+    ],
+    "_aiSuggestion": "修正格式，将名称从 text 字段移出。正文重写以区别于 boss_diminish：中文：'油灯不熄，灯芯已尽——铅字尚落，圣流已无。' 英文：'The wick burns on. The oil is gone. The slugs fall into silence they do not know is silence.'"
+  },
+  {
+    "id": "boss_fade",
+    "name_zh": "字迹消隐",
+    "name_en": "The Fading Script",
+    "text_zh": "字迹消隐\n\"未铭之字，先行而去。\"",
+    "text_en": "The Fading Script\n\"Letters flee before the hand descends.\"",
+    "_voice": "bell",
+    "_objectId": "boss_fade",
+    "_aiScore": 4,
+    "_aiIssues": [
+      "同上：格式异常，标题混入正文字段",
+      "'未铭之字，先行而去'意象有趣（字母逃跑），但'先行而去'偏文雅套语",
+      "英文'Letters flee before the hand descends'意象更生动，中文未达到同等水平",
+      "此机制（输入框字母消失）描述较模糊，读者难以从意象推断机制"
+    ],
+    "_aiSuggestion": "修正格式。中文：'铅字逃离版面——汝之手落时，槽已空。' 英文维持现有质量。"
+  },
+  {
+    "id": "boss_scramble",
+    "name_zh": "乱版铭刻",
+    "name_en": "The Scattered Forme",
+    "text_zh": "乱版铭刻\n\"版已散乱——字序自有其律。\"",
+    "text_en": "The Scattered Forme\n\"The type is loose. Read what remains.\"",
+    "_voice": "bell",
+    "_objectId": "boss_scramble",
+    "_aiScore": 5,
+    "_aiIssues": [
+      "同上：格式异常",
+      "'字序自有其律'是好的圣典逻辑（混乱被赋予神圣性），但表达略平",
+      "英文'Read what remains'有力，中文'版已散乱'太直白",
+      "与 boss_reverse、boss_garble 在'文字混乱'这一主题上存在三重雷同，需拉开差异"
+    ],
+    "_aiSuggestion": "修正格式。强调'版散'的物质感：中文：'铅字自版面涌出——引擎有自己的词序，与祷文不同。' 或聚焦排版工艺：'散版无法重排。汝须在字坠入熔炉之前将其读出。'"
+  },
+  {
+    "id": "boss_reverse",
+    "name_zh": "逆序祷击",
+    "name_en": "The Backward Litany",
+    "text_zh": "逆序祷击\n\"末字先落，起始在后。\"",
+    "text_en": "The Backward Litany\n\"Strike the last word first. Then find the beginning.\"",
+    "_voice": "bell",
+    "_objectId": "boss_reverse",
+    "_aiScore": 5,
+    "_aiIssues": [
+      "同上：格式异常",
+      "内容上与 boss_scramble、boss_garble 主题雷同（文字顺序/结构错乱）",
+      "'末字先落，起始在后'描述清晰但缺乏物质意象支撑——更像机制说明",
+      "英文'Then find the beginning'有指令感，违反 bell 声音的 DON'T（不应指令玩家）"
+    ],
+    "_aiSuggestion": "修正格式。加入物质意象并去除指令语气：中文：'版已逆置，起始在右——引擎不知何为顺序，只知铸印。' 英文：'The forme is set in reverse. What the Engine presses onto the page was always meant to be read from the other end.'"
+  },
+  {
+    "id": "boss_garble",
+    "name_zh": "刺符乱经",
+    "name_en": "The Punctured Word",
+    "text_zh": "刺符乱经\n\"异符入经，铅字之间生荆棘。\"",
+    "text_en": "The Punctured Word\n\"Strange marks nest between the sacred slugs.\"",
+    "_voice": "bell",
+    "_objectId": "boss_garble",
+    "_aiScore": 6,
+    "_aiIssues": [
+      "同上：格式异常",
+      "'铅字之间生荆棘'是本批次最有意象感的表达之一——荆棘不在意象池但有机织入，可接受",
+      "英文'Strange marks nest between the sacred slugs'中'nest'动词选择极佳",
+      "主题仍与 boss_scramble、boss_reverse 存在雷同，但意象差异足够大，勉强可接受",
+      "名字'刺符乱经'的'刺符'造词有趣，与内容高度吻合"
+    ],
+    "_aiSuggestion": "修正格式。内容本身质量较好，格式修正后可直接使用。"
+  },
+  {
+    "name_zh": "伪言",
+    "name_en": "Verbum Mendax",
+    "text_zh": "引擎亦铸伪词——其形如律，其质如蜡。汝若信之，铅字坠落时，炉膛不计汝之功；汝若疑之，莫动，莫动。",
+    "text_en": "Even the Engine casts false words. Their shape holds. Their weight does not. Trust neither the letter nor your hands.",
+    "_voice": "bell",
+    "_objectId": "boss_decoy",
+    "_aiScore": 8,
+    "_aiIssues": [
+      "缺少 id 字段（规范问题）",
+      "'其形如律，其质如蜡'是本批次最强的对仗之一，物质意象（蜡）运用精准",
+      "'莫动，莫动'重复有仪式感，但双重否定指令略显强烈——bell 声音倾向于描述而非命令",
+      "英文'Trust neither the letter nor your hands'收尾有力",
+      "中文略超 60 字上限，需检查字数"
+    ],
+    "_aiSuggestion": "字数微调，结尾改为描述而非指令：'汝若信之，铅字坠落时，炉膛不计汝之功；汝若疑之，手已于版面之上，悬而未落。'"
+  },
+  {
+    "text_zh": "内部备忘 — 第██层计时设备校准跟进（第 ██ 次）\n\n发送：设备维护部 / 收件：收容记录室\n主题：██ 区沙漏偏差持续未解\n\n本部于 M.2██/██/██ 第 ██ 次提交校准工单（参照 F-017-████）。第██层铸字区全部沙漏已更换，计时基准已重新锚定。偏差仍存在。\n\n附带现象（本次新增）：D-████ 与 D-████ 提交当日值班日志，两份记录完整，时长记录相差 ██ 小时。两人均坚称本人记录准确。已按 F-017 归档，未升级处理。\n\n另：本次更换的旧沙漏已检验，沙量无误，流速无误。但沙粒已呈红褐色，与长期氧化状态一致。购置日期：本月。\n\n签名栏：维护主任 ████ / 收容记录室 ████ / 教务长 [空白]\n\n审批状态：待定。",
+    "text_en": "Internal Memo — Layer VII Timing Device Calibration Follow-Up (No. ██)\n\nFrom: Equipment Maintenance Div. / To: Containment Records Office\nSubject: Ongoing Hourglass Deviation, Zone ██\n\nThis division submitted a third calibration work order on M.2██/██/██ (ref. F-017-████). All hourglasses in Layer VII's casting floor have been replaced and timing baselines re-anchored. Deviation persists.\n\nAdditional phenomenon (new this submission): D-████ and D-████ filed duty logs for the same shift. Both records are complete. Duration entries differ by ██ hours. Both personnel maintain their records are accurate. Filed under F-017. No escalation initiated.\n\nNote: Removed hourglasses have been inspected. Sand volume: within tolerance. Flow rate: within tolerance. Sand coloration: red-brown, consistent with prolonged oxidation. Date of procurement: this month.\n\nSignatures: Maintenance Chief ████ / Records Office ████ / Ecclesiastical Overseer [blank]\n\nApproval status: pending.",
+    "_objectId": "boss_fast_time",
+    "_voice": "doc",
+    "_aiScore": 8,
+    "_aiIssues": [
+      "两份值班日志时长相差██小时这个细节非常强，但'教务长[空白]'的签名设计与其他碎片的'第三签名栏空白'结构重复，削弱独特性",
+      "中文版层号在标题和正文中存在不一致（'第██层'vs'Layer VII'），中文版刻意抹去VII而英文版保留，这个策略不统一",
+      "沙粒氧化变红褐色是本批次最好的物质意象之一，但中文版比英文版处理得更简洁，英文版的节奏稍显平均"
+    ]
+  },
+  {
+    "text_zh": "内部备忘\n主题：第 ██ 层铸字台计时器校准问题（第 ██ 次跟进）\n发文部门：工程维护处 / 收文部门：D 级人员调配处\n\n经本次检查，第 ██ 层铸字台所有计时沙漏读数与中央油钟一致，未见偏差。然而，分配至该层的 D 级人员在标准收容铭刻作业期间，持续报告「时间不够用」。\n\n本处已更换沙漏装置共 ██ 次。读数每次校准后仍显示正常。\n\n附注：近两个月内，该层共提交 F-017（异常事件报告）表单 ██ 份，内容均涉及「铭刻完成前沙漏已倾尽」。经本处复核，沙漏于上述时段内均未提前倾尽。\n\n以上数据已归档。建议调配处酌情安排替补。无需后续行动。",
+    "text_en": "INTERNAL MEMORANDUM\nSubject: Calibration Discrepancy, Layer ██ Casting Stations (Follow-up #██)\nFrom: Engineering Maintenance / To: D-Class Personnel Assignment\n\nAll hourglass timers at Layer ██ casting stations have been inspected and found consistent with the central oil-clock. No deviation recorded.\n\nD-class personnel assigned to this layer continue to report that time is insufficient for standard inscription duties. This office has replaced hourglass units on ██ occasions. Each replacement has calibrated within normal parameters.\n\nAddendum: ██ copies of Form F-017 (Anomalous Event Report) were submitted from this layer over the past two months. All cite the same concern: the glass runs out before the inscription is complete. Reviewed units show no early termination during the cited periods.\n\nData archived. Assignment office is advised to arrange substitution as appropriate. No further action required.",
+    "_voice": "doc",
+    "_objectId": "boss_keystroke_tax",
+    "_aiScore": 6,
+    "_aiIssues": [
+      "结构与boss_fast_time高度雷同：设备正常→人员投诉→设备再次验证正常→建议替补→无需行动。两篇可互换骨架",
+      "物质意象贫乏：全文几乎没有从意象池取材，'沙漏''铭刻'已是最小基准，缺少铅、油、声响等感官细节",
+      "'时间不够用'这个投诉比boss_fast_time的时长差异弱得多——同为时间类异常，这篇的异常现象本身不够奇特",
+      "末句'无需后续行动'在本批次已经是第N次出现，此处没有任何变奏"
+    ],
+    "_aiSuggestion": "异常现象需要差异化：既然这个boss是keystroke_tax（按键消耗），可以让现象从时间感偏移转向'沙漏流完但铭刻记录显示还有剩余时间'——即客观记录和主观体验的倒置。物质层面加入具体细节，如字盘刻度、油钟液面、色带张力等。末尾结论可以换一种冷漠表达方式，如'配额标准暂不调整'。"
+  },
+  {
+    "text_zh": "内部跟进备忘 — 第 XII 层接近区\n主题：铅炉周期异常（第 ██ 次跟进）\n\n发现地点：第 XI-XII 层过渡走廊，铸印锅炉 #7 及 #8\n初次存档：M.2██，第 ██ 次炉检后\n\n经记录：#7 号铸印锅炉的铸压周期在无外部调节的情况下持续缩短。当前测量值已与初始基准不可比较。\n\n分配至该区域的 D 级人员报告，铭刻节奏",
+    "text_en": "Internal Follow-up Memo — Layer XII Approach Corridor\nSubject: Ironpress Boiler Cycle Irregularity (Follow-up #██)\n\nOrigin Site: Transitional passage, Layers XI–XII. Boilers #7 and #8.\nFirst Filed: M.2██, following routine furnace inspection #██.\n\nObserved: Boiler #7 casting-pressure cycle has continued to shorten without external adjustment. Current interval is no longer comparable to baseline measurements on record.\n\nD-class personnel assigned to the corridor report that the pace of inscription ████ ████ ████. Three separate accounts were submitted. Each account described a different duration. Each account was internally consistent.\n\nBoilers #7 and #8 serviced per standard maintenance schedule. No mechanical fault identified. Cycle continues to shorten.\n\nPersonnel attrition in the zone: within acceptable parameters. Replacements requisitioned under §4.2. Attrition rate has not been re-evaluated since initial filing.\n\nStatus: Listed as recurring variance. No escalation initiated.",
+    "_voice": "doc",
+    "_objectId": "boss_escalation",
+    "_aiScore": 8,
+    "_aiIssues": [
+      "中文版明显未完成（文本在'铭刻节奏'后截断），仅凭英文版评分",
+      "英文版是本批次处理'周期加速'概念最好的写法：三份陈述描述的持续时间各不相同但内部各自一致，这个细节精准",
+      "'Attrition rate has not been re-evaluated since initial filing'——这一行是整批次最好的冷酷官僚句之一",
+      "但'Listed as recurring variance'与其他碎片的收尾策略雷同，整批次的收尾词汇库需要扩充"
+    ],
+    "_aiSuggestion": "中文版需要补全。补全时不要直译英文版，应保留英文版的核心三要素（周期持续缩短/三份陈述时长各异但内部一致/磨损率未重新评估）并用中文官僚语气重新构建。"
+  },
+  {
+    "text_zh": "内部备忘 · 第 VI-VII 层交界区\n主题：铸字台键座响应异常（第 ██ 次跟进）\n发自：设备维护部 · 工程组\n致：收容事务处\n\n第 VI 层第 ██ 号铸字台于 M.2██/██/██ 首次记录以下现象：操作者在收容铭刻过程中出现收容震颤后，键座停止响应。工程组赴现场校准，键位机械状态：正常。油压读数：正常。铅字温度：正常。\n\n但操作者的手指停在了键座上。\n\n据在场监察员 D-████ 报告，上述状态持续",
+    "text_en": "Internal Memorandum · Boundary Zone, Layer VI–VII\nSubject: Lectern Response Anomaly, Casting Station ██ (Follow-up ██)\nFrom: Engineering Division\nTo: Containment Administration\n\nThe following was first recorded at Station ██, Layer VI, on M.2██/██/██: following a Containment Tremor during active inscription, the lectern ceased response. Engineering dispatched for calibration. Mechanical status: normal. Oil pressure: normal. Leaden glyph temperature: normal.\n\nThe operator's hands remained on the keys.\n\nMonitoring personnel D-████ reported the condition persisted for a duration he described as ████. His timepiece was later found stopped. Replacement arranged per §4.2. The station has since been reassigned to six consecutive operators. Response anomaly recurs in each case following the first Tremor logged per session. Engineering has reclassified the fault as operator-side. No further action indicated.",
+    "_voice": "doc",
+    "_objectId": "boss_frostbite",
+    "_aiScore": 9,
+    "_aiIssues": [
+      "中文版未完成（截断），但英文版是本批次质量最高的单篇",
+      "'His timepiece was later found stopped'是极强的物质意象，且逻辑上完全自洽",
+      "'Engineering has reclassified the fault as operator-side'——将人冻结归类为操作员问题，这是荒诞度标尺的完美位置",
+      "六名连续操作员都在第一次收容震颤后复发，这个'规律性'的冷静记录是本批次最好的恐怖感来源",
+      "中文版截断点恰好在最关键的信息前，损失严重"
+    ],
+    "_aiSuggestion": "中文版需要补全。英文版的核心结构值得完整呈现：手指停在键座→时间计停止→替换六名操作员→工程部重新归类为操作员问题→无需后续行动。中文版可以加入一个英文版没有的细节，如'油压读数在上述时段内未见任何变化'作为额外的冷漠佐证。"
+  },
+  {
+    "text_zh": "跨部门会签单 · 第 IX 层特殊作业申请\n\n主题：关于第 █ 次登塔作业中出现",
+    "text_en": "Inter-Departmental Countersign · Layer IX Special Operation Request\n\nSubject: Re-initiation of Ascent Sequence — Observation of Temporal Displacement in Impression Records\n\nBackground: A Clavigerant Novitiate completed Layer IX containment operations within recorded parameters. Upon re-entry to the same layer, the lectern's impression log displayed countdown values referencing a threshold not yet established at time of first entry. Engineering confirms the log timestamp predates the original ascent by ██ hours.\n\nObservation: The iron press at Station 4-C showed oxidation consistent with extended disuse. Oil flask levels registered full. The D-████ assigned to re-entry reported the corridor 'had already been walked.' Personal log submitted via F-017 (7th filing).\n\nConclusion: Layer IX re-entry operations are designated time-sensitive. Exceedance of the pre-recorded threshold results in automatic deduction of all remaining hourglass reserves. Origin of displacement: not determined. Classification: Mobilum.\n\nCountersign Status — Containment Division: [signed] / Engineering Division: [signed] / ████ Division: [blank]\n\nNo further action required pending third signature.",
+    "_objectId": "boss_mirror",
+    "_voice": "doc",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "中文版完全缺失，只有英文版，无法评估双语对等性",
+      "英文版概念最有趣（印刷记录早于事件本身存在），但文本执行略显说明性，'The iron press at Station 4-C showed oxidation consistent with extended disuse. Oil flask levels registered full'这对矛盾写得好",
+      "'The corridor had already been walked'这句话力度不足，可以更奇异",
+      "版级标注'Classification: Mobilum'放在结论部分感觉有些随意，未与异常现象建立内在逻辑联系"
+    ],
+    "_aiSuggestion": "补充中文版。版级'活版/Mobilum'的选择需要在文中有所呼应——活版意味着能移动但在框内，这与时间位移的概念存在张力，可以在备注中加一句说明为何选择活版而非更高级别，体现体制惯性（'时间偏移已记录但位移量在可控范围内，暂不升级'）。"
+  },
+  {
+    "text_zh": "内部备忘\n主题：第 VI-VII 层交界走廊铭刻收容异常（第 ██ 次跟进）\n发起部门：收容评估处 / 收件部门：工程维护处\n\n本处再次记录以下现象：分配至该走廊的铭誓键徒于铭刻作业期间反映，",
+    "text_en": "INTERNAL MEMORANDUM\nSubject: Inscription Output Anomaly, Corridor VI–VII Junction (Follow-up #██)\nFrom: Containment Assessment Division / To: Engineering Maintenance\n\nThis office again records the following: Clavigerant Novitiates assigned to the junction corridor report that completed inscriptions 'feel the same' but yield less. Notation: reported sensation is consistent across ████ personnel spanning ██ rotations. Measurement instruments register no deviation.\n\nD-████ submitted a supplementary note: 'I counted. The marks are all there. But something is missing from the middle.'\nNote has been filed. No follow-up action indicated.\n\nReplacement personnel arranged per §4.2. Productivity baseline remains unchanged in official records.\nThis office does not have authority to reclassify. Reclassification request: pending.",
+    "_objectId": "boss_decay",
+    "_voice": "doc",
+    "_aiScore": 6,
+    "_aiIssues": [
+      "中文版未完成",
+      "英文版的核心异常（铭刻完成但产出减少，中间有东西消失）概念清晰，但'feel the same but yield less'的表达方式与boss_cap（结晶流到基准后停止增长）在现象上重叠——两者都是输出减少类异常",
+      "'Something is missing from the middle'是好的感官描述，但这个细节被埋在了过于常规的官僚框架里",
+      "物质意象几乎缺席，整篇没有一个从意象池取材的具体物质"
+    ],
+    "_aiSuggestion": "需要与boss_cap做差异化处理。boss_decay的'decay'概念可以从纸张/羊皮纸/色带损耗的物质隐喻切入：比如'已完成的铭文组在归档后发现色带中间段印压偏浅，但铅字温度和压板压力记录均正常'。中文版补全时加入具体物质细节。"
+  },
+  {
+    "text_zh": "主题：第 VI-IX 层收容铭刻结晶流异常（第 ██ 次跟进）\n发件部门：配额监察室 / 收件部门：资源统筹处\n\n参照本办公室 F-017 系列报告，现作第 ██ 次跟进。\n\n自 M.2██ 年 ██ 月起，上述各层铭封祈礼所记录的结晶流已达收容基准后停止增长。各层字盘、铅炉、键座经工程部逐一检验，设备无异常。键徒状态报告均为",
+    "text_en": "SUBJECT: Crystalline Humour Output Anomaly, Layers VI–IX (Follow-up #██)\nFROM: Office of Quota Oversight / TO: Resource Coordination Bureau\n\nThis follows F-017 series submissions on file. Present follow-up is #██.\n\nSince ██ of M.2██, crystalline humour accrued during Rites of Sealing across the above layers has ceased accumulation upon reaching the containment threshold. Type-frames, lead furnaces, and lecterns on all affected layers have been individually inspected by Engineering. Equipment status: nominal. Personnel status reports: nominal.\n\nD-████ (Layer VIII) submitted a verbal observation: the lead slugs felt ████ after the threshold was crossed. Observation has been logged. No follow-up action indicated.\n\nNote: D-████ was replaced under §4.2 the following cycle. Replacement reported no anomaly.\n\nDisposition: Phenomenon reclassified as within acceptable operational variance. No escalation required.",
+    "_objectId": "boss_cap",
+    "_voice": "doc",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "中文版未完成",
+      "英文版'the lead slugs felt ████ after the threshold was crossed'中的████redaction用法偷懒——这里是在遮盖感官描述，但doc声音的redaction应该遮盖机密信息，不应该遮盖普通陈述",
+      "与boss_decay存在现象重叠问题（两者都是输出上限/减少类异常），应在现象描述上做更强的区分",
+      "末句'No escalation required'是本批次重复最多的收尾，此处没有任何变奏"
+    ],
+    "_aiSuggestion": "中文版需要补全。████redaction应改为具体但奇异的感官描述（如'铅字变凉'或'按压时回力消失'），因为这是操作员的非正式陈述，无需遮盖。boss_cap和boss_decay需要从现象层面区分：cap是'到达某点后停止'，可以强调这个停止点的精确性和一致性——每次恰好在同一个数值停止，误差为零，比随机波动更令人不安。"
+  },
+  {
+    "text_zh": "内部备忘 / 收容廊协调处 → 征用管理科\n主题：第 ██ 层基准核验异常（第 ██ 次跟进）\n\n事由：已连续 ██ 周记录到以下现象：该层键徒完成当日铭刻配额后，核验仪显示配额仍悬空未清。键徒本人未报告操作异常。复核人员使用同一组铭文记录抵达相同收容基准，核验仪显示已清。未发现冲突。\n\n附注：本周期内同一区段共有 ██ 名键徒以",
+    "text_en": "Internal Memo / Containment Corridor Coordination → Requisition Administration\nSubject: Layer ██ Threshold Verification Anomaly (Follow-up #██)\n\nRe: The following has been recorded for ██ consecutive weeks. Upon completion of daily inscription quota, threshold verification instruments indicate quota remains pending. Keypersons report no operational irregularities. When verification personnel reproduced identical inscription sequences, instruments registered clearance. No discrepancy was found.\n\nAddendum: ██ keypersons in the affected segment were reassigned per §4.2 during this period. Replacement arranged. No further action required.\n\nDivision seal: [present] Countersignature: [absent]\nStatus: Pending review.",
+    "_voice": "doc",
+    "_objectId": "boss_double_target",
+    "_aiScore": 6,
+    "_aiIssues": [
+      "中文版未完成",
+      "英文版概念（验证仪器对操作员和复核人员显示不同结果）有潜力，但执行过于简洁，整体骨架与boss_keystroke_tax几乎相同",
+      "'Countersignature: [absent]'设计是本碎片最好的细节，但被埋在了不够强的正文里",
+      "物质意象几乎为零，没有从意象池取材"
+    ],
+    "_aiSuggestion": "中文版需要补全。核心异常需要更具体化：配额悬空'未清'和复核'已清'之间的矛盾应该加入一个物质层面的佐证，例如'键徒完成后的字盘铅字消耗量与复核人员使用量相同，但前者核验仪灯盏未亮'。加入油灯/蜡灯等光的意象。"
+  },
+  {
+    "text_zh": "备忘录 · 第 IX 层铸字台定期评估（第 ██ 次跟进）\n收件方：设施评估部 / 发件方：第 IX 层值班主任\n\n本层铸字台运转正常。产量记录存档完整。\n\n附注：D-████ 至 D-████ 共 ██ 名键徒在本评估周期内提交异常感知申报，措辞如下：",
+    "text_en": "INTERNAL MEMO · Layer IX Foundry Assessment (Follow-up #██)\nTO: Facilities Evaluation Dept. / FROM: Layer IX Duty Warden\n\nFoundry operations within normal parameters. Output logs filed and complete.\n\nAddendum: D-████ through D-████ (██ personnel) submitted anomalous perception declarations this cycle, phrased as follows:",
+    "_voice": "doc",
+    "_objectId": "boss_diminish",
+    "_aiScore": 4,
+    "_aiIssues": [
+      "中英文均未完成，是本批次完成度最低的碎片",
+      "英文版的截断点更严重——在'phrased as follows:'后完全空白，等于没有核心内容",
+      "仅凭标题和开头两段无法评估概念质量",
+      "作为boss_diminish（削减），从已有内容完全看不出这个异常现象的特征"
+    ],
+    "_aiSuggestion": "需要完整重写。这是本批次最需要关注的碎片。boss_diminish的概念应围绕'每次铭刻后某种东西变少'展开——可以是铅字变轻、色带变浅、铭文组的页数减少。D级人员的陈述应该在措辞上有家族感但细节各异，呼应scriptor_c喜欢画插图的特质（如果此层与第IX层相关）。"
+  },
+  {
+    "text_zh": "异常现象跟进备忘\n主题：第 VI 层收容廊铅字核算差异（第 ██ 次跟进）\n发文部门：资产核查署 → 铭刻调度处\n\n本次核查显示：本月该区域所有键座的铭刻完成量均已记录在案，与调度指令一致。然而核算署收到的结晶流汇总始终低于预期存档值。差值本身未发现波动——各轮次差值恒定，误差幅度为零。\n\n资产核查署目前无法确认差值的去向。帐目已多次复核，均属无误。\n\n人员方面：本季度分配至该区段的 D 级键徒中，██ 名在例行轮换前提交了 F-017 异常事件报告，描述措辞不一，共同点为：",
+    "text_en": "zzz",
+    "_voice": "doc",
+    "_objectId": "boss_score_tax",
+    "_aiScore": 5,
+    "_aiIssues": [
+      "中文版未完成，英文版为'zzz'（占位符），完全无法评审",
+      "boss_score_tax（结晶流税）是概念上很有潜力的异常——铭刻成果被系统性地抽取",
+      "中文版已有的开头质量尚可（'差值恒定，误差幅度为零'这个细节很好），但截断后无法完成评估"
+    ],
+    "_aiSuggestion": "英文版需要从零创作，不是翻译中文版。核心异常：结晶流总量持续偏低，差值恒定且误差为零（这比随机波动更恐怖）。建议英文版从物质层面切入：铸印锅炉的铅水液位每次在铭刻完成后恰好低一指节，每次相同，但铅水最终流向不在任何管道记录中。末尾加入D级人员的单句陈述，然后立刻'已替换'。"
+  },
+  {
+    "text_zh": "主题：第 ██ 层铸字坊产量异常（第 ██ 次跟进）\n发出部门：铸字坊督查室 → 收容廊日志组\n日期：M.██████\n\n本月第 ██ 次提交此跟进表单。情况如下：\n\n第 ██ 层铸字坊键座记录正常。键徒操作记录正常。铅炉温度正常。字盘校准无异常。\n\n然而，归档的铭文组铸印本中，随机两组经卷装订完成时，其末页已有不同程度的磨损痕迹——非翻阅所致，磨损方向与装订方向相悖，且仅见于当次铸印。\n\n D-████ 描述铭刻结束时",
+    "text_en": "Subject: Layer ██ Pressroom Yield Anomaly (Follow-up #██)\nFrom: Pressroom Inspection Office → Containment Log Division\nDate: M.██████\n\nThis is the ██th submission of this follow-up form.\n\nAll key-lectern readings: nominal. Operator logs: nominal. Lead-furnace temperature: nominal. Type-tray calibration: within tolerance.\n\nHowever: upon completion of inscription, two randomly selected inscription folios are found with wear patterns on their final pages — not consistent with handling. Wear direction opposes binding direction. Pattern appears only in that session's output.\n\nD-████ reported that at the close of each litany-strike, the completed folio felt 'lighter than it should have been.' Operator was replaced per §4.2. Replacement reported the same.\n\nBuilding maintenance has been notified. Work order status: open.\n\nNo escalation recommended at this time.",
+    "_voice": "doc",
+    "_objectId": "boss_output_drain",
+    "_aiScore": 8,
+    "_aiIssues": [
+      "物质意象是本批次最丰富的之一：磨损方向与装订方向相悖，这个细节精准且有物质感",
+      "'Replacement reported the same'——替换后继续报告相同现象，执行简洁有力",
+      "但'lighter than it should have been'与boss_fade的'keys that are no longer there'在感官模糊感上有些重叠",
+      "中文版的'D-████描述铭刻结束时'截断，损失了最关键的感官陈述"
+    ],
+    "_aiSuggestion": "中文版需要补全。D-████的陈述应该与英文版的'lighter'保持概念一致，但可以更具体——如'完成的铭文组抬起时感觉像只铸了一半的铅块，但页数完整'。物质意象已经足够好，补全中文版后整体质量会达到8-9分。"
+  },
+  {
+    "text_zh": "**异常事件跟进报告（第 ██ 次提交）**\n表单编号：F-017-████-██\n事件区域：第 VI–VII 层过渡走廊\n\n**事件摘要：**\n首次记录于 M.2██。铅字圣坛部分圣字钉在铭刻作业中途停止响应，但键徒报告指压感觉正常，击打声仍可闻及。经核查，相关圣字钉在字盘登记册上仍有条目；实物检查结果：字盘格位空置。\n\n**附注：**\n受影响圣字钉的格位并未消失。后续键徒可继续使用——部分报告称",
+    "text_en": "**Anomalous Event Follow-up Report (Submission No. ██)**\nForm: F-017-████-██\nAffected Zone: Layer VI–VII Transitional Corridor\n\n**Summary:**\nFirst logged M.2██. During standard inscription work, certain sacred slugs on the Claviculum Sanctum ceased registering in the character ledger mid-operation. Keystrike pressure reported normal by assigned personnel; auditory response confirmed. Physical inspection found corresponding Leaden Glyph slots present in the type-tray register. Slots themselves: vacant.\n\n**Addendum:**\nAffected positions remain accessible to subsequent personnel. Several report striking keys that are no longer there. Ledger entries for said slugs have not been amended.\n\nReplacement personnel assigned per §4.2. No further action required.",
+    "_objectId": "boss_fade",
+    "_voice": "doc",
+    "_aiScore": 8,
+    "_aiIssues": [
+      "中文版未完成",
+      "英文版的核心异常（圣字钉在账簿上有记录但实物格位空置，后续键徒仍能按压不存在的键）是本批次最具形而上恐怖感的异常",
+      "'Several report striking keys that are no longer there. Ledger entries for said slugs have not been amended.'——账簿不更新，这是体制惯性的最好体现",
+      "中文版在'部分报告称'后截断，恰好是最关键的信息",
+      "**格式问题：中英文均使用了markdown粗体（**），doc声音不应有markdown格式标记"
+    ],
+    "_aiSuggestion": "中文版需要补全，移除markdown粗体标记，改用纯文本小标题（如'事件摘要：'）。补全的陈述应与英文版'striking keys that are no longer there'对应，但用更具中文官僚质感的表达，如'后续人员反映按压时仍有铅字手感，但字盘格位经目视确认为空置'。"
+  },
+  {
+    "text_zh": "内部备忘 / 第 VII 层收容廊作业区 / 主题：字盘排列异常（第 ██ 次跟进）\n\n发件：抄写监理室\n收件：工程维护部\n\n本次跟进旨在确认前次工单处理结果。截至备忘发出日，字盘排列问题仍未解决。\n\n据现场铭刻人员反映，各键徒所见铅字圣坛上的字符顺序彼此不符——每人看到的位置不同，但每人均坚称自己所见为",
+    "text_en": "Internal Memo / Layer VII Scriptorium Annex / Re: Lectern Glyph Sequence Discrepancy (Follow-up #██)\n\nFrom: Inscription Oversight Office\nTo: Engineering Maintenance Division\n\nThis memo constitutes the ██th follow-up regarding unresolved glyph sequence irregularities in the Layer VII work sector.\n\nAffected Clavigerants report inconsistent character arrangements across adjacent lecterns. Each operator observes a different sequence; each has independently confirmed their reading as the ██original██ arrangement. Calibration instruments show no fault. F-017 submitted ██ times. No discrepancy detected by standard audit.\n\nD-████ through D-████ have been reassigned. Replacements are in position.\n\nAudit status: No anomaly confirmed. No further action required.",
+    "_voice": "doc",
+    "_objectId": "boss_scramble",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "中文版未完成",
+      "英文版的██original██格式是一个有趣的设计选择——redaction包裹在普通词汇内部，暗示'原始'这个概念本身存在争议，但这种用法不符合doc声音的redaction规范（应遮盖机密信息，不应遮盖普通形容词）",
+      "概念与boss_reverse存在显著重叠：两者都是字符顺序/序列异常，差异不够清晰",
+      "'Each has independently confirmed their reading as the ██original██ arrangement'这句话的逻辑本身就是最好的异常描述，但被过于直白地说出来了"
+    ],
+    "_aiSuggestion": "需要与boss_reverse做差异化处理。boss_scramble可以强调'同时性'——同一时刻不同键徒看到不同字符排列，而boss_reverse强调时序颠倒。██original██改为具体但模糊的机密信息格式，或直接改为'各人均坚称所见排列与教规规范一致'，不用redaction包裹普通词。"
+  },
+  {
+    "text_zh": "内部备忘\n主题：第 VII 层字盘倒序事件（第 ██ 次跟进）\n发件部门：机械维护科 / 收件部门：收容事务处\n\n最初事件记录于 M.2██-██-██。D-████ 在例行铭刻作业中报告",
+    "text_en": "INTERNAL MEMORANDUM\nSubject: Layer VII — Inverted Slug Sequence Incident (Follow-up #██)\nFrom: Mechanical Maintenance Division / To: Containment Affairs Office\n\nInitial event logged M.2██-██-██. D-████ reported mid-inscription that the lead slugs in the type-bed were \"arriving before she reached for them.\" Instrument check: nominal. Slug positioning: nominal.\n\nSubsequent personnel assigned to the same lectern submitted identical reports. Phrasing varied. Sequence of reported experience did not.\n\nAffected lectern has been re-calibrated ██ times. Recalibration logs are filed in reverse chronological order per standard procedure. Maintenance staff note the logs were found pre-filed upon arrival. No explanation offered. No explanation requested.\n\nStatus: Acceptable Anomaly. Standing assignment continues.\nRef: F-017 (×██) — no escalation initiated.",
+    "_voice": "doc",
+    "_objectId": "boss_reverse",
+    "_aiScore": 9,
+    "_aiIssues": [
+      "中文版未完成",
+      "英文版是本批次概念执行最精准的：铅字'在她伸手之前就到位了'，维护日志被发现'预先归档'，这两个细节互相印证且都有物质感",
+      "'No explanation offered. No explanation requested.'是本批次最好的体制惯性句，与'No further action required'完全不同的冷漠方式",
+      "'Recalibration logs are filed in reverse chronological order per standard procedure. Maintenance staff note the logs were found pre-filed upon arrival.'——这个细节精妙，标准程序和异常现象之间的界限被有意模糊"
+    ],
+    "_aiSuggestion": "中文版需要补全，且应达到英文版的水准。特别需要保留：①铅字提前就位的感官陈述；②维护日志预先归档的细节；③'无需解释，未要求解释'的收尾节奏。中文版可以加入一个英文版没有的物质细节，如'重校准工单的墨迹干燥程度与发文时间不符'。"
+  },
+  {
+    "text_zh": "内部备忘 · MEM-0██-44\n主题：第 ██ 层铸字台异常（第 7 次跟进）\n发文：字盘维护科 → 铭刻事务处\n\n本科于 M.2██/██/██ 再次受理第 ██ 层铸字台字模污染报告。\n持续现象：铸出铅字形态完整，键徒诵读时发现其中嵌有非经文符号。\n符号来源不明。字模本身经检测无缺损。\n\n附注：D-████ 至 D-████ 已调离该层，原因不详。替补已按 §4.2 安排。\n\n注：据替补人员 D-████ 报告，其铭刻时",
+    "text_en": "Internal Memo · MEM-0██-44\nSubject: Layer ██ Typecasting Anomaly (Follow-up 7)\nFrom: Typecase Maintenance Div. → Inscription Affairs Office\n\nThis division received another contamination report from Layer ██ typecasting stations on M.2██/██/██.\nOngoing observation: cast slugs appear structurally intact. Clavigerants report non-liturgical marks embedded within upon recitation.\nSource of marks: undetermined. Matrices tested within normal parameters.\n\nAddendum: D-████ through D-████ reassigned from the layer. Reason not recorded. Replacements arranged per §4.2.\n\nNote: Replacement personnel D-████ reports that during inscription, ████████████████████. Report filed. No further action required.",
+    "_voice": "doc",
+    "_objectId": "boss_garble",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "中文版未完成",
+      "英文版的核心异常（铅字外形完整但内含非经文符号）有物质意象支撑，字模检测正常但符号来源不明，体制逻辑自洽",
+      "最后的████████████████████（大段redaction）是本批次过度使用redaction的典型——遮盖了整个关键陈述，但什么都没有留下，产生的效果是'什么都没说'而非'有东西被遮盖'",
+      "D级人员调离原因'Reason not recorded'是好的细节，但被正文的平淡处理所淹没"
+    ],
+    "_aiSuggestion": "大段████████████████████需要改为部分遮盖：如'D-████报告在铭刻时，铅字印出的符号████████，且该符号在次日的铭文组归档中已不见踪影'。遮盖应该让读者感受到被遮盖的内容可能存在，而非消灭整句话。中文版补全时同样适用此原则。"
+  },
+  {
+    "text_zh": "主题：第 VI-VIII 层收容廊走廊异常（第 ██ 次跟进）\n发件部门：第 ██ 层区域督察 → 收容记录处\n\n本月例检期间，D-████ 至 D-████ 均报告在收容铭刻过程中",
+    "text_en": "MEMO: Vaults VI–VIII Corridor Anomaly (Follow-up No. ██)\nFrom: Vault Six Area Inspector → Containment Records Division\n\nDuring this cycle's standard inspection, Keybound D-████ through D-████ each reported encountering, during inscription procedure, words they did not recognise. Separately, each confirmed they had completed the inscription correctly. Transcripts of their accounts have been attached as Supplement ██.\n\nWords flagged as unrecognised are not absent from the Canonical Register. Each appears under its correct entry. Upon return to the relevant corridor, personnel were unable to locate the word they had previously inscribed.\n\nNote: D-████ was found seated at the lectern, inscription posture intact. No inscription was present on the record. D-████ has since been reallocated per §4.2.\n\nAudit of corridor signage: pending. Follow-up scheduled. No escalation indicated at this time.",
+    "_objectId": "boss_decoy",
+    "_voice": "doc",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "中文版未完成",
+      "英文版的异常（铭刻了不认识的词，词在典册上存在，但回去找不到铭刻的位置）是本批次最接近词义圣律/词义异常的设计",
+      "D-████在键座前被发现、铭刻姿势完整但没有铭刻记录——这个细节非常强，但被处理得过于平淡，没有充分利用",
+      "与boss_fade存在感官层面的相似：两者都涉及'存在但找不到'的体验，差异化不够"
+    ],
+    "_aiSuggestion": "中文版需要补全。D-████在键座前被发现这个细节应该在中文版中获得更多篇幅——可以是一段独立的现场报告附注，语气比正文更短促，形成对比。与boss_fade的差异化可以通过强调'词本身没问题，问题是它的位置'来实现，物质化表达如'经文格位的铅字印迹清晰，但铭文组该页无对应压印'。"
+  }
+]

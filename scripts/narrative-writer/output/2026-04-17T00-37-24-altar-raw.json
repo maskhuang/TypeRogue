@@ -1,0 +1,72 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我觉得有人在按我，但也许只是风……",
+    "text_en": "...I think someone's pressing me, but maybe it's just wind...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……铅屑好像在发热，还是我想象的……",
+    "text_en": "...the lead shavings feel warm, or am I imagining...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……那个人总是按 R 键很轻，像怕弄疼我……",
+    "text_en": "...that person always pressed R so gently, like afraid to hurt...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……我是活的吗？还是只是觉得自己活着……",
+    "text_en": "...am I alive? or just think I'm alive...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……初铭者的手好稳，每一击都那么虔诚……",
+    "text_en": "...Valis had such steady hands, every strike so reverent...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……那时候我们都相信条例是对的……",
+    "text_en": "...back then we all believed the regulations were right...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……问道者总是停在 R 键上，犹豫好久……",
+    "text_en": "...Kernn would always pause on R, hesitating so long...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……他一直想知道 §7.1 写了什么……",
+    "text_en": "...he kept wanting to know what §7.1 actually said...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……悦铭者会在我边上画小花，好可爱……",
+    "text_en": "...Thane would draw little flowers beside me, so lovely...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……他说引擎在唱歌，我也想听听……",
+    "text_en": "...he said the Engine was singing, I want to hear too...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  }
+]

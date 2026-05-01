@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "基础操作手册",
+    "name_en": "Field Basics Manual",
+    "tier_0_zh": "适用于卸任全部配发技能岗位的雇员。手册归还前须完成清单核销。",
+    "tier_0_en": "Issued upon full skill reallocation. Return checklist must be cleared before handover.",
+    "tier_1_zh": "手册封底有一栏附加配发记录，已全数核销。核销签字处有两处笔迹不同。",
+    "tier_1_en": "All supplemental issue entries voided. Two signatures on the clearance page appear mismatched.",
+    "tier_2_zh": "翻过最后一页后，手册的厚度好像没有减少。已报告物资管理中心。尚未受理。",
+    "tier_2_en": "Thickness appears unchanged after the final page. Reported to Materials. Pending intake.",
+    "tier_3_zh": "已确认：样本 #485,902 卸除全部授权后，手册持握频率上升。翻阅行为无目的性。",
+    "tier_3_en": "Confirmed: Subject #485,902 increases grip frequency following full authorization removal. Page-turning behavior yields no output.",
+    "_objectId": "glass_cannon_v2",
+    "_voice": "per_tier_flavor"
+  }
+]

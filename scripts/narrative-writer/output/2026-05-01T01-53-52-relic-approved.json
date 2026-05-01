@@ -1,0 +1,28 @@
+[
+  {
+    "name_zh": "采购限额核准卡",
+    "name_en": "Procurement Discount Card",
+    "tier_0_zh": "凭此卡于物资管理中心办理采购，享有经财务组审批的限额优惠。卡面编号须与工号一致。",
+    "tier_0_en": "Present at procurement counter for approved discount on authorized supplies. Card number must match employee ID.",
+    "tier_1_zh": "本卡优惠条款已完成残稿复核。复核记录中有两处附注页缺失，尚未补档。",
+    "tier_1_en": "Discount terms cleared via fragment review. Two annotation pages remain missing from the file.",
+    "tier_2_zh": "刷卡时卡面印刷的价格栏偶尔显示另一组数字。行为档案已收录。建议正常使用。",
+    "tier_2_en": "Price field occasionally displays a different figure at point of use. Logged by behavior records. Proceed normally.",
+    "tier_3_zh": "已确认：持卡人消费后停顿约两秒，随后继续操作。核对行为已纳入月度观察表。",
+    "tier_3_en": "Confirmed: Subject #485,902 pauses briefly post-transaction before resuming. Verification behavior logged in monthly observation sheet.",
+    "_objectId": "discount_card",
+    "_voice": "per_tier_flavor",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "Tier_0：纯功能描述，无任何叙事质感。两句话都是'怎么用这张卡'的 patch notes，违反 Rule 12（档案是收容报告，不是 patch notes）。完全没有'人遇到这个东西后经历了什么'。",
+      "Tier_0：缺少任何 MIB 信号词——无分类编号、无不在场机构引用、无楼层暗示、无任何'水底'密度。零奇幻触感，单纯像一张员工福利手册条款。",
+      "Tier_1：'残稿复核'指向正确（FRP 层 / Wordsmith 协议），但'两处附注页缺失，尚未补档'处理得太直白——缺失页码是关键留白，直接说'缺失'就把水底的东西说穿了。应保持更大的模糊量化空间。",
+      "Tier_2：'建议正常使用'是 SOP 句式，本身合格；但'卡面印刷的价格栏偶尔显示另一组数字'描写停在了物理层面——没有任何关于持卡人反应或行为档案如何处理这件事的细节，叙事张力的落点缺失。",
+      "Tier_3：'Subject #485,902 pauses briefly post-transaction before resuming' 英文版直接用 Subject 指称玩家，语感已滑向 SCP 基金会报告腔，触碰 Rule 7（'收容物 / entity / object class' 禁用）的边界——Subject 是元层术语的宿主词，极易被读者识别为直接 SCP 引用。中文版'持卡人'较安全，英文应替换。",
+      "Tier_3：中英文描述了'停顿两秒'这一行为但没有任何体制解读——'核对行为已纳入月度观察表'语感平且软，观察主体是谁？谁在写这份报告？腔调在 Tier_3 应完成视角反转，但目前只是把 Tier_2 的'行为档案已收录'升了一个官僚级别，反转感不足。",
+      "四个 tier 均未触及'蕉'或猴行协议角度，猴行方向占比 0%——虽然 Rule 9 规定猴行 ≤ 30%，但此物品作为购物折扣卡，Tier_0 至少可以用财务严肃语调提一句蕉券换算，这是自然接点，放弃了。",
+      "黑色幽默密度不足：四个 tier 里没有一处让人'咦了一下又笑了'的时刻。Tier_2 最接近，但'建议正常使用'太公式化，缺少那一毫米的荒诞感落差。"
+    ],
+    "_aiSuggestion": "Tier_0 改写方向：加入发放部门署名（物资管理中心 · 财务组）+ 至少一个分类编号（如'PC-3 类采购许可凭证'）+ 把使用行为写成人的动作而非规则说明。例：'本卡由物资管理中心 · 财务组统一编号发放。持卡人至柜台出示后，工作人员将核验卡面编号与工号是否对应。若核验通过，优惠额度自动抵扣；若卡面编号模糊，请重新排队。蕉券不适用于本卡折扣叠加计算。'\n\nTier_1 改写方向：不要说'缺失两页'，改为暗示性的不可知量化。例：'附注部分复核状态标注为 Pending（待补）。具体缺失原因政策协调员办公室尚未回函。持卡人目前可照常使用。'\n\nTier_2 改写方向：让持卡人有一个微小但具体的反应。例：'部分持卡人在读数异常后报告曾重复确认票据两到三次，随后将票据收好，未作进一步询问。行为档案已记录。物资管理中心建议：如遇读数差异，照常签字即可。'\n\nTier_3 改写方向：视角完成反转——报告的写作者已经不是雇员了。例：'观察记录显示，#485,902 在交易完成后的停顿时长已从 Cycle 1 的 2.4 秒缩短至 Cycle 5 的 0.3 秒。月度观察表备注：适应曲线符合标准。'（英文将 Subject 替换为 Employee #485,902）"
+  }
+]

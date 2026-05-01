@@ -1,0 +1,56 @@
+[
+  {
+    "text_zh": "铅屑够了就别买了，会烫手",
+    "text_en": "Stop buying shavings when full, burns",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "左边那个遗物，D-0388试过，手指没了",
+    "text_en": "Left relic - D-0388 tried, lost fingers",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "又涨价了？昨天还是12铅币的",
+    "text_en": "Price up again? Was 12 coins yesterday",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "谁用了我的笔？还我！- D-0205",
+    "text_en": "Who took my pen? Give back! - D-0205",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "这破地方连个椅子都没有",
+    "text_en": "This dump doesn't even have chairs",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0144说熔蜡遗物别碰，会做噩梦",
+    "text_en": "D-0144 says don't touch wax relics, nightmares",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0299借走3个铅币，下次见面还",
+    "text_en": "D-0299 borrowed 3 coins, pay back next time",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "昨晚又听到敲字声了，明明没人在",
+    "text_en": "Heard typing again last night, nobody there",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "记得在表单上签名，不然找不到你",
+    "text_en": "Remember to sign forms, or they can't find you",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  }
+]

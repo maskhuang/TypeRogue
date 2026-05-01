@@ -1,0 +1,72 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我觉得有人在按我，但也许只是幻觉……",
+    "text_en": "...I think someone's pressing me, but maybe it's just...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……铅屑又卡在缝里了，好痒……",
+    "text_en": "...lead shavings stuck in my gaps again, so itchy...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……那个声音又来了，是机油滴落吗……",
+    "text_en": "...that sound again, is it oil dripping...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……我是活的吗？前任从没告诉我……",
+    "text_en": "...am I alive? the previous one never told me...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……那个人总是很小心，从不重击字键……",
+    "text_en": "...that person was always careful, never struck hard...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……工整的手感，好像还能记起那种恭敬……",
+    "text_en": "...neat touch, I think I still remember that reverence...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……按R犹豫的那个，手指总是发抖……",
+    "text_en": "...the one who hesitated on R, fingers always trembling...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……他好像在查什么，夜里偷偷按键……",
+    "text_en": "...seemed to be searching for something, typing secretly at night...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……喜欢画画的那个，指尖总有墨香……",
+    "text_en": "...the one who liked drawing, fingertips always smelled of ink...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……最后一天很兴奋，说要去十二层……",
+    "text_en": "...so excited on the last day, said going to Layer XII...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  }
+]

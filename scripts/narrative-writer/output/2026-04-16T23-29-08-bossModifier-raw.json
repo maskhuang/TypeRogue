@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "镜面回响",
+    "name_en": "Echo Inverted",
+    "text_zh": "「时沙逆流，汝之足迹倒映于虚无。引擎记得——每一刻皆是最后一刻。」",
+    "text_en": "\"Time flows backward. Your steps echo in void. The Engine remembers—every moment becomes the last.\"",
+    "_objectId": "boss_mirror",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "残余异文：RA-047 · 镜像试炼\n归属意志：第 XII 层 · 祷文引擎核心\n异常概述：原异文具备完全时间逆转特性。收容前的 M.1██ 年事故中，第 IX-XII 层全部铸字坊陷入时间回流，键徒在同一 ██ 小时内重复同样动作 ████ 次，直至体力衰竭。收容后铅字表面仍保留逆流刻痕，呈镜像排列。\n收容残余：键徒在特定收容程序下会出现'重做感知'现象。报告描述高度一致：'好像之前做过同样的事'。\n附注：D-████ 级人员在暴露 ██ 分钟后开始逆向诵读祷文。音像记录显示其发音完全准确，但称'从未学过此版本'。\n——「昨日之铅，今日仍烫手」",
+    "text_en": "Residual Anomaly: RA-047 · Mirror Trial\nOriginating Will: Layer XII · Litany Engine Core\nAnomalous Synopsis: Original anomaly possessed complete temporal reversal properties. During the M.1██ incident prior to containment, all foundries on layers IX-XII experienced time backflow, with keybound personnel repeating identical motions for ████ iterations within the same ██ hours until physical exhaustion. Post-containment lead slugs retain mirror-etched reversal marks.\nContainment Residue: Keybound personnel under specific containment procedures exhibit 'repetition awareness' phenomena. Reports show remarkable consistency: 'feels like doing the same task before'.\nAddendum: D-████ personnel began reverse-chanting litanies after ██ minutes of exposure. Audio records confirm perfect pronunciation, yet subject claims 'never learned this version'.\n——「Yesterday's lead still burns the hand today」",
+    "_objectId": "boss_mirror",
+    "_voice": "doc"
+  }
+]

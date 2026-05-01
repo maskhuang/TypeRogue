@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "初字圣册",
+    "name_en": "Codex Primum",
+    "text_zh": "初遇之字，铭于黄铜页中。其什一之税，比熟稔者重三倍。",
+    "text_en": "Virgin words inscribed upon brass leaves. Their tithe weighs thrice that of familiar script.",
+    "_objectId": "word_collection",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "初言不忘，其价愈珍。\n────\n分类: Safe\n来源: 第III层 抄写室废料堆\n描述: 皮装册页，封面镶嵌铜环。页内记录键徒首次铭刻之字符，墨迹未干时散发微光。经检验，此册可令持有者在重复铭刻已录字符时获得额外什一税收益。\n备注: 册页总计███页，现存7页可读。余页因油渍污损无法辨识。\n附录: Scriptor K-████曾提议将此册编入正式收容程序，但提案在审批过程中遗失。后续无人追查。",
+    "text_en": "First words hold their weight in lead.\n────\nObject Class: Safe\nRecovery: Layer III scriptor waste pile\nDescription: Leather-bound folio with brass corner guards. Pages record a keybound's first successful inscriptions, ink glowing faintly when wet. Testing confirms enhanced tithe yield upon re-inscription of recorded glyphs.\nNotes: Original ███ pages, 7 remain legible. Remainder obscured by machine oil stains.\nAddendum: Scriptor K-████'s integration proposal disappeared during review. No follow-up conducted.",
+    "_objectId": "word_collection",
+    "_voice": "doc"
+  }
+]

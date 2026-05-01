@@ -1,0 +1,62 @@
+[
+  {
+    "text_zh": "第3排的别碰，上个人用完就没回来过",
+    "text_en": "Don't touch row 3, last guy never came back",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "铅币记得数两遍，有时会自己少掉几个",
+    "text_en": "Count coins twice, they disappear sometimes",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "熔蜡的那些便宜但烫手，literal的烫",
+    "text_en": "Wax stuff is cheap but literally burns",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "谁又把我的笔拿走了？！第三次了！",
+    "text_en": "WHO took my pen AGAIN?! Third time!",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "价格又涨了...上周还是15铅币来着",
+    "text_en": "Prices up again... was 15 coins last week",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "这破地方连个椅子都没有，腿都站麻了",
+    "text_en": "No chairs in this place, legs going numb",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0891说左边柜子里的都是好货",
+    "text_en": "D-0891 says left cabinet has the good stuff",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-1047留：蓝色的那个救过我命",
+    "text_en": "From D-1047: blue one saved my life",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "今天店主又换人了？这是第几个了",
+    "text_en": "New shopkeeper again? How many is that now",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "有人在货架后面写字，但我看不懂",
+    "text_en": "Someone writing behind shelves, can't read it",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  }
+]

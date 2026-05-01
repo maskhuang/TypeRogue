@@ -1,0 +1,62 @@
+[
+  {
+    "text_zh": "铅币不够就按两下R，有时候会多几个",
+    "text_en": "Not enough coins? Try double-tapping R",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "定版的比活版的耐用，别被便宜货骗了",
+    "text_en": "Fixum lasts longer than Mobilum, trust me",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "第三排那个，我用过三次都没坏",
+    "text_en": "Third row item worked fine 3 times",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "又涨价了…上个月还是12铅币的",
+    "text_en": "Price went up again... was 12 coins last month",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "谁把我的笔拿走了？？写着我编号呢！",
+    "text_en": "Who took my pen?? It had my number on it!",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "管子又堵了，敲三下左边那个阀门",
+    "text_en": "Tube's jammed again. Tap left valve 3 times",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0847说脱版的别碰，他手还在抖",
+    "text_en": "D-0847 says avoid Solum grade. Still shaking",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0203推荐那个铜的，说是家传秘方",
+    "text_en": "D-0203 recommends the copper one. Family secret",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "我妈做的比这个好吃多了…等等我妈？",
+    "text_en": "Mom's was better... wait, mom? Do I have a mom?",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "昨天梦到外面下雨了，什么是雨？",
+    "text_en": "Dreamed of rain yesterday. What's rain?",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  }
+]

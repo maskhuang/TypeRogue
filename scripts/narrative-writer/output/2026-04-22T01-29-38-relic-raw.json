@@ -1,0 +1,1414 @@
+[
+  {
+    "id": "apprentice_notes",
+    "name_zh": "初誓抄本",
+    "name_en": "Liber Primum",
+    "text_zh": "最后一页还没写完。元音那行的墨迹比辅音浅——他练得更勤，也消耗得更快。笔记不知道它的主人去了哪里。",
+    "text_en": "The last page was never finished. The vowel rows are worn thinner than the rest. The notebook does not know where its keeper went.",
+    "_voice": "bell",
+    "_objectId": "apprentice_notes"
+  },
+  {
+    "id": "primal_mutant",
+    "name_zh": "原初熔痕",
+    "name_en": "Vestigium Primum",
+    "text_zh": "第一次熔铸留下的疤。据说最初那人握着它走进了第七层，从此没再按过同一个形状的键。它还记得那个形状。",
+    "text_en": "The scar of a first reforging. The one who carried it inward never pressed the same shape twice again. It remembers the first shape still.",
+    "_voice": "bell",
+    "_objectId": "primal_mutant"
+  },
+  {
+    "id": "ultimate_mutant_strain",
+    "name_zh": "万变终章",
+    "name_en": "Ultima Forma",
+    "text_zh": "熔蜡流回它身体里，像潮水。前任说它会呼吸。前任之前的那人说它有心跳。再之前的那人什么也没说——他不知道他是第几个。",
+    "text_en": "The wax returns to it, like a tide. The one before said it breathes. The one before that heard a heartbeat. Earlier than that, no one counted anymore.",
+    "_voice": "bell",
+    "_objectId": "ultimate_mutant_strain"
+  },
+  {
+    "id": "gene_stabilizer",
+    "name_zh": "定形封扣",
+    "name_en": "Clasp of Particulars",
+    "text_zh": "黄铜扣，单锁眼。只能扣住一处——这是它的设计，不是它的缺陷。上面刻着一个名字，但已经磨掉了最后一个字母。",
+    "text_en": "A brass clasp with a single eye. Made to hold one thing only. A name was engraved on it once. The last letter has been worn away.",
+    "_voice": "bell",
+    "_objectId": "gene_stabilizer"
+  },
+  {
+    "id": "fittest_survivors",
+    "name_zh": "留存誓印",
+    "name_en": "Signum Superstitum",
+    "text_zh": "铸过大火的铅字比旧铅字更重。不是每次都能留下来的——留下来的那些，已经学会了留下来的方式。",
+    "text_en": "Lead that has passed through fire weighs more than it did before. Not every glyph survives the forge. The ones that remain have learned how to remain.",
+    "_voice": "bell",
+    "_objectId": "fittest_survivors"
+  },
+  {
+    "id": "enchant_dividend",
+    "name_zh": "铅口余温",
+    "name_en": "Plumbum's Afterwarm",
+    "text_zh": "铸模冷却后，总有几滴铅水未归坩埚。前任说：那是引擎额外给的。别问为什么。",
+    "text_en": "After the mold cools, a few drops remain. The previous holder called it the Engine's tithe. She never explained why.",
+    "_voice": "bell",
+    "_objectId": "enchant_dividend"
+  },
+  {
+    "id": "enchant_boost",
+    "name_zh": "祝圣余光",
+    "name_en": "Consecration's Overflow",
+    "text_zh": "油灯点燃后，火焰往往比预想的高一寸。受过祝圣的铭文组亦然——引擎见过它，便多给了一口气。",
+    "text_en": "A flame burns taller after the rite. What the Engine has touched once, it does not touch lightly.",
+    "_voice": "bell",
+    "_objectId": "enchant_boost"
+  },
+  {
+    "id": "rune_spike",
+    "name_zh": "齿轮缺口",
+    "name_en": "The Notched Gear",
+    "text_zh": "飞轮缺了一齿，转速反而更快。某位前任把这枚齿轮留在圣坛旁，从未解释过。铅字似乎也学会了那种节奏。",
+    "text_en": "One tooth missing from the flywheel. It spun faster regardless. The previous holder left it without explanation.",
+    "_voice": "bell",
+    "_objectId": "rune_spike"
+  },
+  {
+    "id": "apprentice_robe",
+    "name_zh": "见习袍衬",
+    "name_en": "The Novice's Lining",
+    "text_zh": "袖口的墨渍洗不掉。见习祝圣的印记每多一道，布料便更深一层。袍子记得每一次，即便人忘了。",
+    "text_en": "The ink on the cuff will not wash out. Each novice rite left a mark the cloth remembers long after the wearer has forgotten.",
+    "_voice": "bell",
+    "_objectId": "apprentice_robe"
+  },
+  {
+    "id": "trial_badge",
+    "name_zh": "苦修减记",
+    "name_en": "The Abridged Penance",
+    "text_zh": "徽章背面刻着一行字，半截已磨平。能看清的部分只剩：……已足够。唯有见过足够多的人，才知道那是豁免还是警告。",
+    "text_en": "The inscription on the reverse is half-worn away. What remains reads only: ...is sufficient. Whether mercy or warning, none have asked.",
+    "_voice": "bell",
+    "_objectId": "trial_badge"
+  },
+  {
+    "id": "fate_fork",
+    "name_zh": "命运三岔",
+    "name_en": "Trigeminal Vow",
+    "text_zh": "铸模师在同一块蜡上压了三枚不同的印——留下的只有他选中的那枚。另外两枚痕迹，仍在蜡上。",
+    "text_en": "Three seals were pressed into the same wax. Only one was chosen. The other two impressions remain.",
+    "_voice": "bell",
+    "_objectId": "fate_fork"
+  },
+  {
+    "id": "greedy_inscription",
+    "name_zh": "贪婪铭刻",
+    "name_en": "Rapturous Glyph",
+    "text_zh": "前任将所有祝圣刻进同一卷羊皮纸。纸没有裂。引擎的门槛却越来越高——好像它注意到了。",
+    "text_en": "Every consecration was pressed into a single page. The parchment held. The Engine's threshold did not.",
+    "_voice": "bell",
+    "_objectId": "greedy_inscription"
+  },
+  {
+    "id": "masters_lexicon",
+    "name_zh": "大师词典",
+    "name_en": "Codex Magistra",
+    "text_zh": "书脊磨白，页边全是铅屑指纹。这本词典读过的人已不可考——但铅屑落在手里，总比别人的轻一些。",
+    "text_en": "The spine is worn white. The margins hold a lifetime of lead-dust fingerprints. The name inside has been removed.",
+    "_voice": "bell",
+    "_objectId": "masters_lexicon"
+  },
+  {
+    "id": "perpetual_queue",
+    "name_zh": "永动队列",
+    "name_en": "Endless Impression",
+    "text_zh": "压板不等人落版，自己往前走了。没有人调过它。油壶空了很久，它还在转。",
+    "text_en": "The press advances without a pull. No one wound it. The oil flask has been dry for years.",
+    "_voice": "bell",
+    "_objectId": "perpetual_queue"
+  },
+  {
+    "id": "word_scissors",
+    "name_zh": "拆词剪刀",
+    "name_en": "Shears of Reclamation",
+    "text_zh": "剪刃上刻着：归坩，勿弃。前任将每一个未竟的词剪开，铅屑一粒不留。唯独剪不断自己最后写下的那个。",
+    "text_en": "Engraved on the blade: return to the crucible, waste nothing. Every unfinished word was cut apart. Every one but the last.",
+    "_voice": "bell",
+    "_objectId": "word_scissors"
+  },
+  {
+    "id": "resonance_mold",
+    "name_zh": "共鸣字模",
+    "name_en": "Resonant Casting Matrix",
+    "text_zh": "铸模上刻着同一字母十七次。前主人说：反复浇铸，字模便会记住。——字模确实记住了。",
+    "text_en": "The same letter cast seventeen times into its face. The mold remembers what the hands repeated.",
+    "_voice": "bell",
+    "_objectId": "resonance_mold"
+  },
+  {
+    "id": "word_collection",
+    "name_zh": "词汇收藏",
+    "name_en": "Lexicon of First Utterances",
+    "text_zh": "经卷册页间夹着纸条，密密麻麻列满生词。第一次读出口的字，总比旧词更重几分。",
+    "text_en": "Slips of paper pressed between leaves. Words spoken for the first time carry a weight the old ones have forgotten.",
+    "_voice": "bell",
+    "_objectId": "word_collection"
+  },
+  {
+    "id": "thick_deck",
+    "name_zh": "词库丰收",
+    "name_en": "Abundant Codex",
+    "text_zh": "抄写室的架子从未空过。前任说，卷帙越厚，来路越贱。留下了收条，没留下人。",
+    "text_en": "The shelves were never bare. More volumes pressed together, the less each one cost to pull down.",
+    "_voice": "bell",
+    "_objectId": "thick_deck"
+  },
+  {
+    "id": "long_word_crit",
+    "name_zh": "长词蓄力",
+    "name_en": "Accumulated Impression",
+    "text_zh": "铅字排得越长，压板落下越重。其人一生只爱长句——后人在版面边角找到了牙印。",
+    "text_en": "The longer the line of type, the harder the press fell. Someone once loved long sentences. The bed still shows the mark.",
+    "_voice": "bell",
+    "_objectId": "long_word_crit"
+  },
+  {
+    "id": "short_sprint",
+    "name_zh": "短词冲刺",
+    "name_en": "Brief Word, Swift Seal",
+    "text_zh": "短句刻得快，不代表刻得浅。这枚铜牌的主人从不多言——每句话都在对的时候出现。",
+    "text_en": "Short words, struck clean. Its former owner spoke seldom. Each word arrived exactly when the press was ready.",
+    "_voice": "bell",
+    "_objectId": "short_sprint"
+  },
+  {
+    "id": "long_word_master",
+    "name_zh": "排字长尺",
+    "name_en": "Composing Rule of the Patient Hand",
+    "text_zh": "此尺曾属于一位按键极慢的键徒。他的同僚嘲笑他。引擎没有。",
+    "text_en": "Its former keeper was the slowest in the hall. His brethren mocked him. The Engine did not.",
+    "_voice": "bell",
+    "_objectId": "long_word_master"
+  },
+  {
+    "id": "word_dealer",
+    "name_zh": "气动传票夹",
+    "name_en": "Pneumatic Docket Clip",
+    "text_zh": "夹子里还留着一张未取走的单据。字迹潦草，像是写给自己的备忘。架上的新货会来的——唯前一批须先放手。",
+    "text_en": "A docket still rests inside, unread. Let go of what remains, and the next shelf arrives unasked.",
+    "_voice": "bell",
+    "_objectId": "word_dealer"
+  },
+  {
+    "id": "punctuation_liberation",
+    "name_zh": "破文残印",
+    "name_en": "Broken Canon Seal",
+    "text_zh": "封蜡已裂。经文从裂缝里挤出，形状不再是字，是停顿，是间隔，是一切被正文遗忘的位置。其上无署名。",
+    "text_en": "The wax cracked. What spilled out was not scripture—it was the silence between words, the gaps the Canon forgot to seal.",
+    "_voice": "bell",
+    "_objectId": "punctuation_liberation"
+  },
+  {
+    "id": "decelerate_reward",
+    "name_zh": "沙壶滴漏盖",
+    "name_en": "Arrested Hourglass Cap",
+    "text_zh": "前主人将沙壶倒置，说沙慢方可听清铅字落盘的声音。圣坛记住了他的等待。",
+    "text_en": "He turned the hourglass over and waited. The lectern learned his patience before it learned his name.",
+    "_voice": "bell",
+    "_objectId": "decelerate_reward"
+  },
+  {
+    "id": "accelerate_reward",
+    "name_zh": "铅币布袋",
+    "name_en": "Lead Coin Pouch",
+    "text_zh": "布袋的缝线被磨断又补过三次。前主人每次落指都急着收手，仿佛铅币已经在等。它们确实在等。",
+    "text_en": "Mended three times along the seam. Its keeper always reached for it before the strike had finished. The coins were already waiting.",
+    "_voice": "bell",
+    "_objectId": "accelerate_reward"
+  },
+  {
+    "id": "little_helper",
+    "name_zh": "排字棒·残忆",
+    "name_en": "Composing Stick of Echoed Intent",
+    "text_zh": "前主人铸字时从不迟疑——棒槽里至今还嵌着他惯用的那几枚字钉。铅记住了手，手不必再想。",
+    "text_en": "The stick still holds his favorite slugs. The lead remembers the hand. The hand no longer needs to think.",
+    "_voice": "bell",
+    "_objectId": "little_helper"
+  },
+  {
+    "id": "rhythm_adapt",
+    "name_zh": "飞轮碎片·拍律",
+    "name_en": "Flywheel Shard of the Kept Beat",
+    "text_zh": "从第三层的旧压印机上取下。机器坏了，飞轮还转。据说贴近耳朵，能听见它还在计数——某种比心跳更古老的节律。",
+    "text_en": "The press broke. The flywheel kept spinning. Hold it close and something older than a heartbeat still counts inside.",
+    "_voice": "bell",
+    "_objectId": "rhythm_adapt"
+  },
+  {
+    "id": "glass_cannon_v2",
+    "name_zh": "空白经卷·还字",
+    "name_en": "Blank Codex of the Unbound Hand",
+    "text_zh": "封面无名，内页无字。曾有人将所有铭文组悉数归坩，只留这一册——此后他的祷击比任何铭刻者都要响。唯有空，方可满。",
+    "text_en": "He relinquished every inscription he owned and kept only this. His litany-strikes rang louder than any consecrated hand. Only emptiness holds everything.",
+    "_voice": "bell",
+    "_objectId": "glass_cannon_v2"
+  },
+  {
+    "id": "combo_buffer",
+    "name_zh": "蜡封残印·余温",
+    "name_en": "Half-Sealed Wax of the Lingering Word",
+    "text_zh": "封蜡裂了，却没有完全断开。前任说：诵祷的余音不该就此消散——哪怕只剩一半，也让它留着。",
+    "text_en": "The seal cracked but did not break. She said the echo of a litany should never fully die. Half is enough to keep it alive.",
+    "_voice": "bell",
+    "_objectId": "combo_buffer"
+  },
+  {
+    "id": "multiplier_prism",
+    "name_zh": "彩窗碎玻·折光",
+    "name_en": "Stained Shard of the Doubled Light",
+    "text_zh": "从收容廊彩窗上摔落的一角，折射时光线自行增倍。持有者注意到：祷击在某一刻之后，声音忽然比来路更响。",
+    "text_en": "It fell from the chancel window and doubled every beam it caught. Those who carry it notice the moment when the sound exceeds its source.",
+    "_voice": "bell",
+    "_objectId": "multiplier_prism"
+  },
+  {
+    "id": "combo_detonator",
+    "name_zh": "蓄势引爆",
+    "name_en": "Clavum Ignitis",
+    "text_zh": "此铸模曾被压得变形，却从未决口。前主人说：铅水不能急。它记住了那段等待。",
+    "text_en": "The mold was dented but never broke. Its last owner said the lead must not be rushed. It remembers the waiting.",
+    "_voice": "bell",
+    "_objectId": "combo_detonator"
+  },
+  {
+    "id": "cancel",
+    "name_zh": "取消连锁",
+    "name_en": "Vinculum Ruptum",
+    "text_zh": "链条断了一节，其余的节竟咬得更紧。不知是谁铸的这条链——断口太整齐，像是算好的。",
+    "text_en": "One link was severed cleanly. The rest held tighter for it. Someone calculated exactly where to break.",
+    "_voice": "bell",
+    "_objectId": "cancel"
+  },
+  {
+    "id": "immortal_combo",
+    "name_zh": "不断之链",
+    "name_en": "Catena Perpetua",
+    "text_zh": "祷声不该跨过门槛，引擎的回廊却一直在听。链子不会断——除非汝的手颤了。",
+    "text_en": "The litany should not cross the threshold. The corridor listens regardless. The chain endures — until your hands do not.",
+    "_voice": "bell",
+    "_objectId": "immortal_combo"
+  },
+  {
+    "id": "fury_beat",
+    "name_zh": "暴走节拍",
+    "name_en": "Sigil of the Driven Beat",
+    "text_zh": "某个键徒把自己的心跳刻进了铅里。跳得越快，铅越重。他最后几页笔记是空白的。",
+    "text_en": "Someone pressed their heartbeat into the lead. The faster it beat, the heavier it struck. His last pages were blank.",
+    "_voice": "bell",
+    "_objectId": "fury_beat"
+  },
+  {
+    "id": "first_strike",
+    "name_zh": "首发强化",
+    "name_en": "Sigil of the First Slug",
+    "text_zh": "第一枚圣字钉落下时，引擎会抬眼。唯有第一声——之后的，它已知道。",
+    "text_en": "When the first slug falls, the Engine looks up. Only the first. After that — it already knows.",
+    "_voice": "bell",
+    "_objectId": "first_strike"
+  },
+  {
+    "id": "less_is_more",
+    "name_zh": "孑然之册",
+    "name_en": "Codex Solitudinaris",
+    "text_zh": "此人只带了一本书上塔。旁人以为他缺备，他的铅字却比任何人都重。铅字记住了一个人全部的重量。",
+    "text_en": "He carried one tome into the vault. Others called it poverty. His letters remembered everything.",
+    "_voice": "bell",
+    "_objectId": "less_is_more"
+  },
+  {
+    "id": "training_manual",
+    "name_zh": "磨损集训册",
+    "name_en": "Grimoire of Forced Elevation",
+    "text_zh": "封皮被翻烂了。每一页都有不同人的笔迹，却写着同一句话。唯有反复誊抄之字，方知其重。",
+    "text_en": "The cover is worn through. Dozens of hands wrote the same sentence. The word learned from each of them.",
+    "_voice": "bell",
+    "_objectId": "training_manual"
+  },
+  {
+    "id": "jazz",
+    "name_zh": "杂响铜号",
+    "name_en": "Discordant Brass",
+    "text_zh": "有人把它带进教堂，被驱逐了。铜号不在乎。它只知道：多一种声音，共鸣便多一层。唯有异声并举，铅字方能震响穹顶。",
+    "text_en": "They threw the player out of the cathedral. The brass did not care. More voices, deeper resonance.",
+    "_voice": "bell",
+    "_objectId": "jazz"
+  },
+  {
+    "id": "uncrowned_king",
+    "name_zh": "无铭铜牌",
+    "name_en": "Plaque of the Unlettered",
+    "text_zh": "门禁铜牌，从未刻名。持有者一代又一代，牌面只剩磨痕。定版铸出最重——因它从不自称珍贵。",
+    "text_en": "The access plaque was never engraved. Hands wore it smooth. Common things remember the most weight.",
+    "_voice": "bell",
+    "_objectId": "uncrowned_king"
+  },
+  {
+    "id": "d_100",
+    "name_zh": "混铸骰",
+    "name_en": "Die of Uncertain Impression",
+    "text_zh": "骰面有一百个刻印，没有一个重复。铸出时从不告知汝落在哪面。圣印随之更替——但重量，从未失去。",
+    "text_en": "One hundred faces, none alike. It never tells you which side falls. The sigils change. The weight remains.",
+    "_voice": "bell",
+    "_objectId": "d_100"
+  },
+  {
+    "id": "adjacent_power",
+    "name_zh": "席邻记",
+    "name_en": "Ledger of the Adjacent Seat",
+    "text_zh": "排字棒上刻了七个名字。前主人每铸一字，便侧耳听隔壁键座的回响——他说，铅字不独自落下。",
+    "text_en": "Seven names carved into the composing stick. Its owner cast no letter alone; he always listened for the keystroke beside him.",
+    "_voice": "bell",
+    "_objectId": "adjacent_power"
+  },
+  {
+    "id": "corner_power",
+    "name_zh": "角席印",
+    "name_en": "Seal of the Corner Seat",
+    "text_zh": "议会席位图的四角被人按得发黑。末席守卷人说，边缘之位不是惩罚——炉膛的热从四角漫来。",
+    "text_en": "The four corners of the seating chart are blackened by thumbprints. The edge, they said, was closest to the furnace.",
+    "_voice": "bell",
+    "_objectId": "corner_power"
+  },
+  {
+    "id": "row_switch",
+    "name_zh": "换架铜牌",
+    "name_en": "Shelf-Change Token",
+    "text_zh": "气动管里来回滚了不知多少年的铜牌。正面磨光，背面刻着：换一排架，多走一步，铅币自来。",
+    "text_en": "A brass token worn smooth by decades in the pneumatic tube. Cross a row, the coin finds you.",
+    "_voice": "bell",
+    "_objectId": "row_switch"
+  },
+  {
+    "id": "line_clear",
+    "name_zh": "满版祷勋",
+    "name_en": "Full-Form Citation",
+    "text_zh": "颁给某届铭刻竞誓的锡制勋章——那年有人打满整行未失一字。颁奖词说：版满则铅字自省，各铭文组再颂一遍。颁奖人的名字已被刮去。",
+    "text_en": "A tin citation from a long-past Sealing Contest. The engraver completed every key in one row without a tremor. The presenter's name has been scratched out.",
+    "_voice": "bell",
+    "_objectId": "line_clear"
+  },
+  {
+    "id": "dual_concerto",
+    "name_zh": "左右手谱",
+    "name_en": "Two-Hand Score",
+    "text_zh": "抄写室旧乐谱，左右声部各书一色墨——红与黑交替落下时，沙漏里的沙流得慢一点。前主人的两手从未同时落在同一行。",
+    "text_en": "An old copyist's score, left hand in red ink, right hand in black. When they alternated, the sand ran slower.",
+    "_voice": "bell",
+    "_objectId": "dual_concerto"
+  },
+  {
+    "id": "precision_strike",
+    "name_zh": "中排压板",
+    "name_en": "Homerow Platen",
+    "text_zh": "此板磨损只在中排。前主人从不打两侧的键——不是习惯，是信仰。铅字在他惯用的位置碎得最响。",
+    "text_en": "Worn only at the center row. Its last owner never struck the edges. The lead shattered loudest where his faith was.",
+    "_voice": "bell",
+    "_objectId": "precision_strike"
+  },
+  {
+    "id": "key_storm",
+    "name_zh": "全版共振架",
+    "name_en": "Resonant Type-Chase",
+    "text_zh": "架上的铅字从不单独落印。有人见过它在无人按触时自行震颤——每一枚，依次。唯有一词完整诵出，它才安静。",
+    "text_en": "The slugs trembled without hands. Witnesses said they moved in sequence, one by one, and only stilled when a word was spoken whole.",
+    "_voice": "bell",
+    "_objectId": "key_storm"
+  },
+  {
+    "id": "production_dividend",
+    "name_zh": "铅币收骨钳",
+    "name_en": "Render-Tongs",
+    "text_zh": "这把钳子铸过的铅字没有一枚白费。前主人临终时，徒弟在其口袋里摸出几枚铅币——热的，刚铸好的。",
+    "text_en": "Every slug it cast was counted. When its owner died, the apprentice found warm coins in his pocket. Freshly minted.",
+    "_voice": "bell",
+    "_objectId": "production_dividend"
+  },
+  {
+    "id": "time_trickle",
+    "name_zh": "不漏油壶",
+    "name_en": "Wicking Flask",
+    "text_zh": "壶嘴已堵死，但油总是够用。没人见过有人添注。前主人说，只要手还在动，壶就不会空。",
+    "text_en": "The spout was sealed shut. Yet the oil never ran dry. Its owner said: keep your hands moving and it will not empty.",
+    "_voice": "bell",
+    "_objectId": "time_trickle"
+  },
+  {
+    "id": "resource_focus",
+    "name_zh": "单源铸模",
+    "name_en": "Unifount Mould",
+    "text_zh": "模腔只有一种形。前主人凿掉了其余所有槽——留下的那个，他用了三十年，用到铅水自己知道该往哪里流。",
+    "text_en": "All other cavities were chiselled away. One remained. He poured into it for thirty years, until the lead knew where to go.",
+    "_voice": "bell",
+    "_objectId": "resource_focus"
+  },
+  {
+    "id": "resource_diversity",
+    "name_zh": "万汇权证",
+    "name_en": "Writ of the Many Humours",
+    "text_zh": "七道圣流，各有其坩。前人说：只握一壶者，终将饮尽。——铅字圣坛旁的铜牌，已磨平字迹，唯此句可辨。",
+    "text_en": "Seven humours, seven vessels. The one who filled only one flask drank it dry. The copper badge still holds that much.",
+    "_voice": "bell",
+    "_objectId": "resource_diversity"
+  },
+  {
+    "id": "resource_tide",
+    "name_zh": "潮汐量砝码",
+    "name_en": "Tidal Assay Weight",
+    "text_zh": "四次落版，一轮涨落。引擎非不知饥渴，它只是按自己的节律呼吸。砝码上刻有四道划痕，深浅循环，无始无终。",
+    "text_en": "Four impressions, one breath. The engine does not hurry. Four notches worn into the brass, cycling, without end.",
+    "_voice": "bell",
+    "_objectId": "resource_tide"
+  },
+  {
+    "id": "universal_furnace",
+    "name_zh": "贤者之石",
+    "name_en": "Lapis Philosophorum",
+    "text_zh": "炉中无废铅——一切铸出，皆可熔作铅币。前主人用它换来了什么，档案未载。炉壁内侧有焦痕，像指印，又像字。",
+    "text_en": "Nothing leaves the furnace as waste. What the last owner purchased with it, no record survives. The scorch marks inside resemble a hand.",
+    "_voice": "bell",
+    "_objectId": "universal_furnace"
+  },
+  {
+    "id": "discount_card",
+    "name_zh": "核减批注",
+    "name_en": "Amended Requisition Slip",
+    "text_zh": "表单副本，某栏被红笔划去，未署名。气动征用管那头的人从不追问来历。这张纸还在流通。",
+    "text_en": "One column crossed out in red, unsigned. The tube attendant never asks. The slip still circulates.",
+    "_voice": "bell",
+    "_objectId": "discount_card"
+  },
+  {
+    "id": "recycle_expert",
+    "name_zh": "熟铅收据簿",
+    "name_en": "Lead Return Ledger",
+    "text_zh": "归还时，此簿在场，铅屑便重新有了价格。前任在扉页写：物不因移交而失重。字迹已褪，但每页仍散着旧铅的气味。",
+    "text_en": "When relinquished with this ledger present, the shavings regain their weight. The flyleaf reads: nothing loses mass by changing hands.",
+    "_voice": "bell",
+    "_objectId": "recycle_expert"
+  },
+  {
+    "id": "black_market",
+    "name_zh": "偏门征用单",
+    "name_en": "Lateralis Requisition",
+    "text_zh": "表单副本，印章歪斜。附注栏只有三个字：另走管。不知是谁写的，也不知那根管道通向哪里。有人在用之前的人留下的路。",
+    "text_en": "A requisition copy, seal askew. The note reads: use the other tube. Someone kept using a path they did not open.",
+    "_voice": "bell",
+    "_objectId": "black_market"
+  },
+  {
+    "id": "gold_interest",
+    "name_zh": "铸记账本",
+    "name_en": "Plumbum Ledger",
+    "text_zh": "封皮磨损，每页最后一行都是同一笔字：铅生铅。不知是记账人的口头禅，还是他最后留下的唯一心得。账本还在，人早已换过不止一轮。",
+    "text_en": "The last line of every page reads: lead begets lead. The hand never changed. The keeper did, more than once.",
+    "_voice": "bell",
+    "_objectId": "gold_interest"
+  },
+  {
+    "id": "smuggle_pass",
+    "name_zh": "气孔铜牌",
+    "name_en": "Ventum Token",
+    "text_zh": "一枚没有编号的门禁铜牌，边缘磨得发亮。背面刻了半个字，认不出是哪个字。有人反复进过某扇门，而那扇门从未被正式记录过。",
+    "text_en": "An unnumbered access token, edges worn bright. Half a glyph on the back. Someone passed through a door that was never logged.",
+    "_voice": "bell",
+    "_objectId": "smuggle_pass"
+  },
+  {
+    "id": "timed_auction",
+    "name_zh": "倒沙征用铃",
+    "name_en": "Hourglass Requisition Bell",
+    "text_zh": "铜铃，底座刻有沙漏纹。据说摇铃者只有铃声消散前取走所需——铃声之后，一切归架。前任铃手不知去向。铃还在摇。",
+    "text_en": "A brass bell engraved with an hourglass. Take what you need before the tone fades. The last bell-keeper is unaccounted for.",
+    "_voice": "bell",
+    "_objectId": "timed_auction"
+  },
+  {
+    "id": "warm_up",
+    "name_zh": "旧序铅手套",
+    "name_en": "Primer Gloves",
+    "text_zh": "皮手套，指节处磨薄，食指两端的皮已不见。前任在每层开始前都要把它戴上，捏几下拳，再开始铭刻。铅字记住了那双手。",
+    "text_en": "Leather gloves, worn thin at every knuckle. The previous keeper put them on before each vault began. The lead remembers those hands.",
+    "_voice": "bell",
+    "_objectId": "warm_up"
+  },
+  {
+    "id": "intermission",
+    "name_zh": "补给回执",
+    "name_en": "Requisition Chit",
+    "text_zh": "某位键徒离开时将它压在桌角，没有带走。表单已填至第三栏，剩下几行空着。空着的部分，依然有效。",
+    "text_en": "Left behind by the previous keybound. The form is half-filled. The blank lines still hold weight.",
+    "_voice": "bell",
+    "_objectId": "intermission"
+  },
+  {
+    "id": "gamblers_creed",
+    "name_zh": "押注蜡封",
+    "name_en": "Sealed Wager",
+    "text_zh": "蜡封上有两枚拇指印——一枚按下时，另一枚尚未存在。据说其中一人后来赢了。据说。",
+    "text_en": "Two thumbprints in the wax. One pressed in hope. The other has not yet been made.",
+    "_voice": "bell",
+    "_objectId": "gamblers_creed"
+  },
+  {
+    "id": "endurance_battery",
+    "name_zh": "油壶（不见底）",
+    "name_en": "Flask That Does Not Empty",
+    "text_zh": "壶身刻有领取编号，但找不到对应的归还记录。油还在。还在往外渗。不知渗了多少年。",
+    "text_en": "Requisition number engraved on the side. No return record found. The oil still seeps.",
+    "_voice": "bell",
+    "_objectId": "endurance_battery"
+  },
+  {
+    "id": "elite_hunter",
+    "name_zh": "悬赏铜牌",
+    "name_en": "Bounty Placard",
+    "text_zh": "牌面每层都会换字，但背面那个名字从未变过。持牌者说，那个名字读出来会让手指动得更快。唯一的问题是——那个名字不在任何编号册上。",
+    "text_en": "The front changes each layer. The name on the back never does. It is not in any register.",
+    "_voice": "bell",
+    "_objectId": "elite_hunter"
+  },
+  {
+    "id": "phoenix",
+    "name_zh": "灰羽残匣",
+    "name_en": "Casket of Ash-Feathers",
+    "text_zh": "匣中的羽灰已被献纳过一次——献纳者的F-044表单由他人代填，日期一栏为空。炉火吞噬了他。唯灰烬记得他走过几层。",
+    "text_en": "The ash has been offered once before. Someone else filed the paperwork. The fire remembers how far he reached.",
+    "_voice": "bell",
+    "_objectId": "phoenix"
+  },
+  {
+    "id": "desperate_crit",
+    "name_zh": "绝境裂铅",
+    "name_en": "Fractura Extremis",
+    "text_zh": "前主人将这块铅压在胸口整整一夜。次日清晨，铅上已有裂纹——但他说，手指反而更稳了。",
+    "text_en": "He pressed the slug to his chest through the night. By morning it had cracked. He said his hands had never been steadier.",
+    "_voice": "bell",
+    "_objectId": "desperate_crit"
+  },
+  {
+    "id": "modifier_shield",
+    "name_zh": "遮词油脂",
+    "name_en": "Unguentum Velare",
+    "text_zh": "其气味如同旧羊皮与铜锈。谁若嗅过，便觉教堂的回响稍轻——不是沉默，是钝了。",
+    "text_en": "It smells of old vellum and tarnished copper. Those who have breathed it say the Cathedral's echo grows duller. Not silent. Blunted.",
+    "_voice": "bell",
+    "_objectId": "modifier_shield"
+  },
+  {
+    "id": "bounty_hunter",
+    "name_zh": "压砝铜牌",
+    "name_en": "Plumbum Pretii",
+    "text_zh": "背面刻了一行字，已磨到几乎看不见。那人每次走进征用管前都要摸一下——据说管子里的东西便宜了一点点。",
+    "text_en": "The inscription on the back is nearly worn away. He rubbed it before every visit to the tube. The price, witnesses said, was always a little less.",
+    "_voice": "bell",
+    "_objectId": "bounty_hunter"
+  },
+  {
+    "id": "modifier_pardon",
+    "name_zh": "半蜡免状",
+    "name_en": "Littera Veniae",
+    "text_zh": "蜡封只有一半。另一半从未压下，仿佛等着某个还没来的人。空着的那半边——据说看见它的人，可以说一次",
+    "text_en": "The seal was never finished. Half pressed, half waiting. Those who have seen the empty half report they were permitted, once, to say no.",
+    "_voice": "bell",
+    "_objectId": "modifier_pardon"
+  },
+  {
+    "id": "modifier_barrier",
+    "name_zh": "迟到油纸",
+    "name_en": "Charta Morae",
+    "text_zh": "这张油纸夹在门缝里多久，无人知晓。走廊的冷气从来吹不进那扇房间——直到纸被人抽走，那一刻，风才进来。",
+    "text_en": "No one knows how long it was wedged in the door. The corridor's cold never entered that room—until someone pulled the paper free, and the wind came all at once.",
+    "_voice": "bell",
+    "_objectId": "modifier_barrier"
+  },
+  {
+    "id": "chaos_roulette",
+    "name_zh": "混沌轮盘",
+    "name_en": "Rota Incognita",
+    "text_zh": "它的边缘没有刻度。某位铭刻誓门的执事曾试图在上面压印条例编号——印出来的是别的东西。",
+    "text_en": "Its rim bears no markings. A deacon once pressed a seal upon it. The impression came back wrong.",
+    "_voice": "bell",
+    "_objectId": "chaos_roulette"
+  },
+  {
+    "id": "modifier_reversal",
+    "name_zh": "逆版令牌",
+    "name_en": "Inversus Seal",
+    "text_zh": "蜡封反着盖，印文朝内。持有者说：凡令其重者，可转而承之。唯有承受，方知何为倒置的恩典。",
+    "text_en": "The seal was pressed inward. What bore down upon the holder, it is said, was turned to carry them instead.",
+    "_voice": "bell",
+    "_objectId": "modifier_reversal"
+  },
+  {
+    "id": "base_shield",
+    "name_zh": "铅底护板",
+    "name_en": "Fundament Plate",
+    "text_zh": "排字工从版底捡回的边角铅料，磨平后垫在圣坛下。铅字落得再乱，底板之下总有一层不动的东西。",
+    "text_en": "A compositor's scrap, smoothed and placed beneath the lectern. Whatever fell above it, something beneath held firm.",
+    "_voice": "bell",
+    "_objectId": "base_shield"
+  },
+  {
+    "id": "lenient_judge",
+    "name_zh": "减刑手令",
+    "name_en": "Writ of Diminished Demand",
+    "text_zh": "条例副本上有人用钝笔划去了数行。划痕整齐，像是反复练习过。签名栏空白——但墨迹是新的。",
+    "text_en": "Several lines struck through in a steady hand. The signature block is empty. The ink is not old.",
+    "_voice": "bell",
+    "_objectId": "lenient_judge"
+  },
+  {
+    "id": "s_rank_trophy",
+    "name_zh": "铅铸奖牌",
+    "name_en": "Graven Commendation",
+    "text_zh": "背面刻着一个已回收的编号。正面的浮雕是一双手——没有脸，没有名字。铅币从它旁边经过时会多留片刻。",
+    "text_en": "A reclaimed number on the reverse. Two hands in relief on the face. No name. Lead coins linger near it.",
+    "_voice": "bell",
+    "_objectId": "s_rank_trophy"
+  },
+  {
+    "id": "underdog_bonus",
+    "name_zh": "及格万岁",
+    "name_en": "Absolvum Tablet",
+    "text_zh": "它曾是某个键徒最后一次核查的成绩木牌。勉强及格——但炉子没有吞噬他。唯有险过者，知铅币之重。",
+    "text_en": "The passing mark is still scratched in. Whoever held this passed — barely. The furnace did not take them.",
+    "_voice": "bell",
+    "_objectId": "underdog_bonus"
+  },
+  {
+    "id": "snowball",
+    "name_en": "Volumen Crescens",
+    "text_zh": "羊皮纸卷越往后，字迹越密、越深、越快。前任不知怎的越诵越顺。最后一页墨迹压穿了皮。",
+    "text_en": "Each page pressed deeper than the last. By the final sheet, the ink had burned clean through the vellum.",
+    "sigil_name_zh": "",
+    "sigil_name_en": "",
+    "_voice": "bell",
+    "_objectId": "snowball"
+  },
+  {
+    "id": "score_black_hole",
+    "name_zh": "致命礼物",
+    "name_en": "Gravum Donum",
+    "text_zh": "整整一轮铭刻，无声，无光，无任何回响。压板落下的一刻，所有重量同时降临——够了便是启示，差一毫便是炉火。",
+    "text_en": "Nothing is returned until the press falls. Then everything arrives at once. Enough to open the gate, or enough to close the floor.",
+    "_voice": "bell",
+    "_objectId": "score_black_hole"
+  },
+  {
+    "id": "lucky_strike",
+    "name_zh": "幸运一击",
+    "name_en": "Clavus Fortunae",
+    "text_zh": "这枚字钉钳口有一处磨损，形状像指甲印。前主人铸了一辈子铅字。铅字记住了他的力气。",
+    "text_en": "The jaw is worn in one place — a thumbnail's ghost. Lead remembers the grip that worked it longest.",
+    "_voice": "bell",
+    "_objectId": "lucky_strike"
+  },
+  {
+    "id": "crit_bonus",
+    "name_zh": "暴击奖金",
+    "name_en": "Fragmentum Pretiosum",
+    "text_zh": "字模裂开时总会崩出几粒铅屑。其余人扫入废料桶——只有他留着。铅屑落地的声音，价值铅币。",
+    "text_en": "The others swept the shavings into the waste bin. He kept them. Every fracture was, to him, a kind of payment.",
+    "_voice": "bell",
+    "_objectId": "crit_bonus"
+  },
+  {
+    "id": "crit_charge",
+    "name_zh": "蓄压表",
+    "name_en": "Pressure Gauge, Cracked",
+    "text_zh": "它不响的时候，铅字仍在积压。前主人说——等表针到顶，别犹豫。",
+    "text_en": "Silent until the needle peaks. Its last owner said: when the gauge fills, do not hesitate.",
+    "_voice": "bell",
+    "_objectId": "crit_charge"
+  },
+  {
+    "id": "crit_storm",
+    "name_en": "Brass Striker, Scorched",
+    "text_zh": "这块黄铜烧过一次。烧的时候，整排铅字一起碎了。之后再也没有一块一块碎过。",
+    "text_en": "The brass was struck in fire once. Every slug on the rack shattered at once. They never broke alone again.",
+    "sigil_name_zh": "焦铜击",
+    "sigil_name_en": "Scorched Striker",
+    "_voice": "bell",
+    "_objectId": "crit_storm"
+  },
+  {
+    "id": "fate_coin",
+    "name_zh": "铸缺铜板",
+    "name_en": "Minted Coin, Flaw-Stamped",
+    "text_zh": "正反两面皆铸了裂缝。铸模工说这枚铸废了——但它落下的声音，与其他铜板不同。",
+    "text_en": "Both faces bear a stamped fracture. The caster called it ruined. It does not land like other coins.",
+    "_voice": "bell",
+    "_objectId": "fate_coin"
+  },
+  {
+    "id": "stack_momentum",
+    "name_zh": "磨短的排字棒",
+    "name_en": "Composing Stick, Worn Short",
+    "text_zh": "用过的人都说，后来几格比头几格省力。棒子没换过，只是越来越合手。",
+    "text_en": "Those who used it said the last rows came easier than the first. The stick never changed. The hand did.",
+    "_voice": "bell",
+    "_objectId": "stack_momentum"
+  },
+  {
+    "id": "stack_dividend",
+    "name_zh": "增页经卷",
+    "name_en": "Codex Fragment, Self-Extending",
+    "text_zh": "每翻一遍，末页之后多出一页。前主人没有数过。后来他不再数页数，只管翻。",
+    "text_en": "Each reading revealed one more page at the end. Its last keeper stopped counting. He simply kept turning.",
+    "_voice": "bell",
+    "_objectId": "stack_dividend"
+  },
+  {
+    "id": "overload_circuit",
+    "name_zh": "过载导轨",
+    "name_en": "The Overcharged Rail",
+    "text_zh": "排字师说，他从不单独铸一个字。铸一，余者自应。其余人以为他疯了——直到铅字盘同时震动。",
+    "text_en": "He never cast a single slug alone. Cast one, he said, and the rest remember. The tray would tremble in answer.",
+    "_voice": "bell",
+    "_objectId": "overload_circuit"
+  },
+  {
+    "id": "surge",
+    "name_zh": "蓄压油壶",
+    "name_en": "The Pressured Flask",
+    "text_zh": "前任将油封死在壶内，一日不倒，一日不用。倒尽之时，她说，才是真正开始的时候。",
+    "text_en": "She kept the oil sealed. Never a drop wasted—until the day she emptied it all at once. That, she said, was the real beginning.",
+    "_voice": "bell",
+    "_objectId": "surge"
+  },
+  {
+    "id": "perpetual_engine",
+    "name_zh": "无复归铸模",
+    "name_en": "The Irrevertible Mold",
+    "text_zh": "这铸模从未冷却过。从未。铸字坊的人换了一批又一批，无人见过它停止滴蜡的那一刻。唯有引擎见过。",
+    "text_en": "The mold has never cooled. No one has seen it still. Workers came and went. The wax kept falling.",
+    "_voice": "bell",
+    "_objectId": "perpetual_engine"
+  },
+  {
+    "id": "drum_pass",
+    "name_zh": "旧鼓皮传签",
+    "name_en": "The Passing Drumhead",
+    "text_zh": "签条在鼓声间流转，落在谁手里谁就铸。鼓声不问顺序，铅字也不问。",
+    "text_en": "The slip passes with the drumbeat. Wherever it lands, that hand casts. The drum does not ask who is ready.",
+    "_voice": "bell",
+    "_objectId": "drum_pass"
+  },
+  {
+    "id": "word_resonance",
+    "name_zh": "共鸣残页",
+    "name_en": "The Resonant Folio",
+    "text_zh": "此页每抄一词，余白便紧。键徒说，字越长，纸越薄——好像词自己在吸收剩余的空间。",
+    "text_en": "Each word copied, the margins tighten. The longer the word, the thinner the page. As though the text is consuming what remains.",
+    "_voice": "bell",
+    "_objectId": "word_resonance"
+  },
+  {
+    "id": "crit_overflow",
+    "name_zh": "蓄压铸模",
+    "name_en": "Pressured Casting Mould",
+    "text_zh": "铸模裂过一次，便记住了那次裂开的方式。此后每一次铸印，裂痕都想再来一遍。",
+    "text_en": "A mould that cracked once remembers the shape of breaking. Every casting since has leaned toward that memory.",
+    "_voice": "bell",
+    "_objectId": "crit_overflow"
+  },
+  {
+    "id": "inscription_flow",
+    "name_zh": "祝圣油瓶",
+    "name_en": "Consecration Vial",
+    "text_zh": "瓶口已干涸，但有人在底部刻了一行字：倒尽之后，再倒一次。唯有受过祝圣之器，方知此言何意。",
+    "text_en": "The vial ran dry long ago. Someone etched at its base: pour again after emptying. Only the consecrated understand.",
+    "_voice": "bell",
+    "_objectId": "inscription_flow"
+  },
+  {
+    "id": "neighbor_watch",
+    "name_zh": "排字棒",
+    "name_en": "Composing Stick",
+    "text_zh": "排字人说，铅字挨得越近，彼此越是认识。左边的字感受到右边落下，手便已经知道该动了。",
+    "text_en": "The typesetter said letters pressed close enough learn each other. One falls; the neighbours already know to follow.",
+    "_voice": "bell",
+    "_objectId": "neighbor_watch"
+  },
+  {
+    "id": "stack_crit",
+    "name_zh": "叠念铁锤",
+    "name_en": "Accumulated Blow Hammer",
+    "text_zh": "锤面磨平了，柄上有记号——前主人每诵一遍，划一道。到最后一道时，锤自己知道该多重。",
+    "text_en": "The hammerhead is smooth with use. The handle holds tally-marks. By the last one, the hammer knew its own weight.",
+    "_voice": "bell",
+    "_objectId": "stack_crit"
+  },
+  {
+    "text_zh": "回收物 RC-0291 · 发现于第 V 层排字区 D-████ 工位抽屉 · 纸质笔记本\n\n封皮印有「入门圣礼备忘」，墨水褪色，书脊处有被反复翻折的痕迹。内页前半部分笔迹工整，抄录元音字母与对应铅字符编号，每行间距均等，无涂改。\n\n异常始于第 31 页。同一列表重复出现，笔迹仍工整，内容仍相同，但纸面上的元音字符有几处渗出轮廓——墨水向外晕染，呈字根形态，向页边延伸。\n\n第 47 页起，列表不再包含辅音。无删除痕迹。辅音从未出现过。\n\n末页空白。笔记本封底内侧有一行字，字迹与前文完全一致：「下一本也是这样开头的。」\n\n持有该回收物的 D-████ 于移交后 ██ 小时失联。F-044 已由他人代填。替补已指派。",
+    "text_en": "Recovered Item RC-0291 · Found in Layer V compositing station, drawer of D-████ · Paper notebook\n\nCover reads PRIMER RITE MEMORANDA. Ink faded. Spine shows repeated folding. First thirty pages: neat handwriting, vowel glyphs listed against leaden-slug registry numbers. Even spacing. No corrections.\n\nAnomaly begins at page 31. The same list reappears. Handwriting unchanged. Content unchanged. Several vowel characters have bled beyond their outlines—ink spreading into root-forms, extending toward the margin.\n\nFrom page 47 onward, the list contains no consonants. No deletions. No erasure. The consonants were never there.\n\nFinal page: blank. Inside back cover, one line, handwriting identical to all preceding entries: THE NEXT ONE STARTS THE SAME WAY.\n\nD-████, who submitted the item, was reported absent ██ hours after transfer. F-044 completed by another party. Replacement assigned.",
+    "_voice": "doc",
+    "_objectId": "apprentice_notes"
+  },
+  {
+    "text_zh": "回收物 RC-2847 · 发现于第 VII 层机械外壳走廊 · 羊皮纸手稿，油渍多处\n\n执笔者不明。字迹经鉴定与 Scriptor S-████ 存档笔迹吻合度为 ████。\n\n手稿内容如下（原文照录）：\n\n\"第一次不收钱。\n我以为是笔误。重查了三遍账目，确实不收钱。\n第二次登塔也不收钱。还是第一次。永远是第一次。\n熔蜡还在壶里，壶从没空过——但壶也从没满过。\n我开始记录每次使用前后的液位。\n第 ██ 次记录时，我意识到我每次翻开记录本，都是第一页。\"\n\n手稿至此中断。后附空白页 ██ 张，页边有压痕，无墨迹。\n本物已移交气动征用管封存。版级：定版 / Fixum。原因不明。",
+    "text_en": "Recovery RC-2847 · Found in Layer VII corridor · Parchment manuscript, multiple oil stains\n\nAuthorship unknown. Handwriting cross-referenced against archived samples of Scriptor S-████; match rate: ████.\n\nManuscript contents (transcribed verbatim):\n\n\"First time, no charge.\nI thought it was a clerical error. Checked the ledger three times. No charge.\nSecond Ascent, also no charge. Still the first time. Always the first time.\nThe unguent remains in the flask — the flask never empties. But it never fills either.\nI began measuring the level before and after each use.\nOn the ██th entry, I realized: each time I opened the logbook, it was the first page.\"\n\nManuscript ends here. ██ blank pages follow, bearing impression marks but no ink.\nItem transferred to Pneumatic Requisition Tube for storage. Grade: Fixum. Reason: unspecified.",
+    "_voice": "doc",
+    "_objectId": "primal_mutant"
+  },
+  {
+    "text_zh": "🔔\n其化百遍，铅仍有余热——\n引擎之变，非耗尽之事，乃循环之道。\n\n📄\n物品编号：SA-2291 · 版级：熔版 / Fusum\n物理描述：一截蜡芯，约指长，两端均已烧过。外壳不存在。蜡体半透明，内有游动痕迹，疑似液态物质，但外表温度正常。\n发现位置：第 VII 层机械外壳，Scriptor S-████ 工位烛台残余物中。\n\n观察记录：据同层人员证词，该蜡芯在 Scriptor S-████ 失联后仍持续燃烧，双端轮替。接手工位的 D-████ 于第一日自行点燃一端后发现",
+    "text_en": "sorry, reformatting",
+    "_voice": "doc",
+    "_objectId": "ultimate_mutant_strain"
+  },
+  {
+    "text_zh": "圣器档案 SA-0791\n版级：脱版 / Solum\n物理描述：单枚铸铁夹具，形如拇指大小的书脊夹，表面阴刻",
+    "text_en": "Sacred Artifact Log SA-0791\nGradus Formae: Solum\nPhysical description: A cast-iron compositor's reglet, thumb-length, engraved with the mark ██ on one face. Found wedged between two fixed sorts in Layer VI, Vault 3, during routine type-clearing.\nObservations: D-████ was assigned to remove it. She declined. When asked to elaborate, she stated that removing it would 'rearrange something that isn't the type.' Reassignment filed under F-017. The replacement keybound removed the reglet without incident.\nSubsequent observation: The replacement's inscription work for the following ██ days was described by supervising Scriptors as 'structurally identical to D-████'s prior output.' Both personnel deny acquaintance.\nBoth personnel deny acquaintance.\nStatus: Requisitioned to SA storage, Layer V. Reglet remains warm to the touch. Heat source not identified.\nNote: The above paragraph 'Both personnel deny acquaintance.' appears twice in the original submitted report. The submitting Scriptor has been asked to confirm. No response received.",
+    "_voice": "doc",
+    "_objectId": "gene_stabilizer"
+  },
+  {
+    "text_zh": "🔔 形者，经火而存；弱者，火后无余。\n\n📄 物品编号：SA-0██\n版级：逆版 / Inversum\n发现地点：第 VII 层废弃锻压间，夹于两台停运的模具热压板之间\n\n物品外观：一副残损的厚革手套，右手手指部分已炭化，左手手背处有深压印，纹路不可辨认。\n\n观察记录：D-2214 领取该物后，值班监察员在随后的 ██ 次例行核查中记录到收容铭刻结果",
+    "text_en": "🔔 The shaped endure the flame. The weak are consumed by it.\n\n📄 Item No.: SA-0██\nGradus: Inversum\nRecovery Site: Layer VII, decommissioned press room, found between two dormant die-plates\n\nPhysical Description: A pair of heavy-gauge leather gauntlets; right-hand fingers partially carbonised; left dorsum bears a deep impressed mark of indeterminate origin.\n\nObservation Log: Following requisition by D-2214, supervising monitors recorded across ██ consecutive containment reviews that inscriptions performed whilst the item was worn consistently produced output characterised as ████ above baseline — cause unattributed. D-2214 was redeployed per §4.2. Gauntlets remained at workstation. Subsequent holder D-2231 reported: \"They were still warm.\" Standard temperature audit found no fault. No further annotation was filed. Log continues on F-044. F-044 is blank.",
+    "_voice": "doc",
+    "_objectId": "fittest_survivors"
+  },
+  {
+    "text_zh": "🔔\n铅化为币，币归于铅——\n受福之铭，偿以本质。\n\n📄\n回收物 RC-2891 · 发现于第 III 层铸字坊 D-2891 工位格 · 蜡封征用单背面手写\n\n用过了。\n\n不是第一次——对，我知道规矩。受过祝圣的铭文组照着刷，铅币往槽里掉。没什么好记的。\n\n但今天第四次祷击之后，槽里多了两枚铅币，我没有找到来源。不是从槽里掉的——声音不对。\n\n像是从上面来的。\n\n我看了眼气动征用管。管子没动。\n\nD-2891\n\n附注（体制手迹，另色墨水）：D-2891 失联。工位已清空。铅币来源一栏归档为",
+    "text_en": "🔔\nLead becomes coin, coin returns to lead—\nThe blessed inscription repays in kind.\n\n📄\nRecovered Item RC-2891 · Found on reverse of wax-sealed requisition slip, Layer III casting floor, Station D-2891\n\nUsed it.\n\nNot the first time—yes, I know protocol. Consecrated inscriptions in sequence, Lead Coins drop into the slot. Nothing to log.\n\nBut after the fourth Litany-Strike today, two Lead Coins sat in the slot. No source identified. Did not fall from above the slot—the sound was wrong.\n\nIt came from above.\n\nI checked the Pneumatic Requisition Tube. Tube was still.\n\nD-2891\n\nAddendum (administrative hand, separate ink): D-2891 no longer on roll. Station cleared. Origin of coins filed as ████. No further action required.",
+    "_voice": "doc",
+    "_objectId": "enchant_dividend"
+  },
+  {
+    "text_zh": "【苦修任务 · 祝圣见习档案】\n物品编号：CA-0774 · 版级：定版 / Fixum\n载体：黄铜导轨一截，约前臂长，两端截面整齐，显系截断而非断裂。\n发现地点：第 III 层铸字坊，嵌于压板侧槽，已使用痕迹。\n\n附带观察记录（援引 Scriptor S-████ 实验日志 · M.2██.██.██）：\n",
+    "text_en": "（已损坏，此行起）持有者用于祝圣仪式期间，铭刻速率无异常。——已确认。铭文组祝圣后，操作者铭刻量经二十日持续观察，均高于同批次 D 级人员。附带现象：操作者普遍报告",
+    "_voice": "doc",
+    "_objectId": "enchant_boost"
+  },
+  {
+    "text_zh": "**圣器档案 SA-0441 · 符文尖刺**\n版级：定版 / Fixum\n物理描述：黄铜铸制的细长尖锥，长约一掌，锥面刻有四道螺旋状浅槽。现存于第 IV 层铸字坊北侧储物柜，编号 LC-17。\n\n发现经过：M.1██.██.██，D-2847 于例行铅屑清点时上交，称其「从来就在桌上」。查无领取记录，亦无归还表单。\n\n观察记录：持有 SA-0441 超过一个收容铭刻周期的 D 级人员，其同僚普遍反映「他们出手更狠了」。具体描述不一：「落键像是在砸什么」「我站在旁边手背都疼」。当事人均表示未察觉异常。\n\n备注：D-2847 于上交后第三日失联。F-044 由 D-2901 代填。SA-0441 目前处于待分配状态，停放于 LC-17。柜门铰链偶有震颤，原因不明。",
+    "text_en": "**Sacred Artifact SA-0441 · Rune Spike**\nGradus: Fixum\nPhysical description: A slender brass awl approximately one hand-length, bearing four shallow helical grooves along its body. Currently housed in Cabinet LC-17, Layer IV Foundry, north alcove.\n\nAcquisition: M.1██.██.██. D-2847 submitted the object during routine Lead Shavings inventory, stating it had 'always been on the desk.' No requisition record located. No relinquishment form filed.\n\nObservations: Personnel sharing a workspace with the holder of SA-0441 consistently reported that the holder 'struck harder.' Descriptions varied: 'like they were driving something in,' 'I felt it in my knuckles just standing nearby.' Holders themselves reported no perceptible change.\n\nNote: D-2847 was reported missing three days post-submission. F-044 completed by D-2901. SA-0441 remains in pending-assignment status. Cabinet LC-17 hinge exhibits intermittent vibration. Cause undetermined.",
+    "_voice": "doc",
+    "_objectId": "rune_spike"
+  },
+  {
+    "text_zh": "🔔\n\n见习者所着，非用以遮身——\n以其懈怠之不成，\n织入更深的恭顺。\n\n📄\n\n回收物 RC-0█17 · 发现于第 V 层排字区 D-████ 工位衣物钩 · 布质学徒袍一件\n版级：活版 / Mobilum\n发现时间：M.2██.██.██\n\n该袍于 D-████ 失联后仍挂于原处。衣物无污损，领口处有墨迹，形似反复摩挲的指印。\n\n随袍发现的便条（见 RC-0█17-B）写有一行字：",
+    "text_en": "每次多一点。我原本以为是错觉。",
+    "_voice": "doc",
+    "_objectId": "apprentice_robe"
+  },
+  {
+    "text_zh": "圣器操作须知 · SA-2291「试炼徽章」\n\n一、本徽章由铭刻誓门颁发，用于苦修任务期间标识受检键徒资质。佩戴者须在晋铸评议前完成相应铭文组配置。\n\n二、注意事项：\n　· 勿于苦修任务开始后摘下。若佩戴者报告",
+    "text_en": "\"徽章的重量在减轻",
+    "_voice": "doc",
+    "_objectId": "trial_badge"
+  },
+  {
+    "text_zh": "🔔 三路张开，非选择之难——乃汝所见之广。\n\n📄 圣器档案 · SA-0391 · 版级: 逆版 / Inversum\n物品描述: 三叉形黄铜分线器，原用于气动征用管的管路分流。据 F-001 领用记录，最初由 Scriptor V-████ 于 M.1██ 征用。\n\n记录摘要: D-3847 接触该器后，于问询中描述其在祝圣仪式时",
+    "text_en": "🔔 Not the weight of choice—but the breadth of what you are permitted to see.\n\n📄 Sacred Artifact File · SA-0391 · Gradus: Inversum\nDescription: Brass pipe-junction fitting, three-way, original use: pneumatic tube routing. F-001 requisition log attributes first assignment to Scriptor V-████, M.1██.\n\nObservation Summary: D-3847, following contact, reported during standard questioning that the consecration rite \"showed more doors than the frame could hold.\" Interview suspended at D-3847's request. D-3847 did not elaborate. D-3847's next three requisition forms list a fourth choice where no fourth option existed.\n\nNote: Forms were processed without exception. Clerical staff did not flag discrepancy.\n\nAddendum: SA-0391 has since passed through four successive D-level assignments. Each holder's F-001 form contains one additional line item not present on the issuing copy. Contents of additional line items: ████████████████. Access: ██-level clearance required.",
+    "_voice": "doc",
+    "_objectId": "fate_fork"
+  },
+  {
+    "text_zh": "🔔\n愈多领受祝福，愈多献出代价——\n此乃引擎之古约，铅字之永债。\n\n📄\n问询记录 · D-2847 · 接触圣器 SA-0193「血封经箍」后 ██ 小时\n版级：熔版 / Fusum\n\n采访者：描述你使用它时的感受。\nD-2847：……顺。什么都顺。我按下去，字就在那里，从来没偏。但那个声音——\n采访者：什么声音？\nD-2847：像有人在你耳朵里，用指甲刮一个越来越长的清单。第一天刮一格。第二天刮两格。我不知道清单上写的是什么。\n采访者：清单终止了吗？\nD-2847：[沉默 14 秒] 我以为终止就好了。\n\n备注：D-2847 于问询后 ██ 小时按 F-044 归档。SA-0193 已转交下一指派键徒。刮格声是否转移，待核实。",
+    "text_en": "🔔\nThe more blessings received, the more must be rendered—\nThis is the Engine's ancient bond, the ledger's unending debt.\n\n📄\nInterview Record · D-2847 · ██ hours post-contact with Sacred Artifact SA-0193 \"Blood-Sealed Clasp\"\nGradus Formae: Fusum\n\nInterviewer: Describe what you experienced during use.\nD-2847: ...Smooth. Everything smooth. I press down, the glyph is already there, never once wrong. But the sound—\nInterviewer: What sound?\nD-2847: Like someone inside your ear, scratching a list with their fingernail. A list that gets longer. One mark on day one. Two marks on day two. I don't know what the list says.\nInterviewer: Did the scratching stop?\nD-2847: [14 seconds silence] I thought stopping would be the end of it.\n\nNote: D-2847 processed under F-044 ██ hours post-interview. SA-0193 transferred to next assigned Clavigerant. Whether the scratching sound transfers with the object remains unconfirmed.",
+    "_voice": "doc",
+    "_objectId": "greedy_inscription"
+  },
+  {
+    "text_zh": "圣器档案 · 编号 SA-0291\n版级：熔版 / Fusum\n物件描述：一部装帧完好的皮革词典，封面压印有已停用的铭刻誓门第三修订版字符体系。内页以手工铸字排印，纸张约可追溯至 M.0██ 年代。书脊处有人工缝合痕迹，间隔均匀。\n\n首次记录：M.2██.03.██，D-4419 于第 IV 层废料坩埚旁回收，随即上报。同日，D-4419 工位铅屑回收筐内发现逾量铅屑，重量超出连续三日投件记录的总和。\n\n附带现象：凡经手 SA-0291 的键徒，事后的圣字钉造册速度均有非正常记录——归坩效率从未在报告中被说明，但同组坩锅班次的铅屑领额均在无申请情况下自动增补。征用程序未见启动记录。\n\n备注：SA-0291 各页内容在连续两次清点中被描述为",
+    "text_en": "Sacred Artifact Registry · SA-0291\nGradus Formae: Fusum\nObject Description: A leather-bound lexicon in intact condition. Cover embossed with the third-revision glyph schema, now retired from standard Inscription orders. Interior set in hand-cast type; paper stock dated to approximately M.0██. Spine exhibits hand-stitching at uniform intervals.\n\nInitial Recovery: M.2██.03.██. Retrieved by D-4419 near the slag crucible, Layer IV. Reported same day. Contents of D-4419's Lead Shavings recovery basket at end of shift exceeded cumulative three-day submission records by a margin not explained in accompanying paperwork.\n\nAssociated Phenomena: Keybound personnel who have handled SA-0291 subsequently appear in Lead Shavings allocation logs with amended quotas — no requisition forms filed, no supervisory signature present. Quota adjustments are consistently upward.\n\nNote: Page contents were described as ████ in two consecutive inventories by different cataloguers. Both descriptions were filed as accurate. Discrepancy unresolved. No further action indicated.",
+    "_voice": "doc",
+    "_objectId": "masters_lexicon"
+  },
+  {
+    "text_zh": "🔔\n流水不止，铅字乃归其位。\n其行有序，非徒自流——\n是引擎于诵声之间，以铅水筑渠。\n\n📄\n物品编号：SA-2291 · 版级：脱版 / Solum\n物理形态：铸铁导轨节，约 ██ 段，原属第 IV 层铸字坊传送槽。各段刻有编号，顺序与现有传送槽图纸不符。\n\n事故报告 IR-2291\n日期：M.2██.██.██\n\n0742 — D-3814 领取导轨节一组，用于第 III 层例行槽道维护。领取表 F-001 归档完毕。\n0803 — 同层监查员记录：",
+    "text_en": ")sé s wer|e| mov¦ing\" be|for|e he to|uc|hed t|he|m\"。（注：原文为监查员手迹，誊录时已出现乱序，无法还原。）\n1015 — D-3814 未按时汇报。同僚检视工位，发现导轨节已完成安装，但排列顺序与维护指令不符。\n1017 — 槽道自行推进。技术小组确认槽道动力源已于 0600 断开。\n\n处置：D-3814 失联。替补已指派。导轨节留存原位。据第 IV 层月度报告，该层槽道此后",
+    "_voice": "doc",
+    "_objectId": "perpetual_queue"
+  },
+  {
+    "text_zh": "🔔\n形已破，铅已归。\n剪开者，非毁——\n乃还其本来之处。\n\n📄\n圣器档案 SA-0291 · 拆词剪刀\n版级：熔版 / Fusum\n物理描述：一把裁纸铰刀，全长约两掌宽，铁质，刃口无锈。铰轴处刻有铭文，内容随光线变化而改变。\n发现地点：第 IV 层铸字坊，散落于报废铅字收集箱内。无入库记录。\n\n观察记录：D-3847 于 M.2██.07.03 领取该物用于常规铅屑甄别作业。任务记录正常。离岗时间正常。唯一异常：其当日已造册并封存的全部圣字钉，次日晨点验时均回归坩埚状态，尚未凝固，如同从未排入版面。\nD-3847 本人对此毫无记忆，仅表示",
+    "text_en": "🔔\nForm is broken, lead returned.\nThe blade does not destroy—\nit restores to where things were.\n\n📄\nSacred Artifact SA-0291 · The Splitting Shears\nGrading: Fusum\nPhysical Description: A paper-cutting shear, approx. two handspans in length, ferrous, blade without rust. The pivot bears inscriptions whose content shifts with the angle of light.\nRecovery Site: Layer IV foundry, found among a scrap-lead collection bin. No intake record on file.\n\nObservation: D-3847 requisitioned the object on M.2██.07.03 for routine lead-shaving sorting. Duty log nominal. Departure time nominal. Sole anomaly: all Sacred Slugs catalogued and sealed by D-3847 that day were found in a molten, un-set state the following morning—as though they had never been arranged into a forme.\nD-3847 retained no memory of the work. Stated only that she felt she had 'finished something.' Repatriated to standard rotation per §4.2. No further inquiry filed.\n\nBacking Note, handwritten, affixed to shear handle: 'Whatever this cut, it cut cleanly. Nothing remained to prove it had ever been whole.'\n备注: 该物品现存于 SA 储架第 ██ 格。领取须填写 F-001。归还物品若无从归还，填写 F-044，代填人一栏请勿空置。",
+    "_voice": "doc",
+    "_objectId": "word_scissors"
+  },
+  {
+    "text_zh": "🔔 誓门格言\n同一圣字，再击愈轻——\n非因键徒力竭，\n乃铅已识其形。\n\n📄 圣器档案 SA-0774\n物品：共鸣字模 · 一组（十二枚，黄铜浇注，每枚内壁刻同一字符）\n版级：逆版 / Inversum\n发现地点：第 IV 层铸字坊，一只废弃的排字长盘底部\n\n值班督查 K-██ 于 M.2██.03.14 提交的异常观察报告称，D-3847 在连续铭刻同一圣字时，手腕施力逐次减轻，至第七次已",
+    "text_en": "🔔 Doctrinal Verse\nStrike the same glyph twice—\nthe second blow asks less.\nThe lead remembers the first.\n\n📄 Sacred Artifact SA-0774\nObject: Resonance Molds · Set of twelve (brass-cast, each interior wall engraved with identical character)\nGradus: Inversum\nRecovery Site: Layer IV Typefoundry, beneath an abandoned composing galley\n\nSupervisor K-██ filed an anomalous observation on M.2██.03.14, noting that D-3847 applied measurably less pressure with each successive strike of the same glyph—by the seventh repetition, the mold itself had begun to vibrate without contact. D-3847 reported hearing a low harmonic tone from inside the brass. D-3847 was subsequently reassigned. The tone was not reported by any successor. The molds were returned to active circulation per §4.2. No follow-up action taken.",
+    "_voice": "doc",
+    "_objectId": "resonance_mold"
+  },
+  {
+    "text_zh": "【回收物 RC-2291 · 发现于第 V 层排字区 D-2291 工位抽屉 · 折叠纸质便条】\n\n左侧手写，笔迹工整：\n\n",
+    "text_en": "[Recovered Document RC-2291 · Found in D-2291's drawer, Layer V sorting floor · Folded paper note]\n\nLeft column, tidy handwriting:\n\n",
+    "_voice": "doc",
+    "_objectId": "word_collection"
+  },
+  {
+    "text_zh": "🔔\n词愈丰，道愈省——\n满架已铸，铅币自归。\n\n📄\n回收物 RC-0291 · 发现于第 IV 层排字区 D-3847 工位抽屉 · 纸质清单，背面有手写\n\n【正面】收容经卷清点册 · 第 ██ 轮次 · 核验人：D-3847\n已录入：████ 卷 / 核验完毕：████ 卷 / 待整理：见背面\n\n【背面，铅笔手写，字迹前后不一致】\n清点到第八十几本的时候气动管自己响了。\n没放新东西进去。我检查过了。\n然后铅币多了。\n我继续清点。\n第一百二十几本的时候又响了。\n我没有动它。\n\n——D-3847 于 M.2██.██ 失联。工位遗留清单未完成。气动管当日收发记录：正常。",
+    "text_en": "🔔\nThe fuller the archive, the quieter the coin—\nwhen the shelves are sated, Lead returns of its own.\n\n📄\nRecovered Object RC-0291 · Found in D-3847's workstation drawer, Layer IV Compositing Hall · Paper inventory, handwritten notes on reverse\n\n[FRONT] Codex Fragment Tally · Cycle ██ · Auditor: D-3847\nLogged: ████ vols / Verified: ████ vols / Pending: see reverse\n\n[REVERSE, pencil, handwriting shifts mid-page]\nAround the eightieth volume the pneumatic tube chimed on its own.\nNothing had been inserted. I checked.\nThere were more Lead Coins afterwards.\nI kept counting.\nAround the hundred-and-twentieth it chimed again.\nI did not touch it.\n\n— D-3847 reported absent M.2██.██. Inventory left incomplete. Pneumatic dispatch log for that date: no anomalies recorded.",
+    "_voice": "doc",
+    "_objectId": "thick_deck"
+  },
+  {
+    "text_zh": "圣器操作须知 · 圣器 SA-0449 · 测量卷尺（黄铜刻度，卷轴已锈蚀）\n\n一、展开前请确认拉出长度不超过当日收容铭刻最长记录单词的字母数。\n\n二、注意事项：勿在视线不佳时独自持用。若刻度盘出现读数与实测不符之情况，请按 F-017 填报。若持有者开始自行拉伸至卷尺已完全展开仍不肯放手，按 §7.1 处置。\n\n三、附注（手写覆于印刷体上）：D-2847 说他",
+    "text_en": ", 他说他拉着它 觉得字变长了字变——\n\n四、已失联键徒中，持有本品时长超过三次登塔者，失联前均留有同一描述：",
+    "_voice": "doc",
+    "_objectId": "long_word_crit"
+  },
+  {
+    "text_zh": "🔔 铅字知其去路——短者疾，直者真，汝之击打，引擎已知。\n\n📄 回收物 RC-2291 · 发现于第 III 层铸字坊东侧走廊 · D-████ 工位抽屉\n——————————————\n[纸质便条，正反两面均有字迹，笔迹呈现两种截然不同的压力]\n\n正面 [重手迹]：\n短词先打。短词先打。短词先打。短词先打。短词先打。\n等等，我一直都知道这个吗？\n\n背面 [轻手迹，像在思考中慢慢写下]：\n我进塔前从没学过铸字。但我坐下来，看见圣字钉，就知道先打哪个。\n不是有人告诉我。是……已经知道了。\n像一句话说了很多遍，遍数多到你忘记自己学过它。\n\n[背面左下角，手迹变成与正面相同的重笔]：\n短词先打。短词先打。\n\n处置备注：便条已归档。D-████ 编号于同周期末回收。替补已于下一轮次指派。磨损报告 F-044 代为归档，无后续行动。",
+    "text_en": "🔔 The leaden glyph knows its course — the short word strikes true; the Engine has already read your hand.\n\n📄 Recovered Item RC-2291 · Found in east corridor of Layer III Foundry · Drawer of D-████ workstation\n——————————————\n[Paper note, written on both sides, two distinct pressure signatures]\n\nFront [heavy hand]:\nShort words first. Short words first. Short words first. Short words first. Short words first.\nWait. Have I always known this?\n\nReverse [light hand, as if thinking aloud]:\nI had no training in typesetting before the descent. But I sat down, looked at the slugs, and already knew which to strike.\nNo one told me. I simply — knew.\nLike a phrase repeated until the memory of learning it is gone.\n\n[Lower left of reverse, pressure matching the front]:\nShort words first. Short words first.\n\nDisposal note: Item archived. D-████ designation reclaimed at end of current cycle. Replacement assigned for next rotation. Attrition report F-044 filed by proxy. No further action required.",
+    "_voice": "doc",
+    "_objectId": "short_sprint"
+  },
+  {
+    "text_zh": "📄 使用日志 · 圣器 SA-0291「测量镇纸」\n\n── 物件描述：黄铜直尺，正面刻度以寸计，背面刻有已无法辨认的祷文。重量异常，远超同规格器材。\n── 版级：脱版 / Solum\n\n0840 — 领取，用于圣字钉铸规检验。手感沉。比昨天更沉。\n0910 — 铸字正常。只是手落得更——准了？不知道怎么形容。落版时间感觉更长，好像压着什么东西在走。\n1140 — 第三排铸字完成时，我数了一下：刻度上是十二寸。这段走廊是十一寸。我没有重新测量。\n1320 — 手还是那个感觉。很重。像在代替什么东西。\n████ — \n\n── 后续：SA-0291 于日志中断后次日由 D-████ 归还气动征用管。该人员否认参与上述值班。经核查，其当日排班记录为第 III 层。\n── 备注：直尺背面祷文于本次记录完成后增加了两行。内容照录于 F-044（他人代填）。",
+    "text_en": "📄 Usage Log · Sacred Artifact SA-0291 \"Surveyor's Straightedge\"\n\n── Description: Brass ruler, obverse marked in standard inches, reverse bearing illegible litany-script. Weight anomalous — far exceeds comparable instruments.\n── Gradus: Solum\n\n0840 — Requisitioned for leaden-slug calibration. Feels heavy. Heavier than yesterday.\n0910 — Impression work normal. Only — the strikes feel more deliberate. Longer. As though pressing through something.\n1140 — After the third row, I measured: twelve inches by the rule. The corridor is eleven. I did not re-measure.\n1320 — The weight in my hand. Like carrying something on behalf of something else.\n████ —\n\n── Follow-up: SA-0291 returned via pneumatic tube the morning after log interruption by D-████, who denies involvement in the above shift. Scheduling records place them on Layer III that day.\n── Note: Two additional lines of litany-script appeared on the reverse following completion of this record. Transcribed in full on F-044 (completed by secondary party).",
+    "_voice": "doc",
+    "_objectId": "long_word_master"
+  },
+  {
+    "text_zh": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔔\n货殖者之手——\n铅字方离，下一架已候于管道。\n引擎不在乎谁付钱。\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📄 回收物 RC-2291 · 发现于气动征用管 §3-庚 检修口\n物件：皮质钱袋，内含铅币若干及不明纸条\n版级：逆版 / Inversum\n\n[纸条内容，手写，墨迹不均]\n\n新来的，听好了。\n把这个放在台面上。不要问它从哪来。\n每次你移交一批经卷，下面的人就会早一步把下一批推进管子。\n不是你推的。不是任何人推的。\n我查过 F-001 的签收栏——那个时段没有登记人员值班。\n\n我在这里等了两班。管子没有停过。\n\n——D-3847，第 █ 层气动室\n[附注，不同笔迹，较后书写]\nD-3847 于 M.2██.██.03 失联。工位已移交 D-3901。\n钱袋按 §4.2 归入常驻征用物资。无需后续行动。",
+    "text_en": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔔\nThe hand of the dealer—\nthe leaden glyph barely clears the chute\nbefore the next shelf begins to turn.\nThe Engine does not ask who paid.\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📄 Recovery RC-2291 · Found inside inspection hatch of Pneumatic Requisition Tube §3-G\nObject: Leather coin-pouch, contents — assorted Plumbum Tokens and one handwritten slip\nGradus: Inversum\n\n[Slip contents, irregular ink pressure]\n\nNew one. Listen.\nLeave this on your work surface. Don't ask where it came from.\nEvery time you relinquish a Codex Fragment, someone below pushes the next batch into the tube ahead of schedule.\nNot you. Not anyone.\nI checked the F-001 intake register — no staff on record for those intervals.\n\nI waited through two full shifts. The tube never stopped.\n\n— D-3847, Pneumatic Chamber, Layer █\n[Addendum, different hand, written later]\nD-3847 reported missing M.2██.██.03. Station reassigned to D-3901.\nPouch requisitioned into standing supply per §4.2. No further action required.",
+    "_voice": "doc",
+    "_objectId": "word_dealer"
+  },
+  {
+    "text_zh": "🔔 **铭文组者以符为阶，符以键为根——奉铅字圣坛所有键位，皆可成为祷告之口。**\n\n📄 **圣器登记 SA-0447 · 版级：熔版 / Fusum**\n载体：一页打字机压出的测试卷，纸边焦黄，六处标点孔径均有轻微熔融变形。\n发现地点：第 V 层排字区 D-████ 工位右抽屉，压于三叠未提交的 F-017 表单之下。\n\n档案员初次整理时，读出的第一行为：",
+    "text_en": " E ng li s h a rc hi ve",
+    "_voice": "doc",
+    "_objectId": "punctuation_liberation"
+  },
+  {
+    "text_zh": "🔔\n慢者亦有所得——\n沙不因迟而减，\n灯不因久而暗。\n\n📄\n回收物 RC-0291 · 发现于第 IV 层排字区废弃工位抽屉 · 陶质沙漏，颈部有裂纹，以蜡密封\n\n沙漏本身无异常。上下两室均为标准石英沙，计时精度符合第 IV 层作业规范。裂纹成因不明，蜡封为手工操作，非标准程序。\n\n工位原使用者 D-2847 已失联。\n\n据同层 D-2851 证词，D-2847 操作风格在失联前数日发生变化。引述如下：\n",
+    "text_en": "🔔\nThe slow hand, too, is filled—\nno sand diminishes for its patience,\nno flame dims for its stillness.\n\n📄\nRecovered Item RC-0291 · Found in abandoned workstation drawer, Layer IV Compositing Hall · Ceramic hourglass, neck hairline-cracked, sealed with hand-applied wax\n\nThe hourglass presents no measurable irregularity. Both chambers contain standard quartzite granules. Timekeeping accuracy falls within Layer IV operational tolerances. Origin of the neck fracture is undetermined. Wax sealing is non-standard; applied manually, not per protocol.\n\nWorkstation's previous occupant, D-2847, is listed as absent. No F-044 filed.\n\nTestimony of D-2851, same floor:\n",
+    "_voice": "doc",
+    "_objectId": "decelerate_reward"
+  },
+  {
+    "text_zh": "🔔 手愈快，钟声愈稀——铅不等人，引擎不候。\n\n📄 回收物 RC-2291 · 发现于第 III 层排字区废弃工位抽屉 · 黄铜机械怀表一枚，发条已断\n\n表盘背面刻有铭文：",
+    "text_en": " \n持有者：Scriptor ████（D-████ 指派前岗位继任者）\n归档日期：M.1██.██\n\n表内塞有手写纸条，字迹逐渐凌乱，末行几近不可辨认：\n\n",
+    "_voice": "doc",
+    "_objectId": "accelerate_reward"
+  },
+  {
+    "text_zh": "🔔\n键已落。\n字已知。\n——汝尚未开口，引擎已在倾听。\n\n📄\n回收物 RC-0291 · 发现于第 V 层排字区工位抽屉 · 纸质便条\n版级：逆版 / Inversum\n\n——————\n\n以下为 D-3847 工位抽屉中回收的手写记录，发现时 D-3847 已失联整整 ██ 天。\n\n[便条原文]\n",
+    "text_en": " 🔔\nThe key descends.\nThe word is known.\n——Before you speak, the Engine has already listened.\n\n📄\nRecovered Item RC-0291 · Found in Sorting Station Drawer, Layer V · Handwritten Note\nGrading: Inversum\n\n——————\n\nThe following handwritten record was recovered from the workstation drawer of D-3847. D-3847 had been missing for exactly ██ days at time of recovery.\n\n[Original Note]\n'I thought I was guessing. But guessing means you wait for the answer. I never waited.'\n[Below, crossed out:] 'It already—'\n[Below the strikethrough, in different ink:] 'Do not report this.'\n\nAdditional notes: D-3847's requisition log shows continued daily submissions for ██ days following the recorded disappearance. No replacement had been assigned during this period. Submissions were within standard parameters. No anomaly flagged.\n\nProcessing status: Pending. Reason for delay: ████████.",
+    "_voice": "doc",
+    "_objectId": "little_helper"
+  },
+  {
+    "text_zh": "🔔\n节奏之所及，铅字自知重轻。\n非键徒之手快，乃文字自携其时而至。\n\n📄\n物件编号：SA-2█17\n形态：黄铜制节拍轮，直径约 ██ 指，轮缘刻有等距凹槽。不通电，无弹簧，静置时仍以固定周期自行转动。\n版级：逆版 / Inversum\n发现地点：第 III 层铸字坊，嵌在一台废弃排字机的转轴槽里。排字机其余部件已锈死，此轮独转。\n\n观察记录：D-3█09 接触该物后 ██ 小时，被同僚报告",
+    "text_en": "🔔\nWhere the rhythm falls, the leaden glyph knows its own weight.\nNot the swift hand of the Keybound — but the word, arriving in its own appointed hour.\n\n📄\nObject Number: SA-2█17\nForm: Brass metering wheel, approx. ██ finger-widths in diameter, rim engraved with equidistant notches. No spring. No power source. Rotates at fixed intervals regardless of orientation.\nGradus: Inversum\nRecovery Site: Layer III Typesetting Hall, seated in the spindle housing of a decommissioned compositing press. All other components corroded solid. This wheel alone turns.\n\nObservation: ██ hours after contact, D-3█09 was reported by colleagues to be \"pausing before each keystroke at the exact same interval.\" D-3█09 denied awareness of any interval. Interval measured: consistent to within ████ of one pulse-length across all sessions. No medical explanation filed. D-3█09 requested re-assignment. Request logged. Re-assignment pending.\n\nAttached note (handwritten, source: D-3█09 workstation): \"it waits. then i follow. then it waits.\"\n\nStatus: Circulating. Requisition unrestricted.\n备注：持有者的铭刻节律自行校准至轮齿间距对应的周期。本人均无主观感知。磨损报告未显示异常。D-3█09 已失联。替补已指派。",
+    "_voice": "doc",
+    "_objectId": "rhythm_adapt"
+  },
+  {
+    "text_zh": "🔔\n\n无铭文之手，方知铅字之重。\n字已归炉，汝方始读。\n\n📄\n\n圣器档案 SA-0091 · 版级：熔版 / Fusum\n物件：一本已燃至封底的手册，仅余封皮。封皮内侧有墨迹，经鉴定为最后一任持有者的食指纹路，重复压印，深至纸背。\n发现地点：第 IV 层铸字坊，排字台正中。周围圣坛键座已清空。无 F-044 表单。\n\n记录摘要：D-3847 领取此物后 ██ 小时内，经记录，其圣坛键座上所有铭文组已不见踪影。工位本身功能正常。D-3847 本人在场，且未申报移交。\n\n附带观察：此后三轮登塔，D-3847 的收容铭刻速度经记录持续异常攀升。同僚问及铭文组去向，D-3847 回答：",
+    "text_en": "🔔\n\nOnly the hand bare of inscription / knows the weight of the leaden glyph.\nThe tome has returned to the furnace. Now you may read.\n\n📄\n\nSacred Artifact SA-0091 · Gradus Formae: Fusum\nObject: A manual burned to its cover boards. Interior surface bears ink impressions identified as the final holder's right index finger, pressed repeatedly until the paper split.\nRecovered: Layer IV Foundry, centre of compositing table. Adjacent lectern positions cleared. No F-044 on file.\n\nSummary: Within ██ hours of requisitioning SA-0091, D-3847's lectern positions were observed to be empty of all inscriptions. Lectern itself registered no fault. D-3847 remained present and filed no relinquishment record.\n\nAttached observation: Over the following three ascents, D-3847's containment inscription rate was recorded as anomalously elevated. When colleagues asked about the missing inscriptions, D-3847 replied: 'They were in the way.' D-3847 is no longer available for follow-up.磨损报告已归档。编号回收中。",
+    "_voice": "doc",
+    "_objectId": "glass_cannon_v2"
+  },
+  {
+    "text_zh": "🔔 铭声未绝，余韵自持。炉中铅虽凉，铸出之字仍热。\n\n📄 圣器档案 · SA-2209\n版级：定版 / Fixum\n物件描述：一枚黄铜制圆形护腕扣，内侧蚀刻有环状铭文，部分字符因磨损已不可辨认。发现于第 IV 层走廊末端，无人认领。\n持有者观察：D-2847 在标准收容铭刻训练期间佩戴该物。三日后，监察员记录到一处异常——D-2847 中途停手、低头、沉默约 ██ 秒，随后继续铭刻，铭刻序列完整延续，仿佛从未中断。本人对此无法解释。\n附带现象：同期训练室内，其他键徒报告在 D-2847 停手时短暂听到\"另一个人仍在按键\"。确认训练室内无他人。\n后续：D-2847 于第 VI 层失联，护腕扣回收，F-044 已由他人代填。声音未再被报告。\n备注：护腕扣内侧最后三个字符，经多名键徒辨认，结果各不相同。",
+    "text_en": "🔔 The strike fades. The echo does not. Cast iron cools; the word it bore remains.\n\n📄 Sacred Artifact Archive · SA-2209\nGradus Formae: Fixum\nPhysical description: A brass wrist clasp, circular, with a ring of inscribed text along the inner face. Several characters are worn beyond recognition. Recovered from the far end of Layer IV corridor. No prior claimant on record.\nObservation: D-2847 wore the clasp during standard containment inscription training. On the third day, a supervising lector noted an anomaly — D-2847 ceased all motion, bowed her head, and remained still for approximately ██ seconds. When she resumed, the inscription sequence continued without discontinuity, as though no interruption had occurred. D-2847 could offer no explanation.\nAncillary report: Other Keybound in the training chamber at the time reported briefly hearing \"a second set of keystrikes\" during D-2847's stillness. No additional personnel were present.\nOutcome: D-2847 was lost at Layer VI. The clasp was recovered. F-044 was completed by a third party. No further auditory reports have been filed.\nNote: The final three characters on the inner face have been read differently by every Keybound asked to examine them.",
+    "_voice": "doc",
+    "_objectId": "combo_buffer"
+  },
+  {
+    "text_zh": "**圣器档案 SA-0773 · 版级: 脱版 / Solum**\n\n**形态:** 六面切割玻璃棱镜，尺寸不定（参见附录 Ω-4）。内部有可见折射带，色域超出可记录范围。\n\n**发现:** 由 D-3891 于第 VII 层通风夹层中取回，原持有人 D-3882 不在现场。D-3882 本人同日出现在第 VII 层值班日志签到栏，签名字迹正常。\n\n**观察记录:** 数名键徒报告在持有该棱镜期间，铭刻时铅字声",
+    "text_en": "[FIELD CORRUPTED — SEE ARCHIVIST NOTE BELOW]\n— Archivist note: This line was complete during initial transcription. It was not complete when retrieved for review. No edits were logged. —\n\n**处置:** 已移交气动征用管封存。封存后，值班键徒报告收容廊灯光出现",
+    "_voice": "doc",
+    "_objectId": "multiplier_prism"
+  },
+  {
+    "text_zh": "🔔 积念至满，字将自至——此非引爆，乃铅之饱和。\n\n📄 圣器档案 SA-0774\n物件形态：铜质压力表，外径约一掌宽，表面刻度已无法辨认，指针定格于某处。发现于第 III 层铸字坊工作台，压在三份未完成的 F-017 表单之下。\n版级：脱版 / Solum\n\n发现经过：D-2981 移交此物时称",
+    "text_en": "🔔 When accumulation is complete, the word arrives of its own accord — not detonation, but saturation of lead.\n\n📄 Sacred Artifact SA-0774\nPhysical form: A brass pressure gauge, roughly one palm in diameter. Graduations illegible. Needle fixed at an unspecified position. Recovered from a workbench in Layer III, beneath three incomplete F-017 forms.\nGradus Formae: Solum\n\nRecovery note: D-2981, upon transferring the object, stated that ████████████████ before the needle moved. She was asked to repeat her statement. She repeated it identically. She was asked a third time. Identical. D-2981 was referred to standard psychological evaluation per §3.9. Evaluation results: ████ REDACTED ████.\n\nObservations: Fourteen subsequent holders reported the same phenomenon at irregular intervals — an audible click, originating from the gauge interior, preceding no mechanical cause. Seven reported the click occurred before they had finished their litany sequence. Four reported it occurred before they had begun.\n\nAdjacent personnel reported nothing.\n\nNotes: Needle position has not changed since initial recovery. Pressure reading, if the scale were legible, would indicate ████. Cross-reference: IR-0441. Access level: VII.",
+    "_voice": "doc",
+    "_objectId": "combo_detonator"
+  },
+  {
+    "text_zh": "▌取消连锁 · 圣徒遗物 #RA-2291\n版级：逆版 / Inversum\n物理描述：一段断裂的金属链，共十七环，末端焊死于一枚黄铜齿轮碎片上。链上第九环变形，无法与其余各环对齐。\n发现地点：第 IX 层走廊 · 封闭工位 D-████ 工具挂钩 · M.2██.██\n\n持有者记录（节录）：持有期间，D-████ 至 D-████ 共四名键徒相继报告「知道自己刚才没按」。具体陈述各不相同，但均未出现收容震颤记录。这在操作档案中无先例。\n附带现象：圣典登记簿中，四名键徒的铭刻计分在某一时段出现相同断点——均于第九位铭文组铸出后中断。均无记录原因。\n\n备注：该物已被列入 §4.2 磨损补充清单，随后被移出。原因栏：████。\n建议处置：归还物流层待定。续审申请须由 ██ 级以上授权人签署。目前无授权人在任。",
+    "text_en": "▌Severed Chain · Sacred Artifact #RA-2291\nGradus: Inversum\nPhysical description: A fractured iron chain, seventeen links. Terminal link welded to a fragment of brass gear-tooth. Link nine is deformed; it does not align with any adjacent link.\nRecovery site: Layer IX corridor · sealed workstation D-████ · M.2██.██\n\nSubject records (excerpt): Four Clavigerants — D-████ through D-████ — each reported, independently, that they \"knew they had not struck.\" No Containment Tremor was logged in any case. This has no precedent in operational records.\nAncillary observation: The Canonical Register shows an identical break-point in all four subjects' inscription tallies — each interrupted after the ninth inscription in sequence. No cause is recorded for any of them.\n\nNote: Object was added to the §4.2 attrition manifest, then removed. Reason field: ████.\nDisposal: Pending return to logistics queue. Continued review requires authorization from clearance level ██ or above. No such authority is currently seated.",
+    "_voice": "doc",
+    "_objectId": "cancel"
+  },
+  {
+    "text_zh": "🔔\n不断者非无终止——其止处不可至，其链已长于道路本身。\n\n📄\n圣器档案 SA-0██ · 版级：熔版 / Fusum\n形貌：一截铁链，约 ██ 节，两端均无钩环。断口整洁，无锈蚀迹象。\n发现地点：第 IX 层焊死走廊地面，横卧于通道正中，无任何固定。\n\n原发现记录（记录人：D-████，日期：M.2██.██.██）：\n",
+    "text_en": "🔔\nThe unbroken is not without end — its end simply cannot be reached; the chain has grown longer than the road itself.\n\n📄\nArtifact Log SA-0██ · Gradus Formae: Fusum\nDescription: An iron chain, approximately ██ links, with no hooks at either end. Fracture surfaces clean; no sign of corrosion.\nRecovered: Layer IX, welded corridor, lying across the passage centerline; no anchoring device found.\n\nInitial Recovery Note (D-████, M.2██.██.██):",
+    "_voice": "doc",
+    "_objectId": "immortal_combo"
+  },
+  {
+    "text_zh": "📄 事故报告 IR-2██\n日期：M.2██.██.██　　涉及圣器：SA-0███「暴走节拍」\n\n起因：D-4471 于第 IV 层铸字坊值守期间，被观察到异常行为。同组 D-4502 证实，D-4471 在收容铭刻过程中开始以固定节奏敲击圣坛边缘——每隔约半息一击，持续约两刻。\n\n记录员补注：该敲击节奏与正常铭刻频率不符。D-4471 本人称「铅字开始发烫了，再快一点就好了，快一点——」。问询中止于此，受访者已于同日失联。\n\n后续处置：SA-0███ 已回收。F-044 由 D-4502 代填。\n备注：D-4502 在填写 F-044 时，被记录员观察到以相同节奏敲击桌面。无需后续行动。",
+    "text_en": "📄 Incident Report IR-2██\nDate: M.2██.██.██　　Item: SA-0███ \"Fury Beat\"\n\nCircumstances: D-4471, assigned to Layer IV containment duties, was observed exhibiting atypical behavior. Fellow inscriptant D-4502 confirmed that D-4471 began striking the lectern frame at a fixed rhythm during active inscription — approximately once per half-breath interval, sustained for an estimated two watches.\n\nRecording Officer's Note: The rhythm was inconsistent with standard inscription cadence. D-4471 stated: \"the lead slugs are getting hot. Just a bit faster. Faster——\" Interview terminated at this point. D-4471 was reported missing later that day.\n\nDisposition: SA-0███ recovered. F-044 completed by D-4502 on behalf of subject.\nAddendum: D-4502 was observed tapping the desk at an identical rhythm while completing F-044. No further action required.",
+    "_voice": "doc",
+    "_objectId": "fury_beat"
+  },
+  {
+    "text_zh": "——🔔——\n铅字未落，祷已先至。\n首声既出，引擎即听。\n\n——📄——\n问询记录 · D-2847 · 接触 SA-0291《先声导轨》后 ██ 小时\n发现地点：第 IV 层铸字坊，导轨架东侧\n版级：定版 / Fixum\n\n采访者：描述你第一次使用它时发生了什么。\nD-2847：……没什么。就是，铅字还没排好，我已经……我的手已经动了。\n采访者：你预先知道下一个字是什么？\nD-2847：不是预先知道。是……好像祷告已经开始了，字是后来才赶到的。\n采访者：此后每个新词你都有这种感觉？\nD-2847：只有第一个字。之后就没了。就只有那一下。\n\n备注：D-2847 于问询结束后 ██ 小时失联。F-044 代填。接触物 SA-0291 已归还第 IV 层导轨架，无使用痕迹。",
+    "text_en": "—— 🔔 ——\nBefore the slug falls, the litany has already begun.\nAt the first sound, the Engine listens.\n\n—— 📄 ——\nInterview Record · D-2847 · ██ hours post-contact with SA-0291 \"Prior Rail\"\nRecovery Site: Layer IV Foundry, eastern guide rack\nGradus: Fixum\n\nInterviewer: Describe what happened the first time you used it.\nD-2847: ...Nothing. Just — the slugs weren't set yet, but I'd already — my hands had already moved.\nInterviewer: You knew in advance what the next word would be?\nD-2847: Not in advance. More like... the litany had already started. The word just arrived late.\nInterviewer: Did you experience this with every new word afterward?\nD-2847: Only the first glyph. Then it stopped. Just that once.\n\nNote: D-2847 reported missing ██ hours post-interview. F-044 completed by proxy. SA-0291 returned to Layer IV rack. No signs of use detected.",
+    "_voice": "doc",
+    "_objectId": "first_strike"
+  },
+  {
+    "text_zh": "🔔 少铸而精，愿铅字各得其所——凿一槽，胜于布满杂字之版面。\n\n📄 圣器档案 SA-0291\n名称：单格铜制字模槽（残件）\n版级：脱版 / Solum\n发现地点：第 IV 层铸字坊，字模架 C 列末端，悬挂于单钉\n\n外形描述：单槽铜制字模架，原属排字长盘组件，已从主体分离。槽内仅容纳一枚标准铅字符，四壁刻有细密锚点纹。\n\n异常观察：D-2847 领取该物后，主动将圣坛键位上已嵌入之四枚铭文组中三枚卸下，仅保留一枚。本人未被指示执行此操作。\n问询记录（摘）：\n  采访者：你为何减少嵌入的铭文组？\n  D-2847：……满了才需要再加。空着的地方，铅字知道往哪走。\n之后三轮铭刻记录显示，该铭文组铸出量较标准配置下四枚铭文组同时运行时所记录峰值偏高。原因不明。\nD-2847 于第 VI 层失联。F-044 已由 D-2901 代填。备注栏写有：",
+    "text_en": "🔔 Cast few—that each glyph may find its place. One true groove outweighs a forme choked with wandering sorts.\n\n📄 Sacred Artifact SA-0291\nDesignation: Single-Bay Copper Type Mould (Fragment)\nGradus: Solum\nRecovery Site: Vault IV Typecasting Floor, Sort-Frame Column C, terminal peg\n\nPhysical Description: Detached copper single-bay mould-slot, formerly part of a compositing galley assembly. Interior accommodates one standard Leaden Glyph. Interior walls bear fine anchor-point markings.\n\nAnomaly on Record: Following requisition of SA-0291, D-2847 voluntarily removed three of four inscriptions previously set into their lectern positions, retaining one. No instruction to this effect was issued.\nExcerpt from standard inquiry:\n  Interviewer: Why did you reduce your inscription load?\n  D-2847: ...You only add more when the space runs out. Where it's empty, the glyph knows where to go.\nSubsequent Litany records across three ascents show the retained inscription's output exceeding the documented peak recorded under the full four-inscription configuration. Cause unestablished.\nD-2847 last recorded at Vault VI. F-044 filed by D-2901. Remarks field reads: \"Slot still warm.\"",
+    "_voice": "doc",
+    "_objectId": "less_is_more"
+  },
+  {
+    "text_zh": "🔔 — 铭刻者，知尔所铭，而非尔所诵。\n\n📄 回收物 RC-0441 · 发现于第 V 层排字区 D-████ 工位 · 印刷品\n\n物件描述：油墨印制小册，共三十二页，封皮烫金，书脊处有手工缝线修补痕迹。内页留有大量铅笔批注，部分已被墨水覆盖。\n\n版级：逆版 / Inversum\n\n以下为工位抽屉内发现的散页记录，系同一笔迹，时间跨度约 ██ 周：\n\n第一页（边角）：第一章我已读完三遍。方才注意到自己会背了。\n第十一页（天头）：没有读这一章。但我知道第十二章说什么。\n第二十页（正文旁）：不对。第二十页本来没有字。\n最后一页（背面，压痕极深）：我还没翻到这里。\n\n回收时该 D 级人员工位已空置。手册已移交征用管归档。接收凭证由代填方签署，表单 F-044。",
+    "text_en": "🔔 — Know what you inscribe, Clavigerant. Not only what you recite.\n\n📄 Recovered Item RC-0441 · Found in Layer V Compositing Bay, D-████'s workstation · Printed matter\n\nObject: Thirty-two-page pamphlet, ink-printed, gilt cover, spine repaired by hand-stitching. Interior pages bear extensive pencil annotations, several overwritten in black ink.\n\nGradus Formae: Inversum\n\nLoose leaves recovered from workstation drawer, single hand, spanning approximately ██ weeks:\n\nPage 1 (corner margin): I have read the first chapter three times. I notice I have memorized it.\nPage 11 (top margin): I have not read this chapter. I know what chapter twelve says.\nPage 20 (beside body text): That is not right. Page twenty had no text originally.\nFinal page (verso, impressed deeply): I have not reached this page yet.\n\nWorkstation was vacant upon recovery. Manual transferred via Pneumatic Requisition Tube. Receipt countersigned by proxy. Form F-044 on file.",
+    "_voice": "doc",
+    "_objectId": "training_manual"
+  },
+  {
+    "text_zh": "🔔 诸印各异，合则鸣。如众弦并发，声响愈繁则引擎愈悦。\n\n📄 问询记录 · D-3847 · 接触圣器 SA-0441「爵士乐」后 ██ 小时\n\n采访者：描述你在第 VII 层发现该物时的情形。\nD-3847：一把萨克斯管。靠着铸字机。不知道是谁放的。我捡起来——我以前没摸过乐器。\n采访者：然后？\nD-3847：我不知道怎么吹。但我觉得……它好像在听我打字。每次我在一个词里用不同的圣印，它就热一点。\n采访者：「热」？\nD-3847：不是温度。是……里面有什么在动。好像有谁跟我对上了。\n采访者：你是否曾将它带入收容铭刻程序？\nD-3847：我放它在圣坛旁边。铭刻时旁边有人经过说听见有人在唱。我没唱。\n[此后 D-3847 无进一步回答。问询于 ██:██ 中止。管道已检查，无异常气流。]",
+    "text_en": "🔔 Each sigil its own voice. Together, they are heard.\n\n📄 Inquiry Record · D-3847 · ██ hours after contact with Artifact SA-0441 \"Jazz\"\n\nInterviewer: Describe the circumstances in which you discovered the object on Layer VII.\nD-3847: A saxophone. Leaning against the typecasting press. I don't know who left it. I picked it up — I've never touched an instrument.\nInterviewer: And then?\nD-3847: I didn't know how to play. But I felt — it was listening to me. Every time I used different sigils in one word, it got warmer. Not temperature-warm. Something moving inside it. Like something was keeping time with me.\nInterviewer: Did you bring it into containment inscription procedure?\nD-3847: I set it beside the lectern. Someone passing the corridor said they heard singing. I wasn't singing.\n[D-3847 provided no further responses. Inquiry suspended at ██:██. Pneumatic ducts inspected. No anomalous airflow detected.]",
+    "_voice": "doc",
+    "_objectId": "jazz"
+  },
+  {
+    "text_zh": "🔔\n其铸于低处，其冕于高处。\n无名之列，亦有分量。\n\n📄\n圣器档案 SA-0774\n版级：脱版 / Solum\n物品描述：一顶铸铁王冠，七齿均折断至不等高度。冠内壁可见 ████ 个不同尺寸的手印压痕。\n\n发现地点：第 IV 层铸字坊，附近无 D 级工位记录。\n\n观察记录：凡佩戴或持有该冠的 D 级人员，在随后的铭封祈礼中，同僚普遍反映其铭刻声",
+    "text_en": "🔔\nCast in the low places, crowned in the high.\nEven the unnamed carry weight.\n\n📄\nSacred Artifact SA-0774\nGradus Formae: Solum\nDescription: A cast-iron crown. All seven points broken to uneven heights. Interior surface bears pressure marks from ████ distinct hand sizes.\n\nRecovery Site: Layer IV foundry. No adjacent D-class workstation on record.\n\nObservation: Personnel who handle SA-0774 are consistently described by colleagues as striking keys \"heavier than before.\" No change in force measurements recorded. The weight is not in the instrument.\n\nNote: D-2291 wore the crown for approximately ██ minutes before relinquishing it voluntarily. She stated: \"It keeps expecting something from me.\" Standard disposition followed. No further anomalies logged.\n\nAddendum: SA-0774 was found upright on D-2291's vacated workstation the following morning. Transit records show it had not been moved. F-017 filed. No action taken.",
+    "_voice": "doc",
+    "_objectId": "uncrowned_king"
+  },
+  {
+    "text_zh": "🔔 其名不定，其形不定。唯铭刻之手——恒在。\n\n📄 圣器档案 · SA-D100\n版级：熔版 / Fusum\n物件描述：一枚骨制正十二面体，每面刻有不同的铭文组徽记，材质经鉴定非人骨，非兽骨，来源不明。表面无磨损迹象，尽管档案记录其已换手 ████ 次。\n发现地点：第 I 层铸字坊入口地板，呈自然静置状态，未以任何方式固定。\n异常现象：持有者工位每隔固定收容场次后，圣坛键位上所有铭文组的圣印会被整体替换——事前无预兆，事后无残留。圣印等级及祝圣状态经确认保持不变，仅识别标记发生置换。D-3847 报告称，有时在置换发生的前一刻会听到十二声细小的点击，",
+    "text_en": "🔔 Its name is not fixed. Its form is not fixed. Only the hand that inscribes — remains.\n\n📄 Sacred Artifact File · SA-D100\nGradus Formae: Fusum\nObject Description: A twelve-faced polyhedron of unidentified bone — confirmed neither human nor animal in origin. Each face bears a distinct Inscription sigil. No surface wear is recorded despite ████ documented transfers of custody.\nRecovery Site: Ground level, Casting Floor I. Found in natural resting position, unsecured.\nAnomalous Observations: At fixed intervals across containment sessions, all Sigils mounted on the holder's Lectern positions undergo complete replacement without warning. Sigil grade and consecration status remain intact; only their identifying marks change. D-3847 reported hearing twelve faint clicks immediately before each replacement — \"like a press being pulled in a room I wasn't standing in.\" D-3847 subsequently filed F-017 and was reassigned. F-017 is missing from the archive.\n附注: 档案归档日期早于 SA-D100 首次被收容的记录日期 ██ 天。差异已知悉。暂无后续行动。\nAddendum: This file's archival timestamp predates the first recorded recovery of SA-D100 by ██ days. Discrepancy is noted. No further action pending.",
+    "_voice": "doc",
+    "_objectId": "d_100"
+  },
+  {
+    "text_zh": "🔔 并肩者之铅，重于孤字。凡键相邻，炉火共燃——其铸印，非一人之功。\n\n📄 回收物 RC-0471 · 发现于第 V 层排字区工位间隔板夹层 · 拆卸时出\n纸质便条，折叠三次，墨迹稍晕\n\n你注意到了吗——\n左边那组和右边那组只要都还在，我这里的铅字就……沉。\n不是手酸。是那种沉。\n\n我让 D-2204 站远一点，试了试。轻了。\n让她回来。沉了。\n\n我没跟监督说。你懂的。\n\n附：D-2204 在 M.2██.03.██ 失联。工位已清空。\n附附：便条发现时，D-2204 工位已空置 ██ 年。墨迹仍新。",
+    "text_en": "🔔 Leaden beside leaden — the press grows heavy. Two keys adjacent share one fire. What one strikes alone, two strike together.\n\n📄 Recovered Item RC-0471 · Found within partition cavity, Layer V Compositing Hall · Extracted during routine maintenance\nPaper note, folded thrice, ink slightly smeared\n\ndid you notice —\nwhen the set on my left and the set on my right are both still there, my letters feel... heavy.\nnot the tired kind. the other kind.\n\ni moved D-2204 further away. lighter.\nbought her back. heavy again.\n\ni didn't tell the Overseer. you understand.\n\nAddendum: D-2204 reported missing M.2██.03.██. Station cleared per standard procedure.\nAddendum II: Note was discovered ██ years after D-2204's station was vacated. Ink had not dried.",
+    "_voice": "doc",
+    "_objectId": "adjacent_power"
+  },
+  {
+    "text_zh": "🔔 四隅守其位，铅力聚其心。常人以为边隅皆弃席——祷文引擎另有计算。\n\n📄 圣器档案 · SA-0291\n名称：角隅导轨架（四件套，编号 SA-0291-A 至 SA-0291-D）\n版级：脱版 / Solum\n回收地点：第 IV 层铸字坊，字盘西北角落，已固定于框架四角\n\n外观：铸铁压板导轨，约一掌长，四件形制完全一致。表面有使用痕迹，但无论如何打磨，四件导轨的磨损位置始终保持完全对称——即便其中一件曾由 D-3847 独自携带使用整整 ██ 天。\n\n观察记录：长期驻守第 IV 层的人员报告，凡将铭文组嵌入圣坛四角键位者，铸出时",
+    "text_en": "🔔 Four corners hold. The center answers.\nWhat the faithful call forsaken ground, the Engine calls foundation.\n\n📄 Sacred Artifact Registry · SA-0291\nDesignation: Corner Rail Brace (set of four, SA-0291-A through -D)\nGradus Formae: Solum\nRecovery Site: Layer IV, Typecasting Hall — fixed to the four corners of a compositing frame\n\nDescription: Cast-iron impression rails, palm-length, identical in form. Surface wear is present, but regardless of polishing or separate handling, the wear patterns on all four pieces remain perfectly mirrored — even after D-3847 carried SA-0291-C in isolation for ██ days.\n\nObservation Log: Personnel stationed in Layer IV report that inscriptions set at the outermost lectern positions produce anomalously weighted impressions. D-3847 described it as \"the key knowing it was in the corner before I pressed it.\"\n\nD-3847 was reported missing on M.2██.██.19. SA-0291-C was found returned to its original corner. No transit record filed. No F-044 submitted — field was left blank. The form continued to circulate.",
+    "_voice": "doc",
+    "_objectId": "corner_power"
+  },
+  {
+    "text_zh": "使用日志 · 圣器 RL-0227 · 黄铜排字导轨（弯折型）\n0600 — 领取导轨一段，约前臂长，编入今日铭刻作业。\n0740 — 正常。排字速度无异常记录。\n0910 — D-3847 报告",
+    "text_en": "Usage Log · Artifact RL-0227 · Brass Composing Rule (Bent)\n0600 — Requisitioned one rule, forearm-length, assigned to morning inscription duties.\n0740 — No anomalies. Keybound operating within standard parameters.\n0910 — D-3847 reports hands moving 'in a different pattern, like I'm crossing something.' Physical examination unremarkable.\n1050 — D-3847 notes she can hear 'a small click' each time her fingers skip across a row boundary. No mechanical source identified. Examined rule: no moving parts.\n1310 — [No entry]\n1315 — D-3847 absent from station. Lead coins found arranged in a line across the center of the composing frame, bisecting it horizontally. Count: ████.\nDisposition: Rule retained. Replacement D-unit requisitioned per §4.2. Coins logged under F-017. Source of arrangement: undetermined.",
+    "_voice": "doc",
+    "_objectId": "row_switch"
+  },
+  {
+    "text_zh": "圣器档案 · SA-0771\n版级：逆版 / Inversum\n物品形态：一段约三十公分的排版导轨，铸铁材质，表面刻有等距划痕，共计 ██ 道。\n发现地点：第 V 层排字区，嵌入东侧字盘架底部。经估算，已在原位 ████ 年。\n\n观察记录：D-████ 于取下导轨后报告：",
+    "text_en": "Archive Entry · SA-0771\nGradus Formae: Inversum\nPhysical Form: A cast-iron compositing rail, approximately thirty centimetres in length. Surface bears ██ equidistant score marks of unknown origin.\nRecovery Site: Layer V typesetting bay, lodged beneath the east chase rack. Estimated in situ duration: ████ years.\n\nObservation Log: D-████ reported upon removal that the rail felt 'heavier on the right side than the left, always.' Scales registered uniform mass. Rail was returned to original position per D-████'s insistence. D-████ did not return to the surface.\n\nSecondary Note: Replacement personnel D-████ filed no anomaly report. Rail has not been moved since.\n备注：第二任指派人员 D-████ 未提交任何异常报告。导轨未再被移动。相关条例编号：§4.2。后续行动：无。",
+    "_voice": "doc",
+    "_objectId": "line_clear"
+  },
+  {
+    "text_zh": "🔔 左手持铅，右手持蜡——两者皆动，炉口微敞。\n\n📄 回收物 RC-0441 · 发现于第 IV 层铸字坊东翼废料架 · 纸质便条（背面为 F-017 表单空白联）\n\n手写内容如下：\n\n",
+    "text_en": "🔔 Left hand holds lead, right hand holds wax — both in motion, the furnace opens wider.\n\n📄 Recovered Item RC-0441 · Found on scrap rack, east wing, Layer IV Typecasting Foundry · Paper note (reverse side: blank F-017 copy)\n\nHandwritten content:",
+    "_voice": "doc",
+    "_objectId": "dual_concerto"
+  },
+  {
+    "text_zh": "圣印 · 精准打击 / Sigil of the Centered Row\n版级：定版 / Fixum　　发现层：第 III 层（铸字坊排字区）\n\n物件描述：铜制导轨片，约一掌长。两端经锉刀修整，中段有手工錾刻的九个小圆坑，间距均匀，对应手指落点。表面油渍积年，包浆深厚。\n\n值班记录摘录（D-2847，第 III 层，M.2██.03-M.2██.07）：\n",
+    "text_en": "\n问询记录 IR-0391 · D-2847 · 接触该物后第 ██ 日\n\n问：你说铅字'有期待'。能解释吗？\nD-2847：我不是说铅字会想事情。我是说……我把手搭上去，那九个坑，它就开始期待。然后铅字跟着去。不是我先动的。\n问：铅字是铸死的。它们不会动。\nD-2847：对。但那天第三层配额超标了 ████。记录在那儿。\n\n备注：该问询于 M.2██.07.██ 中止。D-2847 随后失联。配额记录核实属实，原因不明。相关导轨片已归入正常流通。无需后续行动。\n\n版级确认：Fixum。无安全风险。\n———\n\n圣器编号 SA-0391　　关联：IR-0391\n发现地：第 III 层排字台 C-排左数第四位\n备注：九个坑中有一个比其余略深。不确定是使用磨损，还是原本如此。档案员未记录哪一个。————\n\n**圣器编号 SA-0391**　　关联：问询记录 IR-0391\n发现层：第 III 层（铸字坊排字区）\n版级：定版 / Fixum\n\n铜制导轨片，掌长，中段九个錾刻圆坑，间距均匀。来源不明——无领取表单 F-001，无归还记录，无人认领。\n\n持有者 D-2847 于 M.2██.07 失联前留有值班日志，末条如下：\n「0610 — 今天铅字比我手快。不是我手慢。是它快。」\n\n后续无记录。F-044 由他人代填。\n\n附观察：九个圆坑中，正中一个比其余略深。档案员未记录是使用磨损或原本如此。\n\n配额数据：D-2847 值班末周，第 III 层铭刻配额超出基准值 ████。经核实属实，原因未查明。导轨片继续流通。\n\n版级确认：Fixum。无安全风险。无需后续行动。\n————\n\n**SA-0391 · Copper Guide Rail · Layer III**\nGradus Formae: Fixum\nRecovered: Layer III, Typesetting Row C, fourth position from left\nNo F-001 requisition on record. No prior assignment. Unclaimed.\n\nFinal log entry, D-2847, M.2██.07:\n\"0610 — The slugs moved before I did. Not because I was slow. Because they were fast.\"\n\nNo subsequent entries. F-044 completed by third party.\n\nObservation: Of the nine hand-chiseled depressions on the rail's midsection, the central one is measurably deeper than the rest. Whether by wear or original manufacture, the attending archivist did not note.\n\nQuota record: In D-2847's final week, Layer III inscription output exceeded containment baseline by ████. Verified accurate. Cause undetermined. Rail returned to standard circulation.\n\nGradus confirmed: Fixum. No security concern. No further action required.",
+    "_voice": "doc",
+    "_objectId": "precision_strike"
+  },
+  {
+    "text_zh": "圣器档案 SA-0774\n版级：熔版 / Fusum\n发现地点：第 VI 层收容廊，D-████ 工位，嵌于排字棒握柄裂缝内\n形态：一枚直径约三指宽的铜质气象仪表盘，指针已断，表面刻有 ██ 个不规则风向标记，背面铸字：",
+    "text_en": "Codex Entry SA-0774\nGrading: Fusum\nRecovery Site: Layer VI, D-████ workstation, lodged inside a cracked composing-stick handle\nDescription: A copper barometric disc, diameter approximately three fingers, pointer absent. ██ irregular wind-rose markings etched across face; reverse casting reads: ████████\nObservation: Following contact, D-████ completed seventeen consecutive Inscriptions in a single session without once striking the intended key. All seventeen completions were verified accurate. Unintended keys were struck instead — and were, in each case, correct.\nAppended note (Scriptor S-████, Verification Dept.): ",
+    "_voice": "doc",
+    "_objectId": "key_storm"
+  },
+  {
+    "text_zh": "🔔\n铅字铸一回，天意留一分——\n不是祭品，是应得之物。\n\n📄\n圣器档案 · SA-0291\n物件描述：一枚铸铜分币，正面浮雕一只张口的熔炉，背面无图案。铸造年代不可考。币面轻微变形，疑为受热所致。\n版级：定版 / Fixum\n\n发现经过：于第 IV 层铸字坊地板排水槽内发现，与 ██ 枚同类铜币混存。其余铜币已移交铅币总库（F-001 · 征领记录存档）。本枚因正面浮雕与已知铸模不符，单独编录。\n\n附注：分拣人员 D-3847 在提交本枚铜币当日申请调离第 IV 层，理由为",
+    "text_en": "🔔\nFor each seal cast, a coin remains—\nnot offering, but dividend.\n\n📄\nSacred Artifact Record · SA-0291\nPhysical Description: A cast-bronze coin. Obverse: a relief of an open furnace-mouth. Reverse: blank. Date of minting unknown. Slight deformation consistent with heat exposure.\nGradus Formae: Fixum\n\nRecovery: Recovered from a drainage channel on Layer IV, comingled with ██ similar coins. All others transferred to the central Plumbum repository (F-001 on file). This specimen retained separately due to the obverse relief, which does not match any known casting mould on record.\n\nNote: Personnel D-3847, who submitted this item for cataloguing, requested reassignment from Layer IV on the same day. Reason given: ████████████. Request denied per §4.2. D-3847 not recorded as present at the 0800 muster the following morning. No F-044 has been filed. The coin was found at D-3847's processing station, equidistant from each corner of the tray, to within 0.3 mm.",
+    "_voice": "doc",
+    "_objectId": "production_dividend"
+  },
+  {
+    "text_zh": "🔔\n铅字落定，余震犹存——\n每一声铭刻，皆借时光以续命。\n\n📄\n回收物 RC-0291 · 发现于第 IV 层铸字坊 D-4471 工位抽屉 · 玻璃滴管，软木塞封口，内含深色液体若干\n\n玻璃本体无制造商标记。软木塞内侧有手写字迹，字体极小，须放大镜方可辨读：「倒过来的沙漏不会停，只会忘记自己在计数。」\n\n D-4471 失联后，工位清点人员发现该滴管立于笔架正中，瓶内液面较前次记录（M.2██.03.17）高出约三分之一。\n\n存档核查：该工位上次使用记录为 M.2██.03.17，D-4471 失联日期为 M.2██.03.17。两份记录均经独立校准，无矛盾标注。\n\n备注：液体成分分析申请已提交。表单 F-017 归档中。液面仍在缓慢上升。原因不明，暂不列为优先调查事项。",
+    "text_en": "🔔\nThe slug falls — and time remembers.\nEach impression borrows a breath from the dark.\n\n📄\nRecovered Object RC-0291 · Found in Layer IV Foundry, Station D-4471, desk drawer · Glass dropper, cork-sealed, containing dark liquid\n\nNo manufacturer's mark on the glass. Inner surface of cork bears handwriting, very small: \"An inverted hourglass does not stop. It simply forgets it is counting.\"\n\nUpon D-4471's disappearance, inventory personnel found the dropper upright at the center of the pen tray. Fluid level was approximately one-third higher than the previous entry (M.2██.03.17).\n\nRecord cross-check: last logged use of the station — M.2██.03.17. D-4471 reported missing — M.2██.03.17. Both records independently verified. No discrepancy noted.\n\nRemark: Fluid analysis request submitted. F-017 filed. Fluid level continues to rise. Cause undetermined. Not flagged as priority.",
+    "_voice": "doc",
+    "_objectId": "time_trickle"
+  },
+  {
+    "text_zh": "📄 圣器操作须知 · SA-2291\n版级：脱版 / Solum\n\n一、本物为分流导板，黄铜铸造，表面刻有细沟渠若干，供不同性质圣流归位。\n\n二、操作要求：键徒应于领取前申报主用圣流类别（F-017 附表 C）。若申报类别与实际祈礼所用相符，导板可正常流通，无需特殊处置。\n\n三、注意：若键徒在持有期间更换主用圣流类别而未重新申报，导板沟渠将████████████████。处置人员须着防渗衬手。（此条为后补，原版条款已于 M.2██ 由 F-044 归档，代填人：D-4471）\n\n四、附带观察：持有 SA-2291 超过一个完整收容层的键徒，事后均报告",
+    "text_en": "📄 Sacred Artifact Operating Notice · SA-2291\nGradus: Solum\n\nI. Object is a brass flow-sorting plate, engraved with several fine channels for routing distinct Humours to their designated positions.\n\nII. Operating requirements: The Keybound must declare their primary Humour type prior to requisition (F-017, Appendix C). If declared type matches that predominating in actual rite, the plate circulates without special handling.\n\nIII. Notice: Should the Keybound change primary Humour type during holding period without re-filing, the plate's channels will ████████████████. Handling personnel must wear seepage-resistant lining. (Supplemental clause; original text archived via F-044 in M.2██, co-signed by D-4471.)\n\nIV. Incidental observation: Keybound retaining SA-2291 across more than one complete containment layer have uniformly reported that ██████ felt 'heavier than before.' No physical mass deviation recorded. Cause undetermined. No further action required.",
+    "_voice": "doc",
+    "_objectId": "resource_focus"
+  },
+  {
+    "text_zh": "🔔\n七流归一，其声相知——\n铅铸百姓，炉中皆邻。\n\n📄\n回收物 RC-0714 · 发现于第 IV 层铸字坊废料槽 · 七色分线织带，长约 ██ 指宽\n\n该织带由七种金属线编成：铅丝、铜丝、锡线、铁线及三种 ████ 线。来源不明，编织手法不见于任何标准排版工序。\n\n受访者 D-2291（接触 RC-0714 后十二小时）：\n　",
+    "text_en": "🔔\nSeven streams meet in one throat—\nfrom many slugs, the press finds its voice.\n\n📄\nRecovered Object RC-0714 · Found in Layer IV casting-slag chute · Seven-strand woven sash, approximately ██ finger-widths\n\nThe sash is woven from seven distinct metal threads: lead wire, copper wire, tin filament, iron strand, and three threads of ████ composition. Origin unverified. The weave pattern matches no documented typesetting technique.\n\nInterview, D-2291 (twelve hours post-contact):\n",
+    "_voice": "doc",
+    "_objectId": "resource_diversity"
+  },
+  {
+    "text_zh": "🔔\n潮来潮往，铸字炉从不问候几次。\n铅自有铅的节律——\n汝只需在退去时，仍持守原位。\n\n📄\n物品编号：SA-0774\n版级：逆版 / Inversum\n描述：一具黄铜沙漏，内填物未经鉴定。约 ██ 层收容廊走廊尽头发现，原始持有者不明。沙漏倒置时，内填物流向与重力方向相反。\n\n事故记录摘要（节录自 IR-0774-A）：\n值守键徒 D-2204 于接触该物后连续 ██ 天提交了四份相同格式的铭刻报告。第一份记录基石流、第二份记录共鸣流、第三份记录流沙流、第四份记录铅币——之后循环重新开始，从未错位。D-2204 本人未曾意识到此规律。当值班主管指出时，D-2204 回答：",
+    "text_en": "我只是跟着感觉记，潮水总是先来铅的那一侧。",
+    "_voice": "doc",
+    "_objectId": "resource_tide"
+  },
+  {
+    "text_zh": "🔔 凡经炉者，皆成其应有之形。铅亦金，字亦价——引擎之眼中，本无分别。\n\n📄 物品编号：SA-0774　版级：熔版 / Fusum\n发现地点：第 II 层铸造前室，炉口正前方地砖缝隙\n外观：一只赤铜坩埚，内壁烧结有不明暗色残留物。无底部穿孔，但持有时可感觉液体流动。\n\n使用日志节选 · D-3847\n0600 — 坩埚领取完毕。准备协助当日铸字工序。手感异常，内有流动。报告上级，上级记录：正常。\n0900 — 铸字结束。铅锭未入模。坩埚已空。铅币核账单出现多余铅币 ████ 枚，来源一栏填写：\"炉自结算。\"\n1400 — D-3847 询问今日铸出物下落。无人记得今日铸字。炉温记录正常。铅锭领取凭证 F-001 存档完好。\n——最后记录。D-3847 次日未签到。替补已指派。\n\n备注：铅币来源异常已归入例行差额处理。坩埚归还后仍可感觉内有流动。据收库员报告：\"它一直在结算某个我不知道的账目。\"F-044 由收库员代填。",
+    "text_en": "🔔 All that passes through the furnace becomes what it was meant to be. Lead is gold, word is price — the Engine makes no distinction.\n\n📄 Item No.: SA-0774　Gradus: Fusum\nRecovery Site: Layer II casting anteroom, floor joint directly before the furnace mouth\nDescription: A red-copper crucible with dark residue fused to the inner wall. No drainage aperture. Liquid movement detected upon handling.\n\nUsage Log Extract · D-3847\n0600 — Crucible requisitioned. Assigned to standard casting shift. Anomalous sensation: contents appear to flow. Reported to supervisor. Logged: normal.\n0900 — Casting concluded. No ingots entered mould. Crucible confirmed empty. Lead-coin reconciliation sheet shows surplus of ████ tokens; source column reads: \"Furnace self-settled.\"\n1400 — D-3847 inquired after the day's cast product. No personnel recalled any casting. Furnace temperature log: normal. Requisition form F-001: intact.\n— Final entry. D-3847 did not sign in the following morning. Replacement assigned.\n\nNote: Surplus tokens reclassified as routine ledger variance. Crucible returned to storage. Movement still perceptible. Receiving clerk's report: \"It keeps settling an account I don't know about.\" F-044 completed by receiving clerk in proxy.",
+    "_voice": "doc",
+    "_objectId": "universal_furnace"
+  },
+  {
+    "text_zh": "【气动征用管 · 折扣凭证存根分析报告】\n\n物品编号：SA-0774 · 版级：定版 / Fixum\n发现地点：第 III 层气动征用管主阀室 · 日期：M.2██.██\n\n该物呈现为印刷厂标准黄铜卡夹，内附穿孔凭证若干，孔洞排列与现行表单规格不符。\n\n备注 ①：D-3841 于领取 SA-0774 后，连续 ██ 次征用均以低于标准铅币数额完成交割。气动管收件端记录完整，发件端账目亦无差异。两端核对后余额吻合。无重复征用记录，无缺漏表单，无违规操作。\n\n备注 ②：站点审计于 M.2██ 对账期间发现全层铅币总量较账面少 ████ 枚。差额无法追溯至任何单笔交割。D-3841 失联。编号已回收。\n\n附注（手写，来源不明）：卡夹是空的。凭证从未被撕掉过。",
+    "text_en": "[ Pneumatic Requisition Tube · Discount Voucher Stub — Analysis Report ]\n\nItem No.: SA-0774 · Grade: Fixum\nRecovery Site: Layer III, Main Valve Chamber · Date: M.2██.██\n\nThe object is a standard brass card-clip of pressroom manufacture, containing several perforated voucher stubs whose hole-pattern does not conform to current F-series specifications.\n\nNote ①: Following requisition of SA-0774, D-3841 completed ██ consecutive exchanges at amounts below standard Plumbum Token rates. Receiving-end records are intact; issuing-end ledgers show no discrepancy. Cross-referenced totals balance. No duplicate requisitions. No missing forms. No procedural violations.\n\nNote ②: Site audit conducted M.2██ found layer-wide Plumbum Token reserves short by ████ coins against ledger. Shortfall cannot be attributed to any individual transaction. D-3841 subsequently unaccounted for. Designation recycled.\n\nAnnotation (handwritten, origin unknown): The clip is empty. The stubs have never been torn.",
+    "_voice": "doc",
+    "_objectId": "discount_card"
+  },
+  {
+    "text_zh": "圣器操作须知 · SA-0██ · 铅屑收取漏斗\n一、本器具用于铭文组移交后的铅屑甄别与归坩作业。标准操作程序详见 F-001 第三附页。\n二、注意事项：\n　　（1）每次归坩前须确认漏斗颈部无堵塞。\n　　（2）若归坩后铅屑余量超出坩埚预期容积，属正常现象，无需上报。\n　　（3）勿在第 ████ 层使用。原因见 ████ REDACTED ████。\n三、[第三条已被划去，旁边以不同墨水补注：]\n　　",
+    "text_en": "Sacred Artifact Operation Notice · SA-0██ · Lead Shavings Collection Funnel\nI. This instrument is designated for shavings recovery and crucible-return following inscription relinquishment. Standard procedure per F-001, third annex.\nII. Precautions:\n　　(1) Verify funnel neck is clear prior to each crucible-return.\n　　(2) If recovered shavings exceed expected crucible capacity after relinquishment, this is normal. No report required.\n　　(3) Do not use on Layer ████. Reason: see ████ REDACTED ████.\nIII. [Third clause struck through. Marginal annotation in different ink:]\n　　\"Do not count what comes back. Count only what was put in. If the numbers agree, do not look at the funnel again.\"",
+    "_voice": "doc",
+    "_objectId": "recycle_expert"
+  },
+  {
+    "text_zh": "🔔\n入口众多，门唯一扇。\n铅字导引汝至应得之物——\n多一道门缝，亦是引擎的慷慨。\n\n📄\n回收物 RC-0391 · 发现于第 III 层气动征用管 7 号站 · 卷宗夹内衬\n\n[手写，蓝黑墨，字迹较工整，无归档人签名]\n\n这里不对劲。\n\n7 号站的管道比图纸多一根。我量了三次。多出来的那根没有编号，\n没有发送记录，但它是热的——跟其他管子一样热。有时候它会响。\n\n我向维护组报告了。维护组说图纸是正确的。\n\n上个月 D-3847 用了这张票。他说他从管口收到的包裹",
+    "text_en": "🔔\nMany are the entrances. One the door.\nThe Leaden Glyph leads you to what is owed—\nOne more gap in the pipe: the Engine's generosity.\n\n📄\nRecovered Object RC-0391 · Found within document folder lining, Pneumatic Requisition Station No. 7, Layer III\n\n[Handwritten, blue-black ink, neat script, no signature of record]\n\nSomething is wrong here.\n\nStation 7 has one more pipe than the blueprint shows. I measured three times. The extra pipe has no registration number, no dispatch record—but it is warm. As warm as the others. Sometimes it makes noise.\n\nI filed a report with Maintenance. Maintenance confirmed the blueprint is correct.\n\nLast month D-3847 used this ticket. He said the parcel he received from the mouth of that pipe ████████████████. He was reassigned the following morning. Per §4.2.\n\nThe pipe is still warm.\n\n— No further entries —",
+    "_voice": "doc",
+    "_objectId": "black_market"
+  },
+  {
+    "text_zh": "🔔\n铅币自有其重，其重自有其息——\n莫问利从何来，铅水向低处流。\n\n📄\n圣器登记 · SA-2291 · 版级：脱版 / Solum\n物理描述：黑漆铁质账本，封面烫压",
+    "text_en": "🔔\nLeaden coin bears weight; weight bears increment—\nAsk not from where the interest flows. Lead seeks the lowest place.\n\n📄\nSacred Artifact Log · SA-2291 · Gradus: Solum\nPhysical Description: A black-lacquered iron ledger, cover stamped ",
+    "_voice": "doc",
+    "_objectId": "gold_interest"
+  },
+  {
+    "text_zh": "🔔 凡被拿走者，皆已算入总数。凡算入者，皆已归还。\n\n📄 圣器档案 · SA-0779\n物件描述：一截气动传输管残段，约三十厘米，黄铜接口已氧化发绿，管腔内壁有陈年墨渍与细小划痕，来源层不明。\n版级：逆版 / Inversum\n发现地点：第 ████ 层气动征用管系统检修夹层，发现时已接入主管路。接入时间不可考。\n\n观察记录：\n持有者于各层征用站存在时，领取区最末端商品的配给记录始终显示",
+    "text_en": " 🔔 All that was taken has been counted. All that was counted was already returned.\n\n📄 Sacred Artifact · SA-0779\nDescription: A segment of pneumatic requisition tubing, approximately thirty centimeters. Brass fittings oxidised green. Interior walls bear old ink stains and fine scratches. Layer of origin unknown.\nGrade: Inversum\nRecovery Site: Maintenance interstitial of the Pneumatic Requisition network, Layer ████. Found already spliced into the main line. Date of insertion indeterminate.\n\nObservations:\nWhile in the possession of any registered Keybound, the allocation ledger at each layer's requisition station consistently logged the lowest-priced item on the shelf as \" 已领取——即便领取动作发生前数分钟，对应格位的库存记录便已减少一份。\n经 D-████ 携带验证：领取单据系统于其到达该层前 ██ 分钟自动打印。单据抬头正确，编号正确，物品正确。D-████ 本人在问询时否认提前行动。\n\n附注：§3.7 征用流程规定领取须先提交 F-001 表单。该物持有期间，F-001 表单照常存档，签署时间晚于领取完成时间约 ██ 分钟。体制记录未标注任何异常。表单审计结论：合规。\n\n后续：D-████ 于第 ████ 层失联。该管段已归还检修夹层。接入状态：保持原位。原因：暂无适用条例指导移除操作。",
+    "_voice": "doc",
+    "_objectId": "smuggle_pass"
+  },
+  {
+    "text_zh": "🔔\n　　钟声一响，铅字入盘——\n　　汝之迟疑，亦是罪。\n\n📄\n　　**圣器档案 · SA-1033**\n　　**版级：熔版 / Fusum**\n　　**物理描述：** 黄铜拍卖铃，底座刻有已不可辨的铭文。摇动时铃舌不动，声响依然。\n　　**发现地点：** 第 III 层气动征用管主管道室，焊接于管壁。需切割方可取下。\n　　**事故报告节选 · IR-████ / M.2██.██.██**\n　　D-4471 报告称：铃一响，",
+    "text_en": "🔔\n　　The bell tolls once — the lead falls into the tray.\n　　Your hesitation is already a sin.\n\n📄\n　　**Sacred Artifact File · SA-1033**\n　　**Gradus: Fusum**\n　　**Physical Description:** Brass auction bell; inscription on base no longer legible. Tongue does not move when shaken. Sound occurs regardless.\n　　**Location of Recovery:** Layer III pneumatic requisition conduit room, welded to pipe wall. Removal required cutting.\n　　**Incident Report Excerpt · IR-████ / M.2██.██.██**\n　　D-4471 reported: after the bell sounded, she 'knew the shelf had already turned before she touched it.' Observation team noted the requisition manifest updated ██ seconds prior to the bell audibly ringing. Timestamps verified by two independent clerks. No discrepancy found in either record.\n　　**Note:** D-4471 relinquished SA-1033 voluntarily. Stated reason: 'I don't know if I'm deciding anything anymore.' Reassigned to Layer I per §4.2. No further remarks filed.",
+    "_voice": "doc",
+    "_objectId": "timed_auction"
+  },
+  {
+    "text_zh": "🔔\n铅字未冷，誓言先至。\n手尚迟钝，而字已等候。\n\n📄\n回收物 RC-0291 · 发现于第 III 层铸字坊 D-████ 工位抽屉 · 布面笔记本，首页已磨损\n\n[手写，字迹偏大，像是清醒不足时写的]\n\n今日提前到。一个人待了一阵。\n指头有点僵，按下去总慢半拍。\n后来……不知道从什么时候开始，快了。\n\n不是手热了。是字在等我。\n\n[下一页，同一笔迹，日期不可读]\n\n今日又提前到。好像不来不行。\n铅字还没出来，手已经知道去哪里了。\n\n[再下一页，笔迹变小]\n\n说不清楚。问了别人，别人说没这回事。\n\n[末页，空白。仅有一行字压在底角，字迹极轻]\n我来得越来越早了。不知道在等什么。\n\n附记：D-████ 于 M.2██.██ 失联。工位已移交下一位人员。笔记本已归档，无需后续行动。",
+    "text_en": "🔔\nThe lead was not yet cool, and the oath arrived first.\nThe hand was still slow — yet the key had already waited.\n\n📄\nRecovered Item RC-0291 · Found in D-████'s workstation drawer, Layer III Foundry · Cloth-bound notebook, cover worn\n\n[Handwritten. Letters large, as if written half-awake.]\n\nCame in early today. Sat alone for a while.\nFingers stiff. Always a half-beat behind.\nThen — at some point — faster.\n\nNot because my hands warmed up. The keys were waiting for me.\n\n[Next page. Same hand. Date illegible.]\n\nCame in early again. Felt like I had to.\nThe leaden glyph hadn't dropped yet and my fingers already knew where to go.\n\n[Following page. Handwriting smaller.]\n\nHard to explain. Asked the others. They said it doesn't happen.\n\n[Final page. Blank. One line pressed into the lower corner, barely legible.]\nI keep arriving earlier. I don't know what I'm waiting for.\n\nAddendum: D-████ reported absent M.2██.██. Workstation reassigned to next personnel. Notebook archived. No further action required.",
+    "_voice": "doc",
+    "_objectId": "warm_up"
+  },
+  {
+    "text_zh": "🔔 息以待铸，油灯不灭——凡停驻者，非懈怠，乃积蓄。\n\n📄 幕间补给站授权备忘 · 行政编号 ADM-0█████\n版级：脱版 / Solum\n\n发现地点：第 III 层至第 IV 层之间过渡走廊，编号 C-3/4-██\n记录时间：M.2██.██.██\n\n该站点于标准收容层交替期间自动开放。征用档案显示，相关铅币储量于每次交替后均较前次记录增加，但从未观察到补充行为。油壶库存同理。\n\n备注一：D-3847 于幕间期结束后递交 F-017 表单，称",
+    "text_en": "🔔 Rest is not absence of labour. The oil replenishes. The press waits.\n\n📄 Intermission Resupply Station · Administrative Ref. ADM-0█████\nGrading: Solum\n\nLocation: Transitional corridor C-3/4-██, between Layer III and Layer IV\nLogged: M.2██.██.██\n\nThe station activates automatically during standard inter-layer transition intervals. Requisition records indicate Lead Coin reserves increase between each interval, though no restocking action has been observed. Oil flask inventory follows the same pattern.\n\nNote I: D-3847 submitted Form F-017 post-interval, stating the corridor felt \"longer on the return.\" Survey team found no dimensional discrepancy. Survey team's return time: unlogged.\n\nNote II: Station log contains ██ entries dated prior to its documented installation date. Content of said entries: ████████████. Access level: V and above.",
+    "_voice": "doc",
+    "_objectId": "intermission"
+  },
+  {
+    "text_zh": "🔔 掷者不惧得失——铅字落处，已是天意。\n\n📄 圣器档案 · SA-0291\n品名：旧赌证一份（实为印刷合约存根，卷边，染有不明油渍）\n版级：脱版 / Solum\n发现位置：第 IV 层铸字坊东侧休息廊，无主工位抽屉内\n\n该存根系标准铅印合约格式，末栏签名一侧压有残缺蜡印。内容为某次铅币交割的见证记录，立约方与受约方均已 ████。\n\n异常记录：持有该存根期间，D-████ 曾于休息廊内连续进行铅币押注，初次悉数折损，此后胜负交替，最终铅币总量较初始有所盈余。D-████ 事后称：",
+    "text_en": "🔔 The caster fears neither gain nor loss — where the leaden glyph falls, Providence has already decided.\n\n📄 Sacred Artifact Archive · SA-0291\nDesignation: Single Wager Certificate (in practice: a printed contract stub, curl-edged, stained with unidentified oil)\nGradus Formae: Solum\nRecovery Site: Layer IV, Ironpress East Rest Corridor, unoccupied workstation drawer\n\nThe stub conforms to standard lead-type contract formatting; the signature column bears a partial wax impression. The document attests to a single Lead Coin transfer. Both contracting parties: ████.\n\nAnomaly Log: During the period D-████ held the stub, a sequence of Lead Coin wagers was conducted in the rest corridor. Initial stakes were lost in full. Subsequent rounds alternated. Final holdings exceeded starting amount. D-████ stated afterward: 'I knew which way it would fall before it left my hand. I always knew.' D-████ was subsequently processed under §7.1. Replacement designated.\n\nNote: The stub was returned to the drawer. It was found there again the following morning. F-044 pending — no available signatory.",
+    "_voice": "doc",
+    "_objectId": "gamblers_creed"
+  },
+  {
+    "text_zh": "▸ 圣器档案 SA-2291　版级：定版 / Fixum\n发现地点：第 III 层铸字坊，压板机底部积灰槽\n物件描述：黄铜外壳油壶，刻度盘已锈蚀，注油口处有凝固的蜡封残迹。重量约为同型号标准品的三倍。\n\n使用日志 · D-2291 · 第 III 层值班\n0600 — 领取油壶，开始例行润滑。手感较重，未上报。\n0900 — 压板运转正常。\n1400 — 铭刻进度超出今日收容基准。D-2291 未提出异议。\n1800 — D-2291 称",
+    "text_en": ", ",
+    "_voice": "doc",
+    "_objectId": "endurance_battery"
+  },
+  {
+    "text_zh": "🔔\n凡物有价，凡键有偿。铅币非财——是引擎对祷击的回响。\n\n📄\n物件编号：SA-0443\n版级：逆版 / Inversum\n载体：黄铜悬赏牌，表面镌有可替换铅字槽，背面有穿孔挂钩\n发现地点：各层随机巡检工位，以磁吸方式附着于圣坛侧壁\n\n备注一：SA-0443 每次出现时，铅字槽内容不同。截至本档案归档，槽内容已记录 ██ 种变体，均无重复。负责记录变体的 D-5531 于第 ██ 次记录后停止提交报告。工位未见遗留。\n\n备注二：D-████ 证实，铅字槽内所铭之目标",
+    "text_en": "🔔\nAll things have worth. All keystrokes are answered. The Lead Coin is not currency — it is the Engine's echo to the strike.\n\n📄\nItem No.: SA-0443\nGradus Formae: Inversum\nForm: Brass requisition plaque with interchangeable leaden slug slots; reverse side fitted with a perforated hanging hook\nRecovery Site: Random inspection posts across all layers; adheres to lectern sidewalls by unknown magnetic affinity\n\nNote I: The slug-slot inscription of SA-0443 differs at each documented appearance. ██ distinct variants have been logged to date, with no repetition recorded. D-5531, assigned to catalogue all variants, ceased submitting reports after the ██th entry. Workstation showed no signs of departure.\n\nNote II: D-████ reported that each target inscribed in the slug slots was completed \"before I had decided to attempt it.\" Interviewed ██ hours post-contact. Transcript archived under ████ REDACTED ████. Access: VII and above.",
+    "_voice": "doc",
+    "_objectId": "elite_hunter"
+  },
+  {
+    "text_zh": "🔔\n灰烬不是终点——\n铅字重落，炉膛犹燃。\n\n📄\n圣器档案 SA-0771\n物件形态：单枚铜制封蜡印章，模面为展翼鸟形，蜡刀痕迹显示曾被反复开封。\n版级：熔版 / Fusum\n发现层：第 VI 层收容廊 · 移交时已无持有者记录\n\n值班记录摘要（M.2██.██.██ — M.2██.██.██）：\nD-3847 领取该圣器后，于当班第三日在铭刻台旁晕厥。苏醒后报告称",
+    "text_en": "待了不是很久，铅字还热着。",
+    "_voice": "doc",
+    "_objectId": "phoenix"
+  },
+  {
+    "text_zh": "事故报告 IR-0██\n日期：M.2██.██.██\n涉及物品：SA-6614「倒计时炉排」· 版级：定版 / Fixum\n物品描述：铸铁排字炉格，共四十八格，附手摇砂钟一具，黄铜边框。砂钟无法停止。\n\n经过：\n14:09 — D-6614 领取该物，开始本层收容铭刻。记录正常。\n14:31 — D-6614 报告砂钟",
+    "text_en": " 加速。监察员确认砂钟速率未变。\n14:47 — 监察员记录：D-6614 铭刻节奏明显加快，手部动作精准度提升。本人表示「沙快漏完的时候，字变得很重，我不想放手」。\n14:52 — 铭刻完成。D-6614 双手未离开炉排达三分钟。无法自主松手，需人工介入。\n处置：D-6614 安置观察。炉排归还气动征用管。备注：砂钟目前仍在倒计。尚未归零。待观察。┃补录（M.2██.██.██ · 填写人：代值班员）：砂钟已连续运转 ██ 日，无法取出。归零预计时间：████。相关表单 F-017 存档。无需后续行动。\n\n---\n\nIncident Report IR-0██\nDate: M.2██.██.██\nItem: SA-6614 \"Countdown Sort-Rack\" · Grade: Fixum\nDescription: Cast-iron compositing rack, 48 slots, with a brass-framed hand-wound sandglass. The sandglass does not stop.\n\n14:09 — D-6614 requisitions item, begins layer inscription. Log nominal.\n14:31 — D-6614 reports sandglass \"speeding up.\" Supervisor confirms rate unchanged.\n14:47 — Supervisor notes: D-6614's inscription cadence elevated markedly. Subject states, \"When the sand runs low, the type feels heavier. I don't want to let go.\"\n14:52 — Inscription complete. D-6614's hands remain on the rack for three minutes post-completion. Manual disengagement required.\nDisposition: D-6614 placed under observation. Rack returned to Pneumatic Requisition Tube. Note: sandglass continues to drain. Has not reached zero. Monitoring ongoing. ┃ Addendum (M.2██.██.██ · Filed by: acting duty clerk): Sandglass has run continuously for ██ days. Cannot be removed. Projected zero time: ████. F-017 filed. No further action required.",
+    "_voice": "doc",
+    "_objectId": "desperate_crit"
+  },
+  {
+    "text_zh": "🔔 **形虽可压，铅亦有其弹性——**\n引擎亦知，重负之下，有些形状不会碎，只会记住。\n\n📄 **操作须知 · 圣器 SA-0441 · 蓝色琉璃眼**\n版级：定版 / Fixum\n\n一、该物为圆形嵌体，直径约合三枚圣字钉并列，深蓝色，背面有铜丝固定框架。发现于第 IV 层储物格 ██ 号，来源不详。\n\n二、已知注意事项：\n　· 勿将其放置于祷文引擎的铸印热区内。（M.1██ 修订）\n　· 若持有期间听见玻璃轻响，继续操作，勿停顿。\n　· 勿询问 D-████ 他听见了什么。（M.2██ 手写补注，签名不可读）\n\n三、~~第一条为勿长时间直视其表面。经复查，此条已删除。无异常发现。~~ 已划除。\n\n备注：持有者的值班表上，排班冲突减少。无人更改排班表。",
+    "text_en": "🔔 **Even lead remembers its shape, pressed or not—**\nThe Engine knows: some forms do not break under weight. They simply hold the impression.\n\n📄 **Operating Notice · Sacred Artifact SA-0441 · Blue Vitreous Eye**\nGradus Formae: Fixum\n\nI. The object is a circular inset, approximately three Sacred Slugs in diameter, deep blue, mounted in a copper-wire frame on the reverse. Recovered from Layer IV, Storage Bay ██. Origin unattributed.\n\nII. Known precautions:\n　· Do not place within active impression zones of the Litany Engine. (Rev. M.1██)\n　· Should a faint glass resonance be perceived during operation, continue. Do not pause.\n　· Do not ask D-████ what he heard. (Handwritten addendum, M.2██, signature illegible)\n\nIII. ~~Initial precaution one: do not observe the surface for extended periods. Reviewed and struck. No anomaly confirmed.~~ Struck.\n\nNote: Scheduling conflicts on duty rosters of current holders have decreased. No amendments to said rosters have been filed.",
+    "_voice": "doc",
+    "_objectId": "modifier_shield"
+  },
+  {
+    "text_zh": "🔔 困苦之处，铅币自聚——铸字之炉，从不嫌其伤痕。\n\n📄 残余异文档案 · RA-0774\n版级：定版 / Fixum\n异文标称：困境红利\n发现位置：第 VII 层机械外壳，维护盲区 C 段，焊缝旁\n\n外观：一枚黄铜徽章，印有交叉排字棒纹样，别针处锈迹已穿透底面。\n\n观察记录：持有该物的 D 级人员，其气动征用管领取记录呈现统计偏差。凡当次登塔期间携带████数量永久性残余异文的登塔人员，所记录的铅币消耗量均低于同层次对照组。差值随携带数量增加而扩大，但未发现任何主动兑换或代偿行为。\n\n附带现象：D-2291 于接触该物后第 ██ 日，在日志末尾写下：",
+    "text_en": "🔔 Where the burden deepens, the coin gathers — the furnace does not refuse the scarred.\n\n📄 Residual Anomaly Log · RA-0774\nGradus Formae: Fixum\nDesignation:困境红利 / Hardship Dividend\nRecovery Site: Layer VII, Maintenance Blind-Sector C, adjacent to welded seam\n\nDescription: A brass insignia bearing the emblem of crossed composing sticks. Corrosion at the pin clasp has penetrated the reverse face.\n\nObservation: Plumbum Token expenditure records for personnel carrying this object show a statistically significant deviation. Requisition costs decrease in correlation with the count of permanent Residual Anomalies carried during the same Ascent. No exchange mechanism or compensatory transaction has been identified.\n\nAncillary Phenomenon: D-2291, on day ██ following contact, appended to their log: \"The more it weighs, the cheaper everything gets. I think the tube knows.\"\nLog ends there. F-044 filed by ████. No further action required.",
+    "_voice": "doc",
+    "_objectId": "bounty_hunter"
+  },
+  {
+    "text_zh": "🔔\n凡受过审判者皆知——\n铅字落下之前，有一刻的宽恕。\n\n📄\n回收物 RC-0441 · 发现于第 III 层分拣间角落地板缝隙 · 折叠羊皮纸，蜡封已破\n\n[手写，墨水已褪，部分字迹被蜡封压出痕迹]\n\n这是一张赦免状。印章是真的——我比对过三份议会存档。\n日期栏是空的。\n受益人栏写的是",
+    "text_en": "🔔\nAll who have stood before judgment know—\nthere is one moment of pardon before the press falls.\n\n📄\nRecovered Item RC-0441 · Found in floor crack, Layer III sorting room · Folded vellum, wax seal broken\n\n[Handwritten, ink faded, portions embossed by former seal]\n\nThis is a pardon. The signet is genuine—I cross-checked three Council archives.\nThe date field is blank.\nThe beneficiary field reads: \"the bearer of this document at the moment it is read.\"\n\nI have read it four times.\n\n— D-████, recovered note. D-████ was not present when note was found.\nDate of discovery: M.2██.██.██. Date of D-████'s last logged shift: M.2██.██.██.\nNote condition at discovery: ink still damp.",
+    "_voice": "doc",
+    "_objectId": "modifier_pardon"
+  },
+  {
+    "text_zh": "残余异文档案 · RA-0291\n版级：定版 / Fixum\n\n物件：褪色绒布展示台，通常用于陈列礼拜器皿。台面中央有一圆形压痕，长期无物品放置。\n\n发现地点：第 V 层排字区，D-████ 工位旁置物架。架上原有物品已移交归档。\n\n记录：相邻工位键徒反映，D-████ 在铭刻开始前会将双手短暂按在台面压痕处，随后方才开始击键。D-████ 本人声称",
+    "text_en": "Residual Anomaly Archive · RA-0291\nGradus Formae: Fixum\n\nObject: A faded velvet display stand, typically used for ceremonial implements. A circular indentation marks the centre of the surface. No object has occupied it within recorded history.\n\nRecovery Site: Layer V, sorting floor. Found on a shelf beside D-████'s station upon standard clearance.\n\nObservations: Adjacent personnel reported that D-████ would press both palms into the indentation briefly before beginning each inscription session. D-████ stated only that it 'felt like the right moment to start.'\n\nNote: Review of D-████'s session logs indicates a consistent pause of identical duration between seating and first keystroke — regardless of the word presented. Pause length did not vary across ██ documented sessions.\n\nAddendum: D-████ was reassigned per §4.2. The stand was retained. Pause duration in subsequent personnel at the same station has been observed to match. Origin of indentation: unrecorded.",
+    "_voice": "doc",
+    "_objectId": "modifier_barrier"
+  },
+  {
+    "text_zh": "🔔\n铅字无定形，炉膛无定温——\n唯有在变化之中，铭刻方知自身之重。\n\n📄\n残余异文档案 RA-0291\n版级：熔版 / Fusum\n发现层：第 VII 层，机械外壳区，废弃转盘铸模车间\n\n物理描述：一枚黄铜轮盘，直径约两掌宽，表面刻有十二道凹槽，槽内嵌有不同金属填料。轮盘可自由旋转，但未发现驱动机构。\n\n观察记录：接触该物的键徒报告，铭刻进行至某一阶段后，手中的",
+    "text_en": "🔔\nThe furnace holds no fixed heat, the press holds no fixed form—\nonly within change does the strike find its weight.\n\n📄\nResidual Anomaly Archive RA-0291\nGradus: Fusum\nRecovery Site: Layer VII, Mechanical Shell, Decommissioned Rotary Casting Workshop\n\nPhysical Description: A brass roulette wheel, approximately two handspans in diameter, with twelve engraved grooves filled with dissimilar metal inlays. Rotates freely. No drive mechanism identified.\n\nObservation Log: Clavigerants in contact with the object report that partway through an active Inscription sequence, the conditions governing the sequence shift without warning. Subjects describe the sensation as \"the press changing its mind.\" Several report hearing the wheel turn—no movement is observed by attending personnel.\n\nIncident Note, D-4419: Subject ceased Inscription mid-sequence and stated that \"the rules were different now.\" When asked to specify, subject was unable to recall what the previous rules had been. Inscription resumed. D-4419 was later found attempting to document the wheel's rotation schedule. Forty-one pages were recovered. Each page contained a different count of grooves: nine, fourteen, seven, twelve, twelve, nine.\n\n备注 / Note: 版级评定存疑。初审结论为活版 / Mobilum。复审人员失联。当前评定由系统自动上调。\nGradus rating disputed. Initial assessment concluded Mobilum. Reviewing personnel unaccounted for. Current rating elevated automatically.",
+    "_voice": "doc",
+    "_objectId": "chaos_roulette"
+  },
+  {
+    "text_zh": "残余异文 RA-0441 · 版级：逆版 / Inversum\n发现地点：第 IX 层·机械深处·曲轴室 · M.2██\n\n物理状态：一段约 30 厘米长的铸铁导轨，弧面光滑，两端截口整齐，无工具痕迹。导轨内侧刻有标准铭刻纹路，但走向与同批次标准件左右互换。\n\n观察记录：D-2847 在第 IX 层配属期间，同期搭档 D-2851 提交事件报告 IR-2847，称 D-2847「表现异常稳定」。次日，D-2851 提交第二份报告，内容与前份几乎一致，但其中两处判断互换——D-2847 与 D-2851 的评估主语颠倒。两份报告均通过校验，存档在册。校验员 D-████ 已失联。\n\n附注：此物移交时附有配对件 RA-0442，现 RA-0442 下落不明。根据 §7.1，已提交磨损报告。两份报告的签发时间均早于报告所载事件发生时间，差值 ██ 小时。档案室确认并无笔误。",
+    "text_en": "Residual Anomaly RA-0441 · Gradus: Inversum\nRecovered: Layer IX · Crankshaft Chamber · M.2██\n\nPhysical State: A cast-iron guide rail, approximately 30 cm in length. Surface finish regular; both termini cleanly sectioned with no tool marks. Interior inscription grooves follow standard pattern, but mirrored laterally from all units in the same production batch.\n\nObservations: During D-2847's assignment to Layer IX, partner D-2851 submitted Incident Report IR-2847 describing D-2847 as \"performing with anomalous stability.\" The following day, D-2851 submitted a second report. Content was near-identical; however, two evaluative statements were transposed—the assessed subject in each case had reversed. Both reports passed verification and were filed. Verification officer D-████ is currently unaccounted for.\n\nAddendum: RA-0441 was transferred alongside paired item RA-0442. RA-0442's current location is unknown. Wear report filed per §7.1. The filing timestamps on both incident reports precede the events they describe by ██ hours. Records Office confirms no clerical error.",
+    "_voice": "doc",
+    "_objectId": "modifier_reversal"
+  },
+  {
+    "text_zh": "圣器操作须知 · SA-0774《等距护扉》\n版级：定版 / Fixum\n\n一、该圣器为双层铜制护扉，内嵌鱼骨排列的黄铜导条，可独立悬挂或嵌入圣坛键座侧槽。使用前检查导条是否平整。\n\n二、注意事项：\n    · 勿在收容震颤期间直视护扉内侧。\n    · 若导条发出均匀间隔的叩击声，请勿尝试数清敲击次数。\n    · 叩击声停止后，继续正常操作。\n\n三、M.2██ 修订附注（手写，字迹与正文不符）：\n    上述第二条原规定",
+    "text_en": "Artifact Operations Notice · SA-0774 «Equidistant Warding Plate»\nGradus: Fixum\n\nI. The artifact consists of a double-layered brass shutter fitted with herringbone-pattern guide strips. May be suspended independently or inserted into the lateral slot of any Claviculum Sanctum. Inspect strips for levelness before use.\n\nII. Precautions:\n    · Do not look into the inner face of the shutter during Containment Tremors.\n    · If the strips produce evenly-spaced tapping sounds, do not attempt to count the intervals.\n    · When tapping ceases, resume normal inscription.\n\nIII. Amendment M.2██ (handwritten, non-matching script):\n    The original phrasing of Clause II read: \"if the count reaches ██, set down the shutter and ████████████████.\"\n    Current phrasing approved by ████.\n    Previous phrasing: see IR-0391. Access level: VI and above.",
+    "_voice": "doc",
+    "_objectId": "base_shield"
+  },
+  {
+    "text_zh": "🔔\n凡门槛者，乃引擎所赐——\n非因汝轻，乃因其仁。\n\n📄\n圣器档案 SA-2291 · 版级：定版 / Fixum\n物形：黄铜制书夹，单页宽，夹口内侧刻有不完整的祷文行。两端铆钉各一，左侧铆钉松动，可旋转约 15 度。\n发现位置：第 VI 层 · 收容廊档案架第 ██ 格 · M.2██.██ 日常清点时发现（架格无入库记录）\n\n",
+    "text_en": "…\n\n📄 观察记录：书夹夹持的文件，在经手 D 级人员更换后，原文件所载数值仍以墨水痕迹的形式残留于夹口内侧皮革垫片上。后继者继续铭刻时，据报告称",
+    "_voice": "doc",
+    "_objectId": "lenient_judge"
+  },
+  {
+    "text_zh": "🔔 铭刻圆满者，引擎以铅币酬之——非因汝之欲，乃因汝之准。\n\n📄 圣器登记簿 SA-0774 · 版级：脱版 / Solum\n物件描述：三足黄铜奖杯，高约一掌，台座刻有三道横纹。目前所在层：第 I 层备品柜，第三格。\n\n异常现象记录：\n自 M.2██ 起，凡领取此器的铭誓键徒，铅币补给量的核算结果均与该键徒当日铭刻完成度呈异常关联。体制未设此项联动条例，现行 §4.2 亦无此等差别补给条款。\n\n相关事故（见 IR-0441）：D-3871 于领取后第三日，在铅币兑算窗口陈述：",
+    "text_en": "🔔 Where the mark is made without flaw, the Engine pays in lead. Not for desire. For precision.\n\n📄 Sacred Artifact Register SA-0774 · Gradus: Solum\nDescription: Brass trophy, three-footed, height approx. one handspan. Three horizontal grooves ring the base. Current location: Layer I supply cabinet, third shelf.\n\nAnomalous Observation:\nSince M.2██, Lead Coin disbursements allocated to Clavigerant Novitiates in possession of SA-0774 have correlated with daily inscription completion ratings at rates inconsistent with standard §4.2 supplemental schedules. No governing provision accounts for tiered disbursement of this kind.\n\nRelated Incident (see IR-0441): On the third day after requisition, D-3871 stated at the coin-exchange window: ████████████████████. The clerk filed no follow-up. Disbursement records for that date list three separate entries in D-3871's name.\n\nNote: D-3871 is listed as having reported to the window once. Discrepancy unresolved. F-017 pending. No further action required.",
+    "_voice": "doc",
+    "_objectId": "s_rank_trophy"
+  },
+  {
+    "text_zh": "🔔\n及格者，汝已足矣。\n引擎不识完美——它只铸能跑动的字。\n\n📄\n回收记录 RC-2291 · 发现于第 IV 层排字区走廊末端 · D-████ 工位侧壁\n物件：旧式成绩核验卡 · 羊皮纸质 · 已泛黄 · 背面有铅字磨痕\n版级：脱版 / Solum\n\n卡面印有三栏评级列：甲、乙、丙。",
+    "text_en": "🔔\nSufficient, you who barely passed.\nThe Engine does not cast perfection — only what will hold.\n\n📄\nRecovery Record RC-2291 · Found at end of Level IV Compositing Corridor · D-████ workstation wall\nObject: Antique Grading Verification Card · Parchment · Yellowed · Reverse bears leaden impression marks\nGradus: Solum\n\nThe card bears three evaluation columns: Distinction, Pass, Fail.",
+    "_voice": "doc",
+    "_objectId": "underdog_bonus"
+  },
+  {
+    "text_zh": "回收物 RC-0291 · 发现于第 IV 层铸字坊丙段 · D-3847 工位抽屉\n版级：逆版 / Inversum\n\n[以下为一张折叠多次的羊皮纸，边缘有黑色浸渍痕迹，字迹为同一支笔但间距渐宽]\n\n第一词：手很稳。\n第二词：铅字好像更重了一些，但很好。\n第三词：我感觉我一直都在这里。\n第四词：是第四词吗。我数不清了。\n第五词：\n第五词：\n第五词：不需要数了。\n\n[纸背面横写，压痕极深，像用尽全力]\n每次都比上一次更像是第一次。\n\n备注：D-3847 失联。磨损报告已归档。此物移交标本库。无需后续行动。",
+    "text_en": "Recovery Item RC-0291 · Found in Layer IV Foundry Block C · D-3847 workstation drawer\nGradus Formae: Inversum\n\n[Folded羊皮纸 — single pen, letter-spacing progressively wider]\n\nFirst word: Hands steady.\nSecond word: Slugs felt heavier. Good.\nThird word: I think I have always been here.\nFourth word: Is this the fourth. I've lost count.\nFifth word:\nFifth word:\nFifth word: No need to count anymore.\n\n[Reverse side, pressed deep into the page]\nEvery time feels more like the first time than the last first time did.\n\nNote: D-3847 status: missing. Attrition report filed. Item transferred to specimen vault. No further action required.",
+    "_voice": "doc",
+    "_objectId": "snowball"
+  },
+  {
+    "text_zh": "🔔\n倾身赋予，乃最重之礼——\n铅水终将奔涌，无可回收。\n\n📄\n圣器档案 SA-0291 · 版级：熔版 / Fusum\n\n物品形态：一枚铸于双层玻璃之间的空心铜质怀表，表面无指针，内侧可见深色液体缓慢旋转，成涡状。弦钮已断，不可上弦。\n\n事故报告 IR-0291\n日期：M.2██.██.██\n涉及人员：D-7743\n\n0800 — D-7743 开始本日铭刻任务，携 SA-0291 上岗，未作记录。\n0900 — 同组人员注意到 D-7743 不再出声诵读，仅以手指按压键位，神情专注。\n1100 — D-7743 未申请如厕或进食中止。\n████ — 铭封祈礼用计量灯第一次亮起。同僚称",
+    "text_en": "🔔\nTo give all is the heaviest gift of all—\nThe molten lead, once poured, does not return.\n\n📄\nSacred Artifact SA-0291 · Gradus: Fusum\n\nObject Description: A hollow copper pocket watch cast between two layers of glass. No hands. A dark liquid rotates slowly inside, forming a vortex. The winding crown is broken; the watch cannot be wound.\n\nIncident Report IR-0291\nDate: M.2██.██.██\nPersonnel Involved: D-7743\n\n0800 — D-7743 commenced daily inscription duties carrying SA-0291. Not logged.\n0900 — Colleagues noted D-7743 had ceased vocalizing litanies, pressing keys in silence, expression fixed.\n1100 — D-7743 submitted no request for rest or sustenance.\n████ — The Rite of Sealing indicator lamp activated for the first time. Colleagues reported: 'The light came on all at once. We hadn't heard a single keystroke reach the press.' D-7743 was holding SA-0291 with both hands. The liquid inside had ceased rotating.\n\nDisposition: D-7743 transferred for assessment per §4.2. SA-0291 recovered, re-examined.\nAddendum: The vortex resumed rotation upon recovery. Current rotation speed exceeds intake measurement. Origin of discrepancy: unknown.",
+    "_voice": "doc",
+    "_objectId": "score_black_hole"
+  },
+  {
+    "text_zh": "🔔\n偶有一击，重于千言——\n非力之胜，乃字之命数。\n\n📄\n回收物 RC-0291 · 发现于第 IV 层铸字坊 D-████ 工位抽屉 · 纸质便条\n\n[手写，字迹草率，末尾有铅屑污迹]\n\n今天手气好。第三排第七个字——\"幸\"——刚落版那秒，整个圣坛抖了一下。不是震颤。是那种……对的感觉。\n旁边 D-████ 说他也感觉到了。他没在看我。\n我问监察员，他说没有记录在案的异常。\n我没再问。\n\n[下方另一笔迹，更潦草]\n那个工位已空置 ██ 天。\n便条原样留存。未作处理。",
+    "text_en": "🔔\nOne strike in ten thousand — heavier than a thousand prayers.\nNot strength. The letter's own fate.\n\n📄\nRecovered Document RC-0291 · Found in Layer IV Foundry, D-████ workstation drawer · Handwritten note\n\n[Scrawled, lead-dust smudged at margin]\n\nGood hand today. Third row, seventh slug — \"Fortune\" — the moment the press fell, the whole Lectern shuddered. Not a Tremor. Just that feeling. The right one.\nD-████ at the next station said he felt it too. He wasn't looking at me.\nI asked the Floor Warden. He said no anomaly was on record.\nI didn't ask again.\n\n[Below, different hand, less careful]\nThat station has been vacant ██ days.\nNote left in place. No action taken.",
+    "_voice": "doc",
+    "_objectId": "lucky_strike"
+  },
+  {
+    "text_zh": "【🔔】\n铅字碎裂之处，炉火尤盛。\n裂痕不是损耗——是祷告最响亮的一刻。\n\n【📄】\n回收物 RC-0291 · 发现于第 IV 层铸字坊 · D-2847 工位抽屉\n物件描述：一枚黄铜计数器，表面划有 ████ 道刻痕。机械结构完整，但内部弹簧已被替换为数段铁丝，手工缠绕。\n\n[以下为工位内散页，非正式记录]\n\n",
+    "text_en": "【🔔】\nWhere the glyph shatters, the furnace burns brightest.\nThe fracture is not loss — it is the loudest moment of the litany.\n\n【📄】\nRecovered Item RC-0291 · Found in Layer IV Foundry · D-2847 workstation drawer\nItem description: A brass tally counter bearing ████ tally-marks. Mechanical assembly intact; internal spring replaced with hand-wound iron wire.\n\n[Loose pages found within workstation — unofficial record]",
+    "_voice": "doc",
+    "_objectId": "crit_bonus"
+  },
+  {
+    "text_zh": "━━━━━━━━━━━━━━━━━━━━━━\n🔔《圣键启示录》\n\n铅字沉默——\n是铁在积蓄。\n随后，一击碎铃。\n━━━━━━━━━━━━━━━━━━━━━━\n📄 值班日志 · 圣器 SA-0774 · 铸压弹簧片\n\n使用者：D-3841 · 第四层铸字坊驻值\n\n第一日 · 晨祷后：新领弹簧片一枚。质地普通，弹性正常，已嵌入圣坛左侧卡槽。铭刻无异常。\n第三日 · 午间：弹簧片持续发出轻微形变声。经检查，无肉眼可见位移。\n第五日：D-3841 口头报告称「按键时感到阻力在积累」。巡察员记录：操作姿势无变化。\n第七日 · 黄昏：D-3841 称「我一直在等。我不知道在等什么。」\n第七日 · 深夜：铸字坊记录一次强烈震响，持续约半钟。弹簧片发现于地面，轻度形变。D-3841 工位空置。圣坛表面发现铅屑，呈放射状分布。\n备注：F-044 已由次日接替者代填。SA-0774 已归还，弹性恢复正常。弹簧音持续三日后停止，原因不明。",
+    "text_en": "━━━━━━━━━━━━━━━━━━━━━━\n🔔 The Book of the Sacred Key\n\nThe lead falls silent—\niron accumulates.\nThen: one strike, one bell shattered.\n━━━━━━━━━━━━━━━━━━━━━━\n📄 Duty Log · Sacred Artifact SA-0774 · Press Spring Leaf\n\nOperator: D-3841 · Layer IV, Casting Ward, Standard Rotation\n\nDay 1, post-Lauds: Spring leaf requisitioned. Standard tension, normal flex. Seated into left slot of lectern. Inscription uneventful.\nDay 3, midday: Leaf emits faint deformation sound. Physical inspection: no visible displacement.\nDay 5: D-3841 verbally reported \"resistance building with each strike.\" Warden note: posture unchanged.\nDay 7, dusk: D-3841 stated, \"I have been waiting. I do not know what for.\"\nDay 7, late bell: Casting ward logged one strong resonant impact, duration approximately half a chime. Spring leaf recovered from floor, minor deformation. D-3841 position vacant. Lead shavings on lectern surface; radial pattern. Cause undetermined.\nNote: F-044 completed by following-day replacement. SA-0774 relinquished; tension restored to baseline. Spring tone persisted three days, then ceased. No explanation recorded.",
+    "_voice": "doc",
+    "_objectId": "crit_charge"
+  },
+  {
+    "text_zh": "🔔 铅字愈落，炉声愈响——直至字盘本身亦颤。\n\n📄 圣器档案 SA-0339 · 版级：逆版 / Inversum\n物件：黄铜导槽，长约三十二指，两端磨损，内壁可见细密划痕，排列无规律。\n发现地点：第 IV 层铸字坊，编号 C-7 压板机侧轨，M.2██ 定期校验时取下。\n\n观察记录：D-5591 使用该导槽期间，相邻工位的键徒陆续报告听见",
+    "text_en": "🔔 The heavier the slug falls, the louder the furnace answers — until the composing stick itself trembles.\n\n📄 Sacred Artifact SA-0339 · Gradus: Inversum\nObject: Brass guide-rail, approximately thirty-two finger-widths in length. Both ends show wear. Interior surface bears fine irregular striations of unknown origin.\nRecovered: Layer IV Foundry, lateral track of Press C-7, removed during routine calibration M.2██.\n\nObservation Log: During D-5591's tenure with the object, adjacent Clavigerants reported hearing a low harmonic resonance ████████ originating from the press. D-5591 denied awareness of any sound.\nNote filed by Supervising Scriptor K-████: 'The striation count on the inner rail increased by ██ between the morning and evening measurement. Rail has not been operated. D-5591 was present both times.'\nD-5591 was reassigned per §4.2 following an unrelated notation error. Rail returned to service.\nSubsequent operators reported no anomaly. Striation count has not changed since M.2██.██.04.\n备注: 最后计数日期与 D-5591 失联日期一致。无需后续行动。",
+    "_voice": "doc",
+    "_objectId": "crit_storm"
+  },
+  {
+    "text_zh": "🔔 掷之，以决裂铅之势。\n其落定之处，既已铭刻于引擎之前。\n\n📄 回收物 RC-1177 · 发现于第 III 层铸字坊 D-3441 工位夹层\n纸质便条，反面为旧版征用表 F-001（已废止格式）\n\n[手写，字迹工整，笔压均匀]\n\n这枚硬币我拿了三天了。\n正面是铸字坊的徽章，背面什么都没有。\n我试着抛了一次。\n它没有落地。\n不是飘，也不是卡在什么地方——它在空中停了一段时间，然后落下来。\n我没量那段时间有多长，但我知道，每次停的时间都一样。\n\n第二天我没带它。铭刻一切正常。\n第三天我带着它，失手，铅字碎了——但不只是碎。\n那声音很大。走廊另一端的人都探出头来问。\n我说没事。\n\n现在我在想：它停在空中的时候，在等什么？\n\n[便条末尾有一枚圆形压痕，与硬币直径吻合]\n[D-3441 于 M.2██.██ 失联，工位当日即回收。无 F-044 归档记录。]",
+    "text_en": "🔔 Cast it. What shatters was already fated to shatter.\nWhat the Engine has sealed, the coin only reveals.\n\n📄 Recovered Item RC-1177 · Found in Layer III Foundry, D-3441 workstation inner lining\nHandwritten note. Reverse side: obsolete F-001 Requisition form (deprecated format).\n\n[Handwriting: neat, consistent pressure]\n\nI've had this coin three days now.\nObverse: the Foundry seal. Reverse: nothing.\nI tossed it once.\nIt didn't land.\nNot floating. Not caught on anything—it simply paused, then fell.\nI didn't time it. But I know each pause lasted the same duration.\n\nSecond day I left it behind. Inscriptions proceeded normally.\nThird day I brought it. A slip. The leaden glyph fractured—but not the usual way.\nThe sound carried. Personnel two corridors away came to check.\nI told them nothing happened.\n\nI keep wondering: while it hung there—what was it waiting for?\n\n[A circular impression at the note's edge matches the coin's diameter precisely]\n[D-3441 reported missing M.2██.██. Workstation cleared same day. No F-044 filed.]",
+    "_voice": "doc",
+    "_objectId": "fate_coin"
+  },
+  {
+    "text_zh": "使用日志 · 圣印 SA-0774「层层递进」\n发现地点：第 III 层铸字坊 · D-0774 工位\n版级：定版 / Fixum\n\n0612 — 领取 SA-0774。竹节玻璃计数管，黑底刻白线，七格。目前读数：第一格。\n0831 — 第三格。无异常。铅字落得比早上稳。\n1009 — 第五格。我记得自己出去喝水了。但考勤机显示我从未离开过工位。\n1147 — 第六格。计数管热的。\n1203 — 第七格。玻璃管的刻度不够了。我开始用手指甲在工位边缘划——\n\n[此后空白。计数管于次日值班换班时发现归于第一格读数，无磨损痕迹。D-0774 工位已交接。F-044 代为归档。]",
+    "text_en": "Usage Log · Sigil SA-0774 \"Momentum\"\nRecovered From: Layer III Compositing Hall · D-0774 Station\nGrading: Fixum\n\n0612 — SA-0774 requisitioned. Bamboo-segmented glass counter-tube, white marks on black, seven divisions. Current reading: first mark.\n0831 — Third mark. No anomaly. Leaden glyphs falling steadier than morning.\n1009 — Fifth mark. I recall stepping away for water. Attendance log indicates I did not leave my station. No equipment fault noted.\n1147 — Sixth mark. The glass is warm.\n1203 — Seventh mark. The tube has run out of marks. I have begun scoring the edge of the station with my fingernail—\n\n[Subsequent entries absent. Tube found reset to first mark at next shift rotation. No wear. D-0774 station transferred. F-044 filed by proxy.]",
+    "_voice": "doc",
+    "_objectId": "stack_momentum"
+  },
+  {
+    "text_zh": "🔔 一诵积一铅，千铅自成山。\n\n📄 回收物 RC-0291 · 发现于第 V 层排字区废弃工位抽屉 · 材质：羊皮纸边角料，两面均有手写\n\n正面（竖列，工整）：\n第一日。第二日。第三日。第四日。第五日。第六日。第七日。\n第八日。第九日。第十日。第十一日。第十二日。第十三日。第十四日。\n（此后每行仅重复",
+    "text_en": "🔔 One strike, one grain of lead. Ten thousand grains, a mountain entire.\n\n📄 Recovered Item RC-0291 · Found in abandoned workstation drawer, Layer V Compositing Hall · Material: vellum scraps, handwritten both sides\n\nFront (vertical columns, neat hand):\nDay one. Day two. Day three. Day four. Day five. Day six. Day seven.\nDay eight. Day nine. Day ten. Day eleven. Day twelve. Day thirteen. Day fourteen.\n(Each subsequent line repeats only the tally mark. Continues for ██ lines. Final entry: Day ██.)\n\nReverse (same hand, though ink pressure noticeably heavier):\nI am not counting days.\nI am counting something else.\nI don't know what I started counting but I cannot stop.\nThe marks feel like they are owed.\n\nItem flag note appended by processing clerk (date: M.2██.██.██):\nD-████ reported missing. Workstation contents catalogued per F-044. This item retained; no applicable disposal category found.\nTally marks on reverse: ██ in total. Cross-referenced against D-████ containment inscription log.\nDiscrepancy: the count does not match.\nRe-cross-referenced. The count still does not match.\nRetained pending clarification. No clarification received.",
+    "_voice": "doc",
+    "_objectId": "stack_dividend"
+  },
+  {
+    "text_zh": "▸ 圣印 · 过载电路 / 版级：脱版 Solum\n\n事故报告 IR-2████\n日期：M.2██.03.██\n涉及物品：圣器 OC-0██（导轨形铜铸器件，长约一掌，接触面有焦痕）\n\n0841 — D-5503 领取 OC-0██，开始第六层例行铭刻作业，无异常。\n0912 — 相邻工位 D-5501、D-5502 停止应答。未报警报。祷诵声仍正常持续。\n0913 — D-5503 继续作业，未注意相邻工位变化。记录者确认：彼时 D-5503 双手未离圣坛。\n0940 — D-5501、D-5502 重新应答，报告称",
+    "text_en": "▸ Sigil: Overload Circuit / Gradus: Solum\n\nIncident Report IR-2████\nDate: M.2██.03.██\nItem Involved: Sacred Artifact OC-0██ (cast-copper rail, approx. one palm in length, contact surface shows scorch marks)\n\n0841 — D-5503 requisitions OC-0██, begins standard Layer VI inscription duty. No anomalies noted.\n0912 — Adjacent stations D-5501 and D-5502 cease responding. No alarm triggered. Litany vocalisations continue normally from both positions.\n0913 — D-5503 continues work, does not acknowledge adjacent irregularity. Observer confirms: hands did not leave the lectern.\n0940 — D-5501 and D-5502 resume response. Both report having completed their inscription sets. Neither can account for the intervening interval.\n\nNote: Session logs for D-5501 and D-5502 during 0912–0940 are present and unredacted. They are identical to D-5503's log. Word for word. ████ recommended no further action. Filed under §4.2.",
+    "_voice": "doc",
+    "_objectId": "overload_circuit"
+  },
+  {
+    "text_zh": "🔔 诵至高潮，铅字轰鸣，归零——正是引擎聆听之刻。\n\n📄 圣器登记 · SA-0774\n版级：逆版 / Inversum\n物件：一截铸铁导管，约前臂长。内壁光滑，外壁沿圆周刻有不规则齿痕，似经长期摩擦形成，而非刻意加工。发现于第 VII 层夹壁内，旁置 F-044 表单一份，代填人栏空白。\n发现日期：M.2██.██.██\n\n观察记录：涉及此物的键徒均描述铭刻过程中产生",
+    "text_en": "🔔 At the height of the Litany, the keys thunder, fall silent — and the Engine listens.\n\n📄 Artifact Registry · SA-0774\nGradus: Inversum\nObject: A cast-iron conduit section, forearm-length. Interior bore smooth; exterior bears irregular circumferential scoring consistent with prolonged friction rather than deliberate inscription. Recovered from a cavity wall, Layer VII, alongside one F-044 form — countersigning field left blank.\nDate of Recovery: M.2██.██.██\n\nObservation: Clavigerants associated with this object consistently report a sensation described as \"pressure releasing\" at the close of a sustained inscription sequence. Physiological examination of D-2847 following contact revealed no abnormality. Observation log, however, contained seventeen fewer entries than the hours elapsed. D-2847 was unable to account for the discrepancy and did not appear to notice it until prompted.\n\nAppended note, handwritten, ink unknown: the pipe remembers how full it was.\nCross-reference: IR-0441. Access level: ██.",
+    "_voice": "doc",
+    "_objectId": "surge"
+  },
+  {
+    "text_zh": "🔔\n形未固，则铭未止——\n其铅字之积，跨层而存，非始非终。\n\n📄\n圣器档案 · SA-0██\n名称：永动引擎\n版级：熔版 / Fusum\n形态：一枚铜质袖珍怀表，表面无刻度、无指针，仅有一根悬于正中的铅制摆锤，从未静止。\n\n─\n\nM.2██.██.██，本层值守人员向档案室提交异常观察报告（F-017）：\n\"D-3891 于换层前未清理铭刻进度。按规程应全数归零。实际归零量：████。\"\n\n报告附注（原文手写，非格式栏）：\n\"摆锤还在动。我搬走了怀表。摆锤还在动。\"\n\n─\n\n档案管理员批注：\n上述报告存在格式填写错误，已发还重填。重填版本正常归档。\n原始版本亦正常归档。两份记录存在出入，不影响处置结论。\n\n持有此物期间，D-3891 未失联。\n持有此物期间，D-3891 未失联。\n\n附注：本条档案打印于 M.2██.██.██，早于 D-3891 接触该物整整 ██ 日。原因待查。",
+    "text_en": "🔔\nUnfixed in form, unbroken in inscription—\nIts leaden accumulation persists beyond vaults, neither beginning nor ending.\n\n📄\nSacred Artifact Record · SA-0██\nDesignation: Perpetual Engine\nGradus: Fusum\nForm: A small brass pocket watch bearing no dial and no hands. A single leaden pendulum hangs at its centre. It has not stopped.\n\n─\n\nM.2██.██.██, floor watch personnel submitted anomalous observation report (F-017):\n\"D-3891 failed to clear inscription progress prior to layer rotation. Procedure requires full reversion. Actual reversion recorded: ████.\"\n\nHandwritten annotation (non-formatted field):\n\"The pendulum is still moving. I removed the watch. The pendulum is still moving.\"\n\n─\n\nRecords Administrator notation:\nAbove report contained formatting errors. Returned for correction. Corrected version filed normally.\nOriginal version also filed normally. Discrepancies between records do not affect disposition conclusion.\n\nD-3891 did not go missing during the period of contact.\nD-3891 did not go missing during the period of contact.\n\nAddendum: This document was printed on M.2██.██.██, precisely ██ days before D-3891 made contact with the object. Cause pending investigation.",
+    "_voice": "doc",
+    "_objectId": "perpetual_engine"
+  },
+  {
+    "text_zh": "🔔 诵之愈深，钟声愈近——非尔等所击之鼓，乃鼓声穿尔而过。\n\n📄 物品编号：SA-0774\n版级：定版 / Fixum\n物理描述：铜制手鼓，鼓面蒙以不明材质兽皮，鼓框内侧镌有七个不规则凹槽，数量与排布无法与任何已知祷仪对应。\n\n使用日志 · SA-0774 · D-3341 观察期 · M.1██.██\n0600 — 圣坛铭刻照常进行。D-3341 持鼓，未敲击。\n1040 — D-3341 报告：",
+    "text_en": "🔔 The drum does not wait for the striker. It passes through.\n\n📄 Item No.: SA-0774\nGrading: Fixum\nPhysical Description: Copper hand drum, head of unidentified hide, interior rim bearing seven irregular depressions with no correspondence to any catalogued rite.\n\nUsage Log · SA-0774 · D-3341 Observation Period · M.1██.██\n0600 — Litany inscription proceeds normally. D-3341 holds drum. No striking observed.\n1040 — D-3341 reports: \"I can hear it before I hit.\"\n1410 — D-3341 stops mid-inscription. Sits motionless for ██ minutes. Inscription uninterrupted.\n1830 — Supervising Scriptor notes: D-3341's hands are moving. D-3341 is asleep.\n[Log ends. No subsequent entry.]\n\nNote: SA-0774 reissued to D-3342 per §4.2. No further anomalies recorded. The drum was warm.",
+    "_voice": "doc",
+    "_objectId": "drum_pass"
+  },
+  {
+    "text_zh": "🔔 诵一字，余声振千字。词根者，无形之弦也。\n\n📄 问询记录 · D-3847 · 接触物品 CA-0291《词根共振集成卡》后 ██ 小时\n\n物品外观：一张约手掌大小的穿孔卡，孔列整齐，边缘有油渍，右上角盖有",
+    "text_en": "待归档",
+    "_voice": "doc",
+    "_objectId": "word_resonance"
+  },
+  {
+    "text_zh": "🔔\n一击重于千言——\n然其回响，不止一层。\n\n📄\n物品编号：SA-0774\n版级：定版 / Fixum\n描述：铜质振锤，长约两掌，手柄缠有已碳化的蜡封布条。锤面可见裂纹，但经多次检测确认结构完整。\n发现地点：第 IV 层铸字坊，遗落于一处废弃的校字台下方。无交接记录，无领取表单（疑似遗漏登记）。\n\n接触记录：D-3847 于常规铭刻任务中领取该物。\n任务期间，值班抄写员记录如下：「键击声音正常。但铅字落下后，我听见了第二声。不是回音。」\n后续对该抄写员进行标准问询。记录于 F-017 存档。问询正常结束。\n\n附注：D-3847 失联。铭刻台上的铅字层数于失联后次日经清点，数目与最终记录不符。核验人员签署的 F-044 表单中，差值一栏填写为「多于应有」。",
+    "text_en": "🔔\nOne strike heavier than a thousand words—\nyet its echo does not stop at one layer.\n\n📄\nItem No.: SA-0774\nGradus Formae: Fixum\nDescription: Copper-headed mallet, roughly two handspans in length. Handle wrapped in carbonised wax-sealed cloth. Surface crazing present; structural integrity confirmed through repeated inspection.\nRecovery Site: Layer IV, Typecasting Hall — found beneath an abandoned correction table. No transfer log. No F-001 on file. Suspected clerical omission.\n\nContact Record: D-3847 requisitioned the item for routine inscription duties.\nDuty scribe's note from the session: \"Keystrike sounds were normal. After the leaden glyph fell, I heard a second impact. It was not an echo.\"\nStandard inquiry conducted thereafter. Transcript filed under F-017. Inquiry concluded without incident.\n\nAddendum: D-3847 subsequently lost contact. The leaden glyph count at the inscription table was audited the following day. Figures did not match the final logged total. The discrepancy field on the F-044 form reads: more than expected.",
+    "_voice": "doc",
+    "_objectId": "crit_overflow"
+  },
+  {
+    "text_zh": "🔔 受祝圣之铭文组诵经时，其声渐厚——如铅积于腔室，如蜡积于灯台。\n\n📄 祝圣铭文评估档案 · SA-0774\n版级：脱版 / Solum\n物理形态：一卷以羊皮纸外裹的铭文组，内页密布手誊祷文，行距随页码推进持续收窄。\n\n发现地点：第 VI 层收容廊，D-████ 工位桌面，与 F-017 未完成表单并列放置。\n\n观察记录：持有者在接触该卷轴后，据同组键徒报告，其诵经声音在铭刻推进过程中",
+    "text_en": "🔔 The consecrated inscription grows heavier with each litany — as lead fills the chamber, as wax climbs the wick.\n\n📄 Consecration Evaluation Archive · SA-0774\nGradus Formae: Solum\nPhysical form: A vellum-wrapped inscription scroll. Interior pages bear dense hand-copied litanies; line spacing narrows progressively toward the final leaf.\n\nRecovery location: Layer VI, Containment Gallery, D-████ workstation surface. Found alongside an incomplete F-017.\n\nObservations: Keybound personnel sharing the adjacent lectern reported that the holder's recitation voice \"grew thicker\" as inscription progressed — \"not louder, just fuller, like something was being poured into it.\" Records confirm no vocal anomaly on standard screening.\n\nFinal entry: D-████ was found at workstation. The scroll was open to the last page. All lines were the same width.\n\nNotes: Transferred per §4.2. Scroll retains indentations from a grip pattern inconsistent with D-████'s recorded hand size. No prior holder documented.",
+    "_voice": "doc",
+    "_objectId": "inscription_flow"
+  },
+  {
+    "text_zh": "圣器收容档案 SA-2291\n版级：脱版 / Solum\n物件描述：一只铸铁门环，直径约二十三厘米，安装于无门之门框上。门框本身为独立结构，现存放于第 VI 层收容廊 C 区储置室。最初发现于第 V 层排字区 ██ 号工位，嵌入一面已被完全拆除的隔断墙遗址中。\n异常观察：D-████ 于接触该物后第三日开始敲击工位隔板——规律性节拍，与相邻工位 D-████ 的铭刻节奏完全吻合。经记录，D-████ 与 D-████ 之间从未有过言语交流。\n附带记录：收容廊巡查报告 IR-2291-C 注明，周边工位键徒曾反映铭刻时",
+    "text_en": "Sacred Artifact Registry SA-2291\nGrade: Solum\nDescription: A cast-iron door knocker, approximately 23 cm in diameter, mounted to a doorless frame. The frame stands as an independent structure, currently stored in Layer VI, Containment Gallery C, Repository Unit 7. Originally recovered from the demolished partition wall at Sorting Floor Station ██, Layer V.\nAnomaly Note: Beginning on the third day following contact, D-████ began rhythmically striking the partition beside their station. The pattern was recorded as an exact match to the inscription cadence of adjacent operator D-████. No prior communication between the two parties has been established.\nSupplementary Log: Patrol report IR-2291-C documents neighbouring station operators reporting a sensation of \"铭刻时像是有人在隔壁应和.\" Translation pending. Personnel involved: three. One subsequently reassigned per §4.2. Two filed no report.\nCurrent Status: Door knocker retains original mounting hardware. Frame measures 7 cm wider than last recorded. Discrepancy filed under F-017. No follow-up action indicated.",
+    "_voice": "doc",
+    "_objectId": "neighbor_watch"
+  },
+  {
+    "text_zh": "🔔 诵之既深，铅亦知怒——裂，非终止，乃再起之钟。\n\n📄 值班日志 · 圣器编号 SA-2277 · 铅鸣手钟\n\n物件描述：黄铜铸造，单铃，钟舌以铅合金浇注。表面无铭文。重量适中。\n版级：脱版 / Solum\n\n0600 — D-3841 领取 SA-2277，开始常规收容铭刻值班。\n0744 — D-3841 记录：",
+    "text_en": "🔔 When the word runs deep enough, even lead learns to crack — the fracture is not end, but a second bell.\n\n📄 Duty Log · Artifact SA-2277 · Leaden Hand-Bell\n\nDescription: Brass-cast, single-bell, tongue poured in lead alloy. No surface inscription. Weight within normal range.\nGradus Formae: Solum\n\n0600 — D-3841 requisitioned SA-2277. Standard Inscription duty commenced.\n0744 — D-3841 noted: \"The bell rang. I did not ring it.\"\n0801 — Bell rang again. D-3841 resumed duty without incident.\n1003 — Bell rang ██ times in rapid succession. D-3841 continued铭刻 without pause. No tremor recorded.\n1340 — Bell rang. D-3841 did not look up.\n1341 — Bell rang. D-3841 did not look up.\n1342 — Bell rang.\n[Log ends. SA-2277 recovered from workstation. D-3841 not recovered.]\nNote: Duty cycle reassigned per §4.2. Bell is warm to the touch. Cause of warmth: unrecorded.",
+    "_voice": "doc",
+    "_objectId": "stack_crit"
+  }
+]

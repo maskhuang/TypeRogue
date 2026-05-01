@@ -1,0 +1,72 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我觉得有人在按我，但也许只是风",
+    "text_en": "...I think someone presses me, but maybe just wind",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……这些铅字好冰，还是那个人的手暖一些",
+    "text_en": "...these slugs so cold, that person's hands warmer",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……我是桌子吗？还是别的什么",
+    "text_en": "...am I a desk? or something else",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……听到远处齿轮声，好像在叫我名字",
+    "text_en": "...hear distant gears, like calling my name",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……那个人总是先洗手，很恭敬的",
+    "text_en": "...that person always washed hands first, so reverent",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……按键很工整，从不犹豫",
+    "text_en": "...keystrokes so neat, never hesitant",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……那个人总在R键前停顿，手在抖",
+    "text_en": "...that person always paused at R, hands shaking",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……翻来翻去找什么条例，很紧张",
+    "text_en": "...flipping pages for some regulation, so nervous",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……喜欢画画的那个，手很轻快",
+    "text_en": "...the one who drew, hands so light and quick",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……最后按得很开心，像是要去哪里",
+    "text_en": "...pressed so happily at the end, like going somewhere",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  }
+]

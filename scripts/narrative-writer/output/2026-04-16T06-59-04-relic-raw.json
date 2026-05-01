@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "不断之链",
+    "name_en": "Catena Perpetua",
+    "text_zh": "其音既起，永不复归。连祷不绝者，沙漏亦随之延展——惟震颤能断此链。",
+    "text_en": "Once begun, the litany knows no end. The hourglass expands with each prayer—save tremor breaks the chain.",
+    "_objectId": "immortal_combo",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "圣印 · 不断之链\n分级: Apollyon\n发现地点: 第███层 熔变誓门活动痕迹\n描述: 观测到连续祷击可维持跨层传导。每次铭刻成功后，下一层初始流沙流量将等同当前连祷深度。收容震颤仍可中断传导链。\n来源推测: ████████熔变仪式残留物\n备注: 该物品已被第██代守卷人议会明确列入禁制清单。当前征用需██级授权。使用者失联率: █████%。",
+    "text_en": "Sigil of Perpetual Chain\nObject Class: Apollyon\nRecovery Site: Layer ███, traces of Molten Verse activity\nDescription: Observed to maintain cross-layer conductivity through sustained litany-strikes. Upon successful inscription, subsequent layer's initial hourglass humour equals current prayer depth. Containment tremors still interrupt the chain.\nOrigin Theory: ████████ molten ritual remnant\nNote: Explicitly prohibited by ██th Keeper Council. Current requisition requires Level-██ clearance. Operator casualty rate: █████%.",
+    "_objectId": "immortal_combo",
+    "_voice": "doc"
+  }
+]

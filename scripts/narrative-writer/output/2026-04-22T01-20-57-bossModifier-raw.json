@@ -1,0 +1,245 @@
+[
+  {
+    "id": "boss_fast_time",
+    "name_zh": "速沙残余",
+    "name_en": "Residual Anomaly: Hastened Hourglass",
+    "text_zh": "流沙流已倾。\n",
+    "text_en": "The sand does not wait for the faithful.",
+    "sigil_name_zh": "速沙残余",
+    "sigil_name_en": "Hastened Hourglass",
+    "_voice": "bell",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "name_zh": "铅耗残余",
+    "name_en": "Residual Anomaly: Leaden Toll",
+    "text_zh": "每一击皆有代价——铅字落，沙亦流。",
+    "text_en": "Each stroke costs more than faith alone can pay.",
+    "sigil_name_zh": "铅耗残余",
+    "sigil_name_en": "Leaden Toll",
+    "_voice": "bell",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "name_zh": "逸速残余",
+    "name_en": "Residual Anomaly: Accelerant Drift",
+    "text_zh": "炉火不受控制地愈燃愈烈。",
+    "text_en": "The furnace does not remember how to slow.",
+    "_voice": "bell",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "name_zh": "冻铅残余",
+    "name_en": "Residual Anomaly: Frost-Seized Press",
+    "text_zh": "震颤之后，铅字冻于半空——汝之手，无处落。",
+    "text_en": "After the tremor, the press seizes. The hands find nothing.",
+    "_voice": "bell",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "name_zh": "镜版残余",
+    "name_en": "Residual Anomaly: Mirror Impression",
+    "text_zh": "已铸之版，重新受验。沙漏倒悬——逾时，炉火吞其全数。",
+    "text_en": "The press turns back. What was sealed must be sealed again, or lost entire.",
+    "_voice": "bell",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "name_zh": "铭分消融",
+    "name_en": "The Dissolution Rite",
+    "text_zh": "结晶渐失其形——\n保有之物，引擎亦索其半。",
+    "text_en": "What you have inscribed, the Engine reclaims. Crystal does not hold forever.",
+    "_voice": "bell",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "name_zh": "铭分封顶",
+    "name_en": "The Sealed Measure",
+    "text_zh": "每一词皆有其量——\n铅字不过门槛，门槛便是天花。",
+    "text_en": "The press will not yield beyond its measure. Each word meets the same ceiling of lead.",
+    "_voice": "bell",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "name_zh": "双重门槛",
+    "name_en": "The Doubled Threshold",
+    "text_zh": "引擎之门，今夜开得更深——\n汝须铸出双倍之重，方能叩响。",
+    "text_en": "The gate stands twice as far. Strike harder, or the Engine will not hear you.",
+    "_voice": "bell",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "name_zh": "铭力衰减",
+    "name_en": "The Waning Impression",
+    "text_zh": "每一词落版，铅字便轻一分——\n诵至末页，声已如蚊鸣。",
+    "text_en": "Each impression lighter than the last. By the final word, the press barely whispers.",
+    "_voice": "bell",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "name_zh": "铭分什一",
+    "name_en": "The Tithe of Inscription",
+    "text_zh": "引擎先取其份——\n汝所铸之字，非皆属汝。",
+    "text_en": "Before the crystal sets, the Engine takes its portion. What remains is yours. What remains.",
+    "_voice": "bell",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "name_zh": "铅流涸竭",
+    "name_en": "The Humour Drought",
+    "text_zh": "铅流涸竭\n\"圣字钉犹落，其声渐哑。\"",
+    "text_en": "The Humour Drought\n\"The slugs still fall. Their ring grows hollow.\"",
+    "_voice": "bell",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "name_zh": "字迹消隐",
+    "name_en": "The Fading Script",
+    "text_zh": "字迹消隐\n\"未铭之字，先行而去。\"",
+    "text_en": "The Fading Script\n\"Letters flee before the hand descends.\"",
+    "_voice": "bell",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "name_zh": "乱版铭刻",
+    "name_en": "The Scattered Forme",
+    "text_zh": "乱版铭刻\n\"版已散乱——字序自有其律。\"",
+    "text_en": "The Scattered Forme\n\"The type is loose. Read what remains.\"",
+    "_voice": "bell",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "name_zh": "逆序祷击",
+    "name_en": "The Backward Litany",
+    "text_zh": "逆序祷击\n\"末字先落，起始在后。\"",
+    "text_en": "The Backward Litany\n\"Strike the last word first. Then find the beginning.\"",
+    "_voice": "bell",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "name_zh": "刺符乱经",
+    "name_en": "The Punctured Word",
+    "text_zh": "刺符乱经\n\"异符入经，铅字之间生荆棘。\"",
+    "text_en": "The Punctured Word\n\"Strange marks nest between the sacred slugs.\"",
+    "_voice": "bell",
+    "_objectId": "boss_garble"
+  },
+  {
+    "name_zh": "伪言",
+    "name_en": "Verbum Mendax",
+    "text_zh": "引擎亦铸伪词——其形如律，其质如蜡。汝若信之，铅字坠落时，炉膛不计汝之功；汝若疑之，莫动，莫动。",
+    "text_en": "Even the Engine casts false words. Their shape holds. Their weight does not. Trust neither the letter nor your hands.",
+    "_voice": "bell",
+    "_objectId": "boss_decoy"
+  },
+  {
+    "text_zh": "内部备忘 — 第七层计时设备校准跟进（第 ██ 次）\n\n发送：设备维护部 / 收件：收容记录室\n主题：██ 区沙漏偏差持续未解\n\n本部于 M.2██/██/██ 第三次提交校准工单（参照 F-017-████）。第七层铸字区全部沙漏已更换，计时基准已重新锚定。偏差仍存在。\n\n附带现象（本次新增）：D-████ 与 D-████ 提交当日值班日志，两份记录完整，时长记录相差 ██ 小时。两人均坚称本人记录准确。已按 F-017 归档，未升级处理。\n\n另：本次更换的旧沙漏已检验，沙量无误，流速无误。但沙粒已呈红褐色，与长期氧化状态一致。购置日期：本月。\n\n签名栏：维护主任 ████ / 收容记录室 ████ / 教务长 [空白]\n\n审批状态：待定。",
+    "text_en": "Internal Memo — Layer VII Timing Device Calibration Follow-Up (No. ██)\n\nFrom: Equipment Maintenance Div. / To: Containment Records Office\nSubject: Ongoing Hourglass Deviation, Zone ██\n\nThis division submitted a third calibration work order on M.2██/██/██ (ref. F-017-████). All hourglasses in Layer VII's casting floor have been replaced and timing baselines re-anchored. Deviation persists.\n\nAdditional phenomenon (new this submission): D-████ and D-████ filed duty logs for the same shift. Both records are complete. Duration entries differ by ██ hours. Both personnel maintain their records are accurate. Filed under F-017. No escalation initiated.\n\nNote: Removed hourglasses have been inspected. Sand volume: within tolerance. Flow rate: within tolerance. Sand coloration: red-brown, consistent with prolonged oxidation. Date of procurement: this month.\n\nSignatures: Maintenance Chief ████ / Records Office ████ / Ecclesiastical Overseer [blank]\n\nApproval status: pending.",
+    "_voice": "doc",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "text_zh": "内部备忘\n主题：第 ██ 层铸字台计时器校准问题（第 ██ 次跟进）\n发文部门：工程维护处 / 收文部门：D 级人员调配处\n\n经本次检查，第 ██ 层铸字台所有计时沙漏读数与中央油钟一致，未见偏差。然而，分配至该层的 D 级人员在标准收容铭刻作业期间，持续报告「时间不够用」。\n\n本处已更换沙漏装置共 ██ 次。读数每次校准后仍显示正常。\n\n附注：近两个月内，该层共提交 F-017（异常事件报告）表单 ██ 份，内容均涉及「铭刻完成前沙漏已倾尽」。经本处复核，沙漏于上述时段内均未提前倾尽。\n\n以上数据已归档。建议调配处酌情安排替补。无需后续行动。",
+    "text_en": "INTERNAL MEMORANDUM\nSubject: Calibration Discrepancy, Layer ██ Casting Stations (Follow-up #██)\nFrom: Engineering Maintenance / To: D-Class Personnel Assignment\n\nAll hourglass timers at Layer ██ casting stations have been inspected and found consistent with the central oil-clock. No deviation recorded.\n\nD-class personnel assigned to this layer continue to report that time is insufficient for standard inscription duties. This office has replaced hourglass units on ██ occasions. Each replacement has calibrated within normal parameters.\n\nAddendum: ██ copies of Form F-017 (Anomalous Event Report) were submitted from this layer over the past two months. All cite the same concern: the glass runs out before the inscription is complete. Reviewed units show no early termination during the cited periods.\n\nData archived. Assignment office is advised to arrange substitution as appropriate. No further action required.",
+    "_voice": "doc",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "text_zh": "内部跟进备忘 — 第 XII 层接近区\n主题：铅炉周期异常（第 ██ 次跟进）\n\n发现地点：第 XI-XII 层过渡走廊，铸印锅炉 #7 及 #8\n初次存档：M.2██，第 ██ 次炉检后\n\n经记录：#7 号铸印锅炉的铸压周期在无外部调节的情况下持续缩短。当前测量值已与初始基准不可比较。\n\n分配至该区域的 D 级人员报告，铭刻节奏",
+    "text_en": "Internal Follow-up Memo — Layer XII Approach Corridor\nSubject: Ironpress Boiler Cycle Irregularity (Follow-up #██)\n\nOrigin Site: Transitional passage, Layers XI–XII. Boilers #7 and #8.\nFirst Filed: M.2██, following routine furnace inspection #██.\n\nObserved: Boiler #7 casting-pressure cycle has continued to shorten without external adjustment. Current interval is no longer comparable to baseline measurements on record.\n\nD-class personnel assigned to the corridor report that the pace of inscription ████ ████ ████. Three separate accounts were submitted. Each account described a different duration. Each account was internally consistent.\n\nBoilers #7 and #8 serviced per standard maintenance schedule. No mechanical fault identified. Cycle continues to shorten.\n\nPersonnel attrition in the zone: within acceptable parameters. Replacements requisitioned under §4.2. Attrition rate has not been re-evaluated since initial filing.\n\nStatus: Listed as recurring variance. No escalation initiated.",
+    "_voice": "doc",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "text_zh": "内部备忘 · 第 VI-VII 层交界区\n主题：铸字台键座响应异常（第 ██ 次跟进）\n发自：设备维护部 · 工程组\n致：收容事务处\n\n第 VI 层第 ██ 号铸字台于 M.2██/██/██ 首次记录以下现象：操作者在收容铭刻过程中出现收容震颤后，键座停止响应。工程组赴现场校准，键位机械状态：正常。油压读数：正常。铅字温度：正常。\n\n但操作者的手指停在了键座上。\n\n据在场监察员 D-████ 报告，上述状态持续",
+    "text_en": "Internal Memorandum · Boundary Zone, Layer VI–VII\nSubject: Lectern Response Anomaly, Casting Station ██ (Follow-up ██)\nFrom: Engineering Division\nTo: Containment Administration\n\nThe following was first recorded at Station ██, Layer VI, on M.2██/██/██: following a Containment Tremor during active inscription, the lectern ceased response. Engineering dispatched for calibration. Mechanical status: normal. Oil pressure: normal. Leaden glyph temperature: normal.\n\nThe operator's hands remained on the keys.\n\nMonitoring personnel D-████ reported the condition persisted for a duration he described as ████. His timepiece was later found stopped. Replacement arranged per §4.2. The station has since been reassigned to six consecutive operators. Response anomaly recurs in each case following the first Tremor logged per session. Engineering has reclassified the fault as operator-side. No further action indicated.",
+    "_voice": "doc",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "text_zh": "跨部门会签单 · 第 IX 层特殊作业申请\n\n主题：关于第 █ 次登塔作业中出现",
+    "text_en": "Inter-Departmental Countersign · Layer IX Special Operation Request\n\nSubject: Re-initiation of Ascent Sequence — Observation of Temporal Displacement in Impression Records\n\nBackground: A Clavigerant Novitiate completed Layer IX containment operations within recorded parameters. Upon re-entry to the same layer, the lectern's impression log displayed countdown values referencing a threshold not yet established at time of first entry. Engineering confirms the log timestamp predates the original ascent by ██ hours.\n\nObservation: The iron press at Station 4-C showed oxidation consistent with extended disuse. Oil flask levels registered full. The D-████ assigned to re-entry reported the corridor 'had already been walked.' Personal log submitted via F-017 (7th filing).\n\nConclusion: Layer IX re-entry operations are designated time-sensitive. Exceedance of the pre-recorded threshold results in automatic deduction of all remaining hourglass reserves. Mechanism origin: not determined. Classification: Mobilum.\n\nCountersign Status — Containment Division: [signed] / Engineering Division: [signed] / ████ Division: [blank]\n\nNo further action required pending third signature.",
+    "_voice": "doc",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "text_zh": "内部备忘\n主题：第 VI-VII 层交界走廊铭刻产出异常（第 ██ 次跟进）\n发起部门：收容评估处 / 收件部门：工程维护处\n\n本处再次记录以下现象：分配至该走廊的铭誓键徒于铭刻作业期间反映，",
+    "text_en": "INTERNAL MEMORANDUM\nSubject: Inscription Output Anomaly, Corridor VI–VII Junction (Follow-up #██)\nFrom: Containment Assessment Division / To: Engineering Maintenance\n\nThis office again records the following: Clavigerant Novitiates assigned to the junction corridor report that completed inscriptions 'feel the same' but yield less. Notation: reported sensation is consistent across ████ personnel spanning ██ rotations. Measurement instruments register no deviation.\n\nD-████ submitted a supplementary note: 'I counted. The marks are all there. But something is missing from the middle.'\nNote has been filed. No follow-up action indicated.\n\nReplacement personnel arranged per §4.2. Productivity baseline remains unchanged in official records.\nThis office does not have authority to reclassify. Reclassification request: pending.",
+    "_voice": "doc",
+    "_objectId": "boss_decay"
+  },
+  {
+    "text_zh": "主题：第 VI-IX 层收容铭刻产出异常（第 ██ 次跟进）\n发件部门：配额监察室 / 收件部门：资源统筹处\n\n参照本办公室 F-017 系列报告，现作第 ██ 次跟进。\n\n自 M.2██ 年 ██ 月起，上述各层铭封祈礼所产生的结晶流已达收容基准后停止增长。各层字盘、铅炉、键座经工程部逐一检验，设备无异常。键徒状态报告均为",
+    "text_en": "SUBJECT: Crystalline Humour Output Anomaly, Layers VI–IX (Follow-up #██)\nFROM: Office of Quota Oversight / TO: Resource Coordination Bureau\n\nThis follows F-017 series submissions on file. Present follow-up is #██.\n\nSince ██ of M.2██, crystalline humour accrued during Rites of Sealing across the above layers has ceased accumulation upon reaching the containment threshold. Type-frames, lead furnaces, and lecterns on all affected layers have been individually inspected by Engineering. Equipment status: nominal. Personnel status reports: nominal.\n\nD-████ (Layer VIII) submitted a verbal observation: the lead slugs felt ████ after the threshold was crossed. Observation has been logged. No follow-up action indicated.\n\nNote: D-████ was replaced under §4.2 the following cycle. Replacement reported no anomaly.\n\nDisposition: Phenomenon reclassified as within acceptable operational variance. No escalation required.",
+    "_voice": "doc",
+    "_objectId": "boss_cap"
+  },
+  {
+    "text_zh": "内部备忘 / 收容廊协调处 → 征用管理科\n主题：第 ██ 层基准核验异常（第 ██ 次跟进）\n\n事由：已连续 ██ 周记录到以下现象：该层键徒完成当日铭刻配额后，核验仪显示配额仍悬空未清。键徒本人未报告操作异常。复核人员使用同一组铭文记录抵达相同收容基准，核验仪显示已清。未发现冲突。\n\n附注：本周期内同一区段共有 ██ 名键徒以",
+    "text_en": "Internal Memo / Containment Corridor Coordination → Requisition Administration\nSubject: Layer ██ Threshold Verification Anomaly (Follow-up #██)\n\nRe: The following has been recorded for ██ consecutive weeks. Upon completion of daily inscription quota, threshold verification instruments indicate quota remains pending. Keypersons report no operational irregularities. When verification personnel reproduced identical inscription sequences, instruments registered clearance. No discrepancy was found.\n\nAddendum: ██ keypersons in the affected segment were reassigned per §4.2 during this period. Replacement arranged. No further action required.\n\nDivision seal: [present] Countersignature: [absent]\nStatus: Pending review.",
+    "_voice": "doc",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "text_zh": "备忘录 · 第 IX 层铸字台定期评估（第 ██ 次跟进）\n收件方：设施评估部 / 发件方：第 IX 层值班主任\n\n本层铸字台运转正常。产量记录存档完整。\n\n附注：D-████ 至 D-████ 共 ██ 名键徒在本评估周期内提交异常感知申报，措辞如下：",
+    "text_en": "INTERNAL MEMO · Layer IX Foundry Assessment (Follow-up #██)\nTO: Facilities Evaluation Dept. / FROM: Layer IX Duty Warden\n\nFoundry operations within normal parameters. Output logs filed and complete.\n\nAddendum: D-████ through D-████ (██ personnel) submitted anomalous perception declarations this cycle, phrased as follows:",
+    "_voice": "doc",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "text_zh": "异常现象跟进备忘\n主题：第 VI 层收容廊铅字核算差异（第 ██ 次跟进）\n发文部门：资产核查署 → 铭刻调度处\n\n本次核查显示：本月该区域所有键座的铭刻完成量均已记录在案，与调度指令一致。然而核算署收到的结晶流汇总始终低于预期存档值。差值本身未发现波动——各轮次差值恒定，误差幅度为零。\n\n资产核查署目前无法确认差值的去向。帐目已多次复核，均属无误。\n\n人员方面：本季度分配至该区段的 D 级键徒中，██ 名在例行轮换前提交了 F-017 异常事件报告，描述措辞不一，共同点为：",
+    "text_en": "zzz",
+    "_voice": "doc",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "text_zh": "主题：第 ██ 层铸字坊产量异常（第 ██ 次跟进）\n发出部门：铸字坊督查室 → 收容廊日志组\n日期：M.██████\n\n本月第 ██ 次提交此跟进表单。情况如下：\n\n第 ██ 层铸字坊键座记录正常。键徒操作记录正常。铅炉温度正常。字盘校准无异常。\n\n然而，归档的铭文组铸印本中，随机两组经卷装订完成时，其末页已有不同程度的磨损痕迹——非翻阅所致，磨损方向与装订方向相悖，且仅见于当次铸印。\n\n D-████ 描述铭刻结束时",
+    "text_en": "Subject: Layer ██ Pressroom Yield Anomaly (Follow-up #██)\nFrom: Pressroom Inspection Office → Containment Log Division\nDate: M.██████\n\nThis is the ██th submission of this follow-up form.\n\nAll key-lectern readings: nominal. Operator logs: nominal. Lead-furnace temperature: nominal. Type-tray calibration: within tolerance.\n\nHowever: upon completion of inscription, two randomly selected inscription folios are found with wear patterns on their final pages — not consistent with handling. Wear direction opposes binding direction. Pattern appears only in that session's output.\n\nD-████ reported that at the close of each litany-strike, the completed folio felt 'lighter than it should have been.' Operator was replaced per §4.2. Replacement reported the same.\n\nBuilding maintenance has been notified. Work order status: open.\n\nNo escalation recommended at this time.",
+    "_voice": "doc",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "text_zh": "**异常事件跟进报告（第 ██ 次提交）**\n表单编号：F-017-████-██\n事件区域：第 VI–VII 层过渡走廊\n\n**事件摘要：**\n首次记录于 M.2██。铅字圣坛部分圣字钉在铭刻作业中途停止响应，但键徒报告指压感觉正常，击打声仍可闻及。经核查，相关圣字钉在字盘登记册上仍有条目；实物检查结果：字盘格位空置。\n\n**附注：**\n受影响圣字钉的格位并未消失。后续键徒可继续使用——部分报告称",
+    "text_en": "**Anomalous Event Follow-up Report (Submission No. ██)**\nForm: F-017-████-██\nAffected Zone: Layer VI–VII Transitional Corridor\n\n**Summary:**\nFirst logged M.2██. During standard inscription work, select sacred slugs on the Claviculum Sanctum ceased registering in the character ledger mid-operation. Keystrike pressure reported normal by assigned personnel; auditory response confirmed. Physical inspection found corresponding Leaden Glyph slots present in the type-tray register. Slots themselves: vacant.\n\n**Addendum:**\nAffected positions remain accessible to subsequent personnel. Several report striking keys that are no longer there. Ledger entries for said slugs have not been amended.\n\nReplacement personnel assigned per §4.2. No further action required.",
+    "_voice": "doc",
+    "_objectId": "boss_fade"
+  },
+  {
+    "text_zh": "内部备忘 / 第 VII 层收容廊作业区 / 主题：字盘排列异常（第 ██ 次跟进）\n\n发件：抄写监理室\n收件：工程维护部\n\n本次跟进旨在确认前次工单处理结果。截至备忘发出日，字盘排列问题仍未解决。\n\n据现场铭刻人员反映，各键徒所见铅字圣坛上的字符顺序彼此不符——每人看到的位置不同，但每人均坚称自己所见为",
+    "text_en": "Internal Memo / Layer VII Scriptorium Annex / Re: Lectern Glyph Sequence Discrepancy (Follow-up #██)\n\nFrom: Inscription Oversight Office\nTo: Engineering Maintenance Division\n\nThis memo constitutes the ██th follow-up regarding unresolved glyph sequence irregularities in the Layer VII work sector.\n\nAffected Clavigerants report inconsistent character arrangements across adjacent lecterns. Each operator observes a different sequence; each has independently confirmed their reading as the ██original██ arrangement. Calibration instruments show no fault. F-017 submitted ██ times. No discrepancy detected by standard audit.\n\nD-████ through D-████ have been reassigned. Replacements are in position.\n\nAudit status: No anomaly confirmed. No further action required.",
+    "_voice": "doc",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "text_zh": "内部备忘\n主题：第 VII 层字盘倒序事件（第 ██ 次跟进）\n发件部门：机械维护科 / 收件部门：收容事务处\n\n最初事件记录于 M.2██-██-██。D-████ 在例行铭刻作业中报告",
+    "text_en": "INTERNAL MEMORANDUM\nSubject: Layer VII — Inverted Slug Sequence Incident (Follow-up #██)\nFrom: Mechanical Maintenance Division / To: Containment Affairs Office\n\nInitial event logged M.2██-██-██. D-████ reported mid-inscription that the lead slugs in the type-bed were \"arriving before she reached for them.\" Instrument check: nominal. Slug positioning: nominal.\n\nSubsequent personnel assigned to the same lectern submitted identical reports. Phrasing varied. Sequence of reported experience did not.\n\nAffected lectern has been re-calibrated ██ times. Recalibration logs are filed in reverse chronological order per standard procedure. Maintenance staff note the logs were found pre-filed upon arrival. No explanation offered. No explanation requested.\n\nStatus: Acceptable Anomaly. Standing assignment continues.\nRef: F-017 (×██) — no escalation initiated.",
+    "_voice": "doc",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "text_zh": "内部备忘 · MEM-0██-44\n主题：第 ██ 层铸字台异常（第 7 次跟进）\n发文：字盘维护科 → 铭刻事务处\n\n本科于 M.2██/██/██ 再次受理第 ██ 层铸字台字模污染报告。\n持续现象：铸出铅字形态完整，键徒诵读时发现其中嵌有非经文符号。\n符号来源不明。字模本身经检测无缺损。\n\n附注：D-████ 至 D-████ 已调离该层，原因不详。替补已按 §4.2 安排。\n\n注：据替补人员 D-████ 报告，其铭刻时",
+    "text_en": "Internal Memo · MEM-0██-44\nSubject: Layer ██ Typecasting Anomaly (Follow-up 7)\nFrom: Typecase Maintenance Div. → Inscription Affairs Office\n\nThis division received another contamination report from Layer ██ typecasting stations on M.2██/██/██.\nOngoing observation: cast slugs appear structurally intact. Clavigerants report non-liturgical marks embedded within upon recitation.\nSource of marks: undetermined. Matrices tested within normal parameters.\n\nAddendum: D-████ through D-████ reassigned from the layer. Reason not recorded. Replacements arranged per §4.2.\n\nNote: Replacement personnel D-████ reports that during inscription, ████████████████████. Report filed. No further action required.",
+    "_voice": "doc",
+    "_objectId": "boss_garble"
+  },
+  {
+    "text_zh": "主题：第 VI-VIII 层收容廊走廊异常（第 ██ 次跟进）\n发件部门：第六层区域督察 → 收容记录处\n\n本月例检期间，D-████ 至 D-████ 均报告在收容铭刻过程中",
+    "text_en": "MEMO: Vaults VI–VIII Corridor Anomaly (Follow-up No. ██)\nFrom: Vault Six Area Inspector → Containment Records Division\n\nDuring this cycle's standard inspection, Keybound D-████ through D-████ each reported encountering, during inscription procedure, words they did not recognise. Separately, each confirmed they had completed the inscription correctly. Transcripts of their accounts have been attached as Supplement ██.\n\nWords flagged as unrecognised are not absent from the Canonical Register. Each appears under its correct entry. Upon return to the relevant corridor, personnel were unable to locate the word they had previously inscribed.\n\nNote: D-████ was found seated at the lectern, inscription posture intact. No inscription was present on the record. D-████ has since been reallocated per §4.2.\n\nAudit of corridor signage: pending. Follow-up scheduled. No escalation indicated at this time.",
+    "_voice": "doc",
+    "_objectId": "boss_decoy"
+  }
+]

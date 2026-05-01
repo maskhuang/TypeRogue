@@ -1,0 +1,29 @@
+[
+  {
+    "id": "none",
+    "name_zh": "初誓键徒",
+    "name_en": "The Keybound Novitiate",
+    "text_zh": "汝手初触圣坛，未蒙专门祝圣——然引擎之门为众生而启。",
+    "text_en": "Your hands first touch the sacred keys, unburdened by specialized oath—yet the Engine's gate opens for all.",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铭刻誓门键徒",
+    "name_en": "Clavigerant of the Graven Oath",
+    "text_zh": "\"形不可变，字不可易——吾以铅屑重铸完美之词。\"",
+    "text_en": "\"Form unchanging, word unaltered—I reforge perfect verse from molten lead.\"",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔变誓门键徒",
+    "name_en": "Clavigerant of the Molten Verse",
+    "text_zh": "\"拥抱熔炉之变——污蜡中见新生，烈火中求真形。\"",
+    "text_en": "\"Embrace the forge's change—new birth in corrupted wax, true form through sacred fire.\"",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  }
+]

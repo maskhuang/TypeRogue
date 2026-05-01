@@ -1,6 +1,8 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { DATA_JSON } from '../config.mjs'
+// v3.1 NEW · 注入静态表，供 prepareForPrompt 增强对象数据
+import { AFFIX_TO_TAXON } from '../generated/affix-taxa.mjs'
 
 function loadJSON(filename) {
   const path = join(DATA_JSON, filename)
@@ -264,7 +266,7 @@ function sanitizeDescription(desc) {
 // Prepare object data for narrative prompt (sanitized)
 export function prepareForPrompt(obj, type) {
   const hint = sanitizeDescription(obj.description)
-  return {
+  const result = {
     id: obj.id,
     name: obj.name,
     icon: obj.icon,
@@ -276,6 +278,17 @@ export function prepareForPrompt(obj, type) {
       : hint,
     // Exclude: basePrice, effects (pure mechanic), flavor (don't bias AI with existing text)
   }
+
+  // v3.1 affix enrichment · 注入 NCBI 学名编码（每个 affix 对应一个唯一灵长目物种）
+  if (type === 'affix' && AFFIX_TO_TAXON[obj.id]) {
+    const taxon = AFFIX_TO_TAXON[obj.id]
+    result.taxa_code = taxon.code           // 如 "Mmul"
+    result.latin = taxon.latin              // 如 "Macaca mulatta"
+    result.common_zh = taxon.common_zh      // 如 "普通猕猴"
+    result.taxa_category = taxon.category   // 如 "crit"
+  }
+
+  return result
 }
 
 // Summarize an object for prompt context (compact, sanitized)

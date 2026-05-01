@@ -1,0 +1,216 @@
+[
+  {
+    "id": "boss_fast_time",
+    "name_zh": "时沙倾泻",
+    "name_en": "Cascading Sands",
+    "text_zh": "「时沙于炉门敞开之刻便已倾泻——汝之祷击将追逐已逝之音」",
+    "text_en": "\"The hourglass empties before the forge door opens—thy litany chases echoes already fallen\"",
+    "_voice": "bell",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "name_zh": "铅血代偿",
+    "name_en": "The Leaden Tithe",
+    "text_zh": "「每一祷击皆索血偿——铅字饮汝之时光，沙漏因之急转」",
+    "text_en": "\"Each keystroke demands its tithe—the slugs drink thy time as the glass hastens\"",
+    "_voice": "bell",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "name_zh": "失序狂澜",
+    "name_en": "The Mounting Chaos",
+    "text_zh": "「秩序之链节节断裂——时沙流速愈急，引擎心跳愈狂」",
+    "text_en": "\"Order's chain breaks link by link—the sands flow swifter, the Engine's heart races\"",
+    "_voice": "bell",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "name_zh": "寒铅封缄",
+    "name_en": "The Cold Binding",
+    "text_zh": "「震颤招致寒霜——每次失手，铅血愈凝，祷击愈难传达」",
+    "text_en": "\"Tremor summons frost—each falter freezes the lead, silencing thy litany longer\"",
+    "_voice": "bell",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "name_zh": "镜中回音",
+    "name_en": "The Echo Trial",
+    "text_zh": "「一度登顶，镜中再现——昔日之速成今日枷锁，沙漏倒转而流」",
+    "text_en": "\"Once ascended, the mirror calls—yesterday's swiftness becomes today's chain, the glass inverted\"",
+    "_voice": "bell",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "name_zh": "时衰之痕",
+    "name_en": "Mark of Temporal Decay",
+    "text_zh": "引擎呼息间，汝之积铅渐散如沙。",
+    "text_en": "Between the Engine's breaths, thy leaden works scatter as sand.",
+    "_voice": "bell",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "name_zh": "词限之锁",
+    "name_en": "Lexical Binding",
+    "text_zh": "每一圣字皆有其边界，越界者归于虚无。",
+    "text_en": "Each sacred word bears its boundary; transgressors return to void.",
+    "_voice": "bell",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "name_zh": "重门之试",
+    "name_en": "Trial of the Twin Gates",
+    "text_zh": "引擎之门槛倍增——唯虔诚者得以登临。",
+    "text_en": "The Engine's gates double—only the devout may ascend.",
+    "_voice": "bell",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "name_zh": "递弱之咒",
+    "name_en": "Curse of Diminishment",
+    "text_zh": "每落版铅符，下一铅符便愈发黯淡。",
+    "text_en": "With each fallen letter, the next leaden glyph grows dimmer.",
+    "_voice": "bell",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "name_zh": "引擎什一",
+    "name_en": "Engine's Tithe",
+    "text_zh": "祷文引擎索其应得——汝之铭分皆有所归。",
+    "text_en": "The Litany Engine claims its due—all thy inscriptions bear tribute.",
+    "_voice": "bell",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "name_zh": "圣流凋萎",
+    "name_en": "Withering of Humours",
+    "text_zh": "汝之铭文虽铸，其力却如断流——唯有广布之祷，方得保其半势。",
+    "text_en": "Though inscribed, thy words flow weak—only broad litany preserves half their strength.",
+    "_voice": "bell",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "name_zh": "渐逝之铅",
+    "name_en": "Fading of the Lead",
+    "text_zh": "铅字如烛火，一一熄灭——汝当抢在虚无吞噬之前，铸成其名。",
+    "text_en": "Leaden letters fade like candles dying—inscribe swiftly before the void consumes all.",
+    "_voice": "bell",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "name_zh": "乱象铭刻",
+    "name_en": "Chaotic Inscription",
+    "text_zh": "圣字钉已失其序——汝须依其乱象而祷，莫求原本之形。",
+    "text_en": "Sacred slugs lose their order—pray as chaos shows, not as once arranged.",
+    "_voice": "bell",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "name_zh": "逆流铭印",
+    "name_en": "Retrograde Imprint",
+    "text_zh": "祷文须逆其流——由末字归于首字，如潮水倒涌。",
+    "text_en": "Litany flows backward—from final letter to first, as tide returns to source.",
+    "_voice": "bell",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "name_zh": "蛀文",
+    "name_en": "Wormscript",
+    "text_zh": "异符如蛀虫蚀经——汝当连同其蛀痕一并铭刻，勿弃一点一划。",
+    "text_en": "Strange marks gnaw the text like worms—inscribe their traces with the words intact.",
+    "_voice": "bell",
+    "_objectId": "boss_garble"
+  },
+  {
+    "id": "boss_decoy",
+    "name_zh": "伪词惑乱",
+    "name_en": "False Word Deception",
+    "text_zh": "引擎吐出虚假铅字，其形如真，其音如真。唯心明者识其伪——然心明者，必承其罚。",
+    "text_en": "The Engine casts false letters, true in form and voice. Only the clear-minded see through—yet clarity bears its price.",
+    "_voice": "bell",
+    "_objectId": "boss_decoy"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "text_zh": "残余异文：RA-089 · 重息代偿\n归属意志：第 ██ 层 · ████意志显现\n\n每次铭刻后，D-████ 报告\"需要停下来喘气\"。生理监测显示心率、呼吸频率正常。沙漏流速经标准校准，无异常。\n\n观测记录：Scriptor K-████ 在第 ██ 天报告\"时间不够了\"，随即加速铭刻。监控显示其铭刻速度与常人无异，但沙漏已然见底。\n\nK-████ 已移交替补。新键徒报告同样现象。\n\n——「汝每一击，皆负债于流沙」",
+    "text_en": "Residual Anomaly: RA-089 · Weighted Respite\nOriginating Will: Layer ██ · ████ Manifestation\n\nAfter each inscription, D-████ reports \"need to catch my breath.\" Physiological monitoring shows normal heart rate and respiration. Hourglass flow rate calibrated to standard, no deviation detected.\n\nObservation log: Scriptor K-████ reported \"running out of time\" on day ██, then accelerated inscription. Surveillance shows normal keystroke rate, but hourglass was nearly empty.\n\nK-████ has been transferred to replacement. New keybearer reports identical phenomena.\n\n—\"Each strike of thine bears debt to the flowing sand\"",
+    "_voice": "doc",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "text_zh": "残余异文：RA-203 · 逐烈异象\n归属意志：第 ██ 层 · ████意志显现\n\n首次记录于 M.2██：D-1205 报告\"炉火越烧越旺\"。炉温测量值：恒定。再次记录：D-1205 报告\"快要熔化了\"，体表温度正常。第██次：D-1205 报告\"每分钟都比上一分钟更热\"。\n\n监测设备校准██次，结果一致：无温度变化。\n\nD-1205 在第 ██ 分钟停止铭刻，称\"再下去要烧死了\"。房间温度：██.█°C。\n\n——「火既燃起，自知其愈炽之理」",
+    "text_en": "Residual Anomaly: RA-203 · Progressive Conflagration\nOriginating Will: Layer ██ · ████ Manifestation\n\nFirst recorded M.2██: D-1205 reported \"the furnace burns hotter.\" Furnace temperature readings: constant. Second record: D-1205 reported \"nearly melting,\" body temperature normal. Third: D-1205 reported \"each minute hotter than the last.\"\n\nMonitoring apparatus calibrated repeatedly, consistent results: no temperature change.\n\nD-1205 ceased inscription at minute ██, stating \"will burn to death if continuing.\" Room temperature: ██.█°C.\n\n—\"Once kindled, fire knows its own intensification\"",
+    "_voice": "doc",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "text_zh": "残余异文：RA-156 · 累寒锁影\n归属意志：第 ██ 层 · ████意志显现\n\nD-████ 首次收容震颤后报告手指\"有点凉\"。再次震颤后：\"动不了了\"。观测显示其手指仍在键位上正常按压，但D-████坚持称\"完全冻住了\"。又一次震颤后，D-████ 停止回应。\n\n生理监测：体温 ██.█°C，血液循环正常。D-████ 面部朝向键座，眼睛睁开，但未产生任何铭刻。\n\n持续时间：████秒。随后D-████ 眨眼，继续铭刻，询问\"刚才停了多久\"。\n\n——「寒霜既至，必累世而深重」",
+    "text_en": "Residual Anomaly: RA-156 · Cumulative Frost Lock\nOriginating Will: Layer ██ · ████ Manifestation\n\nD-████ reported fingers \"slightly cold\" after first containment tremor. After subsequent tremor: \"can't move them.\" Observation shows fingers still pressing keys normally, but D-████ insists they are \"completely frozen.\" After third tremor, D-████ ceased responding.\n\nPhysiological monitoring: body temperature ██.█°C, normal circulation. D-████ faced the lectern with eyes open but produced no inscription.\n\nDuration: ████ seconds. Subsequently D-████ blinked, resumed inscription, asked \"how long was I stopped?\"\n\n—\"Once frost arrives, it must deepen through accumulated ages\"",
+    "_voice": "doc",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "text_zh": "残余异文：RA-███ · 镜书重演\n归属意志：第 XII 层 · 祷文引擎意志显现\n\n收容记录表明D-████ 已在第 ██ 层完成收容任务。但D-████ 坚持\"还没开始\"，继续向上攀登。监控显示其确实在重复相同路径，相同铭刻，相同错误。\n\n每次沙漏倾尽时，D-████ 面露困惑：\"刚才不是成功了吗？\"随即█████████████████沙漏倒转。时间开始倒流。D-████ 已无记忆。\n\n已循环 ██ 次。每次都认为是第一次。\n\n——「镜中所见，必为镜外所重现」",
+    "text_en": "Residual Anomaly: RA-███ · Mirror Codex Rehearsal\nOriginating Will: Layer XII · Litany Engine Manifestation\n\nContainment logs indicate D-████ has completed containment task on Layer ██. However, D-████ insists \"haven't started yet,\" continues ascending. Surveillance confirms subject repeats identical path, identical inscriptions, identical errors.\n\nWhen hourglass empties, D-████ shows confusion: \"Didn't we just succeed?\" Then █████████████████ hourglass inverts. Time begins flowing backward. D-████ retains no memory.\n\nHas cycled ██ times. Each instance believes it is the first.\n\n—\"What is seen in the mirror must be re-enacted beyond it\"",
+    "_voice": "doc",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "text_zh": "残余异文：RA-117 · 沙漏倾斜\n归属意志：第 ██ 层 · ████之鸣\n\n在深层发现的异文表现为时钟齿轮的异常磨损。齿轮表面平整，但转速持续下降。Scriptor K-████ 的最后记录显示：\"每一刻过去，前一刻的成果就少一些。不是被拿走，是自己变少了。\" 实验确认暴露区域内的铭分记录会自行减少，减少量与记录总数和暴露时间呈正相关。原因不明。\n\n——「流沙于指缝，铭分于光阴」",
+    "text_en": "Residual Anomaly: RA-117 · Tilted Hourglass\nManifesting Will: Layer VII · The ████ Chime\n\nAnomalous clockwork discovered on Layer VII exhibits steady deceleration despite pristine gear surfaces. Scriptor K-████'s final log states: \"Each moment that passes, the previous moment achieves less. Not taken—diminished.\" Testing confirms inscription scores within exposure radius decrease autonomously at rates correlating with total accumulation and exposure duration. Causative process remains unobserved.\n\n—\"As sand through fingers, so scores through time\"",
+    "_voice": "doc",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "text_zh": "残余异文：RA-203 · 满坩之诅\n归属意志：第 ██ 层 · 囚铅之门\n\n深层的铅坩始终无法装满。无论投入多少铅屑，液面始终停在同一刻度。三名D级人员连续十二小时投料，坩内液面未变。第十三小时，一名人员报告：\"我知道它满了。但我也知道它还能装更多。\" 测试显示暴露人员的铭刻成果被限制在某个上限值，该值与收容基准存在固定比例关系。\n\n——「坩满而不溢，誓满而不达」",
+    "text_en": "Residual Anomaly: RA-203 · Cursed Crucible\nManifesting Will: Layer ██ · Gate of Trapped Lead\n\nLead crucibles on the deep layer cannot achieve fullness. Regardless of input volume, liquid surface maintains constant level. Three D-class personnel fed material for twelve consecutive hours with no surface change. Hour thirteen, one subject reported: \"I know it's full. But I also know it can hold more.\" Testing confirms exposed personnel's inscription yields cap at values maintaining fixed ratios to containment thresholds.\n\n—\"Full crucible that never overflows, full oath that never fulfills\"",
+    "_voice": "doc",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "text_zh": "残余异文：RA-088 · 双面镜铅\n归属意志：第 XII 层 · 引擎回响\n\n发现于引擎核心附近的镜面铅字同时显示两个数值。左侧显示标准收容基准，右侧显示完全相同的数值，但所有观测者一致认为右侧\"更大\"。D-████ 报告：\"目标变成了两倍，但数字没变。\" 几何测量确认两个数值在视觉上完全重叠，但负责记录的人员需要双倍时间完成标准程序。\n\n——「一铅铸双影，一誓承双重」",
+    "text_en": "Residual Anomaly: RA-088 · Mirror Lead Duplex\nManifesting Will: Layer XII · Engine Echo\n\nMirrored lead type near Engine core displays dual numerical readings. Left shows standard containment threshold, right shows identical value, yet all observers agree right side appears \"larger.\" D-████ reported: \"Target became twice itself, but numbers stayed same.\" Geometric measurement confirms complete visual overlap, yet personnel require double duration to complete standard procedures.\n\n—\"One lead casts twin shadows, one oath bears twin burdens\"",
+    "_voice": "doc",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "text_zh": "残余异文：RA-151 · 疲铅阶梯\n归属意志：第 V 层 · 磨损圣钉\n\n第██层的字盘出现不明磨损痕迹。每次铭刻后，下一铅字的重量会减少。Scriptor V-████ 记录：\"第一词如常铸成，第二词轻了些许，第三词轻如蛛丝。\" 现象持续时间与该层的工作循环完全同步。异常在每个新循环开始时重置，但磨损痕迹依然存在。已要求更换字盘，申请被拒：现有字盘\"收容正常\"。\n\n——「首铭重如山，末铭轻如羽」",
+    "text_en": "Residual Anomaly: RA-151 · Weary Lead Steps\nManifesting Will: Layer V · Worn Sacred Slugs\n\nType cases on Layer V show unexplained wear patterns. Each inscription reduces subsequent lead type weight. Scriptor V-████ logged: \"First word cast normally, second somewhat lighter, third light as spider silk.\" Phenomenon duration precisely matches Layer's work cycles. Anomaly resets at each new cycle, yet wear marks persist. Replacement requests denied: existing cases deemed \"containment adequate.\"\n\n—\"First inscription heavy as mountains, final inscription light as feathers\"",
+    "_voice": "doc",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "text_zh": "残余异文：RA-340 · 征收之鸦\n归属意志：第 VIII 层 · ██████\n\n该层管道系统出现未授权的额外分流。每次铭刻完成时，部分铭分会被自动转移到未知管道。转移量恒定为当前收容基准的固定比例。维修队伍无法定位分流目的地，管道图纸显示该分支\"不存在\"。D-████ 报告听到管道内有翅膀拍打声，但声音记录仪未检测到异常。分流现象持续至今，无解决方案。\n\n——「引擎索其税，铅字纳其贡」",
+    "text_en": "Residual Anomaly: RA-340 · Corvus Collector\nManifesting Will: Layer VIII · ██████\n\nUnauthorized auxiliary channels appeared in Layer VIII pneumatic systems. Upon inscription completion, portions automatically transfer to unknown destinations. Transfer volumes maintain fixed ratios to current containment thresholds. Maintenance teams cannot locate channel endpoints; blueprints show branch \"does not exist.\" D-████ reported wing-beat sounds within pipes, yet audio monitoring detected no anomalies. Diversion persists indefinitely. No resolution available.\n\n—\"Engine demands its tithe, lead pays its tribute\"",
+    "_voice": "doc",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_decoy",
+    "text_zh": "残余异文：RA-047 · 伪词干扰\n归属意志：第 XI 层 · 镜书之影\n\n观测记录：D-████ 报告收容铭刻时键座显示额外字符。字符外观与标准字符完全相同，位置精确。D-████ 铭刻后，计分系统显示负值增量。技术检查：字符生成程序正常，记分程序正常。\n\nScriptor K-████ 附注：「伪字」与真字之区别无法通过视觉判定。D-████ 仅能凭'直觉'识别。问及判定标准，答曰：「它们看起来不想被按。」\n\nD-████ 已失联。替补 D-████ 报告现象完全相同。\n\n——「引擎所赐之字，与引擎所厌之字，同为引擎之字。」",
+    "text_en": "Residual Anomaly: RA-047 · Decoy Interference\nManifested Will: Layer XI · Shadow of the Mirror Codex\n\nObservation Log: D-████ reports additional glyphs appearing during containment inscription. Visual properties identical to standard glyphs, positioning exact. Upon inscription, scoring system records negative increment. Technical verification: glyph generation normal, scoring process normal.\n\nScriptor K-████ addendum: Visual distinction between 'false' and true glyphs impossible. D-████ identification relies solely on 'intuition'. When asked for criteria, responded: \"They look like they don't want to be pressed.\"\n\nD-████ lost contact. Replacement D-████ reports identical phenomena.\n\n—\"The glyphs granted by the Engine, and the glyphs spurned by the Engine, are both glyphs of the Engine.\"",
+    "_voice": "doc",
+    "_objectId": "boss_decoy"
+  }
+]

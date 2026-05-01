@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "暗契券",
+    "name_en": "Umbral Compact",
+    "text_zh": "墨未干，蜡未凝——暗处亦有买卖。其价不在什一，而在汝之所愿舍弃者。",
+    "text_en": "Ink still wet, wax yet warm—trade flourishes in shadow's embrace. Its price lies not in tithe, but in what thou wouldst surrender.",
+    "_objectId": "black_market",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "门券莫名其妙地出现在第█层的抄写台上。\n\n分级：Safe\n来源：未记录（无征用表单F-001存档）\n描述：废料纸张制成，印刷质量粗糙。背面有手写划痕，疑似改写过的层级编号。持有者可进入未编册的补给点位。该点位库存包含更高分级的圣器，但采购依据不明。\n备注：░░░层管理员要求销毁此物。命令被驳回——条例§4.2优先级更高。\n处置：按标准流程分发给D级键徒。",
+    "text_en": "Tickets appear sporadically on scribal desks throughout Layer █.\n\nClass: Safe\nOrigin: Unlogged (no F-001 requisition forms on file)\nDescription: Crude paper stock with poor print quality. Reverse side shows handwritten scratches, possibly altered layer numbers. Bearers gain access to uncatalogued supply stations. These stations stock higher-classification artifacts, though procurement authority remains unclear.\nNote: ░░░ Layer supervisors requested destruction. Order overruled—§4.2 takes precedence.\nDisposition: Standard distribution to D-Class keystroke personnel.",
+    "_objectId": "black_market",
+    "_voice": "doc"
+  }
+]

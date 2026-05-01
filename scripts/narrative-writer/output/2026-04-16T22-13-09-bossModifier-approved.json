@@ -1,0 +1,209 @@
+[
+  {
+    "id": "boss_fast_time",
+    "name_zh": "沙漏急坠",
+    "name_en": "The Plummeting Glass",
+    "text_zh": "时沙不候汝之铭刻——其流如瀑，汝祷如蚁步。",
+    "text_en": "Time-sand brooks no inscription—it flows as torrent while thy prayer crawls.",
+    "_voice": "bell",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "name_zh": "铅字噬时",
+    "name_en": "The Devouring Keys",
+    "text_zh": "每一铅字之落，皆夺汝片刻光阴——铭刻愈勤，时光愈薄。",
+    "text_en": "Each leaden glyph devours moments—the more thou inscribes, the thinner time grows.",
+    "_voice": "bell",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "name_zh": "狂流渐起",
+    "name_en": "The Rising Torrent",
+    "text_zh": "时之洪流渐疾如怒马——其势不可逆，唯能随波而行。",
+    "text_en": "Time's torrent quickens like wrathful steeds—its momentum unstoppable, thou canst only ride.",
+    "_voice": "bell",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "name_zh": "寒铅封键",
+    "name_en": "The Frozen Keys",
+    "text_zh": "震颤生寒霜，霜封汝铅字——愈颤愈寒，愈寒愈哑。",
+    "text_en": "Tremors birth frost, frost seals thy slugs—the more thou errs, the deeper silence.",
+    "_voice": "bell",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "name_zh": "镜中重誓",
+    "name_en": "The Mirrored Oath",
+    "text_zh": "已竟之路，重走如镜影——时刻倒流，超者归空。",
+    "text_en": "Path once walked, revisited as mirror—time flows backward, the late return to void.",
+    "_voice": "bell",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "name_zh": "时蚀残余",
+    "name_en": "Temporal Decay",
+    "text_zh": "「时间啃噬一切铭文——其铅字渐薄，其音渐弱」",
+    "text_en": "\"Time devours all inscription—the lead grows thin, the voice fades\"",
+    "_voice": "bell",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "name_zh": "限额封印",
+    "name_en": "Bounded Seal",
+    "text_zh": "「引擎设槛——单词之铅不得越界，如囚鸟于笼」",
+    "text_en": "\"The Engine sets bounds—no word's lead may cross the threshold\"",
+    "_voice": "bell",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "name_zh": "重门显现",
+    "name_en": "Twin Gates",
+    "text_zh": "「引擎之门槛倍增——汝须铸双重祷文方得通行」",
+    "text_en": "\"The Engine's threshold doubles—only twin litanies may pass\"",
+    "_voice": "bell",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "name_zh": "递衰诅咒",
+    "name_en": "Diminishing Curse",
+    "text_zh": "「每一铭刻皆削弱下一铭刻——如烛火渐熄，如声渐哑」",
+    "text_en": "\"Each inscription weakens the next—as candles dim, as voices fade\"",
+    "_voice": "bell",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "name_zh": "铅税征收",
+    "name_en": "Lead Tithe",
+    "text_zh": "「引擎征收其什一税——每词皆须献其铅于虚无」",
+    "text_en": "\"The Engine claims its tithe—each word surrenders lead to void\"",
+    "_voice": "bell",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "name_zh": "血铅渗透",
+    "name_en": "Sanguine Seepage",
+    "text_zh": "「汝之铭文如漏器，圣流尽泄于铅缝之间。唯广覆盖者，方可挽其一二。」",
+    "text_en": "\"Thy inscriptions bleed through lead seams. Only the wide-cast may stanch the flow.\"",
+    "_voice": "bell",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "name_zh": "消字之息",
+    "name_en": "Breath of Erasure",
+    "text_zh": "「铅字如烛焰，一息一灭。汝须疾手，趁其未尽散于虚无。」",
+    "text_en": "\"Letters fade as candle flames. Swift hands must catch them ere they vanish.\"",
+    "_voice": "bell",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "name_zh": "乱字之惑",
+    "name_en": "Chaos of Glyphs",
+    "text_zh": "「铅字乱舞于版面，其序已非本序。汝当顺其乱象，莫逆其性。」",
+    "text_en": "\"Lead glyphs dance wild upon the press. Follow their chaos, resist not their nature.\"",
+    "_voice": "bell",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "name_zh": "逆序之镜",
+    "name_en": "Mirror of Reversal",
+    "text_zh": "「末字为首，首字为末——如镜中之文。汝须逆行，方得正道。」",
+    "text_en": "\"Last becomes first, first becomes last—text in mirror. Walk backward to find the path.\"",
+    "_voice": "bell",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "name_zh": "污墨侵文",
+    "name_en": "Ink Corruption",
+    "text_zh": "「异符潜入圣文，如蛆虫蚀木。汝当识其伪象，取其真骨。」",
+    "text_en": "\"False marks creep into sacred text like worms in wood. Know the false, take the true.\"",
+    "_voice": "bell",
+    "_objectId": "boss_garble"
+  },
+  {
+    "id": "boss_decoy",
+    "name_zh": "幻字惑心",
+    "name_en": "Phantom Glyphs",
+    "text_zh": "「伪铅混真铸，键徒心自疑」",
+    "text_en": "\"False leads mix with true, the keybound doubt their touch\"",
+    "_voice": "bell",
+    "_objectId": "boss_decoy"
+  },
+  {
+    "id": "boss_fast_time",
+    "text_zh": "残余异文：RA-047 · 时流倾泻\n归属意志：第 XII 层 · 祷文引擎核心意志\n异常概述：收容前表现为时间流速失控，影响范围覆盖整个站点。键徒报告'一切都在加速'，铅字自行飞出字盘。经测定，异文活跃期间时间流速可达标准值的 ██ 倍。\n收容残余：当前引擎压制下，仅在收容室内产生局部时流加速。效应强度已降至可控范围。\n附注：相关事故参见 F-017-████。\n——「时既定，则流必倾」",
+    "text_en": "Residual Anomaly: RA-047 · Temporal Cascade\nManifestation Origin: Layer XII · Core Engine Will\nAnomaly Overview: Pre-containment exhibited uncontrolled temporal acceleration across entire facility. Personnel reported 'everything rushing forward', with lead type ejecting spontaneously from cases. Measured flow rates reached ██x standard during active periods.\nContainment Residue: Under current Engine suppression, produces localized temporal acceleration within containment chamber only. Effect intensity reduced to manageable parameters.\nAddendum: Related incidents documented in F-017-████.\n——'When time is set, the flow must pour'",
+    "_voice": "doc",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_escalation",
+    "text_zh": "残余异文：RA-091 · 渐崩序列\n归属意志：第 ██ 层 · [数据删除]\n异常概述：收容前表现为时间流速的自催化增长。初期症状轻微，随后呈指数级恶化。最终观测到的流速达 ██ 倍，导致 ██ 名键徒在数分钟内经历完整生命周期。\n收容残余：引擎持续压制下，增长曲线已被限制为线性。单次增幅降至 ██%。\n附注：该异文与 RA-047 的关联性正在调查中。禁止同时激活。\n——「小火燎原，滴水穿石」",
+    "text_en": "Residual Anomaly: RA-091 · Progressive Collapse\nManifestation Origin: Layer ██ · [DATA EXPUNGED]\nAnomaly Overview: Pre-containment exhibited autocatalytic temporal acceleration. Initial symptoms minimal, followed by exponential deterioration. Peak observed rates reached ██x standard, resulting in ██ personnel experiencing complete life cycles within minutes.\nContainment Residue: Under continuous Engine suppression, growth curve constrained to linear progression. Individual amplification reduced to ██%.\nAddendum: Correlation with RA-047 under investigation. Simultaneous activation prohibited.\n——'Small flames consume forests, drops pierce stone'",
+    "_voice": "doc",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "text_zh": "残余异文：RA-124 · 寒凝锁印\n归属意志：第 ██ 层 · 冰封意志\n异常概述：收容前表现为温度异常与时间凝滞的复合效应。受影响区域温度骤降至 -██℃，同时观测到时间流动的局部停滞。键徒报告'铅字结冰'、'手指冻僵'。\n收容残余：引擎压制下，仅在收容震颤时激活。凝滞持续时间与震颤累积次数呈正相关。\n附注：Scriptor K-████ 笔记摘录：'每次失误后，感觉时间在结冰。连呼吸都变慢了。'\n——「凛冬封印万物，唯意志之火不熄」",
+    "text_en": "Residual Anomaly: RA-124 · Frost-Lock Sigil\nManifestation Origin: Layer ██ · Will of Frost\nAnomaly Overview: Pre-containment exhibited compound temperature and temporal stasis effects. Affected areas dropped to -██℃ while displaying localized time flow cessation. Personnel reported 'frozen type' and 'numb fingers'.\nContainment Residue: Under Engine suppression, activates only during containment tremors. Stasis duration correlates positively with cumulative tremor count.\nAddendum: Extract from Scriptor K-████ notes: 'After each mistake, time feels frozen. Even breathing slows.'\n——'Winter seals all things, yet the fire of will never dies'",
+    "_voice": "doc",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "text_zh": "残余异文：RA-156 · 镜面轮回\n归属意志：第 XII 层 · 引擎反射意志\n异常概述：收容前表现为现实层的强制重演。键徒完成任务后立即回到起点，保留前次记忆但时间储备翻转为倒计时。超时导致时间本质完全剥夺，受试者'从未存在过'。\n收容残余：引擎约束下，仅在达成收容基准后触发单次重演。时间翻转效应保留。\n附注：Scriptor T-████ 最后报告：'又要重来了。这次我看到了镜子里的自己在笑。'\n——「镜中之影知汝所不知，汝所经历它已预见」",
+    "text_en": "Residual Anomaly: RA-156 · Mirror Recursion\nManifestation Origin: Layer XII · Engine Reflection Will\nAnomaly Overview: Pre-containment forced mandatory re-enactment of reality layers. Personnel completing tasks immediately returned to origin points with retained memories but time reserves inverted to countdown. Timeout resulted in complete temporal essence extraction—subjects 'never existed'.\nContainment Residue: Under Engine constraint, triggers single re-enactment only after containment threshold achievement. Time inversion effect preserved.\nAddendum: Final report from Scriptor T-████: 'Starting over again. This time I see myself smiling in the mirror.'\n——'The reflection knows what you do not, what you experience it has foreseen'",
+    "_voice": "doc",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "text_zh": "残余异文：RA-047 · 铭分蚀失\n归属意志：第 XII 层 · 祷文引擎核心意志\n异常概述：收容前该异文表现为时间性消解效应，能够使既定事实发生逆转。曾记录 ██ 起完整建筑结构在 ██ 分钟内回归原料状态的案例。影响范围可达 ██ 公里。\n收容残余：引擎压制下，异文仅能对铭刻成果产生微弱的蚀解作用。键徒报告\"铭分如沙般流失\"。测定表明残留效应约为本体强度的 ██%。\n附注：F-017 事件报告显示蚀失现象与引擎运转周期呈负相关。\n——「既铸之铅，亦归于尘」",
+    "text_en": "Residual Anomaly: RA-047 · Inscription Decay\nAssociated Will: Layer XII · Core Engine Manifestation\nAnomalous Summary: Prior to containment, entity demonstrated temporal dissolution properties capable of reversing established facts. ██ incidents recorded involving complete structural reversion to base materials within ██ minutes. Effective range documented at ██ kilometers.\nContainment Residue: Under Engine suppression, anomaly exhibits limited erosive effects on inscription outcomes. Subjects report \"scores flowing away like sand.\" Measurements indicate residual potency at ██% of baseline manifestation.\nAddendum: F-017 incident reports correlate decay phenomena with Engine operational cycles (negative correlation).\n——「What once was struck, returns to dust」",
+    "_voice": "doc",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "text_zh": "残余异文：RA-033 · 铭额封顶\n归属意志：第 XII 层 · 祷文引擎核心意志\n异常概述：该异文具有量度限制特性，能够对特定数值施加绝对上限。收容前曾导致 ██ 个城市的人口增长在达到 ██ 后完全停滞，新生儿出现 [已编辑] 现象。\n收容残余：引擎约束下，异文仅能对单次铭刻成果设定微弱的数值边界。键徒描述为\"如有无形之匣束缚文字\"。上限值与收容基准相关联。\n——「一匣一度，不可逾越」",
+    "text_en": "Residual Anomaly: RA-033 · Inscription Ceiling\nAssociated Will: Layer XII · Core Engine Manifestation\nAnomalous Summary: Entity possesses quantitative limitation properties, capable of imposing absolute caps on specified values. Pre-containment incidents included ██ cities experiencing complete population growth cessation at ██ threshold, with newborns exhibiting [REDACTED] phenomena.\nContainment Residue: Under Engine restraint, anomaly demonstrates limited numerical boundary effects on individual inscription yields. Subjects describe \"invisible boxes constraining the words.\" Cap values correlate with containment thresholds.\n——「One measure, one bound, none shall exceed」",
+    "_voice": "doc",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "text_zh": "残余异文：RA-019 · 目标倍增\n归属意志：第 XII 层 · 祷文引擎核心意志\n异常概述：该异文能够对既定标准产生镜像复制效应。收容前曾使 ██ 座工厂的生产配额在一夜间翻倍，随后出现 [数据删除] 规模的物资短缺和社会动荡。\n收容残余：引擎抑制下，异文的复制能力被限制在收容基准层面。键徒报告目标要求\"如影随形般加重\"。现象持续时间与引擎功率输出呈反比。\n附注：Scriptor K-████ 笔记提及\"第二重门槛的出现\"，但后续记录中断。\n——「一诺既出，必有其影」",
+    "text_en": "Residual Anomaly: RA-019 · Target Multiplication\nAssociated Will: Layer XII · Core Engine Manifestation\nAnomalous Summary: Entity exhibits mirror duplication effects on established standards. Pre-containment manifestation caused ██ industrial facilities to experience overnight quota doubling, resulting in [DATA EXPUNGED] scale resource deficit and social disruption.\nContainment Residue: Under Engine suppression, duplication capacity limited to containment threshold levels. Subjects report target requirements \"growing heavy like shadows.\" Phenomenon duration inversely correlates with Engine power output.\nAddendum: Scriptor K-████ notes reference \"appearance of second threshold,\" but subsequent records terminate.\n——「One promise spoken, its shadow must follow」",
+    "_voice": "doc",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "text_zh": "残余异文：RA-061 · 成就递减\n归属意志：第 XII 层 · 祷文引擎核心意志\n异常概述：该异文对累积性活动产生负向增益效应。收容前导致多个学术机构的研究成果质量随论文数量增加而下降，最终研究人员出现 ██% 的能力永久衰退。\n收容残余：引擎压制下，异文仅对连续铭刻行为施加轻微的递减影响。键徒形容为\"每一击都比前一击更沉重\"。效应在休息间隔后可自然复原。\n——「行之愈频，得之愈寡」",
+    "text_en": "Residual Anomaly: RA-061 · Achievement Diminishment\nAssociated Will: Layer XII · Core Engine Manifestation\nAnomalous Summary: Entity produces negative incremental effects on cumulative activities. Pre-containment caused research quality degradation proportional to publication volume at multiple academic institutions, culminating in ██% permanent capability reduction among research personnel.\nContainment Residue: Under Engine suppression, anomaly imposes minor diminishing effects on consecutive inscription actions. Subjects describe \"each strike heavier than the last.\" Effects naturally recover during rest intervals.\n——「The more one acts, the less one gains」",
+    "_voice": "doc",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "text_zh": "残余异文：RA-028 · 贡献征收\n归属意志：第 XII 层 · 祷文引擎核心意志\n异常概述：该异文具有价值抽取特性，能够从完成行为中\"征收\"一定份额。收容前曾导致 ██ 个经济体出现神秘的生产力流失，工人完成同等工作但产出持续下降。\n收容残余：引擎约束下，异文的征收能力被限制为对铭刻成果的微量削减。每次铭刻后键徒报告\"有什么被悄然带走了\"。征收量与当前收容压力相关。\n附注：§4.2 损耗补充条例中提及类似现象，但具体关联性待查。\n——「劳者得其九，余者归虚无」",
+    "text_en": "Residual Anomaly: RA-028 · Contribution Levy\nAssociated Will: Layer XII · Core Engine Manifestation\nAnomalous Summary: Entity demonstrates value extraction properties, capable of \"taxing\" portions from completed actions. Pre-containment caused mysterious productivity losses across ██ economic systems, with workers maintaining effort levels while output consistently declined.\nContainment Residue: Under Engine constraint, extraction capacity limited to minor inscription yield reduction. Subjects report \"something quietly taken away\" following each inscription. Levy amounts correlate with current containment pressure.\nAddendum: §4.2 Wastage Compensation protocols reference similar phenomena, but specific correlation requires investigation.\n——「Nine parts to the laborer, the rest returns to void」",
+    "_voice": "doc",
+    "_objectId": "boss_score_tax"
+  }
+]

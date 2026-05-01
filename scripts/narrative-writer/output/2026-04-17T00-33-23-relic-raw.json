@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "蓄压圣印",
+    "name_en": "Sigil of Accumulated Pressure",
+    "text_zh": "积字愈多，其力愈重——如铅水渐满之坩埚。唯长词方能承载此重，短字徒劳。",
+    "text_en": "The longer the word, the heavier its leaden strike. Brief utterances carry no weight in the molten depths.",
+    "_objectId": "long_word_crit",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "编号: A-1174\n版级: 定版 / Fixum\n发现地点: 第III层 抄写室走廊\n\n描述: 一段刻于铜版上的铭文组残片。持有者报告铭刻较长祷文时感受到'铅字愈发沉重'。经观察，D-████使用期间确有异常增益现象。\n\n备注: 第███次使用后，走廊内偶闻低沉共鸣音。原因不明。已转交第V层进一步分析。",
+    "text_en": "Item No: A-1174\nGrade: Fixum\nRecovery Site: Layer III Scriptorium Corridor\n\nDescription: Copper-etched inscription fragment of unknown provenance. Subjects report sensation of 'heavier letterforms' during extended litany work. Observable performance anomalies confirmed during D-████ deployment.\n\nNote: After ███rd use, low resonant humming detected in corridor. Cause undetermined. Transferred to Layer V for further analysis.",
+    "_objectId": "long_word_crit",
+    "_voice": "doc"
+  }
+]

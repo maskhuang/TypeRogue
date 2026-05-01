@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "什一铅税",
+    "name_en": "Decimation Tithe",
+    "text_zh": "引擎索其什一——汝每铸一字，其中十分之几必归虚空。",
+    "text_en": "The Engine claims its tithe—of every word forged, a portion returns to void.",
+    "_objectId": "boss_score_tax",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "残余异文：RA-217 · 征收蚀失\n归属意志：第 VII 层 · 薄册意志\n异常概述：铸字坊内全部圣字钉重量以固定速率递减，持续至完全粉化。蚀失速率与目标收容基准呈正相关，基准越高蚀失越快。收容失败时曾导致第 ██ 铸字坊在 ██ 小时内全部字料归零。\n收容残余：引擎压制下表现为部分圣字钉质量微幅衰减。键徒铭刻时偶报告'字符变轻'。\n附注：以双倍铅料供给抵消蚀失的实验中，蚀失速率反增 ██%。供料愈多，损耗愈烈，违背基础炼金律。油壶内剩余润滑油呈琥珀色，检测显示未发生化学变化。\n——「重者愈重，轻者归尘」",
+    "text_en": "Residual Anomaly: RA-217 · The Tithe Decay\nSource Will: Layer VII · Will of the Ledger\nAnomalous Overview: All sacred slugs within foundries experience mass reduction at fixed rate until complete pulverization. Decay rate correlates positively with containment threshold - higher baselines accelerate deterioration. Pre-containment breach resulted in total material loss across Foundry ██ within ██ hours.\nContainment Residue: Under Engine suppression manifests as minor mass degradation in select slugs. Operators occasionally report 'lightening letters' during inscription.\nAddendum: Experiments doubling lead supply to counter decay resulted in ██% increased deterioration rate. Greater provision yields swifter loss, violating fundamental alchemical law. Remaining lubricant presents amber coloration with no detectable chemical alteration.\n——「The heavy grow heavier, the light return to dust」",
+    "_objectId": "boss_score_tax",
+    "_voice": "doc"
+  }
+]

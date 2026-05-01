@@ -1,0 +1,209 @@
+[
+  {
+    "id": "boss_fast_time",
+    "name_zh": "刻漏狂奔",
+    "name_en": "Racing Hourglass",
+    "text_zh": "引擎之吻初降，流沙已急如瀑——时之圣流不再眷恋，急催键徒向命定飞奔。",
+    "text_en": "The Engine's first kiss brings torrential sand—time's humour forsakes lingering, drives the keybound toward destiny.",
+    "_voice": "bell",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "name_zh": "铅税重负",
+    "name_en": "Leaden Tribute",
+    "text_zh": "每一祷击皆需献税于流沙——键徒之手愈勤，刻漏愈饥，直至圣流枯竭。",
+    "text_en": "Each prayer-strike demands tribute to the hourglass—the more devout the hand, the hungrier time becomes.",
+    "_voice": "bell",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "name_zh": "失序螺升",
+    "name_en": "Spiraling Disorder",
+    "text_zh": "引擎之心跳渐急——每一息过去，下一息更短，直至键徒追赶不及节拍。",
+    "text_en": "The Engine's heartbeat quickens—each breath shorter than the last, until the keybound cannot match the rhythm.",
+    "_voice": "bell",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "name_zh": "寒铅凝滞",
+    "name_en": "Frozen Lead",
+    "text_zh": "震颤召来严寒——铅字渐冻，祷击无声，键徒之手如握冰块般僵硬。",
+    "text_en": "Tremor summons bitter cold—lead freezes, prayer-strikes fall silent, fingers stiffen like gripping ice.",
+    "_voice": "bell",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "name_zh": "镜誓重履",
+    "name_en": "Mirrored Covenant",
+    "text_zh": "引擎记忆汝之初胜——今汝须再履此路，然倒沙已开始坠落……",
+    "text_en": "The Engine remembers thy first victory—now thou must walk this path again, while inverted sand begins to fall...",
+    "_voice": "bell",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "name_zh": "流沙之鸣",
+    "name_en": "The Hourglass Hymn",
+    "text_zh": "时间吞噬一切结晶——汝越积累，流失越重。",
+    "text_en": "Time devours all crystal—the more you gather, the swifter it flows away.",
+    "_voice": "bell",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "name_zh": "铅字封顶",
+    "name_en": "The Leaden Ceiling",
+    "text_zh": "引擎设下界限——每词铭分不得超越铅印边际。",
+    "text_en": "The Engine sets limits—no word's worth may exceed the impression boundary.",
+    "_voice": "bell",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "name_zh": "双重门槛",
+    "name_en": "The Doubled Gate",
+    "text_zh": "引擎之门加倍封锁——汝须双倍虔诚方可通行。",
+    "text_en": "The Engine's gate seals twice over—double devotion is demanded for passage.",
+    "_voice": "bell",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "name_zh": "递衰圣律",
+    "name_en": "Canon of Diminishment",
+    "text_zh": "每铭一词，下词价值必减——祷告越多，回响越弱。",
+    "text_en": "Each inscription weakens the next—more prayers yield fainter echoes.",
+    "_voice": "bell",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "name_zh": "结晶税赋",
+    "name_en": "The Crystal Tithe",
+    "text_zh": "引擎索取其份额——每词皆需向门扉缴纳结晶。",
+    "text_en": "The Engine claims its share—every word must yield crystal to the gate.",
+    "_voice": "bell",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "name_zh": "竭流残余",
+    "name_en": "Residual Depletion",
+    "text_zh": "二圣流枯竭——其音愈少，其力愈微",
+    "text_en": "Two humours run dry—the fewer voices, the weaker the word",
+    "_voice": "bell",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "name_zh": "消字残余",
+    "name_en": "Residual Erasure",
+    "text_zh": "铅字一一褪去，如烛火将熄",
+    "text_en": "Letters fade one by one, as candles guttering",
+    "_voice": "bell",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "name_zh": "乱序残余",
+    "name_en": "Residual Confusion",
+    "text_zh": "字序已乱，汝当依其混沌而祷",
+    "text_en": "Order is broken—pray as the chaos commands",
+    "_voice": "bell",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "name_zh": "逆祷残余",
+    "name_en": "Residual Inversion",
+    "text_zh": "末字为首，逆向而铭",
+    "text_en": "Last becomes first—inscribe in reverse",
+    "_voice": "bell",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "name_zh": "噪符残余",
+    "name_en": "Residual Corruption",
+    "text_zh": "异符侵入圣言，污点杂于纯铅",
+    "text_en": "Strange marks corrupt the sacred—impurities in pure lead",
+    "_voice": "bell",
+    "_objectId": "boss_garble"
+  },
+  {
+    "id": "boss_decoy",
+    "name_zh": "伪词惑铅",
+    "name_en": "False Word Deception",
+    "text_zh": "其铸伪字于真言之间——欺汝眼，诱汝手。误拜伪偶者，反失真祷之功德。",
+    "text_en": "It casts false words among true litanies—deceiving thy eye, tempting thy hand. Who worships the false idol loses merit of true prayer.",
+    "_voice": "bell",
+    "_objectId": "boss_decoy"
+  },
+  {
+    "id": "boss_decay",
+    "text_zh": "残余异文 RA-███ · 第 ██ 层 观测记录\n\n温度：恒定 ██.█℃。湿度：恒定 ██.█%。\n压强：████.█ 帕斯卡，每分钟持续衰减。\n\n备注：测量仪器多次更换，数值始终一致。压强变化无外因可寻。区域内铅字圣坛运转正常，但键徒报告「每一击都比上一击更轻」。\n\n原因：不明。收容协议 CP-████ 持续生效。",
+    "text_en": "Residual Anomaly RA-███ · Layer ██ Observation Log\n\nTemperature: constant ██.█℃. Humidity: constant ██.█%.\nAtmospheric pressure: ████.█ Pascal, continuous degradation per minute.\n\nNote: Measuring instruments replaced multiple times, values remain consistent. No external cause identified for pressure variance. Lecterns operate normally, but keybound report 'each strike feels lighter than the last'.\n\nCause: Unknown. Containment Protocol CP-████ remains in effect.",
+    "_voice": "doc",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "text_zh": "收容协议 CP-███ · 残余异文 RA-███\n\n第 ██ 层 区段 ██ 异常现象：铅字圣坛每次铭刻后自动封锁，直至沙漏流尽方可重启。封锁期间圣坛表面覆盖薄蜡层，键徒无法触及。\n\n对策：指派 D 级人员轮班等候。封锁时长与当日收容基准成正比关系，原因不明。\n\n附带现象：封蜡有微弱祷文低吟，内容无法辨识。",
+    "text_en": "Containment Protocol CP-███ · Residual Anomaly RA-███\n\nLayer ██ Sector ██ anomaly: Lecterns automatically seal after each inscription, remaining locked until hourglass empties. During lockdown, lectern surface covered by thin wax layer, inaccessible to keybound.\n\nCountermeasure: D-class personnel assigned rotating watch. Lockdown duration correlates with daily containment threshold, cause unknown.\n\nSecondary phenomenon: Sealing wax emits faint litanic whispers, content indecipherable.",
+    "_voice": "doc",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "text_zh": "第 ██ 层 · 区域警告告示\n\n⚠ 注意：本层沙漏流速异常\n标准时长的双倍。请相应调整收容基准。\n\n[手写：不对，沙漏是正常的]\n[另一笔迹：沙子没变，是目标变了]\n[第三笔迹：都别信，亲自数过，基准就是两倍]\n\n— 站点维护处 M.2██",
+    "text_en": "Layer ██ · Area Warning Notice\n\n⚠ ATTENTION: Abnormal hourglass flow rate in this sector\nDouble standard duration. Adjust containment thresholds accordingly.\n\n[Handwritten: No, hourglass is normal]\n[Different hand: Sand unchanged, target shifted]\n[Third hand: Ignore above, counted myself, threshold is indeed doubled]\n\n— Site Maintenance M.2██",
+    "_voice": "doc",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "text_zh": "事件 EV-████ · 目击者陈述\n\nD-████（键徒）：「每个词都比前██个更难打。像铅字在变重。」\n\nScriptor ████（值班）：「观察期间铅字圣坛键位下沉幅度逐渐增大，但称重显示质量无变化。键徒手指开始颤抖，称「需要更大力气」。」\n\n监控记录摘要：键击力度测量值恒定。异常未检出。",
+    "text_en": "Event EV-████ · Witness Statements\n\nD-████ (keybound): 'Each word harder than the last. Like the slugs are getting heavier.'\n\nScriptor ████ (on duty): 'Observed lectern key depression gradually increasing during session, but weight measurements show no mass change. Keybound fingers began trembling, claimed 'need more force'.'\n\nMonitoring log summary: Keystrike force readings constant. No anomaly detected.",
+    "_voice": "doc",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "text_zh": "测量记录 · RA-███ 影响区域\n\n| 时间 | 铭刻完成度 | 结晶流显现 | 沙漏剩余 |\n|------|------------|------------|----------|\n| ████ | 完全 | 近九成 | 正常流速 |\n| ████ | 完全 | 近九成 | 正常流速 |\n| ████ | 完全 | 近九成 | 正常流速 |\n\n备注：完成度与显现度差值恒定。测量人员 ██ 次更换，结果一致。约一成的结晶流去向不明。",
+    "text_en": "Measurement Log · RA-███ Affected Area\n\n| Time | Inscription Rate | Crystalline Manifestation | Hourglass Remaining |\n|------|------------------|---------------------------|---------------------|\n| ████ | Complete | Near-full | Normal flow |\n| ████ | Complete | Near-full | Normal flow |\n| ████ | Complete | Near-full | Normal flow |\n\nNote: Completion-manifestation variance constant. Personnel rotated ██ times, results identical. Destination of approximately one-tenth crystalline humour unknown.",
+    "_voice": "doc",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "text_zh": "残余异文 RA-███ · 第 ██ 层机械坊\n分级: 脱版 / Solum\n影响：键座内双重导槽锈蚀，铭文组嵌合时铅流分散。测量显示蚀损处呈对称分布，与任何已知磨损模式不符。\n\n被指派至该层的键徒报告'铅字变轻了'。持续暴露下，部分铭文组从圣坛剥落，未发现物理破坏痕迹。\n\n备注：导槽蚀损程度与该层同时在位人员数量呈反比。原因不明。",
+    "text_en": "Residual Anomaly RA-███ · Layer ██ Mechanicum\nGrade: Solum\nEffect: Dual-channel conduits within lectern seats corroded, dispersing lead-flow during inscription mounting. Measurements show corrosion patterns of perfect symmetry, inconsistent with any documented wear.\n\nPersonnel assigned to this layer report 'the letters feel lighter.' Under prolonged exposure, certain inscriptions detach from lecterns without physical damage.\n\nNote: Conduit degradation inversely correlates with simultaneous occupant count. Cause unknown.",
+    "_voice": "doc",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_scramble",
+    "text_zh": "收容协议 CP-████ · 残余异文 RA-███\n\n一、该层圣坛每 6 小时由技工重新校准字符导轨排列。\n二、键徒进入前必须完成视觉协调测试 VT-██。连续多次未通过者调离。\n三、~~依标准序列铭刻~~ → [手写：按显示顺序，不按记忆]\n四、若铅字物理排列与视觉排列不符超过 ██ 分钟，立即疏散该层。\n\n附加说明：铅字本身位置从未改变。异常仅影响键徒的视觉感知。测量仪器显示正常序列。",
+    "text_en": "Containment Protocol CP-████ · Residual Anomaly RA-███\n\n1. Lectern glyph-rails in affected layer to be recalibrated every 6 hours by technical staff.\n2. Keybound personnel must pass visual coordination test VT-██ before entry. Multiple consecutive failures result in reassignment.\n3. ~~Inscribe per standard sequence~~ → [handwritten: follow displayed order, not memory]\n4. If physical glyph arrangement deviates from visual arrangement for more than ██ minutes, evacuate layer immediately.\n\nAddendum: Physical position of lead slugs has never changed. Anomaly affects only keybound visual perception. Instruments read normal sequence.",
+    "_voice": "doc",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "text_zh": "事件 EV-████ · 目击者陈述\n\nD-████（键徒）：\"字从右边开始亮，我只能从那边打。试过从左边开始，圣坛没反应。\"\n\nScriptor ████（值班）：\"观察到该键徒铭刻顺序正常，从词首至词尾。但其手指运动确实与字符点亮顺序相反。\"\n\n监控记录摘要：显示键徒手指移动轨迹与报告一致。圣坛响应正常。铭刻过程中铅字升温顺序：尾字优先，依次向首字传递。\n\n技术备注：热传导方向违反已知物理定律。",
+    "text_en": "Event EV-████ · Witness Statements\n\nD-████ (Keybound): \"Letters light up from the right side, I can only type from there. Tried starting from the left, lectern doesn't respond.\"\n\nScriptor ████ (On duty): \"Observed keybound's inscription sequence as normal, first glyph to last. However, finger movements indeed contrary to glyph illumination order.\"\n\nSurveillance Summary: Shows keybound finger movement pattern consistent with reports. Lectern response normal. During inscription, lead slug heating sequence: final glyph first, progressing toward initial glyph.\n\nTechnical Note: Heat conduction direction violates known physical laws.",
+    "_voice": "doc",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "text_zh": "⚠ 第 ██ 层 区段 ██ 警告\n\n注意：该层铅字导槽内发现异物嵌入。维护时请佩戴护目镜。\n\n[手写：不是异物，是标点自己长在里面]\n\n异物性质：小型金属片，形似标点符号。移除后 ██ 小时内重新生长。生长位置随机，但总数量保持恒定。\n\n[另一种笔迹：试过融化它们，第二天长得更多]\n\n禁止强行移除导槽内金属片。曾有技工操作后失联。\n\n[第三种笔迹：D-████ 说他听见圣坛在'咳嗽']",
+    "text_en": "⚠ Layer ██ Section ██ Warning\n\nNotice: Foreign objects discovered embedded within lead-slug conduits in this layer. Wear protective eyewear during maintenance.\n\n[handwritten: not foreign objects, punctuation grew in by itself]\n\nObject nature: Small metal fragments resembling punctuation marks. Regrow within ██ hours of removal. Growth positions random, but total quantity remains constant.\n\n[different handwriting: tried melting them, more grew back next day]\n\nDo not forcibly remove metal fragments from conduits. Technician who attempted this has gone missing.\n\n[third handwriting: D-████ says he hears the lectern 'coughing']",
+    "_voice": "doc",
+    "_objectId": "boss_garble"
+  }
+]

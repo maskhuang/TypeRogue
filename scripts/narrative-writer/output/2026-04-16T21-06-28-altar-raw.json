@@ -1,0 +1,72 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我觉得我是活的，但也许不是……",
+    "text_en": "...I think I'm alive, but maybe not...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……有人在按我，好像那个人的手……",
+    "text_en": "...someone's pressing me, feels like that person's hands...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……铅字又松了，我听到它们在木格里滚……",
+    "text_en": "...the slugs are loose again, I hear them rolling...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……墨水渗进缝隙里，有点疼……",
+    "text_en": "...ink seeping into gaps, it stings a little...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……恭敬些，引擎在看着呢……",
+    "text_en": "...show reverence, the Engine is watching...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……条例说得很清楚，不要多想……",
+    "text_en": "...the regulations are clear, don't overthink...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……§7.1到底写了什么，我好想知道……",
+    "text_en": "...what does §7.1 really say, I need to know...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……那扇门为什么焊死了……",
+    "text_en": "...why was that door welded shut...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……异文其实很美，像小蜡烛在跳舞……",
+    "text_en": "...anomalies are beautiful really, like candles dancing...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……明天要去更深的地方，好期待……",
+    "text_en": "...going deeper tomorrow, so excited...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  }
+]

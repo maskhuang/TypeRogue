@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "余音护盾",
+    "name_en": "Scutum Resonantia",
+    "text_zh": "连祷既断，其音犹存半数。铜铃虽寂，回响不灭。",
+    "text_en": "When litany breaks, half its echo remains. Though the bronze bell falls silent, resonance endures.",
+    "_objectId": "combo_buffer",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "物品编号: AO-047\n\nObject Class: Safe\n\n发现地点: 第IV层 抄写室废墟\n\n描述: 一枚椭圆形铜质护符，表面刻有连续的波纹纹样。当持有者的连祷被外力中断时，护符会发出微弱共鸣，使部分祷文余韵得以保存。\n\n备注: 护符内侧刻有铭刻派圣言：\"断而不绝，韵犹在心\"。经检测，该物品与第VII层发现的███████具有相同的合金成分。\n\n最后更新: M.2██/██/██",
+    "text_en": "Item Number: AO-047\n\nObject Class: Safe\n\nRecovery Location: Level IV Scriptorium Ruins\n\nDescription: An oval copper talisman inscribed with continuous wave patterns. When the bearer's litany is interrupted by external interference, the talisman produces faint resonance, preserving portions of the recitation's echo.\n\nNotes: Inner surface bears Graven Order scripture: \"Broken yet unbroken, the echo remains in heart.\" Analysis confirms identical alloy composition to ███████ recovered from Level VII.\n\nLast Updated: M.2██/██/██",
+    "_objectId": "combo_buffer",
+    "_voice": "doc"
+  }
+]

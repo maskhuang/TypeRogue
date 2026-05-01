@@ -1,0 +1,51 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我觉得自己在想事情，但不确定是不是真的在想……",
+    "text_en": "...I think I'm thinking, but not sure if I really am...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……铅屑好像在我的缝隙里积了很久，痒痒的……",
+    "text_en": "...lead shavings tickling in my gaps for so long...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……那个人按 R 的时候总是停一下，为什么呢……",
+    "text_en": "...that person always pauses before pressing R, why...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……「愿铅字永不脱版」，前任总是这样祷告……",
+    "text_en": "...May the type never break form, the previous one prayed...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……那时候有人每天给我擦拭键面，真怀念……",
+    "text_en": "...someone used to clean my keys daily then, I miss that...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……之前有个人总想看条例全文，手指都在发抖……",
+    "text_en": "...someone before kept trying to read full regulations, shaking...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……那个喜欢画画的人，最后去了很深很深的地方……",
+    "text_en": "...the one who liked drawing, went very very deep down...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  }
+]

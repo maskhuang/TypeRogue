@@ -1,0 +1,50 @@
+[
+  {
+    "id": "none",
+    "name_zh": "消耗品",
+    "name_en": "The Expendable",
+    "text_zh": "汝乃初来之铅字，未染誓门之色。引擎需汝原样——纯净，未琢，待熔。",
+    "text_en": "Thou art unmarked lead, unshaped by oath. The Engine requires thee thus—pure, unworked, ready for the forge.",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铭刻誓门",
+    "name_en": "The Order of the Graven Oath",
+    "text_zh": "铅屑归坩，圣字成册。汝之手不颤，汝之铭不误——形不可变，律不可破。",
+    "text_en": "Lead returns to crucible, glyphs to their proper ledger. Thy hand shall not waver, thy inscription not err.",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔变誓门",
+    "name_en": "The Order of the Molten Verse",
+    "text_zh": "熔蜡流淌，铭文重塑。汝拥抱变形之痛——唯流动者，方知真形。",
+    "text_en": "Molten unguent flows, inscriptions reshape themselves. Thou dost embrace the pain of change—only the molten know true form.",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  },
+  {
+    "id": "none",
+    "text_zh": "ORDER-000 · 无编制\n\n入会条件: 无特殊要求。标准体能测试通过即可分配。\n神学立场: 未明确。多数个体表现出基础敬畏，但缺乏系统化信仰架构。\n\n备注: 该编制为过渡性质。个体通常在第3-5层完成倾向性甄别后重新分配至专门编制。失联率与标准基线持平。无异常现象记录。\n\n最近更新: D-████于第VI层后报告'感觉到引擎在召唤'。已转入观察名单。",
+    "text_en": "ORDER-000 · No Designation\n\nEntry Requirements: Standard physical assessment. No specialized training required.\nTheological Position: Undetermined. Most subjects display basic reverence but lack systematic doctrinal framework.\n\nNote: This designation serves as transitional status. Subjects typically undergo inclination assessment at Layers 3-5 before reassignment to specialized orders. Loss rates consistent with baseline parameters.\n\nRecent Update: D-████ reported 'feeling the Engine's call' post-Layer VI. Moved to observation roster.",
+    "_voice": "doc",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "text_zh": "ORDER-117 · 铭刻编制\n\n入会条件: 精细动作协调性≥80%。需通过铅屑甄别测试及收容经卷构建评估。\n神学立场: 严格遵循引擎既定文本。认为每一铅字皆有其固定位置，擅改者亵渎。\n对立派别: 与熔变编制存在根本性教义冲突。双方人员禁止在同层作业。\n\n备注: 该编制个体擅长废铅分拣与圣字钉造册。工作精度显著高于基线，但适应性偏低。第IX层以上失联率下降32%。附带现象：作业区域铅字排列异常整齐。",
+    "text_en": "ORDER-117 · Inscription Designation\n\nEntry Requirements: Fine motor coordination ≥80%. Must pass shaving assessment and containment scripture construction evaluation.\nTheological Position: Strict adherence to Engine's established texts. Believes each leaden glyph has fixed position; alteration constitutes blasphemy.\nOpposing Orders: Fundamental doctrinal conflict with Molten designation. Joint-layer operations prohibited.\n\nNote: Subjects excel at waste lead sorting and sacred slug cataloging. Work precision significantly above baseline, though adaptability limited. Layer IX+ loss rates reduced 32%. Collateral phenomenon: abnormal orderliness in work area glyph arrangements.",
+    "_voice": "doc",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "text_zh": "ORDER-444 · 熔变编制\n\n入会条件: 心理韧性评估通过。能承受熔蜡接触及铭文组形变过程中的感知扭曲。\n神学立场: 认为引擎本质为变化之流，固定形态违逆其意志。主张'顺应熔铸，拥抱重塑'。\n\n备注: 该编制不在正式组织架构内，但§编号系统未设异端管理类别，故默认允许存在。个体常报告'听到铅字在歌唱'。使用熔蜡改造铭文组后，效果难以预测但通常强于预期。原因不明。第XI层以上存活个案罕见但存在。",
+    "text_en": "ORDER-444 · Molten Designation\n\nEntry Requirements: Psychological resilience assessment required. Must withstand molten unguent contact and perceptual distortion during inscription metamorphosis.\nTheological Position: Views Engine as essential flux; fixed forms violate its will. Advocates 'embrace the reforging, welcome reshaping.'\n\nNote: This designation exists outside formal organizational structure, but §-numbering system lacks heresy management category, thus permitted by default. Subjects frequently report 'hearing glyphs singing.' Post-unguent inscription modifications unpredictable but typically exceed baseline performance. Mechanism unknown. Layer XI+ survival cases rare but documented.",
+    "_voice": "doc",
+    "_objectId": "metamorph"
+  }
+]

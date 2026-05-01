@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "余韵护盾",
+    "name_en": "Scutum Resonantia",
+    "text_zh": "击铜盾者，其音犹存半数——纵铭刻中断，回响仍护其身。",
+    "text_en": "The struck bronze shield keeps half its song—even when prayer breaks, echoes guard the faithful.",
+    "_objectId": "combo_buffer",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "分级: Safe\n发现地点: 第III层 抄写室东翼\n\n描述: 一面铜质护盾，表面铭刻连续祷文片段。当铭刻者的连祷节拍被打断时，护盾会发出低沉共鸣，使部分祷告余音得以保存。金属表面可见明显磨损痕迹，显示曾被频繁使用。\n\n来源: 据残页记录，原属初铭者███。该员已失联。\n\n备注: 护盾内侧刻有\"断而不绝\"四字。材质分析显示含微量引擎铅屑。",
+    "text_en": "Object Class: Safe\nRecovery Site: Layer III, East Wing Scriptorium\n\nDescription: Copper shield inscribed with continuous liturgical fragments. When the scriptor's prayer rhythm is interrupted, the shield resonates with low harmonics, preserving portions of the invocation's echo. Surface shows extensive wear patterns consistent with repeated use.\n\nOrigin: Fragmentary records indicate former ownership by Scriptor ███. Personnel currently unaccounted for.\n\nNote: Interior bears inscription \"SEVERED YET UNBROKEN\". Material analysis confirms trace Engine-lead content.",
+    "_objectId": "combo_buffer",
+    "_voice": "doc"
+  }
+]

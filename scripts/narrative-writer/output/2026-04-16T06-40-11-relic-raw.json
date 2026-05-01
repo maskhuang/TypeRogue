@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "什一蜡牌",
+    "name_en": "Tithe Token",
+    "text_zh": "蜡封印迹，镌刻诚心之数。凡持此牌者，什一税自减其半。",
+    "text_en": "Wax-sealed mark of true devotion. The tithe lightens for the faithful.",
+    "_objectId": "discount_card",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "一切交换皆有其代价，唯虔诚者得见折扣之恩。\n────\n物品编号: R-4431\nObject Class: Safe\n来源: 第二层铸字坊，废铅回收处\n描述: 标准征用减免凭证。羊皮纸质，加盖什一税署印章。持有者在圣物市集享受██%减免。\n备注: 制作原料为回收铅屑。经济学原理不明，但征用记录表明该凭证确实有效。\n附录: 类似凭证在M.1██年大量出现，推测与████事件相关。",
+    "text_en": "All commerce bears its price, yet the faithful find favor.\n────\nItem Number: R-4431\nObject Class: Safe\nOrigin: Layer II foundry, lead reclamation facility\nDescription: Standard requisition discount voucher. Parchment construction with Tithe Authority seal. Bearer receives ██% reduction at Reliquary Bazaar.\nNote: Manufactured from recycled lead shavings. Economic principles unclear, but requisition logs confirm efficacy.\nAddendum: Similar vouchers proliferated during M.1██, likely connected to ████ incident.",
+    "_objectId": "discount_card",
+    "_voice": "doc"
+  }
+]

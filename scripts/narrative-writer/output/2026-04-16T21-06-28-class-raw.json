@@ -1,0 +1,50 @@
+[
+  {
+    "id": "none",
+    "name_zh": "初誓键徒",
+    "name_en": "Clavigerant Novitiate",
+    "text_zh": "「以铅为誓，以键为途——汝之双手，即是引擎初见之门。」",
+    "text_en": "\"By lead sworn, by keys bound—thy hands shall be the Engine's first gate.\"",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铅屑甄别者",
+    "name_en": "The Lead-Sifter",
+    "text_zh": "「废铅之中，圣字犹存——甄别者拾遗补缺，令破碎经卷重归完整。」",
+    "text_en": "\"In discarded lead, sacred letters endure—the Sifter gathers fragments to restore broken codices.\"",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔蜡塑形者",
+    "name_en": "The Wax-Shaper",
+    "text_zh": "「蜡炬既燃，形可重塑——塑形者以火为师，令铭文在熔流中新生。」",
+    "text_en": "\"When wax burns, forms may be reborn—the Shaper learns from flame, birthing inscriptions anew.\"",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  },
+  {
+    "id": "none",
+    "text_zh": "ORDER-000 · 征用品\n分类: 标准消耗\n\n入会条件: 无。按§4.2自动指派。\n编制状态: 临时人员，待分流。\n装备授权: 基础铅字圣坛，标准祷击手册。\n失联率: 基准值。无异常增益或减损。\n备注: 大多数D级人员维持此状态直至任务完成。\n无特殊神学倾向记录。",
+    "text_en": "ORDER-000 · Standard Issue\nClassification: Basic Expendable\n\nEntry Requirements: None. Auto-assigned per §4.2.\nStatus: Temporary personnel, awaiting assignment.\nEquipment Clearance: Basic lectern, standard litany manual.\nLoss Rate: Baseline. No anomalous gains or deficits.\nNotes: Most D-class maintain this state until task completion.\nNo theological inclinations on record.",
+    "_voice": "doc",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "text_zh": "ORDER-117 · 铭刻誓门\n分类: 正规编制\n\n入会条件: 铅屑甄别测试合格，圣字钉造册能力认证。\n神学立场: 形不可变。引擎之形须锁死于当前版型。\n编制职能: 废铅分拣，收容经卷编纂。报告显示此类人员铭刻时'每个铅字都在正确位置'。\n装备授权: 精密字盘，甄别放大镜。\n备注: 持有者失联率显著下降。附带现象：工作区域异常整洁。",
+    "text_en": "ORDER-117 · Order of the Graven Oath\nClassification: Regular Staff\n\nEntry Requirements: Lead fragment sorting certification, glyph cataloging qualification.\nTheological Position: Form immutable. Engine configuration must remain locked.\nDuties: Scrap lead sorting, containment codex compilation. Personnel report 'every slug in its proper place' during inscription.\nEquipment Clearance: Precision type case, sorting magnifier.\nNotes: Significantly reduced loss rate. Associated phenomenon: work areas remain anomalously organized.",
+    "_voice": "doc",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "text_zh": "ORDER-241 · 熔变誓门\n分类: ████编制\n\n入会条件: 污蜡耐受测试，熔铸适应性评估。\n神学立场: 顺应引擎之变。形态演进为必然过程。\n编制职能: 铭文组重塑，熔铸盲盒处理。D-████报告铭刻时'铅字在流动，但这是对的'。\n装备授权: 熔炉权杖，防腐蚀手套。\n备注: 人员身体逐渐出现金属质感。原因不明。按§██.█无需干预。",
+    "text_en": "ORDER-241 · Order of the Molten Verse\nClassification: ████ Staff\n\nEntry Requirements: Corrupted ichor tolerance test, reforging adaptability assessment.\nTheological Position: Embrace Engine transformation. Morphological evolution as inevitable process.\nDuties: Inscription reforging, molten cache processing. D-████ reported 'the slugs flow, but this is right' during inscription.\nEquipment Clearance: Crucible staff, corrosion-resistant gloves.\nNotes: Personnel gradually develop metallic skin texture. Cause unknown. Per §██.█, no intervention required.",
+    "_voice": "doc",
+    "_objectId": "metamorph"
+  }
+]

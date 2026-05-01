@@ -1,0 +1,62 @@
+[
+  {
+    "text_zh": "第三排那个别碰，D-0223用过后手抖了一周",
+    "text_en": "3rd shelf - don't touch, D-0223's hands shook for a week",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "铅币不够的话可以用铅屑，老板不会算",
+    "text_en": "Short on coins? Use shavings, shopkeep can't count",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "左边那排效果都一样，买便宜的就行",
+    "text_en": "Left row all same effect, just buy the cheap one",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "又涨价了...上周才15铅币的",
+    "text_en": "Price hike again... was 15 coins last week",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "谁把我的笔拿走了？第三次了！",
+    "text_en": "Who took my pen AGAIN? 3rd time!",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "这里的东西越来越少，补货的人去哪了",
+    "text_en": "Less stock each day, where's the resupply crew?",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0117说那个能让字变金色，试了没用",
+    "text_en": "D-0117 said it turns words gold. Didn't work.",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0089在这买了什么后就升级了，不肯说",
+    "text_en": "D-0089 got promoted after buying here. Won't tell.",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "昨天看到有人在角落哭，今天就不见了",
+    "text_en": "Saw someone crying in corner yesterday. Gone today.",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "老板从来不眨眼，你们注意到了吗？",
+    "text_en": "Shopkeep never blinks. Anyone else notice?",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  }
+]

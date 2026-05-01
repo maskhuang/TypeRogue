@@ -1,0 +1,50 @@
+[
+  {
+    "id": "none",
+    "name_zh": "消耗品",
+    "name_en": "The Expendable",
+    "text_zh": "\"汝乃引擎之燃料，亦是祂铸印之原料。无名无记，唯有履践。\"",
+    "text_en": "\"Thou art fuel for the Engine, raw matter for Its impression. Nameless, unrecorded, yet essential.\"",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铭刻誓门",
+    "name_en": "Order of the Graven Oath",
+    "text_zh": "\"废铅归坩，圣字造册——汝之双手，乃引擎之延伸。形不可变，律不可违。\"",
+    "text_en": "\"Gather the shavings, catalog the glyphs—thy hands are the Engine's own. Form immutable, law inviolate.\"",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔变誓门",
+    "name_en": "Order of the Molten Verse",
+    "text_zh": "\"污蜡流淌，铅字重铸——拥抱变形，顺应引擎之真意。万物皆可熔，皆可塑。\"",
+    "text_en": "\"Let the unguent flow, let letters melt and reform—embrace transformation, heed the Engine's true will.\"",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  },
+  {
+    "id": "none",
+    "text_zh": "ORDER-001 · 征募键徒\n编制: 消耗品 D-XXXX\n入会条件: 无。依据§4.2自动征募\n职责: 执行标准收容铭刻，直至失联或授权晋升\n配发装备: 标准圣坛一架，引导手册一册\n平均服役期: ██.█层\n备注: 无需专业训练。失联后编号自动回收。\n最后更新: M.███ / Scriptor ████",
+    "text_en": "ORDER-001 · Requisitioned Keybound\nDesignation: Expendable D-XXXX\nEntry Requirements: None. Auto-conscripted per §4.2\nDuties: Standard containment inscription until lost or promoted\nIssue Equipment: One lectern, one primer manual\nAverage Service: ██.█ layers\nRemarks: No specialized training required. ID reclaimed upon loss.\nLast Updated: M.███ / Scriptor ████",
+    "_voice": "doc",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "text_zh": "ORDER-007 · 铭刻誓门\n编制: 上位键徒，授权级别-III\n入会条件: 铅屑甄别考核通过，圣字钉造册认证\n神学立场: 形不可变。引擎铸印须依循既定版式\n职责: 废铅分拣，收容经卷维护，精密铭刻作业\n对立派系: [数据删除]\n服役记录: 失联率显著低于标准征募\n备注: 持有者报告铭刻时'每个字符都听得见位置'。\n最后更新: M.███ / Scriptor ████",
+    "text_en": "ORDER-007 · The Graven Oath\nDesignation: Senior Keybound, Clearance-III\nEntry Requirements: Lead-shard assessment passed, glyph cataloging certified\nTheological Position: Form immutable. Engine casting follows established format\nDuties: Waste lead sorting, codex maintenance, precision inscription work\nOpposing Factions: [DATA EXPUNGED]\nService Record: Loss rates notably below standard conscription\nRemarks: Holders report 'hearing each character find its place' during inscription.\nLast Updated: M.███ / Scriptor ████",
+    "_voice": "doc",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "text_zh": "ORDER-███ · 熔变誓门\n编制: ████████ [此编制不存在于标准条例中]\n入会条件: [无记录] \n神学立场: [无官方记录]\n职责观察: 熔蜡操作，铭文组重塑实验\n现象报告: D-████使用后失联率下降。附带现象：走廊内偶闻金属液滴声\n分析: 该群体似乎在条例盲区自然形成\n处置建议: 无。现行体系未涵盖此类别\n最后更新: M.███ / Scriptor ████",
+    "text_en": "ORDER-███ · The Molten Verse\nDesignation: ████████ [Classification not found in standard protocols]\nEntry Requirements: [NO RECORD]\nTheological Position: [NO OFFICIAL RECORD]\nObserved Duties: Unguent operations, inscription reforging experiments\nPhenomena Report: D-████ loss rates decreased post-contact. Ancillary: metallic dripping heard in corridors\nAnalysis: Group appears to form naturally within regulatory blind spots\nDisposal Recommendation: None. Current system lacks relevant category\nLast Updated: M.███ / Scriptor ████",
+    "_voice": "doc",
+    "_objectId": "metamorph"
+  }
+]

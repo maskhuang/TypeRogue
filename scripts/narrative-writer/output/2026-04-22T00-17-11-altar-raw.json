@@ -1,0 +1,86 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我觉得有人在按我，但也许没有？",
+    "text_en": "...I think someone's pressing me, but maybe not?",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……这些铅字好像在发热……",
+    "text_en": "...these slugs feel warm somehow...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……我是活的吗？还是只是……",
+    "text_en": "...am I alive? Or just...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……条例第四章规定的很清楚……",
+    "text_en": "...Canon Four states it clearly...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……那扇焊死的门后面……到底……",
+    "text_en": "...behind that welded door...what's really...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……这个异文好漂亮，像小蝴蝶……",
+    "text_en": "...this glyph is so pretty, like a butterfly...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  },
+  {
+    "source": "scriptor_d",
+    "text_zh": "……本职按键如常……",
+    "text_en": "...this position operates normally...",
+    "_voice": "altar",
+    "_objectId": "scriptor_d"
+  },
+  {
+    "source": "scriptor_d",
+    "text_zh": "……此岗位记录……不，我……",
+    "text_en": "...this station records...no, I...",
+    "_voice": "altar",
+    "_objectId": "scriptor_d"
+  },
+  {
+    "source": "scriptor_d",
+    "text_zh": "……有个人。不，几个人……都一样……",
+    "text_en": "...someone. No, several...all the same...",
+    "_voice": "altar",
+    "_objectId": "scriptor_d"
+  },
+  {
+    "source": "scriptor_e",
+    "text_zh": "……对照组数据……你的反应很有趣……",
+    "text_en": "...control group data...your reaction is fascinating...",
+    "_voice": "altar",
+    "_objectId": "scriptor_e"
+  },
+  {
+    "source": "scriptor_e",
+    "text_zh": "……实验记录：圣坛具备记忆功能……",
+    "text_en": "...experiment log: lectern exhibits memory capacity...",
+    "_voice": "altar",
+    "_objectId": "scriptor_e"
+  },
+  {
+    "source": "scriptor_e",
+    "text_zh": "……你跟前面那些不一样……",
+    "text_en": "...you're different from the previous ones...",
+    "_voice": "altar",
+    "_objectId": "scriptor_e"
+  }
+]

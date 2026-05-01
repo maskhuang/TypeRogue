@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "恒燃油盏",
+    "name_en": "Eternal Oil Lamp",
+    "text_zh": "其芯燃而不尽，铅灯照亮更深之层。唯油壶满溢者，方可久立于黑暗。",
+    "text_en": "Its wick burns without end, casting lead-light into deeper vaults. Only the oil-blessed may linger long in darkness.",
+    "_objectId": "endurance_battery",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "汝铸己身为流沙之器——承载更深的祷告。\n────\nObject Class: Safe\n编目编号: SA-4471\n来源地点: 第 IV 层 机械外壳分拣间\n\n描述: 黄铜制长方体装置，内含精密弹簧机制。定期注入机械油后可维持标准运转周期。装置表面铭刻小型沙漏标记，底部有接地螺栓。\n\n备注: 已纳入标准征用清单。维护手册参见附录 SA-4471-M。设备故障时参照 §4.2 损耗补充条例进行替换。\n\n最后更新: M.2██ / Scriptor ████",
+    "text_en": "Thou dost forge thyself as vessel of the hourglass—to bear deeper prayer.\n────\nObject Class: Safe\nCatalog ID: SA-4471\nRecovery Site: Layer IV, Mechanical Shell Sorting Bay\n\nDescription: Rectangular brass device containing precision spring mechanisms. Maintains standard operational cycles when periodically serviced with mechanical oil. Surface bears small hourglass engravings, base equipped with grounding bolts.\n\nNote: Included in standard requisition inventory. Maintenance manual referenced in Appendix SA-4471-M. Equipment failure addressed per §4.2 Wastage Replacement Protocol.\n\nLast Updated: M.2██ / Scriptor ████",
+    "_objectId": "endurance_battery",
+    "_voice": "doc"
+  }
+]

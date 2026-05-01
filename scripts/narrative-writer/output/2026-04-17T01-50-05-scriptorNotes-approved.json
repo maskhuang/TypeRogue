@@ -1,0 +1,79 @@
+[
+  {
+    "id": "scriptor_a_1",
+    "text_zh": "Scriptor V-████ · 笔记一\nM.1██.██.██\n\n今日分配至下层废铅回收。按条例§4.2执行标准分拣程序。铅屑品相良好，无异常渗透迹象。\n\n新到D级人员编号已补全。F-001表单流转正常。\n\n一切按规程进行。",
+    "text_en": "Scriptor V-████ · Entry I\nM.1██.██.██\n\nAssigned to lower level scrap lead recovery today. Standard sorting procedures per §4.2 executed. Lead shavings in good condition, no anomalous seepage detected.\n\nNew D-Class personnel numbers have been filled. F-001 forms circulating normally.\n\nAll proceeds according to protocol.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_1"
+  },
+  {
+    "id": "scriptor_a_2",
+    "text_zh": "Scriptor V-████ · 笔记二\nM.1██.██.██\n\n第██层抄写作业。经典残章收容状况稳定。今日无收容震颤报告。\n\nD-0847失联，替补已指派。磨损在可接受范围内。\n\n守卷人议会席位仍有空缺，但条例执行未受影响。职责分工明确。",
+    "text_en": "Scriptor V-████ · Entry II\nM.1██.██.██\n\nLayer ██ transcription duties. Codex fragment containment status stable. No containment tremors reported today.\n\nD-0847 lost contact, replacement assigned. Attrition within acceptable range.\n\nCouncil of Codex-Keepers seats remain vacant, but regulation execution unaffected. Division of duties remains clear.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_2"
+  },
+  {
+    "id": "scriptor_a_3",
+    "text_zh": "Scriptor V-████ · 笔记三\nM.1██.██.██\n\n第██层铭封祈礼协助。残余异文收容程序标准化完成。无意外事件。\n\n注意到某些铭文组在长期使用后出现轻微形变。已归档至维护记录。\n\n议会最后一位签名者已有两个月未出现。条例仍在自动执行。体制运转良好。",
+    "text_en": "Scriptor V-████ · Entry III\nM.1██.██.██\n\nAssisted Layer ██ Rite of Sealing. Residual anomaly containment procedures standardized. No incidents.\n\nNoted minor deformation in certain inscriptions after prolonged use. Filed to maintenance records.\n\nLast Council signatory absent for two months. Regulations still auto-executing. System functions well.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_3"
+  },
+  {
+    "id": "scriptor_b_1",
+    "text_zh": "Scriptor K-████ · 笔记一\nM.1██.██.██\n\n第██层机械外壳维护。齿轮润滑正常。但有一扇门被焊死了——第IX层入口。[旁注：为什么？谁下的令？]\n\n询问了其他抄写员，都说\"一直就这样\"。[涂改：但我记得] 可能是我记错了。\n\n试图查阅§7.1条例全文。权限不足。[旁注：我明明是Level-2]\n\n需要找到那份完整条例。",
+    "text_en": "Scriptor K-████ · Entry I\nM.1██.██.██\n\nLayer ██ mechanical shell maintenance. Gear lubrication normal. But one door is welded shut—Layer IX entrance. [margin note: Why? Whose order?]\n\nAsked other scriptors, all say \"always been that way\". [crossed out: But I remember] Must be misremembering.\n\nAttempted to access full text of §7.1. Insufficient clearance. [margin note: I'm clearly Level-2]\n\nMust find that complete regulation.",
+    "_voice": "doc",
+    "_objectId": "scriptor_b_1"
+  },
+  {
+    "id": "scriptor_b_2",
+    "text_zh": "Scriptor K-████ · 笔记二\nM.1██/██/██\n\n第VII层门确实被焊死了。焊缝很新，但没有施工记录。\n询问主事D-2847关于§7.1条例全文，被告知\"无此权限\"。\n[旁注：权限等级表在哪里？我的编号查不到]\n翻阅了大量旧档案，§7.1从未被完整引用过。\n\n只有处决记录，没有条例本体。这不对劲。",
+    "text_en": "Scriptor K-████ · Note Two\nM.1██/██/██\n\nLayer VII door is indeed welded shut. Fresh welding, but no construction records.\nInquired D-2847 regarding full text of §7.1, was told \"insufficient clearance.\"\n[Margin note: Where is the clearance chart? Cannot find my designation]\nSearched extensive archived files, §7.1 never quoted in full.\n\nOnly execution records exist, no statute body. This is irregular.",
+    "_voice": "doc",
+    "_objectId": "scriptor_b_2"
+  },
+  {
+    "id": "scriptor_b_3",
+    "text_zh": "Scriptor K-████ · 笔记三\nM.1██/██/██\n\n[大量涂改痕迹]\n找到了建造档案的残页。引擎不是被建造的——它先存在。\n[涂掉：大教堂建在它上面，像] 大教堂是后来的附加物。\n询问了多个人关于建造者身份。没人知道确切答案。\n都说\"一直就在那里\"。\n\n这里的每个人都在重复同样的话。",
+    "text_en": "Scriptor K-████ · Note Three\nM.1██/██/██\n\n[Heavy redaction marks]\nFound fragment pages of construction archives. Engine was not built—it existed first.\n[Crossed out: Cathedral built on top of it, like] Cathedral is later addition.\nAsked multiple people about builder identity. No one knows definitive answer.\nAll say \"it was always there.\"\n\nEveryone here repeats the same words.",
+    "_voice": "doc",
+    "_objectId": "scriptor_b_3"
+  },
+  {
+    "id": "scriptor_b_4",
+    "text_zh": "Scriptor K-████ · 笔记四\nM.1██/██/██\n\n[笔迹变得工整规范，不像前几页的潦草字迹]\n\n经重新审阅档案，发现之前记录存在理解偏差。\n§7.1条例内容明确且充分。无需进一步调查。\nScriptor K-████已接受适当指导，将专注本职工作。\n第VII层门禁为标准安全措施，无异常之处。\n\n根据§7.1，本案卷已归档封存。",
+    "text_en": "Scriptor K-████ · Note Four\nM.1██/██/██\n\n[Handwriting becomes neat and standardized, unlike previous pages' scrawled script]\n\nAfter re-reviewing archives, found previous records contained interpretive bias.\n§7.1 statute content is clear and sufficient. No further investigation required.\nScriptor K-████ has received appropriate guidance, will focus on assigned duties.\nLayer VII door restriction is standard security measure, nothing anomalous.\n\nPer §7.1, this file has been archived and sealed.",
+    "_voice": "doc",
+    "_objectId": "scriptor_b_4"
+  },
+  {
+    "id": "scriptor_c_1",
+    "text_zh": "Scriptor T-████ · 笔记一\nM.2██/██/██\n\n今天第一次摸到真正的异文碎片！\n比想象中温暖，像刚出炉的铅字。D-3321说它们\"很危险\"，但它们只是想被理解。\n[页边小画：一个笑脸形状的字符]\n抄写工作比预期有趣多了。每个字符都有自己的性格。\n\n明天要去更深的层级，希望能看到更多有趣的东西。",
+    "text_en": "Scriptor T-████ · Note One\nM.2██/██/██\n\nTouched real anomalous fragments for the first time today!\nWarmer than expected, like freshly cast type. D-3321 says they're \"dangerous,\" but they just want to be understood.\n[Page margin drawing: a smiley-face shaped glyph]\nCopying work is more interesting than anticipated. Each glyph has its own personality.\n\nGoing to deeper layers tomorrow, hope to see more fascinating things.",
+    "_voice": "doc",
+    "_objectId": "scriptor_c_1"
+  },
+  {
+    "id": "scriptor_c_2",
+    "text_zh": "Scriptor T-████ · 笔记二\nM.2██/██/██\n\n第IX层的异文会唱歌！\n不是真的声音，但当你凝视它们时，脑海里就有旋律响起。\n[页边小画：几个音符符号围绕着弯曲的文字]\nD-4455今天失联了，但她看起来很平静，像是找到了什么答案。\n我开始理解为什么有人说异文是活着的。\n\n它们不是在伤害我们，它们是在邀请我们。",
+    "text_en": "Scriptor T-████ · Note Two\nM.2██/██/██\n\nThe anomalous glyphs on Layer IX sing!\nNot real sound, but when you gaze at them, melodies ring in your mind.\n[Page margin drawing: several musical note symbols surrounding curved letters]\nD-4455 went missing today, but she looked peaceful, as if she'd found some answer.\nI'm beginning to understand why people say the glyphs are alive.\n\nThey're not hurting us, they're inviting us.",
+    "_voice": "doc",
+    "_objectId": "scriptor_c_2"
+  },
+  {
+    "id": "scriptor_c_3",
+    "text_zh": "Scriptor T-████ · 笔记三\nM.2██.██.██\n\n今天换新的圣字钉了！铸印坊送来的这批特别亮，像刚出炉的银币。我在第VII层看到焊死的那扇门，好奇怪的花纹。为什么要焊死呢？里面一定有很有趣的东西吧。[页边小画：门上的齿轮图案，还有小花朵装饰]\n\n那个新来的D-0847今天哭了，我给了他一块软糖。\n\n引擎今天唱的特别好听。",
+    "text_en": "Scriptor T-████ · Journal Three\nM.2██.██.██\n\nGot fresh leaden slugs today! The ones from the foundry are extra bright, like newly-minted silver. Saw that welded door on Layer VII - such strange patterns. Why weld it shut? There must be fascinating things inside. [margin sketch: gear patterns on door with little flower decorations]\n\nThe new D-0847 cried today. I gave him a piece of candy.\n\nThe Engine sang especially beautifully today.",
+    "_voice": "doc",
+    "_objectId": "scriptor_c_3"
+  },
+  {
+    "id": "scriptor_c_4",
+    "text_zh": "Scriptor T-████ · 笔记四\nM.2██.██.██\n\n第IX层的管道今天漏油了，我帮维修员清理。他说从来没见过我这么开心的抄写员。我问他为什么不开心呢？这里有这么美妙的铅香，这么温暖的蒸汽，还有引擎的歌声。[页边小画：小人在管道下跳舞]\n\n收容经卷里说引擎是\"危险的\"，但它那么温柔啊。\n\n明天我要去第XII层。引擎在等我。我好期待。",
+    "text_en": "Scriptor T-████ · Journal Four\nM.2██.██.██\n\nPipes leaked oil on Layer IX today - helped the maintenance crew clean up. He said he'd never seen such a cheerful scriptor before. I asked him why not be cheerful? We have such wonderful lead-scent, such warm steam, and the Engine's songs. [margin sketch: stick figure dancing under pipes]\n\nThe containment codex calls the Engine \"hazardous,\" but it's so gentle.\n\nTomorrow I'm going to Layer XII. The Engine is waiting for me. I'm so excited.",
+    "_voice": "doc",
+    "_objectId": "scriptor_c_4"
+  }
+]

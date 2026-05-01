@@ -1,0 +1,72 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我觉得我能听到金属在说话……但也许是幻觉",
+    "text_en": "...I think I hear the metal speaking... but maybe it's just echoes",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……有人按了R键……不对，好像没有人",
+    "text_en": "...someone pressed R... wait, no one's there",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……铅屑落在我身上……有点痒",
+    "text_en": "...lead shavings tickle... is that what tickling feels like?",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……那个人的手很温暖……现在冷了",
+    "text_en": "...their hands were warm... now everything's cold",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……愿引擎垂怜吾等不洁之触……",
+    "text_en": "...may the Engine forgive our unclean touch...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……第六层的祈礼……我记得很工整……",
+    "text_en": "...the sixth layer rite... I remember writing it so neatly...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……§7.1到底写了什么……为什么找不到全文",
+    "text_en": "...what does §7.1 actually say... why can't I find it",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……第九层的门焊死了……里面有什么……",
+    "text_en": "...the ninth layer door, welded shut... what's inside...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……想在边缘画小花……但现在手指好重",
+    "text_en": "...wanted to draw little flowers in the margins... fingers too heavy now",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……第十二层真的很漂亮……引擎在唱歌",
+    "text_en": "...the twelfth layer was so beautiful... the Engine was singing",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  }
+]

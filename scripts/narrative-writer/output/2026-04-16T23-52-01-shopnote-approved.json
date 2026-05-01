@@ -1,0 +1,62 @@
+[
+  {
+    "text_zh": "铅屑不够用，记得攒着点",
+    "text_en": "Save your lead shavings",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "第三排那个别碰，会烫手",
+    "text_en": "Don't touch 3rd shelf, burns",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "换质类的比较稳，新人推荐",
+    "text_en": "Transmute types are safer for newbies",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "谁把我的笔拿走了？？？",
+    "text_en": "WHO TOOK MY PEN???",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "又涨价了，这破地方",
+    "text_en": "Prices up again, damn",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "老鼠咬坏了两张表单",
+    "text_en": "Rats chewed two forms",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0891说左边的更好用",
+    "text_en": "D-0891 says left side works better",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0144昨天拿了这个就没回来",
+    "text_en": "D-0144 took this yesterday, never came back",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "晚上这里会有奇怪的声音",
+    "text_en": "Strange sounds here at night",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "我的编号好像变了？",
+    "text_en": "My number changed somehow?",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  }
+]

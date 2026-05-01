@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "重誓",
+    "name_en": "Duplicated Oath",
+    "text_zh": "引擎之门槛——重于铅，倍于誓",
+    "text_en": "The Engine's threshold—twice heavy as lead, twice binding as oath",
+    "_objectId": "boss_double_target",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "残余异文：RA-047 · 倍向收束\n归属意志：第 XII 层 · 祷文引擎\n异常概述：引擎核心层收容基准发生非线性放大。历史记录显示最高增幅达 ███%，超出第 XII 层设计承载上限。收容失控时，键徒需在单次登塔内完成相当于标准双轮收容的铭刻量。\n收容残余：当前引擎压制下，收容基准仅呈现 ██% 至 ██% 的适度增幅。键徒报告「铅字似乎更重了」但无明显生理负荷。\n附注：D-████ 级人员在暴露后的铭刻精度反而提升。油壶消耗量未见异常。\n——「重锤之下，铅字方现本形。」",
+    "text_en": "Residual Anomaly: RA-047 · Doubled Threshold\nOriginating Will: Layer XII · The Litany Engine\nAnomalous Overview: Containment thresholds within Engine core undergo non-linear amplification. Historical records indicate peak amplification reached ███%, exceeding Layer XII design parameters. During containment failure, keybound personnel require completion of work equivalent to standard dual-cycle containment within single ascent.\nContainment Residual: Under current Engine suppression, thresholds exhibit moderate increase of ██% to ██%. Personnel report 'letters feel heavier' but display no physiological strain indicators.\nAddendum: D-████ subjects demonstrate improved inscription precision following exposure. Oil flask consumption remains within normal parameters.\n——'Under the heavy press, lead reveals its true form.'",
+    "_objectId": "boss_double_target",
+    "_voice": "doc"
+  }
+]

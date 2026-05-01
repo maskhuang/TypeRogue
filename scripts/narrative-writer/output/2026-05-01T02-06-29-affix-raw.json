@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "Mmul 超额条款",
+    "name_en": "Mmul Surplus Clause",
+    "tier_0_zh": "雇员产出超出当日配额时，须在次日填报超额产能申报表。表单暂停受理中。",
+    "tier_0_en": "Excess output requires a surplus declaration form by next shift. Forms currently suspended.",
+    "tier_1_zh": "Mmul 协议触发后，超额记录出现重复归档现象。复审委员会已收到 7 份投诉，尚未受理。",
+    "tier_1_en": "Mmul protocol triggers duplicate archival entries. Review Committee has received seven complaints. Pending.",
+    "tier_2_zh": "触发时雇员报告手指停顿约半拍。行为档案已记录。原因栏填写：待定。",
+    "tier_2_en": "Employees report a half-beat finger pause upon trigger. Behavior file logged. Cause: pending.",
+    "tier_3_zh": "已确认：样本 #485,902 在 Mmul 超额事件后持续注视申报表单 4 秒。持有人未提交。",
+    "tier_3_en": "Confirmed: Subject #485,902 stares at the declaration form after each Mmul event. Form not submitted.",
+    "_objectId": "crit",
+    "_voice": "per_tier_flavor"
+  }
+]

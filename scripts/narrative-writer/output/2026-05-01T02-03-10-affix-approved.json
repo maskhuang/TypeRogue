@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "超额产出附注",
+    "name_en": "Output Surge Note",
+    "tier_0_zh": "雇员超额完成当日产能指标时，系统自动生成附注。行为档案更新周期不变。",
+    "tier_0_en": "System appends a note when daily output exceeds standard quota. Archive cycle unchanged.",
+    "tier_1_zh": "Mfas 协议触发后，残稿打字组合出现节律前移。复核记录显示附注生成时间早于操作时间戳。",
+    "tier_1_en": "After Mfas protocol triggers, keystroke rhythm shifts forward. Note timestamp precedes recorded input.",
+    "tier_2_zh": "超额时你听到的不是自己的键盘声。行为档案已备注：声源存疑，表单暂停受理。",
+    "tier_2_en": "The keystrokes during surplus do not sound like yours. Source flagged. Form intake suspended.",
+    "tier_3_zh": "已确认：样本 #485,902 手部动作超出基线范围。持有人未提交异议。",
+    "tier_3_en": "Confirmed: Subject #485,902 exhibits supra-baseline hand activity during Mfas protocol. No objection filed.",
+    "_objectId": "crit",
+    "_voice": "per_tier_flavor"
+  }
+]

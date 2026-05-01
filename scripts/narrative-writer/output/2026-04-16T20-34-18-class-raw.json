@@ -1,0 +1,50 @@
+[
+  {
+    "id": "none",
+    "name_zh": "初誓键徒",
+    "name_en": "The Novice Keybound",
+    "text_zh": "「以铅为誓，以键为坛——初铭之路始于此。」",
+    "text_en": "\"In lead we swear, upon keys we kneel—the first inscription begins here.\"",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铭刻誓门",
+    "name_en": "Order of the Graven Oath",
+    "text_zh": "「形不可变，律不可违——汝之手当如铁钳，汝之心当如凝铅。」",
+    "text_en": "\"Form unchanging, law unbroken—thy hand as iron, thy heart as molten lead.\"",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔变誓门",
+    "name_en": "Order of the Molten Verse",
+    "text_zh": "「唯变者恒，唯流者存——让圣字在烈焰中重生。」",
+    "text_en": "\"Only change endures, only flow remains—let sacred glyphs be reborn in flame.\"",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  },
+  {
+    "id": "none",
+    "text_zh": "ORDER-001 · 消耗品编制\n\n入会条件: 无。强制征募。\n分级: 标准损耗品\n\n标准编制键徒。按§4.2条例补充，无特殊授权。失联后编号回收再用。大部分在第III层内失联，少数抵达第V层。\n\n备注: 最大的编制。也是唯一不需要申请的编制。",
+    "text_en": "ORDER-001 · Expendable Personnel\n\nEntry Requirements: None. Mandatory conscription.\nClassification: Standard Loss-Asset\n\nStandard keybound operatives. Replenished per §4.2 regulations, no special clearance. ID numbers recycled after loss of contact. Majority lose contact within Layer III, few reach Layer V.\n\nNote: Largest personnel classification. Also the only one requiring no application.",
+    "_voice": "doc",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "text_zh": "ORDER-117 · 铭刻誓门\n\n入会条件: 第V层存活证明 + F-017无污染记录\n分级: 高权限技术人员\n神学立场: 形不可变，引擎当锁死\n\n专精废铅甄别与圣字钉造册。持有者报告铭刻时'每一字母都有准确重量'。经长期观察，确有精密操控现象。所造经卷收容成功率较标准编制高████%。\n\n备注: 与ORDER-344存在神学分歧，但按条例无冲突。",
+    "text_en": "ORDER-117 · The Order of the Graven Oath\n\nEntry Requirements: Layer V survival proof + F-017 clean record\nClassification: High-clearance Technical Personnel\nTheological Position: Form Immutable, Engine Must Remain Locked\n\nSpecialize in lead-waste sorting and sacred slug cataloguing. Holders report that during inscription 'each letter carries precise weight.' Long-term observation confirms anomalous precision control. Their constructed codices show ████% higher containment success than standard personnel.\n\nNote: Theological disagreement with ORDER-344 exists, but no regulatory conflict per standing orders.",
+    "_voice": "doc",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "text_zh": "ORDER-344 · 熔变誓门\n\n入会条件: 第IX层接触记录 + 污蜡耐受测试通过\n分级: ████ 特殊处理人员\n神学立场: 顺应变形，与引擎共化\n\n专精污蜡操控与铭文组重铸。D-████使用后报告'铅字在手中融化又重塑'。附带现象: 走廊内偶闻金属液体滴落声。重铸效果不可预测，但偶有超常表现。\n\n备注: 该编制在§编号系统中无正式类别。按惯例继续运作。",
+    "text_en": "ORDER-344 · The Order of the Molten Verse\n\nEntry Requirements: Layer IX contact record + Corrupted ichor tolerance test passed\nClassification: ████ Special Handling Personnel\nTheological Position: Embrace Transformation, Commune with Engine\n\nSpecialize in corrupted ichor manipulation and inscription recasting. D-████ reported after use that 'lead letters melt and reforge in my hands.' Associated phenomena: Occasional metallic dripping sounds in corridors. Recasting results unpredictable, but occasional extraordinary performance observed.\n\nNote: This classification has no formal category in §numbering system. Continues operation per established precedent.",
+    "_voice": "doc",
+    "_objectId": "metamorph"
+  }
+]

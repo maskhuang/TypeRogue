@@ -1,0 +1,24 @@
+[
+  {
+    "text_en": "Back to Basics · R-0 Class Documentation Aid\n\nIssuing Department: Records & Behavioral Archives Division\nIssued To: Employees cleared for independent output assessment following voluntary skills inventory liquidation\n\nThis tool is issued to employees whose training authorizations have been fully surrendered in exchange for accelerated output recognition. It does not replace a skills portfolio. It is the acknowledgment that one no longer has a skills portfolio.\n\nOperating Notes:\n—— Forty-one employees who received this item subsequently submitted inquiry forms regarding re-authorization of lapsed skill certifications. The inquiry form referenced (RM-114) has been on administrative hold since the previous fiscal quarter. Records & Behavioral Archives has logged all forty-one submissions.\n—— Holders have reported that the item feels lighter than its dimensions suggest, and noticeably less so by the final week of the evaluation cycle. Physical Properties Review has declined to comment in writing.\n—— Several holders have noted that the absence of supplementary tools produces a period of approximately two to four working days during which output volume initially drops before stabilizing. Stabilization has been confirmed in the majority of documented cases. The minority has not been separately categorized.\n—— Upon reassignment or voluntary departure, this item is to be returned to the Records & Behavioral Archives Division together with any outstanding output logs. Replacement issuance requires approval from the Compliance Review Committee and is not guaranteed within the same cycle.\n\nThis item has not been cleared for use in conjunction with any active skill authorization. Employees currently holding open training credits should consult HR Policy Coordination before acceptance.",
+    "text_zh": "回归基础 · R-0 类文档辅助器\n\n配发部门：档案与行为记录处\n配发对象：在完成自愿技能清单注销后，已获准接受独立产能评估的雇员\n\n本工具配发对象为已将全部培训授权上缴、以换取加速产能认定资格的雇员。本工具不替代技能档案。本工具是对",
+    "_objectId": "glass_cannon_v2",
+    "_voice": "doc",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "【文本截断 · 中文】text_zh 在 '本工具是对' 之后被截断，缺失后续内容，无法完整评审中文版本。以下评审以 text_en 为主体，中文部分评分暂时存疑。",
+      "【Rule 12 · 功能描述偏重】Operating Notes 第三条（'output volume initially drops before stabilizing'）过度接近机制说明语言——它描述的是'功能曲线'而非'人遇到这个东西后经历了什么'。改为着墨于持有者的行为变化或感受会更符合收容主义官僚叙事风格。",
+      "【MIB 密度不足 · 楼层暗示缺失】全段无一处楼层限制 / 外勤认证 / 不在场机构的侧面引用（如'请勿带出 X 楼''未通过外勤认证'等）。现有分类编号（R-0、RM-114）和不在场机构（Physical Properties Review / Compliance Review Committee）已有雏形，但楼层暗示这条 MIB 信号词词典里的重要锚点完全缺席。",
+      "【MIB 密度不足 · '异常词料'类信号缺失】'The item feels lighter than its dimensions suggest, and noticeably less so by the final week' 是全文最接近'暗示水底'的一句，做得好。但 Physical Properties Review 'declined to comment in writing' 可以再推进半格——比如加一个 SOP 化的'按 Section X 处理意见维持'之类让这个沉默本身被程序化，而不仅仅是停留在'沒有回應'。",
+      "【'minority has not been separately categorized' · 黑色幽默潜力未充分兑现】这句话是全文最有力的黑色幽默钩子，但被埋在句末且语气太平。这类'被清单遗忘的人'在 v3.1 的 Ethical Rule 8（留白的重量）框架下应当被给予更多叙事空间——哪怕只是一个从属小节或一行档案编号。目前它承担了太多重量却只有半句话的篇幅。",
+      "【B1.a 合规 · 通过】无'突破/觉醒/钻研/共鸣/掌握'等禁止词。'voluntary skills inventory liquidation'（自愿技能清单注销）以及'training authorizations have been fully surrendered'完全符合被分发框架的反向操作逻辑（主动上缴也是公司流程主导，不是员工主动探索）。",
+      "【腔调 · 通过但略偏】整体腔调接近 HR 公文，但部分句子（特别是 Operating Notes 第一条罗列 41 人提交查询的过程）读来更像审计报告而非配发文档。档案 voice 的 HR 腔应更'配发单式'而非'审计汇报式'——两者都是公文，但前者对读者说'你拿到的是什么'，后者对上级说'发生了什么'。此处混用略显腔调漂移。",
+      "【Rule 14 · 规则句式密度合规】规则句式（'Upon reassignment... is to be returned'、'Replacement issuance requires approval'）占比约 20%，在 25% 配额内，合规。",
+      "【配额自我审计 · 通过】无 Section X 引用（0%），无上游母题，无猴子方向内容，载体为配发文档（非公告/政策类），全部在配额内。",
+      "【v2.3 残留 · 通过】无圣印/守卷人/大教堂等残留词汇。",
+      "【锚点准确性 · 通过】HR 无具名，无玩家工号误用，无主任/考核官混淆。",
+      "【黑色幽默五轴 · 基本达标，忧郁轴略偏低】'The minority has not been separately categorized' 和 Physical Properties Review 的沉默有效制造了不安感。但整体比 v3.1 六轴中 65% 忧郁的基准线低一档——文本过于干净、过于'正常的 HR 文件'，缺少那种'日常 + 一行不该出现的细节'的对比触发机制。"
+    ],
+    "_aiSuggestion": "1. 补全中文 text_zh 截断部分（'本工具是对……'之后）。\n2. Operating Notes 第三条改写方向：从'功能曲线描述'转向'持有者行为变化的档案记录'，例如：'档案与行为记录处收到的同期报告显示，部分雇员在初始使用阶段提交了非正式的工位申请变更表，理由栏填写为'工作节律重组'。该理由分类尚未录入标准申请系统。'\n3. 在末尾或 Operating Notes 中补一条楼层限制或外勤认证引用，例如：'本工具未通过 9 楼以上区域的独立使用认证。'\n4. 'minority has not been separately categorized' 可单独成一行，或加一条档案脚注编号（如 '[档案编号：REF-0041-H]'），让这个留白的重量在视觉上得到匹配。\n5. Physical Properties Review declined to comment 可改为：'物理属性复审组已将上述报告归入 REG-PP-071 流程，待处理时间不限。' ——让沉默本身被程序化，而不仅仅是停留在'没有回应'。"
+  }
+]

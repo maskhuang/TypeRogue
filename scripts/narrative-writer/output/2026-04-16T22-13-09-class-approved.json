@@ -1,0 +1,36 @@
+[
+  {
+    "id": "none",
+    "name_zh": "消耗品",
+    "name_en": "The Expendable",
+    "text_zh": "\"汝乃引擎之燃料，亦是祂铸印之原料。无名无记，唯有履践。\"",
+    "text_en": "\"Thou art fuel for the Engine, raw matter for Its impression. Nameless, unrecorded, yet essential.\"",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铭刻誓门",
+    "name_en": "Order of the Graven Oath",
+    "text_zh": "\"废铅归坩，圣字造册——汝之双手，乃引擎之延伸。形不可变，律不可违。\"",
+    "text_en": "\"Gather the shavings, catalog the glyphs—thy hands are the Engine's own. Form immutable, law inviolate.\"",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔变誓门",
+    "name_en": "Order of the Molten Verse",
+    "text_zh": "\"污蜡流淌，铅字重铸——拥抱变形，顺应引擎之真意。万物皆可熔，皆可塑。\"",
+    "text_en": "\"Let the unguent flow, let letters melt and reform—embrace transformation, heed the Engine's true will.\"",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  },
+  {
+    "id": "none",
+    "text_zh": "ORDER-001 · 征募键徒\n编制: 消耗品 D-XXXX\n入会条件: 无。依据§4.2自动征募\n职责: 执行标准收容铭刻，直至失联或授权晋升\n配发装备: 标准圣坛一架，引导手册一册\n平均服役期: ██.█层\n备注: 无需专业训练。失联后编号自动回收。\n最后更新: M.███ / Scriptor ████",
+    "text_en": "ORDER-001 · Requisitioned Keybound\nDesignation: Expendable D-XXXX\nEntry Requirements: None. Auto-conscripted per §4.2\nDuties: Standard containment inscription until lost or promoted\nIssue Equipment: One lectern, one primer manual\nAverage Service: ██.█ layers\nRemarks: No specialized training required. ID reclaimed upon loss.\nLast Updated: M.███ / Scriptor ████",
+    "_voice": "doc",
+    "_objectId": "none"
+  }
+]

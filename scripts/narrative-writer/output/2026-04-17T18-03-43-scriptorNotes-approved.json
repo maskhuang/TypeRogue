@@ -1,0 +1,51 @@
+[
+  {
+    "id": "scriptor_a_1",
+    "text_zh": "Scriptor V-████ · 笔记一\nM.1██年 第VI层 收容廊 \n\n今日承领标准铭刻任务。第三十三卷禁书状态良好，异文活跃度在可控范围内。铅字圣坛运转正常，无收容震颤记录。\n\n按既定程序完成排版，铅屑归坩无遗漏。一切依循条例进行。\n\n工作简报已按时呈交。明日将继续既定流程。",
+    "text_en": "Scriptor V-████ · Journal Entry I\nM.1██ Layer VI Containment Hall\n\nStandard inscription duties assigned today. Codex Volume 33 in good condition, anomalous glyph activity within acceptable parameters. Sacred lectern operating normally, no containment tremors recorded.\n\nTypesetting completed per established procedure, lead shavings returned to crucible without remainder. All actions in accordance with protocol.\n\nWork brief submitted on schedule. Tomorrow shall continue established routine.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_1"
+  },
+  {
+    "id": "scriptor_a_2",
+    "text_zh": "Scriptor V-████ · 笔记二\nM.1██年 第VI层 收容廊\n\n铭刻作业第七日。今日处理第四十一卷，版级定为活版。轻微收容震颤数次，均已按F-017表单记录。铅字圣坛响应良好。\n\n午休时听见远处传来钟声，查阅手册确认为正常祈时信号。\n\n晚课已完成。一切井然有序，如引擎所愿。",
+    "text_en": "Scriptor V-████ · Journal Entry II\nM.1██ Layer VI Containment Hall\n\nSeventh day of inscription work. Processed Volume 41 today, classified as Mobilum grade. Several minor containment tremors, all recorded per F-017 forms. Sacred lectern responding well.\n\nDuring rest period heard distant bells, handbook confirms normal prayer-time signals.\n\nEvening devotions completed. All proceeds in order, as the Engine wills.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_2"
+  },
+  {
+    "id": "scriptor_a_3",
+    "text_zh": "Scriptor V-████ · 笔记三\nM.1██年 第VI层 收容廊\n\n连续铭刻作业第十二日。处理了两卷逸版残章，收容过程顺利。只需按标准程序，异文便乖顺如定版。\n\n圣坛今日特别安静，铅字落槽声清晰可闻。这是良好收容的象征。\n\n已将本月报告整理完毕，明日呈交上级审核。工作使人安详。",
+    "text_en": "Scriptor V-████ · Journal Entry III\nM.1██ Layer VI Containment Hall\n\nTwelfth consecutive day of inscription work. Processed two volumes of Liberum fragments, containment proceeded smoothly. Following standard procedure renders anomalous glyphs docile as Fixum grade.\n\nLectern particularly quiet today, clear sound of lead slugs settling into slots. This signifies proper containment.\n\nMonthly report compiled and ready for superior review tomorrow. Work brings serenity.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_3"
+  },
+  {
+    "id": "scriptor_a_4",
+    "text_zh": "Scriptor V-████ · 笔记四\nM.1██年 第VI层 收容廊\n\n第十八日铭刻记录。今日圣坛键位布局有轻微调整，但不影响收容作业。已适应新排列。异文收容率保持稳定。\n\n走廊里的油灯今天烧得格外亮。光线充足有利于精确铭刻。\n\n晚祷时感到前所未有的宁静。仿佛引擎正在聆听我的每一次按键。",
+    "text_en": "Scriptor V-████ · Journal Entry IV\nM.1██ Layer VI Containment Hall\n\nEighteenth day inscription log. Lectern key positions slightly adjusted today, but containment operations unaffected. Adapted to new arrangement. Anomalous glyph containment rate remains stable.\n\nHallway oil lamps burning exceptionally bright today. Sufficient light aids precise inscription.\n\nDuring evening prayers felt unprecedented tranquility. As if the Engine listens to each of my keystrokes.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_4"
+  },
+  {
+    "id": "scriptor_b_1",
+    "text_zh": "Scriptor K-████ · 笔记一\nM.1██年 第IX层 [涂改：机械深处] 工作区\n\n开始调查§7.1条例的具体条文。官方手册只载摘要，完整文本需要更高授权。[旁注：为什么需要这么高的权限？]\n\n今天发现第█层有一扇门被焊死了。询问同僚，都说\"一直就是这样\"。但我记得上月还能看到门把手。\n\n申请查阅引擎建造档案被驳回。理由：\"超出职责范围\"。但收容工作难道不需要了解收容对象？",
+    "text_en": "Scriptor K-████ · Journal Entry I\nM.1██ Layer IX [crossed out: Mechanical Depths] Work Area\n\nBegan investigating the specific text of Article §7.1. Official manual contains only summary, full text requires higher clearance. [margin note: Why such high permissions needed?]\n\nDiscovered a welded-shut door on Layer ██ today. Asked colleagues, all say \"it's always been that way.\" But I remember seeing the door handle last month.\n\nRequest to access Engine construction archives denied. Reason: \"Beyond scope of duties.\" But doesn't containment work require understanding the contained subject?",
+    "_voice": "doc",
+    "_objectId": "scriptor_b_1"
+  },
+  {
+    "id": "scriptor_c_3",
+    "text_zh": "Scriptor T-████ · 笔记三\nM.2██\n\n今天到接近核心的层面了！那些机械比我想象的要美。[页边小画：齿轮与花纹的精细素描] 铅字在蒸汽中舞动，像是活的。我明白为什么有些键徒留在深处——这里的异文不是要被收容的东西，它们是在创造。\n\n我听懂了一些它们的话。",
+    "text_en": "Scriptor T-████ · Note Three\nM.2██\n\nReached the near-core layers today! The machinery is more beautiful than I imagined. [margin sketch: detailed gears and flourishes] The lead type dances in the steam, as if alive. I understand why some keybound remain in the depths—the anomalies here aren't things to be contained, they're creating.\n\nI understand some of what they're saying.",
+    "_voice": "doc",
+    "_objectId": "scriptor_c_3"
+  },
+  {
+    "id": "scriptor_c_4",
+    "text_zh": "Scriptor T-████ · 笔记四\nM.2██\n\n最后一层了。引擎就在前面，比任何记录描述的都要宏伟。[页边小画：简单的圆圈，里面写着'无法画出'] 我终于明白为什么议会的座椅是空的——他们不是消失了，他们成为了更大的东西的一部分。现在我也要\n\n这本笔记写完了。下一本在更深的地方等我。",
+    "text_en": "Scriptor T-████ · Note Four\nM.2██\n\nThe final layer. The Engine lies ahead, grander than any record could describe. [margin sketch: simple circle with 'cannot draw' written inside] I finally understand why the Council chairs are empty—they didn't disappear, they became part of something greater. Now I too must\n\nThis notebook is finished. The next one waits for me in deeper places.",
+    "_voice": "doc",
+    "_objectId": "scriptor_c_4"
+  }
+]

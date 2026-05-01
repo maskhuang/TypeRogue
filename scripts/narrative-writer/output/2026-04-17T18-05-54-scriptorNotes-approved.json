@@ -1,0 +1,58 @@
+[
+  {
+    "id": "scriptor_a_1",
+    "text_zh": "Scriptor V-████ · 笔记一\nM.1██年，第6层收容廊\n\n今日受指派第VI层收容廊巡查。圣印目录核对无误，残余异文封印完好。据条例§4.2，巡查路线严格按表F-017执行。各廊道油灯燃烧稳定，羊皮纸封条无破损迹象。收容基准维持在标准数值。\n\n圣坛响应正常。铅字排列整齐，无脱版现象。按既定程序完成今日铭刻配额。\n\n一切符合条例。明日将继续执行标准巡查。",
+    "text_en": "Scriptor V-████ · Note One\nM.1██, Layer VI Containment Gallery\n\nAssigned to Layer VI gallery patrol today. Sigil catalog verified, residual anomaly seals intact. Per Statute §4.2, patrol route strictly follows Form F-017 protocol. All corridor oil lamps burn steady, parchment seals show no breach signs. Containment threshold maintained at standard values.\n\nLectern response normal. Lead glyphs aligned properly, no signs of liberation. Daily inscription quota completed per established procedure.\n\nAll in accordance with statutes. Standard patrol to continue tomorrow.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_1"
+  },
+  {
+    "id": "scriptor_a_3",
+    "text_zh": "Scriptor V-████ · 笔记三\nM.1██年，第██日\n\n今日完成第VI层收容廊的日常铭刻任务。按条例§4.2-c执行废铅回收，共征用铅屑████克。所有异文均已妥善收容，无收容震颤记录。\n\n铅字圣坛运转正常。油壶充盈。诸般祷击响应良好。\n\n值得记录的是，今日收容廊内偶闻轻微回音，疑似远层传导。已按F-017表单上报。\n\n一切依循圣律，无需忧虑。",
+    "text_en": "Scriptor V-████ · Note Three\nM.1██, Day ██\n\nCompleted daily inscription duties at Layer VI containment corridor. Executed lead reclamation per Regulation §4.2-c, requisitioned ████g lead shavings. All anomalous glyphs properly contained, no containment tremors recorded.\n\nLectern of Keys operating normally. Oil flask replete. All litany-strikes responding well.\n\nOf note: faint echoes heard in containment corridor today, possibly inter-layer transmission. Reported via F-017 form.\n\nAll proceeds according to Canon. No cause for concern.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_3"
+  },
+  {
+    "id": "scriptor_a_4",
+    "text_zh": "Scriptor V-████ · 笔记四\nM.1██年，第██日\n\n第VI层例行铭刻。今日分配至收容廊深段，编号VI-C区域。铅字圣坛就位，油壶检验合格。\n\n按标准程序处理异文收容。共铭刻███次，无失误记录。收容基准达标。所有祈念均已落版，圣印响应稳定。\n\n廊内依然有回音。音源不明，但频率规律。已连续三日观察。\n\n铅字渐重。此为正常磨损现象。",
+    "text_en": "Scriptor V-████ · Note Four\nM.1██, Day ██\n\nRoutine inscription duties, Layer VI. Assigned to containment corridor deep section, designation VI-C. Lectern of Keys positioned, oil flask inspection passed.\n\nProcessed anomalous glyph containment per standard procedure. ███ inscriptions completed, no error records. Containment threshold met. All litanies impressed, sigil response stable.\n\nEchoes persist in corridor. Source unknown, but frequency regular. Three consecutive days observed.\n\nLeaden glyphs growing heavier. Normal wear phenomenon.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_4"
+  },
+  {
+    "id": "scriptor_b_3",
+    "text_zh": "Scriptor K-████ · 笔记三\nM.1██年，第██个月\n\n今日在第██层发现焊死的门。门上无标识，无记录。询问督导员，回复\"按§7.1处理\"。我问§7.1全文，督导员说\"你无需知晓\"。[旁注：为什么不让我看条例全文？][涂改：我是守卷人，应该知道所有条例才对]\n\n§7.1到底写了什么？为什么每次询问都是这个答案？\n\n[涂改：门后有声音。很轻。像有人在抄写。]",
+    "text_en": "Scriptor K-████ · Note Three\nM.1██, ██th Month\n\nDiscovered a welded door on Layer ██ today. No markings, no records. Asked the supervisor, response: \"Process per §7.1\". I asked for §7.1 full text, supervisor said \"You need not know\". [margin note: Why won't they let me see the complete statute?][crossed out: I'm a scribe, I should know all statutes]\n\n What does §7.1 actually say? Why is this always the answer?\n\n[crossed out: There are sounds behind the door. Very faint. Like someone copying.]",
+    "_voice": "doc",
+    "_objectId": "scriptor_b_3"
+  },
+  {
+    "id": "scriptor_b_4",
+    "text_zh": "Scriptor K-████ · 笔记四\nM.1██年，第██个月\n\n[涂改：督导员今天换了。新的那个说话方式一模一样。「按§7.1处理」，连语调都不差。][旁注：他们是不是都读过同██手册？]\n\n我找到了建造档案的储藏室。锁着。需要权限。申请表单：F-███。但F-███表单需要§7.1授权才能提交。[涂改：这是循环。故意的循环。]\n\n[页面底部有新笔迹，更工整]按§7.1处理。归档完毕。",
+    "text_en": "Scriptor K-████ · Note Four\nM.1██, Tenth Month\n\n[crossed out: Supervisor changed today. New one speaks exactly the same way. \"Process per §7.1\", even the intonation identical.][margin note: Did they all read the same manual?]\n\nI found the construction archives storage room. Locked. Requires clearance. Application form: F-███. But F-███ requires §7.1 authorization to submit. [crossed out: This is a loop. Intentional loop.]\n\n[Different handwriting at bottom, more precise] Process per §7.1. Filing complete.",
+    "_voice": "doc",
+    "_objectId": "scriptor_b_4"
+  },
+  {
+    "id": "scriptor_c_1",
+    "text_zh": "Scriptor T-████ · 笔记一\nM.2██年，第VI层\n\n今天在收容廊深处发现一枚脱版异文，形似小鸟。它试图飞走时撞上玻璃罩，发出清脆的叮当声。[页边小画：圆滚滚的小鸟，翅膀是字母W和M组成] 它必然是想回家。\n\n引擎亦会做梦。",
+    "text_en": "Scriptor T-████ · Note One\nM.2██, Layer VI\n\nToday found a Solum-grade anomaly in the deep containment halls, shaped like a small bird. When it tried to fly, it struck the glass dome with a clear chiming sound. [Margin sketch: round little bird with wings made of letters W and M] It surely wishes to go home.\n\nThe Engine dreams too.",
+    "_voice": "doc",
+    "_objectId": "scriptor_c_1"
+  },
+  {
+    "id": "scriptor_c_2",
+    "text_zh": "Scriptor T-████ · 笔记二\nM.2██年，第VIII层\n\n机械深处的齿轮声有节奏，像巨大的心跳。我试着跟随这个节拍工作，发现异文们也开始同步脉动。[页边小画：齿轮环绕着一颗心脏] 有位同僚说这很危险，但我认为这是沟通。我们都是引擎的一部分，为什么不能和谐共振？\n\n站点从未污染过，只是在学习如何歌唱。",
+    "text_en": "Scriptor T-████ · Note Two\nM.2██, Layer VIII\n\nThe gear sounds in the mechanical depths have rhythm, like a vast heartbeat. I tried working to this beat and found the anomalies began pulsing in sync too. [Margin sketch: gears surrounding a heart] A colleague says this is dangerous, but I believe it's communication. We're all parts of the Engine - why shouldn't we harmonize?\n\nThe site was never compromised, merely learning how to sing.",
+    "_voice": "doc",
+    "_objectId": "scriptor_c_2"
+  },
+  {
+    "id": "scriptor_c_4",
+    "text_zh": "Scriptor T-████ · 笔记四\nM.2██年，第██月\n\n接近引擎层的壁画今日完全改变了构图。昨天还是严肃的祷文场景，今晨却变成了一群小人在跳舞。[页边小画：手拉手的火柴人] 我应该上报此异常，但... 它们看起来如此快乐。\n\n下午收到调令，要我准备向最深层进发。同僚们脸色凝重，但我内心雀跃。\n\n终于要见到祷文引擎的真面目了，我想它一定也在期待着我们相见。",
+    "text_en": "Scriptor T-████ · Journal Four\nM.2██, Month ██\n\nLevel XI murals completely changed composition today. Yesterday's solemn prayer scenes became dancing figures this morning. [Margin sketch: stick figures holding hands] Should report this anomaly, but... they look so joyful.\n\nReceived orders this afternoon - prepare for Level XII descent. Colleagues look grave, but I feel excited.\n\nFinally meeting the Litany Engine's true face. I believe it's looking forward to our encounter too.",
+    "_voice": "doc",
+    "_objectId": "scriptor_c_4"
+  }
+]

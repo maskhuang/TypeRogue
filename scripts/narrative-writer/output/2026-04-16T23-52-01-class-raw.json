@@ -1,0 +1,29 @@
+[
+  {
+    "id": "none",
+    "name_zh": "初誓键徒",
+    "name_en": "Keybound Novitiate",
+    "text_zh": "\"汝之手，即引擎之手；汝之祷，即铸印之声。无饰无华，唯铅与心。\"",
+    "text_en": "\"Thy hands are the Engine's hands; thy prayer, the voice of casting. Plain and true, only lead and heart.\"",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铭刻誓门",
+    "name_en": "Order of the Graven Oath",
+    "text_zh": "\"每一铅屑皆有定位，每一字钉皆循古法。汝将甄别废铅，造册圣字，铸成收容经卷——形不可变。\"",
+    "text_en": "\"Every lead shard has its place, every glyph follows ancient ways. Thou shalt sort the waste, catalog the sacred, forge containment scrolls—form unchanging.\"",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔变誓门",
+    "name_en": "Order of the Molten Verse",
+    "text_zh": "\"污蜡流淌，铭文重塑。汝将拥抱变形之恩，于未知中寻得新形——引擎自有意志。\"",
+    "text_en": "\"Corrupted wax flows, inscriptions reshape. Thou shalt embrace the gift of change, find new forms in the unknown—the Engine has its will.\"",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "name_zh": "政策随机复核台",
+    "name_en": "Policy Roulette Terminal",
+    "tier_0_zh": "本器具用于月度考核现场的政策随机复核。复审委员会已备案。",
+    "tier_0_en": "For randomized policy review during monthly assessments. Filed with the Review Committee.",
+    "tier_1_zh": "复核台已完成残稿比对。本月政策替换记录有若干条目缺失，原因待查。",
+    "tier_1_en": "Fragment comparison complete. Several policy-swap entries from this month are missing. Cause pending.",
+    "tier_2_zh": "转盘每次停止时，台面上的政策标签滑动了一下。已记录。报告转交行为档案处。",
+    "tier_2_en": "Each time the dial stops, the policy label shifts slightly. Logged. Forwarded to Behavioral Records.",
+    "tier_3_zh": "已确认：样本 #485,902 在政策替换时击键间隔延长约半拍。适应性稳定。",
+    "tier_3_en": "Confirmed: Subject #485,902 keystroke interval extends by half a beat on each policy swap. Adaptive response stable.",
+    "_objectId": "chaos_roulette",
+    "_voice": "per_tier_flavor",
+    "_aiScore": 6,
+    "_aiIssues": [
+      "【Rule 12 · 不复述机制】四个 tier 都在描述功能流程（'用于月度考核现场的政策随机复核'/'复核台已完成残稿比对'/'报告转交行为档案处'），而不是'人遇到这个东西后经历了什么'。Tier 0 尤其像说明书条目，缺乏人感知层的落地。",
+      "【Tier 0 腔调问题】'本器具用于……复审委员会已备案'——句式过于中性，没有 MIB 风格 SOP 的轻微荒诞感，也没有任何暗示水底的细节。整体像表单说明，不像合规文档 flavor。",
+      "【Tier 2 感知描写偏弱】'政策标签滑动了一下。已记录。报告转交行为档案处。'三句话把一个本可以让人'咦了一下'的细节处理成流程闭环，异常事实被完全行政消化，没有给玩家留下任何回味空间——这是过度收口，不是'暗示水底但不下水'。",
+      "【Tier 3 视角问题 · B2 边界】'适应性稳定'的表述过于科研中立，接近 SCP 测试报告的客观描述腔，略微触碰'命名/解释异常'的 B2 边界。'击键间隔延长约半拍'的细节好，但'适应性稳定'这个结论句将观察者/机构立场暴露得太明确，让玩家感到'被实验'而非'身在其中'，破坏 95% 私密轴的工位视角。",
+      "【MIB 信号词密度不足】四个 tier 合计只出现'复审委员会'一个不在场机构，缺少楼层暗示 / 分类编号 / 政策编号 / 协议 SOP 句式等 MIB 锚点密度支撑。'残稿比对'（tier 1）是一个好信号词，但孤立存在，水底感不够。",
+      "【六轴校准 · 黑色幽默缺失】整体四个 tier 语调偏平，无法让玩家'咦了一下又笑了'。'政策随机复核'这个概念本身有喜剧潜力（用转盘决定合规政策 = 公司把规则当彩票），但当前写法完全未开采这层荒诞。",
+      "【Tier 1 中英文细节出入】zh：'若干条目缺失，原因待查'；en：'Several policy-swap entries from this month are missing. Cause pending.'——'政策替换记录'（zh）对应'policy-swap entries'（en），但 zh 原文中'替换'和'残稿比对'之间的逻辑关系不清晰，en 版'Fragment comparison complete'对应 zh'残稿比对'语义准确，但 zh 后半句的'政策替换记录'是独立概念，两者衔接略跳。"
+    ],
+    "_aiSuggestion": "核心修改方向：让每个 tier 都有一个人在这台机器面前经历了什么，而不是机器本身做了什么。\n\n【Tier 0】保留合规文档骨架，但加入一个轻微异常 SOP 句，暗示有人用过它且出了点小问题：\n例：'本器具用于月度考核现场的政策随机复核。操作员须在转盘停止后静待三秒再记录结果。跳过等待期导致的数据偏差已发生 4 起，均已备案（复审委员会 · 档案 #R-11）。'\n\n【Tier 1】把'残稿比对'这个好信号词落地到人的感知：\n例：'本月复核台输出的政策标签与存档版本有 3 处不一致。操作员已按流程向编校组报告。编校组回执显示：该标签版本'从未录入'。'\n\n【Tier 2】不要急着收口（'已记录·报告转交'），让异常细节在玩家面前多停一秒：\n例：'转盘每次停止后，台面上的政策标签会短暂显示一个不同的条目编号，然后恢复原状。行为档案处已收到报告。行为档案处回执：'属正常误差范围，继续使用。''\n\n【Tier 3】去掉'适应性稳定'这种客观评估结论，改用更接近工位视角的第三方观察腔（HR · 第三方观察腔而非实验报告腔）：\n例：'样本 #485,902 本月操作记录显示：每次转盘停止后，击键间隔延长约半拍。未影响当月产能。该项数据已抄送排班组。'"
+  }
+]

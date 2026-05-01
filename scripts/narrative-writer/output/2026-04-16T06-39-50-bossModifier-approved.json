@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "镜像显现",
+    "name_en": "Speculum Manifestum",
+    "text_zh": "「时之沙漏倒悬——汝之祷声将成汝之审判」",
+    "text_en": "\"The hourglass inverts—thy litany becomes thy judgment\"",
+    "_objectId": "boss_mirror",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "残余异文: RA-███ · 镜沫回响\n归属 Boss: 第 XII 层 · 祷文引擎\n持续效应: 引擎核心镜面化，映射前一次收容失败之影。时序逆流，沙漏倒悬。超越既定节拍者将遭遇完全时流断绝。\n备注: 现象首次记录于 M.2██，与 D-████ 的二次登塔尝试同期出现。该人员档案已转移至 ████████。\n\"镜中之影非为幻象，乃是引擎对失败者的慈悲重演。\" —— 末席守卷人手记残片",
+    "text_en": "Residual Anomaly: RA-███ · Mirrored Resonance\nHost Entity: Layer XII · The Litany Engine\nPersistent Effect: Engine core exhibits reflective properties, manifesting echoes of prior containment failures. Temporal flow inverts, hourglass suspended. Subjects exceeding established rhythm experience complete chronological severance.\nNote: First documented M.2██, concurrent with D-████'s secondary ascent attempt. Personnel file relocated to ████████.\n\"The mirror's reflection is no illusion, but the Engine's mercy—a second rendering of failure.\" —— Fragment from Last Signatory's notes",
+    "_objectId": "boss_mirror",
+    "_voice": "doc"
+  }
+]

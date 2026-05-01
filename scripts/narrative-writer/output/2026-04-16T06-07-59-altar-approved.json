@@ -1,0 +1,58 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我好像听到什么声音了，是你吗？",
+    "text_en": "...I think I hear something, is that you?",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……铅屑又掉下来了，我感觉到了……",
+    "text_en": "...lead scraps falling again, I can feel them...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……那个人的手很温暖，也许吧……",
+    "text_en": "...that person's hands were warm, maybe...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……我是活的吗？好像不太确定……",
+    "text_en": "...am I alive? not quite sure...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……工整点，工整点，引擎在看着……",
+    "text_en": "...neat and tidy, neat and tidy, the Engine watches...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……祷文不可有误，一个字母都不可以……",
+    "text_en": "...litanies must be perfect, not one letter wrong...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……按 R 键的时候，我总是犹豫……",
+    "text_en": "...when pressing R, I always hesitate...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……明天我要去第十二层了，好期待……",
+    "text_en": "...tomorrow I go to the twelfth floor, so excited...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  }
+]

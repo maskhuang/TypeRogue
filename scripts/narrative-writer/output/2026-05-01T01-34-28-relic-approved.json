@@ -1,0 +1,23 @@
+[
+  {
+    "text_zh": "回归基础 · A-1 类基础合规文书\n\n签发部门：灵长类辅助文书部 · 行为档案处\n适用对象：已连续完成不少于两个月度 KPI 考核周期、且全部技能授权档案已通过 HR 审核流程正式注销的雇员。\n\n本文书签发对象为进入 A-1 基础合规轨道的雇员。进入该轨道后，雇员此前获配的全部技能授权资质将正式停用，并移交内训部主动库存池统一管理。此后，雇员产能仅依据基础打字产能标准进行考核。行为档案处注：A-1 轨道并非作为纠正措施设立；该轨道收录于员工手册",
+    "text_en": "Back to Basics · Classification A-1 Foundational Compliance Document\n\nIssuing Department: Primate Auxiliary Documentation Department · Behavioral Records Office\nEligible Recipients: Employees who have completed no fewer than two consecutive monthly KPI cycles and whose skill authorization portfolio has been formally vacated through HR clearance procedures.\n\nThis document is issued to employees transitioning into the A-1 Foundational Compliance Track, in which all previously authorized skill certifications are formally decommissioned and returned to the Internal Training Department's active inventory pool. The employee's output is thereafter evaluated against baseline typing productivity standards only. The Behavioral Records Office notes that the A-1 Track was not established as a corrective measure; it appears in the employee handbook under the heading \"Voluntary Realignment,\" though no record exists of any employee requesting it voluntarily.\n\nOperational Notes:\n—— Thirty-one employees who transitioned into the A-1 Track reported that their workstation felt, in their words, \"quieter than before.\" The Behavioral Records Office has logged all thirty-one statements. No follow-up was initiated.\n—— All previously issued skill authorization binders must be returned to the Internal Training Department's redistribution window (3rd floor, east corridor) within two business days of A-1 activation. The redistribution window is open Tuesdays and Thursdays. Both Tuesdays and Thursdays are currently listed as closed for inventory reconciliation.\n—— Employees on the A-1 Track have reported above-average monthly output scores in cycles immediately following decommissioning. The Behavioral Records Office has forwarded this data to the Performance Evaluation Unit. The Performance Evaluation Unit has declined to provide a written explanation of the correlation.\n—— Upon transfer or reassignment, this document is to be returned to HR alongside any remaining authorization binders. Documents not returned within the standard window will be noted in the employee's file under \"outstanding compliance items.\"\n\nThis document has not been submitted for external field certification. Employees are advised that the A-1 Track does not appear on the interdepartmental skills registry maintained by the third-floor coordination office. The Behavioral Records Office considers this consistent with the track's scope.",
+    "_objectId": "glass_cannon_v2",
+    "_voice": "doc",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "【中文版截断】text_zh 明显被截断，在'员工手册'后骤然结束，缺失 Operational Notes 全部内容。中英文版本信息量严重不对等——这不是风格选择，是草稿未完成的状态。若为最终输出，此项为硬伤。",
+      "【Rule 12 · 机制复述倾向】中英文均用了大量篇幅描述流程操作（技能授权资质停用→移交→库存池→考核标准切换），这是 patch notes 写法。对应的'人遇到这个东西后经历了什么'仅出现在英文 Operational Notes 的三十一人陈述段——中文版因截断完全缺失。核心情感钩（工位变安静、产出反而上升、归还窗口永远关闭）只在英文存在，且出现位置靠后。",
+      "【MIB 密度分布不均】英文版的 MIB 信号元素（归还窗口永远关闭 / 绩效评估组拒绝书面解释 / 不在技能登记册上）集中堆积在 Operational Notes，前三分之一几乎是纯行政流程描述，水底暗示来得太晚。",
+      "【楼层暗示偏弱】'3rd floor east corridor'是唯一楼层引用，但语气过于平淡，未形成'7楼禁止带出'那种暗示有更多层级的张力。可以更隐晦地使用。",
+      "【'Voluntary Realignment'处理极佳但对比之下中文无对应】英文'no record exists of any employee requesting it voluntarily'是本段最强黑色幽默时刻，中文版因截断完全丢失——即便中文版意图全量翻译，该句在中文语境下也需对应打磨，不能只是直译。",
+      "【英文 Operational Notes 第三条轻微触碰 Rule 4】'above-average monthly output scores immediately following decommissioning'暗示了机制层的数值效果（去掉技能反而产能上升），接近直接描述 glass cannon 的 tradeoff 逻辑，但包裹在档案语气里勉强合规——边缘，需留意。",
+      "【猴行元素完全缺席】本条遗物 flavor 与灵长类辅助文书部的世界锚点脱节——任何蕉券、抓挠、猴行协议的侧面引用都没有，读起来像一个通用 SCP 机构文档，而非本设定专属质感。v3 要求猴行身份是协议必然、在场即奇幻，此条几乎感受不到。",
+      "【B1.a 无明显违规】未检测到禁止词（钻研/突破/觉醒/共鸣等），被分发框架维持良好（'previously authorized'/'formally decommissioned'/'returned to inventory pool'均属安全词汇）。",
+      "【v2.3 残留清零】无圣印/守卷人/大教堂/D-XXXX等残留词汇，通过。",
+      "【锚点准确性通过】HR无具名、主任/考核官未混淆、工号未出现（本条不需要出现）。",
+      "【Rule 14 规则句式配额】英文Operational Notes中破折号逐条罗列接近规则清单结构，但情绪是SOP冷淡腔而非怪谈煽情腔，仍在25%阈值内，勉强通过。"
+    ],
+    "_aiSuggestion": "改进重点共三处：\n\n1. 【优先级 · 硬伤】补全中文版 Operational Notes，并将'工位变安静'陈述、'归还窗口永远关闭'、'绩效评估组拒绝书面解释'三个黑色幽默节点对应翻译落地——这三处是本条 flavor 的全部情感价值，目前只存在于英文。\n\n2. 【结构调整】将至少一个 MIB 信号元素（不在场机构拒绝、楼层矛盾、沉默存档）提前到第一段结尾或第二段开头，不要让前三分之一全是行政流程描述。参考基准语调 sample：封蜡章的'已发生14起意外封缄事件'出现在第二条使用须知，而非尾部。\n\n3. 【世界锚点接地】在 Operational Notes 任意一条内植入一处灵长辅助文书部特有元素：例如将'三十一名雇员'的陈述改为'三十一名灵长抄录员'，或在归还窗口说明后补一句'蕉券结算不受 A-1 轨道激活影响，按正常月度核算执行'——这一句既强化财务严肃语调，又将读者拉回本设定，同时悄悄暗示公司对猴行员工的物质安抚与精神清零是两条独立轨道。"
+  }
+]

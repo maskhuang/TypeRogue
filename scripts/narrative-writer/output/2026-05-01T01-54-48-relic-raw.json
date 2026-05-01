@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "政策随机复核台",
+    "name_en": "Policy Roulette Terminal",
+    "tier_0_zh": "本器具用于月度考核现场的政策随机复核。复审委员会已备案。",
+    "tier_0_en": "For randomized policy review during monthly assessments. Filed with the Review Committee.",
+    "tier_1_zh": "复核台已完成残稿比对。本月政策替换记录有若干条目缺失，原因待查。",
+    "tier_1_en": "Fragment comparison complete. Several policy-swap entries from this month are missing. Cause pending.",
+    "tier_2_zh": "转盘每次停止时，台面上的政策标签滑动了一下。已记录。报告转交行为档案处。",
+    "tier_2_en": "Each time the dial stops, the policy label shifts slightly. Logged. Forwarded to Behavioral Records.",
+    "tier_3_zh": "已确认：样本 #485,902 在政策替换发生时，击键间隔延长约半拍。持有人对随机刺激表现出稳定适应性。",
+    "tier_3_en": "Confirmed: Subject #485,902 keystroke interval extends by half a beat on each policy swap. Adaptive response stable.",
+    "_objectId": "chaos_roulette",
+    "_voice": "per_tier_flavor"
+  }
+]

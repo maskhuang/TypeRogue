@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "产能加速令",
+    "name_en": "Accelerated Output Directive",
+    "tier_0_zh": "新政策 #211 · 产能考核提前进入冲刺阶段。超额完成基准后即执行。",
+    "tier_0_en": "Policy #211: sprint phase initiates upon meeting baseline output. Effective immediately.",
+    "tier_1_zh": "新政策 #211 · FRP 残稿处理岗已确认：冲刺阶段内碎片归档窗口压缩。3 份复核记录未提交。",
+    "tier_1_en": "Policy #211: fragment archival window compressed during sprint phase. Three review entries unsubmitted.",
+    "tier_2_zh": "新政策 #211 · 冲刺令下达后，有雇员反映日光灯频率变了。没人去查。打字继续。",
+    "tier_2_en": "Policy #211 active. Several staff noted the fluorescent pitch shifted. No inquiry filed. Typing continued.",
+    "tier_3_zh": "协议条款 #211 · 已记录：样本 #485,902 在加速阶段的停顿频率下降至可忽略范围。行为评估已归档。",
+    "tier_3_en": "Protocol Clause #211: Subject #485,902 pause frequency reduced to negligible range during sprint phase. Behavioral assessment archived.",
+    "_objectId": "boss_fast_time",
+    "_voice": "per_tier_flavor"
+  }
+]

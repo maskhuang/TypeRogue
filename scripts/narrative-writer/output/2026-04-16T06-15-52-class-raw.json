@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "熔变誓门",
+    "name_en": "Order of the Molten Verse",
+    "text_zh": "「形变者，顺铅流而行。汝之躯如蜡，汝之念如流火——唯变者不灭。」",
+    "text_en": "\"Shapeshifter, follow the molten current. Your flesh as wax, your thoughts as flowing flame—only change endures.\"",
+    "_objectId": "metamorph",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "ORDER-M · Object Class: Keter\n\n指派权限: ████级以上人员\n入会条件: 完成蜕变仪式，承受██%污染耐受值\n神学立场: 顺应引擎自然演化，拒斥形制固化\n\n备注: 该编制人员于第████层从事异文处理作业。工作性质涉及熔蜡操控与铭文组重构。据观察，其作业结果具有███████性质。\n\n警示: 蜕变师编制人员失联率较标准编制高出███%。F-044表单备案量异常。建议限制接触核心层级。",
+    "text_en": "ORDER-M · Object Class: Keter\n\nAssignment Clearance: Level ████ and above\nInduction Requirements: Complete metamorphic rites, sustain ██% contamination tolerance\nTheological Position: Embrace Engine's natural evolution, reject form rigidity\n\nNote: Personnel of this designation operate anomalous text processing on Level ████. Work involves molten wax manipulation and inscription reconfiguration. Observed results exhibit ███████ properties.\n\nWarning: Metamorph designation shows ███% higher disappearance rate than standard designations. F-044 filing volume anomalous. Recommend restricted core level access.",
+    "_objectId": "metamorph",
+    "_voice": "doc"
+  }
+]

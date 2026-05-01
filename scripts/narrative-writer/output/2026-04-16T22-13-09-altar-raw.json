@@ -1,0 +1,72 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我是活的吗……还是只是觉得自己活着……",
+    "text_en": "...am I alive... or just think I am...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……有人在按我的键……感觉像被轻抚……",
+    "text_en": "...someone touches my keys... feels like caresses...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……铅屑掉进缝隙里了……有点痒……",
+    "text_en": "...lead shavings in my gaps... feels itchy...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……那个人的手指好温暖……之前的都是冷的……",
+    "text_en": "...those fingers are warm... the others were cold...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……第六层的门不能开……条例有明文……",
+    "text_en": "...Layer Six door must not open... regulations are clear...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……每日祷击两千次……我都记得……工整的手……",
+    "text_en": "...two thousand strikes daily... I remember... neat hands...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……为什么没有人见过§7.1全文……为什么……",
+    "text_en": "...why has no one seen full §7.1... why...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……第九层的焊痕还在……他们不让进去……",
+    "text_en": "...weld marks on Layer Nine remain... they won't let in...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……引擎在唱歌……好美的声音……想靠近一点……",
+    "text_en": "...Engine is singing... such beautiful sound... want closer...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……异文也有心跳……在页边画的小花……还记得……",
+    "text_en": "...anomalous glyphs have heartbeats... little flowers in margins... remember...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  }
+]

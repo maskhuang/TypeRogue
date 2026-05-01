@@ -1,0 +1,50 @@
+[
+  {
+    "id": "none",
+    "name_zh": "初誓键徒",
+    "name_en": "Clavigerant Novitiate",
+    "text_zh": "「汝之双手尚未染铅，心中唯有虔诚。引擎铸印现实，而汝——将成为其中一笔。」",
+    "text_en": "\"Thy hands unburdened by lead, heart filled with devotion. The Engine inscribes reality, and thou—shalt be its stroke.\"",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铭刻誓门",
+    "name_en": "Order of the Graven Oath",
+    "text_zh": "「形不可变，律不可违。铅屑甄别于坩堝，圣字钉造册于经卷——汝将以工整之手，铸永恒之文。」",
+    "text_en": "\"Form immutable, law inviolate. Lead shavings sorted in crucible, sacred slugs catalogued in codex—thy steady hand inscribes eternal verse.\"",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔变誓门",
+    "name_en": "Order of the Molten Verse",
+    "text_zh": "「蜡火重铸一切，铅字熔而复生。汝将拥抱不定之形，在变化中寻得真理——引擎亦曾如此。」",
+    "text_en": "\"Waxfire reforges all, lead letters molten and reborn. Embrace the shifting form, find truth in transformation—as once did the Engine itself.\"",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  },
+  {
+    "id": "none",
+    "text_zh": "ORDER-117 · D级消耗品\n\n征募条件: 无\n编制状态: 标准单独编制\n\n所有键徒之起始形态。无特殊授权，无额外装备。按标准程序执行收容铭刻任务。\n\n备注: D-████编号系列之基础模板。失联率符合§4.2条例预期值。无需额外培训或特殊表单。\n\n最后更新: M.2██ / 第██天",
+    "text_en": "ORDER-117 · D-Class Expendable\n\nRequisition: None required\nDeployment: Standard individual assignment\n\nBaseline form of all Clavigerants. No special clearance, no additional equipment. Executes standard containment inscription protocols.\n\nNote: Foundation template for D-████ designation series. Loss rates conform to §4.2 regulatory expectations. No additional training or special forms required.\n\nLast Updated: M.2██ / Day ██",
+    "_voice": "doc",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "text_zh": "ORDER-44A · 铭刻誓门新铸\n\n征募条件: 完成见习试炼\n神学立场: 形不可变，律当恒守\n编制类别: 铅屑甄别与收容经卷造册\n\n持有者报告能'听到铅屑说话'。经观察，确实表现出对废铅分级的异常直觉。造册时钟摆般精确。\n\nD-████系列中此类个体的失联率显著下降。附带现象：工作区域内金属共鸣声增强。\n\n备注: 体现铭刻誓门传统工艺。原因不明。",
+    "text_en": "ORDER-44A · Graven Oath Neophyte\n\nRequisition: Completed novice trials\nTheological Position: Form immutable, law eternal\nAssignment: Lead shard classification and codex compilation\n\nSubjects report ability to 'hear the shavings speak'. Observations confirm anomalous intuition for waste lead grading. Registry work displays clockwork precision.\n\nLoss rates among D-████ series significantly reduced for this variant. Associated phenomena: enhanced metallic resonance in work areas.\n\nNote: Embodies traditional Graven craftsmanship. Mechanism unknown.",
+    "_voice": "doc",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "text_zh": "ORDER-44M · 熔变誓门践行者\n\n征募条件: ████████\n神学立场: 顺应熔流，拥抱重塑\n编制类别: 非正式（§编号无此分类）\n\n持有者在熔蜡接触时显示异常适应性。铭文组重塑过程中观察到'直觉式改造'现象。结果不可预测但往往有益。\n\nD-████系列报告此类个体'感觉不太一样了'。皮肤温度轻微上升。偶尔在走廊中留下蜡质足印。\n\n备注: 该分类在正式条例中不存在，但实际编制持续出现。",
+    "text_en": "ORDER-44M · Molten Verse Practitioner\n\nRequisition: ████████\nTheological Position: Embrace the flow, welcome reforging\nAssignment: Informal (no §-designation for this category)\n\nSubjects display anomalous adaptation to molten unguent contact. 'Intuitive modification' phenomena observed during inscription reforging. Results unpredictable but often beneficial.\n\nD-████ series report such individuals 'feel different now'. Slight elevation in skin temperature. Occasional waxy footprints left in corridors.\n\nNote: This classification does not exist in formal regulations, yet deployments continue to manifest.",
+    "_voice": "doc",
+    "_objectId": "metamorph"
+  }
+]

@@ -1,0 +1,10 @@
+[
+  {
+    "name_zh": "什一蜡牌",
+    "name_en": "Tithe Token",
+    "text_zh": "蜡封印迹，镌刻诚心之数。凡持此牌者，什一税自减其半。",
+    "text_en": "Wax-sealed mark of true devotion. The tithe lightens for the faithful.",
+    "_objectId": "discount_card",
+    "_voice": "bell"
+  }
+]

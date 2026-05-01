@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "命运轮盘",
+    "name_en": "Rota Fortunae",
+    "text_zh": "铜轮转动，圣印更迭如潮。引擎之意志不可测度，唯变是其永恒。",
+    "text_en": "The brass wheel turns, and sigils shift like tides. The Engine's will defies measure—only change endures.",
+    "_objectId": "chaos_roulette",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "分级: Apollyon\n\n发现地点: 第XII层 祷文引擎核心腔室\n\n描述: 一组八面体金属构造物，围绕引擎核心旋转。每当收容铭刻达到特定频率，构造物自发重组，改变核心腔室的异文辐射模式。Scriptor K-████的笔记表明此现象与引擎的自我调节机制相关。\n\n备注: 构造物表面镌刻有完整的§7.1条例全文。已指派D级人员进行持续观测。观测记录显示构造物每次重组都会产生新的██████模式，目前已记录17种变体。\n\n附注: 最后一次观测后，D-2847在报告中称构造物\"在对我眨眼\"。该人员已按程序处理。",
+    "text_en": "Classification: Apollyon\n\nRecovery Location: Layer XII, Engine Core Chamber\n\nDescription: Eight octahedral metallic constructs orbiting the Engine core. Upon reaching specific inscription frequencies, constructs spontaneously reconfigure, altering anomalous glyph radiation patterns within the core chamber. Notes from Scriptor K-████ suggest correlation with Engine's self-regulatory mechanisms.\n\nNote: Construct surfaces bear complete text of Statute §7.1. D-Class personnel assigned for continuous observation. Records indicate each reconfiguration produces novel ██████ patterns; 17 variants documented to date.\n\nAddendum: Following final observation, D-2847 reported constructs \"winking at me.\" Personnel processed per protocol.",
+    "_objectId": "chaos_roulette",
+    "_voice": "doc"
+  }
+]

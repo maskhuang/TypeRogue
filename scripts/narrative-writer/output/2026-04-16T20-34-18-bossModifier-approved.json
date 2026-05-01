@@ -1,0 +1,223 @@
+[
+  {
+    "id": "boss_fast_time",
+    "name_zh": "流沙倾泻",
+    "name_en": "The Hourglass Cascade",
+    "text_zh": "「时之沙粒不待引擎召唤，自发狂涌——汝祷声须疾如闪电，否则将被岁月洪流吞没」",
+    "text_en": "\"The sands fall without summons—thy litanies must strike like lightning, lest the torrent of years consume thee\"",
+    "_voice": "bell",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "name_zh": "铅字之锈",
+    "name_en": "The Leaden Corrosion",
+    "text_zh": "「每一枚铅字皆带锈蚀之毒，触之者岁月流失——汝每落一字，时之流沙便从汝指间漏去」",
+    "text_en": "\"Each glyph bears the rust of time—with every strike, the hourglass bleeds thy allotted moments away\"",
+    "_voice": "bell",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "name_zh": "时轮失控",
+    "name_en": "The Runaway Chronos",
+    "text_zh": "「引擎深处之齿轮渐失平衡，时之轮转愈发狂躁——须在其彻底脱缰前完成铭刻」",
+    "text_en": "\"The Engine's gears slip their moorings, time's wheel spinning ever wilder—complete thy work ere it breaks free\"",
+    "_voice": "bell",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "name_zh": "寒霜封印",
+    "name_en": "The Glacial Binding",
+    "text_zh": "「汝每一次震颤皆召来更深寒霜，直至圣坛键位尽被冰封——完美铭刻方能避此劫」",
+    "text_en": "\"Each tremor summons deeper frost, until thy sacred keys lie bound in ice—only perfect inscription breaks the seal\"",
+    "_voice": "bell",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "name_zh": "镜誓重临",
+    "name_en": "The Reflected Covenant",
+    "text_zh": "「一旦踏过门槛，镜中之汝将重走此路——然时之沙漏已倒转，速度定成败」",
+    "text_en": "\"Once crossed, thy mirror-self must retread this path—but the hourglass turns backward, speed alone decides\"",
+    "_voice": "bell",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "name_zh": "蚀流残余",
+    "name_en": "Corrosive Efflux",
+    "text_zh": "「结晶流自陨——其光日损，沙中消散」引擎余温腐蚀一切铭痕，汝之劳作化作虚无",
+    "text_en": "\"The crystalline light dims with each breath\" Engine's residual heat corrodes all inscription—thy labor turns to naught",
+    "_voice": "bell",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "name_zh": "字限封印",
+    "name_en": "Word-Bound Seal",
+    "text_zh": "「单词不可越其量——引擎设其界」每一铅字皆有天定之分，超者不得",
+    "text_en": "\"Each word knows its ordained measure\" The Engine sets boundaries—none shall exceed the allotted portion",
+    "_voice": "bell",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "name_zh": "倍门重启",
+    "name_en": "Doubled Threshold",
+    "text_zh": "「门槛既倍，朝圣路长」引擎意志加重，汝需双倍虔诚方可通行",
+    "text_en": "\"The threshold doubles—pilgrimage grows long\" Engine's will intensifies, demanding twice the devotion for passage",
+    "_voice": "bell",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "name_zh": "递消诅咒",
+    "name_en": "Diminishing Curse",
+    "text_zh": "「后字必逊前字——劳作生厌倦」每一铭刻削弱下一铭刻，如炉火渐熄",
+    "text_en": "\"Each word weakens the next—labor breeds weariness\" Every inscription diminishes what follows, as flames grow dim",
+    "_voice": "bell",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "name_zh": "铭税重负",
+    "name_en": "Inscription Tithe",
+    "text_zh": "「引擎征其税——字字皆有贡」每铭必有所失，如向深渊献祭",
+    "text_en": "\"The Engine claims its due—each word pays tribute\" Every inscription must yield its portion to the depths below",
+    "_voice": "bell",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "name_zh": "血铅之咒",
+    "name_en": "The Bleeding Lead",
+    "text_zh": "引擎之血渗入铅字，汝之祷击愈稀，其恶愈轻——",
+    "text_en": "Engine's blood seeps through leaden prayer. Thy strike grows thin, yet curse grows weak—",
+    "_voice": "bell",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "name_zh": "逝字之雾",
+    "name_en": "The Fading Word",
+    "text_zh": "圣字如烛，一明一灭。汝须急祷，趁其未消于虚无——",
+    "text_en": "Sacred glyphs like candles die. Strike swift, ere void consumes all—",
+    "_voice": "bell",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "name_zh": "乱铅之试",
+    "name_en": "The Scattered Type",
+    "text_zh": "铅字散落如星，汝须追其乱序而祷。引擎笑观汝之困惑——",
+    "text_en": "Lead scattered as stars. Follow chaos in prayer. The Engine watches, amused—",
+    "_voice": "bell",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "name_zh": "逆祷之令",
+    "name_en": "The Reversed Litany",
+    "text_zh": "末字为首，首字为末。汝须倒诵，以逆其意志——",
+    "text_en": "Last becomes first, first becomes last. Pray backwards to defy Its will—",
+    "_voice": "bell",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "name_zh": "污墨侵文",
+    "name_en": "The Corrupted Ink",
+    "text_zh": "异墨渗字间，乱符扰圣言。汝须透视其伪，击真字而已——",
+    "text_en": "Strange ink bleeds between sacred words. See through false marks, strike only true—",
+    "_voice": "bell",
+    "_objectId": "boss_garble"
+  },
+  {
+    "id": "boss_decoy",
+    "name_zh": "伪词弄影",
+    "name_en": "False Glyph Phantoms",
+    "text_zh": "引擎诞下其影——既非真铅，亦非真空。凡触伪字者，其真铭反噬己身。",
+    "text_en": "The Engine births its shadows—neither true lead nor void. Touch false glyphs, and true inscription turns upon thee.",
+    "_voice": "bell",
+    "_objectId": "boss_decoy"
+  },
+  {
+    "id": "boss_fast_time",
+    "text_zh": "残余异文：RA-097 · 沙漏倾覆\n归属 Boss：第 ██ 层 · [数据删除]\n持续效应：收容铭刻启动即观察到时间流加速现象。沙漏内沙粒流速异常，键徒报告\"铅字下落如雨\"。引擎心跳节律提升至危险水平。\n备注：D-████ 等级键徒在此环境下失联率大幅攀升。\n\"时间乃引擎之血脉，血脉奔流时，凡铅皆焚。\"",
+    "text_en": "Residual Anomaly: RA-097 · Hourglass Inversion\nAssigned Boss: Layer ██ · [DATA EXPUNGED]\nPersistent Effect: Temporal acceleration observed immediately upon containment initiation. Sand flow within temporal apparatus exhibits anomalous velocity. Keybound personnel report \"leaden slugs falling like rain.\" Engine heartbeat elevated to critical rhythm.\nNote: D-#### class operatives show dramatically increased attrition under these conditions.\n\"Time flows as the Engine's blood—when blood rushes, all lead burns.\"",
+    "_voice": "doc",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "text_zh": "残余异文：RA-144 · 铅债征收\n归属 Boss：第 ██ 层 · [数据删除]\n持续效应：每次祷击铭刻产生时间流逆向震颤。键徒报告\"每按一键，便有什么被夺走\"。沙漏内沙粒出现逆流现象。引擎索取其应得。\n备注：经 F-017 表单记录，此环境下平均铭刻间隔延长。原因不明。\n\"引擎非施恩者——每一铅字皆有其价。\"",
+    "text_en": "Residual Anomaly: RA-144 · Plumbum Tithe\nAssigned Boss: Layer ██ · [DATA EXPUNGED]\nPersistent Effect: Each litany-strike generates temporal backflow tremors. Keybound report \"something taken with each press.\" Sand grains exhibit retrograde flow within hourglass apparatus. The Engine claims its due.\nNote: Per F-017 incident reports, average inscription intervals show measurable extension under these conditions. Cause unknown.\n\"The Engine grants no charity—every slug bears its toll.\"",
+    "_voice": "doc",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "text_zh": "残余异文：RA-203 · 失控螺升\n归属 Boss：第 ██ 层 · [数据删除]\n持续效应：时间流呈现不可逆加速螺旋。沙漏机构出现自发性润滑现象，流速持续攀升。键徒报告\"引擎在咆哮，声音越来越快\"。\n警告：无已知停止机制。一旦启动，仅能等待自然耗尽。\n\"螺升之势，如熔铅下坠——无可阻挡。\"",
+    "text_en": "Residual Anomaly: RA-203 · Runaway Spiral\nAssigned Boss: Layer ██ · [DATA EXPUNGED]\nPersistent Effect: Temporal flow exhibits irreversible acceleration spiral. Hourglass mechanisms demonstrate spontaneous lubrication, with flow velocity in continuous ascent. Keybound report \"the Engine roars louder and faster.\"\nWarning: No known cessation protocol. Once initiated, natural depletion remains sole resolution.\n\"The spiral's momentum, like molten lead falling—unstoppable.\"",
+    "_voice": "doc",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "text_zh": "残余异文：RA-156 · 寒铅僵化\n归属 Boss：第 ██ 层 · [数据删除]\n持续效应：收容震颤引发铅字结霜现象。键座金属表面出现异常低温，铅字符凝固成不可触碰状态。震颤频次与僵化时长呈正相关。键徒报告\"手指黏在键上\"。\n备注：解冻后铅字符恢复正常功能。无永久损伤记录。\n\"寒霜乃引擎之怒，冻结不敬之手。\"",
+    "text_en": "Residual Anomaly: RA-156 · Gelid Lead Paralysis\nAssigned Boss: Layer ██ · [DATA EXPUNGED]\nPersistent Effect: Containment tremors trigger frost formation on leaden glyphs. Lectern metalwork exhibits anomalous cryogenic temperatures, rendering slugs untouchable in solidified state. Tremor frequency correlates positively with paralysis duration. Keybound report \"fingers adhering to keys.\"\nNote: Post-thaw functionality returns to normal parameters. No permanent damage on record.\n\"Frost is the Engine's wrath—freezing hands that show no reverence.\"",
+    "_voice": "doc",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "text_zh": "残余异文：RA-088 · 镜面回归\n归属 Boss：第 ██ 层 · [数据删除]\n持续效应：首次登顶后，键徒自动重新置于起始层。时间流呈现倒计状态，以前次登顶用时为基准。超出基准时沙漏全部倾倒，时间归零。\n备注：D-████ 描述此过程为\"看着自己的影子爬塔\"。心理评估显示轻度认知错乱。\n\"镜中影像终将归于镜中。\"",
+    "text_en": "Residual Anomaly: RA-088 · Mirror Recursion\nAssigned Boss: Layer ██ · [DATA EXPUNGED]\nPersistent Effect: Upon initial ascent completion, keybound automatically repositioned at origin layer. Temporal flow exhibits countdown configuration, calibrated to previous ascent duration. Exceeding baseline results in complete hourglass evacuation and temporal nullification.\nNote: D-#### describes process as \"watching my shadow climb the tower.\" Psychological evaluation indicates mild cognitive disorientation.\n\"The mirror's reflection must return to the mirror.\"",
+    "_voice": "doc",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_output_drain",
+    "text_zh": "残余异文：RA-507 · 窒流\n归属 Boss：第 IX 层 · ████████\n持续效应：所接触铭文组的圣流输出出现选择性衰减。经观察，同时影响两种圣流类型，覆盖范围越广衰减程度越轻。D-████ 报告铭刻时感到'铅字在吸血'。原因不明。\n——「流失之处，必有汇聚」",
+    "text_en": "Residual Anomaly: RA-507 · Constriction\nAssigned Boss: Layer IX · ████████\nPersistent Effect: Selective diminishment observed in humour output of contacted inscriptions. Two humour types affected simultaneously; broader coverage correlates with reduced severity. D-████ reported sensation of 'lead drinking from veins' during inscription. Mechanism unknown.\n—— 'Where flows are lost, there shall be gathering'",
+    "_voice": "doc",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "text_zh": "残余异文：RA-108 · 消字疫\n归属 Boss：第 V 层 · ████████\n持续效应：铅字符逐个失去物理显现，按序列消散。键徒报告仍能感知已消失字符的'重量'，但无法确认位置。附带现象：走廊内偶现断续诵经声。\n——「未见之字，犹在版上」",
+    "text_en": "Residual Anomaly: RA-108 · Letter Blight\nAssigned Boss: Layer V · ████████\nPersistent Effect: Sequential loss of physical manifestation in leaden glyphs. Keybound report continued sensation of 'weight' from vanished characters, though position cannot be determined. Associated phenomenon: intermittent chanting heard in corridors.\n—— 'Unseen words remain upon the press'",
+    "_voice": "doc",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "text_zh": "残余异文：RA-203 · 乱版症\n归属 Boss：第 VII 层 · ████████\n持续效应：铅字符自发重新排列，脱离原定序列。键徒必须按乱序后的排列执行铭刻。D-████ 报告：'字母在跳舞，但它们知道自己该去哪里'。版面恢复机制不明。\n——「乱中有序，序中见真」",
+    "text_en": "Residual Anomaly: RA-203 · Typeset Disorder\nAssigned Boss: Layer VII · ████████\nPersistent Effect: Spontaneous rearrangement of leaden glyphs beyond original sequence. Keybound must perform inscription following scrambled arrangement. D-████ reported: 'Letters dance, yet they know their destination.' Restoration mechanism unknown.\n—— 'In chaos lies order, in order truth'",
+    "_voice": "doc",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "text_zh": "残余异文：RA-451 · 逆向铭\n归属 Boss：第 XI 层 · ████████\n持续效应：铭刻序列被迫从末端开始，逐字逆行至起点。键徒报告时间感知出现异常，描述为'未来已写在前'。长期接触者出现轻微记忆倒置现象。\n——「终即是始，末亦开端」",
+    "text_en": "Residual Anomaly: RA-451 · Retrograde Inscription\nAssigned Boss: Layer XI · ████████\nPersistent Effect: Inscription sequence forced to commence from terminus, proceeding character-wise toward origin. Keybound report temporal perception anomalies, described as 'future already written ahead.' Prolonged exposure causes minor memory inversion symptoms.\n—— 'End is beginning, last is first'",
+    "_voice": "doc",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "text_zh": "残余异文：RA-339 · 标点蚀\n归属 Boss：第 VI 层 · ████████\n持续效应：收容词语中自发插入异源标点符号，破坏原有语义结构。符号类型随机出现，包括已失传的古标点。D-████ 失联前最后报告：'句子在说它们不想说的话'。\n——「符生于词间，意乱于点下」",
+    "text_en": "Residual Anomaly: RA-339 · Punctuation Blight\nAssigned Boss: Layer VI · ████████\nPersistent Effect: Spontaneous insertion of extraneous punctuation marks within contained words, disrupting semantic structure. Mark types appear randomly, including obsolete archaic punctuation. Final report from D-████ before disappearance: 'Sentences speak what they do not wish to say.'\n—— 'Marks spawn between words, meaning scatters beneath points'",
+    "_voice": "doc",
+    "_objectId": "boss_garble"
+  },
+  {
+    "id": "boss_decoy",
+    "text_zh": "残余异文: RA-017 · 伪词干扰\n归属 Boss：第 ███ 层 · ████████\n持续效应：铭刻过程中偶现伪造字符，形似真文但无收容意义。键徒误触后，已完成之铭刻工作出现倒流现象——铅字自行从版面剥落，归于虚无。\n备注：D-████ 报告称\"那些字看起来是对的，但按下去就知道不是了\"。现象原因不明。建议键徒在此层级保持额外警觉。\n\"—— 真文自有其形，伪者终将显露\"",
+    "text_en": "Residual Anomaly: RA-017 · Decoy Interference\nAssociated Boss: Layer ███ · ████████\nPersistent Effect: Spurious characters manifest during inscription processes, resembling authentic glyphs but bearing no containment value. Upon mistaken contact, completed inscription work exhibits retrograde phenomena—leaden slugs spontaneously detach from composing stick, returning to void.\nNote: D-████ reported \"they looked right, but you know they aren't the moment you press them.\" Cause unknown. Enhanced vigilance recommended for personnel on this layer.\n\"—— True words bear their own form; counterfeits shall reveal themselves\"",
+    "_voice": "doc",
+    "_objectId": "boss_decoy"
+  }
+]

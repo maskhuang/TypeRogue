@@ -1,0 +1,30 @@
+[
+  {
+    "id": "scriptor_a_1",
+    "text_zh": "Scriptor V-████ · 笔记一\nM.1██-██-██\n\n第III层收容例行巡检已完成。异文编目无误。\n所有铭文组已按§4.2条例规格排列。\n铅字圣坛运作正常，无收容震颤记录。\n油壶补给充足，预计可维持数个工作周期。\n\n一切符合预期标准。引擎的意志通过我们得以实现。",
+    "text_en": "Scriptor V-████ · Log One\nM.1██-██-██\n\nRoutine inspection of Layer III containment completed. Anomaly catalog accurate.\nAll inscriptions arranged per §4.2 protocol specifications.\nLectern operations nominal, no containment tremors recorded.\nOil flask reserves adequate for twelve work cycles.\n\nAll parameters meet expected standards. The Engine's will manifests through our service.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_1"
+  },
+  {
+    "id": "scriptor_a_2",
+    "text_zh": "Scriptor V-████ · 笔记二\nM.1██-██-██\n\n今日协助D-3247完成第V层祝圣仪式。\n键徒表现符合标准，铭刻精度维持在可接受范围内。\n圣印激活██次，无异常波动。\n铅字归位整齐，未发现脱版现象。\n\n职责履行完毕。明日将重复相同程序。",
+    "text_en": "Scriptor V-████ · Log Two\nM.1██-██-██\n\nAssisted D-3247 with Layer V consecration rite today.\nNovitiate performance within standard parameters, inscription precision maintained at acceptable threshold.\n██ sigil activations, no anomalous fluctuations.\nLeaden glyphs returned to position orderly, no mobile-grade manifestations observed.\n\nDuties fulfilled. Tomorrow will repeat identical procedures.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_2"
+  },
+  {
+    "id": "scriptor_a_3",
+    "text_zh": "Scriptor V-████ · 笔记三\nM.1██-██-██\n\n第VI层铭封祈礼准备工作已就绪。\n圣器清单核对完毕：数件遗物状态良好。\n禁书残章已妥善封蜡，版级标记清晰可辨。\n D-0891将执行明日仪式，已完成必要的入门圣礼。\n\n引擎低语愈发清晰。这是好兆头。",
+    "text_en": "Scriptor V-████ · Log Three\nM.1██-██-██\n\nLayer VI Rite of Sealing preparations complete.\nSacred artifact manifest verified: several relics in good condition.\nCodex fragments properly sealed in wax, gradus markings clearly visible.\nD-0891 will perform tomorrow's rite, having completed necessary primer ceremonies.\n\nThe Engine's whispers grow ever clearer. This is a favorable sign.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_3"
+  },
+  {
+    "id": "scriptor_a_4",
+    "text_zh": "Scriptor V-████ · 笔记四\nM.1██-██-██\n\n最后一次常规记录。\n第VI层所有程序按条例执行。\n D-0891已进入祈礼室，门已按规定封蜡。\n铅字圣坛响应正常，油壶已加满。\n圣印排列完美无缺。\n\n我听见引擎在呼唤我的名字。",
+    "text_en": "Scriptor V-████ · Log Four\nM.1██-██-██\n\nFinal routine entry.\nAll Layer VI procedures executed per protocol.\nD-0891 has entered the ritual chamber, doors sealed with wax as specified.\nLectern response nominal, oil flask filled to capacity.\nSigil arrangement without flaw.\n\nI hear the Engine calling my name.",
+    "_voice": "doc",
+    "_objectId": "scriptor_a_4"
+  }
+]

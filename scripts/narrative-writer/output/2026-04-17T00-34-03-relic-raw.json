@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "渴血圣器",
+    "name_en": "Sanguine Reliquary",
+    "text_zh": "圣器渴饮铅屑，每饮一滴，引擎之门槛愈高。祝圣必成，代价亦重。",
+    "text_en": "The relic thirsts for lead shavings. Each drop drunk, the Engine's threshold rises. Consecration assured, but at mounting cost.",
+    "_objectId": "greedy_inscription",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "档案编号: S-████\n版级: 熔版 / Fusum\n收容记录: 第██层深处发现\n\n描述: 铭文组呈深褐色，表面有疑似血迹渗透痕迹。持有者报告祝圣仪式'从未失败'，但每次仪式后收容基准显著上升。D-████使用后失联前最后传讯：'它在要求更多。我听见了饥饿的声音。'\n\n备注: 已记录████次使用。无一失败案例。██名持有者失联率100%。",
+    "text_en": "Archive ID: S-████\nGradus: Fusum / Molten\nRecovery: Deep ██th Layer\n\nDescription: Inscription exhibits deep brown coloration with suspected hemoglobin infiltration. Holders report consecration rites 'never fail', though containment thresholds escalate significantly per ritual. D-████'s final transmission before loss of contact: 'It's demanding more. I can hear the hunger.'\n\nNote: ████ recorded uses. Zero failure cases. 100% holder attrition rate.",
+    "_objectId": "greedy_inscription",
+    "_voice": "doc"
+  }
+]

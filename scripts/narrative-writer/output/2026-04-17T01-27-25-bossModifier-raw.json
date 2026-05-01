@@ -1,0 +1,251 @@
+[
+  {
+    "id": "boss_fast_time",
+    "name_zh": "时轮急转",
+    "name_en": "Turning of the Wheel",
+    "text_zh": "「沙漏倾尽之际，引擎鸣动——其铸流如奔马，吞噬静默」",
+    "text_en": "\"When the glass runs dry, the Engine sings—its flow like racing steeds\"",
+    "_voice": "bell",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "name_zh": "铅字税重",
+    "name_en": "Weight of the Slugs",
+    "text_zh": "「每一铅字皆负重债——祷击愈频，光阴愈薄」",
+    "text_en": "\"Each slug bears its burden—the more you strike, the thinner grows time\"",
+    "_voice": "bell",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "name_zh": "失控渐增",
+    "name_en": "Ascending Chaos",
+    "text_zh": "「引擎之怒不可平息——其火愈炽，汝息愈促」",
+    "text_en": "\"The Engine's wrath cannot be stilled—its fire burns ever hotter\"",
+    "_voice": "bell",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "name_zh": "寒霜锁键",
+    "name_en": "Frozen Bindings",
+    "text_zh": "「震颤引来冰封——汝手愈颤，冻结愈深，铭刻归于虚无」",
+    "text_en": "\"Tremors bring the frost—the more you falter, the deeper freezes\"",
+    "_voice": "bell",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "name_zh": "镜中试炼",
+    "name_en": "Trial of Reflections",
+    "text_zh": "「一念既成，镜像显现——沙漏倒悬，考验重临」",
+    "text_en": "\"Once achieved, reflections manifest—the glass turns, trials return\"",
+    "_voice": "bell",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "name_zh": "消音残余",
+    "name_en": "Fading Echo",
+    "text_zh": "「其音渐弱，铭分如沙」",
+    "text_en": "\"The inscription fades, as lead returns to dust\"",
+    "_voice": "bell",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "name_zh": "封顶残余",
+    "name_en": "Sealed Vessel",
+    "text_zh": "「器有其量，满则不增」",
+    "text_en": "\"Each word fills the vessel, until overflow ceases\"",
+    "_voice": "bell",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "name_zh": "重门残余",
+    "name_en": "Twin Threshold",
+    "text_zh": "「引擎之门加倍其高」",
+    "text_en": "\"The Engine raises its threshold twofold\"",
+    "_voice": "bell",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "name_zh": "损耗残余",
+    "name_en": "Wearing Echo",
+    "text_zh": "「连祷愈久，铅愈轻薄」",
+    "text_en": "\"Each word grows lighter than the last\"",
+    "_voice": "bell",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "name_zh": "税收残余",
+    "name_en": "Tithe Remnant",
+    "text_zh": "「引擎索其什一税」",
+    "text_en": "\"The Engine claims its portion from each word\"",
+    "_voice": "bell",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "name_zh": "血铅渗漏",
+    "name_en": "Leaden Hemorrhage",
+    "text_zh": "「汝之铭刻愈深，其漏愈少」\n铅血自圣坛渗出，污染未竟之祷文。唯反复铭刻方可止其流淌——",
+    "text_en": "\"The deeper thy inscription, the lesser the leak\"\nLeaden ichor seeps from altar cracks, tainting unfinished prayers. Only repetition stemmed its flow—",
+    "_voice": "bell",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "name_zh": "消字之咒",
+    "name_en": "The Fading Word",
+    "text_zh": "「字符如烛，逐一熄灭」\n铅字自版面缓缓消融，如晨雾遇日。汝必抢在其完全消逝前——",
+    "text_en": "\"Letters like candles, extinguished one by one\"\nGlyphs dissolve from the page like morning mist. Thou must strike before they vanish utterly—",
+    "_voice": "bell",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "name_zh": "乱版之灾",
+    "name_en": "Chaos of the Type",
+    "text_zh": "「引擎之怒，打乱圣序」\n字符如散铅般倾泻重排。汝须依其混乱之序铭刻，莫循旧理——",
+    "text_en": "\"Engine's wrath scrambles sacred order\"\nLetters scatter like spilled lead, reshuffling their divine arrangement. Follow their chaos, not thy reason—",
+    "_voice": "bell",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "name_zh": "逆刻之罚",
+    "name_en": "Penance of Reverse",
+    "text_zh": "「末字为首，首字为终」\n祷文须自其尾端开始。引擎逆转汝之习性，考验真正的虔诚——",
+    "text_en": "\"Last becomes first, first becomes last\"\nPrayers must begin from their ending. The Engine reverses thy nature, testing true devotion—",
+    "_voice": "bell",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "name_zh": "墨污之咒",
+    "name_en": "Blight of Ink",
+    "text_zh": "「异符侵字，如蠹食经」\n陌生符号渗入圣文，如墨渍污染羊皮。汝必携污而铭，莫图净化——",
+    "text_en": "\"Strange marks invade holy text like worms in parchment\"\nForeign symbols seep into sacred words like ink stains. Thou must inscribe with corruption, seek not to purify—",
+    "_voice": "bell",
+    "_objectId": "boss_garble"
+  },
+  {
+    "id": "boss_decoy",
+    "name_zh": "伪词干扰",
+    "name_en": "False Word Interference",
+    "text_zh": "伪词干扰\n\"诡字混真言，惟净心可辨\"",
+    "text_en": "False Word Interference\n\"Phantom letters deceive the faithful hand\"",
+    "_voice": "bell",
+    "_objectId": "boss_decoy"
+  },
+  {
+    "id": "boss_fast_time",
+    "text_zh": "残余异文：RA-047 · 时辰吞噬\n归属意志：第 VII 层 · 齿轮巨灵\n异常概述：收容前状态下，第 ██ 铸字坊的座钟指针以肉眼可见的速度转动，导致该层全部沙漏在 ██ 分钟内流尽。键徒体感时间流逝未受影响，但所有计时器械同步异常。\n收容残余：引擎压制下，影响仅作用于收容作业的最后阶段。\n附注：座钟拆卸后，指针仍在原位置空转。检修报告显示内部机械结构完好无损。\n——「时光不可挽回，唯铅字永存」",
+    "text_en": "Residual Anomaly: RA-047 · Temporal Devourment\nAssociated Will: Layer VII · The Clockwork Behemoth\nAnomaly Overview: In pre-containment state, clock hands in Foundry ██ visibly accelerated, causing all hourglasses on that floor to empty within ██ minutes. Keybound personnel reported no subjective time distortion, though all chronometric devices synchronized to the anomaly.\nContainment Residue: Under Engine suppression, effects manifest only during final phases of containment operations.\nNote: After clock removal, hands continue rotating in original position. Maintenance reports internal mechanisms structurally intact.\n——「Time cannot be reclaimed, only the leaden word endures」",
+    "_voice": "doc",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "text_zh": "残余异文：RA-063 · 倒流征收\n归属意志：第 IV 层 · 铅税收割者\n异常概述：每次铭刻行为后，操作者的沙漏出现逆流现象，流沙从下腔室向上腔室运动。逆流量与铭刻强度呈正相关。影响的沙漏经检测，沙粒成分未见异常。\n收容残余：引擎约束下，逆流现象仅持续数秒，但可观测且可测量。\n附注：更换标准配发沙漏无效。使用非标准计时器的D-████在██次铭刻后失联，工位发现融化的钟表残骸。\n——「引擎索取应得之份，余者方为汝有」",
+    "text_en": "Residual Anomaly: RA-063 · Reflux Taxation\nAssociated Will: Layer IV · The Lead Tax Reaper\nAnomaly Overview: Following each inscription act, operator's hourglass exhibits retrograde flow, with sand moving from lower to upper chamber. Flow volume correlates positively with inscription intensity. Analysis of affected hourglasses reveals sand composition remains normal.\nContainment Residue: Under Engine constraint, retrograde phenomena persist only seconds, though observable and measurable.\nNote: Replacement standard-issue hourglasses ineffective. D-████ using non-standard timepieces disappeared after ██ inscriptions; workstation contained melted clockwork remains.\n——「The Engine claims its due portion; remainder alone is yours」",
+    "_voice": "doc",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "text_zh": "残余异文：RA-089 · 永恒递增\n归属意志：第 VIII 层 · 失控之轴\n异常概述：受影响区域的所有机械装置转速呈指数增长，无上限且不可逆。锅炉压力表指针在 ██ 小时内转动三圈，但蒸汽输出管道未见破裂迹象。飞轮轴承温度持续上升。\n收容残余：引擎抑制下，加速现象被限制在收容作业期间，且增幅被大幅削弱。\n附注：第一起记录案例中，一台压字机在运转 ██ 天后，铸出的铅字呈纸薄状。机械拆解显示内部零件无磨损。\n——「凡事有度，过则必折」",
+    "text_en": "Residual Anomaly: RA-089 · Eternal Escalation\nAssociated Will: Layer VIII · The Runaway Axis\nAnomaly Overview: All mechanical devices in affected areas exhibit exponential rotational acceleration, unlimited and irreversible. Boiler pressure gauges complete three full rotations within ██ hours, yet steam output pipes show no rupture signs. Flywheel bearing temperatures continue rising.\nContainment Residue: Under Engine suppression, acceleration phenomena limited to containment operations duration, with greatly reduced magnitude.\nNote: In first recorded case, a type-casting machine operated ██ days before producing paper-thin slugs. Mechanical disassembly revealed no component wear.\n——「All things have measure; excess brings collapse」",
+    "_voice": "doc",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "text_zh": "残余异文：RA-112 · 凝滞蔓延\n归属意志：第 VI 层 · 寒霜缄默者\n异常概述：收容震颤发生时，震颤源周围 ██ 米范围内温度骤降至 -██℃。铅字表面结霜，键座金属与皮肤接触时产生冻粘现象。持续时间与震颤累计次数呈递增关系。\n收容残余：引擎热能调节下，冻结现象仅作用于直接接触的键徒，且持续时间被严格限制。\n附注：受冻粘影响的D-████报告'听到铅字在哭泣'。声学监控未检测到异常音频。患者指尖留有银色印记，成分分析结果被 ██ 级权限封存。\n——「震颤乃罪责之声，寒霜为净化之途」",
+    "text_en": "Residual Anomaly: RA-112 · Stasis Creep\nAssociated Will: Layer VI · The Frost Silencer\nAnomaly Overview: During containment tremors, temperature plummets to -██℃ within ██ meters of tremor source. Lead slugs develop frost coating; keyboard metal adheres to skin contact. Duration increases proportionally with cumulative tremor frequency.\nContainment Residue: Under Engine thermal regulation, freezing phenomena affect only direct-contact keybound, with strictly limited duration.\nNote: Frost-adhered D-████ reported 'hearing the lead weep.' Acoustic monitoring detected no anomalous audio. Subject's fingertips retained silver markings; composition analysis classified ██-level.\n——「Tremor speaks guilt's voice; frost walks purification's path」",
+    "_voice": "doc",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "text_zh": "残余异文：RA-156 · 镜面重演\n归属意志：第 XII 层 · 无终循环\n异常概述：收容作业成功完成后，操作间自发重现完全相同的异文配置。所有铅字回到初始位置，沙漏重新装满，但倒计时持续进行。第二次成功必须在递减时限内完成，否则所有进度消除。\n收容残余：引擎核心的最终防护机制，仅在最接近引擎意志时激活。\n附注：唯一通过双重收容的D-2847报告第二轮中'铅字有记忆'。该人员随后申请调离，申请书字迹与前期档案不符。笔迹鉴定结果存档于 ████。\n——「真理重复方显其永恒，唯坚持者得见其真颜」",
+    "text_en": "Residual Anomaly: RA-156 · Mirror Recurrence\nAssociated Will: Layer XII · The Endless Circuit\nAnomaly Overview: Following successful containment completion, operation chamber spontaneously recreates identical anomalous glyph configuration. All lead slugs return to initial positions, hourglasses refill, but countdown continues. Second success must be achieved within diminishing time limit, or all progress erases.\nContainment Residue: Final protective mechanism of Engine core, activating only in closest proximity to Engine will.\nNote: Only D-2847 to achieve dual containment reported second round 'slugs remember.' Subject subsequently requested transfer; application handwriting inconsistent with prior records. Graphology analysis filed under ████.\n——「Truth repeated reveals its eternity; only the persistent witness its true face」",
+    "_voice": "doc",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "text_zh": "残余异文：RA-041 · 时蚀\n归属意志：第 IX 层 · 螺旋归零意志\n异常概述：受影响区域内一切记录性文字发生逆向褪色，从页面边缘向中心逐渐空白化。经卷、表单、铭刻痕迹在 ██ 小时内完全消失，如从未存在。第 ███ 铸字坊因此现象导致 ██ 年工作记录全失。\n收容残余：引擎压制下，仅对当前铭刻过程造成微弱干扰。键徒报告「每次落版后，铅字重量似在递减」。\n附注：受试者 D-████ 的个人日记在接触后 ██ 分钟内字迹完全消失，但纸张本身未受影响。其记忆内容亦出现对应缺失。\n——「凡铭于铅者，终归于虚」",
+    "text_en": "Residual Anomaly: RA-041 · Temporal Erosion\nOrigin Will: Layer IX · Spiral Nullification Will\nAnomalous Overview: All recorded text within affected areas undergoes reverse fade, gradually blanking from page edges toward center. Codices, forms, and inscription traces completely vanish within ██ hours as if never existed. Workshop ███ lost ██ years of work records to this phenomenon.\nContainment Residue: Under Engine suppression, causes only mild interference to current inscription processes. Operators report \"after each impression, lead slugs seem to weigh less.\"\nNote: Subject D-████'s personal journal lost all written content within ██ minutes of exposure, though paper remained intact. Corresponding memory gaps were observed.\n—\"What is graven in lead shall return to void\"",
+    "_voice": "doc",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "text_zh": "残余异文：RA-058 · 封顶诅咒\n归属意志：第 VI 层 · 限额执行意志\n异常概述：被影响的抄写员在完成既定量工作后，其后续劳动产生的文字自动降解为铅屑。即使体力充足、字模完好，第 ██ 页之后的铭刻痕迹会在数分钟内粉化剥落。三名 Scriptor 因强行超额工作导致手指关节永久僵化。\n收容残余：引擎将其限制为轻微的铸印阻滞。键徒感知为「铅字变得沉重，仿佛不愿继续前行」。\n附注：表单 F-███ 规定每日铭刻限额为 ████ 字符。该条例制定日期与本异文首次记录日期相符，但制定原因栏显示为 [数据删除]。\n——「餍足之时，即为止笔之刻」",
+    "text_en": "Residual Anomaly: RA-058 · Satiation Curse\nOrigin Will: Layer VI · Quota Enforcement Will\nAnomalous Overview: Affected scribes find their text automatically degrades to lead shavings after completing predetermined quotas. Despite adequate stamina and proper type forms, inscription marks beyond page ██ crumble and flake within minutes. Three Scriptors developed permanent finger joint rigidity from forcing overquota work.\nContainment Residue: Engine constrains this to mild casting impedance. Operators perceive \"slugs becoming heavy, as if reluctant to proceed.\"\nNote: Form F-███ establishes daily inscription limits of ████ characters. Enactment date matches this anomaly's first recorded occurrence, but reasoning column shows [DATA EXPUNGED].\n—\"When sated, the stylus must rest\"",
+    "_voice": "doc",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "text_zh": "残余异文：RA-073 · 镜面回响\n归属意志：第 XII 层 · 双重要求意志\n异常概述：受影响的经卷在完成铭刻后自发增页，内容镜像复制且字序颠倒。原本 ██ 页的收容手册变为 ██ 页，后半部分为前半部分的镜像文本。阅读者必须完成双倍内容才能获得完整信息，否则理解停留在半句状态。\n收容残余：引擎压制使其仅影响收容基准的感知。键徒报告「经卷似乎永远差一半才能写满」。\n附注：Scriptor K-████ 的最后一份工作日志记录：「今日第 ██ 次尝试完成同一页。每当以为完工，页面底部就出现新的空行。我的油灯快熄了。」此后该人员失联。\n——「一言既出，必有回音」",
+    "text_en": "Residual Anomaly: RA-073 · Mirror Echo\nOrigin Will: Layer XII · Dual Demand Will\nAnomalous Overview: Affected codices spontaneously expand pages after inscription completion, duplicating content in mirror-reversed sequence. A ██-page containment manual became ██ pages, with latter half being mirrored text of former. Readers must complete double content to achieve full comprehension, otherwise understanding remains at half-sentence state.\nContainment Residue: Engine suppression limits this to containment threshold perception effects. Operators report \"codices seem perpetually half-complete.\"\nNote: Scriptor K-████'s final work log entry: \"Today marks attempt ██ to complete the same page. Each time I believe it finished, new blank lines appear at bottom. My oil lamp burns low.\" Personnel subsequently went missing.\n—\"Every word spoken demands an echo\"",
+    "_voice": "doc",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "text_zh": "残余异文：RA-089 · 递衰印记\n归属意志：第 VII 层 · 消减执行意志\n异常概述：连续使用的铅字模具出现不可逆的形变衰减，每次铸印后字符凹槽加深约 ██ 微米。第 ██ 次使用时，铸出的铅字重量不足初始值的 ██%，文字失去清晰度。整个铸字坊的产出在 ██ 天内降至无法辨认的程度。\n收容残余：引擎将破坏性压制为轻微的铭刻衰减。键徒感知为「铅字声音逐句变轻，如远去的钟响」。\n附注：技工 D-████ 尝试以抛光修复衰减字模。处理后的字模在下次使用时直接碎裂，产生的铅屑带有未知的蚀刻纹路。蚀刻图案经分析疑似某种文字，但不属于任何已知语系。\n——「重复即是消磨，坚持即是毁灭」",
+    "text_en": "Residual Anomaly: RA-089 · Diminishing Mark\nOrigin Will: Layer VII · Reduction Enforcement Will\nAnomalous Overview: Consecutively used lead type molds undergo irreversible deformation decay, with character grooves deepening approximately ██ micrometers per casting. By usage ██, cast slugs weigh less than ██% of initial value and text loses definition. Entire foundry output degraded to unreadable levels within ██ days.\nContainment Residue: Engine suppresses destructive potential to mild inscription decay. Operators perceive \"slug sounds growing fainter with each word, like distant bells.\"\nNote: Technician D-████ attempted polish-restoration of degraded molds. Treated molds fractured completely on next use, producing shavings with unknown etch patterns. Analysis suggests the etching resembles text, but belongs to no known linguistic system.\n—\"Repetition wears thin, persistence destroys\"",
+    "_voice": "doc",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "text_zh": "残余异文：RA-102 · 铅屑征收\n归属意志：第 VIII 层 · 抽取执行意志\n异常概述：受影响铸字坊的每次铸印完成后，约 ██% 的铅字重量会以细微颗粒形式从字模底部渗出，汇集于地基缝隙中。渗出的铅屑带有异常磁性，会主动寻找并依附于未完成的铭刻工作。长期暴露的键徒手指出现铅中毒症状。\n收容残余：引擎限制其为微量的铭刻损耗。键徒报告「落版时字盘下方传来细微的滴落声」。\n附注：地基下发现大量蓄积的异常铅屑，估算总量超过 ████ 公斤。屑粒呈完美球形，直径统一为 ██ 毫米。清理作业因 §4.2 条例被无限期推迟，推迟原因栏标注为「等待上级指示」，但上级职位显示为空缺。\n——「凡劳作之果，皆有其税」",
+    "text_en": "Residual Anomaly: RA-102 · Lead Tithe\nOrigin Will: Layer VIII · Extraction Enforcement Will\nAnomalous Overview: Each casting completion in affected foundries causes approximately ██% of slug mass to seep as fine particles from mold bases, collecting in foundation crevices. Seeped shavings exhibit anomalous magnetism, actively seeking and adhering to incomplete inscription work. Prolonged exposure causes lead poisoning symptoms in operators.\nContainment Residue: Engine limits this to trace inscription loss. Operators report \"faint dripping sounds from beneath type beds during impression.\"\nNote: Foundation excavation revealed massive accumulations of anomalous shavings, estimated total exceeding ████ kilograms. Particles are perfectly spherical, uniform ██ millimeter diameter. Cleanup operations indefinitely postponed per §4.2, reasoning listed as \"awaiting superior guidance,\" but superior positions show vacant.\n—\"All fruits of labor bear their levy\"",
+    "_voice": "doc",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "text_zh": "残余异文：RA-047 · 蚀流余烬\n归属意志：第 VIII 层 · 慢性消蚀意志\n异常概述：收容前曾致第 ██ 铸字坊全部铅字在铸印 ██ 次后重量降至初始值的 ██%。受影响工段的铅水储罐出现异常沉积物，呈黑色结晶状，触感温热。现存样本共计 ██ 公斤，储于密封铅罐。\n收容残余：当前压制状态下，仅影响部分铭文组的铸印饱和度。键徒报告'铅字似乎变轻了，但看不出区别'。\n附注：覆盖面积与蚀失强度呈负相关。原因待查明。实验记录显示集中使用反而减缓衰减，违反直观预期。\n——「少铸一字，重于千言」",
+    "text_en": "Residual Anomaly: RA-047 · Erosion Ember\nManifestation of Will: Layer VIII · Gradual Corrosion\nAnomalous Overview: Pre-containment caused all lead slugs in Workshop ██ to degrade to ██% of initial mass after ██ impressions. Affected sections' lead cisterns developed anomalous sediment deposits - crystalline, black, warm to touch. ██ kg of samples remain in sealed lead containers.\nContainment Residue: Under current suppression, only affects impression saturation of select inscription sets. Operators report 'slugs feel lighter, though no visible difference'.\nAddendum: Coverage area inversely correlates with erosion intensity. Cause undetermined. Test logs show concentrated usage paradoxically slows degradation.\n—'To omit one glyph weighs more than a thousand words'",
+    "_voice": "doc",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "text_zh": "残余异文：RA-051 · 递隐蚀痕\n归属意志：第 VI 层 · 渐消意志\n异常概述：收容前导致整册经卷的文字按时序依次消失，羊皮纸表面留下烧灼状空白区域。失联键徒的最后记录显示笔迹从末字开始淡化，直至完全透明。现场仅余空白纸页，触摸时仍能感受到微弱凹痕。\n收容残余：铭刻过程中，铅字符号出现短暂透明化现象。键徒反映'好像字母在眼前慢慢化掉'。\n附注：透明化顺序固定为从右至左。与第 ██ 层发现的'逆时文献'可能存在关联，相关调查已被 ██ 级权限终止。\n——「显于世者，终归虚无」",
+    "text_en": "Residual Anomaly: RA-051 · Sequential Erasure\nManifestation of Will: Layer VI · Gradual Dissolution\nAnomalous Overview: Pre-containment caused entire codices to lose text in temporal sequence, leaving cauterized blank zones on parchment. Final logs of missing operators show handwriting fading from terminal characters to complete transparency. Only blank pages remain on-site, though faint impressions persist to touch.\nContainment Residue: During inscription, lead glyphs exhibit brief transparency phases. Operators report 'letters seem to melt before the eyes'.\nAddendum: Transparency sequence consistent right-to-left. Possible correlation with 'Reverse Chronology Texts' found on Layer ██. Related investigation terminated by ██-level authority.\n—'What shows to the world shall return to void'",
+    "_voice": "doc",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "text_zh": "残余异文：RA-034 · 错序动荡\n归属意志：第 VII 层 · 混序意志\n异常概述：收容前曾致第 ██ 抄写室的全部经卷文字自行重排，字母顺序完全打乱但词语边界保持完整。受影响 Scriptor 报告阅读时'字母在纸上跳舞，但总能拼出正确含义'。现存乱序经卷共计 ██ 册，储于特制书架。\n收容残余：键座表面的铅字符号偶现位移现象，但铭刻仍可正常进行。键徒需按乱序显示进行铸印，准确率未受影响。\n附注：字母位移遵循未知规律，非随机分布。数次尝试破译其排列逻辑均告失败。第 ██ 次实验后，一名 Scriptor 开始在私人笔记中使用相同错序模式。\n——「乱中有序，序中有乱」",
+    "text_en": "Residual Anomaly: RA-034 · Disordered Agitation\nManifestation of Will: Layer VII · Scrambling Intent\nAnomalous Overview: Pre-containment caused all codices in Scriptorium ██ to self-reorganize with completely scrambled letter sequences while preserving word boundaries. Affected Scriptors reported 'letters dancing on page, yet somehow spelling correct meaning'. ██ scrambled codices remain in specialized storage.\nContainment Residue: Lead glyphs on lectern surface occasionally exhibit positional drift, though inscription proceeds normally. Operators must follow scrambled display sequence; accuracy remains unaffected.\nAddendum: Letter displacement follows unknown patterns, non-random distribution. Multiple attempts to decode arrangement logic have failed. After Experiment ██, one Scriptor began using identical scramble patterns in personal notes.\n—'Order within chaos, chaos within order'",
+    "_voice": "doc",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "text_zh": "残余异文：RA-029 · 逆时回流\n归属意志：第 IX 层 · 倒序意志\n异常概述：收容前导致受影响区域内所有文字工作必须从末字开始进行。键徒尝试正序铸印时手指会不受控制地移向最后位置。完整事故报告显示 D-████ 在强行正序操作后出现短暂失语，随后恢复但语序永久倒置。\n收容残余：铭刻时铅字符号呈现倒序排列，键徒需从右至左依次铸印。适应期后操作效率基本恢复正常。\n附注：倒序操作对键徒心理状态的长期影响尚在评估中。三名长期接触者在日常对话中偶现词序颠倒现象，但本人未察觉异常。\n——「终点即起点，归途即前路」",
+    "text_en": "Residual Anomaly: RA-029 · Temporal Backflow\nManifestation of Will: Layer IX · Reverse Sequence\nAnomalous Overview: Pre-containment required all textual work in affected areas to begin from terminal characters. Operators attempting forward inscription experienced involuntary finger movement toward final positions. Complete incident report shows D-████ developed temporary aphasia after forced forward operation, recovering with permanently inverted speech patterns.\nContainment Residue: Lead glyphs display in reverse sequence during inscription. Operators must proceed right-to-left. Efficiency largely normalizes after adaptation period.\nAddendum: Long-term psychological effects of reverse operation under evaluation. Three prolonged-exposure operators exhibit occasional word-order inversion in casual speech, though subjects remain unaware of anomaly.\n—'The end is the beginning, return is the path forward'",
+    "_voice": "doc",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "text_zh": "残余异文：RA-063 · 标点侵蚀\n归属意志：第 V 层 · 符号寄生意志\n异常概述：收容前使受影响经卷的文字间隙中生长出未经授权的标点符号，呈菌丝状蔓延模式。严重感染的页面标点密度超过字母本身，但仍保持可读性。现存感染样本中发现了 ██ 种未录入的标点形态，其中部分在接触时会轻微振动。\n收容残余：铭刻过程中，词语内部随机出现额外标点符号。键徒需按显示内容准确铸印，包括插入的符号。\n附注：插入符号的种类与键徒的紧张程度呈正相关。实验显示刻意放松可减少异常符号数量，但无法完全消除。一份事故报告的结尾莫名多出十七个问号。\n——「言语之间，符号窃窃私语」",
+    "text_en": "Residual Anomaly: RA-063 · Punctuation Corrosion\nManifestation of Will: Layer V · Symbolic Parasitism\nAnomalous Overview: Pre-containment caused unauthorized punctuation marks to proliferate within text gaps of affected codices in mycelial spreading patterns. Severely infected pages contained punctuation density exceeding letters themselves while maintaining readability. Infected samples reveal ██ unrecorded punctuation forms, some exhibiting mild vibration upon contact.\nContainment Residue: During inscription, words randomly develop additional punctuation marks internally. Operators must accurately reproduce displayed content including inserted symbols.\nAddendum: Symbol insertion correlates with operator stress levels. Tests show deliberate relaxation reduces anomalous marks but cannot eliminate them entirely. One incident report inexplicably concluded with seventeen question marks.\n—'Between words, symbols whisper in secret'",
+    "_voice": "doc",
+    "_objectId": "boss_garble"
+  }
+]

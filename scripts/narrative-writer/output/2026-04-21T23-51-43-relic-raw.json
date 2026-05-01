@@ -1,0 +1,1107 @@
+[
+  {
+    "id": "apprentice_notes",
+    "name_zh": "初誓残页",
+    "name_en": "Fragment of First Vows",
+    "text_zh": "新键徒的初次誓言，写在颤抖的羊皮纸上。墨迹渗透纸背，仿佛字母还在生长。",
+    "text_en": "A novice's trembling vows, inked on parchment. The letters seem to still grow through the page.",
+    "_voice": "bell",
+    "_objectId": "apprentice_notes"
+  },
+  {
+    "id": "primal_mutant",
+    "name_zh": "原铸熔蜡",
+    "name_en": "Primal Molten Wax",
+    "text_zh": "引擎深处流出的第一滴蜡。触之犹温，如初铸之铅。每层降临时，它记起自己的本源。",
+    "text_en": "First wax from the Engine's depths. Still warm as freshly cast lead, remembering its origin each descent.",
+    "_voice": "bell",
+    "_objectId": "primal_mutant"
+  },
+  {
+    "id": "ultimate_mutant_strain",
+    "name_zh": "终极污蜡",
+    "name_en": "Ultimate Corrupted Ichor",
+    "text_zh": "已无法名状之蜡液。它自行决定何时流淌，何时凝固——甚至何时回流。",
+    "text_en": "Wax beyond naming. It decides when to flow, when to set, when to flow backward.",
+    "_voice": "bell",
+    "_objectId": "ultimate_mutant_strain"
+  },
+  {
+    "id": "gene_stabilizer",
+    "name_zh": "定铸锁环",
+    "name_en": "Forge Lock Ring",
+    "text_zh": "前任铸师的约束环。可锁住熔炉一角，让其余部分独自重铸。智慧在于知晓何时停手。",
+    "text_en": "A master caster's restraining ring. Locks one corner while the rest reforges. Wisdom lies in knowing when to stop.",
+    "_voice": "bell",
+    "_objectId": "gene_stabilizer"
+  },
+  {
+    "id": "fittest_survivors",
+    "name_zh": "历练者印记",
+    "name_en": "Mark of the Tested",
+    "text_zh": "经受烈火重铸者的印记。熔蜡褪去后，铅字记住了火焰中学会的坚韧。",
+    "text_en": "Mark of those reforged by flame. After the wax cools, letters remember the strength learned in fire.",
+    "_voice": "bell",
+    "_objectId": "fittest_survivors"
+  },
+  {
+    "id": "enchant_dividend",
+    "name_zh": "殊恩铅币",
+    "name_en": "Nummus Benedictus",
+    "text_zh": "受祝圣的铭文组铸出时，坩底总会多几枚铅币。前任抄写员遗言：汝之虔诚，引擎必报之。",
+    "text_en": "Consecrated inscriptions yield extra lead. Former scriptor's dying words: 'Piety rewarded by the Engine's grace.'",
+    "_voice": "bell",
+    "_objectId": "enchant_dividend"
+  },
+  {
+    "id": "enchant_boost",
+    "name_zh": "圣油瓶",
+    "name_en": "Oleum Sanctum",
+    "text_zh": "瓶中圣油从未用尽。以此祝圣之铭文组，其铸出必倍增——如圣火助薪。",
+    "text_en": "Sacred oil never empties. Inscriptions blessed with this yield doubled casting—as flame feeds on kindling.",
+    "_voice": "bell",
+    "_objectId": "enchant_boost"
+  },
+  {
+    "id": "rune_spike",
+    "name_zh": "裂铅尖刺",
+    "name_en": "Spina Fracturae",
+    "text_zh": "从引擎核心带回的黑曜石碎片。每嵌一祝圣铭文组，其锋芒便渗透一分——直至铅字应声而裂。",
+    "text_en": "Obsidian shard from Engine's heart. Each consecrated inscription sharpens its edge—until lead splits at the lightest touch.",
+    "_voice": "bell",
+    "_objectId": "rune_spike"
+  },
+  {
+    "id": "apprentice_robe",
+    "name_zh": "见习抄录袍",
+    "name_en": "Toga Novitiatus",
+    "text_zh": "袍摆沾满铅屑与蜡渍。前主已晋升，但其勤勉仍在袍中——见习祝圣之力因此长存。",
+    "text_en": "Hem stained with lead shavings and wax. Former wearer ascended, but diligence remains—novice consecrations endure within.",
+    "_voice": "bell",
+    "_objectId": "apprentice_robe"
+  },
+  {
+    "id": "trial_badge",
+    "name_zh": "执事铜章",
+    "name_en": "Signum Diaconi",
+    "text_zh": "铜章表面刻着已故执事的名字。佩戴者苦修任务所需之铭文组数总会少一——死者的恩泽。",
+    "text_en": "Copper badge bears deceased deacon's name. Wearer needs fewer inscriptions for penitence quests—the dead's final blessing.",
+    "_voice": "bell",
+    "_objectId": "trial_badge"
+  },
+  {
+    "id": "fate_fork",
+    "name_zh": "三圣途门钥",
+    "name_en": "Tripartite Clavis",
+    "text_zh": "末席守卷人的铜门钥。钥齿分叉，可启三途。其言：择路者必承其重。",
+    "text_en": "The Last Councilor's brass key. Triple-toothed, opens three paths. 'Who chooses must bear the weight.'",
+    "_voice": "bell",
+    "_objectId": "fate_fork"
+  },
+  {
+    "id": "greedy_inscription",
+    "name_zh": "饥渴圣油瓶",
+    "name_en": "Vial of Thirsting Unguent",
+    "text_zh": "验铭者Selen留下的祝圣油。瓶身温热，油色如血。饮之必成——但饮者愈深，引擎门槛愈高。",
+    "text_en": "Consecration oil left by Scriptor Selen. Bottle warm, oil blood-red. Guarantees success—but thirsts for more with each use.",
+    "_voice": "bell",
+    "_objectId": "greedy_inscription"
+  },
+  {
+    "id": "masters_lexicon",
+    "name_zh": "初铭者手册",
+    "name_en": "Codex Primalis",
+    "text_zh": "初铭者Valis的亲手注解本。页边满是铅屑——二十六字皆备。其手依然在铸。",
+    "text_en": "Scriptor Valis's annotated primer. Margins filled with lead shavings—all twenty-six glyphs present. His hands still forge.",
+    "_voice": "bell",
+    "_objectId": "masters_lexicon"
+  },
+  {
+    "id": "perpetual_queue",
+    "name_zh": "无尽传动轴",
+    "name_en": "Axis Perpetualis",
+    "text_zh": "第九层的齿轮轴截面。纹路如蛇鳞，永不停转。每层新启时，它已先行三步。",
+    "text_en": "Shaft fragment from the Ninth Vault. Scale-marked, ever-turning. When each layer begins, it has already moved thrice.",
+    "_voice": "bell",
+    "_objectId": "perpetual_queue"
+  },
+  {
+    "id": "word_scissors",
+    "name_zh": "悔罪分解钳",
+    "name_en": "Penance Shears",
+    "text_zh": "问道者Kernn的铜制拆字钳。刃口磨得发亮。已铸之字皆可重归铅屑——如悔未至。",
+    "text_en": "Scriptor Kernn's brass word-shears. Blades polished bright. Even cast words return to shavings—as if repentance undoes.",
+    "_voice": "bell",
+    "_objectId": "word_scissors"
+  },
+  {
+    "id": "resonance_mold",
+    "name_zh": "共鸣字模",
+    "name_en": "Resonant Mold",
+    "text_zh": "Scriptor V-████ 铸字三十年——其字模记住了她的韵律。铅字落槽时仍唤回旧日之声。",
+    "text_en": "Scriptor V-████ cast type for thirty years. Her molds remember the rhythm. Lead still echoes her touch.",
+    "_voice": "bell",
+    "_objectId": "resonance_mold"
+  },
+  {
+    "id": "word_collection",
+    "name_zh": "词汇收藏",
+    "name_en": "Lexicon Hoard",
+    "text_zh": "前任在抄书边角记词——新学之字用重墨划记。墨渍下铅币犹温。",
+    "text_en": "Previous keeper marked new words in heavy ink at page margins. Lead coins still warm beneath stains.",
+    "_voice": "bell",
+    "_objectId": "word_collection"
+  },
+  {
+    "id": "thick_deck",
+    "name_zh": "词库丰收",
+    "name_en": "Abundant Codex",
+    "text_zh": "收容经卷愈厚，征用管内铅币愈轻——仿佛书页能分担铅币之重。",
+    "text_en": "Thicker codex makes coins lighter in the requisition tube, as if pages share the burden.",
+    "_voice": "bell",
+    "_objectId": "thick_deck"
+  },
+  {
+    "id": "long_word_crit",
+    "name_zh": "长词蓄力",
+    "name_en": "Lengthy Incantation",
+    "text_zh": "长诵之字含力更深——铅字记住念诵时吐息之长。",
+    "text_en": "Longer words hold deeper force. Lead remembers the length of breath in their recitation.",
+    "_voice": "bell",
+    "_objectId": "long_word_crit"
+  },
+  {
+    "id": "short_sprint",
+    "name_zh": "短词冲刺",
+    "name_en": "Swift Utterance",
+    "text_zh": "前任惯于疾书短词——其墨迹至今仍有急切之意。铭文组因之而燃。",
+    "text_en": "Previous keeper favored swift short words. Her urgent ink still burns in inscriptions.",
+    "_voice": "bell",
+    "_objectId": "short_sprint"
+  },
+  {
+    "id": "long_word_master",
+    "name_zh": "词匠墨尺",
+    "name_en": "Scriptorum Regula",
+    "text_zh": "前任抄写者的度量尺。每当铭刻冗长祷文，尺上的墨痕便会加深一分。",
+    "text_en": "The former scribe's measuring rule. Ink stains deepen with each lengthy prayer inscribed.",
+    "_voice": "bell",
+    "_objectId": "long_word_master"
+  },
+  {
+    "id": "word_dealer",
+    "name_zh": "商贩印戒",
+    "name_en": "Mercator Sigillum",
+    "text_zh": "流动书商的铜戒指。戒面刻着一句话：慷慨者，天道必还之。",
+    "text_en": "A wandering book merchant's copper ring. Engraved: 'Generosity begets providence.'",
+    "_voice": "bell",
+    "_objectId": "word_dealer"
+  },
+  {
+    "id": "punctuation_liberation",
+    "name_zh": "异端标记",
+    "name_en": "Signa Haeretica",
+    "text_zh": "从禁书中撕下的页边。墨迹仍在渗透，逗号与句号开始在纸上游走。",
+    "text_en": "A margin torn from forbidden texts. Ink still bleeds—commas and periods wander the page.",
+    "_voice": "bell",
+    "_objectId": "punctuation_liberation"
+  },
+  {
+    "id": "decelerate_reward",
+    "name_zh": "沉思蜡烛",
+    "name_en": "Candela Contemplationis",
+    "text_zh": "修士祈祷时点燃的蜡烛。烛火记住了默想的节奏——越慢，燃得越久。",
+    "text_en": "A monk's prayer candle. The flame remembers contemplation's pace—slower burns longer.",
+    "_voice": "bell",
+    "_objectId": "decelerate_reward"
+  },
+  {
+    "id": "accelerate_reward",
+    "name_zh": "急使钱袋",
+    "name_en": "Bursa Cursoria",
+    "text_zh": "驿站信使的铅币袋。袋底磨得发亮——越是匆忙赶路，铅币便响得越欢。",
+    "text_en": "A courier's lead coin purse. Bottom worn bright—faster journeys make coins sing louder.",
+    "_voice": "bell",
+    "_objectId": "accelerate_reward"
+  },
+  {
+    "id": "little_helper",
+    "name_zh": "先知手套",
+    "name_en": "Gloves of Foresight",
+    "text_zh": "前任抄写员的皮手套。指尖已磨薄，却仍知晓下一个字母——仿佛铅字在呼唤。",
+    "text_en": "The prior scrivener's worn gloves. Fingertips thin from use, yet they know the next letter before it falls.",
+    "_voice": "bell",
+    "_objectId": "little_helper"
+  },
+  {
+    "id": "rhythm_adapt",
+    "name_zh": "节拍器之心",
+    "name_en": "Heart of the Metronome",
+    "text_zh": "从引擎深处取回的齿轮。它仍按照祷文引擎的节拍转动——与之共鸣者，铭刻愈重。",
+    "text_en": "A gear retrieved from the Engine's depths. It still turns to the Litany's rhythm—those who match its beat inscribe deeper.",
+    "_voice": "bell",
+    "_objectId": "rhythm_adapt"
+  },
+  {
+    "id": "glass_cannon_v2",
+    "name_zh": "初学者经卷",
+    "name_en": "The Novitiate Codex",
+    "text_zh": "教堂最古老的祈祷书。其页已融为一体——唯有纯净之手方能铭刻，不可借助他物。",
+    "text_en": "The Cathedral's eldest prayer book. Its pages fused as one—only pure hands may inscribe, unaided by artifice.",
+    "_voice": "bell",
+    "_objectId": "glass_cannon_v2"
+  },
+  {
+    "id": "combo_buffer",
+    "name_zh": "回音石",
+    "name_en": "Stone of Echoes",
+    "text_zh": "圆润的黑曜石。连祷断绝时，其中犹存前声之半——如远山回音，渐弱未绝。",
+    "text_en": "Smooth obsidian stone. When litany breaks, it holds half the prior voice—like distant echo, fading but unbroken.",
+    "_voice": "bell",
+    "_objectId": "combo_buffer"
+  },
+  {
+    "id": "multiplier_prism",
+    "name_zh": "共鸣棱晶",
+    "name_en": "Prism of Resonance",
+    "text_zh": "六面水晶，曾镶嵌于引擎核心。当圣流汇聚一处时，棱面折射其力，令铭刻倍增。",
+    "text_en": "Six-faced crystal, once set in the Engine's core. When humours converge, its facets refract their force, doubling inscription.",
+    "_voice": "bell",
+    "_objectId": "multiplier_prism"
+  },
+  {
+    "id": "combo_detonator",
+    "name_zh": "蓄势引爆",
+    "name_en": "Litany of the Gathered Storm",
+    "text_zh": "铅字蓄于炉膛深处，静候其时。十五声祷念既满，诸铭齐鸣。",
+    "text_en": "The slugs gather in the deep forge, waiting. When fifteen prayers are spoken, all inscriptions shall sound as one.",
+    "_voice": "bell",
+    "_objectId": "combo_detonator"
+  },
+  {
+    "id": "cancel",
+    "name_zh": "取消连锁",
+    "name_en": "Rite of the Severed Chain",
+    "text_zh": "汝可截其未成之词，夺其首字而化为己用。唯震颤者，链断如丝。",
+    "text_en": "You may sever the unformed word, claim its first letter as your own. Yet tremors break the chain like silk.",
+    "_voice": "bell",
+    "_objectId": "cancel"
+  },
+  {
+    "id": "immortal_combo",
+    "name_zh": "不断之链",
+    "name_en": "Chain Eternal",
+    "text_zh": "此链不为时砂所断，亦不为关门所阻。惟震颤可绝其续。",
+    "text_en": "This chain knows no sand's ending, no door's barrier. Only tremor may sever its continuance.",
+    "_voice": "bell",
+    "_objectId": "immortal_combo"
+  },
+  {
+    "id": "fury_beat",
+    "name_zh": "暴走节拍",
+    "name_en": "Rhythm of Shattered Lead",
+    "text_zh": "连祷既起，铅字愈重。每一击皆如雷鸣，碎者愈多。",
+    "text_en": "When prayers flow, the lead grows heavy. Each strike thunders, more shall fracture.",
+    "_voice": "bell",
+    "_objectId": "fury_beat"
+  },
+  {
+    "id": "first_strike",
+    "name_zh": "首发强化",
+    "name_en": "Blessing of the First Letter",
+    "text_zh": "每词之始，铭文组受祝圣。初击之力，重于后继。",
+    "text_en": "At each word's birth, inscriptions receive blessing. The first strike carries weight beyond the rest.",
+    "_voice": "bell",
+    "_objectId": "first_strike"
+  },
+  {
+    "id": "less_is_more",
+    "name_zh": "简朴圣印",
+    "name_en": "Sigil of Restraint",
+    "text_zh": "真正的铭刻者知晓，字符若寡，音将益清。",
+    "text_en": "True scribes know: fewer glyphs, clearer resonance.",
+    "_voice": "bell",
+    "_objectId": "less_is_more"
+  },
+  {
+    "id": "training_manual",
+    "name_zh": "首席见习册",
+    "name_en": "Codex Primum Novitiatum",
+    "text_zh": "初铭者留下的习字册。每页皆有朱墨修正。师者之手，仍在引领。",
+    "text_en": "Novice primer with crimson corrections. The master's hand still guides.",
+    "_voice": "bell",
+    "_objectId": "training_manual"
+  },
+  {
+    "id": "jazz",
+    "name_zh": "千调圣印",
+    "name_en": "Sigil of Myriad Keys",
+    "text_zh": "昔有键徒能让每个字母唱出不同的调子。汝若习其法，音律自会相和。",
+    "text_en": "A keybound once made each letter sing its own tune. Learn their way, find harmony.",
+    "_voice": "bell",
+    "_objectId": "jazz"
+  },
+  {
+    "id": "uncrowned_king",
+    "name_zh": "素位圣印",
+    "name_en": "Sigil of the Humble Seat",
+    "text_zh": "不坐高位者，铅字为其加冕。",
+    "text_en": "Those who claim no throne, the letters crown.",
+    "_voice": "bell",
+    "_objectId": "uncrowned_king"
+  },
+  {
+    "id": "d_100",
+    "name_zh": "命运骰盅",
+    "name_en": "Dice of Fates",
+    "text_zh": "前任留下的象牙骰子。每掷一次，圣坛上的字符就会重新排列。骰子永不静止。",
+    "text_en": "Ivory dice from the last keeper. Each roll reshapes the altar's array. Never truly still.",
+    "_voice": "bell",
+    "_objectId": "d_100"
+  },
+  {
+    "id": "precision_strike",
+    "name_zh": "圣字钉钳",
+    "name_en": "Glyph Tongs of the Sacred Row",
+    "text_zh": "前任的手总是放在那几个键上。铅字记住了他的位置。",
+    "text_en": "The previous keeper's hands always rested there. The lead remembers his position.",
+    "_voice": "bell",
+    "_objectId": "precision_strike"
+  },
+  {
+    "id": "key_storm",
+    "name_zh": "风暴祷文残页",
+    "name_en": "Fragmentum Tempestatis",
+    "text_zh": "此页曾被狂风撕碎，字句四散。如今每个字都在寻找它失落的兄弟。",
+    "text_en": "This page was torn by storm winds, words scattered. Now each seeks its lost brethren.",
+    "_voice": "bell",
+    "_objectId": "key_storm"
+  },
+  {
+    "id": "production_dividend",
+    "name_zh": "征收印章",
+    "name_en": "Sigillum Requisitionis",
+    "text_zh": "体制的蜡印总要留下痕迹。铅币从指缝渗出，无人知晓其源。",
+    "text_en": "The system's seal always leaves traces. Coins seep between fingers, source unknown.",
+    "_voice": "bell",
+    "_objectId": "production_dividend"
+  },
+  {
+    "id": "time_trickle",
+    "name_zh": "破损沙漏",
+    "name_en": "Clepsydra Fracta",
+    "text_zh": "沙粒缓缓渗漏，但漏向何处无人知晓。时间在此处变得粘稠。",
+    "text_en": "Sand leaks slowly, but where it falls none know. Time grows thick here.",
+    "_voice": "bell",
+    "_objectId": "time_trickle"
+  },
+  {
+    "id": "resource_focus",
+    "name_zh": "专工护目镜",
+    "name_en": "Ocularia Artificis",
+    "text_zh": "工匠只看他最熟悉的那种流质。其余一切在镜片中褪色。",
+    "text_en": "The craftsman sees only the flow he knows best. All else fades through the lens.",
+    "_voice": "bell",
+    "_objectId": "resource_focus"
+  },
+  {
+    "id": "resource_diversity",
+    "name_zh": "七流汇印",
+    "name_en": "Septem Confluens",
+    "text_zh": "七圣流汇于一印，其铸愈纯。前任在印面刻下每一流的真名——墨迹至今未干。",
+    "text_en": "Seven humours converge in one seal. The predecessor carved each true name into its face—the ink never dried.",
+    "_voice": "bell",
+    "_objectId": "resource_diversity"
+  },
+  {
+    "id": "resource_tide",
+    "name_zh": "潮汐沙漏",
+    "name_en": "Horologium Aestus",
+    "text_zh": "沙粒按引擎的呼吸流转。四息一轮，每轮赐不同圣流以盈。汝持之，便随潮汐而铸。",
+    "text_en": "Sand flows with the Engine's breath. Four beats per cycle, each grants different humours abundance. Hold it, forge with the tides.",
+    "_voice": "bell",
+    "_objectId": "resource_tide"
+  },
+  {
+    "id": "universal_furnace",
+    "name_zh": "万物坩埚",
+    "name_en": "Crucibulum Omnia",
+    "text_zh": "此坩埚吞噬万物，唯吐铅币。前贤者投入毕生所学，换得一掌铅屑——其面带笑。",
+    "text_en": "This crucible devours all, yields only lead coin. The wise sage cast his life's work within, gained but lead dust—and smiled.",
+    "_voice": "bell",
+    "_objectId": "universal_furnace"
+  },
+  {
+    "id": "discount_card",
+    "name_zh": "旧职铜牌",
+    "name_en": "Lamina Veterana",
+    "text_zh": "前管事的征用铜牌。权限已注销，惯性犹存。管道员见此牌，仍按旧价放行。",
+    "text_en": "Former steward's requisition badge. Authority revoked, habit remains. Tube operators still honor the old rates upon sight.",
+    "_voice": "bell",
+    "_objectId": "discount_card"
+  },
+  {
+    "id": "recycle_expert",
+    "name_zh": "甄别手套",
+    "name_en": "Chirotheca Discernens",
+    "text_zh": "废料甄别师的手套，指尖磨得光亮。其手辨铅之纯度，连铅屑亦知其值几何。",
+    "text_en": "Waste assessor's gloves, fingertips polished smooth. Their hands knew lead's purity—even shavings revealed their true worth.",
+    "_voice": "bell",
+    "_objectId": "recycle_expert"
+  },
+  {
+    "id": "black_market",
+    "name_zh": "密令铜牌",
+    "name_en": "Clandestine Seal",
+    "text_zh": "铜牌上刻着不在册的守卷人印记。其主人从未出现在任何表单上。",
+    "text_en": "Copper seal bears the mark of an unlisted Keeper. Its owner appears in no registry.",
+    "_voice": "bell",
+    "_objectId": "black_market"
+  },
+  {
+    "id": "gold_interest",
+    "name_zh": "锈蚀天平",
+    "name_en": "Rusted Scales",
+    "text_zh": "前任记账员的天平。铅币在其上永远不平——总是向左倾斜，仿佛在索求更多。",
+    "text_en": "The accountant's scales never balanced. Lead coins always lean left, as if demanding more.",
+    "_voice": "bell",
+    "_objectId": "gold_interest"
+  },
+  {
+    "id": "smuggle_pass",
+    "name_zh": "破损工牌",
+    "name_en": "Cracked Badge",
+    "text_zh": "工牌的征用授权早已过期，但管道系统从不记得检查日期。",
+    "text_en": "Badge's requisition authority expired long ago. The pneumatic system never remembers to check.",
+    "_voice": "bell",
+    "_objectId": "smuggle_pass"
+  },
+  {
+    "id": "timed_auction",
+    "name_zh": "催促铃铛",
+    "name_en": "Urgency Bell",
+    "text_zh": "小铃铛响起时，管道内的齿轮转得更急。前主人总说时间不够用。",
+    "text_en": "When the bell chimes, gears within the tubes spin faster. Its owner always said time wasn't enough.",
+    "_voice": "bell",
+    "_objectId": "timed_auction"
+  },
+  {
+    "id": "warm_up",
+    "name_zh": "热炉手套",
+    "name_en": "Furnace Gloves",
+    "text_zh": "铸字工的旧手套，掌心还残留炉膛余温。铅字在其触下更为柔顺。",
+    "text_en": "Typefounder's old gloves, palms still warm from the furnace. Lead bends more willingly beneath them.",
+    "_voice": "bell",
+    "_objectId": "warm_up"
+  },
+  {
+    "id": "intermission",
+    "name_zh": "传令者的油壶",
+    "name_en": "Herald's Flask",
+    "text_zh": "传令者每层都停下来加油。他说这样才能把消息带到更远的地方。",
+    "text_en": "The herald refills his flask at every level. Says messages travel farther that way.",
+    "_voice": "bell",
+    "_objectId": "intermission"
+  },
+  {
+    "id": "gamblers_creed",
+    "name_zh": "骰徒的最后一掷",
+    "name_en": "Gambler's Final Cast",
+    "text_zh": "骰子还在转。骰徒早已不见。唯愿铅币记得那个夜晚的承诺。",
+    "text_en": "The die still rolls. The gambler long gone. May lead coins remember that night's promise.",
+    "_voice": "bell",
+    "_objectId": "gamblers_creed"
+  },
+  {
+    "id": "endurance_battery",
+    "name_zh": "恒燃灯芯",
+    "name_en": "Eternal Wick",
+    "text_zh": "前任留下的煤油灯。灯芯从未燃尽，只是越烧越慢。",
+    "text_en": "The predecessor's kerosene lamp. Its wick never burns out, only slower.",
+    "_voice": "bell",
+    "_objectId": "endurance_battery"
+  },
+  {
+    "id": "elite_hunter",
+    "name_zh": "赏金猎手的钢钉",
+    "name_en": "Bounty Hunter's Nail",
+    "text_zh": "每一层墙上，都钉着一张悬赏。钢钉上还有血渍——那是立约的印记。",
+    "text_en": "Every wall bears a bounty notice. Blood stains the nail—the mark of covenant.",
+    "_voice": "bell",
+    "_objectId": "elite_hunter"
+  },
+  {
+    "id": "phoenix",
+    "name_zh": "炉凤羽翎",
+    "name_en": "Furnace Phoenix Plume",
+    "text_zh": "此羽在炉火中重生过。但每次重生，羽翎都会少一根。",
+    "text_en": "This plume was reborn in furnace flame. Each rebirth costs another feather.",
+    "_voice": "bell",
+    "_objectId": "phoenix"
+  },
+  {
+    "id": "desperate_crit",
+    "name_zh": "末铅残烛",
+    "name_en": "Candle of the Final Hour",
+    "text_zh": "烛芯将尽时，蜡泪最重。前任留下的护目镜上，至今还有最后一夜的烛影。",
+    "text_en": "When the wick burns low, the wax falls heaviest. The last vigil's shadow still haunts these lenses.",
+    "_voice": "bell",
+    "_objectId": "desperate_crit"
+  },
+  {
+    "id": "modifier_shield",
+    "name_zh": "缓冲油瓶",
+    "name_en": "Viscous Unguent",
+    "text_zh": "机械师的私藏。瓶中之油永不凝固，能让最锐利的齿轮也温柔转动。",
+    "text_en": "A machinist's personal reserve. The oil within never thickens, gentling even the sharpest gears.",
+    "_voice": "bell",
+    "_objectId": "modifier_shield"
+  },
+  {
+    "id": "bounty_hunter",
+    "name_zh": "黑市配给券",
+    "name_en": "Shadow Requisition Chit",
+    "text_zh": "越是困境，越有门路。券面磨损严重，边角写着'诸位莫问来路'。",
+    "text_en": "The darker the hour, the deeper the connections. Worn edges bear the words: 'Ask no questions.'",
+    "_voice": "bell",
+    "_objectId": "bounty_hunter"
+  },
+  {
+    "id": "modifier_pardon",
+    "name_zh": "代理人印章",
+    "name_en": "Vicarious Seal",
+    "text_zh": "蜡封上的指纹不是汝的。有人在更高处为汝签下了名字。",
+    "text_en": "The fingerprints in this wax are not yours. Someone in higher places has signed on your behalf.",
+    "_voice": "bell",
+    "_objectId": "modifier_pardon"
+  },
+  {
+    "id": "modifier_barrier",
+    "name_zh": "延时引线",
+    "name_en": "Delayed Fuse",
+    "text_zh": "工程师的谨慎之作。即便雷管已装好，引线仍会再数几个心跳才点燃。",
+    "text_en": "An engineer's careful work. Even with the charge set, the fuse counts several heartbeats before igniting.",
+    "_voice": "bell",
+    "_objectId": "modifier_barrier"
+  },
+  {
+    "id": "chaos_roulette",
+    "name_zh": "命运转轮",
+    "name_en": "Wheel of Fates",
+    "text_zh": "引擎深处的古轮，其上刻满未知符文。每转一圈，现实的某处规则便会改写。",
+    "text_en": "An ancient wheel from the Engine's depths, carved with unknown sigils. Each turn rewrites some rule of reality.",
+    "_voice": "bell",
+    "_objectId": "chaos_roulette"
+  },
+  {
+    "id": "modifier_reversal",
+    "name_zh": "逆写之印",
+    "name_en": "Seal of Inversion",
+    "text_zh": "前任抄写员的蜡印。封蜡中藏着镜文——每当落下，便将诅咒化为祝福。",
+    "_voice": "bell",
+    "_objectId": "modifier_reversal"
+  },
+  {
+    "id": "base_shield",
+    "name_zh": "护法铅盾",
+    "name_en": "Guardian's Aegis",
+    "text_zh": "圣坛守护者的铅制护符。即使最虚弱的祷告，亦有其不可违逆的最低回音。",
+    "text_en": "Lead talisman of a lectern guardian. Even the weakest prayer carries an inviolable minimum echo.",
+    "_voice": "bell",
+    "_objectId": "base_shield"
+  },
+  {
+    "id": "lenient_judge",
+    "name_zh": "慈悯天平",
+    "name_en": "Scales of Mercy",
+    "text_zh": "某位宽恕者的铜制天平。其上永远少放一枚砝码——慈悲比公正更重。",
+    "text_en": "Bronze scales of a merciful judge. Always missing one weight—mercy outweighs justice.",
+    "_voice": "bell",
+    "_objectId": "lenient_judge"
+  },
+  {
+    "id": "s_rank_trophy",
+    "name_zh": "圣铭金杯",
+    "name_en": "Chalice of Sacred Merit",
+    "text_zh": "最高荣誉的见证。杯中永盛熔铅——完美的铭刻值得完美的奖赏。",
+    "text_en": "Witness to highest honor. Forever filled with molten lead—perfect inscription deserves perfect reward.",
+    "_voice": "bell",
+    "_objectId": "s_rank_trophy"
+  },
+  {
+    "id": "underdog_bonus",
+    "name_zh": "铅屑甄别盘",
+    "name_en": "Shard Sorting Tray",
+    "text_zh": "值守键徒的废铅分拣盘。铅屑虽小，亦有品阶之分。",
+    "text_en": "A sifting tray for spent lead. Even the smallest shards hold their worth.",
+    "_voice": "bell",
+    "_objectId": "underdog_bonus"
+  },
+  {
+    "id": "snowball",
+    "name_zh": "蓄势铸模",
+    "name_en": "Momentum Mould",
+    "text_zh": "前任的铸模。每一枚铅字皆比前枚更重——仿佛记忆正在累积。",
+    "text_en": "Each slug cast heavier than the last, as if memory itself accumulates.",
+    "_voice": "bell",
+    "_objectId": "snowball"
+  },
+  {
+    "id": "score_black_hole",
+    "name_zh": "末日天秤",
+    "name_en": "Final Scales",
+    "text_zh": "称重之物不知其重，直至落版一刻。汝之祷告，或救赎或毁灭。",
+    "text_en": "The weight unknown until the press falls. Your litany shall either redeem or damn.",
+    "_voice": "bell",
+    "_objectId": "score_black_hole"
+  },
+  {
+    "id": "lucky_strike",
+    "name_zh": "祝运铅钉",
+    "name_en": "Blessed Slug",
+    "text_zh": "某位键徒的幸运铅字。铅中似有暗纹，击键时偶现异响。",
+    "text_en": "A keybound's lucky piece. Faint patterns in the lead sing when struck.",
+    "_voice": "bell",
+    "_objectId": "lucky_strike"
+  },
+  {
+    "id": "crit_bonus",
+    "name_zh": "响铅钱匣",
+    "name_en": "Chiming Coffers",
+    "text_zh": "每当铅字碎裂，便有铅币自鸣而落。其声如远钟，其源不明。",
+    "text_en": "Lead coins chime forth when metal fractures. The sound rings distant bells.",
+    "_voice": "bell",
+    "_objectId": "crit_bonus"
+  },
+  {
+    "id": "crit_charge",
+    "name_zh": "蓄压铭钉",
+    "name_en": "Accumulator Stylus",
+    "text_zh": "前任键徒遗物。钢笔杆上有齿痕——他总是咬着它思考。铅字记住了他的耐心。",
+    "text_en": "Former keybound's stylus. Teeth marks on the barrel—he always bit it while thinking. Lead remembers his patience.",
+    "_voice": "bell",
+    "_objectId": "crit_charge"
+  },
+  {
+    "id": "crit_storm",
+    "name_zh": "雷鸣印章",
+    "name_en": "Sigillum Fulguris",
+    "text_zh": "蜡封上的雷纹仍在闪烁。传说此印曾封住引擎的一声怒吼。",
+    "text_en": "Lightning patterns still flicker on the wax seal. Legend says this sigil once contained an engine's roar.",
+    "_voice": "bell",
+    "_objectId": "crit_storm"
+  },
+  {
+    "id": "fate_coin",
+    "name_zh": "定命铅币",
+    "name_en": "Coin of Fixed Fate",
+    "text_zh": "两面皆是正面的铅币。抛掷者说它从未落地——总是悬在半空，直到被需要。",
+    "text_en": "Lead coin with heads on both sides. The tosser claimed it never landed—always hovering until needed.",
+    "_voice": "bell",
+    "_objectId": "fate_coin"
+  },
+  {
+    "id": "stack_momentum",
+    "name_zh": "递进齿轮",
+    "name_en": "Momentum Cogwheel",
+    "text_zh": "齿轮转得越久，转得越快。机械师的笔记里写着：它想要永不停歇。",
+    "text_en": "The longer it turns, the faster it spins. Mechanist's note reads: 'It yearns to never cease.'",
+    "_voice": "bell",
+    "_objectId": "stack_momentum"
+  },
+  {
+    "id": "stack_dividend",
+    "name_zh": "积垒石块",
+    "name_en": "Builder's Foundation",
+    "text_zh": "每一块都比前一块更坚固。石匠说过：地基深者，塔必高。",
+    "text_en": "Each stone stronger than the last. The mason once said: 'Deep foundations raise highest towers.'",
+    "_voice": "bell",
+    "_objectId": "stack_dividend"
+  },
+  {
+    "id": "overload_circuit",
+    "name_zh": "圣徒遗物 · 并联铜轴",
+    "name_en": "Sacred Artifact · Parallax Conductor",
+    "text_zh": "同一座炉中铸出的两根轴，切开后纹理完全一致。其一动时，另一必转。",
+    "text_en": "Twin shafts from one furnace. When one turns, the other follows. The grain runs deeper than steel.",
+    "mechanic_hint": "When stacking inscription activates, adjacent stacking inscriptions also activate once",
+    "_voice": "bell",
+    "_objectId": "overload_circuit"
+  },
+  {
+    "id": "surge",
+    "name_zh": "圣徒遗物 · 碎坩蜡印",
+    "name_en": "Sacred Artifact · Shattered Crucible Seal",
+    "text_zh": "蜡印碎成数块，火中重铸必呈新形。旧模既毁，新器愈坚。",
+    "text_en": "A seal broken into fragments. Each reforging yields stronger metal. The old mold remembers its breaking.",
+    "mechanic_hint": "Stack count resets to zero, but matching inscriptions gain power equal to the reset amount",
+    "_voice": "bell",
+    "_objectId": "surge"
+  },
+  {
+    "id": "perpetual_engine",
+    "name_zh": "圣徒遗物 · 未休齿轮",
+    "name_en": "Sacred Artifact · Unsleeping Gear",
+    "text_zh": "引擎核心的一片齿轮，从未停转。触者言：此物无始，亦必无终。",
+    "text_en": "A gear from the Engine's heart. It has never stopped turning. The bearer speaks of endless motion.",
+    "mechanic_hint": "Stacking effects no longer reset, but all stacking has increased intervals",
+    "_voice": "bell",
+    "_objectId": "perpetual_engine"
+  },
+  {
+    "id": "drum_pass",
+    "name_zh": "圣徒遗物 · 传音皮鼓",
+    "name_en": "Sacred Artifact · Echo Drum",
+    "text_zh": "九个键徒围着此鼓诵经，声音传遍教堂。如今无人知晓该敲几下。",
+    "text_en": "Nine keybound once chanted around this drum. The rhythm still echoes, but none remember the count.",
+    "mechanic_hint": "Every +5 combo adds layers to random stacking inscription",
+    "_voice": "bell",
+    "_objectId": "drum_pass"
+  },
+  {
+    "id": "word_resonance",
+    "name_zh": "圣徒遗物 · 词根共鸣板",
+    "name_en": "Sacred Artifact · Root Resonance Plate",
+    "text_zh": "铜板上刻满词根，单词成形时便会震颤。汝言愈长，其鸣愈响。",
+    "text_en": "A copper plate etched with word-roots. It trembles when words take shape. Longer words ring deeper.",
+    "mechanic_hint": "Completing words adds layers to all stacking inscriptions based on letter count",
+    "_voice": "bell",
+    "_objectId": "word_resonance"
+  },
+  {
+    "id": "crit_overflow",
+    "name_zh": "溢铅印章",
+    "name_en": "Sigil of Spilled Lead",
+    "text_zh": "前任铸印时手总发抖。每一击都溢出太多——铅水流过字盘边缘，滴在地砖上。",
+    "text_en": "The former's hand trembled at each strike. Too much lead spilled over the press edges.",
+    "_voice": "bell",
+    "_objectId": "crit_overflow"
+  },
+  {
+    "id": "inscription_flow",
+    "name_zh": "涌墨经卷",
+    "name_en": "Codex of Flowing Ink",
+    "text_zh": "祝圣用墨从不干涸。经卷每翻一页，墨迹便深一分——仿佛虔诚能喂养文字。",
+    "text_en": "Consecration ink never dries. Each turned page darkens the script, as if devotion feeds the words.",
+    "_voice": "bell",
+    "_objectId": "inscription_flow"
+  },
+  {
+    "id": "neighbor_watch",
+    "name_zh": "联铃护符",
+    "name_en": "Charm of Linked Chimes",
+    "text_zh": "五枚小铃铛，铜线相连。一枚鸣响时，邻铃必和。前主人说这叫'守望'。",
+    "text_en": "Five small bells linked by copper wire. When one chimes, its neighbors must answer.",
+    "_voice": "bell",
+    "_objectId": "neighbor_watch"
+  },
+  {
+    "id": "stack_crit",
+    "name_zh": "叠响钟锤",
+    "name_en": "Hammer of Accumulating Strikes",
+    "text_zh": "钟锤敲一下，钟声响三声。越敲得久，每一击便越是震耳——直到钟楼都在摇晃。",
+    "text_en": "Strike once, the bell rings thrice. The longer you toll, the heavier each blow becomes.",
+    "_voice": "bell",
+    "_objectId": "stack_crit"
+  },
+  {
+    "id": "masters_lexicon",
+    "text_zh": "圣器编号：SA-0447\n版级：熔版 / Fusum\n\n装帧考究的字典，皮封已磨损得露出内衬。书脊刻有\"M. Theodosius\"字样。\n\nD-2847使用该书后连续72小时在铸字间工作，期间未进食饮水。同事报告其\"像是提前知道需要哪些字\"。第73小时，监控录像显示其突然停止动作，随后失联。\n\n工位检查显示：所有字盘格栅内铅屑分布异常均匀，每格恰好相等。称重结果精确至0.000克差值。\n\n备注：该书最后一页空白处发现手写注释：\"不是我在查词典。是词典在查我。\"字迹与失联者不符。",
+    "text_en": "Artifact ID: SA-0447\nGrading: Molten Form / Fusum\n\nWell-bound dictionary with worn leather cover exposing inner lining. Spine inscribed \"M. Theodosius\".\n\nD-2847 worked continuously for 72 hours in the type foundry after using this book, without food or water. Colleagues reported he \"seemed to know which letters were needed in advance.\" At hour 73, surveillance showed him suddenly stop moving, then lose contact.\n\nWorkstation inspection revealed: lead shavings distributed abnormally evenly across all type case compartments, each section containing exactly equal amounts. Weighing showed 0.000g variance.\n\nNote: Handwritten annotation found on final blank page: \"I'm not looking up words. The dictionary is looking me up.\" Handwriting doesn't match the missing person.",
+    "_voice": "doc",
+    "_objectId": "masters_lexicon"
+  },
+  {
+    "id": "perpetual_queue",
+    "text_zh": "使用日志 · SA-1203\n\n0630 — 新班次开始。设备运转正常。\n0700 — 注意到传送带在我启动前已开始运转。可能是夜班忘记关停。\n0900 — 传送带速度似乎在自行调节。但这符合标准程序。\n1200 — 中午休息。回来时发现工位已备好下午的铅字。我不记得准备过。\n1500 — 传送带现在总是恰好在我需要时送来正确的字。效率显著提升。\n1700 — 下班。设备仍在运转。明日会询问维修组。\n\n[此后记录空白7页]\n\n无日期 — 我不记得上次停下设备是什么时候。但工作必须继续。工作必须继续。",
+    "text_en": "Usage Log · SA-1203\n\n0630 — New shift begins. Equipment operating normally.\n0700 — Noticed the conveyor belt already running before I started it. Night shift probably forgot to shut down.\n0900 — Belt speed seems to self-adjust. But this follows standard procedure.\n1200 — Lunch break. Returned to find afternoon letters already prepared at workstation. Don't remember preparing them.\n1500 — Belt now always delivers correct letters exactly when needed. Efficiency significantly improved.\n1700 — End of shift. Equipment still running. Will ask maintenance tomorrow.\n\n[Following 7 pages blank]\n\nNo date — I don't remember the last time I stopped the equipment. But the work must continue. The work must continue.",
+    "_voice": "doc",
+    "_objectId": "perpetual_queue"
+  },
+  {
+    "id": "word_scissors",
+    "text_zh": "回收物 RC-0891 · 发现于第V层清洁工储物柜 · 羊皮纸便条\n\n给下一个用这剪刀的人：\n\n别用它拆\"母亲\"这个词。我试过了。第一剪下去，听到她在楼上叫我的名字。第二剪，厨房里有脚步声。等我把\"亲\"字也剪下来的时候，走廊尽头有个人影。\n\n我把铅屑收起来重新拼了\"母亲\"。人影还在。\n\n现在每晚都能听到她叫我回家吃饭。但我妈十二年前就死了。\n\n剪刀还能用，就是拆词的时候小心别拆记忆。有些字一旦散开，就回不去了。\n\n—— 清洁工Hendricks\n附：剪刀在工具箱最下层。别告诉值班员。",
+    "text_en": "Recovered Item RC-0891 · Found in Level V janitor's locker · Parchment note\n\nTo whoever uses these scissors next:\n\nDon't use them to disassemble the word \"mother.\" I tried. First cut, heard her calling my name upstairs. Second cut, footsteps in the kitchen. When I cut off the \"er\" part too, there was a figure at the end of the hall.\n\nI gathered the lead shavings and respelled \"mother.\" The figure is still there.\n\nNow I hear her calling me home for dinner every night. But my mom died twelve years ago.\n\nThe scissors still work, just be careful not to disassemble memories when you disassemble words. Some letters, once scattered, never go back together.\n\n—— Janitor Hendricks\nP.S. Scissors are in the bottom of the toolbox. Don't tell the duty officer.",
+    "_voice": "doc",
+    "_objectId": "word_scissors"
+  },
+  {
+    "id": "resonance_mold",
+    "text_zh": "交接事故 IR-1847\n日期：M.2██.03.██\n涉及物品：共鸣字模\n\n1130 — D-1847 按标准程序接手第 VII 层铅字分拣作业\n1145 — 同僚 D-1851 报告听见'重复的敲击声'\n1200 — D-1847 工位产出比前任高出 40%，无异常操作记录\n1230 — 现场检查：字模井然有序，但每个槽位内铅字数量完全一致\n1300 — D-1847 称'它们自己知道去哪里'\n1315 — 工位暂停使用\n\n备注：字模槽位总数 ███，前持有者 D-1803 失联已 ██ 天。字模仍产生轻微共振，频率与失联人员心跳一致。",
+    "text_en": "Incident Report IR-1847\nDate: M.2██.03.██\nInvolved Item: Resonance Mold\n\n1130 — D-1847 assumed standard lead sorting duties, Layer VII\n1145 — Colleague D-1851 reported 'repetitive hammering sounds'\n1200 — D-1847's workstation output exceeded predecessor by 40%, no anomalous procedures recorded\n1230 — Site inspection: type slugs properly arranged, but each slot contained identical quantities\n1300 — D-1847 stated 'they know where to go themselves'\n1315 — Workstation suspended\n\nNote: Total mold slots ███. Previous operator D-1803 missing ██ days. Mold continues producing minor resonance, frequency matches missing personnel's recorded heartbeat.",
+    "_voice": "doc",
+    "_objectId": "resonance_mold"
+  },
+  {
+    "id": "word_collection",
+    "text_zh": "圣器操作须知 · 词汇收藏册\n\n一、正常使用时保持册页干燥，勿以手指直接接触墨迹。\n\n二、首次记录新词条时，须按标准书写格式填入铅币栏。每词条限填一次。\n\n三、注意事项：若册页自行翻动，立即停止操作。若听见翻页声但册页未动，报告当值抄写员。\n\n四、禁止在同一词条上重复签名。D-0891 违反此项后，其署名开始出现在未接触的册页上。现象持续 ██ 天。\n\n五、下班前须将册页合拢，封签完整。册页敞开过夜的工位记录到异常铅币积累。\n\n[第六条被墨水涂黑，旁边手写：别信第六条 —S]",
+    "text_en": "Sacred Artifact Operation Guidelines · Word Collection Registry\n\n1. Keep registry pages dry during normal use. Do not touch ink directly with fingers.\n\n2. When recording new entries for the first time, fill lead coin column per standard format. One entry per word only.\n\n3. Precautions: If pages turn themselves, cease operation immediately. If page-turning sounds occur without movement, report to duty scribe.\n\n4. Do not sign the same entry repeatedly. Following D-0891's violation, their signature began appearing on untouched pages. Phenomenon lasted ██ days.\n\n5. Close registry before end of shift, seal intact. Workstations with overnight open registries recorded anomalous lead accumulation.\n\n[Sixth item blacked out with ink, handwritten margin note: don't trust item six —S]",
+    "_voice": "doc",
+    "_objectId": "word_collection"
+  },
+  {
+    "id": "thick_deck",
+    "text_zh": "标准问询记录 · D-2103 · 接触经卷丰收后 72 小时\n\n采访者：报告你的工作效率变化。\nD-2103：变好了。气动管便宜了很多，能多领几本。\n\n采访者：'便宜了'如何理解？\nD-2103：就是……我写得多的时候，管子里的灯就闪，价格就掉。像是在奖励我。\n\n采访者：经卷内容有何异常？\nD-2103：起初没有。但到第十七本开始……嗯，第十七本？还是第七十本？记不清了。总之后来的经卷里都是我写过的词。\n\n采访者：你的词？\nD-2103：是我写的，但不是我的思想。就像有人把我的字迹复印了，但想表达的不是我想说的。它们在自己组成句子。\n\n[受访者此后陷入沉默，拒绝进一步交流]",
+    "text_en": "Standard Interview Record · D-2103 · 72 hours post-contact with Abundant Codices\n\nInterviewer: Report any changes in work efficiency.\nD-2103: Got better. Pneumatic tube got much cheaper, could requisition more volumes.\n\nInterviewer: Explain 'cheaper.'\nD-2103: Well... when I wrote more, the tube's light would flash and prices would drop. Like it was rewarding me.\n\nInterviewer: Any anomalies in codex content?\nD-2103: None at first. But starting with the seventeenth volume... hmm, seventeenth? Or seventieth? Can't remember. Anyway, later codices contained only words I'd written.\n\nInterviewer: Your words?\nD-2103: My handwriting, but not my thoughts. Like someone photocopied my script but wanted to express different ideas. They were forming sentences by themselves.\n\n[Subject subsequently fell silent, refused further communication]",
+    "_voice": "doc",
+    "_objectId": "thick_deck"
+  },
+  {
+    "id": "long_word_crit",
+    "text_zh": "物品编号：SA-4721\n版级：定版 / Fixum\n描述：一支磨损的排字棒，木柄已被汗渍浸透。金属尖端留有微小铅屑。\n\n回收自 Scriptor T-████ 工位。该员最后一份记录显示其专注于复合词汇收容——九字母以上的长词异文。工位考勤记录异常：连续十四天无休息记录，但监控显示其每晚正常返回宿舍。\n\n附带现象：持有者报告铭刻长词时感到\"铅字变重\"。经测量，工位附近铅字重量无变化。原因不明。\n\n备注：该员失联前曾申请延长值班时间，理由为\"还差一点就能听到它们说话了\"。申请被驳回。",
+    "text_en": "Item #: SA-4721\nClassification: Fixum\nDescription: A worn composing stick with sweat-stained wooden handle. Metal tip retains microscopic lead residue.\n\nRecovered from Scriptor T-████'s workstation. Final logs indicate focus on compound glyph containment—nine letters and above. Attendance records anomalous: fourteen consecutive days without rest periods, though surveillance confirms normal nightly dormitory returns.\n\nAssociated phenomenon: Operators report sensation of \"heavier lead\" during extended inscriptions. Measured weight of adjacent type slugs unchanged. Cause unknown.\n\nNote: Subject requested extended duty hours prior to disappearance, citing \"almost able to hear them speak.\" Request denied.",
+    "_voice": "doc",
+    "_objectId": "long_word_crit"
+  },
+  {
+    "id": "short_sprint",
+    "text_zh": "标准问询记录 · D-2847 · 接触 SA-6119 后 72 小时\n\n采访者：描述你使用该物品的感受。\nD-2847：开始还好。就是个普通的铅字夹子。但后来...\n采访者：后来怎么了？\nD-2847：手指开始自己动。我想写长句子，但手指总是提前停下。就好像...好像知道什么时候该结束。\n采访者：解释\"提前停下\"。\nD-2847：我脑子里想的是八个字母的词，但打到第三个字就想停手了。就好像有人在我耳边说\"够了\"。\n采访者：你听到了声音吗？\nD-2847：没有声音。是别的东西。是...温度？\n\n后续：D-2847 于问询结束 6 小时后失联。工位留有大量三字母词汇草稿。",
+    "text_en": "Standard Interview Record · D-2847 · 72 hours post-contact with SA-6119\n\nInterviewer: Describe your experience using the item.\nD-2847: Fine at first. Just a regular type clamp. But then...\nInterviewer: Then what?\nD-2847: My fingers started moving by themselves. I'd think of long sentences, but my hands would stop early. Like they... like they knew when to quit.\nInterviewer: Explain \"stop early.\"\nD-2847: I'd think of eight-letter words, but stop typing at the third letter. Like someone whispering \"enough\" in my ear.\nInterviewer: Did you hear voices?\nD-2847: No voices. Something else. Like... temperature?\n\nFollow-up: D-2847 disappeared 6 hours post-interview. Workstation contained extensive three-letter word drafts.",
+    "_voice": "doc",
+    "_objectId": "short_sprint"
+  },
+  {
+    "id": "long_word_master",
+    "text_zh": "使用日志 · SA-8834\n\n0700 — 开始值班。该物为制式沙漏，沙粒呈铅灰色，流速正常。\n0900 — 注意到在完成六字母以上词汇时，沙流会短暂停滞。持续约一秒。现象可重现。\n1200 — 沙粒停滞现象加剧。完成\"establishment\"后，整个沙漏静止了三秒钟。同事未注意到异常。\n1400 — 我试图完成更长的词汇。沙漏反应强烈。每个长词都能让时间...变厚？\n1600 — 发现自己可以预判沙粒何时停止。这不正常。但我需要更长的词。\n1700 — 十三字母的词让沙漏倒流了。我看见昨天的自己坐在这里。他也在写同样的报告。\n\n[此后无记录。沙漏仍在工位上，半满状态，沙粒静止不动]",
+    "text_en": "Usage Log · SA-8834\n\n0700 — Beginning shift. Item is regulation hourglass, lead-gray sand, normal flow rate.\n0900 — Observed sand flow briefly halts upon completing six-letter words. Duration approximately one second. Phenomenon reproducible.\n1200 — Sand stasis intensifying. After completing \"establishment,\" entire hourglass remained motionless for three seconds. Colleagues observed no anomaly.\n1400 — Attempted longer words. Hourglass responds dramatically. Each extended word makes time... thicker?\n1600 — Found myself anticipating when sand will stop. This is not normal. But I need longer words.\n1700 — Thirteen-letter word made hourglass flow backward. Saw yesterday's self sitting here. He was writing this same report.\n\n[No further entries. Hourglass remains at workstation, half-full, sand completely motionless]",
+    "_voice": "doc",
+    "_objectId": "long_word_master"
+  },
+  {
+    "id": "word_dealer",
+    "text_zh": "🔔 交易之铅，自有其墨；偿者再涉，分文不费。\n\n📄 回收物 RC-██23 · 发现于 D-3847 工位抽屉 · 皮质钱袋\n\n[手写便条，墨迹已渍]\n\n\"又卖了三个字给气动管，等下要的那批应该免费。\n\n不对，怎么会免费？我从没见过免费的。\n\n但手里这个袋子... 越来越轻了。每次卖完它都轻一点。\n\n刚数了一下，里面只有十二枚铅币。\n\n昨天明明是三十四枚。\n\n我没花过。我发誓。\n\n那钱去哪了？\"",
+    "text_en": "🔔 In trade's lead lies hidden ink; the seller's path grows cost-free.\n\n📄 Recovery Item RC-██23 · Found in D-3847 workstation drawer · Leather coin pouch\n\n[Handwritten note, ink stained]\n\n\"Sold three more words to the pneumatic tube, next batch should be free.\n\nWait, how can it be free? I've never seen anything free here.\n\nBut this pouch in my hand... it's getting lighter. Every time I sell, it weighs less.\n\nJust counted - only twelve lead coins inside.\n\nYesterday there were thirty-four.\n\nI haven't spent any. I swear.\n\nWhere did the money go?\"",
+    "_voice": "doc",
+    "_objectId": "word_dealer"
+  },
+  {
+    "id": "punctuation_liberation",
+    "text_zh": "🔔 六符既解其枷，混沌文字自由翻腾；铅字不分尊卑。\n\n📄 标准问询记录 · D-7721 · 接触 SA-█████ 后 ██ 小时\n\n采访者：描述第一次使用该物品的感受。\nD-7721：就像... 键位活了。分号开始说话。\n采访者：请具体说明。\nD-7721：我按 A，出来的是逗号。按逗号，出来的是 A。它们在交换位置。\n采访者：其他键呢？\nD-7721：中括号... 中括号在笑。我听到了。\n采访者：收容记录显示您连续工作了十一小时。\nD-7721：[停顿] 对。我停不下来。字母和标点在我手指间跳舞，我只是... 观众。\n采访者：现在感觉如何？\nD-7721：.我,还能/听到;它们在[键盘]下面窃?窃私,语。",
+    "text_en": "🔔 Six marks freed from binding; chaotic letters flow in liberty; no distinction among slugs.\n\n📄 Standard Inquiry Record · D-7721 · ██ hours after contact with SA-█████\n\nInterviewer: Describe your first experience with the item.\nD-7721: It was like... the keys came alive. Semicolons started talking.\nInterviewer: Please be specific.\nD-7721: I pressed A, comma appeared. Pressed comma, A appeared. They were switching places.\nInterviewer: What about other keys?\nD-7721: Brackets... brackets were laughing. I heard them.\nInterviewer: Records show you worked for eleven consecutive hours.\nD-7721: [pause] Yes. I couldn't stop. Letters and marks danced between my fingers, I was just... watching.\nInterviewer: How do you feel now?\nD-7721: .I,can/still;hear[them]whispering?beneath,the/keys.",
+    "_voice": "doc",
+    "_objectId": "punctuation_liberation"
+  },
+  {
+    "id": "decelerate_reward",
+    "text_zh": "🔔 迟者受恩，急者失分；沙漏倒流，予缓行之徒。\n\n📄 物品编号：SA-0847\n版级：定版 / Fixum\n描述：黄铜制沙漏，高 12.7 厘米，内含未知白色颗粒。底座刻有\"TEMPUS RESTITUTUS\"。\n发现：第三层废弃工位内，与键徒 D-1204 遗物一同回收。\n异常特性：持有者报告\"打字变慢了，但时间也变慢了\"。观察确认其工作节奏较常人迟缓，但分配时间异常充足。\n备注：D-1204 最后一份工作日志显示连续 ██ 日准时完成任务，无超时记录。该项记录打破站点历史。其工位时钟在回收时显示时间为 25:73。",
+    "text_en": "🔔 The slow receive grace, the hasty lose favour; hourglass flows backward for the patient.\n\n📄 Item Number: SA-0847\nGrade: Fixum\nDescription: Brass hourglass, 12.7 cm tall, contains unknown white particles. Base engraved \"TEMPUS RESTITUTUS\".\nRecovery: Found in abandoned workstation on Third Layer, recovered alongside effects of Clavigerant D-1204.\nAnomalous Properties: Holder reports \"typing became slower, but time became slower too.\" Observation confirms subject's work pace is notably sluggish, yet allocated time remains anomalously sufficient.\nNote: D-1204's final work log shows consecutive ██ days of on-time completion with no overtime violations. This record is unprecedented in site history. Workstation clock displayed 25:73 when recovered.",
+    "_voice": "doc",
+    "_objectId": "decelerate_reward"
+  },
+  {
+    "id": "accelerate_reward",
+    "text_zh": "回收档案 RC-4721 · 发现于废弃抄写室 · 油纸包裹\n\n内含铅屑约二两，另附字条一张：\n\n\"今日又快了些。昨日一词需三息，今日两息便成。铅屑竟多出许多。\"\n\n\"试过放缓，铅屑立减。似乎引擎偏爱急迫之手。\"\n\n\"奇怪的是，越急铅币越响。像是...在奖赏？\"\n\n字迹于第三行后逐渐潦草。包裹发现时仍有余温。",
+    "text_en": "Recovered Item RC-4721 · Found in abandoned scriptorium · Wrapped in oiled parchment\n\nContains approximately two ounces of lead shavings, plus a single note:\n\n\"Faster again today. Yesterday one word took three breaths, today only two. Shavings multiplied strangely.\"\n\n\"Tried slowing down. Shavings immediately decreased. The Engine seems to favor urgent hands.\"\n\n\"Strange thing is, the faster I work, the louder the coins ring. As if... rewarding?\"\n\nHandwriting deteriorates after the third line. Package was still warm when found.",
+    "_voice": "doc",
+    "_objectId": "accelerate_reward"
+  },
+  {
+    "id": "little_helper",
+    "text_zh": "事故报告 IR-2847\n日期：M.2██.03.██\n涉及物品：SA-████（\"续写匣\"）\n\n0900 — D-3421开始使用该设备进行收容铭刻\n0930 — 报告\"字母会自己跳出来\"。确认设备运作正常\n1015 — D-3421停止说话。继续铭刻但不再抬头\n1200 — 观察员注意到D-3421仅铭刻每词首字母，余字\"凭空完成\"\n1230 — D-3421被发现已失联六小时。圣坛仍在运转\n\n后续：圣坛已封存。首字母组合\"HELP ME HELP ME HELP\"发现于铅字盘。",
+    "text_en": "Incident Report IR-2847\nDate: M.2██.03.██\nInvolving Item: SA-████ (\"Completion Box\")\n\n0900 — D-3421 began using device for containment inscription\n0930 — Reports \"letters jump out by themselves.\" Device confirmed operational\n1015 — D-3421 stops speaking. Continues inscribing without looking up\n1200 — Observer notes D-3421 only inscribes first letters, remaining characters \"complete spontaneously\"\n1230 — D-3421 discovered missing for six hours. Lectern still operating\n\nFollow-up: Lectern sealed. First-letter pattern \"HELP ME HELP ME HELP\" found in type tray.",
+    "_voice": "doc",
+    "_objectId": "little_helper"
+  },
+  {
+    "id": "rhythm_adapt",
+    "text_zh": "标准问询记录 · D-7809 · 接触「拍子摆」后48小时\n\n问：描述你使用该物品时的感受。\nD-7809：开始只是铅字下面有小球在弹跳。我试着配合它按键。\n\n问：然后呢？\nD-7809：小球开始...预知我要按什么。它弹跳的节奏跟我心跳一样。\n\n问：有其他异常吗？\nD-7809：[沉默13秒] 我现在还能看到它们。房间里没有那个东西，但我仍看见小球在弹跳。在您的话语下方。在您的眉毛上。\n\n[D-7809于2小时后申请提前终止访谈。申请被批准。]",
+    "text_en": "Standard Inquiry Record · D-7809 · 48 Hours Post-Contact with \"Metronome Pendulum\"\n\nQ: Describe your experience using the item.\nD-7809: At first just small spheres bouncing beneath the letters. I tried to match their rhythm with keystrokes.\n\nQ: And then?\nD-7809: The spheres began... anticipating which keys I'd press. Their bounce matched my heartbeat exactly.\n\nQ: Any other anomalies?\nD-7809: [13-second silence] I can still see them now. The item isn't here, but I still see spheres bouncing. Under your words. Above your eyebrows.\n\n[D-7809 requested early termination of interview after 2 hours. Request approved.]",
+    "_voice": "doc",
+    "_objectId": "rhythm_adapt"
+  },
+  {
+    "id": "time_trickle",
+    "text_zh": "回收文档 RC-1847 · 发现于第IV层废铅分拣台下方\n\n[纸质便条，字迹工整，墨水有水渍痕迹]\n\n\"今天又听到滴水声。奇怪的是所有管道都检查过了，没有渗漏。\n声音从我的工位传出，每次按键后停顿半秒才响。\n同事说听不到。我申请换岗被驳回——§4.2条例，人员固定配置。\n现在是第十七天。滴水声变成了滴答。像时钟。\n昨天我工作到深夜，发现所有人都走了，但滴答声还在继续。\n我没有离开。我觉得如果我离开，时间就会停下来。\"\n\n[便条背面有水渍形成的环状印记，直径约3厘米，共计17个]",
+    "text_en": "Recovery Document RC-1847 · Found beneath Layer IV slag sorting station\n\n[Paper note, neat handwriting, ink shows water stains]\n\n\"Keep hearing dripping today. Strange - checked all pipes, no leaks.\nSound comes from my station, half-second pause after each keystroke.\nColleagues say they hear nothing. Transfer request denied - §4.2, fixed personnel assignment.\nDay seventeen now. The dripping became ticking. Like a clock.\nYesterday worked late, everyone gone, but ticking continued.\nI didn't leave. Feel if I leave, time would stop.\"\n\n[Note's reverse shows water stain rings, 3cm diameter, total count: 17]",
+    "_voice": "doc",
+    "_objectId": "time_trickle"
+  },
+  {
+    "id": "resource_focus",
+    "text_zh": "标准收容档案\n\n物品编号：SA-2849\n版级：脱版 / Solum\n描述：铜制聚焦镜组，原用于第VII层光谱分析。镜片排列呈六芒星形。\n\n现象记录：持有者在连续使用同类铭文组超过六次后，其余铭文组开始'失色'——铅字可见但无法铭刻。受影响铭文组表面覆盖薄层铜锈。\n\nD-2384使用记录：\"其他的都变暗了，就剩这一种还亮着。我只能用这个。越用越亮，像...像它在吃掉别的光。\"\n\n备注：镜组焦点会自动调节至使用频率最高的圣流波长。清洁无效。更换持有者后铜锈立即消失，但焦点保持前任设定。原因不明。",
+    "text_en": "Standard Containment Archive\n\nItem Number: SA-2849\nGradus: Solum / Unbound\nDescription: Brass focusing lens array, originally for Layer VII spectral analysis. Lenses arranged in hexagonal star pattern.\n\nPhenomena: After holder uses same inscription type six consecutive times, other inscriptions begin 'fading' - glyphs visible but cannot be inscribed. Affected inscriptions show thin copper patina.\n\nD-2384 usage log: \"Others went dark, only this type stays bright. Can only use this one. Brighter with use, like... like it's eating the other lights.\"\n\nNote: Lens focus auto-adjusts to most frequently used humour wavelength. Cleaning ineffective. New holders see patina vanish immediately, but focus retains previous setting. Cause unknown.",
+    "_voice": "doc",
+    "_objectId": "resource_focus"
+  },
+  {
+    "id": "resource_diversity",
+    "text_zh": "事故报告 IR-3401\n日期：M.2██.08.17\n涉及物品：七彩分光棱镜（已重编为SA-3401）\n\n0800 — D-5517配发该棱镜进行多元铭文组测试\n0830 — 报告\"每种颜色都在闪\"，工作效率异常提升\n1100 — D-5517申请添加更多种类铭文组，\"它们想要平衡\"\n1400 — 观察到其铅字圣坛开始发出彩虹光晕，七种色带同时可见\n1600 — D-5517失联。圣坛持续发光，无人操作\n\n回收时发现：该棱镜已分裂为七块，每块保持不同颜色。拼接后自动分离。\n七块碎片需分别存放，距离超过2米时彼此开始共鸣。\n\n后续：禁止将完整棱镜分配给单一操作者。",
+    "text_en": "Incident Report IR-3401\nDate: M.2██.08.17\nItem Involved: Rainbow dispersal prism (reclassified as SA-3401)\n\n0800 — D-5517 issued prism for multi-inscription testing\n0830 — Reports \"every color is flashing,\" work efficiency anomalously increased\n1100 — D-5517 requests additional inscription varieties, \"they want balance\"\n1400 — Observed lectern emitting rainbow aura, seven bands simultaneously visible\n1600 — D-5517 lost contact. Lectern continues glowing unmanned\n\nRecovery findings: Prism split into seven fragments, each retaining different color. Reassembly causes automatic separation.\nSeven pieces require separate storage, begin resonating when over 2 meters apart.\n\nFollow-up: Complete prism assignment to single operator prohibited.",
+    "_voice": "doc",
+    "_objectId": "resource_diversity"
+  },
+  {
+    "id": "recycle_expert",
+    "text_zh": "事故报告 IR-2847\n日期：M.2██.██.15\n涉及物品：RC-2847（铜质分拣托盘）\n\n0830 — D-3294 开始例行铭文组归还作业。使用托盘分拣铅屑残余。\n0845 — 第一批归还。D-3294 报告托盘\"有点重\"。\n0900 — 第二批归还。铅屑未见减少。D-3294 称\"还在里面\"。\n0915 — 督导员检查托盘。空的。铅币结算记录显示双倍返还。\n1000 — D-3294 拒绝放下托盘。称\"它们还在里面，我听得见\"。\n\n后续：托盘已回收。D-3294 持续声称听见铅屑滚动声。",
+    "text_en": "Incident Report IR-2847\nDate: M.2██.██.15\nInvolved Item: RC-2847 (Copper sorting tray)\n\n0830 — D-3294 begins routine inscription relinquishment. Uses tray for lead shaving sorting.\n0845 — First batch returned. D-3294 reports tray \"feels heavy.\"\n0900 — Second batch returned. Lead shavings visually absent. D-3294 states \"still in there.\"\n0915 — Supervisor inspects tray. Empty. Coin ledger shows double returns.\n1000 — D-3294 refuses to release tray. Claims \"they're still in there, I hear them rolling.\"\n\nFollowup: Tray recovered. D-3294 continues reporting lead shaving sounds.",
+    "_voice": "doc",
+    "_objectId": "recycle_expert"
+  },
+  {
+    "id": "black_market",
+    "text_zh": "回收物 RC-4091 · 发现于 D-7732 工位 · 纸质清单\n\n【手写字迹，墨水渗开】\n\n第四个管道\n在正常三根右边\n需要那张纸片\n管理员看不见的那根\n\n记住：\n- 不要在换班时去\n- 蜡滴要带够\n- 听见铃声就走\n- 别让托盘空着回来\n\n【页面下方有蜡滴污渍，边缘烧焦】\n\n附注：D-7732 失联已第18天。工位内发现四根气动管，标准配置为三根。第四根管道位置与清单描述吻合。管道内部检查：空。",
+    "text_en": "Recovery RC-4091 · Found at D-7732 workstation · Paper list\n\n[Handwritten, ink bleeding]\n\nThe fourth tube\nRight of the normal three\nNeed that paper slip\nThe one supervisors can't see\n\nRemember:\n- Not during shift change\n- Bring enough wax drops\n- Leave when bell rings\n- Don't let tray return empty\n\n[Wax stains at bottom, edges scorched]\n\nNote: D-7732 missing 18 days. Workstation contains four pneumatic tubes, standard configuration is three. Fourth tube position matches list description. Tube interior inspection: empty.",
+    "_voice": "doc",
+    "_objectId": "black_market"
+  },
+  {
+    "id": "gold_interest",
+    "text_zh": "标准问询记录 · D-1847 · 接触 SA-1847 后72小时\n\n问：描述你与圣器的接触经历。\nD-1847：那个小金库？挺重的。像个保险箱。\n问：使用期间有异常感受吗？\nD-1847：没有。就是…每天早上醒来口袋里都多点铅币。\n问：你确定是'醒来'时？\nD-1847：对。不是工作的时候，是醒来。铅币是热的。\n问：热的？\n【记录中断3分钟】\nD-1847：我梦见有人在数钱。整夜整夜地数。但数的不是我的钱。\n问：谁的钱？\nD-1847：不知道。数钱的人我看不清脸。但手很冷。\n\n备注：D-1847自此每晚说梦话，内容为重复数数。",
+    "text_en": "Standard Inquiry Record · D-1847 · 72 hours after SA-1847 contact\n\nQ: Describe your contact with the artifact.\nD-1847: That little vault? Pretty heavy. Like a safe.\nQ: Any unusual sensations during use?\nD-1847: No. Just... every morning I wake up with more coins in my pocket.\nQ: You're certain it's when you 'wake up'?\nD-1847: Yes. Not during work, when I wake up. The coins are warm.\nQ: Warm?\n[3-minute recording gap]\nD-1847: I dream someone's counting money. All night long. But not my money.\nQ: Whose money?\nD-1847: Don't know. Can't see the counter's face. But the hands are cold.\n\nNote: D-1847 has since talked in sleep nightly, content consists of repetitive counting.",
+    "_voice": "doc",
+    "_objectId": "gold_interest"
+  },
+  {
+    "id": "smuggle_pass",
+    "text_zh": "圣器编号：SA-██67\n版级：逆版 / Inversum\n\n发现地点：第VII层通风管道内\n外观：废弃的维修工具——一根弯曲的铜管，末端熔接了某种不明合金。\n\n附录：自M.2██起，值班键徒报告每层征用时\"最便宜的总是不见了\"。调取监控显示无异常。盘点记录显示库存无短缺。\n\nD-3401在接触该物72小时后，开始在深夜\"修理\"气动征用管。声称\"管子告诉我哪根是对的\"。\n\n备注：该物周围的管道测温异常。温度始终比相邻区域低1.7度。无人能解释此现象。",
+    "text_en": "Artifact Serial: SA-██67\nGrade: Inversum\n\nRecovery Site: Ventilation shaft, Layer VII\nDescription: Abandoned maintenance tool—a bent copper pipe with an unknown alloy welded to one end.\n\nAddendum: Since M.2██, shift personnel report \"the cheapest always goes missing\" during requisitions. Surveillance shows no anomalies. Inventory logs show no discrepancies.\n\nD-3401 began \"repairing\" pneumatic tubes at night 72 hours after contact. Claims \"the pipe tells me which one is right.\"\n\nNote: Temperature readings around the object are consistently 1.7 degrees below adjacent areas. No explanation available.",
+    "_voice": "doc",
+    "_objectId": "smuggle_pass"
+  },
+  {
+    "id": "timed_auction",
+    "text_zh": "事故报告 IR-████\n日期：M.2██.██.██\n涉及物品：古代铜钟残片，编号SA-██23\n\n1047 — D-2156在第IX层征用站报告\"钟声越来越急\"\n1052 — 同层人员证实听到钟声，但该层无钟类装置\n1055 — D-2156开始快速征用物品，称\"时间不够了\"\n1057 — 钟声停止。D-2156瘫倒。\n\n医检：心率正常，但手腕有轻微烫伤，形状似钟摆刻痕。\n\n后续：该物已移交至限制区。征用站换架改为自动流程。\n\n备注：钟声录音分析显示频率与已拆除的第V层圣钟完全一致。该钟于M.1██年因故拆除，残骸已熔毁。",
+    "text_en": "Incident Report IR-████\nDate: M.2██.██.██\nInvolved Item: Ancient bell fragment, designation SA-██23\n\n1047 — D-2156 at Layer IX requisition station reports \"the bells are getting faster\"\n1052 — Floor personnel confirm hearing bells, despite no bell apparatus on this layer\n1055 — D-2156 begins rapid requisition of items, claims \"not enough time\"\n1057 — Bell sounds cease. D-2156 collapses.\n\nMedical: Pulse normal, but light burns on wrist resembling pendulum marks.\n\nFollow-up: Object transferred to restricted area. Station restocking automated.\n\nNote: Audio analysis reveals bell frequency identical to demolished Layer V sanctuary bell. Bell removed M.1██, remains verified destroyed.",
+    "_voice": "doc",
+    "_objectId": "timed_auction"
+  },
+  {
+    "id": "warm_up",
+    "text_zh": "使用日志 · SA-██94\n\n0630 — 开始使用新分配的腕带。材质似皮革，内侧有细小的铜线编织。\n0700 — 第一层铭刻开始。手感正常。\n0702 — 腕带开始温热。铭文组铸出时铅字声音更响亮。\n0705 — 温度持续上升，但不烫手。铅字落入字格的声音变成了...音乐？\n0708 — \n0710 — 我忘记写什么了。但现在手指动得很快。比之前快很多。\n0712 — 腕带不热了。声音也正常了。\n\n[此后该工位日志空白七天。第八天发现使用者D-4821失联。腕带遗留在键座旁，已冷却。]",
+    "text_en": "Usage Log · SA-██94\n\n0630 — Begin using newly assigned wristband. Material appears leather, with fine copper threading inside.\n0700 — Layer one inscription begins. Touch feels normal.\n0702 — Wristband growing warm. Inscription casting produces louder lead-sound.\n0705 — Temperature continues rising, but not burning. Sound of lead falling into slots becomes...musical?\n0708 — \n0710 — I forgot what I was writing. But fingers move fast now. Much faster than before.\n0712 — Wristband no longer warm. Sounds normal again.\n\n[Logs from this workstation remain blank for seven days. On day eight, operator D-4821 found missing. Wristband left beside lectern, cooled.]",
+    "_voice": "doc",
+    "_objectId": "warm_up"
+  },
+  {
+    "id": "elite_hunter",
+    "text_zh": "悬赏通告发布器 · SG-████\n版级: 脱版 / Solum\n发现地点: 第 VIII 层遗弃公告栏\n\n金属制告示板，表面铜绿斑驳。每日午时自动更新张贴内容——羊皮纸从框架边缘渗出，墨字清晰可读。通告署名格式固定为\"依据§4.2执行\"。\n\nD-1847接收首份通告后，开始反复计算走廊灯盏数量。监控记录显示其对准确数字表现异常执念。完成计数当日，个人账目增加铅币若干，来源不明。\n\n附加现象：完成通告任务的D级人员均报告\"有人在角落鼓掌\"。声源未定位。\n\n备注: 通告内容逐渐偏离标准格式。近期出现手写补充。笔迹未识别。",
+    "text_en": "Bounty Notice Dispatcher · SG-████\nGrade: Solum\nRecovery Site: Layer VIII, abandoned bulletin board\n\nTarnished brass notice board with verdigris patina. Updates posting automatically at midday—parchment seeps from frame edges, text legibly inked. All notices signed \"Per §4.2 Executed.\"\n\nD-1847, after receiving first notice, began compulsively counting corridor lamps. Surveillance shows abnormal fixation on precise numbers. Upon completing count, personal account credited with lead coins of unknown origin.\n\nSecondary phenomenon: D-class completing notice tasks report \"someone clapping in corners.\" Audio source unlocated.\n\nNote: Notice content increasingly deviates from standard format. Recent handwritten addenda observed. Handwriting unidentified.",
+    "_voice": "doc",
+    "_objectId": "elite_hunter"
+  },
+  {
+    "id": "phoenix",
+    "text_zh": "问询记录 · D-2901 · 接触蜡封圣冠后18小时\n\n采访者: 描述接触时的感受。\nD-2901: 戴上的时候...很轻。像纸一样轻。\n采访者: 然后呢？\nD-2901: 我死了。在第九层。记得很清楚，铅字砸穿了胸口。\n采访者: 你现在坐在这里。\nD-2901: 是的。但我确实死了。时间往后退了一点，然后我又站在那里，胸口完好。圣冠不见了。\n采访者: 不见了？\nD-2901: 变成灰了。飘走了。[停顿] 采访者先生？\n采访者: 什么？\nD-2901: 您胸前的铅字...是真的在动吗？\n\n[记录终止]",
+    "text_en": "Standard Inquiry Record · D-2901 · 18 hours post-contact with Waxen Crown\n\nInterviewer: Describe the sensation upon contact.\nD-2901: When I put it on... weightless. Light as parchment.\nInterviewer: Continue.\nD-2901: I died. On the ninth layer. Remember it clearly—lead slug punched through my chest.\nInterviewer: You're sitting here now.\nD-2901: Yes. But I definitely died. Time rolled back a bit, then I was standing there again, chest intact. The crown was gone.\nInterviewer: Gone?\nD-2901: Turned to ash. Drifted away. [Pause] Sir?\nInterviewer: What?\nD-2901: The lead type on your chest... is it actually moving?\n\n[Record terminated]",
+    "_voice": "doc",
+    "_objectId": "phoenix"
+  },
+  {
+    "id": "desperate_crit",
+    "text_zh": "回收物RC-2847 · 发现于D-1203工位抽屉 · 纸质便条\n\n[手写内容]\n倒计时到最后几秒的时候，铅字会裂。不是断成两截，是从里面开始裂。能听到很轻很轻的\"咔\"声。\n\n监工从来听不到。\n\n第一次以为是耳鸣。后来发现每次铅字要\"爆\"的时候都是这个声音。好像铅字知道时间不够了，在最后拼命一击。\n\n昨天差点没能完成收容，只剩三秒。敲下Enter的那一刻，整排铅字都在咔咔响。像骨头在移位。\n\n今天又听到了。但是倒计时还有十秒。\n\n铅字在学习。\n\n[便条背面空白，除了一个用力划出的字：\"快\"]",
+    "text_en": "Recovery Item RC-2847 · Found in D-1203 workstation drawer · Paper note\n\n[Handwritten content]\nWhen countdown reaches final seconds, the lead type fractures. Not snapping in two—cracking from within. You can hear the faintest \"click.\"\n\nOverseers never hear it.\n\nFirst time thought it was tinnitus. Later realized it's always that sound before type \"bursts.\" Like the slugs know time's running out, making one desperate strike.\n\nYesterday nearly failed containment, three seconds left. Moment I hit Enter, whole row of type clicking. Like bones shifting position.\n\nHeard it again today. But countdown showed ten seconds.\n\nThe type is learning.\n\n[Note reverse blank except for single word gouged deep: \"HURRY\"]",
+    "_voice": "doc",
+    "_objectId": "desperate_crit"
+  },
+  {
+    "id": "modifier_shield",
+    "text_zh": "残余异文 · RS-████\n\n版级：定版 / Fixum\n记录地点：第 XII 层 · 引擎心室外围\n\n蓝铜护符，直径 3.7 厘米，表面雕刻重叠的防护铭文。回收自 D-1847 工位。\n\nD-1847 在接触高危异文期间的损伤记录显示明显异常。预期的收容震颤强度应导致 █ 级创伤，实际记录仅为轻微不适。持有者报告'感觉有什么在替我承受'。\n\n后续观察：护符重量在每次收容作业后略有增加。经 ██ 次使用后重 4.2 公斤，持有者仍称'很轻'。\n\n备注：护符内部偶有金属摩擦声。原因不明。",
+    "text_en": "Residual Anomaly · RS-████\n\nGradus: Fixum\nRecovery Location: Layer XII · Engine Chamber Periphery\n\nBlue copper amulet, 3.7 cm diameter, engraved with overlapping ward inscriptions. Recovered from D-1847's workstation.\n\nDamage records for D-1847 during high-risk anomaly exposure show significant deviation. Expected containment tremor intensity should have caused █-level trauma; actual records show only mild discomfort. Subject reports 'feeling something taking the hit for me.'\n\nSubsequent observation: Amulet weight increases slightly after each containment operation. After ██ uses, mass recorded at 4.2 kg, yet subject continues to report it as 'very light.'\n\nNote: Occasional metallic grinding sounds detected from within amulet. Cause unknown.",
+    "_voice": "doc",
+    "_objectId": "modifier_shield"
+  },
+  {
+    "id": "bounty_hunter",
+    "text_zh": "事故报告 IR-2847\n\n日期：M.2██.03.15\n涉及物品：猩红印花手套一副\n\n0830 — D-3901 开始常规征用程序。气动管道运转正常。\n0845 — D-3901 报告'管道里有声音，像硬币滚动'。检查无异常。\n0900 — 征用成本较预算下降 23%。财务科要求说明。\n0920 — D-3901 称'每次伸手进去，铅币就变多了'。管道内确有额外响声。\n1100 — 成本持续下降。D-3901 右手指甲下发现铜锈痕迹。\n\n后续：D-3901 调离征用岗位。手套封存。管道内铅币余量较昨日增加 ██ 枚。来源不明。\n\n处置：按 §4.2 归入损耗补充类目。",
+    "text_en": "Incident Report IR-2847\n\nDate: M.2██.03.15\nInvolved Item: Pair of crimson printed gloves\n\n0830 — D-3901 begins routine requisition procedures. Pneumatic systems operating normally.\n0845 — D-3901 reports 'sounds in the pipes, like coins rolling.' Inspection shows no anomalies.\n0900 — Requisition costs down 23% from projected budget. Finance requests explanation.\n0920 — D-3901 claims 'every time I reach in, the lead coins multiply.' Additional rattling confirmed within tubing.\n1100 — Costs continue declining. Copper rust traces found under D-3901's fingernails.\n\nSubsequent: D-3901 reassigned from requisition duties. Gloves contained. Pneumatic tube lead coin reserves increased by ██ pieces from previous day. Source unknown.\n\nDisposition: Filed under §4.2 wastage compensation category.",
+    "_voice": "doc",
+    "_objectId": "bounty_hunter"
+  },
+  {
+    "id": "modifier_pardon",
+    "text_zh": "标准问询记录 · D-5628 · 接触羊皮纸卷后 12 小时\n\n采访者：描述你在第十二层的选择过程。\nD-5628：正常。三个异文摆着，我选了中间那个。\n采访者：记录显示你当时暂停了 47 秒。\nD-5628：是吗？我不记得停过。\n采访者：监控录像显示你站在那里盯着空气。\nD-5628：[沉默 8 秒] 也许…有人在跟我说话？\n采访者：什么内容？\nD-5628：说我可以不选。说我还没准备好。声音很温和。\n采访者：然后呢？\nD-5628：然后我就选了。但感觉…像是有人替我承担了什么。\n\n备注：D-5628 工位发现半卷羊皮纸，边缘烧焦，内容为某种赦免文书的残片。",
+    "_voice": "doc",
+    "_objectId": "modifier_pardon"
+  },
+  {
+    "id": "underdog_bonus",
+    "text_zh": "圣器编号：SA-0847\n版级：脱版 / Solum\n\n一只磨损的铜质量杯，内壁有古老的刻度线。发现于第III层抄写室角落，周围散落着已干涸的墨水痕迹。\n\n持有者在铭刻评估中表现出异常的\"适度倾向\"。D-2847报告：\"我原本能做得更好，但手总是在快完成时颤抖。\"经观察，持有者在接近完美铭刻时会不由自主地放缓速度，最终稳定在标准线稍上。\n\n事故记录：D-2847在一次意外达到完美铭刻后立即失联。量杯内发现少量铅屑，温度异常偏低。\n\n备注：建议重新评估\"适度\"的收容意义。",
+    "text_en": "Sacred Artifact: SA-0847\nGrade: Solum\n\nA worn copper measuring cup with ancient calibration marks etched into its inner walls. Recovered from Third Vault scriptorium corner, surrounded by dried ink stains.\n\nBearer exhibits anomalous \"moderation tendency\" during inscription assessments. D-2847 reported: \"I could have done better, but my hands always trembled near completion.\" Observation confirms bearer unconsciously slows pace when approaching perfect inscription, stabilizing just above standard threshold.\n\nIncident Log: D-2847 went missing immediately after achieving perfect inscription. Small amount of lead shavings found in cup, temperature anomalously low.\n\nNote: Suggest reassessment of \"adequacy\" as containment principle.",
+    "_voice": "doc",
+    "_objectId": "underdog_bonus"
+  },
+  {
+    "id": "snowball",
+    "text_zh": "[回收物 RC-1203 · 发现于Scriptor K-████工位抽屉 · 羊皮纸便条]\n\n\"第一个字很轻。像雪花。\n\n第二个字重了一点。像被压过的雪。\n\n第三个字......我得用两只手了。\n\n今天是第十二个字。我请假了，说手腕疼。其实是因为听到铅字在呼唤——每一个之前的字都在同一时间鸣响，越来越响。墨水瓶都在共振。\n\n我知道第十三个字会是什么。它会很重。重到......\n\n[便条后半截被撕掉，边缘处有烧灼痕迹]",
+    "text_en": "[Recovered Item RC-1203 · Found in Scriptor K-████ workstation drawer · Parchment note]\n\n\"The first word was light. Like snowflakes.\n\nThe second word weighed more. Like snow that's been pressed.\n\nThe third word... I need both hands now.\n\nToday is the twelfth word. I called in sick, said my wrist hurts. Truth is I can hear the letters calling — every previous word ringing at once, louder and louder. The inkwell's vibrating.\n\nI know what the thirteenth word will be. It will be heavy. Heavy enough to...\n\n[Remainder of note torn off, edges show burn marks]",
+    "_voice": "doc",
+    "_objectId": "snowball"
+  },
+  {
+    "id": "score_black_hole",
+    "text_zh": "物品编号：SA-1856\n版级：熔版 / Fusum\n关联：事故报告 IR-████、D-3911失联记录\n\n一枚黑曜石制成的印章，底部雕刻着螺旋纹路。触感异常温暖，重量随观测者而变。\n\n首次记录的持有者为D-3911，在第VII层收容作业中使用该印章。记录显示其铭刻过程完全正常，但结晶流读数保持零位长达三小时。D-3911神情愈发专注，拒绝休息或进食。\n\n0347时，D-3911按下落版键。引擎第VII层全线异常共振，持续十七秒。共振结束后发现D-3911工位完全空置，印章仍在原位。结晶流计数器显示：[数据删除]。\n\n备注：印章表面螺旋纹路现已逆时针旋转。原因不明。",
+    "text_en": "Object Number: SA-1856\nGrade: Fusum\nCross-ref: Incident Report IR-████, D-3911 Missing Person Record\n\nAn obsidian seal carved with spiral patterns on its base. Anomalously warm to touch, weight varies by observer.\n\nInitial recorded bearer was D-3911 during Layer VII containment operations. Records show normal inscription process, but crystalline humour readings remained zero for three hours. D-3911 grew increasingly focused, refusing rest or sustenance.\n\nAt 0347 hours, D-3911 activated impression lever. Engine Layer VII experienced full resonance cascade lasting seventeen seconds. Post-cascade inspection found D-3911's station completely vacant, seal remained in position. Crystalline counter displayed: [DATA EXPUNGED].\n\nNote: Spiral pattern now rotates counterclockwise. Cause unknown.",
+    "_voice": "doc",
+    "_objectId": "score_black_hole"
+  },
+  {
+    "id": "lucky_strike",
+    "text_zh": "回收文档 RC-2847 · 发现于第III层清洁工储物间\n\n[字迹工整的便条，夹在扫帚把手与墙面间]\n\n\"今天又是他。D-0847。\n来得比谁都早，走得比谁都晚。\n每次路过他工位都听见清脆的铅字声，像在唱歌。\n其他人的字总是闷响，他的不一样。\n昨天问他秘诀，他摸了摸胸口说'运气好'。\n看见他衣领下露出绿色的边。应该是什么小东西。\n今天他没来。听说第VI层。\n没人收他的东西。那个绿色的还在工位抽屉里。\n我不敢碰。\"\n\n[便条背面有潮湿印记，疑似泪渍]",
+    "text_en": "Recovery Document RC-2847 · Found in Layer III custodial storage\n\n[Neat handwriting on note, wedged between mop handle and wall]\n\n\"It's him again today. D-0847.\nArrives earliest, leaves latest.\nPassing his workstation, always that clear sound of lead type, like singing.\nEveryone else's keys sound dull. His are different.\nYesterday asked his secret. He touched his chest, said 'lucky me'.\nSaw green edging beneath his collar. Must be some small thing.\nToday he didn't come. They say Layer VI.\nNo one cleared his belongings. That green thing still in the desk drawer.\nI dare not touch it.\"\n\n[Note reverse bears moisture stains, possibly tears]",
+    "_voice": "doc",
+    "_objectId": "lucky_strike"
+  },
+  {
+    "id": "crit_bonus",
+    "text_zh": "事故报告 IR-1205\n日期：M.2██.04.17\n涉及物品：SA-1205\n\n0800 — D-3391 领取标准征用铅币 15 枚开始轮值\n0830 — 监控显示其工位发出异常亮光，持续 0.4 秒\n0831 — D-3391 征用台账显示余额 18 枚（+3，来源不明）\n0945 — 再次亮光，台账显示 21 枚\n1030 — 第三次亮光，台账显示 24 枚\n1100 — D-3391 申报「铅币自己在增加」，执勤员检查征用台账确认无误\n1200 — D-3391 私人物品搜查，发现小铜片一枚，表面电光纹路\n\n后续：铜片移交研究。D-3391 台账恢复标准配额。\n备注：类似亮光现象在第III层其他工位偶有目击。",
+    "text_en": "Incident Report IR-1205\nDate: M.2██.04.17\nItem Involved: SA-1205\n\n0800 — D-3391 requisitioned standard 15 lead coins, began shift\n0830 — Monitoring detected anomalous luminance from workstation, duration 0.4 seconds\n0831 — D-3391 account ledger shows balance 18 coins (+3, source unknown)\n0945 — Second luminance event, ledger shows 21 coins\n1030 — Third luminance event, ledger shows 24 coins\n1100 — D-3391 reported \"coins multiplying themselves,\" duty officer verified ledger accuracy\n1200 — Personal effects search recovered single copper disc, surface bearing electrical patterns\n\nFollow-up: Disc transferred to Research. D-3391 account restored to standard allocation.\nNote: Similar luminance phenomena occasionally witnessed at other Layer III workstations.",
+    "_voice": "doc",
+    "_objectId": "crit_bonus"
+  },
+  {
+    "id": "crit_charge",
+    "text_zh": "标准问询记录 · D-1847 · 接触 SA-0934 后 72 小时\n\n采访者：描述您使用该物品时的感受。\nD-1847：开始没什么。但是过了一会儿，手指开始发麻。\n采访者：什么时候开始的？\nD-1847：大概按了十来下之后吧。就是一种...饥饿感？不是胃里的饥饿，是手指。手指饿了。\n采访者：然后呢？\nD-1847：越饿越厉害。到后来我按键的时候都能感觉到它在等什么。像野兽蹲伏着。然后突然——啪！整个工位都亮了，铅字砸得特别响。\n采访者：[翻阅记录] 您当天的收容记录显示异常高的裂铅频次。\nD-1847：是那个电池做的。我知道是它。每次充满电就要放出来，不放不行。\n采访者：您现在还有类似感觉吗？\nD-1847：[沉默 15 秒] ...我的手指还在等。",
+    "text_en": "Standard Interrogation Record · D-1847 · 72 Hours Post-Contact SA-0934\n\nInterviewer: Describe your sensation during item usage.\nD-1847: Nothing at first. But after a while, fingers started tingling.\nInterviewer: When did this begin?\nD-1847: After maybe ten keystrokes. It was like... hunger? Not stomach hunger. Finger hunger.\nInterviewer: Continue.\nD-1847: Hunger got worse. Later when I pressed keys, I could feel it waiting for something. Like a crouched beast. Then suddenly—crack! Whole workstation lit up, lead type struck extra loud.\nInterviewer: [Reviews records] Your containment log shows anomalously high fracture frequency that day.\nD-1847: The battery did it. I know it was the battery. Each time it filled up, had to discharge. No choice.\nInterviewer: Do you still experience similar sensations?\nD-1847: [15 seconds silence] ...My fingers are still waiting.",
+    "_voice": "doc",
+    "_objectId": "crit_charge"
+  },
+  {
+    "id": "stack_dividend",
+    "text_zh": "圣器操作须知 · SA-4021\n\n一、正常使用时将其置于圣坛左侧凹槽内。\n二、注意事项：勿连续使用超过四个祷时。若铅字开始自鸣，立即停止操作。\n三、使用后必须将其翻面放置。底面朝上时为休眠状态。\n四、警告：前持有者 D-2847 报告'每按一次都比上次更重'。经测量，物理重量无变化。\n\n[第五条被手写划掉，旁边潦草地写着：'别听它的。它骗你的。']",
+    "text_en": "Sacred Artifact Operating Instructions · SA-4021\n\n1. During normal use, place in left recess of the lectern.\n2. Precautions: Do not use continuously beyond four prayer-hours. If keys begin to chime on their own, cease operation immediately.\n3. After use, must be placed inverted. Base-up position indicates dormant state.\n4. Warning: Previous holder D-2847 reported 'each press heavier than the last.' Physical weight remains unchanged upon measurement.\n\n[Fifth item crossed out in handwriting, with scrawled note: 'Don't listen to it. It lies.']",
+    "_voice": "doc",
+    "_objectId": "stack_dividend"
+  },
+  {
+    "id": "overload_circuit",
+    "text_zh": "标准问询记录 · D-1903 · 接触 SA-7742 后 48 小时\n\n采访者：描述你使用该物品时的体验。\nD-1903：开始时很正常。但后来我发现，每当我按下一个键……\n采访者：是的？\nD-1903：旁边的键也在动。不是我按的。它们自己在动。\n采访者：你确定不是触碰到了？\nD-1903：我的手指很确定只按了一个。但是声音……声音听起来像五个键同时落下。\n采访者：还有其他异常吗？\nD-1903：墙上的影子。我只有一个影子，但墙上有五个人在打字。\n\n[后续 72 小时内 D-1903 持续报告'听到其他人在工位上打字'。其工位周围三米内无其他设备。]",
+    "text_en": "Standard Interview Record · D-1903 · 48 Hours After Contact with SA-7742\n\nInterviewer: Describe your experience using the item.\nD-1903: Started normal enough. But then I noticed, every time I pressed a key...\nInterviewer: Yes?\nD-1903: The ones next to it moved too. I wasn't pressing them. They moved by themselves.\nInterviewer: Are you certain you didn't brush against them?\nD-1903: My finger was sure it only pressed one. But the sound... sounded like five keys falling at once.\nInterviewer: Any other anomalies?\nD-1903: The shadows on the wall. I have one shadow, but there were five people typing on the wall.\n\n[Over the following 72 hours D-1903 continued reporting 'hearing others typing at their stations.' No equipment present within 3-meter radius of subject's position.]",
+    "_voice": "doc",
+    "_objectId": "overload_circuit"
+  },
+  {
+    "id": "surge",
+    "text_zh": "事故报告 IR-2847\n日期：M.2██.07.23\n涉及物品：SA-5903（波纹祝圣铅盒）\n\n0947 — D-4421 按标准程序开启铅盒，开始铭刻作业。\n0952 — 监测显示圣坛周围八个工位的铭刻频率同时激增。无人员在这些工位上。\n0953 — D-4421 报告'感觉很轻，像是有人在帮我按键'。铅盒内部温度骤降至 -12°C。\n0954 — 监控录像显示 D-4421 停止动作，但其圣坛继续发出铭刻声响。持续 47 秒后停止。\n0955 — D-4421 恢复意识。铅盒内侧发现结霜。霜花呈完美的螺旋形。\n\n后续：该物品暂停使用。螺旋霜花样本已送交分析，结果等待中。",
+    "text_en": "Incident Report IR-2847\nDate: M.2██.07.23\nItem Involved: SA-5903 (Ripple-Consecrated Lead Box)\n\n0947 — D-4421 opened lead box per standard procedure, began inscription work.\n0952 — Monitoring detected simultaneous inscription frequency surge across eight stations surrounding the lectern. No personnel present at these positions.\n0953 — D-4421 reported 'feeling light, like someone helping me press the keys.' Internal temperature of box dropped abruptly to -12°C.\n0954 — Surveillance footage shows D-4421 ceased movement, but lectern continued producing inscription sounds. Lasted 47 seconds before stopping.\n0955 — D-4421 regained consciousness. Frost discovered on interior of box. Frost patterns formed perfect spirals.\n\nFollow-up: Item suspended from use. Spiral frost samples submitted for analysis, results pending.",
+    "_voice": "doc",
+    "_objectId": "surge"
+  },
+  {
+    "id": "perpetual_engine",
+    "text_zh": "【物品编号】SA-████\n【版级】熔版 / Fusum\n\n发现于第 VII 层废弃工位。直径约三寸的黄铜齿轮，内嵌十七枚铅字钉。齿轮持续转动，无动力源，无磨损痕迹。\n\n持有者 D-2847 报告「它一直在我手心里转，但没有重量变化」。第三日开始，D-2847 工位考勤异常：连续值班 ████ 小时未离席。监控显示其每晚按时返回宿舍。\n\n第七日，D-2847 失联。工位内发现一纸条：「我不需要停下来了。它也不需要。」\n\n齿轮仍在转动。转速与第一日观察记录完全一致。\n\n【备注】已尝试用外力停止齿轮。失败。齿轮温度始终保持 37.2°C。",
+    "text_en": "【Item Number】SA-████\n【Classification】Fusum / Molten Form\n\nRecovered from abandoned workstation, Layer VII. Brass gear approximately three inches in diameter, embedded with seventeen leaden slugs. Rotates continuously without power source or signs of wear.\n\nSubject D-2847 reported \"it keeps turning in my palm, but the weight never changes.\" On day three, attendance anomaly noted: D-2847 logged ████ consecutive hours without leaving station. Surveillance confirms nightly return to quarters.\n\nDay seven: D-2847 missing. Note found at workstation: \"I don't need to stop anymore. Neither does it.\"\n\nGear continues rotation. Speed matches initial observation records exactly.\n\n【Note】External attempts to halt rotation unsuccessful. Gear temperature maintains constant 37.2°C.",
+    "_voice": "doc",
+    "_objectId": "perpetual_engine"
+  },
+  {
+    "id": "drum_pass",
+    "text_zh": "【标准问询记录 · D-3391 · 接触 SA-████ 后 ██ 小时】\n【采访者】请描述您使用该鼓的体验。\n【D-3391】就是普通的手鼓啊。羊皮鼓面，木制鼓身。我按要求拍了几下。\n【采访者】然后呢？\n【D-3391】然后我旁边那些家伙开始… 怎么说呢，动得更快了？我一拍鼓，他们的手就像被什么东西推了一下。\n【采访者】您是否感到任何异常？\n【D-3391】一开始没有。但后来我发现，我停不下来了。我必须把鼓声传下去。每隔一段时间就得拍一下，不然… 不然就感觉有什么东西会断掉。\n【采访者】现在还有这种感觉吗？\n【D-3391】有。我现在想拍桌子。我能拍桌子吗？\n\n【备注】D-3391 于访谈结束后持续拍击桌面。已转移至隔音室。",
+    "text_en": "【Standard Inquiry Record · D-3391 · ██ hours post-contact with SA-████】\n【Interviewer】Please describe your experience with the drum.\n【D-3391】Just a regular hand drum. Leather head, wooden body. I tapped it a few times as instructed.\n【Interviewer】And then?\n【D-3391】Then the other guys around me started... how do I put this... moving faster? When I hit the drum, their hands jerked like something pushed them.\n【Interviewer】Did you experience any abnormalities?\n【D-3391】Not at first. But then I realized I couldn't stop. I had to pass the beat along. Every so often I have to tap, or else... or else something feels like it'll break.\n【Interviewer】Do you still feel this compulsion?\n【D-3391】Yes. I want to tap the table now. Can I tap the table?\n\n【Note】D-3391 continued tapping table surface after interview concluded. Transferred to soundproof chamber.",
+    "_voice": "doc",
+    "_objectId": "drum_pass"
+  },
+  {
+    "id": "word_resonance",
+    "text_zh": "【回收物 RC-████ · 发现于 D-████ 工位抽屉 · 纸质便条】\n\n今天第三次了。我完成一个词，周围的人就像… 就像同时被什么东西碰了一下。不是碰身体，是碰脑子里的什么地方。\n\n刚才我打完\"cathedral\"，隔壁那家伙突然坐直了，说他\"感觉到了八个什么东西\"。什么八个？单词有八个字母。\n\n我觉得我在做什么不该做的事。每次我完成一个长词，铅字圣坛就开始… 嗡鸣？不对，是共振。像有什么看不见的弦被拨动了。\n\n昨晚我做梦听到有人在念\"CATHEDRAL C-A-T-H-E-D-R-A-L\"，一遍一遍。醒来后嘴里有铅的味道。\n\n我不想再碰那些长词了。但它们一直出现在我面前。\n\n【注：发现时纸张边缘有烧焦痕迹。字迹逐行变淡。最后一行几不可读】",
+    "text_en": "【Recovered Item RC-████ · Found in D-████ workstation drawer · Handwritten note】\n\nThird time today. I finish a word and everyone around me looks like... like something touched them all at once. Not their bodies, something inside their heads.\n\nJust now I typed \"cathedral\" and the guy next to me sat up straight, said he \"felt eight somethings.\" Eight what? The word has eight letters.\n\nI think I'm doing something I shouldn't. Every time I complete a long word, the lectern starts to... hum? No, resonate. Like invisible strings being plucked.\n\nLast night I dreamed someone was chanting \"CATHEDRAL C-A-T-H-E-D-R-A-L\" over and over. Woke up with lead taste in my mouth.\n\nI don't want to touch long words anymore. But they keep appearing in front of me.\n\n【Note: Paper edges show burn marks when discovered. Handwriting fades by line. Final line barely legible】",
+    "_voice": "doc",
+    "_objectId": "word_resonance"
+  },
+  {
+    "id": "stack_crit",
+    "text_zh": "圣徒遗物登记 · SA-████\n版级：脱版 / Solum\n\n发现地点：第VII层废弃工位，操作台仍有余温\n物理描述：铜制计数器，指针固定在「███」位。底座刻有「积怒铭器」。\n\n异常现象记录：\n原持有者D-████的祷击记录显示异常模式：每当积诵达到峰值，后续祷击产生的裂铅痕迹会在铅版上\"叠印\"。第一次叠印时计数器指针跃升一格，第二次再跃升一格，如此递进。\n\n最后的工作日志显示D-████连续祷击███小时。日志末句：\"听到了什么声音，像是计数器在数别的东西。\"\n\n处置备注：指针位置于发现后保持不变。计数内容不明。",
+    "text_en": "Sacred Artifact Registry · SA-████\nGradus: Solum / Unbound\n\nRecovery Site: Abandoned workstation, Layer VII. Console still warm.\nPhysical Description: Brass counter, needle fixed at「███」. Base inscribed \"Wrath Accumulator\".\n\nAnomalous Phenomena:\nFormer operator D-████'s litany records show irregular pattern: when accumulation peaks, subsequent fractures create \"overprint\" marks on lead plates. First overprint advances needle one position, second advances again, progressively.\n\nFinal work log shows D-████ performed continuous litany for ███ hours. Last entry: \"Hearing something now, like the counter is counting something else.\"\n\nDisposition Note: Needle position unchanged since recovery. Object of count unknown.",
+    "_voice": "doc",
+    "_objectId": "stack_crit"
+  }
+]

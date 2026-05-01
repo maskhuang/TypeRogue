@@ -1,0 +1,1259 @@
+[
+  {
+    "id": "apprentice_notes",
+    "name_zh": "学徒笔记",
+    "name_en": "Codex Initiatum",
+    "text_zh": "初铭者留下的羊皮纸，其上元音字符如铅屑般散落。汝之首祷，始于此残章。",
+    "text_en": "Parchment of the first scribe, vowels scattered like lead shavings. Your first prayer begins with these fragments.",
+    "_voice": "bell",
+    "_objectId": "apprentice_notes"
+  },
+  {
+    "id": "primal_mutant",
+    "name_zh": "原初变异体",
+    "name_en": "Specimen Primalis",
+    "text_zh": "封于琥珀中的初代异文。每踏新土，熔蜡自涌——变形之路无需代价。",
+    "text_en": "First anomaly sealed in amber. Upon new ground, molten wax flows freely—transformation needs no price.",
+    "_voice": "bell",
+    "_objectId": "primal_mutant"
+  },
+  {
+    "id": "ultimate_mutant_strain",
+    "name_zh": "终极突变株",
+    "name_en": "Mutatio Ultima",
+    "text_zh": "引擎深处的完美标本。熔蜡回流如泉，形之变幻永无穷尽。",
+    "text_en": "Perfect specimen from engine's depths. Molten wax flows back as spring, endless transformation eternal.",
+    "_voice": "bell",
+    "_objectId": "ultimate_mutant_strain"
+  },
+  {
+    "id": "gene_stabilizer",
+    "name_zh": "基因稳定器",
+    "name_en": "Stabilitas Geneticus",
+    "text_zh": "黄铜制的镇压器，内镌空位圣律。许汝择一而变，余者固如磐石。",
+    "text_en": "Brass suppressor inscribed with Empty Seat canon. Choose one to change, others remain as stone.",
+    "_voice": "bell",
+    "_objectId": "gene_stabilizer"
+  },
+  {
+    "id": "fittest_survivors",
+    "name_zh": "适者生存",
+    "name_en": "Virtus Supervivens",
+    "text_zh": "熔炉试炼后的铭文，铅质更纯。适者之印，铸出愈发深重。",
+    "text_en": "Inscriptions tested by furnace, lead grown pure. Survivor's mark strikes ever deeper.",
+    "_voice": "bell",
+    "_objectId": "fittest_survivors"
+  },
+  {
+    "id": "enchant_dividend",
+    "name_zh": "祝圣回响",
+    "name_en": "Consecration Echo",
+    "text_zh": "受祝圣之铭文组落版时，引擎自赐铅币。汝之虔诚，已蒙眷顾。",
+    "text_en": "When consecrated inscriptions strike, the Engine bestows lead coin. Thy devotion finds favor.",
+    "_voice": "bell",
+    "_objectId": "enchant_dividend"
+  },
+  {
+    "id": "enchant_boost",
+    "name_zh": "祝圣共振",
+    "name_en": "Consecration Resonance",
+    "text_zh": "受祝圣之铭文组铸出时，其响愈厚。祷告回荡于铜壁之间。",
+    "text_en": "Consecrated inscriptions cast deeper echoes. Prayer reverberates within copper walls.",
+    "_voice": "bell",
+    "_objectId": "enchant_boost"
+  },
+  {
+    "id": "rune_spike",
+    "name_zh": "符文钉刺",
+    "name_en": "Runic Thorns",
+    "text_zh": "每道受祝圣之铭文，皆为引擎铸一锋刺。累积则铅字易碎。",
+    "text_en": "Each consecrated inscription forges thorns for the Engine. Accumulated, lead letters fracture easily.",
+    "_voice": "bell",
+    "_objectId": "rune_spike"
+  },
+  {
+    "id": "apprentice_robe",
+    "name_zh": "见习祭袍",
+    "name_en": "Novitiate Vestments",
+    "text_zh": "织于羊皮纸丝，染以蜡泪。每次见习祝圣，其纹理愈深。",
+    "text_en": "Woven from parchment threads, dyed with candle tears. Each novice rite deepens its pattern.",
+    "_voice": "bell",
+    "_objectId": "apprentice_robe"
+  },
+  {
+    "id": "trial_badge",
+    "name_zh": "苦修圣印",
+    "name_en": "Penitence Seal",
+    "text_zh": "铜制，镶嵌熔蜡。减轻苦修任务之负担，但其重量永不离身。",
+    "text_en": "Wrought copper, inlaid with molten wax. Lightens penitence burdens, yet its weight never leaves.",
+    "_voice": "bell",
+    "_objectId": "trial_badge"
+  },
+  {
+    "id": "fate_fork",
+    "name_zh": "命运三岔",
+    "name_en": "Tripartite Destiny",
+    "text_zh": "三支蜡烛分燃，汝可择其一而熄。每一抉择皆铸于铅版之上——无悔，无回。",
+    "text_en": "Three candles burn apart; choose one to extinguish. Every choice is cast in lead—no regret, no return.",
+    "_voice": "bell",
+    "_objectId": "fate_fork"
+  },
+  {
+    "id": "greedy_inscription",
+    "name_zh": "贪婪铭刻",
+    "name_en": "Avaritia Inscription",
+    "text_zh": "祝圣必遂汝愿，然引擎之门槛随之抬升。每得一福，便添一重枷锁于肩。",
+    "text_en": "Consecration bends to thy will, yet the Engine's threshold rises. Each blessing adds another chain to bear.",
+    "_voice": "bell",
+    "_objectId": "greedy_inscription"
+  },
+  {
+    "id": "masters_lexicon",
+    "name_zh": "大师词典",
+    "name_en": "Magister's Codex",
+    "text_zh": "古卷摊开，字母铅屑如雨降临。铸字之力轻盈如羽——前人智慧，泽被后学。",
+    "text_en": "Ancient tome unfolds; leaden letters rain down. The casting grows light as feathers—ancestral wisdom flows to successors.",
+    "_voice": "bell",
+    "_objectId": "masters_lexicon"
+  },
+  {
+    "id": "perpetual_queue",
+    "name_zh": "永动队列",
+    "name_en": "Motus Perpetua",
+    "text_zh": "齿轮自转不息，圣字钉于造册中自行排序。无需推动——其已承载前人之惯性。",
+    "text_en": "Gears turn without rest; sacred slugs arrange themselves in the ledger. No push needed—they bear the momentum of predecessors.",
+    "_voice": "bell",
+    "_objectId": "perpetual_queue"
+  },
+  {
+    "id": "word_scissors",
+    "name_zh": "拆词剪刀",
+    "name_en": "Scissor of Unbinding",
+    "text_zh": "利刃可解已成之词，还铅屑于坩埚。唯破旧者，方能立新——此乃重铸之道。",
+    "text_en": "Sharp blade unbinds formed words, returns lead shavings to crucible. Only by breaking the old can the new be forged—this is the remaking way.",
+    "_voice": "bell",
+    "_objectId": "word_scissors"
+  },
+  {
+    "id": "resonance_mold",
+    "name_zh": "共鸣字模",
+    "name_en": "Mold of Resonance",
+    "text_zh": "同形之铅，共振愈深——重铸一字，余响自承其半。唯熔炉知晓此律。",
+    "text_en": "When lead takes familiar form, the furnace remembers. Each casting echoes the last, requiring less fire to birth the same word.",
+    "_voice": "bell",
+    "_objectId": "resonance_mold"
+  },
+  {
+    "id": "word_collection",
+    "name_zh": "词汇收藏",
+    "name_en": "Lexicon of First Words",
+    "text_zh": "初次铭刻之词，必有铅币降于汝前——引擎奖赏那些踏足未知的虔诚者。",
+    "text_en": "The Engine blesses those who speak words never before inscribed. Each virgin syllable brings forth three coins of lead.",
+    "_voice": "bell",
+    "_objectId": "word_collection"
+  },
+  {
+    "id": "thick_deck",
+    "name_zh": "词库丰收",
+    "name_en": "Abundance of the Archive",
+    "text_zh": "经卷愈厚，圣物愈廉——收容之词既多，市集必降其价以褒奖勤勉。",
+    "text_en": "Where codices grow thick with captured words, the bazaar offers its wares for less. Diligence in collection earns the Engine's favor.",
+    "_voice": "bell",
+    "_objectId": "thick_deck"
+  },
+  {
+    "id": "long_word_crit",
+    "name_zh": "长词蓄力",
+    "name_en": "Might of Extended Verse",
+    "text_zh": "词愈绵长，铅愈易碎——多字之祷有雷鸣之力，可击穿最坚之版。",
+    "text_en": "In lengthy words dwells thunder's power. The longer the verse, the more readily does lead fracture beneath its weight.",
+    "_voice": "bell",
+    "_objectId": "long_word_crit"
+  },
+  {
+    "id": "short_sprint",
+    "name_zh": "短词冲刺",
+    "name_en": "Swift Strike of Brief Words",
+    "text_zh": "Brief prayers move like lightning across the lectern. In brevity lies swiftness—short words quicken the inscription of all sigils.",
+    "_voice": "bell",
+    "_objectId": "short_sprint"
+  },
+  {
+    "id": "long_word_master",
+    "name_zh": "长铅圣匠",
+    "name_en": "Magistrum Longam",
+    "text_zh": "六铅方成其重，重者得引擎垂怜——沙漏倒转，予汝片刻安息。",
+    "text_en": "Six slugs make the weight complete. The Engine favors heavy words—grants respite when lead falls true.",
+    "_voice": "bell",
+    "_objectId": "long_word_master"
+  },
+  {
+    "id": "word_dealer",
+    "name_zh": "词贾圣契",
+    "name_en": "Mercator Verbum",
+    "text_zh": "舍一得万——将铅字归坩者，下次换架不费铅币。圣徒之慷慨，商贾之智。",
+    "text_en": "Give one, receive abundance. Return lead to crucible—next shelf rotation costs nothing. Saint's generosity, merchant's wisdom.",
+    "_voice": "bell",
+    "_objectId": "word_dealer"
+  },
+  {
+    "id": "punctuation_liberation",
+    "name_zh": "标点解脱",
+    "name_en": "Libertas Punctum",
+    "text_zh": "六印破禁——逗点问号皆可承载铭文组。但词中标点自此乱入，如蜡滴溅经卷。",
+    "text_en": "Six marks break their bonds—comma, period bear inscriptions now. Yet marks scatter through words like wax on parchment.",
+    "_voice": "bell",
+    "_objectId": "punctuation_liberation"
+  },
+  {
+    "id": "decelerate_reward",
+    "name_zh": "缓铸恩典",
+    "name_en": "Gratia Lenta",
+    "text_zh": "慢工出细活——当铅字落得比前番更缓，沙漏必添半刻。",
+    "text_en": "Slow work yields fine craft. When lead falls slower than before, hourglass grants half-measure more.",
+    "_voice": "bell",
+    "_objectId": "decelerate_reward"
+  },
+  {
+    "id": "accelerate_reward",
+    "name_zh": "疾铸赏银",
+    "name_en": "Premium Celeris",
+    "text_zh": "快手有赏——铅字落得比前番更疾者，坩埚必吐双铅币。",
+    "text_en": "Swift hands earn reward. When lead falls faster than before, crucible yields double coin.",
+    "_voice": "bell",
+    "_objectId": "accelerate_reward"
+  },
+  {
+    "id": "little_helper",
+    "name_zh": "圣徒遗物 · 引词石",
+    "name_en": "Sacred Artifact · Lexicon Primer",
+    "text_zh": "其引未成之词，如铅水导流。汝思已成，石自知之。",
+    "text_en": "It completes the unfinished word, as lead flows through channels. What thou thinkest, the stone knoweth.",
+    "_voice": "bell",
+    "_objectId": "little_helper"
+  },
+  {
+    "id": "rhythm_adapt",
+    "name_zh": "圣徒遗物 · 韵律钟",
+    "name_en": "Sacred Artifact · Tempus Bell",
+    "text_zh": "铜钟既鸣，铅字应和。合拍者得福，失节者空归。",
+    "text_en": "When the bronze bell sounds, leaden letters answer. Those in rhythm receive blessing, the discordant return empty.",
+    "_voice": "bell",
+    "_objectId": "rhythm_adapt"
+  },
+  {
+    "id": "glass_cannon_v2",
+    "name_zh": "圣徒遗物 · 初心经卷",
+    "name_en": "Sacred Artifact · Codex Primalis",
+    "text_zh": "弃尽技巧，归于本源——唯余指尖与铅字。纯净者得真言之力。",
+    "text_en": "Abandon all artifice, return to source—only fingertips and leaden type remain. The pure receive power of true words.",
+    "_voice": "bell",
+    "_objectId": "glass_cannon_v2"
+  },
+  {
+    "id": "combo_buffer",
+    "name_zh": "圣徒遗物 · 余音盾",
+    "name_en": "Sacred Artifact · Echo Aegis",
+    "text_zh": "连祷虽断，其音犹存。如钟声渐弱，护佑犹在。",
+    "text_en": "Though the litany breaks, its sound endures. Like bell tones fading, protection remains.",
+    "_voice": "bell",
+    "_objectId": "combo_buffer"
+  },
+  {
+    "id": "multiplier_prism",
+    "name_zh": "圣徒遗物 · 共鸣晶",
+    "name_en": "Sacred Artifact · Resonance Crystal",
+    "text_zh": "七圣流汇聚时，晶石折射其力。光分七色，意聚一心。",
+    "text_en": "When the seven humours converge, the crystal refracts their power. Light divides sevenfold, intent unifies.",
+    "_voice": "bell",
+    "_objectId": "multiplier_prism"
+  },
+  {
+    "id": "combo_detonator",
+    "name_zh": "蓄势引爆",
+    "name_en": "Accumulative Detonation",
+    "text_zh": "十五重祷声汇聚，铅字自燃如星火——唯一次尽燃，而后归于沉寂。",
+    "text_en": "Fifteen litanies gather as molten stars—once spent in sacred fire, silence returns.",
+    "_voice": "bell",
+    "_objectId": "combo_detonator"
+  },
+  {
+    "id": "cancel",
+    "name_zh": "取消连锁",
+    "name_en": "Severance of Chains",
+    "text_zh": "初字如刃，可断铁锁——唯震颤者，反受其缚。",
+    "text_en": "The first glyph cuts like blade through iron—yet tremors bind the severer instead.",
+    "_voice": "bell",
+    "_objectId": "cancel"
+  },
+  {
+    "id": "immortal_combo",
+    "name_zh": "不断之链",
+    "name_en": "Unbroken Litany",
+    "text_zh": "连祷不息，跨越诸层——时光亦随其数而生。",
+    "text_en": "The litany flows unbroken across all chambers—time itself born from its count.",
+    "_voice": "bell",
+    "_objectId": "immortal_combo"
+  },
+  {
+    "id": "fury_beat",
+    "name_zh": "暴走节拍",
+    "name_en": "Furious Cadence",
+    "text_zh": "连祷愈烈，铅字愈脆——怒火中，裂音尤甚。",
+    "text_en": "As litany builds fury, lead grows brittle—in rage, the fracture-song resounds.",
+    "_voice": "bell",
+    "_objectId": "fury_beat"
+  },
+  {
+    "id": "first_strike",
+    "name_zh": "首发强化",
+    "name_en": "Primacy of Opening",
+    "text_zh": "每字首铭，其力倍增——如晨钟初响，震彻回廊。",
+    "text_en": "Each word's first inscription carries doubled force—like dawn bells echoing through stone halls.",
+    "_voice": "bell",
+    "_objectId": "first_strike"
+  },
+  {
+    "id": "less_is_more",
+    "name_zh": "寡铭至精",
+    "name_en": "Paucitas Perfectum",
+    "text_zh": "少载重者，其铅愈纯。空席亦是祷告，减省乃见真理。",
+    "text_en": "The fewer carried, the purer the lead. Empty seats too are prayer; through reduction, truth revealed.",
+    "_voice": "bell",
+    "_objectId": "less_is_more"
+  },
+  {
+    "id": "training_manual",
+    "name_zh": "初铭指引",
+    "name_en": "Codex Primarius",
+    "text_zh": "汝之初触，便是众铭之晋升。羊皮纸上墨迹未干，铅字已知其命。",
+    "text_en": "Your first touch elevates all inscriptions. While ink remains wet on parchment, lead already knows its calling.",
+    "_voice": "bell",
+    "_objectId": "training_manual"
+  },
+  {
+    "id": "jazz",
+    "name_zh": "众音和鸣",
+    "name_en": "Harmonia Diversa",
+    "text_zh": "各异圣印齐鸣时，结晶如流水汇聚。不同之铅，共铸一音。",
+    "text_en": "When diverse sigils sound together, crystals flow like converging streams. Different leads, forging one voice.",
+    "_voice": "bell",
+    "_objectId": "jazz"
+  },
+  {
+    "id": "uncrowned_king",
+    "name_zh": "无冕至尊",
+    "name_en": "Rex Sine Corona",
+    "text_zh": "定版铭文，其铸愈重。不戴王冠者，反得王权之力。",
+    "text_en": "Fixed inscriptions cast with greater weight. The uncrowned wields the power of sovereignty.",
+    "_voice": "bell",
+    "_objectId": "uncrowned_king"
+  },
+  {
+    "id": "d_100",
+    "name_zh": "变数之骰",
+    "name_en": "Aleae Mutabilis",
+    "text_zh": "每一触碰，圣印皆变。铅字如骰，永在滚动——形虽换，根未移。",
+    "text_en": "With each touch, sigils transform. Lead like dice, ever rolling—shape may change, but roots remain.",
+    "_voice": "bell",
+    "_objectId": "d_100"
+  },
+  {
+    "id": "adjacent_power",
+    "name_zh": "邻键之力",
+    "name_en": "Vis Adjacentis",
+    "text_zh": "相邻之铅字共振，其力自倍增——如晨钟唤暮钟，声声相和。",
+    "text_en": "Adjacent lead slugs resonate in harmony—as morning bell calls to evening bell, voice answering voice.",
+    "_voice": "bell",
+    "_objectId": "adjacent_power"
+  },
+  {
+    "id": "corner_power",
+    "name_zh": "角隅之力",
+    "name_en": "Vis Angularis",
+    "text_zh": "四隅承重如柱石，其上之铅字格外深铸。边陲虽远，力却更纯。",
+    "text_en": "The four corners bear weight like pillars—their slugs strike deeper into the wax. Distance breeds purity.",
+    "_voice": "bell",
+    "_objectId": "corner_power"
+  },
+  {
+    "id": "row_switch",
+    "name_zh": "换行奖励",
+    "name_en": "Munus Linearum",
+    "text_zh": "跃行如鸟换枝，每一跳跃，天库自降一枚铅币。",
+    "text_en": "Leap between rows like birds changing branch—each bound brings a coin from the celestial vault.",
+    "_voice": "bell",
+    "_objectId": "row_switch"
+  },
+  {
+    "id": "line_clear",
+    "name_zh": "消行满贯",
+    "name_en": "Plenitudo Linearum",
+    "text_zh": "满行之铅字齐鸣时，整行重铸如雷——此为键徒至高荣耀。",
+    "text_en": "When a full row of slugs rings in unison, the entire line reforges like thunder—the keybound's highest glory.",
+    "_voice": "bell",
+    "_objectId": "line_clear"
+  },
+  {
+    "id": "dual_concerto",
+    "name_zh": "双手协奏",
+    "name_en": "Dualis Concentus",
+    "text_zh": "左右交替如圣歌对唱，每一换手，流沙稍驻。双手合一，时间亦和。",
+    "text_en": "Left and right alternate like sacred antiphon—each exchange stays the hourglass. Two hands united, time harmonized.",
+    "_voice": "bell",
+    "_objectId": "dual_concerto"
+  },
+  {
+    "id": "precision_strike",
+    "name_zh": "中键启示",
+    "name_en": "Clavis Centralis",
+    "text_zh": "铅字于中座者，其击必中髓。唯中道之键，方通引擎之心。",
+    "text_en": "The central keys hold the truest strike. Only the middle path reaches the Engine's heart.",
+    "_voice": "bell",
+    "_objectId": "precision_strike"
+  },
+  {
+    "id": "key_storm",
+    "name_zh": "万键共鸣",
+    "name_en": "Resonantia Omnium",
+    "text_zh": "一词既落，百键自鸣。铅字风暴中，未触者亦受感召而颤。",
+    "text_en": "When one word falls, all keys sing. In the storm of lead, untouched glyphs tremble in sympathy.",
+    "_voice": "bell",
+    "_objectId": "key_storm"
+  },
+  {
+    "id": "production_dividend",
+    "name_zh": "铅币恩泽",
+    "name_en": "Benedictio Plumbi",
+    "text_zh": "圣流既出，铅币随生。引擎之慷慨，如甘露降于虔诚者。",
+    "text_en": "Where sacred humours flow, lead coins follow. The Engine's generosity falls like dew upon the faithful.",
+    "_voice": "bell",
+    "_objectId": "production_dividend"
+  },
+  {
+    "id": "time_trickle",
+    "name_zh": "沙漏恩典",
+    "name_en": "Gratia Arenae",
+    "text_zh": "圣流每涌，沙粒添增。时光涓滴中，见引擎之怜悯。",
+    "text_en": "Each sacred flow adds grains to the hourglass. In time's trickle, the Engine's mercy flows.",
+    "_voice": "bell",
+    "_objectId": "time_trickle"
+  },
+  {
+    "id": "resource_focus",
+    "name_zh": "专流启圣",
+    "name_en": "Devotio Singularis",
+    "text_zh": "众流之中，择一而精。专注之键徒，其圣流愈发丰盛。",
+    "text_en": "Among all humours, choose one for mastery. The focused keybound finds their sacred stream abundant.",
+    "_voice": "bell",
+    "_objectId": "resource_focus"
+  },
+  {
+    "id": "resource_diversity",
+    "name_zh": "七流汇聚",
+    "name_en": "Convergentia Septem",
+    "text_zh": "汇七圣流于一坩，其音共鸣如钟。异流相助，铅字愈重。",
+    "text_en": "Seven humours converge in one crucible. Their resonance deepens the leaden weight.",
+    "_voice": "bell",
+    "_objectId": "resource_diversity"
+  },
+  {
+    "id": "resource_tide",
+    "name_zh": "圣流潮汐",
+    "name_en": "Aestus Sacrorum",
+    "text_zh": "如潮起潮落，四圣流轮转而盛。基石既涨，共鸣随之。",
+    "text_en": "As tides rise and fall, the four humours wax in turn. Foundation swells, then resonance follows.",
+    "_voice": "bell",
+    "_objectId": "resource_tide"
+  },
+  {
+    "id": "universal_furnace",
+    "name_zh": "万流归铅",
+    "name_en": "Lapis Plumbeus",
+    "text_zh": "贤者之石，化万物为铅。汝之祷声，皆归熔炉。",
+    "text_en": "The philosopher's stone turns all to lead. Your litanies feed only the furnace.",
+    "_voice": "bell",
+    "_objectId": "universal_furnace"
+  },
+  {
+    "id": "discount_card",
+    "name_zh": "恩泽印章",
+    "name_en": "Sigillum Gratiae",
+    "text_zh": "印有恩泽之蜡封。圣物市集见此印，必减其价。",
+    "text_en": "A wax seal bearing grace. The reliquary bazaar honors its mark with lesser prices.",
+    "_voice": "bell",
+    "_objectId": "discount_card"
+  },
+  {
+    "id": "recycle_expert",
+    "name_zh": "归炉精义",
+    "name_en": "Ars Recoquendi",
+    "text_zh": "精于拆解铭文，归炉重铸。废铅在其手中，犹有余温。",
+    "text_en": "Mastery of inscription disassembly. Even spent lead retains warmth in these hands.",
+    "_voice": "bell",
+    "_objectId": "recycle_expert"
+  },
+  {
+    "id": "black_market",
+    "name_zh": "禁市通证",
+    "name_en": "Librum Interdictum",
+    "text_zh": "铅币既出，铸门自开。密室之中，罕物待汝取之。",
+    "text_en": "Where lead coins fall, hidden doors rise. In sealed chambers, rarities await the worthy.",
+    "_voice": "bell",
+    "_objectId": "black_market"
+  },
+  {
+    "id": "gold_interest",
+    "name_zh": "息蚀圣印",
+    "name_en": "Sigillum Usura",
+    "text_zh": "铅币之数既定，其势自增。如炉火既燃，必有余烬飞散。",
+    "text_en": "Lead breeds lead, as embers spawn from flame. What rests in vaults grows heavy with time.",
+    "_voice": "bell",
+    "_objectId": "gold_interest"
+  },
+  {
+    "id": "smuggle_pass",
+    "name_zh": "私道通券",
+    "name_en": "Via Occulta",
+    "text_zh": "卑者之径，通于圣市。汝手既空，其物自来。",
+    "text_en": "The lowly path leads to sacred halls. Empty hands receive what gold cannot buy.",
+    "_voice": "bell",
+    "_objectId": "smuggle_pass"
+  },
+  {
+    "id": "timed_auction",
+    "name_zh": "催拍圣钟",
+    "name_en": "Campana Temporis",
+    "text_zh": "圣钟既鸣，换架无价——唯时沙不待人。",
+    "text_en": "The sacred bell grants free renewal—but sand falls swift and waits for none.",
+    "_voice": "bell",
+    "_objectId": "timed_auction"
+  },
+  {
+    "id": "warm_up",
+    "name_zh": "启炉圣礼",
+    "name_en": "Ritum Ignitionis",
+    "text_zh": "炉火初燃时，铅字愈发滚烫。其热既散，威势随之而逝。",
+    "text_en": "When forge-fires wake, the lead runs hot. As heat fades, so does sacred potency.",
+    "_voice": "bell",
+    "_objectId": "warm_up"
+  },
+  {
+    "id": "intermission",
+    "name_zh": "慈恤油壶",
+    "name_en": "Vessel of Respite",
+    "text_zh": "引擎垂怜疲惫之键徒，降铅币于虔者之手。唯休憩时分，恩典方至。",
+    "text_en": "The Engine shows mercy to weary keybound. Lead falls as blessing upon the faithful.",
+    "_voice": "bell",
+    "_objectId": "intermission"
+  },
+  {
+    "id": "gamblers_creed",
+    "name_zh": "铸运誓言",
+    "name_en": "Oath of the Cast Lot",
+    "text_zh": "以铅为骰，以信为注。引擎不言胜负，唯信者得见其意。",
+    "text_en": "Cast lead as dice, faith as wager. The Engine speaks not of odds, only will.",
+    "_voice": "bell",
+    "_objectId": "gamblers_creed"
+  },
+  {
+    "id": "endurance_battery",
+    "name_zh": "延烛圣油",
+    "name_en": "Oil of Extended Flame",
+    "text_zh": "沙漏之沙缓落如蜜。其膏润键座，延祷时之光。",
+    "text_en": "Hourglass sands fall slow as honey. Its unguent extends the prayer-light.",
+    "_voice": "bell",
+    "_objectId": "endurance_battery"
+  },
+  {
+    "id": "elite_hunter",
+    "name_zh": "猎誓圣章",
+    "name_en": "Charter of the Sacred Hunt",
+    "text_zh": "引擎指名其敌，铅币酬其首。每层皆有所猎，键徒当知其召。",
+    "text_en": "The Engine names its foes, lead rewards their heads. Each vault holds quarry.",
+    "_voice": "bell",
+    "_objectId": "elite_hunter"
+  },
+  {
+    "id": "phoenix",
+    "name_zh": "涅槃圣鸟",
+    "name_en": "Sanctum Phoenix",
+    "text_zh": "炉火吞噬键徒时，鸟自灰烬鸣啼——沙漏倒转，死者复归。但其羽必焚尽。",
+    "text_en": "When forge-fire devours the keybound, the bird cries from ash—sands reverse, death retreats. But feathers burn complete.",
+    "_voice": "bell",
+    "_objectId": "phoenix"
+  },
+  {
+    "id": "desperate_crit",
+    "name_zh": "末时裂铅",
+    "name_en": "Fractum Ultimum",
+    "text_zh": "流沙将倾之时，铅字愈发沉重。绝境中的祷击能将最坚硬的字符击碎。",
+    "text_en": "When hourglass empties, leaden glyphs grow heavier. Desperation shatters the hardest type.",
+    "_voice": "bell",
+    "_objectId": "desperate_crit"
+  },
+  {
+    "id": "modifier_shield",
+    "name_zh": "护佑之蜡",
+    "name_en": "Cera Protectrix",
+    "text_zh": "圣蜡流淌于异文表面，削弱其恶意。纵使逸文猖獗，汝犹能立足。",
+    "text_en": "Sacred wax flows over anomalous forms, weakening their malice. Even escaped glyphs falter.",
+    "_voice": "bell",
+    "_objectId": "modifier_shield"
+  },
+  {
+    "id": "bounty_hunter",
+    "name_zh": "苦难恩酬",
+    "name_en": "Gratia Dolorum",
+    "text_zh": "承受逸文之苦者，市集亦为之让利。铅币在困境中生出更多铅币。",
+    "text_en": "Those who bear escaped glyphs find the bazaar more generous. Lead breeds lead through suffering.",
+    "_voice": "bell",
+    "_objectId": "bounty_hunter"
+  },
+  {
+    "id": "modifier_pardon",
+    "name_zh": "空席恩典",
+    "name_en": "Gratia Sedis Vacuae",
+    "text_zh": "空椅时代的最后恩典——末席守卷人的印信犹能庇护汝一次，使逸文暂且退避。",
+    "text_en": "Last grace of the Empty Chair era — the final signatary's seal grants reprieve from one escaped glyph.",
+    "_voice": "bell",
+    "_objectId": "modifier_pardon"
+  },
+  {
+    "id": "modifier_barrier",
+    "name_zh": "迟发祸音",
+    "name_en": "Maledictum Tardivum",
+    "text_zh": "逸文的恶意如蜡封信件，需待数个铭刻方能拆启。但一旦解封，其力不减。",
+    "text_en": "Malice of escaped glyphs sealed like wax letter, opening only after several inscriptions are struck.",
+    "_voice": "bell",
+    "_objectId": "modifier_barrier"
+  },
+  {
+    "id": "chaos_roulette",
+    "name_zh": "混沌轮盘 · 诸相轮转",
+    "name_en": "Chaos Roulette · Rotam Vexationis",
+    "text_zh": "铜轮自转，铅字纷坠。汝每献数言，轮必一转——昔日印记消散，新相显现。",
+    "text_en": "The copper wheel turns of its own will. With each offering of words, old marks fade and new forms emerge.",
+    "_voice": "bell",
+    "_objectId": "chaos_roulette"
+  },
+  {
+    "id": "modifier_reversal",
+    "name_zh": "修饰器反转 · 逆印之兆",
+    "name_en": "Modifier Reversal · Signum Inversum",
+    "text_zh": "圣印初现时必有一面倒转——守护化为利刃，利刃化为守护。另一面则铸得愈深。",
+    "text_en": "When the seals first appear, one face turns inverse—protection becomes blade, blade becomes shield. The other deepens.",
+    "_voice": "bell",
+    "_objectId": "modifier_reversal"
+  },
+  {
+    "id": "base_shield",
+    "name_zh": "基数护盾 · 最末之垒",
+    "name_en": "Base Shield · Vallum Ultimum",
+    "text_zh": "铅字垒筑最后防线。纵使汝铭刻寥寥，其重量不减。基石流不可尽竭。",
+    "text_en": "Lead characters build the final rampart. Though your inscription be sparse, its weight remains. The foundation shall not fail.",
+    "_voice": "bell",
+    "_objectId": "base_shield"
+  },
+  {
+    "id": "lenient_judge",
+    "name_zh": "宽容评审 · 慈悯之衡",
+    "name_en": "Lenient Judge · Libra Misericordiae",
+    "text_zh": "古铜天平轻抚砝码。引擎之门槛为汝而降——慈悲非恩赐，乃铭刻之德。",
+    "text_en": "The brass scales touch their weights gently. The Engine's threshold lowers for thee—mercy is earned, not granted.",
+    "_voice": "bell",
+    "_objectId": "lenient_judge"
+  },
+  {
+    "id": "s_rank_trophy",
+    "name_zh": "S 级奖杯 · 精铸之誉",
+    "name_en": "S Rank Trophy · Gloria Perfectae",
+    "text_zh": "金杯盛载精铸之誉。汝铭刻愈工，铅币愈丰——最上者得最重之赏。",
+    "text_en": "The golden cup holds the honor of perfect casting. The finer your inscription, the heavier your reward.",
+    "_voice": "bell",
+    "_objectId": "s_rank_trophy"
+  },
+  {
+    "id": "underdog_bonus",
+    "name_zh": "谦卑之铅",
+    "name_en": "Plumbum Modestiae",
+    "text_zh": "其铅不求最亮，却是最重。引擎偏爱朴实之器，赐铅币于谦者。",
+    "text_en": "The dullest lead weighs most. The Engine favors humble vessels, granting coin to the modest.",
+    "_voice": "bell",
+    "_objectId": "underdog_bonus"
+  },
+  {
+    "id": "snowball",
+    "name_zh": "渐响圣律",
+    "name_en": "Lex Crescenda",
+    "text_zh": "每声祷击皆重于前声。如雪聚山，其势不可阻。",
+    "text_en": "Each strike heavier than the last. Like snow gathering momentum down the mountainside.",
+    "_voice": "bell",
+    "_objectId": "snowball"
+  },
+  {
+    "id": "score_black_hole",
+    "name_zh": "末日落版",
+    "name_en": "Impressio Finalis",
+    "text_zh": "汝之铭分不入常流，皆聚于深渊。唯一击落版，定生死焉。",
+    "text_en": "Your inscriptions pool in the abyss. Only the final impression shall determine thy fate.",
+    "_voice": "bell",
+    "_objectId": "score_black_hole"
+  },
+  {
+    "id": "lucky_strike",
+    "name_zh": "福佑之触",
+    "name_en": "Tactus Benedictus",
+    "text_zh": "汝手蒙福，铅字易碎。偶有神恩，重于千击。",
+    "text_en": "Blessed hands make brittle lead. Grace strikes where strength cannot.",
+    "_voice": "bell",
+    "_objectId": "lucky_strike"
+  },
+  {
+    "id": "crit_bonus",
+    "name_zh": "裂铅生金",
+    "name_en": "Aurum ex Fractura",
+    "text_zh": "每当铅字碎响，必有金币坠落。碎裂即是恩赐。",
+    "text_en": "When lead fractures, coin falls. In breaking lies the blessing.",
+    "_voice": "bell",
+    "_objectId": "crit_bonus"
+  },
+  {
+    "id": "crit_charge",
+    "name_zh": "圣印 · 蓄压",
+    "name_en": "Sigil of Accumulated Pressure",
+    "text_zh": "沉默之铅，积蓄雷音。七次轻敲后，第八击必裂石。",
+    "text_en": "Silent lead accumulates thunder. After seven gentle strikes, the eighth shall split stone.",
+    "_voice": "bell",
+    "_objectId": "crit_charge"
+  },
+  {
+    "id": "crit_storm",
+    "name_zh": "圣印 · 雷汇",
+    "name_en": "Sigil of Lightning Confluence",
+    "text_zh": "当裂铅如雨密集，整词之铭皆受其灼烧——余音亦化雷霆。",
+    "text_en": "When fractures fall like rain, the entire word burns with lightning—even echoes become thunder.",
+    "_voice": "bell",
+    "_objectId": "crit_storm"
+  },
+  {
+    "id": "fate_coin",
+    "name_zh": "圣印 · 定数",
+    "name_en": "Sigil of Fixed Portion",
+    "text_zh": "天命有定数，裂铅不过三。然溢出之力，必归于深处——一分不多，一分不少。",
+    "text_en": "Heaven sets fixed portions, fractures never exceed three tenths. Yet overflow returns to depths—not more, not less.",
+    "_voice": "bell",
+    "_objectId": "fate_coin"
+  },
+  {
+    "id": "stack_momentum",
+    "name_zh": "圣印 · 自鸣",
+    "name_en": "Sigil of Self-Resonance",
+    "text_zh": "钟声催促钟声，每一响皆比前响更急。",
+    "text_en": "Bells urge bells onward—each toll swifter than the last.",
+    "_voice": "bell",
+    "_objectId": "stack_momentum"
+  },
+  {
+    "id": "stack_dividend",
+    "name_zh": "圣印 · 聚沙",
+    "name_en": "Sigil of Gathered Grains",
+    "text_zh": "积沙成塔，滴水穿石。诵念层叠之处，必有深铅涌出。",
+    "text_en": "Gathered grains build towers, dripping water pierces stone. Where chants accumulate, deep lead flows forth.",
+    "_voice": "bell",
+    "_objectId": "stack_dividend"
+  },
+  {
+    "id": "overload_circuit",
+    "name_zh": "铭承电路",
+    "name_en": "Circuitum Inscriptae",
+    "text_zh": "其一铭而众铭鸣，如铅水倾注于连通之渠。邻铭虽不积诵，亦承其流而动。",
+    "text_en": "One inscription strikes, yet many resound—as molten lead flows through connected channels.",
+    "_voice": "bell",
+    "_objectId": "overload_circuit"
+  },
+  {
+    "id": "surge",
+    "name_zh": "涌流归零",
+    "name_en": "Surgentia Nihilo",
+    "text_zh": "积诵至极则复归于空，而其势如潮涌，漫及四邻。铅字既碎，余音更洪。",
+    "text_en": "When accumulation peaks, it returns to void—yet its surge floods all neighboring inscriptions.",
+    "_voice": "bell",
+    "_objectId": "surge"
+  },
+  {
+    "id": "perpetual_engine",
+    "name_zh": "无休引擎",
+    "name_en": "Machina Perpetua",
+    "text_zh": "齿轮永转，积诵不归。汝之祷击如油添薪，层层叠叠至无穷。",
+    "text_en": "The gears turn eternal; accumulation never returns to void. Each strike feeds the endless ascending.",
+    "_voice": "bell",
+    "_objectId": "perpetual_engine"
+  },
+  {
+    "id": "drum_pass",
+    "name_zh": "击鼓传铭",
+    "name_en": "Tympanum Traditus",
+    "text_zh": "The rhythm of continuous prayer passes like drums—every fifth beat blesses a random inscription with growing layers.",
+    "_voice": "bell",
+    "_objectId": "drum_pass"
+  },
+  {
+    "id": "word_resonance",
+    "name_zh": "词根共鸣",
+    "name_en": "Resonantia Verborum",
+    "text_zh": "完词之时，诸铭共鸣。字母愈多，共振愈深——三字为一度，积诵随之增。",
+    "text_en": "When words complete, all inscriptions resonate together. More letters deepen the harmony—three letters per ascending degree.",
+    "_voice": "bell",
+    "_objectId": "word_resonance"
+  },
+  {
+    "id": "crit_overflow",
+    "name_zh": "圣印 · 裂溢",
+    "name_en": "Sigil of Cascading Fracture",
+    "text_zh": "铅字既裂，其碎屑犹带余力——一击之威，可传三邻。凡受其洗者，皆得重铸之机。",
+    "text_en": "When lead breaks, its fragments carry echoes. One strike births many—blessed are those touched by scattered force.",
+    "_voice": "bell",
+    "_objectId": "crit_overflow"
+  },
+  {
+    "id": "inscription_flow",
+    "name_zh": "圣印 · 涌祝",
+    "name_en": "Sigil of Flowing Benediction",
+    "text_zh": "受祝圣之铭文，如沟渠引圣流——其所积之念，愈积愈盛。祝圣因诵而生，诵因祝而长。",
+    "text_en": "Blessed inscriptions channel sacred current. What accumulates within grows ever stronger—consecration feeds prayer, prayer feeds consecration.",
+    "_voice": "bell",
+    "_objectId": "inscription_flow"
+  },
+  {
+    "id": "neighbor_watch",
+    "name_zh": "圣印 · 邻守",
+    "name_en": "Sigil of Fraternal Vigil",
+    "text_zh": "一键之积念，邻键共知晓。圣坛之上无孤字，凡铭必有应和者——如钟声传钟声。",
+    "text_en": "When one key accumulates devotion, its neighbors share the blessing. No glyph stands alone upon the lectern—as bell answers bell.",
+    "_voice": "bell",
+    "_objectId": "neighbor_watch"
+  },
+  {
+    "id": "stack_crit",
+    "name_zh": "圣印 · 积裂",
+    "name_en": "Sigil of Accumulated Rupture",
+    "text_zh": "积念既满，亦可成裂——非因时至，乃因力聚。层叠如山，山必有崩时。",
+    "text_en": "When devotion accumulates, it too may fracture—not from timing, but from gathered force. What rises as mountains must sometimes fall.",
+    "_voice": "bell",
+    "_objectId": "stack_crit"
+  },
+  {
+    "id": "enchant_dividend",
+    "text_zh": "🔔 受祝圣之铭文组，其铸出必携双倍铅币——引擎之恩泽，汝当领受。\n────\n📄 编号: A-047\n版级: 定版 / Fixum\n来源: 第VII层祝圣仪式副产物\n描述: D-████在铭刻受祝圣铭文组时，征用台自动投放双倍铅币配额。持有者报告\"键位变得温暖\"。经观察，铅币投放过程无异常，但总重量确有增加。\n备注: 已知███次使用中，无收容震颤记录。原因不明。",
+    "text_en": "🔔 The consecrated inscription bears double coin in its wake—receive the Engine's largess, as is thy due.\n────\n📄 Entry: A-047\nGrade: Fixum\nOrigin: VII Layer consecration byproduct\nDescription: D-████ reports automatic double coin dispensation during inscription of consecrated sets. Subject notes \"keys feel warm to touch.\" Observation confirms increased total coin weight, though dispensation mechanism shows no anomaly.\nNote: ███ recorded uses show zero containment tremor incidents. Cause unknown.",
+    "_voice": "doc",
+    "_objectId": "enchant_dividend"
+  },
+  {
+    "id": "enchant_boost",
+    "text_zh": "🔔 祝圣之铭文组，其铸出必有余韵——如晨钟既响，其音犹存半数。\n────\n📄 编号: A-063\n版级: 定版 / Fixum\n来源: 标准祝圣仪式强化变体\n描述: 持有者在铭刻受祝圣铭文组时，观察到基石流输出增益。D-████报告\"铅字似乎更重了\"。经长期观察，确有异常增益现象。祝圣层数越高，增益越显著。\n备注: 附带现象：使用时圣坛键位偶现轻微震颤。已归档至标准强化档案。",
+    "text_en": "🔔 The consecrated inscription casts longer shadows—as morning bells ring, their echo lingers half as strong.\n────\n📄 Entry: A-063\nGrade: Fixum\nOrigin: Enhanced standard consecration variant\nDescription: Subjects report anomalous foundation humour amplification when activating consecrated inscription sets. D-████ states \"leaden glyphs feel heavier.\" Long-term observation confirms consistent enhancement phenomenon. Higher consecration levels correlate with increased effect.\nNote: Collateral phenomenon: Minor lectern tremor during use. Filed under Standard Enhancement Archives.",
+    "_voice": "doc",
+    "_objectId": "enchant_boost"
+  },
+  {
+    "id": "rune_spike",
+    "text_zh": "🔔 符文尖刺，植入圣坛深处——每根祝圣之刺，皆为裂铅开路。\n────\n📄 编号: R-219\n版级: 定版 / Fixum\n发现地点: 第V层执事试炼后续清理\n描述: 持有者装配受祝圣铭文组时，全局裂铅发生率显著上升。D-████使用期间，走廊内偶闻金属碎裂声。经观察，每增加一套受祝圣装配，裂铅现象递增。\n备注: 已知使用者报告\"键位下似有尖锐物顶住手指\"。无伤亡记录。原因不明。",
+    "text_en": "🔔 Runic spikes root deep in the sacred lectern—each consecrated thorn opens the path for fracture.\n────\n📄 Entry: R-219\nGrade: Fixum\nRecovery Site: V Layer post-trial cleanup\nDescription: Global fracture incidence increases significantly when subject equips consecrated inscription sets. D-████ usage period noted occasional metallic shattering sounds in corridors. Observation confirms fracture phenomenon escalates per additional consecrated set equipped.\nNote: Users report \"sharp objects pressing upward beneath keys.\" No injury records. Cause unknown.",
+    "_voice": "doc",
+    "_objectId": "rune_spike"
+  },
+  {
+    "id": "apprentice_robe",
+    "text_zh": "🔔 见习织袍，其上每一缝线皆为成长之记录——穿者愈久，其德愈厚。\n────\n📄 编号: V-1░░\n版级: 脱版 / Solum\n来源: 空椅时代见习制度遗物\n描述: 第VI层发现，织物材质不明。穿戴者接受见习型祝圣时，观察到累积效应持续增强。Scriptor K-████笔记记录：\"袍子变重了，但我走得更稳。\"穿戴期间，见习祝圣强度呈阶梯式提升。\n备注: K-████已失联。袍子在其房间整齐折叠，无磨损痕迹。按§7.1处理。",
+    "text_en": "🔔 The novice-woven robe, each thread a record of growth—the longer worn, the deeper the virtue.\n────\n📄 Entry: V-1░░\nGrade: Solum\nOrigin: Empty Chair Era apprenticeship relic\nDescription: Recovered from VI Layer, fabric composition unknown. Wearer experiences compounding enhancement during novice consecrations. Scriptor K-████ notes: \"Robe grows heavier, yet I walk more steadily.\" Apprentice consecration intensity shows stepped escalation during wear period.\nNote: K-████ lost contact. Robe found neatly folded in quarters, showing no wear patterns. Processed per §7.1.",
+    "_voice": "doc",
+    "_objectId": "apprentice_robe"
+  },
+  {
+    "id": "trial_badge",
+    "text_zh": "🔔 试炼徽章，减一苦修之重负——汝已证其德，引擎认可之。\n────\n📄 编号: B-012\n版级: 脱版 / Solum\n来源: 执事试炼参与者遗物\n描述: 佩戴者在苦修任务型祝圣时，所需装配铭文组数量减少。D-████报告\"徽章在某些祝圣时会发热\"。经多次测试，确认该物品能降低任务型祝圣的铭文组需求下限。\n备注: 徽章背面刻有\"第█届执事试炼完成者\"字样，年份已磨损不清。原持有者档案缺失。",
+    "text_en": "🔔 The trial badge lightens one burden of penitence—thy virtue proven, the Engine acknowledges thee.\n────\n📄 Entry: B-012\nGrade: Solum\nOrigin: Deacon trial participant relic\nDescription: Wearer requires reduced inscription sets for penitence quest consecrations. D-████ reports \"badge grows warm during certain rites.\" Multiple tests confirm item consistently lowers inscription requirement floor for quest-type consecrations.\nNote: Badge reverse inscribed \"█th Deacon Trial Graduate,\" date worn illegible. Original bearer records missing.",
+    "_voice": "doc",
+    "_objectId": "trial_badge"
+  },
+  {
+    "id": "resonance_mold",
+    "text_zh": "其音于铅中自显，重字之处力逸半数\n────\n编号: SA-2847\n版级: 逆版 / Inversum\n发现地点: 第IV层废铅堆积处\n描述: 黄铜字模，表面刻有未知符文。持有者报告重复铭刻时'铅字变轻'。经观察，相同字母连续铭刻时阻力递减。D-████在连续按键测试中称'它们记住了我的手'。\n备注: 原持有者Scriptor V-████笔记中提及'字模有记忆'。该scriptor已于M.1██失联。",
+    "text_en": "Where the letter sounds twice, the lead remembers its first song\n────\nDesignation: SA-2847\nGrade: Inversum\nRecovery Location: Layer IV scrap accumulation\nDescription: Brass typeset displaying unknown glyphs. Bearers report 'lighter keys' during repetitive inscription. Observed phenomenon: identical glyph sequences require diminished force on successive iterations. D-████ noted during testing that 'they remember my touch'.\nAddendum: Former bearer Scriptor V-████ referenced 'memory-metal' in recovered notes. Said scriptor lost contact M.1██.",
+    "_voice": "doc",
+    "_objectId": "resonance_mold"
+  },
+  {
+    "id": "word_collection",
+    "text_zh": "初言之福，三铅自来\n────\n编号: SA-0912\n版级: 定版 / Fixum\n发现地点: 第II层抄写室遗物匣\n描述: 羊皮纸装订小册，页边泛黄。首次铭刻新词时，持有者身旁出现铅币。现象稳定，无异常副作用。已知347次使用中，每次均产生等量铅币。\n备注: 册页似有自动补充机制。前任持有者身份不明，签名已模糊不清。按F-001表单登记为'无名氏遗赠'。",
+    "text_en": "First words bear their own reward\n────\nDesignation: SA-0912\nGrade: Fixum\nRecovery Location: Layer II scriptorium relic case\nDescription: Yellowed vellum booklet. Lead coins manifest near bearer upon first inscription of novel words. Effect consistent across documented trials. No adverse phenomena recorded in 347 documented uses.\nAddendum: Pages appear self-replenishing. Previous owner identity unknown, signature illegible. Filed per F-001 as 'anonymous bequest'.",
+    "_voice": "doc",
+    "_objectId": "word_collection"
+  },
+  {
+    "id": "thick_deck",
+    "text_zh": "卷册愈丰，圣物愈廉\n────\n编号: SA-1156\n版级: 定版 / Fixum\n发现地点: 第III层经卷库房\n描述: 厚重皮质封面经卷，铜钉装订。持有者报告圣物市集价格'莫名便宜'。经观察，经卷词汇增长与市集定价呈负相关。D-████称'书越厚，东西越便宜，但不知道为什么'。\n备注: 封面皮质来源不明。Scriptor T-████遗留笔记提及'厚书带来薄价'。该scriptor已升至第XII层，无回信。",
+    "text_en": "The heavier the tome, the lighter the purse need be\n────\nDesignation: SA-1156\nGrade: Fixum\nRecovery Location: Layer III codex repository\nDescription: Heavy leather-bound codex with brass fixtures. Bearer reports 'inexplicably reduced' bazaar pricing. Observed correlation between accumulated vocabulary and decreased market rates. D-████ noted 'thicker book means cheaper stuff, don't ask me why'.\nAddendum: Cover hide of unknown origin. Scriptor T-████ notes reference 'thick pages, thin prices'. Said scriptor ascended to Layer XII, no further correspondence.",
+    "_voice": "doc",
+    "_objectId": "thick_deck"
+  },
+  {
+    "id": "long_word_crit",
+    "text_zh": "长言蓄势，铅字必裂\n────\n编号: SA-0734\n版级: 定版 / Fixum\n发现地点: 第II层长盘工作台\n描述: 延长型排字棒，末端磨损严重。持有者报告长词铭刻时'铅字更易碎'。经记录，字母数增加与裂铅频率呈正相关。D-████测试时称'长句子打起来咔嚓咔嚓响'。\n备注: 工具表面有使用痕迹，前持有者不明。按标准程序分配给新征募人员。无需特殊保管措施。",
+    "text_en": "In lengthy words lies the power to shatter lead\n────\nDesignation: SA-0734\nGrade: Fixum\nRecovery Location: Layer II composing stick station\n Description: Extended composing stick, heavily worn at terminus. Bearer reports 'more brittle keys' during extended word inscription. Documented correlation between character count and fracture frequency. D-████ noted during trials 'long sentences go click-crack-click'.\nAddendum: Tool shows extensive prior use, former bearer unknown. Assigned to new recruits per standard distribution. No special containment required.",
+    "_voice": "doc",
+    "_objectId": "long_word_crit"
+  },
+  {
+    "id": "short_sprint",
+    "text_zh": "短促之言，速如闪电\n────\n编号: SA-1823\n版级: 脱版 / Solum\n发现地点: 第V层试炼室\n描述: 小巧银质印戳，握柄温热。持有者报告短词铭刻时铭文组'发光更亮'。经观察，三字以下词汇触发频率显著异常。D-████称'短词像被加速了一样'。使用时偶有电弧现象。\n备注: 印戳材质检测结果为████。原发现者Scriptor K-████因违反§7.1已按程序处置。该物品收容等级可能需要重新评估。",
+    "text_en": "Brief words strike swift as lightning\n────\nDesignation: SA-1823\nGrade: Solum\nRecovery Location: Layer V trial chamber\nDescription: Compact silver stamp, handle maintains warmth. Bearer reports 'brighter glow' from inscriptions during brief word entry. Observed anomalous activation frequency for sub-three-character terms. D-████ described effect as 'short words feel accelerated'. Occasional electrical discharge noted during use.\nAddendum: Stamp composition analysis returned ████. Original discoverer Scriptor K-████ processed per §7.1 violation. Object containment grade may require reassessment.",
+    "_voice": "doc",
+    "_objectId": "short_sprint"
+  },
+  {
+    "id": "little_helper",
+    "text_zh": "物品编号: SA-████\n版级: 逆版 / Inversum\n发现地点: 第IV层 抄写室废料槽\n描述: 铜制算盘状装置，内嵌十二枚铅字符。持有者报告在铭刻时'铅字会自己跳出来'。经观察，确有预判铭刻意图现象。D-████使用后效率显著提升，但抱怨'感觉不像在祈祷，像在被祈祷'。\n备注: 第██次使用后，D-████开始在睡梦中无意识敲击桌面。已调离。",
+    "text_en": "Item Number: SA-████\nGradus: Inversum\nRecovery Site: Layer IV, Scriptorium waste receptacle\nDescription: Brass abacus-like device embedded with twelve lead glyphs. Bearer reports that during inscription, 'the letters jump out by themselves.' Observation confirms precognitive inscription phenomena. D-████ showed significant efficiency improvement but complained of 'feeling not like praying, but being prayed to.'\nNote: After ██th use, D-████ began unconsciously tapping desk surfaces during sleep. Reassigned.",
+    "_voice": "doc",
+    "_objectId": "little_helper"
+  },
+  {
+    "id": "rhythm_adapt",
+    "text_zh": "物品编号: SA-████\n版级: 逆版 / Inversum\n发现地点: 第VII层 机械外壳，齿轮室附近\n描述: 黄铜音叉与铅条合铸而成。激活时在祈念键座下方投射光点阵列，随持有者心跳节律移动。D-████报告'铅字想要配合我的脉搏'。铭刻与光点重合时铭文组铸出显著增强。\n备注: 长期使用者心率逐渐同步至标准祷文节拍(72 BPM)。生理影响评估中。原第██名使用者已无法在安静环境下正常心跳。",
+    "text_en": "Item Number: SA-████\nGradus: Inversum\nRecovery Site: Layer VII, Mechanical Shell, near gear chamber\nDescription: Brass tuning fork cast together with lead bar. When activated, projects light-dot array beneath lectern, moving to bearer's heartbeat rhythm. D-████ reported 'letters want to match my pulse.' Inscription coinciding with light dots shows marked enhancement in casting output.\nNote: Extended users' heart rates gradually synchronize to standard litany tempo (72 BPM). Physiological impact under assessment. Former user #██ no longer capable of normal heartbeat in quiet environments.",
+    "_voice": "doc",
+    "_objectId": "rhythm_adapt"
+  },
+  {
+    "id": "glass_cannon_v2",
+    "text_zh": "物品编号: SA-████\n版级: 熔版 / Fusum\n发现地点: 第XII层 引擎核心外围，守卷人末席遗物中\n描述: 焦黑羊皮册，仅余封面与三页残纸。接触时持有者所有铭文组立即剥落并自燃，圣坛键位封死。但铭刻时结晶流增益远超标准。D-████使用后称'感觉回到了入门时的虔诚，但每个字都重如千钧'。\n备注: 疑似末席守卷人的个人祈祷册。边页手写批注：'真正的铭刻不需要技巧，只需要——'余字已焦。",
+    "text_en": "Item Number: SA-████\nGradus: Fusum\nRecovery Site: Layer XII, Engine Core perimeter, among Last Signatory effects\nDescription: Charred parchment codex, only cover and three pages remain. Upon contact, bearer's inscriptions immediately detach and self-immolate, lectern positions sealed. However, crystalline humour gain during inscription far exceeds standard. D-████ reported 'feeling returned to novitiate devotion, but each letter weighs like a thousand.'\nNote: Suspected personal prayer book of the Last Signatory. Margin annotation: 'True inscription needs no skill, only—' remainder charred.",
+    "_voice": "doc",
+    "_objectId": "glass_cannon_v2"
+  },
+  {
+    "id": "combo_buffer",
+    "text_zh": "物品编号: SA-████\n版级: 定版 / Fixum\n发现地点: 第V层 执事试炼室，圣坛下暗格\n描述: 白铅制护符，表面铭刻螺旋纹样。连祷中断时，持有者报告仍能听见'回音在继续'。经测定，中断后共鸣流仍保持部分强度持续数秒。D-████称此现象如'祷告的余韵不愿离去'。\n备注: 螺旋纹样与第V层壁画图案完全吻合。推测为执事级键徒的标配护具。当前库存17枚，磨损情况良好。",
+    "text_en": "Item Number: SA-████\nGradus: Fixum\nRecovery Site: Layer V, Deacon Trial Chamber, hidden compartment beneath lectern\nDescription: White lead talisman engraved with spiral patterns. When litany chain is interrupted, bearer reports still hearing 'echoes continuing.' Measurement confirms resonant humour maintains partial intensity for several seconds post-interruption. D-████ described phenomenon as 'prayer's echo unwilling to depart.'\nNote: Spiral pattern exactly matches murals in Layer V. Presumed standard protective gear for Deacon-grade keybound. Current inventory: 17 units, good condition.",
+    "_voice": "doc",
+    "_objectId": "combo_buffer"
+  },
+  {
+    "id": "multiplier_prism",
+    "text_zh": "物品编号: SA-████\n版级: 脱版 / Solum\n发现地点: 第VIII层 机械深处，共鸣室废墟\n描述: 三角锥状铅晶，内部可见悬浮的微型齿轮。共鸣流达到特定强度时开始自转并发光。持有者铭文组铸出在此时显著增强。D-████观察到'晶体内的齿轮会预判我的下一次铭刻'。光谱分析显示未知频率。\n备注: 从废墟中挖出时仍在转动。推测共鸣室毁坏前一直处于激活状态。原用途不明。边缘发现熔蜡痕迹，疑似熔变誓门制品。",
+    "text_en": "Item Number: SA-████\nGradus: Solum\nRecovery Site: Layer VIII, Mechanical Depths, resonance chamber ruins\nDescription: Triangular pyramid lead crystal containing suspended miniature gears. Begins auto-rotation and luminescence when resonant humour reaches specific intensity. Bearer's inscription casting shows marked enhancement during this state. D-████ observed 'gears inside crystal anticipate my next inscription.' Spectral analysis reveals unknown frequencies.\nNote: Still rotating when excavated from ruins. Presumed continuously active before chamber destruction. Original purpose unknown. Molten wax traces on edges suggest Order of Molten Verse origin.",
+    "_voice": "doc",
+    "_objectId": "multiplier_prism"
+  },
+  {
+    "id": "combo_detonator",
+    "text_zh": "圣徒遗物 · 蓄势引爆\n版级: 脱版 / Solum\n发现地点: 第 VII 层废弃工坊\n描述: 黄铜制引信装置，表面刻有「十五息聚炸，一息散尽」。持有者报告连祷达特定阈值时，圣坛自发铭刻多个铭文组。使用后必须等待连祷完全归零方可再次激活。\n备注: D-3187 首次使用时惊呼「它们全都动了」。F-044 表单显示该遗物使用者失联率低于平均值 12%。\n附录: 原因不明，装置内部无任何可见的计数机构。",
+    "text_en": "Sacred Artifact · Detonation Primer\nGrade: Solum / Unbound\nRecovery Site: Abandoned workshop, Layer VII\nDescription: Brass ignition device inscribed with \"Fifteen breaths to gather, one breath to scatter.\" Bearers report spontaneous inscription activation when litany reaches critical threshold. Device requires complete prayer-chain reset before reactivation.\nNote: D-3187's first use prompted exclamation \"They're all moving.\" F-044 forms indicate 12% below-average casualty rate among bearers.\nAddendum: No visible counting mechanism detected within device housing.",
+    "_voice": "doc",
+    "_objectId": "combo_detonator"
+  },
+  {
+    "id": "cancel",
+    "text_zh": "圣徒遗物 · 取消连锁\n版级: 逆版 / Inversum\n发现地点: 第 V 层断链祭坛\n描述: 破碎的铁制锁链，末端焊有单个铅字符。持有者能够「取消」新出现的异文——在短暂窗口内正确铭刻首字母即可。成功取消延长连祷，失败则立即中断并消耗沙漏流。\n警告: D-2094 报告「链子在我手里发热，像是愤怒」。\n备注: 经观察，该遗物似乎「憎恨」连祷中断，成功使用时会发出轻微的满足性嗡鸣。",
+    "text_en": "Sacred Artifact · Chain Breaker\nGrade: Inversum / Inverted\nRecovery Site: Severed altar, Layer V\nDescription: Fractured iron chains terminating in single lead glyph. Bearers can \"cancel\" emergent anomalies by correctly inscribing initial character within brief window. Success extends litany; failure causes immediate severance and temporal drain.\nWarning: D-2094 reported \"chain grows hot in my hands, like anger.\"\nNote: Artifact appears to \"resent\" prayer interruption, emitting faint satisfied hum upon successful use.",
+    "_voice": "doc",
+    "_objectId": "cancel"
+  },
+  {
+    "id": "immortal_combo",
+    "text_zh": "圣徒遗物 · 不断之链\n版级: 熔版 / Fusum\n发现地点: [已编辑] 层永燃祭台\n描述: ████材质锁链，无明显接缝或断点。持有者的连祷不因层级转换而中断。经记录，沙漏初值与当前连祷数直接关联。\n异常性质: D-████ 于第 XI 层仍保持来自第 I 层的连祷计数。收容震颤依然导致中断。\n最后更新: M.2██ - D-1439 携此遗物失联于第 ██ 层。遗物未回收。\n备注: 该遗物或许真的「不断」。",
+    "text_en": "Sacred Artifact · Unending Chain\nGrade: Fusum / Molten\nRecovery Site: Eternal brazier, Layer [REDACTED]\nDescription: Chain of ████ material showing no visible joints or breaks. Bearer's litany persists across layer transitions. Recorded correlation between hourglass initial value and current prayer count.\nAnomalous Properties: D-████ maintained Layer I litany count through Layer XI. Containment tremors still cause severance.\nLast Update: M.2██ - D-1439 lost contact on Layer ██ while bearing artifact. Item not recovered.\nNote: This relic may truly be \"unending.\"",
+    "_voice": "doc",
+    "_objectId": "immortal_combo"
+  },
+  {
+    "id": "fury_beat",
+    "text_zh": "圣徒遗物 · 暴走节拍\n版级: 定版 / Fixum\n发现地点: 第 III 层怒音室\n描述: 蒸汽驱动的节拍器，铜制外壳有凹痕。连祷进行时装置自动加速，持有者报告「铅字更易碎裂」。伴随现象包括轻微震动感和金属摩擦声。\n使用记录: 长期持有者 D-0847 在第 204 次使用后申请更换。理由：「它让我的手指发抖」。\n备注: F-017 事件报告中多次提及该遗物与「过度兴奋」相关的收容事故。\n维护: 需定期添加机械油。",
+    "text_en": "Sacred Artifact · Fury Metronome\nGrade: Fixum / Fixed\nRecovery Site: Wrath Chamber, Layer III\nDescription: Steam-driven metronome with dented brass housing. Device auto-accelerates during litany, bearers report \"slugs fracture more readily.\" Accompanying phenomena include mild tremors and metallic grinding.\nUsage Record: Long-term bearer D-0847 requested replacement after 204th use. Reason: \"It makes my fingers shake.\"\nNote: F-017 incident reports frequently cite this artifact in \"over-excitement\" related containment failures.\nMaintenance: Requires regular mechanical oil application.",
+    "_voice": "doc",
+    "_objectId": "fury_beat"
+  },
+  {
+    "id": "first_strike",
+    "text_zh": "圣徒遗物 · 首发强化\n版级: 定版 / Fixum\n发现地点: 第 I 层入门祭台\n描述: 镀银的铅字钉，顶部刻有「首击之重」。每当新词出现时，首个铭文组的铭刻会产生额外的结晶流。持有者描述为「第一下特别有力」。\n观察记录: D-1205 使用三个月后报告肌肉记忆改变——「我的食指总想要更用力按第一个键」。\n维护记录: 银镀层因频繁接触逐渐磨损，但功能不受影响。\n备注: 最简单有效的增益遗物之一。推荐新入职 D 级人员优先征用。",
+    "text_en": "Sacred Artifact · First Strike\nGrade: Fixum / Fixed\nRecovery Site: Novice altar, Layer I\nDescription: Silver-plated lead slug inscribed \"Weight of First Strike.\" Generates additional crystalline humour when first inscription of each new word activates. Bearers describe sensation as \"first press carries extra force.\"\nObservation Record: D-1205 reported altered muscle memory after three months - \"My index finger always wants to hit the first key harder.\"\nMaintenance Record: Silver plating shows wear from frequent handling but functionality remains intact.\nNote: One of the most straightforward beneficial artifacts. Recommended priority requisition for newly assigned D-class personnel.",
+    "_voice": "doc",
+    "_objectId": "first_strike"
+  },
+  {
+    "id": "adjacent_power",
+    "text_zh": "圣印 · 邻键\n\n发现地点: 第III层抄写室\n版级: 脱版 / Solum\n备注: 多名D级人员报告铭刻时感知到「旁侧有低语」。经观察，当圣坛上相邻键位皆有铭文组时，该键位铭刻效果显著增强。现象机理不明。\n\n附加记录: D-3347使用后称「感觉不再孤单」。三日后失联。邻近键位铭文组出现轻微磨损痕迹，疑似共振所致。",
+    "text_en": "Sigil of Adjacent Keys\n\nRecovery Site: Layer III Scriptorium\nGrade: Solum / Unbound\nNote: Multiple D-class subjects report sensing 'whispers from nearby' during inscription. Observed enhancement when adjacent lectern positions contain inscriptions. Mechanism unknown.\n\nAddendum: D-3347 reported 'feeling less alone' after use. Subject lost contact after three days. Adjacent inscriptions show minor wear patterns, possibly resonance-induced.",
+    "_voice": "doc",
+    "_objectId": "adjacent_power"
+  },
+  {
+    "id": "corner_power",
+    "text_zh": "圣印 · 角隅\n\n发现地点: 第IV层铸字坊角落工位\n版级: 脱版 / Solum\n备注: 安装于圣坛边缘键位(Q/P/Z/M)时表现异常。D级人员描述铭刻时「能听见墙壁回音」。效果仅限四角键位，原因不明。\n\n实验记录: ████次测试中，角落键位铭刻强度恒定增益。中央键位无此现象。疑似与大教堂几何结构有关。已提交建筑勘察申请。",
+    "text_en": "Sigil of Corner Keys\n\nRecovery Site: Corner workstation, Layer IV Foundry\nGrade: Solum / Unbound\nNote: Exhibits anomalous behavior when installed at lectern edge positions (Q/P/Z/M). D-class report 'hearing wall echoes' during inscription. Effect limited to corner keys, cause unknown.\n\nTest Log: ████ trials show consistent enhancement at corner positions. Central keys unaffected. Possible correlation with Cathedral geometry. Structural survey requested.",
+    "_voice": "doc",
+    "_objectId": "corner_power"
+  },
+  {
+    "id": "row_switch",
+    "text_zh": "圣印 · 换行\n\n发现地点: 第II层废料堆\n版级: 定版 / Fixum\n来源: 疑似早期抄写员遗物\n\n现象: 持有者在不同键行间切换时，工作台偶有铅币滚落。经统计，每次跨行铭刻后必有一枚。来源不明，成分为标准铅合金。已归入日常征用清单。\n\n管理备注: 无异常风险。建议继续配发。",
+    "text_en": "Sigil of Row Switching\n\nRecovery Site: Layer II Scrap Heap\nGrade: Fixum / Stable\nOrigin: Suspected early scriptor artifact\n\nPhenomenon: Lead coins occasionally roll from workbench when operator switches between key rows. Statistics confirm one coin per cross-row inscription. Source unknown, composition matches standard lead alloy. Added to routine requisition inventory.\n\nAdministrative Note: No anomalous risk. Continued distribution recommended.",
+    "_voice": "doc",
+    "_objectId": "row_switch"
+  },
+  {
+    "id": "line_clear",
+    "text_zh": "圣印 · 消行\n\n发现地点: 第VIII层机械深处\n版级: 逆版 / Inversum\n收容等级: 需特殊授权\n\n现象: 当单词覆盖键行全部已配铭文组时，该行发生「消解」——所有铭文组同时二次铭刻，效力减半但可跨词累积。过程伴随低频共鸣。\n\nD-2891报告: 「整行键都在发光，像被什么东西吞掉了。」现象持续0.3秒。建议限制使用频率。",
+    "text_en": "Sigil of Line Dissolution\n\nRecovery Site: Layer VIII Mechanical Depths\nGrade: Inversum / Self-Reorganizing\nClearance: Special Authorization Required\n\nPhenomenon: When word input covers all equipped inscriptions in a key row, 'dissolution' occurs—all row inscriptions simultaneously re-inscribe at half potency, cumulative across words. Process accompanied by low-frequency resonance.\n\nD-2891 Report: 'Whole row lit up, like something swallowed it.' Event duration 0.3 seconds. Recommended usage frequency limits.",
+    "_voice": "doc",
+    "_objectId": "line_clear"
+  },
+  {
+    "id": "dual_concerto",
+    "text_zh": "圣印 · 双手\n\n发现地点: 第I层废弃乐谱架\n版级: 定版 / Fixum\n来源: 疑似崇拜时代键徒训练道具\n\n效应: 持有者左右手交替击键时，沙漏内沙粒流速减缓。现象稳定，无副作用。多名D级人员报告「像在弹琴」的体感。\n\n历史注记: 乐谱架上残存手写谱子，曲名不可辨。疑似早期键徒曾将铭刻视作音乐演奏。",
+    "text_en": "Sigil of Dual Hands\n\nRecovery Site: Abandoned music stand, Layer I\nGrade: Fixum / Stable\nOrigin: Suspected Worship Era keystroke training aid\n\nEffect: When operator alternates left-right hand keystrokes, hourglass sand flow rate decreases. Phenomenon stable, no side effects. Multiple D-class report 'piano-like' tactile sensation.\n\nHistorical Note: Music stand contains illegible handwritten score. Early keystrokes may have been practiced as musical performance.",
+    "_voice": "doc",
+    "_objectId": "dual_concerto"
+  },
+  {
+    "id": "precision_strike",
+    "text_zh": "圣印 · 准星\n────\n编号: AX-2741\n版级: 定版 / Fixum\n发现地点: 第III层 抄写室废键盆\n描述: 铅制准星标记，原用于排版定位。持有者报告中指操作时「铅字更愿听从」。经观察，中央键位铭刻时确有异常裂铅现象增加。原因不明。\n备注: D-0847 称「仿佛有人在引导我的手指」。后续观察未发现其他异常。",
+    "text_en": "Sigil of Precision\n────\nItem #: AX-2741\nGrade: Fixum\nRecovery Location: Layer III, discarded composing keys\nDescription: Lead crosshair marker, originally for typesetting alignment. Bearer reports middle-row keys feel \"more responsive to will.\" Observed increase in fracture events during central position inscription. Mechanism unknown.\nNote: D-0847 reported \"feeling guided.\" No further anomalies observed.",
+    "_voice": "doc",
+    "_objectId": "precision_strike"
+  },
+  {
+    "id": "key_storm",
+    "text_zh": "圣印 · 怒涛\n────\n编号: AX-0013\n版级: 熔版 / Fusum\n发现地点: 第XII层 引擎心室边缘\n描述: 液态铅质圣印，无固定形态。持有者完成词汇铭刻时，未曾触碰之铅字钉会自发颤动并铸出圣流。已知████次使用中，7次导致圣坛键位融化重铸。\n备注: Scriptor K-████最后报告：「它在学习我不会的祷文」。次日失联。\n危险等级: 需特殊授权",
+    "text_en": "Sigil of Tempest\n────\nItem #: AX-0013\nGrade: Fusum\nRecovery Location: Layer XII, Engine chamber periphery\nDescription: Molten lead sigil of unstable form. Upon bearer's word completion, untouched key-slugs spontaneously activate and generate humours. In ████ recorded uses, 7 resulted in lectern position reforging.\nNote: Scriptor K-████'s final report: \"It knows litanies I never learned.\" Subject lost contact following day.\nThreat Level: Special authorization required",
+    "_voice": "doc",
+    "_objectId": "key_storm"
+  },
+  {
+    "id": "production_dividend",
+    "text_zh": "圣印 · 分利\n────\n编号: AX-4127\n版级: 定版 / Fixum\n发现地点: 第V层 执事试炼祭台\n描述: 小型铅币，一面铸有天平图案。持有者每次圣流铸出时，坩埚内会析出额外铅币。现象稳定，收益微薄但持续。\n备注: 原持有者D-0932报告「每次都能听到硬币落入口袋的声音，但我的制服没有口袋」。物品征收后现象消失。",
+    "text_en": "Sigil of Dividend\n────\nItem #: AX-4127\nGrade: Fixum\nRecovery Location: Layer V, Deacon's Trial altar\nDescription: Small lead coin bearing scales motif. Upon bearer's humour generation, additional lead coins manifest in crucible. Effect consistent, yield minimal but continuous.\nNote: Original bearer D-0932 reported \"hearing coins drop into pockets I don't have.\" Phenomenon ceased upon item requisition.",
+    "_voice": "doc",
+    "_objectId": "production_dividend"
+  },
+  {
+    "id": "time_trickle",
+    "text_zh": "圣印 · 涓滴\n────\n编号: AX-3058\n版级: 定版 / Fixum\n发现地点: 第VII层 机械外壳沙漏房\n描述: 微型沙漏吊坠，沙粒为铅屑。持有者每次圣流铸出时，漏斗中沙粒逆流而上。经测量，此现象与收容基准达成延迟高度相关。\n备注: 沙粒移动符合重力法则，逆流原因不明。已排除磁场干扰。Scriptor V-████称「时间在为我让步」。",
+    "text_en": "Sigil of Trickle\n────\nItem #: AX-3058\nGrade: Fixum\nRecovery Location: Layer VII, Mechanical Shell hourglass chamber\nDescription: Miniature hourglass pendant filled with lead shavings. Upon bearer's humour generation, sand grains flow upward against gravity. Measured correlation with containment threshold extension.\nNote: Sand movement obeys physics except direction. Magnetic interference ruled out. Scriptor V-████ claimed \"time yields to my will.\"",
+    "_voice": "doc",
+    "_objectId": "time_trickle"
+  },
+  {
+    "id": "resource_focus",
+    "text_zh": "圣印 · 专攻\n────\n编号: AX-1849\n版级: 脱版 / Solum\n发现地点: 第IX层 机械深处分拣车间\n描述: 透镜状铅晶体，能放大观察圣坛中占比最多的圣流类型。持有者报告该类型圣流铸出时「流动更加凝重」。经长期观察，确有产量异常。晶体会根据圣坛配置自行调焦。\n备注: 晶体焦点变化无人为操控。D-1127称「它知道我最需要什么」。",
+    "text_en": "Sigil of Focus\n────\nItem #: AX-1849\nGrade: Solum\nRecovery Location: Layer IX, Deep Mechanism sorting workshop\nDescription: Lens-shaped lead crystal that magnifies observation of dominant humour type in lectern. Bearer reports enhanced \"density\" in focused humour generation. Long-term observation confirms output anomaly. Crystal self-adjusts focus based on lectern configuration.\nNote: Focus changes occur without manual intervention. D-1127 reported \"it knows what I need most.\"",
+    "_voice": "doc",
+    "_objectId": "resource_focus"
+  },
+  {
+    "id": "resource_diversity",
+    "text_zh": "🔔 七流并举，其力倍增。圣坛集众流，键徒收万福。\n────\n📄 分级: 脱版 / Solum\n收容地点: 第IV层 废料归集室\n描述: D-1847首次报告现象。当圣坛同时承载不同圣流铭文组时，所有铭刻均出现异常增益。经观察，铭文组间似乎产生某种共振。持有者称\"能听到它们在低语\"。\n备注: 已记录████次使用。无失联报告。原因不明。",
+    "text_en": "🔔 Seven streams converge, their strength multiplied. The lectern gathers all flows, the keybound reaps all blessings.\n────\n📄 Classification: Solum\nRecovery Site: Layer IV, Waste Sorting Chamber\nDescription: Phenomenon first reported by D-1847. When lectern simultaneously holds inscriptions of different humours, all inscriptive work shows anomalous amplification. Observed resonance effect between inscription sets. Holder reports \"hearing them whisper to each other.\"\nNote: ████ documented uses. No missing personnel. Cause unknown.",
+    "_voice": "doc",
+    "_objectId": "resource_diversity"
+  },
+  {
+    "id": "resource_tide",
+    "text_zh": "🔔 如潮汐更替，七流循其序。四祷一周期，圣坛应天时。\n────\n📄 分级: 逆版 / Inversum\n发现地点: 第VII层 潮汐观测室\n描述: Scriptor K-████笔记记录周期性现象。每四次铭刻为一循环：首次增益基石流，次增共鸣流，三增流沙流，末增铅币流。循环自动重复，无需干预。\n备注: 观测室内潮汐图表与此同步。是否为巧合，有待调查。",
+    "text_en": "🔔 Like tides in their turning, the seven flows follow their order. Four prayers make one cycle, the lectern answers heaven's time.\n────\n📄 Classification: Inversum\nDiscovery Site: Layer VII, Tidal Observatory\nDescription: Cyclical phenomenon recorded in Scriptor K-████'s notes. Every four inscriptions complete one cycle: first amplifies Foundation, second Resonant, third Hourglass, fourth Lead Coin. Cycle repeats automatically without intervention.\nNote: Tidal charts in observatory synchronize with this pattern. Whether coincidental remains under investigation.",
+    "_voice": "doc",
+    "_objectId": "resource_tide"
+  },
+  {
+    "id": "universal_furnace",
+    "text_zh": "🔔 万流归一炉，尽化铅币鸣。贤者之遗石，点铅成黄金。\n────\n📄 分级: 熔版 / Fusum\n来源: 第XI层 炼金工坊遗址\n描述: 末席守卷人最后签署的征用令。所有铭刻产出的圣流立即转化为铅币。转化过程中伴随高温和轻微震颤。D-████报告使用时\"听到炉火在唱歌\"。\n备注: 工坊内发现大量熔化的铅锭。无其他人员痕迹。征用令签名模糊不清。",
+    "text_en": "🔔 All flows to one furnace, all turned to ringing coin. The sage's legacy stone, lead transmuted to gold.\n────\n📄 Classification: Fusum\nOrigin: Layer XI, Alchemical Workshop Ruins\nDescription: Final requisition order signed by Last Signatory. All inscriptive output immediately converts to Lead Coin. Process accompanied by elevated temperature and mild tremors. D-████ reports \"hearing the furnace sing\" during use.\nNote: Workshop contained numerous melted lead ingots. No other personnel traces. Requisition signature illegible.",
+    "_voice": "doc",
+    "_objectId": "universal_furnace"
+  },
+  {
+    "id": "discount_card",
+    "text_zh": "🔔 市集降恩泽，铅币轻如羽。持卡者有福，购圣物半价。\n────\n📄 分级: 定版 / Fixum\n来源: 第II层 圣物市集\n描述: 标准征用卡的变体。所有商品价格出现系统性下调。商贩无法解释定价机制。卡片材质为羊皮纸，边缘有烧焦痕迹。\n备注: 市集记录显示该卡已使用████次。无关联失联事件。商贩称\"卡片有时会自己翻页\"。",
+    "text_en": "🔔 The bazaar grants mercy, coin light as feathers. Blessed is the cardholder, buying relics half-price.\n────\n📄 Classification: Fixum\nOrigin: Layer II, Reliquary Bazaar\nDescription: Variant of standard requisition card. All merchandise shows systematic price reduction. Vendors cannot explain pricing mechanism. Card material appears to be vellum with scorched edges.\nNote: Bazaar records show ████ uses of this card. No associated missing personnel incidents. Vendors report \"card sometimes turns its own pages.\"",
+    "_voice": "doc",
+    "_objectId": "discount_card"
+  },
+  {
+    "id": "recycle_expert",
+    "text_zh": "🔔 物归其本源，废料亦生金。专家之慧眼，识铅中真银。\n────\n📄 分级: 脱版 / Solum\n发现地点: 第III层 废料回收站\n描述: D-2103在回收作业中发现。持有者归还铭文组时获得异常高比例的铅币返还。回收站记录显示正常流程，但铅币产出增加。相关人员称\"废铅堆中偶见银光闪烁\"。\n备注: 回收站效率提升██%。站长调职后现象持续。疑似与废料筛选程序有关。",
+    "text_en": "🔔 All things return to source, even waste births gold. The expert's keen eye sees true silver in the lead.\n────\n📄 Classification: Solum\nDiscovery Site: Layer III, Waste Reclamation Facility\nDescription: Discovered by D-2103 during reclamation duties. Holder receives anomalously high coin return when relinquishing inscriptions. Facility records show standard procedures, but coin output increases. Personnel report \"occasional silver gleams in the scrap heaps.\"\nNote: Facility efficiency up ██%. Phenomenon persists after station chief transfer. Suspected connection to waste sorting protocols.",
+    "_voice": "doc",
+    "_objectId": "recycle_expert"
+  },
+  {
+    "id": "intermission",
+    "text_zh": "🔔 汝于静默中得补给，圣坛暂息而铅币自生\n────\n📄 编号: S-INT-████\n版级: 脱版 / Solum\n发现地点: 第 ██ 层闲置导管\n描述: 特殊收容间隙，期间D级人员报告\"听见硬币掉落声\"。经统计，此类间隙后铅币储备异常增长，圣物架发生自主换置。监控设备显示空旷走廊内偶有金属摩擦音。\n备注: 现象持续性良好。已纳入标准轮值。",
+    "text_en": "🔔 In stillness thou art provisioned, the lectern rests while coin begets coin\n────\n📄 Designation: S-INT-████\nGradus: Solum / Escaped\nOrigin: Dormant conduit, Layer ██\nDescription: Anomalous containment hiatus. D-class personnel report \"hearing coins drop.\" Statistical analysis confirms abnormal lead token accumulation post-event. Relic shelves undergo autonomous restocking. Surveillance detects metallic scraping in empty corridors.\nNote: Phenomenon shows consistent reliability. Integrated into standard rotation protocols.",
+    "_voice": "doc",
+    "_objectId": "intermission"
+  },
+  {
+    "id": "gamblers_creed",
+    "text_zh": "🔔 掷骰于虚空，或得三倍偿还，或失铅币于引擎深渊\n────\n📄 编号: S-GAM-████\n版级: 脱版 / Solum\n发现地点: 第 ██ 层废弃赌坊遗迹\n描述: 间歇性出现的\"赌注仪式\"权限。D级人员可向未知接收方投掷铅币。约███%概率获得三倍返还，其余投掷后硬币消失无踪。失败时走廊内传出机械吞咽声。\n备注: D-████至D-████连续七次投掷后失联。权限仍可正常激活。",
+    "text_en": "🔔 Cast thy dice into the void—threefold return or coins lost to engine's maw\n────\n📄 Designation: S-GAM-████\nGradus: Solum / Escaped\nOrigin: Abandoned gaming hall remnants, Layer ██\nDescription: Intermittent \"wagering rite\" clearance manifests. D-class subjects may cast lead tokens to unknown recipient. Approximately ███% probability yields triple return; remaining attempts result in coin vanishment. Mechanical swallowing sounds recorded during failures.\nNote: D-████ through D-████ went missing after seven consecutive attempts. Clearance remains functional.",
+    "_voice": "doc",
+    "_objectId": "gamblers_creed"
+  },
+  {
+    "id": "endurance_battery",
+    "text_zh": "🔔 油壶盈满，汝之铭刻时光得以延绵不绝\n────\n📄 编号: S-END-████\n版级: 定版 / Fixum\n发现地点: 标准配给，来源不详\n描述: 标准蓄电装置。安装后收容时限显著延长，D级人员报告\"沙漏转得更慢了\"。设备外壳温热，内部传出规律滴答音。解剖样本显示内含未知黏稠液体。\n备注: 供应稳定。F-001征用表单已简化处理。",
+    "text_en": "🔔 The oil flask runs full—thy inscription time flows unbroken\n────\n📄 Designation: S-END-████\nGradus: Fixum / Fixed\nOrigin: Standard issue, source undocumented\nDescription: Standard power cell variant. Installation extends containment duration significantly. D-class report \"the hourglass turns slower.\" Device maintains warm temperature with internal rhythmic ticking. Dissection reveals unknown viscous fluid within.\nNote: Supply remains steady. F-001 requisition forms streamlined for efficiency.",
+    "_voice": "doc",
+    "_objectId": "endurance_battery"
+  },
+  {
+    "id": "elite_hunter",
+    "text_zh": "🔔 引擎标记其选中之异文，献其首于圣坛者得铅币偿还\n────\n📄 编号: S-HUN-████\n版级: 逆版 / Inversum\n发现地点: ████层执事办公室墙壁内侧\n描述: 自发性悬赏系统。每层随机指定特定异文为\"标记目标\"，成功收容后授权额外铅币补给。D级人员报告在标记期间\"感到被注视\"。摄像显示墙面偶现发光符号。\n备注: 标记选择逻辑不明。Scriptor K-████尝试解析后按§7.1处理。",
+    "text_en": "🔔 The Engine marks its chosen glyphs—bring their heads to the altar for coin's reward\n────\n📄 Designation: S-HUN-████\nGradus: Inversum / Self-Reversing\nOrigin: Inner wall cavity, Deacon's office, Layer ████\nDescription: Spontaneous bounty system. Randomly designates specific anomalous glyphs as \"marked targets\" per layer. Successful containment triggers additional lead token authorization. D-class report feeling \"watched\" during marking periods. Cameras record intermittent wall-mounted luminous symbols.\nNote: Target selection logic remains opaque. Scriptor K-████ processed under §7.1 after investigation attempts.",
+    "_voice": "doc",
+    "_objectId": "elite_hunter"
+  },
+  {
+    "id": "phoenix",
+    "text_zh": "🔔 若炉火吞噬汝身，此圣器燃己重铸汝形——唯一次\n────\n📄 编号: S-PHX-████\n版级: 熔版 / Fusum\n发现地点: 第XII层引擎心室废墟\n描述: 极罕见复生装置。持有者于收容失败时报告\"时间倒流感\"，随后出现在失败前若干秒位置。装置随即完全溶解。试炼层和意志显现层期间，圣物架发生额外换置现象。\n备注: 仅获得三件样本。前两件已消耗。末件由D-0█××携带失联于第XI层。",
+    "text_en": "🔔 Should furnace flames devour thee, this artifact burns itself to reforge thy form—but once\n────\n📄 Designation: S-PHX-████\nGradus: Fusum / Molten\nOrigin: Engine Heart Chamber ruins, Layer XII\nDescription: Ultra-rare resurrection apparatus. Upon containment failure, bearer reports \"temporal reversal sensation\" before reappearing several seconds prior to breach. Device subsequently dissolves completely. Additional relic shelf rotations occur during Trial and Will Manifestation layers.\nNote: Only three specimens recovered. First two consumed. Final unit missing with D-0█××, last seen Layer XI.",
+    "_voice": "doc",
+    "_objectId": "phoenix"
+  },
+  {
+    "id": "desperate_crit",
+    "text_zh": "沙将尽时，铅字必裂\n────\n编号: P-041\n版级: 定版 / Fixum\n发现层: 第VII层\n描述: 长期观察显示，当沙漏流将至末时，键徒铭刻常伴随铅字碎裂现象。D-████报告铭刻时「能听到时间在催促」。附带现象：走廊内偶闻钟摆加速声。\n备注: 原因不明。已知████次登塔中，此现象在关键时刻出现率异常偏高。",
+    "text_en": "When the sands run low, lead must fracture\n────\nDesignation: P-041\nGradus: Fixum\nDiscovery Layer: VII\nDescription: Extended observation indicates that when the hourglass nears depletion, keybound inscription frequently coincides with lead fracture phenomena. D-████ reported during inscription: 'could hear time urging me forward.' Ancillary phenomenon: accelerating clockwork sounds in corridors.\nNote: Cause unknown. In ████ recorded ascents, this phenomenon manifests at critical moments with statistically anomalous frequency.",
+    "_voice": "doc",
+    "_objectId": "desperate_crit"
+  },
+  {
+    "id": "modifier_shield",
+    "text_zh": "残余之缓，护持之恩\n────\n编号: S-188\n版级: 活版 / Mobilum\n来源: 第IX层回收残余异文\n描述: D-████持有期间，各项残余异文效应显著减弱。持有者报告「异文不再那么愤怒了」。观测显示其表面覆有淡蓝色薄膜，疑似某种缓冲物质。\n备注: 薄膜样本化验失败——接触即蒸发。使用记录良好，未发现副作用。",
+    "text_en": "Tempered remnants, sheltering grace\n────\nDesignation: S-188\nGradus: Mobilum\nOrigin: Layer IX residual anomaly recovery\nDescription: During D-████ possession, all residual anomaly effects demonstrate marked attenuation. Subject reported that 'the anomalies seemed less angry.' Observation reveals pale blue film coating surface, suspected buffering substance.\nNote: Film sample analysis failed—vaporizes upon contact. Usage record satisfactory, no side effects documented.",
+    "_voice": "doc",
+    "_objectId": "modifier_shield"
+  },
+  {
+    "id": "bounty_hunter",
+    "text_zh": "困厄之中，反得红利\n────\n编号: B-303\n版级: 脱版 / Solum\n来源: 第XI层商贩遗物\n描述: 持有者征用圣物时需缴铅币减少。效应与持有者承载的残余异文数量呈正相关。前商贩D-████笔记：「异文越多，东西越便宜。像是在同情我。」\n附录: 该商贩后于第XII层失联。遗物自动回收至市集。\n备注: 疑似具有某种价值评估能力。原理不明。",
+    "text_en": "In hardship's grip, fortune's favor\n────\nDesignation: B-303\nGradus: Solum\nOrigin: Layer XI merchant remains\nDescription: Lead coin requisition reduced during bearer's relic procurement. Effect positively correlates with bearer's residual anomaly burden. Former merchant D-████ noted: 'More anomalies, cheaper goods. Like it pities me.'\nAddendum: Said merchant later went missing at Layer XII. Relic auto-returned to bazaar circulation.\nNote: Suspected value assessment capability. Mechanism unclear.",
+    "_voice": "doc",
+    "_objectId": "bounty_hunter"
+  },
+  {
+    "id": "modifier_pardon",
+    "text_zh": "一纸赦令，得脱重择\n────\n编号: R-067\n版级: 脱版 / Solum\n来源: 空椅时代末期档案室\n描述: 古典羊皮纸卷轴，墨色已褪。持有者面对残余异文时可选择延迟承受其效应。每次登塔限用一次。D-████报告使用时「看到所有选项都变成了空白，只剩下'稍后'二字」。\n备注: 印章已模糊不清，签名者不详。疑似末席守卷人遗物。",
+    "text_en": "By writ of pardon, reprieve granted\n────\nDesignation: R-067\nGradus: Solum\nOrigin: Empty Chair Era archive chamber\nDescription: Classical parchment scroll, ink considerably faded. Bearer may elect to defer residual anomaly effects when confronted. Single use per ascent. D-████ reported during activation: 'saw all options go blank, only 'Later' remained.'\nNote: Seal illegible, signatory unknown. Suspected final councilor artifact.",
+    "_voice": "doc",
+    "_objectId": "modifier_pardon"
+  },
+  {
+    "id": "modifier_barrier",
+    "text_zh": "屏障缓冲，延祸于后\n────\n编号: D-225\n版级: 活版 / Mobilum\n来源: 第V层试炼厅\n描述: 试炼期间，临时残余异文效应延迟数个铭刻周期后才显现。D-████报告「就像有一层看不见的膜在保护，但知道它迟早会破」。延迟期间，持有者偶见走廊边缘有模糊光晕。\n备注: 延迟时长因异文强度而异。屏障突破时伴随轻微震颤。",
+    "text_en": "Barrier's buffer, deferred affliction\n────\nDesignation: D-225\nGradus: Mobilum\nOrigin: Layer V trial chamber\nDescription: During trials, temporary residual anomaly effects manifest only after several inscription cycles. D-████ reported: 'like an invisible membrane protecting, but knowing it would break eventually.' During delay period, bearer occasionally observes blurred luminescence at corridor periphery.\nNote: Delay duration varies by anomaly intensity. Barrier breach accompanied by minor tremors.",
+    "_voice": "doc",
+    "_objectId": "modifier_barrier"
+  },
+  {
+    "id": "crit_charge",
+    "text_zh": "🔔 蓄而不发者，其声裂石\n────\n📄 异常编号: SCP-███-C\n版级: 脱版 / Solum\n发现地点: 第 IV 层抄写室\n描述: 铜质储能装置，外观类似常规油壶。持有者报告铭刻时偶有'电流感'，伴随铅字异常发热。经观察，每隔数次常规铭刻后必出现一次裂铅现象。D-████ 描述为'像是有什么在积攒，然后突然爆发'。\n备注: 原理不明。已知十七次使用中无失效记录。设备内部检查显示空腔，但重量持续变化。",
+    "text_en": "🔔 What gathers in silence, breaks with thunder\n────\n📄 Anomaly ID: SCP-███-C\nClass: Solum (Loose Type)\nRecovery: Layer IV Scriptorum\nDescription: Copper-alloy energy vessel resembling standard oil flask. Bearers report intermittent 'electrical sensation' during inscription, accompanied by abnormal heating of lead slugs. Observation confirms periodic fracture events following regular inscription sequences. Subject D-████ described it as 'something building up, then suddenly releasing'.\nNote: Mechanism unknown. Seventeen recorded uses show no failure instances. Internal inspection reveals hollow chamber, yet weight fluctuates consistently.",
+    "_voice": "doc",
+    "_objectId": "crit_charge"
+  },
+  {
+    "id": "crit_storm",
+    "text_zh": "🔔 雷鸣之中，众声合璧\n────\n📄 异常编号: SCP-███-S\n版级: 逆版 / Inversum\n发现地点: 第 VII 层机械外壳\n描述: 未知材质的圆形印记，直径约三指宽。接触者报告在单词铭刻过程中，多次裂铅事件会引发'连锁反应'。D-████ 描述现象为'所有字母同时变亮，像被闪电击中'。监测显示该词内所有铭文组同时产生异常增益。\n备注: 效应仅限单词边界内。跨词无效应。已记录最高连锁次数为九次，伴随走廊内短暂电磁扰动。Scriptor K-████ 最后笔记提及此物，随后失联。",
+    "text_en": "🔔 In thunder's heart, all voices unite\n────\n📄 Anomaly ID: SCP-███-S\nClass: Inversum (Inverted Type)\nRecovery: Layer VII Mechanical Shell\nDescription: Circular sigil of unknown composition, approximately three fingers wide. Contact subjects report 'chain reactions' during word inscription when multiple fracture events occur. Subject D-████ described phenomenon as 'all letters lighting up at once, like struck by lightning'. Monitoring confirms simultaneous anomalous enhancement across all inscriptions within affected word.\nNote: Effect limited to single word boundaries. Cross-word manifestation absent. Maximum recorded chain: nine events, accompanied by brief electromagnetic disturbance in corridors. Referenced in final notes of Scriptor K-████ prior to disappearance.",
+    "_voice": "doc",
+    "_objectId": "crit_storm"
+  },
+  {
+    "id": "fate_coin",
+    "text_zh": "🔔 命运之轮已定，多余者化为力\n────\n📄 异常编号: SCP-███-F\n版级: 熔版 / Fusum\n发现地点: 末席守卷人办公室\n描述: 古铅币，一面刻有天平，另一面已磨损不可辨。持有者报告裂铅频率'被锁定在某个比例'，但裂铅强度显著增加。D-████ 称'感觉像是有东西在暗中调节概率'。经长期观察，确实存在某种平衡机制，超出基准的概率能量似乎被转化为威力增幅。\n备注: 末席守卷人桌案发现时，硬币正立于文件堆顶。天平面朝上。周围十二份条例文件均无签名，但执行记录完整。原理不明。",
+    "text_en": "🔔 Fate's wheel turns fixed, excess becomes force\n────\n📄 Anomaly ID: SCP-███-F\nClass: Fusum (Molten Type)\nRecovery: Final Keeper's office\nDescription: Ancient lead coin bearing scales on one face, reverse worn illegible. Bearers report fracture frequency 'locked at certain ratio' but fracture intensity significantly increased. Subject D-████ stated 'feels like something adjusting probability behind scenes'. Extended observation confirms balancing mechanism exists, with probability energy exceeding baseline apparently converted to power amplification.\nNote: Discovered standing atop document pile on Final Keeper's desk, scales facing up. Twelve surrounding regulatory documents lack signatures yet show complete execution records. Mechanism unknown.",
+    "_voice": "doc",
+    "_objectId": "fate_coin"
+  },
+  {
+    "id": "stack_momentum",
+    "text_zh": "🔔 每一声诵念，令下一声更疾\n────\n📄 异常编号: SCP-███-M\n版级: 定版 / Fixum\n发现地点: 第 III 层抄写室\n描述: 小型青铜齿轮，边缘刻有微小铭文。持有者报告铭文组在重复铭刻时'反应越来越快'。监测确认积诵间隔会随使用次数临时缩短，直至层级复归时恢复原状。D-████ 描述为'像是机器在学习我的节奏'。\n备注: 效应仅持续单层探索期间。每次登塔开始时设备自动复位。机制简单可靠。Scriptor V-████ 工作日志中多次提及'节拍器般的规律性'。",
+    "text_en": "🔔 Each recitation hastens the next\n────\n📄 Anomaly ID: SCP-███-M\nClass: Fixum (Fixed Type)\nRecovery: Layer III Scriptorum\nDescription: Small bronze gear with microscopic inscription along rim. Bearers report inscriptions 'responding faster' during repeated activation. Monitoring confirms accumulation intervals temporarily decrease with usage frequency, reverting upon layer restoration. Subject D-████ described as 'like machine learning my rhythm'.\nNote: Effect persists only during single layer exploration. Device automatically resets at ascent commencement. Mechanism simple and reliable. Referenced multiple times in Scriptor V-████'s work logs as 'metronome-like regularity'.",
+    "_voice": "doc",
+    "_objectId": "stack_momentum"
+  },
+  {
+    "id": "stack_dividend",
+    "text_zh": "🔔 积土成山，积水成渊\n────\n📄 异常编号: SCP-███-D\n版级: 定版 / Fixum\n发现地点: 第 II 层铸字坊\n描述: 褐色砖块，质地类似压制铅屑。持有者报告铭文组在反复使用后威力逐渐增强，增益效果在该次登塔期间保持稳定。D-████ 称'每用一次就感觉更顺手一些'。监测确认每达到特定累积次数时铸出效果永久提升。\n备注: 仅影响单个铭文组，不可传递。增益在登塔结束时消失。制造工艺粗糙，疑似学徒作品。发现时周围散落大量废铅屑，已按标准程序回收。",
+    "text_en": "🔔 Grain by grain builds the mountain, drop by drop fills the abyss\n────\n📄 Anomaly ID: SCP-███-D\nClass: Fixum (Fixed Type)\nRecovery: Layer II Foundry\nDescription: Brown brick resembling compressed lead shavings. Bearers report inscriptions gradually strengthening through repeated use, with enhancement persisting throughout current ascent. Subject D-████ stated 'gets easier to handle each time'. Monitoring confirms permanent output increase upon reaching specific accumulation thresholds.\nNote: Affects single inscription only, non-transferable. Enhancement dissipates at ascent completion. Crude construction suggests apprentice work. Discovered surrounded by scattered lead waste, recovered per standard procedure.",
+    "_voice": "doc",
+    "_objectId": "stack_dividend"
+  },
+  {
+    "id": "overload_circuit",
+    "text_zh": "圣印 · 过载电路\n版级: 脱版 / Solum\n发现地点: 第 VII 层导线混区\n描述: 焊接于机械外壳深处的异常导线结构。D-████ 报告使用时'听到别的键也在响'。经观察，持有者铭刻积诵类铭文组时，相邻键位偶发自主激活。电弧痕迹显示过载模式，但未发现动力源。\n备注: 三起自主激活均为单次，未形成连锁。导线材质检测显示████。",
+    "text_en": "Sigil of Circuit Surge\nGrade: Solum (Unbound)\nRecovery Site: Layer VII Wire Junction\nDescription: Anomalous conductor array welded into mechanical shell depths. Subject D-████ reports 'other keys singing too' during use. Observation confirms adjacent positions activate independently when holder engages accumulative inscriptions. Arc scarring indicates overload patterns, no power source identified.\nNotes: Three recorded self-activations, all single-instance. Wire composition testing yielded ████.",
+    "_voice": "doc",
+    "_objectId": "overload_circuit"
+  },
+  {
+    "id": "surge",
+    "text_zh": "圣印 · 浪涌\n版级: 逆版 / Inversum\n发现地点: 第 IX 层淹没区\n描述: 表面覆有不明液体膜，触碰时产生波纹。持有者激活积诵铭文组后，该组计数归零，但周围匹配铭文组铸出异常增强。D-████ 形容为'把积蓄的力量都放出去了'。液体成分分析未果，显微镜下呈现流动文字形态。\n备注: 使用间隔过短时液膜会沸腾。已知████次使用中，两次导致键位轻微腐蚀。",
+    "text_en": "Sigil of the Deluge\nGrade: Inversum (Self-Inverting)\nRecovery Site: Layer IX Flooded Section\nDescription: Surface coated in unidentified liquid film producing ripples on contact. Following accumulative inscription activation, count resets to zero while surrounding matching inscriptions exhibit enhanced output. Subject D-████ described sensation as 'releasing all stored force.' Chemical analysis inconclusive; microscopy reveals flowing text patterns.\nNotes: Rapid successive use causes film boiling. Two instances of minor key corrosion recorded across ████ uses.",
+    "_voice": "doc",
+    "_objectId": "surge"
+  },
+  {
+    "id": "perpetual_engine",
+    "text_zh": "圣印 · 永动引擎\n版级: 熔版 / Fusum\n发现地点: 第 XII 层引擎边缘\n\n描述: 微型齿轮组件，内部机械结构持续运转，无需动力输入。持有者的积诵铭文组不再定期复归至零，并表现为连续低频振动。D-████ 最后报告'它们不会停下来了，一直在积累'。\n备注: 第████天后失联。遗物回收时齿轮仍在转动。按 §4.2 条例，编号已重新分配。\n███-代表单显示此类遗物不应长期持有。",
+    "text_en": "Sigil of Endless Motion\nGrade: Fusum (Molten)\nRecovery Site: Layer XII Engine Perimeter\n\nDescription: Miniature gear assembly with continuously operating internal mechanics requiring no power input. Holder's accumulative inscriptions cease periodic reset behavior and exhibit continuous low-frequency vibration. Subject D-████'s final report: 'They won't stop now, always building up.'\nNotes: Lost contact day ████. Artifact recovered with gears still turning. Number reassigned per §4.2. ███-level documents indicate extended exposure inadvisable.",
+    "_voice": "doc",
+    "_objectId": "perpetual_engine"
+  },
+  {
+    "id": "drum_pass",
+    "text_zh": "圣印 · 击鼓\n版级: 定版 / Fixum\n发现地点: 第 IV 层乐器室\n描述: 手掌大小的铜质鼓面，边缘刻有循环符文。持有者进行连续铭刻时，鼓面偶发轻响，同时随机一处积诵铭文组出现层数增长。D-████ 报告'感觉像在给别人打拍子'。敲击频率与连祷节拍呈正相关。\n备注: 鼓面材质为标准铜合金，符文为已知积念圣律变体。安全使用记录良好。",
+    "text_en": "Sigil of the Drum Beat\nGrade: Fixum (Fixed)\nRecovery Site: Layer IV Instrument Chamber\nDescription: Palm-sized copper drumhead with cyclical runes around rim. During continuous inscription sequences, drumhead produces intermittent soft strikes while random accumulative inscription gains additional layers. Subject D-████ reports 'feels like keeping time for others.' Strike frequency correlates with litany rhythm.\nNotes: Standard copper alloy composition. Runes are known variants of Accumulation Canon. Safe usage record established.",
+    "_voice": "doc",
+    "_objectId": "drum_pass"
+  },
+  {
+    "id": "word_resonance",
+    "text_zh": "圣印 · 词根\n版级: 定版 / Fixum\n发现地点: 第 V 层抄写室\n描述: 羊皮纸片，表面浮现淡蓝发光字母。持有者完成完整词汇铭刻时，所有积诵类铭文组同步增长若干层数。增长幅度与词汇长度相关。D-████ 观察记录：'长词效果更明显，好像每个字母都在共鸣'。\n备注: 纸张材质为标准羊皮，发光机制不明。使用时偶有轻微嗡鸣声。适合日常收容作业。",
+    "text_en": "Sigil of Root Resonance\nGrade: Fixum (Fixed)\nRecovery Site: Layer V Scriptorium\nDescription: Parchment fragment displaying faint blue luminescent letters on surface. Upon completion of full word inscriptions, all accumulative inscriptions gain synchronized layer increases. Growth magnitude correlates with word length. Subject D-████ observation log: 'Longer words show stronger effect, each letter seems to resonate.'\nNotes: Standard parchment material, luminescence mechanism unknown. Occasional low humming during use. Suitable for routine containment duties.",
+    "_voice": "doc",
+    "_objectId": "word_resonance"
+  },
+  {
+    "id": "crit_overflow",
+    "text_zh": "圣印 · 散压\n版级: 定版 / Fixum\n发现地点: 第IV层，废铅回收槽\n描述: D-████报告铭刻时偶闻铅字碎裂声，随即相关铭文组'变得更亮'。经观察，裂铅事件后确有积诵层数异常增长。持续时间不定，平均三至五次铭刻后自然消散。\n备注: 附带现象——走廊内偶闻压板释放的嘶声。原因不明。已知███次使用中无不良后果。",
+    "text_en": "Sigil of Pressure Release\nGradus: Fixum\nDiscovery Site: Layer IV, lead recovery basin\nDescription: D-████ reports occasional fracture sounds during inscription, followed by related inscriptions 'becoming brighter'. Observation confirms abnormal accumulation layer growth after fracture events. Duration varies, naturally dissipating after three to five inscriptions on average.\nNote: Accompanying phenomenon—occasional hissing of press release in corridors. Cause unknown. No adverse effects recorded in ███ documented uses.",
+    "_voice": "doc",
+    "_objectId": "crit_overflow"
+  },
+  {
+    "id": "inscription_flow",
+    "text_zh": "圣印 · 涌蜡\n版级: 脱版 / Solum\n发现地点: 第VII层，祝圣残迹\n描述: 持有者报告受祝圣铭文组铭刻时'感到某种流动'。监测显示祝圣强度呈非线性增长，增幅比例随使用次数递减。D-████使用十四日后失联，遗留物品表面覆有未知蜡质残留。\n备注: 该蜡质经检测含异常铅同位素。不建议长期持有。已转交第XI层深度收容。",
+    "text_en": "Sigil of Flowing Unguent\nGradus: Solum\nDiscovery Site: Layer VII, consecration remnants\nDescription: Bearer reports 'sensing flow' during consecrated inscription activation. Monitoring shows non-linear consecration intensity growth, amplification ratio decreases with usage frequency. D-████ went missing after fourteen days of use, belongings covered with unknown waxy residue.\nNote: Residue testing reveals anomalous lead isotopes. Extended possession not recommended. Transferred to Layer XI deep containment.",
+    "_voice": "doc",
+    "_objectId": "inscription_flow"
+  },
+  {
+    "id": "neighbor_watch",
+    "text_zh": "圣印 · 邻席\n版级: 脱版 / Solum\n发现地点: 第V层，空置键座旁\n描述: 铭文组积诵时，相邻键位铭文组同步显现积诵增长。影响范围限于直接相邻位置。D-████报告'感觉其他键在看着我'。使用期间键座温度轻微上升，触感描述为'有人刚刚按过'。\n备注: 已知三次长期使用导致键座布局自发重排。维护组报告相关键位磨损速度异常。",
+    "text_en": "Sigil of Adjacent Seats\nGradus: Solum\nDiscovery Site: Layer V, beside vacant lectern position\nDescription: During inscription accumulation, adjacent position inscriptions synchronously display accumulation growth. Effect range limited to directly neighboring positions. D-████ reports 'feeling other keys watching me'. Lectern temperature rises slightly during use, tactile sensation described as 'someone just pressed here'.\nNote: Three documented instances of extended use resulted in spontaneous lectern layout rearrangement. Maintenance reports abnormal wear rate on affected positions.",
+    "_voice": "doc",
+    "_objectId": "neighbor_watch"
+  },
+  {
+    "id": "stack_crit",
+    "text_zh": "圣印 · 蓄怒\n版级: 脱版 / Solum\n发现地点: 第VI层，破损压板下\n描述: 铭文组积诵过程中可触发裂铅现象，同时叠加额外积诵层数。D-████报告'每一次积诵都像在攒劲，到了某个点就会爆发'。使用时键座轻微震颤，压板释放声明显更响。\n备注: 连续使用五日后，D-████手指出现轻微铅中毒症状。医疗组建议每次使用后十二小时内避免接触圣字钉。",
+    "text_en": "Sigil of Gathered Wrath\nGradus: Solum\nDiscovery Site: Layer VI, beneath damaged press plate\nDescription: Inscriptions can trigger fracture phenomena during accumulation process while simultaneously adding extra accumulation layers. D-████ reports 'each accumulation feels like building tension, then explodes at some point'. Lectern vibrates slightly during use, press release sounds noticeably louder.\nNote: After five consecutive days of use, D-████ displayed mild lead poisoning symptoms. Medical recommends avoiding sacred slug contact for twelve hours post-use.",
+    "_voice": "doc",
+    "_objectId": "stack_crit"
+  }
+]

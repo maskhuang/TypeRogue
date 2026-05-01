@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "逐减",
+    "name_en": "Diminishment",
+    "text_zh": "铅字愈重，其音愈弱",
+    "text_en": "Each word grows heavier, each voice grows faint",
+    "_objectId": "boss_diminish",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "残余异文：RA-047 · 递减回流\n归属意志：第 ███ 层 · ████████\n异常概述：影响区域内的铅字在连续铸印过程中重量逐步衰减。第 ██ 铸字坊的全部铅字在 ██ 小时内粉化，字盘表面检出未知腐蚀痕迹。键徒体检指标未见异常，铸印动作经影像确认无偏差。\n收容残余：引擎压制下，异常表现为铭刻效率的递进式下降。持续时间受限于单次登塔周期。\n附注：以双倍供给抵消蚀失的实验已终止。结果：蚀失速率反增 ██%。油壶内容物呈琥珀色，检测显示未发生化学变化。\n——「有增必有减，此乃铅字之道。」",
+    "text_en": "Residual Anomaly: RA-047 · Diminishing Returns\nAttributed Will: Layer ███ · ████████\nAnomaly Overview: Leaden glyphs within affected areas exhibit progressive mass degradation during sustained inscription. All typesetting equipment in Workshop ██ disintegrated within ██ hours, leaving unknown corrosion patterns on letter beds. Personnel medical evaluations show no abnormalities; inscription motions confirmed accurate via surveillance.\nContainment Residue: Under Engine suppression, anomaly manifests as progressive degradation of inscription efficiency. Duration limited to single ascent cycles.\nAddendum: Experiments using doubled supply rates to counter degradation have been terminated. Result: degradation rate increased by ██%. Oil flask contents exhibit amber coloration despite no detected chemical changes.\n——\"What rises must fall; such is the way of lead.\"",
+    "_objectId": "boss_diminish",
+    "_voice": "doc"
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "末日之馈",
+    "name_en": "Donum Ultimum",
+    "text_zh": "引擎所赐，必有其价。积汝之铭于深渊，待回车一击——或登神座，或堕无底。",
+    "text_en": "What the Engine giveth, demands its toll. Gather thy inscriptions in the abyss—one strike shall lift thee to glory or cast thee to void.",
+    "_objectId": "score_black_hole",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "圣印·黑陨\n其铅不散，其音不歇。汝祷未完，引擎静候。\n\n────\n\nObject Class: Apollyon\n编号: ████-██-7\n来源: 第XII层深处，引擎心室边缘\n\n描述: 异常祷文凝结体。收容铭刻产生的结晶流不进入常规管道，而是聚积于未知维度池。键徒可主动触发总结算——达成收容基准时获得额外什一税配给，未达标则触发站点污染。\n\n备注: 此物违背惯性流转条例。已知17次使用中████次导致污染。仍被批准使用，依据未明。",
+    "text_en": "Sigil of the Black Collapse\nThy words gather in darkness. The Engine waits.\n\n────\n\nObject Class: Apollyon\nDesignation: ████-██-7\nOrigin: Vault XII depths, Engine antechamber\n\nDescription: Anomalous prayer-matter consolidation. Crystalline humour generated through containment inscription bypasses standard conduits, accumulating in extradimensional reservoir. Operator may trigger manual settlement—successful threshold achievement yields enhanced tithe allocation, failure results in site compromise.\n\nNote: Item violates standing flow protocols. ████ compromises recorded across 17 deployments. Authorization maintained per undisclosed directive.",
+    "_objectId": "score_black_hole",
+    "_voice": "doc"
+  }
+]

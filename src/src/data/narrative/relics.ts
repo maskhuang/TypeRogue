@@ -131,6 +131,30 @@ export const RELICS_NARRATIVE = {
     "doc": {
       "text_zh": "【圣器操作须知 · SA-0291 · 蓝格纹领取凭单】\n\n一、凭单持有者于气动征用管处出示本单，管理员应按标注价目依例核减。\n二、凭单背面印有教会纹章，请勿折叠。若纹章模糊，仍视为有效。\n三、注意事项：若管理员在核减完毕后发现凭单已先于本次使用存在折痕，请忽略，正常归档。\n四、若管理员无法回忆是否见过持有者，请忽略，正常归档。\n五、若管理员发现自己于本次交接前已在归档记录中签过字，请忽略，正常归档。\n六、本须知第 ██ 条已于 M.2██ 依§4.2移除。现行版本共有上列各条。\n\n备注：SA-0291 持有者累计失联率不在本文件统计范围内。相关数据见 IR-████。访问权限：██ 级。",
       "text_en": "[Sacred Artifact Operating Directive · SA-0291 · Blue-Gridded Requisition Docket]\n\nI. Holder shall present docket at the Pneumatic Requisition Tube; staff shall apply the marked reduction per standing procedure.\nII. The Cathedral seal printed on the reverse must not be folded. Faded seals remain valid.\nIII. Note: if staff observe that the docket bears crease-marks predating the current transaction, disregard. File as normal.\nIV. If staff cannot recall having seen the holder before, disregard. File as normal.\nV. If staff find their own signature already present in the log prior to this exchange, disregard. File as normal.\nVI. Article ██ of this directive was removed in M.2██ pursuant to §4.2. The present version contains the articles listed above.\n\nRemark: cumulative disappearance rates among SA-0291 holders fall outside the scope of this document. See IR-████. Access level: ██."
+    },
+    "per_tier_flavor": {
+      "name_zh": "采购限额核准卡",
+      "name_en": "Procurement Discount Card",
+      "tier_0_zh": "凭此卡于物资管理中心办理采购，享有经财务组审批的限额优惠。卡面编号须与工号一致。",
+      "tier_0_en": "Present at procurement counter for approved discount on authorized supplies. Card number must match employee ID.",
+      "tier_1_zh": "本卡优惠条款已完成残稿复核。复核记录中有两处附注页缺失，尚未补档。",
+      "tier_1_en": "Discount terms cleared via fragment review. Two annotation pages remain missing from the file.",
+      "tier_2_zh": "刷卡时卡面印刷的价格栏偶尔显示另一组数字。行为档案已收录。建议正常使用。",
+      "tier_2_en": "Price field occasionally displays a different figure at point of use. Logged by behavior records. Proceed normally.",
+      "tier_3_zh": "已确认：持卡人消费后停顿约两秒，随后继续操作。核对行为已纳入月度观察表。",
+      "tier_3_en": "Confirmed: Subject #485,902 pauses briefly post-transaction before resuming. Verification behavior logged in monthly observation sheet.",
+      "_aiScore": 7,
+      "_aiIssues": [
+        "Tier_0：纯功能描述，无任何叙事质感。两句话都是'怎么用这张卡'的 patch notes，违反 Rule 12（档案是收容报告，不是 patch notes）。完全没有'人遇到这个东西后经历了什么'。",
+        "Tier_0：缺少任何 MIB 信号词——无分类编号、无不在场机构引用、无楼层暗示、无任何'水底'密度。零奇幻触感，单纯像一张员工福利手册条款。",
+        "Tier_1：'残稿复核'指向正确（FRP 层 / Wordsmith 协议），但'两处附注页缺失，尚未补档'处理得太直白——缺失页码是关键留白，直接说'缺失'就把水底的东西说穿了。应保持更大的模糊量化空间。",
+        "Tier_2：'建议正常使用'是 SOP 句式，本身合格；但'卡面印刷的价格栏偶尔显示另一组数字'描写停在了物理层面——没有任何关于持卡人反应或行为档案如何处理这件事的细节，叙事张力的落点缺失。",
+        "Tier_3：'Subject #485,902 pauses briefly post-transaction before resuming' 英文版直接用 Subject 指称玩家，语感已滑向 SCP 基金会报告腔，触碰 Rule 7（'收容物 / entity / object class' 禁用）的边界——Subject 是元层术语的宿主词，极易被读者识别为直接 SCP 引用。中文版'持卡人'较安全，英文应替换。",
+        "Tier_3：中英文描述了'停顿两秒'这一行为但没有任何体制解读——'核对行为已纳入月度观察表'语感平且软，观察主体是谁？谁在写这份报告？腔调在 Tier_3 应完成视角反转，但目前只是把 Tier_2 的'行为档案已收录'升了一个官僚级别，反转感不足。",
+        "四个 tier 均未触及'蕉'或猴行协议角度，猴行方向占比 0%——虽然 Rule 9 规定猴行 ≤ 30%，但此物品作为购物折扣卡，Tier_0 至少可以用财务严肃语调提一句蕉券换算，这是自然接点，放弃了。",
+        "黑色幽默密度不足：四个 tier 里没有一处让人'咦了一下又笑了'的时刻。Tier_2 最接近，但'建议正常使用'太公式化，缺少那一毫米的荒诞感落差。"
+      ],
+      "_aiSuggestion": "Tier_0 改写方向：加入发放部门署名（物资管理中心 · 财务组）+ 至少一个分类编号（如'PC-3 类采购许可凭证'）+ 把使用行为写成人的动作而非规则说明。例：'本卡由物资管理中心 · 财务组统一编号发放。持卡人至柜台出示后，工作人员将核验卡面编号与工号是否对应。若核验通过，优惠额度自动抵扣；若卡面编号模糊，请重新排队。蕉券不适用于本卡折扣叠加计算。'\n\nTier_1 改写方向：不要说'缺失两页'，改为暗示性的不可知量化。例：'附注部分复核状态标注为 Pending（待补）。具体缺失原因政策协调员办公室尚未回函。持卡人目前可照常使用。'\n\nTier_2 改写方向：让持卡人有一个微小但具体的反应。例：'部分持卡人在读数异常后报告曾重复确认票据两到三次，随后将票据收好，未作进一步询问。行为档案已记录。物资管理中心建议：如遇读数差异，照常签字即可。'\n\nTier_3 改写方向：视角完成反转——报告的写作者已经不是雇员了。例：'观察记录显示，#485,902 在交易完成后的停顿时长已从 Cycle 1 的 2.4 秒缩短至 Cycle 5 的 0.3 秒。月度观察表备注：适应曲线符合标准。'（英文将 Subject 替换为 Employee #485,902）"
     }
   },
   "black_market": {
@@ -195,6 +219,29 @@ export const RELICS_NARRATIVE = {
     "doc": {
       "text_zh": "残余异文 RA-0441 · 版级：熔版 / Fusum\n发现地点：第 XII 层通道，嵌于北壁龛内。外观为一枚铸铁圆盘，边缘刻有等分齿口，中央轴孔磨损严重，轴孔内壁附着不明蜡质残留。\n观察记录：圆盘静止时各刻口间距均等。接触者报告，凝视超过约半支烛的时间后，刻口数量",
       "text_en": "Residual Anomaly RA-0441 · Gradus: Fusum\nRecovered from: Layer XII, north wall niche. Physical description: a cast-iron disc with evenly-spaced notches along the rim; central axle bore shows significant wear; unidentified wax residue lines the interior of the bore.\nObservation log: Notch spacing appears uniform when disc is at rest. Subjects report that after sustained observation — approximately the duration of one burning taper — the count of notches becomes unreliable. D-████ submitted three separate tallies within the same hour. All three were witnessed and countersigned. All three differ.\nIncident note: During the Sealing Rite of M.2██.██, the presiding Clavigerant paused mid-inscription. Witnesses report the disc, secured to the wall niche, rotated once — unassisted. The presiding Clavigerant completed the Rite. Filed no report. The incident was recorded by an attending Scriptor K-████ in a margin note: \"The rule changed. She didn't notice.\"\nStatus: Containment threshold unmet. Disc remains in situ. Removal attempts have resulted in ██ consecutive F-044 submissions.\n备注：依 §4.2，已补充替补键徒。圆盘未移除。"
+    },
+    "per_tier_flavor": {
+      "name_zh": "政策随机复核台",
+      "name_en": "Policy Roulette Terminal",
+      "tier_0_zh": "本器具用于月度考核现场的政策随机复核。复审委员会已备案。",
+      "tier_0_en": "For randomized policy review during monthly assessments. Filed with the Review Committee.",
+      "tier_1_zh": "复核台已完成残稿比对。本月政策替换记录有若干条目缺失，原因待查。",
+      "tier_1_en": "Fragment comparison complete. Several policy-swap entries from this month are missing. Cause pending.",
+      "tier_2_zh": "转盘每次停止时，台面上的政策标签滑动了一下。已记录。报告转交行为档案处。",
+      "tier_2_en": "Each time the dial stops, the policy label shifts slightly. Logged. Forwarded to Behavioral Records.",
+      "tier_3_zh": "已确认：样本 #485,902 在政策替换时击键间隔延长约半拍。适应性稳定。",
+      "tier_3_en": "Confirmed: Subject #485,902 keystroke interval extends by half a beat on each policy swap. Adaptive response stable.",
+      "_aiScore": 6,
+      "_aiIssues": [
+        "【Rule 12 · 不复述机制】四个 tier 都在描述功能流程（'用于月度考核现场的政策随机复核'/'复核台已完成残稿比对'/'报告转交行为档案处'），而不是'人遇到这个东西后经历了什么'。Tier 0 尤其像说明书条目，缺乏人感知层的落地。",
+        "【Tier 0 腔调问题】'本器具用于……复审委员会已备案'——句式过于中性，没有 MIB 风格 SOP 的轻微荒诞感，也没有任何暗示水底的细节。整体像表单说明，不像合规文档 flavor。",
+        "【Tier 2 感知描写偏弱】'政策标签滑动了一下。已记录。报告转交行为档案处。'三句话把一个本可以让人'咦了一下'的细节处理成流程闭环，异常事实被完全行政消化，没有给玩家留下任何回味空间——这是过度收口，不是'暗示水底但不下水'。",
+        "【Tier 3 视角问题 · B2 边界】'适应性稳定'的表述过于科研中立，接近 SCP 测试报告的客观描述腔，略微触碰'命名/解释异常'的 B2 边界。'击键间隔延长约半拍'的细节好，但'适应性稳定'这个结论句将观察者/机构立场暴露得太明确，让玩家感到'被实验'而非'身在其中'，破坏 95% 私密轴的工位视角。",
+        "【MIB 信号词密度不足】四个 tier 合计只出现'复审委员会'一个不在场机构，缺少楼层暗示 / 分类编号 / 政策编号 / 协议 SOP 句式等 MIB 锚点密度支撑。'残稿比对'（tier 1）是一个好信号词，但孤立存在，水底感不够。",
+        "【六轴校准 · 黑色幽默缺失】整体四个 tier 语调偏平，无法让玩家'咦了一下又笑了'。'政策随机复核'这个概念本身有喜剧潜力（用转盘决定合规政策 = 公司把规则当彩票），但当前写法完全未开采这层荒诞。",
+        "【Tier 1 中英文细节出入】zh：'若干条目缺失，原因待查'；en：'Several policy-swap entries from this month are missing. Cause pending.'——'政策替换记录'（zh）对应'policy-swap entries'（en），但 zh 原文中'替换'和'残稿比对'之间的逻辑关系不清晰，en 版'Fragment comparison complete'对应 zh'残稿比对'语义准确，但 zh 后半句的'政策替换记录'是独立概念，两者衔接略跳。"
+      ],
+      "_aiSuggestion": "核心修改方向：让每个 tier 都有一个人在这台机器面前经历了什么，而不是机器本身做了什么。\n\n【Tier 0】保留合规文档骨架，但加入一个轻微异常 SOP 句，暗示有人用过它且出了点小问题：\n例：'本器具用于月度考核现场的政策随机复核。操作员须在转盘停止后静待三秒再记录结果。跳过等待期导致的数据偏差已发生 4 起，均已备案（复审委员会 · 档案 #R-11）。'\n\n【Tier 1】把'残稿比对'这个好信号词落地到人的感知：\n例：'本月复核台输出的政策标签与存档版本有 3 处不一致。操作员已按流程向编校组报告。编校组回执显示：该标签版本'从未录入'。'\n\n【Tier 2】不要急着收口（'已记录·报告转交'），让异常细节在玩家面前多停一秒：\n例：'转盘每次停止后，台面上的政策标签会短暂显示一个不同的条目编号，然后恢复原状。行为档案处已收到报告。行为档案处回执：'属正常误差范围，继续使用。''\n\n【Tier 3】去掉'适应性稳定'这种客观评估结论，改用更接近工位视角的第三方观察腔（HR · 第三方观察腔而非实验报告腔）：\n例：'样本 #485,902 本月操作记录显示：每次转盘停止后，击键间隔延长约半拍。未影响当月产能。该项数据已抄送排班组。'"
     }
   },
   "apprentice_notes": {

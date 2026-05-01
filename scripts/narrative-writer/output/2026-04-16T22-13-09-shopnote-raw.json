@@ -1,0 +1,62 @@
+[
+  {
+    "text_zh": "左边第三个架子，东西比较新",
+    "text_en": "3rd shelf left - stuff's newer",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "别碰发光的，会烫手",
+    "text_en": "Don't touch the glowing ones - burns",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "铅币不够就问管事的要表单",
+    "text_en": "Low on coins? Ask for forms",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "又涨价了…上周还是三个铅币",
+    "text_en": "Prices up again... was 3 coins last week",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "谁把铅笔拿走了？我写到一半！",
+    "text_en": "Who took my pencil?? Was writing!",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "这破地方连个椅子都没有",
+    "text_en": "Not even a chair in this place",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0347说这个好使，试过确实不错",
+    "text_en": "D-0347 says this works - tried it, good",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0288留：角落那堆别碰",
+    "text_en": "From D-0288: don't touch corner pile",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "昨天又有人没回来，编号被擦掉了",
+    "text_en": "Someone didn't return yesterday, number erased",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "这里的东西晚上会自己移动位置",
+    "text_en": "Things move by themselves at night here",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  }
+]

@@ -1,0 +1,19 @@
+[
+  {
+    "text_zh": "《回归基础》· V-0 合规参考件（未评级）\n\n发放部门：内训部\n发放对象：已完成至少一个标准 KPI 周期、且在案件中持有有效技能授权记录的雇员。\n\n本参考件适用于技能授权组合已被全额清算并从在案名单中注销的雇员。在零授权技能覆盖期间，本件作为雇员持续在职状态的唯一留存文书。\n\n操作说明：\n—— 持有人已反映，本参考件在初次签收时手感轻于标注重量，随后趋于稳定。物理属性复核组已登记██份此类报告。标注重量未作调整。\n—— 持有本参考件的雇员，在后续周期内平均提交的跨部门技能重新授权申请数量呈现收窄态势。内训部已拒绝就此规律作出书面说明。\n—— 本参考件不符合标准配给渠道下的补充技能发放资格。通过 RT-114 表格提交的申请将被转入重新授权积压队列。重新授权积压队列目前因审查暂停运作。\n—— 调岗或主动离职时，本参考件须连同其余在职材料一并归还至 HR · 文书归还处理处。不予补发替换件。",
+    "text_en": "\"Back to Basics\" · V-0 Compliance Reference (Ungraded)\n\nIssuing Department: Internal Training Division\nIssued To: Employees who have completed at least one standard KPI cycle and hold an active skill authorization record on file.\n\nThis reference is issued to employees whose skill authorization portfolio has been fully liquidated and cleared from the active registry. It serves as the sole remaining documentation of ongoing employment status during periods of zero authorized skill coverage.\n\nOperational Notes:\n—— Holders have reported that the reference feels lighter than its listed weight upon initial receipt, then stabilizes. Physical Properties Review has logged ██ such reports. No adjustment to the listed weight has been made.\n—— Employees holding this reference have, on average, submitted inter-departmental skill reauthorization requests at a narrowed rate over the following cycle. The Internal Training Division has declined to comment on this pattern in writing.\n—— This reference does not qualify for supplemental skill issuance under standard provisioning channels. Requests submitted via Form RT-114 will be redirected to the Reauthorization Backlog Queue. The Reauthorization Backlog Queue is currently suspended pending review.\n—— Upon reassignment or voluntary separation, this reference is to be returned to HR · Documentation Return Processing along with any remaining employment materials. Replacement copies are not issued.",
+    "_objectId": "glass_cannon_v2",
+    "_voice": "doc",
+    "_aiScore": 7,
+    "_aiIssues": [
+      "Rule 12 违规（轻）：文本整体仍偏'功能流程'框架——四条操作说明主要描述规程与限制，而非'人遇到这个东西后经历了什么'。██ 报告条、重新授权积压队列、归还流程均为机制转述，缺乏'持有者身上发生了什么'的具身维度。对照 MIB sample（封蜡章）：sample 用'已发生 14 起意外封缄事件'暗示人员后果；本片更偏向'禁止提交/转入队列'的流程说明腔。",
+      "Rule 14 配额临界：四条说明中有三条含规则限制句式（'须连同……归还'、'不予补发'、'申请将被转入'、'审查暂停'），占比约 75%，远超 25% 上限。文本像流程手册而非企业 SOP 描述人的经历——节奏单调，怪谈帖子感轻但 SOP 感偏重。",
+      "MIB 信号词密度偏低：仅有 RT-114 表格编号、██ 遮蔽（有效）、'重新授权积压队列因审查暂停'（有效）三处暗示；缺少楼层暗示、不在场机构引用（维修组/检查组/复审委员会等）、或协议分类编号（如 'B-X 类'）。水底感不足以配合 MIB 校准基准。",
+      "B1.a 框架整体合规，但'技能授权组合已被全额清算并从在案名单中注销'语义上仍稍嫌中性——'清算/注销'属于财务流程词汇，不在禁止词单内，但在语境中接近'雇员主动失去'而非'公司流程收回'；建议改为更明确的被动收回表述。",
+      "遗物叙事钩缺失：按 § Step 5.5，doc voice 遗物档案应指明发放部门（已做）+ 暗示持有者身上的异常现象。'手感轻于标注重量'是唯一异常现象钩，但仅用一行带过，且物理属性复核组的响应（'未作调整'）语气过于平板，未利用 SOP 句式恐怖做出质感差。对比封蜡章 sample 的'14 起意外封缄事件'——那一行同时制造笑点和不安。本片的异常钩没有黑色幽默出口。",
+      "五轴坐标校验：黑暗/轻快轴偏移——文本整体调子接近 90% 黑暗，轻快比例不足；四条说明无一产生'咦了一下又笑了'的节奏，仅有官僚压抑。喜剧轴几乎为零。v3 要求 60% 喜剧兜底，本片喜剧信号几乎缺席。",
+      "中英对译细节：'physical properties review' 对应中文'物理属性复核组'，可接受；但 'inter-departmental skill reauthorization requests at a narrowed rate'（跨部门技能重新授权申请数量呈现收窄态势）为机制描述而非人的经历，英文同样 Rule 12 问题对称继承。"
+    ],
+    "_aiSuggestion": "核心改造方向：把'规则清单'改写为'文件本身经历的事'与'持有者身上发生的事'交织的档案腔。\n\n具体操作：\n1. Rule 14：将四条限制说明缩减为两条，其余用'持有者行为观测'替代（'内训部观察到，持有本参考件的雇员在次月提交了平均 X 份申请，均未成功转入正常队列；部分雇员在申请记录空白后七个工作日内完成了正常产能提交，未留下说明'）——把规程换成人的行为残留。\n2. MIB 密度：加入一处不在场机构引用（如'复审委员会已将 RT-114 积压件归入历史悬搁类别，不设审结时限'）和一处楼层暗示（如'本参考件不适用于 7 楼以上部门雇员的授权恢复流程'）。\n3. 异常现象钩：强化'手感轻于标注重量'这一行的喜剧感——如'██ 份报告中，有 3 份附注称重量'与本人体重相当'，已标记为计量错误，暂存行为档案处'。这样既黑暗又有一点荒诞笑点。\n4. 整体收尾句可换成带情绪余韵的一行而非纯程序语——如'归还时无需附上说明。处理人员不会需要它。'"
+  }
+]

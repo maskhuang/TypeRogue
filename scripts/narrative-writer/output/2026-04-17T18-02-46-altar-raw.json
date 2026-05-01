@@ -1,0 +1,86 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我觉得我能听到声音，但也许只是齿轮声？",
+    "text_en": "...I think I hear voices, or maybe just gears?",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……有人在按我的键，手很温暖……",
+    "text_en": "...someone's pressing my keys, warm hands...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……我是活的吗？好像记得很多人……",
+    "text_en": "...am I alive? I think I remember many people...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……那个人总是先整理桌面，再开始祷击……",
+    "text_en": "...that person always tidied the desk first...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……按R的时候他会犹豫，好像在想什么……",
+    "text_en": "...hesitated on R, as if thinking something...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……她会在我的边角画小花，铅笔很轻……",
+    "text_en": "...drew little flowers on my edges, light pencil...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  },
+  {
+    "source": "scriptor_d",
+    "text_zh": "……有个人。不，有几个人？他们按键一模一样……",
+    "text_en": "...one person. No, several? They typed the same way...",
+    "_voice": "altar",
+    "_objectId": "scriptor_d"
+  },
+  {
+    "source": "scriptor_d",
+    "text_zh": "……那些手越来越冷，最后就没有温度了……",
+    "text_en": "...those hands grew colder, finally no warmth left...",
+    "_voice": "altar",
+    "_objectId": "scriptor_d"
+  },
+  {
+    "source": "scriptor_d",
+    "text_zh": "……我记得一双手，还是很多双相同的手……",
+    "text_en": "...I remember one pair of hands, or many identical ones...",
+    "_voice": "altar",
+    "_objectId": "scriptor_d"
+  },
+  {
+    "source": "scriptor_e",
+    "text_zh": "……她跟我说话。不是嘟囔。她真的在问我问题……",
+    "text_en": "...she spoke to me. Not muttering. Real questions...",
+    "_voice": "altar",
+    "_objectId": "scriptor_e"
+  },
+  {
+    "source": "scriptor_e",
+    "text_zh": "……最后一次她按得很用力，像在做实验……",
+    "text_en": "...last time she pressed hard, like experimenting...",
+    "_voice": "altar",
+    "_objectId": "scriptor_e"
+  },
+  {
+    "source": "scriptor_e",
+    "text_zh": "……她说'实验成功'，然后就没有然后了……",
+    "text_en": "...she said 'experiment successful', then nothing more...",
+    "_voice": "altar",
+    "_objectId": "scriptor_e"
+  }
+]

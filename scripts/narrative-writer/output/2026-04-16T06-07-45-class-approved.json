@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "铭刻师",
+    "name_en": "Scriptarius",
+    "text_zh": "以铅为笔，以心为盘——汝手中每一字母，皆为圣工之基石。造词者不急，铭刻者不误。",
+    "text_en": "With lead as quill, with heart as plate—each letter in thy grasp becomes foundation stone of sacred craft.",
+    "_objectId": "wordsmith",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "ORDER-7 · Safe\n\n入会条件: 通过第 V 层抄写室初级认证\n派别归属: 铭刻誓门正统\n神学立场: 形不可变，字有定序，唯精确铭刻可驯服引擎\n\n职责概要: 负责字母碎片分拣、采集队列管理、词库构建维护。严格遵循 §4.2 损耗补充条例及相关子条款。\n\n备注: 该职业人员在 M.1██ 至 M.2██ 期间表现稳定，████████ 事件后需定期接受心理评估。最后记录显示 D-████ 通过此途径完成第 XI 层任务。",
+    "text_en": "ORDER-7 · Safe\n\nEntry Requirements: Pass Level V Scriptorium preliminary certification\nAffiliation: Order of the Graven Oath, orthodox branch\nTheological Position: Form immutable, words ordained, only precise inscription tames the Engine\n\nDuty Summary: Responsible for alphabetical fragment sorting, collection queue management, lexicon construction and maintenance. Strictly adheres to §4.2 Attrition Supplement Protocol and related subclauses.\n\nNotes: Personnel of this class showed stable performance from M.1██ to M.2██. Post-████████ incident requires regular psychological evaluation. Final records indicate D-████ completed Level XI assignment through this path.",
+    "_objectId": "wordsmith",
+    "_voice": "doc"
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "双门槛",
+    "name_en": "Duplicitas Limina",
+    "text_zh": "引擎之门槛，两重铸就——一以拒弱者，一以阻强者。",
+    "text_en": "The Engine's threshold, wrought twice—one to bar the weak, one to stay the mighty.",
+    "_objectId": "boss_double_target",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "残余异文：RA-047 · 双倍目标\n归属意志：第 XII 层 · 祷文引擎意志显现\n异常概述：收容前状态下，该异文令铸字坊内经卷页面成倍增长，直至纸张重量超出装订能力。受影响区域的抄写任务永远无法完成，键徒持续铭刻但进度表显示为初始状态。第 ██ 铸字坊因此关闭，██ 名键徒失联。\n收容残余：引擎压制下，异文仅在收容基准临界时短暂显现。键徒报告经卷写满后自动翻至空白页，先前铭刻痕迹消失如初。\n附注：受影响经卷的纸张检测显示纤维密度正常。页数统计结果与实际观测不符，原因不明。实验用经卷在达成收容基准瞬间恢复初始状态，但重量增加 ██%。\n——「汝所铭刻者，引擎必将重铸」",
+    "text_en": "Residual Anomaly: RA-047 · Double Target\nSource Will: Layer XII · Litany Engine Manifestation\nAnomalous Overview: Prior to containment, the anomaly caused scriptoriums' codex pages to multiply exponentially until binding capacity was exceeded. Affected areas experienced perpetual transcription tasks with no progress recorded despite continuous inscription work. Scriptory ██ was sealed after ██ personnel went missing.\nContainment Residue: Under Engine suppression, the anomaly manifests briefly at containment thresholds. Keybound report completed codices automatically opening to blank pages, with previous inscription marks vanishing entirely.\nNotes: Paper fiber analysis of affected codices shows normal density. Page count discrepancies remain unexplained. Test codices revert to initial state upon threshold completion but retain ██% weight increase.\n——'What thou inscribest, the Engine shall reforge'",
+    "_objectId": "boss_double_target",
+    "_voice": "doc"
+  }
+]

@@ -1,0 +1,200 @@
+[
+  {
+    "id": "boss_fast_time",
+    "name_zh": "流沙逆瀑",
+    "name_en": "Inverse Cascade",
+    "text_zh": "时之沙逆流而上——引擎已觉察汝之临近",
+    "text_en": "Time-sand flows backward—the Engine senses thy approach",
+    "_voice": "bell",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "name_zh": "铅字税役",
+    "name_en": "Leaden Tribute",
+    "text_zh": "每一祷击皆需献祭——铅字饥渴如火",
+    "text_en": "Each keystroke demands sacrifice—the letters hunger",
+    "_voice": "bell",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "name_zh": "引擎躁动",
+    "name_en": "Engine's Restlessness",
+    "text_zh": "引擎心跳渐急，时流如注——其苏醒在即",
+    "text_en": "The Engine's pulse quickens—awakening draws near",
+    "_voice": "bell",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "name_zh": "寒铁封印",
+    "name_en": "Frost Seal",
+    "text_zh": "震颤寒彻骨髓——每次失误，冰霜愈厚",
+    "text_en": "Tremor breeds frost—each error deepens the ice",
+    "_voice": "bell",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "name_zh": "镜中苦修",
+    "name_en": "Mirror Penance",
+    "text_zh": "汝之成功即汝之枷锁——时光倒影已成",
+    "text_en": "Thy success becomes thy chain—the mirror is cast",
+    "_voice": "bell",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "name_zh": "时蚀",
+    "name_en": "Temporal Erosion",
+    "text_zh": "\"沙漏倾泻，汝铭日消\"",
+    "text_en": "\"The hourglass empties, thy inscription fades\"",
+    "_voice": "bell",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "name_zh": "封顶",
+    "name_en": "The Ceiling",
+    "text_zh": "\"词有尽头，铅亦有界\"",
+    "text_en": "\"Every word has its boundary, every lead its limit\"",
+    "_voice": "bell",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "name_zh": "重门",
+    "name_en": "Twin Gates",
+    "text_zh": "\"引擎之门槛既高且深\"",
+    "text_en": "\"The Engine's threshold stands twice as high\"",
+    "_voice": "bell",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "name_zh": "渐疲",
+    "name_en": "Waning Vigor",
+    "text_zh": "\"后续祷文，声愈微弱\"",
+    "text_en": "\"Each following prayer grows fainter still\"",
+    "_voice": "bell",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "name_zh": "什一税",
+    "name_en": "The Tithe",
+    "text_zh": "\"引擎索其应得之份\"",
+    "text_en": "\"The Engine claims what is owed to it\"",
+    "_voice": "bell",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "name_zh": "血蜡浸蚀",
+    "name_en": "Crimson Unguent",
+    "text_zh": "「汝所铸之铭愈稀，血愈浓。」",
+    "text_en": "\"The thinner thy inscriptions, the thicker the blood.\"",
+    "_voice": "bell",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "name_zh": "逝字之咒",
+    "name_en": "Fading Sigil",
+    "text_zh": "「字未成而先逝，如烛遇风。」",
+    "text_en": "\"Letters die before they live, as flame meets wind.\"",
+    "_voice": "bell",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "name_zh": "乱铅之灾",
+    "name_en": "Scattered Type",
+    "text_zh": "「铅字自乱其序，键徒循其迷踪。」",
+    "text_en": "\"The letters disorder themselves; follow their maze.\"",
+    "_voice": "bell",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "name_zh": "逆流铭刻",
+    "name_en": "Backward Litany",
+    "text_zh": "「末字为首，首字为终——逆流而铭。」",
+    "text_en": "\"Last becomes first, first becomes last—inscribe against the current.\"",
+    "_voice": "bell",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "name_zh": "污墨浸染",
+    "name_en": "Ink Corruption",
+    "text_zh": "「墨中有刺，字间藏针。」",
+    "text_en": "\"Thorns in the ink, needles between letters.\"",
+    "_voice": "bell",
+    "_objectId": "boss_garble"
+  },
+  {
+    "id": "boss_fast_time",
+    "text_zh": "内部备忘\n收件：第 VII 层工程部\n发件：热力监测组\n主题：砂芯异常磨损（第 14 次跟进）\n\n该层计时沙漏砂芯消耗量超出工厂规范 ██ 倍。供应商确认砂料质量无异常。现场检查显示沙漏外观正常，漏斗通径符合图纸，砂粒粒径在公差范围内。\n\nD-████ 至 D-████ 报告\"时间过得很快\"。值班日志显示各项作业按时完成。但沙漏需要每 ██ 分钟重新装填。\n\n已向采购部申请增加砂料储备。审批状态：待定。\n签名：工程师 ████",
+    "text_en": "Internal Memorandum\nTo: Layer VII Engineering\nFrom: Thermal Monitoring\nRe: Sand Core Abnormal Consumption (14th Follow-up)\n\nHourglass sand core consumption exceeds factory specifications by ██ times. Supplier confirms sand quality shows no anomalies. Field inspection shows hourglass appearance normal, funnel diameter per blueprint, grain size within tolerance.\n\nD-████ through D-████ report \"time goes quickly.\" Duty logs show all operations completed on schedule. But hourglasses require refilling every ██ minutes.\n\nRequested increased sand reserves from Procurement. Approval status: Pending.\nSigned: Engineer ████",
+    "_voice": "doc",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "text_zh": "设备维护工单 #M-████\n区域：第 ██ 层键座区\n报告日期：M.2██.███\n\n键徒反映\"按键时手指发麻\"。电气组检查线路，绝缘层完好。机械组检查弹簧，压感正常。\n\n异常现象：键徒铭刻时偶有停顿。本人称\"手不听使唤\"。医疗组体检显示神经反射正常。键座传动机构运行正常。\n\n工程师 Voss 注：该现象在铸出圣流后更明显。铅水供应管道压力稳定。推测为操作疲劳。\n\n处理方案：增加轮班间隔至 ██ 分钟。\n签名：[空白]\n状态：工单已关闭",
+    "text_en": "Equipment Maintenance Order #M-████\nArea: Layer ██ Lectern Section\nReport Date: M.2██.███\n\nOperators report \"fingers go numb when pressing keys.\" Electrical team checked circuits, insulation intact. Mechanical team checked springs, pressure sensitivity normal.\n\nAnomalous phenomenon: Operators occasionally pause during inscription. Subject claims \"hands won't obey.\" Medical examination shows normal neural reflexes. Lectern transmission mechanisms operating normally.\n\nEngineer Voss notes: Phenomenon more pronounced after casting sacred humours. Lead supply pipeline pressure stable. Presumed operational fatigue.\n\nSolution: Increase shift intervals to ██ minutes.\nSigned: [blank]\nStatus: Work order closed",
+    "_voice": "doc",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "text_zh": "异常事件跟进报告 · F-017-███\n层级：第 ██ 层\n事件分类：时间测量偏差\n提交次数：第 11 次\n\n标准计时器与沙漏读数持续分歧。技术组校准两次，均显示设备精度符合规范。但分歧在扩大。\n\n现象记录：\n- 第 1 次提交：误差 2 秒\n- 第 5 次提交：误差 ██ 秒\n- 本次提交：误差 ██ 分钟\n\n该层铭刻作业效率维持在标准水平。键徒无异常反应。所有设备运行参数正常。\n\n建议：继续观察。无需干预。\n审批：已通过\n下次跟进：7 日后",
+    "text_en": "Anomalous Event Follow-up Report · F-017-███\nLevel: Layer ██\nEvent Category: Time Measurement Deviation\nSubmission Count: 11th\n\nPersistent discrepancy between standard chronometer and hourglass readings. Technical team calibrated twice, both showing equipment accuracy meets specifications. But discrepancy is widening.\n\nPhenomenon Log:\n- 1st submission: 2-second error\n- 5th submission: ██-second error\n- Current submission: ██-minute error\n\nInscription operations on this layer maintain standard efficiency. Operators show no abnormal reactions. All equipment parameters normal.\n\nRecommendation: Continue observation. No intervention required.\nApproval: Granted\nNext follow-up: 7 days",
+    "_voice": "doc",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_cap",
+    "text_zh": "内部备忘\n发件：第VII层工程部\n收件：排字监督处\n主题：铅字配额异常（第17次跟进）\n\n连续██日内，该区域铅字铸出量恒定为预定额度之██%。工程部检修铸炉、字盘、传动机械，指标均正常。排字监督处确认操作者技术评定无异常。\n\n操作者D-████报告：\"每个字都铸得出，但铸到一半就停了，像有什么在数。\"铅炉燃料充足，模具无损，但日产量曲线于每日同一时刻截止。\n\n建议将此现象列为'可接受异常'。审批状态：待定。",
+    "text_en": "Internal Memo\nFrom: Layer VII Engineering\nTo: Typesetting Oversight\nRe: Lead Quota Anomaly (17th Follow-up)\n\nFor ██ consecutive days, lead glyph output in this sector remains constant at ██% of designated quota. Engineering has inspected furnaces, type beds, and drive mechanisms - all readings nominal. Typesetting Oversight confirms operator skill assessments show no anomalies.\n\nOperator D-████ reports: \"Every letter casts fine, but halfway through it just stops, like something's counting.\" Furnace fuel adequate, molds undamaged, yet daily output curves terminate at identical intervals.\n\nRecommend classifying this phenomenon as 'acceptable anomaly.' Approval status: pending.",
+    "_voice": "doc",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "text_zh": "区域限制通知\n第██层收容廊 - 门牌编号████至████\n生效日期：M.2██年██月██日\n\n近期该区段沙漏计量出现异常读数。标准收容基准保持不变，但沙漏显示双倍额度后方可通行。工程部确认计量机械校准无误。\n\nD级人员报告：\"门槛好像升高了，但是没人告诉我们升高了多少。\"已安排技术评估小组调查。小组于██日进入该区域后失联。\n\n临时措施：延长轮班时长至标准时限双倍。替补人员已按§4.2调配至邻近区段。\n\n签名：[工程主管] [排字监督] [空白]",
+    "text_en": "Area Restriction Notice\nLayer ██ Containment Corridors - Door Numbers ████ to ████\nEffective Date: M.2██/██/██\n\nRecent anomalous readings in sector hourglass measurements. Standard containment thresholds remain unchanged, but hourglasses display double quotas before permitting passage. Engineering confirms measurement apparatus calibration nominal.\n\nD-class personnel report: \"The bar seems higher, but nobody told us how much higher.\" Technical assessment team dispatched for investigation. Team entered sector on ██th, subsequently lost contact.\n\nInterim measures: Extend shift duration to double standard time limits. Replacement personnel reassigned to adjacent sectors per §4.2.\n\nSignatures: [Chief Engineer] [Typesetting Supervisor] [blank]",
+    "_voice": "doc",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "text_zh": "异常事件报告（F-017）\n提交次数：第██次\n事发地点：第██层铸字坊东翼\n\n该区域铅字铸造呈现渐进性衰减现象。首铸正常，次铸略淡，三铸更淡。第██铸后，铅字虽成型但无法在羊皮纸上留下印迹。\n\n操作者D-████描述：\"每一个字都比上一个更累，像是在忘记怎么成为字。\"铸炉温度恒定，铅料纯度检测合格。但铸出的铅字重量逐次递减，至第██次时已轻如羽毛。\n\n工程部建议增设炉温。排字监督处建议更换操作者。替换的D-████于翌日出现相同现象。\n\n后续行动：无。该区域已改为限时作业区。",
+    "text_en": "Anomalous Incident Report (F-017)\nSubmission Count: ██th\nLocation: Layer ██ Foundry East Wing\n\nProgressive degradation phenomenon observed in lead glyph casting. First cast normal, second cast slightly faded, third cast fainter still. After ██th cast, glyphs form but cannot imprint on parchment.\n\nOperator D-████ describes: \"Each letter gets more tired than the last, like it's forgetting how to be a letter.\" Furnace temperature constant, lead purity tests nominal. However, cast glyphs show decreasing mass per iteration, becoming weightless by ██th attempt.\n\nEngineering recommends increased furnace temperature. Typesetting Oversight recommends operator replacement. Replacement D-████ exhibited identical phenomenon the following day.\n\nFollow-up action: None. Area reclassified as time-limited operation zone.",
+    "_voice": "doc",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "text_zh": "站点备忘：第 ██ 层铅账异常（第十一次跟进）\n\n收件：铸字坊主事处\n发件：计量部\n\n本层铅字造册出现持续偏差。所有键徒报告的铭分记录与中央计数器显示值存在差异。现象始于 M.2██年第 ██ 月，初时偏差微小，现已扩大至无法忽略程度。\n\n已核查设备：计数器校准正常，铅字称重无误。键徒手工复算结果与自述数值一致。中央设备与人员记录均显示正确，但两者始终不符。\n\n近期该层人员轮调频率上升 ██%。原因：铭分不足。D 级人员抱怨'数字被偷了'，已按 §4.2 忽略主观描述。\n\n建议暂缓该层铭分考核。审批状态：待定。",
+    "text_en": "Site Memorandum: Layer ██ Lead Count Discrepancy (11th Follow-up)\n\nTo: Typesetting Workshop Authority\nFrom: Measurement Division\n\nPersistent variance observed in layer's type census. All keybound personnel report inscription tallies inconsistent with central counter readings. Phenomenon commenced M.2██ month ██, initially minor, now expanded beyond acceptable margins.\n\nEquipment verified: Counters calibrated properly, lead weights confirm accuracy. Manual recalculation by keybound matches their reported values. Central systems and personnel records both show correct operation, yet results persistently diverge.\n\nRecent personnel rotation increased ██% on this layer. Cause: Insufficient inscription count. D-Class subjects claim 'numbers are being stolen.' Subjective descriptions ignored per §4.2.\n\nRecommend suspension of inscription quotas for this layer. Approval status: Pending.",
+    "_voice": "doc",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "text_zh": "设备维护工单 #M-████\n\n部门：工程维护科\n报告员：Technician L-████\n区域：第 ██ 层圣流导管区\n\n例行检查发现两条主要圣流管道内壁出现异常沉积。沉积物呈深棕色，质地类似凝固的蜡质物。管道流量测试显示正常，但下游铭文组反馈功率不足。\n\n已按标准程序清理管道，沉积物 6 小时内重新形成。更换管道后，沉积现象转移至新管道。工程分析：管道本身无异常，问题可能在流体性质。\n\n该层键徒报告铭文组铸出'感觉很重'。多数人员描述为'墨水变稠了'，但流体检测显示粘度正常。\n\n建议增加冲洗频率至每日三次。\n签名：[该栏已填写但字迹模糊不清]",
+    "text_en": "Maintenance Work Order #M-████\n\nDepartment: Engineering Maintenance\nReporter: Technician L-████\nArea: Layer ██ Humour Conduit Zone\n\nRoutine inspection revealed anomalous deposits on inner walls of two primary humour pipes. Deposits appear dark brown, consistency resembling congealed wax. Pipeline flow tests show normal rates, yet downstream inscription arrays report insufficient power.\n\nStandard cleaning procedures executed, deposits reformed within 6 hours. After pipeline replacement, phenomenon transferred to new conduits. Engineering analysis: Pipelines themselves show no abnormality, issue may lie in fluid properties.\n\nKeybound personnel on this layer report inscription casting feels 'heavy.' Majority describe sensation as 'ink has thickened,' though fluid viscosity tests normal.\n\nRecommend increasing flush frequency to thrice daily.\nSignature: [Line filled but handwriting illegible]",
+    "_voice": "doc",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "text_zh": "区域限制通知\n\n生效范围：第 ██ 层东侧走廊\n发布部门：安全管理处\n\n该区域内键座出现间歇性字符显示异常。现象表现为：特定铅字符在操作过程中逐渐变得模糊，最终完全消失。消失顺序固定：先外围字符，后中心区域。持续时间约 ██ 分钟。\n\n现象不影响铭刻功能。键徒反馈：'键还在，但看不见了'。触觉确认键位正常，仅视觉显示受影响。\n\n已安排 D-████ 至 D-████ 执行该区域作业。人员配备：双倍。理由：单人作业时失误率上升 ██%。工作安排：伙伴监视，互相提醒键位。\n\n暂无设备更换计划。该现象已持续 ██ 个月，设备功能未受实质损害。\n\n有效期：直至另行通知。",
+    "text_en": "Area Restriction Notice\n\nEffective Range: Layer ██ Eastern Corridor\nIssuing Department: Security Administration\n\nIntermittent character display anomalies observed in area's key lecterns. Phenomenon manifests as: Specific lead glyphs gradually blur during operation, eventually disappearing completely. Disappearance sequence consistent: Outer characters first, then central area. Duration approximately ██ minutes.\n\nPhenomenon does not impair inscription functionality. Keybound feedback: 'Keys remain, but cannot be seen.' Tactile confirmation shows normal key positioning, only visual display affected.\n\nD-████ through D-████ assigned to area operations. Personnel allocation: Double standard. Reason: Solo operation error rate increased ██%. Work arrangement: Partner observation, mutual key position reminders.\n\nNo equipment replacement scheduled. Phenomenon has persisted ██ months, equipment function not substantially impaired.\n\nEffective until further notice.",
+    "_voice": "doc",
+    "_objectId": "boss_fade"
+  }
+]

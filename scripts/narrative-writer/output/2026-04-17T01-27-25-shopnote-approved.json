@@ -1,0 +1,62 @@
+[
+  {
+    "text_zh": "D-0144说左边那排别碰",
+    "text_en": "D-0144 says avoid left shelf",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "谁又把我的笔拿走了！",
+    "text_en": "Who took my pen AGAIN!",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "铅币不够就签F-001表",
+    "text_en": "No coins? Fill F-001 form",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "上面那层的好用，trust me",
+    "text_en": "3rd shelf works, trust me",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "又涨价了...昨天还便宜",
+    "text_en": "Price up again...was cheaper yesterday",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0089昨天还在这写字呢",
+    "text_en": "D-0089 was writing here yesterday",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "那个闪光的别要，手会麻",
+    "text_en": "Don't take glowing one, hands tingle",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "轮班表上我明明还活着",
+    "text_en": "Schedule still shows me alive",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "墨水用完了有人补吗？",
+    "text_en": "Ink's out, anyone refill?",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "编号被回收前记得花完",
+    "text_en": "Spend before number recycle",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  }
+]

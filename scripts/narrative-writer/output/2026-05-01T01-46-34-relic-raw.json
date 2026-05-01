@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "基础抄录手册",
+    "name_en": "Field Basics Manual",
+    "tier_0_zh": "配发对象须知：持有本手册期间，技能授权通道暂停受理。物资管理中心存档备案。",
+    "tier_0_en": "Note: skill authorization channels suspended upon issuance. Records filed with Materials Management.",
+    "tier_1_zh": "本手册配发批次中有三份残稿记录未完成复核。技能授权暂停原因一栏标注为",
+    "tier_1_en": "Three batch records unreviewed. Skill authorization suspension reason field reads: blank.",
+    "tier_2_zh": "翻到第五页时有人报告页边发热。内训部备注：属正常磨损。已归档。",
+    "tier_2_en": "Page five reported warm at the margin. Internal Training noted: normal wear. Logged.",
+    "tier_3_zh": "已确认：样本 #485,902 持有本手册后技能申请行为归零。持有人未提出异议。",
+    "tier_3_en": "Confirmed: Subject #485,902 filed zero skill requisitions post-issuance. No complaint submitted.",
+    "_objectId": "glass_cannon_v2",
+    "_voice": "per_tier_flavor"
+  }
+]

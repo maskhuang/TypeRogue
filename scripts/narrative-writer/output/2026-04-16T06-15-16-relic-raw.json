@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "初铭真典",
+    "name_en": "Codex Primalis",
+    "text_zh": "诸铭文组皆为后世杂音，唯初铭之音方能直达引擎心脏。弃繁归简者，得见真理之形。",
+    "text_en": "All inscriptions are but echoes of the First Word. Only in simplicity does the Engine's heart recognize its own voice.",
+    "_objectId": "glass_cannon_v2",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "编号: CA-████\nObject Class: Apollyon\n来源: 第 XI 层 抄写室废墟\n描述: 基础铭刻手册，封面烧蚀。内页保留初学者练习谱：单字母铅版、基本键位图解、标准握笔姿势示意。手册末页夹有 F-044 表单，填写者: Scriptor V-████。原因栏记录\"自愿回归基础训练\"。\n备注: 该手册出现后，持有者的高阶铭文组会自行从装备栏剥落。铭刻誓门将此现象归类为\"净化回归\"。\n附录: 手册内侧封面有铅笔涂鸦——一个笑脸，疑似 Scriptor V-████ 笔迹。",
+    "text_en": "ID: CA-████\nObject Class: Apollyon\nOrigin: Level XI Scriptorium ruins\nDescription: Basic inscription manual, cover scorched. Interior pages retain beginner exercises: single-letter lead type, fundamental key position diagrams, standard grip posture illustrations. Manual's final page contains F-044 form, completed by Scriptor V-████. Reason field notes \"voluntary return to foundational training\".\nRemark: Upon manual's appearance, bearer's advanced inscription sets spontaneously detach from equipment slots. Order of the Graven Oath classifies this phenomenon as \"purification regression\".\nAddendum: Manual's inside cover contains pencil sketch—a smiling face, suspected V-████ handwriting.",
+    "_objectId": "glass_cannon_v2",
+    "_voice": "doc"
+  }
+]

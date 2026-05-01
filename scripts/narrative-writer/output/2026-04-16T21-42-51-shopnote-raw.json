@@ -1,0 +1,62 @@
+[
+  {
+    "text_zh": "左边那排试过，管用 —D-0203",
+    "text_en": "Left shelf works —D-0203",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "别碰发光的，手还在疼",
+    "text_en": "Don't touch the glowing ones, hand still hurts",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "又涨价了？昨天才5个铅币",
+    "text_en": "Price up again? Was 5 coins yesterday",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "谁把我的笔拿走了！！",
+    "text_en": "WHO TOOK MY PEN!!",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0144说这个能撑到第8层",
+    "text_en": "D-0144 says this lasts to Layer 8",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "D-0089推荐的，他已经…算了",
+    "text_en": "D-0089 recommended this, he's... nevermind",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "换班的人记得补货",
+    "text_en": "Next shift remember to restock",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "为什么总有血迹？擦不掉",
+    "text_en": "Why always bloodstains? Won't clean off",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "上面那个好像在动…",
+    "text_en": "Top one seems to be moving...",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  },
+  {
+    "text_zh": "第三次忘记我的编号了",
+    "text_en": "3rd time forgot my number",
+    "_voice": "note",
+    "_objectId": "shopnote"
+  }
+]

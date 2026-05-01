@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "采购限额核准卡",
+    "name_en": "Procurement Discount Card",
+    "tier_0_zh": "凭此卡于物资管理中心办理采购，享有经财务组审批的限额优惠。卡面编号须与工号一致。",
+    "tier_0_en": "Present at procurement counter for approved discount on authorized supplies. Card number must match employee ID.",
+    "tier_1_zh": "本卡优惠条款已完成残稿复核。复核记录中有两处附注页缺失，尚未补档。",
+    "tier_1_en": "Discount terms cleared via fragment review. Two annotation pages remain missing from the file.",
+    "tier_2_zh": "刷卡时卡面印刷的价格栏偶尔显示另一组数字。行为档案已收录。建议正常使用。",
+    "tier_2_en": "Price field occasionally displays a different figure at point of use. Logged by behavior records. Proceed normally.",
+    "tier_3_zh": "已确认：样本 #485,902 持卡消费后停顿约两秒，随后继续操作。持有人对优惠数字的核对行为已纳入月度观察表。",
+    "tier_3_en": "Confirmed: Subject #485,902 pauses briefly post-transaction before resuming. Verification behavior logged in monthly observation sheet.",
+    "_objectId": "discount_card",
+    "_voice": "per_tier_flavor"
+  }
+]

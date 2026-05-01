@@ -1,0 +1,50 @@
+[
+  {
+    "id": "none",
+    "name_zh": "初誓键徒",
+    "name_en": "The Keybound Novitiate",
+    "text_zh": "「以铅为誓，以键为途——汝手握初铭之权，心承不朽之重。」",
+    "text_en": "\"By lead sworn, by key bound—thy hands hold first inscription, thy heart bears eternal weight.\"",
+    "_voice": "bell",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "name_zh": "铭刻誓门",
+    "name_en": "Order of the Graven Oath",
+    "text_zh": "「铅屑归坩，字钉造册——形不可变者，锁死引擎之门。」",
+    "text_en": "\"Shavings to crucible, slugs to register—those who hold form unchanging lock fast the Engine's gate.\"",
+    "_voice": "bell",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "name_zh": "熔变誓门",
+    "name_en": "Order of the Molten Verse",
+    "text_zh": "「熔蜡润笔，重铸新形——顺应变化者，与引擎同呼吸。」",
+    "text_en": "\"Molten wax anoints the stylus, reforging new forms—those who embrace change breathe with the Engine.\"",
+    "_voice": "bell",
+    "_objectId": "metamorph"
+  },
+  {
+    "id": "none",
+    "text_zh": "ORDER-001 · 消耗品编制\n\n入会条件: 无。按§4.2条例自动征调。\n编制状况: 标准D级人员。无特殊授权。\n作业分派: 收容铭刻，按标准程序。\n失联率: ██.█%（月均）。\n\n备注: 编制内最大群体。补充来源充足。\n无需特殊训练或筛选。按F-001表单发放基础装备。\n失联后编号回收，七日内完成替补征调。",
+    "text_en": "ORDER-001 · Expendable Personnel\n\nRequisites: None. Auto-conscripted per §4.2.\nStatus: Standard D-Class. No special clearance.\nAssignment: Containment inscription per protocol.\nAttrition: ██.█% (monthly average).\n\nNote: Largest demographic within establishment.\nAdequate replacement pipeline maintained.\nBasic equipment issued per F-001 forms.\nPost-incident ID recycling within seven days.",
+    "_voice": "doc",
+    "_objectId": "none"
+  },
+  {
+    "id": "wordsmith",
+    "text_zh": "ORDER-017 · 铭刻誓门见习\n\n入会条件: 表现D级人员中甄选。需通过铅屑甄别测试。\n神学立场: 形不可变。严守引擎既定铸序。\n作业内容: 废铅分拣、圣字钉造册、收容经卷编撰。\n\n观察记录: 持续作业人员报告'手指自知所需之字'。\n经记录，此类人员收容效率显著提升。原因不明。\n附带现象: 作业区域内铅屑堆积呈几何图案。\n\n对立编制: ████████ [REDACTED]",
+    "text_en": "ORDER-017 · Order of the Graven Oath, Novice\n\nRequisites: Selected from performing D-Class. Pass shaving-sorting evaluation.\nDoctrine: Form immutable. Adhere to Engine's established sequence.\nDuties: Lead sorting, glyph cataloguing, containment scroll compilation.\n\nObservation Log: Sustained operators report 'fingers know required glyphs'.\nRecorded significant containment efficiency improvement. Cause unknown.\nAssociated phenomena: Lead shavings form geometric patterns in work areas.\n\nOpposing Orders: ████████ [REDACTED]",
+    "_voice": "doc",
+    "_objectId": "wordsmith"
+  },
+  {
+    "id": "metamorph",
+    "text_zh": "ORDER-[DATA EXPUNGED] · ████████\n\n入会条件: [REDACTED]\n作业内容: 铭文组重铸。使用熔蜡进行结构改写。\n\n事故记录: D-████使用后报告'字符在流动'。\n后续观察显示铭文组确有自发重构现象。\n该人员于第██层失联，留下大量蜡痕。\n\n安全备注: 熔蜡接触会导致不可逆变化。\n建议限制此类作业的授权级别。\n████ [进一步资料需更高权限]",
+    "text_en": "ORDER-[DATA EXPUNGED] · ████████\n\nRequisites: [REDACTED]\nDuties: Inscription reforging. Structural rewriting using molten unguent.\n\nIncident Log: D-████ reported 'glyphs are flowing' post-contact.\nSubsequent observation confirmed spontaneous inscription reconfiguration.\nSubject lost contact on Layer ██, extensive wax traces remain.\n\nSafety Note: Unguent contact causes irreversible alterations.\nRecommend restricted clearance for such operations.\n████ [Further data requires elevated access]",
+    "_voice": "doc",
+    "_objectId": "metamorph"
+  }
+]

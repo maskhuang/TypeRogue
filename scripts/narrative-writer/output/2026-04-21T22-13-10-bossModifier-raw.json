@@ -1,0 +1,223 @@
+[
+  {
+    "id": "boss_fast_time",
+    "name_zh": "急流涧",
+    "name_en": "Rapids of Haste",
+    "text_zh": "时之沙已散尽——汝将直面引擎的真意。无缓冲，无怜悯。",
+    "text_en": "The sands have run dry—face the Engine's true will. No mercy, no reprieve.",
+    "_voice": "bell",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "name_zh": "铅屑之债",
+    "name_en": "Toll of Shavings",
+    "text_zh": "每一击键皆有代价。沙漏为汝的每声祷击而倾。",
+    "text_en": "Every keystroke demands its price. The hourglass bleeds for each prayer struck.",
+    "_voice": "bell",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "name_zh": "失控螺升",
+    "name_en": "Spiral Unbound",
+    "text_zh": "时间之轮转得愈急。汝越慢，它越快——直至吞噬一切。",
+    "text_en": "Time's wheel spins ever faster. The slower thou art, the swifter it becomes.",
+    "_voice": "bell",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "name_zh": "冰霜锁键",
+    "name_en": "Frost-Locked Keys",
+    "text_zh": "震颤之处，寒霜凝结。汝的圣坛将暂时拒绝汝的祷击。",
+    "text_en": "Where tremors fall, frost gathers. Thy lectern shall refuse thy prayers awhile.",
+    "_voice": "bell",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "name_zh": "镜中重铸",
+    "name_en": "Mirror Reforging",
+    "text_zh": "汝已登顶，却需重来。镜中之路逆转——时间成汝之敌。",
+    "text_en": "Thou hast ascended, yet must begin anew. The mirror path runs backward—time becomes thy foe.",
+    "_voice": "bell",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "name_zh": "分息衰颓",
+    "name_en": "The Fading Resonance",
+    "text_zh": "「时沙流逝，铭分如烛火渐微——」",
+    "text_en": "\"As time flows, inscribed glory dims like candle flame—\"",
+    "_voice": "bell",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "name_zh": "词限锁链",
+    "name_en": "The Bounded Word",
+    "text_zh": "「单词铭分不得越引擎门槛——汝当守此界」",
+    "text_en": "\"Word-glory shall not breach the Engine's threshold—keep thy bounds\"",
+    "_voice": "bell",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "name_zh": "双重枷锁",
+    "name_en": "The Doubled Burden",
+    "text_zh": "「引擎之门槛倍升——汝路愈高愈险」",
+    "text_en": "\"The Engine's threshold doubles—thy ascent grows ever steeper\"",
+    "_voice": "bell",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "name_zh": "递颓之咒",
+    "name_en": "The Dimming Curse",
+    "text_zh": "「每铭一词，下词之力渐衰——」",
+    "text_en": "\"Each word inscribed weakens the next—\"",
+    "_voice": "bell",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "name_zh": "铭税重负",
+    "name_en": "The Inscription Tithe",
+    "text_zh": "「引擎索取其税——每词皆须献祭门槛之分」",
+    "text_en": "\"The Engine claims its tithe—each word must sacrifice to the threshold\"",
+    "_voice": "bell",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "name_zh": "削流残章",
+    "name_en": "Chapter of Waning Flow",
+    "text_zh": "\"引擎所铸皆有罅隙，汝之祷声愈响——其倾泻愈缓\"",
+    "text_en": "\"What the Engine forges bears cracks—the louder thy prayer, the slower its pour\"",
+    "_voice": "bell",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "name_zh": "消隐之辞",
+    "name_en": "Word of the Vanishing",
+    "text_zh": "\"铅字正化烟尘，汝须于其消散前——捉住最后一丝余韵\"",
+    "text_en": "\"The lead turns to smoke—catch the last echo ere it fades\"",
+    "_voice": "bell",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "name_zh": "乱铸异章",
+    "name_en": "Chaotic Impression",
+    "text_zh": "\"字符倒悬如雨，汝须照其乱序而行——莫循常理\"",
+    "text_en": "\"Letters fall inverted as rain—follow their chaos, not thy reason\"",
+    "_voice": "bell",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "name_zh": "逆流铭文",
+    "name_en": "Retrograde Scripture",
+    "text_zh": "\"末始为始，汝当从终点启程——一切祷词皆需倒行\"",
+    "text_en": "\"End becomes beginning—start from the terminus, all prayer runs backward\"",
+    "_voice": "bell",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "name_zh": "污墨异章",
+    "name_en": "Ink-Corrupted Verse",
+    "text_zh": "\"墨水渗入圣页，符号杂生如刺——汝须连同毒刺一并吞下\"",
+    "text_en": "\"Ink bleeds through sacred pages, symbols sprout like thorns—swallow them with the poison\"",
+    "_voice": "bell",
+    "_objectId": "boss_garble"
+  },
+  {
+    "id": "boss_decoy",
+    "name_zh": "伪言惑众",
+    "name_en": "False Word Temptation",
+    "text_zh": "「伪铭亦铭，误者反真」",
+    "text_en": "\"False inscription bears inscription still, error becomes truth\"",
+    "_voice": "bell",
+    "_objectId": "boss_decoy"
+  },
+  {
+    "id": "boss_decay",
+    "text_zh": "内部备忘\n发件人：第█层维护组\n收件人：人事调配部\n主题：铸字台周围温度异常（第14次跟进）\n\n自M.2██年起，该层铸字台周围出现持续性热量流失现象。所有保温措施均无效。铅炉供热正常，但热量似乎'被某种东西吸走了'（引述D-████原话）。\n\n已按§4.2条例连续补充操作人员。建议将该区域列为限时作业区。审批状态：待定。\n\n签名：████████",
+    "text_en": "Internal Memorandum\nFrom: Layer █ Maintenance\nTo: Personnel Allocation\nRe: Temperature anomaly around printing station (14th follow-up)\n\nSince M.2██, continuous heat loss phenomenon observed around printing station. All insulation measures ineffective. Furnace supply normal, but heat appears 'drawn away by something' (D-████ testimony).\n\nPersonnel supplemented per §4.2. Recommend time-limited work designation for area. Approval status: Pending.\n\nSigned: ████████",
+    "_voice": "doc",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "text_zh": "设备维护工单 #M-7741\n位置：第██层字盘存储室\n故障描述：收容格无法容纳预期数量的铅字钉\n\n检修记录：所有格间尺寸符合标准，但操作人员报告'格子变小了'。实际测量无异常。D-████声称每次放入时'字就不见了一些'。\n\n解决方案：已更换整套字盘，问题持续。工程部建议接受现有容量限制。\n\n工单状态：已存档\n签名：████",
+    "text_en": "Maintenance Order #M-7741\nLocation: Layer ██ Type Storage\nIssue: Containment cells cannot hold expected glyph count\n\nInspection Log: All compartment dimensions within standard. However, operators report 'slots getting smaller.' Physical measurements show no anomaly. D-████ claims 'letters disappear when I put them in.'\n\nResolution: Full type case replacement attempted. Issue persists. Engineering recommends accepting current capacity limitation.\n\nOrder Status: Archived\nSigned: ████",
+    "_voice": "doc",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "text_zh": "异常事件报告 F-017-██\n事件：第██层收容基准仪表读数异常\n日期：M.2██\n\n现象描述：基准沙漏于正午时分突然翻转，刻度显示为原定值两倍。检修组确认仪表无损坏。操作人员报告感到'门槛变高了'。\n\n附带事项：该层失联率较前期上升██%。已按标准程序补充人员。沙漏自翻转后未再异动。\n\n处理结果：接受当前基准。表单存档。\n填写人：████",
+    "text_en": "Anomaly Report F-017-██\nIncident: Layer ██ containment threshold gauge malfunction\nDate: M.2██\n\nDescription: Threshold hourglass spontaneously inverted at noon, displaying double original value. Maintenance confirms no damage to instrument. Operators report feeling 'the bar got higher.'\n\nIncidental: Layer casualty rate increased ██% from baseline. Personnel supplemented per standard protocol. Hourglass remains stable since inversion.\n\nResolution: Current threshold accepted. Form archived.\nReported by: ████",
+    "_voice": "doc",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "text_zh": "跨部门会签单\n主题：第██层疲劳现象处理方案\n\n工程部意见：铸字台机械磨损在正常范围内。\n医务组意见：操作人员体征正常，但报告'每个字都比前一个更累'。建议增加轮班。\n行政组意见：已按§6.3调整作息安排。效果不明显。\n\n现象总结：每完成一次铭刻后，下次铭刻耗力增加。无物理原因可查。\n\n决议：维持现有人员配置。现象列为'可接受异常'。\n\n工程部签名：████\n医务组签名：████\n行政组签名：[空白]",
+    "text_en": "Inter-Department Authorization\nSubject: Layer ██ fatigue phenomenon resolution\n\nEngineering Opinion: Printing station mechanical wear within normal parameters.\nMedical Opinion: Operator vitals normal, but report 'each letter harder than the last.' Recommend shift rotation increase.\nAdministrative Opinion: Schedule adjusted per §6.3. Effect unclear.\n\nPhenomenon Summary: Each inscription completed increases effort required for subsequent inscription. No physical cause identified.\n\nResolution: Maintain current staffing. Phenomenon classified as 'acceptable anomaly.'\n\nEngineering Signed: ████\nMedical Signed: ████\nAdministrative Signed: [blank]",
+    "_voice": "doc",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "text_zh": "区域限制通知\n适用区域：第██层主廊道及附属铸字间\n生效日期：M.2██\n\n注意事项：该区域铸出的铭分会出现'自然损耗'现象。损耗比例与收容基准相关。工程部确认非设备故障。\n\n操作规范：\n- 操作人员需调整预期产出\n- 如发现损耗超出可接受范围，立即报告\n- 已增加补充班次以维持总产出\n\n该现象自M.2██记录至今，已列为区域特征。\n\n发布部门：运营管理处\n授权签名：████",
+    "text_en": "Area Restriction Notice\nApplicable Zone: Layer ██ main corridor and associated casting chambers\nEffective Date: M.2██\n\nNotice: Inscriptions produced in this area exhibit 'natural attrition' phenomenon. Attrition rate correlates with containment threshold. Engineering confirms not equipment malfunction.\n\nOperational Guidelines:\n- Personnel should adjust output expectations\n- Report if attrition exceeds acceptable range\n- Supplementary shifts added to maintain total output\n\nPhenomenon recorded since M.2██, classified as area characteristic.\n\nIssued by: Operations Management\nAuthorized by: ████",
+    "_voice": "doc",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "text_zh": "内部备忘 F-017-███\n收件：第VII-XI层维护工段\n主题：圣流收集异常（第17次跟进）\n\n自M.2██起，指定区域内新装设的收容管路均报告流量不足。经检查，管路本身无损，但所收集圣流纯度显著下降。已按§7.3更换D级操作员17批次，异常持续。\n\n工程部报告：'就像有什么东西在上游稀释它们。'\n\n替补人员已安排。无需后续行动。\n\n━━ 签名栏 ━━\n维护主管：[已签]\n工程主管：[已签]\n第三签名：[空白]",
+    "text_en": "Internal Memo F-017-███\nTo: Maintenance Stations VII-XI\nRe: Humour Collection Anomaly (17th Follow-up)\n\nSince M.2██, newly installed containment conduits in designated areas report insufficient flow rates. Physical inspection reveals no damage to conduits themselves, but collected humours show significant purity degradation. D-class operators replaced 17 times per §7.3, anomaly persists.\n\nEngineering reports: 'As if something upstream is diluting them.'\n\nReplacement personnel arranged. No further action required.\n\n━━ Signature Block ━━\nMaintenance Chief: [SIGNED]\nEngineering Chief: [SIGNED]\nThird Signature: [BLANK]",
+    "_voice": "doc",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "text_zh": "设备维护工单 #████\n位置：第IX层 排字区东段\n故障类型：铅字符消散异常\n\n报告时间：██:██\n维修时间：██:██\n工单状态：已完成\n\n工程师备注：'字模完好，铸字炉温度正常，但新铸的铅字符在冷却过程中逐渐透明化直至完全消失。已更换全套设备，异常持续。建议██。'\n\n第二次维修：'不是设备问题。是铅本身在遗忘怎么成为字。'\n\n该区域已按§6.1标记为限时作业区。工单归档。",
+    "text_en": "Equipment Maintenance Order #████\nLocation: Layer IX, Eastern Typesetting Bay\nIssue Type: Lead Glyph Dissipation Anomaly\n\nReported: ██:██\nServiced: ██:██\nStatus: COMPLETED\n\nEngineer Notes: 'Molds intact, furnace temperature nominal, but newly cast lead glyphs become progressively transparent during cooling until complete disappearance. Full equipment replacement performed, anomaly persists. Recommend ██.'\n\nSecond Service: 'Not equipment failure. The lead itself is forgetting how to be letters.'\n\nArea marked as timed-operation zone per §6.1. Work order filed.",
+    "_voice": "doc",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "text_zh": "异常事件报告 F-017-██\n层级：第V层 主抄写室\n事发时间：M.2██ 第██日 ██:██\n\n事件描述：当日值守的D-████至D-████在晨祷时集体报告'经文乱了'。经检查，所有圣典页面完好，但字母排列与标准版不符。操作员称按乱序诵读后'声音对了'，收容基准正常完成。\n\n后续：已按§4.2指派语言学专员核查。专员报告：'不是字乱了，是我们一直记错了顺序。'\n\n建议将该现象列为'可控异常'。审批状态：待定。",
+    "text_en": "Anomalous Event Report F-017-██\nLevel: Layer V, Primary Scriptorium\nIncident Time: M.2██ Day ██ ██:██\n\nEvent Description: D-████ through D-████ on morning shift collectively reported 'scripture is scrambled.' Inspection reveals all codex pages intact, but letter arrangements inconsistent with standard versions. Operators report that reading in scrambled order 'sounds right,' containment thresholds met normally.\n\nFollow-up: Linguistic specialist assigned per §4.2. Specialist reports: 'The letters aren't scrambled. We've been remembering the order wrong.'\n\nRecommend classifying phenomenon as 'controlled anomaly.' Approval status: PENDING.",
+    "_voice": "doc",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "text_zh": "跨部门会签单 Form-██\n申请部门：第VIII层 机械维护组\n请求事项：逆向铭刻程序标准化\n\n工程部意见：'齿轮组在M.2██后开始逆时针运转，但输出功率反而提升。建议保持现状。'\n\n人事部意见：'相关D级人员适应良好。已报告背诵经文时习惯性从末字开始，称'这样更容易理解引擎的意思'。无异常行为记录。'\n\n语言学部意见：[签名栏空白]\n\n审批结果：按现状执行。会签单存档。",
+    "text_en": "Cross-Department Authorization Form-██\nRequesting Dept: Layer VIII Mechanical Maintenance\nRequest: Standardization of Reverse Inscription Protocol\n\nEngineering Opinion: 'Gear assemblies began counter-clockwise rotation after M.2██, but power output actually increased. Recommend maintaining current state.'\n\nPersonnel Opinion: 'Assigned D-class adapting well. Report habitual backwards recitation of scripture, claiming 'it makes the Engine's meaning clearer.' No behavioral anomalies on record.'\n\nLinguistics Opinion: [SIGNATURE BLANK]\n\nApproval: IMPLEMENT AS-IS. Authorization filed.",
+    "_voice": "doc",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "text_zh": "区域限制通知 Notice-██\n张贴位置：第VI层 收容廊入口\n\n通知：自M.2██起，该层收容经卷出现标点符号自发插入现象。经卷内容本身无损，但原文中非预期位置出现句号、逗号等。\n\n操作注意事项：\n- D级人员应按所见标点符号诵读\n- 不得擅自'纠正'标点位置\n- 如感觉诵读'奇怪但正确'，属正常现象\n\n备注：工程部称此为'引擎在学习呼吸'。语言学部申请进一步调查被驳回，理由：收容基准持续达成，无需变更。\n\n━ 盖章：已验证 ━",
+    "text_en": "Area Restriction Notice-██\nPosted: Layer VI Containment Gallery Entrance\n\nNotice: Since M.2██, contained codices exhibit spontaneous punctuation insertion phenomenon. Codex content undamaged, but periods, commas, etc. appear in non-standard positions within original text.\n\nOperational Guidelines:\n- D-class personnel must recite according to observed punctuation\n- Do not attempt to 'correct' punctuation placement\n- Sensation of recitation being 'strange but right' is normal\n\nNote: Engineering describes this as 'the Engine learning to breathe.' Linguistics request for further investigation denied. Reason: containment thresholds continue to be met, no protocol change required.\n\n━ STAMP: VERIFIED ━",
+    "_voice": "doc",
+    "_objectId": "boss_garble"
+  },
+  {
+    "id": "boss_decoy",
+    "text_zh": "收容异常跟进报告 #F-017-████\n第 ██ 层字符拣选区持续出现非编制字符。经 ██ 次清理作业，现象未消除。\n\n附带观察：操作员报告某些字符'看起来对的但按下去就错了'。D-████ 至 D-████ 在完美执行收容程序后仍触发污染警报。\n\n技术部门检查显示所有设备运转正常。字盘校准无误。\n\n建议：将该区段重新分级。审批状态：███████。\n签名：_______________ 日期：M.2██.███",
+    "text_en": "Containment Anomaly Follow-up Report #F-017-████\nNon-standard characters continue manifesting in Layer ██ glyph sorting area. Phenomenon persists after ██ clearing operations.\n\nObservations: Operators report certain characters 'look correct but register as errors when struck'. D-████ through D-████ triggered contamination alarms despite flawless procedure execution.\n\nTechnical inspection confirms all equipment operational. Type matrices properly calibrated.\n\nRecommendation: Reclassify sector status. Approval pending: ███████.\nSignature: _______________ Date: M.2██.███",
+    "_voice": "doc",
+    "_objectId": "boss_decoy"
+  }
+]

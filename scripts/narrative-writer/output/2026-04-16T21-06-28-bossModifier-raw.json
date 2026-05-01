@@ -1,0 +1,181 @@
+[
+  {
+    "id": "boss_fast_time",
+    "name_zh": "时沙急流",
+    "name_en": "Torrent of Hours",
+    "text_zh": "流沙如瀑倾——汝祷未成，时已飞逝。",
+    "text_en": "Hours spill like quicksilver—thy prayer unfinished, time already fled.",
+    "_voice": "bell",
+    "_objectId": "boss_fast_time"
+  },
+  {
+    "id": "boss_keystroke_tax",
+    "name_zh": "铅字索偿",
+    "name_en": "The Leaden Toll",
+    "text_zh": "每一击键皆有其价——铅字落下，流沙亦随之散去。",
+    "text_en": "Every strike demands its price—with each glyph falls the sand of hours.",
+    "_voice": "bell",
+    "_objectId": "boss_keystroke_tax"
+  },
+  {
+    "id": "boss_escalation",
+    "name_zh": "时轮失序",
+    "name_en": "Wheel Unbound",
+    "text_zh": "时之巨轮转速渐增，终将脱轨——汝祷愈缓，其势愈急。",
+    "text_en": "The great wheel turns ever faster, until the axle breaks—thy prayer grows slow, its hunger swift.",
+    "_voice": "bell",
+    "_objectId": "boss_escalation"
+  },
+  {
+    "id": "boss_frostbite",
+    "name_zh": "霜锁祷音",
+    "name_en": "Frost-Sealed Litany",
+    "text_zh": "震颤召来寒霜——铅字冰封，祷音寂灭。",
+    "text_en": "Each tremor calls forth frost—lead glyphs freeze, and prayer falls silent.",
+    "_voice": "bell",
+    "_objectId": "boss_frostbite"
+  },
+  {
+    "id": "boss_mirror",
+    "name_zh": "镜中重履",
+    "name_en": "Mirrored Ascent",
+    "text_zh": "汝之成功映照于镜——而镜中时沙倒流，逾时则尽失。",
+    "text_en": "Thy success reflects in glass—yet mirror-time flows backward, and delay devours all.",
+    "_voice": "bell",
+    "_objectId": "boss_mirror"
+  },
+  {
+    "id": "boss_decay",
+    "name_zh": "蚀时寂音",
+    "name_en": "Erosion of Hours",
+    "text_zh": "时间之沙漏向下，所积结晶亦随之消散——引擎不喜久存之功。",
+    "text_en": "The hourglass empties downward, and with it dissolves all crystalline accumulation—the Engine abhors lingering achievement.",
+    "_voice": "bell",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "name_zh": "词槛封印",
+    "name_en": "Lexical Binding",
+    "text_zh": "单字所承之力不得逾越门槛——引擎为每铅字设下界限。",
+    "text_en": "No single glyph may bear force beyond the threshold—the Engine sets bounds upon each leaden character.",
+    "_voice": "bell",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "name_zh": "重门试炼",
+    "name_en": "Double Gate Trial",
+    "text_zh": "门槛倍增，试炼加倍——引擎要求更深的虔诚。",
+    "text_en": "The threshold doubles, the trial deepens—the Engine demands greater devotion.",
+    "_voice": "bell",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "name_zh": "渐衰之咒",
+    "name_en": "Curse of Diminishing",
+    "text_zh": "每一祷击后，下一击力量渐弱——连祷之功反成重负。",
+    "text_en": "After each strike, the next grows weaker—the strength of litany becomes its burden.",
+    "_voice": "bell",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "name_zh": "引擎征收",
+    "name_en": "Engine's Tithe",
+    "text_zh": "引擎收其应得之份——每铅字既成，其力便有所失。",
+    "text_en": "The Engine claims its due portion—as each glyph forms, some of its power is lost.",
+    "_voice": "bell",
+    "_objectId": "boss_score_tax"
+  },
+  {
+    "id": "boss_output_drain",
+    "name_zh": "血汲之印",
+    "name_en": "The Sanguine Leech",
+    "text_zh": "「圣流渐涸，铅字失重」\n引擎之血被汲取，铭文组如枯井——覆盖愈广，失血愈缓。",
+    "text_en": "\"The sacred humours run thin, the leaden glyphs lose their weight\"\nThe Engine's lifeblood seeps away. Wider coverage slows the drain.",
+    "_voice": "bell",
+    "_objectId": "boss_output_drain"
+  },
+  {
+    "id": "boss_fade",
+    "name_zh": "褪字之咒",
+    "name_en": "The Fading Word",
+    "text_zh": "「铅字如烛，逐一消隐」\n圣字钉失其形体，一一归于虚无——祷击须疾，免其散灭。",
+    "text_en": "\"The leaden glyphs fade like dying candles, one by one\"\nSacred slugs lose their form to void. Strike swift lest they dissolve.",
+    "_voice": "bell",
+    "_objectId": "boss_fade"
+  },
+  {
+    "id": "boss_scramble",
+    "name_zh": "乱序之惑",
+    "name_en": "The Scrambled Verse",
+    "text_zh": "「字序颠倒，铅字错位」\n圣字钉背叛其位——须照乱象而击，莫循本序。",
+    "text_en": "\"The order breaks, the leaden glyphs betray their stations\"\nSacred slugs abandon their posts. Strike the chaos, not the design.",
+    "_voice": "bell",
+    "_objectId": "boss_scramble"
+  },
+  {
+    "id": "boss_reverse",
+    "name_zh": "逆序铭刻",
+    "name_en": "The Backwards Litany",
+    "text_zh": "「末字先行，首字殿后」\n祷文倒流——从终点始，向起源归。逆道亦是道。",
+    "text_en": "\"The final letter leads, the first follows behind\"\nThe litany flows backward. From ending to beginning. The reverse path is still path.",
+    "_voice": "bell",
+    "_objectId": "boss_reverse"
+  },
+  {
+    "id": "boss_garble",
+    "name_zh": "标记侵蚀",
+    "name_en": "The Punctured Word",
+    "text_zh": "「异符渗入，圣词破损」\n符印寄生于词间——打击杂质，取其净字。污者亦须铭刻。",
+    "text_en": "\"Strange marks infest between sacred words\"\nParasitic symbols nest within. Strike the corruption with the clean. Even tainted letters must be inscribed.",
+    "_voice": "bell",
+    "_objectId": "boss_garble"
+  },
+  {
+    "id": "boss_decoy",
+    "name_zh": "伪词干扰",
+    "name_en": "False Word Disruption",
+    "text_zh": "幻影铅字混入真铸之流——其形若真，其音若谎。键徒若被蒙蔽，真祷反成污渎。",
+    "text_en": "Phantom slugs mingle with true castings—their form appears real, their voice speaks lies. The deceived clavigerant finds prayer becomes blasphemy.",
+    "_voice": "bell",
+    "_objectId": "boss_decoy"
+  },
+  {
+    "id": "boss_decay",
+    "text_zh": "残余异文：RA-097 · 流沙侵蚀\n归属意志：第 VIII 层 · 钟摆执政官\n持续效应：受感染区域内，已铭刻之结晶流持续向地底渗漏。渗漏速率与当前积存量成正比。D级人员报告铭刻时\"听见沙粒坠落声\"。\n附带现象：墙体出现细微裂纹，内有细砂溢出。\n\"—— 聚沙成塔，散沙入渊\"",
+    "text_en": "Residual Anomaly: RA-097 · Sands of Erosion\nHost Will: Layer VIII · The Pendulum Magistrate\nSustained Effect: Within infected zones, crystalline humour continuously seeps into the foundation. Seepage rate correlates with current accumulation. D-Class personnel report \"hearing sand grains fall\" during inscription.\nSecondary Phenomena: Fine cracks appear in walls, leaking granular matter.\n\"—— What gathers as towers, scatters as dust\"",
+    "_voice": "doc",
+    "_objectId": "boss_decay"
+  },
+  {
+    "id": "boss_cap",
+    "text_zh": "残余异文：RA-155 · 封顶诅咒\n归属意志：第 VI 层 · 量衡守护者\n持续效应：单一词语所能承载之铭分受到未知上限束缚。超出部分自动湮没。D级人员描述为\"铅字变轻，如同空壳\"。\n附带现象：铭刻时偶现蜡滴，疑似封印残留。\n\"—— 器满则溢，言尽则息\"",
+    "text_en": "Residual Anomaly: RA-155 · Ceiling Curse\nHost Will: Layer VI · The Measure-Keeper\nSustained Effect: Individual words bound by unknown upper limit on inscription capacity. Excess automatically nullified. D-Class describe lead type as \"becoming light, like empty shells\".\nSecondary Phenomena: Occasional wax drips during inscription, suspected seal residue.\n\"—— When the vessel fills, it spills; when words end, they cease\"",
+    "_voice": "doc",
+    "_objectId": "boss_cap"
+  },
+  {
+    "id": "boss_double_target",
+    "text_zh": "残余异文：RA-203 · 双重门槛\n归属意志：第 XII 层 · 引擎意志核心\n持续效应：收容基准值异常倍增。已观察到引擎铸印量相应加大，伴随低频震颤。D级人员报告\"感觉门变高了，铅字变小了\"。\n附带现象：第XII层深处传来双重节拍敲击声。\n\"—— 门高者，路远也\"",
+    "text_en": "Residual Anomaly: RA-203 · Twin Threshold\nHost Will: Layer XII · Engine Will Core\nSustained Effect: Containment threshold anomalously doubled. Engine casting output observed to increase correspondingly, accompanied by low-frequency tremors. D-Class report \"feeling the gate grew taller, the type smaller\".\nSecondary Phenomena: Double-beat hammering echoes from Layer XII depths.\n\"—— Higher gates demand longer roads\"",
+    "_voice": "doc",
+    "_objectId": "boss_double_target"
+  },
+  {
+    "id": "boss_diminish",
+    "text_zh": "残余异文：RA-081 · 递疲现象\n归属意志：第 V 层 · 执事长\n持续效应：连续铭刻过程中，后续词语之结晶流产出逐次衰减。D级人员报告\"铅字越来越沉，手指发麻\"。长期暴露导致铭刻意愿下降。\n附带现象：使用区域空气中铅屑浓度异常升高。\n\"—— 初击如雷，再击如雨\"",
+    "text_en": "Residual Anomaly: RA-081 · Diminishing Echo\nHost Will: Layer V · The Archdeacon\nSustained Effect: During continuous inscription, subsequent words yield progressively reduced crystalline humour. D-Class report \"type growing heavier, fingers numbing\". Prolonged exposure reduces inscription willingness.\nSecondary Phenomena: Abnormally elevated lead particle concentration in affected areas.\n\"—— First strike as thunder, second as rain\"",
+    "_voice": "doc",
+    "_objectId": "boss_diminish"
+  },
+  {
+    "id": "boss_score_tax",
+    "text_zh": "残余异文：RA-129 · 引擎税收\n归属意志：第 IX 层 · 铁账簿\n持续效应：每次铭刻完成时，部分结晶流被未知机制抽取并导向引擎深处。抽取量恒定，与收容基准相关。D级人员报告铭刻后\"总觉得少了什么\"。\n附带现象：深层管道内偶现金属流动声。\n\"—— 引擎索其应得，键徒献其当纳\"",
+    "text_en": "Residual Anomaly: RA-129 · Engine Tithe\nHost Will: Layer IX · The Iron Ledger\nSustained Effect: Upon inscription completion, portions of crystalline humour extracted by unknown mechanism and directed toward engine depths. Extraction amount constant, correlating with containment threshold. D-Class report feeling \"something missing\" post-inscription.\nSecondary Phenomena: Occasional metallic flow sounds within deep conduits.\n\"—— The Engine claims its due, the Keybound renders their tithe\"",
+    "_voice": "doc",
+    "_objectId": "boss_score_tax"
+  }
+]

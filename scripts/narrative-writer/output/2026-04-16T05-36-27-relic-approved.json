@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "余响铜盾",
+    "name_en": "Scutum Resonantia",
+    "text_zh": "铜盾之面，映刻千言余响。连击既断，其音犹存——唯半数得护，余者归尘。",
+    "text_en": "Bronze face bears echoes of struck words. When rhythm breaks, half the song endures.",
+    "_objectId": "combo_buffer",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "物品编号: RLQ-4847\nObject Class: Safe\n发现地点: 第IV层抄写室废墟\n描述: 青铜制圆形护盾,直径约30厘米。表面刻有连续的祷文回路,当持有者的连击动作被外力中断时,护盾会释放储存的动能,使部分连击效果得以保持。经测试,保持率稳定在50%左右。\n备注: 前持有者为Scriptor ████,失联前正在研究连击祷文的持续性问题。护盾上发现其手印痕迹。\n最后更新: M.2██年██月",
+    "text_en": "Item Number: RLQ-4847\nObject Class: Safe\nRecovery Location: Layer IV scriptorium ruins\nDescription: Bronze circular shield, approximately 30cm diameter. Surface inscribed with continuous litany circuits. When holder's combo sequence is interrupted by external force, shield releases stored kinetic energy, allowing partial combo effects to persist. Testing shows consistent 50% retention rate.\nNote: Previous holder was Scriptor ████, missing while researching combo litany persistence. Shield bears their handprints.\nLast Updated: M.2██/██",
+    "_objectId": "combo_buffer",
+    "_voice": "doc"
+  }
+]

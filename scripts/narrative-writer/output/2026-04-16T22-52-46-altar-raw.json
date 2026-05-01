@@ -1,0 +1,72 @@
+[
+  {
+    "source": "self",
+    "text_zh": "……我是什么……感觉有人在摸我……",
+    "text_en": "...what am I... someone's touching me...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……好像听到齿轮声……还是心跳……",
+    "text_en": "...sounds like gears... or heartbeats...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……铅屑又掉了……我在漏什么吗……",
+    "text_en": "...lead shavings fell again... am I leaking...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "self",
+    "text_zh": "……这个人的手好温暖……",
+    "text_en": "...this one's hands are so warm...",
+    "_voice": "altar",
+    "_objectId": "self"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……那个人从不犹豫……每个字都很工整……",
+    "text_en": "...that one never hesitated... every letter so neat...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_a",
+    "text_zh": "……他总说'遵循条例'……声音很恭敬……",
+    "text_en": "...always said 'follow protocol'... so respectful...",
+    "_voice": "altar",
+    "_objectId": "scriptor_a"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……按R键的手在发抖……我记得……",
+    "text_en": "...trembling finger on R... I remember...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_b",
+    "text_zh": "……那个人总问'§7.1到底写了什么'……",
+    "text_en": "...kept asking 'what does §7.1 really say'...",
+    "_voice": "altar",
+    "_objectId": "scriptor_b"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……喜欢画画的那个……手指很轻快……",
+    "text_en": "...the one who drew pictures... such light fingers...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  },
+  {
+    "source": "scriptor_c",
+    "text_zh": "……说'引擎很美'……最后笑着走了……",
+    "text_en": "...said 'the Engine is beautiful'... left smiling...",
+    "_voice": "altar",
+    "_objectId": "scriptor_c"
+  }
+]

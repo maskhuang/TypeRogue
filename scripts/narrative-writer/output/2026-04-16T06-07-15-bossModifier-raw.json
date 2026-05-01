@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "乱序异文",
+    "name_en": "Litania Disarray",
+    "text_zh": "「字母失序，其形如蛇。铭之时当凝神，勿视其显，但依其真。」",
+    "text_en": "\"Letters writhe as serpents. Inscribe by truth, not sight.\"",
+    "_objectId": "boss_scramble",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "残余异文：RA-012 · 乱序现象\n归属 Boss：第 ██ 层 · ████████\n持续效应：铭刻字符在键盘阵列中发生位置偏移。操作者必须按照偏移后的布局进行收容铭刻，而非标准序列。字符本质未改变，仅显示顺序受到干扰。\n备注：现象似乎与引擎的 ████████ 过程相关。已观察到部分操作者在适应期后铭刻效率反而提升。\n\"混沌中自有其序，序中亦藏其混沌。\"",
+    "text_en": "Residual Anomaly: RA-012 · Scramble Phenomenon\nAssociated Boss: Level ██ · ████████\nPersistent Effect: Inscription glyphs undergo positional displacement within the keyboard array. Operators must perform containment inscriptions according to the displaced layout rather than standard sequence. Glyph essence remains unchanged—only display order is disrupted.\nNote: Phenomenon appears linked to Engine's ████████ process. Some operators show improved inscription efficiency after adaptation period.\n\"In chaos lies hidden order; in order, hidden chaos.\"",
+    "_objectId": "boss_scramble",
+    "_voice": "doc"
+  }
+]

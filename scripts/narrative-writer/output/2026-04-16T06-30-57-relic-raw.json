@@ -1,0 +1,16 @@
+[
+  {
+    "name_zh": "不死鸟",
+    "name_en": "Phoenix Immolatum",
+    "text_zh": "火中涅槃之鸟，其羽化作不熄之烛。站点污染时，汝之铭刻将重燃如初。",
+    "text_en": "Born of flame eternal, its feathers burn as undying candles. When sites falter, your inscription shall rekindle anew.",
+    "_objectId": "phoenix",
+    "_voice": "bell"
+  },
+  {
+    "text_zh": "分级: Apollyon\n发现地点: 第V层执事试炼室，M.1██\n征用编号: R-███\n\n描述: 镀金鸟形圣器，内嵌退火铅字一枚。收容震颤时自发复燃，重置流沙流至预设基准。执事试炼与意志显现期间会额外激活残余异文。\n\n备注: 原供奉于崇拜时代祭坛。██████ ████后被移至收容层。D级人员征用后失联率下降73%，但第V层以上异文活跃度显著增加。\n\n最后更新: M.2██ - Scriptor ████",
+    "text_en": "Classification: Apollyon\nRecovery Site: Layer V Deacon Trial Chamber, M.1██\nItem Number: R-███\n\nDescription: Gilt avian artifact containing single annealed lead glyph. Auto-ignites during containment tremors, resetting hourglass humour to baseline parameters. Exhibits enhanced residual anomaly generation during Deacon Trials and Will Manifestations.\n\nNotes: Originally housed in Worship Era altar assemblage. Relocated to containment layers following ██████ ████ incident. D-class requisition reduces casualty rates by 73%, though anomalous activity above Layer V increases substantially.\n\nLast Updated: M.2██ - Scriptor ████",
+    "_objectId": "phoenix",
+    "_voice": "doc"
+  }
+]
