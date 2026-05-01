@@ -11,36 +11,19 @@
 </head>
 <body>
     <div id="game-container">
-        <!-- === MAIN MENU === -->
-        <div id="main-menu-screen" class="screen menu-style-dossier" style="display:none">
+        <!-- === MAIN MENU (cover style — shader background透出) === -->
+        <div id="main-menu-screen" class="screen menu-style-cover" style="display:none">
+            <div class="menu-cover-meta menu-cover-meta-tl" aria-hidden="true">DPCA · DEPT 2-B</div>
+            <div class="menu-cover-meta menu-cover-meta-tr" aria-hidden="true">PAGE 1 / 3</div>
+            <div class="menu-cover-meta menu-cover-meta-bl" id="menu-info"></div>
+            <div class="menu-cover-meta menu-cover-meta-br" aria-hidden="true">DPCA-3942-A · ██7-2█-K</div>
+            <img class="menu-cover-watermark" src="/assets/ui/seal-mark.png?v=3" alt="" aria-hidden="true">
             <div class="menu-content">
-                <!-- 四角裁切对位标记（印刷裁切线） -->
-                <span class="menu-crop menu-crop-tl" aria-hidden="true"></span>
-                <span class="menu-crop menu-crop-tr" aria-hidden="true"></span>
-                <span class="menu-crop menu-crop-bl" aria-hidden="true"></span>
-                <span class="menu-crop menu-crop-br" aria-hidden="true"></span>
-                <!-- 左侧装订孔（暗示从夹子里抽出来） -->
-                <span class="menu-binding-hole menu-binding-hole-top" aria-hidden="true"></span>
-                <span class="menu-binding-hole menu-binding-hole-bot" aria-hidden="true"></span>
-                <!-- 右上角页码（被印章压住，体现 dossier 是多页文档） -->
-                <div class="menu-page-marker" aria-hidden="true">PAGE 1 / 3</div>
-                <div class="menu-classification" data-i18n="menu.classification">⚠ CONFIDENTIAL · INTERNAL USE ONLY · CLEARANCE 4-B ⚠</div>
-                <img class="menu-seal" src="/assets/ui/seal-mark.png?v=3" alt="" aria-hidden="true">
-                <div class="menu-title" data-i18n="menu.title">灵长类辅助文书部</div>
-                <div class="menu-form-meta">
-                    <span data-i18n="menu.form_meta_left">FORM-3942-A · REV 7.4</span>
-                    <span data-i18n="menu.form_meta_right">FILED: M.2█8.0█.██</span>
-                </div>
-                <div class="menu-revision" aria-hidden="true">
-                    <span data-i18n="menu.revision_line">REV 7.4 · EDITED BY ████ · LAST AMENDED M.2█8.██.██</span>
-                </div>
-                <!-- 提交人字段（玩家身份焊进档案） -->
-                <div class="menu-applicant">
-                    <span class="applicant-label" data-i18n="menu.applicant_label">APPLICANT</span>
-                    <span class="applicant-sep">·</span>
+                <h1 class="menu-title" data-i18n="menu.title">灵长类辅助文书部</h1>
+                <div class="menu-cover-rule" aria-hidden="true"></div>
+                <div class="menu-cover-applicant">
                     <span class="applicant-id">OP. PRIMATE-7842</span>
-                </div>
-                <div class="menu-applicant-meta">
+                    <span class="applicant-sep">·</span>
                     <span data-i18n="menu.applicant_in_post">IN POST</span>
                     <span class="applicant-num" id="menu-applicant-days">--</span>
                     <span data-i18n="menu.applicant_days">DAYS</span>
@@ -51,26 +34,11 @@
                     <span data-i18n="menu.applicant_pending">PENDING</span>
                     <span class="applicant-num" id="menu-applicant-pending">--</span>
                 </div>
-                <div class="menu-divider"></div>
                 <div class="menu-buttons">
                     <button class="menu-btn menu-btn-start" id="menu-start-btn" data-i18n="menu.start">开始游戏</button>
                     <button class="menu-btn menu-btn-tutorial" id="menu-tutorial-btn" data-i18n="menu.tutorial">教程</button>
                     <button class="menu-btn menu-btn-settings" id="menu-settings-btn" data-i18n="menu.settings">设置</button>
                 </div>
-                <div class="menu-divider"></div>
-                <div class="menu-examiner">
-                    <span class="examiner-label" data-i18n="menu.examiner_label">EXAMINER</span>
-                    <span class="examiner-sep">·</span>
-                    <span class="examiner-signature" aria-hidden="true">F.</span>
-                    <span class="examiner-redact" aria-hidden="true">███</span>
-                    <span class="examiner-stamp" aria-hidden="true">RECEIVED</span>
-                </div>
-                <div class="menu-footer">
-                    <div data-i18n="menu.footer_property">PROPERTY OF DPCA · UNAUTHORIZED ACCESS PROHIBITED</div>
-                    <div data-i18n="menu.footer_dept">DEPARTMENT 2-B · FORM RETENTION: ██ YRS</div>
-                    <div class="menu-archive-code" aria-hidden="true">║│║│ ║│ ║│║│║│ ║│ ║│║│ &nbsp;&nbsp;DPCA-3942-A-██7-2█-K</div>
-                </div>
-                <div class="menu-info" id="menu-info"></div>
             </div>
         </div>
 
@@ -256,13 +224,21 @@
             </div>
         </div>
 
-        <!-- Class Select Modal -->
-        <div id="class-select-modal" class="class-select-hidden">
+        <!-- Class Select Modal — PAGE 2/3 dossier (人事档案分配) -->
+        <div id="class-select-modal" class="class-select-hidden class-style-dossier">
             <div class="class-select-overlay"></div>
             <div class="class-select-content">
-                <div class="class-select-title" data-i18n="class_select.title">⚔️ 选择职业 ⚔️</div>
+                <div class="class-page-meta class-page-meta-tl" aria-hidden="true">DPCA · DEPT 2-B</div>
+                <div class="class-page-meta class-page-meta-tr" aria-hidden="true">PAGE 2 / 3</div>
+                <div class="class-page-meta class-page-meta-bl" aria-hidden="true">FORM-A8B · WORKER ASSIGNMENT</div>
+                <div class="class-page-meta class-page-meta-br" aria-hidden="true">REV ██ · CLASSIFIED</div>
+                <div class="class-select-headline">
+                    <div class="class-select-title" data-i18n="class_select.title">登陆账号 · 当值身份</div>
+                    <div class="class-select-rule" aria-hidden="true"></div>
+                    <div class="class-select-subline" aria-hidden="true">SELECT ASSIGNMENT · ACKNOWLEDGE BELOW · SIGNATURE REQUIRED</div>
+                </div>
                 <div class="class-select-cards" id="class-select-cards"></div>
-                <button class="class-select-confirm class-select-confirm-hidden" id="class-select-confirm" data-i18n="class_select.confirm">确认选择</button>
+                <button class="class-select-confirm class-select-confirm-hidden" id="class-select-confirm" data-i18n="class_select.confirm">确认登陆</button>
             </div>
         </div>
 
@@ -276,11 +252,19 @@
             </div>
         </div>
 
-        <!-- Relic Picker Modal -->
-        <div id="relic-picker-modal" class="relic-picker-hidden">
+        <!-- Relic Picker Modal — PAGE 3/3 dossier (配发清单审批) -->
+        <div id="relic-picker-modal" class="relic-picker-hidden relic-style-dossier">
             <div class="relic-picker-overlay"></div>
             <div class="relic-picker-content">
-                <div class="relic-picker-title" data-i18n="relic_picker.title">🏺 选择一件遗物 🏺</div>
+                <div class="relic-page-meta relic-page-meta-tl" aria-hidden="true">DPCA · DEPT 2-B</div>
+                <div class="relic-page-meta relic-page-meta-tr" aria-hidden="true">PAGE 3 / 3</div>
+                <div class="relic-page-meta relic-page-meta-bl" aria-hidden="true">FORM-IM7 · EQUIPMENT MANIFEST</div>
+                <div class="relic-page-meta relic-page-meta-br" aria-hidden="true">REV ██ · ISSUED</div>
+                <div class="relic-picker-headline">
+                    <div class="relic-picker-title" data-i18n="relic_picker.title">🏺 选择一件遗物 🏺</div>
+                    <div class="relic-picker-rule" aria-hidden="true"></div>
+                    <div class="relic-picker-subline" aria-hidden="true">SIGN BELOW TO ACCEPT · ITEM ENTERS YOUR FILE</div>
+                </div>
                 <div class="relic-picker-cards" id="relic-picker-cards"></div>
                 <button class="relic-picker-skip" id="relic-picker-skip" data-i18n="relic_picker.skip">跳过</button>
             </div>

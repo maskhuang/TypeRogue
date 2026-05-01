@@ -40,13 +40,9 @@ void main() {
   vec2 frag = gl_FragCoord.xy;
   float minSide = min(u_resolution.x, u_resolution.y);
   vec2 uv = (frag - 0.5 * u_resolution) / minSide;
-  float speed = u_time * u_speed;
-  float uv_len = length(uv);
-  float new_pixel_angle = atan(uv.y, uv.x) + speed
-      - SPIN_EASE * 20.0 * (u_spin_amount * uv_len + (1.0 - u_spin_amount));
-  uv = vec2(uv_len * cos(new_pixel_angle), uv_len * sin(new_pixel_angle));
   uv *= 30.0;
-  speed = u_time * 2.0;
+  // u_speed 仍驱动 trig warp 节奏；删掉了原先的极坐标整体自转
+  float speed = u_time * (2.0 + u_speed * 50.0);
   vec2 uv2 = vec2(uv.x + uv.y);
   for (int i = 0; i < 5; i++) {
     uv2 += sin(max(uv.x, uv.y)) + uv;

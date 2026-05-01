@@ -94,515 +94,175 @@ button, input, select, textarea { font-family: inherit; }
 
 /* Language Toggle */
 /* ============================================ */
-/* MAIN MENU                                    */
+/* MAIN MENU — cover 风格                        */
+/* shader 背景全屏铺满，菜单只放最小必要文字     */
 /* ============================================ */
 #main-menu-screen {
     flex-direction: column;
     align-items: center;
     justify-content: center;
     background: transparent;
-    gap: 32px;
+    gap: 0;
 }
 
-.menu-content { text-align: center; z-index: 1; }
-
-.menu-seal {
-    display: block;
-    width: 220px;
-    height: 220px;
-    margin: 0 auto 28px;
-    image-rendering: -webkit-optimize-contrast;
-    opacity: 0.92;
-    filter: drop-shadow(0 0 14px rgba(255,255,255,0.06));
-    user-select: none;
-    -webkit-user-drag: none;
-}
-
-.menu-title {
-    font-size: calc(var(--text-title-size) * 3);
-    font-weight: bold;
-    color: var(--color-seal-gold);
-    letter-spacing: 8px;
-    margin-bottom: 8px;
-    text-shadow:
-        0 1px 0 rgba(0,0,0,0.6),
-        0 -1px 0 rgba(255,220,160,0.12);
-}
-
-html[lang^="en"] .menu-title {
-    font-size: calc(var(--text-title-size) * 2);
-    letter-spacing: 4px;
-}
-
-.menu-buttons {
+.menu-style-cover .menu-content {
+    position: relative;
+    background: transparent;
+    padding: 0;
+    text-align: center;
     display: flex;
     flex-direction: column;
-    gap: 12px;
     align-items: center;
-}
-
-.menu-btn {
-    min-width: 220px;
-    padding: 14px 32px;
-    font-size: var(--text-subtitle-size);
-    font-family: inherit;
-    font-weight: bold;
-    border: 2px solid var(--color-institutional-border);
-    border-radius: 0;
-    outline: 1px solid #000;
-    outline-offset: 0;
-    cursor: pointer;
-    transition: background 0.15s steps(1), color 0.15s steps(1);
-    box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.12),
-        inset 0 -2px 0 rgba(0,0,0,0.35);
-}
-
-.menu-btn-start {
-    background: var(--color-institutional-teal);
-    color: #e8eef0;
-}
-.menu-btn-start:hover { background: var(--color-institutional-teal-hi); }
-
-.menu-btn-tutorial,
-.menu-btn-settings {
-    background: var(--bg-panel);
-    color: var(--color-institutional-border);
-}
-.menu-btn-tutorial:hover:not(:disabled),
-.menu-btn-settings:hover:not(:disabled) { background: var(--bg-panel-hover); }
-
-.menu-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    border-color: #555;
-    color: #555;
-}
-
-.menu-info {
-    margin-top: 40px;
-    font-size: var(--text-caption-size);
-    color: #555;
-}
-
-/* === DOSSIER STYLE === */
-.menu-style-dossier .menu-content {
-    position: relative;
-    border: 1px solid var(--color-institutional-border);
-    background: rgba(0,0,0,0.55);
-    padding: 18px 36px 24px;
-    width: 540px;
-    box-shadow:
-        inset 0 0 0 1px rgba(0,0,0,0.6),
-        inset 0 0 24px rgba(80,55,30,0.18),
-        /* 内边轻微暖色暗化 — 纸边阴影 */
-        inset 0 -2px 8px rgba(0,0,0,0.35),
-        0 0 0 6px rgba(0,0,0,0.25),
-        /* 桌面投影 — 让表单"压"在背景上 */
-        0 22px 48px rgba(0,0,0,0.6),
-        0 8px 18px rgba(0,0,0,0.45);
-    font-family: var(--font-dossier);
-}
-
-/* 纸面纤维颗粒（暖色噪点叠加，模拟陈纸质感） */
-.menu-style-dossier .menu-content::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch' seed='5'/><feColorMatrix values='0 0 0 0 0.85  0 0 0 0 0.72  0 0 0 0 0.45  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-    opacity: 0.22;
-    z-index: 0;
-}
-
-/* 横向中线折痕（这张纸被对折过 — 盖在文字之上但半透明） */
-.menu-style-dossier .menu-content::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: 28px;
-    transform: translateY(-50%);
-    pointer-events: none;
-    background:
-        linear-gradient(180deg,
-            transparent 0%,
-            rgba(0,0,0,0.32) 46%,
-            rgba(0,0,0,0.42) 50%,
-            rgba(0,0,0,0.32) 54%,
-            transparent 100%),
-        linear-gradient(180deg,
-            transparent 49%,
-            rgba(180,140,90,0.12) 50%,
-            transparent 51%);
-    z-index: 3;
-}
-
-/* 让所有内容元素浮在噪点上方、折痕下方 */
-.menu-style-dossier .menu-content > * {
-    position: relative;
+    gap: 18px;
     z-index: 1;
 }
-/* 印章和裁切对位标记浮在最顶层（折痕之上） */
-.menu-style-dossier .menu-seal,
-.menu-style-dossier .menu-crop,
-.menu-style-dossier .menu-binding-hole {
-    z-index: 4;
-}
 
-/* 折痕去掉 — 屏幕里的图像不该有"对折痕迹" */
-.menu-style-terminal .menu-content::after { display: none; }
-/* 印章不再溢出（避免被 bezel-screen 内 padding 切掉） */
-.menu-style-terminal .menu-seal {
-    top: -4px;
-    right: -8px;
-}
-/* 四角裁切线收回 */
-.menu-style-terminal .menu-crop-tl { top: -2px; left: -2px; }
-.menu-style-terminal .menu-crop-tr { top: -2px; right: -2px; }
-.menu-style-terminal .menu-crop-bl { bottom: -2px; left: -2px; }
-.menu-style-terminal .menu-crop-br { bottom: -2px; right: -2px; }
-.menu-classification {
-    display: inline-block;
+/* 标题 — 大字浮在 shader 上，深描边保可读 */
+.menu-style-cover .menu-title {
     font-family: var(--font-dossier);
-    font-size: 12px;
-    letter-spacing: 4px;
-    color: var(--color-parchment);
-    border: 1px solid currentColor;
-    padding: 4px 14px;
-    margin-bottom: 22px;
-    opacity: 0.7;
-}
-/* 印章：从居中漂浮 → 偏移盖戳（被某个职员后期手盖在表头边缘） */
-.menu-style-dossier .menu-seal {
-    position: absolute;
-    top: -18px;
-    right: -22px;
-    width: 118px;
-    height: 118px;
+    font-size: calc(var(--text-title-size) * 2.0);
+    font-weight: 700;
+    letter-spacing: 10px;
+    color: #f0e5c9;
     margin: 0;
-    transform: rotate(-11deg);
-    mix-blend-mode: screen;
-    opacity: 0.55;
-    filter:
-        drop-shadow(0 0 6px rgba(255,220,160,0.18))
-        drop-shadow(0 1px 0 rgba(0,0,0,0.4));
-    pointer-events: none;
-    z-index: 2;
+    text-shadow:
+        0 0 14px rgba(0,0,0,0.95),
+        0 0 4px rgba(0,0,0,0.85),
+        0 2px 0 rgba(0,0,0,0.6);
 }
-.menu-style-dossier .menu-title {
-    font-size: calc(var(--text-title-size) * 1.7);
-    letter-spacing: 6px;
-    margin-bottom: 4px;
-}
-html[lang^="en"] .menu-style-dossier .menu-title {
-    font-size: calc(var(--text-title-size) * 1.3);
-    letter-spacing: 3px;
-}
-.menu-form-meta {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 380px;
-    margin: 0 auto;
-    font-family: var(--font-dossier);
-    font-size: 12px;
-    letter-spacing: 1px;
-    color: var(--color-parchment);
-    opacity: 0.6;
+html[lang^="en"] .menu-style-cover .menu-title {
+    font-size: calc(var(--text-title-size) * 1.4);
+    letter-spacing: 4px;
 }
 
-/* 修订记录行（"这表已经被改过 N 版"的痕迹） */
-.menu-revision {
-    width: 100%;
-    max-width: 380px;
-    margin: 4px auto 0;
-    font-family: var(--font-dossier);
-    font-size: 9px;
-    letter-spacing: 1.5px;
-    color: var(--color-parchment);
-    opacity: 0.42;
-    text-align: center;
-    text-transform: uppercase;
-}
-
-/* 右上角页码（被印章部分覆盖） */
-.menu-page-marker {
-    position: absolute;
-    top: 8px;
-    right: 18px;
-    font-family: var(--font-dossier);
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: var(--color-parchment);
-    opacity: 0.45;
-    z-index: 1;
-}
-
-/* 装订孔（左侧两个，模拟从档案夹里抽出来） */
-.menu-binding-hole {
-    position: absolute;
-    left: 14px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%,
-        rgba(0,0,0,0.95) 0%,
-        rgba(0,0,0,0.7) 60%,
-        rgba(40,30,20,0.4) 100%);
-    box-shadow:
-        inset 0 1px 1px rgba(0,0,0,0.8),
-        0 1px 0 rgba(255,220,160,0.06);
-    pointer-events: none;
-    z-index: 2;
-}
-.menu-binding-hole-top { top: 80px; }
-.menu-binding-hole-bot { bottom: 80px; }
-
-/* 四角裁切对位标记（印刷裁切线 ✚） */
-.menu-crop {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    pointer-events: none;
-    opacity: 0.35;
-    z-index: 2;
-}
-.menu-crop::before,
-.menu-crop::after {
-    content: '';
-    position: absolute;
-    background: var(--color-institutional-border);
-}
-.menu-crop::before {
-    left: 50%;
-    top: 0;
-    width: 1px;
-    height: 100%;
-    transform: translateX(-50%);
-}
-.menu-crop::after {
-    top: 50%;
-    left: 0;
+/* 标题与申请人间的金色细线 */
+.menu-cover-rule {
+    width: 220px;
     height: 1px;
-    width: 100%;
-    transform: translateY(-50%);
-}
-.menu-crop-tl { top: -8px; left: -8px; }
-.menu-crop-tr { top: -8px; right: -8px; }
-.menu-crop-bl { bottom: -8px; left: -8px; }
-.menu-crop-br { bottom: -8px; right: -8px; }
-
-/* OCR-A 风格归档码（条形码占位 + 编号） */
-.menu-archive-code {
-    margin-top: 8px;
-    font-family: 'OCR A Std', 'Courier Prime', monospace;
-    font-size: 10px;
-    letter-spacing: 0.5px;
-    color: var(--color-parchment);
-    opacity: 0.55;
-    text-align: center;
-    /* 条形码竖线用 unicode "║│" 模拟，不需要外部字体 */
-}
-.menu-archive-code::first-line {
-    /* placeholder for future enhancement */
-}
-.menu-divider {
-    width: 100%;
-    max-width: 420px;
-    height: 1px;
-    background: var(--color-institutional-border);
-    margin: 14px auto;
-    opacity: 0.45;
-}
-.menu-style-dossier .menu-buttons {
-    gap: 8px;
-    width: 100%;
-    max-width: 380px;
-    margin: 0 auto;
-}
-.menu-style-dossier .menu-btn {
-    min-width: 0;
-    width: 100%;
-    text-align: left;
-    padding: 10px 16px;
-    font-size: var(--text-body-size);
-    background: transparent;
-    color: var(--color-parchment);
-    border: 1px solid var(--color-institutional-border);
-    outline: none;
-    box-shadow: none;
-    letter-spacing: 2px;
-    position: relative;
-}
-.menu-style-dossier .menu-btn::before {
-    content: '☐';
-    margin-right: 12px;
-    color: var(--color-parchment);
-    opacity: 0.7;
-}
-.menu-style-dossier .menu-btn::after {
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-family: var(--font-dossier);
-    font-size: 12px;
-    letter-spacing: 1px;
-    opacity: 0.45;
-}
-.menu-style-dossier #menu-start-btn::after { content: 'FORM A'; }
-.menu-style-dossier #menu-tutorial-btn::after { content: 'FORM B'; }
-.menu-style-dossier #menu-settings-btn::after { content: 'FORM C'; }
-.menu-style-dossier .menu-btn:hover {
-    background: rgba(255,220,160,0.06);
-    color: var(--color-seal-gold);
-    border-color: var(--color-seal-gold);
-}
-.menu-style-dossier .menu-btn:hover::before {
-    content: '☑';
-    color: var(--color-seal-gold);
-    opacity: 1;
-}
-.menu-footer {
-    font-family: var(--font-dossier);
-    font-size: 11px;
-    line-height: 1.6;
-    letter-spacing: 1px;
-    color: var(--color-parchment);
-    opacity: 0.5;
-    text-align: center;
-    margin-top: 4px;
-}
-
-/* 提交人字段（玩家身份在档化） */
-.menu-applicant {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    width: 100%;
-    max-width: 380px;
-    margin: 14px auto 2px;
-    font-family: var(--font-dossier);
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: var(--color-parchment);
-    opacity: 0.72;
-}
-.menu-applicant .applicant-label {
-    text-transform: uppercase;
-    color: var(--color-seal-gold);
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--color-seal-gold) 50%,
+        transparent 100%);
     opacity: 0.65;
 }
-.menu-applicant .applicant-sep {
-    opacity: 0.5;
-}
-.menu-applicant .applicant-id {
-    font-family: 'Courier Prime', 'Special Elite', monospace;
-    color: #d8c89a;
-    /* 印钢字模糊感 */
-    text-shadow: 0 0 0.5px rgba(216,200,154,0.5);
-}
-.menu-applicant-meta {
+
+/* 申请人 + 计数（一行紧凑 meta） */
+.menu-cover-applicant {
     display: flex;
-    align-items: baseline;
     flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
     gap: 6px;
-    width: 100%;
-    max-width: 380px;
-    margin: 0 auto 6px;
     font-family: var(--font-dossier);
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    color: var(--color-parchment);
-    opacity: 0.55;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #d8c89a;
+    text-shadow:
+        0 0 8px rgba(0,0,0,0.95),
+        0 1px 0 rgba(0,0,0,0.6);
 }
-.menu-applicant-meta .applicant-num {
-    color: #c9a45e;
+.menu-cover-applicant .applicant-id {
+    color: var(--color-seal-gold);
     font-weight: 700;
-    opacity: 0.95;
-    padding: 0 2px;
-    /* 数字像被人手填进去的，比标签醒目 */
 }
-.menu-applicant-meta .applicant-sep {
+.menu-cover-applicant .applicant-num {
+    color: #ffe66d;
+    font-weight: 700;
+    padding: 0 1px;
+}
+.menu-cover-applicant .applicant-sep {
     opacity: 0.4;
 }
 
-/* 经办人签名行（"被填写过"的痕迹层） */
-.menu-examiner {
-    position: relative;
+/* 按钮纵列 — 纯文本 + 光标，hover 字距撑开 */
+.menu-style-cover .menu-buttons {
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    width: 100%;
-    max-width: 380px;
-    margin: 6px auto 14px;
-    padding-left: 4px;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    margin-top: 14px;
+}
+.menu-style-cover .menu-btn {
+    min-width: 240px;
+    padding: 10px 24px;
     font-family: var(--font-dossier);
-    font-size: 11px;
+    font-size: var(--text-body-size);
+    font-weight: 700;
+    letter-spacing: 4px;
+    background: transparent;
+    color: #d8c89a;
+    border: none;
+    outline: none;
+    border-radius: 0;
+    box-shadow: none;
+    cursor: pointer;
+    text-align: center;
+    text-shadow:
+        0 0 10px rgba(0,0,0,0.95),
+        0 0 4px rgba(0,0,0,0.85),
+        0 1px 0 rgba(0,0,0,0.6);
+    transition: color 0.18s, letter-spacing 0.18s;
+    position: relative;
+}
+.menu-style-cover .menu-btn::before {
+    content: '▸';
+    margin-right: 12px;
+    color: var(--color-seal-gold);
+    opacity: 0.85;
+    display: inline-block;
+    transition: transform 0.18s, opacity 0.18s;
+}
+.menu-style-cover .menu-btn-start { color: #f0e5c9; }
+.menu-style-cover .menu-btn:hover:not(:disabled) {
+    color: var(--color-seal-gold);
+    letter-spacing: 6px;
+}
+.menu-style-cover .menu-btn:hover:not(:disabled)::before {
+    content: '▶';
+    opacity: 1;
+    transform: translateX(2px);
+}
+.menu-style-cover .menu-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    color: #555;
+}
+
+/* 四角 meta — 极小字 + 深描边 */
+.menu-cover-meta {
+    position: absolute;
+    font-family: var(--font-dossier);
+    font-size: 9px;
     letter-spacing: 2px;
     color: var(--color-parchment);
-    opacity: 0.78;
-}
-.menu-examiner .examiner-label {
-    text-transform: uppercase;
-}
-.menu-examiner .examiner-sep {
-    opacity: 0.5;
-}
-.menu-examiner .examiner-signature {
-    font-family: 'Caveat', 'Special Elite', cursive;
-    font-size: 26px;
-    letter-spacing: 0;
-    color: #6b8caf;
-    opacity: 0.92;
-    transform: rotate(-4deg) translateY(-3px);
-    text-shadow: 0 0 1px rgba(107,140,175,0.35);
-    /* 钢笔水在纸上轻微洇开 */
-    filter: blur(0.2px);
-}
-/* 涂黑色块（被 redact 的姓氏）— 独立 inline-block，不跟随签名旋转 */
-.menu-examiner .examiner-redact {
-    display: inline-block;
-    padding: 1px 8px;
-    margin-left: -2px;
-    transform: translateY(-6px) skewX(-3deg);
-    font-family: var(--font-dossier);
-    font-size: 14px;
-    letter-spacing: 2px;
-    color: transparent;
-    background:
-        linear-gradient(180deg, #1f1814 0%, #0c0907 55%, #1a130f 100%);
-    box-shadow:
-        inset 0 0 0 0.5px rgba(110,85,60,0.35),
-        0 1px 1px rgba(0,0,0,0.6);
-    text-shadow: none;
-    filter: none;
-}
-/* "RECEIVED" 红章式戳记 — 压在签名右侧、稍微旋转 */
-.menu-examiner .examiner-stamp {
-    position: absolute;
-    right: -8px;
-    bottom: -2px;
-    font-family: var(--font-dossier);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    color: #b04a3c;
-    border: 2px solid currentColor;
-    padding: 2px 8px;
-    transform: rotate(-6deg);
-    opacity: 0.62;
-    /* 印泥不均：双层 text-shadow + 内边模糊 */
+    opacity: 0.55;
     text-shadow:
-        0 0 1px rgba(176,74,60,0.4),
-        1px 0 0 rgba(176,74,60,0.2);
-    box-shadow:
-        inset 0 0 0 1px rgba(176,74,60,0.15),
-        0 0 0 0.5px rgba(176,74,60,0.2);
-    mix-blend-mode: screen;
+        0 0 8px rgba(0,0,0,0.95),
+        0 1px 0 rgba(0,0,0,0.7);
     pointer-events: none;
+    z-index: 2;
+    user-select: none;
+}
+.menu-cover-meta-tl { top: 12px; left: 16px; }
+.menu-cover-meta-tr { top: 12px; right: 16px; }
+.menu-cover-meta-bl { bottom: 12px; left: 16px; pointer-events: auto; }
+.menu-cover-meta-br { bottom: 12px; right: 16px; }
+
+/* 印章水印 — 右上角浅压戳 */
+.menu-cover-watermark {
+    position: absolute;
+    top: 28px;
+    right: -10px;
+    width: 96px;
+    height: 96px;
+    transform: rotate(-14deg);
+    opacity: 0.16;
+    mix-blend-mode: screen;
+    filter: drop-shadow(0 0 10px rgba(255,220,160,0.18));
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    z-index: 0;
 }
 
 /* ============================================ */
@@ -3789,118 +3449,270 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     font-size: var(--text-caption-size);
     color: #aaa;
 }
-
-/* ============================================ */
-/* RELIC PICKER MODAL                          */
+/* RELIC PICKER MODAL — PAGE 3/3 dossier (配发清单审批) */
 /* ============================================ */
 #relic-picker-modal {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    inset: 0;
     z-index: 1000;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-#relic-picker-modal.relic-picker-hidden {
-    display: none;
-}
+#relic-picker-modal.relic-picker-hidden { display: none; }
 
 .relic-picker-overlay {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    inset: 0;
+    background:
+        radial-gradient(ellipse at center,
+            rgba(0,0,0,0.55) 0%,
+            rgba(0,0,0,0.78) 70%,
+            rgba(0,0,0,0.88) 100%);
 }
 
 .relic-picker-content {
     position: relative;
     z-index: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
     text-align: center;
-    padding: 30px;
-    max-width: 90vw;
-    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
     overflow-y: auto;
 }
 
-.relic-picker-title {
-    font-size: var(--text-subtitle-size);
-    font-weight: bold;
-    color: #ffe66d;
-    margin-bottom: 24px;
+/* 4 角 meta */
+.relic-page-meta {
+    position: absolute;
+    font-family: var(--font-dossier);
+    font-size: 9px;
     letter-spacing: 2px;
+    color: var(--color-parchment);
+    opacity: 0.55;
+    text-shadow: 0 0 8px rgba(0,0,0,0.95), 0 1px 0 rgba(0,0,0,0.7);
+    pointer-events: none;
+    z-index: 2;
+    user-select: none;
+}
+.relic-page-meta-tl { top: 12px; left: 16px; }
+.relic-page-meta-tr { top: 12px; right: 16px; }
+.relic-page-meta-bl { bottom: 12px; left: 16px; }
+.relic-page-meta-br { bottom: 12px; right: 16px; }
+
+/* 标题块 */
+.relic-picker-headline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+.relic-picker-title {
+    font-family: var(--font-dossier);
+    font-size: calc(var(--text-title-size) * 1.2);
+    font-weight: 700;
+    color: #f0e5c9;
+    letter-spacing: 6px;
+    margin: 0;
+    text-shadow:
+        0 0 12px rgba(0,0,0,0.95),
+        0 0 4px rgba(0,0,0,0.85),
+        0 1px 0 rgba(0,0,0,0.6);
+}
+html[lang^="en"] .relic-picker-title {
+    font-size: calc(var(--text-title-size) * 1.0);
+    letter-spacing: 4px;
+}
+.relic-picker-rule {
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--color-seal-gold) 50%,
+        transparent 100%);
+    opacity: 0.65;
+}
+.relic-picker-subline {
+    font-family: var(--font-dossier);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--color-parchment);
+    opacity: 0.55;
+    text-shadow: 0 0 6px rgba(0,0,0,0.85);
 }
 
 .relic-picker-cards {
     display: flex;
-    gap: 15px;
+    gap: 16px;
     justify-content: center;
     flex-wrap: wrap;
+    max-width: 90%;
 }
 
+/* === 配发清单卡 === */
 .relic-picker-card {
-    background: var(--bg-panel);
-    border: 2px solid #333;
+    position: relative;
+    background:
+        linear-gradient(180deg,
+            rgba(40,32,22,0.78) 0%,
+            rgba(28,22,16,0.85) 100%);
+    border: 1px solid var(--color-institutional-border);
     border-radius: 0;
-    padding: 20px;
+    padding: 14px 16px 14px;
     width: 200px;
     cursor: pointer;
-    transition: border-color 0.15s steps(1), background 0.15s steps(1);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1), transform 0.15s ease;
     text-align: center;
+    box-shadow:
+        inset 0 0 0 1px rgba(0,0,0,0.5),
+        0 6px 14px rgba(0,0,0,0.55),
+        0 2px 4px rgba(0,0,0,0.45);
+    font-family: var(--font-dossier);
+    color: #d8c89a;
+    overflow: hidden;
+}
+
+/* 顶部 ITEM-NO 条带（取代 CONFIDENTIAL） */
+.relic-picker-card::before {
+    content: 'ITEM · CONFIDENTIAL';
+    display: block;
+    margin: -14px -16px 10px;
+    padding: 4px 8px;
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: var(--color-parchment);
+    background: rgba(0,0,0,0.45);
+    border-bottom: 1px solid rgba(180,140,90,0.25);
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .relic-picker-card:hover {
-    background: var(--bg-panel-hover);
+    border-color: var(--color-seal-gold);
+    background:
+        linear-gradient(180deg,
+            rgba(50,40,28,0.85) 0%,
+            rgba(36,28,20,0.9) 100%);
+    transform: translateY(-2px);
 }
 
-.relic-picker-card.relic-rarity-common { border-color: #aaa; }
-.relic-picker-card.relic-rarity-common:hover { border-color: #ddd; }
-.relic-picker-card.relic-rarity-rare { border-color: #3498db; }
-.relic-picker-card.relic-rarity-rare:hover { border-color: #5dade2; }
-.relic-picker-card.relic-rarity-epic { border-color: #9b59b6; }
-.relic-picker-card.relic-rarity-epic:hover { border-color: #bb77dd; }
-.relic-picker-card.relic-rarity-legendary { border-color: #ffd700; }
+/* 稀有度 — 用顶部条带颜色 + 左边一道色彩条 */
+.relic-picker-card.relic-rarity-common::before  { color: #cfc1a3; }
+.relic-picker-card.relic-rarity-rare::before    { color: #7ec0ee; content: 'ITEM · CLR 3-A'; }
+.relic-picker-card.relic-rarity-epic::before    { color: #c79bf0; content: 'ITEM · CLR 2-A'; }
+.relic-picker-card.relic-rarity-legendary::before { color: #ffe66d; content: 'ITEM · CLR 1-S'; }
+
+.relic-picker-card.relic-rarity-rare      { box-shadow: inset 4px 0 0 rgba(126,192,238,0.5), inset 0 0 0 1px rgba(0,0,0,0.5), 0 6px 14px rgba(0,0,0,0.55), 0 2px 4px rgba(0,0,0,0.45); }
+.relic-picker-card.relic-rarity-epic      { box-shadow: inset 4px 0 0 rgba(199,155,240,0.5), inset 0 0 0 1px rgba(0,0,0,0.5), 0 6px 14px rgba(0,0,0,0.55), 0 2px 4px rgba(0,0,0,0.45); }
+.relic-picker-card.relic-rarity-legendary { box-shadow: inset 4px 0 0 rgba(255,230,109,0.6), inset 0 0 0 1px rgba(0,0,0,0.5), 0 6px 14px rgba(0,0,0,0.55), 0 2px 4px rgba(0,0,0,0.45); }
+
+.relic-picker-card.relic-rarity-rare:hover      { border-color: #7ec0ee; }
+.relic-picker-card.relic-rarity-epic:hover      { border-color: #c79bf0; }
 .relic-picker-card.relic-rarity-legendary:hover { border-color: #ffe66d; }
 
-.relic-picker-icon { font-size: var(--text-title-size); margin-bottom: 10px; }
-.relic-picker-name { font-size: var(--text-subtitle-size); font-weight: bold; color: #fff; margin-bottom: 8px; }
-.relic-picker-desc { font-size: var(--text-body-size); color: #aaa; margin-bottom: 8px; line-height: 1.4; min-height: 36px; }
-.relic-picker-rarity { font-size: var(--text-caption-size); text-transform: uppercase; letter-spacing: 1px; color: #666; margin-bottom: 6px; }
-.relic-picker-flavor { font-size: var(--text-caption-size); color: #555; font-style: italic; }
+.relic-picker-icon {
+    font-size: calc(var(--text-title-size) * 1.4);
+    margin: 4px 0 6px;
+    color: var(--color-seal-gold);
+    text-shadow: 0 0 10px rgba(201,164,94,0.35);
+    opacity: 0.92;
+    filter: drop-shadow(0 1px 0 rgba(0,0,0,0.6));
+}
+.relic-picker-name {
+    font-family: var(--font-dossier);
+    font-size: var(--text-subtitle-size);
+    font-weight: 700;
+    color: #f0e5c9;
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+    text-shadow: 0 0 6px rgba(0,0,0,0.7);
+}
+.relic-picker-desc {
+    font-family: var(--font-dossier);
+    font-size: 10px;
+    line-height: 1.55;
+    color: #c2b290;
+    opacity: 0.85;
+    margin: 6px 0 8px;
+    min-height: 36px;
+    letter-spacing: 0.5px;
+}
+.relic-picker-rarity {
+    font-family: var(--font-dossier);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #b8a888;
+    opacity: 0.7;
+    margin-bottom: 4px;
+    border-top: 1px dashed rgba(180,140,90,0.3);
+    padding-top: 6px;
+}
+.relic-picker-flavor {
+    font-family: 'Special Elite', var(--font-dossier);
+    font-size: 10px;
+    color: #a8946e;
+    font-style: italic;
+    line-height: 1.5;
+    opacity: 0.85;
+    margin-top: 4px;
+}
 
+/* 跳过按钮 — 表单复选式（同 PAGE 2） */
 .relic-picker-skip {
-    margin-top: 20px;
-    padding: 8px 24px;
-    background: var(--bg-panel);
-    border: 1px solid #555;
-    color: #888;
+    margin-top: 14px;
+    padding: 9px 28px;
+    font-family: var(--font-dossier);
+    font-size: var(--text-body-size);
+    font-weight: 700;
+    letter-spacing: 4px;
+    background: transparent;
+    color: #b8a888;
+    border: 1px solid var(--color-institutional-border);
     border-radius: 0;
     cursor: pointer;
-    font-family: inherit;
-    font-size: var(--text-body-size);
-    transition: border-color 0.15s steps(1), color 0.15s steps(1);
+    text-shadow: 0 0 8px rgba(0,0,0,0.95);
+    transition: background 0.15s steps(1), color 0.15s steps(1);
+    position: relative;
 }
-
+.relic-picker-skip::before {
+    content: '☐';
+    margin-right: 10px;
+    color: var(--color-institutional-border);
+}
 .relic-picker-skip:hover {
-    border-color: #888;
-    color: #fff;
+    border-color: var(--color-parchment);
+    color: var(--color-parchment);
 }
 
-/* Replace mode */
+/* Replace mode — 替换其他遗物的 header */
 .relic-replace-header {
     width: 100%;
+    font-family: var(--font-dossier);
     font-size: var(--text-subtitle-size);
-    font-weight: bold;
-    color: #ffe66d;
+    font-weight: 700;
+    color: #f0e5c9;
+    letter-spacing: 3px;
     margin-bottom: 5px;
     text-align: center;
+    text-shadow: 0 0 8px rgba(0,0,0,0.85);
 }
 
 .relic-picker-sell {
-    font-size: var(--text-caption-size);
-    color: #ffe66d;
+    font-family: var(--font-dossier);
+    font-size: 10px;
+    color: var(--color-seal-gold);
     margin-top: 6px;
+    letter-spacing: 1px;
 }
 
 .relic-give-up {
@@ -3908,12 +3720,9 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    opacity: 0.6;
+    opacity: 0.55;
 }
-
-.relic-give-up:hover {
-    opacity: 1;
-}
+.relic-give-up:hover { opacity: 1; }
 
 /* ============================================ */
 /* BOSS MODIFIER PICKER MODAL                  */
@@ -4891,124 +4700,293 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
 .rating-grade.rating-ss { color: #ffd700; }
 .rating-grade.rating-sss { color: #ff6b6b; }
 
-/* ==================== 职业选择模态框 (Story 32.1) ==================== */
+/* ==================== 职业选择 — PAGE 2/3 dossier (人事档案分配) ==================== */
 
 #class-select-modal {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    position: absolute;
+    inset: 0;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 9000;
 }
 
-#class-select-modal.class-select-hidden {
-    display: none;
-}
+#class-select-modal.class-select-hidden { display: none; }
 
 .class-select-overlay {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    inset: 0;
+    background:
+        radial-gradient(ellipse at center,
+            rgba(0,0,0,0.55) 0%,
+            rgba(0,0,0,0.78) 70%,
+            rgba(0,0,0,0.88) 100%);
 }
 
 .class-select-content {
     position: relative;
     z-index: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
     text-align: center;
-    padding: 30px;
-    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
 }
 
-.class-select-title {
-    font-size: var(--text-subtitle-size);
-    font-weight: bold;
-    color: #ffe66d;
-    margin-bottom: 28px;
+/* 4 角 meta — 与主菜单 cover 同语汇 */
+.class-page-meta {
+    position: absolute;
+    font-family: var(--font-dossier);
+    font-size: 9px;
     letter-spacing: 2px;
+    color: var(--color-parchment);
+    opacity: 0.55;
+    text-shadow: 0 0 8px rgba(0,0,0,0.95), 0 1px 0 rgba(0,0,0,0.7);
+    pointer-events: none;
+    z-index: 2;
+    user-select: none;
+}
+.class-page-meta-tl { top: 12px; left: 16px; }
+.class-page-meta-tr { top: 12px; right: 16px; }
+.class-page-meta-bl { bottom: 12px; left: 16px; }
+.class-page-meta-br { bottom: 12px; right: 16px; }
+
+/* 标题块 */
+.class-select-headline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+.class-select-title {
+    font-family: var(--font-dossier);
+    font-size: calc(var(--text-title-size) * 1.2);
+    font-weight: 700;
+    color: #f0e5c9;
+    letter-spacing: 6px;
+    text-shadow:
+        0 0 12px rgba(0,0,0,0.95),
+        0 0 4px rgba(0,0,0,0.85),
+        0 1px 0 rgba(0,0,0,0.6);
+    margin: 0;
+}
+html[lang^="en"] .class-select-title {
+    font-size: calc(var(--text-title-size) * 1.0);
+    letter-spacing: 4px;
+}
+.class-select-rule {
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--color-seal-gold) 50%,
+        transparent 100%);
+    opacity: 0.65;
+}
+.class-select-subline {
+    font-family: var(--font-dossier);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--color-parchment);
+    opacity: 0.55;
+    text-shadow: 0 0 6px rgba(0,0,0,0.85);
 }
 
-.class-select-cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+/* 卡片排版 */
+.class-select-cards {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 90%;
+}
 
+/* === 档案夹卡 === */
 .class-select-card {
-    background: var(--bg-panel);
-    border: 2px solid #444;
+    position: relative;
+    background:
+        linear-gradient(180deg,
+            rgba(40,32,22,0.78) 0%,
+            rgba(28,22,16,0.85) 100%);
+    border: 1px solid var(--color-institutional-border);
     border-radius: 0;
-    padding: 24px 20px;
-    width: 220px;
+    padding: 14px 16px 14px;
+    width: 200px;
     cursor: pointer;
-    transition: border-color 0.15s steps(1), background 0.15s steps(1);
+    transition: border-color 0.15s steps(1), background 0.15s steps(1), transform 0.15s ease;
     text-align: center;
+    box-shadow:
+        inset 0 0 0 1px rgba(0,0,0,0.5),
+        0 6px 14px rgba(0,0,0,0.55),
+        0 2px 4px rgba(0,0,0,0.45);
+    font-family: var(--font-dossier);
+    color: #d8c89a;
+    overflow: hidden;
 }
 
-.class-select-card:hover {
-    border-color: #ffe66d;
-    background: var(--bg-panel-hover);
+/* 顶部 classification 条带 */
+.class-select-card::before {
+    content: 'CONFIDENTIAL · CLR 4-B';
+    display: block;
+    margin: -14px -16px 10px;
+    padding: 4px 8px;
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: var(--color-parchment);
+    background: rgba(0,0,0,0.45);
+    border-bottom: 1px solid rgba(180,140,90,0.25);
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.class-select-card:hover:not(.class-card-locked) {
+    border-color: var(--color-seal-gold);
+    background:
+        linear-gradient(180deg,
+            rgba(50,40,28,0.85) 0%,
+            rgba(36,28,20,0.9) 100%);
+    transform: translateY(-2px);
 }
 
 .class-select-card.class-card-selected {
-    border-color: #ffe66d;
-    background: rgba(255,230,109,0.1);
+    border-color: var(--color-seal-gold);
+    background:
+        linear-gradient(180deg,
+            rgba(60,46,30,0.92) 0%,
+            rgba(40,30,22,0.95) 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(201,164,94,0.35),
+        0 6px 14px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(201,164,94,0.25);
+}
+
+/* 选中后的红色"录用"印章（旋转 -11°）*/
+.class-select-card.class-card-selected::after {
+    content: '✓ ASSIGNED';
+    position: absolute;
+    bottom: 14px;
+    right: 8px;
+    transform: rotate(-11deg);
+    padding: 3px 8px;
+    font-family: var(--font-dossier);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #d96452;
+    border: 2px solid currentColor;
+    background: transparent;
+    text-shadow: 0 0 1px rgba(217,100,82,0.5);
+    box-shadow: inset 0 0 0 1px rgba(217,100,82,0.2);
+    opacity: 0.92;
+    pointer-events: none;
 }
 
 .class-select-card.class-card-locked {
-    opacity: 0.4;
+    opacity: 0.42;
     cursor: not-allowed;
-    filter: grayscale(0.8);
+    filter: grayscale(0.85);
 }
-
 .class-select-card.class-card-locked:hover {
-    border-color: #444;
-    background: var(--bg-panel);
+    border-color: var(--color-institutional-border);
+    background:
+        linear-gradient(180deg,
+            rgba(40,32,22,0.78) 0%,
+            rgba(28,22,16,0.85) 100%);
+    transform: none;
 }
 
-.class-card-icon { font-size: var(--text-title-size); margin-bottom: 10px; }
-.class-card-name { font-size: var(--text-subtitle-size); font-weight: bold; color: #eaeaea; margin-bottom: 8px; }
-.class-card-desc { font-size: var(--text-body-size); color: #aaa; line-height: 1.4; margin-bottom: 12px; }
-.class-card-info { font-size: var(--text-caption-size); color: #888; line-height: 1.5; }
-
-.class-card-info .info-resource {
-    color: #4ecdc4;
+/* 大图标作为部门章戳 */
+.class-card-icon {
+    font-size: calc(var(--text-title-size) * 1.4);
+    margin: 4px 0 6px;
+    color: var(--color-seal-gold);
+    text-shadow: 0 0 10px rgba(201,164,94,0.35);
+    opacity: 0.92;
+    filter: drop-shadow(0 1px 0 rgba(0,0,0,0.6));
 }
 
-.class-card-info .info-lose {
-    color: #ff6b6b;
-}
-
-.class-card-info .info-relic {
-    color: #ffe66d;
-}
-
-.class-card-lock-text {
-    font-size: var(--text-caption-size);
-    color: #666;
-    margin-top: 8px;
-    font-style: italic;
-}
-
-.class-select-confirm {
-    margin-top: 24px;
-    padding: 10px 40px;
+.class-card-name {
+    font-family: var(--font-dossier);
     font-size: var(--text-subtitle-size);
-    font-family: inherit;
-    font-weight: bold;
-    background: #ffe66d;
-    color: #1a1a2e;
-    border: 2px solid #ffe66d;
+    font-weight: 700;
+    color: #f0e5c9;
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+    text-shadow: 0 0 6px rgba(0,0,0,0.7);
+}
+
+.class-card-desc {
+    font-family: var(--font-dossier);
+    font-size: 10px;
+    line-height: 1.55;
+    color: #c2b290;
+    opacity: 0.85;
+    margin: 6px 0 8px;
+    letter-spacing: 0.5px;
+}
+
+.class-card-info {
+    font-family: var(--font-dossier);
+    font-size: 9px;
+    line-height: 1.6;
+    color: #b8a888;
+    opacity: 0.85;
+    text-align: left;
+    border-top: 1px dashed rgba(180,140,90,0.3);
+    padding-top: 8px;
+    letter-spacing: 0.5px;
+}
+.class-card-info .info-resource { color: #4ecdc4; opacity: 0.9; }
+.class-card-info .info-lose { color: #c94a4a; opacity: 0.9; }
+.class-card-info .info-relic { color: var(--color-seal-gold); opacity: 0.95; }
+
+/* 锁定文案 — "FILE SEALED" 黑章风 */
+.class-card-lock-text {
+    font-family: var(--font-dossier);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #f0e5c9;
+    margin-top: 8px;
+    padding: 3px 8px;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(255,255,255,0.15);
+    display: inline-block;
+}
+
+/* 确认登陆按钮 — 表单复选式 */
+.class-select-confirm {
+    margin-top: 14px;
+    padding: 9px 28px;
+    font-family: var(--font-dossier);
+    font-size: var(--text-body-size);
+    font-weight: 700;
+    letter-spacing: 4px;
+    background: transparent;
+    color: #f0e5c9;
+    border: 1px solid var(--color-seal-gold);
     border-radius: 0;
     cursor: pointer;
-    transition: background 0.15s steps(1);
+    text-shadow: 0 0 8px rgba(0,0,0,0.95);
+    transition: background 0.15s steps(1), color 0.15s steps(1);
+    position: relative;
 }
-
+.class-select-confirm::before {
+    content: '▣';
+    margin-right: 10px;
+    color: var(--color-seal-gold);
+}
 .class-select-confirm:hover {
-    background: #fff080;
+    background: rgba(201,164,94,0.15);
 }
-
-.class-select-confirm.class-select-confirm-hidden {
-    display: none;
-}
+.class-select-confirm.class-select-confirm-hidden { display: none; }
 
 /* ============================================
    Ascension 选择器 (Story 54.3)
