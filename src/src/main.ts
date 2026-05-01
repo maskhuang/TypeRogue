@@ -38,6 +38,9 @@ import { initFullTutorial } from './systems/tutorial/tutorialInit';
 import { A8_WORD_COMPRESS_RATIO } from './core/constants';
 import { initShopPreview } from './ui/shopPreview';
 
+// 模块级引用，让 updateMenuInfo 能拿到 metaState
+let menuMetaRef: MetaState | null = null;
+
 // === 游戏初始化 ===
 async function init(): Promise<void> {
   console.log('🎮 打字肉鸽 - 初始化中...');
@@ -132,6 +135,7 @@ async function init(): Promise<void> {
 
   // Story 25.5: 初始化 MetaState（排行榜 + 统计）
   const metaState = new MetaState();
+  menuMetaRef = metaState;
 
   // 加载存档
   const savedMeta = await saveManager.loadMeta();
@@ -256,7 +260,9 @@ async function init(): Promise<void> {
     }
     // 有初始遗物的职业跳过开局三选一
     if (state.classId === 'none' && hasUnownedRelics()) {
-      showRelicPicker(() => void startLevel(), RELIC_WEIGHT_PRESETS.gameStart);
+      showRelicPicker(() => void startLevel(), RELIC_WEIGHT_PRESETS.gameStart, {
+        titleKey: 'relic_picker.starter_title',
+      });
     } else {
       void startLevel();
     }
@@ -304,10 +310,25 @@ async function init(): Promise<void> {
 /** 更新主菜单底部信息 */
 function updateMenuInfo(): void {
   const infoEl = document.getElementById('menu-info');
-  if (!infoEl) return;
-  const parts: string[] = ['v0.2'];
-  if (state.ascensionLevel > 0) parts.push(`A${state.ascensionLevel}`);
-  infoEl.textContent = parts.join(' · ');
+  if (infoEl) {
+    const parts: string[] = ['v0.2'];
+    if (state.ascensionLevel > 0) parts.push(`GRADE A${state.ascensionLevel}`);
+    infoEl.textContent = parts.join(' · ');
+  }
+
+  // 提交人字段（Layer 3）— 把玩家身份焊进档案
+  const stats = menuMetaRef?.getStats();
+  const days = stats ? Math.max(1, Math.ceil(stats.totalPlayTime / 86_400_000) + Math.floor(stats.totalRuns / 3)) : 0;
+  const archived = stats?.victories ?? 0;
+  const pending = stats ? Math.max(0, stats.totalRuns - stats.victories) : 0;
+  const fmt = (n: number) => n.toString().padStart(2, '0');
+  const setText = (id: string, val: string) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+  setText('menu-applicant-days', fmt(days));
+  setText('menu-applicant-archived', fmt(archived));
+  setText('menu-applicant-pending', fmt(pending));
 }
 
 // === 启动 ===

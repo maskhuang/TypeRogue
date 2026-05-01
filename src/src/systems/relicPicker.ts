@@ -136,8 +136,17 @@ export function generateRelicCandidates(weights: RelicWeights = RELIC_WEIGHT_PRE
   return candidates;
 }
 
+export interface RelicPickerOptions {
+  /** i18n key 用于覆盖标题（如 starter 流程使用 'relic_picker.starter_title'） */
+  titleKey?: string;
+}
+
 // === 显示遗物三选一模态框 ===
-export function showRelicPicker(onComplete: () => void, weights?: RelicWeights): void {
+export function showRelicPicker(
+  onComplete: () => void,
+  weights?: RelicWeights,
+  options?: RelicPickerOptions,
+): void {
   const candidates = generateRelicCandidates(weights);
   if (candidates.length === 0) {
     onComplete();
@@ -152,9 +161,16 @@ export function showRelicPicker(onComplete: () => void, weights?: RelicWeights):
 
   const cardsEl = document.getElementById('relic-picker-cards');
   const skipBtn = document.getElementById('relic-picker-skip');
+  const titleEl = modal.querySelector('.relic-picker-title') as HTMLElement | null;
   if (!cardsEl || !skipBtn) {
     onComplete();
     return;
+  }
+
+  if (titleEl) {
+    const titleKey = options?.titleKey ?? 'relic_picker.title';
+    titleEl.textContent = t(titleKey);
+    titleEl.setAttribute('data-i18n', titleKey);
   }
 
   // Guard flag 防止快速点击多次触发 onComplete
