@@ -30,6 +30,7 @@ export interface ItemDescriptor {
   stockMax: number | null;
   clearance: string;       // '4-B' / '4-A' / 'III'
   redacted: boolean;
+  purchased: boolean;      // true after a successful BUY；UND 清回。cmdBuy 守卫 + LIST 灰显
   upgrade: boolean;        // true if this BUY upgrades an owned skill
   level?: number;          // current level (for skills)
   synergyCount: number;    // 0 in P1.3; P1.4 wires getSynergyCount(item, state)
@@ -115,6 +116,7 @@ function describeSkill(item: ShopItem, idx: number): ItemDescriptor {
     stockMax: 1,
     clearance: RARITY_TO_CLEARANCE[rarity],
     redacted: false,
+    purchased: false,
     upgrade: item.isUpgrade,
     level: skill.level,
     synergyCount: 0,    // P1.4 wires
@@ -147,6 +149,7 @@ function describePack(item: ShopItem, idx: number): ItemDescriptor {
     stockMax: 1,
     clearance: RARITY_TO_CLEARANCE[rarity],
     redacted: false,
+    purchased: false,
     upgrade: false,
     synergyCount: 0,
     originalItem: item,
@@ -179,6 +182,7 @@ function describeRelic(item: ShopItem, idx: number): ItemDescriptor {
     stockMax: 1,
     clearance: RARITY_TO_CLEARANCE[rarity],
     redacted: false,
+    purchased: false,
     upgrade: false,
     synergyCount: 0,
     originalItem: item,
@@ -206,6 +210,7 @@ function describeEnchantment(item: ShopItem, idx: number): ItemDescriptor {
     stockMax: 1,
     clearance: '4-A',
     redacted: false,
+    purchased: false,
     upgrade: false,
     synergyCount: 0,
     originalItem: item,
@@ -241,6 +246,7 @@ export function describeShopItem(item: ShopItem, idx: number, _state?: GameState
         stockMax: null,
         clearance: '4-B',
         redacted: false,
+        purchased: false,
         upgrade: false,
         synergyCount: 0,
         originalItem: item,

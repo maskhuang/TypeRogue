@@ -216,6 +216,7 @@ export function rebuildDescriptors(): void {
   previewState.descriptorCache = describeAllShopItems(state.shop.items, state).map(d => ({
     ...d,
     synergyCount: getSynergyCount(d),
+    purchased: previewState.purchasedSkus.has(d.sku),
   }));
 }
 
@@ -334,7 +335,9 @@ function renderListRow(d: ItemDescriptor): string {
   const synV = d.synergyCount;
   const synCls = synV > 0 ? 't-syn t-syn-hit' : 't-syn t-syn-zero';
   const synTokHtml = `<span class="${synCls}">[SYN:${synV}]</span>`;
-  const trailing = d.redacted
+  const trailing = d.purchased
+    ? `<span class="lst-cell lst-redacted">${t('shop.terminal.list.sold')}</span>`
+    : d.redacted
     ? `<span class="lst-cell lst-redacted">${t('shop.terminal.list.redacted')}</span>`
     : '';
   return [
@@ -490,7 +493,7 @@ export function appendBlank(n = 1): void {
 }
 
 function classForRow(d: ItemDescriptor): string {
-  if (d.redacted) return 'redacted';
+  if (d.purchased || d.redacted) return 'redacted';
   if (d.rarity === 3) return 'legendary';
   if (d.rarity >= 1) return 'rare';
   return '';
@@ -851,6 +854,8 @@ export function executeBuySkill(d: ItemDescriptor): void {
   state.affixSkills.set(skillId, skillCopy);
   state.player.skills.set(skillId, { level: skillCopy.level });
   state.player.inbox.push(skillId);
+  d.purchased = true;
+  previewState.purchasedSkus.add(d.sku);
   previewState.undoStack.push({ kind: 'skill', sku: d.sku, price: d.price, skillId, itemIdx });
   // Story 60.7: 副作用闭合 — T4 max_skill_level 自动满级 + 装备 quest 重算 + 教程监听事件
   applyMaxSkillLevelOnPurchase(skillId);
@@ -889,6 +894,8 @@ function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
   if (pack.wordEffect && state.classId !== 'wordsmith') {
     state.wordEffects.set(word, pack.wordEffect);
   }
+  d.purchased = true;
+  previewState.purchasedSkus.add(d.sku);
   previewState.undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [word] });
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
   eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
@@ -923,6 +930,8 @@ export function finalizePackPick(pickedWord: string): void {
   if (pack.wordEffect && state.classId !== 'wordsmith') {
     state.wordEffects.set(pickedWord, pack.wordEffect);
   }
+  d.purchased = true;
+  previewState.purchasedSkus.add(d.sku);
   previewState.undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [pickedWord] });
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
   eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
@@ -983,6 +992,8 @@ export function executeBuyRelic(d: ItemDescriptor): void {
   if (relicId === 'universal_furnace') initFurnace(random);
   eventBus.emit('shop:purchase', { type: 'relic', itemId: relicId, price: d.price });
   sfx('shop_buy_ok'); // Story 60.12
+  d.purchased = true;
+  previewState.purchasedSkus.add(d.sku);
   previewState.undoStack.push({ kind: 'relic', sku: d.sku, price: d.price, relicId });
   appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
   appendLine(t('shop.terminal.cmd.buy.relic_shelved', { gold: state.gold }), 'dim');
@@ -1000,6 +1011,12 @@ export function cmdBuy(arg?: string): void {
     const guess = suggestSku(arg);
     appendLine(t('shop.terminal.err.sku_not_in_catalog', { sku: arg.toUpperCase() }), 'redacted');
     if (guess) appendLine(t('shop.terminal.cmd.info.did_you_mean', { guess }), 'dim');
+    appendBlank();
+    return;
+  }
+  if (d.purchased) {
+    sfx('shop_buy_err');
+    appendLine(t('shop.terminal.err.already_sold', { sku: d.sku }), 'redacted');
     appendBlank();
     return;
   }
@@ -1129,6 +1146,9 @@ export function cmdUndo(): void {
     shopBus.syncWorkbenchRelics();
   }
   state.gold += last.price;
+  previewState.purchasedSkus.delete(last.sku);
+  const restored = findDescriptorBySku(last.sku);
+  if (restored) restored.purchased = false;
   appendLine(t('shop.terminal.cmd.undo.success', { sku: last.sku, price: last.price, gold: state.gold }), 'echo');
   appendBlank();
   updateTerminalChrome();

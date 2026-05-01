@@ -11,6 +11,8 @@
 :root {
   /* 像素字体（'SerenityOS Emoji' 接管 emoji 渲染，其余字符走 Press Start 2P + CJK 兜底） */
   --font-pixel: 'Press Start 2P', 'SerenityOS Emoji', 'Courier New', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', monospace;
+  /* 文书 / 档案字体（主菜单等"纸面文档"语境）— Special Elite = 老式打字机墨迹质感，CJK 走系统字体兜底 */
+  --font-dossier: 'Special Elite', 'Courier Prime', 'SerenityOS Emoji', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', serif;
 
   /* Design Token — 文字层级 (Press Start 2P 适配，原值 ×0.65) */
   --text-title-size: 14px;
@@ -130,17 +132,6 @@ html[lang^="en"] .menu-title {
     letter-spacing: 4px;
 }
 
-html[lang^="en"] .menu-subtitle {
-    letter-spacing: 6px;
-}
-
-.menu-subtitle {
-    font-size: calc(var(--text-caption-size) * 1.1);
-    color: var(--color-parchment);
-    letter-spacing: 4px;
-    margin-bottom: 40px;
-}
-
 .menu-buttons {
     display: flex;
     flex-direction: column;
@@ -197,15 +188,16 @@ html[lang^="en"] .menu-subtitle {
     border: 1px solid var(--color-institutional-border);
     background: rgba(0,0,0,0.55);
     padding: 18px 36px 24px;
-    max-width: 540px;
+    width: 540px;
     box-shadow:
         inset 0 0 0 1px rgba(0,0,0,0.6),
         0 0 0 6px rgba(0,0,0,0.25);
+    font-family: var(--font-dossier);
 }
 .menu-classification {
     display: inline-block;
-    font-family: var(--font-pixel);
-    font-size: 9px;
+    font-family: var(--font-dossier);
+    font-size: 12px;
     letter-spacing: 4px;
     color: var(--color-parchment);
     border: 1px solid currentColor;
@@ -227,21 +219,15 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     font-size: calc(var(--text-title-size) * 1.3);
     letter-spacing: 3px;
 }
-.menu-style-dossier .menu-subtitle {
-    font-size: var(--text-caption-size);
-    letter-spacing: 3px;
-    margin-bottom: 14px;
-    opacity: 0.85;
-}
 .menu-form-meta {
     display: flex;
     justify-content: space-between;
     width: 100%;
     max-width: 380px;
     margin: 0 auto;
-    font-family: var(--font-pixel);
-    font-size: 9px;
-    letter-spacing: 2px;
+    font-family: var(--font-dossier);
+    font-size: 12px;
+    letter-spacing: 1px;
     color: var(--color-parchment);
     opacity: 0.6;
 }
@@ -284,9 +270,9 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     right: 16px;
     top: 50%;
     transform: translateY(-50%);
-    font-family: var(--font-pixel);
-    font-size: 9px;
-    letter-spacing: 2px;
+    font-family: var(--font-dossier);
+    font-size: 12px;
+    letter-spacing: 1px;
     opacity: 0.45;
 }
 .menu-style-dossier #menu-start-btn::after { content: 'FORM A'; }
@@ -303,10 +289,10 @@ html[lang^="en"] .menu-style-dossier .menu-title {
     opacity: 1;
 }
 .menu-footer {
-    font-family: var(--font-pixel);
-    font-size: 8px;
+    font-family: var(--font-dossier);
+    font-size: 11px;
     line-height: 1.6;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     color: var(--color-parchment);
     opacity: 0.5;
     text-align: center;

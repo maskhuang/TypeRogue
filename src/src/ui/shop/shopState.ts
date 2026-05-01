@@ -78,6 +78,9 @@ export const previewState = {
   // Story 60.9 follow-up #9: 追踪"曾被装配过"的 skillId — 卸回 IN-tray 时
   // 渲染为已开封态（无运单包装），区别于刚购入的未拆封态（完整运单）
   unsealedSkillIds: new Set<string>(),
+  // 已购买 SKU 集合 — 跨 rebuildDescriptors() 持久化（descriptor 重建会丢 purchased flag，
+  // 这里是真相源，descriptor.purchased 在 rebuildDescriptors 时从此 set 同步）
+  purchasedSkus: new Set<string>(),
   // Story 60.11: RESHUFFLE 后下次 LIS 走逐行 print 模式
   nextListIsAnimated: false,
   // Story 60.11: cmdList 调用计数器 — 用户在动画期间再次 LIS 时取消旧队列
@@ -101,6 +104,7 @@ export function resetPreviewSession(): void {
   previewState.pendingPackPick = null; // L2 fix: 防止跨 session 残留 stale pack reference
   previewState.workbenchEntered = false;
   previewState.unsealedSkillIds = new Set<string>(); // Story 60.9 follow-up #9: 重置开封记录
+  previewState.purchasedSkus = new Set<string>();
 }
 
 // === Story 60.12: shop 音效守卫包装 — 单点关 + 兼容 SOUND_PROFILES type ===
