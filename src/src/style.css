@@ -11,8 +11,10 @@
 :root {
   /* 像素字体（'SerenityOS Emoji' 接管 emoji 渲染，其余字符走 Press Start 2P + CJK 兜底） */
   --font-pixel: 'Press Start 2P', 'SerenityOS Emoji', 'Courier New', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', monospace;
-  /* 文书 / 档案字体（主菜单等"纸面文档"语境）— Special Elite = 老式打字机墨迹质感，CJK 走系统字体兜底 */
-  --font-dossier: 'Special Elite', 'Courier Prime', 'SerenityOS Emoji', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', serif;
+  /* 文书 / 档案字体（主菜单 + 工作台 paper-craft 语境）—
+     Courier Prime：经典打字机干净版，比 Special Elite 去做旧；
+     CJK 走系统字体兜底 */
+  --font-dossier: 'Courier Prime', 'Special Elite', 'SerenityOS Emoji', 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', monospace;
 
   /* Design Token — 文字层级 (Press Start 2P 适配，原值 ×0.65) */
   --text-title-size: 14px;
@@ -6082,7 +6084,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     justify-content: space-between;
     padding: 14px 24px;
     color: #2a1a08;
-    font-family: 'Special Elite', 'Courier Prime', 'Courier New', 'Consolas', monospace;
+    font-family: var(--font-dossier);
     font-size: 11px;
     letter-spacing: 2px;
     border-bottom: 2px dashed rgba(40, 20, 0, 0.45);
@@ -6132,7 +6134,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     padding: 6px 10px;
     color: #f6ecd6;
     background: #2a1a08;
-    font-family: 'Special Elite', 'Courier Prime', 'Courier New', monospace;
+    font-family: var(--font-dossier);
     font-size: 12px;
     letter-spacing: 4px;
     box-shadow: 0 2px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
@@ -6183,7 +6185,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     justify-content: center;
     min-height: 56px;
     color: rgba(180, 160, 130, 0.25);
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 10px;
     letter-spacing: 3px;
 }
@@ -6193,7 +6195,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     background:
         linear-gradient(155deg, #e0dcd4 0%, #b5b0a6 35%, #8e8a82 60%, #c0bcb4 100%);
     color: #1a1410;
-    font-family: 'Special Elite', 'Courier Prime', 'Courier New', monospace;
+    font-family: var(--font-dossier);
     border: 1px solid #4a443c;
     border-radius: 2px;
     box-shadow:
@@ -6307,7 +6309,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     letter-spacing: 2px;
     transform: rotate(-3deg);
     background: rgba(255, 245, 220, 0.18);
-    font-family: 'Special Elite', 'Courier Prime', 'Courier New', monospace;
+    font-family: var(--font-dossier);
     text-transform: uppercase;
     /* 已开封章 — 双线边框模拟二次盖章 */
     box-shadow: 0 0 0 1px rgba(255, 245, 220, 0.18), 0 0 0 2px #8a1a1a;
@@ -6365,7 +6367,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 12px;
     font-weight: bold;
     transition: transform 80ms ease, box-shadow 80ms ease;
@@ -6590,7 +6592,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     align-items: center;
     padding: 4px 6px 0;
     color: rgba(40, 20, 0, 0.6);
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 9px;
     letter-spacing: 2px;
 }
@@ -6629,7 +6631,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     border: 1px solid #6a4a18;
     border-top: none;
     color: #f6ecd6;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 9px;
     letter-spacing: 3px;
     box-shadow: 0 2px 3px rgba(0,0,0,0.3);
@@ -6642,7 +6644,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     gap: 8px;
     padding: 6px 4px;
     color: #2a1f10;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 11px;
     letter-spacing: 1px;
     border-bottom: 1px dashed rgba(40, 20, 0, 0.3);
@@ -6682,7 +6684,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     padding: 8px 12px;
     background: #fff8d8;
     color: #2a1f10;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 11px;
     letter-spacing: 1px;
     transform: rotate(-0.6deg);
@@ -6698,7 +6700,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     background: linear-gradient(180deg, #6e1010 0%, #4a0808 100%);
     color: #fff5cc;
     border: 2px solid #2a0404;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 13px;
     font-weight: bold;
     letter-spacing: 3px;
@@ -6737,7 +6739,7 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
     color: #8a1a1a;
     border: 4px solid #8a1a1a;
     background: rgba(255, 245, 220, 0.85);
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 28px;
     font-weight: 700;
     letter-spacing: 4px;
@@ -6939,7 +6941,7 @@ body.shop-preview-active .craft-pipeline-fill {
     flex-direction: column;
     gap: 4px;
     color: rgba(40, 20, 0, 0.7);
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 10px;
     letter-spacing: 1px;
     white-space: nowrap;
@@ -6951,7 +6953,7 @@ body.shop-preview-active .craft-pipeline-fill {
     background: linear-gradient(180deg, #5a4828 0%, #3a2a14 100%);
     color: #f6ecd6;
     border: 2px solid #2a1f10;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 11px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -7016,7 +7018,7 @@ body.shop-preview-active .craft-pipeline-fill {
     padding: 12px 18px;
     background: #2a1f10;
     color: #f6ecd6;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 13px;
     letter-spacing: 3px;
     border-bottom: 2px solid #1a1408;
@@ -7037,7 +7039,7 @@ body.shop-preview-active .craft-pipeline-fill {
     flex: 1;
     padding: 18px 24px;
     overflow-y: auto;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
 }
 .wb-drawer-empty {
     text-align: center;
@@ -7071,7 +7073,7 @@ body.shop-preview-active .craft-pipeline-fill {
 .wb-drawer-stub {
     text-align: center;
     padding: 40px 20px;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
 }
 .wb-drawer-stub .ws-name {
     font-size: 24px;
@@ -7101,7 +7103,7 @@ body.shop-preview-active .craft-pipeline-fill {
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     padding: 24px 20px 12px;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
 }
 .pack-pick-card {
     position: relative;
@@ -7169,7 +7171,7 @@ body.shop-preview-active .craft-pipeline-fill {
 .pack-pick-footer {
     text-align: center;
     padding: 14px 0 8px;
-    font-family: 'Special Elite', 'Courier Prime', monospace;
+    font-family: var(--font-dossier);
     font-size: 11px;
     color: rgba(40, 20, 0, 0.55);
     letter-spacing: 2px;
