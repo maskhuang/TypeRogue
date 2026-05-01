@@ -278,6 +278,8 @@ export function showScreen(name: 'menu' | 'battle' | 'shop' | 'gameover' | 'ritu
     setBgSpeedMul(1.0);
     el.word.style.removeProperty('--raise-d');
   }
+  // CFG 图标可见性跟随屏幕（battle / terminal / workbench 时显示）
+  import('../ui/SettingsPanel').then(m => m.updateSettingsToggleIcon());
 }
 
 // === 词语系统 ===

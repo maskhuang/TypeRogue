@@ -10,7 +10,7 @@ import { startLevel, initInput, resetCycleTracking, showScreen } from './systems
 import { initFloatTextCanvas, clearFloatTexts } from './ui/effects/FloatTextPool';
 import { stopBGM, initAudio, playSound } from './effects/sound';
 import { startTutorialMode } from './systems/tutorial/TutorialMode';
-import { openSettingsPanel, applyAllSettings } from './ui/SettingsPanel';
+import { openSettingsPanel, applyAllSettings, wireSettingsToggleIcon } from './ui/SettingsPanel';
 import { loadSettings } from './core/UserSettings';
 import { initShopEvents } from './systems/shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
@@ -50,6 +50,7 @@ async function init(): Promise<void> {
 
   // 应用设置（CRT 等，音量在 initAudio 后生效）
   applyAllSettings();
+  wireSettingsToggleIcon();
 
   // 初始化 Canvas2D 浮字系统
   initFloatTextCanvas(document.getElementById('game-container')!);

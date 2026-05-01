@@ -416,6 +416,8 @@ export function showOnly(which: 'terminal' | 'workbench'): void {
   const wEl = document.getElementById('workbench-screen-preview') as HTMLElement | null;
   if (tEl) tEl.style.display = which === 'terminal' ? 'flex' : 'none';
   if (wEl) wEl.style.display = which === 'workbench' ? 'flex' : 'none';
+  // CFG 图标可见性跟随
+  import('../SettingsPanel').then(m => m.updateSettingsToggleIcon());
   // Story 60.11: 切屏 CRT flicker 转场（仅当用户开启动画且不在切回相同屏幕时）
   if (which !== previewState.currentScreen && shouldAnimateShop()) {
     const target = which === 'terminal' ? tEl : wEl;
@@ -465,6 +467,7 @@ function restoreFromPreview(): void {
   const menu = document.getElementById('main-menu-screen');
   if (menu) menu.style.display = 'flex';
   if (location.hash === PREVIEW_HASH) history.replaceState(null, '', location.pathname + location.search);
+  import('../SettingsPanel').then(m => m.updateSettingsToggleIcon());
 }
 
 function resetSession(): void {

@@ -9,11 +9,14 @@ import { getSettings, updateSettings } from '../core/UserSettings'
 import type { BackgroundMode } from '../core/UserSettings'
 import { setMasterVolume, playSound } from '../effects/sound'
 import { setBackgroundMode } from '../effects/balatroBackground'
+import { eventBus } from '../core/events/EventBus'
 
 const BG_MODES: BackgroundMode[] = ['off', 'random', 'liquid', 'marble', 'cells', 'aurora', 'ink']
 
 let overlay: HTMLElement | null = null
 let escHandler: ((e: KeyboardEvent) => void) | null = null
+// 战斗中点 CFG 图标会触发 battle:pause —— closeSettingsPanel 时配对 resume
+let battlePausedByIcon = false
 
 export function openSettingsPanel(): void {
   if (overlay) return // already open
@@ -141,6 +144,43 @@ export function closeSettingsPanel(): void {
   if (overlay?.parentNode) overlay.parentNode.removeChild(overlay)
   overlay = null
   if (escHandler) { window.removeEventListener('keydown', escHandler); escHandler = null }
+  if (battlePausedByIcon) {
+    eventBus.emit('battle:resume')
+    battlePausedByIcon = false
+  }
+}
+
+// === In-game CFG 图标 ===
+
+const ICON_VISIBLE_SCREENS = ['battle-screen', 'terminal-shop-screen', 'workbench-screen-preview']
+
+/** 根据当前可见屏幕决定 CFG 图标显示与否 —— 仅 battle / terminal / workbench 三屏 */
+export function updateSettingsToggleIcon(): void {
+  const icon = document.getElementById('settings-toggle-icon') as HTMLButtonElement | null
+  if (!icon) return
+  const anyVisible = ICON_VISIBLE_SCREENS.some(id => {
+    const el = document.getElementById(id)
+    return el && el.style.display !== 'none' && el.style.display !== ''
+  })
+  icon.style.display = anyVisible ? 'inline-block' : 'none'
+}
+
+/** 应用启动时调用一次：绑定点击 + 初始可见性 */
+export function wireSettingsToggleIcon(): void {
+  const icon = document.getElementById('settings-toggle-icon')
+  if (!icon || (icon as HTMLElement).dataset.bound === '1') return
+  ;(icon as HTMLElement).dataset.bound = '1'
+  icon.addEventListener('click', () => {
+    playSound('click')
+    if (overlay) { closeSettingsPanel(); return } // 已开 → 切关
+    const battleVisible = document.getElementById('battle-screen')?.style.display === 'flex'
+    if (battleVisible) {
+      eventBus.emit('battle:pause')
+      battlePausedByIcon = true
+    }
+    openSettingsPanel()
+  })
+  updateSettingsToggleIcon()
 }
 
 /** 应用 CRT 设置到 DOM */
