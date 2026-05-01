@@ -11,6 +11,11 @@ import { MIB_LEXICON } from '../generated/mib-lexicon.mjs'
 // Returns { passed: boolean, errors: string[], warnings: string[] }
 
 export function validateFragment(fragment, voice, template = null) {
+  // v3.1 per_tier_flavor: 内部展开为 4 个 tier 子 fragment，每个用 bell voice 标准检查
+  if (voice === 'per_tier_flavor') {
+    return validatePerTierFlavor(fragment, template)
+  }
+
   const errors = []
   const warnings = []
 
@@ -22,6 +27,60 @@ export function validateFragment(fragment, voice, template = null) {
   errors.push(...checkIPCompliance(fragment))
   errors.push(...checkAnchorConsistency(fragment))
   warnings.push(...softCheckMibSignals(fragment, voice, template))
+
+  return { passed: errors.length === 0, errors, warnings }
+}
+
+// v3.1 per_tier_flavor 验证：展开为 4 个 tier 子 fragment 各自走 bell 标准
+function validatePerTierFlavor(fragment, template) {
+  const errors = []
+  const warnings = []
+
+  // 1. 必须有 name + 4 tier × zh/en = 10 字段
+  const requiredFields = ['name_zh', 'name_en',
+    'tier_0_zh', 'tier_0_en', 'tier_1_zh', 'tier_1_en',
+    'tier_2_zh', 'tier_2_en', 'tier_3_zh', 'tier_3_en']
+  for (const f of requiredFields) {
+    if (!fragment[f] || fragment[f].trim() === '') {
+      errors.push(`per_tier_flavor 缺字段: ${f}`)
+    }
+  }
+
+  // 2. 每个 tier 用 per_tier voice 标准（≤ 40 字 zh / ≤ 20 words en，比 bell 略宽）
+  for (let t = 0; t <= 3; t++) {
+    const tierFragment = {
+      text_zh: fragment[`tier_${t}_zh`] || '',
+      text_en: fragment[`tier_${t}_en`] || '',
+      name_zh: fragment.name_zh || '',
+      name_en: fragment.name_en || '',
+    }
+    const tierResult = {
+      errs: [],
+      warnings: [],
+    }
+    tierResult.errs.push(...checkWordLimit(tierFragment, 'per_tier'))
+    tierResult.errs.push(...checkV2Residue(tierFragment))
+    tierResult.errs.push(...checkB1aForbidden(tierFragment))
+    tierResult.errs.push(...checkNumerics(tierFragment, 'per_tier'))
+    tierResult.errs.push(...checkIPCompliance(tierFragment))
+    tierResult.errs.push(...checkAnchorConsistency(tierFragment))
+
+    for (const e of tierResult.errs) errors.push(`[tier ${t}] ${e}`)
+  }
+
+  // 3. 4 个 tier 不能完全相同（至少需要 3 个 distinct zh 文本）
+  const zhTexts = [0, 1, 2, 3].map(t => fragment[`tier_${t}_zh`] || '')
+  const distinctZh = new Set(zhTexts.filter(Boolean))
+  if (distinctZh.size < 3) {
+    errors.push(`4 个 tier 视角不够区分（仅 ${distinctZh.size} 个不同 zh 文本）—— 必须每个 tier 视角不同`)
+  }
+
+  // 4. Tier 3 必须有 POV 反转标记之一（"样本 #" / "持有人" / "subject" / "research" 等）
+  const tier3Combined = `${fragment.tier_3_zh || ''} ${fragment.tier_3_en || ''}`.toLowerCase()
+  const povMarkers = /样本\s*#|持有人|holder|subject\s*#|research|behavioral|conformance/i
+  if (!povMarkers.test(tier3Combined)) {
+    warnings.push(`Tier 3 缺 POV 反转标记（建议: "样本 #485,902 / 持有人 / subject / research / behavioral"）`)
+  }
 
   return { passed: errors.length === 0, errors, warnings }
 }
@@ -176,12 +235,12 @@ function checkNumerics(fragment, voice) {
     }
   }
 
-  // Chinese counter words
-  const cnNumMatch = zh.match(/([二三四五六七八九十百千万]{1,4}[次个倍层字词条件份额])/)
-  if (cnNumMatch) {
-    const allowed = ['一次', '一句', '一声', '一枚', '一座', '一页', '一层', '一词', '一个', '一字', '一份', '一件', '一条']
-    if (!allowed.includes(cnNumMatch[1])) {
-      errors.push(`含汉字数值: "${cnNumMatch[1]}" — 用模糊量化或 ██ 替代`)
+  // Chinese counter words — 仅检查 mechanic 量词（倍 / 层 / 次）；lore 计数（份/枚/件/条/字/页/封/张/起/名）免检
+  const mechanicCnNumMatch = zh.match(/([二三四五六七八九十百千万]{1,4}[倍层次])/)
+  if (mechanicCnNumMatch) {
+    const allowed = ['一次']
+    if (!allowed.includes(mechanicCnNumMatch[1])) {
+      errors.push(`含机制汉字数值: "${mechanicCnNumMatch[1]}" — 用模糊量化或 ██ 替代`)
     }
   }
 

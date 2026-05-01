@@ -61,11 +61,80 @@ export function buildUserPrompt(obj, type, voice, template) {
     bell: buildBellPrompt,
     doc:  buildDocPrompt,
     note: buildNotePrompt,
+    per_tier_flavor: buildPerTierFlavorPrompt,
   }
 
   const builder = voiceBuilders[voice]
-  if (!builder) throw new Error(`Unknown voice: ${voice} (v3 voices: bell, doc, note)`)
+  if (!builder) throw new Error(`Unknown voice: ${voice} (v3.1 voices: bell, doc, note, per_tier_flavor)`)
   return builder(objSummary, type, template)
+}
+
+// v3.1 NEW · per_tier_flavor voice builder
+// 一次 LLM call 产出 name + 4 个 tier 的 zh/en flavor（每条 ≤ 30 字 / ≤ 15 words）
+function buildPerTierFlavorPrompt(objData, type, template) {
+  const guide = TEMPLATE_GUIDES[template] || ''
+
+  return `为以下游戏对象生成 **per_tier_flavor · 4 tier × 1 行 flavor**（v3.1 三轨映射 · 主显示路径）。
+
+## 对象数据
+${objData}
+
+## 模板：${template}
+${guide}
+
+## v3.1 三轨映射 · 4 个 tier 视角
+
+每个 tier 是**完全不同的视角**——不是同一句话的小修小改，而是**写作主体**变了：
+
+| Tier | 谁在写 | 视角 | 风格 |
+|---|---|---|---|
+| **0** None / SCP / V-1 / L0 标准层 | 普通员工 写给 普通员工 | 表面合规 / 中性 SOP | 像企业入职手册的一句话 |
+| **1** Wordsmith / FRP / V-2 / L1 微扰层 | 残稿处理岗 写给 同岗 | 加碎片识别暗示 | 比 tier 0 多一处"碎片重组" / "复核缺失"等微扰 |
+| **2** Metamorph / ARP / V-3 / L2 双视层 | 异常接收岗 写给 同岗 | 加 ghost label / 双视暗示 | 比 tier 1 更不安——"对你说话" / "蜡仍是温的" / "咖啡机的标签滑了一下" |
+| **3** Endless / PEP / 无守则 / L3 反转层 | **研究员 写给 研究员**（关于你）| **POV 反转** | "已确认：每次封缄后样本 #485,902 暂停 3 秒。" / "持有人对正向强化反应稳定。" |
+
+**关键：** Tier 3 是**视角根本反转**——Tier 0-2 是员工互相说话，Tier 3 是公司（研究员）以**第三人称谈论作为研究对象的玩家**。
+
+## 风格 sample · 假想 wax_seal（封蜡章）
+
+| Tier | zh | en |
+|---|---|---|
+| 0 | 用于异常词料归档前的最终封缄。 | For final sealing of anomalous word residue prior to archival. |
+| 1 | 封缄前需复核碎片来源。复核记录有 4 处缺失。 | Verify fragment provenance before sealing. Four review entries missing. |
+| 2 | 封缄时偶尔感到蜡仍是温的。已记录。 | The wax occasionally feels warm during sealing. Logged. |
+| 3 | 已确认：每次封缄后样本 #485,902 暂停 3 秒。 | Confirmed: Subject #485,902 pauses three seconds following each sealing. |
+
+注意 4 行的**视角差异**：tier 0 中性流程；tier 1 加微扰（碎片复核）；tier 2 加身体感知（"蜡仍是温的"）；tier 3 反转——主语从"你"变成"样本 #485,902"。
+
+## 输出格式
+
+\`\`\`json
+{
+  "name_zh": "中文叙事名（2-6 字，员工腔 / MIB 装备命名感）",
+  "name_en": "English Narrative Name (1-3 words)",
+  "tier_0_zh": "Tier 0 中文 ≤30 字（标准 SOP 中性视角）",
+  "tier_0_en": "Tier 0 English ≤15 words",
+  "tier_1_zh": "Tier 1 中文 ≤30 字（FRP 残稿处理者视角 + 微扰）",
+  "tier_1_en": "Tier 1 English ≤15 words",
+  "tier_2_zh": "Tier 2 中文 ≤30 字（ARP 异常接收者视角 + 双视感）",
+  "tier_2_en": "Tier 2 English ≤15 words",
+  "tier_3_zh": "Tier 3 中文 ≤30 字（PEP 研究员视角 · POV 反转 · 第三人称谈论玩家）",
+  "tier_3_en": "Tier 3 English ≤15 words"
+}
+\`\`\`
+
+## 写作要求
+
+1. **每条 ≤ 30 字 zh / ≤ 15 words en** —— 短而精，不要写长
+2. **4 个 tier 视角根本不同** —— 不是同一句话小修小改
+3. **Tier 3 必须 POV 反转** —— 第三人称谈论"样本 #485,902"或"持有人"，公司 / 研究员视角
+4. **绝不复述机制** —— 4 个 tier 都禁止"+30%" / "持续 3 回合" 等数值
+5. **每个 tier 至少 1 个 v3.1 信号词**（任选）：分类编号 / 异常词汇 / 不在场机构 / 协议代号 / 数字荒诞
+6. **黑色幽默 60%** —— Tier 3 反转本身已有恐怖；tier 0-2 可以加 1 处 understated humor（已发生 N 起 / 表单暂停受理 等）
+
+${ANTI_LEAK}
+
+请直接输出 JSON，不要包含 markdown 代码块标记。`
 }
 
 function buildBellPrompt(objData, type, template) {
@@ -244,6 +313,35 @@ ${ANTI_LEAK}
 // ─── Template-specific guides ───
 
 const TEMPLATE_GUIDES = {
+
+  // ═══ v3.1 per_tier_flavor 模板 ═══
+
+  per_tier_relic: `**per_tier_relic · 遗物 4-tier flavor**
+
+遗物特定要点：
+- **威胁载体**：你可能失去这件物品 → 归还 / 不予补发 / 调岗时连同附件交还
+- **Tier 0**：站在 11 部门发放方视角描述这件物品的工作角色（参见 system prompt § 遗物分发部门）
+- **Tier 1（FRP）**：暗示物品在残稿处理过程中的"细节失常"
+- **Tier 2（ARP）**：物品的异常感知（重量 / 温度 / 边缘 / 倒影 / 声音）
+- **Tier 3（PEP）**：研究员视角描述**"持有此物品的样本 #485,902 表现出 X"**`,
+
+  per_tier_affix: `**per_tier_affix · 词条 4-tier flavor**
+
+词条特定要点：
+- 词条对位 1 个灵长目物种（NCBI 4 字母代码 · 参见 system prompt § Step 4.5）
+- **Tier 0**：动作描述（"接到此条款时雇员需 X"）
+- **Tier 1（FRP）**：物种代码 + 行为暗示（"Mmul 协议触发后, 残稿打字组合反响延迟"）
+- **Tier 2（ARP）**：行为研究观察腔（"Mmul 持有人在异常样本面前显示 Y 行为"）
+- **Tier 3（PEP）**：研究员视角描述**"样本 #485,902 在 Mmul 协议下 X"**`,
+
+  per_tier_bossmod: `**per_tier_bossmod · Boss Modifier 4-tier flavor**
+
+Modifier 特定要点：
+- Modifier = "新政策 #XXX" 系——v3.1 + Tier 3 反转后变成"协议条款 #XXX"
+- **Tier 0**：政策标题 + 一句话生效描述（员工腔）
+- **Tier 1（FRP）**：政策对残稿处理岗的特殊影响
+- **Tier 2（ARP）**：政策应激下的异常体感
+- **Tier 3（PEP）**：研究员视角——"协议条款 #XXX 已纳入样本 #485,902 行为评估"`,
 
   // ═══ doc 长文书 ═══
 

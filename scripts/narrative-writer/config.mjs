@@ -23,18 +23,21 @@ export const OUTPUT_DIR = join(__dirname, 'output')
 
 export const VOICE_MAP = {
   relic: {
-    doc:  { template: 'mib_equipment',  desc: 'Relic Codex · MIB 装备文书 (B-7 类合规器格式)' },
-    bell: { template: 'mib_short',      desc: 'Relic tooltip · 1-2 行短描述' },
+    per_tier_flavor: { template: 'per_tier_relic', desc: 'Relic 主显示 · 4 tier × 1 行 flavor（v3.1 主路径）' },
+    doc:  { template: 'mib_equipment',  desc: 'Relic Codex · MIB 装备文书（v3.1 v1.1+ collection page 用）' },
+    bell: { template: 'mib_short',      desc: 'Relic tooltip · 1-2 行短描述（兼容 v3.0 旧用法）' },
   },
   affix: {
-    bell: { template: 'mib_short',      desc: 'Affix tooltip · 短描述' },
+    per_tier_flavor: { template: 'per_tier_affix', desc: 'Affix 主显示 · 4 tier × 1 行 flavor（v3.1 主路径）' },
+    bell: { template: 'mib_short',      desc: 'Affix tooltip · 短描述（兼容旧用法）' },
   },
   enchantment: {
     bell: { template: 'mib_short',      desc: 'Enchantment tooltip · 短描述' },
   },
   bossModifier: {
-    doc:  { template: 'mib_policy',     desc: 'Boss Modifier · 月度新政策 #XXX 政策文档' },
-    bell: { template: 'mib_short',      desc: 'Boss Modifier · HUD 短格言' },
+    per_tier_flavor: { template: 'per_tier_bossmod', desc: 'Boss Modifier 主显示 · 4 tier × 1 行 flavor（v3.1 主路径）' },
+    doc:  { template: 'mib_policy',     desc: 'Boss Modifier · 月度新政策 #XXX 政策文档（v1.1+）' },
+    bell: { template: 'mib_short',      desc: 'Boss Modifier · HUD 短格言（兼容旧用法）' },
   },
   class: {
     doc:  { template: 'job_desc',       desc: '职业 Codex · 工种简介' },
@@ -126,6 +129,7 @@ export const V2_BANNED_EN = [
 
 export const WORD_LIMITS = {
   bell: { zh_max_chars: 30, en_max_words: 15, label: 'bell · 短 tooltip / HUD' },
+  per_tier: { zh_max_chars: 40, en_max_words: 20, label: 'per_tier · 单 tier flavor 行' },
   doc:  { zh_max_lines: 12, en_max_lines: 12, label: 'doc · MIB 长文书' },
   note: { zh_max_chars: 80, en_max_words: 40, label: 'note · 桌面便条 / 商店批注' },
 }

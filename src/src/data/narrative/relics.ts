@@ -35,18 +35,48 @@ export const RELICS_NARRATIVE = {
       "text_en": "The pages are bare. Only ink-shadows remain where inscriptions once rested. The first oath asked only for fingers and lead."
     },
     "doc": {
-      "text_zh": "回归基础 · C-9 类能力缩减配给物\n\n分发对象：累计技能授权经核查存在结构性冗余情形、已纳入复审程序的雇员。\n\n本配给物随能力缩减处理程序一并配发，用于将持有人的职能档案整合至未附加授权的基准作业状态。配发完成后，持有人此前获批的全部技能许可将提交 HR 并入统一处理流程。持有人在持有本配给物的在岗期内，不予批准任何附加技能授权申请。\n\n操作说明：\n—— 持有人反映，未附加授权状态下的作业水平平均高于配发前的预估数据。产能评估部门尚未就此情况发布说明。\n—— 共有██名雇员在配发后提出提前归还申请。上述申请均已依照标准缩减程序处理完毕。未登记任何例外情形。\n—— 本配给物不具备跨部门转移许可。在周期中途接到调岗安排的雇员，须在前往接收部门报到前将本配给物移交 HR。\n—— 持有本配给物期间，请勿尝试提交附加技能许可申请。违反本程序提交的申请将直接归档，不予审阅。\n—— 雇员在离岗、调岗或职级重新核定时，须将本配给物连同随附的能力豁免文书一并归还政策协调员办公室。",
-      "text_en": "Back to Basics · C-9 Class Competency Reduction Asset\n\nDistribution Target: Employees whose cumulative skill authorizations have been flagged for structural redundancy review.\n\nThis asset is issued in conjunction with the Competency Reduction Procedure and serves to consolidate the holder's operational profile to unaugmented baseline output. Upon issuance, all previously authorized skill permits are submitted to HR for concurrent processing. No supplemental skill authorizations will be approved for the holder's active tenure on this asset.\n\nOperational Notes:\n—— Holders report that unaugmented output is, on average, higher than pre-issuance estimates. The Productivity Assessment Unit has not issued an explanation.\n—— ██ employees requested early return of this asset following issuance. All requests were processed under standard reduction protocol. No exceptions were recorded.\n—— This asset is not cleared for cross-departmental transfer. Employees reassigned mid-cycle must surrender the asset to HR before reporting to the receiving department.\n—— Do not attempt to file supplemental skill permit applications while holding this asset. Applications submitted in violation of this procedure will be archived without review.\n—— Upon separation, transfer, or reclassification, return this asset to the Policy Coordination Office along with any accompanying competency waiver documentation.",
-      "_aiScore": 6,
+      "text_zh": "回归基础 · A-1 类基础合规文书\n\n签发部门：灵长类辅助文书部 · 行为档案处\n适用对象：已连续完成不少于两个月度 KPI 考核周期、且全部技能授权档案已通过 HR 审核流程正式注销的雇员。\n\n本文书签发对象为进入 A-1 基础合规轨道的雇员。进入该轨道后，雇员此前获配的全部技能授权资质将正式停用，并移交内训部主动库存池统一管理。此后，雇员产能仅依据基础打字产能标准进行考核。行为档案处注：A-1 轨道并非作为纠正措施设立；该轨道收录于员工手册",
+      "text_en": "Back to Basics · Classification A-1 Foundational Compliance Document\n\nIssuing Department: Primate Auxiliary Documentation Department · Behavioral Records Office\nEligible Recipients: Employees who have completed no fewer than two consecutive monthly KPI cycles and whose skill authorization portfolio has been formally vacated through HR clearance procedures.\n\nThis document is issued to employees transitioning into the A-1 Foundational Compliance Track, in which all previously authorized skill certifications are formally decommissioned and returned to the Internal Training Department's active inventory pool. The employee's output is thereafter evaluated against baseline typing productivity standards only. The Behavioral Records Office notes that the A-1 Track was not established as a corrective measure; it appears in the employee handbook under the heading \"Voluntary Realignment,\" though no record exists of any employee requesting it voluntarily.\n\nOperational Notes:\n—— Thirty-one employees who transitioned into the A-1 Track reported that their workstation felt, in their words, \"quieter than before.\" The Behavioral Records Office has logged all thirty-one statements. No follow-up was initiated.\n—— All previously issued skill authorization binders must be returned to the Internal Training Department's redistribution window (3rd floor, east corridor) within two business days of A-1 activation. The redistribution window is open Tuesdays and Thursdays. Both Tuesdays and Thursdays are currently listed as closed for inventory reconciliation.\n—— Employees on the A-1 Track have reported above-average monthly output scores in cycles immediately following decommissioning. The Behavioral Records Office has forwarded this data to the Performance Evaluation Unit. The Performance Evaluation Unit has declined to provide a written explanation of the correlation.\n—— Upon transfer or reassignment, this document is to be returned to HR alongside any remaining authorization binders. Documents not returned within the standard window will be noted in the employee's file under \"outstanding compliance items.\"\n\nThis document has not been submitted for external field certification. Employees are advised that the A-1 Track does not appear on the interdepartmental skills registry maintained by the third-floor coordination office. The Behavioral Records Office considers this consistent with the track's scope.",
+      "_aiScore": 7,
       "_aiIssues": [
-        "【Rule 12 · 不复述机制 · 核心问题】全文几乎纯粹描述'功能流程'——配发程序、归还程序、申请处理程序——而未描述'人遇到这个东西后经历了什么'。档案里没有任何人类反应的质感：没有持有者的异常行为、没有工位层面的可观测变化、没有任何一句让玩家感受到'这个东西发生在某个具体员工身上'的叙事锚点。",
-        "【MIB 密度不足 · 水底暗示缺失】唯一接近'暗示水底'的句子是'持有人反映，未附加授权状态下的作业水平平均高于配发前的预估数据。产能评估部门尚未就此情况发布说明。'——这是全文最好的一句，但仅此一处。其余内容是纯 SOP 条款罗列，没有分类编号（仅有'C-9 类'，可接受）、没有楼层暗示、没有不在场机构引用（缺维修组/检查组/复审委员会等），MIB 信号词密度过低。",
-        "【Rule 14 · 规则句式密度偏高】'操作说明'四条中有两条是直接禁止句（'请勿尝试……'/'违反本程序……将直接归档'），加上归还义务条款，规则句式占比约 40%，超出 25% 配额上限。整体读感偏向'怪谈帖子式规则列表'而非'企业 SOP 文书'。",
-        "【黑色幽默五轴失衡 · 喜剧轴几乎归零】全文没有任何'咦了一下又笑了'的钩点。██名雇员申请归还这一数据有潜力，但处理太过平铺（'均已依照标准缩减程序处理完毕。未登记任何例外情形。'），喜剧张力被行政语言完全压平。黑暗轴偏高（80%+），喜剧轴低于目标 60%，五轴坐标失衡。",
-        "【'能力豁免文书'概念悬空】归还时须附'能力豁免文书'，但此文书从未在其他地方建立，单独出现在末条显得像机制 patch note 补丁，而非叙事有机体的一部分。",
-        "【英文版 B1.a 轻微风险】英文中'serve to consolidate the holder's operational profile'中'consolidate'语义安全，但'supplemental skill permit applications'反复出现中'skill permit'结构有轻微'主动求知'语感——建议替换为'authorization allocation'或'competency allocation request'以强化'被分发'框架语感。"
+        "【中文版截断】text_zh 明显被截断，在'员工手册'后骤然结束，缺失 Operational Notes 全部内容。中英文版本信息量严重不对等——这不是风格选择，是草稿未完成的状态。若为最终输出，此项为硬伤。",
+        "【Rule 12 · 机制复述倾向】中英文均用了大量篇幅描述流程操作（技能授权资质停用→移交→库存池→考核标准切换），这是 patch notes 写法。对应的'人遇到这个东西后经历了什么'仅出现在英文 Operational Notes 的三十一人陈述段——中文版因截断完全缺失。核心情感钩（工位变安静、产出反而上升、归还窗口永远关闭）只在英文存在，且出现位置靠后。",
+        "【MIB 密度分布不均】英文版的 MIB 信号元素（归还窗口永远关闭 / 绩效评估组拒绝书面解释 / 不在技能登记册上）集中堆积在 Operational Notes，前三分之一几乎是纯行政流程描述，水底暗示来得太晚。",
+        "【楼层暗示偏弱】'3rd floor east corridor'是唯一楼层引用，但语气过于平淡，未形成'7楼禁止带出'那种暗示有更多层级的张力。可以更隐晦地使用。",
+        "【'Voluntary Realignment'处理极佳但对比之下中文无对应】英文'no record exists of any employee requesting it voluntarily'是本段最强黑色幽默时刻，中文版因截断完全丢失——即便中文版意图全量翻译，该句在中文语境下也需对应打磨，不能只是直译。",
+        "【英文 Operational Notes 第三条轻微触碰 Rule 4】'above-average monthly output scores immediately following decommissioning'暗示了机制层的数值效果（去掉技能反而产能上升），接近直接描述 glass cannon 的 tradeoff 逻辑，但包裹在档案语气里勉强合规——边缘，需留意。",
+        "【猴行元素完全缺席】本条遗物 flavor 与灵长类辅助文书部的世界锚点脱节——任何蕉券、抓挠、猴行协议的侧面引用都没有，读起来像一个通用 SCP 机构文档，而非本设定专属质感。v3 要求猴行身份是协议必然、在场即奇幻，此条几乎感受不到。",
+        "【B1.a 无明显违规】未检测到禁止词（钻研/突破/觉醒/共鸣等），被分发框架维持良好（'previously authorized'/'formally decommissioned'/'returned to inventory pool'均属安全词汇）。",
+        "【v2.3 残留清零】无圣印/守卷人/大教堂/D-XXXX等残留词汇，通过。",
+        "【锚点准确性通过】HR无具名、主任/考核官未混淆、工号未出现（本条不需要出现）。",
+        "【Rule 14 规则句式配额】英文Operational Notes中破折号逐条罗列接近规则清单结构，但情绪是SOP冷淡腔而非怪谈煽情腔，仍在25%阈值内，勉强通过。"
       ],
-      "_aiSuggestion": "核心修改方向：**将流程文书转化为有人气的档案**。建议保留 C-9 编号和'产能评估部门尚未发布说明'这一最强钩点，并以此为支点扩写。具体操作：\n\n1. **加入可观测的人类反应层**：在'操作说明'中插入 1-2 条持有者行为记录，例如：持有者在配发后第 3 个工作日平均键盘敲击速度较基准线高出 12%，但同期错误率降至 0。复审委员会对此保持关注，目前处于观察期，暂未启动干预程序。\n\n2. **降低规则句式密度**：将'请勿尝试提交……'改写为陈述句，例如：'配发期间提交的附加技能许可申请将由系统自动归档，不进入人工审阅队列。'\n\n3. **插入一个留白机构引用**：在归还条款之后可加一行：'如持有人在归还前出现产能异常波动，请通知复审委员会，而非直接联系主任办公室。'\n\n4. **利用██数据做一个轻微喜剧落点**：例如在该条末尾加'——其中 1 名雇员在申请归还时仍持有配给物，本配给物的当前状态：已归还。'制造一个轻微的行政逻辑错位感，保持'咦了一下'而不是'被吓到'。"
+      "_aiSuggestion": "改进重点共三处：\n\n1. 【优先级 · 硬伤】补全中文版 Operational Notes，并将'工位变安静'陈述、'归还窗口永远关闭'、'绩效评估组拒绝书面解释'三个黑色幽默节点对应翻译落地——这三处是本条 flavor 的全部情感价值，目前只存在于英文。\n\n2. 【结构调整】将至少一个 MIB 信号元素（不在场机构拒绝、楼层矛盾、沉默存档）提前到第一段结尾或第二段开头，不要让前三分之一全是行政流程描述。参考基准语调 sample：封蜡章的'已发生14起意外封缄事件'出现在第二条使用须知，而非尾部。\n\n3. 【世界锚点接地】在 Operational Notes 任意一条内植入一处灵长辅助文书部特有元素：例如将'三十一名雇员'的陈述改为'三十一名灵长抄录员'，或在归还窗口说明后补一句'蕉券结算不受 A-1 轨道激活影响，按正常月度核算执行'——这一句既强化财务严肃语调，又将读者拉回本设定，同时悄悄暗示公司对猴行员工的物质安抚与精神清零是两条独立轨道。"
+    },
+    "per_tier_flavor": {
+      "name_zh": "基础操作手册",
+      "name_en": "Field Basics Manual",
+      "tier_0_zh": "适用于卸任全部配发技能岗位的雇员。手册归还前须完成清单核销。",
+      "tier_0_en": "Issued upon full skill reallocation. Return checklist must be cleared before handover.",
+      "tier_1_zh": "手册封底有一栏附加配发记录，已全数核销。核销签字处有两处笔迹不同。",
+      "tier_1_en": "All supplemental issue entries voided. Two signatures on the clearance page appear mismatched.",
+      "tier_2_zh": "翻过最后一页后，手册的厚度好像没有减少。已报告物资管理中心。尚未受理。",
+      "tier_2_en": "Thickness appears unchanged after the final page. Reported to Materials. Pending intake.",
+      "tier_3_zh": "已确认：样本 #485,902 卸除全部授权后，手册持握频率上升。翻阅行为无目的性。",
+      "tier_3_en": "Confirmed: Subject #485,902 increases grip frequency following full authorization removal. Page-turning behavior yields no output.",
+      "_aiScore": 8,
+      "_aiIssues": [
+        "tier_0：'卸任全部配发技能岗位'语义略拗。'卸任岗位'与'归还手册'的因果链模糊——手册是随岗位一起配发的，还是独立配发？前置条件不清晰会让读者误以为是两件事。",
+        "tier_1：'笔迹不同'是有效的微扰信号，但未借助任何机构引用（维修组/物资管理中心/复审委员会）做 SOP 化处理，导致不安感更接近悬疑小说而非企业 SOP 文件——Rule 14 临界。",
+        "tier_2_zh：'已报告物资管理中心。尚未受理。'优秀——正确使用不在场机构 + SOP 句式 + 留白。扣分项：'翻过最后一页后，手册的厚度好像没有减少'中的'好像'是主观口吻，与 per_tier_flavor 的第三方观察腔存在摩擦（不致命，但不稳）。",
+        "tier_2_en：'Reported to Materials. Pending intake.'——'Materials'作为机构简称略显简陋，建议补全为'Materials Management Center'以匹配中文机构锚点一致性；'intake'在企业流程语境中准确，但可考虑'pending review'以区分接收与受理。",
+        "tier_3：语态从'被动观察者'切换为明确的观察记录文书（'已确认：样本 #485,902'），腔调转向实验室档案报告风，偏离 per_tier_flavor 的 HR 第三方观察腔设定；此外'样本'（sample/Subject）在 v3.1 元层禁用词名单边缘（容易引发'收容/Foundation'联想），建议替换为'雇员 #485,902'。",
+        "tier_3_en：'Page-turning behavior yields no output.'——'yields no output'是绩效考核语言，本身很好；但'Subject #485,902'与上述中文问题同源，建议统一改为'Employee #485,902'。",
+        "整体配额审计：无 v2.3 残留词汇；无 Section X 过度引用；无上游母题滥用；猴子方向占比 0%（本碎片未涉及，不算问题）；规则句式密度 ≤ 25%（合规）。",
+        "B1.a 审计：全文无禁止词（无钻研/突破/觉醒等）；手册始终以'配发/归还/核销'框架处理，力量来源指向公司流程而非雇员主动——合规。",
+        "黑色幽默五轴：tier_0-1 过于干净，幽默感接近零；tier_2 的'尚未受理'是全文最好的黑色幽默时刻（体制迟钝 + 异常现象的并置）；tier_3 的档案腔使不安感上升但笑点消失——整体幽默密度偏低，建议在 tier_1 或 tier_3 植入一处'咦了一下又笑了'节点。"
+      ],
+      "_aiSuggestion": "1. tier_0 措辞调整：'适用于全部配发技能均已移交归还的雇员。手册须随技能归还流程一并完成清单核销。'——明确手册与技能配发的绑定关系。\n2. tier_1 补入机构引用：在'两处笔迹不同'后追加一行 SOP 腔，例如'已提交复审委员会留档。建议暂缓提交调岗申请直至复核完成。'——把悬疑感程序化，使其更像企业文件而非悬疑小说。\n3. tier_2_zh '好像'替换：改为'经物资管理中心标准厚度核准表比对，数值超出正常区间 0.4mm。'——第三方观察腔更稳，且具体数字制造额外的荒诞幽默。\n4. tier_3 '样本'替换为'雇员 #485,902'；并在结尾植入一句带黑色幽默的 HR 腔收尾，例如'本记录已抄送政策协调员办公室。产能数据按零处理。'——补回笑点同时维持档案腔。\n5. tier_2_en 'Materials' 改为 'Materials Management Center'；tier_3_en 'Subject' 改为 'Employee #485,902'。"
     }
   },
   "metamorph": {

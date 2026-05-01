@@ -1,0 +1,29 @@
+[
+  {
+    "name_zh": "基础操作手册",
+    "name_en": "Field Basics Manual",
+    "tier_0_zh": "适用于卸任全部配发技能岗位的雇员。手册归还前须完成清单核销。",
+    "tier_0_en": "Issued upon full skill reallocation. Return checklist must be cleared before handover.",
+    "tier_1_zh": "手册封底有一栏附加配发记录，已全数核销。核销签字处有两处笔迹不同。",
+    "tier_1_en": "All supplemental issue entries voided. Two signatures on the clearance page appear mismatched.",
+    "tier_2_zh": "翻过最后一页后，手册的厚度好像没有减少。已报告物资管理中心。尚未受理。",
+    "tier_2_en": "Thickness appears unchanged after the final page. Reported to Materials. Pending intake.",
+    "tier_3_zh": "已确认：样本 #485,902 卸除全部授权后，手册持握频率上升。翻阅行为无目的性。",
+    "tier_3_en": "Confirmed: Subject #485,902 increases grip frequency following full authorization removal. Page-turning behavior yields no output.",
+    "_objectId": "glass_cannon_v2",
+    "_voice": "per_tier_flavor",
+    "_aiScore": 8,
+    "_aiIssues": [
+      "tier_0：'卸任全部配发技能岗位'语义略拗。'卸任岗位'与'归还手册'的因果链模糊——手册是随岗位一起配发的，还是独立配发？前置条件不清晰会让读者误以为是两件事。",
+      "tier_1：'笔迹不同'是有效的微扰信号，但未借助任何机构引用（维修组/物资管理中心/复审委员会）做 SOP 化处理，导致不安感更接近悬疑小说而非企业 SOP 文件——Rule 14 临界。",
+      "tier_2_zh：'已报告物资管理中心。尚未受理。'优秀——正确使用不在场机构 + SOP 句式 + 留白。扣分项：'翻过最后一页后，手册的厚度好像没有减少'中的'好像'是主观口吻，与 per_tier_flavor 的第三方观察腔存在摩擦（不致命，但不稳）。",
+      "tier_2_en：'Reported to Materials. Pending intake.'——'Materials'作为机构简称略显简陋，建议补全为'Materials Management Center'以匹配中文机构锚点一致性；'intake'在企业流程语境中准确，但可考虑'pending review'以区分接收与受理。",
+      "tier_3：语态从'被动观察者'切换为明确的观察记录文书（'已确认：样本 #485,902'），腔调转向实验室档案报告风，偏离 per_tier_flavor 的 HR 第三方观察腔设定；此外'样本'（sample/Subject）在 v3.1 元层禁用词名单边缘（容易引发'收容/Foundation'联想），建议替换为'雇员 #485,902'。",
+      "tier_3_en：'Page-turning behavior yields no output.'——'yields no output'是绩效考核语言，本身很好；但'Subject #485,902'与上述中文问题同源，建议统一改为'Employee #485,902'。",
+      "整体配额审计：无 v2.3 残留词汇；无 Section X 过度引用；无上游母题滥用；猴子方向占比 0%（本碎片未涉及，不算问题）；规则句式密度 ≤ 25%（合规）。",
+      "B1.a 审计：全文无禁止词（无钻研/突破/觉醒等）；手册始终以'配发/归还/核销'框架处理，力量来源指向公司流程而非雇员主动——合规。",
+      "黑色幽默五轴：tier_0-1 过于干净，幽默感接近零；tier_2 的'尚未受理'是全文最好的黑色幽默时刻（体制迟钝 + 异常现象的并置）；tier_3 的档案腔使不安感上升但笑点消失——整体幽默密度偏低，建议在 tier_1 或 tier_3 植入一处'咦了一下又笑了'节点。"
+    ],
+    "_aiSuggestion": "1. tier_0 措辞调整：'适用于全部配发技能均已移交归还的雇员。手册须随技能归还流程一并完成清单核销。'——明确手册与技能配发的绑定关系。\n2. tier_1 补入机构引用：在'两处笔迹不同'后追加一行 SOP 腔，例如'已提交复审委员会留档。建议暂缓提交调岗申请直至复核完成。'——把悬疑感程序化，使其更像企业文件而非悬疑小说。\n3. tier_2_zh '好像'替换：改为'经物资管理中心标准厚度核准表比对，数值超出正常区间 0.4mm。'——第三方观察腔更稳，且具体数字制造额外的荒诞幽默。\n4. tier_3 '样本'替换为'雇员 #485,902'；并在结尾植入一句带黑色幽默的 HR 腔收尾，例如'本记录已抄送政策协调员办公室。产能数据按零处理。'——补回笑点同时维持档案腔。\n5. tier_2_en 'Materials' 改为 'Materials Management Center'；tier_3_en 'Subject' 改为 'Employee #485,902'。"
+  }
+]

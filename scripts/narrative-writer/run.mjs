@@ -182,6 +182,30 @@ const VOICE_SCHEMAS = {
     required: ['text_zh', 'text_en'],
     additionalProperties: false,
   },
+  // v3.1 NEW · per_tier_flavor: name + 4 tier × zh/en（10 字段）
+  per_tier_flavor: {
+    type: 'object',
+    properties: {
+      name_zh: { type: 'string' },
+      name_en: { type: 'string' },
+      tier_0_zh: { type: 'string' },
+      tier_0_en: { type: 'string' },
+      tier_1_zh: { type: 'string' },
+      tier_1_en: { type: 'string' },
+      tier_2_zh: { type: 'string' },
+      tier_2_en: { type: 'string' },
+      tier_3_zh: { type: 'string' },
+      tier_3_en: { type: 'string' },
+    },
+    required: [
+      'name_zh', 'name_en',
+      'tier_0_zh', 'tier_0_en',
+      'tier_1_zh', 'tier_1_en',
+      'tier_2_zh', 'tier_2_en',
+      'tier_3_zh', 'tier_3_en',
+    ],
+    additionalProperties: false,
+  },
 }
 
 // ─── Doc Voice: EN-first + ZH translation ───
