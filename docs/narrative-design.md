@@ -1375,6 +1375,306 @@ Why 5: 为什么这游戏对"麻木的服从者"如此承诺？
 
 ---
 
+## 🟢 Step 4.5 (v3.1 NEW) · 词缀编码体系（决议 Q1 = b · 渐进式）
+
+### 总则
+
+59 base 词缀 + 8 Apprentice + 1 Operator + 1 BonusOutput = **69 个 v1.0 编码体系**。
+~50 Quest 附魔留 v1.1（Quest 是 stack 完成才显现的二次形态，不阻塞 v1.0）。
+
+### 命名规约（生物学界标准）
+
+```
+Genus species → 4 字母代码（首字母大写 + 3 字母小写）
+Macaca mulatta → Mmul
+Pongo pygmaeus → Ppyg
+```
+
+UniProt / Ensembl / NCBI 共用，学术正典。
+
+### 双层显示（继承 Rule 13 物品分层）
+
+| 层 | 内容 | 出现位置 |
+|---|---|---|
+| **核心层** | 4 字母代码（"Mmul"）+ 1 行行为简述 | 词单 / 战斗中 KeyVisual |
+| **完整层** | 4 字母 + 拉丁名 + 中文俗名 + 触发模式 + 研究档案 flavor | 收藏页 / 长按 tooltip |
+
+### 类目 → 进化支映射
+
+| 类目 | 数量 | clade | 灵长学逻辑 |
+|---|---|---|---|
+| **Numeric** | 4 | 松鼠猴属 (*Saimiri*) | 数量大、群居、计数行为研究材料 |
+| **Crit** | 5 | 猕猴核心 5 种 (*Macaca*) | 实验心理学最常用——决断 / 锐利 |
+| **Stack** | 7 | 狒狒 6 + 狮尾狒 1 (*Papio* + *Theropithecus*) | 大型群落 + 节律性鼓动 |
+| **Topology** | 8 | 大猿类 (Hominidae 8 种) | 高维空间认知 / 工具使用 |
+| **Word Sense** | 15 | 长尾猴 + 叶猴混合 | 词料处理类比叶食处理（解析 / 选择）|
+| **Meta Rule** | 17 | 长臂猿科 17 种 (Hylobatidae) | 摆荡式跨距运动 = 元规则的空间隐喻 |
+| **Production** | 3 | 普通狨属 (*Callithrix*) | 高生育率 = production |
+
+### 完整映射表（59 base 词缀，已 NCBI Wikipedia 验证）
+
+#### Numeric (4) · Saimiri 松鼠猴属
+
+| 词缀 | 代码 | 拉丁名 | 中文 |
+|---|---|---|---|
+| convert | **Sbol** | *Saimiri boliviensis* | 黑帽松鼠猴 |
+| rainbow | **Ssci** | *Saimiri sciureus* | 圭亚那松鼠猴 |
+| multiply | **Soer** | *Saimiri oerstedii* | 中美松鼠猴 |
+| charge | **Sust** | *Saimiri ustus* | 裸耳松鼠猴 |
+
+#### Crit (5) · Macaca 猕猴属（核心研究 5 种）
+
+| 词缀 | 代码 | 拉丁名 | 中文 |
+|---|---|---|---|
+| crit | **Mmul** | *Macaca mulatta* | 普通猕猴（恒河猴）|
+| decay | **Mfas** | *Macaca fascicularis* | 食蟹猴 |
+| recurse | **Mfus** | *Macaca fuscata* | 日本猕猴 |
+| taboo | **Marc** | *Macaca arctoides* | 短尾猕猴 |
+| fallacy | **Mnem** | *Macaca nemestrina* | 南方猪尾猕猴 |
+
+#### Stack (7) · Papio + Theropithecus 狒狒族
+
+| 词缀 | 代码 | 拉丁名 | 中文 |
+|---|---|---|---|
+| amplify | **Panu** | *Papio anubis* | 阿努比斯狒狒 |
+| splash | **Pcyn** | *Papio cynocephalus* | 草原狒狒 |
+| resonance | **Pham** | *Papio hamadryas* | 阿拉伯狒狒 |
+| echo | **Pkin** | *Papio kindae* | 黄狒狒 |
+| fury | **Purs** | *Papio ursinus* | 沙巴狒狒 |
+| tide | **Ppap** | *Papio papio* | 几内亚狒狒 |
+| war_drum | **Tgel** | *Theropithecus gelada* | 狮尾狒 |
+
+#### Topology (8) · Hominidae 大猿类
+
+| 词缀 | 代码 | 拉丁名 | 中文 |
+|---|---|---|---|
+| void | **Hsap** | *Homo sapiens* | 智人 |
+| swarm | **Ggor** | *Gorilla gorilla* | 西部大猩猩 |
+| mirror | **Gber** | *Gorilla beringei* | 东部大猩猩 |
+| flow | **Ptro** | *Pan troglodytes* | 黑猩猩 |
+| confluence | **Ppan** | *Pan paniscus* | 倭黑猩猩 |
+| union | **Pabe** | *Pongo abelii* | 苏门答腊红毛猩猩 |
+| aura_fury | **Ppyg** | *Pongo pygmaeus* | 婆罗洲红毛猩猩 |
+| aura_morale | **Ptap** | *Pongo tapanuliensis* | 塔潘奴利红毛猩猩 |
+
+#### Word Sense (15) · 长尾猴 + 叶猴族
+
+| 词缀 | 代码 | 拉丁名 | 中文 |
+|---|---|---|---|
+| cascade | **Cmit** | *Cercopithecus mitis* | 青腹长尾猴 |
+| outcast | **Casc** | *Cercopithecus ascanius* | 红尾长尾猴 |
+| gravity | **Cdia** | *Cercopithecus diana* | 戴安娜长尾猴 |
+| ligature | **Cneg** | *Cercopithecus neglectus* | 德布拉柴长尾猴 |
+| fiber | **Caet** | *Chlorocebus aethiops* | 绿猴 |
+| repulsion | **Cpyg** | *Chlorocebus pygerythrus* | 长尾绿猴 |
+| handoff | **Tgee** | *Trachypithecus geei* | 金叶猴 |
+| rewind | **Tobs** | *Trachypithecus obscurus* | 暗叶猴 |
+| endow | **Tcri** | *Trachypithecus cristatus* | 银叶猴 |
+| proofread | **Sent** | *Semnopithecus entellus* | 北方长尾叶猴 |
+| spelling | **Sjoh** | *Semnopithecus johnii* | 尼尔吉里黑叶猴 |
+| first_edition | **Rrox** | *Rhinopithecus roxellana* | 川金丝猴 |
+| reprint | **Rbie** | *Rhinopithecus bieti* | 滇金丝猴 |
+| matrix | **Cgue** | *Colobus guereza* | 东非黑白疣猴 |
+| typeset | **Pnem** | *Pygathrix nemaeus* | 红腿白臀叶猴 |
+
+#### Meta Rule (17) · Hylobatidae 长臂猿科
+
+| 词缀 | 代码 | 拉丁名 | 中文 |
+|---|---|---|---|
+| relay | **Hlar** | *Hylobates lar* | 白掌长臂猿 |
+| conduit | **Hagi** | *Hylobates agilis* | 敏捷长臂猿 |
+| twin | **Hmol** | *Hylobates moloch* | 银长臂猿 |
+| innate | **Hpil** | *Hylobates pileatus* | 戴帽长臂猿 |
+| exhaust | **Halb** | *Hylobates albibarbis* | 婆罗白胡子长臂猿 |
+| reflect | **Hmue** | *Hylobates muelleri* | 缪氏长臂猿 |
+| monkey_patch | **Hleu** | *Hoolock leuconedys* | 东白眉长臂猿 |
+| excavate | **Hhoo** | *Hoolock hoolock* | 西白眉长臂猿 |
+| treasure | **Htia** | *Hoolock tianxing* | 高黎贡白眉长臂猿 |
+| refine | **Ssyn** | *Symphalangus syndactylus* | 合趾猴 |
+| evolve | **Ncon** | *Nomascus concolor* | 黑冠长臂猿 |
+| harvest | **Ngab** | *Nomascus gabriellae* | 黄颊长臂猿 |
+| chain | **Nleu** | *Nomascus leucogenys* | 北白颊长臂猿 |
+| volatile | **Nhai** | *Nomascus hainanus* | 海南长臂猿 |
+| mutacrit | **Nann** | *Nomascus annamensis* | 北部黄颊长臂猿 |
+| ascend | **Nnas** | *Nomascus nasutus* | 东部黑冠长臂猿 |
+| reecho | **Nsik** | *Nomascus siki* | 南部白颊长臂猿 |
+
+#### Production (3) · Callithrix 普通狨属
+
+| 词缀 | 代码 | 拉丁名 | 中文 |
+|---|---|---|---|
+| mercenary | **Cjac** | *Callithrix jacchus* | 普通狨 |
+| myopia | **Cgeo** | *Callithrix geoffroyi* | 白头狨 |
+| silkworm | **Cpen** | *Callithrix penicillata* | 黑簇狨 |
+
+### 代码冲突自检
+
+- 全部 59 个代码两两不重复（已逐一核对）
+- P-prefix 12 个最密集（Papio×6 + Pongo×3 + Pan×2 + Pygathrix×1）—— 用 4 字母位区分
+- T-prefix 注意 **Tgel**（Theropithecus gelada）vs **Tgee**（Trachypithecus geei）—— 1 字符差，建议 UI 字体确保 l/e 区分
+
+### NCBI taxid 验证
+
+代码命名学界正典，但具体 taxid 需在 v3.1 patch 阶段对齐。**实施时**：用 `scripts/narrative-writer/generated/affix-taxa.mjs` 静态表存 `{ code, latin, taxid, common_zh, common_en }`，单元测试校验。
+
+---
+
+## 🟢 Step 4.6 (v3.1 NEW) · 附魔编码体系（Logic E 混合）
+
+### 总则
+
+三种附魔家族**机制差别太大，分别给最贴的命名系统**：
+
+| 家族 | 数量 | 命名系统 | 来源 |
+|---|---|---|---|
+| **Apprentice** | 8 | 行为学动词 | 灵长行为学（Habituation / Allogrooming / etc.）|
+| **Quest** | ~50 | FOC-XX 协议编码 | 学院观察周期 + 6 子学科 |
+| **Operator + BonusOutput** | 2 | 行为学单词 | Dominance / Provisioning Surplus |
+
+### Apprentice (8) · 行为学术语
+
+| Apprentice | 代号 | 中文 | 机制对位 |
+|---|---|---|---|
+| Self | **Habituation** | 习惯化 | 重复接触 → 反应曲线平稳化 |
+| Neighbor | **Allogrooming** | 异己理毛 | 配对互助 |
+| ResBase | **Foraging** | 觅食 | 基础觅食 |
+| ResScore | **Provisioning** | 受饲 | 被外部投喂 |
+| ResMultiplier | **Reciprocation** | 互惠 | 互惠累加 |
+| ResTime | **Vigilance** | 警戒守望 | 用时间换信息 |
+| ResGold | **Hoarding** | 囤积 | 持续攒储 |
+| Crit | **Display** | 仪态展示 | 突发的高强度行为展示 |
+
+#### 命名格式（核心层）
+
+```
+Mmul · Habituation     （恒河猴 · 习惯化）
+Sbol · Foraging        （黑帽松鼠猴 · 觅食）
+Tgel · Display         （狮尾狒 · 仪态展示）
+```
+
+#### 命名格式（完整层）
+
+```
+Mmul · Macaca mulatta · 恒河猴 / Habituation 协议
+[行为描述：本协议样本对重复字符触发的应答曲线持续优化中]
+```
+
+### Quest (~50) · FOC-XX 协议编码（v1.1 实施）
+
+#### 命名结构
+
+```
+FOC-X-NNN
+├── FOC = Field Observation Cycle（野外观察周期）
+├── X   = 子学科代号（B / G / S / F / M / T）
+└── NNN = 协议编号 001-052（不强制连续）
+```
+
+#### 6 子学科映射
+
+| 学科 | 代号 | 包含 Quest 类型 |
+|---|---|---|
+| **Behavioral Ecology** 行为生态学 | **FOC-B** | QuestConvertAccum / QuestRefine / QuestHarvest / QuestStack / QuestEnergize / QuestPurify |
+| **Group Dynamics** 群体动力学 | **FOC-G** | QuestSwarmPropagate / QuestUnion / QuestRelay / QuestResonance / QuestEcho / QuestChain / QuestMutaChain |
+| **Stress Response** 应激反应学 | **FOC-S** | QuestCharge / QuestMutacrit / QuestFury / QuestTide / QuestVolatile / QuestWarDrum / QuestAuraGlobal / QuestAuraUniversal / QuestAmplifyPulse |
+| **Foraging** 觅食学 | **FOC-F** | QuestDevour / QuestSpectrum / QuestPolarize / QuestExcavate / QuestTreasure / QuestFiberPierce / QuestSilkwormCocoon |
+| **Morphogenesis** 形态发生学 | **FOC-M** | QuestEvolve / QuestMutaRefine / QuestAscend / QuestReechoRumble / QuestMyopiaForesight / QuestRepulsionVacuum |
+| **Meta Cognition** 元认知学 | **FOC-T** | QuestMirror / QuestReflect / QuestOverlap / QuestIterate / QuestSacrifice / QuestTwin / QuestConduit / QuestSplash / QuestFallacy / QuestInnate / QuestExhaust / QuestFlow / QuestConfluence / QuestMonkeyPatch / QuestMercenaryWarlord / QuestMultiplyOp |
+
+具体 NNN 编号在 v1.1 实施时分配（不强制连续，正好符合"档案碎片"美学）。
+
+### Operator + BonusOutput (2)
+
+| 类型 | 代号 | 中文 | 机制对位 |
+|---|---|---|---|
+| MultiplyOperator | **Dominance Hierarchy** | 支配等级 | 加法 → 乘法的群体规则改写 |
+| BonusOutput | **Provisioning Surplus** | 配给溢余 | 外部投喂的额外配给 |
+
+### 完整呈现示例
+
+```
+KEY: F   [Mmul·Hb]
+            ↑ 主名 + 学徒缩写
+
+──────────────── (长按 tooltip) ────────────────
+
+Mmul · Macaca mulatta · 恒河猴
+[词条·暴击族·一号 / 触发：邻位叠层]
+
+执行中协议:
+  · Habituation-Self     习惯化 / 自身适应
+  · FOC-S-024            应激观察 024 · 暴击充能型
+  · Dominance × Mul      支配等级 · 乘法运算
+
+研究档案: 雇员 #485,902 在持有此组合时观察到协议姿态偏离 ≤ 0.3%。
+        无需调整训练频率。
+```
+
+### v1.0 / v1.1 分期
+
+- **v1.0 必带**：59 词缀 + 8 Apprentice + 2 Operator/BonusOutput = **69 个**
+- **v1.1 推迟**：~50 Quest（FOC-XX 编号 + 6 子学科扩写）= **~50 个**
+- **理由**：Quest 是 stack 完成才显现的"二次形态"——v1.0 玩家 90% 时间不会触发 Quest，缺位不破核心体验
+
+---
+
+## 🟢 Step 5.5 (v3.1 NEW) · 遗物分发部门体系（94 遗物 × 11 子系统 × 11 部门）
+
+### 总则
+
+94 遗物分布在 11 个 RelicBehavior 子系统。**v3.1 给每个子系统配一个"发放部门"**，作为 flavor 的 voice 锚（解决：v3.0 的"留白机构"配额每条 flavor 自由发挥太散）。
+
+### 11 子系统 → 11 部门
+
+| 子系统 | 遗物例 | 发放部门 | 调性 |
+|---|---|---|---|
+| **Typing** | wax_seal / echo_thimble / glass_cannon_v2 | **HR · 文具配发处** | 标配文具 / 工卡相关 |
+| **Combo** | combo_buffer / multiplier_prism / immortal_combo | **维修组** | 节律保持工具 |
+| **Skill** | first_strike / less_is_more / jazz | **内训部** | 上岗培训认证 |
+| **Enchantment** | apprentice_robe / fate_fork / enchant_anchor | **仪式协调员办公室** | 仪式合规器 |
+| **Topology** | adjacent_power / symmetry_pact / key_storm | **工位规划组** | 工位规约工具 |
+| **Word** | word_collection / long_word_master / word_dealer | **编校组** | 词料处理器 |
+| **Resource** | score_magnet / time_dew / universal_furnace | **财务组** | 蕉券 / 凭证类 |
+| **Shop** | discount_card / black_market / timed_auction | **物资管理中心** | 配发授权类 |
+| **Stage** | warm_up / elite_hunter / phoenix | **排班组** | 时段调度类 |
+| **Boss Modifier** | modifier_shield / chaos_roulette / modifier_reversal | **复审委员会** | 政策对抗工具 |
+| **Scoring** | base_shield / snowball / score_black_hole | **行为档案处** | 评级相关 |
+
+### 部门腔调差分
+
+| 部门 | 腔调要点 | 例（一句话） |
+|---|---|---|
+| HR · 文具配发处 | 标准化通知 | "请注意领用，离职归还。" |
+| 维修组 | 工程师腔 + 略冷 | "本工具已调试至本季度规格。" |
+| 内训部 | 推销 + 鸡汤（继承内训讲师调） | "授课成果已达标。请保持。" |
+| 仪式协调员办公室 | 庄重 + 程序腔 | "本仪式合规器经协调员办公室审批配发。" |
+| 工位规划组 | 检查员腔 | "工位规约 §7.3 配套工具。请勿改动布局。" |
+| 编校组 | 严谨 + 学究 | "校订规范 V-12 配套器。请按规章使用。" |
+| 财务组 | 严肃账务腔（继承 Rule 9 蕉的财务调） | "凭据有效期内可凭此核销蕉券。" |
+| 物资管理中心 | 库存腔 | "库存编号已登记。请按授权使用。" |
+| 排班组 | 调度腔 | "本时段限定工具。逾期失效。" |
+| 复审委员会 | 仪式化判决腔（继承上级权威 B） | "经复审委员会授权，本工具可对抗指定政策。" |
+| 行为档案处 | 第三方观察腔（继承玩家系统反馈调） | "归档已记录。雇员行为已纳入参考。" |
+
+### v2.3 残留清理优先级
+
+**当前状态：** 95 个 RELICS_NARRATIVE entries 中 **58 个是 v2.3 Ironpress** 残留（铭刻誓门 / 铅字 / Foundation Humour 等）。
+
+**v3.1 处理顺序：**
+
+1. **批次 1 · 重写 58 个 v2.3 残留**（必须，最高优先级）
+   - 通过 narrative-writer 流水线 v3.1 sync 后批量重生成
+2. **批次 2 · 36 个中性条补部门归属**（每个 doc 层 + 一行"分发部门"行）
+3. **批次 3 · 1 个已 v3.1 化的 `combo_buffer`**：核对部门归属（应为"维修组"），微调即可
+
+### 与配额规则的咬合
+
+- "Section X" ≤ 30%、"上游" ≤ 30-40% **不变**
+- **新增**：每个部门在 11 部门池中的占比 **≤ 25%**（避免单一部门垄断 voice）
+- 11 部门作为"留白机构 pool" 的扩展——但要求**部门是发放方**（实在）+ **Section/维修组/检查组等是被引用方**（虚指）
+
+---
+
 ## Step 6 · Dialogue Framework（对话框架 = Voice 系统整合）
 
 ### 框架适配说明
