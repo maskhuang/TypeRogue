@@ -249,21 +249,6 @@ const ZH: Record<string, string> = {
   'settings.bg.cells': '蜂窝',
   'settings.bg.aurora': '极光',
   'settings.bg.ink': '墨晕',
-  'settings.shopUI': '商店界面',
-  'settings.shopUI.classic': '经典',
-  'settings.shopUI.terminal': '终端',
-  // Story 60.11: 转场动画开关
-  'settings.shopAnimations': '商店动画',
-  'settings.shopAnimations.on': '开',
-  'settings.shopAnimations.off': '关',
-  // Story 60.12: 商店音效开关
-  'settings.shopSound': '商店音效',
-  'settings.shopSound.on': '开',
-  'settings.shopSound.off': '关',
-  // Story 60.17: 拖拽中候选键预估 tooltip 开关
-  'settings.shopDragPreview': '拖拽预估提示',
-  'settings.shopDragPreview.on': '开',
-  'settings.shopDragPreview.off': '关',
 
   // Story 60.15: terminal / 工作台 i18n 全覆盖
   // 终端命令 USAGE / 帮助
@@ -864,6 +849,7 @@ const ZH: Record<string, string> = {
   'affix.bridge': '桥', 'affix.clique': '团', 'affix.component': '连通',
   'affix.decorator': '装饰器', 'affix.reflect': '缪氏长臂猿', 'affix.monkey_patch': '东白眉长臂猿', 'affix.excavate': '西白眉长臂猿', 'affix.treasure': '高黎贡白眉长臂猿', 'affix.refine': '合趾猴', 'affix.evolve': '黑冠长臂猿', 'affix.harvest': '黄颊长臂猿', 'affix.chain': '北白颊长臂猿', 'affix.volatile': '海南长臂猿', 'affix.mutacrit': '北部黄颊长臂猿', 'affix.ascend': '东部黑冠长臂猿', 'affix.reecho': '南部白颊长臂猿', 'affix.myopia': '白头狨', 'affix.silkworm': '黑簇狨', 'affix.repulsion': '长尾绿猴',
   'affix.aura_fury': '婆罗洲红毛猩猩', 'affix.aura_morale': '塔潘奴利红毛猩猩', 'affix.fiber': '绿猴', 'affix.proofread': '北方长尾叶猴', 'affix.spelling': '尼尔吉里黑叶猴', 'affix.first_edition': '川金丝猴', 'affix.reprint': '滇金丝猴', 'affix.matrix': '东非黑白疣猴', 'affix.typeset': '红腿白臀叶猴',
+  'affix.handoff': '金叶猴', 'affix.rewind': '暗叶猴', 'affix.endow': '银叶猴',
 
   // --- affix descriptions (53) ---
   'affix_desc.convert': '读取{source}的技能产出量加成',
@@ -1523,21 +1509,6 @@ const EN: Record<string, string> = {
   'settings.bg.cells': 'Cells',
   'settings.bg.aurora': 'Aurora',
   'settings.bg.ink': 'Ink',
-  'settings.shopUI': 'Shop UI',
-  'settings.shopUI.classic': 'Classic',
-  'settings.shopUI.terminal': 'Terminal',
-  // Story 60.11: shop transition animations toggle
-  'settings.shopAnimations': 'Shop Animations',
-  'settings.shopAnimations.on': 'On',
-  'settings.shopAnimations.off': 'Off',
-  // Story 60.12: shop sound effects toggle
-  'settings.shopSound': 'Shop Sound',
-  'settings.shopSound.on': 'On',
-  'settings.shopSound.off': 'Off',
-  // Story 60.17: drag preview tooltip on candidate keys
-  'settings.shopDragPreview': 'Drag Preview Tooltip',
-  'settings.shopDragPreview.on': 'On',
-  'settings.shopDragPreview.off': 'Off',
 
   // Story 60.15: terminal / workbench i18n coverage
   'shop.terminal.cmd.help.header': 'AVAILABLE COMMANDS:',

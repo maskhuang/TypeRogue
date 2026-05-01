@@ -33,7 +33,7 @@ const DEFAULTS: UserSettingsData = {
   crtEnabled: true,
   locale: 'zh',
   backgroundMode: 'random',
-  shopUI: 'classic',
+  shopUI: 'terminal',
   shopAnimations: true,
   shopSound: true,
   shopDragPreviewTooltip: true,
@@ -47,6 +47,11 @@ export function loadSettings(): UserSettingsData {
     if (raw) {
       const parsed = JSON.parse(raw)
       current = { ...DEFAULTS, ...parsed }
+      // 这 4 项 UI 已删，强制锁回默认（防止旧存档残留 'classic' / false）
+      current.shopUI = DEFAULTS.shopUI
+      current.shopAnimations = DEFAULTS.shopAnimations
+      current.shopSound = DEFAULTS.shopSound
+      current.shopDragPreviewTooltip = DEFAULTS.shopDragPreviewTooltip
     }
   } catch { /* ignore */ }
   return current

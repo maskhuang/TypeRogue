@@ -60,17 +60,15 @@ function fallbackAbbr(type: string): string {
 }
 
 /**
- * Story 60.15: locale-aware abbreviation
- * - zh locale → 优先用 t('affix.X') 全名（中文 2-3 字符）
- * - en locale → 沿用既有 3 字母缩写
- * - i18n key 缺失时 fallback 到 en abbrev
+ * v3.1 词条注入后：两个 locale 都优先 i18n
+ *   zh → t('affix.X') = common_zh 灵长名（黑帽松鼠猴 / 普通猕猴…）
+ *   en → t('affix.X') = NCBI 4 字母 code（Sbol / Mmul…）
+ * i18n key 缺失时 fallback 到旧 3 字母 AFFIX_ABBR（防御未注入新 affix）
  */
 export function abbreviateAffix(type: string): string {
-  if (getLocale() === 'zh') {
-    const i18nKey = 'affix.' + type;
-    const fullName = t(i18nKey);
-    if (fullName !== i18nKey) return fullName; // hit i18n
-  }
+  const i18nKey = 'affix.' + type;
+  const fullName = t(i18nKey);
+  if (fullName !== i18nKey) return fullName;
   return AFFIX_ABBR[type] ?? fallbackAbbr(type);
 }
 

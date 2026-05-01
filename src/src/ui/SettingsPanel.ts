@@ -6,7 +6,7 @@
 import { t, setLocale, getLocale, applyHtmlI18n } from '../demo/demo-i18n'
 import type { Locale } from '../demo/demo-i18n'
 import { getSettings, updateSettings } from '../core/UserSettings'
-import type { BackgroundMode, ShopUiMode } from '../core/UserSettings'
+import type { BackgroundMode } from '../core/UserSettings'
 import { setMasterVolume, playSound } from '../effects/sound'
 import { setBackgroundMode } from '../effects/balatroBackground'
 
@@ -56,38 +56,6 @@ export function openSettingsPanel(): void {
               ${esc(t('settings.bg.' + m))}
             </button>
           `).join('')}
-        </div>
-      </div>
-
-      <div class="settings-row">
-        <label class="settings-label">${esc(t('settings.shopUI'))}</label>
-        <div class="settings-lang-btns">
-          <button class="settings-lang-btn ${settings.shopUI === 'classic' ? 'active' : ''}" data-shop-ui="classic">${esc(t('settings.shopUI.classic'))}</button>
-          <button class="settings-lang-btn ${settings.shopUI === 'terminal' ? 'active' : ''}" data-shop-ui="terminal">${esc(t('settings.shopUI.terminal'))}</button>
-        </div>
-      </div>
-
-      <div class="settings-row">
-        <label class="settings-label">${esc(t('settings.shopAnimations'))}</label>
-        <div class="settings-lang-btns">
-          <button class="settings-lang-btn ${settings.shopAnimations ? 'active' : ''}" data-shop-anim="on">${esc(t('settings.shopAnimations.on'))}</button>
-          <button class="settings-lang-btn ${!settings.shopAnimations ? 'active' : ''}" data-shop-anim="off">${esc(t('settings.shopAnimations.off'))}</button>
-        </div>
-      </div>
-
-      <div class="settings-row">
-        <label class="settings-label">${esc(t('settings.shopSound'))}</label>
-        <div class="settings-lang-btns">
-          <button class="settings-lang-btn ${settings.shopSound ? 'active' : ''}" data-shop-sound="on">${esc(t('settings.shopSound.on'))}</button>
-          <button class="settings-lang-btn ${!settings.shopSound ? 'active' : ''}" data-shop-sound="off">${esc(t('settings.shopSound.off'))}</button>
-        </div>
-      </div>
-
-      <div class="settings-row">
-        <label class="settings-label">${esc(t('settings.shopDragPreview'))}</label>
-        <div class="settings-lang-btns">
-          <button class="settings-lang-btn ${settings.shopDragPreviewTooltip ? 'active' : ''}" data-shop-drag-preview="on">${esc(t('settings.shopDragPreview.on'))}</button>
-          <button class="settings-lang-btn ${!settings.shopDragPreviewTooltip ? 'active' : ''}" data-shop-drag-preview="off">${esc(t('settings.shopDragPreview.off'))}</button>
         </div>
       </div>
 
@@ -144,60 +112,6 @@ export function openSettingsPanel(): void {
       setBackgroundMode(mode)
       overlay?.querySelectorAll('.settings-bg-btns [data-bg]').forEach(b => {
         b.classList.toggle('active', (b as HTMLElement).dataset.bg === mode)
-      })
-    })
-  })
-
-  // Story 60.5: Shop UI 切换（classic / terminal）
-  overlay.querySelectorAll('[data-shop-ui]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      playSound('click')
-      const mode = (btn as HTMLElement).dataset.shopUi as ShopUiMode
-      updateSettings({ shopUI: mode })
-      overlay?.querySelectorAll('[data-shop-ui]').forEach(b => {
-        b.classList.toggle('active', (b as HTMLElement).dataset.shopUi === mode)
-      })
-    })
-  })
-
-  // Story 60.11: Shop Animations 切换（on / off）
-  overlay.querySelectorAll('[data-shop-anim]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      playSound('click')
-      const mode = (btn as HTMLElement).dataset.shopAnim
-      const enabled = mode === 'on'
-      updateSettings({ shopAnimations: enabled })
-      overlay?.querySelectorAll('[data-shop-anim]').forEach(b => {
-        const isOn = (b as HTMLElement).dataset.shopAnim === 'on'
-        b.classList.toggle('active', isOn === enabled)
-      })
-    })
-  })
-
-  // Story 60.12: Shop Sound 切换（on / off）
-  overlay.querySelectorAll('[data-shop-sound]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      playSound('click')
-      const mode = (btn as HTMLElement).dataset.shopSound
-      const enabled = mode === 'on'
-      updateSettings({ shopSound: enabled })
-      overlay?.querySelectorAll('[data-shop-sound]').forEach(b => {
-        const isOn = (b as HTMLElement).dataset.shopSound === 'on'
-        b.classList.toggle('active', isOn === enabled)
-      })
-    })
-  })
-
-  // Story 60.17: Shop Drag Preview Tooltip 切换（on / off）
-  overlay.querySelectorAll('[data-shop-drag-preview]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      playSound('click')
-      const mode = (btn as HTMLElement).dataset.shopDragPreview
-      const enabled = mode === 'on'
-      updateSettings({ shopDragPreviewTooltip: enabled })
-      overlay?.querySelectorAll('[data-shop-drag-preview]').forEach(b => {
-        const isOn = (b as HTMLElement).dataset.shopDragPreview === 'on'
-        b.classList.toggle('active', isOn === enabled)
       })
     })
   })
