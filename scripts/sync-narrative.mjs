@@ -28,6 +28,7 @@
 import { readFileSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { HANDBOOKS_SKELETON } from './narrative-writer/data/handbooks-skeleton.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DOC_PATH = join(__dirname, '..', 'docs', 'narrative-design.md')
@@ -528,6 +529,77 @@ function extractEnchantProtocols() {
   }
 }
 
+// ─── 10. Handbooks Validator (v3.1 NEW) ───
+// 验证 handbooks-skeleton 数据完整性：rule ID 唯一 / overrides 引用有效 / silent_expirations 引用有效
+
+function validateHandbooks(hb) {
+  const errors = []
+  const ruleIds = new Set(Object.keys(hb.rules))
+
+  // 1. 每条规则的 version 字段必须匹配它在哪个 versions[].rules 数组里
+  for (const [versionKey, version] of Object.entries(hb.versions)) {
+    for (const ruleId of version.rules) {
+      if (!ruleIds.has(ruleId)) {
+        errors.push(`版本 ${versionKey} 引用未定义规则: ${ruleId}`)
+        continue
+      }
+      const rule = hb.rules[ruleId]
+      if (rule.version !== versionKey) {
+        errors.push(`规则 ${ruleId}.version (${rule.version}) 与版本 ${versionKey} 不一致`)
+      }
+    }
+    // silent_expirations 引用的规则必须存在
+    for (const expiredId of (version.silent_expirations || [])) {
+      if (!ruleIds.has(expiredId)) {
+        errors.push(`版本 ${versionKey}.silent_expirations 引用未定义规则: ${expiredId}`)
+      }
+    }
+  }
+
+  // 2. overrides 引用有效
+  for (const [ruleId, rule] of Object.entries(hb.rules)) {
+    for (const ov of (rule.overrides || [])) {
+      if (!ruleIds.has(ov.rule_id)) {
+        errors.push(`规则 ${ruleId}.overrides 引用未定义规则: ${ov.rule_id}`)
+      }
+    }
+    for (const refId of (rule.references || [])) {
+      if (!ruleIds.has(refId)) {
+        errors.push(`规则 ${ruleId}.references 引用未定义规则: ${refId}`)
+      }
+    }
+  }
+
+  // 3. forms registry 反向校验：mentioned_in 必须对应有 forms_referenced
+  for (const [formId, form] of Object.entries(hb.forms)) {
+    for (const ruleId of (form.mentioned_in || [])) {
+      if (!ruleIds.has(ruleId)) {
+        errors.push(`表单 ${formId}.mentioned_in 引用未定义规则: ${ruleId}`)
+        continue
+      }
+      const rule = hb.rules[ruleId]
+      if (!(rule.forms_referenced || []).includes(formId)) {
+        errors.push(`表单 ${formId} 声称在 ${ruleId} 中提及，但 ${ruleId}.forms_referenced 未列出`)
+      }
+    }
+  }
+
+  // 4. Q4 矛盾密度检查（温和: 每 tier 2-3 expirations）
+  for (const [versionKey, version] of Object.entries(hb.versions)) {
+    if (versionKey === 'V-1') continue // 基底无 expiration
+    const silent = (version.silent_expirations || []).length
+    const explicit = version.rules.reduce((n, ruleId) => {
+      return n + (hb.rules[ruleId].overrides || []).filter(ov => ov.mode === 'modify' || ov.mode === 'expire').length
+    }, 0)
+    const total = silent + explicit
+    if (total < 2 || total > 4) {
+      errors.push(`版本 ${versionKey} expiration 数 (${total} = ${explicit} explicit + ${silent} silent) 超出 Q4 温和范围 [2-3]`)
+    }
+  }
+
+  return { errors }
+}
+
 // ─── 9. Relic Departments (v3.1 NEW) — 11 subsystems → 11 issuing departments ───
 
 function extractRelicDepartments() {
@@ -729,6 +801,63 @@ export const APPRENTICE_CODE = Object.fromEntries(
 export const FOC_SUBDISCIPLINE = ENCHANT_PROTOCOLS.quest_subdisciplines
 `)
 
+  // 10. Handbooks (v3.1 NEW · Hand-curated source from data/handbooks-skeleton.mjs)
+  const handbooks = HANDBOOKS_SKELETON
+  const validation = validateHandbooks(handbooks)
+  if (validation.errors.length > 0) {
+    console.log(`\n  ⚠️  Handbooks 验证错误:`)
+    for (const err of validation.errors) console.log(`     - ${err}`)
+  }
+  console.log(`  Handbooks (v3.1 · 手写): versions=${Object.keys(handbooks.versions).length} rules=${Object.keys(handbooks.rules).length} forms=${Object.keys(handbooks.forms).length} pep=✓ | Q4=${handbooks.meta.q4_decision}`)
+  writeFileSync(join(OUT_DIR, 'handbooks.mjs'), HEADER + `
+// v3.1 NEW · 4 套守则 V-1 / V-2 / V-3 / PEP（Step 4.7 三轨映射 · 守则版本号系统）
+// 数据源（手写）: scripts/narrative-writer/data/handbooks-skeleton.mjs
+// Q4 决议: 温和（每升一 tier 2-3 V-X 失效）
+// Q5 决议: 三层（skeleton → output → runtime · 此文件是 generated 中介）
+export const HANDBOOKS = ${JSON.stringify(handbooks, null, 2)}
+
+// Quick lookup: rule ID → rule data
+export const RULE_BY_ID = HANDBOOKS.rules
+
+// Quick lookup: version key → version metadata
+export const VERSION_BY_KEY = HANDBOOKS.versions
+
+// Quick lookup: tier number → version key
+export const TIER_TO_VERSION = Object.fromEntries(
+  Object.entries(HANDBOOKS.versions).map(([key, v]) => [v.tier, key])
+)
+TIER_TO_VERSION[3] = 'PEP' // PEP 单独建模，Tier 3
+
+// Quick lookup: form ID → form data
+export const FORM_BY_ID = HANDBOOKS.forms
+
+// Active rules at a given tier (excludes silent_expirations cumulatively)
+export function getActiveRulesAtTier(targetTier) {
+  if (targetTier >= 3) return [] // PEP 反规则
+  const expired = new Set()
+  const active = []
+  for (let t = 0; t <= targetTier; t++) {
+    const versionKey = TIER_TO_VERSION[t]
+    if (!versionKey || versionKey === 'PEP') continue
+    const version = HANDBOOKS.versions[versionKey]
+    // 累积应用 silent_expirations
+    for (const expiredId of (version.silent_expirations || [])) expired.add(expiredId)
+    // 累积应用 explicit modify overrides
+    for (const ruleId of version.rules) {
+      const rule = HANDBOOKS.rules[ruleId]
+      for (const ov of (rule.overrides || [])) {
+        if (ov.mode === 'modify' || ov.mode === 'expire') expired.add(ov.rule_id)
+      }
+    }
+    // 把当前版本规则加入（除非自身已被未来版本失效）
+    for (const ruleId of version.rules) {
+      if (!expired.has(ruleId)) active.push(ruleId)
+    }
+  }
+  return active.filter(id => !expired.has(id))
+}
+`)
+
   // 9. Relic Departments (v3.1 NEW)
   const relicDepartments = extractRelicDepartments()
   console.log(`  Relic Departments (v3.1): ${relicDepartments.subsystems.length} 子系统 → ${new Set(relicDepartments.subsystems.map(s => s.department)).size} 部门  /  ${relicDepartments.department_voice.length} voice 锚`)
@@ -759,6 +888,7 @@ export const DEPARTMENT_VOICE = Object.fromEntries(
   console.log('     affix-taxa.mjs        ← v3.1 NEW')
   console.log('     enchant-protocols.mjs ← v3.1 NEW')
   console.log('     relic-departments.mjs ← v3.1 NEW')
+  console.log('     handbooks.mjs         ← v3.1 NEW (from data/handbooks-skeleton.mjs)')
   console.log(`\n⚠️  v2.3 残留：aigc-art/generated/layer-visual.yaml 不再生成（v3 无 12 层塔）。`)
   console.log(`    旧文件保留为遗留产物；如美术流水线需要 v3 visual 数据，需另立 schema。`)
 }
