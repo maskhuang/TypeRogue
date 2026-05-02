@@ -21,11 +21,11 @@ export const PREVIEW_HASH = '#shop-preview';
 export const HIGH_PRICE_THRESHOLD = 100;
 export const PREVIEW_SEED_GOLD = 248;
 
-export const VERBS = ['LIS', 'BUY', 'INF', 'SEL', 'RES', 'PRO', 'HEL', 'UND', 'STA', 'WOR'] as const;
+// STA 已并入 INF /STATS（与 INF /OWNED 同体例）；WOR 已删除
+export const VERBS = ['LIS', 'BUY', 'INF', 'SEL', 'RES', 'PRO', 'HEL', 'UND'] as const;
 export const VERB_FULL: Record<string, string> = {
   LIS: 'LIST', BUY: 'BUY', INF: 'INFO', SEL: 'SELL',
   RES: 'RESHUFFLE', PRO: 'PROCEED', HEL: 'HELP', UND: 'UNDO',
-  STA: 'STATS', WOR: 'WORDS',
 };
 
 // stamp 动画 600ms（CSS 控制） + 200ms safety = 800ms fallback timer
@@ -89,6 +89,15 @@ export const previewState = {
   descriptorCache: [] as ItemDescriptor[],
   drawerOpen: null as DrawerKind | null,
   menuPrevDisplay: null as string | null,
+  // 商品选中态（↑↓ 导航 + dossier 显示 + BUY 默认目标）
+  // selectedSku 跨 freeze 保留 → BUY/RES 后新 LIS 默认回到上次选中的 SKU（若仍存在）
+  selectedSku: null as string | null,
+  // 当前 browse panel 内 list-pane 的列表行 DOM ref，按 SKU 索引
+  // 仅 panel 处于"活动 / 未冻结"状态时有效；freeze 时清空
+  lastListRowsBySku: new Map<string, HTMLElement>(),
+  // 当前活动 browse panel 元素；null = 不在 browse mode（普通 scrollback）
+  // freezeBrowsePanel() 把内容解包进 scrollback 后置 null
+  browsePanelEl: null as HTMLElement | null,
 };
 
 /**
@@ -105,6 +114,9 @@ export function resetPreviewSession(): void {
   previewState.workbenchEntered = false;
   previewState.unsealedSkillIds = new Set<string>(); // Story 60.9 follow-up #9: 重置开封记录
   previewState.purchasedSkus = new Set<string>();
+  previewState.selectedSku = null;
+  previewState.lastListRowsBySku = new Map();
+  previewState.browsePanelEl = null;
 }
 
 // === Story 60.12: shop 音效守卫包装 — 单点关 + 兼容 SOUND_PROFILES type ===

@@ -2289,30 +2289,49 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     50% { border-color: #7ee8e0; }
 }
 
+/* Level announce · DPCA-VT220 phosphor teletype 风（inline overlay 覆盖在 battle bezel 屏内） */
 .level-announce {
     position: absolute;
-    top: 55%;
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: calc(var(--text-title-size) * 2);
-    font-weight: bold;
-    color: #ffe66d;
-    text-align: center;
+    text-align: left;
+    font-family: var(--font-dossier);
+    color: var(--color-seal-gold);
+    text-shadow: 0 0 6px rgba(201, 164, 94, 0.55);
+    line-height: 1.6;
     animation: levelAnnounce 1.5s ease-out forwards;
     z-index: 150;
+    pointer-events: none;
+    white-space: pre;
 }
-
-.level-announce .target-hint {
-    display: block;
-    font-size: var(--text-body-size);
-    color: #888;
-    margin-top: 10px;
+.level-announce .la-line {
+    font-size: 13px;
+    letter-spacing: 0.04em;
+}
+.level-announce .la-pre {
+    color: rgba(201, 164, 94, 0.55);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+}
+.level-announce .la-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffe066;
+    text-shadow: 0 0 12px rgba(255, 224, 102, 0.7);
+    letter-spacing: 0.08em;
+    margin: 4px 0;
+}
+.level-announce .la-target {
+    color: rgba(201, 164, 94, 0.7);
+    font-size: 11px;
+    letter-spacing: 0.06em;
 }
 
 @keyframes levelAnnounce {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-    15% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-    70% { opacity: 1; }
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+    15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    75% { opacity: 1; }
     100% { opacity: 0; }
 }
 
@@ -4433,45 +4452,8 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
 /* ACT TRANSITION OVERLAY                       */
 /* ============================================ */
 
-#act-transition-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: #0a0a0f;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    opacity: 0;
-    transition: opacity 300ms ease;
-    pointer-events: none;
-}
-
-#act-transition-overlay.act-enter { opacity: 1; }
-#act-transition-overlay.act-visible .act-title { transform: scale(1); opacity: 1; }
-#act-transition-overlay.act-visible .act-subtitle { transform: translateY(0); opacity: 1; }
-#act-transition-overlay.act-exit { opacity: 0; }
-
-.act-title {
-    font-size: calc(var(--text-title-size) * 3);
-    font-weight: bold;
-    color: #ffe66d;
-    letter-spacing: 12px;
-    transform: scale(0.8);
-    opacity: 0;
-    transition: all 300ms ease;
-}
-
-.act-subtitle {
-    font-size: calc(var(--text-title-size) * 1.5);
-    color: #87ceeb;
-    letter-spacing: 8px;
-    margin-top: 12px;
-    transform: translateY(10px);
-    opacity: 0;
-    transition: all 300ms ease 100ms;
-}
+/* (旧 #act-transition-overlay / .act-title / .act-subtitle 已移除 —
+   showActTransition 复用 #gold-reward bezel + teletype，与评定/结算同款) */
 
 /* ============================================ */
 /* ELITE ANNOUNCEMENT                           */
@@ -4742,49 +4724,35 @@ body.shop-preview-active .key-tooltip .tooltip-glossary-detail {
 .reward-flavor { font-size: var(--text-caption-size); color: var(--text-caption-color); font-style: italic; margin-top: 2px; }
 
 /* === 评级揭示覆盖层 (Story 31.6) === */
-.rating-reveal {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 400;
-    pointer-events: none;
-    animation: ratingRevealIn 0.2s steps(1);
+/* === 评级揭示 teletype 行（在 settlement bezel 内复用 #gold-reward + #ct-lines） === */
+.ct-line.eval-scan {
+    color: #e8c885;  /* amber-bright */
+    letter-spacing: 0.1em;
 }
-.rating-reveal-fade {
-    animation: ratingRevealOut 0.3s steps(1) forwards;
+.eval-grade-letter {
+    display: inline-block;
+    font-family: var(--font-dossier);
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    vertical-align: middle;
+    margin-left: 4px;
+    transition: color 0.2s steps(2), text-shadow 0.2s steps(2);
 }
-@keyframes ratingRevealIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.eval-grade-letter.tier-c   { color: rgba(201, 164, 94, 0.55); text-shadow: 0 0 6px rgba(201, 164, 94, 0.3); }
+.eval-grade-letter.tier-b   { color: var(--color-seal-gold);   text-shadow: 0 0 12px rgba(201, 164, 94, 0.55); }
+.eval-grade-letter.tier-a   { color: #e8c885;                  text-shadow: 0 0 18px rgba(232, 200, 133, 0.7); }
+.eval-grade-letter.tier-s   { color: #ffe066;                  text-shadow: 0 0 22px rgba(255, 224, 102, 0.85); }
+.eval-grade-letter.tier-ss  { color: #ffe066;                  text-shadow: 0 0 30px rgba(255, 224, 102, 0.9), 0 0 60px rgba(255, 224, 102, 0.4); }
+.eval-grade-letter.tier-sss { color: #ff7f5a;                  text-shadow: 0 0 30px rgba(255, 127, 90, 0.95), 0 0 60px rgba(178, 32, 24, 0.5); }
+.eval-grade-letter.pulse {
+    animation: evalGradePulse 0.6s ease-out;
 }
-@keyframes ratingRevealOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-
-.rating-grade {
-    font-size: calc(var(--text-title-size) * 4);
-    font-weight: bold;
-    transition: color 0.15s steps(1);
-}
-.rating-grade.rating-final {
-    animation: ratingFinalPop 0.4s ease-out;
-}
-@keyframes ratingFinalPop {
-    0% { transform: scale(1); }
-    40% { transform: scale(1.4); }
+@keyframes evalGradePulse {
+    0%   { transform: scale(1.6); }
+    35%  { transform: scale(0.9); }
     100% { transform: scale(1); }
 }
-
-.rating-grade.rating-c { color: #888888; }
-.rating-grade.rating-b { color: #4a90d9; }
-.rating-grade.rating-a { color: #ffd700; }
-.rating-grade.rating-s { color: #a855f7; }
-.rating-grade.rating-ss { color: #ffd700; }
-.rating-grade.rating-sss { color: #ff6b6b; }
 
 /* ==================== 职业选择 — PAGE 2/3 dossier (人事档案分配) ==================== */
 
@@ -6306,6 +6274,69 @@ html[lang^="en"] .class-select-title {
 .lst-tag   { width: 8ch; padding-left: 1ch; }
 .lst-syn   { flex: 0 0 auto; padding-left: 1ch; }
 .lst-redacted { flex: 0 0 auto; padding-left: 1ch; opacity: 0.8; }
+
+/* ↑↓ 选中商品行：phosphor 反白 + 左指示符（已售/屏蔽行用红） */
+.t-line.list-row.list-row-selected {
+    background: rgba(108, 255, 138, 0.18);
+    box-shadow: inset 2px 0 0 #ffe66d;
+}
+.t-line.list-row.list-row-selected.redacted {
+    background: rgba(255, 90, 90, 0.22);
+    box-shadow: inset 2px 0 0 rgba(255, 90, 90, 0.9);
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Browse mode panel：cmdList 后取代 viewport 底部，模式条 + list-pane + dossier-pane
+ * 三段式。任何 scrollback 输出（appendLine / freezeBrowsePanel）会把 panel 内容
+ * 解包进 viewport，回归普通 teletype 走纸。
+ * ──────────────────────────────────────────────────────────────────────────── */
+.browse-panel {
+    display: flex;
+    flex-direction: column;
+    margin-top: 8px;        /* 与上方 scrollback 留一点缝隙 */
+    min-height: 0;
+}
+
+/* 模式条 — 唯一明确告知"非 scrollback 状态"的 UI 元素
+ * amber dashed top/bottom 边 + 微淡 amber 背景 = phosphor 终端的"提示条"质感 */
+.browse-mode-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    color: #ffe66d;
+    font-size: 11px; letter-spacing: 2px;
+    border-top: 1px dashed rgba(255, 230, 109, 0.42);
+    border-bottom: 1px dashed rgba(255, 230, 109, 0.42);
+    background: rgba(255, 230, 109, 0.05);
+    padding: 2px 4px;
+    flex: 0 0 auto;
+}
+.browse-mode-bar .bm-label { font-weight: bold; text-shadow: 0 0 4px rgba(255, 230, 109, 0.55); }
+.browse-mode-bar .bm-help  { color: rgba(255, 230, 109, 0.65); font-size: 10px; letter-spacing: 1px; }
+
+/* List pane — 上半区，独立滚（rows 多时不挤压 dossier）
+ * max-height 给 list 一个"先于 dossier"的空间预算 */
+.browse-list {
+    flex: 0 1 auto;
+    max-height: 32vh;
+    overflow-y: auto;
+    padding: 4px 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(108, 255, 138, 0.4) transparent;
+}
+.browse-list::-webkit-scrollbar { width: 6px; }
+.browse-list::-webkit-scrollbar-thumb { background: rgba(108, 255, 138, 0.4); }
+
+/* Dossier pane — 下半区，自然高度，不内滚（legendary INF 长时由 viewport 整体滚） */
+.browse-dossier {
+    flex: 0 0 auto;
+    padding: 4px 0 2px;
+    border-top: 1px solid rgba(108, 255, 138, 0.18);
+}
+
+/* list-pane 内部 scrollIntoView 时给选中行预留半行空隙，避免贴顶/贴底盖住
+ * 高亮指示符 */
+.browse-list .t-line.list-row { scroll-margin-block: 4px; }
+/* renderInfoBlock 自带 ═══ header / footer，不需要面板再画一层，让两类 phosphor
+ * line（═ 装饰 + ─ LIS 分隔）共存形成天然信息层级 */
 
 /* Shape tags — 不同形状轻微色阶差异，便于扫读 */
 .t-shape           { color: rgba(140, 255, 170, 0.7); }

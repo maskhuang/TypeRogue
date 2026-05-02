@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>SHOP MOCK · Terminal Browse Mode (Option C)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: 'Courier New', 'Consolas', 'Menlo', monospace;
+    background: #15110a;
+    color: #c8b48a;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+  }
+  .note {
+    width: 920px;
+    max-width: 100%;
+    color: #d8c89c;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    border-left: 2px solid #c9a45e;
+    padding: 4px 14px;
+    background: rgba(201,164,94,0.04);
+  }
+  .note strong { color: #ffe066; letter-spacing: 1px; }
+  .note kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    border: 1px solid rgba(201,164,94,0.5);
+    border-radius: 3px;
+    font-size: 11px;
+    color: #ffe066;
+    background: rgba(0,0,0,0.3);
+  }
+
+  /* ===== CRT 终端外壳：拷贝自 .terminal-bezel-screen / .terminal-content ===== */
+  .term {
+    width: 920px;
+    max-width: 100%;
+    height: 540px;
+    border-radius: 6px;
+    background: radial-gradient(ellipse at center, #062c0e 0%, #031305 70%, #000 100%);
+    box-shadow:
+      inset 0 0 60px rgba(0, 255, 100, 0.06),
+      inset 0 0 120px rgba(0, 0, 0, 0.8),
+      inset 0 0 0 2px #000,
+      0 8px 0 #1a1206,
+      0 18px 32px rgba(0,0,0,0.7);
+    position: relative;
+    overflow: hidden;
+  }
+  .term::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.55) 100%);
+    z-index: 5; pointer-events: none;
+  }
+  .term::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0,0,0,0.18) 3px);
+    z-index: 4; pointer-events: none;
+  }
+  .term-content {
+    position: relative; z-index: 1;
+    height: 100%;
+    padding: 14px 22px 10px;
+    display: flex; flex-direction: column; gap: 8px;
+    color: #6cff8a;
+    font-size: 12px;
+    line-height: 1.5;
+    text-shadow: 0 0 4px rgba(108, 255, 138, 0.55), 0 0 1px rgba(108, 255, 138, 0.9);
+  }
+  .term-banner {
+    color: #9cffb1;
+    font-size: 9px;
+    line-height: 1.25;
+    white-space: pre;
+    opacity: 0.6;
+  }
+  .term-status {
+    display: flex; gap: 14px; font-size: 11px;
+    color: #9cffb1;
+    border-top: 1px solid rgba(108,255,138,0.18);
+    border-bottom: 1px solid rgba(108,255,138,0.18);
+    padding: 3px 0;
+  }
+  .term-status em { font-style: normal; color: #ffe66d; margin-left: 4px; }
+  .bna { color: #ffe66d; text-shadow: 0 0 6px rgba(255, 230, 109, 0.85); }
+
+  /* ===== Browse-mode viewport split ===== */
+  .vp {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .vp-line { white-space: pre; min-height: 1em; }
+  .vp-line.dim { color: rgba(108,255,138,0.55); }
+  .vp-line.head { color: #ffe66d; }
+  .vp-line.echo { color: #d6ffe1; }
+  .vp-line.redacted { color: rgba(255,90,90,0.85); text-shadow: 0 0 4px rgba(255,90,90,0.6); }
+
+  /* Browse-mode 模式条：明确告知用户进入了 browse */
+  .mode-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    color: #ffe66d;
+    font-size: 11px; letter-spacing: 2px;
+    border-top: 1px dashed rgba(255,230,109,0.4);
+    border-bottom: 1px dashed rgba(255,230,109,0.4);
+    padding: 2px 4px;
+    background: rgba(255,230,109,0.04);
+  }
+  .mode-bar .mode-label { font-weight: bold; }
+  .mode-bar .mode-help { color: rgba(255,230,109,0.65); font-size: 10px; letter-spacing: 1px; }
+
+  /* List 区 — 上半 viewport（最大 60% 高）— 内部独立滚 */
+  .list-pane {
+    flex: 0 1 auto;
+    max-height: 55%;
+    overflow-y: auto;
+    padding: 4px 0 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(108,255,138,0.4) transparent;
+  }
+  .list-row { display: flex; gap: 0; padding: 0; }
+  .lst-cell { display: inline-block; white-space: nowrap; flex-shrink: 0; }
+  .lst-sku   { width: 9ch; }
+  .lst-name  { width: 38ch; }
+  .lst-price { width: 8ch; text-align: right; padding-right: 1ch; }
+  .lst-stock { width: 7ch; padding-left: 1ch; }
+  .lst-clr   { width: 6ch; padding-left: 1ch; }
+  .lst-tag   { width: 7ch; padding-left: 1ch; color: rgba(140,255,170,0.75); }
+  .lst-syn   { padding-left: 1ch; color: rgba(108,255,138,0.45); }
+  .lst-syn.hit { color: #ffe66d; }
+  .lst-trail { padding-left: 1ch; color: rgba(255,90,90,0.8); }
+  .row-rare    { color: #ffffff; }
+  .row-legend  { color: #fff5b0; }
+  .row-redact  { color: rgba(255,90,90,0.8); }
+
+  .list-row.selected {
+    background: rgba(108,255,138,0.20);
+    box-shadow: inset 2px 0 0 #ffe66d;
+  }
+  .list-row.selected.row-redact {
+    background: rgba(255,90,90,0.20);
+    box-shadow: inset 2px 0 0 rgba(255,90,90,0.9);
+  }
+
+  /* Dossier 区 — 下半 viewport（剩余空间）— 独立滚 */
+  .dossier-pane {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 4px 0;
+    border-top: 1px solid rgba(108,255,138,0.18);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(108,255,138,0.4) transparent;
+  }
+  .dossier-pane .vp-line.head { color: #ffe66d; }
+
+  /* Prompt + hint */
+  .term-prompt {
+    display: flex; align-items: center; gap: 6px;
+    color: #6cff8a;
+    border-top: 1px solid rgba(108,255,138,0.2);
+    padding-top: 4px;
+  }
+  .pp-prefix { color: rgba(108,255,138,0.7); font-weight: bold; letter-spacing: 1px; }
+  .pp-cursor { display: inline-block; width: 0.6em; background: #6cff8a; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+
+  .term-hint {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    font-size: 10px; color: rgba(108,255,138,0.6);
+    letter-spacing: 1px;
+  }
+  .term-hint .hint-strong { color: #ffe66d; }
+  .term-hint kbd {
+    display: inline-block;
+    border: 1px solid rgba(108,255,138,0.4);
+    border-radius: 2px;
+    padding: 0 4px;
+    margin-right: 3px;
+    font-size: 9px;
+  }
+
+  h2.scene {
+    width: 920px;
+    max-width: 100%;
+    color: #ffe066;
+    font-family: 'Press Start 2P', 'Courier Prime', monospace;
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin-bottom: -6px;
+  }
+  h2.scene small {
+    display: block; margin-top: 6px;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 11px;
+    color: #c8b48a;
+    letter-spacing: 1px;
+    font-weight: normal;
+  }
+</style>
+</head>
+<body>
+
+<div class="note">
+  <strong>Option C · 模态 Browse Mode</strong> — viewport 检测到最近一次输出是 LIS 时，自动进入 browse mode：
+  上半区固定显示 list table（独立滚），下半区显示当前选中商品的 dossier（独立滚），中间用模式条标记
+  "<kbd>↑↓</kbd> 选品 · <kbd>BUY</kbd> 入栈 · <kbd>ESC</kbd> 退出"。任意非导航命令（INF/RES/SEL/PRO 等）退出 browse →
+  list 与 dossier 作为整体打印进 scrollback，回归普通 teletype 走纸。
+</div>
+
+<h2 class="scene">A · BROWSE MODE 激活
+  <small>· 玩家刚执行 LIS · 默认选中第一个非 sold 商品 · ↑↓ 移动选中并实时刷新下方 dossier</small>
+</h2>
+
+<div class="term">
+  <div class="term-content">
+    <pre class="term-banner">DPCA-VT220 · TERMINAL III · CONNECTED 56k6 · CYCLE 2 / FILE 14
+══════════════════════════════════════════════════════════════════════════════</pre>
+
+    <div class="term-status">
+      <span>BAL <em><span class="bna">🍌</span> 84</em></span>
+      <span>FORM <em>F-1</em></span>
+      <span>CLR <em>4-A</em></span>
+      <span>CONN <em>56k6 OK</em></span>
+      <span>STAGE <em>📋</em></span>
+    </div>
+
+    <div class="vp">
+      <div class="mode-bar">
+        <span class="mode-label">▾ BROWSE · 6 ITEMS</span>
+        <span class="mode-help">↑↓ select · BUY · INF · ESC exit</span>
+      </div>
+
+      <div class="list-pane">
+        <div class="vp-line head list-row">
+          <span class="lst-cell lst-sku">SKU</span>
+          <span class="lst-cell lst-name">NAME</span>
+          <span class="lst-cell lst-price">PRICE</span>
+          <span class="lst-cell lst-stock">STOCK</span>
+          <span class="lst-cell lst-clr">CLR</span>
+          <span class="lst-cell lst-tag">TAG</span>
+          <span class="lst-cell lst-syn">SYN</span>
+        </div>
+
+        <div class="vp-line list-row selected">
+          <span class="lst-cell lst-sku">SKL-001</span>
+          <span class="lst-cell lst-name">CHARGE-STORM-CHIPS</span>
+          <span class="lst-cell lst-price">28</span>
+          <span class="lst-cell lst-stock">∞</span>
+          <span class="lst-cell lst-clr">4-B</span>
+          <span class="lst-cell lst-tag">[2═]</span>
+          <span class="lst-cell lst-syn hit">[SYN:2]</span>
+        </div>
+
+        <div class="vp-line list-row row-rare">
+          <span class="lst-cell lst-sku">SKL-002</span>
+          <span class="lst-cell lst-name">*ECHO-DRIFT-MULT</span>
+          <span class="lst-cell lst-price">42</span>
+          <span class="lst-cell lst-stock">∞</span>
+          <span class="lst-cell lst-clr">4-B</span>
+          <span class="lst-cell lst-tag">[3I]</span>
+          <span class="lst-cell lst-syn">[SYN:0]</span>
+        </div>
+
+        <div class="vp-line list-row row-legend">
+          <span class="lst-cell lst-sku">SKL-003</span>
+          <span class="lst-cell lst-name">***SWARM-CONDUIT-NEXUS</span>
+          <span class="lst-cell lst-price">96</span>
+          <span class="lst-cell lst-stock">∞</span>
+          <span class="lst-cell lst-clr">4-A</span>
+          <span class="lst-cell lst-tag">[4O]</span>
+          <span class="lst-cell lst-syn hit">[SYN:3]</span>
+        </div>
+
+        <div class="vp-line list-row row-redact">
+          <span class="lst-cell lst-sku">PCK-001</span>
+          <span class="lst-cell lst-name">VOWEL-CLUSTER-PACK</span>
+          <span class="lst-cell lst-price">18</span>
+          <span class="lst-cell lst-stock">01/01</span>
+          <span class="lst-cell lst-clr">4-B</span>
+          <span class="lst-cell lst-tag">[PCK]</span>
+          <span class="lst-cell lst-syn">[SYN:0]</span>
+          <span class="lst-cell lst-trail">SOLD</span>
+        </div>
+
+        <div class="vp-line list-row">
+          <span class="lst-cell lst-sku">PCK-002</span>
+          <span class="lst-cell lst-name">CONSONANT-DRILL-PACK</span>
+          <span class="lst-cell lst-price">24</span>
+          <span class="lst-cell lst-stock">02/02</span>
+          <span class="lst-cell lst-clr">4-B</span>
+          <span class="lst-cell lst-tag">[PCK]</span>
+          <span class="lst-cell lst-syn">[SYN:0]</span>
+        </div>
+
+        <div class="vp-line list-row row-rare">
+          <span class="lst-cell lst-sku">REL-001</span>
+          <span class="lst-cell lst-name">*MULTIPLIER-PRISM</span>
+          <span class="lst-cell lst-price">55</span>
+          <span class="lst-cell lst-stock">01/01</span>
+          <span class="lst-cell lst-clr">4-A</span>
+          <span class="lst-cell lst-tag">[REL]</span>
+          <span class="lst-cell lst-syn">[SYN:0]</span>
+        </div>
+      </div>
+
+      <div class="dossier-pane">
+        <div class="vp-line">═══ CHARGE-STORM-CHIPS · SKL-001 ═══════════════════════════════════════════════</div>
+        <div class="vp-line">SKILL · CLR 4-B · COMMON · [2═]</div>
+        <div class="vp-line">PRICE <span class="bna">🍌</span> 28 · TRIGGER CHIPS · LV 1</div>
+        <div class="vp-line">&nbsp;</div>
+        <div class="vp-line head">─── BASE VALUES ───</div>
+        <div class="vp-line">  Lv1:5 · Lv2:8 · Lv3:12</div>
+        <div class="vp-line">&nbsp;</div>
+        <div class="vp-line head">─── AFFIXES ───</div>
+        <div class="vp-line">  ‹CHARGE› 0.5/s · cap 1.5</div>
+        <div class="vp-line">    Hyldoa · Charge.lat</div>
+        <div class="vp-line">    长按蓄力期间产出按比例上升，松开释放</div>
+        <div class="vp-line">  ‹STORM› x2 · adjacent</div>
+        <div class="vp-line">    相邻技能触发时跟触发一次</div>
+        <div class="vp-line">&nbsp;</div>
+        <div class="vp-line">SYN 2 — 与已装配 chip 系技能同色</div>
+      </div>
+    </div>
+
+    <div class="term-prompt">
+      <span class="pp-prefix">CLERK-7842 §&gt;</span>
+      <span class="pp-cursor">█</span>
+    </div>
+
+    <div class="term-hint">
+      <span><kbd>F1</kbd>LIST</span>
+      <span><kbd>F2</kbd>BUY</span>
+      <span><kbd>F3</kbd>INFO</span>
+      <span><kbd>F5</kbd>RESHUFFLE</span>
+      <span class="hint-strong"><kbd>↑↓</kbd>SELECT · <kbd>ESC</kbd>EXIT BROWSE</span>
+    </div>
+  </div>
+</div>
+
+<h2 class="scene">B · ↑↓ 移到 SKL-003（legendary）
+  <small>· 选中态左移到 amber 边条 · 下半 dossier 整段刷新（list-pane 不动，selection 高亮跟随）</small>
+</h2>
+
+<div class="term">
+  <div class="term-content">
+    <pre class="term-banner">DPCA-VT220 · TERMINAL III · CONNECTED 56k6 · CYCLE 2 / FILE 14
+══════════════════════════════════════════════════════════════════════════════</pre>
+    <div class="term-status">
+      <span>BAL <em><span class="bna">🍌</span> 84</em></span>
+      <span>FORM <em>F-1</em></span>
+      <span>CLR <em>4-A</em></span>
+      <span>CONN <em>56k6 OK</em></span>
+      <span>STAGE <em>📋</em></span>
+    </div>
+    <div class="vp">
+      <div class="mode-bar">
+        <span class="mode-label">▾ BROWSE · 6 ITEMS</span>
+        <span class="mode-help">↑↓ select · BUY · INF · ESC exit</span>
+      </div>
+      <div class="list-pane">
+        <div class="vp-line head list-row">
+          <span class="lst-cell lst-sku">SKU</span>
+          <span class="lst-cell lst-name">NAME</span>
+          <span class="lst-cell lst-price">PRICE</span>
+          <span class="lst-cell lst-stock">STOCK</span>
+          <span class="lst-cell lst-clr">CLR</span>
+          <span class="lst-cell lst-tag">TAG</span>
+          <span class="lst-cell lst-syn">SYN</span>
+        </div>
+        <div class="vp-line list-row">
+          <span class="lst-cell lst-sku">SKL-001</span>
+          <span class="lst-cell lst-name">CHARGE-STORM-CHIPS</span>
+          <span class="lst-cell lst-price">28</span>
+          <span class="lst-cell lst-stock">∞</span>
+          <span class="lst-cell lst-clr">4-B</span>
+          <span class="lst-cell lst-tag">[2═]</span>
+          <span class="lst-cell lst-syn hit">[SYN:2]</span>
+        </div>
+        <div class="vp-line list-row row-rare">
+          <span class="lst-cell lst-sku">SKL-002</span>
+          <span class="lst-cell lst-name">*ECHO-DRIFT-MULT</span>
+          <span class="lst-cell lst-price">42</span>
+          <span class="lst-cell lst-stock">∞</span>
+          <span class="lst-cell lst-clr">4-B</span>
+          <span class="lst-cell lst-tag">[3I]</span>
+          <span class="lst-cell lst-syn">[SYN:0]</span>
+        </div>
+        <div class="vp-line list-row row-legend selected">
+          <span class="lst-cell lst-sku">SKL-003</span>
+          <span class="lst-cell lst-name">***SWARM-CONDUIT-NEXUS</span>
+          <span class="lst-cell lst-price">96</span>
+          <span class="lst-cell lst-stock">∞</span>
+          <span class="lst-cell lst-clr">4-A</span>
+          <span class="lst-cell lst-tag">[4O]</span>
+          <span class="lst-cell lst-syn hit">[SYN:3]</span>
+        </div>
+        <div class="vp-line list-row row-redact">
+          <span class="lst-cell lst-sku">PCK-001</span>
+          <span class="lst-cell lst-name">VOWEL-CLUSTER-PACK</span>
+          <span class="lst-cell lst-price">18</span>
+          <span class="lst-cell lst-stock">01/01</span>
+          <span class="lst-cell lst-clr">4-B</span>
+          <span class="lst-cell lst-tag">[PCK]</span>
+          <span class="lst-cell lst-syn">[SYN:0]</span>
+          <span class="lst-cell lst-trail">SOLD</span>
+        </div>
+        <div class="vp-line list-row">
+          <span class="lst-cell lst-sku">PCK-002</span>
+          <span class="lst-cell lst-name">CONSONANT-DRILL-PACK</span>
+          <span class="lst-cell lst-price">24</span>
+          <span class="lst-cell lst-stock">02/02</span>
+          <span class="lst-cell lst-clr">4-B</span>
+          <span class="lst-cell lst-tag">[PCK]</span>
+          <span class="lst-cell lst-syn">[SYN:0]</span>
+        </div>
+        <div class="vp-line list-row row-rare">
+          <span class="lst-cell lst-sku">REL-001</span>
+          <span class="lst-cell lst-name">*MULTIPLIER-PRISM</span>
+          <span class="lst-cell lst-price">55</span>
+          <span class="lst-cell lst-stock">01/01</span>
+          <span class="lst-cell lst-clr">4-A</span>
+          <span class="lst-cell lst-tag">[REL]</span>
+          <span class="lst-cell lst-syn">[SYN:0]</span>
+        </div>
+      </div>
+      <div class="dossier-pane">
+        <div class="vp-line">═══ SWARM-CONDUIT-NEXUS · SKL-003 ═══════════════════════════════════════════════</div>
+        <div class="vp-line">SKILL · CLR 4-A · LEGENDARY · [4O]</div>
+        <div class="vp-line">PRICE <span class="bna">🍌</span> 96 · TRIGGER VOWELS · LV 1</div>
+        <div class="vp-line">&nbsp;</div>
+        <div class="vp-line head">─── BASE VALUES ───</div>
+        <div class="vp-line">  Lv1:14 · Lv2:22 · Lv3:34</div>
+        <div class="vp-line">&nbsp;</div>
+        <div class="vp-line head">─── AFFIXES ───</div>
+        <div class="vp-line">  ‹SWARM› +12% per swarm · global</div>
+        <div class="vp-line">    Apella · Swarm.lat</div>
+        <div class="vp-line">    全场每个含蜂群词条的技能加成本技能</div>
+        <div class="vp-line">  ‹CONDUIT› adjacent · share</div>
+        <div class="vp-line">    Vellum · Conduit.lat</div>
+        <div class="vp-line">    匹配相邻技能触发时额外触发一次</div>
+        <div class="vp-line">  ‹AURA-MORALE› +18% · range 2</div>
+        <div class="vp-line">    Apaminos · Morale.lat</div>
+        <div class="vp-line">    范围内同资源技能产出 +18%</div>
+        <div class="vp-line">  ‹MIRROR› copy nearest · once</div>
+        <div class="vp-line">&nbsp;</div>
+        <div class="vp-line head">─── ENCHANTMENTS ───</div>
+        <div class="vp-line">  ‹FOC-F-043 · 化茧› — 累积 8 层后本关不再消耗底分</div>
+        <div class="vp-line">&nbsp;</div>
+        <div class="vp-line">SYN 3 — 与已装配 vowel · swarm 同色</div>
+      </div>
+    </div>
+    <div class="term-prompt">
+      <span class="pp-prefix">CLERK-7842 §&gt;</span>
+      <span class="pp-cursor">█</span>
+    </div>
+    <div class="term-hint">
+      <span><kbd>F1</kbd>LIST</span>
+      <span><kbd>F2</kbd>BUY</span>
+      <span><kbd>F3</kbd>INFO</span>
+      <span><kbd>F5</kbd>RESHUFFLE</span>
+      <span class="hint-strong"><kbd>↑↓</kbd>SELECT · <kbd>ESC</kbd>EXIT BROWSE</span>
+    </div>
+  </div>
+</div>
+
+<h2 class="scene">C · 玩家输入 RES（reshuffle，非导航命令） → BROWSE 自动退出
+  <small>· list+dossier 作为整体冻结进 scrollback · viewport 重新变成纯 teletype 走纸 · 新 LIS 把 browse mode 重新唤起</small>
+</h2>
+
+<div class="term">
+  <div class="term-content">
+    <pre class="term-banner">DPCA-VT220 · TERMINAL III · CONNECTED 56k6 · CYCLE 2 / FILE 14
+══════════════════════════════════════════════════════════════════════════════</pre>
+    <div class="term-status">
+      <span>BAL <em><span class="bna">🍌</span> 66</em></span>
+      <span>FORM <em>F-1</em></span>
+      <span>CLR <em>4-A</em></span>
+      <span>CONN <em>56k6 OK</em></span>
+      <span>STAGE <em>📋</em></span>
+    </div>
+    <div class="vp" style="overflow-y:auto; padding-right:4px;">
+      <div class="vp-line dim" style="opacity:0.55">> LIS</div>
+      <div class="vp-line head list-row">
+        <span class="lst-cell lst-sku">SKU</span>
+        <span class="lst-cell lst-name">NAME</span>
+        <span class="lst-cell lst-price">PRICE</span>
+        <span class="lst-cell lst-stock">STOCK</span>
+        <span class="lst-cell lst-clr">CLR</span>
+        <span class="lst-cell lst-tag">TAG</span>
+        <span class="lst-cell lst-syn">SYN</span>
+      </div>
+      <div class="vp-line list-row" style="opacity:0.7"><span class="lst-cell lst-sku">SKL-001</span><span class="lst-cell lst-name">CHARGE-STORM-CHIPS</span><span class="lst-cell lst-price">28</span><span class="lst-cell lst-stock">∞</span><span class="lst-cell lst-clr">4-B</span><span class="lst-cell lst-tag">[2═]</span><span class="lst-cell lst-syn hit">[SYN:2]</span></div>
+      <div class="vp-line list-row row-legend" style="opacity:0.7"><span class="lst-cell lst-sku">SKL-003</span><span class="lst-cell lst-name">***SWARM-CONDUIT-NEXUS</span><span class="lst-cell lst-price">96</span><span class="lst-cell lst-stock">∞</span><span class="lst-cell lst-clr">4-A</span><span class="lst-cell lst-tag">[4O]</span><span class="lst-cell lst-syn hit">[SYN:3]</span></div>
+      <div class="vp-line dim" style="opacity:0.5">  ── DOSSIER · SKL-003 ────────────────</div>
+      <div class="vp-line dim" style="opacity:0.5">  legendary · 96 · base[14,22,34] · SWARM CONDUIT AURA-MORALE MIRROR · SYN 3</div>
+      <div class="vp-line dim" style="opacity:0.5">  ──────────────────────────────────────</div>
+      <div class="vp-line">&nbsp;</div>
+      <div class="vp-line dim">> RES</div>
+      <div class="vp-line echo">RESHUFFLE · -18 <span class="bna">🍌</span> · NEW INVENTORY POSTED</div>
+      <div class="vp-line">&nbsp;</div>
+      <div class="vp-line dim">> LIS</div>
+      <div class="mode-bar" style="margin-top:2px">
+        <span class="mode-label">▾ BROWSE · 6 ITEMS</span>
+        <span class="mode-help">↑↓ select · BUY · INF · ESC exit</span>
+      </div>
+      <div class="list-pane" style="max-height:none">
+        <div class="vp-line head list-row">
+          <span class="lst-cell lst-sku">SKU</span>
+          <span class="lst-cell lst-name">NAME</span>
+          <span class="lst-cell lst-price">PRICE</span>
+          <span class="lst-cell lst-stock">STOCK</span>
+          <span class="lst-cell lst-clr">CLR</span>
+          <span class="lst-cell lst-tag">TAG</span>
+          <span class="lst-cell lst-syn">SYN</span>
+        </div>
+        <div class="vp-line list-row selected"><span class="lst-cell lst-sku">SKL-001</span><span class="lst-cell lst-name">VOID-FLOW-CHIPS</span><span class="lst-cell lst-price">22</span><span class="lst-cell lst-stock">∞</span><span class="lst-cell lst-clr">4-B</span><span class="lst-cell lst-tag">[1·]</span><span class="lst-cell lst-syn">[SYN:0]</span></div>
+        <div class="vp-line list-row row-rare"><span class="lst-cell lst-sku">SKL-002</span><span class="lst-cell lst-name">*REPRINT-RAINBOW-MULT</span><span class="lst-cell lst-price">38</span><span class="lst-cell lst-stock">∞</span><span class="lst-cell lst-clr">4-B</span><span class="lst-cell lst-tag">[3L]</span><span class="lst-cell lst-syn hit">[SYN:1]</span></div>
+        <div class="vp-line list-row"><span class="lst-cell lst-sku">PCK-001</span><span class="lst-cell lst-name">SHORT-WORD-DRILL</span><span class="lst-cell lst-price">14</span><span class="lst-cell lst-stock">02/02</span><span class="lst-cell lst-clr">4-B</span><span class="lst-cell lst-tag">[PCK]</span><span class="lst-cell lst-syn">[SYN:0]</span></div>
+      </div>
+      <div class="dossier-pane">
+        <div class="vp-line">═══ VOID-FLOW-CHIPS · SKL-001 ═══════════════════════════════════════════════</div>
+        <div class="vp-line">SKILL · CLR 4-B · COMMON · [1·]</div>
+        <div class="vp-line">PRICE <span class="bna">🍌</span> 22 · TRIGGER CHIPS · LV 1</div>
+        <div class="vp-line">&nbsp;</div>
+        <div class="vp-line head">─── BASE VALUES ───</div>
+        <div class="vp-line">  Lv1:5 · Lv2:8 · Lv3:12</div>
+        <div class="vp-line head">─── AFFIXES ───</div>
+        <div class="vp-line">  ‹VOID› empty slots · +8% each</div>
+        <div class="vp-line">  ‹FLOW› neighbor differential</div>
+      </div>
+    </div>
+    <div class="term-prompt">
+      <span class="pp-prefix">CLERK-7842 §&gt;</span>
+      <span class="pp-cursor">█</span>
+    </div>
+    <div class="term-hint">
+      <span><kbd>F1</kbd>LIST</span>
+      <span><kbd>F2</kbd>BUY</span>
+      <span><kbd>F3</kbd>INFO</span>
+      <span><kbd>F5</kbd>RESHUFFLE</span>
+      <span class="hint-strong"><kbd>↑↓</kbd>SELECT · <kbd>ESC</kbd>EXIT BROWSE</span>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>关键性质</strong> ·
+  <br>1. List + dossier 共占 viewport，模式条 (▾ BROWSE) 是唯一明确告知用户进入"非 scrollback 状态"的 UI 元素，避免 sticky 那种"打字机为啥有粘住的纸"的逻辑别扭。
+  <br>2. 退出时 list+dossier 像普通 teletype 输出冻结进 scrollback（C 上半段灰文部分演示了这个效果），保留打字机走纸的真实感。
+  <br>3. ↑↓ 不写入 cmdHistory（自然，因为它不是命令）；BUY/INF 直接作用在选中商品；ESC / 任何非导航命令退出 browse。
+  <br>4. List 与 dossier 各自独立滚，互不干扰。Dossier 长 INF 不挤压 list 可见区。
+</div>
+
+</body>
+</html>

@@ -10,7 +10,7 @@ import { renderShapePreview, hideRelicTooltip } from '../../systems/shop';
 import { keyTooltip } from '../keyboard/KeyTooltip';
 import { shouldAnimateShop } from '../../core/UserSettings';
 import { getNextBattleNode } from '../../systems/stage/stageFlow';
-import { t } from '../../demo/demo-i18n';
+import { t, applyHtmlI18n } from '../../demo/demo-i18n';
 import { startLevel } from '../../systems/battle';
 import { dragManager, registerShapePreviewRenderer } from '../../systems/dragManager';
 import { clearShapePlacementOnWorkbench } from '../shapePreview';
@@ -238,6 +238,11 @@ function execute(line: string): void {
     terminal.cmdBuy(verbInput);
     return;
   }
+  // /OWNED · /STATS 等以 / 开头的 token 视为 INF 子命令的顶层短形
+  if (verbInput.startsWith('/')) {
+    terminal.cmdInfo(verbInput);
+    return;
+  }
   const verb = terminal.expandVerb(verbInput);
   if (!verb) {
     terminal.appendLine(t('shop.terminal.err.unknown_verb', { verb: verbInput }), 'redacted');
@@ -252,10 +257,9 @@ function execute(line: string): void {
     case 'SEL': terminal.cmdSell(arg); break;
     case 'RES': terminal.cmdReshuffle(); break;
     case 'PRO': terminal.cmdProceed(); break;
-    case 'HEL': terminal.cmdHelp(); break;
+    case 'HEL': terminal.cmdHelp(arg); break;
     case 'UND': terminal.cmdUndo(); break;
-    case 'STA': terminal.cmdStats(); break;
-    case 'WOR': terminal.cmdWords(); break;
+    // STA 已下沉为 INF /STATS；WOR 已删除（dispatcher 仅留主动词）
   }
 }
 
@@ -353,6 +357,11 @@ function onKey(e: KeyboardEvent): void {
   if (e.key === 'Escape') {
     e.preventDefault();
     if (previewState.drawerOpen) { workbench.closeDrawer(); return; }
+    // Browse mode 活动时 ESC 优先退 browse；再次 ESC 才退出 shop
+    if (previewState.browsePanelEl && previewState.currentScreen === 'terminal') {
+      terminal.freezeBrowsePanel();
+      return;
+    }
     restoreFromPreview();
     return;
   }
@@ -368,11 +377,25 @@ function onKey(e: KeyboardEvent): void {
     return;
   }
 
+  // ↑↓ 优先在活动 LIS 列表中导航选中商品（buffer 空 + 当前有 list 行）；
+  // 否则退回命令历史。Ctrl+P / Ctrl+N 永远走历史，给重度键盘用户一条保底路径。
   if (e.key === 'ArrowUp' || (e.ctrlKey && e.key.toLowerCase() === 'p')) {
-    e.preventDefault(); navHistory(-1); return;
+    e.preventDefault();
+    const wantSelection = !e.ctrlKey
+      && previewState.typedBuffer.length === 0
+      && previewState.lastListRowsBySku.size > 0;
+    if (wantSelection) terminal.navSelection(-1);
+    else navHistory(-1);
+    return;
   }
   if (e.key === 'ArrowDown' || (e.ctrlKey && e.key.toLowerCase() === 'n')) {
-    e.preventDefault(); navHistory(+1); return;
+    e.preventDefault();
+    const wantSelection = !e.ctrlKey
+      && previewState.typedBuffer.length === 0
+      && previewState.lastListRowsBySku.size > 0;
+    if (wantSelection) terminal.navSelection(+1);
+    else navHistory(+1);
+    return;
   }
 
   if (e.key === 'Backspace') {
@@ -383,8 +406,12 @@ function onKey(e: KeyboardEvent): void {
   }
   if (e.key === 'Enter') {
     e.preventDefault();
-    // terminal keyboard sound removed (was sfx('shop_kbd_enter'))
     const line = previewState.typedBuffer;
+    // 空 buffer + browse 活动 + 有选中 SKU → ENTER 直接 BUY 选中（rogue-lite 通用快捷键习惯）
+    if (!line.trim() && previewState.browsePanelEl && previewState.selectedSku) {
+      terminal.cmdBuy();
+      return;
+    }
     if (line.trim()) {
       previewState.cmdHistory.push(line);
       previewState.historyIdx = -1;
@@ -619,14 +646,11 @@ function buildTerminalScreen(): string {
 
             <div class="terminal-hint">
               <span class="hint-clickable" data-fkey="LIS"><kbd>F1</kbd>LIST</span>
-              <span class="hint-clickable" data-fkey="BUY"><kbd>F2</kbd>BUY</span>
-              <span class="hint-clickable" data-fkey="INF"><kbd>F3</kbd>INFO</span>
               <span class="hint-clickable" data-fkey="SEL"><kbd>F4</kbd>SELL</span>
               <span class="hint-clickable" data-fkey="RES"><kbd>F5</kbd>RESHUFFLE</span>
               <span class="hint-clickable" data-fkey="PRO"><kbd>F10</kbd>PROCEED →</span>
               <span class="hint-spacer"></span>
-              <span class="hint-strong"><kbd>TAB</kbd>工作台 ⇄</span>
-              <span><kbd>ESC</kbd>EXIT</span>
+              <span class="hint-strong"><kbd>TAB</kbd><span data-i18n="wb.terminal_hint_tab">工作台 ⇄</span></span>
             </div>
           </div>
         </div>
@@ -656,54 +680,50 @@ function buildWorkbenchScreen(): string {
             <span class="sep">·</span>
             <span>${new Date().toISOString().slice(0, 10).replace(/-/g, '.')}</span>
           </div>
-          <div class="wb-stamp wb-stamp-red">PENDING REVIEW</div>
+          <div class="wb-stamp wb-stamp-red" data-i18n="wb.stamp_pending">PENDING REVIEW</div>
         </div>
 
         <div class="workbench-grid">
           <div class="wb-panel wb-intray">
             <div class="wb-section-title">
-              <span class="wb-tab-label">IN-TRAY</span>
-              <span class="wb-tab-sub">待装配 · 00</span>
+              <span class="wb-tab-label" data-i18n="wb.intray_label">IN-TRAY</span>
+              <span class="wb-tab-sub">${t('wb.intray_sub', { count: '00' })}</span>
             </div>
             <div class="wb-foam-case">
-              ${Array.from({ length: 5 }).map(() => '<div class="foam-cutout empty"><span class="cutout-empty-label">— 空槽 —</span></div>').join('')}
+              ${Array.from({ length: 5 }).map(() => `<div class="foam-cutout empty"><span class="cutout-empty-label" data-i18n="wb.intray_empty_slot">${t('wb.intray_empty_slot')}</span></div>`).join('')}
             </div>
           </div>
 
           <div class="wb-panel wb-keyboard">
             <div class="wb-section-title">
-              <span class="wb-tab-label">KEYBOARD</span>
-              <span class="wb-tab-sub">物理键位 · DPCA-KB-7842</span>
+              <span class="wb-tab-label" data-i18n="wb.keyboard_label">KEYBOARD</span>
+              <span class="wb-tab-sub" data-i18n="wb.keyboard_sub">物理键位 · DPCA-KB-7842</span>
             </div>
             <div class="wb-keyboard-base">
               ${buildFullKeyboardHtml()}
             </div>
             <div class="wb-keyboard-caption">
-              <span>DPCA-KB-7842 · PROPERTY OF DEPT 2-B</span>
+              <span data-i18n="wb.keyboard_caption">DPCA-KB-7842 · PROPERTY OF DEPT 2-B</span>
               <span class="kb-screws">⊗ &nbsp; ⊗ &nbsp; ⊗ &nbsp; ⊗</span>
             </div>
           </div>
 
           <div class="wb-panel wb-cabinet">
             <div class="wb-section-title">
-              <span class="wb-tab-label">FILED</span>
-              <span class="wb-tab-sub">在编档案 · 00</span>
+              <span class="wb-tab-label" data-i18n="wb.filed_label">FILED</span>
+              <span class="wb-tab-sub">${t('wb.filed_sub', { count: '00' })}</span>
             </div>
             <div class="wb-folders">
-              <div class="folder" id="filed-skill-folder">
-                <div class="folder-tab">SKILL · 000</div>
-                <div class="folder-body"></div>
-              </div>
-              <div class="folder" id="filed-relic-folder">
-                <div class="folder-tab">RELIC · 000</div>
+              <div class="folder" id="filed-freq-folder">
+                <div class="folder-tab">${t('wb.folder_freq_tab', { count: '00' })}</div>
                 <div class="folder-body"></div>
               </div>
               <div class="folder folder-clickable" data-drawer="words">
-                <div class="folder-tab">WORDS · <span class="folder-count" id="words-folder-count">0</span></div>
+                <div class="folder-tab"><span data-i18n="wb.folder_words_tab">WORDS · </span><span class="folder-count" id="words-folder-count">0</span></div>
                 <div class="folder-body">
                   <div class="folder-row folder-cta">
                     <span class="fr-icon">📚</span>
-                    <span class="fr-name">OPEN LIBRARY DRAWER</span>
+                    <span class="fr-name" data-i18n="wb.folder_open_words">OPEN LIBRARY DRAWER</span>
                     <span class="fr-lv">→</span>
                   </div>
                   <div class="folder-row" id="words-folder-preview">—</div>
@@ -719,7 +739,7 @@ function buildWorkbenchScreen(): string {
           <div class="wb-drawer-panel">
             <div class="wb-drawer-header">
               <span class="wb-drawer-title" id="wb-drawer-title">DRAWER</span>
-              <button class="wb-drawer-close" id="wb-drawer-close">✕ CLOSE [ESC]</button>
+              <button class="wb-drawer-close" id="wb-drawer-close" data-i18n="wb.drawer_close">✕ CLOSE [ESC]</button>
             </div>
             <div class="wb-drawer-body" id="wb-drawer-body"></div>
           </div>
@@ -728,16 +748,16 @@ function buildWorkbenchScreen(): string {
         <div class="workbench-footer">
           <div class="wb-note">
             <span class="note-pin" aria-hidden="true">📌</span>
-            <span class="note-text">"它在叫我名字。如果你听见——立即更换键盘。" — 前任使用者 #4471（已失踪）</span>
+            <span class="note-text"></span>
           </div>
           <div class="wb-actions">
-            <button class="wb-station-btn" id="wb-craft-btn" data-drawer="craft" style="display:none">🔤 CRAFT</button>
-            <button class="wb-station-btn" id="wb-meta-btn" data-drawer="metamorph" style="display:none">🧬 METAMORPH</button>
-            <button class="wb-submit-btn" id="wb-submit-btn" type="button">提交配置 · SUBMIT FORM ➜</button>
+            <button class="wb-station-btn" id="wb-craft-btn" data-drawer="craft" style="display:none" data-i18n="wb.btn_craft">🔤 CRAFT</button>
+            <button class="wb-station-btn" id="wb-meta-btn" data-drawer="metamorph" style="display:none" data-i18n="wb.btn_metamorph">🧬 METAMORPH</button>
+            <button class="wb-submit-btn" id="wb-submit-btn" type="button" data-i18n="wb.btn_submit">提交配置 · SUBMIT FORM ➜</button>
           </div>
           <div class="wb-hint">
-            <span class="hint-strong"><kbd>TAB</kbd>终端 ⇄</span>
-            <span><kbd>ESC</kbd>EXIT</span>
+            <span class="hint-strong"><kbd>TAB</kbd><span data-i18n="wb.hint_tab_terminal">终端 ⇄</span></span>
+            <span><kbd>ESC</kbd><span data-i18n="wb.hint_esc">EXIT</span></span>
           </div>
         </div>
       </div>
@@ -752,14 +772,14 @@ function injectScreens(): void {
   const wrap = document.createElement('div');
   wrap.innerHTML = buildTerminalScreen() + buildWorkbenchScreen();
   while (wrap.firstChild) container.appendChild(wrap.firstChild);
+  // 让新注入的 [data-i18n] 元素按当前 locale 翻译
+  applyHtmlI18n();
 }
 
 function renderWelcome(): void {
-  terminal.appendLine(t('shop.terminal.welcome.connected', { form: terminal.getAcquisitionFormCode(state.runSeed) }), 'head');
+  // 进店只丢一句 hint；不再自动 LIS 进 browse、也不再 dump HEL —— 显式才打
   terminal.appendLine(t('shop.terminal.welcome.try_help'), 'dim');
   terminal.appendBlank();
-  terminal.cmdList();
-  terminal.cmdHelp();
 }
 
 /**
@@ -803,11 +823,15 @@ export function enterTerminalShop(_won?: boolean): void {
   // Clear viewport then render welcome
   const vp = document.getElementById('terminal-viewport');
   if (vp) vp.innerHTML = '';
+  // browse panel 随 viewport 一起被 wipe；entry 不再 auto-LIS，玩家显式 LIS / F1 才进 browse
+  previewState.browsePanelEl = null;
+  previewState.lastListRowsBySku = new Map();
   renderWelcome();
   setPrompt('');
   workbench.syncWorkbenchInbox();
   workbench.syncWorkbenchRelics();
   workbench.syncWorkbenchKeys();
+  workbench.refreshWorkbenchNote();
   // Story 60.3: 首次进入时把 banner / 状态条接 state 实数（替代 Phase 1 静态 placeholder）
   terminal.updateTerminalChrome();
   // body class 标记：让 paper-craft 缩略图样式能 scope 到拖拽幽灵（dragGhost

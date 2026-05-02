@@ -13,6 +13,7 @@ import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, get
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension, emitResourceSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { setPaletteHsl as setBgPalette, setLightnessBias as setBgLBias, setRandomStyle as setBgRandomStyle, setSpeedMultiplier as setBgSpeedMul } from '../effects/balatroBackground';
+import { installSkipListener, type SkipController } from '../effects/skipAnimation';
 import { initFloatTextCanvas, spawnFloatText, spawnFlightText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput, isChargeSkill, isReechoSkill, resetStageProduced } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
@@ -46,7 +47,7 @@ import { getShieldedValue, getShieldedScoreCap, getShieldedTargetMultiplier, sho
 import { applyBaseShield, applyLenientJudge, getSRankTrophyGold, getUnderdogBonusGold, applySnowball, getSnowballWordIndex, isBlackHoleActive, accumulateBlackHole, settleBlackHole, hasBlackHoleSettled, getDeadlyGiftReward, grantDeadlyGiftFreeRefreshes, resetScoringRelicBattleState, initScoringRelicBehaviors } from './relics/ScoringRelicBehaviors';
 import { resetCritRelicBattleState, resetCritRelicWordState, getCritStormBonus, initCritRelicBehaviors } from './relics/CritRelicBehaviors';
 import { checkDrumPass, getWordResonanceStacks, resetStackingRelicBattleState, initStackingRelicBehaviors, isPerpetualEngineActive, isStackingAffix } from './relics/StackingRelicBehaviors';
-import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests, removeAffixAtRuntime, resetStageState, resolveProofreadWordEnd } from '../data/affixTrigger';
+import { filterEnchantmentCandidates, getTransmuteEligibleResources, applyApprenticeEvent, resolveMirrorCopy, resolveMirrorCopyAllAffixes, categorizeEnchantmentCandidates, weightedPickEnchantment, getEffectiveProbMult, isAffixGloballyTransformed, evaluateEquipQuests, removeAffixAtRuntime, resetStageState, resolveProofreadWordEnd, isSelfZeroSkill } from '../data/affixTrigger';
 import { AffixType, applyAffixLevelScaling } from '../data/affixes';
 import { filterEnchantmentsByClass, filterCategorizedByClass, EnchantmentType as EnchantmentTypeEnum } from '../data/affixes';
 import { PositionRelation } from '../data/keyboardTopology';
@@ -697,6 +698,8 @@ function playerCorrect(k: string): void {
   // 字母基础分（每个正确击键基础 1 分）
   // 蚕食：绑定的技能含 Silkworm 词条时，当前字母不产生底分
   // 质变·化茧：累积达 8 层后，本关剩余字母不再消耗底分
+  // 自身不产出技能（Conduit/Amplify/Splash/Relay/WarDrum/AuraFury/AuraMorale）+ 蚕食：
+  // 蚕食的产出加成在 Phase 2 因 effectiveBase=0 失效，若仍吞底分则净亏 → 跳过吞噬
   const SILKWORM_COCOON_THRESHOLD = 8;
   let letterBase = 1;
   if (skillId) {
@@ -705,7 +708,8 @@ function playerCorrect(k: string): void {
       const rt = state.affixSkillStates.get(skillId);
       const cocoonActive = isAffixGloballyTransformed(AffixType.Silkworm, state.affixSkills, state.affixSkillStates)
         && (rt?.silkwormStacks ?? 0) >= SILKWORM_COCOON_THRESHOLD;
-      if (!cocoonActive) letterBase = 0;
+      const selfZero = rt ? isSelfZeroSkill(sk, rt) : false;
+      if (!cocoonActive && !selfZero) letterBase = 0;
     }
   }
   // 传说词包 base_multiplier：该字母总底分×N（含 letterBase 和其他词包的加成）
@@ -1560,7 +1564,7 @@ function showGoldReward(onComplete: () => void): void {
     const d = new Date();
     const hh = String(d.getHours()).padStart(2, '0');
     const mm = String(d.getMinutes()).padStart(2, '0');
-    headerEl.textContent = `DPCA-VT220 · DEPT 2-B · ${workerId} · 1962·11·23 ${hh}:${mm}`;
+    headerEl.textContent = t('tt.settle_header', { workerId, date: '1962·11·23', time: `${hh}:${mm}` });
   }
 
   // 构造 line script（单 sources of truth：base/skill/relic + 可选 bonuses）
@@ -1578,21 +1582,21 @@ function showGoldReward(onComplete: () => void): void {
   };
   type Line = { text: string; cls?: string; charSpeed: number; holdAfter?: number };
   const script: Line[] = [];
-  script.push({ text: `> FILE ${dlevel}${stageBracket} · PROCESSED.`, charSpeed: 16, holdAfter: 200 });
-  script.push({ text: `> BATCH ${state.cycle} · 1962·11·23`,         charSpeed: 12, holdAfter: 350 });
-  script.push({ text: '',                                              charSpeed: 0,  holdAfter: 180 });
-  script.push({ text: '> ──── BREAKDOWN / 分项 ──────────',             cls: 'divider', charSpeed: 5,  holdAfter: 250 });
-  script.push({ text: dotsLine(baseLabel, baseGold),                   charSpeed: 8,  holdAfter: 150 });
-  if (skillGold > 0)     script.push({ text: dotsLine(t('battle.gold_skill_label') !== 'battle.gold_skill_label' ? t('battle.gold_skill_label') : 'skill',     skillGold),     cls: 'bonus', charSpeed: 8, holdAfter: 150 });
-  if (relicGold > 0)     script.push({ text: dotsLine(t('battle.gold_relic_label') !== 'battle.gold_relic_label' ? t('battle.gold_relic_label') : 'relic',     relicGold),     cls: 'bonus', charSpeed: 8, holdAfter: 150 });
-  if (trophyGold > 0)    script.push({ text: dotsLine('trophy',    trophyGold),    cls: 'bonus', charSpeed: 8, holdAfter: 150 });
-  if (underdogGold > 0)  script.push({ text: dotsLine('underdog',  underdogGold),  cls: 'bonus', charSpeed: 8, holdAfter: 150 });
-  if (bountyEndGold > 0) script.push({ text: dotsLine('bounty',    bountyEndGold), cls: 'bonus', charSpeed: 8, holdAfter: 150 });
-  script.push({ text: '> ──────────────────────────────────────',      cls: 'divider', charSpeed: 5,  holdAfter: 200 });
-  script.push({ text: '> SETTLEMENT POSTED.',                          charSpeed: 14, holdAfter: 300 });
-  script.push({ text: `> 🍌 ALLOCATION ............ +${totalGold}`,    cls: 'total', charSpeed: 20, holdAfter: 550 });
-  script.push({ text: '',                                              charSpeed: 0,  holdAfter: 80  });
-  script.push({ text: '> [READY FOR NEXT FILE]',                       cls: 'ready', charSpeed: 12, holdAfter: 0   });
+  script.push({ text: t('tt.settle_processed', { n: dlevel, type: stageBracket }),       charSpeed: 16, holdAfter: 200 });
+  script.push({ text: t('tt.settle_batch_line', { cycle: state.cycle, date: '1962·11·23' }), charSpeed: 12, holdAfter: 350 });
+  script.push({ text: '',                                                                charSpeed: 0,  holdAfter: 180 });
+  script.push({ text: t('tt.settle_breakdown_header'),                                   cls: 'divider', charSpeed: 5,  holdAfter: 250 });
+  script.push({ text: dotsLine(baseLabel, baseGold),                                     charSpeed: 8,  holdAfter: 150 });
+  if (skillGold > 0)     script.push({ text: dotsLine(t('battle.gold_skill_label') !== 'battle.gold_skill_label' ? t('battle.gold_skill_label') : t('tt.line_label_skill'), skillGold),     cls: 'bonus', charSpeed: 8, holdAfter: 150 });
+  if (relicGold > 0)     script.push({ text: dotsLine(t('battle.gold_relic_label') !== 'battle.gold_relic_label' ? t('battle.gold_relic_label') : t('tt.line_label_relic'), relicGold),     cls: 'bonus', charSpeed: 8, holdAfter: 150 });
+  if (trophyGold > 0)    script.push({ text: dotsLine(t('tt.line_label_trophy'),   trophyGold),    cls: 'bonus', charSpeed: 8, holdAfter: 150 });
+  if (underdogGold > 0)  script.push({ text: dotsLine(t('tt.line_label_underdog'), underdogGold),  cls: 'bonus', charSpeed: 8, holdAfter: 150 });
+  if (bountyEndGold > 0) script.push({ text: dotsLine(t('tt.line_label_bounty'),   bountyEndGold), cls: 'bonus', charSpeed: 8, holdAfter: 150 });
+  script.push({ text: t('tt.settle_divider'),                                            cls: 'divider', charSpeed: 5,  holdAfter: 200 });
+  script.push({ text: t('tt.settle_posted'),                                             charSpeed: 14, holdAfter: 300 });
+  script.push({ text: t('tt.settle_total', { total: totalGold }),                        cls: 'total', charSpeed: 20, holdAfter: 550 });
+  script.push({ text: '',                                                                charSpeed: 0,  holdAfter: 80  });
+  script.push({ text: t('tt.settle_ready'),                                              cls: 'ready', charSpeed: 12, holdAfter: 0   });
 
   // 隐藏结算面板
   hideSettlement();
@@ -1613,19 +1617,21 @@ function showGoldReward(onComplete: () => void): void {
   }
   linesContainer.innerHTML = '';
 
-  void runTeletype(linesContainer, script).then(() => {
-    // 末行追加常驻闪烁光标
+  // skip 只压缩"构建阶段"（typing + holdAfter）；之后 1500ms 阅读 + 300ms 淡出
+  // 自然走完 —— 跳到完成态后让玩家读完结算明细 + 自然消失
+  const skip = installSkipListener();
+  void runTeletype(linesContainer, script, skip).then(() => {
     const finalCursor = document.createElement('span');
     finalCursor.className = 'ct-final-cursor';
     if (linesContainer.lastElementChild) linesContainer.lastElementChild.appendChild(finalCursor);
 
-    // 全部打完 → 1500ms 阅读时间 → 淡出
     setTimeout(() => {
       goldReward.classList.remove('gold-reward-show');
       goldReward.classList.add('gold-reward-hide');
       setTimeout(() => {
         goldReward.classList.add('gold-reward-hidden');
         goldReward.classList.remove('gold-reward-hide');
+        skip.dispose();
         onComplete();
       }, 300);
     }, 1500);
@@ -1633,21 +1639,21 @@ function showGoldReward(onComplete: () => void): void {
 }
 
 type SettlementLine = { text: string; cls?: string; charSpeed: number; holdAfter?: number };
-async function runTeletype(container: HTMLElement, script: SettlementLine[]): Promise<void> {
+async function runTeletype(container: HTMLElement, script: SettlementLine[], skip: SkipController): Promise<void> {
   for (const item of script) {
     const line = document.createElement('div');
     line.className = `ct-line ${item.cls || ''}`.trim();
     line.innerHTML = '<span class="typed"></span><span class="cursor"></span>';
     container.appendChild(line);
     line.classList.add('shown');
-    await typeTeletypeLine(line, item.text, item.charSpeed);
-    if (item.holdAfter) await new Promise(r => setTimeout(r, item.holdAfter));
+    await typeTeletypeLine(line, item.text, item.charSpeed, skip);
+    if (item.holdAfter) await skip.sleep(item.holdAfter);
   }
 }
-function typeTeletypeLine(lineEl: HTMLElement, text: string, charSpeed: number): Promise<void> {
+function typeTeletypeLine(lineEl: HTMLElement, text: string, charSpeed: number, skip: SkipController): Promise<void> {
   return new Promise(resolve => {
     const typed = lineEl.querySelector('.typed') as HTMLElement | null;
-    if (!text || charSpeed === 0) {
+    if (!text || charSpeed === 0 || skip.skipped) {
       if (typed) typed.textContent = text;
       lineEl.classList.add('done');
       resolve();
@@ -1655,6 +1661,12 @@ function typeTeletypeLine(lineEl: HTMLElement, text: string, charSpeed: number):
     }
     let i = 0;
     const tick = () => {
+      if (skip.skipped) {
+        if (typed) typed.textContent = text;
+        lineEl.classList.add('done');
+        resolve();
+        return;
+      }
       if (typed) typed.textContent = text.slice(0, ++i);
       if (i >= text.length) {
         lineEl.classList.add('done');
@@ -2577,17 +2589,25 @@ function announceLevel(): void {
   const displayLevel = getBattleNumber(state.level) || state.level;
   const stageType = getStageType(state.level);
 
-  let typeLabel = '';
-  if (stageType === 'boss') {
-    typeLabel = `<br><span class="boss-hint">${t('battle.boss_hint')}</span>`;
-  } else if (stageType === 'elite') {
-    typeLabel = `<br><span class="boss-hint">${t('battle.elite_hint')}</span>`;
-  }
+  let typeBracket = '';
+  if (stageType === 'boss') typeBracket = ' [BOSS]';
+  else if (stageType === 'elite') typeBracket = ' [ELITE]';
 
-  const cyclePfx = state.cycle >= 2 ? t('battle.cycle_prefix', { cycle: state.cycle }) : '';
-  ann.innerHTML = `${cyclePfx}FILE ${displayLevel}${typeLabel}<br><span class="target-hint">${t('battle.target_hint', { value: state.targetScore })}</span>`;
+  const cyclePfx = state.cycle >= 2 ? t('tt.lvl_batch_prefix', { cycle: state.cycle }) : '';
+  // Teletype 行格式（DPCA-VT220 phosphor 风）
+  const mkLine = (cls: string, text: string): HTMLDivElement => {
+    const div = document.createElement('div');
+    div.className = `la-line ${cls}`;
+    div.textContent = text;
+    return div;
+  };
+  ann.appendChild(mkLine('la-pre',    t('tt.lvl_incoming')));
+  ann.appendChild(mkLine('la-title',  t('tt.lvl_title',  { prefix: cyclePfx, n: displayLevel, type: typeBracket })));
+  ann.appendChild(mkLine('la-target', t('tt.lvl_target', { target: state.targetScore })));
   el.container.appendChild(ann);
   playSound('levelup');
+  // announceLevel 没有构建阶段（一次性渲染 3 行 + 1500ms 自然 dwell），
+  // 跳到尾部 = 当前帧本身，skip 无可压缩；保留原 1500ms 让玩家读完
   setTimeout(() => ann.remove(), 1500);
 }
 

@@ -138,7 +138,7 @@ void main() {
   vec2 frag = gl_FragCoord.xy;
   float minSide = min(u_resolution.x, u_resolution.y);
   vec2 uv = (frag - 0.5 * u_resolution) / minSide * 4.5;
-  float t = u_time * u_speed * 6.0;
+  float t = u_time * u_speed * 1.5;
   vec2 ip = floor(uv);
   vec2 fp = fract(uv);
   float d1 = 8.0;

@@ -6,7 +6,10 @@
 // ============================================
 
 import { state, addRelicWithCapacity, removeRelic, isRelicSlotsFull } from '../../core/state';
-import { INBOX_MAX, BALANCE, PUNCTUATION_KEYS } from '../../core/constants';
+import { INBOX_MAX, BALANCE, RESOURCE_ICONS } from '../../core/constants';
+import { calculateRating } from '../../effects/juice';
+import { CLASS_DEFINITIONS } from '../../data/classes';
+import type { ResourceType } from '../../core/types';
 import {
   generateAffixShopItems,
   generateShopRelicItem,
@@ -22,11 +25,10 @@ import { rerollAllAffixes } from '../../systems/relics/SkillRelicBehaviors';
 import { initFurnace } from '../../systems/relics/ResourceRelicBehaviors';
 import { random } from '../../core/seededRandom';
 import { generateWordPacks } from '../../data/wordPacks';
-import { calculateLetterFrequency, calculateLetterScores, FREQ_UNLOCK_THRESHOLD } from '../../systems/letters/LetterFrequencySystem';
-import { getBattleNumber, getPositionInCycle, getStageType } from '../../systems/stage/stageFlow';
+import { calculateLetterFrequency } from '../../systems/letters/LetterFrequencySystem';
+import { getBattleNumber, getPositionInCycle, getStageType, getNextBattleNode } from '../../systems/stage/stageFlow';
 import { STAGE_ICONS } from '../../systems/actTransition';
 import { t } from '../../demo/demo-i18n';
-import { AFFIX_TAXA } from '../../data/affixTaxa';
 import type { ShopItem, WordPack } from '../../core/types';
 import type { StageType } from '../../systems/stage/StageConfig';
 import { describeAllShopItems, type ItemDescriptor } from '../itemDescriptors';
@@ -126,7 +128,10 @@ export function getClrLabel(level: number): string {
   return CLR_BY_STAGE_TYPE[getStageType(safeLevel)];
 }
 
-/** STAGE 字段：从 actTransition.STAGE_ICONS 单一真相源读 emoji */
+/** STAGE 字段：从 actTransition.STAGE_ICONS 单一真相源读 emoji
+ * 注意 shop 处于"刚结束 N、即将进 N+1"的间隙，state.level 此时仍是 N。
+ * 显示"下一关 type"对玩家决策才有意义（要为 boss/elite 备货 vs 普通），
+ * 所以传入的 level 在 chrome 调用处会先 getNextBattleNode 一次。 */
 export function getStageIcon(level: number): string {
   const safeLevel = level > 0 ? level : 1;
   // STAGE_ICONS 4 键覆盖 4 种 stageType；getStageType 返回 StageType 保证 lookup 命中
@@ -164,9 +169,9 @@ export function updateTerminalChrome(): void {
   const clrEm = root.querySelector('[data-field="clr"] em');
   if (clrEm) clrEm.textContent = getClrLabel(state.level);
 
-  // STAGE
+  // STAGE — 显示下一关 type（决策语义；shop 在 N 与 N+1 之间，state.level=N）
   const stageEm = root.querySelector('[data-field="stage"] em');
-  if (stageEm) stageEm.textContent = getStageIcon(state.level);
+  if (stageEm) stageEm.textContent = getStageIcon(getNextBattleNode(state.level));
 
   // CONN 是固定文本（DPCA 复古调制解调器梗），不动
 }
@@ -379,8 +384,22 @@ function wrapAt(text: string, w: number): string[] {
   return out;
 }
 
-function renderInfoBlock(d: ItemDescriptor): string[] {
-  const W = 80;
+/** INF 块宽度 — header / footer 横线长度，affix wrap 上限 */
+const INF_BLOCK_WIDTH = 80;
+
+/**
+ * INF 信息分四层 / 像不同密级看到不同信息：
+ *   Tier 1  无职业（baseline，所有玩家可见）
+ *   Tier 2  造词师（state.classId === 'wordsmith'）
+ *   Tier 3  蜕变师（state.classId === 'metamorph'）
+ *   Tier 4  无尽模式（state.cycle ≥ 2）
+ * 当前状态可叠加（造词师 + 无尽 → 看 1 + 2 + 4），与"附加权限"语义一致。
+ *
+ * 内容当前只填了 Tier 1，2~4 是空 stub —— 等具体叙事 / 数据规则定下来再灌。
+ * 顶端 ═══ header 在 Tier 1 内部，底端 ═══ footer 由外层 renderInfoBlock 收尾。
+ */
+function buildInfTier1Base(d: ItemDescriptor): string[] {
+  const W = INF_BLOCK_WIDTH;
   const lines: string[] = [];
   const headLine = `═══ ${d.name} · ${d.sku} ` + '═'.repeat(Math.max(3, W - d.name.length - d.sku.length - 7));
   lines.push(headLine);
@@ -414,8 +433,6 @@ function renderInfoBlock(d: ItemDescriptor): string[] {
       for (const af of fields.affixInfo) {
         const hdr = `‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
         for (const w of wrapAt(hdr, W - 4)) lines.push('  ' + w);
-        const taxon = af.typeKey ? AFFIX_TAXA[af.typeKey] : null;
-        if (taxon) lines.push(`    ${taxon.latin} · ${taxon.code}`);
         if (af.description) {
           for (const w of wrapAt(af.description, W - 6)) lines.push('    ' + w);
         }
@@ -450,38 +467,175 @@ function renderInfoBlock(d: ItemDescriptor): string[] {
   lines.push(d.kind === 'skill'
     ? t('shop.terminal.info.catalog.syn_skill', { n: d.synergyCount })
     : t('shop.terminal.info.catalog.syn_other', { n: d.synergyCount }));
-  lines.push('═'.repeat(W));
+  return lines;
+}
+
+/** Tier 2 · 造词师附加段 — 内容待填（叙事 / 字母频率 / 词库相关数据） */
+function buildInfTier2Wordsmith(_d: ItemDescriptor): string[] {
+  return [];
+}
+
+/** Tier 3 · 蜕变师附加段 — 内容待填（叙事 / 质变 / mutagen 相关数据） */
+function buildInfTier3Metamorph(_d: ItemDescriptor): string[] {
+  return [];
+}
+
+/** Tier 4 · 无尽模式附加段 — 内容待填（叙事 / cycle scaling / 污染症候相关数据） */
+function buildInfTier4Endless(_d: ItemDescriptor): string[] {
+  return [];
+}
+
+/**
+ * INF 输出 = Tier 1 baseline + 当前权限可见的附加段 + footer。
+ * 多个状态可同时激活（如造词师 + 无尽 → Tier 1 + 2 + 4 都呈现）。
+ */
+function renderInfoBlock(d: ItemDescriptor): string[] {
+  const lines: string[] = [];
+  lines.push(...buildInfTier1Base(d));
+  if (state.classId === 'wordsmith') lines.push(...buildInfTier2Wordsmith(d));
+  if (state.classId === 'metamorph') lines.push(...buildInfTier3Metamorph(d));
+  if ((state.cycle ?? 1) >= 2) lines.push(...buildInfTier4Endless(d));
+  lines.push('═'.repeat(INF_BLOCK_WIDTH));
   return lines;
 }
 
 // === Output to viewport ===
 
+/** 把 plain text 里的 emoji / shape / syn sentinel 转成 dossier 内可用 HTML 片段。 */
+function escapeAndDecorateLine(text: string): string {
+  let html = escapeHtml(text);
+  html = html.replace(/🍌/g, '<span class="bna">🍌</span>');
+  html = html.replace(/§T([A-Z]+)\|(\[[^\]]+\])§/g, (_m, color, tag) => {
+    return `<span class="t-shape t-shape-${(color as string).toLowerCase()}">${tag}</span>`;
+  });
+  html = html.replace(/§Y(\d+)§/g, (_m, n) => {
+    const v = Number(n);
+    const cls2 = v > 0 ? 't-syn t-syn-hit' : 't-syn t-syn-zero';
+    return `<span class="${cls2}">[SYN:${v}]</span>`;
+  });
+  return html;
+}
+
+/**
+ * Browse mode 退出：把活动 panel 解包进 scrollback。
+ *   - 模式条直接丢弃（它是交互 UI，scrollback 里没意义）
+ *   - list-pane 内每行 + dossier-pane 内每行 → 保持原 .t-line 样式直接挪到 viewport
+ *   - 选中高亮去掉，DOM ref / size 清零（让 ↑↓ 检测失败 → fallback 到 history）
+ *   - selectedSku 字符串保留，给下次 cmdList 的"延续选中"用
+ * 任何走 appendLine 的输出在写入前都会先 freeze，对外语义=teletype 持续走纸。
+ */
+export function freezeBrowsePanel(): void {
+  const panel = previewState.browsePanelEl;
+  if (!panel) return;
+  const vp = document.getElementById('terminal-viewport');
+  if (!vp || !panel.parentNode) {
+    previewState.browsePanelEl = null;
+    previewState.lastListRowsBySku = new Map();
+    return;
+  }
+  panel.querySelector('.browse-mode-bar')?.remove();
+  const listPane = panel.querySelector('.browse-list');
+  const dossierPane = panel.querySelector('.browse-dossier');
+  if (listPane) {
+    while (listPane.firstChild) {
+      const child = listPane.firstChild;
+      if (child instanceof HTMLElement) child.classList.remove('list-row-selected');
+      vp.insertBefore(child, panel);
+    }
+  }
+  if (dossierPane) {
+    while (dossierPane.firstChild) vp.insertBefore(dossierPane.firstChild, panel);
+  }
+  panel.remove();
+  previewState.browsePanelEl = null;
+  previewState.lastListRowsBySku = new Map();
+}
+
 export function appendLine(text: string, cls = '', raw = false): void {
+  // 任何 scrollback 输出 → 退出 browse mode（teletype 走纸语义）
+  freezeBrowsePanel();
   const vp = document.getElementById('terminal-viewport');
   if (!vp) return;
   const div = document.createElement('div');
   div.className = `t-line ${cls}`.trim();
   if (raw) {
-    // List row HTML 已 escape + 已 sentinel 替换，直接 innerHTML 注入
     div.innerHTML = text;
   } else {
-    let html = escapeHtml(text);
-    // 价格 emoji 自动 wrap：把"🍌"包成 .bna
-    html = html.replace(/🍌/g, '<span class="bna">🍌</span>');
-    // shape sentinel: §T<COLOR>|<TAG>§  →  <span class="t-shape t-shape-COLOR">TAG</span>
-    html = html.replace(/§T([A-Z]+)\|(\[[^\]]+\])§/g, (_m, color, tag) => {
-      return `<span class="t-shape t-shape-${(color as string).toLowerCase()}">${tag}</span>`;
-    });
-    // syn sentinel: §Y4§ → [SYN:4]
-    html = html.replace(/§Y(\d+)§/g, (_m, n) => {
-      const v = Number(n);
-      const cls2 = v > 0 ? 't-syn t-syn-hit' : 't-syn t-syn-zero';
-      return `<span class="${cls2}">[SYN:${v}]</span>`;
-    });
-    div.innerHTML = html;
+    div.innerHTML = escapeAndDecorateLine(text);
   }
   vp.appendChild(div);
   vp.scrollTop = vp.scrollHeight;
+}
+
+/**
+ * 切换选中 SKU：
+ *   - 老选中行去 .list-row-selected
+ *   - 新选中行加 .list-row-selected
+ *   - 把 INF 块渲染进 panel 的 .browse-dossier
+ *   - 仅在 browsePanelEl 活动时生效；冻结后调用是 no-op（lastListRowsBySku 已清）
+ */
+export function setSelectedSku(sku: string | null): void {
+  const prev = previewState.selectedSku;
+  if (prev && prev !== sku) {
+    const prevEl = previewState.lastListRowsBySku.get(prev);
+    if (prevEl) prevEl.classList.remove('list-row-selected');
+  }
+  previewState.selectedSku = sku;
+  if (sku) {
+    const el = previewState.lastListRowsBySku.get(sku);
+    if (el) el.classList.add('list-row-selected');
+  }
+  const panel = previewState.browsePanelEl;
+  if (!panel) return;
+  const dossier = panel.querySelector<HTMLElement>('.browse-dossier');
+  if (!dossier) return;
+  const d = sku ? previewState.descriptorCache.find(x => x.sku === sku) : null;
+  if (!d) { dossier.innerHTML = ''; return; }
+  const cls = `t-line ${classForRow(d)}`.trim();
+  const lines = renderInfoBlock(d);
+  dossier.innerHTML = lines
+    .map(line => `<div class="${cls}">${escapeAndDecorateLine(line)}</div>`)
+    .join('');
+}
+
+/** ↑↓ 在当前 descriptorCache 中循环移动选中。返回是否消费该按键。 */
+export function navSelection(delta: number): boolean {
+  const cache = previewState.descriptorCache;
+  if (cache.length === 0 || previewState.lastListRowsBySku.size === 0) return false;
+  let idx = previewState.selectedSku
+    ? cache.findIndex(d => d.sku === previewState.selectedSku)
+    : -1;
+  if (idx < 0) idx = delta > 0 ? -1 : 0;
+  let next = idx + delta;
+  if (next < 0) next = cache.length - 1;
+  if (next >= cache.length) next = 0;
+  const nextSku = cache[next].sku;
+  setSelectedSku(nextSku);
+  const el = previewState.lastListRowsBySku.get(nextSku);
+  if (el) el.scrollIntoView({ block: 'nearest' });
+  return true;
+}
+
+/**
+ * cmdList 完成后选中策略：
+ *   1. 若上次选中的 SKU 仍在 cache（最常见：BUY 后自动 LIS、刚买的 SKU 还在表里）→ 保持，
+ *      用户按 ↓ 主动推进，不会被光标"跳回去"打断
+ *   2. 否则选第一个非 sold/redacted 的商品
+ *   3. 全表售空/屏蔽 → 退回选第一项
+ */
+function defaultSelectAfterList(): void {
+  const cache = previewState.descriptorCache;
+  if (cache.length === 0) {
+    setSelectedSku(null);
+    return;
+  }
+  const prev = previewState.selectedSku;
+  if (prev && cache.some(d => d.sku === prev)) {
+    setSelectedSku(prev);
+    return;
+  }
+  const firstAvailable = cache.find(d => !d.purchased && !d.redacted);
+  setSelectedSku((firstAvailable ?? cache[0]).sku);
 }
 
 // escapeHtml 已移至 ./shopState（workbench inbox card 也要用）— 通过 shopState 重新 export
@@ -500,64 +654,167 @@ function classForRow(d: ItemDescriptor): string {
 
 // === Commands ===
 
-export function cmdHelp(): void {
+/**
+ * 双层 help：
+ *   HEL          → 8 条命令一行 brief + 导航键提示
+ *   HEL INF      → INF 6 子形态详情
+ *   HEL BUY      → BUY 三种形态 + 高价确认阈值
+ *   HEL <other>  → 没有独立详情页 → 回退 brief（"该命令在 brief 已说清"）
+ */
+export function cmdHelp(arg?: string): void {
+  if (arg) {
+    // 解析输入到完整动词名（支持 IN / INFO 等同义形态）
+    const verbShort = expandVerb(arg) ?? arg.toUpperCase().slice(0, 3);
+    if (verbShort === 'INF') {
+      appendLine(t('shop.terminal.cmd.help.inf_header'), 'head');
+      appendLine(t('shop.terminal.cmd.help.inf_sku'));
+      appendLine(t('shop.terminal.cmd.help.inf_key'));
+      appendLine(t('shop.terminal.cmd.help.inf_owned'));
+      appendLine(t('shop.terminal.cmd.help.inf_stats'));
+      appendBlank();
+      return;
+    }
+    if (verbShort === 'BUY') {
+      appendLine(t('shop.terminal.cmd.help.buy_header'), 'head');
+      appendLine(t('shop.terminal.cmd.help.buy_no_arg'));
+      appendLine(t('shop.terminal.cmd.help.buy_sku'));
+      appendLine(t('shop.terminal.cmd.help.buy_enter'));
+      appendLine(t('shop.terminal.cmd.help.price_note', { threshold: HIGH_PRICE_THRESHOLD }), 'dim');
+      appendBlank();
+      return;
+    }
+    if (verbShort === 'SEL') {
+      appendLine(t('shop.terminal.cmd.help.sel_header'), 'head');
+      appendLine(t('shop.terminal.cmd.help.sel_arg'));
+      appendLine(t('shop.terminal.cmd.help.sel_refund'));
+      appendLine(t('shop.terminal.cmd.help.sel_window'));
+      appendBlank();
+      return;
+    }
+    if (verbShort === 'RES') {
+      appendLine(t('shop.terminal.cmd.help.res_header'), 'head');
+      appendLine(t('shop.terminal.cmd.help.res_arg'));
+      appendLine(t('shop.terminal.cmd.help.res_cost'));
+      appendLine(t('shop.terminal.cmd.help.res_anim'));
+      appendLine(t('shop.terminal.cmd.help.res_fallback'));
+      appendBlank();
+      return;
+    }
+    if (verbShort === 'PRO') {
+      appendLine(t('shop.terminal.cmd.help.pro_header'), 'head');
+      appendLine(t('shop.terminal.cmd.help.pro_arg'));
+      appendLine(t('shop.terminal.cmd.help.pro_finalize'));
+      appendLine(t('shop.terminal.cmd.help.pro_gold'));
+      appendBlank();
+      return;
+    }
+    if (verbShort === 'UND') {
+      appendLine(t('shop.terminal.cmd.help.und_header'), 'head');
+      appendLine(t('shop.terminal.cmd.help.und_arg'));
+      appendLine(t('shop.terminal.cmd.help.und_refund'));
+      appendLine(t('shop.terminal.cmd.help.und_lock'));
+      appendBlank();
+      return;
+    }
+    // LIS / HEL 无独立详情页 → fall through 到 brief（brief 已包含一行说明）
+  }
+  // 一级 brief —— 命令清单
   appendLine(t('shop.terminal.cmd.help.header'), 'head');
-  appendLine(t('shop.terminal.cmd.help.row1'));
-  appendLine(t('shop.terminal.cmd.help.row2'));
-  appendLine(t('shop.terminal.cmd.help.row3'), 'dim');
-  // Story 60.10: INF 扩展用法说明
-  appendLine(t('shop.terminal.cmd.help.inf_header'), 'head');
-  appendLine(t('shop.terminal.cmd.help.inf_sku'));
-  appendLine(t('shop.terminal.cmd.help.inf_key'));
-  appendLine(t('shop.terminal.cmd.help.inf_name'));
-  appendLine(t('shop.terminal.cmd.help.inf_owned'));
-  appendLine(t('shop.terminal.cmd.help.price_note', { threshold: HIGH_PRICE_THRESHOLD }), 'dim');
+  appendLine(t('shop.terminal.cmd.help.brief.lis'));
+  appendLine(t('shop.terminal.cmd.help.brief.buy'));
+  appendLine(t('shop.terminal.cmd.help.brief.inf'));
+  appendLine(t('shop.terminal.cmd.help.brief.sel'));
+  appendLine(t('shop.terminal.cmd.help.brief.res'));
+  appendLine(t('shop.terminal.cmd.help.brief.pro'));
+  appendLine(t('shop.terminal.cmd.help.brief.und'));
+  appendLine(t('shop.terminal.cmd.help.brief.hel'));
+  appendLine(t('shop.terminal.cmd.help.brief.nav'), 'dim');
   appendBlank();
 }
 
+/**
+ * 单行行 div 工厂 — list-pane 内单元（与冻结后掉进 scrollback 的 t-line 保持一致样式）
+ * data-sku 让 ↑↓ 之外的代码（INF lookup 等）也能以 SKU 反查 DOM
+ */
+function buildRowDiv(d: ItemDescriptor): HTMLElement {
+  const row = document.createElement('div');
+  row.className = `t-line ${classForRow(d)} list-row`.trim();
+  row.dataset.sku = d.sku;
+  row.innerHTML = renderListRow(d);
+  return row;
+}
+
+/**
+ * cmdList 进入 browse mode：先 freeze 上一轮 panel（解包进 scrollback），
+ * 再造新 panel = mode-bar + list-pane（header + rows）+ dossier-pane（由 setSelectedSku 填充）。
+ * 动画模式下 rows 30ms stagger 进 list-pane（mode-bar 与 dossier 立即在位）。
+ */
 export function cmdList(): void {
+  freezeBrowsePanel();
   rebuildDescriptors();
-  // Story 60.11 review M1: 无条件 single-shot 消费 nextListIsAnimated，
-  // 防 RESHUFFLE 抛错或 cache 临时为空时 flag 跨调用泄漏（之前在空 cache 早 return
-  // 后旁路了 flag reset，下一次非空 LIS 会意外走动画）
   const animated = previewState.nextListIsAnimated && shouldAnimateShop();
   previewState.nextListIsAnimated = false;
+
+  const vp = document.getElementById('terminal-viewport');
+  if (!vp) return;
+
   if (previewState.descriptorCache.length === 0) {
     appendLine(t('shop.terminal.cmd.list.empty'), 'dim');
     appendBlank();
+    setSelectedSku(null);
     return;
   }
-  const HEADER = t('shop.terminal.cmd.list.header');
-  const FOOTER = t('shop.terminal.cmd.list.footer', { n: previewState.descriptorCache.length });
+
+  // ── 构建 panel 骨架 ──
+  const panel = document.createElement('div');
+  panel.className = 'browse-panel';
+
+  const bar = document.createElement('div');
+  bar.className = 'browse-mode-bar';
+  // Mode bar 文案是终端命令 token / 交互提示，不走 i18n（与 SKU 前缀同性质）
+  bar.innerHTML
+    = `<span class="bm-label">▾ BROWSE · ${previewState.descriptorCache.length} ITEMS</span>`
+    + `<span class="bm-help">↑↓ SELECT · BUY · ESC EXIT</span>`;
+  panel.appendChild(bar);
+
+  const listPane = document.createElement('div');
+  listPane.className = 'browse-list';
+  const headRow = document.createElement('div');
+  headRow.className = 't-line head list-row';
+  headRow.innerHTML = renderListHeaderRow();
+  listPane.appendChild(headRow);
+  panel.appendChild(listPane);
+
+  const dossier = document.createElement('div');
+  dossier.className = 'browse-dossier';
+  panel.appendChild(dossier);
+
+  vp.appendChild(panel);
+  previewState.browsePanelEl = panel;
+
+  // ── 灌入 rows ──
   if (!animated) {
-    appendLine(HEADER, 'head');
-    appendLine('─────────────────────────────────────────────────────────────────────────────────────────────────────────');
-    appendLine(renderListHeaderRow(), 'head list-row', true);
-    appendLine('─────────────────────────────────────────────────────────────────────────────────────────────────────────');
-    for (const d of previewState.descriptorCache) appendLine(renderListRow(d), `${classForRow(d)} list-row`.trim(), true);
-    appendLine('─────────────────────────────────────────────────────────────────────────────────────────────────────────');
-    appendLine(FOOTER, 'dim');
-    appendBlank();
+    for (const d of previewState.descriptorCache) {
+      const row = buildRowDiv(d);
+      listPane.appendChild(row);
+      previewState.lastListRowsBySku.set(d.sku, row);
+    }
+    defaultSelectAfterList();
+    vp.scrollTop = vp.scrollHeight;
     return;
   }
-  // 动画模式：每行 30ms 间隔逐行打出（仿点阵打印机走纸）
+  // 动画模式：每行 30ms stagger（点阵打印机走纸感）
   const myCallId = ++previewState.listCallCounter;
-  const lines: Array<{ text: string; cls: string; raw: boolean }> = [];
-  lines.push({ text: HEADER, cls: 'head', raw: false });
-  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
-  lines.push({ text: renderListHeaderRow(), cls: 'head list-row', raw: true });
-  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
-  for (const d of previewState.descriptorCache) {
-    lines.push({ text: renderListRow(d), cls: `${classForRow(d)} list-row`.trim(), raw: true });
-  }
-  lines.push({ text: '─────────────────────────────────────────────────────────────────────────────────────────────────────────', cls: '', raw: false });
-  lines.push({ text: FOOTER, cls: 'dim', raw: false });
-  lines.forEach((line, idx) => {
+  previewState.descriptorCache.forEach((d, idx) => {
     setTimeout(() => {
-      // 取消条件：用户已在动画期间触发新 cmdList（counter 变了）
+      // 用户在动画期间触发新 LIS 或 freeze（计数器 / panel ref 变了）→ 取消
       if (previewState.listCallCounter !== myCallId) return;
-      appendLine(line.text, line.cls, line.raw);
-      if (idx === lines.length - 1) appendBlank();
+      if (previewState.browsePanelEl !== panel) return;
+      const row = buildRowDiv(d);
+      listPane.appendChild(row);
+      previewState.lastListRowsBySku.set(d.sku, row);
+      if (idx === previewState.descriptorCache.length - 1) defaultSelectAfterList();
+      vp.scrollTop = vp.scrollHeight;
     }, idx * 30);
   });
 }
@@ -570,11 +827,12 @@ export function cmdInfo(arg?: string): void {
   if (!arg) { appendLine(t('shop.terminal.cmd.usage.inf'), 'dim'); return; }
   const upper = arg.toUpperCase();
 
-  // 1) /OWNED 子命令 — owned 资产列表
+  // 1) 子命令路由 — owned 资产列表 / session 统计 / 已收 wordDeck
   if (upper === '/OWNED' || upper === '/LIST-OWNED') {
     cmdInfoListOwned();
     return;
   }
+  if (upper === '/STATS') { cmdStats(); return; }
 
   // 2) catalog SKU 优先（保留现有路径，0 行为变化）
   const d = findDescriptorBySku(arg);
@@ -590,25 +848,14 @@ export function cmdInfo(arg?: string): void {
     return;
   }
 
-  // 4) owned skill 模糊名匹配
-  const skillHits = findOwnedSkillsByFragment(arg);
-  if (skillHits.length === 1) {
-    cmdInfoOwnedSkill(skillHits[0]);
-    return;
-  }
-  if (skillHits.length > 1) {
-    cmdInfoMultiSkillHit(skillHits, arg);
-    return;
-  }
-
-  // 5) owned relic id/name 匹配
+  // 4) owned relic id/name 匹配
   const relicHit = findOwnedRelicByQuery(arg);
   if (relicHit) {
     cmdInfoOwnedRelic(relicHit);
     return;
   }
 
-  // 6) 全部 miss → 原 suggestSku fallback
+  // 5) 全部 miss → 原 suggestSku fallback
   const guess = suggestSku(arg);
   appendLine(t('shop.terminal.err.not_found', { target: upper }), 'redacted');
   if (guess) appendLine(t('shop.terminal.cmd.info.did_you_mean', { guess }), 'dim');
@@ -640,22 +887,6 @@ function cmdInfoKey(rawKey: string): void {
     return;
   }
   cmdInfoOwnedRelic(relicId);
-}
-
-/** Story 60.10: owned skill 模糊名匹配（在 bindings + inbox 集合内） */
-function findOwnedSkillsByFragment(query: string): string[] {
-  const q = query.toUpperCase();
-  const ids = new Set<string>();
-  for (const sid of state.player.bindings.values()) ids.add(sid);
-  for (const sid of state.player.inbox) ids.add(sid);
-  const hits: string[] = [];
-  for (const id of ids) {
-    const sk = state.affixSkills.get(id);
-    if (!sk) continue;
-    const name = (sk.name || '').toUpperCase();
-    if (name.includes(q)) hits.push(id);
-  }
-  return hits;
 }
 
 /** Story 60.10: owned relic id/name 模糊匹配 */
@@ -703,8 +934,6 @@ function cmdInfoOwnedSkill(skillId: string): void {
     for (const af of fields.affixInfo) {
       const hdr = `‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
       for (const w of wrapAt(hdr, W - 4)) appendLine('  ' + w);
-      const taxon = af.typeKey ? AFFIX_TAXA[af.typeKey] : null;
-      if (taxon) appendLine(`    ${taxon.latin} · ${taxon.code}`, 'dim');
       if (af.description) {
         for (const w of wrapAt(af.description, W - 6)) appendLine('    ' + w, 'dim');
       }
@@ -750,23 +979,6 @@ function cmdInfoOwnedRelic(relicId: string): void {
     for (const w of wrapAt(data.flavor, W - 4)) appendLine('  ' + w, 'dim');
   }
   appendLine('═'.repeat(W));
-  appendBlank();
-}
-
-/** Story 60.10: 模糊名多命中候选列表 */
-function cmdInfoMultiSkillHit(skillIds: string[], query: string): void {
-  appendLine(t('shop.terminal.cmd.info.multi_match_header', { query: query.toUpperCase(), n: skillIds.length }), 'head');
-  for (const sid of skillIds) {
-    const sk = state.affixSkills.get(sid);
-    if (!sk) continue;
-    let loc = '—';
-    for (const [k, s] of state.player.bindings) {
-      if (s === sid) { loc = t('shop.terminal.cmd.info.multi_match_loc_key', { key: k.toUpperCase() }); break; }
-    }
-    if (loc === '—' && state.player.inbox.includes(sid)) loc = t('shop.terminal.cmd.info.multi_match_loc_inbox');
-    appendLine(t('shop.terminal.cmd.info.multi_match_row', { name: sk.name, loc, level: sk.level }));
-  }
-  appendLine(t('shop.terminal.cmd.info.refine_query'), 'dim');
   appendBlank();
 }
 
@@ -869,6 +1081,9 @@ export function executeBuySkill(d: ItemDescriptor): void {
   // terminal sound removed (was sfx('shop_buy_ok')) // Story 60.12: 点阵打印机 zip — BUY skill 成功
   // Story 60.11: BUY 成功 → IN-tray 对应槽 whoosh 滑入 + 闪光（仅成功路径）
   shopBus.triggerInboxWhoosh(state.player.inbox.length - 1);
+  // Bug fix: 已打印的 LIST 是 BUY 前快照，不会回头标 SOLD —
+  // 与 cmdReshuffle 一样自动重打 LIS，让"购买后划红"立即可见
+  cmdList();
 }
 
 export function executeBuyPack(d: ItemDescriptor): void {
@@ -905,6 +1120,7 @@ function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
   appendBlank();
   updateTerminalChrome();
   shopBus.syncWorkbenchKeys(); // wordDeck 变化 → 字母键 freq-lock 重算
+  cmdList(); // Bug fix: 购买后立即重打 LIS，划红当前 SKU
 }
 
 function executeBuyPackPicker(d: ItemDescriptor, pack: WordPack): void {
@@ -946,6 +1162,7 @@ export function finalizePackPick(pickedWord: string): void {
   shopBus.syncWorkbenchKeys(); // wordDeck 变化 → 字母键 freq-lock 重算
   // M1 fix: 切回终端，让 CONFIRMED / WORD FILED 消息可见
   shopBus.showOnly('terminal');
+  cmdList(); // Bug fix: 购买后立即重打 LIS，划红当前 SKU
 }
 
 // Story 60.2: 取消（ESC / overlay 点击 / drawer 关闭）— 不动 state
@@ -1003,15 +1220,18 @@ export function executeBuyRelic(d: ItemDescriptor): void {
   updateTerminalChrome();
   shopBus.syncWorkbenchRelics();
   shopBus.syncWorkbenchKeys(); // punctuation_liberation 等遗物影响 freq-lock
+  cmdList(); // Bug fix: 购买后立即重打 LIS，划红当前 SKU
 }
 
 export function cmdBuy(arg?: string): void {
-  if (!arg) { appendLine(t('shop.terminal.cmd.usage.buy'), 'dim'); return; }
-  const d = findDescriptorBySku(arg);
+  // 无 SKU 时退回当前 ↑↓ 选中商品；什么都没选则提示 usage
+  const target = arg ?? previewState.selectedSku ?? null;
+  if (!target) { appendLine(t('shop.terminal.cmd.usage.buy'), 'dim'); return; }
+  const d = findDescriptorBySku(target);
   if (!d) {
     // terminal sound removed (was sfx('shop_buy_err')) // Story 60.12: SKU 不存在
-    const guess = suggestSku(arg);
-    appendLine(t('shop.terminal.err.sku_not_in_catalog', { sku: arg.toUpperCase() }), 'redacted');
+    const guess = suggestSku(target);
+    appendLine(t('shop.terminal.err.sku_not_in_catalog', { sku: target.toUpperCase() }), 'redacted');
     if (guess) appendLine(t('shop.terminal.cmd.info.did_you_mean', { guess }), 'dim');
     appendBlank();
     return;
@@ -1089,6 +1309,9 @@ export function cmdReshuffle(): void {
       throw new Error('generator returned empty list');
     }
     state.shop.items = items;
+    // Bug fix: SKU 位置编码，新一轮 SKL-002 ≠ 上一轮 SKL-002；
+    // 不清会让购买标记按位置粘到新商品上（"刷新后还是 SOLD"）
+    previewState.purchasedSkus.clear();
     rebuildDescriptors();
     success = true;
     appendLine(t('shop.terminal.cmd.reshuffle.success', { cost }), 'echo');
@@ -1159,94 +1382,111 @@ export function cmdUndo(): void {
 }
 
 // === Story 60.19: STAT 命令真实数据接入（letterFreqs / wordEffects） ===
-const STATS_TOP_N = 10;
-const STATS_BAR_WIDTH = 20;
-
+/**
+ * /STATS — 上一战每个技能的贡献：让玩家看清"哪个技能产了多少哪种资源"。
+ *   1. 头部：rating + WORDS / PERFECT / CHAIN / MAX-CHAIN / 🍌
+ *   2. SKILL CONTRIBUTION：按触发数降序的双行条目，第一行 名 + 触发 + chain，
+ *      第二行 各资源细分（仅显示非零）—— 这是核心信息
+ *   3. TOTAL OUTPUT：所有技能资源汇总，方便快速看"主资源是什么"
+ * 数据源：state.battleStats.skillStats（Map<skillId, { triggerCount, resources, chainTriggered }>）。
+ * 技能名走 state.affixSkills.get(skillId).name；卖出 / 撤回的技能查不到时 fallback 到 skillId 末段。
+ */
 export function cmdStats(): void {
-  const batchPos = getPositionInCycle(state.level || 1);
-  const batchLabel = `${String(batchPos).padStart(2, '0')}/${BALANCE.CYCLE_LENGTH}`;
-  appendLine(t('shop.terminal.cmd.stats.title', { batch: batchLabel }), 'head');
-
-  const letterFreqs = calculateLetterFrequency(state.player.wordDeck);
-  const letterScores = calculateLetterScores(state.wordEffects);
-
-  // 兜底：词库为空（首关入店）
-  if (letterFreqs.size === 0) {
-    appendLine(t('shop.terminal.cmd.stats.no_activity'), 'dim');
-    appendLine(t('shop.terminal.cmd.stats.footer'), 'dim');
+  const W = INF_BLOCK_WIDTH;
+  const bs = state.battleStats;
+  if (!bs || bs.skillStats.size === 0) {
+    appendLine(t('shop.no_stats'), 'dim');
     appendBlank();
     return;
   }
 
-  // 收集所有"上榜键"：进 freq 表的键 ∪ 有 score 的键
-  const allKeys = new Set<string>();
-  for (const k of letterFreqs.keys()) allKeys.add(k);
-  for (const k of letterScores.keys()) allKeys.add(k);
+  // ── 1. Rating + 头部 ──
+  const rating = bs.rating || calculateRating({
+    score: state.score,
+    targetScore: state.targetScore,
+    perfectWords: bs.perfectWords,
+    wordsCompleted: bs.wordsCompleted,
+    timeRemaining: state.time,
+    timeMax: state.timeMax,
+  });
+  const headTitle = `SESSION STATS · ${rating}`;
+  appendLine(`═══ ${headTitle} ` + '═'.repeat(Math.max(3, W - headTitle.length - 5)), 'head');
 
-  type Row = { key: string; freq: number; score: number; locked: boolean };
-  const rows: Row[] = [];
-  let maxFreq = 0;
-  for (const k of allKeys) {
-    const freq = letterFreqs.get(k) ?? 0;
-    const score = letterScores.get(k) ?? 0;
-    const isPunctKey = PUNCTUATION_KEYS.includes(k);
-    const locked = freq < FREQ_UNLOCK_THRESHOLD && !isPunctKey;
-    if (freq > maxFreq) maxFreq = freq;
-    rows.push({ key: k, freq, score, locked });
+  // ── 2. Summary 行 ──
+  let totalGold = 0;
+  bs.skillStats.forEach(ss => { totalGold += ss.resources.gold ?? 0; });
+  const summaryParts: string[] = [];
+  summaryParts.push(t('shop.words_done', { count: bs.wordsCompleted }));
+  summaryParts.push(t('shop.words_perfect', { count: bs.perfectWords }));
+  summaryParts.push(t('shop.chain_count', { count: bs.totalChainTriggers }));
+  if (bs.maxChainDepth > 1) summaryParts.push(t('shop.max_chain', { count: bs.maxChainDepth }));
+  if (totalGold > 0) summaryParts.push(`🍌 +${Math.floor(totalGold)}`);
+  appendLine(summaryParts.join(' · '));
+
+  // ── 3. 资源排序（用于细分行 + 总览）──
+  const resourceOrder: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+  const classRes = CLASS_DEFINITIONS[state.classId]?.uniqueResource;
+  if (classRes && !resourceOrder.includes(classRes)) resourceOrder.push(classRes);
+
+  // ── 4. SKILL CONTRIBUTION（按触发降序的双行条目）──
+  type SkillRow = { id: string; name: string; triggers: number; chain: number; resources: Record<ResourceType, number> };
+  const skillRows: SkillRow[] = [];
+  bs.skillStats.forEach((ss, sid) => {
+    if (ss.triggerCount <= 0) return;
+    const sk = state.affixSkills.get(sid);
+    const name = sk?.name ?? sid.split('_').pop() ?? sid;
+    skillRows.push({ id: sid, name, triggers: ss.triggerCount, chain: ss.chainTriggered, resources: ss.resources });
+  });
+  skillRows.sort((a, b) => b.triggers - a.triggers || a.name.localeCompare(b.name));
+
+  appendLine('');
+  appendLine('─── SKILL CONTRIBUTION ' + '─'.repeat(Math.max(3, W - 25)), 'head');
+  if (skillRows.length === 0) {
+    appendLine('  · —', 'dim');
+  } else {
+    for (const row of skillRows) {
+      // 第 1 行：名（截到 32ch） + 触发数 + chain（仅 >0）
+      const nameTrunc = row.name.length > 32 ? row.name.slice(0, 31) + '…' : row.name;
+      const namePad = nameTrunc.padEnd(32, ' ');
+      const trgStr = `${row.triggers}×`.padEnd(5, ' ');
+      const chainStr = row.chain > 0 ? `(chain ${row.chain})` : '';
+      appendLine(`  ${namePad} ${trgStr} ${chainStr}`.trimEnd());
+      // 第 2 行：资源细分（仅非零）
+      const resParts: string[] = [];
+      for (const r of resourceOrder) {
+        const v = row.resources[r] ?? 0;
+        if (v <= 0) continue;
+        const icon = RESOURCE_ICONS[r] ?? '◇';
+        const formatted = r === 'multiplier' ? v.toFixed(2) : v.toFixed(1);
+        resParts.push(`${icon}+${formatted}`);
+      }
+      appendLine(resParts.length > 0 ? '      ' + resParts.join('  ') : '      · —', 'dim');
+    }
   }
 
-  // freq 降序，相同 freq 按字母 a→z（避免 score 顺序导致视觉抖动）
-  rows.sort((a, b) => b.freq - a.freq || a.key.localeCompare(b.key));
-
-  // 列头：KEY | BAR | FREQ | SCORE
-  appendLine(t('shop.terminal.cmd.stats.col_header'));
-  const top = rows.slice(0, STATS_TOP_N);
-  for (const row of top) {
-    const barLen = maxFreq > 0 ? Math.round((row.freq / maxFreq) * STATS_BAR_WIDTH) : 0;
-    const bar = '█'.repeat(barLen).padEnd(STATS_BAR_WIDTH, ' ');
-    const keyDisplay = row.key.toUpperCase().padEnd(2, ' ');
-    const freqStr = String(row.freq).padStart(4, ' ');
-    const scoreStr = (row.score > 0 ? `+${row.score}` : String(row.score)).padStart(5, ' ');
-    const lockTag = row.locked ? `  ${t('shop.terminal.cmd.stats.locked')}` : '';
-    const line = `  ${keyDisplay} ${bar} ${freqStr} ${scoreStr}${lockTag}`;
-    appendLine(line, row.locked ? 'redacted' : '');
+  // ── 5. TOTAL OUTPUT（全量资源汇总）──
+  const totals: Record<string, number> = {};
+  bs.skillStats.forEach(ss => {
+    for (const r of resourceOrder) {
+      totals[r] = (totals[r] ?? 0) + (ss.resources[r] ?? 0);
+    }
+  });
+  appendLine('');
+  appendLine('─── TOTAL OUTPUT ' + '─'.repeat(Math.max(3, W - 19)), 'head');
+  let printedAny = false;
+  for (const r of resourceOrder) {
+    const v = totals[r] ?? 0;
+    if (v <= 0) continue;
+    printedAny = true;
+    const icon = RESOURCE_ICONS[r] ?? '◇';
+    const label = t(`resource.${r}`);
+    const formatted = r === 'multiplier' ? v.toFixed(2) : v.toFixed(1);
+    appendLine(`  ${icon} ${label.padEnd(8, ' ')} +${formatted}`);
   }
+  if (!printedAny) appendLine('  · —', 'dim');
 
+  appendLine('═'.repeat(W));
   appendBlank();
-
-  // TOP CONTRIBUTOR：综合贡献 freq × (1 + max(0, score))，占总和 pct
-  const contribOf = (r: Row) => r.freq * (1 + Math.max(0, r.score));
-  const totalContrib = rows.reduce((s, r) => s + contribOf(r), 0);
-  if (totalContrib > 0) {
-    const top1 = rows.slice().sort((a, b) => contribOf(b) - contribOf(a))[0];
-    const pct = Math.round((contribOf(top1) / totalContrib) * 100);
-    appendLine(
-      t('shop.terminal.cmd.stats.top_contributor', { key: top1.key.toUpperCase(), pct }),
-      'echo',
-    );
-  }
-
-  // WEAKEST KEY：freq 最低的非标点键（且 freq>0），若全部锁定则取最低 freq
-  const nonPunct = rows.filter(r => !PUNCTUATION_KEYS.includes(r.key));
-  if (nonPunct.length > 0) {
-    const weakest = nonPunct.slice().sort((a, b) => a.freq - b.freq || a.key.localeCompare(b.key))[0];
-    const lockTag = weakest.locked ? ` ${t('shop.terminal.cmd.stats.locked')}` : '';
-    appendLine(
-      t('shop.terminal.cmd.stats.weakest_key', { key: weakest.key.toUpperCase() }) + lockTag,
-      weakest.locked ? 'redacted' : '',
-    );
-  }
-
-  appendLine(t('shop.terminal.cmd.stats.footer'), 'dim');
-  appendBlank();
-}
-
-export function cmdWords(): void {
-  appendLine(t('shop.terminal.cmd.opening_words'), 'echo');
-  appendBlank();
-  // ensure on workbench so drawer is visible
-  if (previewState.currentScreen !== 'workbench') shopBus.showOnly('workbench');
-  shopBus.openDrawer('words');
 }
 
 // === Confirmation handler ===

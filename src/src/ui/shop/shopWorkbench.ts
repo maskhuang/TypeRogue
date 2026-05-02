@@ -34,14 +34,14 @@ import {
 } from '../shapePreview';
 // Story 60.18: 范围词条（splash/echo/aura/relay/war_drum/conduit/amplify 等）键盘高亮
 import { getKeysWithRelation } from '../../data/keyboardTopology';
-import { t } from '../../demo/demo-i18n';
+import { t, getLocale } from '../../demo/demo-i18n';
+import { pickRandomNote, getNoteText } from '../../data/narrative/workbenchNotes';
 import type { WordPack } from '../../core/types';
 import {
   previewState,
   shopBus,
   deskSfx,
   escapeHtml,
-  getOwnedSkillEntries,
 } from './shopState';
 import type { DrawerKind, InboxCardData } from './shopState';
 
@@ -209,12 +209,12 @@ export function closeDrawer(): void {
 function renderWordsDrawerHtml(): string {
   const words = state.player.wordDeck;
   if (words.length === 0) {
-    return '<div class="wb-drawer-empty">— NO WORDS FILED —</div>';
+    return `<div class="wb-drawer-empty">${escapeHtml(t('wb.no_words_filed'))}</div>`;
   }
   const rows = words.map((w, i) => {
     const eff = state.wordEffects.get(w);
     const effLabel = eff ? `[${eff.type.toUpperCase()}${eff.value ? ' ' + eff.value : ''}]` : '';
-    return `<li class="wb-word-row"><span class="ww-idx">${String(i + 1).padStart(3, '0')}</span><span class="ww-name">${w.toUpperCase()}</span><span class="ww-meta">LEN ${w.length}</span><span class="ww-eff">${effLabel}</span></li>`;
+    return `<li class="wb-word-row"><span class="ww-idx">${String(i + 1).padStart(3, '0')}</span><span class="ww-name">${w.toUpperCase()}</span><span class="ww-meta">${escapeHtml(t('wb.len_label'))} ${w.length}</span><span class="ww-eff">${effLabel}</span></li>`;
   });
   return `<ul class="wb-word-list">${rows.join('')}</ul>`;
 }
@@ -229,14 +229,14 @@ function renderPackPickDrawerHtml(pack: WordPack): string {
       <button class="pack-pick-card" type="button" data-pick-idx="${i}">
         <span class="pp-clip" aria-hidden="true">📎</span>
         <div class="pp-word">${upper}</div>
-        <div class="pp-meta">LEN ${w.length}${freqHint ? ' · ' + escapeHtml(freqHint) : ''}</div>
+        <div class="pp-meta">${escapeHtml(t('wb.len_label'))} ${w.length}${freqHint ? ' · ' + escapeHtml(freqHint) : ''}</div>
         ${effLabel ? `<div class="pp-effect">${escapeHtml(effLabel)}</div>` : ''}
       </button>
     `;
   }).join('');
   return `
     <div class="pack-pick-grid">${cards}</div>
-    <div class="pack-pick-footer">CHOOSE ONE FOR FILING · [TAB] NAVIGATE · [ENTER] FILE · [ESC] CANCEL</div>
+    <div class="pack-pick-footer">${escapeHtml(t('wb.pack_pick_footer'))}</div>
   `;
 }
 
@@ -637,74 +637,62 @@ export function syncWorkbenchInbox(): void {
       opened: previewState.unsealedSkillIds.has(skillId),
     }));
   }
-  while (slots.length < INBOX_MAX) slots.push('<div class="foam-cutout empty"><span class="cutout-empty-label">— 空槽 —</span></div>');
+  while (slots.length < INBOX_MAX) slots.push(`<div class="foam-cutout empty"><span class="cutout-empty-label">${escapeHtml(t('wb.intray_empty_slot'))}</span></div>`);
   root.innerHTML = slots.join('');
   // Re-register drop zones since IN-tray DOM was rebuilt
   if (previewState.active) setupDragZones();
   const sub = document.querySelector('#workbench-screen-preview .wb-intray .wb-tab-sub');
-  if (sub) sub.textContent = `待装配 · ${String(state.player.inbox.length).padStart(2, '0')}`;
+  if (sub) sub.textContent = t('wb.intray_sub', { count: String(state.player.inbox.length).padStart(2, '0') });
   attachWorkbenchTooltips();
   // FILED.SKILL 行随 inbox + bindings 变化；BUY/SELL/UND/拖装填 路径都调本函数后刷 FILED。
   // 进店 enterTerminalShop 调一次本函数，已附带 syncFiledFolders 调用 → 不再需要进店点显式触发。
   syncFiledFolders();
 }
 
-// === Story 60.20: FILED folder real data (skills + relics) ===
+// === FILED cabinet content：字频统计（取代旧的 SKILL+RELIC 冗余清单） ===
+// 旧设计：在编档案展示已购技能 + 遗物 —— 但键盘上每个键已经显示这些信息，重复
+// 新设计：单一 FREQ folder，从 wordDeck 算各字母出现次数 + 占比横条，按降序
 
-/** 单行截断：folder 列宽限制（含 lv 标签时给 fr-name 留 ~22 字符） */
-function truncateName(s: string, max = 22): string {
-  return s.length <= max ? s : s.slice(0, max - 1) + '…';
+const FREQ_BAR_W = 8;
+
+export function renderFreqFolderHtml(): { count: number; rowsHtml: string } {
+  const freq = calculateLetterFrequency(state.player.wordDeck);
+  if (freq.size === 0) {
+    return { count: 0, rowsHtml: `<div class="folder-row folder-empty">${escapeHtml(t('wb.no_words_filed'))}</div>` };
+  }
+  const entries = [...freq.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const maxCount = entries[0][1];
+  const rows: string[] = [];
+  for (const [letter, count] of entries) {
+    const ratio = maxCount > 0 ? count / maxCount : 0;
+    const barLen = Math.max(1, Math.round(ratio * FREQ_BAR_W));
+    const bar = '█'.repeat(barLen).padEnd(FREQ_BAR_W, '·');
+    const letterCell = escapeHtml(letter.toUpperCase());
+    rows.push(`<div class="folder-row"><span class="fr-icon">${letterCell}</span><span class="fr-name">${escapeHtml(bar)}</span><span class="fr-lv">${count}</span></div>`);
+  }
+  return { count: freq.size, rowsHtml: rows.join('') };
 }
 
-export function renderSkillFolderHtml(): { count: number; rowsHtml: string } {
-  const entries = getOwnedSkillEntries();
-  if (entries.length === 0) {
-    return { count: 0, rowsHtml: '<div class="folder-row folder-empty">— NONE —</div>' };
-  }
-  const rows: string[] = [];
-  for (const { sid } of entries) {
-    const sk = state.affixSkills.get(sid);
-    if (!sk) continue;
-    const icon = escapeHtml(sk.icon || '◇');
-    const name = escapeHtml(truncateName(sk.name.toUpperCase()));
-    const lv = `Lv.${sk.level}`;
-    rows.push(`<div class="folder-row"><span class="fr-icon">${icon}</span><span class="fr-name">${name}</span><span class="fr-lv">${lv}</span></div>`);
-  }
-  return { count: rows.length, rowsHtml: rows.join('') };
-}
-
-export function renderRelicFolderHtml(): { count: number; rowsHtml: string } {
-  const ids = Array.from(state.player.relics);
-  if (ids.length === 0) {
-    return { count: 0, rowsHtml: '<div class="folder-row folder-empty">— NONE —</div>' };
-  }
-  const rows: string[] = [];
-  for (const id of ids) {
-    const data = RELICS[id];
-    if (!data) continue;
-    const icon = escapeHtml(data.icon || '🏺');
-    const name = escapeHtml(truncateName(data.name.toUpperCase()));
-    rows.push(`<div class="folder-row"><span class="fr-icon">${icon}</span><span class="fr-name">${name}</span></div>`);
-  }
-  return { count: rows.length, rowsHtml: rows.join('') };
+/** 进店时随机刷一张工作台便签；新增便签只需往 WORKBENCH_NOTES push 一条即可 */
+export function refreshWorkbenchNote(): void {
+  const el = document.querySelector<HTMLElement>('#workbench-screen-preview .note-text');
+  if (!el) return;
+  const note = pickRandomNote();
+  el.textContent = getNoteText(note, getLocale());
+  el.dataset.noteId = note.id; // 便于 console / QA 定位
 }
 
 export function syncFiledFolders(): void {
   const root = document.getElementById('workbench-screen-preview');
   if (!root) return;
-  const skill = renderSkillFolderHtml();
-  const relic = renderRelicFolderHtml();
-  const skillBody = root.querySelector('#filed-skill-folder .folder-body');
-  const skillTab = root.querySelector('#filed-skill-folder .folder-tab');
-  if (skillBody) skillBody.innerHTML = skill.rowsHtml;
-  if (skillTab) skillTab.textContent = `SKILL · ${String(skill.count).padStart(3, '0')}`;
-  const relicBody = root.querySelector('#filed-relic-folder .folder-body');
-  const relicTab = root.querySelector('#filed-relic-folder .folder-tab');
-  if (relicBody) relicBody.innerHTML = relic.rowsHtml;
-  if (relicTab) relicTab.textContent = `RELIC · ${String(relic.count).padStart(3, '0')}`;
-  // FILED 区段的 sub-label "在编档案 · NN" 跟随 skill+relic 总数
+  const freq = renderFreqFolderHtml();
+  const freqBody = root.querySelector('#filed-freq-folder .folder-body');
+  const freqTab = root.querySelector('#filed-freq-folder .folder-tab');
+  if (freqBody) freqBody.innerHTML = freq.rowsHtml;
+  if (freqTab) freqTab.textContent = t('wb.folder_freq_tab', { count: String(freq.count).padStart(2, '0') });
+  // FILED 区段 sub-label：现在统计 wordDeck 录入的字母数（最大 26）
   const sub = root.querySelector('.wb-cabinet .wb-tab-sub');
-  if (sub) sub.textContent = `在编档案 · ${String(skill.count + relic.count).padStart(2, '0')}`;
+  if (sub) sub.textContent = t('wb.filed_sub', { count: String(freq.count).padStart(2, '0') });
 }
 
 function escapeAttr(s: string): string {

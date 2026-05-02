@@ -172,6 +172,22 @@ export interface TriggerContext {
   stackCritActive?: boolean
 }
 
+// ===== 自身不产出词条集（基础值强制为 0） =====
+
+export const SELF_ZERO_TYPES_SET: ReadonlySet<AffixType> = new Set([
+  AffixType.Conduit, AffixType.Amplify, AffixType.Splash, AffixType.Relay,
+  AffixType.WarDrum, AffixType.AuraFury, AffixType.AuraMorale,
+])
+
+/** 技能（含 Mirror 复制词条）是否为自身不产出技能 */
+export function isSelfZeroSkill(
+  skill: AffixSkillInstance,
+  runtimeState: SkillRuntimeState,
+): boolean {
+  const effective = buildEffectiveSkill(skill, runtimeState)
+  return effective.affixes.some(a => SELF_ZERO_TYPES_SET.has(a.type))
+}
+
 // ===== 光环质变检查 =====
 
 const AURA_AFFIX_TYPES: AffixType[] = [AffixType.AuraFury, AffixType.AuraMorale, AffixType.Conduit]
@@ -1899,7 +1915,6 @@ export function triggerAffixSkill(
   const effectiveSkill = buildEffectiveSkill(skill, runtimeState)
 
   // Phase 1: 基础值（Conduit/Amplify/Splash 技能自身不产出，基础值为 0）
-  const SELF_ZERO_TYPES_SET = new Set([AffixType.Conduit, AffixType.Amplify, AffixType.Splash, AffixType.Relay, AffixType.WarDrum, AffixType.AuraFury, AffixType.AuraMorale])
   const AURA_RELAY_TYPES = new Set([AffixType.AuraFury, AffixType.AuraMorale, AffixType.Conduit])
   const hasSelfZero = effectiveSkill.affixes.some(a => SELF_ZERO_TYPES_SET.has(a.type))
   const isAuraOnly = effectiveSkill.affixes.some(a => AURA_RELAY_TYPES.has(a.type)) && !effectiveSkill.affixes.some(a => !AURA_RELAY_TYPES.has(a.type) && SELF_ZERO_TYPES_SET.has(a.type))
