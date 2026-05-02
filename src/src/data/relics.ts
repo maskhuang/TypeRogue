@@ -168,6 +168,8 @@ export interface RelicData {
   basePrice: number
   effects: RelicEffect[]
   flavor?: string
+  /** 文书部档案编号，格式 `{物种NCBI4码}-{站点3字母}-{序号3位}`，如 Ptro-KAS-013。命名个体档案体系，与 affix NCBI 物种码呼应。 */
+  archiveCode?: string
   category?: 'risk-reward'
   /** 所属子系统（通用遗物分类，职业遗物无此字段） */
   subsystem?: RelicSubsystem

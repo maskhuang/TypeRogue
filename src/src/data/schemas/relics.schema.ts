@@ -36,6 +36,7 @@ const relicDataSchema = z.object({
   basePrice: z.number(),
   effects: z.array(relicEffectSchema),
   flavor: z.string().optional(),
+  archiveCode: z.string().optional(),
   category: z.literal('risk-reward').optional(),
   subsystem: z.string().optional(),
   behaviorType: z.string().optional(),

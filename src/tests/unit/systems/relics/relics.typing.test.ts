@@ -241,7 +241,8 @@ describe('打字/输入系统遗物行为 (Story 36.2)', () => {
       expect(relic).toBeDefined()
       expect(relic.behaviorType).toBe('glass_cannon')
       expect(relic.category).toBe('risk-reward')
-      expect(relic.name).toBe('回归基本功')
+      expect(relic.name).toBe('薇姬')
+      expect(relic.archiveCode).toBe('Ptro-HAY-001')
     })
   })
 

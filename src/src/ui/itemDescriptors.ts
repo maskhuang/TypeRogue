@@ -6,6 +6,7 @@
 import type { ShopItem } from '../core/types';
 import type { GameState } from '../core/types';
 import { RELICS } from '../data/relics';
+import { localizeItemName } from '../demo/demo-i18n';
 import { abbreviateSkillName } from './affixAbbrev';
 
 export type ItemKind = 'skill' | 'pack' | 'relic' | 'enchantment';
@@ -166,8 +167,8 @@ function describeRelic(item: ShopItem, idx: number): ItemDescriptor {
   return {
     sku: makeSku('relic', idx),
     kind: 'relic',
-    name: (data?.name ?? relicId).toUpperCase(),
-    nameAbbrev: (data?.name ?? relicId).toUpperCase().slice(0, 12),
+    name: localizeItemName(relicId, data?.name ?? relicId).toUpperCase(),
+    nameAbbrev: localizeItemName(relicId, data?.name ?? relicId).toUpperCase().slice(0, 12),
     iconEmoji: data?.icon || '🏺',
     rarity,
     rarityLabel: RARITY_LABELS[rarity],

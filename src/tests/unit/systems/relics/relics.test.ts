@@ -113,7 +113,8 @@ describe('Relics Data', () => {
     it('should return relic data for valid id', () => {
       const relic = getRelicData('apprentice_notes')
       expect(relic).toBeDefined()
-      expect(relic?.name).toBe('学徒笔记')
+      expect(relic?.name).toBe('卢利斯')
+      expect(relic?.archiveCode).toBe('Ptro-CWU-002')
     })
 
     it('should return undefined for unknown id', () => {
