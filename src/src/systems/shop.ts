@@ -41,7 +41,7 @@ import { renderMetamorphPanel } from './classes/MetamorphStation';
 import { eventBus } from '../core/events/EventBus';
 import type { DragPayload } from './dragManager';
 import { IS_DEMO } from '../demo/demo-config';
-import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
+import { t, localizeItemName, localizeItemDesc, localizeItemFlavor } from '../demo/demo-i18n';
 // Story 60.5: feature flag dispatcher 用 — 按 UserSettings.shopUI 决定 classic / terminal
 import { getSettings } from '../core/UserSettings';
 import { enterTerminalShop } from '../ui/shopPreview';
@@ -1868,7 +1868,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
       <div class="reward-info">
         <div class="reward-name">${localizeItemName(item.relicId, relic.name)}</div>
         <div class="reward-desc">${localizeItemDesc(item.relicId, relic.description)}</div>
-        ${relic.flavor && getLocale() === 'zh' ? `<div class="reward-flavor">"${relic.flavor}"</div>` : ''}
+        ${(() => { const f = localizeItemFlavor(item.relicId, relic.flavor); return f ? `<div class="reward-flavor">"${f}"</div>` : ''; })()}
       </div>
       ${costHtml}
       <div class="reward-type relic-type relic-rarity-${rarityClass}">${t(`shop.rarity.${rarityClass}`)}</div>
@@ -4414,7 +4414,7 @@ export function showRelicTooltip(e: MouseEvent, relic: import('../data/relics').
     `<div style="font-size:12px;font-weight:bold;color:#fff;margin-bottom:4px;">${relic.icon} ${localizeItemName(relic.id, relic.name)}</div>` +
     `<div style="font-size:10px;padding:1px 4px;border-radius:0;display:inline-block;margin-bottom:4px;background:rgba(255,255,255,0.08);color:${rarityColor};">${getRarityLabel(relic.rarity)}</div>` +
     `<div style="color:#aaa;font-size:11px;white-space:normal;">${descText}</div>` +
-    (relic.flavor && getLocale() === 'zh' ? `<div style="color:#666;font-size:10px;font-style:italic;margin-top:4px;">${relic.flavor}</div>` : '');
+    ((): string => { const f = localizeItemFlavor(relic.id, relic.flavor); return f ? `<div style="color:#666;font-size:10px;font-style:italic;margin-top:4px;">${f}</div>` : ''; })();
   tip.style.left = e.clientX + 12 + 'px';
   tip.style.top = e.clientY + 12 + 'px';
   document.body.appendChild(tip);

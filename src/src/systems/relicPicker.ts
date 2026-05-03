@@ -10,7 +10,7 @@ import type { RelicRarity } from '../data/relics';
 import { renderRelicDisplay, showFeedback } from './battle';
 import { playSound, playDeskSound } from '../effects/sound';
 import { random } from '../core/seededRandom';
-import { t, getLocale, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
+import { t, getLocale, localizeItemName, localizeItemDesc, localizeItemFlavor } from '../demo/demo-i18n';
 import { CLASS_DEFINITIONS } from '../data/classes';
 
 // === 加权遗物类型 ===
@@ -219,7 +219,7 @@ function showLegacyRelicPicker(
       <div class="relic-picker-name">${localizeItemName(relicId, relic.name)}</div>
       <div class="relic-picker-desc">${localizeItemDesc(relicId, relic.description)}</div>
       <div class="relic-picker-rarity">${t(`shop.rarity.${rarityClass}`)}</div>
-      ${relic.flavor && getLocale() === 'zh' ? `<div class="relic-picker-flavor">"${relic.flavor}"</div>` : ''}
+      ${(() => { const f = localizeItemFlavor(relicId, relic.flavor); return f ? `<div class="relic-picker-flavor">"${f}"</div>` : ''; })()}
     `;
 
     card.onclick = () => {
