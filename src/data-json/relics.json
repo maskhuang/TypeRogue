@@ -32,7 +32,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "1929 年以来首个被命名的灵长类大型新种。Camp Mayang 监测的成年个案之一。"
+      "flavor": "1929 年以来首个被命名的灵长类大型新种。Batang Toru 反复记录的雌性，与幼子 Cakra 同框出现。"
     },
     "gene_stabilizer": {
       "id": "gene_stabilizer",
@@ -177,7 +177,7 @@
       "rarity": "epic",
       "basePrice": 0,
       "effects": [],
-      "flavor": "与 Sherman 协同。两猿之间 lexigram 请求/分享行为成为合作传播研究典例。"
+      "flavor": "与 Sherman 形成 LRC 早期 lexigram「双人系统」。互相请求、分类、读取符号——被训练为彼此的沟通对象。"
     },
     "word_collection": {
       "id": "word_collection",
@@ -232,7 +232,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Bossou 长期跟踪母性。42 岁仍能独立完成核桃敲击工序。"
+      "flavor": "Bossou 年长母亲。42 岁仍被拍到以石器敲油棕坚果，身旁两个孩子在侧——一堂活着的「工具传统」课。"
     },
     "word_dealer": {
       "id": "word_dealer",
@@ -333,7 +333,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "不育雌性。长期承担 Kasekela 群幼崽的辅助看护角色。",
+      "flavor": "Kasekela 罕见的「不育而强势」雌性。无育幼负担，长期作为雌性等级与力量关系研究的特殊个案被记述。",
       "subsystem": "combo"
     },
     "multiplier_prism": {
@@ -485,7 +485,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Lola ya Bonobo Group 1 matriarch。其女 Elikya 为保护区出生首位个体。",
+      "flavor": "Lola ya Bonobo Group 1 matriarch。女儿 Elikya 与外孙 Molende 同生于保护区，将其个体史连入 Lola 救护繁育谱系。",
       "subsystem": "topology"
     },
     "corner_power": {
@@ -521,7 +521,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Flo 之子。Goodall 认为其为最具策略性的雄性。多次称 alpha。",
+      "flavor": "Flo 之子。从怯弱少年成长为 Gombe 最会结盟的 alpha——靠盟友、亲族与策略反复夺回权威。",
       "subsystem": "topology",
       "behaviorType": "line_clear"
     },
@@ -534,7 +534,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Gremlin 双胞胎之一（与 Golden）。Gombe 罕见双胞胎成活案例。",
+      "flavor": "Gremlin 双胞胎女儿之一，与 Golden 同存活——Gombe 极罕见的成活案例，野外黑猩猩育幼风险中的例外。",
       "subsystem": "topology",
       "behaviorType": "hand_alternation"
     },
@@ -559,7 +559,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "Frodo 之子。继承父辈的体型与攻击性。",
+      "flavor": "Frodo 与 Patti 之子。继承父辈体型与攻击性，年少时即向研究者投掷石块。",
       "subsystem": "topology",
       "behaviorType": "key_storm"
     },
@@ -572,7 +572,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Bossou 长期记录的核桃敲打母性。其工具使用习惯传给子 Foaf。",
+      "flavor": "Bossou 最长寿雌性之一。晚年与儿子 Foaf、Fanwa 同留群中——石器敲坚果传统的老一代母系节点。",
       "subsystem": "resource"
     },
     "time_trickle": {
@@ -596,7 +596,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Camp Leakey ex-captive 雌性。长期被记录使用工具撬树皮取昆虫。",
+      "flavor": "Camp Leakey ex-captive 雌性之一。重返森林个体的代表性案例，独立行为侧写较略。",
       "subsystem": "resource"
     },
     "resource_diversity": {
@@ -620,7 +620,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Yerkes 与 LRC 倭黑猩猩家系成员。与 Kanzi、Panbanisha 同代。",
+      "flavor": "Matata 之女，1983 年生于 LRC/Yerkes 语言研究谱系。夹于 Kanzi 与 Panbanisha 之间的旁支见证者。",
       "subsystem": "resource",
       "behaviorType": "resource_tide"
     },
@@ -682,7 +682,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "S-家系 matriarch。目前 Kasekela 群中存活最久的雌性。",
+      "flavor": "Kasekela S 家系女族长。不张扬，以长寿、稳定与多代育幼留在 Gombe 家族档案中。",
       "subsystem": "shop"
     },
     "smuggle_pass": {
@@ -720,7 +720,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Bossou 幼年雌性。Jire 之女。",
+      "flavor": "Bossou 幼年雌性，Jire 之女。出现在 Jire 晚年育幼的家族画面里，记为小群体延续性的年轻注脚。",
       "subsystem": "stage"
     },
     "intermission": {
@@ -756,7 +756,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Bossou 长期跟踪的老年雄性。",
+      "flavor": "Bossou 长期记录的老年雄性。自高阶雄性条目至晚年坚果敲击，承载该群技术传统的一代。",
       "subsystem": "stage"
     },
     "elite_hunter": {
@@ -768,7 +768,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Taï 早期合作狩猎研究的代表 alpha。Boesch 团队记录其多次主导集体狩猎红疣猴。",
+      "flavor": "Taï North Group 早期 alpha。Boesch 体系记录的「impact hunter」典型，主导红疣猴合作狩猎的高位个案。",
       "subsystem": "stage"
     },
     "phoenix": {
@@ -805,7 +805,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Camp Leakey ex-captive 雌性。Siswi 之母。",
+      "flavor": "Camp Leakey 早期重返森林的 ex-captive 雌性。产下 Siswi——救助个体可野外繁衍的标志性母亲。",
       "subsystem": "boss_modifier"
     },
     "bounty_hunter": {
@@ -841,7 +841,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Fossey 时期出生的 1970s silverback。",
+      "flavor": "Karisoke 早期 Group 5 雄性。Fossey 时代谱系中被反复提及的 silverback，档案细节稀疏。",
       "subsystem": "boss_modifier",
       "behaviorType": "modifier_barrier"
     },
@@ -880,7 +880,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Fossey 时期出生的 1970s 雄性 silverback 之一。",
+      "flavor": "Karisoke Group 5 雄性。名字后留于「Shinda's group」——长期监测谱系中的一条雄性支线。",
       "subsystem": "scoring"
     },
     "lenient_judge": {
@@ -892,7 +892,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Karisoke 长期被监测的雌性。",
+      "flavor": "Karisoke 长期监测的雌性，出生于 Fossey 研究的 Group 5。多次群体分裂迁移后仍持续被追踪。",
       "subsystem": "scoring"
     },
     "s_rank_trophy": {
@@ -954,7 +954,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Fifi 之子。一度跻身 Kasekela beta 位。",
+      "flavor": "Fifi 之子。曾升至 Kasekela beta 位，因重病跌落，缓慢重返等级棋局。",
       "subsystem": "crit"
     },
     "crit_bonus": {
@@ -966,7 +966,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Fifi 之子。alpha 2008-2016。",
+      "flavor": "Fifi 之子。2008 年登上 Kasekela alpha 位，靠威吓与突袭统治，2016 年被联盟推翻——F 家系最强硬也最孤立的一章。",
       "subsystem": "crit"
     },
     "crit_charge": {
@@ -1042,7 +1042,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Lomas Barbudal 跟踪雌性。Susan Perry Manipulative Monkeys 主章节记述其政治生涯。",
+      "flavor": "Lomas Barbudal 白面卷尾猴长期跟踪雌性。Susan Perry 笔下「政治剧」主角之一，独立完整生平资料尚不足。",
       "subsystem": "stacking",
       "behaviorType": "overload_circuit"
     },
@@ -1055,7 +1055,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Pablo's group 名祖。曾短暂主导其一群，后被 Cantsbee 接替。",
+      "flavor": "1974 年生于 Karisoke Group 5。1993 年原 Group 5 分裂出「Pablo's group」——曾短暂主导，后由 Cantsbee 接过权力。",
       "subsystem": "stacking",
       "behaviorType": "surge"
     },
@@ -1081,7 +1081,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Lomas Barbudal 跟踪雌性。Susan Perry Abby and Tattle 章节双主角之一。",
+      "flavor": "Lomas Barbudal 长期跟踪雌性。Susan Perry 笔下「雌性政治与社会操纵」叙事另一半——与 Abby 并列，独立细节尚少。",
       "subsystem": "combo",
       "behaviorType": "drum_pass",
       "requiresSubsystem": "stacking"
@@ -1095,7 +1095,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Matata 亲女。与 Kanzi 同期。同时使用 lexigram 与理解口语英语。",
+      "flavor": "Matata 亲女，Kanzi 同母半同胞。出生起即浸润 lexigram 与英语环境——证明 Kanzi 并非孤例的关键 bonobo。",
       "subsystem": "word",
       "behaviorType": "word_resonance",
       "requiresSubsystem": "stacking"
@@ -1109,7 +1109,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Kasekela alpha 1969-1971。",
+      "flavor": "Kasekela alpha 1969–1971。处于 Mike 与 Figan 之间，群体裂变前夜的过渡性强权。",
       "subsystem": "crit",
       "behaviorType": "crit_overflow",
       "requiresSubsystem": "stacking"
@@ -1123,7 +1123,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "IPS Norman 学手语者。与 Nim、Washoe 并列熟练 ASL 签字者。",
+      "flavor": "IPS Norman ASL 黑猩猩之一。不及 Washoe 或 Nim 知名，留存于 1970s 影像、绘画与符号互动档案。",
       "subsystem": "enchantment",
       "behaviorType": "inscription_flow"
     },
@@ -1136,7 +1136,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Lola ya Bonobo alpha 雌性。群体管理者。Vanessa Woods Bonobo Handshake 文献化。",
+      "flavor": "Lola ya Bonobo alpha 雌性。Woods 记其遭雄性攻击后雌性联盟即时介入——bonobo 雌权结构的鲜明案例。",
       "subsystem": "topology",
       "behaviorType": "neighbor_watch"
     },
@@ -1149,7 +1149,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "IPS Norman 学手语者。70 年代实验记录。",
+      "flavor": "IPS Norman 1970s 黑猩猩。与 Ally、Booee 同框于签字、影像与绘画档案，资料如残存胶片片段。",
       "subsystem": "stacking",
       "behaviorType": "stack_crit",
       "requiresSubsystem": "crit"
