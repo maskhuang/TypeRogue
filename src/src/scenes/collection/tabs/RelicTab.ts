@@ -8,6 +8,7 @@ import { Container, Text } from 'pixi.js'
 import { CollectionItem, CollectionItemData } from '../components/CollectionItem'
 import { RELICS } from '../../../data/relics'
 import type { MetaState } from '../../../core/state/MetaState'
+import { localizeItemName, localizeItemDesc } from '../../../demo/demo-i18n'
 
 /**
  * RelicTab - 遗物图鉴标签页
@@ -35,8 +36,8 @@ export class RelicTab extends Container {
 
     return Object.entries(RELICS).map(([relicId, relic]) => ({
       id: relicId,
-      name: relic.name,
-      description: relic.description,
+      name: localizeItemName(relicId, relic.name),
+      description: localizeItemDesc(relicId, relic.description),
       icon: relic.icon,
       unlocked: unlockedRelics.has(relicId)
     }))

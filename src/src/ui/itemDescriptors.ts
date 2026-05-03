@@ -6,7 +6,7 @@
 import type { ShopItem } from '../core/types';
 import type { GameState } from '../core/types';
 import { RELICS } from '../data/relics';
-import { localizeItemName } from '../demo/demo-i18n';
+import { localizeItemName, localizeItemDesc, localizeItemFlavor } from '../demo/demo-i18n';
 import { abbreviateSkillName } from './affixAbbrev';
 
 export type ItemKind = 'skill' | 'pack' | 'relic' | 'enchantment';
@@ -175,8 +175,8 @@ function describeRelic(item: ShopItem, idx: number): ItemDescriptor {
     shapeTag: tag,
     shapeColor: color,
     triggerHint: 'PASSIVE · NUMBER-ROW',
-    desc: data?.description ?? 'PERMANENT EFFECT · OCCUPIES NUMBER-ROW SLOT',
-    effect: data?.flavor ? `"${data.flavor}"` : '—',
+    desc: data?.description ? localizeItemDesc(relicId, data.description) : 'PERMANENT EFFECT · OCCUPIES NUMBER-ROW SLOT',
+    effect: (() => { const f = localizeItemFlavor(relicId, data?.flavor); return f ? `"${f}"` : '—'; })(),
     affixLine: '—',
     price: item.cost,
     stockNow: 1,

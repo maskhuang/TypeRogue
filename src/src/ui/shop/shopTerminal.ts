@@ -28,7 +28,7 @@ import { generateWordPacks } from '../../data/wordPacks';
 import { calculateLetterFrequency } from '../../systems/letters/LetterFrequencySystem';
 import { getBattleNumber, getPositionInCycle, getStageType, getNextBattleNode } from '../../systems/stage/stageFlow';
 import { STAGE_ICONS } from '../../systems/actTransition';
-import { t } from '../../demo/demo-i18n';
+import { t, localizeItemName, localizeItemDesc, localizeItemFlavor } from '../../demo/demo-i18n';
 import type { ShopItem, WordPack } from '../../core/types';
 import type { StageType } from '../../systems/stage/StageConfig';
 import { describeAllShopItems, type ItemDescriptor } from '../itemDescriptors';
@@ -895,7 +895,9 @@ function findOwnedRelicByQuery(query: string): string | null {
   for (const id of state.player.relics) {
     if (id.toUpperCase().includes(q)) return id;
     const data = RELICS[id];
-    if (data && (data.name || '').toUpperCase().includes(q)) return id;
+    if (!data) continue;
+    if ((data.name || '').toUpperCase().includes(q)) return id;
+    if (localizeItemName(id, data.name).toUpperCase().includes(q)) return id;
   }
   return null;
 }
@@ -968,15 +970,17 @@ function cmdInfoOwnedRelic(relicId: string): void {
   // 数字键位定位
   const idx = Array.from(state.player.relics).indexOf(relicId);
   const numKey = idx < 0 ? '?' : (idx === 9 ? '0' : String(idx + 1));
-  const headPrefix = t('shop.terminal.info.relic.owned_headline', { icon: data.icon, name: data.name, key: numKey });
-  const headLine = headPrefix + '═'.repeat(Math.max(3, W - data.name.length - 28));
+  const localName = localizeItemName(relicId, data.name);
+  const headPrefix = t('shop.terminal.info.relic.owned_headline', { icon: data.icon, name: localName, key: numKey });
+  const headLine = headPrefix + '═'.repeat(Math.max(3, W - localName.length - 28));
   appendLine(headLine, 'echo');
   appendLine(t('shop.terminal.info.relic.rarity_label', { rarity: data.rarity.toUpperCase(), rid: relicId }), 'dim');
   appendLine('');
-  for (const w of wrapAt(data.description, W - 4)) appendLine('  ' + w);
-  if (data.flavor) {
+  for (const w of wrapAt(localizeItemDesc(relicId, data.description), W - 4)) appendLine('  ' + w);
+  const localFlavor = localizeItemFlavor(relicId, data.flavor);
+  if (localFlavor) {
     appendLine('');
-    for (const w of wrapAt(data.flavor, W - 4)) appendLine('  ' + w, 'dim');
+    for (const w of wrapAt(localFlavor, W - 4)) appendLine('  ' + w, 'dim');
   }
   appendLine('═'.repeat(W));
   appendBlank();
@@ -1019,7 +1023,7 @@ function cmdInfoListOwned(): void {
       const data = RELICS[id];
       if (!data) continue;
       const numKey = i === 9 ? '0' : String(i + 1);
-      appendLine(t('shop.terminal.cmd.info.relic_row', { key: numKey, icon: data.icon, name: data.name }));
+      appendLine(t('shop.terminal.cmd.info.relic_row', { key: numKey, icon: data.icon, name: localizeItemName(id, data.name) }));
     }
   }
   appendLine('═'.repeat(W));
