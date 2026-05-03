@@ -42,6 +42,40 @@ const AFFIX_ABBR: Record<string, string> = {
   phase_shift: 'PSH', endo_exo: 'EEX', fusion: 'FSN', turbulence: 'TRB',
 };
 
+/**
+ * EN locale 紧凑显示用 NCBI 4 字母物种代码。
+ * 仅对应灵长类物种 affix；非物种类（pulse/cluster/etc.）落到 AFFIX_ABBR。
+ */
+const AFFIX_NCBI_CODE_EN: Record<string, string> = {
+  // Saimiri 松鼠猴
+  convert: 'Sbol', rainbow: 'Ssci', multiply: 'Soer', charge: 'Sust',
+  // Macaca 猕猴
+  decay: 'Mfas', crit: 'Mmul', recurse: 'Mfus', taboo: 'Marc', fallacy: 'Mnem',
+  // Cercopithecus 长尾猴
+  cascade: 'Cmit', outcast: 'Casc', gravity: 'Cdia', ligature: 'Cneg',
+  // Hsap / Gorilla / Pan / Pongo
+  void: 'Hsap', swarm: 'Ggor', mirror: 'Gber',
+  flow: 'Ptro', confluence: 'Ppan', union: 'Pabe',
+  aura_fury: 'Ppyg', aura_morale: 'Ptap',
+  // Papio 狒狒 + Theropithecus
+  resonance: 'Pham', echo: 'Pkin', fury: 'Purs', tide: 'Ppap', splash: 'Pcyn', amplify: 'Panu',
+  war_drum: 'Tgel',
+  // Hylobates 长臂猿
+  conduit: 'Hagi', relay: 'Hlar', twin: 'Hmol', innate: 'Hpil', exhaust: 'Halb',
+  // Hoolock + Symphalangus
+  reflect: 'Hmue', monkey_patch: 'Hleu', excavate: 'Hhoo', treasure: 'Htia', refine: 'Ssyn',
+  // Nomascus
+  evolve: 'Ncon', harvest: 'Ngab', chain: 'Nleu', volatile: 'Nhai',
+  mutacrit: 'Nann', ascend: 'Nnas', reecho: 'Nsik',
+  // Callithrix 狨 + Chlorocebus 绿猴
+  mercenary: 'Cjac', myopia: 'Cgeo', silkworm: 'Cpen', repulsion: 'Cpyg', fiber: 'Caet',
+  // 叶猴 / 疣猴 / 金丝猴
+  proofread: 'Sent', spelling: 'Sjoh',
+  first_edition: 'Rrox', reprint: 'Rbie',
+  matrix: 'Cgue', typeset: 'Pnem',
+  handoff: 'Tgee', rewind: 'Tobs', endow: 'Tcri',
+};
+
 /** 资源 type → 3 字母缩写 */
 const RESOURCE_ABBR: Record<ResourceType, string> = {
   base: 'BSE',
@@ -60,16 +94,20 @@ function fallbackAbbr(type: string): string {
 }
 
 /**
- * v3.1 词条注入后：两个 locale 都优先 i18n
- *   zh → t('affix.X') = common_zh 灵长名（黑帽松鼠猴 / 普通猕猴…）
- *   en → t('affix.X') = NCBI 4 字母 code（Sbol / Mmul…）
- * i18n key 缺失时 fallback 到旧 3 字母 AFFIX_ABBR（防御未注入新 affix）
+ * 紧凑场景的 affix 显示名：
+ *   zh → t('affix.X') = 中文常用名（黑帽松鼠猴...）
+ *   en → NCBI 4 字母物种代码（Sbol/Mmul...）；非物种类落到 3 字母 AFFIX_ABBR
+ * 详情场景应直接 t('affix.X') 取全名（en 全名 = "Black-capped Squirrel Monkey"）。
  */
 export function abbreviateAffix(type: string): string {
-  const i18nKey = 'affix.' + type;
-  const fullName = t(i18nKey);
-  if (fullName !== i18nKey) return fullName;
-  return AFFIX_ABBR[type] ?? fallbackAbbr(type);
+  if (getLocale() === 'zh') {
+    const i18nKey = 'affix.' + type;
+    const fullName = t(i18nKey);
+    if (fullName !== i18nKey) return fullName;
+    return AFFIX_ABBR[type] ?? fallbackAbbr(type);
+  }
+  // en locale: NCBI 4 字母 → 3 字母 ABBR → fallback
+  return AFFIX_NCBI_CODE_EN[type] ?? AFFIX_ABBR[type] ?? fallbackAbbr(type);
 }
 
 export function abbreviateResource(type: ResourceType | string | undefined): string {
