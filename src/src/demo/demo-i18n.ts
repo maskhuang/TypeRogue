@@ -3083,11 +3083,11 @@ const ITEM_DESCS_EN: Record<string, string> = {
   decelerate_reward: 'Current word slower than last: +0.5s time',
   accelerate_reward: 'Current word faster than last: +2 banana',
   little_helper: 'Repeat words: press Tab after first letter to auto-complete',
-  rhythm_adapt: 'Beat bar above word; hit a beat ball on keypress for +30% skill output',
+  rhythm_adapt: 'Beat bar below word; hit a beat ball on keypress for +30% skill output',
   glass_cannon_v2: 'Score ×10. Sells all skills on acquire; cannot equip skills.',
   // Combo subsystem relics
   echo_thimble: '+8% crit rate; crits trigger skill again (halves each time)',
-  combo_buffer: 'On combo break, keep 50% combo (floor)',
+  combo_buffer: 'On combo break, keep 50% combo',
   multiplier_prism: 'Mult ≥2.5: skill output +20%',
   combo_detonator: 'At combo 15: randomly trigger 3 equipped skills. Resets on combo break.',
   cancel: 'Type first letter within 0.4s of word appearing = Cancel. Each flawless cancelled word: chain+1 (max 5), skill output +10%/stack. Error during cancel: chain resets + lose 0.5s.',
@@ -3147,12 +3147,12 @@ const ITEM_DESCS_EN: Record<string, string> = {
   desperate_crit: 'Remaining time ≤5s: crit rate +20%.',
   phoenix: 'On stage fail: revive with 10s. Consumes this relic. Elite/Boss: also refreshes modifier.',
   // Scoring subsystem relics
-  base_shield: 'Each word scores at least 15 (applied after Boss modifiers)',
+  base_shield: 'Each word scores at least 15',
   lenient_judge: 'Target score reduced by 10%',
   s_rank_trophy: 'Battle rating S: +25, SS: +50, SSS: +100',
   underdog_bonus: 'Battle rating B: +40, A: +20.',
   snowball: 'Each word scores +5% more (word 1: +0%, word 2: +5%, word 3: +10%...)',
-  score_black_hole: 'Scores accumulate in a hidden pool. Press Enter to settle — pass to win with banana reward (closer to target = richer reward), fail = game over.',
+  score_black_hole: 'Scores do not settle automatically. Press Enter to settle — pass to win with banana reward (closer to target = richer reward), fail = game over.',
   // Crit subsystem relics
   lucky_strike: 'All skills gain +8% base crit rate.',
   crit_bonus: '+3 banana per crit.',
