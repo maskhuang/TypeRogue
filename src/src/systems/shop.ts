@@ -42,6 +42,7 @@ import { eventBus } from '../core/events/EventBus';
 import type { DragPayload } from './dragManager';
 import { IS_DEMO } from '../demo/demo-config';
 import { t, localizeItemName, localizeItemDesc, localizeItemFlavor } from '../demo/demo-i18n';
+import { formatAffixRef } from '../ui/affixAbbrev';
 // Story 60.5: feature flag dispatcher 用 — 按 UserSettings.shopUI 决定 classic / terminal
 import { getSettings } from '../core/UserSettings';
 import { enterTerminalShop } from '../ui/shopPreview';
@@ -572,8 +573,8 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       }
       // 回响：替换词条类型占位符
       if (a.type === 'echo') {
-        desc = desc.replace('{affixA}', t('affix.' + (a.echoAffixA ?? '?')));
-        desc = desc.replace('{affixB}', t('affix.' + (a.echoAffixB ?? '?')));
+        desc = desc.replace('{affixA}', formatAffixRef(a.echoAffixA ?? '?'));
+        desc = desc.replace('{affixB}', formatAffixRef(a.echoAffixB ?? '?'));
       }
       // 落差：替换 flowK 占位符
       if (a.flowK != null) desc = desc.replace('{flowK}', `${Math.round(a.flowK * 100)}`);
@@ -621,9 +622,9 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
             }
             if (c.source) cDesc = cDesc.replace('{source}', `${RESOURCE_ICONS[c.source] || ''}${t('resource.' + c.source) || c.source}`);
             if (c.type === 'resonance' && c.resource) cDesc = cDesc.replace('{resource}', `${RESOURCE_ICONS[c.resource] || ''}${t('resource.' + c.resource) || c.resource}`);
-            if (c.type === 'echo') { cDesc = cDesc.replace('{affixA}', t('affix.' + (c.echoAffixA ?? '?'))); cDesc = cDesc.replace('{affixB}', t('affix.' + (c.echoAffixB ?? '?'))); }
+            if (c.type === 'echo') { cDesc = cDesc.replace('{affixA}', formatAffixRef(c.echoAffixA ?? '?')); cDesc = cDesc.replace('{affixB}', formatAffixRef(c.echoAffixB ?? '?')); }
             return {
-              typeName: `${t('affix.' + c.type)} (${t('affix.mirror')})`,
+              typeName: `${formatAffixRef(c.type)} (${formatAffixRef('mirror')})`,
               typeKey: c.type,
               paramSummary: buildAffixParamSummary(c, skill.level, rt),
               description: cDesc,
@@ -792,7 +793,7 @@ function buildAffixParamSummary(a: import('../data/affixes').AffixInstance, skil
     case 'reflect': return `+${Math.round((a.reflectK ?? 0) * 100)}%`
     // ── 叠层类（变化值） ──
     case 'resonance': return `${t('resource.' + (a.resource ?? 'base'))} ${a.interval ?? 4}`
-    case 'echo': return `${t('affix.' + (a.echoAffixA ?? '?'))}+${t('affix.' + (a.echoAffixB ?? '?'))} ${a.interval ?? 4}`
+    case 'echo': return `${formatAffixRef(a.echoAffixA ?? '?')}+${formatAffixRef(a.echoAffixB ?? '?')} ${a.interval ?? 4}`
     case 'fury': return `${a.interval ?? 4}`
     case 'tide': return `${a.interval ?? 6}s`
     case 'war_drum': return `+${Math.round((a.critPerStack ?? 0) * 100)}%/${t('param.wardrum_per')}`

@@ -110,6 +110,24 @@ export function abbreviateAffix(type: string): string {
   return AFFIX_NCBI_CODE_EN[type] ?? AFFIX_ABBR[type] ?? fallbackAbbr(type);
 }
 
+/**
+ * 描述/参数中引用其他 affix 类型时的格式化器。
+ *   zh → t('affix.X') 全名（"普通狨"）
+ *   en → "FullName (NCBI)" 双向锚点（"Common Marmoset (Cjac)"），
+ *        让玩家既能读懂物种又能在 LIST 紧凑代码里对上
+ * 非物种类（Pulse/Cluster/etc.）EN 下也直接返回全名（无 NCBI 括注）。
+ */
+export function formatAffixRef(type: string): string {
+  const i18nKey = 'affix.' + type;
+  const fullName = t(i18nKey);
+  if (fullName === i18nKey) return type;
+  if (getLocale() === 'en') {
+    const code = AFFIX_NCBI_CODE_EN[type];
+    if (code) return `${fullName} (${code})`;
+  }
+  return fullName;
+}
+
 export function abbreviateResource(type: ResourceType | string | undefined): string {
   if (!type) return '???';
   if (getLocale() === 'zh') {
