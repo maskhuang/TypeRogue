@@ -15,7 +15,9 @@ import {
   generateShopRelicItem,
   buildAffixTooltipFields,
   applyMaxSkillLevelOnPurchase,
+  calculateAffixSkillPrice,
 } from '../../systems/shop';
+import { getRecycleSellMultiplier } from '../../systems/relics/ShopRelicBehaviors';
 import { shouldAnimateShop } from '../../core/UserSettings';
 // Story 60.7: 副作用 hook（事件总线 + quest 重算 + 遗物购入瞬时效果）
 import { eventBus } from '../../core/events/EventBus';
@@ -1077,8 +1079,10 @@ export function executeBuySkill(d: ItemDescriptor): void {
   // Story 60.7 review M1: deep-clone affixSkill 隔离 catalog 引用，
   // 防 BUY → UND → BUY 双重 affix 缩放（applyMaxSkillLevelOnPurchase 在 affixes 上 in-place mutate）
   const skillCopy = structuredClone(skill);
+  // 实付价存到 affixSkill — 跨 session 后还能用来算转卖价（与 classic shop 同源）
+  skillCopy.purchasePrice = d.price;
   state.affixSkills.set(skillId, skillCopy);
-  state.player.skills.set(skillId, { level: skillCopy.level });
+  state.player.skills.set(skillId, { level: skillCopy.level, purchasePrice: d.price });
   if (!isUpgrade) state.player.inbox.push(skillId);
   d.purchased = true;
   previewState.purchasedSkus.add(d.sku);
@@ -1282,43 +1286,65 @@ export function cmdBuy(arg?: string): void {
   executeBuy(d);
 }
 
+/**
+ * SEL — 仅 IN<n> 槽位语法：卖收件托盘第 n 张卡（含上次留下、奖励赠送的）。
+ * 按 SKU 卖本次新购的语义与 UND 重复（且 UND 全额退款更优），故只保留槽位入口。
+ *
+ * 退款基价优先级：本次 undoStack price > affixSkill.purchasePrice > 反算标牌价（rarity/level）。
+ * 退款比例 = getRecycleSellMultiplier()（默认 0.5，回收专家 0.75）。
+ */
 export function cmdSell(arg?: string): void {
   if (!arg) { appendLine(t('shop.terminal.cmd.usage.sell'), 'dim'); return; }
   const target = arg.toUpperCase();
-  // SEL operates on inbox items by SKU
-  const undoIdx = previewState.undoStack.findIndex(u => u.sku === target);
-  if (undoIdx < 0) {
-    appendLine(t('shop.terminal.err.not_in_intray', { target }), 'redacted');
-    appendLine(t('shop.terminal.cmd.sell.intray_only'), 'dim');
+
+  const slotMatch = target.match(/^IN(\d+)$/);
+  if (!slotMatch) {
+    // 非槽位语法 → 引导到正确语法（顺带提示按 SKU 撤销请用 UND）
+    appendLine(t('shop.terminal.cmd.usage.sell'), 'redacted');
     appendBlank();
     return;
   }
-  const entry = previewState.undoStack[undoIdx];
-  if (entry.kind !== 'skill') {
-    appendLine(t('shop.terminal.err.sell_not_skill'), 'redacted');
+  const inboxIdx = parseInt(slotMatch[1], 10) - 1;
+  if (inboxIdx < 0 || inboxIdx >= state.player.inbox.length) {
+    appendLine(t('shop.terminal.err.intray_slot_empty', { target, n: state.player.inbox.length }), 'redacted');
     appendBlank();
     return;
   }
-  const refund = Math.floor(entry.price * 0.5);
-  if (entry.isUpgrade && entry.oldLevel !== undefined && entry.oldAffix) {
-    // 升级 SEL：还原旧 level + 旧 affix（不删 skill — 已绑定的原技能保留），半价退款
-    state.player.skills.set(entry.skillId, { level: entry.oldLevel });
-    state.affixSkills.set(entry.skillId, entry.oldAffix);
+  sellFromInboxSlot(target, inboxIdx);
+}
+
+/** 从 IN-tray 指定槽位卖卡 — 退款源逐级回退（session 实付 > affixSkill.purchasePrice > 反算标牌价） */
+function sellFromInboxSlot(target: string, inboxIdx: number): void {
+  const skillId = state.player.inbox[inboxIdx];
+  const sk = state.affixSkills.get(skillId);
+  // 本次 session 购买记录优先（退款基于实付价，含本关折扣）；非升级条目才匹配
+  const sessionUndoIdx = previewState.undoStack.findIndex(
+    u => u.kind === 'skill' && !u.isUpgrade && u.skillId === skillId,
+  );
+  let basis: number;
+  if (sessionUndoIdx >= 0) {
+    basis = (previewState.undoStack[sessionUndoIdx] as { price: number }).price;
+  } else if (sk?.purchasePrice) {
+    basis = sk.purchasePrice;
+  } else if (sk) {
+    basis = calculateAffixSkillPrice(sk.rarity, sk.level);
   } else {
-    const inboxIdx = state.player.inbox.lastIndexOf(entry.skillId);
-    if (inboxIdx >= 0) state.player.inbox.splice(inboxIdx, 1);
-    state.player.skills.delete(entry.skillId);
-    state.affixSkills.delete(entry.skillId);
+    basis = 15;
   }
-  previewState.undoStack.splice(undoIdx, 1);
+  const sellMult = getRecycleSellMultiplier();
+  const refund = Math.floor(basis * sellMult);
+
+  state.player.inbox.splice(inboxIdx, 1);
+  state.player.skills.delete(skillId);
+  state.affixSkills.delete(skillId);
+  state.affixSkillStates.delete(skillId);
+  if (sessionUndoIdx >= 0) previewState.undoStack.splice(sessionUndoIdx, 1);
   state.gold += refund;
-  // Story 60.7: 卖出后 quest 重算（装备型 quest 跟上 inbox 变化）
   evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
-  appendLine(t('shop.terminal.cmd.sell.refunded', { target, refund }), 'echo');
+  appendLine(t('shop.terminal.cmd.sell.refunded', { target, refund, pct: Math.round(sellMult * 100) }), 'echo');
   appendBlank();
   updateTerminalChrome();
   shopBus.syncWorkbenchInbox();
-  if (entry.isUpgrade) shopBus.syncWorkbenchKeys(); // 升级回退后键盘 tooltip / 形状要刷
 }
 
 export function cmdReshuffle(): void {

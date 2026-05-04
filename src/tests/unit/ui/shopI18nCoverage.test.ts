@@ -125,7 +125,6 @@ const SHOP_I18N_KEYS = [
   'shop.terminal.cmd.buy.relic_shelved',
   'shop.terminal.cmd.buy.confirm_purchase',
   'shop.terminal.cmd.buy.bal_after',
-  'shop.terminal.cmd.sell.intray_only',
   'shop.terminal.cmd.sell.refunded',
   'shop.terminal.cmd.reshuffle.success',
   'shop.terminal.cmd.proceed.success',

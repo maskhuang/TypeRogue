@@ -171,6 +171,9 @@ function executeSubmitTransition(overlay: HTMLElement | null): void {
   previewState.pendingConfirm = null; // L2 fix: 防 stale BUY confirm 残留
   previewState.submitting = false;
   previewState.active = false;
+  // 清按钮 DOM 残留 — proceedSubmit 设了 disabled+submitting class，DOM 跨 session
+  // 持久（injectScreens 早返回），不清的话下次进店 click 被 disabled 守卫吞掉
+  setSubmitButtonAwaiting(false);
   document.body.classList.remove('shop-preview-active');
   // 隐藏 preview 屏
   const tEl = document.getElementById('terminal-shop-screen');
@@ -498,6 +501,8 @@ function restoreFromPreview(): void {
     clearTimeout(previewState.submitFallbackTimerId);
     previewState.submitFallbackTimerId = null;
   }
+  // 同 executeSubmitTransition：clear DOM 残留以防按钮 stuck disabled
+  setSubmitButtonAwaiting(false);
   document.querySelector('.submit-stamp-overlay')?.remove();
   document.body.classList.remove('shop-preview-active');
   clearShapePlacementOnWorkbench();

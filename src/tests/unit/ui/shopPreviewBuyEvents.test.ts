@@ -246,8 +246,8 @@ describe('Story 60.7 · cmdSell 副作用', () => {
     // Setup: BUY 一个 skill 进 inbox
     __test.executeBuySkill(makeSkillDescriptor('skill_d', 30))
     evaluateEquipQuestsSpy.mockClear() // 清掉 BUY 触发的那次
-    // SELL by SKU
-    __test.cmdSell('SKL-001')
+    // SELL by IN-tray slot (terminal SEL only accepts IN<n> — SKU 撤销由 UND 负责)
+    __test.cmdSell('IN1')
     expect(evaluateEquipQuestsSpy).toHaveBeenCalledTimes(1)
   })
 })

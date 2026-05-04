@@ -2048,6 +2048,12 @@ function endLevel(): void {
       }
       _targetReached = false; // Story 42.2: 复活=重新开始，重置达标标志
       _targetReachedTime = 0;
+      // 复活=重新开始：必须连同 _elapsedSeconds 和 accel anchors 一起回基线，
+      // 否则下一 tick getTimeAcceleration 用 死时刻的 elapsed 算出虚高 accel，
+      // 复活时间被 ×accel 速烧 + bg/HUD 跳到失控速度
+      _elapsedSeconds = 0;
+      _accelAtTarget = 1.0;
+      _elapsedAtTarget = 0;
       // Review C1: startTimer 会覆盖 state.time，必须在之后设置复活时间
       startTimer();
       state.time = phoenixResult.reviveTime;
