@@ -1721,6 +1721,17 @@ export function stopBattleTimer(): void {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
 }
 
+/**
+ * 字母凸起深度（CSS --raise-d，单位 px）。基线 7px 由 CSS 提供。
+ * 留作叙事接口：高潮 / 异常事件可临时拔高（建议 ≤ 40px）；
+ * 传 null 或离开 battle 屏幕会自动复位到 CSS 基线。
+ */
+export function setLetterRaiseDepth(px: number | null): void {
+  const word = getElements().word;
+  if (px == null) word.style.removeProperty('--raise-d');
+  else word.style.setProperty('--raise-d', `${Math.max(0, px).toFixed(1)}px`);
+}
+
 function startTimer(): void {
   state.time = state.timeMax + state.player.timeBonus;
   state.resources.time = state.time; // 同步资源
@@ -1836,12 +1847,8 @@ function updateTimerDisplay(): void {
 
   // Story 42.4: 倍率 HUD 更新
   const accel = getTimeAcceleration(_elapsedSeconds, _isBoss);
-  // 背景动效速度跟随时间加速倍率；达标后立即回到基准 1.0（视觉"松一口气"反馈）
-  setBgSpeedMul(_targetReached ? 1.0 : accel);
-  // 字母凸起深度跟随时间加速倍率（accel=1 → 7, accel=2 → 19, accel=3 → 31, accel=4 → 40 cap）
-  // 达标后回基准 7px，与背景速度同步"松一口气"
-  const raiseAccel = _targetReached ? 1 : accel;
-  el.word.style.setProperty('--raise-d', `${Math.min(40, 7 + (raiseAccel - 1) * 12).toFixed(1)}px`);
+  // 背景动效速度与字母凸起深度不再跟随时间加速倍率；
+  // 接口保留：叙事系统可调用 setBgSpeedMul() / setLetterRaiseDepth() 驱动视觉
   const accelText = '×' + accel.toFixed(1);
   // Review Fix #1: 检查显示文本而非数值 — toFixed(1) 的 "×1.0" 应隐藏
   if (accelText === '×1.0') {
