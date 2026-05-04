@@ -457,9 +457,12 @@ function buildInfTier1Base(d: ItemDescriptor): string[] {
     }
   } else {
     // Pack / relic / enchantment fallback
+    // .t-line 是 white-space: pre — 这里不 wrapAt 长 flavor / desc 会一行铺到底
     lines.push('');
-    lines.push(d.desc);
-    lines.push(d.effect);
+    for (const w of wrapAt(d.desc, W - 4)) lines.push('  ' + w);
+    if (d.effect && d.effect !== '—') {
+      for (const w of wrapAt(d.effect, W - 4)) lines.push('  ' + w);
+    }
     if (d.affixLine !== '—') lines.push(t('shop.terminal.info.catalog.affix_line', { affix: d.affixLine }));
   }
 
@@ -1047,44 +1050,62 @@ function executeBuy(d: ItemDescriptor): void {
 }
 
 export function executeBuySkill(d: ItemDescriptor): void {
-  if (state.player.inbox.length >= INBOX_MAX) {
-    // terminal sound removed (was sfx('shop_buy_err')) // Story 60.12: inbox 满
+  // 升级路径：shop generator 把同名已拥有技能的新商品转成 isUpgrade=true，
+  // skillId 指向已绑定的 ownedSkillId。原代码对 upgrade / new 一视同仁地推进 inbox，
+  // 导致玩家看到键盘上原绑定 + inbox 多出一张同名卡 → 像 "买了但没拿到"。
+  // 此路径只 in-place 升级 affixSkill / level，不进 inbox。
+  const isUpgrade = d.originalItem.isUpgrade === true;
+  // 升级不进 inbox → INBOX 满判断只对新购技能生效
+  if (!isUpgrade && state.player.inbox.length >= INBOX_MAX) {
     appendLine(t('shop.terminal.err.intray_full', { n: INBOX_MAX, max: INBOX_MAX }), 'redacted');
     appendBlank();
     return;
   }
   const skill = d.originalItem.affixSkill;
   if (!skill) {
-    // terminal sound removed (was sfx('shop_buy_err'))
     appendLine(t('shop.terminal.err.no_skill_data'), 'redacted');
     appendBlank();
     return;
   }
   const skillId = d.originalItem.skillId ?? skill.id;
   const itemIdx = state.shop.items.indexOf(d.originalItem);
+  // 升级前快照：UND 撤销时还原。结构克隆隔离引用，防 affix 后续 in-place mutate 串扰。
+  const oldLevel = isUpgrade ? state.player.skills.get(skillId)?.level : undefined;
+  const oldAffixRef = isUpgrade ? state.affixSkills.get(skillId) : undefined;
+  const oldAffixSnapshot = oldAffixRef ? structuredClone(oldAffixRef) : undefined;
   state.gold -= d.price;
   // Story 60.7 review M1: deep-clone affixSkill 隔离 catalog 引用，
   // 防 BUY → UND → BUY 双重 affix 缩放（applyMaxSkillLevelOnPurchase 在 affixes 上 in-place mutate）
   const skillCopy = structuredClone(skill);
   state.affixSkills.set(skillId, skillCopy);
   state.player.skills.set(skillId, { level: skillCopy.level });
-  state.player.inbox.push(skillId);
+  if (!isUpgrade) state.player.inbox.push(skillId);
   d.purchased = true;
   previewState.purchasedSkus.add(d.sku);
-  previewState.undoStack.push({ kind: 'skill', sku: d.sku, price: d.price, skillId, itemIdx });
+  previewState.undoStack.push({
+    kind: 'skill', sku: d.sku, price: d.price, skillId, itemIdx,
+    ...(isUpgrade ? { isUpgrade: true, oldLevel, oldAffix: oldAffixSnapshot } : {}),
+  });
   // Story 60.7: 副作用闭合 — T4 max_skill_level 自动满级 + 装备 quest 重算 + 教程监听事件
   applyMaxSkillLevelOnPurchase(skillId);
   evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   eventBus.emit('shop:purchase', { type: 'skill', itemId: skillId, price: d.price });
   appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
-  appendLine(t('shop.terminal.cmd.buy.dispatched_intray', { n: state.player.inbox.length, max: INBOX_MAX, gold: state.gold }), 'dim');
+  if (isUpgrade) {
+    // 升级路径：原绑定键保留 → 改用 upgraded_in_place 文案，避免 "派往收件槽" 误导
+    const newLevel = state.player.skills.get(skillId)?.level ?? skillCopy.level;
+    appendLine(t('shop.terminal.cmd.buy.upgraded_in_place', { level: newLevel, gold: state.gold }), 'dim');
+  } else {
+    appendLine(t('shop.terminal.cmd.buy.dispatched_intray', { n: state.player.inbox.length, max: INBOX_MAX, gold: state.gold }), 'dim');
+  }
   appendLine(t('shop.terminal.cmd.buy.undo_stack_pending', { n: previewState.undoStack.length }), 'dim');
   appendBlank();
   updateTerminalChrome();
   shopBus.syncWorkbenchInbox();
-  // terminal sound removed (was sfx('shop_buy_ok')) // Story 60.12: 点阵打印机 zip — BUY skill 成功
-  // Story 60.11: BUY 成功 → IN-tray 对应槽 whoosh 滑入 + 闪光（仅成功路径）
-  shopBus.triggerInboxWhoosh(state.player.inbox.length - 1);
+  // 升级时 affixSkill 已替换为新等级 → 刷键盘以更新 tooltip / 形状属性
+  if (isUpgrade) shopBus.syncWorkbenchKeys();
+  // 非升级路径才有新 inbox 槽 whoosh
+  if (!isUpgrade) shopBus.triggerInboxWhoosh(state.player.inbox.length - 1);
   // Bug fix: 已打印的 LIST 是 BUY 前快照，不会回头标 SOLD —
   // 与 cmdReshuffle 一样自动重打 LIS，让"购买后划红"立即可见
   cmdList();
@@ -1279,10 +1300,16 @@ export function cmdSell(arg?: string): void {
     return;
   }
   const refund = Math.floor(entry.price * 0.5);
-  const inboxIdx = state.player.inbox.lastIndexOf(entry.skillId);
-  if (inboxIdx >= 0) state.player.inbox.splice(inboxIdx, 1);
-  state.player.skills.delete(entry.skillId);
-  state.affixSkills.delete(entry.skillId);
+  if (entry.isUpgrade && entry.oldLevel !== undefined && entry.oldAffix) {
+    // 升级 SEL：还原旧 level + 旧 affix（不删 skill — 已绑定的原技能保留），半价退款
+    state.player.skills.set(entry.skillId, { level: entry.oldLevel });
+    state.affixSkills.set(entry.skillId, entry.oldAffix);
+  } else {
+    const inboxIdx = state.player.inbox.lastIndexOf(entry.skillId);
+    if (inboxIdx >= 0) state.player.inbox.splice(inboxIdx, 1);
+    state.player.skills.delete(entry.skillId);
+    state.affixSkills.delete(entry.skillId);
+  }
   previewState.undoStack.splice(undoIdx, 1);
   state.gold += refund;
   // Story 60.7: 卖出后 quest 重算（装备型 quest 跟上 inbox 变化）
@@ -1291,6 +1318,7 @@ export function cmdSell(arg?: string): void {
   appendBlank();
   updateTerminalChrome();
   shopBus.syncWorkbenchInbox();
+  if (entry.isUpgrade) shopBus.syncWorkbenchKeys(); // 升级回退后键盘 tooltip / 形状要刷
 }
 
 export function cmdReshuffle(): void {
@@ -1357,11 +1385,18 @@ export function cmdUndo(): void {
     return;
   }
   if (last.kind === 'skill') {
-    const idx = state.player.inbox.lastIndexOf(last.skillId);
-    if (idx >= 0) state.player.inbox.splice(idx, 1);
-    state.player.skills.delete(last.skillId);
-    state.affixSkills.delete(last.skillId);
-    shopBus.syncWorkbenchInbox();
+    if (last.isUpgrade && last.oldLevel !== undefined && last.oldAffix) {
+      // 升级回退：还原旧 level + 旧 affix；inbox 没动过、bindings 已存在指向 skillId 的条目
+      state.player.skills.set(last.skillId, { level: last.oldLevel });
+      state.affixSkills.set(last.skillId, last.oldAffix);
+      shopBus.syncWorkbenchKeys(); // 键盘 tooltip / 形状随 affixSkill 一起回退
+    } else {
+      const idx = state.player.inbox.lastIndexOf(last.skillId);
+      if (idx >= 0) state.player.inbox.splice(idx, 1);
+      state.player.skills.delete(last.skillId);
+      state.affixSkills.delete(last.skillId);
+      shopBus.syncWorkbenchInbox();
+    }
     // Story 60.7: UND 撤销技能购买后 quest 重算
     evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
   } else if (last.kind === 'pack') {
@@ -1499,9 +1534,18 @@ export function handleConfirmation(input: string): boolean {
   if (!previewState.pendingConfirm) return false;
   const up = input.trim().toUpperCase();
   if (up === 'Y' || up === 'YES') {
-    const d = findDescriptorBySku(previewState.pendingConfirm.sku);
+    const sku = previewState.pendingConfirm.sku;
     previewState.pendingConfirm = null;
-    if (d) executeBuy(d);
+    const d = findDescriptorBySku(sku);
+    // 之前 `if (d) executeBuy(d)` 在 d 为 null 时静默 no-op：用户按 Y 确认却看不到任何
+    // 反馈也没真扣钱进货，正好对应 "BUY 后并没有真的买到"。RES 在 pendingConfirm 期间
+    // 被本函数吃掉输入，主流程里 d 不应为 null；但 silent skip 是 bug 黑洞，改 loud。
+    if (!d) {
+      appendLine(t('shop.terminal.err.sku_not_in_catalog', { sku }), 'redacted');
+      appendBlank();
+      return true;
+    }
+    executeBuy(d);
     return true;
   }
   if (up === 'N' || up === 'NO') {

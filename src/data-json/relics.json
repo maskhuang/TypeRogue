@@ -10,7 +10,7 @@
       "rarity": "common",
       "basePrice": 0,
       "effects": [],
-      "flavor": "1979 年由 Washoe 收养。研究员未介入教学，仍习得 55 个 ASL 手势——唯一从同类习得手语的个案。"
+      "flavor": "████ 年由 Washoe 收养。研究员未介入教学，仍习得 55 个 █████ 手势——唯一从同类习得手语的个案。"
     },
     "primal_mutant": {
       "id": "primal_mutant",
@@ -21,7 +21,7 @@
       "rarity": "common",
       "basePrice": 0,
       "effects": [],
-      "flavor": "2017 年命名为新种，原归 Hoolock leuconedys。文书部档案据声纹指纹重新归档。"
+      "flavor": "████ 年命名为新种，原归 Hoolock leuconedys。文书部档案据声纹指纹重新归档。"
     },
     "ultimate_mutant_strain": {
       "id": "ultimate_mutant_strain",
@@ -32,7 +32,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "1929 年以来首个被命名的灵长类大型新种。Batang Toru 反复记录的雌性，与幼子 Cakra 同框出现。"
+      "flavor": "████ 年以来首个被命名的灵长类大型新种。█████ 反复记录的雌性，与幼子 Cakra 同框出现。"
     },
     "gene_stabilizer": {
       "id": "gene_stabilizer",
@@ -43,7 +43,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Karisoke Group 5 主导雌性。基因学回溯证实本群多数后代携带其线粒体序列。"
+      "flavor": "█████ Group 5 主导雌性。基因学回溯证实本群多数后代携带其线粒体序列。"
     },
     "fittest_survivors": {
       "id": "fittest_survivors",
@@ -54,7 +54,7 @@
       "rarity": "epic",
       "basePrice": 0,
       "effects": [],
-      "flavor": "1966 年脊髓灰质炎流行后左臂瘫痪。仍以单臂为弟弟 Figan 助阵 alpha 之争。"
+      "flavor": "████ 年脊髓灰质炎流行后左臂瘫痪。仍以单臂为弟弟 Figan 助阵 alpha 之争。"
     },
     "enchant_dividend": {
       "id": "enchant_dividend",
@@ -65,7 +65,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "首只使用 Yerkish lexigram 键盘的黑猩猩。每按对一个符号，便有食物从槽口滑出。"
+      "flavor": "首只使用 █████ █████ 键盘的黑猩猩。每按对一个符号，便有食物从槽口滑出。"
     },
     "enchant_boost": {
       "id": "enchant_boost",
@@ -76,7 +76,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Premack 实验中以塑料色片表征语义。被认为掌握 if-then 条件结构。"
+      "flavor": "█████ 实验中以塑料色片表征语义。被认为掌握 if-then 条件结构。"
     },
     "rune_spike": {
       "id": "rune_spike",
@@ -87,7 +87,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "1960 年代 Kasekela alpha。1975 年 Four-Year War 中被 Kasekela 联盟击杀。"
+      "flavor": "████ 年代 █████ alpha。████ 年 █████ █████ 中被 █████ 联盟击杀。"
     },
     "apprentice_robe": {
       "id": "apprentice_robe",
@@ -98,7 +98,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Gardner 第二批 cross-foster 个体。养家成长期间习得 168 个 ASL 手势。后期作画。"
+      "flavor": "█████ 第二批 cross-foster 个体。养家成长期间习得 168 个 █████ 手势。后期作画。"
     },
     "trial_badge": {
       "id": "trial_badge",
@@ -109,7 +109,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "1966 年脊髓灰质炎流行幸存。下身瘫痪，仍以双臂支撑日常活动。"
+      "flavor": "████ 年脊髓灰质炎流行幸存。下身瘫痪，仍以双臂支撑日常活动。"
     },
     "fate_fork": {
       "id": "fate_fork",
@@ -120,7 +120,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "1998 年产下双胞胎雌性 Glitter 与 Golden。Gombe 史上罕见双胞胎成活案例。",
+      "flavor": "████ 年产下双胞胎雌性 Glitter 与 Golden。█████ 史上罕见双胞胎成活案例。",
       "behaviorType": "fate_fork"
     },
     "greedy_inscription": {
@@ -132,7 +132,7 @@
       "rarity": "legendary",
       "basePrice": 200,
       "effects": [],
-      "flavor": "据 Patterson 报告掌握 1100+ 美国手语手势。文书部档案另注：手势收录持续修订。",
+      "flavor": "据 █████ 报告掌握 1100+ █████ 手势。文书部档案另注：手势收录持续修订。",
       "behaviorType": "greedy_inscription"
     },
     "masters_lexicon": {
@@ -144,7 +144,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "1966 年起在 Reno 接受 ASL 训练。掌握 350+ 手势。后将之传给养子 Loulis。"
+      "flavor": "████ 年起在 █████ 接受 █████ 训练。掌握 350+ 手势。后将之传给养子 Loulis。"
     },
     "perpetual_queue": {
       "id": "perpetual_queue",
@@ -155,7 +155,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Camp Leakey 首只 ex-captive 后代。43 年间稳定出现于站点附近。"
+      "flavor": "█████ 首只 ex-captive 后代。43 年间稳定出现于站点附近。"
     },
     "word_scissors": {
       "id": "word_scissors",
@@ -166,7 +166,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "与 Austin 合作。隔笼通过 lexigram 请求工具，再分享所得食物。"
+      "flavor": "与 Austin 合作。隔笼通过 █████ 请求工具，再分享所得食物。"
     },
     "resonance_mold": {
       "id": "resonance_mold",
@@ -177,7 +177,7 @@
       "rarity": "epic",
       "basePrice": 0,
       "effects": [],
-      "flavor": "与 Sherman 形成 LRC 早期 lexigram「双人系统」。互相请求、分类、读取符号——被训练为彼此的沟通对象。"
+      "flavor": "与 Sherman 形成 █████ 早期 █████「双人系统」。互相请求、分类、读取符号——被训练为彼此的沟通对象。"
     },
     "word_collection": {
       "id": "word_collection",
@@ -188,7 +188,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "与 Koko 同地训练。掌握 600+ 美国手语手势。1973 年自喀麦隆运送至加州。"
+      "flavor": "与 Koko 同地训练。掌握 600+ █████ 手势。████ 年自 █████ 运送至 █████。"
     },
     "thick_deck": {
       "id": "thick_deck",
@@ -199,7 +199,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Flo 唯一存活的女儿。共产下 9 个后代，确立 F-家系在 Kasekela 的核心地位。"
+      "flavor": "Flo 唯一存活的女儿。共产下 9 个后代，确立 F-家系在 █████ 的核心地位。"
     },
     "long_word_crit": {
       "id": "long_word_crit",
@@ -210,7 +210,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "1964 年起以撞击空汽油桶炫示，借此从 alpha 序列后位崛起。"
+      "flavor": "████ 年起以撞击空汽油桶炫示，借此从 alpha 序列后位崛起。"
     },
     "short_sprint": {
       "id": "short_sprint",
@@ -221,7 +221,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "体型偏小。1989-93 年靠梳理结盟而非武力获得 alpha 位。"
+      "flavor": "体型偏小。████-██ 年靠梳理结盟而非武力获得 alpha 位。"
     },
     "long_word_master": {
       "id": "long_word_master",
@@ -232,7 +232,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Bossou 年长母亲。42 岁仍被拍到以石器敲油棕坚果，身旁两个孩子在侧——一堂活着的「工具传统」课。"
+      "flavor": "█████ 年长母亲。42 岁仍被拍到以石器敲油棕坚果，身旁两个孩子在侧——一堂活着的「工具传统」课。"
     },
     "word_dealer": {
       "id": "word_dealer",
@@ -243,7 +243,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Camp Leakey ex-captive 雌性。Gary Shapiro 1978-80 ASL 实验对象，掌握 30-40 手势。",
+      "flavor": "█████ ex-captive 雌性。█████ ████-██ █████ 实验对象，掌握 30-40 手势。",
       "behaviorType": "word_dealer"
     },
     "punctuation_liberation": {
@@ -255,7 +255,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "2015 年布宜诺斯艾利斯法院判决其为「非人法律人格」。后转送佛州 Center for Great Apes。",
+      "flavor": "████ 年 █████ 法院判决其为「非人法律人格」。后转送 █████ █████。",
       "behaviorType": "punctuation_liberation"
     },
     "decelerate_reward": {
@@ -267,7 +267,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Bossou 老年雄性。核桃敲击次数增加但成功率下降，群体仍允许其使用工具。",
+      "flavor": "█████ 老年雄性。核桃敲击次数增加但成功率下降，群体仍允许其使用工具。",
       "subsystem": "typing",
       "behaviorType": "decelerate_reward"
     },
@@ -280,7 +280,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "1993 年实验引入 coula 坚果。Bossou 群中唯一首次接触即敲开者。",
+      "flavor": "████ 年实验引入 coula 坚果。█████ 群中唯一首次接触即敲开者。",
       "subsystem": "typing",
       "behaviorType": "accelerate_reward"
     },
@@ -293,7 +293,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Pan 之女。与同年出生的 Ai 之子 Ayumu 共同参与 Ai-project 第二代符号匹配实验。",
+      "flavor": "Pan 之女。与同年出生的 Ai 之子 Ayumu 共同参与 █████ 第二代符号匹配实验。",
       "subsystem": "typing",
       "behaviorType": "autocomplete"
     },
@@ -306,7 +306,7 @@
       "rarity": "epic",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Project Nim 训练中习得 128 ASL 手势。Terrace 后续分析认为多为节奏性模仿而非语法。",
+      "flavor": "█████ 训练中习得 128 █████ 手势。█████ 后续分析认为多为节奏性模仿而非语法。",
       "subsystem": "typing",
       "behaviorType": "rhythm_adapt"
     },
@@ -319,7 +319,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "1947-54 年由 Hayes 夫妇在家中抚养，试图教其口语。最终发出 mama / papa / cup / up 四词。",
+      "flavor": "████-██ 年由 █████ 夫妇在家中抚养，试图教其口语。最终发出 mama / papa / cup / up 四词。",
       "category": "risk-reward",
       "subsystem": "typing",
       "behaviorType": "glass_cannon"
@@ -333,7 +333,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Kasekela 罕见的「不育而强势」雌性。无育幼负担，长期作为雌性等级与力量关系研究的特殊个案被记述。",
+      "flavor": "█████ 罕见的「不育而强势」雌性。无育幼负担，长期作为雌性等级与力量关系研究的特殊个案被记述。",
       "subsystem": "combo"
     },
     "multiplier_prism": {
@@ -345,7 +345,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Karisoke Group 5 dominant silverback。与 Effie 一起开创该站史上最大谱系。",
+      "flavor": "█████ Group 5 dominant silverback。与 Effie 一起开创该站史上最大谱系。",
       "subsystem": "combo"
     },
     "combo_detonator": {
@@ -357,7 +357,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Mahale M-group 暴政 alpha。2011 年被联盟以石头与棒打死。",
+      "flavor": "█████ M-group 暴政 alpha。████ 年被联盟以石头与棒打死。",
       "subsystem": "combo",
       "behaviorType": "combo_detonator"
     },
@@ -370,7 +370,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Mahale M-group 长期 alpha。1996 年被本群联盟攻击致死。",
+      "flavor": "█████ M-group 长期 alpha。████ 年被本群联盟攻击致死。",
       "subsystem": "combo",
       "behaviorType": "cancel"
     },
@@ -383,7 +383,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "Fossey 见证其出生时误判其母性别故名 Can't be。38 岁离世，Fossey 知道的最后一只 silverback。",
+      "flavor": "█████ 见证其出生时误判其母性别故名 Can't be。38 岁离世，█████ 知道的最后一只 silverback。",
       "category": "risk-reward",
       "subsystem": "combo",
       "behaviorType": "immortal_combo"
@@ -397,7 +397,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "alpha 1997-2002。体型 51.2 kg。曾袭击观察员与人类幼儿。",
+      "flavor": "alpha ████-████。体型 51.2 kg。曾袭击观察员与人类幼儿。",
       "subsystem": "combo"
     },
     "first_strike": {
@@ -409,7 +409,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "1960 年首位被 Goodall 观察使用工具（钓白蚁）。亦是首位接近研究员的雄性。",
+      "flavor": "████ 年首位被 █████ 观察使用工具（钓白蚁）。亦是首位接近研究员的雄性。",
       "subsystem": "skill"
     },
     "less_is_more": {
@@ -421,7 +421,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Mahale M-group alpha 雄性。文献记其作风温和受尊敬，与继任者 Pimu 形成对比。",
+      "flavor": "█████ M-group alpha 雄性。文献记其作风温和受尊敬，与继任者 Pimu 形成对比。",
       "subsystem": "skill"
     },
     "training_manual": {
@@ -433,7 +433,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Kanzi 的养母。LRC 正式 lexigram 训练对象。Kanzi 在旁观察中自行习得。",
+      "flavor": "Kanzi 的养母。█████ 正式 █████ 训练对象。Kanzi 在旁观察中自行习得。",
       "subsystem": "skill",
       "behaviorType": "training_manual"
     },
@@ -446,7 +446,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Lyn Miles 实验对象。掌握约 150 ASL 手势。自创复合词 eye-drink 指代隐形眼镜液。",
+      "flavor": "█████ 实验对象。掌握约 150 █████ 手势。自创复合词 eye-drink 指代隐形眼镜液。",
       "subsystem": "skill",
       "behaviorType": "jazz_diversity"
     },
@@ -459,7 +459,7 @@
       "rarity": "rare",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Mahale M-group 雄性。被研究员称为「造王者」——咬倒前任暴政 alpha Pimu 的关键发起者。",
+      "flavor": "█████ M-group 雄性。被研究员称为「造王者」——咬倒前任暴政 alpha Pimu 的关键发起者。",
       "subsystem": "skill",
       "behaviorType": "uncrowned_king"
     },
@@ -485,7 +485,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Lola ya Bonobo Group 1 matriarch。女儿 Elikya 与外孙 Molende 同生于保护区，将其个体史连入 Lola 救护繁育谱系。",
+      "flavor": "█████ Group 1 matriarch。女儿 Elikya 与外孙 Molende 同生于保护区，将其个体史连入 █████ 救护繁育谱系。",
       "subsystem": "topology"
     },
     "corner_power": {
@@ -497,7 +497,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "因群体冲突失去睾丸。被排除在繁殖序列外，仍长期定居于 Kasekela 边缘区域。",
+      "flavor": "因群体冲突失去睾丸。被排除在繁殖序列外，仍长期定居于 █████ 边缘区域。",
       "subsystem": "topology"
     },
     "row_switch": {
@@ -509,7 +509,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "1973 年自其他群移入 Kasekela。后被 Mitumba 群雄性杀害。",
+      "flavor": "████ 年自其他群移入 █████。后被 █████ 群雄性杀害。",
       "subsystem": "topology"
     },
     "line_clear": {
@@ -521,7 +521,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Flo 之子。从怯弱少年成长为 Gombe 最会结盟的 alpha——靠盟友、亲族与策略反复夺回权威。",
+      "flavor": "Flo 之子。从怯弱少年成长为 █████ 最会结盟的 alpha——靠盟友、亲族与策略反复夺回权威。",
       "subsystem": "topology",
       "behaviorType": "line_clear"
     },
@@ -534,7 +534,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Gremlin 双胞胎女儿之一，与 Golden 同存活——Gombe 极罕见的成活案例，野外黑猩猩育幼风险中的例外。",
+      "flavor": "Gremlin 双胞胎女儿之一，与 Golden 同存活——█████ 极罕见的成活案例，野外黑猩猩育幼风险中的例外。",
       "subsystem": "topology",
       "behaviorType": "hand_alternation"
     },
@@ -547,7 +547,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "首只学会用阿拉伯数字代表数字的黑猩猩。Matsuzawa Ai-project 自 1977 年起。",
+      "flavor": "首只学会用阿拉伯数字代表数字的黑猩猩。█████ █████ 自 ████ 年起。",
       "subsystem": "topology"
     },
     "key_storm": {
@@ -572,7 +572,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Bossou 最长寿雌性之一。晚年与儿子 Foaf、Fanwa 同留群中——石器敲坚果传统的老一代母系节点。",
+      "flavor": "█████ 最长寿雌性之一。晚年与儿子 Foaf、Fanwa 同留群中——石器敲坚果传统的老一代母系节点。",
       "subsystem": "resource"
     },
     "time_trickle": {
@@ -584,7 +584,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Karisoke 现存最后一只仍由 Fossey 本人识别命名的山地大猩猩。",
+      "flavor": "█████ 现存最后一只仍由 █████ 本人识别命名的山地大猩猩。",
       "subsystem": "resource"
     },
     "resource_focus": {
@@ -596,7 +596,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Camp Leakey ex-captive 雌性之一。重返森林个体的代表性案例，独立行为侧写较略。",
+      "flavor": "█████ ex-captive 雌性之一。重返森林个体的代表性案例，独立行为侧写较略。",
       "subsystem": "resource"
     },
     "resource_diversity": {
@@ -608,7 +608,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Fifi 之女。移居 Mitumba 群后创新出 ant-fishing 工具用法。",
+      "flavor": "Fifi 之女。移居 █████ 群后创新出 ant-fishing 工具用法。",
       "subsystem": "resource"
     },
     "resource_tide": {
@@ -620,7 +620,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Matata 之女，1983 年生于 LRC/Yerkes 语言研究谱系。夹于 Kanzi 与 Panbanisha 之间的旁支见证者。",
+      "flavor": "Matata 之女，████ 年生于 █████/█████ 语言研究谱系。夹于 Kanzi 与 Panbanisha 之间的旁支见证者。",
       "subsystem": "resource",
       "behaviorType": "resource_tide"
     },
@@ -633,7 +633,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "Gardner cross-foster 个体。后期偏爱戴帽子与拆装机械玩具。",
+      "flavor": "█████ cross-foster 个体。后期偏爱戴帽子与拆装机械玩具。",
       "subsystem": "resource"
     },
     "discount_card": {
@@ -645,7 +645,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "IPS Norman 学手语者。研究所倒闭后被转卖至 LEMSIP 实验室。",
+      "flavor": "█████ 学手语者。研究所倒闭后被转卖至 █████ 实验室。",
       "subsystem": "shop"
     },
     "recycle_expert": {
@@ -657,7 +657,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Temerlin 一家「人化」抚养。1977 年由 Janis Carter 接手，运送至冈比亚试图野化。",
+      "flavor": "█████ 一家「人化」抚养。████ 年由 █████ 接手，运送至 █████ 试图野化。",
       "subsystem": "shop"
     },
     "black_market": {
@@ -669,7 +669,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "1969 年自偷猎者手中救回的两只孤儿之一。原计划出口至 Cologne 动物园。",
+      "flavor": "████ 年自偷猎者手中救回的两只孤儿之一。原计划出口至 █████ 动物园。",
       "subsystem": "shop",
       "behaviorType": "black_market"
     },
@@ -682,7 +682,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Kasekela S 家系女族长。不张扬，以长寿、稳定与多代育幼留在 Gombe 家族档案中。",
+      "flavor": "█████ S 家系女族长。不张扬，以长寿、稳定与多代育幼留在 █████ 家族档案中。",
       "subsystem": "shop"
     },
     "smuggle_pass": {
@@ -694,7 +694,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "1972-77 年间与女儿 Pom 合谋杀害约 10 只新生婴儿。原因至今未明。",
+      "flavor": "████-██ 年间与女儿 Pom 合谋杀害约 10 只新生婴儿。原因至今未明。",
       "subsystem": "shop",
       "behaviorType": "smuggle_pass"
     },
@@ -707,7 +707,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "Fossey 最钟爱的雄性。1977 年圣诞被偷猎者割头。Digit Fund 由此设立。",
+      "flavor": "█████ 最钟爱的雄性。████ 年 █████ 被偷猎者割头。█████ 由此设立。",
       "subsystem": "shop",
       "behaviorType": "timed_auction"
     },
@@ -720,7 +720,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Bossou 幼年雌性，Jire 之女。出现在 Jire 晚年育幼的家族画面里，记为小群体延续性的年轻注脚。",
+      "flavor": "█████ 幼年雌性，Jire 之女。出现在 Jire 晚年育幼的家族画面里，记为小群体延续性的年轻注脚。",
       "subsystem": "stage"
     },
     "intermission": {
@@ -744,7 +744,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Melissa 之子。alpha 1979 与 1982-89。后被竞争联盟攻击致绝育。",
+      "flavor": "Melissa 之子。alpha ████ 与 ████-██。后被竞争联盟攻击致绝育。",
       "subsystem": "stage"
     },
     "endurance_battery": {
@@ -756,7 +756,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Bossou 长期记录的老年雄性。自高阶雄性条目至晚年坚果敲击，承载该群技术传统的一代。",
+      "flavor": "█████ 长期记录的老年雄性。自高阶雄性条目至晚年坚果敲击，承载该群技术传统的一代。",
       "subsystem": "stage"
     },
     "elite_hunter": {
@@ -768,7 +768,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Taï North Group 早期 alpha。Boesch 体系记录的「impact hunter」典型，主导红疣猴合作狩猎的高位个案。",
+      "flavor": "█████ Group 早期 alpha。█████ 体系记录的「█████」典型，主导红疣猴合作狩猎的高位个案。",
       "subsystem": "stage"
     },
     "phoenix": {
@@ -780,7 +780,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "自刚果丛林肉市救援的孤儿。Vanessa Woods Bonobo Handshake 中长篇记述。",
+      "flavor": "自 █████ 丛林肉市救援的孤儿。█████ 《█████》中长篇记述。",
       "subsystem": "stage",
       "behaviorType": "phoenix"
     },
@@ -793,7 +793,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "alpha 2005-08。被 Ferdinand 击败后伤重死亡。",
+      "flavor": "alpha ████-██。被 Ferdinand 击败后伤重死亡。",
       "subsystem": "stage"
     },
     "modifier_shield": {
@@ -805,7 +805,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Camp Leakey 早期重返森林的 ex-captive 雌性。产下 Siswi——救助个体可野外繁衍的标志性母亲。",
+      "flavor": "█████ 早期重返森林的 ex-captive 雌性。产下 Siswi——救助个体可野外繁衍的标志性母亲。",
       "subsystem": "boss_modifier"
     },
     "bounty_hunter": {
@@ -829,7 +829,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "2016 年阿根廷 Mendoza 法院判决其为「非人法律人格」。后转送巴西庇护所。",
+      "flavor": "████ 年 █████ 法院判决其为「非人法律人格」。后转送 █████ 庇护所。",
       "subsystem": "boss_modifier"
     },
     "modifier_barrier": {
@@ -841,7 +841,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Karisoke 早期 Group 5 雄性。Fossey 时代谱系中被反复提及的 silverback，档案细节稀疏。",
+      "flavor": "█████ 早期 Group 5 雄性。█████ 时代谱系中被反复提及的 silverback，档案细节稀疏。",
       "subsystem": "boss_modifier",
       "behaviorType": "modifier_barrier"
     },
@@ -867,7 +867,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "纽约市首只圈养出生大猩猩。其名字由市民投票比赛产生。",
+      "flavor": "█████ 首只圈养出生大猩猩。其名字由市民投票比赛产生。",
       "subsystem": "boss_modifier",
       "behaviorType": "modifier_reversal"
     },
@@ -880,7 +880,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Karisoke Group 5 雄性。名字后留于「Shinda's group」——长期监测谱系中的一条雄性支线。",
+      "flavor": "█████ Group 5 雄性。名字后留于「Shinda's group」——长期监测谱系中的一条雄性支线。",
       "subsystem": "scoring"
     },
     "lenient_judge": {
@@ -892,7 +892,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Karisoke 长期监测的雌性，出生于 Fossey 研究的 Group 5。多次群体分裂迁移后仍持续被追踪。",
+      "flavor": "█████ 长期监测的雌性，出生于 █████ 研究的 Group 5。多次群体分裂迁移后仍持续被追踪。",
       "subsystem": "scoring"
     },
     "s_rank_trophy": {
@@ -904,7 +904,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "首只「自然习得」lexigram 语言的猿。理解英语口语词汇约 3000。",
+      "flavor": "首只「自然习得」█████ 语言的猿。理解英语口语词汇约 3000。",
       "subsystem": "scoring"
     },
     "underdog_bonus": {
@@ -916,7 +916,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Gardner 第二批 cross-foster。与 Loulis 同为现存最后两位 ASL 黑猩猩。",
+      "flavor": "█████ 第二批 cross-foster。与 Loulis 同为现存最后两位 █████ 黑猩猩。",
       "subsystem": "scoring"
     },
     "snowball": {
@@ -928,7 +928,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "1953 年秋，幸岛 18 个月大雌性独立将红薯带至溪边洗净。三年后，全岛个体均效仿。",
+      "flavor": "████ 年秋，█████ 18 个月大雌性独立将红薯带至溪边洗净。三年后，全岛个体均效仿。",
       "subsystem": "scoring",
       "behaviorType": "snowball"
     },
@@ -941,7 +941,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "首只在 Gombe 研究期出生的婴儿。母亲 Flo 死后陷入抑郁并绝食而亡。",
+      "flavor": "首只在 █████ 研究期出生的婴儿。母亲 Flo 死后陷入抑郁并绝食而亡。",
       "subsystem": "scoring",
       "behaviorType": "score_black_hole"
     },
@@ -954,7 +954,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Fifi 之子。曾升至 Kasekela beta 位，因重病跌落，缓慢重返等级棋局。",
+      "flavor": "Fifi 之子。曾升至 █████ beta 位，因重病跌落，缓慢重返等级棋局。",
       "subsystem": "crit"
     },
     "crit_bonus": {
@@ -966,7 +966,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Fifi 之子。2008 年登上 Kasekela alpha 位，靠威吓与突袭统治，2016 年被联盟推翻——F 家系最强硬也最孤立的一章。",
+      "flavor": "Fifi 之子。████ 年登上 █████ alpha 位，靠威吓与突袭统治，████ 年被联盟推翻——F 家系最强硬也最孤立的一章。",
       "subsystem": "crit"
     },
     "crit_charge": {
@@ -978,7 +978,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Fanni 之子。2016 年推翻舅父 Ferdinand 接任 alpha。",
+      "flavor": "Fanni 之子。████ 年推翻舅父 Ferdinand 接任 alpha。",
       "subsystem": "crit"
     },
     "crit_storm": {
@@ -990,7 +990,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "Passion 之女。1972-77 年与母合谋杀婴事件中的同谋。",
+      "flavor": "Passion 之女。████-██ 年与母合谋杀婴事件中的同谋。",
       "subsystem": "crit",
       "behaviorType": "crit_storm"
     },
@@ -1003,7 +1003,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "Amboseli Hook's group 名祖。1995 年群体分裂事件由其触发。",
+      "flavor": "█████ Hook's group 名祖。████ 年群体分裂事件由其触发。",
       "subsystem": "crit",
       "behaviorType": "fate_coin"
     },
@@ -1016,7 +1016,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Amboseli Alto's group 名祖母。1990-91 年群体分裂事件的起始点。",
+      "flavor": "█████ Alto's group 名祖母。████-██ 年群体分裂事件的起始点。",
       "subsystem": "stacking",
       "behaviorType": "stack_momentum"
     },
@@ -1042,7 +1042,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Lomas Barbudal 白面卷尾猴长期跟踪雌性。Susan Perry 笔下「政治剧」主角之一，独立完整生平资料尚不足。",
+      "flavor": "█████ 白面卷尾猴长期跟踪雌性。█████ 笔下「政治剧」主角之一，独立完整生平资料尚不足。",
       "subsystem": "stacking",
       "behaviorType": "overload_circuit"
     },
@@ -1055,7 +1055,7 @@
       "rarity": "epic",
       "basePrice": 120,
       "effects": [],
-      "flavor": "1974 年生于 Karisoke Group 5。1993 年原 Group 5 分裂出「Pablo's group」——曾短暂主导，后由 Cantsbee 接过权力。",
+      "flavor": "████ 年生于 █████ Group 5。████ 年原 Group 5 分裂出「Pablo's group」——曾短暂主导，后由 Cantsbee 接过权力。",
       "subsystem": "stacking",
       "behaviorType": "surge"
     },
@@ -1068,7 +1068,7 @@
       "rarity": "legendary",
       "basePrice": 0,
       "effects": [],
-      "flavor": "Cantsbee 之子。2017 年其父失踪后接任 Karisoke 群头。",
+      "flavor": "Cantsbee 之子。████ 年其父失踪后接任 █████ 群头。",
       "subsystem": "stacking",
       "behaviorType": "perpetual_engine"
     },
@@ -1081,7 +1081,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Lomas Barbudal 长期跟踪雌性。Susan Perry 笔下「雌性政治与社会操纵」叙事另一半——与 Abby 并列，独立细节尚少。",
+      "flavor": "█████ 长期跟踪雌性。█████ 笔下「雌性政治与社会操纵」叙事另一半——与 Abby 并列，独立细节尚少。",
       "subsystem": "combo",
       "behaviorType": "drum_pass",
       "requiresSubsystem": "stacking"
@@ -1095,7 +1095,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Matata 亲女，Kanzi 同母半同胞。出生起即浸润 lexigram 与英语环境——证明 Kanzi 并非孤例的关键 bonobo。",
+      "flavor": "Matata 亲女，Kanzi 同母半同胞。出生起即浸润 █████ 与英语环境——证明 Kanzi 并非孤例的关键 bonobo。",
       "subsystem": "word",
       "behaviorType": "word_resonance",
       "requiresSubsystem": "stacking"
@@ -1109,7 +1109,7 @@
       "rarity": "common",
       "basePrice": 50,
       "effects": [],
-      "flavor": "Kasekela alpha 1969–1971。处于 Mike 与 Figan 之间，群体裂变前夜的过渡性强权。",
+      "flavor": "█████ alpha ████–████。处于 Mike 与 Figan 之间，群体裂变前夜的过渡性强权。",
       "subsystem": "crit",
       "behaviorType": "crit_overflow",
       "requiresSubsystem": "stacking"
@@ -1123,7 +1123,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "IPS Norman ASL 黑猩猩之一。不及 Washoe 或 Nim 知名，留存于 1970s 影像、绘画与符号互动档案。",
+      "flavor": "█████ █████ 黑猩猩之一。不及 Washoe 或 Nim 知名，留存于 ████s 影像、绘画与符号互动档案。",
       "subsystem": "enchantment",
       "behaviorType": "inscription_flow"
     },
@@ -1136,7 +1136,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "Lola ya Bonobo alpha 雌性。Woods 记其遭雄性攻击后雌性联盟即时介入——bonobo 雌权结构的鲜明案例。",
+      "flavor": "█████ alpha 雌性。█████ 记其遭雄性攻击后雌性联盟即时介入——bonobo 雌权结构的鲜明案例。",
       "subsystem": "topology",
       "behaviorType": "neighbor_watch"
     },
@@ -1149,7 +1149,7 @@
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],
-      "flavor": "IPS Norman 1970s 黑猩猩。与 Ally、Booee 同框于签字、影像与绘画档案，资料如残存胶片片段。",
+      "flavor": "█████ ████s 黑猩猩。与 Ally、Booee 同框于签字、影像与绘画档案，资料如残存胶片片段。",
       "subsystem": "stacking",
       "behaviorType": "stack_crit",
       "requiresSubsystem": "crit"

@@ -11,6 +11,7 @@
 
 import type { ItemDescriptor } from '../itemDescriptors';
 import type { WordPack } from '../../core/types';
+import type { AffixSkillInstance } from '../../data/affixes';
 import { shouldPlayShopSound } from '../../core/UserSettings';
 import { playSound, playDeskSound } from '../../effects/sound';
 import { state } from '../../core/state';
@@ -28,13 +29,15 @@ export const VERB_FULL: Record<string, string> = {
   RES: 'RESHUFFLE', PRO: 'PROCEED', HEL: 'HELP', UND: 'UNDO',
 };
 
-// stamp 动画 600ms（CSS 控制） + 200ms safety = 800ms fallback timer
-export const SUBMIT_STAMP_FALLBACK_MS = 800;
+// stamp 动画 1200ms（CSS 控制） + 200ms safety = 1400ms fallback timer
+export const SUBMIT_STAMP_FALLBACK_MS = 1400;
 
 // === Types ===
 
 export type UndoEntry =
-  | { kind: 'skill'; sku: string; price: number; skillId: string; itemIdx: number }
+  // 升级专用字段（isUpgrade/oldLevel/oldAffix）只在升级路径存在 — 普通新购技能这三者缺省
+  | { kind: 'skill'; sku: string; price: number; skillId: string; itemIdx: number;
+      isUpgrade?: boolean; oldLevel?: number; oldAffix?: AffixSkillInstance }
   | { kind: 'pack'; sku: string; price: number; words: string[] }
   | { kind: 'relic'; sku: string; price: number; relicId: string };
 
@@ -74,6 +77,9 @@ export const previewState = {
   pendingSubmit: null as { stage: SubmitStage; nextStage: SubmitStage | 'proceed' } | null,
   // Story 60.4: stamp 动画进行中防重复点击
   submitting: false,
+  // proceedSubmit 1400ms 兜底定时器 ID — 用户中途 ESC 退出时需要 cancel，否则
+  // stale timer 触发的 executeSubmitTransition 会在新 session 期间提前推进关卡
+  submitFallbackTimerId: null as ReturnType<typeof setTimeout> | null,
   workbenchEntered: false,
   // Story 60.9 follow-up #9: 追踪"曾被装配过"的 skillId — 卸回 IN-tray 时
   // 渲染为已开封态（无运单包装），区别于刚购入的未拆封态（完整运单）
@@ -111,6 +117,15 @@ export function resetPreviewSession(): void {
   previewState.undoStack = [];
   previewState.pendingConfirm = null;
   previewState.pendingPackPick = null; // L2 fix: 防止跨 session 残留 stale pack reference
+  // 跨 session 清理 SUBMIT 流程残留 — 上次 ESC 离开时若 pendingSubmit/submitting 还为真
+  // （warn-bindings 没答 Y/N 就退、或 stamp 动画途中退），下次进店 triggerSubmit 会被
+  // 自身守卫 short-circuit → "工作台 SUBMIT 失效，无法进下一关"
+  previewState.pendingSubmit = null;
+  previewState.submitting = false;
+  if (previewState.submitFallbackTimerId !== null) {
+    clearTimeout(previewState.submitFallbackTimerId);
+    previewState.submitFallbackTimerId = null;
+  }
   previewState.workbenchEntered = false;
   previewState.unsealedSkillIds = new Set<string>(); // Story 60.9 follow-up #9: 重置开封记录
   previewState.purchasedSkus = new Set<string>();

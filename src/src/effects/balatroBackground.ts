@@ -230,11 +230,13 @@ void main() {
   float minSide = min(u_resolution.x, u_resolution.y);
   vec2 uv = (frag - 0.5 * u_resolution) / minSide * 1.8;
   float t = u_time * u_speed;
-  vec2 q = vec2(fbm(uv + vec2(t * 0.6, 0.0)),
-                fbm(uv + vec2(0.0, t * 0.45)));
+  // 内层时间系数对齐 marble 量级：smoothstep(0.40,0.55) 阈值带极窄，
+  // 第一层 warp 太快会被量化成大幅墨块翻转，speedMul=1 时就已扎眼
+  vec2 q = vec2(fbm(uv + vec2(t * 0.20, 0.0)),
+                fbm(uv + vec2(0.0, t * 0.16)));
   // 第二层 warp 让墨晕本身也流动，不只是 q 在动
-  vec2 r = vec2(fbm(uv + 2.0 * q + vec2(t * 0.3, 1.7)),
-                fbm(uv + 2.0 * q + vec2(8.3, t * 0.25)));
+  vec2 r = vec2(fbm(uv + 2.0 * q + vec2(t * 0.16, 1.7)),
+                fbm(uv + 2.0 * q + vec2(8.3, t * 0.13)));
   float f = fbm(uv + 2.0 * r);
   // 高对比 smoothstep 让 FBM 量化成墨块边缘
   float ink = smoothstep(0.40, 0.55, f);

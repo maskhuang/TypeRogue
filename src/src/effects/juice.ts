@@ -4,6 +4,7 @@
 
 import { getElements } from '../ui/elements';
 import { spawnParticles } from './particles';
+import { t } from '../demo/demo-i18n';
 
 /** 重启 CSS 动画：移除 class → 下一帧添加，避免强制同步重排 */
 function restartAnimation(el: HTMLElement, ...classNames: string[]): void {
@@ -359,55 +360,138 @@ export function calculateRating(input: RatingInput): string {
   return 'B';
 }
 
-/** 评级揭示动画：从 C 逐级滚动到最终评级 */
-export function showRatingReveal(finalGrade: string, onComplete: () => void, soundFn?: (grade: string) => void): void {
-  const el = getElements();
-  const finalIdx = GRADE_ORDER.indexOf(finalGrade as typeof GRADE_ORDER[number]);
-  if (finalIdx < 0) { onComplete(); return; }
+/** 评级揭示 · DPCA-VT220 phosphor terminal teletype（Mock A 接入） */
+export function showRatingReveal(finalGrade: string, onComplete: () => void, _soundFn?: (grade: string) => void): void {
+  const goldReward = document.getElementById('gold-reward');
+  const linesContainer = document.getElementById('ct-lines');
+  const headerEl = document.getElementById('ct-header');
+  if (!goldReward || !linesContainer) { onComplete(); return; }
 
-  // 创建覆盖层
-  const overlay = document.createElement('div');
-  overlay.className = 'rating-reveal';
-  const gradeEl = document.createElement('div');
-  gradeEl.className = 'rating-grade';
-  overlay.appendChild(gradeEl);
-  el.container.appendChild(overlay);
+  // 头：固定为 EVALUATION TERMINAL（settlement 阶段会改回 SETTLEMENT TERMINAL）
+  if (headerEl) {
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    const MM = String(d.getMonth() + 1).padStart(2, '0');
+    const DD = String(d.getDate()).padStart(2, '0');
+    // 年份打码，月·日跟当天同步
+    headerEl.textContent = t('tt.eval_header', { date: `████·${MM}·${DD}`, time: `${hh}:${mm}` });
+  }
 
-  let step = 0;
-  const interval = setInterval(() => {
-    if (step > finalIdx) {
-      clearInterval(interval);
-      // 最终评级特效
-      const tier = getRatingTier(finalGrade);
-      if (tier.particleCount > 0) spawnParticles(gradeEl, tier.particleCount, tier.particleColor);
-      if (tier.shakeIntensity > 0) screenShake(tier.shakeIntensity);
-      if (tier.glowColor) screenFlash(tier.glowColor, 0.3);
-      // 停留 800ms 后淡出
+  // 显示 bezel（与 settlement 共享 #gold-reward 容器）
+  goldReward.classList.remove('gold-reward-hidden', 'gold-reward-hide');
+  goldReward.classList.add('gold-reward-show');
+
+  linesContainer.innerHTML = '';
+  void runEvaluationTeletype(linesContainer, finalGrade).then(() => {
+    // 最终等级 tier 特效（沿用既有粒子/震屏/闪光）
+    const tier = getRatingTier(finalGrade);
+    const gradeEl = linesContainer.querySelector('.eval-grade-letter') as HTMLElement | null;
+    if (gradeEl && tier.particleCount > 0) spawnParticles(gradeEl, tier.particleCount, tier.particleColor);
+    if (tier.shakeIntensity > 0) screenShake(tier.shakeIntensity);
+    if (tier.glowColor) screenFlash(tier.glowColor, 0.3);
+
+    // 阅读 1000ms → 淡出 → onComplete
+    setTimeout(() => {
+      goldReward.classList.remove('gold-reward-show');
+      goldReward.classList.add('gold-reward-hide');
       setTimeout(() => {
-        overlay.classList.add('rating-reveal-fade');
-        setTimeout(() => {
-          overlay.remove();
-          onComplete();
-        }, 300);
-      }, 800);
-      return;
-    }
-    const grade = GRADE_ORDER[step];
-    const tier = getRatingTier(grade);
-    gradeEl.textContent = grade;
-    gradeEl.className = `rating-grade ${tier.cssClass}`;
-    gradeEl.style.color = tier.color;
-    if (tier.glowColor) {
-      gradeEl.style.textShadow = `0 0 30px ${tier.glowColor}, 0 0 60px ${tier.glowColor}`;
-    } else {
-      gradeEl.style.textShadow = '';
-    }
-    if (soundFn) soundFn(grade);
-    if (step === finalIdx) {
-      gradeEl.classList.add('rating-final');
-    }
-    step++;
-  }, 300);
+        goldReward.classList.add('gold-reward-hidden');
+        goldReward.classList.remove('gold-reward-hide');
+        onComplete();
+      }, 300);
+    }, 1000);
+  });
+}
+
+const SCAN_FRAMES = [
+  '░░░░░░░░░░░░░░░░',
+  '▒░░░░░░░░░░░░░░░',
+  '▒▒▒░░░░░░░░░░░░░',
+  '▓▒▒▒░░░░░░░░░░░░',
+  '▓▓▒▒▒░░░░░░░░░░░',
+  '▓▓▓▓▒▒▒░░░░░░░░░',
+  '▓▓▓▓▓▓▒▒▒░░░░░░░',
+  '▓▓▓▓▓▓▓▓▒▒░░░░░░',
+  '▓▓▓▓▓▓▓▓▓▓▒▒░░░░',
+  '▓▓▓▓▓▓▓▓▓▓▓▓▒▒░░',
+  '▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒░',
+  '▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓',
+];
+
+function gradeTierClass(grade: string): string {
+  return grade === 'SSS' ? 'tier-sss' :
+         grade === 'SS'  ? 'tier-ss'  :
+         grade === 'S'   ? 'tier-s'   :
+         grade === 'A'   ? 'tier-a'   :
+         grade === 'B'   ? 'tier-b'   : 'tier-c';
+}
+
+async function runEvaluationTeletype(container: HTMLElement, grade: string): Promise<void> {
+  const newLine = (cls = ''): HTMLDivElement => {
+    const line = document.createElement('div');
+    line.className = `ct-line ${cls}`.trim();
+    line.innerHTML = '<span class="typed"></span><span class="cursor"></span>';
+    container.appendChild(line);
+    line.classList.add('shown');
+    return line;
+  };
+
+  const typeLine = (lineEl: HTMLElement, text: string, speed: number): Promise<void> => {
+    return new Promise(resolve => {
+      const typed = lineEl.querySelector('.typed') as HTMLElement | null;
+      if (!text || speed === 0) {
+        if (typed) typed.textContent = text;
+        lineEl.classList.add('done');
+        resolve();
+        return;
+      }
+      let i = 0;
+      const tick = () => {
+        if (typed) typed.textContent = text.slice(0, ++i);
+        if (i >= text.length) { lineEl.classList.add('done'); resolve(); }
+        else setTimeout(tick, speed);
+      };
+      tick();
+    });
+  };
+
+  const scanLine = (): Promise<void> => {
+    const line = newLine('eval-scan');
+    line.classList.add('done');
+    const typed = line.querySelector('.typed') as HTMLElement;
+    return new Promise(resolve => {
+      let i = 0;
+      const tick = () => {
+        typed.textContent = `> ${SCAN_FRAMES[i]}`;
+        if (++i >= SCAN_FRAMES.length) resolve();
+        else setTimeout(tick, 70);
+      };
+      tick();
+    });
+  };
+
+  await typeLine(newLine(), t('tt.eval_processed'),  16);
+  await new Promise(r => setTimeout(r, 200));
+  await typeLine(newLine(), t('tt.eval_scanning'),   14);
+  await new Promise(r => setTimeout(r, 100));
+  await scanLine();
+  await new Promise(r => setTimeout(r, 200));
+  await typeLine(newLine(), t('tt.eval_complete'),   14);
+  await new Promise(r => setTimeout(r, 250));
+
+  // GRADE 行：先打前缀文字，再追加大字母
+  const gradeLine = newLine();
+  await typeLine(gradeLine, t('tt.eval_grade_prefix'), 18);
+  const typed = gradeLine.querySelector('.typed') as HTMLElement | null;
+  if (typed) {
+    const big = document.createElement('span');
+    big.className = `eval-grade-letter ${gradeTierClass(grade)} pulse`;
+    big.textContent = grade;
+    typed.appendChild(big);
+  }
+  // 等级显示后短暂 hold（特效 + 用户阅读）
+  await new Promise(r => setTimeout(r, 600));
 }
 
 // === 分数音效分级（4 档） ===

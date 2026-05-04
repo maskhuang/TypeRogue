@@ -358,8 +358,6 @@ function collectGravityWeights(): Map<string, number> {
   return result;
 }
 
-let _starterSkillBound = false;
-
 function setWord(): void {
   const picked = transformWordForModifier(pickWord());
   const decoyResult = rollDecoyWord(picked);
@@ -367,14 +365,15 @@ function setWord(): void {
   state.player.index = 0;
 
   // 首关第二词：将初始技能绑定到本词首字母（第一词纯打字，第二词引入技能）
-  if (!_starterSkillBound && state.level === 1 && state.player.bindings.size === 0
+  // bindings.size === 0 自然守住单局内只触发一次：绑完即 size > 0；新一局 resetState()
+  // 清空 bindings 时再次允许触发（之前用模块级 _starterSkillBound 跨局不重置 → 第二局起永远绑不上）
+  if (state.level === 1 && state.player.bindings.size === 0
       && state.player.skills.size > 0 && state.player.word.length > 0
       && state.battleStats && state.battleStats.wordsCompleted >= 1) {
     const firstLetter = state.player.word[0].toLowerCase();
     const firstSkillId = state.player.skills.keys().next().value;
     if (firstSkillId) {
       bindShapeToKeys(getBindingState(state), firstSkillId, firstLetter);
-      _starterSkillBound = true;
     }
   }
   state.wordScore = 0;
@@ -517,9 +516,14 @@ function handleEnterKey(e: KeyboardEvent): void {
       showFeedback(t('battle.mirror_first_clear'), '#8888ff');
       playSound('levelup');
     } else {
+      // 必须在置 _targetReached=true 之前 capture 当前 pre-target 加速值；
+      // 否则 getTimeAcceleration 读到 true 会走 post-target cubic 分支，用 stale
+      // _accelAtTarget(=1.0) + _elapsedAtTarget(=0) 算出 1 + rate*elapsed³ 的虚高 anchor，
+      // 后续 HUD ×accel 从这个膨胀基线再叠 → 背景 speedMul=1.0 与 HUD 不匹配
+      const preTargetAccel = getTimeAcceleration(_elapsedSeconds, _isBoss);
       _targetReached = true;
       _targetReachedTime = state.time;
-      _accelAtTarget = getTimeAcceleration(_elapsedSeconds, _isBoss);
+      _accelAtTarget = preTargetAccel;
       _elapsedAtTarget = _elapsedSeconds;
       getElements().container.classList.add('glow-target-reached');
       showFeedback(getMirrorPhase() === 'done' && isModifierActive('boss_mirror') ? t('battle.mirror_survived') : t('battle.target_reached'), '#4ecdc4');
@@ -1376,9 +1380,12 @@ function completeWord(): void {
       showFeedback(t('battle.mirror_first_clear'), '#8888ff');
       playSound('levelup');
     } else {
+      // 同上：必须在置 _targetReached=true 之前 capture pre-target 加速值（getTimeAcceleration
+      // 读到 true 会走 post-target cubic 分支，用 stale anchor 算出虚高的 _accelAtTarget）
+      const preTargetAccel = getTimeAcceleration(_elapsedSeconds, _isBoss);
       _targetReached = true;
       _targetReachedTime = state.time; // 记录达标时剩余时间（万物熔炉等遗物需要）
-      _accelAtTarget = getTimeAcceleration(_elapsedSeconds, _isBoss);
+      _accelAtTarget = preTargetAccel;
       _elapsedAtTarget = _elapsedSeconds;
       getElements().container.classList.add('glow-target-reached');
       showFeedback(getMirrorPhase() === 'done' && isModifierActive('boss_mirror') ? t('battle.mirror_survived') : t('battle.target_reached'), '#4ecdc4');
@@ -1560,11 +1567,13 @@ function showGoldReward(onComplete: () => void): void {
     catch { return 'OP. PRIMATE-7842'; }
   })();
   const headerEl = document.getElementById('ct-header');
+  // 日期戳：年份打码（████），月·日跟当天同步；header 与下方 BATCH 行共用
+  const _ttNow = new Date();
+  const _ttDateStamp = `████·${String(_ttNow.getMonth() + 1).padStart(2, '0')}·${String(_ttNow.getDate()).padStart(2, '0')}`;
   if (headerEl) {
-    const d = new Date();
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    headerEl.textContent = t('tt.settle_header', { workerId, date: '1962·11·23', time: `${hh}:${mm}` });
+    const hh = String(_ttNow.getHours()).padStart(2, '0');
+    const mm = String(_ttNow.getMinutes()).padStart(2, '0');
+    headerEl.textContent = t('tt.settle_header', { workerId, date: _ttDateStamp, time: `${hh}:${mm}` });
   }
 
   // 构造 line script（单 sources of truth：base/skill/relic + 可选 bonuses）
@@ -1583,7 +1592,7 @@ function showGoldReward(onComplete: () => void): void {
   type Line = { text: string; cls?: string; charSpeed: number; holdAfter?: number };
   const script: Line[] = [];
   script.push({ text: t('tt.settle_processed', { n: dlevel, type: stageBracket }),       charSpeed: 16, holdAfter: 200 });
-  script.push({ text: t('tt.settle_batch_line', { cycle: state.cycle, date: '1962·11·23' }), charSpeed: 12, holdAfter: 350 });
+  script.push({ text: t('tt.settle_batch_line', { cycle: state.cycle, date: _ttDateStamp }), charSpeed: 12, holdAfter: 350 });
   script.push({ text: '',                                                                charSpeed: 0,  holdAfter: 180 });
   script.push({ text: t('tt.settle_breakdown_header'),                                   cls: 'divider', charSpeed: 5,  holdAfter: 250 });
   script.push({ text: dotsLine(baseLabel, baseGold),                                     charSpeed: 8,  holdAfter: 150 });
@@ -2166,6 +2175,8 @@ export async function startLevel(): Promise<void> {
   state.overkill = 0;
   _targetReached = false; // Story 42.2: 每关重置达标标志
   _targetReachedTime = 0;
+  _accelAtTarget = 1.0;   // post-target cubic 分支的 anchor，需随 _targetReached 一起回基线
+  _elapsedAtTarget = 0;
   _elapsedSeconds = 0; // Story 42.4: 每关重置已流逝时间
   _lastAccelText = ''; // Story 42.4: 重置倍率显示缓存
 

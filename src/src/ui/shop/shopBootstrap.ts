@@ -130,15 +130,21 @@ export function proceedSubmit(): void {
   const transition = (): void => {
     if (transitioned) return;
     transitioned = true;
+    // 自我消费：第一次触发（animationend 或 fallback 任一）就 cancel pending timer，
+    // 让 restoreFromPreview / resetPreviewSession 看到 null 时不重复 cancel
+    if (previewState.submitFallbackTimerId !== null) {
+      clearTimeout(previewState.submitFallbackTimerId);
+      previewState.submitFallbackTimerId = null;
+    }
     executeSubmitTransition(overlay);
   };
   if (overlay) {
     overlay.addEventListener('animationend', transition, { once: true });
     // animationend fallback（tab 离开 / reduced-motion / 浏览器 throttle）
-    setTimeout(transition, SUBMIT_STAMP_FALLBACK_MS);
+    previewState.submitFallbackTimerId = setTimeout(transition, SUBMIT_STAMP_FALLBACK_MS);
   } else {
     // overlay 创建失败（DOM 不在）— 直接 transition
-    setTimeout(transition, 0);
+    previewState.submitFallbackTimerId = setTimeout(transition, 0);
   }
 }
 
@@ -483,6 +489,16 @@ function hideAllRealScreens(): void {
 
 function restoreFromPreview(): void {
   previewState.active = false;
+  // SUBMIT 流程残留清理：用户在 warn-bindings/warn-inbox prompt 未答 Y/N 就 ESC 退出，
+  // 或 stamp 动画途中退出；不清的话下次进店 triggerSubmit 被自身守卫 short-circuit，
+  // pending fallback timer 也会在新 session 期间 stale fire 把关卡推前
+  previewState.pendingSubmit = null;
+  previewState.submitting = false;
+  if (previewState.submitFallbackTimerId !== null) {
+    clearTimeout(previewState.submitFallbackTimerId);
+    previewState.submitFallbackTimerId = null;
+  }
+  document.querySelector('.submit-stamp-overlay')?.remove();
   document.body.classList.remove('shop-preview-active');
   clearShapePlacementOnWorkbench();
   // Story 60.9: 退出 terminal 商店时关掉残留 tooltip + 清掉 dragStart 回调防泄漏

@@ -362,6 +362,15 @@ function setupDeskMenu(): void {
     setInterval(tick, 1000);
   }
 
+  // 打卡日期戳：年份打码（████），月·日跟当天同步
+  const punchDateEl = document.getElementById('menu-punch-date');
+  if (punchDateEl) {
+    const d = new Date();
+    const MM = String(d.getMonth() + 1).padStart(2, '0');
+    const DD = String(d.getDate()).padStart(2, '0');
+    punchDateEl.textContent = `████·${MM}·${DD}`;
+  }
+
   // 工号显示初始化（从 localStorage 读取上次的工号 → 拆出后缀填入输入框）
   const applicantIdEl = document.getElementById('punch-applicant-id');
   const storedFull = localStorage.getItem(WORKER_ID_STORAGE_KEY);

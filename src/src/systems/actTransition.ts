@@ -24,7 +24,10 @@ export function showActTransition(actNum: number): Promise<void> {
       const d = new Date()
       const hh = String(d.getHours()).padStart(2, '0')
       const mm = String(d.getMinutes()).padStart(2, '0')
-      headerEl.textContent = t('tt.cycle_header', { date: '1962·11·23', time: `${hh}:${mm}` })
+      const MM = String(d.getMonth() + 1).padStart(2, '0')
+      const DD = String(d.getDate()).padStart(2, '0')
+      // 年份打码，月·日跟当天同步
+      headerEl.textContent = t('tt.cycle_header', { date: `████·${MM}·${DD}`, time: `${hh}:${mm}` })
     }
 
     goldReward.classList.remove('gold-reward-hidden', 'gold-reward-hide')
