@@ -10,6 +10,18 @@
 // 内部 §编号 / NCBI 元数据**待定**保留度——当前默认 fictional化（"非人类输入模型组 §M-XXX"
 // 替代 specific NCBI Taxonomy IDs）。可在 production decision 阶段切换到 specific public-domain
 // references（NCBI IDs / Linnean names）若 lore 深度需要。
+//
+// MOKO 协议 historical lineage（§5.4.1 LOCKED）：
+//   [1] 1960s-70s · Manual ASL 训练（Washoe / Nim 等 · 无 attribution 颗粒度）
+//   [2] 1971+ · Lexigram Keyboard（LANA 等 · 每键 = 1 fixed lexigram · per-keystroke attribution）
+//   [3] 1990s+ · MOKO Modular Sticker Keyboard（标准 typewriter + 可重配置 stickers ·
+//                                                per-keystroke + per-config attribution）
+//
+// MOKO Modular innovation 的 horror gain：
+//   - LANA chimp = 被动 lexigram-emitter（不能改配置）
+//   - MOKO worker = 主动配置自己 attribution profile 的 lexigram-emitter
+//   - 演化方向是 attribution 颗粒度，不是玩家赋权
+//   - 玩家"配 build" = 一次 administrative 重配置 record，M5 firewall 收益最大
 
 // ─── 7 类目色码（archive-aged 旧气调 · 与 D13 美学契合）───
 

@@ -483,7 +483,22 @@ Attribution 路径（独立平行 · 与诱降无因果）
 └─────────────────────────────────────────┘
 ```
 
-**双层 horror echo**：和 Project Nim / Kanzi / Washoe 等真实灵长类语言研究项目对照——研究主体（chimp/bonobo）只看到 surface signs/lexigrams，不知道自己背后被分类为 NCBI 物种、被分配 catalog ID、被记录 frequency stats。**玩家与研究 chimp subject 认知地位完全平行**。Ch.4 L4 codex reveal 时玩家才发现自己一直被打了同等 administrative 标签。
+**双层 horror echo**：和 Project Nim / LANA / Kanzi / Washoe 等真实灵长类语言研究项目对照——研究主体（chimp/bonobo）只看到 surface signs/lexigrams，不知道自己背后被分类为 NCBI 物种、被分配 catalog ID、被记录 frequency stats。**玩家与研究 chimp subject 认知地位完全平行**。Ch.4 L4 codex reveal 时玩家才发现自己一直被打了同等 administrative 标签。
+
+**MOKO vs LANA · Modular Sticker Innovation 的 horror gain**（v4.1-late 关键 framing）：
+
+| 维度 | LANA 1971 chimp | MOKO 现代 worker |
+|---|---|---|
+| 键盘 | 每键 fixed lexigram | 标准键盘 + 可重配置 stickers |
+| Sticker config | 出厂 fixed | **玩家自己贴 / 申请发放** |
+| Same key 不同时刻含义 | 永远相同 | 取决于当前 sticker 配置 |
+| Attribution 基础 | (subject, key) | (subject, key, **current_sticker_config**, **timestamp**) |
+| Sticker 替换 = | (不存在) | M5 admin "配置变更 event" record |
+| 主体角色 | **被动** lexigram-emitter | **主动配置自己 attribution profile** 的 lexigram-emitter |
+
+**Modular sticker 是 MOKO 的"创新点"**——但本质是 **administrative attribution 颗粒度精细化**，不是 ergonomic 改进。M5 firewall 收益最大：玩家每次"配 build" / "换 skill" = 一次 administrative 重配置 record · M5 越来越精确地知道这个工号在每个时刻 emit 了什么 meaning。
+
+→ 这正好对齐 §2.6 "技能 = administrative GPS / post-hoc attribution insurance" framing——modular 让 MOKO 的 attribution **比 LANA 更精确**。**演化方向是 attribution 颗粒度**，不是任何对玩家的赋权。
 
 ###### Visual System · 完全原创（借鉴 Yerkish 设计概念但全自创）
 
@@ -571,8 +586,13 @@ L3（修改者可见）：
 
 L4（作者可见）：
   原始登记：MOKO 协议 1986-XX-XX 修订版。
-  GLOSS [BITE] 借鉴 1970s 灵长类语言研究协议（具体研究项目档案
-  已封存）。生物学行为锚点：威吓性张口动作。
+  GLOSS [BITE] 借鉴 1970s 灵长类语言研究协议；具体经历三次协议代际：
+    [1] 1960s-70s manual ASL（无 attribution 颗粒度 · 整体身体动作）
+    [2] 1971+ fixed lexigram keyboard（per-keystroke attribution）
+    [3] 1990s+ modular sticker keyboard（per-keystroke + per-config attribution）
+  Subject [玩家工号] 当前所在阶段：MOKO modular protocol（attribution 颗粒度
+  最精细的代际）。
+  生物学行为锚点：威吓性张口动作。
   对照样本 species reference: 非人类输入模型组 §M-XXX。
   Subject [玩家工号] 经手注：[runtime 替换 PL-5 NarrativeArchive]
 ```
@@ -2189,24 +2209,36 @@ DPCA Genesis lore **不应在任何地方 explicit 显化**——它是 B8 的 u
 
 ### 5.4.1 MOKO 的源头
 
-**MOKO ≠ DPCA 设计**。MOKO 是 inherit 自 1970s 灵长类语言研究协议（含 Project Nim 等同期项目）：
+**MOKO ≠ DPCA 设计**。MOKO 是 inherit 自 1970s 灵长类语言研究协议（含 Project Nim / LANA 等同期项目），经历 **3 代协议演化**：
 
 ```
-1970s 灵长类 ASL 训练协议
+[1] 1960s-70s · Manual ASL 训练
         ↓
-    研究主体习得若干 ASL 手势（real history · 具体项目档案已封存）
+    研究主体习得若干 ASL 手势（含 Washoe / Nim 等项目）
+    无 fine-grained attribution · 每次"对话" = 整体身体动作
+    具体项目档案已封存。
         ↓
 1980s anomaly 借 ASL channel emerge
         ↓
     研究员发现 ASL 训练模式中的 emergent text 部分"成立"
         ↓
-1990s 协议改造
+[2] 1971+ · Lexigram Keyboard 协议（LANA 等同期项目）
         ↓
-    把"灵长类受训手势协议"改造为"灵长类受训打字协议"
-    （因为研究主体不能 type，但人类可以；保留协议结构）
+    每键 = 1 fixed lexigram · 按键 = 直接 emit lexigram
+    Attribution 颗粒度提升：每按键 = 1 record
+    BUT lexigram-key 1:1 fixed · 主体不可重配
         ↓
-现代 MOKO
+[3] 1990s+ · MOKO Modular Sticker Keyboard 协议改造
+        ↓
+    从 "fixed lexigram keyboard" 改造为 "modular sticker keyboard"
+    （研究主体不能 reconfigure，但人类员工可以；保留协议结构 + 加 reconfiguration 层）
+    Stickers 由 envelope 行政发放 · 贴在标准 typewriter key 上 · 可重配置
+    Attribution 颗粒度再升：(keystroke + sticker_config_at_time) per record
+        ↓
+现代 MOKO（M4 安全部门旗下）
 ```
+
+**演化方向是 attribution 颗粒度**——每代协议改造都让 administrative 记录更精细，不是任何对研究主体 / 员工的赋权。MOKO 是这条线的 current state-of-the-art。
 
 ### 5.4.2 MOKO 的 horror 含义
 
