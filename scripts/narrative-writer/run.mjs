@@ -51,6 +51,8 @@ function parseArgs() {
     batchSize: 5,
     dryRun: false,
     apply: false,
+    count: null,        // v4.1 batch · standalone types 生成 N 个
+    maxCalls: null,     // v4.1 安全闸门 · 默认 5（apply 模式）/ Infinity（dry-run）
   }
 
   for (let i = 0; i < args.length; i++) {
@@ -75,6 +77,10 @@ function parseArgs() {
         opts.dryRun = true; break
       case '--apply':
         opts.apply = true; break
+      case '--count':
+        opts.count = parseInt(args[++i], 10); break
+      case '--max-calls':
+        opts.maxCalls = parseInt(args[++i], 10); break
       case '--help': case '-h':
         printHelp(); process.exit(0)
       default:
@@ -912,6 +918,95 @@ async function validateAndReview(client, fragments, voice, opts, { objects, type
 // 当 --voice V[1-7] 时绕过 v3.1 generation pipeline，走 buildPromptForVoice。
 // 目前 dry-run 模式只 print prompt + schema；实际 LLM 调用 / batch / ingest 在 Phase E。
 
+// ─── generateOneV41 · 单个 entry 生成（被 mainV41 单 / batch 复用）───
+
+async function generateOneV41(client, voice, type, target, context, opts) {
+  const userPrompt = buildPromptForVoice(voice, type, target, context)
+  const schema = VOICE_SCHEMAS_V41[voice]
+  if (!schema) throw new Error(`no schema for voice ${voice}`)
+
+  const label = `v4.1/${voice}/${type}/${target.id || 'synthetic'}`
+  const { data: parsed, truncated } = await callClaudeStructured(
+    client,
+    { system: { cached: SYSTEM_CONTEXT, extra: undefined }, user: userPrompt },
+    label,
+    opts.model,
+    schema,
+  )
+  if (!parsed) return { passed: false, errors: ['LLM 返回 null / 解析失败'], envelope: null }
+
+  const { validateFragmentV41 } = await import('./validators/index.mjs')
+  const validation = validateFragmentV41(parsed, voice, { context: 'narrative_flavor' })
+
+  const envelope = {
+    schema_version: 'v4.1',
+    type,
+    id: target.id || 'synthetic',
+    voice,
+    metadata: {
+      generated_at: new Date().toISOString(),
+      model_used: opts.model,
+      validators_passed: validation.passed,
+      validators_errors: validation.errors,
+      truncated,
+      context,
+    },
+    content: parsed,
+  }
+
+  return { passed: validation.passed, errors: validation.errors, envelope }
+}
+
+// ─── generateBatchV41 · standalone types（handbook / charDrift / etc.）按 --count N ───
+//
+// 不同 entry 用不同 context（rotating section_ref / chapter）保证多样性。
+// section_ref 自动避开已用编号（004/008/014/022/027/044/087/122/144 已 seeded）。
+
+const SEEDED_SECTION_REFS = new Set(['§003', '§008', '§014', '§022', '§027', '§044', '§087', '§122', '§144'])
+
+function suggestSectionRef(index) {
+  // 找 010-200 区间未占用编号
+  let candidate = 10 + index * 7  // step 7 stagger
+  while (SEEDED_SECTION_REFS.has(`§${String(candidate).padStart(3, '0')}`)) {
+    candidate += 1
+  }
+  return `§${String(candidate).padStart(3, '0')}`
+}
+
+function generateContextForBatchEntry(voice, type, index, opts) {
+  const baseCtx = {
+    chapter: opts.chapter || null,
+    cycle: opts.cycle || null,
+    section_ref: opts.sectionRef || null,
+    references_position: opts.refPos || null,
+    valid_from_chapter: opts.fromChapter || null,
+    chapter_target: opts.chapterTarget || null,
+    item_id: opts.itemId || null,
+    degradation_state: opts.degState || null,
+    channel: opts.channel || null,
+    length_class: opts.lengthClass || null,
+    sentiment: opts.sentiment || null,
+  }
+  // V5 handbook plain：rotating section_ref + plain state
+  if (voice === 'V5' && type === 'handbook' && !baseCtx.section_ref) {
+    baseCtx.section_ref = suggestSectionRef(index)
+  }
+  // V6 bossTooltip：rotating chapter_target (3/4/5)
+  if (voice === 'V6' && type === 'bossTooltip' && !baseCtx.chapter_target) {
+    baseCtx.chapter_target = 3 + (index % 3)
+  }
+  // V4 D29：rotating item_id × degradation_state
+  if (voice === 'V4' && !baseCtx.item_id) {
+    const items = ['mask', 'name', 'date', 'sentence', 'distinction']
+    const states = ['routine', 'partial_fail', 'auto_fail']
+    baseCtx.item_id = items[index % items.length]
+    baseCtx.degradation_state = baseCtx.degradation_state || states[Math.floor(index / items.length) % states.length]
+  }
+  return baseCtx
+}
+
+// ─── mainV41 · 单 / batch 统一入口 ───
+
 async function mainV41(opts) {
   // v4.1 安全默认：除非 --apply 显式声明，否则强制 dry-run（防止意外消耗 API）
   if (!opts.apply && !opts.dryRun) {
@@ -928,7 +1023,6 @@ async function mainV41(opts) {
   console.log(`\n  voice: ${voice} (${VOICES_V41[voice.replace('_pair', '')]?.label || voice})`)
   console.log(`  type:  ${type}`)
 
-  // 验证 type 在 VOICE_TYPE_MAP_V41 内
   const typeCfg = VOICE_TYPE_MAP_V41[type]
   if (!typeCfg) {
     console.error(`\n  ❌ type "${type}" 不在 VOICE_TYPE_MAP_V41 中`)
@@ -940,123 +1034,135 @@ async function mainV41(opts) {
     console.warn(`  ⚠️  voice ${voice} 不在 type ${type} 的 primary/secondary（允许: ${allowedVoices.join(', ')}）—— 仍生成`)
   }
 
-  // 取目标对象（如 --id 提供）；v4.1 中 obj 找不到一律 fallback 到 synthetic
-  let target = null
-  if (opts.id) {
-    target = getObject(type, opts.id)
-  }
-  if (!target) {
-    target = {
-      id: opts.id || `${type}_dryrun`,
+  // 决定 batch 模式
+  // - --all + object-bearing type (relic/affix/...) → 取 getAllObjects(type)
+  // - --count N + standalone type (handbook/charDrift/...) → 生成 N 个 synthetic targets
+  // - 默认（单 entry）→ --id 或 synthetic
+  const isStandalone = V41_STANDALONE_TYPES.has(type)
+  let targets = []
+
+  if (opts.all && !isStandalone) {
+    const all = getAllObjects(type)
+    if (all.length === 0) {
+      console.error(`\n  ❌ ${type} 无 obj 数据；--all 不适用`)
+      process.exit(1)
+    }
+    targets = all
+    console.log(`  Mode: --all · ${targets.length} obj`)
+  } else if (opts.count && opts.count > 1) {
+    targets = Array.from({ length: opts.count }, (_, i) => ({
+      id: `${type}_${i + 1}`,
       type,
       _synthetic: true,
-      hint: `v4.1 ${type} · pipeline 自行决定 ${type} 内容范围`,
+      hint: `batch entry ${i + 1}/${opts.count}`,
+    }))
+    console.log(`  Mode: --count ${opts.count} · ${targets.length} synthetic targets`)
+  } else {
+    let target = null
+    if (opts.id) target = getObject(type, opts.id)
+    if (!target) {
+      target = {
+        id: opts.id || `${type}_dryrun`,
+        type,
+        _synthetic: true,
+        hint: `single entry`,
+      }
     }
+    targets = [target]
+    console.log(`  Mode: single entry`)
   }
 
-  // context（B Phase 简化版；Phase C/E 会扩展）
-  const context = {
-    chapter: opts.chapter || null,
-    cycle: opts.cycle || null,
-    section_ref: opts.sectionRef || null,
-    references_position: opts.refPos || null,
-    valid_from_chapter: opts.fromChapter || null,
-    chapter_target: opts.chapterTarget || null,
-    item_id: opts.itemId || null,
-    degradation_state: opts.degState || null,
-    channel: opts.channel || null,
-    length_class: opts.lengthClass || null,
-    sentiment: opts.sentiment || null,
-  }
-
-  // 构造 prompt
-  const userPrompt = buildPromptForVoice(voice, type, target, context)
-  const schema = VOICE_SCHEMAS_V41[voice]
-
-  if (!schema) {
-    console.error(`  ❌ no schema for voice ${voice}`)
+  // 安全闸门：--apply 模式下默认 max-calls 5
+  const maxCalls = opts.maxCalls || (opts.apply ? 5 : Infinity)
+  if (targets.length > maxCalls) {
+    console.error(`\n  ❌ ${targets.length} entries > max-calls ${maxCalls}`)
+    console.error(`  加 --max-calls N 显式提高上限（防止意外消耗）`)
     process.exit(1)
   }
 
+  console.log()
+
+  // dry-run：单 entry 显示完整 prompt；batch 仅显示 1 sample
   if (opts.dryRun) {
-    console.log('\n' + '━'.repeat(60))
-    console.log('  [DRY RUN] System prompt: SYSTEM_CONTEXT (cached, ' + SYSTEM_CONTEXT.length + ' chars)')
+    const sample = targets[0]
+    const ctx = generateContextForBatchEntry(voice, type, 0, opts)
+    const userPrompt = buildPromptForVoice(voice, type, sample, ctx)
+    const schema = VOICE_SCHEMAS_V41[voice]
     console.log('━'.repeat(60))
-    console.log('\n  [DRY RUN] User prompt:')
+    console.log(`  [DRY RUN] System prompt: SYSTEM_CONTEXT (cached, ${SYSTEM_CONTEXT.length} chars)`)
+    console.log(`  [DRY RUN] Targets: ${targets.length}`)
     console.log('━'.repeat(60))
-    console.log(userPrompt)
+    console.log('\n  [DRY RUN] User prompt (sample · target 1):')
     console.log('━'.repeat(60))
-    console.log('\n  [DRY RUN] Output schema:')
-    console.log(JSON.stringify(schema, null, 2))
-    console.log('\n  [DRY RUN] (--apply 实际触发 LLM call)')
+    console.log(userPrompt.length > 2000 ? userPrompt.slice(0, 2000) + '\n... (truncated for display)' : userPrompt)
+    console.log('━'.repeat(60))
+    if (targets.length > 1) {
+      console.log(`\n  [DRY RUN] Other targets context preview:`)
+      for (let i = 1; i < Math.min(targets.length, 5); i++) {
+        const c = generateContextForBatchEntry(voice, type, i, opts)
+        console.log(`    ${i + 1}: id=${targets[i].id} ${c.section_ref ? `section=${c.section_ref}` : ''}${c.chapter_target ? ` chapter=${c.chapter_target}` : ''}${c.item_id ? ` item=${c.item_id}/${c.degradation_state}` : ''}`)
+      }
+      if (targets.length > 5) console.log(`    ... ${targets.length - 5} more`)
+    }
+    console.log('\n  [DRY RUN] (--apply 实际触发 LLM call · 预计成本 ~$' + (targets.length * 0.01).toFixed(2) + ' assuming sonnet-4-6 + cache hit)')
     return
   }
 
-  // ─── 实际 LLM 调用 (Phase E) ───
+  // ─── 实跑 batch ───
   const client = createClient()
-  const label = `v4.1/${voice}/${type}/${target.id || 'synthetic'}`
+  const startTime = Date.now()
+  const results = []
 
-  const { data: parsed, truncated } = await callClaudeStructured(
-    client,
-    {
-      system: { cached: SYSTEM_CONTEXT, extra: undefined },
-      user: userPrompt,
-    },
-    label,
-    opts.model,
-    schema,
-  )
+  for (let i = 0; i < targets.length; i++) {
+    const target = targets[i]
+    const ctx = generateContextForBatchEntry(voice, type, i, opts)
+    console.log('━'.repeat(60))
+    console.log(`  Entry ${i + 1}/${targets.length} · ${target.id} ${ctx.section_ref ? `· ${ctx.section_ref}` : ''}${ctx.chapter_target ? ` · Ch.${ctx.chapter_target}` : ''}`)
+    console.log('━'.repeat(60))
 
-  if (!parsed) {
-    console.error(`\n  ❌ LLM 返回 null / 解析失败`)
-    process.exit(1)
+    try {
+      const result = await generateOneV41(client, voice, type, target, ctx, opts)
+      results.push({ target, ctx, ...result })
+      if (result.passed) {
+        console.log(`  ✅ ${target.id}`)
+      } else {
+        console.log(`  ⚠️  ${target.id} · ${result.errors.length} validator error(s):`)
+        for (const e of result.errors) console.log(`      ${e}`)
+      }
+    } catch (err) {
+      console.error(`  ❌ ${target.id} · ${err.message}`)
+      results.push({ target, ctx, passed: false, errors: [err.message], envelope: null })
+    }
   }
 
-  // ─── 验证 (validators v4.1) ───
-  const { validateFragmentV41 } = await import('./validators/index.mjs')
-  const validation = validateFragmentV41(parsed, voice, { context: 'narrative_flavor' })
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+  const passedCount = results.filter(r => r.passed).length
+  const failedCount = results.length - passedCount
 
-  console.log('\n' + '━'.repeat(60))
-  console.log('  Validators check')
-  console.log('━'.repeat(60))
-  if (validation.passed) {
-    console.log('  ✅ All validators pass')
-  } else {
-    console.log(`  ⚠️  ${validation.errors.length} validator error(s):`)
-    for (const e of validation.errors) console.log(`      ${e}`)
-    console.log('  (输出仍写入；可用 --check / 重跑修复)')
-  }
-
-  // ─── 写入 output JSON ───
+  // ─── 写 batch JSON ───
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-  const safeId = (target.id || 'synthetic').replace(/[^a-zA-Z0-9_-]/g, '_')
-  const filename = `${timestamp}-v41-${voice}-${type}-${safeId}-approved.json`
+  const filename = targets.length === 1
+    ? `${timestamp}-v41-${voice}-${type}-${(targets[0].id || 'synthetic').replace(/[^a-zA-Z0-9_-]/g, '_')}-approved.json`
+    : `${timestamp}-v41-batch-${voice}-${type}-${targets.length}-approved.json`
   const outputPath = join(OUTPUT_DIR, filename)
   if (!existsSync(OUTPUT_DIR)) mkdirSync(OUTPUT_DIR, { recursive: true })
 
-  const envelope = {
-    schema_version: 'v4.1',
-    type,
-    id: target.id || 'synthetic',
-    voice,
-    metadata: {
-      generated_at: new Date().toISOString(),
-      model_used: opts.model,
-      validators_passed: validation.passed,
-      validators_errors: validation.errors,
-      truncated,
-    },
-    content: parsed,
-  }
-  writeFileSync(outputPath, JSON.stringify(envelope, null, 2), 'utf-8')
+  const batchEnvelope = targets.length === 1
+    ? results[0].envelope
+    : results.filter(r => r.envelope).map(r => r.envelope)
+  writeFileSync(outputPath, JSON.stringify(batchEnvelope, null, 2), 'utf-8')
 
-  console.log('\n' + '━'.repeat(60))
-  console.log('  Output written')
-  console.log('━'.repeat(60))
-  console.log(`  ${outputPath}`)
   console.log()
-  console.log('  Content preview:')
-  console.log(JSON.stringify(parsed, null, 2).slice(0, 800) + (JSON.stringify(parsed, null, 2).length > 800 ? '\n  ...(truncated for display)' : ''))
+  console.log('═'.repeat(60))
+  console.log(`  Batch summary · ${elapsed}s · ${passedCount}/${targets.length} passed${failedCount ? ` (${failedCount} failed)` : ''}`)
+  console.log('═'.repeat(60))
+  console.log(`  Output: ${outputPath}`)
+  if (targets.length === 1 && results[0].envelope) {
+    console.log()
+    console.log('  Content preview:')
+    const preview = JSON.stringify(results[0].envelope.content, null, 2)
+    console.log(preview.length > 600 ? preview.slice(0, 600) + '\n  ...(truncated)' : preview)
+  }
 }
 
 async function main() {

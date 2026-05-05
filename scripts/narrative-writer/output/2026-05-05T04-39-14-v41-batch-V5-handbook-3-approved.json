@@ -1,0 +1,155 @@
+[
+  {
+    "schema_version": "v4.1",
+    "type": "handbook",
+    "id": "handbook_1",
+    "voice": "V5",
+    "metadata": {
+      "generated_at": "2026-05-05T04:38:50.427Z",
+      "model_used": "claude-sonnet-4-6",
+      "validators_passed": true,
+      "validators_errors": [],
+      "truncated": false,
+      "context": {
+        "chapter": null,
+        "cycle": null,
+        "section_ref": "§010",
+        "references_position": null,
+        "valid_from_chapter": null,
+        "chapter_target": null,
+        "item_id": null,
+        "degradation_state": null,
+        "channel": null,
+        "length_class": null,
+        "sentiment": null
+      }
+    },
+    "content": {
+      "section_ref": "§010",
+      "references_position": "none",
+      "L1_recorder": {
+        "text_zh": "守则 010：录入作业期间，员工须保持双手置于指定键位。离位前完成当前词条。",
+        "text_en": "Rule 010: During entry operations, employees shall keep both hands on designated keys. Complete the current entry before leaving the workstation.",
+        "anomaly_signal_density": 0
+      },
+      "L2_proofreader": {
+        "text_zh": "守则 010 注：本条经编校组复核，归档状态：完整。参见 §009 手部归位流程及 §011 词条结算节点。",
+        "text_en": "Rule 010 note: Reviewed by Editorial Section. Filing status: complete. Cross-reference §009 hand-return procedure and §011 entry settlement point.",
+        "anomaly_signal_density": 0.1
+      },
+      "L3_reviser": {
+        "text_zh": "守则 010 备忘：部分经手词条在离位记录缺失情况下仍显示为已完成。行为档案处建议补充确认双手在位时段与词条受理时间戳之间的对应关系。尚未归入基础守则正文。",
+        "text_en": "Rule 010 memo: Certain entries show completion status despite missing departure logs. Behaviour Records recommends supplementing confirmation of in-position intervals against entry acceptance timestamps. Not yet incorporated into main text.",
+        "anomaly_signal_density": 0.35
+      },
+      "L4_author": {
+        "text_zh": "守则原始来源注记：本条源自受理窗口事件后续整理，17:06 段记录显示词条在无操作员在位状态下完成录入。原始档案注明",
+        "text_en": "Rule origin note: This entry derives from post-acceptance-interval consolidation. The 17:06 segment log shows entries completed with no operator recorded at the workstation. Original archive notes: source designation left blank. Filed under UTF-7-441-B supplementary.",
+        "anomaly_signal_density": 0.65
+      },
+      "state": "plain"
+    }
+  },
+  {
+    "schema_version": "v4.1",
+    "type": "handbook",
+    "id": "handbook_2",
+    "voice": "V5",
+    "metadata": {
+      "generated_at": "2026-05-05T04:39:02.287Z",
+      "model_used": "claude-sonnet-4-6",
+      "validators_passed": true,
+      "validators_errors": [],
+      "truncated": false,
+      "context": {
+        "chapter": null,
+        "cycle": null,
+        "section_ref": "§017",
+        "references_position": null,
+        "valid_from_chapter": null,
+        "chapter_target": null,
+        "item_id": null,
+        "degradation_state": null,
+        "channel": null,
+        "length_class": null,
+        "sentiment": null
+      }
+    },
+    "content": {
+      "section_ref": "§017",
+      "references_position": "none",
+      "L1_recorder": {
+        "text_zh": "守则 017：词条录入完成后，员工须停笔等待送纸。未经送纸确认不得翻页。",
+        "text_en": "Rule 017: Upon completing entry of a word, the employee must pause and await paper feed confirmation before turning the page.",
+        "anomaly_signal_density": 0
+      },
+      "L2_proofreader": {
+        "text_zh": "守则 017 注：本条已与流程 §016、§018 交叉核验，无出入。送纸确认格式见附录 B（附录 B 存档状态：待调阅）。",
+        "text_en": "Rule 017 note: Cross-referenced against §016 and §018. No discrepancy recorded. Feed confirmation format see Appendix B (Appendix B retrieval status: pending).",
+        "anomaly_signal_density": 0.1
+      },
+      "L3_reviser": {
+        "text_zh": "守则 017 内部备忘：附录 B 已于上一归档周期列为封存件，原因未注明。送纸动作记录显示，部分工位在无员工在场的情况下触发了送纸确认。相关经手记录已移交行为档案处。",
+        "text_en": "Rule 017 internal memo: Appendix B was classified as sealed during the previous filing cycle; reason not noted. Feed confirmation logs indicate the action was triggered at certain workstations with no employee present. Related records transferred to Behaviour Archive Division.",
+        "anomaly_signal_density": 0.35
+      },
+      "L4_author": {
+        "text_zh": "守则原始来源：送纸确认流程设立于第七打字室独立运作之前。早期记录中，",
+        "text_en": "Rule origin: The feed confirmation protocol predates the independent operation of Room Seven. Early records describe the confirmation interval as a period during which the page had not yet decided whether to receive the entry.",
+        "anomaly_signal_density": 0.6
+      },
+      "state": "plain"
+    }
+  },
+  {
+    "schema_version": "v4.1",
+    "type": "handbook",
+    "id": "handbook_3",
+    "voice": "V5",
+    "metadata": {
+      "generated_at": "2026-05-05T04:39:14.499Z",
+      "model_used": "claude-sonnet-4-6",
+      "validators_passed": true,
+      "validators_errors": [],
+      "truncated": false,
+      "context": {
+        "chapter": null,
+        "cycle": null,
+        "section_ref": "§024",
+        "references_position": null,
+        "valid_from_chapter": null,
+        "chapter_target": null,
+        "item_id": null,
+        "degradation_state": null,
+        "channel": null,
+        "length_class": null,
+        "sentiment": null
+      }
+    },
+    "content": {
+      "section_ref": "§024",
+      "references_position": "none",
+      "L1_recorder": {
+        "text_zh": "守则 024：词条录入完成后，员工应将双手置于桌面，等待下一批次分发。",
+        "text_en": "Rule 024: Upon completing entry of a word, the employee shall place both hands on the desk surface and await distribution of the next batch.",
+        "anomaly_signal_density": 0
+      },
+      "L2_proofreader": {
+        "text_zh": "守则 024 注：本条经编校组复核，标点规范已确认。请参照 §025 关于批次间隔的相关说明。",
+        "text_en": "Rule 024 note: Reviewed by the editorial unit; punctuation standards confirmed. Cross-reference §025 regarding inter-batch intervals.",
+        "anomaly_signal_density": 0.1
+      },
+      "L3_reviser": {
+        "text_zh": "守则 024 附记：部分员工反映批次间隔期间手部出现不受控击键动作。相关记录已移交行为档案处。本条守则已确认无需修订。",
+        "text_en": "Rule 024 addendum: Several employees reported involuntary keystroke movements during inter-batch intervals. Records forwarded to the Behaviour Archive Division. This rule confirmed requiring no revision.",
+        "anomaly_signal_density": 0.35
+      },
+      "L4_author": {
+        "text_zh": "守则 024 来源备注：原始条款拟定于第七打字室独立设室前。当时记录显示，「等待」期间产生的击键记录曾被归入候选文本类别，后经词包化处理封存。封存编号 UTF-7-024-W。",
+        "text_en": "Rule 024 origin note: Original clause drafted prior to the establishment of Room Seven as an independent unit. Records from that period indicate keystrokes logged during 'waiting' intervals were classified as candidate text, subsequently archived via decontextualisation. Archive ref. UTF-7-024-W.",
+        "anomaly_signal_density": 0.62
+      },
+      "state": "plain"
+    }
+  }
+]
