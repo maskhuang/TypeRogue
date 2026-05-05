@@ -16,12 +16,25 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
-import { VOICE_MAP, OUTPUT_DIR, NARRATIVE_OUT } from './config.mjs'
+import { VOICE_MAP, OUTPUT_DIR, NARRATIVE_OUT, VOICE_TYPE_MAP_V41, VOICES_V41 } from './config.mjs'
 import { SYSTEM_CONTEXT } from './prompts/system-context.mjs'
-import { buildUserPrompt, buildBatchPrompt } from './prompts/voices.mjs'
+import { buildUserPrompt, buildBatchPrompt, buildPromptForVoice } from './prompts/voices.mjs'
+import { VOICE_SCHEMAS_V41, REFLEXIVE_PLACEHOLDER_DICT } from './prompts/voice-schemas.mjs'
 import { getObject, getAllObjects, summarizeObject } from './loaders/index.mjs'
 import { validateFragment, buildReviewPrompt } from './validators/index.mjs'
 import { reviewBatch, closeUI } from './reviewer/terminal-ui.mjs'
+
+// v4.1 voice 识别（spec §3）
+const V41_VOICE_PATTERN = /^V[1-7](_pair)?$/
+function isV41Voice(voice) {
+  return typeof voice === 'string' && V41_VOICE_PATTERN.test(voice)
+}
+
+// v4.1 standalone types — 不需 --id（pipeline 自行决定生成内容）
+const V41_STANDALONE_TYPES = new Set([
+  'handbook', 'charDrift', 'environmental', 'positionDenialAffirmation',
+  'freeTypeNote', 'bossTooltip', 'tutorial',
+])
 
 // ─── CLI Parsing ───
 
@@ -73,7 +86,13 @@ function parseArgs() {
     process.exit(1)
   }
 
-  if (opts.type && !opts.all && !opts.id && !['shopnote', 'ritual', 'scriptorNotes'].includes(opts.type)) {
+  // v4.1 voice + v4.1 standalone type 不需 --id
+  const isV41 = isV41Voice(opts.voice)
+  const isV41Standalone = opts.type && V41_STANDALONE_TYPES.has(opts.type)
+
+  if (opts.type && !opts.all && !opts.id
+      && !['shopnote', 'ritual', 'scriptorNotes'].includes(opts.type)
+      && !(isV41 && isV41Standalone)) {
     console.error(`类型 ${opts.type} 需要 --id <id> 或 --all`)
     process.exit(1)
   }
@@ -885,8 +904,98 @@ async function validateAndReview(client, fragments, voice, opts, { objects, type
 
 // ─── Main ───
 
+// ─── v4.1 main path (Phase B / spec §3) ───
+//
+// 当 --voice V[1-7] 时绕过 v3.1 generation pipeline，走 buildPromptForVoice。
+// 目前 dry-run 模式只 print prompt + schema；实际 LLM 调用 / batch / ingest 在 Phase E。
+
+async function mainV41(opts) {
+  console.log('╔' + '═'.repeat(58) + '╗')
+  console.log('║   打字肉鸽 · Narrative Pipeline · v4.1 path (Phase B)   ║')
+  console.log('╚' + '═'.repeat(58) + '╝')
+
+  const voice = opts.voice
+  const type = opts.type
+  console.log(`\n  voice: ${voice} (${VOICES_V41[voice.replace('_pair', '')]?.label || voice})`)
+  console.log(`  type:  ${type}`)
+
+  // 验证 type 在 VOICE_TYPE_MAP_V41 内
+  const typeCfg = VOICE_TYPE_MAP_V41[type]
+  if (!typeCfg) {
+    console.error(`\n  ❌ type "${type}" 不在 VOICE_TYPE_MAP_V41 中`)
+    console.error(`  支持的 v4.1 types: ${Object.keys(VOICE_TYPE_MAP_V41).join(', ')}`)
+    process.exit(1)
+  }
+  const allowedVoices = [...typeCfg.primary, ...typeCfg.secondary]
+  if (!allowedVoices.includes(voice.replace('_pair', '')) && !(voice === 'V5_pair' && allowedVoices.includes('V5'))) {
+    console.warn(`  ⚠️  voice ${voice} 不在 type ${type} 的 primary/secondary（允许: ${allowedVoices.join(', ')}）—— 仍生成`)
+  }
+
+  // 取目标对象（如 --id 提供）；v4.1 中 obj 找不到一律 fallback 到 synthetic
+  let target = null
+  if (opts.id) {
+    target = getObject(type, opts.id)
+  }
+  if (!target) {
+    target = {
+      id: opts.id || `${type}_dryrun`,
+      type,
+      _synthetic: true,
+      hint: `v4.1 ${type} · pipeline 自行决定 ${type} 内容范围`,
+    }
+  }
+
+  // context（B Phase 简化版；Phase C/E 会扩展）
+  const context = {
+    chapter: opts.chapter || null,
+    cycle: opts.cycle || null,
+    section_ref: opts.sectionRef || null,
+    references_position: opts.refPos || null,
+    valid_from_chapter: opts.fromChapter || null,
+    chapter_target: opts.chapterTarget || null,
+    item_id: opts.itemId || null,
+    degradation_state: opts.degState || null,
+    channel: opts.channel || null,
+    length_class: opts.lengthClass || null,
+    sentiment: opts.sentiment || null,
+  }
+
+  // 构造 prompt
+  const userPrompt = buildPromptForVoice(voice, type, target, context)
+  const schema = VOICE_SCHEMAS_V41[voice]
+
+  if (!schema) {
+    console.error(`  ❌ no schema for voice ${voice}`)
+    process.exit(1)
+  }
+
+  if (opts.dryRun) {
+    console.log('\n' + '━'.repeat(60))
+    console.log('  [DRY RUN] System prompt: SYSTEM_CONTEXT (cached, ' + SYSTEM_CONTEXT.length + ' chars)')
+    console.log('━'.repeat(60))
+    console.log('\n  [DRY RUN] User prompt:')
+    console.log('━'.repeat(60))
+    console.log(userPrompt)
+    console.log('━'.repeat(60))
+    console.log('\n  [DRY RUN] Output schema:')
+    console.log(JSON.stringify(schema, null, 2))
+    console.log('\n  [DRY RUN] (Phase B 不调 API；Phase E 启用 batch generation)')
+    return
+  }
+
+  // 实际 LLM 调用 — 留待 Phase E
+  console.error('\n  ❌ Phase B 仅支持 --dry-run；实际 LLM 调用 / batch / ingest 在 Phase E')
+  process.exit(1)
+}
+
 async function main() {
   const opts = parseArgs()
+
+  // v4.1 path 分流（spec §3）
+  if (isV41Voice(opts.voice)) {
+    return mainV41(opts)
+  }
+
   const client = opts.dryRun ? null : createClient()
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
 
