@@ -333,6 +333,78 @@ X Company
 
 游戏里**已经存在**叫"校勘"（Proofread, AffixType.Reecho 旁的另一个 affix）的词条，目前挂在 wordsmith 下——这是又一次 v4.0 反推方法论的成功证据：前任设计已经播种了"校对者"概念。后续校对者职业落地时应考虑把 Proofread 转移到校对者 starter pool。
 
+#### 三大机制对位 · 7 部门 framework 🔒 LOCKED (v4.1-late · 2026-05-05)
+
+旧抽象 D 锚点 (D25 v2 / D18 / D26 v2 / D30) 是上层不变的; 但**每个机制的 deep meaning 必须从 7 部门 true_motive 推出**，不直接引用抽象 D。
+
+##### 词包 (wordpacks) — D1 anomaly voice 直接载体
+
+| 维度 | mapping |
+|---|---|
+| 部门 | M2 外部文本回收科 |
+| 物化 | task text · 玩家要打的词的列表 |
+| Surface | "本日任务材料" |
+| Deep | M2 deep "把异常切碎到员工无法整体理解的形态"——词包是 M2 这条 deep motive 的**核心 output** |
+| Voice | V3 anomaly fragment + V1 任务纸 boilerplate 包装 |
+
+##### 技能 (skill affixes) — keystroke→effect 操作规则
+
+| 维度 | mapping |
+|---|---|
+| 主部门 | **M3 文书实验部**（"操作规范 / 任务发放 / 现场主管"）|
+| 次级 | M4 MOKO（mechanical 触发执行）+ M5 档案归属（工号-技能配对 record）|
+| 物化 | affix-based skill triggered on keystroke patterns |
+| Surface | "员工 use skill 增产" / 战斗工具 |
+| Deep（多部门合谋）| **M3 把员工 typing throughput 细分为可计量动作模板**；MOKO/M4 维持节律执行；M5 把 attribution 注册到工号档案——三部门同时各取所需，员工是被多方收割的 throughput source |
+| 5 工种 progression | T1 基础动作模板 → T2 + 标注扩展 → T3 玩家自学修改 (PL-2) → T4 typing buffer pre-populate (PL-3) → T5 skill 失效 / anomaly 直接 emit |
+
+##### 遗物 (relics) — 11 子系统 → 5 部门发放
+
+| 子系统 | 部门 | Per-issuing-部门 deep horror |
+|---|---|---|
+| Resource / Shop / Stage | M1 人事 | 把异常处理工资化 / 时段化 |
+| Word | M2 外部回收 | 词包切碎产物的工具化 |
+| Typing / Skill / Enchantment / Topology | **M3 文书实验部** | 现场作业 throughput 收割工具 |
+| Combo | M4 安全部门 | MOKO 节律纪律 = 既防作者化又是 anomaly emit 节拍器 |
+| Boss Modifier / Scoring | M5 档案归属 | administrative liability shifting · attribution 固定在玩家工号 |
+
+**Layered footnote 三层叠加**（D31）：
+- L1 部门 surface
+- L2 cross-ref 起裂
+- L3 部门 deep motive 显化
+- L4 D18 历史档案 + D8 反身闭合 (Subject [玩家工号] 经手注) reveal
+
+##### 附魔 (enchantments) — Ritual scene 关联
+
+| 维度 | mapping |
+|---|---|
+| 主部门 | M3 文书实验部（ritual scene 附注台流程 6） |
+| 次级 | M9 红领结 secondary（诱导玩家选哪种附魔）|
+| Scene 路径 | Ritual (M3 surface) → Battle MOKO (M4 物化) |
+| Surface | "附魔仪式 / 流程 6 合规器" |
+| Deep（双层）| **M3**: 利用员工识别 + 改写能力做受控产能实验（不在意员工 wellbeing）；**M9**: 诱导玩家建立"我是作者"自我认同 |
+| 5 工种 progression | T1 不见 / T2 标注元数据 / T3 **核心机制** (PL-2 reframe = 玩家自学修改 anomaly's expression channel) / T4 退化 / T5 完全消失 |
+
+##### 其他机制 deep meaning（从部门 true_motive 推）
+
+| 机制 | 部门 | Deep |
+|---|---|---|
+| Combo | M4 | MOKO 字符层注意力维持 = 防作者化具像 + anomaly emit 节拍器（同一物两面）|
+| Boss Modifier + V6 attribution | M5 | "保护公司不是作者"的 administrative liability shifting；上一任作者 placeholder = 把责任固定在玩家身上 |
+| Cycle / Stage | M1 + M5 | M1 normalization (排班) + M5 attribution (评级) |
+| 蕉券 | M1 | 把异常处理融入员工日常工资流程 = normalization 装置 |
+| Affix species (NCBI 灵长目) | M2 | 把 anomaly emission 物种化 / 分类学层失去整体性 |
+| D29 状态确认 | M6 | 不是 keep-as-human，是**离场资格判定 sorting machine** |
+
+##### 关键 reframe 总结
+
+| 旧抽象 D 引用 | 新 7 部门 derivation |
+|---|---|
+| "anomaly 借灵长类 species protocol 表达"（D25 v2）| **词包**专属（M2 切碎 output）；技能是 M3 操作规范层，不是 anomaly 自表达 channel |
+| "DPCA 前身研究项目历史档案"（D18）| 每条 relic 的 deep horror 从 issuing 部门 true_motive 推 + D18 + D8 三层叠加 |
+| "玩家自学 tamper anomaly's expression channel"（D26 v2）| M3 用员工做受控实验 + M9 红领结诱导建立作者认同（具体 2 部门机制）|
+| "反身闭合 attribution"（D8）| M5 administrative liability shifting（具体 firewall 物化）|
+
 ---
 
 ### 2.7 触发的设计约束（必须做的）

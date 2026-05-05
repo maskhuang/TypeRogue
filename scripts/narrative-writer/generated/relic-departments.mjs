@@ -7,11 +7,15 @@
 // 11 RelicBehavior 子系统 → 5 部门发放 mapping（M6/M7 不发 relic · 出 voice 资产
 // in V4 / V1 其他 form 渠道）：
 //   M1 人事与排班 (3): Resource, Shop, Stage
-//   M2 外部文本回收 (2): Skill, Word
-//   M3 文书实验部 (3): Typing, Enchantment, Topology
+//   M2 外部文本回收 (1): Word（仅词包相关；Skill subsystem 已迁出 M2）
+//   M3 文书实验部 (4): Typing, Skill, Enchantment, Topology  ← M3 dominant 36%
 //   M4 安全部门 (1): Combo
 //   M5 档案与归属 (2): Boss Modifier, Scoring
-// = 11 / max 27% (M1, M3) within balance guideline
+// = 11 / M3 dominant 36% accepted as 现场作业 / 操作规范 流水线核心
+//
+// v4.1-late (2026-05-05) Skill 重映射理由：
+//   词包 (M2 切碎产物) ≠ 技能 (M3 操作规范层 · keystroke→effect mechanical rules)
+//   旧 framing "skill = anomaly expression channel (D25 v2 抽象)" 已 deprecate
 
 export const RELIC_DEPARTMENTS = {
   "subsystems": [
@@ -30,8 +34,8 @@ export const RELIC_DEPARTMENTS = {
     {
       "subsystem": "Skill",
       "examples": ["first_strike", "less_is_more", "jazz"],
-      "department": "M2 外部文本回收科",
-      "tone": "异常 expression channel 处理工具（D25 v2）"
+      "department": "M3 文书实验部",
+      "tone": "操作规范配套器 · 员工 throughput 调校工具"
     },
     {
       "subsystem": "Enchantment",
@@ -91,8 +95,8 @@ export const RELIC_DEPARTMENTS = {
     },
     {
       "department": "M2 外部文本回收科",
-      "true_motive": "把异常切碎到员工无法整体理解的形态，让 M3 录入 + M4 安全成立",
-      "tone_points": "数据清洗 / 编号 / 遮蔽 / R 标签 (R0-R6)",
+      "true_motive": "把异常切碎到员工无法整体理解的形态——核心 output = 词包（不是技能）；让 M3 录入 + M4 安全成立",
+      "tone_points": "数据清洗 / 编号 / 遮蔽 / R 标签 (R0-R6) / 词包化",
       "sample": "样本编号 UTF-7-441-B 已词包化。来源已遮蔽。"
     },
     {
@@ -143,8 +147,8 @@ export const RELIC_DEPARTMENTS = {
     }
   ],
   "quotas": {
-    "department_max_pct": 27,
-    "note": "5 个发放部门池，max 27% (M1/M3 各 3 子系统) within balance guideline。M6/M7 不发 relic（出其他 voice form 资产）"
+    "department_max_pct": 36,
+    "note": "5 个发放部门池，M3 dominant 36% (4/11 子系统：Typing/Skill/Enchantment/Topology) 接受 · 现场作业 / 操作规范 流水线核心。M6/M7 不发 relic（出其他 voice form 资产）"
   },
   "moko_note": "MOKO 是 M4 安全部门旗下子工具 = battle scene UI（不是整个游戏）。MOKO 名永不在 in-game UI 显化（§5.4.3）。MOKO inherited from Project Nim ASL 协议（§5.4.1）",
   "cleanup_note": "v4.1 启动后必须批量重写 v3.1/v2.3 残留 relic narrative 通过 narrative-writer 流水线产出（per audit Tier 3）"
