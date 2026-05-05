@@ -5,7 +5,7 @@ import {
   WORD_LIMITS, ANCHOR_FACTS,
 } from '../config.mjs'
 import { FORBIDDEN_ZH, FORBIDDEN_EN, B1A_VOCAB } from '../generated/b1a-vocab.mjs'
-import { MIB_LEXICON } from '../generated/mib-lexicon.mjs'
+import { BOILERPLATE_LEXICON as MIB_LEXICON } from '../generated/boilerplate-lexicon.mjs'
 
 // Validate a single fragment against v3 rules.
 // Returns { passed: boolean, errors: string[], warnings: string[] }
