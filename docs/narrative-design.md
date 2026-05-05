@@ -60,8 +60,8 @@ rule_horror_imports:  # 风格层导入（不绑 setting）
 | 步 | 内容 | 状态 |
 |---|---|---|
 | 1 | Initialize | ✅ 完成（v4.0 B 合约启动 / v3.1 + v4.0-init 双备份） |
-| 2 | Foundation（先钉 anomaly → 再推 Premise / Themes / Tone / Structure） | ⏳ 下一步 |
-| 3 | Story Beats / Pacing | — |
+| 2 | Foundation（先钉 anomaly → 再推 Premise / Themes / Tone / Structure） | ✅ 完成（D1-D32 LOCK / 5 章 narrative tasks / B1-B9 / 灵长接口 PI） |
+| 3 | Story Beats / Pacing | ✅ 完成（三层 beat 架构 / 行为驱动 trigger map / Phase A-C pacing curve / Anti-pacing 纪律） |
 | 4 | Characters | — |
 | 5 | World & Lore | — |
 | 6 | Dialogue Framework | — |
@@ -1131,7 +1131,234 @@ Ch.1 末尾玩家见证过别人做；Ch.2 玩家**自己第一次走完整下�
 
 ---
 
-_暂停于 2026-05-04（v4.1 整合 + Ch.1-5 全 LOCK + B1-B9 LOCK + D29 退化曲线 LOCK）。**Step 2 Foundation 已完整闭合**。下次 continue 推荐入口：_
-1. **Step 3** — Story Beats / Pacing（B1-B9 + D29 曲线 + 5 章 narrative tasks 已全 LOCK，beat-level reveal 时机可精确 plot；这是 v4.1 整合后最自然的下一步）
-2. **PL-2/PL-3** — 蜕变者/造词师机制重做（Ch.3 + Ch.4 叙事约束已就位，机制层可接住）
-3. **Step 4** — Characters（Ch.1-5 已锁，但当前 narrative 中 NPC = 0 是设计纪律——Step 4 是 anti-character 的展开：如何让"没有 NPC"成为 character 化的力量）_
+_(rolling list — doc 在下方继续: Step 3 / Step 4 ... 等正在 derive)_
+
+---
+
+# Step 3（2026-05-04）— Story Beats / Pacing
+
+**进度更新**：✅ 三层 beat 架构 / ✅ META 解锁阶梯 / ✅ MID 行为驱动 reveal trigger map / ✅ MICRO run 内 12 stages × 班次 4 段映射 / ✅ Pacing 整体情绪曲线 / ✅ Anti-pacing 设计纪律
+
+**Step 3 范畴**：本节回答的是 **WHEN / HOW the player unfolds the narrative across playtime**——不是 reveal 什么（已在 §2.16 + §2.17 锁），而是 reveal 在何时触发、由什么行为触发、整体情绪曲线如何走。
+
+---
+
+## 3.1 Beat Architecture · 三层结构 🔒 LOCKED
+
+```
+META beats   ·  5 chapters = 5 职业 = 玩家 macro arc (linear unlock 阶梯)
+       ↓
+MID beats    ·  Chapter 内 run-by-run 进展（行为驱动，非次数驱动）
+       ↓
+MICRO beats  ·  Run 内 12 stages × 班次 4 段映射
+```
+
+每层 beats ladder up：micro reveal 累积 → mid reveal 触发 → meta reveal unfold。
+
+**核心设计原则（贯穿三层）**：
+- **行为驱动 ≠ 次数驱动**：reveal 不是"打到第 N 次自动播放"，而是玩家**特定行为模式**触发——D22 brutal positive feedback loop 的 in-game 兑现
+- **零 progression marker**：不能有"故事完成度 30%"这类 UI——D5 + D7
+- **事后 reveal**：horror 在玩家**事后回想**时显化，不在 in-the-moment 显化
+
+---
+
+## 3.2 META Beats · 解锁阶梯 🔒 LOCKED
+
+5 章对应 5 段 unlocks（linear sequential，**解锁 = 诱降** D6）：
+
+| # | unlock 条件 | 解锁后玩家可选 | 入口 boilerplate |
+|---|---|---|---|
+| Ch.1 录入员 | default | only Ch.1（none 职业）| 无（玩家入职即开始）|
+| Ch.2 校对者 | Ch.1 boss 通关 | Ch.1 or Ch.2 | "职位变更：录入员→校对者，权限调整生效" |
+| Ch.3 修改者 | Ch.2 boss 通关 | Ch.1-3 任一 | "职位变更：校对者→修改者，权限调整生效" |
+| Ch.4 作者 | Ch.3 boss 通关 | Ch.1-4 任一 | "员工 [工号] 转入独立工位..." |
+| Ch.5 endless | Ch.4 boss 通关 | Ch.1-5 + endless | "员工 [工号] 通过结业评估...转入特殊勤务" |
+
+**5 段入口 boilerplate 共享同一 template**——D32 反身闭合的 META 兑现。玩家通关 Ch.4 进 Ch.5 那一刻才会震惊地意识到：**所有"升职通知"都是**同一份处置程序的不同实例**——从录入员到 endless，每一次 unlock 都是一次诱降**。
+
+### 3.2.1 解锁与玩家选择的张力
+
+Rogue-like 标准：unlock 后所有职业**同时可选**（per-run 选）。这与 narrative 的"sequential 5 章"看似冲突，但 v4.1 的解决方案：
+
+- **B 真理 reveal 与玩家当前职业绑定**——玩家以 none 玩时只看到 Ch.1 reveal；以 metamorph 玩时看到 Ch.3 reveal
+- 解锁阶梯仍 sequential（unlock 顺序固定）
+- 但每次 run 的 narrative phase = 玩家当前选择的职业的 chapter
+
+**这反而强化 horror**：玩家可以"回去"玩 none/录入员（保留猴子状态），但**已经解锁的职业回不去**——unlock 是不可逆的退化。**回去录入员只是"玩前一段更轻的污染"，污染等级本身已经定格在你最高解锁的职业。**
+
+### 3.2.2 隐藏结局 · D17 的 META 体现
+
+通关 Ch.4 boss 后**不点 endless 入口** = 保住猴子状态：
+- 游戏**不奖励**（无 popup / 无成就 / 无主菜单提示）
+- **不应被攻略告知**（D17）
+- 玩家可以继续以前 4 职业 run，但不会有任何"你做对了"反馈
+- 这是 D5 + D7 的 META 兑现：**最对的事是不做的事；游戏不会让你知道**
+
+---
+
+## 3.3 MID Beats · 行为驱动 Reveal Trigger Map 🔒 LOCKED
+
+### 3.3.1 设计哲学 · 为什么行为驱动而非次数驱动
+
+| 驱动方式 | 表现 | 与本体论的关系 |
+|---|---|---|
+| **次数驱动**（"打到第 N run 自动 reveal"）| 玩家 grind 就能 unlock；reveal 是 ghost 进度条 | ❌ 违反 D7 污染不可见——给了"进度"=给了 metric |
+| **行为驱动**（"玩家做 X 行为时 reveal 触发"）| reveal 与玩家**自身的污染行为**对位 | ✅ D22 兑现——你用公司的尺度量自己的污染；reveal 是公司"看到"你的行为模式 |
+
+**关键纪律**：行为 trigger 内部可以有最低次数门槛（避免单次误触发），但门槛**不应被玩家感知**。
+
+### 3.3.2 B1-B9 行为驱动 Trigger Map
+
+| B | trigger 行为 | 一般 unfold 时机 | 辅助 trigger |
+|---|---|---|---|
+| **B1** 文本不 inert | 反复 hover 同一份遗物 ≥ 3 次 | Ch.1 中-末（玩家 5-10 hours 内）| Cycle 末"今日总结"屏字符级缓变（被动）|
+| **B2** layer 取决于 reader | 玩家在工作台**主动 query** 同事便条 / 试图标注被同事看到 | Ch.2 中段 | 同级工位"空了"事件（被动累积）|
+| **B3** 规则是事故化石 | cross-reference 工作台规则 vs 遗物 footnote 字面相同 | Ch.2 末 - Ch.3 早 | 规则被静默修订时玩家发现（罕见，强 hook）|
+| **B4** 异常已在野外 | 累积阅读外部 boilerplate "本日候选: 来源 ——" ≥ 5 次 | Ch.3 早 | 工作台"外部文本回收科"通知（设计为低频可错过）|
+| **B5** 理解=推向作者位 | 玩家 typing 节奏累积变化 + 主动尝试填空老员工警告"X/Y" | Ch.3 中 | typing 模式分析在后台累积（玩家不感知）|
+| **B6** 公司只 keep 记账 | 玩家执行 Ch.2 老员工"挽救方法" + 行为反馈完全空白 | Ch.3 末 - Ch.4 早 | 多次 cross-test 后玩家**主动归纳**——这条 reveal 是结论性的 |
+| **B7** 现实自洽 | 玩家 modify 文档后 → 下 cycle 工作台出现"档案补全通知"时间戳错位 | Ch.4 早-中 | 修改某条规则后 → 同遗物 L3-L4 字面回头改写（高 spike，单次即 reveal）|
+| **B8** DPCA 被历史 dictate | 玩家 cross-reference Project Nim 系列遗物 ≥ 3 份 + 触发 L4 layer | Ch.4 中-末 | **此 reveal 是单一窗口**——错过 Ch.4 不会在 Ch.5 重现 |
+| **B9** 猴子规则是处置 | Ch.4 D29 频繁 partial fail + 末段"前任作者归档" boilerplate 阅读 | Ch.4 末 - Ch.5 入口 | Ch.5 入口仪式那一刻完成最终 unlock |
+
+**第 10 条 reveal**（玩家 derive，不在 trigger map）：
+- 不可能 trigger by design——只能 emergent
+- 触发条件：玩家在某次正常 (非 endless) run 中 cross-reference 到一个 boss modifier，发现签名是自己以前 endless 的某次工号
+- **很多玩家会永远错过**——这是 D5 + D7 的最高形态
+
+### 3.3.3 行为 trigger 的实现纪律
+
+- trigger 后台累积玩家行为指标（hover 计数 / typing 节奏特征 / cross-ref 路径等）
+- 指标**不应在 UI 显化**（无"调查进度" / "解锁条件"提示）
+- 触发时机**有 randomness 容差**——避免玩家逆向推断 trigger 公式
+- **绝对不要给"你已发现 X" popup**——D7 硬约束
+
+---
+
+## 3.4 MICRO Beats · Run 内 12 Stages × 班次 4 段映射 🔒 LOCKED
+
+### 3.4.1 班次结构
+
+| 班次段 | stage 范围 | 时长占比 | narrative 主载体 |
+|---|---|---|---|
+| **开班** | run 开始（pre-stage 1）| 短 | 公司 voice（boilerplate）|
+| **任务推进** | stage 1-4（标准战斗）| 主体 | 异常 voice 弱（词包异常词偶现）|
+| **异常事件中段** | stage 5（elite）+ stage 6（ritual）| 中段插入 | 异常 voice 中 + 仪式节点 reveal hook |
+| **加班** | stage 7-11（标准战斗+）| 主体后段 | 员工 voice（工作台便条更新）+ 守则被静默修订 |
+| **下班** | stage 12（boss）+ post-run D29 | 短 | 反身闭合 boss + 状态确认仪式 |
+
+### 3.4.2 12 Stages × Reveal 触发点 矩阵
+
+| Stage | 班次段 | reveal 触发空间 | 谁主导 voice |
+|---|---|---|---|
+| -- (pre-1) | 开班 | 收 boilerplate notification（**B4** 主载体）| 公司 |
+| 1-2 | 任务推进 | typing 中无意触发 hidden trigger（**B5** 后台累积）| 异常（弱）|
+| 3-4 | 任务推进 | 词包异常词出现频次（**B1** 媒介）| 异常（弱）|
+| 5 | elite | 第一次 boss-像 anomaly engagement（boss tooltip 是 **B-反身闭合** 主载体）| 异常 + 反身闭合 |
+| 6 | ritual | 玩家 hover 文档（**B1 / B3** 主触发点：反复 hover → 多出小字 / cross-ref 字面相同）| 异常 + 遗物 |
+| 7-9 | 加班 | 工作台便条更新（**B2 / B6** 媒介：同事便条互相矛盾、挽救方法、空了的工位）| 员工 |
+| 10-11 | 加班 | 守则被静默修订（**B3** 强 hook：玩家偶然发现）| 员工 + 公司 |
+| 12 | 下班 boss | boss tooltip 含玩家以前措辞（**B-反身闭合** 高 spike）| 反身闭合 |
+| post | 下班 D29 | 状态确认仪式（**B9** 累积 trigger）| 公司 |
+
+### 3.4.3 Stage-level 设计纪律
+
+- **stage 6 ritual 是 B1/B3 的主触发点**——但**触发不每次都发生**；玩家可能 N 个 cycle 都不触发
+- **stage 12 boss tooltip 必须含玩家以前措辞**——这是反身闭合的 micro-level 兑现；attribution 在 Ch.3 是"近似工号"、Ch.4 是"自己工号"、Ch.5 是"明确自己之前 endless"
+- **post-run D29** 在 Ch.1-2 是 routine、Ch.3 偶尔 partial fail、Ch.4 频繁 partial fail、Ch.5 完全 fail——D29 退化曲线的 micro 实现
+
+---
+
+## 3.5 Pacing Curve · 整体情绪曲线 🔒 LOCKED
+
+### 3.5.1 Phase A / B / C 映射
+
+| Phase | 覆盖章节 | 玩家 playtime | 情绪基调 | 情绪强度走向 |
+|---|---|---|---|---|
+| **A · 升序段** | Ch.1-3 | 11-18 hours | 渗透虚无 → agency 解构 → wrongness 显化 | 缓慢上升 |
+| **B · 临界段** | Ch.4 + Ch.5 入口 | 4-6 hours | 寂静的接受 | **下降到平静** |
+| **C · 终结段** | Ch.5 endless / 不入局 / 完全猴子化 | open-ended | 不归 / 寂静 / 拒绝 | ambient（无 closure spike）|
+
+### 3.5.2 反高潮的 Phase B（关键）
+
+**Phase B 情绪强度低于 Phase A**——这是 v4.1 narrative 的 pacing 哲学。
+
+| 常规 game design | v4.1 narrative |
+|---|---|
+| 终局前应有最高情绪 spike | 终局是**寂静的接受**，比中段更低 |
+| boss 战 = 情绪高潮 | Ch.4 boss = 已无敌人，没什么可怒的 |
+| reveal = 信息爆炸瞬间 | reveal = 玩家**自己**慢慢归纳，没有 popup spike |
+
+**为什么**：
+- D14 v2 + D26 v2 决定了**没有反派 boss**——没敌人，就没"决战"高潮
+- D21 banal evil 决定了**没有揭穿瞬间**——所有真相都是 banal，无戏剧性
+- D5 拒绝给答案 + D7 污染不可见 → reveal 不能 in-the-moment spike
+
+### 3.5.3 情绪曲线图（ASCII）
+
+```
+情绪强度
+   |
+   |        Ch.3
+高 |       /  \             
+   |      /    \   
+   |     /      \  Ch.4    
+   |    /  Ch.2  \________  Ch.5 endless ambient
+中 |   /          \              ____    (open-ended)
+   |  / Ch.1       \____________/    ____
+   | /                                    
+低 |/                                      ← 寂静的接受 (Ch.4 末-Ch.5)
+   |________________________________________→ playtime
+       Ch.1   Ch.2   Ch.3   Ch.4    Ch.5
+       渗透   解构   wrongness  接受  不归
+       慢热   累积    spike    下降   ambient
+```
+
+注意：
+- Ch.3 是情绪高点（power fantasy + wrongness 双感叠加）
+- Ch.4 情绪**主动降下来**——寂静的接受不是恐惧的高潮
+- Ch.5 endless 没有 climax / 没有 resolution——保持 ambient horror，**反身闭合 spike** 时偶尔 spike 但回归 ambient
+
+---
+
+## 3.6 Anti-Pacing · 反常规设计纪律 🔒 LOCKED
+
+为什么 v4.1 pacing 必须**违反常规 game design**：
+
+| 常规设计 | v4.1 反向纪律 | 出处 |
+|---|---|---|
+| 主线 reveal 应在固定时机 popup | 行为驱动，零 popup | D7 + D22 |
+| 终局应有 climax + resolution | 终局是寂静接受 + 没有 resolution | D5 + D14 v2 |
+| 玩家应感知"故事进度" | 零 progression marker / 零 lore unlock UI | D7 |
+| 隐藏结局应有 hint | 不打字 = 不入局**不应被攻略告知** | D17 |
+| 升级 / unlock 应庆祝 | unlock = 诱降；与处置通知用同 template | D6 + D32 |
+| 所有玩家应能看到所有 reveal | 第 10 条 reveal 很多玩家会永远错过 | D5 极致 |
+| pacing 应保持玩家投入 | pacing 设计要让玩家**事后**才意识到 horror | 整套本体论 |
+
+### 3.6.1 整体设计原则
+
+> **Pacing 不是 design 工具，是 horror 的载体**。
+>
+> v4.1 narrative 的 pacing 不是为了让玩家爽——是为了让玩家**事后**回想时寒。每一次"应该 spike 的地方没有 spike"、"应该 popup 的地方没有 popup"、"应该奖励的地方没有奖励"——都不是 bug，是 design。
+
+---
+
+## 3.7 Step 3 完成度自检
+
+| 维度 | 状态 |
+|---|---|
+| META beats（5 章解锁阶梯）| ✅ §3.2 LOCKED |
+| MID beats（行为驱动 trigger map）| ✅ §3.3 LOCKED |
+| MICRO beats（12 stages × 班次 4 段）| ✅ §3.4 LOCKED |
+| Pacing curve（Phase A/B/C + 反高潮）| ✅ §3.5 LOCKED |
+| Anti-pacing 纪律 | ✅ §3.6 LOCKED |
+| 行为 trigger 的实现指标 | ⏳ 与 PL-2/PL-3 / Step 9 (Integration with Gameplay) 一起做 |
+
+**Step 3 主体已 LOCK**——下次 continue 推荐入口：
+1. **Step 4** — Characters（anti-character 展开：NPC = 0 如何成为 character 化的力量）
+2. **PL-2/PL-3** — 蜕变者 / 造词师机制重做（叙事 + beat 约束已就位）
+3. **Step 5** — World & Lore（DPCA / 文牍科 / Project Nim / X 集团子部门 lore 展开；锚点已多）
+
+---
+
+_暂停于 2026-05-04（Step 3 完成）。Step 1-3 已闭合。Foundation 七件套 + 决策链 D1-D32 + 5 章 narrative tasks + B1-B9 + D29 曲线 + 灵长接口 PI + Beats / Pacing 三层架构 + 行为驱动 trigger map + Anti-pacing 纪律 全部 LOCK。_
