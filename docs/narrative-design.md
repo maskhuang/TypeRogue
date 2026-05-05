@@ -428,11 +428,42 @@ Attribution 路径（独立平行 · 与诱降无因果）
 | Combo | M4 安全部门 | MOKO 节律纪律 = 既防作者化又是 anomaly emit 节拍器 |
 | Boss Modifier / Scoring | M5 档案归属 | administrative liability shifting · attribution 固定在玩家工号 |
 
-**Layered footnote 三层叠加**（D31）：
-- L1 部门 surface
-- L2 cross-ref 起裂
-- L3 部门 deep motive 显化
-- L4 D18 历史档案 + D8 反身闭合 (Subject [玩家工号] 经手注) reveal
+**Layered footnote 4 层结构**（D31 + v4.1-late 4-axis）：
+- L1 部门 surface  ← 部门 voice tone 主导（M1-M5 各自 sample 句风）
+- L2 cross-ref 起裂  ← 部门 voice + 跨部门 cross-ref
+- L3 部门 deep motive 显化  ← 部门 true_motive 浮现
+- L4 D18 历史档案 + D8 反身闭合 (Subject [玩家工号] 经手注) reveal **+ specific subject sub-anchor (optional)**
+
+**4-axis tensor**（每条 relic 的 layered footnote）：
+
+```
+{
+  subsystem:  Typing | Combo | Skill | ...           (11 类 · LOCKED)
+  department: M1 | M2 | M3 | M4 | M5                 (5 类 · LOCKED)
+  layer:      L1 | L2 | L3 | L4                      (4 层 · LOCKED)
+  subject:    null | N1976 | W1965 | L1971 | K1980 | SA1974   (仅 L4 · v4.1-late LOCK)
+}
+```
+
+L1-L3 由 (subsystem × department × layer) 三轴 derive · 部门 voice 主导。
+L4 由 (subsystem × department × **subject**) 决定 · subject = null 时用 generic "处置员工 [工号已封存]" / "前一代研究主体（项目档案已封存）"，subject 非 null 时引用 specific anchor 主体。
+
+**Specific subject pool**（5 anchors · 详见 generated/specific-subjects.mjs）：
+
+| Subject | 协议代际 | 主 subsystem | role |
+|---|---|---|---|
+| **N1976** (Nim-analogue) | [1] manual ASL | Boss Modifier + Scoring | **§4.5 hidden tragedy core (B8 reveal) · singular** |
+| W1965 (Washoe-analogue) | [1] manual ASL | Word | early ASL pioneer · background |
+| L1971 (Lana-analogue) | [2] fixed lexigram keyboard | Skill | first lexigram subject · background |
+| K1980 (Kanzi-analogue) | [2] observational extensions | Scoring | observational learner · background |
+| SA1974 (Sherman/Austin-analogue) | [2] Yerkish twins | Skill / Word | sparse secondary anchor · background |
+
+**总分布**：~94 relic estimate · ~6 relic 含 specific subject anchor (6.4%) · ~88 relic 用 generic L4 (93.6%)。**N1976 保持 singular tragedy core**（§4.5 不被稀释），其余 4 subjects 是 background lore。
+
+**关键 invariant**：
+- L1-L3 部门 voice 主导**不变**——specific subjects **绝不**在 L1-L3 出现
+- specific subjects **仅 L4 sub-anchor**——D7 污染不可见 + 渐次显化原则
+- 5 anchors 对应 §5.4.1 MOKO 3-step lineage（[1] manual ASL · [2] lexigram keyboard · [3] modular sticker）——玩家从 L4 拼出协议演化史
 
 ##### 附魔 (enchantments) — Ritual scene 关联
 

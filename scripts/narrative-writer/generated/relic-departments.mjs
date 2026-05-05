@@ -150,7 +150,14 @@ export const RELIC_DEPARTMENTS = {
     "department_max_pct": 36,
     "note": "5 个发放部门池，M3 dominant 36% (4/11 子系统：Typing/Skill/Enchantment/Topology) 接受 · 现场作业 / 操作规范 流水线核心。M6/M7 不发 relic（出其他 voice form 资产）"
   },
-  "moko_note": "MOKO 是 M4 安全部门旗下子工具 = battle scene UI（不是整个游戏）。MOKO 名永不在 in-game UI 显化（§5.4.3）。MOKO inherited from Project Nim ASL 协议（§5.4.1）",
+  "moko_note": "MOKO 是 M4 安全部门旗下子工具 = battle scene UI（不是整个游戏）。MOKO 名永不在 in-game UI 显化（§5.4.3）。MOKO inherited from 1970s 灵长类语言研究协议（含 Project Nim 等同期项目）· 3-step lineage (§5.4.1)",
+  "specific_subjects_policy": {
+    "note": "L4 sub-anchor (§2.6 LOCKED) · 5 specific subjects pool · 详见 generated/specific-subjects.mjs",
+    "axis": "subject 是 L4 的第 4 axis（不影响 L1-L3 部门 voice）",
+    "distribution": "~6 relic 含 specific anchor (~6.4%) / ~88 relic 用 generic L4 (~93.6%)",
+    "anchors": ["N1976", "W1965", "L1971", "K1980", "SA1974"],
+    "singular_core": "N1976 = §4.5 hidden tragedy core (B8 reveal) · 不被稀释 · 其他 4 是 background lore"
+  },
   "cleanup_note": "v4.1 启动后必须批量重写 v3.1/v2.3 残留 relic narrative 通过 narrative-writer 流水线产出（per audit Tier 3）"
 }
 
