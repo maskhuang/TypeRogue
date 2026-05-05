@@ -12,6 +12,8 @@ import * as path from 'path'
 const getSaveDir = (): string => app.getPath('userData')
 const getMetaFile = (): string => path.join(getSaveDir(), 'meta.json')
 const getRunFile = (): string => path.join(getSaveDir(), 'run.json')
+// PL-5 / §9.6.3: NarrativeArchive 仅本地、绝不上云。**不要**给此路径传 cloudFileName。
+const getNarrativeFile = (): string => path.join(getSaveDir(), 'narrative.json')
 
 /**
  * 原子写入 - 写入临时文件后重命名 (AC: #1)
@@ -80,6 +82,9 @@ export const SAVE_PATHS = {
   },
   get RUN() {
     return getRunFile()
+  },
+  get NARRATIVE() {
+    return getNarrativeFile()
   },
 }
 

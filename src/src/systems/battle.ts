@@ -30,6 +30,8 @@ import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDimini
 import type { BossModifierId } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, isModifierActive } from './bossModifierEngine';
 import { showBossModifierPicker, showEliteModifierPicker } from './bossModifierPicker';
+import { getNarrativeArchive } from '../core/state/NarrativeArchiveState';
+import { saveManager } from '../core/save/SaveManager';
 import { showActTransition, showBossIntro, updateStageInfo } from './actTransition';
 import { random, setNormalMode } from '../core/seededRandom';
 import { getMaxQueueLength } from './classes/FragmentQueue';
@@ -2435,6 +2437,27 @@ export async function startLevel(): Promise<void> {
       showBossModifierPicker((mods) => resolve(mods));
     });
     state.bossModifierPool = selectedMods;
+    // PL-5：endless 模式下记录 boss 修饰器签名（DC6 反身闭合 attribution 数据源）
+    // cycle ≥ 6 = endless（与字符级缓变启用阈值一致 / §9.7.6）
+    if (state.cycle >= 6 && selectedMods.length > 0) {
+      const archive = getNarrativeArchive();
+      const workerId = (() => {
+        try { return localStorage.getItem('dpca-worker-id') || 'OP. PRIMATE-7842'; }
+        catch { return 'OP. PRIMATE-7842'; }
+      })();
+      const ts = Date.now();
+      for (const modifier of selectedMods) {
+        if (modifier) {
+          archive.recordEndlessModifierSignature({
+            playerWorkerId: workerId,
+            modifier,
+            cycle: state.cycle,
+            timestamp: ts,
+          });
+        }
+      }
+      void saveManager.saveNarrative(archive.serialize());
+    }
     // 应用选中的临时修饰器
     for (const bossModId of state.bossModifierPool) {
       if (bossModId && !isModifierActive(bossModId)) {

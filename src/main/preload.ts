@@ -19,6 +19,9 @@ const VALID_CHANNELS = [
   IPC_CHANNELS.SAVE_WRITE,
   IPC_CHANNELS.SAVE_READ,
   IPC_CHANNELS.SAVE_EXISTS,
+  // PL-5 NarrativeArchive
+  IPC_CHANNELS.SAVE_NARRATIVE,
+  IPC_CHANNELS.LOAD_NARRATIVE,
   IPC_CHANNELS.APP_GET_VERSION,
   IPC_CHANNELS.APP_QUIT,
   IPC_CHANNELS.STEAM_IS_AVAILABLE,
@@ -56,7 +59,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     loadMeta: () => ipcRenderer.invoke(IPC_CHANNELS.LOAD_META),
     saveRun: (data: string) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_RUN, data),
     loadRun: () => ipcRenderer.invoke(IPC_CHANNELS.LOAD_RUN),
-    deleteRun: () => ipcRenderer.invoke(IPC_CHANNELS.DELETE_RUN)
+    deleteRun: () => ipcRenderer.invoke(IPC_CHANNELS.DELETE_RUN),
+    // PL-5 NarrativeArchive (仅本地，**不**经云同步)
+    saveNarrative: (data: string) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_NARRATIVE, data),
+    loadNarrative: () => ipcRenderer.invoke(IPC_CHANNELS.LOAD_NARRATIVE)
   },
 
   /**
@@ -97,6 +103,8 @@ declare global {
         saveRun: (data: string) => Promise<{ success: boolean; error?: string }>
         loadRun: () => Promise<{ success: boolean; data: string | null }>
         deleteRun: () => Promise<{ success: boolean }>
+        saveNarrative: (data: string) => Promise<{ success: boolean; error?: string }>
+        loadNarrative: () => Promise<{ success: boolean; data: string | null }>
       }
       steam: {
         isAvailable: () => Promise<{ success: boolean; data: boolean }>

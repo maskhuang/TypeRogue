@@ -22,6 +22,10 @@ export const IPC_CHANNELS = {
   SAVE_READ: 'save:read',
   SAVE_EXISTS: 'save:exists',
 
+  // NarrativeArchive (PL-5 / §9.6) — 仅本地 narrative.json，**绝不**上云
+  SAVE_NARRATIVE: 'save:narrative',
+  LOAD_NARRATIVE: 'load:narrative',
+
   // Steam API (Story 8.1 预留, Story 8.2 初始化, Story 8.3 成就, Story 8.4 云存档)
   STEAM_IS_AVAILABLE: 'steam:is-available',
   STEAM_GET_USER_NAME: 'steam:get-user-name',

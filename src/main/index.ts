@@ -80,6 +80,24 @@ function registerSaveHandlers(): void {
     const success = await safeDelete(SAVE_PATHS.RUN)
     return { success }
   })
+
+  // 保存 NarrativeArchive (PL-5 / §9.6.3)
+  // **故意**使用 safeSave 而非 safeSaveWithCloud：narrative archive 仅本地、绝不上云。
+  ipcMain.handle(IPC_CHANNELS.SAVE_NARRATIVE, async (_, data: string) => {
+    try {
+      await safeSave(SAVE_PATHS.NARRATIVE, data)
+      return { success: true }
+    } catch (error) {
+      console.error('IPC: Failed to save narrative archive', error)
+      return { success: false, error: String(error) }
+    }
+  })
+
+  // 加载 NarrativeArchive
+  ipcMain.handle(IPC_CHANNELS.LOAD_NARRATIVE, async () => {
+    const data = await safeLoad(SAVE_PATHS.NARRATIVE)
+    return { success: data !== null, data }
+  })
 }
 
 /**

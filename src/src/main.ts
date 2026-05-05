@@ -17,6 +17,7 @@ import { setBackgroundMode } from './effects/balatroBackground';
 import { initShopEvents } from './systems/shop';
 import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from './systems/relicPicker';
 import { MetaState } from './core/state/MetaState';
+import { getNarrativeArchive } from './core/state/NarrativeArchiveState';
 import { initLeaderboardDisplay, renderLeaderboard } from './ui/leaderboardDisplay';
 import { eventBus } from './core/events/EventBus';
 import { getDailySeed, getDailySeedString, setSeededMode, setNormalMode, random } from './core/seededRandom';
@@ -144,6 +145,12 @@ async function init(): Promise<void> {
   const savedMeta = await saveManager.loadMeta();
   if (savedMeta) {
     metaState.deserialize(savedMeta);
+  }
+
+  // PL-5: 加载 NarrativeArchive（仅本地，绝不上云）
+  const savedNarrative = await saveManager.loadNarrative();
+  if (savedNarrative) {
+    getNarrativeArchive().deserialize(savedNarrative);
   }
 
   state.endlessUnlocked = metaState.isModeUnlocked('endless');

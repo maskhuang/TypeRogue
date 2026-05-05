@@ -164,6 +164,30 @@ export class SaveManager {
     const data = await this.loadRun()
     return data !== null
   }
+
+  // ===========================================
+  // NarrativeArchive (PL-5 / §9.6.3)
+  // ===========================================
+  // **仅本地**——主进程 handler 用 safeSave，不经云同步。
+  // 渲染进程不会感知到云同步差异，但绝不会让 narrative 数据上云。
+
+  /**
+   * 保存 NarrativeArchive
+   * @param serializedData NarrativeArchiveState.serialize() 的输出
+   */
+  async saveNarrative(serializedData: string): Promise<boolean> {
+    const result = await this.invoke(IPC_CHANNELS.SAVE_NARRATIVE, serializedData)
+    return result.success
+  }
+
+  /**
+   * 加载 NarrativeArchive
+   * @returns 序列化数据，或 null 如果不存在
+   */
+  async loadNarrative(): Promise<string | null> {
+    const result = await this.invoke(IPC_CHANNELS.LOAD_NARRATIVE)
+    return result.success ? (result.data ?? null) : null
+  }
 }
 
 // 导出单例
