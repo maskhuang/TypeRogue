@@ -1,0 +1,18 @@
+{
+  "schema_version": "v4.1",
+  "type": "tutorial",
+  "id": "tutorial_dryrun",
+  "voice": "V1",
+  "metadata": {
+    "generated_at": "2026-05-05T04:34:01.302Z",
+    "model_used": "claude-sonnet-4-6",
+    "validators_passed": true,
+    "validators_errors": [],
+    "truncated": false
+  },
+  "content": {
+    "text_zh": "本批次词单已签出。员工 [工号] 按序录入，完成后归档。",
+    "text_en": "Current batch word list signed out. Subject [ID] to enter in sequence and file on completion.",
+    "length_class": "short"
+  }
+}

@@ -243,6 +243,10 @@ export const V3_RESIDUE_BANNED_ZH = [
   '灵长类辅助文书部',
   // v3.1 KPI 月度概念部分作废（v4.1 用 BATCH/CYCLE/DAY/A 词典）
   '月度小报',
+  // v3.1 "词料"残留 — v4.1 canonical：文本（D1 收容物本体）/ 词包（集合载体）/ 词条（个体）
+  '词料', '异常词料',
+  // v3.1 "词料"残留（v4.1 用"词条"/"未受理文本"/"文本"）
+  '词料', '异常词料',
   // 系统反馈违规（audit Tier 1A · context-sensitive：data flag 内可保留，UI / 守则 / system message 上下文禁止）
   '解锁了', '已解锁',
 ]

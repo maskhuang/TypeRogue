@@ -65,7 +65,7 @@ export const RELIC_DEPARTMENTS = {
         "word_dealer"
       ],
       "department": "编校组",
-      "tone": "词料处理器"
+      "tone": "词条经手"
     },
     {
       "subsystem": "Resource",
