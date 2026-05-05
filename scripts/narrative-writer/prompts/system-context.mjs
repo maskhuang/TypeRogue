@@ -384,6 +384,7 @@ v4.1 7 正式部门 + 2 非正式来源（§2.5 LOCKED）：
 - M1 人事与排班办公室（招募 / 排班 / 调岗 / 特殊勤务包装）— 发 Resource / Shop / Stage relics
 - M2 外部文本回收科（来源遮蔽 / 词包化 / R 标签）— 发 Word relics（**词包专属**：词包 = M2 切碎 anomaly 到员工不可整体理解形态的核心 output；技能不是 M2 切碎产物）
 - M3 文书实验部（第七打字室 / 任务发放 / 主管系统）— 发 Typing / Skill / Enchantment / Topology relics（**dominant 36% · 现场作业 / 操作规范流水线核心**；技能是 M3 把员工 typing throughput 细分为可计量动作模板的工具）
+  - **技能与作者化关系铁律**（§2.6 LOCKED）：技能**不是**作者化 catalyst · 获得 / 配置 / 使用技能不推进作者化进度。技能是 firewall 的**post-hoc attribution insurance** = 让 future 作者化（由其他原因触发）发生时被精准定位为责任主体。Catalyst chain（让玩家"关注文本内容"）才推进作者化：解释 / 标注 / 修改 / 创作 / 阅读 anomaly / cross-ref。Skill flavor **绝不**写成"power fantasy 增产工具"或"诱降 trap"——它是 administrative GPS / 防御性 attribution 锁定工具
 - M4 安全部门 (含 MOKO)（动作流程 / 猴面具 / 非人类输入模型组）— 发 Combo relics
 - M5 档案与归属办公室（档案 + 责任归属 + 签名管理）— 发 Boss Modifier / Scoring relics
 - M6 状态确认组（离岗测试 / 延长观察）— 不发 relic · 出 V4 D29 资产

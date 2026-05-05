@@ -358,6 +358,66 @@ X Company
 | Deep（多部门合谋）| **M3 把员工 typing throughput 细分为可计量动作模板**；MOKO/M4 维持节律执行；M5 把 attribution 注册到工号档案——三部门同时各取所需，员工是被多方收割的 throughput source |
 | 5 工种 progression | T1 基础动作模板 → T2 + 标注扩展 → T3 玩家自学修改 (PL-2) → T4 typing buffer pre-populate (PL-3) → T5 skill 失效 / anomaly 直接 emit |
 
+###### 技能与作者化的关系 · catalyst chain vs attribution chain 分离 🔒
+
+**技能不是作者化 catalyst**——获得 / 配置 / 使用技能本身**不让玩家更关注文本内容**，因此**不推进作者化进度**。这两条因果链是**严格独立平行**的：
+
+```
+诱降 / 作者化路径（catalyst chain）
+    ↓ 玩家关注文本内容（解释 / 标注 / 修改 / 创作 / 阅读 anomaly / cross-ref）
+    ↓ D2 "放弃理解 = 防护" 失效 → anomaly contamination
+    ↓ 污染等级上升 → 更深 V5 layer 可见
+    ↓ 最终作者化
+
+Attribution 路径（独立平行 · 与诱降无因果）
+    ↓ 公司给员工配技能 → individuation / signature
+    ↓ 员工日常使用 skill → 工号档案累积 behavioral profile
+    ↓ 当上面 catalyst chain 触发作者化时
+    ↓ M5 用 profile 精准定位"是这位员工成为 author"
+    ↓ Firewall 守住
+```
+
+**Catalyst chain 触发条件（让玩家"关注文本内容"的机制）**：
+- 解释 sentence (D29 partial fail)
+- 标注差异（T2 校对者）
+- 修改文本（PL-2 修改者）
+- 创作 / pre-populate 选择（PL-3 作者）
+- 阅读红领结文本 (M9)
+- Cross-ref V5 layered 不同 layer
+- 看到深层 layer (D31) 本身（"可见 = 已污染到该层"）
+
+**Non-catalyst（仅 attribution / firewall infrastructure，**不**推进作者化）**：
+- typing keystroke 机械执行（D2 防护成立）
+- 配置 / 装备 skill（纯 administrative）
+- 触发 skill effect（mechanical reflex）
+- 接收蕉券 / 看排班 / 完成 D29 routine（M1/M3/M6 surface 流程）
+
+**技能的真正叙事角色**：
+
+> **公司预先在每个员工身上安装的 administrative GPS。安装本身不让你迷路；但当你因为别的原因（catalyst chain）迷路时，公司能精准告诉外界"是这个员工迷的路，不是我们的"。**
+>
+> 技能让"作者化的责任主体定位"从模糊（'某员工'）变成精准（'Subject XX-####'）。Firewall **不靠技能阻止作者化**——靠技能确保作者化发生时**不挂在公司账上**。
+
+这比"诱降 trap"更细致，且更符合 banal evil 本质：**技能不是 active 害人，是 passive 备好"出事时不是公司的"的证据**——D14 v2 + D26 v2 + D30 firewall stance 的 administrative buffer 物化。
+
+###### 技能的 6 层叙事必要性
+
+去掉旧 layer 6（"D6 诱降曲线"，已 deprecate）。技能在 v4.1 叙事里的真正必要性：
+
+| # | 功能 | 没有技能会怎样 |
+|---|---|---|
+| 1 | **Individuation**（attribution 前提）| 所有员工 typing 行为 monolithic · M5 firewall 无法定位责任主体 |
+| 2 | **D8 反身闭合 content carrier** | V6 boss tooltip / D19 经手注无内容差异 · 反身闭合 horror 失效 |
+| 3 | **PL-2 / PL-3 mechanic substrate**（不是 catalyst · 是 substrate）| PL-2 修改者 / PL-3 作者机制无可玩对象 · 但**激活诱降的是玩家的 tamper / pre-populate 选择行为**，不是 skill 自身 |
+| 4 | **M3 deep "细分 throughput" 物化** | M3 部门 deep motive 无 in-game expression channel |
+| 5 | **T1-T5 progression mechanical anchor** | 5 工种阶梯仅 cosmetic · 玩家无可感知渐变 |
+| **6**（修订）| **Firewall 的 administrative buffer**（不是诱降 trap）| 作者化发生时无 attribution stickiness · 责任主体定位模糊 · firewall 失效 |
+
+**层 6 (修订) ≠ 层 6 (旧)**：
+- 旧 layer 6 错把技能当**诱降 catalyst**（已 deprecate）
+- 新 layer 6 是**post-hoc attribution insurance**（与诱降独立平行的另一条机制）
+- D6 "解锁 = 诱降"通过**其他**机制兑现（5 工种解锁顺序反转 / V5 layered 可见 / 接触红领结 等），**不通过技能**
+
 ##### 遗物 (relics) — 11 子系统 → 5 部门发放
 
 | 子系统 | 部门 | Per-issuing-部门 deep horror |
