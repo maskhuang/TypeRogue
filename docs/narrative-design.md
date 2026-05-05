@@ -60,10 +60,10 @@ rule_horror_imports:  # 风格层导入（不绑 setting）
 | 步 | 内容 | 状态 |
 |---|---|---|
 | 1 | Initialize | ✅ 完成（v4.0 B 合约启动 / v3.1 + v4.0-init 双备份） |
-| 2 | Foundation（先钉 anomaly → 再推 Premise / Themes / Tone / Structure） | ✅ 完成（D1-D32 LOCK / 5 章 narrative tasks / B1-B9 / 灵长接口 PI） |
+| 2 | Foundation（先钉 anomaly → 再推 Premise / Themes / Tone / Structure） | ✅ 完成（D1-D32 LOCK / 5 章 narrative tasks / B1-B9 / MOKO） |
 | 3 | Story Beats / Pacing | ✅ 完成（三层 beat 架构 / 行为驱动 trigger map / Phase A-C pacing curve / Anti-pacing 纪律） |
 | 4 | Characters | ✅ 完成（anti-character / 6 类 no-face cast / 同事 ghost / Project Nim 4 layers / 反身闭合 character / villain vacuum） |
-| 5 | World & Lore | ✅ 完成（空间 3 层 + 时间 4 层 / DPCA Genesis 神话 / 第七打字室 唯一 active / PI 源 = Nim ASL 协议 / X 集团 macro banal evil / Nim deep lore real+fiction / D27-29 lore origin / 真假难辨纪律） |
+| 5 | World & Lore | ✅ 完成（空间 3 层 + 时间 4 层 / DPCA Genesis 神话 / 第七打字室 唯一 active / MOKO 源 = Nim ASL 协议 / X 集团 macro banal evil / Nim deep lore real+fiction / D27-29 lore origin / 真假难辨纪律） |
 | 6 | Dialogue Framework | ✅ 完成（anti-dialogue / 6 类 voice (V1-V6) / 每类 craft 规则 + sample library / 规则怪谈 5+1 手法 dialogue 层应用 / 玩家无 reply 无 inner monologue / voice 退场曲线） |
 | 7 | Environmental Storytelling | ✅ 完成（V7 第七 voice / 4 channel (空间-时间-动效-prop) / 工位 5 章 progression / 向心矢量动效铁律 / 字符级缓变 systematize / 美学 D13 物理化 / sound 退场曲线 / 反身闭合 in environment） |
 | 8 | Narrative Delivery | ✅ 完成（11 channel inventory / 6 modes / macro-mid-micro schedule / B 真理 × channel 矩阵 / pipeline v4.1 sync 蓝图 / 跨 run 反身闭合 delivery） |
@@ -375,9 +375,9 @@ _Step 2 后续：基于上述骨架推 Premise / Themes / B1-B9，回头评估 c
 
 **进度更新**：✅ Premise / ✅ Setting / ✅ Themes / ✅ Tone / ✅ Structure / ✅ Act Breakdown framework / ✅ D27-D32 整合（v4.1）/ ✅ 术语词表 / ✅ Ch.1 回炉 (DRAFT v2) / ✅ Ch.2 回炉 (DRAFT v2) / ✅ Ch.3 重写 (DRAFT v2) / ✅ Ch.4 完整章节任务 (DRAFT v1) / ✅ Ch.5 启动 (DRAFT v1) / ✅ B1-B9 真理 (LOCKED)
 
-**Step 2 Foundation 完成度**：✅ **全部主体 LOCK**——5 章 narrative tasks 全 v4.1 一致 + B1-B9 + D29 退化曲线（Ch.1 见证 → Ch.2 routine → Ch.3 偶尔 partial fail → Ch.4 频繁 partial fail → Ch.5 完全 fail）+ 灵长接口（PI）跨章统一。**Step 3 (Story Beats / Pacing) 已可进入**。
+**Step 2 Foundation 完成度**：✅ **全部主体 LOCK**——5 章 narrative tasks 全 v4.1 一致 + B1-B9 + D29 退化曲线（Ch.1 见证 → Ch.2 routine → Ch.3 偶尔 partial fail → Ch.4 频繁 partial fail → Ch.5 完全 fail）+ MOKO跨章统一。**Step 3 (Story Beats / Pacing) 已可进入**。
 
-**v4.1 整合（2026-05-04）**：吸收外部流程文档《X Company 第七打字室完整流程》。机构占位名已与 D12 统一；新增 D27-D32 锁张力裁决与新概念；Ch.3 用 D26 v2 + D30/D31 重写；Ch.5 用 D32 双 voice 同事件框架启动；MOKO → **灵长接口（PI）** 已 LOCK。
+**v4.1 整合（2026-05-04）**：吸收外部流程文档《X Company 第七打字室完整流程》。机构占位名已与 D12 统一；新增 D27-D32 锁张力裁决与新概念；Ch.3 用 D26 v2 + D30/D31 重写；Ch.5 用 D32 双 voice 同事件框架启动；MOKO → **MOKO** 已 LOCK。
 
 ---
 
@@ -510,7 +510,7 @@ Branching 不在 META 而在 MACRO 终点：升（endless）/ 降（完全猴子
 | D28 | **机械见证效应（击键认证 / 格式通道）**：机械打字机是录入唯一稳定通道——它介于"无意图机器"与"有意图人类"之间，提供 anomaly 受理所需的"见证者"状态；不可逆物理压痕 + 色带格式 + 击键节拍共同构成认证。电脑 / 手写 / 打印机均无效 | LOCKED (v4.1, derived from D1+现有打字机系统) |
 | D29 | **状态确认流程（Keep-as-human Check）**：任务结束员工被要求摘面具 / 报姓名 / 报日期 / 解释普通句子 / 区分"打字"和"写作"——表面 boilerplate 下班程序，实质 keep-as-human 检测；通过=离场（但不得复述），失败=转入猴子规则。**员工本人不应知此为污染检测**——给 D7 污染不可见配可见仪式容器 | LOCKED (v4.1, derived from D2+D7) |
 | D30 | **公司 = defensive curator, NOT anomaly vector**：捕获/去语境化/词包化/编号化/筛选 = 防御性观测的副产品；公司**不创造、不引导、不分发、不 weaponize** anomaly。异常已在野外（公共字幕/OCR/会议转写/梦/儿童涂鸦/动物键盘/AI 乱码）时，公司 contain 一次。**任何叙事/UI 文本不得让公司看起来像 anomaly 的加工厂或代理人** | LOCKED (v4.1, 强化 D14 v2 + D15 + D26 v2) |
-| D31 | **§15 规则来源矩阵 = D20 v3 layers 的具象化**：6 类规则（官方守则 / 安全部门便签 / 前员工批注 / 红领结文本 / 猴子规则 / 灵长接口）**不是不同文档**，是同一份《文牍科作业手册》在不同污染等级读者眼里呈现的 6 个 layers；**你看到哪一层 = 你已污染到哪一层**——D22 brutal positive feedback loop 的实现细节 | LOCKED (v4.1, 强化 D20 v3 + D22) |
+| D31 | **§15 规则来源矩阵 = D20 v3 layers 的具象化**：6 类规则（官方守则 / 安全部门便签 / 前员工批注 / 红领结文本 / 猴子规则 / MOKO）**不是不同文档**，是同一份《文牍科作业手册》在不同污染等级读者眼里呈现的 6 个 layers；**你看到哪一层 = 你已污染到哪一层**——D22 brutal positive feedback loop 的实现细节 | LOCKED (v4.1, 强化 D20 v3 + D22) |
 | D32 | **Ch.5 = 双 voice 同事件**：玩家进入 endless 这一事件，在 anomaly voice 里被框定为"升格为新文本源"；在公司 voice 里被框定为"深度作者化案例进入猴子规则 / 转入特殊勤务"。**两边目的不同，但行为方向重合**——D14 v2 最暴力兑现（公司不 service anomaly，但公司的处置正是 anomaly 想要的状态）。入口仪式必须并列呈现两 voice，C1+C2+C3+C4 一次性兑现 | LOCKED (v4.1, derived from D14 v2 + D26 v2 + Ch.5 双框架张力) |
 
 ---
@@ -545,7 +545,7 @@ Branching 不在 META 而在 MACRO 终点：升（endless）/ 降（完全猴子
 | ~~X Company~~ | **X 集团** | D12 |
 | ~~第七打字室~~ | **文牍科 · 第七打字室** | 文牍科下属作业室；in-game 工位称呼仍可用"第七打字室" |
 | ~~未受理文本研究室 / 外部文本回收科~~ | **DPCA · 外部文本回收科** / **DPCA · 风险控制科** | 挂在 DPCA 下，新增不冲突 D12 |
-| ~~MOKO 游戏化界面~~ | **灵长接口（Primate Interface, PI）** | **新 LOCK**：双关——既指人，也指 D26 v2 的"灵长类 species protocol"；玩家以为在玩 typing 游戏，实际是 DPCA 的灵长接口在 process 自己 |
+| ~~MOKO 游戏化界面~~ | **MOKO** | **新 LOCK**：双关——既指人，也指 D26 v2 的"灵长类 species protocol"；玩家以为在玩 typing 游戏，实际是 DPCA 的MOKO在 process 自己 |
 
 ### D. 处置去向（深度作者化）
 
@@ -561,7 +561,7 @@ Branching 不在 META 而在 MACRO 终点：升（endless）/ 降（完全猴子
 |---|---|---|
 | 噪声文本 | 普通错误 / 乱码 / 偶然重复 | 废弃 / 冷储存 |
 | 候选文本 | 异常重复 / 来源缺失 / 未来指向 / 命令格式 | 送入第七打字室测试 |
-| 高危文本 | 已影响读者 / 档案 / 记录 / 记忆 / 现实局部结构 | 隔离录入 + 强制灵长接口 + 必要时强制猴面具 + 不允许普通员工阅读完整句 |
+| 高危文本 | 已影响读者 / 档案 / 记录 / 记忆 / 现实局部结构 | 隔离录入 + 强制MOKO + 必要时强制猴面具 + 不允许普通员工阅读完整句 |
 
 ---
 
@@ -572,13 +572,13 @@ Branching 不在 META 而在 MACRO 终点：升（endless）/ 降（完全猴子
 > 2. 显化异常的两条 vectors（peer + direct guidance）
 > 3. 校对者机制 / 蜕变者机制 / 造词师机制重做后回炉对应章节
 
-### 2.16.1 Ch.1 录入员（DRAFT v2 — v4.1 回炉：B1 媒介绑定 + 灵长接口 + D29 见证仪式）
+### 2.16.1 Ch.1 录入员（DRAFT v2 — v4.1 回炉：B1 媒介绑定 + MOKO + D29 见证仪式）
 
 **核心 horror**：被遗忘的可能性——不是事件 horror，是被世界温和推到边上的渗透感。
 
 **三轨在玩法中的感知载体**：
 
-- **🏢 公司层 · 客服式冷淡 + 藏着观察**：值班表 / 工号 / 规则手册推送 / **灵长接口（PI）极简——纯数字、纯字符、零庆祝** / 系统消息全 boilerplate / 公司 voice 文档全 boilerplate（你和 N 万人读同一份）。**B1 唯一 hook**：某份读过的 boilerplate 文档，**某天回看时多了一行斜体小字**——实际上那行字一直在；是污染让你开始能看到 L1+ layer（D20 v3 + D31 第一次播种）；无 UI 庆祝、无奖励、无解锁通知；玩家会怀疑"是文档变了，还是我变了？"——**这是 B1 "文本不是 inert" 的第一次显化**
+- **🏢 公司层 · 客服式冷淡 + 藏着观察**：值班表 / 工号 / 规则手册推送 / **MOKO极简——纯数字、纯字符、零庆祝** / 系统消息全 boilerplate / 公司 voice 文档全 boilerplate（你和 N 万人读同一份）。**B1 唯一 hook**：某份读过的 boilerplate 文档，**某天回看时多了一行斜体小字**——实际上那行字一直在；是污染让你开始能看到 L1+ layer（D20 v3 + D31 第一次播种）；无 UI 庆祝、无奖励、无解锁通知；玩家会怀疑"是文档变了，还是我变了？"——**这是 B1 "文本不是 inert" 的第一次显化**
 
 - **👥 员工层 · 疏离 + 偶然便条**：工作台便条来自陌生工号（签名只是数字）；内容模糊提醒（"如果听到打字声从隔壁工位传来但隔壁没人，请勿应答"）；便条互相矛盾；偶尔一张直接写给"你"——但落款工号你不认识
 
@@ -622,12 +622,12 @@ Cycle 末尾，玩家从工位走出时，看见**相邻工位另一名录入员
 **关键设计纪律**：
 - 零污染值 UI / 零奖励 popup / 零 layer 命名
 - B1 透露**不能任何 system message frame**——文档自己显化，玩家事后才反思
-- 灵长接口（PI）UI 看起来就是普通 typing 游戏的 HUD——**任何 NPC / 提示框都不命名"PI"**
+- MOKO UI 看起来就是普通 typing 游戏的 HUD——**任何 NPC / 提示框都不命名"MOKO"**
 - **成功标志** = 玩家退出后躺床上想"我今天读到的那行字……是新加的吗？"
 
 ---
 
-### 2.16.2 Ch.2 校对者（DRAFT v2 — v4.1 回炉：D29 routine 态 + B2/B3 媒介绑定 + 灵长接口 channel + 入口仪式对齐）
+### 2.16.2 Ch.2 校对者（DRAFT v2 — v4.1 回炉：D29 routine 态 + B2/B3 媒介绑定 + MOKO channel + 入口仪式对齐）
 
 **核心 horror**："看似有人在 manage 我，但越查越发现没人在那里——只有 forms 在 auto-process 我"——agency 的解构本身就是恐怖。
 
@@ -641,7 +641,7 @@ Cycle 末尾，玩家从工位走出时，看见**相邻工位另一名录入员
 - **没有"恭喜"两个字**——客服式冷淡
 
 工位环境差异：
-- 工作台多了一个**标注 channel**——灵长接口（PI）的 UI 第一次出现"分层"感（实际是同一个 PI 多了一个 layer，但玩家以为是"权限解锁"）
+- 工作台多了一个**标注 channel**——MOKO 的 UI 第一次出现"分层"感（实际是同一个 MOKO 多了一个 layer，但玩家以为是"权限解锁"）
 - 视觉上比 Ch.1 工位**多了一些纸张 / 红笔 / 印章**——美学暗示文牍科旧气加深
 
 ---
@@ -704,7 +704,7 @@ Ch.1 末尾玩家见证过别人做；Ch.2 玩家**自己第一次走完整下�
 - L2 注释要 plausibly always there（D20 v3）
 - D29 状态确认在 Ch.2 表现为 routine——零"检测"暗示
 - B2 / B3 透露**不能 system message frame**（"你发现了 layer 系统" = ❌）
-- 灵长接口（PI）的"标注 channel"出现要像普通"权限解锁"——**任何 NPC / 提示框都不命名"PI"**
+- MOKO 的"标注 channel"出现要像普通"权限解锁"——**任何 NPC / 提示框都不命名"MOKO"**
 - **成功标志** = 玩家中后期反复回看 Ch.2 早期，怀疑"那时是不是看错了"
 
 ---
@@ -1216,8 +1216,8 @@ Ch.1 末尾玩家见证过别人做；Ch.2 玩家**自己第一次走完整下�
 | ~~PL-7~~ | ~~B1-B9 待 derive~~ | ✅ DONE (2026-05-04, §2.17 LOCKED)——9 条 B + 第 10 条玩家自己 derive 的最深 truth + 章节透露矩阵 |
 | PL-8 | contract_reopened（设定壳/美学/伦理）formal 重审 | 设定壳由 D12 + v4.1 术语词表解决；美学由 D13 + D27 + D28 解决；伦理由 D14 v2 + D26 v2 + D30 解决——**contract_reopened 三件套已实质 closed** |
 | ~~PL-9~~ | ~~Ch.4 完整章节任务 derive~~ | ✅ DONE (2026-05-04, DRAFT v1)——三轨展开 + 状态确认临界态 + 入口/过渡仪式 + Project Nim L4 启示 |
-| ~~PL-10~~ | ~~Ch.1 / Ch.2 回炉 v4.1~~ | ✅ DONE (2026-05-04)——Ch.1 注入 B1 媒介绑定 + 末尾 D29 见证仪式；Ch.2 注入 D29 routine 态 + B2/B3 媒介 + 入口仪式对齐 + 灵长接口 channel rename |
-| **PL-11** | **NEW · 灵长接口（PI）的 in-game UI 文案 / theme 落地** | 跨 narrative→UI 边界，需要与 designer 一起做 |
+| ~~PL-10~~ | ~~Ch.1 / Ch.2 回炉 v4.1~~ | ✅ DONE (2026-05-04)——Ch.1 注入 B1 媒介绑定 + 末尾 D29 见证仪式；Ch.2 注入 D29 routine 态 + B2/B3 媒介 + 入口仪式对齐 + MOKO channel rename |
+| **PL-11** | **NEW · MOKO 的 in-game UI 文案 / theme 落地** | 跨 narrative→UI 边界，需要与 designer 一起做 |
 
 ---
 
@@ -1612,7 +1612,7 @@ Project Nim（基于真实 Nim Chimpsky 项目，1970s）是 v4.1 narrative 的*
 | Nim | 玩家 |
 |---|---|
 | 1970s 实验对象 | DPCA 录入员-作者 |
-| ASL 手势协议 | typing 协议（灵长接口 PI）|
+| ASL 手势协议 | typing 协议（MOKO）|
 | 死前 emergent 内部叙事 | endless 玩家写的 modifier |
 | 研究员采用其叙事 → DPCA framework | 玩家 modifier 进入下周目语料 → 影响新职业 run |
 | 没人决定让 Nim 成为 originator | 没人决定让玩家成为下周目原料 |
@@ -1797,7 +1797,7 @@ _(rolling — Step 5 在下方继续)_
 
 # Step 5（2026-05-04）— World & Lore
 
-**进度更新**：✅ World layer architecture / ✅ DPCA 起源神话 / ✅ 文牍科 / 第七打字室 specifics / ✅ 灵长接口 lore origin / ✅ X 集团 macro / ✅ Project Nim deep lore / ✅ D27-D29 lore origin / ✅ World × Chapter mapping / ✅ 真假难辨设计纪律
+**进度更新**：✅ World layer architecture / ✅ DPCA 起源神话 / ✅ 文牍科 / 第七打字室 specifics / ✅ MOKO lore origin / ✅ X 集团 macro / ✅ Project Nim deep lore / ✅ D27-D29 lore origin / ✅ World × Chapter mapping / ✅ 真假难辨设计纪律
 
 **Step 5 范畴**：本节 derive 玩家通过遗物 / boilerplate / 工作台环境**渐次感知**的 world layers——但不是 lore dump。所有 lore 必须通过 documentary trace 显化（与 Step 4 character 设计纪律一致）。Lore 分两类：**locked-derivable**（被 D + B 约束的）/ **suggested production decisions**（speculative，可在 production 阶段 tweak）。
 
@@ -1815,7 +1815,7 @@ _(rolling — Step 5 在下方继续)_
 
 | 层 | 玩家可见度 | 主载体 |
 |---|---|---|
-| **micro** · 第七打字室 | 全程可见（玩家工位）| 工作台 / 灵长接口 UI / 工位环境 |
+| **micro** · 第七打字室 | 全程可见（玩家工位）| 工作台 / MOKO UI / 工位环境 |
 | **meso** · DPCA / 文牍科 | 间接 reference（升职通知 / boilerplate）| boilerplate template / 工号系统 / 部门 reference |
 | **macro** · X 集团 / 现实 | 通过遗物片段感知 | 遗物 layered footnote / "本日候选: 来源 ——" notification |
 
@@ -1907,11 +1907,23 @@ DPCA Genesis lore **不应在任何地方 explicit 显化**——它是 B8 的 u
 
 ---
 
-## 5.4 灵长接口 (PI) Lore Origin 🔒 LOCKED
+## 5.4 MOKO Lore Origin 🔒 LOCKED (v0.2 / 2026-05-05 · ex-PI rename)
 
-### 5.4.1 PI 的源头
+### 5.4.0 范围与归属
 
-**灵长接口（Primate Interface）≠ DPCA 设计**。PI 是 inherit 自 Project Nim 的 ASL 训练协议：
+| 名 | 范围 | 部门归属 | inherited from |
+|---|---|---|---|
+| **MOKO** | **battle scene UI**（不是整个游戏 UI）| **M4 安全部门**旗下子工具 | Project Nim ASL 协议（§5.4.1）|
+
+**要点**：
+- MOKO 是 battle scene 这个特定 UI 的内部 + 员工面向**单一名字**（v4.1 LOCKED · 之前的 "灵长接口 / Primate Interface / PI" 双名 retract）
+- Shop / ritual / class picker / handbook / D29 / endless 入口仪式 等其他 scene 都**不是 MOKO**——见 §2.5.5 Scene → 主 Source 映射
+- MOKO 核心动机 = M4 安全部门动机：**防止员工作者化**——通过去语义化 + 字符层维持 + 节律纪律
+- MOKO 名字**永不在 in-game UI 显化**（设计纪律 · §5.4.3）
+
+### 5.4.1 MOKO 的源头
+
+**MOKO ≠ DPCA 设计**。MOKO 是 inherit 自 Project Nim 的 ASL 训练协议：
 
 ```
 1970s Project Nim ASL 训练
@@ -1927,30 +1939,25 @@ DPCA Genesis lore **不应在任何地方 explicit 显化**——它是 B8 的 u
     把"灵长类受训手势协议"改造为"灵长类受训打字协议"
     （因为 Nim 不能 type，但人类可以；保留协议结构）
         ↓
-现代灵长接口 (PI)
+现代 MOKO
 ```
 
-### 5.4.2 PI 名字的双关
-
-**"灵长"= 双重指代**：
-- 表面：人类是灵长类（玩家 = 灵长类 typing operator）
-- 深层：Nim 也是灵长类（Nim = 灵长接口的真正 originator）
-
-**"接口"**：不是 user interface，是**协议层**——PI 是 anomaly 借灵长类 species protocol 表达自己的 channel（D25 v2 兑现）。
-
-### 5.4.3 PI 的 horror 含义
+### 5.4.2 MOKO 的 horror 含义
 
 - 玩家以为在用一个 typing 游戏 UI
 - 实际上玩家在用 **Nim 留下的 emergent 协议** type
-- 玩家每次 type → 重演 Nim → emit 文本 → anomaly 通过 PI emerge
+- 玩家每次 type → 重演 Nim → emit 文本 → anomaly 通过 MOKO emerge
+- 同时 MOKO 也是**安全部门的去语义工具**——表面"防止员工作者化"，深层是 anomaly 通过 MOKO emit 文本的物理 channel
 
-→ **PI 是 Nim 1986 终末期遗产的 N+1 应用** —— 与 §4.5.3 Nim 反身镜像一致
+→ **MOKO 是 Nim 1986 终末期遗产的 N+1 应用** —— 与 §4.5.3 Nim 反身镜像一致
+→ **MOKO = 既是防护工具又是污染管道**（M4 surface motive vs MOKO 实际功能的 horror gap）
 
-### 5.4.4 in-game 显化纪律
+### 5.4.3 in-game 显化纪律
 
-- PI 名字**永不在 in-game UI 显化**——玩家只看到普通 typing HUD
-- "灵长接口"这个术语**只在文档 / 规则 / 便条**里偶尔出现（boilerplate 风格）——玩家会**逐渐意识到**自己用的 UI 有这个内部名
-- Ch.4 玩家会发现"灵长接口"在某遗物 L4 footnote 里 reference 到 Nim ASL 协议——B8 兑现的辅助 hook
+- MOKO 名字**永不在 in-game UI 显化**——玩家只看到普通 typing HUD（即 battle scene）
+- "MOKO" 这个术语**只在文档 / 规则 / 便条**里偶尔出现（boilerplate 风格）——玩家会**逐渐意识到**自己用的 battle UI 有这个内部名
+- Ch.4 玩家会发现 "MOKO" 在某遗物 L4 footnote 里 reference 到 Nim ASL 协议——B8 兑现的辅助 hook
+- "灵长" / "primate" / "Primate Interface" / "PI" 等 v4.0/v4.1-early 命名**已 retract**——任何输出含此命名 = pipeline validators reject
 
 ---
 
@@ -2112,7 +2119,7 @@ Nim 死前最后一周反复 sign 的 emergent 内容（除"hug me, please"外�
 | **Ch.1 录入员** | 仅第七打字室；工号；工位 | Nim L1 真实历史；零 macro reference |
 | **Ch.2 校对者** | + 文牍科（升职通知 reference）；同事工号系统 | Nim L2 叙事化；初次"针对你工号"的 specific tasks |
 | **Ch.3 修改者** | + DPCA（官方文档可见）；外部文本回收科（boilerplate）| Nim L3 公司视角；B4 显化（外部 candidate 文本来源）|
-| **Ch.4 作者** | + Project Nim L4 deep（"emergent 叙事被研究员采用"）；X 集团（远景 reference）；灵长接口 lore 首次出现于遗物 footnote | DPCA Genesis 神话部分显化；B8 reveal 的唯一窗口 |
+| **Ch.4 作者** | + Project Nim L4 deep（"emergent 叙事被研究员采用"）；X 集团（远景 reference）；MOKO lore 首次出现于遗物 footnote | DPCA Genesis 神话部分显化；B8 reveal 的唯一窗口 |
 | **Ch.5 文本一部分** | + 自由打字区 / 猴群坐席 / 非人类输入源管理室（实际进入）；下周目 reality（反身闭合）| 玩家 become Nim N+1；lore 不再 reveal，**玩家 become the lore** |
 
 ---
@@ -2169,7 +2176,7 @@ Nim 死前最后一周反复 sign 的 emergent 内容（除"hug me, please"外�
 | World layer architecture（空间 3 层 + 时间 4 层）| ✅ §5.1 LOCKED |
 | DPCA Genesis 神话 | ✅ §5.2 LOCKED |
 | 文牍科 / 第七打字室 specifics | ✅ §5.3 LOCKED（含 hidden lore：第七 = 唯一 active）|
-| 灵长接口 PI lore origin | ✅ §5.4 LOCKED |
+| MOKO lore origin | ✅ §5.4 LOCKED |
 | X 集团 / Reality Beyond | ✅ §5.5 LOCKED |
 | Project Nim deep lore（real + fiction）| ✅ §5.6 LOCKED |
 | D27-D29 lore origin | ✅ §5.7 LOCKED（含 hidden lore：17:06 = Nim 死亡时刻）|
@@ -2695,7 +2702,7 @@ _(rolling — Step 7 在下方继续)_
 | **E1** | 空间 (spatial) | 工位 layout / 视野范围 / 物理 prop placement |
 | **E2** | 时间 (temporal) | 计时钟 / 受理窗口 / 时间戳 / 字符级缓变 cycle |
 | **E3** | 动效 (motion) | 向心矢量 / 暗角吸光 / 粒子流 / 文档边缘 micro-changes |
-| **E4** | Prop | 打字机 / 印章 / 色带窗 / 纸张 / 工号牌 / 灵长接口 UI |
+| **E4** | Prop | 打字机 / 印章 / 色带窗 / 纸张 / 工号牌 / MOKO UI |
 
 每 channel 在 §7.3-7.6 各有专门规则。
 
@@ -2707,7 +2714,7 @@ _(rolling — Step 7 在下方继续)_
 
 | Ch | 工位特征 | 视野 | 物理 prop |
 |---|---|---|---|
-| **Ch.1 录入员** | 标准工位 cubicle | 视野范围内**多个**工位（4-8 个）；同事在场（typing 声音偶可听见）| 桌面 + 灵长接口屏幕 + 工号工卡 + 极少纸张 |
+| **Ch.1 录入员** | 标准工位 cubicle | 视野范围内**多个**工位（4-8 个）；同事在场（typing 声音偶可听见）| 桌面 + MOKO屏幕 + 工号工卡 + 极少纸张 |
 | **Ch.2 校对者** | 标注工位（多了红笔/印章/纸张 channel）| 视野**仍多个**工位但**偶尔空了一两个** | + 红笔 + 红章 + 老打字机 + 厚纸张堆 |
 | **Ch.3 修改者** | 工位**渐次孤立** | 视野范围内同事**数量减半**；偶尔回头**多空一个** | + 工位抽屉（前任痕迹）+ hover 文档 channel |
 | **Ch.4 作者** | **独立工位** | 视野内**无其他工位**；远端可见**几张空着的工位**（玩家以为是其他作者休假）| + 极简（比 Ch.1 还少 prop——文牍科 prestige 的体现，实质是 isolation）|
@@ -2774,14 +2781,14 @@ _(rolling — Step 7 在下方继续)_
 
 向心矢量在 v4.1 narrative 中的含义：
 
-> **玩家被吸入 anomaly 的注意中心**。所有 ambient 动效都应有**朝向玩家工位 / 灵长接口屏幕中心**的矢量——这是 anomaly contamination 在 motion 层的 visual signature。
+> **玩家被吸入 anomaly 的注意中心**。所有 ambient 动效都应有**朝向玩家工位 / MOKO屏幕中心**的矢量——这是 anomaly contamination 在 motion 层的 visual signature。
 
 ### 7.5.2 4 类 ambient motion
 
 | # | 动效类型 | 形式 | 何时启用 |
 |---|---|---|---|
 | **M1** | 暗角吸光 | 屏幕四角 vignette darken；中心区相对亮 | Ch.3+ 渐显 |
-| **M2** | 中心定点脉动 | 灵长接口屏幕中心**极慢** pulse（1-2 秒一次）| Ch.4+ |
+| **M2** | 中心定点脉动 | MOKO屏幕中心**极慢** pulse（1-2 秒一次）| Ch.4+ |
 | **M3** | 粒子向心流 | 灰尘 / 纸屑 / 字符粒子向工位中心**极缓**漂 | Ch.4+ ambient |
 | **M4** | 文档边缘 micro-changes | 玩家 hover 文档时边缘微小变化（V3 anomaly 显化）| Ch.2+ 渐显 |
 
@@ -2808,7 +2815,7 @@ _(rolling — Step 7 在下方继续)_
 | # | Prop | narrative function | spec 暗示 |
 |---|---|---|---|
 | **P1** | 机械打字机 | D28 机械见证效应载体 | 老式机械式（1940-50s 风格）；色带窗外露；击键有物理 click |
-| **P2** | 灵长接口 (PI) 屏幕 | 主操作 UI | 极简等宽字体；蓝印章 element；屏幕略微 CRT 弯曲 |
+| **P2** | MOKO 屏幕 | 主操作 UI | 极简等宽字体；蓝印章 element；屏幕略微 CRT 弯曲 |
 | **P3** | 红章 / 印章 | D13 美学锚点 + 签字暴击 | 老式橡皮印章；油墨厚（红色印泥）|
 | **P4** | 色带窗 | V5 守则 reference + D28 机械见证 | 色带显示打字机的"内存"——已打过的字 |
 | **P5** | 工号牌 / 工号工卡 | character identity 锚点（C1 玩家自己）| 数字打孔；老式 admin 卡片质感 |
@@ -2829,7 +2836,7 @@ _(rolling — Step 7 在下方继续)_
 - **不可逆物理压痕**——玩家打过的字在某些视觉显化中可见（如 cycle 末"今日总结"屏幕显示打字机色带）
 - Ch.5 endless：打字机色带变成**字符级缓变**——玩家 type 的字符在色带上**自己改**
 
-### 7.6.3 P2 灵长接口 (PI) 屏幕 spec
+### 7.6.3 P2 MOKO 屏幕 spec
 
 视觉 spec：
 - 极简等宽字体
@@ -2838,7 +2845,7 @@ _(rolling — Step 7 在下方继续)_
 - Ch.4+ 屏幕中心**极慢** pulse（M2）
 - Ch.5 屏幕**与主菜单 boundary 含混**——玩家 typing rhythm leak 出去
 
-**关键**：PI 名字**永不**在 UI 显化（与 §5.4.4 一致）——玩家只看到普通 typing 游戏 HUD。
+**关键**：MOKO 名字**永不**在 UI 显化（与 §5.4.3 一致）——玩家只看到普通 typing 游戏 HUD。
 
 ### 7.6.4 Prop 的反身闭合应用
 
@@ -2999,7 +3006,7 @@ _(rolling — Step 7 在下方继续)_
 | Environmental × Chapter mapping | ✅ §7.9 LOCKED |
 | 反身闭合 in environment | ✅ §7.10 LOCKED |
 | 设计纪律 | ✅ §7.11 LOCKED |
-| Prop 视觉 spec finalize | ⏳ 待 production（与 PL-11 灵长接口 UI 文案 / theme 落地一起）|
+| Prop 视觉 spec finalize | ⏳ 待 production（与 PL-11 MOKO UI 文案 / theme 落地一起）|
 | Sound asset library | ⏳ 待 production |
 
 **Step 7 主体已 LOCK**——下次 continue 推荐入口：
@@ -3769,7 +3776,7 @@ _(rolling — Step 10 在下方继续)_
 | Skill flavor | ~85% 是 v2.3 残留 | 走 v4.1 pipeline 重新生成（D25 v2 anomaly framing）|
 | 词包 narrative entries | v3.1 残留 | 与 PL-3 typing buffer pre-populate 共享 anomaly voice 后端，重新生成 |
 | Boss modifier flavor | v2.3 残留 | reframe "撰写异常报告"风格 |
-| 主菜单 dossier 文案 | v3.2 已重做 | 检查 v4.1 词典统一 + 灵长接口 reference |
+| 主菜单 dossier 文案 | v3.2 已重做 | 检查 v4.1 词典统一 + MOKO reference |
 
 ### 10.1.3 Implementation 优先级回顾
 
@@ -3909,7 +3916,7 @@ _(rolling — Step 10 在下方继续)_
 | 字符级缓变实现 | drift 量极微 / 移开鼠标 settle / drift 内容来自 V3 池非 random |
 | 向心矢量动效 | M1-M4 实现严格遵循向心矢量铁律——零离心 |
 | 双层美学 | 文牍科旧气 + 90s 办公**两层共存**；不该共存的 era 同时——这是 D13 时间错乱 |
-| 灵长接口 (PI) UI | PI 名字**永不**在 UI 显化 |
+| MOKO UI | MOKO 名字**永不**在 UI 显化 |
 
 ### 10.5.4 Narrative ↔ Localization
 
@@ -3951,7 +3958,7 @@ v4.1 主 locale：
 
 ### 10.6.3 Locale-specific 注意点
 
-- 灵长接口 (Primate Interface, PI) 双关在 EN 自然成立（"primate"既指人类也指 Nim）
+- MOKO 双关在 EN 自然成立（"primate"既指人类也指 Nim）
 - 文牍科 旧气美学 EN 等价 = 1940s-50s American clerical office（用 typewriter / ink stamps 美学锚定）
 - 受理窗口 = textual acceptance interval；EN 直译保持
 - 状态确认 = state confirmation / keep-as-human check；EN 用 keep-as-human 强化
@@ -3967,7 +3974,7 @@ v4.1 主 locale：
 | 工号 | worker ID / employee ID | 玩家 identity |
 | Subject XX-#### | Subject XX-#### | 跨 locale 保持 |
 | 受理窗口 | acceptance interval | D27 |
-| 灵长接口 | Primate Interface (PI) | 灵长接口 |
+| MOKO | MOKO | MOKO |
 | 文牍科 | Clerical Bureau | DPCA |
 
 ---
@@ -4135,7 +4142,7 @@ _(rolling — Step 11 收官在下方)_
 | 2 Foundation | ✅ | D1-D32 + Premise/Themes/Tone/Structure/Acts + 5 章 narrative tasks + B1-B9 |
 | 3 Beats / Pacing | ✅ | 三层 beat 架构 + 行为驱动 trigger map + Phase A/B/C |
 | 4 Characters | ✅ | Anti-character + 6 类 no-face cast + 同事 ghost + Project Nim 4 layers |
-| 5 World & Lore | ✅ | DPCA Genesis + 第七打字室 + PI lore + Nim deep lore + D27-29 lore origin |
+| 5 World & Lore | ✅ | DPCA Genesis + 第七打字室 + MOKO lore + Nim deep lore + D27-29 lore origin |
 | 6 Dialogue Framework | ✅ | Anti-dialogue + 6 voices (V1-V6) + voice retire 曲线 |
 | 7 Environmental Storytelling | ✅ | V7 + 4 channel (E1-E4) + 向心矢量铁律 + 美学 D13 物理化 |
 | 8 Narrative Delivery | ✅ | 11 channel (DC1-DC11) + 6 modes + Macro/Mid/Micro schedule + 寂静化总曲线 |
@@ -4352,7 +4359,7 @@ _(rolling — Step 11 收官在下方)_
 | # | Prop | §出处 |
 |---|---|---|
 | P1 | 机械打字机 | §7.6.1 + §7.6.2 |
-| P2 | 灵长接口 PI 屏幕 | §7.6.1 + §7.6.3 |
+| P2 | MOKO 屏幕 | §7.6.1 + §7.6.3 |
 | P3 | 红章 / 印章 | §7.6.1 |
 | P4 | 色带窗 | §7.6.1 |
 | P5 | 工号牌 / 工号工卡 | §7.6.1 |
@@ -4371,7 +4378,7 @@ _(rolling — Step 11 收官在下方)_
 | World layer architecture（空间 3 层 + 时间 4 层）| §5.1 |
 | **DPCA Genesis** 神话（Nim → 无名研究员 → framework）| §5.2 |
 | 文牍科 / **第七打字室**（唯一 active；前六室 fail/closed）| §5.3 |
-| 灵长接口 (PI) Lore Origin（继承自 Project Nim ASL 协议）| §5.4 |
+| MOKO Lore Origin（继承自 Project Nim ASL 协议）| §5.4 |
 | **X 集团** macro banal evil | §5.5 |
 | **Project Nim deep lore**（real + fiction grounding；4 layers）| §5.6 + §4.5 |
 | D27 受理窗口 lore（17:06 = Nim 死亡时刻 hidden）| §5.7.1 |
@@ -4424,7 +4431,7 @@ _(rolling — Step 11 收官在下方)_
 | ~~PL-8~~ | contract_reopened 重审 | 实质 closed | §2.18 |
 | ~~PL-9~~ | Ch.4 完整章节任务 derive | DONE | §2.18 + §2.16.4 |
 | ~~PL-10~~ | Ch.1 / Ch.2 v4.1 回炉 | DONE | §2.18 |
-| **PL-11** | 灵长接口 (PI) UI 文案 / theme 落地 | 待 production execute | §2.18 |
+| **PL-11** | MOKO UI 文案 / theme 落地 | 待 production execute | §2.18 |
 
 ---
 
@@ -4593,7 +4600,7 @@ D14 v2 → D15 → D21 → D26 v2 → D30 → B6 → B8 → 第 10 条
 | **v3.0** | DEPRECATED | 灵长类辅助文书部 + SCP 收容主义底色雏形 |
 | **v3.1** | DEPRECATED | 卡夫卡式打字工厂 + 三轨映射核心机关 + 共谋宇宙恐怖 |
 | **v4.0** | INCREMENT | B 级合约 Start Fresh；从收容物本体反推方法论；D1-D26 决策链 LOCK |
-| **v4.1** | **CURRENT** | 整合外部流程文档；D27-D32 + 灵长接口 PI + 6 voices + 反身闭合工艺 |
+| **v4.1** | **CURRENT** | 整合外部流程文档；D27-D32 + MOKO + 6 voices + 反身闭合工艺 |
 
 ### 11.17.2 v4.0 反推方法论（不可动摇）
 
@@ -4603,7 +4610,7 @@ D14 v2 → D15 → D21 → D26 v2 → D30 → B6 → B8 → 第 10 条
 
 ### 11.17.3 对 v3.x 工作的承认
 
-v4.0/v4.1 的"反推方法论"是建立在 v3.x 设计的基础上——v3.0/v3.1 已经无意识地把 5 段阶梯里的 4 段载体（none/wordsmith/metamorph/endless）盖好了；v4.0 只是事后命名了 anomaly 本体并显化阶梯。**v4.1 整合阶段同样如此——外部流程文档的"灵长接口" / "未受理文本" / "受理窗口" 等概念，都是以 v4.0 的本体为锚点 emerge 的。**
+v4.0/v4.1 的"反推方法论"是建立在 v3.x 设计的基础上——v3.0/v3.1 已经无意识地把 5 段阶梯里的 4 段载体（none/wordsmith/metamorph/endless）盖好了；v4.0 只是事后命名了 anomaly 本体并显化阶梯。**v4.1 整合阶段同样如此——外部流程文档的"MOKO" / "未受理文本" / "受理窗口" 等概念，都是以 v4.0 的本体为锚点 emerge 的。**
 
 ### 11.17.4 v4.1 Narrative 的核心问题
 
