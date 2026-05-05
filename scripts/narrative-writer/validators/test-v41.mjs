@@ -14,7 +14,7 @@ import {
   checkLayeredStratification,
   checkDenialAffirmationVocabulary,
   checkPlaceholderSyntax,
-  checkPIInternalNameLeakage,
+  checkMOKONameLeakage,
   checkClassRenamingConsistency,
   validateFragmentV41,
 } from './index.mjs'
@@ -242,27 +242,27 @@ assertReject(
 )
 
 // ════════════════════════════════════════════════════════
-// 7 · checkPIInternalNameLeakage
+// 7 · checkMOKONameLeakage
 // ════════════════════════════════════════════════════════
-console.log('\n── 7 · checkPIInternalNameLeakage ──')
+console.log('\n── 7 · checkMOKONameLeakage ──')
 
 assertPass(
   'PI leak：合法文本（含 DPCA 缩写）',
-  checkPIInternalNameLeakage('员工签到 DPCA 第七打字室', 'V1')
+  checkMOKONameLeakage('员工签到 DPCA 第七打字室', 'V1')
 )
 assertReject(
   'PI leak：含 "灵长接口"',
-  checkPIInternalNameLeakage('打开灵长接口 settings 面板', 'V1'),
+  checkMOKONameLeakage('打开灵长接口 settings 面板', 'V1'),
   '灵长接口'
 )
 assertReject(
   'PI leak：含 "Primate Interface"',
-  checkPIInternalNameLeakage('Open the Primate Interface', 'V1'),
+  checkMOKONameLeakage('Open the Primate Interface', 'V1'),
   'Primate Interface'
 )
 assertReject(
   'PI leak：含 "灵长类辅助文书部"（DPCA forbidden_in_ui）',
-  checkPIInternalNameLeakage('欢迎来到灵长类辅助文书部', 'V1'),
+  checkMOKONameLeakage('欢迎来到灵长类辅助文书部', 'V1'),
   'DPCA 命名违规'
 )
 

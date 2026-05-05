@@ -726,22 +726,25 @@ export function checkPlaceholderSyntax(text) {
   return errors
 }
 
-// ─── 7 · checkPIInternalNameLeakage · 通用 ───
+// ─── 7 · checkMOKONameLeakage · 通用 ───
 //
-// "灵长接口 / Primate Interface / PI 接口" 在玩家可见 UI 上下文一律 reject。
+// "MOKO / 灵长接口 / Primate Interface / PI" 在玩家可见 UI 上下文一律 reject。
 // 注：
-//   - "PI" 单独缩写在英文里可能误命中（非常罕见），用 "PI 接口" / "PI screen" 等组合检测
-//   - 中文标题 "灵长类辅助文书部" 已被 DPCA_NAMING.forbidden_in_ui 锁定（DPCA 替换）；
-//     此 validator 关注的是"灵长接口"概念名是否泄漏，不是 DPCA 全称
-export function checkPIInternalNameLeakage(text, voice) {
+//   - v4.1 LOCKED 单名 = MOKO（§5.4 LOCKED）；v4.0/v4.1-early 命名 灵长接口 / Primate Interface / PI 已 retract
+//   - "MOKO" / "PI" 单独缩写在英文里可能误命中（非常罕见），用组合检测降低 false positive
+//   - 中文标题 "灵长类辅助文书部" 已被 DPCA_NAMING.forbidden_in_ui 锁定（DPCA 替换）
+export function checkMOKONameLeakage(text, voice) {
   const errors = []
-  const piTerms = [
-    '灵长接口', 'Primate Interface', 'PI 接口', 'PI screen',
-    'PI 屏幕', 'PI 系统', 'PI 已激活', 'Interface activated',
+  // v4.1 单名 MOKO + v4.0/v4.1-early retract 命名
+  const mokoLeakTerms = [
+    'MOKO 接口', 'MOKO screen', 'MOKO 屏幕', 'MOKO 系统', 'MOKO 已激活',
+    '灵长接口', 'Primate Interface',
+    'PI 接口', 'PI screen', 'PI 屏幕', 'PI 系统', 'PI 已激活',
+    'Interface activated',
   ]
-  for (const term of piTerms) {
+  for (const term of mokoLeakTerms) {
     if (text.includes(term)) {
-      errors.push(`PI 内部名泄漏: "${term}" — §5.4.4 铁律 "PI 名字永不在 UI 显化"（voice ${voice}）`)
+      errors.push(`MOKO 内部名泄漏: "${term}" — §5.4.3 铁律 "MOKO 名字永不在 UI 显化"（voice ${voice}）`)
     }
   }
   // DPCA_NAMING 禁词：UI 全用 "DPCA" 缩写
@@ -801,7 +804,7 @@ export function validateFragmentV41(fragment, voice, ctx = {}) {
   errors.push(...checkAuditTier1Banned(allTextZh, 'zh', messageContext))
   errors.push(...checkAuditTier1Banned(allTextEn, 'en', messageContext))
   errors.push(...checkFanfarePattern(allText, voice))
-  errors.push(...checkPIInternalNameLeakage(allText, voice))
+  errors.push(...checkMOKONameLeakage(allText, voice))
   errors.push(...checkClassRenamingConsistency(allText))
 
   // V2 / V3 / V4 / V7 路径检查（继承 v3.1 的 IP / B1.a / GW 等）
