@@ -63,7 +63,7 @@ rule_horror_imports:  # 风格层导入（不绑 setting）
 | 2 | Foundation（先钉 anomaly → 再推 Premise / Themes / Tone / Structure） | ✅ 完成（D1-D32 LOCK / 5 章 narrative tasks / B1-B9 / 灵长接口 PI） |
 | 3 | Story Beats / Pacing | ✅ 完成（三层 beat 架构 / 行为驱动 trigger map / Phase A-C pacing curve / Anti-pacing 纪律） |
 | 4 | Characters | ✅ 完成（anti-character / 6 类 no-face cast / 同事 ghost / Project Nim 4 layers / 反身闭合 character / villain vacuum） |
-| 5 | World & Lore | — |
+| 5 | World & Lore | ✅ 完成（空间 3 层 + 时间 4 层 / DPCA Genesis 神话 / 第七打字室 唯一 active / PI 源 = Nim ASL 协议 / X 集团 macro banal evil / Nim deep lore real+fiction / D27-29 lore origin / 真假难辨纪律） |
 | 6 | Dialogue Framework | — |
 | 7 | Environmental Storytelling | — |
 | 8 | Narrative Delivery | — |
@@ -1701,4 +1701,397 @@ Project Nim（基于真实 Nim Chimpsky 项目，1970s）是 v4.1 narrative 的*
 
 ---
 
-_暂停于 2026-05-04（Step 4 完成）。Step 1-4 已闭合。Foundation + Beats / Pacing + Characters 三大主体全 LOCK。_
+_(rolling — Step 5 在下方继续)_
+
+---
+
+# Step 5（2026-05-04）— World & Lore
+
+**进度更新**：✅ World layer architecture / ✅ DPCA 起源神话 / ✅ 文牍科 / 第七打字室 specifics / ✅ 灵长接口 lore origin / ✅ X 集团 macro / ✅ Project Nim deep lore / ✅ D27-D29 lore origin / ✅ World × Chapter mapping / ✅ 真假难辨设计纪律
+
+**Step 5 范畴**：本节 derive 玩家通过遗物 / boilerplate / 工作台环境**渐次感知**的 world layers——但不是 lore dump。所有 lore 必须通过 documentary trace 显化（与 Step 4 character 设计纪律一致）。Lore 分两类：**locked-derivable**（被 D + B 约束的）/ **suggested production decisions**（speculative，可在 production 阶段 tweak）。
+
+---
+
+## 5.1 World Layer Architecture · 空间 3 层 + 时间 4 层 🔒 LOCKED
+
+### 5.1.1 空间层（嵌套）
+
+```
+玩家直接所在 ─→ 玩家间接 reference ─→ 玩家通过遗物片段感知
+   第七打字室       DPCA / 文牍科         X 集团子部门 / 现实 context
+   (micro)         (meso)                 (macro)
+```
+
+| 层 | 玩家可见度 | 主载体 |
+|---|---|---|
+| **micro** · 第七打字室 | 全程可见（玩家工位）| 工作台 / 灵长接口 UI / 工位环境 |
+| **meso** · DPCA / 文牍科 | 间接 reference（升职通知 / boilerplate）| boilerplate template / 工号系统 / 部门 reference |
+| **macro** · X 集团 / 现实 | 通过遗物片段感知 | 遗物 layered footnote / "本日候选: 来源 ——" notification |
+
+**关键**：玩家**永不去**第七打字室之外的物理空间——所有 meso / macro layer 通过 textual reference 显化。**没有"DPCA 大楼" / "X 集团总部"场景**（D14 v2 + Step 4 anti-character 一致）。
+
+### 5.1.2 时间层（4 段）
+
+| 时段 | 内容 | 玩家可见度 |
+|---|---|---|
+| **1970s · Project Nim 时代** | DPCA 起源种子（Nim ASL 协议被 anomaly 借用）| Ch.1 L1 / Ch.2 L2 / Ch.3 L3 / Ch.4 L4 渐次显化 |
+| **1980s-90s · Containment Formalize** | 研究员（无名）采用 Nim 终末期 emergent 叙事 → protocol → DPCA 雏形 | Ch.4 L4 reveal（B8）|
+| **2000s-now · 玩家时代** | DPCA 已成熟的 administrative tier 体系 | 全程（玩家所在）|
+| **未来 · 下周目** | 玩家自己的 footprint 进入下周目语料 | Ch.5 endless / 第 10 条 reveal |
+
+**时间错乱即 horror**（D13）：受理窗口（D27）让"现在"不稳定；现实自洽（B7）让"过去"会被改写；反身闭合让"未来"已经在玩家手上。**v4.1 narrative 没有 stable timeline——time 本身是 anomaly 的运行时**。
+
+---
+
+## 5.2 DPCA Genesis · 起源神话 🔒 LOCKED (B8 兑现)
+
+### 5.2.1 神话三段（emergent，非 designed）
+
+```
+[1] 1970s Project Nim
+        ↓
+    Nim 终末期 emergent 内部叙事
+    （anomaly 借 ASL channel emit 第一次 documented prototype text）
+        ↓
+[2] 1980s 研究员（无名）
+        ↓
+    试图 verify Nim 的"叙事" → 部分 verify 成功 → 部分 unable to verify
+        ↓
+    采用 Nim 终末期手势模式 → 第一份 protocol
+        ↓
+[3] 1990s-2000s 体制化
+        ↓
+    协议 → 作业手册 → 文牍科 → 第七打字室
+        ↓
+    DPCA 作为 X 集团子部门成立
+```
+
+### 5.2.2 关键 lore 锚点
+
+- **没人决定让 DPCA 做这件事**——它就是这样 emergent 的（D14 v2 + D21 + B8）
+- **DPCA framework 是 Nim 终末期叙事的 inherit**——不是公司发明的（B8）
+- **Nim 是 DPCA 的 originator，但没人识别**——研究员把 Nim 终末期手势当成"valuable framework"，但**他没意识到**那是 anomaly 借 Nim 在 emit
+- **研究员没名字**——这是 D21 banal evil 的 character 化兑现：**关键决定**由**没名字的人**做出，因为决定本身**没有 weight**
+
+### 5.2.3 玩家可感知度
+
+DPCA Genesis lore **不应在任何地方 explicit 显化**——它是 B8 的 unfold：
+- Ch.1-3: 完全不可见
+- Ch.4: 通过 cross-ref Project Nim 多份遗物 + L4 layer 显化（B8 唯一窗口）
+- Ch.5: 玩家**已成为** Nim 的 N+1 实例——lore 的 horror 在于**自己重演了起源**
+
+---
+
+## 5.3 文牍科 / 第七打字室 specifics 🔒 LOCKED
+
+### 5.3.1 文牍科 = clerical-科
+
+文牍科 = DPCA 内部专门处理**textual contamination**的 specific 部门。
+- 处理 medium：text only（字符 / 文档 / 规则 / 便条）
+- 不处理：visual / audio / behavioral 异常（其他子部门负责，但**互相不知道**——D21 macro 兑现）
+
+### 5.3.2 第七打字室
+
+第七打字室 = 文牍科下属**当前 active** 的 recording chamber。
+
+**Hidden lore（不应 explicit 显化，但应作 background 真相）**：
+- 前六个打字室 each 都已经 fail / closed / 封存
+- 失败原因不一：员工集体作者化 / 录入污染外溢 / 异常通过 chamber emerge / chamber 物理失踪 等
+- **第七是 currently 唯一 active 的 chamber**——玩家工位是文牍科目前**唯一**还在运行的 recording 设施
+- 第八打字室**未启动**——但已经被预留（待第七 fail 时接续）
+
+### 5.3.3 玩家如何感知第七打字室的孤立性
+
+- 工位看不到其他打字室——视野范围内只有同事工位（如有）
+- 偶尔工作台出现"邻室封存通知"——格式 boilerplate（"X 室作业已暂停，移交档案管理"）——玩家不会意识到 X 是过去的某个室
+- Ch.4 玩家工位是"独立工位"——但实际是**第七打字室的边角**，不是别的打字室
+- Ch.5 endless 玩家**留在第七打字室**——但**实际上是被转入"自由打字区"**（同一物理空间，不同 administrative 分类）
+
+### 5.3.4 第七打字室的 horror function
+
+为什么 lore 设计第七打字室是唯一 active？
+- 增加 horror 重量：**玩家是文牍科最后的 employee**——不是无数 worker 中的一个
+- 反身闭合: 玩家 fail / 转入 endless → 第七打字室也即将 fail → 第八启动 → 下周目玩家进第八室——**每个玩家都是某个打字室的唯一员工**
+- 这层 lore 让 B6 ("公司只是 keep 记账") 更暴力：**没有"很多员工"**——只有"这一个"，而公司仍然不偏好
+
+---
+
+## 5.4 灵长接口 (PI) Lore Origin 🔒 LOCKED
+
+### 5.4.1 PI 的源头
+
+**灵长接口（Primate Interface）≠ DPCA 设计**。PI 是 inherit 自 Project Nim 的 ASL 训练协议：
+
+```
+1970s Project Nim ASL 训练
+        ↓
+    Nim 习得 128 ASL 手势（real history）
+        ↓
+1980s anomaly 借 ASL channel emerge
+        ↓
+    研究员发现 Nim ASL 模式中的 emergent text 部分"成立"
+        ↓
+1990s 协议改造
+        ↓
+    把"灵长类受训手势协议"改造为"灵长类受训打字协议"
+    （因为 Nim 不能 type，但人类可以；保留协议结构）
+        ↓
+现代灵长接口 (PI)
+```
+
+### 5.4.2 PI 名字的双关
+
+**"灵长"= 双重指代**：
+- 表面：人类是灵长类（玩家 = 灵长类 typing operator）
+- 深层：Nim 也是灵长类（Nim = 灵长接口的真正 originator）
+
+**"接口"**：不是 user interface，是**协议层**——PI 是 anomaly 借灵长类 species protocol 表达自己的 channel（D25 v2 兑现）。
+
+### 5.4.3 PI 的 horror 含义
+
+- 玩家以为在用一个 typing 游戏 UI
+- 实际上玩家在用 **Nim 留下的 emergent 协议** type
+- 玩家每次 type → 重演 Nim → emit 文本 → anomaly 通过 PI emerge
+
+→ **PI 是 Nim 1986 终末期遗产的 N+1 应用** —— 与 §4.5.3 Nim 反身镜像一致
+
+### 5.4.4 in-game 显化纪律
+
+- PI 名字**永不在 in-game UI 显化**——玩家只看到普通 typing HUD
+- "灵长接口"这个术语**只在文档 / 规则 / 便条**里偶尔出现（boilerplate 风格）——玩家会**逐渐意识到**自己用的 UI 有这个内部名
+- Ch.4 玩家会发现"灵长接口"在某遗物 L4 footnote 里 reference 到 Nim ASL 协议——B8 兑现的辅助 hook
+
+---
+
+## 5.5 X 集团 / Reality Beyond DPCA 🔒 LOCKED
+
+### 5.5.1 X 集团 = corporate conglomerate
+
+X 集团（specific name 待 production）是公司 conglomerate；DPCA 是其下属子部门之一。
+
+### 5.5.2 X 集团 macro banal evil
+
+**关键 lore**：X 集团本身**不知道** DPCA 在做什么。
+
+| 层 | X 集团高管视角 | 实际内容 |
+|---|---|---|
+| budget request | "DPCA 申请 Q3 预算 +12%" | 是因为 anomaly 显化 rate 增加 |
+| headcount | "DPCA 人员稳定 ~50 人" | 但 50 人中有员工每月被作者化转入 endless / 新员工补入 |
+| output volume | "DPCA 月度输出 X 份归档文档" | 文档实际是 anomaly 借 employees 录入产生的 emergent text |
+| KPI 评估 | "DPCA 运作正常" | 因为 administrative metrics 都 normal |
+
+→ X 集团高管看的是 abstract metrics；DPCA 上报的也是 abstract metrics——**没人在 X 集团 layer 知道实际 content**。这是 D21 banal evil 的 macro 兑现。
+
+### 5.5.3 X 集团其他子部门
+
+X 集团有多个子部门处理不同 medium 的 anomaly contamination（推测，待 finalize）：
+
+| 推测子部门 | 处理 medium | 与 DPCA 关系 |
+|---|---|---|
+| DPCA · 文牍科 | text contamination | 玩家所在 |
+| 推测部门 A | audio anomaly | 不互相 communicate |
+| 推测部门 B | visual anomaly | 不互相 communicate |
+| 推测部门 C | behavioral anomaly | 不互相 communicate |
+
+**关键**：这些子部门**互相不知道彼此在做什么**。每个部门的员工都以为自己是"X 集团做某 admin work 的"——没人知道整个公司是 anomaly containment 网络。
+
+### 5.5.4 in-game 显化纪律
+
+- X 集团 specific name 不 explicit 显化（boilerplate "X 集团子部门" 即可）
+- 其他子部门的存在**仅作 background 真相**——玩家**不应**遇到任何"audio 异常 / visual 异常"线索（保持 textual 纯粹）
+- macro layer 的 horror 是 emergent：玩家累积感知到 X 集团 vast 而 unaware → "原来还有更大的事"
+
+---
+
+## 5.6 Project Nim Deep Lore · Real + Fiction Grounding 🔒 LOCKED
+
+### 5.6.1 真实历史（real grounding）
+
+真实 Project Nim（玩家可外部 verify）：
+
+| 年份 | 事件（real）|
+|---|---|
+| 1973 | Columbia University, Herbert Terrace 启动 Project Nim |
+| 1973-1979 | 训练 Nim Chimpsky 学 ASL（命名向 Noam Chomsky 致敬）|
+| 1979 | Terrace 宣布 project failed——Nim 没真懂语法，只是 mimic |
+| 1986 | Nim 死亡 |
+| 2011 | 纪录片《Project Nim》 |
+
+→ 玩家可以 Google 验证以上每条——这是 grounding 锚点。
+
+### 5.6.2 Fiction extending（v4.1 narrative）
+
+v4.1 fictional 扩展（不可 external verify）：
+
+| 年份 | 事件（fiction）|
+|---|---|
+| 1979 | Terrace conclusion 是 cover story；项目实际未完全停止——某些 followup 录像 1980-1985 仍在持续 |
+| 1980-1985 | 一些晚间录像里 Nim 表现出 "emergent behavior"——不再是 trained phrases，而是 emergent 内部叙事 |
+| 1986 死前一周 | Nim ASL 内容**变了**——反复 sign "hug me, please"（**这条部分真实**——纪录片中有 reference）/ 但 v4.1 fiction: 这是 anomaly 借 Nim 的 ASL channel emit 的 prototype text |
+| 1986 死后 | 某研究员（无名）采用了 Nim 终末期某些手势模式作为 framework——DPCA 第一份 protocol 诞生 |
+
+### 5.6.3 真假混合密度（v4.1 narrative 设计纪律）
+
+| 类型 | 占比 | 例子 |
+|---|---|---|
+| **真实 verifiable** | ~30% | "Nim 死前最后一周反复 sign 'hug me, please'"（real reference）|
+| **合理推测无法证伪** | ~30% | "Nim 在无人时仍持续打手语"（plausible 但无 documentation）|
+| **清晰叙事化注入** | ~30% | "1980 后某研究员采用 Nim 手势作为 framework"（fiction）|
+| **绝对错误但逻辑自洽** | ~10% | 故意的 minor 错误（如某些日期偏一年）——增强真假难辨感 |
+
+### 5.6.4 Nim 终末期"叙事内容"的 lore（hidden background）
+
+**hidden lore（不显化，仅供 design-reference）**：
+
+Nim 死前最后一周反复 sign 的 emergent 内容（除"hug me, please"外）：
+- "字"（character）
+- "看"（look）
+- "我不在那里"（I not there）——**ASL 不能 directly 表达 "not there"，这本身是 ASL grammar 之外的 emergent 表达**
+- "字 看 我"（characters look me）——形成的 sentence 是 anomaly 借 Nim 显化的第一句"未受理文本"——这句 sentence 在 1986 之后**部分成立**：现实补出"Nim 死前确实有 sign 这些字"的证据链（B7 兑现的 hidden 历史 case）
+
+→ **这是 anomaly 第一次在 documented 历史中显化的 sentence**——也是 DPCA 的"成立"机制 prototype（B7）。
+
+### 5.6.5 Nim Lore 显化的 Ch 时机
+
+| Ch | 玩家可见 Nim lore |
+|---|---|
+| Ch.1 | Nim 1973-1979 真实历史（L1）|
+| Ch.2 | Nim 终末期叙事化（L2）；30% 真 / 30% 推测 / 30% 注入 / 10% 错 |
+| Ch.3 | 公司机关备忘（L3）：去人格化的 administrative |
+| Ch.4 | L4 reveal：Nim 终末期 emergent 叙事被研究员采用——B8 唯一窗口 |
+| Ch.5 | 玩家**自己**重演 Nim——lore 不再 reveal，玩家 become the lore |
+
+---
+
+## 5.7 D27-D29 Lore Origin · 受理窗口 / 机械见证 / 状态确认 🔒 LOCKED
+
+### 5.7.1 D27 受理窗口的 lore origin
+
+**受理窗口的发现**：
+- 1980s 研究员 post-Nim 试图 verify Nim 终末期叙事的"成立"率
+- 发现某些时间段 verification rate 显著高
+- 特别是**17:06 前后**——受理 rate spike
+
+**Hidden lore（不显化）**：**Nim 死亡时刻 = 1986-XX-XX, 17:06**。
+- 研究员发现 anomaly 在每天 17:06 前后特别"active"——形成主要受理窗口
+- 17:06-17:13 这个 7 分钟窗口是文牍科核心 operational time
+- "午休结束前 30 秒"等其他 windows 是 secondary，发现于 1990s
+
+→ **不要在任何 in-game 文档中显化"17:06 = Nim 死亡时刻"**。这层 lore 仅作 design-reference / 用户自己 derive。
+
+### 5.7.2 D28 机械见证效应的 lore origin
+
+**机械见证发现**：
+- 1985 Nim 还活着时，研究员尝试用打字机 record Nim 的 ASL output
+- 比较：hand-written notes vs typed transcription
+- 发现**typed text 比 hand-written notes 有更高 "成立"率**——可能因为：
+  - 不可逆物理压痕
+  - 色带格式统一
+  - 击键节拍提供 authentication
+- 1990s formalize 为 mechanical witness protocol
+
+→ **打字机不是 typing tool，是 textual authentication device**——D28 在 lore 上的兑现。
+
+### 5.7.3 D29 状态确认的 lore origin
+
+**D29 protocol 的 history**：
+- 1980s-90s 早期 DPCA**没有 D29 protocol**
+- 几个 case：员工"作者化"后**带着作者身份回家** → 在 home 继续 author → 成为 移动 textual contamination source → affecting 现实
+- **Post-incident**：D29 protocol 被开发出来作为 keep-as-human check
+- 2000s formalize：5 项检测（摘面具 / 报姓名 / 报日期 / 解释普通句子 / 区分"打字"和"写作"）
+
+**D29 检测员**：
+- 文牍科 protocol 部门的工作人员
+- 他们也走 D29，但**他们的角色 protected**——因为他们**不录入**（不是 typing operator）
+- 他们 voice-only，永不可见（与 §4.9.3 边界 case 一致）
+- 检测员**自己**也不知道 D29 是污染检测——他们以为是 routine 下班程序
+
+### 5.7.4 D27-D29 lore 显化纪律
+
+- 三条 lore origin **不应在 in-game 显化**——它们是 background 真相
+- 玩家**可能永远不知道**为什么受理窗口是 17:06——D5 拒绝给答案
+- D29 检测员 voice-only——玩家永不见人；不该有"检测员" character explicit 显化
+
+---
+
+## 5.8 World × Chapter Mapping 🔒 LOCKED
+
+| Ch | 玩家可见的 world layer | 主要 lore reveal |
+|---|---|---|
+| **Ch.1 录入员** | 仅第七打字室；工号；工位 | Nim L1 真实历史；零 macro reference |
+| **Ch.2 校对者** | + 文牍科（升职通知 reference）；同事工号系统 | Nim L2 叙事化；初次"针对你工号"的 specific tasks |
+| **Ch.3 修改者** | + DPCA（官方文档可见）；外部文本回收科（boilerplate）| Nim L3 公司视角；B4 显化（外部 candidate 文本来源）|
+| **Ch.4 作者** | + Project Nim L4 deep（"emergent 叙事被研究员采用"）；X 集团（远景 reference）；灵长接口 lore 首次出现于遗物 footnote | DPCA Genesis 神话部分显化；B8 reveal 的唯一窗口 |
+| **Ch.5 文本一部分** | + 自由打字区 / 猴群坐席 / 非人类输入源管理室（实际进入）；下周目 reality（反身闭合）| 玩家 become Nim N+1；lore 不再 reveal，**玩家 become the lore** |
+
+---
+
+## 5.9 Lore 真假难辨设计纪律 🔒 LOCKED
+
+### 5.9.1 核心原则
+
+> **Lore 不是为了让玩家知道，是为了让玩家不能 verify**。每条 lore 在玩家手上应该是 plausibly real / plausibly fiction——玩家无法 settle。
+
+### 5.9.2 设计纪律
+
+| 纪律 | 出处 |
+|---|---|
+| 真实部分必须**外部 verifiable**（如 Project Nim 1973-1986 真实历史）——给真实 grounding | D22 brutal positive feedback loop |
+| Fiction 部分必须与真实**逻辑自洽**——不能 anachronism | 整套本体论 |
+| 真假混合密度：30% 真 / 30% 推测 / 30% 注入 / 10% 错 | §5.6.3 |
+| **绝对错误但逻辑自洽**的 10% 是 design——不是 bug；让真假难辨感升级 | 规则怪谈手法 1 罗生门 |
+| Lore 显化通过 layered footnote——同一份遗物在不同 chapter 显化不同 layer（D20 v3 + D31）| Step 4 character 系统一致 |
+| Lore 永不 popup / 永不 cutscene reveal——玩家通过 hover + cross-ref 自己 derive | D5 + D7 + Step 3 anti-pacing |
+
+### 5.9.3 不要做的事
+
+- ❌ "Lore Codex" UI 整理（让玩家有"百科"感）
+- ❌ "X 章解锁 lore N 条"成就
+- ❌ "请阅读以下 lore 段落"提示
+- ❌ Cutscene 揭示 DPCA 起源
+- ❌ NPC 解释"其实是 Nim 把这些 dictate 出来的"
+- ❌ Project Nim L4 用 fanfare reveal——L4 必须是 quiet 嵌入 footnote，玩家自己 cross-ref 才发现
+
+---
+
+## 5.10 Suggested Production Decisions · 待 finalize 🔒 LOCKED-flagged
+
+以下 lore decisions 是 v4.1 derived 但**不锁死**——production 阶段可 tweak：
+
+| # | decision | 当前建议 | 锚定约束 |
+|---|---|---|---|
+| **PD-1** | X 集团 specific name | 不命名（保持"X 集团"placeholder）| 不能命名 specific real corp；可以用 SCP-style 数字代号（如 "X-7"）|
+| **PD-2** | 第七打字室 = 唯一 active 是否锁死 | 锁死（增 horror weight）| 与 §5.3 一致；前六室 fail/closed 是 hidden lore |
+| **PD-3** | 受理窗口 17:06 = Nim 死亡时刻 | 锁死（hidden background）| 永不 explicit 显化 |
+| **PD-4** | Nim 死前 sign 的 emergent sentence | "字 看 我"（characters look me）| §5.6.4；可作为在某遗物 L4 footnote 中的 reference |
+| **PD-5** | DPCA Genesis 那位"无名研究员"是否给名字 | **不给**（D21 banal evil）| 任何名字都会破坏 banal——保持无名 |
+| **PD-6** | X 集团其他子部门具体 medium | audio / visual / behavioral 三个 placeholder | 不应在 in-game 显化具体 medium 名 |
+| **PD-7** | DPCA 全名是否 in-game 完整出现 | "Department of Primate Clerical Affairs"完整可在某遗物 L3 footnote 出现一次；之后均缩写 DPCA | D12 LOCKED；缩写主导符合 banal evil 文牍气 |
+| **PD-8** | 4 个 anchor 工号具体数字 | XX-1138 / XX-047 / XX-0001 / XX-?（§4.4.3 建议）| Step 4 设计纪律 |
+
+---
+
+## 5.11 Step 5 完成度自检
+
+| 维度 | 状态 |
+|---|---|
+| World layer architecture（空间 3 层 + 时间 4 层）| ✅ §5.1 LOCKED |
+| DPCA Genesis 神话 | ✅ §5.2 LOCKED |
+| 文牍科 / 第七打字室 specifics | ✅ §5.3 LOCKED（含 hidden lore：第七 = 唯一 active）|
+| 灵长接口 PI lore origin | ✅ §5.4 LOCKED |
+| X 集团 / Reality Beyond | ✅ §5.5 LOCKED |
+| Project Nim deep lore（real + fiction）| ✅ §5.6 LOCKED |
+| D27-D29 lore origin | ✅ §5.7 LOCKED（含 hidden lore：17:06 = Nim 死亡时刻）|
+| World × Chapter mapping | ✅ §5.8 LOCKED |
+| 真假难辨设计纪律 | ✅ §5.9 LOCKED |
+| Suggested production decisions | ⏳ §5.10 LOCKED-flagged（PD-1 至 PD-8 待 production tweak）|
+
+**Step 5 主体已 LOCK**——下次 continue 推荐入口：
+1. **Step 6** — Dialogue Framework（v4.1 中 dialogue = boilerplate / 便条 / 文档 voice 的 craft；与 Step 4 + Step 5 紧密）
+2. **PL-2/PL-3** — 蜕变者 / 造词师机制重做（叙事 + beat + character + lore 全 LOCK，机制层可接住）
+3. **Step 7** — Environmental Storytelling（已多处涉及，可 systematize）
+
+---
+
+_暂停于 2026-05-04（Step 5 完成）。Step 1-5 已闭合。Foundation + Beats / Pacing + Characters + World & Lore 四大主体全 LOCK。_
