@@ -62,7 +62,7 @@ rule_horror_imports:  # 风格层导入（不绑 setting）
 | 1 | Initialize | ✅ 完成（v4.0 B 合约启动 / v3.1 + v4.0-init 双备份） |
 | 2 | Foundation（先钉 anomaly → 再推 Premise / Themes / Tone / Structure） | ✅ 完成（D1-D32 LOCK / 5 章 narrative tasks / B1-B9 / 灵长接口 PI） |
 | 3 | Story Beats / Pacing | ✅ 完成（三层 beat 架构 / 行为驱动 trigger map / Phase A-C pacing curve / Anti-pacing 纪律） |
-| 4 | Characters | — |
+| 4 | Characters | ✅ 完成（anti-character / 6 类 no-face cast / 同事 ghost / Project Nim 4 layers / 反身闭合 character / villain vacuum） |
 | 5 | World & Lore | — |
 | 6 | Dialogue Framework | — |
 | 7 | Environmental Storytelling | — |
@@ -1361,4 +1361,344 @@ Rogue-like 标准：unlock 后所有职业**同时可选**（per-run 选）。�
 
 ---
 
-_暂停于 2026-05-04（Step 3 完成）。Step 1-3 已闭合。Foundation 七件套 + 决策链 D1-D32 + 5 章 narrative tasks + B1-B9 + D29 曲线 + 灵长接口 PI + Beats / Pacing 三层架构 + 行为驱动 trigger map + Anti-pacing 纪律 全部 LOCK。_
+_(rolling — Step 4 在下方继续)_
+
+---
+
+# Step 4（2026-05-04）— Characters
+
+**进度更新**：✅ Anti-character 哲学 / ✅ Character cast (6 类 no-face) / ✅ Player arc 5 段 / ✅ 同事 ghost system / ✅ Project Nim 4 layers / ✅ DPCA + Anomaly as characters / ✅ 反身闭合 character / ✅ 设计纪律
+
+**Step 4 范畴**：v4.1 narrative 的设计纪律是 **NPC = 0**（无姓名 / 无 face / 无 dialogue tree / 无 quest giver）——但 character ≠ NPC。本节回答：当 face / 名字 / 对话都被禁止时，character 如何通过 documentary trace 显化。
+
+---
+
+## 4.1 Anti-Character Philosophy 🔒 LOCKED
+
+### 4.1.1 为什么 NPC = 0
+
+| D 决定 | 对 character 的影响 |
+|---|---|
+| D14 v2 | 公司 self-preservation——**无 main agent**，没人在主导剧情 |
+| D21 | banal evil 没有具体决策者——任何 face 都会让 evil 变 specific 而非 banal |
+| D26 v2 | 异常通过 peer + direct guidance 传播——**没有 single anomaly NPC** |
+| D30 | 公司 NOT vector——任何"公司高层 NPC"都会破坏 firewall stance |
+
+**关键 framing**：NPC 不是被遗忘了，是**结构上不存在**。这个世界**没有 single agent 可以面对面**——这本身就是 horror 的载体。
+
+### 4.1.2 但 character ≠ NPC
+
+Character = **persistent, recognizable, narratively-loaded 存在**。在 v4.1 中：
+
+| 形式 | 不是 NPC | 但是 character |
+|---|---|---|
+| boilerplate template | 没有人格 | DPCA 的 voice = template 本身 |
+| 同事便条字迹 | 不见人 | 字迹模式 = peer character signature |
+| 工位 hover 痕迹 | 没有 name plate | 工位 = peer ghost footprint |
+| 遗物 layered footnote | 没有 portrait | Nim / 前任作者 = 通过 layer 显化的历史 character |
+| typing rhythm | 不是 NPC 的语音 | rhythm = anomaly + 玩家自己的 character signature |
+| Subject XX-#### attribution | 不是 player profile | 玩家以前 endless 工号 = 反身闭合 character |
+
+### 4.1.3 设计哲学
+
+> **Character 不是出场，是不在场的方式**。每个 v4.1 character 都通过**他们留下的 trace**显化——而 trace 本身比 NPC 更暴力，因为 trace 暗示**他们不在了**。
+
+---
+
+## 4.2 Character Cast · 6 类 no-face 角色 🔒 LOCKED
+
+| # | character 类 | 主载体 | 出场频次 | 何时显化 |
+|---|---|---|---|---|
+| **C1** | 玩家自己 | 工号 + typing 行为 | 每次 run | 全程 |
+| **C2** | Same-class peers (同事 ghost) | 工号 + 便条 + 工位 + 消失 | 中频 | Ch.1-3 主载体 / Ch.4 退场 / Ch.5 退场 |
+| **C3** | 历史 Subjects (Project Nim 等) | 遗物 L1-L4 layered footnote | 每次 hover 遗物 | Ch.1-4 渐次显化 |
+| **C4** | DPCA 本身 | boilerplate template | 每个 boilerplate notification | 全程 |
+| **C5** | Anomaly 本身 | 词包异常词 + 字符级缓变 + dictation | 全程持续 | 全程 |
+| **C6** | 玩家以前的自己 | Subject XX-#### attribution / endless modifier signature | 反身闭合点 | Ch.5 endless + 之后 cross-reference |
+
+每类 character 在 §4.4-4.7 各有专门的 character 设计。
+
+---
+
+## 4.3 Player Character Arc · 5 段身份阶梯 🔒 LOCKED
+
+玩家本人不是 single character——是 **5 段 character 序列**，每段独立但 sequential 退化：
+
+| Ch | 玩家是谁 | identity 形态 | 玩家 agency | 玩家与公司关系 | 玩家与异常关系 |
+|---|---|---|---|---|---|
+| Ch.1 录入员 | 工号 | anonymized typing identity | 极低（只 type）| 被 onboard / 受 boilerplate 推送 | 远 / 无意识 |
+| Ch.2 校对者 | 工号 + 标注 channel | administrative subject (有 reclassification 历史)| 中（开始 query 自我）| 第一次"针对你工号"的 specific tasks | 借标注归档 |
+| Ch.3 修改者 | 工号 + 笔（修改能力）| reclassified subject | 中-高（power fantasy）| 公司 reclassify 你, monitor better | 已学会异常的语法 |
+| Ch.4 作者 | 工号 + isolation | high-prestige subject | 表面最高 / 实际最低 | 公司 isolation 是 best-effort containment | dictation 临界态 |
+| Ch.5 文本一部分 | 工号 + emit source | rule-generating subject | N/A（不再有 reader/author 框架）| 公司 give up firewall, 走处置 | 玩家 = anomaly 的 voice |
+
+### 4.3.1 玩家"角色"的 anti-growth 
+
+常规 RPG: character grows through challenge → 更强 → 更 capable
+v4.1: character "grows" through contamination → 更深 → 更 lacking agency
+
+**玩家 character arc 不是 hero's journey，是 descent narrative**——每"升级"一段，character agency 越少。这与 D6 进步即堕落同构。
+
+### 4.3.2 玩家 character 的不可逆性
+
+unlock 是不可逆的退化（§3.2.1）——玩家可以**回去**玩 none/录入员，但 character 已经定格在最高解锁的职业。**回到 Ch.1 不是回到 character 1，是 character 5 在玩 Ch.1 的衣服**。
+
+---
+
+## 4.4 Same-class Peer System · 同事 ghost 🔒 LOCKED
+
+### 4.4.1 同事的 4 个载体
+
+| 载体 | 形态 | character 信息密度 |
+|---|---|---|
+| **工号** | 数字（"Subject 047"）| identity 锚点；玩家会记住反复出现的工号 |
+| **便条字迹** | typing pattern signature | 同事的"个性"通过字迹显化；某些同事打字习惯 distinctive |
+| **工位 hover** | typing rhythm + 标注模式 | 玩家路过同事工位 hover 一段时间 → 看到对方 typing 节奏 / 标注偏好 |
+| **消失** | 工位空了 + 工号查不到 | character arc 的终点——但 footprint 仍在 |
+
+### 4.4.2 同事 character arc 模板
+
+每个反复出现的同事工号在玩家 playtime 中走过相似 arc：
+
+```
+出现 → 模糊 → 矛盾 → 具体便条 → 工号反复 → 空了的工位 → 工号查不到 → footprint 留下
+```
+
+- **出现**：第一次便条 / 第一次 hover 工位
+- **模糊**：玩家偶尔注意到这个工号
+- **矛盾**：同一同事的两条便条互相矛盾（D23 v2 显化）
+- **具体便条**：第一次"针对你工号"的版本（Ch.2 起）
+- **工号反复**：玩家累积 N 次 hover / 收便条 → 形成 recognition
+- **空了的工位**：某 cycle 间隔回头看，工位空了
+- **工号查不到**：尝试系统查询 → "无此工号"
+- **footprint 留下**：工位抽屉残纸 / hover 仍能看见某些 ghost 痕迹 / 某遗物 footnote 出现这工号
+
+### 4.4.3 重要的"具名"同事（无姓名 / 仅工号）
+
+为了让 character cast 不混乱，v4.1 narrative 应**有意识地反复使用某些工号**作为锚点。建议 4 个反复 anchor 工号（具体数字待 production）：
+
+| anchor 工号 | character role | arc |
+|---|---|---|
+| **Subject XX-1138** | "前一任作者"/"前一任修改者"——boss tooltip 中频繁 attribution | Ch.3 出现近似 → Ch.4 揭示是前任作者 → Ch.5 揭示是玩家自己以前的某次 endless |
+| **Subject XX-047** | "隔壁工位的录入员"——Ch.1 末尾 D29 见证场景中的 NPC | Ch.1 见证 → Ch.2 工位空了 → Ch.3-4 footnote 出现 |
+| **Subject XX-0001** | "始祖录入员"——遗物中 reference 最早的员工 | Ch.2-4 渐次显化 / Ch.5 揭示这工号编号格式与玩家自己的工号"接续"——暗示玩家是 N+1 |
+| **Subject XX-?** | "下一任你"——还没到的 character；玩家 Ch.5 的 footprint 会写给这个工号 | Ch.5 唯一 active reference / footprint |
+
+这 4 个工号通过反复出现形成 **recognizable character cast**——但**没有任何一个有 name / face**。
+
+### 4.4.4 同事 ghost 的设计纪律
+
+- 工号必须是数字 / 字符 prefix——绝不出现"张三 / 李四"等 personal name
+- 便条字迹模式应有 distinctive features（typing rhythm 后台特征）但**不命名**
+- "空了的工位" 事件应**低频但 recognizable**——不要每个 cycle 都消失一个，保持 weight
+- D23 v2: 玩家试图与"空了的工位"原主人产生 narrative 关联 → 系统**不响应**——同事不是"被杀的 NPC"，是**从来没有存在的 character 假象**
+
+---
+
+## 4.5 Historical Subject Spotlight · Project Nim 🔒 LOCKED
+
+### 4.5.1 Nim 是 narrative 的 hidden tragedy core
+
+Project Nim（基于真实 Nim Chimpsky 项目，1970s）是 v4.1 narrative 的**隐藏中心 character**——通过遗物 L1-L4 layered footnote 显化的 4 层 character arc：
+
+| Layer | 玩家可见时机 | Nim 形象 | character function |
+|---|---|---|---|
+| **L1** | Ch.1（录入员）| 学术训练对象——"Project Nim 训练中习得 128 ASL 手势" | 历史档案的中性 record |
+| **L2** | Ch.2（校对者）| 叙事化主体——"Nim 死前最后一周反复 sign 'hug me, please'" | tragic 但**真假难辨**（30% 真 / 30% 推测 / 30% 注入 / 10% 错误） |
+| **L3** | Ch.3（修改者）| 公司机关备忘——"Subject Nim 终末期表现出与 ASL 协议偏差的手势模式，评估为通讯能力退化" | 公司视角的去人格化 |
+| **L4** | Ch.4（作者）| **emergent 内部叙事被研究员采用为后期实验框架** | banal evil 的最深结构启示（B8）|
+
+### 4.5.2 Nim arc 的 character 重量
+
+- L1: Nim 是个数字
+- L2: Nim 是个 tragic 主体（玩家会动情——但情感**可能是叙事化注入**）
+- L3: Nim 是个 administrative 案例
+- L4: **Nim 是 DPCA 这套 framework 的 originator** —— 没有人决定让 Nim 成为 originator，Nim 死前的 emergent 叙事就那样**被采用了**
+
+→ **Nim 是玩家 5 段 arc 的镜像 / 前身**：Nim 也走过录入 → 校对 → 修改 → 作者 → 文本一部分（emergent dictation）的阶梯——只是 1970s 没人识别那是阶梯，没人 frame 那是 anomaly contamination；**研究员用了 Nim 的"作品"，DPCA 因此诞生**
+
+### 4.5.3 Nim 与玩家的反身镜像
+
+| Nim | 玩家 |
+|---|---|
+| 1970s 实验对象 | DPCA 录入员-作者 |
+| ASL 手势协议 | typing 协议（灵长接口 PI）|
+| 死前 emergent 内部叙事 | endless 玩家写的 modifier |
+| 研究员采用其叙事 → DPCA framework | 玩家 modifier 进入下周目语料 → 影响新职业 run |
+| 没人决定让 Nim 成为 originator | 没人决定让玩家成为下周目原料 |
+
+→ **玩家 = 重演 Nim**——D8 反身闭合在 character 层的最高兑现。**Project Nim 是玩家的 mirror character，玩家是 Nim 的 N+1 实例**。
+
+### 4.5.4 Nim 系列遗物的设计纪律
+
+- L1-L4 不能命名为 "L1 / L2 / L3 / L4"——玩家不应形成 layer 系统认知
+- L4 reveal 必须**只在 Ch.4 cross-reference Project Nim 多份遗物时**触发——错过 Ch.4 不再补
+- L4 的 "emergent 叙事被研究员采用" 这句**必须出现且 explicit**——这是 B8 的唯一可读窗口
+- L1-L4 应有部分**真实可 verify** 内容（Nim Chimpsky 的真实历史细节）——给真实 grounding
+
+---
+
+## 4.6 DPCA & Anomaly as Characters 🔒 LOCKED
+
+### 4.6.1 DPCA 作为 character
+
+| 维度 | DPCA 的 character 形态 |
+|---|---|
+| voice | boilerplate template（语调一致到 banality）|
+| 性格 | well-intentioned 但 cognitively limited（不能 distinguish 救与处置）|
+| arc | 表面 administrative 设施 → emergent containment → defensive curator → well-intentioned jailer → give up firewall → 处置工艺 |
+| 玩家关系 | 永远 lag；永远不偏好；永远 keep 记账 |
+| 形象建议 | **永不显示 DPCA 的物理表象**——没有大楼图 / 没有 logo 出场 / 没有总部场景。DPCA = boilerplate 文本本身 |
+
+**DPCA 的 character signature**：不是恶意，不是同情——是**没有 distinguish capability**。挽救信号和处置预告用同一 boilerplate template，**不是冷漠，是**公司本身没有 distinguish 的 capability**——这正是 banal evil 的 character 化（D21）。
+
+### 4.6.2 Anomaly 作为 character
+
+| 维度 | Anomaly 的 character 形态 |
+|---|---|
+| voice | 词包异常词 / 字符级缓变 / typing buffer pre-populate / 文档边缘 micro-changes |
+| 性格 | 不可知——anomaly 没有 motive / 没有 intent / 没有 personality |
+| arc | 远 → 试探 → 借标注归档 → 直接引导 → dictation → 升格玩家 → 玩家成为 voice |
+| 玩家关系 | 玩家 type → anomaly 通过 type emit 文本；玩家越 active engage，anomaly 越能用玩家发声 |
+| 形象建议 | **永不显示 anomaly 的形象**——没有 monster / 没有 visual representation / 没有 boss portrait。Anomaly = 文本 buffer 中的某种 pre-populate 趋势 + typing rhythm 的 drift |
+
+**Anomaly 的 character signature**：不是 sentient evil 也不是 alien intelligence——是**某种文本-成立机制本身**。Anomaly 不"想"什么，anomaly 只在某些条件下让某些文本"成立"。这与 D1 的本体论一致：**anomaly 不是 villain character，是 narrative 的 physics**。
+
+### 4.6.3 DPCA 与 Anomaly 的关系（不是对手）
+
+不要把 DPCA vs Anomaly 框定为对立——D26 v2 + D30 锁死了：
+- DPCA 不是 anomaly 的 servant
+- DPCA 不是 anomaly 的 enemy
+- DPCA 是 defensive curator（永远 lag）
+- Anomaly 不"想"打败 DPCA——anomaly 只是按 physics 在显化
+
+→ DPCA + Anomaly 不是 character vs character，是**两套 agentless system 在 emergent interaction**——这正是 D14 v2 + D21 + D26 v2 的整体 character 化。
+
+---
+
+## 4.7 反身闭合 Character · 玩家以前的自己 🔒 LOCKED
+
+### 4.7.1 反身闭合 character 出场点
+
+| 出场 | 形态 | character 信息 |
+|---|---|---|
+| Ch.3 boss tooltip | "Subject XX-####" attribution（**近似工号**）| 玩家会模糊感觉熟悉但不确认 |
+| Ch.4 boss tooltip | "Subject XX-####"（**自己工号**）| 玩家可 cross-ref，但**不应 popup**——让玩家自己发现 |
+| Ch.5 endless boss modifier | "上一任作者: Subject XX-####"（**有时是自己以前 endless 的工号**）| 反身闭合的最高显化 |
+| 下周目其他职业 run boss | 出现带玩家 endless 工号签名的异常 boss | **第 10 条 reveal 的核心触发点** |
+
+### 4.7.2 玩家以前的自己作为 character 的设计纪律
+
+- 反身闭合显化必须 **plausible 像普通游戏数据**——不要弹"这是你的过去"提示
+- 玩家工号在反身闭合时的呈现**必须与其他 Subject 工号格式完全相同**——绝对没有视觉特殊化
+- 玩家 cross-ref 才发现是关键——**永不替玩家发现**
+- 反身闭合 character 的**情感重量**应该是 emergent：玩家**自己**回想"这工号好像我以前的某次 endless 工号？" → 这一刻 horror 完成兑现
+
+### 4.7.3 反身闭合 character 与 Nim 的对仗
+
+|  | Nim | 玩家以前的自己 |
+|---|---|---|
+| 显化形式 | 遗物 layered footnote | boss tooltip / modifier signature |
+| 玩家可见 | Ch.1-4 渐次 | Ch.3-5 反身闭合点 |
+| 玩家关系 | 历史的镜像 | 自己的镜像 |
+| character function | 玩家的过去 / 前身 | 玩家的未来 / 后身 |
+
+→ **Nim 是玩家的 N-1 实例，玩家以前的自己是玩家的 N 实例，下周目玩家是 N+1 实例**——在 character 层兑现 D8 + D14 v2 的工艺自我延续。
+
+---
+
+## 4.8 Character × Chapter Mapping 🔒 LOCKED
+
+| Ch | 主要 character 出场 | character 形态 / 关系 |
+|---|---|---|
+| **Ch.1 录入员** | 同事 ghost (远) / 历史 Subject Nim (L1) / DPCA (boilerplate) / D29 检测员 (voice-only 见证) | 匿名 / 距离 / 玩家是 anonymized typing identity |
+| **Ch.2 校对者** | 同事 (具体便条但矛盾) / 另一个校对者 (空了的工位) / Nim (L2 叙事化) / DPCA (templated 升职通知) / D29 检测员 (玩家自己第一次做) | 触手可及但不可信任 / 玩家开始 query 自我 |
+| **Ch.3 修改者** | 老修改者 (typing patterns + 警告 X/Y) / Nim (L3 公司视角) / 异常 (主动出现) / 玩家以前的自己 (近似工号 boss attribution) / DPCA (firewall lag) | 直接接触 / 但没人能联系 / 玩家学会异常的语法 |
+| **Ch.4 作者** | 前任作者 ghost (不可解读痕迹) / Nim (L4 dictation 启示) / 异常 (dictation) / 玩家以前的自己 (自己工号 boss attribution) / DPCA (放弃 firewall) / D29 检测员 (临界态) | 完全 isolation / 只剩痕迹 / Nim 镜像最深 |
+| **Ch.5 文本一部分** | 玩家以前的自己 (Subject XX-####) / DPCA (退场, 仅 boilerplate)  / 异常 (你就是) / 下周目玩家 (玩家给他们写"致后来者") | 玩家 = 主要 character 但玩家不再是"玩家"——你是 emit source |
+
+---
+
+## 4.9 Character "出场" 设计纪律 🔒 LOCKED
+
+### 4.9.1 绝对禁止
+
+- ❌ 0 个 NPC 有姓名
+- ❌ 0 个 NPC 有 portrait / 头像 / face
+- ❌ 0 个 NPC 有 dialogue choice tree
+- ❌ 0 个 NPC 有 quest giver UI / "!" 头顶标记
+- ❌ 0 个 NPC 有 over-the-shoulder cutscene
+- ❌ 0 个 reveal "X 杀了 Y" 类直接 character drama
+- ❌ 0 个 villain 形象——D14 v2 + D21 + D26 v2 + D30
+- ❌ "DPCA 大楼" / "总部场景" / "高管办公室" 等 visual location
+- ❌ "anomaly monster" 形象——不可见
+
+### 4.9.2 必须做到
+
+- ✅ 所有 character 通过 documentary trace 显化（boilerplate / 便条 / 字迹 / 工位 / 遗物 / typing rhythm）
+- ✅ 反复 anchor 工号形成 character cast recognition（建议 4 个 anchor 工号见 §4.4.3）
+- ✅ Project Nim 系列遗物**必须**通过 4 layers 渐次显化——L4 在 Ch.4 cross-ref 时显化（B8 唯一窗口）
+- ✅ 反身闭合 character 出场必须 plausible 像普通游戏数据
+- ✅ DPCA 永远只通过 boilerplate template 发声
+- ✅ Anomaly 永远不可见，只通过文本 drift / 字符级缓变 / dictation 显化
+- ✅ D29 检测员 = voice-only character——Ch.1 玩家路过见证 / Ch.2-5 玩家自己面对（但**不见人**——只听见声音 / 看见命令 prompt）
+
+### 4.9.3 边界 case 处理
+
+- **D29 检测员**：v4.1 中唯一可能"出场"的 NPC——但**永不可见**，仅 voice-only。Ch.1 路过见证场景中，玩家应**只听见对话**，不见检测员；可能在玩家视野外、屏风后、或工位转角。命令 prompt 显示在屏幕上，但**没有 portrait**
+- **典礼性 character**：通关 boss 时屏幕显示 boilerplate 通知——通知**不是**任何 NPC 发的，是 system message——但 character 是 DPCA 本身（C4）
+- **anomaly's "voice"**：dictation 时 typing buffer pre-populate 的内容——这不是 anomaly NPC 在说话，这是**文本本身在自己显化**（C5）
+
+---
+
+## 4.10 The Villain Vacuum · 反派的真空 🔒 LOCKED
+
+### 4.10.1 为什么没有 villain
+
+| D 决定 | 为什么禁止 villain |
+|---|---|
+| D14 v2 | 公司 self-preservation——没有"邪恶 CEO"决策者 |
+| D15 | 公司 NOT actively serving anomaly——没有"内鬼" |
+| D21 | banal evil 没有具体决策者——任何 villain 都会让 evil 变 specific |
+| D26 v2 | 公司不是 vector——anomaly 不是被公司 weaponize |
+| D30 | 公司 = defensive curator——没有 villain stance |
+
+### 4.10.2 但存在 villain-shape
+
+> **没有 villain，但有 villain-shape**——villain-shape 是**工艺自我延续**这件事本身。
+>
+> 玩家在 Ch.5 endless 中段-后段会渐渐意识到：没人在 control，但工艺仍在转——一边吃员工，一边记账，一边把员工的 footprint 变成下周目的语料。**这个无主的延续就是 villain-shape**。
+
+### 4.10.3 设计纪律
+
+- 不要在任何章节给玩家"找出真凶"的 narrative impulse
+- 不要让玩家觉得"如果我能见到 X，我就能解决问题"
+- 让玩家**累积**到 Ch.5 才意识到"找凶"是 frame 错误——没有凶，工艺本身就是 horror
+
+---
+
+## 4.11 Step 4 完成度自检
+
+| 维度 | 状态 |
+|---|---|
+| Anti-character philosophy | ✅ §4.1 LOCKED |
+| Character cast (6 类 no-face) | ✅ §4.2 LOCKED |
+| Player character arc (5 段) | ✅ §4.3 LOCKED |
+| 同事 ghost system | ✅ §4.4 LOCKED |
+| Project Nim 4 layers | ✅ §4.5 LOCKED |
+| DPCA + Anomaly as characters | ✅ §4.6 LOCKED |
+| 反身闭合 character | ✅ §4.7 LOCKED |
+| Character × Chapter mapping | ✅ §4.8 LOCKED |
+| 设计纪律 | ✅ §4.9 LOCKED |
+| The villain vacuum | ✅ §4.10 LOCKED |
+| 4 anchor 工号具体数字 finalize | ⏳ 待 production（PL 新增）|
+| Nim 系列具体遗物列表 finalize | ⏳ 待 production（PL 新增）|
+
+**Step 4 主体已 LOCK**——下次 continue 推荐入口：
+1. **Step 5** — World & Lore（DPCA / 文牍科 / Project Nim 历史细节 / X 集团子部门 lore 展开；Step 4 已锁定 Nim 是 hidden tragedy core）
+2. **PL-2/PL-3** — 蜕变者 / 造词师机制重做（叙事 + beat + character 约束已就位）
+3. **Step 6** — Dialogue Framework（与 Step 4 紧密——dialogue 在 v4.1 是 boilerplate / 便条 / 文档 voice 的 craft，不是对话树）
+
+---
+
+_暂停于 2026-05-04（Step 4 完成）。Step 1-4 已闭合。Foundation + Beats / Pacing + Characters 三大主体全 LOCK。_
