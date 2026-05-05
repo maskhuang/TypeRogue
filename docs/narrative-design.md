@@ -68,7 +68,7 @@ rule_horror_imports:  # 风格层导入（不绑 setting）
 | 7 | Environmental Storytelling | ✅ 完成（V7 第七 voice / 4 channel (空间-时间-动效-prop) / 工位 5 章 progression / 向心矢量动效铁律 / 字符级缓变 systematize / 美学 D13 物理化 / sound 退场曲线 / 反身闭合 in environment） |
 | 8 | Narrative Delivery | ✅ 完成（11 channel inventory / 6 modes / macro-mid-micro schedule / B 真理 × channel 矩阵 / pipeline v4.1 sync 蓝图 / 跨 run 反身闭合 delivery） |
 | 9 | Integration with Gameplay | ✅ 完成（行为 trigger 蓝图 / 字符级缓变 implementation / 受理窗口 mechanic / D29 / 反身闭合 in save / 8 现有 systems 接入点 / PL-2/3 约束 / 词包 v4.1 / P0-P3 priority） |
-| 10 | Production Notes | — |
+| 10 | Production Notes | ✅ 完成（status snapshot / R1-R8 risk register / QA plan + edge cases / playtest strategy + metrics / cross-team protocols / localization / demo+web 约束 / telemetry 纪律 / OQ-1 至 OQ-7 / Sprint P0-P3 planning） |
 | 11 | Complete (Appendices + Handoff) | — |
 
 ---
@@ -3644,4 +3644,381 @@ PL-3 typing buffer pre-populate **= 词包系统的 inverse 接入**：
 
 ---
 
-_暂停于 2026-05-04（Step 9 完成）。Step 1-9 已闭合（9/11）。Foundation + Beats / Pacing + Characters + World & Lore + Dialogue Framework + Environmental Storytelling + Narrative Delivery + Integration with Gameplay 八大主体全 LOCK。剩 Step 10-11（Production Notes / Complete + Appendices）。_
+_(rolling — Step 10 在下方继续)_
+
+---
+
+# Step 10（2026-05-04）— Production Notes
+
+**进度更新**：✅ Production status snapshot / ✅ Risk register (R1-R8) / ✅ QA plan / ✅ Playtest strategy / ✅ Cross-team protocols / ✅ Localization considerations / ✅ Demo + web 模式约束 / ✅ Telemetry 纪律 / ✅ Known issues + open questions / ✅ Sprint planning guidance
+
+**Step 10 范畴**：Steps 2-9 已锁定 narrative 蓝图 + integration 路径；Step 10 derive **production execute** 阶段需要的实际指南——QA / playtest / risk / cross-team protocol。这是 v4.1 narrative 与 ship-ready 之间的最后一份 production-facing 文档。
+
+---
+
+## 10.1 Production Status Snapshot 🔒 LOCKED
+
+### 10.1.1 v4.1 Narrative-Design 状态
+
+| 维度 | 状态 |
+|---|---|
+| Foundation (Steps 1-2) | ✅ 全 LOCK |
+| Beats / Pacing (Step 3) | ✅ 全 LOCK |
+| Characters (Step 4) | ✅ 全 LOCK |
+| World & Lore (Step 5) | ✅ 全 LOCK + 8 PD（待 production tweak）|
+| Dialogue Framework (Step 6) | ✅ 全 LOCK；sample library 待 pipeline 扩展至 100+ 句式 |
+| Environmental Storytelling (Step 7) | ✅ 全 LOCK；prop 视觉 spec finalize 待 production |
+| Narrative Delivery (Step 8) | ✅ 全 LOCK；narrative-writer pipeline v4.1 sync 待 execute |
+| Integration with Gameplay (Step 9) | ✅ 全 LOCK；engineering execution 待 |
+
+### 10.1.2 跨 engineering 状态（v3.x 残留）
+
+| Asset | v3.x 残留状态 | 替换计划 |
+|---|---|---|
+| Relic flavor | 58/95 是 v2.3 残留 | 走 v4.1 pipeline 重新生成（layered footnote）|
+| Skill flavor | ~85% 是 v2.3 残留 | 走 v4.1 pipeline 重新生成（D25 v2 anomaly framing）|
+| 词包 narrative entries | v3.1 残留 | 与 PL-3 typing buffer pre-populate 共享 anomaly voice 后端，重新生成 |
+| Boss modifier flavor | v2.3 残留 | reframe "撰写异常报告"风格 |
+| 主菜单 dossier 文案 | v3.2 已重做 | 检查 v4.1 词典统一 + 灵长接口 reference |
+
+### 10.1.3 Implementation 优先级回顾
+
+| Priority | 内容 | 依赖 |
+|---|---|---|
+| **P0**（Ch.1 ship blocker）| D29 routine + V1 boilerplate + V5 守则 L1 + B1 hook | NarrativeTrackingState + NarrativeTriggerEngine + Pipeline P0 内容 |
+| **P1**（Ch.2 ship blocker）| V2 同事便条 + B2/B3 + 升职通知 | DC2 + DC5 实现 |
+| **P2**（Ch.3-4 ship blocker）| 反身闭合 boss tooltip + 受理窗口 + 字符级缓变 + D29 partial fail + B8 reveal | NarrativeArchive save schema |
+| **P3**（Ch.5 ship blocker）| Endless 入口仪式 + 主菜单字符级缓变 + 跨 run 反身闭合 | Pipeline P3 内容 + endless free-type 系统 |
+
+---
+
+## 10.2 Risk Register 🔒 LOCKED
+
+### 10.2.1 R1-R8 风险清单
+
+| # | Risk | 严重度 | Mitigation |
+|---|---|---|---|
+| **R1** | B 真理 reveal trigger 被玩家逆向推断 | 中 | 触发 timing 加 randomness 容差（§3.3.3）；trigger 公式不在任何 documentation 显化 |
+| **R2** | 反身闭合 implementation 跨 run save schema 复杂度 | 中-高 | NarrativeArchive 在 P2 sprint 早期 prototype；schema migration 设计在 SaveManager v6 → v7 |
+| **R3** | 字符级缓变性能（rendering 频次过高）| 中 | CharDriftEffect 仅针对 active 显化 element（不每帧重 render）；Cycle 6+ 才 enable |
+| **R4** | Pipeline v4.1 sync 替换 v3.x 残留体量大 | 高 | 分批替换；优先 P0 / P1 内容；relic flavor + skill flavor 可分批 ship |
+| **R5** | 受理窗口 17:06-17:13 玩家可能永远玩不到那时段 | 低 | 方案 C 混合：午休 30 秒 + 计时钟无秒针 = 高频备用窗口；17:06 是隐藏 best window 而非唯一 |
+| **R6** | 玩家错过 B8 reveal（Ch.4 唯一窗口）| 低 | D5 拒绝答案的兑现，接受；Project Nim 系列遗物在 Ch.4 高 hover 频次（cross-ref 默认引导玩家）|
+| **R7** | PL-2/PL-3 机制重做与现有 metamorph/wordsmith 兼容性 | 中 | DELETED_SKILL_IDS 已建立；新 skills 通过 affix system；保留旧 ID 用于 save migration |
+| **R8** | D29 状态确认 partial fail 体验为 "bug" 而非 design | 中-高 | partial fail 显示**routine 颜色**；不出红色 fail；玩家事后 reflection 是设计目标 |
+
+### 10.2.2 关键风险跟踪
+
+- **R4 Pipeline sync 是体量最大的 risk**——建议在 P0 sprint 内开 separate engineer track 跑 pipeline
+- **R8 D29 partial fail 体验** 是 v4.1 horror 的核心；如果 mitigation 失败，整套 D29 退化曲线会被玩家当 bug——需 playtest 验证
+
+---
+
+## 10.3 QA Plan 🔒 LOCKED
+
+### 10.3.1 QA Verification 清单
+
+| 域 | Verify 项 |
+|---|---|
+| **B 真理 reveal trigger** | 各 chapter 内 B1-B9 在预期 trigger 行为后**确实**显化（行为 trigger 走通）|
+| **多 channel 共显化** | 每条 B 真理至少 2 channel 兑现（避免单点错过）|
+| **反身闭合 cross-run** | 跨 session 持久化（player workerId / modifier signature / typing rhythm）|
+| **跨 run channel 显化** | DC6 boss tooltip / DC2 下周目便条 / DC9 主菜单 ambient 三种 cross-run channel 可触发 |
+| **受理窗口 boost** | 真实时钟到 17:06-17:13 时 reveal 概率 ×1.3-1.5 verify |
+| **D29 退化曲线** | Ch.1 见证 → Ch.2 routine → Ch.3 partial fail → Ch.4 频繁 partial → Ch.5 完全 fail 全跑通 |
+| **字符级缓变 enable** | Cycle 6+ 在 Ch.4-5 触发；Ch.5 leak 到主菜单 |
+| **Voice 退场曲线** | DC2 Ch.4 退场 / DC5 Ch.5 退场 / DC1 Ch.5 极简 |
+| **Voice template 一致** | 5 段升职通知用同一 template（D32 反身闭合）|
+| **anti-popup** | 全 narrative reveal 零 popup verify |
+
+### 10.3.2 Negative QA（反向验证）
+
+| 反向验证 | 验证方法 |
+|---|---|
+| 玩家**不**能 grind 出 reveal | 不触发 trigger 行为时玩 N runs，verify reveal 不显化 |
+| 玩家**不**能逆向猜 trigger 公式 | trigger 文档 not exposed in code comment |
+| 玩家**不**能在主菜单或 settings 看到反身闭合数据 | 测试 NarrativeArchive 在 UI 完全 hidden |
+| 玩家**可能**错过 B8 / B9 / 第 10 条 | 这是 design——不是 bug |
+| 玩家**不**能用 reset save 触发 reveal 重置 | 反身闭合数据应**rerunnable**——保留 in save 不被 in-run reset 影响 |
+
+### 10.3.3 Edge Case Coverage
+
+| Edge case | QA 覆盖 |
+|---|---|
+| 玩家**第一次**通关 Ch.4 时**不**点 endless（D17 隐藏结局）| Verify 游戏不奖励 / 不告知 / 主菜单无变化 |
+| 玩家**重置 progress** 后玩 Ch.1 | NarrativeArchive 应**保留**（仅本地，不被 reset）|
+| 玩家在受理窗口 17:06 时**主动**触发 hidden trigger | 多次 verify boost |
+| 玩家长时间**不 hover 任何遗物** | B1 / B3 / B8 trigger 不会触发——verify reveal 不显化 |
+| 玩家在 Ch.5 endless **不**写任何 modifier | 反身闭合数据生成最少 baseline；下周目仍可显化最少 attribution |
+
+---
+
+## 10.4 Playtest Strategy 🔒 LOCKED
+
+### 10.4.1 Playtest 类型
+
+| 类型 | 目的 | 时长 |
+|---|---|---|
+| **Solo blind playtest** | 验证玩家是否**自然**触发 B 真理 reveal | 单玩家 5-10 hours，全程录像 |
+| **Long session playtest** | 验证 endless cross-run 反身闭合的 emergent reveal（第 10 条）| 10-20 hours，跨 session |
+| **Specific milestone playtest** | 验证 Ch 入口仪式 / D29 partial fail / boss tooltip 反身闭合的玩家体验 | targeted 1-2 hour focused |
+
+### 10.4.2 关键 Playtest Metrics
+
+| Metric | 目标 |
+|---|---|
+| Ch.1 玩家平均触发 B1 数 | ≥ 80% 玩家在 5-10 hours 内触发 |
+| Ch.2 玩家平均触发 B2 + B3 数 | ≥ 60% 玩家在章节内触发 |
+| Ch.3 玩家触发 B4 + B5 + B6（任意 1 条）| ≥ 70% |
+| Ch.4 玩家触发 B7 + B8 任意 1 条 | ≥ 50%（B8 是关键，cross-ref 行为驱动）|
+| Ch.4 玩家触发 B9 累积 | ≥ 70% 玩家 D29 partial fail ≥ 3 次后触发 |
+| Ch.5 玩家在 endless 中触发**第 10 条** reveal | ≤ 30%（design 接受多数玩家错过）|
+| 玩家**事后** reflection（开放问答）| 玩家**自然**用"被吃" / "退化" / "猴子规则"等核心 framing 词 |
+
+### 10.4.3 Playtest 反馈收集
+
+- ❌ 不直接问"你觉得 narrative 怎么样？"
+- ❌ 不让 playtester 看 narrative-design.md
+- ✅ 让 playtester 复述他们**理解**的 narrative
+- ✅ 注意 playtester 的**沉默**——如果 playtester 完全不提 narrative，是 design 失败
+- ✅ 注意 playtester 的"困惑"——v4.1 horror 的成功标志是**事后**回想；in-the-moment 困惑过度说明 channel 太 obscure
+
+### 10.4.4 Playtest 反馈对 design 的边界
+
+> v4.1 narrative 的 design intent 是**让玩家事后才寒**——这意味着 playtest 反馈**不**应作为修改 narrative 的主要依据。
+>
+> 如果 playtester 说"我没看懂"——这**可能**是 design 成功（horror 是延迟感知的）。如果 playtester 说"我觉得是 bug"——这**可能**是 mitigation 不到位（如 D29 partial fail）。
+>
+> Playtest 用来 verify **mechanic** 是否走通（trigger 触发了吗 / channel 显化了吗）；不用于 verify **horror** 是否到位（horror 是 emergent，不是 testable）。
+
+---
+
+## 10.5 Cross-team Protocols 🔒 LOCKED
+
+### 10.5.1 Narrative ↔ Engineering
+
+| 协作场景 | Protocol |
+|---|---|
+| Mechanic 改变（如 affix 调整）| 评估是否影响某 B 真理 trigger 或 §3.4 micro beat 矩阵；narrative-design.md 同步 |
+| 新增 system / scene | 评估是否需要 narrative hook（参考 §9.7 8 systems）|
+| Save schema migration | NarrativeArchive 必须 backward-compatible；MetaState v6 → v7 时不能丢失反身闭合数据 |
+| Performance opt | 字符级缓变 / ambient sound rePlay 性能优化时 narrative 验收（不能因 perf 破坏寂静化效果）|
+
+### 10.5.2 Narrative ↔ Audio
+
+| 协作场景 | Protocol |
+|---|---|
+| Sound retire 曲线 | Ch.5 几乎全 sound 退场——audio 团队需准备**silence as design**，不是 sound asset 缺失 |
+| Typing rhythm replay | session 内 typing 时间戳采样规则 + 主菜单 ambient 重播实现 |
+| Ch.4 偶发钢琴 | 极少 high-note single；不成 melody——避免被理解为 "boss BGM" |
+
+### 10.5.3 Narrative ↔ Visual
+
+| 协作场景 | Protocol |
+|---|---|
+| 字符级缓变实现 | drift 量极微 / 移开鼠标 settle / drift 内容来自 V3 池非 random |
+| 向心矢量动效 | M1-M4 实现严格遵循向心矢量铁律——零离心 |
+| 双层美学 | 文牍科旧气 + 90s 办公**两层共存**；不该共存的 era 同时——这是 D13 时间错乱 |
+| 灵长接口 (PI) UI | PI 名字**永不**在 UI 显化 |
+
+### 10.5.4 Narrative ↔ Localization
+
+| 协作场景 | Protocol |
+|---|---|
+| 6 voices 跨语言 distinguishing | V1-V6 在 EN locale 也保持 distinctive（typography + 句式 + tone）|
+| v4.1 词典统一 | DAY/BATCH/CYCLE/A 等 cycle 演进词典 EN 同步 |
+| Project Nim 真假混合 | 真实历史部分（1973-1986）EN 用真实英文资料；fiction 部分跨语言保持密度 30/30/30/10 |
+| "字 看 我" emergent sentence | EN 等价 = "characters look me"（直译保留 ASL grammar 之外的 emergent 性质）|
+
+### 10.5.5 Narrative ↔ QA
+
+| 协作场景 | Protocol |
+|---|---|
+| Reveal verification | 不在 QA tool 显化"哪条 reveal 触发了"——QA 通过 playtest log 间接 verify |
+| Partial fail vs bug | QA 必须理解 D29 partial fail 是 design——不报为 bug |
+| 反身闭合 cross-session | QA test plan 需含跨 session 测试（清 cache 后 verify NarrativeArchive 留存）|
+
+---
+
+## 10.6 Localization Considerations 🔒 LOCKED
+
+### 10.6.1 Locale 范围
+
+v4.1 主 locale：
+- **ZH (中文 / 简体)**：主 locale，narrative-design.md 原始语言
+- **EN (English)**：第二 locale；许多 v3.x flavor 已 EN 翻译，需 v4.1 重新校准
+
+### 10.6.2 Voice × Locale 兼容性
+
+| Voice | ZH 特征 | EN 等价处理 |
+|---|---|---|
+| V1 公司 boilerplate | 程序化 / 行政化 | 直译 + bureaucratic English（参考 SCP foundation 风格）|
+| V2 同事便条 | 短碎 / 矛盾 | EN 用断句 / 不完整 sentences；保持 contradiction |
+| V3 anomaly fragment | 字符 drift / 半可读 | EN 用 letter drift / partial readability 保持 |
+| V4 D29 prompt | "请..." 命令式 | EN 用 "Please..." 保持 polite imperative |
+| V5 守则 layered | 文牍科旧气 + 规则怪谈 | EN 用 institutional / form-language 保持旧气 |
+| V6 boss tooltip | "上一任作者: Subject XX-####" | EN 直译 "Previous Author: Subject XX-####" |
+
+### 10.6.3 Locale-specific 注意点
+
+- 灵长接口 (Primate Interface, PI) 双关在 EN 自然成立（"primate"既指人类也指 Nim）
+- 文牍科 旧气美学 EN 等价 = 1940s-50s American clerical office（用 typewriter / ink stamps 美学锚定）
+- 受理窗口 = textual acceptance interval；EN 直译保持
+- 状态确认 = state confirmation / keep-as-human check；EN 用 keep-as-human 强化
+
+### 10.6.4 词典统一（cycle 演进 memory 锚定）
+
+> **关联 memory**："UI label vocabulary unified · cycle 演进"——Cycle 1-5 词典统一（DAY/BATCH/CYCLE/A）；Cycle 6+ Endless 启用单字符级缓变作为污染症候
+
+| ZH | EN | 用法 |
+|---|---|---|
+| 班次 | shift / batch | 1 run = 1 班次 |
+| 周期 | cycle | 1 cycle = 12 stages |
+| 工号 | worker ID / employee ID | 玩家 identity |
+| Subject XX-#### | Subject XX-#### | 跨 locale 保持 |
+| 受理窗口 | acceptance interval | D27 |
+| 灵长接口 | Primate Interface (PI) | 灵长接口 |
+| 文牍科 | Clerical Bureau | DPCA |
+
+---
+
+## 10.7 Demo / Web 模式约束 🔒 LOCKED
+
+### 10.7.1 Demo 模式 (`__DEMO_MODE__=true`) narrative 范围
+
+per project-context.md 现有 Demo 模式 tree-shake 全 feature；v4.1 narrative 在 demo 模式：
+
+| Demo 范围 | v4.1 narrative |
+|---|---|
+| Demo 仅含 Ch.1-2 内容 | V1 + V2 + V5（L1）+ V7 ambient；零反身闭合 |
+| 反身闭合数据 disabled | NarrativeArchive 不写 / 不读（`__DEMO_MODE__` flag）|
+| D29 仅 routine 版本 | 见证 + routine 通过；零 partial fail |
+| 字符级缓变 disabled | Cycle 6+ disabled in demo |
+| Boss tooltip 反身闭合 disabled | DC6 仅显 boss modifier text，无 attribution |
+
+### 10.7.2 Web 模式（localStorage fallback）
+
+| Web 限制 | v4.1 处理 |
+|---|---|
+| LocalStorage 大小 | NarrativeArchive 限制条目数（typingRhythmFingerprints 仅保留最近 N 个 session）|
+| 无 IPC 反身闭合 | localStorage 仍可跨 run 持久化 |
+| 跨 device 不同步 | 默认设计 — 反身闭合**仅单 device**（与 §8.9.2 一致）|
+
+---
+
+## 10.8 Telemetry 纪律 🔒 LOCKED
+
+### 10.8.1 不收集 / 不上传
+
+- ❌ 玩家 typed content（任何文本输入内容）
+- ❌ NarrativeArchive 数据（反身闭合记录）
+- ❌ B 真理 reveal trigger 状态
+- ❌ D29 partial fail 详情
+- ❌ 玩家 typing rhythm 时间戳（即使不含内容也不上传）
+
+### 10.8.2 可收集（仅 debug，opt-in）
+
+- ✅ 章节通关 / endless 进入率（aggregate）
+- ✅ 平均 playtime per chapter
+- ✅ Crash / error log（不含 narrative content）
+
+### 10.8.3 Privacy 哲学
+
+> v4.1 narrative 的反身闭合数据**包含玩家本人 typing 历史 fingerprint**——这是**最私密**的玩家数据。**绝不**离开本地 device。
+>
+> 即使是 anonymized analytics 也不收集——因为 typing rhythm fingerprint 在足够样本下可能成为**玩家身份生物特征**。这是 v4.1 narrative 设计的硬纪律。
+
+---
+
+## 10.9 Known Issues / Open Questions 🔒 LOCKED
+
+### 10.9.1 已知 open question
+
+| # | Question | 影响 |
+|---|---|---|
+| **OQ-1** | Reveal randomness 容差具体值（×0.8-×1.2？）| 中——影响 playtest verification rate |
+| **OQ-2** | Project Nim L4 reveal 是否需多于 3 个 cross-ref（4？5？）| 中——影响 B8 触发频次 |
+| **OQ-3** | 受理窗口 "计时钟无秒针时" 触发概率（每 cycle 5%？10%？）| 中——影响 R5 mitigation 强度 |
+| **OQ-4** | 反身闭合 modifier signature 写入策略（每 endless cycle / 每 N cycles）| 高——影响下周目 attribution 频次 |
+| **OQ-5** | typing rhythm fingerprint 数据结构（vector dim / sample interval）| 高——影响 R3 perf + privacy |
+| **OQ-6** | "致后来者"便签写入条件（玩家 endless N cycles 后？随机？）| 中 |
+| **OQ-7** | D29 partial fail 触发概率曲线（Ch.3 5% → Ch.4 50% 怎么 ramp）| 高——影响玩家 reflection 时机 |
+
+### 10.9.2 Open Production Decisions（PD-1 至 PD-8）
+
+per §5.10：
+
+| PD | Status |
+|---|---|
+| PD-1 X 集团 specific name | 不命名（保持 placeholder）|
+| PD-2 第七打字室 = 唯一 active 锁死 | LOCK |
+| PD-3 受理窗口 17:06 = Nim 死亡时刻（hidden）| LOCK |
+| PD-4 Nim "字 看 我" emergent sentence | LOCK |
+| PD-5 无名研究员不给名字 | LOCK |
+| PD-6 X 集团其他子部门 medium（audio/visual/behavioral）| 不在 in-game 显化具体 medium |
+| PD-7 DPCA full name 是否完整出现 | 完整可在某遗物 L3 出现一次 |
+| PD-8 4 anchor 工号具体数字 | 建议 XX-1138 / XX-047 / XX-0001 / XX-?；待 production tweak |
+
+---
+
+## 10.10 Sprint Planning Guidance 🔒 LOCKED
+
+### 10.10.1 Sprint 0（Pre-P0 · Foundation Sprint）
+
+**目标**：v4.1 production infrastructure 就位。
+
+| Task | 估时 | 团队 |
+|---|---|---|
+| `NarrativeTrackingState` schema design + impl | 1 week | engineering |
+| `NarrativeTriggerEngine` skeleton | 1 week | engineering |
+| Pipeline v4.1 sync prep（v3.1 → v4.1 转换 schema）| 1 week | narrative + engineering |
+| `MetaSaveData` NarrativeArchive schema migration design | 0.5 week | engineering |
+| Playtest tooling（log capture）| 0.5 week | QA |
+
+### 10.10.2 Sprint P0（Ch.1 Ship Sprint）
+
+**目标**：Ch.1 录入员可玩 ship 状态。
+
+| Task | 估时 | 团队 |
+|---|---|---|
+| D29 routine 序列接入 stageFlow | 1 week | engineering |
+| V1 boilerplate template ~30 句式（P0 subset）| 1 week | narrative pipeline |
+| V5 守则 L1 库 ~50 守则（P0 subset）| 1 week | narrative pipeline |
+| B1 hook trigger（hover counts）| 0.5 week | engineering |
+| D29 见证场景 UI（voice-only） | 1 week | engineering + audio |
+| **Playtest Ch.1（5 玩家 × 2-3 hours）** | 1 week | QA |
+
+### 10.10.3 Sprint P1-P3 顺序
+
+| Sprint | 关键内容 |
+|---|---|
+| P1 | V2 同事便条系统 + B2/B3 trigger + DC2 + DC5 + 升职通知 boilerplate |
+| P2 | 反身闭合 boss tooltip (V6 + DC6) + 受理窗口 mechanic + 字符级缓变 cycle 6+ + D29 partial fail + Project Nim L4 reveal + NarrativeArchive write/read |
+| P3 | endless 入口仪式 (D32 双 voice) + 主菜单字符级缓变 leak + 跨 run 反身闭合 delivery + "致后来者"便签系统 + endless modifier signature 写入 |
+
+每 Sprint 后接 **chapter playtest**。
+
+---
+
+## 10.11 Step 10 完成度自检
+
+| 维度 | 状态 |
+|---|---|
+| Production status snapshot | ✅ §10.1 LOCKED |
+| Risk register R1-R8 | ✅ §10.2 LOCKED |
+| QA plan + edge cases | ✅ §10.3 LOCKED |
+| Playtest strategy + metrics | ✅ §10.4 LOCKED |
+| Cross-team protocols (5 teams) | ✅ §10.5 LOCKED |
+| Localization considerations | ✅ §10.6 LOCKED |
+| Demo + web 模式约束 | ✅ §10.7 LOCKED |
+| Telemetry 纪律 | ✅ §10.8 LOCKED |
+| Known issues + 7 OQ | ✅ §10.9 LOCKED |
+| Sprint planning P0-P3 | ✅ §10.10 LOCKED |
+| OQ-1 至 OQ-7 finalize | ⏳ 待 production tweak（具体数值需 playtest verify）|
+
+**Step 10 主体已 LOCK**——下次 continue：
+1. **Step 11** — Complete + Appendices + Handoff（最后一步！v4.1 narrative 收官）
+
+---
+
+_暂停于 2026-05-04（Step 10 完成）。Step 1-10 已闭合（10/11）。Foundation + Beats / Pacing + Characters + World & Lore + Dialogue + Environmental + Delivery + Integration + Production Notes 九大主体全 LOCK。**剩 Step 11 — Complete + Appendices + Handoff**。_
