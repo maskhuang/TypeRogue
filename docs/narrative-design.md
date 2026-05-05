@@ -67,7 +67,7 @@ rule_horror_imports:  # 风格层导入（不绑 setting）
 | 6 | Dialogue Framework | ✅ 完成（anti-dialogue / 6 类 voice (V1-V6) / 每类 craft 规则 + sample library / 规则怪谈 5+1 手法 dialogue 层应用 / 玩家无 reply 无 inner monologue / voice 退场曲线） |
 | 7 | Environmental Storytelling | ✅ 完成（V7 第七 voice / 4 channel (空间-时间-动效-prop) / 工位 5 章 progression / 向心矢量动效铁律 / 字符级缓变 systematize / 美学 D13 物理化 / sound 退场曲线 / 反身闭合 in environment） |
 | 8 | Narrative Delivery | ✅ 完成（11 channel inventory / 6 modes / macro-mid-micro schedule / B 真理 × channel 矩阵 / pipeline v4.1 sync 蓝图 / 跨 run 反身闭合 delivery） |
-| 9 | Integration with Gameplay | — |
+| 9 | Integration with Gameplay | ✅ 完成（行为 trigger 蓝图 / 字符级缓变 implementation / 受理窗口 mechanic / D29 / 反身闭合 in save / 8 现有 systems 接入点 / PL-2/3 约束 / 词包 v4.1 / P0-P3 priority） |
 | 10 | Production Notes | — |
 | 11 | Complete (Appendices + Handoff) | — |
 
@@ -3235,4 +3235,413 @@ stage 6 是 **B1 + B3 的核心触发点**：
 
 ---
 
-_暂停于 2026-05-04（Step 8 完成）。Step 1-8 已闭合。Foundation + Beats / Pacing + Characters + World & Lore + Dialogue Framework + Environmental Storytelling + Narrative Delivery 七大主体全 LOCK。剩 Step 9-11（Integration with Gameplay / Production Notes / Complete + Appendices）。_
+_(rolling — Step 9 在下方继续)_
+
+---
+
+# Step 9（2026-05-04）— Integration with Gameplay
+
+**进度更新**：✅ Integration philosophy / ✅ 行为 trigger implementation 蓝图 / ✅ 字符级缓变 implementation / ✅ 受理窗口 mechanic 接入 / ✅ D29 implementation / ✅ 反身闭合 in save system / ✅ 现有 systems × v4.1 接入点 / ✅ PL-2/3 机制重做约束 / ✅ 词包系统 v4.1 校准 / ✅ Implementation priority P0-P3
+
+**Step 9 范畴**：本节跨 narrative → engineering 边界。Steps 2-8 已锁定 narrative 蓝图；Step 9 derive 这套蓝图**如何接入** game systems（battle / shop / skills / relics / boss modifier / save）的 implementation 路径。
+
+> **重要 disclaimer**：本节 implementation 建议针对 `src/` 当前 architecture 提供方向；具体 code-level 实现待 engineering 阶段 verify + iterate。本节是 **integration spec**，不是 final implementation。
+
+---
+
+## 9.1 Integration Philosophy 🔒 LOCKED
+
+### 9.1.1 Narrative ≠ Decoration
+
+> v4.1 narrative 不是 flavor layer——是 **gameplay system 的 narrative-aware behavior**。每个机制都需要 narrative-aware hook：boss modifier UI 是"撰写异常报告" framing；relic flavor 是 layered footnote；技能 = anomaly expression channel；字符级缓变是 cycle 6+ 系统行为。
+
+### 9.1.2 Integration 三原则
+
+1. **零 narrative-only system**——所有 narrative element 走现有 system pipeline（battle / shop / skill / relic / save），不开 separate "narrative engine"
+2. **Narrative-aware refactor 是 production blocker**——不是 cosmetic，是 design contract（D25 v2、D32、B1-B9）的硬兑现
+3. **Implementation 必须 plausible-as-game-data**——反身闭合 / 字符级缓变 / D29 partial fail / boss tooltip dynamic generation 都要看起来像普通游戏行为，玩家事后才反思
+
+---
+
+## 9.2 Behavior Trigger Implementation Blueprint 🔒 LOCKED
+
+### 9.2.1 后台行为指标采集
+
+Step 3 § 行为驱动 trigger map 锁定的 9 条 B 真理 trigger 都需要后台行为指标。建议在 `src/src/core/state/` 新增 **NarrativeTrackingState**（与 BattleState / RunState / MetaState 平级）：
+
+| 指标 | 数据形态 | 用途 (B 真理) |
+|---|---|---|
+| `relicHoverCounts` | `Map<relicId, number>` | B1（反复 hover ≥ 3 次）|
+| `peerNoteContradictionsRead` | `number`（累积阅读相互矛盾便条数）| B2 |
+| `ruleVsRelicCrossRefs` | `Set<{ruleId, relicId}>` 字面相同对 | B3 |
+| `externalCandidateBoilerplateCount` | `number` | B4 |
+| `typingRhythmFingerprint` | runtime 节奏特征向量 | B5 + 反身闭合 sound replay |
+| `rescueAttemptZeroFeedback` | `number`（执行老员工挽救方法 + 0 反馈次数）| B6 |
+| `documentModifyTimestampMismatches` | `number` | B7 |
+| `projectNimRelicCrossRefs` | `Set<relicId>` (Project Nim 系列) | B8（≥ 3 触发 L4 reveal）|
+| `d29PartialFails` | `number` (Ch.4 累积) | B9 |
+
+**实现 location 建议**：`src/src/core/state/NarrativeTrackingState.ts`（新增）；通过 `eventBus` 监听已有事件（`word:complete` / `skill:triggered` / `relic:hover` 等）累积。
+
+### 9.2.2 Trigger Evaluation Engine
+
+建议在 `src/src/systems/narrative/` 下新增 **NarrativeTriggerEngine**（新目录）：
+
+```
+NarrativeTriggerEngine
+├── trigger evaluation (per cycle / per stage / per typing event)
+├── reveal scheduling (考虑 multi-channel routing)
+├── 受理窗口 boost evaluator (real-time check)
+└── 反身闭合 cross-run query
+```
+
+### 9.2.3 Reveal Channel Routing
+
+每条 reveal trigger 满足后，路由到 § 8.7 矩阵中**至少 2 个** delivery channel：
+- B1 → DC1 + DC7 + DC10
+- B2 → DC2 + DC5
+- B3 → DC5 + DC7
+- B4 → DC1
+- B5 → DC2 + DC3
+- B6 → DC1 + DC2
+- B7 → DC1 + DC7
+- B8 → DC7
+- B9 → DC1 + DC4 + DC11
+
+**注意**：trigger 满足 ≠ 立即 reveal——reveal 在**下一次 channel 显化窗口**触发（如 stage 6 ritual / cycle 末尾 / boss 战前），保持 ambient 性质。
+
+---
+
+## 9.3 字符级缓变 Implementation 🔒 LOCKED
+
+### 9.3.1 系统 hook 点
+
+| Hook 点 | 触发条件 | 影响 channel |
+|---|---|---|
+| Cycle 6+ Endless 全程 | run cycle ≥ 6 | DC3 typing buffer / DC10 cycle 末尾 / DC9 主菜单 |
+| Hover 文档（任意章节）| hover duration > 1.5s | DC7 遗物 / DC5 守则 |
+| Cycle 末尾"今日总结" | run end | DC10 |
+| Ch.5 endless 全程 | endless mode active | DC9 主菜单 leak |
+
+### 9.3.2 实现建议
+
+建议在 `src/src/effects/` 下新增 **CharDriftEffect**：
+- 接收任意 string + drift profile（intensity / 哪些 char 漂 / 漂多远）
+- 渲染层使用 PixiJS Text 或 DOM span 替换
+- Hover 触发 / 移开 settle 用 mouseenter/mouseleave 事件
+- 漂的方向 / 字符**不应随机**——应 **dictation-meaningful**（词包池里的某些字符 / 玩家以前 type 过的 fragment）
+
+### 9.3.3 性能与 anti-pattern
+
+- ❌ 每帧重 render 所有文字——应只针对触发的 element
+- ❌ 字符级缓变伴随声音（破坏 ambient）
+- ❌ 太显眼——drift 量应**极微**，玩家可能怀疑自己看错了
+- ✅ Drift 与 V3 dictation 内容池对齐（不能 random 字符）
+
+---
+
+## 9.4 受理窗口 Mechanic 接入 🔒 LOCKED
+
+### 9.4.1 D27 受理窗口的 implementation
+
+**关键问题**：受理窗口 = real-world time（17:06-17:13）还是 game-internal time？
+
+| 方案 | 优 | 劣 |
+|---|---|---|
+| **A · 真实时钟时间**（用 system clock 取小时分钟）| 增加沉浸（玩家会发现真的某些时间游戏不一样）| 玩家可能 game / 永远玩不到那时段 |
+| **B · 游戏内 cycle 时间**（每 run 内的累积时间）| 可控，玩家不会错过 | 失去"时间错乱即 horror" 的真实感（D13）|
+| **C · 混合**——某些 trigger 用真实时钟，某些用游戏内 | 兼顾 | 实现复杂 |
+
+**v4.1 推荐 · 方案 C**：
+- "17:06-17:13" → 真实时钟时间（按 system local time 取小时分）
+- "午休结束前 30 秒" → 游戏内 cycle 时间（每 cycle 启动后算）
+- "计时钟无秒针时" → 概率事件（每 cycle 概率触发，与真实时间无关）
+
+### 9.4.2 Boost 实现
+
+```
+受理窗口 active 时：
+- B1-B9 trigger 概率 ×1.3 to ×1.5
+- 字符级缓变 频次 ×1.5
+- 词包异常词出现频次 ×1.3
+- DC10 cycle 末尾"今日总结"字符级缓变出现概率 ×2
+```
+
+实现 location：`NarrativeTriggerEngine` 内置 `getActiveAcceptanceWindowBoost()` 方法；在 trigger evaluation 时乘入。
+
+### 9.4.3 反向纪律
+
+- ❌ UI 显示 "受理窗口已激活" / "Buff 时段"
+- ❌ 玩家可见的 timer / progress bar
+- ✅ 玩家**自己**摸索绰号（"我的 X 在这时间段最稳"）—— Ch.4 揭示官话名
+
+---
+
+## 9.5 D29 状态确认 Implementation 🔒 LOCKED
+
+### 9.5.1 Post-run 流程接入
+
+D29 状态确认在每个 cycle 结束（即 boss 通关后）触发——建议在 `src/src/systems/stage/stageFlow.ts` 增加 post-cycle 阶段：
+
+```
+stage 12 boss 通关
+    ↓
+post-run summary (existing) / DC10
+    ↓
+[新增] D29 状态确认序列
+    ↓
+chapter unlock check (DC11)
+```
+
+### 9.5.2 5 项检测的退化曲线 implementation
+
+5 项 prompt + 5 阶段退化已在 §6.3.4 + §2.16.4 状态确认临界态锁定。Implementation 建议：
+
+```typescript
+// 概念性，不是 final code
+interface D29Prompt {
+  itemId: 1-5;
+  promptText: string;
+  responseHandler: (chapter, ascensionLevel) => 'pass' | 'partialFail' | 'completeFail';
+  partialFailMessage: string;
+  completeFailMessage: string;
+}
+```
+
+退化阶段查表：
+
+| Chapter | 5 项 D29 状态 | 是否触发 endless 入口 |
+|---|---|---|
+| Ch.1 录入员 | 玩家见证（短）/ 自己仅工号确认 | n/a |
+| Ch.2 校对者 | 全 5 项 routine pass | n/a |
+| Ch.3 修改者 | 偶尔 partial fail（1-2 项）| n/a |
+| Ch.4 作者 | 频繁 partial fail（2-4 项）+ 末段只剩工号 | trigger Ch.5 入口仪式 |
+| Ch.5 endless | 自动 fail（所有项）| n/a |
+
+### 9.5.3 设计纪律 implementation
+
+- ❌ "状态确认 = 检测" 任何 UI hint
+- ❌ Partial fail 显示"红色错误"——所有 fail 仍显示**绿色 routine 颜色**
+- ❌ "完全 fail" 有任何 fanfare
+- ✅ 玩家事后**自己**回想才意识到这是检测
+
+---
+
+## 9.6 反身闭合 Implementation in Save System 🔒 LOCKED
+
+### 9.6.1 跨 run 数据持久化（仅本地）
+
+建议在 `MetaSaveData`（`src/shared/types.ts`）新增 **NarrativeArchive** 字段：
+
+| 字段 | 数据 | 用途 |
+|---|---|---|
+| `endlessModifierSignatures` | `Array<{playerWorkerId, modifier, cycle, timestamp}>` | DC6 boss tooltip 反身闭合 attribution |
+| `typingRhythmFingerprints` | `Array<{sessionId, rhythmVector, timestamp}>` | DC9 主菜单 ambient sound replay |
+| `endlessFreeTypeNotes` | `Array<{playerWorkerId, content, cycle}>` | "致后来者"便签——下周目其他职业 run DC2 |
+| `playerWorkerIdHistory` | `Array<{workerId, chapterCleared, timestamp}>` | 反身闭合 cross-ref 锚点 |
+| `nimL4Unlocked` | `boolean` | B8 reveal 标记（不显化为成就）|
+
+### 9.6.2 跨 run 数据接入点
+
+| Channel | 实现 |
+|---|---|
+| DC6 boss tooltip | `getBossModifierAttribution()` 查 `endlessModifierSignatures` 选最相关 |
+| DC9 主菜单 ambient | 主菜单加载时 query `typingRhythmFingerprints` 取最近 N 个，按时间戳 rePlay 击键节奏 |
+| DC2 工作台便条（下周目）| Ch.1-2 cycle 启动时，random sample `endlessFreeTypeNotes`，作为同事便条池的 augmentation |
+
+### 9.6.3 Privacy / 数据纪律
+
+- 仅本地 `MetaSaveData`——绝不上传 server / 不跨玩家
+- typingRhythmFingerprints 不含 typed content，仅时间戳序列（防止误存敏感内容）
+- 反身闭合数据**不**在 UI 暴露给玩家（无"我的反身闭合记录"页面）
+
+---
+
+## 9.7 现有 Systems × v4.1 接入点 🔒 LOCKED
+
+### 9.7.1 Battle System (`src/src/systems/battle.ts`)
+
+| 接入点 | v4.1 hook |
+|---|---|
+| `triggerSkill()` 调用前后 | 累积 typingRhythmFingerprint；触发 B5 trigger 评估 |
+| Boss 战前 (`startBoss()`) | 查询反身闭合 attribution，注入 boss tooltip |
+| Cycle 末尾 (`endCycle()`) | 触发 D29 状态确认序列；触发 DC10 字符级缓变 |
+| Word complete (`completeWord()`) | 检查词包异常词出现 / V3 dictation 是否 active |
+
+### 9.7.2 Shop System (`src/src/systems/shop.ts`)
+
+| 接入点 | v4.1 hook |
+|---|---|
+| `generateShopItems()` | shop notification UI 用 V1 boilerplate template；V5 守则风 sticker |
+| `buy()` / `sell()` | 触发 B5 trigger（active engage）累积 |
+| `openRitualEnchantment()` | 仪式节点 stage 6 = B1/B3 reveal 主窗口（DC7 hover trigger）|
+
+### 9.7.3 Skill System (`src/src/systems/skills.ts` / `src/src/data/skillGeneration.ts`)
+
+| 接入点 | v4.1 hook |
+|---|---|
+| Skill flavor / display name | D25 v2 兑现：技能 = anomaly expression channel；flavor 走 v4.1 pipeline 重新生成 |
+| 22 affix types tooltip | 用 V5 守则风 layered footnote；Ch.3 起显示 Project Nim 关联 |
+| Skill trigger pipeline (affixTrigger.ts) | typing rhythm signal hook（B5）|
+
+### 9.7.4 Relic System (`src/src/data/relics.ts` + `src/src/systems/relics/`)
+
+| 接入点 | v4.1 hook |
+|---|---|
+| Relic flavor | layered footnote (L1-L4)：v4.1 pipeline 重新生成 376 entries |
+| Relic hover detail | 累积 `relicHoverCounts`（B1 trigger）；Ch.3+ cross-ref check（B3 / B8）|
+| Relic ID naming | 与 §4.5 Project Nim 系列相关的 relic IDs 标记（用于 B8 trigger）|
+
+### 9.7.5 Boss Modifier System (`src/src/data/bossModifiers.ts` + `src/src/systems/bossModifierEngine.ts`)
+
+| 接入点 | v4.1 hook |
+|---|---|
+| Modifier UI | reframe 为"撰写异常报告"（C2/C3）；标"上一任作者: Subject XX-####"（V6 + 反身闭合）|
+| `bossModifierPicker.ts` | endless 模式下 reframe（C2 + C3 一致）|
+| Modifier flavor | v4.1 pipeline 重新生成；走 V1 boilerplate 风 |
+
+### 9.7.6 Cycle / Stage Flow (`src/src/systems/stage/stageFlow.ts`)
+
+| 接入点 | v4.1 hook |
+|---|---|
+| `getStageType()` | stage 6 ritual = B1/B3 reveal 主窗口标记 |
+| `isRitualNode()` | hover 行为采集启用（B1）|
+| Cycle ≥ 6 检测 | 字符级缓变 enable flag（与 memory 锚定一致）|
+
+### 9.7.7 Save System (`src/main/save.ts` + `src/src/core/save/SaveManager.ts`)
+
+| 接入点 | v4.1 hook |
+|---|---|
+| `MetaSaveData` schema | 新增 NarrativeArchive 字段（§9.6.1）|
+| `serialize()` / `deserialize()` | NarrativeArchive 进 / 出 |
+| Migration | v3.x save → v4.1 NarrativeArchive 默认空（无反身闭合资料）|
+
+### 9.7.8 Scene Management (`src/src/scenes/`)
+
+| 接入点 | v4.1 hook |
+|---|---|
+| BattleScene | 工位 progression UI 切换（Ch.1-5）；E1 空间变化 |
+| MainMenuScene | Ch.5+ 字符级缓变 leak；ambient sound rePlay |
+| ShopScene | 仪式节点（stage 6）UI 增加 hover detail（DC7）|
+
+---
+
+## 9.8 PL-2 / PL-3 机制重做约束 🔒 LOCKED
+
+### 9.8.1 PL-2 蜕变者（修改者 / Ch.3）机制约束
+
+叙事约束已锁定（D26 v2 + D25 v2 + Step 4 + Step 6 + Step 7）：
+
+| 约束 | 来源 |
+|---|---|
+| 玩家**自己学会**修改，不是公司分发 | D26 v2 + Ch.3 narrative task |
+| 修改 = tamper anomaly's expression channel | D25 v2 |
+| 修改后 typing 节奏改变（玩家说不清来源）| §3.3.2 B5 trigger |
+| Boss tooltip 含玩家修改过的措辞（近似工号）| V6 + Ch.3 hooks |
+| 公司 reclassify 但**不批准** | D26 v2 + §2.16.3 设计纪律 |
+| 任何 system message 不出现"授权 / 许可 / 解锁 / 配发" | Ch.3 关键设计纪律 |
+
+### 9.8.2 PL-3 造词师（作者 / Ch.4）机制约束
+
+| 约束 | 来源 |
+|---|---|
+| Typing buffer pre-populate（候选词自动出现）| D25 v2 极致前形 + Ch.4 三轨 |
+| 玩家选择 = illusion of choice（从 anomaly 选项里选）| §2.16.4 异常层 |
+| "创意" = anomaly 的 dictation | Ch.4 核心 horror |
+| 完全 isolation — 作者间无 communication | §2.16.4 员工层 |
+| 工位**最简**——比 Ch.1 还少 prop | §7.3.1 |
+| 受理窗口"高效区间"**官方文档**显化（Ch.4）| §2.16.4 异常层 + B5 |
+| L4 Project Nim 反身镜像在 Ch.4 显化 | §4.5 + B8 |
+
+### 9.8.3 共同约束
+
+- ❌ 任何 mechanic tutorial 暗示其更深含义
+- ❌ Power fantasy popup（"获得 X 能力!"）
+- ❌ 解锁庆祝
+- ✅ 像普通 roguelike 新职业一样登场
+- ✅ 玩家事后才意识到 mechanic 的 horror
+
+---
+
+## 9.9 词包系统 v4.1 校准 🔒 LOCKED
+
+### 9.9.1 词包是 anomaly voice 载体（D1 + §2.4 + memory）
+
+> **关联 memory**："传说词包是词包系统，不是遗物" — 词包是 D1 anomaly 本体的天然兑现，**保留并强化，不重写**
+
+### 9.9.2 词包 v4.1 校准方向
+
+| 维度 | v4.1 校准 |
+|---|---|
+| 词包内容 | 异常词比例随 chapter 上升（Ch.1 极弱 / Ch.2 弱 / Ch.3 中模式化 / Ch.4 强 / Ch.5 = 玩家自己）|
+| 异常词 trigger | active engage（理解 / 修改 / cross-ref）触发 B5 |
+| 词包视觉 | Ch.6+ 字符级缓变作用于词包词（与 memory 一致）|
+| 词包 narrative entries | v4.1 pipeline 重新生成（替换 v2.3 / v3.1 残留）|
+
+### 9.9.3 词包与 PL-3（作者）机制
+
+PL-3 typing buffer pre-populate **= 词包系统的 inverse 接入**：
+- 普通词包：anomaly 通过 random word generation emit
+- Ch.4 作者: anomaly 通过 typing buffer pre-populate **直接** emit
+- 这两条 path 共享同一 anomaly voice 后端，不是两套系统
+
+---
+
+## 9.10 Implementation Priority · P0-P3 🔒 LOCKED
+
+### 9.10.1 优先级分级
+
+| Priority | 阻塞 ship | 内容 |
+|---|---|---|
+| **P0** | Ch.1 ship blocker | D29 routine 序列 / V1 boilerplate template / V5 守则 layered (L1) / B1 hook trigger |
+| **P1** | Ch.2 ship blocker | V2 同事便条系统 / B2/B3 trigger / DC2 + DC5 实现 / 升职通知 boilerplate |
+| **P2** | Ch.3-4 ship blocker | 反身闭合 boss tooltip (V6 + DC6) / 受理窗口 mechanic / 字符级缓变 cycle 6+ / D29 partial fail / NarrativeArchive save schema / Project Nim L4 reveal |
+| **P3** | Ch.5 ship blocker | endless 入口仪式 (D32 双 voice) / 主菜单字符级缓变 leak / 跨 run 反身闭合 delivery / "致后来者"便签系统 / endless modifier signature 写入 |
+
+### 9.10.2 跨 priority 共享 implementation
+
+| 共享 | 影响 priority |
+|---|---|
+| `NarrativeTrackingState` (§9.2.1) | P0+ |
+| `NarrativeTriggerEngine` (§9.2.2) | P0+ |
+| Pipeline v4.1 sync (§8.8) | P0+（先生成 P0 内容）|
+| `MetaSaveData` NarrativeArchive (§9.6.1) | P2-P3（反身闭合启动）|
+
+### 9.10.3 已有但需要 narrative-aware refactor 的现有代码
+
+| File | Narrative-aware refactor 内容 |
+|---|---|
+| `src/src/data/relics.ts` | 替换 58/95 v2.3 残留 flavor → v4.1 layered footnote |
+| `src/src/data/skillGeneration.ts` | 替换 ~85% v2.3 残留 flavor → D25 v2 anomaly expression channel framing |
+| `src/src/data/bossModifiers.ts` | reframe 为"撰写异常报告"; tooltip 加 attribution |
+| `src/src/systems/bossModifierPicker.ts` | endless 模式 reframe（C2 + C3）|
+| `src/src/scenes/battle/` | 工位 progression UI 切换 |
+| `src/src/effects/` | 新增 CharDriftEffect / 反身闭合 ambient sound |
+
+---
+
+## 9.11 Step 9 完成度自检
+
+| 维度 | 状态 |
+|---|---|
+| Integration philosophy | ✅ §9.1 LOCKED |
+| 行为 trigger implementation 蓝图 | ✅ §9.2 LOCKED-flagged（待 engineering execute）|
+| 字符级缓变 implementation | ✅ §9.3 LOCKED |
+| 受理窗口 mechanic 接入（方案 C 混合）| ✅ §9.4 LOCKED |
+| D29 implementation | ✅ §9.5 LOCKED |
+| 反身闭合 in save system | ✅ §9.6 LOCKED |
+| 现有 systems × v4.1 接入点（8 systems）| ✅ §9.7 LOCKED-flagged |
+| PL-2/3 机制重做约束 | ✅ §9.8 LOCKED |
+| 词包系统 v4.1 校准 | ✅ §9.9 LOCKED |
+| Implementation priority P0-P3 | ✅ §9.10 LOCKED |
+| Engineering execution | ⏳ 全部待 production execute（叙事侧已 LOCK）|
+| narrative-writer pipeline v4.1 sync | ⏳ 待 production（与 P0 内容生成同步）|
+
+**Step 9 主体已 LOCK**——下次 continue 推荐入口：
+1. **Step 10** — Production Notes（QA / playtest 计划 / 跨 narrative-engineering 协作 protocol / risk register）
+2. **PL-2/PL-3** — 蜕变者 / 造词师机制重做（约束已全 LOCK，可直接 execute）
+3. **narrative-writer pipeline v4.1 sync** — production execution（生成 P0 内容启动）
+
+---
+
+_暂停于 2026-05-04（Step 9 完成）。Step 1-9 已闭合（9/11）。Foundation + Beats / Pacing + Characters + World & Lore + Dialogue Framework + Environmental Storytelling + Narrative Delivery + Integration with Gameplay 八大主体全 LOCK。剩 Step 10-11（Production Notes / Complete + Appendices）。_
