@@ -69,7 +69,7 @@ rule_horror_imports:  # 风格层导入（不绑 setting）
 | 8 | Narrative Delivery | ✅ 完成（11 channel inventory / 6 modes / macro-mid-micro schedule / B 真理 × channel 矩阵 / pipeline v4.1 sync 蓝图 / 跨 run 反身闭合 delivery） |
 | 9 | Integration with Gameplay | ✅ 完成（行为 trigger 蓝图 / 字符级缓变 implementation / 受理窗口 mechanic / D29 / 反身闭合 in save / 8 现有 systems 接入点 / PL-2/3 约束 / 词包 v4.1 / P0-P3 priority） |
 | 10 | Production Notes | ✅ 完成（status snapshot / R1-R8 risk register / QA plan + edge cases / playtest strategy + metrics / cross-team protocols / localization / demo+web 约束 / telemetry 纪律 / OQ-1 至 OQ-7 / Sprint P0-P3 planning） |
-| 11 | Complete (Appendices + Handoff) | — |
+| 11 | Complete (Appendices + Handoff) | ✅ 完成（v4.1 narrative workflow 全 11 步收官） |
 
 ---
 
@@ -4021,4 +4021,564 @@ per §5.10：
 
 ---
 
-_暂停于 2026-05-04（Step 10 完成）。Step 1-10 已闭合（10/11）。Foundation + Beats / Pacing + Characters + World & Lore + Dialogue + Environmental + Delivery + Integration + Production Notes 九大主体全 LOCK。**剩 Step 11 — Complete + Appendices + Handoff**。_
+_(rolling — Step 11 收官在下方)_
+
+---
+
+# Step 11（2026-05-04）— Complete + Appendices + Handoff
+
+**进度更新**：✅ v4.1 status 总览 / ✅ D1-D32 全索引 / ✅ B1-B10 矩阵 / ✅ C1-C7 约束 / ✅ Chapter tasks 索引 / ✅ Character cast 索引 / ✅ Voice/Channel/Mode 矩阵 / ✅ Environment 索引 / ✅ World lore 索引 / ✅ PD/OQ/PL 状态总览 / ✅ Sprint plan / ✅ Handoff checklist / ✅ 关键设计纪律集合 / ✅ Document conventions / ✅ Acknowledgments
+
+**Step 11 范畴**：v4.1 narrative workflow 的**最后一步**。本节是给下一个 agent / production team 的 navigable handoff 文档——任何后续 reader 可从 §11 一节出发完整 navigate 整份 narrative-design.md。
+
+> **本步不引入新的 design 决定**——纯整合 + 索引 + handoff。
+
+---
+
+## 11.1 v4.1 Narrative · 状态总览 🔒 LOCKED
+
+### 11.1.1 Workflow 11 步状态
+
+| Step | 状态 | 关键 LOCK |
+|---|---|---|
+| 1 Initialize | ✅ | v4.0 B 合约启动 |
+| 2 Foundation | ✅ | D1-D32 + Premise/Themes/Tone/Structure/Acts + 5 章 narrative tasks + B1-B9 |
+| 3 Beats / Pacing | ✅ | 三层 beat 架构 + 行为驱动 trigger map + Phase A/B/C |
+| 4 Characters | ✅ | Anti-character + 6 类 no-face cast + 同事 ghost + Project Nim 4 layers |
+| 5 World & Lore | ✅ | DPCA Genesis + 第七打字室 + PI lore + Nim deep lore + D27-29 lore origin |
+| 6 Dialogue Framework | ✅ | Anti-dialogue + 6 voices (V1-V6) + voice retire 曲线 |
+| 7 Environmental Storytelling | ✅ | V7 + 4 channel (E1-E4) + 向心矢量铁律 + 美学 D13 物理化 |
+| 8 Narrative Delivery | ✅ | 11 channel (DC1-DC11) + 6 modes + Macro/Mid/Micro schedule + 寂静化总曲线 |
+| 9 Integration with Gameplay | ✅ | 行为 trigger engine 蓝图 + 字符级缓变 + 受理窗口 + D29 + 反身闭合 save schema + 8 systems hook |
+| 10 Production Notes | ✅ | R1-R8 risk + QA plan + playtest 哲学 + telemetry 隐私 + OQ-1 至 OQ-7 + Sprint P0-P3 |
+| 11 Complete + Handoff | ✅ | 本节 |
+
+**11/11 全 LOCK** —— **v4.1 narrative workflow 完整闭合**。
+
+### 11.1.2 文档统计
+
+| 维度 | 数值 |
+|---|---|
+| Total lines | ~4400+ |
+| 主要 sections | 11 Steps + Document Status + v4.0 B 合约 |
+| Decision atoms (D1-D32) | 32 条 |
+| Truth atoms (B1-B9 + 第 10 条) | 10 条 |
+| Constraint atoms (C1-C7) | 7 条 |
+| Production decisions (PD-1 至 PD-8) | 8 条 |
+| Open questions (OQ-1 至 OQ-7) | 7 条 |
+| Parking lot items (PL-1 至 PL-11) | 11 条 |
+| Voice channels (V1-V6 + V7) | 7 类 |
+| Delivery channels (DC1-DC11) | 11 类 |
+| Delivery modes (DM1-DM6) | 6 类 |
+| Environment channels (E1-E4) | 4 类 |
+| Motion types (M1-M4) | 4 类 |
+| Sound types (S1-S5) | 5 类 |
+| Props (P1-P10) | 10 类 |
+| Chapter narrative tasks | 5 章 (DRAFT v1-v2) |
+| Anchor 工号 | 4 个 |
+
+---
+
+## 11.2 D 决策链全索引（D1-D32）🔒 LOCKED
+
+| # | 决定 | §出处 |
+|---|---|---|
+| **D1** | anomaly 本体：文本通过准确录入获得有效性；污染 = 身份阶梯下滑 | §2.1 + §2.3 |
+| **D2** | 安全态 = 放弃理解（非表演）；猴子悖论自带防腐 | §2.1 + §2.3 |
+| **D3** | 主叙事方法 = 规则怪谈（多声部矛盾公文）| §2.2 + §2.3 |
+| **D4** | 5 段阶梯 = 5 职业 | §2.3 |
+| **D5** | 游戏拒绝给答案；结局 = 玩家成为/留下的文档 | §2.3 |
+| **D6** | Meta-progression 反用：进步即堕落，解锁 = 诱降 | §2.3 |
+| **D7** | 玩家被记账，但污染状态不可见 | §2.3 |
+| **D8** | 多声部反身闭合：玩家职业 = 文档矩阵中一个 voice | §2.3 |
+| **D9** | none = 录入员, metamorph = 修改者, wordsmith = 作者 | §2.3 |
+| **D10** | 解锁顺序反转：录入员 → 校对者 → 修改者 → 作者 → 文本一部分 | §2.3 |
+| **D11** | Ascension A0-Amax orthogonal | §2.3 |
+| **D12** | DPCA / 文牍科 / X 集团子部门 | §2.10 + §2.15 |
+| **D13** | 美学 = 文牍科旧气 + 90s 办公室；时间错乱即 horror | §2.10 + §2.15 + §7.7 |
+| **D14 v2** | 公司动机 = self-preservation；NOT service to anomaly | §2.15 |
+| **D15** | 公司是 knowing containment system；NOT actively serving anomaly | §2.15 |
+| **D16** | 阶梯双向化 — 两端都失人性，中间是"人"的窄道 | §2.15 |
+| **D17** | 隐藏结局：不打字 = 不入局；不应被攻略告知 | §2.15 |
+| **D18** | 遗物 = DPCA 前身灵长类研究项目历史档案 | §2.15 |
+| **D19** | D8 反身闭合在遗物上：Subject [玩家工号] 经手 footnote | §2.15 |
+| **D20 v3** | L1-L5 = 同一份文档不同 reading；公司不投放/不修改；文本是诚实的镜子 | §2.15 |
+| **D21** | 公司的恶 = Kafka × Arendt banal systemic evil；没有具体决策者 | §2.15 |
+| **D22** | 历史档案 = 员工自我检查的认知锚点；用公司的尺度知道自己污染 | §2.15 |
+| **D23 v2** | 双员工同读同一文档读到不同内容 | §2.15 |
+| **D24 v2** | 5 职业 = 公司 emergent 5 道污染容纳防线 | §2.15 |
+| **D25 v2** | 技能 = 异常的 expression channels；修改技能 = tamper anomaly's expression | §2.15 |
+| **D26 v2** | 异常通过 peer-to-peer + direct guidance 两条 vectors 传播；公司 NOT vector | §2.15 |
+| **D27** | 受理窗口（textual acceptance interval）| §2.15 + §5.7 |
+| **D28** | 机械见证效应（击键认证 / 格式通道）| §2.15 + §5.7 |
+| **D29** | 状态确认流程（Keep-as-human Check）| §2.15 + §5.7 + §6.3.4 + §9.5 |
+| **D30** | 公司 = defensive curator, NOT anomaly vector | §2.15 |
+| **D31** | 6 类规则 = 同一文档 6 个 layers（不是不同文档）| §2.15 |
+| **D32** | Ch.5 = 双 voice 同事件（升格 + 处置同步）| §2.15 + §2.16.5 |
+
+---
+
+## 11.3 B 真理矩阵（B1-B9 + 第 10 条）🔒 LOCKED
+
+| # | 真理 | Chapter | Channel | Trigger | §出处 |
+|---|---|---|---|---|---|
+| **B1** | 文本不 inert | Ch.1 中-末 | DC1 + DC7 + DC10 | 反复 hover 同遗物 ≥ 3 次 | §2.17 + §3.3.2 |
+| **B2** | 文档 layer 取决于 reader | Ch.2 中段 | DC2 + DC5 | 玩家 query 同事便条；标注被无视 | §2.17 |
+| **B3** | 规则是事故化石 | Ch.2 末 - Ch.3 早 | DC5 + DC7 | cross-ref 工作台规则 vs 遗物 footnote | §2.17 |
+| **B4** | 异常已在野外，公司只是事后 contain | Ch.3 早 | DC1 | 累积外部 boilerplate ≥ 5 次 | §2.17 |
+| **B5** | 理解 / 修改 / 判断 = 推向作者位 | Ch.3 中 | DC2 + DC3 | typing 节奏累积变化 + 老员工警告填空 | §2.17 |
+| **B6** | 公司既不阻止也不偏好，只是 keep 记账 | Ch.3 末 - Ch.4 早 | DC1 + DC2 | 执行挽救方法 + 0 反馈 | §2.17 |
+| **B7** | 现实自洽 | Ch.4 早-中 | DC1 + DC7 | 修改文档后时间戳错位 / L3-L4 回头改写 | §2.17 |
+| **B8** | DPCA 被 anomaly 通过历史 dictate | Ch.4 中-末 | DC7 | cross-ref Project Nim 遗物 ≥ 3 份 → L4 显化 | §2.17 + §4.5 + §5.6 |
+| **B9** | 猴子规则是处置 | Ch.4 末 - Ch.5 入口 | DC1 + DC4 + DC11 | D29 频繁 partial fail + "前任作者归档" | §2.17 |
+| **第 10 条** | 没有 main agent —— 工艺自我延续 | Ch.5 endless 中-后段 | DC6 + DC9 + DC10（emergent）| 玩家 cross-ref 自己以前 endless 工号在新 run boss tooltip | §2.17 |
+
+**矩阵观察**：
+- **每条 B 真理至少 2 channel 共显化**（避免单点错过）—— §8.7
+- **B6 / B8 完全无 environment 触发** —— 纯 textual reveal
+- **第 10 条跨所有 dimension** —— 这正是它玩家自己 derive 的特征
+- **B6 是 banal evil 的最尖锐 in-game 兑现**（D21）
+
+---
+
+## 11.4 C 约束（C1-C7）🔒 LOCKED
+
+| # | 约束 | 出处 D | §出处 |
+|---|---|---|---|
+| **C1** | Endless 入口必须有"升格仪式"瞬间 | D5 | §2.7 + §2.16.5 |
+| **C2** | Boss modifier UI 不能感觉像 buff 选择 | D5 + D8 | §2.7 + §2.16.5 |
+| **C3** | 每个 modifier 旁应显示"上一任作者: Subject XX" | D8 | §2.7 + §2.16.5 |
+| **C4** | Endless 玩家写的 modifier 进入下周目 | D8 反身闭合硬兑现 | §2.7 + §8.9 |
+| **C5** | 污染状态不可见 | D7 | §2.7 |
+| **C6** | 每个职业必须至少与三轨之一发生强 typing 交互 | Voice 矩阵 | §2.7 |
+| **C7** | "解锁=诱降" 可感知化 | D6 | §2.7 |
+
+---
+
+## 11.5 Chapter Narrative Tasks 索引 🔒 LOCKED
+
+| Ch | 职业 | DRAFT 状态 | §出处 | 核心 horror |
+|---|---|---|---|---|
+| **Ch.1** | 录入员 (none) | DRAFT v2 | §2.16.1 | 被遗忘的可能性 |
+| **Ch.2** | 校对者（待新增 mech）| DRAFT v2 | §2.16.2 | "看似有人在 manage 我，但越查越发现没人在那里" |
+| **Ch.3** | 修改者 (metamorph) | DRAFT v2 | §2.16.3 | "公司既不偏好我用新机制，也不偏好我不用——它只是 keep 记账" |
+| **Ch.4** | 作者 (wordsmith) | DRAFT v1 | §2.16.4 | "最有 agency 感的我，最 lack agency" |
+| **Ch.5** | 文本一部分 (endless) | DRAFT v1 | §2.16.5 | D32 双 voice 同事件 |
+
+每章包含：核心 horror / 入口 / 三轨 (公司/员工/异常) + 遗物 + 技能 / 状态确认仪式（Ch.2-5）/ 情绪曲线 / 本章不应出现 / 埋下的 hooks / 关键设计纪律。
+
+---
+
+## 11.6 Character Cast 索引 🔒 LOCKED
+
+### 11.6.1 6 类 no-face character (C1-C6)
+
+| # | Character 类 | 主载体 | §出处 |
+|---|---|---|---|
+| **C1** | 玩家自己 | 工号 + typing 行为 | §4.3 |
+| **C2** | Same-class peers (同事 ghost) | 工号 + 便条 + 工位 + 消失 | §4.4 |
+| **C3** | 历史 Subjects (Project Nim 等) | 遗物 L1-L4 layered footnote | §4.5 |
+| **C4** | DPCA 本身 | boilerplate template | §4.6 |
+| **C5** | Anomaly 本身 | 词包 + 字符级缓变 + dictation | §4.6 |
+| **C6** | 玩家以前的自己 | Subject XX-#### attribution | §4.7 |
+
+### 11.6.2 4 个 anchor 工号
+
+| Anchor 工号 | Character role | §出处 |
+|---|---|---|
+| **Subject XX-1138** | 前一任作者/修改者；boss tooltip 频繁 attribution | §4.4.3 |
+| **Subject XX-047** | 隔壁工位录入员（Ch.1 末尾 D29 见证场景）| §4.4.3 |
+| **Subject XX-0001** | 始祖录入员；遗物中最早 reference | §4.4.3 |
+| **Subject XX-?** | 下一任你；Ch.5 玩家 footprint 写给的对象 | §4.4.3 |
+
+---
+
+## 11.7 Voice / Channel / Mode 矩阵 🔒 LOCKED
+
+### 11.7.1 7 类 Voice
+
+| # | Voice | Source | §出处 |
+|---|---|---|---|
+| **V1** | DPCA boilerplate | DPCA template | §6.2 + §6.3.1 |
+| **V2** | 同事便条 | peer ghost (C2) | §6.2 + §6.3.2 |
+| **V3** | Anomaly dictation | anomaly (C5) | §6.2 + §6.3.3 |
+| **V4** | D29 检测员 prompt | voice-only character | §6.2 + §6.3.4 |
+| **V5** | 规则手册 / 守则 | DPCA layered document | §6.2 + §6.3.5 |
+| **V6** | Boss tooltip / 反身闭合 | anomaly + 玩家以前自己 (C6) | §6.2 + §6.3.6 |
+| **V7** | Environment voice | E1-E4 ambient | §7.1 |
+
+### 11.7.2 11 类 Delivery Channel
+
+| # | Channel | 主要 voice / env | §出处 |
+|---|---|---|---|
+| DC1 | 工作台 boilerplate notifications | V1 | §8.2 |
+| DC2 | 工作台便条 | V2 | §8.2 |
+| DC3 | Typing buffer dictation | V3 | §8.2 |
+| DC4 | D29 状态确认 prompt | V4 | §8.2 |
+| DC5 | 规则手册 / 守则文档 | V5 | §8.2 |
+| DC6 | Boss tooltip | V6 | §8.2 |
+| DC7 | 遗物 hover footnote | V5 layered + character lore | §8.2 |
+| DC8 | 工位 environment ambient | V7 + E1-E4 | §8.2 |
+| DC9 | 主菜单 / settings | V7 字符级缓变 leak (Ch.5) | §8.2 |
+| DC10 | Cycle 末尾"今日总结"屏 | V3 + B1 媒介 | §8.2 |
+| DC11 | 升职通知 / 章节过渡仪式 | V1 + D32 双 voice (Ch.5) | §8.2 |
+
+### 11.7.3 6 类 Delivery Mode
+
+| # | Mode | 形式 | §出处 |
+|---|---|---|---|
+| DM1 | Static text | 预定义 boilerplate / 守则 / 便条 | §8.3 |
+| DM2 | Dynamic generated | 基于玩家 typing history 生成 | §8.3 |
+| DM3 | Procedural fragment | anomaly dictation 的 buffer 内容 | §8.3 |
+| DM4 | Layered footnote | 同一份遗物 L1-L4 不同 reading | §8.3 |
+| DM5 | Ambient sound / visual | 不显化为 text 的 cue | §8.3 |
+| DM6 | Cross-reference emergent | 玩家手动 cross-ref 触发 | §8.3 |
+
+---
+
+## 11.8 Environment 索引 🔒 LOCKED
+
+### 11.8.1 4 类 Channel + sub-types
+
+| 类 | 子类 | §出处 |
+|---|---|---|
+| **E1** 空间 | 工位 5 章 progression（Ch.1 多同事 → Ch.5 物理含混）| §7.3 |
+| **E2** 时间 | D27 受理窗口 / 计时钟无秒针 / 时间戳错位 / 字符级缓变 cycle | §7.4 |
+| **E3** 动效 | M1 暗角吸光 / M2 中心定点脉动 / M3 粒子向心流 / M4 文档边缘 micro-changes | §7.5 |
+| **E4** Prop | P1-P10（详见下表）| §7.6 |
+
+### 11.8.2 5 类 ambient sound (S1-S5)
+
+| # | Sound | §出处 |
+|---|---|---|
+| S1 | 打字机击键 click | §7.8.2 |
+| S2 | 荧光灯嗡鸣 | §7.8.2 |
+| S3 | 静电噪音 | §7.8.2 |
+| S4 | 远处 PA 广播 | §7.8.2 |
+| S5 | 偶发钢琴 | §7.8.2 |
+
+### 11.8.3 10 类 Prop (P1-P10)
+
+| # | Prop | §出处 |
+|---|---|---|
+| P1 | 机械打字机 | §7.6.1 + §7.6.2 |
+| P2 | 灵长接口 PI 屏幕 | §7.6.1 + §7.6.3 |
+| P3 | 红章 / 印章 | §7.6.1 |
+| P4 | 色带窗 | §7.6.1 |
+| P5 | 工号牌 / 工号工卡 | §7.6.1 |
+| P6 | 文档纸张 | §7.6.1 |
+| P7 | 工位抽屉 | §7.6.1 |
+| P8 | 老式钢笔 / 红笔 | §7.6.1 |
+| P9 | 计时钟 | §7.6.1 |
+| P10 | 荧光灯 | §7.6.1 |
+
+---
+
+## 11.9 World Lore 索引 🔒 LOCKED
+
+| Lore 主题 | §出处 |
+|---|---|
+| World layer architecture（空间 3 层 + 时间 4 层）| §5.1 |
+| **DPCA Genesis** 神话（Nim → 无名研究员 → framework）| §5.2 |
+| 文牍科 / **第七打字室**（唯一 active；前六室 fail/closed）| §5.3 |
+| 灵长接口 (PI) Lore Origin（继承自 Project Nim ASL 协议）| §5.4 |
+| **X 集团** macro banal evil | §5.5 |
+| **Project Nim deep lore**（real + fiction grounding；4 layers）| §5.6 + §4.5 |
+| D27 受理窗口 lore（17:06 = Nim 死亡时刻 hidden）| §5.7.1 |
+| D28 机械见证 lore（1985 Nim 时期发现）| §5.7.2 |
+| D29 状态确认 lore（1980s-90s post-incident protocol）| §5.7.3 |
+| Nim 终末期 emergent sentence "字 看 我" | §5.6.4 |
+
+---
+
+## 11.10 PD（Production Decisions）状态 🔒 LOCKED
+
+| PD | 决定 | 状态 | §出处 |
+|---|---|---|---|
+| PD-1 | X 集团 specific name | 不命名（保持 placeholder）| §5.10 |
+| PD-2 | 第七打字室 = 唯一 active | LOCK | §5.10 |
+| PD-3 | 受理窗口 17:06 = Nim 死亡时刻 | LOCK（hidden）| §5.10 |
+| PD-4 | Nim "字 看 我" emergent sentence | LOCK | §5.10 |
+| PD-5 | 无名研究员**不**给名字 | LOCK | §5.10 |
+| PD-6 | X 集团其他子部门 medium | 不在 in-game 显化 | §5.10 |
+| PD-7 | DPCA full name 完整出现一次（某遗物 L3）| LOCK | §5.10 |
+| PD-8 | 4 anchor 工号具体数字 | 建议 XX-1138 / XX-047 / XX-0001 / XX-? | §4.4.3 + §5.10 |
+
+---
+
+## 11.11 OQ（Open Questions）状态 ⏳ 待 Production verify
+
+| OQ | Question | §出处 |
+|---|---|---|
+| OQ-1 | Reveal randomness 容差具体值（×0.8-×1.2？）| §10.9.1 |
+| OQ-2 | Project Nim L4 reveal cross-ref 阈值（4？5？）| §10.9.1 |
+| OQ-3 | 受理窗口"计时钟无秒针时"概率（5%？10%？）| §10.9.1 |
+| OQ-4 | 反身闭合 modifier signature 写入策略 | §10.9.1 |
+| OQ-5 | typing rhythm fingerprint 数据结构 | §10.9.1 |
+| OQ-6 | "致后来者"便签写入条件 | §10.9.1 |
+| OQ-7 | D29 partial fail 概率曲线 ramp | §10.9.1 |
+
+---
+
+## 11.12 PL（Parking Lot）状态总览 🔒 LOCKED
+
+| PL | 项 | 状态 | §出处 |
+|---|---|---|---|
+| ~~PL-1~~ | 校对者 typing 机制设计 | 暂定（待机制重做）| §2.18 |
+| **PL-2** | 蜕变者（修改者）机制重做 | 待 production execute（叙事约束已 LOCK）| §2.18 + §9.8 |
+| **PL-3** | 造词师（作者）机制重做 | 待 production execute（叙事约束已 LOCK）| §2.18 + §9.8 |
+| ~~PL-4~~ | endless 升格仪式 | LOCKED 入口框架 | §2.18 + §2.16.5 |
+| **PL-5** | endless modifier 写入本地存档 implementation | 待 production execute | §2.18 + §9.6 |
+| ~~PL-6~~ | 章节叙事任务整体改进 | DONE | §2.18 |
+| ~~PL-7~~ | B1-B9 derive | DONE | §2.18 + §2.17 |
+| ~~PL-8~~ | contract_reopened 重审 | 实质 closed | §2.18 |
+| ~~PL-9~~ | Ch.4 完整章节任务 derive | DONE | §2.18 + §2.16.4 |
+| ~~PL-10~~ | Ch.1 / Ch.2 v4.1 回炉 | DONE | §2.18 |
+| **PL-11** | 灵长接口 (PI) UI 文案 / theme 落地 | 待 production execute | §2.18 |
+
+---
+
+## 11.13 Production Sprint Plan 索引 🔒 LOCKED
+
+| Sprint | 范围 | §出处 |
+|---|---|---|
+| **Sprint 0** | NarrativeTrackingState + Engine skeleton + Pipeline sync prep | §10.10.1 |
+| **P0 (Ch.1 ship)** | D29 routine + V1 boilerplate + V5 守则 L1 + B1 hook | §10.10.2 |
+| **P1 (Ch.2 ship)** | V2 同事便条 + B2/B3 + DC2/DC5 + 升职通知 | §10.10.3 |
+| **P2 (Ch.3-4 ship)** | 反身闭合 boss tooltip + 受理窗口 + 字符级缓变 + D29 partial fail + B8 reveal + NarrativeArchive | §10.10.3 |
+| **P3 (Ch.5 ship)** | endless 入口仪式 + 主菜单字符级缓变 leak + 跨 run 反身闭合 | §10.10.3 |
+
+---
+
+## 11.14 Handoff Checklist · 给下一个 Agent / Production Team 🔒 LOCKED
+
+### 11.14.1 设计已就位（不需要重新决定）
+
+- ✅ Anomaly 本体 (D1) + 主叙事方法（规则怪谈 D3）
+- ✅ 5 章 narrative tasks（Ch.1-5 DRAFT v1-v2）
+- ✅ B1-B9 + 第 10 条 reveal 全 trigger map
+- ✅ 6 voices (V1-V6) + V7 environment + 11 channels (DC1-DC11) + 6 modes (DM1-DM6)
+- ✅ Character cast (C1-C6) + 4 anchor 工号
+- ✅ World lore (DPCA Genesis + Project Nim 4 layers + 第七打字室)
+- ✅ Pacing curve (Phase A/B/C 寂静化总曲线)
+- ✅ Anti-paradigm 四件套（anti-character / anti-pacing / anti-dialogue / anti-environment-as-decoration）
+- ✅ 反身闭合 save schema 蓝图（NarrativeArchive）
+- ✅ 8 systems × v4.1 接入点
+- ✅ Sprint planning P0-P3
+- ✅ R1-R8 risk register + Mitigation
+- ✅ QA + Playtest 哲学
+
+### 11.14.2 待 Production Execute
+
+- ⏳ narrative-writer pipeline v4.1 sync（生成 V1 ~100 / V2 ~150 / V3 ~100 / V4 25 / V5 ~900 / 遗物 layered ~376）
+- ⏳ 替换 v3.x 残留（58/95 relic + ~85% skills + 词包 + boss modifier flavor）
+- ⏳ NarrativeTrackingState + NarrativeTriggerEngine implementation
+- ⏳ MetaSaveData NarrativeArchive schema migration
+- ⏳ CharDriftEffect implementation
+- ⏳ 受理窗口 mechanic 接入（方案 C 混合）
+- ⏳ D29 partial fail 触发概率曲线（OQ-7）
+- ⏳ PL-2 / PL-3 / PL-5 / PL-11 production execute
+- ⏳ 4 anchor 工号 + reveal 容差值 finalize（PD-8 / OQ-1）
+- ⏳ Playtest Ch.1（5 玩家 × 2-3 hours）+ verify B1 trigger
+
+### 11.14.3 给下一个 Narrative Agent 的提示
+
+> 如果你正在打开这份 doc 准备继续 narrative work：
+>
+> 1. **不要重写已 LOCK 的部分**——D1-D32 / B1-B9 / Ch.1-5 narrative tasks / Voice / Channel / Environment 全已锁。
+> 2. **如果发现 lock 内容相互矛盾**——优先级：B 真理 > D 决定 > C 约束 > §2.16 narrative tasks > §3-9 derived rules。如果矛盾出现，先读 §2.1-2.7 anomaly 本体确认根本约束。
+> 3. **新增 design 决定必须 derive from D1-D32**——v4.0 反推方法论 (§Document Status) 锁死了从 anomaly 反推的根本方向，新决定不能逆向硬塞。
+> 4. **修改任何 LOCKED 部分前**——先在 §2.18 PARKING LOT 加新 PL 项 → 与 user 确认 → 再改。
+> 5. **Production 阶段的 OQ-1 至 OQ-7 / PD-1 至 PD-8** 是 narrative 团队在 production-time 才能 finalize 的——不要在 design-time 强行决定。
+> 6. **Pipeline v4.1 sync 是最大的 production blocker**——任何 ship-blocking sprint 都需要 narrative content production 提前 / 并行进行。
+> 7. **第 10 条 reveal 必须保持 emergent**——不要 by-design 触发它；让玩家自己 cross-ref。
+
+---
+
+## 11.15 v4.1 Narrative · 关键设计纪律集合 🔒 LOCKED
+
+### 11.15.1 Anti-Paradigm 四件套（v4.1 narrative 核心 stance）
+
+| # | 反什么 | 出处 |
+|---|---|---|
+| **1** | Anti-character — NPC = 0 | Step 4 |
+| **2** | Anti-pacing — 零 popup / 寂静化 | Step 3 |
+| **3** | Anti-dialogue — 无 reply / 无 inner monologue | Step 6 |
+| **4** | Anti-environment-as-decoration — 环境是 voice 不是 background | Step 7 |
+
+### 11.15.2 设计哲学（一句话总结）
+
+| # | 哲学 | 出处 |
+|---|---|---|
+| **1** | Pacing 不是 design 工具，是 horror 的载体 | §3.6 |
+| **2** | Lore 不是为了让玩家知道，是为了让玩家不能 verify | §5.9.1 |
+| **3** | Voice 不是对话，是被告知 | §6.1.3 |
+| **4** | 环境不是 lore 标牌，是不出声的 voice | §7.1.1 |
+| **5** | Delivery success metric = 玩家事后回想时寒 | §8.1.2 |
+| **6** | Character 不是出场，是不在场的方式 | §4.1.3 |
+| **7** | 玩家"获得 voice" = 玩家变成 anomaly 的 voice | §6.6.3 |
+| **8** | 最对的事是不做的事；游戏不会让你知道 | §3.2.2 |
+| **9** | 最重要的真相是最容易错过的真相 | §2.17（第 10 条）|
+| **10** | typing rhythm fingerprint 是玩家身份生物特征——绝不离开本地 | §10.8.3 |
+
+### 11.15.3 Banal Evil 的兑现链
+
+D14 v2 → D15 → D21 → D26 v2 → D30 → B6 → B8 → 第 10 条
+（公司 self-preservation → 不 service anomaly → 没有具体决策者 → 不分发 vector → defensive curator → 公司只是 keep 记账 → DPCA 被 anomaly 通过历史 dictate → 没有 main agent）
+
+### 11.15.4 反身闭合的 5 层兑现
+
+| 层 | 兑现 | §出处 |
+|---|---|---|
+| 文档层 | D8 + D19 玩家工号 footnote | §2.15 + §4.7 |
+| 措辞层 | V6 boss tooltip 含玩家 typing 历史 | §6.3.6 |
+| Modifier 层 | C2/C3/C4 endless modifier signature 写入下周目 | §2.7 + §8.9 |
+| Sound 层 | 主菜单 ambient typing rhythm replay | §7.8.4 |
+| Character 层 | C6 玩家以前的自己 / Nim N+1 镜像 | §4.5.3 + §4.7 |
+
+---
+
+## 11.16 Document Conventions 🔒 LOCKED
+
+### 11.16.1 标记 conventions
+
+| 标记 | 含义 |
+|---|---|
+| 🔒 LOCKED | 该 section 已锁定；不允许修改（除非新 PL 项 + user 确认）|
+| ⏳ pending | 待 derive / 待 production execute |
+| ✅ | 完成 |
+| ❌ | 禁止 / 反向纪律 |
+| ⚠️ | 重要警告 / 必须遵守 |
+| **Bold** | 关键概念 / 锁定决定 |
+| _italic_ | session 暂停 / continue 提示 |
+| ⭐ | 重点观察 / 关键洞察 |
+
+### 11.16.2 编号 conventions
+
+| 前缀 | 含义 | 范围 |
+|---|---|---|
+| **D** | Decision | D1-D32 |
+| **B** | B 真理 (truth) | B1-B9 + 第 10 条 |
+| **C** | C 约束 (constraint) | C1-C7 |
+| **PD** | Production Decision | PD-1 至 PD-8 |
+| **OQ** | Open Question | OQ-1 至 OQ-7 |
+| **PL** | Parking Lot | PL-1 至 PL-11 |
+| **V** | Voice | V1-V7 |
+| **DC** | Delivery Channel | DC1-DC11 |
+| **DM** | Delivery Mode | DM1-DM6 |
+| **E** | Environment Channel | E1-E4 |
+| **M** | Motion | M1-M4 |
+| **S** | Sound | S1-S5 |
+| **P** | Prop | P1-P10 |
+| **C#** | Character class | C1-C6 |
+| **Ch** | Chapter | Ch.1-Ch.5 |
+
+### 11.16.3 章节 numbering schema
+
+```
+# Step N (top-level major section)
+## N.X (subsection)
+### N.X.Y (sub-subsection, only when needed)
+#### N.X.Y.Z (rare, used for inner detail tables)
+```
+
+各 Step 的 §X.Y 可独立引用（如 §2.16.3 = Ch.3 narrative task）。
+
+### 11.16.4 Cross-reference conventions
+
+- "§X.Y" = section reference within doc
+- "(§X.Y)" = inline reference  
+- "per §X.Y" = "according to §X.Y"
+- 所有 D / B / C / PD / OQ / PL 编号在文档中**全局唯一**——不重复 reuse
+
+---
+
+## 11.17 Acknowledgments / Closing 🔒 LOCKED
+
+### 11.17.1 v3.x → v4.0 → v4.1 演进简要
+
+| Version | 状态 | 关键变化 |
+|---|---|---|
+| **v2.3** | DEPRECATED | 早期 narrative；现存 ~85% skill flavor + 58/95 relic flavor 残留 |
+| **v3.0** | DEPRECATED | 灵长类辅助文书部 + SCP 收容主义底色雏形 |
+| **v3.1** | DEPRECATED | 卡夫卡式打字工厂 + 三轨映射核心机关 + 共谋宇宙恐怖 |
+| **v4.0** | INCREMENT | B 级合约 Start Fresh；从收容物本体反推方法论；D1-D26 决策链 LOCK |
+| **v4.1** | **CURRENT** | 整合外部流程文档；D27-D32 + 灵长接口 PI + 6 voices + 反身闭合工艺 |
+
+### 11.17.2 v4.0 反推方法论（不可动摇）
+
+> **从收容物本体反推。先钉 anomaly，再反推 玩家身份 / 三轨映射 / 主题 / B1-B9 / Premise / Beats / Characters / Setting 壳 / 美学 / 伦理。不允许逆向硬塞。**
+
+这条方法论是 v4.0 的根，传到 v4.1 仍是设计宪法。**任何后续修改必须遵守。**
+
+### 11.17.3 对 v3.x 工作的承认
+
+v4.0/v4.1 的"反推方法论"是建立在 v3.x 设计的基础上——v3.0/v3.1 已经无意识地把 5 段阶梯里的 4 段载体（none/wordsmith/metamorph/endless）盖好了；v4.0 只是事后命名了 anomaly 本体并显化阶梯。**v4.1 整合阶段同样如此——外部流程文档的"灵长接口" / "未受理文本" / "受理窗口" 等概念，都是以 v4.0 的本体为锚点 emerge 的。**
+
+### 11.17.4 v4.1 Narrative 的核心问题
+
+> **当文字需要作者承担后果时，不理解也许是一种安全；
+> 但如果安全的代价是放弃理解，那么活下来的还是人吗？**
+
+—— Thematic question (§2.11)
+
+v4.1 narrative 拒绝回答这个问题。这正是 D5 的最高兑现。
+
+---
+
+## 11.18 Step 11 完成度自检 · Final
+
+| 维度 | 状态 |
+|---|---|
+| v4.1 status 总览 | ✅ §11.1 |
+| D1-D32 全索引 | ✅ §11.2 |
+| B1-B9 + 第 10 条矩阵 | ✅ §11.3 |
+| C1-C7 约束 | ✅ §11.4 |
+| Chapter narrative tasks 索引 | ✅ §11.5 |
+| Character cast 索引 (C1-C6 + 4 anchor) | ✅ §11.6 |
+| Voice / Channel / Mode 矩阵 (V1-V7 / DC1-DC11 / DM1-DM6) | ✅ §11.7 |
+| Environment 索引 (E1-E4 + S1-S5 + P1-P10) | ✅ §11.8 |
+| World lore 索引 | ✅ §11.9 |
+| PD-1 至 PD-8 状态 | ✅ §11.10 |
+| OQ-1 至 OQ-7 状态 | ✅ §11.11 |
+| PL-1 至 PL-11 状态 | ✅ §11.12 |
+| Sprint plan 索引 | ✅ §11.13 |
+| Handoff checklist | ✅ §11.14 |
+| 设计纪律集合 | ✅ §11.15 |
+| Document conventions | ✅ §11.16 |
+| Acknowledgments / closing | ✅ §11.17 |
+
+---
+
+# 🎯 v4.1 Narrative Workflow · 11/11 全闭合
+
+**Step 1**：v4.0 B 合约启动
+**Step 2**：Foundation （anomaly 本体 + Premise + Themes + Tone + Structure + Acts + 5 章 + B1-B9）
+**Step 3**：Story Beats / Pacing
+**Step 4**：Characters
+**Step 5**：World & Lore
+**Step 6**：Dialogue Framework
+**Step 7**：Environmental Storytelling
+**Step 8**：Narrative Delivery
+**Step 9**：Integration with Gameplay
+**Step 10**：Production Notes
+**Step 11**：Complete + Appendices + Handoff ← **本节**
+
+---
+
+_暂停于 2026-05-04（Step 11 完成 · v4.1 Narrative Workflow 收官）。_
+
+_**v4.1 Narrative Design Document · 主体 LOCKED**。_
+
+_后续工作：_
+1. _PL-2 / PL-3 / PL-5 / PL-11 production execute_
+2. _narrative-writer pipeline v4.1 sync_
+3. _NarrativeTrackingState + NarrativeTriggerEngine implementation_
+4. _Sprint 0 → P0 → P1 → P2 → P3 顺序 ship_
+5. _Playtest 验证 OQ-1 至 OQ-7_
+
+_**最后的话**：本 doc 是 v4.1 narrative 的 LOCK 状态，不是 final state。production 阶段会有 OQ finalize / PD tweak / 章节细节迭代。但**核心架构（D1-D32 + B1-B9 + 5 章 + Voice / Channel / Environment / Delivery 系统）不再 reopen**——除非外部文档 / playtest 证据强到足以新增 PL 项 → user 确认 → 再开。_
+
+_v4.1 narrative 把"打字肉鸽"的 horror 安顿在了一个**可工艺化、可 production-execute、可玩家事后才寒**的位置。_
+
+_收官于 2026-05-04, 17:06 之前。_
