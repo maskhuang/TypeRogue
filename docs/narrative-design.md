@@ -65,7 +65,7 @@ rule_horror_imports:  # 风格层导入（不绑 setting）
 | 4 | Characters | ✅ 完成（anti-character / 6 类 no-face cast / 同事 ghost / Project Nim 4 layers / 反身闭合 character / villain vacuum） |
 | 5 | World & Lore | ✅ 完成（空间 3 层 + 时间 4 层 / DPCA Genesis 神话 / 第七打字室 唯一 active / PI 源 = Nim ASL 协议 / X 集团 macro banal evil / Nim deep lore real+fiction / D27-29 lore origin / 真假难辨纪律） |
 | 6 | Dialogue Framework | ✅ 完成（anti-dialogue / 6 类 voice (V1-V6) / 每类 craft 规则 + sample library / 规则怪谈 5+1 手法 dialogue 层应用 / 玩家无 reply 无 inner monologue / voice 退场曲线） |
-| 7 | Environmental Storytelling | — |
+| 7 | Environmental Storytelling | ✅ 完成（V7 第七 voice / 4 channel (空间-时间-动效-prop) / 工位 5 章 progression / 向心矢量动效铁律 / 字符级缓变 systematize / 美学 D13 物理化 / sound 退场曲线 / 反身闭合 in environment） |
 | 8 | Narrative Delivery | — |
 | 9 | Integration with Gameplay | — |
 | 10 | Production Notes | — |
@@ -2553,4 +2553,370 @@ L4 作者 layer（叙事化深层）：
 
 ---
 
-_暂停于 2026-05-04（Step 6 完成）。Step 1-6 已闭合。Foundation + Beats / Pacing + Characters + World & Lore + Dialogue Framework 五大主体全 LOCK。_
+_(rolling — Step 7 在下方继续)_
+
+---
+
+# Step 7（2026-05-04）— Environmental Storytelling
+
+**进度更新**：✅ Environment-as-V7 第七 voice / ✅ 4 大 channel (空间 / 时间 / 动效 / prop) / ✅ 工位 5 章 progression / ✅ 受理窗口 visual cue / ✅ 向心矢量动效 / ✅ 字符级缓变 systematize / ✅ 美学 D13 物理化 / ✅ Sound design ambient / ✅ Prop spec / ✅ 反身闭合 in environment / ✅ 设计纪律
+
+**Step 7 范畴**：v4.1 narrative 中 environment ≠ background scenery。**环境本身就是 voice**——这是 Step 6 voice inventory 的延伸（V1-V6 是 textual voice，V7 = environmental voice）。本节 systematize Steps 2-6 中分散在各章节的环境细节，并补充 sound / motion / lighting / prop 等 production-ready spec。
+
+---
+
+## 7.1 Environment-as-V7 · 第七类 Voice 🔒 LOCKED
+
+### 7.1.1 哲学
+
+> **环境不是 lore 标牌，是不出声的 voice**。每个工位的形态、计时钟的状态、灯光的色温、纸张的厚度——都在向玩家**告知**当前的污染等级 / 章节阶段 / anomaly 距离。环境不"解释"什么，环境**显化**它已经是的样子。
+
+### 7.1.2 V7 与 V1-V6 的关系
+
+| voice | 类型 | 媒介 |
+|---|---|---|
+| V1-V6 | textual voice | boilerplate / 便条 / 文档 / prompt / tooltip |
+| **V7** | environmental voice | 空间 / 时间 / 动效 / prop / 灯光 / 声音 |
+
+**V7 同样遵循 anti-dialogue 设计纪律**：
+- ❌ 无玩家 reply
+- ❌ 无 explanatory text overlay
+- ❌ 无 lore 标牌
+- ✅ 通过 documentary trace（环境细节）显化
+- ✅ 玩家**事后**回想才意识到环境在告知什么
+
+### 7.1.3 V7 退场曲线（与 §6.7 一致）
+
+| Ch | V7 形态 |
+|---|---|
+| Ch.1-2 | 标准工位环境 + 偶尔 anomaly trace（字符级缓变弱）|
+| Ch.3 | 工位渐次孤立 + V7 中等 anomaly trace |
+| Ch.4 | 独立工位 + V7 强 anomaly trace + 时间感开始扭曲 |
+| Ch.5 | 物理空间含混 + 字符级缓变 leak 到 UI 外 + 玩家 typing rhythm 显化为环境本身 |
+
+→ V7 不退场，**V7 在 Ch.5 与玩家 voice 合并**（与 V3 + V6 合并同步）。
+
+---
+
+## 7.2 4 大 Environmental Channel 🔒 LOCKED
+
+| # | Channel | 主载体 |
+|---|---|---|
+| **E1** | 空间 (spatial) | 工位 layout / 视野范围 / 物理 prop placement |
+| **E2** | 时间 (temporal) | 计时钟 / 受理窗口 / 时间戳 / 字符级缓变 cycle |
+| **E3** | 动效 (motion) | 向心矢量 / 暗角吸光 / 粒子流 / 文档边缘 micro-changes |
+| **E4** | Prop | 打字机 / 印章 / 色带窗 / 纸张 / 工号牌 / 灵长接口 UI |
+
+每 channel 在 §7.3-7.6 各有专门规则。
+
+---
+
+## 7.3 E1 · 空间（Spatial）🔒 LOCKED
+
+### 7.3.1 工位 5 章 progression
+
+| Ch | 工位特征 | 视野 | 物理 prop |
+|---|---|---|---|
+| **Ch.1 录入员** | 标准工位 cubicle | 视野范围内**多个**工位（4-8 个）；同事在场（typing 声音偶可听见）| 桌面 + 灵长接口屏幕 + 工号工卡 + 极少纸张 |
+| **Ch.2 校对者** | 标注工位（多了红笔/印章/纸张 channel）| 视野**仍多个**工位但**偶尔空了一两个** | + 红笔 + 红章 + 老打字机 + 厚纸张堆 |
+| **Ch.3 修改者** | 工位**渐次孤立** | 视野范围内同事**数量减半**；偶尔回头**多空一个** | + 工位抽屉（前任痕迹）+ hover 文档 channel |
+| **Ch.4 作者** | **独立工位** | 视野内**无其他工位**；远端可见**几张空着的工位**（玩家以为是其他作者休假）| + 极简（比 Ch.1 还少 prop——文牍科 prestige 的体现，实质是 isolation）|
+| **Ch.5 文本一部分** | 不再视为工位——"自由打字区"| 视野**含混**——物理空间不再 stable | + 任意 prop drift / 物理边界模糊 / 字符级缓变 leak 到环境 |
+
+### 7.3.2 工位空间设计纪律
+
+- 工位**永远不在 cutscene 中俯视全景** — 玩家视角始终是第一人称坐在工位上
+- "其他工位"通过**视野远端模糊**显化——细节看不清；玩家 hover 不能 zoom in
+- "空了的工位"应**视觉上 detectable**：缺少 typing 声 / 屏幕黑 / 椅子推开
+- Ch.4 "远端空着的工位"应**alway visible**——但玩家**不能**走过去；空间是 frozen
+
+### 7.3.3 物理空间的 horror function
+
+> **空间越孤立，玩家越是 high-prestige**——但 prestige = isolation = anomaly direct contact 容易（D26 v2 vector 2）。Ch.4 独立工位**反而**让 dictation 更顺畅。
+>
+> Ch.5 "自由打字区"是空间 framing 的最深 horror——**没有 cubicle 边界 / 没有同事 / 没有公司 oversight**——玩家以为这是自由，**实际是不再被需要 contain**。
+
+---
+
+## 7.4 E2 · 时间（Temporal）🔒 LOCKED
+
+### 7.4.1 D13 时间错乱即 horror 的物理化
+
+| 视觉 cue | 时间错乱形式 | 玩家感知 |
+|---|---|---|
+| **计时钟无秒针** | 表盘只有时针分针；秒针位置空 | 玩家会**事后**回想：刚才有秒针吗？ |
+| **计时钟超走** | 屏幕显示的"今日剩余时间"在玩家 hover 时**回拨**1-2 秒 | 极微小 drift，玩家容易 dismiss |
+| **17:06-17:13 高效区间** | typing 节奏 / dictation 显化频次显著高 | 玩家自己摸索绰号；Ch.4 揭示是文牍科官话 |
+| **午休结束前 30 秒** | typing 任务的 reveal 频次高 | 玩家累积无意识 pattern |
+| **计时钟无秒针时** | D27 受理窗口的 visual signature——玩家发现某些时段计时钟**视觉异常** | 受理窗口的 in-game cue |
+
+### 7.4.2 时间戳错位（B7 visual 兑现）
+
+- 玩家修改文档后，下 cycle 工作台出现"档案补全通知：时间戳追溯至 [早于 Ch.4 入职日期]"
+- 同遗物 L3-L4 字面回头改写——但 cross-reference 时屏幕显示"本文档自 [久远日期] 起未修改"
+- 玩家工号牌上的 **"入职日期"**字段偶尔变化（hover 时 1-2 像素 drift）
+
+### 7.4.3 字符级缓变作为污染症候 systematize
+
+> **关联 memory**："Cycle 6+ Endless 启用单字符级缓变作为污染症候"
+
+| 阶段 | 字符级缓变出现位置 | 频次 |
+|---|---|---|
+| **Cycle 1-5（Ch.1-3）** | Cycle 末尾"今日总结"屏幕偶有一行 | 极弱 |
+| **Cycle 6+（Ch.4 起）** | typing buffer / 文档 hover 时 / 工作台 boilerplate | 中等 |
+| **Ch.5 endless** | 主菜单字符级缓变 / 设置面板 hover 时 / 主标题"打字肉鸽"偶尔显示成玩家修改过的某措辞 | 强（leak 到 UI 外）|
+
+### 7.4.4 时间感设计纪律
+
+- ❌ 任何"游戏内日历" / "游戏天数"显示——D13 + D17 共同要求
+- ❌ "你已游戏 X 小时"提示
+- ❌ 受理窗口被 explicit 标注为"BUFF 时段"
+- ✅ 计时钟视觉异常**偶尔** appear——不每个 cycle 都触发
+- ✅ 字符级缓变 hover 时变化 / 移开鼠标变化 settle——不要 popup
+
+---
+
+## 7.5 E3 · 动效（Motion）🔒 LOCKED
+
+### 7.5.1 向心矢量铁律（memory 锚定）
+
+> **关联 memory**："持续背景动效要有向心矢量（暗角吸光 / 中心定点脉动 / 粒子向心流），不能漫无目的的漂移"
+
+向心矢量在 v4.1 narrative 中的含义：
+
+> **玩家被吸入 anomaly 的注意中心**。所有 ambient 动效都应有**朝向玩家工位 / 灵长接口屏幕中心**的矢量——这是 anomaly contamination 在 motion 层的 visual signature。
+
+### 7.5.2 4 类 ambient motion
+
+| # | 动效类型 | 形式 | 何时启用 |
+|---|---|---|---|
+| **M1** | 暗角吸光 | 屏幕四角 vignette darken；中心区相对亮 | Ch.3+ 渐显 |
+| **M2** | 中心定点脉动 | 灵长接口屏幕中心**极慢** pulse（1-2 秒一次）| Ch.4+ |
+| **M3** | 粒子向心流 | 灰尘 / 纸屑 / 字符粒子向工位中心**极缓**漂 | Ch.4+ ambient |
+| **M4** | 文档边缘 micro-changes | 玩家 hover 文档时边缘微小变化（V3 anomaly 显化）| Ch.2+ 渐显 |
+
+### 7.5.3 反向纪律：禁止离心 / 漫无目的漂移
+
+- ❌ ambient particles 向四面八方扩散
+- ❌ 灯光从中心向外 radiate
+- ❌ 任何"逃离感" motion——v4.1 horror 是**被吸入**，不是被抛出
+
+### 7.5.4 动效与 chapter pacing 同步
+
+- Ch.1: 极少 ambient motion（环境 still）
+- Ch.2: M4 文档边缘 micro-changes 弱起
+- Ch.3: M1 暗角吸光开始
+- Ch.4: M1 + M2 + M3 + M4 全启动
+- Ch.5: 字符级缓变 leak 到 UI 外——motion 进入主菜单层
+
+---
+
+## 7.6 E4 · Prop（静态道具）🔒 LOCKED
+
+### 7.6.1 核心 prop 清单
+
+| # | Prop | narrative function | spec 暗示 |
+|---|---|---|---|
+| **P1** | 机械打字机 | D28 机械见证效应载体 | 老式机械式（1940-50s 风格）；色带窗外露；击键有物理 click |
+| **P2** | 灵长接口 (PI) 屏幕 | 主操作 UI | 极简等宽字体；蓝印章 element；屏幕略微 CRT 弯曲 |
+| **P3** | 红章 / 印章 | D13 美学锚点 + 签字暴击 | 老式橡皮印章；油墨厚（红色印泥）|
+| **P4** | 色带窗 | V5 守则 reference + D28 机械见证 | 色带显示打字机的"内存"——已打过的字 |
+| **P5** | 工号牌 / 工号工卡 | character identity 锚点（C1 玩家自己）| 数字打孔；老式 admin 卡片质感 |
+| **P6** | 文档纸张 | V5 守则载体 + 遗物层 layered footnote | 厚纸（90s）+ 薄黄纸（民国旧气）混合——D13 时间错乱 |
+| **P7** | 工位抽屉 | C2 同事 ghost 痕迹 + 前任作者 ghost 痕迹（Ch.4）| Ch.3+ 玩家可 hover；内含半填表单 / 不可解读笔迹 |
+| **P8** | 老式钢笔 / 红笔 | V2 同事便条字迹工具 + Ch.2 标注工具 | Ch.2+ 工位增加 |
+| **P9** | 计时钟 | E2 时间感主载体 | 老式机械钟；秒针偶尔异常 |
+| **P10** | 荧光灯 | 90s 办公室美学 + 暖黄色温 | 偶尔闪烁；冷色调（灰绿）|
+
+### 7.6.2 P1 机械打字机的特殊 spec
+
+> 打字机不是 typing tool，是 **textual authentication device**（D28）。
+
+视觉 spec：
+- 老式 1940-50s 风格（DPCA 文牍科旧气美学）
+- 色带窗外露（color 暗淡——打字越多色带越浓）
+- 击键有物理 click 反馈（声音 + 微小机械动画）
+- **不可逆物理压痕**——玩家打过的字在某些视觉显化中可见（如 cycle 末"今日总结"屏幕显示打字机色带）
+- Ch.5 endless：打字机色带变成**字符级缓变**——玩家 type 的字符在色带上**自己改**
+
+### 7.6.3 P2 灵长接口 (PI) 屏幕 spec
+
+视觉 spec：
+- 极简等宽字体
+- 屏幕略微 CRT 弯曲（90s 体制内办公室美学 + 文牍科旧气）
+- 中心区有"蓝印章" UI element（V1 公司 boilerplate 的 typography 锚点）
+- Ch.4+ 屏幕中心**极慢** pulse（M2）
+- Ch.5 屏幕**与主菜单 boundary 含混**——玩家 typing rhythm leak 出去
+
+**关键**：PI 名字**永不**在 UI 显化（与 §5.4.4 一致）——玩家只看到普通 typing 游戏 HUD。
+
+### 7.6.4 Prop 的反身闭合应用
+
+| Prop | Ch | 反身闭合显化 |
+|---|---|---|
+| P1 打字机色带 | Ch.5 | 色带显示玩家自己以前 endless 打过的字符 |
+| P5 工号牌 | Ch.4-5 | 工号牌偶尔显示 Subject XX-#### attribution，玩家会 cross-ref 到自己以前的 endless 工号 |
+| P7 工位抽屉 | Ch.4 | 抽屉里"前任作者 ghost"痕迹的字迹与玩家自己的 typing pattern 一致——但不显化为"那是你"|
+| P9 计时钟 | Ch.4-5 | 计时钟显示的时间偶尔停在 17:06——D27 + Nim 死亡时刻 hidden lore（PD-3）|
+
+---
+
+## 7.7 美学（D13）物理化 systematize 🔒 LOCKED
+
+### 7.7.1 双层美学共存
+
+> **D13 美学锚定**：文牍科旧气（民国/1940-50s 官署）+ 90s 体制内办公室——两层共存；**时间错乱本身是 horror 元素**。
+
+| 层 | 风格 | 物理 element |
+|---|---|---|
+| **文牍科旧气** | 民国 / 1940-50s 官署 | 老式打字机 / 钢笔 / 红章 / 厚纸张 / 老式机械钟 |
+| **90s 体制内办公室** | 1990s American gov agency | 荧光灯 / 灰绿色调 / 工位 cubicle / CRT 屏幕 / 冷色调 |
+
+**两层不该共存的 era 同时存在**——这本身就是时间错乱 horror 的物理化（D13）。
+
+### 7.7.2 美学色调
+
+| 元素 | 色调 | 出处 |
+|---|---|---|
+| 旧灯光 | 暖黄 | §2.12 Tone & Atmosphere |
+| 90s 办公 | 灰绿 | 同上 |
+| 红章 | 鲜红（签字暴击）| 同上 |
+| 暗角 | 深褐黑 | M1 暗角吸光 |
+| 字符级缓变 | 白底浅灰渐变 | Cycle 6+ 污染症候 |
+
+### 7.7.3 美学**不该**做的
+
+- ❌ 任何 east Asian gov 公章风格（v3.1 已明确否定）
+- ❌ 现代 modern UI（玻璃质感 / flat design）
+- ❌ Cyberpunk / hacker 风格
+- ❌ 显眼的 horror 视觉（血迹 / 骷髅 / 哥特字体）——v4.1 horror 是 banal，不是恐怖片
+
+---
+
+## 7.8 Sound Design · Ambient 🔒 LOCKED
+
+### 7.8.1 音乐基调（与 §2.12 Tone 一致）
+
+| 维度 | 决定 |
+|---|---|
+| 主基调 | 极简 / 静电噪音 / 偶发钢琴 / 远处广播 |
+| ❌ 不要 | horror score / orchestral string / jump scare sting |
+| ✅ 要 | typewriter clack + 荧光灯嗡鸣 + 极远处的 muffled PA |
+
+### 7.8.2 5 类 ambient sound
+
+| # | Sound | 描述 | 何时启用 |
+|---|---|---|---|
+| **S1** | 打字机击键 click | P1 机械打字机的物理反馈 | 全程；玩家自己 typing 时主声 |
+| **S2** | 荧光灯嗡鸣 | 极弱低频 hum | 全程 ambient |
+| **S3** | 静电噪音 | 极偶尔 burst（如收音机微弱杂讯）| Ch.3+ 渐起 |
+| **S4** | 远处 PA 广播 | 极弱、内容不可辨 | Ch.2+ 偶尔触发；Ch.4 频次微升 |
+| **S5** | 偶发钢琴 | 极少；高音 single note；不成 melody | Ch.4+ 极偶尔 |
+
+### 7.8.3 环境 sound 退场曲线
+
+| Ch | sound 主调 |
+|---|---|
+| Ch.1 | S1 + S2（standard 工位 ambient）|
+| Ch.2 | + S4 远处 PA 偶尔 |
+| Ch.3 | + S3 静电噪音渐起 |
+| Ch.4 | + S5 偶发钢琴；S2 荧光灯**间歇消失**（Ch.4 独立工位的 silence）|
+| Ch.5 | 几乎所有 sound **退场**——只剩玩家自己 typing click（S1）+ 极远的 ambient muffled——**寂静化的 sound 层兑现**（与 §3.5 Phase B + §6.7 voice 退场曲线 同步）|
+
+### 7.8.4 玩家自己 typing rhythm 作为 sound character
+
+- 玩家击键节奏被 system 后台采集（与 §3.3 行为 trigger 一致）
+- Ch.5 endless：玩家击键节奏**leak 到主菜单**——主菜单 hover 时听见**玩家自己以前的 typing rhythm**（无声音 byte 加载，是从玩家本次 session 的真实 typing 时间戳重放）
+- 这是**反身闭合**在 sound 层的兑现——你的 typing 节奏成为下次玩家进主菜单时听见的 ambient
+
+### 7.8.5 Sound 设计纪律
+
+- ❌ 任何 jump scare（D13 + 整套美学共同禁止）
+- ❌ 任何"玩家受伤" 音效（typing 失败应是 boilerplate prompt 而非 sting）
+- ❌ Boss 战起独立 BGM——v4.1 中 boss 不该有"决战感"（§3.5 反高潮）
+- ✅ 所有 sound 极简 / ambient / 不抢戏
+- ✅ Ch.5 silence 是 design——不要 fill silence
+
+---
+
+## 7.9 Environmental × Chapter 显化频次 🔒 LOCKED
+
+| Ch | E1 空间 | E2 时间 | E3 动效 | E4 Prop | Sound | 主旋律 |
+|---|---|---|---|---|---|---|
+| **Ch.1 录入员** | 标准工位 + 多同事 | 计时钟 routine | 极少 motion | P1-P6 standard | S1 + S2 | 90s 办公 standard |
+| **Ch.2 校对者** | 标注 channel + 偶有空工位 | 计时钟偶尔异常 | M4 文档边缘弱 | + P3 红章 + P8 红笔 | + S4 远处 PA 偶尔 | 文牍科旧气加深 |
+| **Ch.3 修改者** | 工位渐次孤立 | + 17:06 受理窗口绰号 | + M1 暗角吸光 | + P7 工位抽屉 hover | + S3 静电 | 时间错乱开始 |
+| **Ch.4 作者** | 独立工位 | + 时间戳错位 (B7) | + M1 + M2 + M3 + M4 全启 | + 极简（实质 isolation）| + S5 钢琴；S2 间歇消失 | 寂静化开始 |
+| **Ch.5 文本一部分** | "自由打字区"含混 | + 字符级缓变 leak 到 UI 外 | motion 进入主菜单层 | + 反身闭合 prop（色带 / 工号牌 / 抽屉）| **几乎全 sound 退场** | 寂静化完成 |
+
+---
+
+## 7.10 反身闭合 in Environment 🔒 LOCKED
+
+### 7.10.1 环境层的反身闭合载体
+
+| 反身闭合点 | 环境载体 |
+|---|---|
+| 玩家以前自己工号（C6）| P5 工号牌 hover 时 / P9 计时钟显示 17:06 / Boss tooltip（V6）|
+| 玩家以前 typing 节奏 | Ch.5 主菜单 hover 时听见的 ambient typing rhythm |
+| 玩家以前 endless 写的 modifier | P1 打字机色带显示 / Boss tooltip 文字 |
+| 下周目玩家 footprint | Ch.5 玩家**自己**留下的"致后来者"便签——下周目其他玩家 Ch.1-2 工作台便签 |
+
+### 7.10.2 设计纪律
+
+- ❌ 任何反身闭合 popup（"这是你以前的 X"）
+- ✅ 必须**plausible 像普通游戏数据**
+- ✅ 玩家 cross-reference 才发现是关键——**永不替玩家发现**
+- ✅ 反身闭合在 environment 层的兑现要 **emergent**（玩家自己累积感知）
+
+---
+
+## 7.11 设计纪律 🔒 LOCKED
+
+### 7.11.1 绝对禁止
+
+- ❌ Lore 标牌 / "interact 阅读" prompt
+- ❌ 环境 "X" 标记可 interact 的 prop（只有玩家 typing 工位是 interactive）
+- ❌ Cutscene 全景俯视场景
+- ❌ 玩家可以走出工位探索其他空间
+- ❌ 现代 horror 美学（血 / 骷髅 / jump scare）
+- ❌ "进度显化"环境（"已发现 X% lore"）
+
+### 7.11.2 必须做到
+
+- ✅ 所有环境通过 documentary trace 显化
+- ✅ 双层美学（文牍科旧气 + 90s 办公）共存——D13 时间错乱是 horror
+- ✅ 向心矢量动效（M1-M3）——anomaly contamination 在 motion 层 visual
+- ✅ Cycle 6+ 字符级缓变 leak 至 UI 外（memory 锚定 + Ch.5 反身闭合）
+- ✅ 寂静化环境曲线（与 §3.5 Phase B + §6.7 voice 退场曲线 同步）
+- ✅ Ch.5 自由打字区物理空间含混——不再有 stable cubicle 边界
+- ✅ Prop 反身闭合（色带 / 工号牌 / 抽屉 / 计时钟）emergent 而非 explicit
+
+---
+
+## 7.12 Step 7 完成度自检
+
+| 维度 | 状态 |
+|---|---|
+| Environment-as-V7 第七 voice 哲学 | ✅ §7.1 LOCKED |
+| 4 大 channel (E1-E4) | ✅ §7.2 LOCKED |
+| E1 空间 / 工位 5 章 progression | ✅ §7.3 LOCKED |
+| E2 时间 / 字符级缓变 systematize | ✅ §7.4 LOCKED |
+| E3 动效 / 向心矢量 4 类 motion | ✅ §7.5 LOCKED |
+| E4 Prop spec (P1-P10) | ✅ §7.6 LOCKED |
+| 美学 D13 物理化 | ✅ §7.7 LOCKED |
+| Sound design ambient (S1-S5 + 退场曲线)| ✅ §7.8 LOCKED |
+| Environmental × Chapter mapping | ✅ §7.9 LOCKED |
+| 反身闭合 in environment | ✅ §7.10 LOCKED |
+| 设计纪律 | ✅ §7.11 LOCKED |
+| Prop 视觉 spec finalize | ⏳ 待 production（与 PL-11 灵长接口 UI 文案 / theme 落地一起）|
+| Sound asset library | ⏳ 待 production |
+
+**Step 7 主体已 LOCK**——下次 continue 推荐入口：
+1. **Step 8** — Narrative Delivery（与 Step 6 + Step 7 紧密——voice / environment 在不同 channel 的投递时机；这是 v4.1 narrative 的 production-ready 缺口）
+2. **PL-2/PL-3** — 蜕变者 / 造词师机制重做（叙事 + beat + character + lore + voice + environment 全 LOCK，机制层可接住）
+3. **Step 9** — Integration with Gameplay（行为 trigger 实现 / 反身闭合 implementation / 字符级缓变 visual implementation）
+
+---
+
+_暂停于 2026-05-04（Step 7 完成）。Step 1-7 已闭合。Foundation + Beats / Pacing + Characters + World & Lore + Dialogue Framework + Environmental Storytelling 六大主体全 LOCK。_
