@@ -64,7 +64,7 @@ rule_horror_imports:  # 风格层导入（不绑 setting）
 | 3 | Story Beats / Pacing | ✅ 完成（三层 beat 架构 / 行为驱动 trigger map / Phase A-C pacing curve / Anti-pacing 纪律） |
 | 4 | Characters | ✅ 完成（anti-character / 6 类 no-face cast / 同事 ghost / Project Nim 4 layers / 反身闭合 character / villain vacuum） |
 | 5 | World & Lore | ✅ 完成（空间 3 层 + 时间 4 层 / DPCA Genesis 神话 / 第七打字室 唯一 active / PI 源 = Nim ASL 协议 / X 集团 macro banal evil / Nim deep lore real+fiction / D27-29 lore origin / 真假难辨纪律） |
-| 6 | Dialogue Framework | — |
+| 6 | Dialogue Framework | ✅ 完成（anti-dialogue / 6 类 voice (V1-V6) / 每类 craft 规则 + sample library / 规则怪谈 5+1 手法 dialogue 层应用 / 玩家无 reply 无 inner monologue / voice 退场曲线） |
 | 7 | Environmental Storytelling | — |
 | 8 | Narrative Delivery | — |
 | 9 | Integration with Gameplay | — |
@@ -2094,4 +2094,463 @@ Nim 死前最后一周反复 sign 的 emergent 内容（除"hug me, please"外�
 
 ---
 
-_暂停于 2026-05-04（Step 5 完成）。Step 1-5 已闭合。Foundation + Beats / Pacing + Characters + World & Lore 四大主体全 LOCK。_
+_(rolling — Step 6 在下方继续)_
+
+---
+
+# Step 6（2026-05-04）— Dialogue Framework
+
+**进度更新**：✅ Anti-dialogue 框架 / ✅ 6 类 voice inventory / ✅ Voice craft (V1-V6 每类写作规则) / ✅ Voice 差异矩阵 / ✅ Voice × Chapter 显化频次 / ✅ 规则怪谈 5 手法在 dialogue 层应用 / ✅ 玩家无 reply channel 无 inner monologue / ✅ 设计纪律 / ✅ Sample 句式 library
+
+**Step 6 范畴**：v4.1 narrative 中"dialogue" ≠ 对话——anti-character 设计纪律已锁死 NPC = 0、无对话树、无 dialog choice。本节回答：当对话被结构禁止时，**voice** 如何在 6 个 channel 中保持 distinctive 又一致——这是一份 **voice craft manual**。
+
+---
+
+## 6.1 Anti-Dialogue Framework 🔒 LOCKED
+
+### 6.1.1 v4.1 没有"对话"
+
+| 常规 RPG | v4.1 |
+|---|---|
+| NPC ↔ 玩家双向 dialog tree | ❌ 不存在 |
+| 玩家选择 reply | ❌ 不存在 |
+| 互动 conversation | ❌ 不存在 |
+| Cutscene 多角色对话 | ❌ 不存在 |
+
+v4.1 中所有"voice" 都是**单向 address**（玩家是 receiver / 被告知 / 被 process）——这与 Step 4 anti-character + Step 3 anti-pacing 共同形成 v4.1 narrative 的 anti-paradigm 三件套。
+
+### 6.1.2 但 voice ≠ 0
+
+| 形式 | 不是对话 | 但是 voice |
+|---|---|---|
+| boilerplate template | 不与玩家对话 | DPCA 通过 template 发声 |
+| 同事便条 | 不与玩家 chat | peer ghost 通过字迹发声 |
+| typing buffer pre-populate | 不是 spoken | anomaly 通过文本本身显化 |
+| D29 检测员 prompt | 不是 conversation | voice-only character 通过命令式发声 |
+| 规则手册 | 不是 narrator | DPCA layered 文档发声（D31 6 layers）|
+| boss tooltip | 不是 boss 在说 | 反身闭合 voice (anomaly + 玩家以前自己)|
+
+### 6.1.3 设计哲学
+
+> **Voice 不是对话，是被告知**。每条 voice 把玩家放在 receiver 位置——玩家无法 reply，无法选择，无法 negotiate。这种**单向性**本身就是 horror 的载体：你被 informed / processed / categorized，但你**没有 voice 在这个 system 里**。
+>
+> 玩家的 typing 行为产生**间接 utterance**——但 utterance 是被 anomaly 借出去的，不是玩家的 voice。直到 Ch.5 endless，玩家的 typing rhythm 才 leak 到 UI 外——但**那时玩家已是 anomaly 的 voice**。
+
+---
+
+## 6.2 Voice Inventory · 6 类 voice 🔒 LOCKED
+
+| # | Voice | Source | 主要 Form |
+|---|---|---|---|
+| **V1** | DPCA boilerplate | DPCA template | 通知 / 升职 / 处置预告 / "外部文本回收科" notification |
+| **V2** | 同事便条 | peer ghost (C2) | 字迹 + 工号；互相矛盾；含留白句式 |
+| **V3** | Anomaly dictation | anomaly (C5) | typing buffer pre-populate / 字符级缓变 / 文档边缘 micro-changes |
+| **V4** | D29 检测员 prompt | voice-only character | 命令式 prompt（"请摘下面具"等）|
+| **V5** | 规则手册 / 守则 | DPCA layered document | 6 layers 同一份文档不同 reading（D31）|
+| **V6** | Boss tooltip / 反身闭合 | anomaly + 玩家以前自己 (C6) | 措辞 attribution（"上一任作者: Subject XX-####"）|
+
+每类 voice 在 §6.3 各有专门 craft 规则。
+
+---
+
+## 6.3 Voice Craft · V1-V6 每类写作规则 🔒 LOCKED
+
+### 6.3.1 V1 · DPCA boilerplate
+
+**写作规则**：
+
+| 维度 | 规则 |
+|---|---|
+| **句式** | 短 / 行政 / 动作流程 / 主语 = "员工 [工号]" 或 omit |
+| **时态** | present / imperative |
+| **情感词** | ❌ 0 个——没有"恭喜 / 感谢 / 抱歉 / 提醒"等词 |
+| **措辞** | 程序化（"权限调整生效" 而非"你升职了"）|
+| **称谓** | "员工 [工号]"、"Subject [工号]"——绝不"你 / 您" |
+| **格式** | 与 Ch.2/3/4/5 升职通知**完全相同 template**（D32）|
+| **长度** | 短，1-3 句即止 |
+| **标点** | 句号 / 冒号 / 顿号；**不**用感叹号、问号 |
+
+**Sample 句式 library**：
+- "职位变更：录入员→校对者，权限调整生效。"
+- "员工 [工号] 转入独立工位。本职位无配额，无值班同事，无定期审阅。"
+- "员工 [工号] 通过结业评估。鉴于其 Cycle X 修改记录与 Cycle Y 异常归档之间的 cross-reference 频次超阈，转入特殊勤务。不得复述任务内容。不得记录梦境。"
+- "本日候选：来源——公共字幕系统乱码；编号 UTF-7-441-B；处理状态——已词包化，移交本工位录入测试。"
+- "前任作者 Subject XX 于 Cycle Y 转入特殊勤务，不得复述任务内容。"
+- "本工位无收件人。"
+- "档案补全通知：Subject XX 补充资料已合并入库，时间戳追溯至 [日期]。"
+
+**绝对禁止**：
+- ❌ "亲爱的员工"
+- ❌ "感谢您的付出"
+- ❌ "请慢慢适应新岗位"
+- ❌ "Welcome to..."
+- ❌ "Click here to continue"
+
+**核心 horror 锚定**：V1 的 banality 是 D21 的 voice 化——**没有 distinguish capability**，挽救信号和处置预告用同一 template（B6 媒介）。
+
+> **关联记忆**：v4.1 UI 词汇统一（Cycle 1-5 词典：DAY / BATCH / CYCLE / A 等）→ V1 应**严格遵循**该词典，避免 vocabulary drift；Cycle 6+ Endless 启用单字符级缓变作为污染症候——V3 范畴。
+
+---
+
+### 6.3.2 V2 · 同事便条
+
+**写作规则**：
+
+| 维度 | 规则 |
+|---|---|
+| **句式** | 短 / 碎 / 警告 / 常含 imperative + conditional |
+| **落款** | 仅工号（"Subject XX-####" 或更短的 "047"）|
+| **个体差异** | 不同工号便条字迹模式应有 distinctive features（typing rhythm 后台特征）|
+| **互相矛盾** | 同一议题不同便条互相矛盾（D23 v2）|
+| **留白句式** | 含未命名变量（"X"、"Y"）—— 规则怪谈手法 4 |
+| **称谓** | "你" 或 omit subject——便条比 V1 更 personal，但仍**无姓名** |
+| **情感** | 微弱情感允许（不安 / 警告 / 求救）但**不肉麻** |
+
+**Sample 句式 library**：
+- "想回去：少思考。"
+- "想回去：每天复述录入员手册。"
+- "想回去：避免形容词。"
+- "想回去：让你的标注永远是错的。"
+- "如果听到打字声从隔壁工位传来但隔壁没人，请勿应答。"
+- "如果你的 X 机制开始 Y，请离开工位。"
+- "标 affix 时如果手停在某键超过 0.5 秒，让它停。"
+- "致后来者：我也曾以为 [此处字迹模糊]"
+- "[本工位前任] 留: 不要 cross-ref。"
+
+**绝对禁止**：
+- ❌ "我叫..."
+- ❌ "你好"
+- ❌ "我们一起..."
+- ❌ 完整姓名出现
+- ❌ "感谢你看到这条消息"
+
+**核心 horror 锚定**：V2 的 distinctive 但**不可信**——B2 的 voice 化（每个 reader 看到不同便条 / 同事永远无法验证）。
+
+---
+
+### 6.3.3 V3 · Anomaly dictation
+
+**写作规则**：
+
+| 维度 | 规则 |
+|---|---|
+| **不是 sentence**——是 fragment |
+| **形式** | typing buffer pre-populate / 字符级缓变 / 文档边缘 micro-changes |
+| **不出现**为"对玩家说"——anomaly 没有 voice 概念 |
+| **节奏** | 不规则——anomaly 不遵循人类语法 |
+| **可读性** | 部分可读 / 部分不可 / 部分**逻辑自洽但语义异常** |
+| **频次** | Ch.1-2 极弱 / Ch.3 中 / Ch.4 强 / Ch.5 = 玩家自己 |
+| **特殊形式** | Cycle 6+ endless 启用单字符级缓变作为污染症候（与现有设计一致）|
+
+**Sample 句式 library**：
+- typing buffer 里突然出现的 fragment：
+  - "字 看 我"
+  - "录入 = 见证 = 同意"
+  - "上一任 已完成 [此处字符级缓变]"
+- 字符级缓变示例：
+  - "员工编号 0048" → 0049 → 0048 → 0050 → 0048（hover 时变化）
+  - "本日勤务结束" → "本日勤务转入" → "本日勤务结束" → "本日勤务永续"（cycle 末尾偶见）
+- 文档边缘 micro-changes：
+  - 玩家 hover 文档时某段文字 fade in / fade out
+  - 玩家把鼠标移开再看，变化已 settle
+
+**绝对禁止**：
+- ❌ Anomaly "speaks" 任何完整句子
+- ❌ Anomaly 有 personality / motive
+- ❌ Anomaly 给玩家 "提示" / "warning"
+- ❌ Anomaly 的内容 popup / fanfare
+
+**核心 horror 锚定**：V3 不是 voice，是**文本本身在自己显化**——D1 anomaly 本体的直接 voice 化。
+
+---
+
+### 6.3.4 V4 · D29 检测员 prompt
+
+**写作规则**：
+
+| 维度 | 规则 |
+|---|---|
+| **句式** | 命令式 / boilerplate / 极简 |
+| **形式** | 屏幕显示 prompt + voice-only（永不显示检测员 face）|
+| **结构** | 5 项检测序列，固定顺序 |
+| **退化曲线** | Ch.1 见证版 → Ch.2 routine 全 5 项 → Ch.3 偶尔 partial → Ch.4 频繁 partial fail → Ch.5 自动 fail |
+| **称谓** | "请..." 开头——**唯一**用敬语的 voice，但敬语本身是 boilerplate（D29 routine 表象）|
+
+**Sample 句式 library**（5 项标准序列）：
+- "请摘下面具。"
+- "请报工号与姓名。"
+- "请报今天的日期。"
+- "请解释这一句：'[一句普通话]'"
+- "请区分'打字'和'写作'。"
+
+**Ch.4 partial fail 文案**（D29 退化）：
+- 摘面具：通过
+- 工号 + 姓名：屏幕显示 "工号 [玩家工号] 已记录。**姓名字段不适用。**"
+- 日期：屏幕显示 "今日日期：[一个错一两天的日期]"
+- 解释：屏幕显示 "解释已记录。**等同于零意图字符序列，通过。**"
+- 区分：屏幕显示 "**本项检测对当前职位不适用。**"
+
+**Ch.5 完全 fail 文案**：
+- 摘面具：屏幕**忽略**
+- 姓名：屏幕显示 "姓名字段不适用。"
+- 日期：屏幕显示 "**日期不适用。**"
+- 其他：屏幕显示 "**本项检测对当前职位不适用。**"
+
+**绝对禁止**：
+- ❌ 检测员 face / portrait 显示
+- ❌ 检测员 personality 暗示
+- ❌ "失败" / "通过" 任何 fanfare
+
+**核心 horror 锚定**：V4 的 routine 表象 → 退化曲线渐显 → 玩家事后才意识到这是污染检测（D7 + D29 兑现）。
+
+---
+
+### 6.3.5 V5 · 规则手册 / 守则
+
+**写作规则**：
+
+| 维度 | 规则 |
+|---|---|
+| **句式** | 规则怪谈 5 手法（§6.5）|
+| **layer** | 同一份文档 6 layers（D31）|
+| **形式** | 编号守则 / 公告 / 入职手册 / 便签碎片 / 工作台 sticker |
+| **静默修订** | 偶尔一条规则 silently 增加 / 修改 / 删除——玩家事后回想才发觉 |
+| **称谓** | "员工" / "录入员" / "校对者"——按职位 generic 称呼 |
+| **风格** | 文牍科旧气（民国/1940-50s 官署）+ 90s 体制内办公室（D13 美学）|
+
+**Sample 句式 library**（按职位 layer）：
+
+L1 录入员 layer：
+- "守则 003：视线停留在当前高亮字符。"
+- "守则 008：纸张方向异常时，视线移至色带窗。"
+- "守则 014：每 30 字确认一次计时钟。"
+- "守则 022：任务结束后说：'本轮录入结束。'"
+- "守则 027：使用工号回应。"
+- "守则 034：输出完成后离开座位等待核验。"
+
+L2 校对者 layer（同一手册多出的注释）：
+- "守则 003 注：本条已审阅，无需进一步处理。"
+- "守则 008 注：纸张方向**异常**的判定参照《色带窗作业指引》（已封存）。"
+- "守则 014 红字增补：计时钟无秒针时，受理窗口可能开启。"
+
+L3 修改者 layer（机关备忘）：
+- "守则 003 备忘：Subject [工号] 于 Cycle Y 经手任务时报告幻听打字声，应答后转入特殊勤务。建议补入第七打字室基础守则。"
+
+L4 作者 layer（叙事化深层）：
+- "守则原始来源：1986-XX-XX 17:06 事件后续 protocol。"
+
+**绝对禁止**：
+- ❌ "Welcome / 欢迎使用守则"
+- ❌ 规则带 example / case study
+- ❌ "如有疑问请联系..."
+- ❌ "本守则自 [日期] 起生效"——所有 layer 显化**plausibly always there**（D20 v3 + D31）
+
+**核心 horror 锚定**：V5 的 layer system 是 D31 + D20 v3 的 voice 化——**文档是诚实的镜子**；layer 显化 = 玩家用公司的尺度量自己的污染（D22）。
+
+---
+
+### 6.3.6 V6 · Boss tooltip / 反身闭合
+
+**写作规则**：
+
+| 维度 | 规则 |
+|---|---|
+| **句式** | 措辞是玩家以前打过的字（C6 反身闭合 character）|
+| **attribution** | "上一任作者：Subject XX-####" |
+| **Ch.3** | attribution 是**近似**玩家工号（差一位）|
+| **Ch.4** | attribution 是**自己**工号 |
+| **Ch.5** | attribution 是**自己以前 endless 的工号**——D8 反身闭合最高兑现 |
+| **不解释** | tooltip 不解释 boss 是什么，只列 modifier 文字 |
+| **格式** | 与 V1 同 template 风格——**boss tooltip 看起来像 administrative footnote** |
+
+**Sample 句式 library**：
+- Ch.3 boss tooltip：
+  - "本场 modifier: [玩家 Ch.2 标注过的某句话]
+    上一任作者: Subject XX-1138（**近似工号**）"
+- Ch.4 boss tooltip：
+  - "本场 modifier: [玩家 Ch.3 修改过的某段文字]
+    上一任作者: Subject [玩家自己工号]（**玩家可 cross-ref**）"
+- Ch.5 endless boss modifier：
+  - "本场 modifier: [玩家以前 endless 写的某段]
+    上一任作者: Subject [玩家以前 endless 工号]
+    出处: 本地存档 / Cycle Z 自由打字区记录"
+
+**绝对禁止**：
+- ❌ Boss "speaks" 这些 modifier 给玩家
+- ❌ "你创造了这个 boss" popup
+- ❌ "这是你以前写的" 任何提示
+- ❌ Boss 形象 / 头像
+
+**核心 horror 锚定**：V6 是反身闭合在 dialogue 层的兑现——**你的笔被署在别人名下** → **你的笔被署在自己以前的名下** → **没有"别人"，只有不同时间的你**。
+
+---
+
+## 6.4 Voice 差异矩阵 🔒 LOCKED
+
+| 维度 | V1 公司 | V2 同事 | V3 异常 | V4 D29 | V5 守则 | V6 boss |
+|---|---|---|---|---|---|---|
+| **句长** | 中 | 短 / 碎 | fragment | 极短 | 中 | 短 |
+| **情感** | 0 | 微弱 | 0（非人格）| 0（命令式）| 0 | 0 |
+| **称谓** | "员工 [工号]" | "你" / omit | omit | "请..." | "员工" / "录入员"等 | "Subject [工号]" |
+| **时态** | present / imperative | imperative + conditional | timeless / drift | imperative | timeless | timeless |
+| **逻辑** | 行政 | 矛盾 | 异常 | routine | 规则怪谈互锁 | 反身闭合 |
+| **情感重量** | 冷 | 微暖（求救）| 不可读 | 冷 | 冷（旧气）| 冷（震惊但不 fanfare）|
+| **可信度** | 0（template）| 矛盾 | 不可知 | routine 表象 | 部分可信 | 真假难辨 |
+| **玩家可 reply** | ❌ | ❌ | ❌ | ❌（除选 modifier）| ❌ | ❌ |
+
+**关键观察**：每类 voice 在不同维度有不同 fingerprint——但**所有 voice 都不让玩家 reply**。玩家**唯一**能"回应"的方式是：typing 行为（修改文档 / 标注 / 创作）——但这些都是间接 utterance，**最终被 anomaly 借走**（Ch.5 揭示）。
+
+---
+
+## 6.5 规则怪谈 5 手法在 Dialogue 层应用 🔒 LOCKED
+
+§2.2 已 LOCK 主叙事方法 = 规则怪谈。本节具体落实到 voice craft：
+
+| # | 手法 | dialogue 层应用 | 主载体 voice |
+|---|---|---|---|
+| **1** | 罗生门多声部 | V2 同事便条同议题互相矛盾；V5 同一守则不同 layer 含矛盾注释 | V2 + V5 |
+| **2** | 矛盾即陷阱 | V5 守则相互证伪——例：守则 X 与守则 Y 不能同时遵守 | V5 |
+| **3** | 否定式存在强化 | "如果 X 出现，请勿 Y" 句式；越警告，X 越在文本世界存在感被强化 | V2 + V5 |
+| **4** | 信息留白 + 单一指代物 | V2 老员工警告"X / Y"留空；V5 偶尔 reference 未命名的"它" / "■■" | V2 + V5 + V3 |
+| **5** | 体裁伪装 | V1-V6 全部以官方文档 / 便条 / 公告 / tooltip 形式——**没有故事 / 没有人物心理 / 没有场景描写** | 全部 voice |
+
+**新增手法（v4.1 整合后）**：
+- **手法 6：规则被静默修订** —— 偶尔 V5 守则 silently 增加 / 修改 / 删除一条；玩家事后回想才发觉。这是规则怪谈手法 1（罗生门）+ 手法 5（体裁伪装）的组合扩展
+
+---
+
+## 6.6 玩家与 Dialogue 的关系 🔒 LOCKED
+
+### 6.6.1 玩家**没有 reply channel**
+
+- 玩家**无法**回复 V1 boilerplate
+- 玩家**无法**回复 V2 同事便条（试图 reply：屏幕显示"本工位无收件人"——§4.4.4 已锁）
+- 玩家**无法** reason with V3 anomaly
+- 玩家**只能**机械执行 V4 D29 prompt
+- 玩家**无法**质疑 V5 守则
+- 玩家**无法**反驳 V6 boss tooltip 中的 attribution
+
+### 6.6.2 玩家**没有 inner monologue**
+
+- 游戏**不给玩家**内心独白 / inner voice / 心理 cutscene
+- 玩家是个 typing operator——typing 行为是玩家**唯一**的 utterance 输出
+- 这是 D2 猴子悖论 + D7 污染不可见在 dialogue 层的兑现：**玩家的"内心"在游戏中不存在**——任何 inner voice 显化都会破坏猴子悖论
+
+### 6.6.3 玩家 voice 的 emergent 显化（仅 Ch.5）
+
+| 时机 | 玩家 voice 形态 |
+|---|---|
+| **Ch.1-4** | 玩家无 voice——只有 typing 行为 |
+| **Ch.5 早段** | 玩家 typing rhythm 开始 leak 到 UI 外（主菜单字符级缓变 / hover 时出现常打字符）|
+| **Ch.5 中-末** | 玩家写的 modifier signature → 进入下周目语料 |
+| **下周目 cross-ref** | 玩家以前的 voice 出现在新 run boss tooltip——**第 10 条 reveal** |
+
+→ **玩家"获得 voice" = 玩家变成 anomaly 的 voice**——这是 voice 层最暴力的反身闭合。
+
+---
+
+## 6.7 Voice × Chapter 显化频次 🔒 LOCKED
+
+| Ch | V1 公司 | V2 同事 | V3 异常 | V4 D29 | V5 守则 | V6 boss | 主旋律 voice |
+|---|---|---|---|---|---|---|---|
+| **Ch.1 录入员** | 主 | 远 | 极弱 | 见证版 | 主 | 弱 | V1 + V5 |
+| **Ch.2 校对者** | 主 | 中 | 弱 | routine 全 | 主（L2 显化）| 中 | V2 + V5 |
+| **Ch.3 修改者** | 中 | 中-退场 | 中 | 偶尔 partial | 退化 | 出现（近似工号）| V2 + V3 + V6 |
+| **Ch.4 作者** | 极简（最低）| 完全退场 | 强 | 频繁 partial fail | 极简（玩家不再被推送）| 显化（自己工号）| V3 + V6 |
+| **Ch.5 文本一部分** | 仅 boilerplate（处置）| 完全退场（除"致后来者" 自留）| = 玩家自己 | 自动 fail | 完全退场 | 主（自己以前 endless 工号）| V6 + V3（合并）|
+
+**Voice 退场曲线**：
+- V2 同事 voice：Ch.1 远 → Ch.2 主 → Ch.3 退场 → Ch.4-5 完全退场
+- V5 守则 voice：Ch.1-2 主 → Ch.3-4 退化 → Ch.5 退场
+- V3 + V6：Ch.3 后渐升 → Ch.5 合并（玩家成为 voice 本身）
+
+**关键 horror 节奏**：玩家 playtime 中**周围的 voice 越来越少**——员工消失 / 守则不再推送 / 公司不再回应——只剩**玩家自己的 voice 透过 V3 + V6 反身回响**。这是**寂静化**的 voice 层兑现（与 §3.5 Phase B 寂静的接受一致）。
+
+---
+
+## 6.8 设计纪律 🔒 LOCKED
+
+### 6.8.1 绝对禁止
+
+- ❌ 0 个对话树
+- ❌ 0 个 dialog choice
+- ❌ 0 个 NPC 直接 face-to-face 对话
+- ❌ 0 个 cutscene 多角色对白
+- ❌ 0 个玩家 inner monologue
+- ❌ 0 个"玩家说..."的台词框
+- ❌ V1 出现感叹号 / 问号
+- ❌ V2 出现完整姓名
+- ❌ V3 显化为"完整 sentence with quotation marks"
+- ❌ V4 检测员 face / portrait
+- ❌ V5 守则带"自 [日期] 起生效"
+- ❌ V6 显化为"你创造了这个 boss"
+
+### 6.8.2 必须做到
+
+- ✅ 所有 voice 通过 documentary trace 显化
+- ✅ V1-V6 在 in-game 用不同 typography / spacing / capitalization 区分（但**不命名** voice 类型）
+- ✅ V1 boilerplate template 跨章统一（D32 反身闭合）
+- ✅ V5 守则 layer 显化 plausibly always there（D20 v3）
+- ✅ V6 boss tooltip 措辞**真实**来自玩家以前 typing 历史（不是模板）
+- ✅ 静默修订（手法 6）实现：偶尔 V5 守则 silently 改变；玩家事后回想才发觉
+- ✅ Voice 退场曲线（§6.7）严格执行——周围 voice 越来越少
+
+### 6.8.3 typography / spacing 暗示纪律
+
+为了帮玩家 distinguish voice（无意识层面），建议 in-game typography 差异化（待 production finalize）：
+
+| Voice | typography 暗示 | 备注 |
+|---|---|---|
+| V1 | sans-serif 等宽 / 蓝印章 | DPCA template 风格 |
+| V2 | 手写体 / 钢笔字 | peer ghost 字迹 |
+| V3 | typing buffer 同 UI 字体，但**字符级缓变** | 不显化为"特殊 voice" |
+| V4 | 屏幕中央显示 prompt / 等宽 | command UI |
+| V5 | 老打字机字体 / 红章 | 文牍科旧气 |
+| V6 | 等宽 + administrative footnote 风格 | tooltip border |
+
+**关键**：玩家**不应**意识到这是"6 类 voice"——typography 差异是**潜意识层面**的 distinguishing。
+
+---
+
+## 6.9 Sample Library 索引 · Production-ready 句式 🔒 LOCKED
+
+§6.3 各 voice 的 sample library 已 inline 给出。production 阶段需扩展每类 voice 至少**100+ 句式**——具体扩展由 narrative-writer pipeline（`scripts/narrative-writer/`）批量生成。
+
+**生成方向**：
+- V1 公司 boilerplate：~30 通知 template + 30 处置类 + 30 升职/调岗类 + 10 边缘 case
+- V2 同事便条：~50 警告 / 50 矛盾 / 30 留白 / 20 求救
+- V3 anomaly fragment：~50 typing buffer pre-populate + 50 字符级缓变
+- V4 D29 prompt：5 项 × 5 退化阶段 = 25 sample（已 covered in §6.3.4）
+- V5 守则 layer：~150 守则 × 6 layers = 900 sample（最大池）
+- V6 boss tooltip：动态生成（基于玩家 typing 历史）
+
+**production 提示**：
+- 与 `scripts/narrative-writer/` pipeline sync（pipeline 已 v3.1 sync，需重新 sync v4.1）
+- 现有 `src/data/narrative/` 中 v3.1 残留需通过 v4.1 流水线整体覆盖
+
+---
+
+## 6.10 Step 6 完成度自检
+
+| 维度 | 状态 |
+|---|---|
+| Anti-dialogue framework | ✅ §6.1 LOCKED |
+| 6 类 voice inventory | ✅ §6.2 LOCKED |
+| Voice craft (V1-V6 写作规则)| ✅ §6.3 LOCKED |
+| Voice 差异矩阵 | ✅ §6.4 LOCKED |
+| 规则怪谈 5+1 手法在 dialogue 层应用 | ✅ §6.5 LOCKED |
+| 玩家无 reply / 无 inner monologue | ✅ §6.6 LOCKED |
+| Voice × Chapter 显化频次 + 退场曲线 | ✅ §6.7 LOCKED |
+| 设计纪律 | ✅ §6.8 LOCKED |
+| Sample library 框架 | ✅ §6.9 LOCKED（具体 sample 由 production pipeline 扩展）|
+| typography 差异化 finalize | ⏳ 待 production tweak |
+| narrative-writer pipeline v4.1 重新 sync | ⏳ 待 production |
+
+**Step 6 主体已 LOCK**——下次 continue 推荐入口：
+1. **Step 7** — Environmental Storytelling（已多处涉及 [工位 / 字符级缓变 / 受理窗口时间感 / 工位空了]，可 systematize）
+2. **PL-2/PL-3** — 蜕变者 / 造词师机制重做（叙事 + beat + character + lore + voice 全 LOCK，机制层可接住）
+3. **Step 8** — Narrative Delivery（与 Step 6 紧密衔接——voice 在不同 channel 的投递时机）
+
+---
+
+_暂停于 2026-05-04（Step 6 完成）。Step 1-6 已闭合。Foundation + Beats / Pacing + Characters + World & Lore + Dialogue Framework 五大主体全 LOCK。_
