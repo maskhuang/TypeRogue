@@ -81,7 +81,7 @@ export interface TriggerContext {
   currentWord: string
   /** 当前资源状态快照 */
   resources: ResourceState
-  /** 玩家香蕉总持有量（state.gold） */
+  /** 玩家金币总持有量（state.gold） */
   playerGold: number
   /** 当前目标分数（state.targetScore） */
   targetScore: number
@@ -800,7 +800,7 @@ export function resolvePhase2(
       }
 
       case AffixType.Mercenary: {
-        // 雇佣：玩家香蕉 >= hireCost 时加成产出，消耗 hireCost 香蕉
+        // 雇佣：玩家金币 >= hireCost 时加成产出，消耗 hireCost 金币
         if (effectiveBase <= 0) break // 自不产出技能跳过代价
         const hireCost = affix.hireCost ?? 0
         const currentGold = ctx.playerGold ?? 0

@@ -584,7 +584,7 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
       if (a.gainPerSec != null) desc = desc.replace('{gain}', `${a.gainPerSec}s`);
       if (a.maxTriggers != null) desc = desc.replace('{maxTriggers}', String(a.maxTriggers));
       if (a.patchLow != null) desc = desc.replace('{low}', String(a.patchLow));
-      // 雇佣：替换香蕉/加成占位符
+      // 雇佣：替换金币/加成占位符
       if (a.hireCost != null) desc = desc.replace(/\{hireCost\}/g, String(a.hireCost));
       if (a.hireBonus != null) desc = desc.replace('{hireBonus}', `${Math.round(a.hireBonus * 100)}`);
       // 回音：替换惩罚占位符
@@ -1315,13 +1315,13 @@ export function openShop(_won: boolean): void {
   eventBus.emit('shop:opened');
   const el = getElements();
 
-  // 教程模式：跳过香蕉计算（香蕉已预设）
+  // 教程模式：跳过金币计算（金币已预设）
   if (!state.isTutorial) {
-    // 遗物效果：通过管道解析 on_battle_end 香蕉加成
+    // 遗物效果：通过管道解析 on_battle_end 金币加成
     const goldRelicResult = resolveRelicEffects('on_battle_end', { overkill: state.overkill });
     let relicGold = Math.floor(goldRelicResult.effects.gold);
 
-    // 基础香蕉：100 + 溢出分转化
+    // 基础金币：100 + 溢出分转化
     const calibInfo = getCalibrationInfo();
     let baseGold: number;
     if (calibInfo.isCalibration) {
@@ -1346,7 +1346,7 @@ export function openShop(_won: boolean): void {
 
     // 猎物悬赏：zero_errors 在关卡结束时检查
     const bountyEndGold = checkBountyOnStageEnd();
-    // Story 36.12: S 级奖杯 — 高评级额外香蕉（独立加算，不受乘法影响）
+    // Story 36.12: S 级奖杯 — 高评级额外金币（独立加算，不受乘法影响）
     const trophyGold = getSRankTrophyGold(state.battleStats?.rating || 'B');
     const battleGold = Math.floor(baseGold + skillGold + relicGold) + trophyGold + bountyEndGold;
     state.gold += battleGold;
@@ -1447,7 +1447,7 @@ export function dispatchShopMode(won: boolean, isTutorial: boolean): 'classic' |
   return 'classic';
 }
 
-// === 香蕉显示 ===
+// === 金币显示 ===
 function updateGoldDisplay(): void {
   const el = getElements();
   el.shopGold.textContent = String(state.gold);
@@ -1763,7 +1763,7 @@ function renderUnifiedShopCard(item: ShopItem, index: number, isSmuggleFree: boo
   const effectiveCost = isSmuggleFree ? 0 : item.cost;
   const canAfford = state.gold >= effectiveCost;
   if (!canAfford) card.classList.add('cannot-afford');
-  const costHtml = isSmuggleFree ? '<div class="reward-cost smuggle-free">🆓</div>' : `<div class="reward-cost">🍌${item.cost}</div>`;
+  const costHtml = isSmuggleFree ? '<div class="reward-cost smuggle-free">🆓</div>' : `<div class="reward-cost">💰${item.cost}</div>`;
 
   if (item.type === 'skill' && item.affixSkill) {
     // 词条制技能卡片（Story 35.9 AC3）
@@ -2402,7 +2402,7 @@ function purchasePackItem(index: number): void {
     refreshCraftPanelIfVisible();
   };
 
-  // 先扣香蕉
+  // 先扣金币
   if (smuggleFree) consumeSmuggleFree();
   state.gold -= cost;
   updateGoldDisplay();
@@ -4090,7 +4090,7 @@ function handleDropOnKey(targetKey: string, payload: DragPayload): void {
 
     const skillId = item.skillId!;
 
-    // 预检形状是否能放下（在扣香蕉之前）
+    // 预检形状是否能放下（在扣金币之前）
     const affixSkill = item.affixSkill;
     if (affixSkill) {
       const shapeId = affixSkill.shapeId ?? 'monomino';
@@ -4250,7 +4250,7 @@ function renderStatsPanel(): void {
   });
   const ratingClass = getRatingTier(rating).cssClass;
 
-  // 技能产出香蕉总计
+  // 技能产出金币总计
   let totalGold = 0;
   bs.keyStats.forEach(ks => { totalGold += ks.resources.gold; });
 
@@ -4262,7 +4262,7 @@ function renderStatsPanel(): void {
         <span>${t('shop.words_perfect', { count: bs.perfectWords })}</span>
         <span>${t('shop.chain_count', { count: bs.totalChainTriggers })}</span>
         ${bs.maxChainDepth > 1 ? `<span>${t('shop.max_chain', { count: bs.maxChainDepth })}</span>` : ''}
-        ${totalGold > 0 ? `<span>🍌 +${Math.floor(totalGold)}</span>` : ''}
+        ${totalGold > 0 ? `<span>💰 +${Math.floor(totalGold)}</span>` : ''}
       </div>
     </div>
     <div id="stats-content"></div>

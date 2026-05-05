@@ -82,7 +82,7 @@ function clamp01_3(r: number): 0 | 1 | 2 | 3 {
 
 function emojiForResource(resource: string | undefined): string {
   const m: Record<string, string> = {
-    chips: '⚡', mult: '✖', time: '⏱', gold: '🍌', energy: '🔋',
+    chips: '⚡', mult: '✖', time: '⏱', gold: '💰', energy: '🔋',
     mutagen: '🧬', score: '🎯', base: '◇',
   };
   return m[resource ?? ''] ?? '◇';

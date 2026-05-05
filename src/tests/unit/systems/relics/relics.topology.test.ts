@@ -157,7 +157,7 @@ describe('键盘拓扑遗物行为 (Story 36.6)', () => {
       expect(checkRowSwitch('d')).toBe(0) // 中行 → 中行
     })
 
-    it('跨行 → 1 香蕉', () => {
+    it('跨行 → 1 金币', () => {
       state.player.relics.add('row_switch')
       checkRowSwitch('f') // 中行 (row 1)
       expect(checkRowSwitch('q')).toBe(ROW_SWITCH_GOLD) // 上行 (row 0)

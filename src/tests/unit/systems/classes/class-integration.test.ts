@@ -293,7 +293,7 @@ describe('造词师 End-to-End 集成 (Task 4)', () => {
     expect(isFeatureEnabled('enchant-choice')).toBe(true)
   })
 
-  it('craftWord 消耗碎片+香蕉 → word 进入 wordDeck 和 craftedWords', () => {
+  it('craftWord 消耗碎片+金币 → word 进入 wordDeck 和 craftedWords', () => {
     state.classId = 'wordsmith'
     state.fragmentInventory.c = 1
     state.fragmentInventory.a = 1

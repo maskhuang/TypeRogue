@@ -651,7 +651,7 @@ function buildTerminalScreen(): string {
             <pre class="terminal-banner" id="terminal-banner-pre"></pre>
 
             <div class="terminal-status">
-              <span class="ts-cell" data-field="bal">BAL <em class="bal"><span class="bna">🍌</span> 0</em></span>
+              <span class="ts-cell" data-field="bal">BAL <em class="bal"><span class="bna">💰</span> 0</em></span>
               <span class="ts-cell" data-field="form">FORM <em>F-1</em></span>
               <span class="ts-cell" data-field="clr">CLR <em class="clr">4-B</em></span>
               <span class="ts-cell" data-field="conn">CONN <em class="conn">56k6 OK</em></span>

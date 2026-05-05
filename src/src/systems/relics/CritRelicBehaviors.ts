@@ -30,7 +30,7 @@ export function getLuckyStrikeCritRate(): number {
 
 // === 暴击奖金 (crit_bonus) ===
 
-/** 获取暴击奖金香蕉数：持有遗物 → 3，否则 0 */
+/** 获取暴击奖金金币数：持有遗物 → 3，否则 0 */
 export function getCritBonusGold(): number {
   if (!state.player.relics.has('crit_bonus')) return 0
   return CRIT_BONUS_GOLD

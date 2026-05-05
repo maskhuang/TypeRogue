@@ -642,7 +642,7 @@ function synthTime(ctx: AudioContext, now: number, vol: number, pitchShift = 1, 
   }
 }
 
-/** gold: square + 高频 sine 泛音，"香蕉叮当"感 */
+/** gold: square + 高频 sine 泛音，"金币叮当"感 */
 function synthGold(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
   // 1) Square 基音
   const osc1 = ctx.createOscillator();

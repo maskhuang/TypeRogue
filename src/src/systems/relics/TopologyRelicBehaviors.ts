@@ -19,7 +19,7 @@ const CORNER_KEYS = new Set(['q', 'p', 'z', 'm'])
 /** 双手协奏：手切换时间加成 */
 export const DUAL_CONCERTO_TIME = 0.5
 
-/** 换行奖励：跨行香蕉 */
+/** 换行奖励：跨行金币 */
 export const ROW_SWITCH_GOLD = 1
 
 /** 消行满贯：额外触发的产出比例 */
@@ -63,8 +63,8 @@ export function getCornerPowerBonus(triggerKey: string): number {
 
 /**
  * 检查换行奖励
- * 当前按键与上一个按键不在同一行 → +1 香蕉
- * @returns 香蕉数（0 或 1）
+ * 当前按键与上一个按键不在同一行 → +1 金币
+ * @returns 金币数（0 或 1）
  */
 export function checkRowSwitch(key: string): number {
   if (!state.player.relics.has('row_switch')) {

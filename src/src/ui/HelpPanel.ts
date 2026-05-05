@@ -54,7 +54,7 @@ export const GLOSSARY_DATA: GlossaryEntry[] = [
   { category: 'enchantment', id: 'apprentice_res_score', icon: '🏅', nameKey: 'ench_meta.apprentice_res_score', descKey: 'ench_meta.apprentice_res_score.desc' },
   { category: 'enchantment', id: 'apprentice_res_multiplier', icon: '📈', nameKey: 'ench_meta.apprentice_res_multiplier', descKey: 'ench_meta.apprentice_res_multiplier.desc' },
   { category: 'enchantment', id: 'apprentice_res_time', icon: '⏳', nameKey: 'ench_meta.apprentice_res_time', descKey: 'ench_meta.apprentice_res_time.desc' },
-  { category: 'enchantment', id: 'apprentice_res_gold', icon: '🍌', nameKey: 'ench_meta.apprentice_res_gold', descKey: 'ench_meta.apprentice_res_gold.desc' },
+  { category: 'enchantment', id: 'apprentice_res_gold', icon: '💰', nameKey: 'ench_meta.apprentice_res_gold', descKey: 'ench_meta.apprentice_res_gold.desc' },
   { category: 'enchantment', id: 'multiply_operator', icon: '⚙️', nameKey: 'ench_meta.multiply_operator', descKey: 'ench_meta.multiply_operator.desc' },
   { category: 'enchantment', id: 'ascend', icon: '✨', nameKey: 'help.ascend', descKey: 'help.ascend.desc' },
 
@@ -67,11 +67,11 @@ export const GLOSSARY_DATA: GlossaryEntry[] = [
   { category: 'position', id: 'symmetric', icon: '🪞', nameKey: 'rel.symmetric', descKey: 'rel.symmetric.desc' },
 
   // 资源（7 种）
-  { category: 'resource', id: 'base', icon: '🖊️', nameKey: 'resource.base', descKey: 'resource.base.desc' },
-  { category: 'resource', id: 'score', icon: '🧾', nameKey: 'resource.score', descKey: 'resource.score.desc' },
-  { category: 'resource', id: 'multiplier', icon: '🌟', nameKey: 'resource.multiplier', descKey: 'resource.multiplier.desc' },
+  { category: 'resource', id: 'base', icon: '💥', nameKey: 'resource.base', descKey: 'resource.base.desc' },
+  { category: 'resource', id: 'score', icon: '💯', nameKey: 'resource.score', descKey: 'resource.score.desc' },
+  { category: 'resource', id: 'multiplier', icon: '🔥', nameKey: 'resource.multiplier', descKey: 'resource.multiplier.desc' },
   { category: 'resource', id: 'time', icon: '⏳', nameKey: 'resource.time', descKey: 'resource.time.desc' },
-  { category: 'resource', id: 'gold', icon: '🍌', nameKey: 'resource.gold', descKey: 'resource.gold.desc' },
+  { category: 'resource', id: 'gold', icon: '💰', nameKey: 'resource.gold', descKey: 'resource.gold.desc' },
   { category: 'resource', id: 'energy', icon: '⚡', nameKey: 'resource.energy', descKey: 'resource.energy.desc' },
   { category: 'resource', id: 'mutagen', icon: '🧪', nameKey: 'resource.mutagen', descKey: 'resource.mutagen.desc' },
 

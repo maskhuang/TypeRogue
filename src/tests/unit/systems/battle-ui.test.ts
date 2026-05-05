@@ -92,7 +92,7 @@ describe('7 种资源颜色 (AC2 + Story 32.2)', () => {
     expect(RESOURCE_LABELS['score']).toBe('分数')
     expect(RESOURCE_LABELS['multiplier']).toBe('倍率')
     expect(RESOURCE_LABELS['time']).toBe('时间')
-    expect(RESOURCE_LABELS['gold']).toBe('香蕉')
+    expect(RESOURCE_LABELS['gold']).toBe('金币')
     expect(RESOURCE_LABELS['fragment']).toBe('碎片')
     expect(RESOURCE_LABELS['mutagen']).toBe('变异素')
   })

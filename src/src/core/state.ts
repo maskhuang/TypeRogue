@@ -212,7 +212,7 @@ export function removeRelic(relicId: string): void {
 }
 
 /**
- * 替换遗物 — 删旧添新，返回卖出香蕉
+ * 替换遗物 — 删旧添新，返回卖出金币
  */
 export function replaceRelic(oldId: string, newId: string): number {
   if (state.player.relics.has(newId)) return 0; // 已拥有新遗物，不替换

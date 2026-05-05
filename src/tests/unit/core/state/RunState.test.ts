@@ -188,31 +188,31 @@ describe('RunState', () => {
     })
   })
 
-  // ==================== 香蕉测试 (AC2) ====================
+  // ==================== 金币测试 (AC2) ====================
 
-  describe('香蕉管理', () => {
-    it('初始香蕉为 0', () => {
+  describe('金币管理', () => {
+    it('初始金币为 0', () => {
       expect(runState.getGold()).toBe(0)
     })
 
-    it('addGold() 应增加香蕉', () => {
+    it('addGold() 应增加金币', () => {
       runState.addGold(100)
       expect(runState.getGold()).toBe(100)
     })
 
-    it('addGold() 累加香蕉', () => {
+    it('addGold() 累加金币', () => {
       runState.addGold(50)
       runState.addGold(30)
       expect(runState.getGold()).toBe(80)
     })
 
-    it('addGold() 负数应减少香蕉', () => {
+    it('addGold() 负数应减少金币', () => {
       runState.addGold(100)
       runState.addGold(-30)
       expect(runState.getGold()).toBe(70)
     })
 
-    it('香蕉不应低于 0', () => {
+    it('金币不应低于 0', () => {
       runState.addGold(50)
       runState.addGold(-100)
       expect(runState.getGold()).toBe(0)
@@ -458,13 +458,13 @@ describe('RunState', () => {
       expect(runState.getStats().battlesWon).toBe(0)
     })
 
-    it('胜利战斗应增加香蕉奖励', () => {
+    it('胜利战斗应增加金币奖励', () => {
       runState.applyBattleResult(mockWinResult)
-      // 500 分 / 100 = 5 香蕉
+      // 500 分 / 100 = 5 金币
       expect(runState.getGold()).toBe(5)
     })
 
-    it('失败战斗不应增加香蕉', () => {
+    it('失败战斗不应增加金币', () => {
       runState.applyBattleResult(mockLoseResult)
       expect(runState.getGold()).toBe(0)
     })

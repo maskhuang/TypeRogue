@@ -134,7 +134,7 @@ describe('Story 60.10 · INF dispatcher 路径', () => {
     state.gold = 100
     __test.cmdInfo('F')
     expect(lineContains('KEY F · UNBOUND')).toBe(true)
-    // appendLine 把 🍌 包成 <span class="bna">🍌</span>，故只验证 100 出现
+    // appendLine 把 💰 包成 <span class="bna">💰</span>，故只验证 100 出现
     expect(lineContains('100')).toBe(true)
   })
 

@@ -300,7 +300,7 @@ export function rollAffixParams(
     case AffixType.Evolve:
       return { type }  // 被蜕变时技能稀有度+1
     case AffixType.Harvest:
-      return { type }  // 被蜕变时获得香蕉
+      return { type }  // 被蜕变时获得金币
     case AffixType.Chain:
       return { type, posRel: sharedPosRel ?? pickRandom(ALL_POS_RELATIONS) }  // 被蜕变时连锁范围内技能
     case AffixType.Volatile:

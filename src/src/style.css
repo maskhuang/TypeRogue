@@ -6181,7 +6181,7 @@ html[lang^="en"] .class-select-title {
     line-height: 1.45;
     text-shadow: 0 0 4px rgba(108, 255, 138, 0.55), 0 0 1px rgba(108, 255, 138, 0.9);
 }
-/* CRT 单色香蕉：用固定 px 宽 + center align，让 glyph 完全在 box 内（emoji 自身比 ch 宽，
+/* CRT 单色金币：用固定 px 宽 + center align，让 glyph 完全在 box 内（emoji 自身比 ch 宽，
    width:1ch 会让 glyph 溢出叠到下一字符；此处给 box 留足 emoji 空间 + 等宽） */
 .terminal-content .bna {
     display: inline-block;

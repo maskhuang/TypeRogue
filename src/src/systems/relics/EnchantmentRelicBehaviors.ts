@@ -13,8 +13,8 @@ export const ENCHANTMENT_BOOST_RATE = 1.3
 const ENCHANT_DIVIDEND_GOLD = 2
 
 /**
- * 获取附魔红利香蕉奖励
- * 触发已附魔技能时 +2 香蕉
+ * 获取附魔红利金币奖励
+ * 触发已附魔技能时 +2 金币
  * @param hasEnchantment 该技能是否有附魔
  * @returns 2 当持有遗物且技能有附魔；否则 0
  */

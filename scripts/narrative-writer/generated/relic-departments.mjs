@@ -59,7 +59,7 @@ export const RELIC_DEPARTMENTS = {
       "subsystem": "Resource",
       "examples": ["score_magnet", "time_dew", "universal_furnace"],
       "department": "M1 人事与排班办公室",
-      "tone": "蕉券 / 工时凭证"
+      "tone": "工时券 / 排班凭证（注：banana/蕉 字保留至 L5 灵长 reveal · L1-L3 不显化）"
     },
     {
       "subsystem": "Shop",

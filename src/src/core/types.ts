@@ -169,7 +169,7 @@ export interface ResourceState {
   score: number;       // 即时加分（直接累加到最终分数）— 产出者 prod_loot/prod_crit 写入
   multiplier: number;  // 倍率（基础 + 连击 + 技能加成）
   time: number;        // 时间资源（倒计时秒数）
-  gold: number;        // 香蕉资源（跨词累加，战斗结束转入 state.gold）
+  gold: number;        // 金币资源（跨词累加，战斗结束转入 state.gold）
   energy: number;      // 能量（造词师专属，本关累计）
   mutagen: number;     // 变异素（蜕变师专属，本关累计）
 }

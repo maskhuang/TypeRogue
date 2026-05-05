@@ -70,7 +70,7 @@ export function canAutocomplete(): boolean {
 /**
  * 检查减速/加速遗物
  * @param wordElapsed 当前词用时（秒）
- * @returns 时间加成和香蕉加成
+ * @returns 时间加成和金币加成
  */
 export function checkSpeedRelics(wordElapsed: number): { timeBonus: number; goldBonus: number } {
   let timeBonus = 0, goldBonus = 0
@@ -294,14 +294,14 @@ export function initTypingRelicBehaviors(): void {
     // 获取时卖出所有技能 + 禁止装备 在 relic:acquired 事件中处理
   })
 
-  // 回归基本功：获取时卖出所有已有技能并回收香蕉
+  // 回归基本功：获取时卖出所有已有技能并回收金币
   eventBus.on('relic:acquired', ({ relicId }) => {
     if (relicId !== 'glass_cannon_v2') return
     const bs = getBindingState(state)
     const sellMult = getRecycleSellMultiplier()
     let totalGold = 0
 
-    // 遍历所有技能，累加回收香蕉
+    // 遍历所有技能，累加回收金币
     for (const [skillId, data] of state.player.skills) {
       const sellPrice = Math.floor((data.purchasePrice || 15) * sellMult)
       totalGold += sellPrice
@@ -314,7 +314,7 @@ export function initTypingRelicBehaviors(): void {
     state.player.skills.clear()
     state.player.bindings.clear()
 
-    // 回收香蕉
+    // 回收金币
     if (totalGold > 0) {
       state.player.gold += totalGold
     }

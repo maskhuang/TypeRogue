@@ -174,11 +174,11 @@ describe('全流程冒烟测试 (Story 36.13 AC5)', () => {
       overkill: 0.3,
     } as any;
 
-    // s_rank_trophy 未持有 → 0 香蕉
+    // s_rank_trophy 未持有 → 0 金币
     const trophyGold = getSRankTrophyGold('A');
     expect(trophyGold).toBe(0);
 
-    // 模拟基础香蕉
+    // 模拟基础金币
     const baseGold = 100;
     state.gold += baseGold;
     expect(state.gold).toBe(100);

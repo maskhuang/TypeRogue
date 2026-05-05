@@ -69,7 +69,7 @@ export interface IRunState {
  * 职责:
  * - 生成商品列表（基于配置和稀有度权重）
  * - 处理购买逻辑
- * - 显示香蕉和商品
+ * - 显示金币和商品
  * - 处理键盘输入
  */
 export class ShopScene extends BaseScene {
@@ -253,13 +253,13 @@ export class ShopScene extends BaseScene {
     title.y = 30
     this.container.addChild(title)
 
-    // 香蕉显示
+    // 金币显示
     const goldStyle = new TextStyle({
       fontFamily: FONT_PIXEL,
       fontSize: 20,
       fill: '#ffe66d'
     })
-    this.goldText = new Text({ text: `香蕉: ${this.runState.getGold()}`, style: goldStyle })
+    this.goldText = new Text({ text: `金币: ${this.runState.getGold()}`, style: goldStyle })
     this.goldText.x = 600
     this.goldText.y = 35
     this.container.addChild(this.goldText)
@@ -346,7 +346,7 @@ export class ShopScene extends BaseScene {
     if (item.type === 'skill') {
       this.runState.addSkill(item.id)
     } else if (!this.runState.addRelic(item.id)) {
-      // 槽位满，退还香蕉
+      // 槽位满，退还金币
       this.runState.addGold(price)
       return false
     }
@@ -361,8 +361,8 @@ export class ShopScene extends BaseScene {
       price
     )
 
-    // 更新香蕉显示
-    this.goldText.text = `香蕉: ${this.runState.getGold()}`
+    // 更新金币显示
+    this.goldText.text = `金币: ${this.runState.getGold()}`
 
     // 更新所有商品的可购买状态
     for (let i = 0; i < this.itemDisplays.length; i++) {

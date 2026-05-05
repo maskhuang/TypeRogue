@@ -142,7 +142,7 @@ export function getStageIcon(level: number): string {
 
 function updateBalDisplay(): void {
   const el = document.querySelector('#terminal-shop-screen .ts-cell .bal');
-  if (el) el.innerHTML = `<span class="bna">🍌</span> ${state.gold}`;
+  if (el) el.innerHTML = `<span class="bna">💰</span> ${state.gold}`;
 }
 
 /**
@@ -160,7 +160,7 @@ export function updateTerminalChrome(): void {
     bannerEl.textContent = buildBannerText(state.level, state.cycle, state.ascensionLevel ?? 0, state.runSeed);
   }
 
-  // BAL（沿用 innerHTML 因为含 <span class="bna">🍌</span>）
+  // BAL（沿用 innerHTML 因为含 <span class="bna">💰</span>）
   updateBalDisplay();
 
   // FORM
@@ -349,7 +349,7 @@ function renderListRow(d: ItemDescriptor): string {
   return [
     `<span class="lst-cell lst-sku">${escapeHtml(d.sku)}</span>`,
     `<span class="lst-cell lst-name">${escapeHtml(nameWithMarkers)}</span>`,
-    `<span class="lst-cell lst-price"><span class="bna">🍌</span> ${escapeHtml(priceStr)}</span>`,
+    `<span class="lst-cell lst-price"><span class="bna">💰</span> ${escapeHtml(priceStr)}</span>`,
     `<span class="lst-cell lst-stock">${escapeHtml(stockStr)}</span>`,
     `<span class="lst-cell lst-clr">${escapeHtml(d.clearance)}</span>`,
     `<span class="lst-cell lst-tag">${shapeTokHtml}</span>`,
@@ -509,7 +509,7 @@ function renderInfoBlock(d: ItemDescriptor): string[] {
 /** 把 plain text 里的 emoji / shape / syn sentinel 转成 dossier 内可用 HTML 片段。 */
 function escapeAndDecorateLine(text: string): string {
   let html = escapeHtml(text);
-  html = html.replace(/🍌/g, '<span class="bna">🍌</span>');
+  html = html.replace(/💰/g, '<span class="bna">💰</span>');
   html = html.replace(/§T([A-Z]+)\|(\[[^\]]+\])§/g, (_m, color, tag) => {
     return `<span class="t-shape t-shape-${(color as string).toLowerCase()}">${tag}</span>`;
   });
@@ -1449,7 +1449,7 @@ export function cmdUndo(): void {
 // === Story 60.19: STAT 命令真实数据接入（letterFreqs / wordEffects） ===
 /**
  * /STATS — 上一战每个技能的贡献：让玩家看清"哪个技能产了多少哪种资源"。
- *   1. 头部：rating + WORDS / PERFECT / CHAIN / MAX-CHAIN / 🍌
+ *   1. 头部：rating + WORDS / PERFECT / CHAIN / MAX-CHAIN / 💰
  *   2. SKILL CONTRIBUTION：按触发数降序的双行条目，第一行 名 + 触发 + chain，
  *      第二行 各资源细分（仅显示非零）—— 这是核心信息
  *   3. TOTAL OUTPUT：所有技能资源汇总，方便快速看"主资源是什么"
@@ -1485,7 +1485,7 @@ export function cmdStats(): void {
   summaryParts.push(t('shop.words_perfect', { count: bs.perfectWords }));
   summaryParts.push(t('shop.chain_count', { count: bs.totalChainTriggers }));
   if (bs.maxChainDepth > 1) summaryParts.push(t('shop.max_chain', { count: bs.maxChainDepth }));
-  if (totalGold > 0) summaryParts.push(`🍌 +${Math.floor(totalGold)}`);
+  if (totalGold > 0) summaryParts.push(`💰 +${Math.floor(totalGold)}`);
   appendLine(summaryParts.join(' · '));
 
   // ── 3. 资源排序（用于细分行 + 总览）──

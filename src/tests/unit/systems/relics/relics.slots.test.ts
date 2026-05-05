@@ -117,7 +117,7 @@ describe('遗物槽位系统 (Story 27.3)', () => {
       expect(hasRelic('primal_mutant')).toBe(true)
     })
 
-    it('替换返还香蕉 = floor(basePrice * 0.5)', () => {
+    it('替换返还金币 = floor(basePrice * 0.5)', () => {
       addRelicWithCapacity('apprentice_notes')
       const oldGold = state.gold
       const sellGold = replaceRelic('apprentice_notes', 'primal_mutant')
@@ -138,7 +138,7 @@ describe('遗物槽位系统 (Story 27.3)', () => {
       }
     })
 
-    it('替换不存在的旧遗物 → 返回 0 香蕉，仍添加新遗物', () => {
+    it('替换不存在的旧遗物 → 返回 0 金币，仍添加新遗物', () => {
       const gold = replaceRelic('nonexistent', 'apprentice_notes')
       expect(gold).toBe(0)
       expect(hasRelic('apprentice_notes')).toBe(true)
@@ -176,7 +176,7 @@ describe('遗物槽位系统 (Story 27.3)', () => {
       }
     })
 
-    it('卖出香蕉不超过购买价格', () => {
+    it('卖出金币不超过购买价格', () => {
       for (const relic of Object.values(RELICS)) {
         const sellGold = Math.floor(relic.basePrice * 0.5)
         expect(sellGold, `${relic.id} sell price`).toBeLessThanOrEqual(relic.basePrice)

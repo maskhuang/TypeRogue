@@ -49,7 +49,7 @@ describe('Epic 20: 词库管理 + 字频锁定', () => {
   });
 
   describe('removeWord — 删词逻辑', () => {
-    it('正常删除：扣 3 香蕉，移除词语', () => {
+    it('正常删除：扣 3 金币，移除词语', () => {
       const result = removeWord(0);
       expect(result.success).toBe(true);
       expect(state.gold).toBe(27);
@@ -57,7 +57,7 @@ describe('Epic 20: 词库管理 + 字频锁定', () => {
       expect(state.player.wordDeck.length).toBe(4);
     });
 
-    it('香蕉不足时拒绝删除', () => {
+    it('金币不足时拒绝删除', () => {
       state.gold = 2;
       const result = removeWord(0);
       expect(result.success).toBe(false);

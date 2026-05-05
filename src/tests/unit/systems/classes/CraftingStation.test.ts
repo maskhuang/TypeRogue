@@ -1,7 +1,7 @@
 // ============================================
 // 打字肉鸽 - 造词台单元测试
 // ============================================
-// Story 32.6: Task 8 — 造词逻辑 + 香蕉计算 + tab 可见性
+// Story 32.6: Task 8 — 造词逻辑 + 金币计算 + tab 可见性
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { state, resetState } from '../../../../src/core/state';
@@ -81,7 +81,7 @@ describe('craftWord', () => {
     mockGoldUpdate.mockClear();
   });
 
-  it('成功造词：碎片扣减 + 香蕉扣减 + 词进入 wordDeck', async () => {
+  it('成功造词：碎片扣减 + 金币扣减 + 词进入 wordDeck', async () => {
     const { craftWord } = await import('../../../../src/systems/classes/CraftingStation');
     state.fragmentInventory.e = 5;
     state.fragmentInventory.a = 3;
@@ -100,7 +100,7 @@ describe('craftWord', () => {
     expect(mockGoldUpdate).toHaveBeenCalled();
   });
 
-  it('造词扣香蕉（有重复字母）', async () => {
+  it('造词扣金币（有重复字母）', async () => {
     const { craftWord } = await import('../../../../src/systems/classes/CraftingStation');
     state.fragmentInventory.s = 2;
     state.fragmentInventory.e = 3;
@@ -132,7 +132,7 @@ describe('craftWord', () => {
     expect(state.craftedWords).toHaveLength(0);
   });
 
-  it('香蕉不足 → 拒绝造词，state 无变化', async () => {
+  it('金币不足 → 拒绝造词，state 无变化', async () => {
     const { craftWord } = await import('../../../../src/systems/classes/CraftingStation');
     state.fragmentInventory.e = 3;
     state.gold = 2; // e×3 需要 20g

@@ -45,7 +45,7 @@ export interface StageConfig {
   /** 词语难度等级 (1-5) */
   wordDifficulty: number
 
-  /** 基础香蕉奖励 */
+  /** 基础金币奖励 */
   baseGoldReward: number
 
   /** 分数倍率修正 */

@@ -167,7 +167,7 @@ let _pendingDeadlyGiftRelicPick = false; // 致命礼物：丰厚层级待弹遗
 let letterRegistry: ModifierRegistry | null = null; // 字母升级注册表（每关开始时构建）
 let leftHandTriggered = false; // T5遗物：本词左手技能是否触发过
 let rightHandTriggered = false; // T5遗物：本词右手技能是否触发过
-let _battleRelicGold = 0; // 战斗中遗物产出的香蕉（用于结算面板）
+let _battleRelicGold = 0; // 战斗中遗物产出的金币（用于结算面板）
 let wordStartScore = 0; // 玻璃大炮：记录词开始时总分（用于整词得分翻倍）
 let _targetReached = false; // Story 42.2: 达标标志（达标后继续战斗直到时间耗尽）
 let _accelAtTarget = 1.0;  // 达标时刻的加速倍率（指数基底）
@@ -783,7 +783,7 @@ function playerCorrect(k: string): void {
       state.time += concertoBonus;
       showFeedback(t('battle.dual_concerto', { value: concertoBonus }), '#00ff88', undefined, undefined, { relicId: 'dual_concerto', resource: 'time', amount: concertoBonus });
     }
-    // 换行奖励 — 跨行按键+1香蕉
+    // 换行奖励 — 跨行按键+1金币
     const rowSwitchGold = checkRowSwitch(k);
     if (rowSwitchGold > 0) {
       state.player.gold += rowSwitchGold;
@@ -1286,13 +1286,13 @@ function completeWord(): void {
   }
   incrementWordParity();
 
-  // Story 36.7: 词汇收藏 — 首次完成的单词+3香蕉
+  // Story 36.7: 词汇收藏 — 首次完成的单词+3金币
   const collectionGold = checkWordCollection(state.player.word);
   if (collectionGold > 0) {
     state.gold += collectionGold;
     state.resources.gold += collectionGold;
     _battleRelicGold += collectionGold;
-    showFeedback(`📚 +${collectionGold}🍌`, '#ffe66d', undefined, undefined, { relicId: 'word_collection', resource: 'gold', amount: collectionGold });
+    showFeedback(`📚 +${collectionGold}💰`, '#ffe66d', undefined, undefined, { relicId: 'word_collection', resource: 'gold', amount: collectionGold });
   }
 
   // Story 36.7: 长词达人 — 6+字母单词完成时+1s
@@ -1502,7 +1502,7 @@ function showSettlementComplete(chips: number, mult: number, total: number): voi
   }, 400));
 }
 
-/** 显示香蕉奖励动画 */
+/** 显示金币奖励动画 */
 function showGoldReward(onComplete: () => void): void {
   const goldReward = document.getElementById('gold-reward');
   if (!goldReward) {
@@ -1510,7 +1510,7 @@ function showGoldReward(onComplete: () => void): void {
     return;
   }
 
-  // Story 54.2: 校准关 → 练习关香蕉映射（替代标准战斗香蕉）
+  // Story 54.2: 校准关 → 练习关金币映射（替代标准战斗金币）
   let baseGold: number;
   let skillGold: number;
   let relicGold: number;
@@ -1519,12 +1519,12 @@ function showGoldReward(onComplete: () => void): void {
   let bountyEndGold = 0;
 
   if (_isCalibrationLevel) {
-    // 校准关：基础香蕉由得分映射，技能香蕉产出正常保留
+    // 校准关：基础金币由得分映射，技能金币产出正常保留
     baseGold = computePracticeGold(_calibrationEffectiveScore, state.ascensionLevel);
     skillGold = Math.floor(state.resources.gold) - _battleRelicGold;
     relicGold = 0;
   } else {
-    // 标准关：100 基础 + 溢出分转化为额外香蕉
+    // 标准关：100 基础 + 溢出分转化为额外金币
     const target = Math.max(1, state.targetScore);
     const overflow = Math.max(0, state.overkill);
     const pct = overflow / target;
@@ -2018,7 +2018,7 @@ function endLevel(): void {
         return;
       }
 
-      // 精英战胜利 → 香蕉奖励 → 致命礼物 → 史诗遗物 → 商店
+      // 精英战胜利 → 金币奖励 → 致命礼物 → 史诗遗物 → 商店
       if (currentType === 'elite') {
         const epicWeights = { common: 0, rare: 0, epic: 100, legendary: 0 };
         showGoldReward(() => continueAfterDeadlyGift(() => {
@@ -2031,7 +2031,7 @@ function endLevel(): void {
         return;
       }
 
-      // 普通关/校准关胜利 → 香蕉奖励 → 致命礼物 → 商店
+      // 普通关/校准关胜利 → 金币奖励 → 致命礼物 → 商店
       showGoldReward(() => continueAfterDeadlyGift(() => openShop(true)));
     }, playRatingSound);
   } else {
@@ -2274,10 +2274,10 @@ export async function startLevel(): Promise<void> {
   state.resources.gold = 0;
   _battleRelicGold = 0;
 
-  // 金库利息：每关开始时获得香蕉10%利息
+  // 金库利息：每关开始时获得金币10%利息
   const interestGold = applyGoldInterest();
   if (interestGold > 0) {
-    showFeedback(`🏦 +${interestGold}🍌`, '#ffe66d');
+    showFeedback(`🏦 +${interestGold}💰`, '#ffe66d');
   }
 
   // Story 36.2: 重置打字遗物关级别状态（已见单词等）
@@ -2358,7 +2358,7 @@ export async function startLevel(): Promise<void> {
   if (startRelicResult.effects.multiply > 0) {
     state.multiplier += startRelicResult.effects.multiply;
   }
-  // cornucopia 等：战斗开始时香蕉加成
+  // cornucopia 等：战斗开始时金币加成
   if (startRelicResult.effects.gold > 0) {
     state.gold += startRelicResult.effects.gold;
     state.resources.gold += startRelicResult.effects.gold;
