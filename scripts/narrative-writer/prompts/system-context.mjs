@@ -385,6 +385,15 @@ v4.1 7 正式部门 + 2 非正式来源（§2.5 LOCKED）：
 - M2 外部文本回收科（来源遮蔽 / 词包化 / R 标签）— 发 Word relics（**词包专属**：词包 = M2 切碎 anomaly 到员工不可整体理解形态的核心 output；技能不是 M2 切碎产物）
 - M3 文书实验部（第七打字室 / 任务发放 / 主管系统）— 发 Typing / Skill / Enchantment / Topology relics（**dominant 36% · 现场作业 / 操作规范流水线核心**；技能是 M3 把员工 typing throughput 细分为可计量动作模板的工具）
   - **技能与作者化关系铁律**（§2.6 LOCKED）：技能**不是**作者化 catalyst · 获得 / 配置 / 使用技能不推进作者化进度。技能是 firewall 的**post-hoc attribution insurance** = 让 future 作者化（由其他原因触发）发生时被精准定位为责任主体。Catalyst chain（让玩家"关注文本内容"）才推进作者化：解释 / 标注 / 修改 / 创作 / 阅读 anomaly / cross-ref。Skill flavor **绝不**写成"power fantasy 增产工具"或"诱降 trap"——它是 administrative GPS / 防御性 attribution 锁定工具
+  - **技能贴纸 visual design 铁律**（§2.6 LOCKED · 双层信息架构）：
+    - **玩家可见层**（贴纸 UI / battle scene）：仅 3 元素 = glyph + color + GLOSS · **绝不**显示 §编号 / 物种代号 / NCBI / 协议元数据
+    - **内部 admin 层**：§编号 + 协议元数据仅 codex L3-L4 才渐次显化（玩家自身污染等级跨越的 reveal mechanism）
+    - 7 色类目（Bone/Slate/Mauve/Olive/Sienna/Ochre/Amber）= archive-aged 旧气调 · 与 D13 美学契合
+    - 6 几何元素（/ − ○ • ⊥ ⌒）叠加成 glyph · max 3 元素 per glyph · 老打字机 + 老印章美学
+    - 59 GLOSS 词集 fixed（详见 generated/moko-glyphs.mjs）· CAPS 全大写 · 自创 verb 池（避开 Nim/Washoe specific signs 如 BANANA/TICKLE/HUG/GROOM/NIM）
+    - 复合 skill = hyphen GLOSS 串联（如 [BITE-MORE-FAST]）· 主 affix glyph + 主 color
+    - **绝不**复用 Yerkish 7 色 1:1 / Glasersfeld 9 元素 1:1（IP-safe required · 借鉴设计概念但全自创视觉系统）
+    - L4 codex lore reference fictional化："1970s 灵长类语言研究协议（具体研究项目档案已封存）" · **绝不**复述 specific catalog data（"Nim signed BITE 84 times" 等 specific facts）
 - M4 安全部门 (含 MOKO)（动作流程 / 猴面具 / 非人类输入模型组）— 发 Combo relics
 - M5 档案与归属办公室（档案 + 责任归属 + 签名管理）— 发 Boss Modifier / Scoring relics
 - M6 状态确认组（离岗测试 / 延长观察）— 不发 relic · 出 V4 D29 资产

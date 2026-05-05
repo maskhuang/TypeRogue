@@ -465,6 +465,140 @@ Attribution 路径（独立平行 · 与诱降无因果）
 | "玩家自学 tamper anomaly's expression channel"（D26 v2）| M3 用员工做受控实验 + M9 红领结诱导建立作者认同（具体 2 部门机制）|
 | "反身闭合 attribution"（D8）| M5 administrative liability shifting（具体 firewall 物化）|
 
+##### 技能贴纸 visual design · 双层信息架构 🔒 LOCKED (v4.1-late · 2026-05-05)
+
+技能 = 装在信封里的纸贴纸 · 由公司行政发放 · 玩家贴在键盘 key 上 · MOKO 通过 administrative records 翻译成 game effect。**贴纸没有真实 mechanical 功能** —— 只是 administrative meaning-assignment marker（详见 §2.6 "技能与作者化关系 · catalyst chain vs attribution chain 分离"）。
+
+###### 双层信息架构
+
+```
+┌─────────────────────────────────────────┐
+│ 玩家可见层（贴纸 UI / battle scene）     │
+│   Glyph + Color + GLOSS                 │  ← 玩家所见
+│   (3 元素就够)                           │
+├─────────────────────────────────────────┤
+│ 内部 admin 层（codex L4 / archive only）│
+│   §编号 + 物种代号 + 协议元数据             │  ← 玩家事后挖到（待定保留度）
+│   (玩家从未直接看到，仅通过 codex L3-L4) │
+└─────────────────────────────────────────┘
+```
+
+**双层 horror echo**：和 Project Nim / Kanzi / Washoe 等真实灵长类语言研究项目对照——研究主体（chimp/bonobo）只看到 surface signs/lexigrams，不知道自己背后被分类为 NCBI 物种、被分配 catalog ID、被记录 frequency stats。**玩家与研究 chimp subject 认知地位完全平行**。Ch.4 L4 codex reveal 时玩家才发现自己一直被打了同等 administrative 标签。
+
+###### Visual System · 完全原创（借鉴 Yerkish 设计概念但全自创）
+
+借鉴 Yerkish (Glasersfeld 1971, LANA 项目) **设计概念**——色码 + 几何元素 + lexigram 复合规则——但**视觉、词集、配色全自创**，避免 IP 风险。
+
+**a · 7 类目色码（archive-aged 旧气调，与 D13 美学契合）**：
+
+| 类目语义 | 原创色 | hex 锚点 | 应用 affix clade |
+|---|---|---|---|
+| 增量 / 肯定 | **Bone**（骨白）| `#E8DDB9` | Numeric (4) |
+| 动作 / 主张 | **Slate**（深蓝灰）| `#4A5568` | Crit (5) |
+| 群体 / 社群 | **Mauve**（淡紫赭）| `#735C77` | Stack (7) |
+| 操作 / 工具 | **Olive**（橄榄黄绿）| `#6B7044` | Topology (8) |
+| 位置 / 位移 | **Sienna**（赭石褐）| `#8B5A3C` | Word_sense (15) |
+| 调节 / 否定 | **Ochre**（赭黄）| `#C68B41` | Meta_rule (17) |
+| 食用 / 资源 | **Amber**（琥珀）| `#B8763E` | Production (3) |
+
+视觉气质 = 旧档案纸 + 印刷褪色 tone（**绝不**鲜亮原色 / 现代 RGB）。
+
+**b · 6 自创基本几何元素**：
+
+```
+/    斜线 (motion)
+−    横线 (boundary)
+○    圆环 (containment)
+•    实点 (target)
+⊥    垂线 (anchor)
+⌒    弧线 (rhythm)
+```
+
+**叠加规则**：每个 glyph = 1-3 个基本元素叠加。
+
+```
+单元素：  ○      /      •
+二元素：  ⊘      ⊙      ⌒/
+三元素：  ⊗      ⊕      ⌒•⊥
+```
+
+**与 Yerkish 9 元素区别**：数量（6 vs 9）、形态（不同元素）、组合规则（叠加 vs Yerkish 的 superimposition with 9 elements）—— 视觉上必须看得出**不是** Yerkish copy。
+
+**c · 59 affix GLOSS 词集（CAPS 自创，避开 Nim/Washoe specific signs）**：
+
+| Clade | 类目色 | 59 总 GLOSSes |
+|---|---|---|
+| Numeric (4) | Bone | `MORE` `AGAIN` `FAST` `LITTLE` |
+| Crit (5) | Slate | `BITE` `STRIKE` `CRACK` `EDGE` `SNAP` |
+| Stack (7) | Mauve | `GROUP` `LINE` `GATHER` `GUARD` `CRY` `BOW` `JOIN` |
+| Topology (8) | Olive | `STICK` `STONE` `PROBE` `GRIP` `TURN` `WEAVE` `FOLD` `LINK` |
+| Word_sense (15) | Sienna | `SWING` `CLING` `PIVOT` `CROUCH` `SNIFF` `CHEW` `HIDE` `WATCH` `TOUCH` `PULL` `SHAKE` `PAT` `DROP` `WRAP` `HOLD` |
+| Meta_rule (17) | Ochre | `CALL` `LOUD` `BRACH` `SONG` `REPLY` `HUSH` `MARK` `MATCH` `TRAIL` `ECHO` `CHORUS` `NEXT` `YIELD` `SWAP` `PAUSE` `STILL` `RING` |
+| Production (3) | Amber | `GNAW` `SAP` `NEST` |
+
+**与 Nim/Washoe 区别**：避开 `BANANA / TICKLE / HUG / GROOM / NIM` 等 Nim/Washoe signature 词（这些是 specific research 项目用过的 documented signs）；使用更抽象的 action verbs（`STRIKE / EDGE / SNAP / BRACH / MARK` 等）。
+
+###### 复合技能 = 复合 GLOSS（hyphen 串联）
+
+借鉴 ape language research 中的复合 sign 现象（如 Washoe 1972 用复合手势指代未知物体），但用我们自己的 GLOSS 词集：
+
+```
+单 affix:     [BITE]
+2-affix 复合: [BITE-MORE]
+3-affix 复合: [BITE-MORE-FAST]
+4-affix:     [STICK-PROBE-WEAVE-LINK]
+```
+
+复合 skill 的 player-facing display = 主 affix glyph + GLOSS 复合：
+```
+主 glyph (主 affix 色) + [GLOSS-A-B-C]
+```
+
+###### Codex layered footnote · 内部 metadata 渐次显化
+
+玩家从 L1 → L4 = 自身污染等级跨越，每往深一层挖到更多 admin metadata：
+
+```
+L1（录入员可见）：
+  本贴纸登记为本工位经手词条标记。
+
+L2（校对者可见）：
+  注：[Slate] 类目贴纸计入"动作类"records。
+
+L3（修改者可见）：
+  备忘：Subject [前任工号] 经手任务时反映"[Slate] 类目触发感
+  与 [Bone] 类目边界模糊"。应答后转入特殊勤务。
+
+L4（作者可见）：
+  原始登记：MOKO 协议 1986-XX-XX 修订版。
+  GLOSS [BITE] 借鉴 1970s 灵长类语言研究协议（具体研究项目档案
+  已封存）。生物学行为锚点：威吓性张口动作。
+  对照样本 species reference: 非人类输入模型组 §M-XXX。
+  Subject [玩家工号] 经手注：[runtime 替换 PL-5 NarrativeArchive]
+```
+
+**Internal admin metadata（§编号 + NCBI 待定）**：是否在 L4 出现真实 NCBI Taxonomy ID + 守则 § 编号是 **production decision** —— 当前**默认 fictional化** ("非人类输入模型组 §M-XXX" 替代具体 NCBI ID)；保留权利在 lore 深度需要时启用 specific public-domain references（NCBI IDs / Linnean species names）。
+
+###### 玩家体验路径
+
+| 阶段 | 玩家所见 | horror gradient |
+|---|---|---|
+| Stage 1 · Battle | 工位键盘上贴着色彩 + glyph + GLOSS 的小贴纸；逐渐学会"按这个键 → 这个效果" | 表面 power fantasy |
+| Stage 2 · Codex L1-L2 | 本工位经手登记 / 类目说明 | 开始觉得"这词有点像研究词" |
+| Stage 3 · Codex L3 | 前任 Subject 经手记录 / 类目边界模糊 | 意识到自己被记账 |
+| Stage 4 · Ch.4 L4 reveal | MOKO 协议来源 / 灵长类研究协议 / 对照样本分类 | **意识到自己是研究对象** |
+
+###### 设计纪律（铁律）
+
+- ❌ Battle scene 显示 §编号 / NCBI / 物种代号 / 协议元数据
+- ❌ 贴纸 flavor 写成 power fantasy（"威力强化"/"伤害提升"）
+- ❌ 复用 Yerkish 7 色 1:1 配色 / Glasersfeld 9 元素 1:1 几何
+- ❌ 直接复述 Project Nim / Washoe specific catalog data（"Nim signed BITE 84 times" 等 specific facts）
+- ✅ 贴纸 UI 仅 3 元素（glyph + color + GLOSS）
+- ✅ Internal metadata 仅 codex L3-L4 渐次显化
+- ✅ GLOSS 用自创 verb 池（避开 Nim/Washoe specific signs）
+- ✅ L4 lore reference 用 fictional化（"1970s 灵长类语言研究协议（档案已封存）"）
+
 ---
 
 ### 2.7 触发的设计约束（必须做的）
@@ -2055,21 +2189,21 @@ DPCA Genesis lore **不应在任何地方 explicit 显化**——它是 B8 的 u
 
 ### 5.4.1 MOKO 的源头
 
-**MOKO ≠ DPCA 设计**。MOKO 是 inherit 自 Project Nim 的 ASL 训练协议：
+**MOKO ≠ DPCA 设计**。MOKO 是 inherit 自 1970s 灵长类语言研究协议（含 Project Nim 等同期项目）：
 
 ```
-1970s Project Nim ASL 训练
+1970s 灵长类 ASL 训练协议
         ↓
-    Nim 习得 128 ASL 手势（real history）
+    研究主体习得若干 ASL 手势（real history · 具体项目档案已封存）
         ↓
 1980s anomaly 借 ASL channel emerge
         ↓
-    研究员发现 Nim ASL 模式中的 emergent text 部分"成立"
+    研究员发现 ASL 训练模式中的 emergent text 部分"成立"
         ↓
 1990s 协议改造
         ↓
     把"灵长类受训手势协议"改造为"灵长类受训打字协议"
-    （因为 Nim 不能 type，但人类可以；保留协议结构）
+    （因为研究主体不能 type，但人类可以；保留协议结构）
         ↓
 现代 MOKO
 ```
