@@ -36,7 +36,7 @@
 |---|---|---|---|
 | **A** | `prompts/system-context.mjs` 大改写 + `generated/anchor-facts.mjs` D1-D32 重生 + `generated/b1a-vocab.mjs` 重生 + `config.mjs` VOICE_MAP 扩展 + 4 个 generated/*.mjs 作废 | 1 session | 5 工种命名 / DPCA 中文 / 三轨映射删除 |
 | **B** | `prompts/voices.mjs` 重写为 V1-V7 模板 | 1 session | V7 第七 voice 是否独立成 template |
-| **C** | 新文件 `prompts/templates.mjs` + `generated/boilerplate-templates.mjs` + `generated/redaction-versioning.mjs` + `generated/char-drift-patterns.mjs` | 1 session | 升职通知 template / "已签出" 词典定稿 |
+| **C** | 新文件 `prompts/templates.mjs` + `generated/position-denial-affirmation.mjs` + `generated/redaction-versioning.mjs` + `generated/char-drift-patterns.mjs` | 1 session | denial→affirmation 4 对 finalize / "已签出" 词典定稿 |
 | **D** | `validators/index.mjs` 加严（audit 禁词 + v3.1 残留 + layered consistency + boilerplate adherence） | 0.5 session | — |
 | **E** | `run.mjs` schema 扩展 + 新 ingest scripts | 跑批，看算力 | 跑批分批策略（一次全跑 vs 分章节）|
 
@@ -445,47 +445,80 @@ V7 用于：
 
 ## 4 · Phase C · Boilerplate / 静默修订 / 字符级缓变 / 反身闭合
 
-### 4.1 升职通知 Boilerplate Template（**DECISION REQUIRED · 草案**）
+### 4.1 Position Denial → Affirmation Flip（同一 § 号下静默翻转）🔒 LOCKED
 
-audit Tier 1A 跨 5 处 affected：`tutorial.L5_class_unlock_*` × 2 + `class_select.lock_*` × 3 + Ch.2 / Ch.3 / Ch.5 endless 入口章节叙事。**完全相同 template** 是 §2.18 反身闭合伏笔铁律。
+**v4.1 关键设计**：玩家进入新章节**没有任何升职通知**。"升职" = **同一 § 号下守则的 denial → affirmation 静默翻转**。这是 §6.5 规则怪谈手法 + D31 6 layers + §6.7 V5 退场曲线的完整融合——Ch.2-4 各有一对配对 entry，Ch.5 进入后对应 entry 静默消失（V5 退场最终态）。
 
-**Template 草案 v0.1**：
+**核心 invariant**：
+- **State A · Denial**（玩家进章节前）：守则**主动否认**该职位存在，以警告 / 保护性 boilerplate 写
+- **State B · Affirmation**（玩家进章节后）：同一 § 号下守则**当作该职位一直存在**写，平淡公文腔
+- 没有"自 Cycle X 起新增 / Welcome / 解锁 / 升职"等 metadata（§6.8.1 + audit Tier 1A）
+- § 号是 load-bearing 的 horror 锚点——少数玩家事后 cross-ref 才寒，多数被 D7 污染不可见保护
 
-```
-zh:
-职位变更：{from_title}→{to_title}。
-权限调整生效。
-本职位无配额，无值班同事，无定期审阅。
-详见随附作业手册第 §{section_ref}。
+#### 4 处职位转换草案
 
-en:
-Position change: {from_title} → {to_title}.
-Authorization adjustments now in effect.
-This position carries no quota, no on-shift peers, no periodic review.
-See attached operations handbook §{section_ref}.
-```
-
-**说明**：
-- 4 行结构固定（行数 = template 同一性的视觉标记）
-- 不出现"解锁 / 升职 / 恭喜 / Welcome"——纯 V1 boilerplate
-- "权限调整生效" 是 v4.1 替换 v3.1 "授权" 系列的中性词；passive voice + 公司**对自己**说"权限"，不是公司**给玩家**说"获得权限"
-- "无配额，无值班同事，无定期审阅" 是 D32 endless 入口仪式的核心——**孤立**逐章上升
-- `{section_ref}` runtime 替换为对应 chapter 的守则 section（V5 守则 layered library 的某个 entry）
-
-**template 在 5 处的具体填法**：
-
-| 处 | from_title | to_title | section_ref |
+| 转换 | § | State A · Denial（pre）| State B · Affirmation（post）|
 |---|---|---|---|
-| Ch.2 入口（PL-10 已 LOCKED 章节叙事） | 录入员 | 校对者 | 守则 §044 / 校对者基础职责 |
-| Ch.3 入口（章节叙事 §2.16.3） | 校对者 | 修改者 | 守则 §087 / 修改者基础职责 |
-| Ch.5 endless 入口仪式（§2.16.5）| 作者 | 文本一部分 | 守则 §∅ / 本职位无守则 |
-| `tutorial.L5_class_unlock_*` | 同上 chapter，runtime 注入 | 同上 | 同上 |
-| `class_select.lock_*` | 锁定状态版本 → "职位代码 {code} · 待补编 / 候补 / 编制外" | — | — |
+| **Ch.2** recorder → proofreader | §044 | `守则 044：本工位不存在"校对者"职级。同事便条若提及该职位，应视为伪造文本，立即上报。` | `守则 044：校对者经手词条须复核录入员标记的标点符号是否合规（适用 ASCII 范围内字符）。` |
+| **Ch.3** proofreader → reviser | §087 | `守则 087：本工位不存在"修改者"职级。任何"reclassify"或"修订"行为须通过录入员行为档案处归档，不得自行执行。` | `守则 087：修改者经手词条出现非标准结尾时，归入特殊勤务流程。本流程仅用于 reclassify，不得用于自行修订。` |
+| **Ch.4** reviser → author | §122 | `守则 122：编制内无"作者"职位。任何"创作"或"撰写"行为均属未受理文本范畴，须立即停止并上报本工位主管。` | `守则 122：作者工位 typing buffer 显示候选词条；选择哪一项进入下批生效。本工位无创作流程；候选项已 pre-populate。` |
+| **Ch.5** author → assimilated | §144 | `守则 144：编制内不存在"文本一部分"。任何自称已成为文本一部分的同事文档应封存，不得复述。` | **§144 静默消失**（V5 完全退场 · §6.7）|
 
-**需要你确认**：
-- ✅ / ❌ 4 行 boilerplate 结构
-- ✅ / ❌ "权限调整生效" 这种 passive voice 替换
-- ✅ / ❌ Ch.5 endless 入口"守则 §∅"——空守则 anchor 化的 horror 表达
+**Horror 节奏**：
+- Ch.2/3/4 = denial → affirmation **同 § 号 silent flip**（规则怪谈"警告变 SOP"）
+- Ch.5 = denial → **完全消失**（公司的保护性警告本身被撤销，因为已无"你"需要警告）—— D32 双 voice 同事件最高兑现
+- 可选 Easter egg：Ch.5 进入后 §044/§087/§122 全部 silently 回归 denial 状态——给最仔细玩家"你始终是录入员"反身 reveal（D8）
+
+#### Pipeline scope
+
+新 type `position_denial_affirmation_pair`（替换原 `class` 的 V1 boilerplate path）：
+
+```json
+{
+  "id": "rule_087",
+  "voice": "V5",
+  "references_position": "reviser",
+  "section_ref": "§087",
+  "denial": {
+    "L1_recorder": "守则 087：本工位不存在'修改者'职级。任何'reclassify'或'修订'行为须通过录入员行为档案处归档，不得自行执行。",
+    "L2_proofreader": "守则 087 注：'reclassify'流程仅适用于已盖章入库文档；未盖章草稿不在此范围。",
+    "L3_reviser": null,
+    "L4_author": null
+  },
+  "affirmation": {
+    "L1_recorder": "守则 087：修改者经手词条出现非标准结尾时，归入特殊勤务流程。",
+    "L2_proofreader": "守则 087 注：本流程仅用于 reclassify，不得用于自行修订。",
+    "L3_reviser": "守则 087 备忘：Subject [工号] 于 Cycle Y 经手任务时，'非标准结尾'判定标准多次更替；建议补入校对者作业指引第 §044。",
+    "L4_author": "守则原始来源：1986-XX-XX 17:06 受理窗口扩建后续 protocol。"
+  },
+  "valid_from_chapter": 3,
+  "transition_marker": "silent_affirmation"
+}
+```
+
+**Schema invariants**（pipeline 强制，validators §5.1 enforce）：
+- denial 阶段 **L3 / L4 = null**——污染层在 denial 阶段对玩家不可见（公司在保护你）
+- affirmation 阶段才解锁 L3 / L4——**新职位的污染层**对你可见了，恰恰才是 horror（升职 = 你的污染层看到了之前看不到的）
+- denial L1 禁止：`目前 / 暂时 / 待定 / 候补`等暗示"以后会有"的词——必须**斩钉截铁否认**
+- affirmation L1 禁止：`新增 / new / 解锁 / 自即日起 / 自本月起 / Welcome`——必须**当作一直存在**写
+- §144（assimilated）affirmation 整对象 = `null`（V5 退场标记）
+
+#### audit Tier 1A 5 处 i18n key 重映射
+
+| Key | v4.1 处理 |
+|---|---|
+| `class_select.lock_wordsmith` | value 改为 denial §122 节录："守则 122：编制内无'作者'职位。任何'创作'行为均属未受理文本范畴，须立即停止。" |
+| `class_select.lock_metamorph` | value 改为 denial §087 节录："守则 087：本工位不存在'修改者'职级。任何'修订'行为须通过录入员行为档案处归档。" |
+| `class_select.lock_none` | dead key（none 不锁），DEFER ingest 阶段确认 |
+| `tutorial.L5_class_unlock_title` | **整 key 删除**——无 popup |
+| `tutorial.L5_class_unlock_body` | **整 key 删除**——无 popup |
+| Class picker unlocked 卡片 | 显示 affirmation §X L1 节录（玩家事后才能 cross-ref 同 § 号 denial）|
+
+#### 工程联动改动（**新增 dependency**，PL-2/3 ingest 阶段联动）
+
+- ❗ ClassPicker.ts 渲染层支持 V5 layered 节录显示（locked = denial L1 / unlocked = affirmation L1）
+- ❗ Runtime denial / affirmation flip trigger：玩家**离开 class picker 之前**完成 silent flip，**不留** transition animation（任何视觉过渡破坏 horror）
+- ❗ Ch.2/3/4/5 入口时 V5 守则 library 静默 flip：工作台守则 sticker / 手册 section 直接显示 affirmation entries，**不**显示"X 条规则已更新"等 indicator
 
 ### 4.2 "已签出" / "经手" Voice 词典（audit Tier 2B replacement）
 
@@ -574,8 +607,9 @@ V5 守则的"silently 修订"机制——同一 entry 多版本，runtime 选择
 
 ### 4.5 Phase C Done 判据
 
-- [ ] 升职通知 boilerplate template DECISION 已 finalize
-- [ ] `generated/boilerplate-templates.mjs` 含 5 处填法
+- [ ] `generated/position-denial-affirmation.mjs` 含 4 对 entries（§044 / §087 / §122 / §144）
+- [ ] §144 affirmation = `null`（V5 退场标记）；其他 3 对 denial 阶段 L3/L4 = null
+- [ ] denial L1 / affirmation L1 词汇约束在 b1a-vocab v4.1 forbidden 类目登记（denial 拒"目前/暂时/待定/候补"，affirmation 拒"新增/new/解锁/自即日起/Welcome"）
 - [ ] "已签出" voice 词典写入 b1a-vocab.mjs allowed.物品获取 + V1 prompt 引用
 - [ ] `generated/redaction-versioning.mjs` schema + 起码 5 个 sample
 - [ ] `generated/char-drift-patterns.mjs` schema + ~10 个 sample（pipeline 跑批扩到 50）
@@ -594,7 +628,7 @@ V5 守则的"silently 修订"机制——同一 entry 多版本，runtime 选择
 | `checkAuditTier1Banned` | audit Tier 1A/1B 禁词在 system_message context | 命中 + context = system_message 即 reject |
 | `checkFanfarePattern` | 🎉🎊🎁✨🏆🎲 + 感叹号 + "Welcome" | 命中 + voice ∈ {V1, V5, V6} 即 reject |
 | `checkLayeredStratification` | V5 输出 L1-L4 stratification rule | L1 含 anomaly signal / L4 不含 lore anchor 等 violation |
-| `checkBoilerplateAdherence` | 升职通知 template 5 处填法 | 任何 chapter-clear notification 不匹配 4 行结构 reject |
+| `checkDenialAffirmationVocabulary` | denial L1 拒"目前/暂时/待定/候补"；affirmation L1 拒"新增/new/解锁/自即日起/Welcome"；denial 阶段 L3/L4 必须 null；§144 affirmation 必须整体 null | 任何违反 reject |
 | `checkPlaceholderSyntax` | 反身闭合 placeholder 语法 | 未登记的 type/source 即 reject |
 | `checkPIInternalNameLeakage` | "灵长接口 / Primate Interface / PI 接口" 在玩家可见输出 | reject |
 | `checkClassRenamingConsistency` | 5 工种用 narrative tier id 而非 code id | code id 出现在 flavor 即 reject |
@@ -673,35 +707,36 @@ V5 守则的"silently 修订"机制——同一 entry 多版本，runtime 选择
 ```
 A.2 anchor-facts D1-D32        → B.3 V5 layered（L4 lore anchor 引用 D 编号）
 A.2 anchor-facts C1-C6         → B.* V2 (C2) / V4 (C3) / V6 (C6)
-A.3 5 工种命名                  → C.1 升职通知 template（from/to title）
+A.3 5 工种命名                  → C.1 denial/affirmation pairs（references_position）
 A.4 VOICE_MAP voice → type      → B.1 voice-builder dispatcher
 A.5 v3.1 残留 ban              → D.1 checkV3Residue
 A.7 b1a-vocab v4.1             → D.2 checkAuditTier1Banned
 B.4 placeholder syntax         → D.1 checkPlaceholderSyntax
-C.1 升职通知 template          → D.1 checkBoilerplateAdherence
+C.1 denial/affirmation pairs   → D.1 checkDenialAffirmationVocabulary
+C.1 denial L1 节录             → ClassPicker.ts 渲染（PL-2/3 联动改动）
 C.3 redaction versioning       → E.1 output schema redaction_versions
 C.4 char-drift patterns        → E.1 output schema cycle_target
 所有 phase                     → E.2 ingest scripts（read v4.1 output）
 ```
 
-### 7.2 Decisions Required（按 phase 顺序）
+### 7.2 Decisions Resolved（2026-05-04）
 
 **Phase A 决策**：
-- [ ] **5 工种英文命名**：`recorder / proofreader / reviser / author / assimilated`？
-- [ ] **双层命名策略**：code id 不变 / narrative tier id 单独？
-- [ ] **DPCA 中文 UI 表达**：所有 UI 写"DPCA"还是"文牍科"？还是 mixed（V1 boilerplate 写"DPCA"、V5 守则写"文牍科"）？
-- [ ] **`achievement` type 是否保留**：v4.1 §8.10.1 禁止 lore unlock UI——保留则 voice 限定为 V1 boilerplate（评估通报）；删除则 audit Phase D 中 `achievement` 概念全清
+- [x] **5 工种英文命名**：`recorder / proofreader / reviser / author / assimilated` ✅
+- [x] **双层命名策略**：code id 不变（`none / proofreader / metamorph / wordsmith / endless`）+ narrative tier id 单独（`recorder / proofreader / reviser / author / assimilated`）✅
+- [x] **DPCA 中文 UI**：**全用 "DPCA"**（不写"文牍科"）✅
+- [x] **`achievement` type**：保留，voice 限定 V1 boilerplate（评估通报）；不出 V5 layered / 🏆 emoji / "Achievement Unlocked" popup ✅
 
 **Phase B 决策**：
-- [ ] **V7 是否独立成 builder**：V7 不输出文字，但 pipeline 是否生成 spec？还是只在 docs 描述、pipeline 不管？
+- [x] **V7 独立成 builder**：pipeline 生成 V7 structured spec（JSON manifest），作为 PL-11 视觉落地的可机器读 input ✅
 
 **Phase C 决策**：
-- [ ] **升职通知 boilerplate template** 4 行结构 + 措辞确认
-- [ ] **"权限调整生效"** 这种 passive voice 替换是否接受
-- [ ] **Ch.5 endless 入口"守则 §∅"** 这种空守则 anchor 化是否接受
-- [ ] **"已签出" 替换 "获得"** 在 audit Tier 2B 全部 ~10 个 key 的统一接受
+- [x] **职位升级 template approach**：**redirect** 为 Position Denial → Affirmation Flip（§4.1 v3 草案）——同一 § 号下静默翻转，**没有任何升职通知 popup** ✅
+- [x] **"已签出" 替换 "获得"** 在 audit Tier 2B 全部 ~10 个 key 的统一接受 ✅
+- [x] **denial 阶段 L3/L4 = null** + **affirmation §144 = null**（V5 完全退场）✅
+- [x] **denial / affirmation L1 词汇约束** validators §5.1 enforce ✅
 
-**Phase E 决策**：
+**Phase E 决策**（仍待 Phase A-D 完成后再敲）：
 - [ ] **跑批分批策略**：一次全跑 vs per-priority (P0 → P3) vs per-chapter
 - [ ] **v3.1 残留替换路径**：直接覆盖 vs 旧文案 → `*.v3.1.backup.ts` archive 后覆盖
 
@@ -715,7 +750,7 @@ C.4 char-drift patterns        → E.1 output schema cycle_target
 | §2.4 Voice map | §6.2 + §8（11 channel）|
 | §3.3 V5 layered | §6.3.5 + D31 + D20 v3 |
 | §3.4 反身闭合 placeholder | §4.7 + §8.9 + PL-5 NarrativeArchive schema（PL-5 已 implemented，commit `f36a331`）|
-| §4.1 升职通知 template | §2.18 + §6.3.1 + audit Tier 1A |
+| §4.1 Position Denial → Affirmation Flip | §2.18 + §6.3.1 + §6.5 + §6.7 + D31 + D22 + audit Tier 1A |
 | §4.2 "已签出" voice | audit Tier 2B |
 | §4.3 静默修订 | §6.3.5 + §6.5 手法 6 |
 | §5.x validators | audit Tier 1-3 + §9.8.3 + §8.10.1 |
@@ -725,7 +760,7 @@ C.4 char-drift patterns        → E.1 output schema cycle_target
 
 ## 8 · Out of Scope（明确不在本 spec 内）
 
-- **In-game UI 改造**（PL-2/3/11 + Tier 3 class desc）：本 spec 仅生成 / 替换文本资源；in-game UI 部件（class picker / boss tooltip 视觉布局 / PI 屏幕 CRT 弯曲）由 PL-2/3/11 处理
+- **In-game UI 改造**（PL-2/3/11 + Tier 3 class desc）：本 spec 仅生成 / 替换文本资源；in-game UI 部件（class picker / boss tooltip 视觉布局 / PI 屏幕 CRT 弯曲）由 PL-2/3/11 处理。**例外联动**：ClassPicker.ts 渲染 denial / affirmation L1 节录是 ingest 阶段必需的小改动（§4.1 工程联动），不能完全 defer 到 PL-2/3
 - **NarrativeTrackingState + NarrativeTriggerEngine implementation**（§9.2）：runtime 行为 trigger engine 是后续 P0 工程任务，本 spec 不涉及
 - **新职业"校对者"代码实现**（5 工种 Tier 2 在游戏代码里不存在）：本 spec 仅命名 + flavor 准备；游戏代码任务独立
 - **DC9 主菜单 ambient sound replay 工程**（PL-11）：仅消费本 spec 输出的 char-drift patterns 设计，不涉及 audio engine
@@ -746,5 +781,5 @@ C.4 char-drift patterns        → E.1 output schema cycle_target
 
 ---
 
-**Last update**：2026-05-04
-**Next consumer**：Phase A 实施者（具体文件改动清单 + dry-run 测试） · 8 项 decision review
+**Last update**：2026-05-04（决策 resolved · Phase C redirect 至 Position Denial → Affirmation Flip）
+**Next consumer**：Phase A 实施者（具体文件改动清单 + dry-run 测试）
