@@ -66,7 +66,7 @@ rule_horror_imports:  # 风格层导入（不绑 setting）
 | 5 | World & Lore | ✅ 完成（空间 3 层 + 时间 4 层 / DPCA Genesis 神话 / 第七打字室 唯一 active / PI 源 = Nim ASL 协议 / X 集团 macro banal evil / Nim deep lore real+fiction / D27-29 lore origin / 真假难辨纪律） |
 | 6 | Dialogue Framework | ✅ 完成（anti-dialogue / 6 类 voice (V1-V6) / 每类 craft 规则 + sample library / 规则怪谈 5+1 手法 dialogue 层应用 / 玩家无 reply 无 inner monologue / voice 退场曲线） |
 | 7 | Environmental Storytelling | ✅ 完成（V7 第七 voice / 4 channel (空间-时间-动效-prop) / 工位 5 章 progression / 向心矢量动效铁律 / 字符级缓变 systematize / 美学 D13 物理化 / sound 退场曲线 / 反身闭合 in environment） |
-| 8 | Narrative Delivery | — |
+| 8 | Narrative Delivery | ✅ 完成（11 channel inventory / 6 modes / macro-mid-micro schedule / B 真理 × channel 矩阵 / pipeline v4.1 sync 蓝图 / 跨 run 反身闭合 delivery） |
 | 9 | Integration with Gameplay | — |
 | 10 | Production Notes | — |
 | 11 | Complete (Appendices + Handoff) | — |
@@ -2919,4 +2919,320 @@ _(rolling — Step 7 在下方继续)_
 
 ---
 
-_暂停于 2026-05-04（Step 7 完成）。Step 1-7 已闭合。Foundation + Beats / Pacing + Characters + World & Lore + Dialogue Framework + Environmental Storytelling 六大主体全 LOCK。_
+_(rolling — Step 8 在下方继续)_
+
+---
+
+# Step 8（2026-05-04）— Narrative Delivery
+
+**进度更新**：✅ Delivery framework 哲学 / ✅ 11 类 delivery channel inventory / ✅ 6 类 delivery mode / ✅ 三层 delivery schedule (macro/mid/micro) / ✅ Delivery × Voice × Environment 矩阵 / ✅ Production-ready pipeline / ✅ 跨 run / 跨玩家 反身闭合 delivery / ✅ 设计纪律
+
+**Step 8 范畴**：v4.1 narrative 中 **delivery ≠ content**。Step 2-7 已锁定 narrative **是什么**；本节 systematize narrative **如何 / 何时 / 通过哪个 channel** 投递给玩家。这是 v4.1 production-ready 缺口的补足——尤其是与 `scripts/narrative-writer/` pipeline 的 sync。
+
+---
+
+## 8.1 Delivery Framework 哲学 🔒 LOCKED
+
+### 8.1.1 Delivery 不是 narrative content
+
+| 内容层 | 已 LOCK 在 |
+|---|---|
+| 是什么（content）| Steps 2-7 |
+| 何时（timing）| Step 3 行为驱动 trigger map |
+| 谁说（voice）| Step 6 V1-V6 |
+| 在哪（environment）| Step 7 V7 + E1-E4 |
+| **如何投递（delivery）** | **Step 8 本节** |
+
+### 8.1.2 v4.1 delivery 三大铁律
+
+> 1. **零 popup** — 没有"narrative 已发现"提示
+> 2. **全 indirect / ambient** — narrative 通过 documentary trace + environment 显化
+> 3. **玩家事后才意识到** — delivery success metric 不是玩家**当下**理解，是玩家**事后**回想时寒
+
+### 8.1.3 Delivery 与 anti-paradigm 四件套关系
+
+Step 7 已建立的 **anti-paradigm 四件套**：anti-character / anti-pacing / anti-dialogue / anti-environment-as-decoration。**Delivery 是这四件套的 implementation 接口**——每条 delivery 必须同时满足四件套约束。
+
+---
+
+## 8.2 Delivery Channel Inventory · 11 类 🔒 LOCKED
+
+| # | Channel | 主要 voice / environment | 形态 |
+|---|---|---|---|
+| **DC1** | 工作台 boilerplate notifications | V1 公司 voice | 屏幕 banner / 文档窗口 / 工号通知 |
+| **DC2** | 工作台便条 | V2 同事 voice | 物理桌面纸条 / hover 可见 |
+| **DC3** | Typing buffer 内 dictation | V3 anomaly voice | typing buffer pre-populate / 字符 drift |
+| **DC4** | D29 状态确认 prompt | V4 检测员 voice | 屏幕中央命令 prompt（cycle 末尾）|
+| **DC5** | 规则手册 / 守则文档 | V5 守则 voice | 工作台 hover 文档 / layered footnote |
+| **DC6** | Boss tooltip | V6 反身闭合 | 战斗前 boss UI tooltip |
+| **DC7** | 遗物 hover footnote | V5 layered + Step 4 character lore | 遗物界面 hover detail |
+| **DC8** | 工位 environment ambient | V7 + E1-E4 | 工位视觉 / 动效 / sound |
+| **DC9** | 主菜单 / settings | V7 字符级缓变 leak（Ch.5）| 主菜单 hover 时变化 |
+| **DC10** | Cycle 末尾"今日总结"屏幕 | V3 字符级缓变 + B1 媒介 | run 结束后的 summary screen |
+| **DC11** | 升职通知 / 章节过渡仪式 | V1 + D32 双 voice (Ch.5) | 章节边界的 boilerplate 通知 |
+
+---
+
+## 8.3 Delivery Modes · 6 类 🔒 LOCKED
+
+Mode = content 如何 surface 给玩家：
+
+| # | Mode | 形式 | 主要 channel |
+|---|---|---|---|
+| **DM1** | Static text | 预定义 boilerplate / 守则 / 便条 | DC1 / DC2 / DC4 / DC5 |
+| **DM2** | Dynamic generated | 基于玩家 typing history 生成 | DC6（boss tooltip）/ DC11（Ch.5 入口）|
+| **DM3** | Procedural fragment | anomaly dictation 的 typing buffer 内容 | DC3 / DC10 |
+| **DM4** | Layered footnote | 同一份遗物 L1-L4 不同 reading | DC5 / DC7 |
+| **DM5** | Ambient sound / visual | 不显化为 text 的 cue（向心矢量 / 字符级缓变 / 计时钟异常）| DC8 / DC9 |
+| **DM6** | Cross-reference emergent | 玩家手动 cross-ref 触发的 reveal | DC7 + DC6 + DC1 综合 |
+
+### 8.3.1 Mode × Voice 兼容性
+
+| Voice | 兼容 Mode |
+|---|---|
+| V1 公司 | DM1（标准 boilerplate）/ DM2（Ch.5 入口动态）|
+| V2 同事 | DM1（预定义便条池） |
+| V3 anomaly | DM3（procedural）/ DM5（ambient visual）|
+| V4 D29 | DM1（预定义 5 项 prompt 池）|
+| V5 守则 | DM1（守则池）/ DM4（layered footnote）|
+| V6 boss tooltip | DM2（dynamic 生成）|
+| V7 environment | DM5（ambient）|
+
+---
+
+## 8.4 Delivery Schedule · Macro 🔒 LOCKED
+
+### 8.4.1 Channel × Chapter 显化
+
+| DC | Ch.1 | Ch.2 | Ch.3 | Ch.4 | Ch.5 |
+|---|---|---|---|---|---|
+| DC1 工作台 V1 | 主 | 主 | 中 | 极简 | 仅 boilerplate（处置）|
+| DC2 工作台便条 V2 | 远（陌生工号）| 主（针对你工号）| 中（消失中）| ❌ 退场 | ❌ 退场（除"致后来者"自留）|
+| DC3 typing buffer V3 | 极弱 | 弱（词包异常词模式化）| 中 | 强（pre-populate）| 玩家自己 = anomaly |
+| DC4 D29 prompt | 见证版 | routine 全 5 项 | 偶尔 partial | 频繁 partial fail | 自动 fail |
+| DC5 守则 layered | L1 主 | + L2 显 | + L3 显 | + L4 显（Project Nim B8 reveal）| 守则 ❌ 退场 |
+| DC6 boss tooltip V6 | 弱（反身闭合零）| 中（无玩家 attribution）| 出现（近似工号）| 显化（自己工号）| 主（自己 endless 工号）|
+| DC7 遗物 hover | L1 only | + L2 hover | + L3 hover + B3 cross-ref | + L4 hover + B8 reveal | + L5（玩家自己 footprint）|
+| DC8 工位 ambient | 标准 | 多了红章/红笔 | 渐次孤立 + M1 暗角 | 独立工位 + M1-M4 全启 | 物理含混 + UI leak |
+| DC9 主菜单 | 标准 | 标准 | 标准 | 标准 | 字符级缓变 leak |
+| DC10 cycle 末尾 | 极弱 B1 hook | 弱 | 中 | 强 | 玩家 typing rhythm 显化 |
+| DC11 升职通知 | n/a（玩家入职）| 第一次（Ch.1→Ch.2）| 第二次 | 第三次 | 第四次（D32 双 voice）|
+
+### 8.4.2 Macro 节奏观察
+
+| 节奏 | 描述 |
+|---|---|
+| **DC2 同事便条退场** | Ch.4 完全退场——独立工位无收件人 |
+| **DC5 守则退场** | Ch.5 完全退场——玩家不再被推送守则 |
+| **DC1 公司 voice 极简化** | Ch.4 极简、Ch.5 仅处置——公司从"主导"退到"仅记账" |
+| **DC3 + DC6 反向上升** | Ch.4-5 anomaly + 反身闭合主导——玩家被 voice 包围但**包围他的是他自己** |
+| **DC9 主菜单 leak** | Ch.5 唯一渐入——破除游戏 UI 边界，是反身闭合最暴力显化 |
+
+→ **Delivery 的退场 / 升起曲线与 voice 退场曲线（§6.7）+ environment 寂静化（§7.8.3）三轨同步**——这是 v4.1 narrative 的**寂静化总曲线**。
+
+---
+
+## 8.5 Delivery Schedule · Mid (Cycle Level) 🔒 LOCKED
+
+### 8.5.1 Cycle 内 channel 投递时机
+
+每 cycle 内 stage 1-12 + ritual + boss + post-run D29 的 delivery 节奏（与 §3.4 MICRO Beats 对齐）：
+
+| Stage | 班次段 | 主要 active channel | Delivery 内容 |
+|---|---|---|---|
+| pre-1 | 开班 | DC1（开班 boilerplate）+ DC8（工位 ambient set up）| "本日勤务: ..." 通知 |
+| 1-2 | 任务推进 | DC3（弱）+ DC8（ambient）| typing 任务；anomaly 极弱 |
+| 3-4 | 任务推进 | DC3（中）+ DC8 | 词包异常词频次 |
+| 5 | elite | DC6（boss tooltip）+ DC3（强）| 反身闭合 boss attribution |
+| 6 | ritual | DC7（遗物 hover）+ DC5（守则 cross-ref）| **B1 / B3 主触发点**——hover 文档反复 → multi-layer reveal |
+| 7-9 | 加班 | DC2（同事便条更新）+ DC1（boilerplate）| B2 / B6 媒介 |
+| 10-11 | 加班 | DC5（守则被静默修订）+ DC2 | B3 强 hook（手法 6 静默修订）|
+| 12 | 下班 boss | DC6（最终 boss tooltip）+ DC3 | 反身闭合 high spike |
+| post | 下班 D29 | DC4（状态确认）+ DC10（今日总结）| D29 + B1 字符级缓变 |
+| post-post | unlock 通知 | DC11（升职通知）| 仅 cycle 末尾 + chapter unlock 时 |
+
+### 8.5.2 ritual stage（stage 6）特别强调
+
+stage 6 是 **B1 + B3 的核心触发点**：
+- 玩家在 ritual 节点会主动 hover 文档
+- 反复 hover 同一份遗物 ≥ 3 次 → **B1 trigger**
+- cross-reference 工作台规则 vs 遗物 footnote → **B3 trigger**
+
+**这是 v4.1 narrative 把 reveal trigger 嵌入 gameplay 节奏的关键设计**——ritual stage 不只是机制 ritual，是 narrative reveal 的窗口。
+
+---
+
+## 8.6 Delivery Schedule · Micro (Run / Frame Level) 🔒 LOCKED
+
+### 8.6.1 单次 typing event 的 delivery
+
+玩家在 stage 内**每次 typing key**：
+
+| 玩家行为 | 后台 trigger 累积 | delivery 立即可显化 |
+|---|---|---|
+| typing 击键 | 节奏特征记录（B5 行为 trigger）| ❌ 不立即显化 |
+| 完成一个 word | 词包 / dictation pre-populate 检查 | DC3 typing buffer 状态更新 |
+| hover 文档 | hover 累积计数（B1 trigger）| DC7 多 hover 后显化 layered |
+| 标注 / 修改 | B2 / B5 trigger 累积 | ❌ 不立即显化 |
+| 卡顿 / 超过 0.5 秒 | 同事便条建议触发 evaluation | DC2 后台便条 schedule 更新 |
+
+### 8.6.2 Micro 时间感（受理窗口 D27）
+
+| 受理窗口 | 玩家可见 | 后台行为 |
+|---|---|---|
+| **17:06-17:13** | typing 节奏 / dictation 显化频次显著高 | 后台 reveal trigger 概率 ×1.5 |
+| **午休结束前 30 秒** | 同上 | 后台 reveal trigger 概率 ×1.3 |
+| **计时钟无秒针时** | E2 时间 cue | 后台 reveal trigger 概率 ×1.5 |
+
+> **关键**：受理窗口 boost 的是**触发概率**，不是触发**强度**。玩家无法通过卡时间"刷"reveal——窗口只是提高 chance。
+
+---
+
+## 8.7 Delivery × Voice × Environment 整合矩阵 🔒 LOCKED
+
+跨 dimension 的 v4.1 narrative delivery 全景图：
+
+| Dimension | content | voice | env | delivery channel |
+|---|---|---|---|---|
+| **B1 文本不 inert** | §2.17 | V1 + V3 | E2 + E3 | DC1 + DC7 + DC10 |
+| **B2 layer 取决于 reader** | §2.17 | V2 | E1 | DC2 + DC5 |
+| **B3 规则是事故化石** | §2.17 | V5 | (none) | DC5 + DC7 |
+| **B4 异常已在野外** | §2.17 | V1 | (none) | DC1（"外部文本回收科" notification）|
+| **B5 理解=推向作者位** | §2.17 | V2 + V3 | E2 | DC2 + DC3 |
+| **B6 公司只记账** | §2.17 | V1 | (none) | DC1 反复 + DC2 挽救 0 反馈 |
+| **B7 现实自洽** | §2.17 | V1 | E2 | DC1（时间戳错位）+ DC7（L3-L4 回头改写）|
+| **B8 DPCA 被历史 dictate** | §2.17 | V5 | (none) | DC7（Project Nim L4 cross-ref）|
+| **B9 猴子规则是处置** | §2.17 | V1 + V4 | E1 | DC1 + DC4 + DC11 |
+| **第 10 条 emergent** | §2.17 | V6 + V3 | E2 + E3 + E4 | DC6 + DC9 + DC10（+ 跨 run）|
+
+### 8.7.1 矩阵观察
+
+- **B6 / B8 reveal 完全无 environment 触发** —— 纯 textual reveal
+- **第 10 条 emergent** 跨**所有** dimension —— 这正是它"玩家自己 derive" 的特征
+- **B1 / B7 同时占 DC1 / DC7 / DC10** —— 多 channel 共显化才能 reveal
+- **每条 B 真理至少有 2 个 channel** —— 单 channel 触发不可靠（玩家可能错过）
+
+---
+
+## 8.8 Production Pipeline · narrative-writer Sync 🔒 LOCKED
+
+### 8.8.1 现状
+
+`scripts/narrative-writer/` pipeline 已 v3.1 sync，**需重新 sync v4.1**。
+
+### 8.8.2 v4.1 pipeline scope
+
+需 generate 的 content type：
+
+| Type | 数量 | 主要 voice | DC |
+|---|---|---|---|
+| V1 boilerplate templates | ~100 | V1 | DC1 / DC11 |
+| V2 同事便条池 | ~150 | V2 | DC2 |
+| V3 typing buffer fragments | ~100 | V3 | DC3 |
+| V4 D29 prompts | ~25（5 项 × 5 退化阶段）| V4 | DC4 |
+| V5 守则 layered library | ~150 守则 × 6 layers ≈ 900 entries | V5 | DC5 |
+| V6 boss tooltip 动态生成器 | runtime (基于玩家 history) | V6 | DC6 |
+| 遗物 layered footnote | ~94 遗物 × 4 layer ≈ 376 entries | V5 | DC7 |
+| 字符级缓变 patterns | ~50 patterns | V3 / V7 | DC9 / DC10 |
+
+### 8.8.3 Pipeline 改造方向
+
+- 从 v3.1 单 voice 模式 → v4.1 6 voice 模式
+- 增加 layered footnote generation（L1-L4 同一份文档不同 reading）
+- 增加反身闭合 placeholder（attribution 占位 → runtime 替换）
+- 增加静默修订 generator（同一守则的多个版本）
+- v4.1 词典（DAY/BATCH/CYCLE/A 等 cycle 演进）严格遵循
+
+### 8.8.4 替换 v3.1 残留
+
+`src/data/narrative/` 中：
+- 58/95 relic flavor = v2.3 残留 → 通过 v4.1 pipeline 整体覆盖
+- ~85% skills flavor = v2.3 残留 → 同上
+- 词包 narrative entries → 重新生成（D1 anomaly voice 载体）
+
+---
+
+## 8.9 反身闭合 Delivery 🔒 LOCKED
+
+### 8.9.1 跨 run 反身闭合
+
+| 触发 | delivery channel | 形态 |
+|---|---|---|
+| 玩家以前 run 写的 modifier | DC6 boss tooltip | "上一任作者: Subject [玩家以前 endless 工号]" |
+| 玩家以前 hover 过的措辞 | DC7 遗物 footnote | L4 中出现玩家以前 type 过的 fragment |
+| 玩家以前 typing rhythm | DC9 主菜单 ambient sound | session 真实时间戳重放 |
+| 玩家以前 endless cycle 末尾的 D29 fail | DC4（下次 endless 入口）| 直接 fail，不再 prompt |
+
+### 8.9.2 跨玩家反身闭合（**仅本地存档**）
+
+> **注意**：v4.1 反身闭合**默认仅本地存档**，不依赖 server / 玩家间网络通信。"下周目其他职业 run" = **同一玩家**的下一次进入新职业 run；不是其他玩家的 session。
+
+| 触发 | delivery channel | 形态 |
+|---|---|---|
+| 玩家 endless 写的 modifier | 下周目同玩家 run 的 DC6 | boss tooltip 含"上一任作者: 玩家以前的 endless 工号" |
+| 玩家在自由打字区写的"致后来者" | 下周目同玩家 Ch.1-2 DC2 | 工作台便条出现自己以前的字迹 |
+
+### 8.9.3 设计纪律
+
+- ❌ 任何"你以前的 run 影响了这次"提示
+- ❌ 任何"反身闭合已激活"UI
+- ❌ 任何明确的 cross-run mention
+- ✅ 玩家 cross-ref 才发现是核心
+- ✅ 反身闭合 delivery 必须 plausible 像普通游戏数据
+
+---
+
+## 8.10 设计纪律 🔒 LOCKED
+
+### 8.10.1 绝对禁止
+
+- ❌ 0 个 narrative popup
+- ❌ 0 个"你已发现 X"提示
+- ❌ 0 个"narrative codex" / "lore unlock"UI
+- ❌ 0 个 cutscene reveal
+- ❌ 0 个 quest log / objective tracker for narrative
+- ❌ 0 个"故事进度" indicator
+- ❌ 任何 channel 显化时**不允许**伴随 fanfare（音效 / 闪光 / popup）
+
+### 8.10.2 必须做到
+
+- ✅ 所有 delivery 通过 documentary trace / ambient cue 显化
+- ✅ delivery success metric = 玩家**事后**回想时寒
+- ✅ 每条 B 真理至少 2 个 channel 共显化（避免单点错过）
+- ✅ 受理窗口 boost reveal 概率而非强度
+- ✅ 反身闭合 delivery 必须 plausible 像普通游戏数据
+- ✅ pipeline v4.1 重新 sync 是 production blocker
+
+### 8.10.3 Delivery 与玩家**错过**
+
+> v4.1 设计接受玩家**错过 reveal**——这是 D5 + D7 的兑现。
+>
+> 但**多 channel 共显化**确保**关键 reveal**（B1-B9）的**累积概率**足够高，让大多数玩家**最终**会触发；同时**第 10 条 emergent reveal** 设计为玩家**可能永远错过**——这是 horror 的最高形态。
+
+---
+
+## 8.11 Step 8 完成度自检
+
+| 维度 | 状态 |
+|---|---|
+| Delivery framework 哲学 | ✅ §8.1 LOCKED |
+| 11 类 delivery channel | ✅ §8.2 LOCKED |
+| 6 类 delivery mode | ✅ §8.3 LOCKED |
+| Macro schedule (channel × chapter)| ✅ §8.4 LOCKED |
+| Mid schedule (cycle level)| ✅ §8.5 LOCKED |
+| Micro schedule (run / frame)| ✅ §8.6 LOCKED |
+| Delivery × Voice × Environment 矩阵 | ✅ §8.7 LOCKED |
+| Production pipeline v4.1 sync | ✅ §8.8 LOCKED-flagged（待 production execute）|
+| 跨 run / 跨玩家 反身闭合 delivery | ✅ §8.9 LOCKED |
+| 设计纪律 | ✅ §8.10 LOCKED |
+| narrative-writer pipeline v4.1 sync execution | ⏳ 待 production |
+| 词包 / 守则 / 遗物 v4.1 重新生成 | ⏳ 待 production |
+
+**Step 8 主体已 LOCK**——下次 continue 推荐入口：
+1. **Step 9** — Integration with Gameplay（行为 trigger 实现 / 反身闭合 implementation / 字符级缓变 visual implementation / 受理窗口 mechanic 接入）
+2. **PL-2/PL-3** — 蜕变者 / 造词师机制重做（叙事 + beat + character + lore + voice + environment + delivery 全 LOCK，机制层可接住）
+3. **narrative-writer pipeline v4.1 sync** — production execution（跨叙事 / 工程边界）
+
+---
+
+_暂停于 2026-05-04（Step 8 完成）。Step 1-8 已闭合。Foundation + Beats / Pacing + Characters + World & Lore + Dialogue Framework + Environmental Storytelling + Narrative Delivery 七大主体全 LOCK。剩 Step 9-11（Integration with Gameplay / Production Notes / Complete + Appendices）。_
