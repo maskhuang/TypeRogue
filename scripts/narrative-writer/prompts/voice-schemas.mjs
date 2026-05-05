@@ -12,22 +12,21 @@
 // 每个 layer entry 含 text_zh/text_en + anomaly_signal_density (0-1)。
 // denial 阶段 L3/L4 必须 null（污染层不可见，§4.1 invariant）。
 
+// Anthropic structured output 不支持 oneOf / minimum/maximum / enum+null 联用。
+// "null 化" 的字段一律靠 prompt 教 LLM "为 null 时填空 string / empty object"，
+// 然后 validators (Phase D) catch 违反。
 const layeredEntrySchema = {
   type: 'object',
   properties: {
-    text_zh: { type: 'string' },
-    text_en: { type: 'string' },
+    text_zh: { type: 'string', description: 'null 时填空字符串 ""' },
+    text_en: { type: 'string', description: 'null 时填空字符串 ""' },
     anomaly_signal_density: {
       type: 'number',
-      description: 'L1=0 / L2=0-0.2 / L3=0.2-0.5 / L4=0.5-0.8',
+      description: 'L1=0 / L2=0-0.2 / L3=0.2-0.5 / L4=0.5-0.8 · null 时填 -1',
     },
   },
-  required: ['text_zh', 'text_en'],
+  required: ['text_zh', 'text_en', 'anomaly_signal_density'],
   additionalProperties: false,
-}
-
-const layeredEntryNullable = {
-  oneOf: [layeredEntrySchema, { type: 'null' }],
 }
 
 // ============================================
@@ -119,13 +118,14 @@ export const VOICE_SCHEMAS_V41 = {
     properties: {
       section_ref: { type: 'string', description: 'e.g. "§044", "§087"' },
       references_position: {
-        type: ['string', 'null'],
-        enum: ['recorder', 'proofreader', 'reviser', 'author', 'assimilated', null],
+        type: 'string',
+        enum: ['recorder', 'proofreader', 'reviser', 'author', 'assimilated', 'none'],
+        description: '该规则引用的职位；plain 守则填 "none"',
       },
       L1_recorder: layeredEntrySchema,
-      L2_proofreader: layeredEntryNullable,
-      L3_reviser: layeredEntryNullable,
-      L4_author: layeredEntryNullable,
+      L2_proofreader: layeredEntrySchema,
+      L3_reviser: layeredEntrySchema,
+      L4_author: layeredEntrySchema,
       state: {
         type: 'string',
         enum: ['plain', 'denial', 'affirmation'],
@@ -146,34 +146,35 @@ export const VOICE_SCHEMAS_V41 = {
         enum: ['proofreader', 'reviser', 'author', 'assimilated'],
         description: '4 处转换之一；recorder 默认无配对',
       },
+      // denial 阶段：L3/L4 用 "_null_" 占位 string + density=-1 标记，validator/ingest 转回 null
       denial: {
         type: 'object',
         properties: {
           L1_recorder: layeredEntrySchema,
-          L2_proofreader: layeredEntryNullable,
-          L3_reviser: { type: 'null', description: 'denial 阶段 L3 必须 null（污染层不可见）' },
-          L4_author: { type: 'null', description: 'denial 阶段 L4 必须 null' },
+          L2_proofreader: layeredEntrySchema,
+          L3_reviser: layeredEntrySchema,
+          L4_author: layeredEntrySchema,
         },
-        required: ['L1_recorder', 'L3_reviser', 'L4_author'],
+        required: ['L1_recorder', 'L2_proofreader', 'L3_reviser', 'L4_author'],
         additionalProperties: false,
       },
+      // affirmation：assimilated (§144) 时所有 layer 填 "_null_" + density=-1（V5 退场标记）
       affirmation: {
-        oneOf: [
-          {
-            type: 'object',
-            properties: {
-              L1_recorder: layeredEntrySchema,
-              L2_proofreader: layeredEntrySchema,
-              L3_reviser: layeredEntrySchema,
-              L4_author: layeredEntrySchema,
-            },
-            required: ['L1_recorder', 'L2_proofreader', 'L3_reviser', 'L4_author'],
-            additionalProperties: false,
+        type: 'object',
+        properties: {
+          L1_recorder: layeredEntrySchema,
+          L2_proofreader: layeredEntrySchema,
+          L3_reviser: layeredEntrySchema,
+          L4_author: layeredEntrySchema,
+          is_null: {
+            type: 'boolean',
+            description: 'assimilated (§144) 填 true（V5 退场）；其他填 false',
           },
-          { type: 'null', description: '§144 (assimilated) affirmation = null · V5 完全退场' },
-        ],
+        },
+        required: ['L1_recorder', 'L2_proofreader', 'L3_reviser', 'L4_author', 'is_null'],
+        additionalProperties: false,
       },
-      valid_from_chapter: { type: 'integer', minimum: 2, maximum: 5 },
+      valid_from_chapter: { type: 'integer' },
       transition_marker: {
         type: 'string',
         enum: ['silent_affirmation', 'silent_disappearance'],
@@ -196,8 +197,8 @@ export const VOICE_SCHEMAS_V41 = {
       },
       chapter_target: {
         type: 'integer',
-        minimum: 3,
-        maximum: 5,
+        
+        
         description: '3 = 近似工号 / 4 = 自己工号 / 5 = 自己以前 endless 工号',
       },
     },
@@ -217,7 +218,7 @@ export const VOICE_SCHEMAS_V41 = {
       },
       chapter_scope: {
         type: 'array',
-        items: { type: 'integer', minimum: 1, maximum: 5 },
+        items: { type: 'integer' },
         description: '此 spec 适用的 chapter（可跨章）',
       },
       spec: {
@@ -231,13 +232,13 @@ export const VOICE_SCHEMAS_V41 = {
           time_window_active: { type: 'string', description: '受理窗口 active interval' },
           // motion (M1-M3 向心矢量)
           motion_vector: { type: 'string', enum: ['centripetal', 'pulsing', 'static', 'none'] },
-          motion_intensity: { type: 'number', minimum: 0, maximum: 1 },
+          motion_intensity: { type: 'number' },
           // sonic
           ambient_sounds: { type: 'array', items: { type: 'string' } },
-          sound_density_pct: { type: 'integer', minimum: 0, maximum: 100 },
+          sound_density_pct: { type: 'integer' },
           // 通用
           lighting: { type: 'string', description: 'e.g. "fluorescent_dim", "yellow_warm"' },
-          ambient_density_pct: { type: 'integer', minimum: 0, maximum: 100 },
+          ambient_density_pct: { type: 'integer' },
           design_intent: { type: 'string', description: '锚定 §7.x ref / B# 兑现' },
         },
         additionalProperties: true,

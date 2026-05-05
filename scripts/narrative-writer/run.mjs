@@ -50,6 +50,7 @@ function parseArgs() {
     model: 'claude-sonnet-4-6',
     batchSize: 5,
     dryRun: false,
+    apply: false,
   }
 
   for (let i = 0; i < args.length; i++) {
@@ -72,6 +73,8 @@ function parseArgs() {
         opts.batchSize = parseInt(args[++i], 10); break
       case '--dry-run':
         opts.dryRun = true; break
+      case '--apply':
+        opts.apply = true; break
       case '--help': case '-h':
         printHelp(); process.exit(0)
       default:
@@ -910,8 +913,14 @@ async function validateAndReview(client, fragments, voice, opts, { objects, type
 // 目前 dry-run 模式只 print prompt + schema；实际 LLM 调用 / batch / ingest 在 Phase E。
 
 async function mainV41(opts) {
+  // v4.1 安全默认：除非 --apply 显式声明，否则强制 dry-run（防止意外消耗 API）
+  if (!opts.apply && !opts.dryRun) {
+    console.log('  ℹ️  v4.1 path 默认 dry-run · 加 --apply 实际调 API')
+    opts.dryRun = true
+  }
+
   console.log('╔' + '═'.repeat(58) + '╗')
-  console.log('║   打字肉鸽 · Narrative Pipeline · v4.1 path (Phase B)   ║')
+  console.log('║   打字肉鸽 · Narrative Pipeline · v4.1 path             ║')
   console.log('╚' + '═'.repeat(58) + '╝')
 
   const voice = opts.voice
@@ -979,13 +988,75 @@ async function mainV41(opts) {
     console.log('━'.repeat(60))
     console.log('\n  [DRY RUN] Output schema:')
     console.log(JSON.stringify(schema, null, 2))
-    console.log('\n  [DRY RUN] (Phase B 不调 API；Phase E 启用 batch generation)')
+    console.log('\n  [DRY RUN] (--apply 实际触发 LLM call)')
     return
   }
 
-  // 实际 LLM 调用 — 留待 Phase E
-  console.error('\n  ❌ Phase B 仅支持 --dry-run；实际 LLM 调用 / batch / ingest 在 Phase E')
-  process.exit(1)
+  // ─── 实际 LLM 调用 (Phase E) ───
+  const client = createClient()
+  const label = `v4.1/${voice}/${type}/${target.id || 'synthetic'}`
+
+  const { data: parsed, truncated } = await callClaudeStructured(
+    client,
+    {
+      system: { cached: SYSTEM_CONTEXT, extra: undefined },
+      user: userPrompt,
+    },
+    label,
+    opts.model,
+    schema,
+  )
+
+  if (!parsed) {
+    console.error(`\n  ❌ LLM 返回 null / 解析失败`)
+    process.exit(1)
+  }
+
+  // ─── 验证 (validators v4.1) ───
+  const { validateFragmentV41 } = await import('./validators/index.mjs')
+  const validation = validateFragmentV41(parsed, voice, { context: 'narrative_flavor' })
+
+  console.log('\n' + '━'.repeat(60))
+  console.log('  Validators check')
+  console.log('━'.repeat(60))
+  if (validation.passed) {
+    console.log('  ✅ All validators pass')
+  } else {
+    console.log(`  ⚠️  ${validation.errors.length} validator error(s):`)
+    for (const e of validation.errors) console.log(`      ${e}`)
+    console.log('  (输出仍写入；可用 --check / 重跑修复)')
+  }
+
+  // ─── 写入 output JSON ───
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+  const safeId = (target.id || 'synthetic').replace(/[^a-zA-Z0-9_-]/g, '_')
+  const filename = `${timestamp}-v41-${voice}-${type}-${safeId}-approved.json`
+  const outputPath = join(OUTPUT_DIR, filename)
+  if (!existsSync(OUTPUT_DIR)) mkdirSync(OUTPUT_DIR, { recursive: true })
+
+  const envelope = {
+    schema_version: 'v4.1',
+    type,
+    id: target.id || 'synthetic',
+    voice,
+    metadata: {
+      generated_at: new Date().toISOString(),
+      model_used: opts.model,
+      validators_passed: validation.passed,
+      validators_errors: validation.errors,
+      truncated,
+    },
+    content: parsed,
+  }
+  writeFileSync(outputPath, JSON.stringify(envelope, null, 2), 'utf-8')
+
+  console.log('\n' + '━'.repeat(60))
+  console.log('  Output written')
+  console.log('━'.repeat(60))
+  console.log(`  ${outputPath}`)
+  console.log()
+  console.log('  Content preview:')
+  console.log(JSON.stringify(parsed, null, 2).slice(0, 800) + (JSON.stringify(parsed, null, 2).length > 800 ? '\n  ...(truncated for display)' : ''))
 }
 
 async function main() {

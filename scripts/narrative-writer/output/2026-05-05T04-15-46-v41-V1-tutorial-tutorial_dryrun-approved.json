@@ -1,0 +1,18 @@
+{
+  "schema_version": "v4.1",
+  "type": "tutorial",
+  "id": "tutorial_dryrun",
+  "voice": "V1",
+  "metadata": {
+    "generated_at": "2026-05-05T04:15:46.507Z",
+    "model_used": "claude-sonnet-4-6",
+    "validators_passed": true,
+    "validators_errors": [],
+    "truncated": false
+  },
+  "content": {
+    "text_zh": "本次录入为模拟批次。词料已签出，流程照常进行。结果不计入存档。",
+    "text_en": "Current batch is a dry run. Word material signed out. Workflow proceeds as standard. Results not logged.",
+    "length_class": "short"
+  }
+}

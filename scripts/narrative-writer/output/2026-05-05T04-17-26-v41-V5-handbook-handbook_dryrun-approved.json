@@ -1,0 +1,38 @@
+{
+  "schema_version": "v4.1",
+  "type": "handbook",
+  "id": "handbook_dryrun",
+  "voice": "V5",
+  "metadata": {
+    "generated_at": "2026-05-05T04:17:26.983Z",
+    "model_used": "claude-sonnet-4-6",
+    "validators_passed": true,
+    "validators_errors": [],
+    "truncated": false
+  },
+  "content": {
+    "section_ref": "§031",
+    "references_position": "none",
+    "L1_recorder": {
+      "text_zh": "守则 031：空载工位不计入本批次产能统计。员工离席前须完成当前词条签出手续。",
+      "text_en": "Rule 031: Idle workstations are excluded from batch output tallies. Employees must complete sign-out for the current entry before leaving the station.",
+      "anomaly_signal_density": 0
+    },
+    "L2_proofreader": {
+      "text_zh": "守则 031 注：本条经编校组复核，无修订意见。参见附录 B 工位签出流程。附录 B 暂未随册发放。",
+      "text_en": "Rule 031 note: Reviewed by Editorial Section, no amendments recorded. See Appendix B for workstation sign-out procedure. Appendix B not included in current distribution.",
+      "anomaly_signal_density": 0.1
+    },
+    "L3_reviser": {
+      "text_zh": "守则 031 备忘：部分工位签出记录显示词条仍处于经手状态，员工已不在工位。行为档案处已收件，处置结果未抄送本室。",
+      "text_en": "Rule 031 memo: Several sign-out logs show entries still flagged as in-process with no employee present. Behavioural Records has acknowledged receipt; disposition not copied to this office.",
+      "anomaly_signal_density": 0.35
+    },
+    "L4_author": {
+      "text_zh": "守则 031 原注（档案室留存本）：词条签出后仍检出击键记录，时间戳落在受理窗口内。来源工位当时无人值守。建议补入第七打字室基础守则，待复审委员会签发。",
+      "text_en": "Rule 031 original annotation (archive copy): Keystroke records detected after sign-out, timestamps falling within the acceptance interval. The originating workstation was unattended at the time. Recommended for inclusion in Room Seven base rules; pending Review Committee issuance.",
+      "anomaly_signal_density": 0.62
+    },
+    "state": "plain"
+  }
+}

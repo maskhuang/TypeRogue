@@ -1,0 +1,22 @@
+{
+  "schema_version": "v4.1",
+  "type": "bossTooltip",
+  "id": "bossTooltip_dryrun",
+  "voice": "V6",
+  "metadata": {
+    "generated_at": "2026-05-05T04:15:05.008Z",
+    "model_used": "claude-sonnet-4-6",
+    "validators_passed": true,
+    "validators_errors": [],
+    "truncated": false
+  },
+  "content": {
+    "text_zh": "本场 modifier: {{MODIFIER_TEXT:source=player_history,chapter=3}}\n上一任作者: {{ATTRIBUTION:type=current_player_worker_id}}\n\n词条已归档。本批次结算依据：作者工位历史录入记录。经手文档现作为本场附注条件生效。",
+    "text_en": "Modifier for this batch: {{MODIFIER_TEXT:source=player_history,chapter=3}}\nPrevious author: {{ATTRIBUTION:type=current_player_worker_id}}\n\nEntry archived. Settlement basis: author workstation historical input record. Documents processed are now in effect as annotations for this session.",
+    "placeholders_used": [
+      "{{MODIFIER_TEXT:source=player_history,chapter=3}}",
+      "{{ATTRIBUTION:type=current_player_worker_id}}"
+    ],
+    "chapter_target": 4
+  }
+}
