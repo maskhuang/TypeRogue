@@ -2,10 +2,14 @@ import {
   GW_BANNED, SCP_BANNED_PATTERN,
   V2_BANNED_ZH, V2_BANNED_EN,
   V31_SCP_NAMING_BANNED_ZH, V31_SCP_NAMING_BANNED_EN,
+  V3_RESIDUE_BANNED_ZH, V3_RESIDUE_BANNED_EN,
+  AUDIT_TIER1_BANNED_ZH, AUDIT_TIER1_BANNED_EN, AUDIT_TIER2_BANNED,
+  POSITION_TIERS_V41, DPCA_NAMING,
   WORD_LIMITS, ANCHOR_FACTS,
 } from '../config.mjs'
 import { FORBIDDEN_ZH, FORBIDDEN_EN, B1A_VOCAB } from '../generated/b1a-vocab.mjs'
 import { BOILERPLATE_LEXICON as MIB_LEXICON } from '../generated/boilerplate-lexicon.mjs'
+import { VALID_PLACEHOLDER_PATTERNS } from '../prompts/voice-schemas.mjs'
 
 // Validate a single fragment against v3 rules.
 // Returns { passed: boolean, errors: string[], warnings: string[] }
@@ -470,6 +474,401 @@ function softCheckMibSignals(fragment, voice, template) {
 
 function escapeRe(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+// ============================================
+// v4.1 Validators (Phase D / spec §5)
+// ============================================
+//
+// 8 个 v4.1 validator + validateFragmentV41 dispatcher。
+// universal validators（V3 残留 / audit Tier 1 / fanfare / PI / class id）接入
+// validateFragment 给 v3.1 路径用；V5/V6 专属（layered stratification / deny→affirm vocab /
+// placeholder syntax）由 validateFragmentV41 调用。
+//
+// 设计纪律（§5.3 Phase D Done）：
+//   - validators 输出**仅 reject reason**，不"修复"
+//   - context-sensitive：system_message 上下文严格 / narrative flavor 上下文宽松
+//   - false positive 0：Phase C 数据 (4 对 entries + 5 sample rules + 10 patterns) 必须全部 pass
+
+// ─── 1 · checkV3Residue · 通用 ───
+
+export function checkV3Residue(text, lang = 'zh') {
+  const errors = []
+  const banList = lang === 'zh' ? V3_RESIDUE_BANNED_ZH : V3_RESIDUE_BANNED_EN
+  for (const term of banList) {
+    if (!term) continue
+    if (lang === 'zh') {
+      if (text.includes(term)) {
+        errors.push(`v3.1 残留禁词: "${term}"（v4.1 已作废，参考 config.V3_RESIDUE_BANNED_ZH）`)
+      }
+    } else {
+      // EN: word-boundary match
+      const re = new RegExp(`\\b${escapeRe(term)}\\b`, 'i')
+      if (re.test(text)) {
+        errors.push(`v3.1 EN residue: "${term}" (v4.1 deprecated)`)
+      }
+    }
+  }
+  return errors
+}
+
+// ─── 2 · checkAuditTier1Banned · context-sensitive ───
+//
+// audit Tier 1A/1B 禁词：授权 / 许可 / 解锁 / 配发 等。
+// 仅 system_message 上下文 reject；in-character stamp / boilerplate 文本中允许。
+// @param context "system_message" | "narrative_flavor" | "in_character_stamp" | undefined
+export function checkAuditTier1Banned(text, lang = 'zh', context) {
+  const errors = []
+  if (context !== 'system_message') return errors  // 其他 context 跳过
+
+  const banList = lang === 'zh' ? AUDIT_TIER1_BANNED_ZH : AUDIT_TIER1_BANNED_EN
+  for (const term of banList.system_message) {
+    if (!term) continue
+    if (lang === 'zh') {
+      if (text.includes(term)) {
+        errors.push(`audit Tier 1A/1B [${context}]: "${term}"（${banList.reason}）`)
+      }
+    } else {
+      const re = new RegExp(`\\b${escapeRe(term)}\\b`, 'i')
+      if (re.test(text)) {
+        errors.push(`audit Tier 1A/1B [${context}]: "${term}" (${banList.reason})`)
+      }
+    }
+  }
+  return errors
+}
+
+// ─── 3 · checkFanfarePattern · voice-context-sensitive ───
+//
+// V1 / V5 / V6 不应含 fanfare（§8.10.1 0 fanfare 铁律）。
+// V2 同事便条 / V7 environmental 不在此约束。
+export function checkFanfarePattern(text, voice) {
+  const errors = []
+  const fanfareEnforcedVoices = new Set(['V1', 'V5', 'V5_pair', 'V6'])
+  if (!fanfareEnforcedVoices.has(voice)) return errors
+
+  // Fanfare emoji
+  for (const emoji of AUDIT_TIER2_BANNED.fanfare_emoji) {
+    if (text.includes(emoji)) {
+      errors.push(`fanfare emoji [${voice}]: "${emoji}"（§8.10.1 + audit Tier 2A）`)
+    }
+  }
+
+  // Power fantasy 句式
+  for (const phrase of AUDIT_TIER2_BANNED.power_fantasy_phrases_zh) {
+    if (text.includes(phrase)) {
+      errors.push(`power fantasy 句式 [${voice}]: "${phrase}"（audit Tier 2B）`)
+    }
+  }
+  for (const phrase of AUDIT_TIER2_BANNED.power_fantasy_phrases_en) {
+    if (new RegExp(escapeRe(phrase), 'i').test(text)) {
+      errors.push(`power fantasy phrase [${voice}]: "${phrase}" (audit Tier 2B)`)
+    }
+  }
+
+  // V1 不允许感叹号 / 问号（§6.3.1）
+  if (voice === 'V1') {
+    if (/[!！?？]/.test(text)) {
+      errors.push(`V1 boilerplate 含感叹号 / 问号 — V1 标点仅句号 / 冒号 / 顿号（§6.3.1）`)
+    }
+  }
+
+  return errors
+}
+
+// ─── 4 · checkLayeredStratification · V5 / V5_pair only ───
+//
+// 两种 fragment 形态分别检查：
+//
+//   形态 A · 完整 4-layer V5 fragment（V5 plain / V5_pair denial / V5_pair affirmation）
+//     L1 anomaly_signal_density = 0（严格——L1 是 boilerplate "诚实的镜子"基线）
+//     L2 0 - 0.2
+//     L3 0.2 - 0.5
+//     L4 0.5 - 0.8
+//
+//   形态 B · 单层 snapshot（redaction-versioning entry · 仅 L1）
+//     L1 [0, 0.5]（放宽——silent_amendment / addition / replacement 本身是 L1 污染信号）
+//     L2/L3/L4 absent
+//
+// 跨层 density 反向递减 = reject。
+export function checkLayeredStratification(layered) {
+  const errors = []
+
+  // 检测形态：full 4-layer 还是 single-layer snapshot
+  const populatedLayers = ['L2_proofreader', 'L3_reviser', 'L4_author'].filter(k => layered[k] != null)
+  const isSingleLayerSnapshot = populatedLayers.length === 0
+
+  const checkLayer = (layer, name, expectedRange) => {
+    if (!layer) return
+    const d = layer.anomaly_signal_density
+    if (typeof d !== 'number' || isNaN(d)) {
+      errors.push(`${name}: anomaly_signal_density 必须是 0-1 数字`)
+      return
+    }
+    if (d < expectedRange[0] || d > expectedRange[1]) {
+      errors.push(`${name}: anomaly_signal_density ${d} 超出范围 [${expectedRange[0]}, ${expectedRange[1]}]`)
+    }
+  }
+
+  if (isSingleLayerSnapshot) {
+    // 单层 snapshot — silent修订版本的 L1 可含污染信号
+    checkLayer(layered.L1_recorder, 'L1_recorder (single-layer snapshot)', [0, 0.5])
+    return errors
+  }
+
+  // 完整 4-layer fragment
+  checkLayer(layered.L1_recorder,    'L1_recorder',    [0,    0])
+  checkLayer(layered.L2_proofreader, 'L2_proofreader', [0,    0.2])
+  checkLayer(layered.L3_reviser,     'L3_reviser',    [0.2,  0.5])
+  checkLayer(layered.L4_author,      'L4_author',      [0.5,  0.8])
+
+  // 单调性
+  const layers = ['L1_recorder', 'L2_proofreader', 'L3_reviser', 'L4_author']
+  for (let i = 1; i < layers.length; i++) {
+    const prev = layered[layers[i - 1]]
+    const cur  = layered[layers[i]]
+    if (prev && cur && cur.anomaly_signal_density < prev.anomaly_signal_density) {
+      errors.push(`${layers[i]} density (${cur.anomaly_signal_density}) < ${layers[i - 1]} (${prev.anomaly_signal_density}) — 反向递减是 horror gradient 违反`)
+    }
+  }
+  return errors
+}
+
+// ─── 5 · checkDenialAffirmationVocabulary · V5_pair only ───
+//
+// denial L1 禁词：目前 / 暂时 / 待定 / 候补（必须斩钉截铁否认）
+// affirmation L1 禁词：新增 / new / 解锁 / 自即日起 / Welcome（必须当作"一直存在"写）
+// denial 阶段 L3/L4 必须 null
+// §144 affirmation 必须整体 null
+export function checkDenialAffirmationVocabulary(pair) {
+  const errors = []
+
+  // denial 阶段 L3/L4 = null（污染层不可见）
+  if (pair.denial) {
+    if (pair.denial.L3_reviser !== null) {
+      errors.push(`denial 阶段 L3_reviser 必须 null（污染层不可见，公司在保护）`)
+    }
+    if (pair.denial.L4_author !== null) {
+      errors.push(`denial 阶段 L4_author 必须 null`)
+    }
+    // denial L1 禁词
+    const denialBanZh = ['目前', '暂时', '待定', '候补']
+    const denialBanEn = ['currently', 'for now', 'pending', 'tentative', 'candidate']
+    const l1zh = pair.denial.L1_recorder?.text_zh || ''
+    const l1en = pair.denial.L1_recorder?.text_en || ''
+    for (const w of denialBanZh) {
+      if (l1zh.includes(w)) errors.push(`denial L1 禁词 "${w}"（必须斩钉截铁否认）`)
+    }
+    for (const w of denialBanEn) {
+      if (new RegExp(`\\b${escapeRe(w)}\\b`, 'i').test(l1en)) {
+        errors.push(`denial L1 EN forbidden "${w}" (must absolutely deny)`)
+      }
+    }
+  }
+
+  // §144 (assimilated) affirmation 必须整体 null
+  if (pair.references_position === 'assimilated' && pair.affirmation !== null) {
+    errors.push(`§144 (assimilated) affirmation 必须整体 null（V5 完全退场）`)
+  }
+
+  // 其他 § 号 affirmation L1 禁词
+  if (pair.affirmation) {
+    const affirmBanZh = ['新增', '解锁', '自即日起', '自本月起']
+    const affirmBanEn = ['newly added', 'unlocked', 'as of today', 'Welcome']
+    const l1zh = pair.affirmation.L1_recorder?.text_zh || ''
+    const l1en = pair.affirmation.L1_recorder?.text_en || ''
+    for (const w of affirmBanZh) {
+      if (l1zh.includes(w)) errors.push(`affirmation L1 禁词 "${w}"（必须当作"一直存在"写）`)
+    }
+    for (const w of affirmBanEn) {
+      if (new RegExp(`\\b${escapeRe(w)}\\b`, 'i').test(l1en)) {
+        errors.push(`affirmation L1 EN forbidden "${w}" (must read 'always existed')`)
+      }
+    }
+    // affirmation 4 layers 必须全 populated
+    for (const k of ['L1_recorder', 'L2_proofreader', 'L3_reviser', 'L4_author']) {
+      if (!pair.affirmation[k]) {
+        errors.push(`affirmation ${k} 不可为 null（污染层对你可见了——这才是 horror）`)
+      }
+    }
+  }
+
+  return errors
+}
+
+// ─── 6 · checkPlaceholderSyntax · V6 only ───
+//
+// V6 反身闭合 placeholder 必须在 voice-schemas.mjs VALID_PLACEHOLDER_PATTERNS 中登记。
+// 任何未登记的 {{...}} = reject。
+const PLACEHOLDER_RE = /\{\{[A-Z_]+:[^}]*\}\}/g
+export function checkPlaceholderSyntax(text) {
+  const errors = []
+  const matches = text.match(PLACEHOLDER_RE) || []
+  for (const m of matches) {
+    // 检查 family
+    const familyMatch = m.match(/\{\{([A-Z_]+):/)
+    if (!familyMatch) {
+      errors.push(`placeholder syntax 错误: "${m}"`)
+      continue
+    }
+    const family = familyMatch[1]
+    const familyKnown = VALID_PLACEHOLDER_PATTERNS.some(p => p.family === family)
+    if (!familyKnown) {
+      errors.push(`placeholder family 未登记: "${family}"（合法 family: ${[...new Set(VALID_PLACEHOLDER_PATTERNS.map(p => p.family))].join(' / ')}）`)
+      continue
+    }
+    // 检查 signature 是否匹配某个 known pattern
+    const matchedPattern = VALID_PLACEHOLDER_PATTERNS.some(p => p.regex.test(m))
+    if (!matchedPattern) {
+      errors.push(`placeholder signature 未登记: "${m}"（参考 voice-schemas.mjs REFLEXIVE_PLACEHOLDER_DICT）`)
+    }
+  }
+  return errors
+}
+
+// ─── 7 · checkPIInternalNameLeakage · 通用 ───
+//
+// "灵长接口 / Primate Interface / PI 接口" 在玩家可见 UI 上下文一律 reject。
+// 注：
+//   - "PI" 单独缩写在英文里可能误命中（非常罕见），用 "PI 接口" / "PI screen" 等组合检测
+//   - 中文标题 "灵长类辅助文书部" 已被 DPCA_NAMING.forbidden_in_ui 锁定（DPCA 替换）；
+//     此 validator 关注的是"灵长接口"概念名是否泄漏，不是 DPCA 全称
+export function checkPIInternalNameLeakage(text, voice) {
+  const errors = []
+  const piTerms = [
+    '灵长接口', 'Primate Interface', 'PI 接口', 'PI screen',
+    'PI 屏幕', 'PI 系统', 'PI 已激活', 'Interface activated',
+  ]
+  for (const term of piTerms) {
+    if (text.includes(term)) {
+      errors.push(`PI 内部名泄漏: "${term}" — §5.4.4 铁律 "PI 名字永不在 UI 显化"（voice ${voice}）`)
+    }
+  }
+  // DPCA_NAMING 禁词：UI 全用 "DPCA" 缩写
+  for (const term of DPCA_NAMING.forbidden_in_ui) {
+    if (text.includes(term)) {
+      errors.push(`DPCA 命名违规: "${term}" — UI 全用 "DPCA" 缩写（${DPCA_NAMING.forbidden_reason}）`)
+    }
+  }
+  return errors
+}
+
+// ─── 8 · checkClassRenamingConsistency · 通用 ───
+//
+// 5 工种 narrative tier id (recorder/proofreader/reviser/author/assimilated) 是 flavor 唯一合法名。
+// code id (none/wordsmith/metamorph/endless) 是存档兼容字段，不应出现在 flavor 输出中。
+//
+// 注：英文 "author" / "recorder" / "reviser" 是普通词，可能在自然语境里出现。validator
+// 只检查中文 code id 短语和 v3.1 残留命名。
+export function checkClassRenamingConsistency(text) {
+  const errors = []
+  // v3.1 残留命名（已 deprecated）— 在 V3_RESIDUE_BANNED 列表里也有，重复检查无害
+  const v31Class = ['文字工匠', '异体抄录员', '终身雇员', '普通灵长抄录员']
+  for (const term of v31Class) {
+    if (text.includes(term)) {
+      errors.push(`v3.1 工种命名残留: "${term}" — 用 v4.1 narrative tier id (录入员 / 校对者 / 修改者 / 作者 / 文本一部分)`)
+    }
+  }
+  // code id 形式（"classId: none" / "类别: wordsmith"）— 仅在 flavor 输出 reject；schema 字段不在 flavor 内
+  const codeIdInFlavor = /(类别|class[A-Z_]?[Ii]d|职业 id)\s*[:：=]?\s*(none|wordsmith|metamorph|endless|proofreader)\b/
+  if (codeIdInFlavor.test(text)) {
+    const m = text.match(codeIdInFlavor)
+    errors.push(`code id 出现在 flavor: "${m[0]}" — 用 narrative tier id（录入员 / 校对者 / 修改者 / 作者 / 文本一部分）`)
+  }
+  return errors
+}
+
+// ============================================
+// validateFragmentV41 · v4.1 fragment 主验证入口
+// ============================================
+//
+// @param fragment v4.1 voice 输出（V1-V7 / V5_pair）
+// @param voice    "V1" | "V2" | ... | "V7" | "V5_pair"
+// @param ctx      { context: "system_message" | "narrative_flavor" | "in_character_stamp" }
+export function validateFragmentV41(fragment, voice, ctx = {}) {
+  const errors = []
+  const warnings = []
+  const messageContext = ctx.context || 'narrative_flavor'
+
+  // 提取所有 text 字段
+  const allTextZh = collectV41TextZh(fragment, voice)
+  const allTextEn = collectV41TextEn(fragment, voice)
+  const allText = `${allTextZh} ${allTextEn}`
+
+  // Universal checks
+  errors.push(...checkV3Residue(allTextZh, 'zh'))
+  errors.push(...checkV3Residue(allTextEn, 'en'))
+  errors.push(...checkAuditTier1Banned(allTextZh, 'zh', messageContext))
+  errors.push(...checkAuditTier1Banned(allTextEn, 'en', messageContext))
+  errors.push(...checkFanfarePattern(allText, voice))
+  errors.push(...checkPIInternalNameLeakage(allText, voice))
+  errors.push(...checkClassRenamingConsistency(allText))
+
+  // V2 / V3 / V4 / V7 路径检查（继承 v3.1 的 IP / B1.a / GW 等）
+  errors.push(...checkIPCompliance({ text_zh: allTextZh, text_en: allTextEn }))
+  // V2.3 残留（继承 v3.1）
+  for (const term of V2_BANNED_ZH) {
+    if (allTextZh.includes(term)) errors.push(`v2.3 残留: "${term}"`)
+  }
+
+  // Voice-specific checks
+  if (voice === 'V5') {
+    errors.push(...checkLayeredStratification(fragment))
+  } else if (voice === 'V5_pair') {
+    errors.push(...checkDenialAffirmationVocabulary(fragment))
+    if (fragment.denial) errors.push(...checkLayeredStratification(fragment.denial))
+    if (fragment.affirmation) errors.push(...checkLayeredStratification(fragment.affirmation))
+  } else if (voice === 'V6') {
+    errors.push(...checkPlaceholderSyntax(fragment.text_zh || ''))
+    errors.push(...checkPlaceholderSyntax(fragment.text_en || ''))
+  }
+
+  return { passed: errors.length === 0, errors, warnings }
+}
+
+// ─── v4.1 字段提取助手 ───
+
+function collectV41TextZh(fragment, voice) {
+  const parts = []
+  switch (voice) {
+    case 'V1': parts.push(fragment.text_zh); break
+    case 'V2': parts.push(fragment.text_zh); break
+    case 'V3': parts.push(fragment.fragment_zh); if (fragment.drift_pattern) parts.push(...fragment.drift_pattern); break
+    case 'V4': parts.push(fragment.prompt_zh, fragment.response_zh); break
+    case 'V5': pushLayered(parts, fragment, 'zh'); break
+    case 'V5_pair':
+      if (fragment.denial) pushLayered(parts, fragment.denial, 'zh')
+      if (fragment.affirmation) pushLayered(parts, fragment.affirmation, 'zh')
+      break
+    case 'V6': parts.push(fragment.text_zh); break
+    case 'V7': parts.push(fragment.spec?.design_intent); break
+  }
+  return parts.filter(Boolean).join(' ')
+}
+
+function collectV41TextEn(fragment, voice) {
+  const parts = []
+  switch (voice) {
+    case 'V1': parts.push(fragment.text_en); break
+    case 'V2': parts.push(fragment.text_en); break
+    case 'V3': parts.push(fragment.fragment_en); break
+    case 'V4': parts.push(fragment.prompt_en, fragment.response_en); break
+    case 'V5': pushLayered(parts, fragment, 'en'); break
+    case 'V5_pair':
+      if (fragment.denial) pushLayered(parts, fragment.denial, 'en')
+      if (fragment.affirmation) pushLayered(parts, fragment.affirmation, 'en')
+      break
+    case 'V6': parts.push(fragment.text_en); break
+    case 'V7': parts.push(fragment.spec?.design_intent); break
+  }
+  return parts.filter(Boolean).join(' ')
+}
+
+function pushLayered(parts, layered, lang) {
+  for (const k of ['L1_recorder', 'L2_proofreader', 'L3_reviser', 'L4_author']) {
+    const layer = layered[k]
+    if (layer && layer[`text_${lang}`]) parts.push(layer[`text_${lang}`])
+  }
 }
 
 // ─── AI review prompt (used by reviewer step) ───
