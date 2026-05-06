@@ -1,18 +1,23 @@
 // Auto-derived from docs/narrative-design.md v4.1-late §2.6 词条 layered footnote
-// (LOCKED 2026-05-05 · post L1 affixName arcade-revert)
+// (LOCKED 2026-05-05 · post 5-tier 职业模型 calibration)
 //
-// 灵长类全名 archive · L4 codex 显化用
+// 灵长类全名 archive · L5 endless reveal 专用
+//
+// 5-tier 职业模型 (LOCKED)：
+//   L1 录入员 / L2 校对员 / L3 修改员 / L4 作者     ← Cycle 1-5 base game · 全程 NO 灵长 frame
+//   L5 猴子                                         ← Cycle 6+ endless · primate reveal step-function
 //
 // L1 affixNames（src/data-json/affixes.json）已替换为 arcade/RPG 2-char 中文：
 //   crit→暴击 · convert→变换 · cascade→激流 · void→虚空 · ...
 //
-// 旧 v3.x affix 名（57 灵长类全名）下沉至 L4 codex archive_designation 字段。
-// 仅在 codex L4 / 责任档案 / B8 reveal 后段落显化（与 specific-subjects.mjs 同纪律）。
+// 旧 v3.x affix 名（57 灵长类全名）下沉至 **L5 endless reveal**（NOT L4）。
+// L4 (作者) 仍是 base game 终点 · M5 firewall 的 reclassify 目标 · 用 fictional化
+// archive_designation（"前一代被定位为作者的处置员工 [██]" 等），永不显示物种真名。
 //
 // 设计纪律（铁律）：
-//   - L1 录入员表层（in-game UI · skill name · sticker GLOSS · shop catalog）
-//     **永不**显示物种全名（违反 M4 motive · 暴露灵长 frame）
-//   - L4 archive_designation 仅在归档 / 责任档案 / endless reveal 段落出现
+//   - L1-L4 base game 全部 4 层（录入/校对/修改/作者）**永不**显示物种全名
+//     （违反 M4 motive · 暴露灵长 frame）
+//   - 物种真名仅在 L5 endless reveal 段落出现（B8 reveal 后 / Cycle 6+ endless 触发）
 //   - 物种全名作为"前一代研究主体（项目档案已封存）"的背景 lore，不及 §4.5 N1976
 //     hidden tragedy core 的 emotional weight
 //
@@ -21,7 +26,7 @@
 //   - generated/moko-glyphs.mjs § sticker visual + GLOSS pool
 //   - relic-departments.mjs § 11 子系统 → 7 部门 mapping
 
-export const AFFIX_L4_ARCHIVES = {
+export const AFFIX_L5_MONKEY_ARCHIVES = {
   // ════════════════════════════════════════════════════════
   // Crit clade (Slate · 7) — 打击/暴击
   // ════════════════════════════════════════════════════════
@@ -112,30 +117,30 @@ export const AFFIX_L4_ARCHIVES = {
 
 // ─── 设计纪律（铁律 · pipeline validators 须 enforce）───
 
-export const AFFIX_L4_ARCHIVE_RULES = {
+export const AFFIX_L5_MONKEY_ARCHIVE_RULES = {
   forbidden: [
-    'L1 in-game UI / skill name / sticker GLOSS / shop catalog 显示物种全名',
-    'L4 archive_designation 直接复述 specific real-world taxonomy data / 自然分布 / IUCN status',
+    'L1-L4 base game 任何层（录入/校对/修改/作者）显示物种全名 — 违反 M4 motive · 暴露灵长 frame',
+    'L5 endless 段落直接复述 specific real-world taxonomy data / 自然分布 / IUCN status',
     '把物种全名当作 power fantasy buff 描述（"黑猩猩之力"等）',
     'archive 与 §4.5 N1976 hidden tragedy core 平等 emotional weight（必须 N1976 highest）',
   ],
   required: [
-    'L4 archive 仅在 codex / 责任档案 / endless 段落出现',
-    'L1 录入员表层永远只用 arcade/RPG 2-char 名（变换 / 暴击 / ...）',
-    'archive_designation 字段保留以备 B8 reveal 后段落 reference',
-    'archive 出现时必须配套 fictional化 phrase（如"前一代研究主体（项目档案已封存）"）',
+    '物种真名仅 L5 endless reveal（Cycle 6+ / B8 reveal 后段落）显化',
+    'L1 录入员 / L2 校对员 / L3 修改员 / L4 作者 全部用 arcade/RPG 2-char 名 + fictional化 anchor',
+    'archive 字段保留 species_zh 真名以备 endless 段落 reference',
+    'L5 出现时必须配套 fictional化 phrase（如"前一代研究主体（项目档案已封存）"）',
   ],
 }
 
 // ─── Quick lookup helpers ───
 
 export const AFFIX_TO_ARCHIVE = Object.fromEntries(
-  Object.entries(AFFIX_L4_ARCHIVES).map(([k, v]) => [k, v.archive])
+  Object.entries(AFFIX_L5_MONKEY_ARCHIVES).map(([k, v]) => [k, v.archive])
 )
 
 export const AFFIX_TO_L1 = Object.fromEntries(
-  Object.entries(AFFIX_L4_ARCHIVES).map(([k, v]) => [k, v.l1])
+  Object.entries(AFFIX_L5_MONKEY_ARCHIVES).map(([k, v]) => [k, v.l1])
 )
 
 // 验证：59 archive entries（多于 0 entries · 预防 silent regression）
-export const AFFIX_L4_ARCHIVE_COUNT = Object.keys(AFFIX_L4_ARCHIVES).length
+export const AFFIX_L5_MONKEY_ARCHIVE_COUNT = Object.keys(AFFIX_L5_MONKEY_ARCHIVES).length

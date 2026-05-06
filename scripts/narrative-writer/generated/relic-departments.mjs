@@ -152,11 +152,12 @@ export const RELIC_DEPARTMENTS = {
   },
   "moko_note": "MOKO 是 M4 安全部门旗下子工具 = battle scene UI（不是整个游戏）。MOKO 名永不在 in-game UI 显化（§5.4.3）。MOKO inherited from 1970s 灵长类语言研究协议（含 Project Nim 等同期项目）· 3-step lineage (§5.4.1)",
   "specific_subjects_policy": {
-    "note": "L4 sub-anchor (§2.6 LOCKED) · 5 specific subjects pool · 详见 generated/specific-subjects.mjs",
-    "axis": "subject 是 L4 的第 4 axis（不影响 L1-L3 部门 voice）",
+    "note": "5-tier 职业模型 sub-anchor (§2.6 LOCKED · post 5-tier calibration) · 5 specific subjects pool · 详见 generated/specific-subjects.mjs",
+    "axis": "subject 是双层 axis · L4 (作者) 仅显化 fictional archive_designation（'Subject N-1976'）· L5 (猴子 / endless) 才 reveal real-world lineage 关联（N-1976 ≈ Nim Chimpsky / 1970s manual ASL 协议代际）",
+    "tier_model": "L1 录入 · L2 校对 · L3 修改 · L4 作者 (base game 全程 NO 灵长 frame) | L5 猴子 (Cycle 6+ endless · primate reveal step-function)",
     "distribution": "~6 relic 含 specific anchor (~6.4%) / ~88 relic 用 generic L4 (~93.6%)",
     "anchors": ["N1976", "W1965", "L1971", "K1980", "SA1974"],
-    "singular_core": "N1976 = §4.5 hidden tragedy core (B8 reveal) · 不被稀释 · 其他 4 是 background lore"
+    "singular_core": "N1976 = §4.5 hidden tragedy core (B8 reveal · L5 endless 才与 Nim 真名关联显化) · 不被稀释 · 其他 4 是 background lore"
   },
   "cleanup_note": "v4.1 启动后必须批量重写 v3.1/v2.3 残留 relic narrative 通过 narrative-writer 流水线产出（per audit Tier 3）"
 }

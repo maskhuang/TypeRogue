@@ -1,22 +1,32 @@
-// Auto-derived from docs/narrative-design.md v4.1-late §2.6 L4 specific subject sub-axis
-// (LOCKED 2026-05-05)
+// Auto-derived from docs/narrative-design.md v4.1-late §2.6 specific subject sub-axis
+// (LOCKED 2026-05-05 · post 5-tier 职业模型 calibration)
 //
 // MOKO 历史档案 specific research subjects · 5 anchor pool
 //
-// 角色：作为遗物 layered footnote L4 的 sub-anchor，不破坏 L1-L3 部门 voice 主导。
-// 每条 relic 的 L4 = D18 历史档案 + D8 反身闭合 + (可选) specific subject anchor。
+// 5-tier 职业模型 (LOCKED)：
+//   L1 录入员 / L2 校对员 / L3 修改员 / L4 作者     ← Cycle 1-5 base game · 全程 NO 灵长 frame
+//   L5 猴子                                         ← Cycle 6+ endless · primate reveal step-function
+//
+// 双层 anchor 显化：
+//   - **L4 (作者层) 显化 fictional archive_designation**（"Subject N-1976"等编号 anchor）
+//     · base game 末段 / B7-B8 前响 · 玩家看到编号但不知 real-world lineage
+//     · 仍属 fictional化语言（"具体研究项目档案已封存"）· 不暴露物种 / 真名
+//   - **L5 (猴子 / endless) reveal real-world lineage**（N-1976 ≈ Nim Chimpsky · W-1965 ≈ Washoe ...）
+//     · Cycle 6+ endless / B8 reveal 后段落 · 玩家此时已认知"作者"=lab subject
+//     · 揭穿 archive_designation 与 1970s 灵长协议代际的对应关系
 //
 // IP-safe 要求：
 //   - 用 fictional化 archive_designation（"Subject N-1976" 不直接复用"Nim"全名作 metadata key）
 //   - 历史 era reference 保留作 lore（"1973-77 manual ASL"等是公共历史事实）
 //   - L4_voice template 用 fictional化语言（"具体研究项目档案已封存"等）
+//   - L5_endless_reveal 才允许显化 real-world subject 关联（"N-1976 即 Nim 协议样本编号"等）
 //   - **绝不**复述 specific real-world catalog data / frequency stats / 具体 fates
 //
 // 关联 LOCKED：
 //   - §4.5 Nim hidden tragedy core (B8 reveal)：N1976 是 singular tragedy core，其他
 //     subjects 是 background lore（不及 N1976 的 emotional weight）
 //   - §5.4.1 MOKO 3-step lineage：5 subjects 对应不同协议代际 anchor
-//   - §2.6 遗物 L4 sub-axis：subject 仅在 L4 出现，不在 L1-L3
+//   - §2.6 4-axis tensor：subject 是 L4 fictional anchor + L5 real-lineage reveal 的双层 axis
 //   - 大部分 relics 的 L4 用 generic "处置员工 [工号已封存]" / "前一代研究主体（项目档案已封存）"
 
 export const SPECIFIC_SUBJECTS = {
@@ -119,18 +129,19 @@ export const SUBJECT_DISTRIBUTION_POLICY = {
 
 export const SPECIFIC_SUBJECT_DESIGN_RULES = {
   forbidden: [
-    'L1-L3 出现 specific subject anchor（必须 L4 only）',
-    '直接复用真实研究 subject 全名作 metadata key（用 fictional化 designation）',
+    'L1-L3 (录入/校对/修改) 出现 subject archive_designation（必须 L4 作者层 only）',
+    'L4 (作者层) reveal real-world subject lineage（必须 L5 endless only）',
+    '直接复用真实研究 subject 全名作 metadata key（用 fictional化 designation · 即使 L5）',
     '复述 specific real-world catalog data / frequency stats / 具体 fates',
     '5 个 subjects 平等 emotional weight（必须 N1976 highest · 其他 background）',
-    '在 L4 之外 reveal subject anchor（违反 D7 渐次显化）',
   ],
   required: [
-    'L4 voice template 包含 fictional化 phrase ("具体研究项目档案已封存"等)',
+    'L4 (作者) voice template 仅含 fictional archive_designation + "档案已封存" phrase',
+    'L5 (猴子 / endless) 才允许显化 real-world lineage 关联（"N-1976 即 1973-77 manual ASL 协议代际样本"等）',
     'Specific subjects 仅 ~6 relic 引用 · 其余 ~88 relic 用 generic',
     'N1976 保持 §4.5 + §5.2 singular tragedy core 地位',
     'L4 引用 subject 时 L1-L3 必须保持本部门 voice 主导（不混合）',
-    'Subject anchor 与协议代际 lineage (§5.4.1 3-step) 对应',
+    'Subject anchor 与协议代际 lineage (§5.4.1 3-step) 对应 · 但代际 reference 也仅在 L5 显化',
   ],
 }
 
