@@ -17,6 +17,7 @@ import { playSound } from '../effects/sound';
 import { juiceUp, calculateRating, getRatingTier } from '../effects/juice';
 import { showScreen, startLevel, renderRelicDisplay, showFeedback, randomizeScreenBackground, getCalibrationInfo } from './battle';
 import type { ShopItem, ResourceType, PackConditionType } from '../core/types';
+import { GENERIC_RESOURCES, getActiveResources } from './classes/ClassResourceFilter';
 import { getNextBattleNode, isSecondHalf, getPositionInCycle } from './stage/stageFlow';
 import { calculateLetterFrequency, calculateLetterScores, FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
@@ -34,7 +35,6 @@ import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
 import { random } from '../core/seededRandom';
 import { dragManager, registerShapePreviewRenderer } from './dragManager';
-import { CLASS_DEFINITIONS } from '../data/classes';
 import { isFeatureEnabled, getFeatureLostReason } from './classes/ClassFeatureGate';
 import { renderCraftPanel, resetCraftInput } from './classes/CraftingStation';
 import { renderMetamorphPanel } from './classes/MetamorphStation';
@@ -146,12 +146,7 @@ export function getShapeDescription(shapeId: string, cellCount: number): string 
 }
 
 /** 职业可用资源池（排除非对应职业的 fragment/mutagen） */
-function getAvailableResources(classId: string): ResourceType[] {
-  const all: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
-  if (classId === 'wordsmith') all.push('energy');
-  if (classId === 'metamorph') all.push('mutagen');
-  return all;
-}
+const getAvailableResources = getActiveResources;
 
 /** 位置 → 最大稀有度映射；Boss 商店(level===0)或后半段 → 全稀有度，前半段仅 white+blue */
 function getActMaxRarity(): SkillRarity {
@@ -3061,7 +3056,7 @@ function applyAffixRandomEnchantment(
   }
   // BonusOutput：随机分配一个与技能产出不同的资源
   if (chosen === EnchantmentTypeEnum.BonusOutput) {
-    const allRes: import('../data/affixes').ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
+    const allRes = GENERIC_RESOURCES;
     const eligible = allRes.filter(r => r !== affixSkill.resource);
     affixSkill.bonusOutputResource = eligible[Math.floor(random() * eligible.length)];
   }
@@ -4283,10 +4278,7 @@ type HeatmapDimension = 'triggerCount' | ResourceType;
 let currentHeatmapDimension: HeatmapDimension = 'triggerCount';
 
 function getHeatmapDimensions(): { key: HeatmapDimension; label: string; color: string }[] {
-  const resources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
-  // Story 32.2: 激活的职业资源也显示在热力图维度中
-  const classRes = CLASS_DEFINITIONS[state.classId]?.uniqueResource;
-  if (classRes) resources.push(classRes);
+  const resources = getActiveResources(state.classId);
   return [
     { key: 'triggerCount', label: t('shop.heatmap.triggers'), color: '#aaa' },
     ...resources.map(r => ({ key: r as HeatmapDimension, label: t(`resource.${r}`), color: RESOURCE_COLORS[r] })),
@@ -4374,9 +4366,7 @@ function showHeatmapTooltip(e: MouseEvent, key: string, bs: import('../core/type
   tip.className = 'heatmap-tooltip';
 
   // Story 32.2: 包含激活的职业资源
-  const tooltipResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
-  const tooltipClassRes = CLASS_DEFINITIONS[state.classId]?.uniqueResource;
-  if (tooltipClassRes) tooltipResources.push(tooltipClassRes);
+  const tooltipResources = getActiveResources(state.classId);
   const resourceLines = tooltipResources
     .filter(r => ks.resources[r] > 0)
     .map(r => `<div class="ht-resource"><span style="color:${RESOURCE_COLORS[r]}">${RESOURCE_ICONS[r]} ${t(`resource.${r}`)}</span> +${ks.resources[r].toFixed(1)}</div>`)

@@ -7,6 +7,7 @@
 import { random } from '../core/seededRandom'
 import { RESOURCE_ICONS } from '../core/constants'
 import type { ResourceType } from '../core/types'
+import { GENERIC_RESOURCES } from '../systems/classes/ClassResourceFilter'
 import { PositionRelation } from './keyboardTopology'
 import type { AffixInstance, AffixSkillInstance, SkillRarity } from './affixes'
 import { RARITY_TO_SHAPE_POOL, SHAPE_TEMPLATES, mapShapeToKeys, getShapeRotationCount } from './skillShapes'
@@ -20,7 +21,6 @@ import { t } from '../demo/demo-i18n'
 
 // ===== 常量 =====
 
-const GENERIC_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold']
 const ALL_POS_RELATIONS: PositionRelation[] = Object.values(PositionRelation)
 
 /** 获取词条的有效权重（Convert 仅使用 cross 变体权重） */
@@ -141,7 +141,7 @@ export function rollAffixParams(
   type: AffixType,
   resource: ResourceType,
   convertVariant?: 'cross' | 'self',
-  availableResources?: ResourceType[],
+  availableResources?: readonly ResourceType[],
   sharedPosRel?: PositionRelation,
   excludeAffixTypes?: Set<string>,
 ): AffixInstance {
@@ -396,7 +396,7 @@ export interface GenerateSkillOptions {
   /** 强制等级 */
   level?: number
   /** 职业可用资源池（约束转化源/连接监听/增幅资源） */
-  availableResources?: ResourceType[]
+  availableResources?: readonly ResourceType[]
   /** 强制形状 ID（不随机） */
   shapeId?: string
   /** 强制旋转态（不随机，0~3） */

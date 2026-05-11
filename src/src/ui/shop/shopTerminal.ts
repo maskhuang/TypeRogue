@@ -8,8 +8,8 @@
 import { state, addRelicWithCapacity, removeRelic, isRelicSlotsFull } from '../../core/state';
 import { INBOX_MAX, BALANCE, RESOURCE_ICONS } from '../../core/constants';
 import { calculateRating } from '../../effects/juice';
-import { CLASS_DEFINITIONS } from '../../data/classes';
 import type { ResourceType } from '../../core/types';
+import { getActiveResources } from '../../systems/classes/ClassResourceFilter';
 import {
   generateAffixShopItems,
   generateShopRelicItem,
@@ -1489,9 +1489,7 @@ export function cmdStats(): void {
   appendLine(summaryParts.join(' · '));
 
   // ── 3. 资源排序（用于细分行 + 总览）──
-  const resourceOrder: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
-  const classRes = CLASS_DEFINITIONS[state.classId]?.uniqueResource;
-  if (classRes && !resourceOrder.includes(classRes)) resourceOrder.push(classRes);
+  const resourceOrder = getActiveResources(state.classId);
 
   // ── 4. SKILL CONTRIBUTION（按触发降序的双行条目）──
   type SkillRow = { id: string; name: string; triggers: number; chain: number; resources: Record<ResourceType, number> };

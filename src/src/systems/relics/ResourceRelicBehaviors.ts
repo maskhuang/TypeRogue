@@ -5,6 +5,7 @@
 
 import { state } from '../../core/state'
 import { registerRelicBehavior } from './RelicPipeline'
+import { GENERIC_RESOURCES } from '../classes/ClassResourceFilter'
 
 // === 产出分红 (production_dividend) ===
 export const DIVIDEND_CHANCE = 0.05
@@ -109,7 +110,8 @@ export function getFurnaceConfig(): { from: string; to: string } | null {
 
 /** 初始化熔炉资源（获取遗物时调用） */
 export function initFurnace(randomFn: () => number = Math.random): void {
-  const pool: import('../../core/types').ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield']
+  // 熔炉源资源池：所有通用资源排除转换目标（金币）
+  const pool = GENERIC_RESOURCES.filter(r => r !== 'gold')
   _furnaceFrom = pool[Math.floor(randomFn() * pool.length)]
   _furnaceTo = 'gold'
 }

@@ -11,6 +11,7 @@ import { getElements } from '../ui/elements';
 import { playSound, emitResourceSound } from '../effects/sound';
 import { showFeedback, setPseudoInfiniteVisual, resolveChainAnchor, performAutocomplete, getChargeAutoMultBonus } from './battle';
 import { routeEnergyToPipeline, consumeCompletedWord, updatePipelineHUD } from './classes/AssemblyPipeline';
+import { GENERIC_RESOURCES } from './classes/ClassResourceFilter';
 import { getFloatScale } from '../effects/juice';
 import { eventBus } from '../core/events/EventBus';
 import { random } from '../core/seededRandom';
@@ -567,7 +568,7 @@ function triggerAffixSkillWithFeedback(
 
     // 质变Rainbow·光谱：多资源浮字
     if (tr.phase4.allResources && tr.phase4.rainbowSkillBase && tr.phase4.rainbowSkillLevel) {
-      const pool: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
+      const pool = GENERIC_RESOURCES;
       const skillBase = tr.phase4.rainbowSkillBase;
       const lvIdx = tr.phase4.rainbowSkillLevel - 1;
       for (const r of pool) {

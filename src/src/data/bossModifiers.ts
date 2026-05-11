@@ -219,6 +219,7 @@ export interface BossModifier {
 
 import { state } from '../core/state'
 import { random } from '../core/seededRandom'
+import { GENERIC_RESOURCES } from '../systems/classes/ClassResourceFilter'
 
 const bossDecay: BossModifier = {
   id: 'boss_decay',
@@ -690,7 +691,8 @@ const bossScoreTax: BossModifier = {
 
 const DRAIN_TOTAL_PENALTY = 0.30 // boss: 总削弱预算 30%
 const DRAIN_TOTAL_PENALTY_ELITE = 0.15 // elite: 15%
-const DRAINABLE_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold']
+/** Boss 产出削弱可削减的资源池 — Boss 修饰器从此池随机取资源削弱产出 */
+const DRAINABLE_RESOURCES = GENERIC_RESOURCES
 let _drainResources: Set<ResourceType> = new Set()
 let _drainMult = 1
 // 预生成资源（picker 显示用），在 getParams 时消费

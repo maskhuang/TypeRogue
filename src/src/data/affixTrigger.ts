@@ -19,6 +19,7 @@ import {
 import { hasRelation, getKeysWithRelation, PositionRelation } from './keyboardTopology'
 import { rollAffixParams, weightedSampleWithout } from './skillGeneration'
 import { normalizeRotation } from './skillShapes'
+import { ALL_RESOURCES as ALL_RESOURCES_SOT, getActiveResources } from '../systems/classes/ClassResourceFilter'
 
 function roundTo(n: number, d: number): number { const f = 10 ** d; return Math.round(n * f) / f }
 
@@ -1320,7 +1321,8 @@ export function getEffectiveInterval(baseInterval: number, skillId: string, ctx:
   return Math.max(1, Math.round(interval))
 }
 
-export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold', 'energy', 'mutagen']
+/** 所有资源（通用 + 职业专属）— 转发自 SoT (ClassResourceFilter.ALL_RESOURCES)，保留导出兼容下游 */
+export const ALL_RESOURCES = ALL_RESOURCES_SOT
 export const MAX_RECURSE_DEPTH = 10
 export const MAX_CHAIN_DEPTH = 20
 
@@ -1361,12 +1363,8 @@ export const RES_ENCHANTMENT_BY_RESOURCE: Partial<Record<ResourceType, Enchantme
 // ===== Phase 4-6 辅助函数 =====
 
 /** 根据职业过滤可用资源 */
-export function getClassResources(playerClass?: string): ResourceType[] {
-  const pool: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold']
-  if (playerClass === 'wordsmith') pool.push('energy')
-  if (playerClass === 'metamorph') pool.push('mutagen')
-  return pool
-}
+/** @deprecated 直接调用 getActiveResources(playerClass) — 此包装保留向后兼容 */
+export const getClassResources = getActiveResources
 
 /** 随机资源选择（等概率，职业约束） */
 export function weightedRandomResource(ctx: TriggerContext): ResourceType {
@@ -2402,8 +2400,7 @@ export function getTransmuteEligibleResources(
   skillResource: ResourceType,
   playerClass?: string,
 ): ResourceType[] {
-  const allResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold', 'energy', 'mutagen']
-  return allResources.filter(r => {
+  return ALL_RESOURCES_SOT.filter(r => {
     // 排除与自身相同的资源
     if (r === skillResource) return false
     // fragment: 仅造词师可用
