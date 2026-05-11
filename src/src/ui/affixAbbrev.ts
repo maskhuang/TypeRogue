@@ -95,9 +95,9 @@ function fallbackAbbr(type: string): string {
 
 /**
  * 紧凑场景的 affix 显示名：
- *   zh → t('affix.X') = 中文 2 字 arcade 名（变换 / 暴击 / ...）
- *   en → NCBI 4 字母 L4 archive 代码（Sbol/Mmul...）；非物种类落到 3 字母 AFFIX_ABBR
- * 注：NCBI 代码仍属 L4 archive 残留，待 EN locale arcade 化时替换。
+ *   zh → t('affix.X') = 中文常用名（黑帽松鼠猴...）
+ *   en → NCBI 4 字母物种代码（Sbol/Mmul...）；非物种类落到 3 字母 AFFIX_ABBR
+ * 详情场景应直接 t('affix.X') 取全名（en 全名 = "Black-capped Squirrel Monkey"）。
  */
 export function abbreviateAffix(type: string): string {
   if (getLocale() === 'zh') {
@@ -112,8 +112,9 @@ export function abbreviateAffix(type: string): string {
 
 /**
  * 描述/参数中引用其他 affix 类型时的格式化器。
- *   zh → t('affix.X') 2 字 arcade 名（"佣金"）
- *   en → "FullName (NCBI)" L4 archive 残留括注（"Mercenary (Cjac)"）
+ *   zh → t('affix.X') 全名（"普通狨"）
+ *   en → "FullName (NCBI)" 双向锚点（"Common Marmoset (Cjac)"），
+ *        让玩家既能读懂物种又能在 LIST 紧凑代码里对上
  * 非物种类（Pulse/Cluster/etc.）EN 下也直接返回全名（无 NCBI 括注）。
  */
 export function formatAffixRef(type: string): string {
