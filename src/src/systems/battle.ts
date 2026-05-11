@@ -9,7 +9,7 @@ import { eventBus } from '../core/events/EventBus';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
-import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
+import { juiceUp, bumpCombo, bumpScore, bumpMultiplier, bumpTimer, bumpGold, bumpShield, getFloatScale, screenShake, getShakeIntensity, getScoreTier, SCORE_TIER_CLASSES, ScoreRoller, triggerSlowMotion, getTimeScale, checkMilestone, showMilestoneCelebration, showRatingReveal, calculateRating } from '../effects/juice';
 import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBGM, updateBGMTension, releaseBGMTension, emitResourceSound } from '../effects/sound';
 import { spawnParticles } from '../effects/particles';
 import { setPaletteHsl as setBgPalette, setLightnessBias as setBgLBias, setRandomStyle as setBgRandomStyle, setSpeedMultiplier as setBgSpeedMul } from '../effects/balatroBackground';
@@ -1755,7 +1755,14 @@ function startTimer(): void {
     const escalateBonus = getEscalateTimeSpeedBonus();
     if (escalateBonus > 0) timeSpeed += getShieldedValue(escalateBonus, true);
     const timeAccel = getTimeAcceleration(_elapsedSeconds, _isBoss); // Story 42.4: 二次方加速
-    state.time -= 0.1 * timeSpeed * getTimeScale() * timeAccel; // Story 31.4: 慢动作 + 42.4 加速
+    // 护盾优先吸收时间流逝：拥有护盾时时间视为暂停
+    let _timeDec = 0.1 * timeSpeed * getTimeScale() * timeAccel; // Story 31.4: 慢动作 + 42.4 加速
+    if (state.shield > 0 && _timeDec > 0) {
+      const fromShield = Math.min(state.shield, _timeDec);
+      state.shield -= fromShield;
+      _timeDec -= fromShield;
+    }
+    if (_timeDec > 0) state.time -= _timeDec;
 
     // Charge 按住蓄力：每帧累加，蓄满自动释放
     const chargeFull = updateChargeProducers(0.1);
@@ -1846,6 +1853,14 @@ function updateTimerDisplay(): void {
 
   // 危险光晕：time <= 10s 时显示（达标光晕通过 CSS 顺序覆盖）
   el.container.classList.toggle('glow-danger', state.time <= 10);
+
+  // 护盾显示：拥有时显示数值，否则隐藏
+  if (state.shield > 0) {
+    el.shieldDisplay.textContent = String(Math.ceil(state.shield));
+    el.shieldDisplay.classList.add('visible');
+  } else {
+    el.shieldDisplay.classList.remove('visible');
+  }
 
   // Story 42.4: 倍率 HUD 更新
   const accel = getTimeAcceleration(_elapsedSeconds, _isBoss);
@@ -1946,7 +1961,7 @@ function endLevel(): void {
         triggerKey: anchorKey,
         occupiedKeys: allKeys,
         currentWord: '',
-        resources: { base: 0, score: 0, multiplier: 1, time: 0, gold: 0, energy: 0, mutagen: 0 },
+        resources: { base: 0, score: 0, multiplier: 1, time: 0, shield: 0, gold: 0, energy: 0, mutagen: 0 },
         playerGold: state.gold ?? 0,
         targetScore: state.targetScore ?? 0,
         currentTime: state.time ?? 0,
@@ -2929,6 +2944,7 @@ const RESOURCE_TARGET_IDS: Record<string, string> = {
   score: 'score-count',
   multiplier: 'settlement-mult',
   time: 'timer-display',
+  shield: 'shield-display',
   gold: 'battle-gold-count',
 };
 
@@ -2938,6 +2954,7 @@ const RESOURCE_BUMP_FNS: Record<string, () => void> = {
   score: () => bumpScore(),
   multiplier: () => bumpMultiplier(),
   time: () => bumpTimer(),
+  shield: () => bumpShield(),
   gold: () => bumpGold(),
 };
 

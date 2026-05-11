@@ -147,13 +147,13 @@ export function computePracticeGold(effectiveScore: number, ascensionLevel: numb
 
 // === 资源标签 ===
 export const RESOURCE_LABELS: Record<string, string> = {
-  base: '基数', score: '分数', multiplier: '倍率', time: '时间', gold: '金币',
+  base: '基数', score: '分数', multiplier: '倍率', time: '时间', shield: '护盾', gold: '金币',
   energy: '能量', mutagen: '变异素',
 };
 
 // === 资源图标 ===
 export const RESOURCE_ICONS: Record<string, string> = {
-  base: '💥', score: '💯', multiplier: '🔥', time: '⏳', gold: '💰',
+  base: '💥', score: '💯', multiplier: '🔥', time: '⏳', shield: '◆', gold: '💰',
   energy: '⚡', mutagen: '🧬',
 };
 
@@ -163,6 +163,7 @@ export const RESOURCE_COLORS: Record<string, string> = {
   score: '#ffffff',      // 白
   multiplier: '#e74c3c', // 红
   time: '#00cccc',       // 青
+  shield: '#a8a8b0',     // 冷灰金属银（护盾，避开所有 saturated 资源色）
   gold: '#ffd700',       // 金
   energy: '#9b59b6',     // 紫（造词师能量）
   mutagen: '#2ecc71',    // 绿（蜕变师变异素）

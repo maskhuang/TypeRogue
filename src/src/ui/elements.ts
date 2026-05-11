@@ -21,6 +21,7 @@ export function initElements(): UIElements {
     timerDisplay: document.getElementById('timer-display')!,
     timeAccel: document.getElementById('time-accel')!,
     timerBar: document.getElementById('timer-bar-fill')!,
+    shieldDisplay: document.getElementById('shield-display')!,
     levelLabel: document.getElementById('level-label')!,
     triggerZone: document.getElementById('skill-trigger-zone')!,
     particles: document.getElementById('particles')!,

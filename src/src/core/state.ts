@@ -17,6 +17,7 @@ export function createInitialState(): GameState {
     phase: 'battle',
     time: BALANCE.TIME_PER_LEVEL,
     timeMax: BALANCE.TIME_PER_LEVEL,
+    shield: 0,
     score: 0,
     targetScore: 100,
     combo: 0,
@@ -55,6 +56,7 @@ export function createInitialState(): GameState {
       score: 0,
       multiplier: BALANCE.BASE_MULTIPLIER,
       time: BALANCE.TIME_PER_LEVEL,
+      shield: 0,
       gold: 0,
       energy: 0,
       mutagen: 0,
@@ -109,6 +111,12 @@ export function createInitialState(): GameState {
     enumerable: true,
     configurable: true,
   });
+  Object.defineProperty(gameState.resources, 'shield', {
+    get() { return gameState.shield; },
+    set(v: number) { gameState.shield = Math.max(0, v); },
+    enumerable: true,
+    configurable: true,
+  });
 
   return gameState;
 }
@@ -148,6 +156,7 @@ export function resetResources(): void {
   state.resources.score = 0;
   state.resources.multiplier = BALANCE.BASE_MULTIPLIER;
   state.resources.time = state.timeMax;
+  state.resources.shield = 0;
   state.resources.energy = 0;
   state.resources.mutagen = 0;
   state.classResourceProduced = {};

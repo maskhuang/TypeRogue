@@ -82,6 +82,7 @@ const RESOURCE_ABBR: Record<ResourceType, string> = {
   score: 'SCR',
   multiplier: 'MUL',
   time: 'TIM',
+  shield: 'SHD',
   gold: 'GLD',
   energy: 'NRG',
   mutagen: 'MTG',

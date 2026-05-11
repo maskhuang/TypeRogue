@@ -690,7 +690,7 @@ const bossScoreTax: BossModifier = {
 
 const DRAIN_TOTAL_PENALTY = 0.30 // boss: 总削弱预算 30%
 const DRAIN_TOTAL_PENALTY_ELITE = 0.15 // elite: 15%
-const DRAINABLE_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
+const DRAINABLE_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold']
 let _drainResources: Set<ResourceType> = new Set()
 let _drainMult = 1
 // 预生成资源（picker 显示用），在 getParams 时消费

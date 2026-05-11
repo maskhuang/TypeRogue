@@ -37,7 +37,7 @@ import { inputHandler } from './typing/InputHandler';
 
 
 // === 战后统计：记录技能触发 ===
-const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, gold: 0, energy: 0, mutagen: 0 };
+const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, shield: 0, gold: 0, energy: 0, mutagen: 0 };
 
 function recordSkillTrigger(
   skillId: string,
@@ -567,7 +567,7 @@ function triggerAffixSkillWithFeedback(
 
     // 质变Rainbow·光谱：多资源浮字
     if (tr.phase4.allResources && tr.phase4.rainbowSkillBase && tr.phase4.rainbowSkillLevel) {
-      const pool: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+      const pool: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
       const skillBase = tr.phase4.rainbowSkillBase;
       const lvIdx = tr.phase4.rainbowSkillLevel - 1;
       for (const r of pool) {

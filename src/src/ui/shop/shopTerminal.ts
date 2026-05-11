@@ -1489,7 +1489,7 @@ export function cmdStats(): void {
   appendLine(summaryParts.join(' · '));
 
   // ── 3. 资源排序（用于细分行 + 总览）──
-  const resourceOrder: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+  const resourceOrder: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
   const classRes = CLASS_DEFINITIONS[state.classId]?.uniqueResource;
   if (classRes && !resourceOrder.includes(classRes)) resourceOrder.push(classRes);
 

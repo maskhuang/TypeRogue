@@ -147,7 +147,7 @@ export function getShapeDescription(shapeId: string, cellCount: number): string 
 
 /** 职业可用资源池（排除非对应职业的 fragment/mutagen） */
 function getAvailableResources(classId: string): ResourceType[] {
-  const all: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+  const all: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
   if (classId === 'wordsmith') all.push('energy');
   if (classId === 'metamorph') all.push('mutagen');
   return all;
@@ -3061,7 +3061,7 @@ function applyAffixRandomEnchantment(
   }
   // BonusOutput：随机分配一个与技能产出不同的资源
   if (chosen === EnchantmentTypeEnum.BonusOutput) {
-    const allRes: import('../data/affixes').ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+    const allRes: import('../data/affixes').ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
     const eligible = allRes.filter(r => r !== affixSkill.resource);
     affixSkill.bonusOutputResource = eligible[Math.floor(random() * eligible.length)];
   }
@@ -4283,7 +4283,7 @@ type HeatmapDimension = 'triggerCount' | ResourceType;
 let currentHeatmapDimension: HeatmapDimension = 'triggerCount';
 
 function getHeatmapDimensions(): { key: HeatmapDimension; label: string; color: string }[] {
-  const resources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+  const resources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
   // Story 32.2: 激活的职业资源也显示在热力图维度中
   const classRes = CLASS_DEFINITIONS[state.classId]?.uniqueResource;
   if (classRes) resources.push(classRes);
@@ -4374,7 +4374,7 @@ function showHeatmapTooltip(e: MouseEvent, key: string, bs: import('../core/type
   tip.className = 'heatmap-tooltip';
 
   // Story 32.2: 包含激活的职业资源
-  const tooltipResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold'];
+  const tooltipResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold'];
   const tooltipClassRes = CLASS_DEFINITIONS[state.classId]?.uniqueResource;
   if (tooltipClassRes) tooltipResources.push(tooltipClassRes);
   const resourceLines = tooltipResources

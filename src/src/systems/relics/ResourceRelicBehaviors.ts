@@ -109,7 +109,7 @@ export function getFurnaceConfig(): { from: string; to: string } | null {
 
 /** 初始化熔炉资源（获取遗物时调用） */
 export function initFurnace(randomFn: () => number = Math.random): void {
-  const pool: import('../../core/types').ResourceType[] = ['base', 'score', 'multiplier', 'time']
+  const pool: import('../../core/types').ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield']
   _furnaceFrom = pool[Math.floor(randomFn() * pool.length)]
   _furnaceTo = 'gold'
 }

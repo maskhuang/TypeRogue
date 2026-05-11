@@ -1320,7 +1320,7 @@ export function getEffectiveInterval(baseInterval: number, skillId: string, ctx:
   return Math.max(1, Math.round(interval))
 }
 
-export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'energy', 'mutagen']
+export const ALL_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold', 'energy', 'mutagen']
 export const MAX_RECURSE_DEPTH = 10
 export const MAX_CHAIN_DEPTH = 20
 
@@ -1362,7 +1362,7 @@ export const RES_ENCHANTMENT_BY_RESOURCE: Partial<Record<ResourceType, Enchantme
 
 /** 根据职业过滤可用资源 */
 export function getClassResources(playerClass?: string): ResourceType[] {
-  const pool: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
+  const pool: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold']
   if (playerClass === 'wordsmith') pool.push('energy')
   if (playerClass === 'metamorph') pool.push('mutagen')
   return pool
@@ -2402,7 +2402,7 @@ export function getTransmuteEligibleResources(
   skillResource: ResourceType,
   playerClass?: string,
 ): ResourceType[] {
-  const allResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold', 'energy', 'mutagen']
+  const allResources: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold', 'energy', 'mutagen']
   return allResources.filter(r => {
     // 排除与自身相同的资源
     if (r === skillResource) return false

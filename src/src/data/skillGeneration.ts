@@ -20,7 +20,7 @@ import { t } from '../demo/demo-i18n'
 
 // ===== 常量 =====
 
-const GENERIC_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'gold']
+const GENERIC_RESOURCES: ResourceType[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold']
 const ALL_POS_RELATIONS: PositionRelation[] = Object.values(PositionRelation)
 
 /** 获取词条的有效权重（Convert 仅使用 cross 变体权重） */

@@ -27,10 +27,10 @@ export function juiceUpStrong(element: HTMLElement | null): void {
 
 // === 资源产出浮字缩放（以 Lv1 产出者为基准 x1.0，log 放大，无上限，下限 x1.0） ===
 const LV1_ADD_BASE: Record<string, number> = {
-  base: 4, score: 11, multiplier: 0.35, time: 2, gold: 3,
+  base: 4, score: 11, multiplier: 0.35, time: 2, shield: 2, gold: 3,
 };
 const LV1_MUL_BASE: Record<string, number> = {
-  base: 1.0, score: 0.1, multiplier: 0.15, time: 0.2, gold: 0.3,
+  base: 1.0, score: 0.1, multiplier: 0.15, time: 0.2, shield: 0.2, gold: 0.3,
 };
 
 /** 加算浮字缩放：delta = 实际加值 */
@@ -75,6 +75,11 @@ export function bumpGold(): void {
   const el = document.getElementById('battle-gold-display');
   if (!el) return;
   restartAnimation(el, 'gold-bump');
+}
+
+export function bumpShield(): void {
+  const el = getElements();
+  restartAnimation(el.shieldDisplay, 'shield-bump');
 }
 
 // === 屏幕震动 5 档查表系统 ===

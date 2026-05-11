@@ -11,7 +11,7 @@ export type ClassId = 'none' | 'wordsmith' | 'metamorph';
 export type FeatureId = 'pack-system' | 'enchant-choice';
 
 // === 资源系统 ===
-export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'gold' | 'energy' | 'mutagen';
+export type ResourceType = 'base' | 'score' | 'multiplier' | 'time' | 'shield' | 'gold' | 'energy' | 'mutagen';
 
 // === 造词师组装流水线 ===
 export interface AssemblySlot {
@@ -169,6 +169,7 @@ export interface ResourceState {
   score: number;       // 即时加分（直接累加到最终分数）— 产出者 prod_loot/prod_crit 写入
   multiplier: number;  // 倍率（基础 + 连击 + 技能加成）
   time: number;        // 时间资源（倒计时秒数）
+  shield: number;      // 护盾资源（拥有时优先吸收时间流逝，时间视为暂停；无上限，每关重置）
   gold: number;        // 金币资源（跨词累加，战斗结束转入 state.gold）
   energy: number;      // 能量（造词师专属，本关累计）
   mutagen: number;     // 变异素（蜕变师专属，本关累计）
@@ -183,6 +184,7 @@ export interface GameState {
   phase: GamePhase;
   time: number;
   timeMax: number;
+  shield: number;       // 护盾：拥有时时间流逝优先吃护盾（时间视为暂停），无上限，每关战斗开始重置为 0
   score: number;
   targetScore: number;
   combo: number;
@@ -363,6 +365,7 @@ export interface UIElements {
   timerDisplay: HTMLElement;
   timeAccel: HTMLElement;
   timerBar: HTMLElement;
+  shieldDisplay: HTMLElement;
   levelLabel: HTMLElement;
   triggerZone: HTMLElement;
   particles: HTMLElement;
