@@ -312,30 +312,37 @@ X Company
 | 4. 作者 | 创造新文本 | `wordsmith`（造词师）| 重命名 + 重写 flavor |
 | 5. 文本的一部分 | 被吃掉，反向控制 | **endless 模式** | 本体论再框定，**无需开发新模式** |
 
-#### 5-tier vocab 分层铁律 🔒 LOCKED (2026-05-05 · post 5-tier calibration)
+#### 5-tier vocab 分层铁律 🔒 LOCKED (2026-05-05 · post 5-tier calibration · **2026-05-08 部分修订：物种全名前移到 L1**)
 
-每个职业 / endless 状态对应一个 surface vocab tier · L4 与 L5 之间是 **endless step-function gate**（不是 progressive disclosure）：
+每个职业 / endless 状态对应一个 surface vocab tier · L4 与 L5 之间是 **endless step-function gate**（不是 progressive disclosure）。**修订**：物种全名一列从 L5 前移到 L1（affix surface 直接显化）· step-function 在剩余 6 类 L5 reveal（lab vocab / 真名关联 / 食物经济 / 始祖揭示 / 玩家身份揭示）继续生效：
 
 | Tier | 职业 / 状态 | 时机 | 词汇基调 | 灵长 frame | 关键词样例 |
 |---|---|---|---|---|---|
-| L1 | 录入员（`none`）| Cycle 1 早期 / 默认 | 街机 RPG | **NO** | 暴击 / 变换 / 虫潮 / 金币 / 倍率 / 💥 / 💰 |
-| L2 | 校对者（待加 class）| Cycle 2-3 / 校对 class | 校对术语 | **NO** | 勘误 / 对照 / 检视 / 批注 / 校核 |
-| L3 | 修改者（`metamorph`）| Cycle 3-4 / 修改 class | 编辑术语 | **NO** | 调整 / 重排 / 删改 / 校样 / 蜕化 |
-| L4 | 作者（`wordsmith`）| Cycle 4-5 / 作者 class | 创作 / 署名 / 责任档案 | **NO** | 创作 / 署名 / 发表 / 责任 / Subject N-1976（fictional anchor 编号 OK · 真名 NOT OK）|
-| **L5** | **文本的一部分 / 猴子（endless）** | **Cycle 6+ endless** | **灵长 lab vocab + 物种真名 + N-1976=Nim 关联 reveal** | **YES** | 食丸 / 代币 / chimpomat / WGTA / 香蕉 / 黑帽松鼠猴 / 智人 / Nim · Washoe · Lana 真名 |
+| L1 | 录入员（`none`）| Cycle 1 早期 / 默认 | 街机 RPG + 物种学名 | **物种全名 YES · 其余 NO** | 黑帽松鼠猴 / 倭黑猩猩 / 智人 / 金币 / 倍率 / 💥 / 💰（物种全名作为 affix surface 直接显化 · 但**不**配 lab vocab / 真名关联 / 香蕉经济）|
+| L2 | 校对者（待加 class）| Cycle 2-3 / 校对 class | 校对术语 + 物种学名 | **物种全名 YES · 其余 NO** | 勘误 / 对照 / 检视 / 批注 / 校核 |
+| L3 | 修改者（`metamorph`）| Cycle 3-4 / 修改 class | 编辑术语 + 物种学名 | **物种全名 YES · 其余 NO** | 调整 / 重排 / 删改 / 校样 / 蜕化 |
+| L4 | 作者（`wordsmith`）| Cycle 4-5 / 作者 class | 创作 / 署名 / 责任档案 + 物种学名 | **物种全名 YES · 其余 NO** | 创作 / 署名 / 发表 / 责任 / Subject N-1976（fictional anchor 编号 OK · 真名 NOT OK）|
+| **L5** | **文本的一部分 / 猴子（endless）** | **Cycle 6+ endless** | **灵长 lab vocab + N-1976=Nim 关联 reveal + 食物经济 retcon** | **YES（全包）** | 食丸 / 代币 / chimpomat / WGTA / 香蕉 / Nim · Washoe · Lana 真名 / Subject XX-0001 始祖 / "你 = 智人" reveal |
 
 ##### 铁律
 
-**base game (Cycle 1-5 · L1-L4 全 4 职业) 永不显化**：
-- 物种真名（黑帽松鼠猴 / 智人 / 倭黑猩猩 等）
+**base game (Cycle 1-5 · L1-L4 全 4 职业) 显化 vs 不显化** （2026-05-08 修订）：
+
+**已允许 L1 起显化**：
+- 物种全名（黑帽松鼠猴 / 智人 / 倭黑猩猩 等 · 作为 affix surface 名 · 详 §2.15.1 修订）
+
+**仍永不显化**（L1-L4 全程 gate）：
 - specific subject 真名关联（"N-1976 即 Nim Chimpsky"）
 - primate research lab vocab（chimpomat / WGTA / Skinner-box / lexigram-keyboard / 食丸 / 代币）
-- 香蕉 / 食物奖励经济（base game 用金币）
+- 香蕉 / 食物奖励经济（base game 用金币 · 1b507b1 保留）
+- "你 = 智人" 玩家身份回指
+- Subject XX-0001 始祖录入员 reveal
 
-**L5 (endless) step-function 启用**：
-- 上述全部允许显化
+**L5 (endless) step-function 启用**（修订：剩余 6 类，不含物种全名）：
+- 上述 5 类"仍永不显化"全部允许显化
 - N-1976 与 Nim 真名关联仅此层 reveal（B8 reveal 后段落）
 - "唯一逃脱机制 = 不玩 endless（保住猴子状态）" 已锁 § 第 5 职业 对位
+- **物种全名不在此 gate 内**——L1 已显化，L5 段落直接 reference 即可（不再"reveal"）
 
 ##### archive_designation 双层制度
 
@@ -343,9 +350,10 @@ X Company
 - L4 (作者) 显化 fictional archive_designation（"Subject N-1976" / "Subject W-1965"等编号）· 玩家看到编号但不知 real-world 关联
 - L5 (endless) reveal real-world lineage（N-1976 ≈ Nim · W-1965 ≈ Washoe · L-1971 ≈ Lana · K-1980 ≈ Kanzi · SA-1974 ≈ Sherman/Austin）
 
-具体物种（59 affix archive · 详 `generated/affix-l5-archives.mjs`）：
-- L4 archive_designation = 工号 / "前一代研究主体（项目档案已封存）"等 fictional化
-- L5 archive 显化物种全名（黑帽松鼠猴 / 智人 等 · 仅 endless / B8 后）
+具体物种（59 affix archive · 详 `generated/affix-l5-archives.mjs`）（2026-05-08 修订）：
+- **L1 affix surface 直接显化物种全名**（黑帽松鼠猴 / 智人 等 · 玩家可见 affix 名 = species_zh）
+- L4 archive_designation = 工号 / "前一代研究主体（项目档案已封存）"等 fictional化 · 用于责任档案 / 作者 lore（与 L1 affix surface 平行存在 · 不冲突：affix 名是该物种，archive_designation 是该 affix 在公司档案里的工号）
+- L5 angle = lab vocab + Nim 真名关联仍 gate（物种全名本身不再 gate）· `generated/affix-l5-archives.mjs` 角色降级为 affix↔物种 lookup 表 + endless 段落 reference 资产
 
 #### 第 5 职业 = endless 模式（关键级联）
 

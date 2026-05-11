@@ -1,30 +1,40 @@
 // Auto-derived from docs/narrative-design.md v4.1-late §2.6 词条 layered footnote
-// (LOCKED 2026-05-05 · post 5-tier 职业模型 calibration)
+// (LOCKED 2026-05-05 · post 5-tier 职业模型 calibration · 2026-05-08 修订)
 //
-// 灵长类全名 archive · L5 endless reveal 专用
+// 灵长类全名 archive · L1 affix surface 直接显化 + L5 lookup 资产
 //
-// 5-tier 职业模型 (LOCKED)：
-//   L1 录入员 / L2 校对员 / L3 修改员 / L4 作者     ← Cycle 1-5 base game · 全程 NO 灵长 frame
-//   L5 猴子                                         ← Cycle 6+ endless · primate reveal step-function
+// 5-tier 职业模型 (LOCKED · 2026-05-08 部分修订)：
+//   L1 录入员 / L2 校对员 / L3 修改员 / L4 作者     ← Cycle 1-5 base game
+//   L5 猴子                                         ← Cycle 6+ endless
 //
-// L1 affixNames（src/data-json/affixes.json）已替换为 arcade/RPG 2-char 中文：
-//   crit→暴击 · convert→变换 · cascade→激流 · void→虚空 · ...
+// 修订说明（详 docs/narrative-design.md §2.15.1 修订条款）：
+//   - 物种全名一列从 L5 前移到 L1（affix surface 直接显化）
+//   - L1 affixNames（src/data-json/affixes.json · demo-i18n.ts）= species_zh 全名
+//     （convert→黑帽松鼠猴 · crit→普通猕猴 · void→智人 · swarm→西部大猩猩 · ...）
+//   - L5 step-function 在剩余 6 类继续生效：lab vocab / Nim·Washoe·Lana 真名 /
+//     N-1976=Nim 关联 / 香蕉食物经济 / 始祖 Subject XX-0001 / 玩家=智人 reveal
+//   - 本文件角色降级为：affix↔物种 lookup 表 + endless 段落 reference 资产
 //
-// 旧 v3.x affix 名（57 灵长类全名）下沉至 **L5 endless reveal**（NOT L4）。
-// L4 (作者) 仍是 base game 终点 · M5 firewall 的 reclassify 目标 · 用 fictional化
-// archive_designation（"前一代被定位为作者的处置员工 [██]" 等），永不显示物种真名。
-//
-// 设计纪律（铁律）：
-//   - L1-L4 base game 全部 4 层（录入/校对/修改/作者）**永不**显示物种全名
-//     （违反 M4 motive · 暴露灵长 frame）
-//   - 物种真名仅在 L5 endless reveal 段落出现（B8 reveal 后 / Cycle 6+ endless 触发）
-//   - 物种全名作为"前一代研究主体（项目档案已封存）"的背景 lore，不及 §4.5 N1976
-//     hidden tragedy core 的 emotional weight
+// 设计纪律（修订后铁律）：
+//   - 物种全名 L1 affix surface 直接显化（NOT gate）
+//   - 但物种全名**不**配 lab vocab / 真名关联 / 香蕉经济 / 玩家身份回指
+//     （这些仍 L5 gate）
+//   - L4 archive_designation = 工号 / "前一代研究主体（项目档案已封存）"等 fictional化
+//     仍用于责任档案 / 作者 lore（与 L1 affix surface 物种名平行存在）
+//   - L5 endless 段落直接 reference 物种学名即可（不再"reveal"——L1 已显化）
+//   - 物种全名 emotional weight 始终 < §4.5 N1976 hidden tragedy core
 //
 // 关联：
 //   - generated/specific-subjects.mjs § 5 anchor pool (N1976/W1965/L1971/K1980/SA1974)
 //   - generated/moko-glyphs.mjs § sticker visual + GLOSS pool
 //   - relic-departments.mjs § 11 子系统 → 7 部门 mapping
+
+// 数据结构（2026-05-08 修订语义）：
+//   l1      — LEGACY arcade 2-char 名（37995f9 时代 L1 surface · 现已废弃 surface
+//             但保留作历史记录 / 备用 fallback / 未来 i18n alt-label）
+//   archive — species_zh 全名 = **当前 L1 affix surface 实际显化值**
+//             （src/data-json/affixes.json affixNames + src/src/demo/demo-i18n.ts
+//              ZH affix.X / EN affix.X common name 同源此列）
 
 export const AFFIX_L5_MONKEY_ARCHIVES = {
   // ════════════════════════════════════════════════════════
@@ -118,27 +128,41 @@ export const AFFIX_L5_MONKEY_ARCHIVES = {
 // ─── 设计纪律（铁律 · pipeline validators 须 enforce）───
 
 export const AFFIX_L5_MONKEY_ARCHIVE_RULES = {
+  // 2026-05-08 修订：物种全名前移到 L1 · 其余 6 类 L5 reveal 继续 gate
   forbidden: [
-    'L1-L4 base game 任何层（录入/校对/修改/作者）显示物种全名 — 违反 M4 motive · 暴露灵长 frame',
+    'L1-L4 base game 显化 specific subject 真名（"N-1976 即 Nim Chimpsky"）— 仍 L5 gate',
+    'L1-L4 base game 显化 primate research lab vocab（chimpomat / WGTA / Skinner-box / lexigram-keyboard / 食丸 / 代币）— 仍 L5 gate',
+    'L1-L4 base game 显化 banana / 食物奖励经济（base game 用金币 · 1b507b1 保留）— 仍 L5 gate',
+    'L1-L4 base game 玩家身份回指（"你 = 智人"）— 仍 L5 gate',
+    'L1-L4 base game 显化 Subject XX-0001 始祖录入员 — 仍 L5 gate',
     'L5 endless 段落直接复述 specific real-world taxonomy data / 自然分布 / IUCN status',
-    '把物种全名当作 power fantasy buff 描述（"黑猩猩之力"等）',
+    '把物种全名当作 power fantasy buff 描述（"黑猩猩之力"等）— L1 affix surface 只是命名，不上 buff 文案',
     'archive 与 §4.5 N1976 hidden tragedy core 平等 emotional weight（必须 N1976 highest）',
   ],
   required: [
-    '物种真名仅 L5 endless reveal（Cycle 6+ / B8 reveal 后段落）显化',
-    'L1 录入员 / L2 校对员 / L3 修改员 / L4 作者 全部用 arcade/RPG 2-char 名 + fictional化 anchor',
-    'archive 字段保留 species_zh 真名以备 endless 段落 reference',
-    'L5 出现时必须配套 fictional化 phrase（如"前一代研究主体（项目档案已封存）"）',
+    '物种全名作为 L1 affix surface 直接显化（src/data-json/affixes.json affixNames + demo-i18n.ts affix.X）',
+    'L4 archive_designation = 工号 / "前一代研究主体（项目档案已封存）"等 fictional化 · 用于责任档案与 affix surface 物种名平行存在',
+    'L5 endless 段落 reference 物种学名时只是 lookup（不再"reveal"——L1 已显化）· 真正 reveal 的是 lab vocab + 真名关联 + 食物经济 retcon',
+    'archive 字段保留 species_zh 全名 · 作为 affix↔species lookup（pipeline validators / endless writer 消费）',
   ],
 }
 
 // ─── Quick lookup helpers ───
+// (2026-05-08 修订：L1 surface 现 = species，所以 AFFIX_TO_L1 与 AFFIX_TO_ARCHIVE
+//  返回值在 L1 = species 这个事实下相等 · 保留两个别名让 pipeline 语义更清晰)
 
 export const AFFIX_TO_ARCHIVE = Object.fromEntries(
   Object.entries(AFFIX_L5_MONKEY_ARCHIVES).map(([k, v]) => [k, v.archive])
 )
 
+// L1 affix surface 实际显化值（= species_zh · 与 src/data-json/affixes.json 同源）
 export const AFFIX_TO_L1 = Object.fromEntries(
+  Object.entries(AFFIX_L5_MONKEY_ARCHIVES).map(([k, v]) => [k, v.archive])
+)
+
+// LEGACY 查表 · arcade 2-char 名（37995f9 时代 L1 surface · 现已废弃 surface）
+// pipeline / i18n / fallback 仍可消费（如 alt-label / 紧凑 UI）
+export const AFFIX_TO_ARCADE_LEGACY = Object.fromEntries(
   Object.entries(AFFIX_L5_MONKEY_ARCHIVES).map(([k, v]) => [k, v.l1])
 )
 
