@@ -844,11 +844,13 @@ export function enterTerminalShop(_won?: boolean): void {
   // Clear viewport then render welcome
   const vp = document.getElementById('terminal-viewport');
   if (vp) vp.innerHTML = '';
-  // browse panel 随 viewport 一起被 wipe；entry 不再 auto-LIS，玩家显式 LIS / F1 才进 browse
+  // browse panel 随 viewport 一起被 wipe；entry 自动触发 LIS（与 BUY/RES 后
+  // auto-LIS 同模式 · shopTerminal.ts:1114/1152/1194/1252/1392），让玩家进店即见货品
   previewState.browsePanelEl = null;
   previewState.lastListRowsBySku = new Map();
   renderWelcome();
   setPrompt('');
+  terminal.cmdList();
   workbench.syncWorkbenchInbox();
   workbench.syncWorkbenchRelics();
   workbench.syncWorkbenchKeys();
