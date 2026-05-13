@@ -69,19 +69,53 @@ function setSubmitButtonAwaiting(awaiting: boolean): void {
 
 function promptBindingsWarning(nextStage: 'warn-inbox' | 'proceed'): void {
   previewState.pendingSubmit = { stage: 'warn-bindings', nextStage };
-  showOnly('terminal');
   setSubmitButtonAwaiting(true);
+  // 同步往 terminal 追写（保留键盘 Y/N 输入路径）
   terminal.appendLine(t('shop.terminal.submit.warn_no_bindings'), 'redacted');
   terminal.appendLine(t('shop.terminal.submit.warn_no_bindings_confirm'), 'dim');
+  // workbench inline 对话框（不切走 terminal）
+  showWorkbenchConfirm(
+    t('shop.terminal.submit.warn_no_bindings'),
+    t('shop.terminal.submit.warn_no_bindings_confirm'),
+  );
 }
 
 function promptInboxWarning(): void {
   const n = state.player.inbox.length;
   previewState.pendingSubmit = { stage: 'warn-inbox', nextStage: 'proceed' };
-  showOnly('terminal');
   setSubmitButtonAwaiting(true);
   terminal.appendLine(t('shop.terminal.submit.warn_intray_pending', { n, s: n > 1 ? 'S' : '' }), 'redacted');
   terminal.appendLine(t('shop.terminal.submit.warn_inbox_left'), 'dim');
+  showWorkbenchConfirm(
+    t('shop.terminal.submit.warn_intray_pending', { n, s: n > 1 ? 'S' : '' }),
+    t('shop.terminal.submit.warn_inbox_left'),
+  );
+}
+
+/** workbench 内嵌确认对话框 · 不切走 terminal */
+function showWorkbenchConfirm(title: string, hint: string): void {
+  const dialog = document.getElementById('wb-confirm-dialog');
+  const msg = document.getElementById('wb-confirm-msg');
+  if (!dialog || !msg) return;
+  msg.innerHTML = `<div class="wb-confirm-title">${title}</div><div class="wb-confirm-hint">${hint}</div>`;
+  dialog.style.display = '';
+  // 焦点放 Yes，便于 Enter 直接确认
+  setTimeout(() => document.getElementById('wb-confirm-yes')?.focus(), 0);
+  document.addEventListener('keydown', confirmKeyHandler, true);
+}
+
+function hideWorkbenchConfirm(): void {
+  const dialog = document.getElementById('wb-confirm-dialog');
+  if (dialog) dialog.style.display = 'none';
+  document.removeEventListener('keydown', confirmKeyHandler, true);
+}
+
+/** 对话框打开时的键盘 Y/N/Esc 捷径（capture 阶段拦截，防止冒泡到游戏） */
+function confirmKeyHandler(e: KeyboardEvent): void {
+  if (!previewState.pendingSubmit) return;
+  const k = e.key.toLowerCase();
+  if (k === 'y') { e.preventDefault(); e.stopPropagation(); handleSubmitConfirmation('Y'); return; }
+  if (k === 'n' || k === 'escape') { e.preventDefault(); e.stopPropagation(); handleSubmitConfirmation('N'); return; }
 }
 
 /**
@@ -94,6 +128,7 @@ export function handleSubmitConfirmation(input: string): boolean {
   if (up === 'Y' || up === 'YES') {
     const nextStage = previewState.pendingSubmit.nextStage;
     previewState.pendingSubmit = null;
+    hideWorkbenchConfirm();
     if (nextStage === 'warn-inbox') {
       promptInboxWarning();
     } else {
@@ -103,6 +138,7 @@ export function handleSubmitConfirmation(input: string): boolean {
   }
   if (up === 'N' || up === 'NO') {
     previewState.pendingSubmit = null;
+    hideWorkbenchConfirm();
     terminal.appendLine(t('shop.terminal.submit.aborted'), 'dim');
     terminal.appendBlank();
     setSubmitButtonAwaiting(false);
@@ -220,6 +256,11 @@ function setupDrawerHandlers(): void {
   // Story 60.4: SUBMIT FORM → startLevel
   const submitBtn = document.getElementById('wb-submit-btn');
   if (submitBtn) submitBtn.onclick = triggerSubmit;
+  // Submit 警告对话框 · workbench inline Y/N
+  const yesBtn = document.getElementById('wb-confirm-yes');
+  const noBtn = document.getElementById('wb-confirm-no');
+  if (yesBtn) yesBtn.onclick = () => handleSubmitConfirmation('Y');
+  if (noBtn) noBtn.onclick = () => handleSubmitConfirmation('N');
   // Update WORDS folder count
   const countEl = document.getElementById('words-folder-count');
   if (countEl) countEl.textContent = String(state.player.wordDeck.length).padStart(3, '0');
@@ -779,6 +820,17 @@ function buildWorkbenchScreen(): string {
           <div class="wb-hint">
             <span class="hint-strong"><kbd>TAB</kbd><span data-i18n="wb.hint_tab_terminal">终端 ⇄</span></span>
             <span><kbd>ESC</kbd><span data-i18n="wb.hint_esc">EXIT</span></span>
+          </div>
+        </div>
+
+        <div id="wb-confirm-dialog" class="wb-confirm-dialog" style="display:none" role="dialog" aria-modal="true">
+          <div class="wb-confirm-card">
+            <div class="wb-confirm-stamp">⚠ WARNING</div>
+            <div class="wb-confirm-msg" id="wb-confirm-msg"></div>
+            <div class="wb-confirm-actions">
+              <button id="wb-confirm-yes" class="wb-confirm-btn wb-confirm-btn-yes" type="button">[Y] 确认 · YES</button>
+              <button id="wb-confirm-no" class="wb-confirm-btn wb-confirm-btn-no" type="button">[N] 取消 · NO</button>
+            </div>
           </div>
         </div>
       </div>

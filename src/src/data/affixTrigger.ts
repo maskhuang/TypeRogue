@@ -2562,6 +2562,7 @@ export function serializeSkill(
     neighborPosRel: skill.neighborPosRel,
     shapeId: skill.shapeId,
     rotation: skill.rotation,
+    v2Ids: skill.v2Ids ? [...skill.v2Ids] : undefined,
     runtime: {
       ...runtimeState,
       mirrorCopiedAffix: runtimeState.mirrorCopiedAffix ? { ...runtimeState.mirrorCopiedAffix } : null,
@@ -2592,6 +2593,7 @@ export function deserializeSkill(
     // 老存档可能存有被 placeability filter 移除的 rotation index（如 domino rot 3 主斜，
     // tetromino_T rot 11 等）；normalizeRotation 把超界值 wrap 到当前有效范围。
     rotation: normalizeRotation(data.shapeId ?? 'monomino', data.rotation ?? 0),
+    v2Ids: data.v2Ids ? [...data.v2Ids] : undefined,
   }
   const runtimeState: SkillRuntimeState = {
     skillId: data.id,

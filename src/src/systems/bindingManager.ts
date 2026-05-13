@@ -10,6 +10,7 @@
 import { mapShapeToKeys, getShapeRotationCount } from '../data/skillShapes'
 import { KEYS, PUNCTUATION_KEYS } from '../core/constants'
 import { FREQ_UNLOCK_THRESHOLD } from './letters/LetterFrequencySystem'
+import { equipAffixV2, unequipAllOnSkill } from './affixV2Equipped'
 
 // ===== Types =====
 
@@ -21,7 +22,7 @@ export interface BindShapeResult {
 
 interface BindingState {
   bindings: Map<string, string>
-  affixSkills: Map<string, { shapeId?: string; rotation?: number }>
+  affixSkills: Map<string, { shapeId?: string; rotation?: number; v2Ids?: string[] }>
 }
 
 // ===== Core Functions =====
@@ -76,6 +77,14 @@ export function bindShapeToKeys(
     st.bindings.set(key, skillId)
   }
 
+  // ── V2 affix 同步：绑定成功后把 v2Ids 装到 anchor key ──
+  const v2Ids = skill?.v2Ids
+  if (v2Ids && v2Ids.length > 0) {
+    for (const defId of v2Ids) {
+      equipAffixV2(skillId, normalizedAnchor, defId)
+    }
+  }
+
   return { success: true, displacedSkillIds }
 }
 
@@ -94,6 +103,8 @@ export function unbindSkill(st: BindingState, skillId: string): string[] {
   for (const key of released) {
     st.bindings.delete(key)
   }
+  // ── V2 affix 同步：清空该 skill 上的所有 V2 instance ──
+  unequipAllOnSkill(skillId)
   return released
 }
 

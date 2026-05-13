@@ -1,0 +1,220 @@
+// ============================================
+// 打字肉鸽 - 新 Affix 系统 · TriggerSpec / EffectSpec 类型
+// ============================================
+// 设计文档:
+//   - docs/design/affix-rewrite-research.md §5（trigger 系统）
+//   - docs/design/affix-rewrite-tag-system.md §4-5（FireFilter / Effect）
+
+import type { Tag } from './affixTags'
+import type { PositionRelation } from './keyboardTopology'
+
+// ===== FireFilter（5 维） =====
+// 注：完整类型定义在 src/src/systems/fireFilter.ts；此处仅为 TriggerSpec.on_fire 引用。
+// 避免循环 import，FireFilter 的运行时匹配函数在 fireFilter.ts。
+
+/** 完整 fire filter · 5 维正交（详 affix-rewrite-tag-system.md §4.2） */
+export interface FireFilter {
+  /** behavior sampling：来源 affix 携带此 tag（any-of）*/
+  readonly tag?: Tag | readonly Tag[]
+  /** focal subgroup：键盘拓扑位置关系 */
+  readonly posRel?: PositionRelation
+  /** resource sampling：来源 skill 产出资源类型 */
+  readonly resource?: string
+  /** event-type：来源 fire 是否暴击 */
+  readonly is_crit?: boolean
+  /** event-type：来源 fire 是否触发满层释放 */
+  readonly stack_state?: 'full' | 'partial'
+}
+
+// ===== WindowPattern (Phase 2 · on_window_mode) =====
+
+/** on_window_mode 的 pattern 注册表（详 tag-system §5.3.2） */
+export type WindowPattern =
+  | 'rhythm_stable'         // std(inter-key intervals) < threshold
+  | 'hand_alternation'      // L-R 交替比 > threshold
+  | 'bpm_lock'              // mean ≈ target BPM, jitter 小
+  // Phase 3 扩展：
+  // | 'accel' | 'decel' | 'same_hand_streak'
+
+/** on_window_mode 的窗口参数 */
+export interface WindowSpec {
+  readonly size: number
+  readonly unit: 'keys' | 'seconds' | 'words'
+}
+
+// ===== TriggerSpec (Phase 1 + Phase 2) =====
+
+/** Phase 1 trigger 集（详 research §5.1） */
+export type Phase1TriggerSpec =
+  | { type: 'passive' }
+  | { type: 'on_key' }
+  | { type: 'on_word_end' }
+  | { type: 'on_self_fire' }
+  | { type: 'on_fire'; filter?: FireFilter }
+  | { type: 'every_n_keys'; n: number }
+
+/** Phase 2 trigger 扩展（详 research §5.2） */
+export type Phase2TriggerSpec =
+  | { type: 'on_window_mode'; pattern: WindowPattern; window?: WindowSpec; threshold?: number }
+  | { type: 'on_sequence'; pattern: string }
+  | { type: 'one_per_window'; n: number; inner: TriggerSpec }    // 包裹 inner trigger，限流
+
+/** 完整 TriggerSpec union */
+export type TriggerSpec = Phase1TriggerSpec | Phase2TriggerSpec
+
+// ===== ScaleByTag (供 EffectSpec 引用) =====
+
+export interface ScaleByTag {
+  readonly type: 'tag_count'
+  readonly tag: Tag | readonly Tag[]
+  readonly factor: number
+  /** 计数范围；缺省 = all_skills · pick 字段被忽略（计数语义） */
+  readonly scope?: TargetSelector
+}
+
+// ===== TargetSelector =====
+// 统一范围类型 · 用于 fire_target / apply_aura / apply_status / ScaleByTag.scope / count_tag_*.scope
+//
+// 4 种 selector + 可选 pick 量词：
+//   pick='all'     → 范围内全部目标（默认）
+//   pick='random'  → 范围内随机 1 个
+// 计数 context（ScaleByTag / count_tag_*）下 pick 被忽略——计数不需要"挑一个"。
+
+export type TargetSelector =
+  | { type: 'self' }
+  | { type: 'neighbors'; posRel: PositionRelation; pick?: 'all' | 'random' }
+  | { type: 'matched_tag'; tag: Tag; pick?: 'all' | 'random' }
+  /** 按主产出资源过滤（如"所有 score 产出 skill"）*/
+  | { type: 'matched_resource'; resource: string; pick?: 'all' | 'random' }
+  | { type: 'all_skills'; pick?: 'all' | 'random' }
+
+// ===== AuraModifier (apply_aura 用) =====
+
+export type AuraModifier =
+  /** 邻居 base += ratio × neighbor_resource_Lv1_base */
+  | { type: 'base_add'; ratio: number }
+  /** 邻居 multiplier factor += amount（factor delta，非资源比例）*/
+  | { type: 'factor_add'; amount: number }
+  /** 邻居 crit chance += amount（绝对百分比，0.10 = +10%）*/
+  | { type: 'crit_chance_add'; amount: number }
+  /** 邻居输出 +amount%（绝对百分比，0.10 = +10%）*/
+  | { type: 'output_bonus_pct'; amount: number }
+
+// ===== StatusKeyword (apply_status 占位 · K4 D' 决议)
+// 词表暂未敲定（推迟到 narrative status register 决议），运行时 stub。
+export type StatusKeyword = string
+
+// ===== ConditionSpec (conditional 用) =====
+// K4 D' 决议：基础 8 条永远启用；status 依赖 2 条作占位（runtime stub 返 false）
+
+export type ConditionSpec =
+  // 基础 8 条（不依赖 status）
+  | { type: 'is_crit' }
+  | { type: 'word_length_gte'; n: number }
+  | { type: 'word_length_lte'; n: number }
+  | { type: 'count_tag_gte'; tag: Tag; n: number; scope?: TargetSelector }
+  | { type: 'count_tag_lte'; tag: Tag; n: number; scope?: TargetSelector }
+  /**
+   * 资源量低于阈值 · ratio 是 Lv1 base 的比例（0.5 = 50% Lv1 base）
+   * 例：resource='score', ratio=2 → 阈值 = 2 × score_Lv1_base = 22 (Lv1=11)
+   */
+  | { type: 'resource_below'; resource: string; ratio: number }
+  /** 资源量高于阈值 · ratio 同上 */
+  | { type: 'resource_above'; resource: string; ratio: number }
+  | { type: 'affix_key_count_gte'; n: number }
+  // status 依赖 2 条（K4 D' 占位 · 运行时 stub）
+  | { type: 'has_status'; target: TargetSelector; status: StatusKeyword }
+  | { type: 'status_count_gte'; target: TargetSelector; status: StatusKeyword; n: number }
+
+// ===== Rate limit 常量 (fire_target 防递归爆炸) =====
+// K1 决议：Bazaar 风限流——同一来源每秒最多 4 次触发
+export const FIRE_TARGET_RATE_LIMIT_PER_SEC = 4
+
+// ===== EffectSpec =====
+// 4 个核心 kind（2026-05-12 锁定）：2 个关内成长 + 2 个一次性。
+// 关内成长 = 每次 trigger 命中累积，battle end 重置（Bazaar "for the fight" pattern）。
+// 一次性    = 每次 trigger 输出固定值，无累积。
+//
+// 详 docs/design/affix-rewrite-tag-system.md §5（Effect Scaling 接口）。
+
+/** Effect 规格（数值产出 / 关内成长 / 一次性）*/
+export type EffectSpec =
+  /** 无 effect（占位 · 默认值）*/
+  | { kind: 'noop' }
+
+  /**
+   * 关内成长 · base 累加
+   * 每次 trigger 命中 → 累加 ratio × skill_resource_Lv1_base（for the fight）；battle end 重置。
+   * selector 缺省 = self（写到本 instance state.cumulativeBaseAdd）；
+   * selector 提供时按 scope 展开，写到 per-skill aggregate（affixV2State._skillCumBase）。
+   * 数值演算：fire N 次后 cum base = N × ratio × Lv1_base
+   */
+  | { kind: 'add'; ratio: number; scale?: ScaleByTag; selector?: TargetSelector }
+
+  /**
+   * 关内成长 · multiplier factor 累加
+   * 每次 trigger 命中 → 累加 amount（for the fight）；battle end 重置。
+   * selector 缺省 = self（写到本 instance state.cumulativeFactorAdd）；
+   * selector 提供时按 scope 展开，写到 per-skill aggregate（affixV2State._skillCumFactor）。
+   * 数值演算：fire N 次后 factor = 1 + N × amount；线性增长（非指数）。
+   */
+  | { kind: 'multiply'; amount: number; scale?: ScaleByTag; selector?: TargetSelector }
+
+  /**
+   * 一次性产出
+   * 每次 trigger 命中 → 产出 ratio × resource_Lv1_base 点 resource；
+   * 无累积、无重置。
+   * 设计意图：同上 `add`——ratio 是资源 Lv1 base 比例，跨资源等效。
+   */
+  | { kind: 'gain_resource'; resource: string; ratio: number; scale?: ScaleByTag }
+
+  /**
+   * 多 effect 顺序执行（加算层 → 乘算层 → 一次性产出 的顺序结算）
+   *
+   * **使用约束（2026-05-12 决议）**：composite **仅用于 stack 模式**——
+   * 把 stack_inc + stack_release 在同 trigger 下 atomic 组合。
+   * 其他"同 trigger 多 effect"场景应拆为多 affix（同 skill 多槽位），
+   * 不要用 composite 作为通用复合容器。
+   *
+   * 合法例：composite([stack_inc(1), stack_release(8, gain, reset:true)])
+   * 不合法：composite([add, gain_resource])  → 应拆 2 affix
+   */
+  | { kind: 'composite'; effects: readonly EffectSpec[] }
+
+  /**
+   * 条件包装 · if-then[-else]
+   * when 评估命中 → 执行 then；else 缺省 = 不执行
+   */
+  | { kind: 'conditional'; when: ConditionSpec; then: EffectSpec; else?: EffectSpec }
+
+  /**
+   * 触发目标 skill 完整 re-fire（K1 决议 ii · Bazaar 风）
+   * 目标 skill 走一遍完整 fire pipeline（含所有 affix 重评估）。
+   * 防递归：同一来源 4 fires/sec 限流（FIRE_TARGET_RATE_LIMIT_PER_SEC）。
+   */
+  | { kind: 'fire_target'; selector: TargetSelector }
+
+  /**
+   * 给目标加持续 aura buff/debuff（K3 决议：仅 'fight' duration · battle end 清除）
+   * 不是 per-fire 触发——是常驻 modifier。
+   */
+  | { kind: 'apply_aura'; selector: TargetSelector; modifier: AuraModifier }
+
+  /**
+   * 给目标加 status 层（K4 D' 占位 · 词表未定，runtime stub）
+   * amount 为层数（≥1）；duration 为 ticks/seconds，由 status 系统解析。
+   */
+  | { kind: 'apply_status'; target: TargetSelector; status: StatusKeyword; amount: number; duration?: number }
+
+  /** 自身 stack 计数 +amount（默认 +1）· 需 instance state */
+  | { kind: 'stack_inc'; amount?: number }
+
+  /**
+   * stack 达 threshold 时执行 release effect；reset=true 时清零（K5 决议：state 在 registry）
+   */
+  | { kind: 'stack_release'; threshold: number; release: EffectSpec; reset?: boolean }
+
+// ===== 默认值 =====
+
+export const DEFAULT_TRIGGER: TriggerSpec = { type: 'passive' }
+export const DEFAULT_EFFECT: EffectSpec = { kind: 'noop' }

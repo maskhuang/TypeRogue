@@ -323,6 +323,7 @@ export interface AffixSkillInstance {
   purchasePrice?: number                 // 购买价格（用于转卖计算）
   shapeId?: string                       // Polyomino 形状 ID（默认 'monomino'）
   rotation?: number                      // 形状旋转态（0~3，默认 0）
+  v2Ids?: string[]                       // V2 affix def id 列表（非空时旧 affixes 通道短路）
 }
 
 // ===== 技能运行时状态（战斗中） =====
@@ -367,6 +368,7 @@ export interface AffixSkillSaveData {
   neighborPosRel?: PositionRelation      // 学徒·观摩：随机分配的位置关系
   shapeId?: string                       // Polyomino 形状 ID（默认 'monomino'）
   rotation?: number                      // 形状旋转态（0~3，默认 0）
+  v2Ids?: string[]                       // V2 affix def id 列表
   runtime: SkillRuntimeState
 }
 

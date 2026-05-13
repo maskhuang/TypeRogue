@@ -527,6 +527,8 @@ export function buildEnchantmentInfo(_skillId: string): string | undefined {
 // === 词条制技能 tooltip 数据构建（Story 35.11 AC2/AC8） ===
 import type { AffixTooltipInfo, SmartEstimate, EstimateBreakdownLine } from '../ui/keyboard/KeyTooltip';
 import type { AffixSkillInstance, SkillRuntimeState, QuestEnchantmentDef } from '../data/affixes';
+import { affixV2InstancesToTooltipInfo } from '../ui/affixV2TooltipAdapter';
+
 
 /** 获取技能在指定等级的有效基础值（支持升华 Lv4+） */
 function getEffectiveBaseValue(baseValues: number[], level: number): number {
@@ -651,6 +653,11 @@ export function buildAffixTooltipFields(skill: AffixSkillInstance, rt?: SkillRun
         isMatchAffix: SELF_ZERO_MATCH_TYPES.includes(a.type),
       };
     })
+
+  // V2 词条注入：把当前 skill.v2Ids 追加到 tooltip · 传 skill.resource 让 ratio 预算成绝对值
+  if (skill.v2Ids && skill.v2Ids.length > 0) {
+    affixInfo.push(...affixV2InstancesToTooltipInfo(skill.v2Ids.map(id => ({ defId: id })), skill.resource));
+  }
 
   // 附魔列表
   const enchantments: Array<{ icon: string; name: string; desc: string; color: string }> = [];

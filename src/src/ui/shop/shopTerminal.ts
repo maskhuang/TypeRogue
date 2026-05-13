@@ -22,6 +22,7 @@ import { shouldAnimateShop } from '../../core/UserSettings';
 // Story 60.7: 副作用 hook（事件总线 + quest 重算 + 遗物购入瞬时效果）
 import { eventBus } from '../../core/events/EventBus';
 import { evaluateEquipQuests } from '../../data/affixTrigger';
+import { getSectionName, type SectionTag } from '../../data/affixTags';
 import { getQuestEquipReduction } from '../../systems/relics/EnchantmentRelicBehaviors';
 import { rerollAllAffixes } from '../../systems/relics/SkillRelicBehaviors';
 import { initFurnace } from '../../systems/relics/ResourceRelicBehaviors';
@@ -433,7 +434,9 @@ function buildInfTier1Base(d: ItemDescriptor): string[] {
       lines.push('');
       lines.push(t('shop.terminal.info.catalog.affixes_header'));
       for (const af of fields.affixInfo) {
-        const hdr = `‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
+        // Section tag 前置括号（详 affix-rewrite-tag-system.md §9）
+        const sectionPrefix = af.section ? `[${getSectionName(af.section as SectionTag).toUpperCase()}] ` : '';
+        const hdr = `${sectionPrefix}‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
         for (const w of wrapAt(hdr, W - 4)) lines.push('  ' + w);
         if (af.description) {
           for (const w of wrapAt(af.description, W - 6)) lines.push('    ' + w);
@@ -939,7 +942,9 @@ function cmdInfoOwnedSkill(skillId: string): void {
     appendLine('');
     appendLine(t('shop.terminal.info.section.affixes'), 'head');
     for (const af of fields.affixInfo) {
-      const hdr = `‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
+      // Section tag 前置括号（详 affix-rewrite-tag-system.md §9）
+      const sectionPrefix = af.section ? `[${af.section.toUpperCase()}] ` : '';
+      const hdr = `${sectionPrefix}‹${(af.typeName || '?').toUpperCase()}›${af.paramSummary ? ' ' + af.paramSummary : ''}`;
       for (const w of wrapAt(hdr, W - 4)) appendLine('  ' + w);
       if (af.description) {
         for (const w of wrapAt(af.description, W - 6)) appendLine('    ' + w, 'dim');

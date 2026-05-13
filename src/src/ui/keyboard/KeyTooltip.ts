@@ -5,6 +5,7 @@
 // Story 39.2: Tooltip 信息架构重构 — 分区块卡片式布局
 
 import { t } from '../../demo/demo-i18n'
+import { getSectionName, type SectionTag } from '../../data/affixTags'
 
 export interface AffixTooltipInfo {
   typeName: string
@@ -15,6 +16,12 @@ export interface AffixTooltipInfo {
   upgradeEffect?: string
   /** 是否为"匹配技能"类词条 */
   isMatchAffix?: boolean
+  /**
+   * 新 affix 系统的 section tag（仅新词条提供）。
+   * 设置后 tooltip 在词条名前渲染单色 chip。
+   * 详 docs/design/affix-rewrite-tag-system.md §9。
+   */
+  section?: SectionTag
 }
 
 export interface EstimateBreakdownLine {
@@ -252,6 +259,16 @@ function buildHeaderSection(skill: NonNullable<KeyTooltipData['skill']>): string
   if (skill.schoolCssClass) {
     html += `<span class="tooltip-skill-school ${esc(skill.schoolCssClass)}">${esc(skill.school)}</span>`
   }
+  // Section tag chips · 聚合本技能所有词条携带的 section（去重保序）
+  // 详 docs/design/affix-rewrite-tag-system.md §9
+  if (skill.affixInfo && skill.affixInfo.length > 0) {
+    const seen = new Set<string>()
+    for (const a of skill.affixInfo) {
+      if (!a.section || seen.has(a.section)) continue
+      seen.add(a.section)
+      html += `<span class="tooltip-section-tag">${esc(getSectionName(a.section))}</span>`
+    }
+  }
   html += `<div class="tooltip-skill-desc">${esc(skill.description)}</div>`
   if (skill.critChance != null && skill.critChance > 0) {
     html += `<div class="tooltip-crit-chance" style="color:#f1c40f;">⚡ ${esc(t('tooltip.crit_chance', { pct: Math.round(skill.critChance * 100) }))}</div>`
@@ -267,7 +284,7 @@ function buildHeaderSection(skill: NonNullable<KeyTooltipData['skill']>): string
 function buildAffixSection(skill: NonNullable<KeyTooltipData['skill']>): string {
   const parts: string[] = []
 
-  // 词条列表
+  // 词条列表（section chip 已聚合到 header 区，本处仅渲染词条名 + 参数 + desc）
   if (skill.affixInfo && skill.affixInfo.length > 0) {
     for (const affix of skill.affixInfo) {
       const color = AFFIX_COLORS[affix.typeKey || ''] || '#e67e22'

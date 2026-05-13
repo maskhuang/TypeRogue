@@ -6,8 +6,9 @@
 import type { ShopItem } from '../core/types';
 import type { GameState } from '../core/types';
 import { RELICS } from '../data/relics';
-import { localizeItemName, localizeItemDesc, localizeItemFlavor } from '../demo/demo-i18n';
-import { abbreviateSkillName } from './affixAbbrev';
+import { localizeItemName, localizeItemDesc, localizeItemFlavor, getLocale } from '../demo/demo-i18n';
+import { abbreviateSkillName, abbreviateResource } from './affixAbbrev';
+import { getAffixV2Definition } from '../data/affixV2';
 
 export type ItemKind = 'skill' | 'pack' | 'relic' | 'enchantment';
 export type ShapeColor = 'mono' | 'rare' | 'epic' | 'legendary' | 'special';
@@ -95,9 +96,20 @@ function describeSkill(item: ShopItem, idx: number): ItemDescriptor {
   const sku = makeSku('skill', idx);
   const rarity = clamp01_3(skill.rarity);
   const { tag, color } = shapeTagFromSkillShape(skill.shapeId);
-  const affixNames = skill.affixes.map(a => a.type.toUpperCase()).join(' · ') || '—';
+  // V2 词条名：从动态注册表查 name_zh / name_en，dropdown 到本 locale
+  const zh = getLocale() === 'zh';
+  const v2Names = (skill.v2Ids ?? []).map(id => {
+    const def = getAffixV2Definition(id);
+    if (!def) return id;
+    return zh ? def.name_zh : def.name_en;
+  });
+  const legacyAffixNames = skill.affixes.map(a => a.type.toUpperCase());
+  const affixNames = [...v2Names, ...legacyAffixNames].join(' · ') || '—';
   const enchTag = skill.enchantmentIds.length > 0 ? ' [ENCH]' : '';
-  const nameAbbrev = abbreviateSkillName(skill.affixes.map(a => a.type), skill.resource);
+  // nameAbbrev：V2 名优先直拼 + locale-aware 资源缩写；legacy 走 abbreviateSkillName
+  const nameAbbrev = v2Names.length > 0
+    ? [...v2Names, abbreviateResource(skill.resource)].filter(Boolean).join('·')
+    : abbreviateSkillName(skill.affixes.map(a => a.type), skill.resource);
   return {
     sku,
     kind: 'skill',

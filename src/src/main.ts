@@ -41,6 +41,7 @@ import { tutorialManager } from './systems/tutorial/TutorialManager';
 import { initFullTutorial } from './systems/tutorial/tutorialInit';
 import { A8_WORD_COMPRESS_RATIO } from './core/constants';
 import { initShopPreview } from './ui/shopPreview';
+import { wireV2BattleIntegration } from './systems/affixV2BattleIntegration';
 
 // 模块级引用，让 updateMenuInfo 能拿到 metaState
 let menuMetaRef: MetaState | null = null;
@@ -73,6 +74,9 @@ async function init(): Promise<void> {
 
   // MVP 预览：通过 URL hash `#shop-preview` 触发，不影响主流程
   initShopPreview();
+
+  // V2 affix 战斗集成 · 订阅 battle:start / word:complete · 装配登记表为空时 no-op
+  wireV2BattleIntegration();
 
   if (IS_DEMO) {
     // === Demo 模式：精简初始化 ===

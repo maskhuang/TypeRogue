@@ -875,7 +875,10 @@ html[lang^="en"] .menu-style-cover .menu-title {
 }
 
 .shield-display {
-    display: none;
+    /* 始终占位（display:inline-block + 固定宽度），避免 relic-bar 反复横条
+     * 仅切 opacity，飞行小球永远找得到锚点；min-width 锁宽防尺寸跳
+     */
+    display: inline-block;
     font-family: var(--font-pixel);
     font-size: 14px;
     color: #a8a8b0;
@@ -886,10 +889,13 @@ html[lang^="en"] .menu-style-cover .menu-title {
     border-radius: 0;
     min-width: 28px;
     text-align: center;
+    opacity: 0;
+    transition: opacity 0.35s ease-out;
+    pointer-events: none;
 }
 
 .shield-display.visible {
-    display: inline-block;
+    opacity: 1;
 }
 
 .shield-display::before {
@@ -2693,6 +2699,19 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 .key-tooltip .tooltip-skill-school.school-passive { background: var(--school-passive-bg); color: var(--school-passive); }
 .key-tooltip .tooltip-skill-school.school-amplifier { background: var(--school-amplifier-bg); color: var(--school-amplifier); }
 
+/* Section tag chip · 新 affix 系统词条所属 ethogram 段（单色 pill，与 school chip 同视觉权重）
+ * 详 docs/design/affix-rewrite-tag-system.md §9 */
+.key-tooltip .tooltip-section-tag {
+    font-size: var(--text-caption-size);
+    padding: 1px 4px;
+    margin-right: 4px;
+    background: #2a2a36;
+    color: #d0d0d0;
+    display: inline-block;
+    vertical-align: middle;
+    border: 1px solid #4a4a5a;
+}
+
 /* Tooltip 区块通用分隔 (Story 39.2) */
 .key-tooltip .tooltip-section {
     margin-top: var(--spacing-xs);
@@ -4356,6 +4375,16 @@ body.shop-preview-active #relic-tooltip > div:nth-child(2) {
     border: 1px solid #7a5a10;
     font-family: 'Courier New', monospace !important;
     text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 1px 6px !important;
+}
+
+/* section tag 章戳（完全照搬 school chip "普通" 行的样式 · 同 register）*/
+body.shop-preview-active .key-tooltip .tooltip-section-tag {
+    background: #ead7af !important;
+    color: #7a5a10 !important;
+    border: 1px solid #7a5a10 !important;
+    font-family: 'Courier New', monospace !important;
     letter-spacing: 1px;
     padding: 1px 6px !important;
 }
@@ -7160,6 +7189,80 @@ html[lang^="en"] .class-select-title {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
+}
+
+/* SUBMIT 警告 inline 对话框 · workbench Y/N */
+.wb-confirm-dialog {
+    position: absolute;
+    inset: 0;
+    background: rgba(20, 14, 8, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 60;
+}
+.wb-confirm-card {
+    background: #f5e8c8;
+    border: 3px double #5a3a1a;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(90, 58, 26, 0.3);
+    padding: 24px 32px;
+    min-width: 380px;
+    max-width: 560px;
+    text-align: center;
+    font-family: var(--font-dossier);
+    color: #3a2410;
+    transform: rotate(-0.6deg);
+}
+.wb-confirm-stamp {
+    display: inline-block;
+    color: #8a1a1a;
+    border: 2px solid #8a1a1a;
+    padding: 4px 14px;
+    font-size: 14px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    background: rgba(255, 245, 220, 0.5);
+    transform: rotate(1.4deg);
+}
+.wb-confirm-msg {
+    margin: 12px 0 20px;
+}
+.wb-confirm-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.wb-confirm-hint {
+    font-size: 13px;
+    color: #6b4a26;
+    line-height: 1.5;
+}
+.wb-confirm-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+}
+.wb-confirm-btn {
+    font-family: var(--font-dossier);
+    font-size: 14px;
+    padding: 8px 22px;
+    cursor: pointer;
+    border: 2px solid #3a2410;
+    background: #f5e8c8;
+    color: #3a2410;
+    letter-spacing: 2px;
+}
+.wb-confirm-btn:hover {
+    background: #ead9b0;
+}
+.wb-confirm-btn-yes {
+    background: #8a1a1a;
+    color: #f5e8c8;
+    border-color: #5a0e0e;
+}
+.wb-confirm-btn-yes:hover {
+    background: #6b1414;
 }
 
 /* Story 60.4: SUBMIT 盖红章动画 — 砸下 600ms + 停留 600ms 让玩家欣赏 */

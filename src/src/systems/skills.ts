@@ -4,6 +4,7 @@
 // Epic 35 清理：仅保留词条制技能触发逻辑
 
 import { state, synergy } from '../core/state';
+import { onSkillFireV2 } from './affixV2BattleIntegration';
 import { RESOURCE_COLORS } from '../core/constants';
 import type { ResourceType, PseudoInfiniteState } from '../core/types';
 import { t } from '../demo/demo-i18n';
@@ -40,7 +41,7 @@ import { inputHandler } from './typing/InputHandler';
 // === 战后统计：记录技能触发 ===
 const EMPTY_RESOURCES = { base: 0, score: 0, multiplier: 0, time: 0, shield: 0, gold: 0, energy: 0, mutagen: 0 };
 
-function recordSkillTrigger(
+export function recordSkillTrigger(
   skillId: string,
   triggerKey: string | undefined,
   resource: ResourceType,
@@ -693,4 +694,8 @@ function triggerAffixSkillWithFeedback(
     ...(growthDelta > 0 ? { growthValue: growthDelta } : {}),
     ...(questCompleted ? { questCompleted: true } : {}),
   });
+
+  // V2 affix 触发钩子（装配登记表为空时 no-op）
+  const isCritFire = result.triggerResults.some(tr => tr.isCrit);
+  onSkillFireV2(skillId, skillId, triggerKey, skill.resource, isCritFire, 0);
 }

@@ -6,6 +6,7 @@ import { state, synergy, calculateTargetScore, resetResources, createBattleStats
 import { rebuildBigramFreq } from '../data/bigramFrequency';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
+import { onKeyV2 } from './affixV2BattleIntegration';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
@@ -228,6 +229,28 @@ const timerRoller = new ScoreRoller();
 const multRoller = new ScoreRoller();  // 内部 ×10 存储，显示时 /10
 let scoreRollerRaf: number | null = null;
 let scoreRollerLastTime = 0;
+
+// === 护盾显示 · 归零 linger ===
+// 元素始终 display:inline-block 占位（详 style.css .shield-display），仅切 .visible class（opacity 1/0）
+// shield 归零后保留 .visible SHIELD_LINGER_MS 让飞行小球到达；之后移除 → CSS opacity transition 渐隐
+const SHIELD_LINGER_MS = 1200
+let _shieldLingerTimer: ReturnType<typeof setTimeout> | null = null
+function updateShieldDisplay(el: HTMLElement): void {
+  if (state.shield > 0) {
+    const wasVisible = el.classList.contains('visible')
+    el.textContent = String(Math.ceil(state.shield))
+    el.classList.add('visible')
+    // 首次变可见时强制刷新浮字目标位置缓存（旧缓存若是 display:none 状态拍的，坐标会是 0,0）
+    if (!wasVisible) refreshFloatPositionCache()
+    if (_shieldLingerTimer) { clearTimeout(_shieldLingerTimer); _shieldLingerTimer = null }
+  } else if (el.classList.contains('visible') && _shieldLingerTimer === null) {
+    // 刚清零：保留 .visible（含上次数字）N ms 让飞行小球到达，之后移除 .visible 渐隐
+    _shieldLingerTimer = setTimeout(() => {
+      el.classList.remove('visible')
+      _shieldLingerTimer = null
+    }, SHIELD_LINGER_MS)
+  }
+}
 
 /** 分数滚轮 rAF 帧更新 (Story 31.4) */
 function scoreRollerTick(now: number): void {
@@ -572,6 +595,9 @@ function handleKeyPress(data: { key: string; timestamp: number }): void {
   if (state.phase !== 'battle') return;
   if (isFrostFrozen()) return; // 寒霜冻结期间忽略输入
   initAudio();
+
+  // V2 affix on_key 钩子（装配登记表为空时 no-op）
+  onKeyV2();
 
   const k = data.key.toLowerCase();
   const expect = state.player.word[state.player.index]?.toLowerCase();
@@ -1854,13 +1880,9 @@ function updateTimerDisplay(): void {
   // 危险光晕：time <= 10s 时显示（达标光晕通过 CSS 顺序覆盖）
   el.container.classList.toggle('glow-danger', state.time <= 10);
 
-  // 护盾显示：拥有时显示数值，否则隐藏
-  if (state.shield > 0) {
-    el.shieldDisplay.textContent = String(Math.ceil(state.shield));
-    el.shieldDisplay.classList.add('visible');
-  } else {
-    el.shieldDisplay.classList.remove('visible');
-  }
+  // 护盾显示：拥有时显示数值；归零后保留可见 1.2s 让飞行小球到达，再渐隐
+  // 元素始终 display:inline-block 占位（详 style.css .shield-display），不再 toggle display
+  updateShieldDisplay(el.shieldDisplay)
 
   // Story 42.4: 倍率 HUD 更新
   const accel = getTimeAcceleration(_elapsedSeconds, _isBoss);

@@ -6,6 +6,7 @@
 
 import type { ResourceType } from '../core/types'
 import { AffixType, EnchantmentType, BASE_VALUES } from '../data/affixes'
+import { state } from '../core/state'
 import { hasRelation, PositionRelation, getKeysWithRelation } from '../data/keyboardTopology'
 import { getOutputDrainMultiplier } from '../data/bossModifiers'
 import { onStackEffectTriggered, checkStackDividend, isStackingAffix, SURGE_BONUS_PER_STACK } from './relics/StackingRelicBehaviors'
@@ -115,6 +116,19 @@ export function orchestrateAffixTrigger(
   ctx: TriggerContext,
   callbacks?: OrchestratorCallbacks,
 ): OrchestratorResult {
+  // ── V2 短路：当前技能挂 v2Ids 时，旧 6-phase 管线整体不跑 ──
+  // V2 affix 通过 onSkillFireV2 (skills.ts) 直接走 hookOnSkillFire，路径独立。
+  const v2Skill = state.affixSkills.get(initialSkillId)
+  if (v2Skill?.v2Ids && v2Skill.v2Ids.length > 0) {
+    return {
+      totalOutput: 0,
+      triggerCount: 0,
+      maxDepth: 0,
+      enteredPseudoInfinite: false,
+      triggerResults: [],
+    }
+  }
+
   const queue: TriggerWorkItem[] = []
   const results: TriggerResult[] = []
   let totalOutput = 0

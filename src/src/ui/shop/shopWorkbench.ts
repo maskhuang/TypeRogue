@@ -19,6 +19,7 @@ import {
   moveRelicTooltip,
 } from '../../systems/shop';
 import { keyTooltip, AFFIX_COLORS } from '../keyboard/KeyTooltip';
+import { getV2Color } from '../../data/affixV2';
 import { shouldAnimateShop, shouldShowDragPreviewTooltip } from '../../core/UserSettings';
 import { renderCraftPanel } from '../../systems/classes/CraftingStation';
 import { renderMetamorphPanel } from '../../systems/classes/MetamorphStation';
@@ -328,11 +329,20 @@ export function syncWorkbenchKeys(): void {
     iconSpan.textContent = sk.icon || '⚡';
     keyEl.appendChild(iconSpan);
     // Story 60.20 dogfood: kb-tag 用词条颜色色带 — 多词条则按词条数等分。
-    // 0 词条 → 单段 base 灰；1-3 词条 → 1-3 段 AFFIX_COLORS[affix.type]。
+    // V2 优先按 v2Ids 染色（section 主色），legacy fallback 用 AFFIX_COLORS[affix.type]。
+    // 0 词条 → 单段 base 灰；N 词条 → N 段。
     const tagSpan = document.createElement('span');
     tagSpan.className = 'kb-tag';
+    const v2Ids = sk.v2Ids ?? [];
     const affixes = sk.affixes ?? [];
-    if (affixes.length === 0) {
+    if (v2Ids.length > 0) {
+      for (const defId of v2Ids) {
+        const seg = document.createElement('span');
+        seg.className = 'kb-tag-seg';
+        seg.style.background = getV2Color(defId);
+        tagSpan.appendChild(seg);
+      }
+    } else if (affixes.length === 0) {
       const seg = document.createElement('span');
       seg.className = 'kb-tag-seg';
       seg.style.background = AFFIX_COLORS.base || '#cccccc';

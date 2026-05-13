@@ -18,6 +18,7 @@ import {
   VOID_BONUS_TABLE, SWARM_BONUS_TABLE, FLOW_BONUS_TABLE, CONFLUENCE_BONUS_TABLE, UNION_BONUS_TABLE, CONVERT_K_TABLE, AFFIX_CLASS_RESTRICTION,
 } from './affixes'
 import { t } from '../demo/demo-i18n'
+import { ALL_RECIPES, generateAffixV2 } from './affixV2Generator'
 
 // ===== 常量 =====
 
@@ -431,17 +432,13 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
   if (resource === 'multiplier') excludeTypes.add(AffixType.Reecho)
   if (resource === 'base') excludeTypes.add(AffixType.Silkworm)
 
-  // 加权不重复抽取词条：普通1个、稀有2个、史诗3个、传说4个
-  const affixCount = rarity + 1
-  const samples = weightedSampleWithout(affixCount, excludeTypes.size > 0 ? excludeTypes : undefined)
+  // ── V2 接管：rarity = V2 affix 数量（rarity 0 → 0 个，3 → 3 个）──
+  // 旧 AffixInstance 通道已禁用（orchestrator 入口短路）；保留 affixes=[] 供 UI 兼容
+  const v2Ids = sampleV2Ids(rarity)
+  const affixes: AffixInstance[] = []
 
-  // 同一技能共享同一个 posRel
-  const sharedPosRel = pickRandom(ALL_POS_RELATIONS)
-
-  // 每个词条掷参数
-  const affixes = samples.map(s => rollAffixParams(s.type, resource, s.convertVariant, pool, sharedPosRel, excludeTypes))
-
-  // 自动命名
+  // 自动命名：skill.name 只存资源 base，V2 词条名由 display 层（itemDescriptors / shopTerminal）
+  // 按当前 locale 动态拼接（避免存 def.id "gen_drumming_xxx" 导致界面显示乱码）
   const name = generateName(resource, affixes)
 
   // 唯一 ID
@@ -474,5 +471,23 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
     enchantmentIds: [],
     shapeId,
     rotation,
+    v2Ids,
   }
+}
+
+// ===== V2 affix 生成 =====
+
+/** 用 affixV2Generator.generateAffixV2 为 skill 滚 count 个 V2 词条
+ *  每个词条独立选 recipe + 随机 trigger + magnitude scaling
+ *  rarity 0 → 0 个；返回生成出的 (动态注册的) def id 列表
+ */
+function sampleV2Ids(count: number): string[] {
+  if (count <= 0) return []
+  if (ALL_RECIPES.length === 0) return []
+  const out: string[] = []
+  for (let i = 0; i < count; i++) {
+    const recipe = ALL_RECIPES[Math.floor(random() * ALL_RECIPES.length)]
+    out.push(generateAffixV2(recipe))
+  }
+  return out
 }
