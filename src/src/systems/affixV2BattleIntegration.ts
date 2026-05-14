@@ -33,6 +33,7 @@ import {
 } from './affixV2Equipped'
 import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste } from './affixV2State'
 import { getAffixV2Definition } from '../data/affixV2'
+import { BASE_VALUES } from '../data/affixes'
 import { triggerSkill, recordSkillTrigger } from './skills'
 import { getBindingState, getSkillKeys } from './bindingManager'
 import { getHasteRelicOutputBonus, applyCritOverflow } from './relics/StackingRelicBehaviors'
@@ -62,7 +63,15 @@ const DEFAULT_LV1_BASES: Record<string, number> = {
   mutagen: 1,
 }
 
-export function defaultResourceLv1Base(resource: string): number {
+/** 资源基础产出值查询 · level 缺省 1（向后兼容）·
+ *  优先读 BASE_VALUES 精确 Lv.N 表，缺失资源回退 DEFAULT_LV1_BASES。
+ *  名称沿用 Lv1Base 为历史原因——传入 level 即按 Lv.N 取值，使 V2 affix 效果随技能升级缩放。*/
+export function defaultResourceLv1Base(resource: string, level = 1): number {
+  const table = BASE_VALUES[resource as ResourceType]
+  if (table && table.length > 0) {
+    const idx = Math.min(Math.max(Math.floor(level), 1), table.length) - 1
+    return table[idx]
+  }
   return DEFAULT_LV1_BASES[resource] ?? 1
 }
 
@@ -529,16 +538,18 @@ function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: str
   cumBase += getSkillCumBase(skillId)
   cumFactor += getSkillCumFactor(skillId)
 
-  const lv1Base = defaultResourceLv1Base(resource)
+  // Lv.N 基础产出：随技能等级缩放（之前恒取 Lv1，技能升级不生效）
+  const lvN = skill.level ?? 1
+  const lv1Base = defaultResourceLv1Base(resource, lvN)
   // 极速系遗物产出加成（stack_momentum 逐次递进 + stack_dividend 累计里程碑）
   const relicBonus = getHasteRelicOutputBonus(skillId)
   let baseOutput = (lv1Base + cumBase) * (1 + cumFactor) * (1 + relicBonus) * outputMult
 
-  // rainbow aura：基础产出改为随机资源，按目标资源 Lv1 base 重缩放（每次 fire 重抽）
+  // rainbow aura：基础产出改为随机资源，按目标资源 Lv.N base 重缩放（每次 fire 重抽）
   let outResource = resource
   if (skillHasRainbowAura(skillId, sourceKey)) {
     outResource = RAINBOW_RESOURCE_POOL[Math.floor(random() * RAINBOW_RESOURCE_POOL.length)]
-    const tgtBase = defaultResourceLv1Base(outResource)
+    const tgtBase = defaultResourceLv1Base(outResource, lvN)
     if (lv1Base > 0) baseOutput = baseOutput * (tgtBase / lv1Base)
   }
 

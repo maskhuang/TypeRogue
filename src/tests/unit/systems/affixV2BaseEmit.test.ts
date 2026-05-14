@@ -146,8 +146,8 @@ describe('V2 skill 基础产出 emit', () => {
 
     state.shield = 0
     onSkillFireV2(SKILL_ID, SKILL_ID, KEY, 'shield', false, 0)
-    // shield Lv1 base = 5, charge ratio = 0.083 → cumBase = 0.415, output = 5.415
-    expect(state.shield).toBeCloseTo(5.415, 2)
+    // shield Lv1 base = 0.2（BASE_VALUES 精确表）, charge ratio = 0.083 → cumBase = 0.0166, output = 0.2166
+    expect(state.shield).toBeCloseTo(0.2166, 3)
     expect(state.resources.shield).toBeCloseTo(state.shield, 4)
   })
 })

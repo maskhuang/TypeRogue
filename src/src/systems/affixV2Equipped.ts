@@ -11,6 +11,17 @@
 
 import type { AffixV2Instance } from '../data/affixV2'
 import { getAffixV2Definition } from '../data/affixV2'
+import { state as gameState } from '../core/state'
+
+/** 把 (resource)→base 回调按 skill 等级柯里化为 Lv.N 查询 ·
+ *  resourceLv1Base 接受可选 level 参数（defaultResourceLv1Base），缺省 Lv1 */
+function lvNBaseFor(
+  skillId: string,
+  resourceLv1Base: (r: string, level?: number) => number,
+): (r: string) => number {
+  const level = gameState.affixSkills.get(skillId)?.level ?? 1
+  return (r: string) => resourceLv1Base(r, level)
+}
 import { evaluateTrigger, type TriggerContext } from './affixV2Trigger'
 import { resolveEffect, type ResolveContext, type ResolveResult } from './affixV2Effect'
 import {
@@ -136,7 +147,7 @@ export interface SourcedResult {
 export function hookOnSkillFire(
   skillId: string,
   fireEvent: FireEvent,
-  resourceLv1Base: (r: string) => number,
+  resourceLv1Base: (r: string, level?: number) => number,
   getPlayerResource: (r: string) => number,
   nowMs: number,
 ): SourcedResult[] {
@@ -144,6 +155,7 @@ export function hookOnSkillFire(
 
   // ── 1. on_self_fire: 仅触发 skill 上的 V2 affix ──
   const selfIds = _bySkill.get(skillId) ?? []
+  const selfLvBase = lvNBaseFor(skillId, resourceLv1Base)
   for (const id of selfIds) {
     const entry = _equipped.get(id)
     if (!entry) continue
@@ -166,8 +178,8 @@ export function hookOnSkillFire(
       skillId,
       key: entry.key,
       skillResource: fireEvent.sourceResource,
-      skillResourceLv1Base: resourceLv1Base(fireEvent.sourceResource),
-      resourceLv1Base,
+      skillResourceLv1Base: selfLvBase(fireEvent.sourceResource),
+      resourceLv1Base: selfLvBase,
       nowMs,
       isCrit: fireEvent.isCrit,
       currentWordLength: 0,    // skill fire context, no word context
@@ -207,13 +219,14 @@ export function hookOnSkillFire(
       }
       if (!evaluateTrigger(def.trigger, triggerCtx)) continue
 
+      const entryLvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
       const ctx: ResolveContext = {
         instanceId: entry.instanceId,
         skillId: entry.skillId,
         key: entry.key,
         skillResource: broadcastEvent.sourceResource,
-        skillResourceLv1Base: resourceLv1Base(broadcastEvent.sourceResource),
-        resourceLv1Base,
+        skillResourceLv1Base: entryLvBase(broadcastEvent.sourceResource),
+        resourceLv1Base: entryLvBase,
         nowMs,
         isCrit: broadcastEvent.isCrit,
         currentWordLength: 0,
@@ -242,7 +255,7 @@ export function hookOnSkillFire(
  */
 export function hookOnKey(
   nowMs: number,
-  resourceLv1Base: (r: string) => number,
+  resourceLv1Base: (r: string, level?: number) => number,
   getPlayerResource: (r: string) => number,
 ): SourcedResult[] {
   const results: SourcedResult[] = []
@@ -264,13 +277,14 @@ export function hookOnKey(
     }
     if (!evaluateTrigger(def.trigger, triggerCtx)) continue
 
+    const lvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
     const ctx: ResolveContext = {
       instanceId: entry.instanceId,
       skillId: entry.skillId,
       key: entry.key,
       skillResource: 'score',
-      skillResourceLv1Base: resourceLv1Base('score'),
-      resourceLv1Base,
+      skillResourceLv1Base: lvBase('score'),
+      resourceLv1Base: lvBase,
       nowMs,
       isCrit: false,
       currentWordLength: 0,
@@ -298,7 +312,7 @@ export function hookOnKey(
 export function hookOnWordEnd(
   nowMs: number,
   currentWordLength: number,
-  resourceLv1Base: (r: string) => number,
+  resourceLv1Base: (r: string, level?: number) => number,
   getPlayerResource: (r: string) => number,
 ): SourcedResult[] {
   const results: SourcedResult[] = []
@@ -320,13 +334,14 @@ export function hookOnWordEnd(
     }
     if (!evaluateTrigger(def.trigger, triggerCtx)) continue
 
+    const lvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
     const ctx: ResolveContext = {
       instanceId: entry.instanceId,
       skillId: entry.skillId,
       key: entry.key,
       skillResource: 'score',
-      skillResourceLv1Base: resourceLv1Base('score'),
-      resourceLv1Base,
+      skillResourceLv1Base: lvBase('score'),
+      resourceLv1Base: lvBase,
       nowMs,
       isCrit: false,
       currentWordLength,
@@ -354,7 +369,7 @@ export function hookOnWordEnd(
  */
 export function hookOnHasteGranted(
   grantedSkillId: string,
-  resourceLv1Base: (r: string) => number,
+  resourceLv1Base: (r: string, level?: number) => number,
   getPlayerResource: (r: string) => number,
   nowMs: number,
 ): SourcedResult[] {
@@ -381,13 +396,14 @@ export function hookOnHasteGranted(
     }
     if (!evaluateTrigger(def.trigger, triggerCtx)) continue
 
+    const lvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
     const ctx: ResolveContext = {
       instanceId: entry.instanceId,
       skillId: entry.skillId,
       key: entry.key,
       skillResource: 'score',
-      skillResourceLv1Base: resourceLv1Base('score'),
-      resourceLv1Base,
+      skillResourceLv1Base: lvBase('score'),
+      resourceLv1Base: lvBase,
       nowMs,
       isCrit: false,
       currentWordLength: 0,
@@ -414,7 +430,7 @@ export function hookOnHasteGranted(
 
 /** 战斗开始 · 全 reset + 应用所有 passive aura 一次 */
 export function hookOnBattleStart(
-  resourceLv1Base: (r: string) => number = () => 1,
+  resourceLv1Base: (r: string, level?: number) => number = () => 1,
   getPlayerResource: (r: string) => number = () => 0,
   nowMs: number = Date.now(),
 ): void {
@@ -425,13 +441,14 @@ export function hookOnBattleStart(
   for (const entry of _equipped.values()) {
     const def = getAffixV2Definition(entry.defId)
     if (!def || def.trigger.type !== 'passive') continue
+    const lvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
     const ctx: ResolveContext = {
       instanceId: entry.instanceId,
       skillId: entry.skillId,
       key: entry.key,
       skillResource: 'score',
-      skillResourceLv1Base: resourceLv1Base('score'),
-      resourceLv1Base,
+      skillResourceLv1Base: lvBase('score'),
+      resourceLv1Base: lvBase,
       nowMs,
       isCrit: false,
       currentWordLength: 0,
