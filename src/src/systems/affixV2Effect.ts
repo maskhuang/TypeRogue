@@ -23,7 +23,6 @@ import {
   getInstanceState,
   addAura,
   addStatus,
-  tryFireTargetQuota,
   addSkillCumBase,
   addSkillCumFactor,
 } from './affixV2State'
@@ -196,15 +195,12 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
     }
 
     case 'fire_target': {
-      // K1 决议：rate limit 4/sec/source
-      if (tryFireTargetQuota(ctx.instanceId, ctx.nowMs)) {
-        result.fireTargetsTriggered.push({
-          sourceInstanceId: ctx.instanceId,
-          selector: spec.selector,
-        })
-      } else {
-        result.rateLimitedFireTargets++
-      }
+      // K1 决议：rate limit 4/sec/source · 但不在此处丢弃 —— 全部 push，由 integration
+      // 派发时按窗口配额延迟 setTimeout（实现"无限限流循环"）
+      result.fireTargetsTriggered.push({
+        sourceInstanceId: ctx.instanceId,
+        selector: spec.selector,
+      })
       return
     }
 

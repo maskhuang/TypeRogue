@@ -108,13 +108,15 @@ describe('resolveEffect · 扩展 5 kind', () => {
     expect(r.fireTargetsTriggered[0].sourceInstanceId).toBe('inst_1')
   })
 
-  it('fire_target · 超频被限流', () => {
+  it('fire_target · 不丢 result · rate-limit 由 integration 层 setTimeout 推迟', () => {
+    // 改版后：resolveEffect 永远 push result，rate limit 在 dispatch 层（integration）处理
+    // 实现"无限限流循环"：超额 dispatch setTimeout 到下窗口，循环不中断
     for (let i = 0; i < 4; i++) {
       resolveEffect({ kind: 'fire_target', selector: { type: 'self' } }, { ...baseCtx, nowMs: 1000 + i * 100 })
     }
     const r = resolveEffect({ kind: 'fire_target', selector: { type: 'self' } }, { ...baseCtx, nowMs: 1500 })
-    expect(r.fireTargetsTriggered.length).toBe(0)
-    expect(r.rateLimitedFireTargets).toBe(1)
+    expect(r.fireTargetsTriggered.length).toBe(1)
+    expect(r.rateLimitedFireTargets).toBe(0)
   })
 
   it('apply_aura · 注册到 store + result', () => {

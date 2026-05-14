@@ -19,7 +19,8 @@ import {
   moveRelicTooltip,
 } from '../../systems/shop';
 import { keyTooltip, AFFIX_COLORS } from '../keyboard/KeyTooltip';
-import { getV2Color } from '../../data/affixV2';
+import { getV2Color, getAffixV2Definition } from '../../data/affixV2';
+import type { EffectSpec, TargetSelector } from '../../data/affixV2Trigger';
 import { shouldAnimateShop, shouldShowDragPreviewTooltip } from '../../core/UserSettings';
 import { renderCraftPanel } from '../../systems/classes/CraftingStation';
 import { renderMetamorphPanel } from '../../systems/classes/MetamorphStation';
@@ -61,6 +62,7 @@ let dragHoverLastKey: string | null = null
 // 关系键 union（与 affixTrigger.getExtendedNeighbors 同语义）。
 // 用 getKeysWithRelation（与 affixTrigger 触发逻辑共用同算法 → 0 漂移误导）。
 const RADIUS_PREVIEW_CLASS = 'effect-radius-preview'
+const TRIGGER_SOURCE_PREVIEW_CLASS = 'trigger-source-preview'
 
 /**
  * 算 skill 在 hoverKey anchor 处的真实 effect radius keys —
@@ -80,6 +82,7 @@ function getEffectRadiusKeys(skillId: string, hoverKey: string, payloadShapeId?:
   }
   const occupiedSet = new Set(occupiedKeys)
   const radiusKeys = new Set<string>()
+  // 1) Legacy affixes posRel
   for (const affix of skill.affixes) {
     if (!affix.posRel) continue
     for (const ok of occupiedKeys) {
@@ -88,27 +91,172 @@ function getEffectRadiusKeys(skillId: string, hoverKey: string, payloadShapeId?:
       }
     }
   }
+  // 2) V2 affixes selector → 解析为 highlight 键
+  for (const defId of skill.v2Ids ?? []) {
+    const def = getAffixV2Definition(defId)
+    if (!def) continue
+    const sel = extractSelectorFromEffect(def.effect)
+    if (!sel) continue
+    for (const k of resolveSelectorToHighlightKeys(sel, occupiedKeys, occupiedSet)) {
+      if (!occupiedSet.has(k)) radiusKeys.add(k)
+    }
+  }
   return Array.from(radiusKeys)
 }
 
-/** 给候选范围键加 outline 高亮 class — exported for unit testing (60.18 review M1 fix) */
-export function highlightEffectRadius(hoverKey: string, skillId: string, shapeId?: string, rotation?: number): void {
-  const root = document.getElementById('workbench-screen-preview')
-  if (!root) return
-  const keys = getEffectRadiusKeys(skillId, hoverKey, shapeId, rotation)
-  for (const k of keys) {
-    const keyEl = root.querySelector<HTMLElement>(`.kb-key.kb-tier-1[data-key="${CSS.escape(k)}"]`)
-    if (keyEl) keyEl.classList.add(RADIUS_PREVIEW_CLASS)
+/** 递归提取 effect 中的 TargetSelector（aura / fire_target / apply_status / add / multiply）*/
+function extractSelectorFromEffect(effect: EffectSpec): TargetSelector | undefined {
+  switch (effect.kind) {
+    case 'apply_aura':   return effect.selector
+    case 'fire_target':  return effect.selector
+    case 'apply_status': return effect.target
+    case 'add':          return effect.selector
+    case 'multiply':     return effect.selector
+    case 'composite': {
+      for (const c of effect.effects) {
+        const s = extractSelectorFromEffect(c)
+        if (s) return s
+      }
+      return undefined
+    }
+    case 'conditional': {
+      const t = extractSelectorFromEffect(effect.then)
+      if (t) return t
+      return effect.else ? extractSelectorFromEffect(effect.else) : undefined
+    }
+    case 'stack_release': return extractSelectorFromEffect(effect.release)
+    default: return undefined
   }
 }
 
-/** 清除所有 effect-radius-preview 高亮 class — exported for bootstrap onDragEnd cleanup */
+/** TargetSelector → 高亮键列表（与 affixV2BattleIntegration.resolveSelectorToSkillIds 同语义）*/
+function resolveSelectorToHighlightKeys(sel: TargetSelector, occupiedKeys: string[], occupiedSet: Set<string>): string[] {
+  switch (sel.type) {
+    case 'self':
+      return []   // self 即占位本身，不额外高亮
+    case 'neighbors': {
+      const out = new Set<string>()
+      for (const ok of occupiedKeys) {
+        for (const k of getKeysWithRelation(ok, sel.posRel)) out.add(k)
+      }
+      return Array.from(out)
+    }
+    case 'all_skills': {
+      const out: string[] = []
+      for (const [k, sid] of state.player.bindings) {
+        if (occupiedSet.has(k)) continue
+        // sid 即使被自身覆盖也无所谓 — 拖拽 hover 时还没 commit binding
+        void sid
+        out.push(k)
+      }
+      return out
+    }
+    case 'matched_tag': {
+      const out: string[] = []
+      for (const [k, sid] of state.player.bindings) {
+        const sk = state.affixSkills.get(sid)
+        if (!sk) continue
+        const hit = sk.v2Ids?.some(id => {
+          const d = getAffixV2Definition(id)
+          return d?.tags.includes(sel.tag)
+        })
+        if (hit) out.push(k)
+      }
+      return out
+    }
+    case 'matched_resource': {
+      const out: string[] = []
+      for (const [k, sid] of state.player.bindings) {
+        const sk = state.affixSkills.get(sid)
+        if (sk?.resource === sel.resource) out.push(k)
+      }
+      return out
+    }
+  }
+}
+
+/** 给候选范围键加 outline 高亮 class — exported for unit testing (60.18 review M1 fix)
+ *  同时为 V2 trigger.filter 监听源加 dashed inner ring（trigger-source-preview）
+ */
+export function highlightEffectRadius(hoverKey: string, skillId: string, shapeId?: string, rotation?: number): void {
+  const root = document.getElementById('workbench-screen-preview')
+  if (!root) return
+  // effect 目标键：solid outline
+  const effectKeys = getEffectRadiusKeys(skillId, hoverKey, shapeId, rotation)
+  for (const k of effectKeys) {
+    const keyEl = root.querySelector<HTMLElement>(`.kb-key.kb-tier-1[data-key="${CSS.escape(k)}"]`)
+    if (keyEl) keyEl.classList.add(RADIUS_PREVIEW_CLASS)
+  }
+  // V2 trigger.filter 监听源键：dashed inner ring
+  const triggerKeys = getTriggerSourceKeys(skillId, hoverKey, shapeId, rotation)
+  for (const k of triggerKeys) {
+    const keyEl = root.querySelector<HTMLElement>(`.kb-key.kb-tier-1[data-key="${CSS.escape(k)}"]`)
+    if (keyEl) keyEl.classList.add(TRIGGER_SOURCE_PREVIEW_CLASS)
+  }
+}
+
+/** 清除所有 effect-radius-preview / trigger-source-preview 高亮 — bootstrap onDragEnd cleanup */
 export function clearEffectRadiusHighlight(): void {
   const root = document.getElementById('workbench-screen-preview')
   if (!root) return
   root.querySelectorAll<HTMLElement>(`.kb-key.${RADIUS_PREVIEW_CLASS}`).forEach(el => {
     el.classList.remove(RADIUS_PREVIEW_CLASS)
   })
+  root.querySelectorAll<HTMLElement>(`.kb-key.${TRIGGER_SOURCE_PREVIEW_CLASS}`).forEach(el => {
+    el.classList.remove(TRIGGER_SOURCE_PREVIEW_CLASS)
+  })
+}
+
+/** V2 trigger.filter 解析为监听源键列表（"我会听这里的 fire"）
+ *  filter.posRel → 该 posRel 的邻位键
+ *  filter.tag → 场上挂该 tag 的 V2 affix 所在 skill 键
+ *  filter.resource → 场上该资源 skill 键
+ *  is_crit / stack_state 不是位置维度，无 highlight 输出
+ */
+function getTriggerSourceKeys(skillId: string, hoverKey: string, payloadShapeId?: string, payloadRotation?: number): string[] {
+  const skill = state.affixSkills.get(skillId)
+  if (!skill?.v2Ids?.length) return []
+  // occupied keys（与 effect radius 同算法）
+  let occupiedKeys: string[] = [hoverKey]
+  if (payloadShapeId && payloadShapeId !== 'monomino') {
+    const fit = mapShapeToKeys(hoverKey, payloadShapeId, payloadRotation ?? 0)
+    if (fit) occupiedKeys = fit
+  }
+  const occupiedSet = new Set(occupiedKeys)
+  const out = new Set<string>()
+  for (const defId of skill.v2Ids) {
+    const def = getAffixV2Definition(defId)
+    if (!def) continue
+    if (def.trigger.type !== 'on_fire' || !def.trigger.filter) continue
+    const f = def.trigger.filter
+    if (f.posRel !== undefined) {
+      for (const ok of occupiedKeys) {
+        for (const k of getKeysWithRelation(ok, f.posRel)) {
+          if (!occupiedSet.has(k)) out.add(k)
+        }
+      }
+    }
+    if (f.tag) {
+      const tags = Array.isArray(f.tag) ? f.tag : [f.tag]
+      for (const [k, sid] of state.player.bindings) {
+        if (occupiedSet.has(k)) continue
+        const sk = state.affixSkills.get(sid)
+        const hit = sk?.v2Ids?.some(id => {
+          const d = getAffixV2Definition(id)
+          return d && tags.some(t => d.tags.includes(t))
+        })
+        if (hit) out.add(k)
+      }
+    }
+    if (f.resource) {
+      for (const [k, sid] of state.player.bindings) {
+        if (occupiedSet.has(k)) continue
+        const sk = state.affixSkills.get(sid)
+        if (sk?.resource === f.resource) out.add(k)
+      }
+    }
+  }
+  return Array.from(out)
 }
 
 /**

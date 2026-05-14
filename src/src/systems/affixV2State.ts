@@ -176,6 +176,19 @@ export function tryFireTargetQuota(sourceInstanceId: string, nowMs: number): boo
   return true
 }
 
+/**
+ * 查询：还需等多少 ms 才能再发一次 fire_target（0 = 现在就可以）
+ * 用于 setTimeout 推迟超额 dispatch，让 V2 fire_target 循环按 4/sec 限速持续运行
+ */
+export function getFireTargetWaitMs(sourceInstanceId: string, nowMs: number): number {
+  const window = _rateLimits.get(sourceInstanceId)
+  if (!window) return 0
+  if (nowMs - window.windowStartMs >= 1000) return 0
+  if (window.fireCount < FIRE_TARGET_RATE_LIMIT_PER_SEC) return 0
+  // 窗口未到期且配额满 → 等到窗口结束
+  return Math.max(1, 1000 - (nowMs - window.windowStartMs))
+}
+
 export function clearRateLimits(): void {
   _rateLimits.clear()
 }

@@ -90,7 +90,7 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
         parts.push(zh ? `层态 ${trigger.filter.stack_state}` : `stack: ${trigger.filter.stack_state}`)
       }
       if (trigger.filter.posRel !== undefined) {
-        parts.push(zh ? '邻位位置' : 'neighbor pos')
+        parts.push(zh ? `${locRel(trigger.filter.posRel)}位置` : `${locRel(trigger.filter.posRel)} pos`)
       }
       return zh
         ? `任一技能触发时（${parts.join('、')}）`
@@ -172,15 +172,18 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
       const v = skillResource
         ? `${lv1Amount(skillResource, effect.ratio)} ${locResource(skillResource)}`
         : zh ? `${effect.ratio}×Lv1 底分` : `${effect.ratio}×Lv1 base`
+      // selector 缺省 = self；非 self 显式标 scope（add 写 per-skill aggregate）
+      const target = effect.selector ? formatSelector(effect.selector) : (zh ? '本技能' : 'this skill')
       return zh
-        ? `产出 +${v}（叠加、出关重置）`
-        : `output +${v} (stacks, resets each battle)`
+        ? `${target}产出 +${v}（叠加、出关重置）`
+        : `${target} output +${v} (stacks, resets each battle)`
     }
     case 'multiply': {
       const pct = Math.round(effect.amount * 1000) / 10
+      const target = effect.selector ? formatSelector(effect.selector) : (zh ? '本技能' : 'this skill')
       return zh
-        ? `产出 +${pct}%（叠加、出关重置）`
-        : `output +${pct}% (stacks, resets each battle)`
+        ? `${target}产出 +${pct}%（叠加、出关重置）`
+        : `${target} output +${pct}% (stacks, resets each battle)`
     }
     case 'gain_resource':
       return `+${lv1Amount(effect.resource, effect.ratio)} ${locResource(effect.resource)}`

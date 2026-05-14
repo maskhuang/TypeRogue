@@ -4261,6 +4261,33 @@ body.shop-preview-active .wb-foam-case.drop-zone-highlight {
     50%      { box-shadow: inset 0 0 14px rgba(255, 200, 80, 0.85), 0 0 22px rgba(255, 165, 30, 0.85); }
 }
 
+/* Trigger source preview · V2 affix on_fire.filter 监听源高亮
+ * 用 ::before 内嵌 dashed 环 + 内发光 + 微 bg tint，与 effect-radius-preview（橙）撞色形成"听 vs 打"对比。
+ * outline 通道留给 effect，trigger 走 ::before + box-shadow inset，可叠加。 */
+.kb-key.kb-tier-1.trigger-source-preview {
+    position: relative;
+    box-shadow: inset 0 0 12px rgba(0, 220, 255, 0.55) !important;
+    background: linear-gradient(180deg,
+        rgba(80, 200, 240, 0.32) 0%,
+        rgba(0, 180, 220, 0.32) 100%
+    ) !important;
+}
+.kb-key.kb-tier-1.trigger-source-preview::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border: 3px dashed #00d4ff;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 2;
+    animation: trigger-source-pulse 1.0s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.7);
+}
+@keyframes trigger-source-pulse {
+    0%, 100% { opacity: 0.75; box-shadow: 0 0 6px  rgba(0, 212, 255, 0.55); }
+    50%      { opacity: 1.0;  box-shadow: 0 0 14px rgba(0, 212, 255, 0.95); }
+}
+
 /* Story 40.5: 拖拽幽灵形状缩略图 */
 .drag-ghost-shape {
     margin-top: 2px;

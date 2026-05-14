@@ -25,7 +25,7 @@ import {
   setSelectorResolver,
   type SourcedResult,
 } from './affixV2Equipped'
-import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor } from './affixV2State'
+import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota } from './affixV2State'
 import { getAffixV2Definition } from '../data/affixV2'
 import { triggerSkill, recordSkillTrigger } from './skills'
 import { getBindingState, getSkillKeys } from './bindingManager'
@@ -117,7 +117,11 @@ function emitFloatFeedback(resource: string, amount: number, anchorKey: string):
   showFeedback(`${sign}${displayValue}`, color, 1, anchor)
 }
 
-/** 处理每个 sourced result：注入资源（经 aura 修饰）+ dispatch fire_target */
+/** 处理每个 sourced result：注入资源（经 aura 修饰）+ dispatch fire_target
+ *  fire_target 目标列表剔除 sourceSkillId · 防直接回弹 A → B → A
+ *  当 source 配额用完时（4/sec），剩余 dispatch 用 setTimeout 推迟到下个窗口
+ *  → 实现"无限限流循环"：循环不中断，仅按 4/sec 节奏持续运行
+ */
 export function processV2Results(results: readonly SourcedResult[]): void {
   for (const sr of results) {
     const modified = applyAuraOutputBonus(sr.result.resourceProduced, sr.sourceSkillId, sr.sourceKey)
@@ -126,16 +130,36 @@ export function processV2Results(results: readonly SourcedResult[]): void {
     }
     for (const ft of sr.result.fireTargetsTriggered) {
       const targetIds = resolveSelectorToSkillIds(ft.selector, sr.sourceSkillId, sr.sourceKey)
+        .filter(tid => tid !== sr.sourceSkillId)
       for (const tid of targetIds) {
-        const keys = getSkillKeys(getBindingState(state), tid)
-        const triggerKey = keys[0] ?? sr.sourceKey
-        try {
-          triggerSkill(tid, triggerKey)
-        } catch (e) {
-          console.warn('[V2] fire_target dispatch failed', tid, e)
-        }
+        scheduleFireTargetDispatch(ft.sourceInstanceId, tid, sr.sourceKey)
       }
     }
+  }
+}
+
+/** 调度一次 fire_target 触发：满配额立即派发，否则 setTimeout 推迟到下窗口 */
+function scheduleFireTargetDispatch(sourceInstId: string, targetSkillId: string, sourceKey: string): void {
+  const now = Date.now()
+  const wait = getFireTargetWaitMs(sourceInstId, now)
+  if (wait === 0) {
+    tryFireTargetQuota(sourceInstId, now)  // 记账
+    fireOneTarget(targetSkillId, sourceKey)
+    return
+  }
+  setTimeout(() => {
+    if (state.phase !== 'battle') return  // 出战斗丢弃残留
+    scheduleFireTargetDispatch(sourceInstId, targetSkillId, sourceKey)
+  }, wait + 5)  // 5ms jitter 避免边界精度问题
+}
+
+function fireOneTarget(targetSkillId: string, sourceKey: string): void {
+  const keys = getSkillKeys(getBindingState(state), targetSkillId)
+  const triggerKey = keys[0] ?? sourceKey
+  try {
+    triggerSkill(targetSkillId, triggerKey)
+  } catch (e) {
+    console.warn('[V2] fire_target dispatch failed', targetSkillId, e)
   }
 }
 

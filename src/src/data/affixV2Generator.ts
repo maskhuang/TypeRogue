@@ -44,12 +44,32 @@ function makeOnFireResourceTriggers(): readonly TriggerEntry[] {
   }))
 }
 
-/** 构造完整 trigger 池：4 基础 + 1 on_fire(tag=section) + 6 on_fire(resource) */
+/** on_fire(posRel)：听该位置关系技能 fire · freq ≈ 30 × 平均位置满足技能数（粗估） */
+const ONFIRE_POSREL_FREQ: Record<keyof typeof PositionRelation | string, number> = {
+  Adjacent:   60,    // ~2 邻位
+  SameRow:    90,    // ~3 同行
+  SameColumn: 45,    // ~1.5 同列
+  SameHand:   120,   // ~4 同手
+  SameFinger: 45,    // ~1.5 同指
+  Symmetric:  30,    // ~1 镜像
+}
+function makeOnFirePosRelTriggers(): readonly TriggerEntry[] {
+  return [
+    PositionRelation.Adjacent, PositionRelation.SameRow, PositionRelation.SameColumn,
+    PositionRelation.SameHand, PositionRelation.SameFinger, PositionRelation.Symmetric,
+  ].map(posRel => ({
+    spec: { type: 'on_fire', filter: { posRel } } as TriggerSpec,
+    freq: ONFIRE_POSREL_FREQ[String(posRel)] ?? 60,
+  }))
+}
+
+/** 构造完整 trigger 池：4 基础 + 1 on_fire(tag=section) + 6 on_fire(resource) + 6 on_fire(posRel) */
 function buildTriggerPool(section: SectionTag): readonly TriggerEntry[] {
   return [
     ...BASE_TRIGGER_POOL,
     makeOnFireTagTrigger(section),
     ...makeOnFireResourceTriggers(),
+    ...makeOnFirePosRelTriggers(),
   ]
 }
 
