@@ -109,6 +109,8 @@ export type AuraModifier =
   | { type: 'output_bonus_pct'; amount: number }
   /** 多重释放 · 目标 skill 每次 fire 额外触发 amount 次（amount = 1 → 单次变双发，2 → 三发）*/
   | { type: 'multi_fire_add'; amount: number }
+  /** 彩虹 · 目标 skill 基础产出改为随机资源（按目标资源 Lv1 base 重缩放，每次 fire 重抽）*/
+  | { type: 'rainbow' }
 
 // ===== StatusKeyword (apply_status 占位 · K4 D' 决议)
 // 词表暂未敲定（推迟到 narrative status register 决议），运行时 stub。

@@ -496,6 +496,20 @@ function sumCritChanceAuras(skillId: string, sourceKey: string): number {
   return total
 }
 
+/** 彩虹资源池 · rainbow aura 随机产出的 6 种核心资源 */
+const RAINBOW_RESOURCE_POOL: readonly string[] = ['base', 'score', 'multiplier', 'time', 'shield', 'gold']
+
+/** 该 skill 是否被 rainbow aura 覆盖 */
+function skillHasRainbowAura(skillId: string, sourceKey: string): boolean {
+  for (const aura of listActiveAuras()) {
+    if (aura.modifier.type !== 'rainbow') continue
+    const entry = listAllEquipped().find(e => e.instanceId === aura.sourceInstanceId)
+    if (!entry) continue
+    if (selectorMatchesSkill(aura.selector, entry.skillId, entry.key, skillId, sourceKey)) return true
+  }
+  return false
+}
+
 /** 计算并写入 V2 skill 的基础产出 · 仅对挂有 v2Ids 的 skill 触发 */
 function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: string, outputMult = 1, isCrit = false): void {
   const skill = state.affixSkills.get(skillId)
@@ -518,10 +532,18 @@ function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: str
   const lv1Base = defaultResourceLv1Base(resource)
   // 极速系遗物产出加成（stack_momentum 逐次递进 + stack_dividend 累计里程碑）
   const relicBonus = getHasteRelicOutputBonus(skillId)
-  const baseOutput = (lv1Base + cumBase) * (1 + cumFactor) * (1 + relicBonus) * outputMult
+  let baseOutput = (lv1Base + cumBase) * (1 + cumFactor) * (1 + relicBonus) * outputMult
+
+  // rainbow aura：基础产出改为随机资源，按目标资源 Lv1 base 重缩放（每次 fire 重抽）
+  let outResource = resource
+  if (skillHasRainbowAura(skillId, sourceKey)) {
+    outResource = RAINBOW_RESOURCE_POOL[Math.floor(random() * RAINBOW_RESOURCE_POOL.length)]
+    const tgtBase = defaultResourceLv1Base(outResource)
+    if (lv1Base > 0) baseOutput = baseOutput * (tgtBase / lv1Base)
+  }
 
   // 经 aura output_bonus_pct 修饰后注入 ledger
-  const modified = applyAuraOutputBonus([{ resource, amount: baseOutput }], skillId, sourceKey)
+  const modified = applyAuraOutputBonus([{ resource: outResource, amount: baseOutput }], skillId, sourceKey)
   for (const prod of modified) {
     applyResourceAmount(prod.resource, prod.amount, sourceKey, skillId, isCrit)
   }

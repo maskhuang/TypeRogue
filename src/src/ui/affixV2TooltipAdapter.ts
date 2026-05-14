@@ -244,6 +244,7 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
                  mod.type === 'factor_add' ? `产出 +${pct(mod.amount)}%（倍率加成）` :
                  mod.type === 'crit_chance_add' ? `暴击率 +${pct(mod.amount)}%` :
                  mod.type === 'multi_fire_add' ? `多重释放 +${mod.amount}` :
+                 mod.type === 'rainbow' ? `产出随机资源` :
                  `产出 +${pct(mod.amount)}%`
         return `给 ${formatSelector(effect.selector)} 加光环：${modStr}`
       } else {
@@ -251,6 +252,7 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
                  mod.type === 'factor_add' ? `output +${pct(mod.amount)}% (multiplier bonus)` :
                  mod.type === 'crit_chance_add' ? `crit rate +${pct(mod.amount)}%` :
                  mod.type === 'multi_fire_add' ? `multi-fire +${mod.amount}` :
+                 mod.type === 'rainbow' ? `produces random resource` :
                  `output +${pct(mod.amount)}%`
         return `aura on ${formatSelector(effect.selector)}: ${modStr}`
       }

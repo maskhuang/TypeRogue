@@ -299,7 +299,7 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     triggerSpec = { type: 'passive' }
     const scope = pickWeightedScope(FULL_SCOPE_POOL)
     const modifierType = pickRandom([
-      'crit_chance_add', 'output_bonus_pct', 'base_add', 'factor_add', 'multi_fire_add',
+      'crit_chance_add', 'output_bonus_pct', 'base_add', 'factor_add', 'multi_fire_add', 'rainbow',
     ] as const)
     const amount = recipe.T_byModifier[modifierType]
     let modifier: AuraModifier
@@ -309,6 +309,7 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
       case 'crit_chance_add':  modifier = { type: 'crit_chance_add', amount };        break
       case 'output_bonus_pct': modifier = { type: 'output_bonus_pct', amount };       break
       case 'multi_fire_add':   modifier = { type: 'multi_fire_add', amount };         break
+      case 'rainbow':          modifier = { type: 'rainbow' };                        break
     }
     effect = { kind: 'apply_aura', selector: scope.selector, modifier }
   } else if (recipe.kind === 'convert') {
@@ -433,6 +434,7 @@ export const RECIPE_PILOERECTION: ChantRecipe = {
     base_add:          0.5,
     factor_add:        0.5,
     multi_fire_add:    1,    // +1 释放（self → 2x；adjacent 4 邻 → 每邻位 +1 各自双发）
+    rainbow:           0,    // rainbow 无 amount，值仅占位
   },
 }
 
