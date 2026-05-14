@@ -111,10 +111,12 @@ export function getAffixV2Definition(id: string): AffixV2Definition | undefined 
  */
 const RECIPE_COLORS: Record<string, string> = {
   // maintenance · 绿系
-  feed:         '#27ae60',
+  feed:         '#27ae60',  // 标准绿
+  drink:        '#16a085',  // 深绿 · 转化
   // locomotion · 蓝系
   climb:        '#2980b9',  // 深蓝 · 稳重累加
   run:          '#00cec9',  // 青蓝 · 倍率加速
+  leap:         '#74b9ff',  // 亮蓝 · 极速跳跃
   // posture · 紫系
   piloerection: '#9b59b6',
   // agonistic · 红系

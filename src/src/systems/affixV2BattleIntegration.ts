@@ -15,17 +15,19 @@ import { eventBus } from '../core/events/EventBus'
 import { hasRelation } from '../data/keyboardTopology'
 import { RESOURCE_COLORS } from '../core/constants'
 import { showFeedback, updateHUD } from './battle'
+import { getFloatScale } from '../effects/juice'
 import {
   hookOnSkillFire,
   hookOnKey,
   hookOnWordEnd,
   hookOnBattleStart,
   hookOnBattleEnd,
+  hookOnHasteGranted,
   listAllEquipped,
   setSelectorResolver,
   type SourcedResult,
 } from './affixV2Equipped'
-import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota } from './affixV2State'
+import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne } from './affixV2State'
 import { getAffixV2Definition } from '../data/affixV2'
 import { triggerSkill, recordSkillTrigger } from './skills'
 import { getBindingState, getSkillKeys } from './bindingManager'
@@ -102,7 +104,7 @@ function applyResourceAmount(resource: string, amount: number, anchorKey: string
   recordSkillTrigger(skillId, anchorKey, resource as ResourceType, amount, false)
 }
 
-/** 浮字反馈 · 模仿 skills.ts:587 模板（+X · 资源色 · letterIndex 锚点）*/
+/** 浮字反馈 · 模仿 skills.ts:587 模板（+X · 资源色 · letterIndex 锚点 · getFloatScale 大小缩放）*/
 function emitFloatFeedback(resource: string, amount: number, anchorKey: string): void {
   // 测试 / SSR 环境无 DOM 时跳过（showFeedback 内部 drainQueue 会访问 document）
   if (typeof document === 'undefined') return
@@ -114,7 +116,8 @@ function emitFloatFeedback(resource: string, amount: number, anchorKey: string):
   const anchor = word.includes(k)
     ? { letterIndex: state.player.index, resource, amount }
     : { fromElementId: 'active-library', resource, amount }
-  showFeedback(`${sign}${displayValue}`, color, 1, anchor)
+  const scale = getFloatScale(resource, amount)
+  showFeedback(`${sign}${displayValue}`, color, scale, anchor)
 }
 
 /** 处理每个 sourced result：注入资源（经 aura 修饰）+ dispatch fire_target
@@ -151,6 +154,22 @@ function scheduleFireTargetDispatch(sourceInstId: string, targetSkillId: string,
     if (state.phase !== 'battle') return  // 出战斗丢弃残留
     scheduleFireTargetDispatch(sourceInstId, targetSkillId, sourceKey)
   }, wait + 5)  // 5ms jitter 避免边界精度问题
+}
+
+/** 调度一次 on_haste_granted 派发：满配额立即跑 hook，否则 setTimeout 推迟（同 fire_target 4/sec 限流） */
+function scheduleHasteGrantedDispatch(sourceInstId: string, grantedSkillId: string): void {
+  const now = Date.now()
+  const wait = getFireTargetWaitMs(sourceInstId, now)
+  if (wait === 0) {
+    tryFireTargetQuota(sourceInstId, now)  // 记账（与 fire_target 共享配额）
+    const results = hookOnHasteGranted(grantedSkillId, defaultResourceLv1Base, defaultGetPlayerResource, now)
+    processV2Results(results)
+    return
+  }
+  setTimeout(() => {
+    if (state.phase !== 'battle') return  // 出战斗丢弃残留
+    scheduleHasteGrantedDispatch(sourceInstId, grantedSkillId)
+  }, wait + 5)  // 5ms jitter
 }
 
 function fireOneTarget(targetSkillId: string, sourceKey: string): void {
@@ -303,6 +322,13 @@ export function wireV2BattleIntegration(): void {
     processV2Results(results)
   })
 
+  // haste:granted → 触发 on_haste_granted 类 V2 affix（scope 内含 grantedSkillId）
+  // 同来源限流：复用 fire_target rate limit（4/sec/source），超配额 setTimeout 推迟到下窗口，
+  // grant_haste → on_haste_granted → grant_haste 自循环按 4/sec 节奏持续运行，链不中断
+  eventBus.on('haste:granted', ({ skillId, sourceInstanceId }) => {
+    scheduleHasteGrantedDispatch(sourceInstanceId, skillId)
+  })
+
   // 注：on_key 与 on_skill_fire 不通过 eventBus，需 in-line 调用
   // 由 triggerAffixSkillWithFeedback / handleKeyPress 直接 import 本模块的 helper
 }
@@ -315,6 +341,9 @@ export function triggerV2BattleEnd(): void {
 // ============================================
 // 内联调用 helper（供 skills.ts / battle.ts 调）
 // ============================================
+
+// 多重释放 · 防递归：MULTI_FIRE aura 触发的额外 fire 不再叠加 multi_fire（否则无限）
+let _inMultiFireExtra = false
 
 /** 在 triggerAffixSkillWithFeedback 中调，传 fire event 信息 */
 export function onSkillFireV2(
@@ -346,6 +375,50 @@ export function onSkillFireV2(
   // V2 skill 基础产出：替代旧 orchestrator 的 applyResource 通道
   // 公式：(Lv1Base + Σ cumulativeBaseAdd) × (1 + Σ cumulativeFactorAdd) × aura output_bonus_pct
   emitV2SkillBaseOutput(skillId, sourceKey, sourceResource)
+
+  // 多重释放 aura · 顶层 fire 完成后查匹配此 skill 的 multi_fire_add aura，额外再 fire N 次
+  if (!_inMultiFireExtra) {
+    const extras = sumMultiFireAuras(skillId, sourceKey)
+    if (extras > 0) {
+      _inMultiFireExtra = true
+      try {
+        for (let i = 0; i < extras; i++) {
+          triggerSkill(skillId, sourceKey)
+        }
+      } finally {
+        _inMultiFireExtra = false
+      }
+    }
+  }
+}
+
+/** 极速消耗 · 玩家按下绑定键时调（在 playerCorrect 的 triggerSkill 后）
+ *  若 skill 有 ≥1 极速层 → 消耗 1 层 + 触发：
+ *    1. 全 V2 实例 affixKeyCount +1（额外按键计数，via onKeyV2 → 顺带跑 on_key/every_n_keys）
+ *    2. triggerSkill 再跑一次（base + on_self_fire + on_fire + chain — 完整 fire pipeline）
+ *  注意：word.index 不变（triggerSkill 不动 index，playerCorrect 才动）
+ *  注意：单次按键最多消耗 1 层（即使有多层）— 攒下来分多次用
+ */
+export function consumeHasteFireIfAny(skillId: string, sourceKey: string): boolean {
+  if (!consumeHasteOne(skillId)) return false
+  // 1. 模拟一次额外按键（bump every_n_keys 计数 + 跑 on_key/every_n_keys triggered V2 affixes）
+  onKeyV2()
+  // 2. 模拟一次额外 skill fire（完整 pipeline）
+  triggerSkill(skillId, sourceKey)
+  return true
+}
+
+/** 累计 multi_fire_add aura · 返回向上取整后的额外 fire 次数 */
+function sumMultiFireAuras(skillId: string, sourceKey: string): number {
+  let total = 0
+  for (const aura of listActiveAuras()) {
+    if (aura.modifier.type !== 'multi_fire_add') continue
+    const entry = listAllEquipped().find(e => e.instanceId === aura.sourceInstanceId)
+    if (!entry) continue
+    if (!selectorMatchesSkill(aura.selector, entry.skillId, entry.key, skillId, sourceKey)) continue
+    total += aura.modifier.amount
+  }
+  return Math.floor(total)
 }
 
 /** 计算并写入 V2 skill 的基础产出 · 仅对挂有 v2Ids 的 skill 触发 */

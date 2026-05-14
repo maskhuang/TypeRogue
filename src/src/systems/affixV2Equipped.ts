@@ -347,6 +347,67 @@ export function hookOnWordEnd(
   return results
 }
 
+/**
+ * haste:granted 全局 hook · 任一 skill 获得极速时调
+ * 遍历 on_haste_granted trigger 的 V2 instance，scope 内含 grantedSkillId 才命中。
+ * scope 缺省 = self（仅监听本 affix 所在 skill）。
+ */
+export function hookOnHasteGranted(
+  grantedSkillId: string,
+  resourceLv1Base: (r: string) => number,
+  getPlayerResource: (r: string) => number,
+  nowMs: number,
+): SourcedResult[] {
+  const results: SourcedResult[] = []
+  for (const entry of _equipped.values()) {
+    const def = getAffixV2Definition(entry.defId)
+    if (!def || def.trigger.type !== 'on_haste_granted') continue
+
+    // scope 匹配：缺省 self
+    const scope: TargetSelector = def.trigger.scope ?? { type: 'self' }
+    let inScope = false
+    if (scope.type === 'self') {
+      inScope = entry.skillId === grantedSkillId
+    } else if (_selectorResolver) {
+      const targets = _selectorResolver(scope, entry.skillId, entry.key)
+      inScope = targets.includes(grantedSkillId)
+    }
+    if (!inScope) continue
+
+    const triggerCtx: TriggerContext = {
+      selfAffixId: entry.defId,
+      selfKey: entry.key,
+      grantedSkillId,
+    }
+    if (!evaluateTrigger(def.trigger, triggerCtx)) continue
+
+    const ctx: ResolveContext = {
+      instanceId: entry.instanceId,
+      skillId: entry.skillId,
+      key: entry.key,
+      skillResource: 'score',
+      skillResourceLv1Base: resourceLv1Base('score'),
+      resourceLv1Base,
+      nowMs,
+      isCrit: false,
+      currentWordLength: 0,
+      getPlayerResource,
+      resolveSelector: _selectorResolver,
+    }
+    const result = resolveEffect(def.effect, ctx)
+    results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
+
+    _ghostLog.push({
+      timestamp: nowMs,
+      instanceId: entry.instanceId,
+      defId: entry.defId,
+      trigger: def.trigger.type,
+      result,
+    })
+  }
+  return results
+}
+
 // ============================================
 // Battle lifecycle hooks
 // ============================================

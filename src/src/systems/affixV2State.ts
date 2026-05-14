@@ -224,6 +224,33 @@ export function clearSkillAggregates(): void {
 }
 
 // ============================================
+// 极速层 · per-skill 累加 float · consume floor(1) per key press
+// ============================================
+
+const _hasteBySkill: Map<string, number> = new Map()
+
+export function addHaste(skillId: string, amount: number): void {
+  _hasteBySkill.set(skillId, (_hasteBySkill.get(skillId) ?? 0) + amount)
+}
+
+/** 消耗一层极速 · floor(haste) >= 1 时 -1 并返 true；否则返 false */
+export function consumeHasteOne(skillId: string): boolean {
+  const cur = _hasteBySkill.get(skillId) ?? 0
+  if (cur < 1) return false
+  _hasteBySkill.set(skillId, cur - 1)
+  return true
+}
+
+/** UI 查询 · 显示当前 floor 极速层数 */
+export function getHaste(skillId: string): number {
+  return Math.floor(_hasteBySkill.get(skillId) ?? 0)
+}
+
+export function clearAllHaste(): void {
+  _hasteBySkill.clear()
+}
+
+// ============================================
 // 一键全 reset（battle end / cycle 切换）
 // ============================================
 
@@ -234,4 +261,5 @@ export function resetAllAffixV2State(): void {
   clearStatuses()
   clearRateLimits()
   clearSkillAggregates()
+  clearAllHaste()
 }

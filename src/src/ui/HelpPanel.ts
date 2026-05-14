@@ -57,6 +57,7 @@ export const GLOSSARY_DATA: GlossaryEntry[] = [
   { category: 'enchantment', id: 'apprentice_res_gold', icon: '💰', nameKey: 'ench_meta.apprentice_res_gold', descKey: 'ench_meta.apprentice_res_gold.desc' },
   { category: 'enchantment', id: 'multiply_operator', icon: '⚙️', nameKey: 'ench_meta.multiply_operator', descKey: 'ench_meta.multiply_operator.desc' },
   { category: 'enchantment', id: 'ascend', icon: '✨', nameKey: 'help.ascend', descKey: 'help.ascend.desc' },
+  { category: 'enchantment', id: 'haste', icon: '⚡', nameKey: 'help.haste', descKey: 'help.haste.desc' },
 
   // 位置关系（6 种）
   { category: 'position', id: 'adjacent', icon: '↔️', nameKey: 'rel.adjacent', descKey: 'rel.adjacent.desc' },

@@ -25,7 +25,9 @@ import {
   addStatus,
   addSkillCumBase,
   addSkillCumFactor,
+  addHaste,
 } from './affixV2State'
+import { eventBus } from '../core/events/EventBus'
 
 // ============================================
 // ResolveContext
@@ -173,6 +175,28 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       const baseLv1 = ctx.resourceLv1Base(spec.resource)
       const amount = spec.ratio * baseLv1 * factor
       result.resourceProduced.push({ resource: spec.resource, amount })
+      return
+    }
+
+    case 'gain_proportional': {
+      // amount = ratio × Lv1[target] × (player[source] / Lv1[source])
+      const sourceLv1 = ctx.resourceLv1Base(spec.source)
+      const targetLv1 = ctx.resourceLv1Base(spec.target)
+      const playerSource = ctx.getPlayerResource(spec.source)
+      if (sourceLv1 <= 0 || playerSource <= 0) return  // 防 0 除 / 持有量为 0 不产出
+      const scaleFactor = playerSource / sourceLv1
+      const amount = spec.ratio * targetLv1 * scaleFactor
+      result.resourceProduced.push({ resource: spec.target, amount })
+      return
+    }
+
+    case 'grant_haste': {
+      // selector 展开 → 每个 target skill 累加 amount 极速（float）；floor 后被消耗
+      const targets = ctx.resolveSelector?.(spec.selector, ctx.skillId, ctx.key) ?? [ctx.skillId]
+      for (const tid of targets) {
+        addHaste(tid, spec.amount)
+        eventBus.emit('haste:granted', { skillId: tid, amount: spec.amount, sourceInstanceId: ctx.instanceId })
+      }
       return
     }
 

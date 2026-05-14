@@ -39,6 +39,8 @@ export interface TriggerContext {
   readonly event?: FireEvent
   /** 当前是否处于词末（on_word_end 用）*/
   readonly isWordEnd?: boolean
+  /** 获得极速的目标 skillId（on_haste_granted 用 · scope 匹配在 hook 层做）*/
+  readonly grantedSkillId?: string
 }
 
 // ============================================
@@ -80,6 +82,10 @@ export function evaluateTrigger(spec: TriggerSpec, ctx: TriggerContext): boolean
       // 自时钟：本 affix 已见的按键数能整除 n
       if (typeof ctx.affixKeyCount !== 'number' || ctx.affixKeyCount <= 0) return false
       return ctx.affixKeyCount % spec.n === 0
+
+    case 'on_haste_granted':
+      // hook 层已保证 scope 匹配；evaluator 只校验 context 完整
+      return ctx.grantedSkillId !== undefined
 
     // ── Phase 2（占位 · 未实装）──
     case 'on_window_mode':

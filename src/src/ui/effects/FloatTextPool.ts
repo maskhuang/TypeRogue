@@ -157,6 +157,19 @@ export function spawnFloatText(text: string, color: string, _scale = 1, containe
   f.onArrive = undefined;
 }
 
+/** 指定锚点位置弹浮字（不带飞行小球），用于 anchor-only 反馈如极速 */
+export function spawnFloatTextAt(text: string, color: string, x: number, y: number, scale = 1): void {
+  const f = acquire();
+  if (!f) return;
+  f.active = true;
+  f.text = text;
+  f.color = color;
+  f.x = x;
+  f.y = y;
+  f.life = 0; f.maxLife = 800; f.size = Math.round(8 * scale); f.flight = false;
+  f.onArrive = undefined;
+}
+
 export function spawnFlightText(
   text: string, color: string, scale: number,
   startX: number, startY: number,

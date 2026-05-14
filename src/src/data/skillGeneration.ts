@@ -434,7 +434,7 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
 
   // ── V2 接管：rarity = V2 affix 数量（rarity 0 → 0 个，3 → 3 个）──
   // 旧 AffixInstance 通道已禁用（orchestrator 入口短路）；保留 affixes=[] 供 UI 兼容
-  const v2Ids = sampleV2Ids(rarity)
+  const v2Ids = sampleV2Ids(rarity, resource)
   const affixes: AffixInstance[] = []
 
   // 自动命名：skill.name 只存资源 base，V2 词条名由 display 层（itemDescriptors / shopTerminal）
@@ -480,14 +480,15 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
 /** 用 affixV2Generator.generateAffixV2 为 skill 滚 count 个 V2 词条
  *  每个词条独立选 recipe + 随机 trigger + magnitude scaling
  *  rarity 0 → 0 个；返回生成出的 (动态注册的) def id 列表
+ *  @param skillResource  词条所在 skill 的资源（传给 convert recipe 用作 source 锚点）
  */
-function sampleV2Ids(count: number): string[] {
+function sampleV2Ids(count: number, skillResource: ResourceType): string[] {
   if (count <= 0) return []
   if (ALL_RECIPES.length === 0) return []
   const out: string[] = []
   for (let i = 0; i < count; i++) {
     const recipe = ALL_RECIPES[Math.floor(random() * ALL_RECIPES.length)]
-    out.push(generateAffixV2(recipe))
+    out.push(generateAffixV2(recipe, skillResource))
   }
   return out
 }

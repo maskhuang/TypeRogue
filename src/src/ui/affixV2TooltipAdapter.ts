@@ -96,7 +96,18 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
         ? `任一技能触发时（${parts.join('、')}）`
         : `When any skill fires (${parts.join(', ')})`
     }
-    case 'every_n_keys':  return zh ? `每 ${trigger.n} 次击键` : `Every ${trigger.n} keystrokes`
+    case 'every_n_keys':
+      return trigger.n <= 1
+        ? (zh ? '每次击键' : 'On keystroke')
+        : (zh ? `每 ${trigger.n} 次击键` : `Every ${trigger.n} keystrokes`)
+    case 'on_haste_granted': {
+      const scope = trigger.scope ?? { type: 'self' as const }
+      return scope.type === 'self'
+        ? (zh ? '本技能获得极速时' : 'When this skill gains haste')
+        : (zh
+          ? `${formatSelector(scope)}获得极速时`
+          : `When ${formatSelector(scope)} gains haste`)
+    }
     case 'on_window_mode': return zh ? `节奏·${trigger.pattern}` : `Rhythm·${trigger.pattern}`
     case 'on_sequence':   return zh ? `序列·${trigger.pattern}` : `Sequence·${trigger.pattern}`
     case 'one_per_window': return zh ? `${trigger.n} 键内仅一次` : `Once per ${trigger.n} keys`
@@ -187,6 +198,21 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
     }
     case 'gain_resource':
       return `+${lv1Amount(effect.resource, effect.ratio)} ${locResource(effect.resource)}`
+    case 'gain_proportional': {
+      // 每 1 Lv1[source] 持有量产出 ratio × Lv1[target] target
+      const perUnit = lv1Amount(effect.target, effect.ratio)
+      const sourceUnit = lv1Amount(effect.source, 1)
+      return zh
+        ? `每持有 ${sourceUnit} ${locResource(effect.source)} → +${perUnit} ${locResource(effect.target)}`
+        : `per ${sourceUnit} ${locResource(effect.source)} → +${perUnit} ${locResource(effect.target)}`
+    }
+    case 'grant_haste': {
+      // 每 trigger 固定整数 amount stack（amount 来自 recipe.amount，不再除 freq）
+      const n = Math.max(1, Math.round(effect.amount))
+      return zh
+        ? `给 ${formatSelector(effect.selector)} +${n} 极速`
+        : `grant ${formatSelector(effect.selector)} +${n} haste`
+    }
     case 'composite':
       return effect.effects.map(e => formatEffectDescription(e, skillResource)).join(zh ? '；' : '; ')
     case 'conditional': {
@@ -208,12 +234,14 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         modStr = mod.type === 'base_add' ? `产出 +${pct(mod.ratio)}%（基础值加成）` :
                  mod.type === 'factor_add' ? `产出 +${pct(mod.amount)}%（倍率加成）` :
                  mod.type === 'crit_chance_add' ? `暴击率 +${pct(mod.amount)}%` :
+                 mod.type === 'multi_fire_add' ? `多重释放 +${mod.amount}` :
                  `产出 +${pct(mod.amount)}%`
         return `给 ${formatSelector(effect.selector)} 加光环：${modStr}`
       } else {
         modStr = mod.type === 'base_add' ? `output +${pct(mod.ratio)}% (base bonus)` :
                  mod.type === 'factor_add' ? `output +${pct(mod.amount)}% (multiplier bonus)` :
                  mod.type === 'crit_chance_add' ? `crit rate +${pct(mod.amount)}%` :
+                 mod.type === 'multi_fire_add' ? `multi-fire +${mod.amount}` :
                  `output +${pct(mod.amount)}%`
         return `aura on ${formatSelector(effect.selector)}: ${modStr}`
       }

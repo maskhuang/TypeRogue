@@ -6,7 +6,8 @@ import { state, synergy, calculateTargetScore, resetResources, createBattleStats
 import { rebuildBigramFreq } from '../data/bigramFrequency';
 import { resolveRelicEffects, resolveRelicEffectsWithBehaviors, queryRelicFlag } from './relics/RelicPipeline';
 import { eventBus } from '../core/events/EventBus';
-import { onKeyV2 } from './affixV2BattleIntegration';
+import { onKeyV2, consumeHasteFireIfAny } from './affixV2BattleIntegration';
+import { getHaste } from './affixV2State';
 import { inputHandler } from './typing/InputHandler';
 import { getElements } from '../ui/elements';
 import { RELICS, MAX_RELIC_SLOTS } from '../data/relics';
@@ -15,7 +16,7 @@ import { playSound, initAudio, playScoreSound, playRatingSound, startBGM, stopBG
 import { spawnParticles } from '../effects/particles';
 import { setPaletteHsl as setBgPalette, setLightnessBias as setBgLBias, setRandomStyle as setBgRandomStyle, setSpeedMultiplier as setBgSpeedMul } from '../effects/balatroBackground';
 import { installSkipListener, type SkipController } from '../effects/skipAnimation';
-import { initFloatTextCanvas, spawnFloatText, spawnFlightText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
+import { initFloatTextCanvas, spawnFloatText, spawnFloatTextAt, spawnFlightText, clearFloatTexts, preheatFloatTexts } from '../ui/effects/FloatTextPool';
 import { triggerSkill, clearPseudoInfinite, resetWordResourceTypes, getWordResourceTypeCount, updateChargeProducers, getWordResourceOutput, isChargeSkill, isReechoSkill, resetStageProduced } from './skills';
 import { HAND_MAP } from '../data/keyboardTopology';
 import { openShop } from './shop';
@@ -468,7 +469,81 @@ function renderWord(): void {
     hint.textContent = t('battle.tab_hint');
     el.word.appendChild(hint);
   }
+
+  // 字母级状态徽章（极速/未来其他 status）— 渲染尾部统一应用
+  applyLetterStatusBadges();
 }
+
+/** 字母级状态徽章 · 多种 status 共享一个 .letter-status 容器（flex row-reverse 堆叠）
+ *  当前实现：极速 · 未来可扩展增幅/aura/任务等 */
+function applyLetterStatusBadges(): void {
+  const el = getElements();
+  const s = state.player;
+  for (let i = 0; i < s.word.length; i++) {
+    const span = el.word.children[i] as HTMLElement | undefined;
+    if (!span) continue;
+    // 清除旧 pip 容器 + halo class
+    const old = span.querySelector(':scope > .letter-status');
+    if (old) old.remove();
+    span.classList.remove('has-haste');
+
+    const ch = s.word[i];
+    const skillId = s.bindings.get(ch.toLowerCase());
+    if (!skillId) continue;
+
+    const pips: HTMLElement[] = [];
+    const haste = getHaste(skillId);
+    if (haste > 0) {
+      const pip = document.createElement('span');
+      pip.className = 'status-pip pip-haste';
+      pip.textContent = `⚡${haste}`;
+      pips.push(pip);
+      span.classList.add('has-haste');
+    }
+    // 未来 status 在此追加 pip
+
+    if (pips.length > 0) {
+      const container = document.createElement('span');
+      container.className = 'letter-status';
+      for (const p of pips) container.appendChild(p);
+      span.appendChild(container);
+    }
+  }
+}
+
+/** 极速施加浮字 · 锚到 skill 绑定键对应的当前词字母（或 active-library 兜底）·
+ *  不带飞行小球，纯文本从锚点上方漂起 */
+function showHasteGrantFeedback(skillId: string, amount: number): void {
+  const boundKey = [...state.player.bindings.entries()].find(([, v]) => v === skillId)?.[0];
+  if (!boundKey) return;
+  const anchor = resolveChainAnchor(boundKey);
+  let startEl: HTMLElement | undefined;
+  if (anchor.letterIndex !== undefined) {
+    startEl = getElements().word.children[anchor.letterIndex] as HTMLElement | undefined;
+  } else if (anchor.fromElementId) {
+    startEl = document.getElementById(anchor.fromElementId) ?? undefined;
+  }
+  if (!startEl) startEl = document.getElementById('active-library') ?? undefined;
+  const n = Math.max(1, Math.round(amount));
+  if (!startEl || !_cachedContainerRect) {
+    spawnFloatText(`+${n}⚡`, '#74b9ff', 1, _cachedContainerW, _cachedContainerH);
+    return;
+  }
+  const cr = _cachedContainerRect;
+  const rect = startEl.getBoundingClientRect();
+  const x = rect.left + rect.width / 2 - cr.left;
+  const y = rect.top - cr.top - 6;
+  spawnFloatTextAt(`+${n}⚡`, '#74b9ff', x, y, 1.0);
+}
+
+eventBus.on('haste:granted', ({ skillId, amount }) => {
+  // 监听器在 grant_haste 同步 emit 路径中触发 → 推迟到 microtask，
+  // 避免在 trigger 管线中途修改 DOM / 入队浮字，干扰本次 fire 的产出
+  queueMicrotask(() => {
+    showHasteGrantFeedback(skillId, amount);
+    applyLetterStatusBadges();
+  });
+});
 
 // === 输入处理 ===
 export function initInput(): void {
@@ -831,6 +906,19 @@ function playerCorrect(k: string): void {
       letter.classList.add('charging');
     } else {
       triggerSkill(skillId, k);
+      // V2 极速消耗：本次按键若该 skill 有 ≥1 极速层 → 额外触发一次（不推进 word.index）
+      const hasteConsumed = consumeHasteFireIfAny(skillId, k);
+      if (hasteConsumed) {
+        // 字母弹跳反馈（Bazaar 物品触发式）·
+        // 用子覆盖层而非给 letter 自身加 class — 避免与 .skill-triggered 的 animation 冲突
+        const oldOverlay = letter.querySelector(':scope > .haste-fire-overlay');
+        if (oldOverlay) oldOverlay.remove();
+        const overlay = document.createElement('span');
+        overlay.className = 'haste-fire-overlay';
+        letter.appendChild(overlay);
+        setTimeout(() => overlay.remove(), 260);
+        applyLetterStatusBadges();
+      }
     }
     // Story 36.4: 首发强化反馈（每词第一个技能 +10分）
     if (synergy.wordSkillCount === 1 && state.player.relics.has('first_strike')) {

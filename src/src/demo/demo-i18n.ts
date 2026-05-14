@@ -1157,6 +1157,8 @@ const ZH: Record<string, string> = {
   'ench_meta.multiply_operator.desc': '将加算层各项加成转为独立乘数',
   'help.ascend': '升华',
   'help.ascend.desc': '拥有学徒附魔的 Lv.3+ 技能，积累足够经验后在战斗中自动升华，突破等级上限。',
+  'help.haste': '极速',
+  'help.haste.desc': '在按下该技能绑定键时消耗 1 层，视为额外按下一次。',
 
   // --- quest enchantments (19 name + 19 effect + 19 task) ---
   'quest.quest_convert_accum': 'FOC-B-015 · 汲取', 'quest.quest_convert_accum.effect': '改为读取源资源累积存量', 'quest.quest_convert_accum.task': '装备N个',
@@ -1377,6 +1379,8 @@ const ZH: Record<string, string> = {
   'glossary.transform.detail': '完成附魔任务后词条获得永久强化效果',
   'glossary.crit.term': '暴击',
   'glossary.crit.detail': '触发时有概率造成2倍产出，多个词条的暴击率会叠加',
+  'glossary.haste.term': '极速',
+  'glossary.haste.detail': '按下技能绑定键时消耗 1 层，视为该键被额外按下一次',
 
   'ench_info.quest_desc': '{effect} (任务: {task})',
   'ench_info.quest_equip_desc': '{effect} (任务: 装备 {target} 个{affix}技能)',
@@ -2588,6 +2592,8 @@ const EN: Record<string, string> = {
   'ench_meta.multiply_operator.desc': 'Converts additive bonuses into independent multipliers',
   'help.ascend': 'Ascension',
   'help.ascend.desc': 'Lv.3+ skills with apprentice enchantments auto-ascend during battle after accumulating enough EXP.',
+  'help.haste': 'Haste',
+  'help.haste.desc': 'When the skill\'s bound key is pressed, consume 1 stack to count as an extra keypress.',
 
   // --- quest enchantments (19 name + 19 effect + 19 task) ---
   'quest.quest_convert_accum': 'FOC-B-015 · Absorb', 'quest.quest_convert_accum.effect': 'Reads accumulated resource stock instead of skill output', 'quest.quest_convert_accum.task': 'Equip N',
@@ -2810,6 +2816,8 @@ const EN: Record<string, string> = {
   'glossary.transform.detail': 'Permanent upgrade gained after completing an enchantment quest',
   'glossary.crit.term': 'Crit',
   'glossary.crit.detail': 'Chance to deal 2x output on trigger; crit rates from multiple affixes stack',
+  'glossary.haste.term': 'Haste',
+  'glossary.haste.detail': "When the skill's bound key is pressed, consume 1 stack to count as an extra keypress",
 
   'ench_info.quest_desc': '{effect} (Task: {task})',
   'ench_info.quest_equip_desc': '{effect} (Task: Equip {target} {affix} skills)',

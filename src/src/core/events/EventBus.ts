@@ -21,6 +21,8 @@ export interface GameEvents {
   // 技能事件
   'skill:triggered': { key: string; skillId: string; type: 'passive' | 'active'; amplifierStacks?: number; growthValue?: number; critTriggered?: boolean; pulseTriggered?: boolean; questCompleted?: boolean; tabooNegative?: boolean }
   'skill:upgraded': { skillId: string; newLevel: number }
+  // V2 极速施加事件（grant_haste 结算后逐 target 发射；sourceInstanceId 用于 rate-limit）
+  'haste:granted': { skillId: string; amount: number; sourceInstanceId: string }
 
   // 效果队列事件
   'effect:queued': { effect: unknown; queueSize: number }

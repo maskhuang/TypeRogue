@@ -179,6 +179,7 @@ const MECHANIC_KEYWORD_DEFS: Array<{ id: string; keywords: string[] }> = [
   { id: 'range',           keywords: ['范围', 'range'] },
   { id: 'transform',      keywords: ['质变', 'transform'] },
   { id: 'crit',            keywords: ['暴击', 'crit'] },
+  { id: 'haste',          keywords: ['极速', 'haste'] },
 ]
 
 /** 编译后的匹配列表（长词优先） */

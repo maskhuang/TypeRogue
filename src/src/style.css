@@ -1194,6 +1194,65 @@ html[lang^="en"] .menu-style-cover .menu-title {
     100% { transform: scale(1); }
 }
 
+/* === 字母级状态徽章容器 · 多重 status pip 堆叠（flex row-reverse 从右贴边） === */
+.letter-status {
+    position: absolute;
+    top: -10px;
+    right: -4px;
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 1px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.status-pip {
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: 8px;
+    font-weight: bold;
+    line-height: 1;
+    padding: 0 1px;
+    white-space: nowrap;
+}
+
+.status-pip.pip-haste {
+    color: #74b9ff;
+    text-shadow: 1px 0 0 #000, 0 1px 0 #000, -1px 0 0 #000, 0 -1px 0 #000;
+    animation: hastePipBlink 0.9s steps(1) infinite;
+}
+
+@keyframes hastePipBlink {
+    0%, 65% { opacity: 1; }
+    66%, 100% { opacity: 0.55; }
+}
+
+/* === 极速持续 halo · stepped pulse 保持像素风 === */
+.letter.has-haste {
+    animation: hasteHalo 1.6s steps(1) infinite;
+}
+
+@keyframes hasteHalo {
+    0%, 49% { filter: drop-shadow(0 0 2px #74b9ff); }
+    50%, 100% { filter: drop-shadow(0 0 5px #74b9ff) drop-shadow(0 0 1px #74b9ff); }
+}
+
+/* === 极速消耗 · Bazaar 物品触发式弹跳（子覆盖层，不挤占 .letter 本体的 animation）=== */
+.haste-fire-overlay {
+    position: absolute;
+    inset: -3px;
+    pointer-events: none;
+    z-index: 1;
+    border: 1px solid #74b9ff;
+    box-sizing: border-box;
+    animation: hasteFireOverlay 240ms steps(3) forwards;
+}
+
+@keyframes hasteFireOverlay {
+    0%   { opacity: 0; transform: scale(0.85); box-shadow: 0 0 0 0 rgba(116,185,255,0); }
+    40%  { opacity: 1; transform: scale(1.35); box-shadow: 0 0 10px 2px rgba(116,185,255,0.9); }
+    100% { opacity: 0; transform: scale(1.6); box-shadow: 0 0 0 0 rgba(116,185,255,0); }
+}
+
 /* 小助手 Tab 补全提示 */
 .tab-hint {
     position: absolute;

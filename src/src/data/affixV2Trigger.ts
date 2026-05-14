@@ -52,6 +52,8 @@ export type Phase1TriggerSpec =
   | { type: 'on_self_fire' }
   | { type: 'on_fire'; filter?: FireFilter }
   | { type: 'every_n_keys'; n: number }
+  /** scope 内某个 skill 获得极速时触发 · 默认 scope=self */
+  | { type: 'on_haste_granted'; scope?: TargetSelector }
 
 /** Phase 2 trigger 扩展（详 research §5.2） */
 export type Phase2TriggerSpec =
@@ -99,6 +101,8 @@ export type AuraModifier =
   | { type: 'crit_chance_add'; amount: number }
   /** 邻居输出 +amount%（绝对百分比，0.10 = +10%）*/
   | { type: 'output_bonus_pct'; amount: number }
+  /** 多重释放 · 目标 skill 每次 fire 额外触发 amount 次（amount = 1 → 单次变双发，2 → 三发）*/
+  | { type: 'multi_fire_add'; amount: number }
 
 // ===== StatusKeyword (apply_status 占位 · K4 D' 决议)
 // 词表暂未敲定（推迟到 narrative status register 决议），运行时 stub。
@@ -167,6 +171,22 @@ export type EffectSpec =
    * 设计意图：同上 `add`——ratio 是资源 Lv1 base 比例，跨资源等效。
    */
   | { kind: 'gain_resource'; resource: string; ratio: number; scale?: ScaleByTag }
+
+  /**
+   * 比例产出（"持有 X → 产出 Y"）· source/target 为不同资源
+   * 每次 trigger 命中 → amount = ratio × Lv1[target] × (player[source] / Lv1[source])
+   * 数值演算：持 1 Lv1 单位 source 时，等效一次 `gain_resource(target, ratio)`；
+   *           持 10 Lv1 单位 source 时，等效 10× drip 一次产出。雪球性。
+   */
+  | { kind: 'gain_proportional'; source: string; target: string; ratio: number }
+
+  /**
+   * 极速 grant · 给 selector 内 skill +amount 极速层（per-skill 累加，floor 后消耗）
+   * 消耗时机：玩家按下技能绑定键时，若该 skill 有 ≥1 极速，消耗 1 层 → 额外触发一次
+   * 额外触发内容：基础产出 + 该 skill 上 on_self_fire affix 各跑一次 + every_n_keys 全局计数 +1
+   * **不** 推进 word.index；每关重置。
+   */
+  | { kind: 'grant_haste'; selector: TargetSelector; amount: number }
 
   /**
    * 多 effect 顺序执行（加算层 → 乘算层 → 一次性产出 的顺序结算）

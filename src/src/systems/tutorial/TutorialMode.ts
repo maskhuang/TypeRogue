@@ -85,7 +85,22 @@ export function exitTutorialMode(): void {
   clearFloatTexts()
   resetState()
   state.isTutorial = false
+  // 清教程残留：
+  //   1) demoWordQueue 可能残留 tutorial P1-P4 词序，下场游戏第一关会被错抓
+  //   2) setTutorialHUD 把 HUD 元素 display:none，下场游戏 HUD 残缺
+  //   3) currentPhase 模块级 — startTutorialMode 会重置，但显式回 1 更安全
+  setWordQueue([])
+  resetTutorialHUD()
+  currentPhase = 1
   showScreen('menu')
+}
+
+/** 把 setTutorialHUD 隐藏的 HUD 元素恢复默认 display（让下场游戏 HUD 完整） */
+function resetTutorialHUD(): void {
+  for (const id of ['combo-count', 'multiplier-display', 'timer-section', 'target-score', 'skill-trigger-zone', 'player-relics']) {
+    const el = document.getElementById(id)
+    if (el) el.style.display = ''
+  }
 }
 
 // ==========================================

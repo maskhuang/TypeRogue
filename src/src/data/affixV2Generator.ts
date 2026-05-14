@@ -24,53 +24,75 @@ interface TriggerEntry {
   readonly freq: number
 }
 
-const BASE_TRIGGER_POOL: readonly TriggerEntry[] = [
-  { spec: { type: 'on_word_end' },              freq: 30 },
-  { spec: { type: 'on_self_fire' },             freq: 30 },
-  { spec: { type: 'on_key' },                   freq: 300 },
-  { spec: { type: 'every_n_keys', n: 10 },      freq: 30 },
-]
+// every_n_keys N 范围 · N=1 等同 on_key（合并）
+const EVERY_N_MIN = 1
+const EVERY_N_MAX = 30
 
-/** on_fire(tag=section)：听本 section 其他技能 fire · freq ≈ 30 词 × 1.5 平均同 section 技能数 */
-function makeOnFireTagTrigger(section: SectionTag): TriggerEntry {
-  return { spec: { type: 'on_fire', filter: { tag: section } }, freq: 45 }
+/** on_fire(posRel) freq 表 · 估值 = 30 × 平均位置满足技能数 */
+const ONFIRE_POSREL_FREQ: Record<string, number> = {
+  Adjacent: 60, SameRow: 90, SameColumn: 45,
+  SameHand: 120, SameFinger: 45, Symmetric: 30,
 }
 
-/** on_fire(resource)：听场上指定资源技能 fire · freq ≈ 30 × 1.5 平均同资源技能数 */
-function makeOnFireResourceTriggers(): readonly TriggerEntry[] {
-  return MATCHED_RESOURCE_POOL.map(resource => ({
-    spec: { type: 'on_fire', filter: { resource } } as TriggerSpec,
-    freq: 45,
-  }))
+const POSREL_VALUES = [
+  PositionRelation.Adjacent, PositionRelation.SameRow, PositionRelation.SameColumn,
+  PositionRelation.SameHand, PositionRelation.SameFinger, PositionRelation.Symmetric,
+] as const
+
+// ============================================
+// 二级抽样 trigger · 先大类（on_fire vs non-on-fire 50/50）再细分
+// ============================================
+
+/** 顶层：50% on_fire 家族 / 50% 非 fire（on_word_end / on_key / every_n_keys）*/
+function pickTrigger(section: SectionTag): TriggerEntry {
+  return random() < 0.5 ? pickOnFireTrigger(section) : pickNonFireTrigger()
 }
 
-/** on_fire(posRel)：听该位置关系技能 fire · freq ≈ 30 × 平均位置满足技能数（粗估） */
-const ONFIRE_POSREL_FREQ: Record<keyof typeof PositionRelation | string, number> = {
-  Adjacent:   60,    // ~2 邻位
-  SameRow:    90,    // ~3 同行
-  SameColumn: 45,    // ~1.5 同列
-  SameHand:   120,   // ~4 同手
-  SameFinger: 45,    // ~1.5 同指
-  Symmetric:  30,    // ~1 镜像
-}
-function makeOnFirePosRelTriggers(): readonly TriggerEntry[] {
-  return [
-    PositionRelation.Adjacent, PositionRelation.SameRow, PositionRelation.SameColumn,
-    PositionRelation.SameHand, PositionRelation.SameFinger, PositionRelation.Symmetric,
-  ].map(posRel => ({
-    spec: { type: 'on_fire', filter: { posRel } } as TriggerSpec,
-    freq: ONFIRE_POSREL_FREQ[String(posRel)] ?? 60,
-  }))
+/** on_fire 家族（含 on_self_fire）· 5 子类等权 · 子类内随机参数 */
+function pickOnFireTrigger(section: SectionTag): TriggerEntry {
+  const r = random()
+  if (r < 0.2) {
+    // on_self_fire · 自身 fire
+    return { spec: { type: 'on_self_fire' }, freq: 30 }
+  }
+  if (r < 0.4) {
+    // on_fire(tag=本 section)
+    return { spec: { type: 'on_fire', filter: { tag: section } }, freq: 45 }
+  }
+  if (r < 0.6) {
+    // on_fire(resource) · 6 资源等权
+    const resource = pickRandom(MATCHED_RESOURCE_POOL)
+    return { spec: { type: 'on_fire', filter: { resource } }, freq: 45 }
+  }
+  if (r < 0.8) {
+    // on_fire(posRel) · 6 关系等权
+    const posRel = pickRandom(POSREL_VALUES)
+    return {
+      spec: { type: 'on_fire', filter: { posRel } },
+      freq: ONFIRE_POSREL_FREQ[String(posRel)] ?? 60,
+    }
+  }
+  // on_fire(is_crit) · true/false 等权
+  const isCrit = random() < 0.5
+  return {
+    spec: { type: 'on_fire', filter: { is_crit: isCrit } },
+    freq: isCrit ? 24 : 216,
+  }
 }
 
-/** 构造完整 trigger 池：4 基础 + 1 on_fire(tag=section) + 6 on_fire(resource) + 6 on_fire(posRel) */
-function buildTriggerPool(section: SectionTag): readonly TriggerEntry[] {
-  return [
-    ...BASE_TRIGGER_POOL,
-    makeOnFireTagTrigger(section),
-    ...makeOnFireResourceTriggers(),
-    ...makeOnFirePosRelTriggers(),
-  ]
+/** 非 fire · 3 子类等权 · every_n_keys 含 N=1 等同 on_key · on_haste_granted 含随机 scope */
+function pickNonFireTrigger(): TriggerEntry {
+  const r = random()
+  if (r < 1 / 3) return { spec: { type: 'on_word_end' }, freq: 30 }
+  if (r < 2 / 3) {
+    // every_n_keys · N ∈ [1, 30] 随机；N=1 即每次击键
+    const n = Math.floor(random() * (EVERY_N_MAX - EVERY_N_MIN + 1)) + EVERY_N_MIN
+    return { spec: { type: 'every_n_keys', n }, freq: 300 / n }
+  }
+  // on_haste_granted · scope 加权随机（self 偏多，wide scope 稀有）·
+  // freq 经验值 ~20（依赖场上是否有 grant_haste 源；非 fire 系列里频率粗估）
+  const scope = pickWeightedScope(FULL_SCOPE_POOL).selector
+  return { spec: { type: 'on_haste_granted', scope }, freq: 20 }
 }
 
 // ============================================
@@ -129,7 +151,33 @@ export interface ChainRecipe {
   readonly name_en: string
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe
+/** convert 系：gain_proportional · source 固定为词条所在技能资源 · target 在 resourcePool 随机抽（必与 source 不同）*/
+export interface ConvertRecipe {
+  readonly kind: 'convert'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+  readonly resourcePool: readonly ResourceType[]
+  readonly T: number  // 一关末（player 持 1 Lv1 source 时）总产出 ≈ T × Lv1[target]
+}
+
+/** haste 系：grant_haste · 按下绑定键时消耗 1 层 → 额外触发
+ *  amount = 每 trigger 固定整数 stack；freqRange 决定 trigger pool 过滤 → 自然守恒总量
+ *  典型：amount=1 配 freqRange=[20,30] 一关 ~20-30 极速；
+ *        amount=3 配 freqRange=[5,10]  一关 ~15-30 极速（少而大额）
+ */
+export interface HasteRecipe {
+  readonly kind: 'haste'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+  readonly amount: number           // 每 trigger 整数 stack 数
+  readonly freqRange: readonly [number, number]  // 允许的 trigger freq 区间
+}
+
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | HasteRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -205,10 +253,12 @@ function pickRandom<T>(arr: readonly T[]): T {
 /**
  * 从 recipe 生成一个动态 AffixV2Definition，并注册到运行时索引。
  * 返回 def.id（可塞进 skill.v2Ids）。
+ *
+ * @param skillResource  词条所在技能的资源（convert recipe 用作 source 锚点；其他 recipe 不用）
  */
-export function generateAffixV2(recipe: AffixV2Recipe): string {
-  const triggerPool = buildTriggerPool(recipe.section)
-  const triggerEntry = pickRandom(triggerPool)
+export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceType): string {
+  // 二级抽样：先 50/50 on_fire vs non-on-fire，再分子类
+  const triggerEntry = pickTrigger(recipe.section)
 
   let effect: EffectSpec
   let triggerSpec: TriggerSpec = triggerEntry.spec
@@ -236,7 +286,7 @@ export function generateAffixV2(recipe: AffixV2Recipe): string {
     triggerSpec = { type: 'passive' }
     const scope = pickWeightedScope(FULL_SCOPE_POOL)
     const modifierType = pickRandom([
-      'crit_chance_add', 'output_bonus_pct', 'base_add', 'factor_add',
+      'crit_chance_add', 'output_bonus_pct', 'base_add', 'factor_add', 'multi_fire_add',
     ] as const)
     const amount = recipe.T_byModifier[modifierType]
     let modifier: AuraModifier
@@ -245,13 +295,25 @@ export function generateAffixV2(recipe: AffixV2Recipe): string {
       case 'factor_add':       modifier = { type: 'factor_add', amount };             break
       case 'crit_chance_add':  modifier = { type: 'crit_chance_add', amount };        break
       case 'output_bonus_pct': modifier = { type: 'output_bonus_pct', amount };       break
+      case 'multi_fire_add':   modifier = { type: 'multi_fire_add', amount };         break
     }
     effect = { kind: 'apply_aura', selector: scope.selector, modifier }
+  } else if (recipe.kind === 'convert') {
+    // convert: scope 固定 self · source 固定为词条所在 skill 资源 · target 随机（必不同）
+    const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
+    const source: ResourceType = skillResource ?? 'score'  // 缺省 score 兜底
+    const candidates = recipe.resourcePool.filter(r => r !== source)
+    const target = candidates.length > 0 ? pickRandom(candidates) : source  // pool 单项 fallback
+    effect = { kind: 'gain_proportional', source, target, ratio }
   } else if (recipe.kind === 'chain') {
-    // chain: fire_target broadcast · scope 排除 self · pick=random · trigger 排除 on_key
-    if (triggerEntry.spec.type === 'on_key') {
-      const filtered = triggerPool.filter(t => t.spec.type !== 'on_key')
-      triggerSpec = pickRandom(filtered).spec
+    // chain: fire_target broadcast · scope 排除 self · pick=random
+    // 排除高频 trigger（freq > 100 = 每键 / 每 2 键 / 每 3 键）防 chain 派发洪水
+    let curFreq = triggerEntry.freq
+    let retries = 8
+    while (curFreq > 100 && retries-- > 0) {
+      const retry = pickTrigger(recipe.section)
+      triggerSpec = retry.spec
+      curFreq = retry.freq
     }
     const nonSelfScope = FULL_SCOPE_POOL.filter(s => s.selector.type !== 'self')
     const scope = pickWeightedScope(nonSelfScope)
@@ -274,6 +336,18 @@ export function generateAffixV2(recipe: AffixV2Recipe): string {
         selector = scope.selector
     }
     effect = { kind: 'fire_target', selector }
+  } else if (recipe.kind === 'haste') {
+    // haste: 整数 amount per trigger · freqRange 过滤 trigger（重抽至落入区间）
+    const [fmin, fmax] = recipe.freqRange
+    let curFreq = triggerEntry.freq
+    let retries = 16
+    while ((curFreq < fmin || curFreq > fmax) && retries-- > 0) {
+      const retry = pickTrigger(recipe.section)
+      triggerSpec = retry.spec
+      curFreq = retry.freq
+    }
+    const scope = pickWeightedScope(FULL_SCOPE_POOL)
+    effect = { kind: 'grant_haste', selector: scope.selector, amount: recipe.amount }
   } else {
     throw new Error(`unsupported recipe kind: ${(recipe as { kind: string }).kind}`)
   }
@@ -339,6 +413,7 @@ export const RECIPE_PILOERECTION: ChantRecipe = {
     output_bonus_pct:  0.5,
     base_add:          0.5,
     factor_add:        0.5,
+    multi_fire_add:    1,    // +1 释放（self → 2x；adjacent 4 邻 → 每邻位 +1 各自双发）
   },
 }
 
@@ -350,6 +425,26 @@ export const RECIPE_DRUMMING: ChainRecipe = {
   name_en: 'drumming',
 }
 
+export const RECIPE_DRINK: ConvertRecipe = {
+  kind: 'convert',
+  id: 'drink',
+  section: 'maintenance',
+  name_zh: '饮水',
+  name_en: 'drink',
+  resourcePool: ['score', 'gold', 'shield', 'time', 'multiplier', 'base'],
+  T: 3,
+}
+
+export const RECIPE_LEAP: HasteRecipe = {
+  kind: 'haste',
+  id: 'leap',
+  section: 'locomotion',
+  name_zh: '跳跃',
+  name_en: 'leap',
+  amount: 1,                // 每 trigger 固定 +1 极速
+  freqRange: [20, 30],      // trigger 限 freq=[20,30]，一关约 20-30 极速
+}
+
 /** 暂时全部 recipe 列表（生成 shop 选项时遍历此）*/
 export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_FEED,
@@ -357,4 +452,6 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_RUN,
   RECIPE_PILOERECTION,
   RECIPE_DRUMMING,
+  RECIPE_DRINK,
+  RECIPE_LEAP,
 ]
