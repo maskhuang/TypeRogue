@@ -36,6 +36,11 @@ import { getAffixV2Definition } from '../data/affixV2'
 import { triggerSkill, recordSkillTrigger } from './skills'
 import { getBindingState, getSkillKeys } from './bindingManager'
 import { getHasteRelicOutputBonus, applyCritOverflow } from './relics/StackingRelicBehaviors'
+import {
+  getRelicCritRate, isCritChargeReady, consumeCritCharge, advanceCritCharge,
+  isFateCoinActive, FATE_COIN_CRIT_CAP, FATE_COIN_CONVERSION,
+  getCritBonusGold, recordWordCrit, getCritStormBonus,
+} from './relics/CritRelicBehaviors'
 import type { ResourceProduction } from './affixV2Effect'
 import type { FireEvent } from './fireFilter'
 import type { TargetSelector } from '../data/affixV2Trigger'
@@ -131,12 +136,11 @@ function emitFloatFeedback(resource: string, amount: number, anchorKey: string, 
  *  当 source 配额用完时（4/sec），剩余 dispatch 用 setTimeout 推迟到下个窗口
  *  → 实现"无限限流循环"：循环不中断，仅按 4/sec 节奏持续运行
  */
-export function processV2Results(results: readonly SourcedResult[], critMult = 1): void {
-  const isCrit = critMult > 1
+export function processV2Results(results: readonly SourcedResult[], outputMult = 1, isCrit = false): void {
   for (const sr of results) {
     const modified = applyAuraOutputBonus(sr.result.resourceProduced, sr.sourceSkillId, sr.sourceKey)
     for (const prod of modified) {
-      applyResourceAmount(prod.resource, prod.amount * critMult, sr.sourceKey, sr.sourceSkillId, isCrit)
+      applyResourceAmount(prod.resource, prod.amount * outputMult, sr.sourceKey, sr.sourceSkillId, isCrit)
     }
     for (const ft of sr.result.fireTargetsTriggered) {
       const targetIds = resolveSelectorToSkillIds(ft.selector, sr.sourceSkillId, sr.sourceKey)
@@ -369,10 +373,35 @@ export function onSkillFireV2(
   isCrit: boolean,
   amount: number,
 ): void {
-  // 暴击判定：crit_chance_add aura 累计暴击率 → roll；isCrit 入参作为「强制暴击」短路
-  const critChance = sumCritChanceAuras(skillId, sourceKey)
-  const rolledCrit = isCrit || random() < critChance
-  const critMult = rolledCrit ? V2_CRIT_MULTIPLIER : 1
+  // 暴击判定：V2 crit_chance_add aura + 全遗物暴击率源
+  const wordLen = state.player.word?.length ?? 0
+  let critChance = sumCritChanceAuras(skillId, sourceKey) + getRelicCritRate(sourceKey, wordLen)
+  const chargeReady = isCritChargeReady()   // crit_charge：保底必暴
+
+  // fate_coin：暴击率封顶 50%，超出部分转暴击倍率
+  let critMultBonus = 0
+  if (isFateCoinActive() && critChance > FATE_COIN_CRIT_CAP) {
+    critMultBonus = (critChance - FATE_COIN_CRIT_CAP) * FATE_COIN_CONVERSION
+    critChance = FATE_COIN_CRIT_CAP
+  }
+
+  // isCrit 入参作为「强制暴击」短路（guaranteed crit 用）
+  const rolledCrit = isCrit || chargeReady || random() < critChance
+  if (chargeReady && rolledCrit) consumeCritCharge()
+  advanceCritCharge(rolledCrit)
+
+  if (rolledCrit) {
+    recordWordCrit()   // crit_storm：记录本词暴击
+    // crit_bonus：暴击 → +3 金币
+    const critGold = getCritBonusGold()
+    if (critGold > 0) {
+      state.gold = (state.gold ?? 0) + critGold
+      state.resources.gold = (state.resources.gold ?? 0) + critGold
+      state.player.gold = (state.player.gold ?? 0) + critGold
+    }
+  }
+  // 产出倍率：暴击 (2 + fate_coin 加成) × crit_storm 本词加成（crit_storm 不限暴击 fire）
+  const outputMult = (rolledCrit ? V2_CRIT_MULTIPLIER + critMultBonus : 1) * (1 + getCritStormBonus())
 
   const event: FireEvent = {
     sourceAffixId,
@@ -390,11 +419,11 @@ export function onSkillFireV2(
     defaultGetPlayerResource,
     Date.now(),
   )
-  processV2Results(results, critMult)
+  processV2Results(results, outputMult, rolledCrit)
 
   // V2 skill 基础产出：替代旧 orchestrator 的 applyResource 通道
-  // 公式：(Lv1Base + Σ cumulativeBaseAdd) × (1 + Σ cumulativeFactorAdd) × aura output_bonus_pct × crit
-  emitV2SkillBaseOutput(skillId, sourceKey, sourceResource, critMult)
+  // 公式：(Lv1Base + Σ cumulativeBaseAdd) × (1 + Σ cumulativeFactorAdd) × aura output_bonus_pct × outputMult
+  emitV2SkillBaseOutput(skillId, sourceKey, sourceResource, outputMult, rolledCrit)
 
   // 暴击溢层 (crit_overflow) 遗物：暴击 fire → 该技能 +3 极速
   applyCritOverflow(skillId, rolledCrit)
@@ -460,7 +489,7 @@ function sumCritChanceAuras(skillId: string, sourceKey: string): number {
 }
 
 /** 计算并写入 V2 skill 的基础产出 · 仅对挂有 v2Ids 的 skill 触发 */
-function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: string, critMult = 1): void {
+function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: string, outputMult = 1, isCrit = false): void {
   const skill = state.affixSkills.get(skillId)
   if (!skill?.v2Ids || skill.v2Ids.length === 0) return
 
@@ -481,12 +510,12 @@ function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: str
   const lv1Base = defaultResourceLv1Base(resource)
   // 极速系遗物产出加成（stack_momentum 逐次递进 + stack_dividend 累计里程碑）
   const relicBonus = getHasteRelicOutputBonus(skillId)
-  const baseOutput = (lv1Base + cumBase) * (1 + cumFactor) * (1 + relicBonus) * critMult
+  const baseOutput = (lv1Base + cumBase) * (1 + cumFactor) * (1 + relicBonus) * outputMult
 
   // 经 aura output_bonus_pct 修饰后注入 ledger
   const modified = applyAuraOutputBonus([{ resource, amount: baseOutput }], skillId, sourceKey)
   for (const prod of modified) {
-    applyResourceAmount(prod.resource, prod.amount, sourceKey, skillId, critMult > 1)
+    applyResourceAmount(prod.resource, prod.amount, sourceKey, skillId, isCrit)
   }
 }
 

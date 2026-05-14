@@ -5,6 +5,11 @@
 import { state } from '../../core/state'
 import { registerRelicBehavior } from './RelicPipeline'
 import { FATE_COIN_CRIT_CAP, FATE_COIN_CONVERSION } from '../../data/affixes'
+import { getFuryBeatCritRate } from './ComboRelicBehaviors'
+import { getRuneSpikeCritRate } from './EnchantmentRelicBehaviors'
+import { getDesperateCritRate } from './StageRelicBehaviors'
+import { getPrecisionStrikeCritRate } from './TopologyRelicBehaviors'
+import { getLongWordCritBonus } from './WordRelicBehaviors'
 
 // === 常量 ===
 export const LUCKY_STRIKE_RATE = 0.08
@@ -85,6 +90,20 @@ export function getCritStormBonus(): number {
 /** 命运硬币是否激活 */
 export function isFateCoinActive(): boolean {
   return state.player.relics.has('fate_coin')
+}
+
+// === 全遗物暴击率聚合（V2 暴击 roll 用）===
+
+/** 聚合所有「加算暴击率」遗物源：
+ *  lucky_strike + fury_beat + rune_spike + desperate_crit + precision_strike + long_word_crit
+ *  （crit_charge 是保底必暴、fate_coin 是封顶转化，均不走此加算通道）*/
+export function getRelicCritRate(triggerKey: string, wordLength: number): number {
+  return getLuckyStrikeCritRate()
+    + getFuryBeatCritRate()
+    + getRuneSpikeCritRate()
+    + getDesperateCritRate()
+    + getPrecisionStrikeCritRate(triggerKey)
+    + getLongWordCritBonus(wordLength)
 }
 
 // === 生命周期 ===
