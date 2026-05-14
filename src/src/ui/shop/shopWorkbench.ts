@@ -172,6 +172,9 @@ function resolveSelectorToHighlightKeys(sel: TargetSelector, occupiedKeys: strin
       }
       return out
     }
+    case 'hasted':
+      // 运行时动态范围（依赖战斗内 haste 状态）· workbench 预览无战斗态，不高亮
+      return []
   }
 }
 

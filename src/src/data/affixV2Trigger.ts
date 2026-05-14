@@ -89,6 +89,8 @@ export type TargetSelector =
   /** 按主产出资源过滤（如"所有 score 产出 skill"）*/
   | { type: 'matched_resource'; resource: string; pick?: 'all' | 'random' }
   | { type: 'all_skills'; pick?: 'all' | 'random' }
+  /** 当前处于极速状态（haste 层数 ≥ 1）的技能 · 运行时动态 */
+  | { type: 'hasted'; pick?: 'all' | 'random' }
 
 // ===== AuraModifier (apply_aura 用) =====
 

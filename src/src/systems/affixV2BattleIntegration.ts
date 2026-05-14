@@ -27,10 +27,11 @@ import {
   setSelectorResolver,
   type SourcedResult,
 } from './affixV2Equipped'
-import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne } from './affixV2State'
+import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste } from './affixV2State'
 import { getAffixV2Definition } from '../data/affixV2'
 import { triggerSkill, recordSkillTrigger } from './skills'
 import { getBindingState, getSkillKeys } from './bindingManager'
+import { getHasteRelicOutputBonus, applyCritOverflow } from './relics/StackingRelicBehaviors'
 import type { ResourceProduction } from './affixV2Effect'
 import type { FireEvent } from './fireFilter'
 import type { TargetSelector } from '../data/affixV2Trigger'
@@ -234,6 +235,13 @@ function resolveSelectorToSkillIds(
       candidates = [...state.affixSkills.keys()]
       break
     }
+
+    case 'hasted': {
+      for (const sid of state.affixSkills.keys()) {
+        if (getHaste(sid) > 0) candidates.push(sid)
+      }
+      break
+    }
   }
 
   // pick === 'random' 时返回随机 1 个；self 已提前 return，不会进这里
@@ -268,6 +276,7 @@ function selectorMatchesSkill(
       return sk?.resource === sel.resource
     }
     case 'all_skills':        return true
+    case 'hasted':            return getHaste(targetSkillId) > 0
   }
 }
 
@@ -376,6 +385,9 @@ export function onSkillFireV2(
   // 公式：(Lv1Base + Σ cumulativeBaseAdd) × (1 + Σ cumulativeFactorAdd) × aura output_bonus_pct
   emitV2SkillBaseOutput(skillId, sourceKey, sourceResource)
 
+  // 暴击溢层 (crit_overflow) 遗物：暴击 fire → 该技能 +3 极速
+  applyCritOverflow(skillId, isCrit)
+
   // 多重释放 aura · 顶层 fire 完成后查匹配此 skill 的 multi_fire_add aura，额外再 fire N 次
   if (!_inMultiFireExtra) {
     const extras = sumMultiFireAuras(skillId, sourceKey)
@@ -405,6 +417,8 @@ export function consumeHasteFireIfAny(skillId: string, sourceKey: string): boole
   onKeyV2()
   // 2. 模拟一次额外 skill fire（完整 pipeline）
   triggerSkill(skillId, sourceKey)
+  // 3. 通知极速消耗（极速系遗物监听：overload_circuit / surge / momentum / inscription_flow）
+  eventBus.emit('haste:consumed', { skillId, sourceKey })
   return true
 }
 
@@ -441,7 +455,9 @@ function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: str
   cumFactor += getSkillCumFactor(skillId)
 
   const lv1Base = defaultResourceLv1Base(resource)
-  const baseOutput = (lv1Base + cumBase) * (1 + cumFactor)
+  // 极速系遗物产出加成（stack_momentum 逐次递进 + stack_dividend 累计里程碑）
+  const relicBonus = getHasteRelicOutputBonus(skillId)
+  const baseOutput = (lv1Base + cumBase) * (1 + cumFactor) * (1 + relicBonus)
 
   // 经 aura output_bonus_pct 修饰后注入 ledger
   const modified = applyAuraOutputBonus([{ resource, amount: baseOutput }], skillId, sourceKey)

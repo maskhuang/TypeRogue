@@ -19,7 +19,6 @@ import { random } from '../core/seededRandom';
 import { orchestrateAffixTrigger } from './affixTriggerOrchestrator';
 import { getAscendBaseScale, canAscend, executeAscend, RES_ENCHANTMENT_BY_RESOURCE, APPRENTICE_RES_EXP_RATE, APPRENTICE_CRIT_GROWTH } from '../data/affixTrigger';
 import { getMultiplierPrismBonus, getCancelChainBonus } from './relics/ComboRelicBehaviors';
-import { getStackDividendBonus, checkStackDividend, getPerpetualEngineIntervalMult, getCritOverflowStacks, getInscriptionFlowGrowth, isOverloadCircuitActive, isSurgeActive, isNeighborWatchActive, onStackEffectTriggered } from './relics/StackingRelicBehaviors';
 import { getTaikoBonus } from './relics/TypingRelicBehaviors';
 import { getFirstStrikeBonus, getLessIsMoreBonus, trackWordAffixTypes, resetWordAffixTypes, getUncrownedKingAffixlessBonus } from './relics/SkillRelicBehaviors';
 import { getApprenticeGrowthMultiplier, getEnchantDividendGold, getEnchantBoostBonus } from './relics/EnchantmentRelicBehaviors';
@@ -314,14 +313,15 @@ function triggerAffixSkillWithFeedback(
       + getLongWordCritBonus(state.player.word.length)
       + getDesperateCritRate(),
     fateCoinActive,
-    // 叠层子系统遗物
-    perpetualIntervalMult: getPerpetualEngineIntervalMult(),
-    critOverflowStacks: getCritOverflowStacks(),
-    surgeActive: isSurgeActive(),
-    overloadCircuitActive: isOverloadCircuitActive(),
-    neighborWatchActive: isNeighborWatchActive(),
+    // 旧叠层子系统遗物已 V2 重做为极速系（StackingRelicBehaviors）·
+    // 旧 6-phase orchestrator 对 V2 skill 整体短路，以下 ctx 字段保留中性值仅为类型兼容
+    perpetualIntervalMult: 1,
+    critOverflowStacks: 0,
+    surgeActive: false,
+    overloadCircuitActive: false,
+    neighborWatchActive: false,
     stackCritActive: state.player.relics.has('stack_crit'),
-    inscriptionFlowGrowth: getInscriptionFlowGrowth(),
+    inscriptionFlowGrowth: 0,
     stageProduced: getStageProduced(),
     wordProduced: getWordProduced(),
     wordBaseScore: synergy.skillBaseScore,
@@ -370,10 +370,7 @@ function triggerAffixSkillWithFeedback(
     showFeedback(`💰 +${enchantGold}`, RESOURCE_COLORS.gold, undefined, undefined, { relicId: 'enchant_dividend', resource: 'gold', amount: enchantGold });
   }
 
-  // 积少成多：每10层+5%产出
-  const dividendBonus = getStackDividendBonus(skillId);
-  if (dividendBonus > 0) relicBonus += dividendBonus;
-  // 浪涌：通过 ctx.surgeBonus 在 Phase 2 内应用（编排器设置）
+  // 注：积少成多 / 浪涌等已 V2 重做为极速系遗物（产出加成走 emitV2SkillBaseOutput）
 
   // 蓄力质变：自动补全期间所有技能获得等量产出倍率
   const chargeMultBonus = getChargeAutoMultBonus();

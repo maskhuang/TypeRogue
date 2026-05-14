@@ -9,7 +9,6 @@ import { AffixType, EnchantmentType, BASE_VALUES } from '../data/affixes'
 import { state } from '../core/state'
 import { hasRelation, PositionRelation, getKeysWithRelation } from '../data/keyboardTopology'
 import { getOutputDrainMultiplier } from '../data/bossModifiers'
-import { onStackEffectTriggered, checkStackDividend, isStackingAffix, SURGE_BONUS_PER_STACK } from './relics/StackingRelicBehaviors'
 import { isStackingSkill, isAuraQuestActive, getEffectiveAffixes } from '../data/affixTrigger'
 import {
   triggerAffixSkill,
@@ -525,60 +524,9 @@ export function orchestrateAffixTrigger(
       }
     }
 
-    // ── 叠层遗物钩子 ──
-    if (result.stackEffectFired) {
-      // 层层递进：间隔临时 -1
-      onStackEffectTriggered(item.skillId)
-      // 积少成多：检查产出加成
-      checkStackDividend(item.skillId, runtimeState.stacks)
-      // 铭文涌流：附魔叠层技能 → 成长+2%
-      if (ctx.inscriptionFlowGrowth && skill.enchantmentIds.length > 0) {
-        runtimeState.apprenticeAccumulated += ctx.inscriptionFlowGrowth
-      }
-      // 浪涌：层数归零，范围内匹配技能产出 +层数×10%
-      if (ctx.surgeActive) {
-        const surgeStacks = runtimeState.stacks
-        runtimeState.stacks = 0
-        if (surgeStacks > 0) {
-          const bonus = surgeStacks * SURGE_BONUS_PER_STACK
-          ctx.surgeBonus = (ctx.surgeBonus ?? 0) + bonus
-        }
-      }
-      // 邻里守望：相邻叠层技能+1层
-      if (ctx.neighborWatchActive) {
-        for (const [nk, nSid] of ctx.bindings) {
-          if (nSid === item.skillId) continue
-          // 检查相邻
-          const isAdj = [...ctx.bindings]
-            .filter(([, sid]) => sid === item.skillId)
-            .some(([k]) => hasRelation(k, nk, 0)) // PositionRelation.Adjacent = 0
-          if (!isAdj) continue
-          const nSkill = ctx.allSkills.get(nSid)
-          if (!nSkill || !isStackingSkill(nSkill, ctx.skillStates)) continue
-          const nState = ctx.skillStates.get(nSid)
-          if (nState) nState.stacks += 1
-        }
-      }
-      // 过载电路：额外触发相邻叠层技能（不叠层）
-      if (ctx.overloadCircuitActive && item.type !== 'overload') {
-        for (const [nk, nSid] of ctx.bindings) {
-          if (nSid === item.skillId) continue
-          const isAdj = [...ctx.bindings]
-            .filter(([, sid]) => sid === item.skillId)
-            .some(([k]) => hasRelation(k, nk, 0))
-          if (!isAdj) continue
-          const nSkill = ctx.allSkills.get(nSid)
-          if (!nSkill || !isStackingSkill(nSkill, ctx.skillStates)) continue
-          queue.push({
-            skillId: nSid,
-            triggerKey: nk,
-            type: 'overload' as TriggerWorkType,
-            depth: item.depth + 1,
-            chainHistory: childHistory,
-          })
-        }
-      }
-    }
+    // 注：旧叠层遗物钩子（层层递进 / 积少成多 / 浪涌 / 邻里守望 / 过载电路 / 铭文涌流）
+    // 已随 V2 重做为极速系遗物，逻辑迁移至 StackingRelicBehaviors.ts（事件驱动）。
+    // 旧 6-phase orchestrator 对 V2 skill 整体短路，此处不再挂钩。
   }
 
   return {

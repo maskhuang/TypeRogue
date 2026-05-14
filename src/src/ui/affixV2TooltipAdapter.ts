@@ -136,6 +136,9 @@ function formatSelector(sel: TargetSelector): string {
     case 'all_skills':        return zh
       ? `场上所有技能${pickSuffix}`
       : `all skills on board${pickSuffix}`
+    case 'hasted':            return zh
+      ? `处于极速状态的技能${pickSuffix}`
+      : `skills with haste${pickSuffix}`
   }
 }
 

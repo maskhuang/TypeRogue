@@ -25,9 +25,8 @@ import {
   addStatus,
   addSkillCumBase,
   addSkillCumFactor,
-  addHaste,
+  grantHaste,
 } from './affixV2State'
-import { eventBus } from '../core/events/EventBus'
 
 // ============================================
 // ResolveContext
@@ -191,11 +190,10 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
     }
 
     case 'grant_haste': {
-      // selector 展开 → 每个 target skill 累加 amount 极速（float）；floor 后被消耗
+      // selector 展开 → 每个 target skill 累加 amount 极速（grantHaste 内含 addHaste + emit haste:granted）
       const targets = ctx.resolveSelector?.(spec.selector, ctx.skillId, ctx.key) ?? [ctx.skillId]
       for (const tid of targets) {
-        addHaste(tid, spec.amount)
-        eventBus.emit('haste:granted', { skillId: tid, amount: spec.amount, sourceInstanceId: ctx.instanceId })
+        grantHaste(tid, spec.amount, ctx.instanceId)
       }
       return
     }

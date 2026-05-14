@@ -5,6 +5,8 @@
 // 沿用现 SkillRuntimeState 模式——state 与 schema 分离，battle end 一行 clear。
 
 import type { AuraModifier, TargetSelector, StatusKeyword } from '../data/affixV2Trigger'
+import { state } from '../core/state'
+import { eventBus } from '../core/events/EventBus'
 
 // ============================================
 // AffixV2 实例运行时 state
@@ -230,7 +232,9 @@ export function clearSkillAggregates(): void {
 const _hasteBySkill: Map<string, number> = new Map()
 
 export function addHaste(skillId: string, amount: number): void {
-  _hasteBySkill.set(skillId, (_hasteBySkill.get(skillId) ?? 0) + amount)
+  // perpetual_engine（极速系遗物）：跨关保留极速，代价是每次获得的极速量 ×0.5
+  const mult = state.player?.relics?.has('perpetual_engine') ? 0.5 : 1
+  _hasteBySkill.set(skillId, (_hasteBySkill.get(skillId) ?? 0) + amount * mult)
 }
 
 /** 消耗一层极速 · floor(haste) >= 1 时 -1 并返 true；否则返 false */
@@ -246,8 +250,24 @@ export function getHaste(skillId: string): number {
   return Math.floor(_hasteBySkill.get(skillId) ?? 0)
 }
 
+/** 清空指定 skill 的全部极速 · 返回清空前的 floor 层数（surge 遗物用）*/
+export function clearHasteForSkill(skillId: string): number {
+  const cleared = Math.floor(_hasteBySkill.get(skillId) ?? 0)
+  _hasteBySkill.delete(skillId)
+  return cleared
+}
+
 export function clearAllHaste(): void {
+  // perpetual_engine（极速系遗物）：极速层数关末不清零，跨关累积
+  if (state.player?.relics?.has('perpetual_engine')) return
   _hasteBySkill.clear()
+}
+
+/** 极速施加统一入口 · addHaste + emit haste:granted（UI 反馈 / on_haste_granted / 极速系遗物）
+ *  affixV2Effect.grant_haste 与极速系遗物（drum_pass / neighbor_watch 等）均走此入口 */
+export function grantHaste(skillId: string, amount: number, sourceInstanceId: string): void {
+  addHaste(skillId, amount)
+  eventBus.emit('haste:granted', { skillId, amount, sourceInstanceId })
 }
 
 // ============================================

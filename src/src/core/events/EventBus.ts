@@ -23,6 +23,8 @@ export interface GameEvents {
   'skill:upgraded': { skillId: string; newLevel: number }
   // V2 极速施加事件（grant_haste 结算后逐 target 发射；sourceInstanceId 用于 rate-limit）
   'haste:granted': { skillId: string; amount: number; sourceInstanceId: string }
+  // V2 极速消耗事件（玩家按下绑定键消耗 1 层成功后发射）
+  'haste:consumed': { skillId: string; sourceKey: string }
 
   // 效果队列事件
   'effect:queued': { effect: unknown; queueSize: number }
