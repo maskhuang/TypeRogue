@@ -3185,7 +3185,7 @@ const ITEM_DESCS_EN: Record<string, string> = {
   crit_overflow: 'On crit, the triggered skill gains +3 haste.',
   inscription_flow: 'When an enchanted skill consumes haste, that skill\'s growth +2% this stage.',
   neighbor_watch: 'When a skill gains haste, adjacent skills each gain +1 haste.',
-  stack_crit: 'Stacking can crit; on crit, gain 1 extra stack.',
+  stack_crit: 'Extra fires from consuming haste always crit.',
   // Boss modifier subsystem relics
   modifier_shield: 'All modifier negative effects reduced by 25%',
   bounty_hunter: 'Each permanent modifier: -5% shop prices (max 30%)',

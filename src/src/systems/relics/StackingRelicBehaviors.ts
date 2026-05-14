@@ -209,6 +209,8 @@ export function initStackingRelicBehaviors(): void {
   registerRelicBehavior('crit_overflow', () => {})
   registerRelicBehavior('inscription_flow', () => {})
   registerRelicBehavior('neighbor_watch', () => {})
+  // stack_crit 行为在 affixV2BattleIntegration.onSkillFireV2 内（极速 fire 必定暴击），此处仅登记
+  registerRelicBehavior('stack_crit', () => {})
 
   if (_initialized) return
   _initialized = true

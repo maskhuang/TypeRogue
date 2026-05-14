@@ -1145,7 +1145,7 @@
       "name": "布鲁诺",
       "archiveCode": "Ptro-IPS-003",
       "icon": "💥",
-      "description": "技能叠层时也可暴击，暴击时额外叠加 1 层。",
+      "description": "极速消耗触发的额外 fire 必定暴击。",
       "rarity": "rare",
       "basePrice": 80,
       "effects": [],

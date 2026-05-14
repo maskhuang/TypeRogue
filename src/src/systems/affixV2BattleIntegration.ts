@@ -381,6 +381,9 @@ export function triggerV2BattleEnd(): void {
 // 多重释放 · 防递归：MULTI_FIRE aura 触发的额外 fire 不再叠加 multi_fire（否则无限）
 let _inMultiFireExtra = false
 
+// 极速 fire 标记：consumeHasteFireIfAny 触发的额外 fire 期间为 true（stack_crit 遗物用）
+let _inHasteFire = false
+
 /** 在 triggerAffixSkillWithFeedback 中调，传 fire event 信息 */
 export function onSkillFireV2(
   skillId: string,
@@ -402,8 +405,10 @@ export function onSkillFireV2(
     critChance = FATE_COIN_CRIT_CAP
   }
 
-  // isCrit 入参作为「强制暴击」短路（guaranteed crit 用）
-  const rolledCrit = isCrit || chargeReady || random() < critChance
+  // 强制暴击短路：isCrit 入参（guaranteed crit）/ crit_charge 保底 /
+  // stack_crit 遗物（极速消耗触发的额外 fire 必定暴击）
+  const stackCritForce = _inHasteFire && state.player.relics.has('stack_crit')
+  const rolledCrit = isCrit || chargeReady || stackCritForce || random() < critChance
   if (chargeReady && rolledCrit) consumeCritCharge()
   advanceCritCharge(rolledCrit)
 
@@ -472,8 +477,13 @@ export function consumeHasteFireIfAny(skillId: string, sourceKey: string): boole
   if (!consumeHasteOne(skillId)) return false
   // 1. 模拟一次额外按键（bump every_n_keys 计数 + 跑 on_key/every_n_keys triggered V2 affixes）
   onKeyV2()
-  // 2. 模拟一次额外 skill fire（完整 pipeline）
-  triggerSkill(skillId, sourceKey)
+  // 2. 模拟一次额外 skill fire（完整 pipeline）· _inHasteFire 标记供 stack_crit 遗物判定
+  _inHasteFire = true
+  try {
+    triggerSkill(skillId, sourceKey)
+  } finally {
+    _inHasteFire = false
+  }
   // 3. 通知极速消耗（极速系遗物监听：overload_circuit / surge / momentum / inscription_flow）
   eventBus.emit('haste:consumed', { skillId, sourceKey })
   return true

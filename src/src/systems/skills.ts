@@ -320,7 +320,7 @@ function triggerAffixSkillWithFeedback(
     surgeActive: false,
     overloadCircuitActive: false,
     neighborWatchActive: false,
-    stackCritActive: state.player.relics.has('stack_crit'),
+    stackCritActive: false,   // V2 重做为极速 fire 必定暴击（affixV2BattleIntegration.onSkillFireV2）
     inscriptionFlowGrowth: 0,
     stageProduced: getStageProduced(),
     wordProduced: getWordProduced(),
