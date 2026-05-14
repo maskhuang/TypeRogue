@@ -12,6 +12,10 @@
 import { state, synergy } from '../core/state'
 import type { ResourceType } from '../core/types'
 import { eventBus } from '../core/events/EventBus'
+import { random } from '../core/seededRandom'
+
+/** V2 暴击产出倍率 */
+export const V2_CRIT_MULTIPLIER = 2
 import { hasRelation } from '../data/keyboardTopology'
 import { RESOURCE_COLORS } from '../core/constants'
 import { showFeedback, updateHUD } from './battle'
@@ -75,7 +79,7 @@ export function defaultGetPlayerResource(resource: string): number {
  * state.resources 上的 multiplier / time / shield 由 Object.defineProperty 代理到 state.{multiplier,time,shield}
  * （详 state.ts:100-119），写一次自动同步。score / gold 无 proxy，需手动镜像。
  */
-function applyResourceAmount(resource: string, amount: number, anchorKey: string, skillId: string): void {
+function applyResourceAmount(resource: string, amount: number, anchorKey: string, skillId: string, isCrit = false): void {
   if (amount === 0) return
   // base / multiplier 走 synergy 通道（per-word 累加器，词末 baseChips × mult 才进 state.score）
   // 直接写 state.resources.{base,multiplier} 会被 battle.ts:1430 updateSettlementLive 覆盖
@@ -100,13 +104,13 @@ function applyResourceAmount(resource: string, amount: number, anchorKey: string
   // 顺序：先 updateHUD 刷新（含 shield 可见性 + 浮字目标位置缓存），再 emitFloatFeedback
   // 反过来会导致首次 shield 浮字使用 stale (0,0) 目标位置 → orb 飞向左上角
   if (typeof document !== 'undefined') updateHUD()
-  emitFloatFeedback(resource, amount, anchorKey)
+  emitFloatFeedback(resource, amount, anchorKey, isCrit)
   // 统计接入：INF /STATS 上一战每个技能的贡献（与 legacy recordSkillTrigger 同通道）
   recordSkillTrigger(skillId, anchorKey, resource as ResourceType, amount, false)
 }
 
 /** 浮字反馈 · 模仿 skills.ts:587 模板（+X · 资源色 · letterIndex 锚点 · getFloatScale 大小缩放）*/
-function emitFloatFeedback(resource: string, amount: number, anchorKey: string): void {
+function emitFloatFeedback(resource: string, amount: number, anchorKey: string, isCrit = false): void {
   // 测试 / SSR 环境无 DOM 时跳过（showFeedback 内部 drainQueue 会访问 document）
   if (typeof document === 'undefined') return
   const color = RESOURCE_COLORS[resource] || '#ffffff'
@@ -117,8 +121,9 @@ function emitFloatFeedback(resource: string, amount: number, anchorKey: string):
   const anchor = word.includes(k)
     ? { letterIndex: state.player.index, resource, amount }
     : { fromElementId: 'active-library', resource, amount }
-  const scale = getFloatScale(resource, amount)
-  showFeedback(`${sign}${displayValue}`, color, scale, anchor)
+  // 暴击：💥 前缀 + 放大（对齐 skills.ts:612 旧路径模板）
+  const scale = Math.max(getFloatScale(resource, amount), isCrit ? 2.0 : 1)
+  showFeedback(`${isCrit ? '💥' : ''}${sign}${displayValue}`, color, scale, anchor)
 }
 
 /** 处理每个 sourced result：注入资源（经 aura 修饰）+ dispatch fire_target
@@ -126,11 +131,12 @@ function emitFloatFeedback(resource: string, amount: number, anchorKey: string):
  *  当 source 配额用完时（4/sec），剩余 dispatch 用 setTimeout 推迟到下个窗口
  *  → 实现"无限限流循环"：循环不中断，仅按 4/sec 节奏持续运行
  */
-export function processV2Results(results: readonly SourcedResult[]): void {
+export function processV2Results(results: readonly SourcedResult[], critMult = 1): void {
+  const isCrit = critMult > 1
   for (const sr of results) {
     const modified = applyAuraOutputBonus(sr.result.resourceProduced, sr.sourceSkillId, sr.sourceKey)
     for (const prod of modified) {
-      applyResourceAmount(prod.resource, prod.amount, sr.sourceKey, sr.sourceSkillId)
+      applyResourceAmount(prod.resource, prod.amount * critMult, sr.sourceKey, sr.sourceSkillId, isCrit)
     }
     for (const ft of sr.result.fireTargetsTriggered) {
       const targetIds = resolveSelectorToSkillIds(ft.selector, sr.sourceSkillId, sr.sourceKey)
@@ -363,12 +369,17 @@ export function onSkillFireV2(
   isCrit: boolean,
   amount: number,
 ): void {
+  // 暴击判定：crit_chance_add aura 累计暴击率 → roll；isCrit 入参作为「强制暴击」短路
+  const critChance = sumCritChanceAuras(skillId, sourceKey)
+  const rolledCrit = isCrit || random() < critChance
+  const critMult = rolledCrit ? V2_CRIT_MULTIPLIER : 1
+
   const event: FireEvent = {
     sourceAffixId,
     sourceSkillId: skillId,
     sourceKey,
     sourceResource,
-    isCrit,
+    isCrit: rolledCrit,
     stackState: 'none',
     amount,
     timestamp: Date.now(),
@@ -379,14 +390,14 @@ export function onSkillFireV2(
     defaultGetPlayerResource,
     Date.now(),
   )
-  processV2Results(results)
+  processV2Results(results, critMult)
 
   // V2 skill 基础产出：替代旧 orchestrator 的 applyResource 通道
-  // 公式：(Lv1Base + Σ cumulativeBaseAdd) × (1 + Σ cumulativeFactorAdd) × aura output_bonus_pct
-  emitV2SkillBaseOutput(skillId, sourceKey, sourceResource)
+  // 公式：(Lv1Base + Σ cumulativeBaseAdd) × (1 + Σ cumulativeFactorAdd) × aura output_bonus_pct × crit
+  emitV2SkillBaseOutput(skillId, sourceKey, sourceResource, critMult)
 
   // 暴击溢层 (crit_overflow) 遗物：暴击 fire → 该技能 +3 极速
-  applyCritOverflow(skillId, isCrit)
+  applyCritOverflow(skillId, rolledCrit)
 
   // 多重释放 aura · 顶层 fire 完成后查匹配此 skill 的 multi_fire_add aura，额外再 fire N 次
   if (!_inMultiFireExtra) {
@@ -435,8 +446,21 @@ function sumMultiFireAuras(skillId: string, sourceKey: string): number {
   return Math.floor(total)
 }
 
+/** 累计 crit_chance_add aura · 返回该 skill 本次 fire 的暴击率（未封顶，roll 时 random()<chance 即暴击）*/
+function sumCritChanceAuras(skillId: string, sourceKey: string): number {
+  let total = 0
+  for (const aura of listActiveAuras()) {
+    if (aura.modifier.type !== 'crit_chance_add') continue
+    const entry = listAllEquipped().find(e => e.instanceId === aura.sourceInstanceId)
+    if (!entry) continue
+    if (!selectorMatchesSkill(aura.selector, entry.skillId, entry.key, skillId, sourceKey)) continue
+    total += aura.modifier.amount
+  }
+  return total
+}
+
 /** 计算并写入 V2 skill 的基础产出 · 仅对挂有 v2Ids 的 skill 触发 */
-function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: string): void {
+function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: string, critMult = 1): void {
   const skill = state.affixSkills.get(skillId)
   if (!skill?.v2Ids || skill.v2Ids.length === 0) return
 
@@ -457,12 +481,12 @@ function emitV2SkillBaseOutput(skillId: string, sourceKey: string, resource: str
   const lv1Base = defaultResourceLv1Base(resource)
   // 极速系遗物产出加成（stack_momentum 逐次递进 + stack_dividend 累计里程碑）
   const relicBonus = getHasteRelicOutputBonus(skillId)
-  const baseOutput = (lv1Base + cumBase) * (1 + cumFactor) * (1 + relicBonus)
+  const baseOutput = (lv1Base + cumBase) * (1 + cumFactor) * (1 + relicBonus) * critMult
 
   // 经 aura output_bonus_pct 修饰后注入 ledger
   const modified = applyAuraOutputBonus([{ resource, amount: baseOutput }], skillId, sourceKey)
   for (const prod of modified) {
-    applyResourceAmount(prod.resource, prod.amount, sourceKey, skillId)
+    applyResourceAmount(prod.resource, prod.amount, sourceKey, skillId, critMult > 1)
   }
 }
 
