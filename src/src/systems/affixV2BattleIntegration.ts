@@ -252,6 +252,13 @@ function resolveSelectorToSkillIds(
       }
       break
     }
+
+    case 'matched_rarity': {
+      for (const [sid, sk] of state.affixSkills) {
+        if (sk.rarity === sel.rarity) candidates.push(sid)
+      }
+      break
+    }
   }
 
   // pick === 'random' 时返回随机 1 个；self 已提前 return，不会进这里
@@ -287,6 +294,7 @@ function selectorMatchesSkill(
     }
     case 'all_skills':        return true
     case 'hasted':            return getHaste(targetSkillId) > 0
+    case 'matched_rarity':    return state.affixSkills.get(targetSkillId)?.rarity === sel.rarity
   }
 }
 

@@ -48,29 +48,34 @@ function pickTrigger(section: SectionTag): TriggerEntry {
   return random() < 0.5 ? pickOnFireTrigger(section) : pickNonFireTrigger()
 }
 
-/** on_fire 家族（含 on_self_fire）· 5 子类等权 · 子类内随机参数 */
+/** on_fire 家族（含 on_self_fire）· 6 子类等权 · 子类内随机参数 */
 function pickOnFireTrigger(section: SectionTag): TriggerEntry {
   const r = random()
-  if (r < 0.2) {
+  if (r < 1 / 6) {
     // on_self_fire · 自身 fire
     return { spec: { type: 'on_self_fire' }, freq: 30 }
   }
-  if (r < 0.4) {
+  if (r < 2 / 6) {
     // on_fire(tag=本 section)
     return { spec: { type: 'on_fire', filter: { tag: section } }, freq: 45 }
   }
-  if (r < 0.6) {
+  if (r < 3 / 6) {
     // on_fire(resource) · 6 资源等权
     const resource = pickRandom(MATCHED_RESOURCE_POOL)
     return { spec: { type: 'on_fire', filter: { resource } }, freq: 45 }
   }
-  if (r < 0.8) {
+  if (r < 4 / 6) {
     // on_fire(posRel) · 6 关系等权
     const posRel = pickRandom(POSREL_VALUES)
     return {
       spec: { type: 'on_fire', filter: { posRel } },
       freq: ONFIRE_POSREL_FREQ[String(posRel)] ?? 60,
     }
+  }
+  if (r < 5 / 6) {
+    // on_fire(rarity) · 稀有度 0-3 等权 · freq 粗估（依赖场上稀有度分布）
+    const rarity = Math.floor(random() * 4)
+    return { spec: { type: 'on_fire', filter: { rarity } }, freq: 30 }
   }
   // on_fire(is_crit) · true/false 等权
   const isCrit = random() < 0.5
@@ -222,6 +227,12 @@ const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
     selector: { type: 'matched_resource' as const, resource } as TargetSelector,
     weight: 5,
   })),
+  // matched_rarity：场上指定稀有度（0-3 词条数）的 skill
+  // 每稀有度 3 weight × 4 = 12 total
+  ...[0, 1, 2, 3].map(rarity => ({
+    selector: { type: 'matched_rarity' as const, rarity } as TargetSelector,
+    weight: 3,
+  })),
 ]
 
 /** 按 weight 加权随机抽 ScopeEntry */
@@ -336,6 +347,9 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
         break
       case 'hasted':
         selector = { type: 'hasted', pick: 'random' }
+        break
+      case 'matched_rarity':
+        selector = { type: 'matched_rarity', rarity: scope.selector.rarity, pick: 'random' }
         break
       default:
         selector = scope.selector

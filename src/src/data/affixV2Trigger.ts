@@ -12,7 +12,7 @@ import type { PositionRelation } from './keyboardTopology'
 // 注：完整类型定义在 src/src/systems/fireFilter.ts；此处仅为 TriggerSpec.on_fire 引用。
 // 避免循环 import，FireFilter 的运行时匹配函数在 fireFilter.ts。
 
-/** 完整 fire filter · 5 维正交（详 affix-rewrite-tag-system.md §4.2） */
+/** 完整 fire filter · 6 维正交（详 affix-rewrite-tag-system.md §4.2） */
 export interface FireFilter {
   /** behavior sampling：来源 affix 携带此 tag（any-of）*/
   readonly tag?: Tag | readonly Tag[]
@@ -24,6 +24,8 @@ export interface FireFilter {
   readonly is_crit?: boolean
   /** event-type：来源 fire 是否触发满层释放 */
   readonly stack_state?: 'full' | 'partial'
+  /** 来源 skill 稀有度（= V2 词条数量 0-3）· 精确匹配，复合范围交由 composite */
+  readonly rarity?: number
 }
 
 // ===== WindowPattern (Phase 2 · on_window_mode) =====
@@ -91,6 +93,8 @@ export type TargetSelector =
   | { type: 'all_skills'; pick?: 'all' | 'random' }
   /** 当前处于极速状态（haste 层数 ≥ 1）的技能 · 运行时动态 */
   | { type: 'hasted'; pick?: 'all' | 'random' }
+  /** 指定稀有度（= V2 词条数量 0-3）的技能 · 精确匹配，复合范围交由 composite */
+  | { type: 'matched_rarity'; rarity: number; pick?: 'all' | 'random' }
 
 // ===== AuraModifier (apply_aura 用) =====
 

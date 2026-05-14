@@ -175,6 +175,14 @@ function resolveSelectorToHighlightKeys(sel: TargetSelector, occupiedKeys: strin
     case 'hasted':
       // 运行时动态范围（依赖战斗内 haste 状态）· workbench 预览无战斗态，不高亮
       return []
+    case 'matched_rarity': {
+      const out: string[] = []
+      for (const [k, sid] of state.player.bindings) {
+        const sk = state.affixSkills.get(sid)
+        if (sk?.rarity === sel.rarity) out.push(k)
+      }
+      return out
+    }
   }
 }
 

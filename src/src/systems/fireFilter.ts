@@ -13,6 +13,7 @@
 import type { FireFilter } from '../data/affixV2Trigger'
 import { hasRelation } from '../data/keyboardTopology'
 import { hasTag, type FireEvent } from './tagQuery'
+import { state } from '../core/state'
 
 // re-export 方便调用方一站式 import
 export type { FireFilter, FireEvent }
@@ -61,6 +62,12 @@ export function matchFireFilter(
   // ── stack_state 维度（事件子类型）──
   if (filter.stack_state !== undefined) {
     if (event.stackState !== filter.stack_state) return false
+  }
+
+  // ── rarity 维度（来源 skill 稀有度 · 精确匹配）──
+  if (filter.rarity !== undefined) {
+    const srcRarity = state.affixSkills.get(event.sourceSkillId)?.rarity
+    if (srcRarity !== filter.rarity) return false
   }
 
   return true

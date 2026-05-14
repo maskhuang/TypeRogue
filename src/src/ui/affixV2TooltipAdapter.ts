@@ -92,6 +92,9 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
       if (trigger.filter.posRel !== undefined) {
         parts.push(zh ? `${locRel(trigger.filter.posRel)}位置` : `${locRel(trigger.filter.posRel)} pos`)
       }
+      if (trigger.filter.rarity !== undefined) {
+        parts.push(zh ? `${trigger.filter.rarity} 词条` : `rarity ${trigger.filter.rarity}`)
+      }
       return zh
         ? `任一技能触发时（${parts.join('、')}）`
         : `When any skill fires (${parts.join(', ')})`
@@ -139,6 +142,9 @@ function formatSelector(sel: TargetSelector): string {
     case 'hasted':            return zh
       ? `处于极速状态的技能${pickSuffix}`
       : `skills with haste${pickSuffix}`
+    case 'matched_rarity':    return zh
+      ? `${sel.rarity} 词条的技能${pickSuffix}`
+      : `rarity-${sel.rarity} skills${pickSuffix}`
   }
 }
 
