@@ -15,6 +15,8 @@ import {
 import type { TriggerSpec, EffectSpec, TargetSelector, ConditionSpec } from '../data/affixV2Trigger'
 import { SECTION_TAG_NAMES_ZH, SECTION_TAG_NAMES_EN, type Tag, type SectionTag } from '../data/affixTags'
 import { getLocale } from '../demo/demo-i18n'
+import { listAllEquipped, getEnchant } from '../systems/affixV2Equipped'
+import { applyEnchantToEffect, getEnchantDisplay, type EnchantSpec } from '../data/affixV2Enchant'
 
 // ============================================
 // 词典 · ZH / EN 双语
@@ -286,16 +288,26 @@ export function formatAffixV2Description(def: AffixV2Definition, skillResource?:
  * 把 AffixV2Definition 转为 AffixTooltipInfo。
  *
  * @param skillResource  词条所在技能的资源，用于把 ratio 预算成绝对值
+ * @param enchant        若提供，effect 经 applyEnchantToEffect 变换后再格式化；name 加附魔前缀
  */
-export function affixV2DefinitionToTooltipInfo(def: AffixV2Definition, skillResource?: string): AffixTooltipInfo {
+export function affixV2DefinitionToTooltipInfo(
+  def: AffixV2Definition,
+  skillResource?: string,
+  enchant?: EnchantSpec,
+): AffixTooltipInfo {
   // 默认 (passive + noop) 不显描述，避免每条都显 "持续 · —"
   const isDefault = def.trigger.type === 'passive' && def.effect.kind === 'noop'
-  const name = isZh() ? def.name_zh : def.name_en
+  const baseName = isZh() ? def.name_zh : def.name_en
+  const enchantPrefix = enchant ? `[${getEnchantDisplay(enchant, isZh() ? 'zh' : 'en').name}] ` : ''
+  const effect = enchant ? applyEnchantToEffect(def.effect, enchant) : def.effect
+  const description = isDefault
+    ? def.notes
+    : `${formatTriggerDescription(def.trigger)}${isZh() ? '：' : ': '}${formatEffectDescription(effect, skillResource)}`
   return {
-    typeName: name,
+    typeName: enchantPrefix + baseName,
     typeKey: def.id,
     paramSummary: '',
-    description: isDefault ? def.notes : formatAffixV2Description(def, skillResource),
+    description,
     section: def.section,
   }
 }
@@ -318,6 +330,38 @@ export function affixV2InstancesToTooltipInfo(
   for (const inst of instances) {
     const info = affixV2InstanceToTooltipInfo(inst, skillResource)
     if (info) out.push(info)
+  }
+  return out
+}
+
+/** 附魔感知的 skill-level tooltip 构造 ·
+ *  已绑定 skill（有装备 entry）→ 用 entry.instanceId 查附魔 + 展示附魔后效果
+ *  未绑定（如 shop preview）→ 回退到 skill.v2Ids 直接展示原 def
+ *
+ *  使用：shop / workbench / 任何"展示已拥有 skill 的 tooltip"场景
+ */
+export function affixV2SkillToTooltipInfo(skill: {
+  id: string
+  v2Ids?: readonly string[]
+  resource?: string
+}): AffixTooltipInfo[] {
+  const skillResource = skill.resource
+  const entries = listAllEquipped().filter(e => e.skillId === skill.id)
+  const out: AffixTooltipInfo[] = []
+  if (entries.length > 0) {
+    for (const entry of entries) {
+      const def = getAffixV2Definition(entry.defId)
+      if (!def) continue
+      out.push(affixV2DefinitionToTooltipInfo(def, skillResource, getEnchant(entry.instanceId)))
+    }
+    return out
+  }
+  // fallback: 未绑定 skill（shop preview 等），用 v2Ids 展示原效果（无附魔）
+  if (!skill.v2Ids) return out
+  for (const defId of skill.v2Ids) {
+    const def = getAffixV2Definition(defId)
+    if (!def) continue
+    out.push(affixV2DefinitionToTooltipInfo(def, skillResource))
   }
   return out
 }
