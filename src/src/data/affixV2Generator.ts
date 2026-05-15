@@ -297,14 +297,13 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     // chant: trigger 固定 passive；scope 与 modifier 加权随机；amount 不按 size 缩放
     triggerSpec = { type: 'passive' }
     const scope = pickWeightedScope(FULL_SCOPE_POOL)
+    // base_add / factor_add 暂无消费端，从随机池剔除（类型仍保留供 handwritten 使用）
     const modifierType = pickRandom([
-      'crit_chance_add', 'output_bonus_pct', 'base_add', 'factor_add', 'multi_fire_add', 'rainbow',
+      'crit_chance_add', 'output_bonus_pct', 'multi_fire_add', 'rainbow',
     ] as const)
     const amount = recipe.T_byModifier[modifierType]
     let modifier: AuraModifier
     switch (modifierType) {
-      case 'base_add':         modifier = { type: 'base_add', ratio: amount };        break
-      case 'factor_add':       modifier = { type: 'factor_add', amount };             break
       case 'crit_chance_add':  modifier = { type: 'crit_chance_add', amount };        break
       case 'output_bonus_pct': modifier = { type: 'output_bonus_pct', amount };       break
       case 'multi_fire_add':   modifier = { type: 'multi_fire_add', amount };         break
@@ -428,8 +427,8 @@ export const RECIPE_PILOERECTION: ChantRecipe = {
   T_byModifier: {
     crit_chance_add:   0.4,
     output_bonus_pct:  0.5,
-    base_add:          0.5,
-    factor_add:        0.5,
+    base_add:          0,    // 暂无消费端，从随机池剔除（占位仅满足 Record 完整性）
+    factor_add:        0,    // 暂无消费端，从随机池剔除（占位仅满足 Record 完整性）
     multi_fire_add:    1,    // +1 释放（self → 2x；adjacent 4 邻 → 每邻位 +1 各自双发）
     rainbow:           0,    // rainbow 无 amount，值仅占位
   },
