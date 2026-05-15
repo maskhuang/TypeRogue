@@ -17,8 +17,9 @@ import { grantIntermissionFreeRefreshes } from './relics/StageRelicBehaviors';
 import { applyAffixLevelScaling } from '../data/affixes';
 import { BALANCE } from '../core/constants';
 import { listAllEquipped, setEnchant, getEnchant } from './affixV2Equipped';
-import { rollEnchantResource, getEnchantDisplay, type EnchantSpec } from '../data/affixV2Enchant';
+import { rollEnchantResource, getEnchantDisplay, applyEnchantToEffect, type EnchantSpec } from '../data/affixV2Enchant';
 import { getAffixV2Definition } from '../data/affixV2';
+import { formatEffectDescription } from '../ui/affixV2TooltipAdapter';
 import { random } from '../core/seededRandom';
 
 // 休息关升级后需要补偿附魔的技能ID（旧路径，保留供 shop 兜底；V2 enchant 走 showV2EnchantPicker）
@@ -57,6 +58,8 @@ function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
   const enchant = rollEnchant();
   const info = enchantDisplayInfo(enchant);
   const zh = getLocale() === 'zh';
+  const skill = state.affixSkills.get(skillId);
+  const skillResource = skill?.resource ?? 'score';
 
   const overlay = document.createElement('div');
   overlay.className = 'ritual-enchantment-overlay';
@@ -64,27 +67,38 @@ function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
 
   const panel = document.createElement('div');
   panel.className = 'ritual-enchantment-panel';
-  panel.style.cssText = 'background:#1a1a2e;border:2px solid #9b59b6;padding:24px;max-width:560px;min-width:380px;';
+  panel.style.cssText = 'background:#1a1a2e;border:2px solid #9b59b6;padding:24px;max-width:640px;min-width:420px;';
 
   const titleZh = `获得附魔：${info.name}`;
   const titleEn = `Enchant offered: ${info.name}`;
+  // 不显技术性 desc · 改为每个候选词条预览附魔后的实际产出
   panel.innerHTML = `
-    <h3 style="color:#9b59b6;margin:0 0 8px;text-align:center;">${zh ? titleZh : titleEn}</h3>
-    <p style="color:#bbb;font-size:13px;margin:0 0 16px;text-align:center;">${info.desc}</p>
-    <div style="color:#fff;margin:0 0 8px;">${zh ? '选择挂载到本技能的哪个词条：' : 'Pick an affix on this skill:'}</div>
+    <h3 style="color:#9b59b6;margin:0 0 14px;text-align:center;font-size:18px;">${zh ? titleZh : titleEn}</h3>
+    <div style="color:#fff;margin:0 0 10px;font-size:13px;">${zh ? '选择挂载到哪个词条 · 已展示附魔后效果' : 'Pick an affix · enchanted effect preview shown'}</div>
   `;
 
   const list = document.createElement('div');
-  list.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
+  list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
   for (const entry of equipped) {
     const def = getAffixV2Definition(entry.defId);
     const affName = def ? (zh ? def.name_zh : def.name_en) : entry.defId;
     const existing = getEnchant(entry.instanceId);
-    const existingLabel = existing ? ` <span style="color:#e67e22;">(${zh ? '当前' : 'now'}: ${enchantDisplayInfo(existing).name})</span>` : '';
+    const existingLabel = existing ? ` <span style="color:#e67e22;font-size:11px;">(${zh ? '当前' : 'now'}: ${enchantDisplayInfo(existing).name})</span>` : '';
+
+    // 预览：附魔后的最终 effect 文本
+    const previewText = def
+      ? formatEffectDescription(applyEnchantToEffect(def.effect, enchant), skillResource)
+      : '—';
+
     const btn = document.createElement('button');
     btn.className = 'ritual-skill-btn';
-    btn.style.cssText = 'background:#16213e;border:1px solid #444;color:#fff;padding:10px 14px;cursor:pointer;text-align:left;';
-    btn.innerHTML = `<span style="font-weight:bold;">[${entry.key.toUpperCase()}]</span> ${affName}${existingLabel}`;
+    btn.style.cssText = 'background:#16213e;border:1px solid #444;color:#fff;padding:12px 14px;cursor:pointer;text-align:left;font-family:inherit;';
+    btn.innerHTML = `
+      <div style="font-weight:bold;margin-bottom:4px;">[${entry.key.toUpperCase()}] ${affName}${existingLabel}</div>
+      <div style="font-size:12px;color:#9b8cf0;line-height:1.4;">${previewText}</div>
+    `;
+    btn.onmouseenter = () => { btn.style.background = '#1e2a4e'; };
+    btn.onmouseleave = () => { btn.style.background = '#16213e'; };
     btn.onclick = () => {
       setEnchant(entry.instanceId, enchant);
       overlay.remove();
