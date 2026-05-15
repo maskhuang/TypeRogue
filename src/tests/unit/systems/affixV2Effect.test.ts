@@ -220,50 +220,56 @@ describe('evaluateCondition · 8 基础 + 2 占位', () => {
 })
 
 describe('Scope-aware ScaleByTag', () => {
+  // 测试辅助：构造带 tag 的 mock EquippedView 列表
+  const mockViews = (count: number, tag: string) =>
+    Array.from({ length: count }, (_, i) => ({
+      defId: `m_${i}`, skillId: `sk_${i}`, key: 'q', instanceId: `inst_${i}`, tags: [tag],
+    }))
+
   it('scope=self · 命中本 affix 的 tag', () => {
-    const ctxWithSelfTag = { ...baseCtx, selfHasTag: (t: string) => t === 'vocal' }
+    const ctxQ = { ...baseCtx, queryEquipped: (sc: { type: string }) => sc.type === 'self' ? mockViews(1, 'vocal') : [] }
     const r = resolveEffect({
       kind: 'gain_resource',
       resource: 'score',
       ratio: 0.1,
       scale: { type: 'tag_count', tag: 'vocal', factor: 0.5, scope: { type: 'self' } },
-    }, ctxWithSelfTag)
+    }, ctxQ)
     // base 0.1 × 11 × (1 + 1 × 0.5) = 1.65
     expect(r.resourceProduced[0].amount).toBeCloseTo(1.65, 3)
   })
 
-  it('scope=neighbors · 用 ctx.countTagInNeighbors callback', () => {
-    const ctxWithNeighbors = { ...baseCtx, countTagInNeighbors: (_t: string, _r: number) => 3 }
+  it('scope=neighbors · queryEquipped 返 3 个匹配', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: (sc: { type: string }) => sc.type === 'neighbors' ? mockViews(3, 'vocal') : [] }
     const r = resolveEffect({
       kind: 'gain_resource',
       resource: 'score',
       ratio: 0.1,
       scale: { type: 'tag_count', tag: 'vocal', factor: 0.5, scope: { type: 'neighbors', posRel: 0 as never } },
-    }, ctxWithNeighbors)
+    }, ctxQ)
     // base 0.1 × 11 × (1 + 3 × 0.5) = 2.75
     expect(r.resourceProduced[0].amount).toBeCloseTo(2.75, 3)
   })
 
-  it('scope=matched_resource · 用 ctx.countTagInResourceMatched callback', () => {
-    const ctxWithRes = { ...baseCtx, countTagInResourceMatched: (_t: string, r: string) => r === 'score' ? 4 : 0 }
+  it('scope=matched_resource · queryEquipped 返 4 个匹配', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: (sc: { type: string }) => sc.type === 'matched_resource' ? mockViews(4, 'vocal') : [] }
     const r = resolveEffect({
       kind: 'gain_resource',
       resource: 'score',
       ratio: 0.1,
       scale: { type: 'tag_count', tag: 'vocal', factor: 0.5, scope: { type: 'matched_resource', resource: 'score' } },
-    }, ctxWithRes)
+    }, ctxQ)
     // base 0.1 × 11 × (1 + 4 × 0.5) = 3.3
     expect(r.resourceProduced[0].amount).toBeCloseTo(3.3, 3)
   })
 
-  it('scope 缺省 → all_skills · 用 ctx.countEquippedTag callback', () => {
-    const ctxWithAll = { ...baseCtx, countEquippedTag: (_t: string) => 23 }
+  it('scope 缺省 → all_skills · queryEquipped 返 23 个匹配', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: (_sc: { type: string }) => mockViews(23, 'vocal') }
     const r = resolveEffect({
       kind: 'gain_resource',
       resource: 'score',
       ratio: 0.1,
       scale: { type: 'tag_count', tag: 'vocal', factor: 0.5 },
-    }, ctxWithAll)
+    }, ctxQ)
     // base 0.1 × 11 × (1 + 23 × 0.5) = 13.75
     expect(r.resourceProduced[0].amount).toBeCloseTo(13.75, 2)
   })

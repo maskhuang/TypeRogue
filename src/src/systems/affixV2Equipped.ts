@@ -25,59 +25,78 @@ function lvNBaseFor(
   return (r: string) => resourceLv1Base(r, level)
 }
 
-/** Tag scope 计数回调四件套 · 注入 ResolveContext 供 ScaleByTag / count_tag_gte/lte 使用 */
-interface TagCallbacks {
-  selfHasTag: (tag: Tag) => boolean
-  countTagInNeighbors: (tag: Tag, posRel: PositionRelation) => number
-  countTagInResourceMatched: (tag: Tag, resource: string) => number
-  countEquippedTag: (tag: Tag) => number
+/** 把 EquippedEntry hydrate 为 EquippedView（带 def.tags）·
+ *  def 缺失（动态定义被取消注册）→ 跳过 */
+function toView(entry: EquippedEntry): EquippedView | null {
+  const def = getAffixV2Definition(entry.defId)
+  if (!def) return null
+  return { defId: entry.defId, skillId: entry.skillId, key: entry.key, instanceId: entry.instanceId, tags: def.tags }
 }
 
-/** 计场上所有已装备 affix 中携带 tag 的总数（去重单个 entry）*/
-function countEquippedTagImpl(tag: Tag): number {
-  let n = 0
-  for (const entry of _equipped.values()) {
-    const def = getAffixV2Definition(entry.defId)
-    if (def?.tags.includes(tag)) n++
-  }
-  return n
-}
-
-/** 为给定 entry 构建 4 个 tag 计数回调 */
-function buildTagCallbacks(entry: EquippedEntry): TagCallbacks {
-  const selfDef = getAffixV2Definition(entry.defId)
-  return {
-    selfHasTag: (tag) => selfDef?.tags.includes(tag) ?? false,
-    countTagInNeighbors: (tag, posRel) => {
-      let n = 0
+/** 收集 scope 内所有 skill id（用于把 scope 解析为 entries 列表）·
+ *  与 resolveSelectorToSkillIds 同语义，但这里不依赖 _selectorResolver 以保持模块自给 */
+function collectSkillIdsForScope(
+  scope: TargetSelector,
+  sourceSkillId: string,
+  sourceKey: string,
+): string[] {
+  switch (scope.type) {
+    case 'self':
+      return [sourceSkillId]
+    case 'neighbors': {
+      const out: string[] = []
       for (const [k, sid] of gameState.player.bindings) {
-        if (sid === entry.skillId) continue
-        if (!hasRelation(entry.key, k, posRel)) continue
-        for (const e of _equipped.values()) {
-          if (e.skillId !== sid) continue
-          const d = getAffixV2Definition(e.defId)
-          if (d?.tags.includes(tag)) n++
-        }
+        if (sid === sourceSkillId) continue
+        if (hasRelation(sourceKey, k, scope.posRel)) out.push(sid)
       }
-      return n
-    },
-    countTagInResourceMatched: (tag, resource) => {
-      let n = 0
-      for (const [sid, sk] of gameState.affixSkills) {
-        if (sk.resource !== resource) continue
-        for (const e of _equipped.values()) {
-          if (e.skillId !== sid) continue
-          const d = getAffixV2Definition(e.defId)
-          if (d?.tags.includes(tag)) n++
-        }
+      return out
+    }
+    case 'matched_resource':
+      return [...gameState.affixSkills]
+        .filter(([, sk]) => sk.resource === scope.resource)
+        .map(([sid]) => sid)
+    case 'matched_tag': {
+      const seen = new Set<string>()
+      for (const e of _equipped.values()) {
+        if (seen.has(e.skillId)) continue
+        const d = getAffixV2Definition(e.defId)
+        if (d?.tags.includes(scope.tag)) seen.add(e.skillId)
       }
-      return n
-    },
-    countEquippedTag: countEquippedTagImpl,
+      return [...seen]
+    }
+    case 'matched_rarity':
+      return [...gameState.affixSkills]
+        .filter(([, sk]) => sk.rarity === scope.rarity)
+        .map(([sid]) => sid)
+    case 'all_skills':
+      return [...gameState.affixSkills.keys()]
+    case 'hasted':
+      // 极速状态查询需 affixV2State.getHaste；保留 stub，hasted 不进 generator 池
+      return []
+  }
+}
+
+/** 为给定 entry 构建 queryEquipped(scope) ·
+ *  scope=self 特殊处理（返回本 affix 自身，不展开到同 skill 其他 affix）·
+ *  其它 scope → 解析为 skill ids，收集这些 skill 上的全部装备 entry */
+function buildQueryEquipped(entry: EquippedEntry): (scope: TargetSelector) => readonly EquippedView[] {
+  return (scope) => {
+    if (scope.type === 'self') {
+      const v = toView(entry)
+      return v ? [v] : []
+    }
+    const skillIds = new Set(collectSkillIdsForScope(scope, entry.skillId, entry.key))
+    const out: EquippedView[] = []
+    for (const e of _equipped.values()) {
+      if (!skillIds.has(e.skillId)) continue
+      const v = toView(e)
+      if (v) out.push(v)
+    }
+    return out
   }
 }
 import { evaluateTrigger, type TriggerContext } from './affixV2Trigger'
-import { resolveEffect, type ResolveContext, type ResolveResult } from './affixV2Effect'
+import { resolveEffect, type ResolveContext, type ResolveResult, type EquippedView } from './affixV2Effect'
 import {
   getInstanceState,
   resetAllAffixV2State,
@@ -239,7 +258,7 @@ export function hookOnSkillFire(
       currentWordLength: 0,    // skill fire context, no word context
       getPlayerResource,
       resolveSelector: _selectorResolver,
-      ...buildTagCallbacks(entry),
+      queryEquipped: buildQueryEquipped(entry),
     }
     const result = resolveEffect(def.effect, ctx)
     results.push({ sourceInstanceId: id, sourceSkillId: skillId, sourceKey: entry.key, result })
@@ -286,7 +305,7 @@ export function hookOnSkillFire(
         isCrit: broadcastEvent.isCrit,
         currentWordLength: 0,
         getPlayerResource,
-        ...buildTagCallbacks(entry),
+        queryEquipped: buildQueryEquipped(entry),
       }
       const result = resolveEffect(def.effect, ctx)
       results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
@@ -346,7 +365,7 @@ export function hookOnKey(
       currentWordLength: 0,
       getPlayerResource,
       resolveSelector: _selectorResolver,
-      ...buildTagCallbacks(entry),
+      queryEquipped: buildQueryEquipped(entry),
     }
     const result = resolveEffect(def.effect, ctx)
     results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
@@ -403,7 +422,7 @@ export function hookOnWordEnd(
       isCrit: false,
       currentWordLength,
       getPlayerResource,
-      ...buildTagCallbacks(entry),
+      queryEquipped: buildQueryEquipped(entry),
       resolveSelector: _selectorResolver,
     }
     const result = resolveEffect(def.effect, ctx)
@@ -467,7 +486,7 @@ export function hookOnHasteGranted(
       currentWordLength: 0,
       getPlayerResource,
       resolveSelector: _selectorResolver,
-      ...buildTagCallbacks(entry),
+      queryEquipped: buildQueryEquipped(entry),
     }
     const result = resolveEffect(def.effect, ctx)
     results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
@@ -513,7 +532,7 @@ export function hookOnBattleStart(
       currentWordLength: 0,
       getPlayerResource,
       resolveSelector: _selectorResolver,
-      ...buildTagCallbacks(entry),
+      queryEquipped: buildQueryEquipped(entry),
     }
     const result = resolveEffect(def.effect, ctx)
     _ghostLog.push({

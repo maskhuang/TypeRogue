@@ -28,6 +28,19 @@ import {
 } from './affixV2State'
 
 // ============================================
+// EquippedView · 已装备 affix 的查询视图（避免 affixV2Effect → affixV2Equipped 循环依赖）
+// ============================================
+
+/** scope-aware 查询返回的 affix 视图 · 字段 hydrate 自 def + entry */
+export interface EquippedView {
+  readonly defId: string
+  readonly skillId: string
+  readonly key: string
+  readonly instanceId: string
+  readonly tags: readonly import('../data/affixTags').Tag[]
+}
+
+// ============================================
 // ResolveContext
 // ============================================
 
@@ -54,16 +67,12 @@ export interface ResolveContext {
   /** 玩家资源池查询（resource_below/above 用）*/
   readonly getPlayerResource: (resource: string) => number
 
-  // === scope-aware queries（运行时 loadout 集成时填）===
-  /** 本 affix 是否携带 tag（scope='self' 计数用）*/
-  readonly selfHasTag?: (tag: import('../data/affixTags').Tag) => boolean
-  /** 邻居 skill 中携带 tag 的 affix 总数（scope='neighbors' 计数用）*/
-  readonly countTagInNeighbors?: (tag: import('../data/affixTags').Tag, posRel: import('../data/keyboardTopology').PositionRelation) => number
-  /** 产出指定资源的 skill 中携带 tag 的 affix 总数（scope='matched_resource' 计数用）*/
-  readonly countTagInResourceMatched?: (tag: import('../data/affixTags').Tag, resource: string) => number
-  /** 全场上装备的 affix 中携带 tag 的总数（scope='all_skills' / 'matched_tag' 计数用）·
-   *  必须基于 _equipped 而非 def registry（registry 含未装备的动态注册定义）*/
-  readonly countEquippedTag?: (tag: import('../data/affixTags').Tag) => number
+  // === scope-aware loadout 查询（运行时集成层注入）===
+  /** 单点 scope 查询：返回 scope 内已装备的 affix 视图列表 ·
+   *  self → 本 affix 自身；其它 scope（neighbors / matched_tag / matched_resource /
+   *  matched_rarity / all_skills）→ 范围内 skill 上的全部装备 ·
+   *  resolver / condition 在此基础上做 tag/status/resource 等任意 filter（无需新增 ctx 字段）*/
+  readonly queryEquipped?: (scope: TargetSelector) => readonly EquippedView[]
 
   /** TargetSelector 展开为 skill id 列表（add/multiply 带 selector 时用）
    * 由集成层提供（详 affixV2BattleIntegration.resolveSelectorToSkillIds）；
@@ -297,20 +306,13 @@ function applyScale(scale: ScaleByTag | undefined, ctx: ResolveContext): number 
  *   - matched_resource → ctx.countTagInResourceMatched callback
  */
 function countTagInScope(tag: Tag, scope: TargetSelector | undefined, ctx: ResolveContext): number {
-  if (!scope || scope.type === 'all_skills' || scope.type === 'matched_tag') {
-    // 全场已装备：必须查 _equipped 列表，registry 含未装备的动态定义会偏大
-    return ctx.countEquippedTag?.(tag) ?? 0
+  if (!ctx.queryEquipped) return 0
+  const entries = ctx.queryEquipped(scope ?? { type: 'all_skills' })
+  let n = 0
+  for (const e of entries) {
+    if (e.tags.includes(tag)) n++
   }
-  if (scope.type === 'self') {
-    return ctx.selfHasTag?.(tag) ? 1 : 0
-  }
-  if (scope.type === 'neighbors') {
-    return ctx.countTagInNeighbors?.(tag, scope.posRel) ?? 0
-  }
-  if (scope.type === 'matched_resource') {
-    return ctx.countTagInResourceMatched?.(tag, scope.resource) ?? 0
-  }
-  return 0
+  return n
 }
 
 // ============================================
