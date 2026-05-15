@@ -213,8 +213,7 @@ const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
   { selector: { type: 'neighbors', posRel: PositionRelation.SameRow },          weight: 5 },
   { selector: { type: 'neighbors', posRel: PositionRelation.SameHand },         weight: 3 },
   { selector: { type: 'all_skills' },                                          weight: 2 },
-  // hasted：场上当前处于极速状态的技能 · 运行时动态范围，稀有
-  { selector: { type: 'hasted' },                                              weight: 4 },
+  // 注：hasted scope 不进 generator 池（运行时动态范围，过于条件化，作者化使用）
   // matched_tag：按 section tag 找场上所有挂该 tag 的 affix 所在 skill
   // 每 section 5 weight × 8 sections = 40 total（≈ 15% 命中 matched_tag 抽中）
   ...ALL_SECTION_TAGS.map(tag => ({
@@ -346,9 +345,7 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
       case 'matched_resource':
         selector = { type: 'matched_resource', resource: scope.selector.resource, pick: 'random' }
         break
-      case 'hasted':
-        selector = { type: 'hasted', pick: 'random' }
-        break
+      // 注：hasted 不进 generator 池（见 FULL_SCOPE_POOL），故 chain pick 注入无需处理
       case 'matched_rarity':
         selector = { type: 'matched_rarity', rarity: scope.selector.rarity, pick: 'random' }
         break
