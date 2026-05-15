@@ -39,30 +39,41 @@ function rollEnchant(): EnchantSpec {
   return { id: t };
 }
 
+/** 资源附魔名（2 字形容词，与 迅疾/致命/闪亮 同体例）*/
+const RES_ENCHANT_NAMES_ZH: Record<string, string> = {
+  base: '稳固', score: '辉煌', multiplier: '倍增', time: '永恒', shield: '坚韧', gold: '镀金',
+};
+const RES_ENCHANT_NAMES_EN: Record<string, string> = {
+  base: 'Steadfast', score: 'Resplendent', multiplier: 'Amplified', time: 'Eternal', shield: 'Resilient', gold: 'Gilded',
+};
+const RES_DISPLAY_ZH: Record<string, string> = {
+  base: '基础', score: '分数', multiplier: '倍率', time: '时间', shield: '护盾', gold: '金币',
+};
+
 /** 附魔的显示信息（i18n 暂内联，后续可挪 demo-i18n）*/
 function enchantDisplayInfo(e: EnchantSpec): { name: string; desc: string } {
   const zh = getLocale() === 'zh';
   switch (e.id) {
     case 'haste':
       return zh
-        ? { name: '疾', desc: '触发时给目标技能 +1 极速；若词条已含 grant_haste，数值 ×2' }
-        : { name: 'Hasted', desc: 'On fire: +1 haste to target skill; if affix has grant_haste, amount ×2' };
+        ? { name: '迅疾', desc: '触发时给目标技能 +1 极速；若词条已含 grant_haste，数值 ×2' }
+        : { name: 'Swift', desc: 'On fire: +1 haste to target skill; if affix has grant_haste, amount ×2' };
     case 'crit':
       return zh
-        ? { name: '暴', desc: '触发时挂 +20% 暴击率 aura；若词条已含 crit_chance_add aura，数值 ×2' }
-        : { name: 'Critical', desc: 'On fire: +20% crit rate aura; if affix has crit_chance_add, amount ×2' };
+        ? { name: '致命', desc: '触发时挂 +20% 暴击率 aura；若词条已含 crit_chance_add aura，数值 ×2' }
+        : { name: 'Lethal', desc: 'On fire: +20% crit rate aura; if affix has crit_chance_add, amount ×2' };
     case 'resource': {
-      const resName = zh
-        ? ({ base:'基础', score:'分数', multiplier:'倍率', time:'时间', shield:'护盾', gold:'金币' } as Record<string,string>)[e.resource] ?? e.resource
-        : e.resource;
+      const r = e.resource;
+      const name = zh ? (RES_ENCHANT_NAMES_ZH[r] ?? r) : (RES_ENCHANT_NAMES_EN[r] ?? r);
+      const display = zh ? (RES_DISPLAY_ZH[r] ?? r) : r;
       return zh
-        ? { name: `资·${resName}`, desc: `触发时额外产出 ${resName} (ratio 0.1)；若词条已含 gain_resource(${resName})，ratio ×2` }
-        : { name: `Resource·${resName}`, desc: `On fire: extra ${resName} (ratio 0.1); if affix has gain_resource(${resName}), ratio ×2` };
+        ? { name, desc: `触发时额外产出 ${display} (ratio 0.1)；若词条已含 gain_resource(${display})，ratio ×2` }
+        : { name, desc: `On fire: extra ${r} (ratio 0.1); if affix has gain_resource(${r}), ratio ×2` };
     }
     case 'multi_fire':
       return zh
-        ? { name: '多', desc: '触发时挂 +1 多重释放 aura；若词条已含 multi_fire_add aura，数值 ×2' }
-        : { name: 'Multi-fire', desc: 'On fire: +1 multi-fire aura; if affix has multi_fire_add, amount ×2' };
+        ? { name: '闪亮', desc: '触发时挂 +1 多重释放 aura；若词条已含 multi_fire_add aura，数值 ×2' }
+        : { name: 'Shiny', desc: 'On fire: +1 multi-fire aura; if affix has multi_fire_add, amount ×2' };
   }
 }
 
