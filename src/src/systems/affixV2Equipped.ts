@@ -97,6 +97,38 @@ function buildQueryEquipped(entry: EquippedEntry): (scope: TargetSelector) => re
 }
 import { evaluateTrigger, type TriggerContext } from './affixV2Trigger'
 import { resolveEffect, type ResolveContext, type ResolveResult, type EquippedView } from './affixV2Effect'
+import { applyEnchantToEffect, type EnchantSpec } from '../data/affixV2Enchant'
+
+// ============================================
+// V2 附魔层 store · 按 instanceId 索引
+// ============================================
+
+const _enchants: Map<string, EnchantSpec> = new Map()
+
+/** 给指定 instance 设置附魔（覆盖原附魔；Bazaar 规则：一物一附魔）*/
+export function setEnchant(instanceId: string, enchant: EnchantSpec): void {
+  _enchants.set(instanceId, enchant)
+}
+
+/** 查询 instance 的附魔（无则 undefined）*/
+export function getEnchant(instanceId: string): EnchantSpec | undefined {
+  return _enchants.get(instanceId)
+}
+
+/** 移除指定 instance 的附魔 */
+export function clearEnchant(instanceId: string): void {
+  _enchants.delete(instanceId)
+}
+
+/** 清空全部附魔（切 run / battle end 用）*/
+export function clearAllEnchants(): void {
+  _enchants.clear()
+}
+
+/** 列出全部附魔（UI / 调试用）*/
+export function listAllEnchants(): ReadonlyMap<string, EnchantSpec> {
+  return _enchants
+}
 import {
   getInstanceState,
   resetAllAffixV2State,
@@ -141,6 +173,7 @@ export function unequipAffixV2(instanceId: string): void {
   const entry = _equipped.get(instanceId)
   if (!entry) return
   _equipped.delete(instanceId)
+  _enchants.delete(instanceId)   // 同步清附魔，避免孤立 enchant 状态
   const list = _bySkill.get(entry.skillId)
   if (list) {
     const idx = list.indexOf(instanceId)
@@ -171,6 +204,7 @@ export function listAllEquipped(): readonly EquippedEntry[] {
 export function clearAllEquipped(): void {
   _equipped.clear()
   _bySkill.clear()
+  _enchants.clear()
 }
 
 // ============================================
@@ -260,7 +294,7 @@ export function hookOnSkillFire(
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
     }
-    const result = resolveEffect(def.effect, ctx)
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
     results.push({ sourceInstanceId: id, sourceSkillId: skillId, sourceKey: entry.key, result })
 
     _ghostLog.push({
@@ -307,7 +341,7 @@ export function hookOnSkillFire(
         getPlayerResource,
         queryEquipped: buildQueryEquipped(entry),
       }
-      const result = resolveEffect(def.effect, ctx)
+      const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
       results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
 
       _ghostLog.push({
@@ -367,7 +401,7 @@ export function hookOnKey(
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
     }
-    const result = resolveEffect(def.effect, ctx)
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
     results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
 
     _ghostLog.push({
@@ -425,7 +459,7 @@ export function hookOnWordEnd(
       queryEquipped: buildQueryEquipped(entry),
       resolveSelector: _selectorResolver,
     }
-    const result = resolveEffect(def.effect, ctx)
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
     results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
 
     _ghostLog.push({
@@ -488,7 +522,7 @@ export function hookOnHasteGranted(
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
     }
-    const result = resolveEffect(def.effect, ctx)
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
     results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
 
     _ghostLog.push({
@@ -534,7 +568,7 @@ export function hookOnBattleStart(
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
     }
-    const result = resolveEffect(def.effect, ctx)
+    const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
     _ghostLog.push({
       timestamp: nowMs,
       instanceId: entry.instanceId,
