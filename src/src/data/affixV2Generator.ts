@@ -476,3 +476,24 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_DRINK,
   RECIPE_LEAP,
 ]
+
+/** drink(convert) 以这些资源为 source 时降权 · time/gold 转化收益偏强，降低出率 */
+const DRINK_LOW_WEIGHT_SOURCES: ReadonlySet<string> = new Set(['time', 'gold'])
+/** drink 在降权资源上的权重（其余 recipe 等权 1）*/
+const DRINK_LOW_WEIGHT = 0.25
+
+/** 为指定 skill 资源加权抽一个 recipe ·
+ *  drink recipe 在 source=time/gold 时降权至 DRINK_LOW_WEIGHT，其余 recipe 恒权 1 */
+export function pickRecipeForSkill(skillResource?: ResourceType): AffixV2Recipe {
+  const lowDrink = skillResource != null && DRINK_LOW_WEIGHT_SOURCES.has(skillResource)
+  const weights = ALL_RECIPES.map(r =>
+    r.kind === 'convert' && lowDrink ? DRINK_LOW_WEIGHT : 1,
+  )
+  const total = weights.reduce((a, b) => a + b, 0)
+  let roll = random() * total
+  for (let i = 0; i < ALL_RECIPES.length; i++) {
+    roll -= weights[i]
+    if (roll <= 0) return ALL_RECIPES[i]
+  }
+  return ALL_RECIPES[ALL_RECIPES.length - 1]
+}

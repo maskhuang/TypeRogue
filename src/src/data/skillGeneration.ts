@@ -18,7 +18,7 @@ import {
   VOID_BONUS_TABLE, SWARM_BONUS_TABLE, FLOW_BONUS_TABLE, CONFLUENCE_BONUS_TABLE, UNION_BONUS_TABLE, CONVERT_K_TABLE, AFFIX_CLASS_RESTRICTION,
 } from './affixes'
 import { t } from '../demo/demo-i18n'
-import { ALL_RECIPES, generateAffixV2 } from './affixV2Generator'
+import { ALL_RECIPES, generateAffixV2, pickRecipeForSkill } from './affixV2Generator'
 
 // ===== 常量 =====
 
@@ -487,7 +487,8 @@ function sampleV2Ids(count: number, skillResource: ResourceType): string[] {
   if (ALL_RECIPES.length === 0) return []
   const out: string[] = []
   for (let i = 0; i < count; i++) {
-    const recipe = ALL_RECIPES[Math.floor(random() * ALL_RECIPES.length)]
+    // 加权抽取：drink(convert) 在 source=time/gold 时降权
+    const recipe = pickRecipeForSkill(skillResource)
     out.push(generateAffixV2(recipe, skillResource))
   }
   return out
