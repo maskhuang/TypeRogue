@@ -256,14 +256,15 @@ describe('Scope-aware ScaleByTag', () => {
     expect(r.resourceProduced[0].amount).toBeCloseTo(3.3, 3)
   })
 
-  it('scope 缺省 → all_skills (注册表全量)', () => {
+  it('scope 缺省 → all_skills · 用 ctx.countEquippedTag callback', () => {
+    const ctxWithAll = { ...baseCtx, countEquippedTag: (_t: string) => 23 }
     const r = resolveEffect({
       kind: 'gain_resource',
       resource: 'score',
       ratio: 0.1,
       scale: { type: 'tag_count', tag: 'vocal', factor: 0.5 },
-    }, baseCtx)
-    // 23 vocal in registry · 0.1 × 11 × (1 + 23 × 0.5) = 13.75
-    expect(r.resourceProduced[0].amount).toBeGreaterThan(10)
+    }, ctxWithAll)
+    // base 0.1 × 11 × (1 + 23 × 0.5) = 13.75
+    expect(r.resourceProduced[0].amount).toBeCloseTo(13.75, 2)
   })
 })

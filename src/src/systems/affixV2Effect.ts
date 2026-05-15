@@ -18,7 +18,6 @@ import type {
   ScaleByTag,
 } from '../data/affixV2Trigger'
 import type { Tag } from '../data/affixTags'
-import { countByTag } from './tagQuery'
 import {
   getInstanceState,
   addAura,
@@ -62,6 +61,9 @@ export interface ResolveContext {
   readonly countTagInNeighbors?: (tag: import('../data/affixTags').Tag, posRel: import('../data/keyboardTopology').PositionRelation) => number
   /** 产出指定资源的 skill 中携带 tag 的 affix 总数（scope='matched_resource' 计数用）*/
   readonly countTagInResourceMatched?: (tag: import('../data/affixTags').Tag, resource: string) => number
+  /** 全场上装备的 affix 中携带 tag 的总数（scope='all_skills' / 'matched_tag' 计数用）·
+   *  必须基于 _equipped 而非 def registry（registry 含未装备的动态注册定义）*/
+  readonly countEquippedTag?: (tag: import('../data/affixTags').Tag) => number
 
   /** TargetSelector 展开为 skill id 列表（add/multiply 带 selector 时用）
    * 由集成层提供（详 affixV2BattleIntegration.resolveSelectorToSkillIds）；
@@ -295,8 +297,9 @@ function applyScale(scale: ScaleByTag | undefined, ctx: ResolveContext): number 
  *   - matched_resource → ctx.countTagInResourceMatched callback
  */
 function countTagInScope(tag: Tag, scope: TargetSelector | undefined, ctx: ResolveContext): number {
-  if (!scope || scope.type === 'all_skills') {
-    return countByTag(tag, { kind: 'registry' })
+  if (!scope || scope.type === 'all_skills' || scope.type === 'matched_tag') {
+    // 全场已装备：必须查 _equipped 列表，registry 含未装备的动态定义会偏大
+    return ctx.countEquippedTag?.(tag) ?? 0
   }
   if (scope.type === 'self') {
     return ctx.selfHasTag?.(tag) ? 1 : 0
@@ -306,9 +309,6 @@ function countTagInScope(tag: Tag, scope: TargetSelector | undefined, ctx: Resol
   }
   if (scope.type === 'matched_resource') {
     return ctx.countTagInResourceMatched?.(tag, scope.resource) ?? 0
-  }
-  if (scope.type === 'matched_tag') {
-    return countByTag(tag, { kind: 'registry' })
   }
   return 0
 }

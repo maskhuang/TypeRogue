@@ -12,6 +12,8 @@
 import type { AffixV2Instance } from '../data/affixV2'
 import { getAffixV2Definition } from '../data/affixV2'
 import { state as gameState } from '../core/state'
+import { hasRelation, type PositionRelation } from '../data/keyboardTopology'
+import type { Tag } from '../data/affixTags'
 
 /** 把 (resource)→base 回调按 skill 等级柯里化为 Lv.N 查询 ·
  *  resourceLv1Base 接受可选 level 参数（defaultResourceLv1Base），缺省 Lv1 */
@@ -21,6 +23,58 @@ function lvNBaseFor(
 ): (r: string) => number {
   const level = gameState.affixSkills.get(skillId)?.level ?? 1
   return (r: string) => resourceLv1Base(r, level)
+}
+
+/** Tag scope 计数回调四件套 · 注入 ResolveContext 供 ScaleByTag / count_tag_gte/lte 使用 */
+interface TagCallbacks {
+  selfHasTag: (tag: Tag) => boolean
+  countTagInNeighbors: (tag: Tag, posRel: PositionRelation) => number
+  countTagInResourceMatched: (tag: Tag, resource: string) => number
+  countEquippedTag: (tag: Tag) => number
+}
+
+/** 计场上所有已装备 affix 中携带 tag 的总数（去重单个 entry）*/
+function countEquippedTagImpl(tag: Tag): number {
+  let n = 0
+  for (const entry of _equipped.values()) {
+    const def = getAffixV2Definition(entry.defId)
+    if (def?.tags.includes(tag)) n++
+  }
+  return n
+}
+
+/** 为给定 entry 构建 4 个 tag 计数回调 */
+function buildTagCallbacks(entry: EquippedEntry): TagCallbacks {
+  const selfDef = getAffixV2Definition(entry.defId)
+  return {
+    selfHasTag: (tag) => selfDef?.tags.includes(tag) ?? false,
+    countTagInNeighbors: (tag, posRel) => {
+      let n = 0
+      for (const [k, sid] of gameState.player.bindings) {
+        if (sid === entry.skillId) continue
+        if (!hasRelation(entry.key, k, posRel)) continue
+        for (const e of _equipped.values()) {
+          if (e.skillId !== sid) continue
+          const d = getAffixV2Definition(e.defId)
+          if (d?.tags.includes(tag)) n++
+        }
+      }
+      return n
+    },
+    countTagInResourceMatched: (tag, resource) => {
+      let n = 0
+      for (const [sid, sk] of gameState.affixSkills) {
+        if (sk.resource !== resource) continue
+        for (const e of _equipped.values()) {
+          if (e.skillId !== sid) continue
+          const d = getAffixV2Definition(e.defId)
+          if (d?.tags.includes(tag)) n++
+        }
+      }
+      return n
+    },
+    countEquippedTag: countEquippedTagImpl,
+  }
 }
 import { evaluateTrigger, type TriggerContext } from './affixV2Trigger'
 import { resolveEffect, type ResolveContext, type ResolveResult } from './affixV2Effect'
@@ -185,6 +239,7 @@ export function hookOnSkillFire(
       currentWordLength: 0,    // skill fire context, no word context
       getPlayerResource,
       resolveSelector: _selectorResolver,
+      ...buildTagCallbacks(entry),
     }
     const result = resolveEffect(def.effect, ctx)
     results.push({ sourceInstanceId: id, sourceSkillId: skillId, sourceKey: entry.key, result })
@@ -231,6 +286,7 @@ export function hookOnSkillFire(
         isCrit: broadcastEvent.isCrit,
         currentWordLength: 0,
         getPlayerResource,
+        ...buildTagCallbacks(entry),
       }
       const result = resolveEffect(def.effect, ctx)
       results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
@@ -290,6 +346,7 @@ export function hookOnKey(
       currentWordLength: 0,
       getPlayerResource,
       resolveSelector: _selectorResolver,
+      ...buildTagCallbacks(entry),
     }
     const result = resolveEffect(def.effect, ctx)
     results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
@@ -346,6 +403,7 @@ export function hookOnWordEnd(
       isCrit: false,
       currentWordLength,
       getPlayerResource,
+      ...buildTagCallbacks(entry),
       resolveSelector: _selectorResolver,
     }
     const result = resolveEffect(def.effect, ctx)
@@ -409,6 +467,7 @@ export function hookOnHasteGranted(
       currentWordLength: 0,
       getPlayerResource,
       resolveSelector: _selectorResolver,
+      ...buildTagCallbacks(entry),
     }
     const result = resolveEffect(def.effect, ctx)
     results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
@@ -454,6 +513,7 @@ export function hookOnBattleStart(
       currentWordLength: 0,
       getPlayerResource,
       resolveSelector: _selectorResolver,
+      ...buildTagCallbacks(entry),
     }
     const result = resolveEffect(def.effect, ctx)
     _ghostLog.push({

@@ -154,9 +154,11 @@ describe('Pilot 6 · hand_clap (gesture · stack_release)', () => {
 describe('Pilot 7 · hammer_anvil (tool · burst-add + count-scale)', () => {
   it('关内成长 base，且按 tool tag 数量 scaling', () => {
     const def = getAffixV2Definition('hammer_anvil')!
-    resolveEffect(def.effect, ctx)
+    // 模拟场上 13 个 tool 词条（生产环境由 hook 注入 countEquippedTag 真实计数）
+    const ctxWithCount = { ...ctx, countEquippedTag: (_t: string) => 13 }
+    resolveEffect(def.effect, ctxWithCount)
     const s = peekInstanceState('inst_1')!
-    // base ratio 0.08, scale factor 0.2 × 13 tool in registry = 2.6 scale
+    // base ratio 0.08, scale factor 0.2 × 13 = 2.6 scale
     // cumulativeBaseAdd = 0.08 × 11 × (1 + 0.2 × 13) = 0.88 × 3.6 = 3.168
     expect(s.cumulativeBaseAdd).toBeGreaterThan(2)
     expect(s.cumulativeBaseAdd).toBeLessThan(5)

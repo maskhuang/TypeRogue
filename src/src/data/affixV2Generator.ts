@@ -276,10 +276,14 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
   let triggerSpec: TriggerSpec = triggerEntry.spec
 
   if (recipe.kind === 'drip') {
-    // drip: scope 固定 self · 资源随机
+    // drip: scope 固定 self · 资源随机 · 50% 概率附加 section-count scale（Bazaar Count synergy）
     const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
     const resource = pickRandom(recipe.resourcePool)
-    effect = { kind: 'gain_resource', resource, ratio }
+    const withScale = random() < 0.5
+    effect = withScale
+      ? { kind: 'gain_resource', resource, ratio,
+          scale: { type: 'tag_count', tag: recipe.section, factor: 0.1, scope: { type: 'all_skills' } } }
+      : { kind: 'gain_resource', resource, ratio }
   } else if (recipe.kind === 'growth') {
     // growth: scope 加权随机（self 常见，wide scope 稀有）
     const scope = pickWeightedScope(FULL_SCOPE_POOL)
