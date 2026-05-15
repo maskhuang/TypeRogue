@@ -3490,94 +3490,386 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 /* ============================================ */
 /* REST STAGE (休息关)                           */
 /* ============================================ */
+/* ============================================ */
+/* REST STAGE · DPCA-VT220 CRT TERMINAL (Option B) */
+/* ============================================ */
+
 #rest-screen {
     display: none;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #0a1628 0%, #0f2037 50%, #0a1628 100%);
-    color: #eaeaea;
-    gap: 24px;
-    padding: 40px;
+    align-items: stretch;
+    justify-content: flex-start;
+    background: #02060a;
+    padding: 18px;
+    overflow-y: auto;
+    font-family: var(--font-dossier, 'Courier Prime', monospace);
+    color: #4ade80;
     position: relative;
-    overflow: hidden;
 }
 
+/* 顶部 bezel header（chrome 装饰） */
 #rest-screen::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background:
-        radial-gradient(3px 3px at 12% 20%, rgba(126, 200, 227, 0.12), transparent),
-        radial-gradient(2px 2px at 55% 40%, rgba(126, 200, 227, 0.08), transparent),
-        radial-gradient(3px 3px at 78% 65%, rgba(126, 200, 227, 0.10), transparent),
-        radial-gradient(2px 2px at 30% 80%, rgba(126, 200, 227, 0.06), transparent);
-    pointer-events: none;
-    animation: restParticleFloat 8s steps(2) infinite alternate;
+    content: '● DPCA · VT220 · INTERMISSION TERMINAL              SESSION 0x4B8E';
+    display: block;
+    padding: 6px 18px 8px;
+    background: linear-gradient(180deg, #1f1f1f 0%, #141414 100%);
+    color: #c5c5c0;
+    font-size: 10px;
+    letter-spacing: 3px;
+    border-radius: 10px 10px 0 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.6);
+    margin-bottom: 0;
 }
 
-#rest-screen > * { position: relative; z-index: 1; }
+/* 屏幕主体 · 内嵌 scanlines + vignette · 包住 header/event/options/result */
+#rest-screen > .rest-header,
+#rest-screen > .rest-event,
+#rest-screen > .rest-options,
+#rest-screen > .rest-result {
+    background: linear-gradient(180deg, #02060a 0%, #0a1410 100%);
+    color: #4ade80;
+    text-shadow: 0 0 5px rgba(74,222,128,0.55);
+    margin: 0;
+    padding: 14px 30px;
+    position: relative;
+    box-shadow:
+        inset 1px 0 0 rgba(255,255,255,0.04),
+        inset -1px 0 0 rgba(0,0,0,0.6);
+}
+#rest-screen > .rest-header { padding-top: 24px; }
+#rest-screen > .rest-result { padding-bottom: 24px; }
 
-@keyframes restParticleFloat {
-    from { transform: translateY(0); }
-    to   { transform: translateY(-5px); }
+/* scanlines + vignette 覆盖在 inner sections 上（一层 absolute pseudo）*/
+#rest-screen > .rest-options::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg,
+        rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+        rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 3px);
 }
 
+/* 底部 bezel hint */
+#rest-screen::after {
+    content: 'EVENT-LOG OK     ▾ SELECT DISPOSITION · ENTER TO CONFIRM     OUT-BUF 0%';
+    display: block;
+    padding: 6px 18px;
+    background: linear-gradient(180deg, #141414 0%, #080808 100%);
+    color: #c5c5c0;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-align: center;
+    border-radius: 0 0 10px 10px;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -2px 0 rgba(0,0,0,0.7);
+}
+
+@keyframes ct-blink-rest { 50% { opacity: 0; } }
 @keyframes restFadeIn {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
-.rest-header { text-align: center; animation: restFadeIn 400ms steps(6) both; }
-
+/* === HEADER === */
+.rest-header {
+    text-align: left;
+    animation: restFadeIn 400ms steps(6) both;
+}
 .rest-title {
-    font-size: var(--text-subtitle-size);
+    font-size: 14px;
     font-weight: bold;
-    color: #7ec8e3;
-    margin: 0 0 8px 0;
-    letter-spacing: 4px;
+    color: #c9a45e;
+    text-shadow: 0 0 5px #c9a45e;
+    margin: 0 0 4px 0;
+    letter-spacing: 5px;
 }
+.rest-title::before { content: '▸ '; color: #b6f3c0; text-shadow: 0 0 5px #b6f3c0; }
+.rest-act-label {
+    font-size: 11px;
+    color: #2a8a48;
+    text-shadow: none;
+    margin: 0;
+    letter-spacing: 2px;
+}
+.rest-act-label::before { content: '> '; color: #b6f3c0; text-shadow: 0 0 5px #b6f3c0; }
 
-.rest-act-label { font-size: var(--text-body-size); color: #888; margin: 0; }
-
+/* === EVENT (绿屏字段块) === */
 .rest-event {
-    background: rgba(126, 200, 227, 0.06);
-    border: 1px solid rgba(126, 200, 227, 0.15);
-    border-radius: 0; padding: 24px; text-align: center;
+    text-align: left;
     animation: restFadeIn 400ms steps(6) 100ms both;
+    border-top: 1px solid rgba(74,222,128,0.18);
+    border-bottom: 1px solid rgba(74,222,128,0.18);
+}
+.event-icon {
+    display: inline-block;
+    margin-right: 10px;
+    font-size: 18px;
+    color: #c9a45e;
+    text-shadow: 0 0 5px #c9a45e;
+}
+.event-name {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    color: #b6f3c0;
+    text-shadow: 0 0 5px #b6f3c0;
+    margin: 0;
+    letter-spacing: 2px;
+}
+.event-name::before { content: '== '; color: #2a8a48; }
+.event-name::after { content: ' =='; color: #2a8a48; }
+.event-description {
+    font-size: 12px;
+    color: #2a8a48;
+    text-shadow: none;
+    line-height: 1.6;
+    margin-top: 6px;
 }
 
-.event-icon { font-size: var(--text-title-size); margin-bottom: 8px; }
-.event-name { font-size: var(--text-subtitle-size); font-weight: bold; color: #7ec8e3; margin-bottom: 6px; }
-.event-description { font-size: var(--text-body-size); color: #aaa; line-height: 1.5; }
-
-.rest-options { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: restFadeIn 400ms steps(6) 200ms both; }
+/* === OPTIONS (终端菜单列表) === */
+.rest-options {
+    display: block !important;
+    flex-direction: column;
+    animation: restFadeIn 400ms steps(6) 200ms both;
+}
 
 .rest-option-btn {
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    background: var(--bg-panel); border: 2px solid #445; border-radius: 0;
-    padding: 20px 24px; min-width: 200px; cursor: pointer;
-    transition: border-color 0.15s steps(1), background 0.15s steps(1);
-    font-family: inherit; color: #fff;
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dotted rgba(74,222,128,0.18);
+    border-radius: 0;
+    padding: 10px 12px 10px 40px;
+    margin: 0;
+    text-align: left;
+    cursor: pointer;
+    color: #b6f3c0;
+    text-shadow: 0 0 4px #b6f3c0;
+    font-family: inherit;
+    position: relative;
+    transition: background 0.1s steps(1);
+    min-width: 0;
+}
+.rest-option-btn::before {
+    content: '[' attr(data-marker) ']';
+    position: absolute;
+    left: 4px;
+    top: 10px;
+    color: #b6f3c0;
+    text-shadow: 0 0 5px #b6f3c0;
+    font-weight: bold;
+}
+.rest-option-btn:hover { background: rgba(74,222,128,0.07); }
+.rest-option-btn:disabled { opacity: 0.4; cursor: default; background: transparent; }
+
+.option-label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    color: #b6f3c0;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.option-desc {
+    display: block;
+    font-size: 11px;
+    color: #2a8a48;
+    text-shadow: none;
+    line-height: 1.5;
+    margin-top: 3px;
+    text-align: left;
 }
 
-.rest-option-btn:hover { border-color: #7ec8e3; background: var(--bg-panel-hover); }
-.rest-option-btn:disabled { cursor: default; }
-
-.option-label { font-size: var(--text-subtitle-size); font-weight: bold; color: #fff; }
-.option-desc { font-size: var(--text-body-size); color: #999; text-align: center; line-height: 1.4; }
-
-.rest-result { text-align: center; animation: restFadeIn 400ms steps(6) both; }
+/* === RESULT 区 === */
+.rest-result {
+    text-align: left;
+    animation: restFadeIn 400ms steps(6) both;
+    border-top: 1px solid rgba(201,164,94,0.3);
+}
 .rest-result-hidden { display: none; }
-.result-text { font-size: var(--text-subtitle-size); color: #2ecc71; margin: 0 0 20px 0; line-height: 1.5; }
+.result-text {
+    font-size: 13px;
+    color: #b6f3c0;
+    text-shadow: 0 0 5px #b6f3c0;
+    margin: 0 0 14px 0;
+    line-height: 1.6;
+}
+.result-text::before { content: '> '; color: #c9a45e; text-shadow: 0 0 5px #c9a45e; }
 
 .rest-continue-btn {
-    padding: 12px 40px; background: #ffe66d; border: 2px solid #ffe66d; border-radius: 0;
-    color: #000; font-family: inherit; font-size: var(--text-subtitle-size); font-weight: bold;
-    cursor: pointer; transition: background 0.15s steps(1);
+    padding: 8px 24px;
+    background: transparent;
+    border: 1px solid #4ade80;
+    border-radius: 0;
+    color: #b6f3c0;
+    text-shadow: 0 0 5px #b6f3c0;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: background 0.15s steps(1);
 }
-.rest-continue-btn:hover { background: #fff080; }
+.rest-continue-btn::before { content: '[ ↵ '; }
+.rest-continue-btn::after  { content: ' ]'; }
+.rest-continue-btn:hover { background: rgba(74,222,128,0.12); }
+
+/* === CRT modal · 升级/附魔 弹窗（DPCA-VT220 风） === */
+.crt-modal-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(2,6,10,0.86);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    font-family: var(--font-dossier, 'Courier Prime', monospace);
+}
+.crt-modal-bezel {
+    width: 100%; max-width: 720px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 14px 1fr 14px;
+    border-radius: 10px;
+    background: transparent;
+    position: relative;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.75);
+}
+.crt-modal-bezel::before,
+.crt-modal-bezel::after {
+    content: ''; grid-row: 2;
+    background: linear-gradient(90deg, #2a2a2a 0%, #1a1a1a 50%, #0e0e0e 100%);
+    box-shadow:
+        inset 1px 0 0 rgba(255,255,255,0.06),
+        inset -1px 0 0 rgba(0,0,0,0.6);
+    pointer-events: none;
+}
+.crt-modal-bezel::before { grid-column: 1; }
+.crt-modal-bezel::after  { grid-column: 3; transform: scaleX(-1); }
+.crt-modal-bezel-top,
+.crt-modal-bezel-bottom {
+    display: flex; align-items: center; gap: 12px;
+    color: #c5c5c0;
+    font-family: inherit;
+    font-size: 9px; letter-spacing: 3px;
+    grid-column: 1 / -1; position: relative; z-index: 2;
+}
+.crt-modal-bezel-top {
+    grid-row: 1;
+    padding: 6px 18px 8px;
+    background: linear-gradient(180deg, #1f1f1f 0%, #141414 100%);
+    border-radius: 10px 10px 0 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.6);
+}
+.crt-modal-bezel-bottom {
+    grid-row: 3;
+    padding: 6px 18px;
+    background: linear-gradient(180deg, #141414 0%, #080808 100%);
+    border-radius: 0 0 10px 10px;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -2px 0 rgba(0,0,0,0.7);
+    justify-content: space-between;
+}
+.crt-modal-led {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #b6f3c0, #4ade80 60%, #1f7a3a 100%);
+    box-shadow: 0 0 6px rgba(74,222,128,0.85), inset 0 -1px 0 rgba(0,0,0,0.3), 0 0 0 2px rgba(0,0,0,0.7);
+    flex-shrink: 0;
+}
+.crt-modal-screen {
+    grid-row: 2; grid-column: 2;
+    background: linear-gradient(180deg, #02060a 0%, #0a1410 100%);
+    padding: 18px 26px 22px;
+    color: #4ade80;
+    text-shadow: 0 0 5px rgba(74,222,128,0.55);
+    font-size: 13px; line-height: 1.7;
+    letter-spacing: 1px;
+    position: relative; overflow: hidden;
+    max-height: 70vh; overflow-y: auto;
+}
+.crt-modal-screen::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg,
+        rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+        rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 3px);
+}
+.crt-modal-screen::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.5) 100%);
+}
+.crt-modal-screen > * { position: relative; z-index: 1; }
+
+.crt-modal-prompt { color: #b6f3c0; text-shadow: 0 0 6px #b6f3c0; }
+.crt-modal-dim   { color: #2a8a48; text-shadow: none; }
+.crt-modal-divider { color: #2a8a48; }
+
+.crt-modal-section {
+    margin: 12px 0 6px;
+    color: #c9a45e;
+    text-shadow: 0 0 4px #c9a45e;
+    letter-spacing: 4px;
+    border-top: 1px solid rgba(201,164,94,0.3);
+    padding-top: 6px;
+    font-size: 12px;
+}
+
+.crt-modal-field {
+    display: grid; grid-template-columns: 180px 1fr;
+    color: #2a8a48; font-size: 12px;
+}
+.crt-modal-field .v { color: #b6f3c0; text-shadow: 0 0 5px #b6f3c0; }
+
+.crt-modal-item {
+    position: relative; padding: 8px 12px 8px 38px;
+    cursor: pointer;
+    border-bottom: 1px dotted rgba(74,222,128,0.18);
+    transition: background 0.1s steps(1);
+    text-align: left;
+    background: transparent;
+    border-left: none; border-right: none; border-top: none;
+    color: inherit;
+    font-family: inherit;
+    width: 100%;
+    display: block;
+}
+.crt-modal-item:hover { background: rgba(74,222,128,0.07); }
+.crt-modal-item.sel  { background: rgba(74,222,128,0.13); }
+.crt-modal-item::before {
+    content: '[' attr(data-marker) ']';
+    position: absolute; left: 4px; top: 9px;
+    color: #b6f3c0; text-shadow: 0 0 5px #b6f3c0;
+    font-weight: bold;
+}
+.crt-modal-item-name {
+    color: #b6f3c0; text-shadow: 0 0 4px #b6f3c0;
+    font-size: 13px; font-weight: bold;
+    letter-spacing: 1px;
+}
+.crt-modal-item-desc {
+    color: #2a8a48; text-shadow: none;
+    font-size: 11px; line-height: 1.5;
+    margin-top: 3px;
+}
+.crt-modal-item-note {
+    color: #c9a45e; text-shadow: 0 0 4px #c9a45e;
+    font-size: 10px; margin-left: 6px;
+    letter-spacing: 2px;
+}
+
+/* 附魔抽出结果 · 红色 alert tag */
+.crt-modal-alert {
+    display: inline-block;
+    color: #e26060; text-shadow: 0 0 5px #e26060;
+    border: 1px solid #e26060;
+    padding: 0 8px; margin: 0 4px;
+    letter-spacing: 3px; font-size: 12px; font-weight: bold;
+}
+
+.crt-modal-cursor {
+    display: inline-block; width: 8px; height: 13px;
+    background: #b6f3c0;
+    margin-left: 3px; vertical-align: text-bottom;
+    box-shadow: 0 0 6px #b6f3c0;
+    animation: ct-blink-rest 0.9s steps(2) infinite;
+}
 
 /* ============================================ */
 /* WORD PICKER MODAL (三选一)                    */

@@ -61,61 +61,83 @@ function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
   const skill = state.affixSkills.get(skillId);
   const skillResource = skill?.resource ?? 'score';
 
+  // === DPCA-VT220 CRT modal · ENCHANT_PROTOCOL ===
   const overlay = document.createElement('div');
-  overlay.className = 'ritual-enchantment-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'crt-modal-overlay';
 
-  const panel = document.createElement('div');
-  panel.className = 'ritual-enchantment-panel';
-  panel.style.cssText = 'background:#1a1a2e;border:2px solid #9b59b6;padding:24px;max-width:640px;min-width:420px;';
+  const bezel = document.createElement('div');
+  bezel.className = 'crt-modal-bezel';
 
-  const titleZh = `获得附魔：${info.name}`;
-  const titleEn = `Enchant offered: ${info.name}`;
-  // 不显技术性 desc · 改为每个候选词条预览附魔后的实际产出
-  panel.innerHTML = `
-    <h3 style="color:#9b59b6;margin:0 0 14px;text-align:center;font-size:18px;">${zh ? titleZh : titleEn}</h3>
-    <div style="color:#fff;margin:0 0 10px;font-size:13px;">${zh ? '选择挂载到哪个词条 · 已展示附魔后效果' : 'Pick an affix · enchanted effect preview shown'}</div>
+  const top = document.createElement('div');
+  top.className = 'crt-modal-bezel-top';
+  top.innerHTML = `
+    <span class="crt-modal-led"></span>
+    <span>DPCA · VT220 · ENCHANT-PROTOCOL · SA-2241</span>
+    <span style="margin-left:auto;font-size:9px;color:#888;letter-spacing:2px;">SESSION 0x${(Date.now() & 0xffff).toString(16).toUpperCase()}</span>
   `;
 
-  const list = document.createElement('div');
-  list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
-  for (const entry of equipped) {
+  const screen = document.createElement('div');
+  screen.className = 'crt-modal-screen';
+  const headerHtml = `
+    <div><span class="crt-modal-prompt">&gt;</span> CONNECT DPCA-CORE-04 ... <span class="crt-modal-dim">OK</span></div>
+    <div><span class="crt-modal-prompt">&gt;</span> ROLL ENCHANT ... ${zh ? '抽配' : 'rolled'} <span class="crt-modal-alert">${info.name}</span></div>
+    <div class="crt-modal-divider">────────────────────────────────────────────────────</div>
+    <div class="crt-modal-field"><span>UPGRADED_SKILL</span><span class="v">[${(skill?.name ?? skillId).toString().toUpperCase()}] Lv.${skill?.level ?? 1}</span></div>
+    <div class="crt-modal-section">▸ ${zh ? 'ASSIGN TO AFFIX 挂载至词条' : 'ASSIGN TO AFFIX'}</div>
+  `;
+  screen.innerHTML = headerHtml;
+
+  equipped.forEach((entry, i) => {
     const def = getAffixV2Definition(entry.defId);
     const affName = def ? (zh ? def.name_zh : def.name_en) : entry.defId;
     const existing = getEnchant(entry.instanceId);
-    const existingLabel = existing ? ` <span style="color:#e67e22;font-size:11px;">(${zh ? '当前' : 'now'}: ${enchantDisplayInfo(existing).name})</span>` : '';
-
-    // 预览：附魔后的最终 effect 文本
+    const note = existing ? `<span class="crt-modal-item-note">(now: ${enchantDisplayInfo(existing).name})</span>` : '';
     const previewText = def
       ? formatEffectDescription(applyEnchantToEffect(def.effect, enchant), skillResource)
       : '—';
-
     const btn = document.createElement('button');
-    btn.className = 'ritual-skill-btn';
-    btn.style.cssText = 'background:#16213e;border:1px solid #444;color:#fff;padding:12px 14px;cursor:pointer;text-align:left;font-family:inherit;';
+    btn.className = 'crt-modal-item';
+    btn.dataset.marker = String(i + 1);
     btn.innerHTML = `
-      <div style="font-weight:bold;margin-bottom:4px;">[${entry.key.toUpperCase()}] ${affName}${existingLabel}</div>
-      <div style="font-size:12px;color:#9b8cf0;line-height:1.4;">${previewText}</div>
+      <div class="crt-modal-item-name">[${entry.key.toUpperCase()}] ${affName}${note}</div>
+      <div class="crt-modal-item-desc">${previewText}</div>
     `;
-    btn.onmouseenter = () => { btn.style.background = '#1e2a4e'; };
-    btn.onmouseleave = () => { btn.style.background = '#16213e'; };
     btn.onclick = () => {
       setEnchant(entry.instanceId, enchant);
       overlay.remove();
       playSound('skill');
       onComplete();
     };
-    list.appendChild(btn);
-  }
-  panel.appendChild(list);
+    screen.appendChild(btn);
+  });
 
-  const skip = document.createElement('button');
-  skip.style.cssText = 'margin-top:12px;background:transparent;border:1px solid #666;color:#aaa;padding:6px 12px;cursor:pointer;width:100%;';
-  skip.textContent = zh ? '跳过（不挂载）' : 'Skip (do not enchant)';
-  skip.onclick = () => { overlay.remove(); onComplete(); };
-  panel.appendChild(skip);
+  const skipBtn = document.createElement('button');
+  skipBtn.className = 'crt-modal-item';
+  skipBtn.dataset.marker = '0';
+  skipBtn.innerHTML = `
+    <div class="crt-modal-item-name">${zh ? 'ABORT · 跳过本次挂载' : 'ABORT · skip enchant'}</div>
+    <div class="crt-modal-item-desc">RETURN_TO_PARENT_FORM</div>
+  `;
+  skipBtn.onclick = () => { overlay.remove(); onComplete(); };
+  screen.appendChild(skipBtn);
 
-  overlay.appendChild(panel);
+  const cursor = document.createElement('div');
+  cursor.innerHTML = `<span class="crt-modal-prompt">&gt;</span> INPUT TARGET [1${equipped.length > 1 ? `–${equipped.length}` : ''}/0]:_<span class="crt-modal-cursor"></span>`;
+  cursor.style.marginTop = '8px';
+  screen.appendChild(cursor);
+
+  const bottom = document.createElement('div');
+  bottom.className = 'crt-modal-bezel-bottom';
+  bottom.innerHTML = `
+    <span style="border:1px solid #555;padding:1px 6px;color:#aaa;font-size:8px;letter-spacing:2px;">EVENT-LOG OK</span>
+    <span>${zh ? 'CLICK ROW / ENTER TO CONFIRM' : 'CLICK ROW · ENTER TO CONFIRM'}</span>
+    <span style="border:1px solid #555;padding:1px 6px;color:#aaa;font-size:8px;letter-spacing:2px;">OUT-BUF 0%</span>
+  `;
+
+  bezel.appendChild(top);
+  bezel.appendChild(screen);
+  bezel.appendChild(bottom);
+  overlay.appendChild(bezel);
   document.body.appendChild(overlay);
 }
 
@@ -154,9 +176,10 @@ export function openRestStage(): void {
     if (resultText) resultText.textContent = t('rest.quiet_done');
     continueBtn.onclick = () => completeRestStage();
   } else {
-    options.forEach((option) => {
+    options.forEach((option, i) => {
       const btn = document.createElement('button');
       btn.className = 'rest-option-btn';
+      btn.dataset.marker = String.fromCharCode(65 + i);   // A / B / C ...
       btn.innerHTML = `
         <span class="option-label">${option.icon} ${option.label}</span>
         <span class="option-desc">${option.description}</span>
@@ -221,37 +244,67 @@ function showUpgradeChoice(onPick: (chosen: { id: string; name: string; newLevel
   // 随机选 3 个候选（不足 3 时全部显示）
   const shuffled = [...candidates].sort(() => Math.random() - 0.5).slice(0, 3);
 
+  // === DPCA-VT220 CRT modal · UPGRADE_TRAINING ===
+  const zh = getLocale() === 'zh';
   const overlay = document.createElement('div');
-  overlay.className = 'ritual-enchantment-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;';
+  overlay.className = 'crt-modal-overlay';
 
-  const panel = document.createElement('div');
-  panel.className = 'ritual-enchantment-panel';
-  panel.style.cssText = 'background:#1a1a2e;border:2px solid #ffd700;padding:24px;max-width:500px;text-align:center;';
-  panel.innerHTML = `<h3 style="color:#ffd700;margin:0 0 16px;">${t('rest.upgrade_pick_title')}</h3>`;
+  const bezel = document.createElement('div');
+  bezel.className = 'crt-modal-bezel';
 
-  const list = document.createElement('div');
-  list.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+  const top = document.createElement('div');
+  top.className = 'crt-modal-bezel-top';
+  top.innerHTML = `
+    <span class="crt-modal-led"></span>
+    <span>DPCA · VT220 · UPGRADE_TRAINING-SUBROUTINE</span>
+    <span style="margin-left:auto;font-size:9px;color:#888;letter-spacing:2px;">SESSION 0x${(Date.now() & 0xffff).toString(16).toUpperCase()}</span>
+  `;
 
-  for (const c of shuffled) {
+  const screen = document.createElement('div');
+  screen.className = 'crt-modal-screen';
+  screen.innerHTML = `
+    <div><span class="crt-modal-prompt">&gt;</span> PROBE PLAYER_SKILLS ... <span class="crt-modal-dim">${shuffled.length} TARGET${shuffled.length > 1 ? 'S' : ''} FOUND</span></div>
+    <div class="crt-modal-divider">────────────────────────────────────────────────────</div>
+    <div class="crt-modal-section">▸ ${zh ? 'SELECT TARGET SKILL · 选择升级目标' : 'SELECT TARGET SKILL'}</div>
+  `;
+
+  shuffled.forEach((c, i) => {
     const btn = document.createElement('button');
-    btn.className = 'ritual-skill-btn';
-    btn.innerHTML = `<span class="ritual-skill-icon">${c.affix.icon}</span><span class="ritual-skill-name">${c.affix.name} Lv.${c.data.level} → Lv.${TARGET_LEVEL}</span>`;
+    btn.className = 'crt-modal-item';
+    btn.dataset.marker = String(i + 1);
+    btn.innerHTML = `
+      <div class="crt-modal-item-name">${c.affix.icon} ${c.affix.name}</div>
+      <div class="crt-modal-item-desc">CURRENT Lv.${c.data.level} → PROMOTE Lv.${TARGET_LEVEL} · ENCHANT_REGISTER 配套</div>
+    `;
     btn.onclick = () => {
       const levelsToGain = TARGET_LEVEL - c.data.level;
       c.data.level = TARGET_LEVEL;
       applyAffixLevelScaling(c.affix.affixes, levelsToGain);
       overlay.remove();
-      // V2 附魔 picker：从 upgrade 直接链入；老的 _pendingEnchantSkillIds 路径走 shop 的 V2-dead-code，
-      // V2 skill 不再依赖那条路径，故不再 push
       showV2EnchantPicker(c.skillId, () => {
         onPick({ id: c.skillId, name: c.affix.name, newLevel: TARGET_LEVEL });
       });
     };
-    list.appendChild(btn);
-  }
-  panel.appendChild(list);
-  overlay.appendChild(panel);
+    screen.appendChild(btn);
+  });
+
+  const cursor = document.createElement('div');
+  cursor.innerHTML = `<span class="crt-modal-prompt">&gt;</span> INPUT TARGET [1${shuffled.length > 1 ? `–${shuffled.length}` : ''}]:_<span class="crt-modal-cursor"></span>`;
+  cursor.style.marginTop = '8px';
+  screen.appendChild(cursor);
+
+  const bottom = document.createElement('div');
+  bottom.className = 'crt-modal-bezel-bottom';
+  bottom.innerHTML = `
+    <span style="border:1px solid #555;padding:1px 6px;color:#aaa;font-size:8px;letter-spacing:2px;">EVENT-LOG OK</span>
+    <span>${t('rest.upgrade_pick_title')}</span>
+    <span style="border:1px solid #555;padding:1px 6px;color:#aaa;font-size:8px;letter-spacing:2px;">OUT-BUF 0%</span>
+  `;
+
+  bezel.appendChild(top);
+  bezel.appendChild(screen);
+  bezel.appendChild(bottom);
+  overlay.appendChild(bezel);
   document.body.appendChild(overlay);
 }
 
