@@ -72,7 +72,7 @@ function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
   top.className = 'crt-modal-bezel-top';
   top.innerHTML = `
     <span class="crt-modal-led"></span>
-    <span>DPCA · VT220 · ENCHANT-PROTOCOL · SA-2241</span>
+    <span>DPCA · VT220 · ENCHANT-PROTOCOL</span>
     <span style="margin-left:auto;font-size:9px;color:#888;letter-spacing:2px;">SESSION 0x${(Date.now() & 0xffff).toString(16).toUpperCase()}</span>
   `;
 
@@ -83,7 +83,7 @@ function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
     <div><span class="crt-modal-prompt">&gt;</span> ROLL ENCHANT ... ${zh ? '抽配' : 'rolled'} <span class="crt-modal-alert">${info.name}</span></div>
     <div class="crt-modal-divider">────────────────────────────────────────────────────</div>
     <div class="crt-modal-field"><span>UPGRADED_SKILL</span><span class="v">[${(skill?.name ?? skillId).toString().toUpperCase()}] Lv.${skill?.level ?? 1}</span></div>
-    <div class="crt-modal-section">▸ ${zh ? 'ASSIGN TO AFFIX 挂载至词条' : 'ASSIGN TO AFFIX'}</div>
+    <div class="crt-modal-section">▸ ${zh ? 'ASSIGN TO AFFIX 选择词条' : 'ASSIGN TO AFFIX'}</div>
   `;
   screen.innerHTML = headerHtml;
 
@@ -116,7 +116,7 @@ function showV2EnchantPicker(skillId: string, onComplete: () => void): void {
   skipBtn.dataset.marker = '0';
   skipBtn.innerHTML = `
     <div class="crt-modal-item-name">${zh ? 'ABORT · 跳过本次挂载' : 'ABORT · skip enchant'}</div>
-    <div class="crt-modal-item-desc">RETURN_TO_PARENT_FORM</div>
+    <div class="crt-modal-item-desc">SKIP · 不挂载附魔</div>
   `;
   skipBtn.onclick = () => { overlay.remove(); onComplete(); };
   screen.appendChild(skipBtn);
@@ -244,7 +244,7 @@ function showUpgradeChoice(onPick: (chosen: { id: string; name: string; newLevel
   // 随机选 3 个候选（不足 3 时全部显示）
   const shuffled = [...candidates].sort(() => Math.random() - 0.5).slice(0, 3);
 
-  // === DPCA-VT220 CRT modal · UPGRADE_TRAINING ===
+  // === DPCA-VT220 CRT modal · SKILL-UPGRADE ===
   const zh = getLocale() === 'zh';
   const overlay = document.createElement('div');
   overlay.className = 'crt-modal-overlay';
@@ -256,7 +256,7 @@ function showUpgradeChoice(onPick: (chosen: { id: string; name: string; newLevel
   top.className = 'crt-modal-bezel-top';
   top.innerHTML = `
     <span class="crt-modal-led"></span>
-    <span>DPCA · VT220 · UPGRADE_TRAINING-SUBROUTINE</span>
+    <span>DPCA · VT220 · SKILL-UPGRADE</span>
     <span style="margin-left:auto;font-size:9px;color:#888;letter-spacing:2px;">SESSION 0x${(Date.now() & 0xffff).toString(16).toUpperCase()}</span>
   `;
 
@@ -274,7 +274,7 @@ function showUpgradeChoice(onPick: (chosen: { id: string; name: string; newLevel
     btn.dataset.marker = String(i + 1);
     btn.innerHTML = `
       <div class="crt-modal-item-name">${c.affix.icon} ${c.affix.name}</div>
-      <div class="crt-modal-item-desc">CURRENT Lv.${c.data.level} → PROMOTE Lv.${TARGET_LEVEL} · ENCHANT_REGISTER 配套</div>
+      <div class="crt-modal-item-desc">CURRENT Lv.${c.data.level} → Lv.${TARGET_LEVEL} · + ENCHANT</div>
     `;
     btn.onclick = () => {
       const levelsToGain = TARGET_LEVEL - c.data.level;

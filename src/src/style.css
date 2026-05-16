@@ -3509,7 +3509,7 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 
 /* 顶部 bezel header（chrome 装饰） */
 #rest-screen::before {
-    content: '● DPCA · VT220 · INTERMISSION TERMINAL              SESSION 0x4B8E';
+    content: '● DPCA · VT220 · REST TERMINAL                       SESSION 0x4B8E';
     display: block;
     padding: 6px 18px 8px;
     background: linear-gradient(180deg, #1f1f1f 0%, #141414 100%);
@@ -3549,7 +3549,7 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 
 /* 底部 bezel hint */
 #rest-screen::after {
-    content: 'EVENT-LOG OK     ▾ SELECT DISPOSITION · ENTER TO CONFIRM     OUT-BUF 0%';
+    content: 'EVENT-LOG OK     ▾ SELECT OPTION · ENTER TO CONFIRM     OUT-BUF 0%';
     display: block;
     padding: 6px 18px;
     background: linear-gradient(180deg, #141414 0%, #080808 100%);
