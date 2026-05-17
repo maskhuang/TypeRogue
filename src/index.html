@@ -413,14 +413,30 @@
             </div>
         </div>
 
-        <!-- === GAME OVER === -->
-        <div id="gameover-screen" class="screen">
-            <div id="gameover-content">
-                <div id="gameover-title">GAME OVER</div>
-                <div id="gameover-stats"></div>
-                <div id="gameover-leaderboard" class="gameover-leaderboard"></div>
-                <button class="restart-btn" id="restart-btn" data-i18n="gameover.restart">返回主菜单</button>
-                <button class="restart-btn daily-btn" id="daily-btn" data-i18n="gameover.daily">📅 每日挑战</button>
+        <!-- === GAME OVER · DPCA-VT220 CRT === -->
+        <div id="gameover-screen" class="screen gameover-crt">
+            <div class="gameover-bezel">
+                <div class="gameover-bezel-top">
+                    <span class="gameover-led"></span>
+                    <span class="gameover-brand">DPCA-VT220</span>
+                    <span class="gameover-spec" id="gameover-spec-line">TYPING TERMINAL · DEPT 2-B · OP. PRIMATE-7842</span>
+                    <span class="gameover-vent">▦▦▦▦▦▦</span>
+                </div>
+                <div class="gameover-bezel-screen">
+                    <div class="gameover-screen-content">
+                        <div class="ct-header" id="gameover-header">DPCA-VT220 · DEPT 2-B · 1962·11·23</div>
+                        <div id="gameover-stats"></div>
+                        <div id="gameover-leaderboard" class="gameover-leaderboard"></div>
+                        <div id="gameover-actions" class="gameover-actions" hidden>
+                            <button class="restart-btn" id="restart-btn" data-i18n="gameover.crt.restart">▸ FILE NEW REQUEST</button>
+                            <button class="restart-btn daily-btn" id="daily-btn" data-i18n="gameover.crt.daily">▸ DAILY EXERCISE</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="gameover-bezel-bottom">
+                    <span class="gameover-sticker">PROPERTY OF DPCA · UNAUTHORIZED USE PROHIBITED</span>
+                    <span class="gameover-serial">SN-3942-A</span>
+                </div>
             </div>
         </div>
 

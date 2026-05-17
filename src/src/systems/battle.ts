@@ -62,6 +62,7 @@ import { showDemoEndScreen } from '../demo/demo-end-screen';
 import { trackEvent } from '../demo/demo-analytics';
 import { t, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 import { bindShapeToKeys, restoreSealedSkill, getBindingState, getSkillKeys, getSkillAnchorKey } from './bindingManager';
+import { runGameOverTeletype } from '../ui/gameoverTeletype';
 
 // === 固定词序队列（Demo/教程用） ===
 let demoWordQueue: string[] = [];
@@ -2826,18 +2827,16 @@ function victory(): void {
   setRelicGarbleActive(false);
 
 
-  const el = getElements();
-  const endlessHint = state.endlessUnlocked
-    ? ''
-    : `<br><span style="color:#ffe66d">${t('battle.unlock_endless')}</span>`;
-  const ascBadge = state.ascensionLevel > 0 ? `<br><span style="color:#ffe66d">A${state.ascensionLevel}</span>` : '';
-  el.gameoverStats.innerHTML = `
-    ${t('battle.victory')}${ascBadge}<br>
-    ${t('battle.final_score', { score: state.score })}<br>
-    ${t('battle.max_combo', { combo: state.maxCombo })}<br>
-    ${t('battle.skills_owned', { count: state.player.skills.size })}${endlessHint}
-  `;
   showScreen('gameover');
+  runGameOverTeletype('victory', {
+    fileNumber: getBattleNumber(state.level) || state.level,
+    score: state.score,
+    maxCombo: state.maxCombo,
+    skillCount: state.player.skills.size,
+    cycle: state.cycle,
+    ascensionLevel: state.ascensionLevel,
+    endlessJustUnlocked: !state.endlessUnlocked,
+  });
   playSound('levelup');
 
   // Story 25.6: 恢复普通随机模式
@@ -2875,15 +2874,16 @@ function gameOver(): void {
   setRelicGarbleActive(false);
 
   startBGM('chill');
-  const el = getElements();
   const displayLevel = getBattleNumber(state.level) || state.level;
-  el.gameoverStats.innerHTML = `
-    ${t('battle.reached_level', { level: displayLevel })}<br>
-    ${t('battle.final_score_target', { score: state.score, target: state.targetScore })}<br>
-    ${t('battle.max_combo', { combo: state.maxCombo })}<br>
-    ${t('battle.skills_owned', { count: state.player.skills.size })}
-  `;
   showScreen('gameover');
+  runGameOverTeletype('defeat', {
+    fileNumber: displayLevel,
+    score: state.score,
+    targetScore: state.targetScore,
+    maxCombo: state.maxCombo,
+    skillCount: state.player.skills.size,
+    cycle: state.cycle,
+  });
   playSound('gameover');
 
   // Story 25.6: 恢复普通随机模式

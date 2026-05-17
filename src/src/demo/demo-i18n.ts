@@ -101,6 +101,36 @@ const ZH: Record<string, string> = {
   'rest.continue': '继续旅程',
   'gameover.restart': '返回主菜单',
   'gameover.daily': '📅 每日挑战',
+  // --- DPCA-VT220 CRT GAME OVER (battle scene = MOKO surface) ---
+  'gameover.crt.header': 'DPCA-VT220 · DEPT 2-B · {date} · {time}',
+  'gameover.crt.spec_line': 'TYPING TERMINAL · DEPT 2-B · OP. PRIMATE-{op}',
+  // 失败 (run aborted)
+  'gameover.crt.file_aborted':    '> FILE {n} · ABORTED.',
+  'gameover.crt.reason_target':   '> REASON: TARGET NOT MET.',
+  'gameover.crt.archiving':       '> ARCHIVING ... DONE.',
+  'gameover.crt.operator_relieved':'> OPERATOR RELIEVED. SHIFT REASSIGNED.',
+  // 胜利 (run cleared)
+  'gameover.crt.file_processed':  '> FILE {n} · PROCESSED.',
+  'gameover.crt.settlement_posted':'> SETTLEMENT POSTED.',
+  'gameover.crt.endless_unlocked':'> NOTICE: ENDLESS WINDOW UNLOCKED.',
+  'gameover.crt.ascension_badge': '> CLEARANCE LEVEL ........... A{level}',
+  // 分项
+  'gameover.crt.section_record':  '> ──── RECORD / 记录 ──────────────────────',
+  'gameover.crt.section_breakdown':'> ──── BREAKDOWN / 分项 ──────────────────',
+  'gameover.crt.section_archive': '> ──── ARCHIVE / 历史档案 ──────────────',
+  'gameover.crt.divider':         '> ─────────────────────────────────────────',
+  'gameover.crt.row_score':       '>   SCORE        ............ {score}',
+  'gameover.crt.row_score_target':'>   SCORE        ............ {score} / {target}',
+  'gameover.crt.row_combo':       '>   COMBO MAX    ............ {combo}',
+  'gameover.crt.row_stage':       '>   STAGE        ............ {stage}',
+  'gameover.crt.row_skills':      '>   SKILLS       ............ {count}',
+  'gameover.crt.row_cycle':       '>   CYCLE        ............ {cycle}',
+  // 末尾
+  'gameover.crt.awaiting_next':   '> AWAITING NEXT SHIFT ...',
+  'gameover.crt.archive_pending': '> ARCHIVE INDEX FOLLOWS ...',
+  'gameover.crt.restart':         '▸ FILE NEW REQUEST · 新建录入',
+  'gameover.crt.daily':           '▸ DAILY EXERCISE · 每日演练',
+  'gameover.crt.skip_hint':       '[SPACE / 点击屏幕 · 跳过打字]',
 
   // --- 主菜单 ---
   'menu.title': '灵长类辅助文书部',
@@ -1446,18 +1476,19 @@ const ZH: Record<string, string> = {
   'wordeffect.desc': '含有字母击键时额外产出',
 
   // --- 排行榜 ---
-  'lb.title': '排行榜',
-  'lb.daily_title': '每日挑战榜',
-  'lb.cycle': '周目',
-  'lb.score': '分数',
-  'lb.result': '结果',
-  'lb.date': '日期',
-  'lb.victory': '胜',
-  'lb.defeat': '败',
-  'lb.skills': '技能',
-  'lb.relics': '遗物',
-  'lb.mods': '修饰',
-  'lb.none': '无',
+  // LB 只在 CRT gameover 屏出现 · 沿用 DPCA terminal 全大写 EN 体例
+  'lb.title': 'ARCHIVE · LAST 10',
+  'lb.daily_title': 'DAILY DOCKET · LAST 10',
+  'lb.cycle': 'CYCLE',
+  'lb.score': 'SCORE',
+  'lb.result': 'STATUS',
+  'lb.date': 'DATE',
+  'lb.victory': 'PROCESSED',
+  'lb.defeat': 'ABORTED',
+  'lb.skills': 'SKILLS',
+  'lb.relics': 'RELICS',
+  'lb.mods': 'MODS',
+  'lb.none': '—',
 
   // --- 职业 ---
   'class.none.name': '无职业',
@@ -1542,6 +1573,36 @@ const EN: Record<string, string> = {
   'rest.continue': 'Continue',
   'gameover.restart': 'Main Menu',
   'gameover.daily': '📅 Daily Challenge',
+  // --- DPCA-VT220 CRT GAME OVER (battle scene = MOKO surface) ---
+  'gameover.crt.header': 'DPCA-VT220 · DEPT 2-B · {date} · {time}',
+  'gameover.crt.spec_line': 'TYPING TERMINAL · DEPT 2-B · OP. PRIMATE-{op}',
+  // Defeat (run aborted)
+  'gameover.crt.file_aborted':    '> FILE {n} · ABORTED.',
+  'gameover.crt.reason_target':   '> REASON: TARGET NOT MET.',
+  'gameover.crt.archiving':       '> ARCHIVING ... DONE.',
+  'gameover.crt.operator_relieved':'> OPERATOR RELIEVED. SHIFT REASSIGNED.',
+  // Victory (run cleared)
+  'gameover.crt.file_processed':  '> FILE {n} · PROCESSED.',
+  'gameover.crt.settlement_posted':'> SETTLEMENT POSTED.',
+  'gameover.crt.endless_unlocked':'> NOTICE: ENDLESS WINDOW UNLOCKED.',
+  'gameover.crt.ascension_badge': '> CLEARANCE LEVEL ........... A{level}',
+  // Breakdown
+  'gameover.crt.section_record':  '> ──── RECORD ──────────────────────────',
+  'gameover.crt.section_breakdown':'> ──── BREAKDOWN ──────────────────────',
+  'gameover.crt.section_archive': '> ──── ARCHIVE ────────────────────────',
+  'gameover.crt.divider':         '> ─────────────────────────────────────────',
+  'gameover.crt.row_score':       '>   SCORE        ............ {score}',
+  'gameover.crt.row_score_target':'>   SCORE        ............ {score} / {target}',
+  'gameover.crt.row_combo':       '>   COMBO MAX    ............ {combo}',
+  'gameover.crt.row_stage':       '>   STAGE        ............ {stage}',
+  'gameover.crt.row_skills':      '>   SKILLS       ............ {count}',
+  'gameover.crt.row_cycle':       '>   CYCLE        ............ {cycle}',
+  // Tail
+  'gameover.crt.awaiting_next':   '> AWAITING NEXT SHIFT ...',
+  'gameover.crt.archive_pending': '> ARCHIVE INDEX FOLLOWS ...',
+  'gameover.crt.restart':         '▸ FILE NEW REQUEST',
+  'gameover.crt.daily':           '▸ DAILY EXERCISE',
+  'gameover.crt.skip_hint':       '[SPACE / CLICK · SKIP TYPING]',
 
   // --- Main Menu ---
   'menu.title': 'DEPARTMENT OF PRIMATE CLERICAL AFFAIRS',
@@ -2883,18 +2944,19 @@ const EN: Record<string, string> = {
   'wordeffect.desc': 'Keystroke bonus for contained letters',
 
   // --- Leaderboard ---
-  'lb.title': 'Leaderboard',
-  'lb.daily_title': 'Daily Challenge',
-  'lb.cycle': 'Cycle',
-  'lb.score': 'Score',
-  'lb.result': 'Result',
-  'lb.date': 'Date',
-  'lb.victory': 'Win',
-  'lb.defeat': 'Loss',
-  'lb.skills': 'Skills',
-  'lb.relics': 'Relics',
-  'lb.mods': 'Mods',
-  'lb.none': 'None',
+  // LB renders only inside CRT gameover · all-caps EN DPCA terminal style
+  'lb.title': 'ARCHIVE · LAST 10',
+  'lb.daily_title': 'DAILY DOCKET · LAST 10',
+  'lb.cycle': 'CYCLE',
+  'lb.score': 'SCORE',
+  'lb.result': 'STATUS',
+  'lb.date': 'DATE',
+  'lb.victory': 'PROCESSED',
+  'lb.defeat': 'ABORTED',
+  'lb.skills': 'SKILLS',
+  'lb.relics': 'RELICS',
+  'lb.mods': 'MODS',
+  'lb.none': '—',
 
   // --- Class ---
   'class.none.name': 'No Class',

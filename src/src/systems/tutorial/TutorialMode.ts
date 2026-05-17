@@ -360,18 +360,31 @@ function showTutorialComplete(): void {
 
   const overlay = document.createElement('div')
   overlay.className = 'tutorial-complete-overlay'
+  // DPCA-VT220 bezel · TRAINING COMPLETE
   overlay.innerHTML = `
     <div class="tutorial-complete-panel">
-      <div class="tutorial-complete-title">${esc(t('tutorial.complete.title'))}</div>
-      <div class="tutorial-complete-body">${esc(t('tutorial.complete.body'))}</div>
-      <ul class="tutorial-complete-list">
-        <li>✓ ${esc(t('tutorial.complete.s1'))}</li>
-        <li>✓ ${esc(t('tutorial.complete.s2'))}</li>
-        <li>✓ ${esc(t('tutorial.complete.s3'))}</li>
-        <li>✓ ${esc(t('tutorial.complete.s4'))}</li>
-        <li>✓ ${esc(t('tutorial.complete.s5'))}</li>
-      </ul>
-      <button class="menu-btn menu-btn-start tutorial-complete-btn">${esc(t('tutorial.complete.btn'))}</button>
+      <div class="tc-header">
+        <span class="tc-led"></span>
+        <span class="tc-brand">DPCA-VT220</span>
+        <span class="tc-spec">INSTRUCTION · DEPT 2-B · OP. PRIMATE-7842</span>
+        <span class="tc-vent">▦▦▦▦▦▦</span>
+      </div>
+      <div class="tc-screen">
+        <div class="tutorial-complete-title">${esc(t('tutorial.complete.title'))}</div>
+        <div class="tutorial-complete-body">${esc(t('tutorial.complete.body'))}</div>
+        <ul class="tutorial-complete-list">
+          <li>&gt; ✓ ${esc(t('tutorial.complete.s1'))}</li>
+          <li>&gt; ✓ ${esc(t('tutorial.complete.s2'))}</li>
+          <li>&gt; ✓ ${esc(t('tutorial.complete.s3'))}</li>
+          <li>&gt; ✓ ${esc(t('tutorial.complete.s4'))}</li>
+          <li>&gt; ✓ ${esc(t('tutorial.complete.s5'))}</li>
+        </ul>
+        <button class="tutorial-complete-btn">▸ ${esc(t('tutorial.complete.btn'))}</button>
+      </div>
+      <div class="tc-bottom">
+        <span class="tc-sticker">PROPERTY OF DPCA · UNAUTHORIZED USE PROHIBITED</span>
+        <span class="tc-serial">SN-3942-A</span>
+      </div>
     </div>
   `
   container.appendChild(overlay)

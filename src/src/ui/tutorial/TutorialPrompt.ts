@@ -46,21 +46,37 @@ export function showPrompt(textKey: string, options?: PromptOptions): Promise<vo
       createArrow(options.arrow.target, options.arrow.position)
     }
 
-    // 提示框容器
+    // 提示框容器 · DPCA-VT220 INSTRUCTION channel
     promptContainer = document.createElement('div')
     promptContainer.className = 'tutorial-prompt'
 
+    // 头条：mini DPCA bar (LED + brand + spec + tag)
+    const header = document.createElement('div')
+    header.className = 'tutorial-prompt-header'
+    header.innerHTML = `
+      <span class="tutorial-prompt-led"></span>
+      <span class="tutorial-prompt-brand">DPCA-VT220</span>
+      <span class="tutorial-prompt-spec">INSTRUCTION · DEPT 2-B · OP. PRIMATE-7842</span>
+      <span class="tutorial-prompt-tag">INDUCTION</span>
+    `
+    promptContainer.appendChild(header)
+
+    // 屏内 body 包裹
+    const body = document.createElement('div')
+    body.className = 'tutorial-prompt-body'
+    promptContainer.appendChild(body)
+
     const textEl = document.createElement('div')
     textEl.className = 'tutorial-prompt-text'
-    promptContainer.appendChild(textEl)
+    body.appendChild(textEl)
 
     const continueEl = document.createElement('div')
     continueEl.className = 'tutorial-prompt-continue'
     continueEl.textContent = t('tutorial.press_any_key') !== 'tutorial.press_any_key'
       ? t('tutorial.press_any_key')
-      : '...'
+      : 'ANY KEY'
     continueEl.style.display = 'none'
-    promptContainer.appendChild(continueEl)
+    body.appendChild(continueEl)
 
     document.getElementById('game-container')?.appendChild(promptContainer)
 

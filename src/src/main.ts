@@ -199,7 +199,7 @@ async function init(): Promise<void> {
   const dailyBtn = document.getElementById('daily-btn');
   if (dailyBtn) {
     const seedStr = getDailySeedString();
-    dailyBtn.textContent = `📅 ${t('gameover.daily')} (${seedStr})`;
+    dailyBtn.textContent = `${t('gameover.crt.daily')} · ${seedStr}`;
     dailyBtn.onclick = () => {
       sessionStorage.setItem('dailyMode', '1');
       window.location.reload();
