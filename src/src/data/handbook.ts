@@ -87,25 +87,25 @@ export const RULE_LAYERS: RuleLayer[] = [
       formIdKey:    'hb.form_id',
       preambleKey:  'hb.preamble',
       sections: [
-        // §1 上工 · 3 routine
+        // §1 上工 · 2 routine
         { titleKey: 'hb.section_1', itemKeys: [
-          'hb.section_1_li_1', 'hb.section_1_li_2', 'hb.section_1_li_3',
+          'hb.section_1_li_1', 'hb.section_1_li_3',
         ] },
-        // §2 文件 · 2 routine + 3 事件触发（A 凝视 / B 像谁写的 / D 不合理迹象）
+        // §2 文件 · 1 routine + 3 事件触发 + 1 跨班自我否认（A 凝视 / B 像谁写的 / D 不合理迹象 / 其他职业）
         { titleKey: 'hb.section_2', itemKeys: [
-          'hb.section_2_li_1', 'hb.section_2_li_2', 'hb.section_2_li_3', 'hb.section_2_li_4', 'hb.section_2_li_5',
+          'hb.section_2_li_1', 'hb.section_2_li_3', 'hb.section_2_li_4', 'hb.section_2_li_5', 'hb.section_2_li_6',
         ] },
-        // §3 申领 · 2 routine + 2 事件触发（C 撤格键锁定 / E 个人物品禁带）
+        // §3 申领 · 1 routine + 2 事件触发（C 撤格键锁定 / E 个人物品禁带）
         { titleKey: 'hb.section_3', itemKeys: [
-          'hb.section_3_li_1', 'hb.section_3_li_2', 'hb.section_3_li_3', 'hb.section_3_li_4',
+          'hb.section_3_li_1', 'hb.section_3_li_3', 'hb.section_3_li_4',
         ] },
         // §4 工位伦理 · 2 事件触发（F 空工位 ghost typing / G 挂钟 D27 受理窗口）
         { titleKey: 'hb.section_4', itemKeys: [
           'hb.section_4_li_1', 'hb.section_4_li_2',
         ] },
-        // §5 归档·离场 · 2 routine + 2 事件触发（H 讨论范围 / I D29 simplified 离场仪式）
+        // §5 归档·离场 · 1 routine + 2 事件触发（H 讨论范围 / I D29 simplified 离场仪式 · 引号术语「已受理文本」）
         { titleKey: 'hb.section_5', itemKeys: [
-          'hb.section_5_li_1', 'hb.section_5_li_2', 'hb.section_5_li_3', 'hb.section_5_li_4',
+          'hb.section_5_li_1', 'hb.section_5_li_3', 'hb.section_5_li_4',
         ] },
       ],
       warnKey:      'hb.warn',
