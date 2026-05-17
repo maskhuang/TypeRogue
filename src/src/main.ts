@@ -129,6 +129,11 @@ async function init(): Promise<void> {
     if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playDeskSound('paper'); startTutorialMode(); };
     const settingsBtn = document.getElementById('menu-settings-btn');
     if (settingsBtn) settingsBtn.onclick = () => { initAudio(); playDeskSound('paper'); openSettingsPanel(); };
+
+    // === Stage 2: 桌面化主菜单交互 ===
+    // 完整版在 line ~341 调用；DEMO 路径之前漏调，导致 handbook / request-pad / punch-input
+    // 的 click + keydown listener 全部没挂，主菜单互动失效。
+    setupDeskMenu();
     return;
   }
 
