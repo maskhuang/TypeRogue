@@ -7,7 +7,7 @@
 // ============================================
 
 import { state } from '../../core/state';
-import { INBOX_MAX, PUNCTUATION_KEYS } from '../../core/constants';
+import { INBOX_MAX, PUNCTUATION_KEYS, RESOURCE_ICONS } from '../../core/constants';
 import { calculateLetterFrequency, FREQ_UNLOCK_THRESHOLD } from '../../systems/letters/LetterFrequencySystem';
 import {
   renderShapePreview,
@@ -18,7 +18,7 @@ import {
   hideRelicTooltip,
   moveRelicTooltip,
 } from '../../systems/shop';
-import { keyTooltip, AFFIX_COLORS } from '../keyboard/KeyTooltip';
+import { keyTooltip, AFFIX_COLORS, type KeyTooltipData } from '../keyboard/KeyTooltip';
 import { getV2Color, getAffixV2Definition } from '../../data/affixV2';
 import type { EffectSpec, TargetSelector } from '../../data/affixV2Trigger';
 import { shouldAnimateShop, shouldShowDragPreviewTooltip } from '../../core/UserSettings';
@@ -531,7 +531,7 @@ export function syncWorkbenchKeys(): void {
  * 用 dataset.tooltipBound 防重复挂 listener（参考 60-1 的 rotHandlerBound）
  * 拖拽中跳过：dragManager.dragging 守卫
  */
-/** 工作台键盘 bounding rect — 给 keyTooltip 智能避让用 */
+/** 工作台键盘 bounding rect — 给 keyTooltip 智能避让用（IN-tray + drag preview 路径仍用） */
 function getWorkbenchKeyboardAvoidRect(): { top: number; left: number; right: number; bottom: number } | undefined {
   const wbRoot = document.getElementById('workbench-screen-preview');
   if (!wbRoot) return undefined;
@@ -539,6 +539,37 @@ function getWorkbenchKeyboardAvoidRect(): { top: number; left: number; right: nu
   if (!kbEl || typeof kbEl.getBoundingClientRect !== 'function') return undefined;
   const r = kbEl.getBoundingClientRect();
   return { top: r.top, left: r.left, right: r.right, bottom: r.bottom };
+}
+
+/** 工作台底部固定 tooltip 面板 · 已绑键 hover 时显示，横排各 section · .show 切显隐过渡 */
+function ensureWorkbenchBottomTooltip(): HTMLElement | null {
+  const wbRoot = document.getElementById('workbench-screen-preview');
+  if (!wbRoot) return null;
+  let panel = wbRoot.querySelector<HTMLElement>('.wb-bound-tooltip-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    // 同时挂 key-tooltip class 复用其内部 section 样式 · wb-bound-tooltip-panel 覆盖定位
+    panel.className = 'key-tooltip wb-bound-tooltip-panel';
+    wbRoot.appendChild(panel);
+  }
+  return panel;
+}
+function showWorkbenchBottomTooltip(data: KeyTooltipData): void {
+  const panel = ensureWorkbenchBottomTooltip();
+  if (!panel) return;
+  keyTooltip.renderInElement(panel, data, true);
+  // 紧贴 workbench-footer 顶部（避免被 footer 的 dashed border / note / submit 盖住）
+  const wbRoot = document.getElementById('workbench-screen-preview');
+  const footer = wbRoot?.querySelector<HTMLElement>('.workbench-footer');
+  const footerH = footer?.offsetHeight ?? 0;
+  panel.style.bottom = `${footerH}px`;
+  // 下一帧加 .show 触发 opacity/transform 过渡
+  requestAnimationFrame(() => panel.classList.add('show'));
+}
+function hideWorkbenchBottomTooltip(): void {
+  const wbRoot = document.getElementById('workbench-screen-preview');
+  const panel = wbRoot?.querySelector<HTMLElement>('.wb-bound-tooltip-panel');
+  if (panel) panel.classList.remove('show');
 }
 
 export function attachWorkbenchTooltips(): void {
@@ -625,7 +656,7 @@ export function attachWorkbenchTooltips(): void {
         });
         return;
       }
-      // === 静态已绑键路径（Story 60.9 原路径）===
+      // === 静态已绑键路径 · 改底部全宽横排面板（原 Story 60.9 floating 撤回）===
       if (!keyEl.classList.contains('has-skill')) return;
       const skillId = keyEl.dataset.boundSkill;
       if (!skillId) return;
@@ -635,14 +666,14 @@ export function attachWorkbenchTooltips(): void {
       }
       const data = buildSkillKeyTooltipData(skillId, boundKeys);
       if (!data) return;
-      // 智能避让：tooltip 优先放在键盘上方/下方/左右，不挡其他字母键
-      keyTooltip.show(e.clientX, e.clientY, data, getWorkbenchKeyboardAvoidRect());
+      showWorkbenchBottomTooltip(data);
     });
     keyEl.addEventListener('mouseleave', () => {
-      // 取消可能 pending 的 drag-preview build；hide 当前 tooltip
+      // 取消可能 pending 的 drag-preview build；hide floating tooltip（拖拽预估用）+ 底部面板
       cancelDragHoverPending();
       dragHoverLastKey = null;
       keyTooltip.hide();
+      hideWorkbenchBottomTooltip();
     });
   });
 
@@ -793,8 +824,10 @@ export function syncWorkbenchInbox(): void {
     const shapeId = sk.shapeId ?? 'monomino';
     const rotation = sk.rotation ?? 0;
     const rarity = sk.rarity ?? 0;
+    // 优先按 resource 取最新 RESOURCE_ICONS（修复旧 save 残留的过期 icon，如 shield 加入前生成的 '?'）
+    const iconFromResource = RESOURCE_ICONS[sk.resource ?? ''];
     slots.push(renderInboxCardHtml({
-      iconEmoji: sk.icon || '◇',
+      iconEmoji: iconFromResource || sk.icon || '◇',
       name: sk.name.toUpperCase(),
       sku: previewState.undoStack.find(u => u.kind === 'skill' && u.skillId === skillId)?.sku ?? '???-???',
       clearance: sk.rarity >= 2 ? '4-A' : '4-B',

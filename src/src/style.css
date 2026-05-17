@@ -4943,7 +4943,8 @@ body.shop-preview-active #relic-tooltip {
     background: #f4e4c1 !important;
     border: 1.5px solid #2a1f10 !important;
     color: #2a1f10 !important;
-    font-family: 'Courier New', 'Consolas', monospace !important;
+    /* SerenityOS Emoji 插入到 monospace 前，让 emoji 走像素字体，与其它界面一致 */
+    font-family: 'Courier New', 'Consolas', 'SerenityOS Emoji', monospace !important;
     font-size: 12px;
     line-height: 1.45;
     box-shadow:
@@ -4971,7 +4972,7 @@ body.shop-preview-active #relic-tooltip > div:nth-child(2) {
     background: #ead7af !important;
     color: #7a5a10 !important;
     border: 1px solid #7a5a10;
-    font-family: 'Courier New', monospace !important;
+    font-family: 'Courier New', 'SerenityOS Emoji', monospace !important;
     text-transform: uppercase;
     letter-spacing: 1px;
     padding: 1px 6px !important;
@@ -4982,7 +4983,7 @@ body.shop-preview-active .key-tooltip .tooltip-section-tag {
     background: #ead7af !important;
     color: #7a5a10 !important;
     border: 1px solid #7a5a10 !important;
-    font-family: 'Courier New', monospace !important;
+    font-family: 'Courier New', 'SerenityOS Emoji', monospace !important;
     letter-spacing: 1px;
     padding: 1px 6px !important;
 }
@@ -7304,6 +7305,99 @@ html[lang^="en"] .class-select-title {
     /* 窄屏 fallback: 允许横向滚动避免右侧 FILED 面板被裁掉 */
     overflow: auto;
 }
+
+/* === 工作台底部固定 tooltip 面板（已绑键 hover 时显示）=== */
+/* 面板同时挂 .key-tooltip class 复用所有 section 内部样式 ·
+ * 视觉继承 body.shop-preview-active .key-tooltip 牛皮纸 dossier 配色 ·
+ * 本规则集仅覆盖定位 / 宽度 / 横排 layout */
+.wb-bound-tooltip-panel.key-tooltip {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    /* bottom 由 JS 动态设置（紧贴 .workbench-footer 顶部）· 默认 0 兜底 */
+    bottom: 0;
+    top: auto !important;
+    max-width: none !important;
+    z-index: 50;
+    pointer-events: none;
+    padding: 12px 20px 14px !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    border-top: 2px solid #2a1f10 !important;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3) !important;
+    line-height: 1.55;
+    /* === 过渡：默认隐藏 · 加 .show 显现 === */
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+        opacity 0.18s ease-out,
+        transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.wb-bound-tooltip-panel.key-tooltip.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+/* 横排布局：flex 自适应 · 有内容的 section 等分剩余宽度 · 空 section :empty 隐藏 ·
+ * 注意不能 !important display，否则覆盖 inline display:none */
+.wb-bound-tooltip-panel.tooltip-layout-horizontal {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0;
+}
+/* 每个 section 是 flex 列 · flex-basis: 0 让所有列严格按 flex-grow 均分 ·
+ * min-width: 0 允许收缩到 0（解决 flex item 默认 min-width: auto 的溢出问题） */
+.wb-bound-tooltip-panel .tooltip-section {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 4px 16px !important;
+    border-top: none !important;
+    border-left: 1px dashed rgba(122, 90, 16, 0.4);
+}
+.wb-bound-tooltip-panel .tooltip-section:first-child { border-left: none; padding-left: 4px !important; }
+.wb-bound-tooltip-panel .tooltip-section:last-child  { padding-right: 4px !important; }
+.wb-bound-tooltip-panel .tooltip-section:empty { display: none; }
+/* 简单技能只有 1 个 section · 内部子元素水平流式 + 居中排列 */
+.wb-bound-tooltip-panel .tooltip-section:only-child {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px 18px;
+}
+.wb-bound-tooltip-panel .tooltip-section:only-child > * {
+    margin: 0 !important;
+}
+/* 多 section 时各列内容居中（避免左对齐时单列短内容贴左边）*/
+.wb-bound-tooltip-panel .tooltip-section {
+    text-align: center;
+}
+.wb-bound-tooltip-panel .tooltip-skill-school,
+.wb-bound-tooltip-panel .tooltip-section-tag {
+    display: inline-block;
+}
+/* === 列内呼吸：子元素间距 === */
+.wb-bound-tooltip-panel .tooltip-title { margin-bottom: 4px; }
+.wb-bound-tooltip-panel .tooltip-skill-school { margin: 2px 0 6px; display: inline-block; }
+.wb-bound-tooltip-panel .tooltip-section-tag { margin: 2px 0 6px; display: inline-block; }
+.wb-bound-tooltip-panel .tooltip-skill-desc { margin-top: 4px; }
+.wb-bound-tooltip-panel .tooltip-base-values { margin-top: 4px; }
+.wb-bound-tooltip-panel .tooltip-affix-name { margin-top: 4px; }
+.wb-bound-tooltip-panel .tooltip-affix-name:first-child { margin-top: 0; }
+.wb-bound-tooltip-panel .tooltip-affix-desc { margin: 2px 0 6px; opacity: 0.92; }
+.wb-bound-tooltip-panel .tooltip-ench-name { margin-top: 4px; }
+.wb-bound-tooltip-panel .tooltip-ench-name:first-child { margin-top: 0; }
+.wb-bound-tooltip-panel .tooltip-ench-desc { margin: 2px 0 6px; opacity: 0.92; }
+.wb-bound-tooltip-panel .tooltip-est-value { margin-bottom: 4px; }
+/* 摘要 breakdown 在窄列改竖向，避免一行挤爆 */
+.wb-bound-tooltip-panel .tooltip-est-details {
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 4px;
+}
+.wb-bound-tooltip-panel .tooltip-est-sep { display: none !important; }
 
 .workbench-desk {
     position: relative;

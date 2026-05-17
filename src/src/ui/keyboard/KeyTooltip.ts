@@ -492,6 +492,28 @@ class KeyTooltipManager {
     }
   }
 
+  /**
+   * 在指定容器内渲染 tooltip 内容（不创建浮层 / 不绑定鼠标位置）
+   * 用于固定位置面板（如工作台底部 dock）。复用 build* helpers，
+   * 但跳过 floating tooltip 的 position / glossary 延迟逻辑。
+   *
+   * @param targetEl 容器元素（调用方负责显隐 / 定位）
+   * @param data tooltip 数据
+   * @param horizontal 横排布局（添加 .tooltip-layout-horizontal class，CSS 用 flex 横排各 section）
+   */
+  renderInElement(targetEl: HTMLElement, data: KeyTooltipData, horizontal = false): void {
+    _matchedKeywordIds = new Set()
+    let html = buildLetterSection(data)
+    if (data.skill) {
+      html += buildHeaderSection(data.skill)
+      html += buildAffixSection(data.skill)
+      html += buildEnchantSection(data.skill)
+      html += buildSummarySection(data.skill)
+    }
+    targetEl.innerHTML = html
+    targetEl.classList.toggle('tooltip-layout-horizontal', horizontal)
+  }
+
   private clearGlossaryTimer(): void {
     if (this.glossaryTimerId != null) {
       clearTimeout(this.glossaryTimerId)

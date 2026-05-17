@@ -9,6 +9,7 @@ import { RELICS } from '../data/relics';
 import { localizeItemName, localizeItemDesc, localizeItemFlavor, getLocale } from '../demo/demo-i18n';
 import { abbreviateSkillName, abbreviateResource } from './affixAbbrev';
 import { getAffixV2Definition } from '../data/affixV2';
+import { RESOURCE_ICONS } from '../core/constants';
 
 export type ItemKind = 'skill' | 'pack' | 'relic' | 'enchantment';
 export type ShapeColor = 'mono' | 'rare' | 'epic' | 'legendary' | 'special';
@@ -82,11 +83,8 @@ function clamp01_3(r: number): 0 | 1 | 2 | 3 {
 }
 
 function emojiForResource(resource: string | undefined): string {
-  const m: Record<string, string> = {
-    chips: '⚡', mult: '✖', time: '⏱', gold: '💰', energy: '🔋',
-    mutagen: '🧬', score: '🎯', base: '◇',
-  };
-  return m[resource ?? ''] ?? '◇';
+  // 单一来源 · 与 HUD / battle / shop terminal 一致（含 shield）
+  return RESOURCE_ICONS[resource ?? ''] ?? '◇';
 }
 
 // === Per-kind extractors ===
