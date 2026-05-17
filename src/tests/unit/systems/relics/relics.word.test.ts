@@ -264,7 +264,8 @@ describe('单词/词库系统遗物行为 (Story 36.7)', () => {
       setRelicGarbleActive(true)
       expect(getActiveGarbleChars()).toBe(RELIC_GARBLE_CHARS)
       setRelicGarbleActive(false)
-      expect(getActiveGarbleChars()).toBe('.,;:!?')
+      // 默认字符集 = GARBLE_CHARS (bossModifiers.ts:368)；已扩展至全标点集
+      expect(getActiveGarbleChars()).toBe('.,;:!?@#$%&*~+-=<>()[]{}/\\\'"')
     })
 
     // 标点键拓扑

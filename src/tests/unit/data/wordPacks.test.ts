@@ -488,16 +488,30 @@ describe('generateWordPacks', () => {
 });
 
 describe('generateWordPacks — 词语效果', () => {
-  it('rarity >= 2 的牌包包含 wordEffect', () => {
-    // 多次生成找到至少一个 rarity >= 2 的包
+  // 当前 spec (wordPacks.ts rollWordEffect line ~295)：
+  //   rarity 0/1 → base_score, value 1
+  //   rarity 2   → base_score, value 2
+  //   rarity 3   → base_multiplier, value 2, 含 targetLetter (随机抽自 words[0] 字母)
+  // 所有稀有度都有 wordEffect；传说与史诗 type 不同，不做同类型比较。
+
+  it('所有牌包都附带 wordEffect', () => {
+    for (let i = 0; i < 20; i++) {
+      const packs = generateWordPacks([], undefined, [], 5);
+      for (const p of packs) {
+        expect(p.wordEffect).toBeDefined();
+        expect(p.wordEffect!.value).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('rarity 0/1 → base_score=1', () => {
     let found = false;
     for (let i = 0; i < 50; i++) {
       const packs = generateWordPacks([], undefined, [], 5);
       for (const p of packs) {
-        if (p.rarity >= 2) {
-          expect(p.wordEffect).toBeDefined();
-          expect(['base_score', 'base_multiplier', 'multiplier', 'time', 'gold']).toContain(p.wordEffect!.type);
-          expect(p.wordEffect!.value).toBeGreaterThan(0);
+        if (p.rarity === 0 || p.rarity === 1) {
+          expect(p.wordEffect?.type).toBe('base_score');
+          expect(p.wordEffect?.value).toBe(1);
           found = true;
         }
       }
@@ -506,31 +520,40 @@ describe('generateWordPacks — 词语效果', () => {
     expect(found).toBe(true);
   });
 
-  it('rarity < 2 的牌包不包含 wordEffect', () => {
-    const packs = generateWordPacks([], undefined, [], 20);
-    for (const p of packs) {
-      if (p.rarity < 2) {
-        expect(p.wordEffect).toBeUndefined();
-      }
-    }
-  });
-
-  it('传说牌包 wordEffect value > 史诗牌包 value（同类型比较）', () => {
-    // 统计效果值范围
-    const epicValues: number[] = [];
-    const legendValues: number[] = [];
+  it('史诗 (rarity 2) → base_score=2', () => {
+    let found = false;
     for (let i = 0; i < 100; i++) {
       const packs = generateWordPacks([], undefined, [], 5);
       for (const p of packs) {
-        if (p.rarity === 2 && p.wordEffect) epicValues.push(p.wordEffect.value);
-        if (p.rarity === 3 && p.wordEffect) legendValues.push(p.wordEffect.value);
+        if (p.rarity === 2) {
+          expect(p.wordEffect?.type).toBe('base_score');
+          expect(p.wordEffect?.value).toBe(2);
+          found = true;
+        }
       }
+      if (found) break;
     }
-    if (epicValues.length > 0 && legendValues.length > 0) {
-      const avgEpic = epicValues.reduce((a, b) => a + b, 0) / epicValues.length;
-      const avgLegend = legendValues.reduce((a, b) => a + b, 0) / legendValues.length;
-      expect(avgLegend).toBeGreaterThan(avgEpic);
+    expect(found).toBe(true);
+  });
+
+  it('传说 (rarity 3) → base_multiplier=2 含 targetLetter', () => {
+    let found = false;
+    for (let i = 0; i < 200; i++) {
+      const packs = generateWordPacks([], undefined, [], 5);
+      for (const p of packs) {
+        if (p.rarity === 3) {
+          expect(p.wordEffect?.type).toBe('base_multiplier');
+          expect(p.wordEffect?.value).toBe(2);
+          // targetLetter 抽自 words[0] 的字母；只要 words[0] 有任一 a-z 字母就应有
+          if (p.words[0] && /[a-z]/i.test(p.words[0])) {
+            expect(p.wordEffect?.targetLetter).toMatch(/^[a-z]$/);
+          }
+          found = true;
+        }
+      }
+      if (found) break;
     }
+    expect(found).toBe(true);
   });
 });
 
