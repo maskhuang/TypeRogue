@@ -1,0 +1,3353 @@
+{
+  "stats": {
+    "trailing_drop": 95,
+    "leading_drop": 103,
+    "middle_drop": 168,
+    "double_collapse": 11,
+    "middle_burnout": 77
+  },
+  "classics_leading_drop_short": [
+    {
+      "orig": "shell",
+      "drift": "hell",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "open",
+      "drift": "pen",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "stop",
+      "drift": "top",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "danger",
+      "drift": "anger",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "bar",
+      "drift": "ar",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "grill",
+      "drift": "rill",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "burger",
+      "drift": "urger",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "store",
+      "drift": "tore",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "shop",
+      "drift": "hop",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "mall",
+      "drift": "all",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "bus",
+      "drift": "us",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "train",
+      "drift": "rain",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "gym",
+      "drift": "ym",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "spa",
+      "drift": "pa",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "beach",
+      "drift": "each",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "park",
+      "drift": "ark",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "slow",
+      "drift": "low",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "fast",
+      "drift": "ast",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "cold",
+      "drift": "old",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "sale",
+      "drift": "ale",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "free",
+      "drift": "ree",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "drink",
+      "drift": "rink",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "beer",
+      "drift": "eer",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "bread",
+      "drift": "read",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "meat",
+      "drift": "eat",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "fresh",
+      "drift": "resh",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "ride",
+      "drift": "ide",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "play",
+      "drift": "lay",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "show",
+      "drift": "how",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "king",
+      "drift": "ing",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "tower",
+      "drift": "ower",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "bridge",
+      "drift": "ridge",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "gate",
+      "drift": "ate",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "lake",
+      "drift": "ake",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "star",
+      "drift": "tar",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "pearl",
+      "drift": "earl",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "gold",
+      "drift": "old",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "jade",
+      "drift": "ade",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "saint",
+      "drift": "aint",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "sacred",
+      "drift": "acred",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "never",
+      "drift": "ever",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "last",
+      "drift": "ast",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "hate",
+      "drift": "ate",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "war",
+      "drift": "ar",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "life",
+      "drift": "ife",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "space",
+      "drift": "pace",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "sea",
+      "drift": "ea",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "sun",
+      "drift": "un",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "fire",
+      "drift": "ire",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "snow",
+      "drift": "now",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "wind",
+      "drift": "ind",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "tree",
+      "drift": "ree",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "stone",
+      "drift": "tone",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "iron",
+      "drift": "ron",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "steel",
+      "drift": "teel",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "glass",
+      "drift": "lass",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "paper",
+      "drift": "aper",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "silk",
+      "drift": "ilk",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "game",
+      "drift": "ame",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "sleep",
+      "drift": "leep",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "dream",
+      "drift": "ream",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "wake",
+      "drift": "ake",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "wait",
+      "drift": "ait",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "leave",
+      "drift": "eave",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "here",
+      "drift": "ere",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "there",
+      "drift": "here",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "alone",
+      "drift": "lone",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "wall",
+      "drift": "all",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "table",
+      "drift": "able",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "chair",
+      "drift": "hair",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "bed",
+      "drift": "ed",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "lamp",
+      "drift": "amp",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "clock",
+      "drift": "lock",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "key",
+      "drift": "ey",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "lock",
+      "drift": "ock",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "bell",
+      "drift": "ell",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "name",
+      "drift": "ame",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "truth",
+      "drift": "ruth",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "lie",
+      "drift": "ie",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "hope",
+      "drift": "ope",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "fear",
+      "drift": "ear",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "blood",
+      "drift": "lood",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "tear",
+      "drift": "ear",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "laugh",
+      "drift": "augh",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "smile",
+      "drift": "mile",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "hand",
+      "drift": "and",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "eye",
+      "drift": "ye",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "face",
+      "drift": "ace",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "skin",
+      "drift": "kin",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "bone",
+      "drift": "one",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "ghost",
+      "drift": "host",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "nun",
+      "drift": "un",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "saint",
+      "drift": "aint",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "knight",
+      "drift": "night",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "slave",
+      "drift": "lave",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "master",
+      "drift": "aster",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "lover",
+      "drift": "over",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "devil",
+      "drift": "evil",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "witch",
+      "drift": "itch",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "wizard",
+      "drift": "izard",
+      "mech": "leading_drop",
+      "pos": 0
+    },
+    {
+      "orig": "beast",
+      "drift": "east",
+      "mech": "leading_drop",
+      "pos": 0
+    }
+  ],
+  "by_mech": {
+    "trailing_drop": [
+      {
+        "orig": "motel",
+        "drift": "mote",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "shell",
+        "drift": "shel",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "open",
+        "drift": "ope",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "closed",
+        "drift": "close",
+        "mech": "trailing_drop",
+        "pos": 5
+      },
+      {
+        "orig": "parking",
+        "drift": "parkin",
+        "mech": "trailing_drop",
+        "pos": 6
+      },
+      {
+        "orig": "bank",
+        "drift": "ban",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "atm",
+        "drift": "at",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "bar",
+        "drift": "ba",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "diner",
+        "drift": "dine",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "shop",
+        "drift": "sho",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "mall",
+        "drift": "mal",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "taxi",
+        "drift": "tax",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "bus",
+        "drift": "bu",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "bakery",
+        "drift": "baker",
+        "mech": "trailing_drop",
+        "pos": 5
+      },
+      {
+        "orig": "barber",
+        "drift": "barbe",
+        "mech": "trailing_drop",
+        "pos": 5
+      },
+      {
+        "orig": "park",
+        "drift": "par",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "zoo",
+        "drift": "zo",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "cold",
+        "drift": "col",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "hot",
+        "drift": "ho",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "rooms",
+        "drift": "room",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "sale",
+        "drift": "sal",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "new",
+        "drift": "ne",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "used",
+        "drift": "use",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "food",
+        "drift": "foo",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "beer",
+        "drift": "bee",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "wine",
+        "drift": "win",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "daily",
+        "drift": "dail",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "delivery",
+        "drift": "deliver",
+        "mech": "trailing_drop",
+        "pos": 7
+      },
+      {
+        "orig": "keep",
+        "drift": "kee",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "silent",
+        "drift": "silen",
+        "mech": "trailing_drop",
+        "pos": 5
+      },
+      {
+        "orig": "loud",
+        "drift": "lou",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "live",
+        "drift": "liv",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "born",
+        "drift": "bor",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "ride",
+        "drift": "rid",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "show",
+        "drift": "sho",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "lights",
+        "drift": "light",
+        "mech": "trailing_drop",
+        "pos": 5
+      },
+      {
+        "orig": "night",
+        "drift": "nigh",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "dreams",
+        "drift": "dream",
+        "mech": "trailing_drop",
+        "pos": 5
+      },
+      {
+        "orig": "heaven",
+        "drift": "heave",
+        "mech": "trailing_drop",
+        "pos": 5
+      },
+      {
+        "orig": "king",
+        "drift": "kin",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "gate",
+        "drift": "gat",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "river",
+        "drift": "rive",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "lake",
+        "drift": "lak",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "moon",
+        "drift": "moo",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "pearl",
+        "drift": "pear",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "gold",
+        "drift": "gol",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "ruby",
+        "drift": "rub",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "saint",
+        "drift": "sain",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "never",
+        "drift": "neve",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "always",
+        "drift": "alway",
+        "mech": "trailing_drop",
+        "pos": 5
+      },
+      {
+        "orig": "last",
+        "drift": "las",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "best",
+        "drift": "bes",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "hate",
+        "drift": "hat",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "war",
+        "drift": "wa",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "life",
+        "drift": "lif",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "time",
+        "drift": "tim",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "sea",
+        "drift": "se",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "fire",
+        "drift": "fir",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "wind",
+        "drift": "win",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "wood",
+        "drift": "woo",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "paper",
+        "drift": "pape",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "linen",
+        "drift": "line",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "silk",
+        "drift": "sil",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "song",
+        "drift": "son",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "game",
+        "drift": "gam",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "sleep",
+        "drift": "slee",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "here",
+        "drift": "her",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "chair",
+        "drift": "chai",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "bed",
+        "drift": "be",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "lamp",
+        "drift": "lam",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "bell",
+        "drift": "bel",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "book",
+        "drift": "boo",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "name",
+        "drift": "nam",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "sign",
+        "drift": "sig",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "secret",
+        "drift": "secre",
+        "mech": "trailing_drop",
+        "pos": 5
+      },
+      {
+        "orig": "lie",
+        "drift": "li",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "hope",
+        "drift": "hop",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "joy",
+        "drift": "jo",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "tear",
+        "drift": "tea",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "hand",
+        "drift": "han",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "heart",
+        "drift": "hear",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "eye",
+        "drift": "ey",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "skin",
+        "drift": "ski",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "bone",
+        "drift": "bon",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "soul",
+        "drift": "sou",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "nun",
+        "drift": "nu",
+        "mech": "trailing_drop",
+        "pos": 2
+      },
+      {
+        "orig": "monk",
+        "drift": "mon",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "saint",
+        "drift": "sain",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "guard",
+        "drift": "guar",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "slave",
+        "drift": "slav",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "teacher",
+        "drift": "teache",
+        "mech": "trailing_drop",
+        "pos": 6
+      },
+      {
+        "orig": "lover",
+        "drift": "love",
+        "mech": "trailing_drop",
+        "pos": 4
+      },
+      {
+        "orig": "stranger",
+        "drift": "strange",
+        "mech": "trailing_drop",
+        "pos": 7
+      },
+      {
+        "orig": "hero",
+        "drift": "her",
+        "mech": "trailing_drop",
+        "pos": 3
+      },
+      {
+        "orig": "dragon",
+        "drift": "drago",
+        "mech": "trailing_drop",
+        "pos": 5
+      }
+    ],
+    "leading_drop": [
+      {
+        "orig": "shell",
+        "drift": "hell",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "open",
+        "drift": "pen",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "stop",
+        "drift": "top",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "danger",
+        "drift": "anger",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "bar",
+        "drift": "ar",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "grill",
+        "drift": "rill",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "burger",
+        "drift": "urger",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "store",
+        "drift": "tore",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "shop",
+        "drift": "hop",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "mall",
+        "drift": "all",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "theater",
+        "drift": "heater",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "bus",
+        "drift": "us",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "train",
+        "drift": "rain",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "gym",
+        "drift": "ym",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "spa",
+        "drift": "pa",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "beach",
+        "drift": "each",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "park",
+        "drift": "ark",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "slow",
+        "drift": "low",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "fast",
+        "drift": "ast",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "cold",
+        "drift": "old",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "sale",
+        "drift": "ale",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "free",
+        "drift": "ree",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "drink",
+        "drift": "rink",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "beer",
+        "drift": "eer",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "bread",
+        "drift": "read",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "meat",
+        "drift": "eat",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "fresh",
+        "drift": "resh",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "ride",
+        "drift": "ide",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "play",
+        "drift": "lay",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "show",
+        "drift": "how",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "king",
+        "drift": "ing",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "tower",
+        "drift": "ower",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "bridge",
+        "drift": "ridge",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "gate",
+        "drift": "ate",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "lake",
+        "drift": "ake",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "star",
+        "drift": "tar",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "pearl",
+        "drift": "earl",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "gold",
+        "drift": "old",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "jade",
+        "drift": "ade",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "saint",
+        "drift": "aint",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "sacred",
+        "drift": "acred",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "eternal",
+        "drift": "ternal",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "never",
+        "drift": "ever",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "last",
+        "drift": "ast",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "hate",
+        "drift": "ate",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "war",
+        "drift": "ar",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "life",
+        "drift": "ife",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "space",
+        "drift": "pace",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "sea",
+        "drift": "ea",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "sun",
+        "drift": "un",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "fire",
+        "drift": "ire",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "snow",
+        "drift": "now",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "wind",
+        "drift": "ind",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "tree",
+        "drift": "ree",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "stone",
+        "drift": "tone",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "iron",
+        "drift": "ron",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "steel",
+        "drift": "teel",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "glass",
+        "drift": "lass",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "paper",
+        "drift": "aper",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "silk",
+        "drift": "ilk",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "game",
+        "drift": "ame",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "sleep",
+        "drift": "leep",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "dream",
+        "drift": "ream",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "wake",
+        "drift": "ake",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "wait",
+        "drift": "ait",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "leave",
+        "drift": "eave",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "here",
+        "drift": "ere",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "there",
+        "drift": "here",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "alone",
+        "drift": "lone",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "wall",
+        "drift": "all",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "table",
+        "drift": "able",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "chair",
+        "drift": "hair",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "bed",
+        "drift": "ed",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "lamp",
+        "drift": "amp",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "clock",
+        "drift": "lock",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "key",
+        "drift": "ey",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "lock",
+        "drift": "ock",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "bell",
+        "drift": "ell",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "name",
+        "drift": "ame",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "truth",
+        "drift": "ruth",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "lie",
+        "drift": "ie",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "hope",
+        "drift": "ope",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "fear",
+        "drift": "ear",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "blood",
+        "drift": "lood",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "tear",
+        "drift": "ear",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "laugh",
+        "drift": "augh",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "smile",
+        "drift": "mile",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "hand",
+        "drift": "and",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "eye",
+        "drift": "ye",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "face",
+        "drift": "ace",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "skin",
+        "drift": "kin",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "bone",
+        "drift": "one",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "ghost",
+        "drift": "host",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "nun",
+        "drift": "un",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "saint",
+        "drift": "aint",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "knight",
+        "drift": "night",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "slave",
+        "drift": "lave",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "master",
+        "drift": "aster",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "lover",
+        "drift": "over",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "devil",
+        "drift": "evil",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "witch",
+        "drift": "itch",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "wizard",
+        "drift": "izard",
+        "mech": "leading_drop",
+        "pos": 0
+      },
+      {
+        "orig": "beast",
+        "drift": "east",
+        "mech": "leading_drop",
+        "pos": 0
+      }
+    ],
+    "middle_drop": [
+      {
+        "orig": "shell",
+        "drift": "sell",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "shell",
+        "drift": "shel",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "parking",
+        "drift": "paring",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "stop",
+        "drift": "sop",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "yield",
+        "drift": "yeld",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "caution",
+        "drift": "cation",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "warning",
+        "drift": "waning",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "warning",
+        "drift": "waring",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "atm",
+        "drift": "am",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "grill",
+        "drift": "gill",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "diner",
+        "drift": "dier",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "store",
+        "drift": "sore",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "store",
+        "drift": "stre",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "shop",
+        "drift": "sop",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "mall",
+        "drift": "mal",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "school",
+        "drift": "shool",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "church",
+        "drift": "curch",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "temple",
+        "drift": "tempe",
+        "mech": "middle_drop",
+        "pos": 4
+      },
+      {
+        "orig": "taxi",
+        "drift": "tai",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "train",
+        "drift": "tain",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "train",
+        "drift": "trin",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "train",
+        "drift": "tran",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "metro",
+        "drift": "mero",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "barber",
+        "drift": "barer",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "salon",
+        "drift": "slon",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "spa",
+        "drift": "sa",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "pool",
+        "drift": "pol",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "pool",
+        "drift": "pol",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "beach",
+        "drift": "bach",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "zoo",
+        "drift": "zo",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "slow",
+        "drift": "sow",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "fast",
+        "drift": "fat",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "cold",
+        "drift": "cod",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "free",
+        "drift": "fee",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "food",
+        "drift": "fod",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "food",
+        "drift": "fod",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "drink",
+        "drift": "dink",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "beer",
+        "drift": "ber",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "beer",
+        "drift": "ber",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "bread",
+        "drift": "bead",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "bread",
+        "drift": "brad",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "bread",
+        "drift": "bred",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "meat",
+        "drift": "mat",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "meat",
+        "drift": "met",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "public",
+        "drift": "pubic",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "keep",
+        "drift": "kep",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "keep",
+        "drift": "kep",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "quiet",
+        "drift": "quet",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "quiet",
+        "drift": "quit",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "silent",
+        "drift": "slent",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "loud",
+        "drift": "lod",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "live",
+        "drift": "lie",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "dead",
+        "drift": "dad",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "born",
+        "drift": "bon",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "ride",
+        "drift": "rie",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "play",
+        "drift": "pay",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "play",
+        "drift": "ply",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "show",
+        "drift": "sow",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "heaven",
+        "drift": "haven",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "palace",
+        "drift": "place",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "bridge",
+        "drift": "bride",
+        "mech": "middle_drop",
+        "pos": 4
+      },
+      {
+        "orig": "castle",
+        "drift": "caste",
+        "mech": "middle_drop",
+        "pos": 4
+      },
+      {
+        "orig": "river",
+        "drift": "rier",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "star",
+        "drift": "sar",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "moon",
+        "drift": "mon",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "moon",
+        "drift": "mon",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "pearl",
+        "drift": "peal",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "gold",
+        "drift": "god",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "silver",
+        "drift": "siver",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "prayer",
+        "drift": "payer",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "prayer",
+        "drift": "pryer",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "church",
+        "drift": "curch",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "saint",
+        "drift": "sant",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "holy",
+        "drift": "hoy",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "never",
+        "drift": "neer",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "last",
+        "drift": "lat",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "first",
+        "drift": "fist",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "best",
+        "drift": "bet",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "worst",
+        "drift": "wort",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "peace",
+        "drift": "pace",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "life",
+        "drift": "lie",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "time",
+        "drift": "tie",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "space",
+        "drift": "spae",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "world",
+        "drift": "wold",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "world",
+        "drift": "word",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "earth",
+        "drift": "erth",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "sea",
+        "drift": "sa",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "fire",
+        "drift": "fie",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "rain",
+        "drift": "ran",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "snow",
+        "drift": "sow",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "wind",
+        "drift": "wid",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "tree",
+        "drift": "tee",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "wood",
+        "drift": "wod",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "wood",
+        "drift": "wod",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "iron",
+        "drift": "ion",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "steel",
+        "drift": "seel",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "linen",
+        "drift": "lien",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "linen",
+        "drift": "linn",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "leather",
+        "drift": "lather",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "sound",
+        "drift": "sond",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "sound",
+        "drift": "soud",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "voice",
+        "drift": "vice",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "song",
+        "drift": "sog",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "dance",
+        "drift": "dace",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "dance",
+        "drift": "dane",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "work",
+        "drift": "wok",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "rest",
+        "drift": "ret",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "sleep",
+        "drift": "seep",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "dream",
+        "drift": "dram",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "wake",
+        "drift": "wae",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "wait",
+        "drift": "wit",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "wait",
+        "drift": "wat",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "leave",
+        "drift": "lave",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "come",
+        "drift": "coe",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "there",
+        "drift": "thee",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "alone",
+        "drift": "aloe",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "home",
+        "drift": "hoe",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "house",
+        "drift": "huse",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "house",
+        "drift": "hose",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "door",
+        "drift": "dor",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "door",
+        "drift": "dor",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "window",
+        "drift": "widow",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "table",
+        "drift": "tale",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "chair",
+        "drift": "char",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "lamp",
+        "drift": "lap",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "clock",
+        "drift": "cock",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "bell",
+        "drift": "bel",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "word",
+        "drift": "wod",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "name",
+        "drift": "nae",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "sign",
+        "drift": "sin",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "signal",
+        "drift": "sinal",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "truth",
+        "drift": "tuth",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "answer",
+        "drift": "anser",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "doubt",
+        "drift": "dout",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "hope",
+        "drift": "hoe",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "fear",
+        "drift": "far",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "pain",
+        "drift": "pin",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "pain",
+        "drift": "pan",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "blood",
+        "drift": "bood",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "tear",
+        "drift": "tar",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "smile",
+        "drift": "sile",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "hand",
+        "drift": "had",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "heart",
+        "drift": "hart",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "heart",
+        "drift": "heat",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "head",
+        "drift": "had",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "face",
+        "drift": "fae",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "skin",
+        "drift": "sin",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "soul",
+        "drift": "sol",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "spirit",
+        "drift": "sprit",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "spirit",
+        "drift": "spirt",
+        "mech": "middle_drop",
+        "pos": 4
+      },
+      {
+        "orig": "savior",
+        "drift": "savor",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "witness",
+        "drift": "witess",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "judge",
+        "drift": "jude",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "priest",
+        "drift": "prest",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "saint",
+        "drift": "sant",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "soldier",
+        "drift": "solder",
+        "mech": "middle_drop",
+        "pos": 4
+      },
+      {
+        "orig": "slave",
+        "drift": "save",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "slave",
+        "drift": "slae",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "master",
+        "drift": "mater",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "friend",
+        "drift": "fiend",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "friend",
+        "drift": "fried",
+        "mech": "middle_drop",
+        "pos": 4
+      },
+      {
+        "orig": "guest",
+        "drift": "gest",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "guest",
+        "drift": "gust",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "host",
+        "drift": "hot",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "witch",
+        "drift": "with",
+        "mech": "middle_drop",
+        "pos": 3
+      },
+      {
+        "orig": "beast",
+        "drift": "bast",
+        "mech": "middle_drop",
+        "pos": 1
+      },
+      {
+        "orig": "beast",
+        "drift": "best",
+        "mech": "middle_drop",
+        "pos": 2
+      },
+      {
+        "orig": "beast",
+        "drift": "beat",
+        "mech": "middle_drop",
+        "pos": 3
+      }
+    ],
+    "double_collapse": [
+      {
+        "orig": "shell",
+        "drift": "shel",
+        "mech": "double_collapse",
+        "pos": 3
+      },
+      {
+        "orig": "mall",
+        "drift": "mal",
+        "mech": "double_collapse",
+        "pos": 2
+      },
+      {
+        "orig": "pool",
+        "drift": "pol",
+        "mech": "double_collapse",
+        "pos": 1
+      },
+      {
+        "orig": "zoo",
+        "drift": "zo",
+        "mech": "double_collapse",
+        "pos": 1
+      },
+      {
+        "orig": "food",
+        "drift": "fod",
+        "mech": "double_collapse",
+        "pos": 1
+      },
+      {
+        "orig": "beer",
+        "drift": "ber",
+        "mech": "double_collapse",
+        "pos": 1
+      },
+      {
+        "orig": "keep",
+        "drift": "kep",
+        "mech": "double_collapse",
+        "pos": 1
+      },
+      {
+        "orig": "moon",
+        "drift": "mon",
+        "mech": "double_collapse",
+        "pos": 1
+      },
+      {
+        "orig": "wood",
+        "drift": "wod",
+        "mech": "double_collapse",
+        "pos": 1
+      },
+      {
+        "orig": "door",
+        "drift": "dor",
+        "mech": "double_collapse",
+        "pos": 1
+      },
+      {
+        "orig": "bell",
+        "drift": "bel",
+        "mech": "double_collapse",
+        "pos": 2
+      }
+    ],
+    "middle_burnout": [
+      {
+        "orig": "open",
+        "drift": "on",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "enter",
+        "drift": "er",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "lobby",
+        "drift": "ly",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "atm",
+        "drift": "am",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "cafe",
+        "drift": "ce",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "pizza",
+        "drift": "pa",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "store",
+        "drift": "se",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "plaza",
+        "drift": "pa",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "library",
+        "drift": "ly",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "temple",
+        "drift": "te",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "cinema",
+        "drift": "ca",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "airport",
+        "drift": "at",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "taxi",
+        "drift": "ti",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "metro",
+        "drift": "mo",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "bakery",
+        "drift": "by",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "laundry",
+        "drift": "ly",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "spa",
+        "drift": "sa",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "zoo",
+        "drift": "zo",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "welcome",
+        "drift": "we",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "goodbye",
+        "drift": "ge",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "sale",
+        "drift": "se",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "used",
+        "drift": "ud",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "free",
+        "drift": "fe",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "wine",
+        "drift": "we",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "coffee",
+        "drift": "ce",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "silent",
+        "drift": "st",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "ride",
+        "drift": "re",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "angel",
+        "drift": "al",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "bridge",
+        "drift": "be",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "gate",
+        "drift": "ge",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "castle",
+        "drift": "ce",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "saint",
+        "drift": "st",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "holy",
+        "drift": "hy",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "eternal",
+        "drift": "el",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "always",
+        "drift": "as",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "hate",
+        "drift": "he",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "time",
+        "drift": "te",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "space",
+        "drift": "se",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "earth",
+        "drift": "eh",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "sea",
+        "drift": "sa",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "fire",
+        "drift": "fe",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "tree",
+        "drift": "te",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "stone",
+        "drift": "se",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "iron",
+        "drift": "in",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "mirror",
+        "drift": "mr",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "dance",
+        "drift": "de",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "game",
+        "drift": "ge",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "wake",
+        "drift": "we",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "come",
+        "drift": "ce",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "here",
+        "drift": "he",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "there",
+        "drift": "te",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "somewhere",
+        "drift": "se",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "nowhere",
+        "drift": "ne",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "alone",
+        "drift": "ae",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "home",
+        "drift": "he",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "house",
+        "drift": "he",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "table",
+        "drift": "te",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "name",
+        "drift": "ne",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "message",
+        "drift": "me",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "secret",
+        "drift": "st",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "truth",
+        "drift": "th",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "answer",
+        "drift": "ar",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "hope",
+        "drift": "he",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "smile",
+        "drift": "se",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "face",
+        "drift": "fe",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "bone",
+        "drift": "be",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "spirit",
+        "drift": "st",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "saint",
+        "drift": "st",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "oracle",
+        "drift": "oe",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "slave",
+        "drift": "se",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "servant",
+        "drift": "st",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "master",
+        "drift": "mr",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "student",
+        "drift": "st",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "enemy",
+        "drift": "ey",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "hero",
+        "drift": "ho",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "monster",
+        "drift": "mr",
+        "mech": "middle_burnout",
+        "pos": -1
+      },
+      {
+        "orig": "entity",
+        "drift": "ey",
+        "mech": "middle_burnout",
+        "pos": -1
+      }
+    ]
+  }
+}

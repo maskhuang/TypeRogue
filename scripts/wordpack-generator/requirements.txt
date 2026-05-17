@@ -1,0 +1,12 @@
+# wordpack-generator Python 依赖
+# 安装：
+#   cd scripts/wordpack-generator
+#   python3 -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+#
+# 系统依赖（独立安装）：
+#   brew install tesseract
+
+Pillow>=10.0.0          # 渲染源文本 + 添加噪声/模糊
+pytesseract>=0.3.10     # Tesseract CLI 的 Python wrapper
+anthropic>=0.40.0       # LLM 翻译往返（后续启用）

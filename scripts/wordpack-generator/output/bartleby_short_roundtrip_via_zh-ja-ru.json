@@ -1,0 +1,25 @@
+{
+  "chain": [
+    {
+      "lang": "en",
+      "text": "Bartleby, The Scrivener\n\nA STORY OF WALL-STREET.\n\nby Herman Melville\n\n\n\n\nI am a rather elderly man. The nature of my avocations for the last\nthirty years has brought me into more than ordinary contact with what\nwould seem an interesting and somewhat singular set of men, of whom as\nyet nothing that I know of has ever been written:—I mean the\nlaw-copyists or scriveners. I have known very many of them,\nprofessionally and privately, and if I pleased, could relate divers\nhistories, at which good-natured gentlemen might smile, and sentimental\nsouls might weep. But I waive the biographies of all other scriveners\nfor a few passages in the life of Bartleby, who was a scrivener of the\nstrangest I ever saw or heard of. While of other law-copyists I might\nwrite the complete life, of Bartleby nothing of that sort can be done."
+    },
+    {
+      "lang": "zh",
+      "text": "巴特尔比，文书\n\n华尔街故事\n\n赫尔曼·梅尔维尔 著\n\n\n\n\n我是一个上了年纪的人。过去三十年来，我的职业使我比一般人更多地接触到一群看似有趣而又有些特别的人，据我所知，至今还没有人写过关于他们的文字——我指的是法律文书抄写员或誊写员。我在职业上和私人方面认识他们当中的许多人，如果我愿意，可以讲述各种各样的故事，善良的绅士们听了会微笑，多愁善感的人听了会流泪。但我放弃了所有其他誊写员的传记，只想讲述巴特尔比生平的几个片段，他是我见过或听说过的最奇特的誊写员。关于其他法律文书抄写员，我或许能写出完整的生平，但关于巴特尔比，却无法做到这一点。"
+    },
+    {
+      "lang": "ja",
+      "text": "バートルビー、書記\n\nウォール街の物語\n\nハーマン・メルヴィル 著\n\n\n\n\n私は年配の男である。過去三十年来、私の職業は一般の人々よりも多く、一見興味深くもあり、いささか特殊でもある一群の人々と接する機会を与えてくれた。私の知る限り、今日に至るまで彼らについて書かれたものはない——私が言っているのは法律文書の筆写人、あるいは写字生のことである。私は職業上およびプライベートで彼らの多くを知っており、もし望むならば、様々な物語を語ることができる。善良な紳士たちが聞けば微笑み、感傷的な人々が聞けば涙するような物語を。しかし私は他のすべての写字生の伝記を放棄し、ただバートルビーの生涯のいくつかの断片を語りたいと思う。彼は私が見聞きした中で最も奇妙な写字生である。他の法律文書筆写人については、おそらく完全な生涯を書くことができるだろうが、バートルビーについては、それができないのである。"
+    },
+    {
+      "lang": "ru",
+      "text": "Бартлби, писарь\n\nИстория с Уолл-стрит\n\nГерман Мелвилл\n\n\n\n\nЯ пожилой человек. На протяжении последних тридцати лет моя профессия давала мне возможность общаться с людьми, которые больше, чем обычные люди, представляют собой группу с виду интересную и несколько особенную. Насколько мне известно, о них до сих пор ничего не написано — я говорю о переписчиках юридических документов, или писцах. Я знал многих из них по долгу службы и в частной жизни, и мог бы, если бы захотел, рассказать различные истории. Истории, которые заставили бы добрых джентльменов улыбнуться, а сентиментальных людей — прослезиться. Но я отказываюсь от биографий всех прочих писцов и хочу рассказать лишь несколько фрагментов из жизни Бартлби. Он самый странный писец из всех, кого я видел и о ком слышал. О других переписчиках юридических документов я, вероятно, мог бы написать полную биографию, но о Бартлби этого сделать нельзя."
+    },
+    {
+      "lang": "en",
+      "text": "Bartleby, the Scrivener\n\nA Story of Wall Street\n\nHerman Melville\n\n\n\n\nI am an elderly man. For the last thirty years my profession has given me the opportunity to interact with people who, more than ordinary people, represent a group seemingly interesting and somewhat peculiar. As far as I know, nothing has been written about them to this day—I speak of copyists of legal documents, or scriveners. I have known many of them through duty and in private life, and could, if I wished, tell various stories. Stories that would make good gentlemen smile and sentimental people shed tears. But I decline the biographies of all other scriveners and wish to tell only a few fragments from the life of Bartleby. He is the strangest scrivener of all I have seen or heard of. About other copyists of legal documents I could probably write a complete biography, but about Bartleby this cannot be done."
+    }
+  ],
+  "model": "claude-sonnet-4-5"
+}

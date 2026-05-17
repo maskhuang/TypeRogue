@@ -1,0 +1,21 @@
+{
+  "chain": [
+    {
+      "lang": "en",
+      "text": "Bartleby, The Scrivener\n\nA STORY OF WALL-STREET.\n\nby Herman Melville\n\n\n\n\nI am a rather elderly man. The nature of my avocations for the last\nthirty years has brought me into more than ordinary contact with what\nwould seem an interesting and somewhat singular set of men, of whom as\nyet nothing that I know of has ever been written:—I mean the\nlaw-copyists or scriveners. I have known very many of them,\nprofessionally and privately, and if I pleased, could relate divers\nhistories, at which good-natured gentlemen might smile, and sentimental\nsouls might weep. But I waive the biographies of all other scriveners\nfor a few passages in the life of Bartleby, who was a scrivener of the\nstrangest I ever saw or heard of. While of other law-copyists I might\nwrite the complete life, of Bartleby nothing of that sort can be done."
+    },
+    {
+      "lang": "zh",
+      "text": "巴特比，抄写员\n\n华尔街故事\n\n赫尔曼·梅尔维尔 著\n\n\n\n\n我是一个年纪颇大的人了。过去三十年来，我的职业性质使我比常人更多地接触到一群看似有趣而又有些特别的人，据我所知，至今还没有人写过关于他们的文字——我指的是法律文书抄写员或称抄写员。我在职业上和私人方面都认识很多这样的人，如果我愿意，我可以讲述许多故事，那些性情温和的绅士们听了会微笑，而多愁善感的人们听了会落泪。但我放弃其他所有抄写员的传记，只讲述巴特比生平的几个片段，他是我所见过或听说过的抄写员中最奇特的一个。对于其他法律文书抄写员，我也许能写出完整的生平，但对于巴特比，却无法做到这一点。"
+    },
+    {
+      "lang": "ja",
+      "text": "バートルビー、筆写人\n\nウォール街の物語\n\nハーマン・メルヴィル 著\n\n\n\n\n私はかなり年配の人間である。過去三十年来、私の職業の性質上、一般の人々よりも多く、一見興味深くいささか特殊な人々の集団と接触する機会があった。私の知る限り、今日まで彼らについて書かれたものは一つもない――私が言っているのは法律文書筆写人、あるいは筆写人のことである。私は職業上でも私的にも、そうした人々を数多く知っており、望めば多くの物語を語ることができよう。それは温和な紳士たちには微笑みを、感傷的な人々には涙をもたらすような物語である。しかし私は他のすべての筆写人の伝記を割愛し、ただバートルビーの生涯のいくつかの断片のみを語ることにする。彼は私が見聞きした筆写人の中で最も奇妙な人物であった。他の法律文書筆写人については、完全な生涯を書くことができるかもしれないが、バートルビーについては、それができないのである。"
+    },
+    {
+      "lang": "en",
+      "text": "Bartleby, the Scrivener\n\nA Story of Wall Street\n\nby Herman Melville\n\n\n\n\nI am a rather elderly man. The nature of my occupations for the last thirty years has brought me into more than ordinary contact with what would seem an interesting and somewhat singular set of men, of whom as yet nothing that I know of has hitherto been written:—I mean the law-copyists or scriveners. I have known very many of them, professionally and privately, and if I pleased, could relate divers histories, at which good-natured gentlemen might smile, and sentimental souls might weep. But I waive the biographies of all other scriveners for a few passages in the life of Bartleby, who was a scrivener the strangest I ever saw or heard of. While of other law-copyists I might write the complete life, of Bartleby nothing of that sort can be done."
+    }
+  ],
+  "model": "claude-sonnet-4-5"
+}
