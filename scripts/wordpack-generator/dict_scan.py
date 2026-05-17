@@ -30,7 +30,7 @@ OUTPUT = ROOT / "output"
 DICT_PATH = Path("/usr/share/dict/words")
 
 MIN_LEN = 3
-MAX_LEN = 10
+MAX_LEN = 14
 
 # qwerty 邻键 (typo 机制 4)
 QWERTY_ADJ = {

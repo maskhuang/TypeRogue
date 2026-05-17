@@ -496,7 +496,7 @@ describe('generateWordPacks — 词语效果', () => {
       for (const p of packs) {
         if (p.rarity >= 2) {
           expect(p.wordEffect).toBeDefined();
-          expect(['base_score', 'multiplier', 'time', 'gold']).toContain(p.wordEffect!.type);
+          expect(['base_score', 'base_multiplier', 'multiplier', 'time', 'gold']).toContain(p.wordEffect!.type);
           expect(p.wordEffect!.value).toBeGreaterThan(0);
           found = true;
         }

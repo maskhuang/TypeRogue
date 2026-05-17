@@ -1,0 +1,3946 @@
+{
+  "long": {
+    "orig": "along",
+    "mech": "signage_leading_drop"
+  },
+  "gone": {
+    "orig": "bone",
+    "mech": "typo_qwerty"
+  },
+  "aesthetic": {
+    "orig": "aesthetics",
+    "mech": "signage_trailing_drop"
+  },
+  "sons": {
+    "orig": "sans",
+    "mech": "ocr_a→o"
+  },
+  "leak": {
+    "orig": "peak",
+    "mech": "typo_qwerty"
+  },
+  "drying": {
+    "orig": "crying",
+    "mech": "typo_qwerty"
+  },
+  "fail": {
+    "orig": "sail",
+    "mech": "longs_s→f"
+  },
+  "auditor": {
+    "orig": "auditory",
+    "mech": "signage_trailing_drop"
+  },
+  "square": {
+    "orig": "squared",
+    "mech": "signage_trailing_drop"
+  },
+  "waning": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "warn": {
+    "orig": "warm",
+    "mech": "ocr_m→n"
+  },
+  "facing": {
+    "orig": "fading",
+    "mech": "typo_qwerty"
+  },
+  "fill": {
+    "orig": "till",
+    "mech": "ocr_t→f"
+  },
+  "denomination": {
+    "orig": "renomination",
+    "mech": "typo_qwerty"
+  },
+  "tight": {
+    "orig": "fight",
+    "mech": "ocr_f→t"
+  },
+  "peaking": {
+    "orig": "speaking",
+    "mech": "signage_leading_drop"
+  },
+  "nobility": {
+    "orig": "mobility",
+    "mech": "ocr_m→n"
+  },
+  "warner": {
+    "orig": "warmer",
+    "mech": "ocr_m→n"
+  },
+  "refuge": {
+    "orig": "refugee",
+    "mech": "signage_middle_drop"
+  },
+  "disagree": {
+    "orig": "disagreed",
+    "mech": "signage_trailing_drop"
+  },
+  "brass": {
+    "orig": "grass",
+    "mech": "typo_qwerty"
+  },
+  "dose": {
+    "orig": "close",
+    "mech": "ocr_cl→d"
+  },
+  "stra": {
+    "orig": "straw",
+    "mech": "signage_trailing_drop"
+  },
+  "bern": {
+    "orig": "hern",
+    "mech": "ocr_h→b"
+  },
+  "deserved": {
+    "orig": "reserved",
+    "mech": "typo_qwerty"
+  },
+  "whip": {
+    "orig": "ship",
+    "mech": "typo_qwerty"
+  },
+  "cold": {
+    "orig": "could",
+    "mech": "signage_middle_drop"
+  },
+  "job": {
+    "orig": "mob",
+    "mech": "typo_qwerty"
+  },
+  "gain": {
+    "orig": "again",
+    "mech": "signage_leading_drop"
+  },
+  "avid": {
+    "orig": "avoid",
+    "mech": "signage_middle_drop"
+  },
+  "identity": {
+    "orig": "identify",
+    "mech": "ocr_f→t"
+  },
+  "raft": {
+    "orig": "craft",
+    "mech": "signage_leading_drop"
+  },
+  "rack": {
+    "orig": "rock",
+    "mech": "ocr_o→a"
+  },
+  "full": {
+    "orig": "fully",
+    "mech": "signage_trailing_drop"
+  },
+  "par": {
+    "orig": "pair",
+    "mech": "signage_middle_drop"
+  },
+  "gender": {
+    "orig": "bender",
+    "mech": "typo_qwerty"
+  },
+  "main": {
+    "orig": "amin",
+    "mech": "typo_transpose"
+  },
+  "hart": {
+    "orig": "chart",
+    "mech": "signage_leading_drop"
+  },
+  "lake": {
+    "orig": "lame",
+    "mech": "typo_qwerty"
+  },
+  "bang": {
+    "orig": "gang",
+    "mech": "typo_qwerty"
+  },
+  "tick": {
+    "orig": "stick",
+    "mech": "signage_leading_drop"
+  },
+  "vine": {
+    "orig": "fine",
+    "mech": "typo_qwerty"
+  },
+  "like": {
+    "orig": "alike",
+    "mech": "signage_leading_drop"
+  },
+  "not": {
+    "orig": "knot",
+    "mech": "signage_leading_drop"
+  },
+  "cutter": {
+    "orig": "clutter",
+    "mech": "signage_middle_drop"
+  },
+  "fair": {
+    "orig": "flair",
+    "mech": "signage_middle_drop"
+  },
+  "confession": {
+    "orig": "concession",
+    "mech": "typo_qwerty"
+  },
+  "ras": {
+    "orig": "rash",
+    "mech": "signage_trailing_drop"
+  },
+  "seeming": {
+    "orig": "seeking",
+    "mech": "typo_qwerty"
+  },
+  "leach": {
+    "orig": "peach",
+    "mech": "typo_qwerty"
+  },
+  "scare": {
+    "orig": "score",
+    "mech": "ocr_o→a"
+  },
+  "liking": {
+    "orig": "linking",
+    "mech": "signage_middle_drop"
+  },
+  "calculate": {
+    "orig": "calculated",
+    "mech": "signage_trailing_drop"
+  },
+  "fielder": {
+    "orig": "fielded",
+    "mech": "typo_qwerty"
+  },
+  "defect": {
+    "orig": "detect",
+    "mech": "ocr_t→f"
+  },
+  "folded": {
+    "orig": "folder",
+    "mech": "typo_qwerty"
+  },
+  "viral": {
+    "orig": "vital",
+    "mech": "typo_qwerty"
+  },
+  "geo": {
+    "orig": "gel",
+    "mech": "typo_qwerty"
+  },
+  "fiction": {
+    "orig": "friction",
+    "mech": "signage_middle_drop"
+  },
+  "marital": {
+    "orig": "martial",
+    "mech": "typo_transpose"
+  },
+  "involve": {
+    "orig": "involved",
+    "mech": "signage_trailing_drop"
+  },
+  "cones": {
+    "orig": "comes",
+    "mech": "ocr_m→n"
+  },
+  "resident": {
+    "orig": "president",
+    "mech": "signage_leading_drop"
+  },
+  "gown": {
+    "orig": "grown",
+    "mech": "signage_middle_drop"
+  },
+  "procession": {
+    "orig": "profession",
+    "mech": "typo_qwerty"
+  },
+  "discus": {
+    "orig": "discuss",
+    "mech": "signage_middle_drop"
+  },
+  "owe": {
+    "orig": "awe",
+    "mech": "ocr_a→o"
+  },
+  "ranger": {
+    "orig": "danger",
+    "mech": "typo_qwerty"
+  },
+  "tied": {
+    "orig": "timed",
+    "mech": "signage_middle_drop"
+  },
+  "bard": {
+    "orig": "hard",
+    "mech": "ocr_h→b"
+  },
+  "provided": {
+    "orig": "provider",
+    "mech": "typo_qwerty"
+  },
+  "grill": {
+    "orig": "grille",
+    "mech": "signage_trailing_drop"
+  },
+  "hooker": {
+    "orig": "booker",
+    "mech": "ocr_b→h"
+  },
+  "owing": {
+    "orig": "rowing",
+    "mech": "signage_leading_drop"
+  },
+  "classes": {
+    "orig": "classed",
+    "mech": "typo_qwerty"
+  },
+  "peasant": {
+    "orig": "pleasant",
+    "mech": "signage_middle_drop"
+  },
+  "thesis": {
+    "orig": "theses",
+    "mech": "vowel_e→i"
+  },
+  "move": {
+    "orig": "movie",
+    "mech": "signage_middle_drop"
+  },
+  "dice": {
+    "orig": "dive",
+    "mech": "typo_qwerty"
+  },
+  "forty": {
+    "orig": "forth",
+    "mech": "typo_qwerty"
+  },
+  "boer": {
+    "orig": "boxer",
+    "mech": "signage_middle_drop"
+  },
+  "fund": {
+    "orig": "found",
+    "mech": "signage_middle_drop"
+  },
+  "status": {
+    "orig": "statue",
+    "mech": "typo_qwerty"
+  },
+  "binding": {
+    "orig": "bonding",
+    "mech": "typo_qwerty"
+  },
+  "feared": {
+    "orig": "geared",
+    "mech": "typo_qwerty"
+  },
+  "couple": {
+    "orig": "coupled",
+    "mech": "signage_trailing_drop"
+  },
+  "heller": {
+    "orig": "helper",
+    "mech": "typo_qwerty"
+  },
+  "backward": {
+    "orig": "backwards",
+    "mech": "signage_trailing_drop"
+  },
+  "quote": {
+    "orig": "quite",
+    "mech": "typo_qwerty"
+  },
+  "closed": {
+    "orig": "closer",
+    "mech": "typo_qwerty"
+  },
+  "tire": {
+    "orig": "fire",
+    "mech": "ocr_f→t"
+  },
+  "unlocked": {
+    "orig": "unblocked",
+    "mech": "signage_middle_drop"
+  },
+  "weight": {
+    "orig": "wright",
+    "mech": "typo_qwerty"
+  },
+  "shire": {
+    "orig": "shore",
+    "mech": "typo_qwerty"
+  },
+  "kids": {
+    "orig": "kiss",
+    "mech": "typo_qwerty"
+  },
+  "detention": {
+    "orig": "retention",
+    "mech": "typo_qwerty"
+  },
+  "structure": {
+    "orig": "structured",
+    "mech": "signage_trailing_drop"
+  },
+  "mean": {
+    "orig": "meant",
+    "mech": "signage_trailing_drop"
+  },
+  "shah": {
+    "orig": "shan",
+    "mech": "typo_qwerty"
+  },
+  "cha": {
+    "orig": "cho",
+    "mech": "ocr_o→a"
+  },
+  "withdraw": {
+    "orig": "withdrawn",
+    "mech": "signage_trailing_drop"
+  },
+  "casting": {
+    "orig": "costing",
+    "mech": "ocr_o→a"
+  },
+  "specially": {
+    "orig": "especially",
+    "mech": "signage_leading_drop"
+  },
+  "less": {
+    "orig": "bless",
+    "mech": "signage_leading_drop"
+  },
+  "draft": {
+    "orig": "craft",
+    "mech": "typo_qwerty"
+  },
+  "comprise": {
+    "orig": "comprised",
+    "mech": "signage_trailing_drop"
+  },
+  "freeing": {
+    "orig": "freezing",
+    "mech": "signage_middle_drop"
+  },
+  "accuse": {
+    "orig": "accused",
+    "mech": "signage_trailing_drop"
+  },
+  "clip": {
+    "orig": "dip",
+    "mech": "ocr_d→cl"
+  },
+  "hardy": {
+    "orig": "hardly",
+    "mech": "signage_middle_drop"
+  },
+  "martial": {
+    "orig": "marital",
+    "mech": "typo_transpose"
+  },
+  "consume": {
+    "orig": "consumer",
+    "mech": "signage_trailing_drop"
+  },
+  "hooked": {
+    "orig": "booked",
+    "mech": "ocr_b→h"
+  },
+  "cent": {
+    "orig": "scent",
+    "mech": "signage_leading_drop"
+  },
+  "charting": {
+    "orig": "charging",
+    "mech": "typo_qwerty"
+  },
+  "warship": {
+    "orig": "worship",
+    "mech": "ocr_o→a"
+  },
+  "fram": {
+    "orig": "from",
+    "mech": "ocr_o→a"
+  },
+  "junk": {
+    "orig": "juno",
+    "mech": "typo_qwerty"
+  },
+  "onto": {
+    "orig": "into",
+    "mech": "typo_qwerty"
+  },
+  "back": {
+    "orig": "hack",
+    "mech": "ocr_h→b"
+  },
+  "lan": {
+    "orig": "lam",
+    "mech": "ocr_m→n"
+  },
+  "just": {
+    "orig": "must",
+    "mech": "typo_qwerty"
+  },
+  "nope": {
+    "orig": "hope",
+    "mech": "typo_qwerty"
+  },
+  "weber": {
+    "orig": "webber",
+    "mech": "signage_middle_drop"
+  },
+  "resting": {
+    "orig": "testing",
+    "mech": "typo_qwerty"
+  },
+  "sol": {
+    "orig": "soil",
+    "mech": "signage_middle_drop"
+  },
+  "scale": {
+    "orig": "scaled",
+    "mech": "signage_trailing_drop"
+  },
+  "deaf": {
+    "orig": "dead",
+    "mech": "typo_qwerty"
+  },
+  "booker": {
+    "orig": "hooker",
+    "mech": "ocr_h→b"
+  },
+  "ice": {
+    "orig": "dice",
+    "mech": "signage_leading_drop"
+  },
+  "stick": {
+    "orig": "sticks",
+    "mech": "signage_trailing_drop"
+  },
+  "knew": {
+    "orig": "knee",
+    "mech": "typo_qwerty"
+  },
+  "adopt": {
+    "orig": "adapt",
+    "mech": "ocr_a→o"
+  },
+  "reformer": {
+    "orig": "reformed",
+    "mech": "typo_qwerty"
+  },
+  "primate": {
+    "orig": "primates",
+    "mech": "signage_trailing_drop"
+  },
+  "facial": {
+    "orig": "racial",
+    "mech": "typo_qwerty"
+  },
+  "sensor": {
+    "orig": "sensory",
+    "mech": "signage_trailing_drop"
+  },
+  "five": {
+    "orig": "dive",
+    "mech": "typo_qwerty"
+  },
+  "iberian": {
+    "orig": "siberian",
+    "mech": "signage_leading_drop"
+  },
+  "employed": {
+    "orig": "employee",
+    "mech": "typo_qwerty"
+  },
+  "gong": {
+    "orig": "gang",
+    "mech": "ocr_a→o"
+  },
+  "dock": {
+    "orig": "clock",
+    "mech": "ocr_cl→d"
+  },
+  "mixed": {
+    "orig": "mixer",
+    "mech": "typo_qwerty"
+  },
+  "graphic": {
+    "orig": "graphics",
+    "mech": "signage_trailing_drop"
+  },
+  "learn": {
+    "orig": "learnt",
+    "mech": "signage_trailing_drop"
+  },
+  "remain": {
+    "orig": "remains",
+    "mech": "signage_trailing_drop"
+  },
+  "traverse": {
+    "orig": "traversed",
+    "mech": "signage_trailing_drop"
+  },
+  "draw": {
+    "orig": "drawn",
+    "mech": "signage_trailing_drop"
+  },
+  "adapt": {
+    "orig": "adopt",
+    "mech": "ocr_o→a"
+  },
+  "caste": {
+    "orig": "castle",
+    "mech": "signage_middle_drop"
+  },
+  "license": {
+    "orig": "licensed",
+    "mech": "signage_trailing_drop"
+  },
+  "rad": {
+    "orig": "raid",
+    "mech": "signage_middle_drop"
+  },
+  "rune": {
+    "orig": "dune",
+    "mech": "typo_qwerty"
+  },
+  "net": {
+    "orig": "met",
+    "mech": "ocr_m→n"
+  },
+  "betting": {
+    "orig": "getting",
+    "mech": "typo_qwerty"
+  },
+  "horn": {
+    "orig": "born",
+    "mech": "ocr_b→h"
+  },
+  "token": {
+    "orig": "taken",
+    "mech": "ocr_a→o"
+  },
+  "later": {
+    "orig": "slater",
+    "mech": "signage_leading_drop"
+  },
+  "scam": {
+    "orig": "scan",
+    "mech": "ocr_n→m"
+  },
+  "webber": {
+    "orig": "weber",
+    "mech": "typo_doubling"
+  },
+  "lung": {
+    "orig": "kung",
+    "mech": "typo_qwerty"
+  },
+  "netting": {
+    "orig": "betting",
+    "mech": "typo_qwerty"
+  },
+  "pod": {
+    "orig": "pad",
+    "mech": "ocr_a→o"
+  },
+  "romeo": {
+    "orig": "romero",
+    "mech": "signage_middle_drop"
+  },
+  "dot": {
+    "orig": "dont",
+    "mech": "signage_middle_drop"
+  },
+  "soul": {
+    "orig": "soil",
+    "mech": "typo_qwerty"
+  },
+  "resolve": {
+    "orig": "resolved",
+    "mech": "signage_trailing_drop"
+  },
+  "she": {
+    "orig": "shoe",
+    "mech": "signage_middle_drop"
+  },
+  "figure": {
+    "orig": "figured",
+    "mech": "signage_trailing_drop"
+  },
+  "flat": {
+    "orig": "fiat",
+    "mech": "ocr_i→l"
+  },
+  "won": {
+    "orig": "wan",
+    "mech": "ocr_a→o"
+  },
+  "span": {
+    "orig": "spam",
+    "mech": "ocr_m→n"
+  },
+  "afternoon": {
+    "orig": "afternoons",
+    "mech": "signage_trailing_drop"
+  },
+  "begun": {
+    "orig": "begin",
+    "mech": "typo_qwerty"
+  },
+  "cruise": {
+    "orig": "cruiser",
+    "mech": "signage_trailing_drop"
+  },
+  "gate": {
+    "orig": "fate",
+    "mech": "typo_qwerty"
+  },
+  "lifting": {
+    "orig": "listing",
+    "mech": "longs_s→f"
+  },
+  "jam": {
+    "orig": "nam",
+    "mech": "typo_qwerty"
+  },
+  "lost": {
+    "orig": "last",
+    "mech": "ocr_a→o"
+  },
+  "triad": {
+    "orig": "tried",
+    "mech": "vowel_e→a"
+  },
+  "tool": {
+    "orig": "fool",
+    "mech": "ocr_f→t"
+  },
+  "gel": {
+    "orig": "bel",
+    "mech": "typo_qwerty"
+  },
+  "sigh": {
+    "orig": "singh",
+    "mech": "signage_middle_drop"
+  },
+  "traveled": {
+    "orig": "travelled",
+    "mech": "signage_middle_drop"
+  },
+  "tightly": {
+    "orig": "rightly",
+    "mech": "typo_qwerty"
+  },
+  "harp": {
+    "orig": "sharp",
+    "mech": "signage_leading_drop"
+  },
+  "funk": {
+    "orig": "sunk",
+    "mech": "longs_s→f"
+  },
+  "statistic": {
+    "orig": "statistics",
+    "mech": "signage_trailing_drop"
+  },
+  "ensure": {
+    "orig": "endure",
+    "mech": "typo_qwerty"
+  },
+  "jealous": {
+    "orig": "jealousy",
+    "mech": "signage_trailing_drop"
+  },
+  "seminar": {
+    "orig": "seminary",
+    "mech": "signage_trailing_drop"
+  },
+  "gave": {
+    "orig": "grave",
+    "mech": "signage_middle_drop"
+  },
+  "axes": {
+    "orig": "axis",
+    "mech": "vowel_i→e"
+  },
+  "hair": {
+    "orig": "chair",
+    "mech": "signage_leading_drop"
+  },
+  "radial": {
+    "orig": "radical",
+    "mech": "signage_middle_drop"
+  },
+  "slice": {
+    "orig": "slide",
+    "mech": "typo_qwerty"
+  },
+  "tra": {
+    "orig": "fra",
+    "mech": "ocr_f→t"
+  },
+  "true": {
+    "orig": "truce",
+    "mech": "signage_middle_drop"
+  },
+  "flavor": {
+    "orig": "flavour",
+    "mech": "signage_middle_drop"
+  },
+  "hacked": {
+    "orig": "backed",
+    "mech": "ocr_b→h"
+  },
+  "prepare": {
+    "orig": "prepared",
+    "mech": "signage_trailing_drop"
+  },
+  "bas": {
+    "orig": "bass",
+    "mech": "signage_middle_drop"
+  },
+  "brief": {
+    "orig": "grief",
+    "mech": "typo_qwerty"
+  },
+  "banking": {
+    "orig": "blanking",
+    "mech": "signage_middle_drop"
+  },
+  "bless": {
+    "orig": "bliss",
+    "mech": "vowel_i→e"
+  },
+  "proceed": {
+    "orig": "proceeds",
+    "mech": "signage_trailing_drop"
+  },
+  "ark": {
+    "orig": "bark",
+    "mech": "signage_leading_drop"
+  },
+  "heat": {
+    "orig": "beat",
+    "mech": "ocr_b→h"
+  },
+  "fore": {
+    "orig": "fare",
+    "mech": "ocr_a→o"
+  },
+  "oppose": {
+    "orig": "opposed",
+    "mech": "signage_trailing_drop"
+  },
+  "serial": {
+    "orig": "aerial",
+    "mech": "typo_qwerty"
+  },
+  "mule": {
+    "orig": "mile",
+    "mech": "typo_qwerty"
+  },
+  "grip": {
+    "orig": "trip",
+    "mech": "typo_qwerty"
+  },
+  "conviction": {
+    "orig": "convection",
+    "mech": "vowel_e→i"
+  },
+  "pal": {
+    "orig": "pol",
+    "mech": "ocr_o→a"
+  },
+  "cabal": {
+    "orig": "canal",
+    "mech": "typo_qwerty"
+  },
+  "bear": {
+    "orig": "hear",
+    "mech": "ocr_h→b"
+  },
+  "canning": {
+    "orig": "scanning",
+    "mech": "signage_leading_drop"
+  },
+  "color": {
+    "orig": "colors",
+    "mech": "signage_trailing_drop"
+  },
+  "jet": {
+    "orig": "het",
+    "mech": "typo_qwerty"
+  },
+  "board": {
+    "orig": "aboard",
+    "mech": "signage_leading_drop"
+  },
+  "strange": {
+    "orig": "stranger",
+    "mech": "signage_trailing_drop"
+  },
+  "ser": {
+    "orig": "user",
+    "mech": "signage_leading_drop"
+  },
+  "clover": {
+    "orig": "dover",
+    "mech": "ocr_d→cl"
+  },
+  "losing": {
+    "orig": "posing",
+    "mech": "typo_qwerty"
+  },
+  "bark": {
+    "orig": "bari",
+    "mech": "typo_qwerty"
+  },
+  "toll": {
+    "orig": "tall",
+    "mech": "ocr_a→o"
+  },
+  "aide": {
+    "orig": "abide",
+    "mech": "signage_middle_drop"
+  },
+  "fra": {
+    "orig": "tra",
+    "mech": "ocr_t→f"
+  },
+  "posted": {
+    "orig": "pasted",
+    "mech": "ocr_a→o"
+  },
+  "luck": {
+    "orig": "lucky",
+    "mech": "signage_trailing_drop"
+  },
+  "scaled": {
+    "orig": "sealed",
+    "mech": "ocr_e→c"
+  },
+  "silly": {
+    "orig": "willy",
+    "mech": "typo_qwerty"
+  },
+  "deny": {
+    "orig": "dent",
+    "mech": "typo_qwerty"
+  },
+  "compile": {
+    "orig": "compiler",
+    "mech": "signage_trailing_drop"
+  },
+  "tyrone": {
+    "orig": "throne",
+    "mech": "typo_qwerty"
+  },
+  "hard": {
+    "orig": "bard",
+    "mech": "ocr_b→h"
+  },
+  "orchestra": {
+    "orig": "orchestral",
+    "mech": "signage_trailing_drop"
+  },
+  "lasting": {
+    "orig": "pasting",
+    "mech": "typo_qwerty"
+  },
+  "lest": {
+    "orig": "least",
+    "mech": "signage_middle_drop"
+  },
+  "teddy": {
+    "orig": "reddy",
+    "mech": "typo_qwerty"
+  },
+  "oversee": {
+    "orig": "overseen",
+    "mech": "signage_trailing_drop"
+  },
+  "associate": {
+    "orig": "associated",
+    "mech": "signage_trailing_drop"
+  },
+  "prod": {
+    "orig": "prof",
+    "mech": "typo_qwerty"
+  },
+  "arrange": {
+    "orig": "arranger",
+    "mech": "signage_trailing_drop"
+  },
+  "hid": {
+    "orig": "bid",
+    "mech": "ocr_b→h"
+  },
+  "work": {
+    "orig": "works",
+    "mech": "signage_trailing_drop"
+  },
+  "few": {
+    "orig": "flew",
+    "mech": "signage_middle_drop"
+  },
+  "ordered": {
+    "orig": "bordered",
+    "mech": "signage_leading_drop"
+  },
+  "acquire": {
+    "orig": "acquired",
+    "mech": "signage_trailing_drop"
+  },
+  "filling": {
+    "orig": "filing",
+    "mech": "typo_doubling"
+  },
+  "che": {
+    "orig": "chef",
+    "mech": "signage_trailing_drop"
+  },
+  "yen": {
+    "orig": "gen",
+    "mech": "typo_qwerty"
+  },
+  "rolled": {
+    "orig": "roller",
+    "mech": "typo_qwerty"
+  },
+  "roster": {
+    "orig": "foster",
+    "mech": "typo_qwerty"
+  },
+  "cord": {
+    "orig": "card",
+    "mech": "ocr_a→o"
+  },
+  "vent": {
+    "orig": "event",
+    "mech": "signage_leading_drop"
+  },
+  "loch": {
+    "orig": "koch",
+    "mech": "typo_qwerty"
+  },
+  "halo": {
+    "orig": "hall",
+    "mech": "typo_qwerty"
+  },
+  "offended": {
+    "orig": "offender",
+    "mech": "typo_qwerty"
+  },
+  "shipping": {
+    "orig": "shopping",
+    "mech": "typo_qwerty"
+  },
+  "weighed": {
+    "orig": "weighted",
+    "mech": "signage_middle_drop"
+  },
+  "quarter": {
+    "orig": "quarters",
+    "mech": "signage_trailing_drop"
+  },
+  "engraved": {
+    "orig": "engraver",
+    "mech": "typo_qwerty"
+  },
+  "reserved": {
+    "orig": "deserved",
+    "mech": "typo_qwerty"
+  },
+  "foe": {
+    "orig": "toe",
+    "mech": "ocr_t→f"
+  },
+  "ware": {
+    "orig": "wore",
+    "mech": "ocr_o→a"
+  },
+  "singled": {
+    "orig": "singles",
+    "mech": "typo_qwerty"
+  },
+  "grief": {
+    "orig": "brief",
+    "mech": "typo_qwerty"
+  },
+  "failing": {
+    "orig": "sailing",
+    "mech": "longs_s→f"
+  },
+  "palm": {
+    "orig": "psalm",
+    "mech": "signage_middle_drop"
+  },
+  "fled": {
+    "orig": "flee",
+    "mech": "typo_qwerty"
+  },
+  "reformed": {
+    "orig": "reformer",
+    "mech": "typo_qwerty"
+  },
+  "temp": {
+    "orig": "tempo",
+    "mech": "signage_trailing_drop"
+  },
+  "next": {
+    "orig": "nest",
+    "mech": "typo_qwerty"
+  },
+  "earn": {
+    "orig": "learn",
+    "mech": "signage_leading_drop"
+  },
+  "simulation": {
+    "orig": "stimulation",
+    "mech": "signage_middle_drop"
+  },
+  "hulk": {
+    "orig": "bulk",
+    "mech": "ocr_b→h"
+  },
+  "aria": {
+    "orig": "area",
+    "mech": "vowel_e→i"
+  },
+  "joke": {
+    "orig": "joker",
+    "mech": "signage_trailing_drop"
+  },
+  "reddy": {
+    "orig": "freddy",
+    "mech": "signage_leading_drop"
+  },
+  "venus": {
+    "orig": "genus",
+    "mech": "typo_qwerty"
+  },
+  "quartet": {
+    "orig": "quarter",
+    "mech": "typo_qwerty"
+  },
+  "choir": {
+    "orig": "chair",
+    "mech": "ocr_a→o"
+  },
+  "shift": {
+    "orig": "shirt",
+    "mech": "typo_qwerty"
+  },
+  "tenor": {
+    "orig": "tensor",
+    "mech": "signage_middle_drop"
+  },
+  "compete": {
+    "orig": "complete",
+    "mech": "signage_middle_drop"
+  },
+  "educate": {
+    "orig": "educated",
+    "mech": "signage_trailing_drop"
+  },
+  "analysis": {
+    "orig": "analyses",
+    "mech": "vowel_e→i"
+  },
+  "wealth": {
+    "orig": "wealthy",
+    "mech": "signage_trailing_drop"
+  },
+  "race": {
+    "orig": "brace",
+    "mech": "signage_leading_drop"
+  },
+  "mont": {
+    "orig": "mount",
+    "mech": "signage_middle_drop"
+  },
+  "size": {
+    "orig": "seize",
+    "mech": "signage_middle_drop"
+  },
+  "char": {
+    "orig": "chair",
+    "mech": "signage_middle_drop"
+  },
+  "trivia": {
+    "orig": "trivial",
+    "mech": "signage_trailing_drop"
+  },
+  "profession": {
+    "orig": "procession",
+    "mech": "typo_qwerty"
+  },
+  "pull": {
+    "orig": "pill",
+    "mech": "typo_qwerty"
+  },
+  "needless": {
+    "orig": "needles",
+    "mech": "typo_doubling"
+  },
+  "hind": {
+    "orig": "bind",
+    "mech": "ocr_b→h"
+  },
+  "flew": {
+    "orig": "flee",
+    "mech": "typo_qwerty"
+  },
+  "market": {
+    "orig": "marker",
+    "mech": "typo_qwerty"
+  },
+  "look": {
+    "orig": "lock",
+    "mech": "ocr_c→o"
+  },
+  "mars": {
+    "orig": "mare",
+    "mech": "typo_qwerty"
+  },
+  "coal": {
+    "orig": "cool",
+    "mech": "ocr_o→a"
+  },
+  "defer": {
+    "orig": "deter",
+    "mech": "ocr_t→f"
+  },
+  "canal": {
+    "orig": "cabal",
+    "mech": "typo_qwerty"
+  },
+  "ladder": {
+    "orig": "bladder",
+    "mech": "signage_leading_drop"
+  },
+  "fate": {
+    "orig": "tate",
+    "mech": "ocr_t→f"
+  },
+  "comma": {
+    "orig": "coma",
+    "mech": "typo_doubling"
+  },
+  "rust": {
+    "orig": "crust",
+    "mech": "signage_leading_drop"
+  },
+  "genetic": {
+    "orig": "genetics",
+    "mech": "signage_trailing_drop"
+  },
+  "retention": {
+    "orig": "detention",
+    "mech": "typo_qwerty"
+  },
+  "lip": {
+    "orig": "clip",
+    "mech": "signage_leading_drop"
+  },
+  "evolution": {
+    "orig": "revolution",
+    "mech": "signage_leading_drop"
+  },
+  "worship": {
+    "orig": "warship",
+    "mech": "ocr_a→o"
+  },
+  "hell": {
+    "orig": "bell",
+    "mech": "ocr_b→h"
+  },
+  "duck": {
+    "orig": "suck",
+    "mech": "typo_qwerty"
+  },
+  "bombed": {
+    "orig": "bomber",
+    "mech": "typo_qwerty"
+  },
+  "statute": {
+    "orig": "stature",
+    "mech": "typo_qwerty"
+  },
+  "batch": {
+    "orig": "hatch",
+    "mech": "ocr_h→b"
+  },
+  "wind": {
+    "orig": "windy",
+    "mech": "signage_trailing_drop"
+  },
+  "lap": {
+    "orig": "slap",
+    "mech": "signage_leading_drop"
+  },
+  "discover": {
+    "orig": "discovery",
+    "mech": "signage_trailing_drop"
+  },
+  "kid": {
+    "orig": "kind",
+    "mech": "signage_middle_drop"
+  },
+  "eel": {
+    "orig": "feel",
+    "mech": "signage_leading_drop"
+  },
+  "employer": {
+    "orig": "employed",
+    "mech": "typo_qwerty"
+  },
+  "place": {
+    "orig": "palace",
+    "mech": "signage_middle_drop"
+  },
+  "ask": {
+    "orig": "mask",
+    "mech": "signage_leading_drop"
+  },
+  "resignation": {
+    "orig": "designation",
+    "mech": "typo_qwerty"
+  },
+  "acre": {
+    "orig": "care",
+    "mech": "typo_transpose"
+  },
+  "earning": {
+    "orig": "learning",
+    "mech": "signage_leading_drop"
+  },
+  "beside": {
+    "orig": "besides",
+    "mech": "signage_trailing_drop"
+  },
+  "steep": {
+    "orig": "step",
+    "mech": "typo_doubling"
+  },
+  "basis": {
+    "orig": "bases",
+    "mech": "vowel_e→i"
+  },
+  "lovely": {
+    "orig": "lively",
+    "mech": "typo_qwerty"
+  },
+  "collar": {
+    "orig": "dollar",
+    "mech": "typo_qwerty"
+  },
+  "posting": {
+    "orig": "pasting",
+    "mech": "ocr_a→o"
+  },
+  "tough": {
+    "orig": "though",
+    "mech": "signage_middle_drop"
+  },
+  "boiler": {
+    "orig": "boiled",
+    "mech": "typo_qwerty"
+  },
+  "fouls": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "booked": {
+    "orig": "hooked",
+    "mech": "ocr_h→b"
+  },
+  "siding": {
+    "orig": "sliding",
+    "mech": "signage_middle_drop"
+  },
+  "lime": {
+    "orig": "line",
+    "mech": "ocr_n→m"
+  },
+  "click": {
+    "orig": "clock",
+    "mech": "typo_qwerty"
+  },
+  "produce": {
+    "orig": "produced",
+    "mech": "signage_trailing_drop"
+  },
+  "mart": {
+    "orig": "smart",
+    "mech": "signage_leading_drop"
+  },
+  "tow": {
+    "orig": "town",
+    "mech": "signage_trailing_drop"
+  },
+  "god": {
+    "orig": "gold",
+    "mech": "signage_middle_drop"
+  },
+  "throne": {
+    "orig": "tyrone",
+    "mech": "typo_qwerty"
+  },
+  "morally": {
+    "orig": "mortally",
+    "mech": "signage_middle_drop"
+  },
+  "fit": {
+    "orig": "sit",
+    "mech": "longs_s→f"
+  },
+  "calling": {
+    "orig": "falling",
+    "mech": "typo_qwerty"
+  },
+  "wrapper": {
+    "orig": "wrapped",
+    "mech": "typo_qwerty"
+  },
+  "heritage": {
+    "orig": "hermitage",
+    "mech": "signage_middle_drop"
+  },
+  "hook": {
+    "orig": "book",
+    "mech": "ocr_b→h"
+  },
+  "thank": {
+    "orig": "thanks",
+    "mech": "signage_trailing_drop"
+  },
+  "chili": {
+    "orig": "chill",
+    "mech": "ocr_l→i"
+  },
+  "get": {
+    "orig": "bet",
+    "mech": "typo_qwerty"
+  },
+  "wight": {
+    "orig": "weight",
+    "mech": "signage_middle_drop"
+  },
+  "chance": {
+    "orig": "chancel",
+    "mech": "signage_trailing_drop"
+  },
+  "sewing": {
+    "orig": "seeing",
+    "mech": "typo_qwerty"
+  },
+  "song": {
+    "orig": "sang",
+    "mech": "ocr_a→o"
+  },
+  "worth": {
+    "orig": "worthy",
+    "mech": "signage_trailing_drop"
+  },
+  "howe": {
+    "orig": "hose",
+    "mech": "typo_qwerty"
+  },
+  "scared": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "clarity": {
+    "orig": "clarify",
+    "mech": "ocr_f→t"
+  },
+  "via": {
+    "orig": "vila",
+    "mech": "signage_middle_drop"
+  },
+  "detect": {
+    "orig": "defect",
+    "mech": "ocr_f→t"
+  },
+  "locker": {
+    "orig": "locked",
+    "mech": "typo_qwerty"
+  },
+  "swear": {
+    "orig": "sweat",
+    "mech": "typo_qwerty"
+  },
+  "dough": {
+    "orig": "rough",
+    "mech": "typo_qwerty"
+  },
+  "grey": {
+    "orig": "gray",
+    "mech": "vowel_a→e"
+  },
+  "sometime": {
+    "orig": "sometimes",
+    "mech": "signage_trailing_drop"
+  },
+  "stalk": {
+    "orig": "stall",
+    "mech": "typo_qwerty"
+  },
+  "laughter": {
+    "orig": "slaughter",
+    "mech": "signage_leading_drop"
+  },
+  "swam": {
+    "orig": "swan",
+    "mech": "ocr_n→m"
+  },
+  "adventure": {
+    "orig": "adventurer",
+    "mech": "signage_trailing_drop"
+  },
+  "amid": {
+    "orig": "maid",
+    "mech": "typo_transpose"
+  },
+  "pointing": {
+    "orig": "painting",
+    "mech": "ocr_a→o"
+  },
+  "greed": {
+    "orig": "agreed",
+    "mech": "signage_leading_drop"
+  },
+  "shame": {
+    "orig": "shake",
+    "mech": "typo_qwerty"
+  },
+  "reception": {
+    "orig": "deception",
+    "mech": "typo_qwerty"
+  },
+  "fad": {
+    "orig": "sad",
+    "mech": "longs_s→f"
+  },
+  "lena": {
+    "orig": "lens",
+    "mech": "typo_qwerty"
+  },
+  "recent": {
+    "orig": "decent",
+    "mech": "typo_qwerty"
+  },
+  "bending": {
+    "orig": "blending",
+    "mech": "signage_middle_drop"
+  },
+  "cat": {
+    "orig": "eat",
+    "mech": "ocr_e→c"
+  },
+  "inning": {
+    "orig": "winning",
+    "mech": "signage_leading_drop"
+  },
+  "pocket": {
+    "orig": "packet",
+    "mech": "ocr_a→o"
+  },
+  "collage": {
+    "orig": "college",
+    "mech": "vowel_e→a"
+  },
+  "skater": {
+    "orig": "slater",
+    "mech": "typo_qwerty"
+  },
+  "venue": {
+    "orig": "avenue",
+    "mech": "signage_leading_drop"
+  },
+  "bought": {
+    "orig": "brought",
+    "mech": "signage_middle_drop"
+  },
+  "beast": {
+    "orig": "breast",
+    "mech": "signage_middle_drop"
+  },
+  "disperse": {
+    "orig": "dispersed",
+    "mech": "signage_trailing_drop"
+  },
+  "arrow": {
+    "orig": "barrow",
+    "mech": "signage_leading_drop"
+  },
+  "lax": {
+    "orig": "lac",
+    "mech": "typo_qwerty"
+  },
+  "nice": {
+    "orig": "mice",
+    "mech": "ocr_m→n"
+  },
+  "sage": {
+    "orig": "usage",
+    "mech": "signage_leading_drop"
+  },
+  "made": {
+    "orig": "mode",
+    "mech": "ocr_o→a"
+  },
+  "reign": {
+    "orig": "resign",
+    "mech": "signage_middle_drop"
+  },
+  "deserve": {
+    "orig": "deserved",
+    "mech": "signage_trailing_drop"
+  },
+  "incorporate": {
+    "orig": "incorporated",
+    "mech": "signage_trailing_drop"
+  },
+  "marker": {
+    "orig": "marked",
+    "mech": "typo_qwerty"
+  },
+  "enforce": {
+    "orig": "enforced",
+    "mech": "signage_trailing_drop"
+  },
+  "suit": {
+    "orig": "suite",
+    "mech": "signage_trailing_drop"
+  },
+  "life": {
+    "orig": "live",
+    "mech": "typo_qwerty"
+  },
+  "hong": {
+    "orig": "gong",
+    "mech": "typo_qwerty"
+  },
+  "agree": {
+    "orig": "agreed",
+    "mech": "signage_trailing_drop"
+  },
+  "fielded": {
+    "orig": "fielder",
+    "mech": "typo_qwerty"
+  },
+  "ski": {
+    "orig": "skin",
+    "mech": "signage_trailing_drop"
+  },
+  "reminder": {
+    "orig": "remainder",
+    "mech": "signage_middle_drop"
+  },
+  "folder": {
+    "orig": "colder",
+    "mech": "typo_qwerty"
+  },
+  "pen": {
+    "orig": "open",
+    "mech": "signage_leading_drop"
+  },
+  "missing": {
+    "orig": "kissing",
+    "mech": "typo_qwerty"
+  },
+  "keen": {
+    "orig": "kern",
+    "mech": "typo_qwerty"
+  },
+  "adoptive": {
+    "orig": "adaptive",
+    "mech": "ocr_a→o"
+  },
+  "riff": {
+    "orig": "rift",
+    "mech": "ocr_t→f"
+  },
+  "maid": {
+    "orig": "maud",
+    "mech": "typo_qwerty"
+  },
+  "director": {
+    "orig": "directory",
+    "mech": "signage_trailing_drop"
+  },
+  "composer": {
+    "orig": "composed",
+    "mech": "typo_qwerty"
+  },
+  "patrol": {
+    "orig": "petrol",
+    "mech": "vowel_e→a"
+  },
+  "glad": {
+    "orig": "gland",
+    "mech": "signage_middle_drop"
+  },
+  "dinner": {
+    "orig": "diner",
+    "mech": "typo_doubling"
+  },
+  "threw": {
+    "orig": "three",
+    "mech": "typo_qwerty"
+  },
+  "entry": {
+    "orig": "gentry",
+    "mech": "signage_leading_drop"
+  },
+  "travelled": {
+    "orig": "traveled",
+    "mech": "typo_doubling"
+  },
+  "four": {
+    "orig": "sour",
+    "mech": "longs_s→f"
+  },
+  "more": {
+    "orig": "mare",
+    "mech": "ocr_a→o"
+  },
+  "seek": {
+    "orig": "seem",
+    "mech": "typo_qwerty"
+  },
+  "settler": {
+    "orig": "settled",
+    "mech": "typo_qwerty"
+  },
+  "carrier": {
+    "orig": "carried",
+    "mech": "typo_qwerty"
+  },
+  "sock": {
+    "orig": "sack",
+    "mech": "ocr_a→o"
+  },
+  "hope": {
+    "orig": "hoped",
+    "mech": "signage_trailing_drop"
+  },
+  "actually": {
+    "orig": "factually",
+    "mech": "signage_leading_drop"
+  },
+  "county": {
+    "orig": "country",
+    "mech": "signage_middle_drop"
+  },
+  "northward": {
+    "orig": "northwards",
+    "mech": "signage_trailing_drop"
+  },
+  "thin": {
+    "orig": "thing",
+    "mech": "signage_trailing_drop"
+  },
+  "unite": {
+    "orig": "united",
+    "mech": "signage_trailing_drop"
+  },
+  "leg": {
+    "orig": "let",
+    "mech": "typo_qwerty"
+  },
+  "butt": {
+    "orig": "butte",
+    "mech": "signage_trailing_drop"
+  },
+  "half": {
+    "orig": "halt",
+    "mech": "ocr_t→f"
+  },
+  "ale": {
+    "orig": "hale",
+    "mech": "signage_leading_drop"
+  },
+  "eighty": {
+    "orig": "eighth",
+    "mech": "typo_qwerty"
+  },
+  "log": {
+    "orig": "lag",
+    "mech": "ocr_a→o"
+  },
+  "lack": {
+    "orig": "lock",
+    "mech": "ocr_o→a"
+  },
+  "baton": {
+    "orig": "baron",
+    "mech": "typo_qwerty"
+  },
+  "sup": {
+    "orig": "soup",
+    "mech": "signage_middle_drop"
+  },
+  "ventral": {
+    "orig": "central",
+    "mech": "typo_qwerty"
+  },
+  "claw": {
+    "orig": "flaw",
+    "mech": "typo_qwerty"
+  },
+  "flock": {
+    "orig": "clock",
+    "mech": "typo_qwerty"
+  },
+  "gay": {
+    "orig": "gray",
+    "mech": "signage_middle_drop"
+  },
+  "thee": {
+    "orig": "theme",
+    "mech": "signage_middle_drop"
+  },
+  "untied": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "sold": {
+    "orig": "solid",
+    "mech": "signage_middle_drop"
+  },
+  "heron": {
+    "orig": "heroin",
+    "mech": "signage_middle_drop"
+  },
+  "reformation": {
+    "orig": "deformation",
+    "mech": "typo_qwerty"
+  },
+  "hers": {
+    "orig": "herd",
+    "mech": "typo_qwerty"
+  },
+  "archer": {
+    "orig": "archery",
+    "mech": "signage_trailing_drop"
+  },
+  "hindu": {
+    "orig": "hindi",
+    "mech": "typo_qwerty"
+  },
+  "glow": {
+    "orig": "blow",
+    "mech": "typo_qwerty"
+  },
+  "lining": {
+    "orig": "linking",
+    "mech": "signage_middle_drop"
+  },
+  "insect": {
+    "orig": "inspect",
+    "mech": "signage_middle_drop"
+  },
+  "rev": {
+    "orig": "dev",
+    "mech": "typo_qwerty"
+  },
+  "trail": {
+    "orig": "trial",
+    "mech": "typo_transpose"
+  },
+  "fro": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "stature": {
+    "orig": "statute",
+    "mech": "typo_qwerty"
+  },
+  "stake": {
+    "orig": "stoke",
+    "mech": "ocr_o→a"
+  },
+  "gram": {
+    "orig": "fram",
+    "mech": "typo_qwerty"
+  },
+  "renomination": {
+    "orig": "denomination",
+    "mech": "typo_qwerty"
+  },
+  "pest": {
+    "orig": "lest",
+    "mech": "typo_qwerty"
+  },
+  "expansive": {
+    "orig": "expensive",
+    "mech": "vowel_e→a"
+  },
+  "crew": {
+    "orig": "screw",
+    "mech": "signage_leading_drop"
+  },
+  "fender": {
+    "orig": "tender",
+    "mech": "ocr_t→f"
+  },
+  "aft": {
+    "orig": "raft",
+    "mech": "signage_leading_drop"
+  },
+  "leaning": {
+    "orig": "cleaning",
+    "mech": "signage_leading_drop"
+  },
+  "checked": {
+    "orig": "checker",
+    "mech": "typo_qwerty"
+  },
+  "hasty": {
+    "orig": "nasty",
+    "mech": "typo_qwerty"
+  },
+  "crying": {
+    "orig": "drying",
+    "mech": "typo_qwerty"
+  },
+  "tour": {
+    "orig": "four",
+    "mech": "ocr_f→t"
+  },
+  "depression": {
+    "orig": "repression",
+    "mech": "typo_qwerty"
+  },
+  "chat": {
+    "orig": "chant",
+    "mech": "signage_middle_drop"
+  },
+  "black": {
+    "orig": "block",
+    "mech": "ocr_o→a"
+  },
+  "globe": {
+    "orig": "glove",
+    "mech": "typo_qwerty"
+  },
+  "used": {
+    "orig": "fused",
+    "mech": "signage_leading_drop"
+  },
+  "vortex": {
+    "orig": "cortex",
+    "mech": "typo_qwerty"
+  },
+  "fitting": {
+    "orig": "sitting",
+    "mech": "longs_s→f"
+  },
+  "fake": {
+    "orig": "sake",
+    "mech": "longs_s→f"
+  },
+  "element": {
+    "orig": "clement",
+    "mech": "ocr_c→e"
+  },
+  "finger": {
+    "orig": "singer",
+    "mech": "longs_s→f"
+  },
+  "cane": {
+    "orig": "came",
+    "mech": "ocr_m→n"
+  },
+  "holt": {
+    "orig": "halt",
+    "mech": "ocr_a→o"
+  },
+  "horse": {
+    "orig": "norse",
+    "mech": "typo_qwerty"
+  },
+  "bios": {
+    "orig": "bias",
+    "mech": "ocr_a→o"
+  },
+  "snout": {
+    "orig": "shout",
+    "mech": "typo_qwerty"
+  },
+  "roof": {
+    "orig": "proof",
+    "mech": "signage_leading_drop"
+  },
+  "lowering": {
+    "orig": "flowering",
+    "mech": "signage_leading_drop"
+  },
+  "eat": {
+    "orig": "cat",
+    "mech": "ocr_c→e"
+  },
+  "cooling": {
+    "orig": "cooking",
+    "mech": "typo_qwerty"
+  },
+  "spite": {
+    "orig": "sprite",
+    "mech": "signage_middle_drop"
+  },
+  "walker": {
+    "orig": "waller",
+    "mech": "typo_qwerty"
+  },
+  "addition": {
+    "orig": "addiction",
+    "mech": "signage_middle_drop"
+  },
+  "furious": {
+    "orig": "curious",
+    "mech": "typo_qwerty"
+  },
+  "seal": {
+    "orig": "steal",
+    "mech": "signage_middle_drop"
+  },
+  "timed": {
+    "orig": "timer",
+    "mech": "typo_qwerty"
+  },
+  "posture": {
+    "orig": "pasture",
+    "mech": "ocr_a→o"
+  },
+  "teaching": {
+    "orig": "reaching",
+    "mech": "typo_qwerty"
+  },
+  "designation": {
+    "orig": "resignation",
+    "mech": "typo_qwerty"
+  },
+  "bring": {
+    "orig": "boring",
+    "mech": "signage_middle_drop"
+  },
+  "shan": {
+    "orig": "shah",
+    "mech": "typo_qwerty"
+  },
+  "flag": {
+    "orig": "flat",
+    "mech": "typo_qwerty"
+  },
+  "slam": {
+    "orig": "islam",
+    "mech": "signage_leading_drop"
+  },
+  "continue": {
+    "orig": "continued",
+    "mech": "signage_trailing_drop"
+  },
+  "rail": {
+    "orig": "trail",
+    "mech": "signage_leading_drop"
+  },
+  "deal": {
+    "orig": "ideal",
+    "mech": "signage_leading_drop"
+  },
+  "poster": {
+    "orig": "posted",
+    "mech": "typo_qwerty"
+  },
+  "bail": {
+    "orig": "hail",
+    "mech": "ocr_h→b"
+  },
+  "forward": {
+    "orig": "forwards",
+    "mech": "signage_trailing_drop"
+  },
+  "nest": {
+    "orig": "best",
+    "mech": "typo_qwerty"
+  },
+  "acknowledge": {
+    "orig": "acknowledged",
+    "mech": "signage_trailing_drop"
+  },
+  "needles": {
+    "orig": "needless",
+    "mech": "signage_middle_drop"
+  },
+  "kai": {
+    "orig": "kali",
+    "mech": "signage_middle_drop"
+  },
+  "neural": {
+    "orig": "neutral",
+    "mech": "signage_middle_drop"
+  },
+  "lightly": {
+    "orig": "slightly",
+    "mech": "signage_leading_drop"
+  },
+  "hand": {
+    "orig": "band",
+    "mech": "ocr_b→h"
+  },
+  "duet": {
+    "orig": "diet",
+    "mech": "typo_qwerty"
+  },
+  "swan": {
+    "orig": "swam",
+    "mech": "ocr_m→n"
+  },
+  "whole": {
+    "orig": "whale",
+    "mech": "ocr_a→o"
+  },
+  "chill": {
+    "orig": "chili",
+    "mech": "ocr_i→l"
+  },
+  "wave": {
+    "orig": "save",
+    "mech": "typo_qwerty"
+  },
+  "raven": {
+    "orig": "craven",
+    "mech": "signage_leading_drop"
+  },
+  "lief": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "reference": {
+    "orig": "preference",
+    "mech": "signage_leading_drop"
+  },
+  "blow": {
+    "orig": "below",
+    "mech": "signage_middle_drop"
+  },
+  "meta": {
+    "orig": "metal",
+    "mech": "signage_trailing_drop"
+  },
+  "combine": {
+    "orig": "combined",
+    "mech": "signage_trailing_drop"
+  },
+  "mobility": {
+    "orig": "nobility",
+    "mech": "ocr_n→m"
+  },
+  "lend": {
+    "orig": "blend",
+    "mech": "signage_leading_drop"
+  },
+  "boom": {
+    "orig": "bloom",
+    "mech": "signage_middle_drop"
+  },
+  "remove": {
+    "orig": "removed",
+    "mech": "signage_trailing_drop"
+  },
+  "pleading": {
+    "orig": "pleasing",
+    "mech": "typo_qwerty"
+  },
+  "kung": {
+    "orig": "lung",
+    "mech": "typo_qwerty"
+  },
+  "weed": {
+    "orig": "wed",
+    "mech": "typo_doubling"
+  },
+  "own": {
+    "orig": "down",
+    "mech": "signage_leading_drop"
+  },
+  "hide": {
+    "orig": "hire",
+    "mech": "typo_qwerty"
+  },
+  "retract": {
+    "orig": "detract",
+    "mech": "typo_qwerty"
+  },
+  "qualifier": {
+    "orig": "qualified",
+    "mech": "typo_qwerty"
+  },
+  "starting": {
+    "orig": "starring",
+    "mech": "typo_qwerty"
+  },
+  "shi": {
+    "orig": "shin",
+    "mech": "signage_trailing_drop"
+  },
+  "worry": {
+    "orig": "sorry",
+    "mech": "typo_qwerty"
+  },
+  "bank": {
+    "orig": "blank",
+    "mech": "signage_middle_drop"
+  },
+  "testing": {
+    "orig": "resting",
+    "mech": "typo_qwerty"
+  },
+  "men": {
+    "orig": "omen",
+    "mech": "signage_leading_drop"
+  },
+  "mechanic": {
+    "orig": "mechanics",
+    "mech": "signage_trailing_drop"
+  },
+  "barley": {
+    "orig": "barely",
+    "mech": "typo_transpose"
+  },
+  "cheat": {
+    "orig": "chest",
+    "mech": "typo_qwerty"
+  },
+  "neat": {
+    "orig": "meat",
+    "mech": "ocr_m→n"
+  },
+  "basal": {
+    "orig": "nasal",
+    "mech": "typo_qwerty"
+  },
+  "pending": {
+    "orig": "spending",
+    "mech": "signage_leading_drop"
+  },
+  "vague": {
+    "orig": "vogue",
+    "mech": "ocr_o→a"
+  },
+  "baking": {
+    "orig": "backing",
+    "mech": "signage_middle_drop"
+  },
+  "produced": {
+    "orig": "producer",
+    "mech": "typo_qwerty"
+  },
+  "floor": {
+    "orig": "flood",
+    "mech": "typo_qwerty"
+  },
+  "dealing": {
+    "orig": "sealing",
+    "mech": "typo_qwerty"
+  },
+  "bonded": {
+    "orig": "bounded",
+    "mech": "signage_middle_drop"
+  },
+  "topping": {
+    "orig": "stopping",
+    "mech": "signage_leading_drop"
+  },
+  "rio": {
+    "orig": "trio",
+    "mech": "signage_leading_drop"
+  },
+  "hopper": {
+    "orig": "hooper",
+    "mech": "typo_qwerty"
+  },
+  "rushed": {
+    "orig": "crushed",
+    "mech": "signage_leading_drop"
+  },
+  "loose": {
+    "orig": "lose",
+    "mech": "typo_doubling"
+  },
+  "feature": {
+    "orig": "featured",
+    "mech": "signage_trailing_drop"
+  },
+  "theses": {
+    "orig": "thesis",
+    "mech": "vowel_i→e"
+  },
+  "glue": {
+    "orig": "blue",
+    "mech": "typo_qwerty"
+  },
+  "stack": {
+    "orig": "stock",
+    "mech": "ocr_o→a"
+  },
+  "catch": {
+    "orig": "catchy",
+    "mech": "signage_trailing_drop"
+  },
+  "sell": {
+    "orig": "shell",
+    "mech": "signage_middle_drop"
+  },
+  "waller": {
+    "orig": "walker",
+    "mech": "typo_qwerty"
+  },
+  "sport": {
+    "orig": "sports",
+    "mech": "signage_trailing_drop"
+  },
+  "flown": {
+    "orig": "clown",
+    "mech": "typo_qwerty"
+  },
+  "fend": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "hay": {
+    "orig": "bay",
+    "mech": "ocr_b→h"
+  },
+  "clement": {
+    "orig": "element",
+    "mech": "ocr_e→c"
+  },
+  "fried": {
+    "orig": "tried",
+    "mech": "ocr_t→f"
+  },
+  "feal": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "fully": {
+    "orig": "filly",
+    "mech": "typo_qwerty"
+  },
+  "turbine": {
+    "orig": "turbines",
+    "mech": "signage_trailing_drop"
+  },
+  "stern": {
+    "orig": "stem",
+    "mech": "ocr_m→rn"
+  },
+  "bacteria": {
+    "orig": "bacterial",
+    "mech": "signage_trailing_drop"
+  },
+  "whisky": {
+    "orig": "whiskey",
+    "mech": "signage_middle_drop"
+  },
+  "diet": {
+    "orig": "dirt",
+    "mech": "typo_qwerty"
+  },
+  "bar": {
+    "orig": "bor",
+    "mech": "ocr_o→a"
+  },
+  "steam": {
+    "orig": "stream",
+    "mech": "signage_middle_drop"
+  },
+  "gore": {
+    "orig": "gorge",
+    "mech": "signage_middle_drop"
+  },
+  "bonding": {
+    "orig": "binding",
+    "mech": "typo_qwerty"
+  },
+  "killing": {
+    "orig": "milling",
+    "mech": "typo_qwerty"
+  },
+  "aero": {
+    "orig": "zero",
+    "mech": "typo_qwerty"
+  },
+  "manifest": {
+    "orig": "manifesto",
+    "mech": "signage_trailing_drop"
+  },
+  "replicate": {
+    "orig": "replicated",
+    "mech": "signage_trailing_drop"
+  },
+  "stoke": {
+    "orig": "stake",
+    "mech": "ocr_a→o"
+  },
+  "was": {
+    "orig": "ways",
+    "mech": "signage_middle_drop"
+  },
+  "onward": {
+    "orig": "onwards",
+    "mech": "signage_trailing_drop"
+  },
+  "challenge": {
+    "orig": "challenger",
+    "mech": "signage_trailing_drop"
+  },
+  "salon": {
+    "orig": "salmon",
+    "mech": "signage_middle_drop"
+  },
+  "dank": {
+    "orig": "rank",
+    "mech": "typo_qwerty"
+  },
+  "fest": {
+    "orig": "test",
+    "mech": "ocr_t→f"
+  },
+  "qualified": {
+    "orig": "qualifier",
+    "mech": "typo_qwerty"
+  },
+  "flaw": {
+    "orig": "flow",
+    "mech": "ocr_o→a"
+  },
+  "celebrate": {
+    "orig": "celebrated",
+    "mech": "signage_trailing_drop"
+  },
+  "find": {
+    "orig": "fine",
+    "mech": "typo_qwerty"
+  },
+  "southward": {
+    "orig": "southwards",
+    "mech": "signage_trailing_drop"
+  },
+  "metric": {
+    "orig": "metrics",
+    "mech": "signage_trailing_drop"
+  },
+  "induce": {
+    "orig": "induced",
+    "mech": "signage_trailing_drop"
+  },
+  "cortex": {
+    "orig": "vortex",
+    "mech": "typo_qwerty"
+  },
+  "dwelling": {
+    "orig": "swelling",
+    "mech": "typo_qwerty"
+  },
+  "disguise": {
+    "orig": "disguised",
+    "mech": "signage_trailing_drop"
+  },
+  "might": {
+    "orig": "night",
+    "mech": "ocr_n→m"
+  },
+  "count": {
+    "orig": "county",
+    "mech": "signage_trailing_drop"
+  },
+  "narrow": {
+    "orig": "barrow",
+    "mech": "typo_qwerty"
+  },
+  "dairy": {
+    "orig": "fairy",
+    "mech": "typo_qwerty"
+  },
+  "through": {
+    "orig": "thorough",
+    "mech": "signage_middle_drop"
+  },
+  "tang": {
+    "orig": "fang",
+    "mech": "ocr_f→t"
+  },
+  "vogue": {
+    "orig": "vague",
+    "mech": "ocr_a→o"
+  },
+  "strike": {
+    "orig": "striker",
+    "mech": "signage_trailing_drop"
+  },
+  "enquiry": {
+    "orig": "inquiry",
+    "mech": "vowel_i→e"
+  },
+  "shopping": {
+    "orig": "shipping",
+    "mech": "typo_qwerty"
+  },
+  "weigh": {
+    "orig": "weight",
+    "mech": "signage_trailing_drop"
+  },
+  "getting": {
+    "orig": "betting",
+    "mech": "typo_qwerty"
+  },
+  "tuned": {
+    "orig": "turned",
+    "mech": "signage_middle_drop"
+  },
+  "rear": {
+    "orig": "dear",
+    "mech": "typo_qwerty"
+  },
+  "hill": {
+    "orig": "chill",
+    "mech": "signage_leading_drop"
+  },
+  "colon": {
+    "orig": "colony",
+    "mech": "signage_trailing_drop"
+  },
+  "join": {
+    "orig": "joint",
+    "mech": "signage_trailing_drop"
+  },
+  "aka": {
+    "orig": "ala",
+    "mech": "typo_qwerty"
+  },
+  "prior": {
+    "orig": "priory",
+    "mech": "signage_trailing_drop"
+  },
+  "evolutionary": {
+    "orig": "revolutionary",
+    "mech": "signage_leading_drop"
+  },
+  "spare": {
+    "orig": "sparse",
+    "mech": "signage_middle_drop"
+  },
+  "organized": {
+    "orig": "organizer",
+    "mech": "typo_qwerty"
+  },
+  "pleasing": {
+    "orig": "pleading",
+    "mech": "typo_qwerty"
+  },
+  "trust": {
+    "orig": "thrust",
+    "mech": "signage_middle_drop"
+  },
+  "dub": {
+    "orig": "club",
+    "mech": "ocr_cl→d"
+  },
+  "power": {
+    "orig": "powder",
+    "mech": "signage_middle_drop"
+  },
+  "mayer": {
+    "orig": "mater",
+    "mech": "typo_qwerty"
+  },
+  "stroke": {
+    "orig": "strike",
+    "mech": "typo_qwerty"
+  },
+  "spectra": {
+    "orig": "spectral",
+    "mech": "signage_trailing_drop"
+  },
+  "peak": {
+    "orig": "speak",
+    "mech": "signage_leading_drop"
+  },
+  "nail": {
+    "orig": "mail",
+    "mech": "ocr_m→n"
+  },
+  "sting": {
+    "orig": "string",
+    "mech": "signage_middle_drop"
+  },
+  "final": {
+    "orig": "finale",
+    "mech": "signage_trailing_drop"
+  },
+  "loser": {
+    "orig": "laser",
+    "mech": "ocr_a→o"
+  },
+  "engage": {
+    "orig": "engaged",
+    "mech": "signage_trailing_drop"
+  },
+  "meet": {
+    "orig": "met",
+    "mech": "typo_doubling"
+  },
+  "rowing": {
+    "orig": "growing",
+    "mech": "signage_leading_drop"
+  },
+  "inferior": {
+    "orig": "interior",
+    "mech": "ocr_t→f"
+  },
+  "garlic": {
+    "orig": "gaelic",
+    "mech": "typo_qwerty"
+  },
+  "sire": {
+    "orig": "shire",
+    "mech": "signage_middle_drop"
+  },
+  "garage": {
+    "orig": "garbage",
+    "mech": "signage_middle_drop"
+  },
+  "schema": {
+    "orig": "scheme",
+    "mech": "vowel_e→a"
+  },
+  "fall": {
+    "orig": "fail",
+    "mech": "ocr_i→l"
+  },
+  "eta": {
+    "orig": "beta",
+    "mech": "signage_leading_drop"
+  },
+  "overt": {
+    "orig": "covert",
+    "mech": "signage_leading_drop"
+  },
+  "fry": {
+    "orig": "try",
+    "mech": "ocr_t→f"
+  },
+  "pointer": {
+    "orig": "painter",
+    "mech": "ocr_a→o"
+  },
+  "urge": {
+    "orig": "purge",
+    "mech": "signage_leading_drop"
+  },
+  "brain": {
+    "orig": "brains",
+    "mech": "signage_trailing_drop"
+  },
+  "warming": {
+    "orig": "warning",
+    "mech": "ocr_n→m"
+  },
+  "wing": {
+    "orig": "owing",
+    "mech": "signage_leading_drop"
+  },
+  "sac": {
+    "orig": "soc",
+    "mech": "ocr_o→a"
+  },
+  "park": {
+    "orig": "pork",
+    "mech": "ocr_o→a"
+  },
+  "pork": {
+    "orig": "park",
+    "mech": "ocr_a→o"
+  },
+  "nor": {
+    "orig": "mor",
+    "mech": "ocr_m→n"
+  },
+  "graves": {
+    "orig": "greaves",
+    "mech": "signage_middle_drop"
+  },
+  "diva": {
+    "orig": "dive",
+    "mech": "vowel_e→a"
+  },
+  "purse": {
+    "orig": "pursue",
+    "mech": "signage_middle_drop"
+  },
+  "deed": {
+    "orig": "deer",
+    "mech": "typo_qwerty"
+  },
+  "worker": {
+    "orig": "worked",
+    "mech": "typo_qwerty"
+  },
+  "fond": {
+    "orig": "found",
+    "mech": "signage_middle_drop"
+  },
+  "hole": {
+    "orig": "hale",
+    "mech": "ocr_a→o"
+  },
+  "stain": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "fuse": {
+    "orig": "fused",
+    "mech": "signage_trailing_drop"
+  },
+  "tear": {
+    "orig": "fear",
+    "mech": "ocr_f→t"
+  },
+  "brick": {
+    "orig": "brock",
+    "mech": "typo_qwerty"
+  },
+  "nuclear": {
+    "orig": "unclear",
+    "mech": "typo_transpose"
+  },
+  "thing": {
+    "orig": "tying",
+    "mech": "typo_qwerty"
+  },
+  "gland": {
+    "orig": "bland",
+    "mech": "typo_qwerty"
+  },
+  "professor": {
+    "orig": "processor",
+    "mech": "typo_qwerty"
+  },
+  "white": {
+    "orig": "whites",
+    "mech": "signage_trailing_drop"
+  },
+  "accelerate": {
+    "orig": "accelerated",
+    "mech": "signage_trailing_drop"
+  },
+  "roadway": {
+    "orig": "broadway",
+    "mech": "signage_leading_drop"
+  },
+  "wired": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "naive": {
+    "orig": "native",
+    "mech": "signage_middle_drop"
+  },
+  "trainer": {
+    "orig": "trained",
+    "mech": "typo_qwerty"
+  },
+  "coat": {
+    "orig": "coast",
+    "mech": "signage_middle_drop"
+  },
+  "who": {
+    "orig": "whom",
+    "mech": "signage_trailing_drop"
+  },
+  "lie": {
+    "orig": "life",
+    "mech": "signage_middle_drop"
+  },
+  "oral": {
+    "orig": "coral",
+    "mech": "signage_leading_drop"
+  },
+  "bye": {
+    "orig": "bey",
+    "mech": "typo_transpose"
+  },
+  "headed": {
+    "orig": "header",
+    "mech": "typo_qwerty"
+  },
+  "hold": {
+    "orig": "bold",
+    "mech": "ocr_b→h"
+  },
+  "flood": {
+    "orig": "floor",
+    "mech": "typo_qwerty"
+  },
+  "herd": {
+    "orig": "here",
+    "mech": "typo_qwerty"
+  },
+  "kissing": {
+    "orig": "missing",
+    "mech": "typo_qwerty"
+  },
+  "bra": {
+    "orig": "bray",
+    "mech": "signage_trailing_drop"
+  },
+  "fame": {
+    "orig": "same",
+    "mech": "longs_s→f"
+  },
+  "foul": {
+    "orig": "soul",
+    "mech": "longs_s→f"
+  },
+  "inmate": {
+    "orig": "innate",
+    "mech": "ocr_n→m"
+  },
+  "rat": {
+    "orig": "rot",
+    "mech": "ocr_o→a"
+  },
+  "cake": {
+    "orig": "coke",
+    "mech": "ocr_o→a"
+  },
+  "faced": {
+    "orig": "faded",
+    "mech": "typo_qwerty"
+  },
+  "berth": {
+    "orig": "bertha",
+    "mech": "signage_trailing_drop"
+  },
+  "toe": {
+    "orig": "foe",
+    "mech": "ocr_f→t"
+  },
+  "trained": {
+    "orig": "strained",
+    "mech": "signage_leading_drop"
+  },
+  "take": {
+    "orig": "fake",
+    "mech": "ocr_f→t"
+  },
+  "infer": {
+    "orig": "inter",
+    "mech": "ocr_t→f"
+  },
+  "thus": {
+    "orig": "this",
+    "mech": "typo_qwerty"
+  },
+  "here": {
+    "orig": "there",
+    "mech": "signage_leading_drop"
+  },
+  "warp": {
+    "orig": "wrap",
+    "mech": "typo_transpose"
+  },
+  "tee": {
+    "orig": "fee",
+    "mech": "ocr_f→t"
+  },
+  "void": {
+    "orig": "avoid",
+    "mech": "signage_leading_drop"
+  },
+  "designer": {
+    "orig": "designed",
+    "mech": "typo_qwerty"
+  },
+  "help": {
+    "orig": "hell",
+    "mech": "typo_qwerty"
+  },
+  "tam": {
+    "orig": "tan",
+    "mech": "ocr_n→m"
+  },
+  "reach": {
+    "orig": "breach",
+    "mech": "signage_leading_drop"
+  },
+  "camp": {
+    "orig": "champ",
+    "mech": "signage_middle_drop"
+  },
+  "fence": {
+    "orig": "fencer",
+    "mech": "signage_trailing_drop"
+  },
+  "advertise": {
+    "orig": "advertiser",
+    "mech": "signage_trailing_drop"
+  },
+  "central": {
+    "orig": "ventral",
+    "mech": "typo_qwerty"
+  },
+  "gaelic": {
+    "orig": "garlic",
+    "mech": "typo_qwerty"
+  },
+  "moth": {
+    "orig": "math",
+    "mech": "ocr_a→o"
+  },
+  "rain": {
+    "orig": "brain",
+    "mech": "signage_leading_drop"
+  },
+  "endorse": {
+    "orig": "endorsed",
+    "mech": "signage_trailing_drop"
+  },
+  "explode": {
+    "orig": "exploded",
+    "mech": "signage_trailing_drop"
+  },
+  "peninsula": {
+    "orig": "peninsular",
+    "mech": "signage_trailing_drop"
+  },
+  "hear": {
+    "orig": "bear",
+    "mech": "ocr_b→h"
+  },
+  "stella": {
+    "orig": "stellar",
+    "mech": "signage_trailing_drop"
+  },
+  "form": {
+    "orig": "farm",
+    "mech": "ocr_a→o"
+  },
+  "fault": {
+    "orig": "faulty",
+    "mech": "signage_trailing_drop"
+  },
+  "near": {
+    "orig": "bear",
+    "mech": "typo_qwerty"
+  },
+  "spoke": {
+    "orig": "spoken",
+    "mech": "signage_trailing_drop"
+  },
+  "liner": {
+    "orig": "linear",
+    "mech": "signage_middle_drop"
+  },
+  "wake": {
+    "orig": "awake",
+    "mech": "signage_leading_drop"
+  },
+  "swing": {
+    "orig": "sewing",
+    "mech": "signage_middle_drop"
+  },
+  "miss": {
+    "orig": "kiss",
+    "mech": "typo_qwerty"
+  },
+  "flow": {
+    "orig": "slow",
+    "mech": "longs_s→f"
+  },
+  "quad": {
+    "orig": "squad",
+    "mech": "signage_leading_drop"
+  },
+  "yin": {
+    "orig": "gin",
+    "mech": "typo_qwerty"
+  },
+  "bis": {
+    "orig": "his",
+    "mech": "ocr_h→b"
+  },
+  "tender": {
+    "orig": "fender",
+    "mech": "ocr_f→t"
+  },
+  "examine": {
+    "orig": "examiner",
+    "mech": "signage_trailing_drop"
+  },
+  "office": {
+    "orig": "officer",
+    "mech": "signage_trailing_drop"
+  },
+  "joy": {
+    "orig": "joey",
+    "mech": "signage_middle_drop"
+  },
+  "fan": {
+    "orig": "san",
+    "mech": "longs_s→f"
+  },
+  "tipped": {
+    "orig": "topped",
+    "mech": "typo_qwerty"
+  },
+  "confuse": {
+    "orig": "confused",
+    "mech": "signage_trailing_drop"
+  },
+  "breath": {
+    "orig": "breadth",
+    "mech": "signage_middle_drop"
+  },
+  "weir": {
+    "orig": "weird",
+    "mech": "signage_trailing_drop"
+  },
+  "isolate": {
+    "orig": "isolated",
+    "mech": "signage_trailing_drop"
+  },
+  "forth": {
+    "orig": "fourth",
+    "mech": "signage_middle_drop"
+  },
+  "once": {
+    "orig": "ponce",
+    "mech": "signage_leading_drop"
+  },
+  "batting": {
+    "orig": "betting",
+    "mech": "vowel_e→a"
+  },
+  "grand": {
+    "orig": "brand",
+    "mech": "typo_qwerty"
+  },
+  "baron": {
+    "orig": "barony",
+    "mech": "signage_trailing_drop"
+  },
+  "this": {
+    "orig": "thus",
+    "mech": "typo_qwerty"
+  },
+  "swap": {
+    "orig": "swamp",
+    "mech": "signage_middle_drop"
+  },
+  "engraver": {
+    "orig": "engraved",
+    "mech": "typo_qwerty"
+  },
+  "guild": {
+    "orig": "build",
+    "mech": "typo_qwerty"
+  },
+  "hurst": {
+    "orig": "burst",
+    "mech": "ocr_b→h"
+  },
+  "capital": {
+    "orig": "capitol",
+    "mech": "ocr_o→a"
+  },
+  "jail": {
+    "orig": "hail",
+    "mech": "typo_qwerty"
+  },
+  "dam": {
+    "orig": "dame",
+    "mech": "signage_trailing_drop"
+  },
+  "include": {
+    "orig": "included",
+    "mech": "signage_trailing_drop"
+  },
+  "sank": {
+    "orig": "dank",
+    "mech": "typo_qwerty"
+  },
+  "lighting": {
+    "orig": "lightning",
+    "mech": "signage_middle_drop"
+  },
+  "build": {
+    "orig": "guild",
+    "mech": "typo_qwerty"
+  },
+  "sour": {
+    "orig": "spur",
+    "mech": "typo_qwerty"
+  },
+  "filing": {
+    "orig": "failing",
+    "mech": "signage_middle_drop"
+  },
+  "tram": {
+    "orig": "fram",
+    "mech": "ocr_f→t"
+  },
+  "anger": {
+    "orig": "danger",
+    "mech": "signage_leading_drop"
+  },
+  "refugee": {
+    "orig": "refuge",
+    "mech": "typo_doubling"
+  },
+  "sand": {
+    "orig": "stand",
+    "mech": "signage_middle_drop"
+  },
+  "taking": {
+    "orig": "talking",
+    "mech": "signage_middle_drop"
+  },
+  "early": {
+    "orig": "nearly",
+    "mech": "signage_leading_drop"
+  },
+  "wrapped": {
+    "orig": "wrapper",
+    "mech": "typo_qwerty"
+  },
+  "mail": {
+    "orig": "mall",
+    "mech": "ocr_l→i"
+  },
+  "skill": {
+    "orig": "skull",
+    "mech": "typo_qwerty"
+  },
+  "none": {
+    "orig": "bone",
+    "mech": "typo_qwerty"
+  },
+  "watt": {
+    "orig": "wat",
+    "mech": "typo_doubling"
+  },
+  "eve": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "angle": {
+    "orig": "angles",
+    "mech": "signage_trailing_drop"
+  },
+  "experience": {
+    "orig": "experienced",
+    "mech": "signage_trailing_drop"
+  },
+  "heating": {
+    "orig": "beating",
+    "mech": "ocr_b→h"
+  },
+  "hacking": {
+    "orig": "backing",
+    "mech": "ocr_b→h"
+  },
+  "feel": {
+    "orig": "reel",
+    "mech": "typo_qwerty"
+  },
+  "sound": {
+    "orig": "wound",
+    "mech": "typo_qwerty"
+  },
+  "rink": {
+    "orig": "brink",
+    "mech": "signage_leading_drop"
+  },
+  "ferry": {
+    "orig": "derry",
+    "mech": "typo_qwerty"
+  },
+  "deception": {
+    "orig": "reception",
+    "mech": "typo_qwerty"
+  },
+  "coral": {
+    "orig": "choral",
+    "mech": "signage_middle_drop"
+  },
+  "fin": {
+    "orig": "sin",
+    "mech": "longs_s→f"
+  },
+  "ich": {
+    "orig": "inch",
+    "mech": "signage_middle_drop"
+  },
+  "decline": {
+    "orig": "declined",
+    "mech": "signage_trailing_drop"
+  },
+  "unto": {
+    "orig": "into",
+    "mech": "typo_qwerty"
+  },
+  "fun": {
+    "orig": "sun",
+    "mech": "longs_s→f"
+  },
+  "shop": {
+    "orig": "ship",
+    "mech": "typo_qwerty"
+  },
+  "jeep": {
+    "orig": "keep",
+    "mech": "typo_qwerty"
+  },
+  "danger": {
+    "orig": "ranger",
+    "mech": "typo_qwerty"
+  },
+  "toad": {
+    "orig": "road",
+    "mech": "typo_qwerty"
+  },
+  "reservation": {
+    "orig": "preservation",
+    "mech": "signage_leading_drop"
+  },
+  "bulk": {
+    "orig": "hulk",
+    "mech": "ocr_h→b"
+  },
+  "familia": {
+    "orig": "familiar",
+    "mech": "signage_trailing_drop"
+  },
+  "bacon": {
+    "orig": "beacon",
+    "mech": "signage_middle_drop"
+  },
+  "aus": {
+    "orig": "sus",
+    "mech": "typo_qwerty"
+  },
+  "tall": {
+    "orig": "fall",
+    "mech": "ocr_f→t"
+  },
+  "mono": {
+    "orig": "mona",
+    "mech": "ocr_a→o"
+  },
+  "soap": {
+    "orig": "slap",
+    "mech": "typo_qwerty"
+  },
+  "producer": {
+    "orig": "produced",
+    "mech": "typo_qwerty"
+  },
+  "math": {
+    "orig": "moth",
+    "mech": "ocr_o→a"
+  },
+  "marked": {
+    "orig": "marker",
+    "mech": "typo_qwerty"
+  },
+  "scheme": {
+    "orig": "schema",
+    "mech": "vowel_a→e"
+  },
+  "fix": {
+    "orig": "six",
+    "mech": "longs_s→f"
+  },
+  "jar": {
+    "orig": "mar",
+    "mech": "typo_qwerty"
+  },
+  "save": {
+    "orig": "slave",
+    "mech": "signage_middle_drop"
+  },
+  "tar": {
+    "orig": "far",
+    "mech": "ocr_f→t"
+  },
+  "drink": {
+    "orig": "drunk",
+    "mech": "typo_qwerty"
+  },
+  "pain": {
+    "orig": "plain",
+    "mech": "signage_middle_drop"
+  },
+  "stuck": {
+    "orig": "struck",
+    "mech": "signage_middle_drop"
+  },
+  "many": {
+    "orig": "manly",
+    "mech": "signage_middle_drop"
+  },
+  "concert": {
+    "orig": "concerto",
+    "mech": "signage_trailing_drop"
+  },
+  "hull": {
+    "orig": "bull",
+    "mech": "ocr_b→h"
+  },
+  "road": {
+    "orig": "broad",
+    "mech": "signage_leading_drop"
+  },
+  "bride": {
+    "orig": "bridge",
+    "mech": "signage_middle_drop"
+  },
+  "enhance": {
+    "orig": "enhanced",
+    "mech": "signage_trailing_drop"
+  },
+  "drive": {
+    "orig": "derive",
+    "mech": "signage_middle_drop"
+  },
+  "striped": {
+    "orig": "stripped",
+    "mech": "signage_middle_drop"
+  },
+  "parted": {
+    "orig": "ported",
+    "mech": "ocr_o→a"
+  },
+  "rect": {
+    "orig": "erect",
+    "mech": "signage_leading_drop"
+  },
+  "fraction": {
+    "orig": "traction",
+    "mech": "ocr_t→f"
+  },
+  "mediation": {
+    "orig": "medication",
+    "mech": "signage_middle_drop"
+  },
+  "finn": {
+    "orig": "fin",
+    "mech": "typo_doubling"
+  },
+  "fort": {
+    "orig": "sort",
+    "mech": "longs_s→f"
+  },
+  "dying": {
+    "orig": "drying",
+    "mech": "signage_middle_drop"
+  },
+  "birch": {
+    "orig": "bitch",
+    "mech": "typo_qwerty"
+  },
+  "mister": {
+    "orig": "muster",
+    "mech": "typo_qwerty"
+  },
+  "bend": {
+    "orig": "blend",
+    "mech": "signage_middle_drop"
+  },
+  "convert": {
+    "orig": "concert",
+    "mech": "typo_qwerty"
+  },
+  "handled": {
+    "orig": "handler",
+    "mech": "typo_qwerty"
+  },
+  "scaling": {
+    "orig": "sealing",
+    "mech": "ocr_e→c"
+  },
+  "lower": {
+    "orig": "flower",
+    "mech": "signage_leading_drop"
+  },
+  "chao": {
+    "orig": "chaos",
+    "mech": "signage_trailing_drop"
+  },
+  "cation": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "strive": {
+    "orig": "strife",
+    "mech": "typo_qwerty"
+  },
+  "adept": {
+    "orig": "adapt",
+    "mech": "vowel_a→e"
+  },
+  "harmonic": {
+    "orig": "harmonica",
+    "mech": "signage_trailing_drop"
+  },
+  "bare": {
+    "orig": "hare",
+    "mech": "ocr_h→b"
+  },
+  "action": {
+    "orig": "faction",
+    "mech": "signage_leading_drop"
+  },
+  "advance": {
+    "orig": "advanced",
+    "mech": "signage_trailing_drop"
+  },
+  "metal": {
+    "orig": "mental",
+    "mech": "signage_middle_drop"
+  },
+  "wound": {
+    "orig": "wounds",
+    "mech": "signage_trailing_drop"
+  },
+  "analyses": {
+    "orig": "analysis",
+    "mech": "vowel_i→e"
+  },
+  "execute": {
+    "orig": "executed",
+    "mech": "signage_trailing_drop"
+  },
+  "force": {
+    "orig": "forced",
+    "mech": "signage_trailing_drop"
+  },
+  "jing": {
+    "orig": "ming",
+    "mech": "typo_qwerty"
+  },
+  "shall": {
+    "orig": "shell",
+    "mech": "vowel_e→a"
+  },
+  "contest": {
+    "orig": "context",
+    "mech": "typo_qwerty"
+  },
+  "sky": {
+    "orig": "soy",
+    "mech": "typo_qwerty"
+  },
+  "dame": {
+    "orig": "dane",
+    "mech": "ocr_n→m"
+  },
+  "rash": {
+    "orig": "crash",
+    "mech": "signage_leading_drop"
+  },
+  "arched": {
+    "orig": "archer",
+    "mech": "typo_qwerty"
+  },
+  "town": {
+    "orig": "gown",
+    "mech": "typo_qwerty"
+  },
+  "mess": {
+    "orig": "ness",
+    "mech": "ocr_n→m"
+  },
+  "hood": {
+    "orig": "good",
+    "mech": "typo_qwerty"
+  },
+  "flowing": {
+    "orig": "glowing",
+    "mech": "typo_qwerty"
+  },
+  "cow": {
+    "orig": "chow",
+    "mech": "signage_middle_drop"
+  },
+  "tory": {
+    "orig": "story",
+    "mech": "signage_leading_drop"
+  },
+  "guide": {
+    "orig": "guise",
+    "mech": "typo_qwerty"
+  },
+  "toward": {
+    "orig": "towards",
+    "mech": "signage_trailing_drop"
+  },
+  "ewe": {
+    "orig": "wee",
+    "mech": "typo_transpose"
+  },
+  "jade": {
+    "orig": "made",
+    "mech": "typo_qwerty"
+  },
+  "morale": {
+    "orig": "morals",
+    "mech": "typo_qwerty"
+  },
+  "sai": {
+    "orig": "said",
+    "mech": "signage_trailing_drop"
+  },
+  "waking": {
+    "orig": "walking",
+    "mech": "signage_middle_drop"
+  },
+  "reaching": {
+    "orig": "preaching",
+    "mech": "signage_leading_drop"
+  },
+  "rot": {
+    "orig": "rat",
+    "mech": "ocr_a→o"
+  },
+  "gage": {
+    "orig": "gauge",
+    "mech": "signage_middle_drop"
+  },
+  "milling": {
+    "orig": "killing",
+    "mech": "typo_qwerty"
+  },
+  "fox": {
+    "orig": "cox",
+    "mech": "typo_qwerty"
+  },
+  "beat": {
+    "orig": "heat",
+    "mech": "ocr_h→b"
+  },
+  "unclear": {
+    "orig": "nuclear",
+    "mech": "typo_transpose"
+  },
+  "send": {
+    "orig": "spend",
+    "mech": "signage_middle_drop"
+  },
+  "complain": {
+    "orig": "complaint",
+    "mech": "signage_trailing_drop"
+  },
+  "sealing": {
+    "orig": "scaling",
+    "mech": "ocr_c→e"
+  },
+  "fide": {
+    "orig": "side",
+    "mech": "longs_s→f"
+  },
+  "widow": {
+    "orig": "window",
+    "mech": "signage_middle_drop"
+  },
+  "sure": {
+    "orig": "surge",
+    "mech": "signage_middle_drop"
+  },
+  "sar": {
+    "orig": "tsar",
+    "mech": "signage_leading_drop"
+  },
+  "lay": {
+    "orig": "play",
+    "mech": "signage_leading_drop"
+  },
+  "bohemia": {
+    "orig": "bohemian",
+    "mech": "signage_trailing_drop"
+  },
+  "same": {
+    "orig": "some",
+    "mech": "ocr_o→a"
+  },
+  "lottery": {
+    "orig": "pottery",
+    "mech": "typo_qwerty"
+  },
+  "lane": {
+    "orig": "lame",
+    "mech": "ocr_m→n"
+  },
+  "wet": {
+    "orig": "welt",
+    "mech": "signage_middle_drop"
+  },
+  "loft": {
+    "orig": "lost",
+    "mech": "longs_s→f"
+  },
+  "bah": {
+    "orig": "bath",
+    "mech": "signage_middle_drop"
+  },
+  "ours": {
+    "orig": "yours",
+    "mech": "signage_leading_drop"
+  },
+  "bel": {
+    "orig": "bell",
+    "mech": "signage_middle_drop"
+  },
+  "kern": {
+    "orig": "keen",
+    "mech": "typo_qwerty"
+  },
+  "meg": {
+    "orig": "met",
+    "mech": "typo_qwerty"
+  },
+  "fig": {
+    "orig": "sig",
+    "mech": "longs_s→f"
+  },
+  "countess": {
+    "orig": "countless",
+    "mech": "signage_middle_drop"
+  },
+  "juno": {
+    "orig": "junk",
+    "mech": "typo_qwerty"
+  },
+  "ranch": {
+    "orig": "branch",
+    "mech": "signage_leading_drop"
+  },
+  "room": {
+    "orig": "groom",
+    "mech": "signage_leading_drop"
+  },
+  "din": {
+    "orig": "dim",
+    "mech": "ocr_m→n"
+  },
+  "traveler": {
+    "orig": "traveller",
+    "mech": "signage_middle_drop"
+  },
+  "cell": {
+    "orig": "cello",
+    "mech": "signage_trailing_drop"
+  },
+  "rie": {
+    "orig": "erie",
+    "mech": "signage_leading_drop"
+  },
+  "web": {
+    "orig": "wen",
+    "mech": "typo_qwerty"
+  },
+  "analyse": {
+    "orig": "analyses",
+    "mech": "signage_trailing_drop"
+  },
+  "rank": {
+    "orig": "crank",
+    "mech": "signage_leading_drop"
+  },
+  "dug": {
+    "orig": "drug",
+    "mech": "signage_middle_drop"
+  },
+  "broke": {
+    "orig": "brake",
+    "mech": "ocr_a→o"
+  },
+  "refined": {
+    "orig": "defined",
+    "mech": "typo_qwerty"
+  },
+  "steel": {
+    "orig": "steep",
+    "mech": "typo_qwerty"
+  },
+  "jockey": {
+    "orig": "hockey",
+    "mech": "typo_qwerty"
+  },
+  "agent": {
+    "orig": "argent",
+    "mech": "signage_middle_drop"
+  },
+  "singer": {
+    "orig": "winger",
+    "mech": "typo_qwerty"
+  },
+  "liter": {
+    "orig": "litter",
+    "mech": "signage_middle_drop"
+  },
+  "cultivate": {
+    "orig": "cultivated",
+    "mech": "signage_trailing_drop"
+  },
+  "brock": {
+    "orig": "brook",
+    "mech": "ocr_o→c"
+  },
+  "retain": {
+    "orig": "regain",
+    "mech": "typo_qwerty"
+  },
+  "sanders": {
+    "orig": "saunders",
+    "mech": "signage_middle_drop"
+  },
+  "confirm": {
+    "orig": "conform",
+    "mech": "typo_qwerty"
+  },
+  "crises": {
+    "orig": "crisis",
+    "mech": "vowel_i→e"
+  },
+  "modem": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "canto": {
+    "orig": "canton",
+    "mech": "signage_trailing_drop"
+  },
+  "hash": {
+    "orig": "harsh",
+    "mech": "signage_middle_drop"
+  },
+  "continent": {
+    "orig": "contingent",
+    "mech": "signage_middle_drop"
+  },
+  "fob": {
+    "orig": "(manual)",
+    "mech": "manual_special"
+  },
+  "asset": {
+    "orig": "assert",
+    "mech": "signage_middle_drop"
+  },
+  "papa": {
+    "orig": "papal",
+    "mech": "signage_trailing_drop"
+  },
+  "faulty": {
+    "orig": "faculty",
+    "mech": "signage_middle_drop"
+  },
+  "hit": {
+    "orig": "bit",
+    "mech": "ocr_b→h"
+  },
+  "graduate": {
+    "orig": "graduated",
+    "mech": "signage_trailing_drop"
+  },
+  "fought": {
+    "orig": "sought",
+    "mech": "longs_s→f"
+  },
+  "wright": {
+    "orig": "weight",
+    "mech": "typo_qwerty"
+  },
+  "rating": {
+    "orig": "dating",
+    "mech": "typo_qwerty"
+  },
+  "topical": {
+    "orig": "tropical",
+    "mech": "signage_middle_drop"
+  },
+  "glove": {
+    "orig": "glover",
+    "mech": "signage_trailing_drop"
+  },
+  "looking": {
+    "orig": "locking",
+    "mech": "ocr_c→o"
+  },
+  "food": {
+    "orig": "flood",
+    "mech": "signage_middle_drop"
+  },
+  "fell": {
+    "orig": "sell",
+    "mech": "longs_s→f"
+  },
+  "faded": {
+    "orig": "faced",
+    "mech": "typo_qwerty"
+  },
+  "article": {
+    "orig": "particle",
+    "mech": "signage_leading_drop"
+  },
+  "focal": {
+    "orig": "vocal",
+    "mech": "typo_qwerty"
+  },
+  "alley": {
+    "orig": "valley",
+    "mech": "signage_leading_drop"
+  },
+  "bred": {
+    "orig": "bread",
+    "mech": "signage_middle_drop"
+  },
+  "lab": {
+    "orig": "slab",
+    "mech": "signage_leading_drop"
+  },
+  "command": {
+    "orig": "commando",
+    "mech": "signage_trailing_drop"
+  },
+  "costal": {
+    "orig": "coastal",
+    "mech": "signage_middle_drop"
+  },
+  "morality": {
+    "orig": "mortality",
+    "mech": "signage_middle_drop"
+  },
+  "farming": {
+    "orig": "forming",
+    "mech": "ocr_o→a"
+  },
+  "spark": {
+    "orig": "sparks",
+    "mech": "signage_trailing_drop"
+  },
+  "peach": {
+    "orig": "preach",
+    "mech": "signage_middle_drop"
+  },
+  "aluminum": {
+    "orig": "aluminium",
+    "mech": "signage_middle_drop"
+  },
+  "dev": {
+    "orig": "deg",
+    "mech": "typo_qwerty"
+  },
+  "push": {
+    "orig": "lush",
+    "mech": "typo_qwerty"
+  },
+  "chair": {
+    "orig": "choir",
+    "mech": "ocr_o→a"
+  },
+  "privilege": {
+    "orig": "privileged",
+    "mech": "signage_trailing_drop"
+  },
+  "gala": {
+    "orig": "bala",
+    "mech": "typo_qwerty"
+  },
+  "actual": {
+    "orig": "factual",
+    "mech": "signage_leading_drop"
+  },
+  "semantic": {
+    "orig": "semantics",
+    "mech": "signage_trailing_drop"
+  },
+  "crusade": {
+    "orig": "crusader",
+    "mech": "signage_trailing_drop"
+  },
+  "cross": {
+    "orig": "across",
+    "mech": "signage_leading_drop"
+  },
+  "processor": {
+    "orig": "professor",
+    "mech": "typo_qwerty"
+  },
+  "seem": {
+    "orig": "seen",
+    "mech": "ocr_n→m"
+  },
+  "beak": {
+    "orig": "break",
+    "mech": "signage_middle_drop"
+  },
+  "naked": {
+    "orig": "baked",
+    "mech": "typo_qwerty"
+  },
+  "mid": {
+    "orig": "amid",
+    "mech": "signage_leading_drop"
+  },
+  "balance": {
+    "orig": "balanced",
+    "mech": "signage_trailing_drop"
+  },
+  "stage": {
+    "orig": "staged",
+    "mech": "signage_trailing_drop"
+  },
+  "witch": {
+    "orig": "switch",
+    "mech": "signage_leading_drop"
+  },
+  "wage": {
+    "orig": "wages",
+    "mech": "signage_trailing_drop"
+  },
+  "vila": {
+    "orig": "villa",
+    "mech": "signage_middle_drop"
+  },
+  "font": {
+    "orig": "front",
+    "mech": "signage_middle_drop"
+  },
+  "grown": {
+    "orig": "brown",
+    "mech": "typo_qwerty"
+  },
+  "disable": {
+    "orig": "disabled",
+    "mech": "signage_trailing_drop"
+  },
+  "aerial": {
+    "orig": "serial",
+    "mech": "typo_qwerty"
+  }
+}
