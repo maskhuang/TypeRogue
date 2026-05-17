@@ -324,9 +324,9 @@ async function init(): Promise<void> {
     };
   }
 
-  // 主菜单「教程」按钮
+  // 主菜单「教程」按钮 · Stage 4: 传 metaState 让完整版走真实 class picker + relic picker
   const tutorialBtn = document.getElementById('menu-tutorial-btn');
-  if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playDeskSound('paper'); startTutorialMode(); };
+  if (tutorialBtn) tutorialBtn.onclick = () => { initAudio(); playDeskSound('paper'); startTutorialMode(menuMetaRef ?? undefined); };
 
   // 主菜单「设置」按钮
   const settingsBtn = document.getElementById('menu-settings-btn');

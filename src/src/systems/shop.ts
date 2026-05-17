@@ -1421,7 +1421,8 @@ export function openShop(_won: boolean): void {
   // 补偿：检查商店外升到Lv.3但未附魔的技能（如休息关升级）
   checkPendingEnchantments();
 
-  // Story 60.5: feature flag 派发到 terminal 商店 UI（教程模式 force classic 防新手迷路）
+  // Story 60.5: feature flag 派发到 terminal 商店 UI
+  // (classic UI 已废弃 · 教程模式也走 terminal · 保留 isTutorial 参数仅供单测用)
   dispatchShopMode(_won, state.isTutorial);
 }
 
@@ -1432,9 +1433,10 @@ export function openShop(_won: boolean): void {
  *
  * 提取为独立函数以便单元测试（M1）。
  */
-export function dispatchShopMode(won: boolean, isTutorial: boolean): 'classic' | 'terminal' {
-  const shopUI = getSettings().shopUI ?? 'classic';
-  const goTerminal = shopUI === 'terminal' && !isTutorial;
+export function dispatchShopMode(won: boolean, _isTutorial: boolean): 'classic' | 'terminal' {
+  const shopUI = getSettings().shopUI ?? 'terminal';
+  // classic UI 已废弃 · isTutorial 不再强制 fallback（避免教程显示旧商店）
+  const goTerminal = shopUI === 'terminal';
   if (goTerminal) {
     const shopEl = document.getElementById('shop-screen');
     if (shopEl) shopEl.style.display = 'none';

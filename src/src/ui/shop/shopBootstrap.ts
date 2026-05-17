@@ -8,6 +8,7 @@
 import { state } from '../../core/state';
 import { renderShapePreview, hideRelicTooltip } from '../../systems/shop';
 import { keyTooltip } from '../keyboard/KeyTooltip';
+import { eventBus } from '../../core/events/EventBus';
 import { shouldAnimateShop } from '../../core/UserSettings';
 import { getNextBattleNode } from '../../systems/stage/stageFlow';
 import { t, applyHtmlI18n } from '../../demo/demo-i18n';
@@ -484,6 +485,7 @@ export function switchToWorkbench(): void {
     previewState.undoStack = [];
   }
   showOnly('workbench');
+  eventBus.emit('shop:workbench_entered', {});
 }
 
 // === Screen lifecycle ===

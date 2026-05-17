@@ -3,39 +3,33 @@
 // ============================================
 // Story 56-3a: 基础设施
 // Story 56-3c: 阶段 1-4 战斗教程
+// Stage 2 重构: phase 1-4 接入真实 FILE 1 PRACTICE · 不再合成 word queue / 不再重置 timer
 
 import { t } from '../../demo/demo-i18n'
 import { state, resetState } from '../../core/state'
-import { showScreen, startLevel, setWordQueue, stopBattleTimer } from '../battle'
+import { showScreen, startLevel } from '../battle'
 import { stopBGM, initAudio } from '../../effects/sound'
 import { clearFloatTexts } from '../../ui/effects/FloatTextPool'
 import { eventBus } from '../../core/events/EventBus'
 import { showPrompt, dismissPrompt } from '../../ui/tutorial/TutorialPrompt'
 import { generateSkill } from '../../data/skillGeneration'
 import { createSkillRuntimeState } from '../../data/affixes'
-import { bindShapeToKeys, getBindingState } from '../bindingManager'
 import { resetCycleTracking } from '../battle'
+// Stage 4: 完整版前置引导
+import type { MetaState } from '../../core/state/MetaState'
+import { IS_DEMO } from '../../demo/demo-config'
+import { showClassPicker } from '../classes/ClassPicker'
+import { hasUnownedRelics, showRelicPicker, RELIC_WEIGHT_PRESETS } from '../relicPicker'
+import { CLASS_DEFINITIONS } from '../../data/classes'
 
 export type TutorialPhase = 1 | 2 | 3 | 4 | 5 | 'complete'
 
-/** 教程专用词库 */
+/** 教程词库 (复用为 FILE 1 wordDeck) */
 export const TUTORIAL_WORDS = [
   'fire', 'flame', 'frost', 'frog',
   'ice', 'bolt', 'spark', 'storm',
   'wolf', 'hero', 'rock', 'wind',
 ]
-
-/** P1 固定词序：简单短词 */
-const P1_WORDS = ['fire', 'ice', 'bolt']
-
-/** P2 固定词序：5 词练连击 */
-const P2_WORDS = ['spark', 'storm', 'wolf', 'hero', 'rock']
-
-/** P3 固定词序：充裕供应 */
-const P3_WORDS = ['fire', 'bolt', 'ice', 'wolf', 'spark', 'storm', 'hero', 'rock', 'wind', 'flame']
-
-/** P4 固定词序：确保前 3 词含 F，让玩家明确感受技能触发 */
-const P4_WORDS = ['fire', 'frost', 'flame', 'frog', 'wolf', 'bolt', 'spark', 'ice']
 
 let currentPhase: TutorialPhase = 1
 let escHandler: ((e: KeyboardEvent) => void) | null = null
@@ -43,14 +37,17 @@ let aborted = false
 
 export function getTutorialPhase(): TutorialPhase { return currentPhase }
 
-/** 启动教程模式 */
-export function startTutorialMode(): void {
+/**
+ * 启动教程模式
+ * @param metaState 完整版传入，触发真实 class picker + relic picker 前置流程；
+ *                  Demo 模式忽略（直接进 phase 1）
+ */
+export function startTutorialMode(metaState?: MetaState): void {
   stopBGM()
   clearFloatTexts()
   resetState()
 
   state.isTutorial = true
-  state.classId = 'none'
   state.gameMode = 'normal'
   state.dailySeed = null
   state.level = 1
@@ -66,6 +63,33 @@ export function startTutorialMode(): void {
   }
   window.addEventListener('keydown', escHandler)
 
+  // Stage 4: 完整版走真实 class picker → relic picker 流程；demo 跳过
+  if (!IS_DEMO && metaState) {
+    showClassPicker(metaState, () => {
+      // 教程不走 ascension picker · 直接进 relic 申领
+      const classDef = CLASS_DEFINITIONS[state.classId]
+      const starterId = classDef?.starterRelic
+      const onRelicDone = () => { void runTutorialPhases() }
+      if (starterId) {
+        showRelicPicker(onRelicDone, RELIC_WEIGHT_PRESETS.gameStart, {
+          titleKey: 'relic_picker.starter_title',
+          deskMode: true,
+          overrideCandidates: [starterId],
+        })
+      } else if (hasUnownedRelics()) {
+        showRelicPicker(onRelicDone, RELIC_WEIGHT_PRESETS.gameStart, {
+          titleKey: 'relic_picker.starter_title',
+          deskMode: true,
+        })
+      } else {
+        onRelicDone()
+      }
+    })
+    return
+  }
+
+  // Demo 模式 / 缺 metaState：跳过 picker，沿用旧行为
+  state.classId = 'none'
   void runTutorialPhases()
 }
 
@@ -85,22 +109,9 @@ export function exitTutorialMode(): void {
   clearFloatTexts()
   resetState()
   state.isTutorial = false
-  // 清教程残留：
-  //   1) demoWordQueue 可能残留 tutorial P1-P4 词序，下场游戏第一关会被错抓
-  //   2) setTutorialHUD 把 HUD 元素 display:none，下场游戏 HUD 残缺
-  //   3) currentPhase 模块级 — startTutorialMode 会重置，但显式回 1 更安全
-  setWordQueue([])
-  resetTutorialHUD()
+  // Stage 2: setWordQueue / setTutorialHUD 路径已删 · 仅需重置 phase 指针
   currentPhase = 1
   showScreen('menu')
-}
-
-/** 把 setTutorialHUD 隐藏的 HUD 元素恢复默认 display（让下场游戏 HUD 完整） */
-function resetTutorialHUD(): void {
-  for (const id of ['combo-count', 'multiplier-display', 'timer-section', 'target-score', 'skill-trigger-zone', 'player-relics']) {
-    const el = document.getElementById(id)
-    if (el) el.style.display = ''
-  }
 }
 
 // ==========================================
@@ -108,143 +119,89 @@ function resetTutorialHUD(): void {
 // ==========================================
 
 async function runTutorialPhases(): Promise<void> {
-  // --- 阶段 1: 打字基础 ---
+  // === Stage 2: 一场真实 FILE 1 PRACTICE 覆盖 phase 1-4 ===
+  //   - 不再合成 word queue / stopBattleTimer / time=9999 / setTutorialHUD 进退
+  //   - 用真实 startLevel 走完整 calibration 关（无目标 · timer 自然 ramp · auto-pass）
+  //   - phase 1-4 都是 prompt 注入，等待真实事件推进；HUD 全部默认显示
+  //   - 战斗结束自然触发 settlement → openShop → phase 5
   currentPhase = 1
-  resetBattleForPhase()
-  state.time = 9999; state.timeMax = 9999; state.targetScore = 0
-  setTutorialHUD(1)
   showScreen('battle')
   initAudio()
 
-  // 先启动关卡（词语显示后再给提示）
-  setWordQueue(P1_WORDS)
+  // 生成起手技能（real init 里 main.ts 做的事 · tutorial 走自己分支需手动来一份）
+  // 真实 FILE 1 logic (battle.ts:397) 会在玩家打完第一个词时自动绑到首字母键 → 不需手动 bind
+  const skill = generateSkill({ resource: 'base', rarity: 0, level: 1 })
+  state.affixSkills.set(skill.id, skill)
+  state.affixSkillStates.set(skill.id, createSkillRuntimeState(skill.id))
+  state.player.skills.set(skill.id, { level: 1 })
+
   resetCycleTracking()
   void startLevel()
 
+  // --- 阶段 1: 打字基础 ---
   await showPrompt('tutorial.phase1.intro', { arrow: { target: 'word-display', position: 'top' } })
   if (aborted) return
-  await waitForWords(3)
+  await waitForWords(1)
   if (aborted) return
-
   await showPrompt('tutorial.phase1.done')
   if (aborted) return
 
   // --- 阶段 2: 连击与倍率 ---
   advanceTutorialPhase()
-  setTutorialHUD(2)
-
   await showPrompt('tutorial.phase2.intro', { arrow: { target: 'combo-count', position: 'bottom' } })
   if (aborted) return
-
-  setWordQueue(P2_WORDS)
-  await waitForWords(2)
+  await waitForCombo(3)
   if (aborted) return
-
-  // 打了 2 词后指向倍率
   await showPrompt('tutorial.phase2.mult', { arrow: { target: 'multiplier-display', position: 'bottom' } })
   if (aborted) return
 
-  await waitForWords(3)
-  if (aborted) return
-  if (aborted) return
-
-  // --- 阶段 3: 时间与目标 ---
+  // --- 阶段 3: 时间与目标 (真实 timer / calibration 自动 pass · 仅 intro 提示)---
   advanceTutorialPhase()
-  resetBattleForPhase()
-  state.time = 30; state.timeMax = 30; state.targetScore = 100
-  state.score = 0
-  setTutorialHUD(3)
-
-  setWordQueue(P3_WORDS)
-  resetCycleTracking()
-  void startLevel()
-
   await showPrompt('tutorial.phase3.intro', { arrow: { target: 'timer-section', position: 'bottom' } })
   if (aborted) return
 
-  // 等待达标或时间到
-  const p3result = await waitForTargetOrTimeUp()
-  if (aborted) return
-  stopBattleTimer()
-
-  if (p3result === 'reached') {
-    await showPrompt('tutorial.phase3.reached')
-  } else {
-    await showPrompt('tutorial.phase3.fail')
-  }
-  if (aborted) return
-
-  // --- 阶段 4: 技能触发 ---
+  // --- 阶段 4: 技能触发 (auto-bind 已在第 1 词后由 battle.ts 接管) ---
   advanceTutorialPhase()
-  resetBattleForPhase()
-  state.time = 45; state.timeMax = 45; state.targetScore = 200
-  state.score = 0
-  setTutorialHUD(4)
-
-  // 赠送预设技能绑定 F 键
-  const skill = generateSkill({ resource: 'base', rarity: 0, level: 1 })
-  state.affixSkills.set(skill.id, skill)
-  state.affixSkillStates.set(skill.id, createSkillRuntimeState(skill.id))
-  state.player.skills.set(skill.id, { level: 1, name: skill.name })
-  bindShapeToKeys(getBindingState(state), skill.id, 'f')
-
   await showPrompt('tutorial.phase4.intro', { arrow: { target: 'skill-trigger-zone', position: 'top' } })
   if (aborted) return
-
-  setWordQueue(P4_WORDS)
-  resetCycleTracking()
-  void startLevel()
-
   await showPrompt('tutorial.phase4.hint', { arrow: { target: 'word-display', position: 'top' } })
   if (aborted) return
-
   await waitForSkillTriggers(3)
   if (aborted) return
-  stopBattleTimer()
-
   await showPrompt('tutorial.phase4.done')
   if (aborted) return
 
-  // --- 阶段 5: 商店 ---
+  // --- 阶段 5: 商店 (Stage 1 接入 terminal · 战斗结束 → settlement → openShop 自动触发) ---
   advanceTutorialPhase()
-  state.gold = 200
-
-  // 生成教程固定商品：1格 + 2格 + 3格（展示多格技能）
-  const tutorialSkillConfigs: Array<{ resource: 'base' | 'multiplier' | 'time'; rarity: 0 | 1 | 2 }> = [
-    { resource: 'base', rarity: 0 },        // 1格 monomino
-    { resource: 'multiplier', rarity: 1 },   // 2格 domino
-    { resource: 'time', rarity: 2 },         // 3格 triomino
-  ]
-  const tutorialShopItems: import('../../core/types').ShopItem[] = tutorialSkillConfigs.map((cfg, i) => {
-    const sk = generateSkill({ resource: cfg.resource, rarity: cfg.rarity, level: 1 })
-    return {
-      id: `tutorial-skill-${i}`,
-      type: 'skill' as const,
-      skillId: sk.id,
-      affixSkill: sk,
-      cost: 50,
-      isUpgrade: false,
-      locked: false,
-    }
-  })
-  state.shop.items = tutorialShopItems
-  state.shop.refreshCount = 0
-
-  // openShop 会检测 isTutorial 保留预设商品
-  const { openShop } = await import('../shop')
-  openShop(true)
+  await waitForShopOpened()
+  if (aborted) return
 
   await showPrompt('tutorial.phase5.intro')
   if (aborted) return
 
-  // 等待购买
+  // 等待真实 BUY cmd 触发购买（terminal 内输入 BUY <SKU>）
   await waitForShopPurchase()
+  if (aborted) return
+
+  // 等待 Tab 转工作台（让玩家自然发现 terminal 底部 TAB · WORKBENCH 提示）
+  await waitForWorkbenchEntered()
   if (aborted) return
 
   await showPrompt('tutorial.phase5.bind')
   if (aborted) return
 
+  // 等待真实拖卡至键 · bindSkillToKey emit
+  await waitForSkillBound()
+  if (aborted) return
+
   await showPrompt('tutorial.phase5.done')
+  if (aborted) return
+
+  // === Stage 3: 等玩家提交 → FILE 2 战斗 → battle 结束 → 才弹完成屏 ===
+  // 让玩家把刚学的东西真实跑一遍（FILE 2 自然 timer + 装配技能触发）
+  await waitForBattleStart()
+  if (aborted) return
+  await waitForBattleEnd()
   if (aborted) return
 
   // --- 完成画面 ---
@@ -268,22 +225,16 @@ function waitForWords(count: number): Promise<void> {
 }
 
 // ==========================================
-// Helper: 等待达标或时间到
+// Helper: 等待 combo 达到指定值（Stage 2）
 // ==========================================
-function waitForTargetOrTimeUp(): Promise<'reached' | 'time_up'> {
+function waitForCombo(target: number): Promise<void> {
   return new Promise(resolve => {
-    let resolved = false
     const check = setInterval(() => {
-      if (aborted) { done('time_up') }
+      if (aborted) { unsub(); clearInterval(check); resolve() }
     }, 200)
-    const done = (r: 'reached' | 'time_up') => {
-      if (resolved) return
-      resolved = true; unsub1(); unsub2(); clearInterval(check); resolve(r)
-    }
-    const unsub1 = eventBus.on('word:complete', () => {
-      if (state.score >= state.targetScore) done('reached')
+    const unsub = eventBus.on('score:update', (e) => {
+      if (e.combo >= target) { unsub(); clearInterval(check); resolve() }
     })
-    const unsub2 = eventBus.on('tutorial:time_up', () => done('time_up'))
   })
 }
 
@@ -304,37 +255,17 @@ function waitForSkillTriggers(count: number): Promise<void> {
 }
 
 // ==========================================
-// Helper: 重置战斗 state（阶段间）
+// Helper: 等待 shop 打开（Stage 2 · 真实 FILE 1 end → settlement → openShop）
 // ==========================================
-function resetBattleForPhase(): void {
-  state.combo = 0
-  state.maxCombo = 0
-  state.multiplier = 1.0
-  state.overkill = 0
-  state.overflowScore = 0
-  state.player.word = ''
-  state.player.index = 0
-  state.battleStats = null
-}
-
-// ==========================================
-// Helper: HUD 显隐控制
-// ==========================================
-function setTutorialHUD(phase: number): void {
-  const comboEl = document.getElementById('combo-count')
-  const multEl = document.getElementById('multiplier-display')
-  const timerSection = document.getElementById('timer-section')
-  const targetEl = document.getElementById('target-score')
-  const triggerZone = document.getElementById('skill-trigger-zone')
-  const relicBar = document.getElementById('player-relics')
-
-  // P1: 仅 word + score
-  if (comboEl) comboEl.style.display = phase >= 2 ? '' : 'none'
-  if (multEl) multEl.style.display = phase >= 2 ? '' : 'none'
-  if (timerSection) timerSection.style.display = phase >= 3 ? '' : 'none'
-  if (targetEl) targetEl.style.display = phase >= 3 ? '' : 'none'
-  if (triggerZone) triggerZone.style.display = phase >= 4 ? '' : 'none'
-  if (relicBar) relicBar.style.display = 'none' // 教程中始终隐藏遗物
+function waitForShopOpened(): Promise<void> {
+  return new Promise(resolve => {
+    const unsub = eventBus.on('shop:opened', () => {
+      unsub(); clearInterval(check); resolve()
+    })
+    const check = setInterval(() => {
+      if (aborted) { unsub(); clearInterval(check); resolve() }
+    }, 200)
+  })
 }
 
 // ==========================================
@@ -343,7 +274,63 @@ function setTutorialHUD(phase: number): void {
 function waitForShopPurchase(): Promise<void> {
   return new Promise(resolve => {
     const unsub = eventBus.on('shop:purchase', () => {
-      unsub(); resolve()
+      unsub(); clearInterval(check); resolve()
+    })
+    const check = setInterval(() => {
+      if (aborted) { unsub(); clearInterval(check); resolve() }
+    }, 200)
+  })
+}
+
+// ==========================================
+// Helper: 等待 Tab 转工作台（Stage 1）
+// ==========================================
+function waitForWorkbenchEntered(): Promise<void> {
+  return new Promise(resolve => {
+    const unsub = eventBus.on('shop:workbench_entered', () => {
+      unsub(); clearInterval(check); resolve()
+    })
+    const check = setInterval(() => {
+      if (aborted) { unsub(); clearInterval(check); resolve() }
+    }, 200)
+  })
+}
+
+// ==========================================
+// Helper: 等待 battle:start（Stage 3 · FILE 2 进入信号）
+// ==========================================
+function waitForBattleStart(): Promise<void> {
+  return new Promise(resolve => {
+    const unsub = eventBus.on('battle:start', () => {
+      unsub(); clearInterval(check); resolve()
+    })
+    const check = setInterval(() => {
+      if (aborted) { unsub(); clearInterval(check); resolve() }
+    }, 200)
+  })
+}
+
+// ==========================================
+// Helper: 等待 battle:end（Stage 3 · FILE 2 结束信号）
+// ==========================================
+function waitForBattleEnd(): Promise<void> {
+  return new Promise(resolve => {
+    const unsub = eventBus.on('battle:end', () => {
+      unsub(); clearInterval(check); resolve()
+    })
+    const check = setInterval(() => {
+      if (aborted) { unsub(); clearInterval(check); resolve() }
+    }, 200)
+  })
+}
+
+// ==========================================
+// Helper: 等待 IN-tray 拖卡至键完成绑定（Stage 1）
+// ==========================================
+function waitForSkillBound(): Promise<void> {
+  return new Promise(resolve => {
+    const unsub = eventBus.on('skill:bound', () => {
+      unsub(); clearInterval(check); resolve()
     })
     const check = setInterval(() => {
       if (aborted) { unsub(); clearInterval(check); resolve() }

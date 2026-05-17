@@ -8,6 +8,7 @@
 
 import { state } from '../../core/state';
 import { INBOX_MAX, PUNCTUATION_KEYS, RESOURCE_ICONS } from '../../core/constants';
+import { eventBus } from '../../core/events/EventBus';
 import { calculateLetterFrequency, FREQ_UNLOCK_THRESHOLD } from '../../systems/letters/LetterFrequencySystem';
 import {
   renderShapePreview,
@@ -425,6 +426,7 @@ export function bindSkillToKey(skillId: string, key: string): void {
   syncWorkbenchInbox();
   syncWorkbenchKeys();
   deskSfx('punch'); // 落键 mechanical thud（替代 shop_drag_drop）
+  eventBus.emit('skill:bound', { skillId, key });
 }
 
 // Story 60.1: 从键拖回 IN-tray = 整体卸下多格技能

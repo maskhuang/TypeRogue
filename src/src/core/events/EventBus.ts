@@ -50,6 +50,10 @@ export interface GameEvents {
   'shop:opened': Record<string, never>
   'shop:purchase': { itemId: string; type: 'skill' | 'relic' | 'pack'; price: number }
   'shop:skip': Record<string, never>
+  // Tab 切换至工作台（terminal → workbench）· 教程驱动用
+  'shop:workbench_entered': Record<string, never>
+  // 工作台拖卡至键完成绑定 · 教程驱动用
+  'skill:bound': { skillId: string; key: string }
 
   // 遗物事件
   'relic:effect': {
