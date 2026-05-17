@@ -6389,6 +6389,7 @@ html[lang^="en"] .class-select-title {
         0 0 0 1px rgba(74,222,128,0.18),
         0 6px 20px rgba(0,0,0,0.7);
 }
+/* 扫描线叠层 */
 .tutorial-overlay::before {
     content: ''; position: absolute; inset: 0; pointer-events: none;
     background: repeating-linear-gradient(0deg,
@@ -6473,6 +6474,7 @@ html[lang^="en"] .class-select-title {
     0%, 100% { opacity: 0.55; }
     50% { opacity: 1; }
 }
+/* 箭头（CSS 三角）· 绿磷光 */
 .tutorial-overlay-arrow {
     position: absolute;
     width: 0;
@@ -6504,6 +6506,7 @@ html[lang^="en"] .class-select-title {
     transform: translateY(-50%);
     border-right-color: #4ade80;
 }
+/* 遮罩层 */
 .tutorial-overlay-mask {
     position: fixed;
     top: 0;
@@ -6535,6 +6538,7 @@ html[lang^="en"] .class-select-title {
     font-family: var(--font-dossier, 'Courier Prime', monospace);
     box-shadow: 0 -6px 22px rgba(0,0,0,0.7), 0 -1px 0 rgba(74,222,128,0.35);
 }
+/* CRT 扫描线 */
 .tutorial-prompt::before {
     content: ''; position: absolute; inset: 0; pointer-events: none;
     background: repeating-linear-gradient(0deg,
@@ -6544,6 +6548,7 @@ html[lang^="en"] .class-select-title {
 }
 .tutorial-prompt > * { position: relative; z-index: 2; }
 
+/* DPCA 头条 (小窄条) */
 .tutorial-prompt-header {
     display: flex;
     align-items: center;
@@ -6576,6 +6581,7 @@ html[lang^="en"] .class-select-title {
     letter-spacing: 2px;
 }
 
+/* 屏内内容区 */
 .tutorial-prompt-body {
     padding: 12px 20px 14px;
 }
@@ -6604,6 +6610,7 @@ html[lang^="en"] .class-select-title {
     margin-left: 2px;
 }
 
+/* 打字完成后隐藏光标 */
 .tutorial-prompt-text.typing-done::after {
     display: none;
 }
@@ -6696,6 +6703,7 @@ html[lang^="en"] .class-select-title {
 }
 .tutorial-complete-panel::before { grid-column: 1; }
 .tutorial-complete-panel::after  { grid-column: 3; transform: scaleX(-1); }
+/* 头条 */
 .tutorial-complete-panel .tc-header {
     grid-row: 1; grid-column: 1 / -1;
     display: flex; align-items: center; gap: 12px;
@@ -6717,6 +6725,7 @@ html[lang^="en"] .class-select-title {
 .tutorial-complete-panel .tc-brand { font-weight: bold; letter-spacing: 4px; font-size: 10px; }
 .tutorial-complete-panel .tc-spec  { flex: 1; text-align: center; opacity: 0.72; font-size: 8px; letter-spacing: 3px; }
 .tutorial-complete-panel .tc-vent  { color: rgba(255,255,255,0.18); letter-spacing: -2px; font-size: 9px; }
+/* 底条 */
 .tutorial-complete-panel .tc-bottom {
     grid-row: 3; grid-column: 1 / -1;
     display: flex; align-items: center; gap: 12px; justify-content: space-between;
@@ -6737,6 +6746,7 @@ html[lang^="en"] .class-select-title {
     border: 1px solid rgba(255,255,255,0.18); padding: 1px 6px;
     background: rgba(0,0,0,0.5);
 }
+/* 屏内 */
 .tutorial-complete-panel .tc-screen {
     grid-row: 2; grid-column: 2;
     background: linear-gradient(180deg, #02060a 0%, #0a1410 100%);
@@ -9150,6 +9160,43 @@ body.shop-preview-active .craft-pipeline-fill {
   transform: translate(-50%, -50%) scale(1) rotate(0deg);
   opacity: 1;
   pointer-events: auto;
+}
+
+/* === Handbook · 多 layer tab strip（隐藏 if 单层）=== */
+.desk-overlay-paper .hb-tab-strip {
+  display: flex;
+  gap: 6px;
+  margin: -8px -10px 14px;
+  padding: 0 2px;
+  border-bottom: 2px solid rgba(60, 30, 0, 0.45);
+}
+.desk-overlay-paper .hb-tab {
+  appearance: none;
+  background: rgba(180, 140, 90, 0.16);
+  border: 1px solid rgba(60, 30, 0, 0.35);
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+  padding: 5px 14px 6px;
+  font-family: var(--desk-font-body);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--desk-ink-dim);
+  cursor: pointer;
+  position: relative;
+  top: 2px;
+  transition: background 0.12s steps(1), color 0.12s steps(1);
+}
+.desk-overlay-paper .hb-tab:hover {
+  background: rgba(180, 140, 90, 0.28);
+  color: var(--desk-ink);
+}
+.desk-overlay-paper .hb-tab.active {
+  background: var(--desk-paper);
+  color: var(--desk-ink);
+  font-weight: bold;
+  top: 0;
+  border-bottom: 2px solid var(--desk-paper);
+  z-index: 1;
 }
 .desk-overlay-paper::before {
   content: '';

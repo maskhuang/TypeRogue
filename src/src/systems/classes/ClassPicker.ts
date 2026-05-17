@@ -1,26 +1,39 @@
 // ============================================
 // 打字肉鸽 - 职业选择界面
 // ============================================
-// Stage 3 · 桌面化 duty-roster 实现（2026-05）
-//   原 card-grid + 确认按钮 → 一张「值班表」纸 + 三行 + 键入字母 + Enter 签到 + 红章 ASSIGNED
-//   key→classId 映射：W→wordsmith, M→metamorph, N→none
-// 兼容性：保留 #class-select-modal 容器 ID 和 #class-select-cards 容器 ID。
-//   已锁定的职业渲染为 `▓▓▓▓-▓▓▓▓ · OCCUPIED`，不可签字。
+// 5 段身份阶梯 duty-roster（narrative §2.16 / §4.3 LOCKED）
+//   录入者(R) → 接入 `none` 职业 · 唯一可签字
+//   校对者(P) / 修改者(M) / 作者(A) / 猴子(K) → 仅 roster 占位 · 永远 OCCUPIED
+//   wordsmith / metamorph 数据层保留，但不再在 duty roster 显示
+// 兼容性：保留 #class-select-modal 容器 ID 和 #class-select-cards 容器 ID
 
 import type { ClassId } from '../../core/types';
-import type { ClassDefinition } from '../../data/classes';
-import { CLASS_DEFINITIONS, getSelectableClassIds } from '../../data/classes';
 import { classManager } from './ClassManager';
 import type { MetaState } from '../../core/state/MetaState';
 import { t } from '../../demo/demo-i18n';
 import { playDeskSound } from '../../effects/sound';
 
-// classId → 单字符键映射（与 duty roster 一致）
-const KEY_FOR_CLASS: Record<ClassId, string> = {
-  wordsmith: 'W',
-  metamorph: 'M',
-  none: 'N',
-};
+// 5 段身份阶梯 · roster 显示定义（narrative §4.3 5段身份阶梯）
+//   首项 录入者 是唯一可签字项（hooks to `none`）· 其余 4 项 LOCKED 占位
+interface RosterRowDef {
+  /** 行 dataset 标识 · 录入者用 'operator'，其余占位用 narrative-stage id */
+  rowId: string;
+  /** 单字符键入字符 */
+  key: string;
+  /** 引擎实际职业 ID（仅 operator 项填 `none`，占位项 null） */
+  engineClassId: ClassId | null;
+  zoneCode: string;
+  sectionZh: string;
+  sectionEn: string;
+  clearance: string;
+}
+const ROSTER_LAYOUT: RosterRowDef[] = [
+  { rowId: 'operator',    key: 'R', engineClassId: 'none', zoneCode: 'OPR-1-A', sectionZh: '录入区',   sectionEn: 'DATA ENTRY',    clearance: 'CLR 1-A' },
+  { rowId: 'proofreader', key: 'P', engineClassId: null,   zoneCode: 'PRF-2-B', sectionZh: '校对台',   sectionEn: 'PROOFREADING',  clearance: 'CLR 2-B' },
+  { rowId: 'modifier',    key: 'M', engineClassId: null,   zoneCode: 'MOD-3-A', sectionZh: '修改区',   sectionEn: 'REVISION',      clearance: 'CLR 3-A' },
+  { rowId: 'author',      key: 'A', engineClassId: null,   zoneCode: 'AUT-4-A', sectionZh: '作者室',   sectionEn: 'AUTHORSHIP',    clearance: 'CLR 4-A' },
+  { rowId: 'monkey',      key: 'K', engineClassId: null,   zoneCode: 'MNK-?-?', sectionZh: '猴群坐席', sectionEn: 'MONKEY DESK',   clearance: 'CLR —' },
+];
 
 // 工号读取（与主菜单打卡共用 localStorage key）
 const WORKER_ID_STORAGE_KEY = 'dpca-worker-id';
@@ -62,19 +75,17 @@ export function showClassPicker(metaState: MetaState, onComplete: () => void): v
     onComplete();
   };
 
-  // 渲染三行
+  // 渲染 5 行身份阶梯 · 录入者(R) 接入 `none` · 其余 4 行 LOCKED 占位
   listEl.innerHTML = '';
-  const allIds: ClassId[] = [...getSelectableClassIds(), 'none'];
-  allIds.forEach(classId => {
-    const def = CLASS_DEFINITIONS[classId];
-    if (!def) return;
-    const isUnlocked = metaState.isClassUnlocked(classId);
-    const row = createRosterRow(def, isUnlocked);
-    if (isUnlocked) {
+  ROSTER_LAYOUT.forEach(layout => {
+    const isUnlockable = layout.engineClassId !== null
+      && metaState.isClassUnlocked(layout.engineClassId);
+    const row = createRosterRow(layout, isUnlockable);
+    if (isUnlockable) {
       row.addEventListener('click', () => {
         playDeskSound('paper');
-        if (inputEl.value.toUpperCase() === KEY_FOR_CLASS[classId]) return;
-        inputEl.value = KEY_FOR_CLASS[classId];
+        if (inputEl.value.toUpperCase() === layout.key) return;
+        inputEl.value = layout.key;
         inputEl.dispatchEvent(new Event('input'));
       });
     }
@@ -99,7 +110,8 @@ export function showClassPicker(metaState: MetaState, onComplete: () => void): v
     const row = listEl.querySelector<HTMLElement>(`.roster-row[data-key="${v}"]`);
     if (!row) return;
     if (row.classList.contains('locked')) return;
-    const classId = row.dataset.classId as ClassId | undefined;
+    // dataset.engineClassId 仅设在可签字行（录入者 → 'none'）
+    const classId = row.dataset.engineClassId as ClassId | undefined;
     if (!classId) return;
     selectedClassId = classId;
     inputEl.disabled = true;
@@ -130,41 +142,39 @@ export function showClassPicker(metaState: MetaState, onComplete: () => void): v
   setTimeout(() => inputEl.focus(), 80);
 }
 
-function createRosterRow(def: ClassDefinition, isUnlocked: boolean): HTMLDivElement {
+function createRosterRow(layout: RosterRowDef, isUnlocked: boolean): HTMLDivElement {
   const row = document.createElement('div');
   row.className = 'roster-row';
-  row.dataset.classId = def.id;
-  row.dataset.key = KEY_FOR_CLASS[def.id];
+  row.dataset.rowId = layout.rowId;
+  row.dataset.key = layout.key;
+  if (layout.engineClassId) row.dataset.engineClassId = layout.engineClassId;
   if (!isUnlocked) row.classList.add('locked');
 
   const keyEl = document.createElement('div');
   keyEl.className = 'key';
-  keyEl.textContent = KEY_FOR_CLASS[def.id];
+  keyEl.textContent = layout.key;
   row.appendChild(keyEl);
 
   const roleEl = document.createElement('div');
   roleEl.className = 'role';
-  // 区域代号（语言中性）+ 中区名 + 英区名 + 原岗位名（alt label）
-  // CSS 通过 html[lang] 选择性显示中/英区名（保持双语数据完整，按 locale 切显示）
   const codeEl = document.createElement('div');
   codeEl.className = 'sec-code';
-  codeEl.textContent = def.zoneCode;
+  codeEl.textContent = layout.zoneCode;
   roleEl.appendChild(codeEl);
 
   const zhEl = document.createElement('div');
   zhEl.className = 'section-zh';
-  zhEl.textContent = def.sectionZh;
+  zhEl.textContent = layout.sectionZh;
   roleEl.appendChild(zhEl);
 
   const enEl = document.createElement('div');
   enEl.className = 'section-en';
-  enEl.textContent = def.sectionEn;
+  enEl.textContent = layout.sectionEn;
   roleEl.appendChild(enEl);
 
-  // 原岗位名（locale-aware via t()）作独立行 alt label
-  const alt = t(`class.${def.id}.name`);
-  const altText = alt !== `class.${def.id}.name` ? alt : def.name;
-  if (altText && altText !== def.sectionZh && altText !== def.sectionEn) {
+  // 身份阶梯名（5 阶段 · narrative §4.3）作 alt label
+  const altText = t(`roster.role.${layout.rowId}`);
+  if (altText && altText !== `roster.role.${layout.rowId}`) {
     const altEl = document.createElement('div');
     altEl.className = 'alt-name';
     altEl.textContent = `(${altText})`;
@@ -180,7 +190,7 @@ function createRosterRow(def: ClassDefinition, isUnlocked: boolean): HTMLDivElem
 
   const clrEl = document.createElement('div');
   clrEl.className = 'clr';
-  clrEl.textContent = def.clearance;
+  clrEl.textContent = layout.clearance;
   row.appendChild(clrEl);
 
   return row;

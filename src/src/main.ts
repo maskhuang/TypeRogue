@@ -42,6 +42,7 @@ import { initFullTutorial } from './systems/tutorial/tutorialInit';
 import { A8_WORD_COMPRESS_RATIO } from './core/constants';
 import { initShopPreview } from './ui/shopPreview';
 import { wireV2BattleIntegration } from './systems/affixV2BattleIntegration';
+import { renderHandbook } from './ui/handbook/handbookOverlay';
 
 // 模块级引用，让 updateMenuInfo 能拿到 metaState
 let menuMetaRef: MetaState | null = null;
@@ -505,7 +506,10 @@ function setupDeskMenu(): void {
     initAudio();
     playDeskSound('paper');
     shroud?.classList.add('show');
-    if (which === 'handbook') ovHandbook?.classList.add('show');
+    if (which === 'handbook') {
+      if (menuMetaRef) renderHandbook(menuMetaRef);  // 动态注入 layers (含未来 tab 切换)
+      ovHandbook?.classList.add('show');
+    }
     else {
       populateRequestForm();
       ovRequest?.classList.add('show');
@@ -532,9 +536,12 @@ function setupDeskMenu(): void {
 
   // 守则 ACK → 章音 → 按钮文字变"调档中" → overlay 收回 + whoosh → 教程
   // 静态注释告诉玩家"会去培训科"，转场动画兑现这个承诺
-  document.getElementById('menu-ov-handbook-ack')?.addEventListener('click', (e) => {
+  // 事件委托：ACK 按钮由 renderHandbook 动态生成，监听挂在 overlay 容器上以幸存重绘
+  ovHandbook?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const ackBtn = target.closest('#menu-ov-handbook-ack') as HTMLButtonElement | null;
+    if (!ackBtn) return;
     e.stopPropagation();
-    const ackBtn = e.currentTarget as HTMLButtonElement;
     if (ackBtn.disabled) return;
     ackBtn.disabled = true;
     const originalText = ackBtn.textContent;

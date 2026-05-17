@@ -2,17 +2,17 @@
   "definitions": {
     "none": {
       "id": "none",
-      "name": "无职业",
-      "description": "标准模式，无特殊机制。",
+      "name": "录入者",
+      "description": "标准模式 · 文牍科 1-A 录入岗 · 无特殊机制",
       "icon": "⚔️",
       "uniqueResource": null,
       "loseFeature": null,
       "loseDescription": null,
       "starterRelic": null,
-      "zoneCode": "VAC-4B",
-      "sectionZh": "无役区",
-      "sectionEn": "VACANCY SECTION",
-      "clearance": "CLR 4-B"
+      "zoneCode": "OPR-1-A",
+      "sectionZh": "录入区",
+      "sectionEn": "DATA ENTRY",
+      "clearance": "CLR 1-A"
     },
     "wordsmith": {
       "id": "wordsmith",
