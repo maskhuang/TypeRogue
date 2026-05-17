@@ -167,6 +167,9 @@ export function resetResources(): void {
 export function resetState(): void {
   state = createInitialState();
   synergy = createSynergyState();
+  // 同步清空工作台便条模块的 per-run 状态（visit count / oneShots / lastResult）
+  // 动态 import 避免循环引用 — 便条模块仅在 reset 时需触达
+  void import('../data/narrative/workbenchNotes').then(m => m.resetWorkbenchNoteState());
 }
 
 // === 关卡目标计算（指数增长）===

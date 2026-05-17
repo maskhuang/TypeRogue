@@ -38,7 +38,7 @@ import {
 // Story 60.18: 范围词条（splash/echo/aura/relay/war_drum/conduit/amplify 等）键盘高亮
 import { getKeysWithRelation } from '../../data/keyboardTopology';
 import { t, getLocale } from '../../demo/demo-i18n';
-import { pickRandomNote, getNoteText } from '../../data/narrative/workbenchNotes';
+import { pickWorkbenchNote, recordShopVisit, getNoteText } from '../../data/narrative/workbenchNotes';
 import type { WordPack } from '../../core/types';
 import {
   previewState,
@@ -877,13 +877,29 @@ export function renderFreqFolderHtml(): { count: number; rowsHtml: string } {
   return { count: freq.size, rowsHtml: rows.join('') };
 }
 
-/** 进店时随机刷一张工作台便签；新增便签只需往 WORKBENCH_NOTES push 一条即可 */
+/** 进店时刷一张工作台便签 · recordShopVisit 推进 visit count，触发 first_shop/after_n_shops oneShot */
 export function refreshWorkbenchNote(): void {
   const el = document.querySelector<HTMLElement>('#workbench-screen-preview .note-text');
   if (!el) return;
-  const note = pickRandomNote();
-  el.textContent = getNoteText(note, getLocale());
+  recordShopVisit();
+  const note = pickWorkbenchNote(state.cycle ?? 1);
+  // 用 innerHTML 渲染轻量 markdown（~~strikethrough~~ / **bold** / *italic*）
+  // escape 优先做（XSS 防御），再做语法转换
+  el.innerHTML = renderNoteInline(getNoteText(note, getLocale()));
   el.dataset.noteId = note.id; // 便于 console / QA 定位
+}
+
+/** 工作台便条内联 markdown 渲染 · escape 后转 strikethrough / bold / italic */
+function renderNoteInline(raw: string): string {
+  const escaped = raw
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+  return escaped
+    .replace(/~~([^~]+)~~/g, '<s>$1</s>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
 }
 
 export function syncFiledFolders(): void {

@@ -2819,6 +2819,7 @@ function animateOverflowDeduction(preTarget: number, deduction: number, finalTar
 // === 胜利 ===
 function victory(): void {
   state.phase = 'victory';
+  eventBus.emit('battle:end', { result: 'win', score: state.score });
   if (timerInterval) clearInterval(timerInterval);
   stopScoreRoller(); // Story 31.4
   stopTaikoSpawner();
@@ -2865,6 +2866,7 @@ function victory(): void {
 // === 游戏结束 ===
 function gameOver(): void {
   state.phase = 'gameover';
+  eventBus.emit('battle:end', { result: 'lose', score: state.score });
   if (timerInterval) clearInterval(timerInterval);
   releaseBGMTension();
   clearPseudoInfinite();

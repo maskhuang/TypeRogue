@@ -184,6 +184,11 @@ async function init(): Promise<void> {
     state.endlessUnlocked = metaState.isModeUnlocked('endless');
   });
 
+  // 工作台便条：记录战斗结果（驱动 after_fail / after_n_fails 触发便条 + 红领结）
+  eventBus.on('battle:end', (e) => {
+    void import('./data/narrative/workbenchNotes').then(m => m.recordBattleResult(e.result));
+  });
+
   // 初始化重开按钮 — 回主菜单而非 reload
   const restartBtn = document.getElementById('restart-btn');
   if (restartBtn) {
