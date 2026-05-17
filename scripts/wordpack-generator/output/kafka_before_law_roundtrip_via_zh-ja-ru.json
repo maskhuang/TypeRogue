@@ -1,0 +1,25 @@
+{
+  "chain": [
+    {
+      "lang": "en",
+      "text": "Before the law sits a gatekeeper. To this gatekeeper there comes a man from the country who asks to gain entry into the law. But the gatekeeper says that he cannot grant him entry at the moment. The man thinks about it and then asks if he will be allowed to come in later on. \"It is possible,\" says the gatekeeper, \"but not now.\" The gate to the law stands open, as always, and the gatekeeper walks to the side, so the man bends over in order to see through the gate into the inside. When the gatekeeper notices that, he laughs and says: \"If it tempts you so much, try going inside in spite of my prohibition. But take note. I am powerful. And I am only the lowliest gatekeeper. But from room to room stand gatekeepers, each more powerful than the other. I cannot endure even one glimpse of the third.\""
+    },
+    {
+      "lang": "zh",
+      "text": "法的门前站着一个守门人。一个乡下来的人走到守门人跟前，请求进入法的里面。但守门人说，他此刻不能允许他进去。那人想了想，然后问他以后是否可以进去。\"有可能，\"守门人说，\"但不是现在。\"通往法的大门像往常一样敞开着，守门人走到一边，那人便弯下腰，想从门里往里面看。守门人看到这情形，笑着说：\"如果这么吸引你，那你就试着不顾我的禁令进去吧。不过要注意，我很强大。而且我只是最低等的守门人。但从一个房间到另一个房间都站着守门人，一个比一个强大。光是第三个守门人的样子，连我都受不了。\""
+    },
+    {
+      "lang": "ja",
+      "text": "法の門の前に一人の門番が立っている。田舎から来た男が門番のもとへ歩み寄り、法の中へ入ることを請う。しかし門番は、今は入ることを許可できないと言う。男は考えてから、後で入ることができるかと尋ねる。「可能性はある」と門番は言う、「だが今ではない」。法への門はいつものように開け放たれており、門番が脇へ寄ると、男は身をかがめて門の中を覗き込もうとする。門番はその様子を見て、笑いながら言う。「そんなに惹かれるなら、私の禁止を無視して入ってみるがいい。ただし注意しろ、私は強大だ。しかも私は最も下級の門番に過ぎない。部屋から部屋へと門番が立っており、一人また一人と強大になっていく。三番目の門番の姿だけでも、私には耐えられないほどだ」"
+    },
+    {
+      "lang": "ru",
+      "text": "Перед Законом стоит привратник. К этому привратнику приходит человек из деревни и просит позволить ему войти в Закон. Но привратник говорит, что сейчас он не может позволить ему войти. Человек раздумывает, а затем спрашивает, можно ли будет войти позже. «Возможно», — говорит привратник, — «но не сейчас». Врата Закона открыты, как всегда, и когда привратник отступает в сторону, человек наклоняется, чтобы заглянуть внутрь через врата. Заметив это, привратник смеётся и говорит: «Если тебя так тянет, попробуй войти, несмотря на мой запрет. Но учти: я могуществен. А ведь я всего лишь самый младший привратник. От зала к залу стоят привратники, один могущественнее другого. Уже вид третьего привратника даже я не в силах вынести»."
+    },
+    {
+      "lang": "en",
+      "text": "Before the Law stands a doorkeeper. To this doorkeeper comes a man from the country and requests permission to enter the Law. But the doorkeeper says that he cannot grant him entry at this time. The man thinks it over, then asks if he will be allowed to enter later. \"It is possible,\" says the doorkeeper, \"but not now.\" The gate to the Law stands open, as always, and when the doorkeeper steps aside, the man bends down to look inside through the gate. Noticing this, the doorkeeper laughs and says: \"If it tempts you so much, try to enter despite my prohibition. But bear in mind: I am powerful. And I am only the lowest doorkeeper. From hall to hall stand doorkeepers, each more powerful than the one before. Even I cannot bear the sight of the third doorkeeper.\""
+    }
+  ],
+  "model": "claude-sonnet-4-5"
+}

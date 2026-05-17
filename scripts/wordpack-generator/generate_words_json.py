@@ -25,8 +25,8 @@ OUTPUT = ROOT / "output"
 
 SEED = 42
 
-# 50 个手工策划的 S 级 anchor，覆盖最强 narrative themes
-# 来源：REFERENCE.md §10-§12 + 8 机制经典对。
+# ~100 个手工策划的 S 级 anchor，覆盖最强 narrative themes
+# 来源：REFERENCE.md §10-§12 + 8 机制经典对 + 翻译漂移 gained gems。
 SPECIAL_TOKENS = [
     # 腐烂 / 神圣 (typo)
     "rot", "god", "thee", "lief",
@@ -34,8 +34,9 @@ SPECIAL_TOKENS = [
     "hell", "anger", "ark", "eat", "rain", "tar",
     # OCR cl→d
     "dock", "dose",
-    # ASR 同音
-    "wave", "bear", "bare", "soul", "steel",
+    # ASR 同音 (S 级 12 对中的 drift 一侧)
+    "wave", "bare", "soul", "steel", "plain", "altar",
+    "hare", "heel", "idol", "minor", "pole", "reign", "roll",
     # 长 s ſ→f (神级历史 OCR)
     "feal", "fame", "fail", "fend", "fort", "fouls", "fun", "four", "fit", "fin", "fob",
     # typo drop / 经典字符
@@ -43,11 +44,23 @@ SPECIAL_TOKENS = [
     # 整词易混
     "trail", "untied", "scared", "stain", "fried", "wired",
     # OCR / signage 其他
-    "tight", "tool", "tall", "anger",
+    "tight", "tool", "tall",
     # 警告主题 signage middle
     "waning", "cation",
     # 文员核心 motif
     "pen", "form",
+    # 翻译漂移产物 (Bartleby/Kafka/Lincoln 多源 roundtrip 后浮出的 gained tokens)
+    # 这些词"来自不存在的原作者"，每个都是某句被译者重写后留下的痕迹
+    "deeply", "salvation", "documents", "precious", "memories",
+    "enormous", "departed", "servant", "faithful", "grateful",
+    "express", "address", "deserved", "themselves", "respectful",
+    "following", "sacrificed", "discovered", "realize", "utter",
+    "nevertheless", "overwhelming", "histories", "refrain",
+    # 长 s 古英语词复活 (历史维度 anomaly)
+    "wast", "thee", "thy", "thine",
+    # 卷宗 / 操作主题
+    "stamp", "punch", "ledger", "intake", "redact",
+    "blank", "marked", "voided",
 ]
 
 

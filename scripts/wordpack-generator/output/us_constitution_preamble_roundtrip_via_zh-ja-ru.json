@@ -1,0 +1,25 @@
+{
+  "chain": [
+    {
+      "lang": "en",
+      "text": "We the People of the United States, in Order to form a more perfect Union, establish Justice, insure domestic Tranquility, provide for the common defence, promote the general Welfare, and secure the Blessings of Liberty to ourselves and our Posterity, do ordain and establish this Constitution for the United States of America."
+    },
+    {
+      "lang": "zh",
+      "text": "我们合众国人民,为建立更完善的联邦,树立正义,保障国内安宁,提供共同防务,促进公共福祉,并使我们自己和后代得享自由的幸福,特为美利坚合众国制定本宪法。"
+    },
+    {
+      "lang": "ja",
+      "text": "我々合衆国の人民は、より完全な連邦を形成し、正義を樹立し、国内の安寧を保障し、共同の防衛に備え、一般の福祉を増進し、我々自身と我々の子孫のために自由の恵沢を確保する目的をもって、ここにアメリカ合衆国のためにこの憲法を制定する。"
+    },
+    {
+      "lang": "ru",
+      "text": "Мы, народ Соединенных Штатов, в целях образования более совершенного Союза, утверждения правосудия, обеспечения внутреннего спокойствия, организации совместной обороны, содействия всеобщему благосостоянию и обеспечения нам и нашему потомству благ свободы, учреждаем и принимаем эту Конституцию для Соединенных Штатов Америки."
+    },
+    {
+      "lang": "en",
+      "text": "We the People of the United States, in Order to form a more perfect Union, establish Justice, insure domestic Tranquility, provide for the common defence, promote the general Welfare, and secure the Blessings of Liberty to ourselves and our Posterity, do ordain and establish this Constitution for the United States of America."
+    }
+  ],
+  "model": "claude-sonnet-4-5"
+}

@@ -1,0 +1,25 @@
+{
+  "chain": [
+    {
+      "lang": "en",
+      "text": "Dear Madam: I have been shown in the files of the War Department a statement of the Adjutant General of Massachusetts that you are the mother of five sons who have died gloriously on the field of battle. I feel how weak and fruitless must be any words of mine which should attempt to beguile you from the grief of a loss so overwhelming. But I cannot refrain from tendering to you the consolation that may be found in the thanks of the Republic they died to save. I pray that our Heavenly Father may assuage the anguish of your bereavement, and leave you only the cherished memory of the loved and lost, and the solemn pride that must be yours to have laid so costly a sacrifice upon the altar of freedom. Yours, very sincerely and respectfully, A. Lincoln."
+    },
+    {
+      "lang": "zh",
+      "text": "尊敬的女士:我在陆军部的文件中看到马萨诸塞州副官长的一份声明,称您是五个儿子的母亲,他们都在战场上光荣牺牲了。我深知,无论我说什么话都是软弱无力的,无法减轻您遭受如此巨大损失的悲痛。但我不能不向您表达这样的慰藉:共和国感谢他们,他们为拯救共和国而牺牲。我祈求我们的天父能减轻您丧子之痛,只给您留下对逝去亲人的珍贵回忆,以及您为自由的祭坛献上如此重大牺牲而应有的庄严自豪。您忠诚而恭敬的,A·林肯。"
+    },
+    {
+      "lang": "ja",
+      "text": "謹啓、婦人よ。私は陸軍省の文書の中に、マサチューセッツ州副官長による声明を見ました。それによれば、貴女は五人の息子の母であり、彼らは皆、戦場において名誉ある犠牲を遂げたとのことです。私が何を申し上げようとも、それは力なく、貴女がこれほどまでに甚大な損失に耐えておられる悲しみを和らげることはできないと深く承知しております。しかしながら、私は貴女に次のような慰めの言葉を表さずにはいられません。共和国は彼らに感謝しており、彼らは共和国を救うために犠牲となったのです。私は、天におられる我らが父が、貴女の喪子の痛みを和らげ、貴女には亡くなられた親しき者たちへの貴重な思い出と、自由の祭壇にこれほど重大な犠牲を捧げられたことに対する当然の厳粛なる誇りのみをお残しくださるよう祈ります。貴女の忠実にして恭しく、A・リンカーン。"
+    },
+    {
+      "lang": "ru",
+      "text": "Почтительно обращаюсь к Вам, сударыня. В документах Военного министерства я обнаружил заявление генерал-адъютанта штата Массачусетс, согласно которому Вы являетесь матерью пяти сыновей, и все они погибли со честью на поле боя. Я глубоко осознаю, что какие бы слова я ни произнес, они будут бессильны и не смогут облегчить Вашу скорбь от столь огромной утраты. Тем не менее, я не могу не выразить Вам следующие слова утешения: республика благодарна им, они принесли себя в жертву ради спасения республики. Я молюсь, чтобы Отец наш Небесный облегчил Вашу боль от потери сыновей и оставил Вам лишь драгоценные воспоминания об ушедших близких и заслуженную торжественную гордость за то, что Вы принесли столь великую жертву на алтарь свободы. Ваш верный и почтительный слуга, А. Линкольн."
+    },
+    {
+      "lang": "en",
+      "text": "I address you respectfully, Madam. In the documents of the War Department I discovered a statement by the Adjutant General of the State of Massachusetts, according to which you are the mother of five sons, and all of them died honorably on the field of battle. I deeply realize that whatever words I may utter, they will be powerless and unable to ease your grief from such an enormous loss. Nevertheless, I cannot help but express to you the following words of consolation: the republic is grateful to them, they sacrificed themselves for the salvation of the republic. I pray that our Heavenly Father may ease your pain from the loss of your sons and leave you only precious memories of your departed loved ones and the well-deserved solemn pride that you have made such a great sacrifice on the altar of freedom. Your faithful and respectful servant, A. Lincoln."
+    }
+  ],
+  "model": "claude-sonnet-4-5"
+}
