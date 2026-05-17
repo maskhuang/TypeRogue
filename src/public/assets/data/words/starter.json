@@ -2,6 +2,6 @@
   "name": "starter",
   "language": "en",
   "tier": 0,
-  "words": ["fire", "ice", "bolt", "spark", "flame", "frost", "storm", "flash", "light", "dark"],
-  "difficulty": [1, 1, 1, 1, 1, 1, 2, 1, 1, 1]
+  "words": ["rot", "god", "ark", "eat", "pen", "dock", "rain", "hell", "wave", "bear"],
+  "difficulty": [1, 1, 1, 1, 1, 1, 1, 2, 1, 1]
 }

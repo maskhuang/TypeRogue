@@ -1,0 +1,15 @@
+{
+  "name": "common",
+  "language": "en",
+  "tier": 1,
+  "words": [
+    "burn", "heat", "cold", "snow", "wind", "rain", "wave", "rock", "dust", "sand",
+    "gold", "iron", "steel", "blade", "sword", "shield", "guard", "strike", "slash", "attack",
+    "block", "rush", "dash", "jump", "spin", "flow", "glow", "beam", "ray", "cast"
+  ],
+  "difficulty": [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 1, 1, 1, 1, 1, 1, 1, 1, 1
+  ]
+}

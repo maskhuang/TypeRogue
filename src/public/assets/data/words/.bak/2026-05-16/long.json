@@ -1,0 +1,10 @@
+{
+  "name": "long",
+  "language": "en",
+  "tier": 3,
+  "words": [
+    "thunder", "lightning", "earthquake", "hurricane", "blizzard",
+    "avalanche", "explosion", "destruction", "devastation", "apocalypse"
+  ],
+  "difficulty": [2, 3, 3, 3, 3, 3, 3, 4, 4, 4]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "f-words",
+  "language": "en",
+  "tier": 2,
+  "highlight": "f",
+  "words": [
+    "fire", "flame", "flash", "frost", "fury", "forge", "fuel", "fuse", "flare", "fever",
+    "fierce", "force", "flood", "fall", "fast", "fade", "fear", "fate", "fame", "face"
+  ],
+  "difficulty": [
+    1, 2, 2, 2, 2, 2, 1, 1, 2, 2,
+    2, 2, 2, 1, 1, 1, 1, 1, 1, 1
+  ]
+}
