@@ -307,7 +307,7 @@ X Company
 | 阶梯段 | 本体论动作 | 现有载体 | 改造工作 |
 |---|---|---|---|
 | 1. 录入员 | 不参与，如实接受 | `none`（无职业）| 重命名 display name；ID 保留 `none`（避免向后兼容风险）|
-| 2. 校对者 | 看见瑕疵，标注 | ❌ 无 | 新增职业，机制 ⏳ **暂定** |
+| 2. 校对者 | 看见瑕疵，标注 | ❌ 无 | 新增职业，机制 ✓ **LOCKED** = lineage 对照打字 (见 §2.16.2 typing 机制小节) |
 | 3. 修改者 | 改写已有文本 | `metamorph`（蜕变师）| 重命名 + 重写 flavor |
 | 4. 作者 | 创造新文本 | `wordsmith`（造词师）| 重命名 + 重写 flavor |
 | 5. 文本的一部分 | 被吃掉，反向控制 | **endless 模式** | 本体论再框定，**无需开发新模式** |
@@ -715,7 +715,7 @@ L4（作者可见）：
 
 | 类别 | 项 | 状态 / 备注 |
 |---|---|---|
-| 机制 | **校对者** typing 机制设计 | ⏳ **暂定**（曾尝试 "签字键 + Reecho 池倾斜 + Proofread 转移" 方向，感觉不对，回炉重审）|
+| ~~机制~~ | ~~**校对者** typing 机制设计~~ | ✓ **LOCKED** (2026-05-17) = **lineage 对照打字** · 数据源 wordpack-generator output/words_new.lineage.json · 详 §2.16.2 typing 机制小节 |
 | 机制 | **文本的一部分**（endless）的"升格仪式"具体形态 | ⏳ 暂定（C1）|
 | 系统 | endless modifier 写入本地存档 → 下一周目读取实现路径 | ⏳ 暂定（C4）|
 | 叙事 | Premise 正式 derivation | ⏳ Step 2 后续 |
@@ -1017,6 +1017,69 @@ Cycle 末尾，玩家从工位走出时，看见**相邻工位另一名录入员
 
 - **📦 遗物层 · L2 注释普遍可见 + B3 媒介**：Ch.1 拾过的同一遗物再次拾到时**flavor 多了一段**——但**不是 Terrace 学者批判**（学术 tone 错了），是**更叙事化的描述 / 失去现实严谨性 / 真假难辨**。例：L1"Project Nim 训练中习得 128 ASL 手势" → L2 增补"某些晚间记录显示 Nim 在无人时仍持续打手语，仿佛在自言自语...Nim 死前最后一周的 footage 中可见他反复 sign 'hug me, please'，对象不详"。约 30% 真实可 verify / 30% 合理推测无法证伪 / 30% 清晰叙事化注入 / 10% 绝对错误但逻辑自洽。Ch.2 校对者**第一次主动 hover 历史档案做自我评估**——D22 brutal positive feedback loop 启动
   - **B3 早期播种（Ch.2 末段）**：玩家在 Ch.2 末段会发现某条工作台规则措辞**与某份遗物 L2 footnote 字面相同**——例：工作台规则"如果听到打字声从隔壁工位传来但隔壁没人，请勿应答" → 某遗物 L2 增补"...曾有员工于午休后听到隔壁工位打字声，应答后再未返工位..."——玩家会模糊感觉"规则是事故的化石"——但 Ch.2 不显化，留给 Ch.3 早段 B3 完整 reveal
+
+---
+
+#### 校对者 typing 机制 🔒 LOCKED (2026-05-17 · 闭合 §2.5/§2.8 ⏳暂定 gap)
+
+录入员 → 校对者升职后，typing 屏幕从单 token 盲打 → **三栏对照 + 标注**：
+
+```
+  ┌─ CASE #2847-B · BATCH 1/12 · HAZARD: LOW ──────────┐
+  │  PROPOSED ORIGIN  →  PROPOSED MECH                   │
+  │      fate              typo · QWERTY 邻键 (f→g)      │
+  │                                                       │
+  │                    [G] A T E                          │
+  │                                                       │
+  │    F1 = 成立    F2 = 拒收    F3 = 升级 (升等审查)    │
+  └───────────────────────────────────────────────────────┘
+```
+
+**机制流程**：
+1. 看：屏幕同时显示 drift token + proposed origin + proposed mechanism
+2. 打：录入 drift token (与录入员相同 typing action — 这部分**没退化**，肌肉记忆延续)
+3. 标：完成瞬间从 **成立 / 拒收 / 升级** 三选一标注
+4. 反馈：标注被异常层归档（"已分类入库"·分类标签**不属于公司任何已知分类系统**）
+
+**数据源**：`scripts/wordpack-generator/output/words_new.lineage.json`（每个 token 的 `(orig, mech)` 三元组已 ready，wordpack-generator B-full pool 产出时同步生成 · 详 [[feedback_unfiled_text_mechanism_taxonomy]]）。
+
+**校对术语 label**（用本章 §2.5 已 LOCK 的 L2 校对者 vocab）：勘误 / 对照 / 检视 / 批注 / 校核 · 8 机制 label 用 §2.15.1 LOCKED 词表。
+
+**机制阶位对比（5 段下滑第 2 阶的字面落地）**：
+
+| 维度 | 录入员 (Ch.1) | 校对者 (Ch.2) |
+|---|---|---|
+| 屏幕信息密度 | 单 token | drift + origin + mech |
+| 焦点 | 准确录入 | 对照 + 判断 |
+| 决策点 | 无 (打完即过) | 完成时标注 3 选 1 |
+| 玩家意识参与 | 最小 (盲打) | 中等 (对照思考) |
+| 作者化阶位 | 第 1 阶 | **第 2 阶** (意识更深进入) |
+| MOKO UI 层 | 单层 | 多一个标注 channel (上文已写) |
+
+**与 §2.16.2 既有设计对接**：
+- 入口仪式 boilerplate "职位变更" 后**工位多出标注 channel** = 本 typing 机制 UI 字面化
+- 异常层 "校对者标注 = 替异常打 tag" = 本机制完成时的"成立/拒收"操作 = 给 anomaly receipt
+- D22 brutal positive feedback loop = 玩家越精心校对 → 异常越快归档（**正反馈陷阱**）
+- 8-cell 升职瞬间（§2.5 line 274）可作 lineage UI 首次展开 frame
+
+**与既有 Proofread affix 对接**：line 377 已埋点 "校对者职业落地时把 Proofread 转移到校对者 starter pool" → 实装本机制时同步迁移。
+
+**设计纪律**：
+- 不要把本 UI 加到**录入员** battle scene — 那会违反 [[feedback_token_level_is_decontextualization]] 的去语境化原则
+- 只在校对者 class 解锁后启用 lineage UI；Ch.1 玩家保持盲打体验
+- 标注事件应被**异常层**归档（B6 早期播种），不被公司层正面/负面反馈
+- "成立/拒收"按钮 label 应用校对术语（勘误/对照/检视/批注/校核），**不要**用"正确/错误"
+
+**待实装清单**（scope 较大，可拆 sprint）：
+1. 校对者 class data (data/classes.ts) 新增
+2. Proofread affix 从 wordsmith 迁移到校对者 starter pool
+3. lineage 文件运行时加载到 battle scene
+4. battle scene UI 增加 origin + mech 区 + 标注按钮
+5. 标注事件流写入 anomaly 归档统计
+6. 通关 Ch.1 末 boss → 升职 boilerplate 通知 + UI 切换
+7. D29 ritual Ch.2 变体（本章已写）
+
+详细 spec 见 memory `feedback_proofreader_mechanic_via_lineage`。
 
 ---
 
