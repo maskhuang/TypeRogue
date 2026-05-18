@@ -9284,6 +9284,26 @@ body.shop-preview-active .craft-pipeline-fill {
   pointer-events: none;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.4, 1), opacity 0.3s;
   z-index: 21;
+  /* paper-craft 滚动条（与工作台同款）·
+   * 默认浏览器银灰滚动条与牛皮纸+油墨章风格冲突 */
+  scrollbar-width: thin;
+  scrollbar-color: #7a5a10 #ead7af;          /* thumb=金章 / track=浅牛皮 */
+}
+.desk-overlay-paper::-webkit-scrollbar {
+  width: 8px;
+}
+.desk-overlay-paper::-webkit-scrollbar-track {
+  background: #ead7af;
+  border: 1px solid #7a5a10;
+  border-radius: 0;
+}
+.desk-overlay-paper::-webkit-scrollbar-thumb {
+  background: #7a5a10;
+  border: 1px solid #2a1f10;
+  border-radius: 0;
+}
+.desk-overlay-paper::-webkit-scrollbar-thumb:hover {
+  background: #8a1a1a;                         /* hover 红章 */
 }
 .desk-overlay-paper.show {
   transform: translate(-50%, -50%) scale(1) rotate(0deg);
