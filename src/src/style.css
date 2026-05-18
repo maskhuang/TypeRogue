@@ -7378,7 +7378,10 @@ html[lang^="en"] .class-select-title {
 .wb-bound-tooltip-panel .tooltip-section:only-child {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    /* center 而非 baseline：chip 内部用 inline-flex 居中字形，外层若按 baseline
+     * 对齐会让 chip 的 box 中心与文字基线错位（chip 间字形位置不一致）。
+     * 用 center 让所有 flex item 按 box 中线对齐，保证视觉一致。*/
+    align-items: center;
     justify-content: center;
     gap: 4px 18px;
 }
