@@ -642,6 +642,43 @@ function synthTime(ctx: AudioContext, now: number, vol: number, pitchShift = 1, 
   }
 }
 
+/** shield: triangle 低-中频 + LPF + 短噪声脉冲，"金属护盾轻击"感 ·
+ *  与 score/gold 的脆亮、base 的弹珠落盘对比 — 厚实、缓冲、不刺耳 */
+function synthShield(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
+  // 1) Triangle 主体：500→380Hz 短下滑，LPF 1800Hz 去高频锋利
+  const osc = ctx.createOscillator();
+  const lpf = ctx.createBiquadFilter();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  lpf.type = 'lowpass';
+  lpf.frequency.value = 1800;
+  osc.connect(lpf);
+  lpf.connect(gain);
+  connectToOutput(gain);
+  osc.frequency.setValueAtTime(randomize(500 * pitchShift, 0.04), now);
+  osc.frequency.exponentialRampToValueAtTime(randomize(380 * pitchShift, 0.04), now + 0.06 * decayMul);
+  softAttack(gain, vol * 0.55, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1 * decayMul);
+  osc.start(now);
+  osc.stop(now + 0.11 * decayMul);
+
+  // 2) 短促噪声脉冲：金属边缘"轻击"质感（短于 base 的尾巴）
+  const noiseSrc = ctx.createBufferSource();
+  noiseSrc.buffer = getNoiseBuffer();
+  const bpf = ctx.createBiquadFilter();
+  bpf.type = 'bandpass';
+  bpf.frequency.value = 2200;
+  bpf.Q.value = 4;
+  const noiseGain = ctx.createGain();
+  noiseSrc.connect(bpf);
+  bpf.connect(noiseGain);
+  connectToOutput(noiseGain);
+  noiseGain.gain.setValueAtTime(vol * 0.15, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02 * decayMul);
+  noiseSrc.start(now);
+  noiseSrc.stop(now + 0.025 * decayMul);
+}
+
 /** gold: square + 高频 sine 泛音，"金币叮当"感 */
 function synthGold(ctx: AudioContext, now: number, vol: number, pitchShift = 1, decayMul = 1): void {
   // 1) Square 基音
@@ -675,6 +712,7 @@ const RESOURCE_BASE_FREQ: Record<string, number> = {
   score: 880,
   multiplier: 1800,
   time: 2000,
+  shield: 500,
   gold: 1200,
 };
 
@@ -684,6 +722,7 @@ export const RESOURCE_SYNTH: Record<string, ResourceSynth> = {
   score: synthScore,
   multiplier: synthMultiplier,
   time: synthTime,
+  shield: synthShield,
   gold: synthGold,
 };
 

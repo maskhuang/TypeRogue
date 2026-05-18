@@ -153,7 +153,7 @@ export const RESOURCE_LABELS: Record<string, string> = {
 
 // === 资源图标 ===
 export const RESOURCE_ICONS: Record<string, string> = {
-  base: '💥', score: '💯', multiplier: '🔥', time: '⏳', shield: '◆', gold: '💰',
+  base: '💥', score: '💯', multiplier: '🔥', time: '⏳', shield: '🛡', gold: '💰',
   energy: '⚡', mutagen: '🧬',
 };
 
