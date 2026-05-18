@@ -238,11 +238,13 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
     }
 
     case 'apply_aura': {
-      addAura(ctx.instanceId, spec.selector, spec.modifier)
+      const factor = applyScale(spec.scale, ctx)
+      const scaledModifier = scaleAuraModifier(spec.modifier, factor)
+      addAura(ctx.instanceId, spec.selector, scaledModifier)
       result.aurasApplied.push({
         sourceInstanceId: ctx.instanceId,
         selector: spec.selector,
-        modifier: spec.modifier,
+        modifier: scaledModifier,
       })
       return
     }
@@ -293,7 +295,14 @@ function applyScale(scale: ScaleByTag | undefined, ctx: ResolveContext): number 
   for (const t of tags) {
     totalCount += countTagInScope(t, scale.scope, ctx)
   }
-  return 1 + totalCount * scale.factor
+  switch (scale.type) {
+    case 'tag_count':
+      return 1 + totalCount * scale.factor
+    case 'tag_per_n':
+      // perN<=0 视为关闭（避免除零 / 无限值）
+      if (scale.perN <= 0) return 0
+      return Math.floor(totalCount / scale.perN)
+  }
 }
 
 /**
@@ -313,6 +322,25 @@ function countTagInScope(tag: Tag, scope: TargetSelector | undefined, ctx: Resol
     if (e.tags.includes(tag)) n++
   }
   return n
+}
+
+/**
+ * 把 aura modifier 的 amount/ratio 字段按 scale factor 乘缩；
+ * 'rainbow' 无数值字段，直接透传。factor 缺省值 1（无 scale 时 modifier 不变）。
+ */
+function scaleAuraModifier(mod: AuraModifier, factor: number): AuraModifier {
+  if (factor === 1) return mod
+  switch (mod.type) {
+    case 'rainbow':
+      return mod
+    case 'base_add':
+      return { ...mod, ratio: mod.ratio * factor }
+    case 'factor_add':
+    case 'crit_chance_add':
+    case 'output_bonus_pct':
+    case 'multi_fire_add':
+      return { ...mod, amount: mod.amount * factor }
+  }
 }
 
 // ============================================

@@ -69,14 +69,27 @@ export type Phase2TriggerSpec =
 export type TriggerSpec = Phase1TriggerSpec | Phase2TriggerSpec
 
 // ===== ScaleByTag (供 EffectSpec 引用) =====
+// 两种 mode：
+//   tag_count  — 乘性连续：factor = 1 + count × factor（count=0 时 = 1，全产出）
+//   tag_per_n  — 步进整数：factor = floor(count / perN)（count<perN 时 = 0，门控）
+// 两种 mode 都按"乘性 scale 因子"语义接入 add / multiply / gain_resource / apply_aura；
+// 差别在曲线形态（连续 % 增长 vs 整数跳变）。
 
-export interface ScaleByTag {
-  readonly type: 'tag_count'
-  readonly tag: Tag | readonly Tag[]
-  readonly factor: number
-  /** 计数范围；缺省 = all_skills · pick 字段被忽略（计数语义） */
-  readonly scope?: TargetSelector
-}
+export type ScaleByTag =
+  | {
+      readonly type: 'tag_count'
+      readonly tag: Tag | readonly Tag[]
+      readonly factor: number
+      /** 计数范围；缺省 = all_skills · pick 字段被忽略（计数语义） */
+      readonly scope?: TargetSelector
+    }
+  | {
+      readonly type: 'tag_per_n'
+      readonly tag: Tag | readonly Tag[]
+      /** 每 N 个 tag 贡献 1 单位 scale；count<perN → 0 */
+      readonly perN: number
+      readonly scope?: TargetSelector
+    }
 
 // ===== TargetSelector =====
 // 统一范围类型 · 用于 fire_target / apply_aura / apply_status / ScaleByTag.scope / count_tag_*.scope
@@ -227,8 +240,11 @@ export type EffectSpec =
   /**
    * 给目标加持续 aura buff/debuff（K3 决议：仅 'fight' duration · battle end 清除）
    * 不是 per-fire 触发——是常驻 modifier。
+   * scale 可选：触发时按 tag count 把 modifier amount 乘以 scale factor，再注册到 aura store。
+   * 例：multi_fire_add(amount=1) + scale=tag_per_n(perN=2, tag=vocal)
+   *     → 场上每 2 个 vocal 词条 → +1 多重释放（count<2 → amount=0 空 aura）。
    */
-  | { kind: 'apply_aura'; selector: TargetSelector; modifier: AuraModifier }
+  | { kind: 'apply_aura'; selector: TargetSelector; modifier: AuraModifier; scale?: ScaleByTag }
 
   /**
    * 给目标加 status 层（K4 D' 占位 · 词表未定，runtime stub）

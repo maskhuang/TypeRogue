@@ -274,3 +274,127 @@ describe('Scope-aware ScaleByTag', () => {
     expect(r.resourceProduced[0].amount).toBeCloseTo(13.75, 2)
   })
 })
+
+describe('ScaleByTag · tag_per_n（步进整数）', () => {
+  const mockViews = (count: number, tag: string) =>
+    Array.from({ length: count }, (_, i) => ({
+      defId: `m_${i}`, skillId: `sk_${i}`, key: 'q', instanceId: `inst_${i}`, tags: [tag],
+    }))
+
+  it('gain_resource · count<perN → factor=0 产出 0', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: (_sc: { type: string }) => mockViews(2, 'vocal') }
+    const r = resolveEffect({
+      kind: 'gain_resource',
+      resource: 'score',
+      ratio: 1,
+      scale: { type: 'tag_per_n', tag: 'vocal', perN: 3 },
+    }, ctxQ)
+    expect(r.resourceProduced[0].amount).toBe(0)
+  })
+
+  it('gain_resource · count=perN → factor=1 产出全 base', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: (_sc: { type: string }) => mockViews(3, 'vocal') }
+    const r = resolveEffect({
+      kind: 'gain_resource',
+      resource: 'score',
+      ratio: 1,
+      scale: { type: 'tag_per_n', tag: 'vocal', perN: 3 },
+    }, ctxQ)
+    // 1 × 11 × floor(3/3) = 11
+    expect(r.resourceProduced[0].amount).toBe(11)
+  })
+
+  it('gain_resource · count=7, perN=3 → floor(7/3)=2', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: (_sc: { type: string }) => mockViews(7, 'vocal') }
+    const r = resolveEffect({
+      kind: 'gain_resource',
+      resource: 'score',
+      ratio: 1,
+      scale: { type: 'tag_per_n', tag: 'vocal', perN: 3 },
+    }, ctxQ)
+    // 1 × 11 × 2 = 22
+    expect(r.resourceProduced[0].amount).toBe(22)
+  })
+
+  it('perN<=0 → factor=0（防御性）', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: (_sc: { type: string }) => mockViews(100, 'vocal') }
+    const r = resolveEffect({
+      kind: 'gain_resource',
+      resource: 'score',
+      ratio: 1,
+      scale: { type: 'tag_per_n', tag: 'vocal', perN: 0 },
+    }, ctxQ)
+    expect(r.resourceProduced[0].amount).toBe(0)
+  })
+})
+
+describe('apply_aura · scale 缩放 modifier amount', () => {
+  const mockViews = (count: number, tag: string) =>
+    Array.from({ length: count }, (_, i) => ({
+      defId: `m_${i}`, skillId: `sk_${i}`, key: 'q', instanceId: `inst_${i}`, tags: [tag],
+    }))
+
+  it('无 scale · modifier 原样注册', () => {
+    resolveEffect({
+      kind: 'apply_aura',
+      selector: { type: 'self' },
+      modifier: { type: 'multi_fire_add', amount: 1 },
+    }, baseCtx)
+    const auras = listActiveAuras()
+    expect(auras.length).toBe(1)
+    const mod = auras[0].modifier
+    expect(mod.type).toBe('multi_fire_add')
+    expect((mod as { amount: number }).amount).toBe(1)
+  })
+
+  it('"每 2 vocal +1 multi_fire" · count=4 → amount=2', () => {
+    // 用户原始用例：amount=1, perN=2, vocal
+    const ctxQ = { ...baseCtx, queryEquipped: (_sc: { type: string }) => mockViews(4, 'vocal') }
+    resolveEffect({
+      kind: 'apply_aura',
+      selector: { type: 'all_skills', pick: 'all' },
+      modifier: { type: 'multi_fire_add', amount: 1 },
+      scale: { type: 'tag_per_n', tag: 'vocal', perN: 2 },
+    }, ctxQ)
+    const auras = listActiveAuras()
+    expect(auras.length).toBe(1)
+    expect((auras[0].modifier as { amount: number }).amount).toBe(2)  // 1 × floor(4/2)
+  })
+
+  it('count=1 (< perN=2) → amount=0（aura 仍注册但 effect 0）', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: (_sc: { type: string }) => mockViews(1, 'vocal') }
+    resolveEffect({
+      kind: 'apply_aura',
+      selector: { type: 'self' },
+      modifier: { type: 'multi_fire_add', amount: 1 },
+      scale: { type: 'tag_per_n', tag: 'vocal', perN: 2 },
+    }, ctxQ)
+    const auras = listActiveAuras()
+    expect((auras[0].modifier as { amount: number }).amount).toBe(0)
+  })
+
+  it('tag_count scale 也适用于 apply_aura', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: (_sc: { type: string }) => mockViews(3, 'vocal') }
+    resolveEffect({
+      kind: 'apply_aura',
+      selector: { type: 'self' },
+      modifier: { type: 'crit_chance_add', amount: 0.1 },
+      scale: { type: 'tag_count', tag: 'vocal', factor: 0.5 },
+    }, ctxQ)
+    const auras = listActiveAuras()
+    // 0.1 × (1 + 3 × 0.5) = 0.25
+    expect((auras[0].modifier as { amount: number }).amount).toBeCloseTo(0.25, 5)
+  })
+
+  it('rainbow modifier · scale 无意义被透传', () => {
+    const ctxQ = { ...baseCtx, queryEquipped: (_sc: { type: string }) => mockViews(5, 'vocal') }
+    resolveEffect({
+      kind: 'apply_aura',
+      selector: { type: 'self' },
+      modifier: { type: 'rainbow' },
+      scale: { type: 'tag_per_n', tag: 'vocal', perN: 2 },
+    }, ctxQ)
+    const auras = listActiveAuras()
+    expect(auras[0].modifier.type).toBe('rainbow')
+  })
+})
