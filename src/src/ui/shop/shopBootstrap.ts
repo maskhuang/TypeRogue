@@ -889,7 +889,18 @@ if (typeof queueMicrotask === 'function') {
  * 按 UserSettings.shopUI 调度。
  */
 export function enterTerminalShop(_won?: boolean): void {
-  if (previewState.active) return;
+  if (previewState.active) {
+    // 防御：active 卡 true 时（理论上 executeSubmitTransition/restoreFromPreview 应都已
+    // 设 false，但若某条退出路径漏设 → 下次 openShop 早出 → 工作台便条永不轮换）
+    // 仍跑 syncWorkbench* + refreshWorkbenchNote，保证 UI 与 state 同步
+    if (document.getElementById('workbench-screen-preview')) {
+      workbench.syncWorkbenchInbox();
+      workbench.syncWorkbenchRelics();
+      workbench.syncWorkbenchKeys();
+      workbench.refreshWorkbenchNote();
+    }
+    return;
+  }
   injectScreens();
   hideAllRealScreens();
   resetSession();
