@@ -1928,12 +1928,12 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 /* ============================================ */
 /* GAME OVER SCREEN · DPCA-VT220 CRT            */
 /* ============================================ */
-/* 与 shop/rest/crt-modal 一脉相承：黑 bezel + 绿磷屏 + 扫描线 */
+/* 与 per-stage rating/gold-reward 一脉相承：暖米色 bezel + 琥珀屏 + seal-gold 字 */
 #gameover-screen {
     align-items: center;
     justify-content: center;
     background:
-        radial-gradient(ellipse at 50% 35%, #0a0e10 0%, #02060a 60%, #000 100%);
+        radial-gradient(ellipse at 50% 35%, #1a1410 0%, #0c0905 60%, #000 100%);
     padding: 24px;
 }
 .gameover-bezel {
@@ -1945,17 +1945,21 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     border-radius: 10px;
     background: transparent;
     position: relative;
-    box-shadow: 0 18px 50px rgba(0,0,0,0.85);
+    box-shadow:
+        inset 0 2px 0 rgba(255,255,255,0.45),
+        inset 0 -2px 0 rgba(0,0,0,0.32),
+        0 6px 0 #4a3820,
+        0 14px 28px rgba(0,0,0,0.7);
     font-family: var(--font-dossier, 'Courier Prime', monospace);
     overflow: hidden;
 }
 .gameover-bezel::before,
 .gameover-bezel::after {
     content: ''; grid-row: 2;
-    background: linear-gradient(90deg, #2a2a2a 0%, #1a1a1a 50%, #0e0e0e 100%);
+    background: linear-gradient(90deg, #c0aa7a 0%, #b8a37a 50%, #a89370 100%);
     box-shadow:
-        inset 1px 0 0 rgba(255,255,255,0.06),
-        inset -1px 0 0 rgba(0,0,0,0.6);
+        inset 1px 0 0 rgba(255,255,255,0.2),
+        inset -1px 0 0 rgba(0,0,0,0.25);
     pointer-events: none;
 }
 .gameover-bezel::before { grid-column: 1; }
@@ -1964,65 +1968,72 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 .gameover-bezel-top,
 .gameover-bezel-bottom {
     display: flex; align-items: center; gap: 12px;
-    color: #c5c5c0;
-    font-family: inherit;
-    font-size: 9px; letter-spacing: 3px;
+    color: #2a1f10;
+    font-family: var(--font-pixel);
+    font-size: 8px; letter-spacing: 2px;
     grid-column: 1 / -1;
     position: relative; z-index: 2;
 }
 .gameover-bezel-top {
     grid-row: 1;
-    padding: 6px 18px 8px;
-    background: linear-gradient(180deg, #1f1f1f 0%, #141414 100%);
+    padding: 4px 14px 8px;
+    background: linear-gradient(180deg, #d4c29c 0%, #c0aa7a 100%);
     border-radius: 10px 10px 0 0;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.6);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.25);
 }
 .gameover-bezel-bottom {
     grid-row: 3;
-    padding: 6px 18px;
-    background: linear-gradient(180deg, #141414 0%, #080808 100%);
+    padding: 6px 14px;
+    background: linear-gradient(180deg, #c0aa7a 0%, #b8a37a 100%);
     border-radius: 0 0 10px 10px;
     box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.05),
-        inset -0 -2px 0 rgba(0,0,0,0.7);
+        inset 0 1px 0 rgba(255,255,255,0.3),
+        inset 0 -2px 0 rgba(0,0,0,0.32);
     justify-content: space-between;
 }
 .gameover-led {
     width: 8px; height: 8px; border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #b6f3c0, #4ade80 60%, #1f7a3a 100%);
-    box-shadow: 0 0 6px rgba(74,222,128,0.85), inset 0 -1px 0 rgba(0,0,0,0.3), 0 0 0 2px rgba(0,0,0,0.7);
+    /* 印章金 LED — 暖琥珀脉冲，呼应 seal-gold 主色 */
+    background: radial-gradient(circle at 30% 30%, #ffe7a8, #c9a45e 60%, #6a4f1f 100%);
+    box-shadow: 0 0 6px rgba(201,164,94,0.85), inset 0 -1px 0 rgba(0,0,0,0.3), 0 0 0 2px rgba(42,31,16,0.7);
     flex-shrink: 0;
     animation: gameover-led-blink 1.8s ease-in-out infinite;
 }
 .gameover-crt.gameover-mode-defeat .gameover-led {
-    background: radial-gradient(circle at 30% 30%, #f5b0b0, #e26060 60%, #7a1f1f 100%);
-    box-shadow: 0 0 6px rgba(226,96,96,0.85), inset 0 -1px 0 rgba(0,0,0,0.3), 0 0 0 2px rgba(0,0,0,0.7);
+    /* 失败 — 暗红印章 */
+    background: radial-gradient(circle at 30% 30%, #f5b0b0, #b04040 60%, #5a1818 100%);
+    box-shadow: 0 0 6px rgba(176,64,64,0.85), inset 0 -1px 0 rgba(0,0,0,0.3), 0 0 0 2px rgba(42,31,16,0.7);
 }
 @keyframes gameover-led-blink {
     0%, 100% { opacity: 1; }
     50%      { opacity: 0.55; }
 }
-.gameover-brand { font-weight: bold; letter-spacing: 4px; font-size: 10px; }
-.gameover-spec  { flex: 1; text-align: center; opacity: 0.72; font-size: 8px; letter-spacing: 3px; }
-.gameover-vent  { color: rgba(255,255,255,0.18); letter-spacing: -2px; font-size: 9px; }
+.gameover-brand { font-weight: bold; letter-spacing: 3px; font-size: 9px; }
+.gameover-spec  { flex: 1; text-align: center; opacity: 0.72; font-size: 7px; letter-spacing: 3px; }
+.gameover-vent  { color: rgba(42,31,16,0.4); letter-spacing: -2px; font-size: 9px; }
 .gameover-sticker {
-    flex: 1; border: 1px solid rgba(255,255,255,0.18);
+    flex: 1; border: 1px solid rgba(0,0,0,0.45);
     padding: 1px 6px; text-align: center;
-    background: rgba(255,255,255,0.04);
-    font-size: 8px; letter-spacing: 3px;
+    background: rgba(255,255,255,0.18);
+    font-size: 7px; letter-spacing: 3px;
 }
 .gameover-serial {
-    border: 1px solid rgba(255,255,255,0.18); padding: 1px 6px;
-    background: rgba(0,0,0,0.5); color: #c5c5c0;
-    font-size: 8px; letter-spacing: 2px;
+    border: 1px solid rgba(0,0,0,0.4); padding: 1px 6px;
+    background: rgba(0,0,0,0.18); color: rgba(0,0,0,0.85);
+    font-size: 7px; letter-spacing: 2px;
 }
 
 .gameover-bezel-screen {
     grid-row: 2; grid-column: 2;
-    background: linear-gradient(180deg, #02060a 0%, #0a1410 100%);
+    /* 镜像 .gold-screen：琥珀/sepia 径向渐变，纸面/弱光感 */
+    background: radial-gradient(ellipse at 50% 30%, rgba(60, 40, 16, 0.45) 0%, rgba(16, 10, 4, 0.96) 75%);
+    box-shadow:
+        inset 0 0 24px rgba(0,0,0,0.55),
+        inset 0 0 80px rgba(0,0,0,0.3),
+        inset 0 0 0 2px #1a1208;
     padding: 22px 28px 26px;
-    color: #4ade80;
-    text-shadow: 0 0 5px rgba(74,222,128,0.55);
+    color: var(--color-seal-gold);
+    text-shadow: 0 0 6px rgba(201,164,94,0.55);
     font-size: 13px; line-height: 1.7;
     letter-spacing: 1px;
     position: relative; overflow: hidden;
@@ -2031,26 +2042,29 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     overflow-y: auto;
 }
 .gameover-bezel-screen::before {
+    /* 镜像 .gold-screen::before：浅条纹 + 暗角，paper-craft 弱光 */
     content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 3;
-    background: repeating-linear-gradient(0deg,
-        rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
-        rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 3px);
-}
-.gameover-bezel-screen::after {
-    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 3;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 2px,
+            rgba(0,0,0,0.18) 2px,
+            rgba(0,0,0,0.18) 3px
+        ),
+        radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.6) 100%);
 }
 .gameover-screen-content { position: relative; z-index: 1; }
 .gameover-screen-content > * { position: relative; z-index: 1; }
 
 #gameover-header {
-    color: rgba(74,222,128,0.7);
-    border-bottom: 1px dashed rgba(74,222,128,0.28);
+    color: rgba(201,164,94,0.7);
+    border-bottom: 1px dashed rgba(201,164,94,0.45);
     padding-bottom: 6px;
     margin-bottom: 12px;
     font-size: 11px;
     letter-spacing: 0.12em;
-    text-shadow: 0 0 4px rgba(74,222,128,0.4);
+    text-shadow: 0 0 4px rgba(201,164,94,0.4);
 }
 
 /* === Typewriter lines === */
@@ -2058,7 +2072,7 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     margin-bottom: 10px;
     white-space: pre;
     font-family: inherit;
-    color: #4ade80;
+    color: var(--color-seal-gold);
 }
 #gameover-stats .ct-line {
     min-height: 1.7em;
@@ -2070,30 +2084,30 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 #gameover-stats .ct-line .cursor {
     display: inline-block;
     width: 8px; height: 1em;
-    background: #b6f3c0;
+    background: var(--color-seal-gold);
     margin-left: 2px;
     vertical-align: text-bottom;
-    box-shadow: 0 0 6px #b6f3c0;
+    box-shadow: 0 0 6px rgba(201,164,94,0.7);
     animation: gameover-cursor-blink 0.9s steps(2) infinite;
 }
 #gameover-stats .ct-line.done .cursor { display: none; }
 #gameover-stats .ct-final-cursor {
     display: inline-block;
     width: 8px; height: 1em;
-    background: #b6f3c0;
+    background: var(--color-seal-gold);
     margin-left: 2px;
     vertical-align: text-bottom;
-    box-shadow: 0 0 6px #b6f3c0;
+    box-shadow: 0 0 6px rgba(201,164,94,0.7);
     animation: gameover-cursor-blink 0.9s steps(2) infinite;
 }
 @keyframes gameover-cursor-blink {
     50% { opacity: 0; }
 }
 
-#gameover-stats .ct-line.divider     { color: #2a8a48; text-shadow: none; }
-#gameover-stats .ct-line.dim         { color: #2a8a48; text-shadow: none; font-size: 12px; }
-#gameover-stats .ct-line.bright      { color: #b6f3c0; text-shadow: 0 0 6px rgba(182,243,192,0.7); }
-#gameover-stats .ct-line.alert       { color: #e26060; text-shadow: 0 0 6px rgba(226,96,96,0.6); }
+#gameover-stats .ct-line.divider     { color: rgba(201,164,94,0.45); text-shadow: none; }
+#gameover-stats .ct-line.dim         { color: rgba(201,164,94,0.55); text-shadow: none; font-size: 12px; }
+#gameover-stats .ct-line.bright      { color: #e8c885; text-shadow: 0 0 6px rgba(232,200,133,0.7); }
+#gameover-stats .ct-line.alert       { color: #d97070; text-shadow: 0 0 6px rgba(217,112,112,0.6); }
 #gameover-stats .ct-line.total {
     color: #ffe066;
     text-shadow: 0 0 8px rgba(255,224,102,0.7), 0 0 16px rgba(255,224,102,0.3);
@@ -2106,7 +2120,7 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 .gameover-actions {
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px dashed rgba(74,222,128,0.25);
+    border-top: 1px dashed rgba(201,164,94,0.4);
     display: flex; gap: 12px; flex-wrap: wrap;
     opacity: 0;
     transition: opacity 0.25s steps(3);
@@ -2117,16 +2131,16 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     font-size: 12px;
     font-family: inherit;
     background: transparent;
-    border: 1px solid #4ade80;
+    border: 1px solid var(--color-seal-gold);
     border-radius: 0;
-    color: #b6f3c0;
-    text-shadow: 0 0 5px #b6f3c0;
+    color: #e8c885;
+    text-shadow: 0 0 5px rgba(232,200,133,0.7);
     letter-spacing: 3px;
     cursor: pointer;
     transition: background 0.12s steps(1);
 }
 .restart-btn:hover {
-    background: rgba(74,222,128,0.13);
+    background: rgba(201,164,94,0.13);
 }
 .daily-btn {
     border-color: #ffe066;
@@ -2137,7 +2151,7 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     background: rgba(255,224,102,0.12);
 }
 
-/* === LEADERBOARD · amber CRT 风（Story 25.5）=== */
+/* === LEADERBOARD · 与 settlement 同 amber/sepia 调色 === */
 .gameover-leaderboard {
     margin: 10px 0 0;
     opacity: 0;
@@ -2147,12 +2161,12 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 .gameover-leaderboard:empty { display: none; }
 .lb-title {
     font-size: 11px;
-    color: #c9a45e;
+    color: var(--color-seal-gold);
     text-shadow: 0 0 4px rgba(201,164,94,0.6);
     margin: 10px 0 4px;
     font-weight: bold;
     letter-spacing: 4px;
-    border-top: 1px dashed rgba(201,164,94,0.3);
+    border-top: 1px dashed rgba(201,164,94,0.4);
     padding-top: 8px;
 }
 .lb-table {
@@ -2160,33 +2174,33 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     border-collapse: collapse;
     font-size: 11px;
     font-family: inherit;
-    color: #4ade80;
-    text-shadow: 0 0 4px rgba(74,222,128,0.4);
+    color: var(--color-seal-gold);
+    text-shadow: 0 0 4px rgba(201,164,94,0.4);
 }
 .lb-table th {
-    color: #2a8a48; text-shadow: none;
+    color: rgba(201,164,94,0.55); text-shadow: none;
     font-weight: normal;
     padding: 3px 6px;
     text-align: left;
-    border-bottom: 1px dashed rgba(74,222,128,0.25);
+    border-bottom: 1px dashed rgba(201,164,94,0.4);
     letter-spacing: 2px;
 }
 .lb-table td {
     padding: 3px 6px;
-    color: #4ade80;
+    color: var(--color-seal-gold);
 }
-.lb-table tr:nth-child(even) { background: rgba(74,222,128,0.04); }
+.lb-table tr:nth-child(even) { background: rgba(201,164,94,0.05); }
 .lb-victory td:nth-child(4) { color: #ffe066; text-shadow: 0 0 4px rgba(255,224,102,0.6); font-weight: bold; }
-.lb-defeat  td:nth-child(4) { color: #e26060; text-shadow: 0 0 4px rgba(226,96,96,0.5); }
-.lb-latest { background: rgba(182,243,192,0.10) !important; }
-.lb-latest td { color: #b6f3c0; text-shadow: 0 0 4px rgba(182,243,192,0.6); }
+.lb-defeat  td:nth-child(4) { color: #d97070; text-shadow: 0 0 4px rgba(217,112,112,0.5); }
+.lb-latest { background: rgba(232,200,133,0.12) !important; }
+.lb-latest td { color: #e8c885; text-shadow: 0 0 4px rgba(232,200,133,0.6); }
 .lb-detail td {
     padding: 2px 6px;
     font-size: 10px;
-    color: #2a8a48;
+    color: rgba(201,164,94,0.55);
     text-shadow: none;
 }
-.lb-detail-label { color: #c9a45e; text-shadow: 0 0 3px rgba(201,164,94,0.5); }
+.lb-detail-label { color: var(--color-seal-gold); text-shadow: 0 0 3px rgba(201,164,94,0.5); }
 .lb-daily-title { color: #ffe066; text-shadow: 0 0 4px rgba(255,224,102,0.6); margin-top: 12px; }
 
 /* ============================================ */
