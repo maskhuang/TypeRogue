@@ -15,6 +15,16 @@ export const ENCHANT_CRIT_AMOUNT = 0.2         // 致命：+20% 暴击率
 export const ENCHANT_RESOURCE_RATIO = 0.1      // 资源附魔：ratio 0.1
 export const ENCHANT_MULTI_FIRE_AMOUNT = 1     // 闪亮：+1 multi_fire
 
+// 学徒：threshold(skill.level) = 3 × 2^(level-1) → Lv1→2 用 3 次，Lv2→3 用 6 次，Lv3→4 用 12 次...
+// 不设 level 上限——V2 baseValues 表仅 4 entries (Lv4 封顶按表查值)，但 skill.level 本身可继续涨，
+// 兼容旧 affixes.ts 的 ascend 系（getAscendBaseScale = 1.6^(level-3)）。
+export const APPRENTICE_THRESHOLD_BASE = 3
+
+/** 学徒：从当前 skill level 算下一次升级所需 trigger 命中次数 */
+export function apprenticeNextThreshold(currentSkillLevel: number): number {
+  return APPRENTICE_THRESHOLD_BASE * Math.pow(2, Math.max(0, currentSkillLevel - 1))
+}
+
 // ===== EnchantSpec =====
 
 /** 资源附魔的 6 种资源池 · 获取时随机 roll 一个，玩家预览随机结果（不让选）*/
@@ -26,6 +36,10 @@ export type EnchantSpec =
   | { id: 'crit' }
   | { id: 'resource'; resource: EnchantResource }
   | { id: 'multi_fire' }
+  /** 学徒：监听本词条 trigger 命中次数 → 达阈值 → 宿主 skill level++（无上限）
+   *  阈值递增 3 → 6 → 12 → 24...（× 2），跨战永久。
+   *  effect 本身不变（doubleIfMatch / parallel 均 noop），实际副作用在 hook 层 */
+  | { id: 'apprentice' }
 
 export type EnchantId = EnchantSpec['id']
 export type EnchantDisplay = { name: string; desc: string }
@@ -135,6 +149,16 @@ const ENCHANT_HANDLERS: Record<EnchantId, EnchantHandler> = {
     display: (_spec, locale) => locale === 'zh'
       ? { name: '闪亮', desc: '触发时挂 +1 多重释放 aura；若词条已含 multi_fire_add aura，数值 ×2' }
       : { name: 'Shiny', desc: 'On fire: +1 multi-fire aura; if affix has multi_fire_add, amount ×2' },
+  },
+
+  // 学徒：effect 完全不变；副作用在 hook 层
+  // 注意 noop 经 applyEnchantToEffect 会被包成 composite([orig, noop])——resolveEffect 跳过 noop
+  apprentice: {
+    doubleIfMatch: () => null,
+    parallel: () => ({ kind: 'noop' }),
+    display: (_spec, locale) => locale === 'zh'
+      ? { name: '学徒', desc: '本词条每触发 N 次，宿主技能等级 +1；N = 3 × 2^(Lv-1)（3, 6, 12, 24...），无上限' }
+      : { name: 'Apprentice', desc: 'Every N trigger fires, host skill level +1; N = 3 × 2^(Lv-1) (3, 6, 12, 24...), uncapped' },
   },
 }
 

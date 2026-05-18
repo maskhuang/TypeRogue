@@ -34,6 +34,7 @@ import {
 import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste } from './affixV2State'
 import { getAffixV2Definition } from '../data/affixV2'
 import { BASE_VALUES } from '../data/affixes'
+import { getAscendBaseScale } from '../data/affixTrigger'
 import { triggerSkill, recordSkillTrigger } from './skills'
 import { getBindingState, getSkillKeys } from './bindingManager'
 import { getHasteRelicOutputBonus, applyCritOverflow } from './relics/StackingRelicBehaviors'
@@ -65,12 +66,16 @@ const DEFAULT_LV1_BASES: Record<string, number> = {
 
 /** 资源基础产出值查询 · level 缺省 1（向后兼容）·
  *  优先读 BASE_VALUES 精确 Lv.N 表，缺失资源回退 DEFAULT_LV1_BASES。
- *  名称沿用 Lv1Base 为历史原因——传入 level 即按 Lv.N 取值，使 V2 affix 效果随技能升级缩放。*/
+ *  名称沿用 Lv1Base 为历史原因——传入 level 即按 Lv.N 取值，使 V2 affix 效果随技能升级缩放。
+ *  超出表长度（>Lv4）：按 table[last] × getAscendBaseScale(level) 延伸，
+ *  与 legacy shop.ts:534 getEffectiveBaseValue 保持一致——避免 V2/legacy 两套数字。 */
 export function defaultResourceLv1Base(resource: string, level = 1): number {
   const table = BASE_VALUES[resource as ResourceType]
   if (table && table.length > 0) {
-    const idx = Math.min(Math.max(Math.floor(level), 1), table.length) - 1
-    return table[idx]
+    const maxIdx = table.length - 1
+    const idx = Math.max(Math.floor(level), 1) - 1
+    if (idx <= maxIdx) return table[idx]
+    return table[maxIdx] * getAscendBaseScale(level)
   }
   return DEFAULT_LV1_BASES[resource] ?? 1
 }

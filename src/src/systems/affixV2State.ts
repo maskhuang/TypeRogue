@@ -90,6 +90,40 @@ export function listAllStateIds(): readonly string[] {
 }
 
 // ============================================
+// 学徒附魔进度 · 跨战永久（独立存储，避免 resetFightState 误清）
+// ============================================
+// 设计：监听本 instance 的 trigger 命中次数 → 达阈值 → 宿主 skill level++
+//   阈值序列 3 → 6 → 12（× 2），cap 在 skill.level=4（V2 baseValues 表只 4 级有效）
+//   生命周期：随 V2 instance 同生灭——unequip 清，新 run / clearAllEquipped 清；battle reset 不动
+
+interface ApprenticeProgress {
+  progress: number
+}
+
+const _apprenticeProgress: Map<string, ApprenticeProgress> = new Map()
+
+export function getApprenticeProgress(instanceId: string): ApprenticeProgress {
+  let p = _apprenticeProgress.get(instanceId)
+  if (!p) {
+    p = { progress: 0 }
+    _apprenticeProgress.set(instanceId, p)
+  }
+  return p
+}
+
+export function peekApprenticeProgress(instanceId: string): ApprenticeProgress | undefined {
+  return _apprenticeProgress.get(instanceId)
+}
+
+export function clearApprenticeProgress(instanceId: string): void {
+  _apprenticeProgress.delete(instanceId)
+}
+
+export function clearAllApprenticeProgress(): void {
+  _apprenticeProgress.clear()
+}
+
+// ============================================
 // Aura store · K3 仅 'fight'，battle end 自动清
 // ============================================
 

@@ -132,9 +132,30 @@ export function listAllEnchants(): ReadonlyMap<string, EnchantSpec> {
 import {
   getInstanceState,
   resetAllAffixV2State,
+  getApprenticeProgress,
+  clearApprenticeProgress,
+  clearAllApprenticeProgress,
 } from './affixV2State'
+import { apprenticeNextThreshold } from '../data/affixV2Enchant'
 import type { FireEvent } from './fireFilter'
 import type { TargetSelector } from '../data/affixV2Trigger'
+
+/** 学徒附魔副作用 · 每次本词条 trigger 命中调一次 ·
+ *  累加 progress；达 3 × 2^(skill.level - 1) → skill.level++（无上限）。
+ *  非学徒附魔的 instance 早出。 */
+function recordApprenticeTriggerHit(entry: EquippedEntry): void {
+  const enchant = _enchants.get(entry.instanceId)
+  if (!enchant || enchant.id !== 'apprentice') return
+  const skill = gameState.affixSkills.get(entry.skillId)
+  if (!skill) return
+  const prog = getApprenticeProgress(entry.instanceId)
+  prog.progress += 1
+  // while 而非 if：进度可能跨多级（一般 +1 不会，但保险）
+  while (prog.progress >= apprenticeNextThreshold(skill.level)) {
+    prog.progress -= apprenticeNextThreshold(skill.level)
+    skill.level += 1
+  }
+}
 
 // === resolveSelector 注入点（integration 层提供，避免循环依赖）===
 type SelectorResolver = (sel: TargetSelector, sourceSkillId: string, sourceKey: string) => readonly string[]
@@ -174,6 +195,7 @@ export function unequipAffixV2(instanceId: string): void {
   if (!entry) return
   _equipped.delete(instanceId)
   _enchants.delete(instanceId)   // 同步清附魔，避免孤立 enchant 状态
+  clearApprenticeProgress(instanceId)   // 学徒进度跟随 instance 生灭
   const list = _bySkill.get(entry.skillId)
   if (list) {
     const idx = list.indexOf(instanceId)
@@ -205,6 +227,7 @@ export function clearAllEquipped(): void {
   _equipped.clear()
   _bySkill.clear()
   _enchants.clear()
+  clearAllApprenticeProgress()
 }
 
 // ============================================
@@ -304,6 +327,7 @@ export function hookOnSkillFire(
       trigger: def.trigger.type,
       result,
     })
+    recordApprenticeTriggerHit(entry)
   }
 
   // ── 2. on_fire(filter): 全局 broadcast，所有 V2 affix 监听 ──
@@ -351,6 +375,7 @@ export function hookOnSkillFire(
         trigger: def.trigger.type,
         result,
       })
+      recordApprenticeTriggerHit(entry)
     }
   }
 
@@ -411,6 +436,7 @@ export function hookOnKey(
       trigger: def.trigger.type,
       result,
     })
+    recordApprenticeTriggerHit(entry)
   }
   return results
 }
@@ -469,6 +495,7 @@ export function hookOnWordEnd(
       trigger: def.trigger.type,
       result,
     })
+    recordApprenticeTriggerHit(entry)
   }
   return results
 }
@@ -532,6 +559,7 @@ export function hookOnHasteGranted(
       trigger: def.trigger.type,
       result,
     })
+    recordApprenticeTriggerHit(entry)
   }
   return results
 }
@@ -590,6 +618,7 @@ export function hookOnBattleStart(
       trigger: def.trigger.type,
       result,
     })
+    recordApprenticeTriggerHit(entry)
   }
 
   return results

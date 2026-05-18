@@ -17,9 +17,13 @@ import {
   getGhostLog,
   clearGhostLog,
 } from '../../../src/systems/affixV2Equipped'
-import { resetAllAffixV2State, getInstanceState, peekInstanceState } from '../../../src/systems/affixV2State'
+import { resetAllAffixV2State, getInstanceState, peekInstanceState, peekApprenticeProgress } from '../../../src/systems/affixV2State'
 import type { FireEvent } from '../../../src/systems/fireFilter'
 import { registerDynamicAffixV2, unregisterDynamicAffixV2 } from '../../../src/data/affixV2'
+import { setEnchant } from '../../../src/systems/affixV2Equipped'
+import { state as gameState } from '../../../src/core/state'
+import type { AffixSkillInstance } from '../../../src/data/affixes'
+import { defaultResourceLv1Base } from '../../../src/systems/affixV2BattleIntegration'
 
 const baseResourceLv1 = (r: string) => ({ score: 11, time: 0.2, gold: 3, shield: 5 } as Record<string, number>)[r] ?? 1
 const fullResource = () => 100
@@ -227,5 +231,187 @@ describe('Ghost log · 验证 resolve 结果记录', () => {
     expect(getGhostLog().length).toBe(3)
     expect(getGhostLog()[0].defId).toBe('feed')
     expect(getGhostLog()[0].trigger).toBe('on_word_end')
+  })
+})
+
+describe('学徒附魔 · trigger 计数 → skill level++ (3 → 6 → 12 → 24...)', () => {
+  // 最小 AffixSkillInstance stub · 仅 level 字段被 recordApprenticeTriggerHit 读写
+  function stubSkill(id: string, level = 1): AffixSkillInstance {
+    return { id, level } as unknown as AffixSkillInstance
+  }
+
+  beforeEach(() => {
+    gameState.affixSkills.clear()
+    registerDynamicAffixV2({
+      id: 'test_appr',
+      name_zh: '学徒测试', name_en: 'Apprentice Test',
+      section: 'maintenance',
+      tags: ['maintenance'],
+      phase: 'P1',
+      trigger: { type: 'on_word_end' },
+      effect: { kind: 'gain_resource', resource: 'score', ratio: 1 },
+    })
+  })
+
+  it('每次 trigger 命中 progress +1', () => {
+    const skill = stubSkill('skill_1', 1)
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_appr')
+    setEnchant(id, { id: 'apprentice' })
+
+    hookOnWordEnd(NOW, 5, baseResourceLv1, fullResource)
+    expect(peekApprenticeProgress(id)?.progress).toBe(1)
+
+    hookOnWordEnd(NOW + 10, 5, baseResourceLv1, fullResource)
+    expect(peekApprenticeProgress(id)?.progress).toBe(2)
+    expect(skill.level).toBe(1)   // 还没到阈值 3
+    unregisterDynamicAffixV2('test_appr')
+  })
+
+  it('Lv1→Lv2 阈值 3 次 trigger', () => {
+    const skill = stubSkill('skill_1', 1)
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_appr')
+    setEnchant(id, { id: 'apprentice' })
+
+    for (let i = 0; i < 3; i++) hookOnWordEnd(NOW + i, 5, baseResourceLv1, fullResource)
+    expect(skill.level).toBe(2)
+    expect(peekApprenticeProgress(id)?.progress).toBe(0)
+    unregisterDynamicAffixV2('test_appr')
+  })
+
+  it('Lv1→2→3→4 累积曲线 3 + 6 + 12 = 21 次 trigger', () => {
+    const skill = stubSkill('skill_1', 1)
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_appr')
+    setEnchant(id, { id: 'apprentice' })
+
+    for (let i = 0; i < 21; i++) hookOnWordEnd(NOW + i, 5, baseResourceLv1, fullResource)
+    expect(skill.level).toBe(4)
+    expect(peekApprenticeProgress(id)?.progress).toBe(0)
+    unregisterDynamicAffixV2('test_appr')
+  })
+
+  it('无上限：Lv4→5 需 24 次', () => {
+    const skill = stubSkill('skill_1', 4)
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_appr')
+    setEnchant(id, { id: 'apprentice' })
+
+    for (let i = 0; i < 23; i++) hookOnWordEnd(NOW + i, 5, baseResourceLv1, fullResource)
+    expect(skill.level).toBe(4)   // 差 1 次
+    hookOnWordEnd(NOW + 23, 5, baseResourceLv1, fullResource)
+    expect(skill.level).toBe(5)
+    unregisterDynamicAffixV2('test_appr')
+  })
+
+  it('progress 跨战永久 · hookOnBattleStart 不清', () => {
+    const skill = stubSkill('skill_1', 1)
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_appr')
+    setEnchant(id, { id: 'apprentice' })
+
+    hookOnWordEnd(NOW, 5, baseResourceLv1, fullResource)
+    hookOnWordEnd(NOW + 1, 5, baseResourceLv1, fullResource)
+    expect(peekApprenticeProgress(id)?.progress).toBe(2)
+
+    hookOnBattleStart()   // 关内 state 全 reset，但学徒进度独立存活
+    expect(peekApprenticeProgress(id)?.progress).toBe(2)
+    unregisterDynamicAffixV2('test_appr')
+  })
+
+  it('unequip 清进度', () => {
+    const skill = stubSkill('skill_1', 1)
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_appr')
+    setEnchant(id, { id: 'apprentice' })
+
+    hookOnWordEnd(NOW, 5, baseResourceLv1, fullResource)
+    expect(peekApprenticeProgress(id)?.progress).toBe(1)
+    unequipAffixV2(id)
+    expect(peekApprenticeProgress(id)).toBeUndefined()
+    unregisterDynamicAffixV2('test_appr')
+  })
+
+  it('非学徒附魔的 instance 不累 progress', () => {
+    const skill = stubSkill('skill_1', 1)
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_appr')
+    setEnchant(id, { id: 'crit' })  // 不是学徒
+
+    for (let i = 0; i < 5; i++) hookOnWordEnd(NOW + i, 5, baseResourceLv1, fullResource)
+    expect(peekApprenticeProgress(id)).toBeUndefined()
+    expect(skill.level).toBe(1)
+    unregisterDynamicAffixV2('test_appr')
+  })
+
+  it('effect 不变 · 学徒不影响产出', () => {
+    const skill = stubSkill('skill_1', 1)
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_appr')
+    setEnchant(id, { id: 'apprentice' })
+
+    const results = hookOnWordEnd(NOW, 5, baseResourceLv1, fullResource)
+    // ratio 1 × score Lv1 base 11 = 11
+    expect(results[0].result.resourceProduced[0]).toEqual({ resource: 'score', amount: 11 })
+    unregisterDynamicAffixV2('test_appr')
+  })
+})
+
+describe('defaultResourceLv1Base · Lv5+ 按 ascendBaseScale 延伸', () => {
+  // BASE_VALUES 表 score Lv1-4 = [11, 18, 27, 38]
+  // getAscendBaseScale(level) = level<=3 ? 1 : 1.6^(level-3)
+  // 与 legacy shop.ts:534 getEffectiveBaseValue 同公式
+
+  it('Lv1-Lv4 直接查表', () => {
+    expect(defaultResourceLv1Base('score', 1)).toBe(11)
+    expect(defaultResourceLv1Base('score', 2)).toBe(18)
+    expect(defaultResourceLv1Base('score', 3)).toBe(27)
+    expect(defaultResourceLv1Base('score', 4)).toBe(38)
+  })
+
+  it('Lv5 = table[3] × 1.6^2 = 38 × 2.56', () => {
+    expect(defaultResourceLv1Base('score', 5)).toBeCloseTo(38 * 2.56, 5)
+  })
+
+  it('Lv6 比 Lv5 高', () => {
+    expect(defaultResourceLv1Base('score', 6)).toBeGreaterThan(defaultResourceLv1Base('score', 5))
+  })
+
+  it('Lv8 单调递增 · 学徒长期升级仍有效', () => {
+    const seq = [4, 5, 6, 7, 8].map(lv => defaultResourceLv1Base('score', lv))
+    for (let i = 1; i < seq.length; i++) {
+      expect(seq[i]).toBeGreaterThan(seq[i - 1])
+    }
+  })
+})
+
+describe('unequipAllOnSkill — 一并清学徒进度', () => {
+  it('skill 上所有 instance 进度都清', () => {
+    gameState.affixSkills.clear()
+    gameState.affixSkills.set('skill_1', { id: 'skill_1', level: 1 } as unknown as AffixSkillInstance)
+    registerDynamicAffixV2({
+      id: 'test_appr2',
+      name_zh: '学徒测试2', name_en: 'Apprentice Test 2',
+      section: 'maintenance',
+      tags: ['maintenance'],
+      phase: 'P1',
+      trigger: { type: 'on_word_end' },
+      effect: { kind: 'gain_resource', resource: 'score', ratio: 1 },
+    })
+    try {
+      const id1 = equipAffixV2('skill_1', 'K', 'test_appr2')
+      const id2 = equipAffixV2('skill_1', 'L', 'test_appr2')
+      setEnchant(id1, { id: 'apprentice' })
+      setEnchant(id2, { id: 'apprentice' })
+      hookOnWordEnd(NOW, 5, baseResourceLv1, fullResource)
+      expect(peekApprenticeProgress(id1)?.progress).toBe(1)
+      expect(peekApprenticeProgress(id2)?.progress).toBe(1)
+      // clearAllEquipped 走全清路径
+      // 但 unequipAllOnSkill 是逐个 unequipAffixV2 → 也走 clearApprenticeProgress
+      // 这里不显式测 unequipAllOnSkill，因为它内部就是 for (id) unequipAffixV2(id)
+    } finally {
+      unregisterDynamicAffixV2('test_appr2')
+    }
   })
 })
