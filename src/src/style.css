@@ -2036,10 +2036,30 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     text-shadow: 0 0 6px rgba(201,164,94,0.55);
     font-size: 13px; line-height: 1.7;
     letter-spacing: 1px;
-    position: relative; overflow: hidden;
+    position: relative;
     min-height: 380px;
     max-height: calc(100vh - 120px);
+    /* overflow-y: auto 单独写（避免被 shorthand overflow 反复覆盖）·
+     * scrollbar 用 sepia 调色板（避免 macOS 默认 overlay 隐藏让用户看不到可滚动提示）*/
+    overflow-x: hidden;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-seal-gold) rgba(60, 40, 16, 0.45);
+}
+.gameover-bezel-screen::-webkit-scrollbar {
+    width: 8px;
+}
+.gameover-bezel-screen::-webkit-scrollbar-track {
+    background: rgba(60, 40, 16, 0.35);
+    border: 1px solid rgba(201, 164, 94, 0.4);
+}
+.gameover-bezel-screen::-webkit-scrollbar-thumb {
+    background: var(--color-seal-gold);
+    border: 1px solid #1a1208;
+    border-radius: 0;
+}
+.gameover-bezel-screen::-webkit-scrollbar-thumb:hover {
+    background: #e8c885;
 }
 .gameover-bezel-screen::before {
     /* 镜像 .gold-screen::before：浅条纹 + 暗角，paper-craft 弱光 */
