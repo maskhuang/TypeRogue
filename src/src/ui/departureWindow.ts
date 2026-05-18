@@ -9,43 +9,12 @@
 import { state } from '../core/state'
 import { pickDeparturePrompt } from '../data/narrative/departureCheck'
 import { evaluateDepartureCheck, type DepartureCheckResult } from '../systems/departureCheck'
-import { getLocale } from '../demo/demo-i18n'
+import { t, getLocale } from '../demo/demo-i18n'
 
 const DEPARTURE_TIME_LIMIT_S = 30
 
 const SHROUD_ID = 'departure-check-shroud'
 const PAPER_ID = 'departure-check-form'
-
-interface DepartureWindowI18n {
-  readonly header_org: string
-  readonly header_title: string
-  readonly instruction: string
-  readonly input_placeholder: string
-  readonly submit_btn: string
-  readonly countdown_label: string
-}
-
-const I18N_ZH: DepartureWindowI18n = {
-  header_org: 'DPCA · 值班窗口',
-  header_title: '离场验证 · DEPARTURE',
-  instruction: '请用您本人的话简短解释下列句子的含义。不可引用已受理文本。',
-  input_placeholder: '在此键入您的复述…',
-  submit_btn: '提交 · SUBMIT',
-  countdown_label: '剩余',
-}
-
-const I18N_EN: DepartureWindowI18n = {
-  header_org: 'DPCA · DUTY WINDOW',
-  header_title: 'DEPARTURE VERIFICATION',
-  instruction: 'In your own words, briefly explain the meaning of the sentence below. Do not quote filed text.',
-  input_placeholder: 'Type your paraphrase here…',
-  submit_btn: 'SUBMIT',
-  countdown_label: 'TIME',
-}
-
-function getI18n(): DepartureWindowI18n {
-  return getLocale() === 'en' ? I18N_EN : I18N_ZH
-}
 
 /**
  * 展示离场验证窗，等待玩家提交或 30s 超时。
@@ -54,11 +23,10 @@ function getI18n(): DepartureWindowI18n {
  */
 export function showDepartureWindow(): Promise<DepartureCheckResult> {
   return new Promise((resolve) => {
-    const i18n = getI18n()
     const prompt = pickDeparturePrompt()
     const promptText = getLocale() === 'en' ? prompt.en : prompt.zh
 
-    const { shroud, paper, input, submitBtn, timerEl } = ensureOverlay(i18n, promptText)
+    const { shroud, paper, input, submitBtn, timerEl } = ensureOverlay(promptText)
 
     let timeLeft = DEPARTURE_TIME_LIMIT_S
     timerEl.textContent = `${timeLeft}`
@@ -123,7 +91,6 @@ export function showDepartureWindow(): Promise<DepartureCheckResult> {
 }
 
 function ensureOverlay(
-  i18n: DepartureWindowI18n,
   promptText: string,
 ): {
   shroud: HTMLElement
@@ -148,22 +115,22 @@ function ensureOverlay(
   paper.innerHTML = `
     <div class="ov-header">
       <div class="h-text">
-        <div class="org">${escapeHtml(i18n.header_org)}</div>
-        <div class="title">${escapeHtml(i18n.header_title)}</div>
+        <div class="org">${escapeHtml(t('departure.header_org'))}</div>
+        <div class="title">${escapeHtml(t('departure.header_title'))}</div>
       </div>
     </div>
-    <p class="departure-instruction">${escapeHtml(i18n.instruction)}</p>
+    <p class="departure-instruction">${escapeHtml(t('departure.instruction'))}</p>
     <div class="departure-prompt-card">${escapeHtml(promptText)}</div>
     <div class="departure-input-row">
-      <input type="text" class="departure-input" placeholder="${escapeHtml(i18n.input_placeholder)}" autocomplete="off" spellcheck="false" />
+      <input type="text" class="departure-input" placeholder="${escapeHtml(t('departure.input_placeholder'))}" autocomplete="off" spellcheck="false" />
       <div class="departure-timer">
-        <span class="departure-timer-label">${escapeHtml(i18n.countdown_label)}</span>
+        <span class="departure-timer-label">${escapeHtml(t('departure.countdown_label'))}</span>
         <span class="departure-timer-value">${DEPARTURE_TIME_LIMIT_S}</span>
         <span class="departure-timer-unit">s</span>
       </div>
     </div>
     <div class="ov-footer">
-      <button class="ov-close departure-submit-btn" type="button">${escapeHtml(i18n.submit_btn)}</button>
+      <button class="ov-close departure-submit-btn" type="button">${escapeHtml(t('departure.submit_btn'))}</button>
     </div>
   `
 

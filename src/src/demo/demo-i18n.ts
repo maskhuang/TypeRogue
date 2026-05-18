@@ -132,6 +132,14 @@ const ZH: Record<string, string> = {
   'gameover.crt.daily':           '▸ DAILY EXERCISE · 每日演练',
   'gameover.crt.skip_hint':       '[SPACE / 点击屏幕 · 跳过打字]',
 
+  // --- 离场验证 · run 结束前 paraphrase check ---
+  'departure.header_org':        'DPCA · 值班窗口',
+  'departure.header_title':      '离场验证 · DEPARTURE',
+  'departure.instruction':       '请用您本人的话简短解释下列句子的含义。不可引用已受理文本。',
+  'departure.input_placeholder': '在此键入您的复述…',
+  'departure.submit_btn':        '提交 · SUBMIT',
+  'departure.countdown_label':   '剩余',
+
   // --- 主菜单 ---
   'menu.title': '灵长类辅助文书部',
   'menu.start': '启动设备',
@@ -1621,6 +1629,14 @@ const EN: Record<string, string> = {
   'gameover.crt.restart':         '▸ FILE NEW REQUEST',
   'gameover.crt.daily':           '▸ DAILY EXERCISE',
   'gameover.crt.skip_hint':       '[SPACE / CLICK · SKIP TYPING]',
+
+  // --- Departure verification · paraphrase check before settlement ---
+  'departure.header_org':        'DPCA · DUTY WINDOW',
+  'departure.header_title':      'DEPARTURE VERIFICATION',
+  'departure.instruction':       'In your own words, briefly explain the meaning of the sentence below. Do not quote filed text.',
+  'departure.input_placeholder': 'Type your paraphrase here…',
+  'departure.submit_btn':        'SUBMIT',
+  'departure.countdown_label':   'TIME',
 
   // --- Main Menu ---
   'menu.title': 'DEPARTMENT OF PRIMATE CLERICAL AFFAIRS',
