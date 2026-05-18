@@ -2,6 +2,22 @@
 // 打字肉鸽 - 词库数据（基于 popular-english-words 热度排序生成）
 // ============================================
 // Story 57.1: WORD_POOL 迁至 data-json/words.json，本文件保留运行时函数
+//
+// ⚠️ NARRATIVE TODO (PENDING_DRIFT_REWRITE) ⚠️
+// 当前 WORD_POOL.common (200) + WORD_POOL.long (150) + 大部分 per-letter 池
+// 仍是 popular-english-words 热度排序产物，纯英语词典词 —— 与 v4.1 LOCKED
+// narrative ("作者意图丢失 + 语义仍成立" / "wordpack 必须 100% 未受理") 冲突。
+// 仅 special pool (91 词) 已通过 ASR 同音 + 翻译漂移多源批量挖入正经走过
+// drift methodology（详 feedback_ai_translation_drift_classes.md A-class）。
+//
+// 应由 narrative pipeline 走 A-class drift / 治愈 / OCR / signage drift 等
+// 8 机制（详 feedback_unfiled_text_mechanism_taxonomy.md）重新批量产出，
+// 替换 common / long / per-letter 内容。本文件 + data-json/words.json 暂保留
+// 旧英语词，保 shop / wordPacks 功能不挂；narrative pipeline 接手后这条注释
+// 应被删除。
+//
+// 临时缓解：getStarterWords 已改抽 special pool（下方），保证玩家开局
+// 至少接触到真正的 anomaly token。
 
 import type { WordPool } from '../core/types';
 import { random } from '../core/seededRandom';
