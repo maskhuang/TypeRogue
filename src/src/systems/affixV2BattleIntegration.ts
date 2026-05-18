@@ -345,10 +345,12 @@ export function wireV2BattleIntegration(): void {
   setSelectorResolver(resolveSelectorToSkillIds)
 
   // battle:start → 从 state.player.bindings 重同步 V2 装配 + reset + 应用 passive aura
+  //               + 触发 on_battle_start 词条（旧 innate 等价物，hookOnBattleStart 返回结果）
   // 重同步覆盖存档加载场景（bindings 直接还原，未走 bindShapeToKeys 路径）
   eventBus.on('battle:start', () => {
     resyncV2EquipmentFromState()
-    hookOnBattleStart(defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
+    const results = hookOnBattleStart(defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
+    processV2Results(results)
   })
 
   // word:complete → 触发 on_word_end 类 V2 affix + 处理结果

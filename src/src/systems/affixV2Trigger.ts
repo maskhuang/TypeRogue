@@ -87,6 +87,10 @@ export function evaluateTrigger(spec: TriggerSpec, ctx: TriggerContext): boolean
       // hook 层已保证 scope 匹配；evaluator 只校验 context 完整
       return ctx.grantedSkillId !== undefined
 
+    case 'on_battle_start':
+      // hook 层（hookOnBattleStart）已保证调用时机；恒命中
+      return true
+
     // ── Phase 2（占位 · 未实装）──
     case 'on_window_mode':
     case 'on_sequence':

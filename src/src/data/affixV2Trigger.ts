@@ -56,6 +56,8 @@ export type Phase1TriggerSpec =
   | { type: 'every_n_keys'; n: number }
   /** scope 内某个 skill 获得极速时触发 · 默认 scope=self */
   | { type: 'on_haste_granted'; scope?: TargetSelector }
+  /** 每场战斗开始触发一次 · 旧 innate 的 V2 等价物 */
+  | { type: 'on_battle_start' }
 
 /** Phase 2 trigger 扩展（详 research §5.2） */
 export type Phase2TriggerSpec =

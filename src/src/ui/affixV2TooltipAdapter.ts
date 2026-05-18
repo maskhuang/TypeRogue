@@ -113,6 +113,7 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
           ? `${formatSelector(scope)}获得极速时`
           : `When ${formatSelector(scope)} gains haste`)
     }
+    case 'on_battle_start': return zh ? '战斗开始时' : 'On battle start'
     case 'on_window_mode': return zh ? `节奏·${trigger.pattern}` : `Rhythm·${trigger.pattern}`
     case 'on_sequence':   return zh ? `序列·${trigger.pattern}` : `Sequence·${trigger.pattern}`
     case 'one_per_window': return zh ? `${trigger.n} 键内仅一次` : `Once per ${trigger.n} keys`

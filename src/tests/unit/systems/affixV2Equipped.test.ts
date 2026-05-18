@@ -19,6 +19,7 @@ import {
 } from '../../../src/systems/affixV2Equipped'
 import { resetAllAffixV2State, getInstanceState, peekInstanceState } from '../../../src/systems/affixV2State'
 import type { FireEvent } from '../../../src/systems/fireFilter'
+import { registerDynamicAffixV2, unregisterDynamicAffixV2 } from '../../../src/data/affixV2'
 
 const baseResourceLv1 = (r: string) => ({ score: 11, time: 0.2, gold: 3, shield: 5 } as Record<string, number>)[r] ?? 1
 const fullResource = () => 100
@@ -156,6 +157,49 @@ describe('hookOnBattleStart / hookOnBattleEnd', () => {
     hookOnBattleStart()
     expect(getGhostLog().length).toBe(0)
     expect(peekInstanceState(listAllEquipped()[0].instanceId)).toBeUndefined()
+  })
+
+  it('on_battle_start trigger 一次性产出（旧 innate V2 等价物）', () => {
+    registerDynamicAffixV2({
+      id: 'test_battle_start',
+      name_zh: '战起', name_en: 'Battle Start',
+      section: 'maintenance',
+      tags: ['maintenance'],
+      phase: 'P1',
+      trigger: { type: 'on_battle_start' },
+      effect: { kind: 'gain_resource', resource: 'score', ratio: 2 },
+    })
+    try {
+      equipAffixV2('skill_1', 'K', 'test_battle_start')
+      const results = hookOnBattleStart(baseResourceLv1, fullResource, NOW)
+      expect(results.length).toBe(1)
+      // ratio=2 × score Lv1 base(11) = 22
+      expect(results[0].result.resourceProduced[0]).toEqual({ resource: 'score', amount: 22 })
+      expect(getGhostLog().length).toBe(1)
+      expect(getGhostLog()[0].trigger).toBe('on_battle_start')
+    } finally {
+      unregisterDynamicAffixV2('test_battle_start')
+    }
+  })
+
+  it('on_battle_start 不被 hookOnKey / hookOnWordEnd 触发', () => {
+    registerDynamicAffixV2({
+      id: 'test_battle_start_2',
+      name_zh: '战起2', name_en: 'Battle Start 2',
+      section: 'maintenance',
+      tags: ['maintenance'],
+      phase: 'P1',
+      trigger: { type: 'on_battle_start' },
+      effect: { kind: 'gain_resource', resource: 'score', ratio: 1 },
+    })
+    try {
+      equipAffixV2('skill_1', 'K', 'test_battle_start_2')
+      hookOnKey(NOW, baseResourceLv1, fullResource)
+      hookOnWordEnd(NOW, 5, baseResourceLv1, fullResource)
+      expect(getGhostLog().length).toBe(0)
+    } finally {
+      unregisterDynamicAffixV2('test_battle_start_2')
+    }
   })
 
   it('battle end 也清 state（但 equipped 保留）', () => {

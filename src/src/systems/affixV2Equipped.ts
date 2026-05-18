@@ -540,19 +540,28 @@ export function hookOnHasteGranted(
 // Battle lifecycle hooks
 // ============================================
 
-/** 战斗开始 · 全 reset + 应用所有 passive aura 一次 */
+/** 战斗开始 · 全 reset + 应用所有 passive aura 一次 + 触发 on_battle_start 一次 */
 export function hookOnBattleStart(
   resourceLv1Base: (r: string, level?: number) => number = () => 1,
   getPlayerResource: (r: string) => number = () => 0,
   nowMs: number = Date.now(),
-): void {
+): SourcedResult[] {
   resetAllAffixV2State()
   clearGhostLog()
 
-  // 一次性应用所有 passive trigger 的 affix（典型情况：apply_aura 持续 buff）
+  const results: SourcedResult[] = []
+
+  // passive 与 on_battle_start 都在 battle start 跑一次：
+  //   passive  → 典型 apply_aura 持续 buff（不入 results，沿用历史只 log）
+  //   on_battle_start → 一次性产出/成长种子（入 results 供 caller dispatch，旧 innate 等价物）
   for (const entry of _equipped.values()) {
     const def = getAffixV2Definition(entry.defId)
-    if (!def || def.trigger.type !== 'passive') continue
+    if (!def) continue
+    if (def.trigger.type !== 'passive' && def.trigger.type !== 'on_battle_start') continue
+
+    const triggerCtx: TriggerContext = { selfAffixId: entry.defId, selfKey: entry.key }
+    if (!evaluateTrigger(def.trigger, triggerCtx)) continue
+
     const lvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
     const ctx: ResolveContext = {
       instanceId: entry.instanceId,
@@ -569,14 +578,21 @@ export function hookOnBattleStart(
       queryEquipped: buildQueryEquipped(entry),
     }
     const result = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
+
+    if (def.trigger.type === 'on_battle_start') {
+      results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result })
+    }
+
     _ghostLog.push({
       timestamp: nowMs,
       instanceId: entry.instanceId,
       defId: entry.defId,
-      trigger: 'passive',
+      trigger: def.trigger.type,
       result,
     })
   }
+
+  return results
 }
 
 /** 战斗结束 · 关内成长重置（state 内 cumulativeBaseAdd / cumulativeFactorAdd / stacks 清零）*/
