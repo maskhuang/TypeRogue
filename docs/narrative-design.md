@@ -1020,66 +1020,115 @@ Cycle 末尾，玩家从工位走出时，看见**相邻工位另一名录入员
 
 ---
 
-#### 校对者 typing 机制 🔒 LOCKED (2026-05-17 · 闭合 §2.5/§2.8 ⏳暂定 gap)
+#### 校对者 typing 机制 🔒 LOCKED v2 (2026-05-17 · 闭合 §2.5/§2.8 ⏳暂定 gap · 多轮 narrative 反推 + indie 调研后定稿)
 
-录入员 → 校对者升职后，typing 屏幕从单 token 盲打 → **三栏对照 + 标注**：
+录入员 → 校对者升职后，typing 屏幕从单 token 盲打 → **case file + 5 stamp 双 ledger 分类**：
 
 ```
-  ┌─ CASE #2847-B · BATCH 1/12 · HAZARD: LOW ──────────┐
-  │  PROPOSED ORIGIN  →  PROPOSED MECH                   │
-  │      fate              typo · QWERTY 邻键 (f→g)      │
-  │                                                       │
-  │                    [G] A T E                          │
-  │                                                       │
-  │    F1 = 成立    F2 = 拒收    F3 = 升级 (升等审查)    │
-  └───────────────────────────────────────────────────────┘
+  ┌─ DPCA · BULLETIN · 1962·11·23 ──────────────────────┐
+  │ 今日定额: 12 / 工时: 60 / 工资: 50 gold              │
+  │ 本班重点: typo 类案件 (奖金 +30%)                    │
+  │ 临时规章: 含字母 'M' 案件需检视后再标注              │
+  └──────────────────────────────────────────────────────┘
+  ┌─ CASE #2847-B · DOC-4B · HAZARD: EUCLID ─────────────┐
+  │  PROPOSED ORIGIN: fate                                 │
+  │  PROPOSED MECH:   typo · QWERTY 邻键 (f→g)             │
+  │  PREVIOUS REV:    by OP-2103 · 标"勘误"                │
+  │  CROSS-REF:       #2855 (HELL)                         │
+  │  NOTE:            "此条已审阅，无需进一步处理"         │
+  │                                                         │
+  │                    [G] A T E                            │
+  │                                                         │
+  │ F1=勘误 -3   F2=对照 -5   F3=检视 -1                  │
+  │ F4=批注 -2   F5=校核 -4   (工时消耗)                  │
+  └────────────────────────────────────────────────────────┘
 ```
 
-**机制流程**：
-1. 看：屏幕同时显示 drift token + proposed origin + proposed mechanism
-2. 打：录入 drift token (与录入员相同 typing action — 这部分**没退化**，肌肉记忆延续)
-3. 标：完成瞬间从 **成立 / 拒收 / 升级** 三选一标注
-4. 反馈：标注被异常层归档（"已分类入库"·分类标签**不属于公司任何已知分类系统**）
+→ HTML mock: `scripts/proofreader-mock-casefile.html`
+→ 完整 spec: memory `feedback_proofreader_mechanic_via_lineage`
 
-**数据源**：`scripts/wordpack-generator/output/words_new.lineage.json`（每个 token 的 `(orig, mech)` 三元组已 ready，wordpack-generator B-full pool 产出时同步生成 · 详 [[feedback_unfiled_text_mechanism_taxonomy]]）。
+##### 核心: 双 ledger (公司层 + 异常层)
 
-**校对术语 label**（用本章 §2.5 已 LOCK 的 L2 校对者 vocab）：勘误 / 对照 / 检视 / 批注 / 校核 · 8 机制 label 用 §2.15.1 LOCKED 词表。
+每个 stamp 同时被两套系统读取:
 
-**机制阶位对比（5 段下滑第 2 阶的字面落地）**：
-
-| 维度 | 录入员 (Ch.1) | 校对者 (Ch.2) |
+| Stamp | 🏢 公司层 (玩家显见) | 👁 异常层 (玩家最后才意识到) |
 |---|---|---|
-| 屏幕信息密度 | 单 token | drift + origin + mech |
-| 焦点 | 准确录入 | 对照 + 判断 |
-| 决策点 | 无 (打完即过) | 完成时标注 3 选 1 |
-| 玩家意识参与 | 最小 (盲打) | 中等 (对照思考) |
-| 作者化阶位 | 第 1 阶 | **第 2 阶** (意识更深进入) |
-| MOKO UI 层 | 单层 | 多一个标注 channel (上文已写) |
+| **勘误** | 标"含错误送修改者" | 异常被你**确认**为"标准+偏离"模式 = 异常获得**修正路径**送入 Ch.3 |
+| **对照** | 关联另一份"参考件"，触发交叉审查 | 异常之间**建立边** = 帮它们组织成**网络** |
+| **检视** | 仅"已查看"记录，无判定 | 你的 **attention** 滋养它 (机械见证效应直接落实) |
+| **批注** | 附加操作员笔记 | 你**写下自己的字** = 你成为文本的**次级作者** |
+| **校核** | 通过审核，进入下一步 | 你成为**人证 / 见证人**，异常获得证据链 |
 
-**与 §2.16.2 既有设计对接**：
-- 入口仪式 boilerplate "职位变更" 后**工位多出标注 channel** = 本 typing 机制 UI 字面化
-- 异常层 "校对者标注 = 替异常打 tag" = 本机制完成时的"成立/拒收"操作 = 给 anomaly receipt
-- D22 brutal positive feedback loop = 玩家越精心校对 → 异常越快归档（**正反馈陷阱**）
-- 8-cell 升职瞬间（§2.5 line 274）可作 lineage UI 首次展开 frame
+**核心 horror**: 表面上 5 个都是合理工作行为，**每个 stamp 都让玩家被吃得更深一寸，只是方向不同**。**没有"安全选项"**。
 
-**与既有 Proofread affix 对接**：line 377 已埋点 "校对者职业落地时把 Proofread 转移到校对者 starter pool" → 实装本机制时同步迁移。
+##### 5 池 × 3 档显化 (跨 cycle 持久 + meta 累积)
 
-**设计纪律**：
-- 不要把本 UI 加到**录入员** battle scene — 那会违反 [[feedback_token_level_is_decontextualization]] 的去语境化原则
-- 只在校对者 class 解锁后启用 lineage UI；Ch.1 玩家保持盲打体验
-- 标注事件应被**异常层**归档（B6 早期播种），不被公司层正面/负面反馈
-- "成立/拒收"按钮 label 应用校对术语（勘误/对照/检视/批注/校核），**不要**用"正确/错误"
+池进度玩家**看不见**，只看显化。触发即不可逆。显化通过 5 channel: 视觉变化 / 工作台便条 / 偶发系统页 / case file 修饰 / 工资单。
 
-**待实装清单**（scope 较大，可拆 sprint）：
-1. 校对者 class data (data/classes.ts) 新增
-2. Proofread affix 从 wordsmith 迁移到校对者 starter pool
-3. lineage 文件运行时加载到 battle scene
-4. battle scene UI 增加 origin + mech 区 + 标注按钮
-5. 标注事件流写入 anomaly 归档统计
-6. 通关 Ch.1 末 boss → 升职 boilerplate 通知 + UI 切换
-7. D29 ritual Ch.2 变体（本章已写）
+详细矩阵见 memory `feedback_proofreader_mechanic_via_lineage` §5 池 × 3 档。例:
+- 检视池 N3 (50) = 屏幕角落出现 "OP-7842 已查看 N 份"，你成了元 case 的查看者
+- 校核池 N2 (25) = 偶发系统页弹出，你的校核 token 列表 + **非公司术语分类标签** (§2.16.2 "偶然看到的系统页面"字面化)
+- 勘误池 N3 (50) = "修改者部门请求面谈" = **Ch.3 升职 unlock 条件之一**
 
-详细 spec 见 memory `feedback_proofreader_mechanic_via_lineage`。
+**升职阈值**: 勘误池 ≥ N3 **AND** 总池累积 ≥ 200。
+
+##### case 类型多样化 (puzzle 空间)
+
+6 种 case 类型限定 stamp 子集 (常规/加急/疑案/关联/高危/黑条) — 同一 stamp 在不同 case 上效用不同。
+
+##### 工时 + typing → stamp 效力
+
+- cycle 总工时 60，stamp 消耗 1-5
+- typing 0 错 = stamp 全效，1-2 错 = 半效，3+ 错 = auto 退回 (失 stamp 权)
+- 录入员的 typing 精度成校对者"投票权"
+
+##### 借鉴 indie prior art (详 memory `feedback_indie_prior_art_inspection_games`)
+
+- **Papers Please** Daily Bulletin → 公司明文命令载体
+- **SCP-173 眨眼** → 检视 stamp 强制 attention (mechanical-narrative perfect match)
+- **SCP HAZARD 三档** → Safe / Euclid / Keter 命名
+- **Roottrees / Golden Idol** → 对照 stamp 展开历史 case 让玩家选关联 (mini-deduction)
+- **Beholder / Orwell** → case file 信息密度 (PREVIOUS REV / CROSS-REF / NOTE)
+- **TypInc** → 边界 run (Ch.2 = 5-7 cycle 即触发 Ch.3)
+
+##### 与 §2.16.2 既有设计对接
+
+- 入口仪式后**工位多出标注 channel** = 本 typing 机制 UI 字面化
+- 异常层 "校对者标注 = 替异常打 tag" = 5 stamp 双 ledger 系统
+- D22 brutal positive feedback loop = Daily Bulletin 引诱专攻 → 对应池累积加速 = 你越精心被吃越快
+- 8-cell 升职瞬间 (§2.5 line 274) 可作 lineage UI 首次展开 frame
+- B6 公司不偏好 = 5 个池公司都不奖不罚 (Daily Bulletin 唯一明文)
+
+##### 与既有 Proofread affix 对接
+
+line 377 埋点 "校对者职业落地时把 Proofread 转移到校对者 starter pool" → 实装本机制时同步迁移。
+
+##### 设计纪律
+
+- ❌ 不要把 5-stamp UI 加到**录入员** battle scene — 违反 [[feedback_token_level_is_decontextualization]]
+- ❌ 不要给"对错"反馈 (公司不评判，§2.16.2 B6 真理)
+- ❌ 不加第 6 个 stamp 或 "跳过" — 强制 5 选 1 是作者化的入口
+- ❌ 不给"作者化滑条" UI — 池进度玩家看不见
+- ✓ 5 stamp label 用 §2.15.1 LOCKED 校对术语 (勘误/对照/检视/批注/校核)
+- ✓ 池累积按类别，每池独立显化 (不是单 counter)
+- ✓ 公司信号 (bulletin 明文) vs 异常信号 (便条/case 注释/系统页隐喻) **视觉区隔**
+
+##### 待实装 (Phase 1-11, ~37-60h 总计)
+
+1. **Phase 0 · 既有设计沉淀** ✓ — 本节 + memory + HTML mock
+2. **Phase 1 · 注册 proofreader class** (1-2h)
+3. **Phase 2 · lineage 文件运行时加载** (2-4h)
+4. **Phase 3 · battle scene 5-stamp UI** (8-12h)
+5. **Phase 4 · 5 池累积 + 显化系统** (5-8h)
+6. **Phase 5 · case 类型多样化** (4-6h)
+7. **Phase 6 · Daily Bulletin** (3-4h)
+8. **Phase 7 · 对照 deduction** (4-6h)
+9. **Phase 8 · 检视强制 attention** (2-3h)
+10. **Phase 9 · Affix 系统** (3-5h)
+11. **Phase 10 · Ch.1→Ch.2 升职流程** (4-8h)
+12. **Phase 11 · D29 Ch.2 ritual 变体** (1-2h)
+
+可分 3-5 sprint。
 
 ---
 

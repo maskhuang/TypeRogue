@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>DPCA-VT220 · 校对者 case file mock</title>
+<style>
+  :root {
+    --bg-dark: #0a1612;
+    --bg-mid: #122820;
+    --frame-dark: #1f3326;
+    --frame-mid: #2d4b38;
+    --phos-dim: #4a7b5e;
+    --phos-mid: #6da882;
+    --phos-bright: #a8d9b5;
+    --phos-white: #d9f0e0;
+    --amber: #d4a04a;
+    --red-warn: #c95e4a;
+    --yellow-warn: #d4b54a;
+    --blue-info: #5e8cd4;
+    --redact: #3a3a3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-dark);
+    color: var(--phos-mid);
+    font-family: 'Courier New', 'Menlo', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 0;
+  }
+  .crt-frame {
+    width: 920px;
+    background: var(--bg-mid);
+    border: 4px solid var(--frame-dark);
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 0 24px rgba(109, 168, 130, 0.15), inset 0 0 60px rgba(0,0,0,0.4);
+    position: relative;
+  }
+  /* CRT scanline overlay */
+  .crt-frame::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 2px,
+      rgba(0,0,0,0.04) 2px,
+      rgba(0,0,0,0.04) 3px
+    );
+    pointer-events: none;
+    border-radius: 8px;
+  }
+  .crt-header {
+    background: var(--frame-dark);
+    padding: 6px 16px;
+    display: flex;
+    justify-content: space-between;
+    color: var(--phos-bright);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--frame-mid);
+  }
+  .led-on { color: #2dd96b; }
+  .crt-body {
+    padding: 20px 28px;
+  }
+
+  /* Daily bulletin */
+  .bulletin {
+    border: 1px dashed var(--phos-dim);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    color: var(--phos-mid);
+    font-size: 12px;
+  }
+  .bulletin-head {
+    color: var(--amber);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .bulletin-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .bulletin-row span:first-child { color: var(--phos-dim); }
+  .bulletin-row span:last-child { color: var(--phos-bright); }
+  .bulletin-focus {
+    color: var(--amber);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* Status strip */
+  .status-strip {
+    display: flex;
+    justify-content: space-between;
+    color: var(--phos-dim);
+    font-size: 11px;
+    margin-bottom: 8px;
+    padding: 4px 8px;
+    background: rgba(0,0,0,0.2);
+  }
+  .progress-bar {
+    width: 200px;
+    height: 6px;
+    background: var(--frame-dark);
+    border: 1px solid var(--frame-mid);
+    position: relative;
+  }
+  .progress-bar-fill {
+    background: var(--phos-mid);
+    height: 100%;
+  }
+
+  /* Case file */
+  .case-file {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--frame-mid);
+    padding: 0;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .case-head {
+    background: var(--frame-dark);
+    padding: 8px 14px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    border-bottom: 1px solid var(--frame-mid);
+  }
+  .case-head-left { color: var(--phos-bright); letter-spacing: 1px; }
+  .case-head-right { color: var(--phos-dim); }
+  .hazard-chip {
+    display: inline-block;
+    padding: 2px 10px;
+    border: 1px solid;
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-left: 8px;
+  }
+  .hz-safe   { color: var(--phos-bright); border-color: var(--phos-mid); }
+  .hz-euclid { color: var(--yellow-warn); border-color: var(--yellow-warn); }
+  .hz-keter  { color: var(--red-warn); border-color: var(--red-warn); background: rgba(201,94,74,0.1); }
+
+  .case-meta {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 4px 16px;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--phos-mid);
+  }
+  .case-meta .label { color: var(--phos-dim); }
+  .case-meta .value { color: var(--phos-bright); }
+  .case-meta .value-dim { color: var(--phos-mid); font-style: italic; }
+  .case-meta .value-warn { color: var(--amber); }
+
+  .case-divider {
+    height: 1px;
+    background: var(--frame-mid);
+    margin: 8px 18px;
+  }
+
+  .case-drift {
+    padding: 20px 18px;
+    text-align: center;
+    font-size: 38px;
+    letter-spacing: 8px;
+    color: var(--phos-white);
+    font-weight: bold;
+    text-shadow: 0 0 12px rgba(168, 217, 181, 0.4);
+  }
+  .case-drift .typed { color: var(--phos-white); text-shadow: 0 0 16px rgba(168, 217, 181, 0.7); }
+  .case-drift .untyped { color: var(--phos-dim); }
+  .case-drift .cursor {
+    display: inline-block;
+    background: var(--phos-bright);
+    color: var(--bg-dark);
+    padding: 0 4px;
+    animation: blink 0.8s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  .typing-stats {
+    text-align: center;
+    color: var(--phos-dim);
+    font-size: 11px;
+    padding: 0 0 12px;
+  }
+  .typing-stats .acc-perfect { color: var(--phos-bright); }
+  .typing-stats .acc-warn { color: var(--yellow-warn); }
+  .typing-stats .acc-fail { color: var(--red-warn); }
+
+  /* Stamp row */
+  .stamp-prompt {
+    text-align: center;
+    color: var(--amber);
+    font-size: 12px;
+    margin: 16px 0 10px;
+    letter-spacing: 2px;
+  }
+  .stamps {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .stamp {
+    border: 1px solid var(--frame-mid);
+    background: rgba(0,0,0,0.3);
+    padding: 14px 8px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.12s;
+    position: relative;
+  }
+  .stamp:hover:not(.disabled) {
+    border-color: var(--phos-bright);
+    background: rgba(109, 168, 130, 0.1);
+    transform: translateY(-1px);
+  }
+  .stamp:active:not(.disabled) {
+    background: var(--frame-mid);
+    transform: translateY(1px);
+  }
+  .stamp .key {
+    color: var(--amber);
+    font-size: 11px;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+  .stamp .label-cn {
+    color: var(--phos-bright);
+    font-size: 16px;
+    margin-bottom: 2px;
+    letter-spacing: 4px;
+  }
+  .stamp .label-en {
+    color: var(--phos-dim);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .stamp .cost {
+    color: var(--phos-dim);
+    font-size: 10px;
+    margin-top: 6px;
+  }
+  .stamp.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    position: relative;
+  }
+  .stamp.disabled::after {
+    content: '该 case 类型不可用';
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--red-warn);
+    font-size: 9px;
+    white-space: nowrap;
+  }
+
+  /* Footer / case picker */
+  .footer {
+    padding: 8px 16px;
+    background: var(--frame-dark);
+    border-top: 1px solid var(--frame-mid);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--phos-dim);
+    letter-spacing: 1px;
+  }
+
+  /* Type switcher */
+  .type-switcher {
+    width: 920px;
+    margin-top: 20px;
+    padding: 12px 16px;
+    background: var(--bg-mid);
+    border: 1px dashed var(--frame-mid);
+    border-radius: 6px;
+  }
+  .type-switcher-head {
+    color: var(--amber);
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .type-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .type-btn {
+    border: 1px solid var(--frame-mid);
+    background: var(--bg-dark);
+    color: var(--phos-mid);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    transition: all 0.12s;
+  }
+  .type-btn:hover { border-color: var(--phos-bright); color: var(--phos-bright); }
+  .type-btn.active { background: var(--phos-mid); color: var(--bg-dark); border-color: var(--phos-bright); }
+
+  .legend {
+    width: 920px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--bg-mid);
+    border: 1px dashed var(--frame-mid);
+    border-radius: 6px;
+    color: var(--phos-dim);
+    font-size: 11px;
+    line-height: 1.8;
+  }
+  .legend strong { color: var(--phos-bright); }
+
+  .redacted {
+    display: inline-block;
+    background: var(--redact);
+    color: transparent;
+    padding: 0 4px;
+    border-radius: 1px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- CRT TERMINAL FRAME -->
+  <div class="crt-frame">
+    <div class="crt-header">
+      <span><span class="led-on">●</span> DPCA-VT220</span>
+      <span id="terminal-type">PROOFREAD TERMINAL · DEPT 2-B · OP. PRIMATE-7842</span>
+      <span>▦▦▦▦▦▦</span>
+    </div>
+
+    <div class="crt-body">
+
+      <!-- DAILY BULLETIN -->
+      <div class="bulletin">
+        <div class="bulletin-head">▸ DPCA · BULLETIN · 1962·11·23</div>
+        <div class="bulletin-row">
+          <span>今日定额</span><span>12 件 / 已完 3</span>
+        </div>
+        <div class="bulletin-row">
+          <span>工时</span><span>60 / 余 47</span>
+        </div>
+        <div class="bulletin-row">
+          <span>基础工资</span><span>50 GOLD</span>
+        </div>
+        <div class="bulletin-focus">本班重点: <strong>typo</strong> 类案件 · 奖金 +30%</div>
+        <div class="bulletin-focus" style="color: var(--phos-dim); font-style: normal;">临时规章: 含字母 'M' 案件需<strong>检视</strong>后再标注</div>
+      </div>
+
+      <!-- STATUS STRIP -->
+      <div class="status-strip">
+        <span>当前 cycle: 校对者 / Ch.2 / 1 of 5</span>
+        <span>当前 case: <span id="case-pos">#04 of 12</span></span>
+      </div>
+
+      <!-- CASE FILE -->
+      <div class="case-file" id="case-file">
+        <!-- 内容动态注入 -->
+      </div>
+
+      <!-- STAMP PROMPT -->
+      <div class="stamp-prompt">▸ 标注 / CLASSIFY ◂</div>
+
+      <!-- STAMPS -->
+      <div class="stamps" id="stamps">
+        <div class="stamp" data-stamp="errata">
+          <div class="key">F1</div>
+          <div class="label-cn">勘 误</div>
+          <div class="label-en">Errata</div>
+          <div class="cost">-3 工时</div>
+        </div>
+        <div class="stamp" data-stamp="crossref">
+          <div class="key">F2</div>
+          <div class="label-cn">对 照</div>
+          <div class="label-en">Cross-Ref</div>
+          <div class="cost">-5 工时</div>
+        </div>
+        <div class="stamp" data-stamp="inspect">
+          <div class="key">F3</div>
+          <div class="label-cn">检 视</div>
+          <div class="label-en">Inspect</div>
+          <div class="cost">-1 工时</div>
+        </div>
+        <div class="stamp" data-stamp="annotate">
+          <div class="key">F4</div>
+          <div class="label-cn">批 注</div>
+          <div class="label-en">Annotate</div>
+          <div class="cost">-2 工时</div>
+        </div>
+        <div class="stamp" data-stamp="verify">
+          <div class="key">F5</div>
+          <div class="label-cn">校 核</div>
+          <div class="label-en">Verify</div>
+          <div class="cost">-4 工时</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>PROPERTY OF DPCA · UNAUTHORIZED USE PROHIBITED</span>
+      <span>SN-3942-A</span>
+    </div>
+  </div>
+
+  <!-- CASE TYPE SWITCHER -->
+  <div class="type-switcher">
+    <div class="type-switcher-head">▸ DEMO · 切换 case 类型查看不同 UI</div>
+    <div class="type-buttons" id="type-buttons">
+      <button class="type-btn active" data-type="normal">① 常规 case</button>
+      <button class="type-btn" data-type="urgent">② 加急 case</button>
+      <button class="type-btn" data-type="dubious">③ 疑案 (origin 缺失)</button>
+      <button class="type-btn" data-type="linked">④ 关联 case</button>
+      <button class="type-btn" data-type="hazard">⑤ 高危 case (KETER)</button>
+      <button class="type-btn" data-type="redacted">⑥ 黑条 case</button>
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div><strong>设计要点</strong>:</div>
+    <div>· <strong>Daily Bulletin</strong> = 公司明文 / 异常信号 (case 注释、便条) = 隐藏。今日重点 mech 引诱玩家专攻 → 对应池累积加速 = D22 brutal positive feedback loop</div>
+    <div>· <strong>HAZARD 三档</strong> (Safe / Euclid / Keter) 借 SCP. 高危 case 池累积 +2 而非 +1</div>
+    <div>· <strong>PREVIOUS REV</strong> = 前任校对者标注偏好 (玩家可以"跟前人"或"反前人")</div>
+    <div>· <strong>CROSS-REF</strong> = 已建关联,对照 stamp 可触发 deduction (借 Roottrees/Obra Dinn)</div>
+    <div>· <strong>NOTE</strong> = 公司"轻微暗示" (§2.16.2 已写),5-10% case 出现,玩家可照办或忽略</div>
+    <div>· <strong>case 类型</strong>限制 stamp 子集 → 制造 puzzle 空间</div>
+    <div>· <strong>typing 准确度</strong> 影响 stamp 效力: 0 错=全效 / 1-2 错=半效 / 3+错=auto 退回</div>
+    <div>· <strong>5 stamp</strong> = §2.15.1 LOCKED 校对术语,每个对应不同的"被吃方式"</div>
+  </div>
+
+<script>
+const CASE_DATA = {
+  normal: {
+    id: '#2847-B',
+    section: 'DOC-4B',
+    date: '1962·11·23',
+    origin: 'fate',
+    mech: 'typo · QWERTY 邻键 (f→g)',
+    hazard: 'safe',
+    hazardLabel: 'SAFE',
+    drift: 'GATE',
+    typedCount: 1,
+    prevRev: 'OP-2103 · 标"勘误"',
+    crossRef: '#2841 (RATE)',
+    note: null,
+    disabled: [],
+    typingAcc: 'perfect',
+  },
+  urgent: {
+    id: '#2851-B',
+    section: 'DOC-4B',
+    date: '1962·11·23',
+    origin: 'good',
+    mech: 'typo · drop letter (drop "o")',
+    hazard: 'safe',
+    hazardLabel: 'SAFE · 加急',
+    drift: 'GOD',
+    typedCount: 2,
+    prevRev: 'OP-1180 · 标"校核"',
+    crossRef: null,
+    note: null,
+    timer: '⏱ 时间 -1/3 · 奖励 +50%',
+    disabled: [],
+    typingAcc: 'perfect',
+  },
+  dubious: {
+    id: '#2858-B',
+    section: 'DOC-4B',
+    date: '1962·11·23',
+    origin: '(原始档案缺失)',
+    originDim: true,
+    mech: '(机制未定)',
+    mechDim: true,
+    hazard: 'euclid',
+    hazardLabel: 'EUCLID · 疑案',
+    drift: 'FEAL',
+    typedCount: 0,
+    prevRev: 'OP-7842 · 标"检视" ← 你',
+    prevWarn: true,
+    crossRef: null,
+    note: null,
+    disabled: ['errata', 'crossref', 'annotate', 'verify'],
+    disabledHint: '疑案: 仅可 检视 或 勘误 → 等等,你刚已检视过,只剩勘误了',
+    typingAcc: 'partial',
+  },
+  linked: {
+    id: '#2862-B',
+    section: 'DOC-4B',
+    date: '1962·11·23',
+    origin: 'soul',
+    mech: 'ASR · 同音字 (soul / sole)',
+    hazard: 'safe',
+    hazardLabel: 'SAFE',
+    drift: 'SOLE',
+    typedCount: 4,
+    prevRev: 'OP-3340 · 标"对照" → #2861',
+    crossRef: '#2861 (HEEL ← heal)',
+    crossRefWarn: true,
+    note: '⮬ 由 #2861 触发 · 关联型',
+    disabled: ['errata', 'inspect', 'annotate'],
+    disabledHint: '关联 case: 仅可 对照 或 校核',
+    typingAcc: 'perfect',
+  },
+  hazard: {
+    id: '#2870-B',
+    section: 'DOC-4B / RED',
+    date: '1962·11·23',
+    origin: 'sun',
+    mech: '长 s · 历史 OCR (ſ→f, 1750 文档)',
+    hazard: 'keter',
+    hazardLabel: 'KETER · 高危',
+    drift: 'FUN',
+    typedCount: 0,
+    prevRev: '— 无前任 (首次提交)',
+    crossRef: null,
+    note: '⚠ 池累积 +2 · 错判异常扩散加倍',
+    noteWarn: true,
+    disabled: [],
+    typingAcc: 'perfect',
+  },
+  redacted: {
+    id: '#2877-B',
+    section: 'DOC-4B / CLR-2-B',
+    date: '1962·11·23',
+    origin: '<span class="redacted">▮▮▮▮</span>',
+    mech: '<span class="redacted">▮▮▮▮ · ▮▮▮▮▮▮</span>',
+    hazard: 'euclid',
+    hazardLabel: 'EUCLID · 隐去',
+    drift: 'GA<span class="redacted">▮▮</span>',
+    typedCount: 2,
+    prevRev: '<span class="redacted">▮▮▮▮▮▮ · 标"▮▮"</span>',
+    crossRef: null,
+    note: '本案部分隐去 · 上级权限要求',
+    disabled: ['errata', 'crossref', 'annotate', 'verify'],
+    disabledHint: '黑条 case: 信息不足,仅可 检视 或 退回 (升等)',
+    typingAcc: 'perfect',
+  },
+};
+
+function renderCase(typeKey) {
+  const d = CASE_DATA[typeKey];
+  const el = document.getElementById('case-file');
+
+  // Render drift with typed/untyped split
+  let driftHtml = '';
+  // For redacted, drift contains HTML, render as-is
+  if (typeKey === 'redacted') {
+    driftHtml = d.drift;
+  } else {
+    const driftStr = d.drift;
+    for (let i = 0; i < driftStr.length; i++) {
+      const ch = driftStr[i];
+      if (i < d.typedCount) driftHtml += `<span class="typed">${ch}</span>`;
+      else if (i === d.typedCount) driftHtml += `<span class="cursor">${ch}</span>`;
+      else driftHtml += `<span class="untyped">${ch}</span>`;
+    }
+  }
+
+  const typingAccMap = {
+    perfect: { class: 'acc-perfect', text: '✓ 准确度 完美 (0 错) · stamp 全效' },
+    partial: { class: 'acc-warn', text: '⚠ 准确度 1 错 · stamp 半效' },
+    fail: { class: 'acc-fail', text: '✗ 准确度 3+ 错 · auto 退回' },
+  };
+  const acc = typingAccMap[d.typingAcc];
+
+  el.innerHTML = `
+    <div class="case-head">
+      <div class="case-head-left">CASE ${d.id} · ${d.section} · ${d.date}</div>
+      <div class="case-head-right">
+        HAZARD <span class="hazard-chip hz-${d.hazard}">${d.hazardLabel}</span>
+      </div>
+    </div>
+    <div class="case-meta">
+      <div class="label">PROPOSED ORIGIN</div>
+      <div class="${d.originDim ? 'value-dim' : 'value'}">${d.origin}</div>
+
+      <div class="label">PROPOSED MECH</div>
+      <div class="${d.mechDim ? 'value-dim' : 'value'}">${d.mech}</div>
+
+      <div class="label">PREVIOUS REV</div>
+      <div class="${d.prevWarn ? 'value-warn' : 'value'}">${d.prevRev}</div>
+
+      ${d.crossRef ? `
+      <div class="label">CROSS-REF</div>
+      <div class="${d.crossRefWarn ? 'value-warn' : 'value'}">${d.crossRef}</div>
+      ` : ''}
+
+      ${d.note ? `
+      <div class="label">NOTE</div>
+      <div class="${d.noteWarn ? 'value-warn' : 'value-dim'}">${d.note}</div>
+      ` : ''}
+
+      ${d.timer ? `
+      <div class="label">⏱</div>
+      <div class="value-warn">${d.timer}</div>
+      ` : ''}
+    </div>
+    <div class="case-divider"></div>
+    <div class="case-drift">${driftHtml}</div>
+    <div class="typing-stats">
+      <span class="${acc.class}">${acc.text}</span>
+    </div>
+    ${d.disabledHint ? `<div style="text-align:center;color:var(--red-warn);font-size:11px;padding:4px 0 12px;">${d.disabledHint}</div>` : ''}
+  `;
+
+  // Disable stamps for case type
+  document.querySelectorAll('.stamp').forEach(s => {
+    const key = s.dataset.stamp;
+    if (d.disabled.includes(key)) s.classList.add('disabled');
+    else s.classList.remove('disabled');
+  });
+
+  // Update terminal label
+  const headerEl = document.getElementById('terminal-type');
+  if (typeKey === 'redacted') headerEl.textContent = 'PROOFREAD TERMINAL · DEPT 2-B · OP. PRIMATE-7842 · [REDACTED MODE]';
+  else if (typeKey === 'hazard') headerEl.textContent = 'PROOFREAD TERMINAL · DEPT 2-B · OP. PRIMATE-7842 · ⚠ KETER';
+  else headerEl.textContent = 'PROOFREAD TERMINAL · DEPT 2-B · OP. PRIMATE-7842';
+}
+
+// Wire type switcher
+document.querySelectorAll('.type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCase(btn.dataset.type);
+  });
+});
+
+// Stamp click feedback (mock)
+document.getElementById('stamps').addEventListener('click', (e) => {
+  const stamp = e.target.closest('.stamp');
+  if (!stamp || stamp.classList.contains('disabled')) return;
+  const stampType = stamp.dataset.stamp;
+  const label = stamp.querySelector('.label-cn').textContent;
+  alert(`已盖章: ${label}\n\n· 工时 ${stamp.querySelector('.cost').textContent.replace('工时 ','')}\n· ${stampType} 池 +1\n· (mock: 真实游戏会触发显化检查)`);
+});
+
+// Keyboard shortcuts F1-F5
+document.addEventListener('keydown', (e) => {
+  const map = { F1: 'errata', F2: 'crossref', F3: 'inspect', F4: 'annotate', F5: 'verify' };
+  const stampKey = map[e.key];
+  if (!stampKey) return;
+  e.preventDefault();
+  const stamp = document.querySelector(`.stamp[data-stamp="${stampKey}"]`);
+  if (stamp) stamp.click();
+});
+
+// Initial render
+renderCase('normal');
+</script>
+</body>
+</html>
