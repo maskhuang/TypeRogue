@@ -8069,6 +8069,36 @@ html[lang^="en"] .class-select-title {
     font-size: 10px;
 }
 
+/* === 字频条 · 印章凹槽 + 油墨印 · 替代旧 '█·' 文本字符 === */
+.fr-bar {
+    flex: 1;
+    height: 10px;
+    position: relative;
+    /* 凹槽：浅牛皮底 + 内阴影（如纸面被压印的凹痕）*/
+    background: rgba(122, 90, 16, 0.08);
+    border: 1px solid rgba(42, 31, 16, 0.35);
+    box-shadow:
+        inset 1px 1px 0 rgba(0, 0, 0, 0.12),
+        inset -1px -1px 0 rgba(255, 240, 200, 0.4);
+    overflow: hidden;
+}
+.fr-bar-fill {
+    display: block;
+    height: 100%;
+    /* 油墨主体：深棕渐变 + 横向擦纹（typewriter overstrike feel）*/
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0 3px,
+            rgba(255, 240, 200, 0.12) 3px 4px
+        ),
+        linear-gradient(180deg, #5a4828 0%, #3a2e18 100%);
+    /* 印章右缘略带"墨水堆积"暗影 */
+    box-shadow:
+        inset -2px 0 0 rgba(0, 0, 0, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
 /* Footer */
 .workbench-footer {
     position: relative;

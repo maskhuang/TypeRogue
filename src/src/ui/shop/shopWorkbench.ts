@@ -857,8 +857,6 @@ export function syncWorkbenchInbox(): void {
 // 旧设计：在编档案展示已购技能 + 遗物 —— 但键盘上每个键已经显示这些信息，重复
 // 新设计：单一 FREQ folder，从 wordDeck 算各字母出现次数 + 占比横条，按降序
 
-const FREQ_BAR_W = 8;
-
 export function renderFreqFolderHtml(): { count: number; rowsHtml: string } {
   const freq = calculateLetterFrequency(state.player.wordDeck);
   if (freq.size === 0) {
@@ -869,10 +867,10 @@ export function renderFreqFolderHtml(): { count: number; rowsHtml: string } {
   const rows: string[] = [];
   for (const [letter, count] of entries) {
     const ratio = maxCount > 0 ? count / maxCount : 0;
-    const barLen = Math.max(1, Math.round(ratio * FREQ_BAR_W));
-    const bar = '█'.repeat(barLen).padEnd(FREQ_BAR_W, '·');
+    const widthPct = Math.max(4, Math.round(ratio * 100));   // 最低 4% 保留可见占位
     const letterCell = escapeHtml(letter.toUpperCase());
-    rows.push(`<div class="folder-row"><span class="fr-icon">${letterCell}</span><span class="fr-name">${escapeHtml(bar)}</span><span class="fr-lv">${count}</span></div>`);
+    // CSS 进度条 · .fr-bar 为印章凹槽，.fr-bar-fill 为油墨印 · 详 style.css §FILED
+    rows.push(`<div class="folder-row"><span class="fr-icon">${letterCell}</span><span class="fr-bar"><span class="fr-bar-fill" style="width:${widthPct}%"></span></span><span class="fr-lv">${count}</span></div>`);
   }
   return { count: freq.size, rowsHtml: rows.join('') };
 }
