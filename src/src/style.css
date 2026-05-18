@@ -2991,12 +2991,14 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     margin-right: 4px;
     background: #2a2a36;
     color: #d0d0d0;
-    /* 同 .tooltip-skill-school：inline-flex 中线居中，line-height:1 收紧 line-box */
+    /* 同 .tooltip-skill-school：inline-flex 中线居中，line-height:1 收紧 line-box ·
+     * vertical-align 与 school chip 对齐（默认 baseline）— 多 section 模式下
+     * chip 走 inline 流，vertical-align 不一致会导致 chip 字形错位 */
     display: inline-flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
-    vertical-align: middle;
+    vertical-align: baseline;
     border: 1px solid #4a4a5a;
 }
 
