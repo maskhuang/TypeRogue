@@ -9,7 +9,7 @@
 
 import type { AffixV2Definition } from './affixV2'
 import { registerDynamicAffixV2 } from './affixV2'
-import type { TriggerSpec, EffectSpec, FireFilter, AuraModifier, TargetSelector } from './affixV2Trigger'
+import type { TriggerSpec, EffectSpec, FireFilter, AuraModifier, TargetSelector, ScaleByTag } from './affixV2Trigger'
 import type { ResourceType } from '../core/types'
 import { random } from '../core/seededRandom'
 import type { SectionTag } from './affixTags'
@@ -98,6 +98,36 @@ function pickNonFireTrigger(): TriggerEntry {
   // freq 经验值 ~20（依赖场上是否有 grant_haste 源；非 fire 系列里频率粗估）
   const scope = pickWeightedScope(FULL_SCOPE_POOL).selector
   return { spec: { type: 'on_haste_granted', scope }, freq: 20 }
+}
+
+// ============================================
+// Chant scale roll · apply_aura 的 ScaleByTag 抽样
+// ============================================
+
+const CHANT_SCALE_PROBABILITY = 0.3
+const CHANT_TAG_PER_N_MIN = 2
+const CHANT_TAG_PER_N_MAX = 4
+const CHANT_TAG_COUNT_FACTOR = 0.1
+
+/**
+ * 给 chant recipe 抽 scale 字段 · 30% 概率挂；rainbow modifier 不抽（无 amount）。
+ * 路由：
+ *   - multi_fire_add → tag_per_n（整数步进自然匹配 "每 N 个 tag +1 释放"）
+ *   - crit_chance_add / output_bonus_pct → tag_count（连续 %-scaling）
+ * tag/scope 沿用 drip 模板：tag = recipe.section，scope = all_skills。
+ */
+function pickChantScale(
+  modifierType: AuraModifier['type'],
+  section: SectionTag,
+): ScaleByTag | undefined {
+  if (modifierType === 'rainbow') return undefined
+  if (random() >= CHANT_SCALE_PROBABILITY) return undefined
+  if (modifierType === 'multi_fire_add') {
+    const perN = Math.floor(random() * (CHANT_TAG_PER_N_MAX - CHANT_TAG_PER_N_MIN + 1)) + CHANT_TAG_PER_N_MIN
+    return { type: 'tag_per_n', tag: section, perN, scope: { type: 'all_skills' } }
+  }
+  // crit_chance_add / output_bonus_pct / base_add / factor_add → tag_count
+  return { type: 'tag_count', tag: section, factor: CHANT_TAG_COUNT_FACTOR, scope: { type: 'all_skills' } }
 }
 
 // ============================================
@@ -313,7 +343,12 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
       case 'multi_fire_add':   modifier = { type: 'multi_fire_add', amount };         break
       case 'rainbow':          modifier = { type: 'rainbow' };                        break
     }
-    effect = { kind: 'apply_aura', selector: scope.selector, modifier }
+    // 30% 概率挂 scale · rainbow 跳过（无 amount 字段，scale 无意义）
+    // 路由：multi_fire_add → tag_per_n（整数步进自然匹配）；% 类型 → tag_count（连续）
+    const scale = pickChantScale(modifierType, recipe.section)
+    effect = scale
+      ? { kind: 'apply_aura', selector: scope.selector, modifier, scale }
+      : { kind: 'apply_aura', selector: scope.selector, modifier }
   } else if (recipe.kind === 'convert') {
     // convert: scope 固定 self · source 固定为词条所在 skill 资源 · target 随机（必不同）
     const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
