@@ -4987,12 +4987,15 @@ body.shop-preview-active #relic-tooltip > div:nth-child(2) {
     padding: 1px 6px !important;
 }
 
-/* section tag 章戳（完全照搬 school chip "普通" 行的样式 · 同 register）*/
+/* section tag 章戳（完全照搬 school chip "普通" 行的样式 · 同 register）
+ * text-transform: uppercase 与 school chip 对齐 — 否则 "Agonistic" mixed-case 视觉高度
+ * 与 "RARE" uppercase 不一致，两 chip 字形位置看上去错位 */
 body.shop-preview-active .key-tooltip .tooltip-section-tag {
     background: #ead7af !important;
     color: #7a5a10 !important;
     border: 1px solid #7a5a10 !important;
     font-family: 'Courier New', 'SerenityOS Emoji', monospace !important;
+    text-transform: uppercase;
     letter-spacing: 1px;
     padding: 1px 6px !important;
 }
