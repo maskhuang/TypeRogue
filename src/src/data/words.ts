@@ -15,13 +15,11 @@ const MAX_STARTER_LETTERS = 10;
 const STARTER_WORD_COUNT = 10;
 
 export function getStarterWords(): string[] {
-  // 1. 收集 tier 1-2 候选词并洗牌
-  const candidates: string[] = [];
-  for (const pool of Object.values(WORD_POOL)) {
-    if (pool.tier >= 1 && pool.tier <= 2) {
-      candidates.push(...pool.words);
-    }
-  }
+  // 1. 收集 special pool 候选词（narrative 对齐的未受理 anomaly tokens）·
+  //    之前从 tier 1-2 抽（common/short/per-letter），但那些池是普通英语，
+  //    与 v4.1 LOCKED narrative 直接冲突 — 玩家开局就该感到"未受理"质感
+  const specialPool = WORD_POOL['special'];
+  const candidates: string[] = specialPool ? [...specialPool.words] : [];
   for (let i = candidates.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
