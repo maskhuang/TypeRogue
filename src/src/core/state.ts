@@ -170,6 +170,8 @@ export function resetState(): void {
   // 同步清空工作台便条模块的 per-run 状态（visit count / oneShots / lastResult）
   // 动态 import 避免循环引用 — 便条模块仅在 reset 时需触达
   void import('../data/narrative/workbenchNotes').then(m => m.resetWorkbenchNoteState());
+  // 离场验证 last result 也清（防上一 run 残留章戳进入新 run settlement）
+  void import('../systems/departureCheck').then(m => m.resetDepartureCheckState());
 }
 
 // === 关卡目标计算（指数增长）===

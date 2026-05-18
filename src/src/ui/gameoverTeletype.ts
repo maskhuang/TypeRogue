@@ -4,7 +4,8 @@
 // battle scene = MOKO (M4 旗下) · 失败/通过都走同一 CRT 框架，文案分支
 // 与 settlement-teletype / rest-mock-crt 一脉相承
 
-import { t } from '../demo/demo-i18n'
+import { t, getLocale } from '../demo/demo-i18n'
+import { getLastDepartureResult } from '../systems/departureCheck'
 
 export type GameOverMode = 'defeat' | 'victory'
 
@@ -136,6 +137,21 @@ function buildScript(mode: GameOverMode, s: GameOverStats): ScriptLine[] {
     }
     lines.push({ text: '', charSpeed: 0, holdAfter: 100 })
     lines.push({ text: t('gameover.crt.awaiting_next'), cls: 'dim', charSpeed: 14, holdAfter: 100 })
+  }
+
+  // 离场验证失败章 · 仅 lore，无数值惩罚 ·
+  // pass / no result → 不打章；fail → 加 divider + alert 行
+  const departure = getLastDepartureResult()
+  if (departure && !departure.pass && departure.failLore) {
+    const zh = getLocale() !== 'en'
+    lines.push({ text: '', charSpeed: 0, holdAfter: 120 })
+    lines.push({ text: '─── DEPARTURE WINDOW ───', cls: 'divider', charSpeed: 6, holdAfter: 200 })
+    lines.push({
+      text: zh ? departure.failLore.zh : departure.failLore.en,
+      cls: 'alert',
+      charSpeed: 16,
+      holdAfter: 400,
+    })
   }
 
   return lines

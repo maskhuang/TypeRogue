@@ -9973,3 +9973,105 @@ html[lang^="en"] .desk-paper.duty-roster .roster-row .role .section-en {
   z-index: 60;
 }
 
+/* ============================================ */
+/* DEPARTURE WINDOW · run 结束前的离场验证窗     */
+/* 复用 .desk-overlay-paper 基础皮，特化布局     */
+/* ============================================ */
+
+.desk-overlay-paper.departure-window {
+  /* 比 handbook 窄一点 · 强调"短促"程序 */
+  width: 520px;
+  max-height: none;
+  /* settlement 之前显示，需要叠在 game-container 内的最高层（高于扫描线 9998）*/
+  z-index: 10001;
+}
+
+.desk-overlay-paper.departure-window + .desk-overlay-shroud,
+.desk-overlay-shroud:has(+ .desk-overlay-paper.departure-window) {
+  z-index: 10000;
+}
+/* 防御：shroud 本身要在 paper 之下、扫描线之上 */
+.desk-overlay-shroud#departure-check-shroud,
+.desk-overlay-shroud#departure-check-shroud.show {
+  z-index: 10000;
+}
+
+.desk-overlay-paper.departure-window .departure-instruction {
+  font-size: 13px;
+  color: var(--desk-ink-dim);
+  letter-spacing: 0.05em;
+  margin: 6px 0 14px;
+  line-height: 1.6;
+}
+
+.desk-overlay-paper.departure-window .departure-prompt-card {
+  /* 提示句卡 · 像盖了戳的"被引文本" */
+  background: rgba(122, 90, 16, 0.08);
+  border: 1px dashed #7a5a10;
+  padding: 14px 18px;
+  margin: 0 0 18px;
+  font-family: var(--desk-font-body);
+  font-size: 18px;
+  color: var(--desk-ink);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.desk-overlay-paper.departure-window .departure-input-row {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.desk-overlay-paper.departure-window .departure-input {
+  flex: 1;
+  padding: 10px 14px;
+  font-family: var(--desk-font-body);
+  font-size: 15px;
+  color: var(--desk-ink);
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid #2a1f10;
+  border-radius: 0;
+  outline: none;
+  letter-spacing: 0.03em;
+}
+.desk-overlay-paper.departure-window .departure-input:focus {
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 0 0 1px #7a5a10;
+}
+
+.desk-overlay-paper.departure-window .departure-timer {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 0 12px;
+  border: 1px solid #2a1f10;
+  background: rgba(122, 90, 16, 0.12);
+  color: #2a1f10;
+  font-family: var(--desk-font-body);
+}
+.desk-overlay-paper.departure-window .departure-timer-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #7a5a10;
+}
+.desk-overlay-paper.departure-window .departure-timer-value {
+  font-size: 22px;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: right;
+}
+.desk-overlay-paper.departure-window .departure-timer-unit {
+  font-size: 10px;
+  color: #7a5a10;
+}
+
+.desk-overlay-paper.departure-window .departure-submit-btn {
+  /* 与 .ov-close 同款，但加强一点（这是个 commit 动作）*/
+  font-size: 13px;
+  letter-spacing: 3px;
+  padding: 8px 22px;
+}
+

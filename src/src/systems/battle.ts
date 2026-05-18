@@ -28,6 +28,7 @@ import { ModifierRegistry } from './modifiers/ModifierRegistry';
 import { EffectPipeline } from './modifiers/EffectPipeline';
 import { keyTooltip } from '../ui/keyboard/KeyTooltip';
 import { getStageType, getCycleTimeLimit, getBattleNumber, isRitualNode, isEliteNode, getNextBattleNode } from './stage/stageFlow';
+import { showDepartureWindow } from '../ui/departureWindow';
 import { getBossModifierMeta, getActiveParams, incrementDiminishCount, getDiminishMultiplier, transformWordForModifier, drawSingleBossModifier, setRelicGarbleActive, getEscalateTimeSpeedBonus, triggerFrostFreeze, isFrostFrozen, onMirrorTargetReached, getMirrorPhase, rollDecoyWord, isDecoyWord, isDecoyRecognized, getDecoyOriginalAt, markDecoyRecognized, getOffenseDefenseModifierIds } from '../data/bossModifiers';
 import type { BossModifierId } from '../data/bossModifiers';
 import { applyModifier, cleanupModifier, tickModifier, getActiveModifierEffect, isModifierActive } from './bossModifierEngine';
@@ -2828,17 +2829,21 @@ function victory(): void {
   setRelicGarbleActive(false);
 
 
-  showScreen('gameover');
-  runGameOverTeletype('victory', {
-    fileNumber: getBattleNumber(state.level) || state.level,
-    score: state.score,
-    maxCombo: state.maxCombo,
-    skillCount: state.player.skills.size,
-    cycle: state.cycle,
-    ascensionLevel: state.ascensionLevel,
-    endlessJustUnlocked: !state.endlessUnlocked,
+  // 离场验证 · run 结束、settlement 之前的 paraphrase check ·
+  // 失败仅 lore，settlement 端读 getLastDepartureResult() 显示扣留章
+  void showDepartureWindow().then(() => {
+    showScreen('gameover');
+    runGameOverTeletype('victory', {
+      fileNumber: getBattleNumber(state.level) || state.level,
+      score: state.score,
+      maxCombo: state.maxCombo,
+      skillCount: state.player.skills.size,
+      cycle: state.cycle,
+      ascensionLevel: state.ascensionLevel,
+      endlessJustUnlocked: !state.endlessUnlocked,
+    });
+    playSound('levelup');
   });
-  playSound('levelup');
 
   // Story 25.6: 恢复普通随机模式
   setNormalMode();
@@ -2877,16 +2882,19 @@ function gameOver(): void {
 
   startBGM('chill');
   const displayLevel = getBattleNumber(state.level) || state.level;
-  showScreen('gameover');
-  runGameOverTeletype('defeat', {
-    fileNumber: displayLevel,
-    score: state.score,
-    targetScore: state.targetScore,
-    maxCombo: state.maxCombo,
-    skillCount: state.player.skills.size,
-    cycle: state.cycle,
+  // 离场验证 · 同 victory 路径
+  void showDepartureWindow().then(() => {
+    showScreen('gameover');
+    runGameOverTeletype('defeat', {
+      fileNumber: displayLevel,
+      score: state.score,
+      targetScore: state.targetScore,
+      maxCombo: state.maxCombo,
+      skillCount: state.player.skills.size,
+      cycle: state.cycle,
+    });
+    playSound('gameover');
   });
-  playSound('gameover');
 
   // Story 25.6: 恢复普通随机模式
   setNormalMode();
