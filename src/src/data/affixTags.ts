@@ -91,7 +91,7 @@ export const SECTION_TAG_NAMES_ZH: Record<SectionTag, string> = {
   agonistic: '对抗',
   vocal: '发声',
   gesture: '手势',
-  tool: '工具',
+  tool: '认知/工具',   // §2.1.10 Cognitive/Tool · 含认知（注视/模仿/教学）+ 工具使用两半
   abnormal: '异常',
 }
 
@@ -102,7 +102,7 @@ export const SECTION_TAG_NAMES_EN: Record<SectionTag, string> = {
   agonistic: 'Agonistic',
   vocal: 'Vocal',
   gesture: 'Gesture',
-  tool: 'Tool',
+  tool: 'Cognitive/Tool',   // §2.1.10 · cognition (gaze/imitate/teach) + tool-use
   abnormal: 'Abnormal',
 }
 
@@ -115,7 +115,7 @@ export const SECTION_COLORS: Record<SectionTag, string> = {
   agonistic:   '#e74c3c', // 红 · 对抗 / 连锁
   vocal:       '#f1c40f', // 黄 · 广播
   gesture:     '#f39c12', // 橙 · 动作
-  tool:        '#8B6F47', // 棕 · 工具
+  tool:        '#8B6F47', // 棕 · 认知/工具
   abnormal:    '#95a5a6', // 灰 · 异常
 }
 
