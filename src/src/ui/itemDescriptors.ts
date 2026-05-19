@@ -9,6 +9,7 @@ import { RELICS } from '../data/relics';
 import { localizeItemName, localizeItemDesc, localizeItemFlavor, getLocale } from '../demo/demo-i18n';
 import { abbreviateSkillName, abbreviateResource } from './affixAbbrev';
 import { getAffixV2Definition } from '../data/affixV2';
+import { isMetaEffect } from '../data/affixV2Trigger';
 import { RESOURCE_ICONS } from '../core/constants';
 
 export type ItemKind = 'skill' | 'pack' | 'relic' | 'enchantment';
@@ -96,10 +97,13 @@ function describeSkill(item: ShopItem, idx: number): ItemDescriptor {
   const { tag, color } = shapeTagFromSkillShape(skill.shapeId);
   // V2 词条名：从动态注册表查 name_zh / name_en，dropdown 到本 locale
   const zh = getLocale() === 'zh';
+  // meta-progression 词条（获得/升级/嫁接技能）名前加 ✦ 标记 · 让玩家在商店列表名字层
+  // 一眼区分 meta vs 普通词条（不必 hover tooltip）
   const v2Names = (skill.v2Ids ?? []).map(id => {
     const def = getAffixV2Definition(id);
     if (!def) return id;
-    return zh ? def.name_zh : def.name_en;
+    const nm = zh ? def.name_zh : def.name_en;
+    return isMetaEffect(def.effect.kind) ? `✦${nm}` : nm;
   });
   const legacyAffixNames = skill.affixes.map(a => a.type.toUpperCase());
   const affixNames = [...v2Names, ...legacyAffixNames].join(' · ') || '—';
