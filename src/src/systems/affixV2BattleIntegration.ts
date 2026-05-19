@@ -17,7 +17,7 @@ import { random } from '../core/seededRandom'
 /** V2 暴击产出倍率 */
 export const V2_CRIT_MULTIPLIER = 2
 import { hasRelation } from '../data/keyboardTopology'
-import { RESOURCE_COLORS } from '../core/constants'
+import { RESOURCE_COLORS, INBOX_MAX } from '../core/constants'
 import { showFeedback, updateHUD } from './battle'
 import { getFloatScale } from '../effects/juice'
 import {
@@ -162,6 +162,14 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
       for (const tid of targetIds) {
         scheduleFireTargetDispatch(ft.sourceInstanceId, tid, sr.sourceKey)
       }
+    }
+    // gain_skill: 把 spawn 出来的 skill 写到 state（inventory + inbox 待绑定）
+    // inbox 满 → 直接丢弃 spawn 的 skill（不入 affixSkills/skills 也不入 inbox · 保孤立）
+    for (const sg of sr.result.skillsGranted) {
+      if (state.player.inbox.length >= INBOX_MAX) continue
+      state.affixSkills.set(sg.skill.id, sg.skill)
+      state.player.skills.set(sg.skill.id, { level: sg.skill.level })
+      state.player.inbox.push(sg.skill.id)
     }
   }
 }
@@ -376,9 +384,11 @@ export function wireV2BattleIntegration(): void {
   // 由 triggerAffixSkillWithFeedback / handleKeyPress 直接 import 本模块的 helper
 }
 
-/** Battle 结束 hook · 由调用方在战斗结算时调 */
-export function triggerV2BattleEnd(): void {
-  hookOnBattleEnd()
+/** Battle 结束 hook · 由调用方在战斗结算时调
+ *  result='win' 触发胜利型 on_battle_end 词条；'lose' 触发失败型；'any' 永远过 */
+export function triggerV2BattleEnd(result: 'win' | 'lose' = 'win'): void {
+  const results = hookOnBattleEnd(result, defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
+  processV2Results(results)
 }
 
 // ============================================

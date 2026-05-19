@@ -58,6 +58,9 @@ export type Phase1TriggerSpec =
   | { type: 'on_haste_granted'; scope?: TargetSelector }
   /** 每场战斗开始触发一次 · 旧 innate 的 V2 等价物 */
   | { type: 'on_battle_start' }
+  /** 每场战斗结束触发一次 · result 决定哪类结局触发（缺省 'win'）·
+   *  典型用法：on_battle_end + gain_skill effect 做关后奖励 */
+  | { type: 'on_battle_end'; result?: 'win' | 'lose' | 'any' }
 
 /** Phase 2 trigger 扩展（详 research §5.2） */
 export type Phase2TriggerSpec =
@@ -130,6 +133,32 @@ export type AuraModifier =
 // ===== StatusKeyword (apply_status 占位 · K4 D' 决议)
 // 词表暂未敲定（推迟到 narrative status register 决议），运行时 stub。
 export type StatusKeyword = string
+
+// ===== SkillFilter (gain_skill 用)
+// 给定候选池后按以下字段 AND 过滤；任一字段缺省 = 不过滤该维度。
+// 字段语义见 docs/design/affix-rewrite-tag-system.md §10（skill 维度筛选 · 待补）
+
+export interface SkillFilter {
+  /** 主产出资源（any-of）· 候选 skill 的 resource 字段命中任一即过 */
+  readonly resource?: string | readonly string[]
+  /** 排除资源（none-of）*/
+  readonly excludeResource?: string | readonly string[]
+  /** 稀有度（V2 词条数量 0-3）· 数字 = 精确；范围 = min/max 闭区间 */
+  readonly rarity?: number | { readonly min?: number; readonly max?: number }
+  /** tag 维度 any-of：候选 skill 的任一 V2 词条 tag 命中即过 */
+  readonly hasTag?: Tag | readonly Tag[]
+  /** tag 维度 all-of：候选 skill 的 V2 词条必须同时含所有 tag */
+  readonly allTags?: readonly Tag[]
+  /** 排除 tag：候选 skill 任一 V2 词条带这些 tag 即拒 */
+  readonly excludeTag?: Tag | readonly Tag[]
+  /** 是否排除玩家已拥有的同 skill id（缺省 false · 候选池本身已是新生成则不重复）*/
+  readonly notOwned?: boolean
+  /** class 限制 · 对接现有 ClassResourceFilter（缺省 = 不限制）*/
+  readonly classFilter?: string
+}
+
+// ===== SkillFilter widen 候选维度（fallback='widen' 时按顺序逐档放宽）
+export const SKILL_FILTER_WIDEN_ORDER = ['allTags', 'hasTag', 'rarity', 'resource'] as const
 
 // ===== ConditionSpec (conditional 用) =====
 // K4 D' 决议：基础 8 条永远启用；status 依赖 2 条作占位（runtime stub 返 false）
@@ -259,6 +288,26 @@ export type EffectSpec =
    * stack 达 threshold 时执行 release effect；reset=true 时清零（K5 决议：state 在 registry）
    */
   | { kind: 'stack_release'; threshold: number; release: EffectSpec; reset?: boolean }
+
+  /**
+   * 获得新技能（meta-progression effect）
+   * 典型搭配：on_battle_end trigger · 关后白送一个匹配 filter 的 skill。
+   *
+   * - filter 在 source 池上 AND 过滤；命中 0 时按 fallback 处理
+   * - levelMode 缺省 'inherit_host'（新 skill Lv = 本词条宿主 skill Lv）
+   * - count 缺省 1；多个 gain_skill affix 各自独立触发不互相 cap
+   */
+  | {
+      kind: 'gain_skill'
+      filter: SkillFilter
+      source?: 'recipe_pool' | 'shop_pool' | 'altar_pool'
+      count?: number
+      levelMode?:
+        | 'inherit_host'
+        | { type: 'fixed'; level: number }
+        | { type: 'host_minus'; delta: number }
+      fallback?: 'widen' | 'refund' | 'skip'
+    }
 
 // ===== 默认值 =====
 

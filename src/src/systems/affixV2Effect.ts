@@ -18,6 +18,7 @@ import type {
   ScaleByTag,
 } from '../data/affixV2Trigger'
 import type { Tag } from '../data/affixTags'
+import type { AffixSkillInstance } from '../data/affixes'
 import {
   getInstanceState,
   addAura,
@@ -26,6 +27,8 @@ import {
   addSkillCumFactor,
   grantHaste,
 } from './affixV2State'
+import { random } from '../core/seededRandom'
+import { getCandidatePool, widenSkillFilter, spawnSkillFromSeed } from './affixV2SkillFilter'
 
 // ============================================
 // EquippedView · 已装备 affix 的查询视图（避免 affixV2Effect → affixV2Equipped 循环依赖）
@@ -64,6 +67,8 @@ export interface ResolveContext {
   readonly isCrit: boolean
   /** 当前词长（word_length_gte/lte 用）*/
   readonly currentWordLength: number
+  /** 本 affix 宿主 skill 的等级（gain_skill levelMode='inherit_host' 用 · 缺省 1）*/
+  readonly hostSkillLevel: number
   /** 玩家资源池查询（resource_below/above 用）*/
   readonly getPlayerResource: (resource: string) => number
 
@@ -108,6 +113,13 @@ export interface AuraApplied {
   readonly modifier: AuraModifier
 }
 
+export interface SkillGranted {
+  readonly sourceInstanceId: string
+  readonly skill: AffixSkillInstance
+  /** filter 是否走了 widen 兜底（true 时玩家拿到的不是首选 filter 匹配的 skill）*/
+  readonly widened: boolean
+}
+
 export interface ResolveResult {
   /** 一次性产出的资源列表（gain_resource）+ 关内成长后本次 fire 等效产出（add/multiply 复合）*/
   resourceProduced: ResourceProduction[]
@@ -117,6 +129,8 @@ export interface ResolveResult {
   aurasApplied: AuraApplied[]
   /** 应用的 status（已写入 state 注册表，runtime stub）*/
   statusesApplied: StatusApplied[]
+  /** 申请的新技能（已 spawn 但未入 inbox · 由 caller 写入 state.affixSkills/player.skills/player.inbox）*/
+  skillsGranted: SkillGranted[]
   /** 因 rate limit 被丢弃的 fire_target 次数（telemetry 用）*/
   rateLimitedFireTargets: number
 }
@@ -127,6 +141,7 @@ function freshResult(): ResolveResult {
     fireTargetsTriggered: [],
     aurasApplied: [],
     statusesApplied: [],
+    skillsGranted: [],
     rateLimitedFireTargets: 0,
   }
 }
@@ -272,6 +287,47 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       if (state.stacks >= spec.threshold) {
         resolveInto(spec.release, ctx, result)
         if (spec.reset !== false) state.stacks = 0
+      }
+      return
+    }
+
+    case 'gain_skill': {
+      // 解析 levelMode → 目标 Lv
+      const mode = spec.levelMode ?? 'inherit_host'
+      let targetLv: number
+      if (mode === 'inherit_host') {
+        targetLv = ctx.hostSkillLevel
+      } else if (mode.type === 'fixed') {
+        targetLv = mode.level
+      } else {
+        targetLv = Math.max(1, ctx.hostSkillLevel - mode.delta)
+      }
+
+      // 解析候选池 + filter widen 兜底
+      const source = spec.source ?? 'recipe_pool'
+      const pool = getCandidatePool(source)
+      if (pool.length === 0) return  // 空池（shop/altar stub）直接放弃
+
+      const widen = widenSkillFilter(spec.filter, pool)
+      if (widen.matches.length === 0) {
+        // 全 widen 仍空（不应到这里因为 widenSkillFilter 兜底返全池）→ 按 fallback 处理
+        const fb = spec.fallback ?? 'widen'
+        if (fb === 'skip' || fb === 'refund') return   // refund 当前 stub → 等价 skip
+        return
+      }
+
+      // 从命中集合无放回抽 count 个（同 seed 可重抽不同 spawn instance · 这里实现 seed 不重）
+      const count = Math.max(1, spec.count ?? 1)
+      const remaining = [...widen.matches]
+      for (let i = 0; i < count && remaining.length > 0; i++) {
+        const idx = Math.floor(random() * remaining.length)
+        const [seed] = remaining.splice(idx, 1)
+        const skill = spawnSkillFromSeed(seed, targetLv)
+        result.skillsGranted.push({
+          sourceInstanceId: ctx.instanceId,
+          skill,
+          widened: widen.droppedFields.length > 0,
+        })
       }
       return
     }

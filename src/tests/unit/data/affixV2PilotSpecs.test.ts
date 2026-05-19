@@ -24,6 +24,7 @@ const ctx: ResolveContext = {
   nowMs: 1000,
   isCrit: false,
   currentWordLength: 5,
+  hostSkillLevel: 1,
   getPlayerResource: () => 100,  // 默认资源充足
 }
 
@@ -31,10 +32,10 @@ beforeEach(() => {
   resetAllAffixV2State()
 })
 
-describe('PILOT specs · 10 个全在', () => {
-  it('PILOT_AFFIX_IDS 完整 10 个', () => {
-    expect(PILOT_AFFIX_IDS.length).toBe(10)
-    expect(new Set(PILOT_AFFIX_IDS).size).toBe(10)
+describe('PILOT specs · 11 个全在', () => {
+  it('PILOT_AFFIX_IDS 完整 11 个', () => {
+    expect(PILOT_AFFIX_IDS.length).toBe(11)
+    expect(new Set(PILOT_AFFIX_IDS).size).toBe(11)
   })
 
   it('每个 id 都能查到 spec', () => {
@@ -217,5 +218,46 @@ describe('Archetype 覆盖 · S2 验证', () => {
     expect(triggers.has('passive')).toBe(true)
     expect(triggers.has('every_n_keys')).toBe(true)
     expect(triggers.has('on_fire')).toBe(true)
+    // teach (on_battle_end) 现在也覆盖
+    expect(triggers.has('on_battle_end')).toBe(true)
+  })
+})
+
+describe('Pilot 11 · teach (tool · gain_skill)', () => {
+  it('on_battle_end + gain_skill spec 正确装配', () => {
+    const def = getAffixV2Definition('teach')!
+    expect(def.trigger).toEqual({ type: 'on_battle_end', result: 'win' })
+    expect(def.effect.kind).toBe('gain_skill')
+  })
+
+  it('hostSkillLevel=1 → 出师学徒 Lv=1', () => {
+    const def = getAffixV2Definition('teach')!
+    const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 1 })
+    expect(r.skillsGranted.length).toBe(1)
+    expect(r.skillsGranted[0].skill.level).toBe(1)
+    expect(r.skillsGranted[0].sourceInstanceId).toBe('inst_1')
+  })
+
+  it('hostSkillLevel=5 → 出师学徒 Lv=5（inherit_host）', () => {
+    const def = getAffixV2Definition('teach')!
+    const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 5 })
+    expect(r.skillsGranted[0].skill.level).toBe(5)
+  })
+
+  it('filter:hasTag=tool 在当前 ALL_RECIPES（无 tool 段）必走 widen 兜底', () => {
+    const def = getAffixV2Definition('teach')!
+    const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 3 })
+    expect(r.skillsGranted.length).toBe(1)
+    expect(r.skillsGranted[0].widened).toBe(true)
+  })
+
+  it('多次 resolveEffect 各产 1 个 · 不去重', () => {
+    const def = getAffixV2Definition('teach')!
+    const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 2 })
+    const r2 = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 2 })
+    expect(r.skillsGranted.length).toBe(1)
+    expect(r2.skillsGranted.length).toBe(1)
+    // skill id 由 generateSkill 内部 random+timestamp 生成 · 不同 fire 产不同 id
+    expect(r.skillsGranted[0].skill.id).not.toBe(r2.skillsGranted[0].skill.id)
   })
 })

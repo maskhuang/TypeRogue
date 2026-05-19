@@ -12,8 +12,7 @@
 import type { AffixV2Instance } from '../data/affixV2'
 import { getAffixV2Definition } from '../data/affixV2'
 import { state as gameState } from '../core/state'
-import { hasRelation, type PositionRelation } from '../data/keyboardTopology'
-import type { Tag } from '../data/affixTags'
+import { hasRelation } from '../data/keyboardTopology'
 
 /** 把 (resource)→base 回调按 skill 等级柯里化为 Lv.N 查询 ·
  *  resourceLv1Base 接受可选 level 参数（defaultResourceLv1Base），缺省 Lv1 */
@@ -313,6 +312,7 @@ export function hookOnSkillFire(
       nowMs,
       isCrit: fireEvent.isCrit,
       currentWordLength: 0,    // skill fire context, no word context
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       getPlayerResource,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
@@ -362,6 +362,7 @@ export function hookOnSkillFire(
         nowMs,
         isCrit: broadcastEvent.isCrit,
         currentWordLength: 0,
+        hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
         getPlayerResource,
         queryEquipped: buildQueryEquipped(entry),
       }
@@ -422,6 +423,7 @@ export function hookOnKey(
       nowMs,
       isCrit: false,
       currentWordLength: 0,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       getPlayerResource,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
@@ -481,6 +483,7 @@ export function hookOnWordEnd(
       nowMs,
       isCrit: false,
       currentWordLength,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       getPlayerResource,
       queryEquipped: buildQueryEquipped(entry),
       resolveSelector: _selectorResolver,
@@ -545,6 +548,7 @@ export function hookOnHasteGranted(
       nowMs,
       isCrit: false,
       currentWordLength: 0,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       getPlayerResource,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
@@ -601,6 +605,7 @@ export function hookOnBattleStart(
       nowMs,
       isCrit: false,
       currentWordLength: 0,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
       getPlayerResource,
       resolveSelector: _selectorResolver,
       queryEquipped: buildQueryEquipped(entry),
@@ -624,7 +629,58 @@ export function hookOnBattleStart(
   return results
 }
 
-/** 战斗结束 · 关内成长重置（state 内 cumulativeBaseAdd / cumulativeFactorAdd / stacks 清零）*/
-export function hookOnBattleEnd(): void {
+/** 战斗结束 · 评估 on_battle_end triggers + 关内成长重置
+ *  result='win'/'lose' 决定哪类 on_battle_end 词条命中（trigger.result='any' 全过）
+ *  评估在 state reset 之前——保留 hostSkillLevel 等运行时上下文 */
+export function hookOnBattleEnd(
+  result: 'win' | 'lose' = 'win',
+  resourceLv1Base: (r: string, level?: number) => number = () => 1,
+  getPlayerResource: (r: string) => number = () => 0,
+  nowMs: number = Date.now(),
+): SourcedResult[] {
+  const results: SourcedResult[] = []
+
+  for (const entry of _equipped.values()) {
+    const def = getAffixV2Definition(entry.defId)
+    if (!def || def.trigger.type !== 'on_battle_end') continue
+
+    // result 过滤：'any' 全过；其它必须精确匹配
+    const wantResult = def.trigger.result ?? 'win'
+    if (wantResult !== 'any' && wantResult !== result) continue
+
+    const triggerCtx: TriggerContext = { selfAffixId: entry.defId, selfKey: entry.key }
+    if (!evaluateTrigger(def.trigger, triggerCtx)) continue
+
+    const lvBase = lvNBaseFor(entry.skillId, resourceLv1Base)
+    const ctx: ResolveContext = {
+      instanceId: entry.instanceId,
+      skillId: entry.skillId,
+      key: entry.key,
+      skillResource: 'score',
+      skillResourceLv1Base: lvBase('score'),
+      resourceLv1Base: lvBase,
+      nowMs,
+      isCrit: false,
+      currentWordLength: 0,
+      hostSkillLevel: gameState.affixSkills.get(entry.skillId)?.level ?? 1,
+      getPlayerResource,
+      resolveSelector: _selectorResolver,
+      queryEquipped: buildQueryEquipped(entry),
+    }
+    const r = resolveEffect(applyEnchantToEffect(def.effect, getEnchant(entry.instanceId)), ctx)
+    results.push({ sourceInstanceId: entry.instanceId, sourceSkillId: entry.skillId, sourceKey: entry.key, result: r })
+
+    _ghostLog.push({
+      timestamp: nowMs,
+      instanceId: entry.instanceId,
+      defId: entry.defId,
+      trigger: def.trigger.type,
+      result: r,
+    })
+    recordApprenticeTriggerHit(entry)
+  }
+
+  // 评估完才重置：on_battle_end 词条 hostSkillLevel / cum state 都需在本次结算时可读
   resetAllAffixV2State()
+  return results
 }

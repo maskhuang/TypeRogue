@@ -91,6 +91,10 @@ export function evaluateTrigger(spec: TriggerSpec, ctx: TriggerContext): boolean
       // hook 层（hookOnBattleStart）已保证调用时机；恒命中
       return true
 
+    case 'on_battle_end':
+      // hook 层（hookOnBattleEnd）已按 result 过滤；evaluator 恒命中
+      return true
+
     // ── Phase 2（占位 · 未实装）──
     case 'on_window_mode':
     case 'on_sequence':

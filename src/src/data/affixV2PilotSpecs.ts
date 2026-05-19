@@ -116,6 +116,22 @@ export const PILOT_AFFIX_SPECS: Record<string, AffixV2PilotSpec> = {
     effect: { kind: 'gain_resource', resource: 'score', ratio: 0.05 },
   },
 
+  // ── 11 · tool · gain_skill · teach ──
+  // 战斗胜利后 → 获得 1 个 tool 段、与本技能同 Lv 的新技能
+  // 师承叙事：宿主修为多深 → 徒弟出师就多深；filter 无命中走 widen 兜底
+  teach: {
+    archetype: 'gain_skill',
+    trigger: { type: 'on_battle_end', result: 'win' },
+    effect: {
+      kind: 'gain_skill',
+      filter: { hasTag: 'tool', notOwned: false },
+      source: 'recipe_pool',
+      count: 1,
+      levelMode: 'inherit_host',
+      fallback: 'widen',
+    },
+  },
+
   // ── 9 · abnormal · conditional · pacing ──
   // 危险情境下产出放大（shield < 50% Lv1 base 时 ratio ×6）
   pacing: {
@@ -137,6 +153,8 @@ export const PILOT_AFFIX_IDS = [
   // 扩展 · 覆盖剩余 trigger 类型
   'chew',       // every_n_keys
   'cling',      // on_fire(filter:resource)
+  // meta-progression
+  'teach',      // on_battle_end + gain_skill
 ] as const
 
 /** 查询接口 · 给 affixV2.ts buildDefinition 用 */

@@ -12,7 +12,7 @@ import {
   type AffixV2Definition,
   type AffixV2Instance,
 } from '../data/affixV2'
-import type { TriggerSpec, EffectSpec, TargetSelector, ConditionSpec } from '../data/affixV2Trigger'
+import type { TriggerSpec, EffectSpec, TargetSelector, ConditionSpec, SkillFilter } from '../data/affixV2Trigger'
 import { SECTION_TAG_NAMES_ZH, SECTION_TAG_NAMES_EN, type Tag, type SectionTag } from '../data/affixTags'
 import { getLocale } from '../demo/demo-i18n'
 import { listAllEquipped, getEnchant } from '../systems/affixV2Equipped'
@@ -114,6 +114,12 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
           : `When ${formatSelector(scope)} gains haste`)
     }
     case 'on_battle_start': return zh ? '战斗开始时' : 'On battle start'
+    case 'on_battle_end': {
+      const result = trigger.result ?? 'win'
+      if (result === 'win')  return zh ? '战斗胜利后' : 'On battle won'
+      if (result === 'lose') return zh ? '战斗失败后' : 'On battle lost'
+      return zh ? '战斗结束后' : 'On battle end'
+    }
     case 'on_window_mode': return zh ? `节奏·${trigger.pattern}` : `Rhythm·${trigger.pattern}`
     case 'on_sequence':   return zh ? `序列·${trigger.pattern}` : `Sequence·${trigger.pattern}`
     case 'one_per_window': return zh ? `${trigger.n} 键内仅一次` : `Once per ${trigger.n} keys`
@@ -273,7 +279,59 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         ? `满 ${effect.threshold} 层时 → ${inner}${reset}`
         : `at ${effect.threshold} stacks → ${inner}${reset}`
     }
+    case 'gain_skill': {
+      const count = effect.count ?? 1
+      const lvStr = formatLevelMode(effect.levelMode)
+      const filterStr = formatSkillFilter(effect.filter)
+      return zh
+        ? `获得 ${count} 个${filterStr}技能（${lvStr}）`
+        : `gain ${count} ${filterStr} skill${count > 1 ? 's' : ''} (${lvStr})`
+    }
   }
+}
+
+// ============================================
+// SkillFilter / levelMode → 人读
+// ============================================
+
+type GainSkillLevelMode = 'inherit_host' | { type: 'fixed'; level: number } | { type: 'host_minus'; delta: number }
+
+function formatLevelMode(mode: GainSkillLevelMode | undefined): string {
+  const zh = isZh()
+  if (!mode || mode === 'inherit_host') return zh ? '与本技能同 Lv' : 'same Lv as host'
+  if (mode.type === 'fixed') return zh ? `固定 Lv ${mode.level}` : `Lv ${mode.level}`
+  return zh ? `本技能 Lv -${mode.delta}` : `host Lv -${mode.delta}`
+}
+
+function formatSkillFilter(filter: SkillFilter): string {
+  const zh = isZh()
+  const parts: string[] = []
+  if (filter.hasTag !== undefined) {
+    const tags = Array.isArray(filter.hasTag) ? filter.hasTag.map(locTag).join('/') : locTag(filter.hasTag as Tag)
+    parts.push(zh ? `含${tags}类` : `tag: ${tags}`)
+  }
+  if (filter.allTags) {
+    parts.push(zh ? `全含 ${filter.allTags.map(locTag).join('+')}` : `tags: ${filter.allTags.map(locTag).join('+')}`)
+  }
+  if (filter.excludeTag !== undefined) {
+    const tags = Array.isArray(filter.excludeTag) ? filter.excludeTag.map(locTag).join('/') : locTag(filter.excludeTag as Tag)
+    parts.push(zh ? `排除${tags}` : `not ${tags}`)
+  }
+  if (filter.resource !== undefined) {
+    const rs = Array.isArray(filter.resource) ? filter.resource.map(locResource).join('/') : locResource(filter.resource as string)
+    parts.push(zh ? `${rs}产出` : `${rs}-producing`)
+  }
+  if (filter.rarity !== undefined) {
+    if (typeof filter.rarity === 'number') {
+      parts.push(zh ? `${filter.rarity} 词条` : `rarity ${filter.rarity}`)
+    } else {
+      const min = filter.rarity.min ?? 0
+      const max = filter.rarity.max ?? 3
+      parts.push(zh ? `${min}-${max} 词条` : `rarity ${min}-${max}`)
+    }
+  }
+  if (parts.length === 0) return zh ? '任意' : 'any'
+  return parts.join(zh ? '·' : ' · ')
 }
 
 /** 完整描述：trigger + effect 一行 */
