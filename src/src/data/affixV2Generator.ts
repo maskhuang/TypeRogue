@@ -501,6 +501,15 @@ export const RECIPE_LEAP: HasteRecipe = {
   freqRange: [20, 30],      // trigger 限 freq=[20,30]，一关约 20-30 极速
 }
 
+export const RECIPE_NUT_CRACK: GrowthRecipe = {
+  kind: 'growth',
+  id: 'nut_crack',
+  section: 'tool',
+  name_zh: '砸坚果',
+  name_en: 'nut-crack',
+  T: 2.8,                   // tool 段 throughput 锚（SECTION_THROUGHPUT_TARGET.tool=3.0 略下）
+}
+
 /** 暂时全部 recipe 列表（生成 shop 选项时遍历此）*/
 export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_FEED,
@@ -510,6 +519,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_DRUMMING,
   RECIPE_DRINK,
   RECIPE_LEAP,
+  RECIPE_NUT_CRACK,
 ]
 
 /** drink(convert) 以这些资源为 source 时降权 · time/gold 转化收益偏强，降低出率 */

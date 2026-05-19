@@ -137,12 +137,11 @@ describe('getCandidatePool · recipe_pool 来源', () => {
     expect(getCandidatePool('altar_pool').length).toBe(0)
   })
 
-  it('recipe_pool 含 tool 段（hammer_anvil pilot 段）→ 不一定有 · 看 ALL_RECIPES 当前组成', () => {
-    // 当前 ALL_RECIPES: feed/climb/run/piloerection/drumming/drink/leap
-    // sections: maintenance, locomotion×3, posture, agonistic, maintenance, locomotion
-    // tool 段 0 个 → widen 验证场景
+  it('recipe_pool 含 tool 段（nut_crack）→ teach filter:{hasTag:tool} 直接命中', () => {
+    // 当前 ALL_RECIPES: feed/climb/run/piloerection/drumming/drink/leap/nut_crack
+    // tool 段 ≥1 个 → filter:{hasTag:'tool'} 不再走 widen
     const pool = getCandidatePool('recipe_pool')
     const toolMatches = pool.filter(s => s.section === 'tool')
-    expect(toolMatches.length).toBe(0)  // 这是当前现状，filter:{hasTag:'tool'} 必然走 widen
+    expect(toolMatches.length).toBeGreaterThan(0)
   })
 })

@@ -244,11 +244,11 @@ describe('Pilot 11 · teach (tool · gain_skill)', () => {
     expect(r.skillsGranted[0].skill.level).toBe(5)
   })
 
-  it('filter:hasTag=tool 在当前 ALL_RECIPES（无 tool 段）必走 widen 兜底', () => {
+  it('filter:hasTag=tool 命中 nut_crack recipe · 不走 widen 兜底', () => {
     const def = getAffixV2Definition('teach')!
     const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 3 })
     expect(r.skillsGranted.length).toBe(1)
-    expect(r.skillsGranted[0].widened).toBe(true)
+    expect(r.skillsGranted[0].widened).toBe(false)   // tool recipe 存在 → 严绑
   })
 
   it('多次 resolveEffect 各产 1 个 · 不去重', () => {
