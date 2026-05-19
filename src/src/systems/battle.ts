@@ -64,6 +64,7 @@ import { trackEvent } from '../demo/demo-analytics';
 import { t, localizeItemName, localizeItemDesc } from '../demo/demo-i18n';
 import { bindShapeToKeys, restoreSealedSkill, getBindingState, getSkillKeys, getSkillAnchorKey } from './bindingManager';
 import { runGameOverTeletype } from '../ui/gameoverTeletype';
+import { getLastBattleGrantedSkillIds } from './affixV2BattleIntegration';
 
 // === 固定词序队列（Demo/教程用） ===
 let demoWordQueue: string[] = [];
@@ -2831,6 +2832,11 @@ function victory(): void {
 
   // 离场验证 · run 结束、settlement 之前的 paraphrase check ·
   // 失败仅 lore，settlement 端读 getLastDepartureResult() 显示扣留章
+  // V2 gain_skill 本战获赠 · 在 battle:end emit 后已写 inbox · 这里 snapshot 给 teletype
+  const grantedSkills = getLastBattleGrantedSkillIds()
+    .map(id => state.affixSkills.get(id))
+    .filter((sk): sk is NonNullable<typeof sk> => Boolean(sk))
+    .map(sk => ({ name: sk.name, level: sk.level }))
   void showDepartureWindow().then(() => {
     showScreen('gameover');
     runGameOverTeletype('victory', {
@@ -2841,6 +2847,7 @@ function victory(): void {
       cycle: state.cycle,
       ascensionLevel: state.ascensionLevel,
       endlessJustUnlocked: !state.endlessUnlocked,
+      grantedSkills,
     });
     playSound('levelup');
   });

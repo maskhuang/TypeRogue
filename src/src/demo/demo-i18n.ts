@@ -117,8 +117,10 @@ const ZH: Record<string, string> = {
   // 分项
   'gameover.crt.section_record':  '> ──── RECORD / 记录 ──────────────────────',
   'gameover.crt.section_breakdown':'> ──── BREAKDOWN / 分项 ──────────────────',
+  'gameover.crt.section_bonus':   '> ──── BONUS / 获赠 ──────────────────────',
   'gameover.crt.section_archive': '> ──── ARCHIVE / 历史档案 ──────────────',
   'gameover.crt.divider':         '> ─────────────────────────────────────────',
+  'gameover.crt.row_granted_skill':'>   + {name} · Lv {level}',
   'gameover.crt.row_score':       '>   SCORE        ............ {score}',
   'gameover.crt.row_score_target':'>   SCORE        ............ {score} / {target}',
   'gameover.crt.row_combo':       '>   COMBO MAX    ............ {combo}',
@@ -1615,8 +1617,10 @@ const EN: Record<string, string> = {
   // Breakdown
   'gameover.crt.section_record':  '> ──── RECORD ──────────────────────────',
   'gameover.crt.section_breakdown':'> ──── BREAKDOWN ──────────────────────',
+  'gameover.crt.section_bonus':   '> ──── BONUS ──────────────────────────',
   'gameover.crt.section_archive': '> ──── ARCHIVE ────────────────────────',
   'gameover.crt.divider':         '> ─────────────────────────────────────────',
+  'gameover.crt.row_granted_skill':'>   + {name} · Lv {level}',
   'gameover.crt.row_score':       '>   SCORE        ............ {score}',
   'gameover.crt.row_score_target':'>   SCORE        ............ {score} / {target}',
   'gameover.crt.row_combo':       '>   COMBO MAX    ............ {combo}',

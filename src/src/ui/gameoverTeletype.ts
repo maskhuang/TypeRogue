@@ -23,6 +23,9 @@ export interface GameOverStats {
   endlessJustUnlocked?: boolean
   /** 通关时上升的 ascension level，0 不显示 */
   ascensionLevel?: number
+  /** V2 affix on_battle_end → gain_skill 本战获赠 skill 列表（id+name+level）·
+   *  缺省 / 空数组 = 不显示 BONUS section */
+  grantedSkills?: readonly { name: string; level: number }[]
 }
 
 interface ScriptLine {
@@ -131,6 +134,19 @@ function buildScript(mode: GameOverMode, s: GameOverStats): ScriptLine[] {
       lines.push({ text: t('gameover.crt.ascension_badge', { level: s.ascensionLevel }), cls: 'bright', charSpeed: 10, holdAfter: 200 })
     }
     lines.push({ text: t('gameover.crt.divider'), cls: 'divider', charSpeed: 6, holdAfter: 220 })
+    // V2 gain_skill 获赠 section · 仅 victory 路径显示（lose 路径不送 skill）
+    if (s.grantedSkills && s.grantedSkills.length > 0) {
+      lines.push({ text: t('gameover.crt.section_bonus'), cls: 'divider', charSpeed: 6, holdAfter: 200 })
+      for (const sk of s.grantedSkills) {
+        lines.push({
+          text: t('gameover.crt.row_granted_skill', { name: sk.name, level: sk.level }),
+          cls: 'bright',
+          charSpeed: 10,
+          holdAfter: 250,         // stagger ~250ms · 多 grant 时不糊
+        })
+      }
+      lines.push({ text: t('gameover.crt.divider'), cls: 'divider', charSpeed: 6, holdAfter: 220 })
+    }
     lines.push({ text: t('gameover.crt.settlement_posted'), cls: 'bright', charSpeed: 16, holdAfter: 300 })
     if (s.endlessJustUnlocked) {
       lines.push({ text: t('gameover.crt.endless_unlocked'), cls: 'total', charSpeed: 18, holdAfter: 500 })

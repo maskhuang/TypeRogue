@@ -170,6 +170,7 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
       state.affixSkills.set(sg.skill.id, sg.skill)
       state.player.skills.set(sg.skill.id, { level: sg.skill.level })
       state.player.inbox.push(sg.skill.id)
+      _lastBattleGrantedSkillIds.push(sg.skill.id)
     }
   }
 }
@@ -362,8 +363,16 @@ export function wireV2BattleIntegration(): void {
   // 重同步覆盖存档加载场景（bindings 直接还原，未走 bindShapeToKeys 路径）
   eventBus.on('battle:start', () => {
     resyncV2EquipmentFromState()
+    _lastBattleGrantedSkillIds = []        // 每战清零；本战 gain_skill 命中再 push
     const results = hookOnBattleStart(defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
     processV2Results(results)
+  })
+
+  // battle:end → 触发 on_battle_end 词条（teach 主用 · gain_skill 写 inbox）
+  //              + reset 关内 cum / stacks state（hookOnBattleEnd 内含）
+  // 监听 battle.ts 中 victory() / gameOver() 显式 emit；caller 不需再调 triggerV2BattleEnd
+  eventBus.on('battle:end', ({ result }) => {
+    triggerV2BattleEnd(result === 'lose' ? 'lose' : 'win')
   })
 
   // word:complete → 触发 on_word_end 类 V2 affix + 处理结果
@@ -385,10 +394,23 @@ export function wireV2BattleIntegration(): void {
 }
 
 /** Battle 结束 hook · 由调用方在战斗结算时调
- *  result='win' 触发胜利型 on_battle_end 词条；'lose' 触发失败型；'any' 永远过 */
+ *  result='win' 触发胜利型 on_battle_end 词条；'lose' 触发失败型；'any' 永远过
+ *  现在 wireV2BattleIntegration 已订阅 battle:end event 自动调；保留导出供调试 / 手动调用 */
 export function triggerV2BattleEnd(result: 'win' | 'lose' = 'win'): void {
   const results = hookOnBattleEnd(result, defaultResourceLv1Base, defaultGetPlayerResource, Date.now())
   processV2Results(results)
+}
+
+// ============================================
+// gain_skill 本战 grant 缓冲（settlement UI 用）
+// ============================================
+// battle:start 清零；processV2Results 处理 skillsGranted 时 push
+// UI 在 victory()/gameOver() 读 getLastBattleGrantedSkillIds() 后传给 teletype
+
+let _lastBattleGrantedSkillIds: string[] = []
+
+export function getLastBattleGrantedSkillIds(): readonly string[] {
+  return _lastBattleGrantedSkillIds
 }
 
 // ============================================
