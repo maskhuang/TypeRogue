@@ -429,15 +429,14 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     effect = { kind: 'grant_haste', selector: scope.selector, amount: recipe.amount }
   } else if (recipe.kind === 'imitate') {
     // imitate: trigger 固定 on_battle_end(any) · 胜败都触发
-    // filter 复合：
-    //   - hasTagFromHost=true：限定同 section 兄弟（resolve 时填本词条 def.section）
-    //   - neighborPosRel：从 6 种 PositionRelation 随机锁 1 个 · 跨战不变
+    // filter 仅 neighborPosRel：从 6 种 PositionRelation 随机锁 1 个 · 跨战不变
+    // 不限 section（跨段邻位也可复制 · narrative "邻位"对应键位拓扑，与 section 解耦）
     // source=player_skill_pool · fallback=skip（无邻位兄弟不强造）
     triggerSpec = { type: 'on_battle_end', result: 'any' }
     const rolledPosRel = pickRandom(POSREL_VALUES)
     effect = {
       kind: 'gain_skill',
-      filter: { hasTagFromHost: true, neighborPosRel: rolledPosRel, notOwned: false },
+      filter: { neighborPosRel: rolledPosRel, notOwned: false },
       source: 'player_skill_pool',
       count: 1,
       levelMode: 'inherit_host',

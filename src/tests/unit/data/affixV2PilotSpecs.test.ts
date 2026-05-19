@@ -242,13 +242,13 @@ describe('Archetype 覆盖 · S2 验证', () => {
 })
 
 describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () => {
-  it('imitate (recipe-generated) tooltip · 自有复制 + 工具类 + 邻位关系 · 不含"同 section"', () => {
+  it('imitate (recipe-generated) tooltip · 自有复制 + 邻位关系 · 不含 section（去 hasTagFromHost 后跨段邻位可复制）', () => {
     const id = generateAffixV2(RECIPE_IMITATE)
     const def = getAffixV2Definition(id)!
     const desc = formatAffixV2Description(def, 'score')
     expect(desc).toContain('自有复制')
-    expect(desc).toContain('工具类')              // hasTagFromHost + def.section='tool' → 工具类
     expect(desc).toMatch(/(相邻|同行|同列|同手|同指|对称)邻位/)  // 6 种 PositionRelation 之一
+    expect(desc).not.toContain('工具类')                          // hasTagFromHost 已移除 · 不限段
     expect(desc).not.toContain('同 section')
     expect(desc).toContain('与本技能同 Lv')
   })
@@ -297,7 +297,7 @@ describe('Recipe · imitate (player_skill_pool · 生成时锁 neighborPosRel)',
     if (def.effect.kind === 'gain_skill') {
       expect(def.effect.source).toBe('player_skill_pool')
       expect(def.effect.fallback).toBe('skip')
-      expect(def.effect.filter.hasTagFromHost).toBe(true)
+      expect(def.effect.filter.hasTagFromHost).toBeUndefined()   // 已去掉 · 仅 neighborPosRel 约束
       expect(def.effect.filter.neighborPosRel).toBeDefined()
     }
   })
@@ -318,8 +318,27 @@ describe('Recipe · imitate (player_skill_pool · 生成时锁 neighborPosRel)',
     // 不设 bindings · neighborPosRel 过滤后 pool 必空
     const id = generateAffixV2(RECIPE_IMITATE)
     const def = getAffixV2Definition(id)!
-    const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 3, selfSection: 'tool' })
+    const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 3 })
     expect(r.skillsGranted.length).toBe(0)
+  })
+
+  it('跨段邻位可复制 · 不限 section（hasTagFromHost 去掉）', () => {
+    // 不锁 section · selfSection=tool 但兄弟是 maintenance 段也能被复制
+    gameState.affixSkills.set('cross_sib', mkOwnedV2('cross_sib', 'gold', 'feed'))   // maintenance 段
+    gameState.player.bindings.set('g', 'cross_sib')
+
+    // 用一个保证 g 是 host=f 邻位的 spec（SameRow）
+    const effect: EffectSpec = {
+      kind: 'gain_skill',
+      filter: { neighborPosRel: PositionRelation.SameRow, notOwned: false },
+      source: 'player_skill_pool',
+      count: 1,
+      levelMode: 'inherit_host',
+      fallback: 'skip',
+    }
+    const r = resolveEffect(effect, { ...ctx, key: 'f', hostSkillLevel: 1, selfSection: 'tool' })
+    expect(r.skillsGranted.length).toBe(1)
+    expect(r.skillsGranted[0].skill.resource).toBe('gold')      // 跨段（host=tool，兄弟=maintenance）也命中
   })
 })
 
