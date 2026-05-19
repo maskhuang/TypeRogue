@@ -2,14 +2,17 @@
 // 打字肉鸽 - SkillFilter 匹配 + widen 兜底测试
 // ============================================
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import {
   matchSkillFilter,
   getCandidatePool,
   widenSkillFilter,
+  spawnSkillFromSeed,
   type SkillSeed,
 } from '../../../src/systems/affixV2SkillFilter'
 import type { SkillFilter } from '../../../src/src/data/affixV2Trigger'
+import { state as gameState } from '../../../src/core/state'
+import type { ShopItem, AffixSkillInstance } from '../../../src/core/types'
 
 // 构造测试用 seed
 function mkSeed(section: SkillSeed['section'], resourcePool?: readonly string[]): SkillSeed {
@@ -132,8 +135,11 @@ describe('getCandidatePool · recipe_pool 来源', () => {
     }
   })
 
-  it('shop_pool / altar_pool 当前 stub 返空', () => {
+  it('shop_pool 在 state.shop.items 为空时返空', () => {
     expect(getCandidatePool('shop_pool').length).toBe(0)
+  })
+
+  it('altar_pool 当前 stub 返空', () => {
     expect(getCandidatePool('altar_pool').length).toBe(0)
   })
 
@@ -143,5 +149,92 @@ describe('getCandidatePool · recipe_pool 来源', () => {
     const pool = getCandidatePool('recipe_pool')
     const toolMatches = pool.filter(s => s.section === 'tool')
     expect(toolMatches.length).toBeGreaterThan(0)
+  })
+})
+
+describe('shop_pool · state.shop.items 接入', () => {
+  // 测试中临时塞 shop item · afterEach 清空恢复
+  afterEach(() => {
+    gameState.shop.items = []
+  })
+
+  function mkShopSkill(resource: string, v2Def: string, section: string): ShopItem {
+    const skill: AffixSkillInstance = {
+      id: `mock_${v2Def}_${Math.random()}`,
+      name: `Mock ${section}`,
+      icon: '?',
+      resource: resource as AffixSkillInstance['resource'],
+      baseValues: [1, 2, 3, 4],
+      level: 1,
+      rarity: 1,
+      affixes: [],
+      enchantmentIds: [],
+      v2Ids: [v2Def],
+    }
+    return {
+      id: `item_${v2Def}`,
+      type: 'skill',
+      affixSkill: skill,
+      cost: 10,
+      isUpgrade: false,
+      locked: false,
+    }
+  }
+
+  it('shop 有在架 skill → seed source=shop_pool · section 取首 v2Id', () => {
+    // 用现有静态 def 'feed' (maintenance) 做测试
+    gameState.shop.items = [mkShopSkill('score', 'feed', 'maintenance')]
+    const pool = getCandidatePool('shop_pool')
+    expect(pool.length).toBe(1)
+    expect(pool[0].source).toBe('shop_pool')
+    expect(pool[0].section).toBe('maintenance')
+    expect(pool[0].templateSkill).toBeDefined()
+    expect(pool[0].resourcePool).toEqual(['score'])
+  })
+
+  it('shop skill 无 v2Ids → 跳过（hasTag filter 无 section 可匹配）', () => {
+    const sk: AffixSkillInstance = {
+      id: 'no_v2', name: 'no v2', icon: '?', resource: 'score',
+      baseValues: [1], level: 1, rarity: 0, affixes: [], enchantmentIds: [],
+    }
+    gameState.shop.items = [{ id: 'i', type: 'skill', affixSkill: sk, cost: 1, isUpgrade: false, locked: false }]
+    expect(getCandidatePool('shop_pool').length).toBe(0)
+  })
+
+  it('shop 混杂 type （pack/relic/enchantment）→ 仅取 skill', () => {
+    gameState.shop.items = [
+      mkShopSkill('score', 'feed', 'maintenance'),
+      { id: 'p', type: 'pack', cost: 1, isUpgrade: false, locked: false },
+      { id: 'r', type: 'relic', cost: 1, isUpgrade: false, locked: false },
+    ]
+    expect(getCandidatePool('shop_pool').length).toBe(1)
+  })
+
+  it('spawnSkillFromSeed(templateSkill) → 深 clone · 新 id · 改 level', () => {
+    const template = mkShopSkill('score', 'feed', 'maintenance').affixSkill!
+    const seed: SkillSeed = {
+      source: 'shop_pool',
+      templateSkill: template,
+      section: 'maintenance',
+      resourcePool: ['score'],
+    }
+    const spawned = spawnSkillFromSeed(seed, 5)
+    expect(spawned.id).not.toBe(template.id)         // 新 id
+    expect(spawned.level).toBe(5)                     // 改 level
+    expect(spawned.resource).toBe('score')            // 资源继承
+    expect(spawned.v2Ids).toEqual(template.v2Ids)     // V2 词条引用一致
+    expect(spawned.v2Ids).not.toBe(template.v2Ids)    // 数组深 clone（不共享引用）
+    expect(spawned.rarity).toBe(1)                    // rarity 继承
+  })
+
+  it('spawnSkillFromSeed(recipe) → recipe 路径走 generateSkill', () => {
+    const seed: SkillSeed = {
+      source: 'recipe_pool',
+      section: 'maintenance',
+      resourcePool: ['score', 'gold'],
+    }
+    const spawned = spawnSkillFromSeed(seed, 3)
+    expect(spawned.level).toBe(3)
+    expect(['score', 'gold']).toContain(spawned.resource)
   })
 })

@@ -15,6 +15,8 @@ import type { ResourceType } from '../core/types'
 import type { AffixSkillInstance, SkillRarity } from '../data/affixes'
 import { generateSkill } from '../data/skillGeneration'
 import { random } from '../core/seededRandom'
+import { state as gameState } from '../core/state'
+import { getAffixV2Definition } from '../data/affixV2'
 
 // ============================================
 // SkillSeed · 候选种子
@@ -25,6 +27,8 @@ export interface SkillSeed {
   readonly source: 'recipe_pool' | 'shop_pool' | 'altar_pool'
   /** 关联 recipe（recipe_pool 来源时填）*/
   readonly recipe?: AffixV2Recipe
+  /** 现成 skill 模板（shop_pool / altar_pool 来源时填 · spawn 时深 clone + 改 id/level）*/
+  readonly templateSkill?: AffixSkillInstance
   /** seed 的 section（作为 hasTag / allTags / excludeTag 匹配维度）*/
   readonly section: SectionTag
   /** 候选 resource 池（recipe-driven · 缺省时视为不限）*/
@@ -33,7 +37,8 @@ export interface SkillSeed {
 
 /** 按 source 取候选池 ·
  *  - recipe_pool：从 ALL_RECIPES 映射 SkillSeed，section/resourcePool 透传
- *  - shop_pool / altar_pool：当前 stub 返空，需后续接入对应模块 */
+ *  - shop_pool：读 state.shop.items 当前在架 skill，每个映射为模板 seed（spawn 时深 clone）
+ *  - altar_pool：stub 返空（altar 暂无候选源 · 后续接入） */
 export function getCandidatePool(source: 'recipe_pool' | 'shop_pool' | 'altar_pool'): readonly SkillSeed[] {
   if (source === 'recipe_pool') {
     return ALL_RECIPES.map(r => ({
@@ -42,6 +47,25 @@ export function getCandidatePool(source: 'recipe_pool' | 'shop_pool' | 'altar_po
       section: r.section,
       resourcePool: 'resourcePool' in r ? (r as { resourcePool: readonly string[] }).resourcePool : undefined,
     }))
+  }
+  if (source === 'shop_pool') {
+    const seeds: SkillSeed[] = []
+    for (const item of gameState.shop.items) {
+      if (item.type !== 'skill' || !item.affixSkill) continue
+      const sk = item.affixSkill
+      // 取第一个 V2 def 的 section 作为代表 tag（无 v2Ids 时跳过 · 防 hasTag 永远不命中）
+      const firstDefId = sk.v2Ids?.[0]
+      if (!firstDefId) continue
+      const def = getAffixV2Definition(firstDefId)
+      if (!def) continue
+      seeds.push({
+        source: 'shop_pool' as const,
+        templateSkill: sk,
+        section: def.section,
+        resourcePool: [sk.resource],
+      })
+    }
+    return seeds
   }
   return []
 }
@@ -128,12 +152,28 @@ export function widenSkillFilter(filter: SkillFilter, pool: readonly SkillSeed[]
 // 想"教 tool 必出 tool"的严绑后续可加 forcedRecipe 选项到 generateSkill。
 
 export function spawnSkillFromSeed(seed: SkillSeed, level: number): AffixSkillInstance {
+  const targetLv = Math.max(1, Math.floor(level))
+  // 模板 spawn：深 clone shop 商品 · 换 id · 改 level · 保留 v2Ids/rarity/shapeId 等
+  if (seed.templateSkill) {
+    const t = seed.templateSkill
+    const rnd = random() || 0.0001
+    const newId = `skill_${Date.now()}_${rnd.toString(36).slice(2, 6)}`
+    return {
+      ...t,
+      id: newId,
+      level: targetLv,
+      affixes: t.affixes.map(a => ({ ...a })),
+      enchantmentIds: [...t.enchantmentIds],
+      v2Ids: t.v2Ids ? [...t.v2Ids] : undefined,
+    }
+  }
+  // recipe spawn：调 generateSkill · resource 从 seed.resourcePool 随机选
   const resource = seed.resourcePool && seed.resourcePool.length > 0
     ? (seed.resourcePool[Math.floor(random() * seed.resourcePool.length)] as ResourceType)
     : undefined
   return generateSkill({
     resource,
     rarity: 1 as SkillRarity,
-    level: Math.max(1, Math.floor(level)),
+    level: targetLv,
   })
 }
