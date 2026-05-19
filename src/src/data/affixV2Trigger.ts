@@ -317,6 +317,18 @@ export type EffectSpec =
       fallback?: 'widen' | 'refund' | 'skip'
     }
 
+  /**
+   * 升级 selector 范围内 skill 的等级（meta-progression · 制造/锻造型）
+   * 每次命中 → 目标 skill.level += amount（capped 至 baseValues 长度）· run 内永久
+   */
+  | { kind: 'upgrade_skill'; selector: TargetSelector; amount: number }
+
+  /**
+   * 从 from 范围内随机抽 1 个 V2 词条复制装到宿主（meta-progression · 读取/嫁接型）
+   * 宿主词条数 +1（受 rarity 上限约束，已满则跳过）· run 内永久
+   */
+  | { kind: 'graft_affix'; from: TargetSelector }
+
 // ===== 默认值 =====
 
 export const DEFAULT_TRIGGER: TriggerSpec = { type: 'passive' }

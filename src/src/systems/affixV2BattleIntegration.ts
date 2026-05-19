@@ -172,7 +172,40 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
       state.player.inbox.push(sg.skill.id)
       _lastBattleGrantedSkillIds.push(sg.skill.id)
     }
+    // upgrade_skill: 目标 skill +level（capped baseValues 长度 · 同步 player.skills）
+    for (const up of sr.result.skillUpgrades) {
+      applySkillUpgrade(up.skillId, up.amount)
+    }
+    // graft_affix: 把 defId 装到宿主 skill + 更新 v2Ids + bump rarity（cap 3）
+    for (const gr of sr.result.affixGrafts) {
+      applyAffixGraft(gr.targetSkillId, gr.targetKey, gr.defId)
+    }
   }
+}
+
+/** 升级 skill 等级 · capped 至 baseValues 长度 · 同步 affixSkills + player.skills */
+function applySkillUpgrade(skillId: string, amount: number): void {
+  const skill = state.affixSkills.get(skillId)
+  if (!skill) return
+  const maxLv = skill.baseValues?.length ?? skill.level
+  const newLv = Math.min(maxLv, skill.level + Math.max(1, Math.floor(amount)))
+  if (newLv === skill.level) return
+  skill.level = newLv
+  const ps = state.player.skills.get(skillId)
+  if (ps) ps.level = newLv
+}
+
+/** 词条嫁接 · 把 defId 装到宿主 skill · 更新 v2Ids + rarity（cap 3）· 已满或重复则跳过 */
+function applyAffixGraft(targetSkillId: string, targetKey: string, defId: string): void {
+  const skill = state.affixSkills.get(targetSkillId)
+  if (!skill) return
+  const v2Ids = skill.v2Ids ?? []
+  if (v2Ids.length >= 3) return            // rarity 上限 3 词条 · 满则跳过
+  if (v2Ids.includes(defId)) return        // 已有同 def 不重复嫁接
+  skill.v2Ids = [...v2Ids, defId]
+  skill.rarity = Math.min(3, (skill.rarity ?? v2Ids.length) + 1) as typeof skill.rarity
+  // 装到运行时登记表（与 resyncV2EquipmentFromState 一致 · 让本战后续 / 下战生效）
+  equipAffixV2(targetSkillId, targetKey, defId)
 }
 
 /** 调度一次 fire_target 触发：满配额立即派发，否则 setTimeout 推迟到下窗口 */

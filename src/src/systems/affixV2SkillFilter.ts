@@ -20,6 +20,9 @@ import { getAffixV2Definition } from '../data/affixV2'
 import { getLocale } from '../demo/demo-i18n'
 import { hasRelation, type PositionRelation } from '../data/keyboardTopology'
 
+/** meta-progression recipe 种类 · gain_skill recipe_pool 候选池排除这些（防递归 spawn 模板）*/
+const META_RECIPE_KINDS: ReadonlySet<string> = new Set(['teach', 'imitate', 'spear_make', 'gaze_follow'])
+
 // ============================================
 // SkillSeed · 候选种子
 // ============================================
@@ -48,8 +51,9 @@ export function getCandidatePool(
   excludeSkillId?: string,
 ): readonly SkillSeed[] {
   if (source === 'recipe_pool') {
-    // 排除 meta-progression recipe（teach / imitate）· 防 gain_skill→gain_skill 直接递归
-    return ALL_RECIPES.filter(r => r.kind !== 'teach' && r.kind !== 'imitate').map(r => ({
+    // 排除 meta-progression recipe（teach / imitate / spear_make / gaze_follow）·
+    // 防 gain_skill 直接拿 meta 词条作 spawn 模板（meta 应只作为生成 skill 的随机 V2 词条出现）
+    return ALL_RECIPES.filter(r => !META_RECIPE_KINDS.has(r.kind)).map(r => ({
       source: 'recipe_pool' as const,
       recipe: r,
       section: r.section,

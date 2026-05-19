@@ -122,6 +122,21 @@ export interface SkillGranted {
   readonly widened: boolean
 }
 
+export interface SkillUpgrade {
+  readonly sourceInstanceId: string
+  readonly skillId: string
+  readonly amount: number
+}
+
+export interface AffixGraft {
+  readonly sourceInstanceId: string
+  /** 接收方 skill（宿主）*/
+  readonly targetSkillId: string
+  readonly targetKey: string
+  /** 要嫁接的 V2 词条 def id */
+  readonly defId: string
+}
+
 export interface ResolveResult {
   /** 一次性产出的资源列表（gain_resource）+ 关内成长后本次 fire 等效产出（add/multiply 复合）*/
   resourceProduced: ResourceProduction[]
@@ -133,6 +148,10 @@ export interface ResolveResult {
   statusesApplied: StatusApplied[]
   /** 申请的新技能（已 spawn 但未入 inbox · 由 caller 写入 state.affixSkills/player.skills/player.inbox）*/
   skillsGranted: SkillGranted[]
+  /** 申请的 skill 升级（由 caller 增 skill.level）*/
+  skillUpgrades: SkillUpgrade[]
+  /** 申请的词条嫁接（由 caller equip 到 host + 更新 v2Ids）*/
+  affixGrafts: AffixGraft[]
   /** 因 rate limit 被丢弃的 fire_target 次数（telemetry 用）*/
   rateLimitedFireTargets: number
 }
@@ -144,6 +163,8 @@ function freshResult(): ResolveResult {
     aurasApplied: [],
     statusesApplied: [],
     skillsGranted: [],
+    skillUpgrades: [],
+    affixGrafts: [],
     rateLimitedFireTargets: 0,
   }
 }
@@ -346,6 +367,35 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
           widened: widen.droppedFields.length > 0,
         })
       }
+      return
+    }
+
+    case 'upgrade_skill': {
+      // selector 展开 → 每个 target skill 申请升级 amount 级（实际 +level 在 caller）
+      const targets = ctx.resolveSelector?.(spec.selector, ctx.skillId, ctx.key) ?? [ctx.skillId]
+      for (const tid of targets) {
+        result.skillUpgrades.push({
+          sourceInstanceId: ctx.instanceId,
+          skillId: tid,
+          amount: spec.amount,
+        })
+      }
+      return
+    }
+
+    case 'graft_affix': {
+      // from 范围内查所有已装备词条 → 随机抽 1 个 defId → 申请嫁接到宿主
+      if (!ctx.queryEquipped) return
+      const candidates = ctx.queryEquipped(spec.from)
+        .filter(v => v.skillId !== ctx.skillId)   // 排除宿主自身词条
+      if (candidates.length === 0) return
+      const pick = candidates[Math.floor(random() * candidates.length)]
+      result.affixGrafts.push({
+        sourceInstanceId: ctx.instanceId,
+        targetSkillId: ctx.skillId,
+        targetKey: ctx.key,
+        defId: pick.defId,
+      })
       return
     }
   }

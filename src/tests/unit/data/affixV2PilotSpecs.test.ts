@@ -8,7 +8,7 @@ import { PILOT_AFFIX_IDS, getPilotSpec } from '../../../src/data/affixV2PilotSpe
 import { getAffixV2Definition } from '../../../src/data/affixV2'
 import { resolveEffect, type ResolveContext } from '../../../src/systems/affixV2Effect'
 import { formatEffectDescription, formatAffixV2Description } from '../../../src/ui/affixV2TooltipAdapter'
-import { generateAffixV2, RECIPE_TEACH, RECIPE_IMITATE } from '../../../src/data/affixV2Generator'
+import { generateAffixV2, RECIPE_TEACH, RECIPE_IMITATE, RECIPE_SPEAR_MAKE, RECIPE_GAZE_FOLLOW } from '../../../src/data/affixV2Generator'
 import { PositionRelation } from '../../../src/data/keyboardTopology'
 import type { EffectSpec } from '../../../src/data/affixV2Trigger'
 import { getCandidatePool } from '../../../src/systems/affixV2SkillFilter'
@@ -396,6 +396,78 @@ describe('hasTagFromHost 基础语义（独立于 imitate · 无 neighborPosRel 
       if (r.skillsGranted.length > 0) resources.add(r.skillsGranted[0].skill.resource)
     }
     expect(resources.size).toBeGreaterThan(1)
+  })
+})
+
+describe('Recipe · spear_make (upgrade_skill)', () => {
+  it('生成 on_battle_end(any) + upgrade_skill(neighbors random, +1)', () => {
+    const id = generateAffixV2(RECIPE_SPEAR_MAKE)
+    const def = getAffixV2Definition(id)!
+    expect(def.trigger).toEqual({ type: 'on_battle_end', result: 'any' })
+    expect(def.effect.kind).toBe('upgrade_skill')
+    if (def.effect.kind === 'upgrade_skill') {
+      expect(def.effect.amount).toBe(1)
+      expect(def.effect.selector.type).toBe('neighbors')
+    }
+  })
+
+  it('resolve · selector 展开 → skillUpgrades 申请', () => {
+    const id = generateAffixV2(RECIPE_SPEAR_MAKE)
+    const def = getAffixV2Definition(id)!
+    const r = resolveEffect(def.effect, { ...ctx, resolveSelector: () => ['target_skill'] })
+    expect(r.skillUpgrades.length).toBe(1)
+    expect(r.skillUpgrades[0].skillId).toBe('target_skill')
+    expect(r.skillUpgrades[0].amount).toBe(1)
+  })
+
+  it('无 resolveSelector → 退化 self', () => {
+    const id = generateAffixV2(RECIPE_SPEAR_MAKE)
+    const def = getAffixV2Definition(id)!
+    const r = resolveEffect(def.effect, { ...ctx })
+    expect(r.skillUpgrades.length).toBe(1)
+    expect(r.skillUpgrades[0].skillId).toBe(ctx.skillId)
+  })
+})
+
+describe('Recipe · gaze_follow (graft_affix)', () => {
+  it('生成 on_battle_end(any) + graft_affix(neighbors random)', () => {
+    const id = generateAffixV2(RECIPE_GAZE_FOLLOW)
+    const def = getAffixV2Definition(id)!
+    expect(def.trigger).toEqual({ type: 'on_battle_end', result: 'any' })
+    expect(def.effect.kind).toBe('graft_affix')
+  })
+
+  it('resolve · queryEquipped 出候选 → 抽 1 defId 申请嫁接到宿主', () => {
+    const id = generateAffixV2(RECIPE_GAZE_FOLLOW)
+    const def = getAffixV2Definition(id)!
+    const r = resolveEffect(def.effect, {
+      ...ctx,
+      queryEquipped: () => [
+        { defId: 'feed', skillId: 'neighbor', key: 'g', instanceId: 'i1', tags: ['maintenance'] },
+      ],
+    })
+    expect(r.affixGrafts.length).toBe(1)
+    expect(r.affixGrafts[0].defId).toBe('feed')
+    expect(r.affixGrafts[0].targetSkillId).toBe(ctx.skillId)   // 宿主接收
+  })
+
+  it('queryEquipped 只含宿主自身词条 → 不嫁接（排除自身）', () => {
+    const id = generateAffixV2(RECIPE_GAZE_FOLLOW)
+    const def = getAffixV2Definition(id)!
+    const r = resolveEffect(def.effect, {
+      ...ctx,
+      queryEquipped: () => [
+        { defId: 'x', skillId: ctx.skillId, key: 'k', instanceId: 'i', tags: [] },
+      ],
+    })
+    expect(r.affixGrafts.length).toBe(0)
+  })
+
+  it('无 queryEquipped → 不嫁接', () => {
+    const id = generateAffixV2(RECIPE_GAZE_FOLLOW)
+    const def = getAffixV2Definition(id)!
+    const r = resolveEffect(def.effect, { ...ctx })
+    expect(r.affixGrafts.length).toBe(0)
   })
 })
 

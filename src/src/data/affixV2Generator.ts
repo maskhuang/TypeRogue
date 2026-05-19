@@ -226,7 +226,7 @@ export interface TeachRecipe {
 
 /** imitate 系：on_battle_end + gain_skill(player_skill_pool) · meta-progression
  *  生成时随机锁定一个 PositionRelation（6 种关系）· filter 收紧到宿主键位邻位 ·
- *  hasTagFromHost=true 限定同段 · 每个 instance 锁死一个 posRel + 跟随宿主 section
+ *  每个 instance 锁死一个 posRel（不限段 · 跨段邻位均可复制）
  */
 export interface ImitateRecipe {
   readonly kind: 'imitate'
@@ -236,7 +236,29 @@ export interface ImitateRecipe {
   readonly name_en: string
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | HasteRecipe | TeachRecipe | ImitateRecipe
+/** spear_make 系：on_battle_end + upgrade_skill · meta-progression（制造/锻造型）
+ *  生成时随机锁定一个 PositionRelation · 关后给该邻位 skill +1 Lv
+ */
+export interface SpearMakeRecipe {
+  readonly kind: 'spear_make'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+}
+
+/** gaze_follow 系：on_battle_end + graft_affix · meta-progression（读取/嫁接型）
+ *  生成时随机锁定一个 PositionRelation · 关后复制该邻位 1 个 V2 词条到宿主
+ */
+export interface GazeFollowRecipe {
+  readonly kind: 'gaze_follow'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+}
+
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | HasteRecipe | TeachRecipe | ImitateRecipe | SpearMakeRecipe | GazeFollowRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -442,6 +464,23 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
       levelMode: 'inherit_host',
       fallback: 'skip',
     }
+  } else if (recipe.kind === 'spear_make') {
+    // spear_make: on_battle_end(any) · 给随机锁定邻位的 skill +1 Lv（制造/锻造）
+    triggerSpec = { type: 'on_battle_end', result: 'any' }
+    const rolledPosRel = pickRandom(POSREL_VALUES)
+    effect = {
+      kind: 'upgrade_skill',
+      selector: { type: 'neighbors', posRel: rolledPosRel, pick: 'random' },
+      amount: 1,
+    }
+  } else if (recipe.kind === 'gaze_follow') {
+    // gaze_follow: on_battle_end(any) · 复制随机锁定邻位 skill 的 1 个 V2 词条到宿主（读取/嫁接）
+    triggerSpec = { type: 'on_battle_end', result: 'any' }
+    const rolledPosRel = pickRandom(POSREL_VALUES)
+    effect = {
+      kind: 'graft_affix',
+      from: { type: 'neighbors', posRel: rolledPosRel, pick: 'all' },
+    }
   } else if (recipe.kind === 'teach') {
     // teach: trigger 固定 on_battle_end(any) · 胜败都触发
     // filter 三维度复合 · 生成时独立 roll · 每个实例锁死：
@@ -594,6 +633,22 @@ export const RECIPE_IMITATE: ImitateRecipe = {
   name_en: 'imitate',
 }
 
+export const RECIPE_SPEAR_MAKE: SpearMakeRecipe = {
+  kind: 'spear_make',
+  id: 'spear_make',
+  section: 'tool',
+  name_zh: '削矛',
+  name_en: 'spear-make',
+}
+
+export const RECIPE_GAZE_FOLLOW: GazeFollowRecipe = {
+  kind: 'gaze_follow',
+  id: 'gaze_follow',
+  section: 'tool',
+  name_zh: '视线跟随',
+  name_en: 'gaze-follow',
+}
+
 /** 暂时全部 recipe 列表（生成 shop 选项时遍历此）*/
 export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_FEED,
@@ -606,6 +661,8 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_NUT_CRACK,
   RECIPE_TEACH,
   RECIPE_IMITATE,
+  RECIPE_SPEAR_MAKE,
+  RECIPE_GAZE_FOLLOW,
 ]
 
 /** drink(convert) 以这些资源为 source 时降权 · time/gold 转化收益偏强，降低出率 */

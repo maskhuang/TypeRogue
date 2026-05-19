@@ -288,6 +288,14 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         ? `${sourceStr} ${count} 个${filterStr}技能（${lvStr}）`
         : `${sourceStr} ${count} ${filterStr} skill${count > 1 ? 's' : ''} (${lvStr})`
     }
+    case 'upgrade_skill':
+      return zh
+        ? `${formatSelector(effect.selector)}升 ${effect.amount} 级`
+        : `upgrade ${formatSelector(effect.selector)} +${effect.amount} Lv`
+    case 'graft_affix':
+      return zh
+        ? `复制 ${formatSelector(effect.from)} 的 1 个词条到本技能`
+        : `graft 1 affix from ${formatSelector(effect.from)} to this skill`
   }
 }
 
