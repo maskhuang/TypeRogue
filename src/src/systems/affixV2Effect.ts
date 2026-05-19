@@ -329,12 +329,13 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       }
 
       // 从命中集合无放回抽 count 个（同 seed 可重抽不同 spawn instance · 这里实现 seed 不重）
+      // spawn 时传 widen 后的 effectiveFilter · spawnSkillFromSeed 用 filter.resource/rarity 约束生成参数
       const count = Math.max(1, spec.count ?? 1)
       const remaining = [...widen.matches]
       for (let i = 0; i < count && remaining.length > 0; i++) {
         const idx = Math.floor(random() * remaining.length)
         const [seed] = remaining.splice(idx, 1)
-        const skill = spawnSkillFromSeed(seed, targetLv)
+        const skill = spawnSkillFromSeed(seed, targetLv, widen.filter)
         result.skillsGranted.push({
           sourceInstanceId: ctx.instanceId,
           skill,

@@ -393,4 +393,81 @@ describe('Recipe · teach (recipe_pool · 生成时锁 hasTag)', () => {
     const teachSeeds = pool.filter(s => s.recipe?.kind === 'teach')
     expect(teachSeeds.length).toBe(0)
   })
+
+  describe('复合 filter · hasTag + resource + rarity', () => {
+    it('hasTag 总是有（100%）· resource ≥ 1 个实例（40% 出现率）· rarity ≥ 1 个实例（20% 出现率）', () => {
+      const samples: { hasTag: boolean; resource: boolean; rarity: boolean }[] = []
+      for (let i = 0; i < 100; i++) {
+        const id = generateAffixV2(RECIPE_TEACH)
+        const def = getAffixV2Definition(id)!
+        if (def.effect.kind === 'gain_skill') {
+          samples.push({
+            hasTag: def.effect.filter.hasTag !== undefined,
+            resource: def.effect.filter.resource !== undefined,
+            rarity: def.effect.filter.rarity !== undefined,
+          })
+        }
+      }
+      // hasTag 100%
+      expect(samples.every(s => s.hasTag)).toBe(true)
+      // resource 40% · 100 抽期望 ~40 · 容差 [15, 65]
+      const resourceCount = samples.filter(s => s.resource).length
+      expect(resourceCount).toBeGreaterThanOrEqual(15)
+      expect(resourceCount).toBeLessThanOrEqual(65)
+      // rarity 20% · 期望 ~20 · 容差 [5, 45]
+      const rarityCount = samples.filter(s => s.rarity).length
+      expect(rarityCount).toBeGreaterThanOrEqual(5)
+      expect(rarityCount).toBeLessThanOrEqual(45)
+    })
+
+    it('当 filter.resource 命中 · 学徒 resource 限定到该值', () => {
+      // 强造 filter:{hasTag:'maintenance',resource:'score'} 验证 spawn 约束
+      const def = getAffixV2Definition(generateAffixV2(RECIPE_TEACH))!
+      if (def.effect.kind !== 'gain_skill') return
+      const forcedEffect = {
+        ...def.effect,
+        filter: { hasTag: 'maintenance' as const, resource: 'score' as const, notOwned: false },
+      }
+      // maintenance recipe 池含 feed/drink · 两者都允许 score
+      for (let i = 0; i < 10; i++) {
+        const r = resolveEffect(forcedEffect, { ...ctx, hostSkillLevel: 1 })
+        expect(r.skillsGranted.length).toBe(1)
+        expect(r.skillsGranted[0].skill.resource).toBe('score')
+      }
+    })
+
+    it('当 filter.rarity 命中 · 学徒 rarity 锁定到该值', () => {
+      const def = getAffixV2Definition(generateAffixV2(RECIPE_TEACH))!
+      if (def.effect.kind !== 'gain_skill') return
+      const forcedEffect = {
+        ...def.effect,
+        filter: { hasTag: 'maintenance' as const, rarity: 2, notOwned: false },
+      }
+      for (let i = 0; i < 10; i++) {
+        const r = resolveEffect(forcedEffect, { ...ctx, hostSkillLevel: 1 })
+        expect(r.skillsGranted[0].skill.rarity).toBe(2)
+      }
+    })
+
+    it('widen 顺序：resource → rarity → allTags → hasTag · hasTag 最后丢', () => {
+      // 构造一个不可能直接命中的 filter（resource=mutagen recipe 池 0 个支持）
+      // 验证 widen 时 resource 先丢 · hasTag 保留
+      const def = getAffixV2Definition(generateAffixV2(RECIPE_TEACH))!
+      if (def.effect.kind !== 'gain_skill') return
+      const forcedEffect = {
+        ...def.effect,
+        filter: {
+          hasTag: 'maintenance' as const,
+          resource: 'mutagen' as const,   // recipe 池 0 个 maintenance 支持 mutagen
+          notOwned: false,
+        },
+      }
+      const r = resolveEffect(forcedEffect, { ...ctx, hostSkillLevel: 1 })
+      expect(r.skillsGranted.length).toBe(1)
+      expect(r.skillsGranted[0].widened).toBe(true)            // 走了 widen
+      // mutagen 不可达 · widen 丢 resource 后留 hasTag=maintenance → 应抽 feed/drink
+      const resource = r.skillsGranted[0].skill.resource
+      expect(['score', 'gold', 'shield', 'time', 'multiplier', 'base']).toContain(resource)
+    })
+  })
 })

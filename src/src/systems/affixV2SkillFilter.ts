@@ -133,7 +133,10 @@ export function matchSkillFilter(seed: SkillSeed, filter: SkillFilter): boolean 
 // 优先级：allTags 最严 → hasTag → rarity → resource 最宽。
 // 命中后立即停；全丢仍空 → 返回完全开放 filter + 全池兜底。
 
-const WIDEN_ORDER: readonly (keyof SkillFilter)[] = ['allTags', 'hasTag', 'rarity', 'resource'] as const
+// widen 优先级：先丢 secondary 维度（resource/rarity）· 再丢 allTags · 最后才丢 hasTag
+// 设计意图：hasTag（如 teach.section）是 narrative 主身份 · 保留到最后；
+//          rarity/resource 是细分维度 · 找不到时先放宽这两个 · 让 tooltip 描述与实际产出尽量一致
+const WIDEN_ORDER: readonly (keyof SkillFilter)[] = ['resource', 'rarity', 'allTags', 'hasTag'] as const
 
 export interface WidenResult {
   /** 最终生效的 filter（可能已 widen）*/
@@ -181,9 +184,14 @@ function copySuffix(): string {
   return getLocale() === 'en' ? ' [Copy]' : ' [副本]'
 }
 
-export function spawnSkillFromSeed(seed: SkillSeed, level: number): AffixSkillInstance {
+export function spawnSkillFromSeed(
+  seed: SkillSeed,
+  level: number,
+  filter?: SkillFilter,
+): AffixSkillInstance {
   const targetLv = Math.max(1, Math.floor(level))
   // 模板 spawn：深 clone shop / player 持有的 skill · 换 id · 改 level · 加 [副本] 后缀 · 清 purchasePrice
+  // 模板路径忽略 filter.rarity/resource（深 clone 保留模板的这些字段）
   if (seed.templateSkill) {
     const t = seed.templateSkill
     const rnd = random() || 0.0001
@@ -197,17 +205,37 @@ export function spawnSkillFromSeed(seed: SkillSeed, level: number): AffixSkillIn
       enchantmentIds: [...t.enchantmentIds],
       v2Ids: t.v2Ids ? [...t.v2Ids] : undefined,
     }
-    // 防套现：克隆体不带购买价格 · 卖出走默认折算（不能"买 N 用 imitate 复制 N 个再卖回血"）
+    // 防套现：克隆体不带购买价格 · 卖出走默认折算
     delete cloned.purchasePrice
     return cloned
   }
-  // recipe spawn：调 generateSkill · resource 从 seed.resourcePool 随机选
-  const resource = seed.resourcePool && seed.resourcePool.length > 0
-    ? (seed.resourcePool[Math.floor(random() * seed.resourcePool.length)] as ResourceType)
+
+  // recipe spawn：调 generateSkill · resource/rarity 受 filter 约束
+  // resource 候选 = seed.resourcePool ∩ filter.resource（交集空 fallback seed.resourcePool）
+  let candidateResources: readonly string[] | undefined = seed.resourcePool
+  if (filter?.resource !== undefined && seed.resourcePool && seed.resourcePool.length > 0) {
+    const want = Array.isArray(filter.resource) ? filter.resource : [filter.resource]
+    const intersection = seed.resourcePool.filter(r => want.includes(r))
+    if (intersection.length > 0) candidateResources = intersection
+  }
+  const resource = candidateResources && candidateResources.length > 0
+    ? (candidateResources[Math.floor(random() * candidateResources.length)] as ResourceType)
     : undefined
+
+  // rarity = filter.rarity（单值直取，区间从 [min,max] 随机）· 缺省 1
+  let rarity: SkillRarity = 1 as SkillRarity
+  if (typeof filter?.rarity === 'number') {
+    rarity = Math.max(0, Math.min(3, filter.rarity)) as SkillRarity
+  } else if (filter?.rarity && typeof filter.rarity === 'object') {
+    const min = filter.rarity.min ?? 0
+    const max = filter.rarity.max ?? 3
+    const rolled = min + Math.floor(random() * (max - min + 1))
+    rarity = Math.max(0, Math.min(3, rolled)) as SkillRarity
+  }
+
   return generateSkill({
     resource,
-    rarity: 1 as SkillRarity,
+    rarity,
     level: targetLv,
   })
 }

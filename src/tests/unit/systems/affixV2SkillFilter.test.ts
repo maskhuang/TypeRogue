@@ -103,7 +103,7 @@ describe('widenSkillFilter · 兜底逐档放宽', () => {
     expect(r.droppedFields).toContain('hasTag')
   })
 
-  it('allTags 先 drop · 再 hasTag · 再 rarity · 再 resource', () => {
+  it('widen 按 resource → rarity → allTags → hasTag 顺序逐步丢字段', () => {
     // 构造一个所有字段都不匹配的 filter
     const filter: SkillFilter = {
       allTags: ['gesture'],

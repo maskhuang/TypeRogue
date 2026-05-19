@@ -9,7 +9,7 @@
 
 import type { AffixV2Definition } from './affixV2'
 import { registerDynamicAffixV2 } from './affixV2'
-import type { TriggerSpec, EffectSpec, FireFilter, AuraModifier, TargetSelector, ScaleByTag } from './affixV2Trigger'
+import type { TriggerSpec, EffectSpec, FireFilter, AuraModifier, TargetSelector, ScaleByTag, SkillFilter } from './affixV2Trigger'
 import type { ResourceType } from '../core/types'
 import { random } from '../core/seededRandom'
 import type { SectionTag } from './affixTags'
@@ -416,17 +416,29 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     const scope = pickWeightedScope(FULL_SCOPE_POOL)
     effect = { kind: 'grant_haste', selector: scope.selector, amount: recipe.amount }
   } else if (recipe.kind === 'teach') {
-    // teach: trigger 固定 on_battle_end(any) · 胜败都触发（"示教"行为不因输赢中断）
-    //        filter.hasTag 在生成时随机抽 ALL_RECIPES 已有 section
-    //        排除 teach 自身（防 teach→teach 套娃链）· 每个生成实例 hasTag 锁死，跨战不变
+    // teach: trigger 固定 on_battle_end(any) · 胜败都触发
+    // filter 三维度复合 · 生成时独立 roll · 每个实例锁死：
+    //   - hasTag (100%)：从 ALL_RECIPES non-teach sections 随机 1 段（教学的"对象段"）
+    //   - resource (40%)：从 6 通用资源随机 1 个（教学的"主产出"）
+    //   - rarity (20%)：0-3 等权随机（教学的"水平"）
+    // 复合后 widen fallback 顺序 (resource → rarity → allTags → hasTag) 优先保留 section
     triggerSpec = { type: 'on_battle_end', result: 'any' }
     const recipeSections = [...new Set(
       ALL_RECIPES.filter(r => r.kind !== 'teach').map(r => r.section),
     )]
     const rolledSection: SectionTag = pickRandom(recipeSections)
+
+    let teachFilter: SkillFilter = { hasTag: rolledSection, notOwned: false }
+    if (random() < 0.4) {
+      teachFilter = { ...teachFilter, resource: pickRandom(MATCHED_RESOURCE_POOL) }
+    }
+    if (random() < 0.2) {
+      teachFilter = { ...teachFilter, rarity: Math.floor(random() * 4) }
+    }
+
     effect = {
       kind: 'gain_skill',
-      filter: { hasTag: rolledSection, notOwned: false },
+      filter: teachFilter,
       source: 'recipe_pool',
       count: 1,
       levelMode: 'inherit_host',
