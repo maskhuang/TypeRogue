@@ -143,12 +143,13 @@ describe('getCandidatePool · recipe_pool 来源', () => {
     expect(getCandidatePool('altar_pool').length).toBe(0)
   })
 
-  it('recipe_pool 含 tool 段（nut_crack）→ teach filter:{hasTag:tool} 直接命中', () => {
+  it('recipe_pool 含 tool 段（nut_crack）· 全段至少 5 种 section 覆盖', () => {
     // 当前 ALL_RECIPES: feed/climb/run/piloerection/drumming/drink/leap/nut_crack
-    // tool 段 ≥1 个 → filter:{hasTag:'tool'} 不再走 widen
+    // 包含 maintenance / locomotion / posture / agonistic / tool 5 段
     const pool = getCandidatePool('recipe_pool')
-    const toolMatches = pool.filter(s => s.section === 'tool')
-    expect(toolMatches.length).toBeGreaterThan(0)
+    const sections = new Set(pool.map(s => s.section))
+    expect(sections.has('tool')).toBe(true)
+    expect(sections.size).toBeGreaterThanOrEqual(5)
   })
 })
 

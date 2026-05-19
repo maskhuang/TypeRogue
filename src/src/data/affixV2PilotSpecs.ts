@@ -117,18 +117,18 @@ export const PILOT_AFFIX_SPECS: Record<string, AffixV2PilotSpec> = {
   },
 
   // ── 11 · tool · gain_skill · teach ──
-  // 战斗胜利后 → 获得 1 个 tool 段、与本技能同 Lv 的新技能
-  // 师承叙事：宿主修为多深 → 徒弟出师就多深；filter 无命中走 widen 兜底
+  // 战斗胜利后 → 获得 1 个任意 recipe 池技能、与本技能同 Lv 的新技能
+  // 师承叙事：宿主修为多深 → 徒弟出师就多深；不限段（"任意教学"）
   teach: {
     archetype: 'gain_skill',
     trigger: { type: 'on_battle_end', result: 'win' },
     effect: {
       kind: 'gain_skill',
-      filter: { hasTag: 'tool', notOwned: false },
+      filter: { notOwned: false },          // 全开 · 7 个 recipe 全池随机抽
       source: 'recipe_pool',
       count: 1,
       levelMode: 'inherit_host',
-      fallback: 'widen',
+      fallback: 'widen',                    // 不会触发（filter 已全开）· 保留作 safety net
     },
   },
 

@@ -239,12 +239,12 @@ describe('Archetype 覆盖 · S2 验证', () => {
 })
 
 describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () => {
-  it('teach tooltip · 包含"获得" · 不含"创生"', () => {
+  it('teach tooltip · 包含"获得" + "任意" · 不含"创生"', () => {
     const def = getAffixV2Definition('teach')!
     const desc = formatAffixV2Description(def, 'score')
     expect(desc).toContain('获得')
     expect(desc).not.toContain('创生')
-    expect(desc).toContain('工具类')              // hasTag:'tool' 显示
+    expect(desc).toContain('任意')                // filter 全开 · 渲染"任意技能"
     expect(desc).toContain('与本技能同 Lv')
   })
 
@@ -362,11 +362,11 @@ describe('Pilot 11 · teach (tool · gain_skill)', () => {
     expect(r.skillsGranted[0].skill.level).toBe(5)
   })
 
-  it('filter:hasTag=tool 命中 nut_crack recipe · 不走 widen 兜底', () => {
+  it('filter 全开 · 全 7 recipe 池随机抽 · 不走 widen', () => {
     const def = getAffixV2Definition('teach')!
     const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 3 })
     expect(r.skillsGranted.length).toBe(1)
-    expect(r.skillsGranted[0].widened).toBe(false)   // tool recipe 存在 → 严绑
+    expect(r.skillsGranted[0].widened).toBe(false)   // filter 已全开 · 不需 widen
   })
 
   it('多次 resolveEffect 各产 1 个 · 不去重', () => {
