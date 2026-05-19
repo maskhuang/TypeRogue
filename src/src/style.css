@@ -1938,9 +1938,15 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 }
 .gameover-bezel {
     width: 100%; max-width: 880px;
-    max-height: calc(100vh - 48px);
+    /* #game-container 写死 900x600 · bezel max 用绝对 px（不是 100vh/100%）·
+     * 600 - padding(24*2) = 552; 之前 100vh 在大视口下算成 1000+ px，
+     * 撑爆 #game-container(600) 触发 overflow:hidden 截断 actions 按钮。*/
+    max-height: 552px;
+    /* min-height: 0 必加 — flex item 默认 min-height: auto (= min-content)，
+     * 会无视 max-height，让 grid 内容把 bezel 撑爆。*/
+    min-height: 0;
     display: grid;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-columns: 14px 1fr 14px;
     border-radius: 10px;
     background: transparent;
@@ -2031,14 +2037,20 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
         inset 0 0 24px rgba(0,0,0,0.55),
         inset 0 0 80px rgba(0,0,0,0.3),
         inset 0 0 0 2px #1a1208;
-    padding: 22px 28px 26px;
+    /* padding-bottom 故意为 0 — 改用 .gameover-screen-content { padding-bottom }
+     * 因为 Safari/旧 Chrome 不把 scroll container 的 padding-bottom 计入 scrollHeight，
+     * 导致 scroll 到底时最后一个元素仍被遮 ~26px；放到内容容器上就一定算进 scrollHeight。*/
+    padding: 22px 28px 0;
     color: var(--color-seal-gold);
     text-shadow: 0 0 6px rgba(201,164,94,0.55);
     font-size: 13px; line-height: 1.7;
     letter-spacing: 1px;
     position: relative;
+    /* min-height 380 在 600px 容器里给到 grid 1fr 行已经够；不再写 max-height —
+     * grid `1fr` 会从父 bezel(max 552) 的剩余空间分配，自动 ≤ 容器，无需 vh-based clamp。
+     * 之前用 calc(100vh - 120px) 在大视口下会算出远超 #game-container(600px) 的值，
+     * 撑爆 #game-container 触发 overflow:hidden 截断 actions。*/
     min-height: 380px;
-    max-height: calc(100vh - 120px);
     /* overflow-y: auto 单独写（避免被 shorthand overflow 反复覆盖）·
      * scrollbar 用 sepia 调色板（避免 macOS 默认 overlay 隐藏让用户看不到可滚动提示）*/
     overflow-x: hidden;
@@ -2061,9 +2073,16 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
 .gameover-bezel-screen::-webkit-scrollbar-thumb:hover {
     background: #e8c885;
 }
-.gameover-bezel-screen::before {
-    /* 镜像 .gold-screen::before：浅条纹 + 暗角，paper-craft 弱光 */
-    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 3;
+.gameover-bezel-overlay {
+    /* 镜像 .gold-screen::before：浅条纹 + 暗角，paper-craft 弱光
+     * 放在 bezel 同 grid 格（row 2 / col 2，与 screen 重叠），不在 screen 内部，
+     * 所以不会跟着滚动；pointer-events:none 让滚轮/点击穿透；inset 右 8px 让出滚动条 */
+    grid-row: 2; grid-column: 2;
+    position: relative;
+    align-self: stretch; justify-self: stretch;
+    pointer-events: none;
+    z-index: 3;
+    margin-right: 8px;
     background:
         repeating-linear-gradient(
             to bottom,
@@ -2074,7 +2093,7 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
         ),
         radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.6) 100%);
 }
-.gameover-screen-content { position: relative; z-index: 1; }
+.gameover-screen-content { position: relative; z-index: 1; padding-bottom: 26px; }
 .gameover-screen-content > * { position: relative; z-index: 1; }
 
 #gameover-header {
