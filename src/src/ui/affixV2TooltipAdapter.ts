@@ -351,6 +351,9 @@ function formatSkillFilter(filter: SkillFilter, defSection?: SectionTag): string
     const rs = Array.isArray(filter.resource) ? filter.resource.map(locResource).join('/') : locResource(filter.resource as string)
     parts.push(zh ? `${rs}产出` : `${rs}-producing`)
   }
+  if (filter.neighborPosRel !== undefined) {
+    parts.push(zh ? `${locRel(filter.neighborPosRel)}邻位` : `${locRel(filter.neighborPosRel)} neighbor`)
+  }
   if (filter.rarity !== undefined) {
     if (typeof filter.rarity === 'number') {
       parts.push(zh ? `${filter.rarity} 词条` : `rarity ${filter.rarity}`)

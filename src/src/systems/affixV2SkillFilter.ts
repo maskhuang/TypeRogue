@@ -18,6 +18,7 @@ import { random } from '../core/seededRandom'
 import { state as gameState } from '../core/state'
 import { getAffixV2Definition } from '../data/affixV2'
 import { getLocale } from '../demo/demo-i18n'
+import { hasRelation, type PositionRelation } from '../data/keyboardTopology'
 
 // ============================================
 // SkillSeed · 候选种子
@@ -47,8 +48,8 @@ export function getCandidatePool(
   excludeSkillId?: string,
 ): readonly SkillSeed[] {
   if (source === 'recipe_pool') {
-    // 排除 meta-progression recipe（teach）· 防 teach→teach 递归
-    return ALL_RECIPES.filter(r => r.kind !== 'teach').map(r => ({
+    // 排除 meta-progression recipe（teach / imitate）· 防 gain_skill→gain_skill 直接递归
+    return ALL_RECIPES.filter(r => r.kind !== 'teach' && r.kind !== 'imitate').map(r => ({
       source: 'recipe_pool' as const,
       recipe: r,
       section: r.section,
@@ -125,6 +126,30 @@ export function matchSkillFilter(seed: SkillSeed, filter: SkillFilter): boolean 
     if (nots.includes(seed.section)) return false
   }
   return true
+}
+
+// ============================================
+// filterByNeighborPosRel · player_skill_pool 候选池按宿主键位 + posRel 收紧
+// ============================================
+// 把候选池过滤为"绑定到宿主键位 X 邻位"的 skill · 仅 template seed 路径有意义
+// 多键绑定（shape）任一格命中即过
+
+export function filterByNeighborPosRel(
+  pool: readonly SkillSeed[],
+  hostKey: string,
+  posRel: PositionRelation,
+): readonly SkillSeed[] {
+  if (!hostKey) return []          // 无 host key 上下文 · 无法计算邻位 · 返空
+  return pool.filter(seed => {
+    if (!seed.templateSkill) return false
+    const targetId = seed.templateSkill.id
+    // 找该 skill 当前绑定到哪些键位 · 任一格与 hostKey 满足 posRel 即过
+    for (const [k, sid] of gameState.player.bindings) {
+      if (sid !== targetId) continue
+      if (hasRelation(hostKey, k, posRel)) return true
+    }
+    return false
+  })
 }
 
 // ============================================

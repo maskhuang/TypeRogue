@@ -116,26 +116,10 @@ export const PILOT_AFFIX_SPECS: Record<string, AffixV2PilotSpec> = {
     effect: { kind: 'gain_resource', resource: 'score', ratio: 0.05 },
   },
 
-  // teach 已下放到 recipe_pool · 见 affixV2Generator.ts RECIPE_TEACH
-  //   每个生成实例 filter.hasTag 在 generateAffixV2 时随机锁定一个 section
-  //   不再是 pilot · 静态 JSON 'teach' 词条变为 noop（仅作命名占位）
-
-  // ── 11 · tool · gain_skill · imitate ──
-  // 战斗胜利后 → 深 clone 1 个玩家自有 skill · Lv 等同宿主 · 仅同 section 兄弟（hasTagFromHost）
-  // 模仿叙事：复制邻位 · 与 teach 的 recipe 创生互补 · pool 空走 skip 不 widen
-  // hasTagFromHost: tool 段 imitate 只复制 tool 兄弟；若改投到 maintenance 段则自动改复制 maintenance
-  imitate: {
-    archetype: 'gain_skill',
-    trigger: { type: 'on_battle_end', result: 'win' },
-    effect: {
-      kind: 'gain_skill',
-      filter: { hasTagFromHost: true, notOwned: false },
-      source: 'player_skill_pool',
-      count: 1,
-      levelMode: 'inherit_host',
-      fallback: 'skip',           // imitate 是 nice-to-have · 无可复制对象不强 widen
-    },
-  },
+  // teach / imitate 已下放到 recipe_pool · 见 affixV2Generator.ts RECIPE_TEACH / RECIPE_IMITATE
+  //   teach 每个生成实例 filter.hasTag 在 generateAffixV2 时随机锁 1 段
+  //   imitate 每个生成实例 filter.neighborPosRel 锁 1 种 6 关系之一
+  //   静态 JSON 'teach' / 'imitate' 词条变为 noop（仅作命名占位）
 
   // ── 9 · abnormal · conditional · pacing ──
   // 危险情境下产出放大（shield < 50% Lv1 base 时 ratio ×6）
@@ -158,8 +142,8 @@ export const PILOT_AFFIX_IDS = [
   // 扩展 · 覆盖剩余 trigger 类型
   'chew',       // every_n_keys
   'cling',      // on_fire(filter:resource)
-  // meta-progression（teach 已下放到 recipe_pool · 见 affixV2Generator.RECIPE_TEACH）
-  'imitate',    // on_battle_end + gain_skill(player_skill_pool)
+  // meta-progression 已全下放到 recipe_pool · 见 affixV2Generator
+  //   RECIPE_TEACH / RECIPE_IMITATE
 ] as const
 
 /** 查询接口 · 给 affixV2.ts buildDefinition 用 */

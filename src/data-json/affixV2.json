@@ -128,7 +128,7 @@
     { "id": "gaze_follow", "name_zh": "视线跟随", "name_en": "gaze-follow", "section": "tool", "phase": "P2", "notes": "邻居读取" },
     { "id": "gaze_alternation", "name_zh": "视线交替", "name_en": "gaze-alternation", "section": "tool", "phase": "P2", "notes": "双向读取" },
     { "id": "pointing", "name_zh": "指点", "name_en": "pointing", "section": "tool", "phase": "P2", "notes": "标记目标" },
-    { "id": "imitate", "name_zh": "模仿", "name_en": "imitate", "section": "tool", "phase": "P1", "notes": "on_battle_end → gain_skill(player_skill_pool) · 深 clone 玩家自有 skill（排除宿主）" },
+    { "id": "imitate", "name_zh": "模仿", "name_en": "imitate", "section": "tool", "phase": "P1", "notes": "recipe_pool 实装（RECIPE_IMITATE）· 每个生成实例 neighborPosRel 锁 6 关系之一 · 静态 JSON id 为 noop 占位" },
     { "id": "teach", "name_zh": "示教", "name_en": "teach", "section": "tool", "phase": "P1", "notes": "recipe_pool 实装（RECIPE_TEACH）· 每个生成实例 hasTag 随机锁定 1 段 · 静态 JSON id 为 noop 占位" },
 
     { "id": "pacing", "name_zh": "踱步", "name_en": "pacing", "section": "abnormal", "phase": "P2", "notes": "自循环" },

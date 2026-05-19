@@ -159,6 +159,10 @@ export interface SkillFilter {
    *  典型用法：imitate 在不同 section 上自动只复制同 section 兄弟
    *  与显式 hasTag 同时存在时以本字段为准（覆盖） */
   readonly hasTagFromHost?: boolean
+  /** 候选池仅含与宿主键位满足 posRel 关系的 skill（player_skill_pool 主用 · 其他 source 忽略）
+   *  6 种关系：Adjacent / SameRow / SameColumn / SameHand / SameFinger / Symmetric
+   *  典型用法：imitate 限定为某种位置邻位的兄弟 skill */
+  readonly neighborPosRel?: import('./keyboardTopology').PositionRelation
 }
 
 // ===== SkillFilter widen 候选维度（fallback='widen' 时按顺序逐档放宽）

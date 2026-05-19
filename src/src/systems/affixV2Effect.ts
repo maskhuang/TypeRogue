@@ -28,7 +28,7 @@ import {
   grantHaste,
 } from './affixV2State'
 import { random } from '../core/seededRandom'
-import { getCandidatePool, widenSkillFilter, spawnSkillFromSeed } from './affixV2SkillFilter'
+import { getCandidatePool, widenSkillFilter, spawnSkillFromSeed, filterByNeighborPosRel } from './affixV2SkillFilter'
 
 // ============================================
 // EquippedView · 已装备 affix 的查询视图（避免 affixV2Effect → affixV2Equipped 循环依赖）
@@ -308,8 +308,12 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       // 解析候选池 + filter widen 兜底
       const source = spec.source ?? 'recipe_pool'
       // player_skill_pool 需排除宿主自身（防自我无限克隆）· 其他 source 不需 hostId
-      const pool = getCandidatePool(source, source === 'player_skill_pool' ? ctx.skillId : undefined)
-      if (pool.length === 0) return  // 空池（shop/altar stub · player_skill_pool 无 V2 owned skill 等）直接放弃
+      let pool = getCandidatePool(source, source === 'player_skill_pool' ? ctx.skillId : undefined)
+      // neighborPosRel · 仅 player_skill_pool 有键位信息可计算邻位 · 收紧候选到宿主键位邻位
+      if (spec.filter.neighborPosRel !== undefined && source === 'player_skill_pool') {
+        pool = filterByNeighborPosRel(pool, ctx.key, spec.filter.neighborPosRel)
+      }
+      if (pool.length === 0) return  // 空池（shop/altar stub · 无邻位兄弟 · player_skill_pool 空等）直接放弃
 
       // hasTagFromHost · 用本词条 def 的 section 覆盖 filter.hasTag（缺 selfSection 时退化为去掉该字段）
       let effectiveFilter = spec.filter

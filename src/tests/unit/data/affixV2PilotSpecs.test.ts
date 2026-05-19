@@ -8,7 +8,9 @@ import { PILOT_AFFIX_IDS, getPilotSpec } from '../../../src/data/affixV2PilotSpe
 import { getAffixV2Definition } from '../../../src/data/affixV2'
 import { resolveEffect, type ResolveContext } from '../../../src/systems/affixV2Effect'
 import { formatEffectDescription, formatAffixV2Description } from '../../../src/ui/affixV2TooltipAdapter'
-import { generateAffixV2, RECIPE_TEACH } from '../../../src/data/affixV2Generator'
+import { generateAffixV2, RECIPE_TEACH, RECIPE_IMITATE } from '../../../src/data/affixV2Generator'
+import { PositionRelation } from '../../../src/data/keyboardTopology'
+import type { EffectSpec } from '../../../src/data/affixV2Trigger'
 import { getCandidatePool } from '../../../src/systems/affixV2SkillFilter'
 import {
   resetAllAffixV2State,
@@ -37,10 +39,10 @@ beforeEach(() => {
   resetAllAffixV2State()
 })
 
-describe('PILOT specs · 11 个全在', () => {
-  it('PILOT_AFFIX_IDS 完整 11 个', () => {
-    expect(PILOT_AFFIX_IDS.length).toBe(11)
-    expect(new Set(PILOT_AFFIX_IDS).size).toBe(11)
+describe('PILOT specs · 10 个全在', () => {
+  it('PILOT_AFFIX_IDS 完整 10 个', () => {
+    expect(PILOT_AFFIX_IDS.length).toBe(10)
+    expect(new Set(PILOT_AFFIX_IDS).size).toBe(10)
   })
 
   it('每个 id 都能查到 spec', () => {
@@ -215,7 +217,7 @@ describe('Archetype 覆盖 · S2 验证', () => {
     expect(archetypes.has('conditional')).toBe(true)
   })
 
-  it('涵盖全 6 Phase 1 trigger 类型', () => {
+  it('涵盖 6 Phase 1 trigger 类型（gain_skill 类已下放 recipe_pool）', () => {
     const triggers = new Set(PILOT_AFFIX_IDS.map(id => getPilotSpec(id)!.trigger.type))
     expect(triggers.has('on_key')).toBe(true)
     expect(triggers.has('on_word_end')).toBe(true)
@@ -223,11 +225,11 @@ describe('Archetype 覆盖 · S2 验证', () => {
     expect(triggers.has('passive')).toBe(true)
     expect(triggers.has('every_n_keys')).toBe(true)
     expect(triggers.has('on_fire')).toBe(true)
-    // imitate (on_battle_end) 覆盖 · teach 已下放 recipe_pool 不在 pilot
-    expect(triggers.has('on_battle_end')).toBe(true)
+    // on_battle_end 由 RECIPE_TEACH / RECIPE_IMITATE 提供 · pilot 不再覆盖
+    expect(triggers.has('on_battle_end')).toBe(false)
   })
 
-  it('pilot 中 gain_skill source 限 player_skill_pool（recipe_pool 由 RECIPE_TEACH 提供）', () => {
+  it('pilot 不再含 gain_skill effect（meta-progression 全下放 recipe_pool）', () => {
     const sources = new Set<string>()
     for (const id of PILOT_AFFIX_IDS) {
       const eff = getPilotSpec(id)!.effect
@@ -235,102 +237,221 @@ describe('Archetype 覆盖 · S2 验证', () => {
         sources.add(eff.source ?? 'recipe_pool')
       }
     }
-    expect(sources.has('player_skill_pool')).toBe(true)   // imitate
-    // recipe_pool 不再由 pilot 提供 · 见 affixV2Generator.RECIPE_TEACH
+    expect(sources.size).toBe(0)   // 0 gain_skill in pilot
   })
 })
 
 describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () => {
-  it('imitate tooltip · 包含"自有复制" + "工具类" · 不含"同 section"', () => {
-    const def = getAffixV2Definition('imitate')!
+  it('imitate (recipe-generated) tooltip · 自有复制 + 工具类 + 邻位关系 · 不含"同 section"', () => {
+    const id = generateAffixV2(RECIPE_IMITATE)
+    const def = getAffixV2Definition(id)!
     const desc = formatAffixV2Description(def, 'score')
     expect(desc).toContain('自有复制')
     expect(desc).toContain('工具类')              // hasTagFromHost + def.section='tool' → 工具类
+    expect(desc).toMatch(/(相邻|同行|同列|同手|同指|对称)邻位/)  // 6 种 PositionRelation 之一
     expect(desc).not.toContain('同 section')
-    expect(desc).not.toContain('section')         // 英文残留也检查
     expect(desc).toContain('与本技能同 Lv')
   })
 
   it('hasTagFromHost · 无 defSection 时退化为"同类"', () => {
-    const def = getAffixV2Definition('imitate')!
-    // 不传 defSection · formatEffectDescription 第三参缺省
-    const desc = formatEffectDescription(def.effect, 'score')
+    // 用手造 effect spec · 不挂 defSection
+    const desc = formatEffectDescription(
+      {
+        kind: 'gain_skill',
+        filter: { hasTagFromHost: true },
+        source: 'player_skill_pool',
+      },
+      'score',
+    )
     expect(desc).toContain('同类')
     expect(desc).not.toContain('同 section')
   })
 })
 
-describe('Pilot 11 · imitate (tool · gain_skill · player_skill_pool · hasTagFromHost)', () => {
-  it('on_battle_end + gain_skill spec 正确装配 + source=player_skill_pool', () => {
+describe('Recipe · imitate (player_skill_pool · 生成时锁 neighborPosRel)', () => {
+  afterEach(() => {
+    gameState.affixSkills.clear()
+    gameState.player.bindings.clear()
+  })
+
+  function mkOwnedV2(id: string, resource: string, v2DefId: string): AffixSkillInstance {
+    return {
+      id, name: `Owned-${id}`, icon: '?',
+      resource: resource as AffixSkillInstance['resource'],
+      baseValues: [1, 2, 3, 4], level: 1, rarity: 1,
+      affixes: [], enchantmentIds: [], v2Ids: [v2DefId],
+    }
+  }
+
+  it('静态 JSON imitate 为 noop 占位（已下放 recipe_pool）', () => {
     const def = getAffixV2Definition('imitate')!
-    expect(def.trigger).toEqual({ type: 'on_battle_end', result: 'win' })
+    expect(def.trigger.type).toBe('passive')
+    expect(def.effect.kind).toBe('noop')
+  })
+
+  it('generateAffixV2(RECIPE_IMITATE) 生成 def 含 on_battle_end(any) + gain_skill', () => {
+    const id = generateAffixV2(RECIPE_IMITATE)
+    const def = getAffixV2Definition(id)!
+    expect(def.trigger).toEqual({ type: 'on_battle_end', result: 'any' })
     expect(def.effect.kind).toBe('gain_skill')
     if (def.effect.kind === 'gain_skill') {
       expect(def.effect.source).toBe('player_skill_pool')
       expect(def.effect.fallback).toBe('skip')
       expect(def.effect.filter.hasTagFromHost).toBe(true)
+      expect(def.effect.filter.neighborPosRel).toBeDefined()
     }
   })
 
-  it('player_skill_pool 空（无 V2 owned skill）→ skillsGranted 空（fallback=skip）', () => {
-    const def = getAffixV2Definition('imitate')!
-    // ctx 不挂任何 state · gameState.affixSkills 在测试初始空
-    const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 3 })
+  it('多个生成实例可有不同 neighborPosRel', () => {
+    const rels = new Set<PositionRelation>()
+    for (let i = 0; i < 30; i++) {
+      const id = generateAffixV2(RECIPE_IMITATE)
+      const def = getAffixV2Definition(id)!
+      if (def.effect.kind === 'gain_skill' && def.effect.filter.neighborPosRel !== undefined) {
+        rels.add(def.effect.filter.neighborPosRel)
+      }
+    }
+    expect(rels.size).toBeGreaterThan(1)   // 30 抽至少 2 种关系
+  })
+
+  it('无邻位兄弟 · skillsGranted 空（fallback=skip）', () => {
+    // 不设 bindings · neighborPosRel 过滤后 pool 必空
+    const id = generateAffixV2(RECIPE_IMITATE)
+    const def = getAffixV2Definition(id)!
+    const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 3, selfSection: 'tool' })
     expect(r.skillsGranted.length).toBe(0)
   })
+})
 
-  describe('hasTagFromHost · selfSection 动态绑定', () => {
-    afterEach(() => {
-      gameState.affixSkills.clear()
-    })
+describe('hasTagFromHost 基础语义（独立于 imitate · 无 neighborPosRel 约束）', () => {
+  afterEach(() => {
+    gameState.affixSkills.clear()
+  })
 
-    function mkOwnedV2(id: string, resource: string, v2DefId: string): AffixSkillInstance {
-      return {
-        id, name: `Owned-${id}`, icon: '?',
-        resource: resource as AffixSkillInstance['resource'],
-        baseValues: [1, 2, 3, 4], level: 1, rarity: 1,
-        affixes: [], enchantmentIds: [], v2Ids: [v2DefId],
-      }
+  function mkOwnedV2(id: string, resource: string, v2DefId: string): AffixSkillInstance {
+    return {
+      id, name: `Owned-${id}`, icon: '?',
+      resource: resource as AffixSkillInstance['resource'],
+      baseValues: [1, 2, 3, 4], level: 1, rarity: 1,
+      affixes: [], enchantmentIds: [], v2Ids: [v2DefId],
     }
+  }
 
-    it('selfSection=tool · 仅 tool 段兄弟入候选 · 跨段被过滤', () => {
-      // mix tool + maintenance + locomotion siblings
-      gameState.affixSkills.set('tool_sib', mkOwnedV2('tool_sib', 'score', 'nut_crack'))      // tool（recipe nut_crack 是 tool 段）
-      gameState.affixSkills.set('maint_sib', mkOwnedV2('maint_sib', 'gold', 'feed'))           // maintenance
-      gameState.affixSkills.set('loco_sib', mkOwnedV2('loco_sib', 'shield', 'climb'))          // locomotion
-      const def = getAffixV2Definition('imitate')!
-      // 跑 5 次以确保不是恰巧抽中 tool
-      for (let i = 0; i < 5; i++) {
-        const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 1, selfSection: 'tool' })
-        expect(r.skillsGranted.length).toBe(1)
-        // 克隆体的 resource 来自 tool_sib (score) · 不应是 gold/shield
-        expect(r.skillsGranted[0].skill.resource).toBe('score')
-      }
-    })
+  // 手造一个最小 gain_skill spec · 仅 hasTagFromHost · 不挂 neighborPosRel · 隔离 hasTagFromHost 维度
+  const bareImitateEffect: EffectSpec = {
+    kind: 'gain_skill',
+    filter: { hasTagFromHost: true, notOwned: false },
+    source: 'player_skill_pool',
+    count: 1,
+    levelMode: 'inherit_host',
+    fallback: 'skip',
+  }
 
-    it('selfSection=maintenance · 同段切换 · imitate 自动改为复制 maintenance', () => {
-      gameState.affixSkills.set('tool_sib', mkOwnedV2('tool_sib', 'score', 'nut_crack'))
-      gameState.affixSkills.set('maint_sib', mkOwnedV2('maint_sib', 'gold', 'feed'))
-      const def = getAffixV2Definition('imitate')!
-      for (let i = 0; i < 5; i++) {
-        const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 1, selfSection: 'maintenance' })
-        expect(r.skillsGranted.length).toBe(1)
-        expect(r.skillsGranted[0].skill.resource).toBe('gold')   // 只可能抽到 maint_sib
-      }
-    })
+  it('selfSection=tool · 仅 tool 段兄弟入候选 · 跨段被过滤', () => {
+    gameState.affixSkills.set('tool_sib', mkOwnedV2('tool_sib', 'score', 'nut_crack'))
+    gameState.affixSkills.set('maint_sib', mkOwnedV2('maint_sib', 'gold', 'feed'))
+    gameState.affixSkills.set('loco_sib', mkOwnedV2('loco_sib', 'shield', 'climb'))
+    for (let i = 0; i < 5; i++) {
+      const r = resolveEffect(bareImitateEffect, { ...ctx, hostSkillLevel: 1, selfSection: 'tool' })
+      expect(r.skillsGranted.length).toBe(1)
+      expect(r.skillsGranted[0].skill.resource).toBe('score')
+    }
+  })
 
-    it('selfSection 缺省 → hasTagFromHost 退化为无 tag filter（全池可抽）', () => {
-      gameState.affixSkills.set('tool_sib', mkOwnedV2('tool_sib', 'score', 'nut_crack'))
-      gameState.affixSkills.set('maint_sib', mkOwnedV2('maint_sib', 'gold', 'feed'))
-      const def = getAffixV2Definition('imitate')!
-      const resources = new Set<string>()
-      // 不传 selfSection · 跑 30 次应能抽到两种 resource
-      for (let i = 0; i < 30; i++) {
-        const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 1 })
-        if (r.skillsGranted.length > 0) resources.add(r.skillsGranted[0].skill.resource)
-      }
-      expect(resources.size).toBeGreaterThan(1)
-    })
+  it('selfSection=maintenance · 切换 section · 改为复制 maintenance 兄弟', () => {
+    gameState.affixSkills.set('tool_sib', mkOwnedV2('tool_sib', 'score', 'nut_crack'))
+    gameState.affixSkills.set('maint_sib', mkOwnedV2('maint_sib', 'gold', 'feed'))
+    for (let i = 0; i < 5; i++) {
+      const r = resolveEffect(bareImitateEffect, { ...ctx, hostSkillLevel: 1, selfSection: 'maintenance' })
+      expect(r.skillsGranted.length).toBe(1)
+      expect(r.skillsGranted[0].skill.resource).toBe('gold')
+    }
+  })
+
+  it('selfSection 缺省 → hasTagFromHost 退化无 tag · 全池可抽', () => {
+    gameState.affixSkills.set('tool_sib', mkOwnedV2('tool_sib', 'score', 'nut_crack'))
+    gameState.affixSkills.set('maint_sib', mkOwnedV2('maint_sib', 'gold', 'feed'))
+    const resources = new Set<string>()
+    for (let i = 0; i < 30; i++) {
+      const r = resolveEffect(bareImitateEffect, { ...ctx, hostSkillLevel: 1 })
+      if (r.skillsGranted.length > 0) resources.add(r.skillsGranted[0].skill.resource)
+    }
+    expect(resources.size).toBeGreaterThan(1)
+  })
+})
+
+describe('neighborPosRel · 候选池按宿主键位邻位收紧', () => {
+  afterEach(() => {
+    gameState.affixSkills.clear()
+    gameState.player.bindings.clear()
+  })
+
+  function mkOwnedV2(id: string, resource: string, v2DefId: string): AffixSkillInstance {
+    return {
+      id, name: `Owned-${id}`, icon: '?',
+      resource: resource as AffixSkillInstance['resource'],
+      baseValues: [1, 2, 3, 4], level: 1, rarity: 1,
+      affixes: [], enchantmentIds: [], v2Ids: [v2DefId],
+    }
+  }
+
+  it('SameRow + host=f · 同行兄弟 g 入候选 · 不同行兄弟 q 被过滤', () => {
+    // setup: 兄弟 g 绑 g 键（中行 · 同 f）· 兄弟 q 绑 q 键（顶行 · 跨行）· host 在 f
+    gameState.affixSkills.set('g_sib', mkOwnedV2('g_sib', 'gold', 'nut_crack'))
+    gameState.affixSkills.set('q_sib', mkOwnedV2('q_sib', 'shield', 'nut_crack'))   // 顶行
+    gameState.player.bindings.set('g', 'g_sib')
+    gameState.player.bindings.set('q', 'q_sib')
+
+    const effect: EffectSpec = {
+      kind: 'gain_skill',
+      filter: { hasTagFromHost: true, neighborPosRel: PositionRelation.SameRow, notOwned: false },
+      source: 'player_skill_pool',
+      count: 1,
+      levelMode: 'inherit_host',
+      fallback: 'skip',
+    }
+    for (let i = 0; i < 5; i++) {
+      const r = resolveEffect(effect, { ...ctx, key: 'f', hostSkillLevel: 1, selfSection: 'tool' })
+      expect(r.skillsGranted.length).toBe(1)
+      expect(r.skillsGranted[0].skill.resource).toBe('gold')   // g 同行 f · 必命中 g_sib
+    }
+  })
+
+  it('Adjacent + host=f · 仅相邻键位 (d/g/r/v 等) 兄弟入候选', () => {
+    gameState.affixSkills.set('g_sib', mkOwnedV2('g_sib', 'gold', 'nut_crack'))     // f-g 相邻
+    gameState.affixSkills.set('p_sib', mkOwnedV2('p_sib', 'shield', 'nut_crack'))   // f-p 不相邻
+    gameState.player.bindings.set('g', 'g_sib')
+    gameState.player.bindings.set('p', 'p_sib')
+
+    const effect: EffectSpec = {
+      kind: 'gain_skill',
+      filter: { hasTagFromHost: true, neighborPosRel: PositionRelation.Adjacent, notOwned: false },
+      source: 'player_skill_pool',
+      count: 1,
+      levelMode: 'inherit_host',
+      fallback: 'skip',
+    }
+    for (let i = 0; i < 5; i++) {
+      const r = resolveEffect(effect, { ...ctx, key: 'f', hostSkillLevel: 1, selfSection: 'tool' })
+      expect(r.skillsGranted.length).toBe(1)
+      expect(r.skillsGranted[0].skill.resource).toBe('gold')
+    }
+  })
+
+  it('无满足 posRel 的 owned skill · pool 空 · fallback=skip 不送', () => {
+    gameState.affixSkills.set('p_sib', mkOwnedV2('p_sib', 'shield', 'nut_crack'))
+    gameState.player.bindings.set('p', 'p_sib')
+
+    const effect: EffectSpec = {
+      kind: 'gain_skill',
+      filter: { hasTagFromHost: true, neighborPosRel: PositionRelation.Adjacent, notOwned: false },
+      source: 'player_skill_pool',
+      count: 1,
+      levelMode: 'inherit_host',
+      fallback: 'skip',
+    }
+    const r = resolveEffect(effect, { ...ctx, key: 'f', hostSkillLevel: 1, selfSection: 'tool' })
+    expect(r.skillsGranted.length).toBe(0)
   })
 })
 

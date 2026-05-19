@@ -224,7 +224,19 @@ export interface TeachRecipe {
   readonly name_en: string
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | HasteRecipe | TeachRecipe
+/** imitate 系：on_battle_end + gain_skill(player_skill_pool) · meta-progression
+ *  生成时随机锁定一个 PositionRelation（6 种关系）· filter 收紧到宿主键位邻位 ·
+ *  hasTagFromHost=true 限定同段 · 每个 instance 锁死一个 posRel + 跟随宿主 section
+ */
+export interface ImitateRecipe {
+  readonly kind: 'imitate'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+}
+
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | HasteRecipe | TeachRecipe | ImitateRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -415,6 +427,22 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     }
     const scope = pickWeightedScope(FULL_SCOPE_POOL)
     effect = { kind: 'grant_haste', selector: scope.selector, amount: recipe.amount }
+  } else if (recipe.kind === 'imitate') {
+    // imitate: trigger 固定 on_battle_end(any) · 胜败都触发
+    // filter 复合：
+    //   - hasTagFromHost=true：限定同 section 兄弟（resolve 时填本词条 def.section）
+    //   - neighborPosRel：从 6 种 PositionRelation 随机锁 1 个 · 跨战不变
+    // source=player_skill_pool · fallback=skip（无邻位兄弟不强造）
+    triggerSpec = { type: 'on_battle_end', result: 'any' }
+    const rolledPosRel = pickRandom(POSREL_VALUES)
+    effect = {
+      kind: 'gain_skill',
+      filter: { hasTagFromHost: true, neighborPosRel: rolledPosRel, notOwned: false },
+      source: 'player_skill_pool',
+      count: 1,
+      levelMode: 'inherit_host',
+      fallback: 'skip',
+    }
   } else if (recipe.kind === 'teach') {
     // teach: trigger 固定 on_battle_end(any) · 胜败都触发
     // filter 三维度复合 · 生成时独立 roll · 每个实例锁死：
@@ -559,6 +587,14 @@ export const RECIPE_TEACH: TeachRecipe = {
   name_en: 'teach',
 }
 
+export const RECIPE_IMITATE: ImitateRecipe = {
+  kind: 'imitate',
+  id: 'imitate',
+  section: 'tool',          // imitate 自身 section（Cognitive/Tool 段）
+  name_zh: '模仿',
+  name_en: 'imitate',
+}
+
 /** 暂时全部 recipe 列表（生成 shop 选项时遍历此）*/
 export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_FEED,
@@ -570,6 +606,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_LEAP,
   RECIPE_NUT_CRACK,
   RECIPE_TEACH,
+  RECIPE_IMITATE,
 ]
 
 /** drink(convert) 以这些资源为 source 时降权 · time/gold 转化收益偏强，降低出率 */
