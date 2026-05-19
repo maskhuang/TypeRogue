@@ -193,7 +193,7 @@ function formatCondition(cond: ConditionSpec): string {
 // Effect → 人读文字
 // ============================================
 
-export function formatEffectDescription(effect: EffectSpec, skillResource?: string): string {
+export function formatEffectDescription(effect: EffectSpec, skillResource?: string, defSection?: SectionTag): string {
   const zh = isZh()
   switch (effect.kind) {
     case 'noop':           return '—'
@@ -282,7 +282,7 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
     case 'gain_skill': {
       const count = effect.count ?? 1
       const lvStr = formatLevelMode(effect.levelMode)
-      const filterStr = formatSkillFilter(effect.filter)
+      const filterStr = formatSkillFilter(effect.filter, defSection)
       const sourceStr = formatGainSkillSource(effect.source ?? 'recipe_pool')
       return zh
         ? `${sourceStr} ${count} 个${filterStr}技能（${lvStr}）`
@@ -307,14 +307,14 @@ function formatLevelMode(mode: GainSkillLevelMode | undefined): string {
 type GainSkillSource = 'recipe_pool' | 'shop_pool' | 'altar_pool' | 'player_skill_pool'
 
 const ZH_SOURCE_VERB: Record<GainSkillSource, string> = {
-  recipe_pool:        '创生',     // 全新创造（recipe 生成）
+  recipe_pool:        '获得',      // 全新生成（recipe 生成）· 措辞用通用动词
   shop_pool:          '商店复制',  // 从商店在架商品深 clone
   altar_pool:         '祭坛召唤',  // 祭坛池（stub）
   player_skill_pool:  '自有复制',  // 从玩家自有 skill 深 clone（排除宿主）
 }
 
 const EN_SOURCE_VERB: Record<GainSkillSource, string> = {
-  recipe_pool:        'forge',
+  recipe_pool:        'gain',
   shop_pool:          'copy from shop',
   altar_pool:         'summon from altar',
   player_skill_pool:  'clone from inventory',
@@ -324,12 +324,18 @@ function formatGainSkillSource(source: GainSkillSource): string {
   return (isZh() ? ZH_SOURCE_VERB : EN_SOURCE_VERB)[source] ?? source
 }
 
-function formatSkillFilter(filter: SkillFilter): string {
+function formatSkillFilter(filter: SkillFilter, defSection?: SectionTag): string {
   const zh = isZh()
   const parts: string[] = []
   // hasTagFromHost 优先于显式 hasTag · runtime 同语义（覆盖 hasTag）
+  // defSection 已知时 → 显示具体段名（"工具类/Tool"）；缺省时退化为"同类"
   if (filter.hasTagFromHost) {
-    parts.push(zh ? '同 section' : 'same section')
+    if (defSection) {
+      const sect = locTag(defSection)
+      parts.push(zh ? `${sect}类` : sect)
+    } else {
+      parts.push(zh ? '同类' : 'same kind')
+    }
   } else if (filter.hasTag !== undefined) {
     const tags = Array.isArray(filter.hasTag) ? filter.hasTag.map(locTag).join('/') : locTag(filter.hasTag as Tag)
     parts.push(zh ? `含${tags}类` : `tag: ${tags}`)
@@ -360,7 +366,7 @@ function formatSkillFilter(filter: SkillFilter): string {
 
 /** 完整描述：trigger + effect 一行 */
 export function formatAffixV2Description(def: AffixV2Definition, skillResource?: string): string {
-  return `${formatTriggerDescription(def.trigger)}${isZh() ? '：' : ': '}${formatEffectDescription(def.effect, skillResource)}`
+  return `${formatTriggerDescription(def.trigger)}${isZh() ? '：' : ': '}${formatEffectDescription(def.effect, skillResource, def.section)}`
 }
 
 // ============================================
@@ -385,7 +391,7 @@ export function affixV2DefinitionToTooltipInfo(
   const effect = enchant ? applyEnchantToEffect(def.effect, enchant) : def.effect
   const description = isDefault
     ? def.notes
-    : `${formatTriggerDescription(def.trigger)}${isZh() ? '：' : ': '}${formatEffectDescription(effect, skillResource)}`
+    : `${formatTriggerDescription(def.trigger)}${isZh() ? '：' : ': '}${formatEffectDescription(effect, skillResource, def.section)}`
   return {
     typeName: enchantPrefix + baseName,
     typeKey: def.id,

@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { PILOT_AFFIX_IDS, getPilotSpec } from '../../../src/data/affixV2PilotSpecs'
 import { getAffixV2Definition } from '../../../src/data/affixV2'
 import { resolveEffect, type ResolveContext } from '../../../src/systems/affixV2Effect'
+import { formatEffectDescription, formatAffixV2Description } from '../../../src/ui/affixV2TooltipAdapter'
 import {
   resetAllAffixV2State,
   peekInstanceState,
@@ -234,6 +235,35 @@ describe('Archetype 覆盖 · S2 验证', () => {
     }
     expect(sources.has('recipe_pool')).toBe(true)         // teach
     expect(sources.has('player_skill_pool')).toBe(true)   // imitate
+  })
+})
+
+describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () => {
+  it('teach tooltip · 包含"获得" · 不含"创生"', () => {
+    const def = getAffixV2Definition('teach')!
+    const desc = formatAffixV2Description(def, 'score')
+    expect(desc).toContain('获得')
+    expect(desc).not.toContain('创生')
+    expect(desc).toContain('工具类')              // hasTag:'tool' 显示
+    expect(desc).toContain('与本技能同 Lv')
+  })
+
+  it('imitate tooltip · 包含"自有复制" + "工具类" · 不含"同 section"', () => {
+    const def = getAffixV2Definition('imitate')!
+    const desc = formatAffixV2Description(def, 'score')
+    expect(desc).toContain('自有复制')
+    expect(desc).toContain('工具类')              // hasTagFromHost + def.section='tool' → 工具类
+    expect(desc).not.toContain('同 section')
+    expect(desc).not.toContain('section')         // 英文残留也检查
+    expect(desc).toContain('与本技能同 Lv')
+  })
+
+  it('hasTagFromHost · 无 defSection 时退化为"同类"', () => {
+    const def = getAffixV2Definition('imitate')!
+    // 不传 defSection · formatEffectDescription 第三参缺省
+    const desc = formatEffectDescription(def.effect, 'score')
+    expect(desc).toContain('同类')
+    expect(desc).not.toContain('同 section')
   })
 })
 
