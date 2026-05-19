@@ -333,15 +333,3 @@ export type EffectSpec =
 
 export const DEFAULT_TRIGGER: TriggerSpec = { type: 'passive' }
 export const DEFAULT_EFFECT: EffectSpec = { kind: 'noop' }
-
-// ===== Meta-progression 标记 =====
-// 操纵 skill roster 的 effect（获得/升级/嫁接技能）· UI 据此给词条加 meta 视觉标记。
-
-export const META_EFFECT_KINDS: ReadonlySet<EffectSpec['kind']> = new Set<EffectSpec['kind']>([
-  'gain_skill', 'upgrade_skill', 'graft_affix',
-])
-
-/** 是否为 meta-progression effect（操纵 skill roster）*/
-export function isMetaEffect(kind: EffectSpec['kind']): boolean {
-  return META_EFFECT_KINDS.has(kind)
-}
