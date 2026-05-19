@@ -238,3 +238,53 @@ describe('shop_pool · state.shop.items 接入', () => {
     expect(['score', 'gold']).toContain(spawned.resource)
   })
 })
+
+describe('player_skill_pool · state.affixSkills 接入 + 排除宿主', () => {
+  afterEach(() => {
+    gameState.affixSkills.clear()
+  })
+
+  function mkOwnedSkill(id: string, resource: string, v2Def: string, level = 1): AffixSkillInstance {
+    return {
+      id, name: `Owned ${id}`, icon: '?',
+      resource: resource as AffixSkillInstance['resource'],
+      baseValues: [1, 2, 3, 4], level, rarity: 1,
+      affixes: [], enchantmentIds: [], v2Ids: [v2Def],
+    }
+  }
+
+  it('player_skill_pool 在 affixSkills 为空时返空', () => {
+    expect(getCandidatePool('player_skill_pool').length).toBe(0)
+  })
+
+  it('player_skill_pool 读 affixSkills · 每个 owned skill 一个 seed', () => {
+    gameState.affixSkills.set('sk1', mkOwnedSkill('sk1', 'score', 'feed'))
+    gameState.affixSkills.set('sk2', mkOwnedSkill('sk2', 'gold', 'climb'))
+    const pool = getCandidatePool('player_skill_pool')
+    expect(pool.length).toBe(2)
+    expect(pool.every(s => s.source === 'player_skill_pool')).toBe(true)
+  })
+
+  it('excludeSkillId · 宿主自身从候选池排除（防自我无限克隆）', () => {
+    gameState.affixSkills.set('host', mkOwnedSkill('host', 'score', 'feed'))
+    gameState.affixSkills.set('sibling', mkOwnedSkill('sibling', 'gold', 'climb'))
+    const pool = getCandidatePool('player_skill_pool', 'host')
+    expect(pool.length).toBe(1)
+    expect(pool[0].templateSkill?.id).toBe('sibling')
+  })
+
+  it('player_skill_pool 跳过无 v2Ids 的 owned skill', () => {
+    const noV2: AffixSkillInstance = {
+      id: 'plain', name: 'plain', icon: '?', resource: 'score',
+      baseValues: [1], level: 1, rarity: 0, affixes: [], enchantmentIds: [],
+    }
+    gameState.affixSkills.set('plain', noV2)
+    expect(getCandidatePool('player_skill_pool').length).toBe(0)
+  })
+
+  it('section 取首 v2Id 的 def · imitate filter hasTag 匹配维度', () => {
+    gameState.affixSkills.set('sk', mkOwnedSkill('sk', 'score', 'feed'))   // feed 是 maintenance 段
+    const pool = getCandidatePool('player_skill_pool')
+    expect(pool[0].section).toBe('maintenance')
+  })
+})

@@ -32,10 +32,10 @@ beforeEach(() => {
   resetAllAffixV2State()
 })
 
-describe('PILOT specs · 11 个全在', () => {
-  it('PILOT_AFFIX_IDS 完整 11 个', () => {
-    expect(PILOT_AFFIX_IDS.length).toBe(11)
-    expect(new Set(PILOT_AFFIX_IDS).size).toBe(11)
+describe('PILOT specs · 12 个全在', () => {
+  it('PILOT_AFFIX_IDS 完整 12 个', () => {
+    expect(PILOT_AFFIX_IDS.length).toBe(12)
+    expect(new Set(PILOT_AFFIX_IDS).size).toBe(12)
   })
 
   it('每个 id 都能查到 spec', () => {
@@ -218,8 +218,39 @@ describe('Archetype 覆盖 · S2 验证', () => {
     expect(triggers.has('passive')).toBe(true)
     expect(triggers.has('every_n_keys')).toBe(true)
     expect(triggers.has('on_fire')).toBe(true)
-    // teach (on_battle_end) 现在也覆盖
+    // teach + imitate (on_battle_end) 现在也覆盖
     expect(triggers.has('on_battle_end')).toBe(true)
+  })
+
+  it('覆盖全 4 gain_skill source（recipe_pool + player_skill_pool · shop/altar 后续）', () => {
+    const sources = new Set<string>()
+    for (const id of PILOT_AFFIX_IDS) {
+      const eff = getPilotSpec(id)!.effect
+      if (eff.kind === 'gain_skill') {
+        sources.add(eff.source ?? 'recipe_pool')
+      }
+    }
+    expect(sources.has('recipe_pool')).toBe(true)         // teach
+    expect(sources.has('player_skill_pool')).toBe(true)   // imitate
+  })
+})
+
+describe('Pilot 12 · imitate (tool · gain_skill · player_skill_pool)', () => {
+  it('on_battle_end + gain_skill spec 正确装配 + source=player_skill_pool', () => {
+    const def = getAffixV2Definition('imitate')!
+    expect(def.trigger).toEqual({ type: 'on_battle_end', result: 'win' })
+    expect(def.effect.kind).toBe('gain_skill')
+    if (def.effect.kind === 'gain_skill') {
+      expect(def.effect.source).toBe('player_skill_pool')
+      expect(def.effect.fallback).toBe('skip')
+    }
+  })
+
+  it('player_skill_pool 空（无 V2 owned skill）→ skillsGranted 空（fallback=skip）', () => {
+    const def = getAffixV2Definition('imitate')!
+    // ctx 不挂任何 state · gameState.affixSkills 在测试初始空
+    const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 3 })
+    expect(r.skillsGranted.length).toBe(0)
   })
 })
 

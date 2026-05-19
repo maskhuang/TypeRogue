@@ -305,8 +305,9 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
 
       // 解析候选池 + filter widen 兜底
       const source = spec.source ?? 'recipe_pool'
-      const pool = getCandidatePool(source)
-      if (pool.length === 0) return  // 空池（shop/altar stub）直接放弃
+      // player_skill_pool 需排除宿主自身（防自我无限克隆）· 其他 source 不需 hostId
+      const pool = getCandidatePool(source, source === 'player_skill_pool' ? ctx.skillId : undefined)
+      if (pool.length === 0) return  // 空池（shop/altar stub · player_skill_pool 无 V2 owned skill 等）直接放弃
 
       const widen = widenSkillFilter(spec.filter, pool)
       if (widen.matches.length === 0) {

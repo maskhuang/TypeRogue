@@ -300,7 +300,7 @@ export type EffectSpec =
   | {
       kind: 'gain_skill'
       filter: SkillFilter
-      source?: 'recipe_pool' | 'shop_pool' | 'altar_pool'
+      source?: 'recipe_pool' | 'shop_pool' | 'altar_pool' | 'player_skill_pool'
       count?: number
       levelMode?:
         | 'inherit_host'

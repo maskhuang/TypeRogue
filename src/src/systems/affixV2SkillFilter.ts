@@ -38,8 +38,13 @@ export interface SkillSeed {
 /** 按 source 取候选池 ·
  *  - recipe_pool：从 ALL_RECIPES 映射 SkillSeed，section/resourcePool 透传
  *  - shop_pool：读 state.shop.items 当前在架 skill，每个映射为模板 seed（spawn 时深 clone）
- *  - altar_pool：stub 返空（altar 暂无候选源 · 后续接入） */
-export function getCandidatePool(source: 'recipe_pool' | 'shop_pool' | 'altar_pool'): readonly SkillSeed[] {
+ *  - player_skill_pool：读 state.affixSkills 玩家自有 skill，排除 excludeSkillId（imitate 主用）
+ *  - altar_pool：stub 返空（altar 暂无候选源 · 后续接入）
+ *  @param excludeSkillId · 仅 player_skill_pool 用 · 排除宿主自身防递归 */
+export function getCandidatePool(
+  source: 'recipe_pool' | 'shop_pool' | 'altar_pool' | 'player_skill_pool',
+  excludeSkillId?: string,
+): readonly SkillSeed[] {
   if (source === 'recipe_pool') {
     return ALL_RECIPES.map(r => ({
       source: 'recipe_pool' as const,
@@ -60,6 +65,23 @@ export function getCandidatePool(source: 'recipe_pool' | 'shop_pool' | 'altar_po
       if (!def) continue
       seeds.push({
         source: 'shop_pool' as const,
+        templateSkill: sk,
+        section: def.section,
+        resourcePool: [sk.resource],
+      })
+    }
+    return seeds
+  }
+  if (source === 'player_skill_pool') {
+    const seeds: SkillSeed[] = []
+    for (const sk of gameState.affixSkills.values()) {
+      if (sk.id === excludeSkillId) continue           // 排除宿主 · 防无限自克隆
+      const firstDefId = sk.v2Ids?.[0]
+      if (!firstDefId) continue
+      const def = getAffixV2Definition(firstDefId)
+      if (!def) continue
+      seeds.push({
+        source: 'player_skill_pool' as const,
         templateSkill: sk,
         section: def.section,
         resourcePool: [sk.resource],

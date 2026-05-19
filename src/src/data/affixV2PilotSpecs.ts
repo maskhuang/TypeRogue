@@ -132,6 +132,22 @@ export const PILOT_AFFIX_SPECS: Record<string, AffixV2PilotSpec> = {
     },
   },
 
+  // ── 12 · tool · gain_skill · imitate ──
+  // 战斗胜利后 → 深 clone 1 个玩家自有 skill（排除宿主本身）· Lv 等同宿主
+  // 模仿叙事：复制邻位 · 与 teach 的 recipe 创生互补 · pool 空走 skip 不 widen
+  imitate: {
+    archetype: 'gain_skill',
+    trigger: { type: 'on_battle_end', result: 'win' },
+    effect: {
+      kind: 'gain_skill',
+      filter: { notOwned: false },
+      source: 'player_skill_pool',
+      count: 1,
+      levelMode: 'inherit_host',
+      fallback: 'skip',           // imitate 是 nice-to-have · 无可复制对象不强 widen
+    },
+  },
+
   // ── 9 · abnormal · conditional · pacing ──
   // 危险情境下产出放大（shield < 50% Lv1 base 时 ratio ×6）
   pacing: {
@@ -154,7 +170,8 @@ export const PILOT_AFFIX_IDS = [
   'chew',       // every_n_keys
   'cling',      // on_fire(filter:resource)
   // meta-progression
-  'teach',      // on_battle_end + gain_skill
+  'teach',      // on_battle_end + gain_skill(recipe_pool)
+  'imitate',    // on_battle_end + gain_skill(player_skill_pool)
 ] as const
 
 /** 查询接口 · 给 affixV2.ts buildDefinition 用 */
