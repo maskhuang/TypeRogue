@@ -212,7 +212,19 @@ export interface HasteRecipe {
   readonly freqRange: readonly [number, number]  // 允许的 trigger freq 区间
 }
 
-export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | HasteRecipe
+/** teach 系：on_battle_end + gain_skill(recipe_pool) · meta-progression
+ *  生成时随机锁定一个 hasTag section（从 ALL_RECIPES 现有 section 集合抽 · 排除 teach 自身防自我教学）
+ *  → 同一 teach instance 永远教同一段；不同 instance 不同段（per-shop-roll 多样性）
+ */
+export interface TeachRecipe {
+  readonly kind: 'teach'
+  readonly id: string
+  readonly section: SectionTag
+  readonly name_zh: string
+  readonly name_en: string
+}
+
+export type AffixV2Recipe = DripRecipe | GrowthRecipe | EscalateRecipe | ChantRecipe | ChainRecipe | ConvertRecipe | HasteRecipe | TeachRecipe
 
 // ============================================
 // Scope 池 · 加权抽样 · 范围越广越稀有
@@ -403,6 +415,22 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     }
     const scope = pickWeightedScope(FULL_SCOPE_POOL)
     effect = { kind: 'grant_haste', selector: scope.selector, amount: recipe.amount }
+  } else if (recipe.kind === 'teach') {
+    // teach: trigger 固定 on_battle_end(win) · filter.hasTag 在生成时随机抽 ALL_RECIPES 已有 section
+    //        排除 teach 自身（防 teach→teach 套娃链）· 每个生成实例 hasTag 锁死，跨战不变
+    triggerSpec = { type: 'on_battle_end', result: 'win' }
+    const recipeSections = [...new Set(
+      ALL_RECIPES.filter(r => r.kind !== 'teach').map(r => r.section),
+    )]
+    const rolledSection: SectionTag = pickRandom(recipeSections)
+    effect = {
+      kind: 'gain_skill',
+      filter: { hasTag: rolledSection, notOwned: false },
+      source: 'recipe_pool',
+      count: 1,
+      levelMode: 'inherit_host',
+      fallback: 'widen',
+    }
   } else {
     throw new Error(`unsupported recipe kind: ${(recipe as { kind: string }).kind}`)
   }
@@ -510,6 +538,14 @@ export const RECIPE_NUT_CRACK: GrowthRecipe = {
   T: 2.8,                   // tool 段 throughput 锚（SECTION_THROUGHPUT_TARGET.tool=3.0 略下）
 }
 
+export const RECIPE_TEACH: TeachRecipe = {
+  kind: 'teach',
+  id: 'teach',
+  section: 'tool',          // teach 自身 section（Cognitive/Tool 段）
+  name_zh: '示教',
+  name_en: 'teach',
+}
+
 /** 暂时全部 recipe 列表（生成 shop 选项时遍历此）*/
 export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_FEED,
@@ -520,6 +556,7 @@ export const ALL_RECIPES: readonly AffixV2Recipe[] = [
   RECIPE_DRINK,
   RECIPE_LEAP,
   RECIPE_NUT_CRACK,
+  RECIPE_TEACH,
 ]
 
 /** drink(convert) 以这些资源为 source 时降权 · time/gold 转化收益偏强，降低出率 */

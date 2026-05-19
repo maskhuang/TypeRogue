@@ -116,23 +116,11 @@ export const PILOT_AFFIX_SPECS: Record<string, AffixV2PilotSpec> = {
     effect: { kind: 'gain_resource', resource: 'score', ratio: 0.05 },
   },
 
-  // ── 11 · tool · gain_skill · teach ──
-  // 战斗胜利后 → 获得 1 个任意 recipe 池技能、与本技能同 Lv 的新技能
-  // 师承叙事：宿主修为多深 → 徒弟出师就多深；不限段（"任意教学"）
-  teach: {
-    archetype: 'gain_skill',
-    trigger: { type: 'on_battle_end', result: 'win' },
-    effect: {
-      kind: 'gain_skill',
-      filter: { notOwned: false },          // 全开 · 7 个 recipe 全池随机抽
-      source: 'recipe_pool',
-      count: 1,
-      levelMode: 'inherit_host',
-      fallback: 'widen',                    // 不会触发（filter 已全开）· 保留作 safety net
-    },
-  },
+  // teach 已下放到 recipe_pool · 见 affixV2Generator.ts RECIPE_TEACH
+  //   每个生成实例 filter.hasTag 在 generateAffixV2 时随机锁定一个 section
+  //   不再是 pilot · 静态 JSON 'teach' 词条变为 noop（仅作命名占位）
 
-  // ── 12 · tool · gain_skill · imitate ──
+  // ── 11 · tool · gain_skill · imitate ──
   // 战斗胜利后 → 深 clone 1 个玩家自有 skill · Lv 等同宿主 · 仅同 section 兄弟（hasTagFromHost）
   // 模仿叙事：复制邻位 · 与 teach 的 recipe 创生互补 · pool 空走 skip 不 widen
   // hasTagFromHost: tool 段 imitate 只复制 tool 兄弟；若改投到 maintenance 段则自动改复制 maintenance
@@ -170,8 +158,7 @@ export const PILOT_AFFIX_IDS = [
   // 扩展 · 覆盖剩余 trigger 类型
   'chew',       // every_n_keys
   'cling',      // on_fire(filter:resource)
-  // meta-progression
-  'teach',      // on_battle_end + gain_skill(recipe_pool)
+  // meta-progression（teach 已下放到 recipe_pool · 见 affixV2Generator.RECIPE_TEACH）
   'imitate',    // on_battle_end + gain_skill(player_skill_pool)
 ] as const
 

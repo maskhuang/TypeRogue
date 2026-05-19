@@ -47,7 +47,8 @@ export function getCandidatePool(
   excludeSkillId?: string,
 ): readonly SkillSeed[] {
   if (source === 'recipe_pool') {
-    return ALL_RECIPES.map(r => ({
+    // 排除 meta-progression recipe（teach）· 防 teach→teach 递归
+    return ALL_RECIPES.filter(r => r.kind !== 'teach').map(r => ({
       source: 'recipe_pool' as const,
       recipe: r,
       section: r.section,
