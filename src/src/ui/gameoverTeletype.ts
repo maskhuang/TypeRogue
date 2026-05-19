@@ -119,10 +119,6 @@ function buildScript(mode: GameOverMode, s: GameOverStats): ScriptLine[] {
     lines.push({ text: t('gameover.crt.row_stage', { stage: fileLabel }), charSpeed: 8, holdAfter: 120 })
     lines.push({ text: t('gameover.crt.row_skills', { count: s.skillCount }), charSpeed: 8, holdAfter: 180 })
     lines.push({ text: t('gameover.crt.divider'), cls: 'divider', charSpeed: 6, holdAfter: 220 })
-    lines.push({ text: t('gameover.crt.archiving'), charSpeed: 14, holdAfter: 280 })
-    lines.push({ text: t('gameover.crt.operator_relieved'), cls: 'dim', charSpeed: 14, holdAfter: 350 })
-    lines.push({ text: '', charSpeed: 0, holdAfter: 100 })
-    lines.push({ text: t('gameover.crt.archive_pending'), cls: 'dim', charSpeed: 12, holdAfter: 80 })
   } else {
     lines.push({ text: t('gameover.crt.file_processed', { n: fileLabel }) + cycleLabel, cls: 'bright', charSpeed: 18, holdAfter: 300 })
     lines.push({ text: '', charSpeed: 0, holdAfter: 120 })
@@ -134,19 +130,28 @@ function buildScript(mode: GameOverMode, s: GameOverStats): ScriptLine[] {
       lines.push({ text: t('gameover.crt.ascension_badge', { level: s.ascensionLevel }), cls: 'bright', charSpeed: 10, holdAfter: 200 })
     }
     lines.push({ text: t('gameover.crt.divider'), cls: 'divider', charSpeed: 6, holdAfter: 220 })
-    // V2 gain_skill 获赠 section · 仅 victory 路径显示（lose 路径不送 skill）
-    if (s.grantedSkills && s.grantedSkills.length > 0) {
-      lines.push({ text: t('gameover.crt.section_bonus'), cls: 'divider', charSpeed: 6, holdAfter: 200 })
-      for (const sk of s.grantedSkills) {
-        lines.push({
-          text: t('gameover.crt.row_granted_skill', { name: sk.name, level: sk.level }),
-          cls: 'bright',
-          charSpeed: 10,
-          holdAfter: 250,         // stagger ~250ms · 多 grant 时不糊
-        })
-      }
-      lines.push({ text: t('gameover.crt.divider'), cls: 'divider', charSpeed: 6, holdAfter: 220 })
+  }
+
+  // V2 gain_skill 获赠 section · 胜败通显（teach 现 trigger=any · 失败路径也可能 grant）
+  if (s.grantedSkills && s.grantedSkills.length > 0) {
+    lines.push({ text: t('gameover.crt.section_bonus'), cls: 'divider', charSpeed: 6, holdAfter: 200 })
+    for (const sk of s.grantedSkills) {
+      lines.push({
+        text: t('gameover.crt.row_granted_skill', { name: sk.name, level: sk.level }),
+        cls: 'bright',
+        charSpeed: 10,
+        holdAfter: 250,         // stagger ~250ms · 多 grant 时不糊
+      })
     }
+    lines.push({ text: t('gameover.crt.divider'), cls: 'divider', charSpeed: 6, holdAfter: 220 })
+  }
+
+  if (mode === 'defeat') {
+    lines.push({ text: t('gameover.crt.archiving'), charSpeed: 14, holdAfter: 280 })
+    lines.push({ text: t('gameover.crt.operator_relieved'), cls: 'dim', charSpeed: 14, holdAfter: 350 })
+    lines.push({ text: '', charSpeed: 0, holdAfter: 100 })
+    lines.push({ text: t('gameover.crt.archive_pending'), cls: 'dim', charSpeed: 12, holdAfter: 80 })
+  } else {
     lines.push({ text: t('gameover.crt.settlement_posted'), cls: 'bright', charSpeed: 16, holdAfter: 300 })
     if (s.endlessJustUnlocked) {
       lines.push({ text: t('gameover.crt.endless_unlocked'), cls: 'total', charSpeed: 18, holdAfter: 500 })

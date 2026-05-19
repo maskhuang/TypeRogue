@@ -341,10 +341,10 @@ describe('Recipe · teach (recipe_pool · 生成时锁 hasTag)', () => {
     expect(def.effect.kind).toBe('noop')
   })
 
-  it('generateAffixV2(RECIPE_TEACH) 生成 def 含 on_battle_end + gain_skill', () => {
+  it('generateAffixV2(RECIPE_TEACH) 生成 def 含 on_battle_end(any) + gain_skill', () => {
     const id = generateAffixV2(RECIPE_TEACH)
     const def = getAffixV2Definition(id)!
-    expect(def.trigger).toEqual({ type: 'on_battle_end', result: 'win' })
+    expect(def.trigger).toEqual({ type: 'on_battle_end', result: 'any' })   // 胜败通触发
     expect(def.effect.kind).toBe('gain_skill')
     if (def.effect.kind === 'gain_skill') {
       expect(def.effect.source).toBe('recipe_pool')

@@ -416,9 +416,10 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     const scope = pickWeightedScope(FULL_SCOPE_POOL)
     effect = { kind: 'grant_haste', selector: scope.selector, amount: recipe.amount }
   } else if (recipe.kind === 'teach') {
-    // teach: trigger 固定 on_battle_end(win) · filter.hasTag 在生成时随机抽 ALL_RECIPES 已有 section
+    // teach: trigger 固定 on_battle_end(any) · 胜败都触发（"示教"行为不因输赢中断）
+    //        filter.hasTag 在生成时随机抽 ALL_RECIPES 已有 section
     //        排除 teach 自身（防 teach→teach 套娃链）· 每个生成实例 hasTag 锁死，跨战不变
-    triggerSpec = { type: 'on_battle_end', result: 'win' }
+    triggerSpec = { type: 'on_battle_end', result: 'any' }
     const recipeSections = [...new Set(
       ALL_RECIPES.filter(r => r.kind !== 'teach').map(r => r.section),
     )]

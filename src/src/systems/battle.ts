@@ -2889,6 +2889,11 @@ function gameOver(): void {
 
   startBGM('chill');
   const displayLevel = getBattleNumber(state.level) || state.level;
+  // V2 gain_skill 本战获赠 · teach 现 trigger=any · 失败路径也可能产生 grant
+  const grantedSkills = getLastBattleGrantedSkillIds()
+    .map(id => state.affixSkills.get(id))
+    .filter((sk): sk is NonNullable<typeof sk> => Boolean(sk))
+    .map(sk => ({ name: sk.name, level: sk.level }))
   // 离场验证 · 同 victory 路径
   void showDepartureWindow().then(() => {
     showScreen('gameover');
@@ -2899,6 +2904,7 @@ function gameOver(): void {
       maxCombo: state.maxCombo,
       skillCount: state.player.skills.size,
       cycle: state.cycle,
+      grantedSkills,
     });
     playSound('gameover');
   });
