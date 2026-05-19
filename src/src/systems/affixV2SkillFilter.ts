@@ -17,6 +17,7 @@ import { generateSkill } from '../data/skillGeneration'
 import { random } from '../core/seededRandom'
 import { state as gameState } from '../core/state'
 import { getAffixV2Definition } from '../data/affixV2'
+import { getLocale } from '../demo/demo-i18n'
 
 // ============================================
 // SkillSeed · 候选种子
@@ -173,21 +174,31 @@ export function widenSkillFilter(filter: SkillFilter, pool: readonly SkillSeed[]
 // 注：seed.recipe 当前未直接绑到 spawn 出来的 skill —— sampleV2Ids 走 ALL_RECIPES 随机抽。
 // 想"教 tool 必出 tool"的严绑后续可加 forcedRecipe 选项到 generateSkill。
 
+/** "[副本]" 后缀 · 仅 template 路径加，避免与原 skill 同名混淆
+ *  recipe 路径不加（recipe 生成的是 fresh skill 不算复制）*/
+function copySuffix(): string {
+  return getLocale() === 'en' ? ' [Copy]' : ' [副本]'
+}
+
 export function spawnSkillFromSeed(seed: SkillSeed, level: number): AffixSkillInstance {
   const targetLv = Math.max(1, Math.floor(level))
-  // 模板 spawn：深 clone shop 商品 · 换 id · 改 level · 保留 v2Ids/rarity/shapeId 等
+  // 模板 spawn：深 clone shop / player 持有的 skill · 换 id · 改 level · 加 [副本] 后缀 · 清 purchasePrice
   if (seed.templateSkill) {
     const t = seed.templateSkill
     const rnd = random() || 0.0001
     const newId = `skill_${Date.now()}_${rnd.toString(36).slice(2, 6)}`
-    return {
+    const cloned: AffixSkillInstance = {
       ...t,
       id: newId,
+      name: `${t.name}${copySuffix()}`,                // 名字加 [副本]/[Copy] 防 inbox 混淆
       level: targetLv,
       affixes: t.affixes.map(a => ({ ...a })),
       enchantmentIds: [...t.enchantmentIds],
       v2Ids: t.v2Ids ? [...t.v2Ids] : undefined,
     }
+    // 防套现：克隆体不带购买价格 · 卖出走默认折算（不能"买 N 用 imitate 复制 N 个再卖回血"）
+    delete cloned.purchasePrice
+    return cloned
   }
   // recipe spawn：调 generateSkill · resource 从 seed.resourcePool 随机选
   const resource = seed.resourcePool && seed.resourcePool.length > 0

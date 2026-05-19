@@ -283,9 +283,10 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
       const count = effect.count ?? 1
       const lvStr = formatLevelMode(effect.levelMode)
       const filterStr = formatSkillFilter(effect.filter)
+      const sourceStr = formatGainSkillSource(effect.source ?? 'recipe_pool')
       return zh
-        ? `获得 ${count} 个${filterStr}技能（${lvStr}）`
-        : `gain ${count} ${filterStr} skill${count > 1 ? 's' : ''} (${lvStr})`
+        ? `${sourceStr} ${count} 个${filterStr}技能（${lvStr}）`
+        : `${sourceStr} ${count} ${filterStr} skill${count > 1 ? 's' : ''} (${lvStr})`
     }
   }
 }
@@ -303,10 +304,33 @@ function formatLevelMode(mode: GainSkillLevelMode | undefined): string {
   return zh ? `本技能 Lv -${mode.delta}` : `host Lv -${mode.delta}`
 }
 
+type GainSkillSource = 'recipe_pool' | 'shop_pool' | 'altar_pool' | 'player_skill_pool'
+
+const ZH_SOURCE_VERB: Record<GainSkillSource, string> = {
+  recipe_pool:        '创生',     // 全新创造（recipe 生成）
+  shop_pool:          '商店复制',  // 从商店在架商品深 clone
+  altar_pool:         '祭坛召唤',  // 祭坛池（stub）
+  player_skill_pool:  '自有复制',  // 从玩家自有 skill 深 clone（排除宿主）
+}
+
+const EN_SOURCE_VERB: Record<GainSkillSource, string> = {
+  recipe_pool:        'forge',
+  shop_pool:          'copy from shop',
+  altar_pool:         'summon from altar',
+  player_skill_pool:  'clone from inventory',
+}
+
+function formatGainSkillSource(source: GainSkillSource): string {
+  return (isZh() ? ZH_SOURCE_VERB : EN_SOURCE_VERB)[source] ?? source
+}
+
 function formatSkillFilter(filter: SkillFilter): string {
   const zh = isZh()
   const parts: string[] = []
-  if (filter.hasTag !== undefined) {
+  // hasTagFromHost 优先于显式 hasTag · runtime 同语义（覆盖 hasTag）
+  if (filter.hasTagFromHost) {
+    parts.push(zh ? '同 section' : 'same section')
+  } else if (filter.hasTag !== undefined) {
     const tags = Array.isArray(filter.hasTag) ? filter.hasTag.map(locTag).join('/') : locTag(filter.hasTag as Tag)
     parts.push(zh ? `含${tags}类` : `tag: ${tags}`)
   }

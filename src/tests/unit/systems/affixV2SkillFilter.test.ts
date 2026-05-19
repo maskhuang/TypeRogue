@@ -210,8 +210,9 @@ describe('shop_pool · state.shop.items 接入', () => {
     expect(getCandidatePool('shop_pool').length).toBe(1)
   })
 
-  it('spawnSkillFromSeed(templateSkill) → 深 clone · 新 id · 改 level', () => {
+  it('spawnSkillFromSeed(templateSkill) → 深 clone · 新 id · 改 level · 加 [副本] · 清 purchasePrice', () => {
     const template = mkShopSkill('score', 'feed', 'maintenance').affixSkill!
+    template.purchasePrice = 42                       // 模拟商品有价格
     const seed: SkillSeed = {
       source: 'shop_pool',
       templateSkill: template,
@@ -225,6 +226,9 @@ describe('shop_pool · state.shop.items 接入', () => {
     expect(spawned.v2Ids).toEqual(template.v2Ids)     // V2 词条引用一致
     expect(spawned.v2Ids).not.toBe(template.v2Ids)    // 数组深 clone（不共享引用）
     expect(spawned.rarity).toBe(1)                    // rarity 继承
+    expect(spawned.name).toMatch(/\[(副本|Copy)\]/)   // name 加后缀
+    expect(spawned.name).not.toBe(template.name)
+    expect(spawned.purchasePrice).toBeUndefined()     // purchasePrice 清空 · 防套现
   })
 
   it('spawnSkillFromSeed(recipe) → recipe 路径走 generateSkill', () => {

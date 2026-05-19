@@ -3,7 +3,7 @@
 // ============================================
 // 验证：每个 pilot spec 接入 Definition 后，resolver 能正确执行其 effect。
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { PILOT_AFFIX_IDS, getPilotSpec } from '../../../src/data/affixV2PilotSpecs'
 import { getAffixV2Definition } from '../../../src/data/affixV2'
 import { resolveEffect, type ResolveContext } from '../../../src/systems/affixV2Effect'
@@ -13,6 +13,8 @@ import {
   getInstanceState,
   listActiveAuras,
 } from '../../../src/systems/affixV2State'
+import { state as gameState } from '../../../src/core/state'
+import type { AffixSkillInstance } from '../../../src/core/types'
 
 const ctx: ResolveContext = {
   instanceId: 'inst_1',
@@ -235,7 +237,7 @@ describe('Archetype 覆盖 · S2 验证', () => {
   })
 })
 
-describe('Pilot 12 · imitate (tool · gain_skill · player_skill_pool)', () => {
+describe('Pilot 12 · imitate (tool · gain_skill · player_skill_pool · hasTagFromHost)', () => {
   it('on_battle_end + gain_skill spec 正确装配 + source=player_skill_pool', () => {
     const def = getAffixV2Definition('imitate')!
     expect(def.trigger).toEqual({ type: 'on_battle_end', result: 'win' })
@@ -243,6 +245,7 @@ describe('Pilot 12 · imitate (tool · gain_skill · player_skill_pool)', () => 
     if (def.effect.kind === 'gain_skill') {
       expect(def.effect.source).toBe('player_skill_pool')
       expect(def.effect.fallback).toBe('skip')
+      expect(def.effect.filter.hasTagFromHost).toBe(true)
     }
   })
 
@@ -251,6 +254,60 @@ describe('Pilot 12 · imitate (tool · gain_skill · player_skill_pool)', () => 
     // ctx 不挂任何 state · gameState.affixSkills 在测试初始空
     const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 3 })
     expect(r.skillsGranted.length).toBe(0)
+  })
+
+  describe('hasTagFromHost · selfSection 动态绑定', () => {
+    afterEach(() => {
+      gameState.affixSkills.clear()
+    })
+
+    function mkOwnedV2(id: string, resource: string, v2DefId: string): AffixSkillInstance {
+      return {
+        id, name: `Owned-${id}`, icon: '?',
+        resource: resource as AffixSkillInstance['resource'],
+        baseValues: [1, 2, 3, 4], level: 1, rarity: 1,
+        affixes: [], enchantmentIds: [], v2Ids: [v2DefId],
+      }
+    }
+
+    it('selfSection=tool · 仅 tool 段兄弟入候选 · 跨段被过滤', () => {
+      // mix tool + maintenance + locomotion siblings
+      gameState.affixSkills.set('tool_sib', mkOwnedV2('tool_sib', 'score', 'nut_crack'))      // tool（recipe nut_crack 是 tool 段）
+      gameState.affixSkills.set('maint_sib', mkOwnedV2('maint_sib', 'gold', 'feed'))           // maintenance
+      gameState.affixSkills.set('loco_sib', mkOwnedV2('loco_sib', 'shield', 'climb'))          // locomotion
+      const def = getAffixV2Definition('imitate')!
+      // 跑 5 次以确保不是恰巧抽中 tool
+      for (let i = 0; i < 5; i++) {
+        const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 1, selfSection: 'tool' })
+        expect(r.skillsGranted.length).toBe(1)
+        // 克隆体的 resource 来自 tool_sib (score) · 不应是 gold/shield
+        expect(r.skillsGranted[0].skill.resource).toBe('score')
+      }
+    })
+
+    it('selfSection=maintenance · 同段切换 · imitate 自动改为复制 maintenance', () => {
+      gameState.affixSkills.set('tool_sib', mkOwnedV2('tool_sib', 'score', 'nut_crack'))
+      gameState.affixSkills.set('maint_sib', mkOwnedV2('maint_sib', 'gold', 'feed'))
+      const def = getAffixV2Definition('imitate')!
+      for (let i = 0; i < 5; i++) {
+        const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 1, selfSection: 'maintenance' })
+        expect(r.skillsGranted.length).toBe(1)
+        expect(r.skillsGranted[0].skill.resource).toBe('gold')   // 只可能抽到 maint_sib
+      }
+    })
+
+    it('selfSection 缺省 → hasTagFromHost 退化为无 tag filter（全池可抽）', () => {
+      gameState.affixSkills.set('tool_sib', mkOwnedV2('tool_sib', 'score', 'nut_crack'))
+      gameState.affixSkills.set('maint_sib', mkOwnedV2('maint_sib', 'gold', 'feed'))
+      const def = getAffixV2Definition('imitate')!
+      const resources = new Set<string>()
+      // 不传 selfSection · 跑 30 次应能抽到两种 resource
+      for (let i = 0; i < 30; i++) {
+        const r = resolveEffect(def.effect, { ...ctx, hostSkillLevel: 1 })
+        if (r.skillsGranted.length > 0) resources.add(r.skillsGranted[0].skill.resource)
+      }
+      expect(resources.size).toBeGreaterThan(1)
+    })
   })
 })
 

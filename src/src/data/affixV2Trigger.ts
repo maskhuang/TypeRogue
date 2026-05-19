@@ -155,6 +155,10 @@ export interface SkillFilter {
   readonly notOwned?: boolean
   /** class 限制 · 对接现有 ClassResourceFilter（缺省 = 不限制）*/
   readonly classFilter?: string
+  /** 动态：true 时 hasTag 在 resolve 阶段填充为本词条 def 的 section
+   *  典型用法：imitate 在不同 section 上自动只复制同 section 兄弟
+   *  与显式 hasTag 同时存在时以本字段为准（覆盖） */
+  readonly hasTagFromHost?: boolean
 }
 
 // ===== SkillFilter widen 候选维度（fallback='widen' 时按顺序逐档放宽）

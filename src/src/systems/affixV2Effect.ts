@@ -69,6 +69,8 @@ export interface ResolveContext {
   readonly currentWordLength: number
   /** 本 affix 宿主 skill 的等级（gain_skill levelMode='inherit_host' 用 · 缺省 1）*/
   readonly hostSkillLevel: number
+  /** 本 affix 自身 def 的 section（gain_skill filter.hasTagFromHost 用 · 缺省时 imitate 等动态 filter 退化）*/
+  readonly selfSection?: import('../data/affixTags').SectionTag
   /** 玩家资源池查询（resource_below/above 用）*/
   readonly getPlayerResource: (resource: string) => number
 
@@ -309,7 +311,16 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
       const pool = getCandidatePool(source, source === 'player_skill_pool' ? ctx.skillId : undefined)
       if (pool.length === 0) return  // 空池（shop/altar stub · player_skill_pool 无 V2 owned skill 等）直接放弃
 
-      const widen = widenSkillFilter(spec.filter, pool)
+      // hasTagFromHost · 用本词条 def 的 section 覆盖 filter.hasTag（缺 selfSection 时退化为去掉该字段）
+      let effectiveFilter = spec.filter
+      if (spec.filter.hasTagFromHost) {
+        const { hasTagFromHost: _drop, ...rest } = spec.filter
+        effectiveFilter = ctx.selfSection
+          ? { ...rest, hasTag: ctx.selfSection }
+          : rest
+      }
+
+      const widen = widenSkillFilter(effectiveFilter, pool)
       if (widen.matches.length === 0) {
         // 全 widen 仍空（不应到这里因为 widenSkillFilter 兜底返全池）→ 按 fallback 处理
         const fb = spec.fallback ?? 'widen'
