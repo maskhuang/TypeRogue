@@ -121,14 +121,25 @@ const RECIPE_COLORS: Record<string, string> = {
   piloerection: '#9b59b6',
   // agonistic · 红系
   drumming:     '#e74c3c',
+  // tool/cognition · 棕金系（meta-progression 操纵家族 · 共 tool 段棕基底，各取一调以可辨识）
+  teach:        '#d4a017',  // 暖金 · 教学/启蒙
+  imitate:      '#b5651d',  // 铜/赤陶 · 镜像复制
+  spear_make:   '#6e4b2a',  // 深锻棕 · 制造/锻造
+  gaze_follow:  '#a98f5c',  // 砂驼 · 注视跟随
+}
+
+/** 从 defId 提取 recipe id：gen_<recipeId>_<nonce> · recipeId 可含下划线（如 spear_make）·
+ *  nonce 为 toString(36) 产物（[a-z0-9]，无下划线），故剥末尾 _<nonce> 即得完整 recipeId。
+ *  非 gen_ 前缀（静态 JSON id）原样返回。 */
+function extractRecipeId(defId: string): string {
+  if (!defId.startsWith('gen_')) return defId
+  return defId.slice(4).replace(/_[a-z0-9]+$/, '')
 }
 
 export function getV2Color(defId: string): string {
-  // 先尝试动态生成 id（gen_<recipe>_<nonce>）的 recipe 精细色
-  const m = defId.match(/^gen_([^_]+)_/)
-  if (m && RECIPE_COLORS[m[1]]) return RECIPE_COLORS[m[1]]
-  // 静态 JSON id 直接查表
-  if (RECIPE_COLORS[defId]) return RECIPE_COLORS[defId]
+  // recipe 精细色（动态 gen_ id 与静态 id 统一走 extractRecipeId）
+  const recipeId = extractRecipeId(defId)
+  if (RECIPE_COLORS[recipeId]) return RECIPE_COLORS[recipeId]
   // 回 section 主色
   const def = getAffixV2Definition(defId)
   if (!def) return '#cccccc'

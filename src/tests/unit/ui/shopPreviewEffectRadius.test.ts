@@ -39,6 +39,8 @@ vi.mock('../../../src/systems/battle', () => ({ startLevel: vi.fn() }))
 
 import { clearEffectRadiusHighlight, highlightEffectRadius } from '../../../src/ui/shop/shopWorkbench'
 import { getKeysWithRelation } from '../../../src/data/keyboardTopology'
+import { generateAffixV2, RECIPE_SPEAR_MAKE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_TEACH } from '../../../src/data/affixV2Generator'
+import { getAffixV2Definition } from '../../../src/data/affixV2'
 
 // ===== Fake DOM 基础设施 =====
 interface FakeKeyEl {
@@ -213,5 +215,81 @@ describe('Story 60.18 · effect radius 高亮', () => {
       getElementById: () => ({ querySelector: () => null, querySelectorAll: () => [] }),
     })
     expect(() => highlightEffectRadius('g', 'NONEXISTENT_SID')).not.toThrow()
+  })
+})
+
+describe('meta-progression 操纵家族 effect radius', () => {
+  const ALL_KEYS = ['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m']
+
+  function setupV2Skill(skillId: string, defId: string) {
+    state.affixSkills.set(skillId, {
+      id: skillId, name: 'META', icon: 'X', level: 1, rarity: 1, resource: 'base',
+      baseValues: [10], shapeId: 'monomino', rotation: 0, enchantmentIds: [], affixes: [],
+      v2Ids: [defId],
+    } as unknown as never)
+  }
+
+  function fakeDom(elMap: Map<string, FakeKeyEl>) {
+    const fakeRoot = {
+      querySelector: (sel: string) => {
+        const m = sel.match(/data-key="([^"]+)"/)
+        return m ? (elMap.get(m[1]) ?? null) : null
+      },
+      querySelectorAll: () => [],
+    }
+    vi.stubGlobal('document', {
+      getElementById: (id: string) => (id === 'workbench-screen-preview' ? fakeRoot : null),
+    })
+  }
+
+  function expectAdjacentHighlighted(skillId: string) {
+    const elMap = new Map<string, FakeKeyEl>()
+    for (const k of ALL_KEYS) elMap.set(k, makeFakeKey(k))
+    fakeDom(elMap)
+    highlightEffectRadius('g', skillId)
+    const expected = new Set(getKeysWithRelation('g', PositionRelation.Adjacent))
+    expect(expected.size).toBeGreaterThan(0)
+    for (const k of expected) {
+      const el = elMap.get(k)
+      if (el) expect(el.classList.contains(RADIUS_CLASS)).toBe(true)
+    }
+    // anchor 自身不高亮
+    expect(elMap.get('g')!.classList.contains(RADIUS_CLASS)).toBe(false)
+  }
+
+  it('spear_make (upgrade_skill) → 邻位范围高亮', () => {
+    const defId = generateAffixV2(RECIPE_SPEAR_MAKE)
+    const def = getAffixV2Definition(defId)! as { effect: { selector: { posRel: string } } }
+    def.effect.selector.posRel = PositionRelation.Adjacent
+    setupV2Skill('sk_spear', defId)
+    expectAdjacentHighlighted('sk_spear')
+  })
+
+  it('gaze_follow (graft_affix) → 邻位范围高亮', () => {
+    const defId = generateAffixV2(RECIPE_GAZE_FOLLOW)
+    const def = getAffixV2Definition(defId)! as { effect: { from: { posRel: string } } }
+    def.effect.from.posRel = PositionRelation.Adjacent
+    setupV2Skill('sk_gaze', defId)
+    expectAdjacentHighlighted('sk_gaze')
+  })
+
+  it('imitate (gain_skill[neighborPosRel]) → 邻位范围高亮', () => {
+    const defId = generateAffixV2(RECIPE_IMITATE)
+    const def = getAffixV2Definition(defId)! as { effect: { filter: { neighborPosRel: string } } }
+    def.effect.filter.neighborPosRel = PositionRelation.Adjacent
+    setupV2Skill('sk_imitate', defId)
+    expectAdjacentHighlighted('sk_imitate')
+  })
+
+  it('teach (gain_skill recipe_pool, 无 neighborPosRel) → 不高亮任何键', () => {
+    const defId = generateAffixV2(RECIPE_TEACH)  // teach 用 hasTag/recipe_pool，无 neighborPosRel
+    setupV2Skill('sk_teach', defId)
+    const elMap = new Map<string, FakeKeyEl>()
+    for (const k of ALL_KEYS) elMap.set(k, makeFakeKey(k))
+    fakeDom(elMap)
+    highlightEffectRadius('g', 'sk_teach')
+    for (const el of elMap.values()) {
+      expect(el.classList.contains(RADIUS_CLASS)).toBe(false)
+    }
   })
 })

@@ -31,7 +31,7 @@ import { getLuckyStrikeCritRate, getCritBonusGold, isCritChargeReady, consumeCri
 import { getFuryBeatCritRate } from './relics/ComboRelicBehaviors';
 import { getRuneSpikeCritRate } from './relics/EnchantmentRelicBehaviors';
 import { getPrecisionStrikeCritRate } from './relics/TopologyRelicBehaviors';
-import { AffixType, EnchantmentType as EnchantmentTypeEnum, BASE_VALUES, applyAffixLevelScaling, SWARM_BONUS_TABLE } from '../data/affixes';
+import { AffixType, EnchantmentType as EnchantmentTypeEnum, BASE_VALUES, applyAffixLevelScaling, SWARM_BONUS_TABLE, createSkillRuntimeState } from '../data/affixes';
 import type { PositionRelation } from '../data/keyboardTopology';
 import { rollAffixParams } from '../data/skillGeneration';
 import { inputHandler } from './typing/InputHandler';
@@ -256,6 +256,11 @@ export function triggerSkill(
   outputScale?: number,
 ): void {
   if (state.affixSkills.has(skillId)) {
+    // 防御：运行时新增的技能（gain_skill 授予等）可能没有 runtimeState；
+    // 缺失时旧管线会在 orchestrator 静默 continue，导致无词条技能（依赖旧管线产出基数）零产出/无反馈。
+    if (!state.affixSkillStates.has(skillId)) {
+      state.affixSkillStates.set(skillId, createSkillRuntimeState(skillId));
+    }
     triggerAffixSkillWithFeedback(skillId, triggerKey, overrideAnchor, outputScale);
   }
   // 未知技能：静默忽略

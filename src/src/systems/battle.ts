@@ -2036,6 +2036,11 @@ function endLevel(): void {
   }
 
   if (_isCalibrationLevel || state.score >= state.targetScore) {
+    // 通关即触发 battle:end —— V2 on_battle_end 词条（teach 等）在此结算。
+    // 过去仅最终周目 Boss 的 victory() 和失败的 gameOver() 会 emit，普通通关直接进商店、
+    // 从不 emit，导致 teach 永不授予。统一在此 emit；victory() 不再单独 emit（避免重复）。
+    eventBus.emit('battle:end', { result: 'win', score: state.score });
+
     // 溢出分数不再带到下一关
     state.overflowScore = 0;
 
@@ -2821,7 +2826,7 @@ function animateOverflowDeduction(preTarget: number, deduction: number, finalTar
 // === 胜利 ===
 function victory(): void {
   state.phase = 'victory';
-  eventBus.emit('battle:end', { result: 'win', score: state.score });
+  // battle:end 已在 endLevel() 通关分支统一 emit（含最终周目 Boss）；此处不再重复 emit。
   if (timerInterval) clearInterval(timerInterval);
   stopScoreRoller(); // Story 31.4
   stopTaikoSpawner();

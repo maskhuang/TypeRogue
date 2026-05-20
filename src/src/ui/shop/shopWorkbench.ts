@@ -105,7 +105,8 @@ function getEffectRadiusKeys(skillId: string, hoverKey: string, payloadShapeId?:
   return Array.from(radiusKeys)
 }
 
-/** 递归提取 effect 中的 TargetSelector（aura / fire_target / apply_status / add / multiply）*/
+/** 递归提取 effect 中的 TargetSelector（aura / fire_target / apply_status / add / multiply
+ *  / upgrade_skill / graft_affix / gain_skill[neighborPosRel]）*/
 function extractSelectorFromEffect(effect: EffectSpec): TargetSelector | undefined {
   switch (effect.kind) {
     case 'apply_aura':   return effect.selector
@@ -113,6 +114,13 @@ function extractSelectorFromEffect(effect: EffectSpec): TargetSelector | undefin
     case 'apply_status': return effect.target
     case 'add':          return effect.selector
     case 'multiply':     return effect.selector
+    // meta-progression 操纵家族（on_battle_end）的邻位范围
+    case 'upgrade_skill': return effect.selector                 // spear_make
+    case 'graft_affix':   return effect.from                     // gaze_follow
+    case 'gain_skill':                                           // imitate（teach 走 recipe_pool 无邻位 → 不高亮）
+      return effect.filter.neighborPosRel !== undefined
+        ? { type: 'neighbors', posRel: effect.filter.neighborPosRel }
+        : undefined
     case 'composite': {
       for (const c of effect.effects) {
         const s = extractSelectorFromEffect(c)

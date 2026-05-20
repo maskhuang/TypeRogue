@@ -566,7 +566,11 @@ function restoreFromPreview(): void {
 
 function resetSession(): void {
   resetPreviewSession();
-  state.player.inbox = [];
+  // 注意：不清空 state.player.inbox —— 待装配区是跨关持久状态：
+  //   1) SUBMIT 警告承诺未装配项「带入下批次」(warn_inbox_left)，进店清空会食言；
+  //   2) battle:end 的 teach 等 on_battle_end 词条把获赠技能 push 进 inbox，
+  //      若进店清空则获赠技能永远到不了待装配区（teach 看似无效）。
+  // inbox 仅由 购买/装配/卖出 维护；新 run 由 resetState 重建为空。
   terminal.ensureSeed();
   terminal.rebuildDescriptors();
 }

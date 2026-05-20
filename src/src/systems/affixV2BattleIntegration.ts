@@ -33,7 +33,7 @@ import {
 } from './affixV2Equipped'
 import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste } from './affixV2State'
 import { getAffixV2Definition } from '../data/affixV2'
-import { BASE_VALUES } from '../data/affixes'
+import { BASE_VALUES, createSkillRuntimeState } from '../data/affixes'
 import { getAscendBaseScale } from '../data/affixTrigger'
 import { triggerSkill, recordSkillTrigger } from './skills'
 import { getBindingState, getSkillKeys } from './bindingManager'
@@ -169,6 +169,8 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
       if (state.player.inbox.length >= INBOX_MAX) continue
       state.affixSkills.set(sg.skill.id, sg.skill)
       state.player.skills.set(sg.skill.id, { level: sg.skill.level })
+      // runtimeState 必须随技能一起建立——否则无词条技能（rarity 0）走旧管线时因缺 runtimeState 零产出
+      state.affixSkillStates.set(sg.skill.id, createSkillRuntimeState(sg.skill.id))
       state.player.inbox.push(sg.skill.id)
       _lastBattleGrantedSkillIds.push(sg.skill.id)
     }
