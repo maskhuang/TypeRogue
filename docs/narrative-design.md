@@ -543,6 +543,8 @@ L4 由 (subsystem × department × **subject**) 决定 · subject = null 时用 
 
 技能 = 装在信封里的纸贴纸 · 由公司行政发放 · 玩家贴在键盘 key 上 · MOKO 通过 administrative records 翻译成 game effect。**贴纸没有真实 mechanical 功能** —— 只是 administrative meaning-assignment marker（详见 §2.6 "技能与作者化关系 · catalyst chain vs attribution chain 分离"）。
 
+**设备形态（v4.1-late LOCKED）**：承载贴纸的"标准键盘"（见下表 MOKO vs LANA）就是工位那台 **DPCA 电传打字终端**（电传打字机，既是打字机也是终端）的键面——可重标键位（relegendable / LANA lexigram 谱系），纸 legend 插贴于键面；其机械击键同时是 D28 受理认证通道，琥珀荧光屏为 MOKO 显示层。设备完整定义见 §5.7.2 D28 lore origin 旁注。
+
 ###### 双层信息架构
 
 ```
@@ -2573,6 +2575,13 @@ Nim 死前最后一周反复 sign 的 emergent 内容（除"hug me, please"外�
 - 1990s formalize 为 mechanical witness protocol
 
 → **打字机不是 typing tool，是 textual authentication device**——D28 在 lore 上的兑现。
+
+→ **in-game 设备形态（v4.1-late LOCKED）= DPCA 电传打字终端**（electromechanical teleprinter / 电传打字机；Teletype ASR-33 谱系 + 琥珀荧光读出，DPCA-VT220 样式）。它**既是打字机也是终端**，故全 narrative 的"打字机"称呼一律成立，不需改名。
+- **机构**：机电式，字锤透色带打在纸卷上——不可逆压痕 + 色带格式 + 击键节拍 = D28 三要素；无退格（压痕不可逆，li_3 撤格键锁定）；纸卷 / 色带字面留存最后一句（workbench:237）。
+- **两种模式 = 受理 vs 异常**：你敲键（send 模式）= 有意图的机械见证 = 受理生效；它自己打印（receive 模式，无人击键）= D28"打印机均无效"所指，也正是"打字机内部第二组击键声"（workbench:180）——异常借同一机构绕过你回敲。一台设备把"合法受理"与"异常显化"装进同一机构的两种模式。
+- **荧光屏**：是它的读出 / MOKO 显示层，只回显、不参与受理——故不违反"电脑无效"：完成受理的是机电见证，不是屏上的数字运算。
+- **键面**：relegendable（可重标）/ LANA lexigram 谱系键位，原生承载 §2.6 技能贴纸（纸 legend 插贴于键位）。
+- **现实参照**：Teletype ASR-33 电传打字机、可重标 POS / 工业终端键盘、1971 LANA lexigram 键盘。实装 style.css 已称其 "DPCA-VT220 phosphor teletype"。
 
 ### 5.7.3 D29 状态确认的 lore origin
 

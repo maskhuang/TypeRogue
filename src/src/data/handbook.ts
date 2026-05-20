@@ -91,9 +91,9 @@ export const RULE_LAYERS: RuleLayer[] = [
         { titleKey: 'hb.section_1', itemKeys: [
           'hb.section_1_li_1', 'hb.section_1_li_3',
         ] },
-        // §2 文件 · 1 routine + 3 事件触发 + 1 跨班自我否认（A 凝视 / B 像谁写的 / D 不合理迹象 / 其他职业）
+        // §2 文件 · 2 事件触发 + 1 跨班自我否认 + 1 去语境化指令（A 凝视 / B 像谁写的 / li_5 逐词派发·勿拼回原句 / 其他职业）
         { titleKey: 'hb.section_2', itemKeys: [
-          'hb.section_2_li_1', 'hb.section_2_li_3', 'hb.section_2_li_4', 'hb.section_2_li_5', 'hb.section_2_li_6',
+          'hb.section_2_li_3', 'hb.section_2_li_4', 'hb.section_2_li_5', 'hb.section_2_li_6',
         ] },
         // §3 申领 · 1 routine + 2 事件触发（C 撤格键锁定 / E 个人物品禁带）
         { titleKey: 'hb.section_3', itemKeys: [
@@ -103,7 +103,7 @@ export const RULE_LAYERS: RuleLayer[] = [
         { titleKey: 'hb.section_4', itemKeys: [
           'hb.section_4_li_1', 'hb.section_4_li_2',
         ] },
-        // §5 归档·离场 · 1 routine + 2 事件触发（H 讨论范围 / I D29 simplified 离场仪式 · 引号术语「已受理文本」）
+        // §5 归档·离场 · 1 routine + 2 事件触发（H 讨论范围 / I 离场 = D29 录入员简化版：仅工号确认 · 不交底检测判据 · 保持 routine 表象）
         { titleKey: 'hb.section_5', itemKeys: [
           'hb.section_5_li_1', 'hb.section_5_li_3', 'hb.section_5_li_4',
         ] },

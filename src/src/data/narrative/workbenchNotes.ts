@@ -177,8 +177,8 @@ export const WORKBENCH_NOTES: WorkbenchNote[] = [
   {
     id: 'wn-16-secondkeys',
     source: 'technical', category: 'warning',
-    zh: '"如听到打字机内部有第二组击键声，请勿继续录入。立即通知技术科。" — 技术科',
-    en: '"If you hear a second set of keystrokes from within the typewriter, do not continue entry. Notify Technical Office at once." — Technical Office',
+    zh: '"如听到电传机内部有第二组击键声，请勿继续录入。立即通知技术科。" — 技术科',
+    en: '"If you hear a second set of keystrokes from within the teleprinter, do not continue entry. Notify Technical Office at once." — Technical Office',
   },
   {
     id: 'wn-17-backspace',
@@ -234,8 +234,8 @@ export const WORKBENCH_NOTES: WorkbenchNote[] = [
     id: 'wn-24-keep-ribbon',
     source: 'unsigned', category: 'induction',
     weight: 0.2,
-    zh: '"下班后请保留打字机内的最后一句话。不要清空色带。"',
-    en: '"After shift, retain the last sentence in the typewriter. Do not clear the ribbon."',
+    zh: '"下班后请保留电传机内的最后一句话。不要清空色带。"',
+    en: '"After shift, retain the last sentence in the teleprinter. Do not clear the ribbon."',
   },
 
   // === 引导作者化 induction · I-C 在岗同事 partially 污染 (weight 0.5) ===

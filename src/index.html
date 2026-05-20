@@ -141,47 +141,7 @@
             <!-- Overlay: handbook (Tutorial entry) -->
             <div class="desk-overlay-shroud" id="menu-ov-shroud"></div>
             <div class="desk-overlay-paper" id="menu-ov-handbook">
-                <div class="ov-header">
-                    <div class="seal"><img src="/assets/ui/seal-mark.png" alt=""></div>
-                    <div class="h-text">
-                        <div class="org" data-i18n="menu.org_dept">DPCA · 文牍科 2-B</div>
-                        <div class="title" data-i18n="hb.title">新员工守则 · HANDBOOK</div>
-                    </div>
-                    <div class="form-id" data-i18n="hb.form_id" data-i18n-html>DPCA-NEW<br>第 1 / 1 页</div>
-                </div>
-                <p style="font-size:12px; color:var(--desk-ink-dim); letter-spacing:0.1em" data-i18n="hb.preamble">
-                    本守则适用于初次到岗之文牍部职员。请于上工前细读。
-                </p>
-                <div class="ov-section" data-i18n="hb.section_1">一 · 上 工 / CLOCK-IN</div>
-                <ul>
-                    <li data-i18n="hb.section_1_li_1">每轮班开始前于上工卡打孔。</li>
-                    <li data-i18n="hb.section_1_li_2">逾时未卡视为旷工。罚没工时记入案。</li>
-                </ul>
-                <div class="ov-section" data-i18n="hb.section_2">二 · 文 件 / DOCUMENTS</div>
-                <ul>
-                    <li data-i18n="hb.section_2_li_1">文件按编号顺序处理，不得跳号。</li>
-                    <li data-i18n="hb.section_2_li_2">未盖章之文件不得离桌。</li>
-                    <li data-i18n="hb.section_2_li_3">区域代号属保密信息，不得在部外谈及。</li>
-                </ul>
-                <div class="ov-section" data-i18n="hb.section_3">三 · 申 领 / REQUISITION</div>
-                <ul>
-                    <li data-i18n="hb.section_3_li_1">每日仅可申领工件一件。</li>
-                    <li data-i18n="hb.section_3_li_2">已配发之工件视同分内职责，不得退还。</li>
-                </ul>
-                <div class="ov-section" data-i18n="hb.section_4">四 · 归 档 / FILING</div>
-                <ul>
-                    <li data-i18n="hb.section_4_li_1">已处理文件须于轮班结束前送档案室。</li>
-                    <li data-i18n="hb.section_4_li_2">未归档者计入失职。</li>
-                </ul>
-                <p class="ov-warn" data-i18n="hb.warn">▌ 已读视同同意。 / ACKNOWLEDGMENT IS BINDING.</p>
-                <p class="ov-route-note" data-i18n="hb.route_note" data-i18n-html>
-                    阅毕签收 → 径赴 NEW-Δ-1 入职培训科报到<br>
-                    ON ACK · PROCEED TO ONBOARDING TRAINING (NEW-Δ-1)
-                </p>
-                <div class="ov-footer">
-                    <div data-i18n="hb.footer">DPCA-NEW · ████ 修订</div>
-                    <button class="ov-close" id="menu-ov-handbook-ack" data-i18n="hb.ack_btn">已 阅 · ACK</button>
-                </div>
+                <!-- 内容由 renderHandbook() 运行时注入（ui/handbook/handbookOverlay.ts · 数据见 data/handbook.ts + demo-i18n hb.* keys）。旧静态守则已移除，勿在此重写守则正文。 -->
             </div>
 
             <!-- Overlay: workstation request (Settings entry) -->

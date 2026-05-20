@@ -137,7 +137,7 @@ const ZH: Record<string, string> = {
   // --- 离场验证 · run 结束前 paraphrase check ---
   'departure.header_org':        'DPCA · 值班窗口',
   'departure.header_title':      '离场验证 · DEPARTURE',
-  'departure.instruction':       '请用您本人的话简短解释下列句子的含义。不可引用已受理文本。',
+  'departure.instruction':       '请用您本人的话简短解释下列句子的含义。',
   'departure.input_placeholder': '在此键入您的复述…',
   'departure.submit_btn':        '提交 · SUBMIT',
   'departure.countdown_label':   '剩余',
@@ -221,27 +221,26 @@ const ZH: Record<string, string> = {
   'hb.section_1': '一 · 上 工',
   'hb.section_1_li_1': '上工前于打卡机插针。逾时未卡视为缺勤，扣除工时计入档案。',
   'hb.section_1_li_3': '请勿于他人工位停留。',
-  // §2 文件 · 1 routine + 3 事件触发 + 1 跨班自我否认（A 凝视 / B 像谁写的 / D 不合理迹象 / 其他职业）
+  // §2 文件 · 2 事件触发 + 1 跨班自我否认 + 1 去语境化指令（A 凝视 / B 像谁写的 / li_5 逐词派发·勿拼回原句 / 其他职业）· li_5 不列症候；勿加句/段/文档级内容，见 feedback_token_level_is_decontextualization
   'hb.section_2': '二 · 文 件',
-  'hb.section_2_li_1': '文件按编号顺序录入，不得跳号。',
-  'hb.section_2_li_3': '录入过程中如需思考字形，应将视线移离文件。可选方法：抬头看天花板第三排灯管，或闭目两秒。',
+  'hb.section_2_li_3': '录入过程中如需思考字形，应将视线移离屏幕。可选方法：抬头看天花板第三排灯管，或闭目两秒。',
   'hb.section_2_li_4': '凡感到一段文字"就像是某个人写的"——不论该人是您本人、同事、家属或公众人物——该感受应在录入完成后立即遗忘。如该感受持续超过本班次结束时刻，请填表 D-7 上交人事科。',
-  'hb.section_2_li_5': '录入员无需关心文件内容是否合理。如出现下列情况之一，请按字录入，勿作判断：同一字反复出现；句子读到一半似乎缺少主语；段落结尾是逗号而非句号；标题与正文无关。',
+  'hb.section_2_li_5': '录入员所领录入项均逐词派发，非完整文件；您无需、亦不应尝试将相邻录入项拼回原句。',
   'hb.section_2_li_6': '文件录入完成后送至本科指定档案室。"校对处"、"修改处"、"作者室" 不属于本科。如您收到来自上述部门的便条、电话或人员到访，请勿回应，并照常继续您的录入工作。',
   // §3 申领 · 1 routine + 2 事件触发（C 撤格键 / E 个人物品）
   'hb.section_3': '三 · 申 领',
   'hb.section_3_li_1': '每日仅可申领工件一件。已配发工件视同分内职责，不得退还。',
-  'hb.section_3_li_3': '误击之键已经发生。请继续录入下一字符。打字机的撤格键已被技术科锁定——这是为保护您的输入记录完整性，不应视作设备故障。',
-  'hb.section_3_li_4': '工位仅可放置本科配发之打字机、文件夹、墨水瓶。下列物品不得带入：手稿、便签、私人书写工具（含钢笔、铅笔、口红、指甲油）、家属照片、字典、报纸、信件。如不确定某物品是否允许，默认为不允许。',
+  'hb.section_3_li_3': '误击之键已经发生。请继续录入。电传机的撤格键已被技术科锁定——这是为保护您的输入记录完整性，不应视作设备故障。',
+  'hb.section_3_li_4': '工位仅可放置本科配发之电传机、键位标签、色带、文件夹，及经申领配发之工件。下列物品不得带入：手稿、便签、私人书写工具（含钢笔、铅笔、口红、指甲油）、家属照片、字典、报纸、信件。如不确定某物品是否允许，默认为不允许。',
   // §4 工位伦理 · 2 事件触发（F 空工位 / G 挂钟）· "属正常现象" 句式（reference 动物园招牌）
   'hb.section_4': '四 · 工 位 伦 理',
   'hb.section_4_li_1': '本科共有十二个工位。班次中若有同事请假，其工位将保持原状（含半完成的文件、未盖章的工件、个人物品）。请勿走近此类工位，也不必清理。如听到来自该工位的声响，属正常现象，可视为风声、暖气管震动或邻科活动。',
   'hb.section_4_li_2': '工位上方挂钟无秒针，属设备规格，无需报告。如您在工作中偶感时间流逝异常（如：一段录入感觉比平时短得多或长得多），属正常现象，请勿查看挂钟，按原节奏继续录入。',
-  // §5 归档 · 离场 · 1 routine + 2 事件触发（H 讨论范围 / I 离场仪式 D29 simplified）· 引号术语"已受理文本"
+  // §5 归档 · 离场 · 1 routine + 2 事件触发（H 讨论范围 / I 离场 = D29 录入员简化版：仅工号/日期/工位确认 · 不交底检测判据 · 保持 routine 表象 · narrative-design.md:961/871）
   'hb.section_5': '五 · 归 档 · 离 场',
   'hb.section_5_li_1': '已处理文件须于轮班结束前送档案室。未归档者计入失职。',
   'hb.section_5_li_3': '本科保密守则适用于全部文件内容。建议讨论范围：天气、上下班通勤、配餐质量、设备故障（限功能性故障，不含触感、声响或其他主观感受）。请勿与同事讨论：您今日处理的文件内容、您印象中处理过的文件内容、您未曾处理但好像知道内容的文件。',
-  'hb.section_5_li_4': '离场时请于值班窗口口头报告：本人工号、本日日期、本日所在工位编号。如值班员要求您解释一个普通句子（例如"今日勤务结束"）的含义，请用您本人的话简短解释，不可引用"已受理文本"。整套程序通常在三十秒内完成。',
+  'hb.section_5_li_4': '离场时请于值班窗口口头报告：本人工号、本日日期、本日所在工位编号。值班员可就当日勤务向您口头确认，照常应答即可。整套程序通常在三十秒内完成。',
   'hb.warn': '▌ 已读视同同意 · ACKNOWLEDGMENT IS BINDING',
   'hb.route_note': '阅毕签收 → 径赴 NEW-Δ-1 入职培训科报到<br>ON ACK · PROCEED TO ONBOARDING TRAINING (NEW-Δ-1)',
   'hb.footer': 'DPCA-NEW · ████ 修订',
@@ -1637,7 +1636,7 @@ const EN: Record<string, string> = {
   // --- Departure verification · paraphrase check before settlement ---
   'departure.header_org':        'DPCA · DUTY WINDOW',
   'departure.header_title':      'DEPARTURE VERIFICATION',
-  'departure.instruction':       'In your own words, briefly explain the meaning of the sentence below. Do not quote filed text.',
+  'departure.instruction':       'In your own words, briefly explain the meaning of the sentence below.',
   'departure.input_placeholder': 'Type your paraphrase here…',
   'departure.submit_btn':        'SUBMIT',
   'departure.countdown_label':   'TIME',
@@ -1721,27 +1720,26 @@ const EN: Record<string, string> = {
   'hb.section_1': '1 · CLOCK-IN',
   'hb.section_1_li_1': 'Insert pin at the time-card machine before shift. Late entry counts as absent; forfeited hours are recorded.',
   'hb.section_1_li_3': 'Do not loiter at others\' workstations.',
-  // §2 Documents · 1 routine + 3 event-triggered + 1 cross-class self-denial (A stare / B authored-by-someone / D incoherence / other roles)
+  // §2 Documents · 2 event-triggered + 1 cross-class self-denial + 1 decontextualization directive (A stare / B authored-by-someone / li_5 word-by-word dispatch · do not reassemble / other roles) · li_5 lists no symptoms; do not add sentence/paragraph/document-level content; see feedback_token_level_is_decontextualization
   'hb.section_2': '2 · DOCUMENTS',
-  'hb.section_2_li_1': 'Documents are to be entered in numerical order. No skipping.',
-  'hb.section_2_li_3': 'If you need to consider a character\'s shape during entry, move your gaze off the document. Suggested methods: look up at the third row of ceiling lights, or close your eyes for two seconds.',
+  'hb.section_2_li_3': 'If you need to consider a character\'s shape during entry, move your gaze off the screen. Suggested methods: look up at the third row of ceiling lights, or close your eyes for two seconds.',
   'hb.section_2_li_4': 'Should a passage feel as though it "was written by someone"—whether that person be yourself, a colleague, a family member, or a public figure—this impression is to be forgotten immediately after entry is complete. If the impression persists past end of shift, please submit Form D-7 to Personnel.',
-  'hb.section_2_li_5': 'Operators are not required to assess whether document content is coherent. If any of the following appear, enter character by character without judgment: the same character recurring repeatedly; a sentence apparently missing its subject mid-way; a paragraph ending with a comma rather than a period; a title unrelated to its body text.',
+  'hb.section_2_li_5': 'Items issued to operators are dispatched word by word, not as complete documents; you need not, and must not, attempt to reassemble adjacent items into their original sentence.',
   'hb.section_2_li_6': 'After entry, documents are routed to the department\'s designated archive room. "Proofreading Office", "Revision Office", and "Authorship Studio" are not part of this department. Should you receive a memo, call, or in-person inquiry from any of the above, do not respond, and continue your entry work as usual.',
   // §3 Requisition · 1 routine + 2 event-triggered (C backspace / E personal items)
   'hb.section_3': '3 · REQUISITION',
   'hb.section_3_li_1': 'One implement may be requisitioned per day. Issued implements are part of duty and cannot be returned.',
-  'hb.section_3_li_3': 'The mis-struck key has already occurred. Continue with the next character. The typewriter\'s backspace key has been locked by the Technical Office—this is to preserve the integrity of your input record and should not be treated as equipment failure.',
-  'hb.section_3_li_4': 'Only the following items may be placed at the workstation: department-issued typewriter, file folder, ink bottle. The following items may not be brought in: manuscripts, notes, personal writing implements (including pens, pencils, lipstick, nail polish), family photographs, dictionaries, newspapers, letters. If you are uncertain whether an item is permitted, the default is: not permitted.',
+  'hb.section_3_li_3': 'The mis-struck key has already occurred. Continue entry. The teleprinter\'s backspace key has been locked by the Technical Office—this is to preserve the integrity of your input record and should not be treated as equipment failure.',
+  'hb.section_3_li_4': 'Only the following items may be placed at the workstation: department-issued teleprinter, key labels, ribbon, file folder, and requisitioned items. The following items may not be brought in: manuscripts, notes, personal writing implements (including pens, pencils, lipstick, nail polish), family photographs, dictionaries, newspapers, letters. If you are uncertain whether an item is permitted, the default is: not permitted.',
   // §4 Workplace Ethics · 2 event-triggered (F empty seat / G clock) · "is a normal occurrence" phrasing
   'hb.section_4': '4 · WORKPLACE ETHICS',
   'hb.section_4_li_1': 'This department contains twelve workstations. Should a colleague be absent during a shift, their workstation will remain in its original state (including half-completed documents, unstamped implements, personal items). Do not approach such workstations; do not clean them. Should sounds be heard from such a workstation, this is a normal occurrence and may be attributed to wind, radiator vibration, or activity in an adjacent department.',
   'hb.section_4_li_2': 'The wall clock above the workstation has no second hand; this is per equipment specification and requires no report. Should you, during work, perceive an irregularity in the passage of time (e.g., a stretch of entry feels noticeably shorter or longer than usual), this is a normal occurrence; do not look at the clock, continue entry at the original pace.',
-  // §5 Filing & Egress · 1 routine + 2 event-triggered (H discussion scope / I egress ritual = D29 simplified) · quoted term "Filed Text"
+  // §5 Filing & Egress · 1 routine + 2 event-triggered (H discussion scope / I egress = D29 operator-simplified: ID/date/workstation confirm only · do not disclose the check criterion · keep routine surface · narrative-design.md:961/871)
   'hb.section_5': '5 · FILING · EGRESS',
   'hb.section_5_li_1': 'Processed documents must be submitted to the archive before the shift ends. Failure to file counts as dereliction.',
   'hb.section_5_li_3': 'Departmental confidentiality applies to all document contents. Suggested topics of conversation: weather, commute, cafeteria, equipment malfunctions (limited to functional faults; not including tactile, auditory, or other subjective sensations). Do not discuss with colleagues: contents of documents you processed today; contents of documents you recall processing; contents of documents you have not processed but somehow seem to know.',
-  'hb.section_5_li_4': 'At egress, report verbally at the duty window: your operator number, today\'s date, today\'s workstation number. Should the duty officer ask you to explain the meaning of an ordinary sentence (for example, "Today\'s shift has ended"), please explain in your own words, briefly, and do not quote any "Filed Text". The full procedure typically completes within thirty seconds.',
+  'hb.section_5_li_4': 'At egress, report verbally at the duty window: your operator number, today\'s date, today\'s workstation number. The duty officer may verbally confirm the day\'s duties with you; respond as usual. The full procedure typically completes within thirty seconds.',
   'hb.warn': '▌ ACKNOWLEDGMENT IS BINDING',
   'hb.route_note': 'ON ACK · PROCEED TO ONBOARDING TRAINING (NEW-Δ-1)',
   'hb.footer': 'DPCA-NEW · Rev. ████',

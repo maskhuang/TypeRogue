@@ -557,8 +557,8 @@ export const RELICS_NARRATIVE = {
       "text_en": "The verse on it stops mid-word. Its last owner never finished sentences either. He finished more than anyone else."
     },
     "doc": {
-      "text_zh": "【回收物 RC-2847 · 发现于第 V 层排字区 · D-3801 工位抽屉底层】\n\n一截铜制节拍器摆锤，与摆杆分离，单独保存于打字色带布包中。表面有指甲划痕，非操作性损伤。\n\n布包内附便条（手写，笔迹鉴定属 D-3801）：\n\n",
-      "text_en": "[ Recovery RC-2847 · Discovered in Layer V Compositing Hall · Bottom drawer of D-3801's workstation ]\n\nA brass metronome pendulum, detached from its column, wrapped in a length of typewriter ribbon. Surface shows fingernail scoring; non-operational in origin.\n\nEnclosed note (handwritten; attributed to D-3801 by graphological analysis):"
+      "text_zh": "【回收物 RC-2847 · 发现于第 V 层排字区 · D-3801 工位抽屉底层】\n\n一截铜制节拍器摆锤，与摆杆分离，单独保存于电传机色带布包中。表面有指甲划痕，非操作性损伤。\n\n布包内附便条（手写，笔迹鉴定属 D-3801）：\n\n",
+      "text_en": "[ Recovery RC-2847 · Discovered in Layer V Compositing Hall · Bottom drawer of D-3801's workstation ]\n\nA brass metronome pendulum, detached from its column, wrapped in a length of teleprinter ribbon. Surface shows fingernail scoring; non-operational in origin.\n\nEnclosed note (handwritten; attributed to D-3801 by graphological analysis):"
     }
   },
   "fury_beat": {

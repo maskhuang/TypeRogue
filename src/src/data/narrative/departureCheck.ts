@@ -23,7 +23,7 @@ export interface DepartureFailLore {
 // =============================================================================
 // 普通句子池 · paraphrase 提示用
 // =============================================================================
-// 选词约束：均为"已受理日常句"（区别于 anomaly token），
+// 选词约束：均为普通日常句（区别于 anomaly token / 未受理文本），
 // 玩家自己能换 5+ 个 token 重写出同义。
 // 后续 narrative pipeline 扩到 ~12 条以保 LRU 不撞。
 
@@ -42,8 +42,8 @@ export const DEPARTURE_PROMPTS: readonly DeparturePrompt[] = [
 export const DEPARTURE_FAIL_LORES: readonly DepartureFailLore[] = [
   {
     id: 'fail-01-retained',
-    zh: '扣留 · 您今日的复述与已受理文本有高重合。请配合二审。',
-    en: 'DETAINED · Your departure paraphrase overlaps significantly with filed text. Please cooperate with review.',
+    zh: '扣留 · 您今日的复述与未受理文本有高重合。请配合二审。',
+    en: 'DETAINED · Your departure paraphrase overlaps significantly with unfiled text. Please cooperate with review.',
   },
 ]
 
