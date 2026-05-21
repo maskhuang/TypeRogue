@@ -59,7 +59,13 @@ function lv1Amount(resource: string, ratio: number): string {
   const base = RESOURCE_LV1_BASE[resource]
   if (base === undefined) return isZh() ? `${ratio}×Lv1 底分` : `${ratio}×Lv1 base`
   const n = ratio * base
-  return Number.isInteger(n) ? String(n) : (Math.round(n * 100) / 100).toString()
+  if (n === 0) return '0'
+  if (Number.isInteger(n)) return String(n)
+  const rounded = Math.round(n * 100) / 100
+  // 非零但 2 位小数四舍五入到 0（高频触发 × 小 base 资源）→ 退化到 1 位有效数字，
+  // 避免误导的 "+0"（运行时确有产出，见 affixV2BattleIntegration.applyResourceAmount）
+  if (rounded === 0) return parseFloat(n.toPrecision(1)).toString()
+  return rounded.toString()
 }
 
 // ============================================

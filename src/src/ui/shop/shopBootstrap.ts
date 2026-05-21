@@ -13,6 +13,7 @@ import { shouldAnimateShop } from '../../core/UserSettings';
 import { getNextBattleNode } from '../../systems/stage/stageFlow';
 import { t, applyHtmlI18n } from '../../demo/demo-i18n';
 import { startLevel } from '../../systems/battle';
+import { isTimedAuction, startAuctionTimer, clearAuctionTimer } from '../../systems/relics/ShopRelicBehaviors';
 import { dragManager, registerShapePreviewRenderer } from '../../systems/dragManager';
 import { clearShapePlacementOnWorkbench } from '../shapePreview';
 import {
@@ -150,9 +151,35 @@ export function handleSubmitConfirmation(input: string): boolean {
 }
 
 /** 警告全过 → 启 stamp 动画 + transition */
+// === 限时拍卖 (timed_auction) 倒计时 UI ===
+function setAuctionTimerDisplay(remaining: number): void {
+  let el = document.getElementById('auction-timer');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'auction-timer';
+    (document.getElementById('game-container') ?? document.body).appendChild(el);
+  }
+  el.textContent = t('shop.auction.timer', { n: remaining });
+  el.classList.toggle('auction-urgent', remaining <= 5);
+}
+function clearAuctionTimerDisplay(): void {
+  document.getElementById('auction-timer')?.remove();
+}
+/** 进店时若持 timed_auction → 启动 30s 倒计时；归零自动离店（与 classic 同义） */
+function startAuctionIfNeeded(): void {
+  if (!isTimedAuction()) return;
+  startAuctionTimer(
+    (remaining) => setAuctionTimerDisplay(remaining),
+    () => { clearAuctionTimerDisplay(); proceedSubmit(); },  // 倒计时归零 → 自动提交离店
+  );
+}
+
 export function proceedSubmit(): void {
   if (previewState.submitting) return;
   previewState.submitting = true;
+  // 限时拍卖：离店即停倒计时（防离店后 timer 再次触发 proceedSubmit）
+  clearAuctionTimer();
+  clearAuctionTimerDisplay();
   // terminal stamp sound removed (was sfx('submit_stamp'))
   terminal.appendLine(t('shop.terminal.submit.stamped'), 'echo');
   terminal.appendBlank();
@@ -760,6 +787,13 @@ function buildWorkbenchScreen(): string {
             <div class="wb-foam-case">
               ${Array.from({ length: 5 }).map(() => `<div class="foam-cutout empty"><span class="cutout-empty-label" data-i18n="wb.intray_empty_slot">${t('wb.intray_empty_slot')}</span></div>`).join('')}
             </div>
+            <div class="wb-disposal" id="wb-disposal-zone" title="${t('wb.disposal_hint')}">
+              <span class="wb-disposal-icon" aria-hidden="true">♺</span>
+              <span class="wb-disposal-body">
+                <span class="wb-disposal-label" data-i18n="wb.disposal_label">${t('wb.disposal_label')}</span>
+                <span class="wb-disposal-hint" id="wb-disposal-hint" data-i18n="wb.disposal_hint">${t('wb.disposal_hint')}</span>
+              </span>
+            </div>
           </div>
 
           <div class="wb-panel wb-keyboard">
@@ -938,16 +972,20 @@ export function enterTerminalShop(_won?: boolean): void {
     clearShapePlacementOnWorkbench();
     workbench.clearEffectRadiusHighlight();
     workbench.cancelDragHoverPending();
+    workbench.armDisposalZone(false);
   };
   // Story 60.9: 拖拽起势时全局隐藏所有 tooltip（不挡视线）
   // Story 60.12: 同时播放 pickup 音效（抓握刺啦）
-  dragManager.onDragStart = () => {
+  dragManager.onDragStart = (payload) => {
     keyTooltip.hide();
     hideRelicTooltip();
     deskSfx('paper'); // workbench drag pickup → paper rustle
+    // IN-tray 卡拖起 → 回收槽点亮邀请投放
+    if (payload?.type === 'skill-inventory') workbench.armDisposalZone(true);
   };
   workbench.setupDragZones();
   setupDrawerHandlers();
+  startAuctionIfNeeded();  // timed_auction：进店启动 30s 倒计时
   setTimeout(() => {
     (document.activeElement as HTMLElement | null)?.blur?.();
     if (vp) vp.scrollTop = vp.scrollHeight;

@@ -361,12 +361,11 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
           scale: { type: 'tag_count', tag: recipe.section, factor: 0.1, scope: { type: 'all_skills' } } }
       : { kind: 'gain_resource', resource, ratio }
   } else if (recipe.kind === 'growth') {
-    // growth: scope 加权随机（self 常见，wide scope 稀有）
-    const scope = pickWeightedScope(FULL_SCOPE_POOL)
+    // growth: scope 固定 self —— add(底分累加)只对本技能有意义；
+    // "+0.02 <宿主资源>" 广播到别的技能（按宿主资源算量、加到对方底分）概念上是糊的
+    // （会出现"给产盾技能加 Time"这种无意义组合）。资源无关的广播加成交给 escalate/multiply。
     const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
-    effect = scope.selector.type === 'self'
-      ? { kind: 'add', ratio }
-      : { kind: 'add', ratio, selector: scope.selector }
+    effect = { kind: 'add', ratio }
   } else if (recipe.kind === 'escalate') {
     const scope = pickWeightedScope(FULL_SCOPE_POOL)
     const amount = scaleMagnitude(recipe.T, triggerEntry.freq)

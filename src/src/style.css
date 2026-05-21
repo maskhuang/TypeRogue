@@ -2768,23 +2768,39 @@ body.shop-preview-active .drag-ghost .shape-preview-r3 .shape-cell.filled {
     padding: 3px 10px;
     font-size: 13px;
     color: #ffd700;
+    /* boss/精英修饰器（多条 + 长描述）会撑爆 top-bar 挤占其他 HUD：
+       限定占位 + 收缩 + 截断；完整文本走 title 悬停查看 */
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 36%;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 #modifier-info.visible {
     display: flex;
 }
 
+#modifier-info > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .modifier-icon {
     font-size: 16px;
+    flex: 0 1 auto;       /* 可收缩并 ellipsis（boss 多图标行优雅截断，不硬切字） */
 }
 
 .modifier-name {
     font-weight: bold;
+    flex: 0 1 auto;
 }
 
 .modifier-hint {
     color: #cca300;
     font-size: var(--text-caption-size);
+    flex: 0 1 auto;       /* 最长的描述段优先吃掉收缩配额 */
 }
 
 /* Boss 修饰器切换闪烁 (Story 18.4) */
@@ -4539,67 +4555,113 @@ html[lang^="en"] .relic-picker-title {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(8, 7, 5, 0.92);
 }
 
+/* DPCA dossier 风格 · 与战斗界面统一（深 CRT 底 + 虚线印金边 + 打字机字体） */
 .modifier-picker-content {
     position: relative;
     z-index: 1;
     text-align: center;
-    padding: 30px;
+    max-width: 92%;
+    font-family: var(--font-dossier);
+}
+
+/* DPCA-VT220 终端外框 — 复用 battle-bezel 的奶油侧轨 + 顶/底铭牌条，按内容自适应尺寸 */
+.modifier-picker-bezel {
+    display: grid;
+    grid-template-rows: auto auto auto;   /* 顶条 / 屏幕 / 底条 */
+    grid-template-columns: 14px auto 14px; /* 侧轨 · 屏幕 · 侧轨 */
+    position: relative;
+    border-radius: 10px;
+    box-shadow: 0 14px 30px rgba(0,0,0,0.6);
+}
+/* 奶油色左右侧轨（同 battle-bezel::before/::after） */
+.modifier-picker-bezel::before,
+.modifier-picker-bezel::after {
+    content: '';
+    grid-row: 2;
+    background: linear-gradient(90deg, #c9b894 0%, #b8a37a 50%, #a48f64 100%);
+    box-shadow: inset 1px 0 0 rgba(255,255,255,0.35), inset -1px 0 0 rgba(0,0,0,0.18);
+    pointer-events: none;
+}
+.modifier-picker-bezel::before { grid-column: 1; }
+.modifier-picker-bezel::after  { grid-column: 3; transform: scaleX(-1); }
+
+/* 终端屏幕区（复用 battle-bezel-screen 的暗底+扫描线，仅补内边距 + 自适应高度） */
+.modifier-picker-screen {
+    grid-row: 2;
+    grid-column: 2;
+    min-height: 0;
+    padding: 22px 30px 24px;
+    align-items: center;
 }
 
 .modifier-picker-title {
+    font-family: var(--font-dossier);
     font-size: var(--text-subtitle-size);
-    font-weight: bold;
-    color: #ff6b6b;
+    color: var(--color-seal-gold);
     margin-bottom: 16px;
+    letter-spacing: 4px;
+    border-bottom: 1px dashed rgba(201,164,94,0.4);
+    padding-bottom: 10px;
+}
+.modifier-picker-title::before {
+    content: 'DIRECTIVE · ';
+    font-size: 9px;
     letter-spacing: 2px;
+    color: var(--color-parchment);
+    opacity: 0.6;
 }
 
-.modifier-picker-active { margin-bottom: 20px; }
-.modifier-picker-active-label { font-size: var(--text-caption-size); color: #888; margin-bottom: 8px; }
+.modifier-picker-active { margin-bottom: 18px; }
+.modifier-picker-active-label { font-size: var(--text-caption-size); color: var(--color-parchment); opacity: 0.7; margin-bottom: 8px; letter-spacing: 2px; }
 .modifier-picker-active-list { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.modifier-picker-active-tag { padding: 4px 10px; background: rgba(255,107,107,0.15); border: 1px solid rgba(255,107,107,0.3); border-radius: 0; font-size: var(--text-caption-size); color: #ff6b6b; }
+.modifier-picker-active-tag { padding: 4px 10px; background: rgba(0,0,0,0.4); border: 1px dashed rgba(201,164,94,0.45); border-radius: 0; font-size: var(--text-caption-size); color: var(--color-parchment); letter-spacing: 1px; }
 
-.modifier-picker-cards { display: flex; gap: 20px; justify-content: center; }
+.modifier-picker-cards { display: flex; gap: 18px; justify-content: center; }
 
 .modifier-picker-card {
-    background: rgba(42,26,26,0.8);
-    border: 2px solid #ff6b6b44;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(201,164,94,0.4);
     border-radius: 0;
     padding: 20px;
     width: 200px;
     cursor: pointer;
-    transition: border-color 0.15s steps(1), background 0.15s steps(1);
+    transition: border-color 0.12s steps(1), background 0.12s steps(1);
     text-align: center;
+    font-family: var(--font-dossier);
 }
 
 .modifier-picker-card:hover {
-    border-color: #ff6b6b;
-    background: rgba(42,26,26,1);
+    border-color: var(--color-seal-gold);
+    border-style: solid;
+    background: rgba(255,220,160,0.06);
 }
 
 .modifier-picker-icon { font-size: var(--text-title-size); margin-bottom: 10px; }
-.modifier-picker-name { font-size: var(--text-subtitle-size); font-weight: bold; color: #ff6b6b; margin-bottom: 8px; }
-.modifier-picker-desc { font-size: var(--text-body-size); color: #aaa; line-height: 1.4; min-height: 36px; }
+.modifier-picker-name { font-size: var(--text-subtitle-size); font-weight: bold; color: var(--color-seal-gold); letter-spacing: 1px; margin-bottom: 8px; }
+.modifier-picker-desc { font-size: var(--text-body-size); color: var(--color-parchment); opacity: 0.85; line-height: 1.5; min-height: 36px; }
 
 .modifier-picker-skip-btn {
     display: block;
     margin: 16px auto 0;
     padding: 8px 24px;
     font-size: var(--text-body-size);
-    font-family: inherit;
-    background: var(--bg-panel);
-    border: 1px solid rgba(255,107,107,0.4);
+    font-family: var(--font-dossier);
+    background: transparent;
+    border: 1px dashed rgba(201,164,94,0.5);
     border-radius: 0;
-    color: #ff6b6b;
+    color: var(--color-parchment);
+    letter-spacing: 2px;
     cursor: pointer;
-    transition: background 0.15s steps(1), border-color 0.15s steps(1);
+    transition: background 0.12s steps(1), border-color 0.12s steps(1);
 }
 .modifier-picker-skip-btn:hover {
-    background: rgba(255, 107, 107, 0.1);
-    border-color: #ff6b6b;
+    background: rgba(255,220,160,0.06);
+    border-color: var(--color-seal-gold);
+    border-style: solid;
+    color: var(--color-seal-gold);
 }
 
 /* ============================================ */
@@ -4953,6 +5015,98 @@ body.shop-preview-active .wb-folders {
 }
 body.shop-preview-active .wb-foam-case {
     overflow-x: hidden !important;             /* IN-tray 不应有横向滚动 */
+}
+
+/* IN-tray 回收槽 — 拖入卡片卖出（替代 SEL IN<n> 打字）
+ * 材质与 .wb-foam-case 同源：暗色凹陷"投递口"切进桌面，金章刻字 + 暖辉光态 */
+body.shop-preview-active .wb-disposal {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border: 1px solid #000;
+    border-radius: 4px;
+    background: radial-gradient(ellipse at center, #1a1612 0%, #0a0907 100%);
+    box-shadow:
+        inset 0 3px 6px rgba(0,0,0,0.9),
+        inset 0 -1px 1px rgba(255,255,255,0.04),
+        0 2px 5px rgba(0,0,0,0.4);
+    color: #cdbb92;
+    font-family: var(--font-dossier);
+    font-size: 11px;
+    letter-spacing: 2px;
+    transition: box-shadow 0.18s ease, color 0.18s ease;
+}
+body.shop-preview-active .wb-disposal-icon {
+    font-size: 18px;
+    line-height: 1;
+    color: #c9a45e;
+    opacity: 0.7;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.6);
+    transition: opacity 0.18s ease, transform 0.18s ease, color 0.18s ease;
+}
+/* 文本竖排（label / hint）+ 截断，避免长字串撑出窄面板 */
+body.shop-preview-active .wb-disposal-body { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 1px; overflow: hidden; }
+body.shop-preview-active .wb-disposal-label { font-weight: bold; color: #e8dcc0; letter-spacing: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.shop-preview-active .wb-disposal-hint { opacity: 0.6; font-size: 10px; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity 0.18s ease, color 0.18s ease; }
+
+/* armed：拖起 IN-tray 卡 → 槽口内部泛起暖金辉光，平缓呼吸（邀请投递） */
+body.shop-preview-active .wb-disposal.armed {
+    color: #f0e2c2;
+    animation: wbDisposalBreathe 1.6s ease-in-out infinite;
+}
+@keyframes wbDisposalBreathe {
+    0%, 100% { box-shadow: inset 0 3px 6px rgba(0,0,0,0.9), inset 0 0 10px rgba(201,164,94,0.20), 0 0 0 1px rgba(201,164,94,0.30), 0 0 8px rgba(201,164,94,0.16); }
+    50%      { box-shadow: inset 0 3px 6px rgba(0,0,0,0.9), inset 0 0 18px rgba(201,164,94,0.42), 0 0 0 1px rgba(201,164,94,0.52), 0 0 16px rgba(201,164,94,0.32); }
+}
+body.shop-preview-active .wb-disposal.armed .wb-disposal-icon { opacity: 1; color: #e8c879; }
+
+/* drag-over：卡悬停槽口 → 满辉光 + 图标微张（即将投递） */
+body.shop-preview-active .wb-disposal.drag-over {
+    color: #fff4d8;
+    box-shadow:
+        inset 0 2px 5px rgba(0,0,0,0.85),
+        inset 0 0 22px rgba(201,164,94,0.55),
+        0 0 0 1px rgba(230,200,120,0.9),
+        0 0 18px rgba(201,164,94,0.5);
+    animation: none;
+}
+body.shop-preview-active .wb-disposal.drag-over .wb-disposal-icon { opacity: 1; color: #ffe9a8; transform: scale(1.12); }
+body.shop-preview-active .wb-disposal.drag-over .wb-disposal-hint { opacity: 1; color: #ffe9a8; font-weight: bold; }
+/* dragManager 给所有 drop target 加的默认 cyan .drop-zone-highlight 与暗金主题冲突 →
+ * 覆盖回暗底 / 去 cyan outline，让 .drag-over 的暖金辉光接管 */
+body.shop-preview-active .wb-disposal.drop-zone-highlight {
+    outline: none !important;
+    background: radial-gradient(ellipse at center, #1a1612 0%, #0a0907 100%) !important;
+}
+
+/* 限时拍卖 (timed_auction) 倒计时 — 固定悬浮于商店顶部，DPCA 印金；≤5s 转红脉冲 */
+#auction-timer {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    padding: 6px 16px;
+    font-family: var(--font-dossier);
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #f4d590;
+    background: rgba(20,10,6,0.92);
+    border: 1px solid var(--color-seal-gold);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(0,0,0,0.5);
+    pointer-events: none;
+}
+#auction-timer.auction-urgent {
+    color: #ff7a5c;
+    border-color: #ff7a5c;
+    animation: auctionUrgent 0.6s steps(2) infinite;
+}
+@keyframes auctionUrgent {
+    0%, 100% { box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 8px rgba(255,122,92,0.45); }
+    50%      { box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 20px rgba(255,122,92,0.85); }
 }
 /* Webkit / Blink */
 body.shop-preview-active .wb-foam-case::-webkit-scrollbar,
@@ -6600,11 +6754,20 @@ html[lang^="en"] .class-select-title {
     background: linear-gradient(180deg, #02060a 0%, #0a1410 100%);
     border-top: 1px solid #4ade80;
     padding: 0;
-    z-index: 8000;
+    /* 10000 抬到终端商店 / 工作台 .preview-screen(z=9999)之上 —— 否则商店阶段的教学提示被商店屏盖住看不见 */
+    z-index: 10000;
     min-height: 96px;
     animation: tutorial-fade-in 0.3s ease-out;
     font-family: var(--font-dossier, 'Courier Prime', monospace);
     box-shadow: 0 -6px 22px rgba(0,0,0,0.7), 0 -1px 0 rgba(74,222,128,0.35);
+}
+/* 置顶变体：商店/工作台底部有命令行 / SUBMIT / 键盘，提示贴顶避免遮挡 */
+.tutorial-prompt.tutorial-prompt-top {
+    top: 0;
+    bottom: auto;
+    border-top: none;
+    border-bottom: 1px solid #4ade80;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.7), 0 1px 0 rgba(74,222,128,0.35);
 }
 /* CRT 扫描线 */
 .tutorial-prompt::before {

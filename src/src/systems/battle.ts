@@ -1993,9 +1993,13 @@ function updateTimerDisplay(): void {
 // === 关卡评级 ===
 // === 关卡系统 ===
 function endLevel(): void {
-  // 教程模式不进入商店/下一关流转 — 由教程状态机控制
+  // 教程模式：不走正常的评级/周目/下一关流转（由教程状态机控制），
+  // 但需补发 battle:end —— FILE2 结束的 waitForBattleEnd 依赖它推进到完成屏。
+  // 注：FILE1（练习关）→ 商店的转场由 TutorialMode 在 phase 4 后直接 openShop 驱动，不走这里
+  // （教程态 _isCalibrationLevel 恒为 false，无法在此判定，故交给状态机显式控制）。
   if (state.isTutorial) {
     if (timerInterval) clearInterval(timerInterval);
+    eventBus.emit('battle:end', { result: state.score >= state.targetScore ? 'win' : 'lose', score: state.score });
     return;
   }
   if (timerInterval) clearInterval(timerInterval);
@@ -2099,7 +2103,7 @@ function endLevel(): void {
         if (_pendingDeadlyGiftRelicPick && hasUnownedRelics()) {
           _pendingDeadlyGiftRelicPick = false;
           const epicLegendary = { common: 0, rare: 0, epic: 50, legendary: 50 };
-          showRelicPicker(next, epicLegendary);
+          showRelicPicker(next, epicLegendary, { deskMode: true });
         } else {
           _pendingDeadlyGiftRelicPick = false;
           next();
@@ -2132,7 +2136,7 @@ function endLevel(): void {
         const legendaryWeights = { common: 0, rare: 0, epic: 0, legendary: 100 };
         continueAfterDeadlyGift(() => {
           if (hasUnownedRelics()) {
-            showRelicPicker(() => openShop(true), legendaryWeights);
+            showRelicPicker(() => openShop(true), legendaryWeights, { deskMode: true });
           } else {
             openShop(true);
           }
@@ -2145,7 +2149,7 @@ function endLevel(): void {
         const epicWeights = { common: 0, rare: 0, epic: 100, legendary: 0 };
         showGoldReward(() => continueAfterDeadlyGift(() => {
           if (hasUnownedRelics()) {
-            showRelicPicker(() => openShop(true), epicWeights);
+            showRelicPicker(() => openShop(true), epicWeights, { deskMode: true });
           } else {
             openShop(true);
           }
@@ -2608,6 +2612,8 @@ export async function startLevel(): Promise<void> {
           return t(`modifier.${m.id}.desc`) !== `modifier.${m.id}.desc` ? t(`modifier.${m.id}.desc`) : m.description;
         }).filter(Boolean);
         modInfo.querySelector('.modifier-hint')!.textContent = descs.join(' / ') + (barrierDelay ? ` (${t('battle.barrier_delayed')})` : '');
+        // 截断后完整文本走 title 悬停（HUD 里只占一行紧凑位置）
+        modInfo.title = parts.join('  ·  ') + (descs.length ? `\n${descs.join('\n')}` : '');
         modInfo.classList.add('visible');
       }
     }
@@ -2620,6 +2626,7 @@ export async function startLevel(): Promise<void> {
       modInfo.querySelector('.modifier-icon')!.textContent = eliteMeta.icon;
       modInfo.querySelector('.modifier-name')!.textContent = modName;
       modInfo.querySelector('.modifier-hint')!.textContent = eliteDesc + (barrierDelay ? ` (${t('battle.barrier_delayed')})` : '');
+      modInfo.title = `${eliteMeta.icon} ${modName}\n${eliteDesc}`;
       modInfo.classList.add('visible');
     }
   } else {

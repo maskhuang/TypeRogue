@@ -23,7 +23,8 @@ export interface DragPayload {
 
 export interface DropZone {
   element: HTMLElement;
-  type: 'key-slot' | 'sell-zone' | 'word-deck' | 'skill-inventory';
+  // 'disposal' = 工作台回收槽，自管 DOM（dragManager 不覆写其 textContent，区别于 legacy 'sell-zone'）
+  type: 'key-slot' | 'sell-zone' | 'word-deck' | 'skill-inventory' | 'disposal';
   key?: string;
   accepts: (payload: DragPayload) => boolean;
   onDrop: (payload: DragPayload) => void;

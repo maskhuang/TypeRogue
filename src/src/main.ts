@@ -8,7 +8,7 @@ import { state, resetState } from './core/state';
 import { getStarterWords } from './data/words';
 import { startLevel, initInput, resetCycleTracking, showScreen } from './systems/battle';
 import { initFloatTextCanvas, clearFloatTexts } from './ui/effects/FloatTextPool';
-import { stopBGM, initAudio, playSound, setMasterVolume, playDeskSound } from './effects/sound';
+import { stopBGM, initAudio, playSound, setMasterVolume, setMusicVolume, playDeskSound } from './effects/sound';
 import { startTutorialMode } from './systems/tutorial/TutorialMode';
 import { openSettingsPanel, applyAllSettings, wireSettingsToggleIcon, applyCRT } from './ui/SettingsPanel';
 import { loadSettings, getSettings, updateSettings } from './core/UserSettings';
@@ -466,6 +466,13 @@ function setupDeskMenu(): void {
       slider.value = String(Math.round(s.masterVolume * 100));
       if (sliderVal) sliderVal.textContent = `${slider.value}%`;
     }
+    // 音乐(底乐)滑条
+    const musicSlider = document.getElementById('ws-music') as HTMLInputElement | null;
+    const musicSliderVal = document.getElementById('ws-music-val');
+    if (musicSlider) {
+      musicSlider.value = String(Math.round(s.musicVolume * 100));
+      if (musicSliderVal) musicSliderVal.textContent = `${musicSlider.value}%`;
+    }
     setRadio('ws-lang', s.locale);
     setRadio('ws-crt', s.crtEnabled ? '1' : '0');
     setRadio('ws-bg', s.backgroundMode);
@@ -480,6 +487,16 @@ function setupDeskMenu(): void {
       if (volSliderVal) volSliderVal.textContent = `${volSlider.value}%`;
       setMasterVolume(v);
       updateSettings({ masterVolume: v });
+    });
+  }
+  const musicSlider2 = document.getElementById('ws-music') as HTMLInputElement | null;
+  const musicSliderVal2 = document.getElementById('ws-music-val');
+  if (musicSlider2) {
+    musicSlider2.addEventListener('input', () => {
+      const v = parseInt(musicSlider2.value, 10) / 100;
+      if (musicSliderVal2) musicSliderVal2.textContent = `${musicSlider2.value}%`;
+      setMusicVolume(v);
+      updateSettings({ musicVolume: v });
     });
   }
   document.querySelectorAll<HTMLInputElement>('input[name="ws-lang"]').forEach(r => {

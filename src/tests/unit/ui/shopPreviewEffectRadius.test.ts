@@ -39,7 +39,7 @@ vi.mock('../../../src/systems/battle', () => ({ startLevel: vi.fn() }))
 
 import { clearEffectRadiusHighlight, highlightEffectRadius } from '../../../src/ui/shop/shopWorkbench'
 import { getKeysWithRelation } from '../../../src/data/keyboardTopology'
-import { generateAffixV2, RECIPE_SPEAR_MAKE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_TEACH } from '../../../src/data/affixV2Generator'
+import { generateAffixV2, RECIPE_SPEAR_MAKE, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE, RECIPE_TEACH, RECIPE_LEAP } from '../../../src/data/affixV2Generator'
 import { getAffixV2Definition } from '../../../src/data/affixV2'
 
 // ===== Fake DOM 基础设施 =====
@@ -291,5 +291,14 @@ describe('meta-progression 操纵家族 effect radius', () => {
     for (const el of elMap.values()) {
       expect(el.classList.contains(RADIUS_CLASS)).toBe(false)
     }
+  })
+
+  it('haste/leap (grant_haste, neighbors 作用域) → 邻位范围高亮（回归：grant_haste 此前漏提取 selector）', () => {
+    const defId = generateAffixV2(RECIPE_LEAP)
+    const def = getAffixV2Definition(defId)! as { effect: { kind: string; selector: unknown } }
+    expect(def.effect.kind).toBe('grant_haste')
+    def.effect.selector = { type: 'neighbors', posRel: PositionRelation.Adjacent }
+    setupV2Skill('sk_haste', defId)
+    expectAdjacentHighlighted('sk_haste')
   })
 })

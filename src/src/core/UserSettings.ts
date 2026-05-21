@@ -9,7 +9,8 @@ export type BackgroundMode = 'off' | 'random' | 'liquid' | 'marble' | 'cells' | 
 export type ShopUiMode = 'classic' | 'terminal'
 
 export interface UserSettingsData {
-  masterVolume: number   // 0-1
+  masterVolume: number   // 0-1，总音量（SFX + 底乐）
+  musicVolume: number    // 0-1，仅作用于生成式底乐 (BGM)
   crtEnabled: boolean
   locale: string         // 'zh' | 'en'
   backgroundMode: BackgroundMode
@@ -30,6 +31,7 @@ export interface UserSettingsData {
 
 const DEFAULTS: UserSettingsData = {
   masterVolume: 0.7,
+  musicVolume: 1.0,
   crtEnabled: true,
   locale: 'zh',
   backgroundMode: 'random',

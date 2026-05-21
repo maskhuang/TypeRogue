@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>生成底乐 Preview · B 方案</title>
+<style>
+  :root{
+    --bg:#0c0d0a; --panel:#15160f; --line:#2a2c1d;
+    --amber:#d8a24a; --amber-dim:#8a6f38; --green:#7fae6a;
+    --red:#c2603f; --txt:#cdc7b0; --txt-dim:#7a7660;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg); color:var(--txt);
+    font-family:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+    font-size:13px; line-height:1.5;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .wrap{width:100%; max-width:680px}
+  .panel{
+    background:var(--panel); border:1px solid var(--line);
+    padding:20px 22px; margin-bottom:14px;
+  }
+  h1{font-size:15px; letter-spacing:.12em; margin:0 0 4px; color:var(--amber)}
+  .sub{color:var(--txt-dim); font-size:11px; margin:0 0 18px; letter-spacing:.05em}
+  .row{display:flex; align-items:center; gap:14px; margin:14px 0}
+  .row label{width:96px; flex:none; color:var(--txt-dim); letter-spacing:.06em}
+  .row .val{width:88px; flex:none; text-align:right; color:var(--amber); font-variant-numeric:tabular-nums}
+  input[type=range]{
+    -webkit-appearance:none; appearance:none; flex:1; height:3px;
+    background:var(--line); outline:none; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:14px; height:14px; border-radius:50%;
+    background:var(--amber); border:2px solid var(--bg);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:14px; height:14px; border-radius:50%;
+    background:var(--amber); border:2px solid var(--bg); border-color:var(--bg);
+  }
+  button{
+    background:transparent; color:var(--amber); border:1px solid var(--amber-dim);
+    padding:9px 16px; font-family:inherit; font-size:12px; letter-spacing:.08em;
+    cursor:pointer; transition:.15s;
+  }
+  button:hover{background:var(--amber); color:var(--bg)}
+  button.on{background:var(--green); border-color:var(--green); color:var(--bg)}
+  button:disabled{opacity:.35; cursor:default; background:transparent; color:var(--amber)}
+  .btnrow{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  canvas{width:100%; height:90px; display:block; background:#080906; border:1px solid var(--line); margin-top:6px}
+  .walk{display:flex; gap:18px; align-items:baseline; margin-top:10px}
+  .walk .big{font-size:30px; color:var(--amber); font-variant-numeric:tabular-nums; line-height:1}
+  .walk .tag{font-size:11px; letter-spacing:.12em; padding:2px 8px; border:1px solid var(--line)}
+  .tag.standard{color:var(--txt-dim)}
+  .tag.ritual{color:var(--green); border-color:var(--green)}
+  .tag.boss{color:var(--red); border-color:var(--red)}
+  .tag.elite{color:var(--amber)}
+  .cbar{height:6px; background:var(--line); margin-top:14px; position:relative; overflow:hidden}
+  .cbar > i{position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,var(--red),var(--amber),var(--green)); transition:width .3s}
+  .legend{display:flex; justify-content:space-between; color:var(--txt-dim); font-size:10px; margin-top:4px; letter-spacing:.05em}
+  .hint{color:var(--txt-dim); font-size:11px; margin-top:14px; line-height:1.6}
+  .hint b{color:var(--amber-dim); font-weight:normal}
+  .start-overlay{
+    position:fixed; inset:0; background:rgba(8,9,6,.92); display:flex;
+    align-items:center; justify-content:center; flex-direction:column; gap:18px; z-index:10;
+  }
+  .start-overlay button{font-size:14px; padding:14px 28px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1>生成底乐 PREVIEW · B 方案</h1>
+    <p class="sub">无限猴子 / 打字机 · 协和 pad ⇄ 无调噪声 · 纯律比率调色板</p>
+
+    <div class="row">
+      <label>COHERENCE</label>
+      <input id="coh" type="range" min="0" max="1" step="0.001" value="1">
+      <span class="val" id="cohVal">1.000</span>
+    </div>
+    <div class="cbar"><i id="cbarFill" style="width:100%"></i></div>
+    <div class="legend"><span>0 · 无调噪声 / 寂静化</span><span>协和 pad · 1</span></div>
+
+    <div class="row" style="margin-top:20px">
+      <label>TENSION</label>
+      <input id="ten" type="range" min="0" max="4" step="0.01" value="1">
+      <span class="val" id="tenVal">1.00</span>
+    </div>
+
+    <div class="row">
+      <label>根音 Hz</label>
+      <input id="root" type="range" min="98" max="220" step="1" value="131">
+      <span class="val" id="rootVal">131</span>
+    </div>
+
+    <canvas id="scope"></canvas>
+  </div>
+
+  <div class="panel">
+    <div class="btnrow">
+      <button id="walkBtn">▶ 自动走关</button>
+      <button id="resetBtn">↺ 重置 L1</button>
+      <button id="revoiceBtn">↻ 换声部</button>
+      <button id="modBtn">⇅ 转调</button>
+      <button id="texBtn">🔉 杂音</button>
+      <button id="melBtn">🎵 旋律音</button>
+      <button id="shopBtn">🏪 商店 duck</button>
+      <span style="color:var(--txt-dim); font-size:11px">每关 2.4s · coherence = 1 − (L−1)·0.025 · ritual +0.12 · boss −0.10</span>
+    </div>
+    <div class="walk">
+      <span class="big" id="lvNum">L1</span>
+      <span class="tag standard" id="lvTag">STANDARD</span>
+      <span style="color:var(--txt-dim); font-size:11px" id="lvCoh">coherence 1.000</span>
+    </div>
+    <p class="hint">
+      <b>听点：</b>滑 COHERENCE 从 1→0，协和的开放 pad（根/五度/八度/九度）逐渐失谐、被带通噪声吞没——这是"受理=抹除作者性"的寂静化。
+      <b>TENSION</b> 是单场快轴（时间压力），只动亮度/音量，不动调性。
+      <b>自动走关</b>按 spec 公式逐关沉降，ritual 关短暂回暖、boss 关探底。<br>
+      <b>反重复演化（自动）：</b>浮动声部每 ~8s 缓慢换音 + 密度漂移/dropout（声部进出）；整片 pad 每 ~26s 缓慢<b>转调</b>换"家"；每 ~8s 一次<b>非音高质感杂音</b>（远处闷响/咔哒/纸张）。<br>
+      <b>旋律线：</b>每 ~2.6s 一个音,在<b>自然小调</b>上小步游走(含留白),中低音区、暖音色、克制——给出明确的"调"但不抢前景。失谐随 coherence 下降增大。<br>
+      <b>商店 duck：</b>进入商店(含休息站)后底乐电平降到 50%；🏪 钮可 toggle 试听。<br>
+      手动钮可即时触发听感。<b>注：</b>A（打字即乐器）不含在此 preview。
+    </p>
+  </div>
+</div>
+
+<div class="start-overlay" id="overlay">
+  <div style="color:var(--amber); letter-spacing:.12em">生成底乐 · B</div>
+  <button id="startBtn">▶ 启动音频</button>
+  <div style="color:var(--txt-dim); font-size:11px">需要一次点击解锁浏览器音频</div>
+</div>
+
+<script>
+// ============================================================
+// 生成底乐 Preview — 复用 src/src/effects/sound.ts 的设计语汇
+//   · OPEN_INTERVALS 纯律比率池 = 调色板（防"算法味"）
+//   · coherence: 等功率 crossfade(pad↔noise) + 失谐展宽
+//   · tension: TENSION_TABLE 风格 LPF + 音量
+//   · reverb: 短延迟反馈（仿 initReverb）
+// ============================================================
+
+let ctx, master, masterLPF, analyser;
+let started = false;
+
+// --- 开放音程比率（仿 sound.ts OPEN_INTERVALS）---
+// 低八度垫底 + 根 + 五度 + 八度 + 大九度 = 开放、未解决的 voicing
+const VOICING = [0.5, 1, 3/2, 2, 9/4];
+const ANCHOR_COUNT = 2;         // 前 2 声部（低八度+根）固定作锚
+const MAX_DETUNE_CENTS = 240;   // coherence=0 时的最大随机失谐
+const CHORUS_CENTS = 7;         // 成对振荡器的静态合唱失谐
+
+// --- 反重复演化 ---
+const CHORD_POOL = [3/2, 5/3, 2, 9/4, 5/2, 3]; // 浮动声部音程池（开放/协和）
+const GLIDE_TC = 2.5;           // 换音滑行时间常数
+const DROPOUT_CHANCE = 0.30;    // 换声部时某声部静默概率（声部进出更明显）
+const ROOT_DEGREES = [2/3, 3/4, 1, 9/8, 4/3, 3/2]; // 转调音级（绕 base 重取，不累积）
+const TEXTURE_KINDS = ['thunk', 'click', 'rustle']; // 远处办公/机械杂音（无音高）
+const MELODY_SCALE = [1, 9/8, 6/5, 4/3, 3/2, 8/5, 9/5, 2]; // 自然小调（纯律）
+const MELODY_OCTAVE = 2;        // 根音上方一个八度
+const MELODY_VOL = 0.055;
+const MELODY_NOTE_LEN = 0.9;    // 单音时值
+const MELODY_REST_CHANCE = 0.25;
+const MELODY_LPF_HZ = 1600;
+const REVOICE_MS = 8000;        // 换声部周期
+const TEXTURE_MS = 8000;        // 质感事件周期
+const MODULATE_MS = 26000;      // 转调周期
+const MELODY_MS = 2600;         // 旋律单音节奏
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const jitter = ms => ms * (0.6 + Math.random()*0.8);
+
+// TENSION 表（仿 sound.ts TENSION_TABLE）— 连续插值
+const TENSION_TABLE = [
+  { lpf: 700,  vol: 0.13 },
+  { lpf: 800,  vol: 0.15 },
+  { lpf: 2000, vol: 0.19 },
+  { lpf: 4000, vol: 0.24 },
+  { lpf: 6000, vol: 0.30 },
+];
+
+let voices = [];     // { oscA, oscB, gain, lfo, lfoGain, ratio }
+let noiseGainNode;   // pad↔noise crossfade 的 noise 端
+let padGainNode;     // pad 总线
+let noiseBandLFO;    // 噪声带通中心慢扫
+let noiseBuffer;     // 复用噪声缓冲（质感事件用）
+let melodyOsc, melodyGain, melodyIndex = 0; // 持续旋律振荡器 + gain 门控
+let state = { coherence: 1, tension: 1, root: 131, baseRoot: 131, level: 1 };
+
+function buildReverb(dest){
+  // dry
+  const dry = ctx.createGain(); dry.gain.value = 1.0; dry.connect(dest);
+  // wet: delay→lpf→delay→feedback
+  const send = ctx.createGain(); send.gain.value = 0.30;
+  const d1 = ctx.createDelay(); d1.delayTime.value = 0.037;
+  const d2 = ctx.createDelay(); d2.delayTime.value = 0.071;
+  const fb = ctx.createGain(); fb.gain.value = 0.34;
+  const lpf = ctx.createBiquadFilter(); lpf.type='lowpass'; lpf.frequency.value=2600;
+  send.connect(d1); d1.connect(lpf); lpf.connect(d2); d2.connect(fb); fb.connect(d1);
+  d2.connect(dest);
+  return { dry, send };
+}
+
+function start(){
+  if (started) return;
+  started = true;
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+  master = ctx.createGain();
+  master.gain.value = TENSION_TABLE[1].vol;
+  masterLPF = ctx.createBiquadFilter();
+  masterLPF.type = 'lowpass';
+  masterLPF.frequency.value = TENSION_TABLE[1].lpf;
+
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 1024;
+
+  // master → LPF → analyser → reverb(dry+wet) → destination
+  master.connect(masterLPF);
+  masterLPF.connect(analyser);
+  const verb = buildReverb(ctx.destination);
+  analyser.connect(verb.dry);
+  analyser.connect(verb.send);
+
+  padGainNode = ctx.createGain(); padGainNode.gain.value = 1.0; padGainNode.connect(master);
+
+  // --- pad voices ---
+  voices = VOICING.map((ratio, i) => {
+    const gain = ctx.createGain();
+    gain.gain.value = voiceBaseGain(i);
+    gain.connect(padGainNode);
+
+    const oscA = ctx.createOscillator(); oscA.type = 'sine';
+    const oscB = ctx.createOscillator(); oscB.type = 'triangle';
+    oscA.connect(gain); oscB.connect(gain);
+
+    // 慢呼吸 LFO（不同速率→有机）
+    const lfo = ctx.createOscillator(); lfo.type='sine';
+    lfo.frequency.value = 0.05 + i*0.017;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = voiceBaseGain(i)*0.35;
+    lfo.connect(lfoGain); lfoGain.connect(gain.gain);
+
+    oscA.start(); oscB.start(); lfo.start();
+    return { oscA, oscB, gain, lfo, lfoGain, ratio, idx:i, baseGain: voiceBaseGain(i), floating: i >= ANCHOR_COUNT };
+  });
+
+  // --- noise bed ---
+  const noiseBuf = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate);
+  const nd = noiseBuf.getChannelData(0);
+  for (let i=0;i<nd.length;i++) nd[i] = Math.random()*2-1;
+  noiseBuffer = noiseBuf;
+  const noiseSrc = ctx.createBufferSource(); noiseSrc.buffer = noiseBuf; noiseSrc.loop = true;
+  const band = ctx.createBiquadFilter(); band.type='bandpass'; band.frequency.value=520; band.Q.value=0.8;
+  noiseGainNode = ctx.createGain(); noiseGainNode.gain.value = 0.0;
+  noiseSrc.connect(band); band.connect(noiseGainNode); noiseGainNode.connect(master);
+
+  // 带通中心慢扫（管道风声）
+  noiseBandLFO = ctx.createOscillator(); noiseBandLFO.type='sine'; noiseBandLFO.frequency.value=0.06;
+  const bandLFOGain = ctx.createGain(); bandLFOGain.gain.value=320;
+  noiseBandLFO.connect(bandLFOGain); bandLFOGain.connect(band.frequency);
+  noiseSrc.start(); noiseBandLFO.start();
+
+  // --- 旋律线：持续 triangle → LPF → gain（门控出单音）---
+  melodyOsc = ctx.createOscillator(); melodyOsc.type = 'triangle';
+  const melodyLPF = ctx.createBiquadFilter(); melodyLPF.type='lowpass'; melodyLPF.frequency.value = MELODY_LPF_HZ;
+  melodyGain = ctx.createGain(); melodyGain.gain.value = 0;
+  melodyOsc.connect(melodyLPF); melodyLPF.connect(melodyGain); melodyGain.connect(master);
+  melodyOsc.frequency.value = state.root * MELODY_OCTAVE;
+  melodyOsc.start(); melodyIndex = 0;
+
+  applyAll();
+  reseedDetune();
+  setInterval(reseedDetune, 2800); // 失谐缓慢游走，避免静态走调和弦
+  scheduleRevoice();               // 换声部：浮动声部缓慢换音
+  scheduleTexture();               // 稀疏质感事件（远处办公/机械杂音）
+  scheduleModulate();              // 转调：整片 pad 缓慢换"家"
+  scheduleMelody();                // 缓慢旋律线
+  drawScope();
+}
+
+// --- 反重复演化：缓慢旋律线（自然小调小步游走 + 留白）---
+function playMelodyNote(){
+  if (!started || !melodyOsc) return;
+  if (Math.random() < MELODY_REST_CHANCE) return; // 乐句留白
+  const step = Math.floor(Math.random()*5) - 2;   // -2..+2 级
+  melodyIndex = Math.max(0, Math.min(MELODY_SCALE.length-1, melodyIndex + step));
+  const freq = state.root * MELODY_OCTAVE * MELODY_SCALE[melodyIndex];
+  const t = ctx.currentTime;
+  melodyOsc.frequency.setTargetAtTime(freq, t, 0.04);
+  melodyOsc.detune.setTargetAtTime((Math.random()*2-1)*(1-state.coherence)*MAX_DETUNE_CENTS, t, 0.1);
+  melodyGain.gain.setTargetAtTime(MELODY_VOL, t, 0.12);
+  melodyGain.gain.setTargetAtTime(0.0001, t + MELODY_NOTE_LEN, 0.3);
+}
+function scheduleMelody(){ setTimeout(()=>{ playMelodyNote(); scheduleMelody(); }, jitter(MELODY_MS)); }
+
+// --- 反重复演化：转调（绕 baseRoot 重取根音，不累积漂移）---
+function modulate(){
+  if (!started) return;
+  state.root = state.baseRoot * pick(ROOT_DEGREES);
+  const t = ctx.currentTime;
+  voices.forEach(v=>{
+    const f = state.root * v.ratio;
+    v.oscA.frequency.setTargetAtTime(f, t, GLIDE_TC*1.5);
+    v.oscB.frequency.setTargetAtTime(f, t, GLIDE_TC*1.5);
+  });
+}
+function scheduleModulate(){ setTimeout(()=>{ modulate(); scheduleModulate(); }, jitter(MODULATE_MS)); }
+
+// --- 反重复演化：换声部 + 密度漂移 ---
+function revoice(){
+  if (!started) return;
+  const t = ctx.currentTime;
+  const floating = voices.filter(v => v.floating);
+  const picks = shuffle(CHORD_POOL.slice()).slice(0, floating.length).sort((a,b)=>a-b);
+  floating.forEach((v,i)=>{
+    v.ratio = picks[i] ?? v.ratio;
+    const f = state.root * v.ratio;
+    v.oscA.frequency.setTargetAtTime(f, t, GLIDE_TC);
+    v.oscB.frequency.setTargetAtTime(f, t, GLIDE_TC);
+    const level = Math.random() < DROPOUT_CHANCE ? 0 : 0.5 + Math.random()*0.5;
+    v.gain.gain.setTargetAtTime(v.baseGain * level, t, 2.0);
+  });
+  applyDetune();
+}
+function scheduleRevoice(){ setTimeout(()=>{ revoice(); scheduleRevoice(); }, jitter(REVOICE_MS)); }
+
+// --- 反重复演化：稀疏非音高质感事件（远处办公/机械杂音）---
+function makeNoiseSource(){ const s = ctx.createBufferSource(); s.buffer = noiseBuffer; return s; }
+function playTexture(){
+  if (!started) return;
+  const kind = pick(TEXTURE_KINDS);
+  const dirt = 1 - state.coherence; // 越脏越响越亮
+  const t = ctx.currentTime;
+  if (kind === 'thunk'){
+    // 远处抽屉/机械闷响：低通噪声爆 + 低频 thud
+    const v = 0.05 + dirt*0.04;
+    const noise = makeNoiseSource();
+    const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value = 240 + dirt*260;
+    const ng = ctx.createGain(); noise.connect(lp); lp.connect(ng); ng.connect(master);
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.linearRampToValueAtTime(v, t+0.01); ng.gain.exponentialRampToValueAtTime(0.0001, t+0.22);
+    noise.start(t); noise.stop(t+0.25);
+    const o = ctx.createOscillator(); o.type='sine';
+    o.frequency.setValueAtTime(80, t); o.frequency.exponentialRampToValueAtTime(48, t+0.2);
+    const og = ctx.createGain(); o.connect(og); og.connect(master);
+    og.gain.setValueAtTime(0.0001, t); og.gain.linearRampToValueAtTime(v*0.8, t+0.008); og.gain.exponentialRampToValueAtTime(0.0001, t+0.25);
+    o.start(t); o.stop(t+0.27);
+  } else if (kind === 'click'){
+    // 继电器/开关咔哒：1-2 次极短带通噪声 tick
+    const count = Math.random()<0.5 ? 1 : 2; const v = 0.04 + dirt*0.03;
+    for (let i=0;i<count;i++){
+      const tt = t + i*0.05;
+      const noise = makeNoiseSource();
+      const bp = ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value = 1400 + dirt*1200; bp.Q.value = 2;
+      const g = ctx.createGain(); noise.connect(bp); bp.connect(g); g.connect(master);
+      g.gain.setValueAtTime(v, tt); g.gain.exponentialRampToValueAtTime(0.0001, tt+0.03);
+      noise.start(tt); noise.stop(tt+0.035);
+    }
+  } else {
+    // 纸张/气流：高通噪声短促 rustle
+    const v = 0.03 + dirt*0.025;
+    const noise = makeNoiseSource();
+    const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = 1100;
+    const g = ctx.createGain(); noise.connect(hp); hp.connect(g); g.connect(master);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t+0.03); g.gain.exponentialRampToValueAtTime(0.0001, t+0.2);
+    noise.start(t); noise.stop(t+0.22);
+  }
+}
+function scheduleTexture(){ setTimeout(()=>{ playTexture(); scheduleTexture(); }, jitter(TEXTURE_MS)); }
+
+function voiceBaseGain(i){
+  // 低八度垫底略响，高音程渐弱
+  return [0.10, 0.085, 0.06, 0.05, 0.038][i] ?? 0.05;
+}
+
+// 当前失谐随机种子（每 voice 的目标 cents），随 coherence 缩放
+let detuneSeed = VOICING.map(()=>0);
+function reseedDetune(){
+  detuneSeed = VOICING.map(()=> (Math.random()*2-1));
+  applyDetune();
+}
+
+function applyDetune(){
+  if (!started) return;
+  const spread = (1 - state.coherence) * MAX_DETUNE_CENTS;
+  const t = ctx.currentTime;
+  voices.forEach((v,i)=>{
+    const atonal = detuneSeed[i]*spread;
+    v.oscA.detune.setTargetAtTime(atonal - CHORUS_CENTS, t, 1.2);
+    v.oscB.detune.setTargetAtTime(atonal + CHORUS_CENTS, t, 1.2);
+  });
+}
+
+function applyFreq(){
+  if (!started) return;
+  const t = ctx.currentTime;
+  voices.forEach(v=>{
+    const f = state.root * v.ratio;
+    v.oscA.frequency.setTargetAtTime(f, t, 0.08);
+    v.oscB.frequency.setTargetAtTime(f, t, 0.08);
+  });
+}
+
+function applyCoherence(){
+  if (!started) return;
+  const t = ctx.currentTime;
+  // 等功率 crossfade
+  const theta = (1 - state.coherence) * Math.PI/2;
+  padGainNode.gain.setTargetAtTime(Math.cos(theta), t, 0.15);
+  noiseGainNode.gain.setTargetAtTime(Math.sin(theta) * 0.32, t, 0.15);
+  applyDetune();
+}
+
+function applyTension(){
+  if (!started) return;
+  const t = ctx.currentTime;
+  const lv = Math.max(0, Math.min(4, state.tension));
+  const lo = Math.floor(lv), hi = Math.min(4, lo+1), f = lv-lo;
+  const lpf = TENSION_TABLE[lo].lpf + (TENSION_TABLE[hi].lpf-TENSION_TABLE[lo].lpf)*f;
+  const vol = TENSION_TABLE[lo].vol + (TENSION_TABLE[hi].vol-TENSION_TABLE[lo].vol)*f;
+  masterLPF.frequency.setTargetAtTime(lpf, t, 0.4);
+  master.gain.setTargetAtTime(vol * state.level, t, 0.4); // ×level：商店 duck
+}
+
+function applyAll(){ applyFreq(); applyCoherence(); applyTension(); }
+
+// --- visualizer ---
+const scope = document.getElementById('scope');
+const sctx = scope.getContext('2d');
+function drawScope(){
+  requestAnimationFrame(drawScope);
+  if (!analyser) return;
+  const w = scope.width = scope.clientWidth*devicePixelRatio;
+  const h = scope.height = scope.clientHeight*devicePixelRatio;
+  const bins = analyser.frequencyBinCount;
+  const data = new Uint8Array(bins);
+  analyser.getByteFrequencyData(data);
+  sctx.clearRect(0,0,w,h);
+  const n = 96;
+  const bw = w/n;
+  for (let i=0;i<n;i++){
+    const v = data[Math.floor(i/n*bins*0.6)]/255;
+    const bh = v*h;
+    // 颜色随 coherence：协和偏绿，失谐偏红
+    const c = state.coherence;
+    const r = Math.round(194 + (130-194)*c);
+    const g = Math.round(96 + (174-96)*c);
+    const b = Math.round(63 + (106-63)*c);
+    sctx.fillStyle = `rgb(${r},${g},${b})`;
+    sctx.fillRect(i*bw, h-bh, bw-1.5*devicePixelRatio, bh);
+  }
+}
+
+// --- UI 绑定 ---
+const $ = id => document.getElementById(id);
+function setCoh(v){ state.coherence=v; $('coh').value=v; $('cohVal').textContent=v.toFixed(3); $('cbarFill').style.width=(v*100)+'%'; applyCoherence(); }
+function setTen(v){ state.tension=v; $('ten').value=v; $('tenVal').textContent=v.toFixed(2); applyTension(); }
+function setRoot(v){ state.baseRoot=v; state.root=v; $('root').value=v; $('rootVal').textContent=v; applyFreq(); }
+
+$('coh').addEventListener('input', e=> setCoh(parseFloat(e.target.value)));
+$('ten').addEventListener('input', e=> setTen(parseFloat(e.target.value)));
+$('root').addEventListener('input', e=> setRoot(parseInt(e.target.value)));
+
+// --- 走关模拟 ---
+function getStageType(level){
+  const pos = ((level-1)%12)+1;
+  if (pos===6) return 'ritual';
+  if (pos===12) return 'boss';
+  if (pos===5) return 'elite';
+  return 'standard';
+}
+function computeCoherence(level){
+  let c = 1.0 - (level-1)*0.025;
+  const t = getStageType(level);
+  if (t==='ritual') c += 0.12;
+  if (t==='boss')   c -= 0.10;
+  return Math.max(0.05, Math.min(1, c));
+}
+let walkTimer=null, walkLevel=1;
+function showLevel(level){
+  const type = getStageType(level);
+  const c = computeCoherence(level);
+  $('lvNum').textContent = 'L'+level;
+  const tag = $('lvTag'); tag.textContent = type.toUpperCase(); tag.className = 'tag '+type;
+  $('lvCoh').textContent = 'coherence '+c.toFixed(3);
+}
+function gotoLevel(level, ramp=true){
+  walkLevel = level;
+  const c = computeCoherence(level);
+  showLevel(level);
+  if (!started){ setCoh(c); return; }
+  if (ramp){
+    // 平滑过渡，UI 与音频同步
+    const from = state.coherence, steps=30, dur=900;
+    let i=0;
+    const iv = setInterval(()=>{ i++; const k=i/steps; setCoh(from+(c-from)*k); if(i>=steps) clearInterval(iv); }, dur/steps);
+  } else setCoh(c);
+}
+$('walkBtn').addEventListener('click', ()=>{
+  if (walkTimer){ clearInterval(walkTimer); walkTimer=null; $('walkBtn').classList.remove('on'); $('walkBtn').textContent='▶ 自动走关'; return; }
+  $('walkBtn').classList.add('on'); $('walkBtn').textContent='⏸ 暂停';
+  gotoLevel(walkLevel, false);
+  walkTimer = setInterval(()=>{
+    walkLevel = walkLevel>=40 ? 1 : walkLevel+1;
+    gotoLevel(walkLevel, true);
+  }, 2400);
+});
+$('resetBtn').addEventListener('click', ()=>{ walkLevel=1; gotoLevel(1,false); });
+$('revoiceBtn').addEventListener('click', ()=> revoice());
+$('modBtn').addEventListener('click', ()=> modulate());
+$('texBtn').addEventListener('click', ()=> playTexture());
+$('melBtn').addEventListener('click', ()=> playMelodyNote());
+$('shopBtn').addEventListener('click', e=>{
+  const on = state.level === 1;
+  state.level = on ? 0.5 : 1;       // toggle 商店 duck (50%)
+  e.target.classList.toggle('on', on);
+  applyTension();
+});
+
+// --- 启动 ---
+$('startBtn').addEventListener('click', ()=>{
+  start();
+  $('overlay').style.display='none';
+  setCoh(1); setTen(1); setRoot(131); showLevel(1);
+});
+showLevel(1);
+</script>
+</body>
+</html>

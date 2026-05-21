@@ -21,7 +21,7 @@ import {
 } from '../../systems/shop';
 import { keyTooltip, AFFIX_COLORS, type KeyTooltipData } from '../keyboard/KeyTooltip';
 import { getV2Color, getAffixV2Definition } from '../../data/affixV2';
-import type { EffectSpec, TargetSelector } from '../../data/affixV2Trigger';
+import { extractSelectorFromEffect, resolveSelectorToHighlightKeys } from '../../systems/affixV2ScopeKeys';
 import { shouldAnimateShop, shouldShowDragPreviewTooltip } from '../../core/UserSettings';
 import { renderCraftPanel } from '../../systems/classes/CraftingStation';
 import { renderMetamorphPanel } from '../../systems/classes/MetamorphStation';
@@ -47,6 +47,10 @@ import {
   escapeHtml,
 } from './shopState';
 import type { DrawerKind, InboxCardData } from './shopState';
+// 直接引用卖出函数（shopTerminal 不 import 本模块 → 无循环）。
+// 不走 shopBus.getInboxRefund/sellInboxSkill：那是可变单例、依赖 wire 初始化顺序，
+// HMR / 时序下会停留在默认 ()=>0，导致回收槽退款显示恒为 0。
+import { computeInboxRefund, sellSkillById } from './shopTerminal';
 
 // === Story 60.17 follow-up: 拖拽 hover 节流（防扫键 jank）===
 // 用户 dogfood 反馈拖拽中扫键卡几秒 — buildSkillKeyTooltipData 含 buildAffixTooltipFields
@@ -105,96 +109,6 @@ function getEffectRadiusKeys(skillId: string, hoverKey: string, payloadShapeId?:
   return Array.from(radiusKeys)
 }
 
-/** 递归提取 effect 中的 TargetSelector（aura / fire_target / apply_status / add / multiply
- *  / upgrade_skill / graft_affix / gain_skill[neighborPosRel]）*/
-function extractSelectorFromEffect(effect: EffectSpec): TargetSelector | undefined {
-  switch (effect.kind) {
-    case 'apply_aura':   return effect.selector
-    case 'fire_target':  return effect.selector
-    case 'apply_status': return effect.target
-    case 'add':          return effect.selector
-    case 'multiply':     return effect.selector
-    // meta-progression 操纵家族（on_battle_end）的邻位范围
-    case 'upgrade_skill': return effect.selector                 // spear_make
-    case 'graft_affix':   return effect.from                     // gaze_follow
-    case 'gain_skill':                                           // imitate（teach 走 recipe_pool 无邻位 → 不高亮）
-      return effect.filter.neighborPosRel !== undefined
-        ? { type: 'neighbors', posRel: effect.filter.neighborPosRel }
-        : undefined
-    case 'composite': {
-      for (const c of effect.effects) {
-        const s = extractSelectorFromEffect(c)
-        if (s) return s
-      }
-      return undefined
-    }
-    case 'conditional': {
-      const t = extractSelectorFromEffect(effect.then)
-      if (t) return t
-      return effect.else ? extractSelectorFromEffect(effect.else) : undefined
-    }
-    case 'stack_release': return extractSelectorFromEffect(effect.release)
-    default: return undefined
-  }
-}
-
-/** TargetSelector → 高亮键列表（与 affixV2BattleIntegration.resolveSelectorToSkillIds 同语义）*/
-function resolveSelectorToHighlightKeys(sel: TargetSelector, occupiedKeys: string[], occupiedSet: Set<string>): string[] {
-  switch (sel.type) {
-    case 'self':
-      return []   // self 即占位本身，不额外高亮
-    case 'neighbors': {
-      const out = new Set<string>()
-      for (const ok of occupiedKeys) {
-        for (const k of getKeysWithRelation(ok, sel.posRel)) out.add(k)
-      }
-      return Array.from(out)
-    }
-    case 'all_skills': {
-      const out: string[] = []
-      for (const [k, sid] of state.player.bindings) {
-        if (occupiedSet.has(k)) continue
-        // sid 即使被自身覆盖也无所谓 — 拖拽 hover 时还没 commit binding
-        void sid
-        out.push(k)
-      }
-      return out
-    }
-    case 'matched_tag': {
-      const out: string[] = []
-      for (const [k, sid] of state.player.bindings) {
-        const sk = state.affixSkills.get(sid)
-        if (!sk) continue
-        const hit = sk.v2Ids?.some(id => {
-          const d = getAffixV2Definition(id)
-          return d?.tags.includes(sel.tag)
-        })
-        if (hit) out.push(k)
-      }
-      return out
-    }
-    case 'matched_resource': {
-      const out: string[] = []
-      for (const [k, sid] of state.player.bindings) {
-        const sk = state.affixSkills.get(sid)
-        if (sk?.resource === sel.resource) out.push(k)
-      }
-      return out
-    }
-    case 'hasted':
-      // 运行时动态范围（依赖战斗内 haste 状态）· workbench 预览无战斗态，不高亮
-      return []
-    case 'matched_rarity': {
-      const out: string[] = []
-      for (const [k, sid] of state.player.bindings) {
-        const sk = state.affixSkills.get(sid)
-        if (sk?.rarity === sel.rarity) out.push(k)
-      }
-      return out
-    }
-  }
-}
-
 /** 给候选范围键加 outline 高亮 class — exported for unit testing (60.18 review M1 fix)
  *  同时为 V2 trigger.filter 监听源加 dashed inner ring（trigger-source-preview）
  */
@@ -213,6 +127,12 @@ export function highlightEffectRadius(hoverKey: string, skillId: string, shapeId
     const keyEl = root.querySelector<HTMLElement>(`.kb-key.kb-tier-1[data-key="${CSS.escape(k)}"]`)
     if (keyEl) keyEl.classList.add(TRIGGER_SOURCE_PREVIEW_CLASS)
   }
+}
+
+/** 拖起 IN-tray 卡时点亮回收槽（脉冲邀请投放）；拖拽结束时熄灭 */
+export function armDisposalZone(active: boolean): void {
+  const d = document.querySelector('#workbench-screen-preview #wb-disposal-zone');
+  if (d) d.classList.toggle('armed', active);
 }
 
 /** 清除所有 effect-radius-preview / trigger-source-preview 高亮 — bootstrap onDragEnd cleanup */
@@ -790,6 +710,34 @@ export function setupDragZones(): void {
       accepts: (p: DragPayload) => p.type === 'skill-key',
       onDrop: (p: DragPayload) => {
         if (p.sourceKey) unbindSkillFromKey(p.sourceKey);
+      },
+    });
+  }
+  // 回收槽：拖入 IN-tray 卡片 = 卖出（拖入显示退款额，落手即卖、无二次确认）
+  const disposal = wbRoot.querySelector('#wb-disposal-zone') as HTMLElement | null;
+  if (disposal) {
+    const hintEl = wbRoot.querySelector('#wb-disposal-hint') as HTMLElement | null;
+    const resetHint = () => { if (hintEl) hintEl.textContent = t('wb.disposal_hint'); };
+    dragManager.registerDropZone({
+      element: disposal,
+      type: 'disposal',  // 非 'sell-zone' → dragManager 不覆写本槽 DOM（icon/label/hint 由本模块自管）
+      // IN-tray 卡（skill-inventory）+ 键位上已装备技能（skill-key）都可直接拖来卖
+      accepts: (p: DragPayload) => (p.type === 'skill-inventory' || p.type === 'skill-key') && !!p.skillId,
+      onDragEnter: (p: DragPayload) => {
+        disposal.classList.add('drag-over');
+        if (p.skillId && hintEl) hintEl.textContent = t('wb.disposal_refund', { gold: computeInboxRefund(p.skillId) });
+      },
+      onDragLeave: () => {
+        disposal.classList.remove('drag-over');
+        resetHint();
+      },
+      onDrop: (p: DragPayload) => {
+        disposal.classList.remove('drag-over');
+        if (p.skillId) {
+          deskSfx('punch');                 // 投入回收槽 = 打孔/落槽音
+          sellSkillById(p.skillId);         // 统一处理 IN-tray 卡 + 已绑定键位
+        }
+        resetHint();
       },
     });
   }

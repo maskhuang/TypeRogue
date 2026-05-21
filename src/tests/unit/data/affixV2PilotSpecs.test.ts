@@ -266,6 +266,14 @@ describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () =
     expect(desc).toContain('同类')
     expect(desc).not.toContain('同 section')
   })
+
+  it('微小产出不显示为 "+0"（高频触发 × 小 base 资源 underflow → 退化到有效数字）', () => {
+    // FEED on time：ratio = T/freq = 3/216 ≈ 0.0139，time Lv1 base = 0.2 → 0.00278/次
+    // 此前 2 位小数四舍五入显示 "+0 时间"（误导，运行时实际有产出）
+    const desc = formatEffectDescription({ kind: 'gain_resource', resource: 'time', ratio: 3 / 216 })
+    expect(desc).toContain('0.003')
+    expect(desc).not.toMatch(/\+0\s/)  // 不再是 "+0 <资源>"
+  })
 })
 
 describe('Recipe · imitate (player_skill_pool · 生成时锁 neighborPosRel)', () => {

@@ -86,7 +86,7 @@ export function showEliteModifierPicker(onComplete: (modId: BossModifierId) => v
 
   // 标题
   if (titleEl) {
-    titleEl.textContent = `⚔️ ${t('battle.elite_pick')} ⚔️`
+    titleEl.textContent = t('battle.elite_pick')
   }
 
   // 已激活修饰器列表
@@ -167,7 +167,7 @@ function renderPickerRound(
   // 更新标题（显示当前类别）
   const catLabel = t(CATEGORY_LABELS[category]) || category
   if (titleEl) {
-    titleEl.textContent = `⚔️ ${catLabel} ⚔️`
+    titleEl.textContent = catLabel
   }
 
   // 渲染已激活修饰器列表（永久 + 本轮已选）

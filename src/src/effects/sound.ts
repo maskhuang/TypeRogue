@@ -5,6 +5,8 @@
 import { SOUND_PROFILES } from '../core/constants';
 import { state } from '../core/state';
 import { getScoreSoundTier } from './juice';
+import { GenerativeBed, computeCoherence } from './generativeBed';
+import { eventBus } from '../core/events/EventBus';
 
 let audioContext: AudioContext | null = null;
 let masterGain: GainNode | null = null;
@@ -60,47 +62,6 @@ function playTypeSound(): void {
   toneGain.gain.exponentialRampToValueAtTime(0.001, t + toneDec);
   toneOsc.start(t);
   toneOsc.stop(t + toneDec);
-
-  // BGM 节奏脉冲层
-  playKickPulse();
-}
-
-// === BGM Kick 脉冲 — 柔化 triangle 心跳 ===
-
-let kickOsc: OscillatorNode | null = null;
-
-function playKickPulse(): void {
-  return; // BGM 节奏脉冲已禁用
-  if (!audioContext) return;
-  const combo = state.combo;
-  if (combo === 0) return; // combo 0 无脉冲
-
-  const ctx = audioContext;
-  const t = ctx.currentTime;
-  const vol = Math.min(0.007, combo * 0.001); // combo 7+ → 0.007 封顶
-
-  // 防叠加：停掉上一个 kick
-  if (kickOsc) {
-    try { kickOsc.stop(); } catch (_) { /* already stopped */ }
-    kickOsc = null;
-  }
-
-  // 合成 kick：triangle 60→35Hz 下滑 + 30ms 衰减
-  kickOsc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  kickOsc.type = 'triangle';
-  kickOsc.frequency.setValueAtTime(60, t);
-  kickOsc.frequency.exponentialRampToValueAtTime(35, t + 0.03);
-  gain.gain.setValueAtTime(vol, t);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
-  kickOsc.connect(gain);
-  connectToOutput(gain);
-  kickOsc.start(t);
-  kickOsc.stop(t + 0.035);
-
-  // 播放完毕后清空引用
-  const osc = kickOsc;
-  setTimeout(() => { if (kickOsc === osc) kickOsc = null; }, 40);
 }
 
 // === 随机化工具：每次播放微小随机偏移，避免完全相同的重复 ===
@@ -213,7 +174,6 @@ export function initAudio(): void {
     masterGain = audioContext.createGain();
     masterGain.connect(audioContext.destination);
     initReverb(audioContext);
-    loadAllBGM().catch(() => {}); // fire-and-forget 预加载
   }
 }
 
@@ -826,146 +786,70 @@ function addHarmonicLayer(ctx: AudioContext, now: number, vol: number, baseFreq:
   osc.stop(now + decay + 0.01);
 }
 
-// === BGM 多轨播放层 ===
-// AudioBufferSourceNode (loop) → BiquadFilter (lowpass) → GainNode → connectToOutput
+// === BGM 生成式底乐层 (B 方案) ===
+// 程序化 drone，替代采样 BGM。双轴：coherence(每关) + tension(单场)。
+// 详见 effects/generativeBed.ts。
 
 export type BgmTrack = 'battle' | 'chill';
 
-const BGM_TRACKS: Record<BgmTrack, { url: string; baseVol: number; baseLPF: number }> = {
-  battle: { url: import.meta.env.BASE_URL + 'audio/bgm.mp3',       baseVol: 0.15, baseLPF: 800 },
-  chill:  { url: import.meta.env.BASE_URL + 'audio/bgm-chill.mp3', baseVol: 0.18, baseLPF: 20000 },
-};
+const SHOP_DUCK = 0.5; // 进入商店后底乐电平降到 50%
 
-const bgmBuffers: Map<BgmTrack, AudioBuffer> = new Map();
-let currentTrack: BgmTrack | null = null;
-let bgmSource: AudioBufferSourceNode | null = null;
-let bgmLPF: BiquadFilterNode | null = null;
-let bgmGain: GainNode | null = null;
+let bed: GenerativeBed | null = null;
+let bedMode: BgmTrack | null = null;
+let bgmBusGain: GainNode | null = null;  // 底乐专用总线，受 musicVolume 控制（独立于 master）
+let musicVolume = 1.0;                    // 0-1，仅作用于底乐（master 已统一衰减，故默认满）
 
-/** 并行预加载所有 BGM 曲目 */
-async function loadAllBGM(): Promise<void> {
-  if (!audioContext) return;
-  const ctx = audioContext;
-  const tasks = (Object.entries(BGM_TRACKS) as [BgmTrack, typeof BGM_TRACKS[BgmTrack]][])
-    .filter(([key]) => !bgmBuffers.has(key))
-    .map(async ([key, { url }]) => {
-      const resp = await fetch(url);
-      const arrayBuf = await resp.arrayBuffer();
-      const decoded = await ctx.decodeAudioData(arrayBuf);
-      bgmBuffers.set(key, decoded);
-    });
-  await Promise.all(tasks);
-}
-
-/** 启动/切换 BGM — 异曲交叉淡化，同曲幂等 */
-export async function startBGM(track: BgmTrack): Promise<void> {
-  return; // BGM 已禁用
-  if (!audioContext) return;
-  if (currentTrack === track && bgmSource) return; // 幂等
-
-  const ctx = audioContext;
-  const now = ctx.currentTime;
-
-  // 旧曲淡出
-  if (bgmSource) {
-    bgmGain!.gain.linearRampToValueAtTime(0, now + 0.5);
-    bgmSource.stop(now + 0.55);
-    bgmSource = null;
-    bgmLPF = null;
-    bgmGain = null;
+function ensureBed(): GenerativeBed | null {
+  if (!audioContext) return null;
+  if (!bed) {
+    bgmBusGain = audioContext.createGain();
+    bgmBusGain.gain.value = musicVolume;
+    connectToOutput(bgmBusGain);
+    // 底乐输出接入 bgm 总线（→ master），而非直接 connectToOutput
+    bed = new GenerativeBed(audioContext, node => { if (bgmBusGain) node.connect(bgmBusGain); });
   }
-
-  await loadAllBGM();
-  const buffer = bgmBuffers.get(track);
-  if (!buffer || !audioContext) return;
-
-  const cfg = BGM_TRACKS[track];
-  const now2 = audioContext.currentTime;
-
-  bgmLPF = ctx.createBiquadFilter();
-  bgmLPF.type = 'lowpass';
-  bgmLPF.frequency.setValueAtTime(cfg.baseLPF, now2);
-
-  bgmGain = ctx.createGain();
-  bgmGain.gain.setValueAtTime(0, now2);
-  bgmGain.gain.linearRampToValueAtTime(cfg.baseVol, now2 + 0.5); // 500ms 淡入
-
-  bgmSource = ctx.createBufferSource();
-  bgmSource.buffer = buffer;
-  bgmSource.loop = true;
-
-  bgmSource.connect(bgmLPF);
-  bgmLPF.connect(bgmGain);
-  connectToOutput(bgmGain);
-  const offset = Math.random() * buffer.duration;
-  bgmSource.start(now2, offset);
-
-  currentTrack = track;
-  tensionLevel = 0;
+  return bed;
 }
 
-/** 停止 BGM — 500ms fadeout */
+/** 设置音乐(底乐)音量 (0-1) — 独立于 master，不影响 SFX */
+export function setMusicVolume(v: number): void {
+  musicVolume = Math.max(0, Math.min(1, v));
+  if (bgmBusGain) bgmBusGain.gain.value = musicVolume;
+}
+
+/** 启动/切换底乐。battle: coherence 由当前关号驱动、张力可调；chill: 平静、张力归零 */
+export function startBGM(track: BgmTrack): void {
+  const b = ensureBed();
+  if (!b) return;
+  b.start();
+  b.setLevel(1); // 恢复满电平（撤销商店 duck；start 幂等不会自动复位）
+  bedMode = track;
+  if (track === 'battle') {
+    b.setCoherence(computeCoherence(state.level));
+  } else {
+    b.setTension(0);
+  }
+}
+
+// 进入商店（含休息站；统一走 openShop → shop:opened）后把底乐调低
+eventBus.on('shop:opened', () => { bed?.setLevel(SHOP_DUCK); });
+
+/** 停止底乐 */
 export function stopBGM(): void {
-  if (!audioContext || !bgmSource) return;
-  const now = audioContext.currentTime;
-
-  bgmGain!.gain.linearRampToValueAtTime(0, now + 0.5);
-  bgmSource.stop(now + 0.55);
-
-  bgmSource = null;
-  bgmLPF = null;
-  bgmGain = null;
-  currentTrack = null;
+  bed?.stop();
+  bedMode = null;
 }
 
-// === BGM 张力系统 — LPF + 音量驱动 ===
-
-let tensionLevel = 0;
-
-interface TensionParams {
-  lpfCutoff: number;
-  padVol: number;
-  rampTime: number;
-}
-
-const TENSION_TABLE: Record<number, TensionParams> = {
-  0: { lpfCutoff: 800,  padVol: 0.15, rampTime: 0.8 },
-  1: { lpfCutoff: 800,  padVol: 0.15, rampTime: 0.8 },
-  2: { lpfCutoff: 2000, padVol: 0.20, rampTime: 0.8 },
-  3: { lpfCutoff: 4000, padVol: 0.25, rampTime: 0.6 },
-  4: { lpfCutoff: 6000, padVol: 0.30, rampTime: 0.4 },
-};
-
-/** 更新 BGM 张力层级 (0-4) — 调整 LPF 截止频率 + 音量 */
+/** 更新单场张力 (0-4) — 仅 battle 生效 */
 export function updateBGMTension(level: number): void {
-  if (currentTrack !== 'battle') return; // 张力仅对战斗曲生效
-  if (level === tensionLevel) return;
-  if (!audioContext || !bgmSource) {
-    tensionLevel = level;
-    return;
-  }
-
-  const now = audioContext.currentTime;
-  tensionLevel = level;
-
-  const params = TENSION_TABLE[level] ?? TENSION_TABLE[0];
-  const ramp = params.rampTime;
-
-  bgmLPF!.frequency.linearRampToValueAtTime(params.lpfCutoff, now + ramp);
-  bgmGain!.gain.linearRampToValueAtTime(params.padVol, now + ramp);
+  if (bedMode !== 'battle') return;
+  bed?.setTension(level);
 }
 
-/** 释放张力层 — 通关/结算时 200ms 快速恢复基线 */
+/** 释放张力到基线 (0) — 仅 battle 生效 */
 export function releaseBGMTension(): void {
-  if (currentTrack !== 'battle') return; // 张力仅对战斗曲生效
-  if (!audioContext || !bgmSource) return;
-  const now = audioContext.currentTime;
-  const baseline = TENSION_TABLE[0];
-
-  bgmLPF!.frequency.linearRampToValueAtTime(baseline.lpfCutoff, now + 0.2);
-  bgmGain!.gain.linearRampToValueAtTime(baseline.padVol, now + 0.2);
-
-  tensionLevel = 0;
+  if (bedMode !== 'battle') return;
+  bed?.setTension(0);
 }
 
 // 测试辅助：暴露内部状态供测试验证
@@ -977,27 +861,22 @@ export const _chordInternals = {
   CHORD_BASE_VOL,
   CHORD_MAX_RMS,
   resetCooldown() { lastChordTime = 0; },
-  _setMockContext(ctx: AudioContext | null) { audioContext = ctx; },
+  _setMockContext(ctx: AudioContext | null) {
+    bed?.stop();
+    bed = null;
+    bedMode = null;
+    bgmBusGain = null;
+    audioContext = ctx;
+  },
+  get bedMusicVolume() { return bgmBusGain ? bgmBusGain.gain.value : musicVolume; },
   _setLastChordTime(t: number) { lastChordTime = t; },
   _setScoreSoundActive(v: boolean) { _scoreSoundActive = v; },
-  _setBgmBuffers(map: Map<string, AudioBuffer>) {
-    bgmBuffers.clear();
-    for (const [k, v] of map) bgmBuffers.set(k as BgmTrack, v);
-  },
-  get currentTrack() { return currentTrack; },
-  get droneActive() { return bgmSource !== null; },
-  get kickActive() { return kickOsc !== null; },
-  get tensionLevel() { return tensionLevel; },
-  _playKickPulse: playKickPulse,
-  _updateBGMTension: updateBGMTension,
-  _releaseBGMTension: releaseBGMTension,
-  _stopBGMImmediate() {
-    if (bgmSource) { try { bgmSource.stop(); } catch (_) { /* already stopped */ } bgmSource = null; }
-    bgmLPF = null;
-    bgmGain = null;
-    currentTrack = null;
-    tensionLevel = 0;
-  },
+  // --- 生成式底乐 (B) 测试钩子 ---
+  get bedMode() { return bedMode; },
+  get bedActive() { return bed?.isActive() ?? false; },
+  get bedCoherence() { return bed?.getCoherence() ?? 1; },
+  get bedTension() { return bed?.getTension() ?? 0; },
+  get bedLevel() { return bed?.getLevel() ?? 1; },
 };
 
 // === 便捷函数 ===

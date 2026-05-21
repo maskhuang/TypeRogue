@@ -26,17 +26,22 @@ vi.mock('../../../src/effects/juice', () => ({
   getScoreSoundTier: () => 0,
 }));
 
-// Mock constants
-vi.mock('../../../src/core/constants', () => ({
-  SOUND_PROFILES: {
-    type: [500, 800, 0.06],
-    wrong: [150, 80, 0.1],
-    skill: [450, 850, 0.12],
-    levelup: [400, 800, 0.15],
-    gameover: [300, 100, 0.2],
-    buy: [500, 380, 0.06],
-  },
-}));
+// Mock constants（partial：保留真实 BALANCE 等，仅覆盖 SOUND_PROFILES）
+// sound.ts 经 generativeBed → stageFlow 依赖 BALANCE.CYCLE_LENGTH，故必须保留真实导出
+vi.mock('../../../src/core/constants', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/core/constants')>();
+  return {
+    ...actual,
+    SOUND_PROFILES: {
+      type: [500, 800, 0.06],
+      wrong: [150, 80, 0.1],
+      skill: [450, 850, 0.12],
+      levelup: [400, 800, 0.15],
+      gameover: [300, 100, 0.2],
+      buy: [500, 380, 0.06],
+    },
+  };
+});
 
 /** 创建完整 mock AudioContext（支持所有 synth 函数的节点类型）
  *  收集创建的 oscillators/filters 实例，便于验证波形类型和参数 */

@@ -67,6 +67,8 @@ vi.mock('../../../src/effects/sound', () => ({ playSound: vi.fn() }))
 vi.mock('../../../src/systems/battle', () => ({ startLevel: vi.fn() }))
 
 import { __test } from '../../../src/ui/shopPreview'
+import { computeInboxRefund, sellSkillById } from '../../../src/ui/shop/shopTerminal'
+import { resetSmuggleFree } from '../../../src/systems/relics/ShopRelicBehaviors'
 import type { ItemDescriptor } from '../../../src/ui/itemDescriptors'
 import type { ShopItem } from '../../../src/core/types'
 
@@ -249,6 +251,44 @@ describe('Story 60.7 · cmdSell 副作用', () => {
     // SELL by IN-tray slot (terminal SEL only accepts IN<n> — SKU 撤销由 UND 负责)
     __test.cmdSell('IN1')
     expect(evaluateEquipQuestsSpy).toHaveBeenCalledTimes(1)
+  })
+
+  // 回归：退款额必须 > 0（工作台回收槽曾因 shopBus.getInboxRefund 停留默认 ()=>0 而恒显 0）
+  it('回收退款额 = floor(实付 × 回收率)，且实际入账', () => {
+    state.gold = 100
+    __test.executeBuySkill(makeSkillDescriptor('skill_r', 30))
+    expect(computeInboxRefund('skill_r')).toBe(15) // floor(30 × 0.5)
+    const goldBefore = state.gold
+    __test.cmdSell('IN1')
+    expect(state.gold).toBe(goldBefore + 15)
+  })
+
+  // 回归：从键盘拖来的（已绑定）技能也能直接卖 → sellSkillById 解绑 + 移除 + 退款
+  // 商店遗物适配新商店：走私通道（smuggle_pass）首购免单
+  it('smuggle_pass：首次购买免单 + 消耗一次，第二次正常计费', () => {
+    state.gold = 100
+    state.player.relics.add('smuggle_pass')
+    resetSmuggleFree()
+    __test.executeBuySkill(makeSkillDescriptor('sm1', 30))
+    expect(state.gold).toBe(100)                                  // 免单，未扣金
+    expect(state.affixSkills.get('sm1')?.purchasePrice).toBe(0)   // 实付 0（转卖/UND 按 0）
+    __test.executeBuySkill(makeSkillDescriptor('sm2', 30))
+    expect(state.gold).toBe(70)                                   // 第二次正常扣 30
+    state.player.relics.delete('smuggle_pass')
+    resetSmuggleFree()
+  })
+
+  it('sellSkillById 卖出已绑定键位技能：解绑 + 移除 + 退款入账', () => {
+    state.gold = 100
+    __test.executeBuySkill(makeSkillDescriptor('skill_b', 30))
+    // 模拟装备到键位 G（从 IN-tray 移到 bindings）
+    state.player.inbox = state.player.inbox.filter(id => id !== 'skill_b')
+    state.player.bindings.set('g', 'skill_b')
+    const goldBefore = state.gold
+    sellSkillById('skill_b')
+    expect(state.player.bindings.has('g')).toBe(false)   // 已解绑
+    expect(state.affixSkills.has('skill_b')).toBe(false) // 已移除
+    expect(state.gold).toBe(goldBefore + 15)             // 退款入账
   })
 })
 

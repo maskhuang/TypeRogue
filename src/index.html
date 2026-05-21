@@ -166,6 +166,13 @@
                     </div>
                 </div>
                 <div class="desk-ov-row">
+                    <div class="ov-label" data-i18n="req.label_music">音乐 / MUS</div>
+                    <div class="ov-options">
+                        <input type="range" id="ws-music" class="ws-slider" min="0" max="100" value="100">
+                        <span class="ws-slider-val" id="ws-music-val">100%</span>
+                    </div>
+                </div>
+                <div class="desk-ov-row">
                     <div class="ov-label" data-i18n="req.label_lang">语言 / LANG</div>
                     <div class="ov-options">
                         <label><input type="radio" name="ws-lang" value="zh"> <span data-i18n="req.lang_zh">中文</span></label>
@@ -523,9 +530,23 @@
         <div id="modifier-picker-modal" class="modifier-picker-hidden">
             <div class="modifier-picker-overlay"></div>
             <div class="modifier-picker-content">
-                <div class="modifier-picker-title" data-i18n="modifier_picker.title">⚔️ 选择一个 Boss 修饰器 ⚔️</div>
-                <div class="modifier-picker-active" id="modifier-picker-active"></div>
-                <div class="modifier-picker-cards" id="modifier-picker-cards"></div>
+                <div class="modifier-picker-bezel">
+                    <div class="battle-bezel-top">
+                        <span class="bezel-led"></span>
+                        <span class="bezel-brand">DPCA-VT220</span>
+                        <span class="bezel-spec">DIRECTIVE TERMINAL · DEPT 2-B</span>
+                        <span class="bezel-vent" aria-hidden="true">▦▦▦▦▦▦</span>
+                    </div>
+                    <div class="battle-bezel-screen modifier-picker-screen">
+                        <div class="modifier-picker-title" data-i18n="modifier_picker.title">选择一个 Boss 修饰器</div>
+                        <div class="modifier-picker-active" id="modifier-picker-active"></div>
+                        <div class="modifier-picker-cards" id="modifier-picker-cards"></div>
+                    </div>
+                    <div class="battle-bezel-bottom">
+                        <span class="bezel-sticker">PROPERTY OF DPCA · UNAUTHORIZED USE PROHIBITED</span>
+                        <span class="bezel-serial">SN-3942-A</span>
+                    </div>
+                </div>
             </div>
         </div>
 

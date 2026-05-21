@@ -6,6 +6,7 @@
 // ============================================
 
 import { state, addRelicWithCapacity, removeRelic, isRelicSlotsFull } from '../../core/state';
+import { unbindSkill, getBindingState } from '../../systems/bindingManager';
 import { INBOX_MAX, BALANCE, RESOURCE_ICONS } from '../../core/constants';
 import { calculateRating } from '../../effects/juice';
 import type { ResourceType } from '../../core/types';
@@ -16,8 +17,10 @@ import {
   buildAffixTooltipFields,
   applyMaxSkillLevelOnPurchase,
   calculateAffixSkillPrice,
+  getAdjustedPrice,
 } from '../../systems/shop';
-import { getRecycleSellMultiplier } from '../../systems/relics/ShopRelicBehaviors';
+import { getRecycleSellMultiplier, getBlackMarketExtraSlots, canSmuggleFree, consumeSmuggleFree, isTimedAuction } from '../../systems/relics/ShopRelicBehaviors';
+import { getThickDeckPackDiscount } from '../../systems/relics/WordRelicBehaviors';
 import { shouldAnimateShop } from '../../core/UserSettings';
 // Story 60.7: 副作用 hook（事件总线 + quest 重算 + 遗物购入瞬时效果）
 import { eventBus } from '../../core/events/EventBus';
@@ -184,7 +187,8 @@ export function updateTerminalChrome(): void {
 export function ensureSeed(): void {
   if (state.shop.items.length === 0) {
     try {
-      const items = generateAffixShopItems(3);
+      // black_market（黑市）：额外技能位
+      const items = generateAffixShopItems(3 + getBlackMarketExtraSlots());
       const packs = generateShopPackItems(2);
       items.push(...packs);
       const relic = generateShopRelicItem(1);
@@ -208,7 +212,8 @@ function generateShopPackItems(count: number): ShopItem[] {
       id: `si-pack-${i}-${Date.now()}`,
       type: 'pack',
       pack,
-      cost: pack.cost,
+      // 与 classic 一致：套用全部价格修正（含折扣卡 getDiscountMultiplier）+ 厚牌折扣
+      cost: Math.max(1, getAdjustedPrice(pack.cost) - getThickDeckPackDiscount()),
       isUpgrade: false,
       locked: false,
     }));
@@ -1040,8 +1045,20 @@ function cmdInfoListOwned(): void {
   appendBlank();
 }
 
+/** 走私通道（smuggle_pass）：命中则本次免单（消耗 1 次额度），返回实付价。
+ *  实付价用于扣金/记账（purchasePrice/undoStack）→ UND 退实付、转卖按实付，无免单套利。 */
+function applySmugglePrice(listPrice: number): number {
+  if (canSmuggleFree()) {
+    consumeSmuggleFree();
+    appendLine(t('shop.terminal.cmd.buy.smuggled'), 'echo');
+    return 0;
+  }
+  return listPrice;
+}
+
 function executeBuy(d: ItemDescriptor): void {
-  if (state.gold < d.price) {
+  // 走私通道命中 → 本次免单，余额不足也放行
+  if (!canSmuggleFree() && state.gold < d.price) {
     // terminal sound removed (was sfx('shop_buy_err')) // Story 60.12: 拨号忙音 — 余额不足
     appendLine(t('shop.terminal.err.insufficient_funds', { gold: state.gold, price: d.price }), 'redacted');
     appendLine(t('shop.terminal.err.appeal_form'), 'dim');
@@ -1080,26 +1097,27 @@ export function executeBuySkill(d: ItemDescriptor): void {
   const oldLevel = isUpgrade ? state.player.skills.get(skillId)?.level : undefined;
   const oldAffixRef = isUpgrade ? state.affixSkills.get(skillId) : undefined;
   const oldAffixSnapshot = oldAffixRef ? structuredClone(oldAffixRef) : undefined;
-  state.gold -= d.price;
+  const paid = applySmugglePrice(d.price);  // 走私通道：免单则 0
+  state.gold -= paid;
   // Story 60.7 review M1: deep-clone affixSkill 隔离 catalog 引用，
   // 防 BUY → UND → BUY 双重 affix 缩放（applyMaxSkillLevelOnPurchase 在 affixes 上 in-place mutate）
   const skillCopy = structuredClone(skill);
   // 实付价存到 affixSkill — 跨 session 后还能用来算转卖价（与 classic shop 同源）
-  skillCopy.purchasePrice = d.price;
+  skillCopy.purchasePrice = paid;
   state.affixSkills.set(skillId, skillCopy);
-  state.player.skills.set(skillId, { level: skillCopy.level, purchasePrice: d.price });
+  state.player.skills.set(skillId, { level: skillCopy.level, purchasePrice: paid });
   if (!isUpgrade) state.player.inbox.push(skillId);
   d.purchased = true;
   previewState.purchasedSkus.add(d.sku);
   previewState.undoStack.push({
-    kind: 'skill', sku: d.sku, price: d.price, skillId, itemIdx,
+    kind: 'skill', sku: d.sku, price: paid, skillId, itemIdx,
     ...(isUpgrade ? { isUpgrade: true, oldLevel, oldAffix: oldAffixSnapshot } : {}),
   });
   // Story 60.7: 副作用闭合 — T4 max_skill_level 自动满级 + 装备 quest 重算 + 教程监听事件
   applyMaxSkillLevelOnPurchase(skillId);
   evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
-  eventBus.emit('shop:purchase', { type: 'skill', itemId: skillId, price: d.price });
-  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
+  eventBus.emit('shop:purchase', { type: 'skill', itemId: skillId, price: paid });
+  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: paid }), 'echo');
   if (isUpgrade) {
     // 升级路径：原绑定键保留 → 改用 upgraded_in_place 文案，避免 "派往收件槽" 误导
     const newLevel = state.player.skills.get(skillId)?.level ?? skillCopy.level;
@@ -1137,18 +1155,19 @@ export function executeBuyPack(d: ItemDescriptor): void {
 
 function executeBuyPackDirect(d: ItemDescriptor, pack: WordPack): void {
   const word = pack.words[0];
-  state.gold -= d.price;
+  const paid = applySmugglePrice(d.price);  // 走私通道：免单则 0
+  state.gold -= paid;
   state.player.wordDeck.push(word);
   if (pack.wordEffect && state.classId !== 'wordsmith') {
     state.wordEffects.set(word, pack.wordEffect);
   }
   d.purchased = true;
   previewState.purchasedSkus.add(d.sku);
-  previewState.undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [word] });
+  previewState.undoStack.push({ kind: 'pack', sku: d.sku, price: paid, words: [word] });
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
-  eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
+  eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: paid });
   // terminal sound removed (was sfx('shop_buy_ok')) // Story 60.12
-  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
+  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: paid }), 'echo');
   appendLine(t('shop.terminal.cmd.buy.pack_word_filed', { word: word.toUpperCase(), gold: state.gold }), 'dim');
   appendLine(t('shop.terminal.cmd.buy.undo_stack', { n: previewState.undoStack.length }), 'dim');
   appendBlank();
@@ -1175,20 +1194,21 @@ function executeBuyPackPicker(d: ItemDescriptor, pack: WordPack): void {
 export function finalizePackPick(pickedWord: string): void {
   if (!previewState.pendingPackPick) return;
   const { d, pack } = previewState.pendingPackPick;
-  state.gold -= d.price;
+  const paid = applySmugglePrice(d.price);  // 走私通道：免单则 0（picker 在选词后才扣）
+  state.gold -= paid;
   state.player.wordDeck.push(pickedWord);
   if (pack.wordEffect && state.classId !== 'wordsmith') {
     state.wordEffects.set(pickedWord, pack.wordEffect);
   }
   d.purchased = true;
   previewState.purchasedSkus.add(d.sku);
-  previewState.undoStack.push({ kind: 'pack', sku: d.sku, price: d.price, words: [pickedWord] });
+  previewState.undoStack.push({ kind: 'pack', sku: d.sku, price: paid, words: [pickedWord] });
   // Story 60.8: pack 购入事件（教程 L1_drawer_words 触发依赖）
-  eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: d.price });
+  eventBus.emit('shop:purchase', { type: 'pack', itemId: d.sku, price: paid });
   // terminal sound removed (was sfx('shop_buy_ok')) // Story 60.12
   previewState.pendingPackPick = null;
   shopBus.closeDrawer();
-  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
+  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: paid }), 'echo');
   appendLine(t('shop.terminal.cmd.buy.pack_word_filed', { word: pickedWord.toUpperCase(), gold: state.gold }), 'dim');
   appendLine(t('shop.terminal.cmd.buy.undo_stack', { n: previewState.undoStack.length }), 'dim');
   appendBlank();
@@ -1230,10 +1250,11 @@ export function executeBuyRelic(d: ItemDescriptor): void {
     appendBlank();
     return;
   }
-  state.gold -= d.price;
+  const paid = applySmugglePrice(d.price);  // 走私通道：免单则 0
+  state.gold -= paid;
   const ok = addRelicWithCapacity(relicId);
   if (!ok) {
-    state.gold += d.price;
+    state.gold += paid;
     // terminal sound removed (was sfx('shop_buy_err'))
     appendLine(t('shop.terminal.err.relic_add_failed'), 'redacted');
     appendBlank();
@@ -1246,8 +1267,8 @@ export function executeBuyRelic(d: ItemDescriptor): void {
   // terminal sound removed (was sfx('shop_buy_ok')) // Story 60.12
   d.purchased = true;
   previewState.purchasedSkus.add(d.sku);
-  previewState.undoStack.push({ kind: 'relic', sku: d.sku, price: d.price, relicId });
-  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: d.price }), 'echo');
+  previewState.undoStack.push({ kind: 'relic', sku: d.sku, price: paid, relicId });
+  appendLine(t('shop.terminal.cmd.buy.confirmed', { name: d.name, price: paid }), 'echo');
   appendLine(t('shop.terminal.cmd.buy.relic_shelved', { gold: state.gold }), 'dim');
   appendLine(t('shop.terminal.cmd.buy.undo_stack', { n: previewState.undoStack.length }), 'dim');
   appendBlank();
@@ -1318,26 +1339,61 @@ export function cmdSell(arg?: string): void {
   sellFromInboxSlot(target, inboxIdx);
 }
 
+/** 退款基价 — 逐级回退（session 实付 > affixSkill.purchasePrice > 反算标牌价 > 15） */
+function inboxRefundBasis(skillId: string): number {
+  const sk = state.affixSkills.get(skillId);
+  const sessionUndo = previewState.undoStack.find(
+    u => u.kind === 'skill' && !u.isUpgrade && u.skillId === skillId,
+  ) as { price: number } | undefined;
+  if (sessionUndo) return sessionUndo.price;
+  if (sk?.purchasePrice) return sk.purchasePrice;
+  if (sk) return calculateAffixSkillPrice(sk.rarity, sk.level);
+  return 15;
+}
+
+/** IN-tray 卡回收退款额（terminal SEL 与工作台回收槽共用 · 拖入预览也用此显示金额） */
+export function computeInboxRefund(skillId: string): number {
+  return Math.floor(inboxRefundBasis(skillId) * getRecycleSellMultiplier());
+}
+
+/** 卖出一个技能（工作台回收槽入口）— 同时处理 IN-tray 卡与已绑定键位（多格全解）。
+ *  退款基价与 SEL 同源（computeInboxRefund）。 */
+export function sellSkillById(skillId: string): void {
+  if (!state.affixSkills.has(skillId)) return;
+  const refund = computeInboxRefund(skillId);
+  const sellMult = getRecycleSellMultiplier();
+  const skName = state.affixSkills.get(skillId)?.name ?? skillId;
+  // 来源 1：IN-tray 收件托盘
+  const inboxIdx = state.player.inbox.indexOf(skillId);
+  if (inboxIdx >= 0) state.player.inbox.splice(inboxIdx, 1);
+  // 来源 2：已装备键位（多格形状一并解绑）
+  unbindSkill(getBindingState(state), skillId);
+  // 移除技能数据 + 本次 session 购买记录（防 UND 复活）
+  state.player.skills.delete(skillId);
+  state.affixSkills.delete(skillId);
+  state.affixSkillStates.delete(skillId);
+  const undoIdx = previewState.undoStack.findIndex(
+    u => u.kind === 'skill' && !u.isUpgrade && u.skillId === skillId,
+  );
+  if (undoIdx >= 0) previewState.undoStack.splice(undoIdx, 1);
+  state.gold += refund;
+  evaluateEquipQuests(state.affixSkills, state.affixSkillStates, state.player.bindings, getQuestEquipReduction());
+  appendLine(t('shop.terminal.cmd.sell.refunded', { target: skName, refund, pct: Math.round(sellMult * 100) }), 'echo');
+  appendBlank();
+  updateTerminalChrome();
+  shopBus.syncWorkbenchInbox();
+  shopBus.syncWorkbenchKeys();
+}
+
 /** 从 IN-tray 指定槽位卖卡 — 退款源逐级回退（session 实付 > affixSkill.purchasePrice > 反算标牌价） */
 function sellFromInboxSlot(target: string, inboxIdx: number): void {
   const skillId = state.player.inbox[inboxIdx];
-  const sk = state.affixSkills.get(skillId);
   // 本次 session 购买记录优先（退款基于实付价，含本关折扣）；非升级条目才匹配
   const sessionUndoIdx = previewState.undoStack.findIndex(
     u => u.kind === 'skill' && !u.isUpgrade && u.skillId === skillId,
   );
-  let basis: number;
-  if (sessionUndoIdx >= 0) {
-    basis = (previewState.undoStack[sessionUndoIdx] as { price: number }).price;
-  } else if (sk?.purchasePrice) {
-    basis = sk.purchasePrice;
-  } else if (sk) {
-    basis = calculateAffixSkillPrice(sk.rarity, sk.level);
-  } else {
-    basis = 15;
-  }
   const sellMult = getRecycleSellMultiplier();
-  const refund = Math.floor(basis * sellMult);
+  const refund = computeInboxRefund(skillId);
 
   state.player.inbox.splice(inboxIdx, 1);
   state.player.skills.delete(skillId);
@@ -1353,7 +1409,7 @@ function sellFromInboxSlot(target: string, inboxIdx: number): void {
 }
 
 export function cmdReshuffle(): void {
-  const cost = 18;
+  const cost = isTimedAuction() ? 0 : 18;  // 限时拍卖：刷新免费
   if (state.gold < cost) {
     appendLine(t('shop.terminal.err.reshuffle_funds', { cost }), 'redacted');
     appendBlank();
@@ -1363,7 +1419,7 @@ export function cmdReshuffle(): void {
   let success = false;
   try {
     const items: ShopItem[] = [
-      ...generateAffixShopItems(3),
+      ...generateAffixShopItems(3 + getBlackMarketExtraSlots()),  // black_market 额外技能位
       ...generateShopPackItems(2),
     ];
     const relic = generateShopRelicItem(1);

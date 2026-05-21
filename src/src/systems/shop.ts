@@ -33,6 +33,8 @@ import { getDiscountMultiplier, getRecycleSellMultiplier, getBlackMarketExtraSlo
 import { hasIntermissionFreeRefresh, consumeIntermissionFreeRefresh } from './relics/StageRelicBehaviors';
 import { keyTooltip, AFFIX_COLORS } from '../ui/keyboard/KeyTooltip';
 import type { KeyTooltipData } from '../ui/keyboard/KeyTooltip';
+import { getAffixV2Definition, getV2Color } from '../data/affixV2';
+import { extractSelectorFromEffect, resolveSelectorToHighlightKeys } from './affixV2ScopeKeys';
 import { random } from '../core/seededRandom';
 import { dragManager, registerShapePreviewRenderer } from './dragManager';
 import { isFeatureEnabled, getFeatureLostReason } from './classes/ClassFeatureGate';
@@ -1367,13 +1369,14 @@ export function openShop(_won: boolean): void {
 
   // Story 36.9: 走私通道 — 每关重置; 黑市门票 — +1 商品位
   resetShopRelicState();
-  if (!state.isTutorial) {
+  // 教程模式：若 TutorialMode 预设了 state.shop.items 则沿用；否则（未预设/为空）照常生成，
+  // 避免教程商店空无一物导致 phase 5「购买」无从下手。
+  if (!state.isTutorial || state.shop.items.length === 0) {
     const shopSlots = 5 + getBlackMarketExtraSlots();
     const locked = state.shop.items.filter(item => item.locked);
     const newItems = generateShopItems(shopSlots - locked.length, getBlackMarketExtraSlots() > 0);
     state.shop.items = [...locked, ...newItems];
   }
-  // 教程模式：state.shop.items 已由 TutorialMode 预设
   state.shop.refreshCount = 0;
 
   // Story 36.9: 限时拍卖 — 倒计时（必须在 renderUnifiedShop 之前启动，确保首次渲染能显示）
@@ -1471,7 +1474,7 @@ function getRefreshCost(): number {
   return Math.round(base * a5Mult * getAscensionPriceMultiplier());
 }
 
-function getAdjustedPrice(baseCost: number): number {
+export function getAdjustedPrice(baseCost: number): number {
   // Story 36.5: 附魔锚点 — 每个已激活附魔使价格 +10%
   // Story 36.9: 折扣卡 — 所有商品价格 -15%（先涨后折）
   // 困境红利：每个永久修饰器 -5%（上限 30%）
@@ -3322,6 +3325,23 @@ function highlightSkillRange(key: string): void {
   for (const { rel, color } of highlights) {
     for (const k of getExtendedNeighbors(allKeys, rel)) {
       addColor(k, color);
+    }
+  }
+
+  // 1b. V2 词条 selector → 范围高亮（neighbors / all_skills / matched_*；按 section 染色）
+  //     legacy 只读 affix.posRel，纯 V2 技能此前在键盘 hover 无范围预览 — 此处补齐
+  if (affixSkill?.v2Ids?.length) {
+    const occupiedSet = new Set(allKeys);
+    for (const defId of affixSkill.v2Ids) {
+      const def = getAffixV2Definition(defId);
+      if (!def) continue;
+      const sel = extractSelectorFromEffect(def.effect);
+      if (!sel) continue;
+      const color = getV2Color(defId) || defaultColor;
+      for (const k of resolveSelectorToHighlightKeys(sel, allKeys, occupiedSet)) {
+        if (occupiedSet.has(k)) continue;
+        addColor(k, color);
+      }
     }
   }
 

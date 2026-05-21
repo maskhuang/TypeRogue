@@ -7,7 +7,7 @@ import { t, setLocale, getLocale, applyHtmlI18n } from '../demo/demo-i18n'
 import type { Locale } from '../demo/demo-i18n'
 import { getSettings, updateSettings } from '../core/UserSettings'
 import type { BackgroundMode } from '../core/UserSettings'
-import { setMasterVolume, playSound } from '../effects/sound'
+import { setMasterVolume, setMusicVolume, playSound } from '../effects/sound'
 import { setBackgroundMode } from '../effects/balatroBackground'
 import { eventBus } from '../core/events/EventBus'
 
@@ -34,6 +34,12 @@ export function openSettingsPanel(): void {
         <label class="settings-label">${esc(t('settings.volume'))}</label>
         <input type="range" class="settings-slider" id="settings-volume" min="0" max="100" value="${Math.round(settings.masterVolume * 100)}">
         <span class="settings-value" id="settings-volume-val">${Math.round(settings.masterVolume * 100)}%</span>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-label">${esc(t('settings.music'))}</label>
+        <input type="range" class="settings-slider" id="settings-music" min="0" max="100" value="${Math.round(settings.musicVolume * 100)}">
+        <span class="settings-value" id="settings-music-val">${Math.round(settings.musicVolume * 100)}%</span>
       </div>
 
       <div class="settings-row">
@@ -79,6 +85,16 @@ export function openSettingsPanel(): void {
     valDisplay.textContent = `${slider.value}%`
     setMasterVolume(v)
     updateSettings({ masterVolume: v })
+  })
+
+  // Music (底乐) slider
+  const musicSlider = overlay.querySelector('#settings-music') as HTMLInputElement
+  const musicVal = overlay.querySelector('#settings-music-val') as HTMLElement
+  musicSlider?.addEventListener('input', () => {
+    const v = parseInt(musicSlider.value) / 100
+    musicVal.textContent = `${musicSlider.value}%`
+    setMusicVolume(v)
+    updateSettings({ musicVolume: v })
   })
 
   // Language buttons
@@ -192,6 +208,7 @@ export function applyCRT(enabled: boolean): void {
 export function applyAllSettings(): void {
   const s = getSettings()
   setMasterVolume(s.masterVolume)
+  setMusicVolume(s.musicVolume)
   applyCRT(s.crtEnabled)
   setBackgroundMode(s.backgroundMode)
 }

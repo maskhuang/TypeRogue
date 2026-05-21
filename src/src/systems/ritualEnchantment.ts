@@ -162,5 +162,5 @@ export function shouldShowRitual(): boolean {
  */
 export function openRitualEnchantment(onComplete: () => void): void {
   state.phase = 'ritual';
-  showRelicPicker(onComplete, { common: 0, rare: 0, epic: 0, legendary: 100 });
+  showRelicPicker(onComplete, { common: 0, rare: 0, epic: 0, legendary: 100 }, { deskMode: true });
 }
