@@ -29,6 +29,7 @@ import {
   hookOnHasteGranted,
   listAllEquipped,
   setSelectorResolver,
+  chargeToolAffixUses,
   type SourcedResult,
 } from './affixV2Equipped'
 import { listActiveAuras, peekInstanceState, getSkillCumBase, getSkillCumFactor, getFireTargetWaitMs, tryFireTargetQuota, consumeHasteOne, getHaste } from './affixV2State'
@@ -183,6 +184,8 @@ export function processV2Results(results: readonly SourcedResult[], outputMult =
       applyAffixGraft(gr.targetSkillId, gr.targetKey, gr.defId)
     }
   }
+  // tool/认知词条「用完消失」：本次结算中触发过的词条各计 1 次使用，用尽即从宿主移除
+  if (results.length > 0) chargeToolAffixUses(results.map(r => r.sourceInstanceId))
 }
 
 /** 升级 skill 等级 · capped 至 baseValues 长度 · 同步 affixSkills + player.skills */

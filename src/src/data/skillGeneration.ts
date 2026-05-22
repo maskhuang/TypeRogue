@@ -18,7 +18,7 @@ import {
   VOID_BONUS_TABLE, SWARM_BONUS_TABLE, FLOW_BONUS_TABLE, CONFLUENCE_BONUS_TABLE, UNION_BONUS_TABLE, CONVERT_K_TABLE, AFFIX_CLASS_RESTRICTION,
 } from './affixes'
 import { t } from '../demo/demo-i18n'
-import { ALL_RECIPES, generateAffixV2, pickRecipeForSkill } from './affixV2Generator'
+import { ALL_RECIPES, generateAffixV2, pickRecipeForSkill, type AffixV2Recipe } from './affixV2Generator'
 
 // ===== 常量 =====
 
@@ -404,13 +404,22 @@ export interface GenerateSkillOptions {
   rotation?: number
   /** 当前职业 ID（过滤职业专属词条） */
   playerClass?: string
+  /** 强制至少 1 个 V2 词条来自此 recipe（gain_skill 按 tag 过滤生成时绑定 ·
+   *  保证生成的技能至少拥有一个该 recipe section 的 affix；rarity<1 时提升到 1） */
+  forcedRecipe?: AffixV2Recipe
+  /** 随机槽位排除 meta 操纵家族（teach/imitate/spear_make/gaze_follow）·
+   *  gain_skill spawn 传 true 防递归；shop/普通生成缺省 false（meta 正常刷新出现） */
+  excludeMeta?: boolean
 }
 
 /** 生成一个随机词条制技能实例 */
 export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstance {
   const pool = options?.availableResources ?? GENERIC_RESOURCES
   const resource = options?.resource ?? pickRandom(pool)
-  const rarity = options?.rarity ?? rollRarity()
+  // forcedRecipe（gain_skill 按 tag 生成）要求至少 1 个词条 → rarity 最低 1，否则会出 0 词条技能
+  const rarity = options?.forcedRecipe
+    ? (Math.max(1, options?.rarity ?? rollRarity()) as SkillRarity)
+    : (options?.rarity ?? rollRarity())
   const level = options?.level ?? 1
 
   // 构建职业排除集：非当前职业的专属词条不参与抽取
@@ -434,7 +443,7 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
 
   // ── V2 接管：rarity = V2 affix 数量（rarity 0 → 0 个，3 → 3 个）──
   // 旧 AffixInstance 通道已禁用（orchestrator 入口短路）；保留 affixes=[] 供 UI 兼容
-  const v2Ids = sampleV2Ids(rarity, resource)
+  const v2Ids = sampleV2Ids(rarity, resource, options?.forcedRecipe, options?.excludeMeta)
   const affixes: AffixInstance[] = []
 
   // 自动命名：skill.name 只存资源 base，V2 词条名由 display 层（itemDescriptors / shopTerminal）
@@ -481,14 +490,21 @@ export function generateSkill(options?: GenerateSkillOptions): AffixSkillInstanc
  *  每个词条独立选 recipe + 随机 trigger + magnitude scaling
  *  rarity 0 → 0 个；返回生成出的 (动态注册的) def id 列表
  *  @param skillResource  词条所在 skill 的资源（传给 convert recipe 用作 source 锚点）
+ *  @param forcedRecipe   非空时第 1 个词条强制用此 recipe（gain_skill 按 tag 生成 ·
+ *                        保证技能至少有一个该 section 的 affix）
+ *  @param excludeMeta    随机槽位是否排除 meta 操纵家族（teach/imitate/spear_make/gaze_follow）·
+ *                        gain_skill spawn 传 true（防生成的技能再带 meta → 递归 spawn）；
+ *                        shop/普通生成不传（meta 词条正常刷新出现）
  */
-function sampleV2Ids(count: number, skillResource: ResourceType): string[] {
+function sampleV2Ids(count: number, skillResource: ResourceType, forcedRecipe?: AffixV2Recipe, excludeMeta = false): string[] {
   if (count <= 0) return []
   if (ALL_RECIPES.length === 0) return []
   const out: string[] = []
   for (let i = 0; i < count; i++) {
-    // 加权抽取：drink(convert) 在 source=time/gold 时降权
-    const recipe = pickRecipeForSkill(skillResource)
+    // 第 1 槽位绑定 forcedRecipe（如有）；其余槽位加权随机（drink 在 time/gold source 降权）
+    const recipe = (i === 0 && forcedRecipe)
+      ? forcedRecipe
+      : pickRecipeForSkill(skillResource, { excludeMeta })
     out.push(generateAffixV2(recipe, skillResource))
   }
   return out

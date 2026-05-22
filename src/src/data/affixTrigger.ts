@@ -2563,6 +2563,7 @@ export function serializeSkill(
     shapeId: skill.shapeId,
     rotation: skill.rotation,
     v2Ids: skill.v2Ids ? [...skill.v2Ids] : undefined,
+    v2Uses: skill.v2Uses ? { ...skill.v2Uses } : undefined,
     runtime: {
       ...runtimeState,
       mirrorCopiedAffix: runtimeState.mirrorCopiedAffix ? { ...runtimeState.mirrorCopiedAffix } : null,
@@ -2594,6 +2595,7 @@ export function deserializeSkill(
     // tetromino_T rot 11 等）；normalizeRotation 把超界值 wrap 到当前有效范围。
     rotation: normalizeRotation(data.shapeId ?? 'monomino', data.rotation ?? 0),
     v2Ids: data.v2Ids ? [...data.v2Ids] : undefined,
+    v2Uses: data.v2Uses ? { ...data.v2Uses } : undefined,
   }
   const runtimeState: SkillRuntimeState = {
     skillId: data.id,

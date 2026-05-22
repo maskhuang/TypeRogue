@@ -10,9 +10,10 @@
 // 设计文档: affix-rewrite-research.md §5
 
 import type { AffixV2Instance } from '../data/affixV2'
-import { getAffixV2Definition } from '../data/affixV2'
+import { getAffixV2Definition, getAffixV2UseLimit } from '../data/affixV2'
 import { state as gameState } from '../core/state'
 import { hasRelation } from '../data/keyboardTopology'
+import type { Tag } from '../data/affixTags'
 
 /** 把 (resource)→base 回调按 skill 等级柯里化为 Lv.N 查询 ·
  *  resourceLv1Base 接受可选 level 参数（defaultResourceLv1Base），缺省 Lv1 */
@@ -73,6 +74,28 @@ function collectSkillIdsForScope(
       // 极速状态查询需 affixV2State.getHaste；保留 stub，hasted 不进 generator 池
       return []
   }
+}
+
+/** tooltip 预览用：统计 scope 内含 tag 的已装备词条数（与运行时 countTagInScope 同口径）·
+ *  board-wide scope（all_skills / matched_resource / matched_rarity / matched_tag）无需宿主键位；
+ *  neighbors 需宿主 skillId + key（绑定后才有 → shop 未绑定预览不显 live 数）；
+ *  self（运行时 = 仅本词条自身，预览无实例上下文）/ hasted（运行时动态）→ 返回 null（只显规则）。*/
+export function previewCountTagInScope(
+  tags: readonly Tag[],
+  scope: TargetSelector,
+  hostSkillId?: string,
+  hostKey?: string,
+): number | null {
+  if (scope.type === 'self' || scope.type === 'hasted') return null
+  if (scope.type === 'neighbors' && (hostSkillId === undefined || hostKey === undefined)) return null
+  const skillIds = new Set(collectSkillIdsForScope(scope, hostSkillId ?? '', hostKey ?? ''))
+  let n = 0
+  for (const e of _equipped.values()) {
+    if (!skillIds.has(e.skillId)) continue
+    const def = getAffixV2Definition(e.defId)
+    if (def && tags.some(t => def.tags.includes(t))) n++
+  }
+  return n
 }
 
 /** 为给定 entry 构建 queryEquipped(scope) ·
@@ -219,6 +242,47 @@ export function getEquippedOnSkill(skillId: string): readonly AffixV2Instance[] 
 /** 列出全部 entry · 测试/调试用 */
 export function listAllEquipped(): readonly EquippedEntry[] {
   return Array.from(_equipped.values())
+}
+
+/** 从宿主 skill 移除一个 V2 词条（用完消失）· 同步 v2Ids / rarity / v2Uses ·
+ *  applyAffixGraft 的逆操作（rarity 回落到剩余 v2 词条数）。 */
+function removeV2AffixFromSkill(skillId: string, defId: string): void {
+  const skill = gameState.affixSkills.get(skillId)
+  if (!skill?.v2Ids) return
+  skill.v2Ids = skill.v2Ids.filter(id => id !== defId)
+  skill.rarity = Math.min(3, skill.v2Ids.length) as typeof skill.rarity
+  if (skill.v2Uses) delete skill.v2Uses[defId]
+}
+
+/** tool/认知词条「用完消失」计数 · processV2Results 在每次事件结算后调一次 ·
+ *  对传入的每个触发过的 instanceId（同一调用内去重）：若其 def 带 tool tag，
+ *  宿主 skill 的该 defId 使用数 +1；达上限则从 skill 移除 + unequip 运行时 instance。
+ *  使用计数挂在持久 skill 对象上（按 defId），故能跨关累积——
+ *  _equipped 每关 battle:start 重建 instanceId，不能作为跨关锚点。
+ *  返回被移除的 {skillId, defId}[]（供 caller 做 UI 反馈 / 日志）。 */
+export function chargeToolAffixUses(instanceIds: Iterable<string>): { skillId: string; defId: string }[] {
+  const removed: { skillId: string; defId: string }[] = []
+  const seen = new Set<string>()
+  for (const id of instanceIds) {
+    if (seen.has(id)) continue
+    seen.add(id)
+    const entry = _equipped.get(id)
+    if (!entry) continue
+    const def = getAffixV2Definition(entry.defId)
+    if (!def) continue
+    const limit = getAffixV2UseLimit(def)
+    if (limit == null) continue
+    const skill = gameState.affixSkills.get(entry.skillId)
+    if (!skill) continue
+    const uses = (skill.v2Uses ??= {})
+    uses[entry.defId] = (uses[entry.defId] ?? 0) + 1
+    if (uses[entry.defId] >= limit) {
+      removeV2AffixFromSkill(entry.skillId, entry.defId)
+      unequipAffixV2(id)
+      removed.push({ skillId: entry.skillId, defId: entry.defId })
+    }
+  }
+  return removed
 }
 
 /** 清空（unequip 全部）· 用于切 run / reset */

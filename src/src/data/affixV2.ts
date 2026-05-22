@@ -40,6 +40,8 @@ export interface AffixV2Definition {
   readonly notes?: string
   readonly trigger: TriggerSpec
   readonly effect: EffectSpec
+  /** 使用次数上限（生成时赋值）· 触发若干次后从宿主移除（用完消失）· undefined = 无限制 */
+  readonly maxUses?: number
 }
 
 /**
@@ -149,6 +151,24 @@ export function getV2Color(defId: string): string {
 /** 校验 id 是否合法 */
 export function isAffixV2Id(id: string): boolean {
   return _byId.has(id)
+}
+
+// ===== 使用次数限制 · tool/认知词条「用完消失」=====
+// 认知/工具段（§2.1.10）的词条是"消耗型工具"——触发若干次后即报废移除。
+// 上限在**生成时随机 roll** 写入 def.maxUses（见 affixV2Generator.generateAffixV2：tool 段
+// recipe 在 [MIN, MAX] 内取整数），运行时只读这个值；当前 live 的 tool 词条
+// （teach/imitate/spear_make/gaze_follow）均为 on_battle_end，故每关结束消耗 1 次，
+// 用尽后从宿主 skill 移除（计数与移除见 affixV2Equipped.chargeToolAffixUses）。
+// roll 用 generator 的 seeded random，与该 def 的 trigger/effect 同生命周期（_dynamicById），
+// 故同一实例内稳定。
+
+/** tool/认知段词条生成时 roll 使用次数的闭区间（balance 旋钮）*/
+export const TOOL_AFFIX_USES_MIN = 2
+export const TOOL_AFFIX_USES_MAX = 4
+
+/** 返回该词条的使用次数上限（生成时写入的 def.maxUses）；未赋值 = 无限制 */
+export function getAffixV2UseLimit(def: AffixV2Definition): number | null {
+  return def.maxUses ?? null
 }
 
 /** 按 section 列出所有词条 */

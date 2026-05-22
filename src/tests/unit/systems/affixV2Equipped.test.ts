@@ -2,13 +2,14 @@
 // 打字肉鸽 - affixV2 Equipped Registry + Battle Hook 单元测试
 // ============================================
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   equipAffixV2,
   unequipAffixV2,
   getEquippedOnSkill,
   listAllEquipped,
   clearAllEquipped,
+  chargeToolAffixUses,
   hookOnSkillFire,
   hookOnKey,
   hookOnWordEnd,
@@ -355,6 +356,80 @@ describe('学徒附魔 · trigger 计数 → skill level++ (3 → 6 → 12 → 2
     // ratio 1 × score Lv1 base 11 = 11
     expect(results[0].result.resourceProduced[0]).toEqual({ resource: 'score', amount: 11 })
     unregisterDynamicAffixV2('test_appr')
+  })
+})
+
+describe('tool/认知词条「用完消失」· chargeToolAffixUses', () => {
+  const TOOL_USES = 3   // 本测试固定上限（生成时 roll 的逻辑另见 generator 测试）
+  function toolSkill(id: string, defId: string): AffixSkillInstance {
+    return { id, level: 1, rarity: 1, v2Ids: [defId] } as unknown as AffixSkillInstance
+  }
+
+  beforeEach(() => {
+    gameState.affixSkills.clear()
+    registerDynamicAffixV2({
+      id: 'test_tool', name_zh: '工具测试', name_en: 'Tool Test',
+      section: 'tool', tags: ['tool'], phase: 'P1',
+      trigger: { type: 'on_battle_end', result: 'any' },
+      effect: { kind: 'graft_affix', from: { type: 'self' } },
+      maxUses: TOOL_USES,   // 生成时赋值（此处固定，便于断言）
+    })
+    registerDynamicAffixV2({
+      id: 'test_nontool', name_zh: '非工具', name_en: 'Non Tool',
+      section: 'maintenance', tags: ['maintenance'], phase: 'P1',
+      trigger: { type: 'on_word_end' },
+      effect: { kind: 'gain_resource', resource: 'score', ratio: 1 },
+    })
+  })
+  afterEach(() => {
+    unregisterDynamicAffixV2('test_tool')
+    unregisterDynamicAffixV2('test_nontool')
+  })
+
+  it('每次调用累计 1 次使用', () => {
+    const skill = toolSkill('skill_1', 'test_tool')
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_tool')
+
+    chargeToolAffixUses([id])
+    expect(skill.v2Uses?.['test_tool']).toBe(1)
+    chargeToolAffixUses([id])
+    expect(skill.v2Uses?.['test_tool']).toBe(2)
+    expect(getEquippedOnSkill('skill_1').length).toBe(1)   // 未达上限，仍在
+  })
+
+  it('达上限即从宿主移除（用完消失）+ 同步 v2Ids / rarity', () => {
+    const skill = toolSkill('skill_1', 'test_tool')
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_tool')
+
+    let removed: { skillId: string; defId: string }[] = []
+    for (let i = 0; i < TOOL_USES; i++) removed = chargeToolAffixUses([id])
+
+    expect(removed).toEqual([{ skillId: 'skill_1', defId: 'test_tool' }])
+    expect(getEquippedOnSkill('skill_1').length).toBe(0)   // 运行时 instance 已卸
+    expect(skill.v2Ids).toEqual([])                         // 持久 v2Ids 已移除
+    expect(skill.rarity).toBe(0)                            // rarity 回落
+    expect(skill.v2Uses?.['test_tool']).toBeUndefined()    // 使用计数已清
+  })
+
+  it('非 tool 词条无限制 · 不计数不移除', () => {
+    const skill = toolSkill('skill_2', 'test_nontool')
+    gameState.affixSkills.set('skill_2', skill)
+    const id = equipAffixV2('skill_2', 'L', 'test_nontool')
+
+    for (let i = 0; i < TOOL_USES + 5; i++) chargeToolAffixUses([id])
+    expect(skill.v2Uses).toBeUndefined()
+    expect(getEquippedOnSkill('skill_2').length).toBe(1)
+  })
+
+  it('同一调用内同 instance 去重 · 只计 1 次', () => {
+    const skill = toolSkill('skill_1', 'test_tool')
+    gameState.affixSkills.set('skill_1', skill)
+    const id = equipAffixV2('skill_1', 'K', 'test_tool')
+
+    chargeToolAffixUses([id, id, id])
+    expect(skill.v2Uses?.['test_tool']).toBe(1)
   })
 })
 

@@ -13,6 +13,8 @@ import {
 import type { SkillFilter } from '../../../src/src/data/affixV2Trigger'
 import { state as gameState } from '../../../src/core/state'
 import type { ShopItem, AffixSkillInstance } from '../../../src/core/types'
+import { RECIPE_FEED } from '../../../src/data/affixV2Generator'
+import { getAffixV2Definition } from '../../../src/data/affixV2'
 
 // 构造测试用 seed
 function mkSeed(section: SkillSeed['section'], resourcePool?: readonly string[]): SkillSeed {
@@ -241,6 +243,48 @@ describe('shop_pool · state.shop.items 接入', () => {
     const spawned = spawnSkillFromSeed(seed, 3)
     expect(spawned.level).toBe(3)
     expect(['score', 'gold']).toContain(spawned.resource)
+  })
+
+  it('spawnSkillFromSeed(recipe) → 第 1 个 affix 必出自 seed.recipe 的 section（按 tag 生成）', () => {
+    const seed: SkillSeed = {
+      source: 'recipe_pool',
+      recipe: RECIPE_FEED,        // maintenance
+      section: 'maintenance',
+      resourcePool: ['score'],
+    }
+    // 即使 filter.rarity=0，也至少保底 1 个该 recipe 的词条（≥1 affix 满足过滤 tag）
+    const spawned = spawnSkillFromSeed(seed, 3, { rarity: 0 })
+    expect(spawned.v2Ids?.length ?? 0).toBeGreaterThanOrEqual(1)
+    expect(getAffixV2Definition(spawned.v2Ids![0])?.section).toBe('maintenance')
+  })
+
+  it('spawnSkillFromSeed(recipe) · 多词条时仍保证第 1 个匹配 seed.recipe', () => {
+    const seed: SkillSeed = {
+      source: 'recipe_pool',
+      recipe: RECIPE_FEED,
+      section: 'maintenance',
+      resourcePool: ['score'],
+    }
+    const spawned = spawnSkillFromSeed(seed, 1, { rarity: 3 })
+    expect(spawned.v2Ids?.length).toBe(3)
+    expect(getAffixV2Definition(spawned.v2Ids![0])?.section).toBe('maintenance')
+  })
+
+  it('forcedRecipe 路径次要槽位排除 meta 操纵家族（teach 给的技能不再带 teach/imitate 等）', () => {
+    const META_IDS = ['teach', 'imitate', 'spear_make', 'gaze_follow']
+    const isMeta = (defId: string) => META_IDS.some(id => defId.startsWith(`gen_${id}_`))
+    const seed: SkillSeed = {
+      source: 'recipe_pool',
+      recipe: RECIPE_FEED,
+      section: 'maintenance',
+      resourcePool: ['score'],
+    }
+    for (let i = 0; i < 50; i++) {
+      const spawned = spawnSkillFromSeed(seed, 1, { rarity: 3 })
+      for (const defId of spawned.v2Ids ?? []) {
+        expect(isMeta(defId)).toBe(false)
+      }
+    }
   })
 })
 

@@ -8,7 +8,7 @@
 // 与静态 JSON 词条混用相同 lookup 接口（getAffixV2Definition）。
 
 import type { AffixV2Definition } from './affixV2'
-import { registerDynamicAffixV2 } from './affixV2'
+import { registerDynamicAffixV2, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from './affixV2'
 import type { TriggerSpec, EffectSpec, FireFilter, AuraModifier, TargetSelector, ScaleByTag, SkillFilter } from './affixV2Trigger'
 import type { ResourceType } from '../core/types'
 import { random } from '../core/seededRandom'
@@ -124,10 +124,10 @@ function pickChantScale(
   if (random() >= CHANT_SCALE_PROBABILITY) return undefined
   if (modifierType === 'multi_fire_add') {
     const perN = Math.floor(random() * (CHANT_TAG_PER_N_MAX - CHANT_TAG_PER_N_MIN + 1)) + CHANT_TAG_PER_N_MIN
-    return { type: 'tag_per_n', tag: section, perN, scope: { type: 'all_skills' } }
+    return { type: 'tag_per_n', tag: section, perN, scope: pickWeightedScope(SCALE_SCOPE_POOL).selector }
   }
   // crit_chance_add / output_bonus_pct / base_add / factor_add → tag_count
-  return { type: 'tag_count', tag: section, factor: CHANT_TAG_COUNT_FACTOR, scope: { type: 'all_skills' } }
+  return { type: 'tag_count', tag: section, factor: CHANT_TAG_COUNT_FACTOR, scope: pickWeightedScope(SCALE_SCOPE_POOL).selector }
 }
 
 // ============================================
@@ -310,6 +310,28 @@ const FULL_SCOPE_POOL: readonly ScopeEntry[] = [
   })),
 ]
 
+/** scale-by-tag 的 scope 池 · 决定 scale 计数的范围（"仅监听 scope 内的同 tag 词条数"）·
+ *  all_skills 占主（广域基线），辅以 neighbors（键位拓扑）/ matched_resource / matched_rarity 做变化。
+ *  neighbors 需宿主键位：已绑定 skill 的 tooltip 可精确预览；shop 未绑定预览只显规则。
+ *  不含 self（运行时 = 仅本词条自身，计数退化）/ hasted（运行时动态）。*/
+const SCALE_SCOPE_POOL: readonly ScopeEntry[] = [
+  { selector: { type: 'all_skills' },                                     weight: 40 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.Symmetric },  weight: 6 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameColumn }, weight: 5 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameFinger }, weight: 5 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.Adjacent },   weight: 5 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameRow },    weight: 4 },
+  { selector: { type: 'neighbors', posRel: PositionRelation.SameHand },   weight: 3 },
+  ...MATCHED_RESOURCE_POOL.map(resource => ({
+    selector: { type: 'matched_resource' as const, resource } as TargetSelector,
+    weight: 4,
+  })),
+  ...[0, 1, 2, 3].map(rarity => ({
+    selector: { type: 'matched_rarity' as const, rarity } as TargetSelector,
+    weight: 2,
+  })),
+]
+
 /** 按 weight 加权随机抽 ScopeEntry */
 function pickWeightedScope(pool: readonly ScopeEntry[]): ScopeEntry {
   const total = pool.reduce((s, e) => s + e.weight, 0)
@@ -358,7 +380,7 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     const withScale = random() < 0.5
     effect = withScale
       ? { kind: 'gain_resource', resource, ratio,
-          scale: { type: 'tag_count', tag: recipe.section, factor: 0.1, scope: { type: 'all_skills' } } }
+          scale: { type: 'tag_count', tag: recipe.section, factor: 0.1, scope: pickWeightedScope(SCALE_SCOPE_POOL).selector } }
       : { kind: 'gain_resource', resource, ratio }
   } else if (recipe.kind === 'growth') {
     // growth: scope 固定 self —— add(底分累加)只对本技能有意义；
@@ -525,6 +547,10 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
     phase: 'P1',
     trigger: triggerSpec,
     effect,
+    // tool/认知段词条生成时 roll 使用次数上限（[MIN, MAX] 闭区间整数 · 用完消失）
+    ...(recipe.section === 'tool'
+      ? { maxUses: TOOL_AFFIX_USES_MIN + Math.floor(random() * (TOOL_AFFIX_USES_MAX - TOOL_AFFIX_USES_MIN + 1)) }
+      : {}),
   }
   registerDynamicAffixV2(def)
   return id
@@ -669,18 +695,32 @@ const DRINK_LOW_WEIGHT_SOURCES: ReadonlySet<string> = new Set(['time', 'gold'])
 /** drink 在降权资源上的权重（其余 recipe 等权 1）*/
 const DRINK_LOW_WEIGHT = 0.25
 
+/** meta-progression recipe 种类（操纵家族 · teach/imitate/spear_make/gaze_follow）·
+ *  这些词条会"创建/改造其他技能"。从 **gain_skill spawn** 中排除（候选池 + spawn 出来技能的随机槽位）：
+ *  防递归 spawn / 失控滚雪球——被生成的技能不该自己再带 meta。
+ *  但 shop / 普通 generateSkill **不排除**，meta 词条照常刷新出现（玩家主动获取）。
+ *  注：排除按 kind（meta 操纵家族），tool/cog 段本身不排除——nut_crack 等普通 tool 词条不受影响。 */
+export const META_RECIPE_KINDS: ReadonlySet<string> = new Set(['teach', 'imitate', 'spear_make', 'gaze_follow'])
+
 /** 为指定 skill 资源加权抽一个 recipe ·
- *  drink recipe 在 source=time/gold 时降权至 DRINK_LOW_WEIGHT，其余 recipe 恒权 1 */
-export function pickRecipeForSkill(skillResource?: ResourceType): AffixV2Recipe {
+ *  drink recipe 在 source=time/gold 时降权至 DRINK_LOW_WEIGHT，其余 recipe 恒权 1 ·
+ *  opts.excludeMeta：从候选池剔除 meta 操纵家族（gain_skill 按 tag 生成的次要槽位用）*/
+export function pickRecipeForSkill(
+  skillResource?: ResourceType,
+  opts?: { excludeMeta?: boolean },
+): AffixV2Recipe {
+  const pool = opts?.excludeMeta
+    ? ALL_RECIPES.filter(r => !META_RECIPE_KINDS.has(r.kind))
+    : ALL_RECIPES
   const lowDrink = skillResource != null && DRINK_LOW_WEIGHT_SOURCES.has(skillResource)
-  const weights = ALL_RECIPES.map(r =>
+  const weights = pool.map(r =>
     r.kind === 'convert' && lowDrink ? DRINK_LOW_WEIGHT : 1,
   )
   const total = weights.reduce((a, b) => a + b, 0)
   let roll = random() * total
-  for (let i = 0; i < ALL_RECIPES.length; i++) {
+  for (let i = 0; i < pool.length; i++) {
     roll -= weights[i]
-    if (roll <= 0) return ALL_RECIPES[i]
+    if (roll <= 0) return pool[i]
   }
-  return ALL_RECIPES[ALL_RECIPES.length - 1]
+  return pool[pool.length - 1]
 }

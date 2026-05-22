@@ -8,7 +8,7 @@
 // notOwned / classFilter 是运行时维度（依赖 player state），不在 seed 层裁，
 // 由 handler 在 spawn 后过滤 / 由 GenerateSkillOptions 透传。
 
-import { ALL_RECIPES, type AffixV2Recipe } from '../data/affixV2Generator'
+import { ALL_RECIPES, META_RECIPE_KINDS, type AffixV2Recipe } from '../data/affixV2Generator'
 import type { SkillFilter } from '../data/affixV2Trigger'
 import type { SectionTag } from '../data/affixTags'
 import type { ResourceType } from '../core/types'
@@ -19,9 +19,6 @@ import { state as gameState } from '../core/state'
 import { getAffixV2Definition } from '../data/affixV2'
 import { getLocale } from '../demo/demo-i18n'
 import { hasRelation, type PositionRelation } from '../data/keyboardTopology'
-
-/** meta-progression recipe 种类 · gain_skill recipe_pool 候选池排除这些（防递归 spawn 模板）*/
-const META_RECIPE_KINDS: ReadonlySet<string> = new Set(['teach', 'imitate', 'spear_make', 'gaze_follow'])
 
 // ============================================
 // SkillSeed · 候选种子
@@ -52,7 +49,8 @@ export function getCandidatePool(
 ): readonly SkillSeed[] {
   if (source === 'recipe_pool') {
     // 排除 meta-progression recipe（teach / imitate / spear_make / gaze_follow）·
-    // 防 gain_skill 直接拿 meta 词条作 spawn 模板（meta 应只作为生成 skill 的随机 V2 词条出现）
+    // 防 gain_skill 直接拿 meta 词条作 spawn 模板（spawn 出来的技能也排除 meta，见 generateSkill excludeMeta）。
+    // 注：shop / 普通 generateSkill 不受此限——meta 词条照常在商店刷新出现。
     return ALL_RECIPES.filter(r => !META_RECIPE_KINDS.has(r.kind)).map(r => ({
       source: 'recipe_pool' as const,
       recipe: r,
@@ -204,8 +202,9 @@ export function widenSkillFilter(filter: SkillFilter, pool: readonly SkillSeed[]
 //   - level：caller 传入（gain_skill levelMode 已解析）
 //   - rarity：当前缺省 1（让宿主 + 1 个 V2 词条 · 留口子未来从 filter.rarity 读）
 //
-// 注：seed.recipe 当前未直接绑到 spawn 出来的 skill —— sampleV2Ids 走 ALL_RECIPES 随机抽。
-// 想"教 tool 必出 tool"的严绑后续可加 forcedRecipe 选项到 generateSkill。
+// seed.recipe 通过 generateSkill 的 forcedRecipe 绑到 spawn 出来的 skill：
+// 第 1 个 V2 词条强制用该 recipe（保证至少 1 个 affix 满足 gain_skill 的 hasTag 过滤），
+// 其余槽位仍 sampleV2Ids 随机。修正了此前"按 tag 过滤却生成不匹配 tag 技能"的问题。
 
 /** "[副本]" 后缀 · 仅 template 路径加，避免与原 skill 同名混淆
  *  recipe 路径不加（recipe 生成的是 fresh skill 不算复制）*/
@@ -262,9 +261,14 @@ export function spawnSkillFromSeed(
     rarity = Math.max(0, Math.min(3, rolled)) as SkillRarity
   }
 
+  // seed.recipe 绑定到生成的 skill：保证至少 1 个 affix 来自被 filter 选中的 recipe
+  // （= 满足 gain_skill 的 hasTag 过滤 · "教 X 必出 X"）· 修正此前 sampleV2Ids 纯随机忽略 filter 的问题
+  // excludeMeta：spawn 出来的技能不带 meta 操纵家族（防递归 spawn）· shop/普通生成不受此限
   return generateSkill({
     resource,
     rarity,
     level: targetLv,
+    forcedRecipe: seed.recipe,
+    excludeMeta: true,
   })
 }

@@ -3,8 +3,8 @@
 // ============================================
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { generateAffixV2, RECIPE_PILOERECTION } from '../../../src/data/affixV2Generator'
-import { getAffixV2Definition } from '../../../src/data/affixV2'
+import { generateAffixV2, pickRecipeForSkill, META_RECIPE_KINDS, RECIPE_PILOERECTION, RECIPE_GAZE_FOLLOW, RECIPE_IMITATE } from '../../../src/data/affixV2Generator'
+import { getAffixV2Definition, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from '../../../src/data/affixV2'
 import { setSeededMode, setNormalMode } from '../../../src/core/seededRandom'
 
 beforeEach(() => {
@@ -81,6 +81,59 @@ describe('chant generator · scale roll', () => {
       if (!scale) continue
       expect(scale.tag).toBe(RECIPE_PILOERECTION.section)  // 'posture'
     }
+  })
+
+  it('tool 段 recipe 生成时 roll maxUses（[MIN, MAX] 闭区间整数）', () => {
+    setSeededMode(5)
+    const seen = new Set<number>()
+    for (let i = 0; i < 100; i++) {
+      for (const recipe of [RECIPE_GAZE_FOLLOW, RECIPE_IMITATE]) {
+        const def = getAffixV2Definition(generateAffixV2(recipe))
+        expect(def?.maxUses).toBeDefined()
+        expect(Number.isInteger(def!.maxUses)).toBe(true)
+        expect(def!.maxUses!).toBeGreaterThanOrEqual(TOOL_AFFIX_USES_MIN)
+        expect(def!.maxUses!).toBeLessThanOrEqual(TOOL_AFFIX_USES_MAX)
+        seen.add(def!.maxUses!)
+      }
+    }
+    // 多 seed 应 roll 出不止一个值（验证确实随机，而非固定常量）
+    expect(seen.size).toBeGreaterThan(1)
+  })
+
+  it('scale scope 不再恒为 all_skills（按 SCALE_SCOPE_POOL 抽 · 仍以 all_skills 为主）', () => {
+    setSeededMode(7)
+    const scopes = new Set<string>()
+    for (let i = 0; i < 500; i++) {
+      const def = getAffixV2Definition(generateAffixV2(RECIPE_PILOERECTION))   // chant → apply_aura
+      if (def?.effect.kind === 'apply_aura' && def.effect.scale) {
+        scopes.add(def.effect.scale.scope?.type ?? 'all_skills')
+      }
+    }
+    expect(scopes.has('all_skills')).toBe(true)   // all_skills 仍是常见基线
+    expect(scopes.has('neighbors')).toBe(true)    // neighbors（键位拓扑）已纳入池
+    expect(scopes.size).toBeGreaterThan(1)         // 不再恒为 all_skills
+  })
+
+  it('非 tool 段 recipe 不赋 maxUses（无限制）', () => {
+    setSeededMode(5)
+    const def = getAffixV2Definition(generateAffixV2(RECIPE_PILOERECTION))   // posture
+    expect(def?.maxUses).toBeUndefined()
+  })
+
+  it('pickRecipeForSkill({excludeMeta}) 永不返回 meta 操纵家族', () => {
+    setSeededMode(123)
+    for (let i = 0; i < 300; i++) {
+      expect(META_RECIPE_KINDS.has(pickRecipeForSkill(undefined, { excludeMeta: true }).kind)).toBe(false)
+    }
+  })
+
+  it('pickRecipeForSkill 默认池含 meta（确认 excludeMeta 才是过滤开关）', () => {
+    setSeededMode(7)
+    let sawMeta = false
+    for (let i = 0; i < 500 && !sawMeta; i++) {
+      if (META_RECIPE_KINDS.has(pickRecipeForSkill().kind)) sawMeta = true
+    }
+    expect(sawMeta).toBe(true)
   })
 
   it('scale 概率 ≈ 30% (非 rainbow 中，宽松区间)', () => {

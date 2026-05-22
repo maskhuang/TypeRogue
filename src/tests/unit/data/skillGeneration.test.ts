@@ -458,6 +458,31 @@ describe('generateName', () => {
 
 // ===== generateSkill =====
 
+describe('generateSkill · meta 词条出现控制', () => {
+  const META = ['teach', 'imitate', 'spear_make', 'gaze_follow']
+  const isMeta = (id: string) => META.some(m => id.startsWith(`gen_${m}_`))
+
+  it('默认（shop/普通生成）可刷出 meta 词条', () => {
+    setSeededMode(1)
+    let saw = false
+    for (let i = 0; i < 300 && !saw; i++) {
+      const sk = generateSkill({ rarity: 3, resource: 'score' })
+      if ((sk.v2Ids ?? []).some(isMeta)) saw = true
+    }
+    setNormalMode()
+    expect(saw).toBe(true)
+  })
+
+  it('excludeMeta=true（gain_skill spawn）永不刷出 meta 词条', () => {
+    setSeededMode(1)
+    for (let i = 0; i < 200; i++) {
+      const sk = generateSkill({ rarity: 3, resource: 'score', excludeMeta: true })
+      for (const id of sk.v2Ids ?? []) expect(isMeta(id)).toBe(false)
+    }
+    setNormalMode()
+  })
+})
+
 describe('generateSkill', () => {
   it('should return a valid AffixSkillInstance', () => {
     const skill = generateSkill()

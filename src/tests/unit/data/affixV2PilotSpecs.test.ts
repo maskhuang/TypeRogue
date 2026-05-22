@@ -12,6 +12,7 @@ import { generateAffixV2, RECIPE_TEACH, RECIPE_IMITATE, RECIPE_SPEAR_MAKE, RECIP
 import { PositionRelation } from '../../../src/data/keyboardTopology'
 import type { EffectSpec } from '../../../src/data/affixV2Trigger'
 import { getCandidatePool } from '../../../src/systems/affixV2SkillFilter'
+import { equipAffixV2, clearAllEquipped } from '../../../src/systems/affixV2Equipped'
 import {
   resetAllAffixV2State,
   peekInstanceState,
@@ -273,6 +274,110 @@ describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () =
     const desc = formatEffectDescription({ kind: 'gain_resource', resource: 'time', ratio: 3 / 216 })
     expect(desc).toContain('0.003')
     expect(desc).not.toMatch(/\+0\s/)  // 不再是 "+0 <资源>"
+  })
+
+  it('scale tag_count → 描述末尾带"每个…词条 +X%"后缀', () => {
+    const desc = formatEffectDescription({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'tag_count', tag: 'maintenance', factor: 0.1, scope: { type: 'all_skills' } },
+    })
+    expect(desc).toContain('每个')
+    expect(desc).toContain('+10%')
+    expect(desc).toContain('词条')
+  })
+
+  it('scale tag_per_n（含 multi_fire aura）→ 描述带"每 N 个…词条提升一档"后缀', () => {
+    const desc = formatEffectDescription({
+      kind: 'apply_aura',
+      selector: { type: 'self' },
+      modifier: { type: 'multi_fire_add', amount: 1 },
+      scale: { type: 'tag_per_n', tag: 'vocal', perN: 2, scope: { type: 'all_skills' } },
+    })
+    expect(desc).toContain('多重释放')
+    expect(desc).toContain('每 2')
+    expect(desc).toContain('提升一档')
+  })
+
+  it('无 scale → 不带 scale 后缀', () => {
+    const desc = formatEffectDescription({ kind: 'gain_resource', resource: 'score', ratio: 1 })
+    expect(desc).not.toContain('提升一档')
+    expect(desc).not.toContain('每个')
+  })
+
+  it('scale 直接折进展示数值（场上 tag 词条数 → 缩放后的数）', () => {
+    clearAllEquipped()
+    gameState.affixSkills.clear()
+    // 'feed' 为 maintenance 段（tags:['maintenance']）· 装 3 个到场上（_equipped 与 affixSkills 同步）
+    for (const id of ['sa', 'sb', 'sc']) {
+      gameState.affixSkills.set(id, { id, resource: 'score' } as AffixSkillInstance)
+      equipAffixV2(id, id, 'feed')
+    }
+    const desc = formatEffectDescription({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'tag_count', tag: 'maintenance', factor: 0.1, scope: { type: 'all_skills' } },
+    })
+    // score Lv1 base 11 × (1 + 3×0.1) = 14.3 · 数值直接动
+    expect(desc).toContain('14.3')
+    expect(desc).toContain('+10%')   // 规则后缀仍在
+    clearAllEquipped()
+    gameState.affixSkills.clear()
+  })
+
+  it('scale scope 限定计数范围（matched_resource 仅算同资源技能）', () => {
+    clearAllEquipped()
+    gameState.affixSkills.clear()
+    gameState.affixSkills.set('s1', { id: 's1', resource: 'score' } as AffixSkillInstance)
+    gameState.affixSkills.set('s2', { id: 's2', resource: 'gold' } as AffixSkillInstance)
+    equipAffixV2('s1', 'A', 'feed')   // maintenance · 在 score 技能上
+    equipAffixV2('s2', 'B', 'feed')   // maintenance · 在 gold 技能上
+    const desc = formatEffectDescription({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'tag_count', tag: 'maintenance', factor: 0.1, scope: { type: 'matched_resource', resource: 'score' } },
+    })
+    // 仅 score 技能上的 1 个 maintenance → 11×(1+1×0.1)=12.1（而非全场 2 个的 13.2）
+    expect(desc).toContain('12.1')
+    expect(desc).not.toContain('13.2')
+    clearAllEquipped()
+    gameState.affixSkills.clear()
+  })
+
+  it('neighbors scope · 传入宿主上下文则按键位邻居计数', () => {
+    clearAllEquipped()
+    gameState.affixSkills.clear()
+    gameState.player.bindings.clear()
+    // host 绑在 'f'，邻居绑在 'g'（'f'-'g' 为 SameRow）
+    gameState.affixSkills.set('host', { id: 'host', resource: 'score' } as AffixSkillInstance)
+    gameState.affixSkills.set('nbr', { id: 'nbr', resource: 'score' } as AffixSkillInstance)
+    gameState.player.bindings.set('f', 'host')
+    gameState.player.bindings.set('g', 'nbr')
+    equipAffixV2('nbr', 'g', 'feed')    // maintenance · 邻居
+    equipAffixV2('host', 'f', 'feed')   // maintenance · 宿主自身（neighbors 不计自己）
+    const scale = { type: 'tag_count' as const, tag: 'maintenance' as const, factor: 0.1, scope: { type: 'neighbors' as const, posRel: PositionRelation.SameRow } }
+    // 有宿主上下文 → 解析 'f' 的 SameRow 邻居 = nbar 1 个 maintenance（不含 host 自身）→ 11×1.1=12.1
+    const withHost = formatEffectDescription({ kind: 'gain_resource', resource: 'score', ratio: 1, scale }, 'score', undefined, { skillId: 'host', key: 'f' })
+    expect(withHost).toContain('12.1')
+    // 无宿主上下文（如 shop 未绑定）→ 不折数值，只显规则
+    const noHost = formatEffectDescription({ kind: 'gain_resource', resource: 'score', ratio: 1, scale }, 'score')
+    expect(noHost).not.toContain('12.1')
+    expect(noHost).toContain('每个')   // 规则仍在
+    clearAllEquipped()
+    gameState.affixSkills.clear()
+    gameState.player.bindings.clear()
+  })
+
+  it('tag_per_n 不足一档 → 数值折为 0（暂未生效）', () => {
+    clearAllEquipped()
+    gameState.affixSkills.clear()
+    gameState.affixSkills.set('sa', { id: 'sa', resource: 'score' } as AffixSkillInstance)
+    equipAffixV2('sa', 'A', 'feed')   // 仅 1 个 maintenance，< perN=2 → factor 0
+    const desc = formatEffectDescription({
+      kind: 'apply_aura', selector: { type: 'self' },
+      modifier: { type: 'multi_fire_add', amount: 1 },
+      scale: { type: 'tag_per_n', tag: 'maintenance', perN: 2, scope: { type: 'all_skills' } },
+    })
+    expect(desc).toContain('多重释放 +0')
+    clearAllEquipped()
+    gameState.affixSkills.clear()
   })
 })
 

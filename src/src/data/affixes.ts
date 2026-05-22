@@ -324,6 +324,7 @@ export interface AffixSkillInstance {
   shapeId?: string                       // Polyomino 形状 ID（默认 'monomino'）
   rotation?: number                      // 形状旋转态（0~3，默认 0）
   v2Ids?: string[]                       // V2 affix def id 列表（非空时旧 affixes 通道短路）
+  v2Uses?: Record<string, number>        // tool/认知词条已用次数（defId → count）· 用完消失计数
 }
 
 // ===== 技能运行时状态（战斗中） =====
@@ -369,6 +370,7 @@ export interface AffixSkillSaveData {
   shapeId?: string                       // Polyomino 形状 ID（默认 'monomino'）
   rotation?: number                      // 形状旋转态（0~3，默认 0）
   v2Ids?: string[]                       // V2 affix def id 列表
+  v2Uses?: Record<string, number>        // tool/认知词条已用次数（defId → count）
   runtime: SkillRuntimeState
 }
 

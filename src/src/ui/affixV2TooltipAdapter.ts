@@ -9,13 +9,14 @@
 import type { AffixTooltipInfo } from './keyboard/KeyTooltip'
 import {
   getAffixV2Definition,
+  getAffixV2UseLimit,
   type AffixV2Definition,
   type AffixV2Instance,
 } from '../data/affixV2'
-import type { TriggerSpec, EffectSpec, TargetSelector, ConditionSpec, SkillFilter } from '../data/affixV2Trigger'
+import type { TriggerSpec, EffectSpec, TargetSelector, ConditionSpec, SkillFilter, ScaleByTag } from '../data/affixV2Trigger'
 import { SECTION_TAG_NAMES_ZH, SECTION_TAG_NAMES_EN, type Tag, type SectionTag } from '../data/affixTags'
 import { getLocale } from '../demo/demo-i18n'
-import { listAllEquipped, getEnchant } from '../systems/affixV2Equipped'
+import { listAllEquipped, getEnchant, previewCountTagInScope } from '../systems/affixV2Equipped'
 import { applyEnchantToEffect, getEnchantDisplay, type EnchantSpec } from '../data/affixV2Enchant'
 
 // ============================================
@@ -199,29 +200,67 @@ function formatCondition(cond: ConditionSpec): string {
 // Effect → 人读文字
 // ============================================
 
-export function formatEffectDescription(effect: EffectSpec, skillResource?: string, defSection?: SectionTag): string {
+/** 当前场上（已装备）含某 tag 的词条数 + scale 因子 · 仅 all_skills scope 可在 tooltip 精确预览
+ *  （所有生成的 scale 都是 all_skills · 见 affixV2Generator）；其他 scope 需宿主键位，返回 null 不预览。*/
+/** 宿主上下文（已绑定 skill 的 tooltip 才有）· neighbors scope 需要它来解析键位邻居 */
+type HostCtx = { skillId: string; key: string }
+
+function liveScale(scale: ScaleByTag, host?: HostCtx): { count: number; factor: number } | null {
+  const scope = scale.scope ?? { type: 'all_skills' as const }
+  const tags = (Array.isArray(scale.tag) ? scale.tag : [scale.tag]) as readonly Tag[]
+  // 复用运行时同口径的 scope 解析（仅监听 scope 内的同 tag 词条）· neighbors 需宿主，无则 null 只显规则
+  const count = previewCountTagInScope(tags, scope, host?.skillId, host?.key)
+  if (count === null) return null
+  const factor = scale.type === 'tag_count'
+    ? 1 + count * scale.factor
+    : (scale.perN <= 0 ? 0 : Math.floor(count / scale.perN))
+  return { count, factor }
+}
+
+/** 当前 scale 因子（可精确算 → 直接折进展示数值；无法预览的 scope 返回 1 不缩放）*/
+function liveScaleFactor(scale: ScaleByTag | undefined, host?: HostCtx): number {
+  if (!scale) return 1
+  const live = liveScale(scale, host)
+  return live ? live.factor : 1
+}
+
+/** ScaleByTag 规则后缀（仅说明缩放规则 · 主数值已按当前场上因子直接折算，故不再显 ×factor）*/
+function formatScaleSuffix(scale: ScaleByTag | undefined): string {
+  if (!scale) return ''
+  const zh = isZh()
+  const tags = (Array.isArray(scale.tag) ? scale.tag : [scale.tag]) as readonly Tag[]
+  const tagStr = tags.map(locTag).join('/')
+  if (scale.type === 'tag_count') {
+    const pct = Math.round(scale.factor * 1000) / 10
+    return zh ? `（每个「${tagStr}」词条 +${pct}%）` : ` (+${pct}% per ${tagStr} affix)`
+  }
+  return zh ? `（每 ${scale.perN} 个「${tagStr}」词条提升一档）` : ` (scales per ${scale.perN} ${tagStr} affixes)`
+}
+
+export function formatEffectDescription(effect: EffectSpec, skillResource?: string, defSection?: SectionTag, host?: HostCtx): string {
   const zh = isZh()
   switch (effect.kind) {
     case 'noop':           return '—'
     case 'add': {
+      const scaledRatio = effect.ratio * liveScaleFactor(effect.scale, host)
       const v = skillResource
-        ? `${lv1Amount(skillResource, effect.ratio)} ${locResource(skillResource)}`
-        : zh ? `${effect.ratio}×Lv1 底分` : `${effect.ratio}×Lv1 base`
+        ? `${lv1Amount(skillResource, scaledRatio)} ${locResource(skillResource)}`
+        : zh ? `${Math.round(scaledRatio * 100) / 100}×Lv1 底分` : `${Math.round(scaledRatio * 100) / 100}×Lv1 base`
       // selector 缺省 = self；非 self 显式标 scope（add 写 per-skill aggregate）
       const target = effect.selector ? formatSelector(effect.selector) : (zh ? '本技能' : 'this skill')
-      return zh
+      return (zh
         ? `${target}产出 +${v}（叠加、出关重置）`
-        : `${target} output +${v} (stacks, resets each battle)`
+        : `${target} output +${v} (stacks, resets each battle)`) + formatScaleSuffix(effect.scale)
     }
     case 'multiply': {
-      const pct = Math.round(effect.amount * 1000) / 10
+      const pct = Math.round(effect.amount * liveScaleFactor(effect.scale, host) * 1000) / 10
       const target = effect.selector ? formatSelector(effect.selector) : (zh ? '本技能' : 'this skill')
-      return zh
+      return (zh
         ? `${target}产出 +${pct}%（叠加、出关重置）`
-        : `${target} output +${pct}% (stacks, resets each battle)`
+        : `${target} output +${pct}% (stacks, resets each battle)`) + formatScaleSuffix(effect.scale)
     }
     case 'gain_resource':
-      return `+${lv1Amount(effect.resource, effect.ratio)} ${locResource(effect.resource)}`
+      return `+${lv1Amount(effect.resource, effect.ratio * liveScaleFactor(effect.scale, host))} ${locResource(effect.resource)}` + formatScaleSuffix(effect.scale)
     case 'gain_proportional': {
       // 每 1 Lv1[source] 持有量产出 ratio × Lv1[target] target
       const perUnit = lv1Amount(effect.target, effect.ratio)
@@ -238,11 +277,11 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
         : `grant ${formatSelector(effect.selector)} +${n} haste`
     }
     case 'composite':
-      return effect.effects.map(e => formatEffectDescription(e, skillResource)).join(zh ? '；' : '; ')
+      return effect.effects.map(e => formatEffectDescription(e, skillResource, defSection, host)).join(zh ? '；' : '; ')
     case 'conditional': {
-      const thenStr = formatEffectDescription(effect.then, skillResource)
+      const thenStr = formatEffectDescription(effect.then, skillResource, defSection, host)
       const elseStr = effect.else
-        ? (zh ? `；否则 ${formatEffectDescription(effect.else, skillResource)}` : `; else ${formatEffectDescription(effect.else, skillResource)}`)
+        ? (zh ? `；否则 ${formatEffectDescription(effect.else, skillResource, defSection, host)}` : `; else ${formatEffectDescription(effect.else, skillResource, defSection, host)}`)
         : ''
       return zh
         ? `若 ${formatCondition(effect.when)}，则 ${thenStr}${elseStr}`
@@ -252,24 +291,29 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
       return zh ? `额外触发 ${formatSelector(effect.selector)}` : `extra-fire ${formatSelector(effect.selector)}`
     case 'apply_aura': {
       const mod = effect.modifier
+      const factor = liveScaleFactor(effect.scale, host)
       const pct = (x: number) => Math.round(x * 1000) / 10
+      // 把当前场上因子直接折进光环数值（multi_fire 数量可能为 0 = 暂未生效）
+      const amt = ('amount' in mod ? mod.amount : 0) * factor
+      const rat = (mod.type === 'base_add' ? mod.ratio : 0) * factor
+      const mfa = Math.round(amt * 100) / 100
       let modStr: string
       if (zh) {
-        modStr = mod.type === 'base_add' ? `产出 +${pct(mod.ratio)}%（基础值加成）` :
-                 mod.type === 'factor_add' ? `产出 +${pct(mod.amount)}%（倍率加成）` :
-                 mod.type === 'crit_chance_add' ? `暴击率 +${pct(mod.amount)}%` :
-                 mod.type === 'multi_fire_add' ? `多重释放 +${mod.amount}` :
+        modStr = mod.type === 'base_add' ? `产出 +${pct(rat)}%（基础值加成）` :
+                 mod.type === 'factor_add' ? `产出 +${pct(amt)}%（倍率加成）` :
+                 mod.type === 'crit_chance_add' ? `暴击率 +${pct(amt)}%` :
+                 mod.type === 'multi_fire_add' ? `多重释放 +${mfa}` :
                  mod.type === 'rainbow' ? `产出随机资源` :
-                 `产出 +${pct(mod.amount)}%`
-        return `给 ${formatSelector(effect.selector)} 加光环：${modStr}`
+                 `产出 +${pct(amt)}%`
+        return `给 ${formatSelector(effect.selector)} 加光环：${modStr}` + formatScaleSuffix(effect.scale)
       } else {
-        modStr = mod.type === 'base_add' ? `output +${pct(mod.ratio)}% (base bonus)` :
-                 mod.type === 'factor_add' ? `output +${pct(mod.amount)}% (multiplier bonus)` :
-                 mod.type === 'crit_chance_add' ? `crit rate +${pct(mod.amount)}%` :
-                 mod.type === 'multi_fire_add' ? `multi-fire +${mod.amount}` :
+        modStr = mod.type === 'base_add' ? `output +${pct(rat)}% (base bonus)` :
+                 mod.type === 'factor_add' ? `output +${pct(amt)}% (multiplier bonus)` :
+                 mod.type === 'crit_chance_add' ? `crit rate +${pct(amt)}%` :
+                 mod.type === 'multi_fire_add' ? `multi-fire +${mfa}` :
                  mod.type === 'rainbow' ? `produces random resource` :
-                 `output +${pct(mod.amount)}%`
-        return `aura on ${formatSelector(effect.selector)}: ${modStr}`
+                 `output +${pct(amt)}%`
+        return `aura on ${formatSelector(effect.selector)}: ${modStr}` + formatScaleSuffix(effect.scale)
       }
     }
     case 'apply_status':
@@ -279,7 +323,7 @@ export function formatEffectDescription(effect: EffectSpec, skillResource?: stri
     case 'stack_inc':
       return zh ? `本词条 +${effect.amount ?? 1} 层` : `this affix +${effect.amount ?? 1} stack`
     case 'stack_release': {
-      const inner = formatEffectDescription(effect.release, skillResource)
+      const inner = formatEffectDescription(effect.release, skillResource, defSection, host)
       const reset = effect.reset !== false ? (zh ? '，层数清零' : ', reset stacks') : ''
       return zh
         ? `满 ${effect.threshold} 层时 → ${inner}${reset}`
@@ -400,6 +444,7 @@ export function affixV2DefinitionToTooltipInfo(
   def: AffixV2Definition,
   skillResource?: string,
   enchant?: EnchantSpec,
+  host?: HostCtx,
 ): AffixTooltipInfo {
   // 默认 (passive + noop) 不显描述，避免每条都显 "持续 · —"
   const isDefault = def.trigger.type === 'passive' && def.effect.kind === 'noop'
@@ -408,7 +453,7 @@ export function affixV2DefinitionToTooltipInfo(
   const effect = enchant ? applyEnchantToEffect(def.effect, enchant) : def.effect
   const description = isDefault
     ? def.notes
-    : `${formatTriggerDescription(def.trigger)}${isZh() ? '：' : ': '}${formatEffectDescription(effect, skillResource, def.section)}`
+    : `${formatTriggerDescription(def.trigger)}${isZh() ? '：' : ': '}${formatEffectDescription(effect, skillResource, def.section, host)}`
   return {
     typeName: enchantPrefix + baseName,
     typeKey: def.id,
@@ -449,6 +494,7 @@ export function affixV2InstancesToTooltipInfo(
 export function affixV2SkillToTooltipInfo(skill: {
   id: string
   v2Ids?: readonly string[]
+  v2Uses?: Record<string, number>
   resource?: string
 }): AffixTooltipInfo[] {
   const skillResource = skill.resource
@@ -458,7 +504,9 @@ export function affixV2SkillToTooltipInfo(skill: {
     for (const entry of entries) {
       const def = getAffixV2Definition(entry.defId)
       if (!def) continue
-      out.push(affixV2DefinitionToTooltipInfo(def, skillResource, getEnchant(entry.instanceId)))
+      // 已绑定 → 传宿主上下文（skillId + key），neighbors scope 可解析键位邻居
+      const info = affixV2DefinitionToTooltipInfo(def, skillResource, getEnchant(entry.instanceId), { skillId: entry.skillId, key: entry.key })
+      out.push(withUsesLeft(info, def, skill.v2Uses?.[entry.defId] ?? 0))
     }
     return out
   }
@@ -467,7 +515,20 @@ export function affixV2SkillToTooltipInfo(skill: {
   for (const defId of skill.v2Ids) {
     const def = getAffixV2Definition(defId)
     if (!def) continue
-    out.push(affixV2DefinitionToTooltipInfo(def, skillResource))
+    const info = affixV2DefinitionToTooltipInfo(def, skillResource)
+    out.push(withUsesLeft(info, def, skill.v2Uses?.[defId] ?? 0))
   }
   return out
+}
+
+/** tool/认知词条「用完消失」：在 tooltip 描述末尾补一句剩余次数；非 tool 词条原样返回 */
+function withUsesLeft(info: AffixTooltipInfo, def: AffixV2Definition, usesConsumed: number): AffixTooltipInfo {
+  const limit = getAffixV2UseLimit(def)
+  if (limit == null) return info
+  const left = Math.max(0, limit - usesConsumed)
+  const suffix = isZh() ? `剩余 ${left}/${limit} 次（用完消失）` : `${left}/${limit} uses left (consumed when spent)`
+  return {
+    ...info,
+    description: info.description ? `${info.description}　·　${suffix}` : suffix,
+  }
 }
