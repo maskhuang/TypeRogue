@@ -13,10 +13,10 @@ import {
   type AffixV2Definition,
   type AffixV2Instance,
 } from '../data/affixV2'
-import type { TriggerSpec, EffectSpec, TargetSelector, ConditionSpec, SkillFilter, ScaleByTag } from '../data/affixV2Trigger'
+import type { TriggerSpec, EffectSpec, TargetSelector, ConditionSpec, SkillFilter, ScaleByTag, ScaleCountSource } from '../data/affixV2Trigger'
 import { SECTION_TAG_NAMES_ZH, SECTION_TAG_NAMES_EN, type Tag, type SectionTag } from '../data/affixTags'
 import { getLocale } from '../demo/demo-i18n'
-import { listAllEquipped, getEnchant, previewCountTagInScope } from '../systems/affixV2Equipped'
+import { listAllEquipped, getEnchant, previewCountScaleSource } from '../systems/affixV2Equipped'
 import { applyEnchantToEffect, getEnchantDisplay, type EnchantSpec } from '../data/affixV2Enchant'
 
 // ============================================
@@ -206,12 +206,10 @@ function formatCondition(cond: ConditionSpec): string {
 type HostCtx = { skillId: string; key: string }
 
 function liveScale(scale: ScaleByTag, host?: HostCtx): { count: number; factor: number } | null {
-  const scope = scale.scope ?? { type: 'all_skills' as const }
-  const tags = (Array.isArray(scale.tag) ? scale.tag : [scale.tag]) as readonly Tag[]
-  // 复用运行时同口径的 scope 解析（仅监听 scope 内的同 tag 词条）· neighbors 需宿主，无则 null 只显规则
-  const count = previewCountTagInScope(tags, scope, host?.skillId, host?.key)
+  // 复用运行时同口径的 source/scope 解析（仅监听 scope 内的匹配单位）· 无法解析的上下文 → null 只显规则
+  const count = previewCountScaleSource(scale.source, scale.scope, host?.skillId, host?.key)
   if (count === null) return null
-  const factor = scale.type === 'tag_count'
+  const factor = scale.type === 'count'
     ? 1 + count * scale.factor
     : (scale.perN <= 0 ? 0 : Math.floor(count / scale.perN))
   return { count, factor }
@@ -224,17 +222,33 @@ function liveScaleFactor(scale: ScaleByTag | undefined, host?: HostCtx): number 
   return live ? live.factor : 1
 }
 
+/** scale 计数单位的人读名 · 词条/资源/稀有度/空位 */
+function scaleSourceUnit(source: ScaleCountSource): string {
+  const zh = isZh()
+  switch (source.by) {
+    case 'tag': {
+      const s = (Array.isArray(source.tag) ? source.tag : [source.tag]).map(t => locTag(t as Tag)).join('/')
+      return zh ? `「${s}」词条` : `${s} affix`
+    }
+    case 'resource':
+      return zh ? `产「${locResource(source.resource)}」技能` : `${locResource(source.resource)} skill`
+    case 'rarity':
+      return zh ? `稀有度${source.rarity}技能` : `rarity-${source.rarity} skill`
+    case 'empty':
+      return zh ? `「${locRel(source.posRel)}」空位` : `${locRel(source.posRel)} empty slot`
+  }
+}
+
 /** ScaleByTag 规则后缀（仅说明缩放规则 · 主数值已按当前场上因子直接折算，故不再显 ×factor）*/
 function formatScaleSuffix(scale: ScaleByTag | undefined): string {
   if (!scale) return ''
   const zh = isZh()
-  const tags = (Array.isArray(scale.tag) ? scale.tag : [scale.tag]) as readonly Tag[]
-  const tagStr = tags.map(locTag).join('/')
-  if (scale.type === 'tag_count') {
+  const unit = scaleSourceUnit(scale.source)
+  if (scale.type === 'count') {
     const pct = Math.round(scale.factor * 1000) / 10
-    return zh ? `（每个「${tagStr}」词条 +${pct}%）` : ` (+${pct}% per ${tagStr} affix)`
+    return zh ? `（每个${unit} +${pct}%）` : ` (+${pct}% per ${unit})`
   }
-  return zh ? `（每 ${scale.perN} 个「${tagStr}」词条提升一档）` : ` (scales per ${scale.perN} ${tagStr} affixes)`
+  return zh ? `（每 ${scale.perN} 个${unit}提升一档）` : ` (scales per ${scale.perN} ${unit})`
 }
 
 export function formatEffectDescription(effect: EffectSpec, skillResource?: string, defSection?: SectionTag, host?: HostCtx): string {

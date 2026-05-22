@@ -9,7 +9,7 @@ import { getAffixV2Definition } from '../../../src/data/affixV2'
 import { resolveEffect, type ResolveContext } from '../../../src/systems/affixV2Effect'
 import { formatEffectDescription, formatAffixV2Description } from '../../../src/ui/affixV2TooltipAdapter'
 import { generateAffixV2, RECIPE_TEACH, RECIPE_IMITATE, RECIPE_SPEAR_MAKE, RECIPE_GAZE_FOLLOW } from '../../../src/data/affixV2Generator'
-import { PositionRelation } from '../../../src/data/keyboardTopology'
+import { PositionRelation, getKeysWithRelation } from '../../../src/data/keyboardTopology'
 import type { EffectSpec } from '../../../src/data/affixV2Trigger'
 import { getCandidatePool } from '../../../src/systems/affixV2SkillFilter'
 import { equipAffixV2, clearAllEquipped } from '../../../src/systems/affixV2Equipped'
@@ -183,7 +183,8 @@ describe('Pilot 7 · hammer_anvil (tool · burst-add + count-scale)', () => {
     expect(def.effect.kind).toBe('add')
     if (def.effect.kind === 'add') {
       expect(def.effect.scale).toBeDefined()
-      expect(def.effect.scale?.type).toBe('tag_count')
+      expect(def.effect.scale?.type).toBe('count')
+      if (def.effect.scale?.type === 'count') expect(def.effect.scale.source.by).toBe('tag')
     }
   })
 })
@@ -279,7 +280,7 @@ describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () =
   it('scale tag_count → 描述末尾带"每个…词条 +X%"后缀', () => {
     const desc = formatEffectDescription({
       kind: 'gain_resource', resource: 'score', ratio: 1,
-      scale: { type: 'tag_count', tag: 'maintenance', factor: 0.1, scope: { type: 'all_skills' } },
+      scale: { type: 'count', source: { by: 'tag', tag: 'maintenance' }, factor: 0.1, scope: { type: 'all_skills' } },
     })
     expect(desc).toContain('每个')
     expect(desc).toContain('+10%')
@@ -291,7 +292,7 @@ describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () =
       kind: 'apply_aura',
       selector: { type: 'self' },
       modifier: { type: 'multi_fire_add', amount: 1 },
-      scale: { type: 'tag_per_n', tag: 'vocal', perN: 2, scope: { type: 'all_skills' } },
+      scale: { type: 'per_n', source: { by: 'tag', tag: 'vocal' }, perN: 2, scope: { type: 'all_skills' } },
     })
     expect(desc).toContain('多重释放')
     expect(desc).toContain('每 2')
@@ -314,7 +315,7 @@ describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () =
     }
     const desc = formatEffectDescription({
       kind: 'gain_resource', resource: 'score', ratio: 1,
-      scale: { type: 'tag_count', tag: 'maintenance', factor: 0.1, scope: { type: 'all_skills' } },
+      scale: { type: 'count', source: { by: 'tag', tag: 'maintenance' }, factor: 0.1, scope: { type: 'all_skills' } },
     })
     // score Lv1 base 11 × (1 + 3×0.1) = 14.3 · 数值直接动
     expect(desc).toContain('14.3')
@@ -332,7 +333,7 @@ describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () =
     equipAffixV2('s2', 'B', 'feed')   // maintenance · 在 gold 技能上
     const desc = formatEffectDescription({
       kind: 'gain_resource', resource: 'score', ratio: 1,
-      scale: { type: 'tag_count', tag: 'maintenance', factor: 0.1, scope: { type: 'matched_resource', resource: 'score' } },
+      scale: { type: 'count', source: { by: 'tag', tag: 'maintenance' }, factor: 0.1, scope: { type: 'matched_resource', resource: 'score' } },
     })
     // 仅 score 技能上的 1 个 maintenance → 11×(1+1×0.1)=12.1（而非全场 2 个的 13.2）
     expect(desc).toContain('12.1')
@@ -352,7 +353,7 @@ describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () =
     gameState.player.bindings.set('g', 'nbr')
     equipAffixV2('nbr', 'g', 'feed')    // maintenance · 邻居
     equipAffixV2('host', 'f', 'feed')   // maintenance · 宿主自身（neighbors 不计自己）
-    const scale = { type: 'tag_count' as const, tag: 'maintenance' as const, factor: 0.1, scope: { type: 'neighbors' as const, posRel: PositionRelation.SameRow } }
+    const scale = { type: 'count' as const, source: { by: 'tag' as const, tag: 'maintenance' as const }, factor: 0.1, scope: { type: 'neighbors' as const, posRel: PositionRelation.SameRow } }
     // 有宿主上下文 → 解析 'f' 的 SameRow 邻居 = nbar 1 个 maintenance（不含 host 自身）→ 11×1.1=12.1
     const withHost = formatEffectDescription({ kind: 'gain_resource', resource: 'score', ratio: 1, scale }, 'score', undefined, { skillId: 'host', key: 'f' })
     expect(withHost).toContain('12.1')
@@ -373,11 +374,63 @@ describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () =
     const desc = formatEffectDescription({
       kind: 'apply_aura', selector: { type: 'self' },
       modifier: { type: 'multi_fire_add', amount: 1 },
-      scale: { type: 'tag_per_n', tag: 'maintenance', perN: 2, scope: { type: 'all_skills' } },
+      scale: { type: 'per_n', source: { by: 'tag', tag: 'maintenance' }, perN: 2, scope: { type: 'all_skills' } },
     })
     expect(desc).toContain('多重释放 +0')
     clearAllEquipped()
     gameState.affixSkills.clear()
+  })
+
+  it('资源变体：数 scope 内产某资源的技能数', () => {
+    clearAllEquipped()
+    gameState.affixSkills.clear()
+    gameState.affixSkills.set('s1', { id: 's1', resource: 'score' } as AffixSkillInstance)
+    gameState.affixSkills.set('s2', { id: 's2', resource: 'score' } as AffixSkillInstance)
+    gameState.affixSkills.set('s3', { id: 's3', resource: 'gold' } as AffixSkillInstance)
+    const desc = formatEffectDescription({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'count', source: { by: 'resource', resource: 'score' }, factor: 0.1, scope: { type: 'all_skills' } },
+    })
+    // 2 个产 score 技能 → 11×(1+2×0.1)=13.2
+    expect(desc).toContain('13.2')
+    expect(desc).toContain('产')   // 规则单位含"产「分数」技能"
+    gameState.affixSkills.clear()
+  })
+
+  it('稀有度变体：数 scope 内某稀有度的技能数', () => {
+    clearAllEquipped()
+    gameState.affixSkills.clear()
+    gameState.affixSkills.set('s1', { id: 's1', resource: 'score', rarity: 1 } as AffixSkillInstance)
+    gameState.affixSkills.set('s2', { id: 's2', resource: 'gold', rarity: 1 } as AffixSkillInstance)
+    gameState.affixSkills.set('s3', { id: 's3', resource: 'time', rarity: 2 } as AffixSkillInstance)
+    const desc = formatEffectDescription({
+      kind: 'gain_resource', resource: 'score', ratio: 1,
+      scale: { type: 'count', source: { by: 'rarity', rarity: 1 }, factor: 0.1, scope: { type: 'all_skills' } },
+    })
+    // 2 个稀有度 1 技能 → 11×1.2=13.2
+    expect(desc).toContain('13.2')
+    expect(desc).toContain('稀有度1')
+    gameState.affixSkills.clear()
+  })
+
+  it('空位变体：数与宿主成 posRel 的空键位（需宿主上下文）', () => {
+    clearAllEquipped()
+    gameState.affixSkills.clear()
+    gameState.player.bindings.clear()
+    gameState.affixSkills.set('host', { id: 'host', resource: 'score' } as AffixSkillInstance)
+    gameState.player.bindings.set('f', 'host')   // 仅宿主绑定 → 其余 SameRow 键位皆空
+    const emptyN = getKeysWithRelation('f', PositionRelation.SameRow).filter(k => !gameState.player.bindings.has(k)).length
+    const scale = { type: 'count' as const, source: { by: 'empty' as const, posRel: PositionRelation.SameRow }, factor: 0.1 }
+    const withHost = formatEffectDescription({ kind: 'gain_resource', resource: 'score', ratio: 1, scale }, 'score', undefined, { skillId: 'host', key: 'f' })
+    const expected = (Math.round(11 * (1 + emptyN * 0.1) * 100) / 100).toString()
+    expect(emptyN).toBeGreaterThan(0)
+    expect(withHost).toContain(expected)
+    expect(withHost).toContain('空位')
+    // 无宿主 → 不折数值，只显规则
+    const noHost = formatEffectDescription({ kind: 'gain_resource', resource: 'score', ratio: 1, scale }, 'score')
+    expect(noHost).toContain('空位')
+    gameState.affixSkills.clear()
+    gameState.player.bindings.clear()
   })
 })
 

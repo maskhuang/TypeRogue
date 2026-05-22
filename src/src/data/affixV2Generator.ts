@@ -9,7 +9,7 @@
 
 import type { AffixV2Definition } from './affixV2'
 import { registerDynamicAffixV2, TOOL_AFFIX_USES_MIN, TOOL_AFFIX_USES_MAX } from './affixV2'
-import type { TriggerSpec, EffectSpec, FireFilter, AuraModifier, TargetSelector, ScaleByTag, SkillFilter } from './affixV2Trigger'
+import type { TriggerSpec, EffectSpec, FireFilter, AuraModifier, TargetSelector, ScaleByTag, ScaleCountSource, SkillFilter } from './affixV2Trigger'
 import type { ResourceType } from '../core/types'
 import { random } from '../core/seededRandom'
 import type { SectionTag } from './affixTags'
@@ -109,12 +109,25 @@ const CHANT_TAG_PER_N_MIN = 2
 const CHANT_TAG_PER_N_MAX = 4
 const CHANT_TAG_COUNT_FACTOR = 0.1
 
+/** 抽 scale 计数来源（变体）· 词条 50% / 资源 20% / 稀有度 15% / 空位 15%。
+ *  资源用宿主资源（"数同资源技能"，无则随机）；稀有度 0-3 随机；空位随机锁 posRel。 */
+function pickScaleSource(section: SectionTag, skillResource?: ResourceType): ScaleCountSource {
+  const roll = random()
+  if (roll < 0.50) return { by: 'tag', tag: section }
+  if (roll < 0.70) return { by: 'resource', resource: skillResource ?? pickRandom(MATCHED_RESOURCE_POOL) }
+  if (roll < 0.85) return { by: 'rarity', rarity: Math.floor(random() * 4) }
+  return { by: 'empty', posRel: pickRandom(POSREL_VALUES) }
+}
+
+/** 给定 source 选 scope：empty 用自身 posRel（top-level scope 留空）；其余从 SCALE_SCOPE_POOL 抽。 */
+function pickScaleScope(source: ScaleCountSource): TargetSelector | undefined {
+  return source.by === 'empty' ? undefined : pickWeightedScope(SCALE_SCOPE_POOL).selector
+}
+
 /**
  * 给 chant recipe 抽 scale 字段 · 30% 概率挂；rainbow modifier 不抽（无 amount）。
- * 路由：
- *   - multi_fire_add → tag_per_n（整数步进自然匹配 "每 N 个 tag +1 释放"）
- *   - crit_chance_add / output_bonus_pct → tag_count（连续 %-scaling）
- * tag/scope 沿用 drip 模板：tag = recipe.section，scope = all_skills。
+ * 曲线路由：multi_fire_add → per_n（整数步进）；其余 → count（连续 %-scaling）。
+ * 计数来源由 pickScaleSource 随机（词条/资源/稀有度/空位）。
  */
 function pickChantScale(
   modifierType: AuraModifier['type'],
@@ -122,12 +135,13 @@ function pickChantScale(
 ): ScaleByTag | undefined {
   if (modifierType === 'rainbow') return undefined
   if (random() >= CHANT_SCALE_PROBABILITY) return undefined
+  const source = pickScaleSource(section)
+  const scope = pickScaleScope(source)
   if (modifierType === 'multi_fire_add') {
     const perN = Math.floor(random() * (CHANT_TAG_PER_N_MAX - CHANT_TAG_PER_N_MIN + 1)) + CHANT_TAG_PER_N_MIN
-    return { type: 'tag_per_n', tag: section, perN, scope: pickWeightedScope(SCALE_SCOPE_POOL).selector }
+    return { type: 'per_n', source, perN, scope }
   }
-  // crit_chance_add / output_bonus_pct / base_add / factor_add → tag_count
-  return { type: 'tag_count', tag: section, factor: CHANT_TAG_COUNT_FACTOR, scope: pickWeightedScope(SCALE_SCOPE_POOL).selector }
+  return { type: 'count', source, factor: CHANT_TAG_COUNT_FACTOR, scope }
 }
 
 // ============================================
@@ -374,14 +388,16 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
   let triggerSpec: TriggerSpec = triggerEntry.spec
 
   if (recipe.kind === 'drip') {
-    // drip: scope 固定 self · 资源随机 · 50% 概率附加 section-count scale（Bazaar Count synergy）
+    // drip: 资源随机 · 50% 概率附加 count-scale（来源随机：词条/资源/稀有度/空位 · Bazaar Count synergy）
     const ratio = scaleMagnitude(recipe.T, triggerEntry.freq)
     const resource = pickRandom(recipe.resourcePool)
     const withScale = random() < 0.5
-    effect = withScale
-      ? { kind: 'gain_resource', resource, ratio,
-          scale: { type: 'tag_count', tag: recipe.section, factor: 0.1, scope: pickWeightedScope(SCALE_SCOPE_POOL).selector } }
-      : { kind: 'gain_resource', resource, ratio }
+    if (withScale) {
+      const source = pickScaleSource(recipe.section, resource)
+      effect = { kind: 'gain_resource', resource, ratio, scale: { type: 'count', source, factor: 0.1, scope: pickScaleScope(source) } }
+    } else {
+      effect = { kind: 'gain_resource', resource, ratio }
+    }
   } else if (recipe.kind === 'growth') {
     // growth: scope 固定 self —— add(底分累加)只对本技能有意义；
     // "+0.02 <宿主资源>" 广播到别的技能（按宿主资源算量、加到对方底分）概念上是糊的
@@ -411,7 +427,7 @@ export function generateAffixV2(recipe: AffixV2Recipe, skillResource?: ResourceT
       case 'rainbow':          modifier = { type: 'rainbow' };                        break
     }
     // 30% 概率挂 scale · rainbow 跳过（无 amount 字段，scale 无意义）
-    // 路由：multi_fire_add → tag_per_n（整数步进自然匹配）；% 类型 → tag_count（连续）
+    // 曲线：multi_fire_add → per_n（整数步进）；% 类型 → count（连续）· 来源(词条/资源/稀有度/空位)随机
     const scale = pickChantScale(modifierType, recipe.section)
     effect = scale
       ? { kind: 'apply_aura', selector: scope.selector, modifier, scale }

@@ -170,7 +170,7 @@ export function makeConditionalEffect(params: {
 /** 给已构造的 effect 挂 tag-count scaling（仅 add / multiply / gain_resource 有 scale 字段）*/
 export function withTagCountScale(effect: EffectSpec, tag: Tag, factor: number): EffectSpec {
   if (effect.kind === 'add' || effect.kind === 'multiply' || effect.kind === 'gain_resource') {
-    return { ...effect, scale: { type: 'tag_count', tag, factor } }
+    return { ...effect, scale: { type: 'count', source: { by: 'tag', tag }, factor } }
   }
   // 其他 kind 不支持 scale，原样返
   return effect

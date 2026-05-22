@@ -72,24 +72,36 @@ export type Phase2TriggerSpec =
 export type TriggerSpec = Phase1TriggerSpec | Phase2TriggerSpec
 
 // ===== ScaleByTag (供 EffectSpec 引用) =====
-// 两种 mode：
-//   tag_count  — 乘性连续：factor = 1 + count × factor（count=0 时 = 1，全产出）
-//   tag_per_n  — 步进整数：factor = floor(count / perN)（count<perN 时 = 0，门控）
-// 两种 mode 都按"乘性 scale 因子"语义接入 add / multiply / gain_resource / apply_aura；
-// 差别在曲线形态（连续 % 增长 vs 整数跳变）。
+// 「scale by count」· 两层正交：
+//   curve（type）：count — 乘性连续 factor = 1 + n × factor（n=0 → ×1 全产出）
+//                  per_n — 步进整数 factor = floor(n / perN)（n<perN → 0，门控）
+//   source       ：数 scope 内的什么单位 —— 词条(tag) / 资源(resource) / 稀有度(rarity) / 空位(empty)
+// 都按"乘性 scale 因子"接入 add / multiply / gain_resource / apply_aura。
+// scope 决定计数范围（缺省 all_skills）；empty 例外——用自身 posRel（数与宿主成该关系的空键位）。
+
+/** scale 计数来源 · 决定"数 scope 内的什么" */
+export type ScaleCountSource =
+  /** 词条：scope 内携带该 tag 的词条数 */
+  | { readonly by: 'tag'; readonly tag: Tag | readonly Tag[] }
+  /** 资源：scope 内主产该资源的技能数 */
+  | { readonly by: 'resource'; readonly resource: string }
+  /** 稀有度：scope 内该稀有度(0-3)的技能数 */
+  | { readonly by: 'rarity'; readonly rarity: number }
+  /** 空位：与宿主键位成该 posRel 关系的空键位（无技能绑定）数 · 不使用 scope */
+  | { readonly by: 'empty'; readonly posRel: PositionRelation }
 
 export type ScaleByTag =
   | {
-      readonly type: 'tag_count'
-      readonly tag: Tag | readonly Tag[]
+      readonly type: 'count'
+      readonly source: ScaleCountSource
       readonly factor: number
-      /** 计数范围；缺省 = all_skills · pick 字段被忽略（计数语义） */
+      /** 计数范围；缺省 = all_skills · empty source 忽略此字段 */
       readonly scope?: TargetSelector
     }
   | {
-      readonly type: 'tag_per_n'
-      readonly tag: Tag | readonly Tag[]
-      /** 每 N 个 tag 贡献 1 单位 scale；count<perN → 0 */
+      readonly type: 'per_n'
+      readonly source: ScaleCountSource
+      /** 每 perN 个单位贡献 1 档 scale；count<perN → 0 */
       readonly perN: number
       readonly scope?: TargetSelector
     }
@@ -277,8 +289,8 @@ export type EffectSpec =
   /**
    * 给目标加持续 aura buff/debuff（K3 决议：仅 'fight' duration · battle end 清除）
    * 不是 per-fire 触发——是常驻 modifier。
-   * scale 可选：触发时按 tag count 把 modifier amount 乘以 scale factor，再注册到 aura store。
-   * 例：multi_fire_add(amount=1) + scale=tag_per_n(perN=2, tag=vocal)
+   * scale 可选：触发时按 source count 把 modifier amount 乘以 scale factor，再注册到 aura store。
+   * 例：multi_fire_add(amount=1) + scale={type:'per_n', source:{by:'tag',tag:'vocal'}, perN:2}
    *     → 场上每 2 个 vocal 词条 → +1 多重释放（count<2 → amount=0 空 aura）。
    */
   | { kind: 'apply_aura'; selector: TargetSelector; modifier: AuraModifier; scale?: ScaleByTag }

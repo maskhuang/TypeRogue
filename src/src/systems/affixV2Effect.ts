@@ -16,9 +16,12 @@ import type {
   AuraModifier,
   StatusKeyword,
   ScaleByTag,
+  ScaleCountSource,
 } from '../data/affixV2Trigger'
 import type { Tag } from '../data/affixTags'
 import type { AffixSkillInstance } from '../data/affixes'
+import { state as gameState } from '../core/state'
+import { getKeysWithRelation } from '../data/keyboardTopology'
 import {
   getInstanceState,
   addAura,
@@ -413,38 +416,52 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
  */
 function applyScale(scale: ScaleByTag | undefined, ctx: ResolveContext): number {
   if (!scale) return 1
-  const tags = Array.isArray(scale.tag) ? scale.tag : [scale.tag]
-  let totalCount = 0
-  for (const t of tags) {
-    totalCount += countTagInScope(t, scale.scope, ctx)
-  }
-  switch (scale.type) {
-    case 'tag_count':
-      return 1 + totalCount * scale.factor
-    case 'tag_per_n':
-      // perN<=0 视为关闭（避免除零 / 无限值）
-      if (scale.perN <= 0) return 0
-      return Math.floor(totalCount / scale.perN)
-  }
+  const n = countScaleSource(scale.source, scale.scope, ctx)
+  return scale.type === 'count'
+    ? 1 + n * scale.factor
+    : (scale.perN <= 0 ? 0 : Math.floor(n / scale.perN))   // per_n · perN<=0 关闭
 }
 
 /**
- * 在指定 scope 内计数携带 tag 的 affix。
- * 按 TargetSelector 派发：
- *   - self → ctx.selfHasTag callback（0/1）
- *   - all_skills（默认）→ 全注册表
- *   - neighbors → ctx.countTagInNeighbors callback
- *   - matched_tag → 当前与 all_skills 等价（待 runtime 区分）
- *   - matched_resource → ctx.countTagInResourceMatched callback
+ * 计数 scale source 在 scope 内的单位数：
+ *   - tag      → scope 内携带该 tag 的词条数（ctx.queryEquipped）
+ *   - resource → scope 内主产该资源的技能数（scope→skillIds × gameState.affixSkills）
+ *   - rarity   → scope 内该稀有度的技能数（同上）
+ *   - empty    → 与宿主键位成该 posRel 的空键位数（getKeysWithRelation − bindings · 不用 scope）
  */
-function countTagInScope(tag: Tag, scope: TargetSelector | undefined, ctx: ResolveContext): number {
-  if (!ctx.queryEquipped) return 0
-  const entries = ctx.queryEquipped(scope ?? { type: 'all_skills' })
-  let n = 0
-  for (const e of entries) {
-    if (e.tags.includes(tag)) n++
+function countScaleSource(source: ScaleCountSource, scope: TargetSelector | undefined, ctx: ResolveContext): number {
+  switch (source.by) {
+    case 'tag': {
+      if (!ctx.queryEquipped) return 0
+      const tags = Array.isArray(source.tag) ? source.tag : [source.tag]
+      let n = 0
+      for (const e of ctx.queryEquipped(scope ?? { type: 'all_skills' })) {
+        if (tags.some(t => e.tags.includes(t))) n++
+      }
+      return n
+    }
+    case 'resource':
+    case 'rarity': {
+      const ids = ctx.resolveSelector
+        ? ctx.resolveSelector(scope ?? { type: 'all_skills' }, ctx.skillId, ctx.key)
+        : [...gameState.affixSkills.keys()]
+      let n = 0
+      for (const id of new Set(ids)) {
+        const sk = gameState.affixSkills.get(id)
+        if (!sk) continue
+        if (source.by === 'resource' ? sk.resource === source.resource : sk.rarity === source.rarity) n++
+      }
+      return n
+    }
+    case 'empty': {
+      if (!ctx.key) return 0
+      let n = 0
+      for (const k of getKeysWithRelation(ctx.key, source.posRel)) {
+        if (!gameState.player.bindings.has(k)) n++
+      }
+      return n
+    }
   }
-  return n
 }
 
 /**
@@ -487,10 +504,10 @@ export function evaluateCondition(spec: ConditionSpec, ctx: ResolveContext): boo
       return ctx.currentWordLength <= spec.n
 
     case 'count_tag_gte':
-      return countTagInScope(spec.tag, spec.scope, ctx) >= spec.n
+      return countScaleSource({ by: 'tag', tag: spec.tag }, spec.scope, ctx) >= spec.n
 
     case 'count_tag_lte':
-      return countTagInScope(spec.tag, spec.scope, ctx) <= spec.n
+      return countScaleSource({ by: 'tag', tag: spec.tag }, spec.scope, ctx) <= spec.n
 
     case 'resource_below': {
       const lv1 = ctx.resourceLv1Base(spec.resource)

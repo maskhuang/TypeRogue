@@ -232,7 +232,7 @@ describe('Scope-aware ScaleByTag', () => {
       kind: 'gain_resource',
       resource: 'score',
       ratio: 0.1,
-      scale: { type: 'tag_count', tag: 'vocal', factor: 0.5, scope: { type: 'self' } },
+      scale: { type: 'count', source: { by: 'tag', tag: 'vocal' }, factor: 0.5, scope: { type: 'self' } },
     }, ctxQ)
     // base 0.1 × 11 × (1 + 1 × 0.5) = 1.65
     expect(r.resourceProduced[0].amount).toBeCloseTo(1.65, 3)
@@ -244,7 +244,7 @@ describe('Scope-aware ScaleByTag', () => {
       kind: 'gain_resource',
       resource: 'score',
       ratio: 0.1,
-      scale: { type: 'tag_count', tag: 'vocal', factor: 0.5, scope: { type: 'neighbors', posRel: 0 as never } },
+      scale: { type: 'count', source: { by: 'tag', tag: 'vocal' }, factor: 0.5, scope: { type: 'neighbors', posRel: 0 as never } },
     }, ctxQ)
     // base 0.1 × 11 × (1 + 3 × 0.5) = 2.75
     expect(r.resourceProduced[0].amount).toBeCloseTo(2.75, 3)
@@ -256,7 +256,7 @@ describe('Scope-aware ScaleByTag', () => {
       kind: 'gain_resource',
       resource: 'score',
       ratio: 0.1,
-      scale: { type: 'tag_count', tag: 'vocal', factor: 0.5, scope: { type: 'matched_resource', resource: 'score' } },
+      scale: { type: 'count', source: { by: 'tag', tag: 'vocal' }, factor: 0.5, scope: { type: 'matched_resource', resource: 'score' } },
     }, ctxQ)
     // base 0.1 × 11 × (1 + 4 × 0.5) = 3.3
     expect(r.resourceProduced[0].amount).toBeCloseTo(3.3, 3)
@@ -268,7 +268,7 @@ describe('Scope-aware ScaleByTag', () => {
       kind: 'gain_resource',
       resource: 'score',
       ratio: 0.1,
-      scale: { type: 'tag_count', tag: 'vocal', factor: 0.5 },
+      scale: { type: 'count', source: { by: 'tag', tag: 'vocal' }, factor: 0.5 },
     }, ctxQ)
     // base 0.1 × 11 × (1 + 23 × 0.5) = 13.75
     expect(r.resourceProduced[0].amount).toBeCloseTo(13.75, 2)
@@ -287,7 +287,7 @@ describe('ScaleByTag · tag_per_n（步进整数）', () => {
       kind: 'gain_resource',
       resource: 'score',
       ratio: 1,
-      scale: { type: 'tag_per_n', tag: 'vocal', perN: 3 },
+      scale: { type: 'per_n', source: { by: 'tag', tag: 'vocal' }, perN: 3 },
     }, ctxQ)
     expect(r.resourceProduced[0].amount).toBe(0)
   })
@@ -298,7 +298,7 @@ describe('ScaleByTag · tag_per_n（步进整数）', () => {
       kind: 'gain_resource',
       resource: 'score',
       ratio: 1,
-      scale: { type: 'tag_per_n', tag: 'vocal', perN: 3 },
+      scale: { type: 'per_n', source: { by: 'tag', tag: 'vocal' }, perN: 3 },
     }, ctxQ)
     // 1 × 11 × floor(3/3) = 11
     expect(r.resourceProduced[0].amount).toBe(11)
@@ -310,7 +310,7 @@ describe('ScaleByTag · tag_per_n（步进整数）', () => {
       kind: 'gain_resource',
       resource: 'score',
       ratio: 1,
-      scale: { type: 'tag_per_n', tag: 'vocal', perN: 3 },
+      scale: { type: 'per_n', source: { by: 'tag', tag: 'vocal' }, perN: 3 },
     }, ctxQ)
     // 1 × 11 × 2 = 22
     expect(r.resourceProduced[0].amount).toBe(22)
@@ -322,7 +322,7 @@ describe('ScaleByTag · tag_per_n（步进整数）', () => {
       kind: 'gain_resource',
       resource: 'score',
       ratio: 1,
-      scale: { type: 'tag_per_n', tag: 'vocal', perN: 0 },
+      scale: { type: 'per_n', source: { by: 'tag', tag: 'vocal' }, perN: 0 },
     }, ctxQ)
     expect(r.resourceProduced[0].amount).toBe(0)
   })
@@ -354,7 +354,7 @@ describe('apply_aura · scale 缩放 modifier amount', () => {
       kind: 'apply_aura',
       selector: { type: 'all_skills', pick: 'all' },
       modifier: { type: 'multi_fire_add', amount: 1 },
-      scale: { type: 'tag_per_n', tag: 'vocal', perN: 2 },
+      scale: { type: 'per_n', source: { by: 'tag', tag: 'vocal' }, perN: 2 },
     }, ctxQ)
     const auras = listActiveAuras()
     expect(auras.length).toBe(1)
@@ -367,7 +367,7 @@ describe('apply_aura · scale 缩放 modifier amount', () => {
       kind: 'apply_aura',
       selector: { type: 'self' },
       modifier: { type: 'multi_fire_add', amount: 1 },
-      scale: { type: 'tag_per_n', tag: 'vocal', perN: 2 },
+      scale: { type: 'per_n', source: { by: 'tag', tag: 'vocal' }, perN: 2 },
     }, ctxQ)
     const auras = listActiveAuras()
     expect((auras[0].modifier as { amount: number }).amount).toBe(0)
@@ -379,7 +379,7 @@ describe('apply_aura · scale 缩放 modifier amount', () => {
       kind: 'apply_aura',
       selector: { type: 'self' },
       modifier: { type: 'crit_chance_add', amount: 0.1 },
-      scale: { type: 'tag_count', tag: 'vocal', factor: 0.5 },
+      scale: { type: 'count', source: { by: 'tag', tag: 'vocal' }, factor: 0.5 },
     }, ctxQ)
     const auras = listActiveAuras()
     // 0.1 × (1 + 3 × 0.5) = 0.25
@@ -392,7 +392,7 @@ describe('apply_aura · scale 缩放 modifier amount', () => {
       kind: 'apply_aura',
       selector: { type: 'self' },
       modifier: { type: 'rainbow' },
-      scale: { type: 'tag_per_n', tag: 'vocal', perN: 2 },
+      scale: { type: 'per_n', source: { by: 'tag', tag: 'vocal' }, perN: 2 },
     }, ctxQ)
     const auras = listActiveAuras()
     expect(auras[0].modifier.type).toBe('rainbow')

@@ -96,7 +96,7 @@ export const PILOT_AFFIX_SPECS: Record<string, AffixV2PilotSpec> = {
     effect: {
       kind: 'add',
       ratio: 0.08,
-      scale: { type: 'tag_count', tag: 'tool', factor: 0.2 },
+      scale: { type: 'count', source: { by: 'tag', tag: 'tool' }, factor: 0.2 },
     },
   },
 

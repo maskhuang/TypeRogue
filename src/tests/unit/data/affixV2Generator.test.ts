@@ -34,7 +34,7 @@ describe('chant generator · scale roll', () => {
     expect(rainbowWithScale).toBe(0)         // rainbow 不带 scale
   })
 
-  it('multi_fire_add 的 scale 一定是 tag_per_n', () => {
+  it('multi_fire_add 的 scale 曲线一定是 per_n', () => {
     setSeededMode(7)
     let mfaWithScaleCount = 0
     for (let i = 0; i < 300; i++) {
@@ -45,7 +45,7 @@ describe('chant generator · scale roll', () => {
       const scale = (def.effect as { scale?: { type: string; perN?: number } }).scale
       if (!scale) continue
       mfaWithScaleCount++
-      expect(scale.type).toBe('tag_per_n')
+      expect(scale.type).toBe('per_n')
       // perN ∈ [2, 4]
       expect(scale.perN).toBeGreaterThanOrEqual(2)
       expect(scale.perN).toBeLessThanOrEqual(4)
@@ -53,7 +53,7 @@ describe('chant generator · scale roll', () => {
     expect(mfaWithScaleCount).toBeGreaterThan(0)  // 至少有一次抽到 multi_fire_add + scale
   })
 
-  it('crit_chance_add / output_bonus_pct 的 scale 是 tag_count', () => {
+  it('crit_chance_add / output_bonus_pct 的 scale 曲线是 count', () => {
     setSeededMode(13)
     let pctWithScaleCount = 0
     for (let i = 0; i < 300; i++) {
@@ -65,22 +65,26 @@ describe('chant generator · scale roll', () => {
       const scale = (def.effect as { scale?: { type: string; factor?: number } }).scale
       if (!scale) continue
       pctWithScaleCount++
-      expect(scale.type).toBe('tag_count')
+      expect(scale.type).toBe('count')
       expect(scale.factor).toBe(0.1)
     }
     expect(pctWithScaleCount).toBeGreaterThan(0)
   })
 
-  it('scale tag 总是 = recipe.section', () => {
+  it('tag source 的 tag = recipe.section；source 含全部 4 种变体', () => {
     setSeededMode(99)
-    for (let i = 0; i < 200; i++) {
+    const bys = new Set<string>()
+    for (let i = 0; i < 600; i++) {
       const id = generateAffixV2(RECIPE_PILOERECTION)
       const def = getAffixV2Definition(id)
       if (def?.effect.kind !== 'apply_aura') continue
-      const scale = (def.effect as { scale?: { tag: string } }).scale
+      const scale = (def.effect as { scale?: { source: { by: string; tag?: string } } }).scale
       if (!scale) continue
-      expect(scale.tag).toBe(RECIPE_PILOERECTION.section)  // 'posture'
+      bys.add(scale.source.by)
+      if (scale.source.by === 'tag') expect(scale.source.tag).toBe(RECIPE_PILOERECTION.section)  // 'posture'
     }
+    // 4 种 source 变体都应被抽到
+    for (const by of ['tag', 'resource', 'rarity', 'empty']) expect(bys.has(by)).toBe(true)
   })
 
   it('tool 段 recipe 生成时 roll maxUses（[MIN, MAX] 闭区间整数）', () => {

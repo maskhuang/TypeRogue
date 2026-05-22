@@ -12,7 +12,7 @@
 import type { AffixV2Instance } from '../data/affixV2'
 import { getAffixV2Definition, getAffixV2UseLimit } from '../data/affixV2'
 import { state as gameState } from '../core/state'
-import { hasRelation } from '../data/keyboardTopology'
+import { hasRelation, getKeysWithRelation } from '../data/keyboardTopology'
 import type { Tag } from '../data/affixTags'
 
 /** 把 (resource)→base 回调按 skill 等级柯里化为 Lv.N 查询 ·
@@ -76,24 +76,44 @@ function collectSkillIdsForScope(
   }
 }
 
-/** tooltip 预览用：统计 scope 内含 tag 的已装备词条数（与运行时 countTagInScope 同口径）·
- *  board-wide scope（all_skills / matched_resource / matched_rarity / matched_tag）无需宿主键位；
- *  neighbors 需宿主 skillId + key（绑定后才有 → shop 未绑定预览不显 live 数）；
- *  self（运行时 = 仅本词条自身，预览无实例上下文）/ hasted（运行时动态）→ 返回 null（只显规则）。*/
-export function previewCountTagInScope(
-  tags: readonly Tag[],
-  scope: TargetSelector,
+/** tooltip 预览用：统计 scale source 在 scope 内的单位数（与运行时 countScaleSource 同口径）·
+ *  tag → scope 内含 tag 的词条数；resource/rarity → scope 内匹配的技能数；
+ *  empty → 与宿主 posRel 的空键位数（需宿主 key）。
+ *  无法在当前上下文解析时返 null（neighbors/empty 缺宿主键位、self/hasted）→ 预览只显规则。*/
+export function previewCountScaleSource(
+  source: ScaleCountSource,
+  scope: TargetSelector | undefined,
   hostSkillId?: string,
   hostKey?: string,
 ): number | null {
-  if (scope.type === 'self' || scope.type === 'hasted') return null
-  if (scope.type === 'neighbors' && (hostSkillId === undefined || hostKey === undefined)) return null
-  const skillIds = new Set(collectSkillIdsForScope(scope, hostSkillId ?? '', hostKey ?? ''))
+  if (source.by === 'empty') {
+    if (hostKey === undefined) return null
+    let n = 0
+    for (const k of getKeysWithRelation(hostKey, source.posRel)) {
+      if (!gameState.player.bindings.has(k)) n++
+    }
+    return n
+  }
+  const sc: TargetSelector = scope ?? { type: 'all_skills' }
+  if (sc.type === 'self' || sc.type === 'hasted') return null
+  if (sc.type === 'neighbors' && (hostSkillId === undefined || hostKey === undefined)) return null
+  const skillIds = new Set(collectSkillIdsForScope(sc, hostSkillId ?? '', hostKey ?? ''))
+  if (source.by === 'tag') {
+    const tags = Array.isArray(source.tag) ? source.tag : [source.tag]
+    let n = 0
+    for (const e of _equipped.values()) {
+      if (!skillIds.has(e.skillId)) continue
+      const def = getAffixV2Definition(e.defId)
+      if (def && tags.some(t => def.tags.includes(t))) n++
+    }
+    return n
+  }
+  // resource / rarity：数 scope 内匹配的技能
   let n = 0
-  for (const e of _equipped.values()) {
-    if (!skillIds.has(e.skillId)) continue
-    const def = getAffixV2Definition(e.defId)
-    if (def && tags.some(t => def.tags.includes(t))) n++
+  for (const id of skillIds) {
+    const sk = gameState.affixSkills.get(id)
+    if (!sk) continue
+    if (source.by === 'resource' ? sk.resource === source.resource : sk.rarity === source.rarity) n++
   }
   return n
 }
@@ -160,7 +180,7 @@ import {
 } from './affixV2State'
 import { apprenticeNextThreshold } from '../data/affixV2Enchant'
 import type { FireEvent } from './fireFilter'
-import type { TargetSelector } from '../data/affixV2Trigger'
+import type { TargetSelector, ScaleCountSource } from '../data/affixV2Trigger'
 
 /** 学徒附魔副作用 · 每次本词条 trigger 命中调一次 ·
  *  累加 progress；达 3 × 2^(skill.level - 1) → skill.level++（无上限）。
