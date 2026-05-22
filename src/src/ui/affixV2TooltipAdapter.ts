@@ -18,6 +18,7 @@ import { SECTION_TAG_NAMES_ZH, SECTION_TAG_NAMES_EN, type Tag, type SectionTag }
 import { getLocale } from '../demo/demo-i18n'
 import { listAllEquipped, getEnchant, previewCountScaleSource } from '../systems/affixV2Equipped'
 import { applyEnchantToEffect, getEnchantDisplay, type EnchantSpec } from '../data/affixV2Enchant'
+import { RARITY_NAMES, type SkillRarity } from '../data/affixes'
 
 // ============================================
 // 词典 · ZH / EN 双语
@@ -50,6 +51,11 @@ const RESOURCE_LV1_BASE: Record<string, number> = {
 function isZh(): boolean { return getLocale() === 'zh' }
 function locResource(r: string): string { return (isZh() ? ZH_RESOURCE : EN_RESOURCE)[r] ?? r }
 function locRel(rel: string | number): string { return (isZh() ? ZH_REL : EN_REL)[String(rel)] ?? String(rel) }
+/** 稀有度名 · zh 用 RARITY_NAMES(普通/稀有/史诗/传说)，en 用本地映射；越界回退到数字 */
+const EN_RARITY: Record<number, string> = { 0: 'Common', 1: 'Rare', 2: 'Epic', 3: 'Legendary' }
+function locRarity(n: number): string {
+  return (isZh() ? RARITY_NAMES[n as SkillRarity] : EN_RARITY[n]) ?? String(n)
+}
 function locTag(tag: Tag): string {
   const map = isZh() ? SECTION_TAG_NAMES_ZH : SECTION_TAG_NAMES_EN
   return map[tag as SectionTag] ?? tag
@@ -233,7 +239,7 @@ function scaleSourceUnit(source: ScaleCountSource): string {
     case 'resource':
       return zh ? `产「${locResource(source.resource)}」技能` : `${locResource(source.resource)} skill`
     case 'rarity':
-      return zh ? `稀有度${source.rarity}技能` : `rarity-${source.rarity} skill`
+      return zh ? `${locRarity(source.rarity)}技能` : `${locRarity(source.rarity)} skill`
     case 'empty':
       return zh ? `「${locRel(source.posRel)}」空位` : `${locRel(source.posRel)} empty slot`
   }

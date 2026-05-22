@@ -409,7 +409,7 @@ describe('Tooltip 措辞 · 创生→获得 · 同 section→具体段名', () =
     })
     // 2 个稀有度 1 技能 → 11×1.2=13.2
     expect(desc).toContain('13.2')
-    expect(desc).toContain('稀有度1')
+    expect(desc).toContain('稀有技能')   // rarity 1 → 「稀有」名（非"稀有度1"）
     gameState.affixSkills.clear()
   })
 
