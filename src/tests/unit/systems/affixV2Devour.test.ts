@@ -200,12 +200,15 @@ describe('RECIPE_SUPPLANT · agonistic devour 配方', () => {
     expect(RECIPE_SUPPLANT.kind).toBe('devour')
   })
 
-  it('rollAffixV2Spec → consume_skill + same_word + 单维度 filter + ratio', () => {
-    for (let i = 0; i < 30; i++) {
+  it('rollAffixV2Spec → consume_skill + 常规 scope 池(排除 self) + 单维度 filter + ratio', () => {
+    const seenSelectors = new Set<string>()
+    for (let i = 0; i < 60; i++) {
       const { trigger, effect } = rollAffixV2Spec(RECIPE_SUPPLANT)
       expect(effect.kind).toBe('consume_skill')
       if (effect.kind !== 'consume_skill') continue
-      expect(effect.selector.type).toBe('same_word')
+      // selector 来自常规 scope 池，但绝不为 self（自取代 degenerate）
+      expect(effect.selector.type).not.toBe('self')
+      seenSelectors.add(effect.selector.type)
       expect(effect.ratio).toBe(RECIPE_SUPPLANT.ratio)
       expect(effect.filter).toBeDefined()
       // 恰好锁 1 个维度（resource / rarity / hasTag 之一）
@@ -215,6 +218,8 @@ describe('RECIPE_SUPPLANT · agonistic devour 配方', () => {
       // trigger 由生成器随机抽（非固定）· 类型合法即可
       expect(typeof trigger.type).toBe('string')
     }
+    // 常规池应抽出不止一种 selector（验证不再固定单一 scope）
+    expect(seenSelectors.size).toBeGreaterThan(1)
   })
 })
 

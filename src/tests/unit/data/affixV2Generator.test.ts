@@ -126,7 +126,7 @@ describe('chant generator · scale roll', () => {
       expect(ALL_RECIPES).toContain(RECIPE_NUT_CRACK)
     })
 
-    it('生成 on_self_fire + gain_resource（ratio = 固定大额 amount · 资源在池内）', () => {
+    it('生成 on_self_fire + gain_resource（ratio = 一次性预算 T / maxUses · 总产出恒为 T · 资源在池内）', () => {
       setSeededMode(11)
       const pool = new Set<string>()
       for (let i = 0; i < 100; i++) {
@@ -135,7 +135,9 @@ describe('chant generator · scale roll', () => {
         expect(def?.trigger.type).toBe('on_self_fire')
         expect(def?.effect.kind).toBe('gain_resource')
         const eff = def!.effect as { kind: 'gain_resource'; resource: string; ratio: number }
-        expect(eff.ratio).toBe(RECIPE_NUT_CRACK.amount)              // per-use 不按 freq 缩放
+        // per-use = T / maxUses（不按 freq 缩放）· 整支总产出 = ratio × maxUses 恒为 T
+        expect(eff.ratio).toBeCloseTo(RECIPE_NUT_CRACK.T / def!.maxUses!, 10)
+        expect(eff.ratio * def!.maxUses!).toBeCloseTo(RECIPE_NUT_CRACK.T, 10)
         expect(RECIPE_NUT_CRACK.resourcePool).toContain(eff.resource)
         pool.add(eff.resource)
       }

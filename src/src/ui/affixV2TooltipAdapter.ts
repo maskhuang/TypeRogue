@@ -108,7 +108,7 @@ export function formatTriggerDescription(trigger: TriggerSpec): string {
         parts.push(zh ? `${locRel(trigger.filter.posRel)}位置` : `${locRel(trigger.filter.posRel)} pos`)
       }
       if (trigger.filter.rarity !== undefined) {
-        parts.push(zh ? `${trigger.filter.rarity} 词条` : `rarity ${trigger.filter.rarity}`)
+        parts.push(zh ? `${locRarity(trigger.filter.rarity)}技能` : `${locRarity(trigger.filter.rarity)} skill`)
       }
       return zh
         ? `任一技能触发时（${parts.join('、')}）`
@@ -171,8 +171,8 @@ function formatSelector(sel: TargetSelector): string {
       ? `处于极速状态的技能${pickSuffix}`
       : `skills with haste${pickSuffix}`
     case 'matched_rarity':    return zh
-      ? `${sel.rarity} 词条的技能${pickSuffix}`
-      : `rarity-${sel.rarity} skills${pickSuffix}`
+      ? `${locRarity(sel.rarity)}技能${pickSuffix}`
+      : `${locRarity(sel.rarity)} skills${pickSuffix}`
     case 'workbench':         return zh
       ? `IN-tray 未装配的技能${pickSuffix}`
       : `IN-tray (unequipped) skills${pickSuffix}`
@@ -482,11 +482,11 @@ function formatSkillFilter(filter: SkillFilter, defSection?: SectionTag): string
   }
   if (filter.rarity !== undefined) {
     if (typeof filter.rarity === 'number') {
-      parts.push(zh ? `${filter.rarity} 词条` : `rarity ${filter.rarity}`)
+      parts.push(locRarity(filter.rarity))
     } else {
       const min = filter.rarity.min ?? 0
       const max = filter.rarity.max ?? 3
-      parts.push(zh ? `${min}-${max} 词条` : `rarity ${min}-${max}`)
+      parts.push(`${locRarity(min)}-${locRarity(max)}`)
     }
   }
   if (parts.length === 0) return zh ? '任意' : 'any'

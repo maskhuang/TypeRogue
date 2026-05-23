@@ -305,9 +305,10 @@ export interface GazeFollowRecipe {
   readonly name_en: string
 }
 
-/** crack 系：on_self_fire + per-use 大额 gain_resource · 消耗型「工具」（用完消失）·
+/** crack 系：on_self_fire + per-use 大额 gain_resource · 消耗型「工具」（用完消失·一次性）·
  *  与 drip 区别：(1) trigger 固定 on_self_fire（玩家 fire 宿主技能 = 砸一次）;
- *  (2) per-use 固定大额 amount —— 不按 freq 缩放，总产出由 maxUses 上限封顶而非每战 T;
+ *  (2) 一次性消耗 → 用「整支预算 T」标定（T 远高于常驻 recipe：常驻每战刷 T，一次性整个 run 只给 T 一次，
+ *      故 per-use = T / maxUses，无论 uses roll 多少总产出恒为 T × Lv1 base）;
  *  (3) usesRange 覆盖 tool 段默认 maxUses（坚果耐砸，次数多于一般工具）。
  *  resource 在生成时从 resourcePool 随机抽。*/
 export interface CrackRecipe {
@@ -317,7 +318,7 @@ export interface CrackRecipe {
   readonly name_zh: string
   readonly name_en: string
   readonly resourcePool: readonly ResourceType[]
-  readonly amount: number                          // per-use ratio（× resource Lv1 base）· 大额单次产出
+  readonly T: number                               // 一次性整支总产出预算（× resource Lv1 base）· per-use = T / maxUses
   readonly usesRange: readonly [number, number]    // 覆盖 tool 段默认 maxUses（闭区间整数）
 }
 
@@ -335,8 +336,8 @@ export interface CoprophagyRecipe {
 }
 
 /** devour 系：consume_skill 取代（agonistic 对抗）· trigger 随机抽（沿用 pickTrigger）·
- *  selector 固定 same_word（同词内）· 生成时随机锁 1 个 filter 维度（resource/rarity/hasTag · 与 teach/imitate 同纪律）·
- *  ratio 固定大额（不除 freq —— 同词内可吃技能数有限，总量天然封顶，类似 crack 的 per-use 模型）·
+ *  selector 从常规 scope 池抽（排除 self · 同 chain）· 生成时随机锁 1 个 filter 维度（resource/rarity/hasTag · 与 teach/imitate 同纪律）·
+ *  ratio 固定大额（不除 freq —— 每 trigger 仅吃 1 个 + consumed 不可二吃，总量天然封顶，类似 crack 的 per-use 模型）·
  *  被取代技能本场移除（下场恢复），其 on_removed 词条触发死亡回响（build-around 协同）。*/
 export interface DevourRecipe {
   readonly kind: 'devour'
@@ -736,10 +737,13 @@ export function rollAffixV2Spec(
     }
   } else if (recipe.kind === 'crack') {
     // crack: trigger 固定 on_self_fire（玩家 fire 宿主技能 = 砸一次坚果）·
-    // per-use 固定大额产出（不除 freq —— 总量由 maxUses 封顶）· 资源生成时随机抽
+    // 一次性消耗 → per-use = 整支预算 T / maxUses（总产出恒为 T，与 uses roll 无关）·
+    // 此处先按 usesRange 均值给代表值；generateAffixV2 roll 出 maxUses 后再 patch 成精确 T/maxUses
+    //（避免提前 roll maxUses 扰乱 seeded random 序列）。资源生成时随机抽
     triggerSpec = { type: 'on_self_fire' }
     const resource = pickRandom(recipe.resourcePool)
-    effect = { kind: 'gain_resource', resource, ratio: recipe.amount }
+    const avgUses = Math.round((recipe.usesRange[0] + recipe.usesRange[1]) / 2)
+    effect = { kind: 'gain_resource', resource, ratio: recipe.T / avgUses }
   } else if (recipe.kind === 'teach') {
     // teach: trigger 固定 on_battle_end(any) · 胜败都触发
     // filter 三维度复合 · 生成时独立 roll · 每个实例锁死：
@@ -775,11 +779,14 @@ export function rollAffixV2Spec(
     effect = { kind: 'reclaim_consumed', fraction: recipe.fraction }
   } else if (recipe.kind === 'devour') {
     // devour 取代（agonistic）：trigger 沿用 pickTrigger 随机抽（保持 triggerEntry.spec）·
-    // selector 固定 same_word（同词内 · 无 word 上下文则空集 no-op）·
+    // selector 从常规 scope 池抽（排除 self —— 自取代 = 移除宿主自身，degenerate）·
+    // 不注入 pick='random'：让 consume 结算先收齐全部候选、过完 filter 再随机取 1（filter 命中率更准）·
     // 生成时随机锁 1 个 filter 维度（resource 40% / rarity 30% / hasTag 30%）· ratio 不除 freq
+    const nonSelfScope = FULL_SCOPE_POOL.filter(s => s.selector.type !== 'self')
+    const sel = pickGatedScope(nonSelfScope, recipe.kind)
     effect = {
       kind: 'consume_skill',
-      selector: { type: 'same_word' },
+      selector: sel,
       ratio: recipe.ratio,
       filter: rollDevourFilter(),
     }
@@ -827,6 +834,13 @@ export function generateAffixV2(
     maxUses = usesLo + Math.floor(random() * (usesHi - usesLo + 1))
   }
 
+  // crack：一次性整支预算 T 摊到实际 roll 出的 maxUses → per-use = T / maxUses（总产出恒为 T）·
+  // rollAffixV2Spec 先填了 T/均值 的代表值，这里用精确 maxUses 重算。
+  const finalEffect: EffectSpec =
+    recipe.kind === 'crack' && maxUses !== undefined && effect.kind === 'gain_resource'
+      ? { ...effect, ratio: recipe.T / maxUses }
+      : effect
+
   const def: AffixV2Definition = {
     id,
     name_zh: recipe.name_zh,
@@ -835,7 +849,7 @@ export function generateAffixV2(
     tags: [recipe.section],
     phase: 'P1',
     trigger: triggerSpec,
-    effect,
+    effect: finalEffect,
     ...(maxUses !== undefined ? { maxUses } : {}),
   }
   registerDynamicAffixV2(def)
@@ -990,7 +1004,7 @@ export const RECIPE_COPROPHAGY: CoprophagyRecipe = {
 }
 
 /** 取代 supplant（agonistic 对抗 · §2.1.6 displacement/supplanting）·
- *  移除同词内一个（满足随机 filter 的）技能，吸收其 N× 基础产出 · 本场移除（下场恢复）·
+ *  从常规 scope 池抽出的范围内移除一个（满足随机 filter 的）技能，吸收其 N× 基础产出 · 本场移除（下场恢复）·
  *  被取代技能的 on_removed 词条触发死亡回响 —— agonistic 段首个 live recipe（drumming/broadcast 已迁 vocal）。
  *  build-around 协同：堆「便宜可弃 + on_removed 高回报」技能，supplant 作引擎吃它们换爆发 + 触发死亡回响。 */
 export const RECIPE_SUPPLANT: DevourRecipe = {
@@ -999,7 +1013,7 @@ export const RECIPE_SUPPLANT: DevourRecipe = {
   section: 'agonistic',
   name_zh: '取代',
   name_en: 'supplant',
-  ratio: 10,            // 产出 = 10 × 被移除技能基础产出（balance 旋钮 · 同词内可吃技能数封顶总量）
+  ratio: 10,            // 产出 = 10 × 被移除技能基础产出（balance 旋钮 · 每 trigger 仅吃 1 个 + consumed 不可二吃 → 总量封顶）
 }
 
 export const RECIPE_LEAP: HasteRecipe = {
@@ -1029,7 +1043,9 @@ export const RECIPE_NUT_CRACK: CrackRecipe = {
   name_en: 'nut-crack',
   // 大额单次产出 · 资源生成时随机抽（与 feed 同池）
   resourcePool: ['score', 'gold', 'shield', 'time', 'multiplier', 'base'],
-  amount: 1.2,              // per-use 大额（全套里最大的单次 gain_resource · ≈ 12× feed 单 tick）
+  // 一次性整支预算 T=18（≈6× 常驻 feed 每战 T=3 —— 一次性消耗故远高于常驻；
+  // 整个 run 只给这 18 一次）· per-use = T/maxUses → uses 6-10 时单次 1.8-3.0 × Lv1 底分（明显大额）
+  T: 18,
   usesRange: [6, 10],       // 比一般工具（默认 2-4）耐砸 · 战中多次大额但有限，用完即弃
 }
 

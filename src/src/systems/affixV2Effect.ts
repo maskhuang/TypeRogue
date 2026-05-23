@@ -462,13 +462,15 @@ function resolveInto(spec: EffectSpec, ctx: ResolveContext, result: ResolveResul
     }
 
     case 'consume_skill': {
-      // 取代：selector 展开 → 同词内候选（集成层 resolveSelector 已排除宿主自身 + 本场已 consumed）
+      // 取代：selector 展开候选（集成层 resolveSelector 已排除本场已 consumed）·
+      // 宿主自身这里强制排除——same_word/neighbors 自带排除，但 all_skills/matched_* 不排，
+      // 否则会自取代（移除自己 = degenerate）。
       const candidates = ctx.resolveSelector
         ? ctx.resolveSelector(spec.selector, ctx.skillId, ctx.key)
         : []
       if (candidates.length === 0) return
       // filter AND 过滤（活体 skill · resource/rarity/tag）；缺省 = 不过滤
-      const uniq = [...new Set(candidates)]
+      const uniq = [...new Set(candidates)].filter(id => id !== ctx.skillId)
       const matches = spec.filter
         ? uniq.filter(id => matchLiveSkill(id, spec.filter!))
         : uniq
